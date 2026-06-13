@@ -14,6 +14,7 @@ relationships or processes between these elements."
 Modelled abstractly by identity here; the mereological structure needed for
 extensivity (§13.5) is added in a later module. -/
 structure System where
+  /-- Terminological identity of the system/object (mirrors the OML `id`). -/
   id : String
 deriving DecidableEq, Repr
 

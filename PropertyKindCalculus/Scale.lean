@@ -21,10 +21,14 @@ namespace PropertyKindCalculus
 
 /-- The four operator-based scale types of Dybkær Fig. 12.21. -/
 inductive ScaleType
-  | nominal      -- §12.4   : only `=, ≠`
-  | ordinal      -- §12.16  : adds `<, >` (rankable, not subtractive)
-  | interval     -- §12.19  : adds `+, −` (subtractive, not divisible)
-  | ratio        -- §12.20  : adds `×, ÷` (divisible)
+  /-- §12.4 nominal — only `=, ≠` (classification; no order, no magnitude). -/
+  | nominal
+  /-- §12.16 ordinal — adds `<, >` (rankable, but not subtractive). -/
+  | ordinal
+  /-- §12.19 interval — adds `+, −` (subtractive, but not divisible). -/
+  | interval
+  /-- §12.20 ratio — adds `×, ÷` (divisible; an absolute zero). -/
+  | ratio
 deriving DecidableEq, Repr
 
 namespace ScaleType

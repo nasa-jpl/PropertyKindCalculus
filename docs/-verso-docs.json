@@ -1,13 +1,43 @@
 {"9":
  "<code>PropertyKindCalculus.ScaleType.le_antisymm {a b : PropertyKindCalculus.ScaleType} (h₁ : a ≤ b) (h₂ : b ≤ a) : a = b</code>",
  "8":
- "<code>PropertyKindCalculus.ScaleType.ratio : PropertyKindCalculus.ScaleType</code>",
+ "<code>PropertyKindCalculus.ScaleType.ratio : PropertyKindCalculus.ScaleType</code><span class=\"sep\"></span><code class=\"docstring\">§12.20 ratio — adds `×, ÷` (divisible; an absolute zero). </code>",
  "7":
- "<code>PropertyKindCalculus.ScaleType.interval : PropertyKindCalculus.ScaleType</code>",
+ "<code>PropertyKindCalculus.ScaleType.interval : PropertyKindCalculus.ScaleType</code><span class=\"sep\"></span><code class=\"docstring\">§12.19 interval — adds `+, −` (subtractive, but not divisible). </code>",
+ "61":
+ "<code>Ne.{u} {α : Sort u} (a b : α) : Prop</code><span class=\"sep\"></span><code class=\"docstring\">`a ≠ b`, or `Ne a b` is defined as `¬ (a = b)` or `a = b → False`,\nand asserts that `a` and `b` are not equal.\n\n\nConventions for notations in identifiers:\n\n * The recommended spelling of `≠` in identifiers is `ne`.</code>",
+ "60":
+ "<code>PropertyKindCalculus.KindOfProperty.examPrinciple (self : PropertyKindCalculus.KindOfProperty) : Option String</code><span class=\"sep\"></span><code class=\"docstring\">**§7.5 examination principle** used as a defining aspect, when present. </code>",
  "6":
- "<code>PropertyKindCalculus.ScaleType.ordinal : PropertyKindCalculus.ScaleType</code>",
+ "<code>PropertyKindCalculus.ScaleType.ordinal : PropertyKindCalculus.ScaleType</code><span class=\"sep\"></span><code class=\"docstring\">§12.16 ordinal — adds `&lt;, &gt;` (rankable, but not subtractive). </code>",
+ "59": "<code>k₁.examPrinciple ≠ k₂.examPrinciple</code>",
+ "58":
+ "<code>PropertyKindCalculus.KindOfProperty.distinct_of_examPrinciple {k₁ k₂ : PropertyKindCalculus.KindOfProperty}\n  (h : k₁.examPrinciple ≠ k₂.examPrinciple) : k₁ ≠ k₂</code><span class=\"sep\"></span><code class=\"docstring\">**§7.5 — the examination principle is a defining aspect.** Two kinds examined\nby different principles are *distinct kinds* — independently of scale and (later)\ndimension. This is what individuates otherwise-comparable kinds such as width and\nheight: same scale, same dimension, different examination principle, hence\ndifferent kinds. </code>",
+ "57":
+ "<code>PropertyKindCalculus.ExaminationItem.basePrinciple :\n  PropertyKindCalculus.ExaminationItem → PropertyKindCalculus.ExaminationPrinciple</code><span class=\"sep\"></span><code class=\"docstring\">The principle at the base of an item's based-on chain — the forgetful\nprojection of any examination down to its principle layer. </code>",
+ "56":
+ "<code>PropertyKindCalculus.Refines.basePrinciple_eq {a b : PropertyKindCalculus.ExaminationItem}\n  (h : PropertyKindCalculus.Refines a b) : a.basePrinciple = b.basePrinciple</code><span class=\"sep\"></span><code class=\"docstring\">**Coherence — refinement preserves the principle.** Every examination in one\nrefinement chain rests on the *same* principle: a procedure, the method it is\nbased on, and the principle under that all share one base principle. The\nforgetful projection `basePrinciple` is invariant along `Refines` — the\nexamination analogue of `dim` being a homomorphism, and a law no description\nlogic can phrase. </code>",
+ "55": "<code>PropertyKindCalculus.Refines b c</code>",
+ "54": "<code>PropertyKindCalculus.Refines a b</code>",
+ "53":
+ "<code>PropertyKindCalculus.Refines.trans {a b c : PropertyKindCalculus.ExaminationItem}\n  (h₁ : PropertyKindCalculus.Refines a b) (h₂ : PropertyKindCalculus.Refines b c) : PropertyKindCalculus.Refines a c</code><span class=\"sep\"></span><code class=\"docstring\">Refinement is transitive (a preorder, together with `refl`). </code>",
+ "52":
+ "<code>PropertyKindCalculus.BasedOn : PropertyKindCalculus.ExaminationItem → PropertyKindCalculus.ExaminationItem → Prop</code><span class=\"sep\"></span><code class=\"docstring\">The defining **\"based-on\"** edges (VIM): a method is based on its principle,\na procedure on its method. </code>",
+ "51":
+ "<code>PropertyKindCalculus.Refines.step {a b c : PropertyKindCalculus.ExaminationItem} :\n  PropertyKindCalculus.BasedOn a b → PropertyKindCalculus.Refines b c → PropertyKindCalculus.Refines a c</code><span class=\"sep\"></span><code class=\"docstring\">Prepend a based-on edge `BasedOn a b` to a refinement `b ⊑ c`. </code>",
+ "50":
+ "<code>PropertyKindCalculus.Refines : PropertyKindCalculus.ExaminationItem → PropertyKindCalculus.ExaminationItem → Prop</code><span class=\"sep\"></span><code class=\"docstring\">**Refinement** of examinations: the reflexive–transitive closure of\n`BasedOn`. A more specific examination *refines* a more generic one\n(procedure ⊑ method ⊑ principle). Mirrors `Specializes` over kinds. </code>",
  "5":
  "<code>PropertyKindCalculus.ScaleType : Type</code><span class=\"sep\"></span><code class=\"docstring\">The four operator-based scale types of Dybkær Fig. 12.21. </code>",
+ "49":
+ "<code>PropertyKindCalculus.ExaminationItem : Type</code><span class=\"sep\"></span><code class=\"docstring\">The three layers of the examination refinement chain, gathered into one\ncarrier so that \"based-on\" / \"refines\" is a *homogeneous* relation. </code>",
+ "48": "<code>PropertyKindCalculus.ExaminationItem</code>",
+ "47":
+ "<code>PropertyKindCalculus.Refines.refl (a : PropertyKindCalculus.ExaminationItem) : PropertyKindCalculus.Refines a a</code><span class=\"sep\"></span><code class=\"docstring\">Reflexivity of the closure: every examination refines itself. </code>",
+ "46":
+ "<code>PropertyKindCalculus.ExaminationPrinciple : Type</code><span class=\"sep\"></span><code class=\"docstring\">**§7.5 examination principle** (VIM 2.4) — the phenomenon serving as the\nbasis of an examination. Carries a terminological `id` (OML-style). </code>",
+ "45":
+ "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">Terminological identity of the examination principle (OML-style). </code>",
  "44": "<code>PropertyKindCalculus.MutuallyComparable E a b</code>",
  "43":
  "<code>PropertyKindCalculus.MutuallyComparable.symm\n  {E : PropertyKindCalculus.KindOfProperty → PropertyKindCalculus.KindOfProperty → Prop}\n  {a b : PropertyKindCalculus.KindOfProperty} (h : PropertyKindCalculus.MutuallyComparable E a b) :\n  PropertyKindCalculus.MutuallyComparable E b a</code>",
@@ -16,11 +46,11 @@
  "41": "<code>PropertyKindCalculus.Specializes E b c</code>",
  "40": "<code>PropertyKindCalculus.Specializes E a b</code>",
  "4":
- "<code>PropertyKindCalculus.ScaleType.nominal : PropertyKindCalculus.ScaleType</code>",
+ "<code>PropertyKindCalculus.ScaleType.nominal : PropertyKindCalculus.ScaleType</code><span class=\"sep\"></span><code class=\"docstring\">§12.4 nominal — only `=, ≠` (classification; no order, no magnitude). </code>",
  "39":
  "<code>PropertyKindCalculus.Specializes.trans\n  {E : PropertyKindCalculus.KindOfProperty → PropertyKindCalculus.KindOfProperty → Prop}\n  {a b c : PropertyKindCalculus.KindOfProperty} (h₁ : PropertyKindCalculus.Specializes E a b)\n  (h₂ : PropertyKindCalculus.Specializes E b c) : PropertyKindCalculus.Specializes E a c</code><span class=\"sep\"></span><code class=\"docstring\">Specialization is transitive (it is a preorder, together with `refl`). </code>",
  "38":
- "<code>PropertyKindCalculus.Specializes.step\n  {E : PropertyKindCalculus.KindOfProperty → PropertyKindCalculus.KindOfProperty → Prop}\n  {a b c : PropertyKindCalculus.KindOfProperty} :\n  E a b → PropertyKindCalculus.Specializes E b c → PropertyKindCalculus.Specializes E a c</code>",
+ "<code>PropertyKindCalculus.Specializes.step\n  {E : PropertyKindCalculus.KindOfProperty → PropertyKindCalculus.KindOfProperty → Prop}\n  {a b c : PropertyKindCalculus.KindOfProperty} :\n  E a b → PropertyKindCalculus.Specializes E b c → PropertyKindCalculus.Specializes E a c</code><span class=\"sep\"></span><code class=\"docstring\">Prepend a direct-parent edge `E a b` to a specialization `b ⊑ c`. </code>",
  "37":
  "<code>PropertyKindCalculus.Specializes\n  (E : PropertyKindCalculus.KindOfProperty → PropertyKindCalculus.KindOfProperty → Prop) :\n  PropertyKindCalculus.KindOfProperty → PropertyKindCalculus.KindOfProperty → Prop</code><span class=\"sep\"></span><code class=\"docstring\">Reflexive–transitive closure of a direct-parent edge relation `E`. </code>",
  "36":
@@ -28,7 +58,7 @@
  "35":
  "<code>PropertyKindCalculus.KindOfProperty → PropertyKindCalculus.KindOfProperty → Prop</code>",
  "34":
- "<code>PropertyKindCalculus.Specializes.refl\n  {E : PropertyKindCalculus.KindOfProperty → PropertyKindCalculus.KindOfProperty → Prop}\n  (a : PropertyKindCalculus.KindOfProperty) : PropertyKindCalculus.Specializes E a a</code>",
+ "<code>PropertyKindCalculus.Specializes.refl\n  {E : PropertyKindCalculus.KindOfProperty → PropertyKindCalculus.KindOfProperty → Prop}\n  (a : PropertyKindCalculus.KindOfProperty) : PropertyKindCalculus.Specializes E a a</code><span class=\"sep\"></span><code class=\"docstring\">Reflexivity of the closure: every kind specializes itself. </code>",
  "33":
  "<code>PropertyKindCalculus.KindOfProperty.IsRational (k : PropertyKindCalculus.KindOfProperty) : Prop</code><span class=\"sep\"></span><code class=\"docstring\">§13.2.4 rational kind-of-property (divisible). </code>",
  "32": "<code>k.IsRational</code>",
@@ -77,4 +107,5 @@
  "10": "<code>PropertyKindCalculus.ScaleType</code>",
  "1":
  "<code>String : Type</code><span class=\"sep\"></span><code class=\"docstring\">A string is a sequence of Unicode scalar values.\n\nAt runtime, strings are represented by [dynamic arrays](https://en.wikipedia.org/wiki/Dynamic_array)\nof bytes using the UTF-8 encoding. Both the size in bytes (`String.utf8ByteSize`) and in characters\n(`String.length`) are cached and take constant time. Many operations on strings perform in-place\nmodifications when the reference to the string is unique.\n</code>",
- "0": "<code>String</code>"}
+ "0":
+ "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">Terminological identity of the system/object (mirrors the OML `id`). </code>"}

@@ -118,8 +118,9 @@ Status: ✅ built & proved · 🚧 next · ⬜ planned
 | `Kind` — kind-of-property / -quantity + scale divisions | Ch. 6, §13.2–3 | ✅ |
 | `Specialization` — `Specializes` closure (preorder) + comparability | OML / §6 | ✅ |
 | `PropertyKindCalculus.Examples.MiniLengthWidth` (in the `Examples` lib) — length/width/height as checked facts | — | ✅ |
-| `Examination` — principle / method / procedure (as defining aspects) | Ch. 7, 14 | 🚧 |
-| `PropertyValue` + `ValueScale` — number × reference; scales | Ch. 9, 16, 10, 17 | ⬜ |
+| `Examination` — principle / method / procedure (as defining aspects) + refinement preorder & principle-coherence | Ch. 7, 14 | ✅ |
+| `PropertyKindCalculus.Examples.MiniExamination` (in the `Examples` lib) — refinement chain + examination-individuates-kinds as checked facts | — | ✅ |
+| `PropertyValue` + `ValueScale` — number × reference; scales | Ch. 9, 16, 10, 17 | 🚧 |
 | `Unit` — metrological unit = *chosen reference quantity of a kind* | Ch. 18, §13.3.3 | ⬜ |
 | `Dimension` — PhysLib `Dimension` as forgetful functor (+ coherence) | Ch. 19 | ⬜ (PhysLib) |
 | `Interaction` — `KMul`/`KDiv`, dimensional coherence | Flater App. C | ⬜ |
@@ -130,8 +131,11 @@ Status: ✅ built & proved · 🚧 next · ⬜ planned
 
 ## What builds today
 
-`lake build` compiles the spine and the worked example with **no `sorry`**,
+`lake build` compiles the spine and the worked examples with **no `sorry`**,
 proving: `ScaleType` is a linear order; operator availability is monotone in
 scale; `Specializes` is a preorder; mutual comparability is reflexive/symmetric;
-and (in the example) that `width`/`height` are distinct sub-kinds of `length`,
-mutually comparable, with "the width of a pencil" modelled as an instance.
+examination refinement (procedure ⊑ method ⊑ principle) is a preorder that
+preserves the underlying principle, and the examination principle is a defining
+aspect that individuates kinds; and (in the examples) that `width`/`height` are
+distinct sub-kinds of `length` — distinct *because they are examined differently*,
+yet mutually comparable — with "the width of a pencil" specified as an instance.

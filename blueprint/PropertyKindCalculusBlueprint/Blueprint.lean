@@ -150,8 +150,8 @@ section charges against SysML v2). Stating it as owed keeps the boundary honest.
   * planned
 *
   * R2 — specialization lattice + comparability
-  * Width, Height, Diameter specialize Length; Width, Height comparable yet distinct
-  * `Specializes` preorder; `MutuallyComparable`
+  * Width, Height, Diameter specialize Length; Width, Height comparable yet distinct (by examination principle)
+  * `Specializes` preorder; `MutuallyComparable`; examination defining-aspect (`Refines`, `distinct_of_examPrinciple`)
   * proved
 *
   * R3 — general vs individual (type vs term)

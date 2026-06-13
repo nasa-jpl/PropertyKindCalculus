@@ -179,3 +179,84 @@ specialization induces it (`of_specializes`). Uses {uses "def_mutuallyComparable
 Reflexivity takes the witness `a` itself; symmetry swaps the two halves of the
 conjunction.
 :::
+
+# Examination — principle, method, procedure (Dybkær Ch. 7, 14)
+
+:::group "spine_examination"
+A kind-of-property is a "common defining aspect" (§6.19). One such defining
+aspect is _how the property is examined_: its examination principle (§7.5, VIM
+2.4) — the phenomenon serving as the basis — a method based on that principle
+(VIM 2.5), and a procedure based on that method (VIM 2.6). These refine one
+another and individuate kinds that scale and dimension alone cannot tell apart:
+width and height are both rational lengths, separated only by the principle under
+which each is examined. A description logic can record a link to a defining
+aspect; it cannot state that refinement is a preorder, nor that refinement
+preserves the principle.
+:::
+
+:::definition "def_examination" (parent := "spine_examination") (lean := "PropertyKindCalculus.ExaminationPrinciple")
+The examination chain has three layers — an _examination principle_ (§7.5 / VIM
+2.4), a _method_ based on a principle (VIM 2.5), and a _procedure_ based on a
+method (VIM 2.6) — gathered into one carrier `ExaminationItem` so that refinement
+is a homogeneous relation. The forgetful projection `basePrinciple` sends any
+item down to the principle it rests on.
+:::
+
+:::proof "def_examination"
+Three small `structure`s with `DecidableEq`, united by an `ExaminationItem`
+inductive; `basePrinciple` is the projection to the principle layer.
+:::
+
+:::definition "def_refines" (parent := "spine_examination") (lean := "PropertyKindCalculus.Refines")
+_Refinement_ `Refines` is the reflexive–transitive closure of the "based-on"
+edges (a procedure is based on its method, a method on its principle): procedure
+⊑ method ⊑ principle. It mirrors {uses "def_specializes"}[specialization] over
+kinds — the same closure construction, one level down at the defining aspect.
+:::
+
+:::proof "def_refines"
+An `inductive` with `refl` and `step` constructors over a `BasedOn` edge
+relation; `of_basedOn` lifts a single edge.
+:::
+
+:::theorem "thm_refines_preorder" (parent := "spine_examination") (owner := "author_nfr") (lean := "PropertyKindCalculus.Refines.trans") (tags := "proved")
+*Refinement is a preorder.* It is reflexive (the `refl` constructor) and
+transitive (`Refines.trans`) on {uses "def_refines"}[the examination chain] — the
+same algebraic law proved for specialization, which an OWL2 reasoner can neither
+state nor prove.
+:::
+
+:::proof "thm_refines_preorder"
+Transitivity is by induction on the first derivation, exactly as for
+`Specializes`: `refl` returns the second derivation, `step` re-applies the
+constructor under the inductive hypothesis.
+:::
+
+:::theorem "thm_examination_coherence" (parent := "spine_examination") (owner := "author_nfr") (lean := "PropertyKindCalculus.Refines.basePrinciple_eq") (tags := "capstone, proved") (priority := "high")
+*Refinement preserves the principle.* Every examination in one refinement chain
+rests on the same base principle:
+$$`\mathrm{Refines}\ a\ b \;\Longrightarrow\; \mathrm{basePrinciple}\ a = \mathrm{basePrinciple}\ b.`
+The forgetful projection to the principle layer is invariant along refinement —
+the examination-layer analogue of $`\dim` being a homomorphism, and one provable
+here in the Mathlib-free core without PhysLib. Builds on {uses "def_refines"}[refinement].
+:::
+
+:::proof "thm_examination_coherence"
+By induction on the refinement derivation: each `BasedOn` edge preserves the base
+principle (`cases … <;> rfl`), and the inductive step chains the resulting
+equalities.
+:::
+
+:::theorem "thm_examPrinciple_defining" (parent := "spine_examination") (owner := "author_nfr") (lean := "PropertyKindCalculus.KindOfProperty.distinct_of_examPrinciple") (tags := "proved")
+*The examination principle is a defining aspect.* Two {uses "def_kindOfProperty"}[kinds]
+examined by different principles are distinct kinds — independently of scale and
+dimension. This is what keeps width and height distinct while both remain
+rational lengths, {uses "def_mutuallyComparable"}[mutually comparable] under their
+shared super-kind Length.
+:::
+
+:::proof "thm_examPrinciple_defining"
+The kinds differ in their `examPrinciple` field, so they are unequal by
+congruence: substitute the assumed kind-equality and derive a contradiction from
+the field inequality.
+:::

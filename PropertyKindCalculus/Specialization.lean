@@ -22,7 +22,9 @@ namespace PropertyKindCalculus
 /-- Reflexive–transitive closure of a direct-parent edge relation `E`. -/
 inductive Specializes (E : KindOfProperty → KindOfProperty → Prop) :
     KindOfProperty → KindOfProperty → Prop
+  /-- Reflexivity of the closure: every kind specializes itself. -/
   | refl (a : KindOfProperty) : Specializes E a a
+  /-- Prepend a direct-parent edge `E a b` to a specialization `b ⊑ c`. -/
   | step {a b c : KindOfProperty} : E a b → Specializes E b c → Specializes E a c
 
 namespace Specializes

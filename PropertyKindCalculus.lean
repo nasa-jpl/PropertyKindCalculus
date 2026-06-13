@@ -13,3 +13,4 @@ import PropertyKindCalculus.Foundations
 import PropertyKindCalculus.Scale
 import PropertyKindCalculus.Kind
 import PropertyKindCalculus.Specialization
+import PropertyKindCalculus.Examination
