@@ -1,0 +1,106 @@
+name: Build and Publish Design Blueprint
+
+# Self-hosted CI for PropertyKindCalculus, modelled on L4YAML's
+# `.github/workflows/test-coverage.yml` but reduced to the blueprint spine:
+# build the Mathlib-free Lean core + examples, build and render the Verso
+# design blueprint, publish the HTML under docs/, and (on main) commit it back.
+# PropertyKindCalculus has no FFI / Rust / Python / doc-gen4 / PDF stages, so
+# those phases of the L4YAML job are intentionally omitted.
+
+on:
+  push:
+    branches: [ main, master ]
+    # The job commits the rendered site back to docs/ on main. Ignore docs-only
+    # pushes so that auto-commit can't retrigger the workflow. (Pushes made with
+    # the default GITHUB_TOKEN already don't trigger runs, so this is belt-and-
+    # suspenders — it also covers the case of a PAT-authenticated push.)
+    paths-ignore: [ 'docs/**' ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  blueprint:
+    runs-on: self-hosted
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Elan (Lean toolchain manager)
+        run: |
+          curl https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -sSf | sh -s -- -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> $GITHUB_PATH
+
+      - name: Install Lean toolchain
+        run: |
+          # Root and blueprint/ pin the same toolchain (leanprover/lean4:v4.30.0),
+          # so installing the root one is sufficient for both Lake packages.
+          if [ -f lean-toolchain ]; then
+            TOOLCHAIN="$(cat lean-toolchain)"
+            echo "Lean toolchain: $TOOLCHAIN"
+            elan toolchain install "$TOOLCHAIN" || true
+          fi
+          elan show
+
+      # -------------------------------------------------------
+      # Phase 1: Build the Lean spine (Mathlib-free core + examples)
+      # -------------------------------------------------------
+      - name: Build core library and examples
+        run: |
+          # The core has no dependencies (lake-manifest packages == []), so this
+          # needs no network and is the fastest signal that the spine is sound.
+          lake build
+          lake build Examples
+
+      # -------------------------------------------------------
+      # Phase 2: Build + render the Verso design blueprint
+      # (a separate Lake package under blueprint/ that pulls in Verso)
+      # -------------------------------------------------------
+      - name: Build and render the design blueprint
+        run: |
+          cd blueprint
+          # `lake build` (not `lake update`) so the pinned, committed
+          # blueprint/lake-manifest.json governs the Verso revisions — transitive
+          # deps tracked on `main` cannot drift and break a reproducible render.
+          # Missing packages are still fetched at their pinned revs on a fresh runner.
+          lake build
+          # `--with-html-single` also emits a self-contained one-page build
+          # (html-single/) alongside the multi-page site (html-multi/).
+          lake exe blueprint-gen --output _out/blueprint --with-html-single
+          # Spell out index.html in multi-page directory links so the site is
+          # also navigable over file:// (a no-op when served over HTTP).
+          python3 scripts/file-links.py _out/blueprint/html-multi
+
+      # -------------------------------------------------------
+      # Phase 3: Publish the rendered HTML under docs/
+      # -------------------------------------------------------
+      - name: Stage blueprint HTML under docs/
+        run: |
+          rm -rf docs
+          # Multi-page site at the docs/ root (the served entry point) ...
+          cp -r blueprint/_out/blueprint/html-multi docs
+          # ... plus the self-contained single page for offline/file:// viewing.
+          cp -r blueprint/_out/blueprint/html-single docs/html-single
+          # Disable Jekyll so Pages serves Verso's `-verso-data/` assets verbatim.
+          touch docs/.nojekyll
+          echo "Staged docs/ ($(find docs -type f | wc -l) files)"
+
+      - name: Upload blueprint as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: propertykindcalculus-blueprint
+          path: docs/
+          retention-days: 30
+
+      - name: Commit rendered blueprint to main
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/
+          git diff --staged --quiet || git commit -m "Render design blueprint: ${{ github.sha }}"
+          git push
