@@ -26,6 +26,175 @@ Appendix C). This blueprint is the design map: it records what is already proved
 (linked to real declarations) and the *capstone theorems we plan to provide*,
 with the dependency graph and a status summary at the end.
 
+# Requirements
+
+What follows is the fixed set of requirements PropertyKindCalculus is *specified*
+to meet. The next section, *Why a calculus, not a taxonomy*, argues *why* a
+calculus is needed where a taxonomy stops, and the chapters after it develop and
+prove each requirement; this section states them up front, as the axes the design
+is judged against, with a status table at the end mapping each axis to the
+declaration that discharges it.
+
+The requirements fall into four groups: how kinds are *structured*, how
+*operations* on them are gated, how the kind layer is kept *consistent* with the
+coarser dimension and unit layers, and how values *aggregate* over parts.
+
+## Kind structure
+
+*R1 — Kinds are first-class and discriminate within a dimension.* Two properties
+of the same physical dimension can still be different kinds, and the type system
+must keep them apart. Volumetric water content (`Quantity vwc`), gravimetric
+water content (`Quantity gwc`), relative permittivity, reflectivity, and
+emissivity are all dimension-one, yet `Quantity vwc` and `Quantity gwc` must be
+*different types* — not interchangeable values. (QUDT's and SysML v2's `QuantityKind` is subsumed here as one such kind —
+a scale-gated leaf — not as the root.)
+
+*R2 — Specialization is a lattice, with comparability but not identity.* Width,
+Height, and Diameter each specialize Length, and a kind may specialize several
+parents at once — a lattice, not a tree. Specialization is a preorder (reflexive
+and transitive) and induces a *one-way* coercion: a `Quantity Width` may be used
+where a `Quantity Length` is wanted, never the reverse, and that up-cast is a
+visible, deliberate loss of information. Width and Height remain *mutually
+comparable* — they share the super-kind Length — while staying distinct kinds.
+
+*R3 — General versus individual is type versus term.* A kind is the general
+notion (a *type*); a particular measured value is an individual (a *term* of that
+type). `Length` is a type; the length of this pencil is a term of type
+`Quantity Length`. The two are never conflated — the punning OWL permits between a
+class and its instances is structurally impossible here.
+
+## Operation gating
+
+*R4 — Operations are gated by kind (the additive law).* Arithmetic that keeps a
+quantity within its kind is well-typed; arithmetic across incompatible kinds is a
+*compile-time type error*, not a runtime check. `Width + Width = Width`
+type-checks; `Width + Height` does not — and, decisively, neither does
+`Torque + Energy`, even though torque and energy share a dimension. Matching
+dimension is not licence to add.
+
+*R5 — The interaction algebra is a partial, typed, ternary product.* Some kinds
+combine *across* kinds to yield a third: torque times plane angle is energy,
+force times length is work. The combination is partial and curated — most pairs
+combine to *nothing* (fuel-consumption times rainfall is a category error, not a
+number) — and it carries a division dual, with multiplication and division proved
+inverse. This multiplicative combination is distinct from R4's additive,
+same-kind gate.
+
+*R6 — Operator availability is gated by the measurement scale, monotonically.*
+Which operations even *exist* between two properties is fixed by their scale type,
+$`\mathrm{nominal} \sqsubset \mathrm{ordinal} \sqsubset \mathrm{interval}
+\sqsubset \mathrm{ratio}`: a nominal property admits only $`=`, a ratio property
+admits $`\times` and $`\div`, and a richer scale licenses every operation a
+poorer one does. This gate is *orthogonal* to kind — kind says *which* properties
+may combine, scale says *which operators* are defined at all.
+
+## Soundness bridges
+
+*R7 — Dimension certifies coherence; it does not decide legality.* Every kind has
+a dimension, but dimension is a *consistency check*, not the authorization:
+matching dimensions are necessary yet never sufficient — which is exactly what
+lets R4 reject `Torque + Energy`. Formally the dimension map
+$`\dim : \mathrm{Kind} \to \mathrm{Dimension}` is a *forgetful functor* and a
+*homomorphism*:
+$$`\mathrm{KMul}\ k_1\ k_2\ k_3 \;\Longrightarrow\; \dim k_3 = \dim k_1 \cdot \dim k_2.`
+
+In plain engineering terms: $`\dim` is a deliberately *lossy, one-way*
+translation from the rich kind layer down to the coarse SI-dimension layer. It
+keeps only the base-quantity exponents (length, mass, time, …) and *forgets*
+everything else, so many distinct kinds collapse onto the same dimension and
+there is no way back — that is what "forgetful" names. Calling it a
+*homomorphism* says the translation *respects multiplication*: the dimension of a
+product equals the product of the dimensions (the exponents add), so the kind
+layer and the dimension layer can never disagree about what multiplying means. It
+is the discipline of ordinary dimensional analysis, stated and proved as a law
+rather than performed by hand.
+
+*R8 — Units are chosen values of a kind; conversion is a faithful round-trip.* A
+unit is a distinguished value of a kind (a metre is a chosen length), and a
+measured quantity is a number times a unit. Converting a quantity from one unit
+to another of the *same* kind and back is the identity — conversion is
+multiplication by a ratio, defined only within a kind. There is no conversion
+between units of *different* kinds; that too is a type error, not a runtime check.
+
+## Aggregation
+
+*R9 — Extensive quantities aggregate additively over parts; intensive ones do
+not.* For an *extensive* kind the value over a whole is the sum of the values
+over its disjoint parts — the mass of an assembly is the sum of its parts'
+masses. Where this fails it must *not* be assumed: volume on mixing is
+sub-additive (ethanol and water), and that negation is stated to keep the
+extensive predicate honest. Tracking which kinds are extensive is the
+precondition for soundly summing measurements.
+
+## Out of scope (for now)
+
+*Value representation* — scalar / vector / tensor order, coordinate frames,
+bound-versus-free vectors, and frame transformations — is *not yet specified*
+here. It is a genuine systems-engineering requirement, but a *separate,
+orthogonal* axis: its principled home is an index *over* the kind, never a layer
+the kind hangs beneath (the inversion the *Why a calculus, not a taxonomy*
+section charges against SysML v2). Stating it as owed keeps the boundary honest.
+
+## The requirements at a glance
+
+:::table +header (align := center)
+*
+  * Requirement
+  * Concrete test
+  * Specified as
+  * Status
+*
+  * R1 — kind discrimination within a dimension
+  * `vwc ≠ gwc`, both dimension one
+  * kind-indexed `Quantity k`; dimension-1 disambiguation
+  * planned
+*
+  * R2 — specialization lattice + comparability
+  * Width, Height, Diameter specialize Length; Width, Height comparable yet distinct
+  * `Specializes` preorder; `MutuallyComparable`
+  * proved
+*
+  * R3 — general vs individual (type vs term)
+  * `Length` a type; this pencil's length a term
+  * `KindOfProperty` vs `Quantity k`
+  * proved (kinds), planned (quantities)
+*
+  * R4 — kind-gated addition
+  * `Width+Width` ok; `Width+Height`, `Torque+Energy` rejected
+  * kind-indexed `Quantity k`
+  * planned
+*
+  * R5 — interaction algebra (partial, typed)
+  * `torque × angle = energy`; `fuel × rainfall` an error
+  * `KMul` / `KDiv`; multiplication–division inverse
+  * planned
+*
+  * R6 — scale-type operator availability (monotone)
+  * nominal: only `=`; ratio: `×`, `÷`
+  * `ScaleType` order; operator monotonicity
+  * proved
+*
+  * R7 — dimension certifies, not decides
+  * `dim` many-to-one; necessary ≠ sufficient
+  * `dim` homomorphism
+  * planned
+*
+  * R8 — units and conversion round-trip
+  * round-trip metre/foot conversion is the identity; cross-kind is a type error
+  * `Unit k`; conversion round-trip
+  * planned
+*
+  * R9 — extensive aggregation
+  * mass sums over parts; volume-on-mixing does not
+  * `Extensive`; additive law + counterexample
+  * planned
+*
+  * *(out of scope)* value representation
+  * scalar / vector / tensor, frames
+  * an orthogonal index over the kind
+  * not specified
+:::
+
 # Why a calculus, not a taxonomy
 
 PropertyKindCalculus continues a line of machine-checkable metrology modeling, and
@@ -243,7 +412,7 @@ next section). Two consequences fall out directly: two kinds that share a
 dimension remain distinct types — so the dimension-1 disambiguation is
 expressible — and an operation across kinds is a type error rather than a silent
 success. Value representation — the axis SysML v2 puts at the root — is, candidly,
-*not yet modelled* here; its principled home is an *orthogonal* index over the
+*not yet specified* here; its principled home is an *orthogonal* index over the
 kind, never a layer the kind hangs beneath.
 
 ### The two designs side by side
@@ -276,7 +445,7 @@ kind, never a layer the kind hangs beneath.
 *
   * Scalar / vector / tensor, frames, transforms
   * first-class and rich
-  * not yet modelled (owed — an orthogonal index)
+  * not yet specified (owed — an orthogonal index)
 *
   * Algebraic laws
   * a modelling library; none machine-checked

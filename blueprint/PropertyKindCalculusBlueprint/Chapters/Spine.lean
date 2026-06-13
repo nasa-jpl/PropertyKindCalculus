@@ -33,7 +33,7 @@ The carrier layer: the systems (objects) whose features properties are.
 
 :::definition "def_system" (parent := "spine_foundations") (lean := "PropertyKindCalculus.System")
 A _system_ (Dybkær §3.3) is a demarcated arrangement of elements and their
-relationships; _object_ (§3.3 Note 6) is given as a synonym. Modelled abstractly
+relationships; _object_ (§3.3 Note 6) is given as a synonym. Specified abstractly
 by identity here; the mereological structure that extensivity needs is added in a
 later module.
 :::

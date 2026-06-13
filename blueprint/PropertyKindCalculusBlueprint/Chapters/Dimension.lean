@@ -13,6 +13,15 @@ functor. Dimension answers the coarse question — "are these even commensurable
 the SI base quantities?" — and the kind layer answers the fine one. This chapter
 is _planned_: it records the coherence laws that make the two layers agree.
 
+Two terms recur below; in plain engineering terms they mean this. A _forgetful
+functor_ is a deliberately lossy, one-way map: $`\dim` keeps only a kind's SI
+base-quantity exponents (length, mass, time, …) and discards everything else that
+distinguishes it, so many kinds share one dimension and there is no inverse. A
+_homomorphism_ is a map that respects an operation: here $`\dim` respects
+multiplication — the dimension of a product is the product of the dimensions, the
+exponents adding — which is exactly the bookkeeping of everyday dimensional
+analysis, stated and proved here as a law rather than performed by hand.
+
 # The forgetful map (Dybkær Ch. 19)
 
 :::group "dimension"
