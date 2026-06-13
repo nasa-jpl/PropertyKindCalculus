@@ -79,15 +79,9 @@ jobs:
       # Phase 3: Publish the rendered HTML under docs/
       # -------------------------------------------------------
       - name: Stage blueprint HTML under docs/
-        run: |
-          rm -rf docs
-          # Multi-page site at the docs/ root (the served entry point) ...
-          cp -r blueprint/_out/blueprint/html-multi docs
-          # ... plus the self-contained single page for offline/file:// viewing.
-          cp -r blueprint/_out/blueprint/html-single docs/html-single
-          # Disable Jekyll so Pages serves Verso's `-verso-data/` assets verbatim.
-          touch docs/.nojekyll
-          echo "Staged docs/ ($(find docs -type f | wc -l) files)"
+        # Same script the local render (ci-pages.sh) calls, so the published
+        # docs/ layout is defined in exactly one place.
+        run: bash blueprint/scripts/stage-docs.sh
 
       - name: Upload blueprint as artifact
         uses: actions/upload-artifact@v3
