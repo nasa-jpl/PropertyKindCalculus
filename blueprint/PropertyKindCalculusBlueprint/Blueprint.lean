@@ -1,0 +1,395 @@
+import Verso
+import VersoManual
+import VersoBlueprint
+import VersoBlueprint.Commands.Graph
+import VersoBlueprint.Commands.Summary
+import PropertyKindCalculusBlueprint.Chapters.Spine
+import PropertyKindCalculusBlueprint.Chapters.Units
+import PropertyKindCalculusBlueprint.Chapters.Dimension
+import PropertyKindCalculusBlueprint.Chapters.Interaction
+import PropertyKindCalculusBlueprint.Chapters.Extensivity
+
+open Verso.Genre
+open Verso.Genre.Manual
+open Informal
+
+#doc (Manual) "PropertyKindCalculus Blueprint" =>
+%%%
+shortTitle := "PropertyKindCalculus"
+tag := "kindcalculus-blueprint"
+%%%
+
+PropertyKindCalculus is a Lean 4 formalization of René Dybkær's *An Ontology on Property
+for Physical, Chemical, and Biological Systems* (2009), extended with David
+Flater's full tracking of kinds of quantities (NIST Technical Note 1943,
+Appendix C). This blueprint is the design map: it records what is already proved
+(linked to real declarations) and the *capstone theorems we plan to provide*,
+with the dependency graph and a status summary at the end.
+
+# Why a calculus, not a taxonomy
+
+PropertyKindCalculus continues a line of machine-checkable metrology modeling, and
+inherits its problem statement from exactly where that line stops.
+
+## From QUDV to an OML metrology vocabulary
+
+OMG SysML 1.2 introduced
+[QUDV](https://www.omgwiki.org/OMGSysML/doku.php?id=sysml-qudv:quantities_units_dimensions_values_qudv)
+(Quantities, Units, Dimensions, Values) as a library for declaring quantity
+kinds, units, and their dimensional factoring; QUDV's foundations were then
+revised substantially across SysML 1.3 and 1.4.
+
+In parallel, a formalization in OML — leveraging the semantics of OWL2-DL for
+classification-based reasoning — reworked those foundations, the quantity-kind
+and unit _stereotypes_ carried by SysML, to align them with Dybkær's _An
+Ontology on Property_. That effort became the
+[opencaesar metrology vocabulary](https://github.com/opencaesar/metrology-vocabularies),
+whose current version combines the updates and motivations of the VIM4 Committee
+Draft with Dybkær's ontological grounding. OWL2 (SROIQ) carries the metrology
+_taxonomy_ well: specialization, the general-vs-individual quantity distinction
+(encoded as concept vs. instance), dimensional factoring, and OWL2-DL/SPARQL
+consistency checks over units.
+
+Where a description logic stops is visible in that vocabulary's own _dimensional
+analysis_: computing a derived quantity's dimension from its factors is an
+arithmetic induction that has to be pushed out of OWL2 into SPARQL 1.1 Update,
+and even there it is brittle — updates report success while inserting no triples,
+because "update succeeded" is not a statement about _what was established_.
+Dimension arithmetic sits right at that boundary; the kind interaction algebra
+and the algebraic _laws_ are past it.
+
+## What a description logic cannot express
+
+A description logic captures the _taxonomy_ but is structurally unable to capture
+the _calculus_. The recurring gap is arithmetic, operations,
+definedness-conditions, laws, and proofs:
+
+- *Dimension arithmetic* ($`\dim(a\cdot b) = \dim a + \dim b`): OWL2 has no
+  datatype arithmetic; in Lean it is an ordinary function with a homomorphism
+  theorem.
+- *The interaction algebra* (torque $`\times` angle $`=` energy): role chains
+  are binary, regular, and carry no arithmetic side-conditions; in Lean it is a
+  ternary relation with a dimensional-coherence proof obligation.
+- *Scale-type operator gating* (which of $`=,<,+,\times` are *defined*): DL has
+  no operations; in Lean the scale indexes which typeclasses apply, and
+  monotonicity of availability is a proved meta-theorem.
+- *Extensivity* ($`\mathrm{value}(\text{whole}) = \sum \mathrm{value}(\text{parts})`):
+  no quantified arithmetic in DL; in Lean it is a $`\forall`-theorem.
+- *Units* (a unit is a chosen value of a kind; conversion is a ratio): no
+  arithmetic in DL; in Lean it is a definition with a round-trip theorem.
+- *Meta-theorems* (specialization is a preorder; $`\dim` is a homomorphism): a
+  DL reasoner checks *consistency*, not *laws* — proving the laws is the point.
+
+## SysML v2: a quantity model organized by value representation
+
+OMG's current generation ships a standard-library treatment of quantities and
+units, examined here at tag
+[SysML v2, 2026-04](https://github.com/Systems-Modeling/SysML-v2-Release/tree/2026-04/sysml.library/Domain%20Libraries/Quantities%20and%20Units)
+(its `Quantities`, `MeasurementReferences`, and ISQ packages). Read against
+Dybkær, it is built around a different organizing axis than the one taken here as
+primary, and the contrast is the cleanest way to say what a *kind-primary* model
+buys.
+
+### The evidence: representation is the root, kind is a leaf
+
+The quantity-value hierarchy is rooted in *value representation*, not in quantity kind.
+The most general value is `TensorQuantityValue`, a tensor of any order, and the
+specialization chain runs *toward* the scalar, each more specific type being a
+lower-order tensor — `VectorQuantityValue :> TensorQuantityValue`, then
+`ScalarQuantityValue :> VectorQuantityValue`
+([SysML v2, 2026-04 — Quantities.sysml, lines 17–46](https://github.com/Systems-Modeling/SysML-v2-Release/blob/2026-04/sysml.library/Domain%20Libraries/Quantities%20and%20Units/Quantities.sysml#L17-L46)):
+$$`\text{Scalar} \sqsubseteq \text{Vector} \sqsubseteq \text{Tensor}.`
+So a scalar *is a* tensor of order 0 and a vector *is a* tensor of order 1. What
+a value's type primarily records is the apparatus of that representation:
+- its tensor order,
+- the split of that order into *contravariant* and *covariant* indices — the attributes `contravariantOrder` and `covariantOrder` on
+`TensorQuantityValue`, constrained to sum to the order
+([SysML v2, 2026-04 — Quantities.sysml, lines 33–36](https://github.com/Systems-Modeling/SysML-v2-Release/blob/2026-04/sysml.library/Domain%20Libraries/Quantities%20and%20Units/Quantities.sysml#L33-L36))
+- whether a vector is bound or free, and
+- a matching measurement reference (tensor / vector / scalar) carrying the coordinate frame and its transformations.
+
+Each of these is a statement about *how a quantity is measured, coordinatized, and
+valued*, not about *what kind of property* it is.
+The contravariant/covariant split is the sharpest case of this representation-centric view — the one
+record-field that is *unambiguously* representational, on three escalating counts.
+
+1. *Pure coordinate bookkeeping.* It records only how a value's components
+   transform under a change of frame — nothing about what the quantity *is*. The
+   other three fields each record a facet of the quantity itself:
+   - tensor order tracks its mathematical character,
+   - bound-versus-free is a genuine physical distinction (and one the library actually uses), and
+   - the measurement reference
+   names a dimension and a frame.
+
+  The variance split alone carries no information about the quantity kind.
+
+2. *Not quantity-invariant.* Using the metric to raise a covariant (lower) index
+   or lower a contravariant (upper) one moves a unit between the two counts — say
+   from `contravariantOrder` 2, `covariantOrder` 0 to a mixed 1 and 1 — while the
+   order, and the physical quantity, stay fixed. That the quantity is unchanged is a
+   fact of *tensor algebra* — the metric's raising/lowering isomorphism — not a SysML
+   v2 statement: the library defines no raise- or lower-index operation, so it would
+   record the two splits as distinct `TensorQuantityValue`s with nothing to mark them
+   as one quantity. A feature that a pure change of representation can move while the
+   quantity is held fixed is thus a property of the representation, not of the
+   quantity's kind. Hold the quantity fixed and the other three fields are pinned with
+   it — order, bound-status, and reference do not change — so the variance split is the
+   one field free to vary while the modeled quantity stays put (worked through just below).
+
+3. *Empirically inert.* The split is declared on the abstract root and named by
+   its constraint, yet assigned by *no* quantity anywhere in the library: even the
+   genuine order-2 kinds — `Cartesian3dStressTensor`, with strain and moment of
+   inertia alongside it — inherit the two slots and leave them unset, fixing only
+   `isBound`, `num`, and `mRef`
+   ([SysML v2, 2026-04 — ISQMechanics.sysml, lines 730–746](https://github.com/Systems-Modeling/SysML-v2-Release/blob/2026-04/sysml.library/Domain%20Libraries/Quantities%20and%20Units/ISQMechanics.sysml#L730-L746)).
+   The apparatus is carried at the root whether or not any kind exercises it. By
+   contrast `isBound` *is* used (88 free against 7 bound), so the point is precise
+   rather than blanket: bound-versus-free is live machinery, while the variance
+   split is declared-but-unexercised overhead inherited from the tensor root.
+
+To see why the second count bites — and what the model *loses* by it — follow the
+library's own machinery. `Cartesian3dStressTensor` stores its value as
+`num: Real[9]`, nine bare reals, with the variance split left blank (same
+listing). In an orthonormal Cartesian frame that omission is harmless: under the
+Euclidean metric the contravariant components $`\sigma^{ij}`, the mixed
+$`\sigma^i{}_j`, and the covariant $`\sigma_{ij}` are numerically equal, so it
+does not matter which the nine numbers are. But `TensorCalculations::transform` is
+defined to carry a tensor value from a source frame to a target frame through a
+`CoordinateTransformation`
+([SysML v2, 2026-04 — TensorCalculations.sysml, lines 45–49](https://github.com/Systems-Modeling/SysML-v2-Release/blob/2026-04/sysml.library/Domain%20Libraries/Quantities%20and%20Units/TensorCalculations.sysml#L45-L49),
+[MeasurementReferences.sysml, lines 126–135](https://github.com/Systems-Modeling/SysML-v2-Release/blob/2026-04/sysml.library/Domain%20Libraries/Quantities%20and%20Units/MeasurementReferences.sysml#L126-L135)),
+and the transformation rule is keyed on the split: a contravariant index
+transforms by the Jacobian of the coordinate change, a covariant index by its
+inverse — mutually inverse rules, so the two generally yield different numbers.
+Move to a frame where they differ — any non-orthonormal frame, which is to say the
+everyday cylindrical, spherical, or material coordinates of continuum mechanics —
+and the nine numbers transform by *different* rules depending on a datum the model
+declared but never filled in.
+
+What is missing, then, is the ability to transform an order-2 (or higher-order)
+quantity between frames *at all*: the `transform` contract cannot be met without
+the split, so for exactly the quantities where it would matter the operation is
+underdetermined. And the gap is *silent*. The concrete types are pinned to a
+Cartesian frame, where the omission never shows; the model type-checks and looks
+complete, and fails only where one would actually rely on it — in the curvilinear
+frames it was never exercised in. That is precisely a representational hole that
+validation cannot see: correct on every case anyone tested, wrong on the first
+case anyone needed.
+
+The lone constraint the library attaches to the split sharpens the reading.
+`orderSum` requires `contravariantOrder + covariantOrder == order`
+([SysML v2, 2026-04 — Quantities.sysml, line 36](https://github.com/Systems-Modeling/SysML-v2-Release/blob/2026-04/sysml.library/Domain%20Libraries/Quantities%20and%20Units/Quantities.sysml#L36)).
+Metrologically it is a well-formedness invariant, not a statement about the
+quantity: it says only that the chosen split must be a valid partition of the
+quantity's actual order. Its content is that *order is the frame-invariant datum
+and the split is a convention that must respect it* — raising or lowering an index
+slides one unit between `covariantOrder` and `contravariantOrder` but holds their
+sum, the order, fixed. So `orderSum` is exactly what makes *the same quantity, a
+different split* formally coherent: the order — which carries the quantity's
+mathematical character — is conserved while the representation changes underneath
+it. It constrains nothing metrological: not dimension, unit, scale, or kind, only
+that the coordinate bookkeeping adds up. The one rule SysML v2 writes about
+variance is thus itself a pure-representation consistency check — the section's
+thesis in miniature.
+
+The kind-of-quantity sits one level *down*, as a leaf, and the source is decisive
+on this point: there is no first-class "kind" entity. Length, mass, temperature,
+and the other base quantities are each declared as a *subtype of the scalar value
+type* — `attribute def LengthValue :> ScalarQuantityValue` — with the dimension
+carried only by the corresponding unit's `quantityDimension`, e.g. `LengthUnit`
+([SysML v2, 2026-04 — ISQBase.sysml, lines 16–38](https://github.com/Systems-Modeling/SysML-v2-Release/blob/2026-04/sysml.library/Domain%20Libraries/Quantities%20and%20Units/ISQBase.sysml#L16-L38)),
+and that `quantityDimension` attribute itself lives on `ScalarMeasurementReference`
+([SysML v2, 2026-04 — MeasurementReferences.sysml, lines 82–99](https://github.com/Systems-Modeling/SysML-v2-Release/blob/2026-04/sysml.library/Domain%20Libraries/Quantities%20and%20Units/MeasurementReferences.sysml#L82-L99)).
+In other words, "length-the-kind" exists only as (i) a nominal subtype hanging
+beneath `ScalarQuantityValue` and (ii) a power-product of base quantities on its
+unit — never as a property whose nature is named in its own right. To reach a
+kind one must already have committed to a representation branch: the kind is
+*nested under* the representation. The proportions confirm the weight — across the
+ISQ library 319 kinds are declared on the scalar branch, against 2 vector, 4
+tensor, and 51 fixed-three-vector kinds.
+
+That places the concern precisely. A valued quantity has two independent
+classification axes:
+
+- *(A) kind-of-property* — its nature, fixed by Dybkær's examination principle,
+  common to all mutually comparable quantities;
+- *(B) value representation* — scalar / vector / tensor order, coordinate frame,
+  bound-versus-free — what VIM calls the measurement reference.
+
+Dybkær's ontology lives entirely on axis (A) and is deliberately *agnostic* to
+(B): whether a position is recorded as one number, three Cartesian components, or
+a tensor in a chosen frame does not change *what kind of property* it is. SysML
+v2 makes axis (B) the root and nests (A) beneath it. The model even flags the
+departure from its own source: it quotes VIM's "quantity" Note 5 — "A quantity as
+defined here is a scalar. However, a vector or a tensor, the components of which
+are quantities, is also considered to be a quantity" — then notes that "the rest
+of \[VIM\] does not explicitly define how tensor and vector quantities can be or
+should be supported"
+([SysML v2, 2026-04 — MeasurementReferences.sysml, lines 29–31](https://github.com/Systems-Modeling/SysML-v2-Release/blob/2026-04/sysml.library/Domain%20Libraries/Quantities%20and%20Units/MeasurementReferences.sysml#L29-L31)).
+The tensor-rooted hierarchy is thus SysML's own interpretation, and it *inverts*
+VIM's priority — VIM makes the quantity fundamentally scalar with vectors and
+tensors as composites *of* scalar quantities; SysML v2 makes the tensor primary
+and the scalar the degenerate order-0 case.
+
+### How PropertyKindCalculus takes the kind as root instead
+
+PropertyKindCalculus inverts the nesting: axis (A) is the root. A kind-of-property is a
+first-class value (`KindOfProperty`), and a quantity is indexed *by its kind* —
+`Quantity (k : KindOfProperty)` — so the kind is fixed before, and independently
+of, any choice of how the value is recorded. Dimension is not the organizing
+principle but a forgetful functor $`\dim : \mathrm{Kind} \to \mathrm{Dimension}`
+that *certifies* coherence without *deciding* what is allowed (developed in the
+next section). Two consequences fall out directly: two kinds that share a
+dimension remain distinct types — so the dimension-1 disambiguation is
+expressible — and an operation across kinds is a type error rather than a silent
+success. Value representation — the axis SysML v2 puts at the root — is, candidly,
+*not yet modelled* here; its principled home is an *orthogonal* index over the
+kind, never a layer the kind hangs beneath.
+
+### The two designs side by side
+
+:::table +header (align := center)
+*
+  * Aspect
+  * SysML v2 (2026-04)
+  * PropertyKindCalculus
+*
+  * Root organizing axis
+  * value representation (tensor order, frame)
+  * kind-of-property (Dybkær)
+*
+  * A *kind of quantity* is…
+  * a leaf subtype of `ScalarQuantityValue`
+  * a first-class type index, `Quantity (k : KindOfProperty)`
+*
+  * Role of dimension
+  * the discriminator for commensurability, on the reference
+  * a forgetful functor `dim`; certifies, never decides
+*
+  * Two kinds, one dimension (vwc vs gwc)
+  * indistinguishable
+  * distinct by construction
+*
+  * Adding a length to a mass
+  * well-typed (`Scalar × Scalar → Scalar`)
+  * a type error
+*
+  * Scalar / vector / tensor, frames, transforms
+  * first-class and rich
+  * not yet modelled (owed — an orthogonal index)
+*
+  * Algebraic laws
+  * a modelling library; none machine-checked
+  * proved theorems (preorder, homomorphism, monotonicity)
+:::
+
+The table is honest in both directions: SysML v2's representation-first design
+buys real, first-class machinery for coordinate frames, transformations, and
+stress and strain tensors that systems engineering genuinely needs — machinery
+PropertyKindCalculus does not yet have. The claim is not that one model is right; it is
+that the axes are *orthogonal and should not be nested*.
+
+### Limitations of the SysML v2 approach
+
+Rooting the hierarchy in representation has three consequences that bear directly
+on PropertyKindCalculus's problem statement:
+
+1. *A kind cannot be named without first choosing a representation, so one kind
+   fragments.* Position is a single kind-of-property, yet appears as
+   `CartesianPosition3dVector`, `CylindricalPosition3dVector`,
+   `SphericalPosition3dVector`, and `PlanetaryPosition3dVector` — individuated by
+   *coordinate frame*, not by the nature of the property. The cylindrical and
+   spherical forms even carry mixed-dimension components (a length and two
+   angles), so the single documented "quantity dimension $`\mathrm{L^1}`" does not
+   survive its own representations
+   ([SysML v2, 2026-04 — ISQSpaceTime.sysml, lines 304–353](https://github.com/Systems-Modeling/SysML-v2-Release/blob/2026-04/sysml.library/Domain%20Libraries/Quantities%20and%20Units/ISQSpaceTime.sysml#L304-L353)).
+2. *The within-dimension conflation is left untouched.* On the scalar branch the
+   dimension is the only discriminator, so volumetric and gravimetric water
+   content, relative permittivity, reflectivity, and emissivity remain
+   indistinguishable — exactly the confusion that motivates PropertyKindCalculus. Putting
+   representation at the root does nothing about it; the two are orthogonal.
+3. *The calculus is kind- and dimension-blind.* Scalar addition is declared
+   `ScalarQuantityValue × ScalarQuantityValue → ScalarQuantityValue`, so adding a
+   length to a mass is well-typed; nothing gates an operation on agreeing kind or
+   dimension
+   ([SysML v2, 2026-04 — QuantityCalculations.sysml, line 29](https://github.com/Systems-Modeling/SysML-v2-Release/blob/2026-04/sysml.library/Domain%20Libraries/Quantities%20and%20Units/QuantityCalculations.sysml#L29)).
+
+## How the calculus maps into Lean
+
+Two things in particular resist a DL encoding: the _interaction algebra_ (which
+kind $`\times` which kind $`=` which kind, a _partial_ relation with arithmetic
+side-conditions, not a role chain), and the difference between _instantiation_
+and _subtyping_ (that a radius _is a_ length, versus that this pencil's length
+_is an instance of_ the length kind — conflated by punning in OWL). In Lean both
+map cleanly, and the mapping _is_ the design:
+
+1. *Kinds and units are type-level parameters.* `Quantity (k : QuantityKind) (u :
+   Unit) : Type` — a kind and a unit index a _type_, not a value of one universal
+   `Quantity` class. This is the move OWL cannot make.
+
+2. *Specialization (⊑) induces coercions between types.* It lives on those
+   parameters: `Quantity Radius metre → Quantity Length metre` is sound — a
+   radius _is a_ length — and the reverse is not. Up-casting to a parent kind is
+   an explicit, visible loss of information.
+
+3. *Instantiation is term-of-type, not subtyping.* The length of a pencil is a
+   _term_ `pencil : Quantity Length metre := ⟨5.2⟩` — a value of that type,
+   related to its kind by typing/instantiation, never by subtyping. The
+   general/individual distinction _is_ the type/term distinction.
+
+4. *The kind algebra is a partial typed algebra, not a group.* PhysLib's
+   `Dimension` is a _total_ `CommGroup` — multiply, divide, invert anything.
+   Kinds are not: `Torque × Angle = Work` is meaningful; `Torque + Energy` must
+   be _blocked_ even though the dimensions match; `FuelConsumption × Rainfall` is
+   an error (Flater's own example). The meaningful products are encoded as a
+   relation surfaced through typeclass resolution — Flater's "map kinds onto
+   classes + operator overloading," lifted into Lean's elaborator.
+
+5. *Dimension is a soundness functor, not the primary type.* In QUDV and most
+   quantity libraries dimension is the _primary_ classifier: two quantities
+   interoperate exactly when their dimensions agree — which is precisely the move
+   that collapses every dimension-one quantity into one indistinguishable type.
+   PropertyKindCalculus inverts the dependency: the _kind_ is the primary type-level
+   index, and dimension is recovered as a forgetful functor $`\dim : \mathrm{Kind}
+   \to \mathrm{Dimension}`. Its job is _certification_, not decision — the
+   coherence theorem `KMul k₁ k₂ k₃ → dim k₃ = dim k₁ · dim k₂` proves every
+   product the kind algebra admits is dimensionally consistent — but `dim` never
+   decides whether an operation is _allowed_; the kind relation does. Agreeing
+   dimensions are necessary, not sufficient.
+
+6. *Specialization (⊑) is a preorder — a lattice, not a tree.* Flater stresses
+   this (citing Formal Concept Analysis): a kind can specialize several parents.
+   Unit-1 subtyping (Flater §6) is then just the _dimension-1 slice_ of that kind
+   lattice — and nothing forces it to be uniform: units of plane angle, for one,
+   could carry their own subtyping reflecting the different measurement
+   principles by which they are realized.
+
+The trigger was concrete. PhysLib's `Dimension` makes all dimension-one
+quantities equal, so it cannot distinguish volumetric ($`\mathrm{L^3/L^3}`) from
+gravimetric ($`\mathrm{M/M}`) soil moisture, nor either from permittivity,
+reflectivity, or emissivity. Every dangerous soil-moisture confusion is
+dimension one. Indexing quantities and units by *kind* is what restores the
+distinction — this is the dimension-1 disambiguation capstone in the Units
+chapter.
+
+# How to read the status
+
+Nodes that link a real declaration with `(lean := "PropertyKindCalculus.…")` report
+their *proved* status straight from the checked, sorry-free core. Nodes tagged
+`planned` carry an informal statement and a proof sketch only; they show as
+in-progress goals until formalized. The headline deliverables are tagged
+`capstone`.
+
+{include 0 PropertyKindCalculusBlueprint.Chapters.Spine}
+
+{include 0 PropertyKindCalculusBlueprint.Chapters.Units}
+
+{include 0 PropertyKindCalculusBlueprint.Chapters.Dimension}
+
+{include 0 PropertyKindCalculusBlueprint.Chapters.Interaction}
+
+{include 0 PropertyKindCalculusBlueprint.Chapters.Extensivity}
+
+{blueprint_graph}
+
+{blueprint_summary}

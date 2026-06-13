@@ -1,0 +1,28 @@
+name = "propertykindcalculus-blueprint"
+defaultTargets = ["PropertyKindCalculusBlueprint", "blueprint-gen"]
+
+# Verso + the Blueprint genre. Pinned to the same toolchain (v4.30.0) as the
+# core PropertyKindCalculus library so the dependency builds cleanly.
+[[require]]
+name = "verso"
+git = "https://github.com/leanprover/verso"
+rev = "v4.30.0"
+
+[[require]]
+name = "VersoBlueprint"
+git = "https://github.com/leanprover/verso-blueprint"
+rev = "v4.30.0"
+
+# The library being documented. Linking `(lean := "PropertyKindCalculus.…")` nodes to
+# real declarations (and reading their proved/`sorry` status) requires the
+# library to be importable here, so we depend on the parent package by path.
+[[require]]
+name = "PropertyKindCalculus"
+path = ".."
+
+[[lean_lib]]
+name = "PropertyKindCalculusBlueprint"
+
+[[lean_exe]]
+name = "blueprint-gen"
+root = "PropertyKindCalculusBlueprintMain"
