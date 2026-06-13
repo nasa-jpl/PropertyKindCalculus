@@ -1,0 +1,80 @@
+{"9":
+ "<code>PropertyKindCalculus.ScaleType.le_antisymm {a b : PropertyKindCalculus.ScaleType} (h₁ : a ≤ b) (h₂ : b ≤ a) : a = b</code>",
+ "8":
+ "<code>PropertyKindCalculus.ScaleType.ratio : PropertyKindCalculus.ScaleType</code>",
+ "7":
+ "<code>PropertyKindCalculus.ScaleType.interval : PropertyKindCalculus.ScaleType</code>",
+ "6":
+ "<code>PropertyKindCalculus.ScaleType.ordinal : PropertyKindCalculus.ScaleType</code>",
+ "5":
+ "<code>PropertyKindCalculus.ScaleType : Type</code><span class=\"sep\"></span><code class=\"docstring\">The four operator-based scale types of Dybkær Fig. 12.21. </code>",
+ "44": "<code>PropertyKindCalculus.MutuallyComparable E a b</code>",
+ "43":
+ "<code>PropertyKindCalculus.MutuallyComparable.symm\n  {E : PropertyKindCalculus.KindOfProperty → PropertyKindCalculus.KindOfProperty → Prop}\n  {a b : PropertyKindCalculus.KindOfProperty} (h : PropertyKindCalculus.MutuallyComparable E a b) :\n  PropertyKindCalculus.MutuallyComparable E b a</code>",
+ "42":
+ "<code>PropertyKindCalculus.MutuallyComparable\n  (E : PropertyKindCalculus.KindOfProperty → PropertyKindCalculus.KindOfProperty → Prop)\n  (a b : PropertyKindCalculus.KindOfProperty) : Prop</code><span class=\"sep\"></span><code class=\"docstring\">**§6 / VIM** — two kinds are *mutually comparable* (belong to one broad\nkind) iff they share a common super-kind. This is how `width` and `height`\nremain comparable as lengths even though they are distinct sub-kinds. </code>",
+ "41": "<code>PropertyKindCalculus.Specializes E b c</code>",
+ "40": "<code>PropertyKindCalculus.Specializes E a b</code>",
+ "4":
+ "<code>PropertyKindCalculus.ScaleType.nominal : PropertyKindCalculus.ScaleType</code>",
+ "39":
+ "<code>PropertyKindCalculus.Specializes.trans\n  {E : PropertyKindCalculus.KindOfProperty → PropertyKindCalculus.KindOfProperty → Prop}\n  {a b c : PropertyKindCalculus.KindOfProperty} (h₁ : PropertyKindCalculus.Specializes E a b)\n  (h₂ : PropertyKindCalculus.Specializes E b c) : PropertyKindCalculus.Specializes E a c</code><span class=\"sep\"></span><code class=\"docstring\">Specialization is transitive (it is a preorder, together with `refl`). </code>",
+ "38":
+ "<code>PropertyKindCalculus.Specializes.step\n  {E : PropertyKindCalculus.KindOfProperty → PropertyKindCalculus.KindOfProperty → Prop}\n  {a b c : PropertyKindCalculus.KindOfProperty} :\n  E a b → PropertyKindCalculus.Specializes E b c → PropertyKindCalculus.Specializes E a c</code>",
+ "37":
+ "<code>PropertyKindCalculus.Specializes\n  (E : PropertyKindCalculus.KindOfProperty → PropertyKindCalculus.KindOfProperty → Prop) :\n  PropertyKindCalculus.KindOfProperty → PropertyKindCalculus.KindOfProperty → Prop</code><span class=\"sep\"></span><code class=\"docstring\">Reflexive–transitive closure of a direct-parent edge relation `E`. </code>",
+ "36":
+ "<code class=\"docstring\">The universe of propositions. `Prop ≡ Sort 0`.\n\nEvery proposition is propositionally equal to either `True` or `False`. </code>",
+ "35":
+ "<code>PropertyKindCalculus.KindOfProperty → PropertyKindCalculus.KindOfProperty → Prop</code>",
+ "34":
+ "<code>PropertyKindCalculus.Specializes.refl\n  {E : PropertyKindCalculus.KindOfProperty → PropertyKindCalculus.KindOfProperty → Prop}\n  (a : PropertyKindCalculus.KindOfProperty) : PropertyKindCalculus.Specializes E a a</code>",
+ "33":
+ "<code>PropertyKindCalculus.KindOfProperty.IsRational (k : PropertyKindCalculus.KindOfProperty) : Prop</code><span class=\"sep\"></span><code class=\"docstring\">§13.2.4 rational kind-of-property (divisible). </code>",
+ "32": "<code>k.IsRational</code>",
+ "31":
+ "<code>PropertyKindCalculus.KindOfProperty.rational_isQuantity {k : PropertyKindCalculus.KindOfProperty} (h : k.IsRational) :\n  k.IsQuantity</code><span class=\"sep\"></span><code class=\"docstring\">A rational kind *is* a kind-of-quantity. </code>",
+ "30":
+ "<code>PropertyKindCalculus.KindOfProperty.IsQuantity (k : PropertyKindCalculus.KindOfProperty) : Prop</code><span class=\"sep\"></span><code class=\"docstring\">**§13.3.1** — a kind-of-property is a *kind-of-quantity* iff its instances\nhave a magnitude. </code>",
+ "3":
+ "<code class=\"docstring\">A type universe. `Type ≡ Type 0`, `Type u ≡ Sort (u + 1)`. </code>",
+ "29":
+ "<code>Not (a : Prop) : Prop</code><span class=\"sep\"></span><code class=\"docstring\">`Not p`, or `¬p`, is the negation of `p`. It is defined to be `p → False`,\nso if your goal is `¬p` you can use `intro h` to turn the goal into\n`h : p ⊢ False`, and if you have `hn : ¬p` and `h : p` then `hn h : False`\nand `(hn h).elim` will prove anything.\nFor more information: [Propositional Logic](https://lean-lang.org/theorem_proving_in_lean4/propositions_and_proofs.html#propositional-logic)\n\n\nConventions for notations in identifiers:\n\n * The recommended spelling of `¬` in identifiers is `not`.</code>",
+ "28":
+ "<code>PropertyKindCalculus.KindOfProperty.IsNominal (k : PropertyKindCalculus.KindOfProperty) : Prop</code><span class=\"sep\"></span><code class=\"docstring\">§13.2.1 nominal kind-of-property (no magnitude, comparable for equality). </code>",
+ "27": "<code>k.IsNominal</code>",
+ "26": "<code>PropertyKindCalculus.KindOfProperty</code>",
+ "25":
+ "<code>PropertyKindCalculus.KindOfProperty.nominal_not_quantity {k : PropertyKindCalculus.KindOfProperty} (h : k.IsNominal) :\n  ¬k.IsQuantity</code><span class=\"sep\"></span><code class=\"docstring\">A nominal kind is, by construction, not a kind-of-quantity (§13.3.1). </code>",
+ "24":
+ "<code>PropertyKindCalculus.KindOfProperty : Type</code><span class=\"sep\"></span><code class=\"docstring\">**§6.19 kind-of-property** — common defining aspect of mutually comparable\nproperties. </code>",
+ "23":
+ "<code>Option.{u} (α : Type u) : Type u</code><span class=\"sep\"></span><code class=\"docstring\">Optional values, which are either `some` around a value from the underlying type or `none`.\n\n`Option` can represent nullable types or computations that might fail. In the codomain of a function\ntype, it can also represent partiality.\n</code>",
+ "22":
+ "<code>Option String</code><span class=\"sep\"></span><code class=\"docstring\">**§7.5 examination principle** used as a defining aspect, when present. </code>",
+ "21":
+ "<code>PropertyKindCalculus.ScaleType</code><span class=\"sep\"></span><code class=\"docstring\">The scale type (Ch. 12) — which operations are defined on its instances. </code>",
+ "20":
+ "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">Terminological identity (mirrors the OML `id`). </code>",
+ "2":
+ "<code>PropertyKindCalculus.System : Type</code><span class=\"sep\"></span><code class=\"docstring\">**§3.3 system** — \"part or phenomenon of the perceivable or conceivable\nworld consisting of a demarcated arrangement of a set of elements and a set of\nrelationships or processes between these elements.\"\n\nModelled abstractly by identity here; the mereological structure needed for\nextensivity (§13.5) is added in a later module. </code>",
+ "19":
+ "<code>PropertyKindCalculus.ScaleType.AllowsRatio : PropertyKindCalculus.ScaleType → Prop</code><span class=\"sep\"></span><code class=\"docstring\">`×, ÷` available only at ratio scale (§12.20). </code>",
+ "18":
+ "<code>PropertyKindCalculus.ScaleType.AllowsDifference : PropertyKindCalculus.ScaleType → Prop</code><span class=\"sep\"></span><code class=\"docstring\">`+, −` available from interval upward (§12.19). </code>",
+ "17":
+ "<code>And (a b : Prop) : Prop</code><span class=\"sep\"></span><code class=\"docstring\">`And a b`, or `a ∧ b`, is the conjunction of propositions. It can be\nconstructed and destructed like a pair: if `ha : a` and `hb : b` then\n`⟨ha, hb⟩ : a ∧ b`, and if `h : a ∧ b` then `h.left : a` and `h.right : b`.\n\n\nConventions for notations in identifiers:\n\n * The recommended spelling of `∧` in identifiers is `and`.</code>",
+ "16":
+ "<code>PropertyKindCalculus.ScaleType.AllowsOrder : PropertyKindCalculus.ScaleType → Prop</code><span class=\"sep\"></span><code class=\"docstring\">`&lt;, &gt;` available from ordinal upward (§12.16). </code>",
+ "15":
+ "<code>PropertyKindCalculus.ScaleType.allows_mono {a b : PropertyKindCalculus.ScaleType} (h : a ≤ b) :\n  (a.AllowsOrder → b.AllowsOrder) ∧ (a.AllowsDifference → b.AllowsDifference) ∧ (a.AllowsRatio → b.AllowsRatio)</code><span class=\"sep\"></span><code class=\"docstring\">Meta-theorem OWL2's reasoner cannot even phrase: a richer scale licenses\nevery operation a poorer one does. (Monotonicity of operator availability.) </code>",
+ "14":
+ "<code>Eq.{u_1} {α : Sort u_1} : α → α → Prop</code><span class=\"sep\"></span><code class=\"docstring\">The equality relation. It has one introduction rule, `Eq.refl`.\nWe use `a = b` as notation for `Eq a b`.\nA fundamental property of equality is that it is an equivalence relation.\n```\nvariable (α : Type) (a b c d : α)\nvariable (hab : a = b) (hcb : c = b) (hcd : c = d)\n\nexample : a = d :=\n  Eq.trans (Eq.trans hab (Eq.symm hcb)) hcd\n```\nEquality is much more than an equivalence relation, however. It has the important property that every assertion\nrespects the equivalence, in the sense that we can substitute equal expressions without changing the truth value.\nThat is, given `h1 : a = b` and `h2 : p a`, we can construct a proof for `p b` using substitution: `Eq.subst h1 h2`.\nExample:\n```\nexample (α : Type) (a b : α) (p : α → Prop)\n        (h1 : a = b) (h2 : p a) : p b :=\n  Eq.subst h1 h2\n\nexample (α : Type) (a b : α) (p : α → Prop)\n    (h1 : a = b) (h2 : p a) : p b :=\n  h1 ▸ h2\n```\nThe triangle in the second presentation is a macro built on top of `Eq.subst` and `Eq.symm`, and you can enter it by typing `\\t`.\nFor more information: [Equality](https://lean-lang.org/theorem_proving_in_lean4/quantifiers_and_equality.html#equality)\n\n\nConventions for notations in identifiers:\n\n * The recommended spelling of `=` in identifiers is `eq`.</code>",
+ "13": "<code>b ≤ a</code>",
+ "12":
+ "<code>LE.le.{u} {α : Type u} [self : LE α] : α → α → Prop</code><span class=\"sep\"></span><code class=\"docstring\">The less-equal relation: `x ≤ y` \n\nConventions for notations in identifiers:\n\n * The recommended spelling of `≤` in identifiers is `le`.</code>",
+ "11": "<code>a ≤ b</code>",
+ "10": "<code>PropertyKindCalculus.ScaleType</code>",
+ "1":
+ "<code>String : Type</code><span class=\"sep\"></span><code class=\"docstring\">A string is a sequence of Unicode scalar values.\n\nAt runtime, strings are represented by [dynamic arrays](https://en.wikipedia.org/wiki/Dynamic_array)\nof bytes using the UTF-8 encoding. Both the size in bytes (`String.utf8ByteSize`) and in characters\n(`String.length`) are cached and take constant time. Many operations on strings perform in-place\nmodifications when the reference to the string is unique.\n</code>",
+ "0": "<code>String</code>"}
