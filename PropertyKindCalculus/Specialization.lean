@@ -15,9 +15,9 @@ symmetric, are stated and **proved** here. Stating — let alone proving — suc
 algebraic laws is outside what an OWL2 reasoner can do.
 -/
 
-import KindCalculus.Kind
+import PropertyKindCalculus.Kind
 
-namespace KindCalculus
+namespace PropertyKindCalculus
 
 /-- Reflexive–transitive closure of a direct-parent edge relation `E`. -/
 inductive Specializes (E : KindOfProperty → KindOfProperty → Prop) :
@@ -67,4 +67,4 @@ theorem of_specializes {a b : KindOfProperty}
 
 end MutuallyComparable
 
-end KindCalculus
+end PropertyKindCalculus

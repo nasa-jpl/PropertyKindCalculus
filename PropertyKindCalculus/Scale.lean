@@ -17,7 +17,7 @@ is about which *operations* are *defined* for a kind, and DL has no operations.
 Here it is a first-class datum that later gates the algebra on a `Quantity`.
 -/
 
-namespace KindCalculus
+namespace PropertyKindCalculus
 
 /-- The four operator-based scale types of Dybkær Fig. 12.21. -/
 inductive ScaleType
@@ -82,4 +82,4 @@ theorem allows_mono {a b : ScaleType} (h : a ≤ b) :
 
 end ScaleType
 
-end KindCalculus
+end PropertyKindCalculus

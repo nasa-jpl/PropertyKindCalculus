@@ -1,28 +1,36 @@
-# KindCalculus
+# PropertyKindCalculus
 
 A Lean 4 formalization of **Dybkær's *[An Ontology on Property for Physical,
 Chemical, and Biological Systems](References/ontology-on-property.pdf)*** (2009),
 extended with **Flater's full tracking of kinds of quantities**
 ([NIST Technical Note 1943](References/NIST.TN.1943.pdf), Appendix C).
 
-## Why formalize the ontology in Lean rather than OWL/OML?
+It continues a line of machine-checkable metrology modeling 
+from the Object Management Group (OMG) Systems Modeling Language (SysML)
+ Conceptual model of Quantities, Units, Dimensions and Values (QUDV),
+then an OML/OWL2 metrology vocabulary grounded in Dybkær — and is the first in
+which the *quantity calculus itself*, not just the taxonomy around it, is a
+checked artifact. OWL2 captures the taxonomy (specialization, instantiation,
+dimensional factoring) but is structurally unable to express the calculus: the
+partial kind-interaction algebra, scale-type operator gating, extensivity, unit
+conversion, or any algebraic *law* as a provable theorem. Lean has all of it
+natively.
 
-The author's prior metrology work modelled VIM concepts in OML (OWL2). OWL2
-(SROIQ) faithfully captures the **taxonomy** — specialization, instantiation,
-dimensional factoring — but is structurally unable to capture the **calculus**:
+The full rationale — the QUDV → OML lineage and how each construct maps into
+Lean's type system — is in the [design blueprint](blueprint/) ("Why a calculus,
+not a taxonomy").
 
-| Construct | OWL2 / OML | Lean |
-|---|---|---|
-| kind ⊑ kind, `Instantiates`, `HasUnit`, `Characterizes` | ✅ subClassOf, roles, punning | ✅ relations; some become *type indices* |
-| dimension arithmetic (`M²/M`, `dim(a·b)=dim a + dim b`) | ❌ no datatype arithmetic | ✅ ordinary functions |
-| interaction algebra (`torque × angle = work`) | ❌ role chains are binary, regular, no arithmetic side-conditions | ✅ `KMul` class + coherence proof field |
-| scale-type operator gating (which of `= < + ×` are *defined*) | ❌ DL has no operations | ✅ scale-indexed typeclasses |
-| extensivity (`value(whole) = Σ value(parts)`) | ❌ no quantified arithmetic | ✅ a `∀`-theorem |
-| unit = number × reference; `convert` = ratio | ❌ no arithmetic | ✅ `def` + round-trip theorem |
-| meta-theorems (⊑ is a partial order; `dim` is a homomorphism) | ❌ a reasoner checks consistency, not laws | ✅ theorems — the point |
+## On the name
 
-The recurring gap is **arithmetic + operations + definedness-conditions + laws +
-proofs** — exactly what makes a quantity *calculus* a calculus.
+The calculus is over **kinds of *property*** — Dybkær's root notion (§6.19),
+which spans nominal, ordinal, and quantitative kinds alike. A **kind of
+quantity** is the special case whose scale carries magnitude (§13.3.1, in Lean
+`IsQuantity k := k.scale.HasMagnitude`); the `QuantityKind` of QUDT and SysML v2
+is therefore *subsumed here* — as a scale-gated leaf of the property-kind spine,
+not as its root. The name keeps "Property" in front to make that genus visible
+(and to avoid reading the bare word "kind" in its type-theoretic sense). So the
+project is broader than a quantity calculus by construction, with quantity kinds
+as its motivating special case.
 
 ## Representational conventions
 
@@ -45,22 +53,47 @@ The package ships two libraries so the core is exportable on its own:
 
 | Library | Source tree | Contents | `lake build` |
 |---|---|---|---|
-| `KindCalculus` (default target) | `KindCalculus/` | the exportable ontological spine | `lake build` |
-| `Examples` | `examples/` | worked examples (`KindCalculus.Examples.*`) | `lake build Examples` |
+| `PropertyKindCalculus` (default target) | `PropertyKindCalculus/` | the exportable ontological spine | `lake build` |
+| `Examples` | `examples/` | worked examples (`PropertyKindCalculus.Examples.*`) | `lake build Examples` |
 
 A downstream project depends on the package and imports selectively:
 
 ```lean
-require KindCalculus from git "…/KindCalculus" @ "main"   -- in the consumer lakefile
+require PropertyKindCalculus from git "…/PropertyKindCalculus" @ "main"   -- in the consumer lakefile
 
-import KindCalculus                       -- core spine only, no examples
--- import KindCalculus.Examples           -- opt in to the examples too
+import PropertyKindCalculus                       -- core spine only, no examples
+-- import PropertyKindCalculus.Examples           -- opt in to the examples too
 ```
 
 The **core spine is Mathlib-free** and builds with only the Lean toolchain. The
 dimension/coherence layer (PhysLib `Dimension` as a forgetful functor) and the
 soil-moisture *model* pull in PhysLib + Mathlib and land as further libraries
 once the spine stabilizes.
+
+## Design blueprint
+
+A [Verso](https://github.com/leanprover/verso) /
+[verso-blueprint](https://github.com/leanprover/verso-blueprint) design document
+lives in [`blueprint/`](blueprint/). It records the **proved spine** (each node
+linked to a real, sorry-free declaration here, so its status is read from the
+checked library) and the **capstone theorems we plan to provide** — the
+dimension-1 disambiguation, dimensional coherence (`dim` is a homomorphism), the
+Flater interaction algebra, unit-conversion round-trip, and extensivity — with a
+generated dependency graph and status summary. It is a **separate Lake package**
+(it pulls in Verso) so a plain `import PropertyKindCalculus` stays lightweight:
+
+```bash
+cd blueprint
+lake update && lake build   # type-check the doc + its Lean links
+./scripts/ci-pages.sh       # render both outputs + print absolute paths to open
+```
+
+Open either `_out/blueprint/html-single/index.html` (one self-contained page) or
+`_out/blueprint/html-multi/index.html` (the full per-chapter site) directly as a
+file — `ci-pages.sh` post-processes `html-multi` so chapter navigation works over
+`file://`. Search and the dependency graph need an HTTP server (`python3 -m
+http.server 8000 -d "$PWD/_out/blueprint/html-multi"`). See
+[`blueprint/README.md`](blueprint/README.md) for details.
 
 ## References
 
@@ -84,7 +117,7 @@ Status: ✅ built & proved · 🚧 next · ⬜ planned
 | `Scale` — operator-based scale types + monotonicity meta-thm | Ch. 12 (Fig. 12.21) | ✅ |
 | `Kind` — kind-of-property / -quantity + scale divisions | Ch. 6, §13.2–3 | ✅ |
 | `Specialization` — `Specializes` closure (preorder) + comparability | OML / §6 | ✅ |
-| `KindCalculus.Examples.MiniLengthWidth` (in the `Examples` lib) — length/width/height as checked facts | — | ✅ |
+| `PropertyKindCalculus.Examples.MiniLengthWidth` (in the `Examples` lib) — length/width/height as checked facts | — | ✅ |
 | `Examination` — principle / method / procedure (as defining aspects) | Ch. 7, 14 | 🚧 |
 | `PropertyValue` + `ValueScale` — number × reference; scales | Ch. 9, 16, 10, 17 | ⬜ |
 | `Unit` — metrological unit = *chosen reference quantity of a kind* | Ch. 18, §13.3.3 | ⬜ |

@@ -19,10 +19,10 @@ Design choices (see the project README for rationale):
     can individuate otherwise-comparable kinds (e.g. width vs. height).
 -/
 
-import KindCalculus.Scale
-import KindCalculus.Foundations
+import PropertyKindCalculus.Scale
+import PropertyKindCalculus.Foundations
 
-namespace KindCalculus
+namespace PropertyKindCalculus
 
 /-- **§6.19 kind-of-property** — common defining aspect of mutually comparable
 properties. -/
@@ -69,11 +69,11 @@ property *instantiates* a kind and *characterizes* an object.
 
 This is deliberately a **term**, not a subtype of its kind: the relation
 "the width of this pencil" ↦ "Width" is *instantiation*, not *specialization*.
-Specialization is a relation among kinds (see `KindCalculus.Specialization`). -/
+Specialization is a relation among kinds (see `PropertyKindCalculus.Specialization`). -/
 structure IndividualProperty where
   /-- OML `Instantiates`: the kind this individual is an instance of. -/
   kind : KindOfProperty
   /-- OML `Characterizes`: the object whose feature this is. -/
   carrier : Object
 
-end KindCalculus
+end PropertyKindCalculus

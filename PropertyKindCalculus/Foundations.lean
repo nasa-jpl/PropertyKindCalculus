@@ -5,7 +5,7 @@ Dybkær, *An Ontology on Property for Physical, Chemical, and Biological Systems
 (2009), Chapter 3.
 -/
 
-namespace KindCalculus
+namespace PropertyKindCalculus
 
 /-- **§3.3 system** — "part or phenomenon of the perceivable or conceivable
 world consisting of a demarcated arrangement of a set of elements and a set of
@@ -21,4 +21,4 @@ deriving DecidableEq, Repr
 synonym so that the *instance* layer can read as "characterizes an object". -/
 abbrev Object := System
 
-end KindCalculus
+end PropertyKindCalculus

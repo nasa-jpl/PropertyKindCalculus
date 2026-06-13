@@ -12,14 +12,14 @@ Demonstrates the three theses of the design discussion as *checked* facts:
      that *instantiates* `width`, NOT a subtype of it.
 
 This module is part of the separate `Examples` library; it imports the core
-`KindCalculus` library like any downstream consumer would.
+`PropertyKindCalculus` library like any downstream consumer would.
 -/
 
-import KindCalculus
+import PropertyKindCalculus
 
-namespace KindCalculus.Examples
+namespace PropertyKindCalculus.Examples
 
-open KindCalculus
+open PropertyKindCalculus
 
 /-- The broad rational kind-of-quantity of dimension length. -/
 def length : KindOfProperty := { id := "length", scale := .ratio }
@@ -60,4 +60,4 @@ def pencilWidth : IndividualProperty := { kind := width, carrier := pencil }
 example : pencilWidth.kind = width := rfl
 example : pencilWidth.carrier = pencil := rfl
 
-end KindCalculus.Examples
+end PropertyKindCalculus.Examples
