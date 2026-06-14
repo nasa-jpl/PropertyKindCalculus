@@ -163,9 +163,46 @@
  "<code>PropertyKindCalculus.ScaleType.AllowsOrder : PropertyKindCalculus.ScaleType → Prop</code><span class=\"sep\"></span><code class=\"docstring\">`&lt;, &gt;` available from ordinal upward (§12.16). </code>",
  "15":
  "<code>PropertyKindCalculus.ScaleType.allows_mono {a b : PropertyKindCalculus.ScaleType} (h : a ≤ b) :\n  (a.AllowsOrder → b.AllowsOrder) ∧ (a.AllowsDifference → b.AllowsDifference) ∧ (a.AllowsRatio → b.AllowsRatio)</code><span class=\"sep\"></span><code class=\"docstring\">Meta-theorem OWL2's reasoner cannot even phrase: a richer scale licenses\nevery operation a poorer one does. (Monotonicity of operator availability.) </code>",
+ "140":
+ "<code>PropertyKindCalculus.volume : PropertyKindCalculus.KindOfProperty</code><span class=\"sep\"></span><code class=\"docstring\">Volume, a ratio kind. </code>",
  "14":
  "<code>Eq.{u_1} {α : Sort u_1} : α → α → Prop</code><span class=\"sep\"></span><code class=\"docstring\">The equality relation. It has one introduction rule, `Eq.refl`.\nWe use `a = b` as notation for `Eq a b`.\nA fundamental property of equality is that it is an equivalence relation.\n```\nvariable (α : Type) (a b c d : α)\nvariable (hab : a = b) (hcb : c = b) (hcd : c = d)\n\nexample : a = d :=\n  Eq.trans (Eq.trans hab (Eq.symm hcb)) hcd\n```\nEquality is much more than an equivalence relation, however. It has the important property that every assertion\nrespects the equivalence, in the sense that we can substitute equal expressions without changing the truth value.\nThat is, given `h1 : a = b` and `h2 : p a`, we can construct a proof for `p b` using substitution: `Eq.subst h1 h2`.\nExample:\n```\nexample (α : Type) (a b : α) (p : α → Prop)\n        (h1 : a = b) (h2 : p a) : p b :=\n  Eq.subst h1 h2\n\nexample (α : Type) (a b : α) (p : α → Prop)\n    (h1 : a = b) (h2 : p a) : p b :=\n  h1 ▸ h2\n```\nThe triangle in the second presentation is a macro built on top of `Eq.subst` and `Eq.symm`, and you can enter it by typing `\\t`.\nFor more information: [Equality](https://lean-lang.org/theorem_proving_in_lean4/quantifiers_and_equality.html#equality)\n\n\nConventions for notations in identifiers:\n\n * The recommended spelling of `=` in identifiers is `eq`.</code>",
+ "139":
+ "<code>PropertyKindCalculus.ethanolPart : PropertyKindCalculus.Decomposition</code><span class=\"sep\"></span><code class=\"docstring\">50 mL of ethanol, as an atomic part. </code>",
+ "138":
+ "<code>PropertyKindCalculus.waterPart : PropertyKindCalculus.Decomposition</code><span class=\"sep\"></span><code class=\"docstring\">50 mL of water, as an atomic part. </code>",
+ "137":
+ "<code>LT.lt.{u} {α : Type u} [self : LT α] : α → α → Prop</code><span class=\"sep\"></span><code class=\"docstring\">The less-than relation: `x &lt; y` \n\nConventions for notations in identifiers:\n\n * The recommended spelling of `&lt;` in identifiers is `lt`.</code>",
+ "136":
+ "<code>PropertyKindCalculus.mixture : PropertyKindCalculus.Decomposition</code><span class=\"sep\"></span><code class=\"docstring\">The water/ethanol mixture, as the disjoint union of the two parts. </code>",
+ "135":
+ "<code>PropertyKindCalculus.volMix : PropertyKindCalculus.Measurement</code><span class=\"sep\"></span><code class=\"docstring\">A volume measurement that contracts on mixing: every atomic part reads 50 mL,\nany mixture reads 96 mL. </code>",
+ "134":
+ "<code>PropertyKindCalculus.mixing_subadditive :\n  (PropertyKindCalculus.volMix PropertyKindCalculus.mixture).numeral &lt;\n      (PropertyKindCalculus.volMix PropertyKindCalculus.waterPart).numeral +\n        (PropertyKindCalculus.volMix PropertyKindCalculus.ethanolPart).numeral ∧\n    ¬PropertyKindCalculus.Extensive PropertyKindCalculus.volume PropertyKindCalculus.volMix</code><span class=\"sep\"></span><code class=\"docstring\">**Volume on mixing is not extensive.** The mixture's volume is *strictly less*\nthan the sum of the component volumes (96 &lt; 50 + 50), so additivity fails and\n`volume` is not extensive under this measurement. Matching the extensive law would\nbe unsound here — which is exactly why extensivity must be tracked, not assumed. </code>",
+ "133":
+ "<code>PropertyKindCalculus.leafSum (m : PropertyKindCalculus.Measurement) : PropertyKindCalculus.Decomposition → Int</code><span class=\"sep\"></span><code class=\"docstring\">The total over the atomic **parts** (leaves) of a decomposition: the sum of the\nnumerals the measurement assigns to each leaf. This is the right-hand side\n$`\\sum_i \\mathrm{value}(s_i)` of the extensive law. </code>",
+ "132": "<code>PropertyKindCalculus.Extensive k m</code>",
+ "131":
+ "<code>PropertyKindCalculus.extensive_additive {k : PropertyKindCalculus.KindOfProperty} {m : PropertyKindCalculus.Measurement}\n  (h : PropertyKindCalculus.Extensive k m) (d : PropertyKindCalculus.Decomposition) :\n  (m d).numeral = PropertyKindCalculus.leafSum m d</code><span class=\"sep\"></span><code class=\"docstring\">**Extensive aggregation (the capstone).** For an extensive kind, the value\nmeasured on the *whole* equals the sum over *all* atomic parts of a decomposition,\n$$`\\mathrm{value}\\Bigl(\\bigsqcup_i s_i\\Bigr) = \\sum_i \\mathrm{value}(s_i),`\nto arbitrary depth. The $`\\forall`-quantified law itself — not a single instance —\nis the deliverable: it is proved by induction on the decomposition, lifting the\nsingle-split `additive` field to the whole tree. </code>",
+ "130":
+ "<code>PropertyKindCalculus.Measurement : Type</code><span class=\"sep\"></span><code class=\"docstring\">A **measurement** of a fixed kind over a decomposition: the property value\nobserved on the (sub-)system at each node — a leaf carries the value of that atomic\npart, a node the value of the whole it composes. </code>",
  "13": "<code>b ≤ a</code>",
+ "129":
+ "<code>PropertyKindCalculus.Extensive (k : PropertyKindCalculus.KindOfProperty) (m : PropertyKindCalculus.Measurement) : Prop</code><span class=\"sep\"></span><code class=\"docstring\">**§13.5 extensive kind.** A kind `k` is *extensive* under a measurement `m`\nwhen (i) every part is measured as a value *of kind* `k` (one shared reference, so\nthe numerals are commensurable) and (ii) the numeral on a disjoint union is the sum\nof the numerals on the parts. Mass satisfies this; volume on mixing does not. </code>",
+ "128":
+ "<code>HAdd.hAdd.{u, v, w} {α : Type u} {β : Type v} {γ : outParam (Type w)} [self : HAdd α β γ] : α → β → γ</code><span class=\"sep\"></span><code class=\"docstring\">`a + b` computes the sum of `a` and `b`.\nThe meaning of this notation is type-dependent. \n\nConventions for notations in identifiers:\n\n * The recommended spelling of `+` in identifiers is `add`.</code>",
+ "127":
+ "<code>PropertyKindCalculus.Decomposition.union :\n  PropertyKindCalculus.Decomposition → PropertyKindCalculus.Decomposition → PropertyKindCalculus.Decomposition</code><span class=\"sep\"></span><code class=\"docstring\">The disjoint union of two parts. </code>",
+ "126":
+ "<code>∀ (a b : PropertyKindCalculus.Decomposition), (m (a.union b)).numeral = (m a).numeral + (m b).numeral</code><span class=\"sep\"></span><code class=\"docstring\">The single-split additivity law: a union measures as the sum of its two parts. </code>",
+ "125":
+ "<code>PropertyKindCalculus.PropertyValue.kind (self : PropertyKindCalculus.PropertyValue) :\n  PropertyKindCalculus.KindOfProperty</code><span class=\"sep\"></span><code class=\"docstring\">§9.15 — the kind-of-property this value belongs to; a value is comparable\nonly with values of the same kind. </code>",
+ "124": "<code>PropertyKindCalculus.Measurement</code>",
+ "123":
+ "<code>PropertyKindCalculus.Decomposition : Type</code><span class=\"sep\"></span><code class=\"docstring\">A **decomposition** of a system into disjoint parts (the mereological structure\ndeferred from the foundations chapter, §3.3): an atomic {system}, or the disjoint\nunion of two sub-decompositions. The leaves are the atomic parts; each node stands\nfor the whole they compose. </code>",
+ "122": "<code>PropertyKindCalculus.Decomposition</code>",
+ "121":
+ "<code>∀ (d : PropertyKindCalculus.Decomposition), (m d).kind = k</code><span class=\"sep\"></span><code class=\"docstring\">Every measured part is a value of the kind `k`. </code>",
  "120":
  "<code>PropertyKindCalculus.energyKind : PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">Energy / work, a ratio kind of dimension `M·L²·T⁻²`. </code>",
  "12":

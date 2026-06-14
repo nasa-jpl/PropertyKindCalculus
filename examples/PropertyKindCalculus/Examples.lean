@@ -11,3 +11,4 @@ import PropertyKindCalculus.Examples.MiniLengthWidth
 import PropertyKindCalculus.Examples.MiniExamination
 import PropertyKindCalculus.Examples.MiniValueScale
 import PropertyKindCalculus.Examples.MiniUnit
+import PropertyKindCalculus.Examples.MiniExtensivity

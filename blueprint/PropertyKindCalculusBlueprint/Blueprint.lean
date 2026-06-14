@@ -126,14 +126,52 @@ sub-additive (ethanol and water), and that negation is stated to keep the
 extensive predicate honest. Tracking which kinds are extensive is the
 precondition for soundly summing measurements.
 
+## Representation parametricity
+
+*R10 — A quantity value is parametric in its numeric representation type.* The
+magnitude of a scalar quantity is carried at a *representation type* $`R`, a type
+parameter bounded by whatever algebraic structure a given task demands, so the
+*same* kind-indexed value can be instantiated at whichever $`R` the task needs —
+without changing the kind, scale, dimension, interaction, or extensivity layers
+above it. This is the axis dependent types make not just possible but *necessary*:
+the carrier the kind sits over is exactly where proof and execution diverge, and a
+single quantity must serve both. Three representations matter, and they are not
+interchangeable:
+
+- *Lean's $`\mathbb{R}` — for proofs.* A complete ordered field: the continuous
+  specification against which laws (monotonicity, conversion round-trips,
+  extensivity) are stated and proved.
+- *A finite floating-point rounding model — for numerical-accuracy reasoning.*
+  TorchLean's `FP32` (`NeuralFloat` at binary32 precision: round-to-nearest,
+  ties-to-even over $`\mathbb{R}`, finite-only, with `toReal : FP32 → ℝ`). It is
+  *non-computable* — it exists to bound rounding error against the $`\mathbb{R}`
+  spec, not to run.
+- *An executable IEEE-754 type — for exact-execution reasoning and code
+  generation.* TorchLean's `IEEE32Exec` (a bit-level `UInt32` binary32 kernel) that
+  models NaN, infinities, signed zeros, and subnormals, with `toFloat`/`ofFloat`
+  and `isNaN`. This is the representation that actually runs and the one in which
+  exceptional values (NaN) can be reasoned about — what one might call the
+  "exec" float, distinct from the `FP32` rounding *spec*.
+
+Soundness *across* representations is itself a theorem, not an assumption: an
+exec/spec *refinement* (the executable float result is the rounding of the real
+result) lets a law proved over $`\mathbb{R}` transfer to the executable run. In
+plain engineering terms: choose the number type to fit the job — reals to prove,
+the rounding model to bound error, the IEEE kernel to run and to catch NaN — while
+the kind, dimension, and unit machinery above is written once and is identical for
+all three. This refines R1/R3/R4's kind-indexed value into a doubly-indexed
+`Quantity (k : KindOfProperty) (R : Type) [‹structure on R›]`.
+
 ## Out of scope (for now)
 
-*Value representation* — scalar / vector / tensor order, coordinate frames,
-bound-versus-free vectors, and frame transformations — is *not yet specified*
-here. It is a genuine systems-engineering requirement, but a *separate,
-orthogonal* axis: its principled home is an index *over* the kind, never a layer
-the kind hangs beneath (the inversion the *Why a calculus, not a taxonomy*
-section charges against SysML v2). Stating it as owed keeps the boundary honest.
+*Value representation in the structural sense* — scalar / vector / tensor order,
+coordinate frames, bound-versus-free vectors, and frame transformations — is *not
+yet specified* here (this is the *structural* representation axis, distinct from
+R10's *numeric carrier* $`R`). It is a genuine systems-engineering requirement, but
+a *separate, orthogonal* axis: its principled home is an index *over* the kind,
+never a layer the kind hangs beneath (the inversion the *Why a calculus, not a
+taxonomy* section charges against SysML v2). Stating it as owed keeps the boundary
+honest.
 
 ## The requirements at a glance
 
@@ -187,9 +225,14 @@ section charges against SysML v2). Stating it as owed keeps the boundary honest.
   * R9 — extensive aggregation
   * mass sums over parts; volume-on-mixing does not
   * `Extensive`; additive law + counterexample
+  * proved
+*
+  * R10 — numeric representation parametricity
+  * same value at `ℝ` (proof), `FP32` (rounding spec), `IEEE32Exec` (executable / NaN)
+  * `Quantity k R` over a representation type `R`; exec/spec refinement
   * planned
 *
-  * *(out of scope)* value representation
+  * *(out of scope)* structural value representation
   * scalar / vector / tensor, frames
   * an orthogonal index over the kind
   * not specified
@@ -535,6 +578,25 @@ map cleanly, and the mapping _is_ the design:
    lattice — and nothing forces it to be uniform: units of plane angle, for one,
    could carry their own subtyping reflecting the different measurement
    principles by which they are realized.
+
+7. *The numeric carrier is a type parameter, bounded by a typeclass (R10).* A
+   scalar quantity is `Quantity (k : KindOfProperty) (R : Type) [‹structure on R›]`
+   — the kind fixes *what is measured*, $`R` fixes *in what numbers*. Everything
+   above $`R` (kind discrimination, scale gating, the dimension functor, the
+   interaction algebra, extensivity) is written once, against the typeclass, and is
+   reused verbatim at every $`R`. This is the architecture TorchLean already runs:
+   models are written against a `Context α` typeclass (arithmetic + transcendentals
+   + comparison) and instantiated at `α := ℝ` for the *spec*, `α := FP32` for the
+   finite *rounding* model, and `α := IEEE32Exec` for the *executable* IEEE-754
+   kernel — the *same* source elaborated at three carriers. The kind layer here is
+   the missing index *above* that carrier: TorchLean makes a tensor polymorphic in
+   its scalar type; PropertyKindCalculus makes the scalar polymorphic in its *kind*,
+   and the two indices compose. Crucially the carriers are bridged by *refinement
+   theorems* (`toReal (op_exec x) = round (op_real (toReal x))`), so a law proved at
+   $`\mathbb{R}` is not stranded in the proof world — it descends to the float that
+   runs. A description logic has no type parameters and no typeclasses, so this
+   whole axis is unavailable to it; here it is the ordinary discipline of
+   parametric polymorphism.
 
 The trigger was concrete. PhysLib's `Dimension` makes all dimension-one
 quantities equal, so it cannot distinguish volumetric ($`\mathrm{L^3/L^3}`) from

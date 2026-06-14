@@ -17,3 +17,4 @@ import PropertyKindCalculus.Examination
 import PropertyKindCalculus.PropertyValue
 import PropertyKindCalculus.ValueScale
 import PropertyKindCalculus.Unit
+import PropertyKindCalculus.Extensivity

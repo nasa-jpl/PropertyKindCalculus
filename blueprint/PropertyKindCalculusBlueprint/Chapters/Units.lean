@@ -38,17 +38,40 @@ number"), units are indexed by the kind they measure.
 :::
 
 :::definition "def_quantity" (parent := "units")
-A _quantity_ `Quantity k` is a magnitude of a fixed kind $`k`. It is indexed by
-$`k`, a {uses "def_kindOfProperty"}[kind-of-property], so the type system forbids
-forming or comparing a `Quantity k₁` with a `Quantity k₂` when $`k_1 \neq k_2` —
-even if both kinds are dimension one. This indexing _is_ the fix for the
-dimension-1 conflation.
+A _quantity_ `Quantity k R` is a magnitude of a fixed kind $`k`, carried at a
+_representation type_ $`R` (R10). It is indexed by $`k`, a
+{uses "def_kindOfProperty"}[kind-of-property], so the type system forbids forming
+or comparing a `Quantity k₁ R` with a `Quantity k₂ R` when $`k_1 \neq k_2` — even
+if both kinds are dimension one. This indexing _is_ the fix for the dimension-1
+conflation. The second index $`R` is the numeric carrier: the same value type is
+instantiated at $`\mathbb{R}` to prove, at `FP32` to bound rounding, and at
+`IEEE32Exec` to run — the kind machinery above it written once for all three.
 :::
 
 :::proof "def_quantity"
-Planned. A `structure Quantity (k : KindOfProperty)` carrying a numeric
-magnitude, with arithmetic gated by `k.scale` (per the proved operator
-stratification, {uses "thm_operator_monotonicity"}[operator monotonicity]).
+Planned. A `structure Quantity (k : KindOfProperty) (R : Type) [‹structure on R›]`
+carrying a magnitude in $`R`, with arithmetic gated by `k.scale` (per the proved
+operator stratification, {uses "thm_operator_monotonicity"}[operator
+monotonicity]) and the algebraic operations supplied by a `Context`-style
+typeclass on $`R`.
+:::
+
+:::theorem "thm_representation_refinement" (parent := "units") (tags := "capstone, planned") (effort := "large") (priority := "high")
+*Exec refines spec across representations (R10).* For a kind-$`k` quantity, the
+executable float computation refines the real-number specification: applying an
+operation in `IEEE32Exec` (or `FP32`) and forgetting to $`\mathbb{R}` equals
+rounding the operation performed in $`\mathbb{R}`,
+$$`\mathrm{toReal}\bigl(\mathrm{op}_{\mathrm{exec}}(x)\bigr) = \mathrm{round}\bigl(\mathrm{op}_{\mathbb{R}}(\mathrm{toReal}\,x)\bigr).`
+So a law proved over the $`\mathbb{R}` carrier transfers to the executable run with
+a bounded rounding error — the bridge that makes one kind-indexed value serve both
+proof and execution. Builds on {uses "def_quantity"}[the representation-parametric quantity].
+:::
+
+:::proof "thm_representation_refinement"
+Planned. The refinement is the TorchLean bridge pattern (`BridgeFP32`): each
+arithmetic and transcendental operation on `IEEE32Exec`/`FP32` is specified as
+"compute in $`\mathbb{R}`, then round", so the equation holds by the rounding
+specification, and laws lift along `toReal`.
 :::
 
 :::definition "def_unit" (parent := "units")

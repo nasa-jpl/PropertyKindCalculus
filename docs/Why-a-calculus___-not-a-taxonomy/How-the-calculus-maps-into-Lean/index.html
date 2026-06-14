@@ -8039,6 +8039,32 @@ map cleanly, and the mapping <em>is</em> the design:</p>
    could carry their own subtyping reflecting the different measurement
    principles by which they are realized.</p>
                 </li>
+              <li>
+                <p>
+                  <strong>The numeric carrier is a type parameter, bounded by a typeclass (R10).</strong> A
+   scalar quantity is <code>Quantity (k : KindOfProperty) (R : Type) [‹structure on R›]</code>
+   — the kind fixes <strong>what is measured</strong>, <code class="bp_math inline">R</code> fixes <strong>in what numbers</strong>. Everything
+   above <code class="bp_math inline">R</code> (kind discrimination, scale gating, the dimension functor, the
+   interaction algebra, extensivity) is written once, against the typeclass, and is
+   reused verbatim at every <code class="bp_math inline">R</code>. This is the architecture TorchLean already runs:
+   models are written against a <code>Context α</code> typeclass (arithmetic + transcendentals</p>
+                <ul>
+                  <li>
+                    <p>
+                      comparison) and instantiated at <code>α := ℝ</code> for the <strong>spec</strong>, <code>α := FP32</code> for the
+   finite <strong>rounding</strong> model, and <code>α := IEEE32Exec</code> for the <strong>executable</strong> IEEE-754
+   kernel — the <strong>same</strong> source elaborated at three carriers. The kind layer here is
+   the missing index <strong>above</strong> that carrier: TorchLean makes a tensor polymorphic in
+   its scalar type; PropertyKindCalculus makes the scalar polymorphic in its <strong>kind</strong>,
+   and the two indices compose. Crucially the carriers are bridged by <strong>refinement
+   theorems</strong> (<code>toReal (op_exec x) = round (op_real (toReal x))</code>), so a law proved at
+   <code class="bp_math inline">\mathbb{R}</code> is not stranded in the proof world — it descends to the float that
+   runs. A description logic has no type parameters and no typeclasses, so this
+   whole axis is unavailable to it; here it is the ordinary discipline of
+   parametric polymorphism.</p>
+                    </li>
+                  </ul>
+                </li>
               </ol>
             <p>
               The trigger was concrete. PhysLib's <code>Dimension</code> makes all dimension-one

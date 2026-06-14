@@ -137,7 +137,9 @@ Status: ✅ built & proved · 🚧 next · ⬜ planned
 | `PropertyKindCalculus.Examples.Dimension` (in the `Dimension` lib) — vwc/gwc/permittivity/reflectivity all dimension-one yet pairwise-distinct kinds; dimensional algebra (area = L², speed = L·T⁻¹); forgetful-functor coherence as checked facts | — | ✅ |
 | `Interaction` — `KMul`/`KDiv` as a curated partial product, the multiplication–division round-trip, and the `dim`-homomorphism coherence capstone | Flater App. C | ✅ |
 | `PropertyKindCalculus.Examples.Interaction` (in the `Dimension` lib) — the SI-mechanics algebra: torque × angle = energy holds while torque × angle = torque is rejected; energy ≠ torque yet one dimension; coherence and round-trip as checked facts | — | ✅ |
-| `Extensivity` — extensive / conditionally extensive kinds | §13.5 | 🚧 |
+| `Extensivity` — extensive kinds (additivity over a decomposition) + the n-ary aggregation capstone + a non-extensive counterexample | §13.5 | ✅ |
+| `PropertyKindCalculus.Examples.MiniExtensivity` (in the `Examples` lib) — mass aggregates over a three-part assembly (3+5+7=15); volume on mixing is sub-additive (96 < 50+50) as checked facts | — | ✅ |
+| `Quantity` — representation-parametric value `Quantity k R` over a numeric carrier `R` (Lean `ℝ` to prove, TorchLean `FP32` rounding spec, `IEEE32Exec` executable / NaN) + the exec/spec refinement bridge (R10) | — | 🚧 |
 | `DedicatedKind` — kind × system × component | Ch. 20 | ⬜ |
 | `Model.SI` — SI base kinds, verified well-formed | — | ⬜ |
 | `Model.SoilMoisture` — vwc/gwc/permittivity/reflectivity/… | — | ⬜ |
@@ -160,7 +162,12 @@ only — nominal and ordinal kinds bear none (Dybkær §9.13.4) — with commens
 `length` — distinct *because they are examined differently*, yet mutually
 comparable — with "the width of a pencil" specified as an instance, and "5 cm"
 specified as a quantity value distinct in kind from a mass or a blood-group value,
-measured in a centimetre that is commensurable with the metre but not the kilogram.
+measured in a centimetre that is commensurable with the metre but not the kilogram;
+and that an *extensive* kind aggregates additively over a decomposition of a system
+into disjoint parts — the value of the whole is the sum over the parts, proved by
+induction on the decomposition (the aggregation capstone) — while *volume on mixing*
+is a checked counterexample (50 mL water + 50 mL ethanol ≈ 96 mL < 100 mL), so it is
+**not** extensive and assuming additivity would be unsound.
 
 `lake build Dimension` additionally checks the PhysLib-backed coherence layer
 (this is the one library that pulls in PhysLib + Mathlib). The dimension module
