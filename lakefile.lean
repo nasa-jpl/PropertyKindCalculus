@@ -63,10 +63,14 @@ lean_lib «Examples» where
   srcDir := "examples"
   globs := #[.andSubmodules `PropertyKindCalculus.Examples]
 
-/-- The dimension/coherence layer: `dim` as the forgetful functor into PhysLib's
-`Dimension`. A **separate** library in its own source tree (`dimension/`) so the
-PhysLib + Mathlib dependency lands here and nowhere else. Build with
-`lake build Dimension`. -/
+/-- The PhysLib-backed coherence layer, in a **separate** source tree
+(`dimension/`) so the PhysLib + Mathlib dependency lands here and nowhere else.
+Build with `lake build Dimension`. It carries two modules:
+  * `PropertyKindCalculus.Dimension`   — `dim` as the forgetful functor into PhysLib's `Dimension`
+  * `PropertyKindCalculus.Interaction` — Flater's interaction algebra (`KMul`/`KDiv`),
+    with the dimensional-coherence homomorphism (Flater, NIST TN 1943, App. C). -/
 lean_lib «Dimension» where
   srcDir := "dimension"
-  globs := #[.andSubmodules `PropertyKindCalculus.Dimension]
+  globs := #[
+    .andSubmodules `PropertyKindCalculus.Dimension,
+    .andSubmodules `PropertyKindCalculus.Interaction]

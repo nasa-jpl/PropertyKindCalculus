@@ -55,7 +55,7 @@ The package ships three libraries so the core is exportable on its own:
 |---|---|---|---|
 | `PropertyKindCalculus` (default target) | `PropertyKindCalculus/` | the exportable, Mathlib-free ontological spine | `lake build` |
 | `Examples` | `examples/` | worked examples for the spine (`PropertyKindCalculus.Examples.*`), Mathlib-free | `lake build Examples` |
-| `Dimension` | `dimension/` | `dim` as the forgetful functor into PhysLib's `Dimension`, with its examples (`PropertyKindCalculus.Dimension`, `…Examples.Dimension`) — the **only** library that pulls in PhysLib + Mathlib | `lake build Dimension` |
+| `Dimension` | `dimension/` | the PhysLib-backed coherence layer — `dim` as the forgetful functor into PhysLib's `Dimension` (`PropertyKindCalculus.Dimension`) and Flater's interaction algebra `KMul`/`KDiv` (`PropertyKindCalculus.Interaction`), with their examples — the **only** library that pulls in PhysLib + Mathlib | `lake build Dimension` |
 
 A downstream project depends on the package and imports selectively:
 
@@ -67,11 +67,13 @@ import PropertyKindCalculus                       -- core spine only, no example
 ```
 
 The **core spine is Mathlib-free** and builds with only the Lean toolchain. The
-dimension/coherence layer (PhysLib `Dimension` as a forgetful functor) has landed
-as the separate `Dimension` library — it is the one place PhysLib + Mathlib enter,
-so a plain `import PropertyKindCalculus` stays Mathlib-free. PhysLib HEAD tracks
-the same toolchain this package pins (`leanprover/lean4:v4.30.0`). The
-soil-moisture *model* will land as a further library on the same pattern.
+PhysLib-backed coherence layer has landed as the separate `Dimension` library —
+`dim` as a forgetful functor (`PropertyKindCalculus.Dimension`) and Flater's
+interaction algebra (`PropertyKindCalculus.Interaction`), the one place
+PhysLib + Mathlib enter, so a plain `import PropertyKindCalculus` stays
+Mathlib-free. PhysLib HEAD tracks the same toolchain this package pins
+(`leanprover/lean4:v4.30.0`). The soil-moisture *model* will land as a further
+library on the same pattern.
 
 ## Design blueprint
 
@@ -133,8 +135,9 @@ Status: ✅ built & proved · 🚧 next · ⬜ planned
 | `PropertyKindCalculus.Examples.MiniUnit` (in the `Examples` lib) — metre/centimetre commensurable, metre/kilogram not; ordinal & nominal kinds bear no unit; "5 cm" round-trips as checked facts | — | ✅ |
 | `Dimension` — `dim` as the forgetful functor into PhysLib's `Dimension`; the dimension-1 disambiguation capstone (distinct kinds, one dimension) + product-multiplicativity coherence | Ch. 19 | ✅ |
 | `PropertyKindCalculus.Examples.Dimension` (in the `Dimension` lib) — vwc/gwc/permittivity/reflectivity all dimension-one yet pairwise-distinct kinds; dimensional algebra (area = L², speed = L·T⁻¹); forgetful-functor coherence as checked facts | — | ✅ |
-| `Interaction` — `KMul`/`KDiv`, dimensional coherence (the `dim`-homomorphism capstone) | Flater App. C | 🚧 |
-| `Extensivity` — extensive / conditionally extensive kinds | §13.5 | ⬜ |
+| `Interaction` — `KMul`/`KDiv` as a curated partial product, the multiplication–division round-trip, and the `dim`-homomorphism coherence capstone | Flater App. C | ✅ |
+| `PropertyKindCalculus.Examples.Interaction` (in the `Dimension` lib) — the SI-mechanics algebra: torque × angle = energy holds while torque × angle = torque is rejected; energy ≠ torque yet one dimension; coherence and round-trip as checked facts | — | ✅ |
+| `Extensivity` — extensive / conditionally extensive kinds | §13.5 | 🚧 |
 | `DedicatedKind` — kind × system × component | Ch. 20 | ⬜ |
 | `Model.SI` — SI base kinds, verified well-formed | — | ⬜ |
 | `Model.SoilMoisture` — vwc/gwc/permittivity/reflectivity/… | — | ⬜ |
@@ -159,13 +162,25 @@ comparable — with "the width of a pencil" specified as an instance, and "5 cm"
 specified as a quantity value distinct in kind from a mass or a blood-group value,
 measured in a centimetre that is commensurable with the metre but not the kilogram.
 
-`lake build Dimension` additionally checks the dimension layer (this is the one
-library that pulls in PhysLib + Mathlib): that `dim` — the forgetful functor that
-sends a kind to its PhysLib `Dimension` — is **not injective**, the motivating
-capstone. Volumetric and gravimetric water content (and relative permittivity and
-reflectivity) are pairwise-distinct kinds that all forget to the dimensionless
-`1`, so PhysLib's `Dimension`, and any dimension-only type system, cannot tell
-them apart while the kind layer keeps them distinct. The functor still preserves
-products (the dimension of a product is the product of the dimensions, exponents
-adding), and the dimensional algebra computes in PhysLib's group (area = L²,
-speed = L·T⁻¹) — all sorry-free.
+`lake build Dimension` additionally checks the PhysLib-backed coherence layer
+(this is the one library that pulls in PhysLib + Mathlib). The dimension module
+proves that `dim` — the forgetful functor that sends a kind to its PhysLib
+`Dimension` — is **not injective**, the motivating capstone. Volumetric and
+gravimetric water content (and relative permittivity and reflectivity) are
+pairwise-distinct kinds that all forget to the dimensionless `1`, so PhysLib's
+`Dimension`, and any dimension-only type system, cannot tell them apart while the
+kind layer keeps them distinct. The functor still preserves products (the
+dimension of a product is the product of the dimensions, exponents adding), and
+the dimensional algebra computes in PhysLib's group (area = L², speed = L·T⁻¹).
+
+The interaction module then adds Flater's **kind product** as a *curated, partial*
+ternary relation (`InteractionAlgebra`): an application lists the products it
+sanctions, and each must be dimensionally coherent — bundling that obligation with
+the relation makes the **homomorphism** `KMul k₁ k₂ k₃ → dim k₃ = dim k₁ · dim k₂`
+hold by construction (this is the coherence capstone). Its division dual `KDiv` is
+the product read backwards, so multiplication and division are inverse by
+definition. The worked SI-mechanics algebra carries the point: `torque × angle =
+energy` is sanctioned while `torque × angle = torque` is **rejected** — even
+though the dimensions would balance — because dimensional coherence is necessary,
+not sufficient; `energy ≠ torque` as kinds yet they share one dimension. All
+sorry-free.

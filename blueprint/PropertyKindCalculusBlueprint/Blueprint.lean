@@ -167,7 +167,7 @@ section charges against SysML v2). Stating it as owed keeps the boundary honest.
   * R5 — interaction algebra (partial, typed)
   * `torque × angle = energy`; `fuel × rainfall` an error
   * `KMul` / `KDiv`; multiplication–division inverse
-  * planned
+  * proved
 *
   * R6 — scale-type operator availability (monotone)
   * nominal: only `=`; ratio: `×`, `÷`
@@ -177,7 +177,7 @@ section charges against SysML v2). Stating it as owed keeps the boundary honest.
   * R7 — dimension certifies, not decides
   * `dim` many-to-one; necessary ≠ sufficient
   * `dim` homomorphism
-  * planned
+  * proved
 *
   * R8 — units and conversion round-trip
   * round-trip metre/foot conversion is the identity; cross-kind is a type error

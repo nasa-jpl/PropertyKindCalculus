@@ -4,8 +4,10 @@ import VersoBlueprint
 -- Importing the `Dimension` library lets the `(lean := …)` nodes below resolve to
 -- the real, sorry-free declarations and report their *proved* status. This is the
 -- one chapter that pulls in PhysLib + Mathlib (transitively, through that
--- library); the spine chapters stay Mathlib-free.
+-- library); the spine chapters stay Mathlib-free. The `Interaction` module (same
+-- PhysLib-backed library) supplies the homomorphism capstone below.
 import PropertyKindCalculus.Dimension
+import PropertyKindCalculus.Interaction
 
 open Verso.Genre
 open Verso.Genre.Manual
@@ -17,9 +19,9 @@ PropertyKindCalculus does not discard PhysLib's `Dimension`; it keeps it as a fo
 functor. Dimension answers the coarse question — "are these even commensurable in
 the SI base quantities?" — and the kind layer answers the fine one. The forgetful
 map, its multiplicativity, and the dimension-1 disambiguation it makes possible
-are now _realized_, sorry-free, in the `Dimension` library; the remaining
-coherence law (agreement with the full interaction algebra) waits on the
-`Interaction` chapter's kind product and stays planned.
+are now _realized_, sorry-free, in the `Dimension` library; the full coherence law
+— that $`\dim` is a homomorphism over the interaction algebra — is realized in the
+`Interaction` module and stated as the homomorphism capstone below.
 
 Two terms recur below; in plain engineering terms they mean this. A _forgetful
 functor_ is a deliberately lossy, one-way map: $`\dim` keeps only a kind's SI
@@ -71,7 +73,7 @@ The provisional product multiplies the dimension components (PhysLib's
 law $`\dim 1 = 1` holds likewise.
 :::
 
-:::theorem "thm_dim_homomorphism" (parent := "dimension") (tags := "capstone, planned") (effort := "medium") (priority := "high")
+:::theorem "thm_dim_homomorphism" (parent := "dimension") (lean := "PropertyKindCalculus.InteractionAlgebra.dim_homomorphism") (tags := "capstone, proved") (effort := "medium") (priority := "high")
 *Dimensional coherence — $`\dim` is a homomorphism over the full interaction
 algebra.* Whenever the interaction algebra says $`k_1` and $`k_2` combine to
 $`k_3`, their dimensions combine the same way:
@@ -79,13 +81,14 @@ $$`\mathrm{KMul}\ k_1\ k_2\ k_3 \;\Longrightarrow\; \dim k_3 = \dim k_1 \cdot \d
 This is the theorem that licenses forgetting to the dimension layer without
 losing soundness: a kind-level product is always dimensionally consistent. It
 upgrades {uses "thm_dim_multiplicative"}[the proved multiplicativity] from the
-provisional product to Flater's gated {uses "def_kMul"}[kind product], and so
-stays planned until the `Interaction` chapter lands.
+provisional product to Flater's gated {uses "def_kMul"}[kind product].
 :::
 
 :::proof "thm_dim_homomorphism"
-Planned. By the construction of `KMul`: a well-formed kind product is defined by
-composing the factors, and `dim` is defined to distribute over that composition,
-so the equation holds by `rfl`/unfolding plus `Dimension`'s commutative-group
-laws from PhysLib.
+Realized in the `Interaction` module as `InteractionAlgebra.dim_homomorphism`.
+Coherence is a well-formedness field of every `InteractionAlgebra`, so the
+homomorphism is its projection: any algebra that can be formed at all already
+guarantees $`\dim k_3 = \dim k_1 \cdot \dim k_2` on every sanctioned edge. The
+content sits in the worked algebra, where the obligation is discharged by the
+`Dimension`-group computation, case by case.
 :::
