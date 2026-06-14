@@ -55,7 +55,8 @@ The package ships three libraries so the core is exportable on its own:
 |---|---|---|---|
 | `PropertyKindCalculus` (default target) | `PropertyKindCalculus/` | the exportable, Mathlib-free ontological spine | `lake build` |
 | `Examples` | `examples/` | worked examples for the spine (`PropertyKindCalculus.Examples.*`), Mathlib-free | `lake build Examples` |
-| `Dimension` | `dimension/` | the PhysLib-backed coherence layer — `dim` as the forgetful functor into PhysLib's `Dimension` (`PropertyKindCalculus.Dimension`) and Flater's interaction algebra `KMul`/`KDiv` (`PropertyKindCalculus.Interaction`), with their examples — the **only** library that pulls in PhysLib + Mathlib | `lake build Dimension` |
+| `Dimension` | `dimension/` | the PhysLib-backed coherence layer (library modules only, no examples) — `dim` as the forgetful functor into PhysLib's `Dimension` (`PropertyKindCalculus.Dimension`), Flater's interaction algebra `KMul`/`KDiv` (`PropertyKindCalculus.Interaction`), and the `ℝ` quantity carrier (`PropertyKindCalculus.QuantityReal`); pulls in PhysLib + Mathlib | `lake build Dimension` |
+| `DimensionExamples` | `examples/` | worked examples for the Mathlib-backed `Dimension` layer (dimension functor, interaction algebra, `ℝ` quantity carrier) — kept under `examples/` so no library module carries example code; PhysLib + Mathlib-backed (transitively) | `lake build DimensionExamples` |
 
 A downstream project depends on the package and imports selectively:
 
@@ -68,12 +69,13 @@ import PropertyKindCalculus                       -- core spine only, no example
 
 The **core spine is Mathlib-free** and builds with only the Lean toolchain. The
 PhysLib-backed coherence layer has landed as the separate `Dimension` library —
-`dim` as a forgetful functor (`PropertyKindCalculus.Dimension`) and Flater's
-interaction algebra (`PropertyKindCalculus.Interaction`), the one place
-PhysLib + Mathlib enter, so a plain `import PropertyKindCalculus` stays
-Mathlib-free. PhysLib HEAD tracks the same toolchain this package pins
-(`leanprover/lean4:v4.30.0`). The soil-moisture *model* will land as a further
-library on the same pattern.
+`dim` as a forgetful functor (`PropertyKindCalculus.Dimension`), Flater's
+interaction algebra (`PropertyKindCalculus.Interaction`), and the `ℝ` quantity
+carrier (`PropertyKindCalculus.QuantityReal`), with its worked examples in the
+`DimensionExamples` library — the layer where PhysLib + Mathlib enter, so a plain
+`import PropertyKindCalculus` stays Mathlib-free. PhysLib tracks the same toolchain
+this package pins (`leanprover/lean4:v4.30.0`). The soil-moisture *model* will land
+as a further library on the same pattern.
 
 ## Design blueprint
 
@@ -134,12 +136,16 @@ Status: ✅ built & proved · 🚧 next · ⬜ planned
 | `Unit` — metrological unit = *chosen reference quantity of a kind*; commensurability equivalence + number-and-reference round-trip, gated to unitary kinds | Ch. 18, §13.3.3 | ✅ |
 | `PropertyKindCalculus.Examples.MiniUnit` (in the `Examples` lib) — metre/centimetre commensurable, metre/kilogram not; ordinal & nominal kinds bear no unit; "5 cm" round-trips as checked facts | — | ✅ |
 | `Dimension` — `dim` as the forgetful functor into PhysLib's `Dimension`; the dimension-1 disambiguation capstone (distinct kinds, one dimension) + product-multiplicativity coherence | Ch. 19 | ✅ |
-| `PropertyKindCalculus.Examples.Dimension` (in the `Dimension` lib) — vwc/gwc/permittivity/reflectivity all dimension-one yet pairwise-distinct kinds; dimensional algebra (area = L², speed = L·T⁻¹); forgetful-functor coherence as checked facts | — | ✅ |
+| `PropertyKindCalculus.Examples.Dimension` (in the `DimensionExamples` lib) — vwc/gwc/permittivity/reflectivity all dimension-one yet pairwise-distinct kinds; dimensional algebra (area = L², speed = L·T⁻¹); forgetful-functor coherence as checked facts | — | ✅ |
 | `Interaction` — `KMul`/`KDiv` as a curated partial product, the multiplication–division round-trip, and the `dim`-homomorphism coherence capstone | Flater App. C | ✅ |
-| `PropertyKindCalculus.Examples.Interaction` (in the `Dimension` lib) — the SI-mechanics algebra: torque × angle = energy holds while torque × angle = torque is rejected; energy ≠ torque yet one dimension; coherence and round-trip as checked facts | — | ✅ |
+| `PropertyKindCalculus.Examples.Interaction` (in the `DimensionExamples` lib) — the SI-mechanics algebra: torque × angle = energy holds while torque × angle = torque is rejected; energy ≠ torque yet one dimension; coherence and round-trip as checked facts | — | ✅ |
 | `Extensivity` — extensive kinds (additivity over a decomposition) + the n-ary aggregation capstone + a non-extensive counterexample | §13.5 | ✅ |
 | `PropertyKindCalculus.Examples.MiniExtensivity` (in the `Examples` lib) — mass aggregates over a three-part assembly (3+5+7=15); volume on mixing is sub-additive (96 < 50+50) as checked facts | — | ✅ |
-| `Quantity` — representation-parametric value `Quantity k R` over a numeric carrier `R` (Lean `ℝ` to prove, TorchLean `FP32` rounding spec, `IEEE32Exec` executable / NaN) + the exec/spec refinement bridge (R10) | — | 🚧 |
+| `Quantity` — representation-parametric value `Quantity k R` over a `Carrier`-typed numeric carrier; same-kind addition (R4) + additivity laws proved **once** over any lawful carrier; carriers `Int` + `ℝ` (lawful), `Float` (executable) (R10) | — | ✅ |
+| `PropertyKindCalculus.Examples.MiniQuantity` (in the `Examples` lib) — the same value layer at `Int` (laws transfer) and `Float` (runs, `#eval`); kind-gated add as checked facts | — | ✅ |
+| `PropertyKindCalculus.QuantityReal` (in the `Dimension` lib) — the `ℝ` proof carrier: the `Carrier ℝ`/`LawfulCarrier ℝ` instances for `Quantity k R` | — | ✅ |
+| `PropertyKindCalculus.Examples.QuantityReal` (in the `DimensionExamples` lib) — the core additivity laws transfer to `Quantity k ℝ` with no `ℝ`-specific proof as checked facts | — | ✅ |
+| `Quantity` exec/spec refinement bridge — TorchLean `FP32` (rounding spec) / `IEEE32Exec` (executable, NaN) carriers + `toReal (op_exec x) = round (op_real (toReal x))` (R10 capstone) | — | 🚧 |
 | `DedicatedKind` — kind × system × component | Ch. 20 | ⬜ |
 | `Model.SI` — SI base kinds, verified well-formed | — | ⬜ |
 | `Model.SoilMoisture` — vwc/gwc/permittivity/reflectivity/… | — | ⬜ |
@@ -167,7 +173,15 @@ and that an *extensive* kind aggregates additively over a decomposition of a sys
 into disjoint parts — the value of the whole is the sum over the parts, proved by
 induction on the decomposition (the aggregation capstone) — while *volume on mixing*
 is a checked counterexample (50 mL water + 50 mL ethanol ≈ 96 mL < 100 mL), so it is
-**not** extensive and assuming additivity would be unsound.
+**not** extensive and assuming additivity would be unsound; and that a *quantity
+value* is **parametric in its numeric representation** (R10) — `Quantity k R` is
+indexed by both a kind `k` and a carrier type `R`, with same-kind addition
+`Quantity k R → Quantity k R → Quantity k R` (so adding a length to a mass is a
+type error), and the additivity laws (commutativity, associativity, the zero unit)
+proved **once** over any lawful carrier and reused verbatim at `Int` and (in the
+examples) holding for free, while the same layer runs at `Float` — a `Carrier` but
+deliberately not a *lawful* one, since floating-point addition is not associative,
+which is exactly the gap the planned exec/spec refinement bridge closes.
 
 `lake build Dimension` additionally checks the PhysLib-backed coherence layer
 (this is the one library that pulls in PhysLib + Mathlib). The dimension module
@@ -191,3 +205,15 @@ energy` is sanctioned while `torque × angle = torque` is **rejected** — even
 though the dimensions would balance — because dimensional coherence is necessary,
 not sufficient; `energy ≠ torque` as kinds yet they share one dimension. All
 sorry-free.
+
+`lake build Dimension` also provides the **`ℝ` proof carrier** for the
+representation-parametric `Quantity k R` (`PropertyKindCalculus.QuantityReal`): the
+`Carrier ℝ`/`LawfulCarrier ℝ` instances, so the additivity laws proved once in the
+core specialize to `Quantity k ℝ` with no `ℝ`-specific proof — the R10 payoff in one
+line. The `Int` and `Float` carriers ship with the Mathlib-free core; `ℝ` lands here
+because it needs Mathlib.
+
+`lake build DimensionExamples` then checks the Mathlib-backed worked examples — the
+dimension functor, the interaction algebra, and the `ℝ` quantity-law transfer — kept
+under `examples/` so that no library module carries `example`/`#eval`/`#guard` code
+(the Mathlib-free spine examples stay in the `Examples` library).

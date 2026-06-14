@@ -6,7 +6,7 @@ worked SI-mechanics algebra, its dimensional coherence, the curation that keeps
 `torque × angle = energy` apart from the category error `torque × angle = torque`,
 and the multiplication/division round-trip.
 
-These live with the `Dimension` library (not the Mathlib-free `Examples`
+These live in the `DimensionExamples` library (not the Mathlib-free `Examples`
 library), because the coherence side-condition is stated over PhysLib's
 `Dimension`.
 -/

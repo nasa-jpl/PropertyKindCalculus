@@ -8042,11 +8042,13 @@ map cleanly, and the mapping <em>is</em> the design:</p>
               <li>
                 <p>
                   <strong>The numeric carrier is a type parameter, bounded by a typeclass (R10).</strong> A
-   scalar quantity is <code>Quantity (k : KindOfProperty) (R : Type) [‹structure on R›]</code>
-   — the kind fixes <strong>what is measured</strong>, <code class="bp_math inline">R</code> fixes <strong>in what numbers</strong>. Everything
-   above <code class="bp_math inline">R</code> (kind discrimination, scale gating, the dimension functor, the
-   interaction algebra, extensivity) is written once, against the typeclass, and is
-   reused verbatim at every <code class="bp_math inline">R</code>. This is the architecture TorchLean already runs:
+   scalar quantity is <code>Quantity (k : KindOfProperty) (R : Type)</code> with the arithmetic
+   on <code class="bp_math inline">R</code> supplied by a <code>Carrier</code> typeclass — the kind fixes <strong>what is measured</strong>,
+   <code class="bp_math inline">R</code> fixes <strong>in what numbers</strong>. Everything above <code class="bp_math inline">R</code> (kind discrimination, scale
+   gating, the dimension functor, the interaction algebra, extensivity) is written
+   once, against the typeclass, and is reused verbatim at every <code class="bp_math inline">R</code> (the additivity
+   laws, for one, are proved a single time over any lawful carrier and hold at <code>ℝ</code>
+   and <code>Int</code> with no per-carrier proof). This is the architecture TorchLean already runs:
    models are written against a <code>Context α</code> typeclass (arithmetic + transcendentals</p>
                 <ul>
                   <li>

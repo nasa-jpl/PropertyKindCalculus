@@ -160,7 +160,13 @@ plain engineering terms: choose the number type to fit the job — reals to prov
 the rounding model to bound error, the IEEE kernel to run and to catch NaN — while
 the kind, dimension, and unit machinery above is written once and is identical for
 all three. This refines R1/R3/R4's kind-indexed value into a doubly-indexed
-`Quantity (k : KindOfProperty) (R : Type) [‹structure on R›]`.
+`Quantity (k : KindOfProperty) (R : Type)` whose arithmetic is bounded by a
+`Carrier` typeclass on $`R`. The value layer and its additivity laws are *realized*
+(sorry-free): `Quantity k R` with same-kind addition, the additivity laws proved
+once over any lawful carrier, and three carriers — `Int` and `ℝ` (lawful, for
+proof) and `Float` (executable, deliberately not lawful). Only the exec/spec
+refinement across the float carriers (`FP32`/`IEEE32Exec`, needing TorchLean)
+remains planned.
 
 ## Out of scope (for now)
 
@@ -184,8 +190,8 @@ honest.
 *
   * R1 — kind discrimination within a dimension
   * `vwc ≠ gwc`, both dimension one
-  * kind-indexed `Quantity k`; dimension-1 disambiguation
-  * planned
+  * kind-indexed `Quantity k R`; dimension-1 disambiguation
+  * proved
 *
   * R2 — specialization lattice + comparability
   * Width, Height, Diameter specialize Length; Width, Height comparable yet distinct (by examination principle)
@@ -194,13 +200,13 @@ honest.
 *
   * R3 — general vs individual (type vs term)
   * `Length` a type; this pencil's length a term
-  * `KindOfProperty` vs `Quantity k`
-  * proved (kinds), planned (quantities)
+  * `KindOfProperty` vs `Quantity k R`
+  * proved
 *
   * R4 — kind-gated addition
   * `Width+Width` ok; `Width+Height`, `Torque+Energy` rejected
-  * kind-indexed `Quantity k`
-  * planned
+  * `Quantity.add` over `Quantity k R` (same-kind gate)
+  * proved
 *
   * R5 — interaction algebra (partial, typed)
   * `torque × angle = energy`; `fuel × rainfall` an error
@@ -228,9 +234,9 @@ honest.
   * proved
 *
   * R10 — numeric representation parametricity
-  * same value at `ℝ` (proof), `FP32` (rounding spec), `IEEE32Exec` (executable / NaN)
-  * `Quantity k R` over a representation type `R`; exec/spec refinement
-  * planned
+  * same value at `ℝ`/`Int` (proof), `Float` (executable); `FP32`/`IEEE32Exec` planned
+  * `Carrier`-bounded `Quantity k R`; parametric additivity laws; exec/spec refinement
+  * proved (layer + laws); refinement planned
 *
   * *(out of scope)* structural value representation
   * scalar / vector / tensor, frames
@@ -580,11 +586,13 @@ map cleanly, and the mapping _is_ the design:
    principles by which they are realized.
 
 7. *The numeric carrier is a type parameter, bounded by a typeclass (R10).* A
-   scalar quantity is `Quantity (k : KindOfProperty) (R : Type) [‹structure on R›]`
-   — the kind fixes *what is measured*, $`R` fixes *in what numbers*. Everything
-   above $`R` (kind discrimination, scale gating, the dimension functor, the
-   interaction algebra, extensivity) is written once, against the typeclass, and is
-   reused verbatim at every $`R`. This is the architecture TorchLean already runs:
+   scalar quantity is `Quantity (k : KindOfProperty) (R : Type)` with the arithmetic
+   on $`R` supplied by a `Carrier` typeclass — the kind fixes *what is measured*,
+   $`R` fixes *in what numbers*. Everything above $`R` (kind discrimination, scale
+   gating, the dimension functor, the interaction algebra, extensivity) is written
+   once, against the typeclass, and is reused verbatim at every $`R` (the additivity
+   laws, for one, are proved a single time over any lawful carrier and hold at `ℝ`
+   and `Int` with no per-carrier proof). This is the architecture TorchLean already runs:
    models are written against a `Context α` typeclass (arithmetic + transcendentals
    + comparison) and instantiated at `α := ℝ` for the *spec*, `α := FP32` for the
    finite *rounding* model, and `α := IEEE32Exec` for the *executable* IEEE-754

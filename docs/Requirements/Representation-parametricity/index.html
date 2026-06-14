@@ -8021,7 +8021,13 @@ plain engineering terms: choose the number type to fit the job — reals to prov
 the rounding model to bound error, the IEEE kernel to run and to catch NaN — while
 the kind, dimension, and unit machinery above is written once and is identical for
 all three. This refines R1/R3/R4's kind-indexed value into a doubly-indexed
-<code>Quantity (k : KindOfProperty) (R : Type) [‹structure on R›]</code>.</p>
+<code>Quantity (k : KindOfProperty) (R : Type)</code> whose arithmetic is bounded by a
+<code>Carrier</code> typeclass on <code class="bp_math inline">R</code>. The value layer and its additivity laws are <strong>realized</strong>
+(sorry-free): <code>Quantity k R</code> with same-kind addition, the additivity laws proved
+once over any lawful carrier, and three carriers — <code>Int</code> and <code>ℝ</code> (lawful, for
+proof) and <code>Float</code> (executable, deliberately not lawful). Only the exec/spec
+refinement across the float carriers (<code>FP32</code>/<code>IEEE32Exec</code>, needing TorchLean)
+remains planned.</p>
             </section>
           <nav class="prev-next-buttons">
             <a class="local-button active" href="Requirements/Aggregation/index.html#PropertyKindCalculus-Blueprint--Requirements--Aggregation" rel="prev" title="1.4. Aggregation"><span class="arrow">←</span><span class="where">1.4. Aggregation</span></a><a class="local-button active" href="Requirements/Out-of-scope-_LPAR_for-now_RPAR_/index.html#PropertyKindCalculus-Blueprint--Requirements--Out-of-scope-_LPAR_for-now_RPAR_" rel="next" title="1.6. Out of scope (for now)"><span class="where">1.6. Out of scope (for now)</span><span class="arrow">→</span></a></nav>

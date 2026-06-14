@@ -7992,9 +7992,9 @@ window.onload = () => {
                   </td><td><p>
                     <code>vwc ≠ gwc</code>, both dimension one</p>
                   </td><td><p>
-                    kind-indexed <code>Quantity k</code>; dimension-1 disambiguation</p>
+                    kind-indexed <code>Quantity k R</code>; dimension-1 disambiguation</p>
                   </td><td><p>
-                    planned
+                    proved
 </p>
                   </td></tr><tr><td><p>
                     R2 — specialization lattice + comparability</p>
@@ -8010,18 +8010,18 @@ window.onload = () => {
                   </td><td><p>
                     <code>Length</code> a type; this pencil's length a term</p>
                   </td><td><p>
-                    <code>KindOfProperty</code> vs <code>Quantity k</code></p>
+                    <code>KindOfProperty</code> vs <code>Quantity k R</code></p>
                   </td><td><p>
-                    proved (kinds), planned (quantities)
+                    proved
 </p>
                   </td></tr><tr><td><p>
                     R4 — kind-gated addition</p>
                   </td><td><p>
                     <code>Width+Width</code> ok; <code>Width+Height</code>, <code>Torque+Energy</code> rejected</p>
                   </td><td><p>
-                    kind-indexed <code>Quantity k</code></p>
+                    <code>Quantity.add</code> over <code>Quantity k R</code> (same-kind gate)</p>
                   </td><td><p>
-                    planned
+                    proved
 </p>
                   </td></tr><tr><td><p>
                     R5 — interaction algebra (partial, typed)</p>
@@ -8071,11 +8071,11 @@ window.onload = () => {
                   </td></tr><tr><td><p>
                     R10 — numeric representation parametricity</p>
                   </td><td><p>
-                    same value at <code>ℝ</code> (proof), <code>FP32</code> (rounding spec), <code>IEEE32Exec</code> (executable / NaN)</p>
+                    same value at <code>ℝ</code>/<code>Int</code> (proof), <code>Float</code> (executable); <code>FP32</code>/<code>IEEE32Exec</code> planned</p>
                   </td><td><p>
-                    <code>Quantity k R</code> over a representation type <code>R</code>; exec/spec refinement</p>
+                    <code>Carrier</code>-bounded <code>Quantity k R</code>; parametric additivity laws; exec/spec refinement</p>
                   </td><td><p>
-                    planned
+                    proved (layer + laws); refinement planned
 </p>
                   </td></tr><tr><td><p>
                     <strong>(out of scope)</strong> structural value representation</p>

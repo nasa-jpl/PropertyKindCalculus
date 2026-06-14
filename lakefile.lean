@@ -49,7 +49,7 @@ package «PropertyKindCalculus» where
 -- it, so a plain `import PropertyKindCalculus` stays Mathlib-free.
 require «Physlib» from git
   "https://github.com/leanprover-community/physlib.git" @
-  "ede623da538ba7d5a647763211889c2cc8d0c30b"
+  "v4.30.0"
 
 /-- The exportable core library (Mathlib-free spine). -/
 @[default_target]
@@ -65,12 +65,26 @@ lean_lib «Examples» where
 
 /-- The PhysLib-backed coherence layer, in a **separate** source tree
 (`dimension/`) so the PhysLib + Mathlib dependency lands here and nowhere else.
-Build with `lake build Dimension`. It carries two modules:
-  * `PropertyKindCalculus.Dimension`   — `dim` as the forgetful functor into PhysLib's `Dimension`
-  * `PropertyKindCalculus.Interaction` — Flater's interaction algebra (`KMul`/`KDiv`),
-    with the dimensional-coherence homomorphism (Flater, NIST TN 1943, App. C). -/
+Build with `lake build Dimension`. It carries three *library* modules (no example
+code — worked examples live in the `DimensionExamples` library below):
+  * `PropertyKindCalculus.Dimension`    — `dim` as the forgetful functor into PhysLib's `Dimension`
+  * `PropertyKindCalculus.Interaction`  — Flater's interaction algebra (`KMul`/`KDiv`),
+    with the dimensional-coherence homomorphism (Flater, NIST TN 1943, App. C).
+  * `PropertyKindCalculus.QuantityReal` — the `ℝ` carrier for the representation-parametric
+    `Quantity k R` (R10): the proof representation, which needs Mathlib's `ℝ`. -/
 lean_lib «Dimension» where
   srcDir := "dimension"
   globs := #[
-    .andSubmodules `PropertyKindCalculus.Dimension,
-    .andSubmodules `PropertyKindCalculus.Interaction]
+    .one `PropertyKindCalculus.Dimension,
+    .one `PropertyKindCalculus.Interaction,
+    .one `PropertyKindCalculus.QuantityReal]
+
+/-- Worked examples for the Mathlib-backed `Dimension` library — the dimension
+functor, the interaction algebra, and the `ℝ` quantity carrier. Kept in the
+`examples/` source tree as a **separate library** so that no *library* module
+carries `example`/`#eval`/`#guard` code; it pulls in PhysLib + Mathlib
+transitively, through the `Dimension`-library modules it imports. Build with
+`lake build DimensionExamples`. -/
+lean_lib «DimensionExamples» where
+  srcDir := "examples"
+  globs := #[.andSubmodules `PropertyKindCalculus.DimensionExamples]

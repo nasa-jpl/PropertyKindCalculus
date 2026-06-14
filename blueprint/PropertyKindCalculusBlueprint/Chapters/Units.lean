@@ -37,23 +37,65 @@ Dybkær §13.3.3 (a unitary kind value is "a reference quantity multiplied by a
 number"), units are indexed by the kind they measure.
 :::
 
-:::definition "def_quantity" (parent := "units")
+:::definition "def_carrier" (parent := "units") (lean := "PropertyKindCalculus.Carrier")
+A _numeric carrier_ `Carrier R` is the minimal arithmetic a kind-indexed
+magnitude needs, supplied once per representation type $`R` (a zero and an
+addition; a `LawfulCarrier` adds the additive-monoid laws). In plain engineering
+terms it is the _number type plug_: everything above it — kind discrimination,
+scale gating, the dimension functor, the interaction algebra, extensivity — is
+written against this class and so reused verbatim at every $`R`. This is the role
+TorchLean's `Context α` typeclass plays for tensor element types; the kind index
+is the layer _above_ the carrier that TorchLean does not have.
+:::
+
+:::proof "def_carrier"
+Realized as the `Carrier` / `LawfulCarrier` classes. `Carrier R` bundles `zero`
+and `add`; `LawfulCarrier R` extends it with associativity, commutativity, and the
+unit laws. `Int` and (in the `Dimension` library) `ℝ` are lawful carriers; `Float`
+is a `Carrier` but deliberately _not_ lawful (floating-point addition is not
+associative).
+:::
+
+:::definition "def_quantity" (parent := "units") (lean := "PropertyKindCalculus.Quantity")
 A _quantity_ `Quantity k R` is a magnitude of a fixed kind $`k`, carried at a
-_representation type_ $`R` (R10). It is indexed by $`k`, a
+{uses "def_carrier"}[representation type] $`R` (R10). It is indexed by $`k`, a
 {uses "def_kindOfProperty"}[kind-of-property], so the type system forbids forming
 or comparing a `Quantity k₁ R` with a `Quantity k₂ R` when $`k_1 \neq k_2` — even
 if both kinds are dimension one. This indexing _is_ the fix for the dimension-1
 conflation. The second index $`R` is the numeric carrier: the same value type is
-instantiated at $`\mathbb{R}` to prove, at `FP32` to bound rounding, and at
-`IEEE32Exec` to run — the kind machinery above it written once for all three.
+instantiated at $`\mathbb{R}` and `Int` to prove, at `Float` to run today, and (the
+planned float carriers) at `FP32` to bound rounding and at `IEEE32Exec` to run with
+NaN — the kind machinery above it written once for all of them.
 :::
 
 :::proof "def_quantity"
-Planned. A `structure Quantity (k : KindOfProperty) (R : Type) [‹structure on R›]`
-carrying a magnitude in $`R`, with arithmetic gated by `k.scale` (per the proved
-operator stratification, {uses "thm_operator_monotonicity"}[operator
-monotonicity]) and the algebraic operations supplied by a `Context`-style
-typeclass on $`R`.
+Realized as `structure Quantity (k : KindOfProperty) (R : Type)` carrying a
+magnitude in $`R`, with same-kind addition `Quantity.add : Quantity k R → Quantity
+k R → Quantity k R` (R4: the type forces both summands to share the kind). The
+algebraic operations come from the {uses "def_carrier"}[carrier] typeclass on
+$`R`; which operators are even _admissible_ is the orthogonal scale gate (the
+proved operator stratification, {uses "thm_operator_monotonicity"}[operator
+monotonicity]).
+:::
+
+:::theorem "thm_quantity_laws_parametric" (parent := "units") (lean := "PropertyKindCalculus.Quantity.laws_parametric") (tags := "capstone, proved") (effort := "medium")
+*Representation-parametric additivity (R10).* The additivity laws on quantities —
+commutativity, associativity, and the zero unit —
+$$`q_1 + q_2 = q_2 + q_1, \quad (q_1+q_2)+q_3 = q_1+(q_2+q_3), \quad 0 + q = q`
+hold over _every_ lawful carrier, established by a _single_ proof and so available
+at each $`R` at once: at $`\mathbb{R}` (the proof carrier) and at `Int` with no
+$`R`-specific argument. The very carrier where these laws are _absent_ — an
+executable `Float`, a {uses "def_carrier"}[carrier] but not a lawful one — is what
+the exec/spec refinement bridge below exists to reconcile. Builds on
+{uses "def_quantity"}[the quantity layer].
+:::
+
+:::proof "thm_quantity_laws_parametric"
+Proved in `PropertyKindCalculus.Quantity` (axiom-free). Each law unfolds
+`Quantity.add` to its carrier operation and rewrites by the corresponding
+`LawfulCarrier` field; `laws_parametric` bundles the four. Specializing to `Int`
+(core) and `ℝ` (in the `Dimension` library) reuses the same proof verbatim, which
+_is_ the R10 payoff.
 :::
 
 :::theorem "thm_representation_refinement" (parent := "units") (tags := "capstone, planned") (effort := "large") (priority := "high")
@@ -63,8 +105,10 @@ operation in `IEEE32Exec` (or `FP32`) and forgetting to $`\mathbb{R}` equals
 rounding the operation performed in $`\mathbb{R}`,
 $$`\mathrm{toReal}\bigl(\mathrm{op}_{\mathrm{exec}}(x)\bigr) = \mathrm{round}\bigl(\mathrm{op}_{\mathbb{R}}(\mathrm{toReal}\,x)\bigr).`
 So a law proved over the $`\mathbb{R}` carrier transfers to the executable run with
-a bounded rounding error — the bridge that makes one kind-indexed value serve both
-proof and execution. Builds on {uses "def_quantity"}[the representation-parametric quantity].
+a bounded rounding error — the bridge that carries the
+{uses "thm_quantity_laws_parametric"}[representation-parametric laws] from the
+lawful carrier `ℝ` onto the executable `Float`/`IEEE32Exec` that is not lawful, so
+one kind-indexed value serves both proof and execution.
 :::
 
 :::proof "thm_representation_refinement"

@@ -6,8 +6,8 @@ Checked facts exercising `dim` (the forgetful functor into PhysLib's
 the dimensional algebra in the target group, and the forgetful-functor
 coherence laws.
 
-These live with the `Dimension` library (not the Mathlib-free `Examples`
-library), because they depend on PhysLib.
+These live in the `DimensionExamples` library (not the Mathlib-free `Examples`
+library), because they depend on PhysLib + Mathlib.
 -/
 import PropertyKindCalculus.Dimension
 
