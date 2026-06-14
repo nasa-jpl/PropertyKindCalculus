@@ -14,3 +14,5 @@ import PropertyKindCalculus.Scale
 import PropertyKindCalculus.Kind
 import PropertyKindCalculus.Specialization
 import PropertyKindCalculus.Examination
+import PropertyKindCalculus.PropertyValue
+import PropertyKindCalculus.ValueScale

@@ -1,1 +1,0 @@
-window.docContents[132].resolve({"/Blueprint-Summary/#PropertyKindCalculus-Blueprint--Blueprint-Summary":{"contents":"\n\n","context":"PropertyKindCalculus Blueprint","header":"Blueprint Summary","id":"/Blueprint-Summary/#PropertyKindCalculus-Blueprint--Blueprint-Summary"}});

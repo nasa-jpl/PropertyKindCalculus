@@ -106,6 +106,10 @@ docstrings' `§x.y` citations resolve to a local copy:
 * [`References/NIST.TN.1943.pdf`](References/NIST.TN.1943.pdf) — David Flater,
   *Architecture for Software-Assisted Quantity Calculus*, NIST Technical Note
   1943 (2016).
+* [`References/VIM4-2CD-2023-07-31.pdf`](References/VIM4-2CD-2023-07-31.pdf) —
+  JCGM/WG2, *International Vocabulary of Metrology* (VIM), 4th edition, 2nd
+  Committee Draft (2CD), 2023-07-31. The `VIM4 2CD x.y` clause citations in the
+  docstrings resolve to this copy.
 
 ## Roadmap (faithful to Dybkær's chapter structure)
 
@@ -120,8 +124,9 @@ Status: ✅ built & proved · 🚧 next · ⬜ planned
 | `PropertyKindCalculus.Examples.MiniLengthWidth` (in the `Examples` lib) — length/width/height as checked facts | — | ✅ |
 | `Examination` — principle / method / procedure (as defining aspects) + refinement preorder & principle-coherence | Ch. 7, 14 | ✅ |
 | `PropertyKindCalculus.Examples.MiniExamination` (in the `Examples` lib) — refinement chain + examination-individuates-kinds as checked facts | — | ✅ |
-| `PropertyValue` + `ValueScale` — number × reference; scales | Ch. 9, 16, 10, 17 | 🚧 |
-| `Unit` — metrological unit = *chosen reference quantity of a kind* | Ch. 18, §13.3.3 | ⬜ |
+| `PropertyValue` + `ValueScale` — number × reference; value-comparability equivalence + scale-gated operators | Ch. 9, 16, 10, 17 | ✅ |
+| `PropertyKindCalculus.Examples.MiniValueScale` (in the `Examples` lib) — same-kind comparison + quantity-vs-nominal value + value scale as checked facts | — | ✅ |
+| `Unit` — metrological unit = *chosen reference quantity of a kind* | Ch. 18, §13.3.3 | 🚧 |
 | `Dimension` — PhysLib `Dimension` as forgetful functor (+ coherence) | Ch. 19 | ⬜ (PhysLib) |
 | `Interaction` — `KMul`/`KDiv`, dimensional coherence | Flater App. C | ⬜ |
 | `Extensivity` — extensive / conditionally extensive kinds | §13.5 | ⬜ |
@@ -136,6 +141,11 @@ proving: `ScaleType` is a linear order; operator availability is monotone in
 scale; `Specializes` is a preorder; mutual comparability is reflexive/symmetric;
 examination refinement (procedure ⊑ method ⊑ principle) is a preorder that
 preserves the underlying principle, and the examination principle is a defining
-aspect that individuates kinds; and (in the examples) that `width`/`height` are
-distinct sub-kinds of `length` — distinct *because they are examined differently*,
-yet mutually comparable — with "the width of a pencil" specified as an instance.
+aspect that individuates kinds; that a *property value* is comparable only with
+values of the same kind — comparability is an equivalence relation and comparable
+values share the same operator set — and that a *value scale* holds only mutually
+comparable values, with operator availability inherited monotonically from the
+scale layer; and (in the examples) that `width`/`height` are distinct sub-kinds of
+`length` — distinct *because they are examined differently*, yet mutually
+comparable — with "the width of a pencil" specified as an instance, and "5 cm"
+specified as a quantity value distinct in kind from a mass or a blood-group value.

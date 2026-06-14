@@ -11,7 +11,7 @@ namespace PropertyKindCalculus
 world consisting of a demarcated arrangement of a set of elements and a set of
 relationships or processes between these elements."
 
-Modelled abstractly by identity here; the mereological structure needed for
+Specified abstractly by identity here; the mereological structure needed for
 extensivity (§13.5) is added in a later module. -/
 structure System where
   /-- Terminological identity of the system/object (mirrors the OML `id`). -/

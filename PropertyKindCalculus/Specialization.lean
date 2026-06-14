@@ -44,9 +44,10 @@ theorem trans {a b c : KindOfProperty}
 
 end Specializes
 
-/-- **§6 / VIM** — two kinds are *mutually comparable* (belong to one broad
-kind) iff they share a common super-kind. This is how `width` and `height`
-remain comparable as lengths even though they are distinct sub-kinds. -/
+/-- **Dybkær §6 / VIM4 2CD 1.2** (quantities of the same kind) — two kinds are
+*mutually comparable* (belong to one broad kind) iff they share a common
+super-kind. This is how `width` and `height` remain comparable as lengths even
+though they are distinct sub-kinds. -/
 def MutuallyComparable (E : KindOfProperty → KindOfProperty → Prop)
     (a b : KindOfProperty) : Prop :=
   ∃ p, Specializes E a p ∧ Specializes E b p

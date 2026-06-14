@@ -184,9 +184,9 @@ conjunction.
 
 :::group "spine_examination"
 A kind-of-property is a "common defining aspect" (§6.19). One such defining
-aspect is _how the property is examined_: its examination principle (§7.5, VIM
-2.4) — the phenomenon serving as the basis — a method based on that principle
-(VIM 2.5), and a procedure based on that method (VIM 2.6). These refine one
+aspect is _how the property is examined_: its examination principle (§7.5, VIM4
+2CD 2.4) — the phenomenon serving as the basis — a method based on that principle
+(VIM4 2CD 2.5), and a procedure based on that method (VIM4 2CD 2.7). These refine one
 another and individuate kinds that scale and dimension alone cannot tell apart:
 width and height are both rational lengths, separated only by the principle under
 which each is examined. A description logic can record a link to a defining
@@ -195,9 +195,9 @@ preserves the principle.
 :::
 
 :::definition "def_examination" (parent := "spine_examination") (lean := "PropertyKindCalculus.ExaminationPrinciple")
-The examination chain has three layers — an _examination principle_ (§7.5 / VIM
-2.4), a _method_ based on a principle (VIM 2.5), and a _procedure_ based on a
-method (VIM 2.6) — gathered into one carrier `ExaminationItem` so that refinement
+The examination chain has three layers — an _examination principle_ (§7.5 / VIM4
+2CD 2.4), a _method_ based on a principle (VIM4 2CD 2.5), and a _procedure_ based
+on a method (VIM4 2CD 2.7) — gathered into one carrier `ExaminationItem` so that refinement
 is a homogeneous relation. The forgetful projection `basePrinciple` sends any
 item down to the principle it rests on.
 :::
@@ -259,4 +259,75 @@ shared super-kind Length.
 The kinds differ in their `examPrinciple` field, so they are unequal by
 congruence: substitute the assumed kind-equality and derive a contradiction from
 the field inequality.
+:::
+
+# Property value and value scale (Dybkær Ch. 9, 16, 10, 17)
+
+:::group "spine_value"
+A _property value_ (§9.15) is an inherent feature of a property used in comparing
+it with other properties of the _same_ kind-of-property; it is a member of a
+_value scale_ (§10.14), the ordered set of possible, mutually comparable values
+of a kind. A _quantity value_ (§16.10) is the special case carried as a numerical
+value times a reference — Dybkær's "reference quantity multiplied by a number".
+The laws below — that comparability of values is an equivalence, that a value
+scale holds only mutually comparable values, that a value's scale type fixes which
+operations are defined — quantify over relations, operations, and a scale's
+members; a description logic can record an instance of the link but can neither
+state nor prove the laws.
+:::
+
+:::definition "def_propertyValue" (parent := "spine_value") (lean := "PropertyKindCalculus.PropertyValue")
+A _property value_ (§9.15) bundles its {uses "def_kindOfProperty"}[kind-of-property], a numeral (the numerical value, §16.10), and the reference the numeral is
+taken against — a metrological unit for a quantity value, a designation for a
+nominal one. A value _is a quantity value_ (§16.10) iff its kind has magnitude,
+and two values are _comparable_ iff they are of the same kind.
+:::
+
+:::proof "def_propertyValue"
+A `structure` with `DecidableEq`. `scale`, `IsQuantityValue`, and `Comparable` are
+definitional projections over the `kind` field.
+:::
+
+:::theorem "thm_value_comparable_equiv" (parent := "spine_value") (owner := "author_nfr") (lean := "PropertyKindCalculus.PropertyValue.Comparable.trans") (tags := "proved")
+*Comparability of values is an equivalence.* Two {uses "def_propertyValue"}[property values] are comparable iff they are of the same kind (§9.15); the relation is
+reflexive, symmetric, and transitive. Comparable values are moreover governed by
+the same scale type, so the _same_ operators are defined on both
+(`scale_eq_of_comparable`). Transitivity is exactly the algebraic law a
+description logic cannot state.
+:::
+
+:::proof "thm_value_comparable_equiv"
+Comparability unfolds to equality of the `kind` field, so reflexivity, symmetry,
+and transitivity are those of `Eq`; `scale_eq_of_comparable` is `congrArg` on the
+`scale` projection.
+:::
+
+:::definition "def_valueScale" (parent := "spine_value") (lean := "PropertyKindCalculus.ValueScale")
+A _property value scale_ (§10.14) is the ordered set of possible, mutually
+comparable values of one {uses "def_kindOfProperty"}[kind]. It carries that kind
+and a provenance — _true_ (consistent with the property's definition, §10.16.1) or
+_examined_ (obtained by an examination procedure, §10.16.2). Its `scaleType` is
+the kind's scale, the datum Table 17.4 uses to gate which manipulations a scale
+admits, and `KindOfProperty.valueScale` gives the canonical true scale of a kind
+(§9.15 ↔ §10.14).
+:::
+
+:::proof "def_valueScale"
+A `structure` carrying `kind` and a `ScaleProvenance`; `Admits v` is
+`v.kind = s.kind`, and `KindOfProperty.valueScale` builds the canonical true scale.
+:::
+
+:::theorem "thm_scale_members_comparable" (parent := "spine_value") (owner := "author_nfr") (lean := "PropertyKindCalculus.ValueScale.comparable_of_mem") (tags := "capstone, proved") (priority := "high")
+*A value scale holds only mutually comparable values.* Any two values a
+{uses "def_valueScale"}[value scale] admits are of the scale's kind, hence
+{uses "def_propertyValue"}[comparable] (§10.14) — the defining property of a value
+scale, quantified over its members. The scale type further licenses operations
+monotonically (`allows_mono_of_le`): a richer value scale supports every
+manipulation a poorer one does (Table 17.4), inherited from {uses "thm_operator_monotonicity"}[operator monotonicity].
+:::
+
+:::proof "thm_scale_members_comparable"
+Membership unfolds to equality with the scale's kind, so two members' kinds are
+equal by `trans`/`symm`; operator monotonicity is the scale-layer `allows_mono`
+re-exported through `scaleType`.
 :::

@@ -1,17 +1,18 @@
 /-
 # Examination — principle, method, procedure (defining aspects)
 
-Dybkær (2009), Chapters 7 and 14; aligned with the VIM's measurement-process
-vocabulary.
+Dybkær (2009), Chapters 7 and 14; aligned with the VIM4 2CD (2023-07-31)
+measurement-process vocabulary.
 
-  * **§7.5 examination principle** (VIM 2.4 *measurement principle*) — the
+  * **§7.5 examination principle** (VIM4 2CD 2.4 *measurement principle*) — the
     phenomenon serving as the basis of an examination (e.g. the thermal expansion
     of a liquid, for a temperature measurement).
-  * **examination method** (Dybkær Ch. 7; VIM 2.5 *measurement method*) — a
+  * **examination method** (Dybkær Ch. 7; VIM4 2CD 2.5 *measurement method*) — a
     generic, logical description of the operations of an examination, *based on* a
     principle.
-  * **examination procedure** (Dybkær Ch. 7; VIM 2.6 *measurement procedure*) — a
-    detailed, application-specific description, *based on* a method.
+  * **examination procedure** (Dybkær Ch. 7; VIM4 2CD 2.7 *measurement
+    procedure*) — a detailed, application-specific description, *based on* a
+    method.
 
 These refine one another (procedure ⊑ method ⊑ principle, by the "based-on"
 relation) and are *defining aspects* of a kind-of-property (§6.19, §7.5): two
@@ -28,15 +29,15 @@ import PropertyKindCalculus.Kind
 
 namespace PropertyKindCalculus
 
-/-- **§7.5 examination principle** (VIM 2.4) — the phenomenon serving as the
+/-- **§7.5 examination principle** (VIM4 2CD 2.4) — the phenomenon serving as the
 basis of an examination. Carries a terminological `id` (OML-style). -/
 structure ExaminationPrinciple where
   /-- Terminological identity of the examination principle (OML-style). -/
   id : String
 deriving DecidableEq, Repr
 
-/-- **Examination method** (Dybkær Ch. 7; VIM 2.5) — a generic description of an
-examination, *based on* an `ExaminationPrinciple`. -/
+/-- **Examination method** (Dybkær Ch. 7; VIM4 2CD 2.5) — a generic description of
+an examination, *based on* an `ExaminationPrinciple`. -/
 structure ExaminationMethod where
   /-- Terminological identity of the examination method. -/
   id : String
@@ -44,8 +45,8 @@ structure ExaminationMethod where
   principle : ExaminationPrinciple
 deriving DecidableEq, Repr
 
-/-- **Examination procedure** (Dybkær Ch. 7; VIM 2.6) — a detailed description,
-*based on* an `ExaminationMethod`. -/
+/-- **Examination procedure** (Dybkær Ch. 7; VIM4 2CD 2.7) — a detailed
+description, *based on* an `ExaminationMethod`. -/
 structure ExaminationProcedure where
   /-- Terminological identity of the examination procedure. -/
   id : String
@@ -79,8 +80,8 @@ def basePrinciple : ExaminationItem → ExaminationPrinciple
 
 end ExaminationItem
 
-/-- The defining **"based-on"** edges (VIM): a method is based on its principle,
-a procedure on its method. -/
+/-- The defining **"based-on"** edges (VIM4 2CD): a method is based on its
+principle, a procedure on its method. -/
 inductive BasedOn : ExaminationItem → ExaminationItem → Prop
   /-- A method is based on the principle it cites. -/
   | method_principle (m : ExaminationMethod) :

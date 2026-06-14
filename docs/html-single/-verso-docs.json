@@ -1,9 +1,41 @@
 {"9":
  "<code>PropertyKindCalculus.ScaleType.le_antisymm {a b : PropertyKindCalculus.ScaleType} (h₁ : a ≤ b) (h₂ : b ≤ a) : a = b</code>",
+ "80": "<code>s.Admits w</code>",
  "8":
  "<code>PropertyKindCalculus.ScaleType.ratio : PropertyKindCalculus.ScaleType</code><span class=\"sep\"></span><code class=\"docstring\">§12.20 ratio — adds `×, ÷` (divisible; an absolute zero). </code>",
+ "79":
+ "<code>PropertyKindCalculus.ValueScale.Admits (s : PropertyKindCalculus.ValueScale) (v : PropertyKindCalculus.PropertyValue) :\n  Prop</code><span class=\"sep\"></span><code class=\"docstring\">**§10.14** — a value scale *admits* a value iff the value is of the scale's\nkind. (Membership is the value-layer side of \"of a given kind-of-property\".) </code>",
+ "78": "<code>s.Admits v</code>",
+ "77": "<code>PropertyKindCalculus.ValueScale</code>",
+ "76":
+ "<code>PropertyKindCalculus.ValueScale.comparable_of_mem {s : PropertyKindCalculus.ValueScale}\n  {v w : PropertyKindCalculus.PropertyValue} (hv : s.Admits v) (hw : s.Admits w) : v.Comparable w</code><span class=\"sep\"></span><code class=\"docstring\">**§10.14 — a value scale holds only mutually comparable values.** Any two\nvalues a scale admits are of the scale's kind, and so are comparable. This is the\ndefining property of a value scale, and it quantifies over the scale's members. </code>",
+ "75":
+ "<code>PropertyKindCalculus.ValueScale : Type</code><span class=\"sep\"></span><code class=\"docstring\">**§10.14 property value scale** — the ordered set of possible, mutually\ncomparable property values of one kind. Carried as that kind together with its\nprovenance (§10.16). </code>",
+ "74":
+ "<code>PropertyKindCalculus.ScaleProvenance : Type</code><span class=\"sep\"></span><code class=\"docstring\">**§10.16 provenance** of a value scale: whether it is a *true* or an\n*examined* property-value scale. </code>",
+ "73":
+ "<code>PropertyKindCalculus.ScaleProvenance</code><span class=\"sep\"></span><code class=\"docstring\">§10.16 — whether this is a true or an examined property-value scale. </code>",
+ "72":
+ "<code>PropertyKindCalculus.KindOfProperty</code><span class=\"sep\"></span><code class=\"docstring\">§10.14 — the kind-of-property whose values this scale orders. </code>",
+ "71": "<code>v.Comparable w</code>",
+ "70":
+ "<code>PropertyKindCalculus.PropertyValue.Comparable (v w : PropertyKindCalculus.PropertyValue) : Prop</code><span class=\"sep\"></span><code class=\"docstring\">**§9.15** — two property values are *comparable* iff they are of the same\nkind-of-property. Comparison across kinds is not defined. </code>",
  "7":
  "<code>PropertyKindCalculus.ScaleType.interval : PropertyKindCalculus.ScaleType</code><span class=\"sep\"></span><code class=\"docstring\">§12.19 interval — adds `+, −` (subtractive, but not divisible). </code>",
+ "69": "<code>u.Comparable v</code>",
+ "68": "<code>PropertyKindCalculus.PropertyValue</code>",
+ "67":
+ "<code>PropertyKindCalculus.PropertyValue.Comparable.trans {u v w : PropertyKindCalculus.PropertyValue} (h₁ : u.Comparable v)\n  (h₂ : v.Comparable w) : u.Comparable w</code><span class=\"sep\"></span><code class=\"docstring\">Comparability is transitive — the law a description logic cannot state. </code>",
+ "66":
+ "<code>PropertyKindCalculus.PropertyValue : Type</code><span class=\"sep\"></span><code class=\"docstring\">**§9.15 property value** — an inherent feature of a property used in comparing\nit with other properties of the *same* kind-of-property. Carried as a kind\ntogether with its representation (§9.15 Note 2): a numeral and the reference the\nnumeral is taken against. </code>",
+ "65":
+ "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">§16.10 — the reference the numeral is taken against: a metrological unit id\nfor a quantity value (§18.12), or a category/designation id for a nominal one. </code>",
+ "64":
+ "<code>Int : Type</code><span class=\"sep\"></span><code class=\"docstring\">The integers.\n\nThis type is special-cased by the compiler and overridden with an efficient implementation. The\nruntime has a special representation for `Int` that stores “small” signed numbers directly, while\nlarger numbers use a fast arbitrary-precision arithmetic library (usually\n[GMP](https://gmplib.org/)). A “small number” is an integer that can be encoded with one fewer bits\nthan the platform's pointer size (i.e. 63 bits on 64-bit architectures and 31 bits on 32-bit\narchitectures).\n</code>",
+ "63":
+ "<code>Int</code><span class=\"sep\"></span><code class=\"docstring\">§16.10 — the numerical value (numeral). For a quantity value the magnitude\nis this number times the `reference`; for a nominal value (§12.4) it is a bare\ntype-number / label. </code>",
+ "62":
+ "<code>PropertyKindCalculus.KindOfProperty</code><span class=\"sep\"></span><code class=\"docstring\">§9.15 — the kind-of-property this value belongs to; a value is comparable\nonly with values of the same kind. </code>",
  "61":
  "<code>Ne.{u} {α : Sort u} (a b : α) : Prop</code><span class=\"sep\"></span><code class=\"docstring\">`a ≠ b`, or `Ne a b` is defined as `¬ (a = b)` or `a = b → False`,\nand asserts that `a` and `b` are not equal.\n\n\nConventions for notations in identifiers:\n\n * The recommended spelling of `≠` in identifiers is `ne`.</code>",
  "60":
@@ -22,7 +54,7 @@
  "53":
  "<code>PropertyKindCalculus.Refines.trans {a b c : PropertyKindCalculus.ExaminationItem}\n  (h₁ : PropertyKindCalculus.Refines a b) (h₂ : PropertyKindCalculus.Refines b c) : PropertyKindCalculus.Refines a c</code><span class=\"sep\"></span><code class=\"docstring\">Refinement is transitive (a preorder, together with `refl`). </code>",
  "52":
- "<code>PropertyKindCalculus.BasedOn : PropertyKindCalculus.ExaminationItem → PropertyKindCalculus.ExaminationItem → Prop</code><span class=\"sep\"></span><code class=\"docstring\">The defining **\"based-on\"** edges (VIM): a method is based on its principle,\na procedure on its method. </code>",
+ "<code>PropertyKindCalculus.BasedOn : PropertyKindCalculus.ExaminationItem → PropertyKindCalculus.ExaminationItem → Prop</code><span class=\"sep\"></span><code class=\"docstring\">The defining **\"based-on\"** edges (VIM4 2CD): a method is based on its\nprinciple, a procedure on its method. </code>",
  "51":
  "<code>PropertyKindCalculus.Refines.step {a b c : PropertyKindCalculus.ExaminationItem} :\n  PropertyKindCalculus.BasedOn a b → PropertyKindCalculus.Refines b c → PropertyKindCalculus.Refines a c</code><span class=\"sep\"></span><code class=\"docstring\">Prepend a based-on edge `BasedOn a b` to a refinement `b ⊑ c`. </code>",
  "50":
@@ -35,14 +67,14 @@
  "47":
  "<code>PropertyKindCalculus.Refines.refl (a : PropertyKindCalculus.ExaminationItem) : PropertyKindCalculus.Refines a a</code><span class=\"sep\"></span><code class=\"docstring\">Reflexivity of the closure: every examination refines itself. </code>",
  "46":
- "<code>PropertyKindCalculus.ExaminationPrinciple : Type</code><span class=\"sep\"></span><code class=\"docstring\">**§7.5 examination principle** (VIM 2.4) — the phenomenon serving as the\nbasis of an examination. Carries a terminological `id` (OML-style). </code>",
+ "<code>PropertyKindCalculus.ExaminationPrinciple : Type</code><span class=\"sep\"></span><code class=\"docstring\">**§7.5 examination principle** (VIM4 2CD 2.4) — the phenomenon serving as the\nbasis of an examination. Carries a terminological `id` (OML-style). </code>",
  "45":
  "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">Terminological identity of the examination principle (OML-style). </code>",
  "44": "<code>PropertyKindCalculus.MutuallyComparable E a b</code>",
  "43":
  "<code>PropertyKindCalculus.MutuallyComparable.symm\n  {E : PropertyKindCalculus.KindOfProperty → PropertyKindCalculus.KindOfProperty → Prop}\n  {a b : PropertyKindCalculus.KindOfProperty} (h : PropertyKindCalculus.MutuallyComparable E a b) :\n  PropertyKindCalculus.MutuallyComparable E b a</code>",
  "42":
- "<code>PropertyKindCalculus.MutuallyComparable\n  (E : PropertyKindCalculus.KindOfProperty → PropertyKindCalculus.KindOfProperty → Prop)\n  (a b : PropertyKindCalculus.KindOfProperty) : Prop</code><span class=\"sep\"></span><code class=\"docstring\">**§6 / VIM** — two kinds are *mutually comparable* (belong to one broad\nkind) iff they share a common super-kind. This is how `width` and `height`\nremain comparable as lengths even though they are distinct sub-kinds. </code>",
+ "<code>PropertyKindCalculus.MutuallyComparable\n  (E : PropertyKindCalculus.KindOfProperty → PropertyKindCalculus.KindOfProperty → Prop)\n  (a b : PropertyKindCalculus.KindOfProperty) : Prop</code><span class=\"sep\"></span><code class=\"docstring\">**Dybkær §6 / VIM4 2CD 1.2** (quantities of the same kind) — two kinds are\n*mutually comparable* (belong to one broad kind) iff they share a common\nsuper-kind. This is how `width` and `height` remain comparable as lengths even\nthough they are distinct sub-kinds. </code>",
  "41": "<code>PropertyKindCalculus.Specializes E b c</code>",
  "40": "<code>PropertyKindCalculus.Specializes E a b</code>",
  "4":
@@ -87,7 +119,7 @@
  "20":
  "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">Terminological identity (mirrors the OML `id`). </code>",
  "2":
- "<code>PropertyKindCalculus.System : Type</code><span class=\"sep\"></span><code class=\"docstring\">**§3.3 system** — \"part or phenomenon of the perceivable or conceivable\nworld consisting of a demarcated arrangement of a set of elements and a set of\nrelationships or processes between these elements.\"\n\nModelled abstractly by identity here; the mereological structure needed for\nextensivity (§13.5) is added in a later module. </code>",
+ "<code>PropertyKindCalculus.System : Type</code><span class=\"sep\"></span><code class=\"docstring\">**§3.3 system** — \"part or phenomenon of the perceivable or conceivable\nworld consisting of a demarcated arrangement of a set of elements and a set of\nrelationships or processes between these elements.\"\n\nSpecified abstractly by identity here; the mereological structure needed for\nextensivity (§13.5) is added in a later module. </code>",
  "19":
  "<code>PropertyKindCalculus.ScaleType.AllowsRatio : PropertyKindCalculus.ScaleType → Prop</code><span class=\"sep\"></span><code class=\"docstring\">`×, ÷` available only at ratio scale (§12.20). </code>",
  "18":

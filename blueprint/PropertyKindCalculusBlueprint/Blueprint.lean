@@ -213,8 +213,8 @@ classification-based reasoning — reworked those foundations, the quantity-kind
 and unit _stereotypes_ carried by SysML, to align them with Dybkær's _An
 Ontology on Property_. That effort became the
 [opencaesar metrology vocabulary](https://github.com/opencaesar/metrology-vocabularies),
-whose current version combines the updates and motivations of the VIM4 Committee
-Draft with Dybkær's ontological grounding. OWL2 (SROIQ) carries the metrology
+whose current version combines the updates and motivations of the VIM4 2nd
+Committee Draft (2CD, 2023-07-31) with Dybkær's ontological grounding. OWL2 (SROIQ) carries the metrology
 _taxonomy_ well: specialization, the general-vs-individual quantity distinction
 (encoded as concept vs. instance), dimensional factoring, and OWL2-DL/SPARQL
 consistency checks over units.
@@ -383,22 +383,25 @@ classification axes:
 - *(A) kind-of-property* — its nature, fixed by Dybkær's examination principle,
   common to all mutually comparable quantities;
 - *(B) value representation* — scalar / vector / tensor order, coordinate frame,
-  bound-versus-free — what VIM calls the measurement reference.
+  bound-versus-free — what SysML v2 packages as the measurement reference.
 
 Dybkær's ontology lives entirely on axis (A) and is deliberately *agnostic* to
 (B): whether a position is recorded as one number, three Cartesian components, or
 a tensor in a chosen frame does not change *what kind of property* it is. SysML
 v2 makes axis (B) the root and nests (A) beneath it. The model even flags the
-departure from its own source: it quotes VIM's "quantity" Note 5 — "A quantity as
-defined here is a scalar. However, a vector or a tensor, the components of which
+departure from its own source: it quotes the VIM3 "quantity" Note 5 — "A quantity
+as defined here is a scalar. However, a vector or a tensor, the components of which
 are quantities, is also considered to be a quantity" — then notes that "the rest
 of \[VIM\] does not explicitly define how tensor and vector quantities can be or
 should be supported"
 ([SysML v2, 2026-04 — MeasurementReferences.sysml, lines 29–31](https://github.com/Systems-Modeling/SysML-v2-Release/blob/2026-04/sysml.library/Domain%20Libraries/Quantities%20and%20Units/MeasurementReferences.sysml#L29-L31)).
 The tensor-rooted hierarchy is thus SysML's own interpretation, and it *inverts*
-VIM's priority — VIM makes the quantity fundamentally scalar with vectors and
-tensors as composites *of* scalar quantities; SysML v2 makes the tensor primary
-and the scalar the degenerate order-0 case.
+the VIM's priority — both the quoted VIM3 and the VIM4 2CD (quantity, 1.1 Note 4:
+"As defined here, quantities are scalar … vectors, and tensors are considered
+quantities in a broader sense if their components are (scalar) quantities") make
+the quantity fundamentally scalar, with vectors and tensors as composites *of*
+scalar quantities; SysML v2 makes the tensor primary and the scalar the degenerate
+order-0 case.
 
 ### How PropertyKindCalculus takes the kind as root instead
 

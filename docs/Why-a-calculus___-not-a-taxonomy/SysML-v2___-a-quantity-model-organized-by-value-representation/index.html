@@ -8150,7 +8150,7 @@ classification axes:</p>
                 <li>
                   <p>
                     <strong>(B) value representation</strong> — scalar / vector / tensor order, coordinate frame,
-  bound-versus-free — what VIM calls the measurement reference.</p>
+  bound-versus-free — what SysML v2 packages as the measurement reference.</p>
                   </li>
                 </ul>
               <p>
@@ -8158,16 +8158,19 @@ classification axes:</p>
 (B): whether a position is recorded as one number, three Cartesian components, or
 a tensor in a chosen frame does not change <strong>what kind of property</strong> it is. SysML
 v2 makes axis (B) the root and nests (A) beneath it. The model even flags the
-departure from its own source: it quotes VIM's "quantity" Note 5 — "A quantity as
-defined here is a scalar. However, a vector or a tensor, the components of which
+departure from its own source: it quotes the VIM3 "quantity" Note 5 — "A quantity
+as defined here is a scalar. However, a vector or a tensor, the components of which
 are quantities, is also considered to be a quantity" — then notes that "the rest
 of [VIM] does not explicitly define how tensor and vector quantities can be or
 should be supported"
 (<a href="https://github.com/Systems-Modeling/SysML-v2-Release/blob/2026-04/sysml.library/Domain%20Libraries/Quantities%20and%20Units/MeasurementReferences.sysml#L29-L31">SysML v2, 2026-04 — MeasurementReferences.sysml, lines 29–31</a>).
 The tensor-rooted hierarchy is thus SysML's own interpretation, and it <strong>inverts</strong>
-VIM's priority — VIM makes the quantity fundamentally scalar with vectors and
-tensors as composites <strong>of</strong> scalar quantities; SysML v2 makes the tensor primary
-and the scalar the degenerate order-0 case.</p>
+the VIM's priority — both the quoted VIM3 and the VIM4 2CD (quantity, 1.1 Note 4:
+"As defined here, quantities are scalar … vectors, and tensors are considered
+quantities in a broader sense if their components are (scalar) quantities") make
+the quantity fundamentally scalar, with vectors and tensors as composites <strong>of</strong>
+scalar quantities; SysML v2 makes the tensor primary and the scalar the degenerate
+order-0 case.</p>
               </section>
             <section>
               <h2 id="PropertyKindCalculus-Blueprint--Why-a-calculus___-not-a-taxonomy--SysML-v2___-a-quantity-model-organized-by-value-representation--How-PropertyKindCalculus-takes-the-kind-as-root-instead">

@@ -2,7 +2,7 @@
 # Worked example: examination as a defining aspect
 
 Demonstrates, as *checked* facts, the two roles the examination chain plays
-(Dybkær Ch. 7; VIM 2.4–2.6):
+(Dybkær Ch. 7; VIM4 2CD 2.4, 2.5, 2.7):
 
   1. **The refinement chain.** A concrete procedure *refines* a method, which
      *refines* a principle; refinement is reflexive-transitively closed, and every

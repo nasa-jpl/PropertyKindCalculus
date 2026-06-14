@@ -21,11 +21,12 @@ dimension-only type system cannot tell them apart. In soil-moisture retrieval
 that is precisely the class of confusion that silently corrupts a result. The
 kind layer is what restores the distinction.
 
-# Quantities and units (VIM, Dybkær §13.3.3)
+# Quantities and units (VIM4 2CD, Dybkær §13.3.3)
 
 :::group "units"
-Following the VIM principle that a unit is a chosen value of a kind of quantity,
-and Dybkær §13.3.3 (a unitary kind value is "a reference quantity multiplied by a
+Following the VIM4 2CD principle (measurement unit, 1.12: a "reference quantity
+with which any other quantity of the same kind can be compared by ratio") and
+Dybkær §13.3.3 (a unitary kind value is "a reference quantity multiplied by a
 number"), units are indexed by the kind they measure.
 :::
 

@@ -8,7 +8,7 @@ open Informal
 
 #doc (Manual) "The Interaction Algebra (Flater Appendix C)" =>
 
-This is the contribution beyond VIM/OML, and the reason Flater's note is titled
+This is the contribution beyond the VIM4 2CD and OML, and the reason Flater's note is titled
 _full tracking of kinds of quantities_. Dimensional analysis says torque and
 energy share a dimension ($`\mathrm{M\,L^2\,T^{-2}}`), yet they are not the same
 kind and not interchangeable. The interaction algebra records which kinds
