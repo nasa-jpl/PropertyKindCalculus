@@ -7993,7 +7993,12 @@ parents at once — a lattice, not a tree. Specialization is a preorder (reflexi
 and transitive) and induces a <strong>one-way</strong> coercion: a <code>Quantity Width</code> may be used
 where a <code>Quantity Length</code> is wanted, never the reverse, and that up-cast is a
 visible, deliberate loss of information. Width and Height remain <strong>mutually
-comparable</strong> — they share the super-kind Length — while staying distinct kinds.</p>
+comparable</strong> — they share the super-kind Length — while staying distinct kinds. This
+requirement is now realized on the real standard: the ISO 80000-3 length family
+(width, height, distance, radius, … of items 3-1.2 … 3-1.12, all of dimension <code>L</code>)
+is specified as a specialization lattice over the general length kind, each species
+individuated <strong>not by fiat but by an explicit measurement principle</strong> (see the
+<em>ISO 80000-3</em> chapter).</p>
             <p>
               <strong>R3 — General versus individual is type versus term.</strong> A kind is the general
 notion (a <strong>type</strong>); a particular measured value is an individual (a <strong>term</strong> of that

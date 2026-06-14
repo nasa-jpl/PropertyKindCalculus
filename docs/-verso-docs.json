@@ -135,246 +135,315 @@
  "<code class=\"docstring\">A type universe. `Type ≡ Type 0`, `Type u ≡ Sort (u + 1)`. </code>",
  "29":
  "<code>Not (a : Prop) : Prop</code><span class=\"sep\"></span><code class=\"docstring\">`Not p`, or `¬p`, is the negation of `p`. It is defined to be `p → False`,\nso if your goal is `¬p` you can use `intro h` to turn the goal into\n`h : p ⊢ False`, and if you have `hn : ¬p` and `h : p` then `hn h : False`\nand `(hn h).elim` will prove anything.\nFor more information: [Propositional Logic](https://lean-lang.org/theorem_proving_in_lean4/propositions_and_proofs.html#propositional-logic)\n\n\nConventions for notations in identifiers:\n\n * The recommended spelling of `¬` in identifiers is `not`.</code>",
+ "289":
+ "<code>PropertyKindCalculus.Quantity.magnitude {k : PropertyKindCalculus.KindOfProperty} {R : Type}\n  (self : PropertyKindCalculus.Quantity k R) : R</code><span class=\"sep\"></span><code class=\"docstring\">§13.3.3 — the magnitude (the *number* of the reference-times-number form),\ncarried at the representation type `R`. </code>",
+ "288":
+ "<code>PropertyKindCalculus.Iso80000.Part3.AreaClassification.IsSurfaceArea\n  (q : PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part3.area.kind ℝ)\n  (t : ℝ × ℝ → Fin 2 → EuclideanSpace ℝ (Fin 2)) (s : Set (ℝ × ℝ)) : Prop</code><span class=\"sep\"></span><code class=\"docstring\">**Certificate (Level-2, integral).** `q : Quantity area.kind ℝ` *is a surface area*\niff its magnitude is the area of an actual surface — the parametrization `t` over the\nregion `s`, via area's defining relation `∬ √g du dv`. A proof of this certifies `q`'s\nclassification as an area, rather than asserting it. </code>",
+ "287":
+ "<code>PropertyKindCalculus.Iso80000.Part3.AreaClassification.IsSurfaceArea q t s</code>",
+ "286":
+ "<code>MeasurableSet.{u_1} {α : Type u_1} [MeasurableSpace α] (s : Set α) : Prop</code><span class=\"sep\"></span><code class=\"docstring\">`MeasurableSet s` means that `s` is measurable (in the ambient measure space on `α`) </code>",
+ "285": "<code>MeasurableSet s</code>",
+ "284":
+ "<code>Set.{u} (α : Type u) : Type u</code><span class=\"sep\"></span><code class=\"docstring\">A set is a collection of elements of some type `α`.\n\nAlthough `Set` is defined as `α → Prop`, this is an implementation detail which should not be\nrelied on. Instead, `setOf` and membership of a set (`∈`) should be used to convert between sets\nand predicates.\n</code>",
+ "283": "<code>Set (ℝ × ℝ)</code>",
+ "282":
+ "<code>Prod.{u, v} (α : Type u) (β : Type v) : Type (max u v)</code><span class=\"sep\"></span><code class=\"docstring\">The product type, usually written `α × β`. Product types are also called pair or tuple types.\nElements of this type are pairs in which the first element is an `α` and the second element is a\n`β`.\n\nProducts nest to the right, so `(x, y, z) : α × β × γ` is equivalent to `(x, (y, z)) : α × (β × γ)`.\n\n\nConventions for notations in identifiers:\n\n * The recommended spelling of `×` in identifiers is `Prod`.</code>",
+ "281": "<code>ℝ × ℝ → Fin 2 → EuclideanSpace ℝ (Fin 2)</code>",
+ "280":
+ "<code>PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part3.area.kind ℝ</code>",
  "28":
  "<code>PropertyKindCalculus.KindOfProperty.IsNominal (k : PropertyKindCalculus.KindOfProperty) : Prop</code><span class=\"sep\"></span><code class=\"docstring\">§13.2.1 nominal kind-of-property (no magnitude, comparable for equality). </code>",
+ "279":
+ "<code>PropertyKindCalculus.Iso80000.Part3.AreaClassification.certified_surfaceArea_nonneg\n  {q : PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part3.area.kind ℝ}\n  {t : ℝ × ℝ → Fin 2 → EuclideanSpace ℝ (Fin 2)} {s : Set (ℝ × ℝ)} (hs : MeasurableSet s)\n  (h : PropertyKindCalculus.Iso80000.Part3.AreaClassification.IsSurfaceArea q t s) : 0 ≤ q.magnitude</code><span class=\"sep\"></span><code class=\"docstring\">**Property transport (R12).** *Every* certified surface area is non-negative — a\nproperty of area's defining relation, instantiated at the quantity level via the\ncertificate. </code>",
+ "278":
+ "<code>PropertyKindCalculus.Iso80000.Part3.AreaClassification.rectangleArea\n  (w h : PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part3.length.kind ℝ) :\n  PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part3.area.kind ℝ</code><span class=\"sep\"></span><code class=\"docstring\">A rectangle's area, verified-classified as an area **by construction** from its two\nside lengths (`width × height`). </code>",
+ "277":
+ "<code>PropertyKindCalculus.Iso80000.Part3.AreaClassification.area_is_length_times_length :\n  PropertyKindCalculus.ProductKind PropertyKindCalculus.Iso80000.Part3.length.kind\n    PropertyKindCalculus.Iso80000.Part3.length.kind PropertyKindCalculus.Iso80000.Part3.area.kind</code><span class=\"sep\"></span><code class=\"docstring\">**area = length × length**, as a product kind-law (the Level-1 scale precondition;\nthe dimensional `L²` is `Part3.area_dim_length`). </code>",
+ "276":
+ "<code>PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part3.length.kind ℝ</code>",
+ "275":
+ "<code>PropertyKindCalculus.Iso80000.Part3.AreaClassification.rectangleArea_isProduct\n  (w h : PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part3.length.kind ℝ) :\n  PropertyKindCalculus.Quantity.IsProduct\n    PropertyKindCalculus.Iso80000.Part3.AreaClassification.area_is_length_times_length\n    (PropertyKindCalculus.Iso80000.Part3.AreaClassification.rectangleArea w h) w h</code><span class=\"sep\"></span><code class=\"docstring\">The rectangle-area certificate holds by construction. </code>",
+ "274":
+ "<code>PropertyKindCalculus.Iso80000.Part3.DefiningRelations.frequencyOf\n  (T : PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part3.periodDuration.kind ℝ) :\n  PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part3.frequency.kind ℝ</code><span class=\"sep\"></span><code class=\"docstring\">A frequency built as the reciprocal of a period — classified as a frequency **by\nconstruction**. </code>",
+ "273":
+ "<code>PropertyKindCalculus.Iso80000.Part3.DefiningRelations.frequency_recip_periodDuration :\n  PropertyKindCalculus.ReciprocalKind PropertyKindCalculus.Iso80000.Part3.periodDuration.kind\n    PropertyKindCalculus.Iso80000.Part3.frequency.kind</code><span class=\"sep\"></span><code class=\"docstring\">**Frequency is the reciprocal of the period duration** (item 3-17.1: `f = 1/T`). </code>",
+ "272":
+ "<code>PropertyKindCalculus.Quantity.IsReciprocal {R : Type} [Inv R] {k₁ k : PropertyKindCalculus.KindOfProperty}\n  (_h : PropertyKindCalculus.ReciprocalKind k₁ k) (q : PropertyKindCalculus.Quantity k R)\n  (a : PropertyKindCalculus.Quantity k₁ R) : Prop</code><span class=\"sep\"></span><code class=\"docstring\">**The certificate.** `q` (of kind `k`) is the reciprocal of `a` (of `k₁`): its\nmagnitude is the inverse of `a`'s. A proof *certifies* `q`'s classification as `k`. </code>",
+ "271":
+ "<code>PropertyKindCalculus.Iso80000.Part3.periodDuration : PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">Period duration (period) — item 3-14, dimension `T`. </code>",
+ "270":
+ "<code>PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part3.periodDuration.kind ℝ</code>",
  "27": "<code>k.IsNominal</code>",
+ "269":
+ "<code>PropertyKindCalculus.Iso80000.Part3.DefiningRelations.frequencyOf_isReciprocal\n  (T : PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part3.periodDuration.kind ℝ) :\n  PropertyKindCalculus.Quantity.IsReciprocal\n    PropertyKindCalculus.Iso80000.Part3.DefiningRelations.frequency_recip_periodDuration\n    (PropertyKindCalculus.Iso80000.Part3.DefiningRelations.frequencyOf T) T</code><span class=\"sep\"></span><code class=\"docstring\">The constructed frequency satisfies the reciprocal certificate by construction. </code>",
+ "268":
+ "<code>PropertyKindCalculus.Iso80000.Part3.pathLength : PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">Path length (arc length) — item 3-1.7, a length species (along a curve). </code>",
+ "267":
+ "<code>PropertyKindCalculus.Iso80000.Part3.planeAngle : PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">Plane angle (angular measure) — item 3-5, dimension one, unit rad. The\narc/radius remark is formalized in `Part3.DefiningRelations`. </code>",
+ "266":
+ "<code>PropertyKindCalculus.Iso80000.Part3.DefiningRelations.planeAngle_dim_from_arc_over_radius :\n  PropertyKindCalculus.Iso80000.Part3.planeAngle.dim =\n    PropertyKindCalculus.Iso80000.Part3.pathLength.dim / PropertyKindCalculus.Iso80000.Part3.radius.dim</code><span class=\"sep\"></span><code class=\"docstring\">**Plane angle is dimension one because it is a ratio of two lengths.** The arc and\nthe radius are both lengths, so `α = s/r` cancels the dimension — the angle's\ndimensionlessness is a *checked computation from its defining relation*, not a\nstipulation. (It nonetheless remains a distinct kind from every other dimension-one\nquantity; see `Part3.iso80000_3_dim_one_collision`.) </code>",
+ "265": "<code>Fin 3</code>",
+ "264": "<code>Fin 3 → EuclideanSpace ℝ (Fin 3)</code>",
+ "263":
+ "<code>PropertyKindCalculus.Iso80000.Part3.VolumeElement.volumeElement_eq_abs_det (t : Fin 3 → EuclideanSpace ℝ (Fin 3)) :\n  PropertyKindCalculus.Iso80000.Part3.VolumeElement.volumeElement t = |(Matrix.of fun i j =&gt; (t j).ofLp i).det|</code><span class=\"sep\"></span><code class=\"docstring\">**The element is the change-of-variables volume density.** For a flat region the\nvolume element equals `|det A|` — so `dV = |det A| du dv dw` integrates to the\n*actual* Euclidean volume, confirming the `√g` reading. </code>",
+ "262": "<code>Fin 3 → E</code>",
+ "261":
+ "<code>PropertyKindCalculus.Iso80000.Part3.VolumeElement.volumeElement.{u_1} {E : Type u_1} [NormedAddCommGroup E]\n  [InnerProductSpace ℝ E] (t : Fin 3 → E) : ℝ</code><span class=\"sep\"></span><code class=\"docstring\">The **volume element** `dV = √g`: the volume-element density at the point. The\nsquare root is what makes a flat region recover its Euclidean volume\n(`volumeElement_eq_abs_det`). </code>",
+ "260":
+ "<code>LinearIndependent.{u', u_2, u_4} {ι : Type u'} (R : Type u_2) {M : Type u_4} (v : ι → M) [Semiring R] [AddCommMonoid M]\n  [Module R M] : Prop</code><span class=\"sep\"></span><code class=\"docstring\">`LinearIndependent R v` states the family of vectors `v` is linearly independent over `R`. </code>",
  "26": "<code>PropertyKindCalculus.KindOfProperty</code>",
- "252":
- "<code>PropertyKindCalculus.Quantity.magnitude {k : PropertyKindCalculus.KindOfProperty} {R : Type}\n  (self : PropertyKindCalculus.Quantity k R) : R</code><span class=\"sep\"></span><code class=\"docstring\">§13.3.3 — the magnitude (the *number* of the reference-times-number form),\ncarried at the representation type `R`. </code>",
+ "259":
+ "<code>PropertyKindCalculus.Iso80000.Part3.AreaElement.areaElement_pos_iff.{u_1} {E : Type u_1} [NormedAddCommGroup E]\n  [InnerProductSpace ℝ E] (t : Fin 2 → E) :\n  0 &lt; PropertyKindCalculus.Iso80000.Part3.AreaElement.areaElement t ↔ LinearIndependent ℝ t</code><span class=\"sep\"></span><code class=\"docstring\">**Regularity.** The surface element is strictly positive exactly when the two\ntangent vectors are linearly independent — i.e. at a non-degenerate (regular) point of\nthe parametrization. A vanishing element marks a degenerate parametrization. </code>",
+ "258":
+ "<code>Matrix.det.{v, u_2} {n : Type u_2} [DecidableEq n] [Fintype n] {R : Type v} [CommRing R] (M : Matrix n n R) : R</code><span class=\"sep\"></span><code class=\"docstring\">The determinant of a matrix given by the Leibniz formula. </code>",
+ "257":
+ "<code>WithLp.ofLp.{u_1} {p : ENNReal} {V : Type u_1} (self : WithLp p V) : V</code><span class=\"sep\"></span><code class=\"docstring\">Converts an element of `WithLp p V` to an element of `V`. </code>",
+ "256": "<code>Fin 2</code>",
+ "255":
+ "<code>Matrix.of.{v, u_2, u_3} {m : Type u_2} {n : Type u_3} {α : Type v} : (m → n → α) ≃ Matrix m n α</code><span class=\"sep\"></span><code class=\"docstring\">Cast a function into a matrix.\n\nThe two sides of the equivalence are definitionally equal types. We want to use an explicit cast\nto distinguish the types because `Matrix` has different instances to pi types (such as `Pi.mul`,\nwhich performs elementwise multiplication, vs `Matrix.mul`).\n\nIf you are defining a matrix, in terms of its entries, use `of (fun i j ↦ _)`. The\npurpose of this approach is to ensure that terms of the form `(fun i j ↦ _) * (fun i j ↦ _)` do not\nappear, as the type of `*` can be misleading.\n</code>",
+ "254":
+ "<code>abs.{u_1} {α : Type u_1} [Lattice α] [AddGroup α] (a : α) : α</code><span class=\"sep\"></span><code class=\"docstring\">`abs a`, denoted `|a|`, is the absolute value of `a` </code>",
+ "253":
+ "<code>EuclideanSpace.{u_7, u_8} (𝕜 : Type u_7) (n : Type u_8) : Type (max u_7 u_8)</code><span class=\"sep\"></span><code class=\"docstring\">The standard real/complex Euclidean space, functions on a finite type. For an `n`-dimensional\nspace use `EuclideanSpace 𝕜 (Fin n)`.\n\nFor the case when `n = Fin _`, there is `!₂[x, y, ...]` notation for building elements of this type,\nanalogous to `![x, y, ...]` notation. </code>",
+ "252": "<code>Fin 2 → EuclideanSpace ℝ (Fin 2)</code>",
  "251":
- "<code>PropertyKindCalculus.Iso80000.Part3.AreaClassification.IsSurfaceArea\n  (q : PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part3.area.kind ℝ)\n  (t : ℝ × ℝ → Fin 2 → EuclideanSpace ℝ (Fin 2)) (s : Set (ℝ × ℝ)) : Prop</code><span class=\"sep\"></span><code class=\"docstring\">**Certificate (Level-2, integral).** `q : Quantity area.kind ℝ` *is a surface area*\niff its magnitude is the area of an actual surface — the parametrization `t` over the\nregion `s`, via area's defining relation `∬ √g du dv`. A proof of this certifies `q`'s\nclassification as an area, rather than asserting it. </code>",
+ "<code>PropertyKindCalculus.Iso80000.Part3.AreaElement.areaElement_eq_abs_det (t : Fin 2 → EuclideanSpace ℝ (Fin 2)) :\n  PropertyKindCalculus.Iso80000.Part3.AreaElement.areaElement t = |(Matrix.of fun i j =&gt; (t j).ofLp i).det|</code><span class=\"sep\"></span><code class=\"docstring\">**The element is the change-of-variables area density.** For a flat patch the\nsurface element equals `|det A|` — so `dA = |det A| du dv` integrates to the *actual*\narea, confirming the `√g` reading against the Euclidean area it must reproduce. </code>",
  "250":
- "<code>PropertyKindCalculus.Iso80000.Part3.AreaClassification.IsSurfaceArea q t s</code>",
+ "<code>PropertyKindCalculus.Iso80000.Part3.AreaElement.metricDet.{u_1} {E : Type u_1} [NormedAddCommGroup E]\n  [InnerProductSpace ℝ E] (t : Fin 2 → E) : ℝ</code><span class=\"sep\"></span><code class=\"docstring\">`g` — the **determinant of the metric tensor** (`= E·G − F²`). </code>",
  "25":
  "<code>PropertyKindCalculus.KindOfProperty.nominal_not_quantity {k : PropertyKindCalculus.KindOfProperty} (h : k.IsNominal) :\n  ¬k.IsQuantity</code><span class=\"sep\"></span><code class=\"docstring\">A nominal kind is, by construction, not a kind-of-quantity (§13.3.1). </code>",
  "249":
- "<code>MeasurableSet.{u_1} {α : Type u_1} [MeasurableSpace α] (s : Set α) : Prop</code><span class=\"sep\"></span><code class=\"docstring\">`MeasurableSet s` means that `s` is measurable (in the ambient measure space on `α`) </code>",
- "248": "<code>MeasurableSet s</code>",
+ "<code>HPow.hPow.{u, v, w} {α : Type u} {β : Type v} {γ : outParam (Type w)} [self : HPow α β γ] : α → β → γ</code><span class=\"sep\"></span><code class=\"docstring\">`a ^ b` computes `a` to the power of `b`.\nThe meaning of this notation is type-dependent. \n\nConventions for notations in identifiers:\n\n * The recommended spelling of `^` in identifiers is `pow`.</code>",
+ "248":
+ "<code>PropertyKindCalculus.Iso80000.Part3.AreaElement.areaElement_sq.{u_1} {E : Type u_1} [NormedAddCommGroup E]\n  [InnerProductSpace ℝ E] (t : Fin 2 → E) :\n  PropertyKindCalculus.Iso80000.Part3.AreaElement.areaElement t ^ 2 =\n    PropertyKindCalculus.Iso80000.Part3.AreaElement.metricDet t</code><span class=\"sep\"></span><code class=\"docstring\">`(dA)² = g` — the surface element squares back to the determinant of the metric\ntensor: the `√` in `dA = √g` is faithful. </code>",
  "247":
- "<code>Set.{u} (α : Type u) : Type u</code><span class=\"sep\"></span><code class=\"docstring\">A set is a collection of elements of some type `α`.\n\nAlthough `Set` is defined as `α → Prop`, this is an implementation detail which should not be\nrelied on. Instead, `setOf` and membership of a set (`∈`) should be used to convert between sets\nand predicates.\n</code>",
- "246": "<code>Set (ℝ × ℝ)</code>",
+ "<code>PropertyKindCalculus.Iso80000.Part3.AreaElement.areaElement.{u_1} {E : Type u_1} [NormedAddCommGroup E]\n  [InnerProductSpace ℝ E] (t : Fin 2 → E) : ℝ</code><span class=\"sep\"></span><code class=\"docstring\">The **surface element** `dA = √g`: the area-element density at the point. The\nsquare root is what makes a flat patch recover its Euclidean area\n(`areaElement_eq_abs_det`). </code>",
+ "246":
+ "<code>Matrix.{u, u', v} (m : Type u) (n : Type u') (α : Type v) : Type (max u u' v)</code><span class=\"sep\"></span><code class=\"docstring\">`Matrix m n R` is the type of matrices with entries in `R`, whose rows are indexed by `m`\nand whose columns are indexed by `n`. </code>",
  "245":
- "<code>Prod.{u, v} (α : Type u) (β : Type v) : Type (max u v)</code><span class=\"sep\"></span><code class=\"docstring\">The product type, usually written `α × β`. Product types are also called pair or tuple types.\nElements of this type are pairs in which the first element is an `α` and the second element is a\n`β`.\n\nProducts nest to the right, so `(x, y, z) : α × β × γ` is equivalent to `(x, (y, z)) : α × (β × γ)`.\n\n\nConventions for notations in identifiers:\n\n * The recommended spelling of `×` in identifiers is `Prod`.</code>",
- "244": "<code>ℝ × ℝ → Fin 2 → EuclideanSpace ℝ (Fin 2)</code>",
+ "<code>Fin (n : ℕ) : Type</code><span class=\"sep\"></span><code class=\"docstring\">Natural numbers less than some upper bound.\n\nIn particular, a `Fin n` is a natural number `i` with the constraint that `i &lt; n`. It is the\ncanonical type with `n` elements.\n</code>",
+ "244": "<code>Fin 2 → E</code>",
  "243":
- "<code>PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part3.area.kind ℝ</code>",
+ "<code>Real : Type</code><span class=\"sep\"></span><code class=\"docstring\">The type `ℝ` of real numbers constructed as equivalence classes of Cauchy sequences of rational\nnumbers. </code>",
  "242":
- "<code>PropertyKindCalculus.Iso80000.Part3.AreaClassification.certified_surfaceArea_nonneg\n  {q : PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part3.area.kind ℝ}\n  {t : ℝ × ℝ → Fin 2 → EuclideanSpace ℝ (Fin 2)} {s : Set (ℝ × ℝ)} (hs : MeasurableSet s)\n  (h : PropertyKindCalculus.Iso80000.Part3.AreaClassification.IsSurfaceArea q t s) : 0 ≤ q.magnitude</code><span class=\"sep\"></span><code class=\"docstring\">**Property transport (R12).** *Every* certified surface area is non-negative — a\nproperty of area's defining relation, instantiated at the quantity level via the\ncertificate. </code>",
+ "<code>InnerProductSpace.{u_4, u_5} (𝕜 : Type u_4) (E : Type u_5) [RCLike 𝕜] [SeminormedAddCommGroup E] : Type (max u_4 u_5)</code><span class=\"sep\"></span><code class=\"docstring\">A (pre) inner product space is a vector space with an additional operation called inner product.\nThe (semi)norm could be derived from the inner product, instead we require the existence of a\nseminorm and the fact that `‖x‖^2 = re ⟪x, x⟫` to be able to put instances on `𝕂` or product spaces.\n\nNote that `NormedSpace` does not assume that `‖x‖=0` implies `x=0` (it is rather a seminorm).\n\nTo construct a seminorm from an inner product, see `PreInnerProductSpace.ofCore`.\n</code>",
  "241":
- "<code>PropertyKindCalculus.Iso80000.Part3.AreaClassification.rectangleArea\n  (w h : PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part3.length.kind ℝ) :\n  PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part3.area.kind ℝ</code><span class=\"sep\"></span><code class=\"docstring\">A rectangle's area, verified-classified as an area **by construction** from its two\nside lengths (`width × height`). </code>",
- "240":
- "<code>PropertyKindCalculus.Iso80000.Part3.AreaClassification.area_is_length_times_length :\n  PropertyKindCalculus.ProductKind PropertyKindCalculus.Iso80000.Part3.length.kind\n    PropertyKindCalculus.Iso80000.Part3.length.kind PropertyKindCalculus.Iso80000.Part3.area.kind</code><span class=\"sep\"></span><code class=\"docstring\">**area = length × length**, as a product kind-law (the Level-1 scale precondition;\nthe dimensional `L²` is `Part3.area_dim_length`). </code>",
+ "<code>NormedAddCommGroup.{u_8} (E : Type u_8) : Type u_8</code><span class=\"sep\"></span><code class=\"docstring\">A normed group is an additive group endowed with a norm for which `dist x y = ‖-x + y‖` defines\na metric space structure. </code>",
+ "240": "<code>Type u_1</code>",
  "24":
  "<code>PropertyKindCalculus.KindOfProperty : Type</code><span class=\"sep\"></span><code class=\"docstring\">**§6.19 kind-of-property** — common defining aspect of mutually comparable\nproperties. </code>",
  "239":
- "<code>PropertyKindCalculus.Iso80000.Part3.length : PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">Length — item 3-1.1, dimension `L`. </code>",
+ "<code>PropertyKindCalculus.Iso80000.Part3.AreaElement.firstFundamentalForm.{u_1} {E : Type u_1} [NormedAddCommGroup E]\n  [InnerProductSpace ℝ E] (t : Fin 2 → E) : Matrix (Fin 2) (Fin 2) ℝ</code><span class=\"sep\"></span><code class=\"docstring\">The **first fundamental form** (the *metric tensor* of ISO 80000-2) of a surface\nat a point, given the two tangent vectors `t 0 = ∂r/∂u`, `t 1 = ∂r/∂v`: the `2 × 2`\nGram matrix `⟪tᵢ, tⱼ⟫`. Its entries are the classical coefficients `E = ⟪t₀,t₀⟫`,\n`F = ⟪t₀,t₁⟫`, `G = ⟪t₁,t₁⟫`. </code>",
  "238":
- "<code>PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part3.length.kind ℝ</code>",
+ "<code>PropertyKindCalculus.PrefixedUnit.conversionExponent (p : PropertyKindCalculus.PrefixedUnit) : ℤ</code><span class=\"sep\"></span><code class=\"docstring\">**§1.22 — the conversion factor as an exponent.** `1` of the prefixed unit equals\n`10 ^ conversionExponent` of the base unit (e.g. centimetre → metre gives `-2`). </code>",
  "237":
- "<code>PropertyKindCalculus.Iso80000.Part3.AreaClassification.rectangleArea_isProduct\n  (w h : PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part3.length.kind ℝ) :\n  PropertyKindCalculus.Quantity.IsProduct\n    PropertyKindCalculus.Iso80000.Part3.AreaClassification.area_is_length_times_length\n    (PropertyKindCalculus.Iso80000.Part3.AreaClassification.rectangleArea w h) w h</code><span class=\"sep\"></span><code class=\"docstring\">The rectangle-area certificate holds by construction. </code>",
+ "<code>PropertyKindCalculus.Iso80000.Part3.centimetrePrefixed : PropertyKindCalculus.PrefixedUnit</code><span class=\"sep\"></span><code class=\"docstring\">The centimetre as a **prefixed unit** (VIM4 §1.21): the `centi` submultiple of\nthe metre. Its symbol `\"cm\"` and conversion factor (`10⁻²`) follow from the prefix\nand the base. </code>",
  "236":
- "<code>LinearIndependent.{u', u_2, u_4} {ι : Type u'} (R : Type u_2) {M : Type u_4} (v : ι → M) [Semiring R] [AddCommMonoid M]\n  [Module R M] : Prop</code><span class=\"sep\"></span><code class=\"docstring\">`LinearIndependent R v` states the family of vectors `v` is linearly independent over `R`. </code>",
+ "<code>PropertyKindCalculus.Iso80000.Part3.centimetre_conversionExponent :\n  PropertyKindCalculus.Iso80000.Part3.centimetrePrefixed.conversionExponent = -2</code><span class=\"sep\"></span><code class=\"docstring\">The centimetre is a submultiple of the metre with conversion factor `10⁻²`. </code>",
  "235":
- "<code>PropertyKindCalculus.Iso80000.Part3.AreaElement.areaElement_pos_iff.{u_1} {E : Type u_1} [NormedAddCommGroup E]\n  [InnerProductSpace ℝ E] (t : Fin 2 → E) :\n  0 &lt; PropertyKindCalculus.Iso80000.Part3.AreaElement.areaElement t ↔ LinearIndependent ℝ t</code><span class=\"sep\"></span><code class=\"docstring\">**Regularity.** The surface element is strictly positive exactly when the two\ntangent vectors are linearly independent — i.e. at a non-degenerate (regular) point of\nthe parametrization. A vanishing element marks a degenerate parametrization. </code>",
+ "<code>PropertyKindCalculus.PrefixedUnit : Type</code><span class=\"sep\"></span><code class=\"docstring\">**§1.20 / §1.21 — a prefixed unit.** A `MetrologicalUnit` formed by applying an\n`SIPrefix` to a base unit: a decimal multiple (`exponent &gt; 0`) or submultiple\n(`exponent &lt; 0`) of the same kind. The provenance — the prefix and the base — is\ncarried as data so the §1.22 conversion factor can be read off. </code>",
  "234":
- "<code>Matrix.det.{v, u_2} {n : Type u_2} [DecidableEq n] [Fintype n] {R : Type v} [CommRing R] (M : Matrix n n R) : R</code><span class=\"sep\"></span><code class=\"docstring\">The determinant of a matrix given by the Leibniz formula. </code>",
+ "<code>PropertyKindCalculus.MetrologicalUnit</code><span class=\"sep\"></span><code class=\"docstring\">The base unit the prefix is applied to. </code>",
  "233":
- "<code>WithLp.ofLp.{u_1} {p : ENNReal} {V : Type u_1} (self : WithLp p V) : V</code><span class=\"sep\"></span><code class=\"docstring\">Converts an element of `WithLp p V` to an element of `V`. </code>",
- "232": "<code>Fin 2</code>",
+ "<code>PropertyKindCalculus.SIPrefix : Type</code><span class=\"sep\"></span><code class=\"docstring\">**§1.19 NOTE 5 — an SI prefix.** A decimal factor `10 ^ exponent` used to form a\nmultiple (§1.20) or submultiple (§1.21) of a unit, carried with its name and symbol.\nFor example `centi` is `(name := \"centi\", symbol := \"c\", exponent := -2)`. </code>",
+ "232":
+ "<code>PropertyKindCalculus.SIPrefix</code><span class=\"sep\"></span><code class=\"docstring\">The prefix applied (named `siPrefix` because `prefix` is a Lean keyword). </code>",
  "231":
- "<code>Matrix.of.{v, u_2, u_3} {m : Type u_2} {n : Type u_3} {α : Type v} : (m → n → α) ≃ Matrix m n α</code><span class=\"sep\"></span><code class=\"docstring\">Cast a function into a matrix.\n\nThe two sides of the equivalence are definitionally equal types. We want to use an explicit cast\nto distinguish the types because `Matrix` has different instances to pi types (such as `Pi.mul`,\nwhich performs elementwise multiplication, vs `Matrix.mul`).\n\nIf you are defining a matrix, in terms of its entries, use `of (fun i j ↦ _)`. The\npurpose of this approach is to ensure that terms of the form `(fun i j ↦ _) * (fun i j ↦ _)` do not\nappear, as the type of `*` can be misleading.\n</code>",
+ "<code>PropertyKindCalculus.Iso80000.Part3.iso80000_3_dim_collision : ∃ a b, a.kind ≠ b.kind ∧ a.dim = b.dim</code><span class=\"sep\"></span><code class=\"docstring\">**A dimensionful collision.** Distinct ISO 80000-3 kinds also share *dimensionful*\ndimensions — frequency and angular frequency are both `T⁻¹`. Dimension is not a\nclassifier even away from dimension one. </code>",
  "230":
- "<code>abs.{u_1} {α : Type u_1} [Lattice α] [AddGroup α] (a : α) : α</code><span class=\"sep\"></span><code class=\"docstring\">`abs a`, denoted `|a|`, is the absolute value of `a` </code>",
+ "<code>PropertyKindCalculus.Iso80000.Part3.steradian : PropertyKindCalculus.MetrologicalUnit</code><span class=\"sep\"></span><code class=\"docstring\">The steradian, the SI unit of solid angle (item 3-8) — dimension one. </code>",
  "23":
  "<code>Option.{u} (α : Type u) : Type u</code><span class=\"sep\"></span><code class=\"docstring\">Optional values, which are either `some` around a value from the underlying type or `none`.\n\n`Option` can represent nullable types or computations that might fail. In the codomain of a function\ntype, it can also represent partiality.\n</code>",
  "229":
- "<code>EuclideanSpace.{u_7, u_8} (𝕜 : Type u_7) (n : Type u_8) : Type (max u_7 u_8)</code><span class=\"sep\"></span><code class=\"docstring\">The standard real/complex Euclidean space, functions on a finite type. For an `n`-dimensional\nspace use `EuclideanSpace 𝕜 (Fin n)`.\n\nFor the case when `n = Fin _`, there is `!₂[x, y, ...]` notation for building elements of this type,\nanalogous to `![x, y, ...]` notation. </code>",
- "228": "<code>Fin 2 → EuclideanSpace ℝ (Fin 2)</code>",
+ "<code>PropertyKindCalculus.Iso80000.Part3.radian : PropertyKindCalculus.MetrologicalUnit</code><span class=\"sep\"></span><code class=\"docstring\">The radian, the SI unit of plane angle (item 3-5) — dimension one. </code>",
+ "228":
+ "<code>PropertyKindCalculus.Iso80000.Part3.radian_steradian_not_commensurable :\n  ¬PropertyKindCalculus.Iso80000.Part3.radian.Commensurable PropertyKindCalculus.Iso80000.Part3.steradian</code><span class=\"sep\"></span><code class=\"docstring\">The radian and the steradian are **not** commensurable — plane angle and solid\nangle are distinct kinds, *though both are dimension one*. The kind separates units\nthe dimension cannot. </code>",
  "227":
- "<code>PropertyKindCalculus.Iso80000.Part3.AreaElement.areaElement_eq_abs_det (t : Fin 2 → EuclideanSpace ℝ (Fin 2)) :\n  PropertyKindCalculus.Iso80000.Part3.AreaElement.areaElement t = |(Matrix.of fun i j =&gt; (t j).ofLp i).det|</code><span class=\"sep\"></span><code class=\"docstring\">**The element is the change-of-variables area density.** For a flat patch the\nsurface element equals `|det A|` — so `dA = |det A| du dv` integrates to the *actual*\narea, confirming the `√g` reading against the Euclidean area it must reproduce. </code>",
+ "<code>PropertyKindCalculus.Iso80000.Part3.iso80000_3_dim_one_collision : ∃ a b, a.kind ≠ b.kind ∧ a.dim = b.dim ∧ a.dim = 1</code><span class=\"sep\"></span><code class=\"docstring\">**The dimension-1 disambiguation, on standard quantities.** There exist distinct\nISO 80000-3 kinds with the same dimension one — plane angle and solid angle witness\nit. PhysLib's `Dimension`, and any dimension-only type system, cannot separate them;\nthe kind layer does. (Generalizes `Dimension.dim_not_injective` to the standard.) </code>",
  "226":
- "<code>PropertyKindCalculus.Iso80000.Part3.AreaElement.metricDet.{u_1} {E : Type u_1} [NormedAddCommGroup E]\n  [InnerProductSpace ℝ E] (t : Fin 2 → E) : ℝ</code><span class=\"sep\"></span><code class=\"docstring\">`g` — the **determinant of the metric tensor** (`= E·G − F²`). </code>",
+ "<code>PropertyKindCalculus.Iso80000.Part3.width_distance_comparable :\n  PropertyKindCalculus.MutuallyComparable PropertyKindCalculus.Iso80000.Part3.Edge\n    PropertyKindCalculus.Iso80000.Part3.width.kind PropertyKindCalculus.Iso80000.Part3.distance.kind</code><span class=\"sep\"></span><code class=\"docstring\">**Mutual comparability is preserved.** Width and distance, though distinct kinds,\nremain *mutually comparable* — they share the super-kind length, so combining them is\npossible but only via an explicit up-cast, never silently. </code>",
  "225":
- "<code>HPow.hPow.{u, v, w} {α : Type u} {β : Type v} {γ : outParam (Type w)} [self : HPow α β γ] : α → β → γ</code><span class=\"sep\"></span><code class=\"docstring\">`a ^ b` computes `a` to the power of `b`.\nThe meaning of this notation is type-dependent. \n\nConventions for notations in identifiers:\n\n * The recommended spelling of `^` in identifiers is `pow`.</code>",
+ "<code>PropertyKindCalculus.Iso80000.Part3.length : PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">Length — item 3-1.1, dimension `L`. The broad genus of the length family. </code>",
  "224":
- "<code>PropertyKindCalculus.Iso80000.Part3.AreaElement.areaElement_sq.{u_1} {E : Type u_1} [NormedAddCommGroup E]\n  [InnerProductSpace ℝ E] (t : Fin 2 → E) :\n  PropertyKindCalculus.Iso80000.Part3.AreaElement.areaElement t ^ 2 =\n    PropertyKindCalculus.Iso80000.Part3.AreaElement.metricDet t</code><span class=\"sep\"></span><code class=\"docstring\">`(dA)² = g` — the surface element squares back to the determinant of the metric\ntensor: the `√` in `dA = √g` is faithful. </code>",
+ "<code>PropertyKindCalculus.Iso80000.Part3.radius : PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">Radius — item 3-1.6, a length species (centre to rim). </code>",
  "223":
- "<code>PropertyKindCalculus.Iso80000.Part3.AreaElement.areaElement.{u_1} {E : Type u_1} [NormedAddCommGroup E]\n  [InnerProductSpace ℝ E] (t : Fin 2 → E) : ℝ</code><span class=\"sep\"></span><code class=\"docstring\">The **surface element** `dA = √g`: the area-element density at the point. The\nsquare root is what makes a flat patch recover its Euclidean area\n(`areaElement_eq_abs_det`). </code>",
+ "<code>PropertyKindCalculus.Iso80000.Part3.Edge :\n  PropertyKindCalculus.KindOfProperty → PropertyKindCalculus.KindOfProperty → Prop</code><span class=\"sep\"></span><code class=\"docstring\">This application's system of length quantities — the direct-parent edges among\nthe kinds of the length family (3-1). </code>",
  "222":
- "<code>Matrix.{u, u', v} (m : Type u) (n : Type u') (α : Type v) : Type (max u u' v)</code><span class=\"sep\"></span><code class=\"docstring\">`Matrix m n R` is the type of matrices with entries in `R`, whose rows are indexed by `m`\nand whose columns are indexed by `n`. </code>",
+ "<code>PropertyKindCalculus.Iso80000.Part3.radius_specializes_length :\n  PropertyKindCalculus.Specializes PropertyKindCalculus.Iso80000.Part3.Edge\n    PropertyKindCalculus.Iso80000.Part3.radius.kind PropertyKindCalculus.Iso80000.Part3.length.kind</code><span class=\"sep\"></span><code class=\"docstring\">A **radius specializes length transitively** (radius ⊑ diameter ⊑ width ⊑ length)\n— specialization is a preorder, not just the direct edges. </code>",
  "221":
- "<code>Fin (n : ℕ) : Type</code><span class=\"sep\"></span><code class=\"docstring\">Natural numbers less than some upper bound.\n\nIn particular, a `Fin n` is a natural number `i` with the constraint that `i &lt; n`. It is the\ncanonical type with `n` elements.\n</code>",
- "220": "<code>Fin 2 → E</code>",
+ "<code>PropertyKindCalculus.Iso80000.Part3.distance : PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">Distance — item 3-1.8, a length species (shortest path length). </code>",
+ "220":
+ "<code>PropertyKindCalculus.Iso80000.Part3.width : PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">Width (breadth) — item 3-1.2, a length species (transverse extent). </code>",
  "22":
  "<code>Option String</code><span class=\"sep\"></span><code class=\"docstring\">**§7.5 examination principle** used as a defining aspect, when present. </code>",
  "219":
- "<code>Real : Type</code><span class=\"sep\"></span><code class=\"docstring\">The type `ℝ` of real numbers constructed as equivalence classes of Cauchy sequences of rational\nnumbers. </code>",
- "218":
- "<code>InnerProductSpace.{u_4, u_5} (𝕜 : Type u_4) (E : Type u_5) [RCLike 𝕜] [SeminormedAddCommGroup E] : Type (max u_4 u_5)</code><span class=\"sep\"></span><code class=\"docstring\">A (pre) inner product space is a vector space with an additional operation called inner product.\nThe (semi)norm could be derived from the inner product, instead we require the existence of a\nseminorm and the fact that `‖x‖^2 = re ⟪x, x⟫` to be able to put instances on `𝕂` or product spaces.\n\nNote that `NormedSpace` does not assume that `‖x‖=0` implies `x=0` (it is rather a seminorm).\n\nTo construct a seminorm from an inner product, see `PreInnerProductSpace.ofCore`.\n</code>",
- "217":
- "<code>NormedAddCommGroup.{u_8} (E : Type u_8) : Type u_8</code><span class=\"sep\"></span><code class=\"docstring\">A normed group is an additive group endowed with a norm for which `dist x y = ‖-x + y‖` defines\na metric space structure. </code>",
- "216": "<code>Type u_1</code>",
+ "<code>PropertyKindCalculus.Iso80000.Part3.width_ne_distance :\n  PropertyKindCalculus.Iso80000.Part3.width.kind ≠ PropertyKindCalculus.Iso80000.Part3.distance.kind</code><span class=\"sep\"></span><code class=\"docstring\">**Distinction not by fiat but by measurement principle.** Width and distance are\ndistinct kinds *because they are examined by different principles* (transverse extent\nvs shortest path), not merely because their `id` strings differ — this is the\nuser-facing point of `distinct_of_examPrinciple` applied to the standard. </code>",
+ "218": "<code>PropertyKindCalculus.ExaminationPrinciple</code>",
+ "217": "<code>String</code>",
+ "216":
+ "<code>PropertyKindCalculus.Iso80000.Part3.lengthSpecies (id : String) (p : PropertyKindCalculus.ExaminationPrinciple) :\n  PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">A length species: dimension `L`, ratio-scale, individuated by its measurement\n(examination) principle. </code>",
  "215":
- "<code>PropertyKindCalculus.Iso80000.Part3.AreaElement.firstFundamentalForm.{u_1} {E : Type u_1} [NormedAddCommGroup E]\n  [InnerProductSpace ℝ E] (t : Fin 2 → E) : Matrix (Fin 2) (Fin 2) ℝ</code><span class=\"sep\"></span><code class=\"docstring\">The **first fundamental form** (the *metric tensor* of ISO 80000-2) of a surface\nat a point, given the two tangent vectors `t 0 = ∂r/∂u`, `t 1 = ∂r/∂v`: the `2 × 2`\nGram matrix `⟪tᵢ, tⱼ⟫`. Its entries are the classical coefficients `E = ⟪t₀,t₀⟫`,\n`F = ⟪t₀,t₁⟫`, `G = ⟪t₁,t₁⟫`. </code>",
+ "<code>PropertyKindCalculus.Iso80000.Part3.second : PropertyKindCalculus.MetrologicalUnit</code><span class=\"sep\"></span><code class=\"docstring\">The second, the SI unit of duration (item 3-9). </code>",
  "214":
- "<code>PropertyKindCalculus.PrefixedUnit.conversionExponent (p : PropertyKindCalculus.PrefixedUnit) : ℤ</code><span class=\"sep\"></span><code class=\"docstring\">**§1.22 — the conversion factor as an exponent.** `1` of the prefixed unit equals\n`10 ^ conversionExponent` of the base unit (e.g. centimetre → metre gives `-2`). </code>",
+ "<code>PropertyKindCalculus.Iso80000.Part3.metre_second_not_commensurable :\n  ¬PropertyKindCalculus.Iso80000.Part3.metre.Commensurable PropertyKindCalculus.Iso80000.Part3.second</code><span class=\"sep\"></span><code class=\"docstring\">The metre and the second are **not** commensurable — length and duration are\ndistinct kinds (a type-level fact). </code>",
  "213":
- "<code>PropertyKindCalculus.Iso80000.Part3.centimetrePrefixed : PropertyKindCalculus.PrefixedUnit</code><span class=\"sep\"></span><code class=\"docstring\">The centimetre as a **prefixed unit** (VIM4 §1.21): the `centi` submultiple of\nthe metre. Its symbol `\"cm\"` and its conversion factor (`10⁻²`) follow from the\nprefix and the base, rather than being asserted independently. </code>",
+ "<code>PropertyKindCalculus.Iso80000.Part3.metre : PropertyKindCalculus.MetrologicalUnit</code><span class=\"sep\"></span><code class=\"docstring\">The metre, the SI unit of length (item 3-1.1). </code>",
  "212":
- "<code>PropertyKindCalculus.Iso80000.Part3.centimetre_conversionExponent :\n  PropertyKindCalculus.Iso80000.Part3.centimetrePrefixed.conversionExponent = -2</code><span class=\"sep\"></span><code class=\"docstring\">The centimetre is a **submultiple** of the metre with conversion factor `10⁻²`:\n`1 cm = 10⁻² m` (VIM4 §1.21 / §1.22). The exponent is a checked computation. </code>",
+ "<code>PropertyKindCalculus.Iso80000.Part3.metre_wellFormed : PropertyKindCalculus.Iso80000.Part3.metre.WellFormed</code><span class=\"sep\"></span><code class=\"docstring\">The metre is a well-formed unit (length is ratio-scale, so it bears a unit). </code>",
  "211":
- "<code>PropertyKindCalculus.PrefixedUnit : Type</code><span class=\"sep\"></span><code class=\"docstring\">**§1.20 / §1.21 — a prefixed unit.** A `MetrologicalUnit` formed by applying an\n`SIPrefix` to a base unit: a decimal multiple (`exponent &gt; 0`) or submultiple\n(`exponent &lt; 0`) of the same kind. The provenance — the prefix and the base — is\ncarried as data so the §1.22 conversion factor can be read off. </code>",
+ "<code>PropertyKindCalculus.Dim.time : Dimension</code><span class=\"sep\"></span><code class=\"docstring\">Time, `T`. </code>",
  "210":
- "<code>PropertyKindCalculus.MetrologicalUnit</code><span class=\"sep\"></span><code class=\"docstring\">The base unit the prefix is applied to. </code>",
+ "<code>HDiv.hDiv.{u, v, w} {α : Type u} {β : Type v} {γ : outParam (Type w)} [self : HDiv α β γ] : α → β → γ</code><span class=\"sep\"></span><code class=\"docstring\">`a / b` computes the result of dividing `a` by `b`.\nThe meaning of this notation is type-dependent.\n* For most types like `Nat`, `Int`, `Rat`, `Real`, `a / 0` is defined to be `0`.\n* For `Nat`, `a / b` rounds downwards.\n* For `Int`, `a / b` rounds downwards if `b` is positive or upwards if `b` is negative.\n  It is implemented as `Int.ediv`, the unique function satisfying\n  `a % b + b * (a / b) = a` and `0 ≤ a % b &lt; natAbs b` for `b ≠ 0`.\n  Other rounding conventions are available using the functions\n  `Int.fdiv` (floor rounding) and `Int.tdiv` (truncation rounding).\n* For `Float`, `a / 0` follows the IEEE 754 semantics for division,\n  usually resulting in `inf` or `nan`. \n\nConventions for notations in identifiers:\n\n * The recommended spelling of `/` in identifiers is `div`.</code>",
  "21":
  "<code>PropertyKindCalculus.ScaleType</code><span class=\"sep\"></span><code class=\"docstring\">The scale type (Ch. 12) — which operations are defined on its instances. </code>",
  "209":
- "<code>PropertyKindCalculus.SIPrefix : Type</code><span class=\"sep\"></span><code class=\"docstring\">**§1.19 NOTE 5 — an SI prefix.** A decimal factor `10 ^ exponent` used to form a\nmultiple (§1.20) or submultiple (§1.21) of a unit, carried with its name and symbol.\nFor example `centi` is `(name := \"centi\", symbol := \"c\", exponent := -2)`. </code>",
- "208":
- "<code>PropertyKindCalculus.SIPrefix</code><span class=\"sep\"></span><code class=\"docstring\">The prefix applied (named `siPrefix` because `prefix` is a Lean keyword). </code>",
- "207":
- "<code>PropertyKindCalculus.Iso80000.Part3.second : PropertyKindCalculus.MetrologicalUnit</code><span class=\"sep\"></span><code class=\"docstring\">The second, the SI unit of duration (item 3-9.1). </code>",
- "206":
- "<code>PropertyKindCalculus.Iso80000.Part3.metre_second_not_commensurable :\n  ¬PropertyKindCalculus.Iso80000.Part3.metre.Commensurable PropertyKindCalculus.Iso80000.Part3.second</code><span class=\"sep\"></span><code class=\"docstring\">The metre and the second are **not** commensurable — length and time are\ndistinct kinds (a type-level fact, not a runtime check). </code>",
- "205":
- "<code>PropertyKindCalculus.Iso80000.Part3.metre : PropertyKindCalculus.MetrologicalUnit</code><span class=\"sep\"></span><code class=\"docstring\">The metre, the SI unit of length (item 3-1.1). </code>",
- "204":
- "<code>PropertyKindCalculus.Iso80000.Part3.metre_wellFormed : PropertyKindCalculus.Iso80000.Part3.metre.WellFormed</code><span class=\"sep\"></span><code class=\"docstring\">The metre is a well-formed metrological unit: length is a rational kind, so it\nbears a unit (Dybkær §13.3.5). </code>",
- "203":
- "<code>PropertyKindCalculus.Dim.time : Dimension</code><span class=\"sep\"></span><code class=\"docstring\">Time, `T`. </code>",
- "202":
- "<code>HDiv.hDiv.{u, v, w} {α : Type u} {β : Type v} {γ : outParam (Type w)} [self : HDiv α β γ] : α → β → γ</code><span class=\"sep\"></span><code class=\"docstring\">`a / b` computes the result of dividing `a` by `b`.\nThe meaning of this notation is type-dependent.\n* For most types like `Nat`, `Int`, `Rat`, `Real`, `a / 0` is defined to be `0`.\n* For `Nat`, `a / b` rounds downwards.\n* For `Int`, `a / b` rounds downwards if `b` is positive or upwards if `b` is negative.\n  It is implemented as `Int.ediv`, the unique function satisfying\n  `a % b + b * (a / b) = a` and `0 ≤ a % b &lt; natAbs b` for `b ≠ 0`.\n  Other rounding conventions are available using the functions\n  `Int.fdiv` (floor rounding) and `Int.tdiv` (truncation rounding).\n* For `Float`, `a / 0` follows the IEEE 754 semantics for division,\n  usually resulting in `inf` or `nan`. \n\nConventions for notations in identifiers:\n\n * The recommended spelling of `/` in identifiers is `div`.</code>",
- "201":
  "<code>PropertyKindCalculus.Dim.length : Dimension</code><span class=\"sep\"></span><code class=\"docstring\">Length, `L`. </code>",
+ "208":
+ "<code>PropertyKindCalculus.Iso80000.Part3.speed : PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">Speed — item 3-10.2, dimension `L·T⁻¹`. The `v = ds/dt` remark is formalized\n(as `speed = path length / duration`) in `Part3.DefiningRelations`. </code>",
+ "207":
+ "<code>PropertyKindCalculus.Iso80000.Part3.speed_dim :\n  PropertyKindCalculus.Iso80000.Part3.speed.dim = PropertyKindCalculus.Dim.length / PropertyKindCalculus.Dim.time</code><span class=\"sep\"></span><code class=\"docstring\">Speed is length over time (`L·T⁻¹`), ISO 80000-3 item 3-10.2. </code>",
+ "206":
+ "<code>Dimension.length (self : Dimension) : ℚ</code><span class=\"sep\"></span><code class=\"docstring\">The length dimension. </code>",
+ "205":
+ "<code>PropertyKindCalculus.DimensionedKind.dim (self : PropertyKindCalculus.DimensionedKind) : Dimension</code><span class=\"sep\"></span><code class=\"docstring\">The physical dimension of the kind's quantities (PhysLib `Dimension`). </code>",
+ "204":
+ "<code>PropertyKindCalculus.Iso80000.Part3.area : PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">Area — item 3-3, dimension `L²`. The surface-element remark is formalized in\n`Part3.AreaElement`. </code>",
+ "203":
+ "<code>PropertyKindCalculus.Iso80000.Part3.area_dim_length : PropertyKindCalculus.Iso80000.Part3.area.dim.length = 2</code><span class=\"sep\"></span><code class=\"docstring\">Area is `L²`: its length-exponent is `2` (ISO 80000-3 item 3-3). </code>",
+ "202":
+ "<code>PropertyKindCalculus.Iso80000.Part3.CataloguedKind : Type</code><span class=\"sep\"></span><code class=\"docstring\">A **catalogued quantity-kind**: a {dimensioned kind} together with its exact\nsource in the 80000 series — the part, the printed item designation, the principal\nquantity symbol, and the coherent SI unit symbol. Every field other than `qk` is a\n*citation locator*; the citation travels with the kind as data, so a downstream\nmodel can render or audit the source of each definition. </code>",
+ "201":
+ "<code>PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">The dimensioned kind itself. </code>",
  "200":
- "<code>PropertyKindCalculus.Iso80000.Part3.speed : PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">Speed — item 3-10.2, dimension `L·T⁻¹`. </code>",
+ "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">The coherent SI unit symbol, e.g. \"m²\" (a citation locator). </code>",
  "20":
  "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">Terminological identity (mirrors the OML `id`). </code>",
  "2":
  "<code>PropertyKindCalculus.System : Type</code><span class=\"sep\"></span><code class=\"docstring\">**§3.3 system** — \"part or phenomenon of the perceivable or conceivable\nworld consisting of a demarcated arrangement of a set of elements and a set of\nrelationships or processes between these elements.\"\n\nSpecified abstractly by identity here; the mereological structure needed for\nextensivity (§13.5) is added in a later module. </code>",
  "199":
- "<code>PropertyKindCalculus.Iso80000.Part3.speed_dim :\n  PropertyKindCalculus.Iso80000.Part3.speed.dim = PropertyKindCalculus.Dim.length / PropertyKindCalculus.Dim.time</code><span class=\"sep\"></span><code class=\"docstring\">Speed is length over time (`L·T⁻¹`), ISO 80000-3 item 3-10.2. </code>",
+ "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">The principal quantity symbol, e.g. \"A\". </code>",
  "198":
- "<code>Dimension.length (self : Dimension) : ℚ</code><span class=\"sep\"></span><code class=\"docstring\">The length dimension. </code>",
+ "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">The item designation as printed, e.g. \"3-3\". </code>",
  "197":
- "<code>PropertyKindCalculus.DimensionedKind.dim (self : PropertyKindCalculus.DimensionedKind) : Dimension</code><span class=\"sep\"></span><code class=\"docstring\">The physical dimension of the kind's quantities (PhysLib `Dimension`). </code>",
- "196":
- "<code>PropertyKindCalculus.Iso80000.Part3.area : PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">Area — item 3-2.1, dimension `L²`. </code>",
- "195":
- "<code>PropertyKindCalculus.Iso80000.Part3.area_dim_length : PropertyKindCalculus.Iso80000.Part3.area.dim.length = 2</code><span class=\"sep\"></span><code class=\"docstring\">Area carries `L²`: its length-exponent is `2` — a checked computation in\nPhysLib's group, matching ISO 80000-3 item 3-2.1. </code>",
- "194":
- "<code>PropertyKindCalculus.Iso80000.Part3.CataloguedKind : Type</code><span class=\"sep\"></span><code class=\"docstring\">A **catalogued quantity-kind**: a {dimensioned kind} together with its exact\nsource in the 80000 series (part + item designation + principal symbol). The\ncitation is *data*, so a downstream model can render or audit it. </code>",
- "193":
- "<code>PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">The dimensioned kind itself. </code>",
- "192":
- "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">The principal quantity symbol, e.g. \"l\". </code>",
- "191":
- "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">The item designation as printed, e.g. \"3-1.1\". </code>",
- "190":
  "<code>PropertyKindCalculus.Iso80000.StandardRef</code><span class=\"sep\"></span><code class=\"docstring\">The part of the series this kind is defined in. </code>",
+ "196":
+ "<code>List.{u} (α : Type u) : Type u</code><span class=\"sep\"></span><code class=\"docstring\">Linked lists: ordered lists, in which each element has a reference to the next element.\n\nMost operations on linked lists take time proportional to the length of the list, because each\nelement must be traversed to find the next element.\n\n`List α` is isomorphic to `Array α`, but they are useful for different things:\n* `List α` is easier for reasoning, and `Array α` is modeled as a wrapper around `List α`.\n* `List α` works well as a persistent data structure, when many copies of the tail are shared. When\n  the value is not shared, `Array α` will have better performance because it can do destructive\n  updates.\n</code>",
+ "195":
+ "<code>PropertyKindCalculus.Iso80000.catalogue : List PropertyKindCalculus.Iso80000.StandardRef</code><span class=\"sep\"></span><code class=\"docstring\">The full catalogue of licensed parts, in part order. </code>",
+ "194":
+ "<code>PropertyKindCalculus.Iso80000.StandardRef : Type</code><span class=\"sep\"></span><code class=\"docstring\">A **bibliographic reference** to a published standard — body, number, part,\nedition, and date only. No normative content is carried; this records the citable\nidentity so a {quantity-kind} or {unit} can name its exact source. </code>",
+ "193":
+ "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">The part's official English title (the subtitle after \"Quantities and units —\"). </code>",
+ "192":
+ "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">Publication date, year-month (e.g. \"2019-10\"). </code>",
+ "191":
+ "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">The edition designation as printed on the cover (e.g. \"Second edition\",\n\"Edition 2.0\"). </code>",
+ "190":
+ "<code>Nat</code><span class=\"sep\"></span><code class=\"docstring\">The part number (e.g. `3` for *Space and time*). </code>",
  "19":
  "<code>PropertyKindCalculus.ScaleType.AllowsRatio : PropertyKindCalculus.ScaleType → Prop</code><span class=\"sep\"></span><code class=\"docstring\">`×, ÷` available only at ratio scale (§12.20). </code>",
  "189":
- "<code>List.{u} (α : Type u) : Type u</code><span class=\"sep\"></span><code class=\"docstring\">Linked lists: ordered lists, in which each element has a reference to the next element.\n\nMost operations on linked lists take time proportional to the length of the list, because each\nelement must be traversed to find the next element.\n\n`List α` is isomorphic to `Array α`, but they are useful for different things:\n* `List α` is easier for reasoning, and `Array α` is modeled as a wrapper around `List α`.\n* `List α` works well as a persistent data structure, when many copies of the tail are shared. When\n  the value is not shared, `Array α` will have better performance because it can do destructive\n  updates.\n</code>",
- "188":
- "<code>PropertyKindCalculus.Iso80000.catalogue : List PropertyKindCalculus.Iso80000.StandardRef</code><span class=\"sep\"></span><code class=\"docstring\">The full catalogue of licensed parts, in part order. </code>",
- "187":
- "<code>PropertyKindCalculus.Iso80000.StandardRef : Type</code><span class=\"sep\"></span><code class=\"docstring\">A **bibliographic reference** to a published standard — body, number, part,\nedition, and date only. No normative content is carried; this records the citable\nidentity so a {quantity-kind} or {unit} can name its exact source. </code>",
- "186":
- "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">The part's official English title (the subtitle after \"Quantities and units —\"). </code>",
- "185":
- "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">Publication date, year-month (e.g. \"2019-10\"). </code>",
- "184":
- "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">The edition designation as printed on the cover (e.g. \"Second edition\",\n\"Edition 2.0\"). </code>",
- "183":
- "<code>Nat</code><span class=\"sep\"></span><code class=\"docstring\">The part number (e.g. `3` for *Space and time*). </code>",
- "182":
  "<code>Nat : Type</code><span class=\"sep\"></span><code class=\"docstring\">The natural numbers, starting at zero.\n\nThis type is special-cased by both the kernel and the compiler, and overridden with an efficient\nimplementation. Both use a fast arbitrary-precision arithmetic library (usually\n[GMP](https://gmplib.org/)); at runtime, `Nat` values that are sufficiently small are unboxed.\n</code>",
- "181":
+ "188":
  "<code>Nat</code><span class=\"sep\"></span><code class=\"docstring\">The series number — `80000`. </code>",
- "180":
+ "187":
  "<code>PropertyKindCalculus.Iso80000.StandardBody : Type</code><span class=\"sep\"></span><code class=\"docstring\">The standards body under which a part of the 80000 series is published. The\nseries is a joint ISO/IEC project; each part is issued under one body — in the\ncatalogued copies, part 6 (Electromagnetism) is IEC and the rest are ISO. </code>",
+ "186":
+ "<code>PropertyKindCalculus.Iso80000.StandardBody</code><span class=\"sep\"></span><code class=\"docstring\">The publishing body (ISO or IEC). </code>",
+ "185":
+ "<code>PropertyKindCalculus.volume : PropertyKindCalculus.KindOfProperty</code><span class=\"sep\"></span><code class=\"docstring\">Volume, a ratio kind. </code>",
+ "184":
+ "<code>PropertyKindCalculus.ethanolPart : PropertyKindCalculus.Decomposition</code><span class=\"sep\"></span><code class=\"docstring\">50 mL of ethanol, as an atomic part. </code>",
+ "183":
+ "<code>PropertyKindCalculus.waterPart : PropertyKindCalculus.Decomposition</code><span class=\"sep\"></span><code class=\"docstring\">50 mL of water, as an atomic part. </code>",
+ "182":
+ "<code>LT.lt.{u} {α : Type u} [self : LT α] : α → α → Prop</code><span class=\"sep\"></span><code class=\"docstring\">The less-than relation: `x &lt; y` \n\nConventions for notations in identifiers:\n\n * The recommended spelling of `&lt;` in identifiers is `lt`.</code>",
+ "181":
+ "<code>PropertyKindCalculus.mixture : PropertyKindCalculus.Decomposition</code><span class=\"sep\"></span><code class=\"docstring\">The water/ethanol mixture, as the disjoint union of the two parts. </code>",
+ "180":
+ "<code>PropertyKindCalculus.volMix : PropertyKindCalculus.Measurement</code><span class=\"sep\"></span><code class=\"docstring\">A volume measurement that contracts on mixing: every atomic part reads 50 mL,\nany mixture reads 96 mL. </code>",
  "18":
  "<code>PropertyKindCalculus.ScaleType.AllowsDifference : PropertyKindCalculus.ScaleType → Prop</code><span class=\"sep\"></span><code class=\"docstring\">`+, −` available from interval upward (§12.19). </code>",
  "179":
- "<code>PropertyKindCalculus.Iso80000.StandardBody</code><span class=\"sep\"></span><code class=\"docstring\">The publishing body (ISO or IEC). </code>",
- "178":
- "<code>PropertyKindCalculus.volume : PropertyKindCalculus.KindOfProperty</code><span class=\"sep\"></span><code class=\"docstring\">Volume, a ratio kind. </code>",
- "177":
- "<code>PropertyKindCalculus.ethanolPart : PropertyKindCalculus.Decomposition</code><span class=\"sep\"></span><code class=\"docstring\">50 mL of ethanol, as an atomic part. </code>",
- "176":
- "<code>PropertyKindCalculus.waterPart : PropertyKindCalculus.Decomposition</code><span class=\"sep\"></span><code class=\"docstring\">50 mL of water, as an atomic part. </code>",
- "175":
- "<code>LT.lt.{u} {α : Type u} [self : LT α] : α → α → Prop</code><span class=\"sep\"></span><code class=\"docstring\">The less-than relation: `x &lt; y` \n\nConventions for notations in identifiers:\n\n * The recommended spelling of `&lt;` in identifiers is `lt`.</code>",
- "174":
- "<code>PropertyKindCalculus.mixture : PropertyKindCalculus.Decomposition</code><span class=\"sep\"></span><code class=\"docstring\">The water/ethanol mixture, as the disjoint union of the two parts. </code>",
- "173":
- "<code>PropertyKindCalculus.volMix : PropertyKindCalculus.Measurement</code><span class=\"sep\"></span><code class=\"docstring\">A volume measurement that contracts on mixing: every atomic part reads 50 mL,\nany mixture reads 96 mL. </code>",
- "172":
  "<code>PropertyKindCalculus.mixing_subadditive :\n  (PropertyKindCalculus.volMix PropertyKindCalculus.mixture).numeral &lt;\n      (PropertyKindCalculus.volMix PropertyKindCalculus.waterPart).numeral +\n        (PropertyKindCalculus.volMix PropertyKindCalculus.ethanolPart).numeral ∧\n    ¬PropertyKindCalculus.Extensive PropertyKindCalculus.volume PropertyKindCalculus.volMix</code><span class=\"sep\"></span><code class=\"docstring\">**Volume on mixing is not extensive.** The mixture's volume is *strictly less*\nthan the sum of the component volumes (96 &lt; 50 + 50), so additivity fails and\n`volume` is not extensive under this measurement. Matching the extensive law would\nbe unsound here — which is exactly why extensivity must be tracked, not assumed. </code>",
- "171":
+ "178":
  "<code>PropertyKindCalculus.leafSum (m : PropertyKindCalculus.Measurement) : PropertyKindCalculus.Decomposition → Int</code><span class=\"sep\"></span><code class=\"docstring\">The total over the atomic **parts** (leaves) of a decomposition: the sum of the\nnumerals the measurement assigns to each leaf. This is the right-hand side\n$`\\sum_i \\mathrm{value}(s_i)` of the extensive law. </code>",
- "170": "<code>PropertyKindCalculus.Extensive k m</code>",
+ "177": "<code>PropertyKindCalculus.Extensive k m</code>",
+ "176":
+ "<code>PropertyKindCalculus.extensive_additive {k : PropertyKindCalculus.KindOfProperty} {m : PropertyKindCalculus.Measurement}\n  (h : PropertyKindCalculus.Extensive k m) (d : PropertyKindCalculus.Decomposition) :\n  (m d).numeral = PropertyKindCalculus.leafSum m d</code><span class=\"sep\"></span><code class=\"docstring\">**Extensive aggregation (the capstone).** For an extensive kind, the value\nmeasured on the *whole* equals the sum over *all* atomic parts of a decomposition,\n$$`\\mathrm{value}\\Bigl(\\bigsqcup_i s_i\\Bigr) = \\sum_i \\mathrm{value}(s_i),`\nto arbitrary depth. The $`\\forall`-quantified law itself — not a single instance —\nis the deliverable: it is proved by induction on the decomposition, lifting the\nsingle-split `additive` field to the whole tree. </code>",
+ "175":
+ "<code>PropertyKindCalculus.Measurement : Type</code><span class=\"sep\"></span><code class=\"docstring\">A **measurement** of a fixed kind over a decomposition: the property value\nobserved on the (sub-)system at each node — a leaf carries the value of that atomic\npart, a node the value of the whole it composes. </code>",
+ "174":
+ "<code>PropertyKindCalculus.Extensive (k : PropertyKindCalculus.KindOfProperty) (m : PropertyKindCalculus.Measurement) : Prop</code><span class=\"sep\"></span><code class=\"docstring\">**§13.5 extensive kind.** A kind `k` is *extensive* under a measurement `m`\nwhen (i) every part is measured as a value *of kind* `k` (one shared reference, so\nthe numerals are commensurable) and (ii) the numeral on a disjoint union is the sum\nof the numerals on the parts. Mass satisfies this; volume on mixing does not. </code>",
+ "173":
+ "<code>HAdd.hAdd.{u, v, w} {α : Type u} {β : Type v} {γ : outParam (Type w)} [self : HAdd α β γ] : α → β → γ</code><span class=\"sep\"></span><code class=\"docstring\">`a + b` computes the sum of `a` and `b`.\nThe meaning of this notation is type-dependent. \n\nConventions for notations in identifiers:\n\n * The recommended spelling of `+` in identifiers is `add`.</code>",
+ "172":
+ "<code>PropertyKindCalculus.Decomposition.union :\n  PropertyKindCalculus.Decomposition → PropertyKindCalculus.Decomposition → PropertyKindCalculus.Decomposition</code><span class=\"sep\"></span><code class=\"docstring\">The disjoint union of two parts. </code>",
+ "171":
+ "<code>∀ (a b : PropertyKindCalculus.Decomposition), (m (a.union b)).numeral = (m a).numeral + (m b).numeral</code><span class=\"sep\"></span><code class=\"docstring\">The single-split additivity law: a union measures as the sum of its two parts. </code>",
+ "170":
+ "<code>PropertyKindCalculus.PropertyValue.kind (self : PropertyKindCalculus.PropertyValue) :\n  PropertyKindCalculus.KindOfProperty</code><span class=\"sep\"></span><code class=\"docstring\">§9.15 — the kind-of-property this value belongs to; a value is comparable\nonly with values of the same kind. </code>",
  "17":
  "<code>And (a b : Prop) : Prop</code><span class=\"sep\"></span><code class=\"docstring\">`And a b`, or `a ∧ b`, is the conjunction of propositions. It can be\nconstructed and destructed like a pair: if `ha : a` and `hb : b` then\n`⟨ha, hb⟩ : a ∧ b`, and if `h : a ∧ b` then `h.left : a` and `h.right : b`.\n\n\nConventions for notations in identifiers:\n\n * The recommended spelling of `∧` in identifiers is `and`.</code>",
- "169":
- "<code>PropertyKindCalculus.extensive_additive {k : PropertyKindCalculus.KindOfProperty} {m : PropertyKindCalculus.Measurement}\n  (h : PropertyKindCalculus.Extensive k m) (d : PropertyKindCalculus.Decomposition) :\n  (m d).numeral = PropertyKindCalculus.leafSum m d</code><span class=\"sep\"></span><code class=\"docstring\">**Extensive aggregation (the capstone).** For an extensive kind, the value\nmeasured on the *whole* equals the sum over *all* atomic parts of a decomposition,\n$$`\\mathrm{value}\\Bigl(\\bigsqcup_i s_i\\Bigr) = \\sum_i \\mathrm{value}(s_i),`\nto arbitrary depth. The $`\\forall`-quantified law itself — not a single instance —\nis the deliverable: it is proved by induction on the decomposition, lifting the\nsingle-split `additive` field to the whole tree. </code>",
+ "169": "<code>PropertyKindCalculus.Measurement</code>",
  "168":
- "<code>PropertyKindCalculus.Measurement : Type</code><span class=\"sep\"></span><code class=\"docstring\">A **measurement** of a fixed kind over a decomposition: the property value\nobserved on the (sub-)system at each node — a leaf carries the value of that atomic\npart, a node the value of the whole it composes. </code>",
- "167":
- "<code>PropertyKindCalculus.Extensive (k : PropertyKindCalculus.KindOfProperty) (m : PropertyKindCalculus.Measurement) : Prop</code><span class=\"sep\"></span><code class=\"docstring\">**§13.5 extensive kind.** A kind `k` is *extensive* under a measurement `m`\nwhen (i) every part is measured as a value *of kind* `k` (one shared reference, so\nthe numerals are commensurable) and (ii) the numeral on a disjoint union is the sum\nof the numerals on the parts. Mass satisfies this; volume on mixing does not. </code>",
- "166":
- "<code>HAdd.hAdd.{u, v, w} {α : Type u} {β : Type v} {γ : outParam (Type w)} [self : HAdd α β γ] : α → β → γ</code><span class=\"sep\"></span><code class=\"docstring\">`a + b` computes the sum of `a` and `b`.\nThe meaning of this notation is type-dependent. \n\nConventions for notations in identifiers:\n\n * The recommended spelling of `+` in identifiers is `add`.</code>",
- "165":
- "<code>PropertyKindCalculus.Decomposition.union :\n  PropertyKindCalculus.Decomposition → PropertyKindCalculus.Decomposition → PropertyKindCalculus.Decomposition</code><span class=\"sep\"></span><code class=\"docstring\">The disjoint union of two parts. </code>",
- "164":
- "<code>∀ (a b : PropertyKindCalculus.Decomposition), (m (a.union b)).numeral = (m a).numeral + (m b).numeral</code><span class=\"sep\"></span><code class=\"docstring\">The single-split additivity law: a union measures as the sum of its two parts. </code>",
- "163":
- "<code>PropertyKindCalculus.PropertyValue.kind (self : PropertyKindCalculus.PropertyValue) :\n  PropertyKindCalculus.KindOfProperty</code><span class=\"sep\"></span><code class=\"docstring\">§9.15 — the kind-of-property this value belongs to; a value is comparable\nonly with values of the same kind. </code>",
- "162": "<code>PropertyKindCalculus.Measurement</code>",
- "161":
  "<code>PropertyKindCalculus.Decomposition : Type</code><span class=\"sep\"></span><code class=\"docstring\">A **decomposition** of a system into disjoint parts (the mereological structure\ndeferred from the foundations chapter, §3.3): an atomic {system}, or the disjoint\nunion of two sub-decompositions. The leaves are the atomic parts; each node stands\nfor the whole they compose. </code>",
- "160": "<code>PropertyKindCalculus.Decomposition</code>",
+ "167": "<code>PropertyKindCalculus.Decomposition</code>",
+ "166":
+ "<code>∀ (d : PropertyKindCalculus.Decomposition), (m d).kind = k</code><span class=\"sep\"></span><code class=\"docstring\">Every measured part is a value of the kind `k`. </code>",
+ "165":
+ "<code>PropertyKindCalculus.energyKind : PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">Energy / work, a ratio kind of dimension `M·L²·T⁻²`. </code>",
+ "164":
+ "<code>PropertyKindCalculus.angleKind : PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">Plane angle, a ratio kind of dimension one (Dybkær: a dimensionless quantity). </code>",
+ "163":
+ "<code>PropertyKindCalculus.torqueKind : PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">Torque, a ratio kind of dimension `M·L²·T⁻²` — the *same dimension* as\n`energyKind`, a *different* kind. </code>",
+ "162":
+ "<code>PropertyKindCalculus.siMech : PropertyKindCalculus.InteractionAlgebra</code><span class=\"sep\"></span><code class=\"docstring\">The worked SI-mechanics algebra packaged as a coherent `InteractionAlgebra`: the\ncurated relation together with its discharged coherence obligation. An application\ndeclares its own algebra exactly like this — by listing products and proving each\ncoheres. </code>",
+ "161":
+ "<code>PropertyKindCalculus.torque_angle_work :\n  PropertyKindCalculus.siMech.KMul PropertyKindCalculus.torqueKind PropertyKindCalculus.angleKind\n      PropertyKindCalculus.energyKind ∧\n    PropertyKindCalculus.energyKind.kind ≠ PropertyKindCalculus.torqueKind.kind ∧\n      PropertyKindCalculus.energyKind.toDimension = PropertyKindCalculus.torqueKind.toDimension</code><span class=\"sep\"></span><code class=\"docstring\">**Worked instance — torque × plane-angle = energy, and energy is not torque.**\nThe product is sanctioned, yet `energy ≠ torque` as kinds even though\n`dim energy = dim torque`. This is the small example carrying exactly the\ninformation dimensional analysis discards: the algebra distinguishes a moment from\nthe work it does. </code>",
+ "160":
+ "<code>Iff (a b : Prop) : Prop</code><span class=\"sep\"></span><code class=\"docstring\">If and only if, or logical bi-implication. `a ↔ b` means that `a` implies `b` and vice versa.\nBy `propext`, this implies that `a` and `b` are equal and hence any expression involving `a`\nis equivalent to the corresponding expression with `b` instead.\n\n\nConventions for notations in identifiers:\n\n * The recommended spelling of `↔` in identifiers is `iff`.\n\n * The recommended spelling of `&lt;-&gt;` in identifiers is `iff` (prefer `↔` over `&lt;-&gt;`).</code>",
  "16":
  "<code>PropertyKindCalculus.ScaleType.AllowsOrder : PropertyKindCalculus.ScaleType → Prop</code><span class=\"sep\"></span><code class=\"docstring\">`&lt;, &gt;` available from ordinal upward (§12.16). </code>",
  "159":
- "<code>∀ (d : PropertyKindCalculus.Decomposition), (m d).kind = k</code><span class=\"sep\"></span><code class=\"docstring\">Every measured part is a value of the kind `k`. </code>",
- "158":
- "<code>PropertyKindCalculus.energyKind : PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">Energy / work, a ratio kind of dimension `M·L²·T⁻²`. </code>",
- "157":
- "<code>PropertyKindCalculus.angleKind : PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">Plane angle, a ratio kind of dimension one (Dybkær: a dimensionless quantity). </code>",
- "156":
- "<code>PropertyKindCalculus.torqueKind : PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">Torque, a ratio kind of dimension `M·L²·T⁻²` — the *same dimension* as\n`energyKind`, a *different* kind. </code>",
- "155":
- "<code>PropertyKindCalculus.siMech : PropertyKindCalculus.InteractionAlgebra</code><span class=\"sep\"></span><code class=\"docstring\">The worked SI-mechanics algebra packaged as a coherent `InteractionAlgebra`: the\ncurated relation together with its discharged coherence obligation. An application\ndeclares its own algebra exactly like this — by listing products and proving each\ncoheres. </code>",
- "154":
- "<code>PropertyKindCalculus.torque_angle_work :\n  PropertyKindCalculus.siMech.KMul PropertyKindCalculus.torqueKind PropertyKindCalculus.angleKind\n      PropertyKindCalculus.energyKind ∧\n    PropertyKindCalculus.energyKind.kind ≠ PropertyKindCalculus.torqueKind.kind ∧\n      PropertyKindCalculus.energyKind.toDimension = PropertyKindCalculus.torqueKind.toDimension</code><span class=\"sep\"></span><code class=\"docstring\">**Worked instance — torque × plane-angle = energy, and energy is not torque.**\nThe product is sanctioned, yet `energy ≠ torque` as kinds even though\n`dim energy = dim torque`. This is the small example carrying exactly the\ninformation dimensional analysis discards: the algebra distinguishes a moment from\nthe work it does. </code>",
- "153":
- "<code>Iff (a b : Prop) : Prop</code><span class=\"sep\"></span><code class=\"docstring\">If and only if, or logical bi-implication. `a ↔ b` means that `a` implies `b` and vice versa.\nBy `propext`, this implies that `a` and `b` are equal and hence any expression involving `a`\nis equivalent to the corresponding expression with `b` instead.\n\n\nConventions for notations in identifiers:\n\n * The recommended spelling of `↔` in identifiers is `iff`.\n\n * The recommended spelling of `&lt;-&gt;` in identifiers is `iff` (prefer `↔` over `&lt;-&gt;`).</code>",
- "152":
  "<code>PropertyKindCalculus.InteractionAlgebra.kMul_iff_kDiv (A : PropertyKindCalculus.InteractionAlgebra)\n  (a b c : PropertyKindCalculus.DimensionedKind) : A.KMul a b c ↔ A.KDiv c b a</code><span class=\"sep\"></span><code class=\"docstring\">**Multiplication and division are inverse (R5).** `KDiv` is by definition the\nconverse of `KMul`, so a product and its quotient hold together — the round-trip is\nan equivalence, not merely an implication: `a × b = c` ⇔ `c / b = a`. </code>",
- "151":
+ "158":
  "<code>PropertyKindCalculus.InteractionAlgebra.KDiv (A : PropertyKindCalculus.InteractionAlgebra)\n  (c b a : PropertyKindCalculus.DimensionedKind) : Prop</code><span class=\"sep\"></span><code class=\"docstring\">The **kind quotient**, the division dual of the kind product: `KDiv c b a` reads\n\"`c` divided by `b` yields `a`\", defined as the product read backwards. Partiality\nis inherited — there is no quotient unless the matching product was sanctioned, so a\ncategory error stays a category error on the division side too. </code>",
- "150":
+ "157":
  "<code>PropertyKindCalculus.InteractionAlgebra.KMul (self : PropertyKindCalculus.InteractionAlgebra) :\n  PropertyKindCalculus.DimensionedKind →\n    PropertyKindCalculus.DimensionedKind → PropertyKindCalculus.DimensionedKind → Prop</code><span class=\"sep\"></span><code class=\"docstring\">The sanctioned product edges: `KMul a b c` reads \"`a` times `b` yields `c`\". </code>",
+ "156": "<code>A.KMul a b c</code>",
+ "155":
+ "<code>PropertyKindCalculus.InteractionAlgebra : Type</code><span class=\"sep\"></span><code class=\"docstring\">A curated **interaction algebra** over dimensioned kinds (Flater App. C).\n`KMul a b c` asserts the sanctioned product `a × b = c`. The relation is\ndeliberately *partial* (most triples are absent — a category error, not a number)\nand *curated* (an application lists exactly the products it sanctions). The field\n`kMul_coherent` is the dimensional-coherence obligation R7 imposes on every edge:\na sanctioned kind product must agree with the dimension layer, so the structure\ncannot even be formed for an algebra that violates it. </code>",
+ "154": "<code>PropertyKindCalculus.InteractionAlgebra</code>",
+ "153":
+ "<code>PropertyKindCalculus.InteractionAlgebra.dim_homomorphism (A : PropertyKindCalculus.InteractionAlgebra)\n  {a b c : PropertyKindCalculus.DimensionedKind} (h : A.KMul a b c) : c.toDimension = a.toDimension * b.toDimension</code><span class=\"sep\"></span><code class=\"docstring\">**Dimensional coherence — `dim` is a homomorphism over the interaction algebra\n(R7).** Whenever the algebra sanctions `a × b = c`, forgetting to the dimension\nlayer turns the kind product into PhysLib's `Dimension` product,\n`dim c = dim a · dim b`. This is the theorem that licenses *forgetting* to the\ndimension layer without losing soundness — and, read the other way, why matching\ndimensions are necessary but never sufficient: the kind relation, not `dim`, decides\nlegality. </code>",
+ "152":
+ "<code>HMul.hMul.{u, v, w} {α : Type u} {β : Type v} {γ : outParam (Type w)} [self : HMul α β γ] : α → β → γ</code><span class=\"sep\"></span><code class=\"docstring\">`a * b` computes the product of `a` and `b`.\nThe meaning of this notation is type-dependent. \n\nConventions for notations in identifiers:\n\n * The recommended spelling of `*` in identifiers is `mul`.</code>",
+ "151":
+ "<code>PropertyKindCalculus.DimensionedKind.times (a b : PropertyKindCalculus.DimensionedKind) :\n  PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">Provisional product of dimensioned kinds (superseded by `Interaction`'s\n`KMul`): the dimensions multiply (PhysLib `Dimension.mul`, i.e. exponents add)\nand the kind identity records the composition. Only the dimension component is\nload-bearing for the coherence laws below. </code>",
+ "150":
+ "<code>PropertyKindCalculus.DimensionedKind.toDimension_times (a b : PropertyKindCalculus.DimensionedKind) :\n  (a.times b).toDimension = a.toDimension * b.toDimension</code><span class=\"sep\"></span><code class=\"docstring\">**Coherence (multiplicativity).** `dim` carries products to products — it is\na homomorphism into the multiplicative `Dimension` group. </code>",
  "15":
  "<code>PropertyKindCalculus.ScaleType.allows_mono {a b : PropertyKindCalculus.ScaleType} (h : a ≤ b) :\n  (a.AllowsOrder → b.AllowsOrder) ∧ (a.AllowsDifference → b.AllowsDifference) ∧ (a.AllowsRatio → b.AllowsRatio)</code><span class=\"sep\"></span><code class=\"docstring\">Meta-theorem OWL2's reasoner cannot even phrase: a richer scale licenses\nevery operation a poorer one does. (Monotonicity of operator availability.) </code>",
- "149": "<code>A.KMul a b c</code>",
- "148":
- "<code>PropertyKindCalculus.InteractionAlgebra : Type</code><span class=\"sep\"></span><code class=\"docstring\">A curated **interaction algebra** over dimensioned kinds (Flater App. C).\n`KMul a b c` asserts the sanctioned product `a × b = c`. The relation is\ndeliberately *partial* (most triples are absent — a category error, not a number)\nand *curated* (an application lists exactly the products it sanctions). The field\n`kMul_coherent` is the dimensional-coherence obligation R7 imposes on every edge:\na sanctioned kind product must agree with the dimension layer, so the structure\ncannot even be formed for an algebra that violates it. </code>",
- "147": "<code>PropertyKindCalculus.InteractionAlgebra</code>",
- "146":
- "<code>PropertyKindCalculus.InteractionAlgebra.dim_homomorphism (A : PropertyKindCalculus.InteractionAlgebra)\n  {a b c : PropertyKindCalculus.DimensionedKind} (h : A.KMul a b c) : c.toDimension = a.toDimension * b.toDimension</code><span class=\"sep\"></span><code class=\"docstring\">**Dimensional coherence — `dim` is a homomorphism over the interaction algebra\n(R7).** Whenever the algebra sanctions `a × b = c`, forgetting to the dimension\nlayer turns the kind product into PhysLib's `Dimension` product,\n`dim c = dim a · dim b`. This is the theorem that licenses *forgetting* to the\ndimension layer without losing soundness — and, read the other way, why matching\ndimensions are necessary but never sufficient: the kind relation, not `dim`, decides\nlegality. </code>",
- "145":
- "<code>HMul.hMul.{u, v, w} {α : Type u} {β : Type v} {γ : outParam (Type w)} [self : HMul α β γ] : α → β → γ</code><span class=\"sep\"></span><code class=\"docstring\">`a * b` computes the product of `a` and `b`.\nThe meaning of this notation is type-dependent. \n\nConventions for notations in identifiers:\n\n * The recommended spelling of `*` in identifiers is `mul`.</code>",
- "144":
- "<code>PropertyKindCalculus.DimensionedKind.times (a b : PropertyKindCalculus.DimensionedKind) :\n  PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">Provisional product of dimensioned kinds (superseded by `Interaction`'s\n`KMul`): the dimensions multiply (PhysLib `Dimension.mul`, i.e. exponents add)\nand the kind identity records the composition. Only the dimension component is\nload-bearing for the coherence laws below. </code>",
- "143":
- "<code>PropertyKindCalculus.DimensionedKind.toDimension_times (a b : PropertyKindCalculus.DimensionedKind) :\n  (a.times b).toDimension = a.toDimension * b.toDimension</code><span class=\"sep\"></span><code class=\"docstring\">**Coherence (multiplicativity).** `dim` carries products to products — it is\na homomorphism into the multiplicative `Dimension` group. </code>",
- "142":
+ "149":
  "<code>Dimension : Type</code><span class=\"sep\"></span><code class=\"docstring\">The foundational dimensions.\nDefined in the order ⟨length, time, mass, charge, temperature⟩ </code>",
- "141":
+ "148":
  "<code>PropertyKindCalculus.DimensionedKind : Type</code><span class=\"sep\"></span><code class=\"docstring\">A **dimensioned kind** (Dybkær Ch. 19): a {kind-of-property} together with\nthe physical `Dimension` of its quantities. Pairing the dimension *with* the\nkind — rather than storing it on `KindOfProperty` — keeps the core spine\nMathlib-free and matches the open-world convention (an application declares a\ndimensioned kind with a `def`, never by editing a central type). </code>",
+ "147":
+ "<code>PropertyKindCalculus.ReciprocalKind (k₁ k : PropertyKindCalculus.KindOfProperty) : Prop</code><span class=\"sep\"></span><code class=\"docstring\">**A kind-level reciprocal law.** `k` is the *reciprocal kind* of `k₁`\n(`k = 1 / k₁`): both ratio-scale (the precondition for inverting a quantity). The\nDimension layer strengthens this with `k.dim = (k₁.dim)⁻¹`. </code>",
+ "146":
+ "<code>k.IsRational</code><span class=\"sep\"></span><code class=\"docstring\">The reciprocal is ratio-scale. </code>",
+ "145":
+ "<code>k₁.IsRational</code><span class=\"sep\"></span><code class=\"docstring\">The base kind is ratio-scale. </code>",
+ "144":
+ "<code>PropertyKindCalculus.QuotientKind (k₁ k₂ k : PropertyKindCalculus.KindOfProperty) : Prop</code><span class=\"sep\"></span><code class=\"docstring\">**A kind-level quotient law.** `k` is the *quotient kind* of `k₁` by `k₂`\n(`k = k₁ / k₂`): all three are ratio-scale (the precondition for dividing quantities,\nDybkær §13.3.5). The Dimension layer strengthens this with `k.dim = k₁.dim / k₂.dim`. </code>",
+ "143":
+ "<code>k.IsRational</code><span class=\"sep\"></span><code class=\"docstring\">The quotient is ratio-scale. </code>",
+ "142":
+ "<code>k₂.IsRational</code><span class=\"sep\"></span><code class=\"docstring\">The divisor is ratio-scale. </code>",
+ "141":
+ "<code>k₁.IsRational</code><span class=\"sep\"></span><code class=\"docstring\">The dividend is ratio-scale. </code>",
  "140": "<code>PropertyKindCalculus.Quantity.IsProduct h q' a b</code>",
  "14":
  "<code>Eq.{u_1} {α : Sort u_1} : α → α → Prop</code><span class=\"sep\"></span><code class=\"docstring\">The equality relation. It has one introduction rule, `Eq.refl`.\nWe use `a = b` as notation for `Eq a b`.\nA fundamental property of equality is that it is an equivalence relation.\n```\nvariable (α : Type) (a b c d : α)\nvariable (hab : a = b) (hcb : c = b) (hcd : c = d)\n\nexample : a = d :=\n  Eq.trans (Eq.trans hab (Eq.symm hcb)) hcd\n```\nEquality is much more than an equivalence relation, however. It has the important property that every assertion\nrespects the equivalence, in the sense that we can substitute equal expressions without changing the truth value.\nThat is, given `h1 : a = b` and `h2 : p a`, we can construct a proof for `p b` using substitution: `Eq.subst h1 h2`.\nExample:\n```\nexample (α : Type) (a b : α) (p : α → Prop)\n        (h1 : a = b) (h2 : p a) : p b :=\n  Eq.subst h1 h2\n\nexample (α : Type) (a b : α) (p : α → Prop)\n    (h1 : a = b) (h2 : p a) : p b :=\n  h1 ▸ h2\n```\nThe triangle in the second presentation is a macro built on top of `Eq.subst` and `Eq.symm`, and you can enter it by typing `\\t`.\nFor more information: [Equality](https://lean-lang.org/theorem_proving_in_lean4/quantifiers_and_equality.html#equality)\n\n\nConventions for notations in identifiers:\n\n * The recommended spelling of `=` in identifiers is `eq`.</code>",
