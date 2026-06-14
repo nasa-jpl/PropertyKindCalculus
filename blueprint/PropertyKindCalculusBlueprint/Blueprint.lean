@@ -8,6 +8,8 @@ import PropertyKindCalculusBlueprint.Chapters.Units
 import PropertyKindCalculusBlueprint.Chapters.Dimension
 import PropertyKindCalculusBlueprint.Chapters.Interaction
 import PropertyKindCalculusBlueprint.Chapters.Extensivity
+import PropertyKindCalculusBlueprint.Chapters.Iso80000
+import PropertyKindCalculusBlueprint.Chapters.Iso80000Part3
 
 open Verso.Genre
 open Verso.Genre.Manual
@@ -661,6 +663,10 @@ in-progress goals until formalized. The headline deliverables are tagged
 {include 0 PropertyKindCalculusBlueprint.Chapters.Interaction}
 
 {include 0 PropertyKindCalculusBlueprint.Chapters.Extensivity}
+
+{include 0 PropertyKindCalculusBlueprint.Chapters.Iso80000}
+
+{include 0 PropertyKindCalculusBlueprint.Chapters.Iso80000Part3}
 
 {blueprint_graph}
 
