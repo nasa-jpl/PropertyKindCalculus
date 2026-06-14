@@ -57,7 +57,12 @@ parents at once — a lattice, not a tree. Specialization is a preorder (reflexi
 and transitive) and induces a *one-way* coercion: a `Quantity Width` may be used
 where a `Quantity Length` is wanted, never the reverse, and that up-cast is a
 visible, deliberate loss of information. Width and Height remain *mutually
-comparable* — they share the super-kind Length — while staying distinct kinds.
+comparable* — they share the super-kind Length — while staying distinct kinds. This
+requirement is now realized on the real standard: the ISO 80000-3 length family
+(width, height, distance, radius, … of items 3-1.2 … 3-1.12, all of dimension `L`)
+is specified as a specialization lattice over the general length kind, each species
+individuated *not by fiat but by an explicit measurement principle* (see the
+_ISO 80000-3_ chapter).
 
 *R3 — General versus individual is type versus term.* A kind is the general
 notion (a *type*); a particular measured value is an individual (a *term* of that
@@ -210,12 +215,16 @@ as a carrier-parametric universal over quantities with the kind-relation as a pr
 so it instantiates to a quantity-level fact by ordinary application — the inter-kind
 generalization of R10's carrier-parametric laws — and any property of a kind's defining
 relation transports to *every* quantity certified under it (every certified surface
-area is `≥ 0`, because the area element is). The canonical pattern is the product
-(area = length · length, energy = force · length); analysis-shaped relations such as
-area as a surface integral `∬ √g du dv` follow the same discipline in the
-layer where their mathematics lives. R12 unifies the two halves of the standards work:
-the formalized remark *is* the defining relation, and classification is the witnessed
-instantiation of it.
+area is `≥ 0`, because the area element is). The pattern comes in three algebraic
+shapes — *product* (area = length · length, energy = force · length), *quotient*
+(speed = length / duration, plane angle = arc / radius), and *reciprocal* (frequency =
+1 / period, curvature = 1 / radius) — each a kind-law family in the core; analysis-shaped
+relations such as area as a surface integral `∬ √g du dv` follow the same discipline in
+the layer where their mathematics lives. These are exercised directly on ISO 80000-3's
+own *Remarks* (see the _ISO 80000-3_ chapter), where, for instance, the plane angle is
+*computed* to be dimension one because it is a ratio of two lengths. R12 unifies the two
+halves of the standards work: the formalized remark *is* the defining relation, and
+classification is the witnessed instantiation of it.
 
 ## Out of scope (for now)
 

@@ -270,3 +270,32 @@ quantities gives the quantity-level fact by application. Axiom-free.
 by structure η; `eq_mul_of_isProduct` is `isProduct_unique` against `mul_isProduct`.
 Both depend on no axioms.
 :::
+
+:::definition "def_quotient_kind" (parent := "classification") (lean := "PropertyKindCalculus.QuotientKind")
+A _quotient kind-law_ `QuotientKind k₁ k₂ k` records that `k` is the quotient kind
+`k = k₁ / k₂` (speed = length / duration; plane angle = arc / radius, where the lengths
+cancel). Like the product, it carries the ratio-scale precondition in the core and is
+refined by `k.dim = k₁.dim / k₂.dim` in the dimension layer. Its certificate
+`Quantity.IsQuotient` and smart constructor `Quantity.div` mirror the product family
+exactly, over the core `Div` class.
+:::
+
+:::proof "def_quotient_kind"
+`structure QuotientKind` with three `IsRational` fields; `Quantity.div h a b :=
+⟨a.magnitude / b.magnitude⟩`, `div_isQuotient` is `rfl`, and `isQuotient_unique` /
+`eq_div_of_isQuotient` are the product family's proofs transcribed. Axiom-free.
+:::
+
+:::definition "def_reciprocal_kind" (parent := "classification") (lean := "PropertyKindCalculus.ReciprocalKind")
+A _reciprocal kind-law_ `ReciprocalKind k₁ k` records that `k = 1 / k₁` (frequency =
+1 / period; curvature = 1 / radius; repetency = 1 / wavelength) — the unary special
+case, over the core `Inv` class, refined by `k.dim = (k₁.dim)⁻¹`. All three families
+(product, quotient, reciprocal) stay Mathlib-free, using only toolchain-level
+arithmetic classes.
+:::
+
+:::proof "def_reciprocal_kind"
+`structure ReciprocalKind` with two `IsRational` fields; `Quantity.recip h a :=
+⟨a.magnitude⁻¹⟩`, `recip_isReciprocal` is `rfl`, with `isReciprocal_unique` /
+`eq_recip_of_isReciprocal` as before. Axiom-free.
+:::

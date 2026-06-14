@@ -57,7 +57,7 @@ The package ships six libraries so the core is exportable on its own:
 | `Examples` | `examples/` | worked examples for the spine (`PropertyKindCalculus.Examples.*`), Mathlib-free | `lake build Examples` |
 | `Dimension` | `dimension/` | the PhysLib-backed coherence layer (library modules only, no examples) — `dim` as the forgetful functor into PhysLib's `Dimension` (`PropertyKindCalculus.Dimension`), Flater's interaction algebra `KMul`/`KDiv` (`PropertyKindCalculus.Interaction`), and the `ℝ` quantity carrier (`PropertyKindCalculus.QuantityReal`); pulls in PhysLib + Mathlib | `lake build Dimension` |
 | `DimensionExamples` | `examples/` | worked examples for the Mathlib-backed `Dimension` layer (dimension functor, interaction algebra, `ℝ` quantity carrier, the ISO 80000 catalogue, and the ISO 80000-2 §18 vector quantity) — kept under `examples/` so no library module carries example code; PhysLib + Mathlib-backed (transitively) | `lake build DimensionExamples` |
-| `Iso80000` | `iso80000/` | the standards-grounded layer: a references catalogue citing the ISO/IEC 80000 parts by name + version only (no normative content), plus a seed of ISO 80000-3 *Space and time* quantity-kinds and units; PhysLib-backed | `lake build Iso80000` |
+| `Iso80000` | `iso80000/` | the standards-grounded layer: a references catalogue citing the ISO/IEC 80000 parts by name + version only (no normative content), plus the full ISO 80000-3 *Space and time* catalogue (all 42 items) — quantity-kinds, units, the length specialization lattice, the dimension-collision capstones, and the formalized *Remarks*; PhysLib-backed | `lake build Iso80000` |
 | `Torch` | `torch/` | the TorchLean-backed instance of the R10 exec/spec refinement bridge — the binary32 `FP32` (rounding spec) and `IEEE32Exec` (executable) carriers realizing `CarrierRefinement`; depends on TorchLean | `lake build Torch` |
 
 The core spine and its `import PropertyKindCalculus` stay Mathlib-free. Note that
@@ -157,11 +157,13 @@ Status: ✅ built & proved · 🚧 next · ⬜ planned
 | `Torch` (in the `Torch` lib) — TorchLean instance: unconditional `CarrierRefinement FP32 ℝ` (genuine binary32 rounding) + the conditional `IEEE32Exec` executable refinement (overflow an explicit side condition); `Quantity.add_refines` realized at binary32 | — | ✅ |
 | `QuantityVector` — vector/tensor quantities as a numerical array × one scalar unit (ISO 80000-2 §18, R11): pointwise `Carrier (Fin n → R)`, additivity laws transfer | — | ✅ |
 | `Iso80000.References` (in the `Iso80000` lib) — references catalogue citing all 12 ISO/IEC 80000 parts by name + version | — | ✅ |
-| `Iso80000.Part3` (in the `Iso80000` lib) — ISO 80000-3 *Space and time* seed: length/time/area/volume/speed/displacement kinds + metre/second/… units, citing item locators | ISO 80000-3 | ✅ |
+| `Iso80000.Part3` (in the `Iso80000` lib) — ISO 80000-3 *Space and time* **full catalogue** (all 42 items, 3-1.1 … 3-26.3): the length family as a specialization lattice (R2) individuated **by measurement principle** (width ≠ distance proved, not by fiat), the dimension-collision capstones (plane vs solid angle, Hz vs rad/s, velocity vs speed — same dimension, distinct kind), and all dimensional facts as checked computations | ISO 80000-3 | ✅ |
 | `UnitPrefix` — SI prefixes (VIM4 §1.19) + prefixed units: the centimetre as *centi* · metre, with the §1.22 conversion factor and §1.20/§1.21 multiple/submultiple read off the projection | VIM4 | ✅ |
-| `Iso80000.Part3.AreaElement` (in the `Iso80000` lib) — item 3-2.1's *Remarks* mathematics formalized analytically: the metric tensor (Gram), the surface element `dA = √g`, the area integral, with `(dA)² = g`, regularity, and the flat-patch correctness anchor proved | ISO 80000-3 | ✅ |
-| `QuantityClassification` — verified classification (R12): a kind-law `ProductKind` + the `Quantity.IsProduct` certificate + smart constructor; kind-laws stated to instantiate at the quantity level (axiom-free) | — | ✅ |
+| `Iso80000.Part3.AreaElement` (in the `Iso80000` lib) — item 3-3's *Remarks* mathematics formalized analytically: the metric tensor (Gram), the surface element `dA = √g`, the area integral, with `(dA)² = g`, regularity, and the flat-patch correctness anchor proved | ISO 80000-3 | ✅ |
+| `Iso80000.Part3.VolumeElement` (in the `Iso80000` lib) — item 3-4's *Remarks* mathematics: the 3×3 metric tensor, the volume element `dV = √g`, the volume integral, and the flat-region correctness anchor (`= |det A|`) proved | ISO 80000-3 | ✅ |
+| `QuantityClassification` — verified classification (R12): the kind-law families `ProductKind` / `QuotientKind` / `ReciprocalKind` + their certificates + smart constructors; kind-laws stated to instantiate at the quantity level (axiom-free, Mathlib-free) | — | ✅ |
 | `Iso80000.Part3.AreaClassification` (in the `Iso80000` lib) — R12 area instance: a rectangle's area certified as `width × height` by construction, and every certified surface area proved `≥ 0` (property transport from the defining relation) | ISO 80000-3 | ✅ |
+| `Iso80000.Part3.DefiningRelations` (in the `Iso80000` lib) — the algebraic *Remarks* (curvature = 1/ρ, repetency = 1/λ, frequency = 1/T, speed = s/t, plane angle = s/r) as R12 kind-laws: the dimension *follows from* the relation (plane angle computed dimension-one because it is a ratio of two lengths) | ISO 80000-3 | ✅ |
 | `Iso80000` — the remaining parts (1, 2, 4–12) quantity-kinds + units | ISO/IEC 80000 | ⬜ |
 | `DedicatedKind` — kind × system × component | Ch. 20 | ⬜ |
 | `Model.SI` — SI base kinds, verified well-formed | — | ⬜ |
@@ -247,11 +249,18 @@ ISO 80000 catalogue, and the ISO 80000-2 §18 vector quantity — kept under
 
 `lake build Iso80000` checks the standards-grounded layer: a references catalogue
 that cites each of the twelve ISO/IEC 80000 parts by name and version only — e.g.
-`IEC 80000-6, Edition 2.0, 2022-11`, with no normative content reproduced — and a
-seed of ISO 80000-3 *Space and time* (length, time, area, volume, speed, and a
-displacement vector kind, with the metre, second, square metre, … as units), each
-carrying its exact item locator as data and its dimensional facts checked in
-PhysLib's group.
+`IEC 80000-6, Edition 2.0, 2022-11`, with no normative content reproduced — and the
+**full catalogue of ISO 80000-3 *Space and time*** (all 42 items, 3-1.1 … 3-26.3),
+each carrying its exact item locator as data and its dimensional facts checked in
+PhysLib's group. Part 3 is where the calculus meets the real standard: its length
+family (width, height, distance, radius, …) is specified as a specialization lattice
+over the general length kind, each species individuated **not by fiat but by a
+measurement principle** (so `width ≠ distance` is *proved*, requirement R2); its
+dimension collisions (plane vs solid angle, hertz vs radian-per-second, velocity vs
+speed — same dimension, distinct kind) are the dimension-1 disambiguation on standard
+quantities; and selected *Remarks* are formalized as mathematics — the surface and
+volume elements (`√g`), and the algebraic relations (curvature, frequency, speed,
+plane angle) as R12 kind-laws where the dimension *follows from* the relation.
 
 `lake build Torch` checks the TorchLean-backed instance of the refinement bridge —
 the only library that depends on TorchLean. `FP32` (TorchLean's binary32 rounding
