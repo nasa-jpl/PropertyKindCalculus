@@ -51,6 +51,15 @@ require «Physlib» from git
   "https://github.com/leanprover-community/physlib.git" @
   "v4.30.0"
 
+-- TorchLean (this work's fork, `combined` branch) backs *only* the `Torch` library
+-- below: the concrete IEEE-754 binary32 carriers (`FP32` rounding spec,
+-- `IEEE32Exec` executable) that instantiate the R10 exec/spec refinement bridge.
+-- It tracks the same toolchain and Mathlib rev (`v4.30.0`) this package already
+-- pins via PhysLib, so it adds no version skew. The core spine never imports it.
+require «TorchLean» from git
+  "https://github.com/NicolasRouquette/TorchLean.git" @
+  "combined"
+
 /-- The exportable core library (Mathlib-free spine). -/
 @[default_target]
 lean_lib «PropertyKindCalculus» where
@@ -88,3 +97,22 @@ transitively, through the `Dimension`-library modules it imports. Build with
 lean_lib «DimensionExamples» where
   srcDir := "examples"
   globs := #[.andSubmodules `PropertyKindCalculus.DimensionExamples]
+
+/-- The **standards-grounded** layer: quantity-kinds and units organized to mirror
+the ISO/IEC 80000 *Quantities and units* series, citing each part by name and
+version only (no normative content is reproduced). PhysLib-backed (its
+quantity-kinds carry PhysLib `Dimension`s); the references catalogue alone is
+Mathlib-free. Build with `lake build Iso80000`. It carries:
+  * `PropertyKindCalculus.Iso80000.References` — the citation catalogue (parts 1–12)
+  * `PropertyKindCalculus.Iso80000.Part3`      — a seed of ISO 80000-3 *Space and time* -/
+lean_lib «Iso80000» where
+  srcDir := "iso80000"
+  globs := #[.andSubmodules `PropertyKindCalculus.Iso80000]
+
+/-- The **TorchLean-backed instance** of the R10 exec/spec refinement bridge: the
+concrete IEEE-754 binary32 carriers (TorchLean's `FP32` rounding spec and
+`IEEE32Exec` executable) realizing `CarrierRefinement` over `ℝ`. This is the one
+library that depends on TorchLean. Build with `lake build Torch`. -/
+lean_lib «Torch» where
+  srcDir := "torch"
+  globs := #[.andSubmodules `PropertyKindCalculus.Torch]

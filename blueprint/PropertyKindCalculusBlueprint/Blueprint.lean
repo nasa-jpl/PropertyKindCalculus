@@ -164,20 +164,45 @@ all three. This refines R1/R3/R4's kind-indexed value into a doubly-indexed
 `Carrier` typeclass on $`R`. The value layer and its additivity laws are *realized*
 (sorry-free): `Quantity k R` with same-kind addition, the additivity laws proved
 once over any lawful carrier, and three carriers — `Int` and `ℝ` (lawful, for
-proof) and `Float` (executable, deliberately not lawful). Only the exec/spec
-refinement across the float carriers (`FP32`/`IEEE32Exec`, needing TorchLean)
-remains planned.
+proof) and `Float` (executable, deliberately not lawful). The exec/spec
+*refinement* across representations is now *also realized* (sorry-free): the
+abstract bridge `CarrierRefinement` and its kind-indexed capstone
+`Quantity.add_refines` — a law over the lawful spec carrier descends to the exec
+carrier as one rounding step — instantiated in the separately-built `Torch`
+library at TorchLean's binary32: `FP32` (the rounding *spec*, an *unconditional*
+refinement of $`\mathbb{R}`) and `IEEE32Exec` (the *executable* kernel, refining
+$`\mathbb{R}` on the finite/no-overflow path, with overflow surfaced as an explicit
+side condition rather than silently dropped).
+
+## Value representation: vectors and scalar units
+
+*R11 — Units are scalar; a vector quantity is a numerical array times one scalar
+unit.* Following ISO 80000-2 §18 (scalars, vectors and tensors), a vector (or
+tensor) quantity is written as a *numerical* vector multiplied by a single unit,
+and "all units are scalars" — *not* as a collection of per-coordinate quantity
+values each carrying its own number × unit; the quantity itself is independent of
+the coordinate system while its numerical components are not. This is exactly the
+R10 carrier taken at a numerical-array type: a vector quantity is
+`Quantity (k : KindOfProperty) (Fin n → R)` — one kind $`k`, the numbers an
+$`n`-vector in the carrier $`R`, and one *scalar* `MetrologicalUnit` of the kind
+for the whole vector — and the additivity laws transfer to the vector carrier by
+the *same* parametric proof used for scalars (the pointwise `Carrier (Fin n → R)`).
+It is the ISO 80000-2 §18 *numerical-array* reading of value representation, and it
+aligns with the VIM's "a quantity is scalar; a vector/tensor is a composite of
+scalar quantities" — the priority SysML v2 inverts (see *Why a calculus, not a
+taxonomy*). The fuller *structural* apparatus is a separate axis, still owed below.
 
 ## Out of scope (for now)
 
-*Value representation in the structural sense* — scalar / vector / tensor order,
-coordinate frames, bound-versus-free vectors, and frame transformations — is *not
-yet specified* here (this is the *structural* representation axis, distinct from
-R10's *numeric carrier* $`R`). It is a genuine systems-engineering requirement, but
-a *separate, orthogonal* axis: its principled home is an index *over* the kind,
-never a layer the kind hangs beneath (the inversion the *Why a calculus, not a
-taxonomy* section charges against SysML v2). Stating it as owed keeps the boundary
-honest.
+*Value representation in the structural sense* — coordinate frames, tensor
+variance (the covariant/contravariant split), bound-versus-free vectors, and frame
+transformations — is *not yet specified* here, beyond the ISO 80000-2 §18
+numerical-array reading now specified as R11. This *structural* axis is distinct
+from R10's *numeric carrier* $`R` and R11's *numerical array*. It is a genuine
+systems-engineering requirement, but a *separate, orthogonal* axis: its principled
+home is an index *over* the kind, never a layer the kind hangs beneath (the
+inversion the *Why a calculus, not a taxonomy* section charges against SysML v2).
+Stating it as owed keeps the boundary honest.
 
 ## The requirements at a glance
 
@@ -234,12 +259,17 @@ honest.
   * proved
 *
   * R10 — numeric representation parametricity
-  * same value at `ℝ`/`Int` (proof), `Float` (executable); `FP32`/`IEEE32Exec` planned
-  * `Carrier`-bounded `Quantity k R`; parametric additivity laws; exec/spec refinement
-  * proved (layer + laws); refinement planned
+  * same value at `ℝ`/`Int` (proof), `Float` (executable); `FP32`/`IEEE32Exec` refine `ℝ`
+  * `Carrier`-bounded `Quantity k R`; parametric additivity laws; `CarrierRefinement` + `Quantity.add_refines`
+  * proved (layer + laws + exec/spec refinement)
+*
+  * R11 — scalar units; vector = numerical array × one scalar unit (ISO 80000-2 §18)
+  * a displacement as `Quantity k (Fin 3 → ℝ)` with one metre; laws transfer
+  * pointwise `Carrier (Fin n → R)`; scalar `MetrologicalUnit`
+  * proved
 *
   * *(out of scope)* structural value representation
-  * scalar / vector / tensor, frames
+  * coordinate frames, tensor variance, transforms
   * an orthogonal index over the kind
   * not specified
 :::

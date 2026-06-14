@@ -98,24 +98,64 @@ Proved in `PropertyKindCalculus.Quantity` (axiom-free). Each law unfolds
 _is_ the R10 payoff.
 :::
 
-:::theorem "thm_representation_refinement" (parent := "units") (tags := "capstone, planned") (effort := "large") (priority := "high")
+:::definition "def_carrier_refinement" (parent := "units") (lean := "PropertyKindCalculus.CarrierRefinement")
+A _carrier refinement_ `CarrierRefinement E S` specifies how an _exec_ carrier
+$`E` (fast, lossy) stands in for a _spec_ carrier $`S` (exact): a forgetful map
+`toSpec : E → S` (the analogue of TorchLean's `toReal`) and a spec-side
+`round : S → S`, with the single law that forgetting an exec addition equals
+rounding the spec addition,
+$$`\mathrm{toSpec}(x +_E y) = \mathrm{round}\,(\mathrm{toSpec}\,x +_S \mathrm{toSpec}\,y).`
+In plain engineering terms it is the _rounding contract_ between a slow exact
+number type and the fast machine number that stands in for it. Builds on the
+{uses "def_carrier"}[carrier].
+:::
+
+:::proof "def_carrier_refinement"
+Realized as the `CarrierRefinement` class (core, axiom-free). TorchLean's `FP32`
+gives an _unconditional_ instance over $`\mathbb{R}`, and `IEEE32Exec` refines
+$`\mathbb{R}` on the finite path — both in the separately built `Torch` library.
+:::
+
+:::theorem "thm_representation_refinement" (parent := "units") (lean := "PropertyKindCalculus.Quantity.add_refines") (tags := "capstone, proved") (effort := "large") (priority := "high")
 *Exec refines spec across representations (R10).* For a kind-$`k` quantity, the
-executable float computation refines the real-number specification: applying an
-operation in `IEEE32Exec` (or `FP32`) and forgetting to $`\mathbb{R}` equals
-rounding the operation performed in $`\mathbb{R}`,
-$$`\mathrm{toReal}\bigl(\mathrm{op}_{\mathrm{exec}}(x)\bigr) = \mathrm{round}\bigl(\mathrm{op}_{\mathbb{R}}(\mathrm{toReal}\,x)\bigr).`
-So a law proved over the $`\mathbb{R}` carrier transfers to the executable run with
-a bounded rounding error — the bridge that carries the
-{uses "thm_quantity_laws_parametric"}[representation-parametric laws] from the
-lawful carrier `ℝ` onto the executable `Float`/`IEEE32Exec` that is not lawful, so
-one kind-indexed value serves both proof and execution.
+exec sum _viewed in the spec carrier_ is the rounding of the spec sum,
+$$`\mathrm{toSpec}(x +_E y) = \mathrm{round}\,(\mathrm{toSpec}\,x +_S \mathrm{toSpec}\,y),`
+established over _any_ {uses "def_carrier_refinement"}[carrier refinement] and so
+holding at each at once. A law proved over the lawful spec carrier therefore
+transfers to the executable run with one rounding step — the bridge that carries
+the {uses "thm_quantity_laws_parametric"}[representation-parametric laws] from the
+lawful `ℝ` onto a float that is _not_ lawful, so one kind-indexed value serves both
+proof and execution.
 :::
 
 :::proof "thm_representation_refinement"
-Planned. The refinement is the TorchLean bridge pattern (`BridgeFP32`): each
-arithmetic and transcendental operation on `IEEE32Exec`/`FP32` is specified as
-"compute in $`\mathbb{R}`, then round", so the equation holds by the rounding
-specification, and laws lift along `toReal`.
+Proved as `Quantity.add_refines` (core, axiom-free): the `CarrierRefinement` bridge
+law lifted along the kind index. It is instantiated concretely in the separately
+built `Torch` library at TorchLean's binary32 — an _unconditional_
+`CarrierRefinement FP32 ℝ` (the rounding spec has no overflow, so the law holds by
+computation) and a _conditional_ `IEEE32Exec` refinement on the finite/no-overflow
+path (`Quantity.add_refines_exec`), where overflow is an explicit hypothesis rather
+than a silent failure. This is TorchLean's `BridgeFP32` pattern ("compute in
+$`\mathbb{R}`, then round").
+:::
+
+:::definition "def_vector_carrier" (parent := "units") (lean := "PropertyKindCalculus.instLawfulCarrierPi")
+*Vector quantities: numerical array × one scalar unit (R11, ISO 80000-2 §18).* A
+vector (or tensor) quantity is a _numerical_ array carried at one kind with one
+_scalar_ {uses "def_metrologicalUnit"}[unit] — not a per-coordinate collection of
+`number × unit` values; "all units are scalars". This is the
+{uses "def_carrier"}[carrier] taken at a function-space type: `Fin n → R` is a
+(lawful) carrier whenever $`R` is, pointwise, so a vector quantity is
+`Quantity k (Fin n → R)` and the
+{uses "thm_quantity_laws_parametric"}[additivity laws] transfer to it by the same
+parametric proof. The quantity is coordinate-independent; only its numerical
+components depend on the frame.
+:::
+
+:::proof "def_vector_carrier"
+Realized as the pointwise `Carrier (ι → R)` / `LawfulCarrier (ι → R)` instances
+(core). The fuller structural apparatus — coordinate frames, tensor variance,
+transforms — remains a separate, owed axis.
 :::
 
 :::definition "def_unit" (parent := "units")

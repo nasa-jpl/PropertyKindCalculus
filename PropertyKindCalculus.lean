@@ -19,3 +19,5 @@ import PropertyKindCalculus.ValueScale
 import PropertyKindCalculus.Unit
 import PropertyKindCalculus.Extensivity
 import PropertyKindCalculus.Quantity
+import PropertyKindCalculus.QuantityRefinement
+import PropertyKindCalculus.QuantityVector

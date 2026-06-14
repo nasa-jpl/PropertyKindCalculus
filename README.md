@@ -49,14 +49,21 @@ as its motivating special case.
 
 ## Libraries and how to consume them
 
-The package ships three libraries so the core is exportable on its own:
+The package ships six libraries so the core is exportable on its own:
 
 | Library | Source tree | Contents | `lake build` |
 |---|---|---|---|
 | `PropertyKindCalculus` (default target) | `PropertyKindCalculus/` | the exportable, Mathlib-free ontological spine | `lake build` |
 | `Examples` | `examples/` | worked examples for the spine (`PropertyKindCalculus.Examples.*`), Mathlib-free | `lake build Examples` |
 | `Dimension` | `dimension/` | the PhysLib-backed coherence layer (library modules only, no examples) — `dim` as the forgetful functor into PhysLib's `Dimension` (`PropertyKindCalculus.Dimension`), Flater's interaction algebra `KMul`/`KDiv` (`PropertyKindCalculus.Interaction`), and the `ℝ` quantity carrier (`PropertyKindCalculus.QuantityReal`); pulls in PhysLib + Mathlib | `lake build Dimension` |
-| `DimensionExamples` | `examples/` | worked examples for the Mathlib-backed `Dimension` layer (dimension functor, interaction algebra, `ℝ` quantity carrier) — kept under `examples/` so no library module carries example code; PhysLib + Mathlib-backed (transitively) | `lake build DimensionExamples` |
+| `DimensionExamples` | `examples/` | worked examples for the Mathlib-backed `Dimension` layer (dimension functor, interaction algebra, `ℝ` quantity carrier, the ISO 80000 catalogue, and the ISO 80000-2 §18 vector quantity) — kept under `examples/` so no library module carries example code; PhysLib + Mathlib-backed (transitively) | `lake build DimensionExamples` |
+| `Iso80000` | `iso80000/` | the standards-grounded layer: a references catalogue citing the ISO/IEC 80000 parts by name + version only (no normative content), plus a seed of ISO 80000-3 *Space and time* quantity-kinds and units; PhysLib-backed | `lake build Iso80000` |
+| `Torch` | `torch/` | the TorchLean-backed instance of the R10 exec/spec refinement bridge — the binary32 `FP32` (rounding spec) and `IEEE32Exec` (executable) carriers realizing `CarrierRefinement`; depends on TorchLean | `lake build Torch` |
+
+The core spine and its `import PropertyKindCalculus` stay Mathlib-free. Note that
+`require`-ing the package now also *resolves* the TorchLean dependency (it backs only
+the `Torch` library), so a consumer's lock file lists it even when only the core is
+imported and `Torch` is never built.
 
 A downstream project depends on the package and imports selectively:
 
@@ -145,7 +152,13 @@ Status: ✅ built & proved · 🚧 next · ⬜ planned
 | `PropertyKindCalculus.Examples.MiniQuantity` (in the `Examples` lib) — the same value layer at `Int` (laws transfer) and `Float` (runs, `#eval`); kind-gated add as checked facts | — | ✅ |
 | `PropertyKindCalculus.QuantityReal` (in the `Dimension` lib) — the `ℝ` proof carrier: the `Carrier ℝ`/`LawfulCarrier ℝ` instances for `Quantity k R` | — | ✅ |
 | `PropertyKindCalculus.Examples.QuantityReal` (in the `DimensionExamples` lib) — the core additivity laws transfer to `Quantity k ℝ` with no `ℝ`-specific proof as checked facts | — | ✅ |
-| `Quantity` exec/spec refinement bridge — TorchLean `FP32` (rounding spec) / `IEEE32Exec` (executable, NaN) carriers + `toReal (op_exec x) = round (op_real (toReal x))` (R10 capstone) | — | 🚧 |
+| `QuantityRefinement` — the exec/spec refinement bridge: `CarrierRefinement E S` + the kind-indexed capstone `Quantity.add_refines` (a law over the lawful spec carrier descends to the exec carrier as one rounding step) (R10 capstone) | — | ✅ |
+| `PropertyKindCalculus.Examples.MiniRefinement` (in the `Examples` lib) — a toy rounding carrier instantiating the bridge as checked facts | — | ✅ |
+| `Torch` (in the `Torch` lib) — TorchLean instance: unconditional `CarrierRefinement FP32 ℝ` (genuine binary32 rounding) + the conditional `IEEE32Exec` executable refinement (overflow an explicit side condition); `Quantity.add_refines` realized at binary32 | — | ✅ |
+| `QuantityVector` — vector/tensor quantities as a numerical array × one scalar unit (ISO 80000-2 §18, R11): pointwise `Carrier (Fin n → R)`, additivity laws transfer | — | ✅ |
+| `Iso80000.References` (in the `Iso80000` lib) — references catalogue citing all 12 ISO/IEC 80000 parts by name + version | — | ✅ |
+| `Iso80000.Part3` (in the `Iso80000` lib) — ISO 80000-3 *Space and time* seed: length/time/area/volume/speed/displacement kinds + metre/second/… units, citing item locators | ISO 80000-3 | ✅ |
+| `Iso80000` — the remaining parts (1, 2, 4–12) quantity-kinds + units | ISO/IEC 80000 | ⬜ |
 | `DedicatedKind` — kind × system × component | Ch. 20 | ⬜ |
 | `Model.SI` — SI base kinds, verified well-formed | — | ⬜ |
 | `Model.SoilMoisture` — vwc/gwc/permittivity/reflectivity/… | — | ⬜ |
@@ -181,7 +194,16 @@ type error), and the additivity laws (commutativity, associativity, the zero uni
 proved **once** over any lawful carrier and reused verbatim at `Int` and (in the
 examples) holding for free, while the same layer runs at `Float` — a `Carrier` but
 deliberately not a *lawful* one, since floating-point addition is not associative,
-which is exactly the gap the planned exec/spec refinement bridge closes.
+which is exactly the gap the exec/spec refinement bridge closes: a
+`CarrierRefinement E S` packages a forgetful `toSpec` and a spec-side `round` with
+the law `toSpec (x +ᴱ y) = round (toSpec x +ˢ toSpec y)`, and its kind-indexed
+capstone `Quantity.add_refines` (axiom-free) lifts that to quantities, so a law
+proved over the lawful carrier descends to an executable one as a single rounding
+step. The same carrier-parametricity gives *vector* quantities for free
+(ISO 80000-2 §18, R11): a numerical vector `Fin n → R` is a lawful carrier
+pointwise, so a vector quantity is one kind with one **scalar** unit over a
+numerical array — not a per-coordinate bag of number×unit values — and the
+additivity laws transfer to it unchanged.
 
 `lake build Dimension` additionally checks the PhysLib-backed coherence layer
 (this is the one library that pulls in PhysLib + Mathlib). The dimension module
@@ -214,6 +236,22 @@ line. The `Int` and `Float` carriers ship with the Mathlib-free core; `ℝ` land
 because it needs Mathlib.
 
 `lake build DimensionExamples` then checks the Mathlib-backed worked examples — the
-dimension functor, the interaction algebra, and the `ℝ` quantity-law transfer — kept
-under `examples/` so that no library module carries `example`/`#eval`/`#guard` code
+dimension functor, the interaction algebra, the `ℝ` quantity-law transfer, the
+ISO 80000 catalogue, and the ISO 80000-2 §18 vector quantity — kept under
+`examples/` so that no library module carries `example`/`#eval`/`#guard` code
 (the Mathlib-free spine examples stay in the `Examples` library).
+
+`lake build Iso80000` checks the standards-grounded layer: a references catalogue
+that cites each of the twelve ISO/IEC 80000 parts by name and version only — e.g.
+`IEC 80000-6, Edition 2.0, 2022-11`, with no normative content reproduced — and a
+seed of ISO 80000-3 *Space and time* (length, time, area, volume, speed, and a
+displacement vector kind, with the metre, second, square metre, … as units), each
+carrying its exact item locator as data and its dimensional facts checked in
+PhysLib's group.
+
+`lake build Torch` checks the TorchLean-backed instance of the refinement bridge —
+the only library that depends on TorchLean. `FP32` (TorchLean's binary32 rounding
+spec) is an *unconditional* `CarrierRefinement` of `ℝ`, so `Quantity.add_refines`
+holds at genuine binary32; the *executable* `IEEE32Exec` refines `ℝ` only on the
+finite, no-overflow path, with overflow carried as an explicit hypothesis rather
+than silently dropped — the class of failure this rigor work exists to surface.
