@@ -49,12 +49,13 @@ as its motivating special case.
 
 ## Libraries and how to consume them
 
-The package ships two libraries so the core is exportable on its own:
+The package ships three libraries so the core is exportable on its own:
 
 | Library | Source tree | Contents | `lake build` |
 |---|---|---|---|
-| `PropertyKindCalculus` (default target) | `PropertyKindCalculus/` | the exportable ontological spine | `lake build` |
-| `Examples` | `examples/` | worked examples (`PropertyKindCalculus.Examples.*`) | `lake build Examples` |
+| `PropertyKindCalculus` (default target) | `PropertyKindCalculus/` | the exportable, Mathlib-free ontological spine | `lake build` |
+| `Examples` | `examples/` | worked examples for the spine (`PropertyKindCalculus.Examples.*`), Mathlib-free | `lake build Examples` |
+| `Dimension` | `dimension/` | `dim` as the forgetful functor into PhysLib's `Dimension`, with its examples (`PropertyKindCalculus.Dimension`, `…Examples.Dimension`) — the **only** library that pulls in PhysLib + Mathlib | `lake build Dimension` |
 
 A downstream project depends on the package and imports selectively:
 
@@ -66,9 +67,11 @@ import PropertyKindCalculus                       -- core spine only, no example
 ```
 
 The **core spine is Mathlib-free** and builds with only the Lean toolchain. The
-dimension/coherence layer (PhysLib `Dimension` as a forgetful functor) and the
-soil-moisture *model* pull in PhysLib + Mathlib and land as further libraries
-once the spine stabilizes.
+dimension/coherence layer (PhysLib `Dimension` as a forgetful functor) has landed
+as the separate `Dimension` library — it is the one place PhysLib + Mathlib enter,
+so a plain `import PropertyKindCalculus` stays Mathlib-free. PhysLib HEAD tracks
+the same toolchain this package pins (`leanprover/lean4:v4.30.0`). The
+soil-moisture *model* will land as a further library on the same pattern.
 
 ## Design blueprint
 
@@ -128,8 +131,9 @@ Status: ✅ built & proved · 🚧 next · ⬜ planned
 | `PropertyKindCalculus.Examples.MiniValueScale` (in the `Examples` lib) — same-kind comparison + quantity-vs-nominal value + value scale as checked facts | — | ✅ |
 | `Unit` — metrological unit = *chosen reference quantity of a kind*; commensurability equivalence + number-and-reference round-trip, gated to unitary kinds | Ch. 18, §13.3.3 | ✅ |
 | `PropertyKindCalculus.Examples.MiniUnit` (in the `Examples` lib) — metre/centimetre commensurable, metre/kilogram not; ordinal & nominal kinds bear no unit; "5 cm" round-trips as checked facts | — | ✅ |
-| `Dimension` — PhysLib `Dimension` as forgetful functor (+ coherence) | Ch. 19 | 🚧 (PhysLib) |
-| `Interaction` — `KMul`/`KDiv`, dimensional coherence | Flater App. C | ⬜ |
+| `Dimension` — `dim` as the forgetful functor into PhysLib's `Dimension`; the dimension-1 disambiguation capstone (distinct kinds, one dimension) + product-multiplicativity coherence | Ch. 19 | ✅ |
+| `PropertyKindCalculus.Examples.Dimension` (in the `Dimension` lib) — vwc/gwc/permittivity/reflectivity all dimension-one yet pairwise-distinct kinds; dimensional algebra (area = L², speed = L·T⁻¹); forgetful-functor coherence as checked facts | — | ✅ |
+| `Interaction` — `KMul`/`KDiv`, dimensional coherence (the `dim`-homomorphism capstone) | Flater App. C | 🚧 |
 | `Extensivity` — extensive / conditionally extensive kinds | §13.5 | ⬜ |
 | `DedicatedKind` — kind × system × component | Ch. 20 | ⬜ |
 | `Model.SI` — SI base kinds, verified well-formed | — | ⬜ |
@@ -154,3 +158,14 @@ only — nominal and ordinal kinds bear none (Dybkær §9.13.4) — with commens
 comparable — with "the width of a pencil" specified as an instance, and "5 cm"
 specified as a quantity value distinct in kind from a mass or a blood-group value,
 measured in a centimetre that is commensurable with the metre but not the kilogram.
+
+`lake build Dimension` additionally checks the dimension layer (this is the one
+library that pulls in PhysLib + Mathlib): that `dim` — the forgetful functor that
+sends a kind to its PhysLib `Dimension` — is **not injective**, the motivating
+capstone. Volumetric and gravimetric water content (and relative permittivity and
+reflectivity) are pairwise-distinct kinds that all forget to the dimensionless
+`1`, so PhysLib's `Dimension`, and any dimension-only type system, cannot tell
+them apart while the kind layer keeps them distinct. The functor still preserves
+products (the dimension of a product is the product of the dimensions, exponents
+adding), and the dimensional algebra computes in PhysLib's group (area = L²,
+speed = L·T⁻¹) — all sorry-free.

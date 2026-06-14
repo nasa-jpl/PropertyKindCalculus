@@ -42,6 +42,15 @@ package «PropertyKindCalculus» where
     ⟨`autoImplicit, false⟩,
     ⟨`relaxedAutoImplicit, false⟩]
 
+-- PhysLib (and, transitively, Mathlib) backs *only* the `Dimension` library
+-- below — the dimension/coherence layer that maps each kind to its physical
+-- `Dimension`. PhysLib HEAD tracks the same toolchain this package pins
+-- (`leanprover/lean4:v4.30.0`, Mathlib `v4.30.0`). The core spine never imports
+-- it, so a plain `import PropertyKindCalculus` stays Mathlib-free.
+require «Physlib» from git
+  "https://github.com/leanprover-community/physlib.git" @
+  "ede623da538ba7d5a647763211889c2cc8d0c30b"
+
 /-- The exportable core library (Mathlib-free spine). -/
 @[default_target]
 lean_lib «PropertyKindCalculus» where
@@ -53,3 +62,11 @@ lean_lib «PropertyKindCalculus» where
 lean_lib «Examples» where
   srcDir := "examples"
   globs := #[.andSubmodules `PropertyKindCalculus.Examples]
+
+/-- The dimension/coherence layer: `dim` as the forgetful functor into PhysLib's
+`Dimension`. A **separate** library in its own source tree (`dimension/`) so the
+PhysLib + Mathlib dependency lands here and nowhere else. Build with
+`lake build Dimension`. -/
+lean_lib «Dimension» where
+  srcDir := "dimension"
+  globs := #[.andSubmodules `PropertyKindCalculus.Dimension]

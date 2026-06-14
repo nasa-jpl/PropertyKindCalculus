@@ -1,4 +1,6 @@
-{"98":
+{"99":
+ "<code>PropertyKindCalculus.dim_not_injective : ∃ a b, a.kind ≠ b.kind ∧ a.toDimension = b.toDimension ∧ a.toDimension = 1</code><span class=\"sep\"></span><code class=\"docstring\">**The dimension-1 disambiguation — the motivating capstone.** `dim` is *not\ninjective*: there are distinct kinds with the same dimension, both equal to the\ndimensionless `1`. Volumetric and gravimetric water content witness it. PhysLib's\n`Dimension`, and any dimension-only type system, cannot separate them; the kind\nlayer does. </code>",
+ "98":
  "<code>PropertyKindCalculus.PropertyValue.numeral (self : PropertyKindCalculus.PropertyValue) : Int</code><span class=\"sep\"></span><code class=\"docstring\">§16.10 — the numerical value (numeral). For a quantity value the magnitude\nis this number times the `reference`; for a nominal value (§12.4) it is a bare\ntype-number / label. </code>",
  "97":
  "<code>PropertyKindCalculus.MetrologicalUnit.measure (u : PropertyKindCalculus.MetrologicalUnit) (n : Int) :\n  PropertyKindCalculus.PropertyValue</code><span class=\"sep\"></span><code class=\"docstring\">**§13.3.3 — a magnitude expressed as a reference quantity multiplied by a\nnumber.** Measuring `n` of this unit is the property value \"`n` × `symbol`\": the\nnumeral `n` taken against this unit's reference. </code>",
@@ -167,6 +169,21 @@
  "12":
  "<code>LE.le.{u} {α : Type u} [self : LE α] : α → α → Prop</code><span class=\"sep\"></span><code class=\"docstring\">The less-equal relation: `x ≤ y` \n\nConventions for notations in identifiers:\n\n * The recommended spelling of `≤` in identifiers is `le`.</code>",
  "11": "<code>a ≤ b</code>",
+ "107":
+ "<code>HMul.hMul.{u, v, w} {α : Type u} {β : Type v} {γ : outParam (Type w)} [self : HMul α β γ] : α → β → γ</code><span class=\"sep\"></span><code class=\"docstring\">`a * b` computes the product of `a` and `b`.\nThe meaning of this notation is type-dependent. \n\nConventions for notations in identifiers:\n\n * The recommended spelling of `*` in identifiers is `mul`.</code>",
+ "106":
+ "<code>PropertyKindCalculus.DimensionedKind.times (a b : PropertyKindCalculus.DimensionedKind) :\n  PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">Provisional product of dimensioned kinds (superseded by `Interaction`'s\n`KMul`): the dimensions multiply (PhysLib `Dimension.mul`, i.e. exponents add)\nand the kind identity records the composition. Only the dimension component is\nload-bearing for the coherence laws below. </code>",
+ "105":
+ "<code>PropertyKindCalculus.DimensionedKind.toDimension_times (a b : PropertyKindCalculus.DimensionedKind) :\n  (a.times b).toDimension = a.toDimension * b.toDimension</code><span class=\"sep\"></span><code class=\"docstring\">**Coherence (multiplicativity).** `dim` carries products to products — it is\na homomorphism into the multiplicative `Dimension` group. </code>",
+ "104":
+ "<code>Dimension : Type</code><span class=\"sep\"></span><code class=\"docstring\">The foundational dimensions.\nDefined in the order ⟨length, time, mass, charge, temperature⟩ </code>",
+ "103":
+ "<code>PropertyKindCalculus.DimensionedKind : Type</code><span class=\"sep\"></span><code class=\"docstring\">A **dimensioned kind** (Dybkær Ch. 19): a {kind-of-property} together with\nthe physical `Dimension` of its quantities. Pairing the dimension *with* the\nkind — rather than storing it on `KindOfProperty` — keeps the core spine\nMathlib-free and matches the open-world convention (an application declares a\ndimensioned kind with a `def`, never by editing a central type). </code>",
+ "102":
+ "<code>PropertyKindCalculus.DimensionedKind.toDimension (dk : PropertyKindCalculus.DimensionedKind) : Dimension</code><span class=\"sep\"></span><code class=\"docstring\">The **forgetful functor** on objects: drop the kind identity, keep only the\ndimension. Naming it as a standalone map is what lets the central fact — that it\nis *not injective* — be stated and proved. </code>",
+ "101":
+ "<code>PropertyKindCalculus.DimensionedKind.kind (self : PropertyKindCalculus.DimensionedKind) :\n  PropertyKindCalculus.KindOfProperty</code><span class=\"sep\"></span><code class=\"docstring\">The underlying kind-of-property (the richer datum). </code>",
+ "100": "<code>PropertyKindCalculus.DimensionedKind</code>",
  "10": "<code>PropertyKindCalculus.ScaleType</code>",
  "1":
  "<code>String : Type</code><span class=\"sep\"></span><code class=\"docstring\">A string is a sequence of Unicode scalar values.\n\nAt runtime, strings are represented by [dynamic arrays](https://en.wikipedia.org/wiki/Dynamic_array)\nof bytes using the UTF-8 encoding. Both the size in bytes (`String.utf8ByteSize`) and in characters\n(`String.length`) are cached and take constant time. Many operations on strings perform in-place\nmodifications when the reference to the string is unique.\n</code>",

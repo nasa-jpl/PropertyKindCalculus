@@ -1,6 +1,10 @@
 import Verso
 import VersoManual
 import VersoBlueprint
+-- The dimension-1 disambiguation capstone below now links a real declaration, so
+-- this chapter imports the `Dimension` library (the one PhysLib + Mathlib
+-- dependency); the rest of its nodes remain planned.
+import PropertyKindCalculus.Dimension
 
 open Verso.Genre
 open Verso.Genre.Manual
@@ -8,10 +12,13 @@ open Informal
 
 #doc (Manual) "Units and the Dimension-1 Problem" =>
 
-This chapter states the layer that originally motivated PropertyKindCalculus, and is
-_planned, not yet formalized_. Its nodes carry informal statements and proof
-sketches; they appear as in-progress goals in the dependency graph until a
-`(lean := …)` declaration or a checked code block is attached.
+This chapter states the layer that originally motivated PropertyKindCalculus. Its
+motivating capstone — the dimension-1 disambiguation — is now _proved_ (see the
+_Dimension as a Forgetful Functor_ chapter for the forgetful map it rests on);
+the unit-arithmetic nodes around it remain _planned_, carrying
+informal statements and proof sketches that appear as in-progress goals in the
+dependency graph until a `(lean := …)` declaration or checked code block is
+attached.
 
 PhysLib's `Dimension` (a ℚ-exponent free commutative group over the SI base
 quantities) makes every dimension-one quantity equal. Volumetric water content
@@ -74,21 +81,21 @@ $`r \neq 0` from the chosen-reference nonzeroness. Ratio formation is licensed b
 the ratio scale.
 :::
 
-:::theorem "thm_dimensionless_kinds_distinct" (parent := "units") (tags := "capstone, planned") (effort := "small") (priority := "high")
+:::theorem "thm_dimensionless_kinds_distinct" (parent := "units") (lean := "PropertyKindCalculus.dim_not_injective") (tags := "capstone, proved") (effort := "small") (priority := "high")
 *The dimension-1 disambiguation (the motivating capstone).* There exist distinct
 kinds that map to the same dimension. Concretely, for volumetric and gravimetric
 water content,
 $$`\mathrm{vwc} \neq \mathrm{gwc} \qquad\text{yet}\qquad \dim(\mathrm{vwc}) = \dim(\mathrm{gwc}) = \mathbf{1},`
-and likewise for permittivity, reflectivity, and emissivity. So the kind layer is
-a strict refinement of the dimension layer: $`\dim` is not injective. This is the
-statement PhysLib — and any dimension-only model, whether OWL2 or a
-representation-rooted hierarchy like SysML v2's — structurally cannot make. Uses
+and likewise for permittivity and reflectivity. So the kind layer is a strict
+refinement of the dimension layer: $`\dim` is not injective. This is the statement
+PhysLib — and any dimension-only model, whether OWL2 or a representation-rooted
+hierarchy like SysML v2's — structurally cannot make. Uses
 {uses "def_kindOfProperty"}[kind-of-property] and {uses "def_dim"}[the dimension map].
 :::
 
 :::proof "thm_dimensionless_kinds_distinct"
-Planned. `vwc` and `gwc` are declared as distinct `KindOfProperty` values
-(distinct `id`, distinct examination principle), so `vwc ≠ gwc` is `by decide`.
-Both have `dim = 1` once the dimension map is in place, giving a witnessed
-$`\exists k_1\ k_2,\ k_1 \neq k_2 \wedge \dim k_1 = \dim k_2`.
+Proved in the `Dimension` library. `vwc` and `gwc` are declared as dimensioned
+kinds with distinct kind `id`s, so `vwc.kind ≠ gwc.kind` is `by decide`; both
+carry `dim = 1`, so their dimensions agree by `rfl`. Together they witness
+$`\exists a\ b,\ a.\mathrm{kind} \neq b.\mathrm{kind} \wedge \dim a = \dim b \wedge \dim a = 1`.
 :::
