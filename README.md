@@ -158,6 +158,10 @@ Status: ✅ built & proved · 🚧 next · ⬜ planned
 | `QuantityVector` — vector/tensor quantities as a numerical array × one scalar unit (ISO 80000-2 §18, R11): pointwise `Carrier (Fin n → R)`, additivity laws transfer | — | ✅ |
 | `Iso80000.References` (in the `Iso80000` lib) — references catalogue citing all 12 ISO/IEC 80000 parts by name + version | — | ✅ |
 | `Iso80000.Part3` (in the `Iso80000` lib) — ISO 80000-3 *Space and time* seed: length/time/area/volume/speed/displacement kinds + metre/second/… units, citing item locators | ISO 80000-3 | ✅ |
+| `UnitPrefix` — SI prefixes (VIM4 §1.19) + prefixed units: the centimetre as *centi* · metre, with the §1.22 conversion factor and §1.20/§1.21 multiple/submultiple read off the projection | VIM4 | ✅ |
+| `Iso80000.Part3.AreaElement` (in the `Iso80000` lib) — item 3-2.1's *Remarks* mathematics formalized analytically: the metric tensor (Gram), the surface element `dA = √g`, the area integral, with `(dA)² = g`, regularity, and the flat-patch correctness anchor proved | ISO 80000-3 | ✅ |
+| `QuantityClassification` — verified classification (R12): a kind-law `ProductKind` + the `Quantity.IsProduct` certificate + smart constructor; kind-laws stated to instantiate at the quantity level (axiom-free) | — | ✅ |
+| `Iso80000.Part3.AreaClassification` (in the `Iso80000` lib) — R12 area instance: a rectangle's area certified as `width × height` by construction, and every certified surface area proved `≥ 0` (property transport from the defining relation) | ISO 80000-3 | ✅ |
 | `Iso80000` — the remaining parts (1, 2, 4–12) quantity-kinds + units | ISO/IEC 80000 | ⬜ |
 | `DedicatedKind` — kind × system × component | Ch. 20 | ⬜ |
 | `Model.SI` — SI base kinds, verified well-formed | — | ⬜ |

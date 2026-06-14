@@ -94,8 +94,13 @@ def displacementCK : CataloguedKind :=
 
 /-- The metre, the SI unit of length (item 3-1.1). -/
 def metre : MetrologicalUnit := length.kind.unit "m"
-/-- The centimetre, another unit of length — commensurable with the metre. -/
-def centimetre : MetrologicalUnit := length.kind.unit "cm"
+/-- The centimetre as a **prefixed unit** (VIM4 §1.21): the `centi` submultiple of
+the metre. Its symbol `"cm"` and its conversion factor (`10⁻²`) follow from the
+prefix and the base, rather than being asserted independently. -/
+def centimetrePrefixed : PrefixedUnit := metre.withPrefix SIPrefix.centi
+/-- The centimetre, another unit of length — the projection of `centimetrePrefixed`
+to a plain `MetrologicalUnit`, so it stays commensurable with the metre. -/
+def centimetre : MetrologicalUnit := centimetrePrefixed.toUnit
 /-- The second, the SI unit of duration (item 3-9.1). -/
 def second : MetrologicalUnit := time.kind.unit "s"
 /-- The square metre, the SI unit of area (item 3-2.1). -/
@@ -122,8 +127,28 @@ bears a unit (Dybkær §13.3.5). -/
 theorem metre_wellFormed : metre.WellFormed :=
   KindOfProperty.rational_bears_unit rfl
 
-/-- The metre and the centimetre are commensurable — both reference `length`. -/
-theorem metre_centimetre_commensurable : metre.Commensurable centimetre := rfl
+/-- The metre and the centimetre are commensurable — both reference `length`. The
+prefix leaves the kind unchanged, so this still holds for the prefixed centimetre. -/
+theorem metre_centimetre_commensurable : metre.Commensurable centimetre :=
+  centimetrePrefixed.commensurable_base
+
+/-- The centimetre's symbol is `"cm"` — composed from the prefix symbol `"c"` and the
+base symbol `"m"`, not asserted independently (VIM4 §1.19). -/
+theorem centimetre_symbol : centimetre.symbol = "cm" := rfl
+
+/-- The centimetre is a **submultiple** of the metre with conversion factor `10⁻²`:
+`1 cm = 10⁻² m` (VIM4 §1.21 / §1.22). The exponent is a checked computation. -/
+theorem centimetre_conversionExponent : centimetrePrefixed.conversionExponent = -2 := rfl
+
+/-- The centimetre is a decimal *submultiple* of the metre (VIM4 §1.21). -/
+theorem centimetre_isSubmultiple : centimetrePrefixed.IsSubmultiple := by
+  unfold PrefixedUnit.IsSubmultiple
+  decide
+
+/-- The centimetre, being a prefixing of a well-formed base unit, is itself a
+well-formed metrological unit (the kind is unchanged by the prefix). -/
+theorem centimetre_wellFormed : centimetre.WellFormed :=
+  centimetrePrefixed.toUnit_wellFormed metre_wellFormed
 
 /-- The metre and the second are **not** commensurable — length and time are
 distinct kinds (a type-level fact, not a runtime check). -/

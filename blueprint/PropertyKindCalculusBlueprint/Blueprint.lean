@@ -194,6 +194,29 @@ aligns with the VIM's "a quantity is scalar; a vector/tensor is a composite of
 scalar quantities" — the priority SysML v2 inverts (see *Why a calculus, not a
 taxonomy*). The fuller *structural* apparatus is a separate axis, still owed below.
 
+## Verified classification: kind-laws that instantiate at the quantity level
+
+*R12 — A classification is a certificate, not an assertion; kind-laws instantiate at
+the quantity level.* By default a kind is a *tag*: `Quantity k R` records the kind but
+the magnitude is arbitrary, so a value can be labelled with a kind it has not earned.
+R12 upgrades a classification to a *certificate* — a proof that a quantity satisfies
+its kind's *defining relation* (the formalized ISO 80000 *Remark*) to quantities of the
+kinds it is built from. A length built as speed × time is certified by construction; a
+bare `⟨999⟩` cannot be certified against those factors. The kind becomes a *refinement*
+(a tag plus its earned proof).
+
+The reason this strengthens the calculus is *instantiation*. Every kind-law is stated
+as a carrier-parametric universal over quantities with the kind-relation as a premise,
+so it instantiates to a quantity-level fact by ordinary application — the inter-kind
+generalization of R10's carrier-parametric laws — and any property of a kind's defining
+relation transports to *every* quantity certified under it (every certified surface
+area is `≥ 0`, because the area element is). The canonical pattern is the product
+(area = length · length, energy = force · length); analysis-shaped relations such as
+area as a surface integral `∬ √g du dv` follow the same discipline in the
+layer where their mathematics lives. R12 unifies the two halves of the standards work:
+the formalized remark *is* the defining relation, and classification is the witnessed
+instantiation of it.
+
 ## Out of scope (for now)
 
 *Value representation in the structural sense* — coordinate frames, tensor
@@ -269,6 +292,11 @@ Stating it as owed keeps the boundary honest.
   * a displacement as `Quantity k (Fin 3 → ℝ)` with one metre; laws transfer
   * pointwise `Carrier (Fin n → R)`; scalar `MetrologicalUnit`
   * proved
+*
+  * R12 — verified classification; kind-laws instantiate at the quantity level
+  * a length built as speed × time is certified by construction; `⟨999⟩` cannot be certified; every certified surface area is `≥ 0`
+  * `ProductKind` kind-laws; `Quantity.IsProduct` certificate + smart constructor; defining relations from the ISO 80000 remarks (area = `∬√g`)
+  * proved (product family + area instance)
 *
   * *(out of scope)* structural value representation
   * coordinate frames, tensor variance, transforms

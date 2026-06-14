@@ -206,3 +206,67 @@ kinds with distinct kind `id`s, so `vwc.kind ≠ gwc.kind` is `by decide`; both
 carry `dim = 1`, so their dimensions agree by `rfl`. Together they witness
 $`\exists a\ b,\ a.\mathrm{kind} \neq b.\mathrm{kind} \wedge \dim a = \dim b \wedge \dim a = 1`.
 :::
+
+# Verified classification and instantiable kind-laws (R12)
+
+A quantity `Quantity k R` records its kind `k` as a _tag_:
+the magnitude is an arbitrary `R`, so a value can be labelled with a kind it has not
+earned (`⟨999⟩` type-checks as an area). R12 upgrades a classification from an
+_assertion_ to a _certificate_: a quantity is classified under a kind by a proof that
+it satisfies the kind's _defining relation_ — the formalized ISO 80000 _Remark_ — to
+quantities of the kinds it is built from. The kind becomes a _refinement_ (a tag plus
+its earned proof), not a label.
+
+The payoff is _instantiation_. Every kind-law is stated as a carrier-parametric
+universal over quantities with the kind-relation as a premise; "instantiating it at
+the quantity level" is then ordinary application, and any property of a kind's defining
+relation transports to _every_ quantity certified under it. This is the inter-kind
+generalization of the carrier-parametric laws of R10.
+
+:::group "classification"
+The canonical pattern is the _product_, which covers a large fraction of the ISQ
+(area = length · length, volume = area · length, energy = force · length). The
+general machinery lives in the Mathlib-free core; the dimensional refinement
+(`k.dim = k₁.dim · k₂.dim`) lives in the dimension layer, and analysis-shaped
+relations (area as a surface integral) in the Mathlib-backed layer.
+:::
+
+:::definition "def_product_kind" (parent := "classification") (lean := "PropertyKindCalculus.ProductKind")
+A _product kind-law_ `ProductKind k₁ k₂ k` records that `k` is the product kind of
+`k₁` and `k₂`. In the core it carries the scale precondition — all three are
+ratio-scale, since only ratio quantities multiply (Dybkær §13.3.5); the dimension
+layer refines it with the dimensional equation $`k.\dim = k_1.\dim \cdot k_2.\dim`.
+:::
+
+:::proof "def_product_kind"
+Realized as `structure ProductKind` with three `IsRational` fields. A concrete law
+such as area = length · length is the value `⟨rfl, rfl, rfl⟩`.
+:::
+
+:::definition "def_is_product" (parent := "classification") (lean := "PropertyKindCalculus.Quantity.IsProduct")
+The _certificate_ `q.IsProduct h a b` states that `q` (of kind `k`) is the product of
+`a` (of `k₁`) and `b` (of `k₂`): its magnitude is the product of theirs. A proof of
+this certifies `q`'s classification, rather than asserting it. It is a separate
+proposition, so {uses "def_quantity"}[`Quantity`] stays a clean tag and certificates
+are carried only when needed. The smart constructor `Quantity.mul` yields a quantity
+whose certificate holds by construction.
+:::
+
+:::proof "def_is_product"
+`Quantity.IsProduct h q a b := q.magnitude = a.magnitude * b.magnitude` over a carrier
+with multiplication; `Quantity.mul h a b := ⟨a.magnitude * b.magnitude⟩`, and
+`mul_isProduct` is `rfl`.
+:::
+
+:::theorem "thm_isproduct_unique" (parent := "classification") (lean := "PropertyKindCalculus.Quantity.isProduct_unique") (tags := "proved") (effort := "small")
+*A kind-law that instantiates at the quantity level.* A quantity certified as the
+product of `a` and `b` is unique — and any certified product equals the
+smart-constructed one (`eq_mul_of_isProduct`, canonicity). Supplying concrete
+quantities gives the quantity-level fact by application. Axiom-free.
+:::
+
+:::proof "thm_isproduct_unique"
+`isProduct_unique` rewrites both magnitudes to `a.magnitude * b.magnitude` and closes
+by structure η; `eq_mul_of_isProduct` is `isProduct_unique` against `mul_isProduct`.
+Both depend on no axioms.
+:::

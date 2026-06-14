@@ -17,7 +17,9 @@ import PropertyKindCalculus.Examination
 import PropertyKindCalculus.PropertyValue
 import PropertyKindCalculus.ValueScale
 import PropertyKindCalculus.Unit
+import PropertyKindCalculus.UnitPrefix
 import PropertyKindCalculus.Extensivity
 import PropertyKindCalculus.Quantity
+import PropertyKindCalculus.QuantityClassification
 import PropertyKindCalculus.QuantityRefinement
 import PropertyKindCalculus.QuantityVector
