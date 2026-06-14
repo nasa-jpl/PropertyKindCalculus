@@ -1,5 +1,36 @@
-{"9":
+{"98":
+ "<code>PropertyKindCalculus.PropertyValue.numeral (self : PropertyKindCalculus.PropertyValue) : Int</code><span class=\"sep\"></span><code class=\"docstring\">§16.10 — the numerical value (numeral). For a quantity value the magnitude\nis this number times the `reference`; for a nominal value (§12.4) it is a bare\ntype-number / label. </code>",
+ "97":
+ "<code>PropertyKindCalculus.MetrologicalUnit.measure (u : PropertyKindCalculus.MetrologicalUnit) (n : Int) :\n  PropertyKindCalculus.PropertyValue</code><span class=\"sep\"></span><code class=\"docstring\">**§13.3.3 — a magnitude expressed as a reference quantity multiplied by a\nnumber.** Measuring `n` of this unit is the property value \"`n` × `symbol`\": the\nnumeral `n` taken against this unit's reference. </code>",
+ "96":
+ "<code>PropertyKindCalculus.MetrologicalUnit.Measures (u : PropertyKindCalculus.MetrologicalUnit)\n  (v : PropertyKindCalculus.PropertyValue) : Prop</code><span class=\"sep\"></span><code class=\"docstring\">**§13.3.3 — a value *is measured in* a unit** iff it is of the unit's kind and\ntaken against the unit's reference. (The value-side reading of \"reference quantity\nmultiplied by a number\".) </code>",
+ "95": "<code>u.Measures v</code>",
+ "94":
+ "<code>PropertyKindCalculus.MetrologicalUnit.measure_eq_of_measures {u : PropertyKindCalculus.MetrologicalUnit}\n  {v : PropertyKindCalculus.PropertyValue} (h : u.Measures v) : u.measure v.numeral = v</code><span class=\"sep\"></span><code class=\"docstring\">**`number × unit = quantity`** — re-applying a unit to the numeral of a value\nmeasured in it recovers the value exactly. Together with `measure_numeral` this is\nthe §13.3.3 number-and-reference *round-trip*: the unit is a faithful reference. </code>",
+ "93":
+ "<code>PropertyKindCalculus.MetrologicalUnit.WellFormed (u : PropertyKindCalculus.MetrologicalUnit) : Prop</code><span class=\"sep\"></span><code class=\"docstring\">**§18.12** — a metrological unit is *well-formed* iff its kind actually bears a\nunit (§13.3.3): there is no metrological unit of a nominal or ordinal kind. </code>",
+ "92":
+ "<code>PropertyKindCalculus.KindOfProperty.IsOrdinal (k : PropertyKindCalculus.KindOfProperty) : Prop</code><span class=\"sep\"></span><code class=\"docstring\">§13.2.2 ordinal kind-of-property (rankable, not subtractive). </code>",
+ "91":
+ "<code>PropertyKindCalculus.MetrologicalUnit.kind (self : PropertyKindCalculus.MetrologicalUnit) :\n  PropertyKindCalculus.KindOfProperty</code><span class=\"sep\"></span><code class=\"docstring\">§18.12 / §13.3.3 — the kind whose quantities this unit references. A\nwell-formed unit's kind must bear a unit (`WellFormed`). </code>",
+ "90": "<code>u.kind.IsOrdinal</code>",
+ "9":
  "<code>PropertyKindCalculus.ScaleType.le_antisymm {a b : PropertyKindCalculus.ScaleType} (h₁ : a ≤ b) (h₂ : b ≤ a) : a = b</code>",
+ "89":
+ "<code>PropertyKindCalculus.MetrologicalUnit.not_wellFormed_of_ordinal {u : PropertyKindCalculus.MetrologicalUnit}\n  (h : u.kind.IsOrdinal) : ¬u.WellFormed</code><span class=\"sep\"></span><code class=\"docstring\">A metrological unit of an ordinal kind is ill-formed (§9.13.4). </code>",
+ "88": "<code>u₂.Commensurable u₃</code>",
+ "87":
+ "<code>PropertyKindCalculus.MetrologicalUnit.Commensurable (u₁ u₂ : PropertyKindCalculus.MetrologicalUnit) : Prop</code><span class=\"sep\"></span><code class=\"docstring\">**§9.13.4 \"of the same kind\"** — two units are *commensurable* iff they\nreference the same kind. This is the only relation along which a value converts:\na metre and a centimetre are commensurable (both length); a metre and a kilogram\nare not — and that is a fact of the types, not a runtime guard. </code>",
+ "86": "<code>u₁.Commensurable u₂</code>",
+ "85": "<code>PropertyKindCalculus.MetrologicalUnit</code>",
+ "84":
+ "<code>PropertyKindCalculus.MetrologicalUnit.Commensurable.trans {u₁ u₂ u₃ : PropertyKindCalculus.MetrologicalUnit}\n  (h₁ : u₁.Commensurable u₂) (h₂ : u₂.Commensurable u₃) : u₁.Commensurable u₃</code><span class=\"sep\"></span><code class=\"docstring\">Commensurability is transitive — the law a description logic cannot state. </code>",
+ "83":
+ "<code>PropertyKindCalculus.MetrologicalUnit : Type</code><span class=\"sep\"></span><code class=\"docstring\">**§18.12 metrological unit** — one quantity of a kind chosen as the reference,\n\"with which any other quantity of the same kind can be compared\". Carried as the\nkind it references together with its terminological `symbol` (the §18.12 unit id,\ne.g. `\"m\"`, `\"kg\"`). Like `KindOfProperty`, it is an open value so applications\ndeclare units as `def`s. </code>",
+ "82":
+ "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">§18.12 — the terminological identity of the unit (the unit id, e.g. `\"m\"`). </code>",
+ "81":
+ "<code>PropertyKindCalculus.KindOfProperty</code><span class=\"sep\"></span><code class=\"docstring\">§18.12 / §13.3.3 — the kind whose quantities this unit references. A\nwell-formed unit's kind must bear a unit (`WellFormed`). </code>",
  "80": "<code>s.Admits w</code>",
  "8":
  "<code>PropertyKindCalculus.ScaleType.ratio : PropertyKindCalculus.ScaleType</code><span class=\"sep\"></span><code class=\"docstring\">§12.20 ratio — adds `×, ÷` (divisible; an absolute zero). </code>",

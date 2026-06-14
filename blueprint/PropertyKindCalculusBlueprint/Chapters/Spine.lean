@@ -331,3 +331,83 @@ Membership unfolds to equality with the scale's kind, so two members' kinds are
 equal by `trans`/`symm`; operator monotonicity is the scale-layer `allows_mono`
 re-exported through `scaleType`.
 :::
+
+# Metrological units (Dybkær Ch. 18, §13.3.3)
+
+:::group "spine_unit"
+A _metrological unit_ (§18.12) is one quantity of a kind _chosen as the
+reference_: "with which any other quantity of the same kind can be compared"
+(VIM4 2CD 1.12). It belongs to a _unitary_ kind-of-quantity (§13.3.3), whose
+magnitudes are "a reference quantity multiplied by a number" — the differential
+(§13.3.4) and rational (§13.3.5) kinds. The two laws specified here are ones a
+description logic can record an instance of but neither state nor prove: that
+_commensurability_ — being "of the same kind", the only relation along which a
+value converts — is an equivalence relation (a relation that is reflexive,
+symmetric, and transitive, so it partitions units into convertible classes); and
+that the number-and-reference form is a faithful round-trip. This is the symbolic
+(numeral-and-reference) layer; the real-valued `Quantity k` with conversion
+_ratios_ and the dimension-1 disambiguation are the planned PhysLib refinement,
+stated in the _Units and the Dimension-1 Problem_ chapter.
+:::
+
+:::definition "def_metrologicalUnit" (parent := "spine_unit") (lean := "PropertyKindCalculus.MetrologicalUnit")
+A _metrological unit_ (§18.12) carries the {uses "def_kindOfProperty"}[kind] it
+references and a terminological `symbol` (the unit id, e.g. `"m"`, `"kg"`). A kind
+_bears a unit_ (`BearsUnit`, §13.3.3) iff its scale is at least differential, and a
+unit is _well-formed_ iff its kind bears one; `measure u n` builds the
+{uses "def_propertyValue"}[property value] "`n` × `symbol`".
+:::
+
+:::proof "def_metrologicalUnit"
+A `structure` with `DecidableEq`. `BearsUnit` is `scale.AllowsDifference`,
+`WellFormed` is `kind.BearsUnit`, and `measure` fills the value's `numeral` and
+`reference` fields from `n` and the unit's `symbol`.
+:::
+
+:::theorem "thm_unit_commensurable_equiv" (parent := "spine_unit") (owner := "author_nfr") (lean := "PropertyKindCalculus.MetrologicalUnit.Commensurable.trans") (tags := "proved")
+*Commensurability is an equivalence.* Two {uses "def_metrologicalUnit"}[units] are
+commensurable iff they reference the same kind (§9.13.4); the relation is
+reflexive, symmetric, and transitive. A metre and a centimetre are commensurable;
+a metre and a kilogram are not — incommensurability across kinds is a fact of the
+types, not a runtime check. Transitivity is exactly the law a description logic
+cannot state.
+:::
+
+:::proof "thm_unit_commensurable_equiv"
+Commensurability unfolds to equality of the `kind` field, so reflexivity,
+symmetry, and transitivity are those of `Eq`.
+:::
+
+:::theorem "thm_unit_only_unitary" (parent := "spine_unit") (owner := "author_nfr") (lean := "PropertyKindCalculus.MetrologicalUnit.not_wellFormed_of_ordinal") (tags := "proved")
+*Only a unitary kind bears a unit.* A nominal kind has no magnitude, and — the
+distinctive §9.13.4 fact — an _ordinal_ kind, though rankable, has no
+reference-times-number magnitude either, so neither bears a metrological unit
+(`not_wellFormed_of_nominal`, `not_wellFormed_of_ordinal`). Conversely a rational
+kind does (`rational_bears_unit`), and bearing a unit implies being a
+kind-of-quantity (`bearsUnit_isQuantity`). This gate is invisible to a
+dimension-and-scale-only view that treats every magnitude alike. Uses {uses "def_metrologicalUnit"}[the metrological unit].
+:::
+
+:::proof "thm_unit_only_unitary"
+`BearsUnit` is `scale.AllowsDifference`, which is `False` at nominal and ordinal;
+substitute the scale from `IsNominal`/`IsOrdinal` and the goal is `¬ False`. The
+rational case and `bearsUnit_isQuantity` are the same four-way case split on the
+scale.
+:::
+
+:::theorem "thm_unit_number_reference" (parent := "spine_unit") (owner := "author_nfr") (lean := "PropertyKindCalculus.MetrologicalUnit.measure_eq_of_measures") (tags := "capstone, proved") (priority := "high")
+*The number-and-reference form is a faithful round-trip (§13.3.3).* Measuring a
+quantity in a unit yields a numeral, and re-applying the unit to that numeral
+recovers the value:
+$$`\mathrm{numeral}\,(\mathrm{measure}\ u\ n) = n \qquad\text{and}\qquad \mathrm{measure}\ u\ (\mathrm{numeral}\ v) = v \;\text{ when } v \text{ is measured in } u.`
+So `quantity / unit = number` and `number × unit = quantity` invert one another —
+the §13.3.3 "reference quantity multiplied by a number", checked as a law. Measuring
+in a well-formed unit moreover yields a {uses "def_propertyValue"}[quantity value]
+(`measure_isQuantityValue`), and values measured in {uses "thm_unit_commensurable_equiv"}[commensurable] units are comparable. Builds on {uses "def_metrologicalUnit"}[the metrological unit].
+:::
+
+:::proof "thm_unit_number_reference"
+`measure_numeral` is `rfl`. For the converse, destructure "measured in `u`" into the
+kind- and reference-equalities, unfold `measure`, and rewrite the unit's `kind` and
+`symbol` back to the value's fields; structure eta closes the goal.
+:::

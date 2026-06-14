@@ -126,8 +126,9 @@ Status: ✅ built & proved · 🚧 next · ⬜ planned
 | `PropertyKindCalculus.Examples.MiniExamination` (in the `Examples` lib) — refinement chain + examination-individuates-kinds as checked facts | — | ✅ |
 | `PropertyValue` + `ValueScale` — number × reference; value-comparability equivalence + scale-gated operators | Ch. 9, 16, 10, 17 | ✅ |
 | `PropertyKindCalculus.Examples.MiniValueScale` (in the `Examples` lib) — same-kind comparison + quantity-vs-nominal value + value scale as checked facts | — | ✅ |
-| `Unit` — metrological unit = *chosen reference quantity of a kind* | Ch. 18, §13.3.3 | 🚧 |
-| `Dimension` — PhysLib `Dimension` as forgetful functor (+ coherence) | Ch. 19 | ⬜ (PhysLib) |
+| `Unit` — metrological unit = *chosen reference quantity of a kind*; commensurability equivalence + number-and-reference round-trip, gated to unitary kinds | Ch. 18, §13.3.3 | ✅ |
+| `PropertyKindCalculus.Examples.MiniUnit` (in the `Examples` lib) — metre/centimetre commensurable, metre/kilogram not; ordinal & nominal kinds bear no unit; "5 cm" round-trips as checked facts | — | ✅ |
+| `Dimension` — PhysLib `Dimension` as forgetful functor (+ coherence) | Ch. 19 | 🚧 (PhysLib) |
 | `Interaction` — `KMul`/`KDiv`, dimensional coherence | Flater App. C | ⬜ |
 | `Extensivity` — extensive / conditionally extensive kinds | §13.5 | ⬜ |
 | `DedicatedKind` — kind × system × component | Ch. 20 | ⬜ |
@@ -145,7 +146,11 @@ aspect that individuates kinds; that a *property value* is comparable only with
 values of the same kind — comparability is an equivalence relation and comparable
 values share the same operator set — and that a *value scale* holds only mutually
 comparable values, with operator availability inherited monotonically from the
-scale layer; and (in the examples) that `width`/`height` are distinct sub-kinds of
+scale layer; that a *metrological unit* is a chosen reference of a *unitary* kind
+only — nominal and ordinal kinds bear none (Dybkær §9.13.4) — with commensurability
+("of the same kind") an equivalence relation and the number-and-reference form
+(`number × unit`) a faithful round-trip; and (in the examples) that `width`/`height` are distinct sub-kinds of
 `length` — distinct *because they are examined differently*, yet mutually
 comparable — with "the width of a pencil" specified as an instance, and "5 cm"
-specified as a quantity value distinct in kind from a mass or a blood-group value.
+specified as a quantity value distinct in kind from a mass or a blood-group value,
+measured in a centimetre that is commensurable with the metre but not the kilogram.

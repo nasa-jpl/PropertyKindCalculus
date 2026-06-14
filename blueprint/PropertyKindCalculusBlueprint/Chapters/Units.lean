@@ -48,7 +48,9 @@ stratification, {uses "thm_operator_monotonicity"}[operator monotonicity]).
 A _unit_ `Unit k` is a distinguished {uses "def_quantity"}[quantity] of kind $`k`
 chosen as the reference: measuring expresses any quantity of kind $`k` as
 $`\text{number} \times \text{unit}`. Because `Unit` is indexed by the same $`k`,
-"a metre" and "a unit of gravimetric water content" inhabit different types.
+"a metre" and "a unit of gravimetric water content" inhabit different types. This
+is the real-valued refinement of the proved {uses "def_metrologicalUnit"}[metrological unit]: it replaces the symbolic numeral-and-reference form with a magnitude in
+$`\mathbb{R}`, so that conversion _ratios_ become arithmetic.
 :::
 
 :::proof "def_unit"
