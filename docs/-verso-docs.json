@@ -153,12 +153,70 @@
  "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">Terminological identity (mirrors the OML `id`). </code>",
  "2":
  "<code>PropertyKindCalculus.System : Type</code><span class=\"sep\"></span><code class=\"docstring\">**§3.3 system** — \"part or phenomenon of the perceivable or conceivable\nworld consisting of a demarcated arrangement of a set of elements and a set of\nrelationships or processes between these elements.\"\n\nSpecified abstractly by identity here; the mereological structure needed for\nextensivity (§13.5) is added in a later module. </code>",
+ "195":
+ "<code>PropertyKindCalculus.Iso80000.Part3.second : PropertyKindCalculus.MetrologicalUnit</code><span class=\"sep\"></span><code class=\"docstring\">The second, the SI unit of duration (item 3-9.1). </code>",
+ "194":
+ "<code>PropertyKindCalculus.Iso80000.Part3.metre_second_not_commensurable :\n  ¬PropertyKindCalculus.Iso80000.Part3.metre.Commensurable PropertyKindCalculus.Iso80000.Part3.second</code><span class=\"sep\"></span><code class=\"docstring\">The metre and the second are **not** commensurable — length and time are\ndistinct kinds (a type-level fact, not a runtime check). </code>",
+ "193":
+ "<code>PropertyKindCalculus.Iso80000.Part3.metre : PropertyKindCalculus.MetrologicalUnit</code><span class=\"sep\"></span><code class=\"docstring\">The metre, the SI unit of length (item 3-1.1). </code>",
+ "192":
+ "<code>PropertyKindCalculus.Iso80000.Part3.metre_wellFormed : PropertyKindCalculus.Iso80000.Part3.metre.WellFormed</code><span class=\"sep\"></span><code class=\"docstring\">The metre is a well-formed metrological unit: length is a rational kind, so it\nbears a unit (Dybkær §13.3.5). </code>",
+ "191":
+ "<code>PropertyKindCalculus.Dim.time : Dimension</code><span class=\"sep\"></span><code class=\"docstring\">Time, `T`. </code>",
+ "190":
+ "<code>HDiv.hDiv.{u, v, w} {α : Type u} {β : Type v} {γ : outParam (Type w)} [self : HDiv α β γ] : α → β → γ</code><span class=\"sep\"></span><code class=\"docstring\">`a / b` computes the result of dividing `a` by `b`.\nThe meaning of this notation is type-dependent.\n* For most types like `Nat`, `Int`, `Rat`, `Real`, `a / 0` is defined to be `0`.\n* For `Nat`, `a / b` rounds downwards.\n* For `Int`, `a / b` rounds downwards if `b` is positive or upwards if `b` is negative.\n  It is implemented as `Int.ediv`, the unique function satisfying\n  `a % b + b * (a / b) = a` and `0 ≤ a % b &lt; natAbs b` for `b ≠ 0`.\n  Other rounding conventions are available using the functions\n  `Int.fdiv` (floor rounding) and `Int.tdiv` (truncation rounding).\n* For `Float`, `a / 0` follows the IEEE 754 semantics for division,\n  usually resulting in `inf` or `nan`. \n\nConventions for notations in identifiers:\n\n * The recommended spelling of `/` in identifiers is `div`.</code>",
  "19":
  "<code>PropertyKindCalculus.ScaleType.AllowsRatio : PropertyKindCalculus.ScaleType → Prop</code><span class=\"sep\"></span><code class=\"docstring\">`×, ÷` available only at ratio scale (§12.20). </code>",
+ "189":
+ "<code>PropertyKindCalculus.Dim.length : Dimension</code><span class=\"sep\"></span><code class=\"docstring\">Length, `L`. </code>",
+ "188":
+ "<code>PropertyKindCalculus.Iso80000.Part3.speed : PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">Speed — item 3-10.2, dimension `L·T⁻¹`. </code>",
+ "187":
+ "<code>PropertyKindCalculus.Iso80000.Part3.speed_dim :\n  PropertyKindCalculus.Iso80000.Part3.speed.dim = PropertyKindCalculus.Dim.length / PropertyKindCalculus.Dim.time</code><span class=\"sep\"></span><code class=\"docstring\">Speed is length over time (`L·T⁻¹`), ISO 80000-3 item 3-10.2. </code>",
+ "186":
+ "<code>Dimension.length (self : Dimension) : ℚ</code><span class=\"sep\"></span><code class=\"docstring\">The length dimension. </code>",
+ "185":
+ "<code>PropertyKindCalculus.DimensionedKind.dim (self : PropertyKindCalculus.DimensionedKind) : Dimension</code><span class=\"sep\"></span><code class=\"docstring\">The physical dimension of the kind's quantities (PhysLib `Dimension`). </code>",
+ "184":
+ "<code>PropertyKindCalculus.Iso80000.Part3.area : PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">Area — item 3-2.1, dimension `L²`. </code>",
+ "183":
+ "<code>PropertyKindCalculus.Iso80000.Part3.area_dim_length : PropertyKindCalculus.Iso80000.Part3.area.dim.length = 2</code><span class=\"sep\"></span><code class=\"docstring\">Area carries `L²`: its length-exponent is `2` — a checked computation in\nPhysLib's group, matching ISO 80000-3 item 3-2.1. </code>",
+ "182":
+ "<code>PropertyKindCalculus.Iso80000.Part3.CataloguedKind : Type</code><span class=\"sep\"></span><code class=\"docstring\">A **catalogued quantity-kind**: a {dimensioned kind} together with its exact\nsource in the 80000 series (part + item designation + principal symbol). The\ncitation is *data*, so a downstream model can render or audit it. </code>",
+ "181":
+ "<code>PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">The dimensioned kind itself. </code>",
+ "180":
+ "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">The principal quantity symbol, e.g. \"l\". </code>",
  "18":
  "<code>PropertyKindCalculus.ScaleType.AllowsDifference : PropertyKindCalculus.ScaleType → Prop</code><span class=\"sep\"></span><code class=\"docstring\">`+, −` available from interval upward (§12.19). </code>",
+ "179":
+ "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">The item designation as printed, e.g. \"3-1.1\". </code>",
+ "178":
+ "<code>PropertyKindCalculus.Iso80000.StandardRef</code><span class=\"sep\"></span><code class=\"docstring\">The part of the series this kind is defined in. </code>",
+ "177":
+ "<code>List.{u} (α : Type u) : Type u</code><span class=\"sep\"></span><code class=\"docstring\">Linked lists: ordered lists, in which each element has a reference to the next element.\n\nMost operations on linked lists take time proportional to the length of the list, because each\nelement must be traversed to find the next element.\n\n`List α` is isomorphic to `Array α`, but they are useful for different things:\n* `List α` is easier for reasoning, and `Array α` is modeled as a wrapper around `List α`.\n* `List α` works well as a persistent data structure, when many copies of the tail are shared. When\n  the value is not shared, `Array α` will have better performance because it can do destructive\n  updates.\n</code>",
+ "176":
+ "<code>PropertyKindCalculus.Iso80000.catalogue : List PropertyKindCalculus.Iso80000.StandardRef</code><span class=\"sep\"></span><code class=\"docstring\">The full catalogue of licensed parts, in part order. </code>",
+ "175":
+ "<code>PropertyKindCalculus.Iso80000.StandardRef : Type</code><span class=\"sep\"></span><code class=\"docstring\">A **bibliographic reference** to a published standard — body, number, part,\nedition, and date only. No normative content is carried; this records the citable\nidentity so a {quantity-kind} or {unit} can name its exact source. </code>",
+ "174":
+ "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">The part's official English title (the subtitle after \"Quantities and units —\"). </code>",
+ "173":
+ "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">Publication date, year-month (e.g. \"2019-10\"). </code>",
+ "172":
+ "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">The edition designation as printed on the cover (e.g. \"Second edition\",\n\"Edition 2.0\"). </code>",
+ "171":
+ "<code>Nat</code><span class=\"sep\"></span><code class=\"docstring\">The part number (e.g. `3` for *Space and time*). </code>",
+ "170":
+ "<code>Nat : Type</code><span class=\"sep\"></span><code class=\"docstring\">The natural numbers, starting at zero.\n\nThis type is special-cased by both the kernel and the compiler, and overridden with an efficient\nimplementation. Both use a fast arbitrary-precision arithmetic library (usually\n[GMP](https://gmplib.org/)); at runtime, `Nat` values that are sufficiently small are unboxed.\n</code>",
  "17":
  "<code>And (a b : Prop) : Prop</code><span class=\"sep\"></span><code class=\"docstring\">`And a b`, or `a ∧ b`, is the conjunction of propositions. It can be\nconstructed and destructed like a pair: if `ha : a` and `hb : b` then\n`⟨ha, hb⟩ : a ∧ b`, and if `h : a ∧ b` then `h.left : a` and `h.right : b`.\n\n\nConventions for notations in identifiers:\n\n * The recommended spelling of `∧` in identifiers is `and`.</code>",
+ "169":
+ "<code>Nat</code><span class=\"sep\"></span><code class=\"docstring\">The series number — `80000`. </code>",
+ "168":
+ "<code>PropertyKindCalculus.Iso80000.StandardBody : Type</code><span class=\"sep\"></span><code class=\"docstring\">The standards body under which a part of the 80000 series is published. The\nseries is a joint ISO/IEC project; each part is issued under one body — in the\ncatalogued copies, part 6 (Electromagnetism) is IEC and the rest are ISO. </code>",
+ "167":
+ "<code>PropertyKindCalculus.Iso80000.StandardBody</code><span class=\"sep\"></span><code class=\"docstring\">The publishing body (ISO or IEC). </code>",
  "166":
  "<code>PropertyKindCalculus.volume : PropertyKindCalculus.KindOfProperty</code><span class=\"sep\"></span><code class=\"docstring\">Volume, a ratio kind. </code>",
  "165":
