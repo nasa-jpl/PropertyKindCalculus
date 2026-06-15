@@ -24,6 +24,17 @@ licensed and copyrighted).
     (mass density, specific volume, momentum, pressure, kinematic viscosity,
     efficiency, modulus of elasticity) as R12 kind-laws, several composing Part-4
     kinds out of Part-3 (space-and-time) kinds.
+  * `PropertyKindCalculus.Iso80000.Part5` — the full catalogue of ISO 80000-5
+    *Thermodynamics* (all of items 5-1 … 5-36), with the energy family (the
+    thermodynamic potentials) as a specialization lattice (R2), the
+    entropy/heat-capacity dimension collision (both `J/K`), and — uniquely — the
+    scale-type distinction between thermodynamic temperature (ratio-scale) and
+    Celsius temperature (interval-scale), requirement R6 on the standard.
+  * `PropertyKindCalculus.Iso80000.Part5.DefiningRelations` — the algebraic *Remarks*
+    (specific heat capacity, specific entropy, density of heat flow rate, thermal
+    conductance, the ratio of specific heat capacities) as R12 kind-laws, several
+    composing Part-5 kinds out of Part-4 (mass) and Part-3 (area) kinds and the
+    temperature base quantity.
 
 This library is PhysLib-backed (its quantity-kinds carry PhysLib `Dimension`s); the
 references catalogue alone is Mathlib-free.
@@ -37,3 +48,5 @@ import PropertyKindCalculus.Iso80000.Part3.VolumeElement
 import PropertyKindCalculus.Iso80000.Part3.DefiningRelations
 import PropertyKindCalculus.Iso80000.Part4
 import PropertyKindCalculus.Iso80000.Part4.DefiningRelations
+import PropertyKindCalculus.Iso80000.Part5
+import PropertyKindCalculus.Iso80000.Part5.DefiningRelations

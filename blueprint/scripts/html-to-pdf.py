@@ -302,7 +302,9 @@ def merge_html(pages: list[Path]) -> str:
       }
       h1 { font-size: 18pt; page-break-before: always; margin-top: 0; }
       h1:first-of-type { page-break-before: avoid; }
-      h2 { font-size: 14pt; margin-top: 1.2em; }
+      /* Start every section (a chapter's `#` heading, an h2 after renormalization)
+         on a fresh page, as requested for the printed blueprint. */
+      h2 { font-size: 14pt; margin-top: 0; page-break-before: always; }
       h3 { font-size: 12pt; }
 
       /* ── Code blocks ── */

@@ -57,7 +57,7 @@ The package ships six libraries so the core is exportable on its own:
 | `Examples` | `examples/` | worked examples for the spine (`PropertyKindCalculus.Examples.*`), Mathlib-free | `lake build Examples` |
 | `Dimension` | `dimension/` | the PhysLib-backed coherence layer (library modules only, no examples) — `dim` as the forgetful functor into PhysLib's `Dimension` (`PropertyKindCalculus.Dimension`), Flater's interaction algebra `KMul`/`KDiv` (`PropertyKindCalculus.Interaction`), and the `ℝ` quantity carrier (`PropertyKindCalculus.QuantityReal`); pulls in PhysLib + Mathlib | `lake build Dimension` |
 | `DimensionExamples` | `examples/` | worked examples for the Mathlib-backed `Dimension` layer (dimension functor, interaction algebra, `ℝ` quantity carrier, the ISO 80000 catalogue, and the ISO 80000-2 §18 vector quantity) — kept under `examples/` so no library module carries example code; PhysLib + Mathlib-backed (transitively) | `lake build DimensionExamples` |
-| `Iso80000` | `iso80000/` | the standards-grounded layer: a references catalogue citing the ISO/IEC 80000 parts by name + version only (no normative content), plus the full ISO 80000-3 *Space and time* (42 items) and ISO 80000-4 *Mechanics* (54 items) catalogues — quantity-kinds, units, the length and force specialization lattices, the dimension-collision capstones, and the formalized *Remarks* (Part 4's several crossing into Part 3); PhysLib-backed | `lake build Iso80000` |
+| `Iso80000` | `iso80000/` | the standards-grounded layer: a references catalogue citing the ISO/IEC 80000 parts by name + version only (no normative content), plus the full ISO 80000-3 *Space and time* (42 items), ISO 80000-4 *Mechanics* (54 items), and ISO 80000-5 *Thermodynamics* (54 items) catalogues — quantity-kinds, units, the length/force/energy specialization lattices, the dimension-collision and scale-type capstones, and the formalized *Remarks* (several crossing between parts); PhysLib-backed | `lake build Iso80000` |
 | `Torch` | `torch/` | the TorchLean-backed instance of the R10 exec/spec refinement bridge — the binary32 `FP32` (rounding spec) and `IEEE32Exec` (executable) carriers realizing `CarrierRefinement`; depends on TorchLean | `lake build Torch` |
 
 The core spine and its `import PropertyKindCalculus` stay Mathlib-free. Note that
@@ -166,7 +166,9 @@ Status: ✅ built & proved · 🚧 next · ⬜ planned
 | `Iso80000.Part3.DefiningRelations` (in the `Iso80000` lib) — the algebraic *Remarks* (curvature = 1/ρ, repetency = 1/λ, frequency = 1/T, speed = s/t, plane angle = s/r) as R12 kind-laws: the dimension *follows from* the relation (plane angle computed dimension-one because it is a ratio of two lengths) | ISO 80000-3 | ✅ |
 | `Iso80000.Part4` (in the `Iso80000` lib) — ISO 80000-4 *Mechanics* **full catalogue** (all 54 items, 4-1 … 4-32): the force family as a specialization lattice (R2) individuated **by measurement principle** (static vs kinetic friction force proved distinct, not by fiat), the textbook torque-vs-energy dimension collision (N·m ≠ J, same dimension `M·L²·T⁻²`), and dimensional facts as checked computations | ISO 80000-4 | ✅ |
 | `Iso80000.Part4.DefiningRelations` (in the `Iso80000` lib) — the algebraic *Remarks* as R12 kind-laws, several **cross-part**: momentum = mass × velocity and pressure = force / area build Part-4 kinds out of Part-3 kinds; efficiency computed dimension-one because it is a ratio of two powers | ISO 80000-4 | ✅ |
-| `Iso80000` — the remaining parts (1, 2, 5–12) quantity-kinds + units | ISO/IEC 80000 | ⬜ |
+| `Iso80000.Part5` (in the `Iso80000` lib) — ISO 80000-5 *Thermodynamics* **full catalogue** (all 54 items, 5-1 … 5-36, every sub-suffixed item): the **scale-type** distinction between thermodynamic temperature (ratio) and Celsius temperature (interval) at the same dimension `Θ` (R6 on the standard), the entropy-vs-heat-capacity dimension collision (both `J/K`, not commensurable despite the same unit symbol), the thermodynamic-potential specialization lattice (internal energy, enthalpy, Helmholtz, Gibbs — R2), and dimensional facts as checked computations over the temperature generator | ISO 80000-5 | ✅ |
+| `Iso80000.Part5.DefiningRelations` (in the `Iso80000` lib) — the algebraic *Remarks* as R12 kind-laws, several **cross-part**: specific heat capacity = heat capacity / mass and density of heat flow rate = heat flow rate / area build Part-5 kinds out of Part-4 and Part-3 kinds; the ratio of specific heats computed dimension-one because it is a ratio of two specific heat capacities | ISO 80000-5 | ✅ |
+| `Iso80000` — the remaining parts (1, 2, 6–12) quantity-kinds + units | ISO/IEC 80000 | ⬜ |
 | `DedicatedKind` — kind × system × component | Ch. 20 | ⬜ |
 | `Model.SI` — SI base kinds, verified well-formed | — | ⬜ |
 | `Model.SoilMoisture` — vwc/gwc/permittivity/reflectivity/… | — | ⬜ |
@@ -275,6 +277,21 @@ kinds differ; and the algebraic *Remarks* are R12 kind-laws, several **crossing 
 Part 3** — momentum is mass × velocity, pressure is force / area, so mechanical kinds
 are built out of space-and-time kinds — with efficiency computed dimension-one because
 it is a ratio of two powers.
+
+The same build checks the **full catalogue of ISO 80000-5 *Thermodynamics*** (all 54
+items, 5-1 … 5-36, every sub-suffixed item included). Part 5 brings the one axis Parts
+3 and 4 could not show — the **scale type**: thermodynamic temperature and Celsius
+temperature share the dimension `Θ`, yet the first is ratio-scale (the kelvin admits
+`×`,`÷`) and the second only interval-scale (a ratio of Celsius temperatures is
+undefined), so the two are *proved* distinct kinds by scale alone (requirement R6 on
+the standard). It sharpens the dimension-collision thesis with entropy versus heat
+capacity — both `J/K`, not commensurable even though their units carry the *same
+symbol* — and lays out the thermodynamic potentials (internal energy, enthalpy, the
+Helmholtz and Gibbs energies) as a specialization lattice over energy (R2); the
+algebraic *Remarks* are R12 kind-laws, several **crossing into Parts 3 and 4** —
+specific heat capacity is heat capacity / mass, the density of heat flow rate is heat
+flow rate / area — with the ratio of specific heats computed dimension-one because it
+is a ratio of two specific heat capacities.
 
 `lake build Torch` checks the TorchLean-backed instance of the refinement bridge —
 the only library that depends on TorchLean. `FP32` (TorchLean's binary32 rounding

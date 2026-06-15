@@ -11,6 +11,7 @@ import PropertyKindCalculusBlueprint.Chapters.Extensivity
 import PropertyKindCalculusBlueprint.Chapters.Iso80000
 import PropertyKindCalculusBlueprint.Chapters.Iso80000Part3
 import PropertyKindCalculusBlueprint.Chapters.Iso80000Part4
+import PropertyKindCalculusBlueprint.Chapters.Iso80000Part5
 
 open Verso.Genre
 open Verso.Genre.Manual
@@ -97,7 +98,12 @@ $`\mathrm{nominal} \sqsubset \mathrm{ordinal} \sqsubset \mathrm{interval}
 \sqsubset \mathrm{ratio}`: a nominal property admits only $`=`, a ratio property
 admits $`\times` and $`\div`, and a richer scale licenses every operation a
 poorer one does. This gate is *orthogonal* to kind — kind says *which* properties
-may combine, scale says *which operators* are defined at all.
+may combine, scale says *which operators* are defined at all. This requirement is
+now realized on the real standard: ISO 80000-5 lists thermodynamic temperature
+(ratio-scale) and Celsius temperature (interval-scale) at the *same* dimension `Θ`,
+so a ratio of Celsius temperatures is undefined where a ratio of thermodynamic
+temperatures is not — the scale type, not the dimension, separates them (see the
+_ISO 80000-5_ chapter).
 
 ## Soundness bridges
 
@@ -257,7 +263,7 @@ Stating it as owed keeps the boundary honest.
   * proved
 *
   * R2 — specialization lattice + comparability
-  * Width, Height, Diameter specialize Length (ISO 80000-3); weight, static vs kinetic friction force specialize Force (ISO 80000-4) — comparable yet distinct, by examination principle
+  * Width, Height, Diameter specialize Length (ISO 80000-3); weight, static vs kinetic friction force specialize Force (ISO 80000-4); Helmholtz vs Gibbs energy specialize Energy (ISO 80000-5) — comparable yet distinct, by examination principle
   * `Specializes` preorder; `MutuallyComparable`; examination defining-aspect (`Refines`, `distinct_of_examPrinciple`)
   * proved
 *
@@ -277,8 +283,8 @@ Stating it as owed keeps the boundary honest.
   * proved
 *
   * R6 — scale-type operator availability (monotone)
-  * nominal: only `=`; ratio: `×`, `÷`
-  * `ScaleType` order; operator monotonicity
+  * nominal: only `=`; ratio: `×`, `÷`; thermodynamic temperature (ratio) vs Celsius (interval), same dimension `Θ` (ISO 80000-5)
+  * `ScaleType` order; operator monotonicity; `AllowsRatio` on the standard's temperatures
   * proved
 *
   * R7 — dimension certifies, not decides
@@ -710,6 +716,8 @@ in-progress goals until formalized. The headline deliverables are tagged
 {include 0 PropertyKindCalculusBlueprint.Chapters.Iso80000Part3}
 
 {include 0 PropertyKindCalculusBlueprint.Chapters.Iso80000Part4}
+
+{include 0 PropertyKindCalculusBlueprint.Chapters.Iso80000Part5}
 
 {blueprint_graph}
 

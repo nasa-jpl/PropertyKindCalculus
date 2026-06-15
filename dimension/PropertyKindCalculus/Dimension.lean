@@ -100,6 +100,9 @@ def time : Dimension := T𝓭
 def area : Dimension := L𝓭 * L𝓭
 /-- Speed, `L·T⁻¹`. -/
 def speed : Dimension := L𝓭 / T𝓭
+/-- Thermodynamic temperature, `Θ` — the SI base quantity ISO 80000-5
+*Thermodynamics* is built on. -/
+def temperature : Dimension := Θ𝓭
 
 /-- The dimensional algebra composes in the PhysLib group: speed is length over
 time. -/
@@ -109,6 +112,9 @@ theorem speed_eq : speed = length / time := rfl
 checked computation in the `Dimension` group, not an annotation. -/
 theorem area_length : area.length = 2 := by
   norm_num [area, Dimension.length_mul, Dimension.L𝓭_length]
+
+/-- Temperature carries temperature-exponent `1` — the base generator `Θ`. -/
+theorem temperature_temperature : temperature.temperature = 1 := rfl
 
 end Dim
 
