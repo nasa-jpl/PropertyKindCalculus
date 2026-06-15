@@ -12,6 +12,7 @@ import PropertyKindCalculusBlueprint.Chapters.Iso80000
 import PropertyKindCalculusBlueprint.Chapters.Iso80000Part3
 import PropertyKindCalculusBlueprint.Chapters.Iso80000Part4
 import PropertyKindCalculusBlueprint.Chapters.Iso80000Part5
+import PropertyKindCalculusBlueprint.Chapters.Iso80000Part6
 
 open Verso.Genre
 open Verso.Genre.Manual
@@ -67,7 +68,10 @@ requirement is now realized on the real standard: the ISO 80000-3 length family
 (width, height, distance, radius, … of items 3-1.2 … 3-1.12, all of dimension `L`)
 is specified as a specialization lattice over the general length kind, each species
 individuated *not by fiat but by an explicit measurement principle* (see the
-_ISO 80000-3_ chapter).
+_ISO 80000-3_ chapter), and the same pattern recurs on Part 4's force family, Part 5's
+thermodynamic potentials, and IEC 80000-6's AC power family — active, reactive, and
+apparent power as species of one power kind, carrying three different unit strings
+(`W`, `var`, `VA`) over one dimension (see the _IEC 80000-6_ chapter).
 
 *R3 — General versus individual is type versus term.* A kind is the general
 notion (a *type*); a particular measured value is an individual (a *term* of that
@@ -103,7 +107,10 @@ now realized on the real standard: ISO 80000-5 lists thermodynamic temperature
 (ratio-scale) and Celsius temperature (interval-scale) at the *same* dimension `Θ`,
 so a ratio of Celsius temperatures is undefined where a ratio of thermodynamic
 temperatures is not — the scale type, not the dimension, separates them (see the
-_ISO 80000-5_ chapter).
+_ISO 80000-5_ chapter). IEC 80000-6 repeats the pattern on electromagnetism: electric
+potential is gauge-dependent (fixed only up to an additive reference), hence
+interval-scale, while electric potential difference, of the same dimension `V`, is
+ratio-scale (see the _IEC 80000-6_ chapter).
 
 ## Soundness bridges
 
@@ -263,7 +270,7 @@ Stating it as owed keeps the boundary honest.
   * proved
 *
   * R2 — specialization lattice + comparability
-  * Width, Height, Diameter specialize Length (ISO 80000-3); weight, static vs kinetic friction force specialize Force (ISO 80000-4); Helmholtz vs Gibbs energy specialize Energy (ISO 80000-5) — comparable yet distinct, by examination principle
+  * Width, Height, Diameter specialize Length (ISO 80000-3); weight, static vs kinetic friction force specialize Force (ISO 80000-4); Helmholtz vs Gibbs energy specialize Energy (ISO 80000-5); active vs reactive power specialize Power (IEC 80000-6) — comparable yet distinct, by examination principle
   * `Specializes` preorder; `MutuallyComparable`; examination defining-aspect (`Refines`, `distinct_of_examPrinciple`)
   * proved
 *
@@ -283,7 +290,7 @@ Stating it as owed keeps the boundary honest.
   * proved
 *
   * R6 — scale-type operator availability (monotone)
-  * nominal: only `=`; ratio: `×`, `÷`; thermodynamic temperature (ratio) vs Celsius (interval), same dimension `Θ` (ISO 80000-5)
+  * nominal: only `=`; ratio: `×`, `÷`; thermodynamic temperature (ratio) vs Celsius (interval), same dimension `Θ` (ISO 80000-5); electric potential (interval, gauge-dependent) vs potential difference (ratio), same dimension `V` (IEC 80000-6)
   * `ScaleType` order; operator monotonicity; `AllowsRatio` on the standard's temperatures
   * proved
 *
@@ -718,6 +725,8 @@ in-progress goals until formalized. The headline deliverables are tagged
 {include 0 PropertyKindCalculusBlueprint.Chapters.Iso80000Part4}
 
 {include 0 PropertyKindCalculusBlueprint.Chapters.Iso80000Part5}
+
+{include 0 PropertyKindCalculusBlueprint.Chapters.Iso80000Part6}
 
 {blueprint_graph}
 

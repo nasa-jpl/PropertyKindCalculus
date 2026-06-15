@@ -103,6 +103,15 @@ def speed : Dimension := L𝓭 / T𝓭
 /-- Thermodynamic temperature, `Θ` — the SI base quantity ISO 80000-5
 *Thermodynamics* is built on. -/
 def temperature : Dimension := Θ𝓭
+/-- Electric charge, `C` (the coulomb). PhysLib's `Dimension` takes electric
+*charge* as the electromagnetic base generator; the SI base quantity electric
+current then appears as `charge · time⁻¹` (the ampere as coulomb per second), so
+`charge` is the generator IEC 80000-6 *Electromagnetism* is built on. -/
+def charge : Dimension := C𝓭
+/-- Electric current, `C·T⁻¹` (the ampere, coulomb per second). IEC 80000-6 takes
+electric current as the SI base quantity; PhysLib takes charge as the generator, so
+the two presentations of the electromagnetic dimension group are isomorphic. -/
+def current : Dimension := C𝓭 / T𝓭
 
 /-- The dimensional algebra composes in the PhysLib group: speed is length over
 time. -/
@@ -115,6 +124,12 @@ theorem area_length : area.length = 2 := by
 
 /-- Temperature carries temperature-exponent `1` — the base generator `Θ`. -/
 theorem temperature_temperature : temperature.temperature = 1 := rfl
+
+/-- Charge carries charge-exponent `1` — the base generator `C`. -/
+theorem charge_charge : charge.charge = 1 := rfl
+
+/-- Electric current is charge over time — the ampere as coulomb per second. -/
+theorem current_eq : current = charge / time := rfl
 
 end Dim
 

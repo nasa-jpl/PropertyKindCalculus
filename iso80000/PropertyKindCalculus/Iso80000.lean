@@ -35,6 +35,17 @@ licensed and copyrighted).
     conductance, the ratio of specific heat capacities) as R12 kind-laws, several
     composing Part-5 kinds out of Part-4 (mass) and Part-3 (area) kinds and the
     temperature base quantity.
+  * `PropertyKindCalculus.Iso80000.Part6` — the full catalogue of IEC 80000-6
+    *Electromagnetism* (all of items 6-1 … 6-62), the one IEC-published part: it brings
+    in the electric-current base axis, the AC power family as a specialization lattice
+    (R2) carrying three different unit strings (`W`/`var`/`VA`) over one dimension, and
+    — as Part 5 did with temperature — the scale-type distinction between gauge-dependent
+    electric potential (interval-scale) and potential difference (ratio-scale),
+    requirement R6.
+  * `PropertyKindCalculus.Iso80000.Part6.DefiningRelations` — the algebraic *Remarks*
+    (Ohm's law, the conductance/admittance/permeance/resistivity reciprocals, the power
+    product, the power factor) as R12 kind-laws, the electric-current law composing a
+    Part-6 kind out of an ISO 80000-3 (time) kind.
 
 This library is PhysLib-backed (its quantity-kinds carry PhysLib `Dimension`s); the
 references catalogue alone is Mathlib-free.
@@ -50,3 +61,5 @@ import PropertyKindCalculus.Iso80000.Part4
 import PropertyKindCalculus.Iso80000.Part4.DefiningRelations
 import PropertyKindCalculus.Iso80000.Part5
 import PropertyKindCalculus.Iso80000.Part5.DefiningRelations
+import PropertyKindCalculus.Iso80000.Part6
+import PropertyKindCalculus.Iso80000.Part6.DefiningRelations

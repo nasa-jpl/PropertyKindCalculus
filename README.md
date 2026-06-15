@@ -57,7 +57,7 @@ The package ships six libraries so the core is exportable on its own:
 | `Examples` | `examples/` | worked examples for the spine (`PropertyKindCalculus.Examples.*`), Mathlib-free | `lake build Examples` |
 | `Dimension` | `dimension/` | the PhysLib-backed coherence layer (library modules only, no examples) — `dim` as the forgetful functor into PhysLib's `Dimension` (`PropertyKindCalculus.Dimension`), Flater's interaction algebra `KMul`/`KDiv` (`PropertyKindCalculus.Interaction`), and the `ℝ` quantity carrier (`PropertyKindCalculus.QuantityReal`); pulls in PhysLib + Mathlib | `lake build Dimension` |
 | `DimensionExamples` | `examples/` | worked examples for the Mathlib-backed `Dimension` layer (dimension functor, interaction algebra, `ℝ` quantity carrier, the ISO 80000 catalogue, and the ISO 80000-2 §18 vector quantity) — kept under `examples/` so no library module carries example code; PhysLib + Mathlib-backed (transitively) | `lake build DimensionExamples` |
-| `Iso80000` | `iso80000/` | the standards-grounded layer: a references catalogue citing the ISO/IEC 80000 parts by name + version only (no normative content), plus the full ISO 80000-3 *Space and time* (42 items), ISO 80000-4 *Mechanics* (54 items), and ISO 80000-5 *Thermodynamics* (54 items) catalogues — quantity-kinds, units, the length/force/energy specialization lattices, the dimension-collision and scale-type capstones, and the formalized *Remarks* (several crossing between parts); PhysLib-backed | `lake build Iso80000` |
+| `Iso80000` | `iso80000/` | the standards-grounded layer: a references catalogue citing the ISO/IEC 80000 parts by name + version only (no normative content), plus the full ISO 80000-3 *Space and time* (42 items), ISO 80000-4 *Mechanics* (54 items), ISO 80000-5 *Thermodynamics* (54 items), and IEC 80000-6 *Electromagnetism* (85 items) catalogues — quantity-kinds, units, the length/force/energy/power specialization lattices, the dimension-collision and scale-type capstones, and the formalized *Remarks* (several crossing between parts); PhysLib-backed | `lake build Iso80000` |
 | `Torch` | `torch/` | the TorchLean-backed instance of the R10 exec/spec refinement bridge — the binary32 `FP32` (rounding spec) and `IEEE32Exec` (executable) carriers realizing `CarrierRefinement`; depends on TorchLean | `lake build Torch` |
 
 The core spine and its `import PropertyKindCalculus` stay Mathlib-free. Note that
@@ -168,7 +168,9 @@ Status: ✅ built & proved · 🚧 next · ⬜ planned
 | `Iso80000.Part4.DefiningRelations` (in the `Iso80000` lib) — the algebraic *Remarks* as R12 kind-laws, several **cross-part**: momentum = mass × velocity and pressure = force / area build Part-4 kinds out of Part-3 kinds; efficiency computed dimension-one because it is a ratio of two powers | ISO 80000-4 | ✅ |
 | `Iso80000.Part5` (in the `Iso80000` lib) — ISO 80000-5 *Thermodynamics* **full catalogue** (all 54 items, 5-1 … 5-36, every sub-suffixed item): the **scale-type** distinction between thermodynamic temperature (ratio) and Celsius temperature (interval) at the same dimension `Θ` (R6 on the standard), the entropy-vs-heat-capacity dimension collision (both `J/K`, not commensurable despite the same unit symbol), the thermodynamic-potential specialization lattice (internal energy, enthalpy, Helmholtz, Gibbs — R2), and dimensional facts as checked computations over the temperature generator | ISO 80000-5 | ✅ |
 | `Iso80000.Part5.DefiningRelations` (in the `Iso80000` lib) — the algebraic *Remarks* as R12 kind-laws, several **cross-part**: specific heat capacity = heat capacity / mass and density of heat flow rate = heat flow rate / area build Part-5 kinds out of Part-4 and Part-3 kinds; the ratio of specific heats computed dimension-one because it is a ratio of two specific heat capacities | ISO 80000-5 | ✅ |
-| `Iso80000` — the remaining parts (1, 2, 6–12) quantity-kinds + units | ISO/IEC 80000 | ⬜ |
+| `Iso80000.Part6` (in the `Iso80000` lib) — IEC 80000-6 *Electromagnetism* **full catalogue** (all 85 items, 6-1 … 6-62, every sub-suffixed item), the one IEC-published part: the new **electric-current** base axis (the ampere as `C·T⁻¹` over PhysLib's charge generator), the **scale-type** distinction between gauge-dependent electric potential (interval) and potential difference (ratio) at the same dimension `V` (R6), the AC power family as a specialization lattice (active/reactive/apparent power — R2) carrying three unit strings (`W`/`var`/`VA`) over one dimension, and the power/resistance dimension collisions | IEC 80000-6 | ✅ |
+| `Iso80000.Part6.DefiningRelations` (in the `Iso80000` lib) — the algebraic *Remarks* as R12 kind-laws: Ohm's law (resistance = voltage / current), the power product (power = voltage × current), the conductance/admittance/permeance/resistivity reciprocals, and the power factor; the electric-current law (current = charge / time) **crosses into Part 3**; the power factor computed dimension-one because it is a ratio of two powers | IEC 80000-6 | ✅ |
+| `Iso80000` — the remaining parts (1, 2, 7–12) quantity-kinds + units | ISO/IEC 80000 | ⬜ |
 | `DedicatedKind` — kind × system × component | Ch. 20 | ⬜ |
 | `Model.SI` — SI base kinds, verified well-formed | — | ⬜ |
 | `Model.SoilMoisture` — vwc/gwc/permittivity/reflectivity/… | — | ⬜ |
@@ -292,6 +294,23 @@ algebraic *Remarks* are R12 kind-laws, several **crossing into Parts 3 and 4** �
 specific heat capacity is heat capacity / mass, the density of heat flow rate is heat
 flow rate / area — with the ratio of specific heats computed dimension-one because it
 is a ratio of two specific heat capacities.
+
+The same build checks the **full catalogue of IEC 80000-6 *Electromagnetism*** (all 85
+items, 6-1 … 6-62, every sub-suffixed item included) — the one IEC-published part. Part
+6 brings the last SI base quantity the earlier parts did not exercise, **electric
+current**: PhysLib takes electric charge `C` as its generator, so the ampere appears as
+`C·T⁻¹` and every electromagnetic dimension — capacitance `C²·M⁻¹·L⁻²·T²`, resistance
+`M·L²·T⁻¹·C⁻²`, magnetic flux `M·L²·T⁻¹·C⁻¹` — is a checked computation over it. It
+repeats the **scale-type** thesis on electromagnetism: electric potential is
+gauge-dependent (fixed only up to an additive reference), hence interval-scale, while
+electric potential difference, of the same dimension `V`, is ratio-scale — *proved*
+distinct kinds by scale alone (R6). And it gives the sharpest **dimension does not
+classify** case yet: active, reactive, and apparent power are all `M·L²·T⁻³`, yet the
+standard spends *three* unit strings on the one dimension — the watt, the var, the
+volt-ampere — and arranges them as a specialization lattice over power (R2); the
+algebraic *Remarks* are R12 kind-laws — Ohm's law, the power product, the reciprocal
+pairs — with the electric-current law (current = charge / time) **crossing into Part 3**
+and the power factor computed dimension-one because it is a ratio of two powers.
 
 `lake build Torch` checks the TorchLean-backed instance of the refinement bridge —
 the only library that depends on TorchLean. `FP32` (TorchLean's binary32 rounding
