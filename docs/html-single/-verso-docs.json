@@ -99,11 +99,71 @@
  "48": "<code>PropertyKindCalculus.ExaminationItem</code>",
  "47":
  "<code>PropertyKindCalculus.Refines.refl (a : PropertyKindCalculus.ExaminationItem) : PropertyKindCalculus.Refines a a</code><span class=\"sep\"></span><code class=\"docstring\">Reflexivity of the closure: every examination refines itself. </code>",
+ "463":
+ "<code>PropertyKindCalculus.Iso80000.Part11.workToGoParts : List PropertyKindCalculus.Iso80000.StandardRef</code><span class=\"sep\"></span><code class=\"docstring\">The **work-to-go** references: parts ISO 80000-11 leans on that this library has not\nyet mapped — ISO 80000-8 *Acoustics*, ISO 80000-9 *Physical chemistry and molecular\nphysics*, and ISO 80000-12 *Condensed matter physics*. </code>",
+ "462":
+ "<code>PropertyKindCalculus.Iso80000.Part11.iso80000_11_dim_one_collision : ∃ a b, a.kind ≠ b.kind ∧ a.dim = b.dim ∧ a.dim = 1</code><span class=\"sep\"></span><code class=\"docstring\">**The dimension-one collision, on the standard — total, the widest in the series.**\nThere exist distinct ISO 80000-11 kinds with the same dimension one — the Reynolds and\nEuler numbers witness it, alongside *all* 113 others. The {dimension functor} collapses\nthe entire part to one point; the kind layer, through the measurement principle, keeps its\n115 members apart. </code>",
+ "461":
+ "<code>PropertyKindCalculus.Iso80000.Part11.eulerUnit : PropertyKindCalculus.MetrologicalUnit</code><span class=\"sep\"></span><code class=\"docstring\">The coherent unit (symbol `\"1\"`) of the Euler number. </code>",
+ "460":
+ "<code>PropertyKindCalculus.Iso80000.Part11.reynoldsUnit : PropertyKindCalculus.MetrologicalUnit</code><span class=\"sep\"></span><code class=\"docstring\">The coherent unit (symbol `\"1\"`) of the Reynolds number. </code>",
  "46":
  "<code>PropertyKindCalculus.ExaminationPrinciple : Type</code><span class=\"sep\"></span><code class=\"docstring\">**§7.5 examination principle** (VIM4 2CD 2.4) — the phenomenon serving as the\nbasis of an examination. Carries a terminological `id` (OML-style). </code>",
+ "459":
+ "<code>PropertyKindCalculus.Iso80000.Part11.reynolds_euler_not_commensurable :\n  ¬PropertyKindCalculus.Iso80000.Part11.reynoldsUnit.Commensurable PropertyKindCalculus.Iso80000.Part11.eulerUnit</code><span class=\"sep\"></span><code class=\"docstring\">**The Reynolds and Euler units are not commensurable, though both have unit symbol\n`\"1\"`.** Same symbol, same dimension (one), different kind — so a value of one cannot be\nread as a value of the other. The kind layer keeps them apart where the unit symbol and\nthe dimension cannot. </code>",
+ "458":
+ "<code>PropertyKindCalculus.Iso80000.Part11.bejanMass : PropertyKindCalculus.DimensionedKind</code>",
+ "457":
+ "<code>PropertyKindCalculus.Iso80000.Part11.bejanEntropy : PropertyKindCalculus.DimensionedKind</code>",
+ "456":
+ "<code>PropertyKindCalculus.Iso80000.Part11.bejanHeat : PropertyKindCalculus.DimensionedKind</code>",
+ "455":
+ "<code>PropertyKindCalculus.Iso80000.Part11.bejanMomentum : PropertyKindCalculus.DimensionedKind</code>",
+ "454":
+ "<code>PropertyKindCalculus.Iso80000.Part11.bejan_four_distinct :\n  PropertyKindCalculus.Iso80000.Part11.bejanMomentum.kind ≠ PropertyKindCalculus.Iso80000.Part11.bejanHeat.kind ∧\n    PropertyKindCalculus.Iso80000.Part11.bejanHeat.kind ≠ PropertyKindCalculus.Iso80000.Part11.bejanEntropy.kind ∧\n      PropertyKindCalculus.Iso80000.Part11.bejanEntropy.kind ≠ PropertyKindCalculus.Iso80000.Part11.bejanMass.kind ∧\n        PropertyKindCalculus.Iso80000.Part11.bejanMomentum.kind ≠ PropertyKindCalculus.Iso80000.Part11.bejanMass.kind</code><span class=\"sep\"></span><code class=\"docstring\">**The four Bejan numbers are distinct kinds.** The momentum (11-4.15), the two heat\n(11-5.9, 11-5.10) and the mass (11-6.16) Bejan numbers are four kinds — even the two heat\nones, sharing name *and* transport context, differ by their measurement principle. </code>",
+ "453":
+ "<code>PropertyKindCalculus.Iso80000.Part11.stokesDrag : PropertyKindCalculus.DimensionedKind</code>",
+ "452":
+ "<code>PropertyKindCalculus.Iso80000.Part11.stokesGravity : PropertyKindCalculus.DimensionedKind</code>",
+ "451":
+ "<code>PropertyKindCalculus.Iso80000.Part11.stokesRotameter : PropertyKindCalculus.DimensionedKind</code>",
+ "450":
+ "<code>PropertyKindCalculus.Iso80000.Part11.stokesVibrating : PropertyKindCalculus.DimensionedKind</code>",
  "45":
  "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">Terminological identity of the examination principle (OML-style). </code>",
+ "449":
+ "<code>PropertyKindCalculus.Iso80000.Part11.stokesPlasma : PropertyKindCalculus.DimensionedKind</code>",
+ "448":
+ "<code>PropertyKindCalculus.Iso80000.Part11.stokes_pairwise_distinct :\n  PropertyKindCalculus.Iso80000.Part11.stokesPlasma.kind ≠ PropertyKindCalculus.Iso80000.Part11.stokesVibrating.kind ∧\n    PropertyKindCalculus.Iso80000.Part11.stokesVibrating.kind ≠\n        PropertyKindCalculus.Iso80000.Part11.stokesRotameter.kind ∧\n      PropertyKindCalculus.Iso80000.Part11.stokesRotameter.kind ≠\n          PropertyKindCalculus.Iso80000.Part11.stokesGravity.kind ∧\n        PropertyKindCalculus.Iso80000.Part11.stokesGravity.kind ≠ PropertyKindCalculus.Iso80000.Part11.stokesDrag.kind ∧\n          PropertyKindCalculus.Iso80000.Part11.stokesPlasma.kind ≠ PropertyKindCalculus.Iso80000.Part11.stokesDrag.kind</code><span class=\"sep\"></span><code class=\"docstring\">**The five Stokes numbers are pairwise distinct kinds.** All five (11-4.32 … 11-4.36)\ncarry the name \"Stokes number\" and dimension one, distinguished only by symbol suffix\n(`Stk`, `Stk₁` … `Stk₄`) and the measurement principle each isolates. </code>",
+ "447":
+ "<code>PropertyKindCalculus.Iso80000.Part11.froudeHeat : PropertyKindCalculus.DimensionedKind</code>",
+ "446":
+ "<code>PropertyKindCalculus.Iso80000.Part11.froudeMomentum : PropertyKindCalculus.DimensionedKind</code>",
+ "445":
+ "<code>PropertyKindCalculus.Iso80000.Part11.froudeMomentum_ne_froudeHeat :\n  PropertyKindCalculus.Iso80000.Part11.froudeMomentum.kind ≠ PropertyKindCalculus.Iso80000.Part11.froudeHeat.kind</code><span class=\"sep\"></span><code class=\"docstring\">**The two Froude numbers are distinct kinds.** Both are named \"Froude number\" and both\nare dimension one (11-4.3, `Fr`, momentum transfer; 11-5.4, `Fr*`, heat transfer), yet\nthey isolate different physical ratios — inertial/gravitational versus\ngravitational/thermodiffusion forces. </code>",
+ "444":
+ "<code>PropertyKindCalculus.Iso80000.Part11.CataloguedKind.qk (self : PropertyKindCalculus.Iso80000.Part11.CataloguedKind) :\n  PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">The dimensioned kind itself. </code>",
+ "443":
+ "<code>PropertyKindCalculus.Iso80000.Part11.catalogue : List PropertyKindCalculus.Iso80000.Part11.CataloguedKind</code><span class=\"sep\"></span><code class=\"docstring\">The full ISO 80000-11 catalogue, in item order — all 115 characteristic numbers. </code>",
+ "442":
+ "<code>Membership.mem.{u, v} {α : outParam (Type u)} {γ : Type v} [self : Membership α γ] : γ → α → Prop</code><span class=\"sep\"></span><code class=\"docstring\">The membership relation `a ∈ s : Prop` where `a : α`, `s : γ`. \n\nConventions for notations in identifiers:\n\n * The recommended spelling of `∈` in identifiers is `mem`.</code>",
+ "441": "<code>PropertyKindCalculus.Iso80000.Part11.CataloguedKind</code>",
+ "440":
+ "<code>PropertyKindCalculus.Iso80000.Part11.catalogue_all_dim_one (c : PropertyKindCalculus.Iso80000.Part11.CataloguedKind) :\n  c ∈ PropertyKindCalculus.Iso80000.Part11.catalogue → c.qk.dim = 1</code><span class=\"sep\"></span><code class=\"docstring\">**The entire ISO 80000-11 catalogue lives at dimension one.** All 115 characteristic\nnumbers share the dimensionless dimension; what distinguishes them is the measurement\nprinciple, never the dimension. </code>",
  "44": "<code>PropertyKindCalculus.MutuallyComparable E a b</code>",
+ "439":
+ "<code>PropertyKindCalculus.Iso80000.Part11.Context : Type</code><span class=\"sep\"></span><code class=\"docstring\">The transport-phenomena context of a characteristic number — ISO 80000-11's own clause\nstructure (clauses 4 … 9). </code>",
+ "438": "<code>PropertyKindCalculus.Iso80000.Part11.Context</code>",
+ "437":
+ "<code>PropertyKindCalculus.Iso80000.Part11.charNum (ctx : PropertyKindCalculus.Iso80000.Part11.Context)\n  (id principle : String) : PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">A **characteristic number**: a ratio-scale {dimensioned kind} of **dimension one**,\nnamed by `id` and individuated by its {examination principle} — the measurement principle,\nformed as `context: defining-ratio`. The dimension is one for every characteristic number;\nthe principle is what tells them apart. </code>",
+ "436":
+ "<code>PropertyKindCalculus.Iso80000.Part11.CataloguedKind : Type</code><span class=\"sep\"></span><code class=\"docstring\">A **catalogued quantity-kind**: a {dimensioned kind} together with its exact source\nin the 80000 series — the part, the printed item designation, the principal quantity\nsymbol, and the coherent SI unit symbol. Every field other than `qk` is a *citation\nlocator*; the citation travels with the kind as data. </code>",
+ "435":
+ "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">The coherent SI unit symbol — `\"1\"` for every characteristic number. </code>",
+ "434":
+ "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">The principal quantity symbol, e.g. \"Re\". </code>",
+ "433":
+ "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">The item designation as printed, e.g. \"11-4.1\". </code>",
  "432":
  "<code>PropertyKindCalculus.Iso80000.Part7.DefiningRelations.irradianceOf\n  (φ : PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part7.radiantFlux.kind ℝ)\n  (a : PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part3.area.kind ℝ) :\n  PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part7.irradiance.kind ℝ</code><span class=\"sep\"></span><code class=\"docstring\">An irradiance built as radiant flux / area — classified as an irradiance **by\nconstruction** (`E_e = dΦ_e/dA`). </code>",
  "431":
