@@ -21,6 +21,9 @@ fi
 
 rm -rf "$DOCS"
 # Multi-page site at the docs/ root — this is the Pages entry point (docs/index.html).
+# If the PDF was rendered, ci-pages.sh placed a copy inside html-multi/ and
+# html-single/, so these recursive copies publish it next to each entry point and
+# the root "download the PDF" link resolves on both.
 cp -r "$OUT/html-multi" "$DOCS"
 # Keep the self-contained single page available too, under docs/html-single/.
 cp -r "$OUT/html-single" "$DOCS/html-single"

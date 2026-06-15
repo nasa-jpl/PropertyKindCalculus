@@ -57,7 +57,7 @@ The package ships six libraries so the core is exportable on its own:
 | `Examples` | `examples/` | worked examples for the spine (`PropertyKindCalculus.Examples.*`), Mathlib-free | `lake build Examples` |
 | `Dimension` | `dimension/` | the PhysLib-backed coherence layer (library modules only, no examples) — `dim` as the forgetful functor into PhysLib's `Dimension` (`PropertyKindCalculus.Dimension`), Flater's interaction algebra `KMul`/`KDiv` (`PropertyKindCalculus.Interaction`), and the `ℝ` quantity carrier (`PropertyKindCalculus.QuantityReal`); pulls in PhysLib + Mathlib | `lake build Dimension` |
 | `DimensionExamples` | `examples/` | worked examples for the Mathlib-backed `Dimension` layer (dimension functor, interaction algebra, `ℝ` quantity carrier, the ISO 80000 catalogue, and the ISO 80000-2 §18 vector quantity) — kept under `examples/` so no library module carries example code; PhysLib + Mathlib-backed (transitively) | `lake build DimensionExamples` |
-| `Iso80000` | `iso80000/` | the standards-grounded layer: a references catalogue citing the ISO/IEC 80000 parts by name + version only (no normative content), plus the full ISO 80000-3 *Space and time* catalogue (all 42 items) — quantity-kinds, units, the length specialization lattice, the dimension-collision capstones, and the formalized *Remarks*; PhysLib-backed | `lake build Iso80000` |
+| `Iso80000` | `iso80000/` | the standards-grounded layer: a references catalogue citing the ISO/IEC 80000 parts by name + version only (no normative content), plus the full ISO 80000-3 *Space and time* (42 items) and ISO 80000-4 *Mechanics* (54 items) catalogues — quantity-kinds, units, the length and force specialization lattices, the dimension-collision capstones, and the formalized *Remarks* (Part 4's several crossing into Part 3); PhysLib-backed | `lake build Iso80000` |
 | `Torch` | `torch/` | the TorchLean-backed instance of the R10 exec/spec refinement bridge — the binary32 `FP32` (rounding spec) and `IEEE32Exec` (executable) carriers realizing `CarrierRefinement`; depends on TorchLean | `lake build Torch` |
 
 The core spine and its `import PropertyKindCalculus` stay Mathlib-free. Note that
@@ -164,7 +164,9 @@ Status: ✅ built & proved · 🚧 next · ⬜ planned
 | `QuantityClassification` — verified classification (R12): the kind-law families `ProductKind` / `QuotientKind` / `ReciprocalKind` + their certificates + smart constructors; kind-laws stated to instantiate at the quantity level (axiom-free, Mathlib-free) | — | ✅ |
 | `Iso80000.Part3.AreaClassification` (in the `Iso80000` lib) — R12 area instance: a rectangle's area certified as `width × height` by construction, and every certified surface area proved `≥ 0` (property transport from the defining relation) | ISO 80000-3 | ✅ |
 | `Iso80000.Part3.DefiningRelations` (in the `Iso80000` lib) — the algebraic *Remarks* (curvature = 1/ρ, repetency = 1/λ, frequency = 1/T, speed = s/t, plane angle = s/r) as R12 kind-laws: the dimension *follows from* the relation (plane angle computed dimension-one because it is a ratio of two lengths) | ISO 80000-3 | ✅ |
-| `Iso80000` — the remaining parts (1, 2, 4–12) quantity-kinds + units | ISO/IEC 80000 | ⬜ |
+| `Iso80000.Part4` (in the `Iso80000` lib) — ISO 80000-4 *Mechanics* **full catalogue** (all 54 items, 4-1 … 4-32): the force family as a specialization lattice (R2) individuated **by measurement principle** (static vs kinetic friction force proved distinct, not by fiat), the textbook torque-vs-energy dimension collision (N·m ≠ J, same dimension `M·L²·T⁻²`), and dimensional facts as checked computations | ISO 80000-4 | ✅ |
+| `Iso80000.Part4.DefiningRelations` (in the `Iso80000` lib) — the algebraic *Remarks* as R12 kind-laws, several **cross-part**: momentum = mass × velocity and pressure = force / area build Part-4 kinds out of Part-3 kinds; efficiency computed dimension-one because it is a ratio of two powers | ISO 80000-4 | ✅ |
+| `Iso80000` — the remaining parts (1, 2, 5–12) quantity-kinds + units | ISO/IEC 80000 | ⬜ |
 | `DedicatedKind` — kind × system × component | Ch. 20 | ⬜ |
 | `Model.SI` — SI base kinds, verified well-formed | — | ⬜ |
 | `Model.SoilMoisture` — vwc/gwc/permittivity/reflectivity/… | — | ⬜ |
@@ -261,6 +263,18 @@ speed — same dimension, distinct kind) are the dimension-1 disambiguation on s
 quantities; and selected *Remarks* are formalized as mathematics — the surface and
 volume elements (`√g`), and the algebraic relations (curvature, frequency, speed,
 plane angle) as R12 kind-laws where the dimension *follows from* the relation.
+
+The same build also checks the **full catalogue of ISO 80000-4 *Mechanics*** (all 54
+items, 4-1 … 4-32). Part 4 carries the calculus's two theses on textbook quantities:
+the force family (weight, the friction forces, drag, …) is a specialization lattice
+over the general force kind, individuated by measurement principle (so static and
+kinetic friction forces are *proved* distinct kinds though dimensionally identical,
+R2); the torque-versus-energy collision is the headline dimension clash — both are
+`M·L²·T⁻²`, yet the newton metre is not commensurable with the joule, because the
+kinds differ; and the algebraic *Remarks* are R12 kind-laws, several **crossing into
+Part 3** — momentum is mass × velocity, pressure is force / area, so mechanical kinds
+are built out of space-and-time kinds — with efficiency computed dimension-one because
+it is a ratio of two powers.
 
 `lake build Torch` checks the TorchLean-backed instance of the refinement bridge —
 the only library that depends on TorchLean. `FP32` (TorchLean's binary32 rounding

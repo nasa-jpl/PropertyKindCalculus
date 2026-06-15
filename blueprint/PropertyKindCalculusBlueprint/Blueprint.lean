@@ -10,6 +10,7 @@ import PropertyKindCalculusBlueprint.Chapters.Interaction
 import PropertyKindCalculusBlueprint.Chapters.Extensivity
 import PropertyKindCalculusBlueprint.Chapters.Iso80000
 import PropertyKindCalculusBlueprint.Chapters.Iso80000Part3
+import PropertyKindCalculusBlueprint.Chapters.Iso80000Part4
 
 open Verso.Genre
 open Verso.Genre.Manual
@@ -27,6 +28,9 @@ Flater's full tracking of kinds of quantities (NIST Technical Note 1943,
 Appendix C). This blueprint is the design map: it records what is already proved
 (linked to real declarations) and the *capstone theorems we plan to provide*,
 with the dependency graph and a status summary at the end.
+
+The whole blueprint is also available as a single paginated document:
+[download the PDF](PropertyKindCalculus-Blueprint.pdf).
 
 # Requirements
 
@@ -253,7 +257,7 @@ Stating it as owed keeps the boundary honest.
   * proved
 *
   * R2 — specialization lattice + comparability
-  * Width, Height, Diameter specialize Length; Width, Height comparable yet distinct (by examination principle)
+  * Width, Height, Diameter specialize Length (ISO 80000-3); weight, static vs kinetic friction force specialize Force (ISO 80000-4) — comparable yet distinct, by examination principle
   * `Specializes` preorder; `MutuallyComparable`; examination defining-aspect (`Refines`, `distinct_of_examPrinciple`)
   * proved
 *
@@ -704,6 +708,8 @@ in-progress goals until formalized. The headline deliverables are tagged
 {include 0 PropertyKindCalculusBlueprint.Chapters.Iso80000}
 
 {include 0 PropertyKindCalculusBlueprint.Chapters.Iso80000Part3}
+
+{include 0 PropertyKindCalculusBlueprint.Chapters.Iso80000Part4}
 
 {blueprint_graph}
 

@@ -17,6 +17,13 @@ licensed and copyrighted).
     of areas (R12).
   * `PropertyKindCalculus.Iso80000.Part3.DefiningRelations` — the algebraic *Remarks*
     (curvature, repetency, frequency, speed, plane angle) as R12 kind-laws.
+  * `PropertyKindCalculus.Iso80000.Part4` — the full catalogue of ISO 80000-4
+    *Mechanics* (all of items 4-1 … 4-32), with the force family as a specialization
+    lattice (R2) and the torque/energy dimension-collision capstone.
+  * `PropertyKindCalculus.Iso80000.Part4.DefiningRelations` — the algebraic *Remarks*
+    (mass density, specific volume, momentum, pressure, kinematic viscosity,
+    efficiency, modulus of elasticity) as R12 kind-laws, several composing Part-4
+    kinds out of Part-3 (space-and-time) kinds.
 
 This library is PhysLib-backed (its quantity-kinds carry PhysLib `Dimension`s); the
 references catalogue alone is Mathlib-free.
@@ -28,3 +35,5 @@ import PropertyKindCalculus.Iso80000.Part3.AreaElement
 import PropertyKindCalculus.Iso80000.Part3.AreaClassification
 import PropertyKindCalculus.Iso80000.Part3.VolumeElement
 import PropertyKindCalculus.Iso80000.Part3.DefiningRelations
+import PropertyKindCalculus.Iso80000.Part4
+import PropertyKindCalculus.Iso80000.Part4.DefiningRelations

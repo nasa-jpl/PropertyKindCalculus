@@ -12,3 +12,4 @@ PhysLib `Dimension`s, and the §18 / area examples use `ℝ`-valued carriers).
 
 import PropertyKindCalculus.DimensionExamples.Iso80000.References
 import PropertyKindCalculus.DimensionExamples.Iso80000.Part3
+import PropertyKindCalculus.DimensionExamples.Iso80000.Part4
