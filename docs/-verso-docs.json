@@ -120,12 +120,82 @@
  "<code>PropertyKindCalculus.Specializes\n  (E : PropertyKindCalculus.KindOfProperty → PropertyKindCalculus.KindOfProperty → Prop) :\n  PropertyKindCalculus.KindOfProperty → PropertyKindCalculus.KindOfProperty → Prop</code><span class=\"sep\"></span><code class=\"docstring\">Reflexive–transitive closure of a direct-parent edge relation `E`. </code>",
  "36":
  "<code class=\"docstring\">The universe of propositions. `Prop ≡ Sort 0`.\n\nEvery proposition is propositionally equal to either `True` or `False`. </code>",
+ "357":
+ "<code>PropertyKindCalculus.Iso80000.Part5.specificHeatCapacityConstantVolume : PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">Specific heat capacity at constant volume — item 5-16.3, dimension `L²·T⁻²·Θ⁻¹`. </code>",
+ "356":
+ "<code>PropertyKindCalculus.Iso80000.Part5.specificHeatCapacityConstantPressure : PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">Specific heat capacity at constant pressure — item 5-16.2, dimension\n`L²·T⁻²·Θ⁻¹`. </code>",
+ "355":
+ "<code>PropertyKindCalculus.Iso80000.Part5.ratioOfSpecificHeatCapacities : PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">Ratio of specific heat capacities — item 5-17.1, dimension one (a ratio of two\nspecific heat capacities). The remark is formalized in `Part5.DefiningRelations`. </code>",
+ "354":
+ "<code>PropertyKindCalculus.Iso80000.Part5.DefiningRelations.ratio_dim_from_specific_heats :\n  PropertyKindCalculus.Iso80000.Part5.ratioOfSpecificHeatCapacities.dim =\n    PropertyKindCalculus.Iso80000.Part5.specificHeatCapacityConstantPressure.dim /\n      PropertyKindCalculus.Iso80000.Part5.specificHeatCapacityConstantVolume.dim</code><span class=\"sep\"></span><code class=\"docstring\">**The ratio of specific heat capacities is dimension one because it is a ratio of\ntwo specific heat capacities.** The constant-pressure and constant-volume specific\nheat capacities are both `L²·T⁻²·Θ⁻¹`, so `γ = cp/cV` cancels the dimension — the\nratio's dimensionlessness is a *checked computation from its defining relation*, not a\nstipulation. (It nonetheless remains a distinct kind from every other dimension-one\nquantity; see `Part5.iso80000_5_dim_one_collision`.) This is the thermodynamic\nanalogue of the plane angle being a ratio of two lengths and the efficiency being a\nratio of two powers. </code>",
+ "353":
+ "<code>PropertyKindCalculus.Iso80000.Part5.DefiningRelations.specificHeatCapacityOf\n  (c : PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part5.heatCapacity.kind ℝ)\n  (m : PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part4.mass.kind ℝ) :\n  PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part5.specificHeatCapacity.kind ℝ</code><span class=\"sep\"></span><code class=\"docstring\">A specific heat capacity built as heat capacity / mass — classified as a specific\nheat capacity **by construction** (and built from a Part-5 heat capacity and a Part-4\nmass). </code>",
+ "352":
+ "<code>PropertyKindCalculus.Iso80000.Part5.DefiningRelations.specificHeatCapacity_quot_heatCapacity_mass :\n  PropertyKindCalculus.QuotientKind PropertyKindCalculus.Iso80000.Part5.heatCapacity.kind\n    PropertyKindCalculus.Iso80000.Part4.mass.kind PropertyKindCalculus.Iso80000.Part5.specificHeatCapacity.kind</code><span class=\"sep\"></span><code class=\"docstring\">**Specific heat capacity is heat capacity per mass** (item 5-16.1: `c = C/m`) — a\n*cross-part* law, since the mass is an ISO 80000-4 quantity. </code>",
+ "351":
+ "<code>PropertyKindCalculus.Quantity.IsQuotient {R : Type} [Div R] {k₁ k₂ k : PropertyKindCalculus.KindOfProperty}\n  (_h : PropertyKindCalculus.QuotientKind k₁ k₂ k) (q : PropertyKindCalculus.Quantity k R)\n  (a : PropertyKindCalculus.Quantity k₁ R) (b : PropertyKindCalculus.Quantity k₂ R) : Prop</code><span class=\"sep\"></span><code class=\"docstring\">**The certificate.** `q` (of kind `k`) is the quotient of `a` (of `k₁`) by `b` (of\n`k₂`): its magnitude is the quotient of theirs. A proof *certifies* `q`'s classification\nas `k`. </code>",
+ "350":
+ "<code>PropertyKindCalculus.Iso80000.Part5.heatCapacity : PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">Heat capacity — item 5-15, dimension `M·L²·T⁻²·Θ⁻¹` (unit J/K). The\nheat/temperature-derivative remark is formalized in `Part5.DefiningRelations`. </code>",
  "35":
  "<code>PropertyKindCalculus.KindOfProperty → PropertyKindCalculus.KindOfProperty → Prop</code>",
+ "349":
+ "<code>PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part5.heatCapacity.kind ℝ</code>",
+ "348":
+ "<code>PropertyKindCalculus.Iso80000.Part5.DefiningRelations.specificHeatCapacityOf_isQuotient\n  (c : PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part5.heatCapacity.kind ℝ)\n  (m : PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part4.mass.kind ℝ) :\n  PropertyKindCalculus.Quantity.IsQuotient\n    PropertyKindCalculus.Iso80000.Part5.DefiningRelations.specificHeatCapacity_quot_heatCapacity_mass\n    (PropertyKindCalculus.Iso80000.Part5.DefiningRelations.specificHeatCapacityOf c m) c m</code><span class=\"sep\"></span><code class=\"docstring\">The constructed specific heat capacity satisfies the quotient certificate by\nconstruction. </code>",
+ "347":
+ "<code>PropertyKindCalculus.Iso80000.Part5.iso80000_5_dim_one_collision : ∃ a b, a.kind ≠ b.kind ∧ a.dim = b.dim ∧ a.dim = 1</code><span class=\"sep\"></span><code class=\"docstring\">**The dimension-1 disambiguation, on standard quantities.** There exist distinct\nISO 80000-5 kinds with the same dimension one — the ratio of specific heat capacities\nand the efficiency witness it (alongside the isentropic exponent and the humidity\nratios and fractions). Dimension cannot separate them; the kind layer does. </code>",
+ "346":
+ "<code>PropertyKindCalculus.Iso80000.Part5.joulePerKelvinHeatCapacity : PropertyKindCalculus.MetrologicalUnit</code><span class=\"sep\"></span><code class=\"docstring\">The joule per kelvin **of heat capacity** (item 5-15) — *also* `M·L²·T⁻²·Θ⁻¹` and\n*also* written \"J/K\", but a unit of heat capacity, not of entropy. </code>",
+ "345":
+ "<code>PropertyKindCalculus.Iso80000.Part5.joulePerKelvinEntropy : PropertyKindCalculus.MetrologicalUnit</code><span class=\"sep\"></span><code class=\"docstring\">The joule per kelvin **of entropy** (item 5-18) — dimension `M·L²·T⁻²·Θ⁻¹`. </code>",
+ "344":
+ "<code>PropertyKindCalculus.Iso80000.Part5.entropy_heatCapacity_unit_not_commensurable :\n  ¬PropertyKindCalculus.Iso80000.Part5.joulePerKelvinEntropy.Commensurable\n      PropertyKindCalculus.Iso80000.Part5.joulePerKelvinHeatCapacity</code><span class=\"sep\"></span><code class=\"docstring\">**The entropy joule-per-kelvin is not the heat-capacity joule-per-kelvin, though\nboth are \"J/K\" and both `M·L²·T⁻²·Θ⁻¹`.** The units of entropy and heat capacity carry\nthe same symbol and the same dimension, yet are not commensurable, because their kinds\ndiffer — the sharpest form of \"a dimension (or a unit string) does not determine a\nkind\". </code>",
+ "343":
+ "<code>PropertyKindCalculus.Iso80000.Part5.iso80000_5_dim_collision : ∃ a b, a.kind ≠ b.kind ∧ a.dim = b.dim</code><span class=\"sep\"></span><code class=\"docstring\">**The entropy/heat-capacity collision, on standard quantities.** There exist\ndistinct ISO 80000-5 kinds with the same dimension `M·L²·T⁻²·Θ⁻¹` — entropy and heat\ncapacity witness it (alongside the Massieu and Planck functions). PhysLib's\n`Dimension`, and any dimension-only type system, cannot separate them; the kind layer\ndoes. This is the thermodynamic dimension-does-not-classify case. </code>",
+ "342":
+ "<code>PropertyKindCalculus.Iso80000.Part5.Edge :\n  PropertyKindCalculus.KindOfProperty → PropertyKindCalculus.KindOfProperty → Prop</code><span class=\"sep\"></span><code class=\"docstring\">This application's system of energy quantities — the direct-parent edges among the\nthermodynamic potentials of the energy family (item 5-20). </code>",
+ "341":
+ "<code>PropertyKindCalculus.Iso80000.Part5.helmholtzEnergy_gibbsEnergy_comparable :\n  PropertyKindCalculus.MutuallyComparable PropertyKindCalculus.Iso80000.Part5.Edge\n    PropertyKindCalculus.Iso80000.Part5.helmholtzEnergy.kind PropertyKindCalculus.Iso80000.Part5.gibbsEnergy.kind</code><span class=\"sep\"></span><code class=\"docstring\">**Mutual comparability is preserved.** The Helmholtz and Gibbs energies, though\ndistinct kinds, remain *mutually comparable* — they share the super-kind energy, so\ncombining them is possible but only via an explicit up-cast, never silently. </code>",
+ "340":
+ "<code>PropertyKindCalculus.Iso80000.Part5.gibbsEnergy : PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">Gibbs energy (Gibbs function) — item 5-20.5, an energy species (`G = H − TS`,\nnatural in T, p). </code>",
  "34":
  "<code>PropertyKindCalculus.Specializes.refl\n  {E : PropertyKindCalculus.KindOfProperty → PropertyKindCalculus.KindOfProperty → Prop}\n  (a : PropertyKindCalculus.KindOfProperty) : PropertyKindCalculus.Specializes E a a</code><span class=\"sep\"></span><code class=\"docstring\">Reflexivity of the closure: every kind specializes itself. </code>",
+ "339":
+ "<code>PropertyKindCalculus.Iso80000.Part5.helmholtzEnergy : PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">Helmholtz energy (Helmholtz function) — item 5-20.4, an energy species\n(`A = U − TS`, natural in T, V). </code>",
+ "338":
+ "<code>PropertyKindCalculus.Iso80000.Part5.helmholtzEnergy_ne_gibbsEnergy :\n  PropertyKindCalculus.Iso80000.Part5.helmholtzEnergy.kind ≠ PropertyKindCalculus.Iso80000.Part5.gibbsEnergy.kind</code><span class=\"sep\"></span><code class=\"docstring\">**The Helmholtz and Gibbs energies are distinct kinds — by defining construction,\nnot by fiat.** They have the same dimension `M·L²·T⁻²` and are both \"free energies\",\nyet they are different kinds *because they are defined by different natural variables*\n(`A = U − TS`, natural in T,V; `G = H − TS`, natural in T,p), proved through\n`distinct_of_examPrinciple` (§7.5) rather than by appealing to their `id` strings.\nThis is the thermodynamic-potential analogue of width ≠ distance and static ≠ kinetic\nfriction force. </code>",
+ "337":
+ "<code>PropertyKindCalculus.Iso80000.Part5.energySpecies (id : String) (p : PropertyKindCalculus.ExaminationPrinciple) :\n  PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">An energy species: dimension `M·L²·T⁻²`, ratio-scale, individuated by its defining\nconstruction (examination principle). </code>",
+ "336":
+ "<code>PropertyKindCalculus.Iso80000.Part5.iso80000_5_scale_collision :\n  ∃ a b, a.kind ≠ b.kind ∧ a.dim = b.dim ∧ a.kind.scale ≠ b.kind.scale</code><span class=\"sep\"></span><code class=\"docstring\">**The scale disambiguation, on standard quantities.** There exist distinct\nISO 80000-5 kinds with the same dimension `Θ` that are separated by *scale type* alone\n— thermodynamic temperature (ratio) and Celsius temperature (interval) witness it.\nNeither the dimension nor an examination principle tells them apart; the scale layer\ndoes. This is requirement R6 on the standard, the axis Parts 3 and 4 could not show. </code>",
+ "335":
+ "<code>PropertyKindCalculus.KindOfProperty.scale (self : PropertyKindCalculus.KindOfProperty) : PropertyKindCalculus.ScaleType</code><span class=\"sep\"></span><code class=\"docstring\">The scale type (Ch. 12) — which operations are defined on its instances. </code>",
+ "334":
+ "<code>PropertyKindCalculus.Iso80000.Part5.celsiusTemperature : PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">Celsius temperature — item 5-2, dimension `Θ`, **interval-scale** (an arbitrary\nzero at the ice point, `t = T − T₀`). Same dimension as thermodynamic temperature, a\ndifferent *scale* — only its differences are meaningful. </code>",
+ "333":
+ "<code>PropertyKindCalculus.Iso80000.Part5.celsiusTemperature_not_allowsRatio :\n  ¬PropertyKindCalculus.Iso80000.Part5.celsiusTemperature.kind.scale.AllowsRatio</code><span class=\"sep\"></span><code class=\"docstring\">**Celsius temperature does *not* admit `×`,`÷`.** It is interval-scale (an\narbitrary zero at the ice point), so a ratio of Celsius temperatures is not a\nmeaningful operation — the kind layer refuses it where dimension would not. </code>",
+ "332":
+ "<code>PropertyKindCalculus.Iso80000.Part5.joule : PropertyKindCalculus.MetrologicalUnit</code><span class=\"sep\"></span><code class=\"docstring\">The joule, the SI unit of energy (item 5-20.1) — dimension `M·L²·T⁻²`. </code>",
+ "331":
+ "<code>PropertyKindCalculus.Iso80000.Part5.kelvin : PropertyKindCalculus.MetrologicalUnit</code><span class=\"sep\"></span><code class=\"docstring\">The kelvin, the SI unit of thermodynamic temperature (item 5-1). </code>",
+ "330":
+ "<code>PropertyKindCalculus.Iso80000.Part5.kelvin_joule_not_commensurable :\n  ¬PropertyKindCalculus.Iso80000.Part5.kelvin.Commensurable PropertyKindCalculus.Iso80000.Part5.joule</code><span class=\"sep\"></span><code class=\"docstring\">The kelvin and the joule are **not** commensurable — thermodynamic temperature and\nenergy are distinct kinds (a type-level fact). </code>",
  "33":
  "<code>PropertyKindCalculus.KindOfProperty.IsRational (k : PropertyKindCalculus.KindOfProperty) : Prop</code><span class=\"sep\"></span><code class=\"docstring\">§13.2.4 rational kind-of-property (divisible). </code>",
+ "329":
+ "<code>Dimension.temperature (self : Dimension) : ℚ</code><span class=\"sep\"></span><code class=\"docstring\">The temperature dimension. </code>",
+ "328":
+ "<code>PropertyKindCalculus.Iso80000.Part5.entropy : PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">Entropy — item 5-18, dimension `M·L²·T⁻²·Θ⁻¹` (unit J/K; the same dimension as\nheat capacity, a distinct kind). </code>",
+ "327":
+ "<code>PropertyKindCalculus.Iso80000.Part5.entropy_dim_temperature :\n  PropertyKindCalculus.Iso80000.Part5.entropy.dim.temperature = -1</code><span class=\"sep\"></span><code class=\"docstring\">Entropy is `M·L²·T⁻²·Θ⁻¹`: its temperature-exponent is `-1` (ISO 80000-5 item\n5-18). The temperature generator `Θ` enters through the `energy / temperature`\nquotient. </code>",
+ "326":
+ "<code>PropertyKindCalculus.Iso80000.Part5.CataloguedKind : Type</code><span class=\"sep\"></span><code class=\"docstring\">A **catalogued quantity-kind**: a {dimensioned kind} together with its exact\nsource in the 80000 series — the part, the printed item designation, the principal\nquantity symbol, and the coherent SI unit symbol. Every field other than `qk` is a\n*citation locator*; the citation travels with the kind as data, so a downstream\nmodel can render or audit the source of each definition. </code>",
+ "325":
+ "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">The coherent SI unit symbol, e.g. \"J/K\" (a citation locator). </code>",
+ "324":
+ "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">The principal quantity symbol, e.g. \"S\". </code>",
+ "323":
+ "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">The item designation as printed, e.g. \"5-20.3\". </code>",
  "322":
  "<code>PropertyKindCalculus.Iso80000.Part4.power : PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">Power — item 4-27, dimension `M·L²·T⁻³` (unit W). </code>",
  "321":
