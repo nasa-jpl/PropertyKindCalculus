@@ -255,10 +255,11 @@ def merge_html(pages: list[Path]) -> str:
     </style>
     """
 
+    # The document's own <title> comes from the source page's head (head_html); no
+    # project-specific title is hardcoded here, so this script is reusable as-is.
     return (
         "<!DOCTYPE html>\n"
         f'<html lang="en"><head><meta charset="utf-8">\n'
-        f"<title>PropertyKindCalculus Blueprint</title>\n"
         f"{head_html}\n{pdf_css}\n</head>\n"
         f'<body>\n{"".join(body_parts)}\n</body></html>'
     )
