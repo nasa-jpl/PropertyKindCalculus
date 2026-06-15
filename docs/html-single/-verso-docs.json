@@ -126,13 +126,79 @@
  "<code>PropertyKindCalculus.Specializes.refl\n  {E : PropertyKindCalculus.KindOfProperty → PropertyKindCalculus.KindOfProperty → Prop}\n  (a : PropertyKindCalculus.KindOfProperty) : PropertyKindCalculus.Specializes E a a</code><span class=\"sep\"></span><code class=\"docstring\">Reflexivity of the closure: every kind specializes itself. </code>",
  "33":
  "<code>PropertyKindCalculus.KindOfProperty.IsRational (k : PropertyKindCalculus.KindOfProperty) : Prop</code><span class=\"sep\"></span><code class=\"docstring\">§13.2.4 rational kind-of-property (divisible). </code>",
+ "322":
+ "<code>PropertyKindCalculus.Iso80000.Part4.power : PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">Power — item 4-27, dimension `M·L²·T⁻³` (unit W). </code>",
+ "321":
+ "<code>PropertyKindCalculus.Iso80000.Part4.efficiency : PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">Efficiency — item 4-29, dimension one (a ratio of two powers). The\noutput/input-power remark is formalized in `Part4.DefiningRelations`. </code>",
+ "320":
+ "<code>PropertyKindCalculus.Iso80000.Part4.DefiningRelations.efficiency_dim_from_power_ratio :\n  PropertyKindCalculus.Iso80000.Part4.efficiency.dim =\n    PropertyKindCalculus.Iso80000.Part4.power.dim / PropertyKindCalculus.Iso80000.Part4.power.dim</code><span class=\"sep\"></span><code class=\"docstring\">**Efficiency is dimension one because it is a ratio of two powers.** Output and\ninput power are both `M·L²·T⁻³`, so `η = P_out/P_in` cancels the dimension — the\nefficiency's dimensionlessness is a *checked computation from its defining relation*,\nnot a stipulation. (It nonetheless remains a distinct kind from every other\ndimension-one quantity; see `Part4.iso80000_4_dim_one_collision`.) This is the\nmechanics analogue of the plane angle being a ratio of two lengths. </code>",
  "32": "<code>k.IsRational</code>",
+ "319":
+ "<code>PropertyKindCalculus.Iso80000.Part4.DefiningRelations.momentumOf\n  (m : PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part4.mass.kind ℝ)\n  (v : PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part3.velocity.kind ℝ) :\n  PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part4.momentum.kind ℝ</code><span class=\"sep\"></span><code class=\"docstring\">A momentum built as mass × velocity — classified as a momentum **by construction**\n(and built from a Part-4 mass and a Part-3 velocity). </code>",
+ "318":
+ "<code>PropertyKindCalculus.Iso80000.Part4.DefiningRelations.momentum_prod_mass_velocity :\n  PropertyKindCalculus.ProductKind PropertyKindCalculus.Iso80000.Part4.mass.kind\n    PropertyKindCalculus.Iso80000.Part3.velocity.kind PropertyKindCalculus.Iso80000.Part4.momentum.kind</code><span class=\"sep\"></span><code class=\"docstring\">**Momentum is mass times velocity** (item 4-8: `p = m·v`) — a *cross-part* law,\nsince the velocity is an ISO 80000-3 quantity. </code>",
+ "317":
+ "<code>PropertyKindCalculus.Iso80000.Part3.velocity : PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">Velocity — item 3-10.1, dimension `L·T⁻¹` (a vector quantity). </code>",
+ "316":
+ "<code>PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part3.velocity.kind ℝ</code>",
+ "315":
+ "<code>PropertyKindCalculus.Iso80000.Part4.mass : PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">Mass — item 4-1, dimension `M`. The fundamental mechanical quantity. </code>",
+ "314":
+ "<code>PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part4.mass.kind ℝ</code>",
+ "313":
+ "<code>PropertyKindCalculus.Iso80000.Part4.DefiningRelations.momentumOf_isProduct\n  (m : PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part4.mass.kind ℝ)\n  (v : PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part3.velocity.kind ℝ) :\n  PropertyKindCalculus.Quantity.IsProduct\n    PropertyKindCalculus.Iso80000.Part4.DefiningRelations.momentum_prod_mass_velocity\n    (PropertyKindCalculus.Iso80000.Part4.DefiningRelations.momentumOf m v) m v</code><span class=\"sep\"></span><code class=\"docstring\">The constructed momentum satisfies the product certificate by construction. </code>",
+ "312":
+ "<code>PropertyKindCalculus.Iso80000.Part4.iso80000_4_dim_one_collision : ∃ a b, a.kind ≠ b.kind ∧ a.dim = b.dim ∧ a.dim = 1</code><span class=\"sep\"></span><code class=\"docstring\">**The dimension-1 disambiguation, on standard quantities.** There exist distinct\nISO 80000-4 kinds with the same dimension one — efficiency and the relative mass\ndensity witness it (alongside the strains, the Poisson number, and the friction\nfactors). Dimension cannot separate them; the kind layer does. </code>",
+ "311":
+ "<code>PropertyKindCalculus.Iso80000.Part4.joule : PropertyKindCalculus.MetrologicalUnit</code><span class=\"sep\"></span><code class=\"docstring\">The joule, the SI unit of mechanical energy (item 4-28.3) — dimension `M·L²·T⁻²`. </code>",
+ "310":
+ "<code>PropertyKindCalculus.Iso80000.Part4.newtonMetre : PropertyKindCalculus.MetrologicalUnit</code><span class=\"sep\"></span><code class=\"docstring\">The newton metre, the SI unit of torque (item 4-12.2) — *also* `M·L²·T⁻²`, but a\nunit of torque, not of energy. </code>",
  "31":
  "<code>PropertyKindCalculus.KindOfProperty.rational_isQuantity {k : PropertyKindCalculus.KindOfProperty} (h : k.IsRational) :\n  k.IsQuantity</code><span class=\"sep\"></span><code class=\"docstring\">A rational kind *is* a kind-of-quantity. </code>",
+ "309":
+ "<code>PropertyKindCalculus.Iso80000.Part4.newtonMetre_joule_not_commensurable :\n  ¬PropertyKindCalculus.Iso80000.Part4.newtonMetre.Commensurable PropertyKindCalculus.Iso80000.Part4.joule</code><span class=\"sep\"></span><code class=\"docstring\">**The newton metre is not a joule, though both are `M·L²·T⁻²`.** The SI units of\ntorque and energy are not commensurable, because their kinds differ — the textbook\ncase that a dimension does not determine a unit. </code>",
+ "308":
+ "<code>PropertyKindCalculus.Iso80000.Part4.iso80000_4_dim_collision : ∃ a b, a.kind ≠ b.kind ∧ a.dim = b.dim</code><span class=\"sep\"></span><code class=\"docstring\">**The torque/energy collision, on standard quantities.** There exist distinct\nISO 80000-4 kinds with the same dimension `M·L²·T⁻²` — torque and energy witness it.\nPhysLib's `Dimension`, and any dimension-only type system, cannot separate them; the\nkind layer does. This is the textbook dimension-does-not-classify case. </code>",
+ "307":
+ "<code>PropertyKindCalculus.Iso80000.Part4.dragForce : PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">Drag force — item 4-9.6, a force species (fluid resistance). </code>",
+ "306":
+ "<code>PropertyKindCalculus.Iso80000.Part4.weight : PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">Weight — item 4-9.2, a force species (gravitational-field action). </code>",
+ "305":
+ "<code>PropertyKindCalculus.Iso80000.Part4.Edge :\n  PropertyKindCalculus.KindOfProperty → PropertyKindCalculus.KindOfProperty → Prop</code><span class=\"sep\"></span><code class=\"docstring\">This application's system of force quantities — the direct-parent edges among the\nspecies of the force family (item 4-9). </code>",
+ "304":
+ "<code>PropertyKindCalculus.Iso80000.Part4.weight_dragForce_comparable :\n  PropertyKindCalculus.MutuallyComparable PropertyKindCalculus.Iso80000.Part4.Edge\n    PropertyKindCalculus.Iso80000.Part4.weight.kind PropertyKindCalculus.Iso80000.Part4.dragForce.kind</code><span class=\"sep\"></span><code class=\"docstring\">**Mutual comparability is preserved.** Weight and the drag force, though distinct\nkinds, remain *mutually comparable* — they share the super-kind force, so combining\nthem is possible but only via an explicit up-cast, never silently. </code>",
+ "303":
+ "<code>PropertyKindCalculus.Iso80000.Part4.kineticFrictionForce : PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">Kinetic friction force — item 4-9.4, a force species (sliding resistance). </code>",
+ "302":
+ "<code>PropertyKindCalculus.Iso80000.Part4.staticFrictionForce : PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">Static friction force — item 4-9.3, a force species (pre-slip resistance). </code>",
+ "301":
+ "<code>PropertyKindCalculus.Iso80000.Part4.staticFriction_ne_kineticFriction :\n  PropertyKindCalculus.Iso80000.Part4.staticFrictionForce.kind ≠\n    PropertyKindCalculus.Iso80000.Part4.kineticFrictionForce.kind</code><span class=\"sep\"></span><code class=\"docstring\">**Static and kinetic friction forces are distinct kinds — by measurement\nprinciple, not by fiat.** They have the same dimension `M·L·T⁻²` and are both\n\"friction forces\", yet they are different kinds *because they are examined under\ndifferent conditions* (resistance before sliding vs during sliding), proved through\n`distinct_of_examPrinciple` (§7.5) rather than by appealing to their `id` strings.\nThis is the force-family analogue of width ≠ distance. </code>",
+ "300":
+ "<code>PropertyKindCalculus.Iso80000.Part4.forceSpecies (id : String) (p : PropertyKindCalculus.ExaminationPrinciple) :\n  PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">A force species: dimension `M·L·T⁻²`, ratio-scale, individuated by its measurement\n(examination) principle. </code>",
  "30":
  "<code>PropertyKindCalculus.KindOfProperty.IsQuantity (k : PropertyKindCalculus.KindOfProperty) : Prop</code><span class=\"sep\"></span><code class=\"docstring\">**§13.3.1** — a kind-of-property is a *kind-of-quantity* iff its instances\nhave a magnitude. </code>",
  "3":
  "<code class=\"docstring\">A type universe. `Type ≡ Type 0`, `Type u ≡ Sort (u + 1)`. </code>",
+ "299":
+ "<code>PropertyKindCalculus.Iso80000.Part4.newton : PropertyKindCalculus.MetrologicalUnit</code><span class=\"sep\"></span><code class=\"docstring\">The newton, the SI unit of force (item 4-9.1). </code>",
+ "298":
+ "<code>PropertyKindCalculus.Iso80000.Part4.kilogram : PropertyKindCalculus.MetrologicalUnit</code><span class=\"sep\"></span><code class=\"docstring\">The kilogram, the SI unit of mass (item 4-1). </code>",
+ "297":
+ "<code>PropertyKindCalculus.Iso80000.Part4.kilogram_newton_not_commensurable :\n  ¬PropertyKindCalculus.Iso80000.Part4.kilogram.Commensurable PropertyKindCalculus.Iso80000.Part4.newton</code><span class=\"sep\"></span><code class=\"docstring\">The kilogram and the newton are **not** commensurable — mass and force are distinct\nkinds (a type-level fact). </code>",
+ "296":
+ "<code>Dimension.time (self : Dimension) : ℚ</code><span class=\"sep\"></span><code class=\"docstring\">The time dimension. </code>",
+ "295":
+ "<code>PropertyKindCalculus.Iso80000.Part4.force : PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">Force — item 4-9.1, dimension `M·L·T⁻²` (a vector quantity). The broad genus of\nthe force family. The mass × acceleration remark is in `Part4.DefiningRelations`. </code>",
+ "294":
+ "<code>PropertyKindCalculus.Iso80000.Part4.force_dim_time : PropertyKindCalculus.Iso80000.Part4.force.dim.time = -2</code><span class=\"sep\"></span><code class=\"docstring\">Force is `M·L·T⁻²`: its time-exponent is `-2` (ISO 80000-4 item 4-9.1). </code>",
+ "293":
+ "<code>PropertyKindCalculus.Iso80000.Part4.CataloguedKind : Type</code><span class=\"sep\"></span><code class=\"docstring\">A **catalogued quantity-kind**: a {dimensioned kind} together with its exact\nsource in the 80000 series — the part, the printed item designation, the principal\nquantity symbol, and the coherent SI unit symbol. Every field other than `qk` is a\n*citation locator*; the citation travels with the kind as data, so a downstream\nmodel can render or audit the source of each definition. </code>",
+ "292":
+ "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">The coherent SI unit symbol, e.g. \"N\" (a citation locator). </code>",
+ "291":
+ "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">The principal quantity symbol, e.g. \"F\". </code>",
+ "290":
+ "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">The item designation as printed, e.g. \"4-9.1\". </code>",
  "29":
  "<code>Not (a : Prop) : Prop</code><span class=\"sep\"></span><code class=\"docstring\">`Not p`, or `¬p`, is the negation of `p`. It is defined to be `p → False`,\nso if your goal is `¬p` you can use `intro h` to turn the goal into\n`h : p ⊢ False`, and if you have `hn : ¬p` and `h : p` then `hn h : False`\nand `(hn h).elim` will prove anything.\nFor more information: [Propositional Logic](https://lean-lang.org/theorem_proving_in_lean4/propositions_and_proofs.html#propositional-logic)\n\n\nConventions for notations in identifiers:\n\n * The recommended spelling of `¬` in identifiers is `not`.</code>",
  "289":
