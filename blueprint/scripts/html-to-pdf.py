@@ -16,45 +16,80 @@ and to skip Verso's `find/`/`search/`/`-verso-*` utility directories when mergin
 
 Requires: weasyprint (pip3 install weasyprint)
 """
+from __future__ import annotations
+
+import re
 import sys
 from pathlib import Path
 
-# Verso utility / asset directories that are not document content.
-_SKIP_DIRS = {"find", "search"}
+# Verso renders the numbered table of contents on every page as rows of the form
+#   <td class="num">3.2.1.</td><td><a href="...">Title</a>
+# Each page expands its own subsections, so the union of these rows across all pages
+# is the full TOC. We order the merge by the *dotted section number* (true document
+# order), not alphabetically, and include only pages that appear in the TOC — so the
+# search/index/report/dependency-graph/blueprint-summary pages, which are not numbered
+# content sections, are left out of the PDF.
+_NAV_ROW = re.compile(r'<td class="num">([\d.]+)</td>\s*<td><a href="([^"]+)"')
 
 
-def _is_content_dir(p: Path) -> bool:
-    name = p.name
-    return p.is_dir() and name not in _SKIP_DIRS and not name.startswith((".", "-"))
+def _resolve_page(from_index: Path, href: str, root: Path) -> Path | None:
+    """Resolve a nav href (relative to the page it appears on) to an index.html file
+    under `root`, or None if it points outside the site."""
+    target = href.split("#")[0].split("?")[0]
+    if not target:
+        return None
+    dest = (from_index.parent / target).resolve()
+    if dest.is_dir():
+        dest = dest / "index.html"
+    try:
+        dest.relative_to(root.resolve())
+    except ValueError:
+        return None
+    return dest if dest.is_file() else None
 
 
 def find_all_pages(html_input: Path) -> list[Path]:
     """Return the ordered list of HTML pages to render.
 
-    A single file is returned as-is. A directory is walked two levels deep (chapter,
-    then section), the Verso layout for `htmlDepth = 2`, skipping utility directories.
+    A single file is returned as-is (it already holds the whole document in order).
+    A multi-page site directory is ordered by its numbered table of contents.
     """
     if html_input.is_file():
         return [html_input]
 
-    root_index = html_input / "index.html"
+    root = html_input
+    root_index = root / "index.html"
     if not root_index.is_file():
         print(f"Error: {root_index} not found", file=sys.stderr)
         sys.exit(1)
 
+    def numkey(n: str) -> tuple:
+        return tuple(int(x) for x in n.strip(".").split("."))
+
+    # Collect num -> resolved page across every page's nav; keep the lowest number
+    # seen for each page (so a page shared by 3.4 and its 3.4.1 child sorts at 3.4).
+    page_of_num: dict[str, Path] = {}
+    for idx in sorted(root.rglob("index.html")):
+        text = idx.read_text(encoding="utf-8", errors="ignore")
+        for num, href in _NAV_ROW.findall(text):
+            page = _resolve_page(idx, href, root)
+            if page is not None:
+                page_of_num.setdefault(num.strip("."), page)
+
     pages = [root_index]
-    for child in sorted(html_input.iterdir()):
-        if not _is_content_dir(child):
-            continue
-        sub_index = child / "index.html"
-        if sub_index.is_file():
-            pages.append(sub_index)
-        for grandchild in sorted(child.iterdir()):
-            if not _is_content_dir(grandchild):
-                continue
-            sub_sub = grandchild / "index.html"
-            if sub_sub.is_file():
-                pages.append(sub_sub)
+    seen = {root_index.resolve()}
+    for num in sorted(page_of_num, key=numkey):
+        page = page_of_num[num]
+        rp = page.resolve()
+        if rp not in seen:
+            seen.add(rp)
+            pages.append(page)
+
+    if len(pages) == 1:
+        print(
+            "warning: no numbered table-of-contents found; rendering the root page only",
+            file=sys.stderr,
+        )
     return pages
 
 
@@ -152,10 +187,22 @@ def merge_html(pages: list[Path]) -> str:
       .bp_inline_preview_panel,
       script,
       template,
-      /* The raw Lean docstring duplicates the rendered statement and shows its
-         source markdown (**bold**) verbatim — drop it from the PDF, keeping the
+      /* The embedded Lean-declaration body (the raw docstring, plus the
+         auto-generated Fields / Constructors / Methods breakdown that Verso emits
+         for a *structure* as stray top-level <h1>s) duplicates the rendered
+         statement and corrupts the outline — drop the whole body, keeping the
          rendered statement and the declaration signature. */
-      pre.docstring { display: none !important; }
+      .bp_external_decl_body,
+      pre.docstring,
+      /* The interactive blueprint dashboards — the dependency graph and the status
+         summary ("By parent groups", "Missing owner", "Untagged", with their
+         embedded per-declaration Fields/Constructors panels) — are web-only views,
+         not print content. Hiding them also removes their headings from the PDF
+         outline (display:none generates no bookmarks) and trims the bloat. */
+      [class*="bp_graph"],
+      [class*="bp_summary"],
+      [id$="--Dependency-Graph"],
+      [id$="--Blueprint-Summary"] { display: none !important; }
 
       /* ── Undo the sidebar-offset layout ── */
       .with-toc { margin-top: 0 !important; }
