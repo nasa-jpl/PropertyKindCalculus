@@ -16,3 +16,4 @@ import PropertyKindCalculus.DimensionExamples.Iso80000.Part4
 import PropertyKindCalculus.DimensionExamples.Iso80000.Part5
 import PropertyKindCalculus.DimensionExamples.Iso80000.Part6
 import PropertyKindCalculus.DimensionExamples.Iso80000.Part7
+import PropertyKindCalculus.DimensionExamples.Iso80000.Part11

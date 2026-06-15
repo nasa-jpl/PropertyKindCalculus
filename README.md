@@ -57,7 +57,7 @@ The package ships six libraries so the core is exportable on its own:
 | `Examples` | `examples/` | worked examples for the spine (`PropertyKindCalculus.Examples.*`), Mathlib-free | `lake build Examples` |
 | `Dimension` | `dimension/` | the PhysLib-backed coherence layer (library modules only, no examples) — `dim` as the forgetful functor into PhysLib's `Dimension` (`PropertyKindCalculus.Dimension`), the scale-spanning unit classification (R13, `PropertyKindCalculus.ScaleSpanning`), Flater's interaction algebra `KMul`/`KDiv` (`PropertyKindCalculus.Interaction`), and the `ℝ` quantity carrier (`PropertyKindCalculus.QuantityReal`); pulls in PhysLib + Mathlib | `lake build Dimension` |
 | `DimensionExamples` | `examples/` | worked examples for the Mathlib-backed `Dimension` layer (dimension functor, interaction algebra, `ℝ` quantity carrier, the ISO 80000 catalogue, and the ISO 80000-2 §18 vector quantity) — kept under `examples/` so no library module carries example code; PhysLib + Mathlib-backed (transitively) | `lake build DimensionExamples` |
-| `Iso80000` | `iso80000/` | the standards-grounded layer: a references catalogue citing the ISO/IEC 80000 parts by name + version only (no normative content), plus the full ISO 80000-3 *Space and time* (42 items), ISO 80000-4 *Mechanics* (54 items), ISO 80000-5 *Thermodynamics* (54 items), IEC 80000-6 *Electromagnetism* (85 items), and ISO 80000-7 *Light and radiation* (66 items) catalogues — quantity-kinds, units, the length/force/energy/power/radiation specialization lattices, the dimension-collision, scale-type, and scale-spanning (R13) capstones, and the formalized *Remarks* (several crossing between parts); PhysLib-backed | `lake build Iso80000` |
+| `Iso80000` | `iso80000/` | the standards-grounded layer: a references catalogue citing the ISO/IEC 80000 parts by name + version only (no normative content), plus the full ISO 80000-3 *Space and time* (42 items), ISO 80000-4 *Mechanics* (54 items), ISO 80000-5 *Thermodynamics* (54 items), IEC 80000-6 *Electromagnetism* (85 items), ISO 80000-7 *Light and radiation* (66 items), and ISO 80000-11 *Characteristic numbers* (115 items, all dimension one) catalogues — quantity-kinds, units, the length/force/energy/power/radiation specialization lattices, the sub-suffixed characteristic-number homonyms, the dimension-collision, scale-type, and scale-spanning (R13) capstones, and the formalized *Remarks* (several crossing between parts); PhysLib-backed | `lake build Iso80000` |
 | `Torch` | `torch/` | the TorchLean-backed instance of the R10 exec/spec refinement bridge — the binary32 `FP32` (rounding spec) and `IEEE32Exec` (executable) carriers realizing `CarrierRefinement`; depends on TorchLean | `lake build Torch` |
 
 The core spine and its `import PropertyKindCalculus` stay Mathlib-free. Note that
@@ -174,7 +174,8 @@ Status: ✅ built & proved · 🚧 next · ⬜ planned
 | `Iso80000.Part6.DefiningRelations` (in the `Iso80000` lib) — the algebraic *Remarks* as R12 kind-laws: Ohm's law (resistance = voltage / current), the power product (power = voltage × current), the conductance/admittance/permeance/resistivity reciprocals, and the power factor; the electric-current law (current = charge / time) **crosses into Part 3**; the power factor computed dimension-one because it is a ratio of two powers | IEC 80000-6 | ✅ |
 | `Iso80000.Part7` (in the `Iso80000` lib) — ISO 80000-7 *Light and radiation* **full catalogue** (all 66 items, 7-1.1 … 7-37, every sub-suffixed item): the **radiant / luminous / photon trios** as distinct kinds individuated **by radiation mode** (R2), the candela and mole handled by the **scale-spanning** reduction (R13) so luminous flux ≡ radiant flux in dimension yet not in kind (the watt and the lumen not commensurable), the steradian reduced (radiant flux ≡ radiant intensity), and the **widest dimension-one family** in the series | ISO 80000-7 | ✅ |
 | `Iso80000.Part7.DefiningRelations` (in the `Iso80000` lib) — the algebraic *Remarks* as R12 kind-laws, several **cross-part**: radiant flux = radiant energy / time, irradiance = radiant flux / area, radiant intensity = radiant flux / solid angle (the steradian dropping), and the luminous efficacy computed dimension-one because it is a ratio of two fluxes (the candela reducing to power) | ISO 80000-7 | ✅ |
-| `Iso80000` — the remaining parts (1, 2, 8–12) quantity-kinds + units | ISO/IEC 80000 | ⬜ |
+| `Iso80000.Part11` (in the `Iso80000` lib) — ISO 80000-11 *Characteristic numbers* **full catalogue** (all 115 items, 11-4.1 … 11-9.2, every sub-suffixed item): the limit case of **R1** — *every* characteristic number is dimension one, so the dimension functor collapses the entire part to one point and the 115 kinds are held apart entirely **by measurement principle** (R2), including the sub-suffixed homonyms (two Froude, five Stokes, four Bejan numbers — same name, distinct kind); references to parts not yet specified (ISO 80000-8, -9, -12) recorded as `workToGoParts` | ISO 80000-11 | ✅ |
+| `Iso80000` — the remaining parts (1, 2, 8–10, 12) quantity-kinds + units | ISO/IEC 80000 | ⬜ |
 | `DedicatedKind` — kind × system × component | Ch. 20 | ⬜ |
 | `Model.SI` — SI base kinds, verified well-formed | — | ⬜ |
 | `Model.SoilMoisture` — vwc/gwc/permittivity/reflectivity/… | — | ⬜ |
@@ -335,6 +336,20 @@ distinct. The algebraic *Remarks* are R12 kind-laws — radiant flux = radiant e
 time, irradiance = flux / area, radiant intensity = flux / solid angle (the steradian
 dropping) — several **crossing into Part 3**, and the luminous efficacy computed
 dimension-one because it is a ratio of two fluxes.
+
+The same build checks the **full catalogue of ISO 80000-11 *Characteristic numbers*** (all
+115 items, 11-4.1 … 11-9.2, every sub-suffixed item included) — the part where **dimension
+does not classify the kind** (R1) becomes *total*. A characteristic number is a
+dimensionless ratio, so **every one of the 115 is dimension one**: the dimension functor
+collapses the whole part to a single point, and the 115 kinds are held apart entirely **by
+measurement principle** (R2), carried as each kind's examination principle. This is the
+sharpest form of R2 in the series — ISO 80000-11 reuses one *name* across its
+transport-phenomena clauses (the two Froude numbers, the five Stokes numbers, the four
+Bejan numbers), so a sub-suffixed sibling shares *both* its name and its dimension with the
+others and only the measurement principle tells them apart. Where a definition leans on a
+part this library has not yet specified (ISO 80000-8 *Acoustics*, ISO 80000-9 *Physical
+chemistry*, ISO 80000-12 *Condensed matter physics*), that dependency is recorded
+explicitly as `workToGoParts` rather than left silent.
 
 `lake build Torch` checks the TorchLean-backed instance of the refinement bridge —
 the only library that depends on TorchLean. `FP32` (TorchLean's binary32 rounding

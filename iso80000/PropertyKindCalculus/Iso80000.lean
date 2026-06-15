@@ -57,6 +57,14 @@ licensed and copyrighted).
     area- and solid-angle-densities, the luminous efficacy as a flux ratio) as R12
     kind-laws, several composing a Part-7 kind out of ISO 80000-3 (time, area, solid
     angle) kinds.
+  * `PropertyKindCalculus.Iso80000.Part11` — the full catalogue of ISO 80000-11
+    *Characteristic numbers* (all 115 of items 11-4.1 … 11-9.2): the part where R1 is
+    total — *every* characteristic number is dimension one, so the dimension functor
+    collapses the entire part to a single point, and the 115 kinds are held apart entirely
+    by their *measurement principle* (R2). It carries the widest set of sub-suffixed
+    homonyms in the series (the two Froude numbers, the five Stokes numbers, the four Bejan
+    numbers, …), each a distinct kind sharing a name, and records the parts it leans on but
+    that are not yet mapped (ISO 80000-8, -9, -12) as `workToGoParts`.
 
 This library is PhysLib-backed (its quantity-kinds carry PhysLib `Dimension`s); the
 references catalogue alone is Mathlib-free.
@@ -76,3 +84,4 @@ import PropertyKindCalculus.Iso80000.Part6
 import PropertyKindCalculus.Iso80000.Part6.DefiningRelations
 import PropertyKindCalculus.Iso80000.Part7
 import PropertyKindCalculus.Iso80000.Part7.DefiningRelations
+import PropertyKindCalculus.Iso80000.Part11

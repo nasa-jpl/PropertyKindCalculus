@@ -15,6 +15,7 @@ import PropertyKindCalculusBlueprint.Chapters.Iso80000Part4
 import PropertyKindCalculusBlueprint.Chapters.Iso80000Part5
 import PropertyKindCalculusBlueprint.Chapters.Iso80000Part6
 import PropertyKindCalculusBlueprint.Chapters.Iso80000Part7
+import PropertyKindCalculusBlueprint.Chapters.Iso80000Part11
 
 open Verso.Genre
 open Verso.Genre.Manual
@@ -57,7 +58,10 @@ must keep them apart. Volumetric water content (`Quantity vwc`), gravimetric
 water content (`Quantity gwc`), relative permittivity, reflectivity, and
 emissivity are all dimension-one, yet `Quantity vwc` and `Quantity gwc` must be
 *different types* — not interchangeable values. (QUDT's and SysML v2's `QuantityKind` is subsumed here as one such kind —
-a scale-gated leaf — not as the root.)
+a scale-gated leaf — not as the root.) This reaches its limit on ISO 80000-11
+_Characteristic numbers_, where *all 115* kinds — every one a dimensionless ratio — share
+dimension one, so the dimension functor collapses the entire part to a single point and
+only the kind layer holds its members apart (see the _ISO 80000-11_ chapter).
 
 *R2 — Specialization is a lattice, with comparability but not identity.* Width,
 Height, and Diameter each specialize Length, and a kind may specialize several
@@ -76,7 +80,11 @@ apparent power as species of one power kind, carrying three different unit strin
 (`W`, `var`, `VA`) over one dimension (see the _IEC 80000-6_ chapter) — and on ISO 80000-7's
 radiation trios, where radiant, luminous, and photon flux are one measurand in three
 modes, the radiant and luminous members even sharing a dimension (see the
-_ISO 80000-7_ chapter).
+_ISO 80000-7_ chapter). ISO 80000-11 pushes this furthest: the same name recurs as a
+_different kind_ across its transport-phenomena clauses — the two Froude numbers, the five
+Stokes numbers, the four Bejan numbers — each sub-suffixed sibling sharing *both* name and
+dimension (one) with the others, so the measurement principle alone tells them apart (see
+the _ISO 80000-11_ chapter).
 
 *R3 — General versus individual is type versus term.* A kind is the general
 notion (a *type*); a particular measured value is an individual (a *term* of that
@@ -304,12 +312,12 @@ Stating it as owed keeps the boundary honest.
   * Status
 *
   * R1 — kind discrimination within a dimension
-  * `vwc ≠ gwc`, both dimension one
+  * `vwc ≠ gwc`, both dimension one; all 115 ISO 80000-11 characteristic numbers dimension one, distinct kinds
   * kind-indexed `Quantity k R`; dimension-1 disambiguation
   * proved
 *
   * R2 — specialization lattice + comparability
-  * Width, Height, Diameter specialize Length (ISO 80000-3); weight, static vs kinetic friction force specialize Force (ISO 80000-4); Helmholtz vs Gibbs energy specialize Energy (ISO 80000-5); active vs reactive power specialize Power (IEC 80000-6); radiant vs luminous vs photon flux as radiation-mode trios (ISO 80000-7) — comparable yet distinct, by examination principle
+  * Width, Height, Diameter specialize Length (ISO 80000-3); weight, static vs kinetic friction force specialize Force (ISO 80000-4); Helmholtz vs Gibbs energy specialize Energy (ISO 80000-5); active vs reactive power specialize Power (IEC 80000-6); radiant vs luminous vs photon flux as radiation-mode trios (ISO 80000-7); the two Froude, five Stokes, four Bejan numbers as sub-suffixed homonyms (ISO 80000-11) — comparable yet distinct, by examination principle
   * `Specializes` preorder; `MutuallyComparable`; examination defining-aspect (`Refines`, `distinct_of_examPrinciple`)
   * proved
 *
@@ -775,6 +783,8 @@ in-progress goals until formalized. The headline deliverables are tagged
 {include 0 PropertyKindCalculusBlueprint.Chapters.Iso80000Part6}
 
 {include 0 PropertyKindCalculusBlueprint.Chapters.Iso80000Part7}
+
+{include 0 PropertyKindCalculusBlueprint.Chapters.Iso80000Part11}
 
 {blueprint_graph}
 
