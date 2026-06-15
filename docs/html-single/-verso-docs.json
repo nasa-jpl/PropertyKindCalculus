@@ -112,14 +112,82 @@
  "40": "<code>PropertyKindCalculus.Specializes E a b</code>",
  "4":
  "<code>PropertyKindCalculus.ScaleType.nominal : PropertyKindCalculus.ScaleType</code><span class=\"sep\"></span><code class=\"docstring\">§12.4 nominal — only `=, ≠` (classification; no order, no magnitude). </code>",
+ "391":
+ "<code>PropertyKindCalculus.Iso80000.Part6.apparentPower : PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">Apparent power — item 6-57, a power species (RMS voltage times RMS current, unit VA). </code>",
+ "390":
+ "<code>PropertyKindCalculus.Iso80000.Part6.powerFactor : PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">Power factor — item 6-58, dimension one (active power over apparent power). The remark\nis formalized in `Part6.DefiningRelations`. </code>",
  "39":
  "<code>PropertyKindCalculus.Specializes.trans\n  {E : PropertyKindCalculus.KindOfProperty → PropertyKindCalculus.KindOfProperty → Prop}\n  {a b c : PropertyKindCalculus.KindOfProperty} (h₁ : PropertyKindCalculus.Specializes E a b)\n  (h₂ : PropertyKindCalculus.Specializes E b c) : PropertyKindCalculus.Specializes E a c</code><span class=\"sep\"></span><code class=\"docstring\">Specialization is transitive (it is a preorder, together with `refl`). </code>",
+ "389":
+ "<code>PropertyKindCalculus.Iso80000.Part6.DefiningRelations.powerFactor_dim_from_powers :\n  PropertyKindCalculus.Iso80000.Part6.powerFactor.dim =\n    PropertyKindCalculus.Iso80000.Part6.activePower.dim / PropertyKindCalculus.Iso80000.Part6.apparentPower.dim</code><span class=\"sep\"></span><code class=\"docstring\">**The power factor is dimension one because it is a ratio of two powers.** Active and\napparent power are both `M·L²·T⁻³`, so `λ = P/S` cancels the dimension — the power\nfactor's dimensionlessness is a *checked computation from its defining relation*, not a\nstipulation. (It nonetheless remains a distinct kind from every other dimension-one\nquantity; see `Part6.iec80000_6_dim_one_collision`.) This is the electromagnetic\nanalogue of the plane angle being a ratio of two lengths and the thermodynamic\nefficiency being a ratio of two powers. </code>",
+ "388":
+ "<code>PropertyKindCalculus.Iso80000.Part6.DefiningRelations.resistanceOf\n  (u : PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part6.voltage.kind ℝ)\n  (i : PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part6.electricCurrent.kind ℝ) :\n  PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part6.resistance.kind ℝ</code><span class=\"sep\"></span><code class=\"docstring\">A resistance built as voltage / current — classified as a resistance **by\nconstruction** (Ohm's law `R = U/I`). </code>",
+ "387":
+ "<code>PropertyKindCalculus.Iso80000.Part6.DefiningRelations.resistance_quot_voltage_current :\n  PropertyKindCalculus.QuotientKind PropertyKindCalculus.Iso80000.Part6.voltage.kind\n    PropertyKindCalculus.Iso80000.Part6.electricCurrent.kind PropertyKindCalculus.Iso80000.Part6.resistance.kind</code><span class=\"sep\"></span><code class=\"docstring\">**Resistance is voltage per electric current** (Ohm's law, item 6-46: `R = U/I`). </code>",
+ "386":
+ "<code>PropertyKindCalculus.Iso80000.Part6.electricCurrent : PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">Electric current — item 6-1, dimension `C·T⁻¹` (unit A). One of the seven ISQ base\nquantities (taken here over PhysLib's charge generator). </code>",
+ "385":
+ "<code>PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part6.electricCurrent.kind ℝ</code>",
+ "384":
+ "<code>PropertyKindCalculus.Iso80000.Part6.voltage : PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">Voltage — item 6-11.3, dimension `M·L²·T⁻²·C⁻¹` (unit V), ratio-scale. </code>",
+ "383":
+ "<code>PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part6.voltage.kind ℝ</code>",
+ "382":
+ "<code>PropertyKindCalculus.Iso80000.Part6.DefiningRelations.resistanceOf_isQuotient\n  (u : PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part6.voltage.kind ℝ)\n  (i : PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part6.electricCurrent.kind ℝ) :\n  PropertyKindCalculus.Quantity.IsQuotient\n    PropertyKindCalculus.Iso80000.Part6.DefiningRelations.resistance_quot_voltage_current\n    (PropertyKindCalculus.Iso80000.Part6.DefiningRelations.resistanceOf u i) u i</code><span class=\"sep\"></span><code class=\"docstring\">The constructed resistance satisfies the quotient certificate by construction. </code>",
+ "381":
+ "<code>PropertyKindCalculus.Iso80000.Part6.iec80000_6_dim_one_collision : ∃ a b, a.kind ≠ b.kind ∧ a.dim = b.dim ∧ a.dim = 1</code><span class=\"sep\"></span><code class=\"docstring\">**The dimension-1 disambiguation, on standard quantities.** There exist distinct\nIEC 80000-6 kinds with the same dimension one — relative permittivity and relative\npermeability witness it (alongside the susceptibilities, the coupling and leakage\nfactors, and the quality, loss, and power factors). Dimension cannot separate them; the\nkind layer does. </code>",
+ "380":
+ "<code>PropertyKindCalculus.Iso80000.Part6.varReactive : PropertyKindCalculus.MetrologicalUnit</code><span class=\"sep\"></span><code class=\"docstring\">The var **of reactive power** (item 6-60) — *also* `M·L²·T⁻³`, but a unit of reactive\npower, not active power. </code>",
  "38":
  "<code>PropertyKindCalculus.Specializes.step\n  {E : PropertyKindCalculus.KindOfProperty → PropertyKindCalculus.KindOfProperty → Prop}\n  {a b c : PropertyKindCalculus.KindOfProperty} :\n  E a b → PropertyKindCalculus.Specializes E b c → PropertyKindCalculus.Specializes E a c</code><span class=\"sep\"></span><code class=\"docstring\">Prepend a direct-parent edge `E a b` to a specialization `b ⊑ c`. </code>",
+ "379":
+ "<code>PropertyKindCalculus.Iso80000.Part6.wattActive : PropertyKindCalculus.MetrologicalUnit</code><span class=\"sep\"></span><code class=\"docstring\">The watt **of active power** (item 6-56) — dimension `M·L²·T⁻³`. </code>",
+ "378":
+ "<code>PropertyKindCalculus.Iso80000.Part6.wattActive_varReactive_not_commensurable :\n  ¬PropertyKindCalculus.Iso80000.Part6.wattActive.Commensurable PropertyKindCalculus.Iso80000.Part6.varReactive</code><span class=\"sep\"></span><code class=\"docstring\">**The watt of active power and the var of reactive power are not commensurable, though\nboth are `M·L²·T⁻³`.** The standard spends two different unit strings (`W`, `var`) on one\ndimension precisely to keep the kinds apart — a sharper form of \"a dimension does not\ndetermine a kind\" than Part 5's joule-per-kelvin, where even the unit string agreed. </code>",
+ "377":
+ "<code>PropertyKindCalculus.Iso80000.Part6.iec80000_6_dim_collision : ∃ a b, a.kind ≠ b.kind ∧ a.dim = b.dim</code><span class=\"sep\"></span><code class=\"docstring\">**The power collision, on standard quantities.** There exist distinct IEC 80000-6\nkinds with the same dimension `M·L²·T⁻³` — active power and reactive power witness it\n(alongside apparent, complex, and non-active power). PhysLib's `Dimension`, and any\ndimension-only type system, cannot separate them; the kind layer does — and so do the\nunits, which here even differ in string (`W` vs `var`). This is the electromagnetic\ndimension-does-not-classify case, sharper than Part 5's joule-per-kelvin. </code>",
+ "376":
+ "<code>PropertyKindCalculus.Iso80000.Part6.Edge :\n  PropertyKindCalculus.KindOfProperty → PropertyKindCalculus.KindOfProperty → Prop</code><span class=\"sep\"></span><code class=\"docstring\">This application's system of power quantities — the direct-parent edges among the AC\npower quantities of the power family (item 6-45). </code>",
+ "375":
+ "<code>PropertyKindCalculus.Iso80000.Part6.activePower_reactivePower_comparable :\n  PropertyKindCalculus.MutuallyComparable PropertyKindCalculus.Iso80000.Part6.Edge\n    PropertyKindCalculus.Iso80000.Part6.activePower.kind PropertyKindCalculus.Iso80000.Part6.reactivePower.kind</code><span class=\"sep\"></span><code class=\"docstring\">**Mutual comparability is preserved.** Active and reactive power, though distinct\nkinds, remain *mutually comparable* — they share the super-kind power, so combining them\n(into the complex power) is possible but only via an explicit up-cast, never silently. </code>",
+ "374":
+ "<code>PropertyKindCalculus.Iso80000.Part6.reactivePower : PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">Reactive power — item 6-60, a power species (the imaginary part of complex power,\nunit var). </code>",
+ "373":
+ "<code>PropertyKindCalculus.Iso80000.Part6.activePower : PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">Active power — item 6-56, a power species (the time-averaged real component, unit W). </code>",
+ "372":
+ "<code>PropertyKindCalculus.Iso80000.Part6.activePower_ne_reactivePower :\n  PropertyKindCalculus.Iso80000.Part6.activePower.kind ≠ PropertyKindCalculus.Iso80000.Part6.reactivePower.kind</code><span class=\"sep\"></span><code class=\"docstring\">**Active power and reactive power are distinct kinds — by defining construction, not\nby fiat.** They have the same dimension `M·L²·T⁻³` and are both \"powers\", yet they are\ndifferent kinds *because they isolate different components of the periodic process* (the\ntime-averaged real part vs the imaginary part of the complex power), proved through\n`distinct_of_examPrinciple` (§7.5) rather than by appealing to their `id` strings. This\nis the AC-power analogue of width ≠ distance, static ≠ kinetic friction, and Helmholtz ≠\nGibbs energy. </code>",
+ "371":
+ "<code>PropertyKindCalculus.Iso80000.Part6.powerSpecies (id : String) (p : PropertyKindCalculus.ExaminationPrinciple) :\n  PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">An AC power species: dimension `M·L²·T⁻³`, ratio-scale, individuated by its defining\nconstruction (examination principle). </code>",
+ "370":
+ "<code>PropertyKindCalculus.Iso80000.Part6.iec80000_6_scale_collision :\n  ∃ a b, a.kind ≠ b.kind ∧ a.dim = b.dim ∧ a.kind.scale ≠ b.kind.scale</code><span class=\"sep\"></span><code class=\"docstring\">**The scale disambiguation, on standard quantities.** There exist distinct\nIEC 80000-6 kinds with the same dimension `M·L²·T⁻²·C⁻¹` that are separated by *scale\ntype* alone — electric potential (interval, gauge-dependent) and electric potential\ndifference (ratio) witness it. Neither the dimension nor an examination principle tells\nthem apart; the scale layer does. This is requirement R6 on the standard, the\nelectromagnetic counterpart of Part 5's thermodynamic/Celsius temperature. </code>",
  "37":
  "<code>PropertyKindCalculus.Specializes\n  (E : PropertyKindCalculus.KindOfProperty → PropertyKindCalculus.KindOfProperty → Prop) :\n  PropertyKindCalculus.KindOfProperty → PropertyKindCalculus.KindOfProperty → Prop</code><span class=\"sep\"></span><code class=\"docstring\">Reflexive–transitive closure of a direct-parent edge relation `E`. </code>",
+ "369":
+ "<code>PropertyKindCalculus.Iso80000.Part6.electricPotential : PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">Electric potential — item 6-11.1, dimension `M·L²·T⁻²·C⁻¹` (unit V), **interval-scale**:\nfixed only up to an arbitrary additive reference (gauge freedom), so a ratio of electric\npotentials is not a meaningful operation — only their differences are. </code>",
+ "368":
+ "<code>PropertyKindCalculus.Iso80000.Part6.electricPotential_not_allowsRatio :\n  ¬PropertyKindCalculus.Iso80000.Part6.electricPotential.kind.scale.AllowsRatio</code><span class=\"sep\"></span><code class=\"docstring\">**Electric potential does *not* admit `×`,`÷`.** It is interval-scale (fixed only up\nto an arbitrary additive reference — gauge freedom), so a ratio of electric potentials is\nnot a meaningful operation — the kind layer refuses it where dimension would not. </code>",
+ "367":
+ "<code>PropertyKindCalculus.Iso80000.Part6.voltPotential : PropertyKindCalculus.MetrologicalUnit</code><span class=\"sep\"></span><code class=\"docstring\">The volt **of electric potential** (item 6-11.1) — an *interval-scale* unit. </code>",
+ "366":
+ "<code>PropertyKindCalculus.Iso80000.Part6.ampere : PropertyKindCalculus.MetrologicalUnit</code><span class=\"sep\"></span><code class=\"docstring\">The ampere, the SI unit of electric current (item 6-1). </code>",
+ "365":
+ "<code>PropertyKindCalculus.Iso80000.Part6.ampere_voltPotential_not_commensurable :\n  ¬PropertyKindCalculus.Iso80000.Part6.ampere.Commensurable PropertyKindCalculus.Iso80000.Part6.voltPotential</code><span class=\"sep\"></span><code class=\"docstring\">The ampere and the volt are **not** commensurable — electric current and electric\npotential are distinct kinds (a type-level fact). </code>",
+ "364":
+ "<code>Dimension.charge (self : Dimension) : ℚ</code><span class=\"sep\"></span><code class=\"docstring\">The charge dimension. </code>",
+ "363":
+ "<code>PropertyKindCalculus.Iso80000.Part6.capacitance : PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">Capacitance — item 6-13, dimension `C²·M⁻¹·L⁻²·T²` (unit F, the farad). The\ncharge/voltage remark is formalized in `Part6.DefiningRelations`. </code>",
+ "362":
+ "<code>PropertyKindCalculus.Iso80000.Part6.capacitance_dim_charge :\n  PropertyKindCalculus.Iso80000.Part6.capacitance.dim.charge = 2</code><span class=\"sep\"></span><code class=\"docstring\">**Capacitance is `C²·M⁻¹·L⁻²·T²`: its charge-exponent is `2`** — the farad carries\nthe charge generator squared (item 6-13). </code>",
+ "361":
+ "<code>PropertyKindCalculus.Iso80000.Part6.CataloguedKind : Type</code><span class=\"sep\"></span><code class=\"docstring\">A **catalogued quantity-kind**: a {dimensioned kind} together with its exact\nsource in the 80000 series — the part, the printed item designation, the principal\nquantity symbol, and the coherent SI unit symbol. Every field other than `qk` is a\n*citation locator*; the citation travels with the kind as data, so a downstream\nmodel can render or audit the source of each definition. </code>",
+ "360":
+ "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">The coherent SI unit symbol, e.g. \"Ω\" (a citation locator). </code>",
  "36":
  "<code class=\"docstring\">The universe of propositions. `Prop ≡ Sort 0`.\n\nEvery proposition is propositionally equal to either `True` or `False`. </code>",
+ "359":
+ "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">The principal quantity symbol, e.g. \"Z\". </code>",
+ "358":
+ "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">The item designation as printed, e.g. \"6-51.1\". </code>",
  "357":
  "<code>PropertyKindCalculus.Iso80000.Part5.specificHeatCapacityConstantVolume : PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">Specific heat capacity at constant volume — item 5-16.3, dimension `L²·T⁻²·Θ⁻¹`. </code>",
  "356":
