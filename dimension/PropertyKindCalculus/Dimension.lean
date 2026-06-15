@@ -113,6 +113,36 @@ electric current as the SI base quantity; PhysLib takes charge as the generator,
 the two presentations of the electromagnetic dimension group are isomorphic. -/
 def current : Dimension := C𝓭 / T𝓭
 
+/-- Force, `M·L·T⁻²` (Newton's second law) — the mechanical dimension that energy and
+torque are both built from (`force · length`). Named here so the dimension/interaction
+layers and the scale-spanning reductions share one definition. -/
+def force : Dimension := M𝓭 * L𝓭 / T𝓭 / T𝓭
+/-- Energy and work, `M·L²·T⁻²` — force along a displacement. This is the mechanical
+dimension the Finkelstein–Whitehead *scale-spanning* analysis (Eur. J. Phys. 46 (2025)
+035701) assigns to the **kelvin** — thermodynamic temperature read as energy per
+Boltzmann constant `k_B`. ISO 80000-7 *Light and radiation* uses it for radiant energy
+(item 7-2.1). -/
+def energy : Dimension := force * length
+/-- Power, `M·L²·T⁻³` (energy per time). This is the mechanical dimension the
+Finkelstein–Whitehead *scale-spanning* analysis assigns to the **candela** — luminous
+intensity read as radiant power weighted by the luminous-efficacy coefficient `K_cd`
+(see `ScaleSpanning`). ISO 80000-7 uses it for radiant flux (item 7-4.1). -/
+def power : Dimension := energy / time
+/-- **Luminous intensity, the candela — reduced to power `M·L²·T⁻³`.** PhysLib's
+`Dimension` has no luminous-intensity generator, and — following the
+Finkelstein–Whitehead *scale-spanning* analysis (and the spectral luminous efficiency
+`V(λ)` being dimensionless) — none is needed: the candela is the dimension of *power*,
+the radiant intensity it weights. The luminous quantities of ISO 80000-7 therefore
+share the dimensions of their radiometric partners; what keeps them apart is the
+{kind}, not the dimension. -/
+def luminousIntensity : Dimension := power
+/-- **Amount of substance, the mole — reduced to dimension one.** Following the
+Finkelstein–Whitehead *scale-spanning* analysis, the mole is a (human-selected)
+dimensionless count of entities (`N_A` particles), so a quantity *per mole* drops the
+mole entirely. ISO 80000-7's molar absorption coefficient (item 7-37, `m²/mol`) is
+therefore an area, `L²`. -/
+def amountOfSubstance : Dimension := one
+
 /-- The dimensional algebra composes in the PhysLib group: speed is length over
 time. -/
 theorem speed_eq : speed = length / time := rfl
@@ -130,6 +160,76 @@ theorem charge_charge : charge.charge = 1 := rfl
 
 /-- Electric current is charge over time — the ampere as coulomb per second. -/
 theorem current_eq : current = charge / time := rfl
+
+/-- Power is energy over time — `M·L²·T⁻³`. -/
+theorem power_eq : power = energy / time := rfl
+
+/-- **The candela reduces to power.** Luminous intensity carries the dimension of
+power; the spectral luminous efficiency that relates them is dimensionless. -/
+theorem luminousIntensity_eq_power : luminousIntensity = power := rfl
+
+/-- **The mole reduces to dimension one.** Amount of substance is a dimensionless
+count. -/
+theorem amountOfSubstance_eq_one : amountOfSubstance = 1 := rfl
+
+/-- Energy carries mass-exponent `1` — `M·L²·T⁻²`. -/
+theorem energy_mass : energy.mass = 1 := by
+  norm_num [energy, force, length, Dimension.div_mass, Dimension.mass_mul,
+    Dimension.M𝓭, Dimension.L𝓭_mass, Dimension.T𝓭_mass]
+
+/-- Energy carries length-exponent `2` — `M·L²·T⁻²`. -/
+theorem energy_length : energy.length = 2 := by
+  norm_num [energy, force, length, Dimension.div_length, Dimension.length_mul,
+    Dimension.M𝓭, Dimension.L𝓭_length, Dimension.T𝓭_length]
+
+/-- Energy carries time-exponent `-2` — `M·L²·T⁻²`. -/
+theorem energy_time : energy.time = -2 := by
+  norm_num [energy, force, length, Dimension.div_time, Dimension.time_mul,
+    Dimension.M𝓭, Dimension.L𝓭_time, Dimension.T𝓭_time]
+
+/-- Power carries mass-exponent `1` — `M·L²·T⁻³`. -/
+theorem power_mass : power.mass = 1 := by
+  norm_num [power, energy, force, length, time, Dimension.div_mass, Dimension.mass_mul,
+    Dimension.M𝓭, Dimension.L𝓭_mass, Dimension.T𝓭_mass]
+
+/-- Power carries length-exponent `2` — `M·L²·T⁻³`. -/
+theorem power_length : power.length = 2 := by
+  norm_num [power, energy, force, length, time, Dimension.div_length, Dimension.length_mul,
+    Dimension.M𝓭, Dimension.L𝓭_length, Dimension.T𝓭_length]
+
+/-- Power carries time-exponent `-3` — `M·L²·T⁻³`. -/
+theorem power_time : power.time = -3 := by
+  norm_num [power, energy, force, length, time, Dimension.div_time, Dimension.time_mul,
+    Dimension.M𝓭, Dimension.L𝓭_time, Dimension.T𝓭_time]
+
+/-- **Power is mechanically reducible: it carries no charge.** The candela's dimension
+involves only mass, length, and time — no electromagnetic generator. -/
+theorem power_charge : power.charge = 0 := by
+  norm_num [power, energy, force, length, time, Dimension.div_charge,
+    Dimension.charge_mul, Dimension.M𝓭, Dimension.L𝓭_charge, Dimension.T𝓭_charge]
+
+/-- **Power is mechanically reducible: it carries no temperature.** -/
+theorem power_temperature : power.temperature = 0 := by
+  norm_num [power, energy, force, length, time, Dimension.div_temperature,
+    Dimension.temperature_mul, Dimension.M𝓭, Dimension.L𝓭_temperature,
+    Dimension.T𝓭_temperature]
+
+/-- **Energy is mechanically reducible: it carries no charge.** -/
+theorem energy_charge : energy.charge = 0 := by
+  norm_num [energy, force, length, Dimension.div_charge, Dimension.charge_mul,
+    Dimension.M𝓭, Dimension.L𝓭_charge, Dimension.T𝓭_charge]
+
+/-- **Energy is mechanically reducible: it carries no temperature.** -/
+theorem energy_temperature : energy.temperature = 0 := by
+  norm_num [energy, force, length, Dimension.div_temperature,
+    Dimension.temperature_mul, Dimension.M𝓭, Dimension.L𝓭_temperature,
+    Dimension.T𝓭_temperature]
+
+/-- **Electric current carries charge-exponent `1`** — it is *not* mechanically
+reducible: the ampere genuinely needs the electromagnetic generator, so it is a true
+physical base unit, not a scale-spanning one. -/
+theorem current_charge : current.charge = 1 := by
+  norm_num [current, Dimension.div_charge, Dimension.C𝓭, Dimension.T𝓭_charge]
 
 end Dim
 

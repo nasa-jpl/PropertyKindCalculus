@@ -46,6 +46,17 @@ licensed and copyrighted).
     (Ohm's law, the conductance/admittance/permeance/resistivity reciprocals, the power
     product, the power factor) as R12 kind-laws, the electric-current law composing a
     Part-6 kind out of an ISO 80000-3 (time) kind.
+  * `PropertyKindCalculus.Iso80000.Part7` — the full catalogue of ISO 80000-7 *Light and
+    radiation* (all of items 7-1.1 … 7-37): the radiant / luminous / photon trios as
+    distinct kinds individuated by *radiation mode* (R2), the candela and the mole handled
+    by the Finkelstein–Whitehead *scale-spanning* reduction (R13, see `ScaleSpanning`) so
+    that luminous flux ≡ radiant flux in dimension yet not in kind, and the widest
+    dimension-one family in the series.
+  * `PropertyKindCalculus.Iso80000.Part7.DefiningRelations` — the algebraic *Remarks*
+    (radiant and photon flux as time-derivatives, irradiance and radiant intensity as
+    area- and solid-angle-densities, the luminous efficacy as a flux ratio) as R12
+    kind-laws, several composing a Part-7 kind out of ISO 80000-3 (time, area, solid
+    angle) kinds.
 
 This library is PhysLib-backed (its quantity-kinds carry PhysLib `Dimension`s); the
 references catalogue alone is Mathlib-free.
@@ -63,3 +74,5 @@ import PropertyKindCalculus.Iso80000.Part5
 import PropertyKindCalculus.Iso80000.Part5.DefiningRelations
 import PropertyKindCalculus.Iso80000.Part6
 import PropertyKindCalculus.Iso80000.Part6.DefiningRelations
+import PropertyKindCalculus.Iso80000.Part7
+import PropertyKindCalculus.Iso80000.Part7.DefiningRelations

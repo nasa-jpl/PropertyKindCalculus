@@ -82,18 +82,15 @@ end InteractionAlgebra
 
 /-! ## Named dimensions for the worked algebra
 
-Extend the `Dim` namespace with the mechanical dimensions the worked example needs.
-Energy and torque are *independently* specified as `force · length` — the same
-dimension (`M·L²·T⁻²`) reached two physical ways (work along a displacement; a
-moment about a lever arm) — which is exactly why the dimension layer cannot tell
-them apart. -/
+The mechanical dimensions the worked example needs — `force` and `energy` — are the
+shared definitions in `PropertyKindCalculus.Dimension` (`energy := force · length`).
+Here the `Dim` namespace adds only `torque`, *independently* specified as
+`force · length` — the same dimension (`M·L²·T⁻²`) reached two physical ways (work
+along a displacement; a moment about a lever arm) — which is exactly why the dimension
+layer cannot tell it apart from energy. -/
 
 namespace Dim
 
-/-- Force, `M·L·T⁻²` (Newton's second law). -/
-def force : Dimension := M𝓭 * L𝓭 / T𝓭 / T𝓭
-/-- Energy / work, `M·L²·T⁻²` — force along a displacement. -/
-def energy : Dimension := force * length
 /-- Torque / moment, `M·L²·T⁻²` — force about a lever arm: the *same dimension* as
 `energy`, a *different* kind. -/
 def torque : Dimension := force * length

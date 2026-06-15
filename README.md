@@ -55,9 +55,9 @@ The package ships six libraries so the core is exportable on its own:
 |---|---|---|---|
 | `PropertyKindCalculus` (default target) | `PropertyKindCalculus/` | the exportable, Mathlib-free ontological spine | `lake build` |
 | `Examples` | `examples/` | worked examples for the spine (`PropertyKindCalculus.Examples.*`), Mathlib-free | `lake build Examples` |
-| `Dimension` | `dimension/` | the PhysLib-backed coherence layer (library modules only, no examples) — `dim` as the forgetful functor into PhysLib's `Dimension` (`PropertyKindCalculus.Dimension`), Flater's interaction algebra `KMul`/`KDiv` (`PropertyKindCalculus.Interaction`), and the `ℝ` quantity carrier (`PropertyKindCalculus.QuantityReal`); pulls in PhysLib + Mathlib | `lake build Dimension` |
+| `Dimension` | `dimension/` | the PhysLib-backed coherence layer (library modules only, no examples) — `dim` as the forgetful functor into PhysLib's `Dimension` (`PropertyKindCalculus.Dimension`), the scale-spanning unit classification (R13, `PropertyKindCalculus.ScaleSpanning`), Flater's interaction algebra `KMul`/`KDiv` (`PropertyKindCalculus.Interaction`), and the `ℝ` quantity carrier (`PropertyKindCalculus.QuantityReal`); pulls in PhysLib + Mathlib | `lake build Dimension` |
 | `DimensionExamples` | `examples/` | worked examples for the Mathlib-backed `Dimension` layer (dimension functor, interaction algebra, `ℝ` quantity carrier, the ISO 80000 catalogue, and the ISO 80000-2 §18 vector quantity) — kept under `examples/` so no library module carries example code; PhysLib + Mathlib-backed (transitively) | `lake build DimensionExamples` |
-| `Iso80000` | `iso80000/` | the standards-grounded layer: a references catalogue citing the ISO/IEC 80000 parts by name + version only (no normative content), plus the full ISO 80000-3 *Space and time* (42 items), ISO 80000-4 *Mechanics* (54 items), ISO 80000-5 *Thermodynamics* (54 items), and IEC 80000-6 *Electromagnetism* (85 items) catalogues — quantity-kinds, units, the length/force/energy/power specialization lattices, the dimension-collision and scale-type capstones, and the formalized *Remarks* (several crossing between parts); PhysLib-backed | `lake build Iso80000` |
+| `Iso80000` | `iso80000/` | the standards-grounded layer: a references catalogue citing the ISO/IEC 80000 parts by name + version only (no normative content), plus the full ISO 80000-3 *Space and time* (42 items), ISO 80000-4 *Mechanics* (54 items), ISO 80000-5 *Thermodynamics* (54 items), IEC 80000-6 *Electromagnetism* (85 items), and ISO 80000-7 *Light and radiation* (66 items) catalogues — quantity-kinds, units, the length/force/energy/power/radiation specialization lattices, the dimension-collision, scale-type, and scale-spanning (R13) capstones, and the formalized *Remarks* (several crossing between parts); PhysLib-backed | `lake build Iso80000` |
 | `Torch` | `torch/` | the TorchLean-backed instance of the R10 exec/spec refinement bridge — the binary32 `FP32` (rounding spec) and `IEEE32Exec` (executable) carriers realizing `CarrierRefinement`; depends on TorchLean | `lake build Torch` |
 
 The core spine and its `import PropertyKindCalculus` stay Mathlib-free. Note that
@@ -144,6 +144,8 @@ Status: ✅ built & proved · 🚧 next · ⬜ planned
 | `PropertyKindCalculus.Examples.MiniUnit` (in the `Examples` lib) — metre/centimetre commensurable, metre/kilogram not; ordinal & nominal kinds bear no unit; "5 cm" round-trips as checked facts | — | ✅ |
 | `Dimension` — `dim` as the forgetful functor into PhysLib's `Dimension`; the dimension-1 disambiguation capstone (distinct kinds, one dimension) + product-multiplicativity coherence | Ch. 19 | ✅ |
 | `PropertyKindCalculus.Examples.Dimension` (in the `DimensionExamples` lib) — vwc/gwc/permittivity/reflectivity all dimension-one yet pairwise-distinct kinds; dimensional algebra (area = L², speed = L·T⁻¹); forgetful-functor coherence as checked facts | — | ✅ |
+| `ScaleSpanning` (in the `Dimension` lib) — scale-spanning units (R13, Finkelstein–Whitehead 2025): a third unit category beyond base and derived; the candela reduces to power and the mole to one (mechanically reducible), the kelvin's reduction is invisible to the dimension layer (Θ kept independent), the ampere is a genuine base — so scale-spanning is **not a function of dimension** | Finkelstein–Whitehead 2025 | ✅ |
+| `PropertyKindCalculus.Examples.ScaleSpanning` (in the `DimensionExamples` lib) — the candela/mole reducible, the kelvin invisible, the ampere a genuine base, and the R13 capstone as checked facts | — | ✅ |
 | `Interaction` — `KMul`/`KDiv` as a curated partial product, the multiplication–division round-trip, and the `dim`-homomorphism coherence capstone | Flater App. C | ✅ |
 | `PropertyKindCalculus.Examples.Interaction` (in the `DimensionExamples` lib) — the SI-mechanics algebra: torque × angle = energy holds while torque × angle = torque is rejected; energy ≠ torque yet one dimension; coherence and round-trip as checked facts | — | ✅ |
 | `Extensivity` — extensive kinds (additivity over a decomposition) + the n-ary aggregation capstone + a non-extensive counterexample | §13.5 | ✅ |
@@ -170,7 +172,9 @@ Status: ✅ built & proved · 🚧 next · ⬜ planned
 | `Iso80000.Part5.DefiningRelations` (in the `Iso80000` lib) — the algebraic *Remarks* as R12 kind-laws, several **cross-part**: specific heat capacity = heat capacity / mass and density of heat flow rate = heat flow rate / area build Part-5 kinds out of Part-4 and Part-3 kinds; the ratio of specific heats computed dimension-one because it is a ratio of two specific heat capacities | ISO 80000-5 | ✅ |
 | `Iso80000.Part6` (in the `Iso80000` lib) — IEC 80000-6 *Electromagnetism* **full catalogue** (all 85 items, 6-1 … 6-62, every sub-suffixed item), the one IEC-published part: the new **electric-current** base axis (the ampere as `C·T⁻¹` over PhysLib's charge generator), the **scale-type** distinction between gauge-dependent electric potential (interval) and potential difference (ratio) at the same dimension `V` (R6), the AC power family as a specialization lattice (active/reactive/apparent power — R2) carrying three unit strings (`W`/`var`/`VA`) over one dimension, and the power/resistance dimension collisions | IEC 80000-6 | ✅ |
 | `Iso80000.Part6.DefiningRelations` (in the `Iso80000` lib) — the algebraic *Remarks* as R12 kind-laws: Ohm's law (resistance = voltage / current), the power product (power = voltage × current), the conductance/admittance/permeance/resistivity reciprocals, and the power factor; the electric-current law (current = charge / time) **crosses into Part 3**; the power factor computed dimension-one because it is a ratio of two powers | IEC 80000-6 | ✅ |
-| `Iso80000` — the remaining parts (1, 2, 7–12) quantity-kinds + units | ISO/IEC 80000 | ⬜ |
+| `Iso80000.Part7` (in the `Iso80000` lib) — ISO 80000-7 *Light and radiation* **full catalogue** (all 66 items, 7-1.1 … 7-37, every sub-suffixed item): the **radiant / luminous / photon trios** as distinct kinds individuated **by radiation mode** (R2), the candela and mole handled by the **scale-spanning** reduction (R13) so luminous flux ≡ radiant flux in dimension yet not in kind (the watt and the lumen not commensurable), the steradian reduced (radiant flux ≡ radiant intensity), and the **widest dimension-one family** in the series | ISO 80000-7 | ✅ |
+| `Iso80000.Part7.DefiningRelations` (in the `Iso80000` lib) — the algebraic *Remarks* as R12 kind-laws, several **cross-part**: radiant flux = radiant energy / time, irradiance = radiant flux / area, radiant intensity = radiant flux / solid angle (the steradian dropping), and the luminous efficacy computed dimension-one because it is a ratio of two fluxes (the candela reducing to power) | ISO 80000-7 | ✅ |
+| `Iso80000` — the remaining parts (1, 2, 8–12) quantity-kinds + units | ISO/IEC 80000 | ⬜ |
 | `DedicatedKind` — kind × system × component | Ch. 20 | ⬜ |
 | `Model.SI` — SI base kinds, verified well-formed | — | ⬜ |
 | `Model.SoilMoisture` — vwc/gwc/permittivity/reflectivity/… | — | ⬜ |
@@ -311,6 +315,26 @@ volt-ampere — and arranges them as a specialization lattice over power (R2); t
 algebraic *Remarks* are R12 kind-laws — Ohm's law, the power product, the reciprocal
 pairs — with the electric-current law (current = charge / time) **crossing into Part 3**
 and the power factor computed dimension-one because it is a ratio of two powers.
+
+The same build checks the **full catalogue of ISO 80000-7 *Light and radiation*** (all 66
+items, 7-1.1 … 7-37, every sub-suffixed item included). Part 7 reaches two SI base
+quantities PhysLib's five-generator `Dimension` does not carry — **luminous intensity**
+and **amount of substance** — and handles both by the Finkelstein–Whitehead
+**scale-spanning** reduction (requirement **R13**, `lake build Dimension`), not by a new
+generator: the candela is the dimension of *power*, the steradian and the mole are
+dimension one. So the standard's **radiant / luminous / photon trios** become distinct
+kinds individuated **by radiation mode** (R2) — and, the candela reducing to power,
+*luminous flux ≡ radiant flux in dimension yet not in kind*, the widest **dimension does
+not classify** case in the series: the watt of radiant flux and the lumen of luminous
+flux are not commensurable though both are `M·L²·T⁻³`, and the steradian reduces too, so
+radiant flux ≡ radiant intensity. R13 itself is the unit-layer twin of R1 — *whether a
+unit is scale-spanning is not a function of its dimension*: the candela and mole are
+mechanically reducible (the dimension layer sees it), the kelvin is not (Θ kept
+independent, so the dimension layer cannot), and the ampere is a genuine base — proved
+distinct. The algebraic *Remarks* are R12 kind-laws — radiant flux = radiant energy /
+time, irradiance = flux / area, radiant intensity = flux / solid angle (the steradian
+dropping) — several **crossing into Part 3**, and the luminous efficacy computed
+dimension-one because it is a ratio of two fluxes.
 
 `lake build Torch` checks the TorchLean-backed instance of the refinement bridge —
 the only library that depends on TorchLean. `FP32` (TorchLean's binary32 rounding

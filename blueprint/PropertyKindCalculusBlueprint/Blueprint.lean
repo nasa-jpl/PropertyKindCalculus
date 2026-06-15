@@ -9,10 +9,12 @@ import PropertyKindCalculusBlueprint.Chapters.Dimension
 import PropertyKindCalculusBlueprint.Chapters.Interaction
 import PropertyKindCalculusBlueprint.Chapters.Extensivity
 import PropertyKindCalculusBlueprint.Chapters.Iso80000
+import PropertyKindCalculusBlueprint.Chapters.ScaleSpanning
 import PropertyKindCalculusBlueprint.Chapters.Iso80000Part3
 import PropertyKindCalculusBlueprint.Chapters.Iso80000Part4
 import PropertyKindCalculusBlueprint.Chapters.Iso80000Part5
 import PropertyKindCalculusBlueprint.Chapters.Iso80000Part6
+import PropertyKindCalculusBlueprint.Chapters.Iso80000Part7
 
 open Verso.Genre
 open Verso.Genre.Manual
@@ -71,7 +73,10 @@ individuated *not by fiat but by an explicit measurement principle* (see the
 _ISO 80000-3_ chapter), and the same pattern recurs on Part 4's force family, Part 5's
 thermodynamic potentials, and IEC 80000-6's AC power family — active, reactive, and
 apparent power as species of one power kind, carrying three different unit strings
-(`W`, `var`, `VA`) over one dimension (see the _IEC 80000-6_ chapter).
+(`W`, `var`, `VA`) over one dimension (see the _IEC 80000-6_ chapter) — and on ISO 80000-7's
+radiation trios, where radiant, luminous, and photon flux are one measurand in three
+modes, the radiant and luminous members even sharing a dimension (see the
+_ISO 80000-7_ chapter).
 
 *R3 — General versus individual is type versus term.* A kind is the general
 notion (a *type*); a particular measured value is an individual (a *term* of that
@@ -243,7 +248,41 @@ own *Remarks* (see the _ISO 80000-3_ chapter), where, for instance, the plane an
 halves of the standards work: the formalized remark *is* the defining relation, and
 classification is the witnessed instantiation of it.
 
+## Unit classification
+
+*R13 — Unit classification needs a third category beyond base and derived:
+scale-spanning units.* The SI sorts units into *base* (kilogram, metre, second, ampere,
+kelvin, candela, mole) and *derived* (everything built from them). Finkelstein and
+Whitehead (_Eur. J. Phys._ 46 (2025) 035701) argue this dichotomy is insufficient: of
+the seven base units only four — the kilogram, metre, second, and ampere — are genuinely
+*dimensionally independent*, while the kelvin (the dimension of energy, via the Boltzmann
+constant), the candela (the dimension of power, via the luminous efficacy), and the mole
+(a dimensionless number, via the Avogadro constant) are not — yet each is kept a distinct
+coherent unit because it carries a *human-selected coefficient* sized to span vast scales.
+They are *scale-spanning units*, a third category. R13 specifies that category, and its
+point is the unit-layer twin of R1: *whether a unit is scale-spanning is not a function of
+its dimension alone*. The dimension layer can detect that the candela and the mole are
+*mechanically reducible* (to power and to one), but it cannot detect the kelvin — this
+work keeps thermodynamic temperature an independent dimension (ISO 80000-5 needs it), so
+the kelvin's scale-spanning character is visible only through its coefficient, never
+through dimensional analysis. The ampere, by contrast, *is* dimensionally independent (it
+carries the electromagnetic generator), a genuine base unit — so the third category is
+non-empty and distinct from the first. In plain engineering terms: just as a *kind* carries
+more than its dimension, a *unit's category* carries more than its dimension; the candela
+and mole (ISO 80000-7) and the kelvin (ISO 80000-5) are where this lands on the standard,
+the ampere (IEC 80000-6) the base-unit foil.
+
 ## Out of scope (for now)
+
+*User-specified base units* — making the dimension system parametric in the chosen base
+set (so a quantity's dimensional decomposition is computed relative to a user's choice of
+generators, expressing e.g. Gaussian-CGS electromagnetism, natural units, or the four-base
+Finkelstein system) — is *not specified* here. The controversy over which units are base
+is real, but in this calculus it is largely answered one layer up: a kind is invariant
+under the choice of base, and only its dimensional shadow changes. R13 captures the
+specific base/scale-spanning/derived controversy cheaply over the fixed basis; a parametric
+change-of-basis layer, if added, would be a separate, additive layer over the shared
+`Dimension`, never an edit to it.
 
 *Value representation in the structural sense* — coordinate frames, tensor
 variance (the covariant/contravariant split), bound-versus-free vectors, and frame
@@ -270,7 +309,7 @@ Stating it as owed keeps the boundary honest.
   * proved
 *
   * R2 — specialization lattice + comparability
-  * Width, Height, Diameter specialize Length (ISO 80000-3); weight, static vs kinetic friction force specialize Force (ISO 80000-4); Helmholtz vs Gibbs energy specialize Energy (ISO 80000-5); active vs reactive power specialize Power (IEC 80000-6) — comparable yet distinct, by examination principle
+  * Width, Height, Diameter specialize Length (ISO 80000-3); weight, static vs kinetic friction force specialize Force (ISO 80000-4); Helmholtz vs Gibbs energy specialize Energy (ISO 80000-5); active vs reactive power specialize Power (IEC 80000-6); radiant vs luminous vs photon flux as radiation-mode trios (ISO 80000-7) — comparable yet distinct, by examination principle
   * `Specializes` preorder; `MutuallyComparable`; examination defining-aspect (`Refines`, `distinct_of_examPrinciple`)
   * proved
 *
@@ -323,6 +362,11 @@ Stating it as owed keeps the boundary honest.
   * a length built as speed × time is certified by construction; `⟨999⟩` cannot be certified; every certified surface area is `≥ 0`
   * `ProductKind` kind-laws; `Quantity.IsProduct` certificate + smart constructor; defining relations from the ISO 80000 remarks (area = `∬√g`)
   * proved (product family + area instance)
+*
+  * R13 — scale-spanning units (a third unit category)
+  * candela ≡ power and mole ≡ 1 are reducible, the kelvin's reduction is invisible (Θ kept independent), the ampere is a genuine base — so scale-spanning is not a function of dimension (ISO 80000-7 candela/mole, ISO 80000-5 kelvin, IEC 80000-6 ampere; Finkelstein–Whitehead 2025)
+  * `UnitCategory`; `Dimension.MechanicallyReducible`; `ScaleSpanningUnit`; `scaleSpanning_not_determined_by_dimension`
+  * proved
 *
   * *(out of scope)* structural value representation
   * coordinate frames, tensor variance, transforms
@@ -714,6 +758,8 @@ in-progress goals until formalized. The headline deliverables are tagged
 
 {include 0 PropertyKindCalculusBlueprint.Chapters.Dimension}
 
+{include 0 PropertyKindCalculusBlueprint.Chapters.ScaleSpanning}
+
 {include 0 PropertyKindCalculusBlueprint.Chapters.Interaction}
 
 {include 0 PropertyKindCalculusBlueprint.Chapters.Extensivity}
@@ -727,6 +773,8 @@ in-progress goals until formalized. The headline deliverables are tagged
 {include 0 PropertyKindCalculusBlueprint.Chapters.Iso80000Part5}
 
 {include 0 PropertyKindCalculusBlueprint.Chapters.Iso80000Part6}
+
+{include 0 PropertyKindCalculusBlueprint.Chapters.Iso80000Part7}
 
 {blueprint_graph}
 

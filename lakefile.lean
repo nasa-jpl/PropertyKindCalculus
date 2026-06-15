@@ -85,6 +85,7 @@ lean_lib «Dimension» where
   srcDir := "dimension"
   globs := #[
     .one `PropertyKindCalculus.Dimension,
+    .one `PropertyKindCalculus.ScaleSpanning,
     .one `PropertyKindCalculus.Interaction,
     .one `PropertyKindCalculus.QuantityReal]
 
