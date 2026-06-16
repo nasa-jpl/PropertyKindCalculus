@@ -17,7 +17,8 @@ namespace PropertyKindCalculus.Iso80000
 
 /-- The standards body under which a part of the 80000 series is published. The
 series is a joint ISO/IEC project; each part is issued under one body — in the
-catalogued copies, part 6 (Electromagnetism) is IEC and the rest are ISO. -/
+catalogued copies, parts 6 (Electromagnetism) and 13 (Information science and
+technology) are IEC and the rest are ISO. -/
 inductive StandardBody where
   | ISO
   | IEC
@@ -126,9 +127,16 @@ def iso80000_12 : StandardRef :=
   { body := .ISO, number := 80000, part := 12, edition := "Second edition",
     date := "2019-08", title := "Condensed matter physics" }
 
+/-- IEC 80000-13, *Information science and technology* — the second IEC-published part
+catalogued here (prepared by IEC TC 25 in cooperation with ISO/TC 12). -/
+def iec80000_13 : StandardRef :=
+  { body := .IEC, number := 80000, part := 13, edition := "Edition 2.0",
+    date := "2025-02", title := "Information science and technology" }
+
 /-- The full catalogue of licensed parts, in part order. -/
 def catalogue : List StandardRef :=
   [iso80000_1, iso80000_2, iso80000_3, iso80000_4, iso80000_5, iec80000_6,
-   iso80000_7, iso80000_8, iso80000_9, iso80000_10, iso80000_11, iso80000_12]
+   iso80000_7, iso80000_8, iso80000_9, iso80000_10, iso80000_11, iso80000_12,
+   iec80000_13]
 
 end PropertyKindCalculus.Iso80000

@@ -20,9 +20,11 @@ open PropertyKindCalculus.Iso80000
 #guard iec80000_6.cite == "IEC 80000-6, Edition 2.0, 2022-11"
 #guard iso80000_3.cite == "ISO 80000-3, Second edition, 2019-10"
 #guard iso80000_3.designation == "ISO 80000-3"
--- all twelve licensed parts are catalogued …
-#guard catalogue.length == 12
--- … and part 6 (Electromagnetism) is the IEC-published one.
+-- all thirteen licensed parts are catalogued …
+#guard catalogue.length == 13
+#guard iec80000_13.cite == "IEC 80000-13, Edition 2.0, 2025-02"
+-- … and parts 6 (Electromagnetism) and 13 (Information science) are the IEC-published ones.
 example : iec80000_6.body = StandardBody.IEC := rfl
+example : iec80000_13.body = StandardBody.IEC := rfl
 
 end PropertyKindCalculus.Examples.Iso80000.References

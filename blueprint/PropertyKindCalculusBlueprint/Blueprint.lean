@@ -16,7 +16,12 @@ import PropertyKindCalculusBlueprint.Chapters.Iso80000Part4
 import PropertyKindCalculusBlueprint.Chapters.Iso80000Part5
 import PropertyKindCalculusBlueprint.Chapters.Iso80000Part6
 import PropertyKindCalculusBlueprint.Chapters.Iso80000Part7
+import PropertyKindCalculusBlueprint.Chapters.Iso80000Part8
+import PropertyKindCalculusBlueprint.Chapters.Iso80000Part9
+import PropertyKindCalculusBlueprint.Chapters.Iso80000Part10
 import PropertyKindCalculusBlueprint.Chapters.Iso80000Part11
+import PropertyKindCalculusBlueprint.Chapters.Iso80000Part12
+import PropertyKindCalculusBlueprint.Chapters.Iso80000Part13
 
 open Verso.Genre
 open Verso.Genre.Manual
@@ -43,14 +48,20 @@ The whole blueprint is also available as a single paginated document:
 This project addresses *thirteen requirements* about formalizing _metrology_ — the
 science of measurement — and discharges most of them as machine-checked theorems
 rather than prose. A substantial part of the library is grounded directly on the
-published *ISO and IEC 80000* metrology standards, catalogued item by item:
+published *ISO and IEC 80000* metrology standards — _eleven_ of the thirteen parts (every
+part but the two general ones, 1 _General_ and 2 _Mathematics_), catalogued item by item:
 
 - ISO 80000-3 — _space and time_
 - ISO 80000-4 — _mechanics_
 - ISO 80000-5 — _thermodynamics_
 - IEC 80000-6 — _electromagnetism_
 - ISO 80000-7 — _light and radiation_
+- ISO 80000-8 — _acoustics_
+- ISO 80000-9 — _physical chemistry and molecular physics_
+- ISO 80000-10 — _atomic and nuclear physics_
 - ISO 80000-11 — _characteristic numbers_
+- ISO 80000-12 — _condensed matter physics_
+- IEC 80000-13 — _information science and technology_
 
 In plain terms, _rigorous metrology_ here means:
 
@@ -849,7 +860,17 @@ in-progress goals until formalized. The headline deliverables are tagged
 
 {include 0 PropertyKindCalculusBlueprint.Chapters.Iso80000Part7}
 
+{include 0 PropertyKindCalculusBlueprint.Chapters.Iso80000Part8}
+
+{include 0 PropertyKindCalculusBlueprint.Chapters.Iso80000Part9}
+
+{include 0 PropertyKindCalculusBlueprint.Chapters.Iso80000Part10}
+
 {include 0 PropertyKindCalculusBlueprint.Chapters.Iso80000Part11}
+
+{include 0 PropertyKindCalculusBlueprint.Chapters.Iso80000Part12}
+
+{include 0 PropertyKindCalculusBlueprint.Chapters.Iso80000Part13}
 
 {blueprint_graph}
 

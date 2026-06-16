@@ -39,13 +39,13 @@ defining aspect):
   magnetohydrodynamics (8), miscellaneous (9) — with the terse defining ratio. The
   context is part of how the same ratio name recurs as a different kind across clauses.
 
-* **References to parts not yet specified are work-to-go.** Many definitions of these
-  numbers name quantities from other parts of the series. The parts this library has
-  already mapped — ISO 80000-3, -4, -5, IEC 80000-6, ISO 80000-7 — are recorded as
-  specified; the parts it leans on but has *not* yet mapped — ISO 80000-8 *Acoustics*
-  (the speed of sound, for the Mach number), ISO 80000-9 *Physical chemistry and
-  molecular physics* (diffusion coefficients), and ISO 80000-12 *Condensed matter
-  physics* (relaxation times) — are recorded as `workToGoParts`.
+* **Every referenced part is now specified.** Many definitions of these numbers name
+  quantities from other parts of the series — ISO 80000-3, -4, -5, IEC 80000-6, ISO
+  80000-7, and (the formerly missing trio) ISO 80000-8 *Acoustics* (the speed of sound,
+  for the Mach number), ISO 80000-9 *Physical chemistry and molecular physics* (diffusion
+  coefficients), and ISO 80000-12 *Condensed matter physics* (relaxation times). With
+  parts 8, 9, and 12 now landed, the `workToGoParts` list is **empty**: every part this
+  one leans on is backed by a catalogued part (`referencedParts_all_specified`).
 
 The defining ratios are *this work's own terse descriptors* of the measurement principle,
 not the standard's normative definitions; the dimensional fact (every kind is dimension
@@ -424,28 +424,39 @@ def referencedParts : List StandardRef :=
   [iso80000_3, iso80000_4, iso80000_5, iec80000_6, iso80000_7,
    iso80000_8, iso80000_9, iso80000_12]
 
-/-- Of the referenced parts, those this library has already mapped into a `Part*`
-catalogue. -/
+/-- Of the referenced parts, those this library has mapped into a `Part*` catalogue —
+now **all of them**: with ISO 80000-8 *Acoustics*, ISO 80000-9 *Physical chemistry and
+molecular physics*, and ISO 80000-12 *Condensed matter physics* specified, every part
+ISO 80000-11 leans on is covered. -/
 def specifiedReferencedParts : List StandardRef :=
-  [iso80000_3, iso80000_4, iso80000_5, iec80000_6, iso80000_7]
+  [iso80000_3, iso80000_4, iso80000_5, iec80000_6, iso80000_7,
+   iso80000_8, iso80000_9, iso80000_12]
 
 /-- The **work-to-go** references: parts ISO 80000-11 leans on that this library has not
-yet mapped — ISO 80000-8 *Acoustics*, ISO 80000-9 *Physical chemistry and molecular
-physics*, and ISO 80000-12 *Condensed matter physics*. -/
-def workToGoParts : List StandardRef :=
-  [iso80000_8, iso80000_9, iso80000_12]
+yet mapped. Now **empty** — ISO 80000-8, -9, and -12 (previously work-to-go) are all
+specified, so every referenced part is covered. -/
+def workToGoParts : List StandardRef := []
 
 /-- A part is **mapped** in this library iff its part number is one of those with a `Part*`
-catalogue (3, 4, 5, 6, 7). -/
-def partIsMapped (r : StandardRef) : Bool := [3, 4, 5, 6, 7].contains r.part
+catalogue (3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13). -/
+def partIsMapped (r : StandardRef) : Bool :=
+  [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13].contains r.part
 
-/-- The referenced parts split exactly into the specified ones and the work-to-go ones. -/
+/-- The referenced parts split exactly into the specified ones and the work-to-go ones —
+now, the work-to-go list being empty, the specified ones *are* the referenced ones. -/
 theorem referencedParts_partition :
     referencedParts = specifiedReferencedParts ++ workToGoParts := rfl
 
-/-- The work-to-go parts are exactly the referenced parts this library has not mapped. -/
+/-- The work-to-go parts are exactly the referenced parts this library has not mapped —
+now none, every referenced part being mapped. -/
 theorem workToGoParts_eq_unmapped :
     workToGoParts = referencedParts.filter (fun r => ! partIsMapped r) := by decide
+
+/-- **Every part ISO 80000-11 references is now specified.** With parts 8, 9, and 12
+landed, the work-to-go list is empty: the characteristic numbers' cross-references are all
+backed by a catalogued part. -/
+theorem referencedParts_all_specified :
+    referencedParts = specifiedReferencedParts := rfl
 
 /-! ## Every characteristic number is dimension one — the widest collapse in the series -/
 

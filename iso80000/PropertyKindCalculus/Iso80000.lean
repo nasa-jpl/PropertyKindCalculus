@@ -57,14 +57,40 @@ licensed and copyrighted).
     area- and solid-angle-densities, the luminous efficacy as a flux ratio) as R12
     kind-laws, several composing a Part-7 kind out of ISO 80000-3 (time, area, solid
     angle) kinds.
+  * `PropertyKindCalculus.Iso80000.Part8` (+ `.DefiningRelations`) — the full catalogue of
+    ISO 80000-8 *Acoustics* (all 18 of items 8-1 … 8-17): the logarithmic *levels* collapse
+    to dimension one (the acoustic face of R1), a genuine collision (sound pressure ≡ sound
+    energy density, `M·L⁻¹·T⁻²`), and the boundary case where the dimension *does*
+    discriminate (the two homonymous impedances); sound intensity is `p·u` as a kind-law.
+  * `PropertyKindCalculus.Iso80000.Part9` (+ `.DefiningRelations`) — the full catalogue of
+    ISO 80000-9 *Physical chemistry and molecular physics* (all 62 of items 9-1 … 9-49):
+    the sharpest test of the *scale-spanning* mole reduction (R13) — molar mass *is* a mass,
+    amount concentration *a number density* — the seven-fold `J/mol` collision, and a second
+    dimension-one family; the molar quantities as `X/n` kind-laws crossing to ISO 80000-3/4/5.
+  * `PropertyKindCalculus.Iso80000.Part10` (+ `.DefiningRelations`) — the full catalogue of
+    ISO 80000-10 *Atomic and nuclear physics* (all 125 of items 10-1.1 … 10-89): the
+    standard's own two-name disambiguation of one dimension — the gray and the sievert (both
+    `J/kg`, `L²·T⁻²`) — the becquerel collision (`T⁻¹`), and the widest dimension-one family
+    in the physical parts; dose equivalent is `D·Q` as a kind-law.
   * `PropertyKindCalculus.Iso80000.Part11` — the full catalogue of ISO 80000-11
     *Characteristic numbers* (all 115 of items 11-4.1 … 11-9.2): the part where R1 is
     total — *every* characteristic number is dimension one, so the dimension functor
     collapses the entire part to a single point, and the 115 kinds are held apart entirely
     by their *measurement principle* (R2). It carries the widest set of sub-suffixed
     homonyms in the series (the two Froude numbers, the five Stokes numbers, the four Bejan
-    numbers, …), each a distinct kind sharing a name, and records the parts it leans on but
-    that are not yet mapped (ISO 80000-8, -9, -12) as `workToGoParts`.
+    numbers, …), each a distinct kind sharing a name. With parts 8, 9, and 12 now mapped,
+    its `workToGoParts` list is empty — every part it references is specified
+    (`referencedParts_all_specified`).
+  * `PropertyKindCalculus.Iso80000.Part12` (+ `.DefiningRelations`) — the full catalogue of
+    ISO 80000-12 *Condensed matter physics* (all 60 of items 12-1.1 … 12-38.2): the part
+    where collisions are the rule — thirteen lengths, seven energies, five (named)
+    temperatures, five carrier densities, five reciprocal lengths — each family one
+    dimension; the Seebeck and Peltier coefficients as kind-laws crossing to ISO 80000-5.
+  * `PropertyKindCalculus.Iso80000.Part13` (+ `.DefiningRelations`) — the full catalogue of
+    IEC 80000-13 *Information science and technology* (all 42 of items 13-1 … 13-42), the
+    second IEC-published part: dimension one shared by distinct kinds with incommensurable
+    *scale-spanning* special units (the shannon, the erlang, the bit; R13), the rates
+    re-dimensioning to `T⁻¹`, and the signal energy `P_c·T_bit` as a kind-law.
 
 This library is PhysLib-backed (its quantity-kinds carry PhysLib `Dimension`s); the
 references catalogue alone is Mathlib-free.
@@ -84,4 +110,14 @@ import PropertyKindCalculus.Iso80000.Part6
 import PropertyKindCalculus.Iso80000.Part6.DefiningRelations
 import PropertyKindCalculus.Iso80000.Part7
 import PropertyKindCalculus.Iso80000.Part7.DefiningRelations
+import PropertyKindCalculus.Iso80000.Part8
+import PropertyKindCalculus.Iso80000.Part8.DefiningRelations
+import PropertyKindCalculus.Iso80000.Part9
+import PropertyKindCalculus.Iso80000.Part9.DefiningRelations
+import PropertyKindCalculus.Iso80000.Part10
+import PropertyKindCalculus.Iso80000.Part10.DefiningRelations
 import PropertyKindCalculus.Iso80000.Part11
+import PropertyKindCalculus.Iso80000.Part12
+import PropertyKindCalculus.Iso80000.Part12.DefiningRelations
+import PropertyKindCalculus.Iso80000.Part13
+import PropertyKindCalculus.Iso80000.Part13.DefiningRelations

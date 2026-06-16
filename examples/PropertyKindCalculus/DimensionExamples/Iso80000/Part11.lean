@@ -98,17 +98,19 @@ example : reynolds.kind ≠ euler.kind := reynolds_ne_euler
 example : ∃ a b : DimensionedKind, a.kind ≠ b.kind ∧ a.dim = b.dim ∧ a.dim = 1 :=
   iso80000_11_dim_one_collision
 
-/-! ## (5) References to other parts — specified versus work-to-go
+/-! ## (5) References to other parts — now all specified
 
-ISO 80000-11's definitions name quantities from other parts. The parts already mapped are
-recorded as specified; the parts leant on but not yet mapped are **work-to-go**. -/
+ISO 80000-11's definitions name quantities from other parts. With parts 8, 9, and 12 now
+mapped, **every** referenced part is specified and the work-to-go list is empty. -/
 
 -- the referenced parts split exactly into specified ++ work-to-go.
 example : referencedParts = specifiedReferencedParts ++ workToGoParts :=
   referencedParts_partition
--- the work-to-go parts are ISO 80000-8, -9, -12.
-#guard workToGoParts.map (·.part) == [8, 9, 12]
-#guard specifiedReferencedParts.map (·.part) == [3, 4, 5, 6, 7]
+-- the work-to-go list is now EMPTY — every referenced part is mapped.
+#guard workToGoParts.map (·.part) == []
+example : referencedParts = specifiedReferencedParts := referencedParts_all_specified
+-- the referenced (and now all-specified) parts are 3, 4, 5, 6, 7, 8, 9, 12.
+#guard specifiedReferencedParts.map (·.part) == [3, 4, 5, 6, 7, 8, 9, 12]
 
 /-! ## (6) Catalogue coverage — all 115 items carry their source as data -/
 
