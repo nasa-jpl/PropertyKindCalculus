@@ -82,87 +82,243 @@
  "<code>PropertyKindCalculus.ExaminationItem.basePrinciple :\n  PropertyKindCalculus.ExaminationItem → PropertyKindCalculus.ExaminationPrinciple</code><span class=\"sep\"></span><code class=\"docstring\">The principle at the base of an item's based-on chain — the forgetful\nprojection of any examination down to its principle layer. </code>",
  "56":
  "<code>PropertyKindCalculus.Refines.basePrinciple_eq {a b : PropertyKindCalculus.ExaminationItem}\n  (h : PropertyKindCalculus.Refines a b) : a.basePrinciple = b.basePrinciple</code><span class=\"sep\"></span><code class=\"docstring\">**Coherence — refinement preserves the principle.** Every examination in one\nrefinement chain rests on the *same* principle: a procedure, the method it is\nbased on, and the principle under that all share one base principle. The\nforgetful projection `basePrinciple` is invariant along `Refines` — the\nexamination analogue of `dim` being a homomorphism, and a law no description\nlogic can phrase. </code>",
+ "554":
+ "<code>PropertyKindCalculus.Iso80000.Part13.DefiningRelations.signalEnergyOf\n  (p : PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part13.carrierPower.kind ℝ)\n  (t : PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part13.periodOfBinaryDigits.kind ℝ) :\n  PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part13.signalEnergyPerBinaryDigit.kind ℝ</code><span class=\"sep\"></span><code class=\"docstring\">A signal energy per binary digit built as carrier power × bit period — classified **by\nconstruction** (`E_bit = P_c·T_bit`). </code>",
+ "553":
+ "<code>PropertyKindCalculus.Iso80000.Part13.DefiningRelations.signalEnergy_prod_power_period :\n  PropertyKindCalculus.ProductKind PropertyKindCalculus.Iso80000.Part13.carrierPower.kind\n    PropertyKindCalculus.Iso80000.Part13.periodOfBinaryDigits.kind\n    PropertyKindCalculus.Iso80000.Part13.signalEnergyPerBinaryDigit.kind</code><span class=\"sep\"></span><code class=\"docstring\">**Signal energy per binary digit is carrier power times the bit period** (item 13-19:\n`E_bit = P_c·T_bit`). </code>",
+ "552":
+ "<code>PropertyKindCalculus.Iso80000.Part13.periodOfBinaryDigits : PropertyKindCalculus.DimensionedKind</code>",
+ "551":
+ "<code>PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part13.periodOfBinaryDigits.kind ℝ</code>",
+ "550":
+ "<code>PropertyKindCalculus.Iso80000.Part13.carrierPower : PropertyKindCalculus.DimensionedKind</code>",
  "55": "<code>PropertyKindCalculus.Refines b c</code>",
+ "549":
+ "<code>PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part13.carrierPower.kind ℝ</code>",
+ "548":
+ "<code>PropertyKindCalculus.Iso80000.Part13.DefiningRelations.signalEnergyOf_isProduct\n  (p : PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part13.carrierPower.kind ℝ)\n  (t : PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part13.periodOfBinaryDigits.kind ℝ) :\n  PropertyKindCalculus.Quantity.IsProduct\n    PropertyKindCalculus.Iso80000.Part13.DefiningRelations.signalEnergy_prod_power_period\n    (PropertyKindCalculus.Iso80000.Part13.DefiningRelations.signalEnergyOf p t) p t</code><span class=\"sep\"></span><code class=\"docstring\">The constructed signal energy satisfies the product certificate by construction. </code>",
+ "547":
+ "<code>PropertyKindCalculus.Iso80000.Part13.iec80000_13_dim_collision : ∃ a b, a.kind ≠ b.kind ∧ a.dim = b.dim</code><span class=\"sep\"></span><code class=\"docstring\">**The `T⁻¹` collision, on the standard.** There exist distinct IEC 80000-13 kinds with\nthe same dimension `T⁻¹` — the binary digit rate and the call intensity witness it, alongside\nthe transfer and modulation rates and the information rates. Dimension cannot separate them;\nthe kind layer does. </code>",
+ "546":
+ "<code>PropertyKindCalculus.Iso80000.Part13.iec80000_13_dim_one_collision : ∃ a b, a.kind ≠ b.kind ∧ a.dim = b.dim ∧ a.dim = 1</code><span class=\"sep\"></span><code class=\"docstring\">**The dimension-one collision capstone, on the standard.** There exist distinct\nIEC 80000-13 kinds with the same dimension one — information content and traffic intensity\nwitness it, alongside storage capacity, the entropies, and the probabilities. With distinct\nspecial units (shannon, erlang, bit), the {dimension functor} cannot separate them; the\nkind layer does. </code>",
+ "545":
+ "<code>PropertyKindCalculus.Iso80000.Part13.erlang : PropertyKindCalculus.MetrologicalUnit</code><span class=\"sep\"></span><code class=\"docstring\">The erlang of traffic intensity (item 13-1) — *also* dimension one. </code>",
+ "544":
+ "<code>PropertyKindCalculus.Iso80000.Part13.shannon : PropertyKindCalculus.MetrologicalUnit</code><span class=\"sep\"></span><code class=\"docstring\">The shannon of information content (item 13-24). </code>",
+ "543":
+ "<code>PropertyKindCalculus.Iso80000.Part13.shannon_erlang_not_commensurable :\n  ¬PropertyKindCalculus.Iso80000.Part13.shannon.Commensurable PropertyKindCalculus.Iso80000.Part13.erlang</code><span class=\"sep\"></span><code class=\"docstring\">**The shannon of information content and the erlang of traffic intensity are not\ncommensurable, though both are dimension one.** Two human-selected dimensionless references\nfor two different kinds — a bit of information is not an erlang of traffic. The\nscale-spanning collision (R13) on information. </code>",
+ "542":
+ "<code>PropertyKindCalculus.Iso80000.Part13.CataloguedKind : Type</code><span class=\"sep\"></span><code class=\"docstring\">A **catalogued quantity-kind**: a {dimensioned kind} together with its exact source\nin the 80000 series — the part, the printed item designation, the principal quantity\nsymbol, and the unit symbol (for the information quantities, the special named unit —\nshannon, erlang, bit — rather than the bare `1`). Every field other than `qk` is a\n*citation locator*. </code>",
+ "541":
+ "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">The unit symbol (a citation locator), e.g. \"Sh\" (the shannon). </code>",
+ "540":
+ "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">The principal quantity symbol, e.g. \"I(x)\". </code>",
  "54": "<code>PropertyKindCalculus.Refines a b</code>",
+ "539":
+ "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">The item designation as printed, e.g. \"13-24\". </code>",
+ "538":
+ "<code>PropertyKindCalculus.Iso80000.Part12.DefiningRelations.peltierOf\n  (s : PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part12.seebeckCoefficient.kind ℝ)\n  (t : PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part5.thermodynamicTemperature.kind ℝ) :\n  PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part12.peltierCoefficient.kind ℝ</code><span class=\"sep\"></span><code class=\"docstring\">A Peltier coefficient built as Seebeck coefficient × temperature — classified **by\nconstruction** (`Π = S·T`), over `ℝ`. </code>",
+ "537":
+ "<code>PropertyKindCalculus.Iso80000.Part12.DefiningRelations.peltier_prod_seebeck_temperature :\n  PropertyKindCalculus.ProductKind PropertyKindCalculus.Iso80000.Part12.seebeckCoefficient.kind\n    PropertyKindCalculus.Iso80000.Part5.thermodynamicTemperature.kind\n    PropertyKindCalculus.Iso80000.Part12.peltierCoefficient.kind</code><span class=\"sep\"></span><code class=\"docstring\">**The Peltier coefficient is the Seebeck coefficient times temperature** (item 12-22:\n`Π = S·T`, the Kelvin relation) — a *cross-part* law. </code>",
+ "536":
+ "<code>PropertyKindCalculus.Iso80000.Part5.thermodynamicTemperature : PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">Thermodynamic temperature — item 5-1, dimension `Θ`, ratio-scale. One of the\nseven ISQ base quantities. </code>",
+ "535":
+ "<code>PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part5.thermodynamicTemperature.kind ℝ</code>",
+ "534":
+ "<code>PropertyKindCalculus.Iso80000.Part12.seebeckCoefficient : PropertyKindCalculus.DimensionedKind</code>",
+ "533":
+ "<code>PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part12.seebeckCoefficient.kind ℝ</code>",
+ "532":
+ "<code>PropertyKindCalculus.Iso80000.Part12.DefiningRelations.peltierOf_isProduct\n  (s : PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part12.seebeckCoefficient.kind ℝ)\n  (t : PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part5.thermodynamicTemperature.kind ℝ) :\n  PropertyKindCalculus.Quantity.IsProduct\n    PropertyKindCalculus.Iso80000.Part12.DefiningRelations.peltier_prod_seebeck_temperature\n    (PropertyKindCalculus.Iso80000.Part12.DefiningRelations.peltierOf s t) s t</code><span class=\"sep\"></span><code class=\"docstring\">The constructed Peltier coefficient satisfies the product certificate by\nconstruction. </code>",
+ "531":
+ "<code>PropertyKindCalculus.Iso80000.Part12.iso80000_12_dim_one_collision : ∃ a b, a.kind ≠ b.kind ∧ a.dim = b.dim ∧ a.dim = 1</code><span class=\"sep\"></span><code class=\"docstring\">**The dimension-one disambiguation, on the standard.** There exist distinct\nISO 80000-12 kinds with the same dimension one — the Bragg angle and the structure factor\nwitness it, alongside the order parameters, the scattering factor, the Debye-Waller factor,\nthe Grüneisen parameters, and the mobility ratio. Dimension cannot separate them; the kind\nlayer does. </code>",
+ "530":
+ "<code>PropertyKindCalculus.Iso80000.Part12.kelvinNeel : PropertyKindCalculus.MetrologicalUnit</code><span class=\"sep\"></span><code class=\"docstring\">The kelvin of Néel temperature (item 12-35.2) — *also* `Θ`. </code>",
  "53":
  "<code>PropertyKindCalculus.Refines.trans {a b c : PropertyKindCalculus.ExaminationItem}\n  (h₁ : PropertyKindCalculus.Refines a b) (h₂ : PropertyKindCalculus.Refines b c) : PropertyKindCalculus.Refines a c</code><span class=\"sep\"></span><code class=\"docstring\">Refinement is transitive (a preorder, together with `refl`). </code>",
+ "529":
+ "<code>PropertyKindCalculus.Iso80000.Part12.kelvinCurie : PropertyKindCalculus.MetrologicalUnit</code><span class=\"sep\"></span><code class=\"docstring\">The kelvin of Curie temperature (item 12-35.1). </code>",
+ "528":
+ "<code>PropertyKindCalculus.Iso80000.Part12.kelvinCurie_kelvinNeel_not_commensurable :\n  ¬PropertyKindCalculus.Iso80000.Part12.kelvinCurie.Commensurable PropertyKindCalculus.Iso80000.Part12.kelvinNeel</code><span class=\"sep\"></span><code class=\"docstring\">**The kelvin of Curie temperature and the kelvin of Néel temperature are not\ncommensurable, though both are `Θ`.** Five named temperatures, one dimension, one unit\nsymbol — the kind layer keeps them apart. </code>",
+ "527":
+ "<code>PropertyKindCalculus.Iso80000.Part12.iso80000_12_dim_collision : ∃ a b, a.kind ≠ b.kind ∧ a.dim = b.dim</code><span class=\"sep\"></span><code class=\"docstring\">**The dimension-collision capstone, on the standard — collisions everywhere.** There\nexist distinct ISO 80000-12 kinds with the same dimension `M·L²·T⁻²` — the Fermi energy and\nthe gap energy witness it, alongside the work function, ionization energy, electron\naffinity, exchange integral, and superconductor energy gap (seven energies). The\n{dimension functor} cannot separate them; the kind layer does. </code>",
+ "526":
+ "<code>PropertyKindCalculus.Iso80000.Part12.CataloguedKind : Type</code><span class=\"sep\"></span><code class=\"docstring\">A **catalogued quantity-kind**: a {dimensioned kind} together with its exact source\nin the 80000 series — the part, the printed item designation, the principal quantity\nsymbol, and the coherent SI unit symbol. Every field other than `qk` is a *citation\nlocator*; the citation travels with the kind as data. </code>",
+ "525":
+ "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">The coherent SI unit symbol, e.g. \"J\" (a citation locator). </code>",
+ "524":
+ "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">The principal quantity symbol, e.g. \"E_F\". </code>",
+ "523":
+ "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">The item designation as printed, e.g. \"12-27.1\". </code>",
+ "522":
+ "<code>PropertyKindCalculus.Iso80000.Part11.workToGoParts : List PropertyKindCalculus.Iso80000.StandardRef</code><span class=\"sep\"></span><code class=\"docstring\">The **work-to-go** references: parts ISO 80000-11 leans on that this library has not\nyet mapped. Now **empty** — ISO 80000-8, -9, and -12 (previously work-to-go) are all\nspecified, so every referenced part is covered. </code>",
+ "521":
+ "<code>PropertyKindCalculus.Iso80000.Part11.iso80000_11_dim_one_collision : ∃ a b, a.kind ≠ b.kind ∧ a.dim = b.dim ∧ a.dim = 1</code><span class=\"sep\"></span><code class=\"docstring\">**The dimension-one collision, on the standard — total, the widest in the series.**\nThere exist distinct ISO 80000-11 kinds with the same dimension one — the Reynolds and\nEuler numbers witness it, alongside *all* 113 others. The {dimension functor} collapses\nthe entire part to one point; the kind layer, through the measurement principle, keeps its\n115 members apart. </code>",
+ "520":
+ "<code>PropertyKindCalculus.Iso80000.Part11.eulerUnit : PropertyKindCalculus.MetrologicalUnit</code><span class=\"sep\"></span><code class=\"docstring\">The coherent unit (symbol `\"1\"`) of the Euler number. </code>",
  "52":
  "<code>PropertyKindCalculus.BasedOn : PropertyKindCalculus.ExaminationItem → PropertyKindCalculus.ExaminationItem → Prop</code><span class=\"sep\"></span><code class=\"docstring\">The defining **\"based-on\"** edges (VIM4 2CD): a method is based on its\nprinciple, a procedure on its method. </code>",
+ "519":
+ "<code>PropertyKindCalculus.Iso80000.Part11.reynoldsUnit : PropertyKindCalculus.MetrologicalUnit</code><span class=\"sep\"></span><code class=\"docstring\">The coherent unit (symbol `\"1\"`) of the Reynolds number. </code>",
+ "518":
+ "<code>PropertyKindCalculus.Iso80000.Part11.reynolds_euler_not_commensurable :\n  ¬PropertyKindCalculus.Iso80000.Part11.reynoldsUnit.Commensurable PropertyKindCalculus.Iso80000.Part11.eulerUnit</code><span class=\"sep\"></span><code class=\"docstring\">**The Reynolds and Euler units are not commensurable, though both have unit symbol\n`\"1\"`.** Same symbol, same dimension (one), different kind — so a value of one cannot be\nread as a value of the other. The kind layer keeps them apart where the unit symbol and\nthe dimension cannot. </code>",
+ "517":
+ "<code>PropertyKindCalculus.Iso80000.Part11.bejanMass : PropertyKindCalculus.DimensionedKind</code>",
+ "516":
+ "<code>PropertyKindCalculus.Iso80000.Part11.bejanEntropy : PropertyKindCalculus.DimensionedKind</code>",
+ "515":
+ "<code>PropertyKindCalculus.Iso80000.Part11.bejanHeat : PropertyKindCalculus.DimensionedKind</code>",
+ "514":
+ "<code>PropertyKindCalculus.Iso80000.Part11.bejanMomentum : PropertyKindCalculus.DimensionedKind</code>",
+ "513":
+ "<code>PropertyKindCalculus.Iso80000.Part11.bejan_four_distinct :\n  PropertyKindCalculus.Iso80000.Part11.bejanMomentum.kind ≠ PropertyKindCalculus.Iso80000.Part11.bejanHeat.kind ∧\n    PropertyKindCalculus.Iso80000.Part11.bejanHeat.kind ≠ PropertyKindCalculus.Iso80000.Part11.bejanEntropy.kind ∧\n      PropertyKindCalculus.Iso80000.Part11.bejanEntropy.kind ≠ PropertyKindCalculus.Iso80000.Part11.bejanMass.kind ∧\n        PropertyKindCalculus.Iso80000.Part11.bejanMomentum.kind ≠ PropertyKindCalculus.Iso80000.Part11.bejanMass.kind</code><span class=\"sep\"></span><code class=\"docstring\">**The four Bejan numbers are distinct kinds.** The momentum (11-4.15), the two heat\n(11-5.9, 11-5.10) and the mass (11-6.16) Bejan numbers are four kinds — even the two heat\nones, sharing name *and* transport context, differ by their measurement principle. </code>",
+ "512":
+ "<code>PropertyKindCalculus.Iso80000.Part11.stokesDrag : PropertyKindCalculus.DimensionedKind</code>",
+ "511":
+ "<code>PropertyKindCalculus.Iso80000.Part11.stokesGravity : PropertyKindCalculus.DimensionedKind</code>",
+ "510":
+ "<code>PropertyKindCalculus.Iso80000.Part11.stokesRotameter : PropertyKindCalculus.DimensionedKind</code>",
  "51":
  "<code>PropertyKindCalculus.Refines.step {a b c : PropertyKindCalculus.ExaminationItem} :\n  PropertyKindCalculus.BasedOn a b → PropertyKindCalculus.Refines b c → PropertyKindCalculus.Refines a c</code><span class=\"sep\"></span><code class=\"docstring\">Prepend a based-on edge `BasedOn a b` to a refinement `b ⊑ c`. </code>",
+ "509":
+ "<code>PropertyKindCalculus.Iso80000.Part11.stokesVibrating : PropertyKindCalculus.DimensionedKind</code>",
+ "508":
+ "<code>PropertyKindCalculus.Iso80000.Part11.stokesPlasma : PropertyKindCalculus.DimensionedKind</code>",
+ "507":
+ "<code>PropertyKindCalculus.Iso80000.Part11.stokes_pairwise_distinct :\n  PropertyKindCalculus.Iso80000.Part11.stokesPlasma.kind ≠ PropertyKindCalculus.Iso80000.Part11.stokesVibrating.kind ∧\n    PropertyKindCalculus.Iso80000.Part11.stokesVibrating.kind ≠\n        PropertyKindCalculus.Iso80000.Part11.stokesRotameter.kind ∧\n      PropertyKindCalculus.Iso80000.Part11.stokesRotameter.kind ≠\n          PropertyKindCalculus.Iso80000.Part11.stokesGravity.kind ∧\n        PropertyKindCalculus.Iso80000.Part11.stokesGravity.kind ≠ PropertyKindCalculus.Iso80000.Part11.stokesDrag.kind ∧\n          PropertyKindCalculus.Iso80000.Part11.stokesPlasma.kind ≠ PropertyKindCalculus.Iso80000.Part11.stokesDrag.kind</code><span class=\"sep\"></span><code class=\"docstring\">**The five Stokes numbers are pairwise distinct kinds.** All five (11-4.32 … 11-4.36)\ncarry the name \"Stokes number\" and dimension one, distinguished only by symbol suffix\n(`Stk`, `Stk₁` … `Stk₄`) and the measurement principle each isolates. </code>",
+ "506":
+ "<code>PropertyKindCalculus.Iso80000.Part11.froudeHeat : PropertyKindCalculus.DimensionedKind</code>",
+ "505":
+ "<code>PropertyKindCalculus.Iso80000.Part11.froudeMomentum : PropertyKindCalculus.DimensionedKind</code>",
+ "504":
+ "<code>PropertyKindCalculus.Iso80000.Part11.froudeMomentum_ne_froudeHeat :\n  PropertyKindCalculus.Iso80000.Part11.froudeMomentum.kind ≠ PropertyKindCalculus.Iso80000.Part11.froudeHeat.kind</code><span class=\"sep\"></span><code class=\"docstring\">**The two Froude numbers are distinct kinds.** Both are named \"Froude number\" and both\nare dimension one (11-4.3, `Fr`, momentum transfer; 11-5.4, `Fr*`, heat transfer), yet\nthey isolate different physical ratios — inertial/gravitational versus\ngravitational/thermodiffusion forces. </code>",
+ "503":
+ "<code>PropertyKindCalculus.Iso80000.Part11.CataloguedKind.qk (self : PropertyKindCalculus.Iso80000.Part11.CataloguedKind) :\n  PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">The dimensioned kind itself. </code>",
+ "502":
+ "<code>PropertyKindCalculus.Iso80000.Part11.catalogue : List PropertyKindCalculus.Iso80000.Part11.CataloguedKind</code><span class=\"sep\"></span><code class=\"docstring\">The full ISO 80000-11 catalogue, in item order — all 115 characteristic numbers. </code>",
+ "501":
+ "<code>Membership.mem.{u, v} {α : outParam (Type u)} {γ : Type v} [self : Membership α γ] : γ → α → Prop</code><span class=\"sep\"></span><code class=\"docstring\">The membership relation `a ∈ s : Prop` where `a : α`, `s : γ`. \n\nConventions for notations in identifiers:\n\n * The recommended spelling of `∈` in identifiers is `mem`.</code>",
+ "500": "<code>PropertyKindCalculus.Iso80000.Part11.CataloguedKind</code>",
  "50":
  "<code>PropertyKindCalculus.Refines : PropertyKindCalculus.ExaminationItem → PropertyKindCalculus.ExaminationItem → Prop</code><span class=\"sep\"></span><code class=\"docstring\">**Refinement** of examinations: the reflexive–transitive closure of\n`BasedOn`. A more specific examination *refines* a more generic one\n(procedure ⊑ method ⊑ principle). Mirrors `Specializes` over kinds. </code>",
  "5":
  "<code>PropertyKindCalculus.ScaleType : Type</code><span class=\"sep\"></span><code class=\"docstring\">The four operator-based scale types of Dybkær Fig. 12.21. </code>",
+ "499":
+ "<code>PropertyKindCalculus.Iso80000.Part11.catalogue_all_dim_one (c : PropertyKindCalculus.Iso80000.Part11.CataloguedKind) :\n  c ∈ PropertyKindCalculus.Iso80000.Part11.catalogue → c.qk.dim = 1</code><span class=\"sep\"></span><code class=\"docstring\">**The entire ISO 80000-11 catalogue lives at dimension one.** All 115 characteristic\nnumbers share the dimensionless dimension; what distinguishes them is the measurement\nprinciple, never the dimension. </code>",
+ "498":
+ "<code>PropertyKindCalculus.Iso80000.Part11.Context : Type</code><span class=\"sep\"></span><code class=\"docstring\">The transport-phenomena context of a characteristic number — ISO 80000-11's own clause\nstructure (clauses 4 … 9). </code>",
+ "497": "<code>PropertyKindCalculus.Iso80000.Part11.Context</code>",
+ "496":
+ "<code>PropertyKindCalculus.Iso80000.Part11.charNum (ctx : PropertyKindCalculus.Iso80000.Part11.Context)\n  (id principle : String) : PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">A **characteristic number**: a ratio-scale {dimensioned kind} of **dimension one**,\nnamed by `id` and individuated by its {examination principle} — the measurement principle,\nformed as `context: defining-ratio`. The dimension is one for every characteristic number;\nthe principle is what tells them apart. </code>",
+ "495":
+ "<code>PropertyKindCalculus.Iso80000.Part11.CataloguedKind : Type</code><span class=\"sep\"></span><code class=\"docstring\">A **catalogued quantity-kind**: a {dimensioned kind} together with its exact source\nin the 80000 series — the part, the printed item designation, the principal quantity\nsymbol, and the coherent SI unit symbol. Every field other than `qk` is a *citation\nlocator*; the citation travels with the kind as data. </code>",
+ "494":
+ "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">The coherent SI unit symbol — `\"1\"` for every characteristic number. </code>",
+ "493":
+ "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">The principal quantity symbol, e.g. \"Re\". </code>",
+ "492":
+ "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">The item designation as printed, e.g. \"11-4.1\". </code>",
+ "491":
+ "<code>PropertyKindCalculus.Iso80000.Part10.DefiningRelations.doseEquivalentOf\n  (d : PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part10.absorbedDose.kind ℝ)\n  (q : PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part10.qualityFactor.kind ℝ) :\n  PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part10.doseEquivalent.kind ℝ</code><span class=\"sep\"></span><code class=\"docstring\">A dose equivalent built as absorbed dose × quality factor — classified as a dose\nequivalent **by construction** (`H = D·Q`). </code>",
+ "490":
+ "<code>PropertyKindCalculus.Iso80000.Part10.DefiningRelations.doseEquivalent_prod_dose_quality :\n  PropertyKindCalculus.ProductKind PropertyKindCalculus.Iso80000.Part10.absorbedDose.kind\n    PropertyKindCalculus.Iso80000.Part10.qualityFactor.kind PropertyKindCalculus.Iso80000.Part10.doseEquivalent.kind</code><span class=\"sep\"></span><code class=\"docstring\">**Dose equivalent is absorbed dose times the quality factor** (item 10-83.1:\n`H = D·Q`). </code>",
  "49":
  "<code>PropertyKindCalculus.ExaminationItem : Type</code><span class=\"sep\"></span><code class=\"docstring\">The three layers of the examination refinement chain, gathered into one\ncarrier so that \"based-on\" / \"refines\" is a *homogeneous* relation. </code>",
+ "489":
+ "<code>PropertyKindCalculus.Iso80000.Part10.qualityFactor : PropertyKindCalculus.DimensionedKind</code>",
+ "488":
+ "<code>PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part10.qualityFactor.kind ℝ</code>",
+ "487":
+ "<code>PropertyKindCalculus.Iso80000.Part10.absorbedDose : PropertyKindCalculus.DimensionedKind</code>",
+ "486":
+ "<code>PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part10.absorbedDose.kind ℝ</code>",
+ "485":
+ "<code>PropertyKindCalculus.Iso80000.Part10.DefiningRelations.doseEquivalentOf_isProduct\n  (d : PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part10.absorbedDose.kind ℝ)\n  (q : PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part10.qualityFactor.kind ℝ) :\n  PropertyKindCalculus.Quantity.IsProduct\n    PropertyKindCalculus.Iso80000.Part10.DefiningRelations.doseEquivalent_prod_dose_quality\n    (PropertyKindCalculus.Iso80000.Part10.DefiningRelations.doseEquivalentOf d q) d q</code><span class=\"sep\"></span><code class=\"docstring\">The constructed dose equivalent satisfies the product certificate by construction. </code>",
+ "484":
+ "<code>PropertyKindCalculus.Iso80000.Part10.iso80000_10_dim_one_collision : ∃ a b, a.kind ≠ b.kind ∧ a.dim = b.dim ∧ a.dim = 1</code><span class=\"sep\"></span><code class=\"docstring\">**The dimension-one disambiguation, on the standard — the widest in the physical\nparts.** There exist distinct ISO 80000-10 kinds with the same dimension one — the atomic\nand neutron numbers witness it, alongside the eight quantum numbers, the g-factors, the\nrelative mass excess and defect, the packing and binding fractions, the conversion and\nquality factors, and the reactor factors. Dimension cannot separate them; the kind layer\ndoes. </code>",
+ "483":
+ "<code>PropertyKindCalculus.Iso80000.Part10.perSecondDecay : PropertyKindCalculus.MetrologicalUnit</code><span class=\"sep\"></span><code class=\"docstring\">The reciprocal second of the decay constant (item 10-24) — *also* `s⁻¹`, dimension\n`T⁻¹`. </code>",
+ "482":
+ "<code>PropertyKindCalculus.Iso80000.Part10.becquerel : PropertyKindCalculus.MetrologicalUnit</code><span class=\"sep\"></span><code class=\"docstring\">The becquerel of activity (item 10-27). </code>",
+ "481":
+ "<code>PropertyKindCalculus.Iso80000.Part10.becquerel_perSecond_not_commensurable :\n  ¬PropertyKindCalculus.Iso80000.Part10.becquerel.Commensurable PropertyKindCalculus.Iso80000.Part10.perSecondDecay</code><span class=\"sep\"></span><code class=\"docstring\">**The becquerel of activity and the reciprocal second of the decay constant are not\ncommensurable, though both are `T⁻¹`.** The becquerel is the special name SI reserves for\n`s⁻¹` as the unit of activity — a kind distinction the dimension cannot see. </code>",
+ "480":
+ "<code>PropertyKindCalculus.Iso80000.Part10.iso80000_10_dim_collision : ∃ a b, a.kind ≠ b.kind ∧ a.dim = b.dim</code><span class=\"sep\"></span><code class=\"docstring\">**The gray/sievert collision capstone, on the standard.** There exist distinct\nISO 80000-10 kinds with the same dimension `L²·T⁻²` — absorbed dose and dose equivalent\nwitness it, alongside the specific energy imparted and the kerma. The standard assigns two\nunit names (gray, sievert) to one dimension; the {dimension functor} cannot separate them,\nthe kind layer — and the unit — does. </code>",
  "48": "<code>PropertyKindCalculus.ExaminationItem</code>",
+ "479":
+ "<code>PropertyKindCalculus.Iso80000.Part10.CataloguedKind : Type</code><span class=\"sep\"></span><code class=\"docstring\">A **catalogued quantity-kind**: a {dimensioned kind} together with its exact source\nin the 80000 series — the part, the printed item designation, the principal quantity\nsymbol, and the coherent SI unit symbol. Every field other than `qk` is a *citation\nlocator*; the citation travels with the kind as data. </code>",
+ "478":
+ "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">The coherent SI unit symbol, e.g. \"Gy\" (a citation locator). </code>",
+ "477":
+ "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">The principal quantity symbol, e.g. \"D\". </code>",
  "476":
- "<code>PropertyKindCalculus.Iso80000.Part11.workToGoParts : List PropertyKindCalculus.Iso80000.StandardRef</code><span class=\"sep\"></span><code class=\"docstring\">The **work-to-go** references: parts ISO 80000-11 leans on that this library has not\nyet mapped — ISO 80000-8 *Acoustics*, ISO 80000-9 *Physical chemistry and molecular\nphysics*, and ISO 80000-12 *Condensed matter physics*. </code>",
+ "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">The item designation as printed, e.g. \"10-81.1\". </code>",
  "475":
- "<code>PropertyKindCalculus.Iso80000.Part11.iso80000_11_dim_one_collision : ∃ a b, a.kind ≠ b.kind ∧ a.dim = b.dim ∧ a.dim = 1</code><span class=\"sep\"></span><code class=\"docstring\">**The dimension-one collision, on the standard — total, the widest in the series.**\nThere exist distinct ISO 80000-11 kinds with the same dimension one — the Reynolds and\nEuler numbers witness it, alongside *all* 113 others. The {dimension functor} collapses\nthe entire part to one point; the kind layer, through the measurement principle, keeps its\n115 members apart. </code>",
+ "<code>PropertyKindCalculus.Iso80000.Part9.DefiningRelations.molarMassOf\n  (m : PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part4.mass.kind ℝ)\n  (n : PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part9.amountOfSubstance.kind ℝ) :\n  PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part9.molarMass.kind ℝ</code><span class=\"sep\"></span><code class=\"docstring\">A molar mass built as mass / amount of substance — classified as a molar mass **by\nconstruction** (`M = m/n`). </code>",
  "474":
- "<code>PropertyKindCalculus.Iso80000.Part11.eulerUnit : PropertyKindCalculus.MetrologicalUnit</code><span class=\"sep\"></span><code class=\"docstring\">The coherent unit (symbol `\"1\"`) of the Euler number. </code>",
+ "<code>PropertyKindCalculus.Iso80000.Part9.DefiningRelations.molarMass_quot_mass_amount :\n  PropertyKindCalculus.QuotientKind PropertyKindCalculus.Iso80000.Part4.mass.kind\n    PropertyKindCalculus.Iso80000.Part9.amountOfSubstance.kind PropertyKindCalculus.Iso80000.Part9.molarMass.kind</code><span class=\"sep\"></span><code class=\"docstring\">**Molar mass is mass per amount of substance** (item 9-4: `M = m/n`) — a *cross-part*\nlaw, the mass an ISO 80000-4 quantity. </code>",
  "473":
- "<code>PropertyKindCalculus.Iso80000.Part11.reynoldsUnit : PropertyKindCalculus.MetrologicalUnit</code><span class=\"sep\"></span><code class=\"docstring\">The coherent unit (symbol `\"1\"`) of the Reynolds number. </code>",
+ "<code>PropertyKindCalculus.Iso80000.Part9.amountOfSubstance : PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">Amount of substance — item 9-2, dimension one (the mole, the scale-spanning count\n`N_A`; R13). </code>",
  "472":
- "<code>PropertyKindCalculus.Iso80000.Part11.reynolds_euler_not_commensurable :\n  ¬PropertyKindCalculus.Iso80000.Part11.reynoldsUnit.Commensurable PropertyKindCalculus.Iso80000.Part11.eulerUnit</code><span class=\"sep\"></span><code class=\"docstring\">**The Reynolds and Euler units are not commensurable, though both have unit symbol\n`\"1\"`.** Same symbol, same dimension (one), different kind — so a value of one cannot be\nread as a value of the other. The kind layer keeps them apart where the unit symbol and\nthe dimension cannot. </code>",
+ "<code>PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part9.amountOfSubstance.kind ℝ</code>",
  "471":
- "<code>PropertyKindCalculus.Iso80000.Part11.bejanMass : PropertyKindCalculus.DimensionedKind</code>",
+ "<code>PropertyKindCalculus.Iso80000.Part9.DefiningRelations.molarMassOf_isQuotient\n  (m : PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part4.mass.kind ℝ)\n  (n : PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part9.amountOfSubstance.kind ℝ) :\n  PropertyKindCalculus.Quantity.IsQuotient\n    PropertyKindCalculus.Iso80000.Part9.DefiningRelations.molarMass_quot_mass_amount\n    (PropertyKindCalculus.Iso80000.Part9.DefiningRelations.molarMassOf m n) m n</code><span class=\"sep\"></span><code class=\"docstring\">The constructed molar mass satisfies the quotient certificate by construction. </code>",
  "470":
- "<code>PropertyKindCalculus.Iso80000.Part11.bejanEntropy : PropertyKindCalculus.DimensionedKind</code>",
+ "<code>PropertyKindCalculus.Iso80000.Part9.iso80000_9_dim_collision : ∃ a b, a.kind ≠ b.kind ∧ a.dim = b.dim</code><span class=\"sep\"></span><code class=\"docstring\">**The `J/mol` collision capstone, on the standard.** There exist distinct ISO 80000-9\nkinds with the same dimension `M·L²·T⁻²` — molar internal energy and molar Gibbs energy\nwitness it, alongside the molar enthalpy and Helmholtz energy, the chemical potential, the\nstandard chemical potential, and the affinity (all `J/mol`). The mole reduces to dimension\none, so the {dimension functor} cannot separate them; the kind layer does. </code>",
  "47":
  "<code>PropertyKindCalculus.Refines.refl (a : PropertyKindCalculus.ExaminationItem) : PropertyKindCalculus.Refines a a</code><span class=\"sep\"></span><code class=\"docstring\">Reflexivity of the closure: every examination refines itself. </code>",
  "469":
- "<code>PropertyKindCalculus.Iso80000.Part11.bejanHeat : PropertyKindCalculus.DimensionedKind</code>",
+ "<code>PropertyKindCalculus.Iso80000.Part9.iso80000_9_dim_one_collision : ∃ a b, a.kind ≠ b.kind ∧ a.dim = b.dim ∧ a.dim = 1</code><span class=\"sep\"></span><code class=\"docstring\">**The dimension-one disambiguation, on the standard — with the mole inside it.** There\nexist distinct ISO 80000-9 kinds with the same dimension one — amount of substance (the\nmole, reduced by R13) and the number of entities witness it, alongside the fractions, the\nactivities, and the partition functions. Dimension cannot separate them; the kind layer\ndoes. </code>",
  "468":
- "<code>PropertyKindCalculus.Iso80000.Part11.bejanMomentum : PropertyKindCalculus.DimensionedKind</code>",
+ "<code>PropertyKindCalculus.Dim.mass : Dimension</code><span class=\"sep\"></span><code class=\"docstring\">Mass, `M`. </code>",
  "467":
- "<code>PropertyKindCalculus.Iso80000.Part11.bejan_four_distinct :\n  PropertyKindCalculus.Iso80000.Part11.bejanMomentum.kind ≠ PropertyKindCalculus.Iso80000.Part11.bejanHeat.kind ∧\n    PropertyKindCalculus.Iso80000.Part11.bejanHeat.kind ≠ PropertyKindCalculus.Iso80000.Part11.bejanEntropy.kind ∧\n      PropertyKindCalculus.Iso80000.Part11.bejanEntropy.kind ≠ PropertyKindCalculus.Iso80000.Part11.bejanMass.kind ∧\n        PropertyKindCalculus.Iso80000.Part11.bejanMomentum.kind ≠ PropertyKindCalculus.Iso80000.Part11.bejanMass.kind</code><span class=\"sep\"></span><code class=\"docstring\">**The four Bejan numbers are distinct kinds.** The momentum (11-4.15), the two heat\n(11-5.9, 11-5.10) and the mass (11-6.16) Bejan numbers are four kinds — even the two heat\nones, sharing name *and* transport context, differ by their measurement principle. </code>",
+ "<code>PropertyKindCalculus.Iso80000.Part9.molarMass : PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">Molar mass — item 9-4, dimension `M` (unit kg/mol) — *a mass*, the mole reduced. </code>",
  "466":
- "<code>PropertyKindCalculus.Iso80000.Part11.stokesDrag : PropertyKindCalculus.DimensionedKind</code>",
+ "<code>PropertyKindCalculus.Iso80000.Part9.molarMass_dim_eq_mass :\n  PropertyKindCalculus.Iso80000.Part9.molarMass.dim = PropertyKindCalculus.Dim.mass</code><span class=\"sep\"></span><code class=\"docstring\">**Molar mass is a mass.** With the mole dimension one, `kg/mol` carries the dimension\nof mass, `M` (item 9-4). </code>",
  "465":
- "<code>PropertyKindCalculus.Iso80000.Part11.stokesGravity : PropertyKindCalculus.DimensionedKind</code>",
+ "<code>PropertyKindCalculus.Iso80000.Part9.CataloguedKind : Type</code><span class=\"sep\"></span><code class=\"docstring\">A **catalogued quantity-kind**: a {dimensioned kind} together with its exact source\nin the 80000 series — the part, the printed item designation, the principal quantity\nsymbol, and the coherent SI unit symbol. Every field other than `qk` is a *citation\nlocator*; the citation travels with the kind as data. </code>",
  "464":
- "<code>PropertyKindCalculus.Iso80000.Part11.stokesRotameter : PropertyKindCalculus.DimensionedKind</code>",
+ "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">The coherent SI unit symbol, e.g. \"mol/m³\" (a citation locator). </code>",
  "463":
- "<code>PropertyKindCalculus.Iso80000.Part11.stokesVibrating : PropertyKindCalculus.DimensionedKind</code>",
+ "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">The principal quantity symbol, e.g. \"c_X\". </code>",
  "462":
- "<code>PropertyKindCalculus.Iso80000.Part11.stokesPlasma : PropertyKindCalculus.DimensionedKind</code>",
+ "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">The item designation as printed, e.g. \"9-12.1\". </code>",
  "461":
- "<code>PropertyKindCalculus.Iso80000.Part11.stokes_pairwise_distinct :\n  PropertyKindCalculus.Iso80000.Part11.stokesPlasma.kind ≠ PropertyKindCalculus.Iso80000.Part11.stokesVibrating.kind ∧\n    PropertyKindCalculus.Iso80000.Part11.stokesVibrating.kind ≠\n        PropertyKindCalculus.Iso80000.Part11.stokesRotameter.kind ∧\n      PropertyKindCalculus.Iso80000.Part11.stokesRotameter.kind ≠\n          PropertyKindCalculus.Iso80000.Part11.stokesGravity.kind ∧\n        PropertyKindCalculus.Iso80000.Part11.stokesGravity.kind ≠ PropertyKindCalculus.Iso80000.Part11.stokesDrag.kind ∧\n          PropertyKindCalculus.Iso80000.Part11.stokesPlasma.kind ≠ PropertyKindCalculus.Iso80000.Part11.stokesDrag.kind</code><span class=\"sep\"></span><code class=\"docstring\">**The five Stokes numbers are pairwise distinct kinds.** All five (11-4.32 … 11-4.36)\ncarry the name \"Stokes number\" and dimension one, distinguished only by symbol suffix\n(`Stk`, `Stk₁` … `Stk₄`) and the measurement principle each isolates. </code>",
+ "<code>PropertyKindCalculus.Iso80000.Part8.DefiningRelations.soundIntensityOf\n  (p : PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part8.soundPressure.kind ℝ)\n  (u : PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part8.particleVelocity.kind ℝ) :\n  PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part8.soundIntensity.kind ℝ</code><span class=\"sep\"></span><code class=\"docstring\">A sound intensity built as sound pressure × particle velocity — classified as a sound\nintensity **by construction** (`I = p·u`). </code>",
  "460":
- "<code>PropertyKindCalculus.Iso80000.Part11.froudeHeat : PropertyKindCalculus.DimensionedKind</code>",
+ "<code>PropertyKindCalculus.Iso80000.Part8.DefiningRelations.soundIntensity_prod_pressure_velocity :\n  PropertyKindCalculus.ProductKind PropertyKindCalculus.Iso80000.Part8.soundPressure.kind\n    PropertyKindCalculus.Iso80000.Part8.particleVelocity.kind PropertyKindCalculus.Iso80000.Part8.soundIntensity.kind</code><span class=\"sep\"></span><code class=\"docstring\">**Sound intensity is sound pressure times particle velocity** (item 8-10:\n`I = p·u`). </code>",
  "46":
  "<code>PropertyKindCalculus.ExaminationPrinciple : Type</code><span class=\"sep\"></span><code class=\"docstring\">**§7.5 examination principle** (VIM4 2CD 2.4) — the phenomenon serving as the\nbasis of an examination. Carries a terminological `id` (OML-style). </code>",
  "459":
- "<code>PropertyKindCalculus.Iso80000.Part11.froudeMomentum : PropertyKindCalculus.DimensionedKind</code>",
+ "<code>PropertyKindCalculus.Iso80000.Part8.particleVelocity : PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">Sound particle velocity — item 8-4, dimension `L·T⁻¹` (unit m/s). </code>",
  "458":
- "<code>PropertyKindCalculus.Iso80000.Part11.froudeMomentum_ne_froudeHeat :\n  PropertyKindCalculus.Iso80000.Part11.froudeMomentum.kind ≠ PropertyKindCalculus.Iso80000.Part11.froudeHeat.kind</code><span class=\"sep\"></span><code class=\"docstring\">**The two Froude numbers are distinct kinds.** Both are named \"Froude number\" and both\nare dimension one (11-4.3, `Fr`, momentum transfer; 11-5.4, `Fr*`, heat transfer), yet\nthey isolate different physical ratios — inertial/gravitational versus\ngravitational/thermodiffusion forces. </code>",
+ "<code>PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part8.particleVelocity.kind ℝ</code>",
  "457":
- "<code>PropertyKindCalculus.Iso80000.Part11.CataloguedKind.qk (self : PropertyKindCalculus.Iso80000.Part11.CataloguedKind) :\n  PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">The dimensioned kind itself. </code>",
+ "<code>PropertyKindCalculus.Iso80000.Part8.soundPressure : PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">Sound pressure — item 8-2.2, dimension `M·L⁻¹·T⁻²` (unit Pa). </code>",
  "456":
- "<code>PropertyKindCalculus.Iso80000.Part11.catalogue : List PropertyKindCalculus.Iso80000.Part11.CataloguedKind</code><span class=\"sep\"></span><code class=\"docstring\">The full ISO 80000-11 catalogue, in item order — all 115 characteristic numbers. </code>",
+ "<code>PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part8.soundPressure.kind ℝ</code>",
  "455":
- "<code>Membership.mem.{u, v} {α : outParam (Type u)} {γ : Type v} [self : Membership α γ] : γ → α → Prop</code><span class=\"sep\"></span><code class=\"docstring\">The membership relation `a ∈ s : Prop` where `a : α`, `s : γ`. \n\nConventions for notations in identifiers:\n\n * The recommended spelling of `∈` in identifiers is `mem`.</code>",
- "454": "<code>PropertyKindCalculus.Iso80000.Part11.CataloguedKind</code>",
+ "<code>PropertyKindCalculus.Iso80000.Part8.DefiningRelations.soundIntensityOf_isProduct\n  (p : PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part8.soundPressure.kind ℝ)\n  (u : PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part8.particleVelocity.kind ℝ) :\n  PropertyKindCalculus.Quantity.IsProduct\n    PropertyKindCalculus.Iso80000.Part8.DefiningRelations.soundIntensity_prod_pressure_velocity\n    (PropertyKindCalculus.Iso80000.Part8.DefiningRelations.soundIntensityOf p u) p u</code><span class=\"sep\"></span><code class=\"docstring\">The constructed sound intensity satisfies the product certificate by construction. </code>",
+ "454":
+ "<code>PropertyKindCalculus.Iso80000.Part8.iso80000_8_dim_collision : ∃ a b, a.kind ≠ b.kind ∧ a.dim = b.dim</code><span class=\"sep\"></span><code class=\"docstring\">**The dimension collision capstone, on the standard.** There exist distinct\nISO 80000-8 kinds with the same dimension — sound pressure and sound energy density\nwitness it (`M·L⁻¹·T⁻²`), as do the three logarithmic levels at dimension one. The\n{dimension functor} cannot separate them; the kind layer — and the unit, `Pa` versus\n`J/m³` — does. </code>",
  "453":
- "<code>PropertyKindCalculus.Iso80000.Part11.catalogue_all_dim_one (c : PropertyKindCalculus.Iso80000.Part11.CataloguedKind) :\n  c ∈ PropertyKindCalculus.Iso80000.Part11.catalogue → c.qk.dim = 1</code><span class=\"sep\"></span><code class=\"docstring\">**The entire ISO 80000-11 catalogue lives at dimension one.** All 115 characteristic\nnumbers share the dimensionless dimension; what distinguishes them is the measurement\nprinciple, never the dimension. </code>",
+ "<code>PropertyKindCalculus.Iso80000.Part8.iso80000_8_dim_one_collision : ∃ a b, a.kind ≠ b.kind ∧ a.dim = b.dim ∧ a.dim = 1</code><span class=\"sep\"></span><code class=\"docstring\">**The dimension-one disambiguation, on the standard.** There exist distinct\nISO 80000-8 kinds with the same dimension one — the sound pressure level and the sound\npower level witness it, alongside the sound exposure level and the logarithmic frequency\nrange. The logarithmic levels are the acoustic face of R1. </code>",
  "452":
- "<code>PropertyKindCalculus.Iso80000.Part11.Context : Type</code><span class=\"sep\"></span><code class=\"docstring\">The transport-phenomena context of a characteristic number — ISO 80000-11's own clause\nstructure (clauses 4 … 9). </code>",
- "451": "<code>PropertyKindCalculus.Iso80000.Part11.Context</code>",
+ "<code>PropertyKindCalculus.Iso80000.Part8.decibelPower : PropertyKindCalculus.MetrologicalUnit</code><span class=\"sep\"></span><code class=\"docstring\">The decibel of sound power level (item 8-15) — *also* the symbol `dB`, dimension\none. </code>",
+ "451":
+ "<code>PropertyKindCalculus.Iso80000.Part8.decibelPressure : PropertyKindCalculus.MetrologicalUnit</code><span class=\"sep\"></span><code class=\"docstring\">The decibel of sound pressure level (item 8-14). </code>",
  "450":
- "<code>PropertyKindCalculus.Iso80000.Part11.charNum (ctx : PropertyKindCalculus.Iso80000.Part11.Context)\n  (id principle : String) : PropertyKindCalculus.DimensionedKind</code><span class=\"sep\"></span><code class=\"docstring\">A **characteristic number**: a ratio-scale {dimensioned kind} of **dimension one**,\nnamed by `id` and individuated by its {examination principle} — the measurement principle,\nformed as `context: defining-ratio`. The dimension is one for every characteristic number;\nthe principle is what tells them apart. </code>",
+ "<code>PropertyKindCalculus.Iso80000.Part8.decibelPressure_decibelPower_not_commensurable :\n  ¬PropertyKindCalculus.Iso80000.Part8.decibelPressure.Commensurable PropertyKindCalculus.Iso80000.Part8.decibelPower</code><span class=\"sep\"></span><code class=\"docstring\">**The decibel of sound pressure level and the decibel of sound power level are not\ncommensurable, though both have unit symbol `dB` and dimension one.** Same symbol, same\ndimension, different kind — the level of pressure is not the level of power. This is the\nISO 80000-11 `\"1\"` pattern (Reynolds versus Euler) on the acoustic levels. </code>",
  "45":
  "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">Terminological identity of the examination principle (OML-style). </code>",
  "449":
- "<code>PropertyKindCalculus.Iso80000.Part11.CataloguedKind : Type</code><span class=\"sep\"></span><code class=\"docstring\">A **catalogued quantity-kind**: a {dimensioned kind} together with its exact source\nin the 80000 series — the part, the printed item designation, the principal quantity\nsymbol, and the coherent SI unit symbol. Every field other than `qk` is a *citation\nlocator*; the citation travels with the kind as data. </code>",
+ "<code>PropertyKindCalculus.Iso80000.Part8.CataloguedKind : Type</code><span class=\"sep\"></span><code class=\"docstring\">A **catalogued quantity-kind**: a {dimensioned kind} together with its exact source\nin the 80000 series — the part, the printed item designation, the principal quantity\nsymbol, and the coherent SI unit symbol. Every field other than `qk` is a *citation\nlocator*; the citation travels with the kind as data. </code>",
  "448":
- "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">The coherent SI unit symbol — `\"1\"` for every characteristic number. </code>",
+ "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">The coherent SI unit symbol, e.g. \"Pa\" (a citation locator). </code>",
  "447":
- "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">The principal quantity symbol, e.g. \"Re\". </code>",
+ "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">The principal quantity symbol, e.g. \"p\". </code>",
  "446":
- "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">The item designation as printed, e.g. \"11-4.1\". </code>",
+ "<code>String</code><span class=\"sep\"></span><code class=\"docstring\">The item designation as printed, e.g. \"8-2.2\". </code>",
  "445":
  "<code>PropertyKindCalculus.Iso80000.Part7.DefiningRelations.irradianceOf\n  (φ : PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part7.radiantFlux.kind ℝ)\n  (a : PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part3.area.kind ℝ) :\n  PropertyKindCalculus.Quantity PropertyKindCalculus.Iso80000.Part7.irradiance.kind ℝ</code><span class=\"sep\"></span><code class=\"docstring\">An irradiance built as radiant flux / area — classified as an irradiance **by\nconstruction** (`E_e = dΦ_e/dA`). </code>",
  "444":
@@ -640,7 +796,7 @@
  "223":
  "<code>Nat</code><span class=\"sep\"></span><code class=\"docstring\">The series number — `80000`. </code>",
  "222":
- "<code>PropertyKindCalculus.Iso80000.StandardBody : Type</code><span class=\"sep\"></span><code class=\"docstring\">The standards body under which a part of the 80000 series is published. The\nseries is a joint ISO/IEC project; each part is issued under one body — in the\ncatalogued copies, part 6 (Electromagnetism) is IEC and the rest are ISO. </code>",
+ "<code>PropertyKindCalculus.Iso80000.StandardBody : Type</code><span class=\"sep\"></span><code class=\"docstring\">The standards body under which a part of the 80000 series is published. The\nseries is a joint ISO/IEC project; each part is issued under one body — in the\ncatalogued copies, parts 6 (Electromagnetism) and 13 (Information science and\ntechnology) are IEC and the rest are ISO. </code>",
  "221":
  "<code>PropertyKindCalculus.Iso80000.StandardBody</code><span class=\"sep\"></span><code class=\"docstring\">The publishing body (ISO or IEC). </code>",
  "220":
