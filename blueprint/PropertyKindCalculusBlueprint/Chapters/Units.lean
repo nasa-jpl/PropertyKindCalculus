@@ -207,6 +207,18 @@ carry `dim = 1`, so their dimensions agree by `rfl`. Together they witness
 $`\exists a\ b,\ a.\mathrm{kind} \neq b.\mathrm{kind} \wedge \dim a = \dim b \wedge \dim a = 1`.
 :::
 
+:::definition "def_si_prefix" (parent := "units") (lean := "PropertyKindCalculus.SIPrefix")
+A _decimal SI prefix_ `SIPrefix` is a name and symbol denoting a power-of-ten
+factor (e.g. _centi_ = $`10^{-2}`). Applied to a unit it produces a multiple
+(VIM4 2CD 1.20) or submultiple (1.21) of that unit.
+:::
+
+:::proof "def_si_prefix"
+A `structure SIPrefix` carrying `name`, `symbol`, and an integer `exponent` (the
+factor is $`10^{\text{exponent}}`); the full SI set (quetta … quecto) is
+enumerated as `def`s.
+:::
+
 # Verified classification and instantiable kind-laws (R12)
 
 A quantity `Quantity k R` records its kind `k` as a _tag_:

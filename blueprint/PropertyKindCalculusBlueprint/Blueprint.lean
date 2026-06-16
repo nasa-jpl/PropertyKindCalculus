@@ -22,6 +22,7 @@ import PropertyKindCalculusBlueprint.Chapters.Iso80000Part10
 import PropertyKindCalculusBlueprint.Chapters.Iso80000Part11
 import PropertyKindCalculusBlueprint.Chapters.Iso80000Part12
 import PropertyKindCalculusBlueprint.Chapters.Iso80000Part13
+import PropertyKindCalculusBlueprint.Chapters.CrossReferences
 
 open Verso.Genre
 open Verso.Genre.Manual
@@ -871,6 +872,8 @@ in-progress goals until formalized. The headline deliverables are tagged
 {include 0 PropertyKindCalculusBlueprint.Chapters.Iso80000Part12}
 
 {include 0 PropertyKindCalculusBlueprint.Chapters.Iso80000Part13}
+
+{include 0 PropertyKindCalculusBlueprint.Chapters.CrossReferences}
 
 {blueprint_graph}
 

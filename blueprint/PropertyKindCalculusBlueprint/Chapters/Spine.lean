@@ -128,6 +128,34 @@ A rational kind _is_ a kind-of-quantity. Uses {uses "def_kindOfProperty"}[kind-o
 The scale is `ratio`, so `scale ≠ nominal` holds; unfold and simplify.
 :::
 
+:::definition "def_isRational" (parent := "spine_kind") (lean := "PropertyKindCalculus.KindOfProperty.IsRational")
+A kind is a _ratio quantity_ (VIM4 2CD 1.3) when its scale is `ratio`: the
+operators $`\times, \div` are defined, so its quantities have an absolute zero and
+form ratios.
+:::
+
+:::proof "def_isRational"
+`IsRational k := k.scale = .ratio`.
+:::
+
+:::definition "def_isDifferential" (parent := "spine_kind") (lean := "PropertyKindCalculus.KindOfProperty.IsDifferential")
+A kind is an _interval quantity_ (VIM4 2CD 1.4) when its scale is `interval`: the
+operators $`+, -` are defined (differences are meaningful), but ratios are not.
+:::
+
+:::proof "def_isDifferential"
+`IsDifferential k := k.scale = .interval`.
+:::
+
+:::definition "def_isOrdinal" (parent := "spine_kind") (lean := "PropertyKindCalculus.KindOfProperty.IsOrdinal")
+A kind is an _ordinal quantity_ (VIM4 2CD 1.33) when its scale is `ordinal`: only
+the order $`<, >` is defined, with neither differences nor ratios.
+:::
+
+:::proof "def_isOrdinal"
+`IsOrdinal k := k.scale = .ordinal`.
+:::
+
 # Specialization and mutual comparability (OML / Dybkær §6)
 
 :::group "spine_specialization"
@@ -205,6 +233,25 @@ item down to the principle it rests on.
 :::proof "def_examination"
 Three small `structure`s with `DecidableEq`, united by an `ExaminationItem`
 inductive; `basePrinciple` is the projection to the principle layer.
+:::
+
+:::definition "def_examination_method" (parent := "spine_examination") (lean := "PropertyKindCalculus.ExaminationMethod")
+An _examination method_ (Dybkær Ch. 7 / VIM4 2CD 2.5) is a generic description of
+an examination, _based on_ an {uses "def_examination"}[examination principle].
+:::
+
+:::proof "def_examination_method"
+A `structure` carrying an identifier and the `ExaminationPrinciple` it is based on.
+:::
+
+:::definition "def_examination_procedure" (parent := "spine_examination") (lean := "PropertyKindCalculus.ExaminationProcedure")
+An _examination procedure_ (Dybkær Ch. 7 / VIM4 2CD 2.7) is a detailed description,
+_based on_ an {uses "def_examination_method"}[examination method]; its principle is
+the method's principle.
+:::
+
+:::proof "def_examination_procedure"
+A `structure` carrying an identifier and the `ExaminationMethod` it is based on.
 :::
 
 :::definition "def_refines" (parent := "spine_examination") (lean := "PropertyKindCalculus.Refines")

@@ -112,6 +112,24 @@ lean_lib «Iso80000» where
   srcDir := "iso80000"
   globs := #[.andSubmodules `PropertyKindCalculus.Iso80000]
 
+/-- The **external cross-reference** layer: typed, decl-indexed annotations that
+map this work's declarations to the loci where the corresponding concepts are
+defined in Dybkær's *Ontology on Property* (2009) and the VIM 4 2CD (2023-07-31).
+The annotations are applied *from afar* (a separate `Annotations` module attaches
+the attributes to spine declarations), so the Mathlib-free, meta-free core spine
+stays prelude-only. This library imports `Lean` for the attribute/extension
+machinery; it does **not** pull in PhysLib or Mathlib. Build with
+`lake build CrossRefs`. It carries:
+  * `PropertyKindCalculus.CrossRefs.Attributes`  — the `@[dybkaer …]` / `@[vim4 …]`
+    parametric attributes, their env extensions, and the harvest API.
+  * `PropertyKindCalculus.CrossRefs.Sources`     — the bibliographic identity of the
+    two external sources (mirroring `Iso80000.StandardRef`).
+  * `PropertyKindCalculus.CrossRefs.Annotations` — the cross-reference annotations,
+    promoting the locators already recorded in the spine docstrings to typed data. -/
+lean_lib «CrossRefs» where
+  srcDir := "crossrefs"
+  globs := #[.andSubmodules `PropertyKindCalculus.CrossRefs]
+
 /-- The **TorchLean-backed instance** of the R10 exec/spec refinement bridge: the
 concrete IEEE-754 binary32 carriers (TorchLean's `FP32` rounding spec and
 `IEEE32Exec` executable) realizing `CarrierRefinement` over `ℝ`. This is the one
