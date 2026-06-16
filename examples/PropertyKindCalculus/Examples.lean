@@ -8,6 +8,7 @@ examples explicitly via `import PropertyKindCalculus.Examples`.
 -/
 
 import PropertyKindCalculus.Examples.MiniLengthWidth
+import PropertyKindCalculus.Examples.MiniDedicatedKind
 import PropertyKindCalculus.Examples.MiniExamination
 import PropertyKindCalculus.Examples.MiniValueScale
 import PropertyKindCalculus.Examples.MiniUnit

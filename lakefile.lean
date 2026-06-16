@@ -33,8 +33,10 @@ Sources are vendored under `References/` for clickable markdown links:
     take `PropertyKindCalculus` alone, or additionally `import PropertyKindCalculus.Examples`.
 
 The later `Dimension`/coherence layer (PhysLib `Dimension` as a forgetful
-functor) and the soil-moisture *model* pull in PhysLib + Mathlib and will be
-added as further libraries once the spine stabilizes.
+functor) pulls in PhysLib + Mathlib and is added as a further library once the
+spine stabilizes. The soil-moisture *retrieval* model is a downstream
+application, kept in a separate repository so this package stays focused on
+metrology and the ISO/IEC 80000 parts.
 -/
 
 package «PropertyKindCalculus» where

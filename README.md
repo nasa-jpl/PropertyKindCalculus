@@ -81,8 +81,10 @@ interaction algebra (`PropertyKindCalculus.Interaction`), and the `ℝ` quantity
 carrier (`PropertyKindCalculus.QuantityReal`), with its worked examples in the
 `DimensionExamples` library — the layer where PhysLib + Mathlib enter, so a plain
 `import PropertyKindCalculus` stays Mathlib-free. PhysLib tracks the same toolchain
-this package pins (`leanprover/lean4:v4.30.0`). The soil-moisture *model* will land
-as a further library on the same pattern.
+this package pins (`leanprover/lean4:v4.30.0`). The soil-moisture *retrieval* model
+lives in a **separate downstream repository** that `require`s this package — an
+application of the calculus, kept out of PKC so the package stays focused on
+metrology and the ISO/IEC 80000 parts.
 
 ## Design blueprint
 
@@ -176,9 +178,10 @@ Status: ✅ built & proved · 🚧 next · ⬜ planned
 | `Iso80000.Part7.DefiningRelations` (in the `Iso80000` lib) — the algebraic *Remarks* as R12 kind-laws, several **cross-part**: radiant flux = radiant energy / time, irradiance = radiant flux / area, radiant intensity = radiant flux / solid angle (the steradian dropping), and the luminous efficacy computed dimension-one because it is a ratio of two fluxes (the candela reducing to power) | ISO 80000-7 | ✅ |
 | `Iso80000.Part11` (in the `Iso80000` lib) — ISO 80000-11 *Characteristic numbers* **full catalogue** (all 115 items, 11-4.1 … 11-9.2, every sub-suffixed item): the limit case of **R1** — *every* characteristic number is dimension one, so the dimension functor collapses the entire part to one point and the 115 kinds are held apart entirely **by measurement principle** (R2), including the sub-suffixed homonyms (two Froude, five Stokes, four Bejan numbers — same name, distinct kind); references to parts not yet specified (ISO 80000-8, -9, -12) recorded as `workToGoParts` | ISO 80000-11 | ✅ |
 | `Iso80000` — the remaining parts (1, 2, 8–10, 12) quantity-kinds + units | ISO/IEC 80000 | ⬜ |
-| `DedicatedKind` — kind × system × component | Ch. 20 | ⬜ |
-| `Model.SI` — SI base kinds, verified well-formed | — | ⬜ |
-| `Model.SoilMoisture` — vwc/gwc/permittivity/reflectivity/… | — | ⬜ |
+| `DedicatedKind` — dedicated kind-of-property = system × component × kind-of-property (the IUPAC/IFCC `System — Component ; kind` syntax); the principled form of the vwc-vs-gwc distinctness (same target, different kind-of-property) | Dybkær Ch. 20 | ✅ |
+| `PropertyKindCalculus.Examples.Dedicated` (in the `Examples` lib) — *"soil — water ; volume fraction"* vs *"… ; mass fraction"* as distinct dedicated kinds (distinct **because the kinds-of-property differ**), the systematic-term rendering, and a different-component variant as checked facts | — | ✅ |
+| `Model.SI` — **subsumed by the `Iso80000` layer**: the SI base quantities are exercised against the real standard across Parts 3–7 (length / mass / time, Θ, electric current, luminous intensity & amount of substance), each with checked dimensional facts and coherent units | — | ✅ |
+| `Model.SoilMoisture` — **moved to a separate downstream repository**: soil-moisture retrieval is an *application* of the calculus, kept out of PKC to avoid conflating it with the metrology / ISO-IEC focus; the dimension-one witnesses (vwc, gwc, permittivity, reflectivity) stay in `Dimension` as the `dim_not_injective` capstone | — | → repo |
 
 ## What builds today
 
@@ -221,6 +224,19 @@ step. The same carrier-parametricity gives *vector* quantities for free
 pointwise, so a vector quantity is one kind with one **scalar** unit over a
 numerical array — not a per-coordinate bag of number×unit values — and the
 additivity laws transfer to it unchanged.
+
+The spine also specifies Dybkær's **dedicated kind-of-property** (Ch. 20): a
+generic kind-of-property bound to the *system* it characterizes and a *pertinent
+component*, in the IUPAC/IFCC `System — Component ; kind-of-property` syntax (the
+"NPU" form used in laboratory medicine). This gives the *principled* form of the
+soil-moisture distinctness — volumetric and gravimetric water content are the
+*same measurement target* (soil — water) examined as two different
+kinds-of-property (volume fraction vs mass fraction), so `vwc ≠ gwc` is proved
+**because the kinds-of-property differ**, with the system and component held
+identical, not from differing identity strings. It is exactly the construct the
+QUDV → OML/OWL2 lineage cannot express: OWL2 can record that a quantity *has* a
+system and a component, but it cannot make those two dedicated kinds provably
+distinct while keeping both dedicated to the same system and component.
 
 `lake build Dimension` additionally checks the PhysLib-backed coherence layer
 (this is the one library that pulls in PhysLib + Mathlib). The dimension module

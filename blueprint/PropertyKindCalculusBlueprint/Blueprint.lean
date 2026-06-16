@@ -4,6 +4,7 @@ import VersoBlueprint
 import VersoBlueprint.Commands.Graph
 import VersoBlueprint.Commands.Summary
 import PropertyKindCalculusBlueprint.Chapters.Spine
+import PropertyKindCalculusBlueprint.Chapters.DedicatedKind
 import PropertyKindCalculusBlueprint.Chapters.Units
 import PropertyKindCalculusBlueprint.Chapters.Dimension
 import PropertyKindCalculusBlueprint.Chapters.Interaction
@@ -37,6 +38,64 @@ with the dependency graph and a status summary at the end.
 The whole blueprint is also available as a single paginated document:
 [download the PDF](PropertyKindCalculus-Blueprint.pdf).
 
+# What PropertyKindCalculus provides
+
+This project addresses *thirteen requirements* about formalizing _metrology_ — the
+science of measurement — and discharges most of them as machine-checked theorems
+rather than prose. A substantial part of the library is grounded directly on the
+published *ISO and IEC 80000* metrology standards, catalogued item by item:
+
+- ISO 80000-3 — _space and time_
+- ISO 80000-4 — _mechanics_
+- ISO 80000-5 — _thermodynamics_
+- IEC 80000-6 — _electromagnetism_
+- ISO 80000-7 — _light and radiation_
+- ISO 80000-11 — _characteristic numbers_
+
+In plain terms, _rigorous metrology_ here means:
+
+- *Telling apart quantities that look identical.* Two measurements in the same
+  units can still be different in nature — volumetric and gravimetric soil
+  moisture are both "just a ratio", yet confusing them corrupts a result. The
+  calculus keeps such quantities distinct _types_, so the mix-up is impossible
+  rather than merely discouraged; agreeing units (or dimensions) are treated as
+  necessary but never sufficient.
+- *Rejecting nonsense arithmetic before it runs.* Adding a length to a mass — or
+  even a torque to an energy, which share the same dimension — is a compile-time
+  error, not something caught (or missed) at run time. Quantities that genuinely
+  combine, such as a torque times an angle giving an energy, are sanctioned
+  explicitly; everything else is refused.
+- *Knowing which operations even make sense.* What you may do to a measurement
+  depends on its scale: you can rank mineral hardness but not average it; you can
+  subtract Celsius temperatures but only take ratios of thermodynamic ones. These
+  rules are enforced automatically.
+- *A faithful hierarchy of kinds.* Width and height are special cases of length —
+  usable where a length is wanted, never the reverse — while a general kind
+  (length) is never confused with one individual measurement (the length of this
+  pencil). A kind can even be tied to the system and component it is _dedicated_ to,
+  so "water content of soil" is named in its own right.
+- *Units that convert safely and never silently.* A unit is a chosen reference of
+  one specific kind; a conversion round-trips exactly, and there is simply no
+  conversion between units of different kinds.
+- *Summing only what may be summed.* The masses of the parts add up to the mass of
+  the whole; the volumes of mixed liquids do not. The calculus tracks which
+  quantities aggregate and refuses to assume it of the rest.
+- *Classifications you can trust because they are earned.* Labelling a value "an
+  area" requires a proof that it really is a width times a height; an arbitrary
+  number cannot wear the label.
+- *The same model from proof to running code.* One quantity can carry exact real
+  numbers for proving properties and IEEE floating-point for execution — with a
+  theorem guaranteeing the running code matches the proven specification, rounding
+  and all — and a vector quantity is a list of numbers under a _single_ shared
+  unit, not a bag of separately-united components.
+- *Honest unit classification.* Not even the SI base units are all alike — some
+  (the mole, the candela) are derived in disguise — so the calculus names that
+  third category instead of pretending the base/derived split is clean.
+
+Each of these is stated precisely as one of the thirteen requirements below, and
+the status table at the end of that section maps every requirement to the checked
+declaration that discharges it.
+
 # Requirements
 
 What follows is the fixed set of requirements PropertyKindCalculus is *specified*
@@ -61,7 +120,11 @@ emissivity are all dimension-one, yet `Quantity vwc` and `Quantity gwc` must be
 a scale-gated leaf — not as the root.) This reaches its limit on ISO 80000-11
 _Characteristic numbers_, where *all 115* kinds — every one a dimensionless ratio — share
 dimension one, so the dimension functor collapses the entire part to a single point and
-only the kind layer holds its members apart (see the _ISO 80000-11_ chapter).
+only the kind layer holds its members apart (see the _ISO 80000-11_ chapter). The
+*principled* form of this within-dimension discrimination — naming a kind by the
+system and component it is _dedicated to_, so volumetric and gravimetric water
+content differ by their kind-of-property rather than by an identity string — is
+Dybkær's dedicated kind-of-property (see the _Dedicated kinds-of-property_ chapter).
 
 *R2 — Specialization is a lattice, with comparability but not identity.* Width,
 Height, and Diameter each specialize Length, and a kind may specialize several
@@ -761,6 +824,8 @@ in-progress goals until formalized. The headline deliverables are tagged
 `capstone`.
 
 {include 0 PropertyKindCalculusBlueprint.Chapters.Spine}
+
+{include 0 PropertyKindCalculusBlueprint.Chapters.DedicatedKind}
 
 {include 0 PropertyKindCalculusBlueprint.Chapters.Units}
 
