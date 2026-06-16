@@ -47,7 +47,7 @@ transport-phenomena context (the clause). Each kind still bears values and a coh
 the _same_ unit symbol `1` are still not interchangeable.
 :::
 
-:::definition "def_part11_catalogued_kind" (parent := "iso80000_part11") (lean := "PropertyKindCalculus.Iso80000.Part11.CataloguedKind")
+:::definition "def_part11_catalogued_kind" (parent := "iso80000_part11") (lean := "PropertyKindCalculus.Iso80000.CataloguedKind")
 A _catalogued kind_ pairs a dimensioned {uses "def_quantity"}[quantity]-kind with its
 exact source in the series — the part, the printed item designation (e.g. "11-4.1"), the
 principal quantity symbol (e.g. `Re`), and the coherent SI unit symbol (`1` for every

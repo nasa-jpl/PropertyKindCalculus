@@ -44,7 +44,7 @@ type-level fact, so the shannon of information and the erlang of traffic are not
 interchangeable though both are dimension one.
 :::
 
-:::definition "def_part13_catalogued_kind" (parent := "iso80000_part13") (lean := "PropertyKindCalculus.Iso80000.Part13.CataloguedKind")
+:::definition "def_part13_catalogued_kind" (parent := "iso80000_part13") (lean := "PropertyKindCalculus.Iso80000.CataloguedKind")
 A _catalogued kind_ pairs a dimensioned {uses "def_quantity"}[quantity]-kind with its
 exact source in the series — the part, the printed item designation (e.g. "13-24"), the
 principal quantity symbol, and the unit symbol (for the information quantities, the special

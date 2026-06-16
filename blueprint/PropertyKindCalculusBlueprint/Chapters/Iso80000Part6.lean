@@ -52,7 +52,7 @@ annotations. Each unit is a {uses "def_metrologicalUnit"}[metrological unit] of 
 commensurability is a type-level fact, so an ampere and a volt are not interchangeable.
 :::
 
-:::definition "def_part6_catalogued_kind" (parent := "iso80000_part6") (lean := "PropertyKindCalculus.Iso80000.Part6.CataloguedKind")
+:::definition "def_part6_catalogued_kind" (parent := "iso80000_part6") (lean := "PropertyKindCalculus.Iso80000.CataloguedKind")
 A _catalogued kind_ pairs a dimensioned {uses "def_quantity"}[quantity]-kind with its
 exact source in the series — the part, the printed item designation (e.g. "6-51.1"), the
 principal quantity symbol, and the coherent SI unit symbol. The citation travels with the

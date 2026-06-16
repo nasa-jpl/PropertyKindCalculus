@@ -40,6 +40,7 @@ Acoustics brings two themes the calculus is built for:
 
 import PropertyKindCalculus.Dimension
 import PropertyKindCalculus.Iso80000.References
+import PropertyKindCalculus.Iso80000.Catalogue
 
 namespace PropertyKindCalculus.Iso80000.Part8
 
@@ -48,35 +49,10 @@ open PropertyKindCalculus
 /-- The part of the series this module catalogues. -/
 def source : StandardRef := iso80000_8
 
-/-- A **catalogued quantity-kind**: a {dimensioned kind} together with its exact source
-in the 80000 series — the part, the printed item designation, the principal quantity
-symbol, and the coherent SI unit symbol. Every field other than `qk` is a *citation
-locator*; the citation travels with the kind as data. -/
-structure CataloguedKind where
-  /-- The part of the series this kind is defined in. -/
-  ref : StandardRef
-  /-- The item designation as printed, e.g. "8-2.2". -/
-  item : String
-  /-- The principal quantity symbol, e.g. "p". -/
-  symbol : String
-  /-- The coherent SI unit symbol, e.g. "Pa" (a citation locator). -/
-  coherentUnit : String
-  /-- The dimensioned kind itself. -/
-  qk : DimensionedKind
-
-/-- The standard citation for a catalogued kind, e.g.
-`ISO 80000-8, Second edition, 2020-02 item 8-2.2`. -/
-def CataloguedKind.cite (c : CataloguedKind) : String :=
-  c.ref.cite ++ " item " ++ c.item
-
 /-- Build a catalogued kind from this part, given its locators and dimensioned kind. -/
 def cat (item symbol coherentUnit : String) (qk : DimensionedKind) :
     CataloguedKind :=
-  { ref := source, item := item, symbol := symbol, coherentUnit := coherentUnit, qk := qk }
-
-/-- A ratio-scale dimensioned kind with a plain `id` and a given dimension. -/
-def dimKind (id : String) (dim : Dimension) : DimensionedKind :=
-  { kind := { id := id, scale := .ratio }, dim := dim }
+  CataloguedKind.of source item symbol coherentUnit qk
 
 /-! ## Acoustic dimensions
 

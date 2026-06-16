@@ -46,7 +46,7 @@ commensurability is a type-level fact, so the gray and the sievert are not inter
 though they share one dimension.
 :::
 
-:::definition "def_part10_catalogued_kind" (parent := "iso80000_part10") (lean := "PropertyKindCalculus.Iso80000.Part10.CataloguedKind")
+:::definition "def_part10_catalogued_kind" (parent := "iso80000_part10") (lean := "PropertyKindCalculus.Iso80000.CataloguedKind")
 A _catalogued kind_ pairs a dimensioned {uses "def_quantity"}[quantity]-kind with its
 exact source in the series — the part, the printed item designation (e.g. "10-81.1"), the
 principal quantity symbol, and the coherent SI unit symbol. The citation travels with the

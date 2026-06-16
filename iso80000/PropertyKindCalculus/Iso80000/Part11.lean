@@ -54,6 +54,7 @@ one) is a checked computation.
 
 import PropertyKindCalculus.Dimension
 import PropertyKindCalculus.Iso80000.References
+import PropertyKindCalculus.Iso80000.Catalogue
 
 namespace PropertyKindCalculus.Iso80000.Part11
 
@@ -62,31 +63,10 @@ open PropertyKindCalculus
 /-- The part of the series this module catalogues. -/
 def source : StandardRef := iso80000_11
 
-/-- A **catalogued quantity-kind**: a {dimensioned kind} together with its exact source
-in the 80000 series — the part, the printed item designation, the principal quantity
-symbol, and the coherent SI unit symbol. Every field other than `qk` is a *citation
-locator*; the citation travels with the kind as data. -/
-structure CataloguedKind where
-  /-- The part of the series this kind is defined in. -/
-  ref : StandardRef
-  /-- The item designation as printed, e.g. "11-4.1". -/
-  item : String
-  /-- The principal quantity symbol, e.g. "Re". -/
-  symbol : String
-  /-- The coherent SI unit symbol — `"1"` for every characteristic number. -/
-  coherentUnit : String
-  /-- The dimensioned kind itself. -/
-  qk : DimensionedKind
-
-/-- The standard citation for a catalogued kind, e.g.
-`ISO 80000-11, Second edition, 2019-10 item 11-4.1`. -/
-def CataloguedKind.cite (c : CataloguedKind) : String :=
-  c.ref.cite ++ " item " ++ c.item
-
 /-- Build a catalogued kind from this part, given its locators and dimensioned kind. -/
 def cat (item symbol coherentUnit : String) (qk : DimensionedKind) :
     CataloguedKind :=
-  { ref := source, item := item, symbol := symbol, coherentUnit := coherentUnit, qk := qk }
+  CataloguedKind.of source item symbol coherentUnit qk
 
 /-! ## Transport context — ISO 80000-11's clause structure as a defining aspect
 

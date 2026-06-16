@@ -48,7 +48,7 @@ _checked computations_ rather than annotations. Each unit is a
 type-level fact, so a kelvin and a joule are not interchangeable.
 :::
 
-:::definition "def_part5_catalogued_kind" (parent := "iso80000_part5") (lean := "PropertyKindCalculus.Iso80000.Part5.CataloguedKind")
+:::definition "def_part5_catalogued_kind" (parent := "iso80000_part5") (lean := "PropertyKindCalculus.Iso80000.CataloguedKind")
 A _catalogued kind_ pairs a dimensioned {uses "def_quantity"}[quantity]-kind with its
 exact source in the series — the part, the printed item designation (e.g. "5-20.3"), the
 principal quantity symbol, and the coherent SI unit symbol. The citation travels with

@@ -48,7 +48,7 @@ type-level fact, so the watt of radiant flux and the lumen of luminous flux are 
 interchangeable though they share one dimension.
 :::
 
-:::definition "def_part7_catalogued_kind" (parent := "iso80000_part7") (lean := "PropertyKindCalculus.Iso80000.Part7.CataloguedKind")
+:::definition "def_part7_catalogued_kind" (parent := "iso80000_part7") (lean := "PropertyKindCalculus.Iso80000.CataloguedKind")
 A _catalogued kind_ pairs a dimensioned {uses "def_quantity"}[quantity]-kind with its
 exact source in the series — the part, the printed item designation (e.g. "7-6.1"), the
 principal quantity symbol, and the coherent SI unit symbol. The citation travels with the

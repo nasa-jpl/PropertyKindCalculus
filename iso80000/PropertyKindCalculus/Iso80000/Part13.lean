@@ -39,6 +39,7 @@ characteristic quantities are all **dimension one** — yet they carry special, 
 import PropertyKindCalculus.Dimension
 import PropertyKindCalculus.ScaleSpanning
 import PropertyKindCalculus.Iso80000.References
+import PropertyKindCalculus.Iso80000.Catalogue
 
 namespace PropertyKindCalculus.Iso80000.Part13
 
@@ -47,36 +48,10 @@ open PropertyKindCalculus
 /-- The part of the series this module catalogues. -/
 def source : StandardRef := iec80000_13
 
-/-- A **catalogued quantity-kind**: a {dimensioned kind} together with its exact source
-in the 80000 series — the part, the printed item designation, the principal quantity
-symbol, and the unit symbol (for the information quantities, the special named unit —
-shannon, erlang, bit — rather than the bare `1`). Every field other than `qk` is a
-*citation locator*. -/
-structure CataloguedKind where
-  /-- The part of the series this kind is defined in. -/
-  ref : StandardRef
-  /-- The item designation as printed, e.g. "13-24". -/
-  item : String
-  /-- The principal quantity symbol, e.g. "I(x)". -/
-  symbol : String
-  /-- The unit symbol (a citation locator), e.g. "Sh" (the shannon). -/
-  coherentUnit : String
-  /-- The dimensioned kind itself. -/
-  qk : DimensionedKind
-
-/-- The standard citation for a catalogued kind, e.g.
-`IEC 80000-13, Edition 2.0, 2025-02 item 13-24`. -/
-def CataloguedKind.cite (c : CataloguedKind) : String :=
-  c.ref.cite ++ " item " ++ c.item
-
 /-- Build a catalogued kind from this part, given its locators and dimensioned kind. -/
 def cat (item symbol coherentUnit : String) (qk : DimensionedKind) :
     CataloguedKind :=
-  { ref := source, item := item, symbol := symbol, coherentUnit := coherentUnit, qk := qk }
-
-/-- A ratio-scale dimensioned kind with a plain `id` and a given dimension. -/
-def dimKind (id : String) (dim : Dimension) : DimensionedKind :=
-  { kind := { id := id, scale := .ratio }, dim := dim }
+  CataloguedKind.of source item symbol coherentUnit qk
 
 /-! ## Information-science dimensions
 

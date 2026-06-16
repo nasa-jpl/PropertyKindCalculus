@@ -44,7 +44,7 @@ is a type-level fact, so the joule-per-mole of molar internal energy and that of
 Gibbs energy are not interchangeable though they share one dimension.
 :::
 
-:::definition "def_part9_catalogued_kind" (parent := "iso80000_part9") (lean := "PropertyKindCalculus.Iso80000.Part9.CataloguedKind")
+:::definition "def_part9_catalogued_kind" (parent := "iso80000_part9") (lean := "PropertyKindCalculus.Iso80000.CataloguedKind")
 A _catalogued kind_ pairs a dimensioned {uses "def_quantity"}[quantity]-kind with its
 exact source in the series — the part, the printed item designation (e.g. "9-12.1"), the
 principal quantity symbol, and the coherent SI unit symbol. The citation travels with the

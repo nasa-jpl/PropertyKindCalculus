@@ -7,7 +7,11 @@ by name and version only (no normative content is reproduced — the standards a
 licensed and copyrighted).
 
   * `PropertyKindCalculus.Iso80000.References` — the citation catalogue: one
-    `StandardRef` per licensed part (ISO/IEC 80000-1 … -12).
+    `StandardRef` per licensed part (ISO/IEC 80000-1 … -13).
+  * `PropertyKindCalculus.Iso80000.Catalogue` — the shared catalogue scaffolding
+    reused by every part: the `CataloguedKind` record (a {dimensioned kind} plus its
+    citation locators), the `cite` renderer, and the `dimKind` builder. Defined once
+    here rather than restated per part.
   * `PropertyKindCalculus.Iso80000.Part3` — the full catalogue of ISO 80000-3 *Space
     and time* (all of items 3-1.1 … 3-26.3), with the length family as a
     specialization lattice (R2) and the dimension-collision capstones.
@@ -97,6 +101,7 @@ references catalogue alone is Mathlib-free.
 -/
 
 import PropertyKindCalculus.Iso80000.References
+import PropertyKindCalculus.Iso80000.Catalogue
 import PropertyKindCalculus.Iso80000.Part3
 import PropertyKindCalculus.Iso80000.Part3.AreaElement
 import PropertyKindCalculus.Iso80000.Part3.AreaClassification

@@ -43,7 +43,7 @@ type-level fact, so the joule of Fermi energy and the joule of gap energy are no
 interchangeable though they share one dimension.
 :::
 
-:::definition "def_part12_catalogued_kind" (parent := "iso80000_part12") (lean := "PropertyKindCalculus.Iso80000.Part12.CataloguedKind")
+:::definition "def_part12_catalogued_kind" (parent := "iso80000_part12") (lean := "PropertyKindCalculus.Iso80000.CataloguedKind")
 A _catalogued kind_ pairs a dimensioned {uses "def_quantity"}[quantity]-kind with its
 exact source in the series — the part, the printed item designation (e.g. "12-27.1"), the
 principal quantity symbol, and the coherent SI unit symbol. The citation travels with the

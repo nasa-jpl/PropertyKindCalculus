@@ -47,7 +47,7 @@ joule-per-cubic-metre of sound energy density are not interchangeable though the
 one dimension.
 :::
 
-:::definition "def_part8_catalogued_kind" (parent := "iso80000_part8") (lean := "PropertyKindCalculus.Iso80000.Part8.CataloguedKind")
+:::definition "def_part8_catalogued_kind" (parent := "iso80000_part8") (lean := "PropertyKindCalculus.Iso80000.CataloguedKind")
 A _catalogued kind_ pairs a dimensioned {uses "def_quantity"}[quantity]-kind with its
 exact source in the series — the part, the printed item designation (e.g. "8-2.2"), the
 principal quantity symbol, and the coherent SI unit symbol. The citation travels with the
