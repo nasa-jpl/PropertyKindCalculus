@@ -1011,169 +1011,6 @@ table.tabular td > p:last-child, table.tabular th > p:first-child {
   }
 }
 </style><style>
-#bp-style-switcher {
-  position: fixed;
-  right: 1rem;
-  bottom: 1rem;
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  gap: 0.4rem 0.6rem;
-  flex-wrap: wrap;
-  background: var(--bp-color-surface);
-  border: 1px solid var(--bp-color-border);
-  border-radius: var(--bp-radius-md);
-  box-shadow: var(--bp-shadow-sm);
-  padding: 0.4rem 0.55rem;
-  font-size: 0.82rem;
-}
-
-#bp-style-switcher .bp-style-switcher-control {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-}
-
-#bp-style-switcher label {
-  font-weight: 600;
-}
-
-#bp-style-switcher select {
-  border: 1px solid var(--bp-color-border);
-  border-radius: 0.3rem;
-  background: var(--bp-color-surface);
-  font-size: 0.82rem;
-  padding: 0.1rem 0.25rem;
-}
-
-html[data-bp-style="blueprint"] .bp_wrapper {
-  border: 1px solid var(--bp-color-border);
-  border-radius: var(--bp-radius-sm);
-  padding: 0.45rem 0.6rem 0.55rem;
-  background: var(--bp-color-surface);
-}
-
-html[data-bp-style="blueprint"] .bp_heading {
-  border-bottom: 1px solid var(--bp-color-border-soft);
-  padding-bottom: 0.35rem;
-}
-
-html[data-bp-style="blueprint"] .bp_content {
-  margin-top: 0.35rem;
-  padding-left: 0.45rem;
-}
-
-html[data-bp-style="blueprint"] .bp_kind_theorem_content,
-html[data-bp-style="blueprint"] .bp_kind_proposition_content,
-html[data-bp-style="blueprint"] .bp_kind_lemma_content,
-html[data-bp-style="blueprint"] .bp_kind_corollary_content,
-html[data-bp-style="blueprint"] .bp_kind_proof_content,
-html[data-bp-style="blueprint"] div.theorem_thmcontent,
-html[data-bp-style="blueprint"] div.proposition_thmcontent,
-html[data-bp-style="blueprint"] div.lemma_thmcontent,
-html[data-bp-style="blueprint"] div.corollary_thmcontent,
-html[data-bp-style="blueprint"] div.proof_content {
-  border-left-color: var(--bp-color-text-muted);
-}
-
-html[data-bp-style="modern"] .bp_wrapper {
-  border: 1px solid var(--bp-color-modern-border);
-  border-radius: var(--bp-radius-2xl);
-  padding: 0.6rem 0.7rem 0.68rem;
-  background: linear-gradient(180deg, var(--bp-color-surface), var(--bp-color-surface-modern));
-  box-shadow: var(--bp-shadow-modern);
-}
-
-html[data-bp-style="modern"] .bp_heading {
-  border-bottom: 1px solid var(--bp-color-border-soft);
-  padding-bottom: 0.4rem;
-}
-
-html[data-bp-style="modern"] .bp_caption {
-  background: var(--bp-color-modern-caption);
-  border-radius: var(--bp-radius-pill);
-  padding: 0.08rem 0.5rem;
-}
-
-html[data-bp-style="modern"] .bp_content {
-  margin-top: 0.45rem;
-  padding-left: 0.5rem;
-}
-
-html[data-bp-style="modern"] .bp_kind_theorem_content,
-html[data-bp-style="modern"] .bp_kind_proposition_content,
-html[data-bp-style="modern"] .bp_kind_lemma_content,
-html[data-bp-style="modern"] .bp_kind_corollary_content,
-html[data-bp-style="modern"] .bp_kind_proof_content,
-html[data-bp-style="modern"] .bp_wrapper div.theorem_thmcontent,
-html[data-bp-style="modern"] .bp_wrapper div.proposition_thmcontent,
-html[data-bp-style="modern"] .bp_wrapper div.lemma_thmcontent,
-html[data-bp-style="modern"] .bp_wrapper div.corollary_thmcontent,
-html[data-bp-style="modern"] .bp_wrapper div.proof_content {
-  border-left-color: var(--bp-color-text-faint);
-}
-
-html[data-bp-style="bold"] .bp_wrapper {
-  border: 2px solid var(--bp-color-text-strong);
-  border-radius: var(--bp-radius-3xl);
-  padding: 0.6rem 0.75rem 0.75rem;
-  background:
-    radial-gradient(circle at 100% 0%, var(--bp-color-bold-surface-glow-1), transparent 36%),
-    radial-gradient(circle at 0% 100%, var(--bp-color-bold-surface-glow-2), transparent 32%),
-    var(--bp-color-surface);
-  box-shadow: var(--bp-shadow-bold-lg);
-}
-
-html[data-bp-style="bold"] .bp_heading {
-  border-bottom: 2px solid var(--bp-color-text-strong);
-  padding-bottom: 0.45rem;
-  letter-spacing: 0.01em;
-}
-
-html[data-bp-style="bold"] .bp_caption {
-  background: var(--bp-color-text-strong);
-  color: var(--bp-color-surface-muted);
-  border-radius: 0.25rem;
-  padding: 0.08rem 0.45rem;
-  text-transform: uppercase;
-}
-
-html[data-bp-style="bold"] .bp_label {
-  background: var(--bp-color-bold-label);
-  color: var(--bp-color-text);
-  border-radius: var(--bp-radius-pill);
-  padding: 0.06rem 0.42rem;
-}
-
-html[data-bp-style="bold"] .bp_code_link {
-  color: var(--bp-color-bold-link);
-  font-weight: 700;
-}
-
-html[data-bp-style="bold"] .bp_code_hover {
-  border: 2px solid var(--bp-color-text-strong);
-  border-radius: var(--bp-radius-xl);
-  box-shadow: var(--bp-shadow-bold);
-}
-
-html[data-bp-style="bold"] .bp_content {
-  margin-top: 0.5rem;
-  padding-left: 0.6rem;
-}
-
-html[data-bp-style="bold"] .bp_kind_theorem_content,
-html[data-bp-style="bold"] .bp_kind_proposition_content,
-html[data-bp-style="bold"] .bp_kind_lemma_content,
-html[data-bp-style="bold"] .bp_kind_corollary_content,
-html[data-bp-style="bold"] .bp_kind_proof_content,
-html[data-bp-style="bold"] .bp_wrapper div.theorem_thmcontent,
-html[data-bp-style="bold"] .bp_wrapper div.proposition_thmcontent,
-html[data-bp-style="bold"] .bp_wrapper div.lemma_thmcontent,
-html[data-bp-style="bold"] .bp_wrapper div.corollary_thmcontent,
-html[data-bp-style="bold"] .bp_wrapper div.proof_content {
-  border-left: 0.2rem solid var(--bp-color-text-strong);
-}
-</style><style>
 .bp_wrapper {
   scroll-margin-top: 1rem;
   margin: 0.85rem 0;
@@ -1232,7 +1069,7 @@ span[class$="_thmlabel"]::after {
 
 .bp_extras {
   --bp-extra-group-col: minmax(5rem, max-content);
-  --bp-extra-uses-col: minmax(4.2rem, max-content);
+  --bp-extra-uses-col: minmax(5.2rem, max-content);
   --bp-extra-used-by-col: minmax(7.2rem, max-content);
   --bp-extra-code-col: max-content;
   --bp-extra-code-placeholder-col: minmax(3.35rem, max-content);
@@ -1268,20 +1105,6 @@ span[class$="_thmlabel"]::after {
     var(--bp-extra-used-by-col)
     var(--bp-extra-code-col);
   grid-template-areas: "group used code";
-}
-
-.bp_extras_with_uses {
-  grid-template-columns: minmax(5.2rem, max-content) max-content minmax(7.2rem, max-content);
-  grid-template-areas: "uses used code";
-}
-
-.bp_extras_with_group.bp_extras_with_uses {
-  grid-template-columns:
-    minmax(5rem, max-content)
-    minmax(5.2rem, max-content)
-    minmax(7.2rem, max-content)
-    max-content;
-  grid-template-areas: "group uses used code";
 }
 
 .bp_extras_with_group.bp_extras_with_uses {
@@ -2651,6 +2474,169 @@ div.proof_content {
     background-color: transparent;
     box-shadow: 0 0 0 0.18rem var(--bp-color-target-ring);
   }
+}
+</style><style>
+#bp-style-switcher {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem 0.6rem;
+  flex-wrap: wrap;
+  background: var(--bp-color-surface);
+  border: 1px solid var(--bp-color-border);
+  border-radius: var(--bp-radius-md);
+  box-shadow: var(--bp-shadow-sm);
+  padding: 0.4rem 0.55rem;
+  font-size: 0.82rem;
+}
+
+#bp-style-switcher .bp-style-switcher-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+#bp-style-switcher label {
+  font-weight: 600;
+}
+
+#bp-style-switcher select {
+  border: 1px solid var(--bp-color-border);
+  border-radius: 0.3rem;
+  background: var(--bp-color-surface);
+  font-size: 0.82rem;
+  padding: 0.1rem 0.25rem;
+}
+
+html[data-bp-style="blueprint"] .bp_wrapper {
+  border: 1px solid var(--bp-color-border);
+  border-radius: var(--bp-radius-sm);
+  padding: 0.45rem 0.6rem 0.55rem;
+  background: var(--bp-color-surface);
+}
+
+html[data-bp-style="blueprint"] .bp_heading {
+  border-bottom: 1px solid var(--bp-color-border-soft);
+  padding-bottom: 0.35rem;
+}
+
+html[data-bp-style="blueprint"] .bp_content {
+  margin-top: 0.35rem;
+  padding-left: 0.45rem;
+}
+
+html[data-bp-style="blueprint"] .bp_kind_theorem_content,
+html[data-bp-style="blueprint"] .bp_kind_proposition_content,
+html[data-bp-style="blueprint"] .bp_kind_lemma_content,
+html[data-bp-style="blueprint"] .bp_kind_corollary_content,
+html[data-bp-style="blueprint"] .bp_kind_proof_content,
+html[data-bp-style="blueprint"] div.theorem_thmcontent,
+html[data-bp-style="blueprint"] div.proposition_thmcontent,
+html[data-bp-style="blueprint"] div.lemma_thmcontent,
+html[data-bp-style="blueprint"] div.corollary_thmcontent,
+html[data-bp-style="blueprint"] div.proof_content {
+  border-left-color: var(--bp-color-text-muted);
+}
+
+html[data-bp-style="modern"] .bp_wrapper {
+  border: 1px solid var(--bp-color-modern-border);
+  border-radius: var(--bp-radius-2xl);
+  padding: 0.6rem 0.7rem 0.68rem;
+  background: linear-gradient(180deg, var(--bp-color-surface), var(--bp-color-surface-modern));
+  box-shadow: var(--bp-shadow-modern);
+}
+
+html[data-bp-style="modern"] .bp_heading {
+  border-bottom: 1px solid var(--bp-color-border-soft);
+  padding-bottom: 0.4rem;
+}
+
+html[data-bp-style="modern"] .bp_caption {
+  background: var(--bp-color-modern-caption);
+  border-radius: var(--bp-radius-pill);
+  padding: 0.08rem 0.5rem;
+}
+
+html[data-bp-style="modern"] .bp_content {
+  margin-top: 0.45rem;
+  padding-left: 0.5rem;
+}
+
+html[data-bp-style="modern"] .bp_kind_theorem_content,
+html[data-bp-style="modern"] .bp_kind_proposition_content,
+html[data-bp-style="modern"] .bp_kind_lemma_content,
+html[data-bp-style="modern"] .bp_kind_corollary_content,
+html[data-bp-style="modern"] .bp_kind_proof_content,
+html[data-bp-style="modern"] .bp_wrapper div.theorem_thmcontent,
+html[data-bp-style="modern"] .bp_wrapper div.proposition_thmcontent,
+html[data-bp-style="modern"] .bp_wrapper div.lemma_thmcontent,
+html[data-bp-style="modern"] .bp_wrapper div.corollary_thmcontent,
+html[data-bp-style="modern"] .bp_wrapper div.proof_content {
+  border-left-color: var(--bp-color-text-faint);
+}
+
+html[data-bp-style="bold"] .bp_wrapper {
+  border: 2px solid var(--bp-color-text-strong);
+  border-radius: var(--bp-radius-3xl);
+  padding: 0.6rem 0.75rem 0.75rem;
+  background:
+    radial-gradient(circle at 100% 0%, var(--bp-color-bold-surface-glow-1), transparent 36%),
+    radial-gradient(circle at 0% 100%, var(--bp-color-bold-surface-glow-2), transparent 32%),
+    var(--bp-color-surface);
+  box-shadow: var(--bp-shadow-bold-lg);
+}
+
+html[data-bp-style="bold"] .bp_heading {
+  border-bottom: 2px solid var(--bp-color-text-strong);
+  padding-bottom: 0.45rem;
+  letter-spacing: 0.01em;
+}
+
+html[data-bp-style="bold"] .bp_caption {
+  background: var(--bp-color-text-strong);
+  color: var(--bp-color-surface-muted);
+  border-radius: 0.25rem;
+  padding: 0.08rem 0.45rem;
+  text-transform: uppercase;
+}
+
+html[data-bp-style="bold"] .bp_label {
+  background: var(--bp-color-bold-label);
+  color: var(--bp-color-text);
+  border-radius: var(--bp-radius-pill);
+  padding: 0.06rem 0.42rem;
+}
+
+html[data-bp-style="bold"] .bp_code_link {
+  color: var(--bp-color-bold-link);
+  font-weight: 700;
+}
+
+html[data-bp-style="bold"] .bp_code_hover {
+  border: 2px solid var(--bp-color-text-strong);
+  border-radius: var(--bp-radius-xl);
+  box-shadow: var(--bp-shadow-bold);
+}
+
+html[data-bp-style="bold"] .bp_content {
+  margin-top: 0.5rem;
+  padding-left: 0.6rem;
+}
+
+html[data-bp-style="bold"] .bp_kind_theorem_content,
+html[data-bp-style="bold"] .bp_kind_proposition_content,
+html[data-bp-style="bold"] .bp_kind_lemma_content,
+html[data-bp-style="bold"] .bp_kind_corollary_content,
+html[data-bp-style="bold"] .bp_kind_proof_content,
+html[data-bp-style="bold"] .bp_wrapper div.theorem_thmcontent,
+html[data-bp-style="bold"] .bp_wrapper div.proposition_thmcontent,
+html[data-bp-style="bold"] .bp_wrapper div.lemma_thmcontent,
+html[data-bp-style="bold"] .bp_wrapper div.corollary_thmcontent,
+html[data-bp-style="bold"] .bp_wrapper div.proof_content {
+  border-left: 0.2rem solid var(--bp-color-text-strong);
 }
 </style><style>
 .bp_preview_header_heading {
@@ -4927,17 +4913,8 @@ window.onload = () => {
   function normalizePreviewMode(rawMode, fallback) {
     const defaultMode = fallback === "hover" || fallback === "pinned" ? fallback : "hover";
     const mode = String(rawMode || "").trim().toLowerCase();
-    if (mode === "hover" || mode === "transient") return "hover";
-    if (
-      mode === "pinned" ||
-      mode === "pin" ||
-      mode === "click" ||
-      mode === "click-to-pin" ||
-      mode === "click-and-stay" ||
-      mode === "click-to-stay"
-    ) {
-      return "pinned";
-    }
+    if (mode === "hover") return "hover";
+    if (mode === "pinned") return "pinned";
     return defaultMode;
   }
 
@@ -4945,23 +4922,8 @@ window.onload = () => {
     const defaultPlacement =
       fallback === "anchored" || fallback === "docked" ? fallback : "anchored";
     const placement = String(rawPlacement || "").trim().toLowerCase();
-    if (
-      placement === "anchored" ||
-      placement === "anchor" ||
-      placement === "near" ||
-      placement === "near-node" ||
-      placement === "node"
-    ) {
-      return "anchored";
-    }
-    if (
-      placement === "docked" ||
-      placement === "dock" ||
-      placement === "fixed" ||
-      placement === "panel"
-    ) {
-      return "docked";
-    }
+    if (placement === "anchored") return "anchored";
+    if (placement === "docked") return "docked";
     return defaultPlacement;
   }
 
@@ -5342,8 +5304,6 @@ window.onload = () => {
     bindCloseOnce: bindCloseOnce,
     positionAnchoredPanel: positionAnchoredPanel,
     shouldKeepOpen: shouldKeepOpen,
-    normalizePreviewMode: normalizePreviewMode,
-    normalizePreviewPlacement: normalizePreviewPlacement,
     readPanelBehavior: readPanelBehavior,
     resetPanelPosition: resetPanelPosition,
     configureCloseButton: configureCloseButton,
@@ -8036,7 +7996,7 @@ flux is <code>T⁻¹</code>, not <code>M·L²·T⁻³</code>).</p>
                         </div>
                       </div>
                     </span><span class="bp_extra_slot bp_extra_slot_uses"><div class="bp_relation_wrap">
-                      <button type="button" class="bp_relation_chip bp_uses_chip" title="Statement dependencies used by def_part7_radiation_mode" aria-expanded="false">uses 2</button><div class="bp_relation_panel">
+                      <button type="button" class="bp_relation_chip" title="Statement dependencies used by def_part7_radiation_mode" aria-expanded="false">uses 2</button><div class="bp_relation_panel">
                         <div class="bp_relation_panel_header">
                           <div class="bp_relation_panel_title">
                             Statement uses 2</div>
@@ -8119,15 +8079,15 @@ radiant, luminous, and photon members of each measurand's trio differ in this pr
     </div>
   <div class="bp_external_decl_signature_wrap">
     <div class="wide-only">
-      <pre class="bp_external_decl_signature signature hl lean block"><span class="keyword token">def</span> <span class="inter-text"></span><span class="const token" data-binding="const-PropertyKindCalculus.Iso80000.Part7.modeKind" data-verso-hover="428">PropertyKindCalculus.Iso80000.Part7.modeKind</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.2407" data-verso-hover="263">id</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-String" data-verso-hover="1">String</span><span class="unknown token" data-binding="">)</span><span class="inter-text">
-  </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.2408" data-verso-hover="264">m</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-PropertyKindCalculus.ExaminationPrinciple" data-verso-hover="48">PropertyKindCalculus.ExaminationPrinciple</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.2409" data-verso-hover="183">dim</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-Dimension" data-verso-hover="173">Dimension</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text">
+      <pre class="bp_external_decl_signature signature hl lean block"><span class="keyword token">def</span> <span class="inter-text"></span><span class="const token" data-binding="const-PropertyKindCalculus.Iso80000.Part7.modeKind" data-verso-hover="428">PropertyKindCalculus.Iso80000.Part7.modeKind</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.2711" data-verso-hover="263">id</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-String" data-verso-hover="1">String</span><span class="unknown token" data-binding="">)</span><span class="inter-text">
+  </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.2712" data-verso-hover="264">m</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-PropertyKindCalculus.ExaminationPrinciple" data-verso-hover="48">PropertyKindCalculus.ExaminationPrinciple</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.2713" data-verso-hover="183">dim</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-Dimension" data-verso-hover="173">Dimension</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text">
   </span><span class="const token" data-binding="const-PropertyKindCalculus.DimensionedKind" data-verso-hover="172">PropertyKindCalculus.DimensionedKind</span></pre></div>
     <div class="narrow-only">
       <pre class="bp_external_decl_signature signature hl lean block"><span class="keyword token">def</span> <span class="inter-text"></span><span class="const token" data-binding="const-PropertyKindCalculus.Iso80000.Part7.modeKind" data-verso-hover="428">PropertyKindCalculus.Iso80000.Part7.modeKind</span><span class="inter-text">
-  </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.2407" data-verso-hover="263">id</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-String" data-verso-hover="1">String</span><span class="unknown token" data-binding="">)</span><span class="inter-text">
-  </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.2408" data-verso-hover="264">m</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text">
+  </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.2711" data-verso-hover="263">id</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-String" data-verso-hover="1">String</span><span class="unknown token" data-binding="">)</span><span class="inter-text">
+  </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.2712" data-verso-hover="264">m</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text">
     </span><span class="const token" data-binding="const-PropertyKindCalculus.ExaminationPrinciple" data-verso-hover="48">PropertyKindCalculus.ExaminationPrinciple</span><span class="unknown token" data-binding="">)</span><span class="inter-text">
-  </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.2409" data-verso-hover="183">dim</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-Dimension" data-verso-hover="173">Dimension</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text">
+  </span><span class="unknown token" data-binding="">(</span><span class="var token" data-binding="var-_uniq.2713" data-verso-hover="183">dim</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text"> </span><span class="const token" data-binding="const-Dimension" data-verso-hover="173">Dimension</span><span class="unknown token" data-binding="">)</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text">
   </span><span class="const token" data-binding="const-PropertyKindCalculus.DimensionedKind" data-verso-hover="172">PropertyKindCalculus.DimensionedKind</span></pre></div>
     </div>
   <div class="bp_external_decl_body">
@@ -8143,7 +8103,7 @@ principle). </pre></div>
                 <div class="bp_heading_title_row">
                   <span class="bp_caption bp_kind_proof_caption proof_caption" title="def_part7_radiation_mode">Proof for Definition 17.2.1</span></div>
                 <div class="bp_extras thm_header_extras bp_extras_with_uses">
-                  <span class="bp_extra_slot bp_extra_slot_uses"><span class="bp_relation_chip bp_relation_chip_empty bp_uses_chip" title="No declared proof dependencies">uses 0</span></span></div>
+                  <span class="bp_extra_slot bp_extra_slot_uses"><span class="bp_relation_chip bp_relation_chip_empty" title="No declared proof dependencies">uses 0</span></span></div>
                 </div>
               <div class="bp_content bp_kind_proof_content proof_content">
                 <p>
@@ -8194,7 +8154,7 @@ radiance, irradiance, exitance, and exposure.</p>
                           </div>
                         </div>
                       </div>
-                    </span><span class="bp_extra_slot bp_extra_slot_uses"><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart7-005Ftrio-def-005Fexamination" data-bp-preview-title="Definition 5.5.1" data-bp-preview-key="def_examination--statement" data-bp-preview-fallback-label="def_examination" data-bp-preview-header-label="def_examination" data-bp-preview-header-href="The-Proved-Spine/Examination-___-principle___-method___-procedure-_LPAR_Dybk___r-Ch___-7___-14_RPAR_/index.html#--informal-preview-def_examination--statement" data-bp-preview-footer-html="<span class=&quot;bp_relation_axis_badge bp_relation_badge_axis bp_relation_badge_statement&quot; title=&quot;Declared in the statement&quot;>statement</span>"><a class="bp_relation_chip bp_uses_chip bp_code_link" href="The-Proved-Spine/Examination-___-principle___-method___-procedure-_LPAR_Dybk___r-Ch___-7___-14_RPAR_/index.html#--informal-preview-def_examination--statement" title="Statement dependency: Definition 5.5.1">uses 1</a></span></span><span class="bp_extra_slot bp_extra_slot_used_by"><span class="bp_relation_chip bp_relation_chip_empty" title="No reverse dependencies">used by 0</span></span><span class="bp_extra_slot bp_extra_slot_code"><span class="bp_code_summary_preview_root"><span class="bp_code_summary_preview_wrap bp_code_summary_preview_wrap_active" data-bp-preview-id="bp-code-summary" data-bp-preview-title="thm_part7_trio" tabindex="0" role="button" aria-label="Lean declarations (all present: 1/1)"><span class="bp_code_link bp_code_link_status bp_code_link_status_proved" title="Lean declarations (all present: 1/1)"><span class="bp_code_status_symbol">✓</span><span class="bp_code_link_label">L∃∀N</span></span></span><template class="bp_code_summary_preview_tpl" data-bp-preview-id="bp-code-summary"><div class="bp_code_summary_preview_content">
+                    </span><span class="bp_extra_slot bp_extra_slot_uses"><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart7-005Ftrio-def-005Fexamination" data-bp-preview-title="Definition 5.5.1" data-bp-preview-key="def_examination--statement" data-bp-preview-fallback-label="def_examination" data-bp-preview-header-label="def_examination" data-bp-preview-header-href="The-Proved-Spine/Examination-___-principle___-method___-procedure-_LPAR_Dybk___r-Ch___-7___-14_RPAR_/index.html#--informal-preview-def_examination--statement" data-bp-preview-footer-html="<span class=&quot;bp_relation_axis_badge bp_relation_badge_axis bp_relation_badge_statement&quot; title=&quot;Declared in the statement&quot;>statement</span>"><a class="bp_relation_chip bp_code_link" href="The-Proved-Spine/Examination-___-principle___-method___-procedure-_LPAR_Dybk___r-Ch___-7___-14_RPAR_/index.html#--informal-preview-def_examination--statement" title="Statement dependency: Definition 5.5.1">uses 1</a></span></span><span class="bp_extra_slot bp_extra_slot_used_by"><span class="bp_relation_chip bp_relation_chip_empty" title="No reverse dependencies">used by 0</span></span><span class="bp_extra_slot bp_extra_slot_code"><span class="bp_code_summary_preview_root"><span class="bp_code_summary_preview_wrap bp_code_summary_preview_wrap_active" data-bp-preview-id="bp-code-summary" data-bp-preview-title="thm_part7_trio" tabindex="0" role="button" aria-label="Lean declarations (all present: 1/1)"><span class="bp_code_link bp_code_link_status bp_code_link_status_proved" title="Lean declarations (all present: 1/1)"><span class="bp_code_status_symbol">✓</span><span class="bp_code_link_label">L∃∀N</span></span></span><template class="bp_code_summary_preview_tpl" data-bp-preview-id="bp-code-summary"><div class="bp_code_summary_preview_content">
                           <div class="bp_code_hover_section">
                             <span class="bp_code_hover_label">Associated Lean declarations</span><ul class="bp_code_hover_list">
                               <li class="bp_code_decl_item">
@@ -8269,7 +8229,7 @@ realized as a kind distinction. </pre></div>
                 <div class="bp_heading_title_row">
                   <span class="bp_caption bp_kind_proof_caption proof_caption" title="thm_part7_trio">Proof for Theorem 17.2.2</span></div>
                 <div class="bp_extras thm_header_extras bp_extras_with_uses">
-                  <span class="bp_extra_slot bp_extra_slot_uses"><span class="bp_relation_chip bp_relation_chip_empty bp_uses_chip" title="No declared proof dependencies">uses 0</span></span></div>
+                  <span class="bp_extra_slot bp_extra_slot_uses"><span class="bp_relation_chip bp_relation_chip_empty" title="No declared proof dependencies">uses 0</span></span></div>
                 </div>
               <div class="bp_content bp_kind_proof_content proof_content">
                 <p>
@@ -8322,7 +8282,7 @@ and <code>radiance_ne_luminance</code> cover further trios; <code>radiantFlux_ex
                         </div>
                       </div>
                     </span><span class="bp_extra_slot bp_extra_slot_uses"><div class="bp_relation_wrap">
-                      <button type="button" class="bp_relation_chip bp_uses_chip" title="Statement dependencies used by thm_part7_efficacy" aria-expanded="false">uses 2</button><div class="bp_relation_panel">
+                      <button type="button" class="bp_relation_chip" title="Statement dependencies used by thm_part7_efficacy" aria-expanded="false">uses 2</button><div class="bp_relation_panel">
                         <div class="bp_relation_panel_header">
                           <div class="bp_relation_panel_title">
                             Statement uses 2</div>
@@ -8435,7 +8395,7 @@ kind from every other dimension-one quantity (see `Part7.iso80000_7_dim_one_coll
                 <div class="bp_heading_title_row">
                   <span class="bp_caption bp_kind_proof_caption proof_caption" title="thm_part7_efficacy">Proof for Theorem 17.2.3</span></div>
                 <div class="bp_extras thm_header_extras bp_extras_with_uses">
-                  <span class="bp_extra_slot bp_extra_slot_uses"><span class="bp_relation_chip bp_relation_chip_empty bp_uses_chip" title="No declared proof dependencies">uses 0</span></span></div>
+                  <span class="bp_extra_slot bp_extra_slot_uses"><span class="bp_relation_chip bp_relation_chip_empty" title="No declared proof dependencies">uses 0</span></span></div>
                 </div>
               <div class="bp_content bp_kind_proof_content proof_content">
                 <p>

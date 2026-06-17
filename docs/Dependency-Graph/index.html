@@ -1011,169 +1011,6 @@ table.tabular td > p:last-child, table.tabular th > p:first-child {
   }
 }
 </style><style>
-#bp-style-switcher {
-  position: fixed;
-  right: 1rem;
-  bottom: 1rem;
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  gap: 0.4rem 0.6rem;
-  flex-wrap: wrap;
-  background: var(--bp-color-surface);
-  border: 1px solid var(--bp-color-border);
-  border-radius: var(--bp-radius-md);
-  box-shadow: var(--bp-shadow-sm);
-  padding: 0.4rem 0.55rem;
-  font-size: 0.82rem;
-}
-
-#bp-style-switcher .bp-style-switcher-control {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-}
-
-#bp-style-switcher label {
-  font-weight: 600;
-}
-
-#bp-style-switcher select {
-  border: 1px solid var(--bp-color-border);
-  border-radius: 0.3rem;
-  background: var(--bp-color-surface);
-  font-size: 0.82rem;
-  padding: 0.1rem 0.25rem;
-}
-
-html[data-bp-style="blueprint"] .bp_wrapper {
-  border: 1px solid var(--bp-color-border);
-  border-radius: var(--bp-radius-sm);
-  padding: 0.45rem 0.6rem 0.55rem;
-  background: var(--bp-color-surface);
-}
-
-html[data-bp-style="blueprint"] .bp_heading {
-  border-bottom: 1px solid var(--bp-color-border-soft);
-  padding-bottom: 0.35rem;
-}
-
-html[data-bp-style="blueprint"] .bp_content {
-  margin-top: 0.35rem;
-  padding-left: 0.45rem;
-}
-
-html[data-bp-style="blueprint"] .bp_kind_theorem_content,
-html[data-bp-style="blueprint"] .bp_kind_proposition_content,
-html[data-bp-style="blueprint"] .bp_kind_lemma_content,
-html[data-bp-style="blueprint"] .bp_kind_corollary_content,
-html[data-bp-style="blueprint"] .bp_kind_proof_content,
-html[data-bp-style="blueprint"] div.theorem_thmcontent,
-html[data-bp-style="blueprint"] div.proposition_thmcontent,
-html[data-bp-style="blueprint"] div.lemma_thmcontent,
-html[data-bp-style="blueprint"] div.corollary_thmcontent,
-html[data-bp-style="blueprint"] div.proof_content {
-  border-left-color: var(--bp-color-text-muted);
-}
-
-html[data-bp-style="modern"] .bp_wrapper {
-  border: 1px solid var(--bp-color-modern-border);
-  border-radius: var(--bp-radius-2xl);
-  padding: 0.6rem 0.7rem 0.68rem;
-  background: linear-gradient(180deg, var(--bp-color-surface), var(--bp-color-surface-modern));
-  box-shadow: var(--bp-shadow-modern);
-}
-
-html[data-bp-style="modern"] .bp_heading {
-  border-bottom: 1px solid var(--bp-color-border-soft);
-  padding-bottom: 0.4rem;
-}
-
-html[data-bp-style="modern"] .bp_caption {
-  background: var(--bp-color-modern-caption);
-  border-radius: var(--bp-radius-pill);
-  padding: 0.08rem 0.5rem;
-}
-
-html[data-bp-style="modern"] .bp_content {
-  margin-top: 0.45rem;
-  padding-left: 0.5rem;
-}
-
-html[data-bp-style="modern"] .bp_kind_theorem_content,
-html[data-bp-style="modern"] .bp_kind_proposition_content,
-html[data-bp-style="modern"] .bp_kind_lemma_content,
-html[data-bp-style="modern"] .bp_kind_corollary_content,
-html[data-bp-style="modern"] .bp_kind_proof_content,
-html[data-bp-style="modern"] .bp_wrapper div.theorem_thmcontent,
-html[data-bp-style="modern"] .bp_wrapper div.proposition_thmcontent,
-html[data-bp-style="modern"] .bp_wrapper div.lemma_thmcontent,
-html[data-bp-style="modern"] .bp_wrapper div.corollary_thmcontent,
-html[data-bp-style="modern"] .bp_wrapper div.proof_content {
-  border-left-color: var(--bp-color-text-faint);
-}
-
-html[data-bp-style="bold"] .bp_wrapper {
-  border: 2px solid var(--bp-color-text-strong);
-  border-radius: var(--bp-radius-3xl);
-  padding: 0.6rem 0.75rem 0.75rem;
-  background:
-    radial-gradient(circle at 100% 0%, var(--bp-color-bold-surface-glow-1), transparent 36%),
-    radial-gradient(circle at 0% 100%, var(--bp-color-bold-surface-glow-2), transparent 32%),
-    var(--bp-color-surface);
-  box-shadow: var(--bp-shadow-bold-lg);
-}
-
-html[data-bp-style="bold"] .bp_heading {
-  border-bottom: 2px solid var(--bp-color-text-strong);
-  padding-bottom: 0.45rem;
-  letter-spacing: 0.01em;
-}
-
-html[data-bp-style="bold"] .bp_caption {
-  background: var(--bp-color-text-strong);
-  color: var(--bp-color-surface-muted);
-  border-radius: 0.25rem;
-  padding: 0.08rem 0.45rem;
-  text-transform: uppercase;
-}
-
-html[data-bp-style="bold"] .bp_label {
-  background: var(--bp-color-bold-label);
-  color: var(--bp-color-text);
-  border-radius: var(--bp-radius-pill);
-  padding: 0.06rem 0.42rem;
-}
-
-html[data-bp-style="bold"] .bp_code_link {
-  color: var(--bp-color-bold-link);
-  font-weight: 700;
-}
-
-html[data-bp-style="bold"] .bp_code_hover {
-  border: 2px solid var(--bp-color-text-strong);
-  border-radius: var(--bp-radius-xl);
-  box-shadow: var(--bp-shadow-bold);
-}
-
-html[data-bp-style="bold"] .bp_content {
-  margin-top: 0.5rem;
-  padding-left: 0.6rem;
-}
-
-html[data-bp-style="bold"] .bp_kind_theorem_content,
-html[data-bp-style="bold"] .bp_kind_proposition_content,
-html[data-bp-style="bold"] .bp_kind_lemma_content,
-html[data-bp-style="bold"] .bp_kind_corollary_content,
-html[data-bp-style="bold"] .bp_kind_proof_content,
-html[data-bp-style="bold"] .bp_wrapper div.theorem_thmcontent,
-html[data-bp-style="bold"] .bp_wrapper div.proposition_thmcontent,
-html[data-bp-style="bold"] .bp_wrapper div.lemma_thmcontent,
-html[data-bp-style="bold"] .bp_wrapper div.corollary_thmcontent,
-html[data-bp-style="bold"] .bp_wrapper div.proof_content {
-  border-left: 0.2rem solid var(--bp-color-text-strong);
-}
-</style><style>
 .bp_wrapper {
   scroll-margin-top: 1rem;
   margin: 0.85rem 0;
@@ -1232,7 +1069,7 @@ span[class$="_thmlabel"]::after {
 
 .bp_extras {
   --bp-extra-group-col: minmax(5rem, max-content);
-  --bp-extra-uses-col: minmax(4.2rem, max-content);
+  --bp-extra-uses-col: minmax(5.2rem, max-content);
   --bp-extra-used-by-col: minmax(7.2rem, max-content);
   --bp-extra-code-col: max-content;
   --bp-extra-code-placeholder-col: minmax(3.35rem, max-content);
@@ -1268,20 +1105,6 @@ span[class$="_thmlabel"]::after {
     var(--bp-extra-used-by-col)
     var(--bp-extra-code-col);
   grid-template-areas: "group used code";
-}
-
-.bp_extras_with_uses {
-  grid-template-columns: minmax(5.2rem, max-content) max-content minmax(7.2rem, max-content);
-  grid-template-areas: "uses used code";
-}
-
-.bp_extras_with_group.bp_extras_with_uses {
-  grid-template-columns:
-    minmax(5rem, max-content)
-    minmax(5.2rem, max-content)
-    minmax(7.2rem, max-content)
-    max-content;
-  grid-template-areas: "group uses used code";
 }
 
 .bp_extras_with_group.bp_extras_with_uses {
@@ -2651,6 +2474,169 @@ div.proof_content {
     background-color: transparent;
     box-shadow: 0 0 0 0.18rem var(--bp-color-target-ring);
   }
+}
+</style><style>
+#bp-style-switcher {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem 0.6rem;
+  flex-wrap: wrap;
+  background: var(--bp-color-surface);
+  border: 1px solid var(--bp-color-border);
+  border-radius: var(--bp-radius-md);
+  box-shadow: var(--bp-shadow-sm);
+  padding: 0.4rem 0.55rem;
+  font-size: 0.82rem;
+}
+
+#bp-style-switcher .bp-style-switcher-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+#bp-style-switcher label {
+  font-weight: 600;
+}
+
+#bp-style-switcher select {
+  border: 1px solid var(--bp-color-border);
+  border-radius: 0.3rem;
+  background: var(--bp-color-surface);
+  font-size: 0.82rem;
+  padding: 0.1rem 0.25rem;
+}
+
+html[data-bp-style="blueprint"] .bp_wrapper {
+  border: 1px solid var(--bp-color-border);
+  border-radius: var(--bp-radius-sm);
+  padding: 0.45rem 0.6rem 0.55rem;
+  background: var(--bp-color-surface);
+}
+
+html[data-bp-style="blueprint"] .bp_heading {
+  border-bottom: 1px solid var(--bp-color-border-soft);
+  padding-bottom: 0.35rem;
+}
+
+html[data-bp-style="blueprint"] .bp_content {
+  margin-top: 0.35rem;
+  padding-left: 0.45rem;
+}
+
+html[data-bp-style="blueprint"] .bp_kind_theorem_content,
+html[data-bp-style="blueprint"] .bp_kind_proposition_content,
+html[data-bp-style="blueprint"] .bp_kind_lemma_content,
+html[data-bp-style="blueprint"] .bp_kind_corollary_content,
+html[data-bp-style="blueprint"] .bp_kind_proof_content,
+html[data-bp-style="blueprint"] div.theorem_thmcontent,
+html[data-bp-style="blueprint"] div.proposition_thmcontent,
+html[data-bp-style="blueprint"] div.lemma_thmcontent,
+html[data-bp-style="blueprint"] div.corollary_thmcontent,
+html[data-bp-style="blueprint"] div.proof_content {
+  border-left-color: var(--bp-color-text-muted);
+}
+
+html[data-bp-style="modern"] .bp_wrapper {
+  border: 1px solid var(--bp-color-modern-border);
+  border-radius: var(--bp-radius-2xl);
+  padding: 0.6rem 0.7rem 0.68rem;
+  background: linear-gradient(180deg, var(--bp-color-surface), var(--bp-color-surface-modern));
+  box-shadow: var(--bp-shadow-modern);
+}
+
+html[data-bp-style="modern"] .bp_heading {
+  border-bottom: 1px solid var(--bp-color-border-soft);
+  padding-bottom: 0.4rem;
+}
+
+html[data-bp-style="modern"] .bp_caption {
+  background: var(--bp-color-modern-caption);
+  border-radius: var(--bp-radius-pill);
+  padding: 0.08rem 0.5rem;
+}
+
+html[data-bp-style="modern"] .bp_content {
+  margin-top: 0.45rem;
+  padding-left: 0.5rem;
+}
+
+html[data-bp-style="modern"] .bp_kind_theorem_content,
+html[data-bp-style="modern"] .bp_kind_proposition_content,
+html[data-bp-style="modern"] .bp_kind_lemma_content,
+html[data-bp-style="modern"] .bp_kind_corollary_content,
+html[data-bp-style="modern"] .bp_kind_proof_content,
+html[data-bp-style="modern"] .bp_wrapper div.theorem_thmcontent,
+html[data-bp-style="modern"] .bp_wrapper div.proposition_thmcontent,
+html[data-bp-style="modern"] .bp_wrapper div.lemma_thmcontent,
+html[data-bp-style="modern"] .bp_wrapper div.corollary_thmcontent,
+html[data-bp-style="modern"] .bp_wrapper div.proof_content {
+  border-left-color: var(--bp-color-text-faint);
+}
+
+html[data-bp-style="bold"] .bp_wrapper {
+  border: 2px solid var(--bp-color-text-strong);
+  border-radius: var(--bp-radius-3xl);
+  padding: 0.6rem 0.75rem 0.75rem;
+  background:
+    radial-gradient(circle at 100% 0%, var(--bp-color-bold-surface-glow-1), transparent 36%),
+    radial-gradient(circle at 0% 100%, var(--bp-color-bold-surface-glow-2), transparent 32%),
+    var(--bp-color-surface);
+  box-shadow: var(--bp-shadow-bold-lg);
+}
+
+html[data-bp-style="bold"] .bp_heading {
+  border-bottom: 2px solid var(--bp-color-text-strong);
+  padding-bottom: 0.45rem;
+  letter-spacing: 0.01em;
+}
+
+html[data-bp-style="bold"] .bp_caption {
+  background: var(--bp-color-text-strong);
+  color: var(--bp-color-surface-muted);
+  border-radius: 0.25rem;
+  padding: 0.08rem 0.45rem;
+  text-transform: uppercase;
+}
+
+html[data-bp-style="bold"] .bp_label {
+  background: var(--bp-color-bold-label);
+  color: var(--bp-color-text);
+  border-radius: var(--bp-radius-pill);
+  padding: 0.06rem 0.42rem;
+}
+
+html[data-bp-style="bold"] .bp_code_link {
+  color: var(--bp-color-bold-link);
+  font-weight: 700;
+}
+
+html[data-bp-style="bold"] .bp_code_hover {
+  border: 2px solid var(--bp-color-text-strong);
+  border-radius: var(--bp-radius-xl);
+  box-shadow: var(--bp-shadow-bold);
+}
+
+html[data-bp-style="bold"] .bp_content {
+  margin-top: 0.5rem;
+  padding-left: 0.6rem;
+}
+
+html[data-bp-style="bold"] .bp_kind_theorem_content,
+html[data-bp-style="bold"] .bp_kind_proposition_content,
+html[data-bp-style="bold"] .bp_kind_lemma_content,
+html[data-bp-style="bold"] .bp_kind_corollary_content,
+html[data-bp-style="bold"] .bp_kind_proof_content,
+html[data-bp-style="bold"] .bp_wrapper div.theorem_thmcontent,
+html[data-bp-style="bold"] .bp_wrapper div.proposition_thmcontent,
+html[data-bp-style="bold"] .bp_wrapper div.lemma_thmcontent,
+html[data-bp-style="bold"] .bp_wrapper div.corollary_thmcontent,
+html[data-bp-style="bold"] .bp_wrapper div.proof_content {
+  border-left: 0.2rem solid var(--bp-color-text-strong);
 }
 </style><style>
 .bp_preview_header_heading {
@@ -4927,17 +4913,8 @@ window.onload = () => {
   function normalizePreviewMode(rawMode, fallback) {
     const defaultMode = fallback === "hover" || fallback === "pinned" ? fallback : "hover";
     const mode = String(rawMode || "").trim().toLowerCase();
-    if (mode === "hover" || mode === "transient") return "hover";
-    if (
-      mode === "pinned" ||
-      mode === "pin" ||
-      mode === "click" ||
-      mode === "click-to-pin" ||
-      mode === "click-and-stay" ||
-      mode === "click-to-stay"
-    ) {
-      return "pinned";
-    }
+    if (mode === "hover") return "hover";
+    if (mode === "pinned") return "pinned";
     return defaultMode;
   }
 
@@ -4945,23 +4922,8 @@ window.onload = () => {
     const defaultPlacement =
       fallback === "anchored" || fallback === "docked" ? fallback : "anchored";
     const placement = String(rawPlacement || "").trim().toLowerCase();
-    if (
-      placement === "anchored" ||
-      placement === "anchor" ||
-      placement === "near" ||
-      placement === "near-node" ||
-      placement === "node"
-    ) {
-      return "anchored";
-    }
-    if (
-      placement === "docked" ||
-      placement === "dock" ||
-      placement === "fixed" ||
-      placement === "panel"
-    ) {
-      return "docked";
-    }
+    if (placement === "anchored") return "anchored";
+    if (placement === "docked") return "docked";
     return defaultPlacement;
   }
 
@@ -5342,8 +5304,6 @@ window.onload = () => {
     bindCloseOnce: bindCloseOnce,
     positionAnchoredPanel: positionAnchoredPanel,
     shouldKeepOpen: shouldKeepOpen,
-    normalizePreviewMode: normalizePreviewMode,
-    normalizePreviewPlacement: normalizePreviewPlacement,
     readPanelBehavior: readPanelBehavior,
     resetPanelPosition: resetPanelPosition,
     configureCloseButton: configureCloseButton,
@@ -7977,11 +7937,11 @@ window.onload = () => {
             <div class="bp_graph_fullwidth">
               <div class="bp_graph_controls">
                 <div class="bp_graph_controls_primary">
-                  <button type="button" class="bp_graph_controls_button bp_graph_legend_button" aria-haspopup="dialog" aria-expanded="false" aria-controls="bp-graph---1761---legend">Legend</button><label class="bp_graph_controls_label" for="bp-graph---1761---view">View</label><select id="bp-graph---1761---view" class="bp_graph_controls_select bp_graph_view_select"><option value="full">Full Graph</option><option value="group">Group View</option><option value="parent:spine_dedicated">A dedicated kind joins three things the spine already carries — a system (Ch. 3), a component, and a kind-of-property (Ch. 6) — into the IUPAC/IFCC System — Component ; kind designation. It is a Mathlib-free core module; the worked example "Soil — Water ; volume fraction" versus "… ; mass fraction" is checked in the Examples library.</option><option value="parent:dimension">A kind is given a dimension by forgetting everything but its SI base-quantity exponents. To keep the core spine Mathlib-free, the dimension is paired with the kind in this separate library rather than stored on KindOfProperty : an application declares a dimensioned kind with a def , exactly as it declares a kind. The forgetful map then drops the kind identity and keeps the dimension.</option><option value="parent:spine_kind">A kind is the "common defining aspect of mutually comparable properties" (§6.19). It is an open value — applications declare new kinds as def s — and it carries its scale and an optional examination principle (§7.5) used to individuate otherwise-comparable kinds (width vs. height).</option><option value="parent:spine_examination">A kind-of-property is a "common defining aspect" (§6.19). One such defining aspect is how the property is examined : its examination principle (§7.5, VIM4 2CD 2.4) — the phenomenon serving as the basis — a method based on that principle (VIM4 2CD 2.5), and a procedure based on that method (VIM4 2CD 2.7). These refine one another and individuate kinds that scale and dimension alone cannot tell apart: width and height are both rational lengths, separated only by the principle under which each is examined. A description logic can record a link to a defining aspect; it cannot state that refinement is a preorder, nor that refinement preserves the principle.</option><option value="parent:spine_unit">A metrological unit (§18.12) is one quantity of a kind chosen as the reference : "with which any other quantity of the same kind can be compared" (VIM4 2CD 1.12). It belongs to a unitary kind-of-quantity (§13.3.3), whose magnitudes are "a reference quantity multiplied by a number" — the differential (§13.3.4) and rational (§13.3.5) kinds. The two laws specified here are ones a description logic can record an instance of but neither state nor prove: that commensurability — being "of the same kind", the only relation along which a value converts — is an equivalence relation (a relation that is reflexive, symmetric, and transitive, so it partitions units into convertible classes); and that the number-and-reference form is a faithful round-trip. This is the symbolic (numeral-and-reference) layer; the real-valued Quantity k with conversion ratios and the dimension-1 disambiguation are the planned PhysLib refinement, stated in the Units and the Dimension-1 Problem chapter.</option><option value="parent:spine_value">A property value (§9.15) is an inherent feature of a property used in comparing it with other properties of the same kind-of-property; it is a member of a value scale (§10.14), the ordered set of possible, mutually comparable values of a kind. A quantity value (§16.10) is the special case carried as a numerical value times a reference — Dybkær's "reference quantity multiplied by a number". The laws below — that comparability of values is an equivalence, that a value scale holds only mutually comparable values, that a value's scale type fixes which operations are defined — quantify over relations, operations, and a scale's members; a description logic can record an instance of the link but can neither state nor prove the laws.</option><option value="parent:interaction">Combination of kinds is a ternary relation, not a binary function: a pair of input kinds may produce a specific output kind (torque × angle → energy) or no kind at all (a category error). Description logic role chains are binary, regular, and arithmetic-free, so they cannot express this; here it is an ordinary relation with proofs. An interaction algebra bundles the sanctioned products an application asserts with a proof that each is dimensionally coherent — so the coherence law below holds for any algebra by construction.</option><option value="parent:spine_scale">Dybkær divides ⟨property⟩ by which algebraic operators are defined between properties of a kind. This is the axis a description logic cannot represent: it is about operations, and DL has none.</option><option value="parent:iso80000_part11">Each catalogued kind reuses the dimension functor dim over PhysLib's Dimension , but here every kind maps to the same value, dimension one. The distinguishing datum is moved entirely onto the examination principle — the measurement principle, this work's terse descriptor of the defining ratio, paired with the transport-phenomena context (the clause). Each kind still bears values and a coherent unit ( 1 for all); commensurability is a type-level fact, so two characteristic numbers with the same unit symbol 1 are still not interchangeable.</option><option value="parent:iso80000_part7">Each catalogued kind reuses the dimension functor dim over PhysLib's Dimension , here over mass, length, and time only: the radiation reductions make the candela the dimension of power and the steradian and mole dimension one. The standard's dimensional facts — a radiant flux is M·L²·T⁻³ , an irradiance M·T⁻³ , a molar absorption coefficient an area L² — are checked computations . Each unit is a metrological unit of its kind; commensurability is a type-level fact, so the watt of radiant flux and the lumen of luminous flux are not interchangeable though they share one dimension.</option><option value="parent:iso80000_part6">Each catalogued kind reuses the dimension functor dim over PhysLib's Dimension , now over the charge generator C (with electric current as C·T⁻¹ ), so the standard's dimensional facts — a capacitance is C²·M⁻¹·L⁻²·T² , a resistance M·L²·T⁻¹·C⁻² , a magnetic flux M·L²·T⁻¹·C⁻¹ — are checked computations rather than annotations. Each unit is a metrological unit of its kind; commensurability is a type-level fact, so an ampere and a volt are not interchangeable.</option><option value="parent:iso80000_part5">Each catalogued kind reuses the dimension functor dim over PhysLib's Dimension , now over the temperature generator Θ , so the standard's dimensional facts — heat is M·L²·T⁻² , entropy M·L²·T⁻²·Θ⁻¹ , a linear expansion coefficient Θ⁻¹ — are checked computations rather than annotations. Each unit is a metrological unit of its kind; commensurability is a type-level fact, so a kelvin and a joule are not interchangeable.</option><option value="parent:iso80000_part3">Each catalogued kind reuses the dimension functor dim over PhysLib's Dimension , so the standard's dimensional facts — area is L² , volume is L³ , speed is L·T⁻¹ — are checked computations rather than annotations. Each unit is a metrological unit of its kind; commensurability is a type-level fact, so a metre and a second are not interchangeable.</option><option value="parent:iso80000_part4">Each catalogued kind reuses the dimension functor dim over PhysLib's Dimension , so the standard's dimensional facts — force is M·L·T⁻² , energy M·L²·T⁻² , pressure M·L⁻¹·T⁻² , power M·L²·T⁻³ — are checked computations rather than annotations. Each unit is a metrological unit of its kind; commensurability is a type-level fact, so a kilogram and a newton are not interchangeable.</option><option value="parent:units">Following the VIM4 2CD principle (measurement unit, 1.12: a "reference quantity with which any other quantity of the same kind can be compared by ratio") and Dybkær §13.3.3 (a unitary kind value is "a reference quantity multiplied by a number"), units are indexed by the kind they measure.</option><option value="parent:extensivity">Mass is extensive: the mass of a whole is the sum of the masses of its parts. Volume on mixing is not: ethanol and water mix sub-additively. Tracking which kinds are extensive is a precondition for soundly aggregating measurements.</option><option value="parent:spine_specialization">Specializes relates kinds to kinds. Flater (NIST TN 1943 §6.2) stresses the result is a lattice, not a tree. We generate it as the reflexive–transitive closure of an application-supplied direct-parent edge relation, so each "system of quantities" supplies its own hierarchy.</option><option value="parent:classification">The canonical pattern is the product , which covers a large fraction of the ISQ (area = length · length, volume = area · length, energy = force · length). The general machinery lives in the Mathlib-free core; the dimensional refinement ( k.dim = k₁.dim · k₂.dim ) lives in the dimension layer, and analysis-shaped relations (area as a surface integral) in the Mathlib-backed layer.</option><option value="parent:iso80000_part3_classified">The closed-form certificate is the product (a rectangle's area is width × height); the general certificate is the integral (an area is the area of an actual surface). Both classify the one area kind, and a property of the defining relation transports to every quantity certified under it.</option><option value="parent:scale_spanning">The dimension layer can detect some scale-spanning units: a unit whose dimension is mechanically reducible — expressible in mass, length, and time alone — is by that fact not dimensionally independent. The candela (power) and the mole (one) are reducible this way. The kelvin is the sharp case: this work keeps thermodynamic temperature Θ as an independent dimension (the Thermodynamics chapter needs it), so the dimension layer sees the kelvin as if it were a base — its scale-spanning character is visible only once one adopts k_B as a defining coefficient, which the dimension layer does not. So scale-spanning is carried, like a kind's identity , above the dimension.</option><option value="parent:iso80000_part10_collision">The dimension-collision capstone, on standard quantities: the dimension map identifies absorbed dose with dose equivalent, while the kind layer keeps them apart, both as kinds and as units (the gray and the sievert). The becquerel collision ( T⁻¹ ) is the companion.</option><option value="parent:iso80000_part12_collision">The dimension-collision capstones, on standard quantities: the dimension map identifies the members of each family, while the kind layer keeps them apart, both as kinds and as units .</option><option value="parent:iso80000_part13_units">The dimension-one collision capstone, on standard quantities: the dimension map identifies information content, traffic intensity, and storage capacity, while the kind layer keeps them apart, both as kinds and as units (the shannon, the erlang, the bit).</option><option value="parent:iso80000_part5_energy">The energy species are individuated by an examination principle — here the potential's defining construction — and arranged as a specialization lattice over the general energy kind. The sharpest case is the Helmholtz versus the Gibbs energy: both "free energies" of the same dimension, they are nonetheless different kinds — and the calculus proves it from their differing natural variables, not from a naming convention.</option><option value="parent:iso80000_part4_force">The force species are individuated by an examination principle and arranged as a specialization lattice over the general force kind. The sharpest case is static versus kinetic friction: physically the same dimension and both "friction forces", they are nonetheless different kinds — and the calculus proves it from their differing measurement conditions, not from a naming convention.</option><option value="parent:iso80000_part11_homonyms">The homonym families are individuated by the examination principle alone — distinct_of_examPrinciple , not the id strings, which are equal. Every characteristic number has the same coherent unit symbol 1 , so the unit cannot tell them apart either; yet two are not commensurable, because they reference different kinds.</option><option value="parent:iso80000_part5_scale">The kelvin and the degree Celsius are both well-formed metrological units — a kind bears a unit from the differential (interval) scale upward, not only from ratio scale, so the degree Celsius is a legitimate unit even though × , ÷ are undefined on Celsius temperatures. What separates the two kinds is the scale type : ratio versus interval.</option><option value="parent:iso80000_part3_length">The length species are individuated by an examination principle and arranged as a specialization lattice over the general length kind. This is what lets the calculus answer the question the standard leaves to prose — why is a width not a distance? — with a proof rather than a naming convention, while keeping the two comparable so an explicit up-cast to length is still available.</option><option value="parent:iso80000_part3_area">The metric tensor is realized as the Gram matrix of the two tangent vectors ∂r/∂u , ∂r/∂v (its entries are the classical E , F , G ); its determinant is g ; and the surface element is dA = √g . The standard writes the element with g ; the area-consistent Riemannian element is its square root , and the formalization makes that convention explicit by proving that a flat patch then recovers its Euclidean area. The kind whose magnitudes these areas are is the catalogued quantity -kind area, dimension L² .</option><option value="parent:iso80000_part3_volume">The metric tensor of a region is the 3 × 3 Gram matrix of its three tangent vectors; its determinant is g ; the volume element is dV = √g , and the volume is its integral. The kind is the catalogued quantity -kind volume, dimension L³ .</option><option value="parent:iso80000_part6_power">The power species are individuated by an examination principle — here which component of the periodic process the quantity isolates — and arranged as a specialization lattice over the general power kind. The sharpest case is active versus reactive power: both "powers" of the same dimension, they are nonetheless different kinds — and the calculus proves it from their differing defining constructions, not from a naming convention, while the standard itself separates their units, W from var .</option><option value="parent:iso80000_part3_prefix">The prefix layer is added beside the metrological-unit layer, not inside it: a prefixed unit carries its provenance — which prefix, which base — and projects to an ordinary metrological unit of the same kind. So every fact already proved about units (commensurability, well-formedness) transfers to the projection unchanged, while the provenance lets the conversion factor and the multiple/submultiple distinction be read off rather than restated.</option><option value="parent:iso80000_part6_relations">The product , quotient , and reciprocal families carry the kind-laws. Three payoffs on the standard's own definitions: the constitutive structure of circuit theory is made explicit; the dimension follows from the relation as a checked computation; and a verified-by-construction quantity carries its classification certificate.</option><option value="parent:iso80000_part4_relations">The quotient , reciprocal , and product families carry the kind-laws. Three payoffs on the standard's own remarks: the cross-part dependency structure of the ISQ is made explicit; the dimension follows from the relation as a checked computation; and a verified-by-construction quantity carries its classification certificate.</option><option value="parent:iso80000_part5_relations">The quotient and reciprocal families carry the kind-laws. Three payoffs on the standard's own remarks: the cross-part dependency structure of the ISQ is made explicit; the dimension follows from the relation as a checked computation; and a verified-by-construction quantity carries its classification certificate.</option><option value="parent:iso80000_part3_relations">The quotient and reciprocal families generalize the product kind-law. Two payoffs on the standard's own remarks: the dimension follows from the relation as a checked computation, and a verified-by-construction quantity carries its classification certificate, instantiable at the quantity level.</option><option value="parent:iso80000">The series is a joint ISO/IEC project published in twelve parts. Each part is issued under one body — in the catalogued copies part 6 ( Electromagnetism ) is IEC and the rest are ISO — and carries an edition designation and a publication date on its cover. Recording these as typed data lets a downstream model render or audit a citation rather than carry it as free text.</option><option value="parent:iso80000_part8_levels">The three levels are distinct dimension-one quantity -kinds. Their decibel units share the symbol dB and the dimension one, yet are not commensurable — the kind layer keeps the level of pressure from being read as the level of power.</option><option value="parent:iso80000_part7_trios">The trio members are individuated by an examination principle — the radiation mode — and (the luminous and radiant members) collide in dimension. The sharpest case is radiant versus luminous flux: both M·L²·T⁻³ , they are nonetheless different kinds, and the calculus proves it from their differing radiation modes, not from a naming convention.</option><option value="parent:iso80000_part6_scale">The volt of electric potential and the volt of electric potential difference are both well-formed metrological units — a kind bears a unit from the differential (interval) scale upward, not only from ratio scale, so the gauge-dependent potential still bears the volt even though × , ÷ are undefined on it. What separates the two kinds is the scale type : interval versus ratio — and so the two volts, the same string over the same dimension, are not commensurable.</option><option value="parent:iso80000_part3_collision">These are the dimension-1 disambiguation capstone, now on standard quantities rather than a constructed example: the dimension map identifies the members of each pair, while the kind layer keeps them apart, both as kinds and as units .</option><option value="parent:iso80000_part4_collision">These are the dimension-disambiguation capstone, on standard quantities: the dimension map identifies the members of each pair, while the kind layer keeps them apart, both as kinds and as units .</option><option value="parent:iso80000_part5_collision">These are the dimension-disambiguation capstone, on standard quantities: the dimension map identifies the members of each pair, while the kind layer keeps them apart, both as kinds and as units — here even when the units share a symbol.</option><option value="parent:iso80000_part6_collision">These are the dimension-disambiguation capstone, on standard quantities: the dimension map identifies the members of each pair, while the kind layer keeps them apart, both as kinds and as units — here even where the standard spends a different unit string on each kind of one dimension.</option><option value="parent:iso80000_part7_collision">These are the dimension-disambiguation capstones, on standard quantities: the dimension map identifies the members of each set, while the kind layer keeps them apart, both as kinds and as units . The sharpest is the scale-spanning collision — a base-quantity unit (the candela) sharing a dimension with a derived one (the watt), separated only by kind.</option><option value="parent:iso80000_part9_mole">With Dim.amountOfSubstance = 1 , the dimension map sends every molar quantity to the dimension of its non-molar counterpart. The reduction is a checked computation , not a stipulation.</option></select></div>
+                  <button type="button" class="bp_graph_controls_button bp_graph_legend_button" aria-haspopup="dialog" aria-expanded="false" aria-controls="bp-graph---1762---legend">Legend</button><label class="bp_graph_controls_label" for="bp-graph---1762---view">View</label><select id="bp-graph---1762---view" class="bp_graph_controls_select bp_graph_view_select"><option value="full">Full Graph</option><option value="group">Group View</option><option value="parent:spine_dedicated">A dedicated kind joins three things the spine already carries — a system (Ch. 3), a component, and a kind-of-property (Ch. 6) — into the IUPAC/IFCC System — Component ; kind designation. It is a Mathlib-free core module; the worked example "Soil — Water ; volume fraction" versus "… ; mass fraction" is checked in the Examples library.</option><option value="parent:dimension">A kind is given a dimension by forgetting everything but its SI base-quantity exponents. To keep the core spine Mathlib-free, the dimension is paired with the kind in this separate library rather than stored on KindOfProperty : an application declares a dimensioned kind with a def , exactly as it declares a kind. The forgetful map then drops the kind identity and keeps the dimension.</option><option value="parent:spine_kind">A kind is the "common defining aspect of mutually comparable properties" (§6.19). It is an open value — applications declare new kinds as def s — and it carries its scale and an optional examination principle (§7.5) used to individuate otherwise-comparable kinds (width vs. height).</option><option value="parent:spine_examination">A kind-of-property is a "common defining aspect" (§6.19). One such defining aspect is how the property is examined : its examination principle (§7.5, VIM4 2CD 2.4) — the phenomenon serving as the basis — a method based on that principle (VIM4 2CD 2.5), and a procedure based on that method (VIM4 2CD 2.7). These refine one another and individuate kinds that scale and dimension alone cannot tell apart: width and height are both rational lengths, separated only by the principle under which each is examined. A description logic can record a link to a defining aspect; it cannot state that refinement is a preorder, nor that refinement preserves the principle.</option><option value="parent:spine_unit">A metrological unit (§18.12) is one quantity of a kind chosen as the reference : "with which any other quantity of the same kind can be compared" (VIM4 2CD 1.12). It belongs to a unitary kind-of-quantity (§13.3.3), whose magnitudes are "a reference quantity multiplied by a number" — the differential (§13.3.4) and rational (§13.3.5) kinds. The two laws specified here are ones a description logic can record an instance of but neither state nor prove: that commensurability — being "of the same kind", the only relation along which a value converts — is an equivalence relation (a relation that is reflexive, symmetric, and transitive, so it partitions units into convertible classes); and that the number-and-reference form is a faithful round-trip. This is the symbolic (numeral-and-reference) layer; the real-valued Quantity k with conversion ratios and the dimension-1 disambiguation are the planned PhysLib refinement, stated in the Units and the Dimension-1 Problem chapter.</option><option value="parent:spine_value">A property value (§9.15) is an inherent feature of a property used in comparing it with other properties of the same kind-of-property; it is a member of a value scale (§10.14), the ordered set of possible, mutually comparable values of a kind. A quantity value (§16.10) is the special case carried as a numerical value times a reference — Dybkær's "reference quantity multiplied by a number". The laws below — that comparability of values is an equivalence, that a value scale holds only mutually comparable values, that a value's scale type fixes which operations are defined — quantify over relations, operations, and a scale's members; a description logic can record an instance of the link but can neither state nor prove the laws.</option><option value="parent:interaction">Combination of kinds is a ternary relation, not a binary function: a pair of input kinds may produce a specific output kind (torque × angle → energy) or no kind at all (a category error). Description logic role chains are binary, regular, and arithmetic-free, so they cannot express this; here it is an ordinary relation with proofs. An interaction algebra bundles the sanctioned products an application asserts with a proof that each is dimensionally coherent — so the coherence law below holds for any algebra by construction.</option><option value="parent:spine_scale">Dybkær divides ⟨property⟩ by which algebraic operators are defined between properties of a kind. This is the axis a description logic cannot represent: it is about operations, and DL has none.</option><option value="parent:iso80000_part11">Each catalogued kind reuses the dimension functor dim over PhysLib's Dimension , but here every kind maps to the same value, dimension one. The distinguishing datum is moved entirely onto the examination principle — the measurement principle, this work's terse descriptor of the defining ratio, paired with the transport-phenomena context (the clause). Each kind still bears values and a coherent unit ( 1 for all); commensurability is a type-level fact, so two characteristic numbers with the same unit symbol 1 are still not interchangeable.</option><option value="parent:iso80000_part7">Each catalogued kind reuses the dimension functor dim over PhysLib's Dimension , here over mass, length, and time only: the radiation reductions make the candela the dimension of power and the steradian and mole dimension one. The standard's dimensional facts — a radiant flux is M·L²·T⁻³ , an irradiance M·T⁻³ , a molar absorption coefficient an area L² — are checked computations . Each unit is a metrological unit of its kind; commensurability is a type-level fact, so the watt of radiant flux and the lumen of luminous flux are not interchangeable though they share one dimension.</option><option value="parent:iso80000_part6">Each catalogued kind reuses the dimension functor dim over PhysLib's Dimension , now over the charge generator C (with electric current as C·T⁻¹ ), so the standard's dimensional facts — a capacitance is C²·M⁻¹·L⁻²·T² , a resistance M·L²·T⁻¹·C⁻² , a magnetic flux M·L²·T⁻¹·C⁻¹ — are checked computations rather than annotations. Each unit is a metrological unit of its kind; commensurability is a type-level fact, so an ampere and a volt are not interchangeable.</option><option value="parent:iso80000_part5">Each catalogued kind reuses the dimension functor dim over PhysLib's Dimension , now over the temperature generator Θ , so the standard's dimensional facts — heat is M·L²·T⁻² , entropy M·L²·T⁻²·Θ⁻¹ , a linear expansion coefficient Θ⁻¹ — are checked computations rather than annotations. Each unit is a metrological unit of its kind; commensurability is a type-level fact, so a kelvin and a joule are not interchangeable.</option><option value="parent:iso80000_part3">Each catalogued kind reuses the dimension functor dim over PhysLib's Dimension , so the standard's dimensional facts — area is L² , volume is L³ , speed is L·T⁻¹ — are checked computations rather than annotations. Each unit is a metrological unit of its kind; commensurability is a type-level fact, so a metre and a second are not interchangeable.</option><option value="parent:iso80000_part4">Each catalogued kind reuses the dimension functor dim over PhysLib's Dimension , so the standard's dimensional facts — force is M·L·T⁻² , energy M·L²·T⁻² , pressure M·L⁻¹·T⁻² , power M·L²·T⁻³ — are checked computations rather than annotations. Each unit is a metrological unit of its kind; commensurability is a type-level fact, so a kilogram and a newton are not interchangeable.</option><option value="parent:units">Following the VIM4 2CD principle (measurement unit, 1.12: a "reference quantity with which any other quantity of the same kind can be compared by ratio") and Dybkær §13.3.3 (a unitary kind value is "a reference quantity multiplied by a number"), units are indexed by the kind they measure.</option><option value="parent:extensivity">Mass is extensive: the mass of a whole is the sum of the masses of its parts. Volume on mixing is not: ethanol and water mix sub-additively. Tracking which kinds are extensive is a precondition for soundly aggregating measurements.</option><option value="parent:spine_specialization">Specializes relates kinds to kinds. Flater (NIST TN 1943 §6.2) stresses the result is a lattice, not a tree. We generate it as the reflexive–transitive closure of an application-supplied direct-parent edge relation, so each "system of quantities" supplies its own hierarchy.</option><option value="parent:classification">The canonical pattern is the product , which covers a large fraction of the ISQ (area = length · length, volume = area · length, energy = force · length). The general machinery lives in the Mathlib-free core; the dimensional refinement ( k.dim = k₁.dim · k₂.dim ) lives in the dimension layer, and analysis-shaped relations (area as a surface integral) in the Mathlib-backed layer.</option><option value="parent:iso80000_part3_classified">The closed-form certificate is the product (a rectangle's area is width × height); the general certificate is the integral (an area is the area of an actual surface). Both classify the one area kind, and a property of the defining relation transports to every quantity certified under it.</option><option value="parent:scale_spanning">The dimension layer can detect some scale-spanning units: a unit whose dimension is mechanically reducible — expressible in mass, length, and time alone — is by that fact not dimensionally independent. The candela (power) and the mole (one) are reducible this way. The kelvin is the sharp case: this work keeps thermodynamic temperature Θ as an independent dimension (the Thermodynamics chapter needs it), so the dimension layer sees the kelvin as if it were a base — its scale-spanning character is visible only once one adopts k_B as a defining coefficient, which the dimension layer does not. So scale-spanning is carried, like a kind's identity , above the dimension.</option><option value="parent:iso80000_part10_collision">The dimension-collision capstone, on standard quantities: the dimension map identifies absorbed dose with dose equivalent, while the kind layer keeps them apart, both as kinds and as units (the gray and the sievert). The becquerel collision ( T⁻¹ ) is the companion.</option><option value="parent:iso80000_part12_collision">The dimension-collision capstones, on standard quantities: the dimension map identifies the members of each family, while the kind layer keeps them apart, both as kinds and as units .</option><option value="parent:iso80000_part13_units">The dimension-one collision capstone, on standard quantities: the dimension map identifies information content, traffic intensity, and storage capacity, while the kind layer keeps them apart, both as kinds and as units (the shannon, the erlang, the bit).</option><option value="parent:iso80000_part5_energy">The energy species are individuated by an examination principle — here the potential's defining construction — and arranged as a specialization lattice over the general energy kind. The sharpest case is the Helmholtz versus the Gibbs energy: both "free energies" of the same dimension, they are nonetheless different kinds — and the calculus proves it from their differing natural variables, not from a naming convention.</option><option value="parent:iso80000_part4_force">The force species are individuated by an examination principle and arranged as a specialization lattice over the general force kind. The sharpest case is static versus kinetic friction: physically the same dimension and both "friction forces", they are nonetheless different kinds — and the calculus proves it from their differing measurement conditions, not from a naming convention.</option><option value="parent:iso80000_part11_homonyms">The homonym families are individuated by the examination principle alone — distinct_of_examPrinciple , not the id strings, which are equal. Every characteristic number has the same coherent unit symbol 1 , so the unit cannot tell them apart either; yet two are not commensurable, because they reference different kinds.</option><option value="parent:iso80000_part5_scale">The kelvin and the degree Celsius are both well-formed metrological units — a kind bears a unit from the differential (interval) scale upward, not only from ratio scale, so the degree Celsius is a legitimate unit even though × , ÷ are undefined on Celsius temperatures. What separates the two kinds is the scale type : ratio versus interval.</option><option value="parent:iso80000_part3_length">The length species are individuated by an examination principle and arranged as a specialization lattice over the general length kind. This is what lets the calculus answer the question the standard leaves to prose — why is a width not a distance? — with a proof rather than a naming convention, while keeping the two comparable so an explicit up-cast to length is still available.</option><option value="parent:iso80000_part3_area">The metric tensor is realized as the Gram matrix of the two tangent vectors ∂r/∂u , ∂r/∂v (its entries are the classical E , F , G ); its determinant is g ; and the surface element is dA = √g . The standard writes the element with g ; the area-consistent Riemannian element is its square root , and the formalization makes that convention explicit by proving that a flat patch then recovers its Euclidean area. The kind whose magnitudes these areas are is the catalogued quantity -kind area, dimension L² .</option><option value="parent:iso80000_part3_volume">The metric tensor of a region is the 3 × 3 Gram matrix of its three tangent vectors; its determinant is g ; the volume element is dV = √g , and the volume is its integral. The kind is the catalogued quantity -kind volume, dimension L³ .</option><option value="parent:iso80000_part6_power">The power species are individuated by an examination principle — here which component of the periodic process the quantity isolates — and arranged as a specialization lattice over the general power kind. The sharpest case is active versus reactive power: both "powers" of the same dimension, they are nonetheless different kinds — and the calculus proves it from their differing defining constructions, not from a naming convention, while the standard itself separates their units, W from var .</option><option value="parent:iso80000_part3_prefix">The prefix layer is added beside the metrological-unit layer, not inside it: a prefixed unit carries its provenance — which prefix, which base — and projects to an ordinary metrological unit of the same kind. So every fact already proved about units (commensurability, well-formedness) transfers to the projection unchanged, while the provenance lets the conversion factor and the multiple/submultiple distinction be read off rather than restated.</option><option value="parent:iso80000_part6_relations">The product , quotient , and reciprocal families carry the kind-laws. Three payoffs on the standard's own definitions: the constitutive structure of circuit theory is made explicit; the dimension follows from the relation as a checked computation; and a verified-by-construction quantity carries its classification certificate.</option><option value="parent:iso80000_part4_relations">The quotient , reciprocal , and product families carry the kind-laws. Three payoffs on the standard's own remarks: the cross-part dependency structure of the ISQ is made explicit; the dimension follows from the relation as a checked computation; and a verified-by-construction quantity carries its classification certificate.</option><option value="parent:iso80000_part5_relations">The quotient and reciprocal families carry the kind-laws. Three payoffs on the standard's own remarks: the cross-part dependency structure of the ISQ is made explicit; the dimension follows from the relation as a checked computation; and a verified-by-construction quantity carries its classification certificate.</option><option value="parent:iso80000_part3_relations">The quotient and reciprocal families generalize the product kind-law. Two payoffs on the standard's own remarks: the dimension follows from the relation as a checked computation, and a verified-by-construction quantity carries its classification certificate, instantiable at the quantity level.</option><option value="parent:iso80000">The series is a joint ISO/IEC project published in twelve parts. Each part is issued under one body — in the catalogued copies part 6 ( Electromagnetism ) is IEC and the rest are ISO — and carries an edition designation and a publication date on its cover. Recording these as typed data lets a downstream model render or audit a citation rather than carry it as free text.</option><option value="parent:iso80000_part8_levels">The three levels are distinct dimension-one quantity -kinds. Their decibel units share the symbol dB and the dimension one, yet are not commensurable — the kind layer keeps the level of pressure from being read as the level of power.</option><option value="parent:iso80000_part7_trios">The trio members are individuated by an examination principle — the radiation mode — and (the luminous and radiant members) collide in dimension. The sharpest case is radiant versus luminous flux: both M·L²·T⁻³ , they are nonetheless different kinds, and the calculus proves it from their differing radiation modes, not from a naming convention.</option><option value="parent:iso80000_part6_scale">The volt of electric potential and the volt of electric potential difference are both well-formed metrological units — a kind bears a unit from the differential (interval) scale upward, not only from ratio scale, so the gauge-dependent potential still bears the volt even though × , ÷ are undefined on it. What separates the two kinds is the scale type : interval versus ratio — and so the two volts, the same string over the same dimension, are not commensurable.</option><option value="parent:iso80000_part3_collision">These are the dimension-1 disambiguation capstone, now on standard quantities rather than a constructed example: the dimension map identifies the members of each pair, while the kind layer keeps them apart, both as kinds and as units .</option><option value="parent:iso80000_part4_collision">These are the dimension-disambiguation capstone, on standard quantities: the dimension map identifies the members of each pair, while the kind layer keeps them apart, both as kinds and as units .</option><option value="parent:iso80000_part5_collision">These are the dimension-disambiguation capstone, on standard quantities: the dimension map identifies the members of each pair, while the kind layer keeps them apart, both as kinds and as units — here even when the units share a symbol.</option><option value="parent:iso80000_part6_collision">These are the dimension-disambiguation capstone, on standard quantities: the dimension map identifies the members of each pair, while the kind layer keeps them apart, both as kinds and as units — here even where the standard spends a different unit string on each kind of one dimension.</option><option value="parent:iso80000_part7_collision">These are the dimension-disambiguation capstones, on standard quantities: the dimension map identifies the members of each set, while the kind layer keeps them apart, both as kinds and as units . The sharpest is the scale-spanning collision — a base-quantity unit (the candela) sharing a dimension with a derived one (the watt), separated only by kind.</option><option value="parent:iso80000_part9_mole">With Dim.amountOfSubstance = 1 , the dimension map sends every molar quantity to the dimension of its non-molar counterpart. The reduction is a checked computation , not a stipulation.</option></select></div>
                 <div class="bp_graph_controls_actions">
-                  <button type="button" class="bp_graph_controls_button bp_graph_options_button" aria-haspopup="dialog" aria-expanded="false" aria-controls="bp-graph---1761---options">Graph options</button></div>
+                  <button type="button" class="bp_graph_controls_button bp_graph_options_button" aria-haspopup="dialog" aria-expanded="false" aria-controls="bp-graph---1762---options">Graph options</button></div>
                 </div>
-              <div id="bp-graph---1761---legend" class="bp_graph_legend_popover" hidden="">
+              <div id="bp-graph---1762---legend" class="bp_graph_legend_popover" hidden="">
                 <div class="bp_graph_legend_popover_header">
                   <span class="bp_graph_legend_popover_title">Legend</span><button type="button" class="bp_graph_legend_popover_close" aria-label="Close legend">Close</button></div>
                 <div class="bp_graph_legend_popover_body">
@@ -8051,11 +8011,11 @@ window.onload = () => {
                     </div>
                   </div>
                 </div>
-              <div id="bp-graph---1761---options" class="bp_graph_options_popover" hidden="">
+              <div id="bp-graph---1762---options" class="bp_graph_options_popover" hidden="">
                 <div class="bp_graph_options_popover_header">
                   <span class="bp_graph_options_popover_title">Graph options</span><button type="button" class="bp_graph_options_popover_close" aria-label="Close graph options">Close</button></div>
                 <div class="bp_graph_options_popover_body">
-                  <label class="bp_graph_controls_label" for="bp-graph---1761---direction">Direction</label><select id="bp-graph---1761---direction" class="bp_graph_controls_select bp_graph_direction_select" data-bp-graph-default-direction="TB"><option value="TB" selected="">TB</option><option value="LR">LR</option><option value="RL">RL</option><option value="BT">BT</option></select><label class="bp_graph_option_toggle" for="bp-graph---1761---pack"><input id="bp-graph---1761---pack" type="checkbox" class="bp_graph_pack_input" data-bp-graph-default-pack="false"><span>Pack disconnected components</span></label><label class="bp_graph_controls_label" for="bp-graph---1761---preview-mode">Preview</label><select id="bp-graph---1761---preview-mode" class="bp_graph_controls_select bp_graph_preview_mode_select" data-bp-graph-default-preview-mode="pinned"><option value="pinned" selected="">Click to pin</option><option value="hover">Hover</option></select><label class="bp_graph_controls_label" for="bp-graph---1761---preview-placement">Position</label><select id="bp-graph---1761---preview-placement" class="bp_graph_controls_select bp_graph_preview_placement_select" data-bp-graph-default-preview-placement="docked"><option value="docked" selected="">Docked</option><option value="anchored">Near node</option></select></div>
+                  <label class="bp_graph_controls_label" for="bp-graph---1762---direction">Direction</label><select id="bp-graph---1762---direction" class="bp_graph_controls_select bp_graph_direction_select" data-bp-graph-default-direction="TB"><option value="TB" selected="">TB</option><option value="LR">LR</option><option value="RL">RL</option><option value="BT">BT</option></select><label class="bp_graph_option_toggle" for="bp-graph---1762---pack"><input id="bp-graph---1762---pack" type="checkbox" class="bp_graph_pack_input" data-bp-graph-default-pack="false"><span>Pack disconnected components</span></label><label class="bp_graph_controls_label" for="bp-graph---1762---preview-mode">Preview</label><select id="bp-graph---1762---preview-mode" class="bp_graph_controls_select bp_graph_preview_mode_select" data-bp-graph-default-preview-mode="pinned"><option value="pinned" selected="">Click to pin</option><option value="hover">Hover</option></select><label class="bp_graph_controls_label" for="bp-graph---1762---preview-placement">Position</label><select id="bp-graph---1762---preview-placement" class="bp_graph_controls_select bp_graph_preview_placement_select" data-bp-graph-default-preview-placement="docked"><option value="docked" selected="">Docked</option><option value="anchored">Near node</option></select></div>
                 </div>
               <div class="bp_graph_canvas" data-bp-graph-direction="TB" data-bp-graph-pack="false">
                 <script type="application/json" class="bp-graph-variants">

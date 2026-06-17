@@ -1011,169 +1011,6 @@ table.tabular td > p:last-child, table.tabular th > p:first-child {
   }
 }
 </style><style>
-#bp-style-switcher {
-  position: fixed;
-  right: 1rem;
-  bottom: 1rem;
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  gap: 0.4rem 0.6rem;
-  flex-wrap: wrap;
-  background: var(--bp-color-surface);
-  border: 1px solid var(--bp-color-border);
-  border-radius: var(--bp-radius-md);
-  box-shadow: var(--bp-shadow-sm);
-  padding: 0.4rem 0.55rem;
-  font-size: 0.82rem;
-}
-
-#bp-style-switcher .bp-style-switcher-control {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-}
-
-#bp-style-switcher label {
-  font-weight: 600;
-}
-
-#bp-style-switcher select {
-  border: 1px solid var(--bp-color-border);
-  border-radius: 0.3rem;
-  background: var(--bp-color-surface);
-  font-size: 0.82rem;
-  padding: 0.1rem 0.25rem;
-}
-
-html[data-bp-style="blueprint"] .bp_wrapper {
-  border: 1px solid var(--bp-color-border);
-  border-radius: var(--bp-radius-sm);
-  padding: 0.45rem 0.6rem 0.55rem;
-  background: var(--bp-color-surface);
-}
-
-html[data-bp-style="blueprint"] .bp_heading {
-  border-bottom: 1px solid var(--bp-color-border-soft);
-  padding-bottom: 0.35rem;
-}
-
-html[data-bp-style="blueprint"] .bp_content {
-  margin-top: 0.35rem;
-  padding-left: 0.45rem;
-}
-
-html[data-bp-style="blueprint"] .bp_kind_theorem_content,
-html[data-bp-style="blueprint"] .bp_kind_proposition_content,
-html[data-bp-style="blueprint"] .bp_kind_lemma_content,
-html[data-bp-style="blueprint"] .bp_kind_corollary_content,
-html[data-bp-style="blueprint"] .bp_kind_proof_content,
-html[data-bp-style="blueprint"] div.theorem_thmcontent,
-html[data-bp-style="blueprint"] div.proposition_thmcontent,
-html[data-bp-style="blueprint"] div.lemma_thmcontent,
-html[data-bp-style="blueprint"] div.corollary_thmcontent,
-html[data-bp-style="blueprint"] div.proof_content {
-  border-left-color: var(--bp-color-text-muted);
-}
-
-html[data-bp-style="modern"] .bp_wrapper {
-  border: 1px solid var(--bp-color-modern-border);
-  border-radius: var(--bp-radius-2xl);
-  padding: 0.6rem 0.7rem 0.68rem;
-  background: linear-gradient(180deg, var(--bp-color-surface), var(--bp-color-surface-modern));
-  box-shadow: var(--bp-shadow-modern);
-}
-
-html[data-bp-style="modern"] .bp_heading {
-  border-bottom: 1px solid var(--bp-color-border-soft);
-  padding-bottom: 0.4rem;
-}
-
-html[data-bp-style="modern"] .bp_caption {
-  background: var(--bp-color-modern-caption);
-  border-radius: var(--bp-radius-pill);
-  padding: 0.08rem 0.5rem;
-}
-
-html[data-bp-style="modern"] .bp_content {
-  margin-top: 0.45rem;
-  padding-left: 0.5rem;
-}
-
-html[data-bp-style="modern"] .bp_kind_theorem_content,
-html[data-bp-style="modern"] .bp_kind_proposition_content,
-html[data-bp-style="modern"] .bp_kind_lemma_content,
-html[data-bp-style="modern"] .bp_kind_corollary_content,
-html[data-bp-style="modern"] .bp_kind_proof_content,
-html[data-bp-style="modern"] .bp_wrapper div.theorem_thmcontent,
-html[data-bp-style="modern"] .bp_wrapper div.proposition_thmcontent,
-html[data-bp-style="modern"] .bp_wrapper div.lemma_thmcontent,
-html[data-bp-style="modern"] .bp_wrapper div.corollary_thmcontent,
-html[data-bp-style="modern"] .bp_wrapper div.proof_content {
-  border-left-color: var(--bp-color-text-faint);
-}
-
-html[data-bp-style="bold"] .bp_wrapper {
-  border: 2px solid var(--bp-color-text-strong);
-  border-radius: var(--bp-radius-3xl);
-  padding: 0.6rem 0.75rem 0.75rem;
-  background:
-    radial-gradient(circle at 100% 0%, var(--bp-color-bold-surface-glow-1), transparent 36%),
-    radial-gradient(circle at 0% 100%, var(--bp-color-bold-surface-glow-2), transparent 32%),
-    var(--bp-color-surface);
-  box-shadow: var(--bp-shadow-bold-lg);
-}
-
-html[data-bp-style="bold"] .bp_heading {
-  border-bottom: 2px solid var(--bp-color-text-strong);
-  padding-bottom: 0.45rem;
-  letter-spacing: 0.01em;
-}
-
-html[data-bp-style="bold"] .bp_caption {
-  background: var(--bp-color-text-strong);
-  color: var(--bp-color-surface-muted);
-  border-radius: 0.25rem;
-  padding: 0.08rem 0.45rem;
-  text-transform: uppercase;
-}
-
-html[data-bp-style="bold"] .bp_label {
-  background: var(--bp-color-bold-label);
-  color: var(--bp-color-text);
-  border-radius: var(--bp-radius-pill);
-  padding: 0.06rem 0.42rem;
-}
-
-html[data-bp-style="bold"] .bp_code_link {
-  color: var(--bp-color-bold-link);
-  font-weight: 700;
-}
-
-html[data-bp-style="bold"] .bp_code_hover {
-  border: 2px solid var(--bp-color-text-strong);
-  border-radius: var(--bp-radius-xl);
-  box-shadow: var(--bp-shadow-bold);
-}
-
-html[data-bp-style="bold"] .bp_content {
-  margin-top: 0.5rem;
-  padding-left: 0.6rem;
-}
-
-html[data-bp-style="bold"] .bp_kind_theorem_content,
-html[data-bp-style="bold"] .bp_kind_proposition_content,
-html[data-bp-style="bold"] .bp_kind_lemma_content,
-html[data-bp-style="bold"] .bp_kind_corollary_content,
-html[data-bp-style="bold"] .bp_kind_proof_content,
-html[data-bp-style="bold"] .bp_wrapper div.theorem_thmcontent,
-html[data-bp-style="bold"] .bp_wrapper div.proposition_thmcontent,
-html[data-bp-style="bold"] .bp_wrapper div.lemma_thmcontent,
-html[data-bp-style="bold"] .bp_wrapper div.corollary_thmcontent,
-html[data-bp-style="bold"] .bp_wrapper div.proof_content {
-  border-left: 0.2rem solid var(--bp-color-text-strong);
-}
-</style><style>
 .bp_wrapper {
   scroll-margin-top: 1rem;
   margin: 0.85rem 0;
@@ -1232,7 +1069,7 @@ span[class$="_thmlabel"]::after {
 
 .bp_extras {
   --bp-extra-group-col: minmax(5rem, max-content);
-  --bp-extra-uses-col: minmax(4.2rem, max-content);
+  --bp-extra-uses-col: minmax(5.2rem, max-content);
   --bp-extra-used-by-col: minmax(7.2rem, max-content);
   --bp-extra-code-col: max-content;
   --bp-extra-code-placeholder-col: minmax(3.35rem, max-content);
@@ -1268,20 +1105,6 @@ span[class$="_thmlabel"]::after {
     var(--bp-extra-used-by-col)
     var(--bp-extra-code-col);
   grid-template-areas: "group used code";
-}
-
-.bp_extras_with_uses {
-  grid-template-columns: minmax(5.2rem, max-content) max-content minmax(7.2rem, max-content);
-  grid-template-areas: "uses used code";
-}
-
-.bp_extras_with_group.bp_extras_with_uses {
-  grid-template-columns:
-    minmax(5rem, max-content)
-    minmax(5.2rem, max-content)
-    minmax(7.2rem, max-content)
-    max-content;
-  grid-template-areas: "group uses used code";
 }
 
 .bp_extras_with_group.bp_extras_with_uses {
@@ -2651,6 +2474,169 @@ div.proof_content {
     background-color: transparent;
     box-shadow: 0 0 0 0.18rem var(--bp-color-target-ring);
   }
+}
+</style><style>
+#bp-style-switcher {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem 0.6rem;
+  flex-wrap: wrap;
+  background: var(--bp-color-surface);
+  border: 1px solid var(--bp-color-border);
+  border-radius: var(--bp-radius-md);
+  box-shadow: var(--bp-shadow-sm);
+  padding: 0.4rem 0.55rem;
+  font-size: 0.82rem;
+}
+
+#bp-style-switcher .bp-style-switcher-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+#bp-style-switcher label {
+  font-weight: 600;
+}
+
+#bp-style-switcher select {
+  border: 1px solid var(--bp-color-border);
+  border-radius: 0.3rem;
+  background: var(--bp-color-surface);
+  font-size: 0.82rem;
+  padding: 0.1rem 0.25rem;
+}
+
+html[data-bp-style="blueprint"] .bp_wrapper {
+  border: 1px solid var(--bp-color-border);
+  border-radius: var(--bp-radius-sm);
+  padding: 0.45rem 0.6rem 0.55rem;
+  background: var(--bp-color-surface);
+}
+
+html[data-bp-style="blueprint"] .bp_heading {
+  border-bottom: 1px solid var(--bp-color-border-soft);
+  padding-bottom: 0.35rem;
+}
+
+html[data-bp-style="blueprint"] .bp_content {
+  margin-top: 0.35rem;
+  padding-left: 0.45rem;
+}
+
+html[data-bp-style="blueprint"] .bp_kind_theorem_content,
+html[data-bp-style="blueprint"] .bp_kind_proposition_content,
+html[data-bp-style="blueprint"] .bp_kind_lemma_content,
+html[data-bp-style="blueprint"] .bp_kind_corollary_content,
+html[data-bp-style="blueprint"] .bp_kind_proof_content,
+html[data-bp-style="blueprint"] div.theorem_thmcontent,
+html[data-bp-style="blueprint"] div.proposition_thmcontent,
+html[data-bp-style="blueprint"] div.lemma_thmcontent,
+html[data-bp-style="blueprint"] div.corollary_thmcontent,
+html[data-bp-style="blueprint"] div.proof_content {
+  border-left-color: var(--bp-color-text-muted);
+}
+
+html[data-bp-style="modern"] .bp_wrapper {
+  border: 1px solid var(--bp-color-modern-border);
+  border-radius: var(--bp-radius-2xl);
+  padding: 0.6rem 0.7rem 0.68rem;
+  background: linear-gradient(180deg, var(--bp-color-surface), var(--bp-color-surface-modern));
+  box-shadow: var(--bp-shadow-modern);
+}
+
+html[data-bp-style="modern"] .bp_heading {
+  border-bottom: 1px solid var(--bp-color-border-soft);
+  padding-bottom: 0.4rem;
+}
+
+html[data-bp-style="modern"] .bp_caption {
+  background: var(--bp-color-modern-caption);
+  border-radius: var(--bp-radius-pill);
+  padding: 0.08rem 0.5rem;
+}
+
+html[data-bp-style="modern"] .bp_content {
+  margin-top: 0.45rem;
+  padding-left: 0.5rem;
+}
+
+html[data-bp-style="modern"] .bp_kind_theorem_content,
+html[data-bp-style="modern"] .bp_kind_proposition_content,
+html[data-bp-style="modern"] .bp_kind_lemma_content,
+html[data-bp-style="modern"] .bp_kind_corollary_content,
+html[data-bp-style="modern"] .bp_kind_proof_content,
+html[data-bp-style="modern"] .bp_wrapper div.theorem_thmcontent,
+html[data-bp-style="modern"] .bp_wrapper div.proposition_thmcontent,
+html[data-bp-style="modern"] .bp_wrapper div.lemma_thmcontent,
+html[data-bp-style="modern"] .bp_wrapper div.corollary_thmcontent,
+html[data-bp-style="modern"] .bp_wrapper div.proof_content {
+  border-left-color: var(--bp-color-text-faint);
+}
+
+html[data-bp-style="bold"] .bp_wrapper {
+  border: 2px solid var(--bp-color-text-strong);
+  border-radius: var(--bp-radius-3xl);
+  padding: 0.6rem 0.75rem 0.75rem;
+  background:
+    radial-gradient(circle at 100% 0%, var(--bp-color-bold-surface-glow-1), transparent 36%),
+    radial-gradient(circle at 0% 100%, var(--bp-color-bold-surface-glow-2), transparent 32%),
+    var(--bp-color-surface);
+  box-shadow: var(--bp-shadow-bold-lg);
+}
+
+html[data-bp-style="bold"] .bp_heading {
+  border-bottom: 2px solid var(--bp-color-text-strong);
+  padding-bottom: 0.45rem;
+  letter-spacing: 0.01em;
+}
+
+html[data-bp-style="bold"] .bp_caption {
+  background: var(--bp-color-text-strong);
+  color: var(--bp-color-surface-muted);
+  border-radius: 0.25rem;
+  padding: 0.08rem 0.45rem;
+  text-transform: uppercase;
+}
+
+html[data-bp-style="bold"] .bp_label {
+  background: var(--bp-color-bold-label);
+  color: var(--bp-color-text);
+  border-radius: var(--bp-radius-pill);
+  padding: 0.06rem 0.42rem;
+}
+
+html[data-bp-style="bold"] .bp_code_link {
+  color: var(--bp-color-bold-link);
+  font-weight: 700;
+}
+
+html[data-bp-style="bold"] .bp_code_hover {
+  border: 2px solid var(--bp-color-text-strong);
+  border-radius: var(--bp-radius-xl);
+  box-shadow: var(--bp-shadow-bold);
+}
+
+html[data-bp-style="bold"] .bp_content {
+  margin-top: 0.5rem;
+  padding-left: 0.6rem;
+}
+
+html[data-bp-style="bold"] .bp_kind_theorem_content,
+html[data-bp-style="bold"] .bp_kind_proposition_content,
+html[data-bp-style="bold"] .bp_kind_lemma_content,
+html[data-bp-style="bold"] .bp_kind_corollary_content,
+html[data-bp-style="bold"] .bp_kind_proof_content,
+html[data-bp-style="bold"] .bp_wrapper div.theorem_thmcontent,
+html[data-bp-style="bold"] .bp_wrapper div.proposition_thmcontent,
+html[data-bp-style="bold"] .bp_wrapper div.lemma_thmcontent,
+html[data-bp-style="bold"] .bp_wrapper div.corollary_thmcontent,
+html[data-bp-style="bold"] .bp_wrapper div.proof_content {
+  border-left: 0.2rem solid var(--bp-color-text-strong);
 }
 </style><style>
 .bp_preview_header_heading {
@@ -4927,17 +4913,8 @@ window.onload = () => {
   function normalizePreviewMode(rawMode, fallback) {
     const defaultMode = fallback === "hover" || fallback === "pinned" ? fallback : "hover";
     const mode = String(rawMode || "").trim().toLowerCase();
-    if (mode === "hover" || mode === "transient") return "hover";
-    if (
-      mode === "pinned" ||
-      mode === "pin" ||
-      mode === "click" ||
-      mode === "click-to-pin" ||
-      mode === "click-and-stay" ||
-      mode === "click-to-stay"
-    ) {
-      return "pinned";
-    }
+    if (mode === "hover") return "hover";
+    if (mode === "pinned") return "pinned";
     return defaultMode;
   }
 
@@ -4945,23 +4922,8 @@ window.onload = () => {
     const defaultPlacement =
       fallback === "anchored" || fallback === "docked" ? fallback : "anchored";
     const placement = String(rawPlacement || "").trim().toLowerCase();
-    if (
-      placement === "anchored" ||
-      placement === "anchor" ||
-      placement === "near" ||
-      placement === "near-node" ||
-      placement === "node"
-    ) {
-      return "anchored";
-    }
-    if (
-      placement === "docked" ||
-      placement === "dock" ||
-      placement === "fixed" ||
-      placement === "panel"
-    ) {
-      return "docked";
-    }
+    if (placement === "anchored") return "anchored";
+    if (placement === "docked") return "docked";
     return defaultPlacement;
   }
 
@@ -5342,8 +5304,6 @@ window.onload = () => {
     bindCloseOnce: bindCloseOnce,
     positionAnchoredPanel: positionAnchoredPanel,
     shouldKeepOpen: shouldKeepOpen,
-    normalizePreviewMode: normalizePreviewMode,
-    normalizePreviewPlacement: normalizePreviewPlacement,
     readPanelBehavior: readPanelBehavior,
     resetPanelPosition: resetPanelPosition,
     configureCloseButton: configureCloseButton,
@@ -7994,8 +7954,7 @@ nothing normative is reproduced.</p>
                     </th><th><p>
                       Unit</p>
                     </th><th><p>
-                      Dimension
-</p>
+                      Dimension</p>
                     </th></tr></thead><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart7-005Fcatalogued-005Fkind-statement" data-bp-preview-title="Definition 17.1.1" data-bp-preview-key="def_part7_catalogued_kind--statement" data-bp-preview-fallback-label="def_part7_catalogued_kind"><a href="ISO-80000-7-___-Light-and-radiation/Quantity-kinds-and-units-of-ISO-80000-7/index.html#--informal-preview-def_part7_catalogued_kind--statement" title="def_part7_catalogued_kind">7-1.1</a></span></span></p>
                   </td><td><p>
@@ -8005,8 +7964,7 @@ nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>m/s</code></p>
                   </td><td><p>
-                    <code>L·T⁻¹</code>
-</p>
+                    <code>L·T⁻¹</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart7-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 17.3.2" data-bp-preview-key="thm_part7_dim_one--statement" data-bp-preview-fallback-label="thm_part7_dim_one"><a href="ISO-80000-7-___-Light-and-radiation/Dimension-does-not-classify_SEMI_-the-kind-does-___-the-widest-collisions-in-the-series/index.html#--informal-preview-thm_part7_dim_one--statement" title="thm_part7_dim_one">7-1.2</a></span></span></p>
                   </td><td><p>
@@ -8016,8 +7974,7 @@ nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>1</code></p>
                   </td><td><p>
-                    <code>1</code>
-</p>
+                    <code>1</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart7-005Fcandela-005Fpower-statement" data-bp-preview-title="Theorem 17.1.2" data-bp-preview-key="thm_part7_candela_power--statement" data-bp-preview-fallback-label="thm_part7_candela_power"><a href="ISO-80000-7-___-Light-and-radiation/Quantity-kinds-and-units-of-ISO-80000-7/index.html#--informal-preview-thm_part7_candela_power--statement" title="thm_part7_candela_power">7-2.1</a></span></span></p>
                   </td><td><p>
@@ -8027,8 +7984,7 @@ nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>J</code></p>
                   </td><td><p>
-                    <code>M·L²·T⁻²</code>
-</p>
+                    <code>M·L²·T⁻²</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart7-005Fcatalogued-005Fkind-statement" data-bp-preview-title="Definition 17.1.1" data-bp-preview-key="def_part7_catalogued_kind--statement" data-bp-preview-fallback-label="def_part7_catalogued_kind"><a href="ISO-80000-7-___-Light-and-radiation/Quantity-kinds-and-units-of-ISO-80000-7/index.html#--informal-preview-def_part7_catalogued_kind--statement" title="def_part7_catalogued_kind">7-2.2</a></span></span></p>
                   </td><td><p>
@@ -8038,8 +7994,7 @@ nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>J/nm</code></p>
                   </td><td><p>
-                    <code>M·L·T⁻²</code>
-</p>
+                    <code>M·L·T⁻²</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart7-005Fcatalogued-005Fkind-statement" data-bp-preview-title="Definition 17.1.1" data-bp-preview-key="def_part7_catalogued_kind--statement" data-bp-preview-fallback-label="def_part7_catalogued_kind"><a href="ISO-80000-7-___-Light-and-radiation/Quantity-kinds-and-units-of-ISO-80000-7/index.html#--informal-preview-def_part7_catalogued_kind--statement" title="def_part7_catalogued_kind">7-3.1</a></span></span></p>
                   </td><td><p>
@@ -8049,41 +8004,37 @@ nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>J/m³</code></p>
                   </td><td><p>
-                    <code>M·L⁻¹·T⁻²</code>
-</p>
+                    <code>M·L⁻¹·T⁻²</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart7-005Fcatalogued-005Fkind-statement" data-bp-preview-title="Definition 17.1.1" data-bp-preview-key="def_part7_catalogued_kind--statement" data-bp-preview-fallback-label="def_part7_catalogued_kind"><a href="ISO-80000-7-___-Light-and-radiation/Quantity-kinds-and-units-of-ISO-80000-7/index.html#--informal-preview-def_part7_catalogued_kind--statement" title="def_part7_catalogued_kind">7-3.2</a></span></span></p>
                   </td><td><p>
-                    spectral radiant energy density (wavelength)</p>
+                    spectral radiant energy density in terms of wavelength</p>
                   </td><td><p>
                     <code>w_λ</code></p>
                   </td><td><p>
                     <code>J/(m³·nm)</code></p>
                   </td><td><p>
-                    <code>M·L⁻²·T⁻²</code>
-</p>
+                    <code>M·L⁻²·T⁻²</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart7-005Fcatalogued-005Fkind-statement" data-bp-preview-title="Definition 17.1.1" data-bp-preview-key="def_part7_catalogued_kind--statement" data-bp-preview-fallback-label="def_part7_catalogued_kind"><a href="ISO-80000-7-___-Light-and-radiation/Quantity-kinds-and-units-of-ISO-80000-7/index.html#--informal-preview-def_part7_catalogued_kind--statement" title="def_part7_catalogued_kind">7-3.3</a></span></span></p>
                   </td><td><p>
-                    spectral radiant energy density (wavenumber)</p>
+                    spectral radiant energy density in terms of wavenumber</p>
                   </td><td><p>
                     <code>w_ṽ</code></p>
                   </td><td><p>
                     <code>J/m²</code></p>
                   </td><td><p>
-                    <code>M·T⁻²</code>
-</p>
+                    <code>M·T⁻²</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart7-005Fcollision-statement" data-bp-preview-title="Theorem 17.3.1" data-bp-preview-key="thm_part7_collision--statement" data-bp-preview-fallback-label="thm_part7_collision"><a href="ISO-80000-7-___-Light-and-radiation/Dimension-does-not-classify_SEMI_-the-kind-does-___-the-widest-collisions-in-the-series/index.html#--informal-preview-thm_part7_collision--statement" title="thm_part7_collision">7-4.1</a></span></span></p>
                   </td><td><p>
-                    radiant flux, radiant power</p>
+                    radiant flux</p>
                   </td><td><p>
                     <code>Φ_e</code></p>
                   </td><td><p>
                     <code>W</code></p>
                   </td><td><p>
-                    <code>M·L²·T⁻³</code>
-</p>
+                    <code>M·L²·T⁻³</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart7-005Fcatalogued-005Fkind-statement" data-bp-preview-title="Definition 17.1.1" data-bp-preview-key="def_part7_catalogued_kind--statement" data-bp-preview-fallback-label="def_part7_catalogued_kind"><a href="ISO-80000-7-___-Light-and-radiation/Quantity-kinds-and-units-of-ISO-80000-7/index.html#--informal-preview-def_part7_catalogued_kind--statement" title="def_part7_catalogued_kind">7-4.2</a></span></span></p>
                   </td><td><p>
@@ -8093,8 +8044,7 @@ nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>W/nm</code></p>
                   </td><td><p>
-                    <code>M·L·T⁻³</code>
-</p>
+                    <code>M·L·T⁻³</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart7-005Fcollision-statement" data-bp-preview-title="Theorem 17.3.1" data-bp-preview-key="thm_part7_collision--statement" data-bp-preview-fallback-label="thm_part7_collision"><a href="ISO-80000-7-___-Light-and-radiation/Dimension-does-not-classify_SEMI_-the-kind-does-___-the-widest-collisions-in-the-series/index.html#--informal-preview-thm_part7_collision--statement" title="thm_part7_collision">7-5.1</a></span></span></p>
                   </td><td><p>
@@ -8104,8 +8054,7 @@ nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>W/sr</code></p>
                   </td><td><p>
-                    <code>M·L²·T⁻³</code>
-</p>
+                    <code>M·L²·T⁻³</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart7-005Fcatalogued-005Fkind-statement" data-bp-preview-title="Definition 17.1.1" data-bp-preview-key="def_part7_catalogued_kind--statement" data-bp-preview-fallback-label="def_part7_catalogued_kind"><a href="ISO-80000-7-___-Light-and-radiation/Quantity-kinds-and-units-of-ISO-80000-7/index.html#--informal-preview-def_part7_catalogued_kind--statement" title="def_part7_catalogued_kind">7-5.2</a></span></span></p>
                   </td><td><p>
@@ -8115,8 +8064,7 @@ nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>W/(sr·nm)</code></p>
                   </td><td><p>
-                    <code>M·L·T⁻³</code>
-</p>
+                    <code>M·L·T⁻³</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart7-005Fcollision-statement" data-bp-preview-title="Theorem 17.3.1" data-bp-preview-key="thm_part7_collision--statement" data-bp-preview-fallback-label="thm_part7_collision"><a href="ISO-80000-7-___-Light-and-radiation/Dimension-does-not-classify_SEMI_-the-kind-does-___-the-widest-collisions-in-the-series/index.html#--informal-preview-thm_part7_collision--statement" title="thm_part7_collision">7-6.1</a></span></span></p>
                   </td><td><p>
@@ -8126,8 +8074,7 @@ nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>W/(sr·m²)</code></p>
                   </td><td><p>
-                    <code>M·T⁻³</code>
-</p>
+                    <code>M·T⁻³</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart7-005Fcatalogued-005Fkind-statement" data-bp-preview-title="Definition 17.1.1" data-bp-preview-key="def_part7_catalogued_kind--statement" data-bp-preview-fallback-label="def_part7_catalogued_kind"><a href="ISO-80000-7-___-Light-and-radiation/Quantity-kinds-and-units-of-ISO-80000-7/index.html#--informal-preview-def_part7_catalogued_kind--statement" title="def_part7_catalogued_kind">7-6.2</a></span></span></p>
                   </td><td><p>
@@ -8137,8 +8084,7 @@ nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>W/(sr·m²·nm)</code></p>
                   </td><td><p>
-                    <code>M·L⁻¹·T⁻³</code>
-</p>
+                    <code>M·L⁻¹·T⁻³</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart7-005Firradiance-statement" data-bp-preview-title="Theorem 17.4.1" data-bp-preview-key="thm_part7_irradiance--statement" data-bp-preview-fallback-label="thm_part7_irradiance"><a href="ISO-80000-7-___-Light-and-radiation/The-algebraic-Remarks-as-kind-laws___-radiometry-and-photometry-built-by-the-kind-algebra/index.html#--informal-preview-thm_part7_irradiance--statement" title="thm_part7_irradiance">7-7.1</a></span></span></p>
                   </td><td><p>
@@ -8148,8 +8094,7 @@ nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>W/m²</code></p>
                   </td><td><p>
-                    <code>M·T⁻³</code>
-</p>
+                    <code>M·T⁻³</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart7-005Fcatalogued-005Fkind-statement" data-bp-preview-title="Definition 17.1.1" data-bp-preview-key="def_part7_catalogued_kind--statement" data-bp-preview-fallback-label="def_part7_catalogued_kind"><a href="ISO-80000-7-___-Light-and-radiation/Quantity-kinds-and-units-of-ISO-80000-7/index.html#--informal-preview-def_part7_catalogued_kind--statement" title="def_part7_catalogued_kind">7-7.2</a></span></span></p>
                   </td><td><p>
@@ -8159,8 +8104,7 @@ nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>W/(m²·nm)</code></p>
                   </td><td><p>
-                    <code>M·L⁻¹·T⁻³</code>
-</p>
+                    <code>M·L⁻¹·T⁻³</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart7-005Fcatalogued-005Fkind-statement" data-bp-preview-title="Definition 17.1.1" data-bp-preview-key="def_part7_catalogued_kind--statement" data-bp-preview-fallback-label="def_part7_catalogued_kind"><a href="ISO-80000-7-___-Light-and-radiation/Quantity-kinds-and-units-of-ISO-80000-7/index.html#--informal-preview-def_part7_catalogued_kind--statement" title="def_part7_catalogued_kind">7-8.1</a></span></span></p>
                   </td><td><p>
@@ -8170,8 +8114,7 @@ nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>W/m²</code></p>
                   </td><td><p>
-                    <code>M·T⁻³</code>
-</p>
+                    <code>M·T⁻³</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart7-005Fcatalogued-005Fkind-statement" data-bp-preview-title="Definition 17.1.1" data-bp-preview-key="def_part7_catalogued_kind--statement" data-bp-preview-fallback-label="def_part7_catalogued_kind"><a href="ISO-80000-7-___-Light-and-radiation/Quantity-kinds-and-units-of-ISO-80000-7/index.html#--informal-preview-def_part7_catalogued_kind--statement" title="def_part7_catalogued_kind">7-8.2</a></span></span></p>
                   </td><td><p>
@@ -8181,8 +8124,7 @@ nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>W/(m²·nm)</code></p>
                   </td><td><p>
-                    <code>M·L⁻¹·T⁻³</code>
-</p>
+                    <code>M·L⁻¹·T⁻³</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart7-005Fcatalogued-005Fkind-statement" data-bp-preview-title="Definition 17.1.1" data-bp-preview-key="def_part7_catalogued_kind--statement" data-bp-preview-fallback-label="def_part7_catalogued_kind"><a href="ISO-80000-7-___-Light-and-radiation/Quantity-kinds-and-units-of-ISO-80000-7/index.html#--informal-preview-def_part7_catalogued_kind--statement" title="def_part7_catalogued_kind">7-9.1</a></span></span></p>
                   </td><td><p>
@@ -8192,8 +8134,7 @@ nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>J/m²</code></p>
                   </td><td><p>
-                    <code>M·T⁻²</code>
-</p>
+                    <code>M·T⁻²</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart7-005Fcatalogued-005Fkind-statement" data-bp-preview-title="Definition 17.1.1" data-bp-preview-key="def_part7_catalogued_kind--statement" data-bp-preview-fallback-label="def_part7_catalogued_kind"><a href="ISO-80000-7-___-Light-and-radiation/Quantity-kinds-and-units-of-ISO-80000-7/index.html#--informal-preview-def_part7_catalogued_kind--statement" title="def_part7_catalogued_kind">7-9.2</a></span></span></p>
                   </td><td><p>
@@ -8203,8 +8144,7 @@ nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>J/(m²·nm)</code></p>
                   </td><td><p>
-                    <code>M·L⁻²·T⁻²</code>
-</p>
+                    <code>M·L⁻²·T⁻²</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart7-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 17.3.2" data-bp-preview-key="thm_part7_dim_one--statement" data-bp-preview-fallback-label="thm_part7_dim_one"><a href="ISO-80000-7-___-Light-and-radiation/Dimension-does-not-classify_SEMI_-the-kind-does-___-the-widest-collisions-in-the-series/index.html#--informal-preview-thm_part7_dim_one--statement" title="thm_part7_dim_one">7-10.1</a></span></span></p>
                   </td><td><p>
@@ -8214,8 +8154,7 @@ nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>1</code></p>
                   </td><td><p>
-                    <code>1</code>
-</p>
+                    <code>1</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart7-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 17.3.2" data-bp-preview-key="thm_part7_dim_one--statement" data-bp-preview-fallback-label="thm_part7_dim_one"><a href="ISO-80000-7-___-Light-and-radiation/Dimension-does-not-classify_SEMI_-the-kind-does-___-the-widest-collisions-in-the-series/index.html#--informal-preview-thm_part7_dim_one--statement" title="thm_part7_dim_one">7-10.2</a></span></span></p>
                   </td><td><p>
@@ -8225,8 +8164,7 @@ nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>1</code></p>
                   </td><td><p>
-                    <code>1</code>
-</p>
+                    <code>1</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart7-005Fefficacy-statement" data-bp-preview-title="Theorem 17.2.3" data-bp-preview-key="thm_part7_efficacy--statement" data-bp-preview-fallback-label="thm_part7_efficacy"><a href="ISO-80000-7-___-Light-and-radiation/The-radiant-___-luminous-___-photon-trios/index.html#--informal-preview-thm_part7_efficacy--statement" title="thm_part7_efficacy">7-11.1</a></span></span></p>
                   </td><td><p>
@@ -8236,8 +8174,7 @@ nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>lm/W</code></p>
                   </td><td><p>
-                    <code>1</code>
-</p>
+                    <code>1</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart7-005Fefficacy-statement" data-bp-preview-title="Theorem 17.2.3" data-bp-preview-key="thm_part7_efficacy--statement" data-bp-preview-fallback-label="thm_part7_efficacy"><a href="ISO-80000-7-___-Light-and-radiation/The-radiant-___-luminous-___-photon-trios/index.html#--informal-preview-thm_part7_efficacy--statement" title="thm_part7_efficacy">7-11.2</a></span></span></p>
                   </td><td><p>
@@ -8247,8 +8184,7 @@ nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>lm/W</code></p>
                   </td><td><p>
-                    <code>1</code>
-</p>
+                    <code>1</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart7-005Fefficacy-statement" data-bp-preview-title="Theorem 17.2.3" data-bp-preview-key="thm_part7_efficacy--statement" data-bp-preview-fallback-label="thm_part7_efficacy"><a href="ISO-80000-7-___-Light-and-radiation/The-radiant-___-luminous-___-photon-trios/index.html#--informal-preview-thm_part7_efficacy--statement" title="thm_part7_efficacy">7-11.3</a></span></span></p>
                   </td><td><p>
@@ -8258,8 +8194,7 @@ nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>lm/W</code></p>
                   </td><td><p>
-                    <code>1</code>
-</p>
+                    <code>1</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart7-005Fefficacy-statement" data-bp-preview-title="Theorem 17.2.3" data-bp-preview-key="thm_part7_efficacy--statement" data-bp-preview-fallback-label="thm_part7_efficacy"><a href="ISO-80000-7-___-Light-and-radiation/The-radiant-___-luminous-___-photon-trios/index.html#--informal-preview-thm_part7_efficacy--statement" title="thm_part7_efficacy">7-11.4</a></span></span></p>
                   </td><td><p>
@@ -8269,8 +8204,7 @@ nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>lm/W</code></p>
                   </td><td><p>
-                    <code>1</code>
-</p>
+                    <code>1</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart7-005Fcandela-005Fpower-statement" data-bp-preview-title="Theorem 17.1.2" data-bp-preview-key="thm_part7_candela_power--statement" data-bp-preview-fallback-label="thm_part7_candela_power"><a href="ISO-80000-7-___-Light-and-radiation/Quantity-kinds-and-units-of-ISO-80000-7/index.html#--informal-preview-thm_part7_candela_power--statement" title="thm_part7_candela_power">7-12</a></span></span></p>
                   </td><td><p>
@@ -8280,8 +8214,7 @@ nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>lm·s</code></p>
                   </td><td><p>
-                    <code>M·L²·T⁻²</code>
-</p>
+                    <code>M·L²·T⁻²</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart7-005Fcollision-statement" data-bp-preview-title="Theorem 17.3.1" data-bp-preview-key="thm_part7_collision--statement" data-bp-preview-fallback-label="thm_part7_collision"><a href="ISO-80000-7-___-Light-and-radiation/Dimension-does-not-classify_SEMI_-the-kind-does-___-the-widest-collisions-in-the-series/index.html#--informal-preview-thm_part7_collision--statement" title="thm_part7_collision">7-13</a></span></span></p>
                   </td><td><p>
@@ -8291,8 +8224,7 @@ nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>lm</code></p>
                   </td><td><p>
-                    <code>M·L²·T⁻³</code>
-</p>
+                    <code>M·L²·T⁻³</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart7-005Fcandela-005Fpower-statement" data-bp-preview-title="Theorem 17.1.2" data-bp-preview-key="thm_part7_candela_power--statement" data-bp-preview-fallback-label="thm_part7_candela_power"><a href="ISO-80000-7-___-Light-and-radiation/Quantity-kinds-and-units-of-ISO-80000-7/index.html#--informal-preview-thm_part7_candela_power--statement" title="thm_part7_candela_power">7-14</a></span></span></p>
                   </td><td><p>
@@ -8302,8 +8234,7 @@ nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>cd</code></p>
                   </td><td><p>
-                    <code>M·L²·T⁻³</code>
-</p>
+                    <code>M·L²·T⁻³</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart7-005Fcollision-statement" data-bp-preview-title="Theorem 17.3.1" data-bp-preview-key="thm_part7_collision--statement" data-bp-preview-fallback-label="thm_part7_collision"><a href="ISO-80000-7-___-Light-and-radiation/Dimension-does-not-classify_SEMI_-the-kind-does-___-the-widest-collisions-in-the-series/index.html#--informal-preview-thm_part7_collision--statement" title="thm_part7_collision">7-15</a></span></span></p>
                   </td><td><p>
@@ -8313,8 +8244,7 @@ nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>cd/m²</code></p>
                   </td><td><p>
-                    <code>M·T⁻³</code>
-</p>
+                    <code>M·T⁻³</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart7-005Fcollision-statement" data-bp-preview-title="Theorem 17.3.1" data-bp-preview-key="thm_part7_collision--statement" data-bp-preview-fallback-label="thm_part7_collision"><a href="ISO-80000-7-___-Light-and-radiation/Dimension-does-not-classify_SEMI_-the-kind-does-___-the-widest-collisions-in-the-series/index.html#--informal-preview-thm_part7_collision--statement" title="thm_part7_collision">7-16</a></span></span></p>
                   </td><td><p>
@@ -8324,8 +8254,7 @@ nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>lx</code></p>
                   </td><td><p>
-                    <code>M·T⁻³</code>
-</p>
+                    <code>M·T⁻³</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart7-005Fcatalogued-005Fkind-statement" data-bp-preview-title="Definition 17.1.1" data-bp-preview-key="def_part7_catalogued_kind--statement" data-bp-preview-fallback-label="def_part7_catalogued_kind"><a href="ISO-80000-7-___-Light-and-radiation/Quantity-kinds-and-units-of-ISO-80000-7/index.html#--informal-preview-def_part7_catalogued_kind--statement" title="def_part7_catalogued_kind">7-17</a></span></span></p>
                   </td><td><p>
@@ -8335,8 +8264,7 @@ nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>lm/m²</code></p>
                   </td><td><p>
-                    <code>M·T⁻³</code>
-</p>
+                    <code>M·T⁻³</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart7-005Fcatalogued-005Fkind-statement" data-bp-preview-title="Definition 17.1.1" data-bp-preview-key="def_part7_catalogued_kind--statement" data-bp-preview-fallback-label="def_part7_catalogued_kind"><a href="ISO-80000-7-___-Light-and-radiation/Quantity-kinds-and-units-of-ISO-80000-7/index.html#--informal-preview-def_part7_catalogued_kind--statement" title="def_part7_catalogued_kind">7-18</a></span></span></p>
                   </td><td><p>
@@ -8346,8 +8274,7 @@ nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>lx·s</code></p>
                   </td><td><p>
-                    <code>M·T⁻²</code>
-</p>
+                    <code>M·T⁻²</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart7-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 17.3.2" data-bp-preview-key="thm_part7_dim_one--statement" data-bp-preview-fallback-label="thm_part7_dim_one"><a href="ISO-80000-7-___-Light-and-radiation/Dimension-does-not-classify_SEMI_-the-kind-does-___-the-widest-collisions-in-the-series/index.html#--informal-preview-thm_part7_dim_one--statement" title="thm_part7_dim_one">7-19.1</a></span></span></p>
                   </td><td><p>
@@ -8357,8 +8284,7 @@ nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>1</code></p>
                   </td><td><p>
-                    <code>1</code>
-</p>
+                    <code>1</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart7-005Fcandela-005Fpower-statement" data-bp-preview-title="Theorem 17.1.2" data-bp-preview-key="thm_part7_candela_power--statement" data-bp-preview-fallback-label="thm_part7_candela_power"><a href="ISO-80000-7-___-Light-and-radiation/Quantity-kinds-and-units-of-ISO-80000-7/index.html#--informal-preview-thm_part7_candela_power--statement" title="thm_part7_candela_power">7-19.2</a></span></span></p>
                   </td><td><p>
@@ -8368,8 +8294,7 @@ nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>J</code></p>
                   </td><td><p>
-                    <code>M·L²·T⁻²</code>
-</p>
+                    <code>M·L²·T⁻²</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart7-005Ftrio-statement" data-bp-preview-title="Theorem 17.2.2" data-bp-preview-key="thm_part7_trio--statement" data-bp-preview-fallback-label="thm_part7_trio"><a href="ISO-80000-7-___-Light-and-radiation/The-radiant-___-luminous-___-photon-trios/index.html#--informal-preview-thm_part7_trio--statement" title="thm_part7_trio">7-20</a></span></span></p>
                   </td><td><p>
@@ -8379,8 +8304,7 @@ nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>s⁻¹</code></p>
                   </td><td><p>
-                    <code>T⁻¹</code>
-</p>
+                    <code>T⁻¹</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart7-005Fcatalogued-005Fkind-statement" data-bp-preview-title="Definition 17.1.1" data-bp-preview-key="def_part7_catalogued_kind--statement" data-bp-preview-fallback-label="def_part7_catalogued_kind"><a href="ISO-80000-7-___-Light-and-radiation/Quantity-kinds-and-units-of-ISO-80000-7/index.html#--informal-preview-def_part7_catalogued_kind--statement" title="def_part7_catalogued_kind">7-21</a></span></span></p>
                   </td><td><p>
@@ -8390,8 +8314,7 @@ nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>s⁻¹·sr⁻¹</code></p>
                   </td><td><p>
-                    <code>T⁻¹</code>
-</p>
+                    <code>T⁻¹</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart7-005Fcatalogued-005Fkind-statement" data-bp-preview-title="Definition 17.1.1" data-bp-preview-key="def_part7_catalogued_kind--statement" data-bp-preview-fallback-label="def_part7_catalogued_kind"><a href="ISO-80000-7-___-Light-and-radiation/Quantity-kinds-and-units-of-ISO-80000-7/index.html#--informal-preview-def_part7_catalogued_kind--statement" title="def_part7_catalogued_kind">7-22</a></span></span></p>
                   </td><td><p>
@@ -8401,8 +8324,7 @@ nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>m⁻²·s⁻¹·sr⁻¹</code></p>
                   </td><td><p>
-                    <code>L⁻²·T⁻¹</code>
-</p>
+                    <code>L⁻²·T⁻¹</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart7-005Fcatalogued-005Fkind-statement" data-bp-preview-title="Definition 17.1.1" data-bp-preview-key="def_part7_catalogued_kind--statement" data-bp-preview-fallback-label="def_part7_catalogued_kind"><a href="ISO-80000-7-___-Light-and-radiation/Quantity-kinds-and-units-of-ISO-80000-7/index.html#--informal-preview-def_part7_catalogued_kind--statement" title="def_part7_catalogued_kind">7-23</a></span></span></p>
                   </td><td><p>
@@ -8412,8 +8334,7 @@ nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>m⁻²·s⁻¹</code></p>
                   </td><td><p>
-                    <code>L⁻²·T⁻¹</code>
-</p>
+                    <code>L⁻²·T⁻¹</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart7-005Fcatalogued-005Fkind-statement" data-bp-preview-title="Definition 17.1.1" data-bp-preview-key="def_part7_catalogued_kind--statement" data-bp-preview-fallback-label="def_part7_catalogued_kind"><a href="ISO-80000-7-___-Light-and-radiation/Quantity-kinds-and-units-of-ISO-80000-7/index.html#--informal-preview-def_part7_catalogued_kind--statement" title="def_part7_catalogued_kind">7-24</a></span></span></p>
                   </td><td><p>
@@ -8423,8 +8344,7 @@ nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>m⁻²·s⁻¹</code></p>
                   </td><td><p>
-                    <code>L⁻²·T⁻¹</code>
-</p>
+                    <code>L⁻²·T⁻¹</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart7-005Fcatalogued-005Fkind-statement" data-bp-preview-title="Definition 17.1.1" data-bp-preview-key="def_part7_catalogued_kind--statement" data-bp-preview-fallback-label="def_part7_catalogued_kind"><a href="ISO-80000-7-___-Light-and-radiation/Quantity-kinds-and-units-of-ISO-80000-7/index.html#--informal-preview-def_part7_catalogued_kind--statement" title="def_part7_catalogued_kind">7-25</a></span></span></p>
                   </td><td><p>
@@ -8434,74 +8354,67 @@ nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>m⁻²</code></p>
                   </td><td><p>
-                    <code>L⁻²</code>
-</p>
+                    <code>L⁻²</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart7-005Fcatalogued-005Fkind-statement" data-bp-preview-title="Definition 17.1.1" data-bp-preview-key="def_part7_catalogued_kind--statement" data-bp-preview-fallback-label="def_part7_catalogued_kind"><a href="ISO-80000-7-___-Light-and-radiation/Quantity-kinds-and-units-of-ISO-80000-7/index.html#--informal-preview-def_part7_catalogued_kind--statement" title="def_part7_catalogued_kind">7-26.1</a></span></span></p>
                   </td><td><p>
-                    tristimulus values (CIE 1931)</p>
+                    tristimulus values for the CIE 1931 standard observer</p>
                   </td><td><p>
                     <code>X, Y, Z</code></p>
                   </td><td><p>
                     <code>1</code></p>
                   </td><td><p>
-                    <code>1</code>
-</p>
+                    <code>1</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart7-005Fcatalogued-005Fkind-statement" data-bp-preview-title="Definition 17.1.1" data-bp-preview-key="def_part7_catalogued_kind--statement" data-bp-preview-fallback-label="def_part7_catalogued_kind"><a href="ISO-80000-7-___-Light-and-radiation/Quantity-kinds-and-units-of-ISO-80000-7/index.html#--informal-preview-def_part7_catalogued_kind--statement" title="def_part7_catalogued_kind">7-26.2</a></span></span></p>
                   </td><td><p>
-                    tristimulus values (CIE 1964)</p>
+                    tristimulus values for the CIE 1964 standard observer</p>
                   </td><td><p>
                     <code>X₁₀, Y₁₀, Z₁₀</code></p>
                   </td><td><p>
                     <code>1</code></p>
                   </td><td><p>
-                    <code>1</code>
-</p>
+                    <code>1</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart7-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 17.3.2" data-bp-preview-key="thm_part7_dim_one--statement" data-bp-preview-fallback-label="thm_part7_dim_one"><a href="ISO-80000-7-___-Light-and-radiation/Dimension-does-not-classify_SEMI_-the-kind-does-___-the-widest-collisions-in-the-series/index.html#--informal-preview-thm_part7_dim_one--statement" title="thm_part7_dim_one">7-27.1</a></span></span></p>
                   </td><td><p>
-                    colour-matching functions (CIE 1931)</p>
+                    CIE colour-matching functions for the CIE 1931 standard observer</p>
                   </td><td><p>
                     <code>x̄, ȳ, z̄</code></p>
                   </td><td><p>
                     <code>1</code></p>
                   </td><td><p>
-                    <code>1</code>
-</p>
+                    <code>1</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart7-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 17.3.2" data-bp-preview-key="thm_part7_dim_one--statement" data-bp-preview-fallback-label="thm_part7_dim_one"><a href="ISO-80000-7-___-Light-and-radiation/Dimension-does-not-classify_SEMI_-the-kind-does-___-the-widest-collisions-in-the-series/index.html#--informal-preview-thm_part7_dim_one--statement" title="thm_part7_dim_one">7-27.2</a></span></span></p>
                   </td><td><p>
-                    colour-matching functions (CIE 1964)</p>
+                    CIE colour-matching functions for the CIE 1964 standard observer</p>
                   </td><td><p>
                     <code>x̄₁₀, ȳ₁₀, z̄₁₀</code></p>
                   </td><td><p>
                     <code>1</code></p>
                   </td><td><p>
-                    <code>1</code>
-</p>
+                    <code>1</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart7-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 17.3.2" data-bp-preview-key="thm_part7_dim_one--statement" data-bp-preview-fallback-label="thm_part7_dim_one"><a href="ISO-80000-7-___-Light-and-radiation/Dimension-does-not-classify_SEMI_-the-kind-does-___-the-widest-collisions-in-the-series/index.html#--informal-preview-thm_part7_dim_one--statement" title="thm_part7_dim_one">7-28.1</a></span></span></p>
                   </td><td><p>
-                    chromaticity coordinates (CIE 1931)</p>
+                    chromaticity coordinates in the CIE 1931 standard system</p>
                   </td><td><p>
                     <code>x, y, z</code></p>
                   </td><td><p>
                     <code>1</code></p>
                   </td><td><p>
-                    <code>1</code>
-</p>
+                    <code>1</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart7-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 17.3.2" data-bp-preview-key="thm_part7_dim_one--statement" data-bp-preview-fallback-label="thm_part7_dim_one"><a href="ISO-80000-7-___-Light-and-radiation/Dimension-does-not-classify_SEMI_-the-kind-does-___-the-widest-collisions-in-the-series/index.html#--informal-preview-thm_part7_dim_one--statement" title="thm_part7_dim_one">7-28.2</a></span></span></p>
                   </td><td><p>
-                    chromaticity coordinates (CIE 1964)</p>
+                    chromaticity coordinates in the CIE 1964 standard system</p>
                   </td><td><p>
                     <code>x₁₀, y₁₀, z₁₀</code></p>
                   </td><td><p>
                     <code>1</code></p>
                   </td><td><p>
-                    <code>1</code>
-</p>
+                    <code>1</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart7-005Fcatalogued-005Fkind-statement" data-bp-preview-title="Definition 17.1.1" data-bp-preview-key="def_part7_catalogued_kind--statement" data-bp-preview-fallback-label="def_part7_catalogued_kind"><a href="ISO-80000-7-___-Light-and-radiation/Quantity-kinds-and-units-of-ISO-80000-7/index.html#--informal-preview-def_part7_catalogued_kind--statement" title="def_part7_catalogued_kind">7-29.1</a></span></span></p>
                   </td><td><p>
@@ -8511,8 +8424,7 @@ nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>K</code></p>
                   </td><td><p>
-                    <code>Θ</code>
-</p>
+                    <code>Θ</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart7-005Fcatalogued-005Fkind-statement" data-bp-preview-title="Definition 17.1.1" data-bp-preview-key="def_part7_catalogued_kind--statement" data-bp-preview-fallback-label="def_part7_catalogued_kind"><a href="ISO-80000-7-___-Light-and-radiation/Quantity-kinds-and-units-of-ISO-80000-7/index.html#--informal-preview-def_part7_catalogued_kind--statement" title="def_part7_catalogued_kind">7-29.2</a></span></span></p>
                   </td><td><p>
@@ -8522,8 +8434,7 @@ nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>K</code></p>
                   </td><td><p>
-                    <code>Θ</code>
-</p>
+                    <code>Θ</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart7-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 17.3.2" data-bp-preview-key="thm_part7_dim_one--statement" data-bp-preview-fallback-label="thm_part7_dim_one"><a href="ISO-80000-7-___-Light-and-radiation/Dimension-does-not-classify_SEMI_-the-kind-does-___-the-widest-collisions-in-the-series/index.html#--informal-preview-thm_part7_dim_one--statement" title="thm_part7_dim_one">7-30.1</a></span></span></p>
                   </td><td><p>
@@ -8533,8 +8444,7 @@ nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>1</code></p>
                   </td><td><p>
-                    <code>1</code>
-</p>
+                    <code>1</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart7-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 17.3.2" data-bp-preview-key="thm_part7_dim_one--statement" data-bp-preview-fallback-label="thm_part7_dim_one"><a href="ISO-80000-7-___-Light-and-radiation/Dimension-does-not-classify_SEMI_-the-kind-does-___-the-widest-collisions-in-the-series/index.html#--informal-preview-thm_part7_dim_one--statement" title="thm_part7_dim_one">7-30.2</a></span></span></p>
                   </td><td><p>
@@ -8544,8 +8454,7 @@ nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>1</code></p>
                   </td><td><p>
-                    <code>1</code>
-</p>
+                    <code>1</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart7-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 17.3.2" data-bp-preview-key="thm_part7_dim_one--statement" data-bp-preview-fallback-label="thm_part7_dim_one"><a href="ISO-80000-7-___-Light-and-radiation/Dimension-does-not-classify_SEMI_-the-kind-does-___-the-widest-collisions-in-the-series/index.html#--informal-preview-thm_part7_dim_one--statement" title="thm_part7_dim_one">7-31.1</a></span></span></p>
                   </td><td><p>
@@ -8555,8 +8464,7 @@ nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>1</code></p>
                   </td><td><p>
-                    <code>1</code>
-</p>
+                    <code>1</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart7-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 17.3.2" data-bp-preview-key="thm_part7_dim_one--statement" data-bp-preview-fallback-label="thm_part7_dim_one"><a href="ISO-80000-7-___-Light-and-radiation/Dimension-does-not-classify_SEMI_-the-kind-does-___-the-widest-collisions-in-the-series/index.html#--informal-preview-thm_part7_dim_one--statement" title="thm_part7_dim_one">7-31.2</a></span></span></p>
                   </td><td><p>
@@ -8566,8 +8474,7 @@ nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>1</code></p>
                   </td><td><p>
-                    <code>1</code>
-</p>
+                    <code>1</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart7-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 17.3.2" data-bp-preview-key="thm_part7_dim_one--statement" data-bp-preview-fallback-label="thm_part7_dim_one"><a href="ISO-80000-7-___-Light-and-radiation/Dimension-does-not-classify_SEMI_-the-kind-does-___-the-widest-collisions-in-the-series/index.html#--informal-preview-thm_part7_dim_one--statement" title="thm_part7_dim_one">7-31.3</a></span></span></p>
                   </td><td><p>
@@ -8577,8 +8484,7 @@ nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>1</code></p>
                   </td><td><p>
-                    <code>1</code>
-</p>
+                    <code>1</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart7-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 17.3.2" data-bp-preview-key="thm_part7_dim_one--statement" data-bp-preview-fallback-label="thm_part7_dim_one"><a href="ISO-80000-7-___-Light-and-radiation/Dimension-does-not-classify_SEMI_-the-kind-does-___-the-widest-collisions-in-the-series/index.html#--informal-preview-thm_part7_dim_one--statement" title="thm_part7_dim_one">7-31.4</a></span></span></p>
                   </td><td><p>
@@ -8588,8 +8494,7 @@ nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>1</code></p>
                   </td><td><p>
-                    <code>1</code>
-</p>
+                    <code>1</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart7-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 17.3.2" data-bp-preview-key="thm_part7_dim_one--statement" data-bp-preview-fallback-label="thm_part7_dim_one"><a href="ISO-80000-7-___-Light-and-radiation/Dimension-does-not-classify_SEMI_-the-kind-does-___-the-widest-collisions-in-the-series/index.html#--informal-preview-thm_part7_dim_one--statement" title="thm_part7_dim_one">7-31.5</a></span></span></p>
                   </td><td><p>
@@ -8599,8 +8504,7 @@ nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>1</code></p>
                   </td><td><p>
-                    <code>1</code>
-</p>
+                    <code>1</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart7-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 17.3.2" data-bp-preview-key="thm_part7_dim_one--statement" data-bp-preview-fallback-label="thm_part7_dim_one"><a href="ISO-80000-7-___-Light-and-radiation/Dimension-does-not-classify_SEMI_-the-kind-does-___-the-widest-collisions-in-the-series/index.html#--informal-preview-thm_part7_dim_one--statement" title="thm_part7_dim_one">7-31.6</a></span></span></p>
                   </td><td><p>
@@ -8610,8 +8514,7 @@ nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>1</code></p>
                   </td><td><p>
-                    <code>1</code>
-</p>
+                    <code>1</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart7-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 17.3.2" data-bp-preview-key="thm_part7_dim_one--statement" data-bp-preview-fallback-label="thm_part7_dim_one"><a href="ISO-80000-7-___-Light-and-radiation/Dimension-does-not-classify_SEMI_-the-kind-does-___-the-widest-collisions-in-the-series/index.html#--informal-preview-thm_part7_dim_one--statement" title="thm_part7_dim_one">7-32.1</a></span></span></p>
                   </td><td><p>
@@ -8621,8 +8524,7 @@ nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>1</code></p>
                   </td><td><p>
-                    <code>1</code>
-</p>
+                    <code>1</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart7-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 17.3.2" data-bp-preview-key="thm_part7_dim_one--statement" data-bp-preview-fallback-label="thm_part7_dim_one"><a href="ISO-80000-7-___-Light-and-radiation/Dimension-does-not-classify_SEMI_-the-kind-does-___-the-widest-collisions-in-the-series/index.html#--informal-preview-thm_part7_dim_one--statement" title="thm_part7_dim_one">7-32.2</a></span></span></p>
                   </td><td><p>
@@ -8632,8 +8534,7 @@ nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>1</code></p>
                   </td><td><p>
-                    <code>1</code>
-</p>
+                    <code>1</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart7-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 17.3.2" data-bp-preview-key="thm_part7_dim_one--statement" data-bp-preview-fallback-label="thm_part7_dim_one"><a href="ISO-80000-7-___-Light-and-radiation/Dimension-does-not-classify_SEMI_-the-kind-does-___-the-widest-collisions-in-the-series/index.html#--informal-preview-thm_part7_dim_one--statement" title="thm_part7_dim_one">7-33.1</a></span></span></p>
                   </td><td><p>
@@ -8643,8 +8544,7 @@ nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>1</code></p>
                   </td><td><p>
-                    <code>1</code>
-</p>
+                    <code>1</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart7-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 17.3.2" data-bp-preview-key="thm_part7_dim_one--statement" data-bp-preview-fallback-label="thm_part7_dim_one"><a href="ISO-80000-7-___-Light-and-radiation/Dimension-does-not-classify_SEMI_-the-kind-does-___-the-widest-collisions-in-the-series/index.html#--informal-preview-thm_part7_dim_one--statement" title="thm_part7_dim_one">7-33.2</a></span></span></p>
                   </td><td><p>
@@ -8654,8 +8554,7 @@ nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>1</code></p>
                   </td><td><p>
-                    <code>1</code>
-</p>
+                    <code>1</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart7-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 17.3.2" data-bp-preview-key="thm_part7_dim_one--statement" data-bp-preview-fallback-label="thm_part7_dim_one"><a href="ISO-80000-7-___-Light-and-radiation/Dimension-does-not-classify_SEMI_-the-kind-does-___-the-widest-collisions-in-the-series/index.html#--informal-preview-thm_part7_dim_one--statement" title="thm_part7_dim_one">7-34</a></span></span></p>
                   </td><td><p>
@@ -8665,8 +8564,7 @@ nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>1</code></p>
                   </td><td><p>
-                    <code>1</code>
-</p>
+                    <code>1</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart7-005Fcatalogued-005Fkind-statement" data-bp-preview-title="Definition 17.1.1" data-bp-preview-key="def_part7_catalogued_kind--statement" data-bp-preview-fallback-label="def_part7_catalogued_kind"><a href="ISO-80000-7-___-Light-and-radiation/Quantity-kinds-and-units-of-ISO-80000-7/index.html#--informal-preview-def_part7_catalogued_kind--statement" title="def_part7_catalogued_kind">7-35.1</a></span></span></p>
                   </td><td><p>
@@ -8676,8 +8574,7 @@ nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>m⁻¹</code></p>
                   </td><td><p>
-                    <code>L⁻¹</code>
-</p>
+                    <code>L⁻¹</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart7-005Fcatalogued-005Fkind-statement" data-bp-preview-title="Definition 17.1.1" data-bp-preview-key="def_part7_catalogued_kind--statement" data-bp-preview-fallback-label="def_part7_catalogued_kind"><a href="ISO-80000-7-___-Light-and-radiation/Quantity-kinds-and-units-of-ISO-80000-7/index.html#--informal-preview-def_part7_catalogued_kind--statement" title="def_part7_catalogued_kind">7-35.2</a></span></span></p>
                   </td><td><p>
@@ -8687,8 +8584,7 @@ nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>m⁻¹</code></p>
                   </td><td><p>
-                    <code>L⁻¹</code>
-</p>
+                    <code>L⁻¹</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart7-005Fcatalogued-005Fkind-statement" data-bp-preview-title="Definition 17.1.1" data-bp-preview-key="def_part7_catalogued_kind--statement" data-bp-preview-fallback-label="def_part7_catalogued_kind"><a href="ISO-80000-7-___-Light-and-radiation/Quantity-kinds-and-units-of-ISO-80000-7/index.html#--informal-preview-def_part7_catalogued_kind--statement" title="def_part7_catalogued_kind">7-36.1</a></span></span></p>
                   </td><td><p>
@@ -8698,8 +8594,7 @@ nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>kg⁻¹·m²</code></p>
                   </td><td><p>
-                    <code>M⁻¹·L²</code>
-</p>
+                    <code>M⁻¹·L²</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart7-005Fcatalogued-005Fkind-statement" data-bp-preview-title="Definition 17.1.1" data-bp-preview-key="def_part7_catalogued_kind--statement" data-bp-preview-fallback-label="def_part7_catalogued_kind"><a href="ISO-80000-7-___-Light-and-radiation/Quantity-kinds-and-units-of-ISO-80000-7/index.html#--informal-preview-def_part7_catalogued_kind--statement" title="def_part7_catalogued_kind">7-36.2</a></span></span></p>
                   </td><td><p>
@@ -8709,8 +8604,7 @@ nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>kg⁻¹·m²</code></p>
                   </td><td><p>
-                    <code>M⁻¹·L²</code>
-</p>
+                    <code>M⁻¹·L²</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart7-005Fcandela-005Fpower-statement" data-bp-preview-title="Theorem 17.1.2" data-bp-preview-key="thm_part7_candela_power--statement" data-bp-preview-fallback-label="thm_part7_candela_power"><a href="ISO-80000-7-___-Light-and-radiation/Quantity-kinds-and-units-of-ISO-80000-7/index.html#--informal-preview-thm_part7_candela_power--statement" title="thm_part7_candela_power">7-37</a></span></span></p>
                   </td><td><p>

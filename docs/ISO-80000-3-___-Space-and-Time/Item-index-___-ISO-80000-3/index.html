@@ -1011,169 +1011,6 @@ table.tabular td > p:last-child, table.tabular th > p:first-child {
   }
 }
 </style><style>
-#bp-style-switcher {
-  position: fixed;
-  right: 1rem;
-  bottom: 1rem;
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  gap: 0.4rem 0.6rem;
-  flex-wrap: wrap;
-  background: var(--bp-color-surface);
-  border: 1px solid var(--bp-color-border);
-  border-radius: var(--bp-radius-md);
-  box-shadow: var(--bp-shadow-sm);
-  padding: 0.4rem 0.55rem;
-  font-size: 0.82rem;
-}
-
-#bp-style-switcher .bp-style-switcher-control {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-}
-
-#bp-style-switcher label {
-  font-weight: 600;
-}
-
-#bp-style-switcher select {
-  border: 1px solid var(--bp-color-border);
-  border-radius: 0.3rem;
-  background: var(--bp-color-surface);
-  font-size: 0.82rem;
-  padding: 0.1rem 0.25rem;
-}
-
-html[data-bp-style="blueprint"] .bp_wrapper {
-  border: 1px solid var(--bp-color-border);
-  border-radius: var(--bp-radius-sm);
-  padding: 0.45rem 0.6rem 0.55rem;
-  background: var(--bp-color-surface);
-}
-
-html[data-bp-style="blueprint"] .bp_heading {
-  border-bottom: 1px solid var(--bp-color-border-soft);
-  padding-bottom: 0.35rem;
-}
-
-html[data-bp-style="blueprint"] .bp_content {
-  margin-top: 0.35rem;
-  padding-left: 0.45rem;
-}
-
-html[data-bp-style="blueprint"] .bp_kind_theorem_content,
-html[data-bp-style="blueprint"] .bp_kind_proposition_content,
-html[data-bp-style="blueprint"] .bp_kind_lemma_content,
-html[data-bp-style="blueprint"] .bp_kind_corollary_content,
-html[data-bp-style="blueprint"] .bp_kind_proof_content,
-html[data-bp-style="blueprint"] div.theorem_thmcontent,
-html[data-bp-style="blueprint"] div.proposition_thmcontent,
-html[data-bp-style="blueprint"] div.lemma_thmcontent,
-html[data-bp-style="blueprint"] div.corollary_thmcontent,
-html[data-bp-style="blueprint"] div.proof_content {
-  border-left-color: var(--bp-color-text-muted);
-}
-
-html[data-bp-style="modern"] .bp_wrapper {
-  border: 1px solid var(--bp-color-modern-border);
-  border-radius: var(--bp-radius-2xl);
-  padding: 0.6rem 0.7rem 0.68rem;
-  background: linear-gradient(180deg, var(--bp-color-surface), var(--bp-color-surface-modern));
-  box-shadow: var(--bp-shadow-modern);
-}
-
-html[data-bp-style="modern"] .bp_heading {
-  border-bottom: 1px solid var(--bp-color-border-soft);
-  padding-bottom: 0.4rem;
-}
-
-html[data-bp-style="modern"] .bp_caption {
-  background: var(--bp-color-modern-caption);
-  border-radius: var(--bp-radius-pill);
-  padding: 0.08rem 0.5rem;
-}
-
-html[data-bp-style="modern"] .bp_content {
-  margin-top: 0.45rem;
-  padding-left: 0.5rem;
-}
-
-html[data-bp-style="modern"] .bp_kind_theorem_content,
-html[data-bp-style="modern"] .bp_kind_proposition_content,
-html[data-bp-style="modern"] .bp_kind_lemma_content,
-html[data-bp-style="modern"] .bp_kind_corollary_content,
-html[data-bp-style="modern"] .bp_kind_proof_content,
-html[data-bp-style="modern"] .bp_wrapper div.theorem_thmcontent,
-html[data-bp-style="modern"] .bp_wrapper div.proposition_thmcontent,
-html[data-bp-style="modern"] .bp_wrapper div.lemma_thmcontent,
-html[data-bp-style="modern"] .bp_wrapper div.corollary_thmcontent,
-html[data-bp-style="modern"] .bp_wrapper div.proof_content {
-  border-left-color: var(--bp-color-text-faint);
-}
-
-html[data-bp-style="bold"] .bp_wrapper {
-  border: 2px solid var(--bp-color-text-strong);
-  border-radius: var(--bp-radius-3xl);
-  padding: 0.6rem 0.75rem 0.75rem;
-  background:
-    radial-gradient(circle at 100% 0%, var(--bp-color-bold-surface-glow-1), transparent 36%),
-    radial-gradient(circle at 0% 100%, var(--bp-color-bold-surface-glow-2), transparent 32%),
-    var(--bp-color-surface);
-  box-shadow: var(--bp-shadow-bold-lg);
-}
-
-html[data-bp-style="bold"] .bp_heading {
-  border-bottom: 2px solid var(--bp-color-text-strong);
-  padding-bottom: 0.45rem;
-  letter-spacing: 0.01em;
-}
-
-html[data-bp-style="bold"] .bp_caption {
-  background: var(--bp-color-text-strong);
-  color: var(--bp-color-surface-muted);
-  border-radius: 0.25rem;
-  padding: 0.08rem 0.45rem;
-  text-transform: uppercase;
-}
-
-html[data-bp-style="bold"] .bp_label {
-  background: var(--bp-color-bold-label);
-  color: var(--bp-color-text);
-  border-radius: var(--bp-radius-pill);
-  padding: 0.06rem 0.42rem;
-}
-
-html[data-bp-style="bold"] .bp_code_link {
-  color: var(--bp-color-bold-link);
-  font-weight: 700;
-}
-
-html[data-bp-style="bold"] .bp_code_hover {
-  border: 2px solid var(--bp-color-text-strong);
-  border-radius: var(--bp-radius-xl);
-  box-shadow: var(--bp-shadow-bold);
-}
-
-html[data-bp-style="bold"] .bp_content {
-  margin-top: 0.5rem;
-  padding-left: 0.6rem;
-}
-
-html[data-bp-style="bold"] .bp_kind_theorem_content,
-html[data-bp-style="bold"] .bp_kind_proposition_content,
-html[data-bp-style="bold"] .bp_kind_lemma_content,
-html[data-bp-style="bold"] .bp_kind_corollary_content,
-html[data-bp-style="bold"] .bp_kind_proof_content,
-html[data-bp-style="bold"] .bp_wrapper div.theorem_thmcontent,
-html[data-bp-style="bold"] .bp_wrapper div.proposition_thmcontent,
-html[data-bp-style="bold"] .bp_wrapper div.lemma_thmcontent,
-html[data-bp-style="bold"] .bp_wrapper div.corollary_thmcontent,
-html[data-bp-style="bold"] .bp_wrapper div.proof_content {
-  border-left: 0.2rem solid var(--bp-color-text-strong);
-}
-</style><style>
 .bp_wrapper {
   scroll-margin-top: 1rem;
   margin: 0.85rem 0;
@@ -1232,7 +1069,7 @@ span[class$="_thmlabel"]::after {
 
 .bp_extras {
   --bp-extra-group-col: minmax(5rem, max-content);
-  --bp-extra-uses-col: minmax(4.2rem, max-content);
+  --bp-extra-uses-col: minmax(5.2rem, max-content);
   --bp-extra-used-by-col: minmax(7.2rem, max-content);
   --bp-extra-code-col: max-content;
   --bp-extra-code-placeholder-col: minmax(3.35rem, max-content);
@@ -1268,20 +1105,6 @@ span[class$="_thmlabel"]::after {
     var(--bp-extra-used-by-col)
     var(--bp-extra-code-col);
   grid-template-areas: "group used code";
-}
-
-.bp_extras_with_uses {
-  grid-template-columns: minmax(5.2rem, max-content) max-content minmax(7.2rem, max-content);
-  grid-template-areas: "uses used code";
-}
-
-.bp_extras_with_group.bp_extras_with_uses {
-  grid-template-columns:
-    minmax(5rem, max-content)
-    minmax(5.2rem, max-content)
-    minmax(7.2rem, max-content)
-    max-content;
-  grid-template-areas: "group uses used code";
 }
 
 .bp_extras_with_group.bp_extras_with_uses {
@@ -2651,6 +2474,169 @@ div.proof_content {
     background-color: transparent;
     box-shadow: 0 0 0 0.18rem var(--bp-color-target-ring);
   }
+}
+</style><style>
+#bp-style-switcher {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem 0.6rem;
+  flex-wrap: wrap;
+  background: var(--bp-color-surface);
+  border: 1px solid var(--bp-color-border);
+  border-radius: var(--bp-radius-md);
+  box-shadow: var(--bp-shadow-sm);
+  padding: 0.4rem 0.55rem;
+  font-size: 0.82rem;
+}
+
+#bp-style-switcher .bp-style-switcher-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+#bp-style-switcher label {
+  font-weight: 600;
+}
+
+#bp-style-switcher select {
+  border: 1px solid var(--bp-color-border);
+  border-radius: 0.3rem;
+  background: var(--bp-color-surface);
+  font-size: 0.82rem;
+  padding: 0.1rem 0.25rem;
+}
+
+html[data-bp-style="blueprint"] .bp_wrapper {
+  border: 1px solid var(--bp-color-border);
+  border-radius: var(--bp-radius-sm);
+  padding: 0.45rem 0.6rem 0.55rem;
+  background: var(--bp-color-surface);
+}
+
+html[data-bp-style="blueprint"] .bp_heading {
+  border-bottom: 1px solid var(--bp-color-border-soft);
+  padding-bottom: 0.35rem;
+}
+
+html[data-bp-style="blueprint"] .bp_content {
+  margin-top: 0.35rem;
+  padding-left: 0.45rem;
+}
+
+html[data-bp-style="blueprint"] .bp_kind_theorem_content,
+html[data-bp-style="blueprint"] .bp_kind_proposition_content,
+html[data-bp-style="blueprint"] .bp_kind_lemma_content,
+html[data-bp-style="blueprint"] .bp_kind_corollary_content,
+html[data-bp-style="blueprint"] .bp_kind_proof_content,
+html[data-bp-style="blueprint"] div.theorem_thmcontent,
+html[data-bp-style="blueprint"] div.proposition_thmcontent,
+html[data-bp-style="blueprint"] div.lemma_thmcontent,
+html[data-bp-style="blueprint"] div.corollary_thmcontent,
+html[data-bp-style="blueprint"] div.proof_content {
+  border-left-color: var(--bp-color-text-muted);
+}
+
+html[data-bp-style="modern"] .bp_wrapper {
+  border: 1px solid var(--bp-color-modern-border);
+  border-radius: var(--bp-radius-2xl);
+  padding: 0.6rem 0.7rem 0.68rem;
+  background: linear-gradient(180deg, var(--bp-color-surface), var(--bp-color-surface-modern));
+  box-shadow: var(--bp-shadow-modern);
+}
+
+html[data-bp-style="modern"] .bp_heading {
+  border-bottom: 1px solid var(--bp-color-border-soft);
+  padding-bottom: 0.4rem;
+}
+
+html[data-bp-style="modern"] .bp_caption {
+  background: var(--bp-color-modern-caption);
+  border-radius: var(--bp-radius-pill);
+  padding: 0.08rem 0.5rem;
+}
+
+html[data-bp-style="modern"] .bp_content {
+  margin-top: 0.45rem;
+  padding-left: 0.5rem;
+}
+
+html[data-bp-style="modern"] .bp_kind_theorem_content,
+html[data-bp-style="modern"] .bp_kind_proposition_content,
+html[data-bp-style="modern"] .bp_kind_lemma_content,
+html[data-bp-style="modern"] .bp_kind_corollary_content,
+html[data-bp-style="modern"] .bp_kind_proof_content,
+html[data-bp-style="modern"] .bp_wrapper div.theorem_thmcontent,
+html[data-bp-style="modern"] .bp_wrapper div.proposition_thmcontent,
+html[data-bp-style="modern"] .bp_wrapper div.lemma_thmcontent,
+html[data-bp-style="modern"] .bp_wrapper div.corollary_thmcontent,
+html[data-bp-style="modern"] .bp_wrapper div.proof_content {
+  border-left-color: var(--bp-color-text-faint);
+}
+
+html[data-bp-style="bold"] .bp_wrapper {
+  border: 2px solid var(--bp-color-text-strong);
+  border-radius: var(--bp-radius-3xl);
+  padding: 0.6rem 0.75rem 0.75rem;
+  background:
+    radial-gradient(circle at 100% 0%, var(--bp-color-bold-surface-glow-1), transparent 36%),
+    radial-gradient(circle at 0% 100%, var(--bp-color-bold-surface-glow-2), transparent 32%),
+    var(--bp-color-surface);
+  box-shadow: var(--bp-shadow-bold-lg);
+}
+
+html[data-bp-style="bold"] .bp_heading {
+  border-bottom: 2px solid var(--bp-color-text-strong);
+  padding-bottom: 0.45rem;
+  letter-spacing: 0.01em;
+}
+
+html[data-bp-style="bold"] .bp_caption {
+  background: var(--bp-color-text-strong);
+  color: var(--bp-color-surface-muted);
+  border-radius: 0.25rem;
+  padding: 0.08rem 0.45rem;
+  text-transform: uppercase;
+}
+
+html[data-bp-style="bold"] .bp_label {
+  background: var(--bp-color-bold-label);
+  color: var(--bp-color-text);
+  border-radius: var(--bp-radius-pill);
+  padding: 0.06rem 0.42rem;
+}
+
+html[data-bp-style="bold"] .bp_code_link {
+  color: var(--bp-color-bold-link);
+  font-weight: 700;
+}
+
+html[data-bp-style="bold"] .bp_code_hover {
+  border: 2px solid var(--bp-color-text-strong);
+  border-radius: var(--bp-radius-xl);
+  box-shadow: var(--bp-shadow-bold);
+}
+
+html[data-bp-style="bold"] .bp_content {
+  margin-top: 0.5rem;
+  padding-left: 0.6rem;
+}
+
+html[data-bp-style="bold"] .bp_kind_theorem_content,
+html[data-bp-style="bold"] .bp_kind_proposition_content,
+html[data-bp-style="bold"] .bp_kind_lemma_content,
+html[data-bp-style="bold"] .bp_kind_corollary_content,
+html[data-bp-style="bold"] .bp_kind_proof_content,
+html[data-bp-style="bold"] .bp_wrapper div.theorem_thmcontent,
+html[data-bp-style="bold"] .bp_wrapper div.proposition_thmcontent,
+html[data-bp-style="bold"] .bp_wrapper div.lemma_thmcontent,
+html[data-bp-style="bold"] .bp_wrapper div.corollary_thmcontent,
+html[data-bp-style="bold"] .bp_wrapper div.proof_content {
+  border-left: 0.2rem solid var(--bp-color-text-strong);
 }
 </style><style>
 .bp_preview_header_heading {
@@ -4927,17 +4913,8 @@ window.onload = () => {
   function normalizePreviewMode(rawMode, fallback) {
     const defaultMode = fallback === "hover" || fallback === "pinned" ? fallback : "hover";
     const mode = String(rawMode || "").trim().toLowerCase();
-    if (mode === "hover" || mode === "transient") return "hover";
-    if (
-      mode === "pinned" ||
-      mode === "pin" ||
-      mode === "click" ||
-      mode === "click-to-pin" ||
-      mode === "click-and-stay" ||
-      mode === "click-to-stay"
-    ) {
-      return "pinned";
-    }
+    if (mode === "hover") return "hover";
+    if (mode === "pinned") return "pinned";
     return defaultMode;
   }
 
@@ -4945,23 +4922,8 @@ window.onload = () => {
     const defaultPlacement =
       fallback === "anchored" || fallback === "docked" ? fallback : "anchored";
     const placement = String(rawPlacement || "").trim().toLowerCase();
-    if (
-      placement === "anchored" ||
-      placement === "anchor" ||
-      placement === "near" ||
-      placement === "near-node" ||
-      placement === "node"
-    ) {
-      return "anchored";
-    }
-    if (
-      placement === "docked" ||
-      placement === "dock" ||
-      placement === "fixed" ||
-      placement === "panel"
-    ) {
-      return "docked";
-    }
+    if (placement === "anchored") return "anchored";
+    if (placement === "docked") return "docked";
     return defaultPlacement;
   }
 
@@ -5342,8 +5304,6 @@ window.onload = () => {
     bindCloseOnce: bindCloseOnce,
     positionAnchoredPanel: positionAnchoredPanel,
     shouldKeepOpen: shouldKeepOpen,
-    normalizePreviewMode: normalizePreviewMode,
-    normalizePreviewPlacement: normalizePreviewPlacement,
     readPanelBehavior: readPanelBehavior,
     resetPanelPosition: resetPanelPosition,
     configureCloseButton: configureCloseButton,
@@ -7993,8 +7953,7 @@ itself. Symbols and unit strings are <strong>citation locators</strong>; nothing
                     </th><th><p>
                       Unit</p>
                     </th><th><p>
-                      Dimension
-</p>
+                      Dimension</p>
                     </th></tr></thead><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart3-005Flength-005Fspecies-statement" data-bp-preview-title="Definition 13.2.1" data-bp-preview-key="def_part3_length_species--statement" data-bp-preview-fallback-label="def_part3_length_species"><a href="ISO-80000-3-___-Space-and-Time/The-length-family___-distinguishing-kinds-by-measurement-principle/index.html#--informal-preview-def_part3_length_species--statement" title="def_part3_length_species">3-1.1</a></span></span></p>
                   </td><td><p>
@@ -8004,8 +7963,7 @@ itself. Symbols and unit strings are <strong>citation locators</strong>; nothing
                   </td><td><p>
                     <code>m</code></p>
                   </td><td><p>
-                    <code>L</code>
-</p>
+                    <code>L</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart3-005Fwidth-005Fne-005Fdistance-statement" data-bp-preview-title="Theorem 13.2.2" data-bp-preview-key="thm_part3_width_ne_distance--statement" data-bp-preview-fallback-label="thm_part3_width_ne_distance"><a href="ISO-80000-3-___-Space-and-Time/The-length-family___-distinguishing-kinds-by-measurement-principle/index.html#--informal-preview-thm_part3_width_ne_distance--statement" title="thm_part3_width_ne_distance">3-1.2</a></span></span></p>
                   </td><td><p>
@@ -8015,8 +7973,7 @@ itself. Symbols and unit strings are <strong>citation locators</strong>; nothing
                   </td><td><p>
                     <code>m</code></p>
                   </td><td><p>
-                    <code>L</code>
-</p>
+                    <code>L</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart3-005Flength-005Fspecies-statement" data-bp-preview-title="Definition 13.2.1" data-bp-preview-key="def_part3_length_species--statement" data-bp-preview-fallback-label="def_part3_length_species"><a href="ISO-80000-3-___-Space-and-Time/The-length-family___-distinguishing-kinds-by-measurement-principle/index.html#--informal-preview-def_part3_length_species--statement" title="def_part3_length_species">3-1.3</a></span></span></p>
                   </td><td><p>
@@ -8026,8 +7983,7 @@ itself. Symbols and unit strings are <strong>citation locators</strong>; nothing
                   </td><td><p>
                     <code>m</code></p>
                   </td><td><p>
-                    <code>L</code>
-</p>
+                    <code>L</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart3-005Flength-005Fspecies-statement" data-bp-preview-title="Definition 13.2.1" data-bp-preview-key="def_part3_length_species--statement" data-bp-preview-fallback-label="def_part3_length_species"><a href="ISO-80000-3-___-Space-and-Time/The-length-family___-distinguishing-kinds-by-measurement-principle/index.html#--informal-preview-def_part3_length_species--statement" title="def_part3_length_species">3-1.4</a></span></span></p>
                   </td><td><p>
@@ -8037,8 +7993,7 @@ itself. Symbols and unit strings are <strong>citation locators</strong>; nothing
                   </td><td><p>
                     <code>m</code></p>
                   </td><td><p>
-                    <code>L</code>
-</p>
+                    <code>L</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart3-005Flength-005Fspecies-statement" data-bp-preview-title="Definition 13.2.1" data-bp-preview-key="def_part3_length_species--statement" data-bp-preview-fallback-label="def_part3_length_species"><a href="ISO-80000-3-___-Space-and-Time/The-length-family___-distinguishing-kinds-by-measurement-principle/index.html#--informal-preview-def_part3_length_species--statement" title="def_part3_length_species">3-1.5</a></span></span></p>
                   </td><td><p>
@@ -8048,8 +8003,7 @@ itself. Symbols and unit strings are <strong>citation locators</strong>; nothing
                   </td><td><p>
                     <code>m</code></p>
                   </td><td><p>
-                    <code>L</code>
-</p>
+                    <code>L</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart3-005Fradius-005Fspecializes-005Flength-statement" data-bp-preview-title="Theorem 13.2.3" data-bp-preview-key="thm_part3_radius_specializes_length--statement" data-bp-preview-fallback-label="thm_part3_radius_specializes_length"><a href="ISO-80000-3-___-Space-and-Time/The-length-family___-distinguishing-kinds-by-measurement-principle/index.html#--informal-preview-thm_part3_radius_specializes_length--statement" title="thm_part3_radius_specializes_length">3-1.6</a></span></span></p>
                   </td><td><p>
@@ -8059,8 +8013,7 @@ itself. Symbols and unit strings are <strong>citation locators</strong>; nothing
                   </td><td><p>
                     <code>m</code></p>
                   </td><td><p>
-                    <code>L</code>
-</p>
+                    <code>L</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart3-005Flength-005Fspecies-statement" data-bp-preview-title="Definition 13.2.1" data-bp-preview-key="def_part3_length_species--statement" data-bp-preview-fallback-label="def_part3_length_species"><a href="ISO-80000-3-___-Space-and-Time/The-length-family___-distinguishing-kinds-by-measurement-principle/index.html#--informal-preview-def_part3_length_species--statement" title="def_part3_length_species">3-1.7</a></span></span></p>
                   </td><td><p>
@@ -8070,8 +8023,7 @@ itself. Symbols and unit strings are <strong>citation locators</strong>; nothing
                   </td><td><p>
                     <code>m</code></p>
                   </td><td><p>
-                    <code>L</code>
-</p>
+                    <code>L</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart3-005Fwidth-005Fne-005Fdistance-statement" data-bp-preview-title="Theorem 13.2.2" data-bp-preview-key="thm_part3_width_ne_distance--statement" data-bp-preview-fallback-label="thm_part3_width_ne_distance"><a href="ISO-80000-3-___-Space-and-Time/The-length-family___-distinguishing-kinds-by-measurement-principle/index.html#--informal-preview-thm_part3_width_ne_distance--statement" title="thm_part3_width_ne_distance">3-1.8</a></span></span></p>
                   </td><td><p>
@@ -8081,8 +8033,7 @@ itself. Symbols and unit strings are <strong>citation locators</strong>; nothing
                   </td><td><p>
                     <code>m</code></p>
                   </td><td><p>
-                    <code>L</code>
-</p>
+                    <code>L</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart3-005Flength-005Fspecies-statement" data-bp-preview-title="Definition 13.2.1" data-bp-preview-key="def_part3_length_species--statement" data-bp-preview-fallback-label="def_part3_length_species"><a href="ISO-80000-3-___-Space-and-Time/The-length-family___-distinguishing-kinds-by-measurement-principle/index.html#--informal-preview-def_part3_length_species--statement" title="def_part3_length_species">3-1.9</a></span></span></p>
                   </td><td><p>
@@ -8092,8 +8043,7 @@ itself. Symbols and unit strings are <strong>citation locators</strong>; nothing
                   </td><td><p>
                     <code>m</code></p>
                   </td><td><p>
-                    <code>L</code>
-</p>
+                    <code>L</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart3-005Flength-005Fspecies-statement" data-bp-preview-title="Definition 13.2.1" data-bp-preview-key="def_part3_length_species--statement" data-bp-preview-fallback-label="def_part3_length_species"><a href="ISO-80000-3-___-Space-and-Time/The-length-family___-distinguishing-kinds-by-measurement-principle/index.html#--informal-preview-def_part3_length_species--statement" title="def_part3_length_species">3-1.10</a></span></span></p>
                   </td><td><p>
@@ -8103,8 +8053,7 @@ itself. Symbols and unit strings are <strong>citation locators</strong>; nothing
                   </td><td><p>
                     <code>m</code></p>
                   </td><td><p>
-                    <code>L</code>
-</p>
+                    <code>L</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart3-005Flength-005Fspecies-statement" data-bp-preview-title="Definition 13.2.1" data-bp-preview-key="def_part3_length_species--statement" data-bp-preview-fallback-label="def_part3_length_species"><a href="ISO-80000-3-___-Space-and-Time/The-length-family___-distinguishing-kinds-by-measurement-principle/index.html#--informal-preview-def_part3_length_species--statement" title="def_part3_length_species">3-1.11</a></span></span></p>
                   </td><td><p>
@@ -8114,8 +8063,7 @@ itself. Symbols and unit strings are <strong>citation locators</strong>; nothing
                   </td><td><p>
                     <code>m</code></p>
                   </td><td><p>
-                    <code>L</code>
-</p>
+                    <code>L</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart3-005Flength-005Fspecies-statement" data-bp-preview-title="Definition 13.2.1" data-bp-preview-key="def_part3_length_species--statement" data-bp-preview-fallback-label="def_part3_length_species"><a href="ISO-80000-3-___-Space-and-Time/The-length-family___-distinguishing-kinds-by-measurement-principle/index.html#--informal-preview-def_part3_length_species--statement" title="def_part3_length_species">3-1.12</a></span></span></p>
                   </td><td><p>
@@ -8125,8 +8073,7 @@ itself. Symbols and unit strings are <strong>citation locators</strong>; nothing
                   </td><td><p>
                     <code>m</code></p>
                   </td><td><p>
-                    <code>L</code>
-</p>
+                    <code>L</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart3-005Fcatalogued-005Fkind-statement" data-bp-preview-title="Definition 13.1.1" data-bp-preview-key="def_part3_catalogued_kind--statement" data-bp-preview-fallback-label="def_part3_catalogued_kind"><a href="ISO-80000-3-___-Space-and-Time/Quantity-kinds-and-units-of-ISO-80000-3/index.html#--informal-preview-def_part3_catalogued_kind--statement" title="def_part3_catalogued_kind">3-2</a></span></span></p>
                   </td><td><p>
@@ -8136,8 +8083,7 @@ itself. Symbols and unit strings are <strong>citation locators</strong>; nothing
                   </td><td><p>
                     <code>m⁻¹</code></p>
                   </td><td><p>
-                    <code>L⁻¹</code>
-</p>
+                    <code>L⁻¹</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart3-005Farea-005Fdim-statement" data-bp-preview-title="Theorem 13.1.2" data-bp-preview-key="thm_part3_area_dim--statement" data-bp-preview-fallback-label="thm_part3_area_dim"><a href="ISO-80000-3-___-Space-and-Time/Quantity-kinds-and-units-of-ISO-80000-3/index.html#--informal-preview-thm_part3_area_dim--statement" title="thm_part3_area_dim">3-3</a></span></span></p>
                   </td><td><p>
@@ -8147,8 +8093,7 @@ itself. Symbols and unit strings are <strong>citation locators</strong>; nothing
                   </td><td><p>
                     <code>m²</code></p>
                   </td><td><p>
-                    <code>L²</code>
-</p>
+                    <code>L²</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fvolume-005Felement-statement" data-bp-preview-title="Definition 13.6.1" data-bp-preview-key="def_volume_element--statement" data-bp-preview-fallback-label="def_volume_element"><a href="ISO-80000-3-___-Space-and-Time/The-volume-element-of-a-region-_LPAR_item-3-4_RPAR_/index.html#--informal-preview-def_volume_element--statement" title="def_volume_element">3-4</a></span></span></p>
                   </td><td><p>
@@ -8158,8 +8103,7 @@ itself. Symbols and unit strings are <strong>citation locators</strong>; nothing
                   </td><td><p>
                     <code>m³</code></p>
                   </td><td><p>
-                    <code>L³</code>
-</p>
+                    <code>L³</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart3-005Fplane-005Fangle-005Fdimensionless-statement" data-bp-preview-title="Theorem 13.7.1" data-bp-preview-key="thm_part3_plane_angle_dimensionless--statement" data-bp-preview-fallback-label="thm_part3_plane_angle_dimensionless"><a href="ISO-80000-3-___-Space-and-Time/The-algebraic-Remarks-as-kind-laws/index.html#--informal-preview-thm_part3_plane_angle_dimensionless--statement" title="thm_part3_plane_angle_dimensionless">3-5</a></span></span></p>
                   </td><td><p>
@@ -8169,8 +8113,7 @@ itself. Symbols and unit strings are <strong>citation locators</strong>; nothing
                   </td><td><p>
                     <code>rad</code></p>
                   </td><td><p>
-                    <code>1</code>
-</p>
+                    <code>1</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart3-005Fdim-005Fone-005Fcollision-statement" data-bp-preview-title="Theorem 13.3.1" data-bp-preview-key="thm_part3_dim_one_collision--statement" data-bp-preview-fallback-label="thm_part3_dim_one_collision"><a href="ISO-80000-3-___-Space-and-Time/Dimension-does-not-classify_SEMI_-the-kind-does/index.html#--informal-preview-thm_part3_dim_one_collision--statement" title="thm_part3_dim_one_collision">3-6</a></span></span></p>
                   </td><td><p>
@@ -8180,8 +8123,7 @@ itself. Symbols and unit strings are <strong>citation locators</strong>; nothing
                   </td><td><p>
                     <code>rad</code></p>
                   </td><td><p>
-                    <code>1</code>
-</p>
+                    <code>1</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart3-005Fdim-005Fone-005Fcollision-statement" data-bp-preview-title="Theorem 13.3.1" data-bp-preview-key="thm_part3_dim_one_collision--statement" data-bp-preview-fallback-label="thm_part3_dim_one_collision"><a href="ISO-80000-3-___-Space-and-Time/Dimension-does-not-classify_SEMI_-the-kind-does/index.html#--informal-preview-thm_part3_dim_one_collision--statement" title="thm_part3_dim_one_collision">3-7</a></span></span></p>
                   </td><td><p>
@@ -8191,8 +8133,7 @@ itself. Symbols and unit strings are <strong>citation locators</strong>; nothing
                   </td><td><p>
                     <code>rad</code></p>
                   </td><td><p>
-                    <code>1</code>
-</p>
+                    <code>1</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart3-005Fradian-005Fsteradian-statement" data-bp-preview-title="Theorem 13.3.2" data-bp-preview-key="thm_part3_radian_steradian--statement" data-bp-preview-fallback-label="thm_part3_radian_steradian"><a href="ISO-80000-3-___-Space-and-Time/Dimension-does-not-classify_SEMI_-the-kind-does/index.html#--informal-preview-thm_part3_radian_steradian--statement" title="thm_part3_radian_steradian">3-8</a></span></span></p>
                   </td><td><p>
@@ -8202,8 +8143,7 @@ itself. Symbols and unit strings are <strong>citation locators</strong>; nothing
                   </td><td><p>
                     <code>sr</code></p>
                   </td><td><p>
-                    <code>1</code>
-</p>
+                    <code>1</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart3-005Fmetre-005Fsecond-005Fincommensurable-statement" data-bp-preview-title="Theorem 13.1.5" data-bp-preview-key="thm_part3_metre_second_incommensurable--statement" data-bp-preview-fallback-label="thm_part3_metre_second_incommensurable"><a href="ISO-80000-3-___-Space-and-Time/Quantity-kinds-and-units-of-ISO-80000-3/index.html#--informal-preview-thm_part3_metre_second_incommensurable--statement" title="thm_part3_metre_second_incommensurable">3-9</a></span></span></p>
                   </td><td><p>
@@ -8213,8 +8153,7 @@ itself. Symbols and unit strings are <strong>citation locators</strong>; nothing
                   </td><td><p>
                     <code>s</code></p>
                   </td><td><p>
-                    <code>T</code>
-</p>
+                    <code>T</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart3-005Fdim-005Fcollision-statement" data-bp-preview-title="Theorem 13.3.3" data-bp-preview-key="thm_part3_dim_collision--statement" data-bp-preview-fallback-label="thm_part3_dim_collision"><a href="ISO-80000-3-___-Space-and-Time/Dimension-does-not-classify_SEMI_-the-kind-does/index.html#--informal-preview-thm_part3_dim_collision--statement" title="thm_part3_dim_collision">3-10.1</a></span></span></p>
                   </td><td><p>
@@ -8224,8 +8163,7 @@ itself. Symbols and unit strings are <strong>citation locators</strong>; nothing
                   </td><td><p>
                     <code>m/s</code></p>
                   </td><td><p>
-                    <code>L·T⁻¹</code>
-</p>
+                    <code>L·T⁻¹</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart3-005Fspeed-005Fdim-statement" data-bp-preview-title="Theorem 13.1.3" data-bp-preview-key="thm_part3_speed_dim--statement" data-bp-preview-fallback-label="thm_part3_speed_dim"><a href="ISO-80000-3-___-Space-and-Time/Quantity-kinds-and-units-of-ISO-80000-3/index.html#--informal-preview-thm_part3_speed_dim--statement" title="thm_part3_speed_dim">3-10.2</a></span></span></p>
                   </td><td><p>
@@ -8235,8 +8173,7 @@ itself. Symbols and unit strings are <strong>citation locators</strong>; nothing
                   </td><td><p>
                     <code>m/s</code></p>
                   </td><td><p>
-                    <code>L·T⁻¹</code>
-</p>
+                    <code>L·T⁻¹</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart3-005Fcatalogued-005Fkind-statement" data-bp-preview-title="Definition 13.1.1" data-bp-preview-key="def_part3_catalogued_kind--statement" data-bp-preview-fallback-label="def_part3_catalogued_kind"><a href="ISO-80000-3-___-Space-and-Time/Quantity-kinds-and-units-of-ISO-80000-3/index.html#--informal-preview-def_part3_catalogued_kind--statement" title="def_part3_catalogued_kind">3-11</a></span></span></p>
                   </td><td><p>
@@ -8246,8 +8183,7 @@ itself. Symbols and unit strings are <strong>citation locators</strong>; nothing
                   </td><td><p>
                     <code>m/s²</code></p>
                   </td><td><p>
-                    <code>L·T⁻²</code>
-</p>
+                    <code>L·T⁻²</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart3-005Fdim-005Fcollision-statement" data-bp-preview-title="Theorem 13.3.3" data-bp-preview-key="thm_part3_dim_collision--statement" data-bp-preview-fallback-label="thm_part3_dim_collision"><a href="ISO-80000-3-___-Space-and-Time/Dimension-does-not-classify_SEMI_-the-kind-does/index.html#--informal-preview-thm_part3_dim_collision--statement" title="thm_part3_dim_collision">3-12</a></span></span></p>
                   </td><td><p>
@@ -8257,8 +8193,7 @@ itself. Symbols and unit strings are <strong>citation locators</strong>; nothing
                   </td><td><p>
                     <code>rad/s</code></p>
                   </td><td><p>
-                    <code>T⁻¹</code>
-</p>
+                    <code>T⁻¹</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart3-005Fcatalogued-005Fkind-statement" data-bp-preview-title="Definition 13.1.1" data-bp-preview-key="def_part3_catalogued_kind--statement" data-bp-preview-fallback-label="def_part3_catalogued_kind"><a href="ISO-80000-3-___-Space-and-Time/Quantity-kinds-and-units-of-ISO-80000-3/index.html#--informal-preview-def_part3_catalogued_kind--statement" title="def_part3_catalogued_kind">3-13</a></span></span></p>
                   </td><td><p>
@@ -8268,8 +8203,7 @@ itself. Symbols and unit strings are <strong>citation locators</strong>; nothing
                   </td><td><p>
                     <code>rad/s²</code></p>
                   </td><td><p>
-                    <code>T⁻²</code>
-</p>
+                    <code>T⁻²</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart3-005Ffrequency-005Freciprocal-statement" data-bp-preview-title="Theorem 13.7.2" data-bp-preview-key="thm_part3_frequency_reciprocal--statement" data-bp-preview-fallback-label="thm_part3_frequency_reciprocal"><a href="ISO-80000-3-___-Space-and-Time/The-algebraic-Remarks-as-kind-laws/index.html#--informal-preview-thm_part3_frequency_reciprocal--statement" title="thm_part3_frequency_reciprocal">3-14</a></span></span></p>
                   </td><td><p>
@@ -8279,8 +8213,7 @@ itself. Symbols and unit strings are <strong>citation locators</strong>; nothing
                   </td><td><p>
                     <code>s</code></p>
                   </td><td><p>
-                    <code>T</code>
-</p>
+                    <code>T</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart3-005Fcatalogued-005Fkind-statement" data-bp-preview-title="Definition 13.1.1" data-bp-preview-key="def_part3_catalogued_kind--statement" data-bp-preview-fallback-label="def_part3_catalogued_kind"><a href="ISO-80000-3-___-Space-and-Time/Quantity-kinds-and-units-of-ISO-80000-3/index.html#--informal-preview-def_part3_catalogued_kind--statement" title="def_part3_catalogued_kind">3-15</a></span></span></p>
                   </td><td><p>
@@ -8290,8 +8223,7 @@ itself. Symbols and unit strings are <strong>citation locators</strong>; nothing
                   </td><td><p>
                     <code>s</code></p>
                   </td><td><p>
-                    <code>T</code>
-</p>
+                    <code>T</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart3-005Fdim-005Fone-005Fcollision-statement" data-bp-preview-title="Theorem 13.3.1" data-bp-preview-key="thm_part3_dim_one_collision--statement" data-bp-preview-fallback-label="thm_part3_dim_one_collision"><a href="ISO-80000-3-___-Space-and-Time/Dimension-does-not-classify_SEMI_-the-kind-does/index.html#--informal-preview-thm_part3_dim_one_collision--statement" title="thm_part3_dim_one_collision">3-16</a></span></span></p>
                   </td><td><p>
@@ -8301,8 +8233,7 @@ itself. Symbols and unit strings are <strong>citation locators</strong>; nothing
                   </td><td><p>
                     <code>1</code></p>
                   </td><td><p>
-                    <code>1</code>
-</p>
+                    <code>1</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart3-005Ffrequency-005Freciprocal-statement" data-bp-preview-title="Theorem 13.7.2" data-bp-preview-key="thm_part3_frequency_reciprocal--statement" data-bp-preview-fallback-label="thm_part3_frequency_reciprocal"><a href="ISO-80000-3-___-Space-and-Time/The-algebraic-Remarks-as-kind-laws/index.html#--informal-preview-thm_part3_frequency_reciprocal--statement" title="thm_part3_frequency_reciprocal">3-17.1</a></span></span></p>
                   </td><td><p>
@@ -8312,8 +8243,7 @@ itself. Symbols and unit strings are <strong>citation locators</strong>; nothing
                   </td><td><p>
                     <code>Hz</code></p>
                   </td><td><p>
-                    <code>T⁻¹</code>
-</p>
+                    <code>T⁻¹</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart3-005Fdim-005Fcollision-statement" data-bp-preview-title="Theorem 13.3.3" data-bp-preview-key="thm_part3_dim_collision--statement" data-bp-preview-fallback-label="thm_part3_dim_collision"><a href="ISO-80000-3-___-Space-and-Time/Dimension-does-not-classify_SEMI_-the-kind-does/index.html#--informal-preview-thm_part3_dim_collision--statement" title="thm_part3_dim_collision">3-17.2</a></span></span></p>
                   </td><td><p>
@@ -8323,8 +8253,7 @@ itself. Symbols and unit strings are <strong>citation locators</strong>; nothing
                   </td><td><p>
                     <code>s⁻¹</code></p>
                   </td><td><p>
-                    <code>T⁻¹</code>
-</p>
+                    <code>T⁻¹</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart3-005Fdim-005Fcollision-statement" data-bp-preview-title="Theorem 13.3.3" data-bp-preview-key="thm_part3_dim_collision--statement" data-bp-preview-fallback-label="thm_part3_dim_collision"><a href="ISO-80000-3-___-Space-and-Time/Dimension-does-not-classify_SEMI_-the-kind-does/index.html#--informal-preview-thm_part3_dim_collision--statement" title="thm_part3_dim_collision">3-18</a></span></span></p>
                   </td><td><p>
@@ -8334,8 +8263,7 @@ itself. Symbols and unit strings are <strong>citation locators</strong>; nothing
                   </td><td><p>
                     <code>rad/s</code></p>
                   </td><td><p>
-                    <code>T⁻¹</code>
-</p>
+                    <code>T⁻¹</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart3-005Flength-005Fspecies-statement" data-bp-preview-title="Definition 13.2.1" data-bp-preview-key="def_part3_length_species--statement" data-bp-preview-fallback-label="def_part3_length_species"><a href="ISO-80000-3-___-Space-and-Time/The-length-family___-distinguishing-kinds-by-measurement-principle/index.html#--informal-preview-def_part3_length_species--statement" title="def_part3_length_species">3-19</a></span></span></p>
                   </td><td><p>
@@ -8345,8 +8273,7 @@ itself. Symbols and unit strings are <strong>citation locators</strong>; nothing
                   </td><td><p>
                     <code>m</code></p>
                   </td><td><p>
-                    <code>L</code>
-</p>
+                    <code>L</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart3-005Fcatalogued-005Fkind-statement" data-bp-preview-title="Definition 13.1.1" data-bp-preview-key="def_part3_catalogued_kind--statement" data-bp-preview-fallback-label="def_part3_catalogued_kind"><a href="ISO-80000-3-___-Space-and-Time/Quantity-kinds-and-units-of-ISO-80000-3/index.html#--informal-preview-def_part3_catalogued_kind--statement" title="def_part3_catalogued_kind">3-20</a></span></span></p>
                   </td><td><p>
@@ -8356,8 +8283,7 @@ itself. Symbols and unit strings are <strong>citation locators</strong>; nothing
                   </td><td><p>
                     <code>m⁻¹</code></p>
                   </td><td><p>
-                    <code>L⁻¹</code>
-</p>
+                    <code>L⁻¹</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart3-005Fcatalogued-005Fkind-statement" data-bp-preview-title="Definition 13.1.1" data-bp-preview-key="def_part3_catalogued_kind--statement" data-bp-preview-fallback-label="def_part3_catalogued_kind"><a href="ISO-80000-3-___-Space-and-Time/Quantity-kinds-and-units-of-ISO-80000-3/index.html#--informal-preview-def_part3_catalogued_kind--statement" title="def_part3_catalogued_kind">3-21</a></span></span></p>
                   </td><td><p>
@@ -8367,8 +8293,7 @@ itself. Symbols and unit strings are <strong>citation locators</strong>; nothing
                   </td><td><p>
                     <code>m⁻¹</code></p>
                   </td><td><p>
-                    <code>L⁻¹</code>
-</p>
+                    <code>L⁻¹</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart3-005Fcatalogued-005Fkind-statement" data-bp-preview-title="Definition 13.1.1" data-bp-preview-key="def_part3_catalogued_kind--statement" data-bp-preview-fallback-label="def_part3_catalogued_kind"><a href="ISO-80000-3-___-Space-and-Time/Quantity-kinds-and-units-of-ISO-80000-3/index.html#--informal-preview-def_part3_catalogued_kind--statement" title="def_part3_catalogued_kind">3-22</a></span></span></p>
                   </td><td><p>
@@ -8378,8 +8303,7 @@ itself. Symbols and unit strings are <strong>citation locators</strong>; nothing
                   </td><td><p>
                     <code>m⁻¹</code></p>
                   </td><td><p>
-                    <code>L⁻¹</code>
-</p>
+                    <code>L⁻¹</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart3-005Fcatalogued-005Fkind-statement" data-bp-preview-title="Definition 13.1.1" data-bp-preview-key="def_part3_catalogued_kind--statement" data-bp-preview-fallback-label="def_part3_catalogued_kind"><a href="ISO-80000-3-___-Space-and-Time/Quantity-kinds-and-units-of-ISO-80000-3/index.html#--informal-preview-def_part3_catalogued_kind--statement" title="def_part3_catalogued_kind">3-23.1</a></span></span></p>
                   </td><td><p>
@@ -8389,8 +8313,7 @@ itself. Symbols and unit strings are <strong>citation locators</strong>; nothing
                   </td><td><p>
                     <code>m/s</code></p>
                   </td><td><p>
-                    <code>L·T⁻¹</code>
-</p>
+                    <code>L·T⁻¹</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart3-005Fcatalogued-005Fkind-statement" data-bp-preview-title="Definition 13.1.1" data-bp-preview-key="def_part3_catalogued_kind--statement" data-bp-preview-fallback-label="def_part3_catalogued_kind"><a href="ISO-80000-3-___-Space-and-Time/Quantity-kinds-and-units-of-ISO-80000-3/index.html#--informal-preview-def_part3_catalogued_kind--statement" title="def_part3_catalogued_kind">3-23.2</a></span></span></p>
                   </td><td><p>
@@ -8400,8 +8323,7 @@ itself. Symbols and unit strings are <strong>citation locators</strong>; nothing
                   </td><td><p>
                     <code>m/s</code></p>
                   </td><td><p>
-                    <code>L·T⁻¹</code>
-</p>
+                    <code>L·T⁻¹</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart3-005Fdim-005Fcollision-statement" data-bp-preview-title="Theorem 13.3.3" data-bp-preview-key="thm_part3_dim_collision--statement" data-bp-preview-fallback-label="thm_part3_dim_collision"><a href="ISO-80000-3-___-Space-and-Time/Dimension-does-not-classify_SEMI_-the-kind-does/index.html#--informal-preview-thm_part3_dim_collision--statement" title="thm_part3_dim_collision">3-24</a></span></span></p>
                   </td><td><p>
@@ -8411,8 +8333,7 @@ itself. Symbols and unit strings are <strong>citation locators</strong>; nothing
                   </td><td><p>
                     <code>s⁻¹</code></p>
                   </td><td><p>
-                    <code>T⁻¹</code>
-</p>
+                    <code>T⁻¹</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart3-005Fdim-005Fone-005Fcollision-statement" data-bp-preview-title="Theorem 13.3.1" data-bp-preview-key="thm_part3_dim_one_collision--statement" data-bp-preview-fallback-label="thm_part3_dim_one_collision"><a href="ISO-80000-3-___-Space-and-Time/Dimension-does-not-classify_SEMI_-the-kind-does/index.html#--informal-preview-thm_part3_dim_one_collision--statement" title="thm_part3_dim_one_collision">3-25</a></span></span></p>
                   </td><td><p>
@@ -8422,8 +8343,7 @@ itself. Symbols and unit strings are <strong>citation locators</strong>; nothing
                   </td><td><p>
                     <code>1</code></p>
                   </td><td><p>
-                    <code>1</code>
-</p>
+                    <code>1</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart3-005Fcatalogued-005Fkind-statement" data-bp-preview-title="Definition 13.1.1" data-bp-preview-key="def_part3_catalogued_kind--statement" data-bp-preview-fallback-label="def_part3_catalogued_kind"><a href="ISO-80000-3-___-Space-and-Time/Quantity-kinds-and-units-of-ISO-80000-3/index.html#--informal-preview-def_part3_catalogued_kind--statement" title="def_part3_catalogued_kind">3-26.1</a></span></span></p>
                   </td><td><p>
@@ -8433,8 +8353,7 @@ itself. Symbols and unit strings are <strong>citation locators</strong>; nothing
                   </td><td><p>
                     <code>m⁻¹</code></p>
                   </td><td><p>
-                    <code>L⁻¹</code>
-</p>
+                    <code>L⁻¹</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart3-005Fcatalogued-005Fkind-statement" data-bp-preview-title="Definition 13.1.1" data-bp-preview-key="def_part3_catalogued_kind--statement" data-bp-preview-fallback-label="def_part3_catalogued_kind"><a href="ISO-80000-3-___-Space-and-Time/Quantity-kinds-and-units-of-ISO-80000-3/index.html#--informal-preview-def_part3_catalogued_kind--statement" title="def_part3_catalogued_kind">3-26.2</a></span></span></p>
                   </td><td><p>
@@ -8444,8 +8363,7 @@ itself. Symbols and unit strings are <strong>citation locators</strong>; nothing
                   </td><td><p>
                     <code>rad/m</code></p>
                   </td><td><p>
-                    <code>L⁻¹</code>
-</p>
+                    <code>L⁻¹</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart3-005Fcatalogued-005Fkind-statement" data-bp-preview-title="Definition 13.1.1" data-bp-preview-key="def_part3_catalogued_kind--statement" data-bp-preview-fallback-label="def_part3_catalogued_kind"><a href="ISO-80000-3-___-Space-and-Time/Quantity-kinds-and-units-of-ISO-80000-3/index.html#--informal-preview-def_part3_catalogued_kind--statement" title="def_part3_catalogued_kind">3-26.3</a></span></span></p>
                   </td><td><p>

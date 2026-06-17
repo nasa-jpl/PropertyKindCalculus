@@ -1011,169 +1011,6 @@ table.tabular td > p:last-child, table.tabular th > p:first-child {
   }
 }
 </style><style>
-#bp-style-switcher {
-  position: fixed;
-  right: 1rem;
-  bottom: 1rem;
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  gap: 0.4rem 0.6rem;
-  flex-wrap: wrap;
-  background: var(--bp-color-surface);
-  border: 1px solid var(--bp-color-border);
-  border-radius: var(--bp-radius-md);
-  box-shadow: var(--bp-shadow-sm);
-  padding: 0.4rem 0.55rem;
-  font-size: 0.82rem;
-}
-
-#bp-style-switcher .bp-style-switcher-control {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-}
-
-#bp-style-switcher label {
-  font-weight: 600;
-}
-
-#bp-style-switcher select {
-  border: 1px solid var(--bp-color-border);
-  border-radius: 0.3rem;
-  background: var(--bp-color-surface);
-  font-size: 0.82rem;
-  padding: 0.1rem 0.25rem;
-}
-
-html[data-bp-style="blueprint"] .bp_wrapper {
-  border: 1px solid var(--bp-color-border);
-  border-radius: var(--bp-radius-sm);
-  padding: 0.45rem 0.6rem 0.55rem;
-  background: var(--bp-color-surface);
-}
-
-html[data-bp-style="blueprint"] .bp_heading {
-  border-bottom: 1px solid var(--bp-color-border-soft);
-  padding-bottom: 0.35rem;
-}
-
-html[data-bp-style="blueprint"] .bp_content {
-  margin-top: 0.35rem;
-  padding-left: 0.45rem;
-}
-
-html[data-bp-style="blueprint"] .bp_kind_theorem_content,
-html[data-bp-style="blueprint"] .bp_kind_proposition_content,
-html[data-bp-style="blueprint"] .bp_kind_lemma_content,
-html[data-bp-style="blueprint"] .bp_kind_corollary_content,
-html[data-bp-style="blueprint"] .bp_kind_proof_content,
-html[data-bp-style="blueprint"] div.theorem_thmcontent,
-html[data-bp-style="blueprint"] div.proposition_thmcontent,
-html[data-bp-style="blueprint"] div.lemma_thmcontent,
-html[data-bp-style="blueprint"] div.corollary_thmcontent,
-html[data-bp-style="blueprint"] div.proof_content {
-  border-left-color: var(--bp-color-text-muted);
-}
-
-html[data-bp-style="modern"] .bp_wrapper {
-  border: 1px solid var(--bp-color-modern-border);
-  border-radius: var(--bp-radius-2xl);
-  padding: 0.6rem 0.7rem 0.68rem;
-  background: linear-gradient(180deg, var(--bp-color-surface), var(--bp-color-surface-modern));
-  box-shadow: var(--bp-shadow-modern);
-}
-
-html[data-bp-style="modern"] .bp_heading {
-  border-bottom: 1px solid var(--bp-color-border-soft);
-  padding-bottom: 0.4rem;
-}
-
-html[data-bp-style="modern"] .bp_caption {
-  background: var(--bp-color-modern-caption);
-  border-radius: var(--bp-radius-pill);
-  padding: 0.08rem 0.5rem;
-}
-
-html[data-bp-style="modern"] .bp_content {
-  margin-top: 0.45rem;
-  padding-left: 0.5rem;
-}
-
-html[data-bp-style="modern"] .bp_kind_theorem_content,
-html[data-bp-style="modern"] .bp_kind_proposition_content,
-html[data-bp-style="modern"] .bp_kind_lemma_content,
-html[data-bp-style="modern"] .bp_kind_corollary_content,
-html[data-bp-style="modern"] .bp_kind_proof_content,
-html[data-bp-style="modern"] .bp_wrapper div.theorem_thmcontent,
-html[data-bp-style="modern"] .bp_wrapper div.proposition_thmcontent,
-html[data-bp-style="modern"] .bp_wrapper div.lemma_thmcontent,
-html[data-bp-style="modern"] .bp_wrapper div.corollary_thmcontent,
-html[data-bp-style="modern"] .bp_wrapper div.proof_content {
-  border-left-color: var(--bp-color-text-faint);
-}
-
-html[data-bp-style="bold"] .bp_wrapper {
-  border: 2px solid var(--bp-color-text-strong);
-  border-radius: var(--bp-radius-3xl);
-  padding: 0.6rem 0.75rem 0.75rem;
-  background:
-    radial-gradient(circle at 100% 0%, var(--bp-color-bold-surface-glow-1), transparent 36%),
-    radial-gradient(circle at 0% 100%, var(--bp-color-bold-surface-glow-2), transparent 32%),
-    var(--bp-color-surface);
-  box-shadow: var(--bp-shadow-bold-lg);
-}
-
-html[data-bp-style="bold"] .bp_heading {
-  border-bottom: 2px solid var(--bp-color-text-strong);
-  padding-bottom: 0.45rem;
-  letter-spacing: 0.01em;
-}
-
-html[data-bp-style="bold"] .bp_caption {
-  background: var(--bp-color-text-strong);
-  color: var(--bp-color-surface-muted);
-  border-radius: 0.25rem;
-  padding: 0.08rem 0.45rem;
-  text-transform: uppercase;
-}
-
-html[data-bp-style="bold"] .bp_label {
-  background: var(--bp-color-bold-label);
-  color: var(--bp-color-text);
-  border-radius: var(--bp-radius-pill);
-  padding: 0.06rem 0.42rem;
-}
-
-html[data-bp-style="bold"] .bp_code_link {
-  color: var(--bp-color-bold-link);
-  font-weight: 700;
-}
-
-html[data-bp-style="bold"] .bp_code_hover {
-  border: 2px solid var(--bp-color-text-strong);
-  border-radius: var(--bp-radius-xl);
-  box-shadow: var(--bp-shadow-bold);
-}
-
-html[data-bp-style="bold"] .bp_content {
-  margin-top: 0.5rem;
-  padding-left: 0.6rem;
-}
-
-html[data-bp-style="bold"] .bp_kind_theorem_content,
-html[data-bp-style="bold"] .bp_kind_proposition_content,
-html[data-bp-style="bold"] .bp_kind_lemma_content,
-html[data-bp-style="bold"] .bp_kind_corollary_content,
-html[data-bp-style="bold"] .bp_kind_proof_content,
-html[data-bp-style="bold"] .bp_wrapper div.theorem_thmcontent,
-html[data-bp-style="bold"] .bp_wrapper div.proposition_thmcontent,
-html[data-bp-style="bold"] .bp_wrapper div.lemma_thmcontent,
-html[data-bp-style="bold"] .bp_wrapper div.corollary_thmcontent,
-html[data-bp-style="bold"] .bp_wrapper div.proof_content {
-  border-left: 0.2rem solid var(--bp-color-text-strong);
-}
-</style><style>
 .bp_wrapper {
   scroll-margin-top: 1rem;
   margin: 0.85rem 0;
@@ -1232,7 +1069,7 @@ span[class$="_thmlabel"]::after {
 
 .bp_extras {
   --bp-extra-group-col: minmax(5rem, max-content);
-  --bp-extra-uses-col: minmax(4.2rem, max-content);
+  --bp-extra-uses-col: minmax(5.2rem, max-content);
   --bp-extra-used-by-col: minmax(7.2rem, max-content);
   --bp-extra-code-col: max-content;
   --bp-extra-code-placeholder-col: minmax(3.35rem, max-content);
@@ -1268,20 +1105,6 @@ span[class$="_thmlabel"]::after {
     var(--bp-extra-used-by-col)
     var(--bp-extra-code-col);
   grid-template-areas: "group used code";
-}
-
-.bp_extras_with_uses {
-  grid-template-columns: minmax(5.2rem, max-content) max-content minmax(7.2rem, max-content);
-  grid-template-areas: "uses used code";
-}
-
-.bp_extras_with_group.bp_extras_with_uses {
-  grid-template-columns:
-    minmax(5rem, max-content)
-    minmax(5.2rem, max-content)
-    minmax(7.2rem, max-content)
-    max-content;
-  grid-template-areas: "group uses used code";
 }
 
 .bp_extras_with_group.bp_extras_with_uses {
@@ -2651,6 +2474,169 @@ div.proof_content {
     background-color: transparent;
     box-shadow: 0 0 0 0.18rem var(--bp-color-target-ring);
   }
+}
+</style><style>
+#bp-style-switcher {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem 0.6rem;
+  flex-wrap: wrap;
+  background: var(--bp-color-surface);
+  border: 1px solid var(--bp-color-border);
+  border-radius: var(--bp-radius-md);
+  box-shadow: var(--bp-shadow-sm);
+  padding: 0.4rem 0.55rem;
+  font-size: 0.82rem;
+}
+
+#bp-style-switcher .bp-style-switcher-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+#bp-style-switcher label {
+  font-weight: 600;
+}
+
+#bp-style-switcher select {
+  border: 1px solid var(--bp-color-border);
+  border-radius: 0.3rem;
+  background: var(--bp-color-surface);
+  font-size: 0.82rem;
+  padding: 0.1rem 0.25rem;
+}
+
+html[data-bp-style="blueprint"] .bp_wrapper {
+  border: 1px solid var(--bp-color-border);
+  border-radius: var(--bp-radius-sm);
+  padding: 0.45rem 0.6rem 0.55rem;
+  background: var(--bp-color-surface);
+}
+
+html[data-bp-style="blueprint"] .bp_heading {
+  border-bottom: 1px solid var(--bp-color-border-soft);
+  padding-bottom: 0.35rem;
+}
+
+html[data-bp-style="blueprint"] .bp_content {
+  margin-top: 0.35rem;
+  padding-left: 0.45rem;
+}
+
+html[data-bp-style="blueprint"] .bp_kind_theorem_content,
+html[data-bp-style="blueprint"] .bp_kind_proposition_content,
+html[data-bp-style="blueprint"] .bp_kind_lemma_content,
+html[data-bp-style="blueprint"] .bp_kind_corollary_content,
+html[data-bp-style="blueprint"] .bp_kind_proof_content,
+html[data-bp-style="blueprint"] div.theorem_thmcontent,
+html[data-bp-style="blueprint"] div.proposition_thmcontent,
+html[data-bp-style="blueprint"] div.lemma_thmcontent,
+html[data-bp-style="blueprint"] div.corollary_thmcontent,
+html[data-bp-style="blueprint"] div.proof_content {
+  border-left-color: var(--bp-color-text-muted);
+}
+
+html[data-bp-style="modern"] .bp_wrapper {
+  border: 1px solid var(--bp-color-modern-border);
+  border-radius: var(--bp-radius-2xl);
+  padding: 0.6rem 0.7rem 0.68rem;
+  background: linear-gradient(180deg, var(--bp-color-surface), var(--bp-color-surface-modern));
+  box-shadow: var(--bp-shadow-modern);
+}
+
+html[data-bp-style="modern"] .bp_heading {
+  border-bottom: 1px solid var(--bp-color-border-soft);
+  padding-bottom: 0.4rem;
+}
+
+html[data-bp-style="modern"] .bp_caption {
+  background: var(--bp-color-modern-caption);
+  border-radius: var(--bp-radius-pill);
+  padding: 0.08rem 0.5rem;
+}
+
+html[data-bp-style="modern"] .bp_content {
+  margin-top: 0.45rem;
+  padding-left: 0.5rem;
+}
+
+html[data-bp-style="modern"] .bp_kind_theorem_content,
+html[data-bp-style="modern"] .bp_kind_proposition_content,
+html[data-bp-style="modern"] .bp_kind_lemma_content,
+html[data-bp-style="modern"] .bp_kind_corollary_content,
+html[data-bp-style="modern"] .bp_kind_proof_content,
+html[data-bp-style="modern"] .bp_wrapper div.theorem_thmcontent,
+html[data-bp-style="modern"] .bp_wrapper div.proposition_thmcontent,
+html[data-bp-style="modern"] .bp_wrapper div.lemma_thmcontent,
+html[data-bp-style="modern"] .bp_wrapper div.corollary_thmcontent,
+html[data-bp-style="modern"] .bp_wrapper div.proof_content {
+  border-left-color: var(--bp-color-text-faint);
+}
+
+html[data-bp-style="bold"] .bp_wrapper {
+  border: 2px solid var(--bp-color-text-strong);
+  border-radius: var(--bp-radius-3xl);
+  padding: 0.6rem 0.75rem 0.75rem;
+  background:
+    radial-gradient(circle at 100% 0%, var(--bp-color-bold-surface-glow-1), transparent 36%),
+    radial-gradient(circle at 0% 100%, var(--bp-color-bold-surface-glow-2), transparent 32%),
+    var(--bp-color-surface);
+  box-shadow: var(--bp-shadow-bold-lg);
+}
+
+html[data-bp-style="bold"] .bp_heading {
+  border-bottom: 2px solid var(--bp-color-text-strong);
+  padding-bottom: 0.45rem;
+  letter-spacing: 0.01em;
+}
+
+html[data-bp-style="bold"] .bp_caption {
+  background: var(--bp-color-text-strong);
+  color: var(--bp-color-surface-muted);
+  border-radius: 0.25rem;
+  padding: 0.08rem 0.45rem;
+  text-transform: uppercase;
+}
+
+html[data-bp-style="bold"] .bp_label {
+  background: var(--bp-color-bold-label);
+  color: var(--bp-color-text);
+  border-radius: var(--bp-radius-pill);
+  padding: 0.06rem 0.42rem;
+}
+
+html[data-bp-style="bold"] .bp_code_link {
+  color: var(--bp-color-bold-link);
+  font-weight: 700;
+}
+
+html[data-bp-style="bold"] .bp_code_hover {
+  border: 2px solid var(--bp-color-text-strong);
+  border-radius: var(--bp-radius-xl);
+  box-shadow: var(--bp-shadow-bold);
+}
+
+html[data-bp-style="bold"] .bp_content {
+  margin-top: 0.5rem;
+  padding-left: 0.6rem;
+}
+
+html[data-bp-style="bold"] .bp_kind_theorem_content,
+html[data-bp-style="bold"] .bp_kind_proposition_content,
+html[data-bp-style="bold"] .bp_kind_lemma_content,
+html[data-bp-style="bold"] .bp_kind_corollary_content,
+html[data-bp-style="bold"] .bp_kind_proof_content,
+html[data-bp-style="bold"] .bp_wrapper div.theorem_thmcontent,
+html[data-bp-style="bold"] .bp_wrapper div.proposition_thmcontent,
+html[data-bp-style="bold"] .bp_wrapper div.lemma_thmcontent,
+html[data-bp-style="bold"] .bp_wrapper div.corollary_thmcontent,
+html[data-bp-style="bold"] .bp_wrapper div.proof_content {
+  border-left: 0.2rem solid var(--bp-color-text-strong);
 }
 </style><style>
 .bp_preview_header_heading {
@@ -4927,17 +4913,8 @@ window.onload = () => {
   function normalizePreviewMode(rawMode, fallback) {
     const defaultMode = fallback === "hover" || fallback === "pinned" ? fallback : "hover";
     const mode = String(rawMode || "").trim().toLowerCase();
-    if (mode === "hover" || mode === "transient") return "hover";
-    if (
-      mode === "pinned" ||
-      mode === "pin" ||
-      mode === "click" ||
-      mode === "click-to-pin" ||
-      mode === "click-and-stay" ||
-      mode === "click-to-stay"
-    ) {
-      return "pinned";
-    }
+    if (mode === "hover") return "hover";
+    if (mode === "pinned") return "pinned";
     return defaultMode;
   }
 
@@ -4945,23 +4922,8 @@ window.onload = () => {
     const defaultPlacement =
       fallback === "anchored" || fallback === "docked" ? fallback : "anchored";
     const placement = String(rawPlacement || "").trim().toLowerCase();
-    if (
-      placement === "anchored" ||
-      placement === "anchor" ||
-      placement === "near" ||
-      placement === "near-node" ||
-      placement === "node"
-    ) {
-      return "anchored";
-    }
-    if (
-      placement === "docked" ||
-      placement === "dock" ||
-      placement === "fixed" ||
-      placement === "panel"
-    ) {
-      return "docked";
-    }
+    if (placement === "anchored") return "anchored";
+    if (placement === "docked") return "docked";
     return defaultPlacement;
   }
 
@@ -5342,8 +5304,6 @@ window.onload = () => {
     bindCloseOnce: bindCloseOnce,
     positionAnchoredPanel: positionAnchoredPanel,
     shouldKeepOpen: shouldKeepOpen,
-    normalizePreviewMode: normalizePreviewMode,
-    normalizePreviewPlacement: normalizePreviewPlacement,
     readPanelBehavior: readPanelBehavior,
     resetPanelPosition: resetPanelPosition,
     configureCloseButton: configureCloseButton,
@@ -7994,8 +7954,7 @@ reproduced.</p>
                     </th><th><p>
                       Unit</p>
                     </th><th><p>
-                      Dimension
-</p>
+                      Dimension</p>
                     </th></tr></thead><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart4-005Fcatalogued-005Fkind-statement" data-bp-preview-title="Definition 14.1.1" data-bp-preview-key="def_part4_catalogued_kind--statement" data-bp-preview-fallback-label="def_part4_catalogued_kind"><a href="ISO-80000-4-___-Mechanics/Quantity-kinds-and-units-of-ISO-80000-4/index.html#--informal-preview-def_part4_catalogued_kind--statement" title="def_part4_catalogued_kind">4-1</a></span></span></p>
                   </td><td><p>
@@ -8005,8 +7964,7 @@ reproduced.</p>
                   </td><td><p>
                     <code>kg</code></p>
                   </td><td><p>
-                    <code>M</code>
-</p>
+                    <code>M</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart4-005Fmomentum-statement" data-bp-preview-title="Theorem 14.4.1" data-bp-preview-key="thm_part4_momentum--statement" data-bp-preview-fallback-label="thm_part4_momentum"><a href="ISO-80000-4-___-Mechanics/The-algebraic-Remarks-as-kind-laws___-mechanics-built-from-space-and-time/index.html#--informal-preview-thm_part4_momentum--statement" title="thm_part4_momentum">4-2</a></span></span></p>
                   </td><td><p>
@@ -8016,8 +7974,7 @@ reproduced.</p>
                   </td><td><p>
                     <code>kg/m³</code></p>
                   </td><td><p>
-                    <code>M·L⁻³</code>
-</p>
+                    <code>M·L⁻³</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart4-005Fmomentum-statement" data-bp-preview-title="Theorem 14.4.1" data-bp-preview-key="thm_part4_momentum--statement" data-bp-preview-fallback-label="thm_part4_momentum"><a href="ISO-80000-4-___-Mechanics/The-algebraic-Remarks-as-kind-laws___-mechanics-built-from-space-and-time/index.html#--informal-preview-thm_part4_momentum--statement" title="thm_part4_momentum">4-3</a></span></span></p>
                   </td><td><p>
@@ -8027,8 +7984,7 @@ reproduced.</p>
                   </td><td><p>
                     <code>m³/kg</code></p>
                   </td><td><p>
-                    <code>M⁻¹·L³</code>
-</p>
+                    <code>M⁻¹·L³</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart4-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 14.3.3" data-bp-preview-key="thm_part4_dim_one--statement" data-bp-preview-fallback-label="thm_part4_dim_one"><a href="ISO-80000-4-___-Mechanics/Dimension-does-not-classify_SEMI_-the-kind-does-___-the-torque___energy-case/index.html#--informal-preview-thm_part4_dim_one--statement" title="thm_part4_dim_one">4-4</a></span></span></p>
                   </td><td><p>
@@ -8038,8 +7994,7 @@ reproduced.</p>
                   </td><td><p>
                     <code>1</code></p>
                   </td><td><p>
-                    <code>1</code>
-</p>
+                    <code>1</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart4-005Fcatalogued-005Fkind-statement" data-bp-preview-title="Definition 14.1.1" data-bp-preview-key="def_part4_catalogued_kind--statement" data-bp-preview-fallback-label="def_part4_catalogued_kind"><a href="ISO-80000-4-___-Mechanics/Quantity-kinds-and-units-of-ISO-80000-4/index.html#--informal-preview-def_part4_catalogued_kind--statement" title="def_part4_catalogued_kind">4-5</a></span></span></p>
                   </td><td><p>
@@ -8049,8 +8004,7 @@ reproduced.</p>
                   </td><td><p>
                     <code>kg/m²</code></p>
                   </td><td><p>
-                    <code>M·L⁻²</code>
-</p>
+                    <code>M·L⁻²</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart4-005Fcatalogued-005Fkind-statement" data-bp-preview-title="Definition 14.1.1" data-bp-preview-key="def_part4_catalogued_kind--statement" data-bp-preview-fallback-label="def_part4_catalogued_kind"><a href="ISO-80000-4-___-Mechanics/Quantity-kinds-and-units-of-ISO-80000-4/index.html#--informal-preview-def_part4_catalogued_kind--statement" title="def_part4_catalogued_kind">4-6</a></span></span></p>
                   </td><td><p>
@@ -8060,8 +8014,7 @@ reproduced.</p>
                   </td><td><p>
                     <code>kg/m</code></p>
                   </td><td><p>
-                    <code>M·L⁻¹</code>
-</p>
+                    <code>M·L⁻¹</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart4-005Fcatalogued-005Fkind-statement" data-bp-preview-title="Definition 14.1.1" data-bp-preview-key="def_part4_catalogued_kind--statement" data-bp-preview-fallback-label="def_part4_catalogued_kind"><a href="ISO-80000-4-___-Mechanics/Quantity-kinds-and-units-of-ISO-80000-4/index.html#--informal-preview-def_part4_catalogued_kind--statement" title="def_part4_catalogued_kind">4-7</a></span></span></p>
                   </td><td><p>
@@ -8071,8 +8024,7 @@ reproduced.</p>
                   </td><td><p>
                     <code>kg·m²</code></p>
                   </td><td><p>
-                    <code>M·L²</code>
-</p>
+                    <code>M·L²</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart4-005Fmomentum-statement" data-bp-preview-title="Theorem 14.4.1" data-bp-preview-key="thm_part4_momentum--statement" data-bp-preview-fallback-label="thm_part4_momentum"><a href="ISO-80000-4-___-Mechanics/The-algebraic-Remarks-as-kind-laws___-mechanics-built-from-space-and-time/index.html#--informal-preview-thm_part4_momentum--statement" title="thm_part4_momentum">4-8</a></span></span></p>
                   </td><td><p>
@@ -8082,8 +8034,7 @@ reproduced.</p>
                   </td><td><p>
                     <code>kg·m/s</code></p>
                   </td><td><p>
-                    <code>M·L·T⁻¹</code>
-</p>
+                    <code>M·L·T⁻¹</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart4-005Fforce-005Fspecies-statement" data-bp-preview-title="Definition 14.2.1" data-bp-preview-key="def_part4_force_species--statement" data-bp-preview-fallback-label="def_part4_force_species"><a href="ISO-80000-4-___-Mechanics/The-force-family___-distinguishing-kinds-by-measurement-principle/index.html#--informal-preview-def_part4_force_species--statement" title="def_part4_force_species">4-9.1</a></span></span></p>
                   </td><td><p>
@@ -8093,8 +8044,7 @@ reproduced.</p>
                   </td><td><p>
                     <code>N</code></p>
                   </td><td><p>
-                    <code>M·L·T⁻²</code>
-</p>
+                    <code>M·L·T⁻²</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart4-005Fforce-005Fspecies-statement" data-bp-preview-title="Definition 14.2.1" data-bp-preview-key="def_part4_force_species--statement" data-bp-preview-fallback-label="def_part4_force_species"><a href="ISO-80000-4-___-Mechanics/The-force-family___-distinguishing-kinds-by-measurement-principle/index.html#--informal-preview-def_part4_force_species--statement" title="def_part4_force_species">4-9.2</a></span></span></p>
                   </td><td><p>
@@ -8104,8 +8054,7 @@ reproduced.</p>
                   </td><td><p>
                     <code>N</code></p>
                   </td><td><p>
-                    <code>M·L·T⁻²</code>
-</p>
+                    <code>M·L·T⁻²</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart4-005Fstatic-005Fkinetic-statement" data-bp-preview-title="Theorem 14.2.2" data-bp-preview-key="thm_part4_static_kinetic--statement" data-bp-preview-fallback-label="thm_part4_static_kinetic"><a href="ISO-80000-4-___-Mechanics/The-force-family___-distinguishing-kinds-by-measurement-principle/index.html#--informal-preview-thm_part4_static_kinetic--statement" title="thm_part4_static_kinetic">4-9.3</a></span></span></p>
                   </td><td><p>
@@ -8115,8 +8064,7 @@ reproduced.</p>
                   </td><td><p>
                     <code>N</code></p>
                   </td><td><p>
-                    <code>M·L·T⁻²</code>
-</p>
+                    <code>M·L·T⁻²</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart4-005Fstatic-005Fkinetic-statement" data-bp-preview-title="Theorem 14.2.2" data-bp-preview-key="thm_part4_static_kinetic--statement" data-bp-preview-fallback-label="thm_part4_static_kinetic"><a href="ISO-80000-4-___-Mechanics/The-force-family___-distinguishing-kinds-by-measurement-principle/index.html#--informal-preview-thm_part4_static_kinetic--statement" title="thm_part4_static_kinetic">4-9.4</a></span></span></p>
                   </td><td><p>
@@ -8126,8 +8074,7 @@ reproduced.</p>
                   </td><td><p>
                     <code>N</code></p>
                   </td><td><p>
-                    <code>M·L·T⁻²</code>
-</p>
+                    <code>M·L·T⁻²</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart4-005Fforce-005Fspecies-statement" data-bp-preview-title="Definition 14.2.1" data-bp-preview-key="def_part4_force_species--statement" data-bp-preview-fallback-label="def_part4_force_species"><a href="ISO-80000-4-___-Mechanics/The-force-family___-distinguishing-kinds-by-measurement-principle/index.html#--informal-preview-def_part4_force_species--statement" title="def_part4_force_species">4-9.5</a></span></span></p>
                   </td><td><p>
@@ -8137,8 +8084,7 @@ reproduced.</p>
                   </td><td><p>
                     <code>N</code></p>
                   </td><td><p>
-                    <code>M·L·T⁻²</code>
-</p>
+                    <code>M·L·T⁻²</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart4-005Fforce-005Fspecies-statement" data-bp-preview-title="Definition 14.2.1" data-bp-preview-key="def_part4_force_species--statement" data-bp-preview-fallback-label="def_part4_force_species"><a href="ISO-80000-4-___-Mechanics/The-force-family___-distinguishing-kinds-by-measurement-principle/index.html#--informal-preview-def_part4_force_species--statement" title="def_part4_force_species">4-9.6</a></span></span></p>
                   </td><td><p>
@@ -8148,8 +8094,7 @@ reproduced.</p>
                   </td><td><p>
                     <code>N</code></p>
                   </td><td><p>
-                    <code>M·L·T⁻²</code>
-</p>
+                    <code>M·L·T⁻²</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart4-005Ftorque-005Fenergy-statement" data-bp-preview-title="Theorem 14.3.1" data-bp-preview-key="thm_part4_torque_energy--statement" data-bp-preview-fallback-label="thm_part4_torque_energy"><a href="ISO-80000-4-___-Mechanics/Dimension-does-not-classify_SEMI_-the-kind-does-___-the-torque___energy-case/index.html#--informal-preview-thm_part4_torque_energy--statement" title="thm_part4_torque_energy">4-10</a></span></span></p>
                   </td><td><p>
@@ -8159,8 +8104,7 @@ reproduced.</p>
                   </td><td><p>
                     <code>N·s</code></p>
                   </td><td><p>
-                    <code>M·L·T⁻¹</code>
-</p>
+                    <code>M·L·T⁻¹</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart4-005Fcatalogued-005Fkind-statement" data-bp-preview-title="Definition 14.1.1" data-bp-preview-key="def_part4_catalogued_kind--statement" data-bp-preview-fallback-label="def_part4_catalogued_kind"><a href="ISO-80000-4-___-Mechanics/Quantity-kinds-and-units-of-ISO-80000-4/index.html#--informal-preview-def_part4_catalogued_kind--statement" title="def_part4_catalogued_kind">4-11</a></span></span></p>
                   </td><td><p>
@@ -8170,8 +8114,7 @@ reproduced.</p>
                   </td><td><p>
                     <code>kg·m²/s</code></p>
                   </td><td><p>
-                    <code>M·L²·T⁻¹</code>
-</p>
+                    <code>M·L²·T⁻¹</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart4-005Ftorque-005Fenergy-statement" data-bp-preview-title="Theorem 14.3.1" data-bp-preview-key="thm_part4_torque_energy--statement" data-bp-preview-fallback-label="thm_part4_torque_energy"><a href="ISO-80000-4-___-Mechanics/Dimension-does-not-classify_SEMI_-the-kind-does-___-the-torque___energy-case/index.html#--informal-preview-thm_part4_torque_energy--statement" title="thm_part4_torque_energy">4-12.1</a></span></span></p>
                   </td><td><p>
@@ -8181,8 +8124,7 @@ reproduced.</p>
                   </td><td><p>
                     <code>N·m</code></p>
                   </td><td><p>
-                    <code>M·L²·T⁻²</code>
-</p>
+                    <code>M·L²·T⁻²</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart4-005Ftorque-005Fenergy-statement" data-bp-preview-title="Theorem 14.3.1" data-bp-preview-key="thm_part4_torque_energy--statement" data-bp-preview-fallback-label="thm_part4_torque_energy"><a href="ISO-80000-4-___-Mechanics/Dimension-does-not-classify_SEMI_-the-kind-does-___-the-torque___energy-case/index.html#--informal-preview-thm_part4_torque_energy--statement" title="thm_part4_torque_energy">4-12.2</a></span></span></p>
                   </td><td><p>
@@ -8192,8 +8134,7 @@ reproduced.</p>
                   </td><td><p>
                     <code>N·m</code></p>
                   </td><td><p>
-                    <code>M·L²·T⁻²</code>
-</p>
+                    <code>M·L²·T⁻²</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart4-005Fcatalogued-005Fkind-statement" data-bp-preview-title="Definition 14.1.1" data-bp-preview-key="def_part4_catalogued_kind--statement" data-bp-preview-fallback-label="def_part4_catalogued_kind"><a href="ISO-80000-4-___-Mechanics/Quantity-kinds-and-units-of-ISO-80000-4/index.html#--informal-preview-def_part4_catalogued_kind--statement" title="def_part4_catalogued_kind">4-13</a></span></span></p>
                   </td><td><p>
@@ -8203,8 +8144,7 @@ reproduced.</p>
                   </td><td><p>
                     <code>N·m·s</code></p>
                   </td><td><p>
-                    <code>M·L²·T⁻¹</code>
-</p>
+                    <code>M·L²·T⁻¹</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart4-005Fmomentum-statement" data-bp-preview-title="Theorem 14.4.1" data-bp-preview-key="thm_part4_momentum--statement" data-bp-preview-fallback-label="thm_part4_momentum"><a href="ISO-80000-4-___-Mechanics/The-algebraic-Remarks-as-kind-laws___-mechanics-built-from-space-and-time/index.html#--informal-preview-thm_part4_momentum--statement" title="thm_part4_momentum">4-14.1</a></span></span></p>
                   </td><td><p>
@@ -8214,8 +8154,7 @@ reproduced.</p>
                   </td><td><p>
                     <code>Pa</code></p>
                   </td><td><p>
-                    <code>M·L⁻¹·T⁻²</code>
-</p>
+                    <code>M·L⁻¹·T⁻²</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart4-005Fcatalogued-005Fkind-statement" data-bp-preview-title="Definition 14.1.1" data-bp-preview-key="def_part4_catalogued_kind--statement" data-bp-preview-fallback-label="def_part4_catalogued_kind"><a href="ISO-80000-4-___-Mechanics/Quantity-kinds-and-units-of-ISO-80000-4/index.html#--informal-preview-def_part4_catalogued_kind--statement" title="def_part4_catalogued_kind">4-14.2</a></span></span></p>
                   </td><td><p>
@@ -8225,8 +8164,7 @@ reproduced.</p>
                   </td><td><p>
                     <code>Pa</code></p>
                   </td><td><p>
-                    <code>M·L⁻¹·T⁻²</code>
-</p>
+                    <code>M·L⁻¹·T⁻²</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart4-005Fcatalogued-005Fkind-statement" data-bp-preview-title="Definition 14.1.1" data-bp-preview-key="def_part4_catalogued_kind--statement" data-bp-preview-fallback-label="def_part4_catalogued_kind"><a href="ISO-80000-4-___-Mechanics/Quantity-kinds-and-units-of-ISO-80000-4/index.html#--informal-preview-def_part4_catalogued_kind--statement" title="def_part4_catalogued_kind">4-15</a></span></span></p>
                   </td><td><p>
@@ -8236,8 +8174,7 @@ reproduced.</p>
                   </td><td><p>
                     <code>Pa</code></p>
                   </td><td><p>
-                    <code>M·L⁻¹·T⁻²</code>
-</p>
+                    <code>M·L⁻¹·T⁻²</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart4-005Fmomentum-statement" data-bp-preview-title="Theorem 14.4.1" data-bp-preview-key="thm_part4_momentum--statement" data-bp-preview-fallback-label="thm_part4_momentum"><a href="ISO-80000-4-___-Mechanics/The-algebraic-Remarks-as-kind-laws___-mechanics-built-from-space-and-time/index.html#--informal-preview-thm_part4_momentum--statement" title="thm_part4_momentum">4-16.1</a></span></span></p>
                   </td><td><p>
@@ -8247,8 +8184,7 @@ reproduced.</p>
                   </td><td><p>
                     <code>Pa</code></p>
                   </td><td><p>
-                    <code>M·L⁻¹·T⁻²</code>
-</p>
+                    <code>M·L⁻¹·T⁻²</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart4-005Fcatalogued-005Fkind-statement" data-bp-preview-title="Definition 14.1.1" data-bp-preview-key="def_part4_catalogued_kind--statement" data-bp-preview-fallback-label="def_part4_catalogued_kind"><a href="ISO-80000-4-___-Mechanics/Quantity-kinds-and-units-of-ISO-80000-4/index.html#--informal-preview-def_part4_catalogued_kind--statement" title="def_part4_catalogued_kind">4-16.2</a></span></span></p>
                   </td><td><p>
@@ -8258,8 +8194,7 @@ reproduced.</p>
                   </td><td><p>
                     <code>Pa</code></p>
                   </td><td><p>
-                    <code>M·L⁻¹·T⁻²</code>
-</p>
+                    <code>M·L⁻¹·T⁻²</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart4-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 14.3.3" data-bp-preview-key="thm_part4_dim_one--statement" data-bp-preview-fallback-label="thm_part4_dim_one"><a href="ISO-80000-4-___-Mechanics/Dimension-does-not-classify_SEMI_-the-kind-does-___-the-torque___energy-case/index.html#--informal-preview-thm_part4_dim_one--statement" title="thm_part4_dim_one">4-17.1</a></span></span></p>
                   </td><td><p>
@@ -8269,8 +8204,7 @@ reproduced.</p>
                   </td><td><p>
                     <code>1</code></p>
                   </td><td><p>
-                    <code>1</code>
-</p>
+                    <code>1</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart4-005Fmomentum-statement" data-bp-preview-title="Theorem 14.4.1" data-bp-preview-key="thm_part4_momentum--statement" data-bp-preview-fallback-label="thm_part4_momentum"><a href="ISO-80000-4-___-Mechanics/The-algebraic-Remarks-as-kind-laws___-mechanics-built-from-space-and-time/index.html#--informal-preview-thm_part4_momentum--statement" title="thm_part4_momentum">4-17.2</a></span></span></p>
                   </td><td><p>
@@ -8280,8 +8214,7 @@ reproduced.</p>
                   </td><td><p>
                     <code>1</code></p>
                   </td><td><p>
-                    <code>1</code>
-</p>
+                    <code>1</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart4-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 14.3.3" data-bp-preview-key="thm_part4_dim_one--statement" data-bp-preview-fallback-label="thm_part4_dim_one"><a href="ISO-80000-4-___-Mechanics/Dimension-does-not-classify_SEMI_-the-kind-does-___-the-torque___energy-case/index.html#--informal-preview-thm_part4_dim_one--statement" title="thm_part4_dim_one">4-17.3</a></span></span></p>
                   </td><td><p>
@@ -8291,8 +8224,7 @@ reproduced.</p>
                   </td><td><p>
                     <code>1</code></p>
                   </td><td><p>
-                    <code>1</code>
-</p>
+                    <code>1</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart4-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 14.3.3" data-bp-preview-key="thm_part4_dim_one--statement" data-bp-preview-fallback-label="thm_part4_dim_one"><a href="ISO-80000-4-___-Mechanics/Dimension-does-not-classify_SEMI_-the-kind-does-___-the-torque___energy-case/index.html#--informal-preview-thm_part4_dim_one--statement" title="thm_part4_dim_one">4-17.4</a></span></span></p>
                   </td><td><p>
@@ -8302,8 +8234,7 @@ reproduced.</p>
                   </td><td><p>
                     <code>1</code></p>
                   </td><td><p>
-                    <code>1</code>
-</p>
+                    <code>1</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart4-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 14.3.3" data-bp-preview-key="thm_part4_dim_one--statement" data-bp-preview-fallback-label="thm_part4_dim_one"><a href="ISO-80000-4-___-Mechanics/Dimension-does-not-classify_SEMI_-the-kind-does-___-the-torque___energy-case/index.html#--informal-preview-thm_part4_dim_one--statement" title="thm_part4_dim_one">4-18</a></span></span></p>
                   </td><td><p>
@@ -8313,8 +8244,7 @@ reproduced.</p>
                   </td><td><p>
                     <code>1</code></p>
                   </td><td><p>
-                    <code>1</code>
-</p>
+                    <code>1</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart4-005Fmomentum-statement" data-bp-preview-title="Theorem 14.4.1" data-bp-preview-key="thm_part4_momentum--statement" data-bp-preview-fallback-label="thm_part4_momentum"><a href="ISO-80000-4-___-Mechanics/The-algebraic-Remarks-as-kind-laws___-mechanics-built-from-space-and-time/index.html#--informal-preview-thm_part4_momentum--statement" title="thm_part4_momentum">4-19.1</a></span></span></p>
                   </td><td><p>
@@ -8324,8 +8254,7 @@ reproduced.</p>
                   </td><td><p>
                     <code>Pa</code></p>
                   </td><td><p>
-                    <code>M·L⁻¹·T⁻²</code>
-</p>
+                    <code>M·L⁻¹·T⁻²</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart4-005Fcatalogued-005Fkind-statement" data-bp-preview-title="Definition 14.1.1" data-bp-preview-key="def_part4_catalogued_kind--statement" data-bp-preview-fallback-label="def_part4_catalogued_kind"><a href="ISO-80000-4-___-Mechanics/Quantity-kinds-and-units-of-ISO-80000-4/index.html#--informal-preview-def_part4_catalogued_kind--statement" title="def_part4_catalogued_kind">4-19.2</a></span></span></p>
                   </td><td><p>
@@ -8335,8 +8264,7 @@ reproduced.</p>
                   </td><td><p>
                     <code>Pa</code></p>
                   </td><td><p>
-                    <code>M·L⁻¹·T⁻²</code>
-</p>
+                    <code>M·L⁻¹·T⁻²</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart4-005Fcatalogued-005Fkind-statement" data-bp-preview-title="Definition 14.1.1" data-bp-preview-key="def_part4_catalogued_kind--statement" data-bp-preview-fallback-label="def_part4_catalogued_kind"><a href="ISO-80000-4-___-Mechanics/Quantity-kinds-and-units-of-ISO-80000-4/index.html#--informal-preview-def_part4_catalogued_kind--statement" title="def_part4_catalogued_kind">4-19.3</a></span></span></p>
                   </td><td><p>
@@ -8346,8 +8274,7 @@ reproduced.</p>
                   </td><td><p>
                     <code>Pa</code></p>
                   </td><td><p>
-                    <code>M·L⁻¹·T⁻²</code>
-</p>
+                    <code>M·L⁻¹·T⁻²</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart4-005Fcatalogued-005Fkind-statement" data-bp-preview-title="Definition 14.1.1" data-bp-preview-key="def_part4_catalogued_kind--statement" data-bp-preview-fallback-label="def_part4_catalogued_kind"><a href="ISO-80000-4-___-Mechanics/Quantity-kinds-and-units-of-ISO-80000-4/index.html#--informal-preview-def_part4_catalogued_kind--statement" title="def_part4_catalogued_kind">4-20</a></span></span></p>
                   </td><td><p>
@@ -8357,8 +8284,7 @@ reproduced.</p>
                   </td><td><p>
                     <code>Pa⁻¹</code></p>
                   </td><td><p>
-                    <code>M⁻¹·L·T²</code>
-</p>
+                    <code>M⁻¹·L·T²</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart4-005Fcatalogued-005Fkind-statement" data-bp-preview-title="Definition 14.1.1" data-bp-preview-key="def_part4_catalogued_kind--statement" data-bp-preview-fallback-label="def_part4_catalogued_kind"><a href="ISO-80000-4-___-Mechanics/Quantity-kinds-and-units-of-ISO-80000-4/index.html#--informal-preview-def_part4_catalogued_kind--statement" title="def_part4_catalogued_kind">4-21.1</a></span></span></p>
                   </td><td><p>
@@ -8368,8 +8294,7 @@ reproduced.</p>
                   </td><td><p>
                     <code>m⁴</code></p>
                   </td><td><p>
-                    <code>L⁴</code>
-</p>
+                    <code>L⁴</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart4-005Fcatalogued-005Fkind-statement" data-bp-preview-title="Definition 14.1.1" data-bp-preview-key="def_part4_catalogued_kind--statement" data-bp-preview-fallback-label="def_part4_catalogued_kind"><a href="ISO-80000-4-___-Mechanics/Quantity-kinds-and-units-of-ISO-80000-4/index.html#--informal-preview-def_part4_catalogued_kind--statement" title="def_part4_catalogued_kind">4-21.2</a></span></span></p>
                   </td><td><p>
@@ -8379,8 +8304,7 @@ reproduced.</p>
                   </td><td><p>
                     <code>m⁴</code></p>
                   </td><td><p>
-                    <code>L⁴</code>
-</p>
+                    <code>L⁴</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart4-005Fcatalogued-005Fkind-statement" data-bp-preview-title="Definition 14.1.1" data-bp-preview-key="def_part4_catalogued_kind--statement" data-bp-preview-fallback-label="def_part4_catalogued_kind"><a href="ISO-80000-4-___-Mechanics/Quantity-kinds-and-units-of-ISO-80000-4/index.html#--informal-preview-def_part4_catalogued_kind--statement" title="def_part4_catalogued_kind">4-22</a></span></span></p>
                   </td><td><p>
@@ -8390,8 +8314,7 @@ reproduced.</p>
                   </td><td><p>
                     <code>m³</code></p>
                   </td><td><p>
-                    <code>L³</code>
-</p>
+                    <code>L³</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart4-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 14.3.3" data-bp-preview-key="thm_part4_dim_one--statement" data-bp-preview-fallback-label="thm_part4_dim_one"><a href="ISO-80000-4-___-Mechanics/Dimension-does-not-classify_SEMI_-the-kind-does-___-the-torque___energy-case/index.html#--informal-preview-thm_part4_dim_one--statement" title="thm_part4_dim_one">4-23.1</a></span></span></p>
                   </td><td><p>
@@ -8401,8 +8324,7 @@ reproduced.</p>
                   </td><td><p>
                     <code>1</code></p>
                   </td><td><p>
-                    <code>1</code>
-</p>
+                    <code>1</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart4-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 14.3.3" data-bp-preview-key="thm_part4_dim_one--statement" data-bp-preview-fallback-label="thm_part4_dim_one"><a href="ISO-80000-4-___-Mechanics/Dimension-does-not-classify_SEMI_-the-kind-does-___-the-torque___energy-case/index.html#--informal-preview-thm_part4_dim_one--statement" title="thm_part4_dim_one">4-23.2</a></span></span></p>
                   </td><td><p>
@@ -8412,8 +8334,7 @@ reproduced.</p>
                   </td><td><p>
                     <code>1</code></p>
                   </td><td><p>
-                    <code>1</code>
-</p>
+                    <code>1</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart4-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 14.3.3" data-bp-preview-key="thm_part4_dim_one--statement" data-bp-preview-fallback-label="thm_part4_dim_one"><a href="ISO-80000-4-___-Mechanics/Dimension-does-not-classify_SEMI_-the-kind-does-___-the-torque___energy-case/index.html#--informal-preview-thm_part4_dim_one--statement" title="thm_part4_dim_one">4-23.3</a></span></span></p>
                   </td><td><p>
@@ -8423,8 +8344,7 @@ reproduced.</p>
                   </td><td><p>
                     <code>1</code></p>
                   </td><td><p>
-                    <code>1</code>
-</p>
+                    <code>1</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart4-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 14.3.3" data-bp-preview-key="thm_part4_dim_one--statement" data-bp-preview-fallback-label="thm_part4_dim_one"><a href="ISO-80000-4-___-Mechanics/Dimension-does-not-classify_SEMI_-the-kind-does-___-the-torque___energy-case/index.html#--informal-preview-thm_part4_dim_one--statement" title="thm_part4_dim_one">4-23.4</a></span></span></p>
                   </td><td><p>
@@ -8434,8 +8354,7 @@ reproduced.</p>
                   </td><td><p>
                     <code>1</code></p>
                   </td><td><p>
-                    <code>1</code>
-</p>
+                    <code>1</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart4-005Fmomentum-statement" data-bp-preview-title="Theorem 14.4.1" data-bp-preview-key="thm_part4_momentum--statement" data-bp-preview-fallback-label="thm_part4_momentum"><a href="ISO-80000-4-___-Mechanics/The-algebraic-Remarks-as-kind-laws___-mechanics-built-from-space-and-time/index.html#--informal-preview-thm_part4_momentum--statement" title="thm_part4_momentum">4-24</a></span></span></p>
                   </td><td><p>
@@ -8445,8 +8364,7 @@ reproduced.</p>
                   </td><td><p>
                     <code>Pa·s</code></p>
                   </td><td><p>
-                    <code>M·L⁻¹·T⁻¹</code>
-</p>
+                    <code>M·L⁻¹·T⁻¹</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart4-005Fmomentum-statement" data-bp-preview-title="Theorem 14.4.1" data-bp-preview-key="thm_part4_momentum--statement" data-bp-preview-fallback-label="thm_part4_momentum"><a href="ISO-80000-4-___-Mechanics/The-algebraic-Remarks-as-kind-laws___-mechanics-built-from-space-and-time/index.html#--informal-preview-thm_part4_momentum--statement" title="thm_part4_momentum">4-25</a></span></span></p>
                   </td><td><p>
@@ -8456,8 +8374,7 @@ reproduced.</p>
                   </td><td><p>
                     <code>m²/s</code></p>
                   </td><td><p>
-                    <code>L²·T⁻¹</code>
-</p>
+                    <code>L²·T⁻¹</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart4-005Fcatalogued-005Fkind-statement" data-bp-preview-title="Definition 14.1.1" data-bp-preview-key="def_part4_catalogued_kind--statement" data-bp-preview-fallback-label="def_part4_catalogued_kind"><a href="ISO-80000-4-___-Mechanics/Quantity-kinds-and-units-of-ISO-80000-4/index.html#--informal-preview-def_part4_catalogued_kind--statement" title="def_part4_catalogued_kind">4-26</a></span></span></p>
                   </td><td><p>
@@ -8467,8 +8384,7 @@ reproduced.</p>
                   </td><td><p>
                     <code>N/m</code></p>
                   </td><td><p>
-                    <code>M·T⁻²</code>
-</p>
+                    <code>M·T⁻²</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart4-005Fefficiency-statement" data-bp-preview-title="Theorem 14.4.2" data-bp-preview-key="thm_part4_efficiency--statement" data-bp-preview-fallback-label="thm_part4_efficiency"><a href="ISO-80000-4-___-Mechanics/The-algebraic-Remarks-as-kind-laws___-mechanics-built-from-space-and-time/index.html#--informal-preview-thm_part4_efficiency--statement" title="thm_part4_efficiency">4-27</a></span></span></p>
                   </td><td><p>
@@ -8478,8 +8394,7 @@ reproduced.</p>
                   </td><td><p>
                     <code>W</code></p>
                   </td><td><p>
-                    <code>M·L²·T⁻³</code>
-</p>
+                    <code>M·L²·T⁻³</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart4-005Ftorque-005Fenergy-statement" data-bp-preview-title="Theorem 14.3.1" data-bp-preview-key="thm_part4_torque_energy--statement" data-bp-preview-fallback-label="thm_part4_torque_energy"><a href="ISO-80000-4-___-Mechanics/Dimension-does-not-classify_SEMI_-the-kind-does-___-the-torque___energy-case/index.html#--informal-preview-thm_part4_torque_energy--statement" title="thm_part4_torque_energy">4-28.1</a></span></span></p>
                   </td><td><p>
@@ -8489,8 +8404,7 @@ reproduced.</p>
                   </td><td><p>
                     <code>J</code></p>
                   </td><td><p>
-                    <code>M·L²·T⁻²</code>
-</p>
+                    <code>M·L²·T⁻²</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart4-005Ftorque-005Fenergy-statement" data-bp-preview-title="Theorem 14.3.1" data-bp-preview-key="thm_part4_torque_energy--statement" data-bp-preview-fallback-label="thm_part4_torque_energy"><a href="ISO-80000-4-___-Mechanics/Dimension-does-not-classify_SEMI_-the-kind-does-___-the-torque___energy-case/index.html#--informal-preview-thm_part4_torque_energy--statement" title="thm_part4_torque_energy">4-28.2</a></span></span></p>
                   </td><td><p>
@@ -8500,8 +8414,7 @@ reproduced.</p>
                   </td><td><p>
                     <code>J</code></p>
                   </td><td><p>
-                    <code>M·L²·T⁻²</code>
-</p>
+                    <code>M·L²·T⁻²</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart4-005Ftorque-005Fenergy-statement" data-bp-preview-title="Theorem 14.3.1" data-bp-preview-key="thm_part4_torque_energy--statement" data-bp-preview-fallback-label="thm_part4_torque_energy"><a href="ISO-80000-4-___-Mechanics/Dimension-does-not-classify_SEMI_-the-kind-does-___-the-torque___energy-case/index.html#--informal-preview-thm_part4_torque_energy--statement" title="thm_part4_torque_energy">4-28.3</a></span></span></p>
                   </td><td><p>
@@ -8511,8 +8424,7 @@ reproduced.</p>
                   </td><td><p>
                     <code>J</code></p>
                   </td><td><p>
-                    <code>M·L²·T⁻²</code>
-</p>
+                    <code>M·L²·T⁻²</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart4-005Ftorque-005Fenergy-statement" data-bp-preview-title="Theorem 14.3.1" data-bp-preview-key="thm_part4_torque_energy--statement" data-bp-preview-fallback-label="thm_part4_torque_energy"><a href="ISO-80000-4-___-Mechanics/Dimension-does-not-classify_SEMI_-the-kind-does-___-the-torque___energy-case/index.html#--informal-preview-thm_part4_torque_energy--statement" title="thm_part4_torque_energy">4-28.4</a></span></span></p>
                   </td><td><p>
@@ -8522,8 +8434,7 @@ reproduced.</p>
                   </td><td><p>
                     <code>J</code></p>
                   </td><td><p>
-                    <code>M·L²·T⁻²</code>
-</p>
+                    <code>M·L²·T⁻²</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart4-005Fefficiency-statement" data-bp-preview-title="Theorem 14.4.2" data-bp-preview-key="thm_part4_efficiency--statement" data-bp-preview-fallback-label="thm_part4_efficiency"><a href="ISO-80000-4-___-Mechanics/The-algebraic-Remarks-as-kind-laws___-mechanics-built-from-space-and-time/index.html#--informal-preview-thm_part4_efficiency--statement" title="thm_part4_efficiency">4-29</a></span></span></p>
                   </td><td><p>
@@ -8533,8 +8444,7 @@ reproduced.</p>
                   </td><td><p>
                     <code>1</code></p>
                   </td><td><p>
-                    <code>1</code>
-</p>
+                    <code>1</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart4-005Fcatalogued-005Fkind-statement" data-bp-preview-title="Definition 14.1.1" data-bp-preview-key="def_part4_catalogued_kind--statement" data-bp-preview-fallback-label="def_part4_catalogued_kind"><a href="ISO-80000-4-___-Mechanics/Quantity-kinds-and-units-of-ISO-80000-4/index.html#--informal-preview-def_part4_catalogued_kind--statement" title="def_part4_catalogued_kind">4-30.1</a></span></span></p>
                   </td><td><p>
@@ -8544,8 +8454,7 @@ reproduced.</p>
                   </td><td><p>
                     <code>kg/(m²·s)</code></p>
                   </td><td><p>
-                    <code>M·L⁻²·T⁻¹</code>
-</p>
+                    <code>M·L⁻²·T⁻¹</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart4-005Fcatalogued-005Fkind-statement" data-bp-preview-title="Definition 14.1.1" data-bp-preview-key="def_part4_catalogued_kind--statement" data-bp-preview-fallback-label="def_part4_catalogued_kind"><a href="ISO-80000-4-___-Mechanics/Quantity-kinds-and-units-of-ISO-80000-4/index.html#--informal-preview-def_part4_catalogued_kind--statement" title="def_part4_catalogued_kind">4-30.2</a></span></span></p>
                   </td><td><p>
@@ -8555,8 +8464,7 @@ reproduced.</p>
                   </td><td><p>
                     <code>kg/s</code></p>
                   </td><td><p>
-                    <code>M·T⁻¹</code>
-</p>
+                    <code>M·T⁻¹</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart4-005Fcatalogued-005Fkind-statement" data-bp-preview-title="Definition 14.1.1" data-bp-preview-key="def_part4_catalogued_kind--statement" data-bp-preview-fallback-label="def_part4_catalogued_kind"><a href="ISO-80000-4-___-Mechanics/Quantity-kinds-and-units-of-ISO-80000-4/index.html#--informal-preview-def_part4_catalogued_kind--statement" title="def_part4_catalogued_kind">4-30.3</a></span></span></p>
                   </td><td><p>
@@ -8566,8 +8474,7 @@ reproduced.</p>
                   </td><td><p>
                     <code>kg/s</code></p>
                   </td><td><p>
-                    <code>M·T⁻¹</code>
-</p>
+                    <code>M·T⁻¹</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart4-005Fcatalogued-005Fkind-statement" data-bp-preview-title="Definition 14.1.1" data-bp-preview-key="def_part4_catalogued_kind--statement" data-bp-preview-fallback-label="def_part4_catalogued_kind"><a href="ISO-80000-4-___-Mechanics/Quantity-kinds-and-units-of-ISO-80000-4/index.html#--informal-preview-def_part4_catalogued_kind--statement" title="def_part4_catalogued_kind">4-31</a></span></span></p>
                   </td><td><p>
@@ -8577,8 +8484,7 @@ reproduced.</p>
                   </td><td><p>
                     <code>m³/s</code></p>
                   </td><td><p>
-                    <code>L³·T⁻¹</code>
-</p>
+                    <code>L³·T⁻¹</code></p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fpart4-005Fcatalogued-005Fkind-statement" data-bp-preview-title="Definition 14.1.1" data-bp-preview-key="def_part4_catalogued_kind--statement" data-bp-preview-fallback-label="def_part4_catalogued_kind"><a href="ISO-80000-4-___-Mechanics/Quantity-kinds-and-units-of-ISO-80000-4/index.html#--informal-preview-def_part4_catalogued_kind--statement" title="def_part4_catalogued_kind">4-32</a></span></span></p>
                   </td><td><p>

@@ -1011,169 +1011,6 @@ table.tabular td > p:last-child, table.tabular th > p:first-child {
   }
 }
 </style><style>
-#bp-style-switcher {
-  position: fixed;
-  right: 1rem;
-  bottom: 1rem;
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  gap: 0.4rem 0.6rem;
-  flex-wrap: wrap;
-  background: var(--bp-color-surface);
-  border: 1px solid var(--bp-color-border);
-  border-radius: var(--bp-radius-md);
-  box-shadow: var(--bp-shadow-sm);
-  padding: 0.4rem 0.55rem;
-  font-size: 0.82rem;
-}
-
-#bp-style-switcher .bp-style-switcher-control {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-}
-
-#bp-style-switcher label {
-  font-weight: 600;
-}
-
-#bp-style-switcher select {
-  border: 1px solid var(--bp-color-border);
-  border-radius: 0.3rem;
-  background: var(--bp-color-surface);
-  font-size: 0.82rem;
-  padding: 0.1rem 0.25rem;
-}
-
-html[data-bp-style="blueprint"] .bp_wrapper {
-  border: 1px solid var(--bp-color-border);
-  border-radius: var(--bp-radius-sm);
-  padding: 0.45rem 0.6rem 0.55rem;
-  background: var(--bp-color-surface);
-}
-
-html[data-bp-style="blueprint"] .bp_heading {
-  border-bottom: 1px solid var(--bp-color-border-soft);
-  padding-bottom: 0.35rem;
-}
-
-html[data-bp-style="blueprint"] .bp_content {
-  margin-top: 0.35rem;
-  padding-left: 0.45rem;
-}
-
-html[data-bp-style="blueprint"] .bp_kind_theorem_content,
-html[data-bp-style="blueprint"] .bp_kind_proposition_content,
-html[data-bp-style="blueprint"] .bp_kind_lemma_content,
-html[data-bp-style="blueprint"] .bp_kind_corollary_content,
-html[data-bp-style="blueprint"] .bp_kind_proof_content,
-html[data-bp-style="blueprint"] div.theorem_thmcontent,
-html[data-bp-style="blueprint"] div.proposition_thmcontent,
-html[data-bp-style="blueprint"] div.lemma_thmcontent,
-html[data-bp-style="blueprint"] div.corollary_thmcontent,
-html[data-bp-style="blueprint"] div.proof_content {
-  border-left-color: var(--bp-color-text-muted);
-}
-
-html[data-bp-style="modern"] .bp_wrapper {
-  border: 1px solid var(--bp-color-modern-border);
-  border-radius: var(--bp-radius-2xl);
-  padding: 0.6rem 0.7rem 0.68rem;
-  background: linear-gradient(180deg, var(--bp-color-surface), var(--bp-color-surface-modern));
-  box-shadow: var(--bp-shadow-modern);
-}
-
-html[data-bp-style="modern"] .bp_heading {
-  border-bottom: 1px solid var(--bp-color-border-soft);
-  padding-bottom: 0.4rem;
-}
-
-html[data-bp-style="modern"] .bp_caption {
-  background: var(--bp-color-modern-caption);
-  border-radius: var(--bp-radius-pill);
-  padding: 0.08rem 0.5rem;
-}
-
-html[data-bp-style="modern"] .bp_content {
-  margin-top: 0.45rem;
-  padding-left: 0.5rem;
-}
-
-html[data-bp-style="modern"] .bp_kind_theorem_content,
-html[data-bp-style="modern"] .bp_kind_proposition_content,
-html[data-bp-style="modern"] .bp_kind_lemma_content,
-html[data-bp-style="modern"] .bp_kind_corollary_content,
-html[data-bp-style="modern"] .bp_kind_proof_content,
-html[data-bp-style="modern"] .bp_wrapper div.theorem_thmcontent,
-html[data-bp-style="modern"] .bp_wrapper div.proposition_thmcontent,
-html[data-bp-style="modern"] .bp_wrapper div.lemma_thmcontent,
-html[data-bp-style="modern"] .bp_wrapper div.corollary_thmcontent,
-html[data-bp-style="modern"] .bp_wrapper div.proof_content {
-  border-left-color: var(--bp-color-text-faint);
-}
-
-html[data-bp-style="bold"] .bp_wrapper {
-  border: 2px solid var(--bp-color-text-strong);
-  border-radius: var(--bp-radius-3xl);
-  padding: 0.6rem 0.75rem 0.75rem;
-  background:
-    radial-gradient(circle at 100% 0%, var(--bp-color-bold-surface-glow-1), transparent 36%),
-    radial-gradient(circle at 0% 100%, var(--bp-color-bold-surface-glow-2), transparent 32%),
-    var(--bp-color-surface);
-  box-shadow: var(--bp-shadow-bold-lg);
-}
-
-html[data-bp-style="bold"] .bp_heading {
-  border-bottom: 2px solid var(--bp-color-text-strong);
-  padding-bottom: 0.45rem;
-  letter-spacing: 0.01em;
-}
-
-html[data-bp-style="bold"] .bp_caption {
-  background: var(--bp-color-text-strong);
-  color: var(--bp-color-surface-muted);
-  border-radius: 0.25rem;
-  padding: 0.08rem 0.45rem;
-  text-transform: uppercase;
-}
-
-html[data-bp-style="bold"] .bp_label {
-  background: var(--bp-color-bold-label);
-  color: var(--bp-color-text);
-  border-radius: var(--bp-radius-pill);
-  padding: 0.06rem 0.42rem;
-}
-
-html[data-bp-style="bold"] .bp_code_link {
-  color: var(--bp-color-bold-link);
-  font-weight: 700;
-}
-
-html[data-bp-style="bold"] .bp_code_hover {
-  border: 2px solid var(--bp-color-text-strong);
-  border-radius: var(--bp-radius-xl);
-  box-shadow: var(--bp-shadow-bold);
-}
-
-html[data-bp-style="bold"] .bp_content {
-  margin-top: 0.5rem;
-  padding-left: 0.6rem;
-}
-
-html[data-bp-style="bold"] .bp_kind_theorem_content,
-html[data-bp-style="bold"] .bp_kind_proposition_content,
-html[data-bp-style="bold"] .bp_kind_lemma_content,
-html[data-bp-style="bold"] .bp_kind_corollary_content,
-html[data-bp-style="bold"] .bp_kind_proof_content,
-html[data-bp-style="bold"] .bp_wrapper div.theorem_thmcontent,
-html[data-bp-style="bold"] .bp_wrapper div.proposition_thmcontent,
-html[data-bp-style="bold"] .bp_wrapper div.lemma_thmcontent,
-html[data-bp-style="bold"] .bp_wrapper div.corollary_thmcontent,
-html[data-bp-style="bold"] .bp_wrapper div.proof_content {
-  border-left: 0.2rem solid var(--bp-color-text-strong);
-}
-</style><style>
 .bp_wrapper {
   scroll-margin-top: 1rem;
   margin: 0.85rem 0;
@@ -1232,7 +1069,7 @@ span[class$="_thmlabel"]::after {
 
 .bp_extras {
   --bp-extra-group-col: minmax(5rem, max-content);
-  --bp-extra-uses-col: minmax(4.2rem, max-content);
+  --bp-extra-uses-col: minmax(5.2rem, max-content);
   --bp-extra-used-by-col: minmax(7.2rem, max-content);
   --bp-extra-code-col: max-content;
   --bp-extra-code-placeholder-col: minmax(3.35rem, max-content);
@@ -1268,20 +1105,6 @@ span[class$="_thmlabel"]::after {
     var(--bp-extra-used-by-col)
     var(--bp-extra-code-col);
   grid-template-areas: "group used code";
-}
-
-.bp_extras_with_uses {
-  grid-template-columns: minmax(5.2rem, max-content) max-content minmax(7.2rem, max-content);
-  grid-template-areas: "uses used code";
-}
-
-.bp_extras_with_group.bp_extras_with_uses {
-  grid-template-columns:
-    minmax(5rem, max-content)
-    minmax(5.2rem, max-content)
-    minmax(7.2rem, max-content)
-    max-content;
-  grid-template-areas: "group uses used code";
 }
 
 .bp_extras_with_group.bp_extras_with_uses {
@@ -2651,6 +2474,169 @@ div.proof_content {
     background-color: transparent;
     box-shadow: 0 0 0 0.18rem var(--bp-color-target-ring);
   }
+}
+</style><style>
+#bp-style-switcher {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem 0.6rem;
+  flex-wrap: wrap;
+  background: var(--bp-color-surface);
+  border: 1px solid var(--bp-color-border);
+  border-radius: var(--bp-radius-md);
+  box-shadow: var(--bp-shadow-sm);
+  padding: 0.4rem 0.55rem;
+  font-size: 0.82rem;
+}
+
+#bp-style-switcher .bp-style-switcher-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+#bp-style-switcher label {
+  font-weight: 600;
+}
+
+#bp-style-switcher select {
+  border: 1px solid var(--bp-color-border);
+  border-radius: 0.3rem;
+  background: var(--bp-color-surface);
+  font-size: 0.82rem;
+  padding: 0.1rem 0.25rem;
+}
+
+html[data-bp-style="blueprint"] .bp_wrapper {
+  border: 1px solid var(--bp-color-border);
+  border-radius: var(--bp-radius-sm);
+  padding: 0.45rem 0.6rem 0.55rem;
+  background: var(--bp-color-surface);
+}
+
+html[data-bp-style="blueprint"] .bp_heading {
+  border-bottom: 1px solid var(--bp-color-border-soft);
+  padding-bottom: 0.35rem;
+}
+
+html[data-bp-style="blueprint"] .bp_content {
+  margin-top: 0.35rem;
+  padding-left: 0.45rem;
+}
+
+html[data-bp-style="blueprint"] .bp_kind_theorem_content,
+html[data-bp-style="blueprint"] .bp_kind_proposition_content,
+html[data-bp-style="blueprint"] .bp_kind_lemma_content,
+html[data-bp-style="blueprint"] .bp_kind_corollary_content,
+html[data-bp-style="blueprint"] .bp_kind_proof_content,
+html[data-bp-style="blueprint"] div.theorem_thmcontent,
+html[data-bp-style="blueprint"] div.proposition_thmcontent,
+html[data-bp-style="blueprint"] div.lemma_thmcontent,
+html[data-bp-style="blueprint"] div.corollary_thmcontent,
+html[data-bp-style="blueprint"] div.proof_content {
+  border-left-color: var(--bp-color-text-muted);
+}
+
+html[data-bp-style="modern"] .bp_wrapper {
+  border: 1px solid var(--bp-color-modern-border);
+  border-radius: var(--bp-radius-2xl);
+  padding: 0.6rem 0.7rem 0.68rem;
+  background: linear-gradient(180deg, var(--bp-color-surface), var(--bp-color-surface-modern));
+  box-shadow: var(--bp-shadow-modern);
+}
+
+html[data-bp-style="modern"] .bp_heading {
+  border-bottom: 1px solid var(--bp-color-border-soft);
+  padding-bottom: 0.4rem;
+}
+
+html[data-bp-style="modern"] .bp_caption {
+  background: var(--bp-color-modern-caption);
+  border-radius: var(--bp-radius-pill);
+  padding: 0.08rem 0.5rem;
+}
+
+html[data-bp-style="modern"] .bp_content {
+  margin-top: 0.45rem;
+  padding-left: 0.5rem;
+}
+
+html[data-bp-style="modern"] .bp_kind_theorem_content,
+html[data-bp-style="modern"] .bp_kind_proposition_content,
+html[data-bp-style="modern"] .bp_kind_lemma_content,
+html[data-bp-style="modern"] .bp_kind_corollary_content,
+html[data-bp-style="modern"] .bp_kind_proof_content,
+html[data-bp-style="modern"] .bp_wrapper div.theorem_thmcontent,
+html[data-bp-style="modern"] .bp_wrapper div.proposition_thmcontent,
+html[data-bp-style="modern"] .bp_wrapper div.lemma_thmcontent,
+html[data-bp-style="modern"] .bp_wrapper div.corollary_thmcontent,
+html[data-bp-style="modern"] .bp_wrapper div.proof_content {
+  border-left-color: var(--bp-color-text-faint);
+}
+
+html[data-bp-style="bold"] .bp_wrapper {
+  border: 2px solid var(--bp-color-text-strong);
+  border-radius: var(--bp-radius-3xl);
+  padding: 0.6rem 0.75rem 0.75rem;
+  background:
+    radial-gradient(circle at 100% 0%, var(--bp-color-bold-surface-glow-1), transparent 36%),
+    radial-gradient(circle at 0% 100%, var(--bp-color-bold-surface-glow-2), transparent 32%),
+    var(--bp-color-surface);
+  box-shadow: var(--bp-shadow-bold-lg);
+}
+
+html[data-bp-style="bold"] .bp_heading {
+  border-bottom: 2px solid var(--bp-color-text-strong);
+  padding-bottom: 0.45rem;
+  letter-spacing: 0.01em;
+}
+
+html[data-bp-style="bold"] .bp_caption {
+  background: var(--bp-color-text-strong);
+  color: var(--bp-color-surface-muted);
+  border-radius: 0.25rem;
+  padding: 0.08rem 0.45rem;
+  text-transform: uppercase;
+}
+
+html[data-bp-style="bold"] .bp_label {
+  background: var(--bp-color-bold-label);
+  color: var(--bp-color-text);
+  border-radius: var(--bp-radius-pill);
+  padding: 0.06rem 0.42rem;
+}
+
+html[data-bp-style="bold"] .bp_code_link {
+  color: var(--bp-color-bold-link);
+  font-weight: 700;
+}
+
+html[data-bp-style="bold"] .bp_code_hover {
+  border: 2px solid var(--bp-color-text-strong);
+  border-radius: var(--bp-radius-xl);
+  box-shadow: var(--bp-shadow-bold);
+}
+
+html[data-bp-style="bold"] .bp_content {
+  margin-top: 0.5rem;
+  padding-left: 0.6rem;
+}
+
+html[data-bp-style="bold"] .bp_kind_theorem_content,
+html[data-bp-style="bold"] .bp_kind_proposition_content,
+html[data-bp-style="bold"] .bp_kind_lemma_content,
+html[data-bp-style="bold"] .bp_kind_corollary_content,
+html[data-bp-style="bold"] .bp_kind_proof_content,
+html[data-bp-style="bold"] .bp_wrapper div.theorem_thmcontent,
+html[data-bp-style="bold"] .bp_wrapper div.proposition_thmcontent,
+html[data-bp-style="bold"] .bp_wrapper div.lemma_thmcontent,
+html[data-bp-style="bold"] .bp_wrapper div.corollary_thmcontent,
+html[data-bp-style="bold"] .bp_wrapper div.proof_content {
+  border-left: 0.2rem solid var(--bp-color-text-strong);
 }
 </style><style>
 .bp_preview_header_heading {
@@ -4927,17 +4913,8 @@ window.onload = () => {
   function normalizePreviewMode(rawMode, fallback) {
     const defaultMode = fallback === "hover" || fallback === "pinned" ? fallback : "hover";
     const mode = String(rawMode || "").trim().toLowerCase();
-    if (mode === "hover" || mode === "transient") return "hover";
-    if (
-      mode === "pinned" ||
-      mode === "pin" ||
-      mode === "click" ||
-      mode === "click-to-pin" ||
-      mode === "click-and-stay" ||
-      mode === "click-to-stay"
-    ) {
-      return "pinned";
-    }
+    if (mode === "hover") return "hover";
+    if (mode === "pinned") return "pinned";
     return defaultMode;
   }
 
@@ -4945,23 +4922,8 @@ window.onload = () => {
     const defaultPlacement =
       fallback === "anchored" || fallback === "docked" ? fallback : "anchored";
     const placement = String(rawPlacement || "").trim().toLowerCase();
-    if (
-      placement === "anchored" ||
-      placement === "anchor" ||
-      placement === "near" ||
-      placement === "near-node" ||
-      placement === "node"
-    ) {
-      return "anchored";
-    }
-    if (
-      placement === "docked" ||
-      placement === "dock" ||
-      placement === "fixed" ||
-      placement === "panel"
-    ) {
-      return "docked";
-    }
+    if (placement === "anchored") return "anchored";
+    if (placement === "docked") return "docked";
     return defaultPlacement;
   }
 
@@ -5342,8 +5304,6 @@ window.onload = () => {
     bindCloseOnce: bindCloseOnce,
     positionAnchoredPanel: positionAnchoredPanel,
     shouldKeepOpen: shouldKeepOpen,
-    normalizePreviewMode: normalizePreviewMode,
-    normalizePreviewPlacement: normalizePreviewPlacement,
     readPanelBehavior: readPanelBehavior,
     resetPanelPosition: resetPanelPosition,
     configureCloseButton: configureCloseButton,
@@ -7996,7 +7956,7 @@ number a Froude number (ISO 80000-11).</p>
                 <div class="bp_heading_title_row bp_heading_title_row_statement">
                   <span class="bp_caption bp_kind_theorem_caption theorem_thmcaption" title="thm_part8_levels">Theorem</span><span class="bp_label bp_kind_theorem_label theorem_thmlabel">18.2.1</span></div>
                 <div class="bp_extras thm_header_extras bp_extras_with_group bp_extras_with_uses bp_extras_with_used_by bp_extras_with_code">
-                  <span class="bp_extra_slot bp_extra_slot_group"><span class="bp_inline_preview_ref" data-bp-preview-id="bp-group-thm-005Fpart8-005Flevels-thm-005Fpart8-005Fdim-005Fone" data-bp-preview-title="Theorem 18.2.2" data-bp-preview-key="thm_part8_dim_one--statement" data-bp-preview-fallback-label="thm_part8_dim_one" data-bp-preview-header-label="thm_part8_dim_one" data-bp-preview-header-href="ISO-80000-8-___-Acoustics/The-logarithmic-levels-___-the-acoustic-face-of-dimension-one/index.html#--informal-preview-thm_part8_dim_one--statement"><a class="bp_relation_chip bp_code_link" href="ISO-80000-8-___-Acoustics/The-logarithmic-levels-___-the-acoustic-face-of-dimension-one/index.html#--informal-preview-thm_part8_dim_one--statement" title="Group member: Theorem 18.2.2">group</a></span></span><span class="bp_extra_slot bp_extra_slot_uses"><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart8-005Flevels-def-005FmetrologicalUnit" data-bp-preview-title="Definition 5.7.1" data-bp-preview-key="def_metrologicalUnit--statement" data-bp-preview-fallback-label="def_metrologicalUnit" data-bp-preview-header-label="def_metrologicalUnit" data-bp-preview-header-href="The-Proved-Spine/Metrological-units-_LPAR_Dybk___r-Ch___-18___-___13___3___3_RPAR_/index.html#--informal-preview-def_metrologicalUnit--statement" data-bp-preview-footer-html="<span class=&quot;bp_relation_axis_badge bp_relation_badge_axis bp_relation_badge_statement&quot; title=&quot;Declared in the statement&quot;>statement</span>"><a class="bp_relation_chip bp_uses_chip bp_code_link" href="The-Proved-Spine/Metrological-units-_LPAR_Dybk___r-Ch___-18___-___13___3___3_RPAR_/index.html#--informal-preview-def_metrologicalUnit--statement" title="Statement dependency: Definition 5.7.1">uses 1</a></span></span><span class="bp_extra_slot bp_extra_slot_used_by"><span class="bp_relation_chip bp_relation_chip_empty" title="No reverse dependencies">used by 0</span></span><span class="bp_extra_slot bp_extra_slot_code"><span class="bp_code_summary_preview_root"><span class="bp_code_summary_preview_wrap bp_code_summary_preview_wrap_active" data-bp-preview-id="bp-code-summary" data-bp-preview-title="thm_part8_levels" tabindex="0" role="button" aria-label="Lean declarations (all present: 1/1)"><span class="bp_code_link bp_code_link_status bp_code_link_status_proved" title="Lean declarations (all present: 1/1)"><span class="bp_code_status_symbol">✓</span><span class="bp_code_link_label">L∃∀N</span></span></span><template class="bp_code_summary_preview_tpl" data-bp-preview-id="bp-code-summary"><div class="bp_code_summary_preview_content">
+                  <span class="bp_extra_slot bp_extra_slot_group"><span class="bp_inline_preview_ref" data-bp-preview-id="bp-group-thm-005Fpart8-005Flevels-thm-005Fpart8-005Fdim-005Fone" data-bp-preview-title="Theorem 18.2.2" data-bp-preview-key="thm_part8_dim_one--statement" data-bp-preview-fallback-label="thm_part8_dim_one" data-bp-preview-header-label="thm_part8_dim_one" data-bp-preview-header-href="ISO-80000-8-___-Acoustics/The-logarithmic-levels-___-the-acoustic-face-of-dimension-one/index.html#--informal-preview-thm_part8_dim_one--statement"><a class="bp_relation_chip bp_code_link" href="ISO-80000-8-___-Acoustics/The-logarithmic-levels-___-the-acoustic-face-of-dimension-one/index.html#--informal-preview-thm_part8_dim_one--statement" title="Group member: Theorem 18.2.2">group</a></span></span><span class="bp_extra_slot bp_extra_slot_uses"><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart8-005Flevels-def-005FmetrologicalUnit" data-bp-preview-title="Definition 5.7.1" data-bp-preview-key="def_metrologicalUnit--statement" data-bp-preview-fallback-label="def_metrologicalUnit" data-bp-preview-header-label="def_metrologicalUnit" data-bp-preview-header-href="The-Proved-Spine/Metrological-units-_LPAR_Dybk___r-Ch___-18___-___13___3___3_RPAR_/index.html#--informal-preview-def_metrologicalUnit--statement" data-bp-preview-footer-html="<span class=&quot;bp_relation_axis_badge bp_relation_badge_axis bp_relation_badge_statement&quot; title=&quot;Declared in the statement&quot;>statement</span>"><a class="bp_relation_chip bp_code_link" href="The-Proved-Spine/Metrological-units-_LPAR_Dybk___r-Ch___-18___-___13___3___3_RPAR_/index.html#--informal-preview-def_metrologicalUnit--statement" title="Statement dependency: Definition 5.7.1">uses 1</a></span></span><span class="bp_extra_slot bp_extra_slot_used_by"><span class="bp_relation_chip bp_relation_chip_empty" title="No reverse dependencies">used by 0</span></span><span class="bp_extra_slot bp_extra_slot_code"><span class="bp_code_summary_preview_root"><span class="bp_code_summary_preview_wrap bp_code_summary_preview_wrap_active" data-bp-preview-id="bp-code-summary" data-bp-preview-title="thm_part8_levels" tabindex="0" role="button" aria-label="Lean declarations (all present: 1/1)"><span class="bp_code_link bp_code_link_status bp_code_link_status_proved" title="Lean declarations (all present: 1/1)"><span class="bp_code_status_symbol">✓</span><span class="bp_code_link_label">L∃∀N</span></span></span><template class="bp_code_summary_preview_tpl" data-bp-preview-id="bp-code-summary"><div class="bp_code_summary_preview_content">
                           <div class="bp_code_hover_section">
                             <span class="bp_code_hover_label">Associated Lean declarations</span><ul class="bp_code_hover_list">
                               <li class="bp_code_decl_item">
@@ -8069,7 +8029,7 @@ ISO 80000-11 `"1"` pattern (Reynolds versus Euler) on the acoustic levels. </pre
                 <div class="bp_heading_title_row">
                   <span class="bp_caption bp_kind_proof_caption proof_caption" title="thm_part8_levels">Proof for Theorem 18.2.1</span></div>
                 <div class="bp_extras thm_header_extras bp_extras_with_uses">
-                  <span class="bp_extra_slot bp_extra_slot_uses"><span class="bp_relation_chip bp_relation_chip_empty bp_uses_chip" title="No declared proof dependencies">uses 0</span></span></div>
+                  <span class="bp_extra_slot bp_extra_slot_uses"><span class="bp_relation_chip bp_relation_chip_empty" title="No declared proof dependencies">uses 0</span></span></div>
                 </div>
               <div class="bp_content bp_kind_proof_content proof_content">
                 <p>
@@ -8084,7 +8044,7 @@ ISO 80000-11 `"1"` pattern (Reynolds versus Euler) on the acoustic levels. </pre
                 <div class="bp_heading_title_row bp_heading_title_row_statement">
                   <span class="bp_caption bp_kind_theorem_caption theorem_thmcaption" title="thm_part8_dim_one">Theorem</span><span class="bp_label bp_kind_theorem_label theorem_thmlabel">18.2.2</span></div>
                 <div class="bp_extras thm_header_extras bp_extras_with_group bp_extras_with_uses bp_extras_with_used_by bp_extras_with_code">
-                  <span class="bp_extra_slot bp_extra_slot_group"><span class="bp_inline_preview_ref" data-bp-preview-id="bp-group-thm-005Fpart8-005Fdim-005Fone-thm-005Fpart8-005Flevels" data-bp-preview-title="Theorem 18.2.1" data-bp-preview-key="thm_part8_levels--statement" data-bp-preview-fallback-label="thm_part8_levels" data-bp-preview-header-label="thm_part8_levels" data-bp-preview-header-href="ISO-80000-8-___-Acoustics/The-logarithmic-levels-___-the-acoustic-face-of-dimension-one/index.html#--informal-preview-thm_part8_levels--statement"><a class="bp_relation_chip bp_code_link" href="ISO-80000-8-___-Acoustics/The-logarithmic-levels-___-the-acoustic-face-of-dimension-one/index.html#--informal-preview-thm_part8_levels--statement" title="Group member: Theorem 18.2.1">group</a></span></span><span class="bp_extra_slot bp_extra_slot_uses"><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart8-005Fdim-005Fone-def-005Fdim" data-bp-preview-title="Definition 8.1.1" data-bp-preview-key="def_dim--statement" data-bp-preview-fallback-label="def_dim" data-bp-preview-header-label="def_dim" data-bp-preview-header-href="Dimension-as-a-Forgetful-Functor/The-forgetful-map-_LPAR_Dybk___r-Ch___-19_RPAR_/index.html#--informal-preview-def_dim--statement" data-bp-preview-footer-html="<span class=&quot;bp_relation_axis_badge bp_relation_badge_axis bp_relation_badge_statement&quot; title=&quot;Declared in the statement&quot;>statement</span>"><a class="bp_relation_chip bp_uses_chip bp_code_link" href="Dimension-as-a-Forgetful-Functor/The-forgetful-map-_LPAR_Dybk___r-Ch___-19_RPAR_/index.html#--informal-preview-def_dim--statement" title="Statement dependency: Definition 8.1.1">uses 1</a></span></span><span class="bp_extra_slot bp_extra_slot_used_by"><span class="bp_relation_chip bp_relation_chip_empty" title="No reverse dependencies">used by 0</span></span><span class="bp_extra_slot bp_extra_slot_code"><span class="bp_code_summary_preview_root"><span class="bp_code_summary_preview_wrap bp_code_summary_preview_wrap_active" data-bp-preview-id="bp-code-summary" data-bp-preview-title="thm_part8_dim_one" tabindex="0" role="button" aria-label="Lean declarations (all present: 1/1)"><span class="bp_code_link bp_code_link_status bp_code_link_status_proved" title="Lean declarations (all present: 1/1)"><span class="bp_code_status_symbol">✓</span><span class="bp_code_link_label">L∃∀N</span></span></span><template class="bp_code_summary_preview_tpl" data-bp-preview-id="bp-code-summary"><div class="bp_code_summary_preview_content">
+                  <span class="bp_extra_slot bp_extra_slot_group"><span class="bp_inline_preview_ref" data-bp-preview-id="bp-group-thm-005Fpart8-005Fdim-005Fone-thm-005Fpart8-005Flevels" data-bp-preview-title="Theorem 18.2.1" data-bp-preview-key="thm_part8_levels--statement" data-bp-preview-fallback-label="thm_part8_levels" data-bp-preview-header-label="thm_part8_levels" data-bp-preview-header-href="ISO-80000-8-___-Acoustics/The-logarithmic-levels-___-the-acoustic-face-of-dimension-one/index.html#--informal-preview-thm_part8_levels--statement"><a class="bp_relation_chip bp_code_link" href="ISO-80000-8-___-Acoustics/The-logarithmic-levels-___-the-acoustic-face-of-dimension-one/index.html#--informal-preview-thm_part8_levels--statement" title="Group member: Theorem 18.2.1">group</a></span></span><span class="bp_extra_slot bp_extra_slot_uses"><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart8-005Fdim-005Fone-def-005Fdim" data-bp-preview-title="Definition 8.1.1" data-bp-preview-key="def_dim--statement" data-bp-preview-fallback-label="def_dim" data-bp-preview-header-label="def_dim" data-bp-preview-header-href="Dimension-as-a-Forgetful-Functor/The-forgetful-map-_LPAR_Dybk___r-Ch___-19_RPAR_/index.html#--informal-preview-def_dim--statement" data-bp-preview-footer-html="<span class=&quot;bp_relation_axis_badge bp_relation_badge_axis bp_relation_badge_statement&quot; title=&quot;Declared in the statement&quot;>statement</span>"><a class="bp_relation_chip bp_code_link" href="Dimension-as-a-Forgetful-Functor/The-forgetful-map-_LPAR_Dybk___r-Ch___-19_RPAR_/index.html#--informal-preview-def_dim--statement" title="Statement dependency: Definition 8.1.1">uses 1</a></span></span><span class="bp_extra_slot bp_extra_slot_used_by"><span class="bp_relation_chip bp_relation_chip_empty" title="No reverse dependencies">used by 0</span></span><span class="bp_extra_slot bp_extra_slot_code"><span class="bp_code_summary_preview_root"><span class="bp_code_summary_preview_wrap bp_code_summary_preview_wrap_active" data-bp-preview-id="bp-code-summary" data-bp-preview-title="thm_part8_dim_one" tabindex="0" role="button" aria-label="Lean declarations (all present: 1/1)"><span class="bp_code_link bp_code_link_status bp_code_link_status_proved" title="Lean declarations (all present: 1/1)"><span class="bp_code_status_symbol">✓</span><span class="bp_code_link_label">L∃∀N</span></span></span><template class="bp_code_summary_preview_tpl" data-bp-preview-id="bp-code-summary"><div class="bp_code_summary_preview_content">
                           <div class="bp_code_hover_section">
                             <span class="bp_code_hover_label">Associated Lean declarations</span><ul class="bp_code_hover_list">
                               <li class="bp_code_decl_item">
@@ -8134,12 +8094,12 @@ cannot separate them; the kind layer does. Uses <span><span class="bp_inline_pre
   <div class="bp_external_decl_signature_wrap">
     <div class="wide-only">
       <pre class="bp_external_decl_signature signature hl lean block"><span class="keyword token">theorem</span> <span class="inter-text"></span><span class="const token" data-binding="const-PropertyKindCalculus.Iso80000.Part8.iso80000_8_dim_one_collision" data-verso-hover="443">PropertyKindCalculus.Iso80000.Part8.iso80000_8_dim_one_collision</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text">
-  </span><span class="unknown token" data-binding="">∃</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.2185" data-verso-hover="146">a</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.2186" data-verso-hover="146">b</span><span class="unknown token" data-binding="">,</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.2185" data-verso-hover="146">a</span><span class="unknown token" data-binding="">.</span><span class="const token" data-binding="const-PropertyKindCalculus.DimensionedKind.kind" data-verso-hover="147">kind</span><span class="inter-text"> </span><span class="const token" data-binding="const-Ne" data-verso-hover="69">≠</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.2186" data-verso-hover="146">b</span><span class="unknown token" data-binding="">.</span><span class="const token" data-binding="const-PropertyKindCalculus.DimensionedKind.kind" data-verso-hover="147">kind</span><span class="inter-text"> </span><span class="const token" data-binding="const-And" data-verso-hover="17">∧</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.2185" data-verso-hover="146">a</span><span class="unknown token" data-binding="">.</span><span class="const token" data-binding="const-PropertyKindCalculus.DimensionedKind.dim" data-verso-hover="251">dim</span><span class="inter-text"> </span><span class="const token" data-binding="const-Eq" data-verso-hover="14">=</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.2186" data-verso-hover="146">b</span><span class="unknown token" data-binding="">.</span><span class="const token" data-binding="const-PropertyKindCalculus.DimensionedKind.dim" data-verso-hover="251">dim</span><span class="inter-text"> </span><span class="const token" data-binding="const-And" data-verso-hover="17">∧</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.2185" data-verso-hover="146">a</span><span class="unknown token" data-binding="">.</span><span class="const token" data-binding="const-PropertyKindCalculus.DimensionedKind.dim" data-verso-hover="251">dim</span><span class="inter-text"> </span><span class="const token" data-binding="const-Eq" data-verso-hover="14">=</span><span class="inter-text"> </span><span class="unknown token" data-binding="">1</span></pre></div>
+  </span><span class="unknown token" data-binding="">∃</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.2272" data-verso-hover="146">a</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.2273" data-verso-hover="146">b</span><span class="unknown token" data-binding="">,</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.2272" data-verso-hover="146">a</span><span class="unknown token" data-binding="">.</span><span class="const token" data-binding="const-PropertyKindCalculus.DimensionedKind.kind" data-verso-hover="147">kind</span><span class="inter-text"> </span><span class="const token" data-binding="const-Ne" data-verso-hover="69">≠</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.2273" data-verso-hover="146">b</span><span class="unknown token" data-binding="">.</span><span class="const token" data-binding="const-PropertyKindCalculus.DimensionedKind.kind" data-verso-hover="147">kind</span><span class="inter-text"> </span><span class="const token" data-binding="const-And" data-verso-hover="17">∧</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.2272" data-verso-hover="146">a</span><span class="unknown token" data-binding="">.</span><span class="const token" data-binding="const-PropertyKindCalculus.DimensionedKind.dim" data-verso-hover="251">dim</span><span class="inter-text"> </span><span class="const token" data-binding="const-Eq" data-verso-hover="14">=</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.2273" data-verso-hover="146">b</span><span class="unknown token" data-binding="">.</span><span class="const token" data-binding="const-PropertyKindCalculus.DimensionedKind.dim" data-verso-hover="251">dim</span><span class="inter-text"> </span><span class="const token" data-binding="const-And" data-verso-hover="17">∧</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.2272" data-verso-hover="146">a</span><span class="unknown token" data-binding="">.</span><span class="const token" data-binding="const-PropertyKindCalculus.DimensionedKind.dim" data-verso-hover="251">dim</span><span class="inter-text"> </span><span class="const token" data-binding="const-Eq" data-verso-hover="14">=</span><span class="inter-text"> </span><span class="unknown token" data-binding="">1</span></pre></div>
     <div class="narrow-only">
       <pre class="bp_external_decl_signature signature hl lean block"><span class="keyword token">theorem</span> <span class="inter-text"></span><span class="const token" data-binding="const-PropertyKindCalculus.Iso80000.Part8.iso80000_8_dim_one_collision" data-verso-hover="443">PropertyKindCalculus.Iso80000.Part8.iso80000_8_dim_one_collision</span><span class="inter-text"> </span><span class="unknown token" data-binding="">:</span><span class="inter-text">
-  </span><span class="unknown token" data-binding="">∃</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.2185" data-verso-hover="146">a</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.2186" data-verso-hover="146">b</span><span class="unknown token" data-binding="">,</span><span class="inter-text">
-    </span><span class="var token" data-binding="var-_uniq.2185" data-verso-hover="146">a</span><span class="unknown token" data-binding="">.</span><span class="const token" data-binding="const-PropertyKindCalculus.DimensionedKind.kind" data-verso-hover="147">kind</span><span class="inter-text"> </span><span class="const token" data-binding="const-Ne" data-verso-hover="69">≠</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.2186" data-verso-hover="146">b</span><span class="unknown token" data-binding="">.</span><span class="const token" data-binding="const-PropertyKindCalculus.DimensionedKind.kind" data-verso-hover="147">kind</span><span class="inter-text"> </span><span class="const token" data-binding="const-And" data-verso-hover="17">∧</span><span class="inter-text">
-      </span><span class="var token" data-binding="var-_uniq.2185" data-verso-hover="146">a</span><span class="unknown token" data-binding="">.</span><span class="const token" data-binding="const-PropertyKindCalculus.DimensionedKind.dim" data-verso-hover="251">dim</span><span class="inter-text"> </span><span class="const token" data-binding="const-Eq" data-verso-hover="14">=</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.2186" data-verso-hover="146">b</span><span class="unknown token" data-binding="">.</span><span class="const token" data-binding="const-PropertyKindCalculus.DimensionedKind.dim" data-verso-hover="251">dim</span><span class="inter-text"> </span><span class="const token" data-binding="const-And" data-verso-hover="17">∧</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.2185" data-verso-hover="146">a</span><span class="unknown token" data-binding="">.</span><span class="const token" data-binding="const-PropertyKindCalculus.DimensionedKind.dim" data-verso-hover="251">dim</span><span class="inter-text"> </span><span class="const token" data-binding="const-Eq" data-verso-hover="14">=</span><span class="inter-text"> </span><span class="unknown token" data-binding="">1</span></pre></div>
+  </span><span class="unknown token" data-binding="">∃</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.2272" data-verso-hover="146">a</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.2273" data-verso-hover="146">b</span><span class="unknown token" data-binding="">,</span><span class="inter-text">
+    </span><span class="var token" data-binding="var-_uniq.2272" data-verso-hover="146">a</span><span class="unknown token" data-binding="">.</span><span class="const token" data-binding="const-PropertyKindCalculus.DimensionedKind.kind" data-verso-hover="147">kind</span><span class="inter-text"> </span><span class="const token" data-binding="const-Ne" data-verso-hover="69">≠</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.2273" data-verso-hover="146">b</span><span class="unknown token" data-binding="">.</span><span class="const token" data-binding="const-PropertyKindCalculus.DimensionedKind.kind" data-verso-hover="147">kind</span><span class="inter-text"> </span><span class="const token" data-binding="const-And" data-verso-hover="17">∧</span><span class="inter-text">
+      </span><span class="var token" data-binding="var-_uniq.2272" data-verso-hover="146">a</span><span class="unknown token" data-binding="">.</span><span class="const token" data-binding="const-PropertyKindCalculus.DimensionedKind.dim" data-verso-hover="251">dim</span><span class="inter-text"> </span><span class="const token" data-binding="const-Eq" data-verso-hover="14">=</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.2273" data-verso-hover="146">b</span><span class="unknown token" data-binding="">.</span><span class="const token" data-binding="const-PropertyKindCalculus.DimensionedKind.dim" data-verso-hover="251">dim</span><span class="inter-text"> </span><span class="const token" data-binding="const-And" data-verso-hover="17">∧</span><span class="inter-text"> </span><span class="var token" data-binding="var-_uniq.2272" data-verso-hover="146">a</span><span class="unknown token" data-binding="">.</span><span class="const token" data-binding="const-PropertyKindCalculus.DimensionedKind.dim" data-verso-hover="251">dim</span><span class="inter-text"> </span><span class="const token" data-binding="const-Eq" data-verso-hover="14">=</span><span class="inter-text"> </span><span class="unknown token" data-binding="">1</span></pre></div>
     </div>
   <div class="bp_external_decl_body">
     <pre class="docstring">**The dimension-one disambiguation, on the standard.** There exist distinct
@@ -8156,7 +8116,7 @@ range. The logarithmic levels are the acoustic face of R1. </pre></div>
                 <div class="bp_heading_title_row">
                   <span class="bp_caption bp_kind_proof_caption proof_caption" title="thm_part8_dim_one">Proof for Theorem 18.2.2</span></div>
                 <div class="bp_extras thm_header_extras bp_extras_with_uses">
-                  <span class="bp_extra_slot bp_extra_slot_uses"><span class="bp_relation_chip bp_relation_chip_empty bp_uses_chip" title="No declared proof dependencies">uses 0</span></span></div>
+                  <span class="bp_extra_slot bp_extra_slot_uses"><span class="bp_relation_chip bp_relation_chip_empty" title="No declared proof dependencies">uses 0</span></span></div>
                 </div>
               <div class="bp_content bp_kind_proof_content proof_content">
                 <p>

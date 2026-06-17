@@ -1011,169 +1011,6 @@ table.tabular td > p:last-child, table.tabular th > p:first-child {
   }
 }
 </style><style>
-#bp-style-switcher {
-  position: fixed;
-  right: 1rem;
-  bottom: 1rem;
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  gap: 0.4rem 0.6rem;
-  flex-wrap: wrap;
-  background: var(--bp-color-surface);
-  border: 1px solid var(--bp-color-border);
-  border-radius: var(--bp-radius-md);
-  box-shadow: var(--bp-shadow-sm);
-  padding: 0.4rem 0.55rem;
-  font-size: 0.82rem;
-}
-
-#bp-style-switcher .bp-style-switcher-control {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-}
-
-#bp-style-switcher label {
-  font-weight: 600;
-}
-
-#bp-style-switcher select {
-  border: 1px solid var(--bp-color-border);
-  border-radius: 0.3rem;
-  background: var(--bp-color-surface);
-  font-size: 0.82rem;
-  padding: 0.1rem 0.25rem;
-}
-
-html[data-bp-style="blueprint"] .bp_wrapper {
-  border: 1px solid var(--bp-color-border);
-  border-radius: var(--bp-radius-sm);
-  padding: 0.45rem 0.6rem 0.55rem;
-  background: var(--bp-color-surface);
-}
-
-html[data-bp-style="blueprint"] .bp_heading {
-  border-bottom: 1px solid var(--bp-color-border-soft);
-  padding-bottom: 0.35rem;
-}
-
-html[data-bp-style="blueprint"] .bp_content {
-  margin-top: 0.35rem;
-  padding-left: 0.45rem;
-}
-
-html[data-bp-style="blueprint"] .bp_kind_theorem_content,
-html[data-bp-style="blueprint"] .bp_kind_proposition_content,
-html[data-bp-style="blueprint"] .bp_kind_lemma_content,
-html[data-bp-style="blueprint"] .bp_kind_corollary_content,
-html[data-bp-style="blueprint"] .bp_kind_proof_content,
-html[data-bp-style="blueprint"] div.theorem_thmcontent,
-html[data-bp-style="blueprint"] div.proposition_thmcontent,
-html[data-bp-style="blueprint"] div.lemma_thmcontent,
-html[data-bp-style="blueprint"] div.corollary_thmcontent,
-html[data-bp-style="blueprint"] div.proof_content {
-  border-left-color: var(--bp-color-text-muted);
-}
-
-html[data-bp-style="modern"] .bp_wrapper {
-  border: 1px solid var(--bp-color-modern-border);
-  border-radius: var(--bp-radius-2xl);
-  padding: 0.6rem 0.7rem 0.68rem;
-  background: linear-gradient(180deg, var(--bp-color-surface), var(--bp-color-surface-modern));
-  box-shadow: var(--bp-shadow-modern);
-}
-
-html[data-bp-style="modern"] .bp_heading {
-  border-bottom: 1px solid var(--bp-color-border-soft);
-  padding-bottom: 0.4rem;
-}
-
-html[data-bp-style="modern"] .bp_caption {
-  background: var(--bp-color-modern-caption);
-  border-radius: var(--bp-radius-pill);
-  padding: 0.08rem 0.5rem;
-}
-
-html[data-bp-style="modern"] .bp_content {
-  margin-top: 0.45rem;
-  padding-left: 0.5rem;
-}
-
-html[data-bp-style="modern"] .bp_kind_theorem_content,
-html[data-bp-style="modern"] .bp_kind_proposition_content,
-html[data-bp-style="modern"] .bp_kind_lemma_content,
-html[data-bp-style="modern"] .bp_kind_corollary_content,
-html[data-bp-style="modern"] .bp_kind_proof_content,
-html[data-bp-style="modern"] .bp_wrapper div.theorem_thmcontent,
-html[data-bp-style="modern"] .bp_wrapper div.proposition_thmcontent,
-html[data-bp-style="modern"] .bp_wrapper div.lemma_thmcontent,
-html[data-bp-style="modern"] .bp_wrapper div.corollary_thmcontent,
-html[data-bp-style="modern"] .bp_wrapper div.proof_content {
-  border-left-color: var(--bp-color-text-faint);
-}
-
-html[data-bp-style="bold"] .bp_wrapper {
-  border: 2px solid var(--bp-color-text-strong);
-  border-radius: var(--bp-radius-3xl);
-  padding: 0.6rem 0.75rem 0.75rem;
-  background:
-    radial-gradient(circle at 100% 0%, var(--bp-color-bold-surface-glow-1), transparent 36%),
-    radial-gradient(circle at 0% 100%, var(--bp-color-bold-surface-glow-2), transparent 32%),
-    var(--bp-color-surface);
-  box-shadow: var(--bp-shadow-bold-lg);
-}
-
-html[data-bp-style="bold"] .bp_heading {
-  border-bottom: 2px solid var(--bp-color-text-strong);
-  padding-bottom: 0.45rem;
-  letter-spacing: 0.01em;
-}
-
-html[data-bp-style="bold"] .bp_caption {
-  background: var(--bp-color-text-strong);
-  color: var(--bp-color-surface-muted);
-  border-radius: 0.25rem;
-  padding: 0.08rem 0.45rem;
-  text-transform: uppercase;
-}
-
-html[data-bp-style="bold"] .bp_label {
-  background: var(--bp-color-bold-label);
-  color: var(--bp-color-text);
-  border-radius: var(--bp-radius-pill);
-  padding: 0.06rem 0.42rem;
-}
-
-html[data-bp-style="bold"] .bp_code_link {
-  color: var(--bp-color-bold-link);
-  font-weight: 700;
-}
-
-html[data-bp-style="bold"] .bp_code_hover {
-  border: 2px solid var(--bp-color-text-strong);
-  border-radius: var(--bp-radius-xl);
-  box-shadow: var(--bp-shadow-bold);
-}
-
-html[data-bp-style="bold"] .bp_content {
-  margin-top: 0.5rem;
-  padding-left: 0.6rem;
-}
-
-html[data-bp-style="bold"] .bp_kind_theorem_content,
-html[data-bp-style="bold"] .bp_kind_proposition_content,
-html[data-bp-style="bold"] .bp_kind_lemma_content,
-html[data-bp-style="bold"] .bp_kind_corollary_content,
-html[data-bp-style="bold"] .bp_kind_proof_content,
-html[data-bp-style="bold"] .bp_wrapper div.theorem_thmcontent,
-html[data-bp-style="bold"] .bp_wrapper div.proposition_thmcontent,
-html[data-bp-style="bold"] .bp_wrapper div.lemma_thmcontent,
-html[data-bp-style="bold"] .bp_wrapper div.corollary_thmcontent,
-html[data-bp-style="bold"] .bp_wrapper div.proof_content {
-  border-left: 0.2rem solid var(--bp-color-text-strong);
-}
-</style><style>
 .bp_wrapper {
   scroll-margin-top: 1rem;
   margin: 0.85rem 0;
@@ -1232,7 +1069,7 @@ span[class$="_thmlabel"]::after {
 
 .bp_extras {
   --bp-extra-group-col: minmax(5rem, max-content);
-  --bp-extra-uses-col: minmax(4.2rem, max-content);
+  --bp-extra-uses-col: minmax(5.2rem, max-content);
   --bp-extra-used-by-col: minmax(7.2rem, max-content);
   --bp-extra-code-col: max-content;
   --bp-extra-code-placeholder-col: minmax(3.35rem, max-content);
@@ -1268,20 +1105,6 @@ span[class$="_thmlabel"]::after {
     var(--bp-extra-used-by-col)
     var(--bp-extra-code-col);
   grid-template-areas: "group used code";
-}
-
-.bp_extras_with_uses {
-  grid-template-columns: minmax(5.2rem, max-content) max-content minmax(7.2rem, max-content);
-  grid-template-areas: "uses used code";
-}
-
-.bp_extras_with_group.bp_extras_with_uses {
-  grid-template-columns:
-    minmax(5rem, max-content)
-    minmax(5.2rem, max-content)
-    minmax(7.2rem, max-content)
-    max-content;
-  grid-template-areas: "group uses used code";
 }
 
 .bp_extras_with_group.bp_extras_with_uses {
@@ -2651,6 +2474,169 @@ div.proof_content {
     background-color: transparent;
     box-shadow: 0 0 0 0.18rem var(--bp-color-target-ring);
   }
+}
+</style><style>
+#bp-style-switcher {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem 0.6rem;
+  flex-wrap: wrap;
+  background: var(--bp-color-surface);
+  border: 1px solid var(--bp-color-border);
+  border-radius: var(--bp-radius-md);
+  box-shadow: var(--bp-shadow-sm);
+  padding: 0.4rem 0.55rem;
+  font-size: 0.82rem;
+}
+
+#bp-style-switcher .bp-style-switcher-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+#bp-style-switcher label {
+  font-weight: 600;
+}
+
+#bp-style-switcher select {
+  border: 1px solid var(--bp-color-border);
+  border-radius: 0.3rem;
+  background: var(--bp-color-surface);
+  font-size: 0.82rem;
+  padding: 0.1rem 0.25rem;
+}
+
+html[data-bp-style="blueprint"] .bp_wrapper {
+  border: 1px solid var(--bp-color-border);
+  border-radius: var(--bp-radius-sm);
+  padding: 0.45rem 0.6rem 0.55rem;
+  background: var(--bp-color-surface);
+}
+
+html[data-bp-style="blueprint"] .bp_heading {
+  border-bottom: 1px solid var(--bp-color-border-soft);
+  padding-bottom: 0.35rem;
+}
+
+html[data-bp-style="blueprint"] .bp_content {
+  margin-top: 0.35rem;
+  padding-left: 0.45rem;
+}
+
+html[data-bp-style="blueprint"] .bp_kind_theorem_content,
+html[data-bp-style="blueprint"] .bp_kind_proposition_content,
+html[data-bp-style="blueprint"] .bp_kind_lemma_content,
+html[data-bp-style="blueprint"] .bp_kind_corollary_content,
+html[data-bp-style="blueprint"] .bp_kind_proof_content,
+html[data-bp-style="blueprint"] div.theorem_thmcontent,
+html[data-bp-style="blueprint"] div.proposition_thmcontent,
+html[data-bp-style="blueprint"] div.lemma_thmcontent,
+html[data-bp-style="blueprint"] div.corollary_thmcontent,
+html[data-bp-style="blueprint"] div.proof_content {
+  border-left-color: var(--bp-color-text-muted);
+}
+
+html[data-bp-style="modern"] .bp_wrapper {
+  border: 1px solid var(--bp-color-modern-border);
+  border-radius: var(--bp-radius-2xl);
+  padding: 0.6rem 0.7rem 0.68rem;
+  background: linear-gradient(180deg, var(--bp-color-surface), var(--bp-color-surface-modern));
+  box-shadow: var(--bp-shadow-modern);
+}
+
+html[data-bp-style="modern"] .bp_heading {
+  border-bottom: 1px solid var(--bp-color-border-soft);
+  padding-bottom: 0.4rem;
+}
+
+html[data-bp-style="modern"] .bp_caption {
+  background: var(--bp-color-modern-caption);
+  border-radius: var(--bp-radius-pill);
+  padding: 0.08rem 0.5rem;
+}
+
+html[data-bp-style="modern"] .bp_content {
+  margin-top: 0.45rem;
+  padding-left: 0.5rem;
+}
+
+html[data-bp-style="modern"] .bp_kind_theorem_content,
+html[data-bp-style="modern"] .bp_kind_proposition_content,
+html[data-bp-style="modern"] .bp_kind_lemma_content,
+html[data-bp-style="modern"] .bp_kind_corollary_content,
+html[data-bp-style="modern"] .bp_kind_proof_content,
+html[data-bp-style="modern"] .bp_wrapper div.theorem_thmcontent,
+html[data-bp-style="modern"] .bp_wrapper div.proposition_thmcontent,
+html[data-bp-style="modern"] .bp_wrapper div.lemma_thmcontent,
+html[data-bp-style="modern"] .bp_wrapper div.corollary_thmcontent,
+html[data-bp-style="modern"] .bp_wrapper div.proof_content {
+  border-left-color: var(--bp-color-text-faint);
+}
+
+html[data-bp-style="bold"] .bp_wrapper {
+  border: 2px solid var(--bp-color-text-strong);
+  border-radius: var(--bp-radius-3xl);
+  padding: 0.6rem 0.75rem 0.75rem;
+  background:
+    radial-gradient(circle at 100% 0%, var(--bp-color-bold-surface-glow-1), transparent 36%),
+    radial-gradient(circle at 0% 100%, var(--bp-color-bold-surface-glow-2), transparent 32%),
+    var(--bp-color-surface);
+  box-shadow: var(--bp-shadow-bold-lg);
+}
+
+html[data-bp-style="bold"] .bp_heading {
+  border-bottom: 2px solid var(--bp-color-text-strong);
+  padding-bottom: 0.45rem;
+  letter-spacing: 0.01em;
+}
+
+html[data-bp-style="bold"] .bp_caption {
+  background: var(--bp-color-text-strong);
+  color: var(--bp-color-surface-muted);
+  border-radius: 0.25rem;
+  padding: 0.08rem 0.45rem;
+  text-transform: uppercase;
+}
+
+html[data-bp-style="bold"] .bp_label {
+  background: var(--bp-color-bold-label);
+  color: var(--bp-color-text);
+  border-radius: var(--bp-radius-pill);
+  padding: 0.06rem 0.42rem;
+}
+
+html[data-bp-style="bold"] .bp_code_link {
+  color: var(--bp-color-bold-link);
+  font-weight: 700;
+}
+
+html[data-bp-style="bold"] .bp_code_hover {
+  border: 2px solid var(--bp-color-text-strong);
+  border-radius: var(--bp-radius-xl);
+  box-shadow: var(--bp-shadow-bold);
+}
+
+html[data-bp-style="bold"] .bp_content {
+  margin-top: 0.5rem;
+  padding-left: 0.6rem;
+}
+
+html[data-bp-style="bold"] .bp_kind_theorem_content,
+html[data-bp-style="bold"] .bp_kind_proposition_content,
+html[data-bp-style="bold"] .bp_kind_lemma_content,
+html[data-bp-style="bold"] .bp_kind_corollary_content,
+html[data-bp-style="bold"] .bp_kind_proof_content,
+html[data-bp-style="bold"] .bp_wrapper div.theorem_thmcontent,
+html[data-bp-style="bold"] .bp_wrapper div.proposition_thmcontent,
+html[data-bp-style="bold"] .bp_wrapper div.lemma_thmcontent,
+html[data-bp-style="bold"] .bp_wrapper div.corollary_thmcontent,
+html[data-bp-style="bold"] .bp_wrapper div.proof_content {
+  border-left: 0.2rem solid var(--bp-color-text-strong);
 }
 </style><style>
 .bp_preview_header_heading {
@@ -4927,17 +4913,8 @@ window.onload = () => {
   function normalizePreviewMode(rawMode, fallback) {
     const defaultMode = fallback === "hover" || fallback === "pinned" ? fallback : "hover";
     const mode = String(rawMode || "").trim().toLowerCase();
-    if (mode === "hover" || mode === "transient") return "hover";
-    if (
-      mode === "pinned" ||
-      mode === "pin" ||
-      mode === "click" ||
-      mode === "click-to-pin" ||
-      mode === "click-and-stay" ||
-      mode === "click-to-stay"
-    ) {
-      return "pinned";
-    }
+    if (mode === "hover") return "hover";
+    if (mode === "pinned") return "pinned";
     return defaultMode;
   }
 
@@ -4945,23 +4922,8 @@ window.onload = () => {
     const defaultPlacement =
       fallback === "anchored" || fallback === "docked" ? fallback : "anchored";
     const placement = String(rawPlacement || "").trim().toLowerCase();
-    if (
-      placement === "anchored" ||
-      placement === "anchor" ||
-      placement === "near" ||
-      placement === "near-node" ||
-      placement === "node"
-    ) {
-      return "anchored";
-    }
-    if (
-      placement === "docked" ||
-      placement === "dock" ||
-      placement === "fixed" ||
-      placement === "panel"
-    ) {
-      return "docked";
-    }
+    if (placement === "anchored") return "anchored";
+    if (placement === "docked") return "docked";
     return defaultPlacement;
   }
 
@@ -5342,8 +5304,6 @@ window.onload = () => {
     bindCloseOnce: bindCloseOnce,
     positionAnchoredPanel: positionAnchoredPanel,
     shouldKeepOpen: shouldKeepOpen,
-    normalizePreviewMode: normalizePreviewMode,
-    normalizePreviewPlacement: normalizePreviewPlacement,
     readPanelBehavior: readPanelBehavior,
     resetPanelPosition: resetPanelPosition,
     configureCloseButton: configureCloseButton,
@@ -7994,8 +7954,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                     </th><th><p>
                       Symbol</p>
                     </th><th><p>
-                      Measurement principle (dimension one)
-</p>
+                      Measurement principle (dimension one)</p>
                     </th></tr></thead><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fcollision-statement" data-bp-preview-title="Theorem 21.3.1" data-bp-preview-key="thm_part11_collision--statement" data-bp-preview-fallback-label="thm_part11_collision"><a href="ISO-80000-11-___-Characteristic-numbers/Dimension-does-not-classify_SEMI_-the-measurement-principle-does/index.html#--informal-preview-thm_part11_collision--statement" title="thm_part11_collision">11-4.1</a></span></span></p>
                   </td><td><p>
@@ -8003,8 +7962,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Re</code></p>
                   </td><td><p>
-                    inertial forces / viscous forces
-</p>
+                    inertial forces / viscous forces</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fcollision-statement" data-bp-preview-title="Theorem 21.3.1" data-bp-preview-key="thm_part11_collision--statement" data-bp-preview-fallback-label="thm_part11_collision"><a href="ISO-80000-11-___-Characteristic-numbers/Dimension-does-not-classify_SEMI_-the-measurement-principle-does/index.html#--informal-preview-thm_part11_collision--statement" title="thm_part11_collision">11-4.2</a></span></span></p>
                   </td><td><p>
@@ -8012,8 +7970,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Eu</code></p>
                   </td><td><p>
-                    pressure drop / kinetic energy per volume
-</p>
+                    pressure drop / kinetic energy per volume</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fhomonym-statement" data-bp-preview-title="Theorem 21.2.1" data-bp-preview-key="thm_part11_homonym--statement" data-bp-preview-fallback-label="thm_part11_homonym"><a href="ISO-80000-11-___-Characteristic-numbers/The-sub-suffixed-homonyms-___-same-name___-distinct-kind/index.html#--informal-preview-thm_part11_homonym--statement" title="thm_part11_homonym">11-4.3</a></span></span></p>
                   </td><td><p>
@@ -8021,8 +7978,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Fr</code></p>
                   </td><td><p>
-                    inertial forces / gravitational forces
-</p>
+                    inertial forces / gravitational forces</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-4.4</a></span></span></p>
                   </td><td><p>
@@ -8030,8 +7986,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Gr</code></p>
                   </td><td><p>
-                    thermal buoyancy forces / viscous forces
-</p>
+                    thermal buoyancy forces / viscous forces</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-4.5</a></span></span></p>
                   </td><td><p>
@@ -8039,8 +7994,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>We</code></p>
                   </td><td><p>
-                    inertial forces / surface-tension forces
-</p>
+                    inertial forces / surface-tension forces</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-4.6</a></span></span></p>
                   </td><td><p>
@@ -8048,8 +8002,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Ma</code></p>
                   </td><td><p>
-                    speed of flow / speed of sound
-</p>
+                    speed of flow / speed of sound</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-4.7</a></span></span></p>
                   </td><td><p>
@@ -8057,8 +8010,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Kn</code></p>
                   </td><td><p>
-                    mean free path / characteristic length
-</p>
+                    mean free path / characteristic length</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-4.8</a></span></span></p>
                   </td><td><p>
@@ -8066,8 +8018,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Sr</code></p>
                   </td><td><p>
-                    characteristic frequency / characteristic speed
-</p>
+                    characteristic frequency / characteristic speed</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-4.9</a></span></span></p>
                   </td><td><p>
@@ -8075,8 +8026,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>c_D</code></p>
                   </td><td><p>
-                    drag force / inertial force
-</p>
+                    drag force / inertial force</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-4.10</a></span></span></p>
                   </td><td><p>
@@ -8084,8 +8034,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Bg</code></p>
                   </td><td><p>
-                    drag and gravitational force / inertial force
-</p>
+                    drag and gravitational force / inertial force</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-4.11</a></span></span></p>
                   </td><td><p>
@@ -8093,8 +8042,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Ba₂</code></p>
                   </td><td><p>
-                    drag force / viscous force, solid particles
-</p>
+                    drag force / viscous force, solid particles</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-4.12</a></span></span></p>
                   </td><td><p>
@@ -8102,8 +8050,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>c_l</code></p>
                   </td><td><p>
-                    lift force / inertial force
-</p>
+                    lift force / inertial force</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-4.13</a></span></span></p>
                   </td><td><p>
@@ -8111,8 +8058,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>c_t</code></p>
                   </td><td><p>
-                    thrust force / inertial force
-</p>
+                    thrust force / inertial force</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-4.14</a></span></span></p>
                   </td><td><p>
@@ -8120,8 +8066,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Dn</code></p>
                   </td><td><p>
-                    centrifugal force / inertial force, curved pipe
-</p>
+                    centrifugal force / inertial force, curved pipe</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fbejan-statement" data-bp-preview-title="Theorem 21.2.3" data-bp-preview-key="thm_part11_bejan--statement" data-bp-preview-fallback-label="thm_part11_bejan"><a href="ISO-80000-11-___-Characteristic-numbers/The-sub-suffixed-homonyms-___-same-name___-distinct-kind/index.html#--informal-preview-thm_part11_bejan--statement" title="thm_part11_bejan">11-4.15</a></span></span></p>
                   </td><td><p>
@@ -8129,8 +8074,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Be</code></p>
                   </td><td><p>
-                    mechanical work / frictional energy loss
-</p>
+                    mechanical work / frictional energy loss</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-4.16</a></span></span></p>
                   </td><td><p>
@@ -8138,8 +8082,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Lg</code></p>
                   </td><td><p>
-                    mechanical work / frictional energy loss, Lagrange form
-</p>
+                    mechanical work / frictional energy loss, Lagrange form</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-4.17</a></span></span></p>
                   </td><td><p>
@@ -8147,8 +8090,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Bm</code></p>
                   </td><td><p>
-                    yield stress / viscous stress
-</p>
+                    yield stress / viscous stress</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-4.18</a></span></span></p>
                   </td><td><p>
@@ -8156,8 +8098,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>He</code></p>
                   </td><td><p>
-                    yield stress / viscous stress, at flow limit
-</p>
+                    yield stress / viscous stress, at flow limit</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-4.19</a></span></span></p>
                   </td><td><p>
@@ -8165,8 +8106,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Bd</code></p>
                   </td><td><p>
-                    convective / diffusive matter transfer
-</p>
+                    convective / diffusive matter transfer</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-4.20</a></span></span></p>
                   </td><td><p>
@@ -8174,8 +8114,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Ro</code></p>
                   </td><td><p>
-                    inertial forces / Coriolis forces
-</p>
+                    inertial forces / Coriolis forces</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-4.21</a></span></span></p>
                   </td><td><p>
@@ -8183,8 +8122,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Ek</code></p>
                   </td><td><p>
-                    viscous forces / Coriolis forces
-</p>
+                    viscous forces / Coriolis forces</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-4.22</a></span></span></p>
                   </td><td><p>
@@ -8192,8 +8130,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>El</code></p>
                   </td><td><p>
-                    relaxation time / diffusion time
-</p>
+                    relaxation time / diffusion time</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-4.23</a></span></span></p>
                   </td><td><p>
@@ -8201,8 +8138,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>f_D</code></p>
                   </td><td><p>
-                    pressure loss / pipe-wall friction
-</p>
+                    pressure loss / pipe-wall friction</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-4.24</a></span></span></p>
                   </td><td><p>
@@ -8210,8 +8146,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>f_F</code></p>
                   </td><td><p>
-                    wall shear stress / dynamic pressure
-</p>
+                    wall shear stress / dynamic pressure</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-4.25</a></span></span></p>
                   </td><td><p>
@@ -8219,8 +8154,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Go</code></p>
                   </td><td><p>
-                    centrifugal effects / viscous effects, boundary layer
-</p>
+                    centrifugal effects / viscous effects, boundary layer</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-4.26</a></span></span></p>
                   </td><td><p>
@@ -8228,8 +8162,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Hg</code></p>
                   </td><td><p>
-                    pressure-gradient force / viscous force
-</p>
+                    pressure-gradient force / viscous force</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-4.27</a></span></span></p>
                   </td><td><p>
@@ -8237,8 +8170,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>La</code></p>
                   </td><td><p>
-                    flow speed / critical sound speed, nozzle throat
-</p>
+                    flow speed / critical sound speed, nozzle throat</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-4.28</a></span></span></p>
                   </td><td><p>
@@ -8246,8 +8178,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Poi</code></p>
                   </td><td><p>
-                    pressure force / viscous force, pipe flow
-</p>
+                    pressure force / viscous force, pipe flow</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-4.29</a></span></span></p>
                   </td><td><p>
@@ -8255,8 +8186,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Ne</code></p>
                   </td><td><p>
-                    agitator power / inertial power
-</p>
+                    agitator power / inertial power</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-4.30</a></span></span></p>
                   </td><td><p>
@@ -8264,8 +8194,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Ri</code></p>
                   </td><td><p>
-                    potential energy / kinetic energy
-</p>
+                    potential energy / kinetic energy</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-4.31</a></span></span></p>
                   </td><td><p>
@@ -8273,8 +8202,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Re_e</code></p>
                   </td><td><p>
-                    object speed / wave speed, submerged
-</p>
+                    object speed / wave speed, submerged</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fstokes-statement" data-bp-preview-title="Theorem 21.2.2" data-bp-preview-key="thm_part11_stokes--statement" data-bp-preview-fallback-label="thm_part11_stokes"><a href="ISO-80000-11-___-Characteristic-numbers/The-sub-suffixed-homonyms-___-same-name___-distinct-kind/index.html#--informal-preview-thm_part11_stokes--statement" title="thm_part11_stokes">11-4.32</a></span></span></p>
                   </td><td><p>
@@ -8282,8 +8210,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Stk</code></p>
                   </td><td><p>
-                    friction force / inertial force, particles in flow
-</p>
+                    friction force / inertial force, particles in flow</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fstokes-statement" data-bp-preview-title="Theorem 21.2.2" data-bp-preview-key="thm_part11_stokes--statement" data-bp-preview-fallback-label="thm_part11_stokes"><a href="ISO-80000-11-___-Characteristic-numbers/The-sub-suffixed-homonyms-___-same-name___-distinct-kind/index.html#--informal-preview-thm_part11_stokes--statement" title="thm_part11_stokes">11-4.33</a></span></span></p>
                   </td><td><p>
@@ -8291,8 +8218,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Stk₁</code></p>
                   </td><td><p>
-                    friction force / inertial force, vibrating particles
-</p>
+                    friction force / inertial force, vibrating particles</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fstokes-statement" data-bp-preview-title="Theorem 21.2.2" data-bp-preview-key="thm_part11_stokes--statement" data-bp-preview-fallback-label="thm_part11_stokes"><a href="ISO-80000-11-___-Characteristic-numbers/The-sub-suffixed-homonyms-___-same-name___-distinct-kind/index.html#--informal-preview-thm_part11_stokes--statement" title="thm_part11_stokes">11-4.34</a></span></span></p>
                   </td><td><p>
@@ -8300,8 +8226,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Stk₂</code></p>
                   </td><td><p>
-                    drag / inertia, rotameter calibration
-</p>
+                    drag / inertia, rotameter calibration</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fstokes-statement" data-bp-preview-title="Theorem 21.2.2" data-bp-preview-key="thm_part11_stokes--statement" data-bp-preview-fallback-label="thm_part11_stokes"><a href="ISO-80000-11-___-Characteristic-numbers/The-sub-suffixed-homonyms-___-same-name___-distinct-kind/index.html#--informal-preview-thm_part11_stokes--statement" title="thm_part11_stokes">11-4.35</a></span></span></p>
                   </td><td><p>
@@ -8309,8 +8234,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Stk₃</code></p>
                   </td><td><p>
-                    viscous force / gravity force, settling particles
-</p>
+                    viscous force / gravity force, settling particles</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fstokes-statement" data-bp-preview-title="Theorem 21.2.2" data-bp-preview-key="thm_part11_stokes--statement" data-bp-preview-fallback-label="thm_part11_stokes"><a href="ISO-80000-11-___-Characteristic-numbers/The-sub-suffixed-homonyms-___-same-name___-distinct-kind/index.html#--informal-preview-thm_part11_stokes--statement" title="thm_part11_stokes">11-4.36</a></span></span></p>
                   </td><td><p>
@@ -8318,8 +8242,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Stk₄</code></p>
                   </td><td><p>
-                    drag force / internal friction force, particles
-</p>
+                    drag force / internal friction force, particles</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-4.37</a></span></span></p>
                   </td><td><p>
@@ -8327,8 +8250,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>La</code></p>
                   </td><td><p>
-                    capillary force / viscous force, free surface
-</p>
+                    capillary force / viscous force, free surface</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-4.38</a></span></span></p>
                   </td><td><p>
@@ -8336,8 +8258,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Bl</code></p>
                   </td><td><p>
-                    inertial force / viscous force, porous medium
-</p>
+                    inertial force / viscous force, porous medium</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-4.39</a></span></span></p>
                   </td><td><p>
@@ -8345,8 +8266,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>So</code></p>
                   </td><td><p>
-                    viscous force / load force, lubrication
-</p>
+                    viscous force / load force, lubrication</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-4.40</a></span></span></p>
                   </td><td><p>
@@ -8354,8 +8274,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Ta</code></p>
                   </td><td><p>
-                    centrifugal force / viscous force, rotating flow
-</p>
+                    centrifugal force / viscous force, rotating flow</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-4.41</a></span></span></p>
                   </td><td><p>
@@ -8363,8 +8282,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Ga</code></p>
                   </td><td><p>
-                    gravitational force / viscous force, fluid film
-</p>
+                    gravitational force / viscous force, fluid film</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-4.42</a></span></span></p>
                   </td><td><p>
@@ -8372,8 +8290,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Wo</code></p>
                   </td><td><p>
-                    inertial forces / viscous forces, oscillating flow
-</p>
+                    inertial forces / viscous forces, oscillating flow</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fhomonym-statement" data-bp-preview-title="Theorem 21.2.1" data-bp-preview-key="thm_part11_homonym--statement" data-bp-preview-fallback-label="thm_part11_homonym"><a href="ISO-80000-11-___-Characteristic-numbers/The-sub-suffixed-homonyms-___-same-name___-distinct-kind/index.html#--informal-preview-thm_part11_homonym--statement" title="thm_part11_homonym">11-5.1</a></span></span></p>
                   </td><td><p>
@@ -8381,8 +8298,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Fo</code></p>
                   </td><td><p>
-                    heat conduction rate / thermal storage rate
-</p>
+                    heat conduction rate / thermal storage rate</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-5.2</a></span></span></p>
                   </td><td><p>
@@ -8390,8 +8306,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Pe</code></p>
                   </td><td><p>
-                    convective / conductive heat transfer rate
-</p>
+                    convective / conductive heat transfer rate</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-5.3</a></span></span></p>
                   </td><td><p>
@@ -8399,8 +8314,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Ra</code></p>
                   </td><td><p>
-                    thermal buoyancy forces / viscous forces, free convection
-</p>
+                    thermal buoyancy forces / viscous forces, free convection</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fhomonym-statement" data-bp-preview-title="Theorem 21.2.1" data-bp-preview-key="thm_part11_homonym--statement" data-bp-preview-fallback-label="thm_part11_homonym"><a href="ISO-80000-11-___-Characteristic-numbers/The-sub-suffixed-homonyms-___-same-name___-distinct-kind/index.html#--informal-preview-thm_part11_homonym--statement" title="thm_part11_homonym">11-5.4</a></span></span></p>
                   </td><td><p>
@@ -8408,8 +8322,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Fr*</code></p>
                   </td><td><p>
-                    gravitational forces / thermodiffusion forces
-</p>
+                    gravitational forces / thermodiffusion forces</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fhomonym-statement" data-bp-preview-title="Theorem 21.2.1" data-bp-preview-key="thm_part11_homonym--statement" data-bp-preview-fallback-label="thm_part11_homonym"><a href="ISO-80000-11-___-Characteristic-numbers/The-sub-suffixed-homonyms-___-same-name___-distinct-kind/index.html#--informal-preview-thm_part11_homonym--statement" title="thm_part11_homonym">11-5.5</a></span></span></p>
                   </td><td><p>
@@ -8417,8 +8330,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Nu</code></p>
                   </td><td><p>
-                    convective / conductive heat transfer at a surface
-</p>
+                    convective / conductive heat transfer at a surface</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-5.6</a></span></span></p>
                   </td><td><p>
@@ -8426,8 +8338,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Bi</code></p>
                   </td><td><p>
-                    internal / surface thermal resistance
-</p>
+                    internal / surface thermal resistance</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-5.7</a></span></span></p>
                   </td><td><p>
@@ -8435,8 +8346,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>St</code></p>
                   </td><td><p>
-                    wall heat transfer / fluid heat-capacity flow
-</p>
+                    wall heat transfer / fluid heat-capacity flow</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-5.8</a></span></span></p>
                   </td><td><p>
@@ -8444,8 +8354,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>j</code></p>
                   </td><td><p>
-                    heat transfer / mass transfer, Colburn analogy
-</p>
+                    heat transfer / mass transfer, Colburn analogy</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fbejan-statement" data-bp-preview-title="Theorem 21.2.3" data-bp-preview-key="thm_part11_bejan--statement" data-bp-preview-fallback-label="thm_part11_bejan"><a href="ISO-80000-11-___-Characteristic-numbers/The-sub-suffixed-homonyms-___-same-name___-distinct-kind/index.html#--informal-preview-thm_part11_bejan--statement" title="thm_part11_bejan">11-5.9</a></span></span></p>
                   </td><td><p>
@@ -8453,8 +8362,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Be₁</code></p>
                   </td><td><p>
-                    mechanical work / frictional and thermal-diffusion losses
-</p>
+                    mechanical work / frictional and thermal-diffusion losses</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fbejan-statement" data-bp-preview-title="Theorem 21.2.3" data-bp-preview-key="thm_part11_bejan--statement" data-bp-preview-fallback-label="thm_part11_bejan"><a href="ISO-80000-11-___-Characteristic-numbers/The-sub-suffixed-homonyms-___-same-name___-distinct-kind/index.html#--informal-preview-thm_part11_bejan--statement" title="thm_part11_bejan">11-5.10</a></span></span></p>
                   </td><td><p>
@@ -8462,8 +8370,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Be_S</code></p>
                   </td><td><p>
-                    heat-transfer efficiency / entropy generation
-</p>
+                    heat-transfer efficiency / entropy generation</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-5.11</a></span></span></p>
                   </td><td><p>
@@ -8471,8 +8378,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Ste</code></p>
                   </td><td><p>
-                    sensible heat / latent heat, phase change
-</p>
+                    sensible heat / latent heat, phase change</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-5.12</a></span></span></p>
                   </td><td><p>
@@ -8480,8 +8386,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Br</code></p>
                   </td><td><p>
-                    viscous heat production / wall heat conduction
-</p>
+                    viscous heat production / wall heat conduction</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-5.13</a></span></span></p>
                   </td><td><p>
@@ -8489,8 +8394,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Cl</code></p>
                   </td><td><p>
-                    kinetic energy transfer / thermal conduction
-</p>
+                    kinetic energy transfer / thermal conduction</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-5.14</a></span></span></p>
                   </td><td><p>
@@ -8498,8 +8402,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Ca</code></p>
                   </td><td><p>
-                    maximum thermodynamic (Carnot) efficiency
-</p>
+                    maximum thermodynamic (Carnot) efficiency</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-5.15</a></span></span></p>
                   </td><td><p>
@@ -8507,8 +8410,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Ec</code></p>
                   </td><td><p>
-                    kinetic energy / enthalpy difference
-</p>
+                    kinetic energy / enthalpy difference</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-5.16</a></span></span></p>
                   </td><td><p>
@@ -8516,8 +8418,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Gz</code></p>
                   </td><td><p>
-                    convective / conductive heat, laminar pipe
-</p>
+                    convective / conductive heat, laminar pipe</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-5.17</a></span></span></p>
                   </td><td><p>
@@ -8525,8 +8426,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>K_Q</code></p>
                   </td><td><p>
-                    heat flow / kinetic energy of flow
-</p>
+                    heat flow / kinetic energy of flow</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-5.18</a></span></span></p>
                   </td><td><p>
@@ -8534,8 +8434,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Po</code></p>
                   </td><td><p>
-                    generated heat / conducted heat in a body
-</p>
+                    generated heat / conducted heat in a body</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-5.19</a></span></span></p>
                   </td><td><p>
@@ -8543,8 +8442,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Bz</code></p>
                   </td><td><p>
-                    convective heat / radiant heat
-</p>
+                    convective heat / radiant heat</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-5.20</a></span></span></p>
                   </td><td><p>
@@ -8552,8 +8450,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Sk</code></p>
                   </td><td><p>
-                    radiant heat / conductive heat
-</p>
+                    radiant heat / conductive heat</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fhomonym-statement" data-bp-preview-title="Theorem 21.2.1" data-bp-preview-key="thm_part11_homonym--statement" data-bp-preview-fallback-label="thm_part11_homonym"><a href="ISO-80000-11-___-Characteristic-numbers/The-sub-suffixed-homonyms-___-same-name___-distinct-kind/index.html#--informal-preview-thm_part11_homonym--statement" title="thm_part11_homonym">11-6.1</a></span></span></p>
                   </td><td><p>
@@ -8561,8 +8458,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Fo*</code></p>
                   </td><td><p>
-                    diffusive mass transfer / storage rate
-</p>
+                    diffusive mass transfer / storage rate</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-6.2</a></span></span></p>
                   </td><td><p>
@@ -8570,8 +8466,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Pe*</code></p>
                   </td><td><p>
-                    advective / diffusive mass transfer rate
-</p>
+                    advective / diffusive mass transfer rate</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-6.3</a></span></span></p>
                   </td><td><p>
@@ -8579,8 +8474,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Gr*</code></p>
                   </td><td><p>
-                    buoyancy forces / viscous forces, natural convection
-</p>
+                    buoyancy forces / viscous forces, natural convection</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fhomonym-statement" data-bp-preview-title="Theorem 21.2.1" data-bp-preview-key="thm_part11_homonym--statement" data-bp-preview-fallback-label="thm_part11_homonym"><a href="ISO-80000-11-___-Characteristic-numbers/The-sub-suffixed-homonyms-___-same-name___-distinct-kind/index.html#--informal-preview-thm_part11_homonym--statement" title="thm_part11_homonym">11-6.4</a></span></span></p>
                   </td><td><p>
@@ -8588,8 +8482,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Nu*</code></p>
                   </td><td><p>
-                    mass flux / molecular-diffusion flux
-</p>
+                    mass flux / molecular-diffusion flux</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-6.5</a></span></span></p>
                   </td><td><p>
@@ -8597,8 +8490,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>St*</code></p>
                   </td><td><p>
-                    perpendicular / parallel surface mass transfer
-</p>
+                    perpendicular / parallel surface mass transfer</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-6.6</a></span></span></p>
                   </td><td><p>
@@ -8606,8 +8498,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Gz*</code></p>
                   </td><td><p>
-                    advective / radial diffusive mass transfer
-</p>
+                    advective / radial diffusive mass transfer</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-6.7</a></span></span></p>
                   </td><td><p>
@@ -8615,8 +8506,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>j*</code></p>
                   </td><td><p>
-                    interface mass transfer / parallel flux, Chilton-Colburn
-</p>
+                    interface mass transfer / parallel flux, Chilton-Colburn</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-6.8</a></span></span></p>
                   </td><td><p>
@@ -8624,8 +8514,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>At</code></p>
                   </td><td><p>
-                    density difference / density sum, two fluids
-</p>
+                    density difference / density sum, two fluids</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-6.9</a></span></span></p>
                   </td><td><p>
@@ -8633,8 +8522,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Bi*</code></p>
                   </td><td><p>
-                    interface / interior mass transfer rate
-</p>
+                    interface / interior mass transfer rate</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-6.10</a></span></span></p>
                   </td><td><p>
@@ -8642,8 +8530,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Mo</code></p>
                   </td><td><p>
-                    gravitational forces / viscous forces, bubbles
-</p>
+                    gravitational forces / viscous forces, bubbles</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-6.11</a></span></span></p>
                   </td><td><p>
@@ -8651,8 +8538,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Bo</code></p>
                   </td><td><p>
-                    gravitational and inertial force / capillary force
-</p>
+                    gravitational and inertial force / capillary force</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-6.12</a></span></span></p>
                   </td><td><p>
@@ -8660,8 +8546,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Ar</code></p>
                   </td><td><p>
-                    buoyancy forces / viscous forces, density difference
-</p>
+                    buoyancy forces / viscous forces, density difference</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-6.13</a></span></span></p>
                   </td><td><p>
@@ -8669,8 +8554,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Ex</code></p>
                   </td><td><p>
-                    buoyancy force / inertial force, rising bubbles
-</p>
+                    buoyancy force / inertial force, rising bubbles</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-6.14</a></span></span></p>
                   </td><td><p>
@@ -8678,8 +8562,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Mg</code></p>
                   </td><td><p>
-                    surface-tension convection / thermal diffusion
-</p>
+                    surface-tension convection / thermal diffusion</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-6.15</a></span></span></p>
                   </td><td><p>
@@ -8687,8 +8570,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Lp</code></p>
                   </td><td><p>
-                    two-phase mass-flow-rate ratio by density
-</p>
+                    two-phase mass-flow-rate ratio by density</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fbejan-statement" data-bp-preview-title="Theorem 21.2.3" data-bp-preview-key="thm_part11_bejan--statement" data-bp-preview-fallback-label="thm_part11_bejan"><a href="ISO-80000-11-___-Characteristic-numbers/The-sub-suffixed-homonyms-___-same-name___-distinct-kind/index.html#--informal-preview-thm_part11_bejan--statement" title="thm_part11_bejan">11-6.16</a></span></span></p>
                   </td><td><p>
@@ -8696,8 +8578,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Be*</code></p>
                   </td><td><p>
-                    mechanical work / frictional and diffusion losses
-</p>
+                    mechanical work / frictional and diffusion losses</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-6.17</a></span></span></p>
                   </td><td><p>
@@ -8705,8 +8586,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Ca</code></p>
                   </td><td><p>
-                    static-vapour head / dynamic head
-</p>
+                    static-vapour head / dynamic head</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-6.18</a></span></span></p>
                   </td><td><p>
@@ -8714,8 +8594,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Ab</code></p>
                   </td><td><p>
-                    mass flow rate / surface area, gas absorption
-</p>
+                    mass flow rate / surface area, gas absorption</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-6.19</a></span></span></p>
                   </td><td><p>
@@ -8723,8 +8602,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Ca</code></p>
                   </td><td><p>
-                    gravitational forces / capillary forces
-</p>
+                    gravitational forces / capillary forces</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-6.20</a></span></span></p>
                   </td><td><p>
@@ -8732,8 +8610,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Ca*</code></p>
                   </td><td><p>
-                    viscous force / capillary force, interface
-</p>
+                    viscous force / capillary force, interface</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-7.1</a></span></span></p>
                   </td><td><p>
@@ -8741,8 +8618,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Pr</code></p>
                   </td><td><p>
-                    kinematic viscosity / thermal diffusivity
-</p>
+                    kinematic viscosity / thermal diffusivity</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-7.2</a></span></span></p>
                   </td><td><p>
@@ -8750,8 +8626,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Sc</code></p>
                   </td><td><p>
-                    kinematic viscosity / diffusion coefficient
-</p>
+                    kinematic viscosity / diffusion coefficient</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-7.3</a></span></span></p>
                   </td><td><p>
@@ -8759,8 +8634,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Le</code></p>
                   </td><td><p>
-                    thermal diffusivity / diffusion coefficient
-</p>
+                    thermal diffusivity / diffusion coefficient</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-7.4</a></span></span></p>
                   </td><td><p>
@@ -8768,8 +8642,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Oh</code></p>
                   </td><td><p>
-                    viscous force / root of inertia times capillary force
-</p>
+                    viscous force / root of inertia times capillary force</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-7.5</a></span></span></p>
                   </td><td><p>
@@ -8777,8 +8650,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Cy</code></p>
                   </td><td><p>
-                    inertia forces / compression forces
-</p>
+                    inertia forces / compression forces</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-7.6</a></span></span></p>
                   </td><td><p>
@@ -8786,8 +8658,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Ho₂</code></p>
                   </td><td><p>
-                    inertia forces / linear-stress forces
-</p>
+                    inertia forces / linear-stress forces</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-7.7</a></span></span></p>
                   </td><td><p>
@@ -8795,8 +8666,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Wi</code></p>
                   </td><td><p>
-                    shear rate times relaxation time
-</p>
+                    shear rate times relaxation time</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-7.8</a></span></span></p>
                   </td><td><p>
@@ -8804,8 +8674,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>De</code></p>
                   </td><td><p>
-                    relaxation time / observation time
-</p>
+                    relaxation time / observation time</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-7.9</a></span></span></p>
                   </td><td><p>
@@ -8813,8 +8682,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Lo</code></p>
                   </td><td><p>
-                    electrical conductivity / thermal conductivity
-</p>
+                    electrical conductivity / thermal conductivity</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-7.10</a></span></span></p>
                   </td><td><p>
@@ -8822,8 +8690,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Z</code></p>
                   </td><td><p>
-                    real-gas / ideal-gas compressibility factor
-</p>
+                    real-gas / ideal-gas compressibility factor</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-8.1</a></span></span></p>
                   </td><td><p>
@@ -8831,8 +8698,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Rm</code></p>
                   </td><td><p>
-                    inertial force / magneto-dynamic viscous force
-</p>
+                    inertial force / magneto-dynamic viscous force</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-8.2</a></span></span></p>
                   </td><td><p>
@@ -8840,8 +8706,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Bt</code></p>
                   </td><td><p>
-                    inertia / magneto-dynamic diffusion
-</p>
+                    inertia / magneto-dynamic diffusion</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-8.3</a></span></span></p>
                   </td><td><p>
@@ -8849,8 +8714,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Ne_e</code></p>
                   </td><td><p>
-                    convective / diffusive ion current
-</p>
+                    convective / diffusive ion current</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-8.4</a></span></span></p>
                   </td><td><p>
@@ -8858,8 +8722,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Al</code></p>
                   </td><td><p>
-                    flow speed / Alfvén wave speed
-</p>
+                    flow speed / Alfvén wave speed</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-8.5</a></span></span></p>
                   </td><td><p>
@@ -8867,8 +8730,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Ha</code></p>
                   </td><td><p>
-                    magnetically induced stress / viscous force
-</p>
+                    magnetically induced stress / viscous force</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-8.6</a></span></span></p>
                   </td><td><p>
@@ -8876,8 +8738,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Co</code></p>
                   </td><td><p>
-                    magnetic / kinematic energy density
-</p>
+                    magnetic / kinematic energy density</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-8.7</a></span></span></p>
                   </td><td><p>
@@ -8885,8 +8746,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Se</code></p>
                   </td><td><p>
-                    electric / kinematic energy density
-</p>
+                    electric / kinematic energy density</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-8.8</a></span></span></p>
                   </td><td><p>
@@ -8894,8 +8754,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>N_mp</code></p>
                   </td><td><p>
-                    gas pressure / magnetic pressure
-</p>
+                    gas pressure / magnetic pressure</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-8.9</a></span></span></p>
                   </td><td><p>
@@ -8903,8 +8762,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Q</code></p>
                   </td><td><p>
-                    Lorentz force / viscous force
-</p>
+                    Lorentz force / viscous force</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-8.10</a></span></span></p>
                   </td><td><p>
@@ -8912,8 +8770,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Pr_m</code></p>
                   </td><td><p>
-                    kinematic viscosity / magnetic viscosity
-</p>
+                    kinematic viscosity / magnetic viscosity</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-8.11</a></span></span></p>
                   </td><td><p>
@@ -8921,8 +8778,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Ro_m</code></p>
                   </td><td><p>
-                    thermal diffusivity / magnetic viscosity
-</p>
+                    thermal diffusivity / magnetic viscosity</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-8.12</a></span></span></p>
                   </td><td><p>
@@ -8930,8 +8786,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>N_St</code></p>
                   </td><td><p>
-                    magnetic force / inertial force
-</p>
+                    magnetic force / inertial force</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-8.13</a></span></span></p>
                   </td><td><p>
@@ -8939,8 +8794,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>N_mg</code></p>
                   </td><td><p>
-                    magnetic body force / viscous force
-</p>
+                    magnetic body force / viscous force</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-8.14</a></span></span></p>
                   </td><td><p>
@@ -8948,8 +8802,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>E_f</code></p>
                   </td><td><p>
-                    Coulomb force / Lorentz force
-</p>
+                    Coulomb force / Lorentz force</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-8.15</a></span></span></p>
                   </td><td><p>
@@ -8957,8 +8810,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Hl</code></p>
                   </td><td><p>
-                    gyrofrequency / collision frequency
-</p>
+                    gyrofrequency / collision frequency</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-8.16</a></span></span></p>
                   </td><td><p>
@@ -8966,8 +8818,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Lu</code></p>
                   </td><td><p>
-                    Alfvén speed / magneto-dynamic diffusion speed
-</p>
+                    Alfvén speed / magneto-dynamic diffusion speed</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-8.17</a></span></span></p>
                   </td><td><p>
@@ -8975,8 +8826,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Jo_m</code></p>
                   </td><td><p>
-                    Joule heating / magnetic field energy
-</p>
+                    Joule heating / magnetic field energy</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-8.18</a></span></span></p>
                   </td><td><p>
@@ -8984,8 +8834,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Gr_m</code></p>
                   </td><td><p>
-                    thermo-magnetic buoyancy / viscous force
-</p>
+                    thermo-magnetic buoyancy / viscous force</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-8.19</a></span></span></p>
                   </td><td><p>
@@ -8993,8 +8842,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Na</code></p>
                   </td><td><p>
-                    Alfvén wave speed / sound speed
-</p>
+                    Alfvén wave speed / sound speed</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-8.20</a></span></span></p>
                   </td><td><p>
@@ -9002,8 +8850,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Re_e</code></p>
                   </td><td><p>
-                    fluid speed / charged-particle drift speed
-</p>
+                    fluid speed / charged-particle drift speed</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-8.21</a></span></span></p>
                   </td><td><p>
@@ -9011,8 +8858,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>Am</code></p>
                   </td><td><p>
-                    electric surface current / magnetic field
-</p>
+                    electric surface current / magnetic field</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-9.1</a></span></span></p>
                   </td><td><p>
@@ -9020,8 +8866,7 @@ are <em>citation locators</em>; nothing normative is reproduced.</p>
                   </td><td><p>
                     <code>α</code></p>
                   </td><td><p>
-                    chemical activation energy / thermal energy
-</p>
+                    chemical activation energy / thermal energy</p>
                   </td></tr><tr><td><p>
                     <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fpart11-005Fall-005Fdim-005Fone-statement" data-bp-preview-title="Theorem 21.1.3" data-bp-preview-key="thm_part11_all_dim_one--statement" data-bp-preview-fallback-label="thm_part11_all_dim_one"><a href="ISO-80000-11-___-Characteristic-numbers/Quantity-kinds-of-ISO-80000-11-___-one-dimension___-115-kinds/index.html#--informal-preview-thm_part11_all_dim_one--statement" title="thm_part11_all_dim_one">11-9.2</a></span></span></p>
                   </td><td><p>
