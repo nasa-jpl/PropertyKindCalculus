@@ -20,6 +20,9 @@ The full rationale — the QUDV → OML lineage and how each construct maps into
 Lean's type system — is in the [design blueprint](blueprint/) ("Why a calculus,
 not a taxonomy").
 
+- **License:** Apache-2.0 — see [LICENSE](LICENSE)
+- **Toolchain:** `leanprover/lean4` (see [lean-toolchain](lean-toolchain))
+
 ## On the name
 
 The calculus is over **kinds of *property*** — Dybkær's root notion (§6.19),

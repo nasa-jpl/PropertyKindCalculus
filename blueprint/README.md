@@ -173,3 +173,9 @@ What helps further, in order of payoff vs. effort:
 The `blueprint-gen` render and `--with-html-single` add time *on top of* the
 `.olean` elaboration, but the elaboration of the root document is the dominant
 cost.
+
+## License
+
+PropertyKindCalculus and this blueprint are licensed under **Apache-2.0** (see
+[`../LICENSE`](../LICENSE)). Copyright (c) 2026 California Institute of Technology
+(Caltech). U.S. Government sponsorship acknowledged.

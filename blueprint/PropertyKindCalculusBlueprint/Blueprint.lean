@@ -872,3 +872,11 @@ in-progress goals until formalized. The headline deliverables are tagged
 {blueprint_graph}
 
 {blueprint_summary}
+
+# License
+
+PropertyKindCalculus and this blueprint are released under the Apache License,
+Version 2.0 (SPDX `Apache-2.0`; [license text](https://www.apache.org/licenses/LICENSE-2.0)).
+
+Copyright (c) 2026 California Institute of Technology (Caltech). U.S. Government
+sponsorship acknowledged.
