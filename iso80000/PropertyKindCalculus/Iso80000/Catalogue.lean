@@ -52,3 +52,42 @@ def CataloguedKind.of (ref : StandardRef) (item symbol coherentUnit : String)
 /-- A ratio-scale dimensioned kind with a plain `id` and a given dimension. -/
 def dimKind (id : String) (dim : Dimension) : DimensionedKind :=
   { kind := { id := id, scale := .ratio }, dim := dim }
+
+/-! ## Rendering a `Dimension` to its printed expression
+
+The blueprint item-index tables print each kind's dimension (e.g. `L⁻¹`,
+`M·L²·T⁻²`). Rather than transcribe those strings by hand — which had drifted into
+inconsistent factor orderings — they are *computed* from the PhysLib `Dimension`
+of each catalogued kind via `renderDimension`, in the canonical order
+M·L·T·C·Θ (mass, length, time, charge, temperature). Dimension one renders as `1`. -/
+
+/-- A natural number as Unicode superscript digits, e.g. `12 ↦ "¹²"`. -/
+private def supDigits (n : Nat) : String :=
+  (toString n).map fun c =>
+    match c with
+    | '0' => '⁰' | '1' => '¹' | '2' => '²' | '3' => '³' | '4' => '⁴'
+    | '5' => '⁵' | '6' => '⁶' | '7' => '⁷' | '8' => '⁸' | '9' => '⁹' | c => c
+
+/-- An integer exponent as a Unicode superscript, e.g. `-2 ↦ "⁻²"`. -/
+private def supInt (z : Int) : String :=
+  if z < 0 then "⁻" ++ supDigits z.natAbs else supDigits z.natAbs
+
+/-- One base-dimension factor `symbol^exp`: `none` when the exponent is zero, the
+bare symbol when it is one, `symbol⁻¹`/`symbol²`/… otherwise. A non-integer
+exponent (none occur in the 80000 catalogue) falls back to `symbol^(p/q)`. -/
+private def dimFactor (symbol : String) (q : ℚ) : Option String :=
+  if q == 0 then none
+  else if q.den == 1 then
+    if q.num == 1 then some symbol else some (symbol ++ supInt q.num)
+  else some (symbol ++ "^(" ++ toString q.num ++ "/" ++ toString q.den ++ ")")
+
+/-- The printed dimension expression in canonical order M·L·T·C·Θ; `1` for the
+dimensionless (unit-one) dimension. -/
+def renderDimension (d : Dimension) : String :=
+  let factors := [dimFactor "M" d.mass, dimFactor "L" d.length, dimFactor "T" d.time,
+      dimFactor "C" d.charge, dimFactor "Θ" d.temperature].filterMap id
+  if factors.isEmpty then "1" else String.intercalate "·" factors
+
+/-- The printed dimension expression of a catalogued kind (see `renderDimension`). -/
+def CataloguedKind.dimString (c : CataloguedKind) : String :=
+  renderDimension c.qk.dim

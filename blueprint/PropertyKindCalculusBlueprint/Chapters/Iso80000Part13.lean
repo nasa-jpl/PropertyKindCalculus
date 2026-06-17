@@ -7,10 +7,45 @@ import VersoBlueprint
 -- modules of the `Iso80000` library.
 import PropertyKindCalculus.Iso80000.Part13
 import PropertyKindCalculus.Iso80000.Part13.DefiningRelations
+import PropertyKindCalculusBlueprint.ItemIndex
 
 open Verso.Genre
 open Verso.Genre.Manual
 open Informal
+
+open PropertyKindCalculusBlueprint.ItemIndex
+
+/-- Default blueprint node for ISO/IEC 80000-13 item-index rows (editorial). -/
+def part13Default : String := "thm_part13_dim_one"
+
+/-- Per-item blueprint cross-reference overrides for the ISO/IEC 80000-13 item
+index (editorial; items not listed link to `part13Default`). Every other column
+is generated from `PropertyKindCalculus.Iso80000.Part13.catalogue`. -/
+def part13Refs : List (String × String) := [
+  ("13-1", "thm_part13_units"),
+  ("13-7", "thm_part13_rates"),
+  ("13-8", "thm_part13_rates"),
+  ("13-9", "thm_part13_units"),
+  ("13-11", "thm_part13_rates"),
+  ("13-12", "thm_part13_relations"),
+  ("13-13", "thm_part13_rates"),
+  ("13-14", "thm_part13_relations"),
+  ("13-15", "thm_part13_rates"),
+  ("13-16", "thm_part13_rates"),
+  ("13-17", "def_part13_catalogued_kind"),
+  ("13-18", "thm_part13_relations"),
+  ("13-19", "thm_part13_relations"),
+  ("13-22", "thm_part13_rates"),
+  ("13-24", "thm_part13_units"),
+  ("13-25", "thm_part13_units"),
+  ("13-38", "thm_part13_rates"),
+  ("13-40", "thm_part13_rates"),
+  ("13-42", "thm_part13_rates")
+]
+
+/-- The ISO/IEC 80000-13 item index, generated live from the catalogue. -/
+def part13IndexTable : DocTable :=
+  standardIndex PropertyKindCalculus.Iso80000.Part13.catalogue part13Default part13Refs
 
 #doc (Manual) "IEC 80000-13 — Information science and technology" =>
 
@@ -168,263 +203,5 @@ and the PhysLib dimension this work assigns it. Each item number links to the fo
 result it participates in. Symbols and unit strings are _citation locators_; nothing
 normative is reproduced.
 
-:::table +header (align := left)
-*
-  * Item
-  * Quantity
-  * Symbol
-  * Unit
-  * Dimension
-*
-  * {bpref "thm_part13_units"}[13-1]
-  * traffic intensity
-  * `A`
-  * `E`
-  * `1`
-*
-  * {bpref "thm_part13_dim_one"}[13-2]
-  * traffic offered intensity
-  * `A_o`
-  * `E`
-  * `1`
-*
-  * {bpref "thm_part13_dim_one"}[13-3]
-  * traffic carried intensity
-  * `Y`
-  * `E`
-  * `1`
-*
-  * {bpref "thm_part13_dim_one"}[13-4]
-  * mean queue length
-  * `L`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part13_dim_one"}[13-5]
-  * loss probability
-  * `B`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part13_dim_one"}[13-6]
-  * waiting probability
-  * `W`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part13_rates"}[13-7]
-  * call intensity
-  * `λ`
-  * `s⁻¹`
-  * `T⁻¹`
-*
-  * {bpref "thm_part13_rates"}[13-8]
-  * completed call intensity
-  * `μ`
-  * `s⁻¹`
-  * `T⁻¹`
-*
-  * {bpref "thm_part13_units"}[13-9]
-  * storage capacity
-  * `M`
-  * `bit`
-  * `1`
-*
-  * {bpref "thm_part13_dim_one"}[13-10]
-  * equivalent binary storage capacity
-  * `M_e`
-  * `bit`
-  * `1`
-*
-  * {bpref "thm_part13_rates"}[13-11]
-  * transfer rate
-  * `r`
-  * `s⁻¹`
-  * `T⁻¹`
-*
-  * {bpref "thm_part13_relations"}[13-12]
-  * period of data elements
-  * `T`
-  * `s`
-  * `T`
-*
-  * {bpref "thm_part13_rates"}[13-13]
-  * binary digit rate
-  * `r_bit`
-  * `bit/s`
-  * `T⁻¹`
-*
-  * {bpref "thm_part13_relations"}[13-14]
-  * period of binary digits
-  * `T_bit`
-  * `s`
-  * `T`
-*
-  * {bpref "thm_part13_rates"}[13-15]
-  * equivalent binary digit rate
-  * `r_e`
-  * `bit/s`
-  * `T⁻¹`
-*
-  * {bpref "thm_part13_rates"}[13-16]
-  * modulation rate
-  * `r_m`
-  * `Bd`
-  * `T⁻¹`
-*
-  * {bpref "def_part13_catalogued_kind"}[13-17]
-  * quantizing distortion
-  * `T_Q`
-  * `W`
-  * `M·L²·T⁻³`
-*
-  * {bpref "thm_part13_relations"}[13-18]
-  * carrier power
-  * `P_c`
-  * `W`
-  * `M·L²·T⁻³`
-*
-  * {bpref "thm_part13_relations"}[13-19]
-  * signal energy per binary digit
-  * `E_bit`
-  * `J`
-  * `M·L²·T⁻²`
-*
-  * {bpref "thm_part13_dim_one"}[13-20]
-  * error probability
-  * `P`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part13_dim_one"}[13-21]
-  * Hamming distance
-  * `d_n`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part13_rates"}[13-22]
-  * clock frequency
-  * `f_cl`
-  * `Hz`
-  * `T⁻¹`
-*
-  * {bpref "thm_part13_dim_one"}[13-23]
-  * decision content
-  * `D_a`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part13_units"}[13-24]
-  * information content
-  * `I(x)`
-  * `Sh`
-  * `1`
-*
-  * {bpref "thm_part13_units"}[13-25]
-  * entropy
-  * `H`
-  * `Sh`
-  * `1`
-*
-  * {bpref "thm_part13_dim_one"}[13-26]
-  * maximum entropy
-  * `H_0`
-  * `Sh`
-  * `1`
-*
-  * {bpref "thm_part13_dim_one"}[13-27]
-  * relative entropy
-  * `H_r`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part13_dim_one"}[13-28]
-  * redundancy
-  * `R`
-  * `Sh`
-  * `1`
-*
-  * {bpref "thm_part13_dim_one"}[13-29]
-  * relative redundancy
-  * `r`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part13_dim_one"}[13-30]
-  * joint information content
-  * `I(x,y)`
-  * `Sh`
-  * `1`
-*
-  * {bpref "thm_part13_dim_one"}[13-31]
-  * conditional information content
-  * `I(x|y)`
-  * `Sh`
-  * `1`
-*
-  * {bpref "thm_part13_dim_one"}[13-32]
-  * conditional entropy
-  * `H(X|Y)`
-  * `Sh`
-  * `1`
-*
-  * {bpref "thm_part13_dim_one"}[13-33]
-  * equivocation
-  * `H_x(X|Y)`
-  * `Sh`
-  * `1`
-*
-  * {bpref "thm_part13_dim_one"}[13-34]
-  * irrelevance
-  * `H_y(Y|X)`
-  * `Sh`
-  * `1`
-*
-  * {bpref "thm_part13_dim_one"}[13-35]
-  * transinformation content
-  * `T(x,y)`
-  * `Sh`
-  * `1`
-*
-  * {bpref "thm_part13_dim_one"}[13-36]
-  * mean transinformation content
-  * `T`
-  * `Sh`
-  * `1`
-*
-  * {bpref "thm_part13_dim_one"}[13-37]
-  * character mean entropy
-  * `H′`
-  * `Sh`
-  * `1`
-*
-  * {bpref "thm_part13_rates"}[13-38]
-  * average information rate
-  * `H*`
-  * `Sh/s`
-  * `T⁻¹`
-*
-  * {bpref "thm_part13_dim_one"}[13-39]
-  * character mean transinformation content
-  * `T′`
-  * `Sh`
-  * `1`
-*
-  * {bpref "thm_part13_rates"}[13-40]
-  * average transinformation rate
-  * `T*`
-  * `Sh/s`
-  * `T⁻¹`
-*
-  * {bpref "thm_part13_dim_one"}[13-41]
-  * channel capacity per character
-  * `C′`
-  * `Sh`
-  * `1`
-*
-  * {bpref "thm_part13_rates"}[13-42]
-  * channel time capacity
-  * `C*`
-  * `Sh/s`
-  * `T⁻¹`
+:::iso_doc_table part13IndexTable
 :::

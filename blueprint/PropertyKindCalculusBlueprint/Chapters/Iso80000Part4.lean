@@ -7,10 +7,59 @@ import VersoBlueprint
 -- `Iso80000` library (PhysLib-backed).
 import PropertyKindCalculus.Iso80000.Part4
 import PropertyKindCalculus.Iso80000.Part4.DefiningRelations
+import PropertyKindCalculusBlueprint.ItemIndex
 
 open Verso.Genre
 open Verso.Genre.Manual
 open Informal
+
+open PropertyKindCalculusBlueprint.ItemIndex
+
+/-- Default blueprint node for ISO/IEC 80000-4 item-index rows (editorial). -/
+def part4Default : String := "def_part4_catalogued_kind"
+
+/-- Per-item blueprint cross-reference overrides for the ISO/IEC 80000-4 item
+index (editorial; items not listed link to `part4Default`). Every other column
+is generated from `PropertyKindCalculus.Iso80000.Part4.catalogue`. -/
+def part4Refs : List (String × String) := [
+  ("4-2", "thm_part4_momentum"),
+  ("4-3", "thm_part4_momentum"),
+  ("4-4", "thm_part4_dim_one"),
+  ("4-8", "thm_part4_momentum"),
+  ("4-9.1", "def_part4_force_species"),
+  ("4-9.2", "def_part4_force_species"),
+  ("4-9.3", "thm_part4_static_kinetic"),
+  ("4-9.4", "thm_part4_static_kinetic"),
+  ("4-9.5", "def_part4_force_species"),
+  ("4-9.6", "def_part4_force_species"),
+  ("4-10", "thm_part4_torque_energy"),
+  ("4-12.1", "thm_part4_torque_energy"),
+  ("4-12.2", "thm_part4_torque_energy"),
+  ("4-14.1", "thm_part4_momentum"),
+  ("4-16.1", "thm_part4_momentum"),
+  ("4-17.1", "thm_part4_dim_one"),
+  ("4-17.2", "thm_part4_momentum"),
+  ("4-17.3", "thm_part4_dim_one"),
+  ("4-17.4", "thm_part4_dim_one"),
+  ("4-18", "thm_part4_dim_one"),
+  ("4-19.1", "thm_part4_momentum"),
+  ("4-23.1", "thm_part4_dim_one"),
+  ("4-23.2", "thm_part4_dim_one"),
+  ("4-23.3", "thm_part4_dim_one"),
+  ("4-23.4", "thm_part4_dim_one"),
+  ("4-24", "thm_part4_momentum"),
+  ("4-25", "thm_part4_momentum"),
+  ("4-27", "thm_part4_efficiency"),
+  ("4-28.1", "thm_part4_torque_energy"),
+  ("4-28.2", "thm_part4_torque_energy"),
+  ("4-28.3", "thm_part4_torque_energy"),
+  ("4-28.4", "thm_part4_torque_energy"),
+  ("4-29", "thm_part4_efficiency")
+]
+
+/-- The ISO/IEC 80000-4 item index, generated live from the catalogue. -/
+def part4IndexTable : DocTable :=
+  standardIndex PropertyKindCalculus.Iso80000.Part4.catalogue part4Default part4Refs
 
 #doc (Manual) "ISO 80000-4 — Mechanics" =>
 
@@ -262,335 +311,5 @@ force-family lattice, the torque/energy collision, a cross-part defining relatio
 catalogue itself. Symbols and unit strings are *citation locators*; nothing normative is
 reproduced.
 
-:::table +header (align := left)
-*
-  * Item
-  * Quantity
-  * Symbol
-  * Unit
-  * Dimension
-*
-  * {bpref "def_part4_catalogued_kind"}[4-1]
-  * mass
-  * `m`
-  * `kg`
-  * `M`
-*
-  * {bpref "thm_part4_momentum"}[4-2]
-  * mass density
-  * `ρ`
-  * `kg/m³`
-  * `M·L⁻³`
-*
-  * {bpref "thm_part4_momentum"}[4-3]
-  * specific volume
-  * `v`
-  * `m³/kg`
-  * `M⁻¹·L³`
-*
-  * {bpref "thm_part4_dim_one"}[4-4]
-  * relative mass density
-  * `d`
-  * `1`
-  * `1`
-*
-  * {bpref "def_part4_catalogued_kind"}[4-5]
-  * surface mass density
-  * `ρ_A`
-  * `kg/m²`
-  * `M·L⁻²`
-*
-  * {bpref "def_part4_catalogued_kind"}[4-6]
-  * linear mass density
-  * `ρ_l`
-  * `kg/m`
-  * `M·L⁻¹`
-*
-  * {bpref "def_part4_catalogued_kind"}[4-7]
-  * moment of inertia
-  * `J`
-  * `kg·m²`
-  * `M·L²`
-*
-  * {bpref "thm_part4_momentum"}[4-8]
-  * momentum
-  * `p`
-  * `kg·m/s`
-  * `M·L·T⁻¹`
-*
-  * {bpref "def_part4_force_species"}[4-9.1]
-  * force
-  * `F`
-  * `N`
-  * `M·L·T⁻²`
-*
-  * {bpref "def_part4_force_species"}[4-9.2]
-  * weight
-  * `F_g`
-  * `N`
-  * `M·L·T⁻²`
-*
-  * {bpref "thm_part4_static_kinetic"}[4-9.3]
-  * static friction force
-  * `F_s`
-  * `N`
-  * `M·L·T⁻²`
-*
-  * {bpref "thm_part4_static_kinetic"}[4-9.4]
-  * kinetic friction force
-  * `F_k`
-  * `N`
-  * `M·L·T⁻²`
-*
-  * {bpref "def_part4_force_species"}[4-9.5]
-  * rolling resistance
-  * `F_rr`
-  * `N`
-  * `M·L·T⁻²`
-*
-  * {bpref "def_part4_force_species"}[4-9.6]
-  * drag force
-  * `F_D`
-  * `N`
-  * `M·L·T⁻²`
-*
-  * {bpref "thm_part4_torque_energy"}[4-10]
-  * impulse
-  * `I`
-  * `N·s`
-  * `M·L·T⁻¹`
-*
-  * {bpref "def_part4_catalogued_kind"}[4-11]
-  * angular momentum
-  * `L`
-  * `kg·m²/s`
-  * `M·L²·T⁻¹`
-*
-  * {bpref "thm_part4_torque_energy"}[4-12.1]
-  * moment of force
-  * `M`
-  * `N·m`
-  * `M·L²·T⁻²`
-*
-  * {bpref "thm_part4_torque_energy"}[4-12.2]
-  * torque
-  * `T`
-  * `N·m`
-  * `M·L²·T⁻²`
-*
-  * {bpref "def_part4_catalogued_kind"}[4-13]
-  * angular impulse
-  * `H`
-  * `N·m·s`
-  * `M·L²·T⁻¹`
-*
-  * {bpref "thm_part4_momentum"}[4-14.1]
-  * pressure
-  * `p`
-  * `Pa`
-  * `M·L⁻¹·T⁻²`
-*
-  * {bpref "def_part4_catalogued_kind"}[4-14.2]
-  * gauge pressure
-  * `p_e`
-  * `Pa`
-  * `M·L⁻¹·T⁻²`
-*
-  * {bpref "def_part4_catalogued_kind"}[4-15]
-  * stress
-  * `σ`
-  * `Pa`
-  * `M·L⁻¹·T⁻²`
-*
-  * {bpref "thm_part4_momentum"}[4-16.1]
-  * normal stress
-  * `σ_n`
-  * `Pa`
-  * `M·L⁻¹·T⁻²`
-*
-  * {bpref "def_part4_catalogued_kind"}[4-16.2]
-  * shear stress
-  * `τ`
-  * `Pa`
-  * `M·L⁻¹·T⁻²`
-*
-  * {bpref "thm_part4_dim_one"}[4-17.1]
-  * strain
-  * `ε`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part4_momentum"}[4-17.2]
-  * relative linear strain
-  * `ε`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part4_dim_one"}[4-17.3]
-  * shear strain
-  * `γ`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part4_dim_one"}[4-17.4]
-  * relative volume strain
-  * `ϑ`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part4_dim_one"}[4-18]
-  * Poisson number
-  * `μ`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part4_momentum"}[4-19.1]
-  * modulus of elasticity
-  * `E`
-  * `Pa`
-  * `M·L⁻¹·T⁻²`
-*
-  * {bpref "def_part4_catalogued_kind"}[4-19.2]
-  * modulus of rigidity
-  * `G`
-  * `Pa`
-  * `M·L⁻¹·T⁻²`
-*
-  * {bpref "def_part4_catalogued_kind"}[4-19.3]
-  * modulus of compression
-  * `K`
-  * `Pa`
-  * `M·L⁻¹·T⁻²`
-*
-  * {bpref "def_part4_catalogued_kind"}[4-20]
-  * compressibility
-  * `ϰ`
-  * `Pa⁻¹`
-  * `M⁻¹·L·T²`
-*
-  * {bpref "def_part4_catalogued_kind"}[4-21.1]
-  * second axial moment of area
-  * `I_a`
-  * `m⁴`
-  * `L⁴`
-*
-  * {bpref "def_part4_catalogued_kind"}[4-21.2]
-  * second polar moment of area
-  * `I_p`
-  * `m⁴`
-  * `L⁴`
-*
-  * {bpref "def_part4_catalogued_kind"}[4-22]
-  * section modulus
-  * `Z`
-  * `m³`
-  * `L³`
-*
-  * {bpref "thm_part4_dim_one"}[4-23.1]
-  * static friction factor
-  * `μ_s`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part4_dim_one"}[4-23.2]
-  * kinetic friction factor
-  * `μ`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part4_dim_one"}[4-23.3]
-  * rolling resistance factor
-  * `C_rr`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part4_dim_one"}[4-23.4]
-  * drag coefficient
-  * `C_D`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part4_momentum"}[4-24]
-  * dynamic viscosity
-  * `η`
-  * `Pa·s`
-  * `M·L⁻¹·T⁻¹`
-*
-  * {bpref "thm_part4_momentum"}[4-25]
-  * kinematic viscosity
-  * `ν`
-  * `m²/s`
-  * `L²·T⁻¹`
-*
-  * {bpref "def_part4_catalogued_kind"}[4-26]
-  * surface tension
-  * `γ`
-  * `N/m`
-  * `M·T⁻²`
-*
-  * {bpref "thm_part4_efficiency"}[4-27]
-  * power
-  * `P`
-  * `W`
-  * `M·L²·T⁻³`
-*
-  * {bpref "thm_part4_torque_energy"}[4-28.1]
-  * potential energy
-  * `V`
-  * `J`
-  * `M·L²·T⁻²`
-*
-  * {bpref "thm_part4_torque_energy"}[4-28.2]
-  * kinetic energy
-  * `T`
-  * `J`
-  * `M·L²·T⁻²`
-*
-  * {bpref "thm_part4_torque_energy"}[4-28.3]
-  * mechanical energy
-  * `E`
-  * `J`
-  * `M·L²·T⁻²`
-*
-  * {bpref "thm_part4_torque_energy"}[4-28.4]
-  * mechanical work
-  * `W`
-  * `J`
-  * `M·L²·T⁻²`
-*
-  * {bpref "thm_part4_efficiency"}[4-29]
-  * efficiency
-  * `η`
-  * `1`
-  * `1`
-*
-  * {bpref "def_part4_catalogued_kind"}[4-30.1]
-  * mass flow
-  * `j_m`
-  * `kg/(m²·s)`
-  * `M·L⁻²·T⁻¹`
-*
-  * {bpref "def_part4_catalogued_kind"}[4-30.2]
-  * mass flow rate
-  * `q_m`
-  * `kg/s`
-  * `M·T⁻¹`
-*
-  * {bpref "def_part4_catalogued_kind"}[4-30.3]
-  * mass change rate
-  * `q_m`
-  * `kg/s`
-  * `M·T⁻¹`
-*
-  * {bpref "def_part4_catalogued_kind"}[4-31]
-  * volume flow rate
-  * `q_V`
-  * `m³/s`
-  * `L³·T⁻¹`
-*
-  * {bpref "def_part4_catalogued_kind"}[4-32]
-  * action
-  * `S`
-  * `J·s`
-  * `M·L²·T⁻¹`
+:::iso_doc_table part4IndexTable
 :::

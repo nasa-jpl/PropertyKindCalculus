@@ -7,10 +7,53 @@ import VersoBlueprint
 -- chapter imports the Part-12 modules of the `Iso80000` library.
 import PropertyKindCalculus.Iso80000.Part12
 import PropertyKindCalculus.Iso80000.Part12.DefiningRelations
+import PropertyKindCalculusBlueprint.ItemIndex
 
 open Verso.Genre
 open Verso.Genre.Manual
 open Informal
+
+open PropertyKindCalculusBlueprint.ItemIndex
+
+/-- Default blueprint node for ISO/IEC 80000-12 item-index rows (editorial). -/
+def part12Default : String := "def_part12_catalogued_kind"
+
+/-- Per-item blueprint cross-reference overrides for the ISO/IEC 80000-12 item
+index (editorial; items not listed link to `part12Default`). Every other column
+is generated from `PropertyKindCalculus.Iso80000.Part12.catalogue`. -/
+def part12Refs : List (String × String) := [
+  ("12-3", "thm_part12_collision"),
+  ("12-4", "thm_part12_dim_one"),
+  ("12-5.1", "thm_part12_dim_one"),
+  ("12-5.2", "thm_part12_dim_one"),
+  ("12-5.3", "thm_part12_dim_one"),
+  ("12-5.4", "thm_part12_dim_one"),
+  ("12-6", "thm_part12_collision"),
+  ("12-8", "thm_part12_dim_one"),
+  ("12-11", "thm_part12_temperatures"),
+  ("12-13", "thm_part12_dim_one"),
+  ("12-14", "thm_part12_dim_one"),
+  ("12-20", "thm_part12_relations"),
+  ("12-21", "thm_part12_relations"),
+  ("12-22", "thm_part12_relations"),
+  ("12-23", "thm_part12_relations"),
+  ("12-24.1", "thm_part12_collision"),
+  ("12-24.2", "thm_part12_collision"),
+  ("12-25", "thm_part12_collision"),
+  ("12-27.1", "thm_part12_collision"),
+  ("12-27.2", "thm_part12_collision"),
+  ("12-28", "thm_part12_temperatures"),
+  ("12-31", "thm_part12_dim_one"),
+  ("12-34", "thm_part12_collision"),
+  ("12-35.1", "thm_part12_temperatures"),
+  ("12-35.2", "thm_part12_temperatures"),
+  ("12-35.3", "thm_part12_temperatures"),
+  ("12-37", "thm_part12_collision")
+]
+
+/-- The ISO/IEC 80000-12 item index, generated live from the catalogue. -/
+def part12IndexTable : DocTable :=
+  standardIndex PropertyKindCalculus.Iso80000.Part12.catalogue part12Default part12Refs
 
 #doc (Manual) "ISO 80000-12 — Condensed matter physics" =>
 
@@ -161,371 +204,5 @@ principal quantity symbol, the coherent SI unit, and the PhysLib dimension this 
 assigns it. Each item number links to the formalized result it participates in. Symbols and
 unit strings are _citation locators_; nothing normative is reproduced.
 
-:::table +header (align := left)
-*
-  * Item
-  * Quantity
-  * Symbol
-  * Unit
-  * Dimension
-*
-  * {bpref "def_part12_catalogued_kind"}[12-1.1]
-  * lattice vector
-  * `R`
-  * `m`
-  * `L`
-*
-  * {bpref "def_part12_catalogued_kind"}[12-1.2]
-  * fundamental lattice vectors
-  * `a₁`
-  * `m`
-  * `L`
-*
-  * {bpref "def_part12_catalogued_kind"}[12-2.1]
-  * angular reciprocal lattice vector
-  * `G`
-  * `m⁻¹`
-  * `L⁻¹`
-*
-  * {bpref "def_part12_catalogued_kind"}[12-2.2]
-  * fundamental reciprocal lattice vectors
-  * `b₁`
-  * `m⁻¹`
-  * `L⁻¹`
-*
-  * {bpref "thm_part12_collision"}[12-3]
-  * lattice plane spacing
-  * `d`
-  * `m`
-  * `L`
-*
-  * {bpref "thm_part12_dim_one"}[12-4]
-  * Bragg angle
-  * `ϑ`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part12_dim_one"}[12-5.1]
-  * short-range order parameter
-  * `r`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part12_dim_one"}[12-5.2]
-  * long-range order parameter
-  * `R`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part12_dim_one"}[12-5.3]
-  * atomic scattering factor
-  * `f`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part12_dim_one"}[12-5.4]
-  * structure factor
-  * `F`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part12_collision"}[12-6]
-  * Burgers vector
-  * `b`
-  * `m`
-  * `L`
-*
-  * {bpref "def_part12_catalogued_kind"}[12-7.1]
-  * particle position vector
-  * `r`
-  * `m`
-  * `L`
-*
-  * {bpref "def_part12_catalogued_kind"}[12-7.2]
-  * equilibrium position vector
-  * `R₀`
-  * `m`
-  * `L`
-*
-  * {bpref "def_part12_catalogued_kind"}[12-7.3]
-  * displacement vector
-  * `u`
-  * `m`
-  * `L`
-*
-  * {bpref "thm_part12_dim_one"}[12-8]
-  * Debye-Waller factor
-  * `D`
-  * `1`
-  * `1`
-*
-  * {bpref "def_part12_catalogued_kind"}[12-9.1]
-  * angular wavenumber
-  * `k`
-  * `m⁻¹`
-  * `L⁻¹`
-*
-  * {bpref "def_part12_catalogued_kind"}[12-9.2]
-  * Fermi angular wavenumber
-  * `k_F`
-  * `m⁻¹`
-  * `L⁻¹`
-*
-  * {bpref "def_part12_catalogued_kind"}[12-9.3]
-  * Debye angular wavenumber
-  * `q_D`
-  * `m⁻¹`
-  * `L⁻¹`
-*
-  * {bpref "def_part12_catalogued_kind"}[12-10]
-  * Debye angular frequency
-  * `ω_D`
-  * `s⁻¹`
-  * `T⁻¹`
-*
-  * {bpref "thm_part12_temperatures"}[12-11]
-  * Debye temperature
-  * `Θ_D`
-  * `K`
-  * `Θ`
-*
-  * {bpref "def_part12_catalogued_kind"}[12-12]
-  * density of vibrational states
-  * `g`
-  * `m⁻³·s`
-  * `L⁻³·T`
-*
-  * {bpref "thm_part12_dim_one"}[12-13]
-  * thermodynamic Grüneisen parameter
-  * `γ_G`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part12_dim_one"}[12-14]
-  * Grüneisen parameter
-  * `γ`
-  * `1`
-  * `1`
-*
-  * {bpref "def_part12_catalogued_kind"}[12-15.1]
-  * mean free path of phonons
-  * `l_p`
-  * `m`
-  * `L`
-*
-  * {bpref "def_part12_catalogued_kind"}[12-15.2]
-  * mean free path of electrons
-  * `l_e`
-  * `m`
-  * `L`
-*
-  * {bpref "def_part12_catalogued_kind"}[12-16]
-  * energy density of states
-  * `n_E`
-  * `J⁻¹·m⁻³`
-  * `M⁻¹·L⁻⁵·T²`
-*
-  * {bpref "def_part12_catalogued_kind"}[12-17]
-  * residual resistivity
-  * `ρ₀`
-  * `Ω·m`
-  * `M·L³·T⁻¹·C⁻²`
-*
-  * {bpref "def_part12_catalogued_kind"}[12-18]
-  * Lorenz coefficient
-  * `L`
-  * `V²/K²`
-  * `M²·L⁴·T⁻⁴·C⁻²·Θ⁻²`
-*
-  * {bpref "def_part12_catalogued_kind"}[12-19]
-  * Hall coefficient
-  * `R_H`
-  * `m³/C`
-  * `L³·C⁻¹`
-*
-  * {bpref "thm_part12_relations"}[12-20]
-  * thermoelectric voltage
-  * `E_ab`
-  * `V`
-  * `M·L²·T⁻²·C⁻¹`
-*
-  * {bpref "thm_part12_relations"}[12-21]
-  * Seebeck coefficient
-  * `S_ab`
-  * `V/K`
-  * `M·L²·T⁻²·C⁻¹·Θ⁻¹`
-*
-  * {bpref "thm_part12_relations"}[12-22]
-  * Peltier coefficient
-  * `Π_ab`
-  * `V`
-  * `M·L²·T⁻²·C⁻¹`
-*
-  * {bpref "thm_part12_relations"}[12-23]
-  * Thomson coefficient
-  * `μ`
-  * `V/K`
-  * `M·L²·T⁻²·C⁻¹·Θ⁻¹`
-*
-  * {bpref "thm_part12_collision"}[12-24.1]
-  * work function
-  * `φ`
-  * `J`
-  * `M·L²·T⁻²`
-*
-  * {bpref "thm_part12_collision"}[12-24.2]
-  * ionization energy
-  * `E_i`
-  * `J`
-  * `M·L²·T⁻²`
-*
-  * {bpref "thm_part12_collision"}[12-25]
-  * electron affinity
-  * `χ`
-  * `J`
-  * `M·L²·T⁻²`
-*
-  * {bpref "def_part12_catalogued_kind"}[12-26]
-  * Richardson constant
-  * `A`
-  * `A·m⁻²·K⁻²`
-  * `C·T⁻¹·L⁻²·Θ⁻²`
-*
-  * {bpref "thm_part12_collision"}[12-27.1]
-  * Fermi energy
-  * `E_F`
-  * `J`
-  * `M·L²·T⁻²`
-*
-  * {bpref "thm_part12_collision"}[12-27.2]
-  * gap energy
-  * `E_g`
-  * `J`
-  * `M·L²·T⁻²`
-*
-  * {bpref "thm_part12_temperatures"}[12-28]
-  * Fermi temperature
-  * `T_F`
-  * `K`
-  * `Θ`
-*
-  * {bpref "def_part12_catalogued_kind"}[12-29.1]
-  * electron density
-  * `n`
-  * `m⁻³`
-  * `L⁻³`
-*
-  * {bpref "def_part12_catalogued_kind"}[12-29.2]
-  * hole density
-  * `p`
-  * `m⁻³`
-  * `L⁻³`
-*
-  * {bpref "def_part12_catalogued_kind"}[12-29.3]
-  * intrinsic carrier density
-  * `n_i`
-  * `m⁻³`
-  * `L⁻³`
-*
-  * {bpref "def_part12_catalogued_kind"}[12-29.4]
-  * donor density
-  * `n_d`
-  * `m⁻³`
-  * `L⁻³`
-*
-  * {bpref "def_part12_catalogued_kind"}[12-29.5]
-  * acceptor density
-  * `n_a`
-  * `m⁻³`
-  * `L⁻³`
-*
-  * {bpref "def_part12_catalogued_kind"}[12-30]
-  * effective mass
-  * `m*`
-  * `kg`
-  * `M`
-*
-  * {bpref "thm_part12_dim_one"}[12-31]
-  * mobility ratio
-  * `b`
-  * `1`
-  * `1`
-*
-  * {bpref "def_part12_catalogued_kind"}[12-32.1]
-  * relaxation time
-  * `τ`
-  * `s`
-  * `T`
-*
-  * {bpref "def_part12_catalogued_kind"}[12-32.2]
-  * carrier lifetime
-  * `τ`
-  * `s`
-  * `T`
-*
-  * {bpref "def_part12_catalogued_kind"}[12-33]
-  * diffusion length
-  * `L`
-  * `m`
-  * `L`
-*
-  * {bpref "thm_part12_collision"}[12-34]
-  * exchange integral
-  * `J`
-  * `J`
-  * `M·L²·T⁻²`
-*
-  * {bpref "thm_part12_temperatures"}[12-35.1]
-  * Curie temperature
-  * `T_C`
-  * `K`
-  * `Θ`
-*
-  * {bpref "thm_part12_temperatures"}[12-35.2]
-  * Néel temperature
-  * `T_N`
-  * `K`
-  * `Θ`
-*
-  * {bpref "thm_part12_temperatures"}[12-35.3]
-  * superconduction transition temperature
-  * `T_c`
-  * `K`
-  * `Θ`
-*
-  * {bpref "def_part12_catalogued_kind"}[12-36.1]
-  * thermodynamic critical magnetic flux density
-  * `B_c`
-  * `T`
-  * `M·T⁻¹·C⁻¹`
-*
-  * {bpref "def_part12_catalogued_kind"}[12-36.2]
-  * lower critical magnetic flux density
-  * `B_c1`
-  * `T`
-  * `M·T⁻¹·C⁻¹`
-*
-  * {bpref "def_part12_catalogued_kind"}[12-36.3]
-  * upper critical magnetic flux density
-  * `B_c2`
-  * `T`
-  * `M·T⁻¹·C⁻¹`
-*
-  * {bpref "thm_part12_collision"}[12-37]
-  * superconductor energy gap
-  * `Δ`
-  * `J`
-  * `M·L²·T⁻²`
-*
-  * {bpref "def_part12_catalogued_kind"}[12-38.1]
-  * London penetration depth
-  * `λ_L`
-  * `m`
-  * `L`
-*
-  * {bpref "def_part12_catalogued_kind"}[12-38.2]
-  * coherence length
-  * `ξ`
-  * `m`
-  * `L`
+:::iso_doc_table part12IndexTable
 :::

@@ -13,10 +13,55 @@ import PropertyKindCalculus.Iso80000.Part3.AreaElement
 import PropertyKindCalculus.Iso80000.Part3.AreaClassification
 import PropertyKindCalculus.Iso80000.Part3.VolumeElement
 import PropertyKindCalculus.Iso80000.Part3.DefiningRelations
+import PropertyKindCalculusBlueprint.ItemIndex
 
 open Verso.Genre
 open Verso.Genre.Manual
 open Informal
+open PropertyKindCalculusBlueprint.ItemIndex
+
+/-- Default blueprint node for ISO/IEC 80000-3 item-index rows (editorial). -/
+def part3Default : String := "def_part3_catalogued_kind"
+
+/-- Per-item blueprint cross-reference overrides for the ISO/IEC 80000-3 item
+index (editorial; items not listed link to `part3Default`). Every other column
+is generated from `PropertyKindCalculus.Iso80000.Part3.catalogue`. -/
+def part3Refs : List (String × String) := [
+  ("3-1.1", "def_part3_length_species"),
+  ("3-1.2", "thm_part3_width_ne_distance"),
+  ("3-1.3", "def_part3_length_species"),
+  ("3-1.4", "def_part3_length_species"),
+  ("3-1.5", "def_part3_length_species"),
+  ("3-1.6", "thm_part3_radius_specializes_length"),
+  ("3-1.7", "def_part3_length_species"),
+  ("3-1.8", "thm_part3_width_ne_distance"),
+  ("3-1.9", "def_part3_length_species"),
+  ("3-1.10", "def_part3_length_species"),
+  ("3-1.11", "def_part3_length_species"),
+  ("3-1.12", "def_part3_length_species"),
+  ("3-3", "thm_part3_area_dim"),
+  ("3-4", "def_volume_element"),
+  ("3-5", "thm_part3_plane_angle_dimensionless"),
+  ("3-6", "thm_part3_dim_one_collision"),
+  ("3-7", "thm_part3_dim_one_collision"),
+  ("3-8", "thm_part3_radian_steradian"),
+  ("3-9", "thm_part3_metre_second_incommensurable"),
+  ("3-10.1", "thm_part3_dim_collision"),
+  ("3-10.2", "thm_part3_speed_dim"),
+  ("3-12", "thm_part3_dim_collision"),
+  ("3-14", "thm_part3_frequency_reciprocal"),
+  ("3-16", "thm_part3_dim_one_collision"),
+  ("3-17.1", "thm_part3_frequency_reciprocal"),
+  ("3-17.2", "thm_part3_dim_collision"),
+  ("3-18", "thm_part3_dim_collision"),
+  ("3-19", "def_part3_length_species"),
+  ("3-24", "thm_part3_dim_collision"),
+  ("3-25", "thm_part3_dim_one_collision")
+]
+
+/-- The ISO/IEC 80000-3 item index, generated live from the catalogue. -/
+def part3IndexTable : DocTable :=
+  standardIndex PropertyKindCalculus.Iso80000.Part3.catalogue part3Default part3Refs
 
 #doc (Manual) "ISO 80000-3 — Space and Time" =>
 
@@ -535,263 +580,5 @@ assigns it. Each item number links to the formalized result it participates in �
 length-family lattice, a dimension collision, a formalized remark, or the catalogue
 itself. Symbols and unit strings are *citation locators*; nothing normative is reproduced.
 
-:::table +header (align := left)
-*
-  * Item
-  * Quantity
-  * Symbol
-  * Unit
-  * Dimension
-*
-  * {bpref "def_part3_length_species"}[3-1.1]
-  * length
-  * `l`
-  * `m`
-  * `L`
-*
-  * {bpref "thm_part3_width_ne_distance"}[3-1.2]
-  * width
-  * `b`
-  * `m`
-  * `L`
-*
-  * {bpref "def_part3_length_species"}[3-1.3]
-  * height
-  * `h`
-  * `m`
-  * `L`
-*
-  * {bpref "def_part3_length_species"}[3-1.4]
-  * thickness
-  * `d`
-  * `m`
-  * `L`
-*
-  * {bpref "def_part3_length_species"}[3-1.5]
-  * diameter
-  * `d`
-  * `m`
-  * `L`
-*
-  * {bpref "thm_part3_radius_specializes_length"}[3-1.6]
-  * radius
-  * `r`
-  * `m`
-  * `L`
-*
-  * {bpref "def_part3_length_species"}[3-1.7]
-  * path length
-  * `s`
-  * `m`
-  * `L`
-*
-  * {bpref "thm_part3_width_ne_distance"}[3-1.8]
-  * distance
-  * `d`
-  * `m`
-  * `L`
-*
-  * {bpref "def_part3_length_species"}[3-1.9]
-  * radial distance
-  * `r_Q`
-  * `m`
-  * `L`
-*
-  * {bpref "def_part3_length_species"}[3-1.10]
-  * position vector
-  * `r`
-  * `m`
-  * `L`
-*
-  * {bpref "def_part3_length_species"}[3-1.11]
-  * displacement
-  * `Δr`
-  * `m`
-  * `L`
-*
-  * {bpref "def_part3_length_species"}[3-1.12]
-  * radius of curvature
-  * `ρ`
-  * `m`
-  * `L`
-*
-  * {bpref "def_part3_catalogued_kind"}[3-2]
-  * curvature
-  * `κ`
-  * `m⁻¹`
-  * `L⁻¹`
-*
-  * {bpref "thm_part3_area_dim"}[3-3]
-  * area
-  * `A`
-  * `m²`
-  * `L²`
-*
-  * {bpref "def_volume_element"}[3-4]
-  * volume
-  * `V`
-  * `m³`
-  * `L³`
-*
-  * {bpref "thm_part3_plane_angle_dimensionless"}[3-5]
-  * plane angle
-  * `α`
-  * `rad`
-  * `1`
-*
-  * {bpref "thm_part3_dim_one_collision"}[3-6]
-  * rotational displacement
-  * `φ`
-  * `rad`
-  * `1`
-*
-  * {bpref "thm_part3_dim_one_collision"}[3-7]
-  * phase angle
-  * `φ`
-  * `rad`
-  * `1`
-*
-  * {bpref "thm_part3_radian_steradian"}[3-8]
-  * solid angle
-  * `Ω`
-  * `sr`
-  * `1`
-*
-  * {bpref "thm_part3_metre_second_incommensurable"}[3-9]
-  * duration
-  * `t`
-  * `s`
-  * `T`
-*
-  * {bpref "thm_part3_dim_collision"}[3-10.1]
-  * velocity
-  * `v`
-  * `m/s`
-  * `L·T⁻¹`
-*
-  * {bpref "thm_part3_speed_dim"}[3-10.2]
-  * speed
-  * `v`
-  * `m/s`
-  * `L·T⁻¹`
-*
-  * {bpref "def_part3_catalogued_kind"}[3-11]
-  * acceleration
-  * `a`
-  * `m/s²`
-  * `L·T⁻²`
-*
-  * {bpref "thm_part3_dim_collision"}[3-12]
-  * angular velocity
-  * `ω`
-  * `rad/s`
-  * `T⁻¹`
-*
-  * {bpref "def_part3_catalogued_kind"}[3-13]
-  * angular acceleration
-  * `α`
-  * `rad/s²`
-  * `T⁻²`
-*
-  * {bpref "thm_part3_frequency_reciprocal"}[3-14]
-  * period duration
-  * `T`
-  * `s`
-  * `T`
-*
-  * {bpref "def_part3_catalogued_kind"}[3-15]
-  * time constant
-  * `τ`
-  * `s`
-  * `T`
-*
-  * {bpref "thm_part3_dim_one_collision"}[3-16]
-  * rotation
-  * `N`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part3_frequency_reciprocal"}[3-17.1]
-  * frequency
-  * `f`
-  * `Hz`
-  * `T⁻¹`
-*
-  * {bpref "thm_part3_dim_collision"}[3-17.2]
-  * rotational frequency
-  * `n`
-  * `s⁻¹`
-  * `T⁻¹`
-*
-  * {bpref "thm_part3_dim_collision"}[3-18]
-  * angular frequency
-  * `ω`
-  * `rad/s`
-  * `T⁻¹`
-*
-  * {bpref "def_part3_length_species"}[3-19]
-  * wavelength
-  * `λ`
-  * `m`
-  * `L`
-*
-  * {bpref "def_part3_catalogued_kind"}[3-20]
-  * repetency
-  * `σ`
-  * `m⁻¹`
-  * `L⁻¹`
-*
-  * {bpref "def_part3_catalogued_kind"}[3-21]
-  * wave vector
-  * `k`
-  * `m⁻¹`
-  * `L⁻¹`
-*
-  * {bpref "def_part3_catalogued_kind"}[3-22]
-  * angular repetency
-  * `k`
-  * `m⁻¹`
-  * `L⁻¹`
-*
-  * {bpref "def_part3_catalogued_kind"}[3-23.1]
-  * phase velocity
-  * `c`
-  * `m/s`
-  * `L·T⁻¹`
-*
-  * {bpref "def_part3_catalogued_kind"}[3-23.2]
-  * group velocity
-  * `c_g`
-  * `m/s`
-  * `L·T⁻¹`
-*
-  * {bpref "thm_part3_dim_collision"}[3-24]
-  * damping coefficient
-  * `δ`
-  * `s⁻¹`
-  * `T⁻¹`
-*
-  * {bpref "thm_part3_dim_one_collision"}[3-25]
-  * logarithmic decrement
-  * `Λ`
-  * `1`
-  * `1`
-*
-  * {bpref "def_part3_catalogued_kind"}[3-26.1]
-  * attenuation
-  * `α`
-  * `m⁻¹`
-  * `L⁻¹`
-*
-  * {bpref "def_part3_catalogued_kind"}[3-26.2]
-  * phase coefficient
-  * `β`
-  * `rad/m`
-  * `L⁻¹`
-*
-  * {bpref "def_part3_catalogued_kind"}[3-26.3]
-  * propagation coefficient
-  * `γ`
-  * `m⁻¹`
-  * `L⁻¹`
+:::iso_doc_table part3IndexTable
 :::

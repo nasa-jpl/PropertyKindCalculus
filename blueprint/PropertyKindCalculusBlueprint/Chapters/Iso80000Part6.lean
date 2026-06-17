@@ -8,10 +8,67 @@ import VersoBlueprint
 -- `Iso80000` library (PhysLib-backed).
 import PropertyKindCalculus.Iso80000.Part6
 import PropertyKindCalculus.Iso80000.Part6.DefiningRelations
+import PropertyKindCalculusBlueprint.ItemIndex
 
 open Verso.Genre
 open Verso.Genre.Manual
 open Informal
+
+open PropertyKindCalculusBlueprint.ItemIndex
+
+/-- Default blueprint node for ISO/IEC 80000-6 item-index rows (editorial). -/
+def part6Default : String := "def_part6_catalogued_kind"
+
+/-- Per-item blueprint cross-reference overrides for the ISO/IEC 80000-6 item
+index (editorial; items not listed link to `part6Default`). Every other column
+is generated from `PropertyKindCalculus.Iso80000.Part6.catalogue`. -/
+def part6Refs : List (String × String) := [
+  ("6-1", "thm_part6_current_dim"),
+  ("6-2.1", "thm_part6_current_dim"),
+  ("6-2.2", "thm_part6_current_dim"),
+  ("6-10", "thm_part6_ampere_volt"),
+  ("6-11.1", "thm_part6_scale_collision"),
+  ("6-11.2", "thm_part6_scale_collision"),
+  ("6-11.3", "thm_part6_scale_collision"),
+  ("6-11.4", "thm_part6_scale_collision"),
+  ("6-13", "thm_part6_current_dim"),
+  ("6-15", "thm_part6_dim_one"),
+  ("6-16", "thm_part6_dim_one"),
+  ("6-21", "thm_part6_current_dim"),
+  ("6-22.1", "thm_part6_current_dim"),
+  ("6-27", "thm_part6_dim_one"),
+  ("6-28", "thm_part6_dim_one"),
+  ("6-32", "thm_part6_current_dim"),
+  ("6-36", "thm_part6_scale_collision"),
+  ("6-38", "thm_part6_dim_one"),
+  ("6-40", "thm_part6_ohm"),
+  ("6-42.1", "thm_part6_dim_one"),
+  ("6-42.2", "thm_part6_dim_one"),
+  ("6-43", "thm_part6_ohm"),
+  ("6-44", "thm_part6_ohm"),
+  ("6-45", "thm_part6_power_factor"),
+  ("6-46", "thm_part6_ohm"),
+  ("6-47", "thm_part6_ohm"),
+  ("6-48", "thm_part6_dim_one"),
+  ("6-50", "thm_part6_ampere_volt"),
+  ("6-51.1", "thm_part6_power_collision"),
+  ("6-51.3", "thm_part6_power_collision"),
+  ("6-51.4", "thm_part6_power_collision"),
+  ("6-52.1", "thm_part6_ohm"),
+  ("6-53", "thm_part6_dim_one"),
+  ("6-54", "thm_part6_dim_one"),
+  ("6-55", "thm_part6_dim_one"),
+  ("6-56", "thm_part6_active_reactive"),
+  ("6-57", "thm_part6_power_collision"),
+  ("6-58", "thm_part6_power_factor"),
+  ("6-59", "thm_part6_power_collision"),
+  ("6-60", "thm_part6_active_reactive"),
+  ("6-61", "thm_part6_power_collision")
+]
+
+/-- The ISO/IEC 80000-6 item index, generated live from the catalogue. -/
+def part6IndexTable : DocTable :=
+  standardIndex PropertyKindCalculus.Iso80000.Part6.catalogue part6Default part6Refs
 
 #doc (Manual) "IEC 80000-6 — Electromagnetism" =>
 
@@ -356,521 +413,5 @@ result it participates in — the scale-type distinction, the AC-power lattice, 
 collision, a defining relation, or the catalogue itself. Symbols and unit strings are
 *citation locators*; nothing normative is reproduced.
 
-:::table +header (align := left)
-*
-  * Item
-  * Quantity
-  * Symbol
-  * Unit
-  * Dimension
-*
-  * {bpref "thm_part6_current_dim"}[6-1]
-  * electric current
-  * `I`
-  * `A`
-  * `C·T⁻¹`
-*
-  * {bpref "thm_part6_current_dim"}[6-2.1]
-  * electric charge
-  * `Q`
-  * `C`
-  * `C`
-*
-  * {bpref "thm_part6_current_dim"}[6-2.2]
-  * elementary charge
-  * `e`
-  * `C`
-  * `C`
-*
-  * {bpref "def_part6_catalogued_kind"}[6-3]
-  * electric charge density
-  * `ρ`
-  * `C/m³`
-  * `C·L⁻³`
-*
-  * {bpref "def_part6_catalogued_kind"}[6-4]
-  * surface density of electric charge
-  * `σ`
-  * `C/m²`
-  * `C·L⁻²`
-*
-  * {bpref "def_part6_catalogued_kind"}[6-5]
-  * linear density of electric charge
-  * `τ`
-  * `C/m`
-  * `C·L⁻¹`
-*
-  * {bpref "def_part6_catalogued_kind"}[6-6]
-  * electric dipole moment
-  * `p`
-  * `C·m`
-  * `C·L`
-*
-  * {bpref "def_part6_catalogued_kind"}[6-7]
-  * electric polarization
-  * `P`
-  * `C/m²`
-  * `C·L⁻²`
-*
-  * {bpref "def_part6_catalogued_kind"}[6-8]
-  * electric current density
-  * `J`
-  * `A/m²`
-  * `C·T⁻¹·L⁻²`
-*
-  * {bpref "def_part6_catalogued_kind"}[6-9]
-  * linear electric current density
-  * `J_S`
-  * `A/m`
-  * `C·T⁻¹·L⁻¹`
-*
-  * {bpref "thm_part6_ampere_volt"}[6-10]
-  * electric field strength
-  * `E`
-  * `V/m`
-  * `M·L·T⁻²·C⁻¹`
-*
-  * {bpref "thm_part6_scale_collision"}[6-11.1]
-  * electric potential
-  * `V`
-  * `V`
-  * `M·L²·T⁻²·C⁻¹`
-*
-  * {bpref "thm_part6_scale_collision"}[6-11.2]
-  * electric potential difference
-  * `V_ab`
-  * `V`
-  * `M·L²·T⁻²·C⁻¹`
-*
-  * {bpref "thm_part6_scale_collision"}[6-11.3]
-  * voltage
-  * `U`
-  * `V`
-  * `M·L²·T⁻²·C⁻¹`
-*
-  * {bpref "thm_part6_scale_collision"}[6-11.4]
-  * induced voltage
-  * `U_i`
-  * `V`
-  * `M·L²·T⁻²·C⁻¹`
-*
-  * {bpref "def_part6_catalogued_kind"}[6-12]
-  * electric flux density
-  * `D`
-  * `C/m²`
-  * `C·L⁻²`
-*
-  * {bpref "thm_part6_current_dim"}[6-13]
-  * capacitance
-  * `C`
-  * `F`
-  * `C²·M⁻¹·L⁻²·T²`
-*
-  * {bpref "def_part6_catalogued_kind"}[6-14.1]
-  * electric constant
-  * `ε_0`
-  * `F/m`
-  * `C²·M⁻¹·L⁻³·T²`
-*
-  * {bpref "def_part6_catalogued_kind"}[6-14.2]
-  * permittivity
-  * `ε`
-  * `F/m`
-  * `C²·M⁻¹·L⁻³·T²`
-*
-  * {bpref "thm_part6_dim_one"}[6-15]
-  * relative permittivity
-  * `ε_r`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part6_dim_one"}[6-16]
-  * electric susceptibility
-  * `χ`
-  * `1`
-  * `1`
-*
-  * {bpref "def_part6_catalogued_kind"}[6-17]
-  * electric flux
-  * `Ψ`
-  * `C`
-  * `C`
-*
-  * {bpref "def_part6_catalogued_kind"}[6-18]
-  * displacement current density
-  * `J_D`
-  * `A/m²`
-  * `C·T⁻¹·L⁻²`
-*
-  * {bpref "def_part6_catalogued_kind"}[6-19.1]
-  * displacement current
-  * `I_D`
-  * `A`
-  * `C·T⁻¹`
-*
-  * {bpref "def_part6_catalogued_kind"}[6-19.2]
-  * total current
-  * `I_tot`
-  * `A`
-  * `C·T⁻¹`
-*
-  * {bpref "def_part6_catalogued_kind"}[6-20]
-  * total current density
-  * `J_tot`
-  * `A/m²`
-  * `C·T⁻¹·L⁻²`
-*
-  * {bpref "thm_part6_current_dim"}[6-21]
-  * magnetic flux density
-  * `B`
-  * `T`
-  * `M·T⁻¹·C⁻¹`
-*
-  * {bpref "thm_part6_current_dim"}[6-22.1]
-  * magnetic flux
-  * `Φ`
-  * `Wb`
-  * `M·L²·T⁻¹·C⁻¹`
-*
-  * {bpref "def_part6_catalogued_kind"}[6-22.2]
-  * protoflux
-  * `Ψ_p`
-  * `Wb`
-  * `M·L²·T⁻¹·C⁻¹`
-*
-  * {bpref "def_part6_catalogued_kind"}[6-22.3]
-  * linked magnetic flux
-  * `Φ_l`
-  * `Wb`
-  * `M·L²·T⁻¹·C⁻¹`
-*
-  * {bpref "def_part6_catalogued_kind"}[6-22.4]
-  * total magnetic flux
-  * `Ψ`
-  * `Wb`
-  * `M·L²·T⁻¹·C⁻¹`
-*
-  * {bpref "def_part6_catalogued_kind"}[6-23]
-  * magnetic moment
-  * `m`
-  * `A·m²`
-  * `C·T⁻¹·L²`
-*
-  * {bpref "def_part6_catalogued_kind"}[6-24]
-  * magnetization
-  * `M`
-  * `A/m`
-  * `C·T⁻¹·L⁻¹`
-*
-  * {bpref "def_part6_catalogued_kind"}[6-25]
-  * magnetic field strength
-  * `H`
-  * `A/m`
-  * `C·T⁻¹·L⁻¹`
-*
-  * {bpref "def_part6_catalogued_kind"}[6-26.1]
-  * magnetic constant
-  * `μ_0`
-  * `H/m`
-  * `M·L·C⁻²`
-*
-  * {bpref "def_part6_catalogued_kind"}[6-26.2]
-  * permeability
-  * `μ`
-  * `H/m`
-  * `M·L·C⁻²`
-*
-  * {bpref "thm_part6_dim_one"}[6-27]
-  * relative permeability
-  * `μ_r`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part6_dim_one"}[6-28]
-  * magnetic susceptibility
-  * `κ`
-  * `1`
-  * `1`
-*
-  * {bpref "def_part6_catalogued_kind"}[6-29]
-  * magnetic polarization
-  * `J_m`
-  * `T`
-  * `M·T⁻¹·C⁻¹`
-*
-  * {bpref "def_part6_catalogued_kind"}[6-30]
-  * magnetic dipole moment
-  * `j_m`
-  * `Wb·m`
-  * `M·L³·T⁻¹·C⁻¹`
-*
-  * {bpref "def_part6_catalogued_kind"}[6-31]
-  * coercivity
-  * `H_c`
-  * `A/m`
-  * `C·T⁻¹·L⁻¹`
-*
-  * {bpref "thm_part6_current_dim"}[6-32]
-  * magnetic vector potential
-  * `A`
-  * `Wb/m`
-  * `M·L·T⁻¹·C⁻¹`
-*
-  * {bpref "def_part6_catalogued_kind"}[6-33]
-  * electromagnetic energy density
-  * `w`
-  * `J/m³`
-  * `M·L⁻¹·T⁻²`
-*
-  * {bpref "def_part6_catalogued_kind"}[6-34]
-  * Poynting vector
-  * `S`
-  * `W/m²`
-  * `M·T⁻³`
-*
-  * {bpref "def_part6_catalogued_kind"}[6-35.1]
-  * phase speed of electromagnetic waves
-  * `c`
-  * `m/s`
-  * `L·T⁻¹`
-*
-  * {bpref "def_part6_catalogued_kind"}[6-35.2]
-  * speed of light in vacuum
-  * `c_0`
-  * `m/s`
-  * `L·T⁻¹`
-*
-  * {bpref "thm_part6_scale_collision"}[6-36]
-  * source voltage
-  * `U_s`
-  * `V`
-  * `M·L²·T⁻²·C⁻¹`
-*
-  * {bpref "def_part6_catalogued_kind"}[6-37.1]
-  * magnetic potential
-  * `V_m`
-  * `A`
-  * `C·T⁻¹`
-*
-  * {bpref "def_part6_catalogued_kind"}[6-37.2]
-  * magnetic tension
-  * `U_m`
-  * `A`
-  * `C·T⁻¹`
-*
-  * {bpref "def_part6_catalogued_kind"}[6-37.3]
-  * magnetomotive force
-  * `F_m`
-  * `A`
-  * `C·T⁻¹`
-*
-  * {bpref "thm_part6_dim_one"}[6-38]
-  * number of turns in a winding
-  * `N`
-  * `1`
-  * `1`
-*
-  * {bpref "def_part6_catalogued_kind"}[6-39]
-  * reluctance
-  * `R_m`
-  * `H⁻¹`
-  * `M⁻¹·L⁻²·C²`
-*
-  * {bpref "thm_part6_ohm"}[6-40]
-  * permeance
-  * `Λ`
-  * `H`
-  * `M·L²·C⁻²`
-*
-  * {bpref "def_part6_catalogued_kind"}[6-41.1]
-  * inductance
-  * `L`
-  * `H`
-  * `M·L²·C⁻²`
-*
-  * {bpref "def_part6_catalogued_kind"}[6-41.2]
-  * mutual inductance
-  * `L_mn`
-  * `H`
-  * `M·L²·C⁻²`
-*
-  * {bpref "thm_part6_dim_one"}[6-42.1]
-  * coupling factor
-  * `k`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part6_dim_one"}[6-42.2]
-  * leakage factor
-  * `σ`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part6_ohm"}[6-43]
-  * conductivity
-  * `σ`
-  * `S/m`
-  * `M⁻¹·L⁻³·T·C²`
-*
-  * {bpref "thm_part6_ohm"}[6-44]
-  * resistivity
-  * `ρ`
-  * `Ω·m`
-  * `M·L³·T⁻¹·C⁻²`
-*
-  * {bpref "thm_part6_power_factor"}[6-45]
-  * power
-  * `P`
-  * `W`
-  * `M·L²·T⁻³`
-*
-  * {bpref "thm_part6_ohm"}[6-46]
-  * resistance
-  * `R`
-  * `Ω`
-  * `M·L²·T⁻¹·C⁻²`
-*
-  * {bpref "thm_part6_ohm"}[6-47]
-  * conductance
-  * `G`
-  * `S`
-  * `M⁻¹·L⁻²·T·C²`
-*
-  * {bpref "thm_part6_dim_one"}[6-48]
-  * phase difference
-  * `φ`
-  * `rad`
-  * `1`
-*
-  * {bpref "def_part6_catalogued_kind"}[6-49]
-  * electric current phasor
-  * `I`
-  * `A`
-  * `C·T⁻¹`
-*
-  * {bpref "thm_part6_ampere_volt"}[6-50]
-  * voltage phasor
-  * `U`
-  * `V`
-  * `M·L²·T⁻²·C⁻¹`
-*
-  * {bpref "thm_part6_power_collision"}[6-51.1]
-  * impedance
-  * `Z`
-  * `Ω`
-  * `M·L²·T⁻¹·C⁻²`
-*
-  * {bpref "def_part6_catalogued_kind"}[6-51.2]
-  * impedance of vacuum
-  * `Z_0`
-  * `V/A`
-  * `M·L²·T⁻¹·C⁻²`
-*
-  * {bpref "thm_part6_power_collision"}[6-51.3]
-  * resistance
-  * `R`
-  * `Ω`
-  * `M·L²·T⁻¹·C⁻²`
-*
-  * {bpref "thm_part6_power_collision"}[6-51.4]
-  * reactance
-  * `X`
-  * `Ω`
-  * `M·L²·T⁻¹·C⁻²`
-*
-  * {bpref "def_part6_catalogued_kind"}[6-51.5]
-  * apparent impedance
-  * `Z`
-  * `Ω`
-  * `M·L²·T⁻¹·C⁻²`
-*
-  * {bpref "thm_part6_ohm"}[6-52.1]
-  * admittance
-  * `Y`
-  * `S`
-  * `M⁻¹·L⁻²·T·C²`
-*
-  * {bpref "def_part6_catalogued_kind"}[6-52.2]
-  * admittance of vacuum
-  * `Y_0`
-  * `A/V`
-  * `M⁻¹·L⁻²·T·C²`
-*
-  * {bpref "def_part6_catalogued_kind"}[6-52.3]
-  * conductance
-  * `G`
-  * `S`
-  * `M⁻¹·L⁻²·T·C²`
-*
-  * {bpref "def_part6_catalogued_kind"}[6-52.4]
-  * susceptance
-  * `B`
-  * `S`
-  * `M⁻¹·L⁻²·T·C²`
-*
-  * {bpref "def_part6_catalogued_kind"}[6-52.5]
-  * apparent admittance
-  * `Y`
-  * `S`
-  * `M⁻¹·L⁻²·T·C²`
-*
-  * {bpref "thm_part6_dim_one"}[6-53]
-  * quality factor
-  * `Q`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part6_dim_one"}[6-54]
-  * loss factor
-  * `d`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part6_dim_one"}[6-55]
-  * loss angle
-  * `δ`
-  * `rad`
-  * `1`
-*
-  * {bpref "thm_part6_active_reactive"}[6-56]
-  * active power
-  * `P`
-  * `W`
-  * `M·L²·T⁻³`
-*
-  * {bpref "thm_part6_power_collision"}[6-57]
-  * apparent power
-  * `S`
-  * `VA`
-  * `M·L²·T⁻³`
-*
-  * {bpref "thm_part6_power_factor"}[6-58]
-  * power factor
-  * `λ`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part6_power_collision"}[6-59]
-  * complex power
-  * `S`
-  * `VA`
-  * `M·L²·T⁻³`
-*
-  * {bpref "thm_part6_active_reactive"}[6-60]
-  * reactive power
-  * `Q`
-  * `var`
-  * `M·L²·T⁻³`
-*
-  * {bpref "thm_part6_power_collision"}[6-61]
-  * non-active power
-  * `Q'`
-  * `VA`
-  * `M·L²·T⁻³`
-*
-  * {bpref "def_part6_catalogued_kind"}[6-62]
-  * active energy
-  * `W`
-  * `J`
-  * `M·L²·T⁻²`
+:::iso_doc_table part6IndexTable
 :::

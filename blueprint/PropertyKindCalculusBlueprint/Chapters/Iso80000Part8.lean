@@ -7,10 +7,37 @@ import VersoBlueprint
 -- imports the Part-8 modules of the `Iso80000` library.
 import PropertyKindCalculus.Iso80000.Part8
 import PropertyKindCalculus.Iso80000.Part8.DefiningRelations
+import PropertyKindCalculusBlueprint.ItemIndex
 
 open Verso.Genre
 open Verso.Genre.Manual
 open Informal
+
+open PropertyKindCalculusBlueprint.ItemIndex
+
+/-- Default blueprint node for ISO/IEC 80000-8 item-index rows (editorial). -/
+def part8Default : String := "thm_part8_intensity"
+
+/-- Per-item blueprint cross-reference overrides for the ISO/IEC 80000-8 item
+index (editorial; items not listed link to `part8Default`). Every other column
+is generated from `PropertyKindCalculus.Iso80000.Part8.catalogue`. -/
+def part8Refs : List (String × String) := [
+  ("8-1", "thm_part8_dim_one"),
+  ("8-2.1", "thm_part8_collision"),
+  ("8-2.2", "thm_part8_collision"),
+  ("8-7", "thm_part8_collision"),
+  ("8-8", "def_part8_catalogued_kind"),
+  ("8-9", "def_part8_catalogued_kind"),
+  ("8-11", "def_part8_catalogued_kind"),
+  ("8-14", "thm_part8_dim_one"),
+  ("8-15", "thm_part8_dim_one"),
+  ("8-16", "thm_part8_dim_one"),
+  ("8-17", "def_part8_catalogued_kind")
+]
+
+/-- The ISO/IEC 80000-8 item index, generated live from the catalogue. -/
+def part8IndexTable : DocTable :=
+  standardIndex PropertyKindCalculus.Iso80000.Part8.catalogue part8Default part8Refs
 
 #doc (Manual) "ISO 80000-8 — Acoustics" =>
 
@@ -193,119 +220,5 @@ assigns it. Each item number links to the formalized result it participates in �
 dimension collision, a dimension-one level, a defining relation, or the catalogue itself.
 Symbols and unit strings are _citation locators_; nothing normative is reproduced.
 
-:::table +header (align := left)
-*
-  * Item
-  * Quantity
-  * Symbol
-  * Unit
-  * Dimension
-*
-  * {bpref "thm_part8_dim_one"}[8-1]
-  * logarithmic frequency range
-  * `G`
-  * `oct`
-  * `1`
-*
-  * {bpref "thm_part8_collision"}[8-2.1]
-  * static pressure
-  * `p_s`
-  * `Pa`
-  * `M·L⁻¹·T⁻²`
-*
-  * {bpref "thm_part8_collision"}[8-2.2]
-  * sound pressure
-  * `p`
-  * `Pa`
-  * `M·L⁻¹·T⁻²`
-*
-  * {bpref "thm_part8_intensity"}[8-3]
-  * sound particle displacement
-  * `δ`
-  * `m`
-  * `L`
-*
-  * {bpref "thm_part8_intensity"}[8-4]
-  * sound particle velocity
-  * `u`
-  * `m/s`
-  * `L·T⁻¹`
-*
-  * {bpref "thm_part8_intensity"}[8-5]
-  * sound particle acceleration
-  * `a`
-  * `m/s²`
-  * `L·T⁻²`
-*
-  * {bpref "thm_part8_intensity"}[8-6]
-  * volume flow rate
-  * `q_V`
-  * `m³/s`
-  * `L³·T⁻¹`
-*
-  * {bpref "thm_part8_collision"}[8-7]
-  * sound energy density
-  * `w`
-  * `J/m³`
-  * `M·L⁻¹·T⁻²`
-*
-  * {bpref "def_part8_catalogued_kind"}[8-8]
-  * sound energy
-  * `Q`
-  * `J`
-  * `M·L²·T⁻²`
-*
-  * {bpref "def_part8_catalogued_kind"}[8-9]
-  * sound power
-  * `P`
-  * `W`
-  * `M·L²·T⁻³`
-*
-  * {bpref "thm_part8_intensity"}[8-10]
-  * sound intensity
-  * `I`
-  * `W/m²`
-  * `M·T⁻³`
-*
-  * {bpref "def_part8_catalogued_kind"}[8-11]
-  * sound exposure
-  * `E`
-  * `Pa²·s`
-  * `M²·L⁻²·T⁻³`
-*
-  * {bpref "thm_part8_intensity"}[8-12]
-  * characteristic impedance of a medium
-  * `Z_c`
-  * `Pa·s/m`
-  * `M·L⁻²·T⁻¹`
-*
-  * {bpref "thm_part8_intensity"}[8-13]
-  * acoustic impedance
-  * `Z_a`
-  * `Pa·s/m³`
-  * `M·L⁻⁴·T⁻¹`
-*
-  * {bpref "thm_part8_dim_one"}[8-14]
-  * sound pressure level
-  * `L_p`
-  * `dB`
-  * `1`
-*
-  * {bpref "thm_part8_dim_one"}[8-15]
-  * sound power level
-  * `L_W`
-  * `dB`
-  * `1`
-*
-  * {bpref "thm_part8_dim_one"}[8-16]
-  * sound exposure level
-  * `L_E`
-  * `dB`
-  * `1`
-*
-  * {bpref "def_part8_catalogued_kind"}[8-17]
-  * reverberation time
-  * `T`
-  * `s`
-  * `T`
+:::iso_doc_table part8IndexTable
 :::

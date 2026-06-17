@@ -7,10 +7,63 @@ import VersoBlueprint
 -- chapter imports the Part-5 modules of the `Iso80000` library (PhysLib-backed).
 import PropertyKindCalculus.Iso80000.Part5
 import PropertyKindCalculus.Iso80000.Part5.DefiningRelations
+import PropertyKindCalculusBlueprint.ItemIndex
 
 open Verso.Genre
 open Verso.Genre.Manual
 open Informal
+
+open PropertyKindCalculusBlueprint.ItemIndex
+
+/-- Default blueprint node for ISO/IEC 80000-5 item-index rows (editorial). -/
+def part5Default : String := "def_part5_catalogued_kind"
+
+/-- Per-item blueprint cross-reference overrides for the ISO/IEC 80000-5 item
+index (editorial; items not listed link to `part5Default`). Every other column
+is generated from `PropertyKindCalculus.Iso80000.Part5.catalogue`. -/
+def part5Refs : List (String × String) := [
+  ("5-1", "thm_part5_scale_collision"),
+  ("5-2", "thm_part5_scale_collision"),
+  ("5-3.1", "thm_part5_entropy_dim"),
+  ("5-3.2", "thm_part5_entropy_dim"),
+  ("5-3.3", "thm_part5_entropy_dim"),
+  ("5-6.1", "thm_part5_entropy_heatCapacity"),
+  ("5-7", "thm_part5_specific_heat"),
+  ("5-8", "thm_part5_specific_heat"),
+  ("5-10.1", "thm_part5_specific_heat"),
+  ("5-11", "thm_part5_specific_heat"),
+  ("5-13", "thm_part5_specific_heat"),
+  ("5-15", "thm_part5_entropy_heatCapacity"),
+  ("5-16.1", "thm_part5_specific_heat"),
+  ("5-16.2", "thm_part5_specific_heat"),
+  ("5-16.3", "thm_part5_ratio"),
+  ("5-17.1", "thm_part5_ratio"),
+  ("5-17.2", "thm_part5_dim_one"),
+  ("5-18", "thm_part5_entropy_heatCapacity"),
+  ("5-19", "thm_part5_specific_heat"),
+  ("5-20.1", "def_part5_energy_species"),
+  ("5-20.2", "thm_part5_helmholtz_gibbs"),
+  ("5-20.3", "thm_part5_helmholtz_gibbs"),
+  ("5-20.4", "thm_part5_helmholtz_gibbs"),
+  ("5-20.5", "thm_part5_helmholtz_gibbs"),
+  ("5-22", "thm_part5_entropy_heatCapacity"),
+  ("5-23", "thm_part5_entropy_heatCapacity"),
+  ("5-25.1", "thm_part5_dim_one"),
+  ("5-25.2", "thm_part5_dim_one"),
+  ("5-26", "thm_part5_specific_heat"),
+  ("5-29", "thm_part5_dim_one"),
+  ("5-30", "thm_part5_dim_one"),
+  ("5-31", "thm_part5_dim_one"),
+  ("5-32", "thm_part5_dim_one"),
+  ("5-33", "thm_part5_dim_one"),
+  ("5-34", "thm_part5_dim_one"),
+  ("5-35", "thm_part5_dim_one"),
+  ("5-36", "thm_part5_scale_collision")
+]
+
+/-- The ISO/IEC 80000-5 item index, generated live from the catalogue. -/
+def part5IndexTable : DocTable :=
+  standardIndex PropertyKindCalculus.Iso80000.Part5.catalogue part5Default part5Refs
 
 #doc (Manual) "ISO 80000-5 — Thermodynamics" =>
 
@@ -338,335 +391,5 @@ scale-type distinction, the energy-family lattice, the entropy/heat-capacity col
 cross-part defining relation, or the catalogue itself. Symbols and unit strings are
 *citation locators*; nothing normative is reproduced.
 
-:::table +header (align := left)
-*
-  * Item
-  * Quantity
-  * Symbol
-  * Unit
-  * Dimension
-*
-  * {bpref "thm_part5_scale_collision"}[5-1]
-  * thermodynamic temperature
-  * `T`
-  * `K`
-  * `Θ`
-*
-  * {bpref "thm_part5_scale_collision"}[5-2]
-  * Celsius temperature
-  * `t`
-  * `°C`
-  * `Θ`
-*
-  * {bpref "thm_part5_entropy_dim"}[5-3.1]
-  * linear expansion coefficient
-  * `α_l`
-  * `K⁻¹`
-  * `Θ⁻¹`
-*
-  * {bpref "thm_part5_entropy_dim"}[5-3.2]
-  * cubic expansion coefficient
-  * `α_V`
-  * `K⁻¹`
-  * `Θ⁻¹`
-*
-  * {bpref "thm_part5_entropy_dim"}[5-3.3]
-  * relative pressure coefficient
-  * `α_p`
-  * `K⁻¹`
-  * `Θ⁻¹`
-*
-  * {bpref "def_part5_catalogued_kind"}[5-4]
-  * pressure coefficient
-  * `β`
-  * `Pa/K`
-  * `M·L⁻¹·T⁻²·Θ⁻¹`
-*
-  * {bpref "def_part5_catalogued_kind"}[5-5.1]
-  * isothermal compressibility
-  * `ϰ_T`
-  * `Pa⁻¹`
-  * `M⁻¹·L·T²`
-*
-  * {bpref "def_part5_catalogued_kind"}[5-5.2]
-  * isentropic compressibility
-  * `ϰ_S`
-  * `Pa⁻¹`
-  * `M⁻¹·L·T²`
-*
-  * {bpref "thm_part5_entropy_heatCapacity"}[5-6.1]
-  * heat
-  * `Q`
-  * `J`
-  * `M·L²·T⁻²`
-*
-  * {bpref "def_part5_catalogued_kind"}[5-6.2]
-  * latent heat
-  * `Q`
-  * `J`
-  * `M·L²·T⁻²`
-*
-  * {bpref "thm_part5_specific_heat"}[5-7]
-  * heat flow rate
-  * `Φ`
-  * `W`
-  * `M·L²·T⁻³`
-*
-  * {bpref "thm_part5_specific_heat"}[5-8]
-  * density of heat flow rate
-  * `q`
-  * `W/m²`
-  * `M·T⁻³`
-*
-  * {bpref "def_part5_catalogued_kind"}[5-9]
-  * thermal conductivity
-  * `λ`
-  * `W/(m·K)`
-  * `M·L·T⁻³·Θ⁻¹`
-*
-  * {bpref "thm_part5_specific_heat"}[5-10.1]
-  * coefficient of heat transfer
-  * `K`
-  * `W/(m²·K)`
-  * `M·T⁻³·Θ⁻¹`
-*
-  * {bpref "def_part5_catalogued_kind"}[5-10.2]
-  * surface coefficient of heat transfer
-  * `h`
-  * `W/(m²·K)`
-  * `M·T⁻³·Θ⁻¹`
-*
-  * {bpref "thm_part5_specific_heat"}[5-11]
-  * thermal insulance
-  * `M`
-  * `m²·K/W`
-  * `M⁻¹·T³·Θ`
-*
-  * {bpref "def_part5_catalogued_kind"}[5-12]
-  * thermal resistance
-  * `R`
-  * `K/W`
-  * `M⁻¹·L⁻²·T³·Θ`
-*
-  * {bpref "thm_part5_specific_heat"}[5-13]
-  * thermal conductance
-  * `G`
-  * `W/K`
-  * `M·L²·T⁻³·Θ⁻¹`
-*
-  * {bpref "def_part5_catalogued_kind"}[5-14]
-  * thermal diffusivity
-  * `a`
-  * `m²/s`
-  * `L²·T⁻¹`
-*
-  * {bpref "thm_part5_entropy_heatCapacity"}[5-15]
-  * heat capacity
-  * `C`
-  * `J/K`
-  * `M·L²·T⁻²·Θ⁻¹`
-*
-  * {bpref "thm_part5_specific_heat"}[5-16.1]
-  * specific heat capacity
-  * `c`
-  * `J/(kg·K)`
-  * `L²·T⁻²·Θ⁻¹`
-*
-  * {bpref "thm_part5_specific_heat"}[5-16.2]
-  * specific heat capacity at constant pressure
-  * `c_p`
-  * `J/(kg·K)`
-  * `L²·T⁻²·Θ⁻¹`
-*
-  * {bpref "thm_part5_ratio"}[5-16.3]
-  * specific heat capacity at constant volume
-  * `c_V`
-  * `J/(kg·K)`
-  * `L²·T⁻²·Θ⁻¹`
-*
-  * {bpref "def_part5_catalogued_kind"}[5-16.4]
-  * specific heat capacity at saturated vapour pressure
-  * `c_sat`
-  * `J/(kg·K)`
-  * `L²·T⁻²·Θ⁻¹`
-*
-  * {bpref "thm_part5_ratio"}[5-17.1]
-  * ratio of specific heat capacities
-  * `γ`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part5_dim_one"}[5-17.2]
-  * isentropic exponent
-  * `ϰ`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part5_entropy_heatCapacity"}[5-18]
-  * entropy
-  * `S`
-  * `J/K`
-  * `M·L²·T⁻²·Θ⁻¹`
-*
-  * {bpref "thm_part5_specific_heat"}[5-19]
-  * specific entropy
-  * `s`
-  * `J/(kg·K)`
-  * `L²·T⁻²·Θ⁻¹`
-*
-  * {bpref "def_part5_energy_species"}[5-20.1]
-  * energy
-  * `E`
-  * `J`
-  * `M·L²·T⁻²`
-*
-  * {bpref "thm_part5_helmholtz_gibbs"}[5-20.2]
-  * internal energy
-  * `U`
-  * `J`
-  * `M·L²·T⁻²`
-*
-  * {bpref "thm_part5_helmholtz_gibbs"}[5-20.3]
-  * enthalpy
-  * `H`
-  * `J`
-  * `M·L²·T⁻²`
-*
-  * {bpref "thm_part5_helmholtz_gibbs"}[5-20.4]
-  * Helmholtz energy
-  * `A`
-  * `J`
-  * `M·L²·T⁻²`
-*
-  * {bpref "thm_part5_helmholtz_gibbs"}[5-20.5]
-  * Gibbs energy
-  * `G`
-  * `J`
-  * `M·L²·T⁻²`
-*
-  * {bpref "def_part5_catalogued_kind"}[5-21.1]
-  * specific energy
-  * `e`
-  * `J/kg`
-  * `L²·T⁻²`
-*
-  * {bpref "def_part5_catalogued_kind"}[5-21.2]
-  * specific internal energy
-  * `u`
-  * `J/kg`
-  * `L²·T⁻²`
-*
-  * {bpref "def_part5_catalogued_kind"}[5-21.3]
-  * specific enthalpy
-  * `h`
-  * `J/kg`
-  * `L²·T⁻²`
-*
-  * {bpref "def_part5_catalogued_kind"}[5-21.4]
-  * specific Helmholtz energy
-  * `a`
-  * `J/kg`
-  * `L²·T⁻²`
-*
-  * {bpref "def_part5_catalogued_kind"}[5-21.5]
-  * specific Gibbs energy
-  * `g`
-  * `J/kg`
-  * `L²·T⁻²`
-*
-  * {bpref "thm_part5_entropy_heatCapacity"}[5-22]
-  * Massieu function
-  * `J`
-  * `J/K`
-  * `M·L²·T⁻²·Θ⁻¹`
-*
-  * {bpref "thm_part5_entropy_heatCapacity"}[5-23]
-  * Planck function
-  * `Y`
-  * `J/K`
-  * `M·L²·T⁻²·Θ⁻¹`
-*
-  * {bpref "def_part5_catalogued_kind"}[5-24]
-  * Joule-Thomson coefficient
-  * `μ_JT`
-  * `K/Pa`
-  * `M⁻¹·L·T²·Θ`
-*
-  * {bpref "thm_part5_dim_one"}[5-25.1]
-  * efficiency
-  * `η`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part5_dim_one"}[5-25.2]
-  * maximum efficiency
-  * `η_max`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part5_specific_heat"}[5-26]
-  * specific gas constant
-  * `R_s`
-  * `J/(kg·K)`
-  * `L²·T⁻²·Θ⁻¹`
-*
-  * {bpref "def_part5_catalogued_kind"}[5-27]
-  * mass concentration of water
-  * `w`
-  * `kg/m³`
-  * `M·L⁻³`
-*
-  * {bpref "def_part5_catalogued_kind"}[5-28]
-  * mass concentration of water vapour
-  * `v`
-  * `kg/m³`
-  * `M·L⁻³`
-*
-  * {bpref "thm_part5_dim_one"}[5-29]
-  * mass ratio of water to dry matter
-  * `u`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part5_dim_one"}[5-30]
-  * mass ratio of water vapour to dry gas
-  * `r`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part5_dim_one"}[5-31]
-  * mass fraction of water
-  * `w_H2O`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part5_dim_one"}[5-32]
-  * mass fraction of dry matter
-  * `w_d`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part5_dim_one"}[5-33]
-  * relative humidity
-  * `φ`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part5_dim_one"}[5-34]
-  * relative mass concentration of vapour
-  * `φ`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part5_dim_one"}[5-35]
-  * relative mass ratio of vapour
-  * `ψ`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part5_scale_collision"}[5-36]
-  * dew-point temperature
-  * `T_d`
-  * `K`
-  * `Θ`
+:::iso_doc_table part5IndexTable
 :::

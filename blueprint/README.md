@@ -75,3 +75,101 @@ Two outputs are produced; both can be opened directly as files.
   read from the checked library, not asserted in prose.
 * Planned nodes carry an informal statement and a proof *sketch* only.
 * Source citations follow the core library: Dybkær by `§x.y`, Flater by section.
+
+## Build scripts
+
+Two scripts under `scripts/` automate the render-and-publish pipeline; both are
+idempotent and print absolute paths when they finish.
+
+* **`scripts/ci-pages.sh`** — the full local/CI render. It runs `lake update`,
+  then `lake exe blueprint-gen --output _out/blueprint --with-html-single` (which
+  builds the document and emits both `html-multi/` and a self-contained
+  `html-single/`), then the `file-links.py` pass that makes `html-multi` navigable
+  over `file://`, then renders `PropertyKindCalculus-Blueprint.pdf` from the single
+  page if WeasyPrint is installed (best-effort; skipped otherwise), and finally
+  calls `stage-docs.sh`.
+
+  ```bash
+  cd blueprint
+  ./scripts/ci-pages.sh
+  ```
+
+* **`scripts/stage-docs.sh`** — copies the already-rendered
+  `_out/blueprint/html-multi` (and `html-single/`) into the repo-root `docs/`
+  folder for GitHub Pages (served from `main` at `/docs`), and drops a
+  `.nojekyll` so Verso's `-verso-data/` assets are served verbatim. Run it *after*
+  a render; `ci-pages.sh` already calls it as its last step, so you only invoke it
+  directly when re-staging an existing build.
+
+  ```bash
+  cd blueprint
+  ./scripts/stage-docs.sh   # requires _out/blueprint/html-multi to exist
+  ```
+
+The item-index tables (parts 3–13) and the front-page per-part tally are
+**generated from the Lean catalogues at build time** (see `ItemIndex.lean` and
+`Iso80000/Catalogue.lean`), so they cannot drift from the formalized standard;
+there is no separate generation step to run.
+
+## Why the root build is slow (and how to speed CI up)
+
+A cold `lake build` (or `ci-pages.sh`) spends almost all of its wall-clock time
+in **one** step: elaborating the root `Blueprint.lean` `#doc`, which inlines every
+chapter and then computes the dependency graph and status summary over the whole
+node set. Everything else (the per-chapter `.olean`s) builds in ~10–15 s each.
+
+The cost is structural to Verso, not to anything catalogue-derived. A
+`set_option profiler true` run of the root puts essentially all of the time under
+`interpretation`, against ~**23 ms** of actual term `elaboration`; evaluating all
+~700 catalogue entries to build the eleven item-index tables *and* the tally is
+~**40 ms** of that. The reason:
+
+* Verso's document-elaboration code runs in the Lean **interpreter**, not as
+  compiled native code — both `verso` and `verso-blueprint` ship with
+  `precompileModules := false` (Verso disabled it to dodge a toolchain bug).
+  Interpreted, monad-transformer-heavy elaboration is one to two orders of
+  magnitude slower than native, and the root runs it across the entire assembled
+  document.
+* The single most expensive interpreted operation is a markup `:::table`: its
+  generic directive expander calls `elabBlock` on **every cell**, which recurses
+  into the interpreted inline elaborators (code spans, roles, …). Two large
+  hand-written `:::table`s in `Blueprint.lean` alone cost ≈ **672 s** of a
+  ~16-minute cold build.
+
+**This was addressed.** All the blueprint's data tables are now *term-built* via
+the `iso_doc_table` directive (`ItemIndex.lean`): the directive constructs the
+whole `Block.table` as one term and Verso elaborates it once, bypassing the
+per-cell interpreted path. The eleven catalogue item indexes use it directly; the
+two prose comparison tables on the front page use the `mdTable` helper, whose
+`md` cells carry a tiny inline grammar (text, `` `code` ``, `*emph*`) parsed at
+build time. Converting those two tables cut the cold root elaboration from
+≈ **948 s to ≈ 214 s** (~4×). Prefer `iso_doc_table`/`mdTable` over a markup
+`:::table` for any non-trivial table.
+
+It can still look like a sudden regression even so: local edit/rebuild cycles are
+*incremental* — `Blueprint.olean` is cached and only re-elaborated when a chapter
+or the root changes, so it returns in seconds. The full cold cost only appears on
+a **clean** build (fresh checkout, cleared `.lake`, or CI).
+
+What helps further, in order of payoff vs. effort:
+
+1. **Cache `.lake/build` in CI.** Key the cache on the Lean sources (toolchain +
+   `lake-manifest.json` + the `*.lean` tree). Runs that don't touch the blueprint
+   get a cache hit and skip the root elaboration entirely; only an actual
+   chapter/root edit re-elaborates it. Biggest remaining CI win, no code change.
+2. **Separate "check" from "publish" in CI.** Type-checking the chapters (which
+   verifies every `(lean := …)` link) does not require rendering HTML; only the
+   Pages job needs the full root render + `blueprint-gen`. Splitting them keeps PR
+   feedback fast and pays the cold-root cost only on publish.
+3. **Verso precompilation — not currently available.** Setting
+   `precompileModules := true` for `verso`/`verso-blueprint` would make their
+   elaborators load as a native shared library and remove the interpreted cost
+   wholesale, but it was **tested on this package's pinned `v4.30.0` and fails**:
+   the native build reports `build cycle detected` and the generated dynlibs hit
+   `undefined symbol: initialize_subverso_SubVerso_Module` (Lean exits 127) — the
+   same issue for which Verso disabled it upstream. Revisit when a newer Verso /
+   toolchain re-enables it.
+
+The `blueprint-gen` render and `--with-html-single` add time *on top of* the
+`.olean` elaboration, but the elaboration of the root document is the dominant
+cost.

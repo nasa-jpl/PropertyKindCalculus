@@ -23,10 +23,118 @@ import PropertyKindCalculusBlueprint.Chapters.Iso80000Part11
 import PropertyKindCalculusBlueprint.Chapters.Iso80000Part12
 import PropertyKindCalculusBlueprint.Chapters.Iso80000Part13
 import PropertyKindCalculusBlueprint.Chapters.CrossReferences
+import PropertyKindCalculusBlueprint.ItemIndex
 
 open Verso.Genre
 open Verso.Genre.Manual
 open Informal
+open PropertyKindCalculusBlueprint.ItemIndex
+
+/-- The per-part tally of catalogued quantity kinds, computed live from each
+part's `catalogue` so the front-page counts cannot drift from the formalized
+standards. -/
+def isoTally : DocTable := tallyTable [
+  (PropertyKindCalculus.Iso80000.Part3.source, PropertyKindCalculus.Iso80000.Part3.catalogue),
+  (PropertyKindCalculus.Iso80000.Part4.source, PropertyKindCalculus.Iso80000.Part4.catalogue),
+  (PropertyKindCalculus.Iso80000.Part5.source, PropertyKindCalculus.Iso80000.Part5.catalogue),
+  (PropertyKindCalculus.Iso80000.Part6.source, PropertyKindCalculus.Iso80000.Part6.catalogue),
+  (PropertyKindCalculus.Iso80000.Part7.source, PropertyKindCalculus.Iso80000.Part7.catalogue),
+  (PropertyKindCalculus.Iso80000.Part8.source, PropertyKindCalculus.Iso80000.Part8.catalogue),
+  (PropertyKindCalculus.Iso80000.Part9.source, PropertyKindCalculus.Iso80000.Part9.catalogue),
+  (PropertyKindCalculus.Iso80000.Part10.source, PropertyKindCalculus.Iso80000.Part10.catalogue),
+  (PropertyKindCalculus.Iso80000.Part11.source, PropertyKindCalculus.Iso80000.Part11.catalogue),
+  (PropertyKindCalculus.Iso80000.Part12.source, PropertyKindCalculus.Iso80000.Part12.catalogue),
+  (PropertyKindCalculus.Iso80000.Part13.source, PropertyKindCalculus.Iso80000.Part13.catalogue)
+]
+
+/-- Requirements-at-a-glance table, term-built (see `ItemIndex.mdTable`) so the
+root document elaborates it as one term rather than cell-by-cell as markup. -/
+def requirementsTable : DocTable := mdTable true
+  ["Requirement", "Concrete test", "Specified as", "Status"]
+  [
+  ["R1 — kind discrimination within a dimension",
+   "`vwc ≠ gwc`, both dimension one; all 115 ISO 80000-11 characteristic numbers dimension one, distinct kinds",
+   "kind-indexed `Quantity k R`; dimension-1 disambiguation",
+   "proved"],
+  ["R2 — specialization lattice + comparability",
+   "Width, Height, Diameter specialize Length (ISO 80000-3); weight, static vs kinetic friction force specialize Force (ISO 80000-4); Helmholtz vs Gibbs energy specialize Energy (ISO 80000-5); active vs reactive power specialize Power (IEC 80000-6); radiant vs luminous vs photon flux as radiation-mode trios (ISO 80000-7); the two Froude, five Stokes, four Bejan numbers as sub-suffixed homonyms (ISO 80000-11) — comparable yet distinct, by examination principle",
+   "`Specializes` preorder; `MutuallyComparable`; examination defining-aspect (`Refines`, `distinct_of_examPrinciple`)",
+   "proved"],
+  ["R3 — general vs individual (type vs term)",
+   "`Length` a type; this pencil's length a term",
+   "`KindOfProperty` vs `Quantity k R`",
+   "proved"],
+  ["R4 — kind-gated addition",
+   "`Width+Width` ok; `Width+Height`, `Torque+Energy` rejected",
+   "`Quantity.add` over `Quantity k R` (same-kind gate)",
+   "proved"],
+  ["R5 — interaction algebra (partial, typed)",
+   "`torque × angle = energy`; `fuel × rainfall` an error",
+   "`KMul` / `KDiv`; multiplication–division inverse",
+   "proved"],
+  ["R6 — scale-type operator availability (monotone)",
+   "nominal: only `=`; ratio: `×`, `÷`; thermodynamic temperature (ratio) vs Celsius (interval), same dimension `Θ` (ISO 80000-5); electric potential (interval, gauge-dependent) vs potential difference (ratio), same dimension `V` (IEC 80000-6)",
+   "`ScaleType` order; operator monotonicity; `AllowsRatio` on the standard's temperatures",
+   "proved"],
+  ["R7 — dimension certifies, not decides",
+   "`dim` many-to-one; necessary ≠ sufficient",
+   "`dim` homomorphism",
+   "proved"],
+  ["R8 — units and conversion round-trip",
+   "round-trip metre/foot conversion is the identity; cross-kind is a type error",
+   "`Unit k`; conversion round-trip",
+   "planned"],
+  ["R9 — extensive aggregation",
+   "mass sums over parts; volume-on-mixing does not",
+   "`Extensive`; additive law + counterexample",
+   "proved"],
+  ["R10 — numeric representation parametricity",
+   "same value at `ℝ`/`Int` (proof), `Float` (executable); `FP32`/`IEEE32Exec` refine `ℝ`",
+   "`Carrier`-bounded `Quantity k R`; parametric additivity laws; `CarrierRefinement` + `Quantity.add_refines`",
+   "proved (layer + laws + exec/spec refinement)"],
+  ["R11 — scalar units; vector = numerical array × one scalar unit (ISO 80000-2 §18)",
+   "a displacement as `Quantity k (Fin 3 → ℝ)` with one metre; laws transfer",
+   "pointwise `Carrier (Fin n → R)`; scalar `MetrologicalUnit`",
+   "proved"],
+  ["R12 — verified classification; kind-laws instantiate at the quantity level",
+   "a length built as speed × time is certified by construction; `⟨999⟩` cannot be certified; every certified surface area is `≥ 0`",
+   "`ProductKind` kind-laws; `Quantity.IsProduct` certificate + smart constructor; defining relations from the ISO 80000 remarks (area = `∬√g`)",
+   "proved (product family + area instance)"],
+  ["R13 — scale-spanning units (a third unit category)",
+   "candela ≡ power and mole ≡ 1 are reducible, the kelvin's reduction is invisible (Θ kept independent), the ampere is a genuine base — so scale-spanning is not a function of dimension (ISO 80000-7 candela/mole, ISO 80000-5 kelvin, IEC 80000-6 ampere; Finkelstein–Whitehead 2025)",
+   "`UnitCategory`; `Dimension.MechanicallyReducible`; `ScaleSpanningUnit`; `scaleSpanning_not_determined_by_dimension`",
+   "proved"],
+  ["*(out of scope)* structural value representation",
+   "coordinate frames, tensor variance, transforms",
+   "an orthogonal index over the kind",
+   "not specified"]
+  ]
+
+def sysmlComparisonTable : DocTable := mdTable true
+  ["Aspect", "SysML v2 (2026-04)", "PropertyKindCalculus"]
+  [
+  ["Root organizing axis",
+   "value representation (tensor order, frame)",
+   "kind-of-property (Dybkær)"],
+  ["A *kind of quantity* is…",
+   "a leaf subtype of `ScalarQuantityValue`",
+   "a first-class type index, `Quantity (k : KindOfProperty)`"],
+  ["Role of dimension",
+   "the discriminator for commensurability, on the reference",
+   "a forgetful functor `dim`; certifies, never decides"],
+  ["Two kinds, one dimension (vwc vs gwc)",
+   "indistinguishable",
+   "distinct by construction"],
+  ["Adding a length to a mass",
+   "well-typed (`Scalar × Scalar → Scalar`)",
+   "a type error"],
+  ["Scalar / vector / tensor, frames, transforms",
+   "first-class and rich",
+   "not yet specified (owed — an orthogonal index)"],
+  ["Algebraic laws",
+   "a modelling library; none machine-checked",
+   "proved theorems (preorder, homomorphism, monotonicity)"]
+  ]
 
 #doc (Manual) "PropertyKindCalculus Blueprint" =>
 %%%
@@ -50,19 +158,12 @@ This project addresses *thirteen requirements* about formalizing _metrology_ —
 science of measurement — and discharges most of them as machine-checked theorems
 rather than prose. A substantial part of the library is grounded directly on the
 published *ISO and IEC 80000* metrology standards — _eleven_ of the thirteen parts (every
-part but the two general ones, 1 _General_ and 2 _Mathematics_), catalogued item by item:
+part but the two general ones, 1 _General_ and 2 _Mathematics_), catalogued item by item.
+The table below is generated directly from the formalized catalogues, so its per-part
+counts and total stay in step with the Lean source:
 
-- ISO 80000-3 — _space and time_
-- ISO 80000-4 — _mechanics_
-- ISO 80000-5 — _thermodynamics_
-- IEC 80000-6 — _electromagnetism_
-- ISO 80000-7 — _light and radiation_
-- ISO 80000-8 — _acoustics_
-- ISO 80000-9 — _physical chemistry and molecular physics_
-- ISO 80000-10 — _atomic and nuclear physics_
-- ISO 80000-11 — _characteristic numbers_
-- ISO 80000-12 — _condensed matter physics_
-- IEC 80000-13 — _information science and technology_
+:::iso_doc_table isoTally
+:::
 
 In plain terms, _rigorous metrology_ here means:
 
@@ -379,82 +480,7 @@ Stating it as owed keeps the boundary honest.
 
 ## The requirements at a glance
 
-:::table +header (align := center)
-*
-  * Requirement
-  * Concrete test
-  * Specified as
-  * Status
-*
-  * R1 — kind discrimination within a dimension
-  * `vwc ≠ gwc`, both dimension one; all 115 ISO 80000-11 characteristic numbers dimension one, distinct kinds
-  * kind-indexed `Quantity k R`; dimension-1 disambiguation
-  * proved
-*
-  * R2 — specialization lattice + comparability
-  * Width, Height, Diameter specialize Length (ISO 80000-3); weight, static vs kinetic friction force specialize Force (ISO 80000-4); Helmholtz vs Gibbs energy specialize Energy (ISO 80000-5); active vs reactive power specialize Power (IEC 80000-6); radiant vs luminous vs photon flux as radiation-mode trios (ISO 80000-7); the two Froude, five Stokes, four Bejan numbers as sub-suffixed homonyms (ISO 80000-11) — comparable yet distinct, by examination principle
-  * `Specializes` preorder; `MutuallyComparable`; examination defining-aspect (`Refines`, `distinct_of_examPrinciple`)
-  * proved
-*
-  * R3 — general vs individual (type vs term)
-  * `Length` a type; this pencil's length a term
-  * `KindOfProperty` vs `Quantity k R`
-  * proved
-*
-  * R4 — kind-gated addition
-  * `Width+Width` ok; `Width+Height`, `Torque+Energy` rejected
-  * `Quantity.add` over `Quantity k R` (same-kind gate)
-  * proved
-*
-  * R5 — interaction algebra (partial, typed)
-  * `torque × angle = energy`; `fuel × rainfall` an error
-  * `KMul` / `KDiv`; multiplication–division inverse
-  * proved
-*
-  * R6 — scale-type operator availability (monotone)
-  * nominal: only `=`; ratio: `×`, `÷`; thermodynamic temperature (ratio) vs Celsius (interval), same dimension `Θ` (ISO 80000-5); electric potential (interval, gauge-dependent) vs potential difference (ratio), same dimension `V` (IEC 80000-6)
-  * `ScaleType` order; operator monotonicity; `AllowsRatio` on the standard's temperatures
-  * proved
-*
-  * R7 — dimension certifies, not decides
-  * `dim` many-to-one; necessary ≠ sufficient
-  * `dim` homomorphism
-  * proved
-*
-  * R8 — units and conversion round-trip
-  * round-trip metre/foot conversion is the identity; cross-kind is a type error
-  * `Unit k`; conversion round-trip
-  * planned
-*
-  * R9 — extensive aggregation
-  * mass sums over parts; volume-on-mixing does not
-  * `Extensive`; additive law + counterexample
-  * proved
-*
-  * R10 — numeric representation parametricity
-  * same value at `ℝ`/`Int` (proof), `Float` (executable); `FP32`/`IEEE32Exec` refine `ℝ`
-  * `Carrier`-bounded `Quantity k R`; parametric additivity laws; `CarrierRefinement` + `Quantity.add_refines`
-  * proved (layer + laws + exec/spec refinement)
-*
-  * R11 — scalar units; vector = numerical array × one scalar unit (ISO 80000-2 §18)
-  * a displacement as `Quantity k (Fin 3 → ℝ)` with one metre; laws transfer
-  * pointwise `Carrier (Fin n → R)`; scalar `MetrologicalUnit`
-  * proved
-*
-  * R12 — verified classification; kind-laws instantiate at the quantity level
-  * a length built as speed × time is certified by construction; `⟨999⟩` cannot be certified; every certified surface area is `≥ 0`
-  * `ProductKind` kind-laws; `Quantity.IsProduct` certificate + smart constructor; defining relations from the ISO 80000 remarks (area = `∬√g`)
-  * proved (product family + area instance)
-*
-  * R13 — scale-spanning units (a third unit category)
-  * candela ≡ power and mole ≡ 1 are reducible, the kelvin's reduction is invisible (Θ kept independent), the ampere is a genuine base — so scale-spanning is not a function of dimension (ISO 80000-7 candela/mole, ISO 80000-5 kelvin, IEC 80000-6 ampere; Finkelstein–Whitehead 2025)
-  * `UnitCategory`; `Dimension.MechanicallyReducible`; `ScaleSpanningUnit`; `scaleSpanning_not_determined_by_dimension`
-  * proved
-*
-  * *(out of scope)* structural value representation
-  * coordinate frames, tensor variance, transforms
-  * an orthogonal index over the kind
-  * not specified
+:::iso_doc_table requirementsTable
 :::
 
 # Why a calculus, not a taxonomy
@@ -682,39 +708,7 @@ kind, never a layer the kind hangs beneath.
 
 ### The two designs side by side
 
-:::table +header (align := center)
-*
-  * Aspect
-  * SysML v2 (2026-04)
-  * PropertyKindCalculus
-*
-  * Root organizing axis
-  * value representation (tensor order, frame)
-  * kind-of-property (Dybkær)
-*
-  * A *kind of quantity* is…
-  * a leaf subtype of `ScalarQuantityValue`
-  * a first-class type index, `Quantity (k : KindOfProperty)`
-*
-  * Role of dimension
-  * the discriminator for commensurability, on the reference
-  * a forgetful functor `dim`; certifies, never decides
-*
-  * Two kinds, one dimension (vwc vs gwc)
-  * indistinguishable
-  * distinct by construction
-*
-  * Adding a length to a mass
-  * well-typed (`Scalar × Scalar → Scalar`)
-  * a type error
-*
-  * Scalar / vector / tensor, frames, transforms
-  * first-class and rich
-  * not yet specified (owed — an orthogonal index)
-*
-  * Algebraic laws
-  * a modelling library; none machine-checked
-  * proved theorems (preorder, homomorphism, monotonicity)
+:::iso_doc_table sysmlComparisonTable
 :::
 
 The table is honest in both directions: SysML v2's representation-first design

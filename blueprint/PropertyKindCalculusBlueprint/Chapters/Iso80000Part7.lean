@@ -7,10 +7,64 @@ import VersoBlueprint
 -- kind-laws), so this chapter imports the Part-7 modules of the `Iso80000` library.
 import PropertyKindCalculus.Iso80000.Part7
 import PropertyKindCalculus.Iso80000.Part7.DefiningRelations
+import PropertyKindCalculusBlueprint.ItemIndex
 
 open Verso.Genre
 open Verso.Genre.Manual
 open Informal
+
+open PropertyKindCalculusBlueprint.ItemIndex
+
+/-- Default blueprint node for ISO/IEC 80000-7 item-index rows (editorial). -/
+def part7Default : String := "def_part7_catalogued_kind"
+
+/-- Per-item blueprint cross-reference overrides for the ISO/IEC 80000-7 item
+index (editorial; items not listed link to `part7Default`). Every other column
+is generated from `PropertyKindCalculus.Iso80000.Part7.catalogue`. -/
+def part7Refs : List (String × String) := [
+  ("7-1.2", "thm_part7_dim_one"),
+  ("7-2.1", "thm_part7_candela_power"),
+  ("7-4.1", "thm_part7_collision"),
+  ("7-5.1", "thm_part7_collision"),
+  ("7-6.1", "thm_part7_collision"),
+  ("7-7.1", "thm_part7_irradiance"),
+  ("7-10.1", "thm_part7_dim_one"),
+  ("7-10.2", "thm_part7_dim_one"),
+  ("7-11.1", "thm_part7_efficacy"),
+  ("7-11.2", "thm_part7_efficacy"),
+  ("7-11.3", "thm_part7_efficacy"),
+  ("7-11.4", "thm_part7_efficacy"),
+  ("7-12", "thm_part7_candela_power"),
+  ("7-13", "thm_part7_collision"),
+  ("7-14", "thm_part7_candela_power"),
+  ("7-15", "thm_part7_collision"),
+  ("7-16", "thm_part7_collision"),
+  ("7-19.1", "thm_part7_dim_one"),
+  ("7-19.2", "thm_part7_candela_power"),
+  ("7-20", "thm_part7_trio"),
+  ("7-27.1", "thm_part7_dim_one"),
+  ("7-27.2", "thm_part7_dim_one"),
+  ("7-28.1", "thm_part7_dim_one"),
+  ("7-28.2", "thm_part7_dim_one"),
+  ("7-30.1", "thm_part7_dim_one"),
+  ("7-30.2", "thm_part7_dim_one"),
+  ("7-31.1", "thm_part7_dim_one"),
+  ("7-31.2", "thm_part7_dim_one"),
+  ("7-31.3", "thm_part7_dim_one"),
+  ("7-31.4", "thm_part7_dim_one"),
+  ("7-31.5", "thm_part7_dim_one"),
+  ("7-31.6", "thm_part7_dim_one"),
+  ("7-32.1", "thm_part7_dim_one"),
+  ("7-32.2", "thm_part7_dim_one"),
+  ("7-33.1", "thm_part7_dim_one"),
+  ("7-33.2", "thm_part7_dim_one"),
+  ("7-34", "thm_part7_dim_one"),
+  ("7-37", "thm_part7_candela_power")
+]
+
+/-- The ISO/IEC 80000-7 item index, generated live from the catalogue. -/
+def part7IndexTable : DocTable :=
+  standardIndex PropertyKindCalculus.Iso80000.Part7.catalogue part7Default part7Refs
 
 #doc (Manual) "ISO 80000-7 — Light and radiation" =>
 
@@ -253,407 +307,5 @@ result it participates in — a trio distinction, a dimension collision, a defin
 relation, or the catalogue itself. Symbols and unit strings are _citation locators_;
 nothing normative is reproduced.
 
-:::table +header (align := left)
-*
-  * Item
-  * Quantity
-  * Symbol
-  * Unit
-  * Dimension
-*
-  * {bpref "def_part7_catalogued_kind"}[7-1.1]
-  * speed of light in a medium
-  * `c`
-  * `m/s`
-  * `L·T⁻¹`
-*
-  * {bpref "thm_part7_dim_one"}[7-1.2]
-  * refractive index
-  * `n`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part7_candela_power"}[7-2.1]
-  * radiant energy
-  * `Q_e`
-  * `J`
-  * `M·L²·T⁻²`
-*
-  * {bpref "def_part7_catalogued_kind"}[7-2.2]
-  * spectral radiant energy
-  * `Q_eλ`
-  * `J/nm`
-  * `M·L·T⁻²`
-*
-  * {bpref "def_part7_catalogued_kind"}[7-3.1]
-  * radiant energy density
-  * `w`
-  * `J/m³`
-  * `M·L⁻¹·T⁻²`
-*
-  * {bpref "def_part7_catalogued_kind"}[7-3.2]
-  * spectral radiant energy density (wavelength)
-  * `w_λ`
-  * `J/(m³·nm)`
-  * `M·L⁻²·T⁻²`
-*
-  * {bpref "def_part7_catalogued_kind"}[7-3.3]
-  * spectral radiant energy density (wavenumber)
-  * `w_ṽ`
-  * `J/m²`
-  * `M·T⁻²`
-*
-  * {bpref "thm_part7_collision"}[7-4.1]
-  * radiant flux, radiant power
-  * `Φ_e`
-  * `W`
-  * `M·L²·T⁻³`
-*
-  * {bpref "def_part7_catalogued_kind"}[7-4.2]
-  * spectral radiant flux
-  * `Φ_eλ`
-  * `W/nm`
-  * `M·L·T⁻³`
-*
-  * {bpref "thm_part7_collision"}[7-5.1]
-  * radiant intensity
-  * `I_e`
-  * `W/sr`
-  * `M·L²·T⁻³`
-*
-  * {bpref "def_part7_catalogued_kind"}[7-5.2]
-  * spectral radiant intensity
-  * `I_eλ`
-  * `W/(sr·nm)`
-  * `M·L·T⁻³`
-*
-  * {bpref "thm_part7_collision"}[7-6.1]
-  * radiance
-  * `L_e`
-  * `W/(sr·m²)`
-  * `M·T⁻³`
-*
-  * {bpref "def_part7_catalogued_kind"}[7-6.2]
-  * spectral radiance
-  * `L_eλ`
-  * `W/(sr·m²·nm)`
-  * `M·L⁻¹·T⁻³`
-*
-  * {bpref "thm_part7_irradiance"}[7-7.1]
-  * irradiance
-  * `E_e`
-  * `W/m²`
-  * `M·T⁻³`
-*
-  * {bpref "def_part7_catalogued_kind"}[7-7.2]
-  * spectral irradiance
-  * `E_eλ`
-  * `W/(m²·nm)`
-  * `M·L⁻¹·T⁻³`
-*
-  * {bpref "def_part7_catalogued_kind"}[7-8.1]
-  * radiant exitance
-  * `M_e`
-  * `W/m²`
-  * `M·T⁻³`
-*
-  * {bpref "def_part7_catalogued_kind"}[7-8.2]
-  * spectral radiant exitance
-  * `M_eλ`
-  * `W/(m²·nm)`
-  * `M·L⁻¹·T⁻³`
-*
-  * {bpref "def_part7_catalogued_kind"}[7-9.1]
-  * radiant exposure
-  * `H_e`
-  * `J/m²`
-  * `M·T⁻²`
-*
-  * {bpref "def_part7_catalogued_kind"}[7-9.2]
-  * spectral radiant exposure
-  * `H_eλ`
-  * `J/(m²·nm)`
-  * `M·L⁻²·T⁻²`
-*
-  * {bpref "thm_part7_dim_one"}[7-10.1]
-  * luminous efficiency
-  * `V`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part7_dim_one"}[7-10.2]
-  * spectral luminous efficiency
-  * `V(λ)`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part7_efficacy"}[7-11.1]
-  * luminous efficacy of radiation
-  * `K`
-  * `lm/W`
-  * `1`
-*
-  * {bpref "thm_part7_efficacy"}[7-11.2]
-  * spectral luminous efficacy
-  * `K(λ)`
-  * `lm/W`
-  * `1`
-*
-  * {bpref "thm_part7_efficacy"}[7-11.3]
-  * maximum luminous efficacy
-  * `K_m`
-  * `lm/W`
-  * `1`
-*
-  * {bpref "thm_part7_efficacy"}[7-11.4]
-  * luminous efficacy of a source
-  * `η_v`
-  * `lm/W`
-  * `1`
-*
-  * {bpref "thm_part7_candela_power"}[7-12]
-  * luminous energy
-  * `Q_v`
-  * `lm·s`
-  * `M·L²·T⁻²`
-*
-  * {bpref "thm_part7_collision"}[7-13]
-  * luminous flux
-  * `Φ_v`
-  * `lm`
-  * `M·L²·T⁻³`
-*
-  * {bpref "thm_part7_candela_power"}[7-14]
-  * luminous intensity
-  * `I_v`
-  * `cd`
-  * `M·L²·T⁻³`
-*
-  * {bpref "thm_part7_collision"}[7-15]
-  * luminance
-  * `L_v`
-  * `cd/m²`
-  * `M·T⁻³`
-*
-  * {bpref "thm_part7_collision"}[7-16]
-  * illuminance
-  * `E_v`
-  * `lx`
-  * `M·T⁻³`
-*
-  * {bpref "def_part7_catalogued_kind"}[7-17]
-  * luminous exitance
-  * `M_v`
-  * `lm/m²`
-  * `M·T⁻³`
-*
-  * {bpref "def_part7_catalogued_kind"}[7-18]
-  * luminous exposure
-  * `H_v`
-  * `lx·s`
-  * `M·T⁻²`
-*
-  * {bpref "thm_part7_dim_one"}[7-19.1]
-  * photon number
-  * `N_p`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part7_candela_power"}[7-19.2]
-  * photon energy
-  * `Q_p`
-  * `J`
-  * `M·L²·T⁻²`
-*
-  * {bpref "thm_part7_trio"}[7-20]
-  * photon flux
-  * `Φ_p`
-  * `s⁻¹`
-  * `T⁻¹`
-*
-  * {bpref "def_part7_catalogued_kind"}[7-21]
-  * photon intensity
-  * `I_p`
-  * `s⁻¹·sr⁻¹`
-  * `T⁻¹`
-*
-  * {bpref "def_part7_catalogued_kind"}[7-22]
-  * photon radiance
-  * `L_p`
-  * `m⁻²·s⁻¹·sr⁻¹`
-  * `L⁻²·T⁻¹`
-*
-  * {bpref "def_part7_catalogued_kind"}[7-23]
-  * photon irradiance
-  * `E_p`
-  * `m⁻²·s⁻¹`
-  * `L⁻²·T⁻¹`
-*
-  * {bpref "def_part7_catalogued_kind"}[7-24]
-  * photon exitance
-  * `M_p`
-  * `m⁻²·s⁻¹`
-  * `L⁻²·T⁻¹`
-*
-  * {bpref "def_part7_catalogued_kind"}[7-25]
-  * photon exposure
-  * `H_p`
-  * `m⁻²`
-  * `L⁻²`
-*
-  * {bpref "def_part7_catalogued_kind"}[7-26.1]
-  * tristimulus values (CIE 1931)
-  * `X, Y, Z`
-  * `1`
-  * `1`
-*
-  * {bpref "def_part7_catalogued_kind"}[7-26.2]
-  * tristimulus values (CIE 1964)
-  * `X₁₀, Y₁₀, Z₁₀`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part7_dim_one"}[7-27.1]
-  * colour-matching functions (CIE 1931)
-  * `x̄, ȳ, z̄`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part7_dim_one"}[7-27.2]
-  * colour-matching functions (CIE 1964)
-  * `x̄₁₀, ȳ₁₀, z̄₁₀`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part7_dim_one"}[7-28.1]
-  * chromaticity coordinates (CIE 1931)
-  * `x, y, z`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part7_dim_one"}[7-28.2]
-  * chromaticity coordinates (CIE 1964)
-  * `x₁₀, y₁₀, z₁₀`
-  * `1`
-  * `1`
-*
-  * {bpref "def_part7_catalogued_kind"}[7-29.1]
-  * colour temperature
-  * `T_c`
-  * `K`
-  * `Θ`
-*
-  * {bpref "def_part7_catalogued_kind"}[7-29.2]
-  * correlated colour temperature
-  * `T_cp`
-  * `K`
-  * `Θ`
-*
-  * {bpref "thm_part7_dim_one"}[7-30.1]
-  * emissivity
-  * `ε`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part7_dim_one"}[7-30.2]
-  * emissivity at a specified wavelength
-  * `ε(λ)`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part7_dim_one"}[7-31.1]
-  * absorptance
-  * `α`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part7_dim_one"}[7-31.2]
-  * luminous absorptance
-  * `α_v`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part7_dim_one"}[7-31.3]
-  * reflectance
-  * `ρ`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part7_dim_one"}[7-31.4]
-  * luminous reflectance
-  * `ρ_v`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part7_dim_one"}[7-31.5]
-  * transmittance
-  * `τ`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part7_dim_one"}[7-31.6]
-  * luminous transmittance
-  * `τ_v`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part7_dim_one"}[7-32.1]
-  * transmittance optical density
-  * `D`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part7_dim_one"}[7-32.2]
-  * Napierian absorbance
-  * `A_n`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part7_dim_one"}[7-33.1]
-  * radiance factor
-  * `β_e`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part7_dim_one"}[7-33.2]
-  * luminance factor
-  * `β_v`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part7_dim_one"}[7-34]
-  * reflectance factor
-  * `R`
-  * `1`
-  * `1`
-*
-  * {bpref "def_part7_catalogued_kind"}[7-35.1]
-  * linear attenuation coefficient
-  * `μ`
-  * `m⁻¹`
-  * `L⁻¹`
-*
-  * {bpref "def_part7_catalogued_kind"}[7-35.2]
-  * linear absorption coefficient
-  * `a_l`
-  * `m⁻¹`
-  * `L⁻¹`
-*
-  * {bpref "def_part7_catalogued_kind"}[7-36.1]
-  * mass attenuation coefficient
-  * `μ_m`
-  * `kg⁻¹·m²`
-  * `M⁻¹·L²`
-*
-  * {bpref "def_part7_catalogued_kind"}[7-36.2]
-  * mass absorption coefficient
-  * `α_m`
-  * `kg⁻¹·m²`
-  * `M⁻¹·L²`
-*
-  * {bpref "thm_part7_candela_power"}[7-37]
-  * molar absorption coefficient
-  * `χ`
-  * `m²/mol`
-  * `L²`
+:::iso_doc_table part7IndexTable
 :::

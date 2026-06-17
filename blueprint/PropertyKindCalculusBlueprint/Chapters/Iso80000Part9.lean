@@ -7,10 +7,58 @@ import VersoBlueprint
 -- imports the Part-9 modules of the `Iso80000` library.
 import PropertyKindCalculus.Iso80000.Part9
 import PropertyKindCalculus.Iso80000.Part9.DefiningRelations
+import PropertyKindCalculusBlueprint.ItemIndex
 
 open Verso.Genre
 open Verso.Genre.Manual
 open Informal
+
+open PropertyKindCalculusBlueprint.ItemIndex
+
+/-- Default blueprint node for ISO/IEC 80000-9 item-index rows (editorial). -/
+def part9Default : String := "thm_part9_dim_one"
+
+/-- Per-item blueprint cross-reference overrides for the ISO/IEC 80000-9 item
+index (editorial; items not listed link to `part9Default`). Every other column
+is generated from `PropertyKindCalculus.Iso80000.Part9.catalogue`. -/
+def part9Refs : List (String × String) := [
+  ("9-2", "thm_part9_mole"),
+  ("9-4", "thm_part9_mole"),
+  ("9-5", "thm_part9_mole"),
+  ("9-6.1", "thm_part9_collision"),
+  ("9-6.2", "thm_part9_collision"),
+  ("9-6.3", "thm_part9_collision"),
+  ("9-6.4", "thm_part9_collision"),
+  ("9-7", "thm_part9_collision"),
+  ("9-8", "thm_part9_collision"),
+  ("9-9.1", "thm_part9_mole"),
+  ("9-9.2", "def_part9_catalogued_kind"),
+  ("9-10", "def_part9_catalogued_kind"),
+  ("9-12.1", "thm_part9_mole"),
+  ("9-12.2", "def_part9_catalogued_kind"),
+  ("9-15", "thm_part9_mole"),
+  ("9-16", "thm_part9_collision"),
+  ("9-17", "thm_part9_collision"),
+  ("9-19", "def_part9_catalogued_kind"),
+  ("9-20", "def_part9_catalogued_kind"),
+  ("9-21", "thm_part9_collision"),
+  ("9-28", "def_part9_catalogued_kind"),
+  ("9-30", "thm_part9_collision"),
+  ("9-37.1", "thm_part9_collision"),
+  ("9-37.2", "def_part9_catalogued_kind"),
+  ("9-38", "def_part9_catalogued_kind"),
+  ("9-39", "def_part9_catalogued_kind"),
+  ("9-41", "def_part9_catalogued_kind"),
+  ("9-42", "thm_part9_mole"),
+  ("9-44", "def_part9_catalogued_kind"),
+  ("9-45", "thm_part9_mole"),
+  ("9-48", "thm_part9_mole"),
+  ("9-49", "def_part9_catalogued_kind")
+]
+
+/-- The ISO/IEC 80000-9 item index, generated live from the catalogue. -/
+def part9IndexTable : DocTable :=
+  standardIndex PropertyKindCalculus.Iso80000.Part9.catalogue part9Default part9Refs
 
 #doc (Manual) "ISO 80000-9 — Physical chemistry and molecular physics" =>
 
@@ -183,383 +231,5 @@ assigns it (the mole reduced). Each item number links to the formalized result i
 participates in. Symbols and unit strings are _citation locators_; nothing normative is
 reproduced.
 
-:::table +header (align := left)
-*
-  * Item
-  * Quantity
-  * Symbol
-  * Unit
-  * Dimension
-*
-  * {bpref "thm_part9_dim_one"}[9-1]
-  * number of entities
-  * `N`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part9_mole"}[9-2]
-  * amount of substance
-  * `n`
-  * `mol`
-  * `1`
-*
-  * {bpref "thm_part9_dim_one"}[9-3]
-  * relative atomic mass
-  * `A_r`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part9_mole"}[9-4]
-  * molar mass
-  * `M`
-  * `kg/mol`
-  * `M`
-*
-  * {bpref "thm_part9_mole"}[9-5]
-  * molar volume
-  * `V_m`
-  * `m³/mol`
-  * `L³`
-*
-  * {bpref "thm_part9_collision"}[9-6.1]
-  * molar internal energy
-  * `U_m`
-  * `J/mol`
-  * `M·L²·T⁻²`
-*
-  * {bpref "thm_part9_collision"}[9-6.2]
-  * molar enthalpy
-  * `H_m`
-  * `J/mol`
-  * `M·L²·T⁻²`
-*
-  * {bpref "thm_part9_collision"}[9-6.3]
-  * molar Helmholtz energy
-  * `F_m`
-  * `J/mol`
-  * `M·L²·T⁻²`
-*
-  * {bpref "thm_part9_collision"}[9-6.4]
-  * molar Gibbs energy
-  * `G_m`
-  * `J/mol`
-  * `M·L²·T⁻²`
-*
-  * {bpref "thm_part9_collision"}[9-7]
-  * molar heat capacity
-  * `C_m`
-  * `J/(mol·K)`
-  * `M·L²·T⁻²·Θ⁻¹`
-*
-  * {bpref "thm_part9_collision"}[9-8]
-  * molar entropy
-  * `S_m`
-  * `J/(mol·K)`
-  * `M·L²·T⁻²·Θ⁻¹`
-*
-  * {bpref "thm_part9_mole"}[9-9.1]
-  * particle concentration
-  * `n`
-  * `m⁻³`
-  * `L⁻³`
-*
-  * {bpref "def_part9_catalogued_kind"}[9-9.2]
-  * molecular concentration
-  * `C`
-  * `m⁻³`
-  * `L⁻³`
-*
-  * {bpref "def_part9_catalogued_kind"}[9-10]
-  * mass concentration
-  * `γ`
-  * `kg/m³`
-  * `M·L⁻³`
-*
-  * {bpref "thm_part9_dim_one"}[9-11]
-  * mass fraction
-  * `w`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part9_mole"}[9-12.1]
-  * amount-of-substance concentration
-  * `c`
-  * `mol/m³`
-  * `L⁻³`
-*
-  * {bpref "def_part9_catalogued_kind"}[9-12.2]
-  * standard amount-of-substance concentration
-  * `c°`
-  * `mol/m³`
-  * `L⁻³`
-*
-  * {bpref "thm_part9_dim_one"}[9-13]
-  * mole fraction
-  * `x`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part9_dim_one"}[9-14]
-  * volume fraction
-  * `φ`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part9_mole"}[9-15]
-  * molality
-  * `b`
-  * `mol/kg`
-  * `M⁻¹`
-*
-  * {bpref "thm_part9_collision"}[9-16]
-  * latent heat of phase transition
-  * `C_pt`
-  * `J`
-  * `M·L²·T⁻²`
-*
-  * {bpref "thm_part9_collision"}[9-17]
-  * chemical potential
-  * `μ`
-  * `J/mol`
-  * `M·L²·T⁻²`
-*
-  * {bpref "thm_part9_dim_one"}[9-18]
-  * absolute activity
-  * `λ`
-  * `1`
-  * `1`
-*
-  * {bpref "def_part9_catalogued_kind"}[9-19]
-  * partial pressure
-  * `p`
-  * `Pa`
-  * `M·L⁻¹·T⁻²`
-*
-  * {bpref "def_part9_catalogued_kind"}[9-20]
-  * fugacity
-  * `p̃`
-  * `Pa`
-  * `M·L⁻¹·T⁻²`
-*
-  * {bpref "thm_part9_collision"}[9-21]
-  * standard chemical potential
-  * `μ°`
-  * `J/mol`
-  * `M·L²·T⁻²`
-*
-  * {bpref "thm_part9_dim_one"}[9-22]
-  * activity factor
-  * `f`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part9_dim_one"}[9-23]
-  * standard absolute activity in a mixture
-  * `λ°`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part9_dim_one"}[9-24]
-  * activity of solute
-  * `a`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part9_dim_one"}[9-25]
-  * activity coefficient
-  * `γ`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part9_dim_one"}[9-26]
-  * standard absolute activity in a solution
-  * `λ°`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part9_dim_one"}[9-27.1]
-  * activity of solvent
-  * `a_A`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part9_dim_one"}[9-27.2]
-  * osmotic coefficient of solvent
-  * `φ`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part9_dim_one"}[9-27.3]
-  * standard absolute activity of solvent
-  * `λ_A°`
-  * `1`
-  * `1`
-*
-  * {bpref "def_part9_catalogued_kind"}[9-28]
-  * osmotic pressure
-  * `Π`
-  * `Pa`
-  * `M·L⁻¹·T⁻²`
-*
-  * {bpref "thm_part9_dim_one"}[9-29]
-  * stoichiometric number
-  * `ν`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part9_collision"}[9-30]
-  * affinity of a chemical reaction
-  * `A`
-  * `J/mol`
-  * `M·L²·T⁻²`
-*
-  * {bpref "thm_part9_dim_one"}[9-31]
-  * extent of reaction
-  * `ξ`
-  * `mol`
-  * `1`
-*
-  * {bpref "thm_part9_dim_one"}[9-32]
-  * standard equilibrium constant
-  * `K°`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part9_dim_one"}[9-33]
-  * equilibrium constant (pressure basis)
-  * `K_p`
-  * `Pa^(Σν)`
-  * `1`
-*
-  * {bpref "thm_part9_dim_one"}[9-34]
-  * equilibrium constant (concentration basis)
-  * `K_c`
-  * `(mol/m³)^(Σν)`
-  * `1`
-*
-  * {bpref "thm_part9_dim_one"}[9-35.1]
-  * microcanonical partition function
-  * `Ω`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part9_dim_one"}[9-35.2]
-  * canonical partition function
-  * `Z`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part9_dim_one"}[9-35.3]
-  * grand-canonical partition function
-  * `Ξ`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part9_dim_one"}[9-35.4]
-  * molecular partition function
-  * `q`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part9_dim_one"}[9-36.1]
-  * statistical weight of subsystem
-  * `g`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part9_dim_one"}[9-36.2]
-  * degeneracy
-  * `g`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part9_collision"}[9-37.1]
-  * molar gas constant
-  * `R`
-  * `J/(mol·K)`
-  * `M·L²·T⁻²·Θ⁻¹`
-*
-  * {bpref "def_part9_catalogued_kind"}[9-37.2]
-  * specific gas constant
-  * `R_s`
-  * `J/(kg·K)`
-  * `L²·T⁻²·Θ⁻¹`
-*
-  * {bpref "def_part9_catalogued_kind"}[9-38]
-  * mean free path
-  * `l`
-  * `m`
-  * `L`
-*
-  * {bpref "def_part9_catalogued_kind"}[9-39]
-  * diffusion coefficient
-  * `D`
-  * `m²/s`
-  * `L²·T⁻¹`
-*
-  * {bpref "thm_part9_dim_one"}[9-40.1]
-  * thermal diffusion ratio
-  * `k_T`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part9_dim_one"}[9-40.2]
-  * thermal diffusion factor
-  * `α_T`
-  * `1`
-  * `1`
-*
-  * {bpref "def_part9_catalogued_kind"}[9-41]
-  * thermal diffusion coefficient
-  * `D_T`
-  * `m²/s`
-  * `L²·T⁻¹`
-*
-  * {bpref "thm_part9_mole"}[9-42]
-  * ionic strength
-  * `I`
-  * `mol/kg`
-  * `M⁻¹`
-*
-  * {bpref "thm_part9_dim_one"}[9-43]
-  * degree of dissociation
-  * `α`
-  * `1`
-  * `1`
-*
-  * {bpref "def_part9_catalogued_kind"}[9-44]
-  * electrolytic conductivity
-  * `κ`
-  * `S/m`
-  * `M⁻¹·L⁻³·T·C²`
-*
-  * {bpref "thm_part9_mole"}[9-45]
-  * molar conductivity
-  * `Λ_m`
-  * `S·m²/mol`
-  * `M⁻¹·L⁻¹·T·C²`
-*
-  * {bpref "thm_part9_dim_one"}[9-46]
-  * transport number of the ion
-  * `t`
-  * `1`
-  * `1`
-*
-  * {bpref "thm_part9_dim_one"}[9-47]
-  * angle of optical rotation
-  * `α`
-  * `rad`
-  * `1`
-*
-  * {bpref "thm_part9_mole"}[9-48]
-  * molar optical rotatory power
-  * `α_n`
-  * `rad·m²/mol`
-  * `L²`
-*
-  * {bpref "def_part9_catalogued_kind"}[9-49]
-  * specific optical rotatory power
-  * `α_m`
-  * `rad·m²/kg`
-  * `M⁻¹·L²`
+:::iso_doc_table part9IndexTable
 :::
