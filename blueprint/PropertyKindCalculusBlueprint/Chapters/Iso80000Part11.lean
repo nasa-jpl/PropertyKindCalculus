@@ -50,6 +50,23 @@ def part11Refs : List (String × String) := [
 def part11IndexTable : DocTable :=
   characteristicNumberIndex PropertyKindCalculus.Iso80000.Part11.catalogue part11Default part11Refs
 
+/-- The constant-versus-characteristic-number comparison (hand-authored), rendered in the
+"kind, not a constant" section. A carrier constant like `π` and a characteristic number
+like the Reynolds or Mach number differ on every axis. -/
+def constantVsKindTable : DocTable :=
+  mdTable false
+    ["", "π (a constant)", "Reynolds, Mach, … (characteristic numbers)"]
+    [ ["*What it is*", "a fixed magnitude in the carrier",
+        "a kind of quantity (dimension one)"],
+      ["*Layer*", "below the kind layer, in the representation",
+        "above the carrier, in the kind layer"],
+      ["*Value*", "the same number in every context",
+        "variable — whatever `ρvL/μ`, `v/c`, … produce"],
+      ["*How formed*", "shipped by the carrier",
+        "by the quotient calculus, the dimensions cancelling to 1"],
+      ["*Identity*", "one value",
+        "each a distinct kind — Reynolds ≠ Mach, though both dimension one"] ]
+
 #doc (Manual) "ISO 80000-11 — Characteristic numbers" =>
 
 The sixth part specified is ISO 80000-11, _Characteristic numbers_ — and it is where the
@@ -247,16 +264,8 @@ _kind of quantity_, dimension one, living _above_ the carrier; its value is _var
 whatever the defining ratio produces in a given situation (`ρvL/μ` for the Reynolds
 number, flow speed over sound speed for the Mach number). The two never coincide:
 
-- _Where it lives._ A constant is a value in the carrier; a characteristic number is a
-  kind, one layer up.
-- _What its value is._ A constant is one fixed number; a characteristic number's value is
-  whatever the defining ratio yields, and changes from one flow to the next.
-- _How it is formed._ A constant is _given_ by the carrier; a characteristic number is
-  _built_, by the quotient calculus, the dimensions of the constituent quantities
-  cancelling to one.
-- _Its identity._ `π` is one value; the Reynolds and Mach numbers are _distinct kinds_
-  even though both are dimension one — and even at one shared numerical value, a Reynolds
-  number of `2000` is not a Mach number of `2000`.
+:::iso_doc_table constantVsKindTable
+:::
 
 This is why the function calculus supplies `π` as a carrier constant and `e = exp 1` as a
 _derived_ one (the only mathematical constant a numeric carrier need supply directly is
@@ -305,34 +314,6 @@ differing identities, the two dimensions by reflexivity. The kinds `reynoldsK`/`
 declared in the function-calculus layer (`PropertyKindCalculus.Function`) for this
 contrast; the catalogued `reynolds`/`euler` of this part carry the same point across all
 115 members. Axiom-free.
-:::
-
-# References to other parts — specified versus work-to-go
-
-The definitions of these characteristic numbers name quantities from other parts of the
-80000 series. Some of those parts this library has already specified; others it leans on
-but has _not_ yet mapped — and those are recorded as _work-to-go_, so the dependency is
-explicit rather than silent.
-
-:::group "iso80000_part11_refs"
-The referenced parts split exactly into the specified ones (ISO 80000-3, -4, -5, IEC
-80000-6, ISO 80000-7) and the work-to-go ones. The split is a checked fact, not a comment.
-:::
-
-:::definition "def_part11_worktogo" (parent := "iso80000_part11_refs") (lean := "PropertyKindCalculus.Iso80000.Part11.workToGoParts")
-The _work-to-go_ references are the parts ISO 80000-11 leans on that this library has not
-yet specified: ISO 80000-8 _Acoustics_ (the speed of sound, for the Mach number), ISO
-80000-9 _Physical chemistry and molecular physics_ (diffusion coefficients, for the
-mass-transfer and material-constant numbers), and ISO 80000-12 _Condensed matter physics_
-(relaxation times, for the rheological and superconductivity numbers).
-:::
-
-:::proof "def_part11_worktogo"
-`workToGoParts := [iso80000_8, iso80000_9, iso80000_12]`, with `referencedParts_partition :
-referencedParts = specifiedReferencedParts ++ workToGoParts` (`rfl`) and
-`workToGoParts_eq_unmapped`, which checks (`decide`) that the work-to-go parts are exactly
-the referenced parts whose part number is not among those this library has mapped
-(`partIsMapped`, the parts 3, 4, 5, 6, 7).
 :::
 
 # Item index — ISO 80000-11
