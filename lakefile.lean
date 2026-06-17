@@ -89,6 +89,7 @@ lean_lib «Dimension» where
     .one `PropertyKindCalculus.Dimension,
     .one `PropertyKindCalculus.ScaleSpanning,
     .one `PropertyKindCalculus.Interaction,
+    .one `PropertyKindCalculus.Function,
     .one `PropertyKindCalculus.QuantityReal]
 
 /-- Worked examples for the Mathlib-backed `Dimension` library — the dimension

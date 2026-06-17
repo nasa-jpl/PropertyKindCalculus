@@ -7,6 +7,11 @@ import VersoBlueprint
 -- the dimension-one collision capstone, and the work-to-go references), so this chapter
 -- imports the Part-11 module of the `Iso80000` library.
 import PropertyKindCalculus.Iso80000.Part11
+-- The "kind, not a constant" section links the function-calculus carrier constants
+-- (`MathCarrier.pi`, the derived `MathCarrier.e`) and the Reynolds-vs-Mach contrast
+-- theorem, so it imports the function-calculus layer (which re-exports the core
+-- `QuantityFunction` carrier capability).
+import PropertyKindCalculus.Function
 import PropertyKindCalculusBlueprint.ItemIndex
 
 open Verso.Genre
@@ -226,6 +231,80 @@ examination principle].
 :::proof "thm_part11_collision"
 `iso80000_11_dim_one_collision : ∃ a b : DimensionedKind, a.kind ≠ b.kind ∧ a.dim = b.dim
 ∧ a.dim = 1`, witnessed by `⟨reynolds, euler, reynolds_ne_euler, rfl, rfl⟩`. Axiom-free.
+:::
+
+# A characteristic number is a kind, not a constant
+
+The collapse to dimension one (the collision above) invites a tempting confusion: if
+every characteristic number is dimension one, isn't it just _a number_ — the same sort of
+thing as `π` or `e`? It is not, and saying why is the clearest statement of the
+two-index architecture: a quantity is a _kind_ carried over a _numeric representation_.
+
+A mathematical constant such as `π` is a fixed _magnitude in the carrier_: it lives
+_below_ the kind layer, in the numbers the magnitudes are drawn from, and it is the same
+value in every context. A characteristic number is the opposite in every respect: it is a
+_kind of quantity_, dimension one, living _above_ the carrier; its value is _variable_ —
+whatever the defining ratio produces in a given situation (`ρvL/μ` for the Reynolds
+number, flow speed over sound speed for the Mach number). The two never coincide:
+
+- _Where it lives._ A constant is a value in the carrier; a characteristic number is a
+  kind, one layer up.
+- _What its value is._ A constant is one fixed number; a characteristic number's value is
+  whatever the defining ratio yields, and changes from one flow to the next.
+- _How it is formed._ A constant is _given_ by the carrier; a characteristic number is
+  _built_, by the quotient calculus, the dimensions of the constituent quantities
+  cancelling to one.
+- _Its identity._ `π` is one value; the Reynolds and Mach numbers are _distinct kinds_
+  even though both are dimension one — and even at one shared numerical value, a Reynolds
+  number of `2000` is not a Mach number of `2000`.
+
+This is why the function calculus supplies `π` as a carrier constant and `e = exp 1` as a
+_derived_ one (the only mathematical constant a numeric carrier need supply directly is
+`π`), while the Reynolds and Mach numbers are _kinds_ in this part, never carrier
+constants. The kind layer keeps the two categories apart exactly where a dimension-only
+model — seeing "dimension one" for all of them — cannot.
+
+:::group "iso80000_part11_kind_not_constant"
+A {uses "def_dim"}[dimension]-one quantity-kind is _not_ a carrier constant. A carrier
+constant (`π`, `e`) is a magnitude in the numeric representation, _below_ the kind layer;
+a {uses "def_part11_char_number"}[characteristic number] is a ratio-scale kind of
+dimension one, _above_ the carrier, formed by the quotient calculus. Distinct
+characteristic numbers stay distinct kinds at one shared dimension — the
+{uses "def_examination"}[measurement principle] separates them, never a value.
+:::
+
+:::definition "def_part11_carrier_constant" (parent := "iso80000_part11_kind_not_constant") (lean := "PropertyKindCalculus.MathCarrier.e")
+A _carrier constant_ is a fixed magnitude supplied by the numeric carrier — `π`, and the
+derived `e = exp 1` — living _below_ the kind layer, in the representation type. It is the
+same value in every context, and it is _not_ a {uses "def_quantity"}[quantity]-kind: it
+carries no kind index, no measurement principle, and is not formed from other quantities.
+This is the categorical opposite of a characteristic number.
+:::
+
+:::proof "def_part11_carrier_constant"
+In the function calculus (`PropertyKindCalculus.QuantityFunction`), the carrier capability
+`MathCarrier` carries `pi` as its _only_ primitive constant — the one transcendental
+constant a numeric carrier ships directly (matching TorchLean's `MathFunctions`). Every
+other constant is _derived_: `MathCarrier.e := MathCarrier.exp 1`, and likewise `ln 2`,
+`√2`, …. Adding them as carrier fields would be redundant, since the operations already
+determine them.
+:::
+
+:::theorem "thm_part11_kind_not_constant" (parent := "iso80000_part11_kind_not_constant") (lean := "PropertyKindCalculus.reynolds_ne_mach_but_both_dimensionless") (tags := "proved") (effort := "small")
+*The Reynolds and Mach numbers are distinct kinds, both dimension one — so neither is a
+carrier constant.* Two characteristic numbers forget to the same dimension one yet are
+different kinds, formed by the quotient calculus from different physical ratios. Unlike
+`π` (a fixed magnitude in the carrier), each is a variable quantity whose value depends on
+the flow. Uses {uses "def_dim"}[the dimension map].
+:::
+
+:::proof "thm_part11_kind_not_constant"
+`reynolds_ne_mach_but_both_dimensionless : reynoldsK.kind ≠ machK.kind ∧
+reynoldsK.toDimension = 1 ∧ machK.toDimension = 1`, the kind inequality by `decide` on the
+differing identities, the two dimensions by reflexivity. The kinds `reynoldsK`/`machK` are
+declared in the function-calculus layer (`PropertyKindCalculus.Function`) for this
+contrast; the catalogued `reynolds`/`euler` of this part carry the same point across all
+115 members. Axiom-free.
 :::
 
 # References to other parts — specified versus work-to-go

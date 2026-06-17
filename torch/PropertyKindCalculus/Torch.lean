@@ -12,3 +12,4 @@ This is the only PropertyKindCalculus library that depends on TorchLean.
 -/
 
 import PropertyKindCalculus.Torch.Fp32
+import PropertyKindCalculus.Torch.Fp32Math
