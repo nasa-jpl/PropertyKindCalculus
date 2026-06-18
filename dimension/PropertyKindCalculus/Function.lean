@@ -29,6 +29,7 @@ It builds on PhysLib (`lake build Dimension`); the core spine stays Mathlib-free
 import PropertyKindCalculus.Dimension
 import PropertyKindCalculus.Interaction
 import PropertyKindCalculus.QuantityFunction
+import PropertyKindCalculus.Complex
 import Mathlib.Analysis.SpecialFunctions.Trigonometric.Basic
 import Mathlib.Analysis.SpecialFunctions.Trigonometric.Inverse
 import Mathlib.Analysis.SpecialFunctions.Trigonometric.Arctan
@@ -93,6 +94,14 @@ noncomputable instance instLawfulMathCarrierReal : LawfulMathCarrier ℝ where
   sq_sqrt := fun _ h => by simpa [pow_two] using Real.sq_sqrt h
   tanh_zero := Real.tanh_zero
   abs_zero := abs_zero
+
+/-- **`ℝ` decides negativity** — the branch-cut capability of the complex carrier
+(`Complex.NegTest`), at the proof representation. Classical (hence noncomputable), like
+`ℝ`'s order: the principal complex square root branches on `sign(im)`, and at `ℝ` that
+decision is the classical `x < 0`. The executable `Float` instance (computable) lives in
+the core `Complex` module. -/
+noncomputable instance instNegTestReal : Complex.NegTest ℝ where
+  isNeg x := decide (x < 0)
 
 /-! ## Family B — the power coherence (`dim k = (dim k₁)^p`)
 

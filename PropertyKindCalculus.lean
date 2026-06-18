@@ -23,5 +23,7 @@ import PropertyKindCalculus.UnitPrefix
 import PropertyKindCalculus.Extensivity
 import PropertyKindCalculus.Quantity
 import PropertyKindCalculus.QuantityClassification
+import PropertyKindCalculus.QuantityFunction
+import PropertyKindCalculus.Complex
 import PropertyKindCalculus.QuantityRefinement
 import PropertyKindCalculus.QuantityVector

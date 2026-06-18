@@ -8,6 +8,7 @@ import PropertyKindCalculusBlueprint.Chapters.DedicatedKind
 import PropertyKindCalculusBlueprint.Chapters.Units
 import PropertyKindCalculusBlueprint.Chapters.Dimension
 import PropertyKindCalculusBlueprint.Chapters.Interaction
+import PropertyKindCalculusBlueprint.Chapters.FunctionCalculus
 import PropertyKindCalculusBlueprint.Chapters.Extensivity
 import PropertyKindCalculusBlueprint.Chapters.Iso80000
 import PropertyKindCalculusBlueprint.Chapters.ScaleSpanning
@@ -840,6 +841,8 @@ in-progress goals until formalized. The headline deliverables are tagged
 {include 0 PropertyKindCalculusBlueprint.Chapters.ScaleSpanning}
 
 {include 0 PropertyKindCalculusBlueprint.Chapters.Interaction}
+
+{include 0 PropertyKindCalculusBlueprint.Chapters.FunctionCalculus}
 
 {include 0 PropertyKindCalculusBlueprint.Chapters.Extensivity}
 
