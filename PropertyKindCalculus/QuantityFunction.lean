@@ -188,6 +188,11 @@ namespace Quantity
 def neg {k : KindOfProperty} {R : Type} [Neg R] (a : Quantity k R) : Quantity k R :=
   ⟨-a.magnitude⟩
 
+/-- Unary `-` on quantities (kind-preserving), the operator-instance counterpart of
+`Quantity.neg` — completing the `Add`/`Sub`/`Neg` family begun in the core `Quantity`
+module. -/
+instance instNeg {k : KindOfProperty} {R : Type} [Neg R] : Neg (Quantity k R) := ⟨Quantity.neg⟩
+
 /-- Absolute value (kind-preserving): `|length|` is a length. -/
 def abs {k : KindOfProperty} {R : Type} [MathCarrier R] (a : Quantity k R) : Quantity k R :=
   ⟨MathCarrier.abs a.magnitude⟩
@@ -221,6 +226,9 @@ def round {k : KindOfProperty} {R : Type} [MathCarrierExt R] (a : Quantity k R) 
 @[simp] theorem neg_magnitude {k : KindOfProperty} {R : Type} [Neg R] (a : Quantity k R) :
     (Quantity.neg a).magnitude = -a.magnitude := rfl
 
+@[simp] theorem neg_op_magnitude {k : KindOfProperty} {R : Type} [Neg R] (a : Quantity k R) :
+    (-a).magnitude = -a.magnitude := rfl
+
 @[simp] theorem abs_magnitude {k : KindOfProperty} {R : Type} [MathCarrier R] (a : Quantity k R) :
     (Quantity.abs a).magnitude = MathCarrier.abs a.magnitude := rfl
 
@@ -245,6 +253,11 @@ structure PowerKind (p : Rat) (k₁ k : KindOfProperty) : Prop where
   ratio₁ : k₁.IsRational
   /-- The power is ratio-scale. -/
   ratioPow : k.IsRational
+
+/-- **Smart constructor.** Build a power law `k = k₁^p` from two *named* ratio-scale kinds,
+the ratio-scale gate discharged by `rfl` for any concrete kinds. -/
+def PowerKind.ofRatio (p : Rat) (k₁ k : KindOfProperty)
+    (h₁ : k₁.IsRational := by rfl) (h : k.IsRational := by rfl) : PowerKind p k₁ k := ⟨h₁, h⟩
 
 namespace Quantity
 

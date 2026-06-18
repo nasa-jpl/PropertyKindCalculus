@@ -148,6 +148,15 @@ $`R \mapsto \mathrm{Complex}\ R` that, given the real arithmetic of $`R`, equips
 $`(\mathrm{re}, \mathrm{im})` with the complex arithmetic. A complex-valued quantity is
 $`\mathrm{Quantity}\ k\ (\mathrm{Complex}\ R)`; the carrier varies
 ($`\mathbb{R}` to prove, `Float` to run) while the kind $`k` does not.
+
+This is a *fourth* point on the representation axis (R10): the three scalar carriers
+($`\mathbb{R}` to prove, a binary32 rounding spec to certify, `Float` to run) are all real,
+and $`\mathrm{Complex}\ R` lifts each of them — $`\mathrm{Complex}\ \mathbb{R}` to prove,
+$`\mathrm{Complex}\ (\mathrm{binary32})` to certify rounding, $`\mathrm{Complex}\ \mathrm{Float}`
+to run. It is a `Carrier`, and a `LawfulCarrier` whenever $`R` is (complex addition is
+componentwise, so the additivity laws lift for free); it carries a full field $`+\,-\,\times\,\div`
+but is _unordered_, so — unlike the real carriers — it sits outside the
+ordinal/interval/ratio carrier tower: complex magnitudes are compared by modulus, not ranked.
 :::
 
 :::proof "def_complex"

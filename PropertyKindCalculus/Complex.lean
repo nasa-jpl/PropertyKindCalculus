@@ -1,5 +1,5 @@
 /-
-# Complex-valued carriers — the complexification of a representation (R10)
+# Complex-valued carriers — the fourth representation (R10): complexifying a carrier
 
 A quantity carries a magnitude *in some numbers* (Dybkær §13.3.3); `Quantity k R`
 makes *which numbers* an explicit carrier parameter `R` (R10). So far every carrier
@@ -135,6 +135,23 @@ kind-gated `Quantity.add`/`Quantity.zero` are available over complex quantities.
 instance [Carrier R] : Carrier (Complex R) where
   zero := ⟨Carrier.zero, Carrier.zero⟩
   add z w := ⟨Carrier.add z.re w.re, Carrier.add z.im w.im⟩
+
+/-- Extensionality for complex carriers: equal real and imaginary parts ⇒ equal. -/
+@[ext] theorem ext {z w : Complex R} (hre : z.re = w.re) (him : z.im = w.im) : z = w := by
+  cases z; cases w; cases hre; cases him; rfl
+
+/-- **`Complex R` is a *lawful* carrier whenever `R` is** (the complex proof
+representation). Complex addition is componentwise, so the additive-monoid laws lift
+directly from `R`'s — making `Complex ℝ` / `Complex Int` lawful complex carriers, exactly
+as the real ones, while `Complex Float` stays a `Carrier` but not a `LawfulCarrier`,
+mirroring `Float`. This is what makes `Complex R` a *fourth* point on the R10 representation
+axis (see the `Quantity` module): complex over `ℝ` to prove, over binary32 to certify
+rounding, over `Float` to run. -/
+instance [LawfulCarrier R] : LawfulCarrier (Complex R) where
+  add_assoc a b c := by ext <;> exact LawfulCarrier.add_assoc _ _ _
+  add_comm a b := by ext <;> exact LawfulCarrier.add_comm _ _
+  zero_add a := by ext <;> exact LawfulCarrier.zero_add _
+  add_zero a := by ext <;> exact LawfulCarrier.add_zero _
 
 /-! ## The branch-cut capability and the principal square root -/
 

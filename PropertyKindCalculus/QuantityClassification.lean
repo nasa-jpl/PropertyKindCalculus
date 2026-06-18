@@ -58,11 +58,23 @@ structure ProductKind (k₁ k₂ k : KindOfProperty) : Prop where
   /-- The product is ratio-scale. -/
   ratioProduct : k.IsRational
 
+/-- **Smart constructor.** Build a product law from three *named* ratio-scale kinds, the
+ratio-scale gate discharged by `rfl` for any concrete kinds. Reads as the kind equation it
+stands for at the call site (`ProductKind.ofRatio k₁ k₂ k`), with the dimensional content
+certified in the application's `Dimension` layer. -/
+def ProductKind.ofRatio (k₁ k₂ k : KindOfProperty)
+    (h₁ : k₁.IsRational := by rfl) (h₂ : k₂.IsRational := by rfl) (h : k.IsRational := by rfl) :
+    ProductKind k₁ k₂ k := ⟨h₁, h₂, h⟩
+
 /-- **Verified construction.** Build a `k`-quantity from a `k₁`- and a `k₂`-quantity,
 licensed by the product law: the result is classified `k` *by construction*. -/
 def Quantity.mul [Mul R] {k₁ k₂ k : KindOfProperty}
     (_h : ProductKind k₁ k₂ k) (a : Quantity k₁ R) (b : Quantity k₂ R) : Quantity k R :=
   ⟨a.magnitude * b.magnitude⟩
+
+@[simp] theorem Quantity.mul_magnitude [Mul R] {k₁ k₂ k : KindOfProperty}
+    (h : ProductKind k₁ k₂ k) (a : Quantity k₁ R) (b : Quantity k₂ R) :
+    (Quantity.mul h a b).magnitude = a.magnitude * b.magnitude := rfl
 
 /-- **The certificate.** `q` (of kind `k`) is the product of `a` (of `k₁`) and `b` (of
 `k₂`): its magnitude is the product of theirs. A proof of this *certifies* `q`'s
@@ -112,12 +124,22 @@ structure QuotientKind (k₁ k₂ k : KindOfProperty) : Prop where
   /-- The quotient is ratio-scale. -/
   ratioQuotient : k.IsRational
 
+/-- **Smart constructor.** Build a quotient law from three *named* ratio-scale kinds, the
+ratio-scale gate discharged by `rfl` for any concrete kinds. -/
+def QuotientKind.ofRatio (k₁ k₂ k : KindOfProperty)
+    (h₁ : k₁.IsRational := by rfl) (h₂ : k₂.IsRational := by rfl) (h : k.IsRational := by rfl) :
+    QuotientKind k₁ k₂ k := ⟨h₁, h₂, h⟩
+
 /-- **Verified construction.** Build a `k`-quantity as the quotient of a `k₁`- by a
 `k₂`-quantity, licensed by the quotient law: the result is classified `k` *by
 construction*. -/
 def Quantity.div [Div R] {k₁ k₂ k : KindOfProperty}
     (_h : QuotientKind k₁ k₂ k) (a : Quantity k₁ R) (b : Quantity k₂ R) : Quantity k R :=
   ⟨a.magnitude / b.magnitude⟩
+
+@[simp] theorem Quantity.div_magnitude [Div R] {k₁ k₂ k : KindOfProperty}
+    (h : QuotientKind k₁ k₂ k) (a : Quantity k₁ R) (b : Quantity k₂ R) :
+    (Quantity.div h a b).magnitude = a.magnitude / b.magnitude := rfl
 
 /-- **The certificate.** `q` (of kind `k`) is the quotient of `a` (of `k₁`) by `b` (of
 `k₂`): its magnitude is the quotient of theirs. A proof *certifies* `q`'s classification

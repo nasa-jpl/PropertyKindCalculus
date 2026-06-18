@@ -25,6 +25,21 @@ an executable IEEE-754 kernel — the same source at three carriers. `Carrier` h
 plays the role of TorchLean's `Context`; the kind index `k` is the layer *above*
 the carrier that TorchLean does not have. The two indices compose.
 
+**Four representations, not three.** Those three carriers are all *real*. Many
+physical quantities take a *complex* value (the relative permittivity of a lossy
+dielectric `ε = ε′ + jε″`, an impedance, an AC phasor), so there is a fourth
+representation: the **complexification** `Complex R` of any of the first three
+(`PropertyKindCalculus.Complex`, a *functor on carriers* `R ↦ Complex R`). Complex-
+ness is a property of the *carrier*, not of the kind — `Quantity k (Complex R)` is
+the *same* kind layer over a complexified carrier — so it is genuinely a fourth point
+on the representation axis, giving `Complex ℝ` to prove, `Complex (binary32)` to
+certify rounding, and `Complex Float` to run. `Complex R` is a `Carrier` (and a
+`LawfulCarrier` whenever `R` is — complex addition is componentwise, so the
+additivity laws lift for free), and it carries the full `+ − × ÷` of a field; but it
+is *unordered* (there is no `≤` on `ℂ`), so it sits **outside** the
+ordinal/interval/ratio carrier tower below — complex magnitudes are compared by
+modulus, not ranked. See the `Complex` module.
+
 The split into `Carrier` (operations) and `LawfulCarrier` (operations *plus* the
 algebraic laws) is deliberate and is the whole point of R10: a law proved once
 over `LawfulCarrier R` transfers to *every* lawful carrier (`Int`, `ℝ`), while an
@@ -39,23 +54,48 @@ import PropertyKindCalculus.Kind
 
 namespace PropertyKindCalculus
 
-/-- **The numeric carrier of a quantity (R10).** The minimal arithmetic a
-kind-indexed magnitude needs, supplied once per representation type `R`. This is
-the role TorchLean's `Context α` plays for tensor element types: the kind, scale,
-dimension, interaction, and extensivity layers are all written *against* this
-class, and so are reused verbatim at every `R`. -/
+/-- **The numeric carrier of a quantity (R10).** The minimal *additive* structure a
+kind-indexed magnitude needs in order to *aggregate*: a zero and an addition, supplied once
+per representation type `R`. This is the role TorchLean's `Context α` plays for tensor element
+types — the kind, scale, dimension, interaction, and extensivity layers are all written
+*against* this class and reused verbatim at every `R`.
+
+**Why a bespoke `zero`/`add` rather than extending Lean's `Zero`/`Add`?** Three reasons, all
+deliberate:
+
+  * **It is the home of additivity (extensivity §13.5, R10), nothing more.** `Carrier` carries
+    *exactly* the operation whose laws the extensivity capstone is about. It is intentionally
+    *not* a field/ring: multiplication and division change the *kind* (length × length = area),
+    so they are cross-kind operations gated by `ProductKind`/`QuotientKind` witnesses, not
+    carrier methods (see `QuantityClassification`); subtraction and the transcendentals ride
+    Lean's own `Sub`/`MathCarrier` at their use sites. Which operations are even *meaningful*
+    is a property of a kind's *scale* (`Scale.lean`: `AllowsOrder`/`AllowsDifference`/
+    `AllowsRatio`), not of the carrier — so the carrier stays minimal and the licensing lives
+    on the kind.
+  * **It keeps the core Mathlib-free and self-contained.** Because `add`/`zero` are bespoke
+    methods, derived carriers — `Carrier (ι → R)` (`QuantityVector`) and `Carrier (Complex R)`
+    (`Complex`) — are built *directly* from `R`'s `Carrier`, with no need for Mathlib's
+    `Pi`/`Complex` algebra instances and with no risk of *instance diamonds* against them in
+    the Mathlib-backed `dimension` layer.
+  * **It draws the R10 line sharply** (see `LawfulCarrier`).
+
+For ergonomic *computation*, the same-kind operator `+` is also available over Lean's `Add`
+(see the "Two additions" note below); on any carrier that is both a `Carrier` and an `Add`,
+the two coincide. -/
 class Carrier (R : Type) where
   /-- The additive unit (a zero magnitude). -/
   zero : R
-  /-- Addition of magnitudes (the operation a same-kind sum is built from). -/
+  /-- Addition of magnitudes — the operation extensive aggregation (§13.5) is built from. -/
   add : R → R → R
 
-/-- **A lawful numeric carrier.** A `Carrier` whose addition additionally obeys
-the additive-monoid laws (associative, commutative, with `zero` a unit). These
-are exactly the laws that hold over `ℝ` (the proof carrier) and `Int`, and that
-*fail* over an executable float — which is why a float is only a `Carrier`. A
-quantity law proved over `LawfulCarrier R` is proved for every lawful `R` at
-once. -/
+/-- **A lawful numeric carrier (the R10 line).** A `Carrier` whose addition additionally obeys
+the additive-monoid laws (associative, commutative, with `zero` a unit). These are exactly the
+laws that hold over `ℝ` (the proof carrier) and `Int`, and that *fail* over an executable
+float (float `+` is not associative) — which is why `Float` is a `Carrier` but **not** a
+`LawfulCarrier`. A quantity law proved over `LawfulCarrier R` is proved for *every* lawful `R`
+at once (R10); the gap to the unlawful executable carrier is what the planned exec/spec
+refinement bridge (`QuantityRefinement`) reconciles, by relating each float operation to the
+rounding of its real-number specification. -/
 class LawfulCarrier (R : Type) extends Carrier R where
   /-- Addition is associative. -/
   add_assoc : ∀ a b c : R, add (add a b) c = add a (add b c)
@@ -76,55 +116,123 @@ structure Quantity (k : KindOfProperty) (R : Type) where
   carried at the representation type `R`. -/
   magnitude : R
 
+/-- **A kind-level difference law (the additive analogue of `ProductKind`).** A witness that
+`k`'s scale *allows differences* — i.e. is interval or ratio (Dybkær §12.19, `Scale.lean`'s
+`AllowsDifference`), the precondition for forming a same-kind sum or difference. It is to the
+*named*, scale-checked `Quantity.add` / `Quantity.sub` what `ProductKind`/`QuotientKind` are to
+`Quantity.mul` / `Quantity.div`: the metrology gate, recorded in the type. (You cannot
+meaningfully add two *nominal* or *ordinal* quantities; this rules that out.) -/
+structure DifferenceKind (k : KindOfProperty) : Prop where
+  /-- `k`'s scale licenses `+`/`−` (interval or ratio). -/
+  allowsDifference : k.scale.AllowsDifference
+
+/-- **Smart constructor.** A difference law for any kind whose scale concretely allows
+differences (interval or ratio); the gate is discharged by `trivial` for a concrete kind. -/
+def DifferenceKind.ofScale {k : KindOfProperty} (h : k.scale.AllowsDifference := by trivial) :
+    DifferenceKind k := ⟨h⟩
+
 namespace Quantity
 
 variable {k : KindOfProperty} {R : Type}
 
+/-- **Extensionality.** Two quantities of the same kind and carrier are equal exactly when
+their magnitudes are — `Quantity` is a one-field wrapper, so equality is decided on the
+magnitude. Registered with `@[ext]` so the `ext` tactic reduces a quantity goal to its
+magnitude. -/
+@[ext] theorem ext {x y : Quantity k R} (h : x.magnitude = y.magnitude) : x = y := by
+  cases x; cases y; cases h; rfl
+
 /-- The zero quantity of a kind (needs only a `Carrier`). -/
 def zero [Carrier R] : Quantity k R := ⟨Carrier.zero⟩
 
-/-- **Kind-gated addition (R4).** Addition of two quantities of the *same* kind
-`k`. The type `Quantity k R → Quantity k R → Quantity k R` is itself the gate:
-both summands must share the kind, so `Width + Width` type-checks while
-`Width + Height` — and `Torque + Energy`, dimensions notwithstanding — does not. -/
-def add [Carrier R] (x y : Quantity k R) : Quantity k R :=
+/-- **Kind- and scale-gated addition (R4, the named/lawful form).** Adds two quantities of the
+*same* kind `k`, over the additive `Carrier`. Two gates, both in the type: the kind index `k`
+(so `Width + Width` type-checks but `Width + Height` does not), and the `DifferenceKind k`
+witness (so the kind's scale must license `+`). This is the *disciplined* counterpart of the
+ergonomic operator `+` — uniform with `Quantity.mul`/`Quantity.div`, which likewise carry their
+kind-law witness — and the operation the R10 additivity laws below are stated about. -/
+def add [Carrier R] (_h : DifferenceKind k) (x y : Quantity k R) : Quantity k R :=
   ⟨Carrier.add x.magnitude y.magnitude⟩
 
 /-- Addition is commutative over any lawful carrier — proved once, for every `R`. -/
-protected theorem add_comm [LawfulCarrier R] (x y : Quantity k R) :
-    Quantity.add x y = Quantity.add y x := by
+protected theorem add_comm [LawfulCarrier R] (h : DifferenceKind k) (x y : Quantity k R) :
+    Quantity.add h x y = Quantity.add h y x := by
   unfold Quantity.add
   rw [LawfulCarrier.add_comm]
 
 /-- Addition is associative over any lawful carrier — proved once, for every `R`. -/
-protected theorem add_assoc [LawfulCarrier R] (x y z : Quantity k R) :
-    Quantity.add (Quantity.add x y) z = Quantity.add x (Quantity.add y z) := by
+protected theorem add_assoc [LawfulCarrier R] (h : DifferenceKind k) (x y z : Quantity k R) :
+    Quantity.add h (Quantity.add h x y) z = Quantity.add h x (Quantity.add h y z) := by
   unfold Quantity.add
   rw [LawfulCarrier.add_assoc]
 
 /-- The zero quantity is a left unit over any lawful carrier. -/
-protected theorem zero_add [LawfulCarrier R] (x : Quantity k R) :
-    Quantity.add Quantity.zero x = x := by
+protected theorem zero_add [LawfulCarrier R] (h : DifferenceKind k) (x : Quantity k R) :
+    Quantity.add h Quantity.zero x = x := by
   unfold Quantity.add Quantity.zero
   rw [LawfulCarrier.zero_add]
 
 /-- The zero quantity is a right unit over any lawful carrier. -/
-protected theorem add_zero [LawfulCarrier R] (x : Quantity k R) :
-    Quantity.add x Quantity.zero = x := by
+protected theorem add_zero [LawfulCarrier R] (h : DifferenceKind k) (x : Quantity k R) :
+    Quantity.add h x Quantity.zero = x := by
   unfold Quantity.add Quantity.zero
   rw [LawfulCarrier.add_zero]
 
-/-- **Representation-parametric additivity (R10).** The additivity laws hold over
-*any* lawful carrier, established by a single proof and so available at every `R`
-at once (`ℝ` for proofs, `Int`, …). The very `R` where these laws are absent —
-an executable float, a `Carrier` but not a `LawfulCarrier` — is what the planned
-exec/spec refinement bridge exists to reconcile. -/
-theorem laws_parametric [LawfulCarrier R] (x y z : Quantity k R) :
-    Quantity.add x y = Quantity.add y x
-      ∧ Quantity.add (Quantity.add x y) z = Quantity.add x (Quantity.add y z)
-      ∧ Quantity.add Quantity.zero x = x ∧ Quantity.add x Quantity.zero = x :=
-  ⟨Quantity.add_comm x y, Quantity.add_assoc x y z,
-    Quantity.zero_add x, Quantity.add_zero x⟩
+/-- **Representation-parametric additivity (R10).** The additivity laws hold over *any* lawful
+carrier, established by a single proof and so available at every `R` at once (`ℝ` for proofs,
+`Int`, …). The very `R` where these laws are absent — an executable float, a `Carrier` but not
+a `LawfulCarrier` — is what the planned exec/spec refinement bridge exists to reconcile. -/
+theorem laws_parametric [LawfulCarrier R] (h : DifferenceKind k) (x y z : Quantity k R) :
+    Quantity.add h x y = Quantity.add h y x
+      ∧ Quantity.add h (Quantity.add h x y) z = Quantity.add h x (Quantity.add h y z)
+      ∧ Quantity.add h Quantity.zero x = x ∧ Quantity.add h x Quantity.zero = x :=
+  ⟨Quantity.add_comm h x y, Quantity.add_assoc h x y z,
+    Quantity.zero_add h x, Quantity.add_zero h x⟩
+
+/-! ### Two additions, two worlds — `Quantity.add` vs `+`
+
+PropertyKindCalculus offers same-kind addition in **two** spellings, for two different jobs.
+Pick by *which world you are in*; on the concrete leaf carriers (`Int`, `ℝ`, `Float`) they
+compute the same value, so it never matters there — the distinction is about *what is in
+scope* and *what you are proving*.
+
+  * **`Quantity.add (h : DifferenceKind k)` — the lawful / metrology world.** Defined over the
+    bespoke `Carrier` (`Carrier.add`), it carries the R10 additivity laws (`LawfulCarrier`)
+    and works over carriers Lean's `Add` cannot reach Mathlib-free — the derived
+    `Carrier (ι → R)` and `Carrier (Complex R)`. It is **scale-gated** (the `DifferenceKind`
+    witness), so it is the operation to use in proofs and in generic code that must be sound
+    across every representation. Uniform with `Quantity.mul`/`Quantity.div`.
+
+  * **`x + y` (the `Add` instance) — the computational world.** Defined over Lean's standard
+    `Add R` (`x.magnitude + y.magnitude`), it needs *no* `Carrier` instance, so it is available
+    over carriers that only supply Lean's `+` — e.g. TorchLean's `Context` — and reads as
+    ordinary arithmetic in an executable kernel (the Mironov forward in `sm-smap-nisar-lean`
+    uses it). It is kind-gated (different kinds are different types) but **not** scale-gated:
+    an operator instance has nowhere to carry the `DifferenceKind` witness, exactly as there is
+    deliberately no `Mul` instance (multiplication is cross-kind). Reach for the named
+    `Quantity.add` when you want that gate enforced.
+
+The subtraction/negation operators `-` / unary `-` mirror `+` (computational world, over
+Lean's `Sub`/`Neg`); their scale-gated named form is `Quantity.sub` below (and `Quantity.neg`
+in the function-calculus module, alongside `abs`/`min`/`max`). -/
+
+/-- **Kind- and scale-gated subtraction (the named form).** The disciplined counterpart of the
+`-` operator: a same-kind difference over Lean's `Sub`, gated by `DifferenceKind k`. (Defined
+over `Sub` rather than `Carrier` because subtraction is not part of the additive-aggregation
+carrier; it is the interval-scale difference.) -/
+def sub [Sub R] (_h : DifferenceKind k) (x y : Quantity k R) : Quantity k R :=
+  ⟨x.magnitude - y.magnitude⟩
+
+/-- Same-kind `+` over any `Add` carrier (kind-gated, ergonomic; the computational-world
+addition — see the "Two additions" note). -/
+instance instAdd [Add R] : Add (Quantity k R) := ⟨fun x y => ⟨x.magnitude + y.magnitude⟩⟩
+/-- Same-kind `-` over any `Sub` carrier (kind-gated, ergonomic). -/
+instance instSub [Sub R] : Sub (Quantity k R) := ⟨fun x y => ⟨x.magnitude - y.magnitude⟩⟩
+
+@[simp] theorem add_magnitude [Add R] (x y : Quantity k R) :
+    (x + y).magnitude = x.magnitude + y.magnitude := rfl
+@[simp] theorem sub_magnitude [Sub R] (x y : Quantity k R) :
+    (x - y).magnitude = x.magnitude - y.magnitude := rfl
 
 end Quantity
 
@@ -156,5 +264,56 @@ each float operation to the rounding of its real-number specification. -/
 instance instCarrierFloat : Carrier Float where
   zero := 0.0
   add := (· + ·)
+
+/-! ## The carrier tower — representations mirroring Dybkær's scale lattice (R-scale ↔ carrier)
+
+`Carrier` above is the *additive-aggregation* carrier — exactly what the extensivity/R10 story
+needs, no more. Dybkær's scale lattice (`Scale.lean`) records, on the *kind* side, which
+operations a kind's scale licenses: order at ordinal, `+`/`−` at interval, `×`/`÷` at ratio.
+The marker classes below mirror that lattice on the *carrier* side. Each bundles exactly the
+standard-Lean arithmetic a representation `R` must supply to carry a quantity of the matching
+scale, and the `extends` chain reproduces the lattice order `ordinal ⊏ interval ⊏ ratio`
+(`ScaleType.le`). They **require** Lean's classes (`LE`/`Add`/`Sub`/`Mul`/…) rather than
+redefining them, so they compose with the field operations the rest of the library already
+rides — `Quantity.mul` over `[Mul R]`, `Quantity.sqrt` over `MathCarrier` — and add no
+instance diamonds.
+
+Two complementary gates, then: a *kind*'s scale says an operation is **meaningful**
+(`DifferenceKind`, `ProductKind`, … on the kind index); a *carrier*'s tier says the
+representation can **compute** it (`IntervalCarrier`, `RatioCarrier`, … on `R`). A sound
+quantity operation needs both. -/
+
+/-- **Ordinal carrier** — a representation that can be *ordered* (`<`, `>`), the least a
+non-nominal magnitude needs. Mirrors `ScaleType.ordinal`. -/
+class OrdinalCarrier (R : Type) [LE R] [LT R] : Prop
+
+/-- **Interval carrier** — additionally supplies `0`, `+`, `−` (and unary `−`): differences
+are representable. Mirrors `ScaleType.interval`; the carrier-side companion of `DifferenceKind`
+(which is the *kind*-side gate for the same `+`/`−`). -/
+class IntervalCarrier (R : Type) [LE R] [LT R] [Zero R] [Add R] [Sub R] [Neg R] : Prop
+    extends OrdinalCarrier R
+
+/-- **Ratio carrier** — additionally supplies `1`, `×`, `÷`: an absolute zero and full field
+arithmetic. Mirrors `ScaleType.ratio`; the carrier-side companion of `ProductKind` /
+`QuotientKind`. The concrete representations the library runs on — `Int`, `ℝ`, `Float` — are
+all ratio carriers. -/
+class RatioCarrier (R : Type) [LE R] [LT R] [Zero R] [One R] [Add R] [Sub R] [Neg R] [Mul R]
+    [Div R] : Prop extends IntervalCarrier R
+
+/-- `Int` is a ratio carrier (the proof carrier with exact arithmetic). -/
+instance : RatioCarrier Int := {}
+/-- `Float` is a ratio carrier (the executable representation). -/
+instance : RatioCarrier Float := {}
+
+/-- **The carrier tower reproduces the scale order.** Every ratio carrier is in particular an
+interval carrier — the carrier-side image of `interval ⊏ ratio` (`ScaleType.allows_mono`). -/
+theorem ratioCarrier_isIntervalCarrier {R : Type}
+    [LE R] [LT R] [Zero R] [One R] [Add R] [Sub R] [Neg R] [Mul R] [Div R] [RatioCarrier R] :
+    IntervalCarrier R := inferInstance
+
+/-- And every interval carrier is an ordinal carrier — the image of `ordinal ⊏ interval`. -/
+theorem intervalCarrier_isOrdinalCarrier {R : Type}
+    [LE R] [LT R] [Zero R] [Add R] [Sub R] [Neg R] [IntervalCarrier R] :
+    OrdinalCarrier R := inferInstance
 
 end PropertyKindCalculus

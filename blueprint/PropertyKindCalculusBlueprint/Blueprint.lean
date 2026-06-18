@@ -349,8 +349,8 @@ parameter bounded by whatever algebraic structure a given task demands, so the
 without changing the kind, scale, dimension, interaction, or extensivity layers
 above it. This is the axis dependent types make not just possible but *necessary*:
 the carrier the kind sits over is exactly where proof and execution diverge, and a
-single quantity must serve both. Three representations matter, and they are not
-interchangeable:
+single quantity must serve both. Three *real* representations matter, and they are not
+interchangeable — and a fourth *complexifies* any of them:
 
 - *Lean's $`\mathbb{R}` — for proofs.* A complete ordered field: the continuous
   specification against which laws (monotonicity, conversion round-trips,
@@ -366,6 +366,20 @@ interchangeable:
   and `isNaN`. This is the representation that actually runs and the one in which
   exceptional values (NaN) can be reasoned about — what one might call the
   "exec" float, distinct from the `FP32` rounding *spec*.
+- *The complexification $`\mathrm{Complex}\ R` of any of the above — for
+  complex-valued quantities.* Many physical quantities take a complex value (the
+  relative permittivity of a lossy dielectric $`\varepsilon = \varepsilon' +
+  j\varepsilon''`, an impedance, an AC phasor); complex-ness is a property of the
+  *carrier*, not the kind, so $`\mathrm{Quantity}\ k\ (\mathrm{Complex}\ R)` is the
+  *same* kind layer over a complexified carrier. As a functor $`R \mapsto
+  \mathrm{Complex}\ R` it lifts each of the three above — $`\mathrm{Complex}\
+  \mathbb{R}` to prove, complex binary32 to certify rounding, $`\mathrm{Complex}\
+  \mathrm{Float}` to run. It is a `Carrier` — and a `LawfulCarrier` whenever $`R`
+  is, since complex addition is componentwise so the additivity laws lift for free —
+  carrying the full field $`+\,-\,\times\,\div`; but it is *unordered* (there is no
+  $`\le` on $`\mathbb{C}`), so unlike the real carriers it sits outside the
+  ordinal/interval/ratio carrier tower: complex magnitudes are compared by modulus,
+  not ranked.
 
 Soundness *across* representations is itself a theorem, not an assumption: an
 exec/spec *refinement* (the executable float result is the rounding of the real

@@ -85,10 +85,10 @@ This is `CarrierRefinement.toSpec_add` lifted along the kind index, so a law pro
 over the lawful spec carrier transfers to the executable run with one rounding
 step. The kind `k` is preserved throughout — the bridge never crosses kinds. -/
 theorem add_refines [Carrier E] [Carrier S] [CarrierRefinement E S]
-    (x y : Quantity k E) :
-    (Quantity.toSpec (Quantity.add x y) : Quantity k S)
+    (h : DifferenceKind k) (x y : Quantity k E) :
+    (Quantity.toSpec (Quantity.add h x y) : Quantity k S)
       = Quantity.roundBy (CarrierRefinement.round (E := E))
-          (Quantity.add (Quantity.toSpec x) (Quantity.toSpec y)) := by
+          (Quantity.add h (Quantity.toSpec x) (Quantity.toSpec y)) := by
   unfold Quantity.toSpec Quantity.roundBy Quantity.add
   rw [CarrierRefinement.toSpec_add]
 
