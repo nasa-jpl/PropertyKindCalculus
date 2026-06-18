@@ -7946,8 +7946,8 @@ parameter bounded by whatever algebraic structure a given task demands, so the
 without changing the kind, scale, dimension, interaction, or extensivity layers
 above it. This is the axis dependent types make not just possible but <strong>necessary</strong>:
 the carrier the kind sits over is exactly where proof and execution diverge, and a
-single quantity must serve both. Three representations matter, and they are not
-interchangeable:</p>
+single quantity must serve both. Three <strong>real</strong> representations matter, and they are not
+interchangeable — and a fourth <strong>complexifies</strong> any of them:</p>
             <ul>
               <li>
                 <p>
@@ -7971,6 +7971,23 @@ interchangeable:</p>
   and <code>isNaN</code>. This is the representation that actually runs and the one in which
   exceptional values (NaN) can be reasoned about — what one might call the
   "exec" float, distinct from the <code>FP32</code> rounding <strong>spec</strong>.</p>
+                </li>
+              <li>
+                <p>
+                  <strong>The complexification <code class="bp_math inline">\mathrm{Complex}\ R</code> of any of the above — for
+  complex-valued quantities.</strong> Many physical quantities take a complex value (the
+  relative permittivity of a lossy dielectric <code class="bp_math inline">\varepsilon = \varepsilon' +
+  j\varepsilon''</code>, an impedance, an AC phasor); complex-ness is a property of the
+  <strong>carrier</strong>, not the kind, so <code class="bp_math inline">\mathrm{Quantity}\ k\ (\mathrm{Complex}\ R)</code> is the
+  <strong>same</strong> kind layer over a complexified carrier. As a functor <code class="bp_math inline">R \mapsto
+  \mathrm{Complex}\ R</code> it lifts each of the three above — <code class="bp_math inline">\mathrm{Complex}\
+  \mathbb{R}</code> to prove, complex binary32 to certify rounding, <code class="bp_math inline">\mathrm{Complex}\
+  \mathrm{Float}</code> to run. It is a <code>Carrier</code> — and a <code>LawfulCarrier</code> whenever <code class="bp_math inline">R</code>
+  is, since complex addition is componentwise so the additivity laws lift for free —
+  carrying the full field <code class="bp_math inline">+\,-\,\times\,\div</code>; but it is <strong>unordered</strong> (there is no
+  <code class="bp_math inline">\le</code> on <code class="bp_math inline">\mathbb{C}</code>), so unlike the real carriers it sits outside the
+  ordinal/interval/ratio carrier tower: complex magnitudes are compared by modulus,
+  not ranked.</p>
                 </li>
               </ul>
             <p>
