@@ -83,6 +83,44 @@ def _renumber_headings(body: str) -> str:
     return re.sub(r"<(/?)(h)([1-6])\b", repl, body, flags=re.I)
 
 
+def _check_heading_nesting(body: str) -> list[str]:
+    """Diagnose whether the merged outline is already a proper, skip-free tree.
+
+    Returns a list of problems (empty == properly nested). A problem is reported
+    for every heading whose *source* level differs from the level a proper-tree
+    renumbering assigns it — i.e. exactly the headings `_renumber_headings` would
+    rewrite. An empty result therefore means that fallback pass had nothing to do on
+    this input (the source outline was already well-nested); a non-empty result means
+    the fallback actively re-levelled the outline to keep the PDF bookmarks correct.
+
+    This makes the `_renumber_headings` fallback *observable*: the PDF is correct
+    either way (the fallback fixes any skew), but the caller surfaces a clear status
+    so a regression — or an insufficient upstream fix — is visible rather than masked.
+    It is the standing guard for verso-blueprint #130 (fixed in PR #134), where
+    declaration sub-section labels (Fields / Methods / Constructors / Extends) were
+    emitted as out-of-order top-level `<h1>` regardless of depth. Those declaration
+    bodies are pruned structurally by `BodyExtractor` (`.bp_external_decl_body`), so
+    this check sees the *same* post-pruning outline `_renumber_headings` normalizes —
+    it reports whether that fallback is still doing real work or merely standing by.
+    """
+    problems: list[str] = []
+    ctx: list[int] = []  # strictly increasing source levels of open ancestor headings
+    # Opening tags only: levels in document order determine the outline tree. The
+    # stack walk mirrors `_renumber_headings` exactly (pop ancestors at the same or a
+    # deeper level, push, assigned level == resulting depth).
+    for m in re.finditer(r"<h([1-6])\b([^>]*)>", body, flags=re.I):
+        lvl = int(m.group(1))
+        while ctx and ctx[-1] >= lvl:
+            ctx.pop()
+        ctx.append(lvl)
+        assigned = len(ctx)
+        if assigned != lvl:
+            idm = re.search(r'\bid="([^"]*)"', m.group(2))
+            where = f"#{idm.group(1)}" if idm else "(no id)"
+            problems.append(f"<h{lvl}> {where} should be <h{assigned}>")
+    return problems
+
+
 def find_all_pages(html_input: Path) -> list[Path]:
     """Return the ordered list of HTML pages to render.
 
@@ -245,9 +283,33 @@ def merge_html(pages: list[Path]) -> str:
         body_parts.append(f'<section class="chapter">{content}</section>')
 
     # Post-process the merged body: the chrome/declaration/dashboard subtrees were
-    # already pruned during extraction (so they emit no PDF bookmarks); now renormalize
-    # the surviving heading levels so the outline is a proper, skip-free tree.
-    body_html = _renumber_headings("".join(body_parts))
+    # already pruned during extraction (so they emit no PDF bookmarks). First *check*
+    # whether the surviving outline is already a proper, skip-free tree and print a
+    # clear PASS / MIS-NESTED status; then renormalize unconditionally. The
+    # `_renumber_headings` pass is kept as a permanent fallback (so the PDF stays
+    # correct if a bug like verso-blueprint #130 recurs or its upstream fix proves
+    # insufficient); the status line above makes plain whether that fallback actually
+    # had to do anything on this build.
+    merged_body = "".join(body_parts)
+    problems = _check_heading_nesting(merged_body)
+    if problems:
+        print(
+            f"heading-nesting check: MIS-NESTED — {len(problems)} problem(s) in the "
+            f"source outline; the _renumber_headings fallback re-levelled them so the "
+            f"PDF bookmark tree stays well-formed (see verso-blueprint #130):",
+            file=sys.stderr,
+        )
+        for p in problems[:20]:
+            print(f"  • {p}", file=sys.stderr)
+        if len(problems) > 20:
+            print(f"  … and {len(problems) - 20} more", file=sys.stderr)
+    else:
+        print(
+            "heading-nesting check: PASS — the source outline is already properly "
+            "nested; the _renumber_headings fallback made no changes.",
+            file=sys.stderr,
+        )
+    body_html = _renumber_headings(merged_body)
 
     pdf_css = """
     <style>

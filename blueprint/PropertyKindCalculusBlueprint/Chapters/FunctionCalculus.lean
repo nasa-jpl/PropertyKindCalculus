@@ -27,17 +27,17 @@ only what a magnitude can _do_, or what numbers it lives _in_, changes.
 # Functions on quantities
 
 :::group "functions"
-The algebraic calculus rides on the toolchain classes for $`\times`, $`\div`, $`{}^{-1}`.
-There is no toolchain class for $`\exp`, $`\sin`, $`\sqrt{\,}`, so the one genuinely new
-artifact is a carrier capability — the function-layer analogue of {uses "def_carrier"}[the
-numeric carrier] — and a family of smart constructors that each carry their own
-metrological discipline. The functions split into five families with genuinely different
-kind signatures: kind-preserving ($`|x|`, $`\min`, $`\max`); powers and roots (the
-dimension scales by the exponent); dimensionless transcendentals ($`\exp`, $`\log` — pure
-number in, pure number out); the trigonometric functions (a plane angle in, a number out —
-curated so that $`\sin` of a reflectivity stays a category error); and logarithmic levels
-(dB, neper — where $`\log` of a ratio demotes the scale, so the product calculus correctly
-refuses it).
+The algebraic calculus rides on the toolchain classes for multiplication, division, and
+reciprocal. There is no toolchain class for `exp`, `sin`, or square root, so the one
+genuinely new artifact is a carrier capability — the function-layer analogue of
+{uses "def_carrier"}[the numeric carrier] — and a family of smart constructors that each
+carry their own metrological discipline. The functions split into five families with
+genuinely different kind signatures: kind-preserving (`abs`, `min`, `max`); powers and
+roots (the dimension scales by the exponent); dimensionless transcendentals (`exp`, `log`
+— pure number in, pure number out); the trigonometric functions (a plane angle in, a
+number out — curated so that `sin` of a reflectivity stays a category error); and
+logarithmic levels (dB, neper — where `log` of a ratio demotes the scale, so the product
+calculus correctly refuses it).
 :::
 
 :::definition "def_mathCarrier" (parent := "functions") (lean := "PropertyKindCalculus.MathCarrier")
@@ -133,13 +133,13 @@ value), and the trigonometric curation is the `Dimension`-layer trig algebra.
 :::group "complex"
 A quantity carries a magnitude _in some numbers_; many physical quantities take that
 magnitude in the _complex_ numbers. The key observation is metrological, not numerical:
-*complex-ness is a property of the carrier, not of the kind*. A complex permittivity
-$`\varepsilon = \varepsilon' + j\varepsilon''` is _one_ kind of quantity — a relative
+*complex-ness is a property of the carrier, not of the kind*. A complex permittivity (a
+real part plus _j_ times an imaginary part) is _one_ kind of quantity — a relative
 permittivity, dimension one, ratio-scale — whose _value_ is complex. It is not two real
 quantities, and not a new dimension. In the two-index design it is exactly
-$`\mathrm{Quantity}\ k\ (\mathrm{Complex}\ R)`: the _same_ kind layer over a
-_complexified_ carrier, so {uses "def_kMul"}[the algebraic calculus] applies verbatim, now
-computing complex products and quotients.
+`Quantity k (Complex R)`: the _same_ kind layer over a _complexified_ carrier, so
+{uses "def_kMul"}[the algebraic calculus] applies verbatim, now computing complex products
+and quotients.
 :::
 
 :::definition "def_complex" (parent := "complex") (lean := "PropertyKindCalculus.Complex") (tags := "proved")

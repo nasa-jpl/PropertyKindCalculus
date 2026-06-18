@@ -223,7 +223,7 @@ The requirements fall into four groups: how kinds are *structured*, how
 *operations* on them are gated, how the kind layer is kept *consistent* with the
 coarser dimension and unit layers, and how values *aggregate* over parts.
 
-## Kind structure
+## Kind structure (R1, R2, R3)
 
 *R1 — Kinds are first-class and discriminate within a dimension.* Two properties
 of the same physical dimension can still be different kinds, and the type system
@@ -269,7 +269,7 @@ type). `Length` is a type; the length of this pencil is a term of type
 `Quantity Length`. The two are never conflated — the punning OWL permits between a
 class and its instances is structurally impossible here.
 
-## Operation gating
+## Operation gating (R4, R5, R6)
 
 *R4 — Operations are gated by kind (the additive law).* Arithmetic that keeps a
 quantity within its kind is well-typed; arithmetic across incompatible kinds is a
@@ -302,7 +302,7 @@ potential is gauge-dependent (fixed only up to an additive reference), hence
 interval-scale, while electric potential difference, of the same dimension `V`, is
 ratio-scale (see the _IEC 80000-6_ chapter).
 
-## Soundness bridges
+## Soundness bridges (R7, R8)
 
 *R7 — Dimension certifies coherence; it does not decide legality.* Every kind has
 a dimension, but dimension is a *consistency check*, not the authorization:
@@ -330,7 +330,7 @@ to another of the *same* kind and back is the identity — conversion is
 multiplication by a ratio, defined only within a kind. There is no conversion
 between units of *different* kinds; that too is a type error, not a runtime check.
 
-## Aggregation
+## Aggregation (R9)
 
 *R9 — Extensive quantities aggregate additively over parts; intensive ones do
 not.* For an *extensive* kind the value over a whole is the sum of the values
@@ -340,7 +340,7 @@ sub-additive (ethanol and water), and that negation is stated to keep the
 extensive predicate honest. Tracking which kinds are extensive is the
 precondition for soundly summing measurements.
 
-## Representation parametricity
+## Representation parametricity (R10)
 
 *R10 — A quantity value is parametric in its numeric representation type.* The
 magnitude of a scalar quantity is carried at a *representation type* $`R`, a type
@@ -402,7 +402,7 @@ refinement of $`\mathbb{R}`) and `IEEE32Exec` (the *executable* kernel, refining
 $`\mathbb{R}` on the finite/no-overflow path, with overflow surfaced as an explicit
 side condition rather than silently dropped).
 
-## Value representation: vectors and scalar units
+## Value representation: vectors and scalar units (R11)
 
 *R11 — Units are scalar; a vector quantity is a numerical array times one scalar
 unit.* Following ISO 80000-2 §18 (scalars, vectors and tensors), a vector (or
@@ -420,7 +420,7 @@ aligns with the VIM's "a quantity is scalar; a vector/tensor is a composite of
 scalar quantities" — the priority SysML v2 inverts (see *Why a calculus, not a
 taxonomy*). The fuller *structural* apparatus is a separate axis, still owed below.
 
-## Verified classification: kind-laws that instantiate at the quantity level
+## Verified classification: kind-laws that instantiate at the quantity level (R12)
 
 *R12 — A classification is a certificate, not an assertion; kind-laws instantiate at
 the quantity level.* By default a kind is a *tag*: `Quantity k R` records the kind but
@@ -447,7 +447,7 @@ own *Remarks* (see the _ISO 80000-3_ chapter), where, for instance, the plane an
 halves of the standards work: the formalized remark *is* the defining relation, and
 classification is the witnessed instantiation of it.
 
-## Unit classification
+## Unit classification (R13)
 
 *R13 — Unit classification needs a third category beyond base and derived:
 scale-spanning units.* The SI sorts units into *base* (kilogram, metre, second, ampere,
