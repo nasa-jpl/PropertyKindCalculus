@@ -16,22 +16,21 @@ lake exe blueprint-gen --output _out/blueprint --with-html-single
 # opening a file:// directory shows the folder instead of its `index.html`. This
 # pass spells out `index.html` in those links so html-multi is navigable over
 # file:// too. It is a no-op for the served site (HTTP maps `Chapter/` to the
-# same file) and for html-single (no inter-page links).
-python3 "$ROOT/scripts/file-links.py" "$OUT/html-multi"
+# same file) and for html-single (no inter-page links). Python comes from pixi
+# (pyproject.toml + pixi.lock), the pinned env shared with the PDF render and CI.
+pixi run python "$ROOT/scripts/file-links.py" "$OUT/html-multi"
 
 # Render a beautifully paginated PDF from the self-contained single page (which
-# Verso emits in document order). Best-effort: if WeasyPrint is not installed the
-# render still succeeds and the HTML outputs are produced as usual. The PDF is
-# placed inside both site directories so the root "download the PDF" link resolves
-# locally and after staging (stage-docs.sh copies the site dirs verbatim).
+# Verso emits in document order), via the shared scripts/render-pdf.sh — the same
+# script the CI workflow calls, so the PDF name and placement live in one place.
+# render-pdf.sh invokes WeasyPrint through the same pixi env. Best-effort here: if
+# pixi is not installed the HTML outputs are still produced and only the PDF is skipped.
 PDF_NAME="PropertyKindCalculus-Blueprint.pdf"
 PDF="$OUT/$PDF_NAME"
-if python3 -c 'import weasyprint' 2>/dev/null; then
-  python3 "$ROOT/scripts/html-to-pdf.py" "$OUT/html-single/index.html" "$PDF"
-  cp "$PDF" "$OUT/html-single/$PDF_NAME"
-  cp "$PDF" "$OUT/html-multi/$PDF_NAME"
+if command -v pixi >/dev/null 2>&1; then
+  "$ROOT/scripts/render-pdf.sh"
 else
-  echo "note: WeasyPrint not installed — skipping PDF (pip3 install weasyprint to enable)." >&2
+  echo "note: pixi not installed — skipping PDF (see blueprint/pyproject.toml; install pixi from https://pixi.sh)." >&2
   PDF=""
 fi
 

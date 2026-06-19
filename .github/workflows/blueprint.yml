@@ -3,9 +3,9 @@ name: Build and Publish Design Blueprint
 # Self-hosted CI for PropertyKindCalculus, modelled on L4YAML's
 # `.github/workflows/test-coverage.yml` but reduced to the blueprint spine:
 # build the Mathlib-free Lean core + examples, build and render the Verso
-# design blueprint, publish the HTML under docs/, and (on main) commit it back.
-# PropertyKindCalculus has no FFI / Rust / Python / doc-gen4 / PDF stages, so
-# those phases of the L4YAML job are intentionally omitted.
+# design blueprint (HTML + a paginated PDF), publish them under docs/, and (on
+# main) commit it back. PropertyKindCalculus has no FFI / Rust / doc-gen4 stages,
+# so those phases of the L4YAML job are intentionally omitted.
 
 on:
   push:
@@ -37,7 +37,7 @@ jobs:
 
       - name: Install Lean toolchain
         run: |
-          # Root and blueprint/ pin the same toolchain (leanprover/lean4:v4.30.0),
+          # Root and blueprint/ pin the same toolchain (leanprover/lean4:v4.31.0),
           # so installing the root one is sufficient for both Lake packages.
           if [ -f lean-toolchain ]; then
             TOOLCHAIN="$(cat lean-toolchain)"
@@ -45,6 +45,20 @@ jobs:
             elan toolchain install "$TOOLCHAIN" || true
           fi
           elan show
+
+      - name: Set up Python tooling via pixi
+        run: |
+          # The blueprint's Python steps (file-links post-pass + the WeasyPrint PDF
+          # render) run on a pinned Python + WeasyPrint managed by pixi
+          # (blueprint/pyproject.toml + pixi.lock), so the host's system python3 is
+          # irrelevant. Install pixi if the runner lacks it, put it on PATH for the
+          # later steps, and materialize the locked environment up front.
+          if ! command -v pixi >/dev/null 2>&1 && [ ! -x "$HOME/.pixi/bin/pixi" ]; then
+            curl -fsSL https://pixi.sh/install.sh | bash
+          fi
+          echo "$HOME/.pixi/bin" >> "$GITHUB_PATH"
+          export PATH="$HOME/.pixi/bin:$PATH"
+          pixi install --manifest-path blueprint/pyproject.toml
 
       # -------------------------------------------------------
       # Phase 1: Build the Lean spine (Mathlib-free core + examples)
@@ -72,15 +86,30 @@ jobs:
           # (html-single/) alongside the multi-page site (html-multi/).
           lake exe blueprint-gen --output _out/blueprint --with-html-single
           # Spell out index.html in multi-page directory links so the site is
-          # also navigable over file:// (a no-op when served over HTTP).
-          python3 scripts/file-links.py _out/blueprint/html-multi
+          # also navigable over file:// (a no-op when served over HTTP). Python runs
+          # through the pinned pixi env (set up above), not the host python3.
+          pixi run python scripts/file-links.py _out/blueprint/html-multi
 
       # -------------------------------------------------------
-      # Phase 3: Publish the rendered HTML under docs/
+      # Phase 3: Render a paginated PDF of the single-page site
       # -------------------------------------------------------
-      - name: Stage blueprint HTML under docs/
+      - name: Render blueprint PDF
+        run: |
+          cd blueprint
+          # render-pdf.sh runs WeasyPrint through the pinned pixi env (Python +
+          # WeasyPrint), the same way the local render (ci-pages.sh) does, and copies
+          # the PDF into html-single/ and html-multi/ so stage-docs.sh publishes it
+          # under docs/. The render is required (the PDF is a published artifact), so
+          # it fails the job loudly rather than silently shipping HTML only.
+          bash scripts/render-pdf.sh
+
+      # -------------------------------------------------------
+      # Phase 4: Publish the rendered HTML + PDF under docs/
+      # -------------------------------------------------------
+      - name: Stage blueprint HTML and PDF under docs/
         # Same script the local render (ci-pages.sh) calls, so the published
-        # docs/ layout is defined in exactly one place.
+        # docs/ layout is defined in exactly one place. It copies html-multi/ and
+        # html-single/ verbatim, carrying the PDF that Phase 3 placed inside them.
         run: bash blueprint/scripts/stage-docs.sh
 
       - name: Upload blueprint as artifact

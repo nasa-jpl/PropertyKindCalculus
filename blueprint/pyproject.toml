@@ -1,0 +1,40 @@
+# Python tooling environment for the PropertyKindCalculus design blueprint.
+#
+# Managed by pixi (https://pixi.sh). The only Python the blueprint needs is for
+# rendering the single-page HTML into a paginated PDF (WeasyPrint) and the small
+# `file-links.py` post-pass. The system `python3` on a host can be an old version
+# whose WeasyPrint is too old to render this document, so we pin an exact,
+# reproducible Python + WeasyPrint here (pixi.lock) and invoke Python through
+# `pixi run` everywhere — local (scripts/render-pdf.sh, scripts/ci-pages.sh) and
+# CI (.github/workflows/blueprint.yml). WeasyPrint comes from conda-forge, which
+# bundles its native deps (pango/cairo/gdk-pixbuf/harfbuzz), so no system libs are
+# required.
+#
+# Usage:
+#   pixi install                       # materialize the env from pixi.lock
+#   pixi run render-pdf                # render + place the PDF (calls scripts/render-pdf.sh)
+#   pixi run python scripts/html-to-pdf.py IN.html OUT.pdf   # ad-hoc
+
+[project]
+name = "propertykindcalculus-blueprint-tools"
+version = "0.0.0"
+description = "Python tooling (HTML→PDF via WeasyPrint) for the PropertyKindCalculus design blueprint."
+requires-python = ">=3.13"
+
+[tool.pixi.workspace]
+channels = ["conda-forge"]
+platforms = ["linux-64", "osx-arm64"]
+
+[tool.pixi.dependencies]
+# Latest stable Python and WeasyPrint; pixi.lock pins the exact resolved builds so
+# every host and CI render with the identical toolchain.
+python = "3.13.*"
+weasyprint = "*"
+
+[tool.pixi.tasks]
+# Render the blueprint PDF (the single-page HTML must already be built under
+# _out/blueprint/ — e.g. by `lake exe blueprint-gen --with-html-single`).
+render-pdf = "bash scripts/render-pdf.sh"
+# Ad-hoc helpers (paths passed on the command line).
+html-to-pdf = "python scripts/html-to-pdf.py"
+file-links = "python scripts/file-links.py"

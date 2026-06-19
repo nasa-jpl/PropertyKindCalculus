@@ -21,6 +21,26 @@ Capstone theorems are tagged `capstone`; proved nodes are tagged `proved`;
 not-yet-formalized nodes are tagged `planned` and show as in-progress goals in
 the graph until a `(lean := …)` declaration or a checked code block is attached.
 
+## Prerequisites
+
+* **Lean** — via [elan](https://github.com/leanprover/elan); the pinned toolchain
+  (`lean-toolchain`, currently `v4.31.0`) is fetched automatically by Lake.
+* **[pixi](https://pixi.prefix.dev/latest/#installation)** — required to run the
+  blueprint's **Python** steps: the WeasyPrint **PDF render** and the small
+  `file-links.py` post-pass. The scripts and CI invoke Python through `pixi run`,
+  which supplies a *pinned* Python + WeasyPrint from `pyproject.toml` + `pixi.lock`
+  — so the host's system `python3` is never used and never has to match (an old
+  system WeasyPrint will not render this document). Install pixi once, per
+  <https://pixi.prefix.dev/latest/#installation>:
+
+  ```bash
+  curl -fsSL https://pixi.sh/install.sh | bash
+  ```
+
+  The first `pixi run` (or an explicit `pixi install`) materializes the locked
+  environment under `blueprint/.pixi/` (git-ignored). Without pixi the HTML still
+  builds; only the PDF is skipped.
+
 ## Build
 
 This is a **separate Lake package** from the core library: it depends on Verso,
@@ -78,20 +98,35 @@ Two outputs are produced; both can be opened directly as files.
 
 ## Build scripts
 
-Two scripts under `scripts/` automate the render-and-publish pipeline; both are
-idempotent and print absolute paths when they finish.
+Three scripts under `scripts/` automate the render-and-publish pipeline; all are
+idempotent and print absolute paths when they finish. The two that run Python
+(`ci-pages.sh`'s `file-links.py` pass and `render-pdf.sh`) go through `pixi run`,
+so they need [pixi](https://pixi.prefix.dev/latest/#installation) (see
+[Prerequisites](#prerequisites)).
 
 * **`scripts/ci-pages.sh`** — the full local/CI render. It runs `lake update`,
   then `lake exe blueprint-gen --output _out/blueprint --with-html-single` (which
   builds the document and emits both `html-multi/` and a self-contained
   `html-single/`), then the `file-links.py` pass that makes `html-multi` navigable
-  over `file://`, then renders `PropertyKindCalculus-Blueprint.pdf` from the single
-  page if WeasyPrint is installed (best-effort; skipped otherwise), and finally
-  calls `stage-docs.sh`.
+  over `file://`, then `render-pdf.sh` (skipped with a note if pixi is not
+  installed), and finally calls `stage-docs.sh`.
 
   ```bash
   cd blueprint
   ./scripts/ci-pages.sh
+  ```
+
+* **`scripts/render-pdf.sh`** — renders `PropertyKindCalculus-Blueprint.pdf` from
+  the single page (via WeasyPrint in the pinned pixi env) and copies it into both
+  `html-single/` and `html-multi/` so the "download the PDF" link resolves in each
+  and `stage-docs.sh` publishes it. Run it *after* a render (it needs
+  `_out/blueprint/html-single/` to exist); `ci-pages.sh` and CI both call it, so
+  you only invoke it directly to re-make the PDF from an existing build. Also
+  available as the pixi task `pixi run render-pdf`.
+
+  ```bash
+  cd blueprint
+  ./scripts/render-pdf.sh   # requires pixi; requires _out/blueprint/html-single to exist
   ```
 
 * **`scripts/stage-docs.sh`** — copies the already-rendered
