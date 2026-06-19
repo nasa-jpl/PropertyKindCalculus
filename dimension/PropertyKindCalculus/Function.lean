@@ -89,9 +89,12 @@ noncomputable instance instLawfulMathCarrierReal : LawfulMathCarrier ℝ where
   log_exp := Real.log_exp
   sin_zero := Real.sin_zero
   cos_zero := Real.cos_zero
-  sin_sq_add_cos_sq := fun a => by simpa [pow_two] using Real.sin_sq_add_cos_sq a
-  cosh_sq_sub_sinh_sq := fun a => by simpa [pow_two] using Real.cosh_sq_sub_sinh_sq a
-  sq_sqrt := fun _ h => by simpa [pow_two] using Real.sq_sqrt h
+  sin_sq_add_cos_sq := fun a => by
+    have h := Real.sin_sq_add_cos_sq a; rw [pow_two, pow_two] at h; exact h
+  cosh_sq_sub_sinh_sq := fun a => by
+    have h := Real.cosh_sq_sub_sinh_sq a; rw [pow_two, pow_two] at h; exact h
+  sq_sqrt := fun _ h => by
+    have h' := Real.sq_sqrt h; rw [pow_two] at h'; exact h'
   tanh_zero := Real.tanh_zero
   abs_zero := abs_zero
 

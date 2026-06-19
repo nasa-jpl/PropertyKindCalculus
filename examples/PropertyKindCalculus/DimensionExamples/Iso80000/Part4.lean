@@ -36,6 +36,10 @@ open PropertyKindCalculus.Iso80000
 open PropertyKindCalculus.Iso80000.Part4
 open PropertyKindCalculus.Iso80000.Part4.DefiningRelations
 
+-- force is ratio-scale, hence a `DifferenceKind` — the comparability witness
+-- `Quantity.add` requires, threaded explicitly into the additivity examples.
+private def hForce : DifferenceKind force.kind := .ofScale
+
 /-! ## (1) ISO 80000-4 — Mechanics (the dimensional algebra and units) -/
 
 -- the dimensional algebra is a checked computation, not an annotation
@@ -73,19 +77,20 @@ example : forceNewton.WellFormed := KindOfProperty.rational_bears_unit rfl
 -- the additivity laws hold over the vector carrier `Fin 3 → ℝ` by the SAME parametric
 -- proof used for scalars (adding forces is componentwise)
 example (x y : Quantity force.kind (Fin 3 → ℝ)) :
-    Quantity.add x y = Quantity.add y x :=
-  Quantity.add_comm x y
+    Quantity.add hForce x y = Quantity.add hForce y x :=
+  Quantity.add_comm hForce x y
 
 example (x y z : Quantity force.kind (Fin 3 → ℝ)) :
-    Quantity.add x y = Quantity.add y x
-      ∧ Quantity.add (Quantity.add x y) z = Quantity.add x (Quantity.add y z)
-      ∧ Quantity.add Quantity.zero x = x ∧ Quantity.add x Quantity.zero = x :=
-  Quantity.laws_parametric x y z
+    Quantity.add hForce x y = Quantity.add hForce y x
+      ∧ Quantity.add hForce (Quantity.add hForce x y) z
+          = Quantity.add hForce x (Quantity.add hForce y z)
+      ∧ Quantity.add hForce Quantity.zero x = x ∧ Quantity.add hForce x Quantity.zero = x :=
+  Quantity.laws_parametric hForce x y z
 
 /-- An `Int`-valued force, for an executable witness: componentwise addition computes
 (the first component `4 + 4 = 8`). -/
 def fInt : Quantity force.kind (Fin 3 → Int) := ⟨![4, 5, 6]⟩
-#guard (Quantity.add fInt fInt).magnitude 0 == 8
+#guard (Quantity.add hForce fInt fInt).magnitude 0 == 8
 
 /-! ## (3) The force family: a specialization lattice individuated by measurement
 principle (requirement R2, on the real standard)

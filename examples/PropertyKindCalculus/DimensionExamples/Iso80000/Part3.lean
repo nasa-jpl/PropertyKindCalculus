@@ -42,6 +42,11 @@ open PropertyKindCalculus.Iso80000.Part3.AreaClassification
 open PropertyKindCalculus.Iso80000.Part3.VolumeElement
 open PropertyKindCalculus.Iso80000.Part3.DefiningRelations
 
+-- displacement and area are ratio-scale, hence `DifferenceKind`s — the comparability
+-- witness `Quantity.add` requires, threaded explicitly into the additivity examples.
+private def hDisp : DifferenceKind displacement.kind := .ofScale
+private def hArea : DifferenceKind area.kind := .ofScale
+
 /-! ## (1) ISO 80000-3 — Space and time (the seed) -/
 
 -- the dimensional algebra is a checked computation, not an annotation
@@ -76,19 +81,20 @@ example : displacementMetre.WellFormed := KindOfProperty.rational_bears_unit rfl
 -- the additivity laws hold over the vector carrier `Fin 3 → ℝ` by the SAME
 -- parametric proof used for scalars (adding displacements is componentwise)
 example (x y : Quantity displacement.kind (Fin 3 → ℝ)) :
-    Quantity.add x y = Quantity.add y x :=
-  Quantity.add_comm x y
+    Quantity.add hDisp x y = Quantity.add hDisp y x :=
+  Quantity.add_comm hDisp x y
 
 example (x y z : Quantity displacement.kind (Fin 3 → ℝ)) :
-    Quantity.add x y = Quantity.add y x
-      ∧ Quantity.add (Quantity.add x y) z = Quantity.add x (Quantity.add y z)
-      ∧ Quantity.add Quantity.zero x = x ∧ Quantity.add x Quantity.zero = x :=
-  Quantity.laws_parametric x y z
+    Quantity.add hDisp x y = Quantity.add hDisp y x
+      ∧ Quantity.add hDisp (Quantity.add hDisp x y) z
+          = Quantity.add hDisp x (Quantity.add hDisp y z)
+      ∧ Quantity.add hDisp Quantity.zero x = x ∧ Quantity.add hDisp x Quantity.zero = x :=
+  Quantity.laws_parametric hDisp x y z
 
 /-- An `Int`-valued displacement, for an executable witness: componentwise addition
 computes (the middle component `5 + 5 = 10`). -/
 def vInt : Quantity displacement.kind (Fin 3 → Int) := ⟨![4, 5, 6]⟩
-#guard (Quantity.add vInt vInt).magnitude 1 == 10
+#guard (Quantity.add hDisp vInt vInt).magnitude 1 == 10
 
 /-! ## (3) From a remark's mathematics to quantity classification and consistency
 
@@ -126,9 +132,9 @@ example : area.dim.length = 2 := area_dim_length
 -- (d) METROLOGICAL CONSISTENCY at the quantity level.
 -- Two areas (same kind) combine — `Quantity.add` is defined on the area carrier …
 example (t u : Fin 2 → EuclideanSpace ℝ (Fin 2)) :
-    Quantity.add (surfaceAreaQuantity t) (surfaceAreaQuantity u)
-      = Quantity.add (surfaceAreaQuantity u) (surfaceAreaQuantity t) :=
-  Quantity.add_comm _ _
+    Quantity.add hArea (surfaceAreaQuantity t) (surfaceAreaQuantity u)
+      = Quantity.add hArea (surfaceAreaQuantity u) (surfaceAreaQuantity t) :=
+  Quantity.add_comm hArea _ _
 
 -- … but an area is NOT a length: the kinds differ, so `Quantity area.kind ℝ` and
 -- `Quantity length.kind ℝ` are *different types*. Writing

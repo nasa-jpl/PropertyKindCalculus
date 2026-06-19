@@ -1,22 +1,22 @@
 name = "propertykindcalculus-blueprint"
 defaultTargets = ["PropertyKindCalculusBlueprint", "blueprint-gen"]
 
-# Verso + the Blueprint genre, on the v4.30.0 toolchain (matching the core
-# PropertyKindCalculus library). Pinned to exact commits, NOT the `v4.30.0` ref:
-# that ref is a *moving* branch, and a `lake update` (run by ci-pages.sh) drifted
-# `verso-blueprint` from 17a4fd2a → 380b94be, whose `manualMainWithPreviewData`
-# regressed and killed the blueprint-gen build with exit 137 (SIGKILL). These two
-# SHAs are the last-known-good pair that renders the blueprint cleanly; bump them
+# Verso + the Blueprint genre, on the v4.31.0 toolchain (matching the core
+# PropertyKindCalculus library after the v4.31.0 migration). `verso` is pinned to the
+# immutable `v4.31.0` *tag*; `verso-blueprint` only ships a *moving* `v4.31.0` branch,
+# so it is pinned to that branch's current tip as an exact commit — NOT the branch ref:
+# tracking the branch once drifted `verso-blueprint` to a `manualMainWithPreviewData`
+# that regressed and killed `blueprint-gen` with exit 137 (SIGKILL). Bump this SHA
 # deliberately (re-test `lake exe blueprint-gen`) rather than tracking the branch.
 [[require]]
 name = "verso"
 git = "https://github.com/leanprover/verso"
-rev = "8bcbd2b8723307c329c12997a0c16a6ac174d3e9"
+rev = "v4.31.0"
 
 [[require]]
 name = "VersoBlueprint"
 git = "https://github.com/leanprover/verso-blueprint"
-rev = "17a4fd2a056013d950a7bdf8e31d4bb5a40b2f06"
+rev = "53a781139092d04ab1babb42f51596b96758da35"
 
 # The library being documented. Linking `(lean := "PropertyKindCalculus.…")` nodes to
 # real declarations (and reading their proved/`sorry` status) requires the

@@ -21,23 +21,31 @@ open PropertyKindCalculus
 def length : KindOfProperty := { id := "length", scale := .ratio }
 def mass : KindOfProperty := { id := "mass", scale := .ratio }
 
+/-- Both kinds are ratio-scale, so each is a `DifferenceKind` — the comparability
+witness `Quantity.add` requires. Supplied explicitly here, the gate stays visible. -/
+def hLen : DifferenceKind length := .ofScale
+def hMass : DifferenceKind mass := .ofScale
+
 /-! ## The `Int` carrier: lawful, so the additivity laws hold for free -/
 
 def lenA : Quantity length Int := ⟨3⟩
 def lenB : Quantity length Int := ⟨5⟩
 
 /-- Addition adds magnitudes within the kind. -/
-example : (lenA.add lenB).magnitude = 8 := by decide
+example : (Quantity.add hLen lenA lenB).magnitude = 8 := by decide
 
 /-- Commutativity, proved once over any lawful carrier, specialized to `Int`. -/
-example (x y : Quantity length Int) : x.add y = y.add x := Quantity.add_comm x y
+example (x y : Quantity length Int) :
+    Quantity.add hLen x y = Quantity.add hLen y x := Quantity.add_comm hLen x y
 
 /-- Associativity, likewise. -/
 example (x y z : Quantity length Int) :
-    (x.add y).add z = x.add (y.add z) := Quantity.add_assoc x y z
+    Quantity.add hLen (Quantity.add hLen x y) z
+      = Quantity.add hLen x (Quantity.add hLen y z) := Quantity.add_assoc hLen x y z
 
 /-- The zero quantity is a unit. -/
-example (x : Quantity length Int) : (Quantity.zero).add x = x := Quantity.zero_add x
+example (x : Quantity length Int) :
+    Quantity.add hLen Quantity.zero x = x := Quantity.zero_add hLen x
 
 /-! ## The `Float` carrier: the *executable* representation
 
@@ -46,10 +54,10 @@ The identical `Quantity` layer at `R := Float` actually runs. -/
 def lenF : Quantity length Float := ⟨3.0⟩
 
 -- The magnitude reduces — execution, not just specification (`3.0 + 0.5 = 3.5`).
-#guard (lenF.add ⟨0.5⟩).magnitude == 3.5
+#guard (Quantity.add hLen lenF ⟨0.5⟩).magnitude == 3.5
 
 -- A `Quantity Float` value computes (prints `3.500000`):
-#eval (lenF.add ⟨0.5⟩).magnitude
+#eval (Quantity.add hLen lenF ⟨0.5⟩).magnitude
 
 /- `Float` is a `Carrier` but **not** a `LawfulCarrier`: floating-point addition
 is not associative, so the additivity laws are unavailable at `Float`. The next
@@ -61,13 +69,14 @@ the gap the planned exec/spec refinement bridge (R10) closes:
 
 /-! ## Kind-gated addition (R4)
 
-`Quantity.add : Quantity k R → Quantity k R → Quantity k R` forces both summands
-to share the kind `k`. -/
+`Quantity.add : DifferenceKind k → Quantity k R → Quantity k R → Quantity k R`
+forces both summands to share the kind `k` (and to be a kind whose scale admits
+differences — the `DifferenceKind k` witness, here `hLen`). -/
 
 def massA : Quantity mass Int := ⟨2⟩
 
 /-- Adding two lengths is well-typed. -/
-example : (lenA.add lenB).magnitude = 8 := by decide
+example : (Quantity.add hLen lenA lenB).magnitude = 8 := by decide
 
 /- Adding a length to a mass is a *type error*, not a runtime check —
 `massA : Quantity mass Int` cannot be a summand where a `Quantity length Int` is

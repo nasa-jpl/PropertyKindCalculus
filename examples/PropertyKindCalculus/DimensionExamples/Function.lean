@@ -86,10 +86,11 @@ multiplicative calculus refuses it: there is no product kind with a level as a f
 example {k₂ k : KindOfProperty} : ¬ ProductKind soundPressureLevelK.kind k₂ k :=
   level_no_product
 
-/-- Levels may still be *added* — `Quantity.add` is kind-gated, not scale-gated — which
-is exactly right: a dB *difference* is meaningful, a dB *product* is not. -/
+/-- Levels may still be *added* — `Quantity.add` is gated only to scales that admit
+differences, and **interval** scale does (it is a `DifferenceKind`) — which is exactly
+right: a dB *difference* is meaningful, a dB *product* is not. -/
 example (x y : Quantity soundPressureLevelK.kind Float) : Quantity soundPressureLevelK.kind Float :=
-  Quantity.add x y
+  Quantity.add (DifferenceKind.ofScale) x y
 
 /-! ## Coda — a characteristic number is a kind, not a constant -/
 

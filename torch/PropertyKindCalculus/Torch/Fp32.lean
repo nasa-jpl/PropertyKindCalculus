@@ -60,11 +60,12 @@ noncomputable instance instCarrierRefinementFP32 : CarrierRefinement FP32 ℝ wh
 to `ℝ` is the FP32-rounding of the real sum — `Quantity.add_refines` specialized to
 the `FP32 → ℝ` refinement above, with no further proof. A law proved over the lawful
 `ℝ` carrier therefore descends to FP32 with one rounding step. -/
-theorem Quantity.add_refines_fp32 {k : KindOfProperty} (x y : Quantity k FP32) :
-    (Quantity.toSpec (Quantity.add x y) : Quantity k ℝ)
+theorem Quantity.add_refines_fp32 {k : KindOfProperty} (h : DifferenceKind k)
+    (x y : Quantity k FP32) :
+    (Quantity.toSpec (Quantity.add h x y) : Quantity k ℝ)
       = Quantity.roundBy (CarrierRefinement.round (E := FP32))
-          (Quantity.add (Quantity.toSpec x) (Quantity.toSpec y)) :=
-  Quantity.add_refines x y
+          (Quantity.add h (Quantity.toSpec x) (Quantity.toSpec y)) :=
+  Quantity.add_refines h x y
 
 /-! ## The executable carrier and its conditional refinement -/
 
@@ -88,13 +89,13 @@ explicit side condition: where they fail (overflow to ∞, a NaN operand), the
 refinement does not hold — exactly the silent failure the unconditional spec-side
 bridge abstracts away, made visible here. Lifts TorchLean's
 `toReal_add_eq_fp32Round` along the kind index. -/
-theorem Quantity.add_refines_exec {k : KindOfProperty}
+theorem Quantity.add_refines_exec {k : KindOfProperty} (h : DifferenceKind k)
     (x y : Quantity k IEEE32Exec) {dx dy : IEEE32Exec.Dyadic}
     (hx : IEEE32Exec.toDyadic? x.magnitude = some dx)
     (hy : IEEE32Exec.toDyadic? y.magnitude = some dy)
     (hfin : IEEE32Exec.isFinite (IEEE32Exec.add x.magnitude y.magnitude) = true) :
-    (Quantity.add x y).toRealExec
-      = Quantity.roundBy IEEE32Exec.fp32Round (x.toRealExec.add y.toRealExec) := by
+    (Quantity.add h x y).toRealExec
+      = Quantity.roundBy IEEE32Exec.fp32Round (Quantity.add h x.toRealExec y.toRealExec) := by
   show (Quantity.mk (IEEE32Exec.toReal (IEEE32Exec.add x.magnitude y.magnitude))
         : Quantity k ℝ)
       = Quantity.mk

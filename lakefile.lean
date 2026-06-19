@@ -46,9 +46,18 @@ package «PropertyKindCalculus» where
 
 -- PhysLib (and, transitively, Mathlib) backs *only* the `Dimension` library
 -- below — the dimension/coherence layer that maps each kind to its physical
--- `Dimension`. PhysLib HEAD tracks the same toolchain this package pins
--- (`leanprover/lean4:v4.30.0`, Mathlib `v4.30.0`). The core spine never imports
--- it, so a plain `import PropertyKindCalculus` stays Mathlib-free.
+-- `Dimension`. Upstream PhysLib has not yet released a `v4.31.0` (its latest tag
+-- and `master` are both still `v4.30.0` / Mathlib `v4.30.0`), so this stays pinned
+-- at the `v4.30.0` tag. Its transitive pins — `mathlib v4.30.0` and the older
+-- `aesop`/`Qq`/`doc-gen4`/`Cli` revs — are overridden: `doc-gen4` by TorchLean
+-- below (required after PhysLib), and Mathlib (with `aesop`/`Qq`/`batteries`/`Cli`)
+-- by the `require mathlib` kept *last* so Mathlib `v4.31.0`'s own dependency
+-- versions take precedence (Lake resolves later requires over earlier ones; this
+-- is also what makes `lake exe cache get` compute matching hashes). The only
+-- PhysLib module this package consumes — `Physlib.Units.Dimension`, a
+-- near-standalone file over `Mathlib.Analysis.Normed.Field.Lemmas` — compiles
+-- unchanged under Mathlib `v4.31.0`. Bump to a proper `v4.31.0` tag once upstream
+-- ships one.
 require «Physlib» from git
   "https://github.com/leanprover-community/physlib.git" @
   "v4.30.0"
@@ -56,11 +65,21 @@ require «Physlib» from git
 -- TorchLean (this work's fork, `combined` branch) backs *only* the `Torch` library
 -- below: the concrete IEEE-754 binary32 carriers (`FP32` rounding spec,
 -- `IEEE32Exec` executable) that instantiate the R10 exec/spec refinement bridge.
--- It tracks the same toolchain and Mathlib rev (`v4.30.0`) this package already
--- pins via PhysLib, so it adds no version skew. The core spine never imports it.
+-- Its `combined` branch was rebased onto Lean `v4.31.0` / Mathlib `v4.31.0`; this
+-- package pins the same toolchain. Required after PhysLib so its `doc-gen4 v4.31.0`
+-- wins. The core spine never imports it, so `import PropertyKindCalculus` stays
+-- Mathlib-free.
 require «TorchLean» from git
   "https://github.com/NicolasRouquette/TorchLean.git" @
   "combined"
+
+-- Mathlib is pinned directly at the root, at `v4.31.0`, and kept LAST so that its
+-- dependency versions win over PhysLib's older transitive pins (see above). This
+-- is the same discipline TorchLean's lakefile follows. The core spine never
+-- imports Mathlib, so a plain `import PropertyKindCalculus` stays Mathlib-free.
+require mathlib from git
+  "https://github.com/leanprover-community/mathlib4" @
+  "v4.31.0"
 
 /-- The exportable core library (Mathlib-free spine). -/
 @[default_target]

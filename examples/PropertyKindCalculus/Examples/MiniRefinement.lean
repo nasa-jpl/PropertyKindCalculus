@@ -46,6 +46,10 @@ instance : CarrierRefinement Coarse Int where
 /-- A length kind to gate the quantities to (so the bridge is kind-indexed). -/
 def lengthKind : KindOfProperty := { id := "length", scale := .ratio }
 
+/-- `lengthKind` is ratio-scale, hence a `DifferenceKind` — the comparability
+witness threaded explicitly into each `Quantity.add`/`add_refines`. -/
+def hLen : DifferenceKind lengthKind := .ofScale
+
 /-- Two coarse lengths: 3 and 2. -/
 def a : Quantity lengthKind Coarse := ⟨⟨3⟩⟩
 def b : Quantity lengthKind Coarse := ⟨⟨2⟩⟩
@@ -55,16 +59,16 @@ def aSpec : Quantity lengthKind Int := a.toSpec
 def bSpec : Quantity lengthKind Int := b.toSpec
 
 -- Rounding bites: the exact spec sum is 5, but the coarse exec sum snaps to 4.
-#guard (Quantity.add a b).magnitude.val == 4
-#guard (Quantity.add aSpec bSpec).magnitude == 5
+#guard (Quantity.add hLen a b).magnitude.val == 4
+#guard (Quantity.add hLen aSpec bSpec).magnitude == 5
 
 /-- **The capstone, instantiated.** The coarse (exec) sum, viewed in the exact
 carrier, is the rounding of the exact (spec) sum — `Quantity.add_refines` at the
-toy carrier, with no extra argument. -/
+toy carrier, threading the kind's comparability witness. -/
 example :
-    (Quantity.toSpec (Quantity.add a b) : Quantity lengthKind Int)
-      = Quantity.roundBy quantize (Quantity.add aSpec bSpec) :=
-  Quantity.add_refines a b
+    (Quantity.toSpec (Quantity.add hLen a b) : Quantity lengthKind Int)
+      = Quantity.roundBy quantize (Quantity.add hLen aSpec bSpec) :=
+  Quantity.add_refines hLen a b
 
 /-- Zero refines exactly: no rounding at the additive unit. -/
 example :
