@@ -16,3 +16,4 @@ import PropertyKindCalculus.Examples.MiniExtensivity
 import PropertyKindCalculus.Examples.MiniQuantity
 import PropertyKindCalculus.Examples.MiniRefinement
 import PropertyKindCalculus.Examples.MiniClassification
+import PropertyKindCalculus.Examples.MiniWriteOnce

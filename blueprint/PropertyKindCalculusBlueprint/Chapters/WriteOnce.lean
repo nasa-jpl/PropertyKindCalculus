@@ -3,8 +3,9 @@ import VersoManual
 import VersoBlueprint
 -- This is a *methodology* chapter: it cross-references the proved spine nodes with `{uses …}`
 -- (the labels resolve at blueprint-generation time, not Lean elaboration), and illustrates each
--- step with the soil-moisture-model decls by name only. It re-declares nothing, so — unlike the
--- node-bearing chapters — it does not import `PropertyKindCalculus` or the model.
+-- step with the public `PropertyKindCalculus.Examples.MiniWriteOnce` worked example by name only.
+-- It re-declares nothing, so — unlike the node-bearing chapters — it does not import
+-- `PropertyKindCalculus` or the examples; the worked example is checked in the `Examples` library.
 
 open Verso.Genre
 open Verso.Genre.Manual
@@ -14,14 +15,16 @@ open Informal
 
 The chapters so far catalogue what PropertyKindCalculus _provides_. This one is about _method_:
 the order in which an application author reaches for those pieces when specifying a real model,
-and why the order is forced rather than a matter of taste. The running example is the
-[`soil-moisture-model`](https://github.jpl.nasa.gov/nfr/soil-moisture-model) library — the typed
-SMAP–NISAR soil-moisture retrieval — read here only to _infer the recipe_. That library declares
-its own kinds and proofs and is cited live by its own
-[verifiable ATBD](https://github.jpl.nasa.gov/nfr/SMAP-AVS-ATBD); PropertyKindCalculus re-declares
-none of it and only supplies the four primitives named below.
+and why the order is forced rather than a matter of taste. The running example is
+`PropertyKindCalculus.Examples.MiniWriteOnce` — a small, self-contained soil-moisture retrieval in
+the project's own `Examples` library — read here only to _infer the recipe_. It is a deliberately
+simplified subset, keeping just the salient structure each step needs (a few kinds, a typed
+constant table, a dedicated kind, one row of a Cholesky factor) and omitting the full retrieval.
+Every line of it is a _checked fact_, built in the `Examples` library under CI, so the
+illustrations below are machine-verified; PropertyKindCalculus supplies the four primitives named
+below and the example composes them in this order.
 
-The discipline has a slogan the model states in its own source: _write once correctly, go fast
+The discipline has a slogan: _write once correctly, go fast
 automatically_. A quantity is authored once, carrying its kind, over an abstract numeric carrier;
 the kind layer is checked by the elaborator and then _erases_ — projected away by `.magnitude` —
 to a bare floating-point kernel, bit for bit. Correctness lives in the types and is paid for at
@@ -33,7 +36,7 @@ before the one above it can type-check.
 
 :::group "write-once"
 These four steps are the order in which a PropertyKindCalculus model is authored. Each rests on
-the layer beneath it; each is shown with where the soil-moisture model realizes it.
+the layer beneath it; each is shown with where the `MiniWriteOnce` worked example realizes it.
 :::
 
 ## Step 1 — Start from the measurement principle: declare the kinds
@@ -47,11 +50,13 @@ measures them, so that {uses "thm_examPrinciple_defining"}[a different principle
 kind]. This is the layer a description logic partly has: it can record a class, but not the
 operator algebra or the laws the later steps add.
 
-In the model this is the catalogue of bare kinds — the radar `backscatter` $`\sigma^0`, the
-optical `ndvi`, the surface `reflectivity`, and the dielectric kinds — each declared as a `def` of
-`KindOfProperty`, named by the instrument or principle that examines it. A kind is _general_ (a
-type); _this pixel's_ backscatter is _individual_ (a term, `Quantity backscatter α`). Fix the kinds
-first: everything above is indexed by them.
+In the example this is the catalogue of bare kinds — the radar `backscatter` $`\sigma^0`, the
+optical `ndvi`, the surface `reflectivity`, and the Mironov dielectric fit-constant kinds — each
+declared as a `def` of `KindOfProperty`, named by the instrument or principle that examines it.
+That a different examination principle forces a different kind is itself checked there: monostatic
+and bistatic `reflectivity` share name, scale, and dimension yet are distinct kinds. A kind is
+_general_ (a type); _this pixel's_ backscatter is _individual_ (a term, `Quantity backscatter α`).
+Fix the kinds first: everything above is indexed by them.
 :::
 
 ## Step 2 — Pair each kind with its dimension
@@ -67,9 +72,11 @@ index. Dimension equates them all; the kind layer keeps them apart. Pairing a ki
 dimension here is what lets a later product be checked for dimensional consistency _and_ kind
 consistency at once.
 
-In the model, volumetric and gravimetric water content are both dimension one yet distinct kinds —
-a units library alone would silently accept one for the other, which is exactly the failure this
-layer removes.
+In the example, volumetric and gravimetric water content (`vwc`, `gwc`) are both dimension one yet
+distinct kinds — a units library alone would silently accept one for the other, which is exactly
+the failure this layer removes. (The literal `dim`-functor collapse is the Mathlib-backed dimension
+layer, shown in the _Units_ and _Dimension_ chapters; here the point is made one level up, at the
+kind.)
 :::
 
 ## Step 3 — Build kind-differentiated quantities; gate the arithmetic
@@ -83,12 +90,12 @@ quotients change kind by the algebra. Authored over an abstract carrier `α`, th
 re-represents at the proof carrier (`ℝ`), the rounding spec (binary32), and the executable (`Float`)
 by one map, preserving every kind.
 
-The model's `MironovCoeffs α` is the pattern: each Mironov-2009 fit constant is a field of its own
-kind — a dry refractive index `ndA0 : Quantity nIndexKind α`, a relaxation time
+The example's `MiniMironovCoeffs α` is the pattern: each Mironov-2009 fit constant is a field of its
+own kind — a dry refractive index `ndA0 : Quantity refractiveIndexKind α`, a relaxation time
 `taub0 : Quantity relaxTimeKind α`, a conductivity `sigbF0 : Quantity conductivityKind α` — so the
 elaborator refuses to pass a relaxation time where a conductivity is expected, even though all three
-erase to the same `Float`. Its `MironovCoeffs.map` re-represents the whole table at any carrier,
-each constant keeping its kind.
+erase to the same carrier. Its `MiniMironovCoeffs.map` re-represents the whole table at any carrier
+(the constants moved from `Int` to executable `Float` by one map), each constant keeping its kind.
 :::
 
 ## Step 4 — Differentiate shared kinds: dedicate, or index by field
@@ -101,20 +108,21 @@ When two quantities _should_ be different kinds because their measurement target
 quantity, different system or component — make them distinct with a {uses "def_dedicatedKind"}[
 dedicated kind]: holding the {uses "def_component"}[component] (or system) apart
 {uses "thm_dedicated_distinct_component"}[is enough to force distinct kinds], without inventing
-identity strings. In the model the bound-water and free-water static permittivities are one
-relative-permittivity kind dedicated to two components, hence provably distinct.
+identity strings. In the example the bound-water and free-water static permittivities
+(`boundStaticPerm`, `freeStaticPerm`) are one relative-permittivity kind dedicated to two
+components, hence provably distinct.
 
 When the algebra _forces_ a genuinely shared kind, the leftover distinction is _positional_, not
-metrological, and belongs on a second axis carried by _named record fields_ — not arrays. The
-Cholesky factor `CholQ α` is row-homogeneous: row 2 is three fields `l20 l21 l22`, all
-`Quantity reflectivity α`, because $`A = L L^{\mathsf T}` makes every $`L_{ik} L_{jk}` land at the
-same kind regardless of the column — a kind that separated them would make the factorization's own
-row sums ill-typed. The forward-substitution intermediate `YQ α` is likewise uniformly
-`backscatter`. The remaining "which slot" distinction is held by the distinct field names and
-checked off the kind axis by the erasure `rfl`: `cholesky4Q` equals the bare kernel only when the
-slots line up, so a same-kind swap still type-checks but breaks parity. A `Fin 4`-indexed array
-would push that positional bookkeeping onto the type and discard the named slots; the record keeps
-both axes separable — kind by the elaborator, position by parity-to-reference.
+metrological, and belongs on a second axis carried by _named record fields_ — not arrays. One row
+of the Cholesky factor — the example's `CholRowQ α` — is row-homogeneous: three fields
+`l20 l21 l22`, all `Quantity reflectivity α`, because $`A = L L^{\mathsf T}` makes every
+$`L_{ik} L_{jk}` land at the same kind regardless of the column — a kind that separated them would
+make the factorization's own row sums ill-typed. The remaining "which slot" distinction is held by
+the distinct field names and checked off the kind axis by an erasure `rfl`: the theorem
+`cholRowQ_magnitudes` proves the kinded row's `.magnitudes` are _definitionally_ the bare-`Float`
+kernel's outputs, so a same-kind slot swap still type-checks but breaks parity. A `Fin 3`-indexed
+array would push that positional bookkeeping onto the type and discard the named slots; the record
+keeps both axes separable — kind by the elaborator, position by parity-to-reference.
 :::
 
 # The payoff
@@ -127,8 +135,10 @@ arithmetic; and dedication plus named fields carry the distinctions the kind axi
 by a definitional `rfl` for every input, to be the same numbers. _Write once correctly, go fast
 automatically._
 
-The worked model is the
-[`soil-moisture-model`](https://github.jpl.nasa.gov/nfr/soil-moisture-model) library (build-gated
-by its own CI); its claims are cited live, with proved or `sorry` status, by the
-[SMAP-AVS verifiable ATBD](https://github.jpl.nasa.gov/nfr/SMAP-AVS-ATBD). PropertyKindCalculus
-supplies the four primitives this chapter names; the model composes them in this order.
+The worked example is `PropertyKindCalculus.Examples.MiniWriteOnce`, build-gated by the project's
+own CI, so every illustration above is a checked fact rather than a claim. The recipe scales to a
+full retrieval: the same four steps, composed in the same order, carry a complete SMAP–NISAR
+soil-moisture model — and because each step's facts are real declarations, a downstream
+_verifiable ATBD_ can cite them by name with their proved-or-`sorry` status, keeping the document
+and the code in lockstep. PropertyKindCalculus supplies the four primitives this chapter names; a
+model composes them in this order.
