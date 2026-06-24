@@ -8235,10 +8235,10 @@ window.onload = () => {
                     <span class="bp_caption bp_kind_definition_caption definition_thmcaption" title="«wo-kinds»">Definition</span><span class="bp_label bp_kind_definition_label definition_thmlabel">13.1.1.1</span></div>
                   <div class="bp_extras thm_header_extras bp_extras_with_group bp_extras_with_uses bp_extras_with_used_by bp_extras_with_code">
                     <span class="bp_extra_slot bp_extra_slot_group"><div class="bp_relation_wrap">
-                        <button type="button" class="bp_relation_chip" title="Other entries in group These four steps are the order in which a PropertyKindCalculus model is authored. Each rests on the layer beneath it; each is shown with where the soil-moisture model realizes it." aria-expanded="false">group</button><div class="bp_relation_panel">
+                        <button type="button" class="bp_relation_chip" title="Other entries in group These four steps are the order in which a PropertyKindCalculus model is authored. Each rests on the layer beneath it; each is shown with where the MiniWriteOnce worked example realizes it." aria-expanded="false">group</button><div class="bp_relation_panel">
                           <div class="bp_relation_panel_header">
                             <div class="bp_relation_panel_title">
-                              Group: These four steps are the order in which a PropertyKindCalculus model is authored. Each rests on the layer beneath it; each is shown with where the soil-moisture model realizes it. (3)</div>
+                              Group: These four steps are the order in which a PropertyKindCalculus model is authored. Each rests on the layer beneath it; each is shown with where the MiniWriteOnce worked example realizes it. (3)</div>
                             <div class="bp_relation_panel_meta">
                               Group member previews</div>
                             </div>
@@ -8334,11 +8334,13 @@ measures them, so that <span><span class="bp_inline_preview_ref" data-bp-preview
 kind</a></span></span>. This is the layer a description logic partly has: it can record a class, but not the
 operator algebra or the laws the later steps add.</p>
                   <p>
-                    In the model this is the catalogue of bare kinds — the radar <code>backscatter</code> <code class="bp_math inline">\sigma^0</code>, the
-optical <code>ndvi</code>, the surface <code>reflectivity</code>, and the dielectric kinds — each declared as a <code>def</code> of
-<code>KindOfProperty</code>, named by the instrument or principle that examines it. A kind is <em>general</em> (a
-type); <em>this pixel's</em> backscatter is <em>individual</em> (a term, <code>Quantity backscatter α</code>). Fix the kinds
-first: everything above is indexed by them.</p>
+                    In the example this is the catalogue of bare kinds — the radar <code>backscatter</code> <code class="bp_math inline">\sigma^0</code>, the
+optical <code>ndvi</code>, the surface <code>reflectivity</code>, and the Mironov dielectric fit-constant kinds — each
+declared as a <code>def</code> of <code>KindOfProperty</code>, named by the instrument or principle that examines it.
+That a different examination principle forces a different kind is itself checked there: monostatic
+and bistatic <code>reflectivity</code> share name, scale, and dimension yet are distinct kinds. A kind is
+<em>general</em> (a type); <em>this pixel's</em> backscatter is <em>individual</em> (a term, <code>Quantity backscatter α</code>).
+Fix the kinds first: everything above is indexed by them.</p>
                   </div>
                 </div>
               </section>
@@ -8351,10 +8353,10 @@ first: everything above is indexed by them.</p>
                     <span class="bp_caption bp_kind_definition_caption definition_thmcaption" title="«wo-dimension»">Definition</span><span class="bp_label bp_kind_definition_label definition_thmlabel">13.1.2.1</span></div>
                   <div class="bp_extras thm_header_extras bp_extras_with_group bp_extras_with_uses bp_extras_with_used_by bp_extras_with_code">
                     <span class="bp_extra_slot bp_extra_slot_group"><div class="bp_relation_wrap">
-                        <button type="button" class="bp_relation_chip" title="Other entries in group These four steps are the order in which a PropertyKindCalculus model is authored. Each rests on the layer beneath it; each is shown with where the soil-moisture model realizes it." aria-expanded="false">group</button><div class="bp_relation_panel">
+                        <button type="button" class="bp_relation_chip" title="Other entries in group These four steps are the order in which a PropertyKindCalculus model is authored. Each rests on the layer beneath it; each is shown with where the MiniWriteOnce worked example realizes it." aria-expanded="false">group</button><div class="bp_relation_panel">
                           <div class="bp_relation_panel_header">
                             <div class="bp_relation_panel_title">
-                              Group: These four steps are the order in which a PropertyKindCalculus model is authored. Each rests on the layer beneath it; each is shown with where the soil-moisture model realizes it. (3)</div>
+                              Group: These four steps are the order in which a PropertyKindCalculus model is authored. Each rests on the layer beneath it; each is shown with where the MiniWriteOnce worked example realizes it. (3)</div>
                             <div class="bp_relation_panel_meta">
                               Group member previews</div>
                             </div>
@@ -8450,9 +8452,11 @@ index. Dimension equates them all; the kind layer keeps them apart. Pairing a ki
 dimension here is what lets a later product be checked for dimensional consistency <em>and</em> kind
 consistency at once.</p>
                   <p>
-                    In the model, volumetric and gravimetric water content are both dimension one yet distinct kinds —
-a units library alone would silently accept one for the other, which is exactly the failure this
-layer removes.</p>
+                    In the example, volumetric and gravimetric water content (<code>vwc</code>, <code>gwc</code>) are both dimension one yet
+distinct kinds — a units library alone would silently accept one for the other, which is exactly
+the failure this layer removes. (The literal <code>dim</code>-functor collapse is the Mathlib-backed dimension
+layer, shown in the <em>Units</em> and <em>Dimension</em> chapters; here the point is made one level up, at the
+kind.)</p>
                   </div>
                 </div>
               </section>
@@ -8465,10 +8469,10 @@ layer removes.</p>
                     <span class="bp_caption bp_kind_definition_caption definition_thmcaption" title="«wo-quantities»">Definition</span><span class="bp_label bp_kind_definition_label definition_thmlabel">13.1.3.1</span></div>
                   <div class="bp_extras thm_header_extras bp_extras_with_group bp_extras_with_uses bp_extras_with_used_by bp_extras_with_code">
                     <span class="bp_extra_slot bp_extra_slot_group"><div class="bp_relation_wrap">
-                        <button type="button" class="bp_relation_chip" title="Other entries in group These four steps are the order in which a PropertyKindCalculus model is authored. Each rests on the layer beneath it; each is shown with where the soil-moisture model realizes it." aria-expanded="false">group</button><div class="bp_relation_panel">
+                        <button type="button" class="bp_relation_chip" title="Other entries in group These four steps are the order in which a PropertyKindCalculus model is authored. Each rests on the layer beneath it; each is shown with where the MiniWriteOnce worked example realizes it." aria-expanded="false">group</button><div class="bp_relation_panel">
                           <div class="bp_relation_panel_header">
                             <div class="bp_relation_panel_title">
-                              Group: These four steps are the order in which a PropertyKindCalculus model is authored. Each rests on the layer beneath it; each is shown with where the soil-moisture model realizes it. (3)</div>
+                              Group: These four steps are the order in which a PropertyKindCalculus model is authored. Each rests on the layer beneath it; each is shown with where the MiniWriteOnce worked example realizes it. (3)</div>
                             <div class="bp_relation_panel_meta">
                               Group member previews</div>
                             </div>
@@ -8562,12 +8566,12 @@ quotients change kind by the algebra. Authored over an abstract carrier <code>α
 re-represents at the proof carrier (<code>ℝ</code>), the rounding spec (binary32), and the executable (<code>Float</code>)
 by one map, preserving every kind.</p>
                   <p>
-                    The model's <code>MironovCoeffs α</code> is the pattern: each Mironov-2009 fit constant is a field of its own
-kind — a dry refractive index <code>ndA0 : Quantity nIndexKind α</code>, a relaxation time
+                    The example's <code>MiniMironovCoeffs α</code> is the pattern: each Mironov-2009 fit constant is a field of its
+own kind — a dry refractive index <code>ndA0 : Quantity refractiveIndexKind α</code>, a relaxation time
 <code>taub0 : Quantity relaxTimeKind α</code>, a conductivity <code>sigbF0 : Quantity conductivityKind α</code> — so the
 elaborator refuses to pass a relaxation time where a conductivity is expected, even though all three
-erase to the same <code>Float</code>. Its <code>MironovCoeffs.map</code> re-represents the whole table at any carrier,
-each constant keeping its kind.</p>
+erase to the same carrier. Its <code>MiniMironovCoeffs.map</code> re-represents the whole table at any carrier
+(the constants moved from <code>Int</code> to executable <code>Float</code> by one map), each constant keeping its kind.</p>
                   </div>
                 </div>
               </section>
@@ -8580,10 +8584,10 @@ each constant keeping its kind.</p>
                     <span class="bp_caption bp_kind_definition_caption definition_thmcaption" title="«wo-dedication»">Definition</span><span class="bp_label bp_kind_definition_label definition_thmlabel">13.1.4.1</span></div>
                   <div class="bp_extras thm_header_extras bp_extras_with_group bp_extras_with_uses bp_extras_with_used_by bp_extras_with_code">
                     <span class="bp_extra_slot bp_extra_slot_group"><div class="bp_relation_wrap">
-                        <button type="button" class="bp_relation_chip" title="Other entries in group These four steps are the order in which a PropertyKindCalculus model is authored. Each rests on the layer beneath it; each is shown with where the soil-moisture model realizes it." aria-expanded="false">group</button><div class="bp_relation_panel">
+                        <button type="button" class="bp_relation_chip" title="Other entries in group These four steps are the order in which a PropertyKindCalculus model is authored. Each rests on the layer beneath it; each is shown with where the MiniWriteOnce worked example realizes it." aria-expanded="false">group</button><div class="bp_relation_panel">
                           <div class="bp_relation_panel_header">
                             <div class="bp_relation_panel_title">
-                              Group: These four steps are the order in which a PropertyKindCalculus model is authored. Each rests on the layer beneath it; each is shown with where the soil-moisture model realizes it. (3)</div>
+                              Group: These four steps are the order in which a PropertyKindCalculus model is authored. Each rests on the layer beneath it; each is shown with where the MiniWriteOnce worked example realizes it. (3)</div>
                             <div class="bp_relation_panel_meta">
                               Group member previews</div>
                             </div>
@@ -8678,20 +8682,21 @@ each constant keeping its kind.</p>
 quantity, different system or component — make them distinct with a <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005FdedicatedKind-statement" data-bp-preview-title="Definition 6.1.2" data-bp-preview-key="def_dedicatedKind--statement" data-bp-preview-fallback-label="def_dedicatedKind"><a href="Dedicated-kinds-of-property/The-dedicated-kind-_LPAR_Dybk___r-Ch___-20_RPAR_/index.html#--informal-preview-def_dedicatedKind--statement" title="def_dedicatedKind">
 dedicated kind</a></span></span>: holding the <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-def-005Fcomponent-statement" data-bp-preview-title="Definition 6.1.1" data-bp-preview-key="def_component--statement" data-bp-preview-fallback-label="def_component"><a href="Dedicated-kinds-of-property/The-dedicated-kind-_LPAR_Dybk___r-Ch___-20_RPAR_/index.html#--informal-preview-def_component--statement" title="def_component">component</a></span></span> (or system) apart
 <span><span class="bp_inline_preview_ref" data-bp-preview-id="bp-uses-thm-005Fdedicated-005Fdistinct-005Fcomponent-statement" data-bp-preview-title="Theorem 6.1.4" data-bp-preview-key="thm_dedicated_distinct_component--statement" data-bp-preview-fallback-label="thm_dedicated_distinct_component"><a href="Dedicated-kinds-of-property/The-dedicated-kind-_LPAR_Dybk___r-Ch___-20_RPAR_/index.html#--informal-preview-thm_dedicated_distinct_component--statement" title="thm_dedicated_distinct_component">is enough to force distinct kinds</a></span></span>, without inventing
-identity strings. In the model the bound-water and free-water static permittivities are one
-relative-permittivity kind dedicated to two components, hence provably distinct.</p>
+identity strings. In the example the bound-water and free-water static permittivities
+(<code>boundStaticPerm</code>, <code>freeStaticPerm</code>) are one relative-permittivity kind dedicated to two
+components, hence provably distinct.</p>
                   <p>
                     When the algebra <em>forces</em> a genuinely shared kind, the leftover distinction is <em>positional</em>, not
-metrological, and belongs on a second axis carried by <em>named record fields</em> — not arrays. The
-Cholesky factor <code>CholQ α</code> is row-homogeneous: row 2 is three fields <code>l20 l21 l22</code>, all
-<code>Quantity reflectivity α</code>, because <code class="bp_math inline">A = L L^{\mathsf T}</code> makes every <code class="bp_math inline">L_{ik} L_{jk}</code> land at the
-same kind regardless of the column — a kind that separated them would make the factorization's own
-row sums ill-typed. The forward-substitution intermediate <code>YQ α</code> is likewise uniformly
-<code>backscatter</code>. The remaining "which slot" distinction is held by the distinct field names and
-checked off the kind axis by the erasure <code>rfl</code>: <code>cholesky4Q</code> equals the bare kernel only when the
-slots line up, so a same-kind swap still type-checks but breaks parity. A <code>Fin 4</code>-indexed array
-would push that positional bookkeeping onto the type and discard the named slots; the record keeps
-both axes separable — kind by the elaborator, position by parity-to-reference.</p>
+metrological, and belongs on a second axis carried by <em>named record fields</em> — not arrays. One row
+of the Cholesky factor — the example's <code>CholRowQ α</code> — is row-homogeneous: three fields
+<code>l20 l21 l22</code>, all <code>Quantity reflectivity α</code>, because <code class="bp_math inline">A = L L^{\mathsf T}</code> makes every
+<code class="bp_math inline">L_{ik} L_{jk}</code> land at the same kind regardless of the column — a kind that separated them would
+make the factorization's own row sums ill-typed. The remaining "which slot" distinction is held by
+the distinct field names and checked off the kind axis by an erasure <code>rfl</code>: the theorem
+<code>cholRowQ_magnitudes</code> proves the kinded row's <code>.magnitudes</code> are <em>definitionally</em> the bare-<code>Float</code>
+kernel's outputs, so a same-kind slot swap still type-checks but breaks parity. A <code>Fin 3</code>-indexed
+array would push that positional bookkeeping onto the type and discard the named slots; the record
+keeps both axes separable — kind by the elaborator, position by parity-to-reference.</p>
                   </div>
                 </div>
               </section>

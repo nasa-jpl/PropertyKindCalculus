@@ -1,0 +1,1 @@
+window.docContents[51].resolve({"/#PropertyKindCalculus-Blueprint--Write-Once___-Correctly--The-four-steps":{"contents":"\n\n\n\n\n\n\n\n\n\n","context":"PropertyKindCalculus Blueprint\u0009Write Once, Correctly","header":"13.1. The four steps","id":"/#PropertyKindCalculus-Blueprint--Write-Once___-Correctly--The-four-steps"}});

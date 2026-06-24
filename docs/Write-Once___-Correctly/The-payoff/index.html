@@ -8235,11 +8235,13 @@ arithmetic; and dedication plus named fields carry the distinctions the kind axi
 by a definitional <code>rfl</code> for every input, to be the same numbers. <em>Write once correctly, go fast
 automatically.</em></p>
             <p>
-              The worked model is the
-<a href="https://github.jpl.nasa.gov/nfr/soil-moisture-model"><code>soil-moisture-model</code></a> library (build-gated
-by its own CI); its claims are cited live, with proved or <code>sorry</code> status, by the
-<a href="https://github.jpl.nasa.gov/nfr/SMAP-AVS-ATBD">SMAP-AVS verifiable ATBD</a>. PropertyKindCalculus
-supplies the four primitives this chapter names; the model composes them in this order.
+              The worked example is <code>PropertyKindCalculus.Examples.MiniWriteOnce</code>, build-gated by the project's
+own CI, so every illustration above is a checked fact rather than a claim. The recipe scales to a
+full retrieval: the same four steps, composed in the same order, carry a complete SMAP–NISAR
+soil-moisture model — and because each step's facts are real declarations, a downstream
+<em>verifiable ATBD</em> can cite them by name with their proved-or-<code>sorry</code> status, keeping the document
+and the code in lockstep. PropertyKindCalculus supplies the four primitives this chapter names; a
+model composes them in this order.
 </p>
             </section>
           <nav class="prev-next-buttons">
