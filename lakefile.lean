@@ -39,6 +39,20 @@ application, kept in a separate repository so this package stays focused on
 metrology and the ISO/IEC 80000 parts.
 -/
 
+/-- Forward this package's `-K cuda` / `-K cuda_home` / `-K isoc23_shim` options to the
+TorchLean dependency (Lake applies command-line `-K` to the root package only). This
+package produces only libraries — its `Torch` library uses TorchLean's CPU executable
+carrier (`IEEE32Exec`), never the CUDA backend — so it never links the isoc23 shim
+directly; the clause is here so the option threads uniformly through the store build and a
+`-K cuda=true` at this root would still reach TorchLean. Empty when no option is set, so
+the default build is byte-for-byte the same `require` as before (no resolution change). -/
+private def torchLeanOpts : Lean.NameMap String := Id.run do
+  let mut m : Lean.NameMap String := Lean.mkNameMap String
+  if let some v := get_config? cuda then m := m.insert `cuda v
+  if let some v := get_config? cuda_home then m := m.insert `cuda_home v
+  if let some v := get_config? isoc23_shim then m := m.insert `isoc23_shim v
+  return m
+
 package «PropertyKindCalculus» where
   leanOptions := #[
     ⟨`autoImplicit, false⟩,
@@ -72,6 +86,7 @@ require «Physlib» from git
 require «TorchLean» from git
   "https://github.com/NicolasRouquette/TorchLean.git" @
   "combined"
+  with torchLeanOpts
 
 -- Mathlib is pinned directly at the root, at `v4.31.0`, and kept LAST so that its
 -- dependency versions win over PhysLib's older transitive pins (see above). This
