@@ -6,6 +6,22 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 OUT="$ROOT/_out/blueprint"
 
+# --no-pdf / SKIP_PDF: skip the (slow, ~5 min) WeasyPrint PDF render for a fast
+# HTML-only preview loop (the HTML render is ~30 s, so the PDF is ~90% of the wall
+# clock). The HTML outputs are byte-identical either way; only the downloadable PDF
+# — and the target of the in-doc "download the PDF" link — is omitted. Set the env
+# var (`SKIP_PDF=1 ./scripts/ci-pages.sh`) or pass the flag (`--no-pdf`).
+SKIP_PDF="${SKIP_PDF:-}"
+for arg in "$@"; do
+  case "$arg" in
+    --no-pdf) SKIP_PDF=1 ;;
+    -h|--help)
+      echo "usage: ci-pages.sh [--no-pdf]   (or SKIP_PDF=1 ci-pages.sh) — --no-pdf skips the ~5 min PDF render"
+      exit 0 ;;
+    *) echo "error: unknown argument '$arg' (try --no-pdf)" >&2; exit 2 ;;
+  esac
+done
+
 lake update
 # `--with-html-single` also emits a one-page `html-single/index.html` (multi-page
 # stays on by default). The single page is self-contained and openable directly
@@ -27,7 +43,10 @@ pixi run python "$ROOT/scripts/file-links.py" "$OUT/html-multi"
 # pixi is not installed the HTML outputs are still produced and only the PDF is skipped.
 PDF_NAME="PropertyKindCalculus-Blueprint.pdf"
 PDF="$OUT/$PDF_NAME"
-if command -v pixi >/dev/null 2>&1; then
+if [ -n "$SKIP_PDF" ]; then
+  echo "note: --no-pdf/SKIP_PDF set — skipping the WeasyPrint PDF render (~5 min). HTML outputs are complete; the in-doc 'download the PDF' link will 404 until a full run." >&2
+  PDF=""
+elif command -v pixi >/dev/null 2>&1; then
   "$ROOT/scripts/render-pdf.sh"
 else
   echo "note: pixi not installed — skipping PDF (see blueprint/pyproject.toml; install pixi from https://pixi.sh)." >&2

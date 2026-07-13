@@ -30,6 +30,12 @@ platforms = ["linux-64", "osx-arm64"]
 # every host and CI render with the identical toolchain.
 python = "3.13.*"
 weasyprint = "*"
+# Brotli bindings for fontTools' WOFF2 decoder. The blueprint's KaTeX math fonts
+# ship as `.woff2` (Brotli-compressed); without this, WeasyPrint cannot decode them
+# and floods stderr with "The WOFF2 decoder requires the Brotli Python extension"
+# while falling back to the `.woff`/`.ttf` variants. `brotli-python` provides the
+# importable `brotli` module fontTools looks for.
+brotli-python = "*"
 
 [tool.pixi.tasks]
 # Render the blueprint PDF (the single-page HTML must already be built under

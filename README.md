@@ -105,6 +105,7 @@ generated dependency graph and status summary. It is a **separate Lake package**
 cd blueprint
 lake update && lake build   # type-check the doc + its Lean links
 ./scripts/ci-pages.sh       # render both outputs + print absolute paths to open
+./scripts/ci-pages.sh --no-pdf   # fast HTML-only loop (~50 s vs ~5.5 min; skips the WeasyPrint PDF)
 ```
 
 Open either `_out/blueprint/html-single/index.html` (one self-contained page) or
