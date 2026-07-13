@@ -26,6 +26,7 @@ import PropertyKindCalculusBlueprint.Chapters.Iso80000Part12
 import PropertyKindCalculusBlueprint.Chapters.Iso80000Part13
 import PropertyKindCalculusBlueprint.Chapters.CrossReferences
 import PropertyKindCalculusBlueprint.ItemIndex
+import PropertyKindCalculusBlueprint.References
 
 open Verso.Genre
 open Verso.Genre.Manual
@@ -145,7 +146,7 @@ tag := "kindcalculus-blueprint"
 %%%
 
 PropertyKindCalculus is a Lean 4 formalization of René Dybkær's *An Ontology on Property
-for Physical, Chemical, and Biological Systems* (2009), extended with David
+for Physical, Chemical, and Biological Systems* {Manual.citep dybkaer_ontology_on_property}[], extended with David
 Flater's full tracking of kinds of quantities (NIST Technical Note 1943,
 Appendix C). This blueprint is the design map: it records what is already proved
 (linked to real declarations) and the *capstone theorems we plan to provide*,
