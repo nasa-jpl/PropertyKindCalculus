@@ -59,7 +59,7 @@ block_extension Block.crossRefTable (tableData : CrossRefTableData) where
     open Verso.Output.Html in
     some <| fun _goI _goB _id data _blocks => do
       let .ok tableData := fromJson? (α := CrossRefTableData) data
-        | HtmlT.logError "Malformed data in Block.crossRefTable.toHtml"
+        | Verso.reportError "Malformed data in Block.crossRefTable.toHtml"
           pure .empty
       let st ← HtmlT.state
       let bodyRows : Array Verso.Output.Html := tableData.rows.map fun r =>
