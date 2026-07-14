@@ -256,7 +256,7 @@ structure PowerKind (p : Rat) (k₁ k : KindOfProperty) : Prop where
 
 /-- **Smart constructor.** Build a power law `k = k₁^p` from two *named* ratio-scale kinds,
 the ratio-scale gate discharged by `rfl` for any concrete kinds. -/
-def PowerKind.ofRatio (p : Rat) (k₁ k : KindOfProperty)
+theorem PowerKind.ofRatio (p : Rat) (k₁ k : KindOfProperty)
     (h₁ : k₁.IsRational := by rfl) (h : k.IsRational := by rfl) : PowerKind p k₁ k := ⟨h₁, h⟩
 
 namespace Quantity

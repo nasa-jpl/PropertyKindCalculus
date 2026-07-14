@@ -74,7 +74,7 @@ package «PropertyKindCalculus» where
 -- ships one.
 require «Physlib» from git
   "https://github.com/leanprover-community/physlib.git" @
-  "v4.30.0"
+  "v4.31.0"
 
 -- TorchLean (this work's fork, `combined` branch) backs *only* the `Torch` library
 -- below: the concrete IEEE-754 binary32 carriers (`FP32` rounding spec,
@@ -94,7 +94,7 @@ require «TorchLean» from git
 -- imports Mathlib, so a plain `import PropertyKindCalculus` stays Mathlib-free.
 require mathlib from git
   "https://github.com/leanprover-community/mathlib4" @
-  "v4.31.0"
+  "v4.32.0"
 
 /-- The exportable core library (Mathlib-free spine). -/
 @[default_target]

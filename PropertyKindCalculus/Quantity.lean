@@ -128,7 +128,7 @@ structure DifferenceKind (k : KindOfProperty) : Prop where
 
 /-- **Smart constructor.** A difference law for any kind whose scale concretely allows
 differences (interval or ratio); the gate is discharged by `trivial` for a concrete kind. -/
-def DifferenceKind.ofScale {k : KindOfProperty} (h : k.scale.AllowsDifference := by trivial) :
+theorem DifferenceKind.ofScale {k : KindOfProperty} (h : k.scale.AllowsDifference := by trivial) :
     DifferenceKind k := ⟨h⟩
 
 namespace Quantity

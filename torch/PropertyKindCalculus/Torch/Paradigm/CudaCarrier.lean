@@ -21,7 +21,7 @@ fit. (Add the real device kernels if a future kernel needs them.)
 -/
 import PropertyKindCalculus.Paradigm.NumCarrier
 import PropertyKindCalculus.Torch.Paradigm.NumCarrierContext
-import NN.Entrypoint.Tensor
+import NN.Tensor
 import NN.Runtime.Autograd.Engine.Cuda.Buffer
 
 open Spec

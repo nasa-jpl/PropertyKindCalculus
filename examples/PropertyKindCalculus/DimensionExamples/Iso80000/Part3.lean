@@ -44,8 +44,8 @@ open PropertyKindCalculus.Iso80000.Part3.DefiningRelations
 
 -- displacement and area are ratio-scale, hence `DifferenceKind`s — the comparability
 -- witness `Quantity.add` requires, threaded explicitly into the additivity examples.
-private def hDisp : DifferenceKind displacement.kind := .ofScale
-private def hArea : DifferenceKind area.kind := .ofScale
+private theorem hDisp : DifferenceKind displacement.kind := .ofScale
+private theorem hArea : DifferenceKind area.kind := .ofScale
 
 /-! ## (1) ISO 80000-3 — Space and time (the seed) -/
 

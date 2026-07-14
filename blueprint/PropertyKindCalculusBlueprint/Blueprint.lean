@@ -147,8 +147,8 @@ tag := "kindcalculus-blueprint"
 
 PropertyKindCalculus is a Lean 4 formalization of René Dybkær's *An Ontology on Property
 for Physical, Chemical, and Biological Systems* {Manual.citep dybkaer_ontology_on_property}[], extended with David
-Flater's full tracking of kinds of quantities (NIST Technical Note 1943,
-Appendix C). This blueprint is the design map: it records what is already proved
+Flater's full tracking of kinds of quantities in {Manual.citep flater_architecture_for_software_assisted_quantity_calculus}[] (Appendix C).
+This blueprint is the design map: it records what is already proved
 (linked to real declarations) and the *capstone theorems we plan to provide*,
 with the dependency graph and a status summary at the end.
 

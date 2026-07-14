@@ -38,7 +38,7 @@ open PropertyKindCalculus.Iso80000.Part4.DefiningRelations
 
 -- force is ratio-scale, hence a `DifferenceKind` — the comparability witness
 -- `Quantity.add` requires, threaded explicitly into the additivity examples.
-private def hForce : DifferenceKind force.kind := .ofScale
+private theorem hForce : DifferenceKind force.kind := .ofScale
 
 /-! ## (1) ISO 80000-4 — Mechanics (the dimensional algebra and units) -/
 

@@ -62,7 +62,7 @@ structure ProductKind (k₁ k₂ k : KindOfProperty) : Prop where
 ratio-scale gate discharged by `rfl` for any concrete kinds. Reads as the kind equation it
 stands for at the call site (`ProductKind.ofRatio k₁ k₂ k`), with the dimensional content
 certified in the application's `Dimension` layer. -/
-def ProductKind.ofRatio (k₁ k₂ k : KindOfProperty)
+theorem ProductKind.ofRatio (k₁ k₂ k : KindOfProperty)
     (h₁ : k₁.IsRational := by rfl) (h₂ : k₂.IsRational := by rfl) (h : k.IsRational := by rfl) :
     ProductKind k₁ k₂ k := ⟨h₁, h₂, h⟩
 
@@ -126,7 +126,7 @@ structure QuotientKind (k₁ k₂ k : KindOfProperty) : Prop where
 
 /-- **Smart constructor.** Build a quotient law from three *named* ratio-scale kinds, the
 ratio-scale gate discharged by `rfl` for any concrete kinds. -/
-def QuotientKind.ofRatio (k₁ k₂ k : KindOfProperty)
+theorem QuotientKind.ofRatio (k₁ k₂ k : KindOfProperty)
     (h₁ : k₁.IsRational := by rfl) (h₂ : k₂.IsRational := by rfl) (h : k.IsRational := by rfl) :
     QuotientKind k₁ k₂ k := ⟨h₁, h₂, h⟩
 

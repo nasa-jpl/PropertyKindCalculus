@@ -48,7 +48,7 @@ def lengthKind : KindOfProperty := { id := "length", scale := .ratio }
 
 /-- `lengthKind` is ratio-scale, hence a `DifferenceKind` — the comparability
 witness threaded explicitly into each `Quantity.add`/`add_refines`. -/
-def hLen : DifferenceKind lengthKind := .ofScale
+theorem hLen : DifferenceKind lengthKind := .ofScale
 
 /-- Two coarse lengths: 3 and 2. -/
 def a : Quantity lengthKind Coarse := ⟨⟨3⟩⟩

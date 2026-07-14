@@ -23,8 +23,8 @@ def mass : KindOfProperty := { id := "mass", scale := .ratio }
 
 /-- Both kinds are ratio-scale, so each is a `DifferenceKind` — the comparability
 witness `Quantity.add` requires. Supplied explicitly here, the gate stays visible. -/
-def hLen : DifferenceKind length := .ofScale
-def hMass : DifferenceKind mass := .ofScale
+theorem hLen : DifferenceKind length := .ofScale
+theorem hMass : DifferenceKind mass := .ofScale
 
 /-! ## The `Int` carrier: lawful, so the additivity laws hold for free -/
 
