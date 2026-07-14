@@ -1,2 +1,8 @@
 /.lake
 blueprint/scripts/__pycache__/
+
+# The generated Verso/blueprint documentation site is published to the orphan `gh-pages`
+# branch by scripts/publish-pages.sh, never committed on main — so the often-regenerated
+# artifact (churning HTML + content-hashed search shards + PDF) never pollutes main's history.
+/docs
+/docs.new
