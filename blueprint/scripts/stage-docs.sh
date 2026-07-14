@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Stage the rendered blueprint HTML into the repo-root docs/ folder for GitHub
-# Pages (configured to serve from the main branch at /docs).
+# Stage the rendered blueprint HTML into the repo-root docs/ folder, which the
+# publish step (scripts/publish-pages.sh) then commits to the orphan gh-pages
+# branch. docs/ is gitignored — a build artifact, never committed on main.
 #
 # Run AFTER the blueprint has been rendered into blueprint/_out/blueprint/
 # (e.g. by blueprint/scripts/ci-pages.sh, or the CI render step). Shared by both

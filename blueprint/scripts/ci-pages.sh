@@ -23,6 +23,12 @@ for arg in "$@"; do
 done
 
 lake update
+# Render into a CLEAN output dir: blueprint-gen never prunes superseded,
+# content-hashed `searchIndex_N.<hash>.js` search shards, so a reused
+# _out/blueprint accumulates stale shard sets that stage-docs.sh then copies
+# into docs/ (and thus into the published site). Wiping it first guarantees a
+# single, current shard set.
+rm -rf "$OUT"
 # `--with-html-single` also emits a one-page `html-single/index.html` (multi-page
 # stays on by default). The single page is self-contained and openable directly
 # as a file.
@@ -53,8 +59,9 @@ else
   PDF=""
 fi
 
-# Stage the rendered HTML (and the PDF, if built) into the repo-root docs/ for
-# GitHub Pages (main /docs).
+# Stage the rendered HTML (and the PDF, if built) into the repo-root docs/.
+# Publish it with scripts/publish-pages.sh (orphan gh-pages branch); docs/ is
+# gitignored — a build artifact, never committed on main.
 "$ROOT/scripts/stage-docs.sh"
 
 echo
@@ -62,7 +69,7 @@ echo "Rendered. Open either output directly as a file:"
 echo "  • single page:  file://$OUT/html-single/index.html"
 echo "  • multi page:   file://$OUT/html-multi/index.html"
 [ -n "$PDF" ] && echo "  • PDF:          file://$PDF"
-echo "  • staged for Pages at repo-root docs/ (commit + push, then enable Pages on main /docs)"
+echo "  • staged at repo-root docs/ — publish to gh-pages with: scripts/publish-pages.sh (add PAGES_PUSH=1 to push)"
 echo
 echo "Or serve the multi-page site over HTTP (search + dependency graph need this;"
 echo "the -d path is absolute so it works from any directory):"
