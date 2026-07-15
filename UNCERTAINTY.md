@@ -1,8 +1,11 @@
 # UNCERTAINTY.md — A rigor-first plan for uncertainty & numerical adequacy in PKC
 
-> Status: **Stages 0–2 implemented & CI-checked** (reference layer, GUM/Willink, autograd `cᵢ`,
-> the ladder theorems T1–T5, and the executable SSPRC pipeline); Stages 3–4 (numerical adequacy,
-> scale) are design/plan. Audience: PKC maintainers.
+> Status: **Stages 0–3 implemented & CI-checked** (reference layer, GUM/Willink, autograd `cᵢ`,
+> the ladder theorems T1–T5, the executable SSPRC pipeline, and the numerical-adequacy layer — the
+> executable `Adequacy` carrier plus the theorems A1 absorption, A2 Sterbenz, A3 verdict soundness
+> over `ℝ`). The *universal* adequacy capstone (soundness over an arbitrary model/box) and
+> Stage 4 (scale) remain design/plan, scoped as sub-stages 3.1–3.4 and Stage 4 in §6. Audience:
+> PKC maintainers.
 > Scope: augment PropertyKindCalculus in two coupled areas —
 > (1) **uncertainty quantification** (UQ) of model outputs from input uncertainties, and
 > (2) **numerical adequacy** of the floating-point representation of a science model.
@@ -302,7 +305,57 @@ inputs — which is the deep reason to build these together rather than as two f
 * **A3 — Adequacy soundness capstone:** if the `Adequacy` carrier reports *no* violation on box `B`,
   then for all inputs in `B` the `FP32` measurand's uncertainty equals the `ℝ` measurand's
   uncertainty up to a proven bound (`RInterval` soundness ∘ per-op `abs_error` ∘ A1). This is the
-  theorem that makes "no information loss" a *proof*, not a heuristic.
+  theorem that makes "no information loss" a *proof*, not a heuristic. Realized per-site (A3
+  `verdict_sound`); the universal-box form is Stage 3.1.
+
+### 4.6 The verified TorchLean FP32 / RInterval / carrier API surface (2026-07-15)
+
+Before implementing Stage 3 we swept the two dependency trees (PKC core spine; the TorchLean
+`combined` package under `.lake/packages/TorchLean`) for the exact signatures the adequacy layer
+builds on. The findings below are what the Stage-3 design and sub-stages 3.1–3.3 rest on — recorded
+here because they are non-obvious and drive the deferral decisions.
+
+**Bottom line.** TorchLean's `FP32`/Flocq layer is a **`noncomputable` ℝ-level specification**, not
+an executable float, and there is **no FLT/FP32-level Sterbenz** — only FLX. Both facts drove the
+architecture: the executable carrier runs over Lean `Float`; the `ℝ` rigor is a self-contained grid/
+FLX model *grounded* in (not built on) the TorchLean lemmas, whose statement shapes are exactly right.
+
+* **A — PKC carrier classes.** `NumCarrier` (`Paradigm/NumCarrier.lean:37`) `extends Zero One Add Sub
+  Mul Div Min Max, MathCarrier, Coe Nat` — 10 parents, **no own fields** (so `instance : NumCarrier
+  Adequacy := {}` closes once the parents are supplied; note `Coe Nat`, not `NatCast`). `MathCarrier`
+  (`QuantityFunction.lean:71`) is a **flat 10-field** class (`exp log sin cos sinh cosh tanh sqrt abs`
+  + `pi`). `instance : MathCarrier Float` exists; core does **not** declare `NumCarrier Float` (only
+  the Torch lib does) — hence `Uncertainty.Carriers`.
+
+* **B — FP32 rounding + error lemmas** (namespace `TorchLean.Floats.FP32`, `NN/Floats/FP32/`).
+  `FP32 := NF binaryRadix fexp32 rnd32` where `fexp32 = FLTExp (−149) 24` (FLT, gradual underflow, **no
+  upper bound**); an `FP32` is a wrapped real `⟨v⟩`. All `noncomputable`: `round₃₂ ulp₃₂ eps₃₂ : ℝ → ℝ`
+  (`Notation.lean`, `eps₃₂ x = ulp₃₂ x / 2` confirmed). Usable and proven, exactly the shapes we want:
+  `round_abs_error (x) : |round₃₂ x − x| ≤ eps₃₂ x` (`Error.lean:73`); per-op
+  `{add,sub,mul,div}_abs_error (a b) : |(a∘b).val − (a.val∘b.val)| ≤ eps₃₂ (a.val∘b.val)`
+  (`Error.lean:99–148`); `round_relative_error_of_normal` (unit roundoff `2⁻²⁴`, `Error.lean:79`);
+  `add_residual_isRepresentable` (an EFT, `Error.lean:111`).
+
+* **C — Absorption levers.** `neuralRound_nearestEven_point (x)` (`Rounding/Order.lean:227`) — the
+  rounded value is *globally nearest* among representables; `neuralUlp_le_abs_of_generic`,
+  `neuralUlp_mono_pos` (`Analysis/Ulp.lean:112,138`). These realize A1 on the real binary32 grid (the
+  self-contained grid model localizes them; `Fp32Grounding` re-exports `round_abs_error`).
+
+* **D — Sterbenz.** **Only** `neural_generic_format_FLX_sterbenz (prec) (0<x)(0<y)(x≤2y)(y≤2x) …`
+  (`Analysis/Sterbenz.lean:146`, `FLXExp prec` — fixed precision) and its one-sided helper. **No FLT
+  or FP32 Sterbenz** anywhere in the tree → our self-contained FLX proof is the analogue, and the
+  FLT/FP32 lift is Stage 3.2 (a TorchLean PR).
+
+* **E — Sound intervals** (namespace `TorchLean.Floats.Interval`, `Interval/Quantized.lean`).
+  `structure RInterval (lo hi : ℝ)`; `x ∈ I ↔ lo ≤ x ≤ hi`. Operations take a `Rounder` (outward
+  rounding; canonical `formatRounder`, `noncomputable`). Soundness: `RInterval.mem_{add,sub,mul}
+  (hx : x ∈ A)(hy : y ∈ B) : x∘y ∈ RInterval.∘ R A B` (`:123,133,147`). This is the range-analysis
+  backbone for the Stage 3.1 capstone and Stage 3.4 support-box propagation.
+
+* **F — computability.** *Everything* FP32/Flocq is `noncomputable` (`rnd32`, all `round₃₂/ulp₃₂/eps₃₂`,
+  every `NF` arithmetic instance). The executable model is the **separate** `IEEE32Exec` structure,
+  connected to `FP32` only by bridge lemmas (`BridgeFP32*`, `RuntimeApprox`), not defeq. ⟹ the runtime
+  `Adequacy` carrier necessarily computes over `Float`, and certifying it against the spec is Stage 3.3.
 
 ---
 
@@ -330,11 +383,20 @@ uncertainty/PropertyKindCalculus/Uncertainty/
   Ladder.lean           ✅ T1 (cumulant additivity), T2 (gum = willink|κ₄=0) / ℝ  [rigor, Stage 1]
   Convolution.lean      ✅ Dist/conv over ℝ; T5 (convolution adds cumulants),      [rigor, Stage 2]
                            T3 (willink = linearized-ssprc|κ₄), T4 (affine R = E(Y)) — sorry-free
-  Adequacy.lean         ▫ Adequacy carrier + NumCarrier instance                  [Area 2, Stage 3]
-  Adequacy/Absorption.lean ▫ A1 absorption theorem
-  Adequacy/Sterbenz32.lean ▫ A2 FP32 Sterbenz (transport from FLX)
-  Adequacy/Soundness.lean  ▫ A3 capstone
+  Adequacy.lean         ✅ executable Adequacy NumCarrier over Float: ulp₃₂,        [Area 2, Stage 3]
+                           swamping + cancellation checks, isAdequate verdict (Mathlib/Torch-free)
+  Adequacy/Grid.lean       ✅ local uniform-grid rounding spec over ℝ (gridRound, OnGrid, ½-ulp bound)
+  Adequacy/Absorption.lean ✅ A1 absorption (`absorb`) + converse (`resolve`) — half-ulp is the exact threshold
+  Adequacy/Sterbenz32.lean ✅ A2 self-contained FLX Sterbenz (`flx_sterbenz`) + grid exactness + rel-unc amplification
+  Adequacy/Soundness.lean  ✅ A3 verdict soundness (`verdict_sound`: flag ⟺ contribution lost) — sorry-free
+  Adequacy/Fp32Grounding.lean ✅ binary32 grounding: re-exports TorchLean's (noncomputable) FP32 round/ulp/
+                           per-op + sound RInterval lemmas the grid model localizes
 ```
+
+Stage-3 modules split by dependency exactly as Stages 1–2: `Adequacy.lean` (the executable carrier,
+`Float`) lives in the Mathlib/Torch-free `Uncertainty` library (Stage 0 stays 18 jobs, toolchain-only);
+`Adequacy/*` (the `ℝ` rigor + the TorchLean grounding) lives in `UncertaintyRigor`. The carrier is the
+`Float` *mirror* of the `ℝ` grid spec, exactly as `Ssprc` mirrors `Convolution`.
 
 ### 5.1 Worked examples (`examples/` tree, library `UncertaintyExamples`)
 
@@ -356,9 +418,13 @@ examples/PropertyKindCalculus/UncertaintyExamples/
                              than MCM's 20000); recovers the non-linear mean GUM misses; runConv cross-check
   SsprcNesting.lean       ✅ T3/T4/T5 applied over ℝ (willink cumulants (41,−1186), affine ⇒ E(Y)=R);
                              #print axioms shows sorry-free (Mathlib-backed)
+  AdequacySwamping.lean   ✅ Stage-3 executable Adequacy carrier: `bias + x` swamped under a 10⁸
+                             accumulator / clean under 100; `a − b` catastrophic-cancellation flagged / clean
+                             separated — one WO1 kernel per hazard, checked for free (Float, #guard)
+  AdequacyLadder.lean     ✅ Stage-3 A1/A2/A3 theorems applied to concrete values over ℝ (round₈(80+1)=80;
+                             3−2 of FLX 24 is FLX 24; the verdict biconditional); #print axioms sorry-free
   DegenhardtAfm.lean      ▫ Degenhardt §3.2 AFM indenter PAF, ~70× efficiency (Stage 4/scale)
   WillinkAsymmetric.lean  ▫ Willink §5 asymmetric input (κ₃) + Type-A t-cases (Stage 1)
-  AdequacySwamping.lean   ▫ a deliberately-inadequate model the Adequacy carrier flags (Stage 3)
 ```
 
 TorchLean surface newly imported at Stage 1+ (dependency expansion, explicitly in-scope):
@@ -408,12 +474,59 @@ and FFT kernels under `NN/Runtime/Autograd/Engine/Cuda/Ops/*` for SSPRC's convol
   full `UncertaintyMethod` structure, the continuous DDE reconstruction for the *shape*, an FFT
   convolution, and the `hvp` Taylor-surrogate nonlinearity gauge (§3.2 item 2).
 
-* **Stage 3 — Numerical adequacy.** `Adequacy` carrier (runtime certificate) over `RInterval`+FP32;
-  A1 absorption theorem; A2 FP32 Sterbenz; A3 soundness. Demonstrate a *deliberately inadequate*
-  model (small-uncertainty input swamped by a large accumulator) that the carrier flags, and an
-  adequate variant that certifies clean.
-  *Exit:* A3 is a theorem; the flagged/clean pair is a reflection test (indexed per the project's
-  reflection-tests convention).
+* **Stage 3 — Numerical adequacy. ✅ DONE (built & CI-checked).** The executable `Adequacy` carrier
+  (`Adequacy.lean`, `Float`, Mathlib/Torch-free) is a `NumCarrier`, so any WO1 `[NumCarrier α]` model
+  instantiates at it and emits an adequacy report with **no rewrite** (P1). Its `add` runs a swamping
+  check (the smaller-magnitude operand's uncertainty against half the sum's `ulp₃₂`) and its `sub` a
+  catastrophic-cancellation check (relative uncertainty ≥ 100%). The `ℝ` rigor sits in `Adequacy/*`:
+  **A1** (`absorb`, with converse `resolve`) proves a sub-½-ulp perturbation of a grid value is
+  absorbed — and half a ulp is the *exact* threshold; **A2** (`flx_sterbenz`, self-contained over an
+  explicit FLX mantissa/exponent model, the analogue of TorchLean's `neural_generic_format_FLX_sterbenz`)
+  proves near-equal subtraction is exact, plus `relUnc_amplifies` for the relative-uncertainty dual;
+  **A3** (`verdict_sound`) proves the biconditional *carrier-flag ⟺ contribution numerically lost* —
+  sound *and* complete. `Adequacy/Fp32Grounding.lean` re-exports the genuine (but `noncomputable`)
+  TorchLean binary32 `round₃₂`/`ulp₃₂`/per-op and sound `RInterval` lemmas the grid model localizes.
+  *Exit met:* A3 is a theorem (`#print axioms` → `[propext, Classical.choice, Quot.sound]`, no `sorryAx`,
+  verified in `AdequacyLadder`); the flagged/clean pair is a reflection test — `AdequacySwamping`
+  flags `10⁸ ⊕ (1±1)` swamped (½·ulp₃₂(10⁸)=4 > 1) and certifies `100 ⊕ (1±1)` clean, and flags a
+  near-equal subtraction while certifying `3−1` separated — both indexed in `UncertaintyExamples.lean`.
+  Stage 0 stays 18 jobs (toolchain-only).
+
+  Deferred to the sub-stages below (honest scoping, driven by the verified TorchLean API surface in
+  §4.6): the *universal* soundness capstone over an arbitrary model/box, the lift of A2 to the FLT
+  format binary32 actually uses, and an executable↔spec bridge for the `noncomputable` FP32 layer.
+
+* **Stage 3.1 — Universal adequacy soundness (the capstone A3′).** Lift the per-site verdict (A3) across
+  a whole evaluation: for an arbitrary WO1 model and an input *box*, *no flagged site ⟹ the `FP32`
+  measurand's uncertainty equals the `ℝ` one up to a proven bound, for every input in the box.* Compose
+  the per-op `FP32` rounding bounds (`FP32.{add,sub,mul,div}_abs_error`) and the sound interval enclosures
+  (`Interval.RInterval.mem_{add,sub,mul}`, re-exported in `Fp32Grounding`) along a formal evaluation-DAG
+  abstraction. No TorchLean PR needed (the levers all exist, §4.6 B6/E13) — the work is the DAG induction
+  and the accumulation bound. *Exit:* A3′ is a theorem over a nontrivial model DAG.
+
+* **Stage 3.2 — FLT/FP32 Sterbenz (lift A2 to the real binary32 format).** A2 is proved over a
+  self-contained FLX (fixed-precision, unbounded-exponent) model; binary32 is `fexp32 = FLTExp (−149) 24`
+  (gradual underflow). TorchLean has **only** FLX Sterbenz (`neural_generic_format_FLX_sterbenz`, §4.6 D11)
+  — there is *no* FLT- or FP32-level Sterbenz. **TorchLean PR:** add `neural_generic_format_FLT_sterbenz`
+  (transport FLX→FLT for the normal range via the existing `neural_generic_format_FLT_to_FIX` bridge,
+  handling the underflow boundary) and an `FP32.sub_exact_of_sterbenz` corollary. Then re-state
+  `Adequacy.Sterbenz32` over `round₃₂`/`neuralGenericFormat fexp32` instead of the local `FLX` predicate.
+  *Exit:* `flx_sterbenz`'s binary32 instance is a theorem about `round₃₂`.
+
+* **Stage 3.3 — Executable↔spec bridge for FP32.** The entire TorchLean FP32/Flocq layer is
+  `noncomputable` (§4.6 F14): `round₃₂ : ℝ → ℝ` is a spec, not a float, so the runtime carrier's
+  `ulp32/round` run over Lean `Float`, and the executable model is the separate `IEEE32Exec` structure,
+  bridged only by `BridgeFP32*`/`RuntimeApprox` lemmas. **TorchLean PR:** expose a certified
+  `Float ↔ IEEE32Exec ↔ FP32` bridge (or a `Float.ulp`/`Float.round` provably matching `ulp₃₂`/`round₃₂`
+  on the representable range), so the `Adequacy` carrier's *computed* verdict is provably the *specified*
+  one. *Exit:* the executable check is certified equal to the A1/A3 spec on the finite fragment.
+
+* **Stage 3.4 — Wire the Axis-U significance yardstick.** The demo passes absolute uncertainties directly;
+  the design (§4.4) makes the significance scale the autograd `cᵢ·uᵢ` and the input box `InputDist.support`.
+  Instantiate the `RInterval` carrier over the support box (for the magnitude ranges) and feed the
+  `Sensitivity` coefficients into the carrier's threshold, closing the Area-1 ↔ Area-2 coupling: a
+  UQ-analyzed model is *simultaneously* adequacy-checked from the *same* descriptor. *Exit:* a soil-moisture
+  (or Degenhardt) model checked for adequacy at the scale of its own propagated `cᵢ·uᵢ`.
 
 * **Stage 4 — Scale.** GPU-batched SSPRC/MCM on `CudaT`; sensitivity-driven `Nᵢ` allocation; a
   real downstream science model (soil-moisture retrieval) as the capstone example.

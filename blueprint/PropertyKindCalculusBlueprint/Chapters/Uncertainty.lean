@@ -12,6 +12,9 @@ import PropertyKindCalculus.Uncertainty
 import PropertyKindCalculus.Uncertainty.Ladder
 import PropertyKindCalculus.Uncertainty.Convolution
 import PropertyKindCalculus.Uncertainty.Sensitivity
+import PropertyKindCalculus.Uncertainty.Adequacy.Absorption
+import PropertyKindCalculus.Uncertainty.Adequacy.Sterbenz32
+import PropertyKindCalculus.Uncertainty.Adequacy.Soundness
 import PropertyKindCalculusBlueprint.References
 
 open Verso.Genre
@@ -27,12 +30,14 @@ does not: _given the uncertainty of the input quantities, what is the uncertaint
 and _does the floating-point representation of the model lose information that matters at the
 scale of those uncertainties?_ Both are developed against one shared, additive descriptor placed
 on a quantity — never a change to the carrier tower. The design is recorded in full in the
-project's `UNCERTAINTY.md`; this chapter is its blueprint face. Stages 0–2 are built and
+project's `UNCERTAINTY.md`; this chapter is its blueprint face. Stages 0–3 are built and
 CI-checked — the reference layer and worked examples, the GUM and Willink combines, the autograd
-sensitivity coefficients, the derivative-free SSPRC pipeline, and the five ladder theorems (T1,
+sensitivity coefficients, the derivative-free SSPRC pipeline, the five ladder theorems (T1,
 cumulant additivity; T2, $`\mathrm{gum} = \mathrm{willink}|_{\kappa_4=0}`; T3, Willink as the
 projection of the linearized SSPRC; T4, affine reference equals the mean; T5, convolution adds
-cumulants); only the numerical-adequacy capstone is *planned*.
+cumulants), and the numerical-adequacy layer (the executable analysis carrier, and the theorems A1
+absorption, A2 Sterbenz, A3 verdict soundness over `ℝ`); only the *universal* adequacy capstone —
+soundness over an arbitrary model and input box — remains *planned*.
 
 # Two orthogonal axes, and why their properties compose
 
@@ -312,35 +317,100 @@ difference of near-equal quantities is exact by Sterbenz, yet amplifies *relativ
 is the same two views — floating-point and uncertainty — meeting again.
 
 The idiomatic realization is *numerical adequacy as a carrier*: because the model is WO1 over
-`[NumCarrier α]`, instantiating it at an analysis carrier that tracks each value's magnitude
-interval and carried uncertainty, and checks each operation for swamping and cancellation, yields
-the adequacy report *for free* — no model rewrite. The check is sound because the ranges come from
-TorchLean's proven-sound interval arithmetic and the swamping bound from its `FP32` unit-in-the-
-last-place lemmas.
+`[NumCarrier α]`, instantiating it at an analysis carrier that tracks each value's magnitude and
+carried uncertainty, and checks each operation for swamping and cancellation, yields the adequacy
+report *for free* — no model rewrite. The check is sound because the swamping threshold is exactly
+half a unit in the last place, a fact proved on the rounding grid over `ℝ` and grounded in
+TorchLean's binary32 `FP32` unit-in-the-last-place lemmas (`Adequacy.Fp32Grounding`, which imports
+the genuine — `noncomputable` — Flocq port); the executable carrier computes the same threshold over
+`Float`.
+
+:::definition "def_uq_adequacy" (parent := "uncertainty") (lean := "PropertyKindCalculus.Uncertainty.Adequacy")
+The *adequacy analysis carrier*: a value carrying its magnitude, its propagated uncertainty, and an
+accumulated report of adequacy violations. As a `NumCarrier`, any write-once model instantiates at it
+and is analyzed for floating-point information loss with no rewrite — the *runtime certificate*, the
+pragmatic first target of the numerical-adequacy layer.
+:::
+
+:::proof "def_uq_adequacy"
+Realized (Stage 3, `Adequacy`) over the `Float` carrier. Addition runs a swamping check (the
+smaller-magnitude operand's uncertainty against half the sum's ulp), subtraction a cancellation check
+(relative uncertainty reaching 100%); the `NumCarrier` instance closes with these plus the arithmetic
+and `MathCarrier` fields, so the *same* kernel the earlier rungs evaluate runs here to emit the
+report. The `AdequacySwamping` example flags a large-accumulator model and certifies its
+small-accumulator variant clean — one WO1 kernel, checked for free.
+:::
+
+:::theorem "thm_uq_absorption" (parent := "uncertainty") (lean := "PropertyKindCalculus.Uncertainty.Adequacy.absorb")
+*Absorption (A1).* On the rounding grid of spacing `u` (a ulp), a representable value perturbed by
+strictly less than half a ulp rounds back unchanged: $`|y| < u/2 \Rightarrow
+\mathrm{round}_u(x + y) = x`. The perturbation carries *no* information into the result — floating-point
+swamping made precise — and its converse (`resolve`) shows a perturbation of at least half a ulp does
+move the result, so half a ulp is the *exact* absorption threshold.
+:::
+
+:::proof "thm_uq_absorption"
+Realized over `ℝ` (`Adequacy.Absorption.absorb`, with `resolve` the converse): on the uniform grid
+`u·ℤ`, `round_u(x+y) = u·round((x+y)/u)`, and `|y| < u/2` places `(x+y)/u` within a half-integer of
+`x/u`, so it rounds to `x/u`. The binary32 realization is TorchLean's `neuralRound` nearest-point
+optimality and `neuralUlp` (`Adequacy.Fp32Grounding`). Sorry-free.
+:::
+
+:::theorem "thm_uq_sterbenz" (parent := "uncertainty") (lean := "PropertyKindCalculus.Uncertainty.Adequacy.flx_sterbenz")
+*Sterbenz (A2).* The difference of two positive floating-point numbers representable at precision
+`p` that lie within a factor of two of each other ($`y \le x \le 2y`) is *itself* representable at
+precision `p` — so near-equal subtraction is *exact*, introducing no rounding error. Its dual is the
+uncertainty hazard: that exact difference can have *relative* uncertainty ≥ 100% (`relUnc_amplifies`).
+:::
+
+:::proof "thm_uq_sterbenz"
+Realized over `ℝ` (`Adequacy.Sterbenz32.flx_sterbenz`), the real-number analogue of TorchLean's
+`neural_generic_format_FLX_sterbenz`: align both operands to the smaller exponent, and the factor-of-two
+condition bounds the difference's mantissa below `2^p`. `sub_exact_on_grid` gives the grid form (the
+difference rounds to itself). Sorry-free. Lifting this to the FLT/`fexp32` format binary32 actually
+uses (gradual underflow) is a follow-up sub-stage, and a TorchLean PR.
+:::
+
+:::theorem "thm_uq_adequacy_verdict" (parent := "uncertainty") (lean := "PropertyKindCalculus.Uncertainty.Adequacy.verdict_sound") (tags := "capstone")
+*Adequacy verdict soundness (A3).* At an addition site, the carrier's flag — the operand's
+uncertainty is below half the accumulator's ulp — holds *if and only if* the contribution is
+genuinely lost (the rounded sum is unchanged by that uncertainty). So the flag is *sound* (flag ⟹
+lost) and *complete* (lost ⟹ flag): the theorem that makes the carrier's report trustworthy. Rests
+on {uses "thm_uq_absorption"}[absorption and its converse].
+:::
+
+:::proof "thm_uq_adequacy_verdict"
+Realized over `ℝ` (`Adequacy.Soundness.verdict_sound`): the forward direction is A1 `absorb`, the
+reverse is the contrapositive of `resolve`, giving the biconditional `unc < ½ ulp ↔ fl(s + unc) = s`
+for a representable accumulator and an uncertainty within one ulp. The `AdequacyLadder` example applies
+it to concrete values with a sorry-free axiom profile. This is the per-site soundness that grounds the
+runtime carrier.
+:::
 
 :::theorem "thm_uq_adequacy_soundness" (parent := "uncertainty") (tags := "capstone, planned") (effort := "large") (priority := "high")
-*Adequacy soundness.* If the analysis carrier reports no absorption or harmful cancellation on an
-input box, then for every input in that box the `FP32`-computed measurand's uncertainty equals the
-`ℝ`-computed one up to a proven bound. This turns "no loss of information" into a proof
-rather than a hope, and it is the theorem that binds the numerical-adequacy layer to R10's
-exec/spec refinement.
+*Universal adequacy soundness (the capstone).* If the analysis carrier reports no absorption or
+harmful cancellation on an input *box*, then for *every* input in that box the `FP32`-computed
+measurand's uncertainty equals the `ℝ`-computed one up to a proven bound, over an *arbitrary* model.
+This lifts the per-site verdict {uses "thm_uq_adequacy_verdict"}[A3] across a whole evaluation, and is
+the theorem that binds the layer to R10's exec/spec refinement.
 :::
 
 :::proof "thm_uq_adequacy_soundness"
-Planned (capstone A3 of `UNCERTAINTY.md`). Composes three pieces: the soundness of the interval
-carrier's enclosures, the per-operation `FP32` rounding bounds, and an absorption theorem (A1)
-under a magnitude gap — the last to be authored from TorchLean's `neuralRound` nearest-point
-optimality and unit-in-the-last-place lemmas, together with an `FP32` Sterbenz instance (A2)
-transported from the proven unbounded-exponent case.
+Planned. Composes the per-site verdict soundness (A3, realized) with the soundness of the interval
+carrier's enclosures (`Adequacy.Fp32Grounding.interval_add_sound`) and the per-operation `FP32`
+rounding bounds across the evaluation DAG. The remaining work — DAG composition, and lifting the
+`FP32` grounding from the current `noncomputable` spec to an executable-carrier bridge — is scoped as
+sub-stages 3.1–3.3 in `UNCERTAINTY.md` §6.
 :::
 
 # Worked examples (checked facts)
 
-Six examples reproduce a headline number (or a theorem) as a `#guard`, so the
+Eight examples reproduce a headline number (or a theorem) as a `#guard`, so the
 `UncertaintyExamples` library building under CI is what makes the claims true rather than
 asserted — the project's reflection-tests discipline applied to metrology. The first two are the
-Stage-0 reference numbers; the next two are the Stage-1 autograd and ladder facts; the last two are
-the Stage-2 SSPRC pipeline and its ladder theorems.
+Stage-0 reference numbers; the next two are the Stage-1 autograd and ladder facts; the next two are
+the Stage-2 SSPRC pipeline and its ladder theorems; the last two are the Stage-3 adequacy carrier and
+its theorems.
 
 - `PropertyKindCalculus.UncertaintyExamples.DegenhardtFictive` — the non-linear fictive model
   $`Y = (X_1 + X_2^2)\,X_3` of Degenhardt
@@ -379,3 +449,13 @@ the Stage-2 SSPRC pipeline and its ladder theorems.
   combined deviation has exactly the Willink cumulants $`(41, -1186)` (T3), and an all-centered
   (affine) input list yields a centered combined deviation, so $`E(Y) = R` (T4) — with `#print axioms`
   confirming no `sorryAx`.
+- `PropertyKindCalculus.UncertaintyExamples.AdequacySwamping` — the executable `Adequacy` carrier on
+  two write-once kernels: `bias + x` with a small input uncertainty is flagged *swamped* under a large
+  accumulator ($`10^8`, where $`\tfrac12\,\mathrm{ulp}_{32} = 4 > 1`) and certifies *clean* under a
+  small one ($`100`); `a − b` of near-equal uncertain operands is flagged *catastrophic cancellation*
+  (relative uncertainty ≥ 100%) and certifies clean when the operands are well separated — the same
+  kernel, checked for free at each configuration.
+- `PropertyKindCalculus.UncertaintyExamples.AdequacyLadder` — the adequacy theorems A1 (absorption,
+  $`\mathrm{round}_8(80+1) = 80`), A2 (Sterbenz, $`3 - 2` of two `FLX 24` numbers is `FLX 24`), and A3
+  (the verdict biconditional) applied to concrete values over `ℝ`, with `#print axioms` confirming no
+  `sorryAx`.

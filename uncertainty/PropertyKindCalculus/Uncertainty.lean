@@ -13,6 +13,9 @@ Stage 0 delivers the reference layer:
   * `Combine`          — the linearized GUM and Willink moment-combine methods.
   * `Ssprc`            — the derivative-free SSPRC pipeline (systematic sampling, separated
                          propagation, empirical deviation distributions, discrete convolution).
+  * `Adequacy`         — the executable numerical-adequacy carrier (Stage 3 runtime certificate):
+                         a WO1 `[NumCarrier α]` model run over it flags floating-point swamping and
+                         catastrophic cancellation at the scale of the input uncertainties.
 
 Worked, paper-grounded examples live in the `UncertaintyExamples` library.
 Mathlib- and TorchLean-free.
@@ -24,3 +27,4 @@ import PropertyKindCalculus.Uncertainty.UncertainQuantity
 import PropertyKindCalculus.Uncertainty.Mcm
 import PropertyKindCalculus.Uncertainty.Combine
 import PropertyKindCalculus.Uncertainty.Ssprc
+import PropertyKindCalculus.Uncertainty.Adequacy

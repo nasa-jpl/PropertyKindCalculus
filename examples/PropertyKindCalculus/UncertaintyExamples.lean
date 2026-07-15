@@ -27,8 +27,15 @@ Stage-2 additions (the derivative-free SSPRC method):
     projection of the linearized SSPRC`, `affine ⇒ E(Y)=R`) applied to concrete distributions over
     `ℝ`, plus the sorry-free axiom profile.
 
+Stage-3 additions (numerical adequacy):
+  * `AdequacySwamping` — the executable `Adequacy` carrier: one WO1 kernel flags floating-point
+    swamping under a large accumulator (and certifies clean under a small one), a second flags
+    catastrophic cancellation (and certifies clean when the operands are well separated).
+  * `AdequacyLadder` — the `ℝ`-level adequacy theorems A1 (absorption), A2 (Sterbenz), A3 (verdict
+    soundness) applied to concrete values, with the sorry-free axiom profile.
+
 Further paper examples (the AFM indenter model; Willink's asymmetric and Type-A cases) arrive with
-Stages 2–3.
+later sub-stages.
 -/
 import PropertyKindCalculus.UncertaintyExamples.DegenhardtFictive
 import PropertyKindCalculus.UncertaintyExamples.WillinkGaugeBlock
@@ -36,3 +43,5 @@ import PropertyKindCalculus.UncertaintyExamples.DegenhardtSensitivity
 import PropertyKindCalculus.UncertaintyExamples.LadderNesting
 import PropertyKindCalculus.UncertaintyExamples.DegenhardtSsprc
 import PropertyKindCalculus.UncertaintyExamples.SsprcNesting
+import PropertyKindCalculus.UncertaintyExamples.AdequacySwamping
+import PropertyKindCalculus.UncertaintyExamples.AdequacyLadder

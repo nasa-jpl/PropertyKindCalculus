@@ -113,9 +113,9 @@ def requirementsTable : DocTable := mdTable true
    "additive `InputDist`/`MomentData` descriptor; `gumStdUnc`/`willinkCombine` + Pearson `k₉₅/k₉₉`; the derivative-free `Ssprc` pipeline (systematic sampling, separated propagation, convolution); `Ladder`+`Convolution` (`Cumulants` combine-monoid, T1 additivity, T2 projection, T5 convolution-adds-cumulants, T3 Willink=linearized-SSPRC, T4 affine reference=mean); autograd `cᵢ` via the `TapeBuilder` carrier",
    "proved (GUM + Willink + SSPRC + T1–T5 + autograd cᵢ)"],
   ["R15 — numerical adequacy: no information loss at the scale of the input uncertainties",
-   "an input whose contribution `cᵢ·uᵢ` sits below ½ ulp of the accumulated sum is flagged numerically invisible; near-equal subtraction is Sterbenz-exact yet amplifies relative uncertainty",
-   "an `Adequacy` analysis carrier over TorchLean's sound `RInterval` + `FP32` ulp lemmas; soundness capstone (A3)",
-   "planned"],
+   "an input whose contribution `cᵢ·uᵢ` sits below ½ ulp of the accumulated sum is flagged numerically invisible (`AdequacySwamping`: `10⁸ ⊕ (1±1)` swamped, `100 ⊕ (1±1)` clean); near-equal subtraction is Sterbenz-exact yet amplifies relative uncertainty; A1 absorption, A2 Sterbenz, A3 verdict-soundness proved over `ℝ`",
+   "an executable `Adequacy` `NumCarrier` (swamping + cancellation checks over `Float`); the grid-rounding spec + `Absorption` (A1), `Sterbenz32` (A2, self-contained FLX), `Soundness` (A3, flag ⟺ loss) over `ℝ`, grounded in TorchLean's `FP32` ulp/round + sound `RInterval` lemmas (`Fp32Grounding`)",
+   "proved (runtime carrier + A1 + A2 + A3); universal-DAG capstone planned (Stage 3.1–3.3)"],
   ["*(out of scope)* structural value representation",
    "coordinate frames, tensor variance, transforms",
    "an orthogonal index over the kind",
@@ -518,11 +518,18 @@ input whose contribution $`c_i\,u_i` falls below half a unit in the last place o
 sum is *numerically invisible*, a silent corruption of the uncertainty result; its dual is
 exact-by-Sterbenz cancellation that nonetheless amplifies *relative* uncertainty. Because the model
 is written once over `[NumCarrier α]`, the check is obtained *for free* by instantiating it at an
-analysis carrier that tracks each value's magnitude interval and carried uncertainty and flags
-swamping and harmful cancellation — sound because the ranges come from TorchLean's proven interval
-arithmetic and the swamping bound from its `FP32` unit-in-the-last-place lemmas. The capstone (A3)
-turns "no loss of information" into a proof rather than a hope, binding this layer to R10's
-exec/spec refinement. Planned.
+analysis carrier that tracks each value's magnitude and carried uncertainty and flags swamping and
+harmful cancellation — sound because the swamping threshold is exactly half a ulp, proved on the
+rounding grid over `ℝ` and grounded in TorchLean's binary32 `FP32` unit-in-the-last-place lemmas and
+its proven interval arithmetic. This requirement is realized through Stage 3: the executable
+`Adequacy` carrier (a `NumCarrier` running the swamping and cancellation checks over `Float`, with a
+worked flagged/clean example pair), and the three theorems over `ℝ` — A1 absorption (a sub-½-ulp
+perturbation is invisible, its converse fixing the threshold), A2 Sterbenz (near-equal subtraction is
+exact, its dual amplifying relative uncertainty), and A3 verdict soundness (the flag holds *iff* the
+contribution is lost — sound and complete). What remains *planned* is the universal capstone —
+soundness over an arbitrary model and input box, lifting the per-site A3 across a whole evaluation —
+together with a bridge from the `noncomputable` `FP32` spec to an executable carrier and the FLT-level
+Sterbenz; these are scoped as sub-stages 3.1–3.3 in the project's `UNCERTAINTY.md`.
 
 ## Out of scope (for now)
 

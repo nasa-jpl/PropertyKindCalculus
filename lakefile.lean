@@ -193,7 +193,8 @@ lean_lib «Uncertainty» where
     .one `PropertyKindCalculus.Uncertainty.UncertainQuantity,
     .one `PropertyKindCalculus.Uncertainty.Mcm,
     .one `PropertyKindCalculus.Uncertainty.Combine,
-    .one `PropertyKindCalculus.Uncertainty.Ssprc]
+    .one `PropertyKindCalculus.Uncertainty.Ssprc,
+    .one `PropertyKindCalculus.Uncertainty.Adequacy]
 
 /-- **Stage 1 of the uncertainty workstream** (see `UNCERTAINTY.md` §6): the rigor and
 sensitivity layer that the Mathlib- and TorchLean-free Stage-0 `Uncertainty` library above cannot
@@ -212,7 +213,12 @@ lean_lib «UncertaintyRigor» where
   globs := #[
     .one `PropertyKindCalculus.Uncertainty.Ladder,
     .one `PropertyKindCalculus.Uncertainty.Convolution,
-    .one `PropertyKindCalculus.Uncertainty.Sensitivity]
+    .one `PropertyKindCalculus.Uncertainty.Sensitivity,
+    .one `PropertyKindCalculus.Uncertainty.Adequacy.Grid,
+    .one `PropertyKindCalculus.Uncertainty.Adequacy.Absorption,
+    .one `PropertyKindCalculus.Uncertainty.Adequacy.Soundness,
+    .one `PropertyKindCalculus.Uncertainty.Adequacy.Sterbenz32,
+    .one `PropertyKindCalculus.Uncertainty.Adequacy.Fp32Grounding]
 
 /-- Worked uncertainty examples grounded in the two source papers (Degenhardt 2025 fictive
 example; Willink 2005 gauge-block), in the `examples/` source tree as a **separate library** so
