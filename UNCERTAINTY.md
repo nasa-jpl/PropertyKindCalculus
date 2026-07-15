@@ -357,6 +357,35 @@ FLX model *grounded* in (not built on) the TorchLean lemmas, whose statement sha
   connected to `FP32` only by bridge lemmas (`BridgeFP32*`, `RuntimeApprox`), not defeq. ⟹ the runtime
   `Adequacy` carrier necessarily computes over `Float`, and certifying it against the spec is Stage 3.3.
 
+> **Note — Sterbenz, and the `FLX`/`FLT`/`FP32` formats (terminology used throughout Stage 3).**
+>
+> *Sterbenz* is **Pat H. Sterbenz**, author of *Floating-Point Computation* (Prentice-Hall, 1974), a
+> foundational text on floating-point error analysis. **Sterbenz's lemma:** if two floating-point
+> numbers `x`, `y` are within a factor of two of each other (`y/2 ≤ x ≤ 2y`, both positive), then
+> `x − y` is *exactly representable* in the same format — the subtraction incurs **zero rounding
+> error**. Intuition: their exponents differ by at most one, so they lie on a common grid, and the
+> difference — no larger than either operand — fits at that precision. This is the "no new rounding
+> noise" half of the cancellation story; its treacherous companion is that the leading digits cancel,
+> so any *pre-existing relative uncertainty* in the operands is amplified — catastrophic cancellation
+> (the `relUnc_amplifies` side of A2). `flx_sterbenz` is exactly this lemma, proved over `ℝ`.
+>
+> *`FLX` / `FLT` / `FP32`* are **Flocq** format names (Flocq = the Coq floating-point library of
+> Boldo & Melquiond; TorchLean's float layer is a native port, so the names carry over). They are
+> three points on a realism spectrum — `FP32 ⊂ FLT ⊂ FLX`:
+> * **`FLX`** — fixed precision, *unbounded eXponent*: no overflow, no underflow (an idealization).
+> * **`FLT`** — fixed precision with a *minimum exponent* → gradual underflow (subnormals): what real
+>   IEEE formats are (`FLTExp emin prec`).
+> * **`FP32`** — IEEE-754 **binary32** (single precision), the one `FLT` instance TorchLean writes
+>   `fexp32 = FLTExp (−149) 24` (24-bit significand; smallest subnormal `2⁻¹⁴⁹`).
+>
+> Why the distinction matters here: TorchLean proves Sterbenz **only for `FLX`** (group D above), the
+> idealized unbounded-exponent format. Binary32 is an `FLT` format, so applying the theorem to the
+> format that actually runs means lifting `FLX → FLT`, re-checking the argument survives the
+> gradual-underflow region (it does — subnormals are uniformly spaced — but it is a real formalization
+> step, not free). That lift is **Stage 3.2**, scoped as a TorchLean PR because it is a fact about
+> TorchLean's Flocq port, not about PKC. Until then, `flx_sterbenz` is the honest self-contained `ℝ`
+> analogue.
+
 ---
 
 ## 5. Module layout
