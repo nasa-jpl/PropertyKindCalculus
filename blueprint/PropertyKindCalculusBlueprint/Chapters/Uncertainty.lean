@@ -1,11 +1,16 @@
 import Verso
 import VersoManual
 import VersoBlueprint
--- Importing the Stage-0 uncertainty library lets the `(lean := "PropertyKindCalculus.Uncertainty.…")`
--- nodes below resolve to real declarations; the planned rungs (the ladder theorems and the
--- numerical-adequacy capstone) carry an informal statement only. The chapter cites the two source
--- papers, so it also imports the blueprint's `References`.
+-- Every realized node below is linked to a real declaration via `(lean := "PropertyKindCalculus.…")`
+-- and is elaborated for its proved/`sorry` status, so the chapter imports the Stage-0 uncertainty
+-- library, the Stage-1 `Ladder` (T1/T2 over `ℝ`), and the Stage-1 `Sensitivity` autograd bridge —
+-- the last pulls TorchLean into the blueprint build, deliberately, so the sensitivity coefficients
+-- are a formal lean-linked node rather than prose. Only the SSPRC method and the numerical-adequacy
+-- capstone remain informal (unbuilt). The chapter cites the two source papers, so it also imports
+-- the blueprint's `References`.
 import PropertyKindCalculus.Uncertainty
+import PropertyKindCalculus.Uncertainty.Ladder
+import PropertyKindCalculus.Uncertainty.Sensitivity
 import PropertyKindCalculusBlueprint.References
 
 open Verso.Genre
@@ -21,9 +26,11 @@ does not: _given the uncertainty of the input quantities, what is the uncertaint
 and _does the floating-point representation of the model lose information that matters at the
 scale of those uncertainties?_ Both are developed against one shared, additive descriptor placed
 on a quantity — never a change to the carrier tower. The design is recorded in full in the
-project's `UNCERTAINTY.md`; this chapter is its blueprint face. Stage 0 (the reference layer and
-two paper-grounded worked examples) is built and CI-checked; the ladder theorems and the
-adequacy capstone are *planned*.
+project's `UNCERTAINTY.md`; this chapter is its blueprint face. Stages 0 and 1 are built and
+CI-checked — the reference layer and worked examples, the GUM and Willink combines, the autograd
+sensitivity coefficients, and the first two ladder theorems (T1, cumulant additivity; T2,
+$`\mathrm{gum} = \mathrm{willink}|_{\kappa_4=0}`); the SSPRC method, the remaining ladder rungs, and
+the numerical-adequacy capstone are *planned*.
 
 # Two orthogonal axes, and why their properties compose
 
@@ -119,7 +126,9 @@ $`\kappa_2`; Willink keeps $`\kappa_2` and $`\kappa_4`; SSPRC's convolution comb
 cumulants numerically (Willink himself calls his method "convolution of the components in the
 linearized formulation"). So the ladder is a chain of homomorphisms between the methods'
 contribution types, and each coarser rung is a *projection* of the finer one — the claim the
-planned theorems below discharge.
+ladder theorems below discharge (T1 and T2 proved over `ℝ`; T3, linking Willink to the linearized
+SSPRC, planned with the sampling method). The sensitivity coefficients $`c_i` the two linearized
+rungs need come from the autograd bridge below, not by hand.
 
 :::definition "def_uq_gum" (parent := "uncertainty") (lean := "PropertyKindCalculus.Uncertainty.gumStdUnc")
 The GUM combined standard uncertainty $`\sqrt{\sum_i c_i^2 u_i^2}`, over a list of sensitivity /
@@ -127,8 +136,10 @@ moment-data pairs. The coarsest rung.
 :::
 
 :::proof "def_uq_gum"
-Realized. `gumStdUnc` folds the $`\kappa_2` contributions. Stage 0 supplies the $`c_i` explicitly;
-Stage 1 sources them from the autograd carrier, leaving this fold unchanged.
+Realized. `gumStdUnc` folds the $`\kappa_2` contributions. Stage 0 supplied the $`c_i` explicitly;
+Stage 1 now sources them from the autograd carrier (one reverse pass over the write-once model at
+the input means), leaving this fold unchanged — the Degenhardt example checks the two agree, both
+giving $`u_c = 1.662`.
 :::
 
 :::definition "def_uq_willink" (parent := "uncertainty") (lean := "PropertyKindCalculus.Uncertainty.willinkCombine")
@@ -153,20 +164,55 @@ Realized. `Mcm.run` over the `Float` carrier, drawing each input through its `in
 is not its job — fidelity is.
 :::
 
-:::theorem "thm_uq_gum_is_willink" (parent := "uncertainty") (tags := "capstone, planned") (effort := "medium") (priority := "high")
-*GUM is the $`\kappa_2`-projection of Willink.* When every input's fourth cumulant vanishes
-($`w_i = 0`, as for normal inputs), Willink's excess $`\gamma_Y` is zero, its Pearson closure is
-the normal distribution, and its expanded uncertainty reduces exactly to GUM's Gaussian interval.
-Hence $`\mathrm{gum}` is the coarsening of $`\mathrm{willink}` along the cumulant-forgetting
-homomorphism. Uses {uses "def_uq_gum"}[the GUM combine] and {uses "def_uq_willink"}[Willink's combine].
+:::definition "def_uq_sensitivity" (parent := "uncertainty") (lean := "PropertyKindCalculus.Uncertainty.Sensitivity.gradient")
+The *sensitivity bridge*: the coefficients $`c_i = \partial f/\partial X_i` that GUM and Willink
+need are obtained by instantiating the write-once model at an autograd carrier and running one
+reverse pass at the input means — not by hand. This is the `extract` step of the two linearized
+rungs, and the narrow, precise role of automatic differentiation here, since the SSPRC method is
+derivative-free.
+:::
+
+:::proof "def_uq_sensitivity"
+Realized (Stage 1, `Sensitivity.gradient`). The model kernel — the *same* source run at `Float`
+for Monte Carlo — is interpreted at TorchLean's reverse-mode `TapeBuilder` carrier; each input
+enters as a differentiable leaf and `backwardScalar` reads every $`c_i` from one pass, with no
+model rewrite. On the Degenhardt fictive model the bridge returns $`(c_1, c_2, c_3) = (5, 5, 2.25)`
+and reproduces the GUM $`u_c = 1.662` exactly (the `DegenhardtSensitivity` example). The op class is
+`exp`/`log`/`sqrt` with arithmetic; trigonometric models await tape VJP nodes.
+:::
+
+:::theorem "thm_uq_cumulant_additivity" (parent := "uncertainty") (lean := "PropertyKindCalculus.Uncertainty.willinkCumulants_cons")
+*Cumulant additivity (T1).* Combining independent contributions adds their cumulants: the
+measurand's combined $`(\kappa_2, \kappa_4)` for an input list is the head input's contribution
+plus the combined cumulants of the tail. Equivalently the contribution type is a commutative monoid
+under `combine` — *and that it is a monoid is the independence assumption made explicit*. This is
+Willink's $`\kappa_r(\sum_j a_j Z_j) = \sum_j a_j^{\,r}\,\kappa_r(Z_j)` for $`r \in \{2, 4\}`, the
+fact the whole ladder rests on.
+:::
+
+:::proof "thm_uq_cumulant_additivity"
+Realized over `ℝ`: `willinkCumulants_cons`, with the `Cumulants` `AddCommMonoid` instance (the
+`combine`/`empty` monoid laws) providing the associativity/commutativity/unit that make the
+independent fold well-defined.
+:::
+
+:::theorem "thm_uq_gum_is_willink" (parent := "uncertainty") (lean := "PropertyKindCalculus.Uncertainty.gum_eq_willink_of_normal") (tags := "capstone")
+*GUM is the $`\kappa_2`-projection of Willink (T2).* The second cumulant of the Willink combine is
+exactly the GUM combined variance, so $`\mathrm{gum}` is the cumulant-forgetting coarsening of
+$`\mathrm{willink}`. And when every input's fourth cumulant vanishes ($`w_i = 0`, as for normal
+inputs) the excess $`\gamma_Y` is zero, the Pearson coverage factor collapses to the standard-normal
+percentile ($`k_{0.95}(0) = 1.96`), and the Willink expanded-uncertainty half-width equals GUM's
+Gaussian half-width $`1.96\,u_c`. Uses {uses "def_uq_gum"}[the GUM combine] and
+{uses "def_uq_willink"}[Willink's combine], resting on {uses "thm_uq_cumulant_additivity"}[cumulant additivity].
 :::
 
 :::proof "thm_uq_gum_is_willink"
-Planned (theorem T2 of `UNCERTAINTY.md`), to be proved over `ℝ`. The variance fold is
-literally shared between the two definitions; the content is that $`\gamma_Y = 0 \Rightarrow
-k_p(\gamma_Y)` is the standard-normal percentile, so the half-widths coincide. Establishes the top
-edge of the ladder; the lower edge — that Willink is the fourth-cumulant truncation of the
-linearized SSPRC, because convolution adds cumulants — is theorem T3.
+Realized over `ℝ` (theorem T2 of `UNCERTAINTY.md`, `gum_eq_willink_of_normal`; `#print axioms`
+shows it sorry-free — no `sorryAx`). Two parts: `willinkCumulants_kappa2` — the variance fold is
+literally the GUM one — and the shape collapse $`w_i = 0 \Rightarrow \gamma_Y = 0 \Rightarrow k_p`
+is the standard-normal percentile, so the half-widths coincide. Establishes the top edge of the
+ladder; the lower edge — that Willink is the fourth-cumulant truncation of the linearized SSPRC,
+because convolution adds cumulants — is the planned theorem T3.
 :::
 
 # Numerical adequacy of the floating-point representation
@@ -207,9 +253,10 @@ transported from the proven unbounded-exponent case.
 
 # Worked examples (checked facts)
 
-Two examples reproduce a headline number from each source paper as a `#guard`, so the
+Four examples reproduce a headline number (or a theorem) as a `#guard`, so the
 `UncertaintyExamples` library building under CI is what makes the claims true rather than
-asserted — the project's reflection-tests discipline applied to metrology.
+asserted — the project's reflection-tests discipline applied to metrology. The first two are the
+Stage-0 reference numbers; the last two are the Stage-1 autograd and ladder facts.
 
 - `PropertyKindCalculus.UncertaintyExamples.DegenhardtFictive` — the non-linear fictive model
   $`Y = (X_1 + X_2^2)\,X_3` of Degenhardt
@@ -228,3 +275,12 @@ asserted — the project's reflection-tests discipline applied to metrology.
   procedure's 93 nm at the same coverage, because the (mostly negative) fourth cumulants pull the
   tails of the output toward normal. That narrowing *is* the difference between the GUM rung and
   the Willink rung, reproduced as a checked number.
+- `PropertyKindCalculus.UncertaintyExamples.DegenhardtSensitivity` — the Stage-1 autograd bridge on
+  the *same* fictive kernel: interpreting it at the reverse-mode tape carrier returns the
+  sensitivity coefficients $`(c_1, c_2, c_3) = (5, 5, 2.25)` to machine precision (matching the
+  hand-computed $`\partial Y/\partial X_i` at the means), and feeding them through `gumStdUnc`
+  reproduces $`u_c = 1.662` exactly — the write-once model differentiated with no rewrite.
+- `PropertyKindCalculus.UncertaintyExamples.LadderNesting` — T1/T2 applied to a concrete
+  all-Gaussian term list over `ℝ` (`gum = willink|κ₄=0` as a closed proof term, `#print axioms`
+  confirming no `sorryAx`), together with the executable `Float` shadow of the collapse: for
+  normal-only inputs the Willink 95% half-width is exactly $`1.96\,u_c`.

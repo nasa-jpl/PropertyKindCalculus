@@ -11,8 +11,17 @@ building under CI is what makes the claims true rather than asserted.
   * `WillinkGaugeBlock` — Willink (2005) Table 4, the gauge-block calibration: the cumulants
     method reproducing `u_Y = 33.4 nm`, `γ_Y = 0.124`, `h₀.₉₉ = 87.6 nm`.
 
+Stage-1 additions (these two pull in Mathlib and TorchLean respectively):
+  * `DegenhardtSensitivity` — the fictive model's GUM sensitivities `cᵢ` sourced from TorchLean
+    autograd over the write-once kernel, reproducing the hand-supplied `[5, 5, 2.25]` and the GUM
+    `u_c ≈ 1.662`.
+  * `LadderNesting` — the T1/T2 nesting theorems (`gum = willink|κ₄=0`) applied to a concrete
+    term list over `ℝ`, plus the executable `Float` shadow of the collapse.
+
 Further paper examples (Degenhardt's SSPRC systematic-sampling run and the AFM indenter model;
-Willink's asymmetric and Type-A cases) arrive with Stages 2–3. Mathlib- and TorchLean-free.
+Willink's asymmetric and Type-A cases) arrive with Stages 2–3.
 -/
 import PropertyKindCalculus.UncertaintyExamples.DegenhardtFictive
 import PropertyKindCalculus.UncertaintyExamples.WillinkGaugeBlock
+import PropertyKindCalculus.UncertaintyExamples.DegenhardtSensitivity
+import PropertyKindCalculus.UncertaintyExamples.LadderNesting

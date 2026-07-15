@@ -177,10 +177,40 @@ lean_lib «Torch» where
 distributions, the inverse-CDF sampler shared by Monte Carlo and systematic propagation, the
 Monte Carlo reference propagator, and the linearized GUM/Willink moment-combine methods.
 Mathlib- and TorchLean-free — it depends only on the core spine, so it builds with just the
-toolchain. Build with `lake build Uncertainty`. -/
+toolchain. Build with `lake build Uncertainty`.
+
+The module list is **explicit** (not `.andSubmodules`) precisely so that the Stage-1 rigor
+modules (`.Ladder` over Mathlib's `ℝ`, `.Sensitivity` over TorchLean autograd) can live in the
+same `uncertainty/` source tree and namespace **without** being swept into this Mathlib-free
+library — they belong to `UncertaintyRigor` below. -/
 lean_lib «Uncertainty» where
   srcDir := "uncertainty"
-  globs := #[.andSubmodules `PropertyKindCalculus.Uncertainty]
+  globs := #[
+    .one `PropertyKindCalculus.Uncertainty,
+    .one `PropertyKindCalculus.Uncertainty.Carriers,
+    .one `PropertyKindCalculus.Uncertainty.Sampling,
+    .one `PropertyKindCalculus.Uncertainty.InputDist,
+    .one `PropertyKindCalculus.Uncertainty.UncertainQuantity,
+    .one `PropertyKindCalculus.Uncertainty.Mcm,
+    .one `PropertyKindCalculus.Uncertainty.Combine]
+
+/-- **Stage 1 of the uncertainty workstream** (see `UNCERTAINTY.md` §6): the rigor and
+sensitivity layer that the Mathlib- and TorchLean-free Stage-0 `Uncertainty` library above cannot
+carry. Two modules, sharing the `uncertainty/` source tree and the `PropertyKindCalculus.Uncertainty`
+namespace but built as a separate library so the dependency expansion lands *here* and Stage 0
+stays toolchain-only:
+  * `PropertyKindCalculus.Uncertainty.Ladder`      — the GUM ⊂ Willink nesting theorems T1
+    (cumulant additivity) and T2 (`gum = willink|κ₄=0`), stated and proved over Mathlib's `ℝ`.
+  * `PropertyKindCalculus.Uncertainty.Sensitivity` — the autograd bridge sourcing the GUM/Willink
+    sensitivity coefficients `cᵢ = ∂f/∂Xᵢ` from a WO1 kernel via TorchLean's reverse-mode tape
+    (`TapeBuilder`), reusing the model with no rewrite.
+Build with `lake build UncertaintyRigor`. Pulls in Mathlib (via `Ladder`) and TorchLean (via
+`Sensitivity`). -/
+lean_lib «UncertaintyRigor» where
+  srcDir := "uncertainty"
+  globs := #[
+    .one `PropertyKindCalculus.Uncertainty.Ladder,
+    .one `PropertyKindCalculus.Uncertainty.Sensitivity]
 
 /-- Worked uncertainty examples grounded in the two source papers (Degenhardt 2025 fictive
 example; Willink 2005 gauge-block), in the `examples/` source tree as a **separate library** so

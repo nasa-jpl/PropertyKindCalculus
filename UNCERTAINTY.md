@@ -76,7 +76,7 @@ uncertainty/adequacy story and light up the two currently-idle carriers (`TapeBu
 | Carrier | What it computes | **Value-added property** | Status |
 |---|---|---|---|
 | `ℝ` | exact symbolic reals ([`QuantityReal.lean:25`](PropertyKindCalculus/dimension/PropertyKindCalculus/QuantityReal.lean#L25)) | **Proof** — specs, ladder-nesting theorems, adequacy soundness | exists |
-| `TapeBuilder` | `cᵢ=∂f/∂Xᵢ`, `hᵢ=∂²f/∂Xᵢ²`, HVP, Jacobian ([`TapeCarrier.lean`](PropertyKindCalculus/torch/PropertyKindCalculus/Torch/Paradigm/TapeCarrier.lean)) | **Sensitivity** — GUM/Willink coefficients, contribution ranking, nonlinearity gauge, Taylor surrogates for SSPRC | carrier exists; autograd API unused |
+| `TapeBuilder` | `cᵢ=∂f/∂Xᵢ`, `hᵢ=∂²f/∂Xᵢ²`, HVP, Jacobian ([`TapeCarrier.lean`](PropertyKindCalculus/torch/PropertyKindCalculus/Torch/Paradigm/TapeCarrier.lean)) | **Sensitivity** — GUM/Willink coefficients, contribution ranking, nonlinearity gauge, Taylor surrogates for SSPRC | ✅ `cᵢ` wired (`Sensitivity.lean`, Stage 1); `hᵢ`/HVP Stage 2 |
 | `FP32` | round-on-ℝ binary32; half-ULP & `(1+δ)` bounds | **No information loss / numerical adequacy** — certify swamping/cancellation-free; quantify approximation error | carrier exists; adequacy layer new |
 | `RInterval` | sound magnitude enclosures on the FP32 grid | **Rigorous ranges** — bound operand magnitudes for adequacy; verified output bounds | exists in TorchLean; unused by PKC |
 | `IEEE32Exec` | bit-exact binary32 | **Executable certification** — real bits match the spec (finite fragment) | exists |
@@ -306,8 +306,11 @@ inputs — which is the deep reason to build these together rather than as two f
 
 ## 5. Module layout
 
-A Lake library `Uncertainty` (Stage 0 is Mathlib- and TorchLean-free — it depends only on the
-core spine; Stage 1+ pull in the `ℝ`/`Dimension` and `Torch`/autograd layers). Legend: ✅ built
+Two Lake libraries over one `uncertainty/` source tree. `Uncertainty` (Stage 0) is Mathlib- and
+TorchLean-free — it depends only on the core spine, and its module list is *explicit* so the
+Stage-1 rigor modules can share the tree and namespace without being swept in. `UncertaintyRigor`
+(Stage 1) carries `Ladder` (over Mathlib's `ℝ`) and `Sensitivity` (over TorchLean autograd); the
+dependency expansion lands there, so `lake build Uncertainty` stays toolchain-only. Legend: ✅ built
 & CI-checked, ▫ planned.
 
 ```
@@ -320,8 +323,9 @@ uncertainty/PropertyKindCalculus/Uncertainty/
   Combine.lean          ✅ gumStdUnc, willinkCombine, Pearson k₉₅/k₉₉ (eqs. 6/7)   [Area 1]
   Method.lean           ▫ UncertaintyMethod structure + monoid laws               [Area 1 core]
   Method/Ssprc.lean     ▫ def ssprc (systematic sampling, DDE, FFT convolution)   [Stage 2]
-  Sensitivity.lean      ▫ autograd bridge: cᵢ, hᵢ via TapeBuilder / func.grad     [Axis N, Stage 1]
-  Ladder.lean           ▫ T1–T5 nesting theorems (over ℝ)                         [rigor, Stage 1]
+  Sensitivity.lean      ✅ autograd bridge: cᵢ via TapeBuilder reverse tape        [Axis N, Stage 1]
+  Ladder.lean           ✅ T1 (cumulant additivity), T2 (gum = willink|κ₄=0) / ℝ  [rigor, Stage 1]
+                           (T3–T5 arrive with SSPRC in Stage 2)
   Adequacy.lean         ▫ Adequacy carrier + NumCarrier instance                  [Area 2, Stage 3]
   Adequacy/Absorption.lean ▫ A1 absorption theorem
   Adequacy/Sterbenz32.lean ▫ A2 FP32 Sterbenz (transport from FLX)
@@ -340,6 +344,10 @@ examples/PropertyKindCalculus/UncertaintyExamples/
                              → R=11.25, MCM 11.60/1.70, GUM u_c=1.662 (non-linearity gap shown)
   WillinkGaugeBlock.lean  ✅ Willink Table 4 gauge block : cumulants method
                              → u_Y=33.4nm, γ_Y=0.124, h₀.₉₉=87.6nm (vs GUM's 93nm)
+  DegenhardtSensitivity.lean ✅ Stage-1 autograd cᵢ over the WO1 fictive kernel: reproduces the
+                             hand-supplied [5, 5, 2.25] and GUM u_c=1.662 (TorchLean-backed)
+  LadderNesting.lean      ✅ T1/T2 (gum = willink|κ₄=0) applied over ℝ + Float shadow of the
+                             collapse; #print axioms shows sorry-free (Mathlib-backed)
   DegenhardtSsprc.lean    ▫ Degenhardt SSPRC systematic-sampling run (Stage 2)
   DegenhardtAfm.lean      ▫ Degenhardt §3.2 AFM indenter PAF, ~70× efficiency (Stage 2)
   WillinkAsymmetric.lean  ▫ Willink §5 asymmetric input (κ₃) + Type-A t-cases (Stage 1)
@@ -363,10 +371,18 @@ and FFT kernels under `NN/Runtime/Autograd/Engine/Cuda/Ops/*` for SSPRC's convol
   gap) and Willink's gauge block (u_Y=33.4nm, γ_Y=0.124, h₀.₉₉=87.6nm). *Exit met:* numbers
   reproduce both papers. `lake build Uncertainty UncertaintyExamples` is green.
 
-* **Stage 1 — Linearized methods + autograd + nesting proofs.** `gum`, `willink`; `Sensitivity.lean`
-  wiring `TapeBuilder`→`cᵢ`; T1, T2 proven over `ℝ`. Cross-check `gum`/`willink` vs. MCM on Stage 0.
-  *Exit:* T2 (`gum = willink|κ₄=0`) is a theorem; Willink's Pearson interval reproduces his Table 4
-  gauge-block example half-widths.
+* **Stage 1 — Linearized methods + autograd + nesting proofs. ✅ DONE (built & CI-checked).**
+  `Ladder.lean` proves **T1** (cumulant additivity, via the `Cumulants` commutative monoid) and
+  **T2** (`gum = willink|κ₄=0`: `willinkCumulants_kappa2` = the κ₂-projection is GUM, and
+  `gum_eq_willink_of_normal` = the all-Gaussian Willink 95% half-width equals `1.96·u_c`) over `ℝ`.
+  `Sensitivity.lean` wires `TapeBuilder`→`cᵢ` via TorchLean's reverse-mode tape (Route B: the WO1
+  kernel is instantiated at `α := TapeBuilder .scalar`, no rewrite; `TapeM.backwardScalar` reads
+  the coefficients). Both live in the new `UncertaintyRigor` Lake library. *Exit met:* T2 is a
+  theorem (`#print axioms` → `[propext, Classical.choice, Quot.sound]`, no `sorryAx`); autograd
+  reproduces the fictive model's `[5, 5, 2.25]` to machine precision and its GUM `u_c = 1.662359`
+  exactly; the Willink Pearson interval reproduces Table 4 (Stage-0 `WillinkGaugeBlock`).
+  Deferred to later stages: the full `UncertaintyMethod` structure and T3–T5 (they need SSPRC,
+  Stage 2); `hᵢ`/`hvp` nonlinearity gauges (Stage 2 surrogates).
 
 * **Stage 2 — SSPRC pipeline.** Systematic sampling (inverse-CDF), separated propagation, DDE
   reconstruction, FFT convolution; T3, T4, T5. Optional autograd Taylor surrogate (§3.2 item 2)

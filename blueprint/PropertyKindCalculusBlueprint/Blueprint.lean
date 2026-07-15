@@ -108,6 +108,14 @@ def requirementsTable : DocTable := mdTable true
    "candela ≡ power and mole ≡ 1 are reducible, the kelvin's reduction is invisible (Θ kept independent), the ampere is a genuine base — so scale-spanning is not a function of dimension (ISO 80000-7 candela/mole, ISO 80000-5 kelvin, IEC 80000-6 ampere; Finkelstein–Whitehead 2025)",
    "`UnitCategory`; `Dimension.MechanicallyReducible`; `ScaleSpanningUnit`; `scaleSpanning_not_determined_by_dimension`",
    "proved"],
+  ["R14 — uncertainty propagation as a provably nested method ladder (GUM ⊂ Willink ⊂ SSPRC)",
+   "Degenhardt fictive `Y=(X₁+X₂²)X₃`: Monte Carlo `E(Y)/u(Y)`, GUM `u_c=1.662` from autograd `cᵢ=[5,5,2.25]`; Willink gauge block `u_Y=33.4nm`, `γ_Y=0.124`, `h₀.₉₉=87.6nm`; `gum = willink|κ₄=0` a theorem over `ℝ`",
+   "additive `InputDist`/`MomentData` descriptor; `gumStdUnc`/`willinkCombine` + Pearson `k₉₅/k₉₉`; `Ladder` (`Cumulants` combine-monoid, T1 additivity, T2 projection); autograd `cᵢ` via the `TapeBuilder` carrier",
+   "proved (GUM + Willink + T1/T2 + autograd cᵢ); SSPRC and T3–T5 planned"],
+  ["R15 — numerical adequacy: no information loss at the scale of the input uncertainties",
+   "an input whose contribution `cᵢ·uᵢ` sits below ½ ulp of the accumulated sum is flagged numerically invisible; near-equal subtraction is Sterbenz-exact yet amplifies relative uncertainty",
+   "an `Adequacy` analysis carrier over TorchLean's sound `RInterval` + `FP32` ulp lemmas; soundness capstone (A3)",
+   "planned"],
   ["*(out of scope)* structural value representation",
    "coordinate frames, tensor variance, transforms",
    "an orthogonal index over the kind",
@@ -158,7 +166,7 @@ The whole blueprint is also available as a single paginated document:
 
 # What PropertyKindCalculus provides
 
-This project addresses *thirteen requirements* about formalizing _metrology_ — the
+This project addresses *fifteen requirements* about formalizing _metrology_ — the
 science of measurement — and discharges most of them as machine-checked theorems
 rather than prose. A substantial part of the library is grounded directly on the
 published *ISO and IEC 80000* metrology standards — _eleven_ of the thirteen parts (every
@@ -209,7 +217,7 @@ In plain terms, _rigorous metrology_ here means:
   (the mole, the candela) are derived in disguise — so the calculus names that
   third category instead of pretending the base/derived split is clean.
 
-Each of these is stated precisely as one of the thirteen requirements below, and
+Each of these is stated precisely as one of the fifteen requirements below, and
 the status table at the end of that section maps every requirement to the checked
 declaration that discharges it.
 
@@ -473,6 +481,45 @@ non-empty and distinct from the first. In plain engineering terms: just as a *ki
 more than its dimension, a *unit's category* carries more than its dimension; the candela
 and mole (ISO 80000-7) and the kelvin (ISO 80000-5) are where this lands on the standard,
 the ampere (IEC 80000-6) the base-unit foil.
+
+## Uncertainty and numerical adequacy (R14, R15)
+
+*R14 — Output uncertainty is computed by a provably nested ladder of methods.* A measured input
+quantity carries not just a magnitude but a *dispersion*; given the uncertainty of the inputs of a
+model $`Y = f(X_1,\dots,X_k)`, the calculus computes the uncertainty of $`Y`. The dispersion is an
+*additive* descriptor placed alongside a quantity — moments and cumulants, an inverse-CDF sampler,
+and a support range — never a change to the carrier tower, the same discipline R11 used for
+vectors. Three methods estimate the output uncertainty at increasing fidelity and cost: GUM
+linearization (combine variances), Willink's cumulants method (combine the second *and* fourth
+cumulants, recovering the tail shape), and the derivative-free SSPRC sampling method (propagate
+each input separately and combine by convolution, capturing full non-linearity). The organizing
+claim is that these form a *provably nested ladder* $`\mathrm{GUM} \subset \mathrm{Willink} \subset
+\mathrm{SSPRC}`: each coarser method is a projection of the finer one, all resting on the
+additivity of cumulants under independent summation. The linearized methods' sensitivity
+coefficients $`c_i = \partial f/\partial X_i` are *not* hand-supplied — they come from instantiating
+the write-once model at an autograd carrier, R10's representation parametricity put to a new use.
+This requirement is realized through Stage 1: the reference Monte Carlo propagator, the GUM and
+Willink combines (reproducing both source papers' headline numbers as checked facts), the autograd
+coefficients, and the first two ladder theorems — cumulant additivity (T1) and
+$`\mathrm{gum} = \mathrm{willink}|_{\kappa_4 = 0}` (T2) — are proved; the SSPRC method and the
+remaining rungs (T3–T5) are planned. The development is the *Uncertainty quantification and
+numerical adequacy* chapter, and the full design is recorded in the project's `UNCERTAINTY.md`.
+
+*R15 — A floating-point representation is numerically adequate iff it loses no information at the
+scale of the input uncertainties.* R10 gives a model exact reals to prove with and IEEE floats to
+run with; R15 asks the sharper question the pairing makes possible — does the floating-point
+representation silently drop an input uncertainty that *matters*? "Matters" is made precise by
+R14's descriptor: the scale is the input dispersion itself, which is exactly why the two areas
+*share* one descriptor rather than being two features. The textbook failure becomes checkable — an
+input whose contribution $`c_i\,u_i` falls below half a unit in the last place of the accumulated
+sum is *numerically invisible*, a silent corruption of the uncertainty result; its dual is
+exact-by-Sterbenz cancellation that nonetheless amplifies *relative* uncertainty. Because the model
+is written once over `[NumCarrier α]`, the check is obtained *for free* by instantiating it at an
+analysis carrier that tracks each value's magnitude interval and carried uncertainty and flags
+swamping and harmful cancellation — sound because the ranges come from TorchLean's proven interval
+arithmetic and the swamping bound from its `FP32` unit-in-the-last-place lemmas. The capstone (A3)
+turns "no loss of information" into a proof rather than a hope, binding this layer to R10's
+exec/spec refinement. Planned.
 
 ## Out of scope (for now)
 
