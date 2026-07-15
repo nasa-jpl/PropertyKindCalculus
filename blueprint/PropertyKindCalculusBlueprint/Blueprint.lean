@@ -11,6 +11,7 @@ import PropertyKindCalculusBlueprint.Chapters.Interaction
 import PropertyKindCalculusBlueprint.Chapters.FunctionCalculus
 import PropertyKindCalculusBlueprint.Chapters.Extensivity
 import PropertyKindCalculusBlueprint.Chapters.WriteOnce
+import PropertyKindCalculusBlueprint.Chapters.Uncertainty
 import PropertyKindCalculusBlueprint.Chapters.Iso80000
 import PropertyKindCalculusBlueprint.Chapters.ScaleSpanning
 import PropertyKindCalculusBlueprint.Chapters.Iso80000Part3
@@ -863,6 +864,8 @@ in-progress goals until formalized. The headline deliverables are tagged
 {include 0 PropertyKindCalculusBlueprint.Chapters.Extensivity}
 
 {include 0 PropertyKindCalculusBlueprint.Chapters.WriteOnce}
+
+{include 0 PropertyKindCalculusBlueprint.Chapters.Uncertainty}
 
 {include 0 PropertyKindCalculusBlueprint.Chapters.Iso80000}
 

@@ -172,3 +172,19 @@ library that depends on TorchLean. Build with `lake build Torch`. -/
 lean_lib «Torch» where
   srcDir := "torch"
   globs := #[.andSubmodules `PropertyKindCalculus.Torch]
+
+/-- **Stage 0 of the uncertainty workstream** (see `UNCERTAINTY.md`): carrier-parametric input
+distributions, the inverse-CDF sampler shared by Monte Carlo and systematic propagation, the
+Monte Carlo reference propagator, and the linearized GUM/Willink moment-combine methods.
+Mathlib- and TorchLean-free — it depends only on the core spine, so it builds with just the
+toolchain. Build with `lake build Uncertainty`. -/
+lean_lib «Uncertainty» where
+  srcDir := "uncertainty"
+  globs := #[.andSubmodules `PropertyKindCalculus.Uncertainty]
+
+/-- Worked uncertainty examples grounded in the two source papers (Degenhardt 2025 fictive
+example; Willink 2005 gauge-block), in the `examples/` source tree as a **separate library** so
+no *library* module carries `#eval`/`#guard`. Build with `lake build UncertaintyExamples`. -/
+lean_lib «UncertaintyExamples» where
+  srcDir := "examples"
+  globs := #[.andSubmodules `PropertyKindCalculus.UncertaintyExamples]

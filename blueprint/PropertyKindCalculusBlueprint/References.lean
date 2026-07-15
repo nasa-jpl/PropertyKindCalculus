@@ -89,3 +89,24 @@ def unit_one_is_intruisive : Article where
   volume    := inlines!"61"
   number    := inlines!"3"
   url       := some "https://iopscience.iop.org/article/10.1088/1681-7575/ad4bea"
+
+def willink_evaluation_of_measurement_uncertainty_based_on_moments : Article where
+  authors   := #[inlines!"Robin Willink"]
+  journal   := inlines!"Metrologia"
+  title     := inlines!"A procedure for the evaluation of measurement uncertainty based on moments"
+  year      := 2005
+  month     := none
+  volume    := inlines!"42"
+  number    := inlines!"5"
+  url       := some "https://iopscience.iop.org/article/10.1088/0026-1394/42/5/001"
+
+def degenhardt_efficient_alternative_to_monte_carlo : Article where
+  authors   := #[inlines!"Johannes Degenhardt", inlines!"Rainer Tutsch", inlines!"Xiukun Hu",
+                 inlines!"Gaoliang Dai"]
+  journal   := inlines!"Metrologia"
+  title     := inlines!"A practically oriented, efficient alternative to the Monte Carlo method for measurement uncertainty estimation"
+  year      := 2025
+  month     := none
+  volume    := inlines!"62"
+  number    := inlines!"2"
+  url       := some "https://iopscience.iop.org/article/10.1088/1681-7575/adb3ab"
