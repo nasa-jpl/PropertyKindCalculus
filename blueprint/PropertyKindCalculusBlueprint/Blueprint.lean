@@ -109,9 +109,9 @@ def requirementsTable : DocTable := mdTable true
    "`UnitCategory`; `Dimension.MechanicallyReducible`; `ScaleSpanningUnit`; `scaleSpanning_not_determined_by_dimension`",
    "proved"],
   ["R14 — uncertainty propagation as a provably nested method ladder (GUM ⊂ Willink ⊂ SSPRC)",
-   "Degenhardt fictive `Y=(X₁+X₂²)X₃`: Monte Carlo `E(Y)/u(Y)`, GUM `u_c=1.662` from autograd `cᵢ=[5,5,2.25]`; Willink gauge block `u_Y=33.4nm`, `γ_Y=0.124`, `h₀.₉₉=87.6nm`; `gum = willink|κ₄=0` a theorem over `ℝ`",
-   "additive `InputDist`/`MomentData` descriptor; `gumStdUnc`/`willinkCombine` + Pearson `k₉₅/k₉₉`; `Ladder` (`Cumulants` combine-monoid, T1 additivity, T2 projection); autograd `cᵢ` via the `TapeBuilder` carrier",
-   "proved (GUM + Willink + T1/T2 + autograd cᵢ); SSPRC and T3–T5 planned"],
+   "Degenhardt fictive `Y=(X₁+X₂²)X₃`: Monte Carlo `E(Y)/u(Y)`, GUM `u_c=1.662` from autograd `cᵢ=[5,5,2.25]`; SSPRC recovers `E(Y)=11.5875` (incl. the +0.3375 non-linearity) and `u(Y)≈1.69` at 300 evals vs Monte Carlo's 20 000 (~67×); Willink gauge block `u_Y=33.4nm`, `γ_Y=0.124`, `h₀.₉₉=87.6nm`; `gum = willink|κ₄=0` and `willink = ssprc|κ₄` theorems over `ℝ`",
+   "additive `InputDist`/`MomentData` descriptor; `gumStdUnc`/`willinkCombine` + Pearson `k₉₅/k₉₉`; the derivative-free `Ssprc` pipeline (systematic sampling, separated propagation, convolution); `Ladder`+`Convolution` (`Cumulants` combine-monoid, T1 additivity, T2 projection, T5 convolution-adds-cumulants, T3 Willink=linearized-SSPRC, T4 affine reference=mean); autograd `cᵢ` via the `TapeBuilder` carrier",
+   "proved (GUM + Willink + SSPRC + T1–T5 + autograd cᵢ)"],
   ["R15 — numerical adequacy: no information loss at the scale of the input uncertainties",
    "an input whose contribution `cᵢ·uᵢ` sits below ½ ulp of the accumulated sum is flagged numerically invisible; near-equal subtraction is Sterbenz-exact yet amplifies relative uncertainty",
    "an `Adequacy` analysis carrier over TorchLean's sound `RInterval` + `FP32` ulp lemmas; soundness capstone (A3)",
@@ -498,12 +498,15 @@ claim is that these form a *provably nested ladder* $`\mathrm{GUM} \subset \math
 additivity of cumulants under independent summation. The linearized methods' sensitivity
 coefficients $`c_i = \partial f/\partial X_i` are *not* hand-supplied — they come from instantiating
 the write-once model at an autograd carrier, R10's representation parametricity put to a new use.
-This requirement is realized through Stage 1: the reference Monte Carlo propagator, the GUM and
+This requirement is realized through Stages 1–2: the reference Monte Carlo propagator, the GUM and
 Willink combines (reproducing both source papers' headline numbers as checked facts), the autograd
-coefficients, and the first two ladder theorems — cumulant additivity (T1) and
-$`\mathrm{gum} = \mathrm{willink}|_{\kappa_4 = 0}` (T2) — are proved; the SSPRC method and the
-remaining rungs (T3–T5) are planned. The development is the *Uncertainty quantification and
-numerical adequacy* chapter, and the full design is recorded in the project's `UNCERTAINTY.md`.
+coefficients, the derivative-free SSPRC pipeline (recovering the fictive model's full non-linear
+output uncertainty at ~67× fewer model evaluations than Monte Carlo), and all five ladder theorems —
+cumulant additivity (T1), $`\mathrm{gum} = \mathrm{willink}|_{\kappa_4 = 0}` (T2), convolution adds
+cumulants (T5), Willink as the $`(\kappa_2,\kappa_4)`-projection of the linearized SSPRC (T3), and
+the affine reference equalling the mean (T4) — are proved over `ℝ`. The development is the
+*Uncertainty quantification and numerical adequacy* chapter, and the full design is recorded in the
+project's `UNCERTAINTY.md`.
 
 *R15 — A floating-point representation is numerically adequate iff it loses no information at the
 scale of the input uncertainties.* R10 gives a model exact reals to prove with and IEEE floats to

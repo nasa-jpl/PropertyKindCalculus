@@ -18,10 +18,21 @@ Stage-1 additions (these two pull in Mathlib and TorchLean respectively):
   * `LadderNesting` — the T1/T2 nesting theorems (`gum = willink|κ₄=0`) applied to a concrete
     term list over `ℝ`, plus the executable `Float` shadow of the collapse.
 
-Further paper examples (Degenhardt's SSPRC systematic-sampling run and the AFM indenter model;
-Willink's asymmetric and Type-A cases) arrive with Stages 2–3.
+Stage-2 additions (the derivative-free SSPRC method):
+  * `DegenhardtSsprc` — the SSPRC pipeline on the same fictive model, recovering the ground-truth
+    `E(Y) = 11.5875` (incl. its non-linear offset) and `u(Y) ≈ 1.69` at ~67× fewer model
+    evaluations than the Monte Carlo reference; the convolution engine cross-checks against the
+    moment read-off.
+  * `SsprcNesting` — the T3/T4/T5 ladder theorems (`convolution adds cumulants`, `willink is the
+    projection of the linearized SSPRC`, `affine ⇒ E(Y)=R`) applied to concrete distributions over
+    `ℝ`, plus the sorry-free axiom profile.
+
+Further paper examples (the AFM indenter model; Willink's asymmetric and Type-A cases) arrive with
+Stages 2–3.
 -/
 import PropertyKindCalculus.UncertaintyExamples.DegenhardtFictive
 import PropertyKindCalculus.UncertaintyExamples.WillinkGaugeBlock
 import PropertyKindCalculus.UncertaintyExamples.DegenhardtSensitivity
 import PropertyKindCalculus.UncertaintyExamples.LadderNesting
+import PropertyKindCalculus.UncertaintyExamples.DegenhardtSsprc
+import PropertyKindCalculus.UncertaintyExamples.SsprcNesting

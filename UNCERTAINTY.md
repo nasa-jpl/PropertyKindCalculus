@@ -1,6 +1,8 @@
 # UNCERTAINTY.md — A rigor-first plan for uncertainty & numerical adequacy in PKC
 
-> Status: **design/plan** (no code yet). Audience: PKC maintainers.
+> Status: **Stages 0–2 implemented & CI-checked** (reference layer, GUM/Willink, autograd `cᵢ`,
+> the ladder theorems T1–T5, and the executable SSPRC pipeline); Stages 3–4 (numerical adequacy,
+> scale) are design/plan. Audience: PKC maintainers.
 > Scope: augment PropertyKindCalculus in two coupled areas —
 > (1) **uncertainty quantification** (UQ) of model outputs from input uncertainties, and
 > (2) **numerical adequacy** of the floating-point representation of a science model.
@@ -76,7 +78,7 @@ uncertainty/adequacy story and light up the two currently-idle carriers (`TapeBu
 | Carrier | What it computes | **Value-added property** | Status |
 |---|---|---|---|
 | `ℝ` | exact symbolic reals ([`QuantityReal.lean:25`](PropertyKindCalculus/dimension/PropertyKindCalculus/QuantityReal.lean#L25)) | **Proof** — specs, ladder-nesting theorems, adequacy soundness | exists |
-| `TapeBuilder` | `cᵢ=∂f/∂Xᵢ`, `hᵢ=∂²f/∂Xᵢ²`, HVP, Jacobian ([`TapeCarrier.lean`](PropertyKindCalculus/torch/PropertyKindCalculus/Torch/Paradigm/TapeCarrier.lean)) | **Sensitivity** — GUM/Willink coefficients, contribution ranking, nonlinearity gauge, Taylor surrogates for SSPRC | ✅ `cᵢ` wired (`Sensitivity.lean`, Stage 1); `hᵢ`/HVP Stage 2 |
+| `TapeBuilder` | `cᵢ=∂f/∂Xᵢ`, `hᵢ=∂²f/∂Xᵢ²`, HVP, Jacobian ([`TapeCarrier.lean`](PropertyKindCalculus/torch/PropertyKindCalculus/Torch/Paradigm/TapeCarrier.lean)) | **Sensitivity** — GUM/Willink coefficients, contribution ranking, nonlinearity gauge, Taylor surrogates for SSPRC | ✅ `cᵢ` wired (`Sensitivity.lean`, Stage 1); `hᵢ`/HVP Taylor-surrogate deferred (optional, off the Stage-2 exit path) |
 | `FP32` | round-on-ℝ binary32; half-ULP & `(1+δ)` bounds | **No information loss / numerical adequacy** — certify swamping/cancellation-free; quantify approximation error | carrier exists; adequacy layer new |
 | `RInterval` | sound magnitude enclosures on the FP32 grid | **Rigorous ranges** — bound operand magnitudes for adequacy; verified output bounds | exists in TorchLean; unused by PKC |
 | `IEEE32Exec` | bit-exact binary32 | **Executable certification** — real bits match the spec (finite fragment) | exists |
@@ -321,11 +323,13 @@ uncertainty/PropertyKindCalculus/Uncertainty/
   UncertainQuantity.lean✅ Quantity k R paired with its InputDist
   Mcm.lean              ✅ Monte Carlo reference propagator → (E(Y), u(Y))
   Combine.lean          ✅ gumStdUnc, willinkCombine, Pearson k₉₅/k₉₉ (eqs. 6/7)   [Area 1]
-  Method.lean           ▫ UncertaintyMethod structure + monoid laws               [Area 1 core]
-  Method/Ssprc.lean     ▫ def ssprc (systematic sampling, DDE, FFT convolution)   [Stage 2]
+  Ssprc.lean            ✅ executable SSPRC: systematic sampling, separated        [Stage 2]
+                           propagation, empirical deviation dists, discrete convolution (Float)
+  Method.lean           ▫ UncertaintyMethod structure + monoid laws               [Area 1 core, deferred]
   Sensitivity.lean      ✅ autograd bridge: cᵢ via TapeBuilder reverse tape        [Axis N, Stage 1]
   Ladder.lean           ✅ T1 (cumulant additivity), T2 (gum = willink|κ₄=0) / ℝ  [rigor, Stage 1]
-                           (T3–T5 arrive with SSPRC in Stage 2)
+  Convolution.lean      ✅ Dist/conv over ℝ; T5 (convolution adds cumulants),      [rigor, Stage 2]
+                           T3 (willink = linearized-ssprc|κ₄), T4 (affine R = E(Y)) — sorry-free
   Adequacy.lean         ▫ Adequacy carrier + NumCarrier instance                  [Area 2, Stage 3]
   Adequacy/Absorption.lean ▫ A1 absorption theorem
   Adequacy/Sterbenz32.lean ▫ A2 FP32 Sterbenz (transport from FLX)
@@ -348,8 +352,11 @@ examples/PropertyKindCalculus/UncertaintyExamples/
                              hand-supplied [5, 5, 2.25] and GUM u_c=1.662 (TorchLean-backed)
   LadderNesting.lean      ✅ T1/T2 (gum = willink|κ₄=0) applied over ℝ + Float shadow of the
                              collapse; #print axioms shows sorry-free (Mathlib-backed)
-  DegenhardtSsprc.lean    ▫ Degenhardt SSPRC systematic-sampling run (Stage 2)
-  DegenhardtAfm.lean      ▫ Degenhardt §3.2 AFM indenter PAF, ~70× efficiency (Stage 2)
+  DegenhardtSsprc.lean    ✅ Stage-2 SSPRC run: E(Y)=11.5875 / u(Y)≈1.686 at 300 evals (~67× fewer
+                             than MCM's 20000); recovers the non-linear mean GUM misses; runConv cross-check
+  SsprcNesting.lean       ✅ T3/T4/T5 applied over ℝ (willink cumulants (41,−1186), affine ⇒ E(Y)=R);
+                             #print axioms shows sorry-free (Mathlib-backed)
+  DegenhardtAfm.lean      ▫ Degenhardt §3.2 AFM indenter PAF, ~70× efficiency (Stage 4/scale)
   WillinkAsymmetric.lean  ▫ Willink §5 asymmetric input (κ₃) + Type-A t-cases (Stage 1)
   AdequacySwamping.lean   ▫ a deliberately-inadequate model the Adequacy carrier flags (Stage 3)
 ```
@@ -384,10 +391,22 @@ and FFT kernels under `NN/Runtime/Autograd/Engine/Cuda/Ops/*` for SSPRC's convol
   Deferred to later stages: the full `UncertaintyMethod` structure and T3–T5 (they need SSPRC,
   Stage 2); `hᵢ`/`hvp` nonlinearity gauges (Stage 2 surrogates).
 
-* **Stage 2 — SSPRC pipeline.** Systematic sampling (inverse-CDF), separated propagation, DDE
-  reconstruction, FFT convolution; T3, T4, T5. Optional autograd Taylor surrogate (§3.2 item 2)
-  gated by the `hvp` nonlinearity gauge.
-  *Exit:* SSPRC agrees with MCM on the fictive example at ~70× fewer evals; T3 links it to Willink.
+* **Stage 2 — SSPRC pipeline. ✅ DONE (built & CI-checked).** `Ssprc.lean` (executable, `Float`)
+  realizes systematic sampling (`Pⱼ = (j−0.5)/Nᵢ` via the shared inverse-CDF), separated propagation
+  (`aᵢⱼ = f(…,xᵢⱼ,…) − R`), the empirical per-input deviation distributions, and their **discrete
+  convolution** (the FFT of the paper is the O(n log n) optimization of this same operation, deferred).
+  `Convolution.lean` (over `ℝ`) proves the three rigor rungs sorry-free: **T5** (`kappa2_conv`/
+  `kappa4_conv`/`cumulantsOf_conv` — convolution *adds* cumulants, proved from the joint-expectation
+  factorization, not defined as addition), **T3** (`cumulantsOf_combinedDeviation` — the linearized
+  SSPRC's convolved deviation has exactly the Willink combined cumulants, closing
+  `GUM ⊂ Willink ⊂ SSPRC`), and **T4** (`combinedDeviation_isCentered`/`mean_combinedDeviation` —
+  affine ⇒ `E(Y) = R`; the gap is `Σcᵢ·E(Zᵢ)`). *Exit met:* on the fictive example SSPRC recovers
+  `E(Y) = 11.5875` (incl. the non-linear `+0.3375` GUM misses) and `u(Y) ≈ 1.686` from **300**
+  evaluations vs the reference Monte Carlo's 20 000 (**~67×** fewer), and T3 links it to Willink as a
+  theorem (`#print axioms` → `[propext, Classical.choice, Quot.sound]`). Examples `DegenhardtSsprc`
+  (numeric) and `SsprcNesting` (T3/T4/T5 proof terms). Deferred (optional, not on the exit path): the
+  full `UncertaintyMethod` structure, the continuous DDE reconstruction for the *shape*, an FFT
+  convolution, and the `hvp` Taylor-surrogate nonlinearity gauge (§3.2 item 2).
 
 * **Stage 3 — Numerical adequacy.** `Adequacy` carrier (runtime certificate) over `RInterval`+FP32;
   A1 absorption theorem; A2 FP32 Sterbenz; A3 soundness. Demonstrate a *deliberately inadequate*

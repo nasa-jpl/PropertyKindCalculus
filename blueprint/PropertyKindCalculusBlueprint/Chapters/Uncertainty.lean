@@ -3,13 +3,14 @@ import VersoManual
 import VersoBlueprint
 -- Every realized node below is linked to a real declaration via `(lean := "PropertyKindCalculus.…")`
 -- and is elaborated for its proved/`sorry` status, so the chapter imports the Stage-0 uncertainty
--- library, the Stage-1 `Ladder` (T1/T2 over `ℝ`), and the Stage-1 `Sensitivity` autograd bridge —
--- the last pulls TorchLean into the blueprint build, deliberately, so the sensitivity coefficients
--- are a formal lean-linked node rather than prose. Only the SSPRC method and the numerical-adequacy
--- capstone remain informal (unbuilt). The chapter cites the two source papers, so it also imports
--- the blueprint's `References`.
+-- library, the Stage-1 `Ladder` (T1/T2 over `ℝ`) and `Sensitivity` autograd bridge, and the Stage-2
+-- `Ssprc` executable pipeline (`Float`) and `Convolution` (T3/T4/T5 over `ℝ`). The `Sensitivity`
+-- import pulls TorchLean into the blueprint build, deliberately, so the sensitivity coefficients are
+-- a formal lean-linked node rather than prose. Only the numerical-adequacy capstone remains informal
+-- (unbuilt). The chapter cites the two source papers, so it also imports the blueprint's `References`.
 import PropertyKindCalculus.Uncertainty
 import PropertyKindCalculus.Uncertainty.Ladder
+import PropertyKindCalculus.Uncertainty.Convolution
 import PropertyKindCalculus.Uncertainty.Sensitivity
 import PropertyKindCalculusBlueprint.References
 
@@ -26,11 +27,12 @@ does not: _given the uncertainty of the input quantities, what is the uncertaint
 and _does the floating-point representation of the model lose information that matters at the
 scale of those uncertainties?_ Both are developed against one shared, additive descriptor placed
 on a quantity — never a change to the carrier tower. The design is recorded in full in the
-project's `UNCERTAINTY.md`; this chapter is its blueprint face. Stages 0 and 1 are built and
+project's `UNCERTAINTY.md`; this chapter is its blueprint face. Stages 0–2 are built and
 CI-checked — the reference layer and worked examples, the GUM and Willink combines, the autograd
-sensitivity coefficients, and the first two ladder theorems (T1, cumulant additivity; T2,
-$`\mathrm{gum} = \mathrm{willink}|_{\kappa_4=0}`); the SSPRC method, the remaining ladder rungs, and
-the numerical-adequacy capstone are *planned*.
+sensitivity coefficients, the derivative-free SSPRC pipeline, and the five ladder theorems (T1,
+cumulant additivity; T2, $`\mathrm{gum} = \mathrm{willink}|_{\kappa_4=0}`; T3, Willink as the
+projection of the linearized SSPRC; T4, affine reference equals the mean; T5, convolution adds
+cumulants); only the numerical-adequacy capstone is *planned*.
 
 # Two orthogonal axes, and why their properties compose
 
@@ -126,9 +128,11 @@ $`\kappa_2`; Willink keeps $`\kappa_2` and $`\kappa_4`; SSPRC's convolution comb
 cumulants numerically (Willink himself calls his method "convolution of the components in the
 linearized formulation"). So the ladder is a chain of homomorphisms between the methods'
 contribution types, and each coarser rung is a *projection* of the finer one — the claim the
-ladder theorems below discharge (T1 and T2 proved over `ℝ`; T3, linking Willink to the linearized
-SSPRC, planned with the sampling method). The sensitivity coefficients $`c_i` the two linearized
-rungs need come from the autograd bridge below, not by hand.
+ladder theorems below discharge, all five now proved over `ℝ`: T1 and T2 relate GUM and Willink;
+T5 shows convolution adds cumulants; T3 uses it to identify Willink with the $`(\kappa_2,\kappa_4)`
+truncation of the linearized SSPRC; and T4 pins the SSPRC reference to the mean for an affine model.
+The sensitivity coefficients $`c_i` the two linearized rungs need come from the autograd bridge
+below, not by hand.
 
 :::definition "def_uq_gum" (parent := "uncertainty") (lean := "PropertyKindCalculus.Uncertainty.gumStdUnc")
 The GUM combined standard uncertainty $`\sqrt{\sum_i c_i^2 u_i^2}`, over a list of sensitivity /
@@ -212,7 +216,86 @@ shows it sorry-free — no `sorryAx`). Two parts: `willinkCumulants_kappa2` — 
 literally the GUM one — and the shape collapse $`w_i = 0 \Rightarrow \gamma_Y = 0 \Rightarrow k_p`
 is the standard-normal percentile, so the half-widths coincide. Establishes the top edge of the
 ladder; the lower edge — that Willink is the fourth-cumulant truncation of the linearized SSPRC,
-because convolution adds cumulants — is the planned theorem T3.
+because convolution adds cumulants — is theorem T3 below.
+:::
+
+# The SSPRC method and the lower ladder rungs
+
+The two linearized rungs replace the model by its gradient at the input means. The *SSPRC method*
+{Manual.citep degenhardt_efficient_alternative_to_monte_carlo}[] does no such thing: it keeps the
+full model but evaluates it *cheaply* by sampling each input systematically and propagating each
+one separately. Its four steps are systematic sampling (each input at the equidistant probabilities
+$`P_j = (j-\tfrac12)/N_i` through its inverse CDF), separated propagation (vary one input, hold the
+rest at their means, form the deviations $`a_{i,j} = f(\dots,x_{i,j},\dots) - R` from the reference
+$`R = f(E(X))`), reconstruction of each input's deviation distribution, and *convolution* of those
+distributions into the measurand's. Because the sample counts *add* ($`N_s = \sum_i N_i`) rather
+than multiply, it reaches Monte Carlo fidelity at a fraction of the model evaluations — and, keeping
+the full model, it recovers the *non-linear* mean the linearized rungs cannot.
+
+:::definition "def_uq_ssprc" (parent := "uncertainty") (lean := "PropertyKindCalculus.Uncertainty.Ssprc.run")
+The *SSPRC pipeline*: from the model, the input descriptors, and a per-input sample count, produce the
+combined $`(E(Y), u(Y))` by systematic sampling, separated propagation, and convolution — a
+derivative-free method whose evaluation budget is additive in the inputs.
+:::
+
+:::proof "def_uq_ssprc"
+Realized (Stage 2, `Ssprc.run`) over the `Float` carrier. `run` reads $`E(Y) = R + \sum_i E(A_i)` and
+$`\mathrm{Var}(Y) = \sum_i \mathrm{Var}(A_i)` off the per-input deviation distributions (means and
+variances add under convolution, so the combinatorial convolution need not be materialized);
+`runConv` performs the actual discrete convolution and agrees, cross-checking the engine. On the
+Degenhardt fictive model with 100 systematic samples per input — 300 evaluations against the Monte
+Carlo reference's 20 000 — it returns $`E(Y) = 11.5875` (recovering the non-linear $`+0.3375` offset
+that GUM cannot see) and $`u(Y) \approx 1.69`, closer to the Monte Carlo value than GUM's 1.662 (the
+`DegenhardtSsprc` example).
+:::
+
+:::theorem "thm_uq_convolution_cumulants" (parent := "uncertainty") (lean := "PropertyKindCalculus.Uncertainty.Dist.cumulantsOf_conv")
+*Convolution adds cumulants (T5).* For independent centered probability distributions the second and
+fourth cumulants are additive under convolution: $`\kappa_r(d_1 \star d_2) = \kappa_r(d_1) +
+\kappa_r(d_2)` for $`r \in \{2,4\}`. Equivalently the cumulant map is a homomorphism from the
+convolution operation onto the `Cumulants` monoid. This is the mathematical bridge under T3.
+:::
+
+:::proof "thm_uq_convolution_cumulants"
+Realized over `ℝ` (`Convolution.lean`): convolution is *defined* as the distribution of the sum of
+independent contributions — every pairwise sum weighted by the product — and the additivity is
+*proved* from the factorization of the joint expectation (`kappa2_conv`, `kappa4_conv`; the
+$`-3\,E[X^2]^2` correction is exactly what cancels the cross term $`6\,E[X^2]E[Y^2]` in the fourth
+moment of the sum), not assumed. Sorry-free (`#print axioms` → `propext`, `Classical.choice`,
+`Quot.sound`).
+:::
+
+:::theorem "thm_uq_ssprc_willink" (parent := "uncertainty") (lean := "PropertyKindCalculus.Uncertainty.cumulantsOf_combinedDeviation") (tags := "capstone")
+*Willink is the $`(\kappa_2,\kappa_4)`-projection of the linearized SSPRC (T3).* If each input's
+deviation distribution is a centered probability distribution realizing its declared moments, then
+the cumulants of the convolved combined deviation are *exactly* the Willink combined cumulants
+$`(\sum_i c_i^2 u_i^2,\ \sum_i c_i^4 w_i)`. So convolving the separately-propagated inputs and
+truncating at the fourth cumulant reproduces $`\mathrm{willink}` — the lower edge of the ladder,
+whose upper edge is {uses "thm_uq_gum_is_willink"}[T2]. Rests on
+{uses "thm_uq_convolution_cumulants"}[convolution adding cumulants].
+:::
+
+:::proof "thm_uq_ssprc_willink"
+Realized over `ℝ` (`cumulantsOf_combinedDeviation`): induction over the input list, each step the
+scaling law $`\kappa_r(c_i \cdot Z_i) = c_i^{\,r}\,\kappa_r(Z_i)` followed by the convolution
+homomorphism T5, landing on `willinkCumulants` term by term. Together with T2 this closes the ladder
+$`\mathrm{GUM} \subset \mathrm{Willink} \subset \mathrm{SSPRC}` as a chain of homomorphisms
+(the `SsprcNesting` example applies it to concrete distributions, pinning $`(\kappa_2,\kappa_4) =
+(41, -1186)`). Sorry-free.
+:::
+
+:::theorem "thm_uq_affine_reference" (parent := "uncertainty") (lean := "PropertyKindCalculus.Uncertainty.combinedDeviation_isCentered")
+*The SSPRC reference equals the mean for an affine model (T4).* When every input's deviation
+distribution is centered — the case of a linear/affine model — the combined deviation is centered, so
+the reference value $`R = f(E(X))` equals $`E(Y)`. The non-linearity signature $`E(Y) - R` is exactly
+the non-vanishing of $`\sum_i c_i\,E(Z_i)` when a deviation distribution is *not* centered — the gap
+the Degenhardt fictive example exhibits (0.3375) and the linearized rungs structurally miss.
+:::
+
+:::proof "thm_uq_affine_reference"
+Realized over `ℝ` (`combinedDeviation_isCentered`, with `mean_combinedDeviation` giving the general
+gap $`\sum_i c_i\,E(Z_i)`): the mean of a convolution is the sum of the means (weighted by the unit
+totals), so a fold of centered contributions is centered. Sorry-free.
 :::
 
 # Numerical adequacy of the floating-point representation
@@ -253,10 +336,11 @@ transported from the proven unbounded-exponent case.
 
 # Worked examples (checked facts)
 
-Four examples reproduce a headline number (or a theorem) as a `#guard`, so the
+Six examples reproduce a headline number (or a theorem) as a `#guard`, so the
 `UncertaintyExamples` library building under CI is what makes the claims true rather than
 asserted — the project's reflection-tests discipline applied to metrology. The first two are the
-Stage-0 reference numbers; the last two are the Stage-1 autograd and ladder facts.
+Stage-0 reference numbers; the next two are the Stage-1 autograd and ladder facts; the last two are
+the Stage-2 SSPRC pipeline and its ladder theorems.
 
 - `PropertyKindCalculus.UncertaintyExamples.DegenhardtFictive` — the non-linear fictive model
   $`Y = (X_1 + X_2^2)\,X_3` of Degenhardt
@@ -284,3 +368,14 @@ Stage-0 reference numbers; the last two are the Stage-1 autograd and ladder fact
   all-Gaussian term list over `ℝ` (`gum = willink|κ₄=0` as a closed proof term, `#print axioms`
   confirming no `sorryAx`), together with the executable `Float` shadow of the collapse: for
   normal-only inputs the Willink 95% half-width is exactly $`1.96\,u_c`.
+- `PropertyKindCalculus.UncertaintyExamples.DegenhardtSsprc` — the Stage-2 SSPRC pipeline on the
+  *same* fictive model {Manual.citep degenhardt_efficient_alternative_to_monte_carlo}[]: 100
+  systematic samples per input (300 model evaluations against the Monte Carlo reference's 20 000, a
+  factor $`\approx 67`) recover $`E(Y) = 11.5875` — including the non-linear $`+0.3375` offset the
+  linearized rungs cannot produce — and $`u(Y) \approx 1.69`, closer to the Monte Carlo value than
+  GUM's 1.662; the actual convolution (`runConv`) reproduces the moment read-off to machine precision.
+- `PropertyKindCalculus.UncertaintyExamples.SsprcNesting` — the T3/T4/T5 ladder theorems applied to
+  two concrete centered distributions over `ℝ`: convolution adds their cumulants (T5), the convolved
+  combined deviation has exactly the Willink cumulants $`(41, -1186)` (T3), and an all-centered
+  (affine) input list yields a centered combined deviation, so $`E(Y) = R` (T4) — with `#print axioms`
+  confirming no `sorryAx`.

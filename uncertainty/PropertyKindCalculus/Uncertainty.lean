@@ -11,6 +11,8 @@ Stage 0 delivers the reference layer:
   * `UncertainQuantity`— a kinded quantity paired with its `InputDist`.
   * `Mcm`              — the Monte Carlo reference propagator.
   * `Combine`          — the linearized GUM and Willink moment-combine methods.
+  * `Ssprc`            — the derivative-free SSPRC pipeline (systematic sampling, separated
+                         propagation, empirical deviation distributions, discrete convolution).
 
 Worked, paper-grounded examples live in the `UncertaintyExamples` library.
 Mathlib- and TorchLean-free.
@@ -21,3 +23,4 @@ import PropertyKindCalculus.Uncertainty.InputDist
 import PropertyKindCalculus.Uncertainty.UncertainQuantity
 import PropertyKindCalculus.Uncertainty.Mcm
 import PropertyKindCalculus.Uncertainty.Combine
+import PropertyKindCalculus.Uncertainty.Ssprc

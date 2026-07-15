@@ -192,7 +192,8 @@ lean_lib «Uncertainty» where
     .one `PropertyKindCalculus.Uncertainty.InputDist,
     .one `PropertyKindCalculus.Uncertainty.UncertainQuantity,
     .one `PropertyKindCalculus.Uncertainty.Mcm,
-    .one `PropertyKindCalculus.Uncertainty.Combine]
+    .one `PropertyKindCalculus.Uncertainty.Combine,
+    .one `PropertyKindCalculus.Uncertainty.Ssprc]
 
 /-- **Stage 1 of the uncertainty workstream** (see `UNCERTAINTY.md` §6): the rigor and
 sensitivity layer that the Mathlib- and TorchLean-free Stage-0 `Uncertainty` library above cannot
@@ -210,6 +211,7 @@ lean_lib «UncertaintyRigor» where
   srcDir := "uncertainty"
   globs := #[
     .one `PropertyKindCalculus.Uncertainty.Ladder,
+    .one `PropertyKindCalculus.Uncertainty.Convolution,
     .one `PropertyKindCalculus.Uncertainty.Sensitivity]
 
 /-- Worked uncertainty examples grounded in the two source papers (Degenhardt 2025 fictive
