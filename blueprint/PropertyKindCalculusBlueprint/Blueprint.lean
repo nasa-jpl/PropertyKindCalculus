@@ -27,12 +27,14 @@ import PropertyKindCalculusBlueprint.Chapters.Iso80000Part12
 import PropertyKindCalculusBlueprint.Chapters.Iso80000Part13
 import PropertyKindCalculusBlueprint.Chapters.CrossReferences
 import PropertyKindCalculusBlueprint.ItemIndex
+import PropertyKindCalculusBlueprint.TraceabilityTable
 import PropertyKindCalculusBlueprint.References
 
 open Verso.Genre
 open Verso.Genre.Manual
 open Informal
 open PropertyKindCalculusBlueprint.ItemIndex
+open PropertyKindCalculusBlueprint.Traceability
 
 /-- The per-part tally of catalogued quantity kinds, computed live from each
 part's `catalogue` so the front-page counts cannot drift from the formalized
@@ -50,77 +52,6 @@ def isoTally : DocTable := tallyTable [
   (PropertyKindCalculus.Iso80000.Part12.source, PropertyKindCalculus.Iso80000.Part12.catalogue),
   (PropertyKindCalculus.Iso80000.Part13.source, PropertyKindCalculus.Iso80000.Part13.catalogue)
 ]
-
-/-- Requirements-at-a-glance table, term-built (see `ItemIndex.mdTable`) so the
-root document elaborates it as one term rather than cell-by-cell as markup. -/
-def requirementsTable : DocTable := mdTable true
-  ["Requirement", "Concrete test", "Specified as", "Status"]
-  [
-  ["R1 — kind discrimination within a dimension",
-   "`vwc ≠ gwc`, both dimension one; all 115 ISO 80000-11 characteristic numbers dimension one, distinct kinds",
-   "kind-indexed `Quantity k R`; dimension-1 disambiguation",
-   "proved"],
-  ["R2 — specialization lattice + comparability",
-   "Width, Height, Diameter specialize Length (ISO 80000-3); weight, static vs kinetic friction force specialize Force (ISO 80000-4); Helmholtz vs Gibbs energy specialize Energy (ISO 80000-5); active vs reactive power specialize Power (IEC 80000-6); radiant vs luminous vs photon flux as radiation-mode trios (ISO 80000-7); the two Froude, five Stokes, four Bejan numbers as sub-suffixed homonyms (ISO 80000-11) — comparable yet distinct, by examination principle",
-   "`Specializes` preorder; `MutuallyComparable`; examination defining-aspect (`Refines`, `distinct_of_examPrinciple`)",
-   "proved"],
-  ["R3 — general vs individual (type vs term)",
-   "`Length` a type; this pencil's length a term",
-   "`KindOfProperty` vs `Quantity k R`",
-   "proved"],
-  ["R4 — kind-gated addition",
-   "`Width+Width` ok; `Width+Height`, `Torque+Energy` rejected",
-   "`Quantity.add` over `Quantity k R` (same-kind gate)",
-   "proved"],
-  ["R5 — interaction algebra (partial, typed)",
-   "`torque × angle = energy`; `fuel × rainfall` an error",
-   "`KMul` / `KDiv`; multiplication–division inverse",
-   "proved"],
-  ["R6 — scale-type operator availability (monotone)",
-   "nominal: only `=`; ratio: `×`, `÷`; thermodynamic temperature (ratio) vs Celsius (interval), same dimension `Θ` (ISO 80000-5); electric potential (interval, gauge-dependent) vs potential difference (ratio), same dimension `V` (IEC 80000-6)",
-   "`ScaleType` order; operator monotonicity; `AllowsRatio` on the standard's temperatures",
-   "proved"],
-  ["R7 — dimension certifies, not decides",
-   "`dim` many-to-one; necessary ≠ sufficient",
-   "`dim` homomorphism",
-   "proved"],
-  ["R8 — units and conversion round-trip",
-   "round-trip metre/foot conversion is the identity; cross-kind is a type error",
-   "`Unit k`; conversion round-trip",
-   "planned"],
-  ["R9 — extensive aggregation",
-   "mass sums over parts; volume-on-mixing does not",
-   "`Extensive`; additive law + counterexample",
-   "proved"],
-  ["R10 — numeric representation parametricity",
-   "same value at `ℝ`/`Int` (proof), `Float` (executable); `FP32`/`IEEE32Exec` refine `ℝ`",
-   "`Carrier`-bounded `Quantity k R`; parametric additivity laws; `CarrierRefinement` + `Quantity.add_refines`",
-   "proved (layer + laws + exec/spec refinement)"],
-  ["R11 — scalar units; vector = numerical array × one scalar unit (ISO 80000-2 §18)",
-   "a displacement as `Quantity k (Fin 3 → ℝ)` with one metre; laws transfer",
-   "pointwise `Carrier (Fin n → R)`; scalar `MetrologicalUnit`",
-   "proved"],
-  ["R12 — verified classification; kind-laws instantiate at the quantity level",
-   "a length built as speed × time is certified by construction; `⟨999⟩` cannot be certified; every certified surface area is `≥ 0`",
-   "`ProductKind` kind-laws; `Quantity.IsProduct` certificate + smart constructor; defining relations from the ISO 80000 remarks (area = `∬√g`)",
-   "proved (product family + area instance)"],
-  ["R13 — scale-spanning units (a third unit category)",
-   "candela ≡ power and mole ≡ 1 are reducible, the kelvin's reduction is invisible (Θ kept independent), the ampere is a genuine base — so scale-spanning is not a function of dimension (ISO 80000-7 candela/mole, ISO 80000-5 kelvin, IEC 80000-6 ampere; Finkelstein–Whitehead 2025)",
-   "`UnitCategory`; `Dimension.MechanicallyReducible`; `ScaleSpanningUnit`; `scaleSpanning_not_determined_by_dimension`",
-   "proved"],
-  ["R14 — uncertainty propagation as a provably nested method ladder (GUM ⊂ Willink ⊂ SSPRC)",
-   "Degenhardt fictive `Y=(X₁+X₂²)X₃`: Monte Carlo `E(Y)/u(Y)`, GUM `u_c=1.662` from autograd `cᵢ=[5,5,2.25]`; SSPRC recovers `E(Y)=11.5875` (incl. the +0.3375 non-linearity) and `u(Y)≈1.69` at 300 evals vs Monte Carlo's 20 000 (~67×); Willink gauge block `u_Y=33.4nm`, `γ_Y=0.124`, `h₀.₉₉=87.6nm`; `gum = willink|κ₄=0` and `willink = ssprc|κ₄` theorems over `ℝ`",
-   "additive `InputDist`/`MomentData` descriptor; `gumStdUnc`/`willinkCombine` + Pearson `k₉₅/k₉₉`; the derivative-free `Ssprc` pipeline (systematic sampling, separated propagation, convolution); `Ladder`+`Convolution` (`Cumulants` combine-monoid, T1 additivity, T2 projection, T5 convolution-adds-cumulants, T3 Willink=linearized-SSPRC, T4 affine reference=mean); autograd `cᵢ` via the `TapeBuilder` carrier",
-   "proved (GUM + Willink + SSPRC + T1–T5 + autograd cᵢ)"],
-  ["R15 — numerical adequacy: no information loss at the scale of the input uncertainties",
-   "an input whose contribution `cᵢ·uᵢ` sits below ½ ulp of the accumulated sum is flagged numerically invisible (`AdequacySwamping`: `10⁸ ⊕ (1±1)` swamped, `100 ⊕ (1±1)` clean); near-equal subtraction is Sterbenz-exact yet amplifies relative uncertainty; A1 absorption, A2 Sterbenz, A3 verdict-soundness proved over `ℝ`",
-   "an executable `Adequacy` `NumCarrier` (swamping + cancellation checks over `Float`); the grid-rounding spec + `Absorption` (A1), `Sterbenz32` (A2, self-contained FLX, lifted to TorchLean's genuine binary32 `fexp32` in Stage 3.2), `Soundness` (A3, flag ⟺ loss) over `ℝ`, grounded in TorchLean's `FP32` ulp/round + sound `RInterval` lemmas (`Fp32Grounding`)",
-   "proved (runtime carrier + A1 + A2 + A3 + A3′ universal-DAG capstone `DagBound` + A2 at the genuine binary32 `fexp32` format via the FLT Sterbenz TorchLean PR + the exec↔spec bridge, Stage 3.3: the computable `IEEE32Exec` ULP + `absorbs` verdict certified against `round₃₂`/`ulp₃₂`, `exec_verdict_sound`, via a second TorchLean PR); the `×`/`÷` DAG extension and Axis-U wiring (Stage 3.4) remain"],
-  ["*(out of scope)* structural value representation",
-   "coordinate frames, tensor variance, transforms",
-   "an orthogonal index over the kind",
-   "not specified"]
-  ]
 
 def sysmlComparisonTable : DocTable := mdTable true
   ["Aspect", "SysML v2 (2026-04)", "PropertyKindCalculus"]
@@ -566,9 +497,23 @@ home is an index *over* the kind, never a layer the kind hangs beneath (the
 inversion the *Why a calculus, not a taxonomy* section charges against SysML v2).
 Stating it as owed keeps the boundary honest.
 
-## The requirements at a glance
+## The requirements at a glance — the traceability matrix
 
-:::iso_doc_table requirementsTable
+The matrix below is *generated* from the typed `@[requirement …]` annotations
+carried by the Lean declarations (harvested by `PropertyKindCalculus.Requirements`),
+not maintained by hand. It is organized by the requirement groups introduced
+above; within each group, every requirement lists the declarations that
+_specify_, _prove_, _implement_, or _exemplify_ it, linked to that declaration's
+blueprint node. The *Status* column is likewise derived, not asserted: a
+requirement reads _proved_ exactly when some declaration is annotated `proves`,
+_specified_ when it is addressed but not yet proved, and _unaddressed_ otherwise.
+
+Because every annotation attaches to a *real* declaration and every status is a
+function of those annotations, the matrix cannot drift from the source — a renamed
+declaration or a missing proof is a build-time fact, not a stale cell. (This
+replaces the hand-maintained requirements-at-a-glance table.)
+
+:::traceability
 :::
 
 # Why a calculus, not a taxonomy

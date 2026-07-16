@@ -165,6 +165,20 @@ lean_lib «CrossRefs» where
   srcDir := "crossrefs"
   globs := #[.andSubmodules `PropertyKindCalculus.CrossRefs]
 
+/-- The **requirement-traceability** layer: typed, decl-indexed `@[requirement …]`
+annotations mapping each blueprint requirement (R1–R15) to the declarations that
+specify, prove, implement, or exemplify it, plus the canonical requirement
+catalogue. The blueprint harvests these into a traceability matrix, so it cannot
+drift from the source — a renamed declaration is a compile error. The annotations
+are applied *from afar*, mirroring `CrossRefs`. The core mechanism
+(`Attributes`, `Catalogue`, core-spine `Annotations`) is Mathlib-free; the
+`DimensionAnnotations` (R1/R5/R7/R13) and `UncertaintyAnnotations` (R14/R15)
+modules reach into the PhysLib/Mathlib-backed layers. Build with
+`lake build Requirements`. -/
+lean_lib «Requirements» where
+  srcDir := "requirements"
+  globs := #[.andSubmodules `PropertyKindCalculus.Requirements]
+
 /-- The **TorchLean-backed instance** of the R10 exec/spec refinement bridge: the
 concrete IEEE-754 binary32 carriers (TorchLean's `FP32` rounding spec and
 `IEEE32Exec` executable) realizing `CarrierRefinement` over `ℝ`. This is the one
