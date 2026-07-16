@@ -34,6 +34,12 @@ Stage-3 additions (numerical adequacy):
   * `AdequacyLadder` — the `ℝ`-level adequacy theorems A1 (absorption), A2 (Sterbenz), A3 (verdict
     soundness) applied to concrete values, with the sorry-free axiom profile.
 
+Stage-3.1 addition (the universal, whole-evaluation lift of A3):
+  * `AdequacyDag` — the capstone A3′ (`Adequacy.DagBound`) instantiated on concrete model DAGs (a
+    three-input accumulator, an add/sub variant, a deeper five-input tree): the FP32 measurand's
+    variation over an input box equals the `ℝ` one up to the DAG-additive rounding budget, and
+    *exactly* when no site rounds (flag-free). Sorry-free axiom profile confirmed.
+
 Further paper examples (the AFM indenter model; Willink's asymmetric and Type-A cases) arrive with
 later sub-stages.
 -/
@@ -45,3 +51,4 @@ import PropertyKindCalculus.UncertaintyExamples.DegenhardtSsprc
 import PropertyKindCalculus.UncertaintyExamples.SsprcNesting
 import PropertyKindCalculus.UncertaintyExamples.AdequacySwamping
 import PropertyKindCalculus.UncertaintyExamples.AdequacyLadder
+import PropertyKindCalculus.UncertaintyExamples.AdequacyDag

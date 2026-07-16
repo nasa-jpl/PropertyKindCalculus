@@ -115,7 +115,7 @@ def requirementsTable : DocTable := mdTable true
   ["R15 — numerical adequacy: no information loss at the scale of the input uncertainties",
    "an input whose contribution `cᵢ·uᵢ` sits below ½ ulp of the accumulated sum is flagged numerically invisible (`AdequacySwamping`: `10⁸ ⊕ (1±1)` swamped, `100 ⊕ (1±1)` clean); near-equal subtraction is Sterbenz-exact yet amplifies relative uncertainty; A1 absorption, A2 Sterbenz, A3 verdict-soundness proved over `ℝ`",
    "an executable `Adequacy` `NumCarrier` (swamping + cancellation checks over `Float`); the grid-rounding spec + `Absorption` (A1), `Sterbenz32` (A2, self-contained FLX), `Soundness` (A3, flag ⟺ loss) over `ℝ`, grounded in TorchLean's `FP32` ulp/round + sound `RInterval` lemmas (`Fp32Grounding`)",
-   "proved (runtime carrier + A1 + A2 + A3); universal-DAG capstone planned (Stage 3.1–3.3)"],
+   "proved (runtime carrier + A1 + A2 + A3 + A3′ universal-DAG capstone, `DagBound`: FP32 measurand ≈ ℝ over an input box up to a DAG-additive rounding budget, exact when flag-free); `×`/`÷` and exec↔spec bridge remain (Stage 3.2–3.3)"],
   ["*(out of scope)* structural value representation",
    "coordinate frames, tensor variance, transforms",
    "an orthogonal index over the kind",
@@ -526,10 +526,13 @@ its proven interval arithmetic. This requirement is realized through Stage 3: th
 worked flagged/clean example pair), and the three theorems over `ℝ` — A1 absorption (a sub-½-ulp
 perturbation is invisible, its converse fixing the threshold), A2 Sterbenz (near-equal subtraction is
 exact, its dual amplifying relative uncertainty), and A3 verdict soundness (the flag holds *iff* the
-contribution is lost — sound and complete). What remains *planned* is the universal capstone —
-soundness over an arbitrary model and input box, lifting the per-site A3 across a whole evaluation —
-together with a bridge from the `noncomputable` `FP32` spec to an executable carrier and the FLT-level
-Sterbenz; these are scoped as sub-stages 3.1–3.3 in the project's `UNCERTAINTY.md`.
+contribution is lost — sound and complete). Stage 3.1 then lifts A3 to the whole evaluation: A3′
+(`DagBound`) abstracts a write-once model as a binary32 `+`/`−` DAG and proves that the `FP32`
+measurand's variation over an input box reproduces the exact `ℝ` variation up to a DAG-additive
+rounding budget (composed from the per-operation `FP32` half-ulp bounds), collapsing to *equality*
+when no site rounds anywhere — so rounding is the sole source of the gap. What remains is extending
+the DAG to `×`/`÷`, a bridge from the `noncomputable` `FP32` spec to an executable carrier, and the
+FLT-level Sterbenz; these are scoped as sub-stages 3.2–3.3 in the project's `UNCERTAINTY.md`.
 
 ## Out of scope (for now)
 

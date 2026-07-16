@@ -15,6 +15,7 @@ import PropertyKindCalculus.Uncertainty.Sensitivity
 import PropertyKindCalculus.Uncertainty.Adequacy.Absorption
 import PropertyKindCalculus.Uncertainty.Adequacy.Sterbenz32
 import PropertyKindCalculus.Uncertainty.Adequacy.Soundness
+import PropertyKindCalculus.Uncertainty.Adequacy.DagBound
 import PropertyKindCalculusBlueprint.References
 
 open Verso.Genre
@@ -387,30 +388,36 @@ it to concrete values with a sorry-free axiom profile. This is the per-site soun
 runtime carrier.
 :::
 
-:::theorem "thm_uq_adequacy_soundness" (parent := "uncertainty") (tags := "capstone, planned") (effort := "large") (priority := "high")
-*Universal adequacy soundness (the capstone).* If the analysis carrier reports no absorption or
-harmful cancellation on an input *box*, then for *every* input in that box the `FP32`-computed
-measurand's uncertainty equals the `ℝ`-computed one up to a proven bound, over an *arbitrary* model.
-This lifts the per-site verdict {uses "thm_uq_adequacy_verdict"}[A3] across a whole evaluation, and is
-the theorem that binds the layer to R10's exec/spec refinement.
+:::theorem "thm_uq_adequacy_soundness" (parent := "uncertainty") (lean := "PropertyKindCalculus.Uncertainty.Adequacy.dag_fp32_box_faithful") (tags := "capstone")
+*Universal adequacy soundness (A3′, the capstone).* Abstract a write-once model as a binary32
+evaluation DAG of `+`/`−`. For *any* two inputs — in particular every input in a box around a nominal
+one — the `FP32`-computed measurand's *variation* reproduces the exact `ℝ`-computed variation up to a
+proven, DAG-additive rounding budget; and when no site rounds anywhere (flag-free — no absorption at
+any addition, every subtraction in the Sterbenz {uses "thm_uq_sterbenz"}[A2] regime), the bound
+collapses to *equality*. This lifts the per-site verdict {uses "thm_uq_adequacy_verdict"}[A3] across a
+whole evaluation, and is the theorem that binds the layer to R10's exec/spec refinement.
 :::
 
 :::proof "thm_uq_adequacy_soundness"
-Planned. Composes the per-site verdict soundness (A3, realized) with the soundness of the interval
-carrier's enclosures (`Adequacy.Fp32Grounding.interval_add_sound`) and the per-operation `FP32`
-rounding bounds across the evaluation DAG. The remaining work — DAG composition, and lifting the
-`FP32` grounding from the current `noncomputable` spec to an executable-carrier bridge — is scoped as
-sub-stages 3.1–3.3 in `UNCERTAINTY.md` §6.
+Realized over `ℝ`/`FP32` (Stage 3.1, `Adequacy.DagBound`). The forward-error accumulation
+`dag_fp32_error_bound` composes the per-operation half-ulp bounds
+(`Adequacy.Fp32Grounding.{add32,sub32}_within_half_ulp`, the genuine `FP32.{add,sub}_abs_error`) with
+the triangle inequality along the DAG; applying it at both inputs and one more triangle step gives the
+box-faithfulness bound `dag_fp32_box_faithful`, and `dag_fp32_box_exact_of_flagFree` is the flag-free
+equality. Sorry-free (`#print axioms` → `[propext, Classical.choice, Quot.sound]`), instantiated on
+concrete DAGs in the `AdequacyDag` example. Honest scope: the DAG covers `+`/`−` (the operations
+A1/A2/A3 cover); extending to `×`/`÷` and the executable-carrier bridge are sub-stages 3.2–3.3 in
+`UNCERTAINTY.md` §6.
 :::
 
 # Worked examples (checked facts)
 
-Eight examples reproduce a headline number (or a theorem) as a `#guard`, so the
+Nine examples reproduce a headline number (or a theorem) as a `#guard`, so the
 `UncertaintyExamples` library building under CI is what makes the claims true rather than
 asserted — the project's reflection-tests discipline applied to metrology. The first two are the
 Stage-0 reference numbers; the next two are the Stage-1 autograd and ladder facts; the next two are
-the Stage-2 SSPRC pipeline and its ladder theorems; the last two are the Stage-3 adequacy carrier and
-its theorems.
+the Stage-2 SSPRC pipeline and its ladder theorems; the last three are the Stage-3 adequacy carrier,
+its per-site theorems, and the Stage-3.1 DAG capstone A3′.
 
 - `PropertyKindCalculus.UncertaintyExamples.DegenhardtFictive` — the non-linear fictive model
   $`Y = (X_1 + X_2^2)\,X_3` of Degenhardt
@@ -458,4 +465,9 @@ its theorems.
 - `PropertyKindCalculus.UncertaintyExamples.AdequacyLadder` — the adequacy theorems A1 (absorption,
   $`\mathrm{round}_8(80+1) = 80`), A2 (Sterbenz, $`3 - 2` of two `FLX 24` numbers is `FLX 24`), and A3
   (the verdict biconditional) applied to concrete values over `ℝ`, with `#print axioms` confirming no
+  `sorryAx`.
+- `PropertyKindCalculus.UncertaintyExamples.AdequacyDag` — the Stage-3.1 capstone A3′ instantiated on
+  concrete model DAGs (a three-input accumulator, an add/sub variant, a deeper five-input tree): the
+  `FP32` measurand's variation over an input box equals the `ℝ` one up to the DAG-additive rounding
+  budget, and *exactly* when no site rounds (flag-free) — again with `#print axioms` confirming no
   `sorryAx`.

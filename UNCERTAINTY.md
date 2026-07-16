@@ -1,11 +1,12 @@
 # UNCERTAINTY.md — A rigor-first plan for uncertainty & numerical adequacy in PKC
 
-> Status: **Stages 0–3 implemented & CI-checked** (reference layer, GUM/Willink, autograd `cᵢ`,
-> the ladder theorems T1–T5, the executable SSPRC pipeline, and the numerical-adequacy layer — the
+> Status: **Stages 0–3.1 implemented & CI-checked** (reference layer, GUM/Willink, autograd `cᵢ`,
+> the ladder theorems T1–T5, the executable SSPRC pipeline, the numerical-adequacy layer — the
 > executable `Adequacy` carrier plus the theorems A1 absorption, A2 Sterbenz, A3 verdict soundness
-> over `ℝ`). The *universal* adequacy capstone (soundness over an arbitrary model/box) and
-> Stage 4 (scale) remain design/plan, scoped as sub-stages 3.1–3.4 and Stage 4 in §6. Audience:
-> PKC maintainers.
+> over `ℝ` — and the **universal capstone A3′** (`DagBound`: FP32 measurand ≈ `ℝ` over an input box up
+> to a DAG-additive rounding budget, exact when flag-free), over a binary32 `+`/`−` evaluation DAG).
+> The `×`/`÷` extension, the exec↔spec bridge, and Stage 4 (scale) remain design/plan, scoped as
+> sub-stages 3.2–3.4 and Stage 4 in §6. Audience: PKC maintainers.
 > Scope: augment PropertyKindCalculus in two coupled areas —
 > (1) **uncertainty quantification** (UQ) of model outputs from input uncertainties, and
 > (2) **numerical adequacy** of the floating-point representation of a science model.
@@ -420,6 +421,9 @@ uncertainty/PropertyKindCalculus/Uncertainty/
   Adequacy/Soundness.lean  ✅ A3 verdict soundness (`verdict_sound`: flag ⟺ contribution lost) — sorry-free
   Adequacy/Fp32Grounding.lean ✅ binary32 grounding: re-exports TorchLean's (noncomputable) FP32 round/ulp/
                            per-op + sound RInterval lemmas the grid model localizes
+  Adequacy/DagBound.lean   ✅ A3′ universal capstone (Stage 3.1): FP32 `+`/`−` evaluation DAG (`evalFP32`
+                           vs `evalExact`), forward-error accumulation (`dag_fp32_error_bound`), box
+                           faithfulness (`dag_fp32_box_faithful`) + flag-free exactness — sorry-free
 ```
 
 Stage-3 modules split by dependency exactly as Stages 1–2: `Adequacy.lean` (the executable carrier,
@@ -452,6 +456,8 @@ examples/PropertyKindCalculus/UncertaintyExamples/
                              separated — one WO1 kernel per hazard, checked for free (Float, #guard)
   AdequacyLadder.lean     ✅ Stage-3 A1/A2/A3 theorems applied to concrete values over ℝ (round₈(80+1)=80;
                              3−2 of FLX 24 is FLX 24; the verdict biconditional); #print axioms sorry-free
+  AdequacyDag.lean        ✅ Stage-3.1 A3′ capstone on concrete DAGs (3-input accumulator, add/sub variant,
+                             5-input tree): box faithfulness + flag-free exactness; #print axioms sorry-free
   DegenhardtAfm.lean      ▫ Degenhardt §3.2 AFM indenter PAF, ~70× efficiency (Stage 4/scale)
   WillinkAsymmetric.lean  ▫ Willink §5 asymmetric input (κ₃) + Type-A t-cases (Stage 1)
 ```
@@ -525,13 +531,23 @@ and FFT kernels under `NN/Runtime/Autograd/Engine/Cuda/Ops/*` for SSPRC's convol
   §4.6): the *universal* soundness capstone over an arbitrary model/box, the lift of A2 to the FLT
   format binary32 actually uses, and an executable↔spec bridge for the `noncomputable` FP32 layer.
 
-* **Stage 3.1 — Universal adequacy soundness (the capstone A3′).** Lift the per-site verdict (A3) across
-  a whole evaluation: for an arbitrary WO1 model and an input *box*, *no flagged site ⟹ the `FP32`
-  measurand's uncertainty equals the `ℝ` one up to a proven bound, for every input in the box.* Compose
-  the per-op `FP32` rounding bounds (`FP32.{add,sub,mul,div}_abs_error`) and the sound interval enclosures
-  (`Interval.RInterval.mem_{add,sub,mul}`, re-exported in `Fp32Grounding`) along a formal evaluation-DAG
-  abstraction. No TorchLean PR needed (the levers all exist, §4.6 B6/E13) — the work is the DAG induction
-  and the accumulation bound. *Exit:* A3′ is a theorem over a nontrivial model DAG.
+* **Stage 3.1 — Universal adequacy soundness (the capstone A3′). ✅ DONE (built & CI-checked).**
+  `Adequacy/DagBound.lean` abstracts a WO1 model as a binary32 evaluation DAG (`Expr` over `+`/`−`) and
+  interprets it two ways over TorchLean's *real* `FP32`: `evalFP32` (every node rounds) and `evalExact`
+  (the exact `ℝ` reference). Composing the per-op half-ulp bounds
+  (`Fp32Grounding.{add32,sub32}_within_half_ulp`, the genuine `FP32.{add,sub}_abs_error`) along the DAG:
+  **`dag_fp32_error_bound`** is the forward-error accumulation (`|evalFP32 − evalExact| ≤ errBound`, the
+  tree-sum of per-node `eps₃₂`); **A3′ = `dag_fp32_box_faithful`** proves that for *any* two inputs `ρ`,
+  `σ` — every input in a box around `ρ` — the FP32 output *variation* reproduces the exact `ℝ` variation
+  up to `errBound σ + errBound ρ`; and **`dag_fp32_box_exact_of_flagFree`** collapses that bound to
+  *equality* when no site rounds anywhere (`FlagFree` — the whole-evaluation *no flagged site*: no
+  absorption at any `+`, every `−` in the Sterbenz A2 regime), so rounding is the *sole* source of the
+  FP32/`ℝ` measurand gap. *Exit met:* A3′ is a theorem over nontrivial model DAGs (a 3-input accumulator,
+  an add/sub variant, a 5-input tree in the `AdequacyDag` example), `#print axioms` →
+  `[propext, Classical.choice, Quot.sound]` (no `sorryAx`). No TorchLean PR needed (the levers all
+  existed, §4.6 B6/E13). Honest scope carried to 3.2/3.3: the DAG covers `+`/`−` (what A1/A2/A3 cover);
+  `×`/`÷` (their per-op bounds `FP32.{mul,div}_abs_error` exist) and refining `FlagFree` to the *minimal*
+  no-absorption condition remain.
 
 * **Stage 3.2 — FLT/FP32 Sterbenz (lift A2 to the real binary32 format).** A2 is proved over a
   self-contained FLX (fixed-precision, unbounded-exponent) model; binary32 is `fexp32 = FLTExp (−149) 24`
