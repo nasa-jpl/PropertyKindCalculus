@@ -363,7 +363,7 @@ FLX model *grounded* in (not built on) the TorchLean lemmas, whose statement sha
 
 * **F — computability.** *Everything* FP32/Flocq is `noncomputable` (`rnd32`, all `round₃₂/ulp₃₂/eps₃₂`,
   every `NF` arithmetic instance). The executable model is the **separate** `IEEE32Exec` structure,
-  connected to `FP32` only by bridge lemmas (`BridgeFP32*`, `RuntimeApprox`), not defeq. ⟹ the runtime
+  connected to `FP32` only by bridge lemmas (`Bridge/FP32*`, `RuntimeApprox`), not defeq. ⟹ the runtime
   host-`Float` `Adequacy` carrier is inherently uncertifiable (opaque FFI). **✅ Stage 3.3 (done):** the
   certified executable check runs on `IEEE32Exec` instead — a second TorchLean PR adds `IEEE32Exec.ulpExp`
   (bit-level ULP exponent, proved `= ulp₃₂` on the finite fragment) and `absorbs` (float32 sum unchanged),
@@ -449,7 +449,7 @@ merged into the fork's `combined`): `NN/Floats/NeuralFloat/Analysis/SterbenzFLT.
 (`neural_generic_format_FLT_sterbenz` + the `FLX→FLT`-normal helper) and `NN/Floats/FP32/Sterbenz.lean`
 (`round32_sub_exact_of_sterbenz`, `FP32.sub_exact_of_sterbenz`). Stage 3.3 adds one more **TorchLean**
 module (second upstream PR, branch `ieee32exec-ulp` off `upstream/main`, merged into `combined`):
-`NN/Floats/IEEEExec/BridgeFP32/Ulp.lean` (`IEEE32Exec.ulpExp` + `neuralBpow_ulpExp_eq_ulp32`,
+`NN/Floats/IEEEExec/Bridge/FP32/Ulp.lean` (`IEEE32Exec.ulpExp` + `neuralBpow_ulpExp_eq_ulp32`,
 `absorbs` + `round32_add_eq_left_of_absorbs`). PKC pins TorchLean at that `combined` rev. (Note: upstream
 `lean-dojo/TorchLean` main has since reorganized the whole `IEEEExec` tree; both PRs branch off the
 pre-reorg base that the fork's `main`/`combined` still track, so opening them against current upstream
@@ -608,7 +608,7 @@ and FFT kernels under `NN/Runtime/Autograd/Engine/Cuda/Ops/*` for SSPRC's convol
   whose ops are provably `round₃₂` of the exact real result. **Exploration finding:** the op-level
   `IEEE32Exec ↔ round₃₂` refinement (`toReal_{add,sub,…}_eq_fp32Round`) already existed; what was missing
   is an executable ULP (existed only as the `noncomputable` `neuralUlp`/`ulp₃₂`) and a certified
-  absorption verdict. A second **TorchLean PR** (`NN/Floats/IEEEExec/BridgeFP32/Ulp.lean`, branch
+  absorption verdict. A second **TorchLean PR** (`NN/Floats/IEEEExec/Bridge/FP32/Ulp.lean`, branch
   `ieee32exec-ulp` off `upstream/main`, no co-author trailer, merged into `combined`) adds
   `IEEE32Exec.ulpExp` (bit-level ULP exponent via `Nat.log2` + `fexp32`), proved `2^(ulpExp x) =
   ulp₃₂ (toReal x)` on the finite fragment (`neuralBpow_ulpExp_eq_ulp32`, via `neural_magnitude_dyadic`

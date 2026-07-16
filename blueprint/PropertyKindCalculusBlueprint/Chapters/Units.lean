@@ -135,7 +135,7 @@ built `Torch` library at TorchLean's binary32 — an _unconditional_
 `CarrierRefinement FP32 ℝ` (the rounding spec has no overflow, so the law holds by
 computation) and a _conditional_ `IEEE32Exec` refinement on the finite/no-overflow
 path (`Quantity.add_refines_exec`), where overflow is an explicit hypothesis rather
-than a silent failure. This is TorchLean's `BridgeFP32` pattern ("compute in
+than a silent failure. This is TorchLean's `Bridge/FP32` pattern ("compute in
 $`\mathbb{R}`, then round").
 :::
 

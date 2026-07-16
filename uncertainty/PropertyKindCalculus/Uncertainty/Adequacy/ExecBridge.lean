@@ -17,7 +17,7 @@ The residual `Float32 ↔ IEEE32Exec` step is an *assumption typeclass* upstream
 (`RuntimeFloat32MatchesIEEE32Exec`), not an axiom — the honest, irreducible hardware trust boundary.
 
 This module re-exposes, under adequacy-layer names, the executable primitives added in the Stage-3.3
-TorchLean PR (`NN/Floats/IEEEExec/BridgeFP32/Ulp.lean`) and states the capstone:
+TorchLean PR (`NN/Floats/IEEEExec/Bridge/FP32/Ulp.lean`) and states the capstone:
 
   * `exec_ulp_grounds` / `exec_half_ulp_grounds` — the *executable* ULP exponent `ulpExp` (computed
     from a bit pattern by `Nat.log2` + `fexp32`) yields exactly the specified `ulp₃₂` / `eps₃₂` of the
@@ -33,7 +33,7 @@ example. Mathlib- and TorchLean-backed.
 -/
 import PropertyKindCalculus.Uncertainty.Adequacy.Soundness
 import PropertyKindCalculus.Uncertainty.Adequacy.Fp32Grounding
-import NN.Floats.IEEEExec.BridgeFP32.Ulp
+import NN.Floats.IEEEExec.Bridge.FP32.Ulp
 
 namespace PropertyKindCalculus.Uncertainty.Adequacy
 
