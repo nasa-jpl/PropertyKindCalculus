@@ -16,6 +16,7 @@ import PropertyKindCalculus.Uncertainty.Adequacy.Absorption
 import PropertyKindCalculus.Uncertainty.Adequacy.Sterbenz32
 import PropertyKindCalculus.Uncertainty.Adequacy.Soundness
 import PropertyKindCalculus.Uncertainty.Adequacy.DagBound
+import PropertyKindCalculus.Uncertainty.Adequacy.Fp32Grounding
 import PropertyKindCalculusBlueprint.References
 
 open Verso.Genre
@@ -36,9 +37,10 @@ CI-checked — the reference layer and worked examples, the GUM and Willink comb
 sensitivity coefficients, the derivative-free SSPRC pipeline, the five ladder theorems (T1,
 cumulant additivity; T2, $`\mathrm{gum} = \mathrm{willink}|_{\kappa_4=0}`; T3, Willink as the
 projection of the linearized SSPRC; T4, affine reference equals the mean; T5, convolution adds
-cumulants), and the numerical-adequacy layer (the executable analysis carrier, and the theorems A1
-absorption, A2 Sterbenz, A3 verdict soundness over `ℝ`); only the *universal* adequacy capstone —
-soundness over an arbitrary model and input box — remains *planned*.
+cumulants), and the numerical-adequacy layer (the executable analysis carrier; the per-site theorems
+A1 absorption, A2 Sterbenz, A3 verdict soundness over `ℝ`; the universal capstone A3′ over an
+arbitrary model DAG and input box; and A2 lifted to the genuine binary32 format `fexp32`); the
+executable↔spec bridge and the `×`/`÷` extension remain *planned* (Stage 3.3).
 
 # Two orthogonal axes, and why their properties compose
 
@@ -368,8 +370,29 @@ uncertainty hazard: that exact difference can have *relative* uncertainty ≥ 10
 Realized over `ℝ` (`Adequacy.Sterbenz32.flx_sterbenz`), the real-number analogue of TorchLean's
 `neural_generic_format_FLX_sterbenz`: align both operands to the smaller exponent, and the factor-of-two
 condition bounds the difference's mantissa below `2^p`. `sub_exact_on_grid` gives the grid form (the
-difference rounds to itself). Sorry-free. Lifting this to the FLT/`fexp32` format binary32 actually
-uses (gradual underflow) is a follow-up sub-stage, and a TorchLean PR.
+difference rounds to itself). Sorry-free. Stage 3.2 carries this to the FLT/`fexp32` format binary32
+actually uses (gradual underflow) — the genuine grounding is `thm_uq_sterbenz_fp32`.
+:::
+
+:::theorem "thm_uq_sterbenz_fp32" (parent := "uncertainty") (lean := "PropertyKindCalculus.Uncertainty.Adequacy.round32_sterbenz_exact") (tags := "capstone")
+*Sterbenz at the binary32 format (A2, Stage 3.2).* The same exactness at the format binary32 *actually
+uses* — TorchLean's `fexp32 = \mathrm{FLTExp}\,(-149)\,24`, an `FLT` format with gradual underflow: for
+representable binary32 `u`, `v` within a factor of two ($`u \le 2v`, $`v \le 2u`), the exact difference
+is already on the grid, so $`\mathrm{round}_{32}(u - v) = u - v`. This realizes the `FLX`-model
+{uses "thm_uq_sterbenz"}[A2] at the real gradual-underflow format, and its `FP32`-typed corollary
+`sub32_exact_of_sterbenz` makes a near-equal binary32 subtraction *lossless*.
+:::
+
+:::proof "thm_uq_sterbenz_fp32"
+Realized over `ℝ`/`FP32` (Stage 3.2, `Adequacy.Fp32Grounding.round32_sterbenz_exact` /
+`sub32_exact_of_sterbenz`), grounded in the TorchLean PR's `neural_generic_format_FLT_sterbenz`. That
+`FLT` Sterbenz lemma splits on the underflow boundary `β^(prec+emin)`: on the subnormal side the fixed
+`emin` grid subtracts exactly (`FLT_to_FIX` → `FIX_sub` → `FIX_to_FLT`), on the normal side it
+transports through the unbounded `FLX` family (`FLT_to_FLX` → `FLX_sterbenz` → `FLX_to_FLT_of_normal`).
+Composing it with `neural_round_preserves_generic` (rounding is the identity on representable reals)
+gives $`\mathrm{round}_{32}(u - v) = u - v`, so the per-op `sub32_within_half_ulp` half-ulp bound
+collapses to *zero* in the Sterbenz regime. Sorry-free (`[propext, Classical.choice, Quot.sound]`),
+exercised by the `AdequacySterbenz32` example.
 :::
 
 :::theorem "thm_uq_adequacy_verdict" (parent := "uncertainty") (lean := "PropertyKindCalculus.Uncertainty.Adequacy.verdict_sound") (tags := "capstone")
@@ -406,18 +429,18 @@ the triangle inequality along the DAG; applying it at both inputs and one more t
 box-faithfulness bound `dag_fp32_box_faithful`, and `dag_fp32_box_exact_of_flagFree` is the flag-free
 equality. Sorry-free (`#print axioms` → `[propext, Classical.choice, Quot.sound]`), instantiated on
 concrete DAGs in the `AdequacyDag` example. Honest scope: the DAG covers `+`/`−` (the operations
-A1/A2/A3 cover); extending to `×`/`÷` and the executable-carrier bridge are sub-stages 3.2–3.3 in
+A1/A2/A3 cover); extending to `×`/`÷` and the executable-carrier bridge (sub-stage 3.3) remain in
 `UNCERTAINTY.md` §6.
 :::
 
 # Worked examples (checked facts)
 
-Nine examples reproduce a headline number (or a theorem) as a `#guard`, so the
+Ten examples reproduce a headline number (or a theorem) as a `#guard`, so the
 `UncertaintyExamples` library building under CI is what makes the claims true rather than
 asserted — the project's reflection-tests discipline applied to metrology. The first two are the
 Stage-0 reference numbers; the next two are the Stage-1 autograd and ladder facts; the next two are
-the Stage-2 SSPRC pipeline and its ladder theorems; the last three are the Stage-3 adequacy carrier,
-its per-site theorems, and the Stage-3.1 DAG capstone A3′.
+the Stage-2 SSPRC pipeline and its ladder theorems; the last four are the Stage-3 adequacy carrier,
+its per-site theorems, the Stage-3.1 DAG capstone A3′, and the Stage-3.2 binary32 Sterbenz.
 
 - `PropertyKindCalculus.UncertaintyExamples.DegenhardtFictive` — the non-linear fictive model
   $`Y = (X_1 + X_2^2)\,X_3` of Degenhardt
@@ -471,3 +494,8 @@ its per-site theorems, and the Stage-3.1 DAG capstone A3′.
   `FP32` measurand's variation over an input box equals the `ℝ` one up to the DAG-additive rounding
   budget, and *exactly* when no site rounds (flag-free) — again with `#print axioms` confirming no
   `sorryAx`.
+- `PropertyKindCalculus.UncertaintyExamples.AdequacySterbenz32` — the Stage-3.2 A2 lift to the genuine
+  binary32 format: $`\mathrm{round}_{32}(u - v) = u - v` and $`(a - b).\mathrm{val} = a.\mathrm{val} -
+  b.\mathrm{val}` for near-equal representable binary32 values (so the `sub32_within_half_ulp` bound
+  collapses to zero), tied back to the self-contained `FLX 24` fact — with `#print axioms` confirming
+  no `sorryAx`.

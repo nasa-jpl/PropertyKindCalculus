@@ -1,12 +1,15 @@
 # UNCERTAINTY.md — A rigor-first plan for uncertainty & numerical adequacy in PKC
 
-> Status: **Stages 0–3.1 implemented & CI-checked** (reference layer, GUM/Willink, autograd `cᵢ`,
+> Status: **Stages 0–3.2 implemented & CI-checked** (reference layer, GUM/Willink, autograd `cᵢ`,
 > the ladder theorems T1–T5, the executable SSPRC pipeline, the numerical-adequacy layer — the
 > executable `Adequacy` carrier plus the theorems A1 absorption, A2 Sterbenz, A3 verdict soundness
-> over `ℝ` — and the **universal capstone A3′** (`DagBound`: FP32 measurand ≈ `ℝ` over an input box up
-> to a DAG-additive rounding budget, exact when flag-free), over a binary32 `+`/`−` evaluation DAG).
-> The `×`/`÷` extension, the exec↔spec bridge, and Stage 4 (scale) remain design/plan, scoped as
-> sub-stages 3.2–3.4 and Stage 4 in §6. Audience: PKC maintainers.
+> over `ℝ` — the **universal capstone A3′** (`DagBound`: FP32 measurand ≈ `ℝ` over an input box up
+> to a DAG-additive rounding budget, exact when flag-free), over a binary32 `+`/`−` evaluation DAG,
+> and **A2 lifted to the genuine binary32 format** (Stage 3.2: a TorchLean PR adds
+> `neural_generic_format_FLT_sterbenz`/`FP32.sub_exact_of_sterbenz` for the FLT/`fexp32` gradual-underflow
+> format, grounded in PKC as `Fp32Grounding.round32_sterbenz_exact` — `round₃₂(u−v)=u−v` for near-equal
+> representable operands)). The `×`/`÷` extension, the exec↔spec bridge, and Stage 4 (scale) remain
+> design/plan, scoped as sub-stages 3.3–3.4 and Stage 4 in §6. Audience: PKC maintainers.
 > Scope: augment PropertyKindCalculus in two coupled areas —
 > (1) **uncertainty quantification** (UQ) of model outputs from input uncertainties, and
 > (2) **numerical adequacy** of the floating-point representation of a science model.
@@ -254,7 +257,7 @@ lemmas we need are proven; the adequacy theorems are thin wrappers we author on 
 | Sub-property | Meaning | Grounding lemma (**exists**) | To build |
 |---|---|---|---|
 | **No absorption / swamping** | in `a ⊕ b`, neither operand's uncertainty falls below ½ulp(sum) | `neuralRound_nearestEven_point` (`Rounding/Order.lean:227`) + `neuralUlp_le_abs_of_generic` (`Analysis/Ulp.lean:112`) + `neuralUlp_mono_pos` (`Ulp.lean:138`); already used this way at `Error/Addition.lean:75` | the absorption theorem `\|round₃₂(x+y) − x\| ≤ …` under a magnitude gap |
-| **Exact cancellation, amplified uncertainty** | `a ⊖ b`, `a≈b`: subtraction is *exact* (no rounding) but *relative* uncertainty blows up | FLX Sterbenz `neural_generic_format_FLX_sterbenz` (`Analysis/Sterbenz.lean:146`) + FLT↔FLX transport (`Error/Multiplication.lean:157`) | FP32/FLT Sterbenz instance; the relative-amplification bound (UQ-level, from `cᵢ`) |
+| **Exact cancellation, amplified uncertainty** | `a ⊖ b`, `a≈b`: subtraction is *exact* (no rounding) but *relative* uncertainty blows up | FLX Sterbenz `neural_generic_format_FLX_sterbenz` (`Analysis/Sterbenz.lean:146`) + FLT↔FLX transport (`Error/Multiplication.lean:157`); **FP32/FLT instance ✅ Stage 3.2** (`neural_generic_format_FLT_sterbenz`, `FP32.sub_exact_of_sterbenz`) | ~~FP32/FLT Sterbenz instance~~ (done); the relative-amplification bound (UQ-level, from `cᵢ`) |
 | **Bounded accumulated rounding error** | total FP noise over the whole evaluation ≤ a fraction of the output uncertainty | `(1+δ)` model `neural_round_relative_error_ulp` (`Error/Bounds.lean:139`); FP32 `u=2⁻²⁴` `round_relative_error_of_normal` (`FP32/Error.lean:79`); per-op `add/sub/mul/div_abs_error` (`FP32/Error.lean:99–148`) | DAG-composition of per-op bounds; comparison to `u_Y` |
 | **Adequate dynamic range** | no overflow/underflow on the input box | `RInterval` sound enclosures (`Interval/Quantized.lean`), `minNormal=2⁻¹²⁶`, `ieeeMaxFinite` (`FP32/Core.lean:150,160`) | range check vs. `InputDist.support` |
 
@@ -342,10 +345,12 @@ FLX model *grounded* in (not built on) the TorchLean lemmas, whose statement sha
   `neuralUlp_mono_pos` (`Analysis/Ulp.lean:112,138`). These realize A1 on the real binary32 grid (the
   self-contained grid model localizes them; `Fp32Grounding` re-exports `round_abs_error`).
 
-* **D — Sterbenz.** **Only** `neural_generic_format_FLX_sterbenz (prec) (0<x)(0<y)(x≤2y)(y≤2x) …`
-  (`Analysis/Sterbenz.lean:146`, `FLXExp prec` — fixed precision) and its one-sided helper. **No FLT
-  or FP32 Sterbenz** anywhere in the tree → our self-contained FLX proof is the analogue, and the
-  FLT/FP32 lift is Stage 3.2 (a TorchLean PR).
+* **D — Sterbenz.** Originally **only** `neural_generic_format_FLX_sterbenz (prec) (0<x)(0<y)(x≤2y)(y≤2x) …`
+  (`Analysis/Sterbenz.lean:146`, `FLXExp prec` — fixed precision) and its one-sided helper. **Stage 3.2's
+  TorchLean PR adds the FLT/FP32 lift** (`Analysis/SterbenzFLT.lean`): `neural_generic_format_FLT_sterbenz`
+  (regime split — FIX grid on the subnormal side, FLX transport on the normal side, plus the helper
+  `neural_generic_format_FLX_to_FLT_of_normal`) and the corollary `FP32.sub_exact_of_sterbenz` /
+  `round32_sub_exact_of_sterbenz` (`FP32/Sterbenz.lean`), grounded in PKC via `Fp32Grounding`.
 
 * **E — Sound intervals** (namespace `TorchLean.Floats.Interval`, `Interval/Quantized.lean`).
   `structure RInterval (lo hi : ℝ)`; `x ∈ I ↔ lo ≤ x ≤ hi`. Operations take a `Rounder` (outward
@@ -420,11 +425,17 @@ uncertainty/PropertyKindCalculus/Uncertainty/
   Adequacy/Sterbenz32.lean ✅ A2 self-contained FLX Sterbenz (`flx_sterbenz`) + grid exactness + rel-unc amplification
   Adequacy/Soundness.lean  ✅ A3 verdict soundness (`verdict_sound`: flag ⟺ contribution lost) — sorry-free
   Adequacy/Fp32Grounding.lean ✅ binary32 grounding: re-exports TorchLean's (noncomputable) FP32 round/ulp/
-                           per-op + sound RInterval lemmas the grid model localizes
+                           per-op + sound RInterval lemmas the grid model localizes; + Stage-3.2 Sterbenz
+                           grounding (`round32_sterbenz_exact`, `sub32_exact_of_sterbenz` over `fexp32`)
   Adequacy/DagBound.lean   ✅ A3′ universal capstone (Stage 3.1): FP32 `+`/`−` evaluation DAG (`evalFP32`
                            vs `evalExact`), forward-error accumulation (`dag_fp32_error_bound`), box
                            faithfulness (`dag_fp32_box_faithful`) + flag-free exactness — sorry-free
 ```
+
+Stage 3.2 also adds two **TorchLean** modules (upstream PR, branch `flt-fp32-sterbenz` off `upstream/main`,
+merged into the fork's `combined`): `NN/Floats/NeuralFloat/Analysis/SterbenzFLT.lean`
+(`neural_generic_format_FLT_sterbenz` + the `FLX→FLT`-normal helper) and `NN/Floats/FP32/Sterbenz.lean`
+(`round32_sub_exact_of_sterbenz`, `FP32.sub_exact_of_sterbenz`). PKC pins TorchLean at that `combined` rev.
 
 Stage-3 modules split by dependency exactly as Stages 1–2: `Adequacy.lean` (the executable carrier,
 `Float`) lives in the Mathlib/Torch-free `Uncertainty` library (Stage 0 stays 18 jobs, toolchain-only);
@@ -458,6 +469,9 @@ examples/PropertyKindCalculus/UncertaintyExamples/
                              3−2 of FLX 24 is FLX 24; the verdict biconditional); #print axioms sorry-free
   AdequacyDag.lean        ✅ Stage-3.1 A3′ capstone on concrete DAGs (3-input accumulator, add/sub variant,
                              5-input tree): box faithfulness + flag-free exactness; #print axioms sorry-free
+  AdequacySterbenz32.lean ✅ Stage-3.2 A2 at the genuine binary32 format: round₃₂(u−v)=u−v and
+                             (a−b).val=a.val−b.val for near-equal representable FP32; sub32 bound → 0;
+                             ties to the FLX 24 fact; #print axioms sorry-free (TorchLean-backed)
   DegenhardtAfm.lean      ▫ Degenhardt §3.2 AFM indenter PAF, ~70× efficiency (Stage 4/scale)
   WillinkAsymmetric.lean  ▫ Willink §5 asymmetric input (κ₃) + Type-A t-cases (Stage 1)
 ```
@@ -549,14 +563,22 @@ and FFT kernels under `NN/Runtime/Autograd/Engine/Cuda/Ops/*` for SSPRC's convol
   `×`/`÷` (their per-op bounds `FP32.{mul,div}_abs_error` exist) and refining `FlagFree` to the *minimal*
   no-absorption condition remain.
 
-* **Stage 3.2 — FLT/FP32 Sterbenz (lift A2 to the real binary32 format).** A2 is proved over a
-  self-contained FLX (fixed-precision, unbounded-exponent) model; binary32 is `fexp32 = FLTExp (−149) 24`
-  (gradual underflow). TorchLean has **only** FLX Sterbenz (`neural_generic_format_FLX_sterbenz`, §4.6 D11)
-  — there is *no* FLT- or FP32-level Sterbenz. **TorchLean PR:** add `neural_generic_format_FLT_sterbenz`
-  (transport FLX→FLT for the normal range via the existing `neural_generic_format_FLT_to_FIX` bridge,
-  handling the underflow boundary) and an `FP32.sub_exact_of_sterbenz` corollary. Then re-state
-  `Adequacy.Sterbenz32` over `round₃₂`/`neuralGenericFormat fexp32` instead of the local `FLX` predicate.
-  *Exit:* `flx_sterbenz`'s binary32 instance is a theorem about `round₃₂`.
+* **Stage 3.2 — FLT/FP32 Sterbenz (lift A2 to the real binary32 format). ✅ DONE (built & CI-checked).**
+  A2 was proved over a self-contained FLX (fixed-precision, unbounded-exponent) model; binary32 is
+  `fexp32 = FLTExp (−149) 24` (gradual underflow), and TorchLean had **only** FLX Sterbenz. **TorchLean PR
+  (branch `flt-fp32-sterbenz` off `upstream/main`, merged into the fork's `combined`):**
+  `NN/Floats/NeuralFloat/Analysis/SterbenzFLT.lean` adds `neural_generic_format_FLT_sterbenz` — a regime
+  split on the underflow boundary `β^(prec+emin)`: the **subnormal** side subtracts exactly on the fixed
+  `emin` grid (`FLT_to_FIX` → `FIX_sub` → `FIX_to_FLT_of_abs_le`, no ratio hypothesis), the **normal**
+  side transports through the unbounded FLX family (`FLT_to_FLX` → `FLX_sterbenz` → the new
+  `neural_generic_format_FLX_to_FLT_of_normal` helper, where the factor-of-two ratio is used). `FP32/Sterbenz.lean`
+  adds `round32_sub_exact_of_sterbenz` (Sterbenz as a theorem about `round₃₂`) and `FP32.sub_exact_of_sterbenz`
+  (`(a−b).val = a.val−b.val`), composing FLT Sterbenz with `neural_round_preserves_generic`. PKC grounds
+  these in `Adequacy.Fp32Grounding.round32_sterbenz_exact` / `sub32_exact_of_sterbenz`, re-stating
+  `Adequacy.Sterbenz32` over `round₃₂`/`neuralGenericFormat fexp32`. All sorry-free
+  (`#print axioms` → `[propext, Classical.choice, Quot.sound]`). *Exit met:* `flx_sterbenz`'s binary32
+  instance is a theorem about `round₃₂` — exercised by the `AdequacySterbenz32` example. (No co-author
+  trailer on the TorchLean commit — upstream-facing.)
 
 * **Stage 3.3 — Executable↔spec bridge for FP32.** The entire TorchLean FP32/Flocq layer is
   `noncomputable` (§4.6 F14): `round₃₂ : ℝ → ℝ` is a spec, not a float, so the runtime carrier's

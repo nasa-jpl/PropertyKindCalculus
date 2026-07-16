@@ -13,9 +13,11 @@ halves matter for adequacy, and both are theorems here:
     representable at precision `p` (Flocq's `FLX p`) with `y ≤ x ≤ 2y`, the difference `x − y` is
     itself representable at precision `p`. This is the self-contained real-number analogue of
     TorchLean's `neural_generic_format_FLX_sterbenz` (`Analysis/Sterbenz.lean`), stated over the
-    explicit mantissa/exponent model. Binary32 is `FLX 24` with a bounded exponent; carrying this to
-    TorchLean's `fexp32`/`FP32` (gradual underflow) is a follow-up sub-stage — see `UNCERTAINTY.md`
-    §6, Stage 3.2, and the corresponding TorchLean PR.
+    explicit mantissa/exponent model. Binary32 is `FLX 24` with a bounded exponent; **Stage 3.2 now
+    carries this to TorchLean's `fexp32`/`FP32` (the FLT format with gradual underflow)** —
+    `Fp32Grounding.round32_sterbenz_exact` / `sub32_exact_of_sterbenz` state near-equal binary32
+    subtraction as a theorem about `round₃₂`, grounded in the TorchLean PR's
+    `neural_generic_format_FLT_sterbenz`.
 
   * **`relUnc_amplifies`.** The uncertainty-side hazard: when the difference shrinks to at or below
     the absolute uncertainty the operands carry, the *relative* uncertainty of the difference is at

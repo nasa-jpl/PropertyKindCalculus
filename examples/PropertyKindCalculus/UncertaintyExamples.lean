@@ -40,6 +40,12 @@ Stage-3.1 addition (the universal, whole-evaluation lift of A3):
     variation over an input box equals the `ℝ` one up to the DAG-additive rounding budget, and
     *exactly* when no site rounds (flag-free). Sorry-free axiom profile confirmed.
 
+Stage-3.2 addition (A2 at the real binary32 format):
+  * `AdequacySterbenz32` — A2 (Sterbenz) lifted from the `FLX` model to TorchLean's genuine
+    `fexp32 = FLTExp (−149) 24` (gradual underflow): `round₃₂ (u − v) = u − v` and `(a − b).val =
+    a.val − b.val` for near-equal representable binary32 values, so the `sub32_within_half_ulp` bound
+    collapses to zero. Grounded in the Stage-3.2 TorchLean PR (`neural_generic_format_FLT_sterbenz`).
+
 Further paper examples (the AFM indenter model; Willink's asymmetric and Type-A cases) arrive with
 later sub-stages.
 -/
@@ -52,3 +58,4 @@ import PropertyKindCalculus.UncertaintyExamples.SsprcNesting
 import PropertyKindCalculus.UncertaintyExamples.AdequacySwamping
 import PropertyKindCalculus.UncertaintyExamples.AdequacyLadder
 import PropertyKindCalculus.UncertaintyExamples.AdequacyDag
+import PropertyKindCalculus.UncertaintyExamples.AdequacySterbenz32

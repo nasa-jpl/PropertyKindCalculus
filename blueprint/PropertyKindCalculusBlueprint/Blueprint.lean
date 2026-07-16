@@ -114,8 +114,8 @@ def requirementsTable : DocTable := mdTable true
    "proved (GUM + Willink + SSPRC + T1–T5 + autograd cᵢ)"],
   ["R15 — numerical adequacy: no information loss at the scale of the input uncertainties",
    "an input whose contribution `cᵢ·uᵢ` sits below ½ ulp of the accumulated sum is flagged numerically invisible (`AdequacySwamping`: `10⁸ ⊕ (1±1)` swamped, `100 ⊕ (1±1)` clean); near-equal subtraction is Sterbenz-exact yet amplifies relative uncertainty; A1 absorption, A2 Sterbenz, A3 verdict-soundness proved over `ℝ`",
-   "an executable `Adequacy` `NumCarrier` (swamping + cancellation checks over `Float`); the grid-rounding spec + `Absorption` (A1), `Sterbenz32` (A2, self-contained FLX), `Soundness` (A3, flag ⟺ loss) over `ℝ`, grounded in TorchLean's `FP32` ulp/round + sound `RInterval` lemmas (`Fp32Grounding`)",
-   "proved (runtime carrier + A1 + A2 + A3 + A3′ universal-DAG capstone, `DagBound`: FP32 measurand ≈ ℝ over an input box up to a DAG-additive rounding budget, exact when flag-free); `×`/`÷` and exec↔spec bridge remain (Stage 3.2–3.3)"],
+   "an executable `Adequacy` `NumCarrier` (swamping + cancellation checks over `Float`); the grid-rounding spec + `Absorption` (A1), `Sterbenz32` (A2, self-contained FLX, lifted to TorchLean's genuine binary32 `fexp32` in Stage 3.2), `Soundness` (A3, flag ⟺ loss) over `ℝ`, grounded in TorchLean's `FP32` ulp/round + sound `RInterval` lemmas (`Fp32Grounding`)",
+   "proved (runtime carrier + A1 + A2 + A3 + A3′ universal-DAG capstone `DagBound` + A2 at the genuine binary32 `fexp32` format via the FLT Sterbenz TorchLean PR, `round32_sterbenz_exact`: `round₃₂(u−v)=u−v` for near-equal representable operands); `×`/`÷` and the exec↔spec bridge remain (Stage 3.3)"],
   ["*(out of scope)* structural value representation",
    "coordinate frames, tensor variance, transforms",
    "an orthogonal index over the kind",
@@ -530,9 +530,13 @@ contribution is lost — sound and complete). Stage 3.1 then lifts A3 to the who
 (`DagBound`) abstracts a write-once model as a binary32 `+`/`−` DAG and proves that the `FP32`
 measurand's variation over an input box reproduces the exact `ℝ` variation up to a DAG-additive
 rounding budget (composed from the per-operation `FP32` half-ulp bounds), collapsing to *equality*
-when no site rounds anywhere — so rounding is the sole source of the gap. What remains is extending
-the DAG to `×`/`÷`, a bridge from the `noncomputable` `FP32` spec to an executable carrier, and the
-FLT-level Sterbenz; these are scoped as sub-stages 3.2–3.3 in the project's `UNCERTAINTY.md`.
+when no site rounds anywhere — so rounding is the sole source of the gap. Stage 3.2 then discharges
+the FLT-level Sterbenz: a TorchLean PR (`neural_generic_format_FLT_sterbenz`) lifts A2 from the
+self-contained `FLX` model to the gradual-underflow format binary32 actually uses (`fexp32`), so
+$`\mathrm{round}_{32}(u - v) = u - v` for near-equal representable operands is a theorem about the real
+rounding operator (`round32_sterbenz_exact`), and a near-equal binary32 subtraction is lossless. What
+remains is extending the DAG to `×`/`÷` and a bridge from the `noncomputable` `FP32` spec to an
+executable carrier, scoped as sub-stage 3.3 in the project's `UNCERTAINTY.md`.
 
 ## Out of scope (for now)
 
