@@ -219,7 +219,8 @@ lean_lib «UncertaintyRigor» where
     .one `PropertyKindCalculus.Uncertainty.Adequacy.Soundness,
     .one `PropertyKindCalculus.Uncertainty.Adequacy.Sterbenz32,
     .one `PropertyKindCalculus.Uncertainty.Adequacy.Fp32Grounding,
-    .one `PropertyKindCalculus.Uncertainty.Adequacy.DagBound]
+    .one `PropertyKindCalculus.Uncertainty.Adequacy.DagBound,
+    .one `PropertyKindCalculus.Uncertainty.Adequacy.ExecBridge]
 
 /-- Worked uncertainty examples grounded in the two source papers (Degenhardt 2025 fictive
 example; Willink 2005 gauge-block), in the `examples/` source tree as a **separate library** so

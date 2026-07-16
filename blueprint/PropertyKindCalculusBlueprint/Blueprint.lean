@@ -115,7 +115,7 @@ def requirementsTable : DocTable := mdTable true
   ["R15 — numerical adequacy: no information loss at the scale of the input uncertainties",
    "an input whose contribution `cᵢ·uᵢ` sits below ½ ulp of the accumulated sum is flagged numerically invisible (`AdequacySwamping`: `10⁸ ⊕ (1±1)` swamped, `100 ⊕ (1±1)` clean); near-equal subtraction is Sterbenz-exact yet amplifies relative uncertainty; A1 absorption, A2 Sterbenz, A3 verdict-soundness proved over `ℝ`",
    "an executable `Adequacy` `NumCarrier` (swamping + cancellation checks over `Float`); the grid-rounding spec + `Absorption` (A1), `Sterbenz32` (A2, self-contained FLX, lifted to TorchLean's genuine binary32 `fexp32` in Stage 3.2), `Soundness` (A3, flag ⟺ loss) over `ℝ`, grounded in TorchLean's `FP32` ulp/round + sound `RInterval` lemmas (`Fp32Grounding`)",
-   "proved (runtime carrier + A1 + A2 + A3 + A3′ universal-DAG capstone `DagBound` + A2 at the genuine binary32 `fexp32` format via the FLT Sterbenz TorchLean PR, `round32_sterbenz_exact`: `round₃₂(u−v)=u−v` for near-equal representable operands); `×`/`÷` and the exec↔spec bridge remain (Stage 3.3)"],
+   "proved (runtime carrier + A1 + A2 + A3 + A3′ universal-DAG capstone `DagBound` + A2 at the genuine binary32 `fexp32` format via the FLT Sterbenz TorchLean PR + the exec↔spec bridge, Stage 3.3: the computable `IEEE32Exec` ULP + `absorbs` verdict certified against `round₃₂`/`ulp₃₂`, `exec_verdict_sound`, via a second TorchLean PR); the `×`/`÷` DAG extension and Axis-U wiring (Stage 3.4) remain"],
   ["*(out of scope)* structural value representation",
    "coordinate frames, tensor variance, transforms",
    "an orthogonal index over the kind",
@@ -534,9 +534,15 @@ when no site rounds anywhere — so rounding is the sole source of the gap. Stag
 the FLT-level Sterbenz: a TorchLean PR (`neural_generic_format_FLT_sterbenz`) lifts A2 from the
 self-contained `FLX` model to the gradual-underflow format binary32 actually uses (`fexp32`), so
 $`\mathrm{round}_{32}(u - v) = u - v` for near-equal representable operands is a theorem about the real
-rounding operator (`round32_sterbenz_exact`), and a near-equal binary32 subtraction is lossless. What
-remains is extending the DAG to `×`/`÷` and a bridge from the `noncomputable` `FP32` spec to an
-executable carrier, scoped as sub-stage 3.3 in the project's `UNCERTAINTY.md`.
+rounding operator (`round32_sterbenz_exact`), and a near-equal binary32 subtraction is lossless.
+Stage 3.3 then closes the executable↔spec gap: since Lean's host `Float` is an opaque FFI type no
+theorem can constrain, a second TorchLean PR gives TorchLean's *computable* `IEEE32Exec` model an
+executable ULP (`ulpExp`, proved equal to `ulp₃₂` on the finite fragment) and an absorption test
+(`absorbs`, the float32 sum unchanged) that is *sound* against the specification — when it fires, the
+exact real sum rounds back under `round₃₂` (`exec_verdict_sound`). So the computed adequacy verdict is
+provably the specified one, the residual `Float32 ↔ IEEE32Exec` step being an upstream assumption
+typeclass rather than an axiom. What remains is extending the DAG to `×`/`÷` and wiring the Axis-U
+`cᵢ·uᵢ` yardstick, scoped as sub-stage 3.4 in the project's `UNCERTAINTY.md`.
 
 ## Out of scope (for now)
 

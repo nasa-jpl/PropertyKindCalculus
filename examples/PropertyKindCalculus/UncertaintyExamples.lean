@@ -46,6 +46,13 @@ Stage-3.2 addition (A2 at the real binary32 format):
     a.val − b.val` for near-equal representable binary32 values, so the `sub32_within_half_ulp` bound
     collapses to zero. Grounded in the Stage-3.2 TorchLean PR (`neural_generic_format_FLT_sterbenz`).
 
+Stage-3.3 addition (the executable↔spec bridge):
+  * `AdequacyExecBridge` — the runtime adequacy verdict certified against the specification. The
+    executable ULP `ulpExp` and absorption test `absorbs` run over TorchLean's computable
+    `IEEE32Exec` (concrete `#guard`s at `2²⁵` and `10⁸`), while `exec_verdict` proves that whenever
+    the kernel reports absorption, the exact real sum rounds back under the binary32 `round₃₂` spec —
+    the computed verdict is provably the specified one. Sorry-free axiom profile confirmed.
+
 Further paper examples (the AFM indenter model; Willink's asymmetric and Type-A cases) arrive with
 later sub-stages.
 -/
@@ -59,3 +66,4 @@ import PropertyKindCalculus.UncertaintyExamples.AdequacySwamping
 import PropertyKindCalculus.UncertaintyExamples.AdequacyLadder
 import PropertyKindCalculus.UncertaintyExamples.AdequacyDag
 import PropertyKindCalculus.UncertaintyExamples.AdequacySterbenz32
+import PropertyKindCalculus.UncertaintyExamples.AdequacyExecBridge

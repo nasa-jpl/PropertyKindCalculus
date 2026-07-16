@@ -1,15 +1,18 @@
 # UNCERTAINTY.md — A rigor-first plan for uncertainty & numerical adequacy in PKC
 
-> Status: **Stages 0–3.2 implemented & CI-checked** (reference layer, GUM/Willink, autograd `cᵢ`,
+> Status: **Stages 0–3.3 implemented & CI-checked** (reference layer, GUM/Willink, autograd `cᵢ`,
 > the ladder theorems T1–T5, the executable SSPRC pipeline, the numerical-adequacy layer — the
 > executable `Adequacy` carrier plus the theorems A1 absorption, A2 Sterbenz, A3 verdict soundness
 > over `ℝ` — the **universal capstone A3′** (`DagBound`: FP32 measurand ≈ `ℝ` over an input box up
 > to a DAG-additive rounding budget, exact when flag-free), over a binary32 `+`/`−` evaluation DAG,
-> and **A2 lifted to the genuine binary32 format** (Stage 3.2: a TorchLean PR adds
+> **A2 lifted to the genuine binary32 format** (Stage 3.2: a TorchLean PR adds
 > `neural_generic_format_FLT_sterbenz`/`FP32.sub_exact_of_sterbenz` for the FLT/`fexp32` gradual-underflow
 > format, grounded in PKC as `Fp32Grounding.round32_sterbenz_exact` — `round₃₂(u−v)=u−v` for near-equal
-> representable operands)). The `×`/`÷` extension, the exec↔spec bridge, and Stage 4 (scale) remain
-> design/plan, scoped as sub-stages 3.3–3.4 and Stage 4 in §6. Audience: PKC maintainers.
+> representable operands), and the **executable↔spec bridge** (Stage 3.3: a second TorchLean PR gives
+> the computable `IEEE32Exec` model an executable ULP `ulpExp` proved equal to `ulp₃₂` and an absorption
+> test `absorbs` certified against `round₃₂`, grounded in PKC as `ExecBridge.exec_verdict_sound` — the
+> computed adequacy verdict is provably the specified one)). The `×`/`÷` DAG extension, the Axis-U
+> wiring, and Stage 4 (scale) remain design/plan, scoped as sub-stage 3.4 and Stage 4 in §6. Audience: PKC maintainers.
 > Scope: augment PropertyKindCalculus in two coupled areas —
 > (1) **uncertainty quantification** (UQ) of model outputs from input uncertainties, and
 > (2) **numerical adequacy** of the floating-point representation of a science model.
@@ -361,7 +364,12 @@ FLX model *grounded* in (not built on) the TorchLean lemmas, whose statement sha
 * **F — computability.** *Everything* FP32/Flocq is `noncomputable` (`rnd32`, all `round₃₂/ulp₃₂/eps₃₂`,
   every `NF` arithmetic instance). The executable model is the **separate** `IEEE32Exec` structure,
   connected to `FP32` only by bridge lemmas (`BridgeFP32*`, `RuntimeApprox`), not defeq. ⟹ the runtime
-  `Adequacy` carrier necessarily computes over `Float`, and certifying it against the spec is Stage 3.3.
+  host-`Float` `Adequacy` carrier is inherently uncertifiable (opaque FFI). **✅ Stage 3.3 (done):** the
+  certified executable check runs on `IEEE32Exec` instead — a second TorchLean PR adds `IEEE32Exec.ulpExp`
+  (bit-level ULP exponent, proved `= ulp₃₂` on the finite fragment) and `absorbs` (float32 sum unchanged),
+  proved sound against `round₃₂` (`round32_add_eq_left_of_absorbs`), re-exposed in PKC as
+  `ExecBridge.exec_verdict_sound`. The residual `Float32 ↔ IEEE32Exec` step is an upstream *assumption
+  typeclass* (`RuntimeFloat32MatchesIEEE32Exec`), not an axiom — the irreducible hardware trust boundary.
 
 > **Note — Sterbenz, and the `FLX`/`FLT`/`FP32` formats (terminology used throughout Stage 3).**
 >
@@ -430,12 +438,22 @@ uncertainty/PropertyKindCalculus/Uncertainty/
   Adequacy/DagBound.lean   ✅ A3′ universal capstone (Stage 3.1): FP32 `+`/`−` evaluation DAG (`evalFP32`
                            vs `evalExact`), forward-error accumulation (`dag_fp32_error_bound`), box
                            faithfulness (`dag_fp32_box_faithful`) + flag-free exactness — sorry-free
+  Adequacy/ExecBridge.lean ✅ exec↔spec bridge (Stage 3.3): re-exposes the computable `IEEE32Exec`
+                           ULP `ulpExp` (proved `= ulp₃₂`, `exec_ulp_grounds`) and absorption test `absorbs`
+                           certified against `round₃₂` (`exec_verdict_sound`) — the computed verdict is the
+                           specified one; over `ℝ`/`IEEE32Exec`, sorry-free
 ```
 
 Stage 3.2 also adds two **TorchLean** modules (upstream PR, branch `flt-fp32-sterbenz` off `upstream/main`,
 merged into the fork's `combined`): `NN/Floats/NeuralFloat/Analysis/SterbenzFLT.lean`
 (`neural_generic_format_FLT_sterbenz` + the `FLX→FLT`-normal helper) and `NN/Floats/FP32/Sterbenz.lean`
-(`round32_sub_exact_of_sterbenz`, `FP32.sub_exact_of_sterbenz`). PKC pins TorchLean at that `combined` rev.
+(`round32_sub_exact_of_sterbenz`, `FP32.sub_exact_of_sterbenz`). Stage 3.3 adds one more **TorchLean**
+module (second upstream PR, branch `ieee32exec-ulp` off `upstream/main`, merged into `combined`):
+`NN/Floats/IEEEExec/BridgeFP32/Ulp.lean` (`IEEE32Exec.ulpExp` + `neuralBpow_ulpExp_eq_ulp32`,
+`absorbs` + `round32_add_eq_left_of_absorbs`). PKC pins TorchLean at that `combined` rev. (Note: upstream
+`lean-dojo/TorchLean` main has since reorganized the whole `IEEEExec` tree; both PRs branch off the
+pre-reorg base that the fork's `main`/`combined` still track, so opening them against current upstream
+requires porting to the new `Semantics/`/`Rounding/` layout.)
 
 Stage-3 modules split by dependency exactly as Stages 1–2: `Adequacy.lean` (the executable carrier,
 `Float`) lives in the Mathlib/Torch-free `Uncertainty` library (Stage 0 stays 18 jobs, toolchain-only);
@@ -472,6 +490,9 @@ examples/PropertyKindCalculus/UncertaintyExamples/
   AdequacySterbenz32.lean ✅ Stage-3.2 A2 at the genuine binary32 format: round₃₂(u−v)=u−v and
                              (a−b).val=a.val−b.val for near-equal representable FP32; sub32 bound → 0;
                              ties to the FLX 24 fact; #print axioms sorry-free (TorchLean-backed)
+  AdequacyExecBridge.lean ✅ Stage-3.3 exec↔spec bridge: `ulpExp`/`absorbs` RUN on IEEE32Exec bit patterns
+                             (#guard: ulp=4 at 2²⁵, ulp=8 at 10⁸; 1 absorbed, 4/8 survive) + `exec_verdict`
+                             proving the verdict = round₃₂ spec; #print axioms sorry-free (TorchLean-backed)
   DegenhardtAfm.lean      ▫ Degenhardt §3.2 AFM indenter PAF, ~70× efficiency (Stage 4/scale)
   WillinkAsymmetric.lean  ▫ Willink §5 asymmetric input (κ₃) + Type-A t-cases (Stage 1)
 ```
@@ -580,13 +601,27 @@ and FFT kernels under `NN/Runtime/Autograd/Engine/Cuda/Ops/*` for SSPRC's convol
   instance is a theorem about `round₃₂` — exercised by the `AdequacySterbenz32` example. (No co-author
   trailer on the TorchLean commit — upstream-facing.)
 
-* **Stage 3.3 — Executable↔spec bridge for FP32.** The entire TorchLean FP32/Flocq layer is
-  `noncomputable` (§4.6 F14): `round₃₂ : ℝ → ℝ` is a spec, not a float, so the runtime carrier's
-  `ulp32/round` run over Lean `Float`, and the executable model is the separate `IEEE32Exec` structure,
-  bridged only by `BridgeFP32*`/`RuntimeApprox` lemmas. **TorchLean PR:** expose a certified
-  `Float ↔ IEEE32Exec ↔ FP32` bridge (or a `Float.ulp`/`Float.round` provably matching `ulp₃₂`/`round₃₂`
-  on the representable range), so the `Adequacy` carrier's *computed* verdict is provably the *specified*
-  one. *Exit:* the executable check is certified equal to the A1/A3 spec on the finite fragment.
+* **Stage 3.3 — Executable↔spec bridge for FP32. ✅ DONE (built & CI-checked).** The entire TorchLean
+  FP32/Flocq layer is `noncomputable` (§4.6 F): `round₃₂ : ℝ → ℝ` is a spec, not a float. The host-`Float`
+  `Adequacy` carrier is inherently uncertifiable (opaque FFI — no theorem relates `Float.log2`/`exp2` to
+  `ulp₃₂`), so the certified executable check runs instead on TorchLean's **computable** `IEEE32Exec`,
+  whose ops are provably `round₃₂` of the exact real result. **Exploration finding:** the op-level
+  `IEEE32Exec ↔ round₃₂` refinement (`toReal_{add,sub,…}_eq_fp32Round`) already existed; what was missing
+  is an executable ULP (existed only as the `noncomputable` `neuralUlp`/`ulp₃₂`) and a certified
+  absorption verdict. A second **TorchLean PR** (`NN/Floats/IEEEExec/BridgeFP32/Ulp.lean`, branch
+  `ieee32exec-ulp` off `upstream/main`, no co-author trailer, merged into `combined`) adds
+  `IEEE32Exec.ulpExp` (bit-level ULP exponent via `Nat.log2` + `fexp32`), proved `2^(ulpExp x) =
+  ulp₃₂ (toReal x)` on the finite fragment (`neuralBpow_ulpExp_eq_ulp32`, via `neural_magnitude_dyadic`
+  + `neuralUlp.of_ne_zero`), and the executable test `absorbs a b := decide (add a b = a)`, proved sound
+  against `round₃₂` (`round32_add_eq_left_of_absorbs`, a 3-line corollary of `toReal_add_eq_fp32Round`
+  since `fp32Round` *is* `round₃₂`). PKC re-exposes these as `Adequacy.ExecBridge.{exec_ulp_grounds,
+  exec_half_ulp_grounds,exec_verdict_sound}`: the kernel's absorption verdict *certifies* the spec
+  absorption `round₃₂ (toReal s + toReal δ) = toReal s`. All sorry-free (`[propext, Classical.choice,
+  Quot.sound]`). The residual `Float32 ↔ IEEE32Exec` step is an upstream *assumption typeclass*
+  (`RuntimeFloat32MatchesIEEE32Exec`), not an axiom — the irreducible hardware trust boundary. *Exit met:*
+  the executable check (`ulpExp`/`absorbs`, which actually `#eval`s, unlike the noncomputable `FP32`) is
+  certified equal to the A1/A3 spec on the finite fragment — exercised by the `AdequacyExecBridge` example
+  (`#guard`s at `2²⁵`/`10⁸` + `exec_verdict` proof term).
 
 * **Stage 3.4 — Wire the Axis-U significance yardstick.** The demo passes absolute uncertainties directly;
   the design (§4.4) makes the significance scale the autograd `cᵢ·uᵢ` and the input box `InputDist.support`.

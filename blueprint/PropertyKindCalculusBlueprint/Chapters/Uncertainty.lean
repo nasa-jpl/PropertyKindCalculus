@@ -17,6 +17,7 @@ import PropertyKindCalculus.Uncertainty.Adequacy.Sterbenz32
 import PropertyKindCalculus.Uncertainty.Adequacy.Soundness
 import PropertyKindCalculus.Uncertainty.Adequacy.DagBound
 import PropertyKindCalculus.Uncertainty.Adequacy.Fp32Grounding
+import PropertyKindCalculus.Uncertainty.Adequacy.ExecBridge
 import PropertyKindCalculusBlueprint.References
 
 open Verso.Genre
@@ -39,8 +40,10 @@ cumulant additivity; T2, $`\mathrm{gum} = \mathrm{willink}|_{\kappa_4=0}`; T3, W
 projection of the linearized SSPRC; T4, affine reference equals the mean; T5, convolution adds
 cumulants), and the numerical-adequacy layer (the executable analysis carrier; the per-site theorems
 A1 absorption, A2 Sterbenz, A3 verdict soundness over `ℝ`; the universal capstone A3′ over an
-arbitrary model DAG and input box; and A2 lifted to the genuine binary32 format `fexp32`); the
-executable↔spec bridge and the `×`/`÷` extension remain *planned* (Stage 3.3).
+arbitrary model DAG and input box; A2 lifted to the genuine binary32 format `fexp32`; and the
+executable↔spec bridge, certifying the runtime absorption verdict against the `round₃₂` specification
+on TorchLean's computable `IEEE32Exec` model). The `×`/`÷` DAG extension and the Axis-U wiring
+(Stage 3.4) remain *planned*.
 
 # Two orthogonal axes, and why their properties compose
 
@@ -429,18 +432,42 @@ the triangle inequality along the DAG; applying it at both inputs and one more t
 box-faithfulness bound `dag_fp32_box_faithful`, and `dag_fp32_box_exact_of_flagFree` is the flag-free
 equality. Sorry-free (`#print axioms` → `[propext, Classical.choice, Quot.sound]`), instantiated on
 concrete DAGs in the `AdequacyDag` example. Honest scope: the DAG covers `+`/`−` (the operations
-A1/A2/A3 cover); extending to `×`/`÷` and the executable-carrier bridge (sub-stage 3.3) remain in
-`UNCERTAINTY.md` §6.
+A1/A2/A3 cover); extending it to `×`/`÷` remains in `UNCERTAINTY.md` §6 (the executable-carrier
+bridge {uses "thm_uq_exec_bridge"}[is now built, Stage 3.3]).
+:::
+
+:::theorem "thm_uq_exec_bridge" (parent := "uncertainty") (lean := "PropertyKindCalculus.Uncertainty.Adequacy.exec_verdict_sound") (tags := "capstone")
+*Executable↔spec bridge (Stage 3.3).* The verdicts above are stated over the `noncomputable` `ℝ`/`FP32`
+specification, but the *runtime* carrier must compute a verdict. Lean's host `Float` is an opaque FFI
+type no theorem can constrain, so the certified executable check runs on TorchLean's *computable*
+`IEEE32Exec` model instead. There the ULP is genuinely computed from a bit pattern (`ulpExp`, matching
+the spec `ulp₃₂`), and the kernel's absorption test `absorbs s δ` — the float32 sum is unchanged —
+*certifies* the specification: the exact real sum rounds back under $`\mathrm{round}_{32}`. So the
+computed adequacy verdict is provably the specified {uses "thm_uq_adequacy_verdict"}[A3] one, on the
+finite fragment. The residual `Float32 ↔ IEEE32Exec` step is an upstream *assumption typeclass*, not an
+axiom — the irreducible hardware trust boundary.
+:::
+
+:::proof "thm_uq_exec_bridge"
+Realized over `ℝ`/`IEEE32Exec` (Stage 3.3, `Adequacy.ExecBridge`), grounded in the TorchLean PR's
+`IEEE32Exec.ulpExp` + `neuralBpow_ulpExp_eq_ulp32` (the executable ULP equals `ulp₃₂` on the finite
+fragment) and `round32_add_eq_left_of_absorbs` (a 3-line corollary of the existing
+`toReal_add_eq_fp32Round` op-level refinement, since `fp32Round` *is* `round₃₂`). `exec_verdict_sound`
+composes them: when `absorbs s δ` fires, `round₃₂(\mathrm{toReal}\,s + \mathrm{toReal}\,δ) =
+\mathrm{toReal}\,s`. Sorry-free (`[propext, Classical.choice, Quot.sound]`); the executable side is
+*run* (`#guard`) at $`2^{25}` and $`10^8` in the `AdequacyExecBridge` example, which also confirms the
+axiom profile. The host-`Float` `Adequacy` carrier stays the fast, unverified mirror.
 :::
 
 # Worked examples (checked facts)
 
-Ten examples reproduce a headline number (or a theorem) as a `#guard`, so the
+Eleven examples reproduce a headline number (or a theorem) as a `#guard`, so the
 `UncertaintyExamples` library building under CI is what makes the claims true rather than
 asserted — the project's reflection-tests discipline applied to metrology. The first two are the
 Stage-0 reference numbers; the next two are the Stage-1 autograd and ladder facts; the next two are
-the Stage-2 SSPRC pipeline and its ladder theorems; the last four are the Stage-3 adequacy carrier,
-its per-site theorems, the Stage-3.1 DAG capstone A3′, and the Stage-3.2 binary32 Sterbenz.
+the Stage-2 SSPRC pipeline and its ladder theorems; the last five are the Stage-3 adequacy carrier,
+its per-site theorems, the Stage-3.1 DAG capstone A3′, the Stage-3.2 binary32 Sterbenz, and the
+Stage-3.3 executable↔spec bridge.
 
 - `PropertyKindCalculus.UncertaintyExamples.DegenhardtFictive` — the non-linear fictive model
   $`Y = (X_1 + X_2^2)\,X_3` of Degenhardt
@@ -499,3 +526,9 @@ its per-site theorems, the Stage-3.1 DAG capstone A3′, and the Stage-3.2 binar
   b.\mathrm{val}` for near-equal representable binary32 values (so the `sub32_within_half_ulp` bound
   collapses to zero), tied back to the self-contained `FLX 24` fact — with `#print axioms` confirming
   no `sorryAx`.
+- `PropertyKindCalculus.UncertaintyExamples.AdequacyExecBridge` — the Stage-3.3 executable↔spec
+  bridge: the ULP exponent `ulpExp` and absorption test `absorbs` *run* on concrete float32 bit
+  patterns (`#guard`: at $`2^{25}` the ULP is `4`, so a perturbation of `1` is absorbed and `4` is
+  not; at $`10^8` the ULP is `8`, so `1` is absorbed and `8` is not), while `exec_verdict` *proves*
+  that whenever the kernel reports absorption the exact real sum rounds back under $`\mathrm{round}_{32}`
+  — the computed verdict equal to the specified one, with `#print axioms` confirming no `sorryAx`.

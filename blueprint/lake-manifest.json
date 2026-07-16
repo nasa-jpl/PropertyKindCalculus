@@ -42,7 +42,7 @@
    "type": "git",
    "subDir": null,
    "scope": "",
-   "rev": "caa653112a00d4c7a38149474869666f863b7a76",
+   "rev": "e2724723308c8ca38ca0e38122556e9143386d90",
    "name": "TorchLean",
    "manifestFile": "lake-manifest.json",
    "inputRev": "combined",
