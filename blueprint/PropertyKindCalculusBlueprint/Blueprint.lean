@@ -81,17 +81,43 @@ def sysmlComparisonTable : DocTable := mdTable true
    "proved theorems (preorder, homomorphism, monotonicity)"]
   ]
 
-#doc (Manual) "PropertyKindCalculus Blueprint" =>
+#doc (Manual) "A Property Kind Calculus for Metrology: proving quantity and unit laws in Lean, from ISO/IEC 80000 to measurement uncertainty" =>
 %%%
-shortTitle := "PropertyKindCalculus"
+shortTitle := "A Property Kind Calculus for Metrology"
 tag := "kindcalculus-blueprint"
 %%%
 
-PropertyKindCalculus {version}[] is a Lean 4 formalization of René Dybkær's *An Ontology on Property
-for Physical, Chemical, and Biological Systems* {Manual.citep dybkaer_ontology_on_property}[], extended with David
-Flater's full tracking of kinds of quantities in {Manual.citep flater_architecture_for_software_assisted_quantity_calculus}[] (Appendix C).
-This blueprint is the design map: it records what is already proved
-(linked to real declarations) and the *capstone theorems we plan to provide*,
+Models of physical systems are saturated with quantities, yet the languages used to
+manage them — SysML/QUDV, OWL-based vocabularies, and dimension-checking type systems —
+verify _dimensions_, not _kinds_. Two quantities of the same dimension are therefore
+silently interchangeable: volumetric and gravimetric water content, relative
+permittivity and reflectivity, torque and energy. Description logics capture the
+metrology _taxonomy_ but cannot express the _calculus_ — dimension arithmetic, the
+kind-interaction algebra, scale-gated operations, extensivity, or any law as a theorem.
+We present PropertyKindCalculus (PKC) {version}[], a machine-checked formalization, in the
+Lean 4 proof assistant, of Dybkær's seminal contribution to metrology
+{Manual.citep dybkaer_ontology_on_property}[] and several recent developments in this field
+(Flater {Manual.citep flater_architecture_for_software_assisted_quantity_calculus}[],
+Willink {Manual.citep willink_evaluation_of_measurement_uncertainty_based_on_moments}[], and
+Degenhardt {Manual.citep degenhardt_efficient_alternative_to_monte_carlo}[]). PKC makes a
+kind a first-class type, kind-incompatible arithmetic a compile-time error, and
+classification a proof obligation. Of nineteen metrology requirements, sixteen are
+discharged as kernel-checked theorems and three — the capabilities a type system affords
+by construction — are demonstrated by elaboration. The standard is the test: all eleven
+quantity-and-unit parts of ISO/IEC 80000, item by item, 700+ kinds with checked
+dimensions and proved defining relations. Because a PKC model is carrier-polymorphic and
+its measurement uncertainty is an additive descriptor, a single model definition serves
+proof, calculation, sensitivity analysis, and uncertainty quantification with no
+rewrite — the design principle we abbreviate _write once, correctly; go fast,
+automatically_. Measurement uncertainty, its propagation, and the coverage of the
+resulting interval are thereby machine-checked, while _accuracy_ against nature — which
+needs a true value the kernel never has — remains an empirical matter; the boundary is
+exact, not rhetorical. The result is a modeling discipline whose specification
+documents — rendered from the checked sources — are verifiable rather than merely
+descriptive.
+
+This blueprint is the design map for that formalization: it records what is already
+proved (linked to real declarations) and the *capstone theorems we plan to provide*,
 with the dependency graph and a status summary at the end.
 
 The whole blueprint is also available as a single paginated document:
