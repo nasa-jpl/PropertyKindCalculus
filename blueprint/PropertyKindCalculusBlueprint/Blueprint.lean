@@ -99,7 +99,7 @@ The whole blueprint is also available as a single paginated document:
 
 # What PropertyKindCalculus provides
 
-This project addresses *seventeen requirements* about formalizing _metrology_ — the
+This project addresses *eighteen requirements* about formalizing _metrology_ — the
 science of measurement — and discharges most of them as machine-checked theorems
 rather than prose. A substantial part of the library is grounded directly on the
 published *ISO and IEC 80000* metrology standards — _eleven_ of the thirteen parts (every
@@ -150,7 +150,7 @@ In plain terms, _rigorous metrology_ here means:
   (the mole, the candela) are derived in disguise — so the calculus names that
   third category instead of pretending the base/derived split is clean.
 
-Each of these is stated precisely as one of the fifteen requirements below, and
+Each of these is stated precisely as one of the eighteen requirements below, and
 the status table at the end of that section maps every requirement to the checked
 declaration that discharges it.
 

@@ -1,7 +1,7 @@
 /-
-# The requirement catalogue — the 17 axes the calculus is specified against
+# The requirement catalogue — the 18 axes the calculus is specified against
 
-The canonical identity of each blueprint requirement: its identifier (R1 … R17),
+The canonical identity of each blueprint requirement: its identifier (R1 … R18),
 a one-line title, the group it belongs to, and its headline status. This is the
 *spine* of the traceability matrix — the rows the harvested `@[requirement …]`
 annotations are grouped under — so the matrix always shows every requirement, even
@@ -29,7 +29,7 @@ inductive RequirementGroup where
   | representation
   /-- R12–R13: verified classification and unit classification. -/
   | classification
-  /-- R14–R15: uncertainty propagation and numerical adequacy. -/
+  /-- R14–R15, R18: uncertainty propagation, numerical adequacy, and coverage. -/
   | uncertainty
   deriving Repr, Inhabited, DecidableEq, BEq
 
@@ -87,7 +87,7 @@ fact *derived* from the `@[requirement …]` annotations — see
 annotations already witness (or fail to), so recording it twice would only
 reintroduce the drift this layer exists to eliminate. -/
 structure Requirement where
-  /-- The identifier, as printed — `"R1"` … `"R15"`. -/
+  /-- The identifier, as printed — `"R1"` … `"R18"`. -/
   id : String
   /-- A one-line title. -/
   title : String
@@ -142,7 +142,10 @@ def catalogue : List Requirement :=
       title := "Output uncertainty is computed by a provably nested ladder of methods" }
   , { id := "R15", group := .uncertainty,
       title := "A floating-point representation is numerically adequate iff it loses no \
-                information at the scale of the input uncertainties" } ]
+                information at the scale of the input uncertainties" }
+  , { id := "R18", group := .uncertainty, kind := .verifiable,
+      title := "The recorded variance certifies a coverage interval: distribution-free \
+                (Chebyshev ≥ 1 − 1/k²), exact for bounded families" } ]
 
 /-- Look up a requirement by id. -/
 def requirementById? (id : String) : Option Requirement :=

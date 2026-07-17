@@ -11,6 +11,7 @@ import VersoBlueprint
 import PropertyKindCalculus.Uncertainty
 import PropertyKindCalculus.Uncertainty.Ladder
 import PropertyKindCalculus.Uncertainty.Convolution
+import PropertyKindCalculus.Uncertainty.Coverage
 import PropertyKindCalculus.Uncertainty.Sensitivity
 import PropertyKindCalculus.Uncertainty.Adequacy.Absorption
 import PropertyKindCalculus.Uncertainty.Adequacy.Sterbenz32
@@ -457,6 +458,57 @@ composes them: when `absorbs s δ` fires, `round₃₂(\mathrm{toReal}\,s + \mat
 \mathrm{toReal}\,s`. Sorry-free (`[propext, Classical.choice, Quot.sound]`); the executable side is
 *run* (`#guard`) at $`2^{25}` and $`10^8` in the `AdequacyExecBridge` example, which also confirms the
 axiom profile. The host-`Float` `Adequacy` carrier stays the fast, unverified mirror.
+:::
+
+# Coverage intervals (R18)
+
+Once an output's uncertainty is a distribution, VIM 2.36–2.38 ask for a _coverage interval_ — a
+probability attached to an interval about the mean. R18 discharges this in two tiers, graded by how
+much is assumed about the distribution's shape. Both are stated over `ℝ` and depend only on the
+`variance` the descriptor already carries; neither needs a _true value_ (the sense in which coverage
+is provable while _accuracy_ — closeness to nature — is not). Deliberately out of scope: exact
+_normal_ coverage (the 95% ↔ $`k \approx 1.96` statement), which needs the Gaussian CDF / error
+function Mathlib does not provide, and any bridge to the executable `Float` sampler (the R15
+exec↔spec axis).
+
+:::definition "def_uq_stdUnc" (parent := "uncertainty") (lean := "PropertyKindCalculus.Uncertainty.Coverage.stdUnc")
+The *standard uncertainty* $`u = \sqrt{\mathrm{variance}}` (VIM 2.30) — the scale in which a coverage
+interval is measured. It is the square root of the $`\kappa_2` the moment descriptor records.
+:::
+
+:::proof "def_uq_stdUnc"
+Realized: `Coverage.stdUnc`, `Real.sqrt` of `ProbabilityTheory.variance`.
+:::
+
+:::theorem "thm_uq_coverage_chebyshev" (parent := "uncertainty") (lean := "PropertyKindCalculus.Uncertainty.Coverage.coverageBound_stdUnc") (tags := "capstone")
+*Tier 1 — the distribution-free coverage bound.* For *any* distribution with a positive variance,
+the interval of $`k` standard uncertainties about the mean, $`[m - k u,\, m + k u]`, has coverage
+probability at least $`1 - 1/k^2`. This is the complement of Chebyshev's inequality and assumes
+nothing about the distribution's shape. It is honest but conservative: $`k = 2` gives $`\ge 75\%`,
+not the Gaussian $`95\%` — the famous figure is a shape assumption, out of scope. Uses
+{uses "def_uq_stdUnc"}[the standard uncertainty].
+:::
+
+:::proof "thm_uq_coverage_chebyshev"
+Realized over `ℝ`: `coverageBound_stdUnc`, from Mathlib's `meas_ge_le_variance_div_sq` by taking the
+complement of the tail event (`prob_compl_eq_one_sub`) and substituting $`c = k u`. Sorry-free
+(`[propext, Classical.choice, Quot.sound]`). The half-width form `coverageBound` ($`\ge 1 -
+\mathrm{variance}/c^2`) is the underlying lemma.
+:::
+
+:::theorem "thm_uq_coverage_uniform" (parent := "uncertainty") (lean := "PropertyKindCalculus.Uncertainty.Coverage.uniform_coverage_exact")
+*Tier 2 — exact coverage for a bounded family.* For a uniform distribution on $`[m - δ, m + δ]`, the
+coverage of the centred interval $`[m - h, m + h]` (with $`0 \le h \le δ`) is *exactly* $`h/δ` —
+closed-form, from the distribution's definition, and tighter than the Chebyshev bound. A concrete
+witness (the identity on `ℝ` under `volume` conditioned to the support) shows the hypothesis is
+non-vacuous; the `Coverage` worked example checks the central half of a uniform on $`[-2, 2]` has
+coverage exactly $`1/2`.
+:::
+
+:::proof "thm_uq_coverage_uniform"
+Realized over `ℝ`: `uniform_coverage_exact`, from Mathlib's `pdf.IsUniform.measure_preimage` and
+`Real.volume_Icc` (the intersection with the support is the sub-interval, and the ratio of Lebesgue
+lengths is $`2h/2δ = h/δ`). Sorry-free (`[propext, Classical.choice, Quot.sound]`).
 :::
 
 # Worked examples (checked facts)

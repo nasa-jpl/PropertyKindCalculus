@@ -9,11 +9,13 @@ is not Mathlib-free.
 
 import PropertyKindCalculus.Uncertainty.Combine
 import PropertyKindCalculus.Uncertainty.Ladder
+import PropertyKindCalculus.Uncertainty.Coverage
 import PropertyKindCalculus.Uncertainty.Adequacy
 import PropertyKindCalculus.Uncertainty.Adequacy.Soundness
 import PropertyKindCalculus.Uncertainty.Adequacy.Sterbenz32
 import PropertyKindCalculus.UncertaintyExamples.LadderNesting
 import PropertyKindCalculus.UncertaintyExamples.AdequacyLadder
+import PropertyKindCalculus.UncertaintyExamples.Coverage
 import PropertyKindCalculus.Requirements.Attributes
 
 namespace PropertyKindCalculus.Uncertainty
@@ -50,5 +52,18 @@ attribute [requirement "R15" exemplifies "the absorption verdict is exactly righ
   PropertyKindCalculus.UncertaintyExamples.AdequacyLadder.a3_verdict_sound
 attribute [requirement "R15" exemplifies "near-equal subtraction is Sterbenz-exact yet amplifies relative uncertainty to 100%"]
   PropertyKindCalculus.UncertaintyExamples.AdequacyLadder.a2_relunc
+
+/-! ## R18 — the recorded variance certifies a coverage interval (VIM 2.36–2.38) -/
+
+attribute [requirement "R18" specifies "the standard uncertainty u = √variance the coverage interval is measured in"]
+  Coverage.stdUnc
+attribute [requirement "R18" proves "Tier 1 (half-width): coverage of the interval of half-width c is ≥ 1 − variance/c² (Chebyshev)"]
+  Coverage.coverageBound
+attribute [requirement "R18" proves "Tier 1 (coverage factor): the k-standard-uncertainty interval has coverage ≥ 1 − 1/k², distribution-free"]
+  Coverage.coverageBound_stdUnc
+attribute [requirement "R18" proves "Tier 2 (uniform): the centred interval [m−h, m+h] of a uniform on [m−δ, m+δ] has coverage exactly h/δ"]
+  Coverage.uniform_coverage_exact
+attribute [requirement "R18" exemplifies "the central half [-1,1] of a uniform on [-2,2] has coverage exactly 1/2"]
+  PropertyKindCalculus.UncertaintyExamples.Coverage.central_half_coverage
 
 end PropertyKindCalculus.Uncertainty
