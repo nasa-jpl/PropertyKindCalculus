@@ -42,6 +42,13 @@ attribute [requirement "R2" proves "kinds with different examination principles 
 attribute [requirement "R3" specifies "a kind is a type"] KindOfProperty
 attribute [requirement "R3" specifies "an individual measured value is a term of that type"] Quantity
 
+/-! ## Object identity, first-class (R19) -/
+
+attribute [requirement "R19" specifies "a quantity that characterizes an object — the object rides in the type, alongside the kind"]
+  IndividualQuantity
+attribute [requirement "R19" proves "quantities of different objects are provably distinct: differing systems ⇒ differing dedicated kinds"]
+  DedicatedKind.distinct_of_system
+
 /-! ## Operation gating (R4, R5, R6) -/
 
 attribute [requirement "R4" implements "same-kind addition; cross-kind addition is a type error"]

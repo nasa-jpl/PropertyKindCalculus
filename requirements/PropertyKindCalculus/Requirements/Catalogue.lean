@@ -1,7 +1,7 @@
 /-
-# The requirement catalogue — the 18 axes the calculus is specified against
+# The requirement catalogue — the 19 axes the calculus is specified against
 
-The canonical identity of each blueprint requirement: its identifier (R1 … R18),
+The canonical identity of each blueprint requirement: its identifier (R1 … R19),
 a one-line title, the group it belongs to, and its headline status. This is the
 *spine* of the traceability matrix — the rows the harvested `@[requirement …]`
 annotations are grouped under — so the matrix always shows every requirement, even
@@ -17,7 +17,7 @@ namespace PropertyKindCalculus.Requirements
 /-- The four (plus two) groups the requirements fall into, matching the blueprint's
 "Requirements" section headings. -/
 inductive RequirementGroup where
-  /-- R1–R3: how kinds are structured. -/
+  /-- R1–R3, R19: how kinds are structured, and how quantities characterize objects. -/
   | kindStructure
   /-- R4–R6: how operations on kinds are gated. -/
   | operationGating
@@ -87,7 +87,7 @@ fact *derived* from the `@[requirement …]` annotations — see
 annotations already witness (or fail to), so recording it twice would only
 reintroduce the drift this layer exists to eliminate. -/
 structure Requirement where
-  /-- The identifier, as printed — `"R1"` … `"R18"`. -/
+  /-- The identifier, as printed — `"R1"` … `"R19"`. -/
   id : String
   /-- A one-line title. -/
   title : String
@@ -112,6 +112,8 @@ def catalogue : List Requirement :=
       title := "Specialization is a lattice, with comparability but not identity" }
   , { id := "R3",  group := .kindStructure, kind := .expressiveness,
       title := "General versus individual is type versus term" }
+  , { id := "R19", group := .kindStructure, kind := .expressiveness,
+      title := "A quantity characterizes an object; object identity is carried in the type" }
   , { id := "R4",  group := .operationGating,
       title := "Operations are gated by kind (the additive law)" }
   , { id := "R5",  group := .operationGating,

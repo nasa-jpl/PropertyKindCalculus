@@ -31,6 +31,9 @@ attribute [requirement "R2" exemplifies "width and height specialize length, com
 attribute [requirement "R3" exemplifies "a specific pencil's width — a term instantiating the kind `width`, not a subtype"]
   PropertyKindCalculus.Examples.pencilWidth
 
+attribute [requirement "R19" exemplifies "the volumetric water content of a specific soil sample — an `IndividualQuantity` carrying its object, so mixing it with another sample's is a type error"]
+  PropertyKindCalculus.Examples.Dedicated.wc1
+
 /-! ## Operation gating (R4, R6) -/
 
 attribute [requirement "R4" exemplifies "same-kind Int lengths add (3 + 5 = 8); adding a length to a mass is a type error"]

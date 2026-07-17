@@ -55,7 +55,7 @@ declaration to its blueprint node label. Rows are organized by **requirement
 group** (each introduced by a header row), then by requirement (in catalogue
 order), and within a requirement ordered specification → proof → implementation →
 example. A requirement with no annotation yet still gets a row, so the matrix
-always shows all eighteen. -/
+always shows all nineteen. -/
 def buildTable : DocElabM DocTable := do
   let env ← getEnv
   let refs := requirementRefs env

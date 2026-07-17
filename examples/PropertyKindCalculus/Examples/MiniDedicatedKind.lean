@@ -60,4 +60,33 @@ def air : Component := { id := "air" }
 def airContent : DedicatedKind := volumeFraction.dedicatedTo soil air
 example : vwc ≠ airContent := DedicatedKind.distinct_of_component (by decide)
 
+/-! ## (6) Object identity on quantities, first-class (R19)
+
+`DedicatedKind` distinguishes kinds by system (§5). `IndividualQuantity` carries the object in
+the *quantity type* itself, so a measured water content that characterizes one soil sample
+cannot be combined with that of another — a compile-time type error, the object-aware
+refinement of `Quantity`. -/
+
+/-- Two distinct soil samples (objects, Dybkær Ch. 3). -/
+def sample1 : Object := { id := "sample-1" }
+def sample2 : Object := { id := "sample-2" }
+
+private theorem hVF : DifferenceKind volumeFraction := .ofScale
+
+/-- The volumetric water content of sample-1 — an individual quantity that *characterizes*
+sample-1: the object rides in the type. -/
+def wc1 : IndividualQuantity sample1 volumeFraction Int := ⟨30⟩
+/-- A second reading of sample-1. -/
+def wc1' : IndividualQuantity sample1 volumeFraction Int := ⟨2⟩
+/-- The volumetric water content of a *different* sample, sample-2. -/
+def wc2 : IndividualQuantity sample2 volumeFraction Int := ⟨45⟩
+
+-- same-object addition type-checks and computes (two readings of the *same* sample) …
+#guard (IndividualQuantity.add hVF wc1 wc1').magnitude == 32
+
+-- … but adding a reading of sample-1 to a reading of sample-2 does NOT type-check: the object is
+-- in the type. Uncommenting the next line is a compile-time error (different objects) — the
+-- cross-sample mix a bare numeric model would silently accept:
+--   #guard (IndividualQuantity.add hVF wc1 wc2).magnitude == 75
+
 end PropertyKindCalculus.Examples.Dedicated

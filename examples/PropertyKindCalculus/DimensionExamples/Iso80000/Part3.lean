@@ -17,13 +17,20 @@ Part-3 examples, mirroring the `Iso80000` library's own `Iso80000/Part3` layout:
    frequency vs angular frequency, velocity vs speed), and the units they keep apart;
 7. **the volume-element remark** (item 3-4) and the **algebraic remarks** (item 3-2,
    3-5, 3-10.2, 3-17.1, 3-20) as kind-laws;
-8. **catalogue coverage** — all 42 items carry their source as data.
+8. **catalogue coverage** — all 42 items carry their source as data;
+9. **first-class object identity** — rectangles R1, R2 as *objects* and their sides as
+   `IndividualQuantity`s that *characterize* them (Dybkær Ch. 3), so `area(R1) = length(R1) ×
+   width(R1)` type-checks and is certified (R12), while `length(R1) × width(R2)` is a
+   **compile-time type error** (different objects); the *square* case (`length = width`) shown
+   to be a magnitude fact, not a type-check.
 
 Series-wide catalogue examples are in the sibling
 `PropertyKindCalculus.DimensionExamples.Iso80000.References`.
 -/
 
 import PropertyKindCalculus.Iso80000
+import PropertyKindCalculus.DedicatedKind
+import PropertyKindCalculus.IndividualQuantity
 import PropertyKindCalculus.Iso80000.Part3.AreaElement
 import PropertyKindCalculus.Iso80000.Part3.AreaClassification
 import PropertyKindCalculus.Iso80000.Part3.VolumeElement
@@ -270,5 +277,71 @@ def speedInt : Quantity speed.kind Int :=
 #guard curvatureCK.coherentUnit == "m⁻¹"
 #guard planeAngleCK.coherentUnit == "rad"
 #guard frequencyCK.coherentUnit == "Hz"
+
+/-! ## (9) Object identity, first-class: quantities that *characterize* an object
+(Dybkær Ch. 3 + Ch. 20; R4/R5/R12 with object identity)
+
+Sections (1)–(8) use the *generic* kinds `length`, `width`, `area`. But a measured quantity
+is always the property of some **object**: "the length of *this* rectangle".
+`IndividualQuantity o k R` carries that object `o` in the *type*, alongside the kind, so
+combining quantities across objects is a compile-time type error — no hand-tagged kinds, just
+the catalogue kinds and the object index.
+
+Whether a rectangle is a *square* (its length equals its width) is, by contrast, a fact about
+**magnitudes**, not the type — a theorem, never a type-check. -/
+
+-- two rectangles and a square, as objects (Dybkær Ch. 3); `side` is a pertinent component.
+def R1 : Object := { id := "R1" }
+def R2 : Object := { id := "R2" }
+def sq : Object := { id := "square" }
+def side : Component := { id := "side" }
+
+-- PRINCIPLED DISTINCTNESS (kind level): "length of R1" ≠ "length of R2" *because the objects
+-- differ* — Dybkær Ch. 20's `distinct_of_system`, the dedication QUDV/OML can record but cannot
+-- make provably distinct.
+example : length.kind.dedicatedTo R1 side ≠ length.kind.dedicatedTo R2 side :=
+  DedicatedKind.distinct_of_system (by decide)
+
+-- area = length × width, as a product kind-law on the *catalogue* kinds (dimensional `L²` is
+-- `Part3.area_dim_length`).
+theorem area_is_length_times_width : ProductKind length.kind width.kind area.kind := ⟨rfl, rfl, rfl⟩
+
+-- R1's two sides, as individual quantities *characterizing R1* — the object rides in the type.
+noncomputable def lengthR1 : IndividualQuantity R1 length.kind ℝ := ⟨3⟩
+noncomputable def widthR1  : IndividualQuantity R1 width.kind  ℝ := ⟨4⟩
+noncomputable def widthR2  : IndividualQuantity R2 width.kind  ℝ := ⟨5⟩
+
+-- (a) area(R1) = length(R1) × width(R1): type-checks, certified an area BY CONSTRUCTION (R12),
+--     and computes to 3 × 4 = 12.
+noncomputable def areaR1 : IndividualQuantity R1 area.kind ℝ :=
+  IndividualQuantity.mul area_is_length_times_width lengthR1 widthR1
+example : areaR1.IsProduct area_is_length_times_width lengthR1 widthR1 := rfl
+example : areaR1.magnitude = 12 := by show (3 : ℝ) * 4 = 12; norm_num
+
+-- (b) area(R1) = length(R1) × width(R2) DOES NOT TYPE-CHECK: `widthR2` characterizes R2, but
+--     `IndividualQuantity.mul` on `lengthR1` (characterizing R1) demands its second factor
+--     characterize R1 too — the objects are *in the type*. Uncommenting the next line is a
+--     compile-time type error (mismatched object), the mix a dimensionless model would accept:
+--   noncomputable def bad := IndividualQuantity.mul area_is_length_times_width lengthR1 widthR2
+
+-- (c) OBJECT-GATED ADDITION (R4): two areas of the *same* rectangle add (shown over `Int`, so it
+--     computes); adding an area of R1 to an area of R2 would not type-check (the object gate on `+`).
+def areaR1a : IndividualQuantity R1 area.kind Int := ⟨12⟩
+def areaR1b : IndividualQuantity R1 area.kind Int := ⟨7⟩
+example : (IndividualQuantity.add hArea areaR1a areaR1b).magnitude = 19 := by decide
+
+-- A SQUARE is the case where length = width — a *magnitude* fact, not a type-check.
+noncomputable def lengthSq : IndividualQuantity sq length.kind ℝ := ⟨5⟩
+noncomputable def widthSq  : IndividualQuantity sq width.kind  ℝ := ⟨5⟩
+example : lengthSq.magnitude = widthSq.magnitude := rfl                          -- length = width
+noncomputable def areaSq : IndividualQuantity sq area.kind ℝ :=
+  IndividualQuantity.mul area_is_length_times_width lengthSq widthSq
+example : areaSq.magnitude = 25 := by show (5 : ℝ) * 5 = 25; norm_num
+
+-- for the *rectangle* R1, computing area as length × length gives length² (3·3 = 9), NOT its
+-- area (3·4 = 12): a rectangle is not its length squared, precisely because length ≠ width.
+-- (`area_is_length_times_length` is the catalogue's length × length law, from AreaClassification.)
+example : (IndividualQuantity.mul area_is_length_times_length lengthR1 lengthR1).magnitude
+    ≠ areaR1.magnitude := by show (3 : ℝ) * 3 ≠ 3 * 4; norm_num
 
 end PropertyKindCalculus.Examples.Iso80000.Part3
