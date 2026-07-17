@@ -29,12 +29,14 @@ import PropertyKindCalculusBlueprint.Chapters.CrossReferences
 import PropertyKindCalculusBlueprint.ItemIndex
 import PropertyKindCalculusBlueprint.TraceabilityTable
 import PropertyKindCalculusBlueprint.References
+import PropertyKindCalculusBlueprint.Version
 
 open Verso.Genre
 open Verso.Genre.Manual
 open Informal
 open PropertyKindCalculusBlueprint.ItemIndex
 open PropertyKindCalculusBlueprint.Traceability
+open PropertyKindCalculusBlueprint.Version
 
 /-- The per-part tally of catalogued quantity kinds, computed live from each
 part's `catalogue` so the front-page counts cannot drift from the formalized
@@ -85,7 +87,7 @@ shortTitle := "PropertyKindCalculus"
 tag := "kindcalculus-blueprint"
 %%%
 
-PropertyKindCalculus is a Lean 4 formalization of René Dybkær's *An Ontology on Property
+PropertyKindCalculus {version}[] is a Lean 4 formalization of René Dybkær's *An Ontology on Property
 for Physical, Chemical, and Biological Systems* {Manual.citep dybkaer_ontology_on_property}[], extended with David
 Flater's full tracking of kinds of quantities in {Manual.citep flater_architecture_for_software_assisted_quantity_calculus}[] (Appendix C).
 This blueprint is the design map: it records what is already proved
@@ -97,7 +99,7 @@ The whole blueprint is also available as a single paginated document:
 
 # What PropertyKindCalculus provides
 
-This project addresses *fifteen requirements* about formalizing _metrology_ — the
+This project addresses *seventeen requirements* about formalizing _metrology_ — the
 science of measurement — and discharges most of them as machine-checked theorems
 rather than prose. A substantial part of the library is grounded directly on the
 published *ISO and IEC 80000* metrology standards — _eleven_ of the thirteen parts (every
@@ -499,19 +501,33 @@ Stating it as owed keeps the boundary honest.
 
 ## The requirements at a glance — the traceability matrix
 
+The requirements fall into two kinds of obligation. A *verifiable* requirement is
+a truth-apt claim about the calculus, discharged by a *checked theorem* — PropertyKindCalculus
+*proves* it. An *expressiveness* requirement is a capability the type system must
+afford — general-versus-individual (R3), units as chosen values of a kind (R8) —
+discharged not by a theorem but by a *construction that typechecks*: that the
+witnessing declaration elaborates under CI *is* the demonstration. Conflating the
+two would make a capability look like an unfinished proof; separating them lets each
+be reported in its own honest vocabulary.
+
+:::traceability_summary
+:::
+
 The matrix below is *generated* from the typed `@[requirement …]` annotations
 carried by the Lean declarations (harvested by `PropertyKindCalculus.Requirements`),
 not maintained by hand. It is organized by the requirement groups introduced
 above; within each group, every requirement lists the declarations that
 _specify_, _prove_, _implement_, or _exemplify_ it, linked to that declaration's
-blueprint node. The *Status* column is likewise derived, not asserted: a
-requirement reads _proved_ exactly when some declaration is annotated `proves`,
-_specified_ when it is addressed but not yet proved, and _unaddressed_ otherwise.
+blueprint node. The *Status* column is likewise derived, not asserted, in the
+vocabulary of each requirement's kind: a *verifiable* requirement reads _proved_
+and shows links to the very theorems that discharge it; an *expressiveness*
+requirement reads _demonstrated_ and links to the constructions that exhibit it;
+an undischarged one reads _specified_ (addressed) or _unaddressed_.
 
 Because every annotation attaches to a *real* declaration and every status is a
-function of those annotations, the matrix cannot drift from the source — a renamed
-declaration or a missing proof is a build-time fact, not a stale cell. (This
-replaces the hand-maintained requirements-at-a-glance table.)
+function of those annotations and the requirement's kind, the matrix cannot drift
+from the source — a renamed declaration or a missing proof is a build-time fact, not
+a stale cell. (This replaces the hand-maintained requirements-at-a-glance table.)
 
 :::traceability
 :::

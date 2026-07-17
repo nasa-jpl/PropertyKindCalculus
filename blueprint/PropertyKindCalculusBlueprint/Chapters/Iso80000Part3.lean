@@ -315,19 +315,20 @@ multiple/submultiple distinction be _read off_ rather than restated.
 :::
 
 :::definition "def_prefixed_unit" (parent := "iso80000_part3_prefix") (lean := "PropertyKindCalculus.PrefixedUnit")
-A _prefixed unit_ is an `SIPrefix` (a decimal factor `10ⁿ` with its name and symbol,
-the VIM4 §1.19 table) applied to a base {uses "def_metrologicalUnit"}[unit]. It
-projects to a metrological unit of the _same kind_ with the prefix symbol prepended
-(`"c"` ++ `"m"` = `"cm"`), and exposes its §1.22 conversion factor as the exponent and
-its §1.20/§1.21 status as a multiple or submultiple.
+A _prefixed unit_ is a decimal (SI, §1.19) or binary (IEC 80000-13) prefix applied to a
+base {uses "def_metrologicalUnit"}[unit]. It projects to a metrological unit of the
+_same kind_ with the prefix symbol prepended (`"c"` ++ `"m"` = `"cm"`), and exposes its
+§1.22 conversion factor as the exponent and its §1.20/§1.21 status as a multiple or
+submultiple.
 :::
 
 :::proof "def_prefixed_unit"
 Realized as `structure SIPrefix` (`name`, `symbol`, `exponent : Int`) with the full
-§1.19 table, and `structure PrefixedUnit` (`siPrefix`, `base`) with `toUnit`
-(the projection), `conversionExponent`, `IsMultiple`, and `IsSubmultiple`. The
-projection preserves the kind, so `toUnit_wellFormed` and `commensurable_base` follow
-by reflexivity.
+§1.19 table (and a sibling `BinaryPrefix` for IEC 80000-13), and `structure
+PrefixedUnit` (`radix`, `exponent`, `symbol`, `base`) with `toUnit` (the projection),
+`conversionExponent`, `IsMultiple`, and `IsSubmultiple`. Recording the resolved `radix`
+lets both prefix families share one prefixed unit; the projection preserves the kind, so
+`toUnit_wellFormed` and `commensurable_base` follow by reflexivity.
 :::
 
 :::theorem "thm_part3_centimetre_conversion" (parent := "iso80000_part3_prefix") (lean := "PropertyKindCalculus.Iso80000.Part3.centimetre_conversionExponent") (tags := "proved") (effort := "small")

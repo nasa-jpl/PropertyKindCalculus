@@ -172,20 +172,35 @@ Planned. A `Unit k := { ref : Quantity k }` (or a chosen nonzero reference), wit
 `measure : Quantity k → Unit k → ℝ` giving the numeric value in that unit.
 :::
 
-:::theorem "thm_unit_conversion_roundtrip" (parent := "units") (tags := "capstone, planned") (effort := "medium") (priority := "high")
-*Unit conversion is a faithful round-trip.* For two units $`u_1, u_2` of the same
-kind $`k`, converting a quantity from $`u_1` to $`u_2` and back is the identity:
-$$`\mathrm{convert}_{u_2 \to u_1}\bigl(\mathrm{convert}_{u_1 \to u_2}(q)\bigr) = q.`
-Conversion is multiplication by the ratio $`u_1 / u_2`, defined only within a
-kind. There is no conversion between units of different kinds — that is a type
-error, not a runtime check. Builds on {uses "def_unit"}[the unit definition].
+:::theorem "thm_unit_conversion_roundtrip" (parent := "units") (lean := "PropertyKindCalculus.PrefixedUnit.convertExp_roundtrip") (tags := "capstone, proved") (effort := "medium") (priority := "high")
+*Unit conversion is a faithful round-trip.* For two commensurable units $`u_1, u_2`
+of the same kind $`k`, converting a magnitude from $`u_1` to $`u_2` and back is the
+identity:
+$$`\mathrm{convert}_{u_2 \to u_1}\bigl(\mathrm{convert}_{u_1 \to u_2}(x)\bigr) = x.`
+This is proved for the realized case: the {uses "def_si_prefix"}[SI-prefixed] (decimal)
+and {uses "def_binary_prefix"}[binary-prefixed] (IEC 80000-13) units, where the §1.22
+conversion factor is a *power of the radix* — ten for SI, two for binary. That factor is
+kept as its integer **exponent**, so the two directions are reciprocal on the nose
+($`+5` then $`-5` for $`\mathrm{km}\leftrightarrow\mathrm{cm}`; $`+10` then $`-10` for
+$`\mathrm{MiB}\leftrightarrow\mathrm{KiB}`) — exact over $`\mathbb{Z}`
+(`convertExp_roundtrip`) and, numerically, over $`\mathbb{R}` via a power-of-radix
+factor that is *structurally* nonzero (`convertReal_roundtrip`). The exponent
+bookkeeping is blind to the radix, so **one** proof serves both prefix families, gated
+to a common radix; conversion across radices (a power of ten is never a power of two)
+and across kinds is simply undefined — a type-level fact, not a runtime check. The
+fully general conversion by an arbitrary chosen-reference ratio, over the
+{uses "def_unit"}[real-valued unit], remains the deeper refinement below.
 :::
 
 :::proof "thm_unit_conversion_roundtrip"
-Planned. The conversion factor is $`r = \mathrm{measure}(u_1, u_2)` and its
-inverse $`r^{-1}`; the round-trip is $`r^{-1}\cdot(r \cdot q) = q`, requiring
-$`r \neq 0` from the chosen-reference nonzeroness. Ratio formation is licensed by
-the ratio scale.
+Because the conversion factor is a power of ten, its exponent is an `Int` — an
+element of an additive group — so the shift $`u_1\to u_2` (`shift`, the difference of
+the prefix exponents) and the shift back sum to zero (`shift_add_symm`). The
+round-trip on the decimal exponent is then $`x + (e_1 - e_2) + (e_2 - e_1) = x`,
+closed by `omega` with no rounding. The numeric $`\mathbb{R}` companion multiplies by
+$`10^{e_1-e_2}` then $`10^{e_2-e_1}`; `zpow_add₀` on $`10\neq 0` collapses the
+exponents to $`10^0 = 1`. Neither needs a chosen-reference nonzeroness hypothesis —
+that is what the general real-valued case (planned) must still supply.
 :::
 
 :::theorem "thm_dimensionless_kinds_distinct" (parent := "units") (lean := "PropertyKindCalculus.dim_not_injective") (tags := "capstone, proved") (effort := "small") (priority := "high")
@@ -217,6 +232,23 @@ factor (e.g. _centi_ = $`10^{-2}`). Applied to a unit it produces a multiple
 A `structure SIPrefix` carrying `name`, `symbol`, and an integer `exponent` (the
 factor is $`10^{\text{exponent}}`); the full SI set (quetta … quecto) is
 enumerated as `def`s.
+:::
+
+:::definition "def_binary_prefix" (parent := "units") (lean := "PropertyKindCalculus.BinaryPrefix")
+A _binary prefix_ `BinaryPrefix` (IEC 80000-13) is the information-technology
+counterpart of an SI prefix, denoting a power-of-_two_ factor: _kibi_ = $`2^{10}`,
+_mebi_ = $`2^{20}`, …. IEC 80000-13 introduced these to disambiguate the "kilobyte"
+between $`10^3` and $`2^{10}` bytes — _kibi_ names the binary one. They are **not** SI
+prefixes (the SI is decimal-only), so they are a distinct type; but they form the same
+multiples/submultiples and bear the same §1.22 conversion factor, and so reuse one
+prefixed-unit and one {uses "thm_unit_conversion_roundtrip"}[conversion round-trip].
+:::
+
+:::proof "def_binary_prefix"
+A `structure BinaryPrefix` carrying `name`, `symbol`, and an integer `exponent` (the
+factor is $`2^{\text{exponent}}`); the eight prefixes kibi … yobi are enumerated as
+`def`s. A `PrefixedUnit` records the resolved `radix` (10 or 2) so that a single
+`convertExp_roundtrip` serves both families, gated to a common radix.
 :::
 
 # Verified classification and instantiable kind-laws (R12)

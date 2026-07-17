@@ -56,12 +56,53 @@ attribute [requirement "R6" specifies "the four operator-based scale types, orde
 attribute [requirement "R6" proves "a richer scale licenses every operation a poorer one does (monotonicity)"]
   ScaleType.allows_mono
 
-/-! ## Soundness bridges (R7, R8) -/
+/-! ## Soundness bridges (R7, R8, R16, R17) -/
 
 -- R7 (dim is a forgetful homomorphism) lives in the Dimension layer; see `DimensionAnnotations`.
 
-attribute [requirement "R8" specifies "a unit is a chosen value of a kind (conversion round-trip is planned)"]
+-- R8 (expressiveness) — a metrological unit *is* one chosen value of a kind: the
+-- referenced kind together with its symbol. A capability the type system affords,
+-- not a theorem; it is discharged by the construction that typechecks (see
+-- `ExampleAnnotations`), so here it is only *specified*.
+attribute [requirement "R8" specifies "a metrological unit is one chosen value of a kind — the referenced kind together with its unit symbol"]
   MetrologicalUnit
+
+-- R16 (verifiable) — unit references are faithful: commensurability ("of the same
+-- kind") is an equivalence relation, and the §13.3.3 number-and-reference form is a
+-- round-trip. This is the faithfulness R8 used to promise; it is now its own
+-- verifiable requirement, discharged by these checked theorems.
+attribute [requirement "R16" specifies "commensurability — \"of the same kind\", the only relation a unit converts along"]
+  MetrologicalUnit.Commensurable
+attribute [requirement "R16" proves "commensurability is reflexive"] MetrologicalUnit.Commensurable.refl
+attribute [requirement "R16" proves "commensurability is symmetric"] MetrologicalUnit.Commensurable.symm
+attribute [requirement "R16" proves "commensurability is transitive — completing the equivalence a description logic cannot state"]
+  MetrologicalUnit.Commensurable.trans
+attribute [requirement "R16" specifies "the number-and-reference form: measuring a numeral against a unit's reference (§13.3.3)"]
+  MetrologicalUnit.measure
+attribute [requirement "R16" proves "quantity / unit = number: the numeral reads back off a measured value"]
+  MetrologicalUnit.measure_numeral
+attribute [requirement "R16" proves "number × unit = quantity: re-applying the unit to a value's numeral recovers it — the faithful round-trip"]
+  MetrologicalUnit.measure_eq_of_measures
+
+-- R17 (verifiable) — unit *conversion* between commensurable units is a faithful
+-- round-trip. Distinct from R16's number-and-reference inversion: here the §1.22
+-- conversion factor between two prefixed units of the same base and radix composes
+-- with its reciprocal to the identity. Kept as a power-of-radix *exponent*, so it is
+-- exact over `Int`, and one proof serves both the SI decimal and IEC 80000-13 binary
+-- prefix families — this is their home in the matrix. The companion numeric (ℝ)
+-- statement is proved in `DimensionAnnotations`.
+attribute [requirement "R17" specifies "the SI decimal prefix — the §1.22 conversion factor as a power-of-ten exponent"]
+  SIPrefix
+attribute [requirement "R17" specifies "the IEC 80000-13 binary prefix — the same conversion factor at radix two (kibi = 2¹⁰)"]
+  BinaryPrefix
+attribute [requirement "R17" specifies "a prefixed unit: a unit related to a base by a power-of-radix conversion factor (decimal or binary)"]
+  PrefixedUnit
+attribute [requirement "R17" specifies "the §1.22 conversion factor of a prefixed unit, read off as an exponent"]
+  PrefixedUnit.conversionExponent
+attribute [requirement "R17" proves "the two conversion factors between commensurable units are reciprocal (their exponents cancel)"]
+  PrefixedUnit.shift_add_symm
+attribute [requirement "R17" proves "converting a magnitude between units and back recovers it exactly — the faithful round-trip, exact over Int"]
+  PrefixedUnit.convertExp_roundtrip
 
 /-! ## Aggregation (R9) -/
 

@@ -41,6 +41,10 @@ inductive Cell where
   | code (s : String)
   | ref (tag : String) (text : String)
   | md (s : String)
+  /-- A comma-separated list of cross-references, each a `(tag, text)` pair. An
+  empty `tag` renders its `text` as inline code (no link); a non-empty `tag`
+  renders a Blueprint cross-reference, exactly like `ref`. -/
+  | links (items : List (String × String))
 deriving Repr, Inhabited, BEq
 
 /-- A generated table: its header titles and its body rows (each a list of cells,
@@ -178,6 +182,19 @@ def cellBlock : Cell → DocElabM Term
       | .text t => `(Verso.Doc.Inline.text $(quote t))
       | .code t => `(Verso.Doc.Inline.code $(quote t))
       | .emph t => `(Verso.Doc.Inline.emph #[Verso.Doc.Inline.text $(quote t)])
+    `(Verso.Doc.Block.para #[$inls,*])
+  | .links items => do
+    let parts ← items.toArray.mapM fun (tag, txt) =>
+      if tag.isEmpty then
+        `(Verso.Doc.Inline.code $(quote txt))
+      else do
+        let data : Informal.InlineData :=
+          { label := Informal.LabelNameParsing.parse tag, block := none }
+        `(Verso.Doc.Inline.other (Informal.Inline.informal $(quote data))
+            #[Verso.Doc.Inline.text $(quote txt)])
+    let sep ← `(Verso.Doc.Inline.text ", ")
+    let inls := parts.foldl (init := (#[] : Array Term)) fun acc p =>
+      if acc.isEmpty then #[p] else (acc.push sep).push p
     `(Verso.Doc.Block.para #[$inls,*])
 
 /-- Build the `Block.table` term from an evaluated `DocTable`. The header row is

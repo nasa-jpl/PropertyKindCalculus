@@ -382,3 +382,55 @@ spec) is an *unconditional* `CarrierRefinement` of `ℝ`, so `Quantity.add_refin
 holds at genuine binary32; the *executable* `IEEE32Exec` refines `ℝ` only on the
 finite, no-overflow path, with overflow carried as an explicit hypothesis rather
 than silently dropped — the class of failure this rigor work exists to surface.
+
+## Versioning
+
+PropertyKindCalculus is a pure-Lean project, so its version is declared **once** — in
+the Lean package manifest — as the single source of truth:
+
+| Location | Field |
+|---|---|
+| [lakefile.lean](lakefile.lean) | `version := v!"X.Y.Z"` |
+
+Nothing else needs to be kept in lockstep. In particular, the **blueprint reads that
+same line at build time** (via its `{version}[]` Verso role in
+[`Version.lean`](blueprint/PropertyKindCalculusBlueprint/Version.lean)), so the
+published document's version can never drift from the source — the front-page
+sentence *"PropertyKindCalculus X.Y.Z is a Lean 4 formalization…"* is generated, not
+hand-typed. (Lake does not track the parent `lakefile.lean` as a dependency of the
+blueprint, so after a bump an *incremental* local build may show the stale cached
+value; CI builds the document fresh, and `lake clean` in `blueprint/` forces a local
+refresh.)
+
+### Bumping the version
+
+[`scripts/bump-version.sh`](scripts/bump-version.sh) shows or bumps the version and
+verifies each write:
+
+```sh
+scripts/bump-version.sh        # print the current version
+scripts/bump-version.sh +p     # patch  X.Y.Z   -> X.Y.(Z+1)
+scripts/bump-version.sh +m     # minor  X.Y.Z   -> X.(Y+1).0
+scripts/bump-version.sh +M     # major  (X+1).0.0
+```
+
+A grep to sanity-check the declaration by hand:
+
+```sh
+grep -n '^\s*version := v!' lakefile.lean
+```
+
+### Cutting a release
+
+After a bump, commit and tag:
+
+```sh
+scripts/bump-version.sh +m
+git commit -am "chore: bump version to $(scripts/bump-version.sh)"
+git tag "v$(scripts/bump-version.sh)"
+```
+
+The script keeps L4YAML's multi-site `SITES` structure, so if a language binding is
+ever added (a Python or Rust package, say), its manifest becomes one extra line in
+that array and the bumper will then keep all sites in lockstep and refuse to bump a
+divergent set.

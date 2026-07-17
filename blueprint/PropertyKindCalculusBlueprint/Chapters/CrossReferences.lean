@@ -68,6 +68,8 @@ _correction_ (2.17), and the _metrology_/_measurand_/_primary method_ terms (2.2
 2.3, 2.6, 2.8, 2.9). Others are *not yet formalized*: the _base_/_derived
 quantity_ and _base_/_derived_/_off-system unit_ distinctions (1.6, 1.7,
 1.13, 1.14, 1.18), _system of quantities_/_of units_ as first-class objects
-(1.5, 1.16, 1.17, 1.19), _reference quantity_ (1.11), the _unit_/_numerical-value
-equation_ forms (1.31, 1.32), and _conversion factor between units_ (1.22), whose
-round-trip is a planned capstone.
+(1.5, 1.16, 1.17, 1.19), _reference quantity_ (1.11), and the
+_unit_/_numerical-value equation_ forms (1.31, 1.32). The §1.22 _conversion factor
+between units_ is, by contrast, now formalized — carried as a power-of-ten exponent
+(`conversionExponent`), with the conversion round-trip proved exactly over $`\mathbb{Z}`
+and numerically over $`\mathbb{R}` (requirement R17).

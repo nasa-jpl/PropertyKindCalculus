@@ -2,10 +2,11 @@
 # Requirement annotations reaching into the Dimension layer
 
 The requirements whose discharging declarations live in the PhysLib-backed
-`Dimension` / `Interaction` / `ScaleSpanning` libraries: R1's dimension-1
-disambiguation (`dim` is not injective), R5's interaction algebra, R7's dimension
-homomorphism, and R13's scale-spanning unit classification. Applied from afar, so
-the layers being annotated need no import of this machinery.
+`Dimension` / `Interaction` / `ScaleSpanning` / `UnitConversion` libraries: R1's
+dimension-1 disambiguation (`dim` is not injective), R5's interaction algebra, R7's
+dimension homomorphism, R13's scale-spanning unit classification, and R17's numeric
+(ℝ) unit-conversion round-trip. Applied from afar, so the layers being annotated
+need no import of this machinery.
 
 These pull in PhysLib (and, transitively, Mathlib), so — like
 `CrossRefs.DimensionAnnotations` — this module is not Mathlib-free even though the
@@ -15,6 +16,8 @@ core-spine annotations in `Annotations` are.
 import PropertyKindCalculus.Dimension
 import PropertyKindCalculus.Interaction
 import PropertyKindCalculus.ScaleSpanning
+import PropertyKindCalculus.UnitConversion
+import PropertyKindCalculus.DimensionExamples.UnitConversion
 import PropertyKindCalculus.Requirements.Attributes
 
 namespace PropertyKindCalculus
@@ -57,5 +60,20 @@ attribute [requirement "R13" exemplifies "the kelvin's scale-spanning character 
   ScaleSpanning.kelvin_reduction_invisible_to_dimension
 attribute [requirement "R13" exemplifies "the ampere is a genuine physical base — not scale-spanning — the contrast unit"]
   ScaleSpanning.ampere_is_physicalBase
+
+/-! ## R17 — unit conversion round-trip, the numeric (ℝ) statement -/
+
+-- The exact `Int`-exponent round-trip is proved core-side (`Annotations`); this is
+-- the companion over the real carrier: the magnitude is multiplied by the
+-- power-of-ten factor `10 ^ shift`, and the round-trip closes because the factor is
+-- structurally nonzero — no chosen-reference nonzeroness needed.
+attribute [requirement "R17" specifies "the §1.22 conversion factor as a real number, 10 ^ (power-of-ten shift)"]
+  PrefixedUnit.realFactor
+attribute [requirement "R17" proves "over ℝ, converting a magnitude between units and back is the identity (10 ^ shift · 10 ^ (−shift) = 1)"]
+  PrefixedUnit.convertReal_roundtrip
+attribute [requirement "R17" exemplifies "over ℝ, a cm magnitude converted to km and back returns exactly (×10⁵ then ×10⁻⁵)"]
+  PropertyKindCalculus.Examples.UnitConversion.cm_km_real_roundtrip
+attribute [requirement "R17" exemplifies "over ℝ at radix 2, a KiB magnitude converted to MiB and back returns exactly — the same theorem"]
+  PropertyKindCalculus.Examples.UnitConversion.kib_mib_real_roundtrip
 
 end PropertyKindCalculus

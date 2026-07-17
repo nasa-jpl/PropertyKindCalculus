@@ -113,4 +113,46 @@ example : metre.kind.valueScale = centimetre.kind.valueScale :=
 -- a measured value lives on its unit's kind's value scale.
 example : (centimetre.kind.valueScale).Admits fiveCm := rfl
 
+/-! ## (4) Unit conversion is a faithful round-trip (§1.22) -/
+
+/-- The centimetre as a *prefixed* unit — the metre with the SI `centi` prefix (10⁻²). -/
+def centi : PrefixedUnit := metre.withPrefix SIPrefix.centi
+/-- The kilometre — the metre with the SI `kilo` prefix (10³). -/
+def kilo : PrefixedUnit := metre.withPrefix SIPrefix.kilo
+
+-- the §1.22 conversion factor km → cm is 10⁵ (a power-of-ten exponent) …
+example : kilo.shift centi = 5 := by decide
+-- … and cm → km is its exact reciprocal, 10⁻⁵.
+example : centi.shift kilo = -5 := by decide
+
+/-- **§1.22 round-trip.** Converting a magnitude's decimal exponent from `cm` to `km`
+and back recovers it *exactly*, for every value — the faithful conversion round-trip
+on the exact `Int` exponent. -/
+theorem cm_km_roundtrip (x : Int) :
+    kilo.convertExp centi (centi.convertExp kilo x) = x :=
+  PrefixedUnit.convertExp_roundtrip centi kilo x
+
+-- concretely, 7 survives the cm → km → cm trip.
+example : kilo.convertExp centi (centi.convertExp kilo 7) = 7 := by decide
+
+/-! ## (5) The same round-trip for IEC 80000-13 binary prefixes -/
+
+/-- A byte — the reference unit of a rational `information` kind. -/
+def byte : MetrologicalUnit := { kind := { id := "information", scale := .ratio }, symbol := "B" }
+/-- The kibibyte and mebibyte — binary prefixings of the byte (2¹⁰, 2²⁰). -/
+def kibibyte : PrefixedUnit := byte.withBinaryPrefix BinaryPrefix.kibi
+def mebibyte : PrefixedUnit := byte.withBinaryPrefix BinaryPrefix.mebi
+
+-- the binary conversion factor MiB → KiB is 2¹⁰ (exponent 10) …
+example : mebibyte.shift kibibyte = 10 := by decide
+-- … and both live at radix 2, so conversion between them is defined.
+example : kibibyte.SameRadix mebibyte := rfl
+
+/-- **The identical round-trip at radix 2.** Exactly the same theorem as
+`cm_km_roundtrip` — `convertExp_roundtrip` is blind to the radix, so the IEC binary
+prefixes reuse it with no new proof. -/
+theorem kib_mib_roundtrip (x : Int) :
+    mebibyte.convertExp kibibyte (kibibyte.convertExp mebibyte x) = x :=
+  PrefixedUnit.convertExp_roundtrip kibibyte mebibyte x
+
 end PropertyKindCalculus.Examples.Unit

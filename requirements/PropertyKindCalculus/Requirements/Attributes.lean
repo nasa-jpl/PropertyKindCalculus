@@ -1,7 +1,7 @@
 /-
 # Requirement-traceability attributes — `@[requirement …]`
 
-The blueprint fixes a set of *requirements* (R1 … R15) the calculus is specified
+The blueprint fixes a set of *requirements* (R1 … R17) the calculus is specified
 to meet. Each requirement is discharged by real declarations — the type that
 *states* it, the theorem that *proves* it, the definition that *implements* it, or
 the worked example that *exercises* it. Those correspondences were, until now,
@@ -30,6 +30,7 @@ ask, for a given requirement, *where it is formalized, proved, and implemented*.
 -/
 
 import Lean
+import PropertyKindCalculus.Requirements.Catalogue
 
 open Lean
 
@@ -80,7 +81,7 @@ plays, and an optional note in this work's own words. -/
 structure RequirementRef where
   /-- The annotated Lean declaration (resolved, so it cannot dangle). -/
   decl : Name
-  /-- The requirement identifier, as printed — `"R1"` … `"R15"`. -/
+  /-- The requirement identifier, as printed — `"R1"` … `"R17"`. -/
   req : String
   /-- The role the declaration plays for the requirement. -/
   role : RequirementRole
@@ -103,7 +104,7 @@ syntax (name := requirementAttr) "requirement " str ident (str)? : attr
 
 initialize registerBuiltinAttribute {
   name  := `requirementAttr
-  descr := "Traceability link from a declaration to a blueprint requirement (R1–R15)."
+  descr := "Traceability link from a declaration to a blueprint requirement (R1–R17)."
   add   := fun decl stx _kind => do
     match stx with
     | `(attr| requirement $req:str $role:ident $[$note:str]?) =>
@@ -130,21 +131,69 @@ def refsForRequirement (env : Environment) (id : String) : Array RequirementRef 
 def requirementHasRole (env : Environment) (id : String) (role : RequirementRole) : Bool :=
   (refsForRequirement env id).any (·.role == role)
 
-/-- The **evidence-derived status** of a requirement — a *computed* fact about the
-annotations, never a hand-typed assertion. A requirement is:
+/-- The role whose presence *discharges* a requirement of the given kind: a
+`verifiable` requirement is discharged by a `proves` theorem, an `expressiveness`
+requirement by an `exemplifies` construction. -/
+def RequirementKind.dischargeRole : RequirementKind → RequirementRole
+  | .verifiable     => .proves
+  | .expressiveness => .exemplifies
 
-  * `"proved"`      once at least one declaration is annotated `proves` (a checked
-    theorem discharges it);
-  * `"specified"`   when it is specified/implemented/exemplified but no `proves`
-    annotation yet witnesses it;
+/-- The kind of a requirement `id` from the catalogue (defaulting to `verifiable`
+for any id not in the catalogue). -/
+def requirementKind (id : String) : RequirementKind :=
+  ((requirementById? id).map (·.kind)).getD .verifiable
+
+/-- Whether requirement `id` is *discharged* — has evidence in its discharging
+role (`proves` for verifiable, `exemplifies` for expressiveness). -/
+def requirementDischarged (env : Environment) (id : String) : Bool :=
+  requirementHasRole env id (requirementKind id).dischargeRole
+
+/-- The **evidence-derived status** of a requirement — a *computed* fact about the
+annotations, never a hand-typed assertion — reported in the vocabulary of the
+requirement's *kind*:
+
+  * a **verifiable** requirement is `"proved"` once some declaration is annotated
+    `proves`; an **expressiveness** requirement is `"demonstrated"` once some
+    declaration is annotated `exemplifies` (a construction that typechecks);
+  * `"specified"`   when it is addressed but not yet discharged in its kind's role;
   * `"unaddressed"` when no declaration references it at all.
 
-Because this is a function of the harvested metadata, the status can never disagree
-with the source: adding the `proves` annotation is what flips a requirement to
-`"proved"`, and there is no other switch to forget to flip. -/
+Because this is a function of the harvested metadata and the requirement's kind,
+the status can never disagree with the source: adding the discharging annotation is
+what flips a requirement to `"proved"`/`"demonstrated"`, and there is no other
+switch to forget to flip. -/
 def requirementStatus (env : Environment) (id : String) : String :=
-  if requirementHasRole env id .proves then "proved"
-  else if (refsForRequirement env id).isEmpty then "unaddressed"
+  if (refsForRequirement env id).isEmpty then "unaddressed"
+  else if requirementDischarged env id then
+    match requirementKind id with
+    | .verifiable     => "proved"
+    | .expressiveness => "demonstrated"
   else "specified"
+
+/-- A count of how the catalogue's requirements stand, split by kind — the raw
+material for the matrix's headline claim. -/
+structure RequirementTally where
+  /-- Total verifiable requirements. -/
+  verifiableTotal : Nat
+  /-- Verifiable requirements with a `proves` theorem. -/
+  verifiableProved : Nat
+  /-- Total expressiveness requirements. -/
+  expressivenessTotal : Nat
+  /-- Expressiveness requirements with an `exemplifies` construction. -/
+  expressivenessDemonstrated : Nat
+  deriving Repr, Inhabited
+
+/-- Tally the catalogue against the harvested annotations, split by kind. -/
+def requirementTally (env : Environment) : RequirementTally :=
+  catalogue.foldl (init := ⟨0, 0, 0, 0⟩) fun t r =>
+    match r.kind with
+    | .verifiable =>
+      { t with verifiableTotal := t.verifiableTotal + 1,
+               verifiableProved := t.verifiableProved
+                 + (if requirementDischarged env r.id then 1 else 0) }
+    | .expressiveness =>
+      { t with expressivenessTotal := t.expressivenessTotal + 1,
+               expressivenessDemonstrated := t.expressivenessDemonstrated
+                 + (if requirementDischarged env r.id then 1 else 0) }
 
 end PropertyKindCalculus.Requirements

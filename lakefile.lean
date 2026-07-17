@@ -54,6 +54,10 @@ private def torchLeanOpts : Lean.NameMap String := Id.run do
   return m
 
 package «PropertyKindCalculus» where
+  -- The package version — the single source of truth. `scripts/bump-version.sh`
+  -- reads and bumps it here, and the blueprint reads this same line at build time
+  -- (its `{version}[]` role) so the published document never drifts from the source.
+  version := v!"0.1.0"
   leanOptions := #[
     ⟨`autoImplicit, false⟩,
     ⟨`relaxedAutoImplicit, false⟩]
@@ -124,7 +128,8 @@ lean_lib «Dimension» where
     .one `PropertyKindCalculus.ScaleSpanning,
     .one `PropertyKindCalculus.Interaction,
     .one `PropertyKindCalculus.Function,
-    .one `PropertyKindCalculus.QuantityReal]
+    .one `PropertyKindCalculus.QuantityReal,
+    .one `PropertyKindCalculus.UnitConversion]
 
 /-- Worked examples for the Mathlib-backed `Dimension` library — the dimension
 functor, the interaction algebra, and the `ℝ` quantity carrier. Kept in the
@@ -166,13 +171,13 @@ lean_lib «CrossRefs» where
   globs := #[.andSubmodules `PropertyKindCalculus.CrossRefs]
 
 /-- The **requirement-traceability** layer: typed, decl-indexed `@[requirement …]`
-annotations mapping each blueprint requirement (R1–R15) to the declarations that
+annotations mapping each blueprint requirement (R1–R17) to the declarations that
 specify, prove, implement, or exemplify it, plus the canonical requirement
 catalogue. The blueprint harvests these into a traceability matrix, so it cannot
 drift from the source — a renamed declaration is a compile error. The annotations
 are applied *from afar*, mirroring `CrossRefs`. The core mechanism
 (`Attributes`, `Catalogue`, core-spine `Annotations`) is Mathlib-free; the
-`DimensionAnnotations` (R1/R5/R7/R13) and `UncertaintyAnnotations` (R14/R15)
+`DimensionAnnotations` (R1/R5/R7/R13/R17) and `UncertaintyAnnotations` (R14/R15)
 modules reach into the PhysLib/Mathlib-backed layers. Build with
 `lake build Requirements`. -/
 lean_lib «Requirements» where

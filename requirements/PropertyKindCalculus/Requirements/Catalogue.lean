@@ -1,7 +1,7 @@
 /-
-# The requirement catalogue — the 15 axes the calculus is specified against
+# The requirement catalogue — the 17 axes the calculus is specified against
 
-The canonical identity of each blueprint requirement: its identifier (R1 … R15),
+The canonical identity of each blueprint requirement: its identifier (R1 … R17),
 a one-line title, the group it belongs to, and its headline status. This is the
 *spine* of the traceability matrix — the rows the harvested `@[requirement …]`
 annotations are grouped under — so the matrix always shows every requirement, even
@@ -21,7 +21,7 @@ inductive RequirementGroup where
   | kindStructure
   /-- R4–R6: how operations on kinds are gated. -/
   | operationGating
-  /-- R7–R8: keeping the kind layer consistent with dimension and unit layers. -/
+  /-- R7–R8, R16–R17: keeping the kind layer consistent with dimension and unit layers. -/
   | soundnessBridges
   /-- R9: how values aggregate over parts. -/
   | aggregation
@@ -38,6 +38,35 @@ traceability matrix. -/
 def requirementGroups : List RequirementGroup :=
   [ .kindStructure, .operationGating, .soundnessBridges, .aggregation,
     .representation, .classification, .uncertainty ]
+
+/-- What would *count* as discharging a requirement — an intrinsic property of the
+requirement, not of the evidence. Two obligations of fundamentally different
+character live in the catalogue:
+
+  * a `verifiable` requirement is a truth-apt claim about the calculus, discharged
+    by a **checked theorem** (a `proves` annotation) — "PKC *proves* it";
+  * an `expressiveness` requirement is a capability the type system must afford,
+    discharged by a **construction that typechecks** (an `exemplifies` annotation)
+    — "PKC *demonstrates* it". There is no theorem to prove: that the witnessing
+    declaration elaborates under CI *is* the demonstration.
+
+This is a design decision about the *nature* of each requirement, so — unlike
+`status`, which is derived from the annotations — it belongs in the catalogue as
+citable identity. Recording it lets the matrix report each class in its own honest
+vocabulary (`proved` vs `demonstrated`) and lets the headline claim quantify over
+the right subset: *all verifiable requirements proved, all expressiveness
+requirements demonstrated.* -/
+inductive RequirementKind where
+  /-- A truth-apt claim, discharged by a checked theorem (`proves`). -/
+  | verifiable
+  /-- A capability, discharged by a typechecking construction (`exemplifies`). -/
+  | expressiveness
+  deriving Repr, Inhabited, DecidableEq, BEq
+
+/-- The kind as printed. -/
+def RequirementKind.label : RequirementKind → String
+  | .verifiable     => "verifiable"
+  | .expressiveness => "expressiveness"
 
 /-- The group as printed. -/
 def RequirementGroup.label : RequirementGroup → String
@@ -64,6 +93,10 @@ structure Requirement where
   title : String
   /-- The group the requirement belongs to. -/
   group : RequirementGroup
+  /-- Whether the requirement is `verifiable` (discharged by a theorem) or an
+  `expressiveness` capability (discharged by a typechecking construction). Most
+  requirements are verifiable; this defaults accordingly. -/
+  kind : RequirementKind := .verifiable
   deriving Repr, Inhabited
 
 /-- The numeric part of a requirement id (`"R12"` ↦ `12`), for natural sorting. -/
@@ -77,7 +110,7 @@ def catalogue : List Requirement :=
       title := "Kinds are first-class and discriminate within a dimension" }
   , { id := "R2",  group := .kindStructure,
       title := "Specialization is a lattice, with comparability but not identity" }
-  , { id := "R3",  group := .kindStructure,
+  , { id := "R3",  group := .kindStructure, kind := .expressiveness,
       title := "General versus individual is type versus term" }
   , { id := "R4",  group := .operationGating,
       title := "Operations are gated by kind (the additive law)" }
@@ -87,8 +120,14 @@ def catalogue : List Requirement :=
       title := "Operator availability is gated by scale, monotonically" }
   , { id := "R7",  group := .soundnessBridges,
       title := "Dimension certifies coherence; it does not decide legality" }
-  , { id := "R8",  group := .soundnessBridges,
-      title := "Units are chosen values of a kind; conversion is a faithful round-trip" }
+  , { id := "R8",  group := .soundnessBridges, kind := .expressiveness,
+      title := "Units are chosen values of a kind" }
+  , { id := "R16", group := .soundnessBridges, kind := .verifiable,
+      title := "Unit references are faithful: commensurability is an equivalence and \
+                the number-and-reference form round-trips" }
+  , { id := "R17", group := .soundnessBridges, kind := .verifiable,
+      title := "Unit conversion between commensurable units is a faithful round-trip \
+                (an exact, reciprocal power-of-radix factor — SI decimal or IEC binary)" }
   , { id := "R9",  group := .aggregation,
       title := "Extensive quantities aggregate additively over parts; intensive ones do not" }
   , { id := "R10", group := .representation,

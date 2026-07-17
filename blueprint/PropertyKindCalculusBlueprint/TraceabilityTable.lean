@@ -3,7 +3,7 @@
 
 `{traceability}` expands into the requirement-traceability matrix built from the
 typed `@[requirement …]` annotations harvested by `PropertyKindCalculus.Requirements`.
-For each requirement in the catalogue (R1 … R15) it lists every declaration that
+For each requirement in the catalogue (R1 … R17) it lists every declaration that
 *specifies*, *proves*, *implements*, or *exemplifies* it, linked to that
 declaration's blueprint node.
 
@@ -67,6 +67,18 @@ def buildTable : DocElabM DocTable := do
       let status := requirementStatus env req.id
       let these := (refs.filter (·.req == req.id)).qsort
         (fun a b => a.role.order < b.role.order)
+      -- A discharged requirement links its status to the evidence that discharges
+      -- it — proofs for a verifiable requirement, the typechecking constructions
+      -- for an expressiveness one — rather than printing the bare word.
+      let mut dischargeLinks : List (String × String) := []
+      for r in these.filter (·.role == req.kind.dischargeRole) do
+        let labels ← Informal.Environment.labelsForLeanDecl r.decl
+        let label := (labels[0]?.map (·.toString)).getD ""
+        dischargeLinks := dischargeLinks ++ [(label, lastComponent r.decl)]
+      let statusOf (first : Bool) : Cell :=
+        if !first then .text ""
+        else if status == "proved" || status == "demonstrated" then .links dischargeLinks
+        else .text status
       if these.isEmpty then
         rows := rows ++ [[ .md s!"*{req.id}* — {req.title}", .text status,
                            .text "—", .text "—", .text "" ]]
@@ -79,8 +91,7 @@ def buildTable : DocElabM DocTable := do
             if label.isEmpty then .code (lastComponent r.decl)
             else .ref label (lastComponent r.decl)
           let reqCell : Cell := if first then .md s!"*{req.id}* — {req.title}" else .text ""
-          let statusCell : Cell := if first then .text status else .text ""
-          rows := rows ++ [[ reqCell, statusCell, .text r.role.label, declCell, .text r.note ]]
+          rows := rows ++ [[ reqCell, statusOf first, .text r.role.label, declCell, .text r.note ]]
           first := false
   return { headers := ["Requirement", "Status", "Role", "This work", "Note"], rows := rows }
 
@@ -89,5 +100,27 @@ def traceability : DirectiveExpanderOf Config
   | _cfg, _contents => do
     let tbl ← buildTable
     docTableTerm tbl
+
+/-- The headline claim, *computed* from the catalogue's kinds and the harvested
+annotations: how many verifiable requirements are proved and how many
+expressiveness requirements are demonstrated. Because it is derived, the sentence
+can never overstate the evidence. -/
+def summarySentence (t : RequirementTally) : String :=
+  if t.verifiableProved == t.verifiableTotal
+      && t.expressivenessDemonstrated == t.expressivenessTotal then
+    s!"PropertyKindCalculus *proves all {t.verifiableTotal} verifiable requirements* \
+       and *demonstrates all {t.expressivenessTotal} expressiveness requirements* — \
+       the two capability requirements a type system supports by construction rather \
+       than by theorem."
+  else
+    s!"Of the {t.verifiableTotal} verifiable requirements, {t.verifiableProved} are \
+       proved; of the {t.expressivenessTotal} expressiveness requirements, \
+       {t.expressivenessDemonstrated} are demonstrated."
+
+@[directive]
+def traceability_summary : DirectiveExpanderOf Config
+  | _cfg, _contents => do
+    let t := requirementTally (← getEnv)
+    ItemIndex.cellBlock (.md (summarySentence t))
 
 end PropertyKindCalculusBlueprint.Traceability
