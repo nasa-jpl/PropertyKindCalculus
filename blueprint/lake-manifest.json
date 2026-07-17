@@ -15,7 +15,7 @@
    "rev": "988bccb30719b6108b40e85b43a0485df463310e",
    "name": "VersoBlueprint",
    "manifestFile": "lake-manifest.json",
-   "inputRev": "v4.32.0",
+   "inputRev": "988bccb30719b6108b40e85b43a0485df463310e",
    "inherited": false,
    "configFile": "lakefile.lean"},
   {"url": "https://github.com/leanprover/verso",

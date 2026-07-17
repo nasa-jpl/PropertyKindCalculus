@@ -1,13 +1,18 @@
 name = "propertykindcalculus-blueprint"
 defaultTargets = ["PropertyKindCalculusBlueprint", "blueprint-gen"]
 
-# Verso + the Blueprint genre, on the v4.31.0 toolchain (matching the core
-# PropertyKindCalculus library after the v4.31.0 migration). `verso` is pinned to the
-# immutable `v4.31.0` *tag*; `verso-blueprint` only ships a *moving* `v4.31.0` branch,
-# so it is pinned to that branch's current tip as an exact commit — NOT the branch ref:
-# tracking the branch once drifted `verso-blueprint` to a `manualMainWithPreviewData`
-# that regressed and killed `blueprint-gen` with exit 137 (SIGKILL). Bump this SHA
-# deliberately (re-test `lake exe blueprint-gen`) rather than tracking the branch.
+# Verso + the Blueprint genre, on the v4.32.0 toolchain (matching the core
+# PropertyKindCalculus library after the v4.32.0 migration). `verso` is pinned to the
+# immutable `v4.32.0` *tag*, so its manifest `rev` is stable.
+#
+# `verso-blueprint`, however, only ships a *moving* `v4.32.0` *branch* (no tag), so it
+# MUST be pinned to an exact commit SHA — NOT the branch ref. Using the branch name has
+# two costs: (1) `ci-pages.sh` runs `lake update`, which re-resolves the branch to its
+# current tip on every build and rewrites this repo's `lake-manifest.json` (a spurious
+# dirty file each time); and (2) tracking the branch once drifted verso-blueprint to a
+# `manualMainWithPreviewData` that regressed and killed `blueprint-gen` with exit 137.
+# Pinning the SHA fixes both. Bump it deliberately (re-test `lake exe blueprint-gen`)
+# rather than tracking the branch; the SHA below is the v4.32.0 branch tip as vendored.
 [[require]]
 name = "verso"
 git = "https://github.com/leanprover/verso"
@@ -16,7 +21,7 @@ rev = "v4.32.0"
 [[require]]
 name = "VersoBlueprint"
 git = "https://github.com/leanprover/verso-blueprint"
-rev = "v4.32.0"
+rev = "988bccb30719b6108b40e85b43a0485df463310e"
 
 # The library being documented. Linking `(lean := "PropertyKindCalculus.…")` nodes to
 # real declarations (and reading their proved/`sorry` status) requires the
