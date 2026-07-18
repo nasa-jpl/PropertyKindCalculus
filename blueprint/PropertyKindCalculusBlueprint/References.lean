@@ -31,6 +31,16 @@ def sysml20 : Article where
   number  := inlines!""
   url     := some "https://www.omg.org/spec/SysML/2.0"
 
+def foster_automated_reasoning_for_physical_quantities : Article where
+  authors := #[inlines!"Simon Foster", inlines!"Burkhart Wolff"]
+  journal := inlines!"27th International Conference on Engineering of Complex Computer Systems (ICECCS)"
+  title   := inlines!"Automated Reasoning for Physical Quantities, Units, and Measurements in Isabelle/HOL"
+  year    := 2023
+  month   := none
+  volume  := inlines!""
+  number  := inlines!""
+  url     := some "https://isa-afp.org/browser_info/current/AFP/Physical_Quantities/"
+
 
 def dybkaer_units_for_quantities_of_dimension_one : Article where
   authors := #[inlines!"René Dybkær"]

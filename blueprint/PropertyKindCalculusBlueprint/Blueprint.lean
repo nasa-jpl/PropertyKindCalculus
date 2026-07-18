@@ -88,12 +88,21 @@ tag := "kindcalculus-blueprint"
 %%%
 
 Models of physical systems are saturated with quantities, yet the languages used to
-manage them — SysML/QUDV, OWL-based vocabularies, and dimension-checking type systems —
-verify _dimensions_, not _kinds_. Two quantities of the same dimension are therefore
-silently interchangeable: volumetric and gravimetric water content, relative
-permittivity and reflectivity, torque and energy. Description logics capture the
-metrology _taxonomy_ but cannot express the _calculus_ — dimension arithmetic, the
-kind-interaction algebra, scale-gated operations, extensivity, or any law as a theorem.
+manage them — SysML/QUDV, OWL-based vocabularies such as QUDT and OML, and
+dimension-checking type systems — verify _dimensions_, not _kinds_. Two quantities of
+the same dimension are therefore silently interchangeable: volumetric and gravimetric
+water content, relative permittivity and reflectivity, torque and energy. These
+descriptive languages record the metrology _taxonomy_ — which kinds exist, their
+dimensions and defining relations — but stop there: they cannot express the _calculus_
+that operates on those kinds — dimension arithmetic, the kind-interaction algebra,
+scale-gated operations, extensivity; cannot carry one model across the numeric carriers a
+quantity must inhabit; and cannot state, let alone check, a single law as a theorem. A property kind calculus _subsumes_ them: it
+retains the taxonomy and adds the _calculus_, _parametricity_ over the carrier, and
+machine-checked _proof_. The strongest prior formalization is no exception: the ISQ and
+SI have been mechanized in a proof assistant
+{Manual.citep foster_automated_reasoning_for_physical_quantities}[], yet that work checks
+_dimensions_, not kinds — the dimensional calculus is one part of metrology, and cannot
+separate the confusions above.
 We present PropertyKindCalculus (PKC) {version}[], a machine-checked formalization, in the
 Lean 4 proof assistant, of Dybkær's seminal contribution to metrology
 {Manual.citep dybkaer_ontology_on_property}[] and several recent developments in this field
