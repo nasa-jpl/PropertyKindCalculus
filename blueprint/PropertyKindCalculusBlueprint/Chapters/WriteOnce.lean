@@ -1,6 +1,7 @@
 import Verso
 import VersoManual
 import VersoBlueprint
+import PropertyKindCalculusBlueprint.References
 -- This is a *methodology* chapter: it cross-references the proved spine nodes with `{uses …}`
 -- (the labels resolve at blueprint-generation time, not Lean elaboration), and illustrates each
 -- step with the public `PropertyKindCalculus.Examples.MiniWriteOnce` worked example by name only.
@@ -31,6 +32,17 @@ to a bare floating-point kernel, bit for bit. Correctness lives in the types and
 compile time, while the number that runs is the same one a hand-written kernel would compute.
 Getting the _authoring order_ right is what makes that erasure sound: each layer must be in place
 before the one above it can type-check.
+
+This carrier-parametric discipline is inherited from TorchLean
+{Manual.citep george_torchlean_formalizing_neural_networks}[], where a tensor is generic over its
+scalar carrier so that one network runs at `ℝ` for proof and at `Float` for execution — and the
+executable carrier here is, in fact, a TorchLean tensor. PropertyKindCalculus lifts the discipline
+up the metrology tower: the same numeric carrier is varied over a kind-typed scalar quantity, a
+tensor-valued quantity, and — across the lawful-to-executable refinement — a numerically adequate
+one; the same parametric-indexing idea then carries onto an additive uncertainty descriptor,
+yielding an _uncertain_ quantity, and onto the measured object as a further type index, yielding an
+object-indexed _individual_ quantity. What TorchLean provides for one carrier of one tensor,
+PropertyKindCalculus provides for the whole tower of quantity notions.
 
 # The four steps
 

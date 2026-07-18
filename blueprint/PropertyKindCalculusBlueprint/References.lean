@@ -41,6 +41,17 @@ def foster_automated_reasoning_for_physical_quantities : Article where
   number  := inlines!""
   url     := some "https://isa-afp.org/browser_info/current/AFP/Physical_Quantities/"
 
+def george_torchlean_formalizing_neural_networks : Article where
+  authors := #[inlines!"Robert Joseph George", inlines!"Jennifer Cruden", inlines!"Will Adkisson",
+               inlines!"Xiangru Zhong", inlines!"Huan Zhang", inlines!"Anima Anandkumar"]
+  journal := inlines!"arXiv preprint arXiv:2602.22631 (cs.MS)"
+  title   := inlines!"TorchLean: Formalizing Neural Networks in Lean"
+  year    := 2026
+  month   := none
+  volume  := inlines!""
+  number  := inlines!""
+  url     := some "https://arxiv.org/abs/2602.22631"
+
 
 def dybkaer_units_for_quantities_of_dimension_one : Article where
   authors := #[inlines!"René Dybkær"]

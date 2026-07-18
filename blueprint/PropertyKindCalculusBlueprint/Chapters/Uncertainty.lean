@@ -43,7 +43,8 @@ cumulants), and the numerical-adequacy layer (the executable analysis carrier; t
 A1 absorption, A2 Sterbenz, A3 verdict soundness over `ℝ`; the universal capstone A3′ over an
 arbitrary model DAG and input box; A2 lifted to the genuine binary32 format `fexp32`; and the
 executable↔spec bridge, certifying the runtime absorption verdict against the `round₃₂` specification
-on TorchLean's computable `IEEE32Exec` model). The `×`/`÷` DAG extension and the Axis-U wiring
+on TorchLean's computable `IEEE32Exec` model
+{Manual.citep george_torchlean_formalizing_neural_networks}[]). The `×`/`÷` DAG extension and the Axis-U wiring
 (Stage 3.4) remain *planned*.
 
 # Two orthogonal axes, and why their properties compose

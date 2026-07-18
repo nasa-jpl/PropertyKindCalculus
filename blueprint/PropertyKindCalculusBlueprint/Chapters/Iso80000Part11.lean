@@ -13,6 +13,7 @@ import PropertyKindCalculus.Iso80000.Part11
 -- `QuantityFunction` carrier capability).
 import PropertyKindCalculus.Function
 import PropertyKindCalculusBlueprint.ItemIndex
+import PropertyKindCalculusBlueprint.References
 
 open Verso.Genre
 open Verso.Genre.Manual
@@ -293,7 +294,8 @@ This is the categorical opposite of a characteristic number.
 :::proof "def_part11_carrier_constant"
 In the function calculus (`PropertyKindCalculus.QuantityFunction`), the carrier capability
 `MathCarrier` carries `pi` as its _only_ primitive constant — the one transcendental
-constant a numeric carrier ships directly (matching TorchLean's `MathFunctions`). Every
+constant a numeric carrier ships directly (matching TorchLean's `MathFunctions`
+{Manual.citep george_torchlean_formalizing_neural_networks}[]). Every
 other constant is _derived_: `MathCarrier.e := MathCarrier.exp 1`, and likewise `ln 2`,
 `√2`, …. Adding them as carrier fields would be redundant, since the operations already
 determine them.
