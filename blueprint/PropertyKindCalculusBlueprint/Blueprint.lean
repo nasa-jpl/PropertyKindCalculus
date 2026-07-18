@@ -567,6 +567,26 @@ a stale cell. (This replaces the hand-maintained requirements-at-a-glance table.
 :::traceability
 :::
 
+## What _proved_ is checked to mean
+
+A _proved_ status is stronger than "a theorem of that name compiles", and two
+guarantees that `lake build` does not enforce on its own are carried by a dedicated
+validation suite (`PropertyKindCalculus.Tests`, one probe per requirement group),
+built by CI alongside the dimension and uncertainty layers so that _all sixteen_
+verifiable requirements — not only the nine whose theorems live in the Mathlib-free
+core — are under regression on every change.
+
+First, each verifiable requirement's theorem has its _axiom profile_ pinned with
+`#guard_msgs` over `#print axioms`, so _proved_ means *sorry-free as certified by the
+axiom set*, not merely that no `sorry` keyword appears: a proof relocated behind a
+`sorry` raises no warning at its call sites, and only the axiom profile exposes it.
+(The exportable core stays axiom-free; the Mathlib-backed layers use only the three
+standard classical axioms — and the suite pins exactly that.) Second, each theorem is
+applied to a _concrete witness_ whose premises are discharged — and, at the degenerate
+boundary where a premise _fails_, shown genuinely excluded — so that no requirement is
+satisfied *vacuously*: an empty quantifier or an unsatisfiable hypothesis would leave a
+theorem true but empty, and the witness is what rules that out.
+
 # Why a calculus, not a taxonomy
 
 PropertyKindCalculus continues a line of machine-checkable metrology modeling, and

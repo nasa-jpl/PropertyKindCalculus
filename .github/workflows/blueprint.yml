@@ -2,7 +2,9 @@ name: Build and Publish Design Blueprint
 
 # Self-hosted CI for PropertyKindCalculus, modelled on L4YAML's
 # `.github/workflows/test-coverage.yml` but reduced to the blueprint spine:
-# build the Mathlib-free Lean core + examples, build and render the Verso
+# build the Mathlib-free Lean core + examples, then the Mathlib/PhysLib/TorchLean-
+# backed dimension and uncertainty layers plus the `Tests` validation suite (so all
+# sixteen verifiable requirements are CI-enforced), build and render the Verso
 # design blueprint (HTML + a paginated PDF), and (on main) publish them to the
 # orphan `gh-pages` branch — never committed on main. PropertyKindCalculus has no
 # FFI / Rust / doc-gen4 stages, so those phases of the L4YAML job are omitted.
@@ -56,14 +58,39 @@ jobs:
           pixi install --manifest-path blueprint/pyproject.toml
 
       # -------------------------------------------------------
-      # Phase 1: Build the Lean spine (Mathlib-free core + examples)
+      # Phase 1a: Build the Lean spine (Mathlib-free core + examples)
       # -------------------------------------------------------
       - name: Build core library and examples
         run: |
-          # The core has no dependencies (lake-manifest packages == []), so this
-          # needs no network and is the fastest signal that the spine is sound.
+          # The core spine is Mathlib-free, so this is the fastest signal that the
+          # spine is sound — run first so a core break fails the job before the
+          # heavier Mathlib-backed build below.
           lake build
           lake build Examples
+
+      # -------------------------------------------------------
+      # Phase 1b: Build the Mathlib/PhysLib/TorchLean-backed layers and the
+      # validation-test suite that probes every verifiable requirement.
+      # -------------------------------------------------------
+      - name: Build the dimension/uncertainty layers and the validation suite
+        run: |
+          # Seven of the sixteen verifiable requirements are discharged in the
+          # PhysLib/Mathlib-backed layers (R1/R5/R7/R13/R17-ℝ in `Dimension`;
+          # R14/R15/R18 in `Uncertainty`/`UncertaintyRigor`). Before the `Tests`
+          # library existed these theorems were never built by CI — a theorem CI
+          # never compiles is validated by nobody. Building them here, plus the
+          # `Tests` suite that pins each requirement theorem's axiom profile and
+          # drives a concrete inhabitation witness through it, brings all sixteen
+          # under regression.
+          #
+          # These layers need Mathlib oleans: fetch them from the Mathlib cache
+          # rather than recompiling Mathlib from source. (PhysLib and TorchLean are
+          # compiled from their pinned sources; the broken `Torch` library — an
+          # upstream TorchLean 4.32 module reorg — is deliberately not built, and
+          # nothing here depends on it.)
+          lake exe cache get
+          lake build Dimension Uncertainty UncertaintyRigor
+          lake build Tests
 
       # -------------------------------------------------------
       # Phase 2: Build + render the Verso design blueprint

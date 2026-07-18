@@ -57,7 +57,7 @@ package «PropertyKindCalculus» where
   -- The package version — the single source of truth. `scripts/bump-version.sh`
   -- reads and bumps it here, and the blueprint reads this same line at build time
   -- (its `{version}[]` role) so the published document never drifts from the source.
-  version := v!"0.3.1"
+  version := v!"0.4.0"
   leanOptions := #[
     ⟨`autoImplicit, false⟩,
     ⟨`relaxedAutoImplicit, false⟩]
@@ -111,6 +111,28 @@ lean_lib «PropertyKindCalculus» where
 lean_lib «Examples» where
   srcDir := "examples"
   globs := #[.andSubmodules `PropertyKindCalculus.Examples]
+
+/-- **The validation-test suite** (source tree `tests/`, namespace
+`PropertyKindCalculus.Tests`). Distinct from the pedagogical `Examples` library: these are
+build-time *regression probes* for the two properties a "machine-checked" claim rests on but
+that `lake build` does not check on its own —
+
+  * **inhabitation / non-vacuity.** Each verifiable requirement's theorem is applied to a
+    *concrete* witness whose hypotheses are discharged by `decide`/`rfl`, so a theorem that
+    were vacuously true (an empty universal, an unsatisfiable premise) would fail to compile
+    here — the "validate the target is inhabited, not merely well-formed" discipline.
+  * **axiom profile.** Each requirement theorem's `#print axioms` is pinned with
+    `#guard_msgs`, so a proof silently relocated behind a `sorry` (which emits *no* warning
+    on its caller) is caught by the axiom set, not the absence of the `sorry` keyword.
+
+Every probe file is imported by the tier index it belongs to, and the tiers by
+`PropertyKindCalculus.Tests` — an *unindexed* probe is never built and guards nothing, so
+indexing is part of landing one. Build with `lake build Tests`; CI builds it (and the
+Dimension/Uncertainty layers it reaches into) so all sixteen verifiable requirements are
+CI-enforced, not just the nine in the core spine. -/
+lean_lib «Tests» where
+  srcDir := "tests"
+  globs := #[.andSubmodules `PropertyKindCalculus.Tests]
 
 /-- The PhysLib-backed coherence layer, in a **separate** source tree
 (`dimension/`) so the PhysLib + Mathlib dependency lands here and nowhere else.
