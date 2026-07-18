@@ -111,6 +111,26 @@ def unit_one_is_intruisive : Article where
   number    := inlines!"3"
   url       := some "https://iopscience.iop.org/article/10.1088/1681-7575/ad4bea"
 
+def quincey_angles_neither_length_ratios_nor_dimensionless : Article where
+  authors   := #[inlines!"Paul Quincey", inlines!"Peter J. Mohr", inlines!"William D. Phillips"]
+  journal   := inlines!"Metrologia"
+  title     := inlines!"Angles are inherently neither length ratios nor dimensionless"
+  year      := 2019
+  month     := none
+  volume    := inlines!"56"
+  number    := inlines!"4"
+  url       := some "https://iopscience.iop.org/article/10.1088/1681-7575/ab27d7"
+
+def leonard_dimensionally_consistent_treatment_of_angle_and_solid_angle : Article where
+  authors   := #[inlines!"B. P. Leonard"]
+  journal   := inlines!"Metrologia"
+  title     := inlines!"Proposal for the dimensionally consistent treatment of angle and solid angle by the International System of Units (SI)"
+  year      := 2021
+  month     := none
+  volume    := inlines!"58"
+  number    := inlines!"5"
+  url       := some "https://iopscience.iop.org/article/10.1088/1681-7575/abe0fc"
+
 def willink_evaluation_of_measurement_uncertainty_based_on_moments : Article where
   authors   := #[inlines!"Robin Willink"]
   journal   := inlines!"Metrologia"

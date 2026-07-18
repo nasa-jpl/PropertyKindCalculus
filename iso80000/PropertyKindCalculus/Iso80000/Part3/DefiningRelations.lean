@@ -14,10 +14,15 @@ quantities as a product, quotient, or reciprocal:
 This module formalizes each as an R12 *kind-law* over the catalogued kinds, using the
 quotient and reciprocal families of `QuantityClassification`. Two payoffs:
 
-  1. **The dimension follows from the relation, as a checked computation.** Plane
-     angle is dimension one *because* it is a ratio of two lengths
-     (`planeAngle_dim_from_arc_over_radius`), not by stipulation — yet it remains a
-     distinct kind from every other dimension-one quantity.
+  1. **The dimension follows from the relation, as a checked computation.** Under the
+     SI's defining relation `α = s/r`, with arc and radius taken as plain lengths,
+     plane angle computes to dimension one (`planeAngle_dim_from_arc_over_radius`).
+     This formalizes the *current* SI convention — which the metrology literature
+     actively contests (Quincey, Mohr & Phillips and others argue an angle is
+     inherently *neither* a length ratio *nor* dimensionless). PKC need not adjudicate
+     that at the dimension layer: plane angle stays a distinct *kind* from every other
+     dimension-one quantity either way, and it is the kind, not the dimension, that
+     keeps the radian and the steradian apart.
   2. **Verified construction and certificates instantiate at the quantity level.** A
      frequency built as the reciprocal of a period carries its classification
      certificate by construction (`frequencyOf_isReciprocal`), and the certificate
@@ -80,11 +85,15 @@ theorem speed_dim_from_pathLength_duration :
 theorem length_div_length : Dim.length / Dim.length = 1 := by
   ext <;> simp [Dim.length]
 
-/-- **Plane angle is dimension one because it is a ratio of two lengths.** The arc and
-the radius are both lengths, so `α = s/r` cancels the dimension — the angle's
-dimensionlessness is a *checked computation from its defining relation*, not a
-stipulation. (It nonetheless remains a distinct kind from every other dimension-one
-quantity; see `Part3.iso80000_3_dim_one_collision`.) -/
+/-- **Under the SI's `α = s/r`, plane angle computes to dimension one.** With arc and
+radius taken as plain lengths, `s/r` cancels the dimension — a checked computation
+that reproduces the *current SI convention* rather than settling it. That the relation
+*forces* dimensionlessness is exactly what the metrology reform literature disputes:
+read arc and radius as carrying an angle dimension and `s/r` need not be dimensionless.
+PKC formalizes the standard as published and leaves the dimensional stance open —
+plane angle nonetheless stays a distinct *kind* from every other dimension-one quantity
+(see `Part3.iso80000_3_dim_one_collision`), which is what keeps the radian and the
+steradian non-interchangeable, whatever dimension the SI ultimately assigns. -/
 theorem planeAngle_dim_from_arc_over_radius :
     planeAngle.dim = pathLength.dim / radius.dim := by
   show (1 : Dimension) = Dim.length / Dim.length
@@ -124,7 +133,7 @@ theorem speedOf_isQuotient (s : Quantity pathLength.kind ℝ) (t : Quantity dura
     (speedOf s t).IsQuotient speed_quot_pathLength_duration s t := rfl
 
 /-- A plane angle built as arc length per radius — classified as a plane angle **by
-construction** (and dimensionless by `planeAngle_dim_from_arc_over_radius`). -/
+construction** (dimension one under the SI relation, `planeAngle_dim_from_arc_over_radius`). -/
 noncomputable def planeAngleOf
     (s : Quantity pathLength.kind ℝ) (r : Quantity radius.kind ℝ) :
     Quantity planeAngle.kind ℝ :=

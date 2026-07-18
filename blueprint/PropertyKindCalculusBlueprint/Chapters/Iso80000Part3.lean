@@ -14,6 +14,9 @@ import PropertyKindCalculus.Iso80000.Part3.AreaClassification
 import PropertyKindCalculus.Iso80000.Part3.VolumeElement
 import PropertyKindCalculus.Iso80000.Part3.DefiningRelations
 import PropertyKindCalculusBlueprint.ItemIndex
+-- The plane-angle / radian-vs-steradian nodes engage the live metrology debate over
+-- whether angle should have its own dimension, so this chapter cites those sources.
+import PropertyKindCalculusBlueprint.References
 
 open Verso.Genre
 open Verso.Genre.Manual
@@ -273,8 +276,13 @@ b.dim ∧ a.dim = 1`, witnessed by `⟨planeAngle, solidAngle, …⟩` with
 :::theorem "thm_part3_radian_steradian" (parent := "iso80000_part3_collision") (lean := "PropertyKindCalculus.Iso80000.Part3.radian_steradian_not_commensurable") (tags := "proved") (effort := "small")
 *A radian is not a steradian, though both are dimension one.* The SI units of plane and
 solid angle are not commensurable, because their kinds differ — a type-level fact the
-dimension cannot see. The hertz and the radian-per-second are separated the same way
-(both `T⁻¹`). Uses {uses "def_metrologicalUnit"}[metrological units].
+dimension cannot see. This is exactly the separation the angle-reform literature seeks to
+install _in the dimension layer_ — Leonard
+{Manual.citep leonard_dimensionally_consistent_treatment_of_angle_and_solid_angle}[]
+would give angle its own dimension and make solid angle its square — whereas PKC secures
+it _at the kind layer_, so it holds whether or not the SI ever assigns angle a dimension.
+The hertz and the radian-per-second are separated the same way (both `T⁻¹`). Uses
+{uses "def_metrologicalUnit"}[metrological units].
 :::
 
 :::proof "thm_part3_radian_steradian"
@@ -479,11 +487,16 @@ certificate, instantiable at the quantity level.
 :::
 
 :::theorem "thm_part3_plane_angle_dimensionless" (parent := "iso80000_part3_relations") (lean := "PropertyKindCalculus.Iso80000.Part3.DefiningRelations.planeAngle_dim_from_arc_over_radius") (tags := "proved") (effort := "small")
-*A plane angle is dimension one because it is a ratio of two lengths.* From the remark
-`α = s/r` (arc over radius), the lengths cancel and the dimension is _computed_ to be
-one — not stipulated. Yet plane angle remains a distinct kind from every other
-dimension-one quantity (the collision capstone above). Uses {uses "def_dim"}[the
-dimension map].
+*Under the SI's `α = s/r`, a plane angle computes to dimension one.* Taking arc and
+radius as plain lengths, the remark `α = s/r` cancels the dimension — a checked
+computation that reproduces the _current SI convention_, not one that settles it. That
+the relation _forces_ dimensionlessness is exactly what the metrology reform disputes:
+Quincey, Mohr and Phillips {Manual.citep quincey_angles_neither_length_ratios_nor_dimensionless}[]
+argue an angle is inherently _neither_ a length ratio _nor_ dimensionless. PKC
+formalizes the standard as published and leaves the dimensional stance open — plane
+angle remains a distinct kind from every other dimension-one quantity (the collision
+capstone above), which is what keeps the radian and steradian apart whatever dimension
+the SI assigns. Uses {uses "def_dim"}[the dimension map].
 :::
 
 :::proof "thm_part3_plane_angle_dimensionless"

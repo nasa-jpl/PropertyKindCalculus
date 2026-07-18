@@ -520,9 +520,12 @@ generators, expressing e.g. Gaussian-CGS electromagnetism, natural units, or the
 Finkelstein system) — is *not specified* here. The controversy over which units are base
 is real, but in this calculus it is largely answered one layer up: a kind is invariant
 under the choice of base, and only its dimensional shadow changes. R13 captures the
-specific base/scale-spanning/derived controversy cheaply over the fixed basis; a parametric
-change-of-basis layer, if added, would be a separate, additive layer over the shared
-`Dimension`, never an edit to it.
+specific base/scale-spanning/derived controversy cheaply over the fixed basis. Expressing a
+genuinely different generating set — Gaussian-CGS's three generators, natural units, or an
+angle-augmented basis — would require making PhysLib's `Dimension` itself parametric in its
+basis, an upstream change we have filed as a PhysLib feature request
+(`github.com/leanprover-community/physlib/issues/1441`); because a kind is invariant under
+the choice of base, that change stays additive for this calculus and edits none of its results.
 
 *Value representation in the structural sense* — coordinate frames, tensor
 variance (the covariant/contravariant split), bound-versus-free vectors, and frame
