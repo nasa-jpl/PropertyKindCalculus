@@ -523,13 +523,26 @@ system) — was out of scope in an earlier draft and is now *delivered*. We made
 the former fixed five-generator type is recovered as the default instance, so no existing
 result changes. PKC then *realizes* the angle-augmented basis — PhysLib's five generators
 together with *angle* — as one instantiation among several (Gaussian-CGS, natural units,
-the four-base Finkelstein system): in it plane angle, solid angle, and a pure number are
+the four-base Finkelstein system, the seven-generator current-based ISQ of ISO/IEC 80000-1):
+in it plane angle, solid angle, and a pure number are
 dimensionally distinct (solid angle the square of plane angle, `sr = rad²`) and torque is
 energy *per angle* (so `torque ≠ energy`), the very separations the five-generator group
 cannot draw. The ISO 80000 catalogue stays faithful to the standard (SI convention, plane
 angle dimension one) in the five-generator basis and lifts into any of these along the
 injective embedding of those generators, with every kind invariant under the lift — a proved
-change-of-basis theorem. Committing the catalogue to one reformed basis would merely
+change-of-basis theorem. Not every such lift is an embedding of generators: passing to the
+current-based ISQ sends the charge generator to the *product* `I·T` (the coulomb as
+ampere-second), so it is realized not by reindexing generators but as a genuine group
+homomorphism, proved injective and hence lossless (`IsqBase.toISQ`, `toISQ_injective`). The
+catalogue turns this to account for *citation*: its kinds are dimensioned internally over
+PhysLib's charge generator, yet the item-index dimensional formulae it prints are rendered in
+the ISQ base quantity current, so a capacitance reads `M⁻¹·L⁻²·T⁴·I²` exactly as IEC 80000-6
+tabulates it rather than in the internal charge encoding. The same instantiation shows the
+mole/candela reduction to be a stance rather than a lack: the ISQ *offers* independent
+generators for amount of substance and luminous intensity, and the catalogue declines them
+(the mole stays dimension one, the candela stays power under the lift), so R13 is a modeling
+choice the change of basis preserves, not an artifact of the five-generator type. Committing
+the catalogue to one reformed basis would merely
 privilege a single contested proposal, which is exactly what the parametricity avoids. So the controversy over which
 units are base is answered on both layers: a kind is invariant under the choice of base, and
 only its dimensional shadow changes. R13 captures the specific base/scale-spanning/derived

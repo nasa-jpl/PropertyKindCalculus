@@ -128,9 +128,61 @@ theorem extend_toDimension_exponent {B' : Type} [Fintype B] [DecidableEq B']
   show (Dimension.extend f dk.dim).exponent (f b) = dk.dim.exponent b
   exact Dimension.extend_exponent_apply hf dk.dim b
 
+/-- **Re-dimension along an arbitrary map of dimensions, fixing the kind.** Unlike
+`extend` — which reindexes generators along `f : B → B'`, and so can only send a
+*generator to a generator* — this accepts any `φ : Dimension B → Dimension B'`, including a
+genuine change of basis that sends a generator to a *product* of generators (PhysLib's
+charge to the ISQ `current · time`; see `IsqBase`). The kind component is untouched, so
+kinds stay invariant under change of basis however the dimension is re-expressed
+(`mapDim_kind`) — the same invariance `extend` gives, now for a non-reindexing hom. -/
+def mapDim {B' : Type} (φ : Dimension B → Dimension B') (dk : DimensionedKind B) :
+    DimensionedKind B' :=
+  { kind := dk.kind, dim := φ dk.dim }
+
+/-- **Kinds are invariant under any re-dimensioning.** The base choice, and how the
+dimension is re-expressed, is invisible at the kind layer. -/
+@[simp] theorem mapDim_kind {B' : Type} (φ : Dimension B → Dimension B')
+    (dk : DimensionedKind B) : (dk.mapDim φ).kind = dk.kind := rfl
+
+/-- Re-dimensioning acts on the forgotten dimension exactly by `φ`. -/
+@[simp] theorem toDimension_mapDim {B' : Type} (φ : Dimension B → Dimension B')
+    (dk : DimensionedKind B) : (dk.mapDim φ).toDimension = φ dk.dim := rfl
+
 end DimensionedKind
 
-/-! ## Named dimensions
+/-! ## The canonical basis `PhyslibBase`, and its two deliberate departures from ISQ
+
+PKC fixes **`PhyslibBase`** — PhysLib's five generators length, time, mass, *charge*,
+temperature — as the catalogue's canonical basis (the default of `DimensionedKind`). This
+is deliberately *not* the seven-generator ISQ base of ISO 80000-1, and the two differences
+are of different kinds:
+
+* **Charge vs. current — a coordinate choice.** ISQ takes electric *current* `I` as base;
+  PhysLib takes *charge* `C = I·T` (the ampere-second). These span the *same* group, so the
+  choice is only a lossless, invertible change of coordinates. It is invisible to the kinds
+  and to every distinctness theorem; it surfaces only in how a dimension is *printed*. For
+  citation fidelity the catalogue's renderer re-expresses the electromagnetic axis in
+  current (`Iso80000.renderDimension`), and `IsqBase` exhibits the change of basis as a
+  genuine group homomorphism `Dimension PhyslibBase →* Dimension ISQBase` sending
+  `charge ↦ current · time` — a map a mere generator reindexing (`Dimension.extend`) cannot
+  express, since a generator goes to a *product*.
+
+* **The mole and candela reduced — a modeling stance.** ISQ carries amount of substance and
+  luminous intensity as independent base quantities. PKC does **not**: following the
+  Finkelstein–Whitehead *scale-spanning* analysis (`ScaleSpanning`, R13) the mole is a
+  human-selected dimensionless count (`Dim.amountOfSubstance = 1`) and the candela is the
+  dimension of *power* (`Dim.luminousIntensity = Dim.power`). This is a *considered choice*,
+  not a limitation forced by `PhyslibBase`: even over a basis that offers the two generators
+  (`IsqBase.ISQBase`), the catalogue declines them — the mole stays dimension one and the
+  candela stays power under the lift — and the distinctions the reduced dimension conflates
+  (the `J/mol` energies, luminous vs. radiant flux) are carried by the **kind** layer, which
+  is the whole point of this development.
+
+So the base choice lives strictly *below* the kind layer; `IsqBase` witnesses that the
+catalogue is base-agnostic (kinds invariant under the lift) while citing faithfully in the
+ISQ base quantities.
+
+## Named dimensions
 
 A handful of dimensions expressed in PhysLib's generators, enough to state the
 capstone and to exercise the dimensional algebra. -/

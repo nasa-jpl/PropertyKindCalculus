@@ -8,3 +8,4 @@ seven theorems — previously never compiled by CI — under regression.
 
 import PropertyKindCalculus.Tests.Dimension.DimensionBridges
 import PropertyKindCalculus.Tests.Dimension.AngleReform
+import PropertyKindCalculus.Tests.Dimension.IsqBase

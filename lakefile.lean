@@ -148,6 +148,7 @@ lean_lib «Dimension» where
   globs := #[
     .one `PropertyKindCalculus.Dimension,
     .one `PropertyKindCalculus.AngleReform,
+    .one `PropertyKindCalculus.IsqBase,
     .one `PropertyKindCalculus.ScaleSpanning,
     .one `PropertyKindCalculus.Interaction,
     .one `PropertyKindCalculus.Function,

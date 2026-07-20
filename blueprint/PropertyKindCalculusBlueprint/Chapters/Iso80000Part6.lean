@@ -105,8 +105,12 @@ Each catalogued kind reuses the {uses "def_dim"}[dimension functor] `dim` over P
 `Dimension`, now over the charge generator `C` (with electric current as `C·T⁻¹`), so the
 standard's dimensional facts — a capacitance is `C²·M⁻¹·L⁻²·T²`, a resistance
 `M·L²·T⁻¹·C⁻²`, a magnetic flux `M·L²·T⁻¹·C⁻¹` — are _checked computations_ rather than
-annotations. Each unit is a {uses "def_metrologicalUnit"}[metrological unit] of its kind;
-commensurability is a type-level fact, so an ampere and a volt are not interchangeable.
+annotations. The kinds are dimensioned internally over this charge generator — so the checked
+facts read in `C` (a capacitance's charge-exponent is `2`) — but the item-index tables _cite_
+each dimension in the ISQ base quantity current via the change of basis `C = I·T`, so the
+printed capacitance is `M⁻¹·L⁻²·T⁴·I²` exactly as IEC 80000-6 tabulates it. Each unit is a
+{uses "def_metrologicalUnit"}[metrological unit] of its kind; commensurability is a type-level
+fact, so an ampere and a volt are not interchangeable.
 :::
 
 :::definition "def_part6_catalogued_kind" (parent := "iso80000_part6") (lean := "PropertyKindCalculus.Iso80000.CataloguedKind")

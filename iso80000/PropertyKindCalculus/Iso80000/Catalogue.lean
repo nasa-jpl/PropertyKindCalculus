@@ -58,8 +58,17 @@ def dimKind (id : String) (dim : Dimension PhyslibBase) : DimensionedKind :=
 The blueprint item-index tables print each kind's dimension (e.g. `L⁻¹`,
 `M·L²·T⁻²`). Rather than transcribe those strings by hand — which had drifted into
 inconsistent factor orderings — they are *computed* from the PhysLib `Dimension`
-of each catalogued kind via `renderDimension`, in the canonical order
-M·L·T·C·Θ (mass, length, time, charge, temperature). Dimension one renders as `1`. -/
+of each catalogued kind via `renderDimension`.
+
+The kinds are dimensioned over PhysLib's *charge*-based `PhyslibBase`, but ISO 80000
+tabulates electromagnetic dimensions over the ISQ base quantity electric *current* `I`.
+For citation fidelity the renderer re-expresses the electromagnetic axis in current: since
+the coulomb is the ampere-second, `C = I·T`, a charge factor with exponent `q` reads as
+`Iq·Tq`, so the printed current exponent is the charge exponent and the printed time
+exponent absorbs it.
+The order is thus the ISQ order M·L·T·I·Θ (mass, length, time, current, temperature) — for
+a charge-free quantity (`I`-exponent 0) this is exactly the mechanical `M·L·T·Θ`.
+Dimension one renders as `1`. -/
 
 /-- A natural number as Unicode superscript digits, e.g. `12 ↦ "¹²"`. -/
 private def supDigits (n : Nat) : String :=
@@ -81,11 +90,16 @@ private def dimFactor (symbol : String) (q : ℚ) : Option String :=
     if q.num == 1 then some symbol else some (symbol ++ supInt q.num)
   else some (symbol ++ "^(" ++ toString q.num ++ "/" ++ toString q.den ++ ")")
 
-/-- The printed dimension expression in canonical order M·L·T·C·Θ; `1` for the
-dimensionless (unit-one) dimension. -/
+/-- The printed dimension expression in the ISQ base-quantity order M·L·T·I·Θ (mass,
+length, time, electric current, temperature); `1` for the dimensionless (unit-one)
+dimension. The electromagnetic axis is re-expressed from PhysLib's internal charge
+generator into the ISQ base quantity current via `C = I·T`: the current exponent is the
+charge exponent, and the time exponent absorbs the charge exponent. -/
 def renderDimension (d : Dimension PhyslibBase) : String :=
-  let factors := [dimFactor "M" d.mass, dimFactor "L" d.length, dimFactor "T" d.time,
-      dimFactor "C" d.charge, dimFactor "Θ" d.temperature].filterMap id
+  let currentExp := d.charge
+  let timeExp := d.time + d.charge
+  let factors := [dimFactor "M" d.mass, dimFactor "L" d.length, dimFactor "T" timeExp,
+      dimFactor "I" currentExp, dimFactor "Θ" d.temperature].filterMap id
   if factors.isEmpty then "1" else String.intercalate "·" factors
 
 /-- The printed dimension expression of a catalogued kind (see `renderDimension`). -/
