@@ -62,7 +62,7 @@ namespace IDim
 
 /-- Per time, `T⁻¹` (`s⁻¹`, `bit/s`, `Bd`, `Sh/s`) — the call, bit, transfer, modulation,
 and information rates. -/
-def perTime : Dimension := Dim.time⁻¹
+def perTime : Dimension PhyslibBase := Dim.time⁻¹
 
 end IDim
 

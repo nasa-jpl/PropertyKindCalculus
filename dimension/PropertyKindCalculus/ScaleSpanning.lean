@@ -59,7 +59,7 @@ Finkelstein–Whitehead criterion for "*not* dimensionally independent of the fo
 physical base units `{kg, m, s, A}`" specialized to the mechanical generators: a unit
 whose dimension is mechanically reducible needs neither an electromagnetic, a
 thermal, a luminous, nor a chemical base of its own. -/
-def Dimension.MechanicallyReducible (d : Dimension) : Prop :=
+def Dimension.MechanicallyReducible (d : Dimension PhyslibBase) : Prop :=
   d.charge = 0 ∧ d.temperature = 0
 
 /-- Power is mechanically reducible — the candela's reduction. -/
@@ -71,7 +71,7 @@ theorem energy_mechanicallyReducible : Dimension.MechanicallyReducible Dim.energ
   ⟨Dim.energy_charge, Dim.energy_temperature⟩
 
 /-- Dimension one is mechanically reducible — the mole's reduction. -/
-theorem one_mechanicallyReducible : Dimension.MechanicallyReducible (1 : Dimension) :=
+theorem one_mechanicallyReducible : Dimension.MechanicallyReducible (1 : Dimension PhyslibBase) :=
   ⟨Dimension.one_charge, Dimension.one_temperature⟩
 
 /-- **Electric current is *not* mechanically reducible.** The ampere carries the
@@ -125,7 +125,7 @@ structure ScaleSpanningUnit where
   /-- The metrological unit (e.g. the candela of luminous intensity). -/
   unit : MetrologicalUnit
   /-- The mechanical dimension the unit reduces to (power, energy, one). -/
-  reducesTo : Dimension
+  reducesTo : Dimension PhyslibBase
   /-- The human-selected defining coefficient (e.g. `K_cd`, `k_B`, `N_A`). -/
   coefficient : String
   /-- The coefficient's published value, a citation locator (e.g. `683 lm/W`). -/

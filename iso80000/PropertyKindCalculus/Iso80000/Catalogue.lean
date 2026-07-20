@@ -50,7 +50,7 @@ def CataloguedKind.of (ref : StandardRef) (item symbol coherentUnit : String)
   { ref := ref, item := item, symbol := symbol, coherentUnit := coherentUnit, qk := qk }
 
 /-- A ratio-scale dimensioned kind with a plain `id` and a given dimension. -/
-def dimKind (id : String) (dim : Dimension) : DimensionedKind :=
+def dimKind (id : String) (dim : Dimension PhyslibBase) : DimensionedKind :=
   { kind := { id := id, scale := .ratio }, dim := dim }
 
 /-! ## Rendering a `Dimension` to its printed expression
@@ -83,7 +83,7 @@ private def dimFactor (symbol : String) (q : ℚ) : Option String :=
 
 /-- The printed dimension expression in canonical order M·L·T·C·Θ; `1` for the
 dimensionless (unit-one) dimension. -/
-def renderDimension (d : Dimension) : String :=
+def renderDimension (d : Dimension PhyslibBase) : String :=
   let factors := [dimFactor "M" d.mass, dimFactor "L" d.length, dimFactor "T" d.time,
       dimFactor "C" d.charge, dimFactor "Θ" d.temperature].filterMap id
   if factors.isEmpty then "1" else String.intercalate "·" factors

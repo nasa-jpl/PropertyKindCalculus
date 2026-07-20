@@ -64,21 +64,21 @@ package «PropertyKindCalculus» where
 
 -- PhysLib (and, transitively, Mathlib) backs *only* the `Dimension` library
 -- below — the dimension/coherence layer that maps each kind to its physical
--- `Dimension`. Upstream PhysLib has not yet released a `v4.31.0` (its latest tag
--- and `master` are both still `v4.30.0` / Mathlib `v4.30.0`), so this stays pinned
--- at the `v4.30.0` tag. Its transitive pins — `mathlib v4.30.0` and the older
--- `aesop`/`Qq`/`doc-gen4`/`Cli` revs — are overridden: `doc-gen4` by TorchLean
--- below (required after PhysLib), and Mathlib (with `aesop`/`Qq`/`batteries`/`Cli`)
--- by the `require mathlib` kept *last* so Mathlib `v4.31.0`'s own dependency
--- versions take precedence (Lake resolves later requires over earlier ones; this
--- is also what makes `lake exe cache get` compute matching hashes). The only
--- PhysLib module this package consumes — `Physlib.Units.Dimension`, a
--- near-standalone file over `Mathlib.Analysis.Normed.Field.Lemmas` — compiles
--- unchanged under Mathlib `v4.31.0`. Bump to a proper `v4.31.0` tag once upstream
--- ships one.
+-- `Dimension`. This package's dimension layer is *parametric in the base-dimension
+-- basis*, which requires the parametric `Dimension B` API: the author's own
+-- contribution to PhysLib (feature request issue #1441, implemented in PR #1447),
+-- still under review upstream. Until it merges, we pin to the contribution branch
+-- `parametric-dimension` on the author's fork; the exact commit is recorded in
+-- `lake-manifest.json`, so the build is reproducible even though the branch tracks
+-- review rebases. That branch carries PhysLib's `v4.32.0` toolchain bump, so it
+-- matches this package's `leanprover/lean4:v4.32.0` and the `require mathlib` at
+-- `v4.32.0` kept *last* below (Lake resolves later requires over earlier ones, so
+-- Mathlib `v4.32.0`'s own dependency versions take precedence and `lake exe cache
+-- get` computes matching hashes). Repoint to an upstream `v4.32.0`+ tag once #1447
+-- merges.
 require «Physlib» from git
-  "https://github.com/leanprover-community/physlib.git" @
-  "v4.31.0"
+  "https://github.com/NicolasRouquette/physlib.git" @
+  "parametric-dimension"
 
 -- TorchLean (this work's fork, `combined` branch) backs *only* the `Torch` library
 -- below: the concrete IEEE-754 binary32 carriers (`FP32` rounding spec,
@@ -147,6 +147,7 @@ lean_lib «Dimension» where
   srcDir := "dimension"
   globs := #[
     .one `PropertyKindCalculus.Dimension,
+    .one `PropertyKindCalculus.AngleReform,
     .one `PropertyKindCalculus.ScaleSpanning,
     .one `PropertyKindCalculus.Interaction,
     .one `PropertyKindCalculus.Function,

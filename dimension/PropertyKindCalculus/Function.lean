@@ -134,13 +134,10 @@ This is the certificate the core `Quantity.sqrt` carries, here discharged in the
 `Dimension` group. -/
 theorem sqrt_area_coherent : DimPowerKind (1 / 2) areaK lengthKind := by
   show lengthKind.dim = areaK.dim ^ (1 / 2 : Rat)
-  ext <;>
-    simp only [lengthKind, areaK, Dim.length, Dim.area, Dimension.length_mul,
-      Dimension.time_mul, Dimension.mass_mul, Dimension.charge_mul,
-      Dimension.temperature_mul, Dimension.L𝓭_length, Dimension.L𝓭_time,
-      Dimension.L𝓭_mass, Dimension.L𝓭_charge, Dimension.L𝓭_temperature,
-      HPow.hPow, Pow.pow] <;>
-    norm_num
+  ext b
+  simp only [lengthKind, areaK, Dim.length, Dim.area, Dimension.qpow_exponent,
+    Dimension.mul_exponent]
+  ring
 
 /-! ## Family C — transcendentals are dimension-one in, dimension-one out
 

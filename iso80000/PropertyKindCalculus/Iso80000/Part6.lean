@@ -95,65 +95,65 @@ relative permittivity and relative permeability — provable by reflexivity. -/
 namespace EDim
 
 /-- Energy and work, `M·L²·T⁻²` (force times length). -/
-def energy : Dimension := Dim.mass * Dim.area / (Dim.time * Dim.time)
+def energy : Dimension PhyslibBase := Dim.mass * Dim.area / (Dim.time * Dim.time)
 /-- Power, `M·L²·T⁻³` (energy per time). -/
-def power : Dimension := energy / Dim.time
+def power : Dimension PhyslibBase := energy / Dim.time
 /-- Volume, `L³`. -/
-def volume : Dimension := Dim.area * Dim.length
+def volume : Dimension PhyslibBase := Dim.area * Dim.length
 /-- Electric charge density, `C·L⁻³` (charge per volume). -/
-def chargeDensity : Dimension := Dim.charge / volume
+def chargeDensity : Dimension PhyslibBase := Dim.charge / volume
 /-- Surface density of charge, electric polarization, electric flux density, `C·L⁻²`
 (charge per area). -/
-def surfaceChargeDensity : Dimension := Dim.charge / Dim.area
+def surfaceChargeDensity : Dimension PhyslibBase := Dim.charge / Dim.area
 /-- Linear density of charge, `C·L⁻¹` (charge per length). -/
-def linearChargeDensity : Dimension := Dim.charge / Dim.length
+def linearChargeDensity : Dimension PhyslibBase := Dim.charge / Dim.length
 /-- Electric dipole moment, `C·L` (charge times length). -/
-def electricDipoleMoment : Dimension := Dim.charge * Dim.length
+def electricDipoleMoment : Dimension PhyslibBase := Dim.charge * Dim.length
 /-- Electric current density, `C·T⁻¹·L⁻²` (current per area). -/
-def currentDensity : Dimension := Dim.current / Dim.area
+def currentDensity : Dimension PhyslibBase := Dim.current / Dim.area
 /-- Linear electric current density, `C·T⁻¹·L⁻¹` (current per length). -/
-def linearCurrentDensity : Dimension := Dim.current / Dim.length
+def linearCurrentDensity : Dimension PhyslibBase := Dim.current / Dim.length
 /-- Electric potential, potential difference, voltage, `M·L²·T⁻²·C⁻¹` (energy per
 charge). -/
-def voltage : Dimension := energy / Dim.charge
+def voltage : Dimension PhyslibBase := energy / Dim.charge
 /-- Electric field strength, `M·L·T⁻²·C⁻¹` (voltage per length). -/
-def electricFieldStrength : Dimension := voltage / Dim.length
+def electricFieldStrength : Dimension PhyslibBase := voltage / Dim.length
 /-- Capacitance, `C²·M⁻¹·L⁻²·T²` (charge per voltage; the farad). -/
-def capacitance : Dimension := Dim.charge * Dim.charge / energy
+def capacitance : Dimension PhyslibBase := Dim.charge * Dim.charge / energy
 /-- Permittivity, `C²·M⁻¹·L⁻³·T²` (capacitance per length; the farad per metre). -/
-def permittivity : Dimension := capacitance / Dim.length
+def permittivity : Dimension PhyslibBase := capacitance / Dim.length
 /-- Magnetic flux density, `M·T⁻¹·C⁻¹` (voltage-second per area; the tesla). -/
-def magneticFluxDensity : Dimension := voltage * Dim.time / Dim.area
+def magneticFluxDensity : Dimension PhyslibBase := voltage * Dim.time / Dim.area
 /-- Magnetic flux, `M·L²·T⁻¹·C⁻¹` (voltage-second; the weber). -/
-def magneticFlux : Dimension := voltage * Dim.time
+def magneticFlux : Dimension PhyslibBase := voltage * Dim.time
 /-- Magnetic moment, `C·T⁻¹·L²` (current times area). -/
-def magneticMoment : Dimension := Dim.current * Dim.area
+def magneticMoment : Dimension PhyslibBase := Dim.current * Dim.area
 /-- Magnetization, magnetic field strength, coercivity, `C·T⁻¹·L⁻¹` (current per
 length). -/
-def magneticFieldStrength : Dimension := Dim.current / Dim.length
+def magneticFieldStrength : Dimension PhyslibBase := Dim.current / Dim.length
 /-- Inductance, permeance, `M·L²·C⁻²` (flux per current; the henry). -/
-def inductance : Dimension := magneticFlux / Dim.current
+def inductance : Dimension PhyslibBase := magneticFlux / Dim.current
 /-- Permeability, `M·L·C⁻²` (inductance per length; the henry per metre). -/
-def permeability : Dimension := inductance / Dim.length
+def permeability : Dimension PhyslibBase := inductance / Dim.length
 /-- Reluctance, `M⁻¹·L⁻²·C²` (the reciprocal of inductance; the reciprocal henry). -/
-def reluctance : Dimension := inductance⁻¹
+def reluctance : Dimension PhyslibBase := inductance⁻¹
 /-- Magnetic vector potential, `M·L·T⁻¹·C⁻¹` (flux per length; the weber per metre). -/
-def magneticVectorPotential : Dimension := magneticFlux / Dim.length
+def magneticVectorPotential : Dimension PhyslibBase := magneticFlux / Dim.length
 /-- Magnetic dipole moment, `M·L³·T⁻¹·C⁻¹` (flux times length; the weber metre). -/
-def magneticDipoleMoment : Dimension := magneticFlux * Dim.length
+def magneticDipoleMoment : Dimension PhyslibBase := magneticFlux * Dim.length
 /-- Electromagnetic energy density, `M·L⁻¹·T⁻²` (energy per volume). -/
-def energyDensity : Dimension := energy / volume
+def energyDensity : Dimension PhyslibBase := energy / volume
 /-- Poynting vector, `M·T⁻³` (power per area). -/
-def poyntingVector : Dimension := power / Dim.area
+def poyntingVector : Dimension PhyslibBase := power / Dim.area
 /-- Resistance, impedance, `M·L²·T⁻¹·C⁻²` (voltage per current; the ohm). -/
-def resistance : Dimension := voltage / Dim.current
+def resistance : Dimension PhyslibBase := voltage / Dim.current
 /-- Conductance, admittance, `M⁻¹·L⁻²·T·C²` (the reciprocal of resistance; the
 siemens). -/
-def conductance : Dimension := resistance⁻¹
+def conductance : Dimension PhyslibBase := resistance⁻¹
 /-- Conductivity, `M⁻¹·L⁻³·T·C²` (conductance per length; the siemens per metre). -/
-def conductivity : Dimension := conductance / Dim.length
+def conductivity : Dimension PhyslibBase := conductance / Dim.length
 /-- Resistivity, `M·L³·T⁻¹·C⁻²` (resistance times length; the ohm metre). -/
-def resistivity : Dimension := resistance * Dim.length
+def resistivity : Dimension PhyslibBase := resistance * Dim.length
 
 end EDim
 

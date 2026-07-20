@@ -112,11 +112,9 @@ theorem power_dim_from_voltage_current :
     power.dim = voltage.dim * electricCurrent.dim := by
   show EDim.power = EDim.voltage * Dim.current
   rw [EDim.power, EDim.voltage, Dim.current_eq]
-  apply Dimension.ext <;>
-    simp only [Dimension.div_length, Dimension.length_mul, Dimension.div_time,
-      Dimension.time_mul, Dimension.div_mass, Dimension.mass_mul, Dimension.div_charge,
-      Dimension.charge_mul, Dimension.div_temperature, Dimension.temperature_mul] <;>
-    ring
+  ext b
+  simp only [Dimension.div_exponent, Dimension.mul_exponent]
+  ring
 
 /-- **The power factor is dimension one because it is a ratio of two powers.** Active and
 apparent power are both `M·L²·T⁻³`, so `λ = P/S` cancels the dimension — the power

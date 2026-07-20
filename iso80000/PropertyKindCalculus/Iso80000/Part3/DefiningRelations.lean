@@ -96,7 +96,7 @@ plane angle nonetheless stays a distinct *kind* from every other dimension-one q
 steradian non-interchangeable, whatever dimension the SI ultimately assigns. -/
 theorem planeAngle_dim_from_arc_over_radius :
     planeAngle.dim = pathLength.dim / radius.dim := by
-  show (1 : Dimension) = Dim.length / Dim.length
+  show (1 : Dimension PhyslibBase) = Dim.length / Dim.length
   exact length_div_length.symm
 
 /-! ## (3) Verified construction and certificates at the quantity level (`ℝ`)

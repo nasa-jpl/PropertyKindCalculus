@@ -97,7 +97,7 @@ end RadiationMode
 
 /-- A ratio-scale dimensioned kind individuated by its radiation mode (examination
 principle). -/
-def modeKind (id : String) (m : ExaminationPrinciple) (dim : Dimension) :
+def modeKind (id : String) (m : ExaminationPrinciple) (dim : Dimension PhyslibBase) :
     DimensionedKind :=
   { kind := { id := id, scale := .ratio, examPrinciple := some m.id }, dim := dim }
 
@@ -112,38 +112,38 @@ dimensions of their radiant partners and a molar quantity drops the mole. -/
 namespace RDim
 
 /-- Volume, `L³`. -/
-def volume : Dimension := Dim.area * Dim.length
+def volume : Dimension PhyslibBase := Dim.area * Dim.length
 /-- Radiant/luminous/photon energy, `M·L²·T⁻²` (the joule, and `lm·s` reduced). -/
-def energy : Dimension := Dim.energy
+def energy : Dimension PhyslibBase := Dim.energy
 /-- Spectral radiant energy (per wavelength), `M·L·T⁻²` (`J/nm` → `J/m`). -/
-def energyPerLength : Dimension := Dim.energy / Dim.length
+def energyPerLength : Dimension PhyslibBase := Dim.energy / Dim.length
 /-- Radiant energy density, `M·L⁻¹·T⁻²` (energy per volume, `J/m³`). -/
-def energyDensity : Dimension := Dim.energy / volume
+def energyDensity : Dimension PhyslibBase := Dim.energy / volume
 /-- Spectral radiant energy density per wavelength, `M·L⁻²·T⁻²` (`J/(m³·nm)`). -/
-def spectralEnergyDensity : Dimension := energyDensity / Dim.length
+def spectralEnergyDensity : Dimension PhyslibBase := energyDensity / Dim.length
 /-- Energy per area, `M·T⁻²` (radiant exposure `J/m²`; energy density per wavenumber). -/
-def energyPerArea : Dimension := Dim.energy / Dim.area
+def energyPerArea : Dimension PhyslibBase := Dim.energy / Dim.area
 /-- Radiant/luminous flux and intensity, `M·L²·T⁻³` (the watt, and the candela
 reduced). The steradian being dimension one, flux and intensity coincide here. -/
-def power : Dimension := Dim.power
+def power : Dimension PhyslibBase := Dim.power
 /-- Spectral radiant flux/intensity (per wavelength), `M·L·T⁻³` (`W/nm`). -/
-def powerPerLength : Dimension := Dim.power / Dim.length
+def powerPerLength : Dimension PhyslibBase := Dim.power / Dim.length
 /-- Power per area, `M·T⁻³` (radiance, irradiance, exitance; luminance, illuminance). -/
-def powerPerArea : Dimension := Dim.power / Dim.area
+def powerPerArea : Dimension PhyslibBase := Dim.power / Dim.area
 /-- Spectral power per area per wavelength, `M·L⁻¹·T⁻³` (`W/(m²·nm)`; spectral
 radiance/irradiance/exitance). -/
-def powerPerVolume : Dimension := Dim.power / volume
+def powerPerVolume : Dimension PhyslibBase := Dim.power / volume
 /-- Photon flux and intensity, `T⁻¹` (a count rate; the steradian being dimension one,
 flux and intensity coincide). -/
-def perTime : Dimension := Dim.time⁻¹
+def perTime : Dimension PhyslibBase := Dim.time⁻¹
 /-- Photon radiance, irradiance, exitance, `L⁻²·T⁻¹` (`m⁻²·s⁻¹`). -/
-def perAreaPerTime : Dimension := (Dim.area * Dim.time)⁻¹
+def perAreaPerTime : Dimension PhyslibBase := (Dim.area * Dim.time)⁻¹
 /-- Photon exposure, `L⁻²` (`m⁻²`). -/
-def perArea : Dimension := Dim.area⁻¹
+def perArea : Dimension PhyslibBase := Dim.area⁻¹
 /-- Linear attenuation/absorption coefficient, `L⁻¹` (`m⁻¹`). -/
-def perLength : Dimension := Dim.length⁻¹
+def perLength : Dimension PhyslibBase := Dim.length⁻¹
 /-- Mass attenuation/absorption coefficient, `M⁻¹·L²` (`kg⁻¹·m²`). -/
-def massAttenuation : Dimension := Dim.area / Dim.mass
+def massAttenuation : Dimension PhyslibBase := Dim.area / Dim.mass
 
 end RDim
 

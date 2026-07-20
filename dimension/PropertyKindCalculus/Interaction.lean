@@ -93,7 +93,7 @@ namespace Dim
 
 /-- Torque / moment, `M·L²·T⁻²` — force about a lever arm: the *same dimension* as
 `energy`, a *different* kind. -/
-def torque : Dimension := force * length
+def torque : Dimension PhyslibBase := force * length
 
 /-- Torque and energy share a dimension — the dimension layer cannot separate them.
 The interaction algebra is what keeps them distinct. -/

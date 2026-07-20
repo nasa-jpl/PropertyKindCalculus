@@ -83,7 +83,7 @@ the two doses collide on one dimension, made a checked computation. They nonethe
 distinct kinds: the gray and the sievert (see `Part10.iso80000_10_dim_collision`). -/
 theorem doseEquivalent_dim_from_dose_quality :
     doseEquivalent.dim = absorbedDose.dim * qualityFactor.dim := by
-  show NDim.specificEnergy = NDim.specificEnergy * (1 : Dimension)
+  show NDim.specificEnergy = NDim.specificEnergy * (1 : Dimension PhyslibBase)
   rw [mul_one]
 
 /-- **Mean life is the reciprocal of the decay constant's dimension** (`τ = 1/λ`, so

@@ -32,21 +32,35 @@ namespace PropertyKindCalculus
 the physical `Dimension` of its quantities. Pairing the dimension *with* the
 kind — rather than storing it on `KindOfProperty` — keeps the core spine
 Mathlib-free and matches the open-world convention (an application declares a
-dimensioned kind with a `def`, never by editing a central type). -/
-structure DimensionedKind where
+dimensioned kind with a `def`, never by editing a central type).
+
+It is **parametric in the base-dimension basis** `B`: `dim` is a PhysLib
+`Dimension B`, so a dimensioned kind can be typed over any generating set — the
+SI/PhysLib default (`PhyslibBase`), Gaussian–CGS, natural units, or an
+angle-augmented basis. The basis parameter defaults to `PhyslibBase`, so a bare
+`DimensionedKind` is the familiar five-generator instance and every existing
+declaration reads unchanged; the parametricity is exercised where a different
+basis is wanted (see `DimensionExamples`). Crucially the *kind* component does not
+mention `B` at all: re-coordinatizing the dimension into another basis leaves the
+kind fixed (`DimensionedKind.extend_kind`), the formal content of the base choice
+living strictly *below* the kind layer. -/
+structure DimensionedKind (B : Type := PhyslibBase) where
   /-- The underlying kind-of-property (the richer datum). -/
   kind : KindOfProperty
-  /-- The physical dimension of the kind's quantities (PhysLib `Dimension`). -/
-  dim : Dimension
+  /-- The physical dimension of the kind's quantities, over the base-dimension
+  basis `B` (PhysLib `Dimension B`; `B` defaults to `PhyslibBase`). -/
+  dim : Dimension B
 
 namespace DimensionedKind
 
+variable {B : Type}
+
 /-- The **forgetful functor** on objects: drop the kind identity, keep only the
 dimension. Naming it as a standalone map is what lets the central fact — that it
-is *not injective* — be stated and proved. -/
-def toDimension (dk : DimensionedKind) : Dimension := dk.dim
+is *not injective* — be stated and proved. Generic in the basis `B`. -/
+def toDimension (dk : DimensionedKind B) : Dimension B := dk.dim
 
-@[simp] theorem toDimension_eq (dk : DimensionedKind) : dk.toDimension = dk.dim := rfl
+@[simp] theorem toDimension_eq (dk : DimensionedKind B) : dk.toDimension = dk.dim := rfl
 
 /-! ## Forgetful-functor coherence
 
@@ -61,23 +75,58 @@ records the composition. -/
 /-- Provisional product of dimensioned kinds (superseded by `Interaction`'s
 `KMul`): the dimensions multiply (PhysLib `Dimension.mul`, i.e. exponents add)
 and the kind identity records the composition. Only the dimension component is
-load-bearing for the coherence laws below. -/
-def times (a b : DimensionedKind) : DimensionedKind :=
+load-bearing for the coherence laws below. Generic in the basis `B`. -/
+def times (a b : DimensionedKind B) : DimensionedKind B :=
   { kind := { id := a.kind.id ++ "·" ++ b.kind.id, scale := .ratio }
     dim := a.dim * b.dim }
 
-/-- The dimensionless unit dimensioned kind (`dim = 1`). -/
-def unitless : DimensionedKind :=
+/-- The dimensionless unit dimensioned kind (`dim = 1`), generic in the basis `B`
+(inferred from the use site; `PhyslibBase` in the catalogue). -/
+def unitless : DimensionedKind B :=
   { kind := { id := "1", scale := .ratio }, dim := 1 }
 
 /-- **Coherence (multiplicativity).** `dim` carries products to products — it is
 a homomorphism into the multiplicative `Dimension` group. -/
-@[simp] theorem toDimension_times (a b : DimensionedKind) :
+@[simp] theorem toDimension_times (a b : DimensionedKind B) :
     (a.times b).toDimension = a.toDimension * b.toDimension := rfl
 
 /-- **Coherence (unit).** `dim` carries the unit dimensioned kind to the
 dimensionless `1`. -/
-@[simp] theorem toDimension_unitless : unitless.toDimension = 1 := rfl
+@[simp] theorem toDimension_unitless : (unitless : DimensionedKind B).toDimension = 1 := rfl
+
+/-! ## Change of basis and the invariance of kinds
+
+The base-dimension basis `B` lives strictly *below* the kind layer. Re-coordinatizing
+a dimensioned kind's dimension into another basis `B'` (via PhysLib's basis-change
+map `Dimension.extend`) leaves the **kind** component untouched. This is the formal
+content of "the base choice is invisible at the layer where kinds live": the same
+kind, however its dimension is written. -/
+
+/-- **Change of basis** on a dimensioned kind: re-express its dimension over an
+extending basis `B'` along `f : B → B'`, leaving the kind identity fixed. -/
+def extend {B' : Type} [Fintype B] [DecidableEq B'] (f : B → B')
+    (dk : DimensionedKind B) : DimensionedKind B' :=
+  { kind := dk.kind, dim := Dimension.extend f dk.dim }
+
+/-- **Kinds are invariant under change of basis.** Re-coordinatizing the dimension
+does not change the kind — the base choice is invisible at the kind layer. -/
+@[simp] theorem extend_kind {B' : Type} [Fintype B] [DecidableEq B'] (f : B → B')
+    (dk : DimensionedKind B) : (dk.extend f).kind = dk.kind := rfl
+
+/-- Change of basis acts on the forgotten dimension exactly by `Dimension.extend`. -/
+@[simp] theorem toDimension_extend {B' : Type} [Fintype B] [DecidableEq B'] (f : B → B')
+    (dk : DimensionedKind B) :
+    (dk.extend f).toDimension = Dimension.extend f dk.toDimension := rfl
+
+/-- **Faithfulness of an embedding.** Along an *injective* change of basis, every
+base-dimension exponent is preserved: the dimension re-expresses without loss, so no
+distinction is created or destroyed by re-coordinatizing (only new zero exponents are
+added for the fresh generators). -/
+theorem extend_toDimension_exponent {B' : Type} [Fintype B] [DecidableEq B']
+    {f : B → B'} (hf : Function.Injective f) (dk : DimensionedKind B) (b : B) :
+    (dk.extend f).toDimension.exponent (f b) = dk.toDimension.exponent b := by
+  show (Dimension.extend f dk.dim).exponent (f b) = dk.dim.exponent b
+  exact Dimension.extend_exponent_apply hf dk.dim b
 
 end DimensionedKind
 
@@ -89,45 +138,45 @@ capstone and to exercise the dimensional algebra. -/
 namespace Dim
 
 /-- Dimensionless (dimension one). -/
-def one : Dimension := 1
+def one : Dimension PhyslibBase := 1
 /-- Length, `L`. -/
-def length : Dimension := L𝓭
+def length : Dimension PhyslibBase := L𝓭
 /-- Mass, `M`. -/
-def mass : Dimension := M𝓭
+def mass : Dimension PhyslibBase := M𝓭
 /-- Time, `T`. -/
-def time : Dimension := T𝓭
+def time : Dimension PhyslibBase := T𝓭
 /-- Area, `L²`. -/
-def area : Dimension := L𝓭 * L𝓭
+def area : Dimension PhyslibBase := L𝓭 * L𝓭
 /-- Speed, `L·T⁻¹`. -/
-def speed : Dimension := L𝓭 / T𝓭
+def speed : Dimension PhyslibBase := L𝓭 / T𝓭
 /-- Thermodynamic temperature, `Θ` — the SI base quantity ISO 80000-5
 *Thermodynamics* is built on. -/
-def temperature : Dimension := Θ𝓭
+def temperature : Dimension PhyslibBase := Θ𝓭
 /-- Electric charge, `C` (the coulomb). PhysLib's `Dimension` takes electric
 *charge* as the electromagnetic base generator; the SI base quantity electric
 current then appears as `charge · time⁻¹` (the ampere as coulomb per second), so
 `charge` is the generator IEC 80000-6 *Electromagnetism* is built on. -/
-def charge : Dimension := C𝓭
+def charge : Dimension PhyslibBase := C𝓭
 /-- Electric current, `C·T⁻¹` (the ampere, coulomb per second). IEC 80000-6 takes
 electric current as the SI base quantity; PhysLib takes charge as the generator, so
 the two presentations of the electromagnetic dimension group are isomorphic. -/
-def current : Dimension := C𝓭 / T𝓭
+def current : Dimension PhyslibBase := C𝓭 / T𝓭
 
 /-- Force, `M·L·T⁻²` (Newton's second law) — the mechanical dimension that energy and
 torque are both built from (`force · length`). Named here so the dimension/interaction
 layers and the scale-spanning reductions share one definition. -/
-def force : Dimension := M𝓭 * L𝓭 / T𝓭 / T𝓭
+def force : Dimension PhyslibBase := M𝓭 * L𝓭 / T𝓭 / T𝓭
 /-- Energy and work, `M·L²·T⁻²` — force along a displacement. This is the mechanical
 dimension the Finkelstein–Whitehead *scale-spanning* analysis (Eur. J. Phys. 46 (2025)
 035701) assigns to the **kelvin** — thermodynamic temperature read as energy per
 Boltzmann constant `k_B`. ISO 80000-7 *Light and radiation* uses it for radiant energy
 (item 7-2.1). -/
-def energy : Dimension := force * length
+def energy : Dimension PhyslibBase := force * length
 /-- Power, `M·L²·T⁻³` (energy per time). This is the mechanical dimension the
 Finkelstein–Whitehead *scale-spanning* analysis assigns to the **candela** — luminous
 intensity read as radiant power weighted by the luminous-efficacy coefficient `K_cd`
 (see `ScaleSpanning`). ISO 80000-7 uses it for radiant flux (item 7-4.1). -/
-def power : Dimension := energy / time
+def power : Dimension PhyslibBase := energy / time
 /-- **Luminous intensity, the candela — reduced to power `M·L²·T⁻³`.** PhysLib's
 `Dimension` has no luminous-intensity generator, and — following the
 Finkelstein–Whitehead *scale-spanning* analysis (and the spectral luminous efficiency
@@ -135,13 +184,13 @@ Finkelstein–Whitehead *scale-spanning* analysis (and the spectral luminous eff
 the radiant intensity it weights. The luminous quantities of ISO 80000-7 therefore
 share the dimensions of their radiometric partners; what keeps them apart is the
 {kind}, not the dimension. -/
-def luminousIntensity : Dimension := power
+def luminousIntensity : Dimension PhyslibBase := power
 /-- **Amount of substance, the mole — reduced to dimension one.** Following the
 Finkelstein–Whitehead *scale-spanning* analysis, the mole is a (human-selected)
 dimensionless count of entities (`N_A` particles), so a quantity *per mole* drops the
 mole entirely. ISO 80000-7's molar absorption coefficient (item 7-37, `m²/mol`) is
 therefore an area, `L²`. -/
-def amountOfSubstance : Dimension := one
+def amountOfSubstance : Dimension PhyslibBase := one
 
 /-- The dimensional algebra composes in the PhysLib group: speed is length over
 time. -/

@@ -94,11 +94,9 @@ theorem soundIntensity_dim_from_pressure_velocity :
   show ADim.intensity = ADim.pressure * ADim.velocity
   rw [ADim.intensity, ADim.pressure, ADim.velocity, Dim.power, Dim.energy, Dim.speed,
     Dim.force, Dim.area, Dim.length, Dim.time]
-  apply Dimension.ext <;>
-    simp only [Dimension.div_length, Dimension.length_mul, Dimension.div_time,
-      Dimension.time_mul, Dimension.div_mass, Dimension.mass_mul, Dimension.div_charge,
-      Dimension.charge_mul, Dimension.div_temperature, Dimension.temperature_mul] <;>
-    ring
+  ext b
+  simp only [Dimension.div_exponent, Dimension.mul_exponent]
+  ring
 
 /-- Characteristic impedance's dimension is sound pressure over particle velocity:
 `M·L⁻²·T⁻¹` because `Z_c = p/u`. -/

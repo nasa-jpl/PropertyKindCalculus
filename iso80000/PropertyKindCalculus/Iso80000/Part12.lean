@@ -60,31 +60,31 @@ mass `M`, length `L`, time `T`, temperature `Θ`, and charge `C`. -/
 namespace CDim
 
 /-- Volume, `L³`. -/
-def volume : Dimension := Dim.area * Dim.length
+def volume : Dimension PhyslibBase := Dim.area * Dim.length
 /-- Reciprocal length, `L⁻¹` (`m⁻¹`) — reciprocal lattice vectors and wavenumbers. -/
-def perLength : Dimension := Dim.length⁻¹
+def perLength : Dimension PhyslibBase := Dim.length⁻¹
 /-- Number density, `L⁻³` (`m⁻³`) — the carrier densities. -/
-def numberDensity : Dimension := volume⁻¹
+def numberDensity : Dimension PhyslibBase := volume⁻¹
 /-- Per time, `T⁻¹` (`s⁻¹`) — the Debye angular frequency. -/
-def perTime : Dimension := Dim.time⁻¹
+def perTime : Dimension PhyslibBase := Dim.time⁻¹
 /-- Density of vibrational states, `L⁻³·T` (`m⁻³·s`). -/
-def vibrationalDOS : Dimension := numberDensity * Dim.time
+def vibrationalDOS : Dimension PhyslibBase := numberDensity * Dim.time
 /-- Voltage, `M·L²·T⁻²·C⁻¹` (`V`) — thermoelectric voltage and Peltier coefficient. -/
-def voltage : Dimension := Dim.energy / Dim.charge
+def voltage : Dimension PhyslibBase := Dim.energy / Dim.charge
 /-- Resistivity, `M·L³·T⁻¹·C⁻²` (`Ω·m`) — the residual resistivity. -/
-def resistivity : Dimension := voltage / Dim.current * Dim.length
+def resistivity : Dimension PhyslibBase := voltage / Dim.current * Dim.length
 /-- Energy density of states, `M⁻¹·L⁻⁵·T²` (`J⁻¹·m⁻³`). -/
-def energyDOS : Dimension := (Dim.energy * volume)⁻¹
+def energyDOS : Dimension PhyslibBase := (Dim.energy * volume)⁻¹
 /-- Lorenz coefficient, `M²·L⁴·T⁻⁴·C⁻²·Θ⁻²` (`V²/K²`). -/
-def lorenz : Dimension := (voltage * voltage) / (Dim.temperature * Dim.temperature)
+def lorenz : Dimension PhyslibBase := (voltage * voltage) / (Dim.temperature * Dim.temperature)
 /-- Hall coefficient, `L³·C⁻¹` (`m³/C`). -/
-def hallCoeff : Dimension := volume / Dim.charge
+def hallCoeff : Dimension PhyslibBase := volume / Dim.charge
 /-- Seebeck and Thomson coefficient, `M·L²·T⁻²·C⁻¹·Θ⁻¹` (`V/K`). -/
-def seebeck : Dimension := voltage / Dim.temperature
+def seebeck : Dimension PhyslibBase := voltage / Dim.temperature
 /-- Richardson constant, `C·T⁻¹·L⁻²·Θ⁻²` (`A·m⁻²·K⁻²`). -/
-def richardson : Dimension := Dim.current / (Dim.area * Dim.temperature * Dim.temperature)
+def richardson : Dimension PhyslibBase := Dim.current / (Dim.area * Dim.temperature * Dim.temperature)
 /-- Magnetic flux density, `M·T⁻¹·C⁻¹` (`T`, the tesla) — the critical flux densities. -/
-def magFluxDensity : Dimension := (Dim.energy * Dim.time) / (Dim.charge * Dim.area)
+def magFluxDensity : Dimension PhyslibBase := (Dim.energy * Dim.time) / (Dim.charge * Dim.area)
 
 end CDim
 

@@ -43,7 +43,7 @@ example : permittivity.kind ≠ reflectivity.kind := by decide
 not dimension one. -/
 example : lengthKind.toDimension ≠ vwc.toDimension := by
   intro h
-  have : (Dim.length).length = (1 : Dimension).length := congrArg Dimension.length h
+  have : (Dim.length).length = (1 : Dimension PhyslibBase).length := congrArg Dimension.length h
   simp [Dim.length] at this
 
 /-! ## The dimensional algebra computes in the PhysLib group -/
@@ -64,7 +64,7 @@ example : (lengthKind.times lengthKind).toDimension = Dim.area := rfl
 example : (lengthKind.times lengthKind).toDimension
     = lengthKind.toDimension * lengthKind.toDimension :=
   DimensionedKind.toDimension_times lengthKind lengthKind
-example : DimensionedKind.unitless.toDimension = 1 :=
+example : (DimensionedKind.unitless (B := PhyslibBase)).toDimension = 1 :=
   DimensionedKind.toDimension_unitless
 
 end PropertyKindCalculus.Examples.Dimension

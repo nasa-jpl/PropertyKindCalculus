@@ -88,43 +88,43 @@ reflexivity. -/
 namespace TDim
 
 /-- Energy, work, heat, `M·L²·T⁻²` (force times length). -/
-def energy : Dimension := Dim.mass * Dim.area / (Dim.time * Dim.time)
+def energy : Dimension PhyslibBase := Dim.mass * Dim.area / (Dim.time * Dim.time)
 /-- Power and heat flow rate, `M·L²·T⁻³` (energy per time). -/
-def power : Dimension := energy / Dim.time
+def power : Dimension PhyslibBase := energy / Dim.time
 /-- Pressure, `M·L⁻¹·T⁻²` (force per area). -/
-def pressure : Dimension := Dim.mass / (Dim.length * Dim.time * Dim.time)
+def pressure : Dimension PhyslibBase := Dim.mass / (Dim.length * Dim.time * Dim.time)
 /-- Expansion coefficient, `Θ⁻¹` (a relative change per temperature). -/
-def expansionCoefficient : Dimension := Dim.temperature⁻¹
+def expansionCoefficient : Dimension PhyslibBase := Dim.temperature⁻¹
 /-- Pressure coefficient, `M·L⁻¹·T⁻²·Θ⁻¹` (pressure per temperature). -/
-def pressureCoefficient : Dimension := pressure / Dim.temperature
+def pressureCoefficient : Dimension PhyslibBase := pressure / Dim.temperature
 /-- Compressibility, `M⁻¹·L·T²` (the reciprocal of pressure). -/
-def compressibility : Dimension := pressure⁻¹
+def compressibility : Dimension PhyslibBase := pressure⁻¹
 /-- Density of heat flow rate, `M·T⁻³` (power per area). -/
-def densityOfHeatFlowRate : Dimension := power / Dim.area
+def densityOfHeatFlowRate : Dimension PhyslibBase := power / Dim.area
 /-- Thermal conductivity, `M·L·T⁻³·Θ⁻¹` (power per length per temperature). -/
-def thermalConductivity : Dimension := power / (Dim.length * Dim.temperature)
+def thermalConductivity : Dimension PhyslibBase := power / (Dim.length * Dim.temperature)
 /-- Coefficient of heat transfer, `M·T⁻³·Θ⁻¹` (power per area per temperature). -/
-def coefficientOfHeatTransfer : Dimension := power / (Dim.area * Dim.temperature)
+def coefficientOfHeatTransfer : Dimension PhyslibBase := power / (Dim.area * Dim.temperature)
 /-- Thermal insulance, `M⁻¹·T³·Θ` (the reciprocal of the coefficient of heat
 transfer). -/
-def thermalInsulance : Dimension := coefficientOfHeatTransfer⁻¹
+def thermalInsulance : Dimension PhyslibBase := coefficientOfHeatTransfer⁻¹
 /-- Thermal resistance, `M⁻¹·L⁻²·T³·Θ` (temperature per power). -/
-def thermalResistance : Dimension := Dim.temperature / power
+def thermalResistance : Dimension PhyslibBase := Dim.temperature / power
 /-- Thermal conductance, `M·L²·T⁻³·Θ⁻¹` (power per temperature). -/
-def thermalConductance : Dimension := power / Dim.temperature
+def thermalConductance : Dimension PhyslibBase := power / Dim.temperature
 /-- Thermal diffusivity, `L²·T⁻¹` (area per time). -/
-def thermalDiffusivity : Dimension := Dim.area / Dim.time
+def thermalDiffusivity : Dimension PhyslibBase := Dim.area / Dim.time
 /-- Heat capacity and entropy, `M·L²·T⁻²·Θ⁻¹` (energy per temperature). -/
-def heatCapacity : Dimension := energy / Dim.temperature
+def heatCapacity : Dimension PhyslibBase := energy / Dim.temperature
 /-- Specific heat capacity and specific entropy, `L²·T⁻²·Θ⁻¹` (heat capacity per
 mass). -/
-def specificHeatCapacity : Dimension := heatCapacity / Dim.mass
+def specificHeatCapacity : Dimension PhyslibBase := heatCapacity / Dim.mass
 /-- Specific energy, `L²·T⁻²` (energy per mass). -/
-def specificEnergy : Dimension := energy / Dim.mass
+def specificEnergy : Dimension PhyslibBase := energy / Dim.mass
 /-- Joule-Thomson coefficient, `M⁻¹·L·T²·Θ` (temperature per pressure). -/
-def jouleThomson : Dimension := Dim.temperature / pressure
+def jouleThomson : Dimension PhyslibBase := Dim.temperature / pressure
 /-- Mass concentration, `M·L⁻³` (mass per volume). -/
-def massConcentration : Dimension := Dim.mass / (Dim.area * Dim.length)
+def massConcentration : Dimension PhyslibBase := Dim.mass / (Dim.area * Dim.length)
 
 end TDim
 

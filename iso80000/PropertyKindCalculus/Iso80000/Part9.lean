@@ -71,43 +71,43 @@ a molar energy an energy, an amount concentration a number density. -/
 namespace PDim
 
 /-- Amount of substance, the mole — reduced to dimension one (`N_A` particles). -/
-def amount : Dimension := Dim.amountOfSubstance
+def amount : Dimension PhyslibBase := Dim.amountOfSubstance
 /-- Volume, `L³` (`m³/mol` reduced to `m³`). -/
-def volume : Dimension := Dim.area * Dim.length
+def volume : Dimension PhyslibBase := Dim.area * Dim.length
 /-- Number density, `L⁻³` — particle/molecular concentration, *and* the
 amount-of-substance concentration `mol/m³` once the mole reduces. -/
-def numberDensity : Dimension := volume⁻¹
+def numberDensity : Dimension PhyslibBase := volume⁻¹
 /-- Mass concentration, `M·L⁻³` (mass per volume, `kg/m³`). -/
-def massConcentration : Dimension := Dim.mass / volume
+def massConcentration : Dimension PhyslibBase := Dim.mass / volume
 /-- Molar energy, `M·L²·T⁻²` — the energies *per mole* (`J/mol`) with the mole reduced:
 the molar internal energy, enthalpy, Helmholtz and Gibbs energies, the chemical potential,
 and the affinity all share it. -/
-def molarEnergy : Dimension := Dim.energy
+def molarEnergy : Dimension PhyslibBase := Dim.energy
 /-- Molar heat capacity, `M·L²·T⁻²·Θ⁻¹` — energy per temperature (`J/(mol·K)`), the mole
 reduced: molar heat capacity, molar entropy, and the molar gas constant share it. -/
-def molarHeatCapacity : Dimension := Dim.energy / Dim.temperature
+def molarHeatCapacity : Dimension PhyslibBase := Dim.energy / Dim.temperature
 /-- Specific gas constant, `L²·T⁻²·Θ⁻¹` — energy per mass per temperature
 (`J/(kg·K)`). -/
-def specificGasConstant : Dimension := Dim.energy / (Dim.mass * Dim.temperature)
+def specificGasConstant : Dimension PhyslibBase := Dim.energy / (Dim.mass * Dim.temperature)
 /-- Pressure, `M·L⁻¹·T⁻²` (force per area; the pascal) — partial pressure, fugacity,
 osmotic pressure. -/
-def pressure : Dimension := Dim.force / Dim.area
+def pressure : Dimension PhyslibBase := Dim.force / Dim.area
 /-- Inverse mass, `M⁻¹` — molality `mol/kg` and ionic strength, the mole reduced to a
 count per mass. -/
-def inverseMass : Dimension := Dim.mass⁻¹
+def inverseMass : Dimension PhyslibBase := Dim.mass⁻¹
 /-- Diffusion coefficient, `L²·T⁻¹` (`m²/s`). -/
-def diffusionCoefficient : Dimension := Dim.area / Dim.time
+def diffusionCoefficient : Dimension PhyslibBase := Dim.area / Dim.time
 /-- Electrolytic conductivity, `M⁻¹·L⁻³·T·C²` (`S/m`) — the reciprocal of resistivity per
 length, in the charge-based electromagnetic group. -/
-def conductivity : Dimension := ((Dim.energy / Dim.charge / Dim.current) * Dim.length)⁻¹
+def conductivity : Dimension PhyslibBase := ((Dim.energy / Dim.charge / Dim.current) * Dim.length)⁻¹
 /-- Molar conductivity, `M⁻¹·L⁻¹·T·C²` (`S·m²/mol`) — conductivity times area, the mole
 reduced. -/
-def molarConductivity : Dimension := conductivity * Dim.area
+def molarConductivity : Dimension PhyslibBase := conductivity * Dim.area
 /-- Molar optical rotatory power, `L²` (`rad·m²/mol`) — an area, the radian dimension one
 and the mole reduced. -/
-def molarRotatoryPower : Dimension := Dim.area
+def molarRotatoryPower : Dimension PhyslibBase := Dim.area
 /-- Specific optical rotatory power, `M⁻¹·L²` (`rad·m²/kg`). -/
-def specificRotatoryPower : Dimension := Dim.area / Dim.mass
+def specificRotatoryPower : Dimension PhyslibBase := Dim.area / Dim.mass
 
 end PDim
 

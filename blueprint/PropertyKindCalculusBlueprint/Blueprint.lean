@@ -515,17 +515,25 @@ typeclass rather than an axiom. What remains is extending the DAG to `×`/`÷` a
 ## Out of scope (for now)
 
 *User-specified base units* — making the dimension system parametric in the chosen base
-set (so a quantity's dimensional decomposition is computed relative to a user's choice of
-generators, expressing e.g. Gaussian-CGS electromagnetism, natural units, or the four-base
-Finkelstein system) — is *not specified* here. The controversy over which units are base
-is real, but in this calculus it is largely answered one layer up: a kind is invariant
-under the choice of base, and only its dimensional shadow changes. R13 captures the
-specific base/scale-spanning/derived controversy cheaply over the fixed basis. Expressing a
-genuinely different generating set — Gaussian-CGS's three generators, natural units, or an
-angle-augmented basis — would require making PhysLib's `Dimension` itself parametric in its
-basis, an upstream change we have filed as a PhysLib feature request
-(`github.com/leanprover-community/physlib/issues/1441`); because a kind is invariant under
-the choice of base, that change stays additive for this calculus and edits none of its results.
+set (so a quantity's dimensional decomposition is relative to a choice of generators,
+expressing e.g. Gaussian-CGS electromagnetism, natural units, or the four-base Finkelstein
+system) — was out of scope in an earlier draft and is now *delivered*. We made PhysLib's
+`Dimension` itself parametric in its basis and contributed the change upstream
+(`github.com/leanprover-community/physlib/issues/1441`, pull request 1447, under review);
+the former fixed five-generator type is recovered as the default instance, so no existing
+result changes. PKC then *realizes* the angle-augmented basis — PhysLib's five generators
+together with *angle* — as one instantiation among several (Gaussian-CGS, natural units,
+the four-base Finkelstein system): in it plane angle, solid angle, and a pure number are
+dimensionally distinct (solid angle the square of plane angle, `sr = rad²`) and torque is
+energy *per angle* (so `torque ≠ energy`), the very separations the five-generator group
+cannot draw. The ISO 80000 catalogue stays faithful to the standard (SI convention, plane
+angle dimension one) in the five-generator basis and lifts into any of these along the
+injective embedding of those generators, with every kind invariant under the lift — a proved
+change-of-basis theorem. Committing the catalogue to one reformed basis would merely
+privilege a single contested proposal, which is exactly what the parametricity avoids. So the controversy over which
+units are base is answered on both layers: a kind is invariant under the choice of base, and
+only its dimensional shadow changes. R13 captures the specific base/scale-spanning/derived
+controversy over the five-generator basis.
 
 *Value representation in the structural sense* — coordinate frames, tensor
 variance (the covariant/contravariant split), bound-versus-free vectors, and frame

@@ -61,11 +61,9 @@ theorem signalEnergy_dim_from_power_period :
     signalEnergyPerBinaryDigit.dim = carrierPower.dim * periodOfBinaryDigits.dim := by
   show Dim.energy = Dim.power * Dim.time
   rw [Dim.power, Dim.energy, Dim.force, Dim.length, Dim.time]
-  apply Dimension.ext <;>
-    simp only [Dimension.div_length, Dimension.length_mul, Dimension.div_time,
-      Dimension.time_mul, Dimension.div_mass, Dimension.mass_mul, Dimension.div_charge,
-      Dimension.charge_mul, Dimension.div_temperature, Dimension.temperature_mul] <;>
-    ring
+  ext b
+  simp only [Dimension.div_exponent, Dimension.mul_exponent]
+  ring
 
 /-- **The period of data elements is the reciprocal of the transfer rate's dimension**
 (`T = 1/r`, so `dim T = T = (T⁻¹)⁻¹`). -/

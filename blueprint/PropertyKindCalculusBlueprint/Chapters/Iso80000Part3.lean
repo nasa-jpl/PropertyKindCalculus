@@ -279,8 +279,11 @@ solid angle are not commensurable, because their kinds differ — a type-level f
 dimension cannot see. This is exactly the separation the angle-reform literature seeks to
 install _in the dimension layer_ — Leonard
 {Manual.citep leonard_dimensionally_consistent_treatment_of_angle_and_solid_angle}[]
-would give angle its own dimension and make solid angle its square — whereas PKC secures
-it _at the kind layer_, so it holds whether or not the SI ever assigns angle a dimension.
+would give angle its own dimension and make solid angle its square. PKC secures it _at the
+kind layer_ — so it holds whether or not the SI ever assigns angle a dimension — and,
+having made PhysLib's `Dimension` parametric in its basis, now realizes the reform itself
+in an angle-augmented basis where plane angle is a base dimension and solid angle its
+square.
 The hertz and the radian-per-second are separated the same way (both `T⁻¹`). Uses
 {uses "def_metrologicalUnit"}[metrological units].
 :::

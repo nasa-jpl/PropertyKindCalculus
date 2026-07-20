@@ -62,30 +62,30 @@ length `L`, and time `T`. -/
 namespace ADim
 
 /-- Volume, `L³`. -/
-def volume : Dimension := Dim.area * Dim.length
+def volume : Dimension PhyslibBase := Dim.area * Dim.length
 /-- Pressure, `M·L⁻¹·T⁻²` (force per area; the pascal). Static and sound pressure
 share it; so — the collision — does the sound energy density (energy per volume). -/
-def pressure : Dimension := Dim.force / Dim.area
+def pressure : Dimension PhyslibBase := Dim.force / Dim.area
 /-- Sound particle velocity, `L·T⁻¹` (the time-derivative of displacement). -/
-def velocity : Dimension := Dim.speed
+def velocity : Dimension PhyslibBase := Dim.speed
 /-- Sound particle acceleration, `L·T⁻²`. -/
-def acceleration : Dimension := Dim.speed / Dim.time
+def acceleration : Dimension PhyslibBase := Dim.speed / Dim.time
 /-- Volume flow rate, `L³·T⁻¹` (volume per time). -/
-def volumeFlowRate : Dimension := volume / Dim.time
+def volumeFlowRate : Dimension PhyslibBase := volume / Dim.time
 /-- Sound energy density, `M·L⁻¹·T⁻²` (energy per volume) — *equal* to `pressure`. -/
-def energyDensity : Dimension := Dim.energy / volume
+def energyDensity : Dimension PhyslibBase := Dim.energy / volume
 /-- Sound intensity, `M·T⁻³` (power per area). -/
-def intensity : Dimension := Dim.power / Dim.area
+def intensity : Dimension PhyslibBase := Dim.power / Dim.area
 /-- Sound exposure, `M²·L⁻²·T⁻³` (sound pressure squared, integrated over time —
 `Pa²·s`). -/
-def exposure : Dimension := pressure * pressure * Dim.time
+def exposure : Dimension PhyslibBase := pressure * pressure * Dim.time
 /-- Characteristic impedance of a medium, `M·L⁻²·T⁻¹` (pressure per particle velocity —
 `Pa·s/m`). -/
-def charImpedance : Dimension := pressure / velocity
+def charImpedance : Dimension PhyslibBase := pressure / velocity
 /-- Acoustic impedance, `M·L⁻⁴·T⁻¹` (pressure per volume flow rate — `Pa·s/m³`). The
 extra `L²` over the characteristic impedance is what lets the dimension tell the two
 homonymous "impedances" apart. -/
-def acousticImpedance : Dimension := pressure / volumeFlowRate
+def acousticImpedance : Dimension PhyslibBase := pressure / volumeFlowRate
 
 end ADim
 
@@ -293,11 +293,9 @@ theorem soundPressure_dim_eq_energyDensity_dim :
   show ADim.pressure = ADim.energyDensity
   rw [ADim.pressure, ADim.energyDensity, ADim.volume, Dim.energy, Dim.force, Dim.area,
     Dim.length]
-  apply Dimension.ext <;>
-    simp only [Dimension.div_length, Dimension.length_mul, Dimension.div_time,
-      Dimension.time_mul, Dimension.div_mass, Dimension.mass_mul, Dimension.div_charge,
-      Dimension.charge_mul, Dimension.div_temperature, Dimension.temperature_mul] <;>
-    ring
+  ext b
+  simp only [Dimension.div_exponent, Dimension.mul_exponent]
+  ring
 
 /-- Static pressure is not sound pressure, though both are `M·L⁻¹·T⁻²`. -/
 theorem staticPressure_ne_soundPressure : staticPressure.kind ≠ soundPressure.kind := by
