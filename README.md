@@ -237,8 +237,43 @@ Status: ✅ done · 🚧 in progress · ⬜ planned
   `buildNativeBackendLib` slot, compile, validate against the fp64 oracle, and measure achieved
   throughput / arithmetic intensity against the eager path; likewise override `CudaT.scaledProdExp` with
   a single fused device kernel under `-K cuda`.
-- ⬜ Apply the backend to the deployed SMAP–NISAR fit in the downstream application; optional nvrtc
-  runtime kernel specialization per tile shape.
+- ⬜ Apply the backend to the deployed SMAP–NISAR kernels in the downstream application — and deploy
+  **both** Stage-3 CLIs side by side, because the A/B is the point. Three Stage-3 methods exist, and
+  the distinction must stay sharp:
+  1. **Table lookup** (operational `r_lut.py` / SMM `kernel.r_lut`): nearest clay+angle node, linear
+     interp along SM — a *gather*. `retrieveSmFromR` is host-scalar (`Array Float` in, `Option Float`
+     out): there is no carrier parameter to instantiate, so on the tape/CUDA carrier it is not merely
+     slow, it is **inexpressible** (`NumCarrier` has no indexing) and its GPU column is structurally
+     empty. To be fair: the GPU hardware gathers fine (texture/L2), and TorchLean's eager engine even
+     exposes `gather*` ops — the exclusion is the *verified write-once vocabulary's*, by design. So
+     deploy the LUT twice, once per meaning of "runs":
+     - `tile_retrieve_lut` (CPU): a small host CLI over `kernel.r_lut` — per-pixel scalar loop over
+       precomputed nearest-angle slices; fills the CPU wall-time cell. (Today only the demo-scale
+       `r_lut_example` exists: one slice + monotonicity certificate + QC guard.)
+     - `tile_retrieve_lut_eager` (GPU): an **eager-tensor port** written directly against TorchLean
+       `gather*` — slice table uploaded as a tensor, nearest-node by `round` (the grids are uniform),
+       the SM bracket by a fixed 7-step bisection of gathers, then lerp. This is the *deliberately
+       deficient* baseline, and its deficiencies are the point of comparison: it runs and can be
+       timed, but it records **no tape** (gather has no tape node, so the AI recorders are blind to
+       it), compiles to **no megakernel**, and sits **outside the verified single-source story** — a
+       second, hand-written implementation with no erasure/parity theorem connecting it to anything
+       proven, exactly the artifact class the calculus exists to eliminate. And it still carries the
+       LUT's accuracy bias.
+  2. **Equations, iterated** (`tile_retrieve`): 12 projected-Newton steps on the same physics
+     (~36 forward evals/px) — fixed trip count, hence recordable; the ×12 body measured above.
+  3. **Equations, solved** (`tile_retrieve_reflectivity` / SMM `kernel.retrieve_analytic`,
+     `smOfReflectivityHH`): closed-form Fresnel-HH + Mironov root formulas, 8 unrolled loss-coupling
+     sweeps, ~2 forward-evals/px.
+
+  All the CLIs share one I/O + flags/QC contract (2 vs 3 already validated NaN-mask-identical on
+  synthetic tiles), so outputs diff directly. CPU compares all three (closed form already 18.5 ms vs
+  Newton 28.3 ms per 160×160 tile; LUT wall-time still unmeasured in Lean); GPU compares 2 vs 3
+  *inside* the verified pipeline, with `tile_retrieve_lut_eager` alongside as the out-of-framework
+  baseline — the LUT's absence *from the verified column* is the SMM textbook Ch06 “was the look-up
+  table an accelerator?” verdict (which also
+  measures the LUT's ~6e-3 m³/m³ angle-quantization bias vs 2e-8 for the closed form, so the
+  performance table should sit beside the accuracy one). Record (3) à la `examples.tile_retrieve_ai`,
+  codegen both equation kernels, measure. Optional nvrtc runtime kernel specialization per tile shape.
 
 ## References
 
