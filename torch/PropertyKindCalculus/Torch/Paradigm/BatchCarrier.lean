@@ -65,6 +65,18 @@ instance : BatchCarrier CudaT where
   liveSize     := fun t => Buffer.size t.buf
   release      := fun t => Buffer.release t.buf
 
+/-- **Fused kernels** for a batched carrier (Layer 1) — bit-exact single-op replacements for hot
+composed sub-expressions. Kept separate from `BatchCarrier` (general marshaling) so the fit can
+request a fused op where the carrier provides one and fall back to the composed form elsewhere. -/
+class FusedAtten (C : Shape → Type) where
+  /-- The AVS vegetation attenuation `exp(−2·b·ndvi)` in one op. -/
+  atten : ∀ {s : Shape}, C s → C s → C s
+
+/-- `CudaT`: the native fused `Buffer.atten` (device kernel on the GPU build, CPU-stub twin
+otherwise), bit-exact to the composed `exp((0−2)·b·ndvi)`. -/
+instance : FusedAtten CudaT where
+  atten := fun b ndvi => ⟨Buffer.atten b.buf ndvi.buf⟩
+
 namespace BatchCarrier
 
 /-- Force the CPU-stub's one-time lazy init (external-class registration + the
