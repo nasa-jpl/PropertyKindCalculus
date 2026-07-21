@@ -65,21 +65,31 @@ instance : BatchCarrier CudaT where
   liveSize     := fun t => Buffer.size t.buf
   release      := fun t => Buffer.release t.buf
 
-/-- **Fused elementwise ops** for a batched carrier (Layer 1) — bit-exact single-op replacements for
-hot composed sub-expressions, requested where a carrier provides a fused kernel and composed from the
-`NumCarrier` ops elsewhere. Kept separate from `BatchCarrier` (general marshaling), and **domain-
-neutral**: a soil-moisture two-way vegetation attenuation `exp(−2·b·ndvi)` is `scaledExp (−2) (b·ndvi)`,
+/-- **Fused forms** for a batched carrier (Layer 1) — a small, extensible family of *bit-exact
+single-op replacements* for hot composed sub-expressions. A carrier-parametric `[NumCarrier α]` model
+is a composition of primitive ops; where one composed shape is hot, a carrier can offer a **fused
+form** it realizes as one device kernel (bit-identical to the composition, so it is a *refinement* of
+the composed spec, not an approximation), and the model falls back to the plain `NumCarrier`
+composition where no fused form is provided. This is the *targeted* companion to the general megakernel
+codegen (`paradigm.tape_codegen`), which fuses the *whole* recorded model rather than one named shape.
+
+Kept separate from `BatchCarrier` (general marshaling), **domain-neutral**, and **extensible**:
+`scaledProdExp` (`exp(c·x·y)`) is the first form; the same pattern admits more as hot paths warrant —
+e.g. `exp(a + c·x)` (affine exponent: Arrhenius, log-linear), `exp(−γ·x²)` (Gaussian / RBF),
+`logSumExp`, `rsqrt`. A soil-moisture attenuation `exp(−2·b·ndvi)` is `scaledProdExp (−2) b ndvi`,
 defined in the downstream science model (soil-moisture-model), not here. -/
 class FusedExp (C : Shape → Type) where
-  /-- The scaled exponential `exp(c · x)` in one op — e.g. a Beer–Lambert extinction `exp(−κ·x)`. -/
-  scaledExp : ∀ {s : Shape}, Float → C s → C s
+  /-- The scaled product exponential `exp(c · x · y)` (left-associated) in one op — e.g. a Beer–Lambert
+  two-way extinction `exp(−2·κ·ℓ)`. -/
+  scaledProdExp : ∀ {s : Shape}, Float → C s → C s → C s
 
-/-- `CudaT`'s scaled exponential, via the portable `CudaT.scaledExp` (`exp(c·x)` composed from the
-dual-backend device kernels): **one instance for both** the CPU-stub (`lake build`) and GPU (`-K cuda`)
-builds, naming no CUDA-only symbol so the `Torch` library builds green without a GPU. A `-K cuda` /
-deploy build may override `CudaT.scaledExp` with a single fused device kernel, a bit-exact drop-in. -/
+/-- `CudaT`'s scaled product exponential, via the portable `CudaT.scaledProdExp` (`exp(c·x·y)` composed
+from the dual-backend device kernels): **one instance for both** the CPU-stub (`lake build`) and GPU
+(`-K cuda`) builds, naming no CUDA-only symbol so the `Torch` library builds green without a GPU. A
+`-K cuda` / deploy build may override `CudaT.scaledProdExp` with a single fused device kernel, a
+bit-exact drop-in. -/
 instance : FusedExp CudaT where
-  scaledExp := fun c x => CudaT.scaledExp c x
+  scaledProdExp := fun c x y => CudaT.scaledProdExp c x y
 
 namespace BatchCarrier
 

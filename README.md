@@ -186,11 +186,15 @@ Status: ✅ done · 🚧 in progress · ⬜ planned
   so the `Torch` library builds green CPU-side (`lake build Torch`). The old `FusedAtten` class named a
   soil-moisture `exp(−2·b·ndvi)` device kernel present only in the CUDA/deploy fork, so the module — and
   hence the whole `Torch` lib — did not compile in the default config *and* tied PKC to the
-  soil-moisture domain. It is now the domain-neutral **`FusedExp`** class with a single general primitive
-  `scaledExp c x = exp(c·x)`, realized by a portable `CudaT.scaledExp` (composed from the dual-backend
-  `Buffer` kernels), **one instance for both** the CPU-stub and GPU (`-K cuda`) builds, with a clean seam
-  for a `-K cuda` single-fused-kernel override. The soil-moisture attenuation is just
-  `scaledExp (−2) (b·ndvi)`, defined downstream in the science model — not in PKC. This also unblocked
+  soil-moisture domain. It is now the domain-neutral **`FusedExp`** class of _fused forms_ — bit-exact
+  single-op refinements of hot composed sub-expressions — with a first primitive
+  `scaledProdExp c x y = exp(c·x·y)`, realized by a portable `CudaT.scaledProdExp` (composed from the
+  dual-backend `Buffer` kernels), **one instance for both** the CPU-stub and GPU (`-K cuda`) builds, with
+  a clean seam for a `-K cuda` single-fused-kernel override. The class is extensible — further forms
+  (`exp(a+c·x)`, `exp(−γ·x²)`, `logSumExp`, …) drop in as hot paths warrant — and the megakernel codegen
+  is its general counterpart (it fuses the *whole* model, not one named shape). The soil-moisture
+  attenuation is just `scaledProdExp (−2) b ndvi` (a bit-exact twin of the composed `attenuation`),
+  defined downstream in the science model — not in PKC. This also unblocked
   the `BatchCarrier (TapeBuilder)` recording instance (`Paradigm.TapeBatchCarrier`) the step demo uses.
   (A separate stale import — `Torch.Fp32`'s `BridgeFP32.Ops`, renamed in TorchLean 4.32 — was fixed in
   the same pass so the full lib is green.)
@@ -201,8 +205,8 @@ Status: ✅ done · 🚧 in progress · ⬜ planned
   plus a `cseCompact` value-preservation theorem, closing tape → generated-kernel.
 - ⬜ GPU landing (gated): wire the generated `.cu` through the lakefile `extern_lib` /
   `buildNativeBackendLib` slot, compile, validate against the fp64 oracle, and measure achieved
-  throughput / arithmetic intensity against the eager path; likewise override `CudaT.scaledExp` with a
-  single fused device kernel under `-K cuda`.
+  throughput / arithmetic intensity against the eager path; likewise override `CudaT.scaledProdExp` with
+  a single fused device kernel under `-K cuda`.
 - ⬜ Apply the backend to the deployed SMAP–NISAR fit in the downstream application; optional nvrtc
   runtime kernel specialization per tile shape.
 

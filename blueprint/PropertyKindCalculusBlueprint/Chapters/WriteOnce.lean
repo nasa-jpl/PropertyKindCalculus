@@ -226,6 +226,34 @@ device's roofline (for the SMAP–NISAR AVS fit, an intensity of roughly 0.17 ag
 13.75, an ~80× gap). The device spends its time moving buffers, not computing. This is the current
 production GPU path.
 
+## Fused forms — a targeted middle ground
+
+Between dispatching every operation eagerly and compiling the whole model there is a targeted lever: a
+_fused form_. On the eager carrier a single composed sub-expression of the model — say a two-way
+attenuation `exp(c · x · y)` — is several kernel launches and as many DRAM round-trips, one per
+operation. A fused form replaces that one recurring shape with a single kernel the carrier provides
+directly, computing the composition in one pass with its intermediates in registers. Crucially the
+fused form is a _refinement_ of the composition, not an approximation of it: it is required to be
+bit-identical to the `NumCarrier` expression it stands in for — same operations, same association — so
+substituting it changes only _how fast_ the shape is computed, never _what_ it computes. Where a carrier
+offers no fused form for a shape, the model simply falls back to the plain composition; the write-once
+source is unchanged either way.
+
+This lever is _domain-neutral_ and _extensible_. The forms are named by their mathematical shape, not by
+any application: the first is the scaled product exponential `exp(c · x · y)`, of which a soil-moisture
+vegetation attenuation `exp(−2 · b · ndvi)` and a Beer–Lambert two-way extinction `exp(−2 · κ · ℓ)` are
+instances — the domain reading lives downstream, in the science model that supplies the coefficient.
+Further forms — an affine exponent `exp(a + c · x)` (Arrhenius, log-linear models), a Gaussian
+`exp(−γ · x²)` (radial-basis kernels), a numerically-stable `logSumExp`, a reciprocal square root — drop
+in the same way, each earned by a specific hot path rather than added speculatively.
+
+A fused form is the _special case_ of the general fusion the next strategy performs. The megakernel
+compiles the _whole_ model into one kernel; a fused form hand-collapses _one named shape_ within an
+otherwise eager execution. It is the right tool when a single sub-expression dominates and the rest of
+the model is content to run eagerly, or as the concrete kernel a compiled path targets for that shape.
+The same discipline governs both: a fused form is trusted because it is a refinement of its composed
+spec, exactly as the megakernel is trusted because it is proved faithful to the recorded model.
+
 ## GPU, megakernel-compiled — Lean → recorded IR → CUDA source
 
 The remaining headroom is recovered by _compiling_ the model rather than dispatching it
