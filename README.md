@@ -115,6 +115,62 @@ file — `ci-pages.sh` post-processes `html-multi` so chapter navigation works o
 http.server 8000 -d "$PWD/_out/blueprint/html-multi"`). See
 [`blueprint/README.md`](blueprint/README.md) for details.
 
+## Go fast, automatically — deployment and the megakernel backend
+
+The *go fast, automatically* half of the discipline (the deployment-spectrum section of the
+*Write Once, Correctly* blueprint chapter) is realized by instantiating **one** carrier-parametric
+`[NumCarrier α]` model at different carriers — moving along the spectrum is *choosing a carrier, not
+rewriting the model*:
+
+- **CPU, single-threaded** (`α := Float`) — the universal baseline and the per-pixel *oracle*; runs
+  any science model, including ones whose I/O–compute interleaving defeats parallelism.
+- **CPU, multi-threaded** — coarse-grained Lean-`Task` sharding over the pixel axis (`runSharded`);
+  needs a model with good arithmetic intensity *and* independent work-items.
+- **GPU, eager** (`α := CudaT`) — one pre-compiled CUDA kernel per operation, dispatched by FFI. This
+  is *not* an IR interpreted on the GPU and involves no IR; it is eager, operation-at-a-time launch,
+  so every intermediate round-trips through DRAM → *memory-bound* (arithmetic intensity ≈ 0.17 vs an
+  ideal ≈ 13.75 for the AVS fit). The current production GPU path.
+- **GPU, megakernel-compiled** — record the branchless model at the tape carrier → CSE its distinct-op
+  DAG → emit one fused CUDA `__global__` kernel (one thread/pixel, the whole model in registers, DRAM
+  touched only for inputs/outputs). A genuine *ahead-of-time* compilation Lean → recorded IR → `.cu`,
+  *not* an interpreter; *compute-bound*, approaching the roofline. Needs a model with good AI
+  properties (branchless — guaranteed by `NumCarrier` — and register-fittable).
+
+The **megakernel codegen backend** lives in the `Torch` library and is verified:
+
+- `PropertyKindCalculus.Torch.Paradigm.TapeCodegen` — generic `Tape → CUDA`/C-stub codegen, a `Float`
+  reference interpreter (the generated kernel's semantics *and* the CPU bit-exact validator), and
+  arithmetic-intensity accounting.
+- `PropertyKindCalculus.Examples.TapeCodegenDemo` — the AVS Stage-2 residual + 4 Jacobian columns
+  recorded, CSE'd to a 28-node DAG (18 ops), codegen'd, and `#guard`'d **bit-identical** to the `Float`
+  source with no CUDA toolchain.
+- `PropertyKindCalculus.Examples.TapeCodegenProof` — recorder faithfulness for **all** inputs
+  (6 sorry-free theorems; axioms `[propext, Classical.choice, Quot.sound]`).
+
+Compile the emitted kernel with `nvcc --fmad=false -prec-div=true -prec-sqrt=true` (no FMA-contraction,
+no re-association) to stay bit-identical to the eager path — the speedup is pure memory-traffic
+elimination, orthogonal to the numerics.
+
+### Follow-ons
+
+Status: ✅ done · 🚧 in progress · ⬜ planned
+
+- ✅ Generic `Tape → CUDA` megakernel codegen (+ portable C-stub twin) and AI accounting.
+- ✅ AVS residual/Jacobian recorded → CSE DAG → codegen → CPU bit-exact `#guard` (`TapeCodegenDemo`).
+- ✅ Recorder faithfulness proved for all inputs, axiom-audited (`TapeCodegenProof`).
+- ⬜ Record the full trust-region **`lmStep`** (weighted normal equations + `solveSPD4` Cholesky) — needs
+  a `BatchCarrier (TapeBuilder)` `const` instance for the loop constants — for the *real* whole-fit
+  op-count and arithmetic intensity (the megakernel wraps one recorded step in a fixed device-side
+  iteration loop, keeping θ in registers).
+- ⬜ Extend the proof end to end: parametric `evalTape`/`cExpr` rendering faithfulness over all inputs,
+  plus a `cseCompact` value-preservation theorem, closing tape → generated-kernel.
+- ⬜ GPU landing (gated): wire the generated `.cu` through the lakefile `extern_lib` /
+  `buildNativeBackendLib` slot (the hand-written `Buffer.atten` fused kernel is the precedent),
+  compile, validate against the fp64 oracle, and measure achieved throughput / arithmetic intensity
+  against the eager path.
+- ⬜ Apply the backend to the deployed SMAP–NISAR fit in the downstream application; optional nvrtc
+  runtime kernel specialization per tile shape.
+
 ## References
 
 The primary sources are vendored under [`References/`](References/) so the

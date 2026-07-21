@@ -154,3 +154,115 @@ soil-moisture model — and because each step's facts are real declarations, a d
 _verifiable ATBD_ can cite them by name with their proved-or-`sorry` status, keeping the document
 and the code in lockstep. PropertyKindCalculus supplies the four primitives this chapter names; a
 model composes them in this order.
+
+# Go fast, automatically — the deployment spectrum
+
+The four steps above are the _write once, correctly_ half of the slogan; this section is the _go
+fast, automatically_ half. Once a model is authored once over an abstract carrier `[NumCarrier α]`,
+the kind overlay erases to a bare arithmetic kernel that is the _same_ for every carrier — and the
+_carrier the model is instantiated at_ then selects, on its own, an execution strategy. There is a
+spectrum of them, from a portable single core to a compiled GPU megakernel, and moving along it is
+_choosing a carrier, not rewriting the model_. That is the precise content of "automatically": the
+performance engineering is a consequence of the instantiation, paid for once in the carrier
+libraries rather than per model.
+
+The spectrum has an honest dividing line. The first two strategies ask _nothing_ of the model's
+structure — they run an arbitrary science model, including one whose control flow braids input/output
+and computation in ways that defeat vectorization. The last two exploit a structural property the
+`NumCarrier` capability _enforces_: because `NumCarrier` carries no ordering-to-`Bool`, a kernel over
+it cannot take a data-dependent branch on its inputs — every conditional is re-expressed with the
+branchless selectors `min`/`max`. "Typechecks against `NumCarrier`" therefore _means_ "one fused,
+control-flow-free elementwise kernel", which is exactly the precondition that makes automatic
+parallelization and fusion sound. Good throughput on the last two strategies additionally needs the
+model to have favourable _arithmetic intensity_ — enough arithmetic per byte of input/output moved —
+which is a property of the science, not of the calculus.
+
+## CPU, single-threaded — the universal baseline and the oracle
+
+Instantiate the model at the scalar executable carrier (`α := Float`). The kind overlay erases by
+`.magnitude` to the bare floating-point program of Step 4's payoff; every intermediate lives in a
+register, so the arithmetic intensity per work-item is maximal and the kernel is compute-bound on one
+core. This strategy is unconditional: it runs _any_ science model, including those whose interleaving
+of I/O and computation, data-dependent iteration, or irregular memory access makes efficient
+parallelism genuinely hard — the cases where the later strategies do not apply. It is also the
+_oracle_: because it is the same erased kernel, its per-pixel result is the reference the parallel and
+GPU strategies are checked against, bit for bit. The cost is that it uses a single core.
+
+## CPU, multi-threaded — coarse-grained task parallelism
+
+Keep the scalar carrier and split the _row-independent_ (pixel) axis into contiguous slices, running
+the whole kernel on each slice on its own dedicated Lean `Task`. The parallelism is Lean's own task
+construct — no external threading library, no OpenMP shim — and it is _coarse-grained_: one task per
+slice runs the entire op-chain, so the compute-per-fork is maximal and per-operation fork/join
+overhead is nil. This is exact whenever the work-items are independent (which the per-pixel retrieval
+is), and it scales toward the core count _when the model has good arithmetic intensity_ — enough
+compute per work-item that the cores are kept busy rather than starved on memory bandwidth or throttled
+by task overhead. A model with poor intensity, or one whose items are not independent, sees little
+benefit here and is better served by the single-threaded baseline. This strategy is the deployment
+layer's `runSharded`.
+
+## GPU, eager — one pre-compiled kernel per operation
+
+Instantiate the model at TorchLean's batched device carrier (`α := CudaT`). Each `NumCarrier`
+operation on this carrier is a single pre-compiled CUDA kernel, launched by a foreign-function call,
+that reads its operand buffers from device memory and writes one output buffer back. Running the
+write-once source at this carrier therefore issues a _sequence_ of device kernel launches, one per
+arithmetic operation of the model, and the GPU parallelizes _within_ each launch — one thread per
+pixel per operation.
+
+It is worth being exact about what is _not_ happening here, because it is a common confusion: this is
+_not_ an intermediate representation being _interpreted on the GPU_, and no IR is involved at all.
+The Lean-level operation sequence directly drives a sequence of hand-written device kernels through
+the foreign-function boundary — eager, operation-at-a-time dispatch, the device analogue of running
+the scalar kernel one statement at a time. There is no on-device program, no fused kernel, and nothing
+that walks a graph at run time.
+
+This strategy is _automatic_ in the strongest sense — the very same write-once source runs on the GPU
+with no GPU code written — and it wins substantially when the pixel batch is large, because each launch
+amortizes over the whole batch. Its ceiling is set by _memory bandwidth_: every intermediate of the
+model is materialized as a full device buffer and round-tripped through DRAM, so the workload is
+_memory-bound_ and its arithmetic intensity — arithmetic performed per byte moved — sits far below the
+device's roofline (for the SMAP–NISAR AVS fit, an intensity of roughly 0.17 against an ideal near
+13.75, an ~80× gap). The device spends its time moving buffers, not computing. This is the current
+production GPU path.
+
+## GPU, megakernel-compiled — Lean → recorded IR → CUDA source
+
+The remaining headroom is recovered by _compiling_ the model rather than dispatching it
+operation-by-operation. Because the write-once kernel is branchless — the `NumCarrier` guarantee — the
+same source, instantiated at a _recording_ carrier, does not compute a number: it _records_ its own
+elementwise operation graph. That graph is common-subexpression-eliminated to its DAG of distinct
+sub-expressions and emitted as a single fused CUDA `__global__` kernel: one thread per pixel, the
+_whole_ model held in registers, with device memory touched only for the model's actual inputs and
+outputs. This is a genuine _ahead-of-time compilation_ — from the Lean source, through a recorded
+intermediate representation, to CUDA C source text — and, again, _not_ an interpreter: the generated
+kernel is ordinary compiled CUDA, with no graph walked at run time.
+
+The trade the previous strategy could not make is now available: with every intermediate kept in a
+register instead of round-tripped to DRAM, the workload moves from memory-bound to _compute-bound_,
+and its arithmetic intensity rises above the roofline knee — as close to the device's peak as the
+science allows. The cost is a precondition: the model must have favourable AI properties — branchless
+(guaranteed) and _register-fittable_, since the register pressure of the fused kernel bounds how much
+of the model can be held live at once (a very large model is fused per-step and looped on the device,
+rather than fused whole). This is why the strategy is _not_ universal in the way the single-threaded
+baseline is: it buys the roofline in exchange for a structural demand on the model.
+
+Two properties make this more than a code generator. First, it is _verified_: the recorded graph is
+proved — sorry-free, over all inputs, by the tape's forward-value faithfulness — to compute exactly
+the source kernel, so the generated kernel is faithful to the model _by a theorem_, not by a tested
+diff. Second, it is _bit-controllable_: compiled with fused-multiply-add contraction disabled and no
+re-association, the megakernel is bit-identical to the eager device path, because fusion changes only
+_where an intermediate lives_ (a register versus DRAM), never the arithmetic performed — the speedup is
+pure memory-traffic elimination, orthogonal to the numerics. (Enabling contraction trades that exact
+identity for additional speed and a more-accurate-but-different result, a separate, quantified step.)
+
+## The through-line
+
+The four strategies are one source. The single-threaded baseline runs anything and is the oracle; the
+multi-threaded and both GPU strategies trade a structural demand on the model — independence and good
+arithmetic intensity, and for the megakernel, register-fittability — for progressively more of the
+hardware's peak. What licenses the automatic parallelization and fusion of the latter three is not a
+heroic compiler analysis but the `NumCarrier` discipline itself: a model that typechecks against it is
+_already_ branchless and fusible, so "go fast, automatically" is earned at authoring time by the same
+type that made "write once, correctly" true. The performance is a corollary of the specification, not
+a second, hand-written artifact that must be kept in step with it.
