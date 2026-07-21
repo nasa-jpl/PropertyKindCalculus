@@ -146,6 +146,11 @@ The **megakernel codegen backend** lives in the `Torch` library and is verified:
   source with no CUDA toolchain.
 - `PropertyKindCalculus.Examples.TapeCodegenProof` — recorder faithfulness for **all** inputs
   (6 sorry-free theorems; axioms `[propext, Classical.choice, Quot.sound]`).
+- `PropertyKindCalculus.Examples.LmStepCodegenDemo` — the *whole* projected-LM step (residual +
+  Jacobian reduction over *K* rows → normal equations → Marquardt damping → 4×4 Cholesky solve →
+  box clip) recorded, CSE'd to a **322-node** DAG, codegen'd, and `#guard`'d **bit-identical** to the
+  `Float` source — arithmetic intensity **4.48/step (≈ 268.7 for the ×60 fit)**, the honest whole-step
+  number.
 
 Compile the emitted kernel with `nvcc --fmad=false -prec-div=true -prec-sqrt=true` (no FMA-contraction,
 no re-association) to stay bit-identical to the eager path — the speedup is pure memory-traffic
@@ -158,10 +163,29 @@ Status: ✅ done · 🚧 in progress · ⬜ planned
 - ✅ Generic `Tape → CUDA` megakernel codegen (+ portable C-stub twin) and AI accounting.
 - ✅ AVS residual/Jacobian recorded → CSE DAG → codegen → CPU bit-exact `#guard` (`TapeCodegenDemo`).
 - ✅ Recorder faithfulness proved for all inputs, axiom-audited (`TapeCodegenProof`).
-- ⬜ Record the full trust-region **`lmStep`** (weighted normal equations + `solveSPD4` Cholesky) — needs
-  a `BatchCarrier (TapeBuilder)` `const` instance for the loop constants — for the *real* whole-fit
-  op-count and arithmetic intensity (the megakernel wraps one recorded step in a fixed device-side
-  iteration loop, keeping θ in registers).
+- ✅ **Recorded the *whole* trust-region step, not just the residual/Jacobian fragment**
+  (`Examples.LmStepCodegenDemo`, parallel to `TapeCodegenDemo`). One full `lmStep` iteration —
+  fold the residual + 4 Jacobian columns over all *K* observation rows into the 4×4 normal equations
+  (`JᵀJ`, `Jᵀr`, a *reduction*), Marquardt-damp the diagonal, solve the 4×4 SPD system by unrolled
+  Cholesky (`solveSPD4`), update θ, and box-clip — recorded self-contained over `[NumCarrier α]`,
+  CSE'd, codegen'd, and `#guard`'d **bit-identical** to the `Float` source. This is the *honest*
+  whole-step number: the fragment (28 nodes, AI 0.56/step) undercounts because it omits the O(*K*)
+  reduction and the Cholesky tail.
+  - *Result (K=5).* a **322-node** DAG — 297 ops: mul 138, add 85, sub 43, **div 14, sqrt 4, min 4,
+    max 4, exp 5** (CSE folds the two attenuations/row to one) — i.e. the reduction, the linear solve
+    (`div`/`sqrt`), and the box clip (`min`/`max`) the fragment lacked, and every op was already in the
+    codegen's table (**no backend change needed**). **AI 4.48/step (8× the fragment), ≈ 268.7 for the
+    ×60 whole-fit** (vs eager ≈ 0.17) — the compute-bound, whole-fit-in-registers number that decides
+    CPU-vs-GPU for the deployed fit.
+  - *Correction to the earlier plan.* the loop constants (the λ value, the box bounds `lb`/`ub` — which
+    `NumCarrier`, offering only `0`/`1`/`Nat` literals, cannot express) enter the tape via
+    **`TapeBuilder.const`** directly, *not* a `BatchCarrier (TapeBuilder)` instance: the `BatchCarrier`
+    class lives in a module coupled to the CUDA-only `Buffer.atten` (its `FusedAtten CudaT` instance),
+    so it does not build in the CPU/default config. `TapeBuilder.const` is exactly what such a `const`
+    field would delegate to.
+- ⬜ Companion recording of the **deployed** SMAP–NISAR fit: record soil-moisture-model's *actual*
+  `lmStepLavs` through this same backend for the operational whole-fit number, homed downstream in that
+  repo (the correct dependency direction — SMM imports PKC, never the reverse).
 - ⬜ Extend the proof end to end: parametric `evalTape`/`cExpr` rendering faithfulness over all inputs,
   plus a `cseCompact` value-preservation theorem, closing tape → generated-kernel.
 - ⬜ GPU landing (gated): wire the generated `.cu` through the lakefile `extern_lib` /
