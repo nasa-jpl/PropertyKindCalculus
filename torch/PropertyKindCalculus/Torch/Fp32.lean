@@ -27,7 +27,7 @@ Mathlib- and module-free.
 
 import PropertyKindCalculus.QuantityRefinement
 import PropertyKindCalculus.QuantityReal
-import NN.Floats.IEEEExec.BridgeFP32.Ops
+import NN.Floats.IEEEExec.Bridge.FP32.Ops
 
 open TorchLean.Floats          -- `FP32`
 open TorchLean.Floats.IEEE754  -- `IEEE32Exec`, `Dyadic`

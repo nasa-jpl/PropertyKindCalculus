@@ -177,21 +177,32 @@ Status: ✅ done · 🚧 in progress · ⬜ planned
     codegen's table (**no backend change needed**). **AI 4.48/step (8× the fragment), ≈ 268.7 for the
     ×60 whole-fit** (vs eager ≈ 0.17) — the compute-bound, whole-fit-in-registers number that decides
     CPU-vs-GPU for the deployed fit.
-  - *Correction to the earlier plan.* the loop constants (the λ value, the box bounds `lb`/`ub` — which
-    `NumCarrier`, offering only `0`/`1`/`Nat` literals, cannot express) enter the tape via
-    **`TapeBuilder.const`** directly, *not* a `BatchCarrier (TapeBuilder)` instance: the `BatchCarrier`
-    class lives in a module coupled to the CUDA-only `Buffer.atten` (its `FusedAtten CudaT` instance),
-    so it does not build in the CPU/default config. `TapeBuilder.const` is exactly what such a `const`
-    field would delegate to.
+  - *Loop constants.* the λ value and box bounds `lb`/`ub` — which `NumCarrier`, offering only
+    `0`/`1`/`Nat` literals, cannot express — enter the tape via **`BatchCarrier.const (C := TapeBuilder)`**
+    (`Paradigm.TapeBatchCarrier`), the app-level constant-lifting instantiated at the recording carrier
+    (it delegates to `TapeBuilder.const`, an unnamed `fill`-leaf). Recording the step is thus the same
+    app code a `[BatchCarrier C]` deployment runs, only at `C := TapeBuilder`.
+- ✅ **Decoupled `BatchCarrier` from the CUDA-only `Buffer.atten` and made the fused op domain-neutral**
+  so the `Torch` library builds green CPU-side (`lake build Torch`). The old `FusedAtten` class named a
+  soil-moisture `exp(−2·b·ndvi)` device kernel present only in the CUDA/deploy fork, so the module — and
+  hence the whole `Torch` lib — did not compile in the default config *and* tied PKC to the
+  soil-moisture domain. It is now the domain-neutral **`FusedExp`** class with a single general primitive
+  `scaledExp c x = exp(c·x)`, realized by a portable `CudaT.scaledExp` (composed from the dual-backend
+  `Buffer` kernels), **one instance for both** the CPU-stub and GPU (`-K cuda`) builds, with a clean seam
+  for a `-K cuda` single-fused-kernel override. The soil-moisture attenuation is just
+  `scaledExp (−2) (b·ndvi)`, defined downstream in the science model — not in PKC. This also unblocked
+  the `BatchCarrier (TapeBuilder)` recording instance (`Paradigm.TapeBatchCarrier`) the step demo uses.
+  (A separate stale import — `Torch.Fp32`'s `BridgeFP32.Ops`, renamed in TorchLean 4.32 — was fixed in
+  the same pass so the full lib is green.)
 - ⬜ Companion recording of the **deployed** SMAP–NISAR fit: record soil-moisture-model's *actual*
   `lmStepLavs` through this same backend for the operational whole-fit number, homed downstream in that
   repo (the correct dependency direction — SMM imports PKC, never the reverse).
 - ⬜ Extend the proof end to end: parametric `evalTape`/`cExpr` rendering faithfulness over all inputs,
   plus a `cseCompact` value-preservation theorem, closing tape → generated-kernel.
 - ⬜ GPU landing (gated): wire the generated `.cu` through the lakefile `extern_lib` /
-  `buildNativeBackendLib` slot (the hand-written `Buffer.atten` fused kernel is the precedent),
-  compile, validate against the fp64 oracle, and measure achieved throughput / arithmetic intensity
-  against the eager path.
+  `buildNativeBackendLib` slot, compile, validate against the fp64 oracle, and measure achieved
+  throughput / arithmetic intensity against the eager path; likewise override `CudaT.scaledExp` with a
+  single fused device kernel under `-K cuda`.
 - ⬜ Apply the backend to the deployed SMAP–NISAR fit in the downstream application; optional nvrtc
   runtime kernel specialization per tile shape.
 

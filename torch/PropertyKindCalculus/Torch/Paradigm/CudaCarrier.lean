@@ -77,5 +77,18 @@ instance : NumCarrier (CudaT s) where
 /-- A constant batch (every pixel the same value). -/
 @[inline] def const (v : Float) : CudaT s := ⟨Buffer.full (szU s) v⟩
 
+/-- **Scaled exponential** `exp(c · x)`, exposed as one named carrier op so a batched deployment can
+request a fused form (`paradigm.batch_carrier`'s `FusedExp`). Domain-neutral: it names no problem
+domain, yet a soil-moisture two-way vegetation attenuation `exp(−2·b·ndvi)` is one instance
+(`c = −2`, `x = b·ndvi`, composed downstream), as is a Beer–Lambert extinction `exp(−κ·ℓ)` or an
+RBF / softmax-temperature term. This portable definition composes the existing dual-backend device
+kernels (`full`/`mul`/`exp`), so it runs on **both** the CPU-stub (plain `lake build`) and the GPU
+(`-K cuda`) build, and is bit-identical to the same `exp(c·x)` computed through the `NumCarrier` ops.
+A `-K cuda` / deploy build may override this body with a single fused device kernel (one launch
+instead of three); this main-branch form names no CUDA-only symbol, so the `Torch` library builds
+green without a GPU (the pinned `combined` TorchLean carries no fused-exponential kernel). -/
+@[inline] def scaledExp (c : Float) (x : CudaT s) : CudaT s :=
+  ⟨Buffer.exp (Buffer.mul (Buffer.full (szU s) c) x.buf)⟩
+
 end CudaT
 end PropertyKindCalculus.Paradigm.CudaCarrier

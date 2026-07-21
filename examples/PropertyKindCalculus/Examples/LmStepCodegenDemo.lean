@@ -19,20 +19,20 @@ WHY ONE STEP, NOT THE WHOLE FIT. The thunk carrier re-emits shared sub-expressio
 the megakernel wraps it in a fixed device-side λ-schedule loop that keeps θ in registers across
 iterations — the whole-fit-in-registers, compute-bound win.
 
-WHY `TapeBuilder.const`, NOT `BatchCarrier.const`. The step's arbitrary-`Float` loop constants (the
-`λ` value and the box bounds `lb`/`ub`) cannot be expressed by `NumCarrier` alone, which offers only
-`0`/`1`/`Nat` literals; they enter the tape as baked constant leaves via `TapeBuilder.const`. Routing
-them through a `BatchCarrier (TapeBuilder)` instance would be the app-level story, but the
-`BatchCarrier` class lives in a module (`paradigm.batch_carrier`) coupled to the CUDA-only
-`Buffer.atten` (its `FusedAtten CudaT` instance), so it does not build in the CPU/default config;
-`TapeBuilder.const` is exactly what such a `const` field would delegate to.
+LOOP CONSTANTS. The step's arbitrary-`Float` loop constants (the `λ` value and the box bounds
+`lb`/`ub`) cannot be expressed by `NumCarrier` alone, which offers only `0`/`1`/`Nat` literals; they
+enter the tape as baked constant leaves via `BatchCarrier.const (C := TapeBuilder)`
+(`paradigm.tape_batch_carrier`) — the app-level constant-lifting instantiated at the recording
+carrier, which delegates to `TapeBuilder.const` (an unnamed `fill`-leaf). Recording the step is thus
+the same app code a `[BatchCarrier C]` deployment runs, only at `C := TapeBuilder`.
 -/
 import PropertyKindCalculus.Torch.Paradigm.TapeCodegen
+import PropertyKindCalculus.Torch.Paradigm.TapeBatchCarrier
 
 open Spec
 open Runtime.Autograd (Tape TapeM)
 open PropertyKindCalculus (MathCarrier)
-open PropertyKindCalculus.Paradigm (TapeBuilder NumCarrier)
+open PropertyKindCalculus.Paradigm (TapeBuilder NumCarrier BatchCarrier)
 open PropertyKindCalculus.Paradigm.TapeCSE (cseCompact)
 open PropertyKindCalculus.Paradigm.TapeCodegen
 
@@ -213,9 +213,10 @@ abbrev TB := TapeBuilder Shape.scalar
 /-- A named input leaf (a kernel input pointer; placeholder value `0`). -/
 def inLeaf (nm : String) : TB := ⟨TapeM.leaf (fill (0.0 : Float) Shape.scalar) (name := some nm)⟩
 
-/-- A baked host constant on the tape (an unnamed `fill`-leaf). This is the arbitrary-`Float`
-constant-injection `NumCarrier` cannot express — the `λ` schedule and box bounds enter here. -/
-def kconst (x : Float) : TB := TapeBuilder.const x
+/-- A baked host constant on the tape, via the `BatchCarrier (TapeBuilder)` `const` instance (an
+unnamed `fill`-leaf). This is the arbitrary-`Float` constant-injection `NumCarrier` cannot express —
+the `λ` schedule and box bounds enter here. -/
+def kconst (x : Float) : TB := BatchCarrier.const (C := TapeBuilder) (s := Shape.scalar) x
 
 /-- Number of observation rows folded into the normal equations (fixed for the demo; ≥ 4 so `JᵀJ`
 is full-rank and the Cholesky solve stays finite). -/
