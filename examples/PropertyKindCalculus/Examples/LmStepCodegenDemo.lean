@@ -292,13 +292,15 @@ def report : IO Unit := do
   | .error e => IO.println s!"[lm_step_codegen] record failed: {e}"
   | .ok (t, outIds) =>
     let rep := aiReport t outIds.length
-    let (aiStep, aiFit, bytes) := intensity rep 60
+    let I := intensity rep 60
     IO.println s!"=== lm_step_codegen demo: one full projected-LM step, K={K} obs (scalar / 1 pixel) ==="
     IO.println s!"CSE'd DAG nodes : {rep.nNodes}  (inputs {rep.nInputs}, consts {rep.nConsts}, ops {rep.nOps}, outputs {rep.nOut})"
     IO.println s!"op histogram    : {rep.hist}"
-    IO.println s!"weighted FLOPs  : {rep.flops}   bytes (in+out, fp32): {bytes}"
-    IO.println s!"AI (one step)   : {aiStep}"
-    IO.println s!"AI (×60-iter fit, inputs/outputs fixed): {aiFit}   vs eager ≈ 0.17"
+    IO.println s!"weighted FLOPs  : {rep.flops}   fused bytes (in+out): {I.fusedBytes}   eager bytes (ops round-trip): {I.eagerBytes}"
+    IO.println s!"AI eager (elementwise carrier; flat in iters): {I.aiEager}"
+    IO.println s!"AI fused (one step)                          : {I.aiStep}"
+    IO.println s!"AI fused (×60-iter fit, θ resident)          : {I.aiFit}"
+    IO.println s!"roofline gap (fused ×60-fit / eager)         : {I.aiFit / I.aiEager}   (per-step: {I.aiStep / I.aiEager})"
     IO.println s!"CPU bit-exact vs Float source : {demoFaithful}"
     IO.println "--- generated CUDA megakernel ---"
     match gen t outIds with

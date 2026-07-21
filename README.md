@@ -198,9 +198,39 @@ Status: ✅ done · 🚧 in progress · ⬜ planned
   the `BatchCarrier (TapeBuilder)` recording instance (`Paradigm.TapeBatchCarrier`) the step demo uses.
   (A separate stale import — `Torch.Fp32`'s `BridgeFP32.Ops`, renamed in TorchLean 4.32 — was fixed in
   the same pass so the full lib is green.)
-- ⬜ Companion recording of the **deployed** SMAP–NISAR fit: record soil-moisture-model's *actual*
-  `lmStepLavs` through this same backend for the operational whole-fit number, homed downstream in that
-  repo (the correct dependency direction — SMM imports PKC, never the reverse).
+- ✅ **Eager AI is now *computed*, not cited.** `TapeCodegen.aiReport`/`intensity` used to report only
+  the *fused* (megakernel-target) intensity; the **eager ≈ 0.17** the batched apps run at was merely
+  *cited* in docstrings/demos. `aiReport` now also accumulates the eager carrier's DRAM traffic
+  `eagerBytes = Σ over op-nodes of (nParents + 1)·4` (every op reads its operand buffers and writes its
+  result buffer through global memory), and `intensity` returns an `Intensity` record carrying the
+  computed `aiEager` alongside `aiStep`/`aiFit`. `LmStepCodegenDemo` now prints the honest,
+  machine-checked roofline gap: **eager 0.117 vs fused 4.48/step (38×), vs 268.7 for the ×60 whole-fit
+  (2301×)** — no asserted constants. This is the accounting the two recordings below consume to produce
+  a genuine per-application AI report.
+- ✅ **Deployed `tile_gpu` + `tile_retrieve` kernels recorded and measured — homed downstream in SMM.**
+  The deployed weighted trust-region AVS fit and the projected-Newton retrieval lived inside the
+  `gpu-smap-nisar-sm` CLIs (below which nothing could import them), so they were first **hoisted into
+  soil-moisture-model** as the single source of truth (`kernel.avs_weighted` + `kernel.batch_helpers` =
+  `ObsW`/`buildObsW`/`normalEqsAvsW`/`lmStepAvsW`/`sseAvsW`/`penTR`/`trStep`; `kernel.retrieve` =
+  `rEffOf`/`rOfSm`/`newtonStep`/`retrieveSm`). Two SMM recorders (`examples.tile_gpu_ai`,
+  `examples.tile_retrieve_ai`) then record the **real deployed defs** at `C := TapeBuilder`, hash-cons,
+  and report eager-vs-fused AI, each `#guard`ed **bit-identical** to a scalar fp64 oracle carrier
+  (`examples.scalar_oracle`, `Scalar1 s := Float` — needed because these defs are `[BatchCarrier C]`, not
+  `[NumCarrier α]`, so they have no direct `Float` instance). Since the megakernel records ONE step and
+  loops it (the thunk-tape unrolls exponentially), each kernel is split into setup (×1) + iterated body
+  (×60 fit / ×12 Newton). Measured (bit-exact):
+  - `tile_gpu` **fit body** (one weighted `trStep`, K=5): 442 ops, **eager 0.115 vs fused 4.70/step,
+    282 for the ×60 fit — a 2460× roofline gap**; **setup** (Mironov ε + Fresnel + weight): eager 0.142
+    vs fused 8.25 (58×).
+  - `tile_retrieve` **Newton body** (one step, 3× dielectric): 217 ops (16 `sqrt`, 22 `div`), only 3
+    inputs → **eager 0.156 vs fused 24.7/step, 296 for the ×12 — a 1905× gap (159× per step)**, the
+    densest kernel in the study; **R_eff setup**: eager 0.19 vs fused 0.79 (4.1×).
+
+  (The eager number is computed locally in the recorders — the identical `Σ (nParents+1)·4` formula — so
+  they are self-contained against SMM's currently-vendored PKC; once its pin advances past the eager-AI
+  accounting above they can delegate to `rep.eagerBytes`. The remaining step is mechanical: rewire the
+  `gpu-smap-nisar-sm` CLIs to *import* the hoisted SMM defs and delete their local copies, gated on the
+  app's PKC pin bump.)
 - ⬜ Extend the proof end to end: parametric `evalTape`/`cExpr` rendering faithfulness over all inputs,
   plus a `cseCompact` value-preservation theorem, closing tape → generated-kernel.
 - ⬜ GPU landing (gated): wire the generated `.cu` through the lakefile `extern_lib` /

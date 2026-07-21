@@ -8,9 +8,12 @@ instantiating it at the tape carrier (`α := TapeBuilder s`) *records* it as an 
 (`paradigm.tape_carrier`), and `cseCompact` (`paradigm.tape_cse`) recovers the DAG of distinct
 sub-expressions. This module walks that DAG and emits one straight-line kernel: each node becomes one
 `float vID = <op>(parents);` line, every intermediate a register. That is the roofline win the
-`tape_cse` docstring anticipated — the eager `CudaT` carrier materialises a length-P buffer per op
-(arithmetic intensity ≈ 0.17, memory-bound); the megakernel touches DRAM only for the inputs and
-outputs, so AI ≈ (total ops)/((#inputs+#outputs)·4) and grows with the fused program size.
+`tape_cse` docstring anticipated — the eager `CudaT` carrier materialises a length-P buffer per op, so
+every op round-trips its operands and result through DRAM (intensity `flops / (Σ over op-nodes of
+(nParents+1)·4)`, memory-bound, ≈ 0.1); the megakernel touches DRAM only for the inputs and outputs, so
+AI ≈ `flops/((#inputs+#outputs)·4)` and grows with the fused program size. Both numbers are *computed* —
+not cited — by the AI-accounting section below (`aiReport`/`intensity`), so a demo reports the honest
+eager-vs-fused roofline gap rather than asserting it.
 
 FAITHFULNESS. `evalTape` gives the generated kernel's denotation as a Float interpreter with the
 SAME scalar op-semantics the emitted C uses (`+ − × ÷`, `fminf`/`fmaxf`, `expf`/`logf`/`sqrtf`).
@@ -176,6 +179,11 @@ structure AiReport where
   nOps    : Nat
   nOut    : Nat
   flops   : Nat
+  /-- DRAM traffic (bytes, fp32) of the **eager** elementwise carrier: every op reads its operand
+  buffers and writes its result buffer to global memory, so `Σ over op-nodes of (nParents+1)·4`.
+  The fused megakernel keeps every intermediate in a register and touches only inputs+outputs; this is
+  the denominator that turns the roofline gap into a computed number instead of the cited ≈ 0.17. -/
+  eagerBytes : Nat
   /-- op-name → count -/
   hist    : List (String × Nat)
 
@@ -184,6 +192,7 @@ def aiReport (t : Tape Float) (nOut : Nat) : AiReport := Id.run do
   let mut nConsts := 0
   let mut nOps := 0
   let mut flops := 0
+  let mut eagerWords := 0   -- fp32 words the eager carrier round-trips through DRAM
   let mut hist : Std.HashMap String Nat := {}
   for n in t.nodes do
     if n.parents.isEmpty then
@@ -193,18 +202,40 @@ def aiReport (t : Tape Float) (nOut : Nat) : AiReport := Id.run do
     else
       nOps := nOps + 1
       flops := flops + flopWeight n.name
+      eagerWords := eagerWords + n.parents.length + 1   -- reads each operand buffer, writes one result
       let k := n.name.getD "?"
       hist := hist.insert k ((hist.getD k 0) + 1)
   let histL := (hist.toList.toArray.qsort (fun a b => a.2 > b.2)).toList
-  pure { nNodes := t.nodes.size, nInputs, nConsts, nOps, nOut, flops, hist := histL }
+  pure { nNodes := t.nodes.size, nInputs, nConsts, nOps, nOut, flops
+       , eagerBytes := eagerWords * 4, hist := histL }
 
-/-- The intensity numbers: bytes touched = `(#inputs + #outputs)·4` (fp32, read once / written once);
-`aiStep` for the recorded sub-program; `aiFit` extrapolates a fixed `iters`-iteration loop reusing the
-SAME inputs/outputs (θ stays in registers), i.e. the whole-fit megakernel. -/
-def intensity (rep : AiReport) (iters : Nat) : Float × Float × Nat :=
-  let bytes := (rep.nInputs + rep.nOut) * 4
-  let aiStep := Float.ofNat rep.flops / Float.ofNat bytes
-  let aiFit  := Float.ofNat (rep.flops * iters) / Float.ofNat bytes
-  (aiStep, aiFit, bytes)
+/-- The intensity numbers for a recorded kernel — the FUSED and EAGER arithmetic intensities, both
+computed from the same recorded DAG (identical FLOPs, different DRAM traffic).
+
+* `fusedBytes = (#inputs + #outputs)·4` — the megakernel reads each input once, writes each output
+  once, every intermediate in a register.
+* `eagerBytes` (from `aiReport`) — the eager elementwise carrier round-trips every op's operands and
+  result through DRAM.
+
+`aiStep`/`aiFit` are the FUSED AI for one recorded step and for a fixed `iters`-iteration whole-fit
+loop that keeps θ resident (inputs/outputs still touched once, FLOPs ×`iters`). `aiEager` is the EAGER
+AI — note it is **flat in `iters`**: nothing stays resident, so each iteration re-pays the full traffic.
+The compute-vs-memory-bound gap that decides CPU-vs-GPU for the whole fit is `aiFit / aiEager`. -/
+structure Intensity where
+  /-- Fused AI of one recorded step (`flops/fusedBytes`). -/
+  aiStep     : Float
+  /-- Fused AI of the `iters`-iteration whole-fit megakernel (`flops·iters/fusedBytes`). -/
+  aiFit      : Float
+  /-- Eager AI of the elementwise carrier (`flops/eagerBytes`); flat in `iters`. -/
+  aiEager    : Float
+  fusedBytes : Nat
+  eagerBytes : Nat
+
+def intensity (rep : AiReport) (iters : Nat) : Intensity :=
+  let fusedBytes := (rep.nInputs + rep.nOut) * 4
+  let aiStep  := Float.ofNat rep.flops / Float.ofNat fusedBytes
+  let aiFit   := Float.ofNat (rep.flops * iters) / Float.ofNat fusedBytes
+  let aiEager := Float.ofNat rep.flops / Float.ofNat rep.eagerBytes
+  { aiStep, aiFit, aiEager, fusedBytes, eagerBytes := rep.eagerBytes }
 
 end PropertyKindCalculus.Paradigm.TapeCodegen

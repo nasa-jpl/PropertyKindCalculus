@@ -100,13 +100,14 @@ def report : IO Unit := do
   | .error e => IO.println s!"[tape_codegen] record failed: {e}"
   | .ok (t, outIds) =>
     let rep := aiReport t outIds.length
-    let (aiStep, aiFit, bytes) := intensity rep 60
+    let I := intensity rep 60
     IO.println "=== tape_codegen demo: AVS residual + 4 Jacobian columns (1 pixel / scalar) ==="
     IO.println s!"CSE'd DAG nodes : {rep.nNodes}  (inputs {rep.nInputs}, consts {rep.nConsts}, ops {rep.nOps}, outputs {rep.nOut})"
     IO.println s!"op histogram    : {rep.hist}"
-    IO.println s!"weighted FLOPs  : {rep.flops}   bytes (in+out, fp32): {bytes}"
-    IO.println s!"AI (this kernel): {aiStep}"
-    IO.println s!"AI (× 60-iter fit, inputs/outputs fixed): {aiFit}   vs eager ≈ 0.17, ideal ≈ 13.75"
+    IO.println s!"weighted FLOPs  : {rep.flops}   fused bytes (in+out): {I.fusedBytes}   eager bytes (ops round-trip): {I.eagerBytes}"
+    IO.println s!"AI eager (elementwise carrier; flat in iters): {I.aiEager}"
+    IO.println s!"AI fused (this kernel)                       : {I.aiStep}"
+    IO.println s!"AI fused (× 60-iter fit, inputs/outputs fixed): {I.aiFit}   (eager computed above, not cited)"
     IO.println s!"CPU bit-exact vs Float source : {demoFaithful}"
     IO.println "--- generated CUDA megakernel ---"
     match gen t outIds with
