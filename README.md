@@ -286,10 +286,23 @@ Status: ✅ done · 🚧 in progress · ⬜ planned
   nodes CSE may collapse are interchangeable for all inputs — no `Float.toBits` injectivity needed); and
   concretely, `#guard cse_preserves_resJac` machine-checks that on the deployed `resJac` tape every
   node's stored value is bit-identical to its CSE-remapped node's.
-- ⬜ Lift `cseKey_denotation_sound` across the whole hash-cons pass for an *arbitrary* tape — a
-  `Std.HashMap` loop invariant relating `memo`/`remap`/`newTape` — to obtain the general
-  `evalTape`-denotation preservation theorem (`cse_preserves_resJac` is the concrete instance; the
-  denotation route means it needs no `Float.toBits` injectivity, only the memo/remap bookkeeping).
+- ✅ Lifted `cseKey_denotation_sound` across the whole hash-cons pass for an *arbitrary* well-formed
+  tape (`examples.tape_cse_structural`). `cseCompact`'s `Id.run` `for`-loop is reformulated as a fold
+  (`cseCompact_eq_foldl`) and a `Std.HashMap`/`remap`/`newTape` **loop invariant** (`Inv`, preserved by
+  `inv_step`, established by `Array.foldl_induction` in `cseFold_inv`) yields three sorry-free
+  whole-pass corollaries (axioms `[propext, Classical.choice, Quot.sound]`): `cseCompact_structural` —
+  every original node's CSE-remapped node carries the **same op name, parents remapped by the same map,
+  and a bit-identical stored value**, the whole-pass promotion of the node-local `cseKey_denotation_sound`;
+  `cseCompact_wellFormed` — the compacted tape stays well-formed; and `cseCompact_preserves_stored` — the
+  arbitrary-tape generalisation of the machine-checked `cse_preserves_resJac`. No `Float.toBits`
+  injectivity is used: the invariant is over op names, ids, and bit patterns.
+- ⬜ Wrap the structural correspondence in the `evalTape`-fold argument to get the pointwise
+  `evalTape`-denotation equality (`∀ env id, valsC.getD (remap id) 0 = vals.getD id 0`): an `evalTape`
+  value-characterisation (a `foldlM` invariant) + strong induction on `id` over `cseCompact_structural`.
+  Op nodes need no `Float.toBits` injectivity (the interpreter reads only op-name + remapped parents);
+  **const leaves do** — `evalTape` reads their stored value via `nodeScalar`, so equal value-*bits* give
+  equal denotation only under `toBits` injectivity (absent in core), which the concrete
+  `#guard cse_preserves_resJac` discharges empirically for the deployed kernel.
 - ⬜ GPU landing (gated): wire the generated `.cu` through the lakefile `extern_lib` /
   `buildNativeBackendLib` slot, compile, validate against the fp64 oracle, and measure achieved
   throughput / arithmetic intensity against the eager path; likewise override `CudaT.scaledProdExp` with
