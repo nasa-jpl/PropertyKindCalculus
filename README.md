@@ -226,11 +226,45 @@ Status: ✅ done · 🚧 in progress · ⬜ planned
     inputs → **eager 0.156 vs fused 24.7/step, 296 for the ×12 — a 1905× gap (159× per step)**, the
     densest kernel in the study; **R_eff setup**: eager 0.19 vs fused 0.79 (4.1×).
 
-  (The eager number is computed locally in the recorders — the identical `Σ (nParents+1)·4` formula — so
-  they are self-contained against SMM's currently-vendored PKC; once its pin advances past the eager-AI
-  accounting above they can delegate to `rep.eagerBytes`. The remaining step is mechanical: rewire the
-  `gpu-smap-nisar-sm` CLIs to *import* the hoisted SMM defs and delete their local copies, gated on the
-  app's PKC pin bump.)
+  (The recorders derive both the eager and fused AI from PKC's `intensity` / `aiReport.eagerBytes`: SMM's
+  PKC pin was bumped to the eager-AI-accounting commit, so they delegate rather than recompute the eager
+  traffic.)
+- ✅ **The third retrieval method — the closed-form `smOfReflectivityHH` — recorded and measured.**
+  `examples.tile_retrieve_reflectivity_ai` (SMM) records the deployed closed-form Stage-3 inverse
+  (`tile_retrieve_reflectivity` / `kernel.retrieve_analytic`). Being plain `[NumCarrier α]`, its bit-exact
+  oracle is `α := Float` directly (`mironovCoeffsFloat`) — **no `Scalar1` carrier needed**. Measured
+  (bit-exact): the **whole per-pixel retrieval** (Fresnel-HH quadratic root + 8 Mironov loss-coupling
+  sweeps + final Step-2/3) is **511 ops** (34 `sqrt`, 37 `div`), 2 inputs → **eager 0.143 vs fused 71.7 —
+  a 500× roofline gap**, and 71.7 is the highest single-kernel fused AI in the study. It has no outer loop
+  (the sweeps are unrolled internally), so its 511 ops are the *entire* retrieval — fewer than the Newton
+  path's 217 × 12 = 2604 — the closed form's whole point. The shared recorder harness (`aiBlock` + the
+  record→CSE→oracle→`#guard` pattern) was factored into `examples.ai_recorder` and both prior recorders
+  refactored onto it.
+  - **Pitfall found + fixed — deferred carriers unroll folds exponentially.** A naïve recording (call
+    `smOfReflectivityHH (α := TapeBuilder)` and run the thunk) blew up to **>100 GB at elaboration** and
+    had to be OOM-capped. `TapeBuilder` is a *deferred* carrier: every reference to a value re-runs its
+    emission, so the closed form's 8-deep loss-coupling fold — whose accumulator is reused ~4× per sweep —
+    unrolls ~4⁸× *before* `cseCompact` can dedup it. Fix: thread the fold through the tape monad and
+    **materialize the accumulator to one node per sweep** (`⟨pure id⟩` re-emits nothing), making the
+    recording linear in the sweep count (build dropped from >100 GB / OOM to **6.3 s**). The `#guard`
+    against `smOfReflectivityHH (α := Float)` keeps the hand-threaded fold bit-exact to the deployed def.
+    This is a general hazard for any science model recorded through a deferred/thunk carrier — see the
+    blueprint's WriteOnce chapter for the write-up.
+  The **table-lookup** method stays off this list — a gather is inexpressible in `NumCarrier`, so it has
+  no AI row; its CPU/GPU baselines are the deploy item's concern.
+- ⬜ **Complete the SSOT — rewire the `gpu-smap-nisar-sm` CLIs onto the hoisted SMM defs** (gated on the
+  app's PKC pin bump). `tile_gpu.lean` / `tile_retrieve.lean` still carry local copies of the kernels now
+  hoisted into `soil-moisture-model` (`kernel.avs_weighted` / `batch_helpers` / `retrieve`); replace them
+  with `import`s of the SMM modules — keeping only the app-specific shell (the `IO` driver `fitAvsTR`,
+  `computeChunk`, the scalar-carrier twins, npy I/O, QC flags, the CLI) — and repoint the app's
+  trust-region parity proofs (`parity/tile_tr_refine`, `tile_tr_kinds`). Gated: the app can't build today
+  (stale PKC pin + an uncommitted `FusedExp` edit, both needing the newer PKC), so it is mechanical but
+  unverifiable until the pin bumps. Payoff: the duplication is gone, so a fit/retrieval change lands in
+  one place and the deployment and the AI recorders can never drift. Scope: only `tile_gpu` /
+  `tile_retrieve` carry pre-hoist local copies; `tile_retrieve_reflectivity` already imports SMM's
+  `smOfReflectivityHH` and a future `tile_retrieve_lut` would import `kernel.r_lut`, so those are
+  SSOT-clean by construction (the deliberately out-of-framework `tile_retrieve_lut_eager` GPU baseline is
+  not a rewire target).
 - ⬜ Extend the proof end to end: parametric `evalTape`/`cExpr` rendering faithfulness over all inputs,
   plus a `cseCompact` value-preservation theorem, closing tape → generated-kernel.
 - ⬜ GPU landing (gated): wire the generated `.cu` through the lakefile `extern_lib` /

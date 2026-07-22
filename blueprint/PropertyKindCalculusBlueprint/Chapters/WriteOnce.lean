@@ -284,6 +284,32 @@ _where an intermediate lives_ (a register versus DRAM), never the arithmetic per
 pure memory-traffic elimination, orthogonal to the numerics. (Enabling contraction trades that exact
 identity for additional speed and a more-accurate-but-different result, a separate, quantified step.)
 
+## Recording carriers are deferred — share loop-carried state or the graph explodes
+
+The megakernel strategy carries one authoring hazard worth stating on its own, because it is a
+property of the _recording carrier_ rather than of any model. That carrier is _deferred_: a recorded
+value is a thunk that re-emits its sub-graph on every reference, not a memoized handle to an
+already-emitted node. Reusing an intermediate therefore records it _again_ — and an iterated
+computation reuses its loop-carried state on every step. A fixed-point sweep whose accumulator appears
+$`k` times in the body, composed to depth $`d`, records on the order of $`k^{d}` copies of the first
+step _before_ common-subexpression elimination can collapse them. CSE dedups the _result_, but the
+recorder must first _build_ that intermediate, so a deep, reuse-heavy fold can exhaust memory at
+elaboration time even though the final DAG — and every carrier's actual arithmetic — is small.
+
+The discipline is the recording-time analogue of the megakernel's own _fuse one step, loop the device_
+shape: record _one_ step and _materialize_ the loop-carried state to a single node between steps, so the
+next step references it as one shared leaf instead of re-recording the entire prior step. Materialization
+is semantics-preserving — the shared node computes the same value — so the recording stays bit-for-bit the
+same kernel; only its _cost of being recorded_ changes, from exponential to linear in the step count. This
+is invisible at the scalar, threaded, and eager-GPU carriers, where a value is just a number or a buffer
+and reuse is free; it surfaces only when the same write-once source is run at the deferred recording
+carrier, and it is a general hazard for _any_ science model with an unrolled iteration recorded that way —
+not a quirk of one retrieval. It was found and fixed in exactly that setting: an eight-sweep loss-coupling
+fixed point in the SMAP–NISAR closed-form Stage-3 retrieval, its accumulator reused several times per
+sweep, unrolled past a hundred gigabytes at elaboration until the fold was threaded to share its
+accumulator per sweep — after which the same recording completed in seconds, the generated kernel
+unchanged.
+
 ## The through-line
 
 The four strategies are one source. The single-threaded baseline runs anything and is the oracle; the
