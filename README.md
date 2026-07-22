@@ -252,21 +252,23 @@ Status: ✅ done · 🚧 in progress · ⬜ planned
     blueprint's WriteOnce chapter for the write-up.
   The **table-lookup** method stays off this list — a gather is inexpressible in `NumCarrier`, so it has
   no AI row; its CPU/GPU baselines are the deploy item's concern.
-- ⬜ **Complete the SSOT — rewire the `gpu-smap-nisar-sm` CLIs onto the hoisted SMM defs** (gated on the
-  app's PKC pin bump). `tile_gpu.lean` / `tile_retrieve.lean` still carry local copies of the kernels now
-  hoisted into `soil-moisture-model` (`kernel.avs_weighted` / `batch_helpers` / `retrieve`); replace them
-  with `import`s of the SMM modules — keeping only the app-specific shell (the `IO` driver `fitAvsTR`,
-  `computeChunk`, the scalar-carrier twins, npy I/O, QC flags, the CLI) — and repoint the app's
-  trust-region parity proofs (`parity/tile_tr_refine`, `tile_tr_kinds`). Gated: a full `lake build` of
-  the app can't complete today (stale PKC pin + an uncommitted `FusedExp` edit in `tile_gpu`, both needing
-  the newer PKC), so the `tile_gpu`/`tile_retrieve` rewire is mechanical but unverifiable until the pin
-  bumps — though individual stable-subset exes still build against the current pin (`tile_retrieve`,
-  and the new `tile_retrieve_lut{,_eager}`, all verified green). Payoff: the duplication is gone, so a
-  fit/retrieval change lands in one place and the deployment and the AI recorders can never drift. Scope:
-  only `tile_gpu` / `tile_retrieve` carry pre-hoist local copies; `tile_retrieve_reflectivity` already
-  imports SMM's `smOfReflectivityHH` and `tile_retrieve_lut` imports `kernel.r_lut`, so those are
-  SSOT-clean by construction (the deliberately out-of-framework `tile_retrieve_lut_eager` GPU baseline is
-  not a rewire target).
+- ✅ **The SSOT is complete — the `gpu-smap-nisar-sm` CLIs are rewired onto the hoisted SMM defs.**
+  `tile_gpu.lean` and `tile_retrieve.lean` no longer carry local copies of the kernels: they `import`
+  `kernel.avs_weighted` / `kernel.batch_helpers` / `kernel.retrieve` and keep only the app-specific shell
+  (the `IO` driver `fitAvsTR`, `computeChunk`, the scalar-carrier Layer-0 twin, npy I/O, QC flags, the
+  CLI). `tile_retrieve`'s retrieval body is now `rEffOf` + `retrieveSm` + `rOfSm`; `tile_gpu`'s
+  observation build is `buildObsW` and its trust-region step/objective are the imported `trStep`/`penTR`
+  (`fitAvsTR` runs exactly them and adds only the liveness guard). The app's trust-region parity proofs
+  (`parity/tile_tr_refine`, `tile_tr_kinds`) are repointed at `SoilMoisture.Algorithm.AvsWeighted` and
+  **still pass unchanged** — the `SatisfiesM` refinement and the `rfl`/induction erasure now certify the
+  *hoisted* defs, a machine-checked guarantee the deployed fit's numeric content did not move. Full
+  `lake build` green (the pin is bumped, the `FusedExp` edit committed); both CLIs smoke-tested on
+  synthetic tiles (`tile_gpu`'s batched-`CudaT` and scalar-`Float` carriers agree bit-for-bit;
+  `tile_retrieve`'s `R_eff` matches the closed formula exactly). Payoff realized: the duplication is gone,
+  so a fit/retrieval change lands in one place and the deployment and the AI recorders can never drift.
+  `tile_retrieve_reflectivity` (imports `smOfReflectivityHH`) and `tile_retrieve_lut` (imports
+  `kernel.r_lut`) were already SSOT-clean; the deliberately out-of-framework `tile_retrieve_lut_eager` GPU
+  baseline was correctly left untouched.
 - ⬜ Extend the proof end to end: parametric `evalTape`/`cExpr` rendering faithfulness over all inputs,
   plus a `cseCompact` value-preservation theorem, closing tape → generated-kernel.
 - ⬜ GPU landing (gated): wire the generated `.cu` through the lakefile `extern_lib` /
