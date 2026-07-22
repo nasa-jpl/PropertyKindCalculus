@@ -296,13 +296,19 @@ Status: ✅ done · 🚧 in progress · ⬜ planned
   `cseCompact_wellFormed` — the compacted tape stays well-formed; and `cseCompact_preserves_stored` — the
   arbitrary-tape generalisation of the machine-checked `cse_preserves_resJac`. No `Float.toBits`
   injectivity is used: the invariant is over op names, ids, and bit patterns.
-- ⬜ Wrap the structural correspondence in the `evalTape`-fold argument to get the pointwise
-  `evalTape`-denotation equality (`∀ env id, valsC.getD (remap id) 0 = vals.getD id 0`): an `evalTape`
-  value-characterisation (a `foldlM` invariant) + strong induction on `id` over `cseCompact_structural`.
-  Op nodes need no `Float.toBits` injectivity (the interpreter reads only op-name + remapped parents);
-  **const leaves do** — `evalTape` reads their stored value via `nodeScalar`, so equal value-*bits* give
-  equal denotation only under `toBits` injectivity (absent in core), which the concrete
-  `#guard cse_preserves_resJac` discharges empirically for the deployed kernel.
+- ✅ Wrapped the structural correspondence in the `evalTape`-fold argument to get the pointwise
+  `evalTape`-denotation equality (`examples.tape_cse_denotation`). An `evalTape` value-characterisation
+  (`evalTape_node_value`, built from a `foldlM` invariant `foldlM_stepVal_spec` proved by list induction
+  since core has no `Array.foldlM_induction`) plus strong induction on `id` over `cseCompact_structural`
+  give `cseCompact_denotation`: for a well-formed tape, `valsC.getD (remap id) 0 = vals.getD id 0` at
+  every id. Op nodes need **no** `Float.toBits` injectivity (the interpreter reads only op-name +
+  remapped parents); **const leaves do** — `evalTape` reads their stored value via `nodeScalar`, so equal
+  value-*bits* give equal denotation only under `toBits` injectivity (absent in core). That one
+  const-leaf fact is isolated as an explicit, per-tape-checkable hypothesis `hleaf`; two consequences
+  discharge it: `cseCompact_denotation_of_named` (named-leaf tapes need `hleaf` vacuously → the equality
+  holds unconditionally, no `toBits`), and `#guard cseDenotationHolds demoEnv …` checks it computationally
+  on the deployed AVS `resJac` tape (whose merged const leaves exercise the `hleaf` case), mirroring
+  `#guard cse_preserves_resJac`. Sorry-free; axioms `[propext, Classical.choice, Quot.sound]`.
 - ⬜ GPU landing (gated): wire the generated `.cu` through the lakefile `extern_lib` /
   `buildNativeBackendLib` slot, compile, validate against the fp64 oracle, and measure achieved
   throughput / arithmetic intensity against the eager path; likewise override `CudaT.scaledProdExp` with
