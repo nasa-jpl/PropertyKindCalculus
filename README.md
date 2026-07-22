@@ -269,8 +269,27 @@ Status: ✅ done · 🚧 in progress · ⬜ planned
   `tile_retrieve_reflectivity` (imports `smOfReflectivityHH`) and `tile_retrieve_lut` (imports
   `kernel.r_lut`) were already SSOT-clean; the deliberately out-of-framework `tile_retrieve_lut_eager` GPU
   baseline was correctly left untouched.
-- ⬜ Extend the proof end to end: parametric `evalTape`/`cExpr` rendering faithfulness over all inputs,
-  plus a `cseCompact` value-preservation theorem, closing tape → generated-kernel.
+- ✅ **The proof runs end to end — the generated kernel is the source kernel for all inputs.**
+  `examples.tape_codegen_end_to_end` lifts recorder-faithfulness (`examples.tape_codegen_proof`, which
+  pins the *stored* values at the placeholder recording inputs) to the codegen-relevant statement: for
+  **every** input environment `env`, `evalTape env` on the recorded DAG computes the source
+  `[NumCarrier α]` kernel at `env` — not just the one pixel `examples.tape_codegen_demo` `#guard`s. The
+  vehicle is an `evalTape`-denotation bridge `Faithful` mirroring `paradigm.tape_parity`'s `Evaluates`
+  but tracking the re-interpreted `Float` alongside the stored tensor; each `NumCarrier` op preserves it
+  (`Faithful_add/sub/mul/exp/…`), so the AVS Stage-2 residual + four Jacobian columns chain to
+  `resJac (α := Float)` at `env` (`residual_kernel_faithful`, sorry-free — axioms `[propext,
+  Classical.choice, Quot.sound]`). The **`cExpr` ↔ `cOp` rendering table** (`rendering_table_binary`/
+  `_unary`/`_reject`) certifies the emitted CUDA/C covers exactly the interpreter's op alphabet, so the
+  generated source and the validated `evalTape` are the same program. `cseCompact` value-preservation is
+  pinned at both ends: node-locally, `cseKey_denotation_sound` proves the merge key is denotation-sound
+  for op nodes (the interpreter reads only op-name + remapped parents, never the stored bits, so any two
+  nodes CSE may collapse are interchangeable for all inputs — no `Float.toBits` injectivity needed); and
+  concretely, `#guard cse_preserves_resJac` machine-checks that on the deployed `resJac` tape every
+  node's stored value is bit-identical to its CSE-remapped node's.
+- ⬜ Lift `cseKey_denotation_sound` across the whole hash-cons pass for an *arbitrary* tape — a
+  `Std.HashMap` loop invariant relating `memo`/`remap`/`newTape` — to obtain the general
+  `evalTape`-denotation preservation theorem (`cse_preserves_resJac` is the concrete instance; the
+  denotation route means it needs no `Float.toBits` injectivity, only the memo/remap bookkeeping).
 - ⬜ GPU landing (gated): wire the generated `.cu` through the lakefile `extern_lib` /
   `buildNativeBackendLib` slot, compile, validate against the fp64 oracle, and measure achieved
   throughput / arithmetic intensity against the eager path; likewise override `CudaT.scaledProdExp` with
