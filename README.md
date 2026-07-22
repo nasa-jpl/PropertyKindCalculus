@@ -257,12 +257,14 @@ Status: ✅ done · 🚧 in progress · ⬜ planned
   hoisted into `soil-moisture-model` (`kernel.avs_weighted` / `batch_helpers` / `retrieve`); replace them
   with `import`s of the SMM modules — keeping only the app-specific shell (the `IO` driver `fitAvsTR`,
   `computeChunk`, the scalar-carrier twins, npy I/O, QC flags, the CLI) — and repoint the app's
-  trust-region parity proofs (`parity/tile_tr_refine`, `tile_tr_kinds`). Gated: the app can't build today
-  (stale PKC pin + an uncommitted `FusedExp` edit, both needing the newer PKC), so it is mechanical but
-  unverifiable until the pin bumps. Payoff: the duplication is gone, so a fit/retrieval change lands in
-  one place and the deployment and the AI recorders can never drift. Scope: only `tile_gpu` /
-  `tile_retrieve` carry pre-hoist local copies; `tile_retrieve_reflectivity` already imports SMM's
-  `smOfReflectivityHH` and a future `tile_retrieve_lut` would import `kernel.r_lut`, so those are
+  trust-region parity proofs (`parity/tile_tr_refine`, `tile_tr_kinds`). Gated: a full `lake build` of
+  the app can't complete today (stale PKC pin + an uncommitted `FusedExp` edit in `tile_gpu`, both needing
+  the newer PKC), so the `tile_gpu`/`tile_retrieve` rewire is mechanical but unverifiable until the pin
+  bumps — though individual stable-subset exes still build against the current pin (`tile_retrieve`,
+  and the new `tile_retrieve_lut{,_eager}`, all verified green). Payoff: the duplication is gone, so a
+  fit/retrieval change lands in one place and the deployment and the AI recorders can never drift. Scope:
+  only `tile_gpu` / `tile_retrieve` carry pre-hoist local copies; `tile_retrieve_reflectivity` already
+  imports SMM's `smOfReflectivityHH` and `tile_retrieve_lut` imports `kernel.r_lut`, so those are
   SSOT-clean by construction (the deliberately out-of-framework `tile_retrieve_lut_eager` GPU baseline is
   not a rewire target).
 - ⬜ Extend the proof end to end: parametric `evalTape`/`cExpr` rendering faithfulness over all inputs,
@@ -281,18 +283,24 @@ Status: ✅ done · 🚧 in progress · ⬜ planned
      empty. To be fair: the GPU hardware gathers fine (texture/L2), and TorchLean's eager engine even
      exposes `gather*` ops — the exclusion is the *verified write-once vocabulary's*, by design. So
      deploy the LUT twice, once per meaning of "runs":
-     - `tile_retrieve_lut` (CPU): a small host CLI over `kernel.r_lut` — per-pixel scalar loop over
-       precomputed nearest-angle slices; fills the CPU wall-time cell. (Today only the demo-scale
-       `r_lut_example` exists: one slice + monotonicity certificate + QC guard.)
-     - `tile_retrieve_lut_eager` (GPU): an **eager-tensor port** written directly against TorchLean
-       `gather*` — slice table uploaded as a tensor, nearest-node by `round` (the grids are uniform),
-       the SM bracket by a fixed 7-step bisection of gathers, then lerp. This is the *deliberately
-       deficient* baseline, and its deficiencies are the point of comparison: it runs and can be
-       timed, but it records **no tape** (gather has no tape node, so the AI recorders are blind to
-       it), compiles to **no megakernel**, and sits **outside the verified single-source story** — a
-       second, hand-written implementation with no erasure/parity theorem connecting it to anything
-       proven, exactly the artifact class the calculus exists to eliminate. And it still carries the
-       LUT's accuracy bias.
+     - ✅ `tile_retrieve_lut` (CPU): a small host CLI over `kernel.r_lut` — per-pixel scalar loop over
+       precomputed nearest-angle slices (SM 100∈[0,0.6] × clay 20∈[0,1] × the tile-40° nearest angle
+       node 38.889°), reusing the shared `rEffOf` for Step 1. **Built + validated** (~3.8 ms/1600 px;
+       SM∈[0,0.6], monotone in R_eff, NaN range-guard faithful to `no_solution_above/below`). Fills the
+       CPU wall-time cell. (`r_lut_example` remains the demo-scale monotonicity/QC witness.)
+     - ✅ `tile_retrieve_lut_eager` (GPU): an **eager-tensor port** on the `Cuda.Tape` engine (A4500
+       under `-K cuda`, C stubs otherwise) — the clay slice + `invΔ` table uploaded as leaves, an
+       on-device `gatherRowsNat` at the nearest-clay node, then the SM inversion. Design finding worth
+       keeping: the eager tensor vocabulary (`const/add/sub/mul/max/min/clamp/relu/reduceSum/gather*`)
+       has **no compare / select / round / div**, so the intended 7-step bisection + NaN range-guard is
+       *inexpressible in the tensor API* — the thesis, one layer up. What IS expressible is a branchless
+       **clamped-ramp** `pos = Σⱼ clamp((R_eff−slice[j])·invΔ[j],0,1)`, **bit-exact to `np.interp`
+       in-range** (validated to ~6e-8 vs the fp64 CPU LUT), whose one deviation is that it **clamps**
+       out-of-range instead of returning NaN — no comparison to flag it. This is the *deliberately
+       deficient* baseline: it runs and times, but records **no tape**, compiles to **no megakernel**,
+       and sits **outside the verified single-source story** — no erasure/parity theorem, plus the LUT's
+       accuracy bias — exactly the artifact class the calculus exists to eliminate. (GPU run needs a
+       one-time `pixi install --manifest-path cuda-toolchain/pixi.toml`, then `./cuda.sh exe`.)
   2. **Equations, iterated** (`tile_retrieve`): 12 projected-Newton steps on the same physics
      (~36 forward evals/px) — fixed trip count, hence recordable; the ×12 body measured above.
   3. **Equations, solved** (`tile_retrieve_reflectivity` / SMM `kernel.retrieve_analytic`,
@@ -300,8 +308,8 @@ Status: ✅ done · 🚧 in progress · ⬜ planned
      sweeps, ~2 forward-evals/px.
 
   All the CLIs share one I/O + flags/QC contract (2 vs 3 already validated NaN-mask-identical on
-  synthetic tiles), so outputs diff directly. CPU compares all three (closed form already 18.5 ms vs
-  Newton 28.3 ms per 160×160 tile; LUT wall-time still unmeasured in Lean); GPU compares 2 vs 3
+  synthetic tiles), so outputs diff directly. CPU compares all three (closed form 18.5 ms vs Newton
+  28.3 ms per 160×160 tile; the host-scalar LUT now measured too); GPU compares 2 vs 3
   *inside* the verified pipeline, with `tile_retrieve_lut_eager` alongside as the out-of-framework
   baseline — the LUT's absence *from the verified column* is the SMM textbook Ch06 “was the look-up
   table an accelerator?” verdict (which also
