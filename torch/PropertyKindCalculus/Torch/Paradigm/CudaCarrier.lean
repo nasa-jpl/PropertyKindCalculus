@@ -80,16 +80,16 @@ instance : NumCarrier (CudaT s) where
 /-- **Scaled product exponential** `exp(c · x · y)` (left-associated, `exp((c·x)·y)`) — a *fused form*
 (`paradigm.batch_carrier`'s `FusedExp`) a batched deployment can request. Domain-neutral: it names no
 problem domain, yet a soil-moisture two-way vegetation attenuation `exp(−2·b·ndvi)` is one instance
-(`c = −2`, `x = b`, `y = ndvi`), as is a Beer–Lambert two-way extinction `exp(−2·κ·ℓ)`. This portable
-definition composes the existing dual-backend device kernels (`full`/`mul`/`exp`), so it runs on
-**both** the CPU-stub (plain `lake build`) and the GPU (`-K cuda`) build, and is bit-identical to the
-same `exp(c·x·y)` computed through the `NumCarrier` ops — *same left-association*, so it is an exact
-twin of a composed `exp((c·x)·y)` (e.g. `avs_batch.attenuation`), not merely a close one. A `-K cuda` /
-deploy build may override this body with a single fused device kernel (one launch instead of four);
-this main-branch form names no CUDA-only symbol, so the `Torch` library builds green without a GPU
-(the pinned `combined` TorchLean carries no fused kernel). -/
+(`c = −2`, `x = b`, `y = ndvi`), as is a Beer–Lambert two-way extinction `exp(−2·κ·ℓ)`. This dispatches
+to TorchLean's **single fused device kernel** `Buffer.scaledProdExp` (one launch instead of the four
+`full`/`mul`/`mul`/`exp` ops), which the pinned `combined` now carries. That extern has **both** a CUDA
+kernel and a portable C stub behind the same symbol (`torchlean_cuda_buffer_scaled_prod_exp`), so the
+`Torch` library still builds green on **both** the CPU-stub (plain `lake build`) and the GPU (`-K cuda`)
+build — no GPU required. The fused kernel is bit-identical to the same `exp((c·x)·y)` composed through
+the `NumCarrier` ops (*same left-association*, verified when the op landed in TorchLean), so it stays an
+exact twin of a composed `exp((c·x)·y)` (e.g. `avs_batch.attenuation`), not merely a close one. -/
 @[inline] def scaledProdExp (c : Float) (x y : CudaT s) : CudaT s :=
-  ⟨Buffer.exp (Buffer.mul (Buffer.mul (Buffer.full (szU s) c) x.buf) y.buf)⟩
+  ⟨Buffer.scaledProdExp x.buf y.buf c⟩
 
 end CudaT
 end PropertyKindCalculus.Paradigm.CudaCarrier

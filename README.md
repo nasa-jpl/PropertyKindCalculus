@@ -324,14 +324,16 @@ Status: ✅ done · 🚧 in progress · ⬜ planned
   max abs 0.0 / max rel 2e-4 → PASS (tol 1e-3)**; end-to-end 2.96 ms over 131072 px, fused AI 0.5625
   flop/byte (the single `resJac` pass is transfer-bound, as its AI predicts — the compute-bound win is
   the ×60 fit-loop device-wrapper, the next codegen step).
-- ✅ / ⬜ **Fused `scaledProdExp` under `-K cuda`.** The single fused device kernel `exp((c·x)·y)` is
+- ✅ **Fused `scaledProdExp` under `-K cuda`.** The single fused device kernel `exp((c·x)·y)` is
   added to TorchLean as the domain-neutral `Buffer.scaledProdExp` — a *scaled product exponential*
   (Beer–Lambert / propagation two-way extinction in computational electromagnetism and remote sensing,
   Boltzmann-type weights) motivates it while naming no domain — bit-identical to the composed four-op
-  form and verified compiling (nvcc kernel + C stub + `@[extern]` binding). PKC's `CudaT.scaledProdExp`
-  then becomes the one-liner `⟨Buffer.scaledProdExp x.buf y.buf c⟩`; that repoint is **pin-gated** (it
-  lands when TorchLean's `combined` pin is bumped to carry the new op), the same coupling discipline the
-  downstream SMM/app rewires follow.
+  form and verified compiling (nvcc kernel + C stub + `@[extern]` binding). Bit-identity is now pinned
+  by a TorchLean suite test (`Tests.Cuda.ScaledProdExp`) that compares the fused kernel to the composed
+  `exp(((full c)·x)·y)` by `Float.toBits` — green on the A4500. PKC's `CudaT.scaledProdExp` is now the
+  one-liner `⟨Buffer.scaledProdExp x.buf y.buf c⟩` (the `combined` pin carries the op; the extern's C
+  stub keeps a plain `lake build` green without a GPU), the same coupling discipline the downstream
+  SMM/app rewires follow.
 - ⬜ Apply the backend to the deployed SMAP–NISAR kernels in the downstream application — and deploy
   **both** Stage-3 CLIs side by side, because the A/B is the point. Three Stage-3 methods exist, and
   the distinction must stay sharp:
