@@ -115,21 +115,30 @@ structure Codegen where
   /-- `out[j*P + i] = vID;` lines. -/
   outLines : Array String
 
-/-- Lower a CSE'd tape + its output ids to the straight-line body. Node array index = node id
-(tape ids are array indices), so a node's `vID` is `v{arrayIndex}` and its parents reference earlier
-`v`s. -/
-def gen (t : Tape Float) (outIds : List Nat) : Except String Codegen := do
-  let mut inputs : Array String := #[]
+/-- The kernel's input parameters: the distinct **named** leaf names in first-seen order (each a
+`const float* in_<nm>`). A pure `foldl`, so it is duplicate-free by construction
+(`collectInputs_nodup`) and the generated ABI's input list is a pure function of the tape — `gen`
+builds its `inputs` field with exactly this (`gen_inputs_eq`). -/
+def collectInputs (t : Tape Float) : Array String :=
+  t.nodes.foldl (init := #[]) fun inputs n =>
+    if n.parents.isEmpty then
+      match n.name with
+      | some nm => if inputs.contains nm then inputs else inputs.push nm
+      | none    => inputs
+    else inputs
+
+/-- The straight-line body lines (`const float vID = …;`) in node-id order — the only part that can
+fail (an op node must carry an op name). Factored out of `gen` so the record fields that do *not*
+depend on the node walk (`inputs`, `numOutputs`, `outLines`) are pure, making the codegen
+well-formedness theorems (`gen_inputs_eq`, `gen_numOutputs`) immediate. -/
+def genBody (t : Tape Float) : Except String (Array String) := do
   let mut body : Array String := #[]
   let mut i : Nat := 0
   for n in t.nodes do
     if n.parents.isEmpty then
       match n.name with
-      | some nm =>
-          if !inputs.contains nm then inputs := inputs.push nm
-          body := body.push s!"  const float v{i} = in_{nm}[p];"
-      | none =>
-          body := body.push s!"  const float v{i} = {floatLit (nodeScalar n)};"
+      | some nm => body := body.push s!"  const float v{i} = in_{nm}[p];"
+      | none    => body := body.push s!"  const float v{i} = {floatLit (nodeScalar n)};"
     else
       match n.name with
       | some nm =>
@@ -137,8 +146,18 @@ def gen (t : Tape Float) (outIds : List Nat) : Except String Codegen := do
           body := body.push s!"  const float v{i} = {e};"
       | none => .error s!"tape_codegen: op node {i} has no op name"
     i := i + 1
-  let outLines := (outIds.zipIdx).map (fun (oid, j) => s!"  out[{j} * P + p] = v{oid};")
-  pure { inputs, numOutputs := outIds.length, body, outLines := outLines.toArray }
+  pure body
+
+/-- Lower a CSE'd tape + its output ids to the straight-line body. Node array index = node id
+(tape ids are array indices), so a node's `vID` is `v{arrayIndex}` and its parents reference earlier
+`v`s. The `inputs`/`numOutputs`/`outLines` fields are pure functions of `t`/`outIds`; only `body`
+runs the (fallible) node walk (`genBody`). -/
+def gen (t : Tape Float) (outIds : List Nat) : Except String Codegen :=
+  (genBody t).map fun body =>
+    { inputs := collectInputs t
+    , numOutputs := outIds.length
+    , body
+    , outLines := ((outIds.zipIdx).map (fun (oid, j) => s!"  out[{j} * P + p] = v{oid};")).toArray }
 
 /-- The kernel parameter list: `int P, const float* in_<x>…, float* out`. -/
 def paramList (cg : Codegen) : String :=
@@ -162,6 +181,145 @@ def emitStub (name : String) (cg : Codegen) : String :=
   let bod := String.join (cg.body.toList.map ("  " ++ · ++ "\n"))
   let out := String.join (cg.outLines.toList.map ("  " ++ · ++ "\n"))
   sig ++ loop ++ bod ++ out ++ "  }\n}\n"
+
+/-! ### FFI landing: wiring the generated kernel through a Lake `extern_lib` slot
+
+`emitCuda` is the compute `__global__` only. Landing it through a `buildNativeBackendLib`-style
+`extern_lib` slot and calling it from Lean needs three more artifacts, all generated from the *same*
+`Codegen` so the ABI cannot drift from the kernel:
+
+* a `.cu` translation unit = the device kernel + an `extern "C"` host launcher
+  `<name>_launch(P, nIns, ins) : FloatArray` (upload packed inputs, one thread per pixel, download
+  packed outputs);
+* a `.c` **stub** twin = the portable host loop behind the identical launcher symbol, so a CUDA-free
+  build links the same entry point (the `torchlean_dgemm_cuda.cu` / `_stub.c` precedent);
+* the Lean `@[extern]` binding + a `NativeBackendLib`-style `{stem, cudaSrc, stubSrc}` spec.
+
+**Packed layout** (tape-independent, so the Lean signature never changes with the tape): the `k`-th
+distinct named input occupies `ins[k*P .. (k+1)*P)`, output `j` occupies `out[j*P .. (j+1)*P)` — the
+same `out[j*P + p]` the kernel writes. `Float` is 64-bit while the kernel is `float`, so the launcher
+casts `double ↔ float32` at the boundary (the fp64 `evalTape` denotation is the oracle the fp32 kernel
+is validated against). -/
+
+/-- The kernel's parameter list as tokens (`paramList` renders it): `int P`, one
+`const float* in_<nm>` per distinct named input, then `float* out`. -/
+def kernelParamList (cg : Codegen) : List String :=
+  "int P" :: cg.inputs.toList.map (fun nm => s!"const float* __restrict__ in_{nm}")
+    ++ ["float* __restrict__ out"]
+
+/-- The arguments the host launcher forwards to the kernel — one per kernel parameter, same order
+(`P`, each uploaded `d_in_<nm>`, `d_out`). `landing_abi_consistent` proves this has the same length as
+`kernelParamList`, so the generated FFI call is arity-correct by construction. -/
+def launchArgList (cg : Codegen) : List String :=
+  "P" :: cg.inputs.toList.map (fun nm => s!"d_in_{nm}") ++ ["d_out"]
+
+/-- The `.cu` translation unit: the device kernel plus an `extern "C"` host launcher that marshals the
+packed `FloatArray` across the FFI, uploads inputs, launches one thread per pixel, and downloads the
+packed outputs. Compile with `nvcc --fmad=false -prec-div=true -prec-sqrt=true`. -/
+def emitCudaLanding (name : String) (cg : Codegen) : String :=
+  let ins := cg.inputs.toList
+  let nOut := cg.numOutputs
+  let kernelArgs := String.intercalate ", " (launchArgList cg)
+  let uploads := String.intercalate "\n" <| ins.zipIdx.map (fun (nm, k) =>
+    String.intercalate "\n"
+      [ s!"  float* d_in_{nm}; cudaMalloc((void**)&d_in_{nm}, nb);"
+      , s!"  for (size_t i = 0; i < np; ++i) hbuf[i] = (float)src[(size_t){k} * np + i];"
+      , s!"  cudaMemcpy(d_in_{nm}, hbuf, nb, cudaMemcpyHostToDevice);" ])
+  let frees := String.intercalate "\n" <| ins.map (fun nm => s!"  cudaFree(d_in_{nm});")
+  String.intercalate "\n"
+    [ "// generated by paradigm.tape_codegen — FFI landing translation unit (CUDA path)."
+    , "// compile: nvcc --fmad=false -prec-div=true -prec-sqrt=true"
+    , "#include <lean/lean.h>"
+    , "#include <cuda_runtime.h>"
+    , "#include <stdlib.h>"
+    , ""
+    , emitCuda name cg
+    , s!"extern \"C\" LEAN_EXPORT lean_obj_res {name}_launch(uint32_t P, uint32_t nIns, b_lean_obj_arg InsObj) \{"
+    , "  (void)nIns;"
+    , "  const size_t np = (size_t)P;"
+    , "  const size_t nb = np * sizeof(float);"
+    , s!"  const size_t no = (size_t){nOut} * np;"
+    , "  const double* src = lean_float_array_cptr((lean_object*)InsObj);"
+    , "  float* hbuf = (float*)malloc(nb);"
+    , uploads
+    , s!"  float* d_out; cudaMalloc((void**)&d_out, (size_t){nOut} * nb);"
+    , "  const int threads = 256;"
+    , "  const int blocks = (int)((np + (size_t)threads - 1) / (size_t)threads);"
+    , s!"  {name}<<<blocks, threads>>>({kernelArgs});"
+    , "  cudaDeviceSynchronize();"
+    , "  lean_object* outObj = lean_mk_empty_float_array(lean_box(no));"
+    , "  lean_sarray_set_size(outObj, no);"
+    , "  double* dst = lean_float_array_cptr(outObj);"
+    , "  float* hout = (float*)malloc(no * sizeof(float));"
+    , "  cudaMemcpy(hout, d_out, no * sizeof(float), cudaMemcpyDeviceToHost);"
+    , "  for (size_t i = 0; i < no; ++i) dst[i] = (double)hout[i];"
+    , frees
+    , "  cudaFree(d_out);"
+    , "  free(hbuf); free(hout);"
+    , "  return outObj;"
+    , "}"
+    , "" ]
+
+/-- The `.c` stub twin: the portable host loop (`emitStub`, one pass per pixel) behind the identical
+`<name>_launch` FFI symbol — a CUDA-free build links this instead. Compile with `-ffp-contract=off`. -/
+def emitStubLanding (name : String) (cg : Codegen) : String :=
+  let ins := cg.inputs.toList
+  let nOut := cg.numOutputs
+  let computeArgs := String.intercalate ", "
+    (("P" :: ins.map (fun nm => s!"in_{nm}")) ++ ["out"])
+  let allocs := String.intercalate "\n" <| ins.zipIdx.map (fun (nm, k) =>
+    String.intercalate "\n"
+      [ s!"  float* in_{nm} = (float*)malloc(np * sizeof(float));"
+      , s!"  for (size_t i = 0; i < np; ++i) in_{nm}[i] = (float)src[(size_t){k} * np + i];" ])
+  let frees := String.intercalate "\n" <| ins.map (fun nm => s!"  free(in_{nm});")
+  String.intercalate "\n"
+    [ "// generated by paradigm.tape_codegen — FFI landing translation unit (portable C stub)."
+    , "// compile with -ffp-contract=off to match the device kernel bit-for-bit."
+    , "#include <lean/lean.h>"
+    , "#include <math.h>"
+    , "#include <stdlib.h>"
+    , ""
+    , emitStub name cg
+    , s!"LEAN_EXPORT lean_obj_res {name}_launch(uint32_t P, uint32_t nIns, b_lean_obj_arg InsObj) \{"
+    , "  (void)nIns;"
+    , "  const size_t np = (size_t)P;"
+    , s!"  const size_t no = (size_t){nOut} * np;"
+    , "  const double* src = lean_float_array_cptr((lean_object*)InsObj);"
+    , allocs
+    , "  float* out = (float*)malloc(no * sizeof(float));"
+    , s!"  {name}_stub({computeArgs});"
+    , "  lean_object* outObj = lean_mk_empty_float_array(lean_box(no));"
+    , "  lean_sarray_set_size(outObj, no);"
+    , "  double* dst = lean_float_array_cptr(outObj);"
+    , "  for (size_t i = 0; i < no; ++i) dst[i] = (double)out[i];"
+    , frees
+    , "  free(out);"
+    , "  return outObj;"
+    , "}"
+    , "" ]
+
+/-- The Lean `@[extern]` binding for the generated launcher (tape-independent signature). Emitted as a
+string so a downstream `extern_lib` client can drop it in verbatim. -/
+def landingLeanBinding (name : String) : String :=
+  s!"@[extern \"{name}_launch\"] opaque {name}Launch (P : UInt32) (nIns : UInt32) (ins : @& FloatArray) : FloatArray"
+
+/-- A `buildNativeBackendLib`-style spec naming the two generated translation units for an `extern_lib`
+slot (CUDA source → nvcc under `-K cuda`, `.c` stub → `cc` otherwise). -/
+structure LandingSpec where
+  stem : String
+  cudaSrc : String
+  stubSrc : String
+deriving Repr
+
+def landingSpec (name : String) : LandingSpec :=
+  { stem := name, cudaSrc := s!"{name}.cu", stubSrc := s!"{name}_stub.c" }
+
+/-- Write the two generated translation units into `dir` (AOT: with no nvrtc, the `.cu` is produced at
+record time and checked in for `nvcc` to compile through the `extern_lib` slot). -/
+def writeLandingFiles (dir : System.FilePath) (name : String) (cg : Codegen) : IO Unit := do
+  IO.FS.createDirAll dir
+  IO.FS.writeFile (dir / s!"{name}.cu") (emitCudaLanding name cg)
+  IO.FS.writeFile (dir / s!"{name}_stub.c") (emitStubLanding name cg)
 
 /-! ### Arithmetic-intensity accounting -/
 

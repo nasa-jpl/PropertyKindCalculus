@@ -309,10 +309,29 @@ Status: ✅ done · 🚧 in progress · ⬜ planned
   holds unconditionally, no `toBits`), and `#guard cseDenotationHolds demoEnv …` checks it computationally
   on the deployed AVS `resJac` tape (whose merged const leaves exercise the `hleaf` case), mirroring
   `#guard cse_preserves_resJac`. Sorry-free; axioms `[propext, Classical.choice, Quot.sound]`.
-- ⬜ GPU landing (gated): wire the generated `.cu` through the lakefile `extern_lib` /
-  `buildNativeBackendLib` slot, compile, validate against the fp64 oracle, and measure achieved
-  throughput / arithmetic intensity against the eager path; likewise override `CudaT.scaledProdExp` with
-  a single fused device kernel under `-K cuda`.
+- ✅ **GPU landing on the A4500** (`examples.tape_codegen_landing` + the deploy app). The codegen now
+  emits, from one `Codegen`, the full FFI-landing artifact set — the device `.cu`, an `extern "C"` host
+  launcher (`<name>_launch`, a packed-`FloatArray` FFI), the portable `.c` stub twin behind the same
+  symbol, the Lean `@[extern]` binding, and a `{stem, cudaSrc, stubSrc}` spec (`emitCudaLanding` /
+  `emitStubLanding` / `landingSpec`). Landing native code adds exactly one risk the `evalTape`-denotation
+  proofs do not cover — the **ABI** — so `examples.tape_codegen_landing` certifies it structurally: the
+  host launcher forwards exactly one argument per kernel parameter (`landing_abi_consistent`), the input
+  list is a pure function of the tape (`gen_inputs_eq`) and duplicate-free (`collectInputs_nodup`), and
+  the output arity is the caller's (`gen_numOutputs`) — with inhabitation on `demoTape` and on the
+  actually-recorded `resJac` tape (axioms `[propext, …]`). Downstream, `gpu-smap-nisar-sm` wires the
+  generated `avs_resjac.cu` through a Lake `extern_lib` (the `buildNativeBackendLib` pattern) and
+  `megakernel_check` runs it on the RTX A4500: the **fp32 kernel matches the fp64 `evalTape` oracle to
+  max abs 0.0 / max rel 2e-4 → PASS (tol 1e-3)**; end-to-end 2.96 ms over 131072 px, fused AI 0.5625
+  flop/byte (the single `resJac` pass is transfer-bound, as its AI predicts — the compute-bound win is
+  the ×60 fit-loop device-wrapper, the next codegen step).
+- ✅ / ⬜ **Fused `scaledProdExp` under `-K cuda`.** The single fused device kernel `exp((c·x)·y)` is
+  added to TorchLean as the domain-neutral `Buffer.scaledProdExp` — a *scaled product exponential*
+  (Beer–Lambert / propagation two-way extinction in computational electromagnetism and remote sensing,
+  Boltzmann-type weights) motivates it while naming no domain — bit-identical to the composed four-op
+  form and verified compiling (nvcc kernel + C stub + `@[extern]` binding). PKC's `CudaT.scaledProdExp`
+  then becomes the one-liner `⟨Buffer.scaledProdExp x.buf y.buf c⟩`; that repoint is **pin-gated** (it
+  lands when TorchLean's `combined` pin is bumped to carry the new op), the same coupling discipline the
+  downstream SMM/app rewires follow.
 - ⬜ Apply the backend to the deployed SMAP–NISAR kernels in the downstream application — and deploy
   **both** Stage-3 CLIs side by side, because the A/B is the point. Three Stage-3 methods exist, and
   the distinction must stay sharp:
