@@ -62,30 +62,30 @@ length `L`, and time `T`. -/
 namespace ADim
 
 /-- Volume, `L³`. -/
-def volume : Dimension PhyslibBase := Dim.area * Dim.length
+def volume : Dimension LTMCTDimensionBase := Dim.area * Dim.length
 /-- Pressure, `M·L⁻¹·T⁻²` (force per area; the pascal). Static and sound pressure
 share it; so — the collision — does the sound energy density (energy per volume). -/
-def pressure : Dimension PhyslibBase := Dim.force / Dim.area
+def pressure : Dimension LTMCTDimensionBase := Dim.force / Dim.area
 /-- Sound particle velocity, `L·T⁻¹` (the time-derivative of displacement). -/
-def velocity : Dimension PhyslibBase := Dim.speed
+def velocity : Dimension LTMCTDimensionBase := Dim.speed
 /-- Sound particle acceleration, `L·T⁻²`. -/
-def acceleration : Dimension PhyslibBase := Dim.speed / Dim.time
+def acceleration : Dimension LTMCTDimensionBase := Dim.speed / Dim.time
 /-- Volume flow rate, `L³·T⁻¹` (volume per time). -/
-def volumeFlowRate : Dimension PhyslibBase := volume / Dim.time
+def volumeFlowRate : Dimension LTMCTDimensionBase := volume / Dim.time
 /-- Sound energy density, `M·L⁻¹·T⁻²` (energy per volume) — *equal* to `pressure`. -/
-def energyDensity : Dimension PhyslibBase := Dim.energy / volume
+def energyDensity : Dimension LTMCTDimensionBase := Dim.energy / volume
 /-- Sound intensity, `M·T⁻³` (power per area). -/
-def intensity : Dimension PhyslibBase := Dim.power / Dim.area
+def intensity : Dimension LTMCTDimensionBase := Dim.power / Dim.area
 /-- Sound exposure, `M²·L⁻²·T⁻³` (sound pressure squared, integrated over time —
 `Pa²·s`). -/
-def exposure : Dimension PhyslibBase := pressure * pressure * Dim.time
+def exposure : Dimension LTMCTDimensionBase := pressure * pressure * Dim.time
 /-- Characteristic impedance of a medium, `M·L⁻²·T⁻¹` (pressure per particle velocity —
 `Pa·s/m`). -/
-def charImpedance : Dimension PhyslibBase := pressure / velocity
+def charImpedance : Dimension LTMCTDimensionBase := pressure / velocity
 /-- Acoustic impedance, `M·L⁻⁴·T⁻¹` (pressure per volume flow rate — `Pa·s/m³`). The
 extra `L²` over the characteristic impedance is what lets the dimension tell the two
 homonymous "impedances" apart. -/
-def acousticImpedance : Dimension PhyslibBase := pressure / volumeFlowRate
+def acousticImpedance : Dimension LTMCTDimensionBase := pressure / volumeFlowRate
 
 end ADim
 

@@ -20,7 +20,7 @@ Over `Base` the reform's claims are theorems of the dimension group:
   cancellation of the angle exponent, not by multiplying by a hidden `1`.
 
 The angle-free ISO 80000 catalogue keeps its natural five-generator sub-basis and
-**lifts** into `Base` along the injective embedding `emb : PhyslibBase ↪ Base`, with
+**lifts** into `Base` along the injective embedding `emb : LTMCTDimensionBase ↪ Base`, with
 the *kind* invariant under the lift (`DimensionedKind.extend_kind`): the base choice
 is invisible at the kind layer. And the dimension-one conflation the kind layer
 exists to repair *survives* the reform — volumetric and gravimetric water content are
@@ -114,7 +114,7 @@ theorem torque_mul_angle_eq_energy : torque * planeAngle = energy := by
 losslessly along it, and every *kind* is fixed by the re-coordinatization. -/
 
 /-- The injective embedding of PhysLib's basis into the angle-augmented `Base`. -/
-def emb : PhyslibBase → Base
+def emb : LTMCTDimensionBase → Base
   | .length => .length
   | .time => .time
   | .mass => .mass

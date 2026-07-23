@@ -50,7 +50,7 @@ def CataloguedKind.of (ref : StandardRef) (item symbol coherentUnit : String)
   { ref := ref, item := item, symbol := symbol, coherentUnit := coherentUnit, qk := qk }
 
 /-- A ratio-scale dimensioned kind with a plain `id` and a given dimension. -/
-def dimKind (id : String) (dim : Dimension PhyslibBase) : DimensionedKind :=
+def dimKind (id : String) (dim : Dimension LTMCTDimensionBase) : DimensionedKind :=
   { kind := { id := id, scale := .ratio }, dim := dim }
 
 /-! ## Rendering a `Dimension` to its printed expression
@@ -60,7 +60,7 @@ The blueprint item-index tables print each kind's dimension (e.g. `L⁻¹`,
 inconsistent factor orderings — they are *computed* from the PhysLib `Dimension`
 of each catalogued kind via `renderDimension`.
 
-The kinds are dimensioned over PhysLib's *charge*-based `PhyslibBase`, but ISO 80000
+The kinds are dimensioned over PhysLib's *charge*-based `LTMCTDimensionBase`, but ISO 80000
 tabulates electromagnetic dimensions over the ISQ base quantity electric *current* `I`.
 For citation fidelity the renderer re-expresses the electromagnetic axis in current: since
 the coulomb is the ampere-second, `C = I·T`, a charge factor with exponent `q` reads as
@@ -95,7 +95,7 @@ length, time, electric current, temperature); `1` for the dimensionless (unit-on
 dimension. The electromagnetic axis is re-expressed from PhysLib's internal charge
 generator into the ISQ base quantity current via `C = I·T`: the current exponent is the
 charge exponent, and the time exponent absorbs the charge exponent. -/
-def renderDimension (d : Dimension PhyslibBase) : String :=
+def renderDimension (d : Dimension LTMCTDimensionBase) : String :=
   let currentExp := d.charge
   let timeExp := d.time + d.charge
   let factors := [dimFactor "M" d.mass, dimFactor "L" d.length, dimFactor "T" timeExp,

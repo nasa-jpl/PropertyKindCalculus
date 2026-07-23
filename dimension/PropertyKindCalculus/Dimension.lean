@@ -21,7 +21,7 @@ This is the **only** library in the package that depends on PhysLib (hence
 Mathlib); the core spine stays Mathlib-free. It lives in its own source tree
 (`dimension/`) and builds with `lake build Dimension`.
 -/
-import Physlib.Units.Dimension
+import Physlib.Units.LTMCTDimensionBase
 import PropertyKindCalculus
 
 open Dimension
@@ -36,19 +36,19 @@ dimensioned kind with a `def`, never by editing a central type).
 
 It is **parametric in the base-dimension basis** `B`: `dim` is a PhysLib
 `Dimension B`, so a dimensioned kind can be typed over any generating set — the
-SI/PhysLib default (`PhyslibBase`), Gaussian–CGS, natural units, or an
-angle-augmented basis. The basis parameter defaults to `PhyslibBase`, so a bare
+SI/PhysLib default (`LTMCTDimensionBase`), Gaussian–CGS, natural units, or an
+angle-augmented basis. The basis parameter defaults to `LTMCTDimensionBase`, so a bare
 `DimensionedKind` is the familiar five-generator instance and every existing
 declaration reads unchanged; the parametricity is exercised where a different
 basis is wanted (see `DimensionExamples`). Crucially the *kind* component does not
 mention `B` at all: re-coordinatizing the dimension into another basis leaves the
 kind fixed (`DimensionedKind.extend_kind`), the formal content of the base choice
 living strictly *below* the kind layer. -/
-structure DimensionedKind (B : Type := PhyslibBase) where
+structure DimensionedKind (B : Type := LTMCTDimensionBase) where
   /-- The underlying kind-of-property (the richer datum). -/
   kind : KindOfProperty
   /-- The physical dimension of the kind's quantities, over the base-dimension
-  basis `B` (PhysLib `Dimension B`; `B` defaults to `PhyslibBase`). -/
+  basis `B` (PhysLib `Dimension B`; `B` defaults to `LTMCTDimensionBase`). -/
   dim : Dimension B
 
 namespace DimensionedKind
@@ -81,7 +81,7 @@ def times (a b : DimensionedKind B) : DimensionedKind B :=
     dim := a.dim * b.dim }
 
 /-- The dimensionless unit dimensioned kind (`dim = 1`), generic in the basis `B`
-(inferred from the use site; `PhyslibBase` in the catalogue). -/
+(inferred from the use site; `LTMCTDimensionBase` in the catalogue). -/
 def unitless : DimensionedKind B :=
   { kind := { id := "1", scale := .ratio }, dim := 1 }
 
@@ -150,9 +150,9 @@ dimension is re-expressed, is invisible at the kind layer. -/
 
 end DimensionedKind
 
-/-! ## The canonical basis `PhyslibBase`, and its two deliberate departures from ISQ
+/-! ## The canonical basis `LTMCTDimensionBase`, and its two deliberate departures from ISQ
 
-PKC fixes **`PhyslibBase`** — PhysLib's five generators length, time, mass, *charge*,
+PKC fixes **`LTMCTDimensionBase`** — PhysLib's five generators length, time, mass, *charge*,
 temperature — as the catalogue's canonical basis (the default of `DimensionedKind`). This
 is deliberately *not* the seven-generator ISQ base of ISO 80000-1, and the two differences
 are of different kinds:
@@ -163,7 +163,7 @@ are of different kinds:
   and to every distinctness theorem; it surfaces only in how a dimension is *printed*. For
   citation fidelity the catalogue's renderer re-expresses the electromagnetic axis in
   current (`Iso80000.renderDimension`), and `IsqBase` exhibits the change of basis as a
-  genuine group homomorphism `Dimension PhyslibBase →* Dimension ISQBase` sending
+  genuine group homomorphism `Dimension LTMCTDimensionBase →* Dimension ISQBase` sending
   `charge ↦ current · time` — a map a mere generator reindexing (`Dimension.extend`) cannot
   express, since a generator goes to a *product*.
 
@@ -172,7 +172,7 @@ are of different kinds:
   Finkelstein–Whitehead *scale-spanning* analysis (`ScaleSpanning`, R13) the mole is a
   human-selected dimensionless count (`Dim.amountOfSubstance = 1`) and the candela is the
   dimension of *power* (`Dim.luminousIntensity = Dim.power`). This is a *considered choice*,
-  not a limitation forced by `PhyslibBase`: even over a basis that offers the two generators
+  not a limitation forced by `LTMCTDimensionBase`: even over a basis that offers the two generators
   (`IsqBase.ISQBase`), the catalogue declines them — the mole stays dimension one and the
   candela stays power under the lift — and the distinctions the reduced dimension conflates
   (the `J/mol` energies, luminous vs. radiant flux) are carried by the **kind** layer, which
@@ -190,45 +190,45 @@ capstone and to exercise the dimensional algebra. -/
 namespace Dim
 
 /-- Dimensionless (dimension one). -/
-def one : Dimension PhyslibBase := 1
+def one : Dimension LTMCTDimensionBase := 1
 /-- Length, `L`. -/
-def length : Dimension PhyslibBase := L𝓭
+def length : Dimension LTMCTDimensionBase := L𝓭
 /-- Mass, `M`. -/
-def mass : Dimension PhyslibBase := M𝓭
+def mass : Dimension LTMCTDimensionBase := M𝓭
 /-- Time, `T`. -/
-def time : Dimension PhyslibBase := T𝓭
+def time : Dimension LTMCTDimensionBase := T𝓭
 /-- Area, `L²`. -/
-def area : Dimension PhyslibBase := L𝓭 * L𝓭
+def area : Dimension LTMCTDimensionBase := L𝓭 * L𝓭
 /-- Speed, `L·T⁻¹`. -/
-def speed : Dimension PhyslibBase := L𝓭 / T𝓭
+def speed : Dimension LTMCTDimensionBase := L𝓭 / T𝓭
 /-- Thermodynamic temperature, `Θ` — the SI base quantity ISO 80000-5
 *Thermodynamics* is built on. -/
-def temperature : Dimension PhyslibBase := Θ𝓭
+def temperature : Dimension LTMCTDimensionBase := Θ𝓭
 /-- Electric charge, `C` (the coulomb). PhysLib's `Dimension` takes electric
 *charge* as the electromagnetic base generator; the SI base quantity electric
 current then appears as `charge · time⁻¹` (the ampere as coulomb per second), so
 `charge` is the generator IEC 80000-6 *Electromagnetism* is built on. -/
-def charge : Dimension PhyslibBase := C𝓭
+def charge : Dimension LTMCTDimensionBase := C𝓭
 /-- Electric current, `C·T⁻¹` (the ampere, coulomb per second). IEC 80000-6 takes
 electric current as the SI base quantity; PhysLib takes charge as the generator, so
 the two presentations of the electromagnetic dimension group are isomorphic. -/
-def current : Dimension PhyslibBase := C𝓭 / T𝓭
+def current : Dimension LTMCTDimensionBase := C𝓭 / T𝓭
 
 /-- Force, `M·L·T⁻²` (Newton's second law) — the mechanical dimension that energy and
 torque are both built from (`force · length`). Named here so the dimension/interaction
 layers and the scale-spanning reductions share one definition. -/
-def force : Dimension PhyslibBase := M𝓭 * L𝓭 / T𝓭 / T𝓭
+def force : Dimension LTMCTDimensionBase := M𝓭 * L𝓭 / T𝓭 / T𝓭
 /-- Energy and work, `M·L²·T⁻²` — force along a displacement. This is the mechanical
 dimension the Finkelstein–Whitehead *scale-spanning* analysis (Eur. J. Phys. 46 (2025)
 035701) assigns to the **kelvin** — thermodynamic temperature read as energy per
 Boltzmann constant `k_B`. ISO 80000-7 *Light and radiation* uses it for radiant energy
 (item 7-2.1). -/
-def energy : Dimension PhyslibBase := force * length
+def energy : Dimension LTMCTDimensionBase := force * length
 /-- Power, `M·L²·T⁻³` (energy per time). This is the mechanical dimension the
 Finkelstein–Whitehead *scale-spanning* analysis assigns to the **candela** — luminous
 intensity read as radiant power weighted by the luminous-efficacy coefficient `K_cd`
 (see `ScaleSpanning`). ISO 80000-7 uses it for radiant flux (item 7-4.1). -/
-def power : Dimension PhyslibBase := energy / time
+def power : Dimension LTMCTDimensionBase := energy / time
 /-- **Luminous intensity, the candela — reduced to power `M·L²·T⁻³`.** PhysLib's
 `Dimension` has no luminous-intensity generator, and — following the
 Finkelstein–Whitehead *scale-spanning* analysis (and the spectral luminous efficiency
@@ -236,13 +236,13 @@ Finkelstein–Whitehead *scale-spanning* analysis (and the spectral luminous eff
 the radiant intensity it weights. The luminous quantities of ISO 80000-7 therefore
 share the dimensions of their radiometric partners; what keeps them apart is the
 {kind}, not the dimension. -/
-def luminousIntensity : Dimension PhyslibBase := power
+def luminousIntensity : Dimension LTMCTDimensionBase := power
 /-- **Amount of substance, the mole — reduced to dimension one.** Following the
 Finkelstein–Whitehead *scale-spanning* analysis, the mole is a (human-selected)
 dimensionless count of entities (`N_A` particles), so a quantity *per mole* drops the
 mole entirely. ISO 80000-7's molar absorption coefficient (item 7-37, `m²/mol`) is
 therefore an area, `L²`. -/
-def amountOfSubstance : Dimension PhyslibBase := one
+def amountOfSubstance : Dimension LTMCTDimensionBase := one
 
 /-- The dimensional algebra composes in the PhysLib group: speed is length over
 time. -/

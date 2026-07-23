@@ -2,13 +2,13 @@
 # The ISQ base — the catalogue is base-agnostic and cites faithfully in current
 
 PhysLib's `Dimension` is parametric in its basis, and PKC fixes the five-generator
-*charge*-based `PhyslibBase` as canonical (see `Dimension`). ISO 80000-1's own basis is the
+*charge*-based `LTMCTDimensionBase` as canonical (see `Dimension`). ISO 80000-1's own basis is the
 seven-generator **ISQ**, which differs in two ways: it takes electric *current* as base
 (charge derived, `Q = I·T`) and it adds *amount of substance* and *luminous intensity*.
 This module realizes ISQ as `ISQBase` and settles, as theorems, what each difference costs.
 
 * **The charge → current change of basis is a genuine group homomorphism** `toISQ :
-  Dimension PhyslibBase →* Dimension ISQBase` sending `charge ↦ current · time`. This is
+  Dimension LTMCTDimensionBase →* Dimension ISQBase` sending `charge ↦ current · time`. This is
   *not* a reindexing of generators (`Dimension.extend`): a generator maps to a *product*,
   which `extend` cannot express — so it needs a real hom, built and proved injective
   (lossless) here.
@@ -36,7 +36,7 @@ namespace PropertyKindCalculus
 
 /-- **The ISO/IEC 80000-1 base quantities (ISQ)** — the seven-generator, *current*-based
 basis: length, time, mass, electric **current**, temperature, **amount of substance**,
-**luminous intensity**. Contrast PKC's canonical `PhyslibBase`, which is charge-based and
+**luminous intensity**. Contrast PKC's canonical `LTMCTDimensionBase`, which is charge-based and
 omits the last two (see `Dimension`). -/
 inductive ISQBase
   | length | time | mass | current | temperature | amount | luminousIntensity
@@ -46,11 +46,11 @@ namespace IsqBase
 
 /-! ## The charge → current change of basis, as a group homomorphism -/
 
-/-- The underlying map of the change of basis `PhyslibBase → ISQBase`. Because the coulomb
+/-- The underlying map of the change of basis `LTMCTDimensionBase → ISQBase`. Because the coulomb
 is the ampere-second, `C = I·T`, a charge exponent `q` becomes a current exponent `q`
 together with an added time exponent `q`; the mass/length/temperature axes carry over
 unchanged, and the amount/luminous-intensity axes that ISQ adds start at zero. -/
-def ofPhyslib (d : Dimension PhyslibBase) : Dimension ISQBase :=
+def ofPhyslib (d : Dimension LTMCTDimensionBase) : Dimension ISQBase :=
   ⟨fun
     | .length => d.length
     | .time => d.time + d.charge
@@ -60,26 +60,26 @@ def ofPhyslib (d : Dimension PhyslibBase) : Dimension ISQBase :=
     | .amount => 0
     | .luminousIntensity => 0⟩
 
-@[simp] theorem ofPhyslib_length (d : Dimension PhyslibBase) :
+@[simp] theorem ofPhyslib_length (d : Dimension LTMCTDimensionBase) :
     (ofPhyslib d).exponent .length = d.length := rfl
-@[simp] theorem ofPhyslib_time (d : Dimension PhyslibBase) :
+@[simp] theorem ofPhyslib_time (d : Dimension LTMCTDimensionBase) :
     (ofPhyslib d).exponent .time = d.time + d.charge := rfl
-@[simp] theorem ofPhyslib_mass (d : Dimension PhyslibBase) :
+@[simp] theorem ofPhyslib_mass (d : Dimension LTMCTDimensionBase) :
     (ofPhyslib d).exponent .mass = d.mass := rfl
-@[simp] theorem ofPhyslib_current (d : Dimension PhyslibBase) :
+@[simp] theorem ofPhyslib_current (d : Dimension LTMCTDimensionBase) :
     (ofPhyslib d).exponent .current = d.charge := rfl
-@[simp] theorem ofPhyslib_temperature (d : Dimension PhyslibBase) :
+@[simp] theorem ofPhyslib_temperature (d : Dimension LTMCTDimensionBase) :
     (ofPhyslib d).exponent .temperature = d.temperature := rfl
-@[simp] theorem ofPhyslib_amount (d : Dimension PhyslibBase) :
+@[simp] theorem ofPhyslib_amount (d : Dimension LTMCTDimensionBase) :
     (ofPhyslib d).exponent .amount = 0 := rfl
-@[simp] theorem ofPhyslib_luminousIntensity (d : Dimension PhyslibBase) :
+@[simp] theorem ofPhyslib_luminousIntensity (d : Dimension LTMCTDimensionBase) :
     (ofPhyslib d).exponent .luminousIntensity = 0 := rfl
 
-/-- **The charge → current change of basis is a group homomorphism** `Dimension PhyslibBase
+/-- **The charge → current change of basis is a group homomorphism** `Dimension LTMCTDimensionBase
 →* Dimension ISQBase`: it carries the dimensionless `1` to `1` and products to products, so
 the whole dimensional algebra transports. Each output exponent is a fixed ℤ-linear
 combination of input exponents, which is exactly what makes it a hom. -/
-def toISQ : Dimension PhyslibBase →* Dimension ISQBase where
+def toISQ : Dimension LTMCTDimensionBase →* Dimension ISQBase where
   toFun := ofPhyslib
   map_one' := by ext b; cases b <;> simp
   map_mul' a c := by
@@ -87,7 +87,7 @@ def toISQ : Dimension PhyslibBase →* Dimension ISQBase where
     cases b <;> simp [Dimension.mul_exponent]
     ring
 
-@[simp] theorem toISQ_apply (d : Dimension PhyslibBase) : toISQ d = ofPhyslib d := rfl
+@[simp] theorem toISQ_apply (d : Dimension LTMCTDimensionBase) : toISQ d = ofPhyslib d := rfl
 
 /-! ## The reform's laws: mass/length preserved, charge derived, the ampere a base quantity
 
@@ -148,7 +148,7 @@ theorem toISQ_injective : Function.Injective toISQ := by
 `ISQBase` provides an independent generator for each of amount of substance and luminous
 intensity — yet PKC's catalogue declines both. The reductions `Dim.amountOfSubstance = 1`
 and `Dim.luminousIntensity = Dim.power` survive the lift into a basis that *could* carry
-them, so they are a modeling choice, not an artefact of `PhyslibBase`. -/
+them, so they are a modeling choice, not an artefact of `LTMCTDimensionBase`. -/
 
 /-- Over ISQ the mole is still dimension one: PKC's reduction is preserved by the lift, even
 though ISQ offers an independent `amount` generator. -/
@@ -187,7 +187,7 @@ citation-fidelity headline, on a witness kind (the ISO catalogue is a downstream
 the witness is local, exactly as `AngleReform` lifts `lengthKind`). -/
 
 /-- A witness catalogued kind — electric current — dimensioned over the canonical
-`PhyslibBase` (PhysLib's charge generator, `A = C·T⁻¹`). -/
+`LTMCTDimensionBase` (PhysLib's charge generator, `A = C·T⁻¹`). -/
 def electricCurrentKind : DimensionedKind :=
   { kind := { id := "electric current", scale := .ratio }, dim := Dim.current }
 

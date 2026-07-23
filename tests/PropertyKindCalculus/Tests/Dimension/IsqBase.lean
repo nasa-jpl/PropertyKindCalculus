@@ -3,7 +3,7 @@
 
 Inhabitation and axiom-profile probes for `IsqBase`, which realizes ISO 80000-1's
 seven-generator, *current*-based ISQ and settles what each departure of PKC's canonical
-charge-based `PhyslibBase` costs. Each result is applied to concrete witnesses. The Rule-2
+charge-based `LTMCTDimensionBase` costs. Each result is applied to concrete witnesses. The Rule-2
 boundaries are (a) the charge → current change of basis is a genuine *product*-valued
 homomorphism `charge ↦ current · time`, not a generator reindexing, and it is injective
 (lossless); and (b) the mole/candela reduction is a modeling *stance*, not a lack — it
@@ -36,7 +36,7 @@ theorem isq_lossless : Function.Injective toISQ := toISQ_injective
 
 -- Boundary: `ISQBase` provides `amount` and `luminousIntensity` generators, yet PKC's
 -- catalogue declines both — the mole stays dimension one and the candela stays power under
--- the lift, so the reductions are a modeling choice, not an artefact of `PhyslibBase`.
+-- the lift, so the reductions are a modeling choice, not an artefact of `LTMCTDimensionBase`.
 theorem isq_reduction_is_a_stance :
     toISQ Dim.amountOfSubstance = 1 ∧
     single (.amount : ISQBase) ≠ toISQ Dim.amountOfSubstance ∧

@@ -88,43 +88,43 @@ reflexivity. -/
 namespace TDim
 
 /-- Energy, work, heat, `M·L²·T⁻²` (force times length). -/
-def energy : Dimension PhyslibBase := Dim.mass * Dim.area / (Dim.time * Dim.time)
+def energy : Dimension LTMCTDimensionBase := Dim.mass * Dim.area / (Dim.time * Dim.time)
 /-- Power and heat flow rate, `M·L²·T⁻³` (energy per time). -/
-def power : Dimension PhyslibBase := energy / Dim.time
+def power : Dimension LTMCTDimensionBase := energy / Dim.time
 /-- Pressure, `M·L⁻¹·T⁻²` (force per area). -/
-def pressure : Dimension PhyslibBase := Dim.mass / (Dim.length * Dim.time * Dim.time)
+def pressure : Dimension LTMCTDimensionBase := Dim.mass / (Dim.length * Dim.time * Dim.time)
 /-- Expansion coefficient, `Θ⁻¹` (a relative change per temperature). -/
-def expansionCoefficient : Dimension PhyslibBase := Dim.temperature⁻¹
+def expansionCoefficient : Dimension LTMCTDimensionBase := Dim.temperature⁻¹
 /-- Pressure coefficient, `M·L⁻¹·T⁻²·Θ⁻¹` (pressure per temperature). -/
-def pressureCoefficient : Dimension PhyslibBase := pressure / Dim.temperature
+def pressureCoefficient : Dimension LTMCTDimensionBase := pressure / Dim.temperature
 /-- Compressibility, `M⁻¹·L·T²` (the reciprocal of pressure). -/
-def compressibility : Dimension PhyslibBase := pressure⁻¹
+def compressibility : Dimension LTMCTDimensionBase := pressure⁻¹
 /-- Density of heat flow rate, `M·T⁻³` (power per area). -/
-def densityOfHeatFlowRate : Dimension PhyslibBase := power / Dim.area
+def densityOfHeatFlowRate : Dimension LTMCTDimensionBase := power / Dim.area
 /-- Thermal conductivity, `M·L·T⁻³·Θ⁻¹` (power per length per temperature). -/
-def thermalConductivity : Dimension PhyslibBase := power / (Dim.length * Dim.temperature)
+def thermalConductivity : Dimension LTMCTDimensionBase := power / (Dim.length * Dim.temperature)
 /-- Coefficient of heat transfer, `M·T⁻³·Θ⁻¹` (power per area per temperature). -/
-def coefficientOfHeatTransfer : Dimension PhyslibBase := power / (Dim.area * Dim.temperature)
+def coefficientOfHeatTransfer : Dimension LTMCTDimensionBase := power / (Dim.area * Dim.temperature)
 /-- Thermal insulance, `M⁻¹·T³·Θ` (the reciprocal of the coefficient of heat
 transfer). -/
-def thermalInsulance : Dimension PhyslibBase := coefficientOfHeatTransfer⁻¹
+def thermalInsulance : Dimension LTMCTDimensionBase := coefficientOfHeatTransfer⁻¹
 /-- Thermal resistance, `M⁻¹·L⁻²·T³·Θ` (temperature per power). -/
-def thermalResistance : Dimension PhyslibBase := Dim.temperature / power
+def thermalResistance : Dimension LTMCTDimensionBase := Dim.temperature / power
 /-- Thermal conductance, `M·L²·T⁻³·Θ⁻¹` (power per temperature). -/
-def thermalConductance : Dimension PhyslibBase := power / Dim.temperature
+def thermalConductance : Dimension LTMCTDimensionBase := power / Dim.temperature
 /-- Thermal diffusivity, `L²·T⁻¹` (area per time). -/
-def thermalDiffusivity : Dimension PhyslibBase := Dim.area / Dim.time
+def thermalDiffusivity : Dimension LTMCTDimensionBase := Dim.area / Dim.time
 /-- Heat capacity and entropy, `M·L²·T⁻²·Θ⁻¹` (energy per temperature). -/
-def heatCapacity : Dimension PhyslibBase := energy / Dim.temperature
+def heatCapacity : Dimension LTMCTDimensionBase := energy / Dim.temperature
 /-- Specific heat capacity and specific entropy, `L²·T⁻²·Θ⁻¹` (heat capacity per
 mass). -/
-def specificHeatCapacity : Dimension PhyslibBase := heatCapacity / Dim.mass
+def specificHeatCapacity : Dimension LTMCTDimensionBase := heatCapacity / Dim.mass
 /-- Specific energy, `L²·T⁻²` (energy per mass). -/
-def specificEnergy : Dimension PhyslibBase := energy / Dim.mass
+def specificEnergy : Dimension LTMCTDimensionBase := energy / Dim.mass
 /-- Joule-Thomson coefficient, `M⁻¹·L·T²·Θ` (temperature per pressure). -/
-def jouleThomson : Dimension PhyslibBase := Dim.temperature / pressure
+def jouleThomson : Dimension LTMCTDimensionBase := Dim.temperature / pressure
 /-- Mass concentration, `M·L⁻³` (mass per volume). -/
-def massConcentration : Dimension PhyslibBase := Dim.mass / (Dim.area * Dim.length)
+def massConcentration : Dimension LTMCTDimensionBase := Dim.mass / (Dim.area * Dim.length)
 
 end TDim
 

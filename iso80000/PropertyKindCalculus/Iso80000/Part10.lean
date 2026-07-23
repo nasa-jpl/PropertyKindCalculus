@@ -69,66 +69,66 @@ area and a molar attenuation coefficient an area. -/
 namespace NDim
 
 /-- Volume, `L³`. -/
-def volume : Dimension PhyslibBase := Dim.area * Dim.length
+def volume : Dimension LTMCTDimensionBase := Dim.area * Dim.length
 /-- Per time, `T⁻¹` — activity (the becquerel), decay constant, emission rate, the Larmor
 and cyclotron angular frequencies. -/
-def perTime : Dimension PhyslibBase := Dim.time⁻¹
+def perTime : Dimension LTMCTDimensionBase := Dim.time⁻¹
 /-- **Specific energy (dose), `L²·T⁻²`** — energy per mass (`J/kg`): the absorbed dose, the
 specific energy imparted, the kerma (all `Gy`), and the dose equivalent (`Sv`) all share
 it. -/
-def specificEnergy : Dimension PhyslibBase := Dim.energy / Dim.mass
+def specificEnergy : Dimension LTMCTDimensionBase := Dim.energy / Dim.mass
 /-- Specific energy rate, `L²·T⁻³` — power per mass (`W/kg`): the dose-equivalent, absorbed-
 dose, and kerma rates. -/
-def specificEnergyRate : Dimension PhyslibBase := Dim.power / Dim.mass
+def specificEnergyRate : Dimension LTMCTDimensionBase := Dim.power / Dim.mass
 /-- Magnetic dipole moment, `L²·C·T⁻¹` (`m²·A`) — the magnetic moment and the Bohr and
 nuclear magnetons. -/
-def magneticMoment : Dimension PhyslibBase := Dim.area * Dim.current
+def magneticMoment : Dimension LTMCTDimensionBase := Dim.area * Dim.current
 /-- Angular momentum, `M·L²·T⁻¹` (`J·s`) — spin and total angular momentum. -/
-def angularMomentum : Dimension PhyslibBase := Dim.energy * Dim.time
+def angularMomentum : Dimension LTMCTDimensionBase := Dim.energy * Dim.time
 /-- Gyromagnetic ratio, `M⁻¹·C` (`A·m²·J⁻¹·s⁻¹`) — magnetic moment per angular momentum. -/
-def gyromagneticRatio : Dimension PhyslibBase := magneticMoment / angularMomentum
+def gyromagneticRatio : Dimension LTMCTDimensionBase := magneticMoment / angularMomentum
 /-- Per length, `L⁻¹` (`m⁻¹`) — the Rydberg constant, the macroscopic cross section, the
 linear attenuation coefficient, the linear ionization. -/
-def perLength : Dimension PhyslibBase := Dim.length⁻¹
+def perLength : Dimension LTMCTDimensionBase := Dim.length⁻¹
 /-- Mass attenuation coefficient, `M⁻¹·L²` (`kg⁻¹·m²`) — also the mass energy-transfer
 coefficient. -/
-def massAttenuation : Dimension PhyslibBase := Dim.area / Dim.mass
+def massAttenuation : Dimension LTMCTDimensionBase := Dim.area / Dim.mass
 /-- Number density, `L⁻³` (`m⁻³`) — particle and ion number densities. -/
-def numberDensity : Dimension PhyslibBase := volume⁻¹
+def numberDensity : Dimension LTMCTDimensionBase := volume⁻¹
 /-- Particle fluence, `L⁻²` (`m⁻²`). -/
-def particleFluence : Dimension PhyslibBase := Dim.area⁻¹
+def particleFluence : Dimension LTMCTDimensionBase := Dim.area⁻¹
 /-- Fluence rate, `L⁻²·T⁻¹` (`m⁻²·s⁻¹`) — particle fluence rate, particle current density,
 and the surface-activity density (`Bq/m²`). -/
-def fluenceRate : Dimension PhyslibBase := (Dim.area * Dim.time)⁻¹
+def fluenceRate : Dimension LTMCTDimensionBase := (Dim.area * Dim.time)⁻¹
 /-- Activity per mass, `M⁻¹·T⁻¹` (`Bq/kg`) — the specific (massic) activity. -/
-def activityPerMass : Dimension PhyslibBase := perTime / Dim.mass
+def activityPerMass : Dimension LTMCTDimensionBase := perTime / Dim.mass
 /-- Activity density, `L⁻³·T⁻¹` (`Bq/m³`) — also the particle source density and slowing-
 down density (`m⁻³·s⁻¹`). -/
-def activityDensity : Dimension PhyslibBase := (volume * Dim.time)⁻¹
+def activityDensity : Dimension LTMCTDimensionBase := (volume * Dim.time)⁻¹
 /-- Cross section per energy, `M⁻¹·T²` (`m²/J`) — the energy-distributed cross sections. -/
-def crossSectionPerEnergy : Dimension PhyslibBase := Dim.area / Dim.energy
+def crossSectionPerEnergy : Dimension LTMCTDimensionBase := Dim.area / Dim.energy
 /-- Energy fluence, `M·T⁻²` (`J/m²`). -/
-def energyFluence : Dimension PhyslibBase := Dim.energy / Dim.area
+def energyFluence : Dimension LTMCTDimensionBase := Dim.energy / Dim.area
 /-- Energy fluence rate, `M·T⁻³` (`W/m²`). -/
-def energyFluenceRate : Dimension PhyslibBase := Dim.power / Dim.area
+def energyFluenceRate : Dimension LTMCTDimensionBase := Dim.power / Dim.area
 /-- Linear stopping power, `M·L·T⁻²` (`J/m`) — also the linear energy transfer (LET). -/
-def linearStoppingPower : Dimension PhyslibBase := Dim.energy / Dim.length
+def linearStoppingPower : Dimension LTMCTDimensionBase := Dim.energy / Dim.length
 /-- Mass stopping power, `L⁴·T⁻²` (`J·m²/kg`). -/
-def massStoppingPower : Dimension PhyslibBase := Dim.energy * Dim.area / Dim.mass
+def massStoppingPower : Dimension LTMCTDimensionBase := Dim.energy * Dim.area / Dim.mass
 /-- Mean mass range, `M·L⁻²` (`kg·m⁻²`). -/
-def massRange : Dimension PhyslibBase := Dim.mass / Dim.area
+def massRange : Dimension LTMCTDimensionBase := Dim.mass / Dim.area
 /-- Voltage, `M·L²·T⁻²·C⁻¹` — used to compose mobility. -/
-def voltage : Dimension PhyslibBase := Dim.energy / Dim.charge
+def voltage : Dimension LTMCTDimensionBase := Dim.energy / Dim.charge
 /-- Mobility, `M⁻¹·T·C` (`m²/(V·s)`). -/
-def mobility : Dimension PhyslibBase := Dim.area / (voltage * Dim.time)
+def mobility : Dimension LTMCTDimensionBase := Dim.area / (voltage * Dim.time)
 /-- Recombination coefficient, `L³·T⁻¹` (`m³·s⁻¹`). -/
-def recombination : Dimension PhyslibBase := volume / Dim.time
+def recombination : Dimension LTMCTDimensionBase := volume / Dim.time
 /-- Diffusion coefficient, `L²·T⁻¹` (`m²/s`). -/
-def diffusionCoefficient : Dimension PhyslibBase := Dim.area / Dim.time
+def diffusionCoefficient : Dimension LTMCTDimensionBase := Dim.area / Dim.time
 /-- Exposure, `M⁻¹·C` (`C/kg`). -/
-def exposure : Dimension PhyslibBase := Dim.charge / Dim.mass
+def exposure : Dimension LTMCTDimensionBase := Dim.charge / Dim.mass
 /-- Exposure rate, `M⁻¹·T⁻¹·C` (`C/(kg·s)`). -/
-def exposureRate : Dimension PhyslibBase := exposure / Dim.time
+def exposureRate : Dimension LTMCTDimensionBase := exposure / Dim.time
 
 end NDim
 

@@ -74,45 +74,45 @@ energy, momentum and impulse — provable by reflexivity. -/
 namespace MDim
 
 /-- Force, `M·L·T⁻²` (mass times acceleration). -/
-def force : Dimension PhyslibBase := Dim.mass * Dim.length / (Dim.time * Dim.time)
+def force : Dimension LTMCTDimensionBase := Dim.mass * Dim.length / (Dim.time * Dim.time)
 /-- Momentum (and impulse), `M·L·T⁻¹` (mass times speed). -/
-def momentum : Dimension PhyslibBase := Dim.mass * Dim.speed
+def momentum : Dimension LTMCTDimensionBase := Dim.mass * Dim.speed
 /-- Energy, work, and torque, `M·L²·T⁻²` (force times length). -/
-def energy : Dimension PhyslibBase := Dim.mass * Dim.area / (Dim.time * Dim.time)
+def energy : Dimension LTMCTDimensionBase := Dim.mass * Dim.area / (Dim.time * Dim.time)
 /-- Power, `M·L²·T⁻³` (energy per time). -/
-def power : Dimension PhyslibBase := Dim.mass * Dim.area / (Dim.time * Dim.time * Dim.time)
+def power : Dimension LTMCTDimensionBase := Dim.mass * Dim.area / (Dim.time * Dim.time * Dim.time)
 /-- Pressure, stress, and the elastic moduli, `M·L⁻¹·T⁻²` (force per area). -/
-def pressure : Dimension PhyslibBase := Dim.mass / (Dim.length * Dim.time * Dim.time)
+def pressure : Dimension LTMCTDimensionBase := Dim.mass / (Dim.length * Dim.time * Dim.time)
 /-- Compressibility, `M⁻¹·L·T²` (the reciprocal of pressure). -/
-def compressibility : Dimension PhyslibBase := pressure⁻¹
+def compressibility : Dimension LTMCTDimensionBase := pressure⁻¹
 /-- Angular momentum, angular impulse, and action, `M·L²·T⁻¹` (energy times time). -/
-def angularMomentum : Dimension PhyslibBase := Dim.mass * Dim.area / Dim.time
+def angularMomentum : Dimension LTMCTDimensionBase := Dim.mass * Dim.area / Dim.time
 /-- Moment of inertia, `M·L²` (mass times area). -/
-def momentOfInertia : Dimension PhyslibBase := Dim.mass * Dim.area
+def momentOfInertia : Dimension LTMCTDimensionBase := Dim.mass * Dim.area
 /-- Mass density, `M·L⁻³` (mass per volume). -/
-def massDensity : Dimension PhyslibBase := Dim.mass / (Dim.length * Dim.length * Dim.length)
+def massDensity : Dimension LTMCTDimensionBase := Dim.mass / (Dim.length * Dim.length * Dim.length)
 /-- Specific volume, `M⁻¹·L³` (the reciprocal of mass density). -/
-def specificVolume : Dimension PhyslibBase := (Dim.length * Dim.length * Dim.length) / Dim.mass
+def specificVolume : Dimension LTMCTDimensionBase := (Dim.length * Dim.length * Dim.length) / Dim.mass
 /-- Surface (areal) mass density, `M·L⁻²` (mass per area). -/
-def surfaceMassDensity : Dimension PhyslibBase := Dim.mass / (Dim.length * Dim.length)
+def surfaceMassDensity : Dimension LTMCTDimensionBase := Dim.mass / (Dim.length * Dim.length)
 /-- Linear mass density, `M·L⁻¹` (mass per length). -/
-def linearMassDensity : Dimension PhyslibBase := Dim.mass / Dim.length
+def linearMassDensity : Dimension LTMCTDimensionBase := Dim.mass / Dim.length
 /-- Second moment of area, `L⁴` (area times area). -/
-def secondMomentOfArea : Dimension PhyslibBase := Dim.area * Dim.area
+def secondMomentOfArea : Dimension LTMCTDimensionBase := Dim.area * Dim.area
 /-- Section modulus, `L³` (area times length — the volume dimension). -/
-def sectionModulus : Dimension PhyslibBase := Dim.area * Dim.length
+def sectionModulus : Dimension LTMCTDimensionBase := Dim.area * Dim.length
 /-- Dynamic viscosity, `M·L⁻¹·T⁻¹` (pressure times time). -/
-def dynamicViscosity : Dimension PhyslibBase := Dim.mass / (Dim.length * Dim.time)
+def dynamicViscosity : Dimension LTMCTDimensionBase := Dim.mass / (Dim.length * Dim.time)
 /-- Kinematic viscosity, `L²·T⁻¹` (area per time). -/
-def kinematicViscosity : Dimension PhyslibBase := Dim.area / Dim.time
+def kinematicViscosity : Dimension LTMCTDimensionBase := Dim.area / Dim.time
 /-- Surface tension, `M·T⁻²` (force per length). -/
-def surfaceTension : Dimension PhyslibBase := Dim.mass / (Dim.time * Dim.time)
+def surfaceTension : Dimension LTMCTDimensionBase := Dim.mass / (Dim.time * Dim.time)
 /-- Mass flow, `M·L⁻²·T⁻¹` (mass density times speed). -/
-def massFlow : Dimension PhyslibBase := Dim.mass / (Dim.area * Dim.time)
+def massFlow : Dimension LTMCTDimensionBase := Dim.mass / (Dim.area * Dim.time)
 /-- Mass flow rate and mass change rate, `M·T⁻¹` (mass per time). -/
-def massRate : Dimension PhyslibBase := Dim.mass / Dim.time
+def massRate : Dimension LTMCTDimensionBase := Dim.mass / Dim.time
 /-- Volume flow rate, `L³·T⁻¹` (volume per time). -/
-def volumeFlowRate : Dimension PhyslibBase := (Dim.area * Dim.length) / Dim.time
+def volumeFlowRate : Dimension LTMCTDimensionBase := (Dim.area * Dim.length) / Dim.time
 
 end MDim
 

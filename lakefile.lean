@@ -57,7 +57,7 @@ package «PropertyKindCalculus» where
   -- The package version — the single source of truth. `scripts/bump-version.sh`
   -- reads and bumps it here, and the blueprint reads this same line at build time
   -- (its `{version}[]` role) so the published document never drifts from the source.
-  version := v!"0.9.0"
+  version := v!"0.10.0"
   leanOptions := #[
     ⟨`autoImplicit, false⟩,
     ⟨`relaxedAutoImplicit, false⟩]
@@ -66,19 +66,18 @@ package «PropertyKindCalculus» where
 -- below — the dimension/coherence layer that maps each kind to its physical
 -- `Dimension`. This package's dimension layer is *parametric in the base-dimension
 -- basis*, which requires the parametric `Dimension B` API: the author's own
--- contribution to PhysLib (feature request issue #1441, implemented in PR #1447),
--- still under review upstream. Until it merges, we pin to the contribution branch
--- `parametric-dimension` on the author's fork; the exact commit is recorded in
--- `lake-manifest.json`, so the build is reproducible even though the branch tracks
--- review rebases. That branch carries PhysLib's `v4.32.0` toolchain bump, so it
--- matches this package's `leanprover/lean4:v4.32.0` and the `require mathlib` at
--- `v4.32.0` kept *last* below (Lake resolves later requires over earlier ones, so
--- Mathlib `v4.32.0`'s own dependency versions take precedence and `lake exe cache
--- get` computes matching hashes). Repoint to an upstream `v4.32.0`+ tag once #1447
--- merges.
+-- contribution to PhysLib (feature request issue #1441, PR #1447), stacked on the
+-- `v4.32.0` toolchain bump (PR #1445). Both are now merged upstream, so we track
+-- the upstream `leanprover-community/physlib` `master` branch directly; the exact
+-- commit is recorded in `lake-manifest.json`, so the build stays reproducible.
+-- Upstream `master` carries the `leanprover/lean4:v4.32.0` toolchain, matching this
+-- package's `leanprover/lean4:v4.32.0` and the `require mathlib` at `v4.32.0` kept
+-- *last* below (Lake resolves later requires over earlier ones, so Mathlib
+-- `v4.32.0`'s own dependency versions take precedence and `lake exe cache get`
+-- computes matching hashes).
 require «Physlib» from git
-  "https://github.com/NicolasRouquette/physlib.git" @
-  "parametric-dimension"
+  "https://github.com/leanprover-community/physlib.git" @
+  "master"
 
 -- TorchLean (this work's fork, `combined` branch) backs *only* the `Torch` library
 -- below: the concrete IEEE-754 binary32 carriers (`FP32` rounding spec,

@@ -97,7 +97,7 @@ dimension one.** From `I_e = dΦ_e/dΩ` with `dim Ω = 1`, the division by the s
 leaves `M·L²·T⁻³` unchanged — the steradian reducing away, made a checked computation. -/
 theorem radiantIntensity_dim_from_flux_solidAngle :
     radiantIntensity.dim = radiantFlux.dim / Part3.solidAngle.dim := by
-  show Dim.power = Dim.power / (1 : Dimension PhyslibBase)
+  show Dim.power = Dim.power / (1 : Dimension LTMCTDimensionBase)
   rw [div_one]
 
 /-- **The luminous efficacy is dimension one because it is a ratio of two fluxes of equal
