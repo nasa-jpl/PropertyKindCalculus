@@ -29,6 +29,7 @@ import PropertyKindCalculus.Examples.TapeCodegenEndToEnd
 import PropertyKindCalculus.Examples.TapeCseStructural
 
 open Runtime.Autograd (Tape Node)
+open PropertyKindCalculus.Paradigm (LutTable lutNodeName?)
 open PropertyKindCalculus.Paradigm.TapeCodegen
 open PropertyKindCalculus.Examples.TapeCodegenEndToEnd (recordRaw)
 open PropertyKindCalculus.Examples.TapeCseStructural (demoTape)
@@ -38,12 +39,19 @@ namespace PropertyKindCalculus.Examples.TapeCodegenLanding
 /-! ### ABI arity consistency (universal) -/
 
 theorem kernelParamList_length (cg : Codegen) :
-    (kernelParamList cg).length = cg.inputs.size + 2 := by
-  simp [kernelParamList]
+    (kernelParamList cg).length = cg.inputs.size + cg.tables.size + 2 := by
+  simp [kernelParamList]; omega
 
 theorem launchArgList_length (cg : Codegen) :
-    (launchArgList cg).length = cg.inputs.size + 2 := by
-  simp [launchArgList]
+    (launchArgList cg).length = cg.inputs.size + cg.tables.size + 2 := by
+  simp [launchArgList]; omega
+
+/-- The stub kernel declares exactly as many parameters as the device kernel (each table slot is a
+`const float*` instead of a `cudaTextureObject_t`, same position) — the two translation units stay
+call-compatible. -/
+theorem stubParamList_length (cg : Codegen) :
+    (stubParamList cg).length = (kernelParamList cg).length := by
+  simp [stubParamList, kernelParamList]
 
 /-- The host launcher forwards exactly one argument per kernel parameter — so the generated FFI call
 is arity-correct by construction (a mismatch would read past the kernel's declared parameters). -/
@@ -53,19 +61,44 @@ theorem landing_abi_consistent (cg : Codegen) :
 
 /-! ### `gen`'s ABI fields are pure functions of the tape (universal) -/
 
-theorem gen_inputs_eq {t : Tape Float} {outIds : List Nat} {cg : Codegen}
-    (h : gen t outIds = .ok cg) : cg.inputs = collectInputs t := by
+theorem gen_inputs_eq {t : Tape Float} {outIds : List Nat} {tables : Array LutTable}
+    {mode : LutFilterMode} {cg : Codegen}
+    (h : gen t outIds tables mode = .ok cg) : cg.inputs = collectInputs t := by
   unfold gen at h
-  cases hb : genBody t with
-  | error e => rw [hb] at h; simp [Except.map] at h
-  | ok body => rw [hb] at h; simp [Except.map] at h; subst h; rfl
+  cases hr : resolveTables (collectTableNames t) tables with
+  | error e => rw [hr] at h; simp [Except.bind] at h
+  | ok resolved =>
+    rw [hr] at h
+    cases hb : genBody t tables with
+    | error e => rw [hb] at h; simp [Except.bind, Except.map] at h
+    | ok body => rw [hb] at h; simp [Except.bind, Except.map] at h; subst h; rfl
 
-theorem gen_numOutputs {t : Tape Float} {outIds : List Nat} {cg : Codegen}
-    (h : gen t outIds = .ok cg) : cg.numOutputs = outIds.length := by
+theorem gen_numOutputs {t : Tape Float} {outIds : List Nat} {tables : Array LutTable}
+    {mode : LutFilterMode} {cg : Codegen}
+    (h : gen t outIds tables mode = .ok cg) : cg.numOutputs = outIds.length := by
   unfold gen at h
-  cases hb : genBody t with
-  | error e => rw [hb] at h; simp [Except.map] at h
-  | ok body => rw [hb] at h; simp [Except.map] at h; subst h; rfl
+  cases hr : resolveTables (collectTableNames t) tables with
+  | error e => rw [hr] at h; simp [Except.bind] at h
+  | ok resolved =>
+    rw [hr] at h
+    cases hb : genBody t tables with
+    | error e => rw [hb] at h; simp [Except.bind, Except.map] at h
+    | ok body => rw [hb] at h; simp [Except.bind, Except.map] at h; subst h; rfl
+
+/-- The generated table ABI is a pure function of the tape and the supplied tables: `gen` succeeds
+only with `cg.tables` = the resolution of the tape's first-seen referenced table names. -/
+theorem gen_tables_eq {t : Tape Float} {outIds : List Nat} {tables : Array LutTable}
+    {mode : LutFilterMode} {cg : Codegen}
+    (h : gen t outIds tables mode = .ok cg) :
+    resolveTables (collectTableNames t) tables = .ok cg.tables := by
+  unfold gen at h
+  cases hr : resolveTables (collectTableNames t) tables with
+  | error e => rw [hr] at h; simp [Except.bind] at h
+  | ok resolved =>
+    rw [hr] at h
+    cases hb : genBody t tables with
+    | error e => rw [hb] at h; simp [Except.bind, Except.map] at h
+    | ok body => rw [hb] at h; simp [Except.bind, Except.map] at h; subst h; rfl
 
 /-! ### The generated input ABI is duplicate-free (universal) -/
 
@@ -88,6 +121,28 @@ theorem collectInputs_nodup (t : Tape Float) : (collectInputs t).toList.Nodup :=
           exact fun heqab => hnm (heqab ▸ ha)
       · exact hacc
     · exact hacc
+
+/-- The referenced-table name list is duplicate-free — same first-seen `foldl` shape as
+`collectInputs`, so no two table kernel parameters collide (`tex_x` declared twice). -/
+theorem collectTableNames_nodup (t : Tape Float) : (collectTableNames t).toList.Nodup := by
+  unfold collectTableNames
+  refine Array.foldl_induction (motive := fun _ (acc : Array String) => acc.toList.Nodup) ?_ ?_
+  · simp
+  · intro i acc hacc
+    split
+    · exact hacc
+    · split
+      · split
+        · exact hacc
+        · rename_i tn _ hcon
+          rw [Array.toList_push, List.nodup_append]
+          refine ⟨hacc, List.nodup_singleton _, ?_⟩
+          intro a ha b hb
+          simp only [List.mem_singleton] at hb
+          subst hb
+          have hnm : b ∉ acc.toList := by simpa using hcon
+          exact fun heqab => hnm (heqab ▸ ha)
+      · exact hacc
 
 /-! ### Inhabitation — the well-formedness hypotheses hold on real tapes with op nodes -/
 
@@ -123,7 +178,7 @@ def resjacLandingHolds : Bool :=
       let cu   := emitCudaLanding "avs_resjac" cg
       let stub := emitStubLanding "avs_resjac" cg
       (launchArgList cg).length == (kernelParamList cg).length
-        && (launchArgList cg).length == cg.inputs.size + 2
+        && (launchArgList cg).length == cg.inputs.size + cg.tables.size + 2
         && decide cg.inputs.toList.Nodup
         && cg.numOutputs == outIds.length
         && hasSub cu "avs_resjac_launch"
@@ -145,11 +200,17 @@ def demoLandingHolds : Bool :=
 
 /-! ## Axiom audit — these rest only on the standard axioms (no `sorryAx`). -/
 
-/-- info: 'PropertyKindCalculus.Examples.TapeCodegenLanding.landing_abi_consistent' depends on axioms: [propext] -/
+/-- info: 'PropertyKindCalculus.Examples.TapeCodegenLanding.landing_abi_consistent' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs (whitespace := lax) in #print axioms landing_abi_consistent
 
 /-- info: 'PropertyKindCalculus.Examples.TapeCodegenLanding.collectInputs_nodup' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs (whitespace := lax) in #print axioms collectInputs_nodup
+
+/-- info: 'PropertyKindCalculus.Examples.TapeCodegenLanding.collectTableNames_nodup' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in #print axioms collectTableNames_nodup
+
+/-- info: 'PropertyKindCalculus.Examples.TapeCodegenLanding.gen_tables_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in #print axioms gen_tables_eq
 
 /-- info: 'PropertyKindCalculus.Examples.TapeCodegenLanding.gen_inputs_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in #print axioms gen_inputs_eq

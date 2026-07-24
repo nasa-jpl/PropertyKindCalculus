@@ -254,6 +254,36 @@ the model is content to run eagerly, or as the concrete kernel a compiled path t
 The same discipline governs both: a fused form is trusted because it is a refinement of its composed
 spec, exactly as the megakernel is trusted because it is proved faithful to the recorded model.
 
+## Vocabulary extensions — tabulated data as a declared capability
+
+A fused form refines a shape the base vocabulary can already _compose_. Some operations are not like
+that: a look-up into tabulated data is a data-dependent gather, and the branchless carrier vocabulary
+deliberately has no indexing to compose it from — the exclusion that makes every model above lower to
+one straight-line kernel. When a model genuinely needs a table (a tabulated transfer function, a
+calibration curve), the honest move is not to smuggle the gather in but to _declare_ it: a
+vocabulary-_extension_ class whose single operation is piecewise-linear interpolation into a named,
+layered, uniform-abscissa table. Unlike a fused form it has _no_ composed fallback — a model that uses
+it says so in its type, so the dependence on tabulated data is visible exactly where the write-once
+discipline wants it: in the instance context.
+
+The extension keeps every leg of the discipline. Its reference semantics is one small function —
+clamp, floor, linear interpolation, the uniform-grid analogue of the operational interpolator — which
+is simultaneously the scalar oracle, the value a recording stores (recorder-faithful by construction),
+and the meaning the interpreter assigns a recorded fetch. On the device it is realised by _texture
+hardware_: the table lives in a layered texture bound once, fetched through the GPU's dedicated
+texture cache — a table of tens of kilobytes is simply _resident_ there, so per-fetch traffic
+effectively vanishes. One boundary must be stated rather than wished away: the texture unit's
+hardware interpolation uses a low-precision fixed-point blend weight, so the _hardware-filtered_ mode
+is a tolerance-bounded accelerator, never bit-reproducible; the _point-fetch_ mode — two exact texel
+reads and an explicit, contraction-blocked lerp — is the bit-reproducible twin of the reference, and
+it is the mode every bit-exact claim quantifies over. The split is fixed at generation time, not
+discovered in production. Two further consequences come for free: the table's _name_ rides in the
+recorded node, so common-subexpression elimination distinguishes fetches into different tables with no
+change to its key; and because texture hardware interpolates only _uniform_ coordinates, an inverse
+table over a non-uniform abscissa must first be inverted and resampled host-side — a one-time,
+measured, controllable approximation that belongs to the model's accuracy budget, stated next to the
+table's own discretization bias.
+
 ## GPU, megakernel-compiled — Lean → recorded IR → CUDA source
 
 The remaining headroom is recovered by _compiling_ the model rather than dispatching it

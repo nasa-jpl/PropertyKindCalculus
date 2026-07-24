@@ -27,11 +27,12 @@ Plain (not a `module`) file: imports the tape carrier and the CSE pass.
 -/
 import PropertyKindCalculus.Torch.Paradigm.TapeCarrier
 import PropertyKindCalculus.Torch.Paradigm.TapeCse
+import PropertyKindCalculus.Torch.Paradigm.LutCarrier
 
 open Spec
 open Runtime.Autograd (Tape Node TapeM)
 open PropertyKindCalculus (MathCarrier)
-open PropertyKindCalculus.Paradigm (TapeBuilder NumCarrier)
+open PropertyKindCalculus.Paradigm (TapeBuilder NumCarrier LutTable lutNodeName?)
 open PropertyKindCalculus.Paradigm.TapeCSE (cseCompact)
 
 namespace PropertyKindCalculus.Paradigm.TapeCodegen
@@ -82,6 +83,59 @@ def evalTape (env : String → Float) (t : Tape Float) : Except String (Array Fl
     vals := vals.push v
   pure vals
 
+/-! ### The table-extended interpreter
+
+`paradigm.lut_carrier`'s `lutFetch` records nodes named `lutfetch:<table>` with parents
+`[layerId, uId]`. `cOpT`/`evalTapeT` extend the reference interpreter with that one case —
+the fp64 `LutTable.refFetch` — resolving the table by the name baked into the node. `evalTape`
+itself is untouched, and `evalTapeT` with no tables *is* `evalTape` (`cOpT` falls back to `cOp`,
+including for unknown tables, so the two agree error-for-error) — every existing
+`evalTape`-denotation proof is unaffected. -/
+
+/-- `cOp` extended with the `lutfetch:<table>` alphabet entry: the fetch node re-interprets as
+`LutTable.refFetch` (fp64 reference). An unresolvable table name falls through to `cOp`'s
+standard unsupported-op error, so `cOpT (fun _ => none) = cOp` pointwise. -/
+def cOpT (tables : String → Option LutTable) (nm : String) (args : List Float) :
+    Except String Float :=
+  match lutNodeName? nm with
+  | some tn =>
+      match tables tn, args with
+      | some tbl, [l, u] => .ok (tbl.refFetch l u)
+      | some _, _ => .error s!"tape_codegen: lutfetch `{tn}` expects [layer, u] (arity {args.length})"
+      | none, _ => cOp nm args
+  | none => cOp nm args
+
+/-- `evalTape` with the table-extended alphabet (`cOpT`). The deployed megakernel's fp64
+denotation when the recorded DAG contains `lutfetch` nodes. -/
+def evalTapeT (tables : String → Option LutTable) (env : String → Float) (t : Tape Float) :
+    Except String (Array Float) := do
+  let mut vals : Array Float := Array.mkEmpty t.nodes.size
+  for n in t.nodes do
+    let v ← (
+      if n.parents.isEmpty then
+        match n.name with
+        | some nm => pure (env nm)
+        | none    => pure (nodeScalar n)
+      else
+        match n.name with
+        | some nm => cOpT tables nm (n.parents.map (fun p => vals.getD p 0.0))
+        | none    => .error "tape_codegen: op node with no op name")
+    vals := vals.push v
+  pure vals
+
+/-- With no tables, the extended alphabet degenerates to `cOp` — including on `lutfetch:*`
+names, where the fallback reproduces `cOp`'s error. -/
+theorem cOpT_none (nm : String) (args : List Float) : cOpT (fun _ => none) nm args = cOp nm args := by
+  unfold cOpT
+  cases lutNodeName? nm <;> rfl
+
+/-- With no tables, `evalTapeT` *is* `evalTape` — the extension is conservative, so every
+existing `evalTape`-denotation proof transfers verbatim. -/
+theorem evalTapeT_none (env : String → Float) (t : Tape Float) :
+    evalTapeT (fun _ => none) env t = evalTape env t := by
+  unfold evalTapeT evalTape
+  simp only [cOpT_none]
+
 /-! ### C expression for one op node -/
 
 /-- The C infix/`fminf`/`expf` expression for op `nm` on already-emitted parent temporaries. -/
@@ -104,6 +158,18 @@ def cExpr (nm : String) (ps : List Nat) : Except String String :=
 constants like `0/1/2` round-trip exactly). -/
 def floatLit (x : Float) : String := s!"{x}f"
 
+/-- How a generated kernel realises a `lutfetch` node (`paradigm.lut_carrier`).
+
+* `point` — two texture point fetches + an explicit contraction-blocked fp32 lerp: bit-identical
+  between the CUDA kernel and the C stub (the bit-exactness carrier).
+* `hardware` — one hardware-filtered `tex1DLayered` fetch: zero ALU cost, but CUDA's 9-bit
+  fixed-point lerp weight makes it tolerance-only (`≤ 2⁻⁸·|Δsample|` per fetch, stub emulated);
+  it is excluded from the bit-exact claims. -/
+inductive LutFilterMode where
+  | point
+  | hardware
+deriving Repr, DecidableEq, Inhabited
+
 /-- The straight-line kernel body: input reads, the per-node temporaries, and the output stores. -/
 structure Codegen where
   /-- Named input leaves in first-seen order — the kernel's input pointer parameters. -/
@@ -114,6 +180,12 @@ structure Codegen where
   body : Array String
   /-- `out[j*P + i] = vID;` lines. -/
   outLines : Array String
+  /-- Lookup tables referenced by `lutfetch` nodes, in first-seen order — each becomes one extra
+  kernel parameter (`cudaTextureObject_t tex_<name>` on CUDA, `const float* lut_<name>` in the
+  stub) with its data baked into the landing translation units. Empty for pure-arithmetic tapes. -/
+  tables : Array LutTable := #[]
+  /-- How `lutfetch` nodes are realised (irrelevant when `tables` is empty). -/
+  lutMode : LutFilterMode := .point
 
 /-- The kernel's input parameters: the distinct **named** leaf names in first-seen order (each a
 `const float* in_<nm>`). A pure `foldl`, so it is duplicate-free by construction
@@ -127,11 +199,38 @@ def collectInputs (t : Tape Float) : Array String :=
       | none    => inputs
     else inputs
 
+/-- The distinct table names referenced by `lutfetch` op nodes, in first-seen order — the same
+pure-`foldl` shape as `collectInputs`, so it is duplicate-free by construction
+(`collectTableNames_nodup`) and the generated table ABI is a pure function of the tape
+(`gen_tables_eq`). -/
+def collectTableNames (t : Tape Float) : Array String :=
+  t.nodes.foldl (init := #[]) fun tabs n =>
+    if n.parents.isEmpty then tabs
+    else
+      match n.name.bind lutNodeName? with
+      | some tn => if tabs.contains tn then tabs else tabs.push tn
+      | none    => tabs
+
+/-- Resolve the referenced table names against the caller-supplied tables: every referenced name
+must be present, and the supplied tables must carry pairwise-distinct names (a duplicate would
+make the node-name → table mapping — and hence the CSE key — ambiguous, the `nodeKey` docstring's
+scalar-baking hazard). Returns the resolved tables in first-seen reference order. -/
+def resolveTables (names : Array String) (avail : Array LutTable) :
+    Except String (Array LutTable) := do
+  if (avail.map (·.name)).toList.Nodup then
+    names.foldlM (init := #[]) fun acc tn =>
+      match avail.find? (·.name == tn) with
+      | some tbl => .ok (acc.push tbl)
+      | none => .error s!"tape_codegen: lutfetch references unknown table `{tn}`"
+  else
+    .error "tape_codegen: supplied tables must have pairwise-distinct names"
+
 /-- The straight-line body lines (`const float vID = …;`) in node-id order — the only part that can
 fail (an op node must carry an op name). Factored out of `gen` so the record fields that do *not*
 depend on the node walk (`inputs`, `numOutputs`, `outLines`) are pure, making the codegen
 well-formedness theorems (`gen_inputs_eq`, `gen_numOutputs`) immediate. -/
-def genBody (t : Tape Float) : Except String (Array String) := do
+def genBody (t : Tape Float) (tables : Array LutTable := #[]) :
+    Except String (Array String) := do
   let mut body : Array String := #[]
   let mut i : Nat := 0
   for n in t.nodes do
@@ -142,8 +241,21 @@ def genBody (t : Tape Float) : Except String (Array String) := do
     else
       match n.name with
       | some nm =>
-          let e ← cExpr nm n.parents
-          body := body.push s!"  const float v{i} = {e};"
+          match lutNodeName? nm with
+          | some tn =>
+              -- a `lutfetch:<table>` node: backend-neutral macro call; the CUDA/stub emitters
+              -- prepend the matching `TL_LUTFETCH` definition (texture fetch vs array lerp).
+              match tables.find? (·.name == tn), n.parents with
+              | some tbl, [l, u] =>
+                  body := body.push
+                    s!"  const float v{i} = TL_LUTFETCH({tbl.name}, {tbl.width}, {tbl.layers}, v{l}, v{u});"
+              | some _, _ =>
+                  .error s!"tape_codegen: lutfetch node {i} expects parents [layer, u] (got {n.parents.length})"
+              | none, _ =>
+                  .error s!"tape_codegen: lutfetch node {i} references unknown table `{tn}`"
+          | none =>
+              let e ← cExpr nm n.parents
+              body := body.push s!"  const float v{i} = {e};"
       | none => .error s!"tape_codegen: op node {i} has no op name"
     i := i + 1
   pure body
@@ -152,35 +264,96 @@ def genBody (t : Tape Float) : Except String (Array String) := do
 (tape ids are array indices), so a node's `vID` is `v{arrayIndex}` and its parents reference earlier
 `v`s. The `inputs`/`numOutputs`/`outLines` fields are pure functions of `t`/`outIds`; only `body`
 runs the (fallible) node walk (`genBody`). -/
-def gen (t : Tape Float) (outIds : List Nat) : Except String Codegen :=
-  (genBody t).map fun body =>
-    { inputs := collectInputs t
-    , numOutputs := outIds.length
-    , body
-    , outLines := ((outIds.zipIdx).map (fun (oid, j) => s!"  out[{j} * P + p] = v{oid};")).toArray }
+def gen (t : Tape Float) (outIds : List Nat) (tables : Array LutTable := #[])
+    (lutMode : LutFilterMode := .point) : Except String Codegen :=
+  (resolveTables (collectTableNames t) tables).bind fun resolved =>
+    (genBody t tables).map fun body =>
+      { inputs := collectInputs t
+      , numOutputs := outIds.length
+      , body
+      , outLines := ((outIds.zipIdx).map (fun (oid, j) => s!"  out[{j} * P + p] = v{oid};")).toArray
+      , tables := resolved
+      , lutMode }
 
-/-- The kernel parameter list: `int P, const float* in_<x>…, float* out`. -/
-def paramList (cg : Codegen) : String :=
+/-- The kernel parameter list: `int P, const float* in_<x>…, <table params…>, float* out`.
+Table parameters differ per backend — `cudaTextureObject_t tex_<n>` on the device kernel,
+`const float* lut_<n>` in the portable stub (`stub := true`); same arity either way. -/
+def paramList (cg : Codegen) (stub : Bool := false) : String :=
   "int P" ++ String.join (cg.inputs.toList.map (fun nm => s!", const float* __restrict__ in_{nm}"))
+    ++ String.join (cg.tables.toList.map (fun tb =>
+        if stub then s!", const float* lut_{tb.name}" else s!", cudaTextureObject_t tex_{tb.name}"))
     ++ ", float* __restrict__ out"
 
-/-- The fused CUDA `__global__` megakernel: one thread per pixel `p`, the whole DAG in registers. -/
+/-- The CUDA-side `lutfetch` helper + the `TL_LUTFETCH` macro `genBody`'s neutral body lines call.
+Point mode: two point fetches + a `__f*_rn` contraction-blocked fp32 lerp (bit-identical to the
+stub). Hardware mode: one hardware-filtered fetch (9-bit weight, tolerance-only). Empty when the
+kernel uses no tables. -/
+def lutHelperCuda (cg : Codegen) : String :=
+  if cg.tables.isEmpty then "" else
+  let body := match cg.lutMode with
+    | .point => String.intercalate "\n"
+        [ "  float j = floorf(uc);"
+        , "  float f = __fsub_rn(uc, j);"
+        , "  float a = tex1DLayered<float>(tex, j + 0.5f, L);"
+        , "  float b = tex1DLayered<float>(tex, fminf(j + 1.0f, wmax) + 0.5f, L);"
+        , "  return __fadd_rn(a, __fmul_rn(f, __fsub_rn(b, a)));" ]
+    | .hardware => "  return tex1DLayered<float>(tex, uc + 0.5f, L);"
+  String.intercalate "\n"
+    [ "__device__ __forceinline__ float tl_lutfetch(cudaTextureObject_t tex, int W, float layer, float u) {"
+    , "  float wmax = (float)(W - 1);"
+    , "  float uc = fminf(fmaxf(u, 0.0f), wmax);"
+    , "  int L = (int)(layer + 0.5f);"
+    , body
+    , "}"
+    , "#define TL_LUTFETCH(NAME, W, LAYERS, L, U) tl_lutfetch(tex_##NAME, W, L, U)"
+    , "" ]
+
+/-- The stub-side `lutfetch` helper + macro: the same clamp/floor/lerp as a host loop over the
+baked table (point mode bit-identical to the device kernel; hardware mode emulates the 9-bit
+weight, tolerance-only). Empty when the kernel uses no tables. -/
+def lutHelperStub (cg : Codegen) : String :=
+  if cg.tables.isEmpty then "" else
+  let quant := match cg.lutMode with
+    | .point => ""
+    | .hardware => "  f = floorf(f * 256.0f + 0.5f) / 256.0f;\n"
+  String.intercalate "\n"
+    [ "static float tl_lutfetch(const float* tab, int W, int LAYERS, float layer, float u) {"
+    , "  float wmax = (float)(W - 1);"
+    , "  float uc = u < 0.0f ? 0.0f : (u > wmax ? wmax : u);"
+    , "  long L = (long)(layer + 0.5f);"
+    , "  if (L < 0) L = 0;"
+    , "  if (L > (long)LAYERS - 1) L = (long)LAYERS - 1;"
+    , "  float j = floorf(uc);"
+    , s!"  float f = uc - j;\n{quant}  const float* row = tab + (long)L * (long)W;"
+    , "  long j0 = (long)j;"
+    , "  long j1 = j0 + 1 < (long)W ? j0 + 1 : (long)W - 1;"
+    , "  float a = row[j0];"
+    , "  float b = row[j1];"
+    , "  float d = b - a;"
+    , "  float fd = f * d;"
+    , "  return a + fd;"
+    , "}"
+    , "#define TL_LUTFETCH(NAME, W, LAYERS, L, U) tl_lutfetch(lut_##NAME, W, LAYERS, L, U)"
+    , "" ]
+
+/-- The fused CUDA `__global__` megakernel: one thread per pixel `p`, the whole DAG in registers.
+Tables (if any) arrive as `cudaTextureObject_t` parameters, fetched through `tl_lutfetch`. -/
 def emitCuda (name : String) (cg : Codegen) : String :=
   let hdr := s!"// generated by paradigm.tape_codegen — compile: nvcc --fmad=false -prec-div=true -prec-sqrt=true\n"
   let sig := s!"__global__ void {name}({paramList cg}) \{\n"
   let idx := "  int p = blockIdx.x * blockDim.x + threadIdx.x;\n  if (p >= P) return;\n"
   let bod := String.join (cg.body.toList.map (· ++ "\n"))
   let out := String.join (cg.outLines.toList.map (· ++ "\n"))
-  hdr ++ sig ++ idx ++ bod ++ out ++ "}\n"
+  hdr ++ lutHelperCuda cg ++ sig ++ idx ++ bod ++ out ++ "}\n"
 
 /-- The portable C-stub twin (host loop over pixels) — the CPU deployment path and the bit-exact
-oracle (compile with `-ffp-contract=off`). -/
+oracle (compile with `-ffp-contract=off`). Tables arrive as `const float*` parameters. -/
 def emitStub (name : String) (cg : Codegen) : String :=
-  let sig := s!"void {name}_stub({paramList cg}) \{\n"
+  let sig := s!"void {name}_stub({paramList cg (stub := true)}) \{\n"
   let loop := "  for (int p = 0; p < P; ++p) {\n"
   let bod := String.join (cg.body.toList.map ("  " ++ · ++ "\n"))
   let out := String.join (cg.outLines.toList.map ("  " ++ · ++ "\n"))
-  sig ++ loop ++ bod ++ out ++ "  }\n}\n"
+  lutHelperStub cg ++ sig ++ loop ++ bod ++ out ++ "  }\n}\n"
 
 /-! ### FFI landing: wiring the generated kernel through a Lake `extern_lib` slot
 
@@ -202,20 +375,71 @@ casts `double ↔ float32` at the boundary (the fp64 `evalTape` denotation is th
 is validated against). -/
 
 /-- The kernel's parameter list as tokens (`paramList` renders it): `int P`, one
-`const float* in_<nm>` per distinct named input, then `float* out`. -/
+`const float* in_<nm>` per distinct named input, one `cudaTextureObject_t tex_<nm>` per referenced
+table, then `float* out`. -/
 def kernelParamList (cg : Codegen) : List String :=
-  "int P" :: cg.inputs.toList.map (fun nm => s!"const float* __restrict__ in_{nm}")
-    ++ ["float* __restrict__ out"]
+  "int P" :: (cg.inputs.toList.map (fun nm => s!"const float* __restrict__ in_{nm}")
+    ++ cg.tables.toList.map (fun tb => s!"cudaTextureObject_t tex_{tb.name}")
+    ++ ["float* __restrict__ out"])
+
+/-- The stub kernel's parameter list as tokens: identical to `kernelParamList` except each table
+slot is a `const float* lut_<nm>` (the portable build has no texture objects) — same arity, so the
+two translation units stay call-compatible position-for-position. -/
+def stubParamList (cg : Codegen) : List String :=
+  "int P" :: (cg.inputs.toList.map (fun nm => s!"const float* in_{nm}")
+    ++ cg.tables.toList.map (fun tb => s!"const float* lut_{tb.name}")
+    ++ ["float* out"])
 
 /-- The arguments the host launcher forwards to the kernel — one per kernel parameter, same order
-(`P`, each uploaded `d_in_<nm>`, `d_out`). `landing_abi_consistent` proves this has the same length as
-`kernelParamList`, so the generated FFI call is arity-correct by construction. -/
+(`P`, each uploaded `d_in_<nm>`, each table's created-once `tex_<nm>`, `d_out`).
+`landing_abi_consistent` proves this has the same length as `kernelParamList`, so the generated FFI
+call is arity-correct by construction. -/
 def launchArgList (cg : Codegen) : List String :=
-  "P" :: cg.inputs.toList.map (fun nm => s!"d_in_{nm}") ++ ["d_out"]
+  "P" :: (cg.inputs.toList.map (fun nm => s!"d_in_{nm}")
+    ++ cg.tables.toList.map (fun tb => s!"tex_{tb.name}")
+    ++ ["d_out"])
+
+/-- The baked table data for one `LutTable` — a `static const float` array in the generated
+translation unit (AOT, checked-in; a 20 KB table is one array literal). fp64 sample values render
+through `floatLit`; the C compiler's compile-time `double→float` narrowing is round-to-nearest,
+the same conversion the runtime upload paths perform. -/
+def lutDataDecl (tbl : LutTable) : String :=
+  s!"static const float lut_{tbl.name}_data[{tbl.width * tbl.layers}] = \{ "
+    ++ String.intercalate ", " (tbl.values.toList.map floatLit) ++ " };"
+
+/-- The create-once texture getter for one table in the CUDA landing TU: first call builds the
+layered `cudaArray`, uploads the baked data, and creates the texture object (filter mode per the
+generation's `LutFilterMode`); later calls return the cached handle — tables are immutable, so
+per-launch creation cost is paid once per process. -/
+def lutTexGetter (mode : LutFilterMode) (tbl : LutTable) : String :=
+  let filt := match mode with
+    | .point => "cudaFilterModePoint"
+    | .hardware => "cudaFilterModeLinear"
+  String.intercalate "\n"
+    [ s!"static cudaTextureObject_t tl_tex_{tbl.name} = 0;"
+    , s!"static cudaTextureObject_t tl_get_tex_{tbl.name}(void) \{"
+    , s!"  if (tl_tex_{tbl.name}) return tl_tex_{tbl.name};"
+    , "  cudaChannelFormatDesc desc = cudaCreateChannelDesc<float>();"
+    , "  cudaArray_t arr = NULL;"
+    , s!"  cudaMalloc3DArray(&arr, &desc, make_cudaExtent({tbl.width}, 0, {tbl.layers}), cudaArrayLayered);"
+    , "  cudaMemcpy3DParms cp; memset(&cp, 0, sizeof(cp));"
+    , s!"  cp.srcPtr = make_cudaPitchedPtr((void*)lut_{tbl.name}_data, {tbl.width} * sizeof(float), {tbl.width}, 1);"
+    , s!"  cp.dstArray = arr; cp.extent = make_cudaExtent({tbl.width}, 1, {tbl.layers}); cp.kind = cudaMemcpyHostToDevice;"
+    , "  cudaMemcpy3D(&cp);"
+    , "  cudaResourceDesc res; memset(&res, 0, sizeof(res));"
+    , "  res.resType = cudaResourceTypeArray; res.res.array.array = arr;"
+    , "  cudaTextureDesc td; memset(&td, 0, sizeof(td));"
+    , "  td.addressMode[0] = cudaAddressModeClamp; td.addressMode[1] = cudaAddressModeClamp;"
+    , s!"  td.filterMode = {filt}; td.readMode = cudaReadModeElementType; td.normalizedCoords = 0;"
+    , s!"  cudaCreateTextureObject(&tl_tex_{tbl.name}, &res, &td, NULL);"
+    , s!"  return tl_tex_{tbl.name};"
+    , "}"
+    ]
 
 /-- The `.cu` translation unit: the device kernel plus an `extern "C"` host launcher that marshals the
 packed `FloatArray` across the FFI, uploads inputs, launches one thread per pixel, and downloads the
-packed outputs. Compile with `nvcc --fmad=false -prec-div=true -prec-sqrt=true`. -/
+packed outputs. Tables (if any) are baked as `static const float` data with create-once texture
+getters. Compile with `nvcc --fmad=false -prec-div=true -prec-sqrt=true`. -/
 def emitCudaLanding (name : String) (cg : Codegen) : String :=
   let ins := cg.inputs.toList
   let nOut := cg.numOutputs
@@ -225,6 +449,10 @@ def emitCudaLanding (name : String) (cg : Codegen) : String :=
       [ s!"  float* d_in_{nm}; cudaMalloc((void**)&d_in_{nm}, nb);"
       , s!"  for (size_t i = 0; i < np; ++i) hbuf[i] = (float)src[(size_t){k} * np + i];"
       , s!"  cudaMemcpy(d_in_{nm}, hbuf, nb, cudaMemcpyHostToDevice);" ])
+  let tableDecls := String.intercalate "\n" <| cg.tables.toList.map (fun tb =>
+    lutDataDecl tb ++ "\n" ++ lutTexGetter cg.lutMode tb)
+  let texGets := String.intercalate "\n" <| cg.tables.toList.map (fun tb =>
+    s!"  cudaTextureObject_t tex_{tb.name} = tl_get_tex_{tb.name}();")
   let frees := String.intercalate "\n" <| ins.map (fun nm => s!"  cudaFree(d_in_{nm});")
   String.intercalate "\n"
     [ "// generated by paradigm.tape_codegen — FFI landing translation unit (CUDA path)."
@@ -232,7 +460,9 @@ def emitCudaLanding (name : String) (cg : Codegen) : String :=
     , "#include <lean/lean.h>"
     , "#include <cuda_runtime.h>"
     , "#include <stdlib.h>"
+    , "#include <string.h>"
     , ""
+    , tableDecls
     , emitCuda name cg
     , s!"extern \"C\" LEAN_EXPORT lean_obj_res {name}_launch(uint32_t P, uint32_t nIns, b_lean_obj_arg InsObj) \{"
     , "  (void)nIns;"
@@ -242,6 +472,7 @@ def emitCudaLanding (name : String) (cg : Codegen) : String :=
     , "  const double* src = lean_float_array_cptr((lean_object*)InsObj);"
     , "  float* hbuf = (float*)malloc(nb);"
     , uploads
+    , texGets
     , s!"  float* d_out; cudaMalloc((void**)&d_out, (size_t){nOut} * nb);"
     , "  const int threads = 256;"
     , "  const int blocks = (int)((np + (size_t)threads - 1) / (size_t)threads);"
@@ -261,12 +492,16 @@ def emitCudaLanding (name : String) (cg : Codegen) : String :=
     , "" ]
 
 /-- The `.c` stub twin: the portable host loop (`emitStub`, one pass per pixel) behind the identical
-`<name>_launch` FFI symbol — a CUDA-free build links this instead. Compile with `-ffp-contract=off`. -/
+`<name>_launch` FFI symbol — a CUDA-free build links this instead. Tables are baked as the same
+`static const float` data and passed directly. Compile with `-ffp-contract=off`. -/
 def emitStubLanding (name : String) (cg : Codegen) : String :=
   let ins := cg.inputs.toList
   let nOut := cg.numOutputs
   let computeArgs := String.intercalate ", "
-    (("P" :: ins.map (fun nm => s!"in_{nm}")) ++ ["out"])
+    (("P" :: ins.map (fun nm => s!"in_{nm}"))
+      ++ cg.tables.toList.map (fun tb => s!"lut_{tb.name}_data")
+      ++ ["out"])
+  let tableDecls := String.intercalate "\n" <| cg.tables.toList.map lutDataDecl
   let allocs := String.intercalate "\n" <| ins.zipIdx.map (fun (nm, k) =>
     String.intercalate "\n"
       [ s!"  float* in_{nm} = (float*)malloc(np * sizeof(float));"
@@ -279,6 +514,7 @@ def emitStubLanding (name : String) (cg : Codegen) : String :=
     , "#include <math.h>"
     , "#include <stdlib.h>"
     , ""
+    , tableDecls
     , emitStub name cg
     , s!"LEAN_EXPORT lean_obj_res {name}_launch(uint32_t P, uint32_t nIns, b_lean_obj_arg InsObj) \{"
     , "  (void)nIns;"
@@ -323,12 +559,14 @@ def writeLandingFiles (dir : System.FilePath) (name : String) (cg : Codegen) : I
 
 /-! ### Arithmetic-intensity accounting -/
 
-/-- Per-op FLOP weight (transcendentals cost more): `exp/log ≈ 10`, `sqrt ≈ 8`, `div ≈ 4`, else 1. -/
+/-- Per-op FLOP weight (transcendentals cost more): `exp/log ≈ 10`, `sqrt ≈ 8`, `div ≈ 4`,
+`lutfetch:* ≈ 4` (clamp + floor + lerp around the fetch), else 1. -/
 def flopWeight : Option String → Nat
   | some "exp" | some "log" => 10
   | some "sqrt"             => 8
   | some "div"              => 4
-  | _                       => 1
+  | some nm                 => if (lutNodeName? nm).isSome then 4 else 1
+  | none                    => 1
 
 structure AiReport where
   nNodes  : Nat
@@ -344,8 +582,14 @@ structure AiReport where
   eagerBytes : Nat
   /-- op-name → count -/
   hist    : List (String × Nat)
+  /-- Total bytes of lookup-table data the kernel binds (`Σ width·layers·4`) — compulsory traffic
+  the fused model must charge (amortized per launch by `intensityWithTables`); `0` for
+  pure-arithmetic tapes. Per-fetch texture-cache traffic is an L1-level effect and is documented,
+  not charged (a ≤ tens-of-KB table is cache-resident — which is the texture encoding's point). -/
+  tableBytes : Nat := 0
 
-def aiReport (t : Tape Float) (nOut : Nat) : AiReport := Id.run do
+def aiReport (t : Tape Float) (nOut : Nat) (tables : Array LutTable := #[]) :
+    AiReport := Id.run do
   let mut nInputs := 0
   let mut nConsts := 0
   let mut nOps := 0
@@ -364,8 +608,9 @@ def aiReport (t : Tape Float) (nOut : Nat) : AiReport := Id.run do
       let k := n.name.getD "?"
       hist := hist.insert k ((hist.getD k 0) + 1)
   let histL := (hist.toList.toArray.qsort (fun a b => a.2 > b.2)).toList
+  let tableBytes := tables.foldl (init := 0) fun acc tb => acc + tb.width * tb.layers * 4
   pure { nNodes := t.nodes.size, nInputs, nConsts, nOps, nOut, flops
-       , eagerBytes := eagerWords * 4, hist := histL }
+       , eagerBytes := eagerWords * 4, hist := histL, tableBytes }
 
 /-- The intensity numbers for a recorded kernel — the FUSED and EAGER arithmetic intensities, both
 computed from the same recorded DAG (identical FLOPs, different DRAM traffic).
@@ -391,6 +636,18 @@ structure Intensity where
 
 def intensity (rep : AiReport) (iters : Nat) : Intensity :=
   let fusedBytes := (rep.nInputs + rep.nOut) * 4
+  let aiStep  := Float.ofNat rep.flops / Float.ofNat fusedBytes
+  let aiFit   := Float.ofNat (rep.flops * iters) / Float.ofNat fusedBytes
+  let aiEager := Float.ofNat rep.flops / Float.ofNat rep.eagerBytes
+  { aiStep, aiFit, aiEager, fusedBytes, eagerBytes := rep.eagerBytes }
+
+/-- `intensity` for a kernel that binds lookup tables: the fused model's "DRAM only for
+inputs/outputs" assumption gains one compulsory term — the table upload — charged **once per
+launch and amortized over the `pixels` in flight** (`fusedBytes += tableBytes / pixels`, per-pixel
+like the other terms). Per-fetch traffic is texture-cache-resident and documented, not charged
+(`AiReport.tableBytes`). With no tables this definitionally reduces to `intensity`. -/
+def intensityWithTables (rep : AiReport) (iters pixels : Nat) : Intensity :=
+  let fusedBytes := (rep.nInputs + rep.nOut) * 4 + rep.tableBytes / (max pixels 1)
   let aiStep  := Float.ofNat rep.flops / Float.ofNat fusedBytes
   let aiFit   := Float.ofNat (rep.flops * iters) / Float.ofNat fusedBytes
   let aiEager := Float.ofNat rep.flops / Float.ofNat rep.eagerBytes

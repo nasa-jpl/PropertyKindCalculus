@@ -334,6 +334,39 @@ Status: ✅ done · 🚧 in progress · ⬜ planned
   one-liner `⟨Buffer.scaledProdExp x.buf y.buf c⟩` (the `combined` pin carries the op; the extern's C
   stub keeps a plain `lake build` green without a GPU), the same coupling discipline the downstream
   SMM/app rewires follow.
+- ✅ **The look-up table enters the verified story — as an explicit vocabulary extension backed by
+  CUDA texture objects.** A gather stays inexpressible in `NumCarrier` (the thesis is untouched);
+  what changed is that the dependence can now be *declared*: the new `LutInterp` class
+  (`Paradigm.LutCarrier`) is a genuine vocabulary-EXTENSION class — unlike a `FusedExp` fused form
+  it has **no** composed fallback, so a model using tabulated data carries `[LutInterp α]` in its
+  type. `LutTable.refFetch` (clamp/floor/lerp on a uniform layered abscissa — the `np.interp`
+  analogue) is the reference semantics; instances: `Float` (the fp64 oracle), `TapeBuilder`
+  (records one `lutfetch:<table>` node storing the elementwise `refFetch` — recorder-faithful by
+  construction), and `CudaT` (TorchLean's new **`TexTable`** texture-object fetch, branch
+  `cuda-texture-table`, layered `cudaArray` + hardware texture cache; upstream-shippable and
+  domain-neutral). The codegen lowers fetch nodes to `tex1DLayered` through one backend-neutral
+  helper, with the **exactness split fixed at generation**: point mode (two point fetches + a
+  contraction-blocked fp32 lerp) is *bit-reproducible* — the A4500 kernel, the C stub, and the
+  Lean `Float32` reference agree bit-for-bit, machine-checked — while hardware-filtered mode
+  (zero-ALU lerp, CUDA's 9-bit fixed-point weight) is tolerance-only and excluded from bit-exact
+  claims. The table's identity rides in the node *name*, so `tape_cse`'s `nodeKey` distinguishes
+  tables with **no CSE change** (its scalar-baking hazard, resolved by construction —
+  `#guard lutCseIdentity`); `gen` gains a `tables` argument (unknown/duplicate names are hard
+  errors), the landing emitters bake the table data and create the texture once per process, and
+  the ABI theorems extend to `inputs + tables + 2` (`examples.tape_codegen_lut` +
+  `examples.tape_codegen_landing`, sorry-free, axiom-audited, with recorder/`evalTapeT`
+  faithfulness `#guard`s). AI accounting charges the table upload amortized per launch
+  (`AiReport.tableBytes`, `intensityWithTables`); per-fetch traffic is texture-cache-resident —
+  the 20 KB operational R-LUT lives entirely in the texture cache, which is the encoding's point.
+  Deployed end-to-end downstream: SMM `kernel.r_lut_uniform` inverts/resamples the non-uniform
+  R-abscissa per clay layer onto a uniform grid (the coordinate-convention SSOT — texture hardware
+  interpolates only uniform coordinates, so the *inverse* table must be resampled, a measured
+  ~3·10⁻⁴ m³/m³ at 256 nodes, halving per doubling, 20× under the LUT's own ~6·10⁻³ angle bias),
+  and the app's `tile_retrieve_lut_tex` binds it as a 20-layer texture: Steps 2–3 collapse to
+  **one device fetch per chunk — 0.18 ms for 25 600 px vs ~330 ms / ~10 launches for the eager
+  baseline** — with the NaN range-guard restored host-side (masks agree *exactly* with the CPU
+  LUT, which the comparison-free eager port could not do). Measurements + gates:
+  `gpu-smap-nisar-sm/STAGE3_LUT_TEX.md`.
 - ⬜ Apply the backend to the deployed SMAP–NISAR kernels in the downstream application — and deploy
   **both** Stage-3 CLIs side by side, because the A/B is the point. Three Stage-3 methods exist, and
   the distinction must stay sharp:
