@@ -392,7 +392,7 @@ Status: ✅ done · 🚧 in progress · ⬜ planned
   samples (`uniformLerpR_monotone`, `inverse_le_of_le`, `resampled_lerp_monotone` — reusing
   `retrieval_well_posed`'s hypotheses), so a table passing `monotoneNondecreasing` provably
   cannot reorder soil moistures.
-- ⬜ Apply the backend to the deployed SMAP–NISAR kernels in the downstream application — and deploy
+- ✅ Apply the backend to the deployed SMAP–NISAR kernels in the downstream application — and deploy
   **both** Stage-3 CLIs side by side, because the A/B is the point. Three Stage-3 methods exist, and
   the distinction must stay sharp:
   1. **Table lookup** (operational `r_lut.py` / SMM `kernel.r_lut`): nearest clay+angle node, linear
@@ -421,7 +421,14 @@ Status: ✅ done · 🚧 in progress · ⬜ planned
        accuracy bias — exactly the artifact class the calculus exists to eliminate. (GPU run needs a
        one-time `pixi install --manifest-path cuda-toolchain/pixi.toml`, then `./cuda.sh exe`.)
   2. **Equations, iterated** (`tile_retrieve`): 12 projected-Newton steps on the same physics
-     (~36 forward evals/px) — fixed trip count, hence recordable; the ×12 body measured above.
+     (~36 forward evals/px) — fixed trip count, hence recordable. The **whole 12-step fold** (Step-1
+     `R_eff` fused in, outputs `[sm, r_eff]`) is recorded at the tape carrier and landed as a
+     generated megakernel `retrieve_newton.{cu,c}` (SMM `scripts/gen_newton_megakernel.lean` →
+     app `newton_megakernel_check`, bench variant `mk-newton`): the deferred-carrier fold is
+     unrolled with the `sm` accumulator materialized per step, CSE-compacted to 1852 nodes / 3156
+     flops, and cross-validated **bit-exact vs `retrieveSm (C := Scalar1)` on 1024/1024 probes**.
+     Its recorded fused AI is ≈**88 flop/byte** — ~3.6× the closed form's ≈24.5 (same 7-in/2-out
+     kernel), the iterated method's dielectric-heaviness made quantitative.
   3. **Equations, solved** (`tile_retrieve_reflectivity` / SMM `kernel.retrieve_analytic`,
      `smOfReflectivityHH`): closed-form Fresnel-HH + Mironov root formulas, 8 unrolled loss-coupling
      sweeps, ~2 forward-evals/px.
@@ -433,8 +440,15 @@ Status: ✅ done · 🚧 in progress · ⬜ planned
   baseline — the LUT's absence *from the verified column* is the SMM textbook Ch06 “was the look-up
   table an accelerator?” verdict (which also
   measures the LUT's ~6e-3 m³/m³ angle-quantization bias vs 2e-8 for the closed form, so the
-  performance table should sit beside the accuracy one). Record (3) à la `examples.tile_retrieve_ai`,
-  codegen both equation kernels, measure. Optional nvrtc runtime kernel specialization per tile shape.
+  performance table should sit beside the accuracy one). Record (3) à la `examples.tile_retrieve_ai`
+  — done (`examples.tile_retrieve_reflectivity_ai`). **Both** equation kernels are now codegen'd as
+  megakernels — `retrieve_reflectivity` (mk-refl) and `retrieve_newton` (mk-newton) — each
+  correctness-gated bit-exact vs its baked fp64 `evalTape` oracle and wired into `scripts/bench.py`,
+  so a single `--modes gpu` sweep measures both equation methods head-to-head inside the verified
+  column (mk-refl's A4500 throughput is recorded in `bench_results/full-2026-07-24/`; mk-newton's
+  GPU row lands on the next GPU sweep — its correctness gate is P-independent and already green on
+  the CPU stub). The one remaining item is **optional**: nvrtc runtime kernel specialization per
+  tile shape.
 
 ## References
 
