@@ -367,6 +367,31 @@ Status: ✅ done · 🚧 in progress · ⬜ planned
   baseline** — with the NaN range-guard restored host-side (masks agree *exactly* with the CPU
   LUT, which the comparison-free eager port could not do). Measurements + gates:
   `gpu-smap-nisar-sm/STAGE3_LUT_TEX.md`.
+- ✅ **The vocabulary extension's proof story is closed over all inputs — and the LUT megakernel
+  is landed.** The four follow-ons from the texture-object landing, done: (i) the
+  `∀`-environment faithfulness bridge for the table-extended interpreter — `FaithfulT` lifts
+  `examples.tape_codegen_end_to_end`'s `Faithful` to `evalTapeT`, the one genuinely new step
+  being `FaithfulT_lutfetch` (the recorded fetch *stores* the elementwise `refFetch` and
+  *re-interprets*, via `cOpT_lutfetch`, to `refFetch` of the re-interpreted operands), with
+  capstone `lut_kernel_faithful`: the recorded arithmetic+fetch fixture computes the
+  `[NumCarrier]+[LutInterp]` source model at **every** environment
+  (`examples.tape_codegen_lut_end_to_end`, sorry-free, axiom-audited — the single-pixel
+  `#guard`s promoted to theorems). (ii) Generated literals are now **exact**: `floatLit` renders
+  C99/C++17 hexadecimal floats from the double bits (the decimal printer's six significant
+  digits silently detuned baked tables and constants), so the baked table data is bit-identical
+  to what the runtime upload paths produce. (iii) The **general Steps-2–3 texture retrieval is
+  landed as a generated megakernel** downstream
+  (`gpu-smap-nisar-sm/csrc/megakernel/retrieve_lut_tex.{cu,c}`, produced by the *committed*
+  generator `soil-moisture-model/scripts/gen_lut_megakernel.lean` — per-pixel
+  `layer/r_eff/r_min/inv_span` so one kernel serves all clay layers, the 20 KB `rlut` baked with
+  a create-once texture getter) and gated by `lut_megakernel_check` against a baked fp64
+  `evalTapeT` oracle (tol 1e-3, probes bit-exact vs the `Float`-instance model at generation)
+  plus the ≥20-rep `P = 131072` throughput row. (iv) The nondecreasing certificate got its ℝ
+  theorem: SMM `kernel.r_lut_uniform` now proves that the piecewise-linear interpolant of
+  monotone data is monotone and that inverting a strictly-monotone forward model yields monotone
+  samples (`uniformLerpR_monotone`, `inverse_le_of_le`, `resampled_lerp_monotone` — reusing
+  `retrieval_well_posed`'s hypotheses), so a table passing `monotoneNondecreasing` provably
+  cannot reorder soil moistures.
 - ⬜ Apply the backend to the deployed SMAP–NISAR kernels in the downstream application — and deploy
   **both** Stage-3 CLIs side by side, because the A/B is the point. Three Stage-3 methods exist, and
   the distinction must stay sharp:

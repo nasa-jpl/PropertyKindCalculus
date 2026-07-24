@@ -154,9 +154,23 @@ def cExpr (nm : String) (ps : List Nat) : Except String String :=
   | "abs",  [a]    => .ok s!"fabsf({v a})"
   | _, _ => .error s!"tape_codegen: unsupported op `{nm}` (arity {ps.length})"
 
-/-- A C `float` literal for a constant leaf (full `Float.toString` precision; simple kernel
-constants like `0/1/2` round-trip exactly). -/
-def floatLit (x : Float) : String := s!"{x}f"
+/-- Render a `Float` as an **exact** C literal (C99/C++17 hexadecimal float, e.g.
+`0x1.51eb851eb851fp-7f`). The decimal printer is lossy (6 significant digits), which would
+silently detune baked table samples and recorded constants; the hex form reproduces the double
+bit-for-bit, and the compiler's compile-time `double → float` narrowing is round-to-nearest —
+the same conversion the runtime upload paths perform. Zero renders as `0.0f`; NaN/Inf do not
+occur in generated bodies (leaf constants and table samples are finite). -/
+def floatLit (x : Float) : String :=
+  let bits : Nat := x.toBits.toNat
+  let sign := if bits / 2 ^ 63 == 1 then "-" else ""
+  let expBits : Nat := (bits / 2 ^ 52) % 2 ^ 11
+  let mant : Nat := bits % 2 ^ 52
+  if expBits == 0 && mant == 0 then s!"{sign}0.0f"
+  else
+    let mantHex := String.ofList <| (List.range 13).map fun i =>
+      Nat.digitChar ((mant / 2 ^ (48 - 4 * i)) % 16)
+    if expBits == 0 then s!"{sign}0x0.{mantHex}p-1022f"          -- subnormal
+    else s!"{sign}0x1.{mantHex}p{Int.ofNat expBits - 1023}f"
 
 /-- How a generated kernel realises a `lutfetch` node (`paradigm.lut_carrier`).
 

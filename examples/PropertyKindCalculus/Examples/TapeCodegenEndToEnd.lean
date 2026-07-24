@@ -23,8 +23,9 @@ The remaining half of "rendering faithfulness" — that the emitted C (`cExpr`) 
 interpreter (`cOp`) computes — is the per-op `rendering_table` below: `cExpr` succeeds with the C
 form exactly where `cOp` succeeds with the arithmetic, over the whole op alphabet.
 
-Plain leaf module (nothing imports it). Builds under the `Examples` glob, so CI checks it, and the
-axiom audit at the end certifies it sorry-free.
+Plain module (imported by `examples.tape_codegen_lut_end_to_end`, which lifts this bridge to the
+table-extended interpreter `evalTapeT`). Builds under the `Examples` glob, so CI checks it, and
+the axiom audit at the end certifies it sorry-free.
 -/
 import PropertyKindCalculus.Examples.TapeCodegenProof
 

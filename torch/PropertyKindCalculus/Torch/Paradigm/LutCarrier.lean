@@ -104,26 +104,32 @@ against. -/
 instance : LutInterp Float where
   lutFetch := LutTable.refFetch
 
+/-- The recording action of one fetch — the `TapeBuilder` instance's body, named so the
+end-to-end bridge (`examples.tape_codegen_lut_end_to_end`) can unfold its run: append one
+`lutfetch:<name>` node whose stored value is the elementwise `refFetch` of the parents' stored
+tensors. -/
+def TapeBuilder.lutFetchM {s : Shape} (tbl : LutTable) (l u : TapeBuilder s) : TapeBuilder s :=
+  ⟨do
+    let lId ← l.run
+    let uId ← u.run
+    let t ← get
+    let lVal : Tensor Float s ← liftM (Tape.requireValue (t := t) (s := s) lId)
+    let uVal : Tensor Float s ← liftM (Tape.requireValue (t := t) (s := s) uId)
+    let v := map2Spec (fun a b => tbl.refFetch a b) lVal uVal
+    let (t', id) := Tape.addNode t
+      { name := some tbl.nodeName
+      , value := AnyTensor.mk v
+      , requires_grad := false
+      , parents := [lId, uId]
+      , backward := fun _ => .ok [] }
+    set t'
+    pure id⟩
+
 /-- The recording instance: one tape node per fetch, table identity in the node name, stored
 value = elementwise `refFetch` of the parents' stored tensors (so recorder faithfulness is by
 construction), forward-only. -/
 instance {s : Shape} : LutInterp (TapeBuilder s) where
-  lutFetch tbl l u :=
-    ⟨do
-      let lId ← l.run
-      let uId ← u.run
-      let t ← get
-      let lVal : Tensor Float s ← liftM (Tape.requireValue (t := t) (s := s) lId)
-      let uVal : Tensor Float s ← liftM (Tape.requireValue (t := t) (s := s) uId)
-      let v := map2Spec (fun a b => tbl.refFetch a b) lVal uVal
-      let (t', id) := Tape.addNode t
-        { name := some tbl.nodeName
-        , value := AnyTensor.mk v
-        , requires_grad := false
-        , parents := [lId, uId]
-        , backward := fun _ => .ok [] }
-      set t'
-      pure id⟩
+  lutFetch := TapeBuilder.lutFetchM
 
 /-- The executing GPU/CPU-stub instance: one `TexTable` fetch in point mode (the bit-reproducible
 float32 twin of `refFetch`). Table creation is per call — parity-check economics; deployments that

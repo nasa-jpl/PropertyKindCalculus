@@ -24,6 +24,9 @@ tolerance). This module certifies the extension end to end on a mixed arithmetic
   once, and fetches through `tex1DLayered` (`__f*_rn` lerp in point mode, no ALU lerp in hardware
   mode); the stub TU passes the baked array — `#guard lutLandingHolds`.
 
+The `∀`-environment lift of the two computational faithfulness checks — the `FaithfulT` bridge
+and its capstone `lut_kernel_faithful` — lives in `examples.tape_codegen_lut_end_to_end`.
+
 EXACTNESS SPLIT (stated once, load-bearing): every bit-exact claim here — and the recorded stored
 values, and `evalTapeT` — is the **point-mode** semantics (`LutTable.refFetch`). Hardware-filtered
 deployments carry a documented per-fetch tolerance `≤ 2⁻⁸·|Δsample|` (CUDA's 9-bit fixed-point
