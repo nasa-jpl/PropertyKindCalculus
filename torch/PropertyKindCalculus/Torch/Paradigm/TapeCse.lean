@@ -31,6 +31,13 @@ node, so the pass stays correct even if the carrier later grows a scalar-baking 
 ⇒ distinct keys ⇒ never merged, while genuine duplicates (deterministic op, same inputs) carry
 bit-identical values ⇒ still merged. Hence the collapse is exact common-subexpression elimination.
 
+The one op family that *does* bake an identity into the node is the `LutInterp` vocabulary
+extension (`paradigm.lut_carrier`): a recorded fetch is named `lutfetch:<table>`, so the table's
+identity rides in the NAME component of the key and fetches into different tables never merge —
+the hazard above, resolved by construction (witnessed by `examples.tape_codegen_lut`'s
+`lutCseIdentity`). The obligation this shifts onto callers is that distinct tables carry distinct
+names; `paradigm.tape_codegen`'s `gen` enforces it (`resolveTables` rejects duplicates).
+
 Plain (not a `module`) file: imports the plain tape carrier.
 -/
 import PropertyKindCalculus.Torch.Paradigm.TapeCarrier
