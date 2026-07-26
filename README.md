@@ -209,7 +209,7 @@ Status: ✅ done · 🚧 in progress · ⬜ planned
   a genuine per-application AI report.
 - ✅ **Deployed `tile_gpu` + `tile_retrieve` kernels recorded and measured — homed downstream in SMM.**
   The deployed weighted trust-region AVS fit and the projected-Newton retrieval lived inside the
-  `gpu-smap-nisar-sm` CLIs (below which nothing could import them), so they were first **hoisted into
+  `soil-moisture-workflows` CLIs (below which nothing could import them), so they were first **hoisted into
   soil-moisture-model** as the single source of truth (`kernel.avs_weighted` + `kernel.batch_helpers` =
   `ObsW`/`buildObsW`/`normalEqsAvsW`/`lmStepAvsW`/`sseAvsW`/`penTR`/`trStep`; `kernel.retrieve` =
   `rEffOf`/`rOfSm`/`newtonStep`/`retrieveSm`). Two SMM recorders (`examples.tile_gpu_ai`,
@@ -252,7 +252,7 @@ Status: ✅ done · 🚧 in progress · ⬜ planned
     blueprint's WriteOnce chapter for the write-up.
   The **table-lookup** method stays off this list — a gather is inexpressible in `NumCarrier`, so it has
   no AI row; its CPU/GPU baselines are the deploy item's concern.
-- ✅ **The SSOT is complete — the `gpu-smap-nisar-sm` CLIs are rewired onto the hoisted SMM defs.**
+- ✅ **The SSOT is complete — the `soil-moisture-workflows` CLIs are rewired onto the hoisted SMM defs.**
   `tile_gpu.lean` and `tile_retrieve.lean` no longer carry local copies of the kernels: they `import`
   `kernel.avs_weighted` / `kernel.batch_helpers` / `kernel.retrieve` and keep only the app-specific shell
   (the `IO` driver `fitAvsTR`, `computeChunk`, the scalar-carrier Layer-0 twin, npy I/O, QC flags, the
@@ -266,7 +266,7 @@ Status: ✅ done · 🚧 in progress · ⬜ planned
   synthetic tiles (`tile_gpu`'s batched-`CudaT` and scalar-`Float` carriers agree bit-for-bit;
   `tile_retrieve`'s `R_eff` matches the closed formula exactly). Payoff realized: the duplication is gone,
   so a fit/retrieval change lands in one place and the deployment and the AI recorders can never drift.
-  `tile_retrieve_reflectivity` (imports `smOfReflectivityHH`) and `tile_retrieve_lut` (imports
+  `tile_retrieve_reflectivity` (imports `smOfReflectivityHH`) and `tile_retrieve_lut_host` (imports
   `kernel.r_lut`) were already SSOT-clean; the deliberately out-of-framework `tile_retrieve_lut_eager` GPU
   baseline was correctly left untouched.
 - ✅ **The proof runs end to end — the generated kernel is the source kernel for all inputs.**
@@ -318,7 +318,7 @@ Status: ✅ done · 🚧 in progress · ⬜ planned
   host launcher forwards exactly one argument per kernel parameter (`landing_abi_consistent`), the input
   list is a pure function of the tape (`gen_inputs_eq`) and duplicate-free (`collectInputs_nodup`), and
   the output arity is the caller's (`gen_numOutputs`) — with inhabitation on `demoTape` and on the
-  actually-recorded `resJac` tape (axioms `[propext, …]`). Downstream, `gpu-smap-nisar-sm` wires the
+  actually-recorded `resJac` tape (axioms `[propext, …]`). Downstream, `soil-moisture-workflows` wires the
   generated `avs_resjac.cu` through a Lake `extern_lib` (the `buildNativeBackendLib` pattern) and
   `megakernel_check` runs it on the RTX A4500: the **fp32 kernel matches the fp64 `evalTape` oracle to
   max abs 0.0 / max rel 2e-4 → PASS (tol 1e-3)**; end-to-end 2.96 ms over 131072 px, fused AI 0.5625
@@ -366,7 +366,7 @@ Status: ✅ done · 🚧 in progress · ⬜ planned
   **one device fetch per chunk — 0.18 ms for 25 600 px vs ~330 ms / ~10 launches for the eager
   baseline** — with the NaN range-guard restored host-side (masks agree *exactly* with the CPU
   LUT, which the comparison-free eager port could not do). Measurements + gates:
-  `gpu-smap-nisar-sm/STAGE3_LUT_TEX.md`.
+  `soil-moisture-workflows/STAGE3_LUT_TEX.md`.
 - ✅ **The vocabulary extension's proof story is closed over all inputs — and the LUT megakernel
   is landed.** The four follow-ons from the texture-object landing, done: (i) the
   `∀`-environment faithfulness bridge for the table-extended interpreter — `FaithfulT` lifts
@@ -381,7 +381,7 @@ Status: ✅ done · 🚧 in progress · ⬜ planned
   digits silently detuned baked tables and constants), so the baked table data is bit-identical
   to what the runtime upload paths produce. (iii) The **general Steps-2–3 texture retrieval is
   landed as a generated megakernel** downstream
-  (`gpu-smap-nisar-sm/csrc/megakernel/retrieve_lut_tex.{cu,c}`, produced by the *committed*
+  (`soil-moisture-workflows/csrc/megakernel/retrieve_lut_tex.{cu,c}`, produced by the *committed*
   generator `soil-moisture-model/scripts/gen_lut_megakernel.lean` — per-pixel
   `layer/r_eff/r_min/inv_span` so one kernel serves all clay layers, the 20 KB `rlut` baked with
   a create-once texture getter) and gated by `lut_megakernel_check` against a baked fp64
@@ -402,7 +402,7 @@ Status: ✅ done · 🚧 in progress · ⬜ planned
      empty. To be fair: the GPU hardware gathers fine (texture/L2), and TorchLean's eager engine even
      exposes `gather*` ops — the exclusion is the *verified write-once vocabulary's*, by design. So
      deploy the LUT twice, once per meaning of "runs":
-     - ✅ `tile_retrieve_lut` (CPU): a small host CLI over `kernel.r_lut` — per-pixel scalar loop over
+     - ✅ `tile_retrieve_lut_host` (CPU): a small host CLI over `kernel.r_lut` — per-pixel scalar loop over
        precomputed nearest-angle slices (SM 100∈[0,0.6] × clay 20∈[0,1] × the tile-40° nearest angle
        node 38.889°), reusing the shared `rEffOf` for Step 1. **Built + validated** (~3.8 ms/1600 px;
        SM∈[0,0.6], monotone in R_eff, NaN range-guard faithful to `no_solution_above/below`). Fills the
