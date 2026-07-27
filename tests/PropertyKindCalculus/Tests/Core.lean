@@ -13,3 +13,5 @@ import PropertyKindCalculus.Tests.Core.SoundnessBridges
 import PropertyKindCalculus.Tests.Core.Aggregation
 import PropertyKindCalculus.Tests.Core.Representation
 import PropertyKindCalculus.Tests.Core.Classification
+import PropertyKindCalculus.Tests.Core.OperatorTable
+import PropertyKindCalculus.Tests.Core.Bounds

@@ -23,6 +23,8 @@ import PropertyKindCalculus.UnitPrefix
 import PropertyKindCalculus.Extensivity
 import PropertyKindCalculus.Quantity
 import PropertyKindCalculus.QuantityClassification
+import PropertyKindCalculus.OperatorTable
+import PropertyKindCalculus.Bounds
 import PropertyKindCalculus.IndividualQuantity
 import PropertyKindCalculus.QuantityFunction
 import PropertyKindCalculus.Complex

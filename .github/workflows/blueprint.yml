@@ -85,11 +85,11 @@ jobs:
           #
           # These layers need Mathlib oleans: fetch them from the Mathlib cache
           # rather than recompiling Mathlib from source. (PhysLib and TorchLean are
-          # compiled from their pinned sources; the broken `Torch` library — an
-          # upstream TorchLean 4.32 module reorg — is deliberately not built, and
-          # nothing here depends on it.)
+          # compiled from their pinned sources. The `Torch` library builds again
+          # since the upstream TorchLean 4.32 module reorg was absorbed, and the
+          # `Tests.Torch` tier probes its kind layer, so it is built here.)
           lake exe cache get
-          lake build Dimension Uncertainty UncertaintyRigor
+          lake build Dimension Uncertainty UncertaintyRigor Torch
           lake build Tests
 
       # -------------------------------------------------------
