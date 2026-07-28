@@ -5,6 +5,9 @@ import VersoBlueprint
 -- imports the `Interaction` module (carried by the PhysLib-backed `Dimension`
 -- library). The coherence side-condition is stated over PhysLib's `Dimension`.
 import PropertyKindCalculus.Interaction
+-- The trust-model section links the core witness constructor and the operator table.
+import PropertyKindCalculus.QuantityClassification
+import PropertyKindCalculus.OperatorTable
 
 open Verso.Genre
 open Verso.Genre.Manual
@@ -89,3 +92,92 @@ dimension `force · length`; the product edge `torque_angle_energy` is asserted 
 the worked `siMech` algebra and its coherence checked by the `Dimension`-group
 computation, while `energy.kind ≠ torque.kind` is `by decide`.
 :::
+
+# The trust model: what is checked, what is authored
+
+:::group "trustmodel"
+The interaction algebra is _curated_, and it pays to be precise about what the
+type system guarantees for a curated edge: *explicitness and propagation, not
+truth*. Every kind-changing operation demands a witness naming the full kind
+equation at its call site, and no mechanism — no inference, no instance search,
+no coercion — can introduce an edge silently. But whether a written edge is
+metrologically _right_ is the author's claim, exactly as an axiom is a claim a
+proof assistant checks everything _against_ but never _for_. This section fixes
+the two poles the discipline sits between, and shows the residue between them is
+finite, local, and mechanically enumerable.
+:::
+
+*The negative pole — kinds in the name only.* In an unkinded model every
+quantity is a bare numeric: a vegetation-attenuation kernel reads
+`attenuation (b ndvi : Float) : Float`, and the kind of each argument lives only
+in its _name_. The type system then cannot see any of the kind algebra: the
+swapped call `attenuation ndvi b` elaborates and silently computes the
+role-swapped exponent; a damping `lam : Float` adds to a Gram-diagonal entry
+`jtj : Float` whatever the entry's kind; a fitted gain from one forward model
+substitutes for the differently-kinded gain of another. Dimension checking does
+not recover the distinctions: attenuations, damping factors, and vegetation
+indices are all dimension one, so a dimensional type system waves every one of
+these confusions through (the torque-versus-energy instance above is the same
+failure at dimension $`\mathrm{M\,L^2\,T^{-2}}`). Name-only kinds are
+documentation; nothing enforces them.
+
+*The positive pole — the kind algebra is explicit.* The same kernel written
+over `Quantity` makes the kind a type index and gates every kind-changing
+operation on a witness: `attenuationQ (b : Quantity paramB α) (ndvi : Quantity
+vegetationIndex α)` rejects the swapped call at compile time, the cross-kind sum
+`jtj + lam` fails to elaborate because addition is defined only at a _shared_
+kind (there is deliberately no opt-in for heterogeneous addition), and each
+product or exponential names its edge in full — `ProductKind.ofRatio paramB
+vegetationIndex attenuationExponent` — where it is used. Downstream models
+certify the rejections as build artifacts: a `#check_failure` probe succeeds
+only if the forbidden term fails to elaborate, so the build proves the negative
+examples _stay_ negative.
+
+:::definition "def_ofRatio" (parent := "trustmodel") (lean := "PropertyKindCalculus.ProductKind.ofRatio")
+*The liberal certificate authority.* `ProductKind.ofRatio k₁ k₂ k` signs
+_any_ three ratio-scale kinds: the scale gate is checked, the kind equation is
+not. This is deliberate — the same dimension-one ratio can legitimately land in
+different kinds by role (a quotient of two backscatters is an attenuation in one
+column of a Jacobian and a pure number in another), so the landing kind is
+curation the calculus must let the author state. The cost is the trust model
+above: an edge's truth is a reviewed claim. The guarantee that remains is that
+the claim must be written, in full, where it is used — a wrong edge is not
+impossible, it is impossible to write _silently_.
+:::
+
+:::proof "def_ofRatio"
+Realized in `QuantityClassification` ("The trust model" in that module's
+header): the witness Props (`ProductKind`, `QuotientKind`, `TranscendentalKind`)
+carry only the ratio-scale gates, `ofRatio` discharges them by `rfl` for any
+concrete kinds, and `Quantity.mul`/`div`/`exp` refuse to operate without the
+witness.
+:::
+
+:::definition "def_operatorTable" (parent := "trustmodel") (lean := "PropertyKindCalculus.KindMul")
+*Narrowing by instance table.* `KindMul k₁ k₂ k` (with `k` an `outParam`) and
+its division dual `KindDiv` re-house authored edges as typeclass instances: a
+model registers at most one signed edge per operand pair next to its kind
+declarations, and adopting call sites use scoped `*`/`/` whose result kind is
+resolved — not chosen — at each use. Where the table is adopted, an unlisted
+edge is no longer merely unwritten; it is unresolvable.
+:::
+
+:::proof "def_operatorTable"
+Realized in `OperatorTable`: the instance classes wrap
+{uses "def_kMul"}[the curated ternary product] as resolution-driven registrations,
+with `hmul_eq_mul` bridging the scoped operator back to the witness-passing
+`Quantity.mul` by `rfl`.
+:::
+
+*The audit is mechanical.* A witness is to the kind algebra what an axiom is
+to a proof, and the analogy extends to the tooling: soundness is judged by
+_enumerating_ the trusted base, never by the absence of errors. Three queries
+cover it. Instance-table registrations are listed by the stock `#instances
+KindMul` command. Named witness theorems are found by scanning the environment
+for declarations whose type mentions the witness Props. And every _call-site_
+witness is lifted by Lean into an auxiliary theorem whose type _is_ the edge
+(`attenuationQ._proof_2 : ProductKind paramB vegetationIndex
+attenuationExponent`), so one environment scan over constant types — internal
+names attributed to their parents — enumerates the complete authored edge set
+of a kind, named and inline alike: the kind-algebra analog of `#print axioms`.
+

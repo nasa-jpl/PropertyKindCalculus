@@ -15,3 +15,4 @@ import PropertyKindCalculus.Tests.Core.Representation
 import PropertyKindCalculus.Tests.Core.Classification
 import PropertyKindCalculus.Tests.Core.OperatorTable
 import PropertyKindCalculus.Tests.Core.Bounds
+import PropertyKindCalculus.Tests.Core.KindEdges

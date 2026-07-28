@@ -38,6 +38,29 @@ These use only the core arithmetic classes `Mul`, `Div`, `Inv` (all toolchain-le
 so the whole family stays Mathlib-free. Analysis-shaped defining relations (area as a
 surface integral) follow the same discipline in the layers where their mathematics
 lives.
+
+## The trust model — witnesses are authored, not checked
+
+What the type system enforces about a kind-law witness is *explicitness and
+propagation*, not truth. `Quantity.mul`/`div`/`recip` refuse to operate without a
+witness naming the full kind equation at the call site, and no mechanism — no
+inference, no instance search, no coercion — can introduce one silently. But the smart
+constructors are deliberately *liberal*: `ProductKind.ofRatio` signs **any** three
+ratio-scale kinds it is handed. Whether `k` really is the product kind of `k₁` and `k₂`
+is a metrological claim the type system cannot decide (the same dimension-one ratio can
+legitimately land in different kinds by role); it is the *author's* claim.
+
+So a wrong edge is not impossible — it is impossible to write *silently*. The
+consequence, and the discipline downstream models build on: a model's kind algebra is
+exactly the finite list of witnesses visible in its source. **A witness is to the kind
+algebra what an axiom is to a proof**: the checker verifies everything *given* the
+witnesses; their truth is a reviewed claim; and soundness is judged by enumerating them
+— grep the witness constructors and the raw `⟨·⟩` tagging sites, exactly as
+sorry-freeness is judged by `#print axioms`, never by the absence of warnings. Keep the
+trusted base explicit, small, and enumerable; state the sanctioned edges next to each
+kind declaration; certify the specifically-forbidden ones with `#check_failure` probes.
+(A curated instance table — `OperatorTable`'s `KindMul`/`KindDiv` — narrows this
+further at use sites that adopt it: at most one signed edge per operand pair.)
 -/
 
 import PropertyKindCalculus.Quantity
@@ -61,7 +84,12 @@ structure ProductKind (k₁ k₂ k : KindOfProperty) : Prop where
 /-- **Smart constructor.** Build a product law from three *named* ratio-scale kinds, the
 ratio-scale gate discharged by `rfl` for any concrete kinds. Reads as the kind equation it
 stands for at the call site (`ProductKind.ofRatio k₁ k₂ k`), with the dimensional content
-certified in the application's `Dimension` layer. -/
+certified in the application's `Dimension` layer.
+
+Deliberately liberal: it signs *any* ratio-scale triple — whether `k` truly is the product
+kind of `k₁` and `k₂` is the author's claim, not a checked fact (the trust model in this
+module's header). The guarantee is that the claim must be *written*, in full, where it is
+used. -/
 theorem ProductKind.ofRatio (k₁ k₂ k : KindOfProperty)
     (h₁ : k₁.IsRational := by rfl) (h₂ : k₂.IsRational := by rfl) (h : k.IsRational := by rfl) :
     ProductKind k₁ k₂ k := ⟨h₁, h₂, h⟩

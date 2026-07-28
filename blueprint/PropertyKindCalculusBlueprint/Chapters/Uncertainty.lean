@@ -442,8 +442,8 @@ bridge {uses "thm_uq_exec_bridge"}[is now built, Stage 3.3]).
 *Executable↔spec bridge (Stage 3.3).* The verdicts above are stated over the `noncomputable` `ℝ`/`FP32`
 specification, but the *runtime* carrier must compute a verdict. Lean's host `Float` is an opaque FFI
 type no theorem can constrain, so the certified executable check runs on TorchLean's *computable*
-`IEEE32Exec` model instead. There the ULP is genuinely computed from a bit pattern (`ulpExp`, matching
-the spec `ulp₃₂`), and the kernel's absorption test `absorbs s δ` — the float32 sum is unchanged —
+`IEEE32Exec` model instead. There the ULP is genuinely computed from a bit pattern (`ulpExp?`, matching
+the spec `ulp₃₂` whenever it answers — `none` on NaNs and infinities), and the kernel's absorption test `absorbs s δ` — the float32 sum is unchanged —
 *certifies* the specification: the exact real sum rounds back under $`\mathrm{round}_{32}`. So the
 computed adequacy verdict is provably the specified {uses "thm_uq_adequacy_verdict"}[A3] one, on the
 finite fragment. The residual `Float32 ↔ IEEE32Exec` step is an upstream *assumption typeclass*, not an
@@ -452,8 +452,8 @@ axiom — the irreducible hardware trust boundary.
 
 :::proof "thm_uq_exec_bridge"
 Realized over `ℝ`/`IEEE32Exec` (Stage 3.3, `Adequacy.ExecBridge`), grounded in the TorchLean PR's
-`IEEE32Exec.ulpExp` + `neuralBpow_ulpExp_eq_ulp32` (the executable ULP equals `ulp₃₂` on the finite
-fragment) and `round32_add_eq_left_of_absorbs` (a 3-line corollary of the existing
+`IEEE32Exec.ulpExp?` + `neuralBpow_eq_ulp32_of_ulpExp?_eq_some` (an executable ULP answer equals
+`ulp₃₂`; the query answers on exactly the finite fragment) and `round32_add_eq_left_of_absorbs` (a 3-line corollary of the existing
 `toReal_add_eq_fp32Round` op-level refinement, since `fp32Round` *is* `round₃₂`). `exec_verdict_sound`
 composes them: when `absorbs s δ` fires, `round₃₂(\mathrm{toReal}\,s + \mathrm{toReal}\,δ) =
 \mathrm{toReal}\,s`. Sorry-free (`[propext, Classical.choice, Quot.sound]`); the executable side is
@@ -580,7 +580,7 @@ Stage-3.3 executable↔spec bridge.
   collapses to zero), tied back to the self-contained `FLX 24` fact — with `#print axioms` confirming
   no `sorryAx`.
 - `PropertyKindCalculus.UncertaintyExamples.AdequacyExecBridge` — the Stage-3.3 executable↔spec
-  bridge: the ULP exponent `ulpExp` and absorption test `absorbs` *run* on concrete float32 bit
+  bridge: the ULP query `ulpExp?` and absorption test `absorbs` *run* on concrete float32 bit
   patterns (`#guard`: at $`2^{25}` the ULP is `4`, so a perturbation of `1` is absorbed and `4` is
   not; at $`10^8` the ULP is `8`, so `1` is absorbed and `8` is not), while `exec_verdict` *proves*
   that whenever the kernel reports absorption the exact real sum rounds back under $`\mathrm{round}_{32}`

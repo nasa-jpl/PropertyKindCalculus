@@ -505,7 +505,7 @@ $`\mathrm{round}_{32}(u - v) = u - v` for near-equal representable operands is a
 rounding operator (`round32_sterbenz_exact`), and a near-equal binary32 subtraction is lossless.
 Stage 3.3 then closes the executable↔spec gap: since Lean's host `Float` is an opaque FFI type no
 theorem can constrain, a second TorchLean PR gives TorchLean's *computable* `IEEE32Exec` model an
-executable ULP (`ulpExp`, proved equal to `ulp₃₂` on the finite fragment) and an absorption test
+executable ULP query (`ulpExp?`, its answers proved equal to `ulp₃₂`, answering on exactly the finite fragment) and an absorption test
 (`absorbs`, the float32 sum unchanged) that is *sound* against the specification — when it fires, the
 exact real sum rounds back under `round₃₂` (`exec_verdict_sound`). So the computed adequacy verdict is
 provably the specified one, the residual `Float32 ↔ IEEE32Exec` step being an upstream assumption
