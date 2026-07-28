@@ -24,6 +24,11 @@ instance on `Quantity` itself: on a batched deployment carrier, "if it type-chec
 is one branch-free elementwise kernel" is a design law, and an ordering-to-`Bool`
 operator would break it. Order facts about bounds are *Props*, stated at proof
 carriers; the *executable* eliminator is `IccQ.clamp`, over the carrier's `Min`/`Max`.
+For host-side per-scalar logic (quality flags, threshold audits), the executable
+deciders at the end of this module (`Quantity.leb/ltb/geb/gtb`, `UpperBound.hitBy`,
+`LowerBound.hitBy`) provide the same queries as `Bool`s, gated on the carrier having
+*decidable* order — an instance batched carriers do not have, so the branchless law
+survives by instance absence.
 
 **Association of `clamp` (load-bearing).** `IccQ.clamp` computes
 `min (max x lo) hi` — clamp-from-below first, then from above. This is the association
@@ -151,5 +156,59 @@ def clamp [Min R] [Max R] (I : IccQ k R) (x : Quantity k R) : Quantity k R :=
     (IccQ.of lo hi ord).hi.q = hi := rfl
 
 end IccQ
+
+/-! ## Executable order deciders — the host-carrier counterparts of the Prop formers
+
+The Prop formers above state order facts at proof carriers, and `Quantity` deliberately
+has no `LE`/`Ord` instance — on a batched deployment carrier "if it type-checks it is one
+branch-free elementwise kernel" is a design law. But host-side *per-scalar* logic
+(quality flags, QC-level classification, threshold audits) is legitimately branchy, and
+it needs the same order queries as `Bool`s. These deciders are the opt-in executable
+counterparts, gated on the carrier having **decidable order**: host scalars (`Float`,
+`Int`, `Rat`, …) have it, batched deployment carriers do not — so the branchless law
+holds by *instance absence*, not by convention.
+
+Two disciplines carry over from the Prop formers:
+
+  * **Kind-gated**: both operands of a comparison share the kind `k`, so comparing a
+    reflectivity against a water-content threshold is a type error, exactly as for `+`.
+  * **Directional on bounds**: a bound is queried only from its own side — an
+    `UpperBound` can be `hitBy` a quantity rising to meet it, a `LowerBound` by one
+    falling to meet it; there is no former asking whether a quantity sits on a bound's
+    *other* side, so a max/min swap remains unwritable through the bounds' API. -/
+
+namespace Quantity
+
+variable {k : KindOfProperty} {R : Type}
+
+/-- Executable same-kind `≤` at a host carrier with decidable order. -/
+def leb [LE R] [∀ x y : R, Decidable (x ≤ y)] (x y : Quantity k R) : Bool :=
+  decide (x.magnitude ≤ y.magnitude)
+
+/-- Executable same-kind `<` at a host carrier with decidable order. -/
+def ltb [LT R] [∀ x y : R, Decidable (x < y)] (x y : Quantity k R) : Bool :=
+  decide (x.magnitude < y.magnitude)
+
+/-- Executable same-kind `≥` — `x.geb y` is `y.leb x`. -/
+def geb [LE R] [∀ x y : R, Decidable (x ≤ y)] (x y : Quantity k R) : Bool := y.leb x
+
+/-- Executable same-kind `>` — `x.gtb y` is `y.ltb x`. -/
+def gtb [LT R] [∀ x y : R, Decidable (x < y)] (x y : Quantity k R) : Bool := y.ltb x
+
+end Quantity
+
+/-- **An upper bound is hit from below**: `x` sits at or beyond the bound — the
+executable counterpart of the *negation* of strict interiority, and the only direction
+an `UpperBound` can be queried in (the bound-hit test of a box-constrained fit's QC). -/
+def UpperBound.hitBy {k : KindOfProperty} {R : Type} [LE R] [∀ x y : R, Decidable (x ≤ y)]
+    (b : UpperBound k R) (x : Quantity k R) : Bool :=
+  decide (b.q.magnitude ≤ x.magnitude)
+
+/-- **A lower bound is hit from above**: `x` sits at or below the bound — the dual of
+`UpperBound.hitBy`, and the only direction a `LowerBound` can be queried in (the
+saturation test of a clamped retrieval's QC). -/
+def LowerBound.hitBy {k : KindOfProperty} {R : Type} [LE R] [∀ x y : R, Decidable (x ≤ y)]
+    (b : LowerBound k R) (x : Quantity k R) : Bool :=
+  decide (x.magnitude ≤ b.q.magnitude)
 
 end PropertyKindCalculus

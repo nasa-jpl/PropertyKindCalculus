@@ -66,4 +66,33 @@ theorem colour_no_order : ¬ OrderKind colourK := fun h => h.allowsOrder
 /-- info: 'PropertyKindCalculus.IccQ.clamp_magnitude' does not depend on any axioms -/
 #guard_msgs in #print axioms IccQ.clamp_magnitude
 
+/-! ## Executable order deciders (host carriers with decidable order)
+
+Inhabitation over `Int`: each decider computes, in its own direction only. -/
+
+-- Same-kind comparisons compute …
+#guard (⟨3⟩ : Quantity lengthK Int).leb ⟨5⟩ == true
+#guard (⟨5⟩ : Quantity lengthK Int).ltb ⟨5⟩ == false
+#guard (⟨5⟩ : Quantity lengthK Int).geb ⟨5⟩ == true
+#guard (⟨5⟩ : Quantity lengthK Int).gtb ⟨3⟩ == true
+
+-- … and are kind-gated: a cross-kind comparison is a type error, exactly as for `+`.
+def massK : KindOfProperty := { id := "mass", scale := .ratio }
+#check_failure (fun (x : Quantity lengthK Int) (y : Quantity massK Int) => x.leb y)
+
+-- Bound hits are directional: the upper bound is hit at and beyond it, from below …
+#guard ub.hitBy (⟨10⟩ : Quantity lengthK Int) == true
+#guard ub.hitBy (⟨12⟩ : Quantity lengthK Int) == true
+#guard ub.hitBy (⟨9⟩ : Quantity lengthK Int) == false
+-- … the lower bound at and below it, from above.
+#guard lb.hitBy (⟨0⟩ : Quantity lengthK Int) == true
+#guard lb.hitBy (⟨-2⟩ : Quantity lengthK Int) == true
+#guard lb.hitBy (⟨1⟩ : Quantity lengthK Int) == false
+
+-- Directionality is API-shape, executably too: a `LowerBound` has no `≥`-style query
+-- of its own — `hitBy` is its only Bool former, and it asks the one meaningful
+-- question (saturation from above); there is no way to ask an upper-bound question
+-- of a lower bound.
+#check_failure (fun (x : Quantity lengthK Int) => lb.exceededBy x)
+
 end PropertyKindCalculus.Tests.Bounds
