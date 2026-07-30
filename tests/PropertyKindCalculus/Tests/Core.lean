@@ -16,3 +16,5 @@ import PropertyKindCalculus.Tests.Core.Classification
 import PropertyKindCalculus.Tests.Core.OperatorTable
 import PropertyKindCalculus.Tests.Core.Bounds
 import PropertyKindCalculus.Tests.Core.KindEdges
+import PropertyKindCalculus.Tests.Core.CertifiedIngest
+import PropertyKindCalculus.Tests.Core.BoundaryAudit
