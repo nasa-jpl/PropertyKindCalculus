@@ -8,3 +8,4 @@ carrier, so they build and evaluate without a GPU.
 -/
 
 import PropertyKindCalculus.Tests.Torch.FusedKinds
+import PropertyKindCalculus.Tests.Torch.TapeHom
