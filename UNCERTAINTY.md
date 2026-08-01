@@ -1,6 +1,6 @@
 # UNCERTAINTY.md — A rigor-first plan for uncertainty & numerical adequacy in PKC
 
-> Status: **Stages 0–3.3 implemented & CI-checked** (reference layer, GUM/Willink, autograd `cᵢ`,
+> Status: **Stages 0–3.4 implemented & CI-checked** (reference layer, GUM/Willink, autograd `cᵢ`,
 > the ladder theorems T1–T5, the executable SSPRC pipeline, the numerical-adequacy layer — the
 > executable `Adequacy` carrier plus the theorems A1 absorption, A2 Sterbenz, A3 verdict soundness
 > over `ℝ` — the **universal capstone A3′** (`DagBound`: FP32 measurand ≈ `ℝ` over an input box up
@@ -11,8 +11,13 @@
 > representable operands), and the **executable↔spec bridge** (Stage 3.3: a second TorchLean PR gives
 > the computable `IEEE32Exec` model an executable ULP query `ulpExp?` proved equal to `ulp₃₂` and an absorption
 > test `absorbs` certified against `round₃₂`, grounded in PKC as `ExecBridge.exec_verdict_sound` — the
-> computed adequacy verdict is provably the specified one)). The `×`/`÷` DAG extension, the Axis-U
-> wiring, and Stage 4 (scale) remain design/plan, scoped as sub-stage 3.4 and Stage 4 in §6. Audience: PKC maintainers.
+> computed adequacy verdict is provably the specified one)), and the **kind-typed Axis-U significance
+> wiring** (Stage 3.4: `Adequacy.Significance.analyzeQ` runs one carrier-raw write-once kernel at
+> `TapeBuilder .scalar` and `Adequacy` from *one* `InputDist` list, folding the autograd `cᵢ` and the
+> descriptor's `uᵢ` into the carrier-generic kinded GUM budget of `Uncertainty.Budget` — one
+> descriptor, both areas, every budget quantity a `Quantity k R`). The `×`/`÷` DAG extension, the
+> autograd-soundness sub-stages (3.5–3.6), and Stage 4 (scale) remain design/plan, scoped in §6.
+> Audience: PKC maintainers.
 > Scope: augment PropertyKindCalculus in two coupled areas —
 > (1) **uncertainty quantification** (UQ) of model outputs from input uncertainties, and
 > (2) **numerical adequacy** of the floating-point representation of a science model.
@@ -442,6 +447,15 @@ uncertainty/PropertyKindCalculus/Uncertainty/
                            ULP query `ulpExp?` (answers proved `= ulp₃₂`, `exec_ulp_grounds`) and absorption test `absorbs`
                            certified against `round₃₂` (`exec_verdict_sound`) — the computed verdict is the
                            specified one; over `ℝ`/`IEEE32Exec`, sorry-free
+  Budget.lean              ✅ kinded GUM budget (Stage 3.4, Mathlib/Torch-free, **carrier-generic `[NumCarrier R]`**):
+                           the three roles a naked `Float` conflates get kinds — input uncertainty `stdUncQ : Quantity kᵢ R`,
+                           sensitivity `sensitivityQ : Quantity (kₒ/kᵢ) R`, contribution `contributionQ : Quantity kₒ R` gated by
+                           `ProductKind kₛ kᵢ kₒ` (the GUM units cancellation as a typecheck), combined `combinedQ : Quantity kₒ R`
+                           — one budget × any carrier: `ℝ` (prove laws), `Float` (run), `Adequacy` (adequacy-check the quadrature)
+  Adequacy/Significance.lean ✅ Axis-U coupling (Stage 3.4): seeds the (Float) `Adequacy` carrier from the descriptor
+                           (`ofInputDist`); `analyzeQ (h : ProductKind kₛ kᵢ kₒ)` instantiates one carrier-raw WO1 kernel at
+                           both `TapeBuilder .scalar` (for `cᵢ`) and `Adequacy` (for the verdict) and folds them into a
+                           kind-typed `CouplingResultQ kₒ` (contributions + combined = `Quantity kₒ`; no naked field swap)
 ```
 
 Stage 3.2 also adds two **TorchLean** modules (upstream PR, branch `flt-fp32-sterbenz` off `upstream/main`,
@@ -493,6 +507,12 @@ examples/PropertyKindCalculus/UncertaintyExamples/
   AdequacyExecBridge.lean ✅ Stage-3.3 exec↔spec bridge: `ulpExp?`/`absorbs` RUN on IEEE32Exec bit patterns
                              (#guard: ulp=4 at 2²⁵, ulp=8 at 10⁸; 1 absorbed, 4/8 survive) + `exec_verdict`
                              proving the verdict = round₃₂ spec; #print axioms sorry-free (TorchLean-backed)
+  AdequacyCoupling.lean   ✅ Stage-3.4 kind-typed budget: one `analyzeQ` on the Degenhardt descriptors gives kinded
+                             contributions cᵢ·uᵢ=[1.0,1.30,0.28] at `measurandY` whose quadrature `combined` reproduces the
+                             GUM u_c=1.662359 EXACTLY; `#check_failure` probes show the conflations (sensitivity↔uncertainty,
+                             heterogeneous quadrature, field swap) are type errors; a 10⁸-accumulator swamps a contribution
+                             (1 absorption) + `verdict_sound` at s=1; the same `combinedQ` run at R:=Adequacy adequacy-checks
+                             its own quadrature (clean 0 / swamped 1); #print axioms sorry-free
   DegenhardtAfm.lean      ▫ Degenhardt §3.2 AFM indenter PAF, ~70× efficiency (Stage 4/scale)
   WillinkAsymmetric.lean  ▫ Willink §5 asymmetric input (κ₃) + Type-A t-cases (Stage 1)
 ```
@@ -629,15 +649,148 @@ and FFT kernels under `NN/Runtime/Autograd/Engine/Cuda/Ops/*` for SSPRC's convol
   API: `exec_ulp_grounds`/`exec_half_ulp_grounds` now take `ulpExp? x = some k`, and the new
   `exec_verdict_sound_of_isFinite` re-export needs only the three executable finiteness checks.)*
 
-* **Stage 3.4 — Wire the Axis-U significance yardstick.** The demo passes absolute uncertainties directly;
-  the design (§4.4) makes the significance scale the autograd `cᵢ·uᵢ` and the input box `InputDist.support`.
-  Instantiate the `RInterval` carrier over the support box (for the magnitude ranges) and feed the
-  `Sensitivity` coefficients into the carrier's threshold, closing the Area-1 ↔ Area-2 coupling: a
-  UQ-analyzed model is *simultaneously* adequacy-checked from the *same* descriptor. *Exit:* a soil-moisture
-  (or Degenhardt) model checked for adequacy at the scale of its own propagated `cᵢ·uᵢ`.
+* **Stage 3.4 — Wire the Axis-U significance yardstick. ✅ DONE (built & CI-checked).** Until here the
+  two areas ran from *separate* inputs (Stage 1 fed autograd `cᵢ` to GUM/Willink; `AdequacySwamping`
+  handed the carrier hand-picked absolute uncertainties). Stage 3.4 makes both read the *same*
+  `InputDist` descriptor (§4.4). `Adequacy/Significance.lean` (UncertaintyRigor): `ofInputDist` seeds
+  the `Adequacy` carrier from the descriptor (value = mean, `unc = √variance = uᵢ`); `significanceOf`
+  pairs the autograd `cᵢ` with each `uᵢ` into the significance scale `cᵢ·uᵢ` (the propagated
+  contribution of input `i` to the output); `supportMagnitude` reads `InputDist.support`'s box
+  magnitude (the unbounded normal is `none`). The driver **`analyze`** takes one carrier-polymorphic
+  write-once kernel (`ListModel := {α} → [NumCarrier α] → List α → α`) and instantiates it *twice* from
+  one source — at `TapeBuilder .scalar` (reverse pass → `cᵢ`, via `Sensitivity`) and at `Adequacy`
+  (verdict, seeded from the same descriptors) — returning `⟨coefficients, significance, verdict⟩`. The
+  seeding is definitionally faithful (`ofInputDist_{value,unc,report}` `rfl` lemmas). **Honest scope:**
+  Stage 3.4 adds *no new rigor* — the flag's soundness is the Stage-3 A3 verdict (`verdict_sound`), here
+  merely *fed* the autograd-propagated `cᵢ·uᵢ`; the carrier runs over host `Float` (uncertifiable FFI,
+  §4.6 F), and sound magnitude-range propagation over the support box remains the `RInterval` grounding
+  already re-exposed by `Fp32Grounding.interval_add_sound` (referenced, not re-run). *Exit met:* the
+  `AdequacyCoupling` example runs *one* `analyze` on the Degenhardt fictive descriptors — reproducing
+  the autograd `cᵢ = [5, 5, 2.25]`, deriving `cᵢ·uᵢ = [1.0, 1.30, 0.28]` from the *same* descriptors'
+  moments, and certifying the model **adequate** at that scale — and a deliberately ill-scaled
+  accumulator `bias + gain·x` (`bias = 10⁸`, `gain = 5`, `x = 0.6 ± 0.5`) whose `x`-contribution
+  `cₓ·uₓ = 5·0.5 = 2.5` the carrier propagates *exactly* and flags **swamped** below `½ ulp₃₂(10⁸) = 4`
+  (one absorption); the closing theorem `contribution_absorbed_at_scale` applies `verdict_sound` at
+  `s = cₓ·uₓ`, sorry-free (`[propext, Classical.choice, Quot.sound]`). No TorchLean PR needed.
+
+  **Metrological kinding (revision).** The GUM budget has three roles a naked `Float` conflates —
+  input standard uncertainty `u(xᵢ) : Quantity kᵢ`, sensitivity `cᵢ = ∂y/∂xᵢ : Quantity (kₒ/kᵢ)`,
+  contribution `uᵢ(y) = |cᵢ|·u(xᵢ) : Quantity kₒ` — and `Uncertainty.Budget` gives each its kind:
+  `stdUncQ`, `sensitivityQ` (the boundary stamp that re-dresses the kind-blind autograd magnitude with
+  its *static* kind `kₒ/kᵢ`), `contributionQ` (gated by `ProductKind kₛ kᵢ kₒ` — the GUM units
+  cancellation `(kₒ/kᵢ)·kᵢ = kₒ` as a typechecking obligation, built through the named `Quantity.mul`),
+  `combinedQ` (quadrature of the homogeneous-at-`kₒ` contributions). `analyzeQ` returns a kind-typed
+  `CouplingResultQ kₒ`; its two former swappable `List Float` fields are now a `List (Quantity kₒ)` and
+  a `Quantity kₒ`. The model stays *carrier-raw* (kinds are the caller-declared overlay on the budget,
+  not on the tape — the key move that needs no kinded autograd). The `AdequacyCoupling` example shows
+  the kinded contributions' quadrature reproduces the GUM `u_c = 1.662359` **exactly**, and
+  `#check_failure` probes make the three conflations (sensitivity↔uncertainty, heterogeneous
+  quadrature, `CouplingResultQ` field swap) type errors. Honest limit (§4.4): `ProductKind.ofRatio` is
+  *liberal* (signs any ratio triple), so the gate enforces the GUM *shape* and forbids un-sanctioned
+  mixing, but the author still asserts `kₛ = kₒ/kᵢ` (the curated-edge discipline); and the current
+  `analyzeQ` covers the *homogeneous-input* case (all `kᵢ` equal) — a genuinely heterogeneous model is
+  served by applying the `Budget` primitives per input at each input's kind.
+
+  **Carrier-generic (two-axis).** `Budget` is a write-once model over `[NumCarrier R]`, not a
+  `Float`-only computation — the second axis (carrier) is orthogonal to the kind. So the *same*
+  `stdUncQ`/`contributionQ`/`combinedQ` run at `ℝ` (to prove budget laws), `Float`/`FP32` (execution),
+  or the `Adequacy` carrier — where `combinedQ`'s quadrature `√(Σ uᵢ²)` adequacy-checks *itself*: the
+  `AdequacyCoupling` example runs the identical `combinedQ` at `R := Adequacy` and shows comparable
+  contributions combine clean (0 absorptions) while a `10⁻³` contribution beside a `10⁸` one is swamped
+  in the sum of squares (1 absorption). `analyzeQ`'s autograd source stays `Float` (that specialization
+  is the driver's, not the budget's).
+
+* **Autograd soundness (backward = fderiv) — feasibility assessed, not a Stage-3.4 gate.** The
+  sensitivities `cᵢ` are *computed* by TorchLean's reverse-mode tape but not *proven* to equal
+  `∂f/∂xᵢ` (the tape is "an execution facility… not connected to the fderiv proof layer",
+  `Autograd/TorchLean/Dual.lean:24`). A 2026-07-31 read-only sweep found the hard mathematics **already
+  exists** in TorchLean `NN/Proofs/Autograd/`: `backpropVec_eq_adjoint_fderiv`
+  (`Tape/Core/FDeriv.lean:1129` — reverse-mode = adjoint of Mathlib `fderiv`) plus per-op `HasFDerivAt`
+  for PKC's *entire* op class (`add/sub/mul/div/scale/min/max/relu/abs/sqrt/exp/log`,
+  `Tape/Nodes/{Arithmetic,Piecewise,Elementwise}.lean`). But it lives on a **clean abstract graph over
+  `ℝ`** that PKC's runtime call (`TapeM.backwardScalar` — an eager, `Float`, shape-erased,
+  `HashMap`/`Except`, reachability-pruned interpreter) never touches. So a soundness PR is *model
+  reconciliation, not new calculus*. Verdict: certifying the current *eager* path is a multi-week
+  interpreter-reflection slog (five stacked gaps: two disjoint proof models; sparse vs total reverse
+  pass; a `compileAux` provenance/reflection obligation; `Float` vs `ℝ`; `Except` partiality). The
+  tractable PR is to **retarget `Sensitivity.gradient` onto the compiled/`backwardDenseFrom` entry
+  point** (which TorchLean's `Runtime/Link` theorem already bridges to the `Algebra` graph model) and
+  prove **one bridge lemma** `backpropAllCtx ⟹ ℝ-`fderiv``; the honest statement is `= fderiv` only at
+  the `ℝ` instantiation (the `Float` gradient is a separate adequacy claim this workstream already
+  owns). Deferred as its own workstream; not required for the kinded budget.
+
+  *Spike result (2026-07-31, direct P↔R simulation attempted in Lean).* A compiling scaffold
+  (`uncertainty/…/Uncertainty/Experiments/PRSimulation.lean` — deliberately **unindexed**, a spike
+  artifact with 5 precisely-typed `sorry` obligations, not a CI'd probe) settles the design question
+  empirically. **Proven sorry-free** (axiom-checked `[propext, Classical.choice, Quot.sound]`): the
+  per-node backward/adjoint correspondence for `add`/`mul` at `ℝ` — R's runtime backward closures
+  evaluate to exactly P's node VJP (`p_{mul,add}_vjpVec` via `Node.vjpVec_ofVec`, feeding
+  `TapeNodes.{mul,add}Fderiv` → `backpropVec_eq_adjoint_fderiv`), and `AnyTensor`/`Except` do **not**
+  obstruct the node-level statement. What blocks the direct route is the *fold*: the scatter/accumulate
+  `addGradAll` (`Engine/Core/Backward.lean:113`, four nested shape checks/casts per contribution),
+  exactly the ~800 lines of fold-commutation the existing A-bridge (`Runtime/Link/BackwardGraph.lean`)
+  already spent on the same plumbing — plus two structural findings: the sparse `backwardScalar` path
+  forces you onto the total `backwardDenseFrom` anyway, and P's `backpropVec` returns input-gradients
+  only (`CtxVec Γ`) so the comparison must project R's all-nodes output onto the `Γ`-prefix (A's
+  `backpropAllCtx` matches R's shape directly; P does not). Partiality resolves cleanly: `.ok` follows
+  from shape-alignment alone, and the `log`/`sqrt` domain conditions live entirely on the P side
+  (`NodeFDerivCorrectAt`) — R totalises and never inspects values. **Refined verdict:** keep the
+  spike's per-node lemmas (the reusable, honest core), but land soundness by a thin **A→P upgrade**
+  (ℝ-instantiated `backpropAllCtx` = P's all-node backprop) composed with the existing Link theorem —
+  reusing the 800 lines of `AnyTensor` fold work instead of re-deriving it against P.
+
+* **Stage 3.5 — Autograd soundness via the A→P upgrade (a TorchLean PR).** The economical route the
+  spike identified. Deliverable: *the compiled runtime reverse pass is the adjoint of the Fréchet
+  derivative, at the `ℝ` carrier* — three composable pieces, two of which already exist:
+  1. *(exists)* the Link theorem `Tape.backwardDenseFrom (compileAux g) = backpropAllCtx g`
+     (`Runtime/Link/BackwardGraph.lean:40`, runtime ↔ Algebra model **A**);
+  2. *(the PR — new)* the **fderiv upgrade on the ℝ-instantiated Algebra graph**:
+     `backpropAllCtx (A@ℝ) =` the fderiv model **P**'s all-node backprop, by the per-node
+     value/adjoint correspondence whose node-level obligations the Stage-3.4 spike proved sorry-free
+     in isolation (the `p_{mul,add}_vjpVec` pattern, extended across the op class); composed with P's
+     `backpropVec_eq_adjoint_fderiv` (`Tape/Core/FDeriv.lean:1129`). Care: P returns input gradients
+     only (`CtxVec Γ`) while A/R keep every node — state the composed theorem on the `Γ`-prefix
+     projection. Non-smooth ops (`relu`/`abs`/`min`/`max`, `log`/`sqrt` domains) enter through P's
+     *pointwise* `NodeFDerivCorrectAt` side conditions, so the composed statement is pointwise where
+     it must be, global on the smooth `+/−/×/scale` fragment.
+  3. *(PKC-side, after the PR lands)* retarget `Sensitivity.gradient` onto the
+     compiled/`backwardDenseFrom` entry (`Autodiff.gradInputs`/`CompiledScalar.backward`) with its
+     public signature unchanged, so the theorem covers the very call PKC makes; the honest statement
+     stays at `ℝ` (the `Float` deviation is this workstream's own Adequacy claim, Stages 3–3.3).
+  **PR mechanics (the standing TorchLean rules):** branch off `upstream/main` (lean-dojo), one
+  self-contained module under `NN/Proofs/Autograd/` plus its aggregator line; **no `Co-authored-by`
+  trailers in any commit and none in the PR description**; no project-specific terminology in code,
+  commits, or PR text; merge `--no-ff` into the fork's `combined`; PKC then re-pins both manifests
+  (root + `blueprint/`) at the new `combined` rev. Build note: PKC's default closure does not compile
+  `NN.Proofs.Autograd.*` (the spike had to build those oleans explicitly), so the proof layer stays
+  upstream where TorchLean's own CI builds it — the PR adds no PKC build weight.
+
+* **Stage 3.6 — Direct-route completion (the spike's remaining obligations).** Contingent on 3.5;
+  ordered so the bounded parts land first and the expensive part is never done twice:
+  1. *Cheap, immediate (independent of 3.5):* the two vectorization homomorphisms
+     `mulSpec_ofVecT`/`addSpec_ofVecT` — `Shape` induction exactly like the existing `toVecT_get2`
+     (`Tape/Nodes/Matrix.lean:59`); closes forward agreement for `add`/`mul`.
+  2. *Partiality (`backwardDenseFrom_ok`):* derive `.ok` from `ForwardSim` shape-alignment by
+     threading the "every slot carries its node's shape" invariant through the fold — value-free,
+     independent of the adjoint facts.
+  3. *The fold pair (`sim_backward_step`, `direct_PR_soundness`):* do **not** re-derive the
+     `addGradAll` commutation against P — that duplicates the ~800-line `haddGradAllPush` argument
+     (`Runtime/Link/BackwardGraph.lean:491–617`). Once 3.5 lands, `sim_backward_step` is derivable by
+     composing the A-bridge's fold lemma with the A→P per-node correspondence, and
+     `direct_PR_soundness` is the `Γ`-prefix projection of the composed theorem. Only if 3.5 is
+     abandoned does the standalone alternative — porting `haddGradAllPush` to the P target — become
+     the (known-size, no-new-mathematics) cost of the direct route.
+  *Exit:* the scaffold's sorries close as corollaries (3.5 route), or the scaffold is retired to
+  documentation of the node-level correspondence — which is already sorry-free either way.
 
 * **Stage 4 — Scale.** GPU-batched SSPRC/MCM on `CudaT`; sensitivity-driven `Nᵢ` allocation; a
-  real downstream science model (soil-moisture retrieval) as the capstone example.
+  real downstream science model (soil-moisture retrieval) as the capstone example. **Independent of
+  Stages 3.5–3.6**: SSPRC/MCM are derivative-free, and the `Nᵢ` allocation consumes the same
+  *computed* `cᵢ` Stage 1 already relies on — the soundness sub-stages upgrade the *trust* in those
+  coefficients, not the pipeline's function, and the capstone model at `CudaT` never touches the
+  proof layer. The only soft coupling is that 3.5's retarget must keep `Sensitivity.gradient`'s
+  public signature (it does, by construction). Stage 4 can proceed in parallel with, before, or
+  after the soundness work.
 
 Reflection/CI note: each new proof file gets a paired, *indexed* reflection probe (per the
 project's convention that an un-indexed probe is never built and silently rots).

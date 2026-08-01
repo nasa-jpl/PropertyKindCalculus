@@ -509,8 +509,12 @@ executable ULP query (`ulpExp?`, its answers proved equal to `ulp₃₂`, answer
 (`absorbs`, the float32 sum unchanged) that is *sound* against the specification — when it fires, the
 exact real sum rounds back under `round₃₂` (`exec_verdict_sound`). So the computed adequacy verdict is
 provably the specified one, the residual `Float32 ↔ IEEE32Exec` step being an upstream assumption
-typeclass rather than an axiom. What remains is extending the DAG to `×`/`÷` and wiring the Axis-U
-`cᵢ·uᵢ` yardstick, scoped as sub-stage 3.4 in the project's `UNCERTAINTY.md`.
+typeclass rather than an axiom. Stage 3.4 then wires the Axis-U significance yardstick: `analyze`
+drives *both* areas from one `InputDist` descriptor — instantiating a single write-once kernel at the
+autograd carrier for the sensitivities `cᵢ` and at the adequacy carrier (seeded from the same
+descriptor) for the verdict — so a model is adequacy-checked at the scale `cᵢ·uᵢ` its own uncertainty
+descriptor defines (the soundness inherited from the A3 verdict). What remains is extending the DAG to
+`×`/`÷`, scoped in the project's `UNCERTAINTY.md`.
 
 ## Out of scope (for now)
 

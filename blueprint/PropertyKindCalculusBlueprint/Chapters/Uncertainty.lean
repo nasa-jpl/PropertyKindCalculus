@@ -19,6 +19,7 @@ import PropertyKindCalculus.Uncertainty.Adequacy.Soundness
 import PropertyKindCalculus.Uncertainty.Adequacy.DagBound
 import PropertyKindCalculus.Uncertainty.Adequacy.Fp32Grounding
 import PropertyKindCalculus.Uncertainty.Adequacy.ExecBridge
+import PropertyKindCalculus.Uncertainty.Adequacy.Significance
 import PropertyKindCalculusBlueprint.References
 
 open Verso.Genre
@@ -44,8 +45,9 @@ A1 absorption, A2 Sterbenz, A3 verdict soundness over `ℝ`; the universal capst
 arbitrary model DAG and input box; A2 lifted to the genuine binary32 format `fexp32`; and the
 executable↔spec bridge, certifying the runtime absorption verdict against the `round₃₂` specification
 on TorchLean's computable `IEEE32Exec` model
-{Manual.citep george_torchlean_formalizing_neural_networks}[]). The `×`/`÷` DAG extension and the Axis-U wiring
-(Stage 3.4) remain *planned*.
+{Manual.citep george_torchlean_formalizing_neural_networks}[]); and the Axis-U significance wiring,
+coupling the autograd $`c_i` with the descriptor's $`u_i` into the significance scale $`c_i u_i` the
+adequacy carrier checks against (Stage 3.4). The `×`/`÷` DAG extension remains *planned*.
 
 # Two orthogonal axes, and why their properties compose
 
@@ -461,6 +463,39 @@ composes them: when `absorbs s δ` fires, `round₃₂(\mathrm{toReal}\,s + \mat
 axiom profile. The host-`Float` `Adequacy` carrier stays the fast, unverified mirror.
 :::
 
+:::definition "def_uq_significance" (parent := "uncertainty") (lean := "PropertyKindCalculus.Uncertainty.Adequacy.analyzeQ")
+*The Axis-U significance yardstick (Stage 3.4).* Uncertainty propagation and numerical adequacy are
+driven from *one* `InputDist` descriptor, and the GUM budget carries its metrological intent in the
+*types*: an input standard uncertainty is a $`\mathrm{Quantity}\ k_i`, a
+{uses "def_uq_sensitivity"}[sensitivity] $`c_i = \partial f/\partial x_i` a quotient
+$`\mathrm{Quantity}\ (k_o/k_i)`, and their product — the *contribution* $`u_i(y) = |c_i|\,u(x_i)`,
+the scale at which absorption becomes genuine information loss — a $`\mathrm{Quantity}\ k_o`, formed by
+a term gated on $`(k_o/k_i)\cdot k_i = k_o` (the GUM units cancellation, a typechecking obligation).
+`analyzeQ` instantiates one *carrier-raw* write-once kernel twice from that single descriptor list — at
+the autograd carrier for the $`c_i`, and at the {uses "def_uq_adequacy"}[adequacy carrier] seeded from
+the same descriptor — and returns a kind-typed budget, so a UQ-analyzed model is *simultaneously*
+adequacy-checked at the scale its own uncertainty defines, with the roles kept distinct by kind.
+:::
+
+:::proof "def_uq_significance"
+Realized (Stage 3.4, `Adequacy.Significance.analyzeQ` over `Uncertainty.Budget`). The three budget
+roles get kinds (`stdUncQ`, `sensitivityQ`, `contributionQ` gated by `ProductKind kₛ kᵢ kₒ`,
+`combinedQ`); the model stays carrier-raw, so no kinded autograd is needed — the kinds are the
+caller-declared overlay on the budget. On the Degenhardt descriptors the coupling reproduces
+$`(c_i) = (5, 5, 2.25)`, the kinded contributions $`(c_i u_i) = (1.0, 1.30, 0.28)` at $`\mathrm{
+measurandY}`, and their quadrature reproduces the GUM combined uncertainty $`u_c = 1.662359`
+*exactly*; `#check_failure` probes make the conflations (sensitivity↔uncertainty, heterogeneous
+quadrature, field swap) type errors. A $`10^8`-accumulator swamps a contribution
+($`< \tfrac12\,\mathrm{ulp}_{32}(10^8) = 4`); the flag's soundness is the
+{uses "thm_uq_adequacy_verdict"}[A3 verdict], and `contribution_absorbed_at_scale` applies it at the
+contribution scale, sorry-free. (`ProductKind.ofRatio` is liberal, so the gate enforces the GUM shape
+and forbids un-sanctioned mixing while the author asserts $`k_s = k_o/k_i`.) The budget is
+carrier-generic (`Uncertainty.Budget` over `[NumCarrier R]`) — the *second* axis, orthogonal to the
+kind: the same `combinedQ` runs at `ℝ` (to prove laws), at `Float` (to run), and at the
+{uses "def_uq_adequacy"}[adequacy carrier], where its quadrature $`\sqrt{\sum u_i^2}` adequacy-checks
+*itself* (the example flags a $`10^{-3}` contribution swamped beside a $`10^8` one).
+:::
+
 # Coverage intervals (R18)
 
 Once an output's uncertainty is a distribution, VIM 2.36–2.38 ask for a _coverage interval_ — a
@@ -514,13 +549,13 @@ lengths is $`2h/2δ = h/δ`). Sorry-free (`[propext, Classical.choice, Quot.soun
 
 # Worked examples (checked facts)
 
-Eleven examples reproduce a headline number (or a theorem) as a `#guard`, so the
+Twelve examples reproduce a headline number (or a theorem) as a `#guard`, so the
 `UncertaintyExamples` library building under CI is what makes the claims true rather than
 asserted — the project's reflection-tests discipline applied to metrology. The first two are the
 Stage-0 reference numbers; the next two are the Stage-1 autograd and ladder facts; the next two are
-the Stage-2 SSPRC pipeline and its ladder theorems; the last five are the Stage-3 adequacy carrier,
-its per-site theorems, the Stage-3.1 DAG capstone A3′, the Stage-3.2 binary32 Sterbenz, and the
-Stage-3.3 executable↔spec bridge.
+the Stage-2 SSPRC pipeline and its ladder theorems; the last six are the Stage-3 adequacy carrier,
+its per-site theorems, the Stage-3.1 DAG capstone A3′, the Stage-3.2 binary32 Sterbenz, the
+Stage-3.3 executable↔spec bridge, and the Stage-3.4 Axis-U significance coupling.
 
 - `PropertyKindCalculus.UncertaintyExamples.DegenhardtFictive` — the non-linear fictive model
   $`Y = (X_1 + X_2^2)\,X_3` of Degenhardt
@@ -585,3 +620,11 @@ Stage-3.3 executable↔spec bridge.
   not; at $`10^8` the ULP is `8`, so `1` is absorbed and `8` is not), while `exec_verdict` *proves*
   that whenever the kernel reports absorption the exact real sum rounds back under $`\mathrm{round}_{32}`
   — the computed verdict equal to the specified one, with `#print axioms` confirming no `sorryAx`.
+- `PropertyKindCalculus.UncertaintyExamples.AdequacyCoupling` — the Stage-3.4 kind-typed coupling: one
+  `analyzeQ` on the Degenhardt descriptors yields kinded contributions
+  $`(c_i u_i) = (1.0, 1.30, 0.28)` at $`\mathrm{measurandY}` whose quadrature reproduces the GUM
+  combined uncertainty $`u_c = 1.662359` *exactly*, and certifies the model adequate at that scale;
+  `#check_failure` probes make the metrological conflations (sensitivity↔uncertainty, heterogeneous
+  quadrature, `CouplingResultQ` field swap) type errors; and a $`10^8`-accumulator swamps a contribution
+  (one absorption), with `contribution_absorbed_at_scale` applying the A3 verdict at that scale,
+  `#print axioms` confirming no `sorryAx`.

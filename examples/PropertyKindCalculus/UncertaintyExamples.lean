@@ -67,4 +67,5 @@ import PropertyKindCalculus.UncertaintyExamples.AdequacyLadder
 import PropertyKindCalculus.UncertaintyExamples.AdequacyDag
 import PropertyKindCalculus.UncertaintyExamples.AdequacySterbenz32
 import PropertyKindCalculus.UncertaintyExamples.AdequacyExecBridge
+import PropertyKindCalculus.UncertaintyExamples.AdequacyCoupling
 import PropertyKindCalculus.UncertaintyExamples.Coverage
