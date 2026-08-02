@@ -11,12 +11,18 @@
 > representable operands), and the **executable↔spec bridge** (Stage 3.3: a second TorchLean PR gives
 > the computable `IEEE32Exec` model an executable ULP query `ulpExp?` proved equal to `ulp₃₂` and an absorption
 > test `absorbs` certified against `round₃₂`, grounded in PKC as `ExecBridge.exec_verdict_sound` — the
-> computed adequacy verdict is provably the specified one)), and the **kind-typed Axis-U significance
+> computed adequacy verdict is provably the specified one)), the **kind-typed Axis-U significance
 > wiring** (Stage 3.4: `Adequacy.Significance.analyzeQ` runs one carrier-raw write-once kernel at
 > `TapeBuilder .scalar` and `Adequacy` from *one* `InputDist` list, folding the autograd `cᵢ` and the
 > descriptor's `uᵢ` into the carrier-generic kinded GUM budget of `Uncertainty.Budget` — one
-> descriptor, both areas, every budget quantity a `Quantity k R`). The `×`/`÷` DAG extension, the
-> autograd-soundness sub-stages (3.5–3.6), and Stage 4 (scale) remain design/plan, scoped in §6.
+> descriptor, both areas, every budget quantity a `Quantity k R`), and the **autograd-soundness
+> upgrade** (Stage 3.5: a third TorchLean PR connects the runtime reverse pass to Mathlib's Fréchet
+> derivative — `backwardDenseFrom_compileAux_adjoint_fderiv` in
+> `NN/Proofs/Autograd/Runtime/Link/FDeriv.lean` proves the executable dense reverse pass on a
+> compiled graph returns, on the input prefix, exactly `(fderiv ℝ eval x)† seed`; PKC's
+> `Sensitivity.gradient` now invokes that very entry point, `Tape.backwardDenseFrom`, with its
+> public signature unchanged). The `×`/`÷` DAG extension, the direct-route closure (3.6), and
+> Stage 4 (scale) remain design/plan, scoped in §6.
 > Audience: PKC maintainers.
 > Scope: augment PropertyKindCalculus in two coupled areas —
 > (1) **uncertainty quantification** (UQ) of model outputs from input uncertainties, and
@@ -427,7 +433,8 @@ uncertainty/PropertyKindCalculus/Uncertainty/
   Ssprc.lean            ✅ executable SSPRC: systematic sampling, separated        [Stage 2]
                            propagation, empirical deviation dists, discrete convolution (Float)
   Method.lean           ▫ UncertaintyMethod structure + monoid laws               [Area 1 core, deferred]
-  Sensitivity.lean      ✅ autograd bridge: cᵢ via TapeBuilder reverse tape        [Axis N, Stage 1]
+  Sensitivity.lean      ✅ autograd bridge: cᵢ via TapeBuilder reverse tape; 3.5 retarget onto the
+                           soundness-covered total entry `Tape.backwardDenseFrom`  [Axis N, Stages 1+3.5]
   Ladder.lean           ✅ T1 (cumulant additivity), T2 (gum = willink|κ₄=0) / ℝ  [rigor, Stage 1]
   Convolution.lean      ✅ Dist/conv over ℝ; T5 (convolution adds cumulants),      [rigor, Stage 2]
                            T3 (willink = linearized-ssprc|κ₄), T4 (affine R = E(Y)) — sorry-free
@@ -739,34 +746,57 @@ and FFT kernels under `NN/Runtime/Autograd/Engine/Cuda/Ops/*` for SSPRC's convol
   (ℝ-instantiated `backpropAllCtx` = P's all-node backprop) composed with the existing Link theorem —
   reusing the 800 lines of `AnyTensor` fold work instead of re-deriving it against P.
 
-* **Stage 3.5 — Autograd soundness via the A→P upgrade (a TorchLean PR).** The economical route the
-  spike identified. Deliverable: *the compiled runtime reverse pass is the adjoint of the Fréchet
-  derivative, at the `ℝ` carrier* — three composable pieces, two of which already exist:
-  1. *(exists)* the Link theorem `Tape.backwardDenseFrom (compileAux g) = backpropAllCtx g`
-     (`Runtime/Link/BackwardGraph.lean:40`, runtime ↔ Algebra model **A**);
-  2. *(the PR — new)* the **fderiv upgrade on the ℝ-instantiated Algebra graph**:
-     `backpropAllCtx (A@ℝ) =` the fderiv model **P**'s all-node backprop, by the per-node
-     value/adjoint correspondence whose node-level obligations the Stage-3.4 spike proved sorry-free
-     in isolation (the `p_{mul,add}_vjpVec` pattern, extended across the op class); composed with P's
-     `backpropVec_eq_adjoint_fderiv` (`Tape/Core/FDeriv.lean:1129`). Care: P returns input gradients
-     only (`CtxVec Γ`) while A/R keep every node — state the composed theorem on the `Γ`-prefix
-     projection. Non-smooth ops (`relu`/`abs`/`min`/`max`, `log`/`sqrt` domains) enter through P's
-     *pointwise* `NodeFDerivCorrectAt` side conditions, so the composed statement is pointwise where
-     it must be, global on the smooth `+/−/×/scale` fragment.
-  3. *(PKC-side, after the PR lands)* retarget `Sensitivity.gradient` onto the
-     compiled/`backwardDenseFrom` entry (`Autodiff.gradInputs`/`CompiledScalar.backward`) with its
-     public signature unchanged, so the theorem covers the very call PKC makes; the honest statement
-     stays at `ℝ` (the `Float` deviation is this workstream's own Adequacy claim, Stages 3–3.3).
-  **PR mechanics (the standing TorchLean rules):** branch off `upstream/main` (lean-dojo), one
-  self-contained module under `NN/Proofs/Autograd/` plus its aggregator line; **no `Co-authored-by`
-  trailers in any commit and none in the PR description**; no project-specific terminology in code,
-  commits, or PR text; merge `--no-ff` into the fork's `combined`; PKC then re-pins both manifests
-  (root + `blueprint/`) at the new `combined` rev. Build note: PKC's default closure does not compile
-  `NN.Proofs.Autograd.*` (the spike had to build those oleans explicitly), so the proof layer stays
-  upstream where TorchLean's own CI builds it — the PR adds no PKC build weight.
+* **Stage 3.5 — Autograd soundness via the A→P upgrade (a TorchLean PR). ✅ DONE (landed on the
+  fork's `combined`; PKC re-pinned & retargeted).** Deliverable delivered: *the compiled runtime
+  reverse pass is the adjoint of the Fréchet derivative, at the `ℝ` carrier.* Exploration
+  confirmed the two proof models were entirely unconnected — different graph types (the
+  carrier-generic `Algebra.Graph α Δ Γ ss` vs the `ℝ`-monomorphic `Proofs.Autograd.Graph Γ ss`),
+  no translation function, no lemma either way — so the PR supplies the bridge itself, as one
+  self-contained module `NN/Proofs/Autograd/Runtime/Link/FDeriv.lean` (+ its `Link.lean`
+  aggregator line; TorchLean branch `autograd-link-fderiv` = commit `92ab40f` based exactly on
+  `upstream/main` `14bc499`, merged `--no-ff` into `combined` = `d689b0e`; scrubbed: no
+  co-author trailer, no project-specific terms; PR lean-dojo#25; amended once after upstream CI
+  lint rejected `omega` — the five `flattenCtx_snoc` guard facts now close with core `Nat`
+  lemmas `Nat.lt_of_lt_of_le`/`Nat.add_lt_add_left`/`Nat.lt_of_add_lt_add_left`/
+  `Nat.add_sub_add_left`, axiom profiles unchanged):
+  1. *The slice isomorphism.* `Algebra.{Node,Graph}.toReal` specialize the algebra model at
+     `α := ℝ` and a fixed environment `d : Δ` onto the analytic model; `{Node,Graph}.toAlgebra`
+     embed back as the `Δ := Unit` slice; the round trip is the identity (`toAlgebra_toReal`),
+     and `toReal_{eval,jvpCtx,backpropCtx}` show the specialization preserves all three
+     semantics. The analytic model is therefore *exactly* the environment-free `ℝ` slice of the
+     algebraic one. This is the "reduce the model gap" answer: the gap was missing *lemmas*, not
+     duplicated *types* (contexts were already shared — `TList Γ` *is* `Algebra.TList ℝ Γ` — and
+     the two `backpropCtx` recursions mirror node for node), so the bridge is purely additive;
+     re-founding the analytic model as an abbreviation of the algebraic one is offered upstream
+     as follow-up, with the round-trip lemmas as its ready-made migration spec.
+  2. *Input-prefix extraction.* `TList.takeLeft` + `takeLeft_backpropAllCtx` (`Graph` and
+     `GraphData` forms) identify the `Γ`-prefix of the runtime-facing full backpropagation with
+     the proof-facing inputs-only `backpropCtx` — the missing lemma relating the two
+     backpropagation forms upstream kept side by side.
+  3. *Vectorization transport + composed endpoints.* `flattenCtx_{cast,snoc,add}` /
+     `unsnocCtx_flattenCtx` commute context vectorization with the tape operations, giving
+     `{evalVec,jvpVec,backpropVec}_flattenCtx`; composing with the existing Link theorem and
+     `backpropVec_eq_adjoint_fderiv` yields `backpropCtx_eq_adjoint_fderiv` and the headline
+     **`backwardDenseFrom_compileAux_adjoint_fderiv`**: the executable dense reverse pass on a
+     compiled graph succeeds with the full backpropagation context, whose input prefix is
+     exactly `(fderiv ℝ eval x)† seed` — plus `_at` variants under `GraphFDerivCorrectAt` for
+     non-smooth primitives (`relu`/`abs`/`min`/`max`, `log`/`sqrt` domains). Axiom profile of
+     every new declaration: `[propext, Classical.choice, Quot.sound]` (the `takeLeft` layer
+     needs only `propext`).
+  4. *(PKC-side.)* Both manifests (root + `blueprint/`) re-pinned at `combined = d689b0e`;
+     `Sensitivity.gradient` retargeted onto the total dense entry `Tape.backwardDenseFrom`
+     (zero seed everywhere, `1` at the scalar output) with its public signature unchanged — the
+     theorem now covers the very entry point PKC invokes, and all numeric guards pass unchanged
+     (on a topologically ordered tape the total pass performs the same accumulation as the
+     previous reachability-pruned path; a dead subexpression now contributes an exact `0`
+     instead of being skipped). The two honest residual gaps, unchanged in kind: *provenance*
+     (PKC's tape is built eagerly by `TapeM`, not by `compileAux` — scoped by 3.6 step 2's
+     shape-alignment argument) and *carrier* (the theorem speaks at `ℝ`, the run is `Float` —
+     that deviation is precisely this workstream's own Adequacy claim, Stages 3–3.3).
 
-* **Stage 3.6 — Direct-route completion (the spike's remaining obligations).** Contingent on 3.5;
-  ordered so the bounded parts land first and the expensive part is never done twice:
+* **Stage 3.6 — Direct-route completion (the spike's remaining obligations).** 3.5 has landed, so
+  the composition ingredients now exist upstream; ordered so the bounded parts land first and the
+  expensive part is never done twice:
   1. *Cheap, immediate (independent of 3.5):* the two vectorization homomorphisms
      `mulSpec_ofVecT`/`addSpec_ofVecT` — `Shape` induction exactly like the existing `toVecT_get2`
      (`Tape/Nodes/Matrix.lean:59`); closes forward agreement for `add`/`mul`.
@@ -775,11 +805,13 @@ and FFT kernels under `NN/Runtime/Autograd/Engine/Cuda/Ops/*` for SSPRC's convol
      independent of the adjoint facts.
   3. *The fold pair (`sim_backward_step`, `direct_PR_soundness`):* do **not** re-derive the
      `addGradAll` commutation against P — that duplicates the ~800-line `haddGradAllPush` argument
-     (`Runtime/Link/BackwardGraph.lean:491–617`). Once 3.5 lands, `sim_backward_step` is derivable by
-     composing the A-bridge's fold lemma with the A→P per-node correspondence, and
-     `direct_PR_soundness` is the `Γ`-prefix projection of the composed theorem. Only if 3.5 is
-     abandoned does the standalone alternative — porting `haddGradAllPush` to the P target — become
-     the (known-size, no-new-mathematics) cost of the direct route.
+     (`Runtime/Link/BackwardGraph.lean:491–617`). With 3.5 landed, `sim_backward_step` is derivable
+     by composing the A-bridge's fold lemma with the now-existing A→P correspondence
+     (`toReal_backpropCtx` + `takeLeft_backpropAllCtx` give the P-side content of the runtime
+     output directly), and `direct_PR_soundness` is the `Γ`-prefix projection of
+     `backwardDenseFrom_compileAux_adjoint_fderiv` — for *compiled* tapes it is now a corollary;
+     what the spike's statement still adds is only the eager-`TapeM` provenance (step 2's
+     `ForwardSim` shape-alignment), not new adjoint mathematics.
   *Exit:* the scaffold's sorries close as corollaries (3.5 route), or the scaffold is retired to
   documentation of the node-level correspondence — which is already sorry-free either way.
 

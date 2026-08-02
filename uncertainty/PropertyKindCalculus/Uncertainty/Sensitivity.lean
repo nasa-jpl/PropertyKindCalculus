@@ -47,20 +47,37 @@ abbrev ScalarModel := List (TapeBuilder Shape.scalar) → TapeBuilder Shape.scal
 the tape carrier `TapeBuilder .scalar`, creating one differentiable input leaf per coordinate of
 `point`, records the forward tape, runs a single reverse pass from the scalar output, and reads
 back `∂f/∂xᵢ` at `point` in input order. These are the sensitivity coefficients `cᵢ` the
-linearized GUM/Willink methods consume (UNCERTAINTY.md §3.2 item 1). -/
+linearized GUM/Willink methods consume (UNCERTAINTY.md §3.2 item 1).
+
+**Stage 3.5 retarget.** The reverse pass is the *total dense* engine entry
+`Tape.backwardDenseFrom` — the very function TorchLean's soundness theorem
+`backwardDenseFrom_compileAux_adjoint_fderiv` (`NN/Proofs/Autograd/Runtime/Link/FDeriv.lean`)
+characterizes: on a compiled graph at the `ℝ` carrier, its input-prefix output is the adjoint of
+the Fréchet derivative of the forward evaluation. The seed is `1` at the scalar output and `0`
+everywhere else, which on a topologically-ordered tape computes the same accumulation as the
+previous reachability-pruned `backwardScalar` path (a dead subexpression now contributes an exact
+`0` instead of being skipped). The two honest gaps that remain are recorded in UNCERTAINTY.md
+§3.2/§6: this tape is built eagerly rather than by `compileAux` (provenance), and it runs at
+`Float` while the theorem speaks at `ℝ` (the deviation is this workstream's own Adequacy claim). -/
 def gradient (model : ScalarModel) (point : List Float) : Except String (List Float) := do
-  let ((ids, grads), _t) ← TapeM.run Tape.empty do
+  let ((ids, outId), t) ← TapeM.run Tape.empty do
     let ids ← point.mapM fun x => TapeM.leaf (α := Float) (fill x Shape.scalar)
     let out : TapeBuilder Shape.scalar := model (ids.map fun i => (⟨pure i⟩ : TapeBuilder Shape.scalar))
     let outId ← out.run
-    let grads ← TapeM.backwardScalar (α := Float) outId
-    pure (ids, grads)
-  ids.mapM fun i =>
-    match grads[i]? with
-    | some g => do
-        let t ← Tape.requireGrad (α := Float) (τ := Shape.scalar) g
-        pure t.item
-    | none => .error s!"sensitivity: no gradient recorded for input leaf id {i}"
+    pure (ids, outId)
+  if h : outId < t.nodes.size then
+    let grads0 : Array (Runtime.AnyTensor Float) :=
+      (t.nodes.map fun node => AnyTensor.mk (fill (0 : Float) node.value.s)).set outId
+        (AnyTensor.mk (Tensor.scalar (1 : Float))) (h := by simpa using h)
+    let grads ← Tape.backwardDenseFrom (t := t) grads0
+    ids.mapM fun i =>
+      match grads[i]? with
+      | some g => do
+          let tg ← Tape.requireGrad (α := Float) (τ := Shape.scalar) g
+          pure tg.item
+      | none => .error s!"sensitivity: no gradient recorded for input leaf id {i}"
+  else
+    .error "sensitivity: output node id out of tape bounds"
 
 /-- **Sensitivity coefficients paired with input moments** — the `(cᵢ, MomentData)` term list the
 linearized `Combine` methods (`gumStdUnc`, `willinkCombine`) consume. Differentiates `model` at

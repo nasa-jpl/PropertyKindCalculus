@@ -192,10 +192,15 @@ derivative-free.
 :::
 
 :::proof "def_uq_sensitivity"
-Realized (Stage 1, `Sensitivity.gradient`). The model kernel — the *same* source run at `Float`
-for Monte Carlo — is interpreted at TorchLean's reverse-mode `TapeBuilder` carrier; each input
-enters as a differentiable leaf and `backwardScalar` reads every $`c_i` from one pass, with no
-model rewrite. On the Degenhardt fictive model the bridge returns $`(c_1, c_2, c_3) = (5, 5, 2.25)`
+Realized (Stage 1, `Sensitivity.gradient`; retargeted in Stage 3.5). The model kernel — the *same*
+source run at `Float` for Monte Carlo — is interpreted at TorchLean's reverse-mode `TapeBuilder`
+carrier; each input enters as a differentiable leaf, and one *total dense* reverse pass
+(`Tape.backwardDenseFrom`, seeded $`1` at the scalar output) reads every $`c_i`, with no model
+rewrite. Since Stage 3.5 this is the very entry point TorchLean's soundness theorem
+`backwardDenseFrom_compileAux_adjoint_fderiv` characterizes: on a compiled graph at the `ℝ`
+carrier its input-prefix output *is* the adjoint of the Fréchet derivative of the forward
+evaluation (the eager-tape provenance and the `Float`-vs-`ℝ` deviation remain the two documented
+gaps). On the Degenhardt fictive model the bridge returns $`(c_1, c_2, c_3) = (5, 5, 2.25)`
 and reproduces the GUM $`u_c = 1.662` exactly (the `DegenhardtSensitivity` example). The op class is
 `exp`/`log`/`sqrt` with arithmetic; trigonometric models await tape VJP nodes.
 :::
