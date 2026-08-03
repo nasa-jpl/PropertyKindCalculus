@@ -29,7 +29,7 @@
 > `direct_PR_soundness_compiled` as the `Γ`-prefix `ArrCorr` corollary of the Stage-3.5 theorem —
 > `Experiments/PRSimulation.lean`, now indexed in `UncertaintyRigor`, sorry-free — **and the
 > eager-provenance closure** (`Experiments/EagerProvenance.lean`: `EagerBuilds` relates the tape
-> the runtime constructors `leaf`/`add`/`mul` actually build to its P-graph, and
+> the runtime constructors `leaf`/`add`/`sub`/`mul` actually build to its P-graph, and
 > `backwardDenseFrom_eager_eq_compiled` proves that tape's total dense reverse pass computes
 > exactly the compiled tape's — so `direct_PR_soundness_eager` puts the fderiv endpoint on the
 > *eagerly built* tape, no compilation involved). The `×`/`÷` DAG extension and Stage 4 (scale)
@@ -483,7 +483,7 @@ uncertainty/PropertyKindCalculus/Uncertainty/
                            theorem — sorry-free, no fold re-derivation (the adjoint enters only through 3.5)
   Experiments/EagerProvenance.lean ✅ eager-tape provenance, closed (Stage 3.6 addendum): `EagerBuilds g x t` =
                            the tape the eager constructors build for graph `g` (leaves = `addLeaves`, one
-                           `Tape.add`/`mul` call per node); `backwardDenseFrom_eager_eq_compiled` — that tape's
+                           `Tape.add`/`sub`/`mul` call per node); `backwardDenseFrom_eager_eq_compiled` — that tape's
                            reverse pass computes exactly the compiled tape's (compiled dense folds by the upstream
                            accumulation bridge, eager sparse folds by `addGradAll_toAnyArray_single`, the two
                            context updates identified through flatten-injectivity + the §2 homomorphisms,
@@ -875,10 +875,10 @@ and FFT kernels under `NN/Runtime/Autograd/Engine/Cuda/Ops/*` for SSPRC's convol
 
   **Addendum — the eager-provenance residual, CLOSED (`Experiments/EagerProvenance.lean`,
   sorry-free, indexed; probe additions in `AutogradDirectSim`).** The accounting question above
-  is now a theorem, for the `leaf`/`add`/`mul` fragment: **`EagerBuilds g x t`** is the
+  is now a theorem, for the `leaf`/`add`/`sub`/`mul` fragment: **`EagerBuilds g x t`** is the
   provenance relation (the base tape is `addLeaves`, which *is* the `Tape.leaf` fold — literally
   the compiled tape of the empty graph — and each graph node corresponds to one successful eager
-  `Tape.add`/`Tape.mul` call), and **`backwardDenseFrom_eager_eq_compiled`** proves the total
+  `Tape.add`/`Tape.sub`/`Tape.mul` call), and **`backwardDenseFrom_eager_eq_compiled`** proves the total
   dense reverse pass on the eager tape returns *exactly* what it returns on
   `compileAux g.toAlgebra x ()` — same `Result`, same array — from any erased-context seed.
   Consequently **`direct_PR_soundness_eager`** (+ `_at`): the fderiv endpoint holds on the
@@ -895,14 +895,20 @@ and FFT kernels under `NN/Runtime/Autograd/Engine/Cuda/Ops/*` for SSPRC's convol
   for the stored values). Push-invariance lemmas (`addGradAll_push` → `backwardDenseFromLoop_push`,
   under the bounded-contribution-ids fact both tape families satisfy) restrict the extended
   tape's loop to the prefix so the `EagerBuilds` induction consumes its hypothesis directly.
-  What remains, honestly: ops beyond `add`/`mul` (each is one more crank of the same machine —
-  per-op fderiv facts already exist upstream for the whole class), the `TapeM` `StateT` sugar
-  (each `TapeM` op is a one-line wrapper over the corresponding `Tape` constructor; identifying
-  a `TapeM.run` trace with an `EagerBuilds` derivation is wrapper bookkeeping), and the
-  `Float`-vs-`ℝ` carrier deviation, which is this workstream's own Adequacy claim. Gate:
-  `lake build Uncertainty UncertaintyRigor UncertaintyExamples` = 3168 jobs green, 0 warnings;
+  `sub` (2026-08-02) followed as the second binary crank — the same machine as `add`, save that the
+  runtime `Tape.sub` feeds the negated cotangent `subSpec (fill 0) δ` to the right parent
+  (`sub_vjp_add_eq`, via the two extra facts `toVecT_subSpec` and `single_neg`), which the compiled
+  side already accepts (op-generic `direct_PR_soundness_compiled`); a concrete `subGraph = x₀ − x₁`
+  probe in `AutogradDirectSim` exercises `EagerBuilds.sub`. What remains, honestly: `div` (reuses the
+  two-parent machine under a nonzero-denominator `…At`), `scale`/`neg` and the elementwise unaries
+  (the simpler *one-parent* variant of the machine — one contribution, not two), the `TapeM` `StateT`
+  sugar (identifying a `TapeM.run` trace with an `EagerBuilds` derivation, wrapper bookkeeping over
+  `Engine/TapeM.lean`), and the `Float`-vs-`ℝ` carrier deviation, which is this workstream's own
+  Adequacy claim. Gate: `lake build Uncertainty UncertaintyRigor UncertaintyExamples` green, 0
+  warnings (the `sub` addition rebuilds the `UncertaintyExamples` library green, 3166 jobs);
   `backwardDenseFrom_eager_eq_compiled`/`direct_PR_soundness_eager{,_at}`/`forwardSim_eager`
-  all axiom-pinned `[propext, Classical.choice, Quot.sound]` in the probe.
+  all axiom-pinned `[propext, Classical.choice, Quot.sound]` in the probe (those pins transitively
+  cover the `sub` case of `loop_eager_eq_compiled`, so `sub` introduced no axioms).
 
 * **Stage 4 — Scale.** GPU-batched SSPRC/MCM on `CudaT`; sensitivity-driven `Nᵢ` allocation; a
   real downstream science model (soil-moisture retrieval) as the capstone example. **Independent of
@@ -930,12 +936,65 @@ un-started; four honest residuals remain, each scoped small.
 
 The four residuals — all "one more crank of the same machine," none a new workstream:
 
-1. **Autograd ops beyond `add`/`mul`, and the `TapeM`/`StateT` sugar.** The eager-provenance closure
-   (`Experiments/EagerProvenance.lean`) covers the `leaf`/`add`/`mul` fragment; each further op is one
-   more application of the same machine (per-op `HasFDerivAt` facts already exist upstream for PKC's
-   entire op class in `Tape/Nodes/{Arithmetic,Piecewise,Elementwise}.lean`), and identifying a
-   `TapeM.run` trace with an `EagerBuilds` derivation is wrapper bookkeeping (each `TapeM` op is a
-   one-line wrapper over the corresponding `Tape` constructor).
+1. **Autograd ops beyond the arithmetic core, and the `TapeM`/`StateT` sugar — CLOSED (2026-08-03).**
+   The eager-provenance closure (`Experiments/EagerProvenance.lean`) now covers the **entire
+   elementwise runtime surface of the tape**, plus the monadic sugar:
+     * **Both machines, plus the generic unary abstraction** (2026-08-02): binary two-parent
+       (`leaf`/`add`/`sub`/`mul`), unary one-parent (`scale`), and the generic `EagerBuilds.unary`
+       constructor keyed on the shared `Tape.unary` node shape, with generic §B bridges — adding an
+       elementwise op is two pointwise facts, no §E/§F reasoning.
+     * **`div` — the binary crank landed** (2026-08-03): the upstream PR
+       ([lean-dojo/TorchLean#26](https://github.com/lean-dojo/TorchLean/pull/26), `TapeNodes.div` +
+       `divFderivAt`) is **merged** (`0c9a8b8`) and the pin bumped; `EagerBuilds.div` mirrors `sub`
+       end-to-end (quotient-rule accounting: `divSpec δ b` to the left parent, negated
+       `subSpec (fill 0) (mulSpec δ (divSpec a (mulSpec b b)))` to the right, unconditional under
+       the totalized `0⁻¹ = 0`), with the probe `divGraph`/`eagerBuilds_div` and the endpoint
+       through the pointwise `direct_PR_soundness_eager_at` (denominator-nonzero at the input).
+     * **The elementwise/activation family — instantiated** (2026-08-03): `exp`, `sigmoid`, `tanh`,
+       `softplus` (global witnesses, universal endpoint) and `relu`, `log`, `abs`, `sqrt`
+       (pointwise `…At` witnesses and endpoint, with the input-nonzero condition threaded through
+       the binders) are all literal `EagerBuilds.unary` instances in `AutogradDirectSim`,
+       axiom-pinned to the classical trio. Genuine per-op facts were only the pointwise scalar
+       bridges the drafts predicted: `signSpec` vs the `SignType.sign` coercion (trichotomy),
+       `sqrtSpec`'s clamp (`√(max v 0) = √v` over `ℝ`) and its `if`-guarded backward vs the
+       totalized `1/(2·√v)`, and `invSpec = mapSpec (1/·)` vs `(·)⁻¹` (`one_div`). Elaboration
+       gotcha worth keeping: the `sigmoid`/`tanh` instance unifications **diverge** (>25M
+       heartbeats) unless the scalar specs are made `attribute [local irreducible]` for the block —
+       the unifier otherwise substitutes their bodies through the elemwise node machinery; the
+       other ops fit the usual 6.4M budget as-is.
+     * **The `TapeM`/`StateT` sugar — bridged** (`UncertaintyExamples/TapeMBridge.lean`,
+       2026-08-03): the uniform builder reshuffle is reduced once (`opM_run_ok`/`opM_run_error`/
+       `opM_run_inv`), per-op corollaries are definitional instantiations
+       (`run_{add,sub,mul,div,scale,exp,tanh,sigmoid,softplus,log,relu,abs,sqrt}_ok` + `run_leaf`),
+       `run_bind_inv`/`exec_inv` peel `do`-blocks, and the demo `progMulScale_exec_eagerBuilds`
+       proves a user-style monadic program's successful `exec` is `EagerBuilds`-covered — composed
+       with `direct_PR_soundness_eager`, the reverse pass of the tape a `do`-block built realises
+       `(fderiv ℝ eval x)† seed`. Axiom-pinned.
+     * **Planned upstream TorchLean PR — the `TapeM` reduction layer.** Everything above the demo
+       is TorchLean-generic, not PKC-specific: `opM` and its three run lemmas, `run_bind_inv`/
+       `exec_inv`, `run_leaf`, and the per-op `run_<op>_ok` family are all statable over an
+       arbitrary carrier `{α}` (each with exactly the typeclass row of its `TapeM.<op>` wrapper) —
+       the `α := ℝ` pinning in `TapeMBridge.lean` is an artifact of where they were first needed.
+       The PR: a new additive proofs module (e.g. `NN/Proofs/Autograd/Runtime/TapeM.lean`)
+       carrying the generalized layer, extended from our 14 ops toward the full `TapeM` wrapper
+       surface (every wrapper is the same reshuffle, so each op is a one-line `opM_run_ok`
+       instantiation); optionally the per-op "returned id = pre-append size" facts in the
+       `tape_mul_id` style (the `addNode` invariant read back through each op's `do`-block).
+       Discipline: purely additive, classical-trio axiom profile, and — per the standing TorchLean
+       policy — no project-specific terms in code, commits, or the PR body. After it merges and
+       the pin bumps, `TapeMBridge.lean` here shrinks to the demo + endpoint, importing the
+       upstream lemmas. Proof recipe to reuse: the curated `simp only` set must include
+       `TapeM.run`; `cases h : g t` rewrites `g t` *in the goal* (the leftovers are `rfl`s);
+       destructure pairs before projecting (`obtain ⟨t1, i1⟩ := p`); ctor-clash hypotheses close
+       by `cases h`.
+   Out of frame, unchanged in kind: `inv`'s runtime backward is `scaleSpec (mulSpec δ (inv x)²) (-1)`
+   — not the `mulSpec (bwd x) δ` shape the generic machine keys on (a dedicated constructor or an
+   upstream backward-form alignment would admit it); `safeLog` is machine-shaped but uninstantiated;
+   structural/higher-arity nodes (affine/matmul, reductions, softmax, conv) have a non-sparse vjp and
+   sit outside the "one crank" framing, and the tape has no trig VJP nodes at all. The science models
+   this workstream targets are polynomial/affine in the sensitivity inputs, so nothing outstanding
+   gates them. (Minor parity item, unchanged: `sub`/`scale`/`div` and the activation instances are
+   proved on the soundness route; only `add`/`mul` carry the independent shape-total totality route.)
 2. **The kinded budget's ×/÷ DAG extension.** `analyzeQ` (`Budget.lean`) covers the
    *homogeneous-input* case (all `kᵢ` equal); a genuinely heterogeneous multiply/divide model is
    served today by applying the `Budget` primitives per input at each input's kind. Generalizing the
