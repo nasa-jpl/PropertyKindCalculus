@@ -739,7 +739,11 @@ and FFT kernels under `NN/Runtime/Autograd/Engine/Cuda/Ops/*` for SSPRC's convol
   in the sum of squares (1 absorption). `analyzeQ`'s autograd source stays `Float` (that specialization
   is the driver's, not the budget's).
 
-* **Autograd soundness (backward = fderiv) — feasibility assessed, not a Stage-3.4 gate.** The
+* **Autograd soundness (backward = fderiv) — feasibility assessed, not a Stage-3.4 gate. ✅ COMPLETE
+  — the deferred workstream this bullet scoped was carried out and closed by Stages 3.5–3.6 + the
+  eager-provenance addendum below; the sensitivities are now *proved* the adjoint of the Fréchet
+  derivative at the ℝ carrier, on the very tape the bridge builds. The assessment below is retained
+  as the design record that chose the A→P route.** The
   sensitivities `cᵢ` are *computed* by TorchLean's reverse-mode tape but not *proven* to equal
   `∂f/∂xᵢ` (the tape is "an execution facility… not connected to the fderiv proof layer",
   `Autograd/TorchLean/Dual.lean:24`). A 2026-07-31 read-only sweep found the hard mathematics **already
@@ -756,7 +760,8 @@ and FFT kernels under `NN/Runtime/Autograd/Engine/Cuda/Ops/*` for SSPRC's convol
   point** (which TorchLean's `Runtime/Link` theorem already bridges to the `Algebra` graph model) and
   prove **one bridge lemma** `backpropAllCtx ⟹ ℝ-`fderiv``; the honest statement is `= fderiv` only at
   the `ℝ` instantiation (the `Float` gradient is a separate adequacy claim this workstream already
-  owns). Deferred as its own workstream; not required for the kinded budget.
+  owns). Deferred as its own workstream (since delivered — Stages 3.5–3.6 below); not required for
+  the kinded budget.
 
   *Spike result (2026-07-31, direct P↔R simulation attempted in Lean).* A compiling scaffold
   (`uncertainty/…/Uncertainty/Experiments/PRSimulation.lean` — at the time deliberately
@@ -910,6 +915,40 @@ and FFT kernels under `NN/Runtime/Autograd/Engine/Cuda/Ops/*` for SSPRC's convol
 
 Reflection/CI note: each new proof file gets a paired, *indexed* reflection probe (per the
 project's convention that an un-indexed probe is never built and silently rots).
+
+**Remaining work (as of 2026-08-02).** Stages 0–3.6 are built and CI-checked, and autograd
+soundness is complete (Stages 3.5–3.6 + the eager-provenance addendum: the reverse pass is proved
+the adjoint of the Fréchet derivative at the ℝ carrier, on the eagerly built tape). One stage is
+un-started; four honest residuals remain, each scoped small.
+
+* **Stage 4 — Scale** ([`§6`](#6-staged-plan-each-stage-is-shippable-testable-rigor-first) above) —
+  the one genuinely un-started workstream: GPU-batched SSPRC/MCM on `CudaT`, sensitivity-driven `Nᵢ`
+  allocation, and a real downstream science model (soil-moisture retrieval) as the capstone example.
+  Independent of Stages 3.5–3.6 (SSPRC/MCM are derivative-free, and the `Nᵢ` allocation consumes the
+  same *computed* `cᵢ` Stage 1 already relies on), so it can proceed before, in parallel with, or
+  after the soundness work.
+
+The four residuals — all "one more crank of the same machine," none a new workstream:
+
+1. **Autograd ops beyond `add`/`mul`, and the `TapeM`/`StateT` sugar.** The eager-provenance closure
+   (`Experiments/EagerProvenance.lean`) covers the `leaf`/`add`/`mul` fragment; each further op is one
+   more application of the same machine (per-op `HasFDerivAt` facts already exist upstream for PKC's
+   entire op class in `Tape/Nodes/{Arithmetic,Piecewise,Elementwise}.lean`), and identifying a
+   `TapeM.run` trace with an `EagerBuilds` derivation is wrapper bookkeeping (each `TapeM` op is a
+   one-line wrapper over the corresponding `Tape` constructor).
+2. **The kinded budget's ×/÷ DAG extension.** `analyzeQ` (`Budget.lean`) covers the
+   *homogeneous-input* case (all `kᵢ` equal); a genuinely heterogeneous multiply/divide model is
+   served today by applying the `Budget` primitives per input at each input's kind. Generalizing the
+   kinded budget to a full ×/÷ evaluation DAG — so the `ProductKind`/`QuotientKind` edges are threaded
+   through a multi-node graph rather than a single quadrature — is specified but not built.
+3. **The `Float`-vs-`ℝ` carrier deviation.** The soundness theorems speak at `ℝ`; the run is `Float`.
+   That gap is precisely this workstream's own Adequacy claim, and is discharged in kind by Stages
+   3–3.3 (the executable `Adequacy` carrier, A3 verdict soundness, the FP32 Sterbenz lift, and the
+   executable↔spec bridge); no separate deliverable is outstanding, only its per-model application.
+4. **Optional / decision items.** The `hᵢ`/HVP Taylor surrogate (off the Stage-2 exit path, §5 table)
+   and the trig VJP nodes (`sin/cos/tanh/sinh/cosh`, §7 risks: TorchLean's tape has no VJP for these,
+   so trig models can be *evaluated* but not *differentiated* on the tape). Fund only if a model needs
+   second-order surrogates or transcendental differentiation.
 
 ---
 
