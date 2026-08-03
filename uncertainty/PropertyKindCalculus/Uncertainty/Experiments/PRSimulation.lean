@@ -1,41 +1,57 @@
 /-
-# SPIKE: a DIRECT P↔R simulation for TorchLean reverse-mode AD
+# A direct P↔R simulation for TorchLean reverse-mode AD — closed (Stage 3.6)
 
-This is a *scratch* file (not in any lakefile). Typecheck with:
+Historically a *spike* with five `sorry`s (committed 2026-07-31 as a recorded experiment);
+now a sorry-free module, indexed in the `UncertaintyRigor` library. Typecheck standalone with:
 
     lake env lean uncertainty/PropertyKindCalculus/Uncertainty/Experiments/PRSimulation.lean
 
-Goal: attempt to prove TorchLean's **runtime eager tape** (R) sound against Mathlib `fderiv`,
-*directly*, by a simulation relation to the **fderiv proof model** (P), bypassing the existing
-carrier-generic algebra bridge (A, `Runtime/Link/BackwardGraph.lean`).
+Goal: relate TorchLean's **runtime eager tape** (R) to the **fderiv proof model** (P) by a
+simulation relation, *directly* — and say precisely which parts of that relation are provable
+without re-deriving the carrier-generic algebra bridge (A, `Runtime/Link/BackwardGraph.lean`).
 
 Two worlds:
 
 * **P** (`Proofs.Autograd`, ℝ-only, the fderiv model):
-  - `Graph Γ ss`      (`Tape/Core/Soundness.lean:360`) snoc-list of typed nodes.
-  - `Graph.evalVec`    (`Tape/Core/FDeriv.lean:747`)  : `CtxVec Γ → CtxVec (Γ ++ ss)`.
-  - `Graph.backpropVec` (`Tape/Core/FDeriv.lean:777`) : returns input grads `CtxVec Γ` **only**.
-  - `Graph.backpropVec_eq_adjoint_fderiv` (`…FDeriv.lean:1129`, needs `GraphFDerivCorrect g`)
-        `backpropVec g x seed = (fderiv ℝ (evalVec g) x).adjoint seed`.
-  - Per-op nodes authored on `CtxVec` via `Node.ofVec` with per-op fderiv proofs:
-        `TapeNodes.add`/`TapeNodes.mul` (`Tape/Nodes/Arithmetic.lean:87,280`),
-        `TapeNodes.addFderiv`/`mulFderiv` (`…:99,342`).
-
+  - `Graph Γ ss`      (`Tape/Core/Soundness.lean`) snoc-list of typed nodes.
+  - `Graph.evalVec` / `Graph.backpropVec` (`Tape/Core/FDeriv.lean`), and
+    `Graph.backpropVec_eq_adjoint_fderiv` : reverse mode = `(fderiv ℝ evalVec x).adjoint`.
 * **R** (`Runtime.Autograd`, carrier-generic eager engine):
-  - `AnyTensor α = { s : Shape, t : Tensor α s }`  (`Runtime/Context.lean:44`), shape-**erased**.
-  - `Node α`  (`Engine/Core/Core.lean:143`): `value : AnyTensor α`, `parents : List Nat`,
-        `backward : AnyTensor α → Result (List (Nat × AnyTensor α))`  (opaque closure, `Except`).
-  - `Tape α = { nodes : Array (Node α) }`.
-  - per-op tape ctors `Tape.add`/`Tape.mul` (`Engine/Core/Elementwise.lean:30,65`).
-  - reverse pass: `backwardScalar → backward → backwardDense` (`Engine/Core/Backward.lean:245,234,75`,
-        a `foldlM` over `(range n).reverse` with reachability pruning), or the total, proof-friendly
-        `backwardDenseFrom{,Loop,Step}` (`…Backward.lean:188,175,149`).
+  - `AnyTensor α` shape-erased values; `Node α` with an *opaque* `backward` closure
+    (`AnyTensor α → Result (List (Nat × AnyTensor α))`); `Tape α = Array (Node α)`.
+  - total reverse pass `backwardDenseFrom{,Loop,Step}` (`Engine/Core/Backward.lean`).
 
-What compiles here vs. what is `sorry`:  see the section banners.  Every `sorry` is on a
-**precisely-typed** statement so the remaining obligation is explicit.
+How the five original obligations closed (Stage 3.6, ordered per `UNCERTAINTY.md` §6):
+
+1. `mulSpec_ofVecT` / `addSpec_ofVecT` (§2) — PROVEN, by `Shape` induction through the
+   pointwise lemma `toVecT_map2Spec_apply` (using upstream `toVecT_dim_apply`).
+2. `backwardDenseFrom_ok` (§6) — PROVEN, with one *statement refinement*: the original
+   statement assumed only `ForwardSim`, which pins the tape's stored **values** but says
+   nothing about the opaque `backward` **closures** the reverse pass runs; a tape with correct
+   forward values and a closure `fun _ => .error …` refutes the unrefined claim. The honest
+   hypothesis is `BackwardShapeWF` (§5): every closure is *shape-total*. Under it, the
+   "every slot carries its node's shape" invariant (`AccShapeAligned`) threads through the
+   fold, value-free — and §6 also shows the eager constructors `Tape.leaf`/`add`/`mul`
+   *provide* `BackwardShapeWF`, so the hypothesis is discharged on eagerly built tapes.
+3. `sim_backward_step` — RETIRED to documentation (§5): its `.ok`-and-invariant half is
+   `backwardDenseFromStep_ok`; its per-step *value* half is exactly the `addGradAll`
+   fold-commutation the A-bridge already proves (`BackwardGraph.lean`, `haddGradAllPush`
+   and neighbours), and re-deriving it against P would duplicate those ~800 lines.
+4. `direct_PR_soundness` — CLOSED as `direct_PR_soundness_compiled` (§7): for a *compiled*
+   tape it is the `Γ`-prefix projection of the Stage-3.5 endpoint
+   `backwardDenseFrom_compileAux_adjoint_fderiv` (`Runtime/Link/FDeriv.lean`), transported
+   to this file's `ArrCorr` phrasing by `getRaw_flattenCtx` (§1) and
+   `toAnyArray_extract_takeLeft` (§7). For an *arbitrary* `ForwardSim` tape the statement is
+   unprovable for the same reason as (2) — `ForwardSim` does not pin the closures. For the
+   tapes the eager constructors actually build, that closure provenance is supplied by
+   `Experiments/EagerProvenance.lean` (`EagerBuilds` / `direct_PR_soundness_eager`).
+
+What this file does *not* do, by design: re-derive any `addGradAll` value commutation against
+P. The adjoint mathematics enters exactly once, through the Stage-3.5 bridge.
 -/
 
 import NN.Proofs.Autograd.Tape.Nodes.Arithmetic
+import NN.Proofs.Autograd.Runtime.Link.FDeriv
 import NN.Runtime.Autograd.Engine.Core
 
 open Spec Tensor Proofs.Autograd
@@ -47,6 +63,7 @@ namespace PRSim
 -- R-side abbreviations (kept qualified to avoid `Node`/`Tape` clashes with P's `Proofs.Autograd`).
 abbrev Any    := Runtime.AnyTensor ℝ
 abbrev RTape  := Runtime.Autograd.Tape ℝ
+abbrev RNode  := Runtime.Autograd.Node ℝ
 abbrev Res    := Runtime.Autograd.Result
 @[reducible] def mkAny {s : Shape} (t : Tensor ℝ s) : Any := Runtime.Autograd.AnyTensor.mk t
 
@@ -74,39 +91,147 @@ def ForwardSim {Γ ss : List Shape} (g : Graph Γ ss) (xV : CtxVec Γ) (t : RTap
   t.nodes.size = (Γ ++ ss).length ∧
   ∀ i : Fin (Γ ++ ss).length, t.getValue? i.val = some (ctxSlotValue g xV i)
 
+/-- Block-read of a flattened context: `getRaw` inverts `flattenCtx` entrywise.  This is the
+    coordinate bridge between P's `CtxVec` reads and the typed `TList` entries. -/
+theorem getRaw_flattenCtx :
+    ∀ {Γ : List Shape} (xs : TList Γ) (i : Fin Γ.length),
+      CtxVec.getRaw (Γ := Γ) i (flattenCtx xs)
+        = toVecT (t := Algebra.TList.get (α := ℝ) xs i)
+  | s :: Γ, .cons x xs, ⟨0, h0⟩ => by
+      show CtxVec.getRaw (Γ := s :: Γ) ⟨0, h0⟩ (flattenCtx (TList.cons x xs)) = toVecT (t := x)
+      ext j
+      simp [CtxVec.getRaw, flattenCtx, Fin.append, Fin.addCases]
+  | s :: Γ, .cons x xs, ⟨Nat.succ k, hk⟩ => by
+      have htail :
+          (vecOfFun (n := ctxSize Γ) fun j =>
+              flattenCtx (Γ := s :: Γ) (TList.cons x xs) (Fin.natAdd (Spec.Shape.size s) j))
+            = flattenCtx (Γ := Γ) xs := by
+        ext j
+        simp [flattenCtx, Fin.append_right]
+      show CtxVec.getRaw (Γ := Γ) ⟨k, Nat.lt_of_succ_lt_succ hk⟩
+          (vecOfFun (n := ctxSize Γ) fun j =>
+            flattenCtx (Γ := s :: Γ) (TList.cons x xs) (Fin.natAdd (Spec.Shape.size s) j))
+          = toVecT (t := Algebra.TList.get (α := ℝ) xs ⟨k, Nat.lt_of_succ_lt_succ hk⟩)
+      rw [htail]
+      exact getRaw_flattenCtx xs ⟨k, Nat.lt_of_succ_lt_succ hk⟩
+
+/-- Option-form of the upstream `get_toAnyArray`: erased array lookup is the typed entry. -/
+theorem toAnyArray_getElem? {ss : List Shape} (xs : Algebra.TList ℝ ss) (i : Fin ss.length) :
+    (Algebra.TList.toAnyArray (α := ℝ) (ss := ss) xs)[i.val]?
+      = some (mkAny (Algebra.TList.get (α := ℝ) xs i)) := by
+  have hlt : i.val < (Algebra.TList.toAnyArray (α := ℝ) (ss := ss) xs).size := by
+    simp
+  rw [Array.getElem?_eq_getElem hlt]
+  exact congrArg some (Algebra.TList.get_toAnyArray (α := ℝ) (ss := ss) xs i)
+
+/-- **`ForwardSim` is realised by compiled tapes**: `compileAux` on the algebraic embedding of a
+    P graph produces a tape forward-simulating that graph.  (So the simulation relation of this
+    file is not hypothetical — the Stage-3.5 compile path inhabits it.) -/
+theorem forwardSim_compileAux {Γ ss : List Shape} (g : Graph Γ ss) (x : TList Γ) :
+    ForwardSim g (flattenCtx x)
+      (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss) g.toAlgebra x ()).1 := by
+  have hsize :=
+    Algebra.Graph.compileAux_nodes_size (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss) g.toAlgebra x ()
+  have hvals :=
+    Algebra.Graph.compileAux_values_eq (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss) g.toAlgebra x ()
+  have hctx :=
+    Algebra.Graph.compileAux_ctx_eq_eval (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss) g.toAlgebra x ()
+  have heval : Algebra.Graph.eval (α := ℝ) (Δ := Unit) g.toAlgebra x () = Graph.eval g x := by
+    rw [← Algebra.Graph.toReal_eval]
+    simp
+  refine ⟨by simp [hsize], ?_⟩
+  intro i
+  -- Read the stored value through `compileAux_values_eq`.
+  have hread :
+      (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) g.toAlgebra x ()).1.getValue? i.val
+        = (Algebra.TList.toAnyArray (α := ℝ) (ss := Γ ++ ss) (Graph.eval g x))[i.val]? := by
+    have hmap :
+        ((Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) g.toAlgebra x ()).1.nodes.map
+            (fun node => node.value))[i.val]?
+          = (Algebra.TList.toAnyArray (α := ℝ) (ss := Γ ++ ss) (Graph.eval g x))[i.val]? := by
+      rw [hvals, hctx, heval]
+    simpa [Runtime.Autograd.Tape.getValue?, Runtime.Autograd.Tape.getNode?,
+      Array.getElem?_map] using hmap
+  rw [hread, toAnyArray_getElem?]
+  -- Both sides are the erased `i`-th entry of `eval g x`.
+  unfold ctxSlotValue
+  rw [Graph.evalVec_flattenCtx, getRaw_flattenCtx, ofVecT_toVecT]
+
 /- ===========================================================================================
-   §2.  The single "easy" bucket: VECTORIZATION HOMOMORPHISMS  (pure, no `AnyTensor`).
+   §2.  VECTORIZATION HOMOMORPHISMS  (pure, no `AnyTensor`) — the two cheap obligations, CLOSED.
 
    Both forward agreement and the per-op backward *value* agreement (§4) reduce to these two
    facts: `mulSpec`/`addSpec` (elementwise tensor ops, R's forward/backward kernels) commute with
-   `ofVecT`/`toVecT` (P's vectorization).  They are provable by induction on `Shape` exactly like
-   `dot_eq_inner_toVecT` / `toVecT_get2` (`Tape/Nodes/Matrix.lean:59`); no runtime representation is
-   involved.  Left as `sorry` here — they are the *cheap* remaining obligations. -/
+   `ofVecT`/`toVecT` (P's vectorization).  Proven by induction on `Shape` through the pointwise
+   characterization `toVecT_dim_apply` (`Tape/Core/FDeriv.lean`).
+   =========================================================================================== -/
 
-/-- `mulSpec` is the Hadamard product under vectorization.  (⇐ `toVecT_get2`-style shape induction.) -/
+/-- `toVecT` on scalar tensors always returns the scalar value (the only coordinate is `0`). -/
+lemma toVecT_scalar_apply (x : ℝ) (i : Fin (Spec.Shape.size Shape.scalar)) :
+    toVecT (t := (Tensor.scalar x : Tensor ℝ Shape.scalar)) i = x := by
+  simpa [toVecT, toVecE, Spec.Tensor.flattenSpec, Spec.Shape.size, Spec.toVec] using
+    (euclideanEquiv_symm_ofLp
+      (n := Spec.Shape.size Shape.scalar)
+      (f := fun _ : Fin (Spec.Shape.size Shape.scalar) => x)
+      (i := i))
+
+/-- Pointwise: `map2Spec f` acts coordinatewise under vectorization. -/
+theorem toVecT_map2Spec_apply {f : ℝ → ℝ → ℝ} :
+    ∀ {s : Shape} (a b : Tensor ℝ s) (i : Fin (Spec.Shape.size s)),
+      toVecT (t := map2Spec f a b) i = f (toVecT (t := a) i) (toVecT (t := b) i)
+  | .scalar, .scalar x, .scalar y, i => by
+      simp only [map2Spec]
+      rw [toVecT_scalar_apply, toVecT_scalar_apply, toVecT_scalar_apply]
+  | .dim n s, .dim fa, .dim fb, i => by
+      by_cases hm : Spec.Shape.size s = 0
+      · exact absurd i.isLt (by simp [Spec.Shape.size, hm])
+      · have hmpos : 0 < Spec.Shape.size s := Nat.pos_of_ne_zero hm
+        obtain ⟨p, rfl⟩ := finProdFinEquiv.surjective i
+        have hstep : map2Spec f (Tensor.dim fa) (Tensor.dim fb)
+            = Tensor.dim (fun j => map2Spec f (fa j) (fb j)) := rfl
+        rw [hstep, toVecT_dim_apply hmpos, toVecT_dim_apply hmpos, toVecT_dim_apply hmpos]
+        exact toVecT_map2Spec_apply (fa p.1) (fb p.1) p.2
+
+/-- `mulSpec` is the Hadamard product under `toVecT`. -/
+theorem toVecT_mulSpec {s : Shape} (a b : Tensor ℝ s) :
+    toVecT (t := mulSpec a b) = hadamardVec (toVecT (t := a)) (toVecT (t := b)) := by
+  have h : ∀ i, toVecT (t := mulSpec a b) i = toVecT (t := a) i * toVecT (t := b) i :=
+    fun i => toVecT_map2Spec_apply (f := (· * ·)) a b i
+  calc toVecT (t := mulSpec a b)
+      = vecOfFun (fun i => toVecT (t := mulSpec a b) i) := (vecOfFun_eta _).symm
+    _ = vecOfFun (fun i => toVecT (t := a) i * toVecT (t := b) i) :=
+        congrArg (vecOfFun (n := Spec.Shape.size s)) (funext h)
+    _ = hadamardVec (toVecT (t := a)) (toVecT (t := b)) := rfl
+
+/-- `mulSpec` is the Hadamard product under vectorization.  (Original obligation, CLOSED.) -/
 theorem mulSpec_ofVecT {s : Shape} (u v : Vec s.size) :
     mulSpec (ofVecT u) (ofVecT v) = ofVecT (hadamardVec u v) := by
-  sorry
+  have h := congrArg (ofVecT (s := s))
+    (toVecT_mulSpec (ofVecT (s := s) u) (ofVecT (s := s) v))
+  simpa using h
 
-/-- `addSpec` is Euclidean `+` under vectorization.  (⇐ shape induction; cf. `toVecT_add_spec_mat`.) -/
+/-- `addSpec` is Euclidean `+` under vectorization.  (Original obligation, CLOSED — via the
+    Stage-3.5 lemma `toVecT_addSpec`.) -/
 theorem addSpec_ofVecT {s : Shape} (u v : Vec s.size) :
     addSpec (ofVecT u) (ofVecT v) = ofVecT (u + v) := by
-  sorry
+  have h := congrArg (ofVecT (s := s))
+    (toVecT_addSpec (ofVecT (s := s) u) (ofVecT (s := s) v))
+  simpa using h
 
 /- ===========================================================================================
    §3.  Where the SHAPE-ERASURE bites, and the fact that it does NOT block a per-node statement.
 
    R's backward is `AnyTensor ℝ → Result (List (Nat × AnyTensor ℝ))`.  The cotangent arrives
    shape-erased; the *only* dynamic check inside a per-op backward is `requireGrad`
-   (`Engine/Core/Core.lean:265`), an `if h : dLdyAny.s = τ`.  Against a cotangent that the
+   (`Engine/Core/Core.lean`), an `if h : dLdyAny.s = τ`.  Against a cotangent that the
    simulation *mints* with the right shape (`mkAny δ`), that check discharges definitionally.
 
-   Below are the verbatim `add`/`mul` backward closures (Elementwise.lean:40-42, 75-79) and the
-   proof that they evaluate to a concrete parent-contribution list.  THESE ARE PROVEN (no `sorry`).
-   Conclusion for the report: "state R's backward = P's adjoint" is *not* blocked by `AnyTensor`
+   Below are the verbatim `add`/`mul` backward closures (Elementwise.lean) and the
+   proof that they evaluate to a concrete parent-contribution list.  THESE ARE PROVEN.
+   Conclusion: "state R's backward = P's adjoint" is *not* blocked by `AnyTensor`
    at the per-node level. The erasure bites only in the *fold* (§5, `addGradAll`). -/
 
-/-- The exact backward closure stored by the runtime `Tape.mul` node (Elementwise.lean:75-79). -/
+/-- The exact backward closure stored by the runtime `Tape.mul` node (Elementwise.lean). -/
 def mulBackward {s : Shape} (a b : Tensor ℝ s) (aId bId : Nat) :
     Any → Res (List (Nat × Any)) :=
   fun dLdyAny => do
@@ -115,7 +240,7 @@ def mulBackward {s : Shape} (a b : Tensor ℝ s) (aId bId : Nat) :
     let db : Tensor ℝ s := mulSpec dLdy a
     pure [(aId, mkAny da), (bId, mkAny db)]
 
-/-- The exact backward closure stored by the runtime `Tape.add` node (Elementwise.lean:40-42). -/
+/-- The exact backward closure stored by the runtime `Tape.add` node (Elementwise.lean). -/
 def addBackward {s : Shape} (aId bId : Nat) : Any → Res (List (Nat × Any)) :=
   fun dLdyAny => do
     let dLdy ← Runtime.Autograd.Tape.requireGrad (α := ℝ) (τ := s) dLdyAny
@@ -146,10 +271,9 @@ theorem addBackward_mkAny {s : Shape} (δ : Tensor ℝ s) (aId bId : Nat) :
      (add a b).vjpVec ctx δ = single a δ            + single b δ                        [PROVEN]
    and `TapeNodes.mulFderiv`/`addFderiv` certify these equal the `fderiv` adjoint of the node's
    forward map.  R's backward (§3) produces the *same contributions* but keyed by parent id and
-   shape-erased.  The per-parent VALUE agreement is exactly the §2 homomorphism, so it is proven
-   *modulo* §2 (`mul_contrib_agree` / `add_contrib_agree`).  What is NOT yet closed is turning the
-   parent-keyed list into P's `single _ + single _` — that is the *scatter*, and it lives in the
-   fold (§5), not here. -/
+   shape-erased.  The per-parent VALUE agreement is exactly the §2 homomorphism (now proven, so
+   `mul_contrib_agree` is closed).  Turning the parent-keyed list into P's `single _ + single _`
+   is the *scatter*, and it lives in the fold (§5), not here. -/
 
 /-- P's `mul` node VJP, definitional unfold.  PROVEN. -/
 theorem p_mul_vjpVec {Γ : List Shape} {s : Shape} (a b : Idx Γ s)
@@ -167,7 +291,7 @@ theorem p_add_vjpVec {Γ : List Shape} {s : Shape} (a b : Idx Γ s)
   simp [TapeNodes.add, Node.vjpVec_ofVec]
 
 /-- Per-parent VALUE agreement for `mul`: R's shape-erased contribution `mkAny (mulSpec δ v)` is
-    the erasure of P's Hadamard block `δV ⊙ vV`.  Reduces to §2 (`mulSpec_ofVecT`).  PROVEN mod §2. -/
+    the erasure of P's Hadamard block `δV ⊙ vV`.  CLOSED (was "proven mod §2"). -/
 theorem mul_contrib_agree {s : Shape} (δV vV : Vec s.size) :
     mkAny (mulSpec (ofVecT δV) (ofVecT vV)) = mkAny (ofVecT (hadamardVec δV vV)) := by
   rw [mulSpec_ofVecT]
@@ -184,20 +308,23 @@ example {Γ : List Shape} {s : Shape} (a b : Idx Γ s) :
     NodeFDerivCorrect (TapeNodes.add (Γ := Γ) (s := s) a b) := TapeNodes.addFderiv a b
 
 /- ===========================================================================================
-   §5.  The reverse pass as a FOLD INVARIANT — the HARD obstacle (all `sorry`).
+   §5.  The reverse pass as a FOLD INVARIANT — the shape-alignment half, PROVEN.
 
    R's total reverse pass is `backwardDenseFromLoop` over ids `n-1 … 0`, each step
-   `backwardDenseFromStep` running `node.backward` then folding contributions through `addGradAll`.
-   P's `backpropVec` is a structural recursion that, at each snoc node, does `seedPrev + node.vjp`.
+   `backwardDenseFromStep` running `node.backward` then folding contributions through
+   `addGradAll`.  `addGradAll` (`Engine/Core/Backward.lean`) is where the shape-erasure
+   *actually* bites: per scattered contribution it performs nested dynamic checks/casts.
 
-   `addGradAll` (`Engine/Core/Backward.lean:113`) is where the shape-erasure *actually* bites:
-   per scattered contribution it performs FOUR nested dynamic checks/casts —
-     `node.requires_grad`,  `if h : g.s = node.value.s`,  `match grads[id]?`,
-     `if hex : existing.s = node.value.s`,  `if hid : id < grads.size`.
-   The simulation invariant "every array slot has its node's shape" discharges all of them, but
-   only through a fold-commutation argument.  The existing A-bridge spends ~250 lines on exactly
-   this (`BackwardGraph.lean:491-617`, `haddGradAllPush`).  We phrase the obligation as a relation
-   between a runtime gradient `Array (AnyTensor ℝ)` and a P cotangent `CtxVec (Γ ++ ss)`. -/
+   The invariant "every accumulator slot has its node's shape" (`AccShapeAligned`) discharges
+   every *shape* check.  What it cannot discharge is the closures themselves: `Node.backward`
+   is opaque state, so totality additionally needs each closure to be *shape-total*
+   (`BackwardShapeWF`) — succeed on a node-shaped cotangent and emit contributions that target
+   existing parents at their shapes.  §6 shows the eager constructors provide exactly this.
+
+   The per-step *value* commutation against P (the retired `sim_backward_step`) is
+   deliberately NOT re-derived: it is the A-bridge's ~800-line `haddGradAllPush` argument
+   (`BackwardGraph.lean:491-617`), and with Stage 3.5 landed its composed consequence is
+   available as a theorem — see §7. -/
 
 /-- A runtime gradient array realises a P cotangent context, blockwise (shapes included). -/
 def ArrCorr {Γ' : List Shape} (v : CtxVec Γ') (arr : Array Any) : Prop :=
@@ -205,68 +332,434 @@ def ArrCorr {Γ' : List Shape} (v : CtxVec Γ') (arr : Array Any) : Prop :=
   ∀ i : Fin Γ'.length,
     arr[i.val]? = some (mkAny (ofVecT (s := Γ'.get i) (CtxVec.getRaw (Γ := Γ') i v)))
 
-/-- **One reverse step commutes (fold invariant).**  If `acc` realises the P cotangent context
-    `seedFull`, then R's single step at the last id equals — under `ArrCorr` — P's snoc peel
-    `seedPrev + node.vjp`.  This is the crux the direct route must reproduce; it is the fderiv-model
-    analogue of `BackwardGraph.lean`'s `hstepLast`/`haddGradAllPush`.  OBLIGATION (sorry). -/
-theorem sim_backward_step
-    {Γ ss : List Shape} {τ : Shape}
-    (g : Graph Γ ss) (node : Node (Γ ++ ss) τ) (xV : CtxVec Γ)
-    (t : RTape) (hsim : ForwardSim (Graph.snoc g node) xV t)
-    (seedFull : CtxVec ((Γ ++ ss) ++ [τ])) (acc : Array Any)
-    (hacc : ArrCorr seedFull acc) :
-    ∃ acc',
-      Runtime.Autograd.Tape.backwardDenseFromStep (t := t) acc ((Γ ++ ss).length) = .ok acc' ∧
-      -- `acc'` realises the P context after this node's VJP has been scattered/accumulated
-      True := by
-  sorry
+/-- Every accumulator slot carries its node's shape (and the sizes agree). -/
+def AccShapeAligned (t : RTape) (acc : Array Any) : Prop :=
+  acc.size = t.nodes.size ∧
+  ∀ (i : Nat) (node : RNode) (g : Any),
+    t.getNode? i = some node → acc[i]? = some g → g.s = node.value.s
+
+/-- Backward closures are *shape-total*: fed a cotangent of the node's own shape (which is what
+    `backwardDenseFromStep` always passes), the closure succeeds, and every contribution targets
+    an existing node at that node's shape. -/
+def BackwardShapeWF (t : RTape) : Prop :=
+  ∀ (i : Nat) (node : RNode), t.getNode? i = some node →
+    ∀ d : Tensor ℝ node.value.s,
+      ∃ contribs, node.backward ⟨node.value.s, d⟩ = .ok contribs ∧
+        ∀ pc ∈ contribs, ∃ pnode : RNode,
+          t.getNode? pc.1 = some pnode ∧ pc.2.s = pnode.value.s
+
+/-- A `getNode?` hit bounds the id by the tape size. -/
+theorem lt_of_getNode?_eq_some {t : RTape} {i : Nat} {node : RNode}
+    (h : t.getNode? i = some node) : i < t.nodes.size := by
+  by_contra hge
+  have hnone : t.getNode? i = none := by
+    simp [Runtime.Autograd.Tape.getNode?, Array.getElem?_eq_none (Nat.le_of_not_lt hge)]
+  simp [hnone] at h
+
+/-- `AnyTensor.add` succeeds on equal shapes, and the sum keeps the left shape. -/
+theorem anyAdd_ok_of_shape_eq (a b : Any) (h : a.s = b.s) :
+    ∃ c : Any, Runtime.Autograd.AnyTensor.add a b = .ok c ∧ c.s = a.s := by
+  refine ⟨⟨a.s, addSpec a.t (Tensor.castShape b.t h.symm)⟩, ?_, rfl⟩
+  simp [Runtime.Autograd.AnyTensor.add, h, Runtime.Autograd.AnyTensor.materialize]
+
+/-- One `addGradAll` accumulation preserves the shape-alignment invariant and succeeds,
+    provided the contribution targets an existing node at that node's shape. -/
+theorem addGradAll_ok (t : RTape) (acc : Array Any) (hacc : AccShapeAligned t acc)
+    (pid : Nat) (g : Any) (pnode : RNode)
+    (hp : t.getNode? pid = some pnode) (hs : g.s = pnode.value.s) :
+    ∃ acc', Runtime.Autograd.Tape.addGradAll (t := t) acc pid g = .ok acc' ∧
+      AccShapeAligned t acc' := by
+  obtain ⟨hsize, hslots⟩ := hacc
+  by_cases hreq : pnode.requires_grad = false
+  · refine ⟨acc, ?_, hsize, hslots⟩
+    simp [Runtime.Autograd.Tape.addGradAll, hp, hreq, bind, Except.bind, pure, Except.pure]
+  · have hreq' : pnode.requires_grad = true := by
+      cases hb : pnode.requires_grad
+      · exact absurd hb hreq
+      · rfl
+    have hpid_lt : pid < t.nodes.size := lt_of_getNode?_eq_some hp
+    have hpid_acc : pid < acc.size := by rw [hsize]; exact hpid_lt
+    have hex : (acc[pid]'hpid_acc).s = pnode.value.s :=
+      hslots pid pnode _ hp (Array.getElem?_eq_getElem hpid_acc)
+    obtain ⟨summed, hsummed, hsummed_s⟩ :=
+      anyAdd_ok_of_shape_eq
+        ⟨pnode.value.s, Tensor.castShape (acc[pid]'hpid_acc).t hex⟩
+        ⟨pnode.value.s, Tensor.castShape g.t hs⟩ rfl
+    refine ⟨acc.set pid summed hpid_acc, ?_, ?_, ?_⟩
+    · simp [Runtime.Autograd.Tape.addGradAll, hp, hreq', hs, hex, hpid_acc,
+        hsummed, bind, Except.bind, pure, Except.pure]
+    · simpa using hsize
+    · intro i node gi hnode hgi
+      by_cases hi : pid = i
+      · subst hi
+        rw [hp] at hnode
+        have hnodeeq : pnode = node := Option.some.inj hnode
+        subst hnodeeq
+        rw [Array.getElem?_set_self hpid_acc] at hgi
+        have hgieq : summed = gi := Option.some.inj hgi
+        subst hgieq
+        exact hsummed_s
+      · rw [Array.getElem?_set_ne hpid_acc hi] at hgi
+        exact hslots i node gi hnode hgi
+
+/-- Folding a list of well-targeted contributions through `addGradAll` succeeds and preserves
+    the invariant.  (The fold function is written exactly as in `backwardDenseFromStep`.) -/
+theorem foldContribs_ok (t : RTape) :
+    ∀ (contribs : List (Nat × Any)) (acc : Array Any), AccShapeAligned t acc →
+      (∀ pc ∈ contribs, ∃ pnode : RNode,
+          t.getNode? pc.1 = some pnode ∧ pc.2.s = pnode.value.s) →
+      ∃ acc',
+        contribs.foldlM
+            (fun acc2 (pid, pg) => Runtime.Autograd.Tape.addGradAll (t := t) acc2 pid pg) acc
+          = .ok acc' ∧ AccShapeAligned t acc'
+  | [], acc, hacc, _ => ⟨acc, rfl, hacc⟩
+  | (pid, pg) :: rest, acc, hacc, htargets => by
+      obtain ⟨pnode, hp, hs⟩ := htargets (pid, pg) List.mem_cons_self
+      obtain ⟨acc1, hstep, hacc1⟩ := addGradAll_ok t acc hacc pid pg pnode hp hs
+      obtain ⟨acc', hrest, hacc'⟩ :=
+        foldContribs_ok t rest acc1 hacc1 (fun q hq => htargets q (List.mem_cons_of_mem _ hq))
+      exact ⟨acc', by simp [List.foldlM_cons, hstep, hrest, bind, Except.bind], hacc'⟩
+
+/-- One reverse step succeeds and preserves the invariant.  This is the surviving half of the
+    retired `sim_backward_step` (the value half is §7's composed endpoint). -/
+theorem backwardDenseFromStep_ok (t : RTape) (hwf : BackwardShapeWF t)
+    (acc : Array Any) (hacc : AccShapeAligned t acc) (id : Nat) (hid : id < t.nodes.size) :
+    ∃ acc', Runtime.Autograd.Tape.backwardDenseFromStep (t := t) acc id = .ok acc' ∧
+      AccShapeAligned t acc' := by
+  obtain ⟨hsize, hslots⟩ := hacc
+  have hnode : t.getNode? id = some (t.nodes[id]'hid) := by
+    simp [Runtime.Autograd.Tape.getNode?, Array.getElem?_eq_getElem hid]
+  set node := t.nodes[id]'hid with hnode_def
+  by_cases hreq : node.requires_grad = false
+  · refine ⟨acc, ?_, hsize, hslots⟩
+    simp [Runtime.Autograd.Tape.backwardDenseFromStep, hnode, hreq,
+      bind, Except.bind, pure, Except.pure]
+  · have hreq' : node.requires_grad = true := by
+      cases hb : node.requires_grad
+      · exact absurd hb hreq
+      · rfl
+    have hid_acc : id < acc.size := by rw [hsize]; exact hid
+    have hg : acc[id]? = some (acc[id]'hid_acc) := Array.getElem?_eq_getElem hid_acc
+    set g := acc[id]'hid_acc with hg_def
+    have hshape : g.s = node.value.s := hslots id node g hnode hg
+    obtain ⟨contribs, hbackward, htargets⟩ :=
+      hwf id node hnode (Tensor.castShape g.t hshape)
+    obtain ⟨acc', hfold, hacc'⟩ :=
+      foldContribs_ok t contribs acc ⟨hsize, hslots⟩ htargets
+    refine ⟨acc', ?_, hacc'⟩
+    simp [Runtime.Autograd.Tape.backwardDenseFromStep, hnode, hreq', hg, hshape,
+      hbackward, hfold, bind, Except.bind, pure, Except.pure]
+
+/-- The reverse loop over the first `n` ids succeeds and preserves the invariant. -/
+theorem backwardDenseFromLoop_ok (t : RTape) (hwf : BackwardShapeWF t) :
+    ∀ (n : Nat), n ≤ t.nodes.size → ∀ acc, AccShapeAligned t acc →
+      ∃ out, Runtime.Autograd.Tape.backwardDenseFromLoop (t := t) n acc = .ok out ∧
+        AccShapeAligned t out
+  | 0, _, acc, hacc => ⟨acc, rfl, hacc⟩
+  | n + 1, hn, acc, hacc => by
+      obtain ⟨acc', hstep, hacc'⟩ :=
+        backwardDenseFromStep_ok t hwf acc hacc n (Nat.lt_of_succ_le hn)
+      obtain ⟨out, hloop, hout⟩ :=
+        backwardDenseFromLoop_ok t hwf n (Nat.le_of_succ_le hn) acc' hacc'
+      exact ⟨out, by
+        simp [Runtime.Autograd.Tape.backwardDenseFromLoop, hstep, hloop,
+          bind, Except.bind], hout⟩
 
 /- ===========================================================================================
-   §6.  PARTIALITY — does R return `.ok`?  (sorry, but the shape of the answer is settled.)
+   §6.  PARTIALITY — R returns `.ok`.  CLOSED (with the honest closure hypothesis).
 
-   Claim: for a `ForwardSim`-well-formed graph, every dynamic *shape* check in the reverse pass
-   takes its matching branch, so `backwardDenseFrom` returns `.ok`.  Crucially this needs ONLY
-   shape-alignment: the `log`/`sqrt` value-domain side conditions are on the *real values* and live
-   entirely on the P side as `NodeFDerivCorrectAt` (`Tape/Core/FDeriv.lean:928`); R never inspects
-   them (it totalises the derivative), so `.ok` is orthogonal to differentiability.  OBLIGATION. -/
+   The original claim assumed only `ForwardSim`.  That is *not enough*: `ForwardSim` pins the
+   tape's stored values, but the reverse pass runs the opaque `backward` closures, and a tape
+   whose values are correct but whose closure is `fun _ => .error …` satisfies `ForwardSim`
+   while refuting the claim.  The honest statement adds `BackwardShapeWF` — and the lemmas
+   after the theorem show the eager runtime constructors (`Tape.leaf`/`Tape.add`/`Tape.mul`,
+   the ops `Sensitivity.gradient`'s model class uses) provide it, so on eagerly built tapes the
+   hypothesis is discharged constructor by constructor.  The `log`/`sqrt` value-domain side
+   conditions live entirely on the P side (`NodeFDerivCorrectAt`); R never inspects values, so
+   `.ok` is orthogonal to differentiability, as the spike predicted. -/
 
+/-- `ForwardSim` + a seed realising some cotangent context give the fold invariant. -/
+theorem accShapeAligned_of_sim {Γ ss : List Shape} {g : Graph Γ ss} {xV : CtxVec Γ}
+    {t : RTape} (hsim : ForwardSim g xV t)
+    {seedFull : CtxVec (Γ ++ ss)} {seedArr : Array Any}
+    (hseed : ArrCorr seedFull seedArr) :
+    AccShapeAligned t seedArr := by
+  obtain ⟨hts, hvals⟩ := hsim
+  obtain ⟨hss, hslots⟩ := hseed
+  refine ⟨by rw [hss, hts], ?_⟩
+  intro i node gi hnode hgi
+  have hi : i < (Γ ++ ss).length := by
+    have h := lt_of_getNode?_eq_some hnode
+    rwa [hts] at h
+  -- The node's stored value is the slot value, so its shape is the slot shape.
+  have hval : t.getValue? i = some (ctxSlotValue g xV ⟨i, hi⟩) := hvals ⟨i, hi⟩
+  have hvalue : node.value = ctxSlotValue g xV ⟨i, hi⟩ := by
+    simp only [Runtime.Autograd.Tape.getValue?, hnode, Option.map_some] at hval
+    exact Option.some.inj hval
+  have hnode_s : node.value.s = (Γ ++ ss).get ⟨i, hi⟩ := by
+    rw [hvalue]; rfl
+  -- The seed slot's shape is also the slot shape.
+  have hslot : seedArr[i]? = some (mkAny (ofVecT (s := (Γ ++ ss).get ⟨i, hi⟩)
+      (CtxVec.getRaw (Γ := Γ ++ ss) ⟨i, hi⟩ seedFull))) := hslots ⟨i, hi⟩
+  rw [hgi] at hslot
+  have hgieq : gi = mkAny (ofVecT (s := (Γ ++ ss).get ⟨i, hi⟩)
+      (CtxVec.getRaw (Γ := Γ ++ ss) ⟨i, hi⟩ seedFull)) := Option.some.inj hslot
+  rw [hgieq, hnode_s]
+  rfl
+
+/-- **The total reverse pass returns `.ok`** on a `ForwardSim`-well-formed tape with shape-total
+    closures, from any seed realising a cotangent context.  (Original obligation, CLOSED with
+    the `BackwardShapeWF` refinement; the invariant on the output comes for free.) -/
 theorem backwardDenseFrom_ok
     {Γ ss : List Shape} (g : Graph Γ ss) (xV : CtxVec Γ)
-    (t : RTape) (hsim : ForwardSim g xV t)
+    (t : RTape) (hsim : ForwardSim g xV t) (hwf : BackwardShapeWF t)
     (seedFull : CtxVec (Γ ++ ss)) (seedArr : Array Any) (hseed : ArrCorr seedFull seedArr) :
-    ∃ out : Array Any, Runtime.Autograd.Tape.backwardDenseFrom (t := t) seedArr = .ok out := by
-  sorry
+    ∃ out : Array Any, Runtime.Autograd.Tape.backwardDenseFrom (t := t) seedArr = .ok out ∧
+      AccShapeAligned t out := by
+  have hacc := accShapeAligned_of_sim hsim hseed
+  obtain ⟨out, hloop, hout⟩ :=
+    backwardDenseFromLoop_ok t hwf t.nodes.size (Nat.le_refl _) seedArr hacc
+  refine ⟨out, ?_, hout⟩
+  simp [Runtime.Autograd.Tape.backwardDenseFrom, hacc.1, hloop]
+
+/- The eager constructors provide `BackwardShapeWF`, node by node. -/
+
+/-- The empty tape is (vacuously) shape-total. -/
+theorem backwardShapeWF_empty : BackwardShapeWF (Runtime.Autograd.Tape.empty (α := ℝ)) := by
+  intro i node hnode
+  simp [Runtime.Autograd.Tape.empty, Runtime.Autograd.Tape.getNode?] at hnode
+
+/-- Pushing a node whose closure is shape-total w.r.t. the *old* tape preserves
+    `BackwardShapeWF` (old closures never see the new id; targets persist under push). -/
+theorem backwardShapeWF_addNode (t : RTape) (hwf : BackwardShapeWF t) (node : RNode)
+    (hnode : ∀ d : Tensor ℝ node.value.s,
+      ∃ contribs, node.backward ⟨node.value.s, d⟩ = .ok contribs ∧
+        ∀ pc ∈ contribs, ∃ pnode : RNode,
+          t.getNode? pc.1 = some pnode ∧ pc.2.s = pnode.value.s) :
+    BackwardShapeWF (t.addNode node).1 := by
+  -- `addNode` materializes the stored value, which is the identity on `AnyTensor`.
+  have hpush : (t.addNode node).1.nodes = t.nodes.push node := by
+    simp [Runtime.Autograd.Tape.addNode]
+  have hmono : ∀ (j : Nat) (pnode : RNode), t.getNode? j = some pnode →
+      (t.addNode node).1.getNode? j = some pnode := by
+    intro j pnode hj
+    have hjlt : j < t.nodes.size := lt_of_getNode?_eq_some hj
+    have hj' : t.nodes[j]? = some pnode := hj
+    have hval : t.nodes[j]'hjlt = pnode :=
+      Option.some.inj ((Array.getElem?_eq_getElem hjlt).symm.trans hj')
+    simp only [Runtime.Autograd.Tape.getNode?, hpush]
+    rw [Array.getElem?_push_lt hjlt, hval]
+  intro i inode hi d
+  by_cases hilt : i < t.nodes.size
+  · -- an old node: its closure and its targets are untouched
+    have hi_old : t.getNode? i = some inode := by
+      have h := hi
+      simp only [Runtime.Autograd.Tape.getNode?, hpush] at h
+      rw [Array.getElem?_push_lt hilt] at h
+      have hval : t.nodes[i]'hilt = inode := Option.some.inj h
+      show t.nodes[i]? = some inode
+      rw [Array.getElem?_eq_getElem hilt, hval]
+    obtain ⟨contribs, hok, htargets⟩ := hwf i inode hi_old d
+    exact ⟨contribs, hok, fun pc hpc =>
+      let ⟨pnode, hp, hs⟩ := htargets pc hpc
+      ⟨pnode, hmono pc.1 pnode hp, hs⟩⟩
+  · -- the new node: `hnode` gives the closure fact against `t`, transported by `hmono`
+    have hi_eq : i = t.nodes.size := by
+      have hi_lt : i < (t.addNode node).1.nodes.size := lt_of_getNode?_eq_some hi
+      rw [hpush, Array.size_push] at hi_lt
+      omega
+    subst hi_eq
+    have hi_new : inode = node := by
+      have h := hi
+      simp only [Runtime.Autograd.Tape.getNode?, hpush] at h
+      rw [Array.getElem?_push_size] at h
+      exact (Option.some.inj h).symm
+    subst hi_new
+    obtain ⟨contribs, hok, htargets⟩ := hnode d
+    exact ⟨contribs, hok, fun pc hpc =>
+      let ⟨pnode, hp, hs⟩ := htargets pc hpc
+      ⟨pnode, hmono pc.1 pnode hp, hs⟩⟩
+
+/-- Leaves are shape-total (their closure returns no contributions). -/
+theorem backwardShapeWF_leaf {s : Shape} (t : RTape) (hwf : BackwardShapeWF t)
+    (v : Tensor ℝ s) (name : Option String) (rg : Bool) :
+    BackwardShapeWF (Runtime.Autograd.Tape.leaf (α := ℝ) t v name rg).1 := by
+  exact backwardShapeWF_addNode t hwf _ (fun d => ⟨[], rfl, by simp⟩)
+
+/-- A successful `requireValue` pins the target node's stored shape. -/
+theorem requireValue_shape {s : Shape} (t : RTape) (id : Nat) (v : Tensor ℝ s)
+    (h : Runtime.Autograd.Tape.requireValue (α := ℝ) (t := t) (s := s) id = .ok v) :
+    ∃ pnode : RNode, t.getNode? id = some pnode ∧ pnode.value.s = s := by
+  cases hv : t.getValue? id with
+  | none => simp [Runtime.Autograd.Tape.requireValue, hv] at h
+  | some any =>
+    by_cases hs : any.s = s
+    · cases hn : t.getNode? id with
+      | none => simp [Runtime.Autograd.Tape.getValue?, hn] at hv
+      | some pnode =>
+        refine ⟨pnode, rfl, ?_⟩
+        have hval : pnode.value = any := by
+          simp only [Runtime.Autograd.Tape.getValue?, hn, Option.map_some] at hv
+          exact Option.some.inj hv
+        rw [hval, hs]
+    · simp [Runtime.Autograd.Tape.requireValue, hv, hs] at h
+
+/-- The eager `Tape.add` constructor preserves `BackwardShapeWF`: its closure copies the
+    (node-shaped) cotangent to both parents, whose stored shapes `requireValue` has pinned. -/
+theorem backwardShapeWF_add {s : Shape} (t : RTape) (hwf : BackwardShapeWF t)
+    (aId bId : Nat) (t' : RTape) (id : Nat)
+    (h : Runtime.Autograd.Tape.add (α := ℝ) (s := s) t aId bId = .ok (t', id)) :
+    BackwardShapeWF t' := by
+  cases hA : Runtime.Autograd.Tape.requireValue (α := ℝ) (t := t) (s := s) aId with
+  | error e => simp [Runtime.Autograd.Tape.add, hA, bind, Except.bind] at h
+  | ok a =>
+  cases hB : Runtime.Autograd.Tape.requireValue (α := ℝ) (t := t) (s := s) bId with
+  | error e => simp [Runtime.Autograd.Tape.add, hA, hB, bind, Except.bind] at h
+  | ok b =>
+  obtain ⟨pa, hpa, hpa_s⟩ := requireValue_shape t aId a hA
+  obtain ⟨pb, hpb, hpb_s⟩ := requireValue_shape t bId b hB
+  simp only [Runtime.Autograd.Tape.add, hA, hB, bind, Except.bind, pure, Except.pure] at h
+  have hpair := Except.ok.inj h
+  have ht' : t' = (t.addNode _).1 := (congrArg Prod.fst hpair).symm
+  rw [ht']
+  refine backwardShapeWF_addNode t hwf _ ?_
+  intro d
+  refine ⟨[(aId, mkAny d), (bId, mkAny d)], ?_, ?_⟩
+  · simp [Runtime.Autograd.Tape.requireGrad, mkAny, Runtime.Autograd.AnyTensor.mk]
+  · intro pc hpc
+    simp only [List.mem_cons, List.not_mem_nil, or_false] at hpc
+    rcases hpc with rfl | rfl
+    · exact ⟨pa, hpa, by simp [mkAny, Runtime.Autograd.AnyTensor.mk, hpa_s]⟩
+    · exact ⟨pb, hpb, by simp [mkAny, Runtime.Autograd.AnyTensor.mk, hpb_s]⟩
+
+/-- The eager `Tape.mul` constructor preserves `BackwardShapeWF`: its product-rule closure
+    emits node-shaped contributions to both parents. -/
+theorem backwardShapeWF_mul {s : Shape} (t : RTape) (hwf : BackwardShapeWF t)
+    (aId bId : Nat) (t' : RTape) (id : Nat)
+    (h : Runtime.Autograd.Tape.mul (α := ℝ) (s := s) t aId bId = .ok (t', id)) :
+    BackwardShapeWF t' := by
+  cases hA : Runtime.Autograd.Tape.requireValue (α := ℝ) (t := t) (s := s) aId with
+  | error e => simp [Runtime.Autograd.Tape.mul, hA, bind, Except.bind] at h
+  | ok a =>
+  cases hB : Runtime.Autograd.Tape.requireValue (α := ℝ) (t := t) (s := s) bId with
+  | error e => simp [Runtime.Autograd.Tape.mul, hA, hB, bind, Except.bind] at h
+  | ok b =>
+  obtain ⟨pa, hpa, hpa_s⟩ := requireValue_shape t aId a hA
+  obtain ⟨pb, hpb, hpb_s⟩ := requireValue_shape t bId b hB
+  simp only [Runtime.Autograd.Tape.mul, hA, hB, bind, Except.bind, pure, Except.pure] at h
+  have hpair := Except.ok.inj h
+  have ht' : t' = (t.addNode _).1 := (congrArg Prod.fst hpair).symm
+  rw [ht']
+  refine backwardShapeWF_addNode t hwf _ ?_
+  intro d
+  refine ⟨[(aId, mkAny (mulSpec d b)), (bId, mkAny (mulSpec d a))], ?_, ?_⟩
+  · simp [Runtime.Autograd.Tape.requireGrad, mkAny, Runtime.Autograd.AnyTensor.mk]
+  · intro pc hpc
+    simp only [List.mem_cons, List.not_mem_nil, or_false] at hpc
+    rcases hpc with rfl | rfl
+    · exact ⟨pa, hpa, by simp [mkAny, Runtime.Autograd.AnyTensor.mk, hpa_s]⟩
+    · exact ⟨pb, hpb, by simp [mkAny, Runtime.Autograd.AnyTensor.mk, hpb_s]⟩
 
 /- ===========================================================================================
-   §7.  TOP-LEVEL COMPOSITION to `fderiv`.  (sorry, but the endpoint is the real theorem.)
+   §7.  TOP-LEVEL COMPOSITION to `fderiv` — CLOSED for compiled tapes, via Stage 3.5.
 
-   Chaining §5 over the graph gives:  R's total `backwardDenseFrom`, projected onto the first
-   `Γ.length` slots, equals P's `backpropVec`, which (`backpropVec_eq_adjoint_fderiv`) equals
-   `(fderiv ℝ evalVec).adjoint`.
+   Chaining §5 over the graph would give: R's total `backwardDenseFrom`, projected onto the
+   first `Γ.length` slots, equals P's `backpropVec` = `(fderiv ℝ evalVec).adjoint`.  We do NOT
+   chain §5 (that would re-derive the A-bridge's fold argument).  Instead the composed value
+   statement is the `Γ`-prefix projection of the Stage-3.5 endpoint
+   `backwardDenseFrom_compileAux_adjoint_fderiv`, transported into this file's `ArrCorr`
+   phrasing.  The projection matters because P's `backpropVec` returns INPUT grads only while
+   R retains a gradient per node — `Algebra.TList.takeLeft` names the projection on the typed
+   side, `Array.extract` on the runtime side, and the two commute with erasure (below).
 
-   NOTE (a real mismatch worth naming): P's `backpropVec` returns `CtxVec Γ` — INPUT grads only;
-   it folds intermediate cotangents into `seedPrev` and discards them.  R's `backwardDenseFrom`
-   RETAINS a gradient for *every* node.  So the comparison must PROJECT R's output array onto the
-   `Γ`-prefix.  (The dropped slots are the intermediate accumulated cotangents, computed identically
-   along the way — but P's fderiv model gives no name for them, unlike A's `backpropAllCtx`.) -/
+   For an *arbitrary* tape known only through `ForwardSim`, the corresponding statement is
+   unprovable — `ForwardSim` does not pin the backward closures, and a value-correct tape with
+   junk closures is a countermodel.  For the tapes the eager constructors build, the closure
+   provenance is supplied by `Experiments/EagerProvenance.lean`: `EagerBuilds` relates the
+   runtime construction to the graph, and `direct_PR_soundness_eager` transfers this endpoint
+   to the eager tape with no compilation involved. -/
 
-/-- Projection of a runtime gradient array onto the input (`Γ`-prefix) slots, as a P `CtxVec Γ`
-    — assuming the array already realises some `CtxVec (Γ ++ ss)` we could just read it off; here we
-    only need the *statement*, so we take the realised context as a hypothesis. -/
-theorem direct_PR_soundness
-    {Γ ss : List Shape} (g : Graph Γ ss) (hg : GraphFDerivCorrect g)
-    (xV : CtxVec Γ) (t : RTape) (hsim : ForwardSim g xV t)
-    (seedFull : CtxVec (Γ ++ ss)) (seedArr : Array Any) (hseed : ArrCorr seedFull seedArr) :
-    ∃ (out : Array Any) (gInput : CtxVec Γ),
-      Runtime.Autograd.Tape.backwardDenseFrom (t := t) seedArr = .ok out ∧
-      -- the `Γ`-prefix of `out` realises `gInput`:
-      ArrCorr gInput (out.extract 0 Γ.length) ∧
-      -- …and `gInput` is exactly the `fderiv` adjoint (the imported P theorem):
-      gInput = (fderiv ℝ (g.evalVec) xV).adjoint seedFull := by
-  -- The last conjunct's RHS is `g.backpropVec xV seedFull` by `backpropVec_eq_adjoint_fderiv`;
-  -- the first two are §6 + (§5 chained). We record the fderiv endpoint is genuinely available:
-  have hfderiv : g.backpropVec xV seedFull = (fderiv ℝ (g.evalVec) xV).adjoint seedFull :=
-    Graph.backpropVec_eq_adjoint_fderiv g hg xV seedFull
-  sorry
+/-- Erasure commutes with the input-prefix projection: extracting the first `Γ.length` runtime
+    slots is erasing the typed `takeLeft`. -/
+theorem toAnyArray_extract_takeLeft {Γ ss : List Shape} (w : Algebra.TList ℝ (Γ ++ ss)) :
+    (Algebra.TList.toAnyArray (α := ℝ) (ss := Γ ++ ss) w).extract 0 Γ.length
+      = Algebra.TList.toAnyArray (α := ℝ) (ss := Γ)
+          (Algebra.TList.takeLeft (α := ℝ) (Γ := Γ) (ss := ss) w) := by
+  have hlist : ∀ (Γ' : List Shape) (w' : Algebra.TList ℝ (Γ' ++ ss)),
+      Algebra.TList.toAnyList (α := ℝ) (ss := Γ')
+          (Algebra.TList.takeLeft (α := ℝ) (Γ := Γ') (ss := ss) w')
+        = (Algebra.TList.toAnyList (α := ℝ) (ss := Γ' ++ ss) w').take Γ'.length := by
+    intro Γ'
+    induction Γ' with
+    | nil => intro w'; simp [Algebra.TList.takeLeft, Algebra.TList.toAnyList]
+    | cons s Γ' ih =>
+      intro w'
+      cases w' with
+      | cons x xs =>
+        simp [Algebra.TList.takeLeft, Algebra.TList.toAnyList, List.take_succ_cons, ih xs]
+  apply Array.ext'
+  simp [Algebra.TList.toAnyArray, hlist Γ w]
+
+/-- An erased typed context realises its own flattening (`ArrCorr` is inhabited by erasure). -/
+theorem arrCorr_flattenCtx {Γ : List Shape} (u : TList Γ) :
+    ArrCorr (flattenCtx u) (Algebra.TList.toAnyArray (α := ℝ) (ss := Γ) u) := by
+  refine ⟨by simp, ?_⟩
+  intro i
+  rw [toAnyArray_getElem?, getRaw_flattenCtx, ofVecT_toVecT]
+
+/-- **Runtime reverse pass on a compiled tape = `(fderiv ℝ evalVec x)†`, in `ArrCorr` form.**
+    (The closure of the original `direct_PR_soundness`, for compiled tapes: a corollary of the
+    Stage-3.5 endpoint; the `Γ`-prefix of the output array realises exactly the adjoint of the
+    Fréchet derivative of the P graph's forward evaluation.) -/
+theorem direct_PR_soundness_compiled {Γ ss : List Shape}
+    (g : Graph Γ ss) (hg : GraphFDerivCorrect g) (x : TList Γ) (seed : TList (Γ ++ ss)) :
+    ∃ out : Array Any,
+      Runtime.Autograd.Tape.backwardDenseFrom
+          (t := (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
+            g.toAlgebra x ()).1)
+          (grads0 := Algebra.TList.toAnyArray (α := ℝ) (ss := Γ ++ ss) seed)
+        = .ok out ∧
+      ArrCorr ((fderiv ℝ (g.evalVec) (flattenCtx x)).adjoint (flattenCtx seed))
+        (out.extract 0 Γ.length) := by
+  have hg' : GraphFDerivCorrect
+      (Algebra.Graph.toReal (Δ := Unit) g.toAlgebra ()) := by simpa using hg
+  obtain ⟨h1, h2⟩ :=
+    Algebra.Graph.backwardDenseFrom_compileAux_adjoint_fderiv (Δ := Unit)
+      g.toAlgebra x () seed hg'
+  refine ⟨_, h1, ?_⟩
+  rw [toAnyArray_extract_takeLeft]
+  have h2' : flattenCtx (Algebra.TList.takeLeft
+        (Algebra.Graph.backpropAllCtx (α := ℝ) (Δ := Unit) g.toAlgebra x () seed))
+      = (fderiv ℝ (g.evalVec) (flattenCtx x)).adjoint (flattenCtx seed) := by
+    simpa using h2
+  rw [← h2']
+  exact arrCorr_flattenCtx _
+
+/-- The pointwise-differentiability variant (`GraphFDerivCorrectAt`), covering graphs with
+    non-smooth primitives away from their kinks — same shape, via the `_at` Stage-3.5 endpoint. -/
+theorem direct_PR_soundness_compiled_at {Γ ss : List Shape}
+    (g : Graph Γ ss) (x : TList Γ)
+    (hg : GraphFDerivCorrectAt g (flattenCtx x)) (seed : TList (Γ ++ ss)) :
+    ∃ out : Array Any,
+      Runtime.Autograd.Tape.backwardDenseFrom
+          (t := (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
+            g.toAlgebra x ()).1)
+          (grads0 := Algebra.TList.toAnyArray (α := ℝ) (ss := Γ ++ ss) seed)
+        = .ok out ∧
+      ArrCorr ((fderiv ℝ (g.evalVec) (flattenCtx x)).adjoint (flattenCtx seed))
+        (out.extract 0 Γ.length) := by
+  have hg' : GraphFDerivCorrectAt
+      (Algebra.Graph.toReal (Δ := Unit) g.toAlgebra ()) (flattenCtx x) := by simpa using hg
+  obtain ⟨h1, h2⟩ :=
+    Algebra.Graph.backwardDenseFrom_compileAux_adjoint_fderiv_at (Δ := Unit)
+      g.toAlgebra x () seed hg'
+  refine ⟨_, h1, ?_⟩
+  rw [toAnyArray_extract_takeLeft]
+  have h2' : flattenCtx (Algebra.TList.takeLeft
+        (Algebra.Graph.backpropAllCtx (α := ℝ) (Δ := Unit) g.toAlgebra x () seed))
+      = (fderiv ℝ (g.evalVec) (flattenCtx x)).adjoint (flattenCtx seed) := by
+    simpa using h2
+  rw [← h2']
+  exact arrCorr_flattenCtx _
 
 end PRSim

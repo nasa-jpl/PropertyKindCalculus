@@ -53,6 +53,15 @@ Stage-3.3 addition (the executable↔spec bridge):
     the kernel reports absorption, the exact real sum rounds back under the binary32 `round₃₂` spec —
     the computed verdict is provably the specified one. Sorry-free axiom profile confirmed.
 
+Stage-3.6 addition (the direct P↔R simulation, closed; + the eager-provenance addendum):
+  * `AutogradDirectSim` — the closed `PRSim` obligations instantiated concretely: the
+    vectorization homomorphisms at a 3-vector shape; the compiled product graph `x₀ * x₁` with
+    the `direct_PR_soundness_compiled` endpoint (runtime dense reverse pass = `(fderiv eval)†`
+    on the input prefix) and its inhabited `ForwardSim`; an eager two-leaf/`mul` tape whose
+    `BackwardShapeWF` is discharged constructor by constructor; and `EagerBuilds` witnessing
+    that runtime tape with `direct_PR_soundness_eager` giving the endpoint on it — no
+    compilation involved. Axiom pins confirm the classical trio only.
+
 Further paper examples (the AFM indenter model; Willink's asymmetric and Type-A cases) arrive with
 later sub-stages.
 -/
@@ -68,4 +77,5 @@ import PropertyKindCalculus.UncertaintyExamples.AdequacyDag
 import PropertyKindCalculus.UncertaintyExamples.AdequacySterbenz32
 import PropertyKindCalculus.UncertaintyExamples.AdequacyExecBridge
 import PropertyKindCalculus.UncertaintyExamples.AdequacyCoupling
+import PropertyKindCalculus.UncertaintyExamples.AutogradDirectSim
 import PropertyKindCalculus.UncertaintyExamples.Coverage

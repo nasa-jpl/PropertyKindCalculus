@@ -1,6 +1,6 @@
 # UNCERTAINTY.md — A rigor-first plan for uncertainty & numerical adequacy in PKC
 
-> Status: **Stages 0–3.4 implemented & CI-checked** (reference layer, GUM/Willink, autograd `cᵢ`,
+> Status: **Stages 0–3.6 implemented & CI-checked** (reference layer, GUM/Willink, autograd `cᵢ`,
 > the ladder theorems T1–T5, the executable SSPRC pipeline, the numerical-adequacy layer — the
 > executable `Adequacy` carrier plus the theorems A1 absorption, A2 Sterbenz, A3 verdict soundness
 > over `ℝ` — the **universal capstone A3′** (`DagBound`: FP32 measurand ≈ `ℝ` over an input box up
@@ -21,8 +21,19 @@
 > `NN/Proofs/Autograd/Runtime/Link/FDeriv.lean` proves the executable dense reverse pass on a
 > compiled graph returns, on the input prefix, exactly `(fderiv ℝ eval x)† seed`; PKC's
 > `Sensitivity.gradient` now invokes that very entry point, `Tape.backwardDenseFrom`, with its
-> public signature unchanged). The `×`/`÷` DAG extension, the direct-route closure (3.6), and
-> Stage 4 (scale) remain design/plan, scoped in §6.
+> public signature unchanged), and the **direct-simulation closure** (Stage 3.6: the `PRSim`
+> spike's five obligations are theorems — the vectorization homomorphisms
+> `mulSpec_ofVecT`/`addSpec_ofVecT`; the value-free totality `backwardDenseFrom_ok` (the dense
+> reverse pass returns `.ok` on any value-correct tape whose backward closures are *shape-total*,
+> a hypothesis the eager `leaf`/`add`/`mul` constructors are proved to provide); and the endpoint
+> `direct_PR_soundness_compiled` as the `Γ`-prefix `ArrCorr` corollary of the Stage-3.5 theorem —
+> `Experiments/PRSimulation.lean`, now indexed in `UncertaintyRigor`, sorry-free — **and the
+> eager-provenance closure** (`Experiments/EagerProvenance.lean`: `EagerBuilds` relates the tape
+> the runtime constructors `leaf`/`add`/`mul` actually build to its P-graph, and
+> `backwardDenseFrom_eager_eq_compiled` proves that tape's total dense reverse pass computes
+> exactly the compiled tape's — so `direct_PR_soundness_eager` puts the fderiv endpoint on the
+> *eagerly built* tape, no compilation involved). The `×`/`÷` DAG extension and Stage 4 (scale)
+> remain design/plan, scoped in §6.
 > Audience: PKC maintainers.
 > Scope: augment PropertyKindCalculus in two coupled areas —
 > (1) **uncertainty quantification** (UQ) of model outputs from input uncertainties, and
@@ -463,6 +474,22 @@ uncertainty/PropertyKindCalculus/Uncertainty/
                            (`ofInputDist`); `analyzeQ (h : ProductKind kₛ kᵢ kₒ)` instantiates one carrier-raw WO1 kernel at
                            both `TapeBuilder .scalar` (for `cᵢ`) and `Adequacy` (for the verdict) and folds them into a
                            kind-typed `CouplingResultQ kₒ` (contributions + combined = `Quantity kₒ`; no naked field swap)
+  Experiments/PRSimulation.lean ✅ direct P↔R simulation, closed (Stage 3.6): the vectorization homomorphisms
+                           (`mulSpec_ofVecT`/`addSpec_ofVecT`, `Shape` induction); the value-free `.ok` totality of
+                           `backwardDenseFrom` via the `AccShapeAligned` fold invariant under `BackwardShapeWF`
+                           (shape-total closures — provided, constructor by constructor, by the eager
+                           `Tape.leaf`/`add`/`mul`); `ForwardSim` inhabited by compiled tapes; and the endpoint
+                           `direct_PR_soundness_compiled` = the `Γ`-prefix `ArrCorr` corollary of the Stage-3.5
+                           theorem — sorry-free, no fold re-derivation (the adjoint enters only through 3.5)
+  Experiments/EagerProvenance.lean ✅ eager-tape provenance, closed (Stage 3.6 addendum): `EagerBuilds g x t` =
+                           the tape the eager constructors build for graph `g` (leaves = `addLeaves`, one
+                           `Tape.add`/`mul` call per node); `backwardDenseFrom_eager_eq_compiled` — that tape's
+                           reverse pass computes exactly the compiled tape's (compiled dense folds by the upstream
+                           accumulation bridge, eager sparse folds by `addGradAll_toAnyArray_single`, the two
+                           context updates identified through flatten-injectivity + the §2 homomorphisms,
+                           push-invariance restricting the extended loop to the prefix — never re-deriving the
+                           fold); hence `direct_PR_soundness_eager`: the fderiv endpoint on the eagerly built
+                           tape itself — sorry-free
 ```
 
 Stage 3.2 also adds two **TorchLean** modules (upstream PR, branch `flt-fp32-sterbenz` off `upstream/main`,
@@ -520,6 +547,11 @@ examples/PropertyKindCalculus/UncertaintyExamples/
                              heterogeneous quadrature, field swap) are type errors; a 10⁸-accumulator swamps a contribution
                              (1 absorption) + `verdict_sound` at s=1; the same `combinedQ` run at R:=Adequacy adequacy-checks
                              its own quadrature (clean 0 / swamped 1); #print axioms sorry-free
+  AutogradDirectSim.lean  ✅ Stage-3.6 closure probe: the homomorphisms at a 3-vector shape; the compiled
+                             product graph x₀*x₁ with `direct_PR_soundness_compiled` + its inhabited `ForwardSim`;
+                             an eager two-leaf/`mul` tape with `BackwardShapeWF` discharged constructor by
+                             constructor; `EagerBuilds` witnessing that tape + `direct_PR_soundness_eager` on it
+                             (the endpoint with no compilation involved); #print axioms pins = classical trio only
   DegenhardtAfm.lean      ▫ Degenhardt §3.2 AFM indenter PAF, ~70× efficiency (Stage 4/scale)
   WillinkAsymmetric.lean  ▫ Willink §5 asymmetric input (κ₃) + Type-A t-cases (Stage 1)
 ```
@@ -727,8 +759,9 @@ and FFT kernels under `NN/Runtime/Autograd/Engine/Cuda/Ops/*` for SSPRC's convol
   owns). Deferred as its own workstream; not required for the kinded budget.
 
   *Spike result (2026-07-31, direct P↔R simulation attempted in Lean).* A compiling scaffold
-  (`uncertainty/…/Uncertainty/Experiments/PRSimulation.lean` — deliberately **unindexed**, a spike
-  artifact with 5 precisely-typed `sorry` obligations, not a CI'd probe) settles the design question
+  (`uncertainty/…/Uncertainty/Experiments/PRSimulation.lean` — at the time deliberately
+  **unindexed**, a spike artifact with 5 precisely-typed `sorry` obligations; since **closed,
+  sorry-free, and indexed** by Stage 3.6 below) settled the design question
   empirically. **Proven sorry-free** (axiom-checked `[propext, Classical.choice, Quot.sound]`): the
   per-node backward/adjoint correspondence for `add`/`mul` at `ℝ` — R's runtime backward closures
   evaluate to exactly P's node VJP (`p_{mul,add}_vjpVec` via `Node.vjpVec_ofVec`, feeding
@@ -794,26 +827,77 @@ and FFT kernels under `NN/Runtime/Autograd/Engine/Cuda/Ops/*` for SSPRC's convol
      shape-alignment argument) and *carrier* (the theorem speaks at `ℝ`, the run is `Float` —
      that deviation is precisely this workstream's own Adequacy claim, Stages 3–3.3).
 
-* **Stage 3.6 — Direct-route completion (the spike's remaining obligations).** 3.5 has landed, so
-  the composition ingredients now exist upstream; ordered so the bounded parts land first and the
-  expensive part is never done twice:
-  1. *Cheap, immediate (independent of 3.5):* the two vectorization homomorphisms
-     `mulSpec_ofVecT`/`addSpec_ofVecT` — `Shape` induction exactly like the existing `toVecT_get2`
-     (`Tape/Nodes/Matrix.lean:59`); closes forward agreement for `add`/`mul`.
-  2. *Partiality (`backwardDenseFrom_ok`):* derive `.ok` from `ForwardSim` shape-alignment by
-     threading the "every slot carries its node's shape" invariant through the fold — value-free,
-     independent of the adjoint facts.
-  3. *The fold pair (`sim_backward_step`, `direct_PR_soundness`):* do **not** re-derive the
-     `addGradAll` commutation against P — that duplicates the ~800-line `haddGradAllPush` argument
-     (`Runtime/Link/BackwardGraph.lean:491–617`). With 3.5 landed, `sim_backward_step` is derivable
-     by composing the A-bridge's fold lemma with the now-existing A→P correspondence
-     (`toReal_backpropCtx` + `takeLeft_backpropAllCtx` give the P-side content of the runtime
-     output directly), and `direct_PR_soundness` is the `Γ`-prefix projection of
-     `backwardDenseFrom_compileAux_adjoint_fderiv` — for *compiled* tapes it is now a corollary;
-     what the spike's statement still adds is only the eager-`TapeM` provenance (step 2's
-     `ForwardSim` shape-alignment), not new adjoint mathematics.
-  *Exit:* the scaffold's sorries close as corollaries (3.5 route), or the scaffold is retired to
-  documentation of the node-level correspondence — which is already sorry-free either way.
+* **Stage 3.6 — Direct-route completion (the spike's remaining obligations). ✅ DONE (pure PKC,
+  no TorchLean change).** `Experiments/PRSimulation.lean` is now a sorry-free module indexed in
+  `UncertaintyRigor`, with the paired probe `AutogradDirectSim.lean` in `UncertaintyExamples`
+  (every closed statement instantiated concretely + axiom pins = the classical trio). The three
+  planned steps landed exactly in order, with one honest statement refinement:
+  1. *Vectorization homomorphisms — PROVEN.* `mulSpec_ofVecT`/`addSpec_ofVecT` via the pointwise
+     `toVecT_map2Spec_apply` (`Shape` induction through the upstream coordinate characterization
+     `toVecT_dim_apply`; the zero-size branch is vacuous, the base case reuses the
+     `euclideanEquiv_symm_ofLp` scalar read). `addSpec` additionally short-cuts through the
+     Stage-3.5 `toVecT_addSpec` + the `toVecT`/`ofVecT` roundtrips. `mul_contrib_agree` is
+     thereby closed too.
+  2. *Partiality (`backwardDenseFrom_ok`) — PROVEN, with a refinement the original statement
+     needed:* `ForwardSim` pins the tape's stored **values** but not the opaque `backward`
+     **closures** the reverse pass runs — a value-correct tape with a `fun _ => .error` closure
+     refutes the unrefined claim. The honest hypothesis is `BackwardShapeWF` (every closure is
+     *shape-total*: on a node-shaped cotangent it succeeds and emits contributions targeting
+     existing nodes at their shapes). Under it, the "every slot carries its node's shape"
+     invariant `AccShapeAligned` threads through `addGradAll` → `backwardDenseFromStep` →
+     `backwardDenseFromLoop` value-free, and `ForwardSim` + `ArrCorr` seed it. Crucially the
+     hypothesis is *dischargeable*: `backwardShapeWF_{empty,addNode,leaf,add,mul}` prove the
+     eager runtime constructors provide it, constructor by constructor (`requireValue_shape`
+     pins the parents' stored shapes) — so `.ok` holds on eagerly built `leaf`/`add`/`mul`
+     tapes, not just compiled ones. `log`/`sqrt` domains stay P-side, as predicted.
+  3. *The fold pair — closed without re-deriving the `addGradAll` commutation.*
+     `sim_backward_step` is retired to documentation: its `.ok`-and-invariant half survives as
+     `backwardDenseFromStep_ok`; its per-step *value* half is exactly the A-bridge's ~800-line
+     `haddGradAllPush` argument and was not duplicated. `direct_PR_soundness` is closed as
+     **`direct_PR_soundness_compiled`** (+ `_at` variant): the `Γ`-prefix projection of the
+     Stage-3.5 endpoint transported into the spike's own `ArrCorr` phrasing by two new erasure
+     lemmas — `getRaw_flattenCtx` (block-reads invert `flattenCtx`, giving also
+     `arrCorr_flattenCtx`) and `toAnyArray_extract_takeLeft` (`Array.extract` is the erased
+     `TList.takeLeft`). `forwardSim_compileAux` additionally shows compiled tapes *inhabit*
+     `ForwardSim`, so the simulation relation is realized, not hypothetical. For an *arbitrary*
+     `ForwardSim` tape the value statement stays unprovable for the same reason as (2) — the
+     closures are unpinned — which at this point left one residual: identifying the eager
+     tape's closures with a compiled tape's, an accounting question, not adjoint mathematics.
+  *Exit met:* all five scaffold sorries are gone (three as proofs, one as a refined proof, one as
+  a compiled-tape corollary + documentation). Gate: `lake build Uncertainty UncertaintyRigor
+  UncertaintyExamples` = 3167 jobs green, 0 warnings; all named endpoints axiom-pinned
+  `[propext, Classical.choice, Quot.sound]`.
+
+  **Addendum — the eager-provenance residual, CLOSED (`Experiments/EagerProvenance.lean`,
+  sorry-free, indexed; probe additions in `AutogradDirectSim`).** The accounting question above
+  is now a theorem, for the `leaf`/`add`/`mul` fragment: **`EagerBuilds g x t`** is the
+  provenance relation (the base tape is `addLeaves`, which *is* the `Tape.leaf` fold — literally
+  the compiled tape of the empty graph — and each graph node corresponds to one successful eager
+  `Tape.add`/`Tape.mul` call), and **`backwardDenseFrom_eager_eq_compiled`** proves the total
+  dense reverse pass on the eager tape returns *exactly* what it returns on
+  `compileAux g.toAlgebra x ()` — same `Result`, same array — from any erased-context seed.
+  Consequently **`direct_PR_soundness_eager`** (+ `_at`): the fderiv endpoint holds on the
+  eagerly built tape itself, with no compilation anywhere; and `forwardSim_eager` shows those
+  tapes inhabit `ForwardSim`. The proof discipline held: no reverse-pass fold is re-derived —
+  the compiled node's *dense* contribution list is folded by the upstream accumulation bridge
+  (`foldlM_addGradAll_toIndexedAnyList_eq_add`), the eager node's *sparse* two-element list by
+  the new single-slot lemma `addGradAll_toAnyArray_single` (one `addGradAll` call = one one-hot
+  `TList.add`, via `toAnyList_add_single` + `addSpec_fill_zero`), and the two context updates
+  coincide by flatten-injectivity: `flattenCtx_single`/`getIdx_flattenCtx` (new erasure lemmas
+  for one-hot contexts and block reads) turn both into vector sums where the Stage-3.6
+  homomorphism `toVecT_mulSpec` identifies the eager `mulSpec` payloads with the `ofVec`-authored
+  node's Hadamard vjp (`mul_vjp_add_eq`/`add_vjp_add_eq`, and `mul_forward_eq`/`add_forward_eq`
+  for the stored values). Push-invariance lemmas (`addGradAll_push` → `backwardDenseFromLoop_push`,
+  under the bounded-contribution-ids fact both tape families satisfy) restrict the extended
+  tape's loop to the prefix so the `EagerBuilds` induction consumes its hypothesis directly.
+  What remains, honestly: ops beyond `add`/`mul` (each is one more crank of the same machine —
+  per-op fderiv facts already exist upstream for the whole class), the `TapeM` `StateT` sugar
+  (each `TapeM` op is a one-line wrapper over the corresponding `Tape` constructor; identifying
+  a `TapeM.run` trace with an `EagerBuilds` derivation is wrapper bookkeeping), and the
+  `Float`-vs-`ℝ` carrier deviation, which is this workstream's own Adequacy claim. Gate:
+  `lake build Uncertainty UncertaintyRigor UncertaintyExamples` = 3168 jobs green, 0 warnings;
+  `backwardDenseFrom_eager_eq_compiled`/`direct_PR_soundness_eager{,_at}`/`forwardSim_eager`
+  all axiom-pinned `[propext, Classical.choice, Quot.sound]` in the probe.
 
 * **Stage 4 — Scale.** GPU-batched SSPRC/MCM on `CudaT`; sensitivity-driven `Nᵢ` allocation; a
   real downstream science model (soil-moisture retrieval) as the capstone example. **Independent of

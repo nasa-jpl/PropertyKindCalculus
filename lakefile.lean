@@ -57,7 +57,7 @@ package «PropertyKindCalculus» where
   -- The package version — the single source of truth. `scripts/bump-version.sh`
   -- reads and bumps it here, and the blueprint reads this same line at build time
   -- (its `{version}[]` role) so the published document never drifts from the source.
-  version := v!"0.22.0"
+  version := v!"0.23.0"
   leanOptions := #[
     ⟨`autoImplicit, false⟩,
     ⟨`relaxedAutoImplicit, false⟩]
@@ -266,7 +266,9 @@ lean_lib «UncertaintyRigor» where
     .one `PropertyKindCalculus.Uncertainty.Adequacy.Fp32Grounding,
     .one `PropertyKindCalculus.Uncertainty.Adequacy.DagBound,
     .one `PropertyKindCalculus.Uncertainty.Adequacy.ExecBridge,
-    .one `PropertyKindCalculus.Uncertainty.Adequacy.Significance]
+    .one `PropertyKindCalculus.Uncertainty.Adequacy.Significance,
+    .one `PropertyKindCalculus.Uncertainty.Experiments.PRSimulation,
+    .one `PropertyKindCalculus.Uncertainty.Experiments.EagerProvenance]
 
 /-- Worked uncertainty examples grounded in the two source papers (Degenhardt 2025 fictive
 example; Willink 2005 gauge-block), in the `examples/` source tree as a **separate library** so

@@ -20,6 +20,8 @@ import PropertyKindCalculus.Uncertainty.Adequacy.DagBound
 import PropertyKindCalculus.Uncertainty.Adequacy.Fp32Grounding
 import PropertyKindCalculus.Uncertainty.Adequacy.ExecBridge
 import PropertyKindCalculus.Uncertainty.Adequacy.Significance
+import PropertyKindCalculus.Uncertainty.Experiments.PRSimulation
+import PropertyKindCalculus.Uncertainty.Experiments.EagerProvenance
 import PropertyKindCalculusBlueprint.References
 
 open Verso.Genre
@@ -29,25 +31,113 @@ open Informal
 #doc (Manual) "Uncertainty quantification and numerical adequacy" =>
 
 The representation-parametric quantity of R10 carries a model's numbers at whatever carrier a
-task needs — `ℝ` to prove, `Float` to run, `FP32` to bound rounding. This chapter puts
+task needs:
+
+- `ℝ` to prove,
+- `Float` to run,
+- `FP32` to bound rounding.
+
+This chapter puts
 that parametricity to work on two questions a metrology model must answer but the calculus so far
-does not: _given the uncertainty of the input quantities, what is the uncertainty of the output?_
-and _does the floating-point representation of the model lose information that matters at the
-scale of those uncertainties?_ Both are developed against one shared, additive descriptor placed
+does not:
+
+- _given the uncertainty of the input quantities, what is the uncertainty of the output?_
+and
+- _does the floating-point representation of the model lose information that matters at the
+scale of those uncertainties?_
+
+Both are developed against one shared, additive descriptor placed
 on a quantity — never a change to the carrier tower. The design is recorded in full in the
 project's `UNCERTAINTY.md`; this chapter is its blueprint face. Stages 0–3 are built and
-CI-checked — the reference layer and worked examples, the GUM and Willink combines, the autograd
-sensitivity coefficients, the derivative-free SSPRC pipeline, the five ladder theorems (T1,
-cumulant additivity; T2, $`\mathrm{gum} = \mathrm{willink}|_{\kappa_4=0}`; T3, Willink as the
-projection of the linearized SSPRC; T4, affine reference equals the mean; T5, convolution adds
-cumulants), and the numerical-adequacy layer (the executable analysis carrier; the per-site theorems
-A1 absorption, A2 Sterbenz, A3 verdict soundness over `ℝ`; the universal capstone A3′ over an
-arbitrary model DAG and input box; A2 lifted to the genuine binary32 format `fexp32`; and the
-executable↔spec bridge, certifying the runtime absorption verdict against the `round₃₂` specification
+CI-checked (each item below links to the formal node that realizes it):
+
+- the {bpref "def_uq_inputDist"}[reference layer] and worked examples,
+- the {bpref "def_uq_gum"}[GUM] and {bpref "def_uq_willink"}[Willink] combines,
+- the autograd {bpref "def_uq_sensitivity"}[sensitivity coefficients],
+- the derivative-free {bpref "def_uq_ssprc"}[SSPRC pipeline],
+- the five ladder theorems:
+  - {bpref "thm_uq_cumulant_additivity"}[T1], cumulant additivity;
+  - {bpref "thm_uq_gum_is_willink"}[T2], $`\mathrm{gum} = \mathrm{willink}|_{\kappa_4=0}`;
+  - {bpref "thm_uq_ssprc_willink"}[T3], Willink as the projection of the linearized SSPRC;
+  - {bpref "thm_uq_affine_reference"}[T4], affine reference equals the mean;
+  - {bpref "thm_uq_convolution_cumulants"}[T5], convolution adds cumulants, and
+- the numerical-adequacy layer:
+  - the executable {bpref "def_uq_adequacy"}[analysis carrier];
+  - the per-site theorems:
+    - {bpref "thm_uq_absorption"}[A1] absorption,
+    - {bpref "thm_uq_sterbenz"}[A2] Sterbenz,
+    - {bpref "thm_uq_adequacy_verdict"}[A3] verdict soundness over `ℝ`;
+    - the universal capstone {bpref "thm_uq_adequacy_soundness"}[A3′] over an arbitrary model DAG and input box;
+    - A2 lifted to the genuine {bpref "thm_uq_sterbenz_fp32"}[binary32 format `fexp32`]; and
+  - the {bpref "thm_uq_exec_bridge"}[executable↔spec bridge], certifying the runtime absorption verdict against the `round₃₂` specification
 on TorchLean's computable `IEEE32Exec` model
-{Manual.citep george_torchlean_formalizing_neural_networks}[]); and the Axis-U significance wiring,
-coupling the autograd $`c_i` with the descriptor's $`u_i` into the significance scale $`c_i u_i` the
-adequacy carrier checks against (Stage 3.4). The `×`/`÷` DAG extension remains *planned*.
+{Manual.citep george_torchlean_formalizing_neural_networks}[]; and
+  - the Axis-U {bpref "def_uq_significance"}[significance wiring], coupling the autograd $`c_i` with the descriptor's $`u_i` into the significance scale $`c_i u_i` the
+adequacy carrier checks against (Stage 3.4).
+
+Since Stage 3.5 the sensitivity coefficients are also *proved* correct — the reverse pass is the
+adjoint of the Fréchet derivative — and Stage 3.6 carries that endpoint from the compiled tape
+({bpref "thm_uq_direct_sim"}[direct simulation]) to the tape the bridge actually builds
+({bpref "thm_uq_eager_provenance"}[eager provenance]). The `×`/`÷` DAG extension remains *planned*.
+
+# Why formalize this? What the rigor buys
+
+Uncertainty analysis is routinely done in a spreadsheet or a NumPy script, so casting it in a proof
+assistant earns its keep only by buying something those tools cannot. It buys five things — each
+*exercised by a checked example* below, not asserted here.
+
+- *The published numbers are re-derived under CI, not transcribed.* Each worked example reproduces a
+  headline figure of its source paper as a `#guard`, so the `UncertaintyExamples` library *building*
+  is what certifies the figure. Degenhardt's fictive model (`UncertaintyExamples.DegenhardtFictive`,
+  its {bpref "def_uq_gum"}[GUM] answer cross-checked against a Monte Carlo reference) and Willink's
+  gauge block (`UncertaintyExamples.WillinkGaugeBlock`, by {bpref "def_uq_willink"}[the cumulants
+  method]) reproduce their papers' $`u_c`, excess $`\gamma_Y`, and expanded-uncertainty half-widths
+  to the printed digits.
+- *The method hierarchy is a theorem, so the three methods cross-validate for free.* GUM ⊂ Willink ⊂
+  SSPRC is a chain of proved homomorphisms ({bpref "thm_uq_gum_is_willink"}[T2],
+  {bpref "thm_uq_ssprc_willink"}[T3], resting on {bpref "thm_uq_convolution_cumulants"}[T5]), not a
+  slogan. Wherever their hypotheses hold the three answers *must* agree; a discrepancy is a modelling
+  error or a broken proof, caught mechanically rather than by eye
+  (`UncertaintyExamples.SsprcNesting` pins the shared cumulants $`(41, -1186)`).
+- *The sensitivity coefficients are proved equal to the derivative, not merely computed.* The
+  $`c_i = \partial f/\partial X_i` the two linearized rungs need come from one reverse pass over the
+  write-once model ({bpref "def_uq_sensitivity"}[the sensitivity bridge]); since Stage 3.5 that
+  reverse pass is *proved* to be the adjoint of the Fréchet derivative, an endpoint that
+  {bpref "thm_uq_eager_provenance"}[holds on the very tape the bridge builds]. A $`c_i` entering a
+  budget is therefore correct by theorem, not by trust in an autograd library
+  (`UncertaintyExamples.DegenhardtSensitivity` returns $`(5, 5, 2.25)` and reproduces $`u_c = 1.662`).
+- *"No information loss" is decided, not hoped for — and at the scale that matters.* The hazard this
+  half of the chapter guards is silent: a small-but-significant input uncertainty rounded away in
+  floating point, corrupting the result with no error raised. The {bpref "def_uq_adequacy"}[adequacy
+  carrier] detects exactly that, and its verdict is {bpref "thm_uq_adequacy_verdict"}[sound and
+  complete] — the flag fires *iff* a contribution is genuinely lost — at the half-ulp scale the *same*
+  descriptor defines. `UncertaintyExamples.AdequacySwamping` flags a contribution swamped under a
+  $`10^8` accumulator and certifies the small-accumulator variant clean, while
+  `UncertaintyExamples.AdequacyCoupling` drives {bpref "def_uq_significance"}[the significance
+  coupling] — the uncertainty budget and the adequacy check from one descriptor list — so a
+  UQ-analysed model is *simultaneously* adequacy-checked at its own uncertainty scale.
+- *One model serves proof, differentiation, execution, and certification with no re-implementation.*
+  All of the above are interpretations of a single write-once kernel at different carriers, so the
+  proved model and the model that runs cannot drift apart — they are one source. The next section
+  makes this composition precise; the working consequence is that an edit to the model is proved,
+  differentiated, run, and adequacy-checked from the one definition.
+
+None of this substitutes for measurement, or for judgement about which distribution an input follows.
+What it removes is a specific class of *silent* errors:
+- *a mis-stated propagation law* — the combine rules are *derived*, not asserted: GUM and Willink are
+  proved projections of the finer method ({bpref "thm_uq_gum_is_willink"}[T2],
+  {bpref "thm_uq_ssprc_willink"}[T3]), so a wrong law surfaces as a broken proof or a numerical
+  cross-validation mismatch rather than a plausible-looking answer;
+- *a sensitivity taken on trust* — the coefficients $`c_i` are proved equal to the adjoint of the
+  Fréchet derivative on the very tape the {bpref "def_uq_sensitivity"}[sensitivity bridge] builds
+  ({bpref "thm_uq_eager_provenance"}[eager provenance]), not read off an unverified autograd library;
+- *an uncertainty contribution quietly lost to rounding* — the {bpref "def_uq_adequacy"}[adequacy
+  carrier] detects {bpref "thm_uq_absorption"}[absorption], and its verdict is
+  {bpref "thm_uq_adequacy_verdict"}[sound and complete] at the half-ulp scale the same descriptor
+  defines, so a swamped contribution is *reported*, not dropped in silence.
+
+The uncertainty formalism turns each into an
+obligation the build must discharge.
 
 # Two orthogonal axes, and why their properties compose
 
@@ -199,10 +289,60 @@ carrier; each input enters as a differentiable leaf, and one *total dense* rever
 rewrite. Since Stage 3.5 this is the very entry point TorchLean's soundness theorem
 `backwardDenseFrom_compileAux_adjoint_fderiv` characterizes: on a compiled graph at the `ℝ`
 carrier its input-prefix output *is* the adjoint of the Fréchet derivative of the forward
-evaluation (the eager-tape provenance and the `Float`-vs-`ℝ` deviation remain the two documented
-gaps). On the Degenhardt fictive model the bridge returns $`(c_1, c_2, c_3) = (5, 5, 2.25)`
+evaluation (the eager-tape provenance — narrowed at Stage 3.6 to a closure-provenance question,
+see the direct-simulation theorem below — and the `Float`-vs-`ℝ` deviation remain the two
+documented gaps). On the Degenhardt fictive model the bridge returns $`(c_1, c_2, c_3) = (5, 5, 2.25)`
 and reproduces the GUM $`u_c = 1.662` exactly (the `DegenhardtSensitivity` example). The op class is
 `exp`/`log`/`sqrt` with arithmetic; trigonometric models await tape VJP nodes.
+:::
+
+:::theorem "thm_uq_direct_sim" (parent := "uncertainty") (lean := "PRSim.direct_PR_soundness_compiled")
+*Direct runtime simulation, closed for compiled tapes (Stage 3.6).* The executable dense reverse
+pass on a compiled tape succeeds, and the input-prefix of its gradient *array* — the runtime's own
+shape-erased representation, block by block (`ArrCorr`) — realises exactly the adjoint of the
+Fréchet derivative of the forward evaluation applied to the seed. Separately, and for *arbitrary*
+(not just compiled) value-correct tapes: the reverse pass returns `.ok` provided every backward
+closure is *shape-total* — a hypothesis the eager `leaf`/`add`/`mul` tape constructors are proved
+to provide, constructor by constructor.
+:::
+
+:::proof "thm_uq_direct_sim"
+Realized (`PRSim.direct_PR_soundness_compiled`, with `backwardDenseFrom_ok` for the totality half
+and `forwardSim_compileAux` inhabiting the simulation relation; `Experiments/PRSimulation.lean`,
+sorry-free). The endpoint is the input-prefix projection of the Stage-3.5 theorem transported to
+the runtime array by two erasure lemmas (block-reads invert context flattening; `Array.extract` is
+the erased typed prefix) — no reverse-pass fold argument is re-derived, so the adjoint mathematics
+enters exactly once, through the Stage-3.5 bridge. The totality half threads the "every slot
+carries its node's shape" invariant through the accumulation fold, value-free; the shape-totality
+hypothesis is honest and necessary, since a value-correct tape with an erroring closure refutes
+the unconditioned claim — the closure-provenance identification for the *eager* path is the next
+theorem. The `AutogradDirectSim` example instantiates everything concretely and pins the axiom
+profiles to the classical trio.
+:::
+
+:::theorem "thm_uq_eager_provenance" (parent := "uncertainty") (lean := "PRSim.direct_PR_soundness_eager")
+*Eager provenance (Stage 3.6 addendum).* The tape the eager runtime constructors actually build —
+input leaves, then one `add`/`mul` call per graph node, which is the construction pattern the
+sensitivity bridge uses — runs the *same* total dense reverse pass as the compiled tape of the
+corresponding graph: same result, same gradient array, from any erased-context seed. Therefore
+the Fréchet-adjoint endpoint above holds on the eagerly built tape itself, with no compilation
+anywhere in the trusted path.
+:::
+
+:::proof "thm_uq_eager_provenance"
+Realized (`PRSim.direct_PR_soundness_eager`, via `backwardDenseFrom_eager_eq_compiled`;
+`Experiments/EagerProvenance.lean`, sorry-free). `EagerBuilds` is the provenance relation — its
+base tape *is* the compiled tape of the empty graph, definitionally — and the identification is
+pure accounting, never a re-derived fold: the compiled node's dense contribution list is folded by
+the upstream accumulation bridge, the eager node's sparse two-element list by a new single-slot
+lemma (one accumulation call is a one-hot context addition), and the two context updates coincide
+by flatten-injectivity through the vectorization homomorphisms — the eager closure's stored
+product-rule payloads are exactly the `ofVec`-authored node's Hadamard vjp blocks. Push-invariance
+lemmas restrict the extended tape's loop to its prefix, so the structural induction consumes its
+hypothesis directly. Honest residuals: ops beyond `add`/`mul` (one more crank of the same machine
+per op), the `TapeM` state-monad sugar (a one-line wrapper per op), and the `Float`-vs-`ℝ`
+deviation — the workstream's own Adequacy claim. The `AutogradDirectSim` example witnesses
+`EagerBuilds` for the concrete product tape and pins the classical-trio axiom profile.
 :::
 
 :::theorem "thm_uq_cumulant_additivity" (parent := "uncertainty") (lean := "PropertyKindCalculus.Uncertainty.willinkCumulants_cons")
@@ -554,13 +694,14 @@ lengths is $`2h/2δ = h/δ`). Sorry-free (`[propext, Classical.choice, Quot.soun
 
 # Worked examples (checked facts)
 
-Twelve examples reproduce a headline number (or a theorem) as a `#guard`, so the
+Thirteen examples reproduce a headline number (or a theorem) as a `#guard`, so the
 `UncertaintyExamples` library building under CI is what makes the claims true rather than
 asserted — the project's reflection-tests discipline applied to metrology. The first two are the
 Stage-0 reference numbers; the next two are the Stage-1 autograd and ladder facts; the next two are
-the Stage-2 SSPRC pipeline and its ladder theorems; the last six are the Stage-3 adequacy carrier,
+the Stage-2 SSPRC pipeline and its ladder theorems; the last seven are the Stage-3 adequacy carrier,
 its per-site theorems, the Stage-3.1 DAG capstone A3′, the Stage-3.2 binary32 Sterbenz, the
-Stage-3.3 executable↔spec bridge, and the Stage-3.4 Axis-U significance coupling.
+Stage-3.3 executable↔spec bridge, the Stage-3.4 Axis-U significance coupling, and the Stage-3.6
+direct-simulation closure.
 
 - `PropertyKindCalculus.UncertaintyExamples.DegenhardtFictive` — the non-linear fictive model
   $`Y = (X_1 + X_2^2)\,X_3` of Degenhardt
@@ -633,3 +774,11 @@ Stage-3.3 executable↔spec bridge, and the Stage-3.4 Axis-U significance coupli
   quadrature, `CouplingResultQ` field swap) type errors; and a $`10^8`-accumulator swamps a contribution
   (one absorption), with `contribution_absorbed_at_scale` applying the A3 verdict at that scale,
   `#print axioms` confirming no `sorryAx`.
+- `PropertyKindCalculus.UncertaintyExamples.AutogradDirectSim` — the Stage-3.6 closure instantiated
+  concretely: the vectorization homomorphisms at a 3-vector shape; the compiled product graph
+  $`x_0 \cdot x_1` with `direct_PR_soundness_compiled` (the runtime dense reverse pass succeeds and
+  its input-prefix realises the adjoint of the Fréchet derivative) and its inhabited forward
+  simulation; an eager two-leaf/`mul` runtime tape whose shape-total-closure hypothesis is
+  discharged constructor by constructor; and, via the eager-provenance addendum, `EagerBuilds`
+  witnessing that runtime tape with `direct_PR_soundness_eager` giving the endpoint on it — no
+  compilation involved — with `#print axioms` pinning the classical trio only.
