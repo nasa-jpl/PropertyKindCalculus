@@ -1,8 +1,11 @@
 # PKC ↔ doc-gen4 Math Rendering — Cross-Session Plan
 
-**Status:** 2026-08-03 — Phase 0 (setup) **DONE**; **Phase P (doc-gen4 hook) DONE + committed** (`62439e4`);
-**Phase B (IR pipeline + `@[pkc_math]`) DONE + green + verified** (uncommitted); design frozen (IR-based B;
-option C dropped). Remaining: Phase V *visual* browser render (transport already proven), Phase S submit PR.
+**Status:** 2026-08-03 — **ALL PHASES DONE.** Phase 0 (setup); Phase P (doc-gen4 hook, committed `62439e4`
+on `pkc-math-hook`); Phase B (IR pipeline + `@[pkc_math]`, committed `f6a07a8` on PKC); Phase V (doc-gen4
+HTML render verified — `Demo.html` shows the `$$…$$` in a MathJax-processed `<p>`); **Phase S — PR opened:
+https://github.com/leanprover/doc-gen4/pull/403 (OPEN, ready-for-review)** = the v4.33 rebase of the hook.
+Rendering default = **F (faithful), CONFIRMED**. Remaining = **maintainer review of #403** + the follow-on
+(apply `@[pkc_math]` to real SMM/EM models); the local `../doc-gen4` override drops once #403 merges.
 **This file is the durable, multi-session tracker.** Update the checkboxes and the "Session log"
 at the bottom every time you make progress. A fresh session should read §2 (repo map) and §4
 (checklist) first.
@@ -119,11 +122,28 @@ All in `docgen/PropertyKindCalculus/DocGenMath/` (`lean_lib «DocGenMath»`, `sr
 ### Phase V — verification / end-to-end (see §7)
 - [x] Local doc-gen4 override wired; `lake update doc-gen4` repoints the manifest to the local path (`"dir": "/home/nfr/projects/lean/doc-gen4"`). `lake build DocGenMath` **green, 33 jobs**.
 - [x] **Transport proven** (this substitutes for most of Phase V): a separate `lake env lean` process imported the `Demo` olean and read back `$$\sigma^0 = …$$` via `getDeclMath?` — exactly doc-gen4's own path (load target oleans → `getDocString?` → `getDeclMath?`). So the data reaches the renderer.
-- [ ] *Visual only:* run doc-gen4's full HTML generation over `Demo`, grep the HTML for the `$$…$$` block, open in a browser to confirm MathJax typesets it. (Heavier — doc-gen4 must build/run over the module.)
+- [x] **HTML generated + verified** (2026-08-03): `lake build PropertyKindCalculus.DocGenMath.Demo:docs`
+  (doc-gen4 v4.32.0 DB pipeline `genCore`→`single`→`fromDb`; module facet `docs`) → **300 jobs green**.
+  Output: `.lake/build/doc/PropertyKindCalculus/DocGenMath/Demo.html`. `avsForward`'s doc carries
+  `<p>$$\sigma^0 = a\,\mathrm{NDVI} + e^{-2\,b\,\mathrm{NDVI}}\,c\,r + d$$</p>` in the **docstring prose**
+  (after the description `<p>`, before the auto `<details>Equations</details>` — i.e. NOT the skipped
+  `equations` block). MathJax is loaded (`mathjax@3/es5/tex-mml-chtml.js` + `mathjax-config.js`), and
+  `mathjax-config.js` has `displayMath: [["$$","$$"]]` with `skipHtmlTags` listing `code`/`equation`/
+  `equations`/`decl_*` but **not `p`** → the block is processed and typeset. **Acceptance met** (only the
+  literal browser-pixel view is left to the user). bibPrepass handled the missing bib gracefully
+  ("reference page disabled"). doc-gen4 exe built from the local override; no mathlib compiled.
 
-### Phase S — submit PR
-- [ ] Rebase the Phase-P diff from `pkc-math-hook` onto doc-gen4 `main` (v4.33); fix any drift.
-- [ ] Push to `origin` (NicolasRouquette/doc-gen4); open PR against `leanprover/doc-gen4`. **Only after B verified against the local hook (Phase V green).**
+### Phase S — submit PR — ✅ DONE 2026-08-03 — **PR https://github.com/leanprover/doc-gen4/pull/403 (OPEN)**
+- [x] Rebased the Phase-P diff onto doc-gen4 `main` (v4.33.0-rc2) **in a git worktree** (so the main
+  `../doc-gen4` checkout stays on `pkc-math-hook` for the PKC override + a concurrent editor). Branch
+  `declmath-hook` = `feb58b8` + `aad7b98`. **Drift fixed:** on v4.33 `getDocString?` returns
+  `Option (String ⊕ (VersoDocString × String))` and `Output.docStringToHtml` uses **only the Markdown
+  string** for both cases (`versoDocToMarkdown` renders Verso→md; native Verso render is a TODO) — so the
+  hook now appends the attached Markdown to that `md` string (cleaner than the v4.32 edit). `DeclMath.lean`
+  is toolchain-agnostic, copied verbatim. **Build-verified: `lake build DocGen4` green, 131 jobs on v4.33.0-rc2.**
+- [x] Pushed `declmath-hook` to `origin` (NicolasRouquette/doc-gen4); opened PR #403 against
+  `leanprover/doc-gen4:main`, ready-for-review (user chose non-draft). 3 files: `Process.lean` (+1 import),
+  `Process/DeclMath.lean` (new), `Process/NameInfo.lean` (`getDocString?`). Generic wording, no PKC vocab.
 
 ### Follow-on (not in scope)
 - [ ] Register SMM/EM named helpers + apply `@[pkc_math]` to `lavsForwardQ` etc. and Xiaolan's models.
@@ -161,9 +181,10 @@ Worked example (LAVS ∂/∂b): `mul h₁ (mul h₂ (mul h₃ (mul h₄ ⟨2⟩ 
 - **(P) Proof-carrying editorial** — same as E but each rewrite discharges a `rfl`/`ring`/`simp`
   obligation proving pretty = def. Uniquely-PKC (write-once / no-naked-math applied to rendering).
 
-**Chosen default (revisit if needed): F on by default, E opt-in per decl; P and the sibling-def path
-(below) documented as advanced.** F is most of the win and keeps the doc faithful. Escalate to P as the
-flagship only if we decide certified-pretty-math is a headline feature. *(open decision #1)*
+**Default: F only — CONFIRMED by user (2026-08-03).** Faithful normalizer + named-operator recognition;
+the LaTeX denotes exactly what the def computes. E (editorial) and P (proof-carrying) are **not**
+implemented; the sibling-def path (below) is the escape hatch when a model needs real algebra to look
+right. Escalate to P as a flagship feature only if we later decide certified-pretty-math is a headline.
 
 ### Scope discipline + the escape hatch
 Stage 2 is **presentation-normalization + recognition, NOT a CAS/solver.** When a model needs genuine
@@ -223,8 +244,10 @@ Scope the doc-gen build to the demo module, not all of PKC. *(open decision #3)*
 ---
 
 ## 9. Open decisions
-1. Rendering philosophy default: **F** (chosen, and implemented — faithful only) vs F+E vs P-as-flagship
-   (§5). — *confirm with user.* (E/P not built; the sibling-def escape hatch remains available.)
+1. Rendering philosophy default: **F (faithful only) — CONFIRMED by user 2026-08-03.** The LaTeX denotes
+   exactly what the definition computes; no editorial (E) or proof-carrying (P) rewriting is applied.
+   E/P are not built; when a model needs genuine algebra to look right, use the sibling-def escape hatch
+   (author `def foo_math`, prove `foo = foo_math`, render the sibling) — §5. This is the standing default.
 2. `@[pkc_math]` attribute surface syntax — **DONE**: `@[pkc_math]` (auto) / `@[pkc_math "…literal…"]`
    (override); named-operator notation via `@[pkc_math_symbol "…"]`. Structural `@[pkc_math_rule]`
    shape-recognition DSL = deferred (documented future extension in §5; named-operator recognition
@@ -270,4 +293,21 @@ Scope the doc-gen build to the demo module, not all of PKC. *(open decision #3)*
   **`Expr.natLit?` does not exist** in v4.32.0 — match `Expr.lit (.natVal n)` directly. (5) `Lift` uses
   `` `` ``-checked PKC names, so it must `import PropertyKindCalculus` (couples the lift to the core —
   honest, since it hard-codes PKC's alphabet). (6) `where`-clause helpers don't see the outer `let fn`
-  — recompute `e.getAppFn` inside.
+  — recompute `e.getAppFn` inside. Committed Phase B as `f6a07a8` (switched the override to the portable
+  relative `../doc-gen4`; `lake update doc-gen4` rewrote the manifest `dir` to `../doc-gen4` — resolved
+  revs unchanged, only transitive-dep `inputRev` metadata now sourced from the local doc-gen4 lakefile).
+- **2026-08-03 (session 2, cont.):** **Phase V done + F confirmed.** User confirmed **F (faithful)** as
+  the standing rendering default (E/P not built; sibling-def escape hatch for hard algebra). Generated
+  the doc HTML: `lake build PropertyKindCalculus.DocGenMath.Demo:docs` → 300 jobs green (builds the
+  doc-gen4 exe from the local override + `genCore` over Lean core + `single` over the Demo closure +
+  `fromDb`; ~several min, dominated by `genCore Lean`). Verified `Demo.html` carries
+  `<p>$$\sigma^0 = a\,\mathrm{NDVI} + e^{-2\,b\,\mathrm{NDVI}}\,c\,r + d$$</p>` in the docstring prose,
+  MathJax loaded, `$$…$$` = displayMath and `<p>` not in `skipHtmlTags` → typesets. Page:
+  `.lake/build/doc/PropertyKindCalculus/DocGenMath/Demo.html`.
+- **2026-08-03 (session 2, cont.):** **Phase S done — PR #403 opened.** Rebased the hook onto doc-gen4
+  `main` (v4.33.0-rc2) in a throwaway git **worktree** (kept the `../doc-gen4` checkout on `pkc-math-hook`).
+  Re-authored `getDocString?` for v4.33 (return type gained the `(VersoDocString × String)` pair; the
+  Markdown string is what `docStringToHtml` renders — appended the attached md there). `lake build DocGen4`
+  green (131 jobs, v4.33.0-rc2). Committed `aad7b98` on `declmath-hook`, pushed to fork `origin`, opened
+  https://github.com/leanprover/doc-gen4/pull/403 against `leanprover/doc-gen4:main` (ready-for-review).
+  Worktree removed after. **Workstream complete pending maintainer review.**
