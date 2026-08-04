@@ -49,6 +49,7 @@ Depends on TorchLean (the autograd column of rung 2).
 -/
 import PropertyKindCalculus.Uncertainty
 import PropertyKindCalculus.Uncertainty.Sensitivity
+import PropertyKindCalculus.DocGenMath
 
 namespace PropertyKindCalculus.UncertaintyExamples.WaterCloudModel
 
@@ -153,6 +154,7 @@ forced by the parameter kinds. -/
 
 /-- **The Water Cloud Model forward** `σ⁰ = veg + τ·(soil − veg)` over any branchless numeric carrier,
 kinded throughout. `.magnitude` is the scalar WCM forward, op-for-op. -/
+@[pkc_math "\\sigma^0 = a\\,\\mathrm{NDVI} + e^{-2\\,b\\,\\mathrm{NDVI}}\\,(c\\,m_v + d - a\\,\\mathrm{NDVI})"]
 def wcmForwardQ {α : Type} [NumCarrier α] (cfg : WcmConfig α)
     (mv : Quantity soilMoisture α) (ndvi : Quantity vegetationIndex α)
     (b : Quantity attenRate α) : Quantity backscatter α :=

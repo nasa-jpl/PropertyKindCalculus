@@ -21,6 +21,7 @@ import PropertyKindCalculus.Quantity
 import PropertyKindCalculus.QuantityClassification
 import PropertyKindCalculus.QuantityFunction
 import PropertyKindCalculus.Paradigm.NumCarrier
+import PropertyKindCalculus.DocGenMath
 
 namespace PropertyKindCalculus.Examples.AvsForward
 
@@ -83,6 +84,7 @@ Each mirrors `kernel.avs_batch` op-for-op, so its `.magnitude` is the same `Floa
 computes; the only inline symbols are the carrier's `0`/`1` identities. -/
 
 /-- The vegetation attenuation `τ = exp(−2·b·ndvi)`, kind `attenuationK`. -/
+@[pkc_math "\\tau = e^{-2\\,b\\,\\mathrm{NDVI}}"]
 def attenuationQ {α : Type} [NumCarrier α] (cfg : AvsConfig α)
     (b : Quantity paramB α) (ndvi : Quantity vegetationIndex α) : Quantity attenuationK α :=
   let negTwo : Quantity pureNumber α := (⟨(0 : α)⟩ : Quantity pureNumber α) - cfg.two
@@ -92,6 +94,7 @@ def attenuationQ {α : Type} [NumCarrier α] (cfg : AvsConfig α)
   Quantity.exp (⟨rfl, rfl⟩ : TranscendentalKind attenExponent attenuationK) arg
 
 /-- The LAVS forward `σ⁰ = a·ndvi + (τ·c)·r + d`, kind `backscatter`. -/
+@[pkc_math "\\sigma^0 = a\\,\\mathrm{NDVI} + e^{-2\\,b\\,\\mathrm{NDVI}}\\,c\\,r + d"]
 def lavsForwardQ {α : Type} [NumCarrier α] (cfg : AvsConfig α)
     (a : Quantity paramA α) (b : Quantity paramB α) (c : Quantity paramC α) (d : Quantity backscatter α)
     (ndvi : Quantity vegetationIndex α) (r : Quantity reflectivity α) : Quantity backscatter α :=
@@ -102,6 +105,7 @@ def lavsForwardQ {α : Type} [NumCarrier α] (cfg : AvsConfig α)
     + d
 
 /-- The LAVS residual `s0 − σ⁰`, kind `backscatter` (subtraction forces the shared kind). -/
+@[pkc_math "s_0 - \\sigma^0"]
 def lavsResidualQ {α : Type} [NumCarrier α] (cfg : AvsConfig α)
     (a : Quantity paramA α) (b : Quantity paramB α) (c : Quantity paramC α) (d : Quantity backscatter α)
     (ndvi : Quantity vegetationIndex α) (r : Quantity reflectivity α) (s0 : Quantity backscatter α) :

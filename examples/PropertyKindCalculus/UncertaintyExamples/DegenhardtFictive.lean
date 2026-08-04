@@ -22,6 +22,7 @@ value `R = f(E(X)) = 11.25`; the gap `E(Y) − R = 0.3375` is the non-linearity 
 what SSPRC (Stage 2) will recover. Mathlib- and TorchLean-free.
 -/
 import PropertyKindCalculus.Uncertainty
+import PropertyKindCalculus.DocGenMath
 
 namespace PropertyKindCalculus.UncertaintyExamples.DegenhardtFictive
 
@@ -64,6 +65,7 @@ def x3 : InputDist Float := InputDist.triangular 5.0 0.3
 boundary is its `.magnitude` — definitionally the scalar `(X₁ + X₂²)·X₃` the propagators consume. -/
 
 /-- `Y = (X₁ + X₂²) · X₃`, kinded over any branchless numeric carrier. -/
+@[pkc_math_symbol "Y", pkc_math]
 def fictiveModelQ {α : Type} [NumCarrier α]
     (x1 : Quantity influenceX1 α) (x2 : Quantity influenceX2 α) (x3 : Quantity influenceX3 α) :
     Quantity measurandY α :=

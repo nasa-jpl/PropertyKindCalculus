@@ -170,8 +170,13 @@ in the editor's InfoView (native mouse-hover tooltip uses VS Code markdown → s
   `leanprover/doc-gen4:main`, ready-for-review (user chose non-draft). 3 files: `Process.lean` (+1 import),
   `Process/DeclMath.lean` (new), `Process/NameInfo.lean` (`getDocString?`). Generic wording, no PKC vocab.
 
-### Follow-on (not in scope)
-- [ ] Register SMM/EM named helpers + apply `@[pkc_math]` to `lavsForwardQ` etc. and Xiaolan's models.
+### Follow-on
+- [x] **Apply `@[pkc_math]` to the kinded PKC example models** — DONE 2026-08-04 (session 4):
+  `attenuationQ`, `lavsForwardQ`, `lavsResidualQ` (`Examples/AvsForward.lean`), `wcmForwardQ`
+  (`UncertaintyExamples/WaterCloudModel.lean`), `fictiveModelQ` (`UncertaintyExamples/DegenhardtFictive.lean`).
+  See session log for the let-zeta engine change + the auto-vs-override split.
+- [ ] Register SMM/EM named helpers + apply `@[pkc_math]` to the *downstream* SMM `lavsForwardQ` and
+  Xiaolan's models (in `soil-moisture-model`, not the PKC example mirror).
 
 ---
 
@@ -390,3 +395,31 @@ Scope the doc-gen build to the demo module, not all of PKC. *(open decision #3)*
   `Attr.lean`, `Demo.lean`, `lakefile.lean` (override removed + NOTE comment), `lake-manifest.json`
   (doc-gen4 path→git), `RENDERING.md`. The `62439e4`/`aad7b98` doc-gen4 hooks are now dead ends kept only
   for the record.
+- **2026-08-04 (session 4):** **Committed the pivot + rebased onto v0.27.0 + applied `@[pkc_math]` to the
+  kinded PKC example models.** Committed the session-3 pivot (`2454054`). Rebased `feat/pkc-math-rendering`
+  onto sibling `local/main` = `8481845` (v0.27.0 — the concurrent session's *"Kind the PKC example physical
+  models"* commit, which authored `AvsForward.lean` / `WaterCloudModel.lean` / kinded `DegenhardtFictive`
+  but added **no** `@[pkc_math]`): clean, **no conflicts** (our `DocGenMath` lib + doc-gen4-override removal
+  and their version bump / `Allocation` glob / `UncertaintyBatch` lib touched disjoint lakefile regions).
+  **Engine change (user chose "improve the renderer first"):** added a `.letE` **zeta** case to
+  `Lift.liftExpr` (inline the `let`-bound value on the way in) — a presentation-only zeta, *not* a delta of
+  named helpers — so let-threaded model bodies render as their operators instead of falling to the opaque
+  `sym (ppExpr e)` leaf. Empirically, before the fix `lavsForwardQ` rendered `\mathrm{_proof_3 att c) r + d}`
+  (garbage); after, `a\,\mathrm{NDVI} + \mathrm{attenuationQ}(cfg,b,NDVI)\,c\,r + d`. Pinned by a new Demo
+  `letExample` (`q = a^{2} + a`). **Auto-vs-override split:** the flat `fictiveModelQ` auto-renders cleanly
+  → bare `@[pkc_math]` + `@[pkc_math_symbol "Y"]` (⟶ `Y = \left(x_{1} + x_{2}^{2}\right)\,x_{3}`); the
+  config/numeral models get `@[pkc_math "…"]` overrides because **`cfg.two` is a `def` *parameter`, never
+  bound to `2`** in the generic kernel, so the `−2` can't fold (`attenuationQ` post-zeta = `e^{(-\mathrm{two}
+  \,\mathrm{cfg})\,b\,\mathrm{NDVI}}`). Overrides: `attenuationQ` `\tau = e^{-2\,b\,\mathrm{NDVI}}`,
+  `lavsForwardQ` the full σ⁰, `lavsResidualQ` `s_0 - \sigma^0`, `wcmForwardQ` the expanded WCM. **Source-block
+  polish:** `defSource?` now inlines the elaborator-lifted `<decl>._proof_k` kind witnesses — they are
+  `thmInfo`, so `ConstantInfo.value?` withholds the value (read `thmInfo.value` directly) — and the
+  pretty-printer then **elides the proof term to the idiomatic `⋯`** instead of leaking
+  `attenuationQ._proof_1`; the source reads as a clean op skeleton (`Quantity.mul ⋯ a ndvi + …`).
+  **Wiring:** each annotated example `import PropertyKindCalculus.DocGenMath` (intra-package cross-lib import;
+  the `pkc_math`/`pkc_math_symbol` attribute names are global, no `open` needed). **Safety/verification:** the
+  attribute is docstring-only at `afterCompilation`, so it cannot change elaboration — the codegen bit-exact
+  `#guard`s + faithfulness proofs are untouched (`Examples`/`UncertaintyExamples` libs + AvsForward's codegen
+  dependents all green); readback of all 5 docstrings shows prose + `$$…$$` + clean ```` ```lean ```` source.
+  Files (UNPUSHED on `feat/pkc-math-rendering`): `Lift.lean`, `Attr.lean`, `Demo.lean` (engine); `AvsForward.lean`,
+  `WaterCloudModel.lean`, `DegenhardtFictive.lean` (annotations); `RENDERING.md`.
