@@ -1,0 +1,78 @@
+/-
+Copyright (c) 2026 California Institute of Technology. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Nicolas Rouquette
+-/
+import PropertyKindCalculus
+import PropertyKindCalculus.DocGenMath
+
+/-!
+# Demo — a `@[pkc_math]`-rendered `Quantity` definition + regression pins
+
+A self-contained example over PKC primitives (a single dimensionless ratio kind, the `Float`
+carrier). `avsForward` is the AVS-style backscatter model whose ASCII form motivated this work,
+`σ⁰ = a·ndvi + exp(−2·b·ndvi)·c·r + d`; `@[pkc_math]` renders it to LaTeX and hands it to doc-gen4.
+
+The `#guard_msgs` blocks pin the pipeline output so a regression in any stage is a build error:
+the first three exercise the pure `normalize`/`pretty` stages (no environment needed), the last the
+full `Expr → LaTeX` path on `avsForward`.
+-/
+
+namespace PropertyKindCalculus.DocGenMath.Demo
+
+open PropertyKindCalculus
+open PropertyKindCalculus.DocGenMath
+
+/-! ## Kinds and witnesses (all dimensionless / ratio-scale, so the gates discharge by `rfl`) -/
+
+/-- A single dimensionless ratio kind used for every quantity in the demo. -/
+def dl : KindOfProperty := { id := "1", scale := .ratio }
+
+/-- The product kind-law `dl = dl × dl` (all ratio-scale). -/
+theorem pk : ProductKind dl dl dl := ⟨rfl, rfl, rfl⟩
+
+/-- The transcendental kind-law `dl → dl` (dimensionless in, dimensionless out). -/
+theorem tk : TranscendentalKind dl dl := ⟨rfl, rfl⟩
+
+/-! ## The rendered model -/
+
+/-- The AVS-style backscatter forward model. Rendered on its doc page as
+`σ⁰ = a·ndvi + exp(−2·b·ndvi)·c·r + d`. The `@[pkc_math_symbol]` override gives the left-hand side
+its conventional notation `σ⁰`; `@[pkc_math]` (applied after it) renders the whole equation. -/
+@[pkc_math_symbol "\\sigma^0", pkc_math]
+def avsForward (a b c d r ndvi : Quantity dl Float) : Quantity dl Float :=
+  Quantity.mul pk a ndvi
+    + Quantity.mul pk
+        (Quantity.mul pk (Quantity.exp tk (Quantity.mul pk (Quantity.mul pk (⟨-2⟩ : Quantity dl Float) b) ndvi)) c)
+        r
+    + d
+
+/-! ## Regression pins — the pure `normalize`/`pretty` stages -/
+
+-- `2·x·x` folds the coefficient and combines the repeated factor into a power.
+/-- info: 2\,x^{2} -/
+#guard_msgs in
+#eval IO.println (pretty id (normalize (.mul #[.num 2, .sym "x", .sym "x"])))
+
+-- `a + (−1)·b` renders as a subtraction (via the sign-aware sum printer + `−1·x → −x`).
+/-- info: a - b -/
+#guard_msgs in
+#eval IO.println (pretty id (normalize (.add #[.sym "a", .mul #[.num (-1), .sym "b"]])))
+
+-- a quotient of sums parenthesizes correctly and folds the numeral sum in the numerator.
+/-- info: \frac{x + 3}{y} -/
+#guard_msgs in
+#eval IO.println (pretty id (normalize (.frac (.add #[.sym "x", .num 1, .num 2]) (.sym "y"))))
+
+/-! ## Regression pin — the full `Expr → LaTeX` path on `avsForward`
+
+The `@[pkc_math_symbol]` override resolves the LHS to `\sigma^0`; the local variable `ndvi` maps to
+`\mathrm{NDVI}` through the dictionary; the `⟨-2⟩` literal folds into the exponent's coefficient. -/
+
+/-- info: \sigma^0 = a\,\mathrm{NDVI} + e^{-2\,b\,\mathrm{NDVI}}\,c\,r + d -/
+#guard_msgs in
+run_cmd do
+  let s ← Lean.Elab.Command.liftTermElabM (quantityToLatex ``avsForward)
+  Lean.logInfo s
+
+end PropertyKindCalculus.DocGenMath.Demo

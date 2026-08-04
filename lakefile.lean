@@ -99,6 +99,16 @@ require mathlib from git
   "https://github.com/leanprover-community/mathlib4" @
   "v4.32.0"
 
+-- doc-gen4 is already a *transitive* dependency (Mathlib pulls it for its own docs). This local
+-- override points it at a sibling working copy on the `pkc-math-hook` branch (toolchain v4.32.0,
+-- matching this package), which carries the small `DocGen4.Process.DeclMath` hook that the
+-- `DocGenMath` library below builds on. A `from` (path) require overrides the same-named git require,
+-- so this wins without touching the version Mathlib resolves for everything else. The path is
+-- relative to this package, so it resolves as long as `doc-gen4` sits beside this repo (the layout
+-- used across sessions). **Development override**: to be dropped once the hook lands upstream
+-- (Phase S in `RENDERING.md`). Only `DocGenMath` imports it; the core spine stays doc-gen4-free.
+require «doc-gen4» from "../doc-gen4"
+
 /-- The exportable core library (Mathlib-free spine). -/
 @[default_target]
 lean_lib «PropertyKindCalculus» where
@@ -305,3 +315,15 @@ no *library* module carries `#eval`/`#guard`. Build with `lake build Uncertainty
 lean_lib «UncertaintyExamples» where
   srcDir := "examples"
   globs := #[.andSubmodules `PropertyKindCalculus.UncertaintyExamples]
+
+/-- **Documentation-math rendering** (`docgen/` source tree, namespace
+`PropertyKindCalculus.DocGenMath`; see `RENDERING.md`). Renders a `@[pkc_math]`-annotated `Quantity`
+definition as human-friendly typeset LaTeX on its doc-gen4 page, via a three-stage presentation
+pipeline (lift `Expr → MathTerm`, faithful normalize, precedence pretty-print). Depends on the
+core spine and on the local `doc-gen4` override (for `DocGen4.Process.addDeclMath`); it is a
+docs-only library — the core spine never imports it, so `import PropertyKindCalculus` stays
+doc-gen4-free. The `Demo` submodule carries the worked example and its `#guard_msgs` regression
+pins. Build with `lake build DocGenMath`. -/
+lean_lib «DocGenMath» where
+  srcDir := "docgen"
+  globs := #[.andSubmodules `PropertyKindCalculus.DocGenMath]

@@ -1,7 +1,8 @@
 # PKC ↔ doc-gen4 Math Rendering — Cross-Session Plan
 
-**Status:** 2026-08-03 — Phase 0 (setup) **DONE**; **Phase P (doc-gen4 hook) DONE + green, uncommitted**;
-design frozen (IR-based B; option C dropped); Phases B/V/S not started.
+**Status:** 2026-08-03 — Phase 0 (setup) **DONE**; **Phase P (doc-gen4 hook) DONE + committed** (`62439e4`);
+**Phase B (IR pipeline + `@[pkc_math]`) DONE + green + verified** (uncommitted); design frozen (IR-based B;
+option C dropped). Remaining: Phase V *visual* browser render (transport already proven), Phase S submit PR.
 **This file is the durable, multi-session tracker.** Update the checkboxes and the "Session log"
 at the bottom every time you make progress. A fresh session should read §2 (repo map) and §4
 (checklist) first.
@@ -104,18 +105,21 @@ Proposed new PKC lib (keep the core spine clean — mirror the blueprint/crossre
 - [x] Wired into `DocGen4/Process.lean`; `lake build` **green (196 jobs)**.
 - [ ] Commit on `pkc-math-hook` (awaiting user OK). Do NOT push until Phase V green (Phase S).
 
-### Phase B — IR + Expr→LaTeX + `@[pkc_math]` (see §5) — the core
-- [ ] **Stage 1 (Lift):** `Expr → MathTerm` (n-ary `Mul`/`Add`, `Neg`, `Pow`, `Exp`, `App`, `Sym`, `Lit`); drop `ProductKind`/`TranscendentalKind` Props, instances, mdata; **flatten associativity**.
-- [ ] **Stage 2 (Normalize/Recognize):** faithful normalizer (sort, numeral-fold, `x·x→x²`, `exp→e^`, `a+(−b)→a−b`, CSE→`where`) + a **recognition registry** (`@[pkc_math_rule]`) for named operators.
-- [ ] **Stage 3 (Pretty):** `MathTerm → LaTeX` precedence printer (owns all parens/spacing).
-- [ ] Name→LaTeX symbol table (`ndvi→\mathrm{NDVI}`, `s0→s_0`, …); extensible registry for named helpers (e.g. SMM `attenuationQ`, EM `curl`).
-- [ ] `@[pkc_math]` attribute: compute LaTeX from the def value → Phase-P `addDeclMath`. Support literal override `@[pkc_math "…"]` (escape hatch).
-- [ ] `#eval`/`#guard_msgs` pins for demo defs. Wire `lean_lib «DocGenMath»` into `lakefile.lean`.
+### Phase B — IR + Expr→LaTeX + `@[pkc_math]` (see §5) — the core — ✅ DONE + green 2026-08-03
+All in `docgen/PropertyKindCalculus/DocGenMath/` (`lean_lib «DocGenMath»`, `srcDir := "docgen"`):
+- [x] **Stage 0 IR** `Term.lean`: `MathTerm` = `sym/num/neg/add/mul/frac/pow/fn` (n-ary add/mul; sub = `add[a, neg b]`).
+- [x] **Stage 1 (Lift)** `Lift.lean`: `liftExpr : Expr → MetaM MathTerm`, defensive/total; matches PKC alphabet by head (`Quantity.mul/div/add/sub/exp/log/…/mk`, `HAdd/HSub/HMul/HDiv/HPow/Neg`, `OfNat`), drops witnesses/instances via **last-N args** + `getFunInfo` explicit-filter for unknown heads; flattens assoc. Imports `PropertyKindCalculus` (uses `` `` ``-checked names).
+- [x] **Stage 2 (Normalize)** `Normalize.lean`: faithful — flatten, integer fold (`2·3→6`, `2+3→5`), drop `1·`/`+0`, `−1·x→−x`, double-neg, adjacent `x·x→x²`, scalar-first product sort (sum order preserved). (Structural `@[pkc_math_rule]` shape-rules = documented future; named-operator recognition is the registry, below.)
+- [x] **Stage 3 (Pretty)** `Pretty.lean`: precedence printer (sum 10 < neg 15 < mul 20 < pow 30 < atom 40); `e^{…}`, `\sin/\cos/\log/\arcsin…`, `\frac`, sign-aware sums (`a − b`); takes a `resolve : String→String` closure (pure/testable).
+- [x] Symbol table + registry `Registry.lean`: `@[pkc_math_symbol "…"]` per-decl LaTeX override (the practical recognition registry) + `builtinSymbol` heuristic (Greek, `s0→s_{0}`, `ndvi→\mathrm{NDVI}`, single-letter italic, multi-letter `\mathrm`). `resolveToken env` = override-then-heuristic.
+- [x] `@[pkc_math]` attribute `Attr.lean`: `quantityToLatex declName : MetaM String` (lambdaTelescope value → lift → normalize → pretty; LHS via `resolveToken`), `@[pkc_math]` / `@[pkc_math "…literal…"]` → `DocGen4.Process.addDeclMath` (the only doc-gen4-coupled module).
+- [x] `Demo.lean`: dimensionless-kind demo; `@[pkc_math_symbol "\\sigma^0", pkc_math] def avsForward` renders `\sigma^0 = a\,\mathrm{NDVI} + e^{-2\,b\,\mathrm{NDVI}}\,c\,r + d`; 4 `#guard_msgs` pins (3 pure-stage + 1 end-to-end) — all green.
+- [x] `lakefile.lean`: `require «doc-gen4» from "/home/nfr/projects/lean/doc-gen4"` + `lean_lib «DocGenMath»`.
 
 ### Phase V — verification / end-to-end (see §7)
-- [ ] `require «doc-gen4» from "/home/nfr/projects/lean/doc-gen4"` (local override) in the PKC clone lakefile.
-- [ ] Resolve build strategy (§7): get PKC + deps built in the clone (rebase to `49ab475` first).
-- [ ] Run doc-gen4 over the demo module; grep the HTML for the `$$…$$` block; open in a browser to confirm MathJax typesets it.
+- [x] Local doc-gen4 override wired; `lake update doc-gen4` repoints the manifest to the local path (`"dir": "/home/nfr/projects/lean/doc-gen4"`). `lake build DocGenMath` **green, 33 jobs**.
+- [x] **Transport proven** (this substitutes for most of Phase V): a separate `lake env lean` process imported the `Demo` olean and read back `$$\sigma^0 = …$$` via `getDeclMath?` — exactly doc-gen4's own path (load target oleans → `getDocString?` → `getDeclMath?`). So the data reaches the renderer.
+- [ ] *Visual only:* run doc-gen4's full HTML generation over `Demo`, grep the HTML for the `$$…$$` block, open in a browser to confirm MathJax typesets it. (Heavier — doc-gen4 must build/run over the module.)
 
 ### Phase S — submit PR
 - [ ] Rebase the Phase-P diff from `pkc-math-hook` onto doc-gen4 `main` (v4.33); fix any drift.
@@ -219,10 +223,17 @@ Scope the doc-gen build to the demo module, not all of PKC. *(open decision #3)*
 ---
 
 ## 9. Open decisions
-1. Rendering philosophy default: **F** (chosen) vs F+E vs P-as-flagship (§5). — *confirm with user.*
-2. `@[pkc_math]` attribute surface syntax + the `@[pkc_math_rule]` DSL shape (§5). — *TBD during Phase B.*
-3. Build strategy: (a) clean vs (b) reuse deps (§7). — *leaning (a).*
-4. doc-gen4 PR transport: env-extension hook (§6, preferred) vs docstring injection (fallback).
+1. Rendering philosophy default: **F** (chosen, and implemented — faithful only) vs F+E vs P-as-flagship
+   (§5). — *confirm with user.* (E/P not built; the sibling-def escape hatch remains available.)
+2. `@[pkc_math]` attribute surface syntax — **DONE**: `@[pkc_math]` (auto) / `@[pkc_math "…literal…"]`
+   (override); named-operator notation via `@[pkc_math_symbol "…"]`. Structural `@[pkc_math_rule]`
+   shape-recognition DSL = deferred (documented future extension in §5; named-operator recognition
+   already covered by `@[pkc_math_symbol]`).
+3. Build strategy — **RESOLVED**: neither (a) nor (b). `DocGenMath` compiles only core + the Lean-only
+   `DeclMath`, so the heavy deps are merely *resolved*, never built; the clone's own `.lake/packages`
+   sufficed. `lake update doc-gen4` once to activate the local override. (§7's 9.3G problem was moot.)
+4. doc-gen4 PR transport: env-extension hook (§6, preferred) — **shipped as Phase P**; docstring-append
+   variant chosen (mirrors `getRecommendedSpellingText`). Verified end-to-end this session.
 
 ---
 
@@ -240,3 +251,23 @@ Scope the doc-gen build to the demo module, not all of PKC. *(open decision #3)*
 - **2026-08-03 (session 1, cont.):** Re-synced the PKC clone `feat/pkc-math-rendering` to sibling
   `local/main` = `71b7508` (v0.24.0 + blueprint update; clean ff, RENDERING.md preserved). Committed:
   RENDERING.md on the PKC feat branch; the Phase-P hook on doc-gen4 `pkc-math-hook`. Neither pushed.
+- **2026-08-03 (session 2):** Rebased `feat/pkc-math-rendering` onto sibling `local/main` = `b43f9c0`
+  (v0.25.0). **Implemented + verified all of Phase B.** Smoke-tested the pure stages (Term/Normalize/
+  Pretty import only `Lean`) against the bare toolchain by hand-compiling oleans with `lean --root`
+  — all 4 LaTeX predictions matched before touching the heavy build. Then `lake build DocGenMath`
+  green (33 jobs); the `@[pkc_math]` attribute runs over `avsForward` at build time, and a separate
+  `lake env lean` process read the attached `$$…$$` back via `getDeclMath?` (transport proven).
+  **Build strategy that worked (supersedes §7's open decision):** the clone already had its **own**
+  resolved `.lake/packages` (848M, sources only, *not* the sibling's — no sharing/interference).
+  `DocGenMath` builds only the mathlib-free core spine + the `Lean`-only `DocGen4.Process.DeclMath`,
+  so **no** mathlib/PhysLib/TorchLean module is compiled — the heavy deps only need to be *resolved*.
+  `lake update doc-gen4` was required once to make the local `from path` override win over the cached
+  git manifest entry (it also decompressed the mathlib cache as a harmless side effect, ~3 min).
+  **Gotchas fixed:** (1) `String` is ByteArray-backed in v4.32.0 → `⟨List Char⟩` fails; use
+  `String.ofList`. (2) `s!"…{{…}}…"` literal-brace escaping is fragile → build LaTeX with `++` and an
+  explicit `br`/`"{"++…++"}"`. (3) `macro` is a reserved keyword — can't name a `match` binder that.
+  (4) Reading an `OfNat` numeral: **`Expr.nat?` silently returns none** on the raw `Nat` index and
+  **`Expr.natLit?` does not exist** in v4.32.0 — match `Expr.lit (.natVal n)` directly. (5) `Lift` uses
+  `` `` ``-checked PKC names, so it must `import PropertyKindCalculus` (couples the lift to the core —
+  honest, since it hard-codes PKC's alphabet). (6) `where`-clause helpers don't see the outer `let fn`
+  — recompute `e.getAppFn` inside.
