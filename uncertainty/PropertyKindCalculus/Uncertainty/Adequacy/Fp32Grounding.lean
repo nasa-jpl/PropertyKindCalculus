@@ -56,6 +56,22 @@ theorem sub32_within_half_ulp (a b : FP32) :
     |(a - b).val - (a.val - b.val)| ≤ eps₃₂ (a.val - b.val) :=
   FP32.sub_abs_error a b
 
+/-- **The binary32 multiplication is within half a ulp** of the exact real product: the per-operation
+rounding bound the accumulation argument composes at a `mul` node (`FP32.mul_abs_error`). Unlike
+`+`/`−`, the *propagated* operand error passes through a product with magnitude-dependent factors, so
+`DagBound.errBound` weights each operand's error by the other operand's magnitude. -/
+theorem mul32_within_half_ulp (a b : FP32) :
+    |(a * b).val - (a.val * b.val)| ≤ eps₃₂ (a.val * b.val) :=
+  FP32.mul_abs_error a b
+
+/-- **The binary32 division is within half a ulp** of the exact real quotient (`FP32.div_abs_error`):
+the per-operation rounding bound at a `div` node. This isolates only the *rounding* stage; the
+propagated operand error at a division is governed by the denominator's magnitude (hence
+`DagBound.errBound`'s `1/|b|` factors and the nonzero-denominator side condition `DagBound.Regular`). -/
+theorem div32_within_half_ulp (a b : FP32) :
+    |(a / b).val - (a.val / b.val)| ≤ eps₃₂ (a.val / b.val) :=
+  FP32.div_abs_error a b
+
 /-- **Sound interval enclosure of addition.** The exact real sum of two enclosed reals is enclosed by
 the outward-rounded interval sum — the soundness the adequacy *range* analysis rests on. -/
 theorem interval_add_sound {R : Interval.Rounder} {A B : Interval.RInterval} {x y : ℝ}

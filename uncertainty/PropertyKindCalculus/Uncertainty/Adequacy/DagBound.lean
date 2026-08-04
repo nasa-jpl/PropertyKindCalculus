@@ -29,13 +29,16 @@ genuine, Flocq-backed `FP32.{add,sub}_abs_error`) along the DAG yields:
     measurand's uncertainty over the box is *exactly* the `ℝ` one. Rounding is the *sole* source of
     the gap — which is precisely the adequacy hazard the carrier flags.
 
-Restriction (honest scope, `UNCERTAINTY.md` §6). The DAG covers `+`/`−` — the operations A1/A2/A3
-cover and the carrier flags. Multiplication/division rounding (their per-op bounds
-`FP32.{mul,div}_abs_error` exist in `Fp32Grounding`) accumulate the same way but with
-magnitude-dependent factors; extending the box theorem to them, and refining `FlagFree` to the
-*minimal* no-absorption condition (rounding allowed as long as the tracked contribution survives),
-are the remaining refinements. Proved over `ℝ`/`FP32`, sorry-free
-(`[propext, Classical.choice, Quot.sound]`).
+Scope (`UNCERTAINTY.md` §6). The DAG covers the full arithmetic operator class `+`/`−`/`×`/`÷`. The
+*linear* nodes `+`/`−` are exactly the operations the per-site verdict A1/A2/A3 and the runtime
+carrier flag; the *nonlinear* nodes `×`/`÷` are added here by composing their per-operation rounding
+bounds `Fp32Grounding.{mul32,div32}_within_half_ulp` (the genuine `FP32.{mul,div}_abs_error`) with the
+first-order *propagation* of operand errors — the magnitude-dependent factors of a GUM sensitivity
+analysis (`∂(ab)/∂a = b`, `∂(a/b)/∂b = −a/b²`). Division propagation is a genuine bound only where the
+denominator is nonzero, so the forward-error theorem carries a `Regular` side condition (vacuous on
+any `÷`-free DAG). The one remaining refinement is tightening `FlagFree` from *no node rounds* to the
+*minimal* no-absorption condition (rounding allowed as long as the tracked contribution survives).
+Proved over `ℝ`/`FP32`, sorry-free (`[propext, Classical.choice, Quot.sound]`).
 -/
 import PropertyKindCalculus.Uncertainty.Adequacy.Fp32Grounding
 
@@ -57,6 +60,10 @@ inductive Expr where
   | add : Expr → Expr → Expr
   /-- Subtraction node. -/
   | sub : Expr → Expr → Expr
+  /-- Multiplication node. -/
+  | mul : Expr → Expr → Expr
+  /-- Division node. -/
+  | div : Expr → Expr → Expr
 
 /-- **The rounded (binary32) measurand.** Every `add`/`sub` node rounds its result to the binary32
 grid: `(a + b).val = round₃₂ (a.val + b.val)` (TorchLean's `FP32` `Add`/`Sub`). This is the
@@ -66,6 +73,8 @@ noncomputable def evalFP32 : Expr → (ℕ → FP32) → FP32
   | .const c, _ => c
   | .add a b, ρ => evalFP32 a ρ + evalFP32 b ρ
   | .sub a b, ρ => evalFP32 a ρ - evalFP32 b ρ
+  | .mul a b, ρ => evalFP32 a ρ * evalFP32 b ρ
+  | .div a b, ρ => evalFP32 a ρ / evalFP32 b ρ
 
 /-- **The exact `ℝ` measurand.** The same DAG evaluated with *no rounding* over the reals — the
 reference against which the floating-point evaluation's information loss is measured. -/
@@ -74,16 +83,36 @@ noncomputable def evalExact : Expr → (ℕ → FP32) → ℝ
   | .const c, _ => c.val
   | .add a b, ρ => evalExact a ρ + evalExact b ρ
   | .sub a b, ρ => evalExact a ρ - evalExact b ρ
+  | .mul a b, ρ => evalExact a ρ * evalExact b ρ
+  | .div a b, ρ => evalExact a ρ / evalExact b ρ
 
-/-- **The accumulated rounding budget** of the DAG: the tree-sum of the per-node half-ulps `eps₃₂`
-at each rounded (`add`/`sub`) node's exact operand sum. This is the total forward error the
-floating-point evaluation can introduce, composed from the per-operation bounds
-`Fp32Grounding.{add32,sub32}_within_half_ulp`. -/
+/-- **The accumulated rounding budget** of the DAG: the tree-sum of the per-node rounding half-ulps
+`eps₃₂` *plus* the propagated operand error, composed from the per-operation bounds
+`Fp32Grounding.{add32,sub32,mul32,div32}_within_half_ulp`. For the *linear* nodes (`add`/`sub`) the
+operand errors pass through with coefficient one, so the budget is a plain sum. For the *nonlinear*
+nodes the propagation carries magnitude-dependent factors, exactly as in a first-order (GUM)
+sensitivity analysis:
+
+  * at a **product** `a·b`, operand `a`'s error is weighted by `|b|` and vice-versa
+    (`∂(ab)/∂a = b`);
+  * at a **quotient** `a/b`, the numerator's error is scaled by `1/|b|` and the denominator's by
+    `|a|/(|b|·|b|)` (`∂(a/b)/∂a = 1/b`, `∂(a/b)/∂b = −a/b²`) — well-defined, and a genuine *bound*,
+    only where the denominator is nonzero (the side condition `Regular`).
+
+The `div` node uses the *FP32* denominator `|(evalFP32 b ρ).val|` and the *exact* denominator
+`|evalExact b ρ|` — the two magnitudes the propagation identity naturally exposes. -/
 noncomputable def errBound : Expr → (ℕ → FP32) → ℝ
   | .inp _,   _ => 0
   | .const _, _ => 0
   | .add a b, ρ => errBound a ρ + errBound b ρ + eps₃₂ ((evalFP32 a ρ).val + (evalFP32 b ρ).val)
   | .sub a b, ρ => errBound a ρ + errBound b ρ + eps₃₂ ((evalFP32 a ρ).val - (evalFP32 b ρ).val)
+  | .mul a b, ρ =>
+      |(evalFP32 a ρ).val| * errBound b ρ + |evalExact b ρ| * errBound a ρ
+        + eps₃₂ ((evalFP32 a ρ).val * (evalFP32 b ρ).val)
+  | .div a b, ρ =>
+      errBound a ρ / |(evalFP32 b ρ).val|
+        + |evalExact a ρ| * errBound b ρ / (|(evalFP32 b ρ).val| * |evalExact b ρ|)
+        + eps₃₂ ((evalFP32 a ρ).val / (evalFP32 b ρ).val)
 
 /-- `|x − y| ≤ |x| + |y|`, the triangle bound used to split a difference of errors. -/
 private theorem abs_sub_bound (x y : ℝ) : |x - y| ≤ |x| + |y| := by
@@ -104,20 +133,52 @@ theorem errBound_nonneg (ρ : ℕ → FP32) (e : Expr) : 0 ≤ errBound e ρ := 
   | sub a b iha ihb =>
     simp only [errBound]
     have := eps_nonneg ((evalFP32 a ρ).val - (evalFP32 b ρ).val); linarith
+  | mul a b iha ihb =>
+    simp only [errBound]
+    have h1 : 0 ≤ |(evalFP32 a ρ).val| * errBound b ρ := mul_nonneg (abs_nonneg _) ihb
+    have h2 : 0 ≤ |evalExact b ρ| * errBound a ρ := mul_nonneg (abs_nonneg _) iha
+    have h3 := eps_nonneg ((evalFP32 a ρ).val * (evalFP32 b ρ).val); linarith
+  | div a b iha ihb =>
+    simp only [errBound]
+    have h1 : 0 ≤ errBound a ρ / |(evalFP32 b ρ).val| := div_nonneg iha (abs_nonneg _)
+    have h2 : 0 ≤ |evalExact a ρ| * errBound b ρ / (|(evalFP32 b ρ).val| * |evalExact b ρ|) :=
+      div_nonneg (mul_nonneg (abs_nonneg _) ihb) (mul_nonneg (abs_nonneg _) (abs_nonneg _))
+    have h3 := eps_nonneg ((evalFP32 a ρ).val / (evalFP32 b ρ).val); linarith
 
 /-! ## The forward-error accumulation and the box-faithfulness capstone (A3′) -/
 
-/-- **Forward-error accumulation over the DAG.** The rounded binary32 measurand differs from the
-exact `ℝ` one by at most the accumulated rounding budget `errBound e ρ`. Proved by structural
-induction, composing the per-operation half-ulp bounds `Fp32Grounding.{add32,sub32}_within_half_ulp`
-with the triangle inequality at each node — the whole-evaluation lift of the local half-ulp bound
-`Grid.abs_sub_gridRound_le` (A1's grid). -/
-theorem dag_fp32_error_bound (ρ : ℕ → FP32) (e : Expr) :
-    |(evalFP32 e ρ).val - evalExact e ρ| ≤ errBound e ρ := by
+/-- The DAG is **regular** at inputs `ρ` when every division has a nonzero denominator — in *both*
+the floating-point and the exact interpretation (`(evalFP32 b ρ).val ≠ 0` and `evalExact b ρ ≠ 0`).
+This is the domain condition under which the quotient-rule error propagation of a `div` node is a
+genuine bound (a division by zero has no first-order sensitivity). It is vacuously true on any
+`div`-free DAG (`add`/`sub`/`mul` only), so the forward-error bound below is unconditional there. -/
+def Regular : Expr → (ℕ → FP32) → Prop
+  | .inp _,   _ => True
+  | .const _, _ => True
+  | .add a b, ρ => Regular a ρ ∧ Regular b ρ
+  | .sub a b, ρ => Regular a ρ ∧ Regular b ρ
+  | .mul a b, ρ => Regular a ρ ∧ Regular b ρ
+  | .div a b, ρ => Regular a ρ ∧ Regular b ρ ∧ (evalFP32 b ρ).val ≠ 0 ∧ evalExact b ρ ≠ 0
+
+/-- **Forward-error accumulation over the DAG.** For a `Regular` input assignment, the rounded
+binary32 measurand differs from the exact `ℝ` one by at most the accumulated rounding budget
+`errBound e ρ`. Proved by structural induction, composing the per-operation half-ulp bounds
+`Fp32Grounding.{add32,sub32,mul32,div32}_within_half_ulp` (the *rounding* stage) with the triangle
+inequality and the first-order *propagation* of operand errors at each node — the whole-evaluation
+lift of the local half-ulp bound `Grid.abs_sub_gridRound_le` (A1's grid). At the *linear* nodes the
+propagation is coefficient-one; at the *nonlinear* nodes it carries the magnitude factors of a GUM
+sensitivity analysis (`|b|`, `1/|b|`, `|a|/|b|²`). -/
+theorem dag_fp32_error_bound (ρ : ℕ → FP32) :
+    ∀ e : Expr, Regular e ρ → |(evalFP32 e ρ).val - evalExact e ρ| ≤ errBound e ρ := by
+  intro e
   induction e with
-  | inp i => simp [evalFP32, evalExact, errBound]
-  | const c => simp [evalFP32, evalExact, errBound]
+  | inp i => intro _; simp [evalFP32, evalExact, errBound]
+  | const c => intro _; simp [evalFP32, evalExact, errBound]
   | add a b iha ihb =>
+    intro hreg
+    simp only [Regular] at hreg
+    obtain ⟨ha, hb⟩ := hreg
+    have iha' := iha ha; have ihb' := ihb hb
     simp only [evalFP32, evalExact, errBound]
     have hop := add32_within_half_ulp (evalFP32 a ρ) (evalFP32 b ρ)
     have htri := abs_sub_le ((evalFP32 a ρ + evalFP32 b ρ).val)
@@ -127,8 +188,12 @@ theorem dag_fp32_error_bound (ρ : ℕ → FP32) (e : Expr) :
       have hrw : ((evalFP32 a ρ).val + (evalFP32 b ρ).val) - (evalExact a ρ + evalExact b ρ)
           = ((evalFP32 a ρ).val - evalExact a ρ) + ((evalFP32 b ρ).val - evalExact b ρ) := by ring
       rw [hrw]; exact abs_add_le _ _
-    linarith [hop, htri, hsplit, iha, ihb]
+    linarith [hop, htri, hsplit, iha', ihb']
   | sub a b iha ihb =>
+    intro hreg
+    simp only [Regular] at hreg
+    obtain ⟨ha, hb⟩ := hreg
+    have iha' := iha ha; have ihb' := ihb hb
     simp only [evalFP32, evalExact, errBound]
     have hop := sub32_within_half_ulp (evalFP32 a ρ) (evalFP32 b ρ)
     have htri := abs_sub_le ((evalFP32 a ρ - evalFP32 b ρ).val)
@@ -138,7 +203,73 @@ theorem dag_fp32_error_bound (ρ : ℕ → FP32) (e : Expr) :
       have hrw : ((evalFP32 a ρ).val - (evalFP32 b ρ).val) - (evalExact a ρ - evalExact b ρ)
           = ((evalFP32 a ρ).val - evalExact a ρ) - ((evalFP32 b ρ).val - evalExact b ρ) := by ring
       rw [hrw]; exact abs_sub_bound _ _
-    linarith [hop, htri, hsplit, iha, ihb]
+    linarith [hop, htri, hsplit, iha', ihb']
+  | mul a b iha ihb =>
+    intro hreg
+    simp only [Regular] at hreg
+    obtain ⟨ha, hb⟩ := hreg
+    have iha' := iha ha; have ihb' := ihb hb
+    simp only [evalFP32, evalExact, errBound]
+    have hop := mul32_within_half_ulp (evalFP32 a ρ) (evalFP32 b ρ)
+    -- First-order propagation: ãb̃ − âb̂ = ã·(b̃−b̂) + b̂·(ã−â).
+    have hprop : |(evalFP32 a ρ).val * (evalFP32 b ρ).val - evalExact a ρ * evalExact b ρ|
+        ≤ |(evalFP32 a ρ).val| * |(evalFP32 b ρ).val - evalExact b ρ|
+          + |evalExact b ρ| * |(evalFP32 a ρ).val - evalExact a ρ| := by
+      have hrw : (evalFP32 a ρ).val * (evalFP32 b ρ).val - evalExact a ρ * evalExact b ρ
+          = (evalFP32 a ρ).val * ((evalFP32 b ρ).val - evalExact b ρ)
+            + evalExact b ρ * ((evalFP32 a ρ).val - evalExact a ρ) := by ring
+      rw [hrw]
+      calc |(evalFP32 a ρ).val * ((evalFP32 b ρ).val - evalExact b ρ)
+              + evalExact b ρ * ((evalFP32 a ρ).val - evalExact a ρ)|
+          ≤ |(evalFP32 a ρ).val * ((evalFP32 b ρ).val - evalExact b ρ)|
+            + |evalExact b ρ * ((evalFP32 a ρ).val - evalExact a ρ)| := abs_add_le _ _
+        _ = |(evalFP32 a ρ).val| * |(evalFP32 b ρ).val - evalExact b ρ|
+            + |evalExact b ρ| * |(evalFP32 a ρ).val - evalExact a ρ| := by rw [abs_mul, abs_mul]
+    have hm1 : |(evalFP32 a ρ).val| * |(evalFP32 b ρ).val - evalExact b ρ|
+        ≤ |(evalFP32 a ρ).val| * errBound b ρ := mul_le_mul_of_nonneg_left ihb' (abs_nonneg _)
+    have hm2 : |evalExact b ρ| * |(evalFP32 a ρ).val - evalExact a ρ|
+        ≤ |evalExact b ρ| * errBound a ρ := mul_le_mul_of_nonneg_left iha' (abs_nonneg _)
+    have htri := abs_sub_le ((evalFP32 a ρ * evalFP32 b ρ).val)
+      ((evalFP32 a ρ).val * (evalFP32 b ρ).val) (evalExact a ρ * evalExact b ρ)
+    linarith [hop, hprop, hm1, hm2, htri]
+  | div a b iha ihb =>
+    intro hreg
+    simp only [Regular] at hreg
+    obtain ⟨ha, hb, hbfp, hbex⟩ := hreg
+    have iha' := iha ha; have ihb' := ihb hb
+    simp only [evalFP32, evalExact, errBound]
+    have hop := div32_within_half_ulp (evalFP32 a ρ) (evalFP32 b ρ)
+    -- First-order propagation of a quotient (nonzero denominators):
+    -- ã/b̃ − â/b̂ = (ã−â)/b̃ − â·(b̃−b̂)/(b̃·b̂).
+    have hid : (evalFP32 a ρ).val / (evalFP32 b ρ).val - evalExact a ρ / evalExact b ρ
+        = ((evalFP32 a ρ).val - evalExact a ρ) / (evalFP32 b ρ).val
+          - evalExact a ρ * ((evalFP32 b ρ).val - evalExact b ρ)
+            / ((evalFP32 b ρ).val * evalExact b ρ) := by
+      field_simp
+      ring
+    have hprop : |(evalFP32 a ρ).val / (evalFP32 b ρ).val - evalExact a ρ / evalExact b ρ|
+        ≤ |(evalFP32 a ρ).val - evalExact a ρ| / |(evalFP32 b ρ).val|
+          + |evalExact a ρ| * |(evalFP32 b ρ).val - evalExact b ρ|
+            / (|(evalFP32 b ρ).val| * |evalExact b ρ|) := by
+      rw [hid]
+      calc |((evalFP32 a ρ).val - evalExact a ρ) / (evalFP32 b ρ).val
+              - evalExact a ρ * ((evalFP32 b ρ).val - evalExact b ρ)
+                / ((evalFP32 b ρ).val * evalExact b ρ)|
+          ≤ |((evalFP32 a ρ).val - evalExact a ρ) / (evalFP32 b ρ).val|
+            + |evalExact a ρ * ((evalFP32 b ρ).val - evalExact b ρ)
+                / ((evalFP32 b ρ).val * evalExact b ρ)| := abs_sub_bound _ _
+        _ = |(evalFP32 a ρ).val - evalExact a ρ| / |(evalFP32 b ρ).val|
+            + |evalExact a ρ| * |(evalFP32 b ρ).val - evalExact b ρ|
+              / (|(evalFP32 b ρ).val| * |evalExact b ρ|) := by
+          simp only [abs_div, abs_mul]
+    have hm1 : |(evalFP32 a ρ).val - evalExact a ρ| / |(evalFP32 b ρ).val|
+        ≤ errBound a ρ / |(evalFP32 b ρ).val| := by gcongr
+    have hm2 : |evalExact a ρ| * |(evalFP32 b ρ).val - evalExact b ρ|
+          / (|(evalFP32 b ρ).val| * |evalExact b ρ|)
+        ≤ |evalExact a ρ| * errBound b ρ / (|(evalFP32 b ρ).val| * |evalExact b ρ|) := by gcongr
+    have htri := abs_sub_le ((evalFP32 a ρ / evalFP32 b ρ).val)
+      ((evalFP32 a ρ).val / (evalFP32 b ρ).val) (evalExact a ρ / evalExact b ρ)
+    linarith [hop, hprop, hm1, hm2, htri]
 
 /-- **A3′ — box faithfulness of the floating-point measurand.** For a fixed model DAG `e`, a nominal
 input `ρ`, and *any* input `σ` (in particular every input in a box around `ρ`), the floating-point
@@ -146,16 +277,17 @@ output *variation* `evalFP32 σ − evalFP32 ρ` reproduces the exact `ℝ` outp
 `evalExact σ − evalExact ρ` up to the summed rounding budget `errBound σ + errBound ρ`. So the FP32
 measurand's uncertainty — its spread over the input box — equals the `ℝ` one **up to a proven,
 DAG-additive bound**: the universal (whole-evaluation) lift of the per-site verdict A3. -/
-theorem dag_fp32_box_faithful (e : Expr) (ρ σ : ℕ → FP32) :
+theorem dag_fp32_box_faithful (e : Expr) (ρ σ : ℕ → FP32)
+    (hρ : Regular e ρ) (hσ : Regular e σ) :
     |((evalFP32 e σ).val - (evalFP32 e ρ).val) - (evalExact e σ - evalExact e ρ)|
       ≤ errBound e σ + errBound e ρ := by
-  have hσ := dag_fp32_error_bound σ e
-  have hρ := dag_fp32_error_bound ρ e
+  have hσ' := dag_fp32_error_bound σ e hσ
+  have hρ' := dag_fp32_error_bound ρ e hρ
   have hrw : ((evalFP32 e σ).val - (evalFP32 e ρ).val) - (evalExact e σ - evalExact e ρ)
       = ((evalFP32 e σ).val - evalExact e σ) - ((evalFP32 e ρ).val - evalExact e ρ) := by ring
   rw [hrw]
   have h := abs_sub_bound ((evalFP32 e σ).val - evalExact e σ) ((evalFP32 e ρ).val - evalExact e ρ)
-  linarith [h, hσ, hρ]
+  linarith [h, hσ', hρ']
 
 /-! ## The flag-free regime — no rounding, hence exact box faithfulness -/
 
@@ -169,6 +301,10 @@ def FlagFree : Expr → (ℕ → FP32) → Prop
       (evalFP32 a ρ + evalFP32 b ρ).val = (evalFP32 a ρ).val + (evalFP32 b ρ).val
   | .sub a b, ρ => FlagFree a ρ ∧ FlagFree b ρ ∧
       (evalFP32 a ρ - evalFP32 b ρ).val = (evalFP32 a ρ).val - (evalFP32 b ρ).val
+  | .mul a b, ρ => FlagFree a ρ ∧ FlagFree b ρ ∧
+      (evalFP32 a ρ * evalFP32 b ρ).val = (evalFP32 a ρ).val * (evalFP32 b ρ).val
+  | .div a b, ρ => FlagFree a ρ ∧ FlagFree b ρ ∧
+      (evalFP32 a ρ / evalFP32 b ρ).val = (evalFP32 a ρ).val / (evalFP32 b ρ).val
 
 /-- **Under flag-freedom the floating-point measurand is exact.** If no node rounds, the binary32
 evaluation coincides with the exact `ℝ` evaluation. Proved by induction, discharging each node with
@@ -186,6 +322,18 @@ theorem evalFP32_val_eq_exact_of_flagFree (ρ : ℕ → FP32) :
     simp only [evalFP32, evalExact]
     rw [hexact, iha ha, ihb hb]
   | sub a b iha ihb =>
+    intro h
+    simp only [FlagFree] at h
+    obtain ⟨ha, hb, hexact⟩ := h
+    simp only [evalFP32, evalExact]
+    rw [hexact, iha ha, ihb hb]
+  | mul a b iha ihb =>
+    intro h
+    simp only [FlagFree] at h
+    obtain ⟨ha, hb, hexact⟩ := h
+    simp only [evalFP32, evalExact]
+    rw [hexact, iha ha, ihb hb]
+  | div a b iha ihb =>
     intro h
     simp only [FlagFree] at h
     obtain ⟨ha, hb, hexact⟩ := h

@@ -22,6 +22,7 @@ import PropertyKindCalculus.Uncertainty.Adequacy.ExecBridge
 import PropertyKindCalculus.Uncertainty.Adequacy.Significance
 import PropertyKindCalculus.Uncertainty.Experiments.PRSimulation
 import PropertyKindCalculus.Uncertainty.Experiments.EagerProvenance
+import PropertyKindCalculus.Uncertainty.BudgetDagLaws
 import PropertyKindCalculusBlueprint.References
 
 open Verso.Genre
@@ -73,12 +74,17 @@ CI-checked (each item below links to the formal node that realizes it):
 on TorchLean's computable `IEEE32Exec` model
 {Manual.citep george_torchlean_formalizing_neural_networks}[]; and
   - the Axis-U {bpref "def_uq_significance"}[significance wiring], coupling the autograd $`c_i` with the descriptor's $`u_i` into the significance scale $`c_i u_i` the
-adequacy carrier checks against (Stage 3.4).
+adequacy carrier checks against (Stage 3.4); and
+  - its heterogeneous generalization, the {bpref "def_uq_budget_dag"}[kinded `×`/`÷` budget DAG], whose
+`ProductKind`/`QuotientKind` edges are threaded through a multi-node graph and whose threaded
+propagation {bpref "thm_uq_budget_dag_collapse"}[collapses] to the flat quadrature (residual 2).
 
 Since Stage 3.5 the sensitivity coefficients are also *proved* correct — the reverse pass is the
 adjoint of the Fréchet derivative — and Stage 3.6 carries that endpoint from the compiled tape
 ({bpref "thm_uq_direct_sim"}[direct simulation]) to the tape the bridge actually builds
-({bpref "thm_uq_eager_provenance"}[eager provenance]). The `×`/`÷` DAG extension remains *planned*.
+({bpref "thm_uq_eager_provenance"}[eager provenance]). The kinded `×`/`÷` budget DAG (residual 2) is
+{bpref "def_uq_budget_dag"}[realized], its threaded propagation {bpref "thm_uq_budget_dag_collapse"}[proved
+to collapse] to the flat quadrature.
 
 # Why formalize this? What the rigor buys
 
@@ -565,24 +571,29 @@ runtime carrier.
 
 :::theorem "thm_uq_adequacy_soundness" (parent := "uncertainty") (lean := "PropertyKindCalculus.Uncertainty.Adequacy.dag_fp32_box_faithful") (tags := "capstone")
 *Universal adequacy soundness (A3′, the capstone).* Abstract a write-once model as a binary32
-evaluation DAG of `+`/`−`. For *any* two inputs — in particular every input in a box around a nominal
-one — the `FP32`-computed measurand's *variation* reproduces the exact `ℝ`-computed variation up to a
-proven, DAG-additive rounding budget; and when no site rounds anywhere (flag-free — no absorption at
-any addition, every subtraction in the Sterbenz {uses "thm_uq_sterbenz"}[A2] regime), the bound
-collapses to *equality*. This lifts the per-site verdict {uses "thm_uq_adequacy_verdict"}[A3] across a
-whole evaluation, and is the theorem that binds the layer to R10's exec/spec refinement.
+evaluation DAG over the full operator class `+`/`−`/`×`/`÷`. For *any* two inputs — in particular
+every input in a box around a nominal one — the `FP32`-computed measurand's *variation* reproduces the
+exact `ℝ`-computed variation up to a proven, DAG-additive rounding budget; and when no site rounds
+anywhere (flag-free — no absorption at any addition, every subtraction in the Sterbenz
+{uses "thm_uq_sterbenz"}[A2] regime), the bound collapses to *equality*. This lifts the per-site
+verdict {uses "thm_uq_adequacy_verdict"}[A3] across a whole evaluation, and is the theorem that binds
+the layer to R10's exec/spec refinement.
 :::
 
 :::proof "thm_uq_adequacy_soundness"
 Realized over `ℝ`/`FP32` (Stage 3.1, `Adequacy.DagBound`). The forward-error accumulation
 `dag_fp32_error_bound` composes the per-operation half-ulp bounds
-(`Adequacy.Fp32Grounding.{add32,sub32}_within_half_ulp`, the genuine `FP32.{add,sub}_abs_error`) with
-the triangle inequality along the DAG; applying it at both inputs and one more triangle step gives the
+(`Adequacy.Fp32Grounding.{add32,sub32,mul32,div32}_within_half_ulp`, the genuine
+`FP32.{add,sub,mul,div}_abs_error`) with the triangle inequality *and* the first-order propagation of
+operand errors along the DAG; applying it at both inputs and one more triangle step gives the
 box-faithfulness bound `dag_fp32_box_faithful`, and `dag_fp32_box_exact_of_flagFree` is the flag-free
-equality. Sorry-free (`#print axioms` → `[propext, Classical.choice, Quot.sound]`), instantiated on
-concrete DAGs in the `AdequacyDag` example. Honest scope: the DAG covers `+`/`−` (the operations
-A1/A2/A3 cover); extending it to `×`/`÷` remains in `UNCERTAINTY.md` §6 (the executable-carrier
-bridge {uses "thm_uq_exec_bridge"}[is now built, Stage 3.3]).
+equality. The *linear* nodes `+`/`−` pass operand error through with coefficient one; the *nonlinear*
+`×`/`÷` carry the GUM magnitude factors (`|b|`, `1/|b|`, `|a|/|b|²`), a `div` node's bound holding on
+the nonzero-denominator side condition `Regular` (vacuous on `÷`-free DAGs). Sorry-free (`#print
+axioms` → `[propext, Classical.choice, Quot.sound]`), instantiated on concrete `+`/`−`/`×`/`÷` DAGs in
+the `AdequacyDag` example. Remaining refinement (`UNCERTAINTY.md` §6): tightening `FlagFree` from *no
+node rounds* to the *minimal* no-absorption condition (the executable-carrier bridge
+{uses "thm_uq_exec_bridge"}[is built, Stage 3.3]).
 :::
 
 :::theorem "thm_uq_exec_bridge" (parent := "uncertainty") (lean := "PropertyKindCalculus.Uncertainty.Adequacy.exec_verdict_sound") (tags := "capstone")
@@ -639,6 +650,59 @@ carrier-generic (`Uncertainty.Budget` over `[NumCarrier R]`) — the *second* ax
 kind: the same `combinedQ` runs at `ℝ` (to prove laws), at `Float` (to run), and at the
 {uses "def_uq_adequacy"}[adequacy carrier], where its quadrature $`\sqrt{\sum u_i^2}` adequacy-checks
 *itself* (the example flags a $`10^{-3}` contribution swamped beside a $`10^8` one).
+:::
+
+:::definition "def_uq_budget_dag" (parent := "uncertainty") (lean := "PropertyKindCalculus.Uncertainty.BudgetExpr")
+*The kinded `×`/`÷` budget DAG (residual 2).* The {uses "def_uq_significance"}[significance wiring]
+covers the *homogeneous-input* case — all inputs at one shared kind, one flat quadrature. A genuinely
+heterogeneous multiply/divide model, each interior node with its own kind equation, needs the kind
+gates *threaded through the expression*. `BudgetExpr R k` is a kinded `×`/`÷` expression whose every
+`mul`/`div` node *carries its $`\mathrm{ProductKind}`/$`\mathrm{QuotientKind}` witness as a
+constructor field*, so an ill-kinded expression is unwritable; and every interpretation — the plain
+value `valueQ`, the node-local GUM propagation `propagateQ`, the flattened per-leaf `contribsQ` — is
+built exclusively by the kind-gated $`\mathrm{Quantity.mul}`/$`\mathrm{Quantity.div}`, never a naked
+carrier op re-stamped. The per-node GUM content is the product/quotient rows of GUM Table §4.4: at a
+product the two quadrature terms are $`u_a|b|` and $`|a|u_b`, at a quotient $`u_a/|b|` and
+$`(|y|u_b)/|b|`, the latter written through the transposed witness $`k = k_1/k_2 \Rightarrow k\cdot
+k_2 = k_1` so the intermediate $`|y|u_b` is itself a kinded product, not unkinded scratch.
+:::
+
+:::proof "def_uq_budget_dag"
+Realized (Stage 3.4 extension, residual 2; `Uncertainty.BudgetDag`, Mathlib/Torch-free,
+carrier-generic over `[NumCarrier R]`). The transposed witness is `QuotientKind.toProductKind`
+(`QuantityClassification`); the value component rides along unperturbed
+(`propagateQ_value_eq_valueQ`). Deliberately no `add`/`sub` nodes — the homogeneous linear case is
+already the {uses "def_uq_significance"}[flat kinded budget] fed by autograd sensitivities, so tree
+`+`/`−` would be a second authoring of the same quadrature. Exercised on the block-density model
+$`\rho = m/((l\cdot w)\cdot h)` (`UncertaintyExamples.BudgetDagDensity`): five distinct kinds through
+one budget — untypeable under the significance wiring's single shared input kind — with `#guard`s
+reproducing $`\rho = 2500`, the per-leaf contributions $`(1.0, 2.5, 5.0, 25.0)`, and
+$`u_c = \sqrt{657.25} \approx 25.637`, and `#check_failure` probes making the operand swap, the
+heterogeneous quadrature, and the kind-misplaced leaf type errors.
+:::
+
+:::theorem "thm_uq_budget_dag_collapse" (parent := "uncertainty") (lean := "PropertyKindCalculus.Uncertainty.BudgetExpr.propagateQ_unc_eq_combinedQ") (tags := "capstone")
+*The threaded propagation collapses to the flat quadrature.* Over `ℝ`, the uncertainty the
+{uses "def_uq_budget_dag"}[budget DAG] accumulates node-by-node — a $`\sqrt{\ }` at every node,
+re-squared by the parent — telescopes *exactly*, not up to a bound, to the flat
+{uses "def_uq_significance"}[`combinedQ` quadrature] over the flattened per-leaf-occurrence
+contributions. Relative to the flat single-quadrature baseline the DAG machine therefore adds
+*threading only*, never a second combination rule: it is a conservative generalization of the kinded
+budget, not a second authority over the same GUM content.
+:::
+
+:::proof "thm_uq_budget_dag_collapse"
+Realized over `ℝ` (`Uncertainty.BudgetDagLaws.propagateQ_unc_eq_combinedQ`), under a `NonnegUncs`
+hypothesis (nonnegativity of every leaf uncertainty — statable only at the ordered proof carrier, the
+core `NumCarrier` being deliberately branchless). Structural induction: `Quantity.ext` reduces each
+node to a magnitude identity in the `sumSq` sum-of-squares vocabulary (`sumSq_append`, the scaled
+families `sumSq_map_mul_left`/`_right`/`_div`), each child radicand re-expressed as $`\sqrt{S}\cdot
+\sqrt{S}` (`Real.mul_self_sqrt`) and closed by `ring`. No divisor-nonzero hypotheses — division is
+`ℝ`'s totalized $`x/0 = 0` and both sides degenerate identically. Sorry-free (`#print axioms` →
+`[propext, Classical.choice, Quot.sound]`, pinned in `BudgetDagDensity`). Two textbook
+relative-uncertainty corollaries (`mul_leaf_relative_quadrature`, `div_leaf_relative_quadrature`)
+give $`(u_y/|y|)^2 = (u_a/|a|)^2 + (u_b/|b|)^2` for single nodes, there needing the nonzero-value
+hypotheses relative uncertainty divides by.
 :::
 
 # Coverage intervals (R18)
