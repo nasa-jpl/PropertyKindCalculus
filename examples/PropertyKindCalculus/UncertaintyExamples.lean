@@ -62,6 +62,16 @@ Stage-3.6 addition (the direct P↔R simulation, closed; + the eager-provenance 
     that runtime tape with `direct_PR_soundness_eager` giving the endpoint on it — no
     compilation involved. Axiom pins confirm the classical trio only.
 
+Residual-2 addition (the kinded ×/÷ budget DAG):
+  * `BudgetDagDensity` — a genuinely *heterogeneous* ×/÷ budget: block density `ρ = m/((l·w)·h)`
+    threads five distinct kinds (mass, length, area, volume, mass density) through one
+    `BudgetExpr`, every edge carrying its `ProductKind`/`QuotientKind` witness — a model the
+    homogeneous-input `analyzeQ` cannot type at all. `#guard`s pin ρ = 2500, the four per-leaf
+    contributions [1.0, 2.5, 5.0, 25.0] and u_c = √657.25 ≈ 25.637, plus the executable `Float`
+    shadow of the ℝ collapse law (`propagateQ` agrees with `combinedQ ∘ contribsQ`);
+    `#check_failure` probes make the operand swap, the heterogeneous quadrature, and the
+    kind-misplaced leaf type errors; the capstone's axiom pin is the classical trio only.
+
 Further paper examples (the AFM indenter model; Willink's asymmetric and Type-A cases) arrive with
 later sub-stages.
 -/
@@ -78,4 +88,5 @@ import PropertyKindCalculus.UncertaintyExamples.AdequacySterbenz32
 import PropertyKindCalculus.UncertaintyExamples.AdequacyExecBridge
 import PropertyKindCalculus.UncertaintyExamples.AdequacyCoupling
 import PropertyKindCalculus.UncertaintyExamples.AutogradDirectSim
+import PropertyKindCalculus.UncertaintyExamples.BudgetDagDensity
 import PropertyKindCalculus.UncertaintyExamples.Coverage

@@ -57,7 +57,7 @@ package «PropertyKindCalculus» where
   -- The package version — the single source of truth. `scripts/bump-version.sh`
   -- reads and bumps it here, and the blueprint reads this same line at build time
   -- (its `{version}[]` role) so the published document never drifts from the source.
-  version := v!"0.23.0"
+  version := v!"0.24.0"
   leanOptions := #[
     ⟨`autoImplicit, false⟩,
     ⟨`relaxedAutoImplicit, false⟩]
@@ -234,6 +234,7 @@ lean_lib «Uncertainty» where
     .one `PropertyKindCalculus.Uncertainty.Sampling,
     .one `PropertyKindCalculus.Uncertainty.InputDist,
     .one `PropertyKindCalculus.Uncertainty.Budget,
+    .one `PropertyKindCalculus.Uncertainty.BudgetDag,
     .one `PropertyKindCalculus.Uncertainty.UncertainQuantity,
     .one `PropertyKindCalculus.Uncertainty.Mcm,
     .one `PropertyKindCalculus.Uncertainty.Combine,
@@ -256,6 +257,7 @@ lean_lib «UncertaintyRigor» where
   srcDir := "uncertainty"
   globs := #[
     .one `PropertyKindCalculus.Uncertainty.Ladder,
+    .one `PropertyKindCalculus.Uncertainty.BudgetDagLaws,
     .one `PropertyKindCalculus.Uncertainty.Convolution,
     .one `PropertyKindCalculus.Uncertainty.Coverage,
     .one `PropertyKindCalculus.Uncertainty.Sensitivity,

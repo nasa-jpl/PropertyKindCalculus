@@ -198,6 +198,18 @@ theorem Quantity.eq_div_of_isQuotient [Div R] {k₁ k₂ k} (h : QuotientKind k�
     (hq : q.IsQuotient h a b) : q = Quantity.div h a b :=
   Quantity.isQuotient_unique h hq (Quantity.div_isQuotient h a b)
 
+/-- **Transposition.** A quotient law re-read as a product law: if `k = k₁ / k₂`, then
+`k · k₂ = k₁` — multiplying a quotient back by its divisor recovers the dividend kind.
+The ratio-scale fields permute; the *semantic* claim transposes with them (the same
+trust model as the smart constructors: the author signed `k = k₁ / k₂`, and this is
+that signature re-oriented, not a new edge). It lets a consumer that holds a quotient
+witness build the dividend-kinded product — e.g. an uncertainty propagator forming
+`|y| · u(b)` at the dividend kind from `y = a / b` — without registering a second,
+independently-trusted law. -/
+theorem QuotientKind.toProductKind {k₁ k₂ k : KindOfProperty}
+    (h : QuotientKind k₁ k₂ k) : ProductKind k k₂ k₁ :=
+  ⟨h.ratioQuotient, h.ratio₂, h.ratio₁⟩
+
 /-! ## The reciprocal family (`k = 1 / k₁`)
 
 Frequency is the reciprocal of period duration, curvature the reciprocal of the radius

@@ -470,6 +470,16 @@ uncertainty/PropertyKindCalculus/Uncertainty/
                            sensitivity `sensitivityQ : Quantity (kₒ/kᵢ) R`, contribution `contributionQ : Quantity kₒ R` gated by
                            `ProductKind kₛ kᵢ kₒ` (the GUM units cancellation as a typecheck), combined `combinedQ : Quantity kₒ R`
                            — one budget × any carrier: `ℝ` (prove laws), `Float` (run), `Adequacy` (adequacy-check the quadrature)
+  BudgetDag.lean           ✅ kinded ×/÷ budget DAG (residual 2, Mathlib/Torch-free, carrier-generic): `BudgetExpr R k`
+                           carries a `ProductKind`/`QuotientKind` witness in every `mul`/`div` node (heterogeneous input
+                           kinds; an ill-kinded tree is unwritable); `valueQ` / `propagateQ` (per-node GUM two-term
+                           quadrature; the division's `(|y|·u_b)/|b|` term goes through the transposed core-spine witness
+                           `QuotientKind.toProductKind`) / `contribsQ` (per-leaf contributions flattened to the root kind);
+                           `EstimateQ` + its `InputDist` seeding
+  BudgetDagLaws.lean       ✅ the DAG law layer over `ℝ` (scoped `instNumCarrierReal`): the collapse capstone
+                           `propagateQ_unc_eq_combinedQ` — the node-wise threaded quadrature telescopes *exactly* to the
+                           flat `combinedQ` of `contribsQ` (leaf nonnegativity the only hypothesis; totalized `x/0 = 0`
+                           needs no divisor side condition) + the relative-quadrature textbook corollaries — sorry-free
   Adequacy/Significance.lean ✅ Axis-U coupling (Stage 3.4): seeds the (Float) `Adequacy` carrier from the descriptor
                            (`ofInputDist`); `analyzeQ (h : ProductKind kₛ kᵢ kₒ)` instantiates one carrier-raw WO1 kernel at
                            both `TapeBuilder .scalar` (for `cᵢ`) and `Adequacy` (for the verdict) and folds them into a
@@ -552,6 +562,11 @@ examples/PropertyKindCalculus/UncertaintyExamples/
                              an eager two-leaf/`mul` tape with `BackwardShapeWF` discharged constructor by
                              constructor; `EagerBuilds` witnessing that tape + `direct_PR_soundness_eager` on it
                              (the endpoint with no compilation involved); #print axioms pins = classical trio only
+  BudgetDagDensity.lean   ✅ residual-2 closure probe: block density ρ = m/((l·w)·h) — five distinct kinds through one
+                             ×/÷ budget (untypeable under `analyzeQ`'s single shared input kind); #guards reproduce the
+                             hand-computed GUM (ρ=2500, contributions [1.0, 2.5, 5.0, 25.0], u_c=√657.25≈25.637) and the
+                             Float shadow of the collapse; #check_failure probes (operand swap, heterogeneous quadrature,
+                             kind-permuted builder); the applied ℝ collapse + capstone axiom pin = classical trio
   DegenhardtAfm.lean      ▫ Degenhardt §3.2 AFM indenter PAF, ~70× efficiency (Stage 4/scale)
   WillinkAsymmetric.lean  ▫ Willink §5 asymmetric input (κ₃) + Type-A t-cases (Stage 1)
 ```
@@ -726,9 +741,11 @@ and FFT kernels under `NN/Runtime/Autograd/Engine/Cuda/Ops/*` for SSPRC's convol
   `#check_failure` probes make the three conflations (sensitivity↔uncertainty, heterogeneous
   quadrature, `CouplingResultQ` field swap) type errors. Honest limit (§4.4): `ProductKind.ofRatio` is
   *liberal* (signs any ratio triple), so the gate enforces the GUM *shape* and forbids un-sanctioned
-  mixing, but the author still asserts `kₛ = kₒ/kᵢ` (the curated-edge discipline); and the current
-  `analyzeQ` covers the *homogeneous-input* case (all `kᵢ` equal) — a genuinely heterogeneous model is
-  served by applying the `Budget` primitives per input at each input's kind.
+  mixing, but the author still asserts `kₛ = kₒ/kᵢ` (the curated-edge discipline); and `analyzeQ`
+  itself covers the *homogeneous-input* case (all `kᵢ` equal) — the genuinely heterogeneous ×/÷ case
+  is served by the kinded budget DAG (`BudgetDag.lean`/`BudgetDagLaws.lean`, residual 2 below, closed
+  2026-08-03), which threads the `ProductKind`/`QuotientKind` witnesses node by node and provably
+  collapses to this same flat quadrature.
 
   **Carrier-generic (two-axis).** `Budget` is a write-once model over `[NumCarrier R]`, not a
   `Float`-only computation — the second axis (carrier) is orthogonal to the kind. So the *same*
@@ -925,7 +942,8 @@ project's convention that an un-indexed probe is never built and silently rots).
 **Remaining work (as of 2026-08-02).** Stages 0–3.6 are built and CI-checked, and autograd
 soundness is complete (Stages 3.5–3.6 + the eager-provenance addendum: the reverse pass is proved
 the adjoint of the Fréchet derivative at the ℝ carrier, on the eagerly built tape). One stage is
-un-started; four honest residuals remain, each scoped small.
+un-started; of the four honest residuals identified, items 1–2 are closed (2026-08-03) and items
+3–4 remain, each scoped small.
 
 * **Stage 4 — Scale** ([`§6`](#6-staged-plan-each-stage-is-shippable-testable-rigor-first) above) —
   the one genuinely un-started workstream: GPU-batched SSPRC/MCM on `CudaT`, sensitivity-driven `Nᵢ`
@@ -995,11 +1013,36 @@ The four residuals — all "one more crank of the same machine," none a new work
    this workstream targets are polynomial/affine in the sensitivity inputs, so nothing outstanding
    gates them. (Minor parity item, unchanged: `sub`/`scale`/`div` and the activation instances are
    proved on the soundness route; only `add`/`mul` carry the independent shape-total totality route.)
-2. **The kinded budget's ×/÷ DAG extension.** `analyzeQ` (`Budget.lean`) covers the
-   *homogeneous-input* case (all `kᵢ` equal); a genuinely heterogeneous multiply/divide model is
-   served today by applying the `Budget` primitives per input at each input's kind. Generalizing the
-   kinded budget to a full ×/÷ evaluation DAG — so the `ProductKind`/`QuotientKind` edges are threaded
-   through a multi-node graph rather than a single quadrature — is specified but not built.
+2. **The kinded budget's ×/÷ DAG extension — CLOSED (2026-08-03).** `analyzeQ`
+   (`Adequacy/Significance.lean`, composing `Budget.lean`'s primitives) covers the
+   *homogeneous-input* case (all `kᵢ` equal); the genuinely heterogeneous multiply/divide
+   case is now served by the kinded budget DAG (`BudgetDag.lean` + `BudgetDagLaws.lean` + the
+   `BudgetDagDensity` example):
+     * **The machine** (`BudgetDag.lean`, Mathlib/Torch-free, carrier-generic): `BudgetExpr R k` is
+       a ×/÷ expression whose every node carries its `ProductKind`/`QuotientKind` witness as a
+       constructor field — the residual's "edges threaded through a multi-node graph" made literal;
+       an ill-kinded tree is unwritable. `propagateQ` folds `(value, standard uncertainty)` pairs
+       (`EstimateQ`, descriptor-seeded) bottom-up with the per-node GUM two-term quadrature; the
+       division's `(|y|·u_b)/|b|` term is built through the *transposed* witness
+       `QuotientKind.toProductKind` (new, core spine: `k = k₁/k₂` re-read as `k·k₂ = k₁`), so no
+       intermediate is a naked magnitude. `contribsQ` flattens the same tree to per-leaf-occurrence
+       contributions at the root kind.
+     * **The law that keeps one authority** (`BudgetDagLaws.lean`, `ℝ`, scoped `instNumCarrierReal`):
+       the node-wise propagation collapses *exactly* to the flat `Budget.combinedQ` quadrature of
+       `contribsQ` (`propagateQ_unc_eq_combinedQ`) — relative to the flat Stage-3.4 budget baseline
+       the DAG adds threading only, never a second combination rule. Leaf nonnegativity is the only
+       hypothesis; `ℝ`'s totalized `x/0 = 0` makes both sides degenerate identically at a zero
+       divisor, so there is no divisor side condition. Plus the textbook relative-quadrature
+       corollaries for single `mul`/`div` nodes. Axiom profile: classical trio.
+     * **The closure probe** (`BudgetDagDensity`): block density `ρ = m/((l·w)·h)` — five distinct
+       kinds (mass, length, area, volume, mass density) through one budget, untypeable under
+       `analyzeQ`'s single shared input kind; `#guard`s reproduce the hand-computed GUM numbers and
+       the `Float` shadow of the collapse; `#check_failure` probes make the operand swap, the
+       heterogeneous quadrature, and the kind-permuted builder type errors; the ℝ collapse is
+       applied and the capstone axiom-pinned.
+   Honest limits, unchanged in kind: the tree treats every leaf *occurrence* as independent
+   (correlation — including a shared subterm written twice — is out of frame exactly as in the flat
+   `combinedQ`), and the witnesses stay `ofRatio`-liberal (the calculus' curated-edge trust model).
 3. **The `Float`-vs-`ℝ` carrier deviation.** The soundness theorems speak at `ℝ`; the run is `Float`.
    That gap is precisely this workstream's own Adequacy claim, and is discharged in kind by Stages
    3–3.3 (the executable `Adequacy` carrier, A3 verdict soundness, the FP32 Sterbenz lift, and the
