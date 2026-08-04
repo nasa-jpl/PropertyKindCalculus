@@ -57,7 +57,7 @@ package «PropertyKindCalculus» where
   -- The package version — the single source of truth. `scripts/bump-version.sh`
   -- reads and bumps it here, and the blueprint reads this same line at build time
   -- (its `{version}[]` role) so the published document never drifts from the source.
-  version := v!"0.25.0"
+  version := v!"0.26.0"
   leanOptions := #[
     ⟨`autoImplicit, false⟩,
     ⟨`relaxedAutoImplicit, false⟩]
@@ -271,6 +271,32 @@ lean_lib «UncertaintyRigor» where
     .one `PropertyKindCalculus.Uncertainty.Adequacy.Significance,
     .one `PropertyKindCalculus.Uncertainty.Experiments.PRSimulation,
     .one `PropertyKindCalculus.Uncertainty.Experiments.EagerProvenance]
+
+/-- **Stage 4 of the uncertainty workstream** (see `UNCERTAINTY.md` §6, "Scale"): the batched
+SSPRC/MCM propagators that run the write-once `[NumCarrier α]` kernel at the `CudaT` batch carrier —
+all `Nᵢ` samples of an input in one launch (a GPU kernel under `-K cuda`, the portable CPU stub
+otherwise). Its own library because it depends on the TorchLean `CudaT` carrier, which the
+Mathlib/TorchLean-free Stage-0 `Uncertainty` library cannot carry. Note `lake build` only
+*typechecks* these modules: `CudaT`'s device ops are `@[extern]` FFI with no interpreter fallback,
+and `precompileModules` cannot load the TorchLean graph into the elaborator (it shared-links whole
+libraries, and the upstream `ProofWidgets`/`QuantumInfo` `:shared` facets do not build), so a batched
+result is *run* — and checked against the scalar reference — only by the `ssprc_batched_parity`
+executable below. Build with `lake build UncertaintyBatch`. -/
+lean_lib «UncertaintyBatch» where
+  srcDir := "uncertainty"
+  globs := #[.one `PropertyKindCalculus.Uncertainty.SsprcBatched]
+
+/-- **Stage-4 parity harness** (the one executable this package produces). `CudaT`'s device ops are
+`@[extern]` FFI with no interpreter fallback, and the TorchLean dependency graph cannot be
+`precompileModules`-loaded into the elaborator (upstream `ProofWidgets`/`QuantumInfo` `:shared`
+facets do not build), so the batched propagator's numbers cannot be `#guard`ed at build. A compiled
+executable links the native `CudaT` code directly, so this harness *runs* `SsprcBatched.run` and
+asserts it agrees with the scalar `Ssprc.run`. Run with `lake exe ssprc_batched_parity` — the default
+build uses the portable CPU stub (float32, no GPU), a `-K cuda=true` container build runs it on the
+device. Exits `0` on parity, `1` on mismatch. -/
+lean_exe «ssprc_batched_parity» where
+  srcDir := "apps"
+  root := `PropertyKindCalculus.Apps.SsprcBatchedParity
 
 /-- Worked uncertainty examples grounded in the two source papers (Degenhardt 2025 fictive
 example; Willink 2005 gauge-block), in the `examples/` source tree as a **separate library** so
