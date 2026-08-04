@@ -69,7 +69,7 @@ built tape).
 | 3.4 | Axis-U coupling + kinded GUM budget (`Budget`) | ✅ |
 | 3.5 | Autograd soundness (reverse pass = fderiv adjoint) — *TorchLean PR* | ✅ |
 | 3.6 | Direct-route completion + eager-provenance closure | ✅ |
-| **4** | **Scale — GPU SSPRC/MCM on `CudaT`, `Nᵢ` allocation, science-model capstone** | **◐ in progress** — batched SSPRC propagator landed (`SsprcBatched` + `ssprc_batched_parity` exe); batched MCM, `Nᵢ` allocation, science capstone remain |
+| **4** | **Scale — GPU SSPRC/MCM on `CudaT`, `Nᵢ` allocation, science-model capstone** | **◐ in progress** — batched SSPRC propagator landed (`SsprcBatched` + `ssprc_batched_parity` exe); sensitivity-driven `Nᵢ` allocation landed (`Allocation` + `DegenhardtAllocation` example, `#guard`-checked); batched MCM, science capstone remain |
 
 **Residuals / loose threads** (from the four honest residuals scoped after Stage 3.6):
 
@@ -83,11 +83,12 @@ built tape).
 
 **What to pick up next** (rough priority):
 
-1. **Stage 4 — Scale (in progress).** The batched SSPRC propagator on `CudaT` is landed and verified
+1. **Stage 4 — Scale (in progress).** Two slices landed: the batched SSPRC propagator on `CudaT`
    (`SsprcBatched.run`, checked by the `ssprc_batched_parity` executable — a build-time `#guard` of a
-   `CudaT` result is impossible here; see the Stage-4 note in §6). Next within Stage 4: batched **MCM**,
-   the sensitivity-driven **`Nᵢ` allocation** (rank inputs by `|cᵢ|·uᵢ`, spend samples where they
-   matter), and the soil-moisture **science-model capstone**.
+   `CudaT` result is impossible here; see the Stage-4 note in §6), and the sensitivity-driven **`Nᵢ`
+   allocation** (`Allocation.allocate`, a pure `List Nat` that ranks inputs by `|cᵢ|·uᵢ` and
+   largest-remainder-splits the budget; `#guard`-checked in `DegenhardtAllocation`). Next within
+   Stage 4: batched **MCM** and the soil-moisture **science-model capstone**.
 2. **TorchLean PR — the generic `TapeM` reduction layer** (residual #1's recorded follow-up):
    `opM` + its run lemmas + the per-op `run_<op>_ok` family, generalized over the carrier `{α}`.
    Purely additive, classical-trio axiom profile, no project terms; after it merges `TapeMBridge.lean`
@@ -553,6 +554,10 @@ uncertainty/PropertyKindCalculus/Uncertainty/
                            push-invariance restricting the extended loop to the prefix — never re-deriving the
                            fold); hence `direct_PR_soundness_eager`: the fderiv endpoint on the eagerly built
                            tape itself — sorry-free
+  Allocation.lean          ✅ sensitivity-driven sample allocation (Stage 4, Mathlib/Torch-free): `wᵢ=|cᵢ|·uᵢ`
+                           contributions → drop negligible inputs (`dropRatio`) → largest-remainder split of the
+                           budget (`Σ Nᵢ = total` exactly) → a pure `List Nat` feeding `Ssprc`/`SsprcBatched` `ns`.
+                           `#guard`-checked (unlike CudaT) in `DegenhardtAllocation`
   SsprcBatched.lean        ◐ batched SSPRC propagator (Stage 4, TorchLean `CudaT`): runs the WO1 kernel at
                            `CudaT (Shape.dim Nᵢ .scalar)` — input i's Nᵢ systematic samples as one batch
                            tensor, one launch per input (a GPU kernel per op under `-K cuda`, the portable CPU
@@ -595,6 +600,9 @@ examples/PropertyKindCalculus/UncertaintyExamples/
                              collapse; #print axioms shows sorry-free (Mathlib-backed)
   DegenhardtSsprc.lean    ✅ Stage-2 SSPRC run: E(Y)=11.5875 / u(Y)≈1.686 at 300 evals (~67× fewer
                              than MCM's 20000); recovers the non-linear mean GUM misses; runConv cross-check
+  DegenhardtAllocation.lean ✅ Stage-4 sensitivity-driven `Nᵢ` allocation: w=[1.00,1.30,0.28] → alloc 300
+                             = [117,151,32] (X₂ dominant, X₃ minor); drop demo; SSPRC on the allocated ns
+                             reproduces 11.5875/1.686 even at a 120-eval (60%-cut) budget — all `#guard`
   SsprcNesting.lean       ✅ T3/T4/T5 applied over ℝ (willink cumulants (41,−1186), affine ⇒ E(Y)=R);
                              #print axioms shows sorry-free (Mathlib-backed)
   AdequacySwamping.lean   ✅ Stage-3 executable Adequacy carrier: `bias + x` swamped under a 10⁸
@@ -1013,27 +1021,42 @@ and FFT kernels under `NN/Runtime/Autograd/Engine/Cuda/Ops/*` for SSPRC's convol
     stub here, on the device in the `-K cuda` container). The engine sits in its own
     `precompileModules`-free lib `UncertaintyBatch`; the harness is the one executable the package
     produces. *Exit met:* the batched device propagator agrees with the Stage-2 scalar SSPRC to float32.
+  * **Sensitivity-driven `Nᵢ` allocation — ✅ DONE (built & `#guard`-checked).**
+    `Uncertainty/Allocation.lean` (`allocate`, `allocateFromTerms`) turns the per-input uncertainty
+    contributions `wᵢ = |cᵢ|·uᵢ` — the same `cᵢ` Stage 1's `Sensitivity.coefficients` computes and the
+    same `uᵢ = √varianceᵢ` from `MomentData` — into per-input sample counts: it **drops** any input
+    with `wᵢ ≤ dropRatio·maxⱼ wⱼ` (`Nᵢ = 0`; its deviation distribution is a point mass) and
+    **largest-remainder-splits** the whole budget across the survivors in proportion to `wᵢ`, so
+    `Σ Nᵢ = total` exactly and a larger contribution never gets fewer samples. A pure `List Nat` that
+    drops into `Ssprc.run`/`SsprcBatched.run`'s `ns` — Mathlib/Torch-free, so (unlike the `CudaT`
+    propagator) it is checked at build time. `examples/…/DegenhardtAllocation.lean` verifies, all
+    `#guard`: on the fictive model `w=[1.00,1.30,0.28]` ⇒ `allocate 300 = [117,151,32]` (X₂ dominant,
+    X₃ ~4.7× fewer, `Σ=300`), the drop mechanic, the degenerate-fallback equal split, and — the payoff
+    — that SSPRC on the *allocated* `ns` reproduces the ground-truth `E(Y)=11.5875`/`u(Y)≈1.686` even
+    at a 120-eval budget (a 60 % cut vs the flat `[100,100,100]`), because the samples it drops are
+    X₃'s over-sampling, not signal. Axiom profile `[propext, Classical.choice, Quot.sound]`.
+    *Exit met:* a budget-conserving, ranking-respecting allocation that preserves SSPRC accuracy under
+    a cut, checked in CI.
   * **Remaining (Stage 4):** batched **MCM** (the same batched-moments primitive, one launch for the
-    joint sample block, seed-matched to `Mcm.run` so its parity is checkable), the sensitivity-driven
-    **`Nᵢ` allocation** (rank inputs by `|cᵢ|·uᵢ`, spend `Nᵢ` where it matters — a pure `List Nat`
-    computation feeding `run`'s existing `ns` argument), and the soil-moisture **science-model capstone**
-    (a self-contained Water-Cloud-Model forward kernel in `examples/`, since PKC cannot import the
-    downstream soil-moisture-model — that package already requires PKC).
+    joint sample block, seed-matched to `Mcm.run` so its parity is checkable) and the soil-moisture
+    **science-model capstone** (a self-contained Water-Cloud-Model forward kernel in `examples/`, since
+    PKC cannot import the downstream soil-moisture-model — that package already requires PKC).
 
 Reflection/CI note: each new proof file gets a paired, *indexed* reflection probe (per the
 project's convention that an un-indexed probe is never built and silently rots).
 
-**Remaining work (as of 2026-08-03).** Stages 0–3.6 are built and CI-checked, and autograd
+**Remaining work (as of 2026-08-04).** Stages 0–3.6 are built and CI-checked, and autograd
 soundness is complete (Stages 3.5–3.6 + the eager-provenance addendum: the reverse pass is proved
 the adjoint of the Fréchet derivative at the ℝ carrier, on the eagerly built tape). One stage
 (Stage 4) is in progress; of the four honest residuals identified, items 1–2 are closed (2026-08-03)
 and items 3–4 remain, each scoped small.
 
 * **Stage 4 — Scale** ([`§6`](#6-staged-plan-each-stage-is-shippable-testable-rigor-first) above) —
-  **in progress.** The batched SSPRC propagator on `CudaT` is landed and verified (`SsprcBatched.run`,
-  checked by the `ssprc_batched_parity` executable — build-time `#guard` of a `CudaT` value is
+  **in progress.** Two slices landed: the batched SSPRC propagator on `CudaT` (`SsprcBatched.run`,
+  verified by the `ssprc_batched_parity` executable — build-time `#guard` of a `CudaT` value is
   impossible here, so the harness runs the native kernels and asserts parity with the scalar
-  `Ssprc.run`). Remaining: batched MCM, sensitivity-driven `Nᵢ` allocation, and a self-contained
+  `Ssprc.run`), and the sensitivity-driven `Nᵢ` allocation (`Allocation.allocate` — a pure `List Nat`,
+  `#guard`-checked in `DegenhardtAllocation`). Remaining: batched MCM and a self-contained
   soil-moisture science-model capstone. Independent of Stages 3.5–3.6 (SSPRC/MCM are derivative-free,
   and the `Nᵢ` allocation consumes the same *computed* `cᵢ` Stage 1 already relies on), so it can
   proceed before, in parallel with, or after the soundness work.
