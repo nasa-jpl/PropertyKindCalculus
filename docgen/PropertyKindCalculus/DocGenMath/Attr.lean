@@ -55,9 +55,28 @@ def displayMath (body : String) : String := "$$" ++ body ++ "$$"
 rendered math (`none` when it is not a definition, so the caller omits the source block). The
 delaborator runs in the ambient namespace / `open` context, so names print as authored. -/
 def defSource? (declName : Name) : MetaM (Option String) := do
-  let some (.defnInfo di) := (← getEnv).find? declName | return none
+  let env ← getEnv
+  let some (.defnInfo di) := env.find? declName | return none
   let sig ← PrettyPrinter.ppSignature declName
-  let body ← lambdaTelescope di.value fun _xs b => Meta.ppExpr b
+  -- Inline the elaborator-extracted `<decl>._proof_k` kind witnesses. A kind-gated `Quantity.mul`/
+  -- `exp` carries its edge proof in the first slot; the elaborator lifts each to a synthetic
+  -- `theorem` and the body then references it by name (`Quantity.mul attenuationQ._proof_1 …`), which
+  -- leaks internal machinery. Substituting the proof *term* back lets the pretty-printer treat it as
+  -- the proof it is and elide it to the idiomatic `⋯`, so the source reads as a clean operator
+  -- skeleton (`Quantity.mul ⋯ a ndvi + …`). These are `theorem`s, whose value `ConstantInfo.value?`
+  -- withholds, so read `thmInfo.value` directly.
+  let proofValue? (n : Name) : Option Expr :=
+    match env.find? n with
+    | some (.thmInfo v)  => some v.value
+    | some (.defnInfo v) => some v.value
+    | _                  => none
+  let inlined ← Meta.transform di.value (pre := fun s => do
+    if let .const n _ := s then
+      if declName.isPrefixOf n && n.getString!.startsWith "_proof" then
+        if let some v := proofValue? n then
+          return .visit v
+    return .continue)
+  let body ← lambdaTelescope inlined fun _xs b => Meta.ppExpr b
   -- `ppSignature` prints the fully-qualified decl name as the header; shorten it to the base name
   -- (binders and body already delaborate to short names in the ambient `open` context).
   let full := toString declName

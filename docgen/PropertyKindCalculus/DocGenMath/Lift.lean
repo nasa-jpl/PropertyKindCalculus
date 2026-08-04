@@ -16,6 +16,12 @@ to show). We match the PKC combinator alphabet by its head symbol and keep only 
 dropping the kind-law `Prop` witnesses, the instance arguments, the carrier/kind implicits, and any
 `mdata`. Associativity is flattened here, so `a + b + c` and `a·b·c` become single n-ary nodes.
 
+A definition's authored value often threads intermediate results through `let` bindings (`let τ :=
+exp …; …`). Those are `zeta`-reduced on the way in — the bound value is substituted into the body —
+so the body renders in terms of the model's operators rather than falling to the opaque-leaf branch.
+This is a presentation-only inlining (it duplicates a `let`-bound subterm if it is used more than
+once); it does not `delta`-unfold *named* helpers, so a `let x := f a` still shows `f a`.
+
 The lift is **total and defensive**: any head it does not special-case becomes a generic `fn`
 (keeping only the explicit arguments), and any leaf it cannot read becomes a `sym` of its
 pretty-printed form. It never fails, so rendering degrades gracefully on unfamiliar models rather
@@ -70,6 +76,7 @@ private def explicitArgs (fn : Expr) (args : Array Expr) : MetaM (Array Expr) :=
 partial def liftExpr (e : Expr) : MetaM MathTerm := do
   match e with
   | .mdata _ e'        => liftExpr e'
+  | .letE _ _ v b _    => liftExpr (b.instantiate1 v)   -- zeta: inline the `let`-bound value
   | .lit (.natVal n)   => return .num (Int.ofNat n)
   | .fvar fid          => return .sym (toString (← fid.getUserName))
   | .bvar _            => return .sym "?"        -- should not occur after `lambdaTelescope`

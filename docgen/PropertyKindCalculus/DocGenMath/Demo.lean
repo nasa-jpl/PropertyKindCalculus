@@ -76,6 +76,26 @@ run_cmd do
   let s ← Lean.Elab.Command.liftTermElabM (quantityToLatex ``avsForward)
   Lean.logInfo s
 
+/-! ## Regression pin — the Stage-1 `let`-zeta
+
+A definition that threads an intermediate through a `let` renders in terms of its operators — the
+bound value is inlined on the way into the lift (`Lift.liftExpr`'s `.letE` case), so the body is not
+an opaque leaf. `letExample` squares `a` through a `let` and adds it back; the pipeline inlines the
+binding, folds `a·a → a²`, and prints the sum. This is what lets kinded models written with named
+intermediates (`let τ := exp …; …`) render at all. -/
+
+/-- A `let`-bound intermediate `sq = a·a`, added back: exercises the lift's `let`-zeta. -/
+@[pkc_math_symbol "q"]
+def letExample (a : Quantity dl Float) : Quantity dl Float :=
+  let sq := Quantity.mul pk a a
+  sq + a
+
+/-- info: q = a^{2} + a -/
+#guard_msgs in
+run_cmd do
+  let s ← Lean.Elab.Command.liftTermElabM (quantityToLatex ``letExample)
+  Lean.logInfo s
+
 /-! ## Regression pin — the attribute writes the equation into the declaration's docstring
 
 `@[pkc_math]` appends to the declaration's own docstring (or sets it, when there is none) both the
