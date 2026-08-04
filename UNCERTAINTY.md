@@ -69,7 +69,7 @@ built tape).
 | 3.4 | Axis-U coupling + kinded GUM budget (`Budget`) | ✅ |
 | 3.5 | Autograd soundness (reverse pass = fderiv adjoint) — *TorchLean PR* | ✅ |
 | 3.6 | Direct-route completion + eager-provenance closure | ✅ |
-| **4** | **Scale — GPU SSPRC/MCM on `CudaT`, `Nᵢ` allocation, science-model capstone** | **◐ in progress** — batched SSPRC propagator landed (`SsprcBatched` + `ssprc_batched_parity` exe); sensitivity-driven `Nᵢ` allocation landed (`Allocation` + `DegenhardtAllocation` example, `#guard`-checked); batched MCM, science capstone remain |
+| **4** | **Scale — GPU SSPRC/MCM on `CudaT`, `Nᵢ` allocation, science-model capstone** | **◐ in progress** — batched SSPRC propagator landed (`SsprcBatched` + `ssprc_batched_parity` exe); sensitivity-driven `Nᵢ` allocation landed (`Allocation` + `DegenhardtAllocation` example, `#guard`-checked); science-model capstone landed (`WaterCloudModel` — one WO1 Water-Cloud-Model forward through the whole pipeline, `#guard`-checked); batched MCM remains |
 
 **Residuals / loose threads** (from the four honest residuals scoped after Stage 3.6):
 
@@ -83,12 +83,14 @@ built tape).
 
 **What to pick up next** (rough priority):
 
-1. **Stage 4 — Scale (in progress).** Two slices landed: the batched SSPRC propagator on `CudaT`
+1. **Stage 4 — Scale (in progress).** Three slices landed: the batched SSPRC propagator on `CudaT`
    (`SsprcBatched.run`, checked by the `ssprc_batched_parity` executable — a build-time `#guard` of a
-   `CudaT` result is impossible here; see the Stage-4 note in §6), and the sensitivity-driven **`Nᵢ`
+   `CudaT` result is impossible here; see the Stage-4 note in §6), the sensitivity-driven **`Nᵢ`
    allocation** (`Allocation.allocate`, a pure `List Nat` that ranks inputs by `|cᵢ|·uᵢ` and
-   largest-remainder-splits the budget; `#guard`-checked in `DegenhardtAllocation`). Next within
-   Stage 4: batched **MCM** and the soil-moisture **science-model capstone**.
+   largest-remainder-splits the budget; `#guard`-checked in `DegenhardtAllocation`), and the
+   soil-moisture **science-model capstone** (`WaterCloudModel` — one write-once Water-Cloud-Model
+   forward driven through the Float forward, the autograd Jacobian, GUM/Willink, SSPRC, and the
+   allocation; `#guard`-checked). Next within Stage 4: batched **MCM**.
 2. **TorchLean PR — the generic `TapeM` reduction layer** (residual #1's recorded follow-up):
    `opM` + its run lemmas + the per-op `run_<op>_ok` family, generalized over the carrier `{α}`.
    Purely additive, classical-trio axiom profile, no project terms; after it merges `TapeMBridge.lean`
@@ -603,6 +605,16 @@ examples/PropertyKindCalculus/UncertaintyExamples/
   DegenhardtAllocation.lean ✅ Stage-4 sensitivity-driven `Nᵢ` allocation: w=[1.00,1.30,0.28] → alloc 300
                              = [117,151,32] (X₂ dominant, X₃ minor); drop demo; SSPRC on the allocated ns
                              reproduces 11.5875/1.686 even at a 120-eval (60%-cut) budget — all `#guard`
+  WaterCloudModel.lean    ✅ Stage-4 capstone, KINDED end-to-end (SMM ConfigKinds/AvsKinds discipline):
+                             one WO1 Water-Cloud-Model forward σ⁰=a·ndvi·(1−τ)+τ·(c·mv+d), τ=exp(−2b·ndvi),
+                             with 9 role-named kinds + witnessed algebra, calib constants (a,c,d,2) as
+                             kinded quantities in a `WcmConfig` structure (sole numerals), every variable a
+                             `Quantity k`/`UncertainQuantity k`, `.magnitude` only at the emission boundary,
+                             `#check_failure` kind-safety probes. Through the whole pipeline — forward
+                             (0.047089), autograd Jacobian=closed forms 6 dp ([0.0861,0.0206,0.0129]) via
+                             kinded `exp`, GUM u_c≈0.002847, SSPRC recovers the +0.0001 exp-curvature mean
+                             offset, allocation ranks soil moisture dominant & drops the canopy rate (alloc
+                             300=[197,91,12]); self-contained; all `#guard`
   SsprcNesting.lean       ✅ T3/T4/T5 applied over ℝ (willink cumulants (41,−1186), affine ⇒ E(Y)=R);
                              #print axioms shows sorry-free (Mathlib-backed)
   AdequacySwamping.lean   ✅ Stage-3 executable Adequacy carrier: `bias + x` swamped under a 10⁸
@@ -1037,10 +1049,36 @@ and FFT kernels under `NN/Runtime/Autograd/Engine/Cuda/Ops/*` for SSPRC's convol
     X₃'s over-sampling, not signal. Axiom profile `[propext, Classical.choice, Quot.sound]`.
     *Exit met:* a budget-conserving, ranking-respecting allocation that preserves SSPRC accuracy under
     a cut, checked in CI.
+  * **Science-model capstone — ✅ DONE (built & `#guard`-checked; kinded end-to-end).**
+    `examples/…/WaterCloudModel.lean` drives **one write-once kernel** — the Water Cloud Model
+    soil-moisture forward `σ⁰ = a·ndvi·(1−τ) + τ·(c·mv + d)`, `τ = exp(−2·b·ndvi)` (Attema & Ulaby
+    1978, the standard radar vegetation-scattering forward), over `[NumCarrier α]` — written in the
+    **rigorous quantity discipline** (the soil-moisture-model's `ConfigKinds`/`AvsKinds` pattern):
+    nine role-named kinds-of-property (`backscatter`, `vegetationIndex`, `soilMoisture`, `pureNumber`,
+    `attenExponent`, `attenuation`, `vegGain`/`attenRate`/`soilGain`) with the product/`exp` algebra
+    witnessed (`wcm_kind_algebra`, axiom-free) and the three dimension-1 roles proved distinct (what a
+    dimension checker cannot separate); every numeric constant (`a,c,d` and the two-way `2`) a kinded
+    quantity in a carrier-generic `WcmConfig` structure (the *sole* numerals in the module); every
+    variable a `Quantity k`/`UncertainQuantity k`; a naked `Float` *only* at the emission boundary,
+    where `.magnitude` (definitionally the scalar forward) meets the propagators — no naked twin; and
+    `#check_failure` probes certifying the kind confusions. Through the entire pipeline: (1) the `Float`
+    forward `σ⁰(E(X)) = 0.047089`; (2) the TorchLean-autograd
+    Jacobian `∂σ⁰/∂(mv,ndvi,B) = [0.0861, 0.0206, 0.0129]`, matched to the **hand-derived closed-form
+    columns** to 6 dp (this is the first uncertainty example to differentiate an `exp`-nonlinear
+    model — it exercises the tape's `exp` VJP, not just `+`/`·`); (3) the GUM/Willink combine
+    `u_c ≈ 0.002847`; (4) SSPRC on `[100,100,100]` recovering the mean **including** the small
+    `exp`-curvature offset `E(σ⁰) − R ≈ +0.000100` that the linearized rungs (mean = `R = f(E(X))`)
+    structurally miss; and (5) the Stage-4 allocation, which ranks **soil moisture** (the retrieval
+    target) the dominant input (`allocate 300 = [197,91,12]`), **drops** the canopy coefficient at
+    `dropRatio 0.1`, and — at *half* the flat budget (`[99,45,6]`, 151 evals) — still reproduces the
+    SSPRC mean/uncertainty, because the samples it cuts are `B`/`ndvi` over-sampling, not signal.
+    Self-contained by necessity: PKC cannot import the downstream `soil-moisture-model` (that package
+    already requires PKC — a cycle), so the kernel is written fresh. Axiom profile — classical trio.
+    *Exit met:* a real downstream science model carried write-once across evaluation, autograd,
+    combine, SSPRC, and allocation, every number a checked fact.
   * **Remaining (Stage 4):** batched **MCM** (the same batched-moments primitive, one launch for the
-    joint sample block, seed-matched to `Mcm.run` so its parity is checkable) and the soil-moisture
-    **science-model capstone** (a self-contained Water-Cloud-Model forward kernel in `examples/`, since
-    PKC cannot import the downstream soil-moisture-model — that package already requires PKC).
+    joint sample block, seed-matched to `Mcm.run` so its parity is checkable, verified by an
+    executable like `ssprc_batched_parity` since it uses `CudaT`).
 
 Reflection/CI note: each new proof file gets a paired, *indexed* reflection probe (per the
 project's convention that an un-indexed probe is never built and silently rots).
@@ -1052,14 +1090,17 @@ the adjoint of the Fréchet derivative at the ℝ carrier, on the eagerly built 
 and items 3–4 remain, each scoped small.
 
 * **Stage 4 — Scale** ([`§6`](#6-staged-plan-each-stage-is-shippable-testable-rigor-first) above) —
-  **in progress.** Two slices landed: the batched SSPRC propagator on `CudaT` (`SsprcBatched.run`,
+  **in progress.** Three slices landed: the batched SSPRC propagator on `CudaT` (`SsprcBatched.run`,
   verified by the `ssprc_batched_parity` executable — build-time `#guard` of a `CudaT` value is
   impossible here, so the harness runs the native kernels and asserts parity with the scalar
-  `Ssprc.run`), and the sensitivity-driven `Nᵢ` allocation (`Allocation.allocate` — a pure `List Nat`,
-  `#guard`-checked in `DegenhardtAllocation`). Remaining: batched MCM and a self-contained
-  soil-moisture science-model capstone. Independent of Stages 3.5–3.6 (SSPRC/MCM are derivative-free,
-  and the `Nᵢ` allocation consumes the same *computed* `cᵢ` Stage 1 already relies on), so it can
-  proceed before, in parallel with, or after the soundness work.
+  `Ssprc.run`), the sensitivity-driven `Nᵢ` allocation (`Allocation.allocate` — a pure `List Nat`,
+  `#guard`-checked in `DegenhardtAllocation`), and the soil-moisture **science-model capstone**
+  (`WaterCloudModel` — one write-once Water-Cloud-Model forward through the Float forward, the
+  autograd Jacobian matched to closed forms, GUM/Willink, SSPRC, and the allocation; `#guard`-checked,
+  self-contained since PKC cannot import the downstream soil-moisture-model). Remaining: batched MCM.
+  Independent of Stages 3.5–3.6 (SSPRC/MCM are derivative-free, and the `Nᵢ` allocation consumes the
+  same *computed* `cᵢ` Stage 1 already relies on), so it can proceed before, in parallel with, or
+  after the soundness work.
 
 The four residuals — all "one more crank of the same machine," none a new workstream:
 

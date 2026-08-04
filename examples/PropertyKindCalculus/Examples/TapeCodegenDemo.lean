@@ -6,10 +6,13 @@ carrier, hash-conses to the distinct-op DAG, emits the fused CUDA megakernel + C
 `#guard`s that the generated kernel is **bit-identical** to the source kernel at `Float` (CPU-side,
 no CUDA toolchain).
 
-The kernel is reproduced here self-contained (not imported from `soil-moisture-model`, which depends
-on PKC, not the reverse) — it is the AVS residual/Jacobian verbatim, the codegen demo's fixture.
+The AVS residual/Jacobian **physics is authored once, kinded**, in `examples.avs_forward`
+(`PropertyKindCalculus.Examples.AvsForward` — self-contained, since `soil-moisture-model` depends on
+PKC, not the reverse); this demo records its `.magnitude` emission boundary (`resJac`), so the tape is
+byte-identical to the bare kernel while the model stays in the rigorous quantity discipline.
 -/
 import PropertyKindCalculus.Torch.Paradigm.TapeCodegen
+import PropertyKindCalculus.Examples.AvsForward
 
 open Spec
 open Runtime.Autograd (Tape TapeM)
@@ -17,32 +20,14 @@ open PropertyKindCalculus (MathCarrier)
 open PropertyKindCalculus.Paradigm (TapeBuilder NumCarrier)
 open PropertyKindCalculus.Paradigm.TapeCSE (cseCompact)
 open PropertyKindCalculus.Paradigm.TapeCodegen
+open PropertyKindCalculus.Examples.AvsForward (resJac)
 
 namespace PropertyKindCalculus.Paradigm.TapeCodegen.Demo
 
-/-! ### The AVS Stage-2 kernel — written once over `[NumCarrier α]` (verbatim `kernel.avs_batch`) -/
+/-! ### Record at the tape carrier
 
-variable {α : Type} [NumCarrier α]
-
-/-- `Nat → α` embedding (the `dielectric.core.ofN`). -/
-def ofN (n : Nat) : α := (n : α)
-
-/-- `exp(−2·b·ndvi)` — the vegetation attenuation, shared by the residual and the b/c Jacobians. -/
-@[inline] def attenuation (b ndvi : α) : α :=
-  MathCarrier.exp (((0 : α) - ofN 2) * b * ndvi)
-
-/-- Residual `s0 − σ⁰` and the four Jacobian columns `∂residual/∂(a,b,c,d)`, sharing one `att` (the
-Layer-2 CSE the codegen recovers automatically). Op-structure identical to `avs_batch.lavsResidual`
-+ `lavsJacResidual`. -/
-def resJac (a b c d ndvi r s0 : α) : α × α × α × α × α :=
-  let att := attenuation b ndvi
-  ( s0 - (a * ndvi + att * c * r + d)   -- residual
-  , (0 : α) - ndvi                       -- ∂/∂a
-  , ofN 2 * ndvi * c * r * att           -- ∂/∂b
-  , (0 : α) - (att * r)                  -- ∂/∂c
-  , (0 : α) - (1 : α) )                  -- ∂/∂d
-
-/-! ### Record at the tape carrier -/
+The kinded AVS residual + Jacobian columns live in `examples.avs_forward`; `resJac` is its emission
+boundary (the `.magnitude` of the kinded kernels), recorded here on the tape carrier. -/
 
 abbrev TB := TapeBuilder Shape.scalar
 

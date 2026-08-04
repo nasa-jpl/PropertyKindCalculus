@@ -27,6 +27,18 @@ Stage-2 additions (the derivative-free SSPRC method):
     projection of the linearized SSPRC`, `affine ⇒ E(Y)=R`) applied to concrete distributions over
     `ℝ`, plus the sorry-free axiom profile.
 
+Stage-4 additions (Scale — allocation + the science-model capstone):
+  * `DegenhardtAllocation` — the sensitivity-driven `Nᵢ` allocation on the fictive model: rank the
+    inputs by `wᵢ = |cᵢ|·uᵢ`, largest-remainder-split a 300-sample SSPRC budget (`[117, 151, 32]`,
+    X₂ dominant), drop negligible inputs, and reproduce `E(Y)/u(Y)` even at a 60 %-cut budget.
+  * `WaterCloudModel` — **the capstone.** One write-once Water Cloud Model soil-moisture forward
+    `σ⁰ = A·ndvi·(1−τ) + τ·(C·mv + D)`, `τ = exp(−2B·ndvi)`, driven through the whole pipeline: the
+    `Float` forward, the TorchLean-autograd Jacobian (matched to the hand-derived closed forms), the
+    GUM/Willink combine, the derivative-free SSPRC (recovering the `exp`-curvature mean offset), and
+    the Stage-4 allocation — which ranks soil moisture (the retrieval target) dominant and drops the
+    canopy coefficient. Self-contained (PKC cannot import the downstream soil-moisture-model — that
+    package already requires PKC); depends on TorchLean for the autograd column.
+
 Stage-3 additions (numerical adequacy):
   * `AdequacySwamping` — the executable `Adequacy` carrier: one WO1 kernel flags floating-point
     swamping under a large accumulator (and certifies clean under a small one), a second flags
@@ -81,6 +93,8 @@ import PropertyKindCalculus.UncertaintyExamples.DegenhardtSensitivity
 import PropertyKindCalculus.UncertaintyExamples.LadderNesting
 import PropertyKindCalculus.UncertaintyExamples.DegenhardtSsprc
 import PropertyKindCalculus.UncertaintyExamples.SsprcNesting
+import PropertyKindCalculus.UncertaintyExamples.DegenhardtAllocation
+import PropertyKindCalculus.UncertaintyExamples.WaterCloudModel
 import PropertyKindCalculus.UncertaintyExamples.AdequacySwamping
 import PropertyKindCalculus.UncertaintyExamples.AdequacyLadder
 import PropertyKindCalculus.UncertaintyExamples.AdequacyDag

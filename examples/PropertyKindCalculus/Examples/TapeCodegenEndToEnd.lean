@@ -37,7 +37,9 @@ open PropertyKindCalculus.Paradigm (TapeBuilder)
 open PropertyKindCalculus.Paradigm.TapeParity
 open PropertyKindCalculus.Paradigm.TapeFaithful
 open PropertyKindCalculus.Paradigm.TapeCodegen
-open PropertyKindCalculus.Paradigm.TapeCodegen.Demo (attenuation resJac ofN inLeaf)
+open PropertyKindCalculus.Paradigm.TapeCodegen.Demo (inLeaf)
+open PropertyKindCalculus.Examples.AvsForward
+  (attenuation resJac ofN attenuationQ deployed lavsForwardQ lavsResidualQ lavsJacResidualQ)
 open PropertyKindCalculus.Examples.TapeCodegenProof
   (attenSpec resSpec jaSpec jbSpec jcSpec jdSpec)
 
@@ -326,7 +328,8 @@ theorem attenuation_faithful (env : String → Float)
     (hb : Faithful env b vb xb) (hn : Faithful env ndvi vn xn) :
     Faithful env (attenuation (α := TB) b ndvi) (attenSpec vb vn)
       (attenuation (α := Float) xb xn) := by
-  unfold attenuation attenSpec ofN
+  simp only [attenuation, attenuationQ, deployed, attenSpec,
+    Quantity.exp_magnitude, Quantity.mul_magnitude, Quantity.sub_magnitude]
   exact Faithful_exp env
     (Faithful_mul env (Faithful_mul env (Faithful_sub env (eval_zero env) (eval_two env)) hb) hn)
 
@@ -337,7 +340,8 @@ theorem residual_faithful (env : String → Float)
     (hs0 : Faithful env s0 vs0 xs0) :
     Faithful env (resJac (α := TB) a b c d ndvi r s0).1 (resSpec va vb vc vd vn vr vs0)
       (resJac (α := Float) xa xb xc xd xn xr xs0).1 := by
-  unfold resJac resSpec
+  simp only [resJac, lavsResidualQ, lavsForwardQ, resSpec,
+    Quantity.sub_magnitude, Quantity.add_magnitude, Quantity.mul_magnitude]
   exact Faithful_sub env hs0
     (Faithful_add env (Faithful_add env (Faithful_mul env ha hn)
       (Faithful_mul env (Faithful_mul env (attenuation_faithful env hb hn) hc) hr)) hd)
@@ -346,7 +350,7 @@ theorem residual_faithful (env : String → Float)
 theorem ja_faithful (env : String → Float) (hn : Faithful env ndvi vn xn) :
     Faithful env (resJac (α := TB) a b c d ndvi r s0).2.1 (jaSpec vn)
       (resJac (α := Float) xa xb xc xd xn xr xs0).2.1 := by
-  unfold resJac jaSpec
+  simp only [resJac, lavsJacResidualQ, jaSpec, Quantity.sub_magnitude]
   exact Faithful_sub env (eval_zero env) hn
 
 /-- ∂/∂b column. -/
@@ -355,7 +359,7 @@ theorem jb_faithful (env : String → Float)
     (hr : Faithful env r vr xr) :
     Faithful env (resJac (α := TB) a b c d ndvi r s0).2.2.1 (jbSpec vb vc vd vn vr)
       (resJac (α := Float) xa xb xc xd xn xr xs0).2.2.1 := by
-  unfold resJac jbSpec ofN
+  simp only [resJac, lavsJacResidualQ, deployed, jbSpec, Quantity.mul_magnitude]
   exact Faithful_mul env (Faithful_mul env (Faithful_mul env (Faithful_mul env (eval_two env) hn) hc) hr)
     (attenuation_faithful env hb hn)
 
@@ -364,14 +368,14 @@ theorem jc_faithful (env : String → Float)
     (hb : Faithful env b vb xb) (hn : Faithful env ndvi vn xn) (hr : Faithful env r vr xr) :
     Faithful env (resJac (α := TB) a b c d ndvi r s0).2.2.2.1 (jcSpec vb vn vr)
       (resJac (α := Float) xa xb xc xd xn xr xs0).2.2.2.1 := by
-  unfold resJac jcSpec
+  simp only [resJac, lavsJacResidualQ, jcSpec, Quantity.sub_magnitude, Quantity.mul_magnitude]
   exact Faithful_sub env (eval_zero env) (Faithful_mul env (attenuation_faithful env hb hn) hr)
 
 /-- ∂/∂d column. -/
 theorem jd_faithful (env : String → Float) :
     Faithful env (resJac (α := TB) a b c d ndvi r s0).2.2.2.2 jdSpec
       (resJac (α := Float) xa xb xc xd xn xr xs0).2.2.2.2 := by
-  unfold resJac jdSpec
+  simp only [resJac, lavsJacResidualQ, jdSpec, Quantity.sub_magnitude]
   exact Faithful_sub env (eval_zero env) (eval_one env)
 
 /-- **Capstone (over all inputs).** Recording the AVS residual at the tape carrier and re-interpreting

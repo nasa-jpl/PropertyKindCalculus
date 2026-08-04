@@ -18,7 +18,8 @@ open Spec.Tensor
 open PropertyKindCalculus (MathCarrier)
 open PropertyKindCalculus.Paradigm (TapeBuilder)
 open PropertyKindCalculus.Paradigm.TapeParity
-open PropertyKindCalculus.Paradigm.TapeCodegen.Demo (attenuation resJac ofN)
+open PropertyKindCalculus.Examples.AvsForward
+  (attenuation resJac ofN attenuationQ deployed lavsForwardQ lavsResidualQ lavsJacResidualQ)
 
 namespace PropertyKindCalculus.Examples.TapeCodegenProof
 
@@ -61,7 +62,8 @@ variable {a b c d ndvi r s0 : TB} {va vb vc vd vndvi vr vs0 : T}
 /-- The recorded `attenuation` sub-kernel computes `attenSpec` for all inputs. -/
 theorem attenuation_faithful (hb : Evaluates b vb) (hn : Evaluates ndvi vndvi) :
     Evaluates (attenuation (α := TB) b ndvi) (attenSpec vb vndvi) := by
-  unfold attenuation attenSpec ofN
+  simp only [attenuation, attenuationQ, deployed, attenSpec,
+    Quantity.exp_magnitude, Quantity.mul_magnitude, Quantity.sub_magnitude]
   exact Evaluates_exp (Evaluates_mul (Evaluates_mul (Evaluates_sub eval_zero eval_two) hb) hn)
 
 /-- The recorded residual output carries the source residual value, for all inputs. -/
@@ -69,7 +71,8 @@ theorem residual_faithful
     (ha : Evaluates a va) (hb : Evaluates b vb) (hc : Evaluates c vc) (hd : Evaluates d vd)
     (hn : Evaluates ndvi vndvi) (hr : Evaluates r vr) (hs0 : Evaluates s0 vs0) :
     Evaluates (resJac (α := TB) a b c d ndvi r s0).1 (resSpec va vb vc vd vndvi vr vs0) := by
-  unfold resJac resSpec
+  simp only [resJac, lavsResidualQ, lavsForwardQ, resSpec,
+    Quantity.sub_magnitude, Quantity.add_magnitude, Quantity.mul_magnitude]
   exact Evaluates_sub hs0
     (Evaluates_add (Evaluates_add (Evaluates_mul ha hn)
       (Evaluates_mul (Evaluates_mul (attenuation_faithful hb hn) hc) hr)) hd)
@@ -77,27 +80,27 @@ theorem residual_faithful
 /-- ∂/∂a column. -/
 theorem ja_faithful (hn : Evaluates ndvi vndvi) :
     Evaluates (resJac (α := TB) a b c d ndvi r s0).2.1 (jaSpec vndvi) := by
-  unfold resJac jaSpec
+  simp only [resJac, lavsJacResidualQ, jaSpec, Quantity.sub_magnitude]
   exact Evaluates_sub eval_zero hn
 
 /-- ∂/∂b column. -/
 theorem jb_faithful (hb : Evaluates b vb) (hc : Evaluates c vc) (hn : Evaluates ndvi vndvi)
     (hr : Evaluates r vr) :
     Evaluates (resJac (α := TB) a b c d ndvi r s0).2.2.1 (jbSpec vb vc vd vndvi vr) := by
-  unfold resJac jbSpec ofN
+  simp only [resJac, lavsJacResidualQ, deployed, jbSpec, Quantity.mul_magnitude]
   exact Evaluates_mul (Evaluates_mul (Evaluates_mul (Evaluates_mul eval_two hn) hc) hr)
     (attenuation_faithful hb hn)
 
 /-- ∂/∂c column. -/
 theorem jc_faithful (hb : Evaluates b vb) (hn : Evaluates ndvi vndvi) (hr : Evaluates r vr) :
     Evaluates (resJac (α := TB) a b c d ndvi r s0).2.2.2.1 (jcSpec vb vndvi vr) := by
-  unfold resJac jcSpec
+  simp only [resJac, lavsJacResidualQ, jcSpec, Quantity.sub_magnitude, Quantity.mul_magnitude]
   exact Evaluates_sub eval_zero (Evaluates_mul (attenuation_faithful hb hn) hr)
 
 /-- ∂/∂d column. -/
 theorem jd_faithful :
     Evaluates (resJac (α := TB) a b c d ndvi r s0).2.2.2.2 jdSpec := by
-  unfold resJac jdSpec
+  simp only [resJac, lavsJacResidualQ, jdSpec, Quantity.sub_magnitude]
   exact Evaluates_sub eval_zero eval_one
 
 -- Axiom audit: these must rest only on the standard axioms (no `sorryAx`).

@@ -28,6 +28,7 @@ the same app code a `[BatchCarrier C]` deployment runs, only at `C := TapeBuilde
 -/
 import PropertyKindCalculus.Torch.Paradigm.TapeCodegen
 import PropertyKindCalculus.Torch.Paradigm.TapeBatchCarrier
+import PropertyKindCalculus.Examples.AvsForward
 
 open Spec
 open Runtime.Autograd (Tape TapeM)
@@ -35,6 +36,7 @@ open PropertyKindCalculus (MathCarrier)
 open PropertyKindCalculus.Paradigm (TapeBuilder NumCarrier BatchCarrier)
 open PropertyKindCalculus.Paradigm.TapeCSE (cseCompact)
 open PropertyKindCalculus.Paradigm.TapeCodegen
+open PropertyKindCalculus.Examples.AvsForward (lavsResidual lavsJacResidual)
 
 namespace PropertyKindCalculus.Examples.LmStepCodegenDemo
 
@@ -44,26 +46,12 @@ set_option linter.unusedVariables false
 
 variable {α : Type} [NumCarrier α]
 
-/-! ### The AVS Stage-2 residual + Jacobian (verbatim `kernel.avs_batch`) -/
+/-! ### The AVS Stage-2 residual + Jacobian
 
-/-- `Nat → α` embedding. -/
-def ofN (n : Nat) : α := (n : α)
-
-/-- `exp(−2·b·ndvi)` — the vegetation attenuation, shared by the residual and the b/c Jacobians. -/
-@[inline] def attenuation (b ndvi : α) : α :=
-  MathCarrier.exp (((0 : α) - ofN 2) * b * ndvi)
-
-/-- Residual `s0 − σ⁰` = `s0 − (a·ndvi + exp(−2·b·ndvi)·c·r + d)`. -/
-def lavsResidual (a b c d ndvi r s0 : α) : α :=
-  s0 - (a * ndvi + attenuation b ndvi * c * r + d)
-
-/-- The four analytic Jacobian columns `∂residual/∂(a,b,c,d)`. -/
-def lavsJacResidual (b c ndvi r : α) : α × α × α × α :=
-  let att := attenuation b ndvi
-  ( (0 : α) - ndvi                       -- ∂/∂a = −ndvi
-  , ofN 2 * ndvi * c * r * att           -- ∂/∂b
-  , (0 : α) - (att * r)                  -- ∂/∂c
-  , (0 : α) - (1 : α) )                  -- ∂/∂d = −1
+The AVS forward physics is authored once, **kinded**, in `examples.avs_forward`
+(`PropertyKindCalculus.Examples.AvsForward`); this demo folds its `.magnitude` emission boundary
+(`lavsResidual`/`lavsJacResidual`) into the normal equations below, so the recorded tape is
+byte-identical to the bare kernel while the model stays in the rigorous quantity discipline. -/
 
 /-! ### The 4×4 SPD Cholesky solve (verbatim `kernel.spd_solve`) -/
 

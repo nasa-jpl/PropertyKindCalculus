@@ -27,12 +27,26 @@ namespace PropertyKindCalculus.UncertaintyExamples.DegenhardtFictive
 
 open PropertyKindCalculus PropertyKindCalculus.Paradigm PropertyKindCalculus.Uncertainty
 
-/-! ## The kinds and the input distributions -/
+/-! ## The kinds and the input distributions
 
-/-- The measurand kind. -/
+The measurand `Y` and the three influence quantities. The model's algebra *forces* three distinct
+input kinds: the sum `X₁ + X₂²` requires `kind(X₁) = kind(X₂)²`, so `X₁` and `X₂` cannot share a
+kind. (`influenceX` below is a separate, generic influence kind — the *homogeneous* input kind the
+Stage-3.4 significance budget `analyzeQ` analyses over; see `AdequacyCoupling`.) -/
+
+/-- The measurand kind — `Y`. -/
 def measurandY : KindOfProperty := { id := "fictive measurand Y", scale := .ratio }
-/-- A generic influence-quantity kind (the three inputs are positionally distinct, same scale). -/
+/-- A generic influence-quantity kind — the homogeneous input kind of the significance budget
+(`AdequacyCoupling`'s `analyzeQ` assumes commensurable inputs); distinct from the model's per-input
+kinds below. -/
 def influenceX : KindOfProperty := { id := "fictive influence quantity", scale := .ratio }
+
+/-- `X₁`'s kind — shared with `X₂²` (the `X₁ + X₂²` sum forces `kind(X₁) = kind(X₂)²`). -/
+def influenceX1 : KindOfProperty := { id := "fictive influence X₁ (= X₂²)", scale := .ratio }
+/-- `X₂`'s kind. -/
+def influenceX2 : KindOfProperty := { id := "fictive influence X₂", scale := .ratio }
+/-- `X₃`'s kind. -/
+def influenceX3 : KindOfProperty := { id := "fictive influence X₃", scale := .ratio }
 
 /-- `X₁ ~ Normal(2, 0.2)`. -/
 def x1 : InputDist Float := InputDist.normal 2.0 0.2
@@ -41,14 +55,26 @@ def x2 : InputDist Float := InputDist.uniform 0.5 0.45
 /-- `X₃ ~ Triangular(5, δ=0.3)`  (paper width `R = 2δ = 0.6`). -/
 def x3 : InputDist Float := InputDist.triangular 5.0 0.3
 
-/-! ## The model — written once over the branchless carrier, run at `Float`
+/-! ## The model — written once over the branchless carrier, kinded
 
-`fictiveModel` is a genuine WO1 kernel: it type-checks against any `[NumCarrier α]`, so the same
-source will later interpret at `ℝ` (proofs), `FP32` (rounding), and `CudaT`/`TapeBuilder`
-(GPU/autograd). Here it runs at `Float`. -/
+`fictiveModelQ` is a genuine WO1 kernel, kinded throughout: `X₂²` is a `ProductKind`-witnessed square
+(landing in `influenceX1`, so it may be added to `X₁`), and the outer product lands the result in
+`measurandY`. It type-checks against any `[NumCarrier α]`, so the same source interprets at `ℝ`
+(proofs), `FP32` (rounding), and `CudaT`/`TapeBuilder` (GPU/autograd). The naked `fictiveModel`
+boundary is its `.magnitude` — definitionally the scalar `(X₁ + X₂²)·X₃` the propagators consume. -/
 
-/-- `Y = (X₁ + X₂²) · X₃`, over any branchless numeric carrier. -/
-def fictiveModel {α : Type} [NumCarrier α] (a b c : α) : α := (a + b * b) * c
+/-- `Y = (X₁ + X₂²) · X₃`, kinded over any branchless numeric carrier. -/
+def fictiveModelQ {α : Type} [NumCarrier α]
+    (x1 : Quantity influenceX1 α) (x2 : Quantity influenceX2 α) (x3 : Quantity influenceX3 α) :
+    Quantity measurandY α :=
+  Quantity.mul (ProductKind.ofRatio influenceX1 influenceX3 measurandY)
+    (x1 + Quantity.mul (ProductKind.ofRatio influenceX2 influenceX2 influenceX1) x2 x2)
+    x3
+
+/-- The emission boundary — `Y = (X₁ + X₂²)·X₃` at the carrier (the `.magnitude` of `fictiveModelQ`),
+consumed by the propagators. Definitionally `(a + b*b)*c`; no naked op-tree twin. -/
+def fictiveModel {α : Type} [NumCarrier α] (a b c : α) : α :=
+  (fictiveModelQ ⟨a⟩ ⟨b⟩ ⟨c⟩).magnitude
 
 /-- The model as the arity-3 `List Float → Float` the propagators consume. -/
 def modelF : List Float → Float
