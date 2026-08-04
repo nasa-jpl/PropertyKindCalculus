@@ -11,7 +11,8 @@ import PropertyKindCalculus.DocGenMath
 
 A self-contained example over PKC primitives (a single dimensionless ratio kind, the `Float`
 carrier). `avsForward` is the AVS-style backscatter model whose ASCII form motivated this work,
-`σ⁰ = a·ndvi + exp(−2·b·ndvi)·c·r + d`; `@[pkc_math]` renders it to LaTeX and hands it to doc-gen4.
+`σ⁰ = a·ndvi + exp(−2·b·ndvi)·c·r + d`; `@[pkc_math]` renders it to LaTeX and appends the `$$…$$`
+to the declaration's own docstring, so it typesets on the doc-gen4 page and in the Lean InfoView.
 
 The `#guard_msgs` blocks pin the pipeline output so a regression in any stage is a build error:
 the first three exercise the pure `normalize`/`pretty` stages (no environment needed), the last the
@@ -74,5 +75,31 @@ The `@[pkc_math_symbol]` override resolves the LHS to `\sigma^0`; the local vari
 run_cmd do
   let s ← Lean.Elab.Command.liftTermElabM (quantityToLatex ``avsForward)
   Lean.logInfo s
+
+/-! ## Regression pin — the attribute writes the equation into the declaration's docstring
+
+`@[pkc_math]` appends to the declaration's own docstring (or sets it, when there is none) both the
+rendered `$$…$$` equation and the definition's Lean source as a ```` ```lean ```` block, reading it
+back with `findSimpleDocString?`. `noted` carries an authored one-line docstring, so this pins the
+append: the prose is preserved, then the equation, then the source. Because the docstring is what
+`findDocString?` returns, this is exactly what doc-gen4 and the InfoView render. -/
+
+/-- Base backscatter. -/
+@[pkc_math_symbol "\\gamma", pkc_math]
+def noted (a b : Quantity dl Float) : Quantity dl Float := Quantity.mul pk a b
+
+/-- info: Base backscatter.
+
+$$\gamma = a\,b$$
+
+```lean
+def noted (a b : Quantity dl Float) : Quantity dl Float :=
+  Quantity.mul pk a b
+```
+-/
+#guard_msgs in
+run_cmd do
+  let doc := (← Lean.findSimpleDocString? (← Lean.getEnv) ``noted).getD "‹none›"
+  Lean.logInfo doc
 
 end PropertyKindCalculus.DocGenMath.Demo

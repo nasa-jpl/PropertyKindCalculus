@@ -1,14 +1,24 @@
 # PKC ↔ doc-gen4 Math Rendering — Cross-Session Plan
 
-**Status:** 2026-08-03 — **ALL PHASES DONE.** Phase 0 (setup); Phase P (doc-gen4 hook, committed `62439e4`
-on `pkc-math-hook`); Phase B (IR pipeline + `@[pkc_math]`, committed `f6a07a8` on PKC); Phase V (doc-gen4
-HTML render verified — `Demo.html` shows the `$$…$$` in a MathJax-processed `<p>`); **Phase S — PR opened:
-https://github.com/leanprover/doc-gen4/pull/403 (OPEN, ready-for-review)** = the v4.33 rebase of the hook.
-Rendering default = **F (faithful), CONFIRMED**. Remaining = **maintainer review of #403** + the follow-on
-(apply `@[pkc_math]` to real SMM/EM models); the local `../doc-gen4` override drops once #403 merges.
+**Status:** 2026-08-04 — **ARCHITECTURE PIVOT (per doc-gen4 maintainer review) — DONE.** The doc-gen4
+PR #403 (env-extension hook) was **closed**: maintainer `hargoniX` pointed out (1) most projects don't
+have doc-gen4 in their dependency closure (docs are built by a separate docbuild project), so a producer
+API *in* doc-gen4 is unreachable; and (2) the built-in **docstring** env-extension already flows into
+doc-gen4 for free. Both correct. **New design: `@[pkc_math]` writes the rendered `$$…$$` (now *plus* the
+definition's Lean source) into the declaration's own docstring via core Lean's `Lean.addDocStringCore`
+— no doc-gen4 dependency, no doc-gen4 changes.** This also reaches the **Lean InfoView** (which renders
+docstring math via MathJax), which the doc-gen-only hook never could. Rendering default = **F (faithful),
+CONFIRMED**. Remaining = follow-on (apply `@[pkc_math]` to real SMM/EM models). No library module imports
+doc-gen4; the `../doc-gen4` **dev override was removed** — doc-gen4 reverts to the stock `v4.32.0` tag
+(`092d631`) that PhysLib and TorchLean already pin transitively (it cannot be dropped *entirely* — both
+require it; this Mathlib pin does not), and is only ever resolved, never built here.
 **This file is the durable, multi-session tracker.** Update the checkboxes and the "Session log"
-at the bottom every time you make progress. A fresh session should read §2 (repo map) and §4
+at the bottom every time you make progress. A fresh session should read this header, §2 (repo map) and §4
 (checklist) first.
+
+> **Superseded below:** Phase P and Phase S describe the *old* doc-gen4-hook route (`addDeclMath` /
+> `getDeclMath?` / the `getDocString?` edit / PR #403). That route is **abandoned**; it is kept for the
+> record. The live mechanism is the docstring-append in Phase B / §6, marked **(v2)**.
 
 ---
 
@@ -87,8 +97,9 @@ applications. In PKC we build the mechanism + a **self-contained demo** using PK
 Proposed new PKC lib (keep the core spine clean — mirror the blueprint/crossref separation):
 
 - `docgen/` → `lean_lib «DocGenMath»` — the **B** IR + walker + `@[pkc_math]` attribute + the
-  presentation-rewrite/recognition registry. **Imports doc-gen4** (for the Phase-P hook API) + PKC core.
-  Docs-only; never imported by the core spine.
+  presentation-rewrite/recognition registry. **(v2) Imports core Lean + PKC core only — NOT doc-gen4.**
+  `Attr.lean` writes into the built-in docstring extension (`Lean.addDocStringCore`); the library has no
+  doc-gen4 dependency at all. Docs-only; never imported by the core spine.
 - demo/tests under `examples/`/`tests/`: `#eval`/`#guard_msgs` pins for the LaTeX of demo defs, plus a
   demo def rendered end-to-end.
 
@@ -102,7 +113,7 @@ Proposed new PKC lib (keep the core spine clean — mirror the blueprint/crossre
 - [x] Clone PKC → `/home/nfr/projects/lean/PKC`; remotes repointed (`origin`=JPL, `maap`, `local`=sibling); branch `feat/pkc-math-rendering`.
 - [x] Plan written; option C dropped; IR design folded in (§5).
 
-### Phase P — doc-gen4 hook PR (see §6) — ✅ DONE 2026-08-03 (uncommitted)
+### Phase P — doc-gen4 hook PR (see §6) — ⛔️ SUPERSEDED 2026-08-04 (route abandoned; kept for record)
 - [x] New `DocGen4/Process/DeclMath.lean`: `declMathExt` (`SimplePersistentEnvExtension (Name×String) (NameMap String)`) + `addDeclMath declName markdown` (downstream API) + `getDeclMath? env declName` (reader).
 - [x] `getDocString?` (`DocGen4/Process/NameInfo.lean`) appends the attached markdown to the docstring (none/`.inl`/`.inr`) → renders through the existing **MathJax-processed** docstring path. **No new `Info` field, no Output change, no DB-schema change.** Mirrors the `getRecommendedSpellingText` precedent.
 - [x] Wired into `DocGen4/Process.lean`; `lake build` **green (196 jobs)**.
@@ -115,11 +126,25 @@ All in `docgen/PropertyKindCalculus/DocGenMath/` (`lean_lib «DocGenMath»`, `sr
 - [x] **Stage 2 (Normalize)** `Normalize.lean`: faithful — flatten, integer fold (`2·3→6`, `2+3→5`), drop `1·`/`+0`, `−1·x→−x`, double-neg, adjacent `x·x→x²`, scalar-first product sort (sum order preserved). (Structural `@[pkc_math_rule]` shape-rules = documented future; named-operator recognition is the registry, below.)
 - [x] **Stage 3 (Pretty)** `Pretty.lean`: precedence printer (sum 10 < neg 15 < mul 20 < pow 30 < atom 40); `e^{…}`, `\sin/\cos/\log/\arcsin…`, `\frac`, sign-aware sums (`a − b`); takes a `resolve : String→String` closure (pure/testable).
 - [x] Symbol table + registry `Registry.lean`: `@[pkc_math_symbol "…"]` per-decl LaTeX override (the practical recognition registry) + `builtinSymbol` heuristic (Greek, `s0→s_{0}`, `ndvi→\mathrm{NDVI}`, single-letter italic, multi-letter `\mathrm`). `resolveToken env` = override-then-heuristic.
-- [x] `@[pkc_math]` attribute `Attr.lean`: `quantityToLatex declName : MetaM String` (lambdaTelescope value → lift → normalize → pretty; LHS via `resolveToken`), `@[pkc_math]` / `@[pkc_math "…literal…"]` → `DocGen4.Process.addDeclMath` (the only doc-gen4-coupled module).
-- [x] `Demo.lean`: dimensionless-kind demo; `@[pkc_math_symbol "\\sigma^0", pkc_math] def avsForward` renders `\sigma^0 = a\,\mathrm{NDVI} + e^{-2\,b\,\mathrm{NDVI}}\,c\,r + d`; 4 `#guard_msgs` pins (3 pure-stage + 1 end-to-end) — all green.
-- [x] `lakefile.lean`: `require «doc-gen4» from "/home/nfr/projects/lean/doc-gen4"` + `lean_lib «DocGenMath»`.
+- [x] `@[pkc_math]` attribute `Attr.lean`: `quantityToLatex declName : MetaM String` (lambdaTelescope value → lift → normalize → pretty; LHS via `resolveToken`), `@[pkc_math]` / `@[pkc_math "…literal…"]`. **(v2, 2026-08-04)** — no longer `addDeclMath`; instead runs at `applicationTime := .afterCompilation` and writes into the declaration's **own docstring** via `Lean.addDocStringCore`, appending both the `$$…$$` and (new) the **definition's Lean source** as a ```` ```lean ```` block (`defSource?` = `ppSignature` + delaborated body, decl name shortened to its base). `afterCompilation` is required so the authored `/-- … -/` docstring is already attached and preserved (at the default `afterTypeChecking` it is not yet present and would clobber ours — verified empirically). **No doc-gen4 import.**
+- [x] `Demo.lean`: dimensionless-kind demo; `@[pkc_math_symbol "\\sigma^0", pkc_math] def avsForward` renders `\sigma^0 = a\,\mathrm{NDVI} + e^{-2\,b\,\mathrm{NDVI}}\,c\,r + d`; **(v2)** now 5 `#guard_msgs` pins (3 pure-stage + 1 `quantityToLatex` + 1 docstring read-back on `noted` asserting prose + `$$…$$` + the ```` ```lean ```` source) — all green.
+- [x] **(v2)** `lakefile.lean`: `Attr.lean` no longer imports doc-gen4, so `lean_lib «DocGenMath»` depends on core Lean + PKC core only; `lake build DocGenMath` green (31 jobs) **without building doc-gen4**. The `require «doc-gen4» from "../doc-gen4"` **override was removed** and `lake update doc-gen4` reconciled the manifest (doc-gen4 `path → git` at the stock `092d631`/`v4.32.0` already in `.lake/packages`, now `inherited:true`; the only other diff is a benign `Cli` `inputRev` metadata shift — same resolved rev; **PhysLib/TorchLean/mathlib unchanged, no branch drift, no network**). doc-gen4 stays only because PhysLib and TorchLean each require it transitively — it can't be dropped entirely — but nothing here imports or builds it.
 
 ### Phase V — verification / end-to-end (see §7)
+**(v2, 2026-08-04) — re-verified with the docstring-append mechanism + source block, STOCK doc-gen4 path.**
+`lake build DocGenMath` green (31 jobs, **no doc-gen4 built** — DocGenMath imports core Lean + PKC only).
+The `noted` `#guard_msgs` pin reads the docstring back at build time = transport proof (prose + `$$…$$`
++ ```` ```lean ```` source). Re-ran `lake build …Demo:docs` (had to `rm -rf .lake/build/doc` to defeat a
+stale `fromDb` replay; genCore/`api-docs.db` cache reused): `avsForward`'s page now shows, in order,
+(1) the authored prose `<p>`, (2) `<p>$$\sigma^0 = a\,\mathrm{NDVI} + e^{-2\,b\,\mathrm{NDVI}}\,c\,r + d$$</p>`
+(MathJax typesets — `$$`=displayMath, `<p>`∉skipHtmlTags), (3) a `<pre>` Lean code block with the real
+source `def avsForward … := Quantity.mul pk a ndvi + …` (`⟨-2⟩`→`{ magnitude := -2 }`). Rendered by the
+**normal docstring path** — the inert `pkc-math-hook` in `../doc-gen4` contributes nothing (nothing calls
+`addDeclMath`), so this is what unmodified doc-gen4 produces. **InfoView:** the shipped
+`lean4-infoview` bundle carries MathJax + remark-math/rehype-mathjax, so the same docstring math typesets
+in the editor's InfoView (native mouse-hover tooltip uses VS Code markdown → shows literal `$$…$$`).
+
+**(v1) — original Phase V (doc-gen4-hook route):**
 - [x] Local doc-gen4 override wired; `lake update doc-gen4` repoints the manifest to the local path (`"dir": "/home/nfr/projects/lean/doc-gen4"`). `lake build DocGenMath` **green, 33 jobs**.
 - [x] **Transport proven** (this substitutes for most of Phase V): a separate `lake env lean` process imported the `Demo` olean and read back `$$\sigma^0 = …$$` via `getDeclMath?` — exactly doc-gen4's own path (load target oleans → `getDocString?` → `getDeclMath?`). So the data reaches the renderer.
 - [x] **HTML generated + verified** (2026-08-03): `lake build PropertyKindCalculus.DocGenMath.Demo:docs`
@@ -133,7 +158,7 @@ All in `docgen/PropertyKindCalculus/DocGenMath/` (`lean_lib «DocGenMath»`, `sr
   literal browser-pixel view is left to the user). bibPrepass handled the missing bib gracefully
   ("reference page disabled"). doc-gen4 exe built from the local override; no mathlib compiled.
 
-### Phase S — submit PR — ✅ DONE 2026-08-03 — **PR https://github.com/leanprover/doc-gen4/pull/403 (OPEN)**
+### Phase S — submit PR — ⛔️ SUPERSEDED 2026-08-04 — **PR #403 CLOSED** (maintainer review → library-side pivot; see header + §6 (v2))
 - [x] Rebased the Phase-P diff onto doc-gen4 `main` (v4.33.0-rc2) **in a git worktree** (so the main
   `../doc-gen4` checkout stays on `pkc-math-hook` for the PKC override + a concurrent editor). Branch
   `declmath-hook` = `feb58b8` + `aad7b98`. **Drift fixed:** on v4.33 `getDocString?` returns
@@ -201,7 +226,37 @@ EM models.
 
 ---
 
-## 6. Design — the doc-gen4 PR (Phase P) — IMPLEMENTED
+## 6. Design — the docstring-append mechanism
+
+### (v2, 2026-08-04) — THE LIVE DESIGN: write into the built-in docstring, no doc-gen4 change
+
+doc-gen4 maintainer `hargoniX` (PR #403 review) made the pivot obvious:
+1. Users of doc-gen4 usually do **not** have it in their dependency closure — docs are built by a
+   separate docbuild project — so a producer API living *in* doc-gen4 is unreachable by the libraries
+   that would use it.
+2. Lean's **built-in docstring env-extension** already flows into doc-gen4 (and the InfoView) with no
+   extra work; just write the rendered content into the docstring from a metaprogram.
+
+So `@[pkc_math]` (in PKC, depending on **core Lean only**) computes the LaTeX + source and calls
+`Lean.addDocStringCore declName combined` — writing `docStringExt` (a `MapDeclarationExtension String`
+that serializes into the `.olean`). doc-gen4 reads it via the normal `findDocString?` → `docStringToHtml`
+path and MathJax typesets the `$$…$$`; the Lean InfoView renders the same docstring math via its bundled
+MathJax (`remark-math`/`rehype-mathjax`). **No doc-gen4 dependency, no doc-gen4 changes.**
+
+Two facts pinned empirically (v4.32.0):
+- **Timing.** The attribute must run at `applicationTime := .afterCompilation`; the elaborator attaches
+  the authored `/-- … -/` docstring *between* the default `afterTypeChecking` attributes and the
+  `afterCompilation` ones (`Lean.Elab.PreDefinition.Basic.addNonRecAux`). At the default time the
+  docstring is absent and the authored one clobbers ours; at `afterCompilation` we read-and-append it.
+- **Source block.** `defSource? = ppSignature + delaborated body`; the delaborator shortens names in the
+  ambient `open`/namespace context, but `ppSignature` prints the full decl name in the header, so we
+  string-replace it with the base name. `⟨-2⟩` prints as `{ magnitude := -2 }` (faithful, acceptable).
+
+Trade-off: content lands *inside* the docstring (so the `$$…$$`/source also show in editor hover as
+literal text, and a Verso docstring is flattened to Markdown by the append). Both acceptable; the win is
+zero coupling and reaching every docstring consumer.
+
+### (v1, 2026-08-03) — ⛔️ SUPERSEDED — the doc-gen4 env-extension hook (PR #403, closed)
 
 Generic, upstreamable hook: any library attaches extra rendered docs to a decl. Transport is an
 **environment extension** (doc-gen4 loads the target `.olean` in a separate process). Implemented by
@@ -311,3 +366,27 @@ Scope the doc-gen build to the demo module, not all of PKC. *(open decision #3)*
   green (131 jobs, v4.33.0-rc2). Committed `aad7b98` on `declmath-hook`, pushed to fork `origin`, opened
   https://github.com/leanprover/doc-gen4/pull/403 against `leanprover/doc-gen4:main` (ready-for-review).
   Worktree removed after. **Workstream complete pending maintainer review.**
+- **2026-08-04 (session 3):** **ARCHITECTURE PIVOT — PR #403 closed; doc-gen4 route abandoned.** Maintainer
+  `hargoniX` reviewed #403: (1) most projects lack doc-gen4 in their dep closure (docs = separate docbuild
+  project) → a producer API in doc-gen4 is unreachable; (2) the built-in docstring env-extension already
+  flows into doc-gen4 for free. Both correct → posted a concession + closed #403 (comment `5181046146`).
+  **Reworked `@[pkc_math]` to the library-side design (§6 v2):** it now writes the rendered `$$…$$` **plus
+  the definition's Lean source** (```` ```lean ```` block) into the decl's own docstring via
+  `Lean.addDocStringCore`; `Attr.lean` dropped `import DocGen4.*`; the library depends on core Lean + PKC
+  only. **Gotcha (pinned empirically):** the attribute must run at `applicationTime := .afterCompilation`,
+  because the elaborator attaches the authored `/-- -/` docstring *between* the default `afterTypeChecking`
+  attrs and the `afterCompilation` ones (`Lean.Elab.PreDefinition.Basic.addNonRecAux`); at the default time
+  the docstring is absent and the authored one clobbers ours. **Source block:** `findDeclarationRanges?`/
+  `getRef` can't reach the decl source span at `afterCompilation` (ranges unstored, `getRef` = attr node
+  only), so `defSource?` uses `ppSignature` + delaborated body (names shorten in the ambient `open`; the
+  full decl name in the `ppSignature` header is string-replaced with its base name). v4.32 String churn:
+  `trim`/`trimRight`/`trimAscii*`/`dropRightWhile` all deprecated→`Slice`; used `doc.trimAsciiEnd.toString`.
+  Added a `noted` prose def + docstring-read-back `#guard_msgs` pin (build-time transport proof). Verified
+  the doc HTML shows prose + typeset math + source (Phase V v2). Confirmed the Lean InfoView bundle ships
+  MathJax + remark-math/rehype-mathjax (so it typesets docstring math; native hover does not). Then
+  **removed the `../doc-gen4` override** (`lake update doc-gen4` reverted doc-gen4 to the stock `092d631`
+  `v4.32.0` tag that PhysLib/TorchLean already pin transitively — clean manifest diff, no drift, no
+  network; `lake build DocGenMath` still green). Files (all UNPUSHED on `feat/pkc-math-rendering`):
+  `Attr.lean`, `Demo.lean`, `lakefile.lean` (override removed + NOTE comment), `lake-manifest.json`
+  (doc-gen4 path→git), `RENDERING.md`. The `62439e4`/`aad7b98` doc-gen4 hooks are now dead ends kept only
+  for the record.

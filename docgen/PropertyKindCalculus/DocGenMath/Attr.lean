@@ -9,16 +9,24 @@ import PropertyKindCalculus.DocGenMath.Registry
 import PropertyKindCalculus.DocGenMath.Lift
 import PropertyKindCalculus.DocGenMath.Normalize
 import PropertyKindCalculus.DocGenMath.Pretty
-import DocGen4.Process.DeclMath
 
 /-!
-# The `@[pkc_math]` attribute — orchestration + doc-gen4 hand-off
+# The `@[pkc_math]` attribute — orchestration + docstring hand-off
 
 `quantityToLatex` runs the three-stage pipeline over a definition's value and returns a LaTeX
 equation `lhs = rhs`. The `@[pkc_math]` attribute computes it (or takes a literal override) and
-hands the rendered markdown to doc-gen4 via `DocGen4.Process.addDeclMath`, which appends it to the
-declaration's docstring so it typesets through doc-gen4's normal, MathJax-processed rendering path
-(see `RENDERING.md` §6). This is the only module coupled to doc-gen4.
+appends to the declaration's **own docstring** both the rendered `$$…$$` equation and the
+definition's Lean source (a ```` ```lean ```` code block), so the doc page shows the formula *and*
+the source it came from — not the formula plus a link. The write goes through core Lean's
+`Lean.addDocStringCore` (the `docStringExt` map extension), so the content flows through the standard
+docstring path with no special support from any renderer: doc-gen4 typesets it on the declaration's
+HTML page, and the Lean InfoView typesets it in the editor — both via MathJax. This makes the
+library depend on core Lean only, never on doc-gen4 (see `RENDERING.md` §6).
+
+The attribute runs at `AttributeApplicationTime.afterCompilation`, which is *after* the elaborator
+attaches any authored `/-- … -/` docstring (see `Lean.Elab.PreDefinition.Basic.addNonRecAux`), so
+reading the current docstring and appending preserves the authored prose. At the default time
+(`afterTypeChecking`) the docstring is not yet present and the authored one would clobber ours.
 -/
 
 namespace PropertyKindCalculus.DocGenMath
@@ -43,23 +51,53 @@ def quantityToLatex (declName : Name) : MetaM String := do
 /-- Wrap a LaTeX equation body as a MathJax **display-math** markdown block. -/
 def displayMath (body : String) : String := "$$" ++ body ++ "$$"
 
-/-- Compute the markdown for `@[pkc_math]` on `declName`: the literal `override?` if given (the
-escape hatch of `RENDERING.md` §5), otherwise the rendered equation. -/
+/-- Pretty-print `declName`'s definition as Lean source, `def … := …`, for display next to the
+rendered math (`none` when it is not a definition, so the caller omits the source block). The
+delaborator runs in the ambient namespace / `open` context, so names print as authored. -/
+def defSource? (declName : Name) : MetaM (Option String) := do
+  let some (.defnInfo di) := (← getEnv).find? declName | return none
+  let sig ← PrettyPrinter.ppSignature declName
+  let body ← lambdaTelescope di.value fun _xs b => Meta.ppExpr b
+  -- `ppSignature` prints the fully-qualified decl name as the header; shorten it to the base name
+  -- (binders and body already delaborate to short names in the ambient `open` context).
+  let full := toString declName
+  let short := full.splitOn "." |>.getLastD full
+  let sigStr := sig.fmt.pretty.replace full short
+  return some ("def " ++ sigStr ++ " :=\n  " ++ body.pretty)
+
+/-- Fence a Lean source snippet as a ```` ```lean ```` markdown code block. -/
+def sourceBlock (src : String) : String := "```lean\n" ++ src ++ "\n```"
+
+/-- Compute the markdown for `@[pkc_math]` on `declName`: the rendered equation (or the literal
+`override?` — the escape hatch of `RENDERING.md` §5) as display math, followed by the definition's
+Lean source in a code block, so the doc page shows both the formula and the source it came from. -/
 def mathMarkdown (declName : Name) (override? : Option String) : MetaM String := do
-  match override? with
-  | some s => return displayMath s
-  | none   => return displayMath (← quantityToLatex declName)
+  let math := displayMath (← match override? with
+    | some s => pure s
+    | none   => quantityToLatex declName)
+  match (← defSource? declName) with
+  | some src => return math ++ "\n\n" ++ sourceBlock src
+  | none     => return math
 
 initialize registerBuiltinAttribute {
   name := `pkc_math
-  descr := "Render this quantity definition as typeset LaTeX on its doc-gen4 page."
+  descr := "Render this quantity definition as typeset LaTeX in its docstring (doc-gen4 + InfoView)."
+  -- Run after the elaborator attaches the authored docstring, so the append below preserves it.
+  applicationTime := .afterCompilation
   add := fun decl stx _kind => do
     let override? : Option String :=
       match stx with
       | `(attr| pkc_math $s:str) => some s.getString
       | _                        => none
     let md ← (mathMarkdown decl override?).run'
-    DocGen4.Process.addDeclMath decl md
+    -- Append to the declaration's own docstring (or set it, if there is none). `docStringExt`
+    -- serializes into the `.olean`, so the separate doc-gen4 process reads it back via
+    -- `findDocString?` and MathJax typesets the `$$…$$`; the InfoView renders it the same way.
+    let existing ← findSimpleDocString? (← getEnv) decl (includeBuiltin := false)
+    let combined := match existing with
+      | some doc => doc.trimAsciiEnd.toString ++ "\n\n" ++ md
+      | none     => md
+    addDocStringCore decl combined
 }
 
 end PropertyKindCalculus.DocGenMath
