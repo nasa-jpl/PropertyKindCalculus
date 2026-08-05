@@ -88,6 +88,27 @@ def configFieldName? (env : Environment) (declName : Name) : Option String := do
   guard <| pkcMathConfigAttr.hasTag env structName
   return structName.getString! ++ "." ++ declName.getString!
 
+/-! ### Transparent wrappers -/
+
+/-- Marks a declaration as a **notational wrapper**: an application of it renders as its argument.
+
+The case that motivates it is a carrier's numeral injection — `ofN (n : Nat) : α := (n : α)` — which
+otherwise renders `\mathrm{ofN}\left(2\right)` wherever the model writes a constant, so every
+equation carries the name of the coercion instead of the number. `2` is what the definition
+computes, so dropping the wrapper stays in the **F** (faithful) tier; it is notation, not algebra.
+
+Only put it on a declaration that really is transparent — one whose value *is* its explicit
+argument, up to the representation change the reader is meant not to see. A wrapper that scales
+(`clayPctOfMassFraction c = c·100`) is **not** transparent: hiding it would drop the factor. Those
+keep the ordinary application layout, and `@[pkc_math_symbol]` gives them their notation. -/
+initialize pkcMathTransparentAttr : TagAttribute ←
+  registerTagAttribute `pkc_math_transparent
+    "Render an application of this notational wrapper as its argument (e.g. a numeral injection)."
+
+/-- Whether `declName` is tagged `@[pkc_math_transparent]`. -/
+def isTransparentWrapper (env : Environment) (declName : Name) : Bool :=
+  pkcMathTransparentAttr.hasTag env declName
+
 /-! ### Heuristic atom table (used when there is no `@[pkc_math_symbol]` override) -/
 
 /-- Greek-letter spellings recognized in atom names. -/
@@ -115,6 +136,25 @@ private def splitTrailingDigits (s : String) : String × String :=
 
 /-- Upright multi-letter identifier, `\mathrm{name}`. -/
 def mathrm (s : String) : String := "\\mathrm{" ++ s ++ "}"
+
+/-- Escape arbitrary text for a LaTeX `\text{…}` box, and fold newlines into spaces.
+
+Used for the lift's last-resort leaf, where the "text" is pretty-printed Lean source: it carries
+braces, backslashes and line breaks, every one of which ends the math environment early or is read
+as a control sequence. Escaping keeps an unrenderable subterm *visible and valid* rather than
+silently malformed. -/
+def latexText (s : String) : String :=
+  let escaped := s.foldl (init := "") fun acc c =>
+    acc ++ match c with
+      | '\\' => "\\backslash "
+      | '{'  => "\\{"     | '}' => "\\}"
+      | '_'  => "\\_"     | '^' => "\\^{}"
+      | '&'  => "\\&"     | '%' => "\\%"
+      | '#'  => "\\#"     | '$' => "\\$"
+      | '~'  => "\\~{}"
+      | '\n' | '\r' | '\t' => " "
+      | c    => c.toString
+  "\\text{" ++ escaped ++ "}"
 
 /-- Map the *base* token (already stripped of any namespace) to LaTeX, by heuristics only. -/
 def builtinSymbol (base : String) : String := Id.run do

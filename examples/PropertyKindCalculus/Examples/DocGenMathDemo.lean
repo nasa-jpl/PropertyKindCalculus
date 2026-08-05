@@ -264,4 +264,206 @@ run_cmd do
   let doc := (← Lean.findSimpleDocString? (← Lean.getEnv) ``residual).getD "‹none›"
   Lean.logInfo doc
 
+/-! ## Regression pins — notational wrappers
+
+A carrier's numeral injection is notation, not content: `ofN 2` *is* `2`, so
+`@[pkc_math_transparent]` renders it as its argument. Without the tag every constant in every
+equation carries the name of the coercion (`\mathrm{ofN}\left(2\right)`). The tag belongs only on a
+wrapper that really is transparent — one that scales, like a percent conversion, must keep showing
+its factor. -/
+
+/-- The carrier's numeral injection: a transparent wrapper. -/
+@[pkc_math_transparent]
+def ofN (n : Nat) : Quantity dl Float := ⟨n.toFloat⟩
+
+/-- Doubling through the numeral injection. -/
+@[pkc_math_symbol "u", pkc_math]
+def scaledByTwo (a : Quantity dl Float) : Quantity dl Float := Quantity.mul pk (ofN 2) a
+
+/-- info: u = 2\,a -/
+#guard_msgs in
+run_cmd do
+  let s ← Lean.Elab.Command.liftTermElabM (quantityToLatex ``scaledByTwo)
+  Lean.logInfo s
+
+/-! ## Regression pin — a record result is a *system* of equations
+
+A model whose result is a record of quantities has no single defining equation: it has one per
+field. The lift reads the structure literal as a `record` and the printer renders the aligned
+system, which is how such a model is written on paper. Collapsing it into one right-hand side is
+what a record-valued definition used to do. -/
+
+/-- Two outputs of one model, as a record. -/
+structure Bounds where
+  /-- The upper output. -/
+  hi : Quantity dl Float
+  /-- The lower output. -/
+  lo : Quantity dl Float
+
+/-- A record-valued model: renders as the system `hi = a·b`, `lo = a − b`. -/
+@[pkc_math]
+def spread (a b : Quantity dl Float) : Bounds :=
+  { hi := Quantity.mul pk a b, lo := a - b }
+
+/-- info: \begin{aligned} \mathrm{hi} &= a\,b \\ \mathrm{lo} &= a - b \end{aligned} -/
+#guard_msgs in
+run_cmd do
+  let s ← Lean.Elab.Command.liftTermElabM (quantityToLatex ``spread)
+  Lean.logInfo s
+
+/-! ## Regression pin — a destructuring `let` becomes a `where` equation
+
+`let (x, y) := split a` elaborates to a one-branch `match`. There is no case analysis to show, and
+inlining it would repeat the scrutinee once per component, so the binder is named: the pair becomes
+one auxiliary equation and the body renders in terms of the names. The docstring pin below is the
+whole markdown the attribute writes — equation, `where`, source — so it also pins the block layout
+that MathJax needs (each `$$…$$` a top-level block). -/
+
+/-- Splits an input into a pair — the destructured helper. -/
+def split (a : Quantity dl Float) : Quantity dl Float × Quantity dl Float := (a, a)
+
+/-- Consumes a destructured pair. -/
+@[pkc_math_symbol "D", pkc_math]
+def combined (a b : Quantity dl Float) : Quantity dl Float :=
+  let (x, y) := split a
+  Quantity.mul pk x y + b
+
+/-- info: Consumes a destructured pair.
+
+$$D = x\,y + b$$
+
+where
+
+$$\left(x, y\right) = \mathrm{split}\left(a\right)$$
+
+```lean
+def combined (a b : Quantity dl Float) : Quantity dl Float :=
+  match split a with
+| (x, y) => Quantity.mul pk x y + b
+```
+-/
+#guard_msgs in
+run_cmd do
+  let doc := (← Lean.findSimpleDocString? (← Lean.getEnv) ``combined).getD "‹none›"
+  Lean.logInfo doc
+
+/-! ## Regression pin — `match` is case analysis
+
+A multi-alternative `match` renders as `\begin{cases}`, each branch labelled with the pattern it
+holds for. The patterns are read from the matcher's own **equation lemmas**, which is the only place
+Lean keeps them — `MatcherInfo` records arities, not patterns.
+
+`byPolarization` writes its alternatives in the *reverse* of `Pol`'s constructor order, so this pin
+is what proves the labels come from the equations and not from a guess at constructor order: a guess
+would swap the two conditions and publish a wrong equation. -/
+
+/-- A two-way polarization tag. -/
+inductive Pol where
+  /-- Horizontal. -/
+  | hh
+  /-- Vertical. -/
+  | vv
+
+/-- Case analysis on the polarization, written vertical-first. -/
+@[pkc_math_symbol "P", pkc_math]
+def byPolarization (p : Pol) (a b : Quantity dl Float) : Quantity dl Float :=
+  match p with
+  | .vv => Quantity.mul pk a b
+  | .hh => a - b
+
+/--
+info: P = \begin{cases} a\,b & \text{if } p = \mathrm{vv} \\ a - b & \text{if } p = \mathrm{hh} \end{cases}
+-/
+#guard_msgs in
+run_cmd do
+  let s ← Lean.Elab.Command.liftTermElabM (quantityToLatex ``byPolarization)
+  Lean.logInfo s
+
+/-! ## Regression pins — `keeping`: the inverse of the `let`-zeta
+
+The lift inlines `let` bindings by default, which is right for one threaded intermediate and ruinous
+for a shared one: a Debye denominator used by four outputs is duplicated four times, and the
+equation grows past reading. `keeping` binds them instead, as the `where` block of the equation.
+
+`keeping` alone keeps every binding; `keeping d` keeps the named ones and inlines the rest. The
+three pins below are the same definition rendered all three ways, so the difference is visible. -/
+
+/-- A model with a shared intermediate: `d` is used by both `s` and the sum. -/
+@[pkc_math_symbol "S", pkc_math keeping]
+def shared (a b : Quantity dl Float) : Quantity dl Float :=
+  let d := a + b
+  let s := Quantity.mul pk d d
+  s + d
+
+-- inlining everything (the default): `d` appears three times over
+/-- info: S = \left(a + b\right)^{2} + a + b -/
+#guard_msgs in
+run_cmd do
+  let s ← Lean.Elab.Command.liftTermElabM (quantityToLatex ``shared)
+  Lean.logInfo s
+
+-- keeping everything: each binding once, in binding order
+/-- info: S = s + d | where \begin{aligned} d &= a + b \\ s &= d^{2} \end{aligned} -/
+#guard_msgs in
+run_cmd do
+  let r ← Lean.Elab.Command.liftTermElabM (quantityToRendering ``shared #[] .keepAll)
+  Lean.logInfo (r.equation ++ " | where " ++ (r.whereEqs.getD "‹none›"))
+
+-- keeping only `d`: `s` is inlined around it
+/-- info: S = d^{2} + d | where d = a + b -/
+#guard_msgs in
+run_cmd do
+  let r ← Lean.Elab.Command.liftTermElabM (quantityToRendering ``shared #[] (.keepOnly #[`d]))
+  Lean.logInfo (r.equation ++ " | where " ++ (r.whereEqs.getD "‹none›"))
+
+/-! ## Regression pins — names in a system
+
+Two refinements that keep a `where` block readable, both about names rather than about math.
+
+**An alias is not an equation.** A definition that binds its outputs with `let` and then packs them
+into a record would render `hi = d` above `d = a + b`. When a field's value is nothing but the name
+of an auxiliary equation used *exactly once*, the field takes its right-hand side and the equation
+goes away. The single-use condition is what stops this from duplicating a shared intermediate — the
+second pin keeps `d` precisely because two fields read it. -/
+
+/-- info: hi = a + b (0 auxiliary) -/
+#guard_msgs in
+#eval do
+  let s : MathSystem := { body := .record #[("hi", .sym "d")],
+                          aux := #[(.sym "d", .add #[.sym "a", .sym "b"])] }
+  let c := s.collapseAliases
+  IO.println s!"{prettyEquation MathNotation.ofLatex "F" c.body} ({c.aux.size} auxiliary)"
+
+/-- info: \begin{aligned} hi &= d \\ lo &= -d \end{aligned} (1 auxiliary) -/
+#guard_msgs in
+#eval do
+  let s : MathSystem := { body := .record #[("hi", .sym "d"), ("lo", .neg (.sym "d"))],
+                          aux := #[(.sym "d", .add #[.sym "a", .sym "b"])] }
+  let c := s.collapseAliases
+  IO.println s!"{prettyEquation MathNotation.ofLatex "F" c.body} ({c.aux.size} auxiliary)"
+
+/-! **A re-bound name disambiguates.** A definition may open two blocks with the same local name for
+different values (a Debye model binds `ωτ` twice). Keeping both would put two equations with one
+left-hand side and two right-hand sides in a single block, so the second becomes `u2` — which the
+trailing-digit rule then typesets as a subscript. Inlining the shadowed binding instead reads worse:
+it turns `u²` into `a\,b\,a\,b`, because the faithful normalizer folds powers only from *adjacent*
+equal factors. -/
+
+/-- A definition that binds `u` twice, for different values. -/
+@[pkc_math_symbol "T", pkc_math keeping]
+def twiceBound (a b : Quantity dl Float) : Quantity dl Float :=
+  let u := a + b
+  let x := Quantity.mul pk u u
+  let u := a - b
+  let y := Quantity.mul pk u u
+  x + y
+
+/--
+info: T = x + y | where \begin{aligned} u &= a + b \\ x &= u^{2} \\ u_{2} &= a - b \\ y &= u_{2}^{2} \end{aligned}
+-/
+#guard_msgs in
+run_cmd do
+  let r ← Lean.Elab.Command.liftTermElabM (quantityToRendering ``twiceBound #[] .keepAll)
+  Lean.logInfo (r.equation ++ " | where " ++ (r.whereEqs.getD "‹none›"))
+
 end PropertyKindCalculus.Examples.DocGenMathDemo

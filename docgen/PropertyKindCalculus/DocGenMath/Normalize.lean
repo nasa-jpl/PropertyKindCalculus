@@ -54,6 +54,7 @@ private def groupPowers (fs : Array MathTerm) : Array MathTerm := Id.run do
 partial def normalize : MathTerm → MathTerm
   | .num n      => .num n
   | .sym s      => .sym s
+  | .raw l      => .raw l
   | .neg t      =>
     match normalize t with
     | .num n  => .num (-n)
@@ -63,6 +64,10 @@ partial def normalize : MathTerm → MathTerm
   | .frac a b   => .frac (normalize a) (normalize b)
   | .fn n args  => .fn n (args.map normalize)
   | .tuple ts   => .tuple (ts.map normalize)
+  | .record fs  => .record (fs.map fun (f, t) => (f, normalize t))
+  -- values only: a pattern is a constructor application the reader matches against literally, so
+  -- folding inside it would rewrite what the author wrote the branch on
+  | .cases s as => .cases (normalize s) (as.map fun (p, t) => (p, normalize t))
   | .add ts     => Id.run do
     -- normalize + flatten
     let flat : Array MathTerm := (ts.map normalize).foldl

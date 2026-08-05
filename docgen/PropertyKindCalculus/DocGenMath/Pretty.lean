@@ -38,6 +38,9 @@ private def precOf : MathTerm → Nat
   | .tuple _  => 40
   | .sym _    => 40
   | .num _    => 40
+  | .record _ => 40
+  | .cases _ _ => 40
+  | .raw _    => 40
 
 /-- LaTeX macro for a recognized elementary function head (`exp` is handled separately). -/
 private def funcMacro : String → Option String
@@ -66,6 +69,7 @@ where
   core : MathTerm → String
     | .num n      => toString n
     | .sym s      => (resolve s).latex
+    | .raw l      => l
     | .neg t      => "-" ++ go 16 t
     | .pow a b    => go 31 a ++ "^" ++ br (go 0 b)
     | .frac a b   => "\\frac" ++ br (go 0 a) ++ br (go 0 b)
@@ -73,6 +77,12 @@ where
     | .mul ts     => renderProd ts
     | .fn name as => renderFn name as
     | .tuple ts   => paren (String.intercalate ", " (ts.toList.map (go 0 ·)))
+    -- a record met *inside* an expression stays inline, `\{ n_d = …,\ k_d = … \}`; only a record
+    -- that is the whole right-hand side becomes the aligned system (`prettyEquation` below)
+    | .record fs  =>
+      "\\left\\{ " ++ String.intercalate ",\\; "
+        (fs.toList.map fun (f, v) => (resolve f).latex ++ " = " ++ go 0 v) ++ " \\right\\}"
+    | .cases s as => renderCases s as
   /-- A sum `t₀ ± t₁ ± …`, choosing `+`/`−` from each term's sign. -/
   renderSum (ts : Array MathTerm) : String := Id.run do
     if ts.isEmpty then return "0"
@@ -88,6 +98,13 @@ where
   /-- A product, factors joined by thin spaces (`\,`). -/
   renderProd (ts : Array MathTerm) : String :=
     String.intercalate "\\," (ts.toList.map (go 21 ·))
+  /-- A `match`, as the conventional brace-and-conditions layout: each branch's value, then the
+  pattern it holds for. `\begin{cases}` is AMSmath, which MathJax bundles, so this typesets on the
+  doc-gen4 page and in the InfoView without any extra configuration. -/
+  renderCases (scrut : MathTerm) (as : Array (MathTerm × MathTerm)) : String :=
+    let rows := as.toList.map fun (pat, val) =>
+      go 0 val ++ " & \\text{if } " ++ go 0 scrut ++ " = " ++ go 0 pat
+    "\\begin{cases} " ++ String.intercalate " \\\\ " rows ++ " \\end{cases}"
   /-- A function application, laid out by head. -/
   renderFn (name : String) (as : Array MathTerm) : String :=
     if name == "exp" && as.size == 1 then
@@ -106,5 +123,31 @@ where
         else if nota.operator && as.size == 1 then
           nota.latex ++ " " ++ go 40 as[0]!
         else nota.latex ++ paren (String.intercalate ", " (as.toList.map (go 0 ·)))
+
+/-- An aligned block of `lhs = rhs` rows, the AMSmath layout MathJax bundles. One row renders as a
+plain equation: a single-line `\begin{aligned}` buys nothing and reads worse. -/
+private def alignedRows (rows : Array (String × String)) : String :=
+  if h : rows.size = 1 then
+    let (l, r) := rows[0]'(by omega)
+    l ++ " = " ++ r
+  else
+    "\\begin{aligned} " ++ String.intercalate " \\\\ "
+      (rows.toList.map fun (l, r) => l ++ " &= " ++ r) ++ " \\end{aligned}"
+
+/-- Render a definition's rendering as its equation. A record-valued definition has no single
+defining equation — it has one per field — so it renders as the aligned *system* of them, which is
+how such a model is written on paper. Everything else is the familiar `lhs = rhs`. -/
+def prettyEquation (resolve : String → MathNotation) (lhs : String) (t : MathTerm) : String :=
+  match t with
+  | .record fs => alignedRows (fs.map fun (f, v) => ((resolve f).latex, pretty resolve v))
+  | _          => lhs ++ " = " ++ pretty resolve t
+
+/-- Render the auxiliary equations of a `MathSystem` as one aligned block, or `none` when there are
+none. This is the `where` of the equation above it: each kept `let` and each destructured `match`,
+once, in the order the definition binds them. -/
+def prettyAux (resolve : String → MathNotation) (aux : Array (MathTerm × MathTerm)) :
+    Option String :=
+  if aux.isEmpty then none
+  else some (alignedRows (aux.map fun (l, r) => (pretty resolve l, pretty resolve r)))
 
 end PropertyKindCalculus.DocGenMath

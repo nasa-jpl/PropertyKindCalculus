@@ -133,6 +133,32 @@ All in `docgen/PropertyKindCalculus/DocGenMath/` (`lean_lib «DocGenMath»`, `sr
 - [x] **(v3)** **Derivations** `Attr.lean` + `Lift.lean`: `substitute names e` is the opt-in **delta** pre-pass (`Meta.transform`, `instantiateLevelParams` + `mkAppN … |>.headBeta`, `.visit` so nested occurrences expand) run *before* the lift, so an inlined body's `let`s zeta-reduce as usual. `isSubstitutable` rejects a self-mentioning definition (which would not terminate) at attribute time, alongside rejecting a literal override combined with `substituting`. Idents in the attribute resolve through `realizeGlobalConstNoOverload` in `AttrM` — the ambient namespace *is* available at `afterCompilation` (verified by the demo pins).
 - [x] `@[pkc_math]` attribute `Attr.lean`: `quantityToLatex declName : MetaM String` (lambdaTelescope value → lift → normalize → pretty; LHS via `resolveToken`), `@[pkc_math]` / `@[pkc_math "…literal…"]`. **(v2, 2026-08-04)** — no longer `addDeclMath`; instead runs at `applicationTime := .afterCompilation` and writes into the declaration's **own docstring** via `Lean.addDocStringCore`, appending both the `$$…$$` and (new) the **definition's Lean source** as a ```` ```lean ```` block (`defSource?` = `ppSignature` + delaborated body, decl name shortened to its base). `afterCompilation` is required so the authored `/-- … -/` docstring is already attached and preserved (at the default `afterTypeChecking` it is not yet present and would clobber ours — verified empirically). **No doc-gen4 import.**
 - [x] The demo + regression pins: dimensionless-kind demo; `@[pkc_math_symbol "\\sigma^0", pkc_math] def avsForward` renders `\sigma^0 = a\,\mathrm{NDVI} + e^{-2\,b\,\mathrm{NDVI}}\,c\,r + d`; **(v3)** 8 `#guard_msgs` pins (4 pure-stage incl. tuples + 3 `quantityToLatex` incl. `columns` for tuple/head-layout + 1 docstring read-back on `noted` asserting prose + `$$…$$` + the ```` ```lean ```` source) — all green. **(v3, 2026-08-04)** moved out of the `DocGenMath` library to `examples/PropertyKindCalculus/Examples/DocGenMathDemo.lean` (`lean_lib «Examples»`, namespace `PropertyKindCalculus.Examples.DocGenMathDemo`), so no `DocGenMath` module carries `#eval`/`#guard` — the same library/example split as `UncertaintyExamples`. Build with `lake build PropertyKindCalculus.Examples.DocGenMathDemo`.
+- [x] **(v4, 2026-08-05)** **Systems, cases, `where`, transparent wrappers** — the shapes a model
+  outside this repo is actually written in (found by rendering soil-moisture-model's Mironov
+  dielectric, where the old output was *malformed LaTeX* on the published page):
+  `Term.lean` gains `record` / `cases` / `raw` nodes plus `MathSystem` (a term + its auxiliary
+  equations); `raw` is what guarantees an unreadable leaf degrades to escaped `\text{…}` instead of
+  pretty-printed Lean inside `\mathrm{…}` (`Registry.latexText`).
+  `Lift.lean` gains `KeepPolicy` (`inlineAll`/`keepAll`/`keepOnly`) and runs in
+  `LiftM = StateRefT (Array (MathTerm × MathTerm)) MetaM` so a kept `let` (bound via `withLetDecl`,
+  so the body keeps the author's name) emits an auxiliary equation; `liftMatcher` reads
+  `Meta.matchMatcherApp?` — one alternative = a destructuring binder (name the components, emit
+  `(n, k) = …`), several = `cases`, with patterns from `Match.getEquationsFor` (**not** constructor
+  order, which would mislabel a reordered match); structure literals lift to `record` via
+  `getStructureFields` (guarded by `isStructure` — `getStructureFields` *panics* otherwise, and Lean's
+  strict `let` made an unguarded call crash the whole elaboration); `letBinderNames` backs the
+  attribute's rejection of an unbound `keeping` name.
+  `Term.lean` also carries the two name refinements: `MathTerm.countSym` + `MathSystem.collapseAliases`
+  (a single-use field alias absorbs its auxiliary equation), and the lift disambiguates a re-bound
+  `let` name (`ωτ`, `ωτ2`) rather than dropping or shadowing it.
+  `Pretty.lean` gains `\begin{cases}`, inline records, and `prettyEquation`/`prettyAux` (the aligned
+  system, and the `where` block; one row prints as a plain equation, not a one-line `aligned`).
+  `Registry.lean` gains `@[pkc_math_transparent]` + `latexText`. `Attr.lean` gains the `keeping`
+  clause, `MathRendering` (equation + optional `where`), and `quantityToRendering`; `mathMarkdown`
+  interleaves the `where` block after the equation and after each derivation step.
+  6 new `#guard_msgs` pins (transparent wrapper, record system, destructuring docstring read-back,
+  a **reverse-order** `match`, and `keeping` in all three modes) — all green, and the 12 pre-existing
+  pins are byte-identical, so an un-annotated definition renders exactly as before.
 - [x] **(v2)** `lakefile.lean`: `Attr.lean` no longer imports doc-gen4, so `lean_lib «DocGenMath»` depends on core Lean + PKC core only; `lake build DocGenMath` green (31 jobs) **without building doc-gen4**. The `require «doc-gen4» from "../doc-gen4"` **override was removed** and `lake update doc-gen4` reconciled the manifest (doc-gen4 `path → git` at the stock `092d631`/`v4.32.0` already in `.lake/packages`, now `inherited:true`; the only other diff is a benign `Cli` `inputRev` metadata shift — same resolved rev; **PhysLib/TorchLean/mathlib unchanged, no branch drift, no network**). doc-gen4 stays only because PhysLib and TorchLean each require it transitively — it can't be dropped entirely — but nothing here imports or builds it.
 
 ### Phase V — verification / end-to-end (see §7)
@@ -272,6 +298,75 @@ the presentational-sibling escape hatch below. Prefer `substituting` when the he
 definition the reader should see expanded; keep the sibling for when genuine **algebra** — not mere
 unfolding — is what makes the equation legible.
 
+### Systems of equations — record results, `match`, and `where` (v4, 2026-08-05)
+
+Three shapes that real models are written in, none of which the F-tier pipeline could read until
+now. All three were found by rendering `soil-moisture-model`'s Mironov dielectric — the first model
+outside this repo with a genuinely non-trivial authored surface — where the `@[pkc_math]` output was
+not merely ugly but **malformed LaTeX**: unbalanced parens and pretty-printed Lean source dumped
+inside `\mathrm{…}`, published to the API site.
+
+**A record result is a system, not an equation.** `mironovNK` returns a seven-field record of
+refractive-index parameters. A definition like that has no single defining equation, so the lift
+reads the structure literal as a `record` node and the printer emits the aligned system
+
+```latex
+\begin{aligned} n_d &= … \\ k_d &= … \end{aligned}
+```
+
+one row per field, each left-hand side resolved through the registry like any other token. (A record
+met *inside* a larger expression stays inline, `\{ n_d = …,\; k_d = … \}`.)
+
+**`match` is case analysis.** A multi-alternative match renders `\begin{cases}`, each branch labelled
+with the pattern it holds for. The patterns come from the matcher's own **equation lemmas** —
+`MatcherInfo` records arities, not patterns — which matters: alternatives are compiled in the order
+*written*, so guessing labels from constructor order silently mislabels every `match` that lists its
+cases in another order. The demo pins a match written in reverse constructor order for exactly this
+reason. When the equations are unavailable the branch is labelled `\text{case i}`, never guessed.
+
+**A destructuring `let` is a `where` equation.** `let (n, k) := nkOfEps …` elaborates to a one-branch
+match. There is no case analysis to show, and inlining it repeats the scrutinee once per component,
+so the binder is *named*: the pair becomes one auxiliary equation `(n, k) = \mathrm{nkOfEps}(…)`
+below the equation it serves.
+
+**`@[pkc_math keeping …]` — the inverse of the `let`-zeta.** Stage 1 inlines `let` bindings, which is
+right for one threaded intermediate and ruinous for a shared one: a Debye denominator used by four
+outputs is duplicated four times and the equation grows past reading (the un-kept `mironovNK`
+rendered a single 2 587-character line). `keeping` binds them instead, as the equation's `where`
+block — `keeping` alone keeps every binding, `keeping d, ω` keeps the named ones and inlines the
+rest. A name that binds nothing is rejected at attribute time rather than silently ignored.
+
+Two refinements the Mironov model forced, both about *names*:
+
+- **Aliases collapse.** A definition that binds its outputs with `let` and then packs them into a
+  record renders `n_d = \mathrm{nd}` above `\mathrm{nd} = …` — the same thing said twice. When a
+  field's value is nothing but the name of an auxiliary equation used **exactly once**, the field
+  takes that equation's right-hand side and the equation goes away. The single-use condition is what
+  keeps this from duplicating anything: an intermediate two fields share stays a named equation,
+  which is the entire point of keeping it.
+- **Shadowed names disambiguate.** `denomB` and `denomU` each open with their own `let ωτ := ω·τ`,
+  so keeping both would put two equations with one left-hand side and two right-hand sides in a
+  single block. The second becomes `\mathrm{ωτ}_{2}` (the suffix rides the trailing-digit subscript
+  rule). Inlining the shadowed bindings instead was the first attempt and read *worse* — it turned
+  `ωτ² + 1` into `ω\,τ\,ω\,τ + 1`, because the faithful normalizer folds powers only from adjacent
+  equal factors.
+
+All of this is **F tier**: naming a subterm, splitting a record into its fields, and showing a branch
+under the condition that selects it are presentation, not algebra. Each rendering still denotes
+exactly what the definition computes.
+
+### Notational wrappers (`@[pkc_math_transparent]`)
+
+A carrier's numeral injection — `ofN (n : Nat) : α := (n : α)` — is notation, not content, but it
+renders `\mathrm{ofN}\left(2\right)` wherever a model writes a constant. Tagging it
+`@[pkc_math_transparent]` renders an application as its argument, so the equation reads `2`. Still F
+tier: `ofN 2` *is* `2`.
+
+The tag belongs only on a wrapper that is genuinely transparent. A crossing that **scales** —
+`clayPctOfMassFraction c = c·100` — is not: hiding it would drop the factor. Those keep the ordinary
+application layout, and `@[pkc_math_symbol]` gives them their conventional notation. This is the same
+opt-in discipline as `@[pkc_math_config]`, and for the same reason: the blanket rule is wrong.
+
 ### Rendering philosophy — three tiers (pick the default)
 - **(F) Faithful only** — normalizer + recognition; LaTeX denotes exactly what the def computes. Simplest.
 - **(E) Editorial (opt-in, flagged)** — factoring/regrouping/Horner-unroll that change incidental
@@ -295,12 +390,16 @@ EM models.
 - **Global registry** (`@[pkc_math_rule]` / notation-recognizer table): domain conventions written once
   (EM operators, tensor conventions) → apply library-wide. The workhorse.
 - **Per-decl `@[pkc_math ...]`**: what *this* declaration's doc should show — the literal-LaTeX escape
-  hatch, and the derivation steps (`substituting f`) whose expansions are meaningful *here* and not
-  library-wide. Still not a rewrite language: every per-decl knob is either notation or delta, so it
-  cannot make the rendering say something the definition does not compute. **Resolved** — see §9 #2.
+  hatch, the derivation steps (`substituting f`) whose expansions are meaningful *here* and not
+  library-wide, and which `let` bindings to keep as a `where` block (`keeping`), which is a property
+  of this definition's shape and nothing else. Still not a rewrite language: every per-decl knob is
+  notation, delta, or naming, so it cannot make the rendering say something the definition does not
+  compute. **Resolved** — see §9 #2.
 - **Per-type `@[pkc_math_config]`**: one tag on a configuration structure covers all of its fields.
   Between global and per-decl: it is a property of the *type*, so it is stated once where the type is
   declared rather than repeated at every model that reads a constant from it.
+- **Per-declaration-of-a-wrapper `@[pkc_math_transparent]`**: likewise stated once, where the wrapper
+  is declared, rather than at each of the hundreds of call sites that write a constant through it.
 
 ---
 
@@ -389,6 +488,12 @@ Scope the doc-gen build to the demo module, not all of PKC. *(open decision #3)*
      additionally declares a bare prefix operator (juxtaposed, not parenthesized).
    - `@[pkc_math_config]` — on a *structure*: its fields are the model's named constants and render
      qualified by their type (§5, *Constants and configuration types*).
+   - **(v4, 2026-08-05)** `@[pkc_math keeping]` / `@[pkc_math keeping x, y]` — render those `let`
+     bindings as the equation's `where` block instead of inlining them (§5, *Systems of equations*).
+     Composes with `substituting`; mutually exclusive with the literal override, like it. An unbound
+     name is an error.
+   - **(v4)** `@[pkc_math_transparent]` — on a notational wrapper (a numeral injection): an
+     application renders as its argument (§5, *Notational wrappers*).
 
    Structural `@[pkc_math_rule]` shape-recognition DSL = still deferred (documented future extension
    in §5; named-operator recognition already covered by `@[pkc_math_symbol]`).
@@ -622,3 +727,32 @@ Scope the doc-gen build to the demo module, not all of PKC. *(open decision #3)*
   Files: `Registry.lean`, `Lift.lean`, `Normalize.lean`, `Attr.lean` (engine);
   `Examples/DocGenMathDemo.lean` (pins), `Examples/AvsForward.lean` (annotations);
   `scripts/build-api-docs.sh`; `RENDERING.md`.
+- **2026-08-05 (session 8): v4 — the shapes a real model is written in.** Rendering
+  `soil-moisture-model`'s Mironov dielectric was the first test of `@[pkc_math]` on an authored
+  surface not written here, and it failed in a way the demo could not have caught: of the 12
+  annotated declarations in `algorithm/dielectric/core.lean`, three rendered **malformed LaTeX** —
+  `\mathrm{match_}_{1}\left(\mathrm{fun x ↦ MironovNK α}, …\right)` with unbalanced parens and
+  pretty-printed Lean dumped inside `\mathrm{…}` — and were live on the published API site. Three
+  independent gaps, now all closed (§5 *Systems of equations*, *Notational wrappers*; Phase B v4):
+  1. **`match`.** A matcher was an ordinary application to the lift, so its motive lambda and its
+     branches were rendered as *arguments*. Now: one alternative = a destructuring binder → a `where`
+     equation; several = `\begin{cases}` with patterns from `Match.getEquationsFor`. Reading the
+     patterns from the equation lemmas rather than from constructor order is load-bearing — `match`
+     alternatives compile in the order *written*, so the demo pins a reverse-order match to prove it.
+  2. **Record results.** `mironovNK` returns a 7-field record; there is no single defining equation.
+     Now an aligned *system*, one row per field — which is what its own docstring always promised
+     ("as a sequence of quantity equations").
+  3. **Zeta blowup.** With every `let` inlined, `mironovNK`'s shared Debye denominator was duplicated
+     into a single 2 587-character line (`ω τ ω τ + 1` instead of `1 + (ωτ)²`). `@[pkc_math keeping]`
+     is the inverse of the `let`-zeta: bindings become the equation's `where` block.
+  Plus `@[pkc_math_transparent]` for a carrier's numeral injection (`ofN 2` → `2`, not
+  `\mathrm{ofN}(2)`), and a `raw`/`latexText` leaf so an unreadable subterm degrades to escaped
+  `\text{…}` — **the general lesson**: the old fallback put pretty-printed Lean into a `sym`, and a
+  `sym` is a token to be resolved, so anything it could not read became invalid math on a published
+  page rather than an ugly-but-valid one.
+  Two Lean-side traps worth remembering: `getStructureFields` **panics** on a non-structure and
+  Lean's `let` is strict, so an unguarded call crashed the entire elaboration (guard with
+  `isStructure` *before* binding); and `if h : xs.size == 1` gives `omega` a `Bool` equation it
+  cannot use — write `if h : xs.size = 1`.
+  Files: `Term.lean`, `Lift.lean`, `Normalize.lean`, `Pretty.lean`, `Registry.lean`, `Attr.lean`
+  (engine); `Examples/DocGenMathDemo.lean` (+6 pins); `RENDERING.md`.
