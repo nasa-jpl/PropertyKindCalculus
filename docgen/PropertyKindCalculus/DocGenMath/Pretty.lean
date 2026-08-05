@@ -124,6 +124,80 @@ where
           nota.latex ++ " " ++ go 40 as[0]!
         else nota.latex ++ paren (String.intercalate ", " (as.toList.map (go 0 ·)))
 
+/-! ## Breaking a wide equation across lines
+
+A rendered equation has no width limit, and some are far wider than a documentation page: a
+four-component Jacobian tuple comes out around 240 characters of LaTeX on one line, which makes the
+whole doc-gen4 page scroll horizontally.
+
+MathJax cannot be asked to fix this. Automatic display-math line breaking is a MathJax **4** feature
+(`displayOverflow: 'linebreak'`), and doc-gen4 loads MathJax 3 — upstream `main` still does, as of
+the v4.33.0-rc2 toolchain bump. So the break has to be authored into the LaTeX, and this is the right
+stage to author it: `Pretty` already owns every space and parenthesis, and `MathTerm` is *n-ary*, so
+the seams a reader would break at (`add`'s summands, `tuple`'s components) are explicit nodes rather
+than something to recover from a string.
+
+Breaking is purely presentational — the same term, laid out over more lines — so it stays inside the
+**F (faithful)** tier that `RENDERING.md` §5 fixes as the standing policy.
+
+### Estimating width
+
+We need the *rendered* width, which is not the LaTeX length: `\mathrm{}` costs eight characters and
+no glyphs, `\left(` costs six and one, `\tau` costs four and one. So the estimate walks the term,
+charging each leaf its resolved notation's glyph count, and accounts for the two constructors that
+lay out *vertically* rather than horizontally — a fraction is as wide as the wider of its parts, not
+their sum, and a superscript renders small. It does not have to be exact; it has to be good enough to
+decide "does this need breaking". -/
+
+/-- The visible width of a piece of LaTeX, in glyphs: braces, sub/superscript markers and spacing
+macros cost nothing, a structural macro costs nothing, and any other control sequence
+(`\tau`, `\nabla`, `\sigma`) is one glyph. -/
+partial def latexWidth (s : String) : Nat :=
+  go s.toList 0
+where
+  go : List Char → Nat → Nat
+    | [], acc => acc
+    | '\\' :: rest, acc =>
+      let (name, rest') := rest.span Char.isAlpha
+      if name.isEmpty then
+        -- `\,` `\;` `\!` `\\` — spacing or a row break, no glyph
+        go (rest.drop 1) acc
+      else if ["mathrm", "left", "right", "begin", "end", "big", "Big"].contains
+                (String.ofList name) then
+        go rest' acc
+      else go rest' (acc + 1)
+    | c :: rest, acc =>
+      if c == '{' || c == '}' || c == '^' || c == '_' then go rest acc
+      else go rest (acc + 1)
+
+/-- An estimate of `t`'s rendered width in glyphs, used only to decide whether to break it. -/
+partial def estWidth (resolve : String → MathNotation) : MathTerm → Nat
+  | .num n      => (toString n).length
+  | .sym s      => latexWidth (resolve s).latex
+  | .raw l      => latexWidth l
+  | .neg t      => 1 + estWidth resolve t
+  -- a fraction stacks, so it is as wide as its wider part; a superscript renders small
+  | .frac a b   => 2 + max (estWidth resolve a) (estWidth resolve b)
+  | .pow a b    => estWidth resolve a + (estWidth resolve b * 7 + 9) / 10
+  | .add ts     => ts.foldl (fun acc t => acc + 3 + estWidth resolve t) 0
+  | .mul ts     => ts.foldl (fun acc t => acc + 1 + estWidth resolve t) 0
+  | .tuple ts   => 2 + ts.foldl (fun acc t => acc + 2 + estWidth resolve t) 0
+  | .fn name as =>
+    latexWidth (resolve name).latex + 2 + as.foldl (fun acc t => acc + 2 + estWidth resolve t) 0
+  -- these two already lay out vertically, so their width is that of their widest row
+  | .record fs  => fs.foldl (fun acc (f, v) => max acc (latexWidth f + 3 + estWidth resolve v)) 0
+  | .cases s as =>
+    estWidth resolve s
+      + as.foldl (fun acc (p, v) => max acc (estWidth resolve p + estWidth resolve v + 8)) 0
+
+/-- The width past which an equation is broken across lines.
+
+Chosen against doc-gen4's own layout: its declaration column is about 100 glyphs of body text at the
+default size, and display math renders slightly larger, so ~90 is where a formula starts to push the
+page. Deliberately generous — a break costs vertical space and an unnecessary one reads worse than a
+slightly wide line. -/
+def wideThreshold : Nat := 90
+
 /-- An aligned block of `lhs = rhs` rows, the AMSmath layout MathJax bundles. One row renders as a
 plain equation: a single-line `\begin{aligned}` buys nothing and reads worse. -/
 private def alignedRows (rows : Array (String × String)) : String :=
@@ -134,13 +208,49 @@ private def alignedRows (rows : Array (String × String)) : String :=
     "\\begin{aligned} " ++ String.intercalate " \\\\ "
       (rows.toList.map fun (l, r) => l ++ " &= " ++ r) ++ " \\end{aligned}"
 
+/-- A wide sum broken before each top-level `+`/`−`, continuation rows indented under the first.
+
+The conventional textbook layout for a long sum, and the break points are the `add` node's own
+elements — no string has to be re-parsed to find them. -/
+private def brokenSum (resolve : String → MathNotation) (lhs : String) (ts : Array MathTerm) :
+    String := Id.run do
+  let mut rows : Array String := #[]
+  for h : i in [0:ts.size] do
+    let (neg, body) := signOf ts[i]
+    let s := pretty resolve body
+    if i == 0 then rows := rows.push (lhs ++ " &= " ++ (if neg then "-" ++ s else s))
+    else rows := rows.push ("&\\quad " ++ (if neg then "- " else "+ ") ++ s)
+  return "\\begin{aligned} " ++ String.intercalate " \\\\ " rows.toList ++ " \\end{aligned}"
+
+/-- A wide tuple broken one component per row, as the column vector it is.
+
+`pmatrix` rather than a broken `\left(…\right)`: a wide tuple in this library is a Jacobian's columns
+or a model's several outputs, which *is* a column vector, and `pmatrix` is AMSmath, which MathJax
+bundles — so it needs no configuration on either the doc-gen4 page or the InfoView. -/
+private def brokenTuple (resolve : String → MathNotation) (lhs : String) (ts : Array MathTerm) :
+    String :=
+  lhs ++ " = \\begin{pmatrix} "
+    ++ String.intercalate " \\\\ " (ts.toList.map (pretty resolve ·))
+    ++ " \\end{pmatrix}"
+
 /-- Render a definition's rendering as its equation. A record-valued definition has no single
 defining equation — it has one per field — so it renders as the aligned *system* of them, which is
-how such a model is written on paper. Everything else is the familiar `lhs = rhs`. -/
+how such a model is written on paper. Everything else is the familiar `lhs = rhs`.
+
+A right-hand side wider than `wideThreshold` is broken at its own top-level seams: a sum before each
+`+`/`−`, a tuple one component per row. Anything else is left alone — a single wide product or
+function application has no seam a reader would break at, and inventing one would read worse than the
+horizontal scroll. -/
 def prettyEquation (resolve : String → MathNotation) (lhs : String) (t : MathTerm) : String :=
   match t with
   | .record fs => alignedRows (fs.map fun (f, v) => ((resolve f).latex, pretty resolve v))
-  | _          => lhs ++ " = " ++ pretty resolve t
+  | .add ts =>
+    if latexWidth lhs + 3 + estWidth resolve t > wideThreshold then brokenSum resolve lhs ts
+    else lhs ++ " = " ++ pretty resolve t
+  | .tuple ts =>
+    if latexWidth lhs + 3 + estWidth resolve t > wideThreshold then brokenTuple resolve lhs ts
+    else lhs ++ " = " ++ pretty resolve t
+  | _ => lhs ++ " = " ++ pretty resolve t
 
 /-- Render the auxiliary equations of a `MathSystem` as one aligned block, or `none` when there are
 none. This is the `where` of the equation above it: each kept `let` and each destructured `match`,

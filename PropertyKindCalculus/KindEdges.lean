@@ -81,20 +81,84 @@ def parentOf (n : Name) : Name :=
   | .num p _ => parentOf p
   | _ => n
 
+/-! ## The harvest
+
+`#kind_edges` below is a *renderer* over `edgesMentioning`. The split exists for the same reason
+`BoundaryAudit.boundarySites` exists: the enumeration is wanted both as the `info` message an author
+reads and as table rows a document renders. Because a kind's authored edges *are* the statement of
+what may be done with it algebraically, this is the column that makes a rendered kind index worth
+reading — see `PropertyKindCalculus.Index`. -/
+
+/-- One authored kind-algebra edge: the declaration that authored it (a named witness theorem, the
+definition a call-site witness was lifted out of, or an operator-table instance) and the edge itself,
+already rendered as a kind equation by its family's formatter. -/
+structure KindEdge where
+  /-- The authoring declaration. -/
+  author : Name
+  /-- The edge, as `a · b → c`, `1 / a → b`, `[table] a · b → c`, … -/
+  edge : String
+deriving Repr, Inhabited, BEq, Hashable
+
+/-- Every authored edge in the environment mentioning the kind constant `target`, deduplicated and
+sorted by `"author: edge"` — the order the pinned report prints. -/
+def edgesMentioning (target : Name) : MetaM (Array KindEdge) := do
+  let env ← getEnv
+  let mut seen : Std.HashSet String := {}
+  let mut out : Array KindEdge := #[]
+  for (name, info) in env.constants.toList do
+    for (spec, args) in collectEdges info.type #[] do
+      if args.any (·.isConstOf target) then
+        let pps ← args.mapM fun a => return toString (← Meta.ppExpr a)
+        let e : KindEdge := { author := parentOf name, edge := spec.fmt pps }
+        let key := s!"{e.author}: {e.edge}"
+        unless seen.contains key do
+          seen := seen.insert key
+          out := out.push e
+  return out.qsort (fun a b => s!"{a.author}: {a.edge}" < s!"{b.author}: {b.edge}")
+
+/-- The edges mentioning **each** of `targets`, in one environment walk.
+
+The single-target `edgesMentioning` is the right shape for `#kind_edges`, which asks about one kind.
+It is the wrong shape for an index over a hundred kinds: that would walk the environment a hundred
+times. A rendered kind table wants this one instead. An edge mentioning two kinds is listed under
+both, which is what makes the column readable from either end.
+
+Kinds are rendered by their **last name component** here, where `#kind_edges` prints them fully
+qualified. That is not an inconsistency to fix: `#kind_edges` is read in a file whose namespace is
+open, where the qualified name disambiguates, while a table cell holding four edges of qualified
+names is a paragraph of repeated prefixes with the content buried in it. The table is scoped to a
+namespace already, so the short name is unambiguous there. -/
+def edgesByKind (targets : Array Name) : MetaM (Std.HashMap Name (Array KindEdge)) := do
+  let env ← getEnv
+  let wanted : Std.HashSet Name := targets.foldl (·.insert ·) {}
+  let mut acc : Std.HashMap Name (Array KindEdge) := {}
+  for t in targets do acc := acc.insert t #[]
+  for (name, info) in env.constants.toList do
+    for (spec, args) in collectEdges info.type #[] do
+      -- Which of the targets does this edge mention? Compute the rendering only if at least one.
+      let mentioned := args.filterMap fun a =>
+        match a with
+        | .const c _ => if wanted.contains c then some c else none
+        | _          => none
+      if mentioned.isEmpty then continue
+      let pps ← args.mapM fun a =>
+        match a with
+        | .const (.str _ s) _ => return s
+        | _                   => return toString (← Meta.ppExpr a)
+      let e : KindEdge := { author := parentOf name, edge := spec.fmt pps }
+      for c in mentioned.toList.eraseDups do
+        acc := acc.insert c ((acc.getD c #[]).push e)
+  return acc.fold (init := {}) fun m k v =>
+    m.insert k ((v.toList.eraseDups).toArray.qsort
+      (fun a b => s!"{a.author}: {a.edge}" < s!"{b.author}: {b.edge}"))
+
 open Elab Command in
 /-- `#kind_edges k` prints every authored kind-algebra edge in the environment that
 mentions the kind constant `k` — sorted, deduplicated, one line per (author, edge) pair —
 as a single `info` message suitable for `#guard_msgs` pinning. -/
 elab "#kind_edges " id:ident : command => liftTermElabM do
   let target ← realizeGlobalConstNoOverload id
-  let env ← getEnv
-  let mut lines : Std.HashSet String := {}
-  for (name, info) in env.constants.toList do
-    for (spec, args) in collectEdges info.type #[] do
-      if args.any (·.isConstOf target) then
-        let pps ← args.mapM fun a => return toString (← Meta.ppExpr a)
-        lines := lines.insert s!"{parentOf name}: {spec.fmt pps}"
-  let sorted := lines.toArray.qsort (· < ·)
+  let sorted := (← edgesMentioning target).map fun e => s!"{e.author}: {e.edge}"
   if sorted.isEmpty then
     logInfo m!"no authored kind edges mention '{target}'"
   else

@@ -57,7 +57,7 @@ package «PropertyKindCalculus» where
   -- The package version — the single source of truth. `scripts/bump-version.sh`
   -- reads and bumps it here, and the blueprint reads this same line at build time
   -- (its `{version}[]` role) so the published document never drifts from the source.
-  version := v!"0.31.0"
+  version := v!"0.32.0"
   leanOptions := #[
     ⟨`autoImplicit, false⟩,
     ⟨`relaxedAutoImplicit, false⟩]
@@ -345,3 +345,35 @@ lean_lib «DocGenMath» where
   -- `roots` is explicit because the doc build renders `lib.rootModules` (see the NOTE above).
   roots := #[`PropertyKindCalculus.DocGenMath]
   globs := #[.andSubmodules `PropertyKindCalculus.DocGenMath]
+
+/-- **The self-index** (source tree `index/`, namespace `PropertyKindCalculus.Index`): the
+environment walks that enumerate the library's own annotations, kinds, ontology values, kinded
+records and kinded operations as *data* — `IndexTable`s of `IndexCell`s — rather than as the `info`
+messages `#kind_edges` and `#kind_boundary_audit` print.
+
+It exists because a *document* needs the rows. The blueprint chapter "Using the library" and the
+doc-gen4 index page both render these tables, and both live in Verso-backed packages that the core
+must not depend on; so the harvest lives here (plain `Lean` + the core spine + `DocGenMath` for the
+rendering attributes) and each document supplies its own ~30-line adapter. That split is also what
+lets **downstream** repositories render the same tables: soil-moisture-model requires this package
+from git and so can import `PropertyKindCalculus.Index`, but cannot reach `blueprint/`.
+
+`roots` is explicit because the doc build renders `lib.rootModules` (see the NOTE above).
+Build with `lake build Index`. -/
+lean_lib «Index» where
+  srcDir := "index"
+  roots := #[`PropertyKindCalculus.Index]
+  globs := #[.andSubmodules `PropertyKindCalculus.Index]
+
+/-- **The generated index page** — one module whose *module docstring* is written by
+`#pkc_index_page` from the environment, so doc-gen4 renders the whole self-index as that module's
+page. Same trick `@[pkc_math]` uses to get typeset equations onto an API page: write markdown into a
+docstring and let doc-gen4 do the rest.
+
+A separate library from `Index` because it must **import what it indexes** (the worked examples, the
+rendering pipeline), and the harvest has to stay importable by anything without dragging those along.
+Build with `lake build IndexPage`; `scripts/build-api-docs.sh` renders it. -/
+lean_lib «IndexPage» where
+  srcDir := "index"
+  roots := #[`PropertyKindCalculus.IndexPage]
+  globs := #[.one `PropertyKindCalculus.IndexPage]

@@ -179,6 +179,53 @@ def mathMarkdown (declName : Name) (override? : Option String) (keep : KeepPolic
   let blocks : Array String := renderingBlocks main ++ #[derivationBlock steps] ++ src?.toArray
   return String.intercalate "\n\n" (blocks.filter (!·.isEmpty)).toList
 
+/-! ## The occurrence registry
+
+`@[pkc_math]` writes a docstring and keeps nothing, which is all a *renderer* needs — but it makes
+the annotation invisible to an index. There is no way to ask the environment "which declarations are
+rendered, and in which mode?", because a rendered docstring is indistinguishable from an authored
+one once written. So the attribute also records its own application here.
+
+`SimplePersistentEnvExtension` (rather than the `TagAttribute` the sibling `@[pkc_math_symbol]` and
+`@[pkc_math_config]` use) because its `addImportedFn` **combines** imported entries into the state:
+`pkcMathUses` is then a one-line read across every imported module, where enumerating a tag
+attribute needs a per-module walk (`PropertyKindCalculus.Index.Basic.tagAttrDecls`). -/
+
+/-- One `@[pkc_math]` application and the modes it requested — enough to index the rendering family
+without re-parsing attribute syntax. -/
+structure PkcMathUse where
+  /-- The annotated declaration. -/
+  decl : Name
+  /-- Whether a literal LaTeX override replaced the rendering. -/
+  literal : Bool
+  /-- The `let`-binding policy the author asked for. -/
+  keep : KeepPolicy
+  /-- The derivation steps, each the helpers that step substitutes. -/
+  substSteps : Array (Array Name)
+deriving Inhabited
+
+/-- The environment extension collecting every `@[pkc_math]` application. -/
+initialize pkcMathExt : SimplePersistentEnvExtension PkcMathUse (Array PkcMathUse) ←
+  registerSimplePersistentEnvExtension {
+    addEntryFn    := fun a e => a.push e
+    addImportedFn := fun ess => ess.foldl (init := #[]) (· ++ ·)
+  }
+
+/-- Every `@[pkc_math]` application harvested into `env`. -/
+def pkcMathUses (env : Environment) : Array PkcMathUse := pkcMathExt.getState env
+
+/-- How a use's rendering mode reads in an index: the clauses the author wrote, or `plain`. -/
+def PkcMathUse.modeDescription (u : PkcMathUse) : String :=
+  let parts : List String :=
+    (if u.literal then ["literal override"] else [])
+    ++ (match u.keep with
+        | .inlineAll   => []
+        | .keepAll     => ["keeping"]
+        | .keepOnly ns => [s!"keeping {String.intercalate ", " (ns.toList.map toString)}"])
+    ++ (if u.substSteps.isEmpty then []
+        else [s!"substituting ({u.substSteps.size} step(s))"])
+  if parts.isEmpty then "plain" else String.intercalate "; " parts
+
 initialize registerBuiltinAttribute {
   name := `pkc_math
   descr := "Render this quantity definition as typeset LaTeX in its docstring (doc-gen4 + InfoView)."
@@ -228,6 +275,9 @@ initialize registerBuiltinAttribute {
       | some doc => doc.trimAsciiEnd.toString ++ "\n\n" ++ md
       | none     => md
     addDocStringCore decl combined
+    -- Record the application, so the rendering family can be indexed (see the note above).
+    modifyEnv fun env => pkcMathExt.addEntry env
+      { decl, literal := override?.isSome, keep, substSteps }
 }
 
 end PropertyKindCalculus.DocGenMath

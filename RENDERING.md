@@ -367,6 +367,42 @@ The tag belongs only on a wrapper that is genuinely transparent. A crossing that
 application layout, and `@[pkc_math_symbol]` gives them their conventional notation. This is the same
 opt-in discipline as `@[pkc_math_config]`, and for the same reason: the blanket rule is wrong.
 
+### Breaking a wide equation (v5, 2026-08-05)
+
+A rendered equation had no width limit, and some are far wider than a documentation page:
+`lavsJacResidualQ`, a four-component Jacobian tuple, came out at ~240 characters of LaTeX on one
+line and made the whole doc-gen4 page scroll horizontally.
+
+**MathJax cannot be asked to fix this.** Automatic display-math line breaking is a MathJax **4**
+feature (`displayOverflow: 'linebreak'`); doc-gen4 loads MathJax 3, and upstream `main` still does as
+of its v4.33.0-rc2 toolchain bump (`DocGen4/Output/Template.lean` hardcodes
+`cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js`). Bumping it upstream is a small, worthwhile PR
+— one CDN URL plus a `chtml` config key — and would benefit every Lean doc site; it is not a
+prerequisite for the below.
+
+So the break is authored into the LaTeX, in `Pretty`, which is the right stage for it: it already
+owns every space and parenthesis, and `MathTerm` is **n-ary**, so the seams a reader would break at
+are explicit nodes (`add`'s summands, `tuple`'s components) rather than something to recover from a
+string.
+
+* `latexWidth` — the *visible* width of a piece of LaTeX, which is not its length: `\mathrm{}` costs
+  eight characters and no glyphs, `\left(` six and one, `\tau` four and one.
+* `estWidth` — the estimate over a term, charging each leaf its resolved notation's glyph count and
+  accounting for the constructors that lay out **vertically**: a fraction is as wide as the wider of
+  its parts, a superscript renders small, and `record`/`cases` are as wide as their widest row.
+* `wideThreshold` (90 glyphs) — past it, `prettyEquation` breaks a top-level sum before each `+`/`−`
+  (`\begin{aligned}` with indented continuation rows) and a top-level tuple one component per row
+  (`\begin{pmatrix}` — a wide tuple here *is* a column vector, and `pmatrix` is AMSmath, which
+  MathJax bundles).
+
+Anything else is left alone: a single wide product or function application has no seam a reader would
+break at, and inventing one reads worse than the scroll. Still **F** tier — the same term, laid out
+over more lines.
+
+Belt and braces: `scripts/build-api-docs.sh` also appends
+`mjx-container[display="true"]{overflow-x:auto}` to the API stylesheet, so anything that still
+overflows scrolls inside its own box rather than widening the page.
+
 ### Rendering philosophy — three tiers (pick the default)
 - **(F) Faithful only** — normalizer + recognition; LaTeX denotes exactly what the def computes. Simplest.
 - **(E) Editorial (opt-in, flagged)** — factoring/regrouping/Horner-unroll that change incidental
@@ -506,6 +542,15 @@ Scope the doc-gen build to the demo module, not all of PKC. *(open decision #3)*
 ---
 
 ## Session log
+- **2026-08-05 (session 9):** **v5 — equation width.** `Pretty` gained `latexWidth`/`estWidth`/
+  `wideThreshold` and breaks a wide top-level sum (`aligned`) or tuple (`pmatrix`); `lavsJacResidualQ`
+  went from one 240-char line to a four-row column vector, and all 18 `DocGenMathDemo` pins stayed
+  green (the estimator measures *rendered glyphs*, so `lavsResidualQ` at 139 LaTeX characters but ~50
+  glyphs is correctly left alone). Confirmed doc-gen4 upstream still pins MathJax 3, so the
+  `displayOverflow: 'linebreak'` route is unavailable — see §5 *Breaking a wide equation*.
+  Separately: `@[pkc_math]` now records its applications in a `SimplePersistentEnvExtension`
+  (`pkcMathUses`), because the attribute previously kept nothing and so could not be **indexed** — see
+  the new `PropertyKindCalculus.Index` library and the blueprint chapter *Using the library*.
 - **2026-08-03 (session 1):** Investigated doc-gen4 render pipeline; confirmed pretty-printer seam +
   MathJax-in-docstrings + equation-block-skip facts. Phase 0 setup done (doc-gen4 `pkc-math-hook` builds
   green; PKC clone). Design discussion → **option C dropped**; B redesigned around a 3-stage IR

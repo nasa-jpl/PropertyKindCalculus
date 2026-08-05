@@ -249,26 +249,44 @@ def isGeneratedMachinery (env : Environment) (specs : Array CarrierSpec) (name :
       | _ => false)
   || specs.any (fun s => s.projName == name || s.ctorName == name)
 
-/-! ## `#kind_boundary_audit` -/
+/-! ## The harvest
 
-open Elab Command in
-/-- `#kind_boundary_audit ns …` walks every compute `def` under the given namespaces, reports
-each declaration that mints or erases a registered carrier (with the kinds it mints), and marks
-a boundary-active declaration that carries no tier attribute as a **violation**. One sorted
-`info` message, suitable for `#guard_msgs` pinning; a new untagged interior boundary then fails
-the build. Theorems and `Prop`-valued declarations are skipped — a parity statement is legitimately
-*about* `.magnitude`. -/
-elab "#kind_boundary_audit" nss:ident+ : command => liftTermElabM do
+`#kind_boundary_audit` below is a *renderer* over `boundarySites`. The split exists because the
+audit's result is wanted in two forms: as the `info` message an author reads in the InfoView (and a
+probe pins with `#guard_msgs`), and as table rows a document renders — the blueprint's kind-crossing
+index and the doc-gen4 page both need "which kinds does this crossing mint", which is exactly what
+the walk already computes and used to format away into a string. `PropertyKindCalculus.Index`
+consumes the structured form; nothing else changed, and the pinned report is byte-identical. -/
+
+/-- One boundary-active declaration: what the walk found, before any formatting. `tier` is `none`
+for an untagged site — the violation the audit reports. -/
+structure BoundarySite where
+  /-- The authoring declaration (lifted auxiliaries attributed to their parent). -/
+  decl : Name
+  /-- The tier sanctioning this site, or `none` if it carries no tier attribute. -/
+  tier : Option BoundaryTier
+  /-- The kinds minted here, pretty-printed, deduplicated and sorted. -/
+  mints : Array String
+  /-- Whether the body erases a carrier (projects its first field). -/
+  erases : Bool
+deriving Repr, Inhabited
+
+/-- Walk every compute `def` under `scope` (empty = unrestricted) and return each declaration that
+mints or erases a registered carrier, with the kinds it mints and the tier that sanctions it.
+
+Theorems and `Prop`-valued declarations are skipped: a parity statement is legitimately *about*
+`.magnitude`, so it is not a boundary. Results are sorted by declaration name. -/
+def boundarySites (scope : Array Name) : MetaM (Array BoundarySite) := do
   let env ← getEnv
-  let targets := nss.map (·.getId)
   let specs := (kindCarrierNames env).filterMap (mkCarrierSpec env)
   let tags := boundaryTags env
+  let inScope : Name → Bool := fun d => scope.isEmpty || scope.any (fun ns => ns.isPrefixOf d)
   let mut mintMap : Std.HashMap Name (Array String) := {}
   let mut eraseSet : Std.HashSet Name := {}
   let mut parents : Std.HashSet Name := {}
   for (name, info) in env.constants.toList do
     let parent := parentOf name
-    unless targets.any (fun ns => ns.isPrefixOf parent) do continue
+    unless inScope parent do continue
     if info matches .thmInfo _ then continue
     if isGeneratedMachinery env specs parent then continue
     let some body := info.value? | continue
@@ -280,24 +298,46 @@ elab "#kind_boundary_audit" nss:ident+ : command => liftTermElabM do
     if !mintStrs.isEmpty then
       mintMap := mintMap.insert parent ((mintMap.getD parent #[]) ++ mintStrs)
     if erases then eraseSet := eraseSet.insert parent
-  -- Assemble one line per boundary-active declaration.
   let tierOf : Name → Option BoundaryTier := fun p => (tags.find? (·.decl == p)).map (·.tier)
+  let mut sites : Array BoundarySite := #[]
+  for parent in parents.toList do
+    sites := sites.push {
+      decl   := parent
+      tier   := tierOf parent
+      mints  := (mintMap.getD parent #[]).toList.eraseDups.toArray.qsort (· < ·)
+      erases := eraseSet.contains parent }
+  return sites.qsort (fun a b => toString a.decl < toString b.decl)
+
+/-- How a site reads in the audit report: the kinds it mints, or emission-only if it merely erases. -/
+def BoundarySite.description (s : BoundarySite) : String :=
+  if s.mints.isEmpty then "erases (emission-only)"
+  else s!"mints: {String.intercalate ", " s.mints.toList}"
+
+/-! ## `#kind_boundary_audit` -/
+
+open Elab Command in
+/-- `#kind_boundary_audit ns …` walks every compute `def` under the given namespaces, reports
+each declaration that mints or erases a registered carrier (with the kinds it mints), and marks
+a boundary-active declaration that carries no tier attribute as a **violation**. One sorted
+`info` message, suitable for `#guard_msgs` pinning; a new untagged interior boundary then fails
+the build. Theorems and `Prop`-valued declarations are skipped — a parity statement is legitimately
+*about* `.magnitude`. -/
+elab "#kind_boundary_audit" nss:ident+ : command => liftTermElabM do
+  let sites ← boundarySites (nss.map (·.getId))
+  -- Lines are sorted *as rendered*, so the report groups by tier tag (`[carrierVocab]` <
+  -- `[kindCrossing]` < `[kindEmission]` < `⚠ UNTAGGED`) and only then by name.
   let mut lines : Array String := #[]
   let mut nSanctioned := 0
   let mut nViolations := 0
-  for parent in parents.toList do
-    let mints := (mintMap.getD parent #[]).toList.eraseDups.toArray.qsort (· < ·)
-    let descr :=
-      if mints.isEmpty then "erases (emission-only)"
-      else s!"mints: {String.intercalate ", " mints.toList}"
+  for s in sites do
     let tag : String :=
-      match tierOf parent with
+      match s.tier with
       | some t => s!"[{t.label}]"
       | none   => "⚠ UNTAGGED"
-    match tierOf parent with
+    match s.tier with
     | some _ => nSanctioned := nSanctioned + 1
     | none   => nViolations := nViolations + 1
-    lines := lines.push s!"{tag} {parent} — {descr}"
+    lines := lines.push s!"{tag} {s.decl} — {s.description}"
   let sorted := lines.qsort (· < ·)
   if sorted.isEmpty then
     logInfo m!"boundary audit — no boundary sites in the given namespaces"

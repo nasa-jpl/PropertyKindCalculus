@@ -38,6 +38,7 @@ DOC_TARGETS=(
   "PropertyKindCalculus:docs"   # the exportable core spine
   "Examples:docs"               # worked examples: AvsForward + DocGenMathDemo carry the rendered math
   "DocGenMath:docs"             # the rendering pipeline itself
+  "IndexPage:docs"              # the generated self-index, as one module's generated module docstring
 )
 
 # --- Force the HTML assembly to re-run ----------------------------------------------------------
@@ -111,5 +112,48 @@ if [ -f "$SINGLE" ]; then
   sed -i 's|href="api/|href="../api/|g' "$SINGLE"
   echo "Re-pointed the API link in docs/html-single/index.html to ../api/ (it sits one level down)"
 fi
+
+# --- Splice the per-declaration index blocks ----------------------------------------------------
+#
+# Each kind's own page gains its authored kind-algebra edges, the crossings that mint it, and the
+# theorems that mention it — so browsing to a kind answers "what can I do with this?" without going
+# back to the index page.
+#
+# WHY A POST-PROCESS. The natural implementation is the one `@[pkc_math]` uses: write the block into
+# the kind's docstring and let doc-gen4 render it. `Lean.addDocStringCore` refuses a declaration in
+# an *imported* module, and the crossings and theorems that mention a kind are almost always declared
+# in later modules than the kind itself — so by the time the facts exist, the kind is imported. The
+# blocks are therefore computed in Lean (where the calculus lives) and spliced into the HTML here.
+#
+# Order matters: after `cp -r` into docs/api, so the injection lands on the *staged* copy. Both steps
+# are idempotent, so re-running this script is safe.
+# --- Confine wide display math to its own scroll box ---------------------------------------------
+#
+# A rendered equation can be much wider than the page — `lavsJacResidualQ` is a four-component
+# Jacobian tuple that comes out around 240 characters of LaTeX on one line. Without this, MathJax's
+# container widens the whole page and every paragraph on it scrolls horizontally.
+#
+# This does not *break* the equation, it bounds the damage: the overflow stays inside the equation's
+# own box. Breaking long equations across lines belongs in the renderer (`DocGenMath.Pretty` owns
+# every space and parenthesis, and `MathTerm`'s n-ary `add`/`mul`/`tuple` nodes are exactly the
+# break points); it cannot be done here, and it cannot be delegated to MathJax either — automatic
+# display-math line breaking is a MathJax **4** feature (`displayOverflow: 'linebreak'`) and doc-gen4
+# loads MathJax 3.
+#
+# Appended to the one stylesheet, so it covers every page rather than only the ones injected below.
+if [ -f "$DOCS/api/style.css" ] && ! grep -q "pkc-math-overflow" "$DOCS/api/style.css"; then
+  cat >> "$DOCS/api/style.css" <<'CSS'
+
+/* pkc-math-overflow: keep an over-wide display equation inside its own scroll box, so the page
+   body never scrolls horizontally because of one long formula. */
+mjx-container[display="true"] { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
+CSS
+  echo "Appended the display-math overflow rule to docs/api/style.css"
+fi
+
+BLOCKS="$ROOT/.lake/build/pkc-index.json"
+echo "Emitting per-declaration index blocks…"
+lake env lean "$ROOT/scripts/emit-index-json.lean"
+python3 "$ROOT/scripts/inject-index-docs.py" "$DOCS/api" "$BLOCKS"
 
 echo "Staged $(find "$DOCS/api" -type f | wc -l) files into $DOCS/api/ (entry point: docs/api/index.html)"
