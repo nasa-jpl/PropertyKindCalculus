@@ -10,12 +10,13 @@ import PropertyKindCalculus.DocGenMath.Term
 
 An operator-precedence printer that owns **all** parenthesization and spacing, so stages 1–2 never
 reason about layout. Precedence: sum (10) < unary minus (15) < product (20) < power (30) < atoms and
-self-bracketing forms — `\frac`, function applications — (40). A subterm is parenthesized exactly
-when its own precedence is below the position it sits in.
+self-bracketing forms — `\frac`, function applications, tuples — (40). A subterm is parenthesized
+exactly when its own precedence is below the position it sits in.
 
-Atoms are resolved to LaTeX by a caller-supplied `resolve : String → String` (built in
+Tokens are resolved to notation by a caller-supplied `resolve : String → MathNotation` (built in
 `DocGenMath.Attr` from the `@[pkc_math_symbol]` registry + heuristics), keeping this module pure and
-unit-testable with a trivial resolver.
+unit-testable with `MathNotation.ofLatex`. The `MathNotation.operator` flag — and *only* that flag —
+selects the juxtaposed prefix layout `\nabla x`; layout is never inferred from the LaTeX itself.
 -/
 
 namespace PropertyKindCalculus.DocGenMath
@@ -34,6 +35,7 @@ private def precOf : MathTerm → Nat
   | .pow _ _  => 30
   | .frac _ _ => 40
   | .fn _ _   => 40
+  | .tuple _  => 40
   | .sym _    => 40
   | .num _    => 40
 
@@ -52,8 +54,8 @@ private def signOf : MathTerm → Bool × MathTerm
   | .num n            => if n < 0 then (true, .num (-n)) else (false, .num n)
   | t                 => (false, t)
 
-/-- Stage 3. Render a `MathTerm` as LaTeX, resolving atoms through `resolve`. -/
-partial def pretty (resolve : String → String) (t : MathTerm) : String :=
+/-- Stage 3. Render a `MathTerm` as LaTeX, resolving tokens through `resolve`. -/
+partial def pretty (resolve : String → MathNotation) (t : MathTerm) : String :=
   go 0 t
 where
   /-- Render `t` for a slot requiring precedence `prec`, adding parentheses if needed. -/
@@ -63,13 +65,14 @@ where
   /-- Render `t` without regard to the surrounding precedence. -/
   core : MathTerm → String
     | .num n      => toString n
-    | .sym s      => resolve s
+    | .sym s      => (resolve s).latex
     | .neg t      => "-" ++ go 16 t
     | .pow a b    => go 31 a ++ "^" ++ br (go 0 b)
     | .frac a b   => "\\frac" ++ br (go 0 a) ++ br (go 0 b)
     | .add ts     => renderSum ts
     | .mul ts     => renderProd ts
     | .fn name as => renderFn name as
+    | .tuple ts   => paren (String.intercalate ", " (ts.toList.map (go 0 ·)))
   /-- A sum `t₀ ± t₁ ± …`, choosing `+`/`−` from each term's sign. -/
   renderSum (ts : Array MathTerm) : String := Id.run do
     if ts.isEmpty then return "0"
@@ -97,11 +100,11 @@ where
         if as.size == 1 && precOf as[0]! ≥ 40 then mac ++ " " ++ go 40 as[0]!
         else mac ++ paren (String.intercalate ", " (as.toList.map (go 0 ·)))
       | none =>
-        let sym := resolve name
-        if as.isEmpty then sym
-        -- an override that is a LaTeX macro/operator on a single argument prints operator-style
-        else if as.size == 1 && sym.startsWith "\\" then
-          sym ++ " " ++ go 40 as[0]!
-        else sym ++ paren (String.intercalate ", " (as.toList.map (go 0 ·)))
+        let nota := resolve name
+        if as.isEmpty then nota.latex
+        -- a notation *registered* as a bare prefix operator juxtaposes its single argument
+        else if nota.operator && as.size == 1 then
+          nota.latex ++ " " ++ go 40 as[0]!
+        else nota.latex ++ paren (String.intercalate ", " (as.toList.map (go 0 ·)))
 
 end PropertyKindCalculus.DocGenMath

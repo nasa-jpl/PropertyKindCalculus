@@ -132,6 +132,11 @@ with the dependency graph and a status summary at the end.
 The whole blueprint is also available as a single paginated document:
 [download the PDF](PropertyKindCalculus-Blueprint.pdf).
 
+The generated API reference for the checked sources is published alongside it:
+[browse the API documentation](api/index.html). Declarations carrying `@[pkc_math]` render
+their defining equation as typeset mathematics there, next to the Lean source it was
+derived from.
+
 # What PropertyKindCalculus provides
 
 This project addresses *nineteen requirements* about formalizing _metrology_ — the

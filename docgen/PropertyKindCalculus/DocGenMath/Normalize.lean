@@ -16,7 +16,11 @@ what the definition computes* (the **F** — faithful — tier of `RENDERING.md`
   (`1·x → x`, `x + 0 → x`), simplify `(−1)·x → −x` and double negation;
 * combine adjacent equal factors into a power (`x·x → x²`);
 * move the numeric coefficient to the front of a product (`b·2·ndvi → 2·b·ndvi`), a stable partition
-  that leaves the *symbolic* factor order the author chose untouched.
+  that leaves the *symbolic* factor order the author chose untouched;
+* hoist a product's sign out of it (`(−x)·y·z → −(x·y·z)`), so an exponent reads
+  `e^{-c\,b\,\mathrm{NDVI}}` rather than `e^{\left(-c\right)\,b\,\mathrm{NDVI}}`. The sign is
+  collected from the integer coefficient *and* from any negated factors, so it composes with the
+  `(−1)·x → −x` rule above rather than duplicating it.
 
 Sum term order is **preserved** (a model's `a·ndvi + … + d` reads in the author's order); only the
 commutative *product* is reordered, and only to hoist the scalar. Editorial regrouping/factoring
@@ -58,6 +62,7 @@ partial def normalize : MathTerm → MathTerm
   | .pow a b    => .pow (normalize a) (normalize b)
   | .frac a b   => .frac (normalize a) (normalize b)
   | .fn n args  => .fn n (args.map normalize)
+  | .tuple ts   => .tuple (ts.map normalize)
   | .add ts     => Id.run do
     -- normalize + flatten
     let flat : Array MathTerm := (ts.map normalize).foldl
@@ -77,27 +82,29 @@ partial def normalize : MathTerm → MathTerm
   | .mul ts     => Id.run do
     let flat : Array MathTerm := (ts.map normalize).foldl
       (fun acc t => match t with | .mul us => acc ++ us | t => acc.push t) #[]
-    -- fold the integer coefficients (product); absorbing zero
+    -- fold the integer coefficients (product); absorbing zero. A negated factor contributes its
+    -- sign to the coefficient and enters `rest` unnegated, hoisting the sign out of the product.
     let mut coeff : Int := 1
     let mut rest : Array MathTerm := #[]
     for t in flat do
       match asInt? t with
       | some k => coeff := coeff * k
-      | none   => rest := rest.push t
+      | none   =>
+        match t with
+        | .neg u => coeff := -coeff; rest := rest.push u
+        | u      => rest := rest.push u
     if coeff == 0 then return .num 0
     rest := groupPowers rest
-    -- reassemble: scalar coefficient first, then the symbolic factors in authored order
+    -- reassemble: scalar magnitude first, then the symbolic factors in authored order, with the
+    -- sign (from the coefficient and from any hoisted negations) wrapped around the whole product
     if rest.isEmpty then
       return .num coeff
+    let neg := coeff < 0
+    let mag := coeff.natAbs
     let factors : Array MathTerm :=
-      if coeff == 1 then rest
-      else if coeff == -1 then #[]        -- handled by wrapping in `neg` below
-      else #[.num coeff] ++ rest
+      if mag == 1 then rest else #[.num (Int.ofNat mag)] ++ rest
     let core : MathTerm :=
-      match factors.size with
-      | 0 => (if rest.size == 1 then rest[0]! else .mul rest)   -- coeff == -1 path
-      | 1 => factors[0]!
-      | _ => .mul factors
-    return (if coeff == -1 then .neg core else core)
+      if factors.size == 1 then factors[0]! else .mul factors
+    return (if neg then .neg core else core)
 
 end PropertyKindCalculus.DocGenMath

@@ -24,7 +24,14 @@ presentation pipeline (see `RENDERING.md` §5):
 * `DocGenMath.Normalize` — Stage 2: faithful cleanups (numeral fold, `x·x → x²`, scalars-first).
 * `DocGenMath.Pretty`    — Stage 3: precedence printer to LaTeX.
 * `DocGenMath.Registry`  — `@[pkc_math_symbol]` notation overrides + atom heuristics.
-* `DocGenMath.Attr`      — the `@[pkc_math]` attribute; hands the LaTeX to doc-gen4's `addDeclMath`.
+* `DocGenMath.Attr`      — the `@[pkc_math]` attribute; appends the `$$…$$` equation and the
+  definition's Lean source to the declaration's **own docstring** via core Lean's
+  `Lean.addDocStringCore`, so every docstring consumer typesets it with no special support
+  (doc-gen4's page, and the Lean InfoView's hover popups, both via MathJax).
 
 The rendering is **faithful** (the F tier): the LaTeX denotes exactly what the definition computes.
+
+The worked example and the `#guard_msgs` regression pins for all three stages live outside this
+library, in `PropertyKindCalculus.Examples.DocGenMathDemo` (`examples/` source tree), so no module
+here carries `#eval`/`#guard`.
 -/

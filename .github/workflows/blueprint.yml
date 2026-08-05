@@ -5,9 +5,10 @@ name: Build and Publish Design Blueprint
 # build the Mathlib-free Lean core + examples, then the Mathlib/PhysLib/TorchLean-
 # backed dimension and uncertainty layers plus the `Tests` validation suite (so all
 # sixteen verifiable requirements are CI-enforced), build and render the Verso
-# design blueprint (HTML + a paginated PDF), and (on main) publish them to the
-# orphan `gh-pages` branch — never committed on main. PropertyKindCalculus has no
-# FFI / Rust / doc-gen4 stages, so those phases of the L4YAML job are omitted.
+# design blueprint (HTML + a paginated PDF), generate the doc-gen4 API site under
+# docs/api/, and (on main) publish them to the orphan `gh-pages` branch — never
+# committed on main. PropertyKindCalculus has no FFI / Rust stages, so those phases
+# of the L4YAML job are omitted; its doc-gen4 stage is mirrored here (Phase 4b).
 
 on:
   push:
@@ -139,6 +140,23 @@ jobs:
         # docs/ layout is defined in exactly one place. It copies html-multi/ and
         # html-single/ verbatim, carrying the PDF that Phase 3 placed inside them.
         run: bash blueprint/scripts/stage-docs.sh
+
+      # -------------------------------------------------------
+      # Phase 4b: Generate the doc-gen4 API site under docs/api/
+      # -------------------------------------------------------
+      - name: Build and stage doc-gen4 API documentation
+        # MUST run AFTER the stage step above: stage-docs.sh does `rm -rf docs/` before copying the
+        # blueprint in, so staging the API site first would delete it again.
+        #
+        # The script owns the scope (the Mathlib-free tier) and the docs/api/ layout, so CI and any
+        # local render agree by construction. It also fails the job if a docs target reports
+        # "0 root modules" — doc-gen4 renders `lib.rootModules`, and a library that declares only
+        # `globs` has a non-existent default root, which Lake reports as a *successful* build that
+        # generates nothing. See the NOTE in lakefile.lean.
+        #
+        # This is the first stage that *builds* doc-gen4 (~131 jobs: leansqlite, MD4Lean,
+        # UnicodeBasic, BibtexQuery, Cli, DocGen4). It is still never imported by any module.
+        run: bash scripts/build-api-docs.sh
 
       - name: Upload blueprint as artifact
         uses: actions/upload-artifact@v4

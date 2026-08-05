@@ -6,8 +6,10 @@ have doc-gen4 in their dependency closure (docs are built by a separate docbuild
 API *in* doc-gen4 is unreachable; and (2) the built-in **docstring** env-extension already flows into
 doc-gen4 for free. Both correct. **New design: `@[pkc_math]` writes the rendered `$$…$$` (now *plus* the
 definition's Lean source) into the declaration's own docstring via core Lean's `Lean.addDocStringCore`
-— no doc-gen4 dependency, no doc-gen4 changes.** This also reaches the **Lean InfoView** (which renders
-docstring math via MathJax), which the doc-gen-only hook never could. Rendering default = **F (faithful),
+— no doc-gen4 dependency, no doc-gen4 changes.** This also reaches the **Lean InfoView** (whose bundle
+ships MathJax, so docstring math typesets in its **hover popups** — note the *goal* panel shows a type and
+never a docstring, and VS Code's *native* editor hover has no math renderer), which the doc-gen-only hook
+never could. Rendering default = **F (faithful),
 CONFIRMED**. Remaining = follow-on (apply `@[pkc_math]` to real SMM/EM models). No library module imports
 doc-gen4; the `../doc-gen4` **dev override was removed** — doc-gen4 reverts to the stock `v4.32.0` tag
 (`092d631`) that PhysLib and TorchLean already pin transitively (it cannot be dropped *entirely* — both
@@ -101,7 +103,9 @@ Proposed new PKC lib (keep the core spine clean — mirror the blueprint/crossre
   `Attr.lean` writes into the built-in docstring extension (`Lean.addDocStringCore`); the library has no
   doc-gen4 dependency at all. Docs-only; never imported by the core spine.
 - demo/tests under `examples/`/`tests/`: `#eval`/`#guard_msgs` pins for the LaTeX of demo defs, plus a
-  demo def rendered end-to-end.
+  demo def rendered end-to-end. **(v3, 2026-08-04) — as planned:** `examples/PropertyKindCalculus/
+  Examples/DocGenMathDemo.lean` (`lean_lib «Examples»`). It briefly lived inside `DocGenMath` as
+  `Demo.lean`; moved back out so no library module carries `#eval`/`#guard`.
 
 ---
 
@@ -121,13 +125,14 @@ Proposed new PKC lib (keep the core spine clean — mirror the blueprint/crossre
 
 ### Phase B — IR + Expr→LaTeX + `@[pkc_math]` (see §5) — the core — ✅ DONE + green 2026-08-03
 All in `docgen/PropertyKindCalculus/DocGenMath/` (`lean_lib «DocGenMath»`, `srcDir := "docgen"`):
-- [x] **Stage 0 IR** `Term.lean`: `MathTerm` = `sym/num/neg/add/mul/frac/pow/fn` (n-ary add/mul; sub = `add[a, neg b]`).
+- [x] **Stage 0 IR** `Term.lean`: `MathTerm` = `sym/num/neg/add/mul/frac/pow/fn/tuple` (n-ary add/mul/tuple; sub = `add[a, neg b]`), plus `MathNotation` = `latex` + `operator` (the resolved-token record the printer consumes).
 - [x] **Stage 1 (Lift)** `Lift.lean`: `liftExpr : Expr → MetaM MathTerm`, defensive/total; matches PKC alphabet by head (`Quantity.mul/div/add/sub/exp/log/…/mk`, `HAdd/HSub/HMul/HDiv/HPow/Neg`, `OfNat`), drops witnesses/instances via **last-N args** + `getFunInfo` explicit-filter for unknown heads; flattens assoc. Imports `PropertyKindCalculus` (uses `` `` ``-checked names).
-- [x] **Stage 2 (Normalize)** `Normalize.lean`: faithful — flatten, integer fold (`2·3→6`, `2+3→5`), drop `1·`/`+0`, `−1·x→−x`, double-neg, adjacent `x·x→x²`, scalar-first product sort (sum order preserved). (Structural `@[pkc_math_rule]` shape-rules = documented future; named-operator recognition is the registry, below.)
-- [x] **Stage 3 (Pretty)** `Pretty.lean`: precedence printer (sum 10 < neg 15 < mul 20 < pow 30 < atom 40); `e^{…}`, `\sin/\cos/\log/\arcsin…`, `\frac`, sign-aware sums (`a − b`); takes a `resolve : String→String` closure (pure/testable).
-- [x] Symbol table + registry `Registry.lean`: `@[pkc_math_symbol "…"]` per-decl LaTeX override (the practical recognition registry) + `builtinSymbol` heuristic (Greek, `s0→s_{0}`, `ndvi→\mathrm{NDVI}`, single-letter italic, multi-letter `\mathrm`). `resolveToken env` = override-then-heuristic.
+- [x] **Stage 2 (Normalize)** `Normalize.lean`: faithful — flatten, integer fold (`2·3→6`, `2+3→5`), drop `1·`/`+0`, `−1·x→−x`, double-neg, adjacent `x·x→x²`, scalar-first product sort (sum order preserved), **(v3)** sign hoisting `(−x)·y·z → −(x·y·z)` collected from the integer coefficient *and* negated factors together (a ring law, so still faithful) — this is what makes an exponent read `e^{-\mathrm{AvsConfig.two}\,b\,\mathrm{NDVI}}` instead of `e^{\left(-…\right)\,b\,\mathrm{NDVI}}`. (Structural `@[pkc_math_rule]` shape-rules = documented future; named-operator recognition is the registry, below.)
+- [x] **Stage 3 (Pretty)** `Pretty.lean`: precedence printer (sum 10 < neg 15 < mul 20 < pow 30 < atom/tuple 40); `e^{…}`, `\sin/\cos/\log/\arcsin…`, `\frac`, sign-aware sums (`a − b`), `\left(a, b, c\right)` tuples; takes a `resolve : String→MathNotation` closure (pure/testable via `MathNotation.ofLatex`).
+- [x] Symbol table + registry `Registry.lean`: `@[pkc_math_symbol "…"]` per-decl LaTeX override (the practical recognition registry) + `builtinSymbol` heuristic (Greek, `s0→s_{0}`, `ndvi→\mathrm{NDVI}`, single-letter italic, multi-letter `\mathrm`). The optional `operator` marker (`@[pkc_math_symbol "\\nabla" operator]`) declares a **bare prefix operator** so a 1-arg application juxtaposes (`\nabla x`); layout is *declared*, never inferred from the LaTeX (the heuristic `\mathrm{…}` also starts with `\` and must stay parenthesized). **(v3)** `@[pkc_math_config]` tags a *structure* as a configuration type (`TagAttribute`, `validate` rejects a non-structure), and `configFieldName?` = core's `Environment.getProjectionStructureName?` + `hasTag`. `resolveToken env` is now three tiers: `@[pkc_math_symbol]` override → configuration qualification (`\mathrm{AvsConfig.two}`) → heuristic.
+- [x] **(v3)** **Derivations** `Attr.lean` + `Lift.lean`: `substitute names e` is the opt-in **delta** pre-pass (`Meta.transform`, `instantiateLevelParams` + `mkAppN … |>.headBeta`, `.visit` so nested occurrences expand) run *before* the lift, so an inlined body's `let`s zeta-reduce as usual. `isSubstitutable` rejects a self-mentioning definition (which would not terminate) at attribute time, alongside rejecting a literal override combined with `substituting`. Idents in the attribute resolve through `realizeGlobalConstNoOverload` in `AttrM` — the ambient namespace *is* available at `afterCompilation` (verified by the demo pins).
 - [x] `@[pkc_math]` attribute `Attr.lean`: `quantityToLatex declName : MetaM String` (lambdaTelescope value → lift → normalize → pretty; LHS via `resolveToken`), `@[pkc_math]` / `@[pkc_math "…literal…"]`. **(v2, 2026-08-04)** — no longer `addDeclMath`; instead runs at `applicationTime := .afterCompilation` and writes into the declaration's **own docstring** via `Lean.addDocStringCore`, appending both the `$$…$$` and (new) the **definition's Lean source** as a ```` ```lean ```` block (`defSource?` = `ppSignature` + delaborated body, decl name shortened to its base). `afterCompilation` is required so the authored `/-- … -/` docstring is already attached and preserved (at the default `afterTypeChecking` it is not yet present and would clobber ours — verified empirically). **No doc-gen4 import.**
-- [x] `Demo.lean`: dimensionless-kind demo; `@[pkc_math_symbol "\\sigma^0", pkc_math] def avsForward` renders `\sigma^0 = a\,\mathrm{NDVI} + e^{-2\,b\,\mathrm{NDVI}}\,c\,r + d`; **(v2)** now 5 `#guard_msgs` pins (3 pure-stage + 1 `quantityToLatex` + 1 docstring read-back on `noted` asserting prose + `$$…$$` + the ```` ```lean ```` source) — all green.
+- [x] The demo + regression pins: dimensionless-kind demo; `@[pkc_math_symbol "\\sigma^0", pkc_math] def avsForward` renders `\sigma^0 = a\,\mathrm{NDVI} + e^{-2\,b\,\mathrm{NDVI}}\,c\,r + d`; **(v3)** 8 `#guard_msgs` pins (4 pure-stage incl. tuples + 3 `quantityToLatex` incl. `columns` for tuple/head-layout + 1 docstring read-back on `noted` asserting prose + `$$…$$` + the ```` ```lean ```` source) — all green. **(v3, 2026-08-04)** moved out of the `DocGenMath` library to `examples/PropertyKindCalculus/Examples/DocGenMathDemo.lean` (`lean_lib «Examples»`, namespace `PropertyKindCalculus.Examples.DocGenMathDemo`), so no `DocGenMath` module carries `#eval`/`#guard` — the same library/example split as `UncertaintyExamples`. Build with `lake build PropertyKindCalculus.Examples.DocGenMathDemo`.
 - [x] **(v2)** `lakefile.lean`: `Attr.lean` no longer imports doc-gen4, so `lean_lib «DocGenMath»` depends on core Lean + PKC core only; `lake build DocGenMath` green (31 jobs) **without building doc-gen4**. The `require «doc-gen4» from "../doc-gen4"` **override was removed** and `lake update doc-gen4` reconciled the manifest (doc-gen4 `path → git` at the stock `092d631`/`v4.32.0` already in `.lake/packages`, now `inherited:true`; the only other diff is a benign `Cli` `inputRev` metadata shift — same resolved rev; **PhysLib/TorchLean/mathlib unchanged, no branch drift, no network**). doc-gen4 stays only because PhysLib and TorchLean each require it transitively — it can't be dropped entirely — but nothing here imports or builds it.
 
 ### Phase V — verification / end-to-end (see §7)
@@ -175,8 +180,22 @@ in the editor's InfoView (native mouse-hover tooltip uses VS Code markdown → s
   `attenuationQ`, `lavsForwardQ`, `lavsResidualQ` (`Examples/AvsForward.lean`), `wcmForwardQ`
   (`UncertaintyExamples/WaterCloudModel.lean`), `fictiveModelQ` (`UncertaintyExamples/DegenhardtFictive.lean`).
   See session log for the let-zeta engine change + the auto-vs-override split.
+- [x] **Publish the API site** — DONE 2026-08-04 (session 5). `scripts/build-api-docs.sh` renders the
+  doc-gen4 site and stages it under `docs/api/`, next to the Verso blueprint at the `docs/` root; both
+  go to the orphan `gh-pages` branch via the existing `scripts/publish-pages.sh`. Wired into
+  `.github/workflows/blueprint.yml` (Phase 4b) and `blueprint/scripts/ci-pages.sh` (`--no-api` to skip),
+  always **after** `stage-docs.sh`, which wipes `docs/`. This is the first stage that *builds* doc-gen4
+  (~131 jobs); nothing imports it. Scope = the **Mathlib-free tier** (`PropertyKindCalculus`, `Examples`,
+  `DocGenMath`) — see the session log for why the Mathlib-backed libraries are excluded.
 - [ ] Register SMM/EM named helpers + apply `@[pkc_math]` to the *downstream* SMM `lavsForwardQ` and
   Xiaolan's models (in `soil-moisture-model`, not the PKC example mirror).
+- [x] **Engine knob — derivations** — DONE 2026-08-04 (session 6), shipped as `substituting` rather than
+  `expand`, together with `@[pkc_math_config]` and sign hoisting; see §5 and the session log. The caveat
+  recorded when this was proposed still holds and is now the documented policy line: a derivation does
+  **not** recover the authored `e^{-2\,b\,\mathrm{NDVI}}`, because `cfg.two` is a `def` parameter — it
+  recovers `e^{-\mathrm{AvsConfig.two}\,b\,\mathrm{NDVI}}`. Folding that to the literal `-2` asserts
+  `cfg.two = 2`, which is **E tier** and out of policy; the literal `@[pkc_math "…"]` override remains
+  the sanctioned escape hatch.
 
 ---
 
@@ -204,6 +223,55 @@ Worked example (LAVS ∂/∂b): `mul h₁ (mul h₂ (mul h₃ (mul h₄ ⟨2⟩ 
 → (lift+flatten) `Mul[2,NDVI,c,r,att]` → (sort + recognize `att`=`E`) `Mul[2,c,r,NDVI,E]`
 → (print) `2\,c\,r\,\mathrm{NDVI}\,E`. **Entirely faithful** — no editorial assertion needed.
 
+### Constants and configuration types (`@[pkc_math_config]`)
+
+A model's named constants live in a configuration structure and are read through a field projection
+(`cfg.two` = `AvsConfig.two cfg`). Untagged, that is just an unrecognized application and renders
+`\mathrm{two}\left(\mathrm{cfg}\right)` — the field stripped of the type it belongs to, applied to a
+value that carries nothing for the reader. `@[pkc_math_config]` on the **structure** declares its
+fields to be constants of the model, so the projection renders as the qualified constant
+`\mathrm{AvsConfig.two}` and the configuration value is elided.
+
+The tag is what makes this safe. A blanket "drop the receiver of any projection" rule would turn
+`p.fst` into `\mathrm{fst}`; opting in per type confines the rule to structures whose fields really
+are constants. An individual field can still be given its own notation with `@[pkc_math_symbol]`,
+which wins over the qualification.
+
+**This is F tier**: qualifying a name is notation, and eliding the configuration value asserts
+nothing about it. Rendering `cfg.two` as `2` would be a different claim entirely — `two` is a `def`
+*parameter*, so a value for it is an **E**-tier assertion about the configuration and is out of
+policy. Use the literal `@[pkc_math "…"]` override when a doc page must show the deployed numeral.
+
+### Derivations by substitution (`@[pkc_math substituting …]`)
+
+The equation as written is faithful but often folded: `lavsForwardQ` renders
+`a\,\mathrm{NDVI} + \mathrm{attenuationQ}\left(\mathrm{cfg}, b, \mathrm{NDVI}\right)\,c\,r + d`.
+A reader wants both that *and* the expanded form. `@[pkc_math substituting attenuationQ]` renders the
+equation as written, then again with the named helper inlined. Each `substituting` clause is one
+**step**, and step *n* applies the union of clauses 1..*n*, so the equations refine one another:
+
+```lean
+@[pkc_math substituting lavsForwardQ substituting attenuationQ]
+def lavsResidualQ … := s0 - lavsForwardQ cfg a b c d ndvi r
+```
+
+⟶ `s_{0} - \mathrm{lavsForwardQ}\left(…\right)`, then
+`s_{0} - \left(a\,\mathrm{NDVI} + \mathrm{attenuationQ}\left(…\right)\,c\,r + d\right)`, then
+`s_{0} - \left(a\,\mathrm{NDVI} + e^{-\mathrm{AvsConfig.two}\,b\,\mathrm{NDVI}}\,c\,r + d\right)`.
+Zero clauses ⟶ byte-identical output to a bare `@[pkc_math]`.
+
+Substitution is **delta**, the opt-in counterpart to the `let`-**zeta** Stage 1 always performs. It
+runs as a pre-pass on the `Expr` before the lift, so an inlined body's own `let`s are zeta-reduced
+exactly as if written at the use site. Delta is meaning-preserving, so **every line of the chain is F
+tier** — each still denotes exactly what the definition computes. It is therefore *not* a way in to
+editorial rewriting: a literal override and a derivation are mutually exclusive and rejected
+together, and a recursive definition is rejected as unsubstitutable (inlining would not terminate).
+
+This gives the F tier a second answer to *"the source form is faithful but hard to read"*, next to
+the presentational-sibling escape hatch below. Prefer `substituting` when the helper is a real
+definition the reader should see expanded; keep the sibling for when genuine **algebra** — not mere
+unfolding — is what makes the equation legible.
+
 ### Rendering philosophy — three tiers (pick the default)
 - **(F) Faithful only** — normalizer + recognition; LaTeX denotes exactly what the def computes. Simplest.
 - **(E) Editorial (opt-in, flagged)** — factoring/regrouping/Horner-unroll that change incidental
@@ -226,8 +294,13 @@ EM models.
 ### Rule locality (mirror mathlib's `@[simp]` split)
 - **Global registry** (`@[pkc_math_rule]` / notation-recognizer table): domain conventions written once
   (EM operators, tensor conventions) → apply library-wide. The workhorse.
-- **Per-decl `@[pkc_math ...]`**: hints/overrides only (symbol choice, forced grouping, literal-LaTeX
-  escape hatch). Not a full rewrite language. *(open decision #2: exact attribute surface syntax)*
+- **Per-decl `@[pkc_math ...]`**: what *this* declaration's doc should show — the literal-LaTeX escape
+  hatch, and the derivation steps (`substituting f`) whose expansions are meaningful *here* and not
+  library-wide. Still not a rewrite language: every per-decl knob is either notation or delta, so it
+  cannot make the rendering say something the definition does not compute. **Resolved** — see §9 #2.
+- **Per-type `@[pkc_math_config]`**: one tag on a configuration structure covers all of its fields.
+  Between global and per-decl: it is a property of the *type*, so it is stated once where the type is
+  declared rather than repeated at every model that reads a constant from it.
 
 ---
 
@@ -308,10 +381,17 @@ Scope the doc-gen build to the demo module, not all of PKC. *(open decision #3)*
    exactly what the definition computes; no editorial (E) or proof-carrying (P) rewriting is applied.
    E/P are not built; when a model needs genuine algebra to look right, use the sibling-def escape hatch
    (author `def foo_math`, prove `foo = foo_math`, render the sibling) — §5. This is the standing default.
-2. `@[pkc_math]` attribute surface syntax — **DONE**: `@[pkc_math]` (auto) / `@[pkc_math "…literal…"]`
-   (override); named-operator notation via `@[pkc_math_symbol "…"]`. Structural `@[pkc_math_rule]`
-   shape-recognition DSL = deferred (documented future extension in §5; named-operator recognition
-   already covered by `@[pkc_math_symbol]`).
+2. `@[pkc_math]` attribute surface syntax — **DONE**, and extended 2026-08-04. The full surface:
+   - `@[pkc_math]` — auto-render; `@[pkc_math "…literal…"]` — override (the E-tier escape hatch).
+   - `@[pkc_math substituting f, g substituting h]` — auto-render plus a derivation, one step per
+     clause, cumulative (§5, *Derivations by substitution*). Mutually exclusive with the override.
+   - `@[pkc_math_symbol "…"]` — named-operator notation; `@[pkc_math_symbol "\\nabla" operator]`
+     additionally declares a bare prefix operator (juxtaposed, not parenthesized).
+   - `@[pkc_math_config]` — on a *structure*: its fields are the model's named constants and render
+     qualified by their type (§5, *Constants and configuration types*).
+
+   Structural `@[pkc_math_rule]` shape-recognition DSL = still deferred (documented future extension
+   in §5; named-operator recognition already covered by `@[pkc_math_symbol]`).
 3. Build strategy — **RESOLVED**: neither (a) nor (b). `DocGenMath` compiles only core + the Lean-only
    `DeclMath`, so the heavy deps are merely *resolved*, never built; the clone's own `.lake/packages`
    sufficed. `lake update doc-gen4` once to activate the local override. (§7's 9.3G problem was moot.)
@@ -423,3 +503,122 @@ Scope the doc-gen build to the demo module, not all of PKC. *(open decision #3)*
   dependents all green); readback of all 5 docstrings shows prose + `$$…$$` + clean ```` ```lean ```` source.
   Files (UNPUSHED on `feat/pkc-math-rendering`): `Lift.lean`, `Attr.lean`, `Demo.lean` (engine); `AvsForward.lean`,
   `WaterCloudModel.lean`, `DegenhardtFictive.lean` (annotations); `RENDERING.md`.
+- **2026-08-04 (session 5):** **Two auto-render defects fixed + the demo moved into `examples/`.** Triggered
+  by a user question about the *InfoView*: the `⊢ …` panel is the **term goal**, not a docstring surface, so
+  no attribute can put math there — the typesetting surfaces are the doc-gen4 page and the InfoView's own
+  **hover popups** (re-confirmed against the installed `leanprover.lean4-0.0.239`: `dist/lean4-infoview/
+  index.production.min.js` carries MathJax + `rehype-mathjax` with `displayMath: [["$$","$$"],["\\[","\\]"]]`).
+  The **native VS Code editor hover** renders docstrings with VS Code's own markdown, which has no math
+  renderer *and* eats `\,` as a CommonMark escape of `,` — so a product `a\,b` reads there as `a,b`. That is a
+  hover artifact only (doc-gen4's HTML keeps `a\,\mathrm{NDVI}`), but it is what made `lavsJacResidualQ` look
+  like a comma-separated argument list. Two **real** defects behind it, both now fixed:
+  (1) **No `Prod.mk` handler** — a multi-output model's tuple fell to the generic `fn` fallback and printed
+  `\mathrm{mk}(x, \mathrm{mk}(y, z))`. `Term.lean` gains a `tuple` constructor (n-ary), `Lift.liftExpr` matches
+  `Prod.mk` and flattens the **right**-nested chain (a genuinely nested left component keeps its parentheses),
+  `Normalize` maps componentwise, `Pretty` prints `\left(a, b, c\right)` at precedence 40.
+  (2) **The `sym.startsWith "\\"` prefix guess** in `Pretty.renderFn` fired for *every* multi-letter
+  identifier, because `builtinSymbol`'s fallback is `\mathrm{…}` — so `cfg.two` printed as the juxtaposition
+  `\mathrm{two} \mathrm{cfg}`. Replaced by an **explicit registration**: `resolveToken` now returns a
+  `MathNotation` (`latex` + `operator`), and only `@[pkc_math_symbol "…" operator]` selects the juxtaposed
+  prefix layout. Syntax is `str (ppSpace &"operator")?`; the attribute is now `ParametricAttribute
+  MathNotation`. Net effect on `lavsJacResidualQ`: was `\mathrm{mk}(-\mathrm{NDVI}, \mathrm{mk}(\mathrm{two}
+  \mathrm{cfg}\,…))`, now `\left(-\mathrm{NDVI}, \mathrm{two}\left(\mathrm{cfg}\right)\,\mathrm{NDVI}\,c\,r\,
+  \mathrm{attenuationQ}\left(\mathrm{cfg}, b, \mathrm{NDVI}\right), -\mathrm{attenuationQ}\left(…\right)\,r,
+  -1\right)`. **Demo moved** out of the library (see Phase B bullet). **Verification:** `lake build DocGenMath`
+  green (30 jobs); `PropertyKindCalculus.Examples.DocGenMathDemo` green with 8 pins; `AvsForward` +
+  `DegenhardtFictive` + `WaterCloudModel` green (2118 jobs) and `fictiveModelQ` reads back **unchanged**
+  (`Y = \left(x_{1} + x_{2}^{2}\right)\,x_{3}`) — the prefix-guess removal regressed nothing.
+  **Still open (known, deliberate):** a *structure projection* (`cfg.two` = `AvsConfig.two cfg`) has no handler,
+  so it prints honestly but noisily as `\mathrm{two}\left(\mathrm{cfg}\right)`. The natural fix is a second
+  registration marker on the same syntax — e.g. `@[pkc_math_symbol "2" atom]`, "render as this symbol,
+  discard the arguments" — which is an author-notation API decision, not a bug fix; **not** done here.
+  Files (UNPUSHED on `feat/pkc-math-rendering`): `Term.lean`, `Lift.lean`, `Normalize.lean`, `Pretty.lean`,
+  `Registry.lean`, `Attr.lean`, `DocGenMath.lean` (engine); `Demo.lean` **deleted** →
+  `examples/PropertyKindCalculus/Examples/DocGenMathDemo.lean` **added**; `lakefile.lean`; `RENDERING.md`.
+- **2026-08-04 (session 5b): the doc-gen4 API site is wired into the blueprint pipeline.** The site now
+  publishes to `docs/api/` alongside the Verso blueprint at `docs/`, on the same orphan `gh-pages` branch.
+  **Two real defects found and fixed while wiring — both silent:**
+  1. **`lake build :docs` renders only `pkg.defaultTargets`.** PKC marks only `«PropertyKindCalculus»`
+     `@[default_target]`, so the run reported *"(1 root modules)"* and generated the core spine **only** —
+     none of the `@[pkc_math]` models were on the site, which is the entire point of publishing it.
+  2. **`library_facet docs` renders `lib.rootModules`, and Lake defaults `roots := #[<target name>]`, not
+     the glob prefix.** `lean_lib «DocGenMath»` sets only `globs := #[.andSubmodules
+     `PropertyKindCalculus.DocGenMath]`, so its root was the non-existent module `DocGenMath` and
+     `lake build DocGenMath:docs` **succeeded while generating nothing** — *"Generating documentation for
+     DocGenMath (0 root modules)"*, exit 0. That is the worst possible CI failure mode, so
+     `build-api-docs.sh` greps its own log for `(0 root modules)` and fails the job on it.
+     Fixed by declaring `roots` explicitly on `Examples` and `DocGenMath`; every other library still
+     carries the bogus default and must declare `roots` before being added (NOTE in `lakefile.lean`).
+  **Scope = Mathlib-free tier only.** `module_facet docInfo` recurses into a module's transitive imports
+  and `fromDb` emits HTML for the closure of the roots, so adding `Dimension`/`Uncertainty`/`Torch`/
+  `UncertaintyExamples` would drag **all of Mathlib** through both passes (hours, multi-GB). Cost of the
+  trade: `wcmForwardQ` and `fictiveModelQ` are absent from the site. (This corrects an earlier estimate in
+  this session that the facet would not reach into dependencies — it does.)
+  `examples/…/Examples.lean` was completed with `AvsForward` + `DocGenMathDemo` (both Mathlib-free) since
+  it *is* the library root and thus defines the rendered closure; the `TapeCodegen*`/`TapeCse*`/
+  `LmStepCodegenDemo` demos stay out because they reach `Torch`'s Mathlib-importing carriers. They are
+  still built by `lake build Examples`, which works off globs, not roots (verified: 2141 jobs green).
+  **Verified:** `docs/index.html` (blueprint, 723 files) + `docs/api/index.html` (2470 files);
+  `docs/api/PropertyKindCalculus/Examples/AvsForward.html` carries all four `$$…$$` equations; MathJax is
+  loaded there (`mathjax-config.js` + the `tex-mml-chtml` CDN) with `displayMath: [["$$","$$"]]` and `<p>`
+  absent from `skipHtmlTags`, so they typeset. The blueprint front matter now links to `api/index.html`
+  (blueprint rebuilt, 7198 jobs, link present in the rendered `html-multi/index.html`).
+  **Log noise that is NOT a problem:** `INFO: reference page disabled` (no `docs/references.bib` in the
+  repo — the bibliography lives in the Verso blueprint, not doc-gen4), and the `WARNING: Failed to
+  calculate equational lemmata for Lean.…/Std.…` block, which comes from `genCore` over **Lean core** and
+  is unrelated to PKC.
+  Files: `scripts/build-api-docs.sh` **added**; `lakefile.lean`, `.github/workflows/blueprint.yml`,
+  `blueprint/scripts/ci-pages.sh`, `blueprint/PropertyKindCalculusBlueprint/Blueprint.lean`,
+  `examples/PropertyKindCalculus/Examples.lean`, `RENDERING.md`.
+- **2026-08-04 (session 6): textbook rendering — qualified configuration constants + derivations.**
+  Driven by two concrete complaints about `AvsForward`'s auto-render. **(1) `cfg.two` rendered
+  `\mathrm{two}\left(\mathrm{cfg}\right)`** — the field stripped of its type, applied to a value that
+  tells the reader nothing. Fixed with `@[pkc_math_config]` on the *structure*, a `TagAttribute` whose
+  tag is what makes the receiver-elision safe (a blanket projection rule would turn `p.fst` into
+  `\mathrm{fst}`). **(2) only the literal source form was shown** — `Lift` did zeta but never delta.
+  Fixed with `@[pkc_math substituting f, g substituting h]`: one derivation step per clause, step *n*
+  substituting the union of clauses 1..*n*, rendered under a `**Derivation**` heading as numbered
+  steps (user chose this layout over paragraph captions and a bulleted list; user also chose cumulative
+  steps over a single flat substitution set). Zero clauses ⟶ byte-identical to before, so every prior
+  pin stayed green untouched. A third, small change carries most of the visual win: **sign hoisting**
+  in `Normalize` (`(−x)·y·z → −(x·y·z)`, folded into the existing coefficient-sign path rather than
+  added beside it). Net effect on `attenuationQ`: was `e^{\left(-\mathrm{two}\left(\mathrm{cfg}
+  \right)\right)\,b\,\mathrm{NDVI}}`, now `e^{-\mathrm{AvsConfig.two}\,b\,\mathrm{NDVI}}`.
+  **Policy** (§5, and the reason both additions were acceptable at all): qualification is notation and
+  delta is meaning-preserving, so **both are F tier** — no line of a derivation asserts anything the
+  definition does not compute. The boundary is drawn explicitly in §5: rendering `cfg.two` as `2`
+  asserts a value for a `def` parameter, which is E tier and stays out; a literal override and
+  `substituting` are mutually exclusive and rejected together, and a self-mentioning definition is
+  rejected as unsubstitutable (`.visit` would not terminate).
+  **Risk that did not materialize:** the attribute resolves its `ident`s with
+  `realizeGlobalConstNoOverload` in `AttrM`; the ambient namespace *is* available at
+  `afterCompilation`, so unqualified helper names work (the fallback of demanding fully-qualified
+  names was not needed). **Verified:** `DocGenMath` 30 jobs; `DocGenMathDemo` green with 14 pins
+  (added: 2 sign-hoist pure-stage, 1 `@[pkc_math_config]` end-to-end, 2 substitution end-to-end, 1
+  full two-step `**Derivation**` docstring read-back); `Examples` + `DegenhardtFictive` 2152 jobs, with
+  `fictiveModelQ` unchanged. `lavsResidualQ` now reads back a two-step chain ending in
+  `s_{0} - \left(a\,\mathrm{NDVI} + e^{-\mathrm{AvsConfig.two}\,b\,\mathrm{NDVI}}\,c\,r + d\right)`.
+  **Two more silent doc-gen4 traps, found by checking the published HTML rather than trusting the
+  build** — both fixed in `scripts/build-api-docs.sh`:
+  1. **Stale HTML.** The assembly steps (`fromDb`, `headerData`) are guarded by `*_built` markers whose
+     traces do **not** change when a module's `docInfo` marker does. Observed directly: editing a
+     docstring rebuilt `doc-data/…AvsForward.doc` (17:54) while `doc/…/AvsForward.html` kept its old
+     content and timestamp (15:50). Lake reports success, and CI would publish documentation that does
+     not match the source. This is the same failure the 2026-08-03 session worked around by hand with
+     `rm -rf .lake/build/doc`; the script now clears **only** `doc-data/*_built*`, so the expensive
+     `genCore`/`single` passes are reused and just the assembly repeats.
+  2. **`references.bib` is traced but not emitted.** `generateHtmlDocs` ends by tracing a fixed static
+     list including `doc/references.bib`, which doc-gen4 only writes when a bibliography is configured.
+     With none (this repo's bibliography lives in the Verso blueprint), a build tree that does not
+     already carry the file fails with a bare `no such file or directory` — **including a fresh CI
+     runner**. Wiping `doc/` is therefore *not* a safe way to force regeneration, which is why (1) is
+     marker-only; the script pre-creates the empty file. Note doc-gen4 reads a bibliography from
+     `<root>/docs/references.bib`, which collides with the published-site `docs/` that
+     `stage-docs.sh` wipes — so supplying a real one is not an option here.
+  **Verified in the published HTML:** `docs/api/…/AvsForward.html` carries
+  `<p><strong>Derivation</strong></p>` + `<ol><li>substituting <code><a …>attenuationQ</a></code>` +
+  `<p>$$…$$</p>`, with the second step emitted as `<ol start="2">` — so the numbering survives the
+  interleaved display math, and doc-gen4 auto-links each substituted helper to its declaration.
+  Files: `Registry.lean`, `Lift.lean`, `Normalize.lean`, `Attr.lean` (engine);
+  `Examples/DocGenMathDemo.lean` (pins), `Examples/AvsForward.lean` (annotations);
+  `scripts/build-api-docs.sh`; `RENDERING.md`.

@@ -12,13 +12,19 @@ OUT="$ROOT/_out/blueprint"
 # — and the target of the in-doc "download the PDF" link — is omitted. Set the env
 # var (`SKIP_PDF=1 ./scripts/ci-pages.sh`) or pass the flag (`--no-pdf`).
 SKIP_PDF="${SKIP_PDF:-}"
+# --no-api / SKIP_API: skip the doc-gen4 API render staged under docs/api/. The first run builds
+# doc-gen4 itself and generates HTML for Lean core, so it is the other slow leg of a full render.
+SKIP_API="${SKIP_API:-}"
 for arg in "$@"; do
   case "$arg" in
     --no-pdf) SKIP_PDF=1 ;;
+    --no-api) SKIP_API=1 ;;
     -h|--help)
-      echo "usage: ci-pages.sh [--no-pdf]   (or SKIP_PDF=1 ci-pages.sh) — --no-pdf skips the ~5 min PDF render"
+      echo "usage: ci-pages.sh [--no-pdf] [--no-api]   (or SKIP_PDF=1 / SKIP_API=1)"
+      echo "  --no-pdf  skip the ~5 min WeasyPrint PDF render"
+      echo "  --no-api  skip the doc-gen4 API render staged under docs/api/"
       exit 0 ;;
-    *) echo "error: unknown argument '$arg' (try --no-pdf)" >&2; exit 2 ;;
+    *) echo "error: unknown argument '$arg' (try --no-pdf or --no-api)" >&2; exit 2 ;;
   esac
 done
 
@@ -63,6 +69,16 @@ fi
 # Publish it with scripts/publish-pages.sh (orphan gh-pages branch); docs/ is
 # gitignored — a build artifact, never committed on main.
 "$ROOT/scripts/stage-docs.sh"
+
+# Add the doc-gen4 API site under docs/api/, the same way the CI workflow does (Phase 4b).
+# MUST come after stage-docs.sh, which wipes docs/ before copying the blueprint in. Skippable
+# with --no-api/SKIP_API for a blueprint-only preview loop; the in-doc "browse the API
+# documentation" link then 404s until a full run, exactly as --no-pdf does for the PDF.
+if [ -n "$SKIP_API" ]; then
+  echo "note: --no-api/SKIP_API set — skipping the doc-gen4 API render. The in-doc 'browse the API documentation' link will 404 until a full run." >&2
+else
+  bash "$ROOT/../scripts/build-api-docs.sh"
+fi
 
 echo
 echo "Rendered. Open either output directly as a file:"

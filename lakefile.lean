@@ -57,7 +57,7 @@ package «PropertyKindCalculus» where
   -- The package version — the single source of truth. `scripts/bump-version.sh`
   -- reads and bumps it here, and the blueprint reads this same line at build time
   -- (its `{version}[]` role) so the published document never drifts from the source.
-  version := v!"0.28.0"
+  version := v!"0.29.0"
   leanOptions := #[
     ⟨`autoImplicit, false⟩,
     ⟨`relaxedAutoImplicit, false⟩]
@@ -106,8 +106,19 @@ require mathlib from git
 -- `@[pkc_math]` writes its rendered math + source into each declaration's own docstring via core Lean's
 -- `Lean.addDocStringCore`, so **no module here imports doc-gen4** — it is only ever resolved, never
 -- built by this package. The former `require «doc-gen4» from "../doc-gen4"` dev override (which carried
--- a now-abandoned `DeclMath` hook) has been removed; the demo's HTML, if regenerated, is produced by
--- the stock transitive doc-gen4 via the ordinary docstring path.
+-- a now-abandoned `DeclMath` hook) has been removed; the API site is produced by the stock transitive
+-- doc-gen4 via the ordinary docstring path.
+--
+-- **(2026-08-04) doc-gen4 is now BUILT here**, by `scripts/build-api-docs.sh` (the `:docs` facets it
+-- contributes to the workspace), which publishes the API site under `docs/api/` alongside the Verso
+-- blueprint. Still no `require` and still no *import* — the facets come from the transitive package.
+--
+-- **GOTCHA for anyone adding a library to that docs build:** doc-gen4's `library_facet docs` renders
+-- `lib.rootModules`, and Lake defaults `roots := #[<target name>]` — *not* the glob prefix. So a library
+-- declared with only `globs := #[.andSubmodules `PropertyKindCalculus.Foo]` has the non-existent root
+-- `Foo`, and `lake build Foo:docs` **silently succeeds while generating nothing** ("0 root modules").
+-- Every library in the docs build must therefore declare `roots` explicitly, as `Examples` and
+-- `DocGenMath` do below.
 
 /-- The exportable core library (Mathlib-free spine). -/
 @[default_target]
@@ -119,6 +130,8 @@ lean_lib «PropertyKindCalculus» where
 /-- Worked examples — a separate library so the core can be imported alone. -/
 lean_lib «Examples» where
   srcDir := "examples"
+  -- `roots` is explicit because the doc build renders `lib.rootModules` (see the NOTE above).
+  roots := #[`PropertyKindCalculus.Examples]
   globs := #[.andSubmodules `PropertyKindCalculus.Examples]
 
 /-- **The validation-test suite** (source tree `tests/`, namespace
@@ -323,8 +336,12 @@ pipeline (lift `Expr → MathTerm`, faithful normalize, precedence pretty-print)
 rendered `$$…$$` equation **and** the definition's Lean source into each decl's own docstring via
 core Lean's `Lean.addDocStringCore` (2026-08-04 pivot — `RENDERING.md` §6 v2), so it depends on the
 core spine + core `Lean` only, **not** on doc-gen4; the core spine never imports it either. doc-gen4
-(and the Lean InfoView) then typeset the docstring math with no special support. The `Demo` submodule
-carries the worked example and its `#guard_msgs` regression pins. Build with `lake build DocGenMath`. -/
+(and the Lean InfoView) then typeset the docstring math with no special support. The worked example
+and its `#guard_msgs` regression pins live in the `Examples` library
+(`PropertyKindCalculus.Examples.DocGenMathDemo`), so no module here carries `#eval`/`#guard`.
+Build with `lake build DocGenMath`. -/
 lean_lib «DocGenMath» where
   srcDir := "docgen"
+  -- `roots` is explicit because the doc build renders `lib.rootModules` (see the NOTE above).
+  roots := #[`PropertyKindCalculus.DocGenMath]
   globs := #[.andSubmodules `PropertyKindCalculus.DocGenMath]

@@ -6,6 +6,7 @@ Authors: Nicolas Rouquette
 import Lean
 import PropertyKindCalculus
 import PropertyKindCalculus.DocGenMath.Term
+import PropertyKindCalculus.DocGenMath.Registry
 
 /-!
 # Stage 1 — Lift `Lean.Expr → MathTerm`
@@ -21,6 +22,18 @@ exp …; …`). Those are `zeta`-reduced on the way in — the bound value is su
 so the body renders in terms of the model's operators rather than falling to the opaque-leaf branch.
 This is a presentation-only inlining (it duplicates a `let`-bound subterm if it is used more than
 once); it does not `delta`-unfold *named* helpers, so a `let x := f a` still shows `f a`.
+
+A field of a `@[pkc_math_config]` structure (`cfg.two`) is lifted as a bare `sym`, not as an
+application: it is one of the model's named constants, and the configuration value it is read from
+carries nothing for the reader. `Registry.resolveToken` then qualifies it by its type
+(`\mathrm{AvsConfig.two}`). Only *tagged* structures get this — see `Registry.configFieldName?`.
+
+`substitute` is the opt-in **delta** counterpart to the `let`-zeta: given a set of declaration names
+it inlines their bodies, so `@[pkc_math substituting attenuationQ]` can show a model's equation with
+a named helper expanded (`RENDERING.md` §5, *Derivations by substitution*). It runs as a pre-pass on
+the `Expr`, before the lift, so the inlined body's own `let`s are zeta-reduced on the way in exactly
+as if they had been written at the use site. Delta is meaning-preserving, so the result stays in the
+**F** (faithful) tier.
 
 The lift is **total and defensive**: any head it does not special-case becomes a generic `fn`
 (keeping only the explicit arguments), and any leaf it cannot read becomes a `sym` of its
@@ -41,6 +54,14 @@ private def addArgs : MathTerm → Array MathTerm
 private def mulArgs : MathTerm → Array MathTerm
   | .mul ts => ts
   | t       => #[t]
+
+/-- Splice a term into a tuple's component array. Only the *second* component of a `Prod.mk` is
+spliced, because `Prod` nests to the right: `(a, b, c)` is `⟨a, ⟨b, c⟩⟩` and renders as one
+three-component tuple, exactly as Lean's anonymous-constructor notation displays it, while a
+genuinely nested left component `⟨⟨a, b⟩, c⟩` keeps its inner parentheses. -/
+private def tupleArgs : MathTerm → Array MathTerm
+  | .tuple ts => ts
+  | t         => #[t]
 
 /-- The last argument of an application (the innermost operand of a unary combinator). -/
 private def lastArg (args : Array Expr) : Expr := args[args.size - 1]!
@@ -106,6 +127,10 @@ where
     -- the `Quantity` wrapper: `⟨r⟩` — render its magnitude
     if name == ``PropertyKindCalculus.Quantity.mk then
       if args.size ≥ 1 then return ← liftExpr (lastArg args)
+    -- tuples: a multi-output model (residual + Jacobian columns, …) returns a `Prod.mk` chain
+    if name == ``Prod.mk && args.size ≥ 2 then
+      let (x, y) := lastTwo args
+      return .tuple (#[← liftExpr x] ++ tupleArgs (← liftExpr y))
     -- binary ring operators (ergonomic `+ - * /` and the named kind-gated forms)
     if args.size ≥ 2 then
       let (x, y) := lastTwo args
@@ -127,11 +152,40 @@ where
     -- unary transcendental/trig functions: keep the last (value) operand, drop the witness
     if unaryFns.contains name && args.size ≥ 1 then
       return .fn (baseName' name) #[← liftExpr (lastArg args)]
+    -- a field of a `@[pkc_math_config]` structure is one of the model's named constants, not a
+    -- function of the configuration: drop the configuration value and render the qualified symbol
+    if (configFieldName? (← getEnv) name).isSome then
+      return .sym (toString name)
     -- generic fallback: a named application, keeping only explicit operands
     let expl ← explicitArgs fn args
     if expl.isEmpty then return .sym (toString name)
     else return .fn (toString name) (← expl.mapM liftExpr)
   /-- The final component of `name`, as a bare string (for `fn` heads of known functions). -/
   baseName' (name : Name) : String := name.getString!
+
+/-- The opt-in **delta** pre-pass: inline the body of every application whose head is one of
+`names`, so the caller's equation can be shown with those helpers substituted. Runs before
+`liftExpr`, so the inlined `let`s are zeta-reduced by the lift as usual.
+
+`Meta.transform`'s `.visit` revisits each result, so nested occurrences (a substituted body that
+itself calls a substituted helper) are expanded too. That would not terminate on a helper whose own
+value mentions it, which is why `DocGenMath.Attr` rejects such a name at attribute-application time
+rather than looping here. Anything that is not a `defnInfo` — a `partial def`, an opaque constant,
+a theorem — is left alone. -/
+def substitute (names : Array Name) (e : Expr) : MetaM Expr := do
+  if names.isEmpty then return e
+  Meta.transform e (pre := fun s => do
+    let .const n us := s.getAppFn | return .continue
+    unless names.contains n do return .continue
+    let some (.defnInfo di) := (← getEnv).find? n | return .continue
+    let value := di.value.instantiateLevelParams di.levelParams us
+    return .visit (mkAppN value s.getAppArgs).headBeta)
+
+/-- Whether `declName` can be substituted without looping: it must be a definition whose own value
+does not mention it (a recursive definition would make `substitute`'s `.visit` diverge). -/
+def isSubstitutable (env : Environment) (declName : Name) : Bool :=
+  match env.find? declName with
+  | some (.defnInfo di) => (di.value.find? (·.isConstOf declName)).isNone
+  | _                   => false
 
 end PropertyKindCalculus.DocGenMath

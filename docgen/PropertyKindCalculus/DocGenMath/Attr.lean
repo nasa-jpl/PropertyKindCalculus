@@ -27,26 +27,55 @@ The attribute runs at `AttributeApplicationTime.afterCompilation`, which is *aft
 attaches any authored `/-- … -/` docstring (see `Lean.Elab.PreDefinition.Basic.addNonRecAux`), so
 reading the current docstring and appending preserves the authored prose. At the default time
 (`afterTypeChecking`) the docstring is not yet present and the authored one would clobber ours.
+
+## Derivations
+
+`@[pkc_math substituting f]` adds, *after* the equation as written, the same equation with `f`
+inlined. Each `substituting` clause is one derivation step and each step applies the union of the
+clauses up to it, so the equations form a chain a reader can follow:
+
+```lean
+@[pkc_math substituting lavsForwardQ substituting attenuationQ]
+```
+
+renders the literal `s_0 - \mathrm{lavsForwardQ}\left(…\right)`, then the same with `lavsForwardQ`
+substituted, then the same again with `attenuationQ` substituted as well. With no clauses the output
+is byte-identical to what the attribute produced before derivations existed.
+
+Substitution is *delta*, hence meaning-preserving, so every equation in the chain still denotes
+exactly what the definition computes — the **F** tier of `RENDERING.md` §5. It is not a way to
+assert algebra: a literal override and a derivation are mutually exclusive, and are rejected
+together.
 -/
 
 namespace PropertyKindCalculus.DocGenMath
 
 open Lean Meta
 
-/-- Attribute syntax: `@[pkc_math]` (auto-render) or `@[pkc_math "…literal LaTeX…"]` (override). -/
-syntax (name := pkc_math) "pkc_math" (ppSpace str)? : attr
+/-- One derivation step: the helpers to substitute at that step. -/
+syntax pkcMathSubst := " substituting " ident,+
+
+/-- Attribute syntax: `@[pkc_math]` (auto-render), `@[pkc_math "…literal LaTeX…"]` (override), or
+`@[pkc_math substituting f, g substituting h]` (auto-render plus a derivation, one step per
+`substituting` clause). -/
+syntax (name := pkc_math) "pkc_math" (ppSpace str)? (pkcMathSubst)* : attr
 
 /-- Run the three stages (lift → normalize → pretty) over `declName`'s value and return the LaTeX
-body of the equation `lhs = rhs` (no `$$` delimiters). Definitions only; anything else yields an
-error the caller turns into a graceful skip. -/
-def quantityToLatex (declName : Name) : MetaM String := do
+body of the equation `lhs = rhs` (no `$$` delimiters), first inlining the bodies of `subst` (empty
+for the equation as written). Definitions only; anything else yields an error the caller turns into
+a graceful skip. -/
+def quantityToLatexSubst (declName : Name) (subst : Array Name) : MetaM String := do
   let env ← getEnv
   let some (.defnInfo di) := env.find? declName
     | throwError "`[pkc_math]` expects a definition, but {declName} is not one"
   let rhs ← lambdaTelescope di.value fun _xs body => do
-    return pretty (resolveToken (← getEnv)) (normalize (← liftExpr body))
-  let lhs := resolveToken env (toString declName)
+    return pretty (resolveToken (← getEnv)) (normalize (← liftExpr (← substitute subst body)))
+  let lhs := (resolveToken env (toString declName)).latex
   return lhs ++ " = " ++ rhs
+
+/-- The equation as written — `quantityToLatexSubst` with nothing substituted. -/
+def quantityToLatex (declName : Name) : MetaM String :=
+  quantityToLatexSubst declName #[]
 
 /-- Wrap a LaTeX equation body as a MathJax **display-math** markdown block. -/
 def displayMath (body : String) : String := "$$" ++ body ++ "$$"
@@ -87,16 +116,39 @@ def defSource? (declName : Name) : MetaM (Option String) := do
 /-- Fence a Lean source snippet as a ```` ```lean ```` markdown code block. -/
 def sourceBlock (src : String) : String := "```lean\n" ++ src ++ "\n```"
 
+/-- Render a derivation as markdown: a `**Derivation**` heading, then one numbered step per entry of
+`steps`, each naming the helpers it substitutes and followed by the resulting display equation. The
+step number is written literally so the interleaved display math does not restart the numbering, and
+each `$$…$$` stays a top-level block — the layout already known to typeset in both doc-gen4 and the
+InfoView. Empty `steps` renders nothing at all. -/
+def derivationBlock (steps : Array (Array Name × String)) : String := Id.run do
+  if steps.isEmpty then return ""
+  let mut out := "**Derivation**"
+  for h : i in [0:steps.size] do
+    let (names, math) := steps[i]
+    let named := String.intercalate ", " (names.toList.map fun n => "`" ++ n.getString! ++ "`")
+    out := out ++ "\n\n" ++ toString (i + 1) ++ ". substituting " ++ named ++ ":"
+      ++ "\n\n" ++ displayMath math
+  return out
+
 /-- Compute the markdown for `@[pkc_math]` on `declName`: the rendered equation (or the literal
-`override?` — the escape hatch of `RENDERING.md` §5) as display math, followed by the definition's
-Lean source in a code block, so the doc page shows both the formula and the source it came from. -/
-def mathMarkdown (declName : Name) (override? : Option String) : MetaM String := do
+`override?` — the escape hatch of `RENDERING.md` §5) as display math, then the derivation for
+`substSteps` (each step substituting the union of the clauses up to it), then the definition's Lean
+source in a code block, so the doc page shows the formulas and the source they came from. -/
+def mathMarkdown (declName : Name) (override? : Option String)
+    (substSteps : Array (Array Name) := #[]) : MetaM String := do
   let math := displayMath (← match override? with
     | some s => pure s
     | none   => quantityToLatex declName)
-  match (← defSource? declName) with
-  | some src => return math ++ "\n\n" ++ sourceBlock src
-  | none     => return math
+  -- each step substitutes everything named so far, so the equations refine one another
+  let mut cumulative : Array Name := #[]
+  let mut steps : Array (Array Name × String) := #[]
+  for names in substSteps do
+    cumulative := cumulative ++ names.filter (!cumulative.contains ·)
+    steps := steps.push (names, ← quantityToLatexSubst declName cumulative)
+  let src? := (← defSource? declName).map sourceBlock
+  let blocks : Array String := #[math, derivationBlock steps] ++ src?.toArray
+  return String.intercalate "\n\n" (blocks.filter (!·.isEmpty)).toList
 
 initialize registerBuiltinAttribute {
   name := `pkc_math
@@ -104,11 +156,21 @@ initialize registerBuiltinAttribute {
   -- Run after the elaborator attaches the authored docstring, so the append below preserves it.
   applicationTime := .afterCompilation
   add := fun decl stx _kind => do
-    let override? : Option String :=
-      match stx with
-      | `(attr| pkc_math $s:str) => some s.getString
-      | _                        => none
-    let md ← (mathMarkdown decl override?).run'
+    -- `stx` is `pkc_math (str)? (substituting ident,+)*`: child 1 is the optional literal override,
+    -- child 2 the (possibly empty) sequence of derivation steps.
+    let override? : Option String := stx[1][0].isStrLit?
+    let substSteps ← stx[2].getArgs.mapM fun step => do
+      -- `step` is ` substituting ident,+`; its child 1 is the comma-separated ident list
+      step[1].getSepArgs.mapM fun ident => do
+        let n ← realizeGlobalConstNoOverload ident
+        unless isSubstitutable (← getEnv) n do
+          throwErrorAt ident "`[pkc_math substituting {n}]` cannot substitute {n}: it must be a \
+            non-recursive definition (a recursive one would not terminate when inlined)"
+        return n
+    unless substSteps.isEmpty || override?.isNone do
+      throwError "`[pkc_math]` cannot combine a literal LaTeX override with `substituting`: the \
+        override replaces the rendering, so there is no equation to derive from"
+    let md ← (mathMarkdown decl override? substSteps).run'
     -- Append to the declaration's own docstring (or set it, if there is none). `docStringExt`
     -- serializes into the `.olean`, so the separate doc-gen4 process reads it back via
     -- `findDocString?` and MathJax typesets the `$$…$$`; the InfoView renders it the same way.
