@@ -67,10 +67,13 @@ where
 /-! ## Plain-text rendering, for the InfoView and for pinned probes -/
 
 /-- A cell as plain text: a declaration reference shows its display text, a link list shows them
-comma-separated. -/
+comma-separated. A `prose` cell keeps its markdown markers, because this surface is a report of what
+the docstrings say and showing the author their own text unaltered is the honest rendering — the
+surfaces that *typeset* it are the ones that parse. -/
 def IndexCell.toText : IndexCell → String
   | .text s      => s
   | .code s      => s
+  | .prose s     => s
   | .decl _ d    => d
   | .links items => String.intercalate ", " (items.toList.map (·.2))
 

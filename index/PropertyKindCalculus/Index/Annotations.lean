@@ -135,8 +135,8 @@ def annotationsTable : IndexTable :=
     title := "The annotations PropertyKindCalculus defines"
     headers := #["Annotation", "Attaches to", "Effect", "Enforcement"]
     rows := catalogue.map fun a => #[
-      .code a.syntax_, .text a.attachesTo, .text a.effect,
-      .text a.enforcement.description] }
+      .code a.syntax_, .text a.attachesTo, .prose a.effect,
+      .prose a.enforcement.description] }
 
 /-! ## Occurrences
 
@@ -166,7 +166,7 @@ def crossingsTable (scope : Scope) : MetaM IndexTable := do
       .decl t.decl (lastComponent t.decl),
       .code t.tier.label,
       .code (String.intercalate ", " ((mintsOf t.decl).toList.map shortenNames)),
-      .text (← summaryLine env t.decl)]
+      .prose (← summaryLine env t.decl)]
   return { id := "crossings", title := "Authored kind crossings", headers, rows }
 
 /-- The registered kind carriers: the two built into the calculus plus every structure a downstream
@@ -181,7 +181,7 @@ def carriersTable : MetaM IndexTable := do
     rows := rows.push #[
       .decl c (lastComponent c),
       .text (if builtin.contains c then "built in" else "registered with @[kindCarrier]"),
-      .text (← summaryLine env c)]
+      .prose (← summaryLine env c)]
   return { id := "carriers", title := "Registered kind carriers"
            headers := #["Carrier", "Origin", "What it is"], rows }
 
@@ -197,7 +197,7 @@ def pkcMathTable (scope : Scope) : MetaM IndexTable := do
     rows := rows.push #[
       .decl u.decl (lastComponent u.decl),
       .text u.modeDescription,
-      .text (← summaryLine env u.decl)]
+      .prose (← summaryLine env u.decl)]
   return { id := "pkc-math", title := "Rendered definitions", headers, rows }
 
 /-- `@[pkc_math_symbol]` declarations in scope, with the LaTeX each fixes.
@@ -229,7 +229,7 @@ def tagTable (id title heading : String) (attr : TagAttribute) (scope : Scope) :
   if decls.isEmpty then return IndexTable.empty id title headers
   let mut rows : Array (Array IndexCell) := #[]
   for d in decls do
-    rows := rows.push #[.decl d (lastComponent d), .text (← summaryLine env d)]
+    rows := rows.push #[.decl d (lastComponent d), .prose (← summaryLine env d)]
   return { id, title, headers, rows }
 
 /-- Configuration types (`@[pkc_math_config]`) in scope. -/

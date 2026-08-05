@@ -91,7 +91,9 @@ def buildTable : DocElabM DocTable := do
             if label.isEmpty then .code (lastComponent r.decl)
             else .ref label (lastComponent r.decl)
           let reqCell : Cell := if first then .md s!"*{req.id}* — {req.title}" else .text ""
-          rows := rows ++ [[ reqCell, statusOf first, .text r.role.label, declCell, .text r.note ]]
+          -- The note is author-written prose and names Lean constants in it, so it is markdown for
+          -- the same reason a docstring is. As `text` its backticks reach the page.
+          rows := rows ++ [[ reqCell, statusOf first, .text r.role.label, declCell, .md r.note ]]
           first := false
   return { headers := ["Requirement", "Status", "Role", "This work", "Note"], rows := rows }
 

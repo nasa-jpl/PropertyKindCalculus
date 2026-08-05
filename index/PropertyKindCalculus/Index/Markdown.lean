@@ -42,9 +42,13 @@ def mdEscape (s : String) : String :=
 
 /-- A cell as markdown. A `decl` reference is written as a code span holding the **fully qualified**
 name, because doc-gen4 resolves such a span to a link to that declaration's page — the short display
-name would not resolve. -/
+name would not resolve.
+
+A `prose` cell passes through unparsed: it is already markdown, and this is the one surface that
+renders markdown, so the emphasis survives and its code spans become doc-gen4 links. -/
 def IndexCell.toMarkdown : IndexCell → String
   | .text s      => mdEscape s
+  | .prose s     => mdEscape s
   | .code s      => if s.isEmpty then "" else "`" ++ mdEscape s ++ "`"
   | .decl n _    => "`" ++ mdEscape (toString n) ++ "`"
   | .links items =>

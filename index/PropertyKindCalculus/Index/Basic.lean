@@ -58,18 +58,26 @@ def Scope.covers (s : Scope) (n : Name) : Bool :=
 
 /-! ## Cells and tables — a Verso-free presentation IR
 
-Deliberately the same shape as `PropertyKindCalculusBlueprint.ItemIndex.Cell`, minus the two
-constructors that only make sense inside Verso (`ref` to a blueprint tag, `md` inline markup).
+Deliberately the same shape as `PropertyKindCalculusBlueprint.ItemIndex.Cell`, minus the one
+constructor that only makes sense inside Verso — `ref`, which names a blueprint tag. Its `md` cell
+*does* have a counterpart here, `prose`, because the harvest quotes docstrings and a docstring is
+markdown; what stays out of the library is the parsed form's rendering, not the fact of the markup.
 A `decl` cell names a *declaration*, and each document decides what to do with it: the blueprint
 resolves it to a blueprint node via `Informal.Environment.labelsForLeanDecl`, doc-gen4 resolves it
 to a page anchor. The harvest does not know, and must not, which is why it stores the `Name`. -/
 
 /-- One table cell. -/
 inductive IndexCell where
-  /-- Plain prose. -/
+  /-- Plain prose, rendered exactly as given. -/
   | text (s : String)
   /-- Inline code — a type, a term, a kind equation. -/
   | code (s : String)
+  /-- Prose **quoted from a docstring**, and therefore written in the inline markdown a docstring is
+  written in: `` `code` ``, `*emphasis*`, `**strong**`. Distinct from `text` because the two surfaces
+  disagree about what to do with it — doc-gen4 renders markdown and wants it untouched, while a Verso
+  table sets a string literally and must parse it first. Passing docstring prose as `text` is exactly
+  the bug this constructor exists to prevent: the markers reach the page. -/
+  | prose (s : String)
   /-- A reference to a declaration, with the text to display for it. -/
   | decl (n : Name) (display : String)
   /-- A comma-separated list of declaration references, each with its display text. -/
@@ -78,6 +86,68 @@ deriving Repr, Inhabited, BEq
 
 /-- An empty cell. -/
 def IndexCell.blank : IndexCell := .text ""
+
+/-! ### The inline grammar of a `prose` cell
+
+A docstring is markdown and the harvest quotes it verbatim, so a `prose` cell arrives with markers
+in it. The two ways to get that wrong are to render it literally — which puts `**` on the page — and
+to run a markdown library over a table cell, which is far more machinery than three constructs
+deserve. Between them is the grammar below: inline code, emphasis and strong, parsed *once, here*,
+so that every document rendering an index agrees about what a docstring cell means rather than each
+adapter growing its own dialect.
+
+Two properties are deliberate. Spans **nest**, because a docstring lead-in is routinely
+`**… the *branched* principal …**` and flattening it would put the inner markers back on the page.
+And an unterminated delimiter is **kept as literal text** rather than swallowing the rest of the
+cell: a docstring is written for a human first, and a lone asterisk or backtick in one is a
+typographic accident, not a truncation instruction. -/
+
+/-- One inline run of a `prose` cell. Spans nest, so `emph` and `strong` carry runs rather than a
+string. -/
+inductive ProseRun where
+  /-- Literal text. -/
+  | text (s : String)
+  /-- An inline code span, written `` `…` ``. -/
+  | code (s : String)
+  /-- Emphasis, written `*…*`. -/
+  | emph (content : Array ProseRun)
+  /-- Strong emphasis, written `**…**`. -/
+  | strong (content : Array ProseRun)
+deriving Inhabited, Repr
+
+/-- Split `cs` at the first occurrence of the delimiter `close`, returning what precedes it and what
+follows it, or `none` when it does not occur. -/
+private def splitAtDelim (close : List Char) : List Char → Option (List Char × List Char)
+  | [] => none
+  | c :: rest =>
+    if close.isPrefixOf (c :: rest) then some ([], (c :: rest).drop close.length)
+    else (splitAtDelim close rest).map fun (pre, post) => (c :: pre, post)
+
+/-- Emit the pending literal text, if any. -/
+private def flushText (buf : String) (acc : Array ProseRun) : Array ProseRun :=
+  if buf.isEmpty then acc else acc.push (.text buf)
+
+private partial def parseProseAux : List Char → String → Array ProseRun → Array ProseRun
+  | [], buf, acc => flushText buf acc
+  | '*' :: '*' :: rest, buf, acc =>
+    match splitAtDelim ['*', '*'] rest with
+    | some (inner, rest') =>
+      parseProseAux rest' "" ((flushText buf acc).push (.strong (parseProseAux inner "" #[])))
+    | none => parseProseAux rest (buf ++ "**") acc
+  | '*' :: rest, buf, acc =>
+    match splitAtDelim ['*'] rest with
+    | some (inner, rest') =>
+      parseProseAux rest' "" ((flushText buf acc).push (.emph (parseProseAux inner "" #[])))
+    | none => parseProseAux rest (buf.push '*') acc
+  | '`' :: rest, buf, acc =>
+    match splitAtDelim ['`'] rest with
+    | some (inner, rest') =>
+      parseProseAux rest' "" ((flushText buf acc).push (.code (String.ofList inner)))
+    | none => parseProseAux rest (buf.push '`') acc
+  | c :: rest, buf, acc => parseProseAux rest (buf.push c) acc
+
+/-- Split a `prose` cell into its inline runs. -/
+def parseProse (s : String) : Array ProseRun := parseProseAux s.toList "" #[]
 
 /-- A generated table: a stable identifier (what a directive names to select it), a human title,
 column headers, and body rows. -/
@@ -128,7 +198,12 @@ spaces, truncated on a word boundary. Returns `""` for an undocumented declarati
 Not the first *line*: a docstring is hard-wrapped, so the first line ends wherever the author's
 column limit fell and cutting there truncates mid-sentence — which is tolerable in `#kind_crossings`'
 one-line report and is not in a rendered table. The first paragraph is the unit the author actually
-composed. -/
+composed.
+
+The result is **markdown**, because a docstring is, and it is returned that way rather than stripped:
+the doc-gen4 surface renders it, and stripping would cost that surface both the emphasis and the
+code spans doc-gen4 resolves into links. It therefore belongs in an `IndexCell.prose` cell, never an
+`IndexCell.text` one — see the grammar note above. -/
 def summaryLine (env : Environment) (n : Name) (maxLen : Nat := 160) : IO String := do
   let doc := (← findDocString? env n).getD ""
   let para := (doc.splitOn "\n\n").headD ""

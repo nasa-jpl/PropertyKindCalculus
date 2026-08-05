@@ -78,9 +78,14 @@ def labelFor (n : Name) : DocElabM String := do
 
 /-- Map a harvested cell onto the blueprint's own cell type. A declaration with a blueprint node
 becomes a hoverable cross-reference; one without becomes inline code — which is the common case, and
-is why `ref` is not used unconditionally (an unresolvable tag would render as a dead link). -/
+is why `ref` is not used unconditionally (an unresolvable tag would render as a dead link).
+
+A `prose` cell is a quoted docstring, so it becomes an `md` cell: the two are the same thing under
+two names, and `ItemIndex.parseRuns` is `PropertyKindCalculus.Index.parseProse`. Sending it to `text`
+instead is what puts `**` on the page. -/
 def toCell : IndexCell → DocElabM Cell
   | .text s => return .text s
+  | .prose s => return .md s
   | .code s => return .code s
   | .decl n display => do
     let label ← labelFor n

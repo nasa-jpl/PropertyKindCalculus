@@ -23,6 +23,7 @@ import Verso
 import VersoManual
 import VersoBlueprint
 import PropertyKindCalculus.Iso80000.Catalogue
+import PropertyKindCalculus.Index.Basic
 
 open Lean Elab
 open Verso Doc Elab
@@ -35,7 +36,8 @@ namespace PropertyKindCalculusBlueprint.ItemIndex
 /-- A single table cell. `ref` renders a Blueprint cross-reference (the same link
 the `{bpref "tag"}[text]` role makes); `code` renders inline code; `text` is
 plain text; `md` is a small markdown-ish string (runs of text, inline `` `code` ``,
-and `*emph*`) parsed at build time — for prose cells that mix code and text. -/
+`*emph*` and `**strong**`) parsed at build time — for prose cells that mix code
+and text, and for the docstrings the generated indexes quote. -/
 inductive Cell where
   | text (s : String)
   | code (s : String)
@@ -58,34 +60,26 @@ deriving Repr, Inhabited
 
 /-! ### Inline markup for `md` cells
 
-A deliberately tiny inline grammar — text, inline `` `code` ``, and `*emph*` —
-parsed into runs and emitted as `Inline.{text,code,emph}` *terms*. This keeps a
-prose-rich table term-built (one elaboration) instead of going through the
-interpreter cell-by-cell the way a markup `:::table` does, which is the dominant
-cost of a cold blueprint build. -/
+An `md` cell is parsed into runs and emitted as `Inline.{text,code,emph,bold}`
+*terms*. That keeps a prose-rich table term-built (one elaboration) instead of
+going through the interpreter cell-by-cell the way a markup `:::table` does,
+which is the dominant cost of a cold blueprint build.
+
+The grammar itself is `PropertyKindCalculus.Index.parseProse`, not a copy of it.
+The library needs that grammar anyway — its generated indexes quote docstrings,
+and a docstring is markdown — and soil-moisture-model's technical reference
+renders the same indexes through its own adapter. Three parsers for one dialect
+is three chances for a cell to mean something different depending on which
+document it lands in, so the dialect is defined once, in the library, and every
+renderer consumes runs rather than characters. -/
 
 /-- An inline run within an `md` cell. -/
-inductive Run where
-  | text (s : String)
-  | code (s : String)
-  | emph (s : String)
-deriving Repr, Inhabited
-
-private partial def parseRunsAux : List Char → String → Array Run → Array Run
-  | [], buf, acc => if buf.isEmpty then acc else acc.push (.text buf)
-  | '`' :: rest, buf, acc =>
-    let acc := if buf.isEmpty then acc else acc.push (.text buf)
-    let (code, rest') := rest.span (· != '`')
-    parseRunsAux (rest'.drop 1) "" (acc.push (.code (String.ofList code)))
-  | '*' :: rest, buf, acc =>
-    let acc := if buf.isEmpty then acc else acc.push (.text buf)
-    let (em, rest') := rest.span (· != '*')
-    parseRunsAux (rest'.drop 1) "" (acc.push (.emph (String.ofList em)))
-  | c :: rest, buf, acc => parseRunsAux rest (buf.push c) acc
+abbrev Run := PropertyKindCalculus.Index.ProseRun
 
 /-- Split an `md` cell into its inline runs. Backtick spans are code, single-
-asterisk spans are emphasis, everything else is text. -/
-def parseRuns (s : String) : List Run := (parseRunsAux s.toList "" #[]).toList
+asterisk spans are emphasis, double-asterisk spans are strong; spans nest, and an
+unterminated delimiter stays literal text. -/
+def parseRuns (s : String) : List Run := (PropertyKindCalculus.Index.parseProse s).toList
 
 /-! ## Building a `DocTable` from a catalogue
 
@@ -165,6 +159,19 @@ opaque evalDocTable (stx : Syntax) : TermElabM DocTable
 
 /-! ## Building the table term -/
 
+/-- One inline run as a Verso `Inline` term. Recursive, because the runs are: a
+docstring lead-in is routinely `**… the *branched* principal …**`, and rendering
+only the outer span would put the inner markers back on the page. -/
+partial def runInline : Run → DocElabM Term
+  | .text t   => `(Verso.Doc.Inline.text $(quote t))
+  | .code t   => `(Verso.Doc.Inline.code $(quote t))
+  | .emph rs  => do
+    let inls ← rs.mapM runInline
+    `(Verso.Doc.Inline.emph #[$inls,*])
+  | .strong rs => do
+    let inls ← rs.mapM runInline
+    `(Verso.Doc.Inline.bold #[$inls,*])
+
 /-- A cell becomes a one-paragraph block; `ref` cells become the `Inline.informal`
 node that `bpref` produces (`block := none`; the href and hover are resolved from
 the traversal state at render time, exactly as for a hand-written `bpref`). -/
@@ -178,10 +185,7 @@ def cellBlock : Cell → DocElabM Term
         #[Verso.Doc.Inline.other (Informal.Inline.informal $(quote data))
             #[Verso.Doc.Inline.text $(quote txt)]])
   | .md s => do
-    let inls ← (parseRuns s).toArray.mapM fun
-      | .text t => `(Verso.Doc.Inline.text $(quote t))
-      | .code t => `(Verso.Doc.Inline.code $(quote t))
-      | .emph t => `(Verso.Doc.Inline.emph #[Verso.Doc.Inline.text $(quote t)])
+    let inls ← (parseRuns s).toArray.mapM runInline
     `(Verso.Doc.Block.para #[$inls,*])
   | .links items => do
     let parts ← items.toArray.mapM fun (tag, txt) =>

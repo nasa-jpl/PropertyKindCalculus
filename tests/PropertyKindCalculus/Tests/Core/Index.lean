@@ -166,4 +166,43 @@ gain | g | function head
 #guard_msgs in
 #pkc_index "pkc-math-symbol" PropertyKindCalculus.Tests.Index
 
+/-! ## The prose grammar
+
+The `What it does` column of the tables above is a docstring quoted verbatim, so it arrives as
+markdown. `parseProse` is what stops the markers reaching the page, and its two interesting cases are
+both invisible from a table that looks fine:
+
+  * spans **nest** — a docstring lead-in is routinely `**… the *branched* … **`, and a flattening
+    parser puts the inner markers back on the page while the outer ones disappear, which looks like
+    a *partial* fix rather than a broken one;
+  * an unterminated delimiter must degrade to literal text. A parser that instead runs to the end of
+    the string silently deletes the rest of the cell, and a cell that is merely *shorter* than it
+    should be is not something a reader can notice.
+-/
+
+open PropertyKindCalculus.Index
+
+/-- A parse rendered compactly, so the pins below diff on structure rather than on `Repr`'s
+fully-qualified constructor names. -/
+private partial def runsText (rs : Array ProseRun) : String :=
+  "[" ++ String.intercalate ", " (rs.toList.map go) ++ "]"
+where
+  go : ProseRun → String
+    | .text s   => s!"“{s}”"
+    | .code s   => s!"code “{s}”"
+    | .emph c   => "emph " ++ runsText c
+    | .strong c => "strong " ++ runsText c
+
+/-- info: "[strong [“a ”, emph [“b”], “ ”, code “c”], “ tail”]" -/
+#guard_msgs in
+#eval runsText (parseProse "**a *b* `c`** tail")
+
+/-- info: "[“a lone * asterisk and a lone ` tick”]" -/
+#guard_msgs in
+#eval runsText (parseProse "a lone * asterisk and a lone ` tick")
+
+/-- info: "[“plain sentence.”]" -/
+#guard_msgs in
+#eval runsText (parseProse "plain sentence.")
+
 end PropertyKindCalculus.Tests.Index
