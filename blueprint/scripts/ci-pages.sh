@@ -80,13 +80,22 @@ else
   bash "$ROOT/../scripts/build-api-docs.sh"
 fi
 
+# Point every hint at the staged docs/ tree rather than at _out/. docs/ is the exact layout that
+# publish-pages.sh commits to gh-pages — the multi-page site at the root, html-single/ and api/
+# beneath it — so a link that resolves here resolves on the published site. The _out/ trees hold the
+# blueprint alone: the API site is never staged into them, so the in-doc "browse the API
+# documentation" link 404s when _out/blueprint/html-multi is served directly.
+DOCS="$(cd "$ROOT/.." && pwd)/docs"
 echo
-echo "Rendered. Open either output directly as a file:"
-echo "  • single page:  file://$OUT/html-single/index.html"
-echo "  • multi page:   file://$OUT/html-multi/index.html"
-[ -n "$PDF" ] && echo "  • PDF:          file://$PDF"
-echo "  • staged at repo-root docs/ — publish to gh-pages with: scripts/publish-pages.sh (add PAGES_PUSH=1 to push)"
+echo "Rendered and staged at repo-root docs/ — the exact layout publish-pages.sh commits to gh-pages."
+echo "Open any of these directly as a file:"
+echo "  • multi page:   file://$DOCS/index.html"
+echo "  • single page:  file://$DOCS/html-single/index.html"
+[ -n "$PDF" ] && echo "  • PDF:          file://$DOCS/$PDF_NAME"
+[ -z "$SKIP_API" ] && echo "  • API docs:     file://$DOCS/api/index.html"
+echo "  • publish to gh-pages with: scripts/publish-pages.sh (add PAGES_PUSH=1 to push)"
 echo
-echo "Or serve the multi-page site over HTTP (search + dependency graph need this;"
-echo "the -d path is absolute so it works from any directory):"
-echo "  python3 -m http.server 8000 -d \"$OUT/html-multi\"   # then http://localhost:8000/"
+echo "Or serve the whole staged site over HTTP (search + dependency graph need this; serving docs/"
+echo "rather than _out/ is what makes the in-doc API link resolve. The -d path is absolute so it"
+echo "works from any directory):"
+echo "  python3 -m http.server 8000 -d \"$DOCS\"   # then http://localhost:8000/"

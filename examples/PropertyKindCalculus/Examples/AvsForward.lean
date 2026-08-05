@@ -96,37 +96,48 @@ def attenuationQ {α : Type} [NumCarrier α] (cfg : AvsConfig α)
     Quantity.mul (ProductKind.ofRatio paramB vegetationIndex attenExponent)
       (Quantity.mul (ProductKind.ofRatio pureNumber paramB paramB) negTwo b) ndvi
   Quantity.exp (⟨rfl, rfl⟩ : TranscendentalKind attenExponent attenuationK) arg
-#check @attenuationQ
 
---  "\\sigma^0 = a\\,\\mathrm{NDVI} + e^{-2\\,b\\,\\mathrm{NDVI}}\\,c\\,r + d"
 /-- The LAVS forward `σ⁰ = a·ndvi + (τ·c)·r + d`, kind `backscatter`. -/
 @[pkc_math substituting attenuationQ]
-def lavsForwardQ {α : Type} [NumCarrier α] (cfg : AvsConfig α)
-    (a : Quantity paramA α) (b : Quantity paramB α) (c : Quantity paramC α) (d : Quantity backscatter α)
-    (ndvi : Quantity vegetationIndex α) (r : Quantity reflectivity α) : Quantity backscatter α :=
+def lavsForwardQ {α : Type} [NumCarrier α]
+  (cfg : AvsConfig α)
+  (a : Quantity paramA α)
+  (b : Quantity paramB α)
+  (c : Quantity paramC α)
+  (d : Quantity backscatter α)
+  (ndvi : Quantity vegetationIndex α)
+  (r : Quantity reflectivity α)
+: Quantity backscatter α :=
   let att := attenuationQ cfg b ndvi
   Quantity.mul (ProductKind.ofRatio paramA vegetationIndex backscatter) a ndvi
     + Quantity.mul (ProductKind.ofRatio paramC reflectivity backscatter)
         (Quantity.mul (ProductKind.ofRatio attenuationK paramC paramC) att c) r
     + d
-#check @lavsForwardQ
 
 /-- The LAVS residual `s0 − σ⁰`, kind `backscatter` (subtraction forces the shared kind). -/
 @[pkc_math substituting lavsForwardQ substituting attenuationQ]
-def lavsResidualQ {α : Type} [NumCarrier α] (cfg : AvsConfig α)
-    (a : Quantity paramA α) (b : Quantity paramB α) (c : Quantity paramC α) (d : Quantity backscatter α)
-    (ndvi : Quantity vegetationIndex α) (r : Quantity reflectivity α) (s0 : Quantity backscatter α) :
-    Quantity backscatter α :=
+def lavsResidualQ {α : Type} [NumCarrier α]
+  (cfg : AvsConfig α)
+  (a : Quantity paramA α)
+  (b : Quantity paramB α)
+  (c : Quantity paramC α)
+  (d : Quantity backscatter α)
+  (ndvi : Quantity vegetationIndex α)
+  (r : Quantity reflectivity α)
+  (s0 : Quantity backscatter α)
+: Quantity backscatter α :=
   s0 - lavsForwardQ cfg a b c d ndvi r
-#check @lavsResidualQ
 
 /-- The four analytic Jacobian columns `∂residual/∂(a,b,c,d)`, each at its forced kind. Grouping
 matches `kernel.avs_batch.lavsJacResidual` (the `∂/∂b` left-fold passes through `jacBPartial`). -/
 @[pkc_math substituting attenuationQ]
-def lavsJacResidualQ {α : Type} [NumCarrier α] (cfg : AvsConfig α)
-    (b : Quantity paramB α) (c : Quantity paramC α)
-    (ndvi : Quantity vegetationIndex α) (r : Quantity reflectivity α) :
-    Quantity vegetationIndex α × Quantity jacB α × Quantity reflectivity α × Quantity pureNumber α :=
+def lavsJacResidualQ {α : Type} [NumCarrier α]
+  (cfg : AvsConfig α)
+  (b : Quantity paramB α)
+  (c : Quantity paramC α)
+  (ndvi : Quantity vegetationIndex α)
+  (r : Quantity reflectivity α)
+: Quantity vegetationIndex α × Quantity jacB α × Quantity reflectivity α × Quantity pureNumber α :=
   let att := attenuationQ cfg b ndvi
   let ja : Quantity vegetationIndex α := (⟨(0 : α)⟩ : Quantity vegetationIndex α) - ndvi
   let jb : Quantity jacB α :=
@@ -144,7 +155,6 @@ def lavsJacResidualQ {α : Type} [NumCarrier α] (cfg : AvsConfig α)
     (⟨(0 : α)⟩ : Quantity pureNumber α) - (⟨(1 : α)⟩ : Quantity pureNumber α)
   (ja, jb, jc, jd)
 
-#check @lavsJacResidualQ
 /-! ## The emission boundary — `.magnitude` projections for the scalar tape recorder
 
 Naked `Float`/`α` appears only here, where the model meets the (scalar) tape recorder. Each is

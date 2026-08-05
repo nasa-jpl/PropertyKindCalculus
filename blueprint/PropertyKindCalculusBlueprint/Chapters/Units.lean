@@ -180,12 +180,12 @@ $$`\mathrm{convert}_{u_2 \to u_1}\bigl(\mathrm{convert}_{u_1 \to u_2}(x)\bigr) =
 This is proved for the realized case: the {uses "def_si_prefix"}[SI-prefixed] (decimal)
 and {uses "def_binary_prefix"}[binary-prefixed] (IEC 80000-13) units, where the §1.22
 conversion factor is a *power of the radix* — ten for SI, two for binary. That factor is
-kept as its integer **exponent**, so the two directions are reciprocal on the nose
+kept as its integer *exponent*, so the two directions are reciprocal on the nose
 ($`+5` then $`-5` for $`\mathrm{km}\leftrightarrow\mathrm{cm}`; $`+10` then $`-10` for
 $`\mathrm{MiB}\leftrightarrow\mathrm{KiB}`) — exact over $`\mathbb{Z}`
 (`convertExp_roundtrip`) and, numerically, over $`\mathbb{R}` via a power-of-radix
 factor that is *structurally* nonzero (`convertReal_roundtrip`). The exponent
-bookkeeping is blind to the radix, so **one** proof serves both prefix families, gated
+bookkeeping is blind to the radix, so *one* proof serves both prefix families, gated
 to a common radix; conversion across radices (a power of ten is never a power of two)
 and across kinds is simply undefined — a type-level fact, not a runtime check. The
 fully general conversion by an arbitrary chosen-reference ratio, over the
@@ -238,7 +238,7 @@ enumerated as `def`s.
 A _binary prefix_ `BinaryPrefix` (IEC 80000-13) is the information-technology
 counterpart of an SI prefix, denoting a power-of-_two_ factor: _kibi_ = $`2^{10}`,
 _mebi_ = $`2^{20}`, …. IEC 80000-13 introduced these to disambiguate the "kilobyte"
-between $`10^3` and $`2^{10}` bytes — _kibi_ names the binary one. They are **not** SI
+between $`10^3` and $`2^{10}` bytes — _kibi_ names the binary one. They are *not* SI
 prefixes (the SI is decimal-only), so they are a distinct type; but they form the same
 multiples/submultiples and bear the same §1.22 conversion factor, and so reuse one
 prefixed-unit and one {uses "thm_unit_conversion_roundtrip"}[conversion round-trip].

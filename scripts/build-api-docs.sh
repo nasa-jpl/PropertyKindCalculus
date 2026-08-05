@@ -94,4 +94,22 @@ cp -r "$GENERATED" "$DOCS/api"
 # repeat it here so this script also works standalone (API site without a blueprint render).
 touch "$DOCS/.nojekyll"
 
+# --- Re-point the single-page blueprint's API link ----------------------------------------------
+#
+# The blueprint's "browse the API documentation" link is authored once, in Blueprint.lean, as the
+# relative `api/index.html`. Verso renders that same href into BOTH outputs, and each carries
+# `<base href="./">` — so it resolves correctly from the multi-page site at the docs/ root, but from
+# `docs/html-single/index.html` it points at `docs/html-single/api/`, which does not exist: a 404 on
+# the published site, not just in a local preview.
+#
+# The PDF avoids this because ci-pages.sh copies the 2 MB file into both trees. The API site is
+# ~220 MB, so mirroring it is not the answer; re-point the one href instead. Matching `href="api/`
+# exactly makes this idempotent — after the rewrite the value starts `../api/` and no longer matches
+# — and `<base href="./">` is untouched (it has no `api/` path).
+SINGLE="$DOCS/html-single/index.html"
+if [ -f "$SINGLE" ]; then
+  sed -i 's|href="api/|href="../api/|g' "$SINGLE"
+  echo "Re-pointed the API link in docs/html-single/index.html to ../api/ (it sits one level down)"
+fi
+
 echo "Staged $(find "$DOCS/api" -type f | wc -l) files into $DOCS/api/ (entry point: docs/api/index.html)"

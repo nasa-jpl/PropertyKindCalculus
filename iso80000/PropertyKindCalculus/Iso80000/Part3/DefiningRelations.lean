@@ -83,7 +83,7 @@ theorem speed_dim_from_pathLength_duration :
 
 /-- A ratio of two equal dimensions is dimension one. -/
 theorem length_div_length : Dim.length / Dim.length = 1 := by
-  ext <;> simp [Dim.length]
+  ext; simp [Dim.length]
 
 /-- **Under the SI's `α = s/r`, plane angle computes to dimension one.** With arc and
 radius taken as plain lengths, `s/r` cancels the dimension — a checked computation
