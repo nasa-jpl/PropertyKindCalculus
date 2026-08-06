@@ -105,4 +105,35 @@ elab "#pkc_index " id:str nss:ident* : command => liftTermElabM do
   let tbl ← tableById id.getString (nss.map (·.getId))
   logInfo m!"{tbl.toText}"
 
+open Command in
+/-- `#pkc_summary_overflow [ns …]` lists the docstrings an index quotes whose first paragraph is
+wider than the column that quotes it, widest first.
+
+    #pkc_summary_overflow SoilMoisture.Algorithm
+
+**A command rather than a build warning**, which is the design point worth stating because a warning
+is the obvious thing to want. There is no source position to raise one at: `summaryLine` runs while
+the *document* elaborates, so a warning raised where the overflow is detected attaches to the
+`:::pkc_index` directive — one diagnostic on a chapter, naming none of the docstrings that caused it,
+in a file whose author may not own any of them. Asked as a command, the question is answered where
+the docstrings are, over the scope the asker chose.
+
+An over-budget docstring is **not a defect**. It truncates on a run boundary and stays well-formed
+markdown at any length; the harvest reads a paragraph rather than a line exactly so that a docstring
+can be written for its reader first. What this reports is narrower: these particular paragraphs open
+a table column, and the fix where one is wanted is a paragraph break — a first paragraph saying what
+the declaration *is*, with the argument below it. -/
+elab "#pkc_summary_overflow" nss:ident* : command => liftTermElabM do
+  let env ← getEnv
+  let scope := nss.map (·.getId)
+  let maxLen := 160
+  let quoted := quotedDecls env scope
+  let over ← summaryOverflows env scope maxLen
+  if over.isEmpty then
+    logInfo m!"summary overflow — none of {quoted.size} quoted docstring(s) exceed {maxLen} characters"
+  else
+    let lines := over.toList.map fun o => s!"{o.decl} — {o.width}"
+    logInfo m!"summary overflow ({over.size} of {quoted.size} quoted docstring(s) exceed \
+      {maxLen} characters):\n{String.intercalate "\n" lines}"
+
 end PropertyKindCalculus.Index

@@ -149,6 +149,107 @@ private partial def parseProseAux : List Char → String → Array ProseRun → 
 /-- Split a `prose` cell into its inline runs. -/
 def parseProse (s : String) : Array ProseRun := parseProseAux s.toList "" #[]
 
+/-! ### Measuring and re-emitting runs
+
+Parsing is only half of what a `prose` cell needs. **Truncating** one — which is what `summaryLine`
+does when a docstring's first paragraph is longer than a table column — has to happen on the runs
+rather than on the characters, because a character-level cut lands wherever the budget runs out, and
+that place is as likely to be inside a code span as between two words. The symptom is an unpaired
+backtick on the page: markdown that no longer parses, produced by a cut that looked fine when it was
+made, in a docstring nobody thought of as too long.
+
+So the three below travel together. `runsWidth` measures what a reader sees, `takeRuns` cuts only
+where a run survives the cut, and `runsToMarkdown` writes the result back out. Together they make a
+severed span impossible for *any* docstring, rather than for the ones someone remembered to
+shorten. -/
+
+/-- Re-emit runs as the markdown they were parsed from — the inverse of `parseProse`.
+An unterminated delimiter, which `parseProse` keeps as literal text, is written back out as that
+text, so a stray asterisk does not acquire a partner on the way through. -/
+partial def runsToMarkdown (rs : Array ProseRun) : String :=
+  rs.foldl (init := "") fun acc r =>
+    acc ++ match r with
+      | .text s   => s
+      | .code s   => "`" ++ s ++ "`"
+      | .emph c   => "*" ++ runsToMarkdown c ++ "*"
+      | .strong c => "**" ++ runsToMarkdown c ++ "**"
+
+/-- The width of runs as a reader sees them: the delimiters are notation, not content, so `**ε**` is
+one character wide and not five. A budget is spent on what reaches the page, which is what keeps a
+heavily marked-up docstring from being cut short by its own emphasis. -/
+partial def runsWidth (rs : Array ProseRun) : Nat :=
+  rs.foldl (init := 0) fun acc r =>
+    acc + match r with
+      | .text s   => s.length
+      | .code s   => s.length
+      | .emph c   => runsWidth c
+      | .strong c => runsWidth c
+
+/-- The width of a single run. -/
+def runWidth (r : ProseRun) : Nat := runsWidth #[r]
+
+/-- The longest prefix of `s` that ends on a word boundary and fits in `budget` characters. -/
+private def takeWords (budget : Nat) (s : String) : String := Id.run do
+  let mut out := ""
+  let mut started := false
+  for w in s.splitOn " " do
+    let next := if started then out ++ " " ++ w else w
+    if next.length > budget then break
+    out := next
+    started := true
+  return out
+
+/-- Keep as much of `rs` as fits in `budget` visible characters, cutting only where the cut cannot
+produce malformed markdown. Returns the kept runs, the budget left over, and whether anything was
+dropped.
+
+One rule per run, and each is a judgement about what a *shortened* version of that run would mean.
+A `text` run may be cut, at a word boundary. A `code` run is **all-or-nothing**: half an identifier
+is not a shorter identifier, it is a different and non-existent one, so a span that does not fit is
+dropped rather than trimmed. An `emph` or `strong` span is truncated *inside*, keeping its
+delimiters — which is what stops a docstring whose entire first paragraph is bold from degrading to
+nothing at all. -/
+private partial def takeRuns (budget : Nat) : List ProseRun → Array ProseRun × Nat × Bool
+  | [] => (#[], budget, false)
+  | r :: rest =>
+    let w := runWidth r
+    if w ≤ budget then
+      let (kept, budget', dropped) := takeRuns (budget - w) rest
+      (#[r] ++ kept, budget', dropped)
+    else
+      let kept : Array ProseRun :=
+        match r with
+        | .text s   => let pre := takeWords budget s
+                       if pre.isEmpty then #[] else #[.text pre]
+        | .code _   => #[]
+        | .emph c   => let (inner, _, _) := takeRuns budget c.toList
+                       if inner.isEmpty then #[] else #[.emph inner]
+        | .strong c => let (inner, _, _) := takeRuns budget c.toList
+                       if inner.isEmpty then #[] else #[.strong inner]
+      (kept, 0, true)
+
+/-- Strip trailing whitespace from the last run, recursing into a span and dropping the run entirely
+if nothing survives.
+
+Needed because a cut lands where the budget ran out, which is routinely just after a space, and a
+span closing on one is not a span: `*b *` is a literal asterisk to markdown, not emphasis, since a
+closing delimiter may not be preceded by whitespace. Left alone it is the same defect the run-based
+cut exists to prevent, arrived at from the other side. Whitespace *inside* a code span is content and
+is left alone. -/
+private partial def trimRunsEnd (rs : Array ProseRun) : Array ProseRun :=
+  match rs.back? with
+  | none => rs
+  | some r =>
+    let init := rs.pop
+    match r with
+    | .text s   => let t := s.trimAsciiEnd.toString
+                   if t.isEmpty then trimRunsEnd init else init.push (.text t)
+    | .code _   => rs
+    | .emph c   => let c' := trimRunsEnd c
+                   if c'.isEmpty then trimRunsEnd init else init.push (.emph c')
+    | .strong c => let c' := trimRunsEnd c
+                   if c'.isEmpty then trimRunsEnd init else init.push (.strong c')
+
 /-- A generated table: a stable identifier (what a directive names to select it), a human title,
 column headers, and body rows. -/
 structure IndexTable where
@@ -192,29 +293,45 @@ def shortenNames (s : String) : String :=
     | some last => if last.isEmpty then tok else last
     | none      => tok)
 
-/-- A declaration's docstring reduced to one table cell: its first paragraph, newlines collapsed to
-spaces, truncated on a word boundary. Returns `""` for an undocumented declaration.
+/-- A docstring's first paragraph, hard-wrap newlines collapsed to spaces.
 
 Not the first *line*: a docstring is hard-wrapped, so the first line ends wherever the author's
 column limit fell and cutting there truncates mid-sentence — which is tolerable in `#kind_crossings`'
 one-line report and is not in a rendered table. The first paragraph is the unit the author actually
-composed.
+composed, which is why nothing here asks anyone to write to a character budget. -/
+def firstParagraph (doc : String) : String :=
+  let para := (doc.splitOn "\n\n").headD ""
+  let lines := (para.splitOn "\n").map (fun l => l.trimAscii.toString)
+  String.intercalate " " (lines.filter (!·.isEmpty))
+
+/-- The visible width of a docstring's first paragraph — what a summary cell is budgeted against,
+and what `#pkc_summary_overflow` reports. -/
+def summaryWidth (doc : String) : Nat := runsWidth (parseProse (firstParagraph doc))
+
+/-- A docstring reduced to one table cell: its first paragraph, at most `maxLen` visible characters,
+ending in an ellipsis when it had to be cut.
 
 The result is **markdown**, because a docstring is, and it is returned that way rather than stripped:
 the doc-gen4 surface renders it, and stripping would cost that surface both the emphasis and the
 code spans doc-gen4 resolves into links. It therefore belongs in an `IndexCell.prose` cell, never an
-`IndexCell.text` one — see the grammar note above. -/
+`IndexCell.text` one — see the grammar note above.
+
+Which is also why the cut is made on runs rather than on characters. Returning markdown means the
+cell has to *stay* markdown at whatever length it comes out at, and a character-level cut cannot
+promise that: it severs whichever span the budget happens to land in. `takeRuns` cuts only where a
+run survives being cut, so no docstring length can produce a cell that fails to parse. -/
+def summarize (doc : String) (maxLen : Nat := 160) : String :=
+  let flat := firstParagraph doc
+  if flat.length ≤ maxLen then flat
+  else
+    let (kept, _, dropped) := takeRuns maxLen (parseProse flat).toList
+    let out := runsToMarkdown (trimRunsEnd kept)
+    if dropped then out ++ " …" else out
+
+/-- A declaration's docstring as one table cell, per `summarize`. `""` for an undocumented
+declaration. -/
 def summaryLine (env : Environment) (n : Name) (maxLen : Nat := 160) : IO String := do
-  let doc := (← findDocString? env n).getD ""
-  let para := (doc.splitOn "\n\n").headD ""
-  let lines := (para.splitOn "\n").map (fun l => l.trimAscii.toString)
-  let flat := String.intercalate " " (lines.filter (!·.isEmpty))
-  if flat.length ≤ maxLen then return flat
-  let mut out := ""
-  for w in flat.splitOn " " do
-    if out.length + w.length + 1 > maxLen then break
-    out := if out.isEmpty then w else out ++ " " ++ w
-  return out ++ " …"
+  return summarize ((← findDocString? env n).getD "") maxLen
 
 /-! ## Which declarations are *authored*
 

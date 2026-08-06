@@ -70,10 +70,12 @@ theorem attenuation_roles_distinct :
 def ofN {α : Type} [NumCarrier α] (n : Nat) : α := (n : α)
 
 /-- The AVS forward's configuration: the two-way optical-path factor `2`, as a kinded quantity — the
-sole numeral of the model. `@[pkc_math_config]` declares it a configuration type, so `cfg.two`
-renders as the qualified constant `\mathrm{AvsConfig.two}` rather than as an application of the
-configuration value. It is *not* rendered as `2`: `two` is a `def` parameter here, and asserting a
-value for it would be an editorial claim (`RENDERING.md` §5, E tier), not a faithful one. -/
+sole numeral of the model.
+
+`@[pkc_math_config]` declares it a configuration type, so `cfg.two` renders as the qualified constant
+`\mathrm{AvsConfig.two}` rather than as an application of the configuration value. It is *not*
+rendered as `2`: `two` is a `def` parameter here, and asserting a value for it would be an editorial
+claim (`RENDERING.md` §5, E tier), not a faithful one. -/
 @[pkc_math_config]
 structure AvsConfig (α : Type) where
   /-- The two-way optical-path factor `2` (kind `pureNumber`). -/
@@ -128,8 +130,10 @@ def lavsResidualQ {α : Type} [NumCarrier α]
 : Quantity backscatter α :=
   s0 - lavsForwardQ cfg a b c d ndvi r
 
-/-- The four analytic Jacobian columns `∂residual/∂(a,b,c,d)`, each at its forced kind. Grouping
-matches `kernel.avs_batch.lavsJacResidual` (the `∂/∂b` left-fold passes through `jacBPartial`). -/
+/-- The four analytic Jacobian columns `∂residual/∂(a,b,c,d)`, each at its forced kind.
+
+Grouping matches `kernel.avs_batch.lavsJacResidual` (the `∂/∂b` left-fold passes through
+`jacBPartial`). -/
 @[pkc_math substituting attenuationQ]
 def lavsJacResidualQ {α : Type} [NumCarrier α]
   (cfg : AvsConfig α)

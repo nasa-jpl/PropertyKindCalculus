@@ -241,4 +241,49 @@ def transparentTable (scope : Scope) : MetaM IndexTable :=
   tagTable "pkc-math-transparent" "Notational wrappers" "Wrapper"
     DocGenMath.pkcMathTransparentAttr scope
 
+/-! ## Which docstrings an index quotes
+
+`summaryLine` reads a *first paragraph* precisely so that nobody has to write a docstring to a
+character budget. But the four tables above open a column with one, and a paragraph much longer than
+the column is an ellipsis where a summary should be — a cell that stops before it has said what the
+declaration is.
+
+The declarations that can happen to are exactly the ones those tables quote, which is the union
+below and not "every documented declaration in scope": a docstring no index reads cannot ellipsize
+anywhere, and reporting it would bury the ones that can. Carriers are unscoped for the same reason
+`carriersTable` is — a downstream chapter renders the built-in carriers alongside its own, so the
+carrier overflowing *its* column may well be one of PropertyKindCalculus's. -/
+
+/-- Every declaration whose docstring an index table quotes. -/
+def quotedDecls (env : Environment) (scope : Scope) : Array Name :=
+  let inScope (ns : Array Name) : Array Name := ns.filter scope.covers
+  let all :=
+    inScope ((BoundaryAudit.boundaryTags env).map (·.decl))
+      ++ BoundaryAudit.kindCarrierNames env
+      ++ inScope ((DocGenMath.pkcMathUses env).map (·.decl))
+      ++ inScope (tagAttrDecls DocGenMath.pkcMathConfigAttr env)
+      ++ inScope (tagAttrDecls DocGenMath.pkcMathTransparentAttr env)
+  all.toList.eraseDups.toArray.qsort nameLt
+
+/-- A quoted docstring whose first paragraph does not fit the column that quotes it. -/
+structure SummaryOverflow where
+  /-- The declaration whose docstring overflows. -/
+  decl : Name
+  /-- The visible width of its first paragraph. -/
+  width : Nat
+deriving Repr, Inhabited
+
+/-- The quoted docstrings whose first paragraph exceeds `maxLen` visible characters, widest first —
+what `#pkc_summary_overflow` reports. -/
+def summaryOverflows (env : Environment) (scope : Scope) (maxLen : Nat := 160) :
+    IO (Array SummaryOverflow) := do
+  let mut out : Array SummaryOverflow := #[]
+  for d in quotedDecls env scope do
+    let doc := (← findDocString? env d).getD ""
+    if doc.isEmpty then continue
+    let w := summaryWidth doc
+    if w > maxLen then out := out.push { decl := d, width := w }
+  return out.qsort fun a b =>
+    if a.width == b.width then nameLt a.decl b.decl else a.width > b.width
+
 end PropertyKindCalculus.Index

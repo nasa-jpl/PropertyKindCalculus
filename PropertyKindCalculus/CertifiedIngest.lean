@@ -73,11 +73,13 @@ inductive CertError where
   | inadmissible (kindId : String) : CertError
 deriving Repr, DecidableEq, Inhabited
 
-/-- **A quantity bundled with its discharged admissibility evidence.** Produced *only* by a
-sanctioned constructor — `Quantity.certify` (checked) or `CertifiedQuantity.byConstruction`
-(tier (i)) — so an anonymous `⟨…⟩` mint is, by contrast, reviewable as a defect. The proof
-`cert` is the gate's receipt; `q` is the plain quantity that flows downstream once the
-receipt is dropped. -/
+/-- **A quantity bundled with its discharged admissibility evidence** — `cert` is the gate's
+receipt, kept in the type rather than asserted at the call site.
+
+Produced *only* by a sanctioned constructor — `Quantity.certify` (checked) or
+`CertifiedQuantity.byConstruction` (tier (i)) — so an anonymous `⟨…⟩` mint is, by contrast,
+reviewable as a defect. `q` is the plain quantity that flows downstream once the receipt is
+dropped. -/
 structure CertifiedQuantity (k : KindOfProperty) (R : Type) [inst : KindAdmissible k R] where
   /-- The certified quantity. -/
   q : Quantity k R

@@ -205,4 +205,45 @@ where
 #guard_msgs in
 #eval runsText (parseProse "plain sentence.")
 
+/-! ## Truncating a quoted docstring
+
+A cell wider than its column is cut, and the cut used to be made on characters — which is blind to
+the markup, so it landed inside a code span as readily as between two words and left an unpaired
+backtick on the page. Markdown that no longer parses, from a cut that looked fine when it was made.
+
+Cutting on *runs* instead is what the pins below fix, and each is a way that cut can still go wrong.
+A code span cannot be trimmed to fit — half an identifier is a different, non-existent one — so it
+has to be dropped whole. A paragraph that is entirely one span has to be truncated *inside* the span,
+or it degrades to nothing at all. And the cut must not leave a span closing on a space: `*b *` is a
+literal asterisk to markdown, not emphasis, so the trailing whitespace has to go with the cut. -/
+
+/-- info: "alpha …" -/
+#guard_msgs in
+#eval summarize "alpha `beta gamma delta` omega" 12
+
+/-- info: "**alpha** …" -/
+#guard_msgs in
+#eval summarize "**alpha beta gamma**" 8
+
+/-- info: "a *b* …" -/
+#guard_msgs in
+#eval summarize "a *b `c d e` f* tail" 6
+
+/-! Below the budget nothing is touched, and the budget is spent on what a reader sees: the six
+`*` and two `` ` `` of the first pin are notation, so its 54 characters are 48 wide. The second is
+the reason `summarize` reads a paragraph rather than a line — the body is the author's, not the
+column's. -/
+
+/-- info: "**A quantity (R10).** A magnitude of a fixed kind `k`." -/
+#guard_msgs in
+#eval summarize "**A quantity (R10).** A magnitude of a fixed kind `k`."
+
+/-- info: 48 -/
+#guard_msgs in
+#eval summaryWidth "**A quantity (R10).** A magnitude of a fixed kind `k`."
+
+/-- info: "Summary." -/
+#guard_msgs in
+#eval summarize "Summary.\n\nBody paragraph."
+
 end PropertyKindCalculus.Tests.Index

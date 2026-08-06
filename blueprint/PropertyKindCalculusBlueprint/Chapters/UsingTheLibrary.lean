@@ -295,3 +295,35 @@ is already a row of the table above.
 
 :::pkc_index "operations" (scope := PropertyKindCalculus.Examples)
 :::
+
+# Reading an index without building a document
+
+Every table above is also available from the InfoView, under the name the directive uses:
+
+```
+#pkc_index "crossings" PropertyKindCalculus.Examples
+```
+
+which is how a pinned probe fixes one. `tests/PropertyKindCalculus/Tests/Core/Index.lean` authors a
+small closed world — three kinds with one edge between them, a record, an operation, one site of
+each boundary tier — and pins the rendered index of each with `#guard_msgs`. That is what turns
+*the table came back empty* into a build failure, which matters more here than for a hand-written
+table: a derived index that stops matching does not look broken, it looks like an absence.
+
+The second command asks after the *docstrings* the tables quote:
+
+```
+#pkc_summary_overflow PropertyKindCalculus.Examples
+```
+
+The `What it does` column is a declaration's first paragraph — the unit its author composed, read
+in preference to its first line, which ends wherever a hard wrap fell. A paragraph much longer than
+the column is cut, and the cut is made on the parsed inline runs rather than on characters, so a
+code span is dropped whole rather than severed and an emphasized phrase keeps its delimiters. No
+docstring length can produce a cell that fails to parse.
+
+What a length can still produce is a cell that says nothing: an ellipsis three words in, where a
+summary should be. `#pkc_summary_overflow` reports the quoted docstrings that will do that, widest
+first, so the question is asked where the docstrings are rather than raised as a warning against the
+directive that happened to render them. It is not an error, and the fix where one is wanted is a
+paragraph break — a first paragraph saying what the declaration *is*, with the argument below it.

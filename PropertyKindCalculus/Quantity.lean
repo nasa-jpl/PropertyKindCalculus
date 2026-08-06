@@ -106,11 +106,11 @@ class LawfulCarrier (R : Type) extends Carrier R where
   /-- `zero` is a right unit. -/
   add_zero : ∀ a : R, add a zero = a
 
-/-- **A quantity (R10).** A magnitude of a fixed kind `k`, carried at a
-representation type `R`. Indexed by `k`, so the type system forbids forming or
-comparing a `Quantity k₁ R` with a `Quantity k₂ R` when `k₁ ≠ k₂`; indexed by
-`R`, so the same value type is instantiated at whichever numbers the task needs.
-This indexing *is* the fix for the dimension-1 conflation. -/
+/-- **A quantity (R10).** A magnitude of a fixed kind `k`, carried at a representation type `R`.
+
+Indexed by `k`, so the type system forbids forming or comparing a `Quantity k₁ R` with a
+`Quantity k₂ R` when `k₁ ≠ k₂`; indexed by `R`, so the same value type is instantiated at whichever
+numbers the task needs. This indexing *is* the fix for the dimension-1 conflation. -/
 structure Quantity (k : KindOfProperty) (R : Type) where
   /-- §13.3.3 — the magnitude (the *number* of the reference-times-number form),
   carried at the representation type `R`. -/

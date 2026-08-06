@@ -35,9 +35,11 @@ theorem tk : TranscendentalKind dl dl := ⟨rfl, rfl⟩
 
 /-! ## The rendered model -/
 
-/-- The AVS-style backscatter forward model. Rendered on its doc page as
-`σ⁰ = a·ndvi + exp(−2·b·ndvi)·c·r + d`. The `@[pkc_math_symbol]` override gives the left-hand side
-its conventional notation `σ⁰`; `@[pkc_math]` (applied after it) renders the whole equation. -/
+/-- The AVS-style backscatter forward model, rendered on its doc page as
+`σ⁰ = a·ndvi + exp(−2·b·ndvi)·c·r + d`.
+
+The `@[pkc_math_symbol]` override gives the left-hand side its conventional notation `σ⁰`;
+`@[pkc_math]` (applied after it) renders the whole equation. -/
 @[pkc_math_symbol "\\sigma^0", pkc_math]
 def avsForward (a b c d r ndvi : Quantity dl Float) : Quantity dl Float :=
   Quantity.mul pk a ndvi
