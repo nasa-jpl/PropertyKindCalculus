@@ -82,6 +82,13 @@ inductive IndexCell where
   | decl (n : Name) (display : String)
   /-- A comma-separated list of declaration references, each with its display text. -/
   | links (items : Array (Name × String))
+  /-- A reference to a *section of the rendering document*, by the tag that document gives it —
+  distinct from `decl`, which names a declaration and is resolved to whatever node the document has
+  for it. The catalogue tables use this: what documents `@[kindCrossing]` is a section of prose, not
+  a declaration, so the row's link target is a place in a document rather than a place in the
+  environment. Carrying the tag as a plain string keeps this library Verso-free; a document that
+  defines no such section renders the display text instead of a dead link. -/
+  | tag (tag : String) (display : String)
 deriving Repr, Inhabited, BEq
 
 /-- An empty cell. -/

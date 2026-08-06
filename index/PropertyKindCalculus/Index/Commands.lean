@@ -38,6 +38,7 @@ this library does not import. A document that imports it calls `kindsTable` with
 def tableById (id : String) (scope : Scope := #[]) : MetaM IndexTable := withHarvestBudget do
   match id with
   | "annotations"          => return annotationsTable
+  | "commands"             => return commandsTable
   | "crossings"            => crossingsTable scope
   | "carriers"             => carriersTable
   | "pkc-math"             => pkcMathTable scope
@@ -60,9 +61,9 @@ where
   /-- The table identifiers, for the error message and for documents that enumerate them. -/
   tableIds : String :=
     String.intercalate ", "
-      ["annotations", "crossings", "carriers", "pkc-math", "pkc-math-symbol", "pkc-math-config",
-       "pkc-math-transparent", "kinds", "systems", "components", "dedicated-kinds",
-       "examinations", "records", "operations"]
+      ["annotations", "commands", "crossings", "carriers", "pkc-math", "pkc-math-symbol",
+       "pkc-math-config", "pkc-math-transparent", "kinds", "systems", "components",
+       "dedicated-kinds", "examinations", "records", "operations"]
 
 /-! ## Plain-text rendering, for the InfoView and for pinned probes -/
 
@@ -76,6 +77,7 @@ def IndexCell.toText : IndexCell → String
   | .prose s     => s
   | .decl _ d    => d
   | .links items => String.intercalate ", " (items.toList.map (·.2))
+  | .tag _ d     => d
 
 /-- A table as a plain-text block: a title line, the headers, and one ` | `-separated line per row.
 

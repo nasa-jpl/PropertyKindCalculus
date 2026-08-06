@@ -42,6 +42,11 @@ inductive Cell where
   | text (s : String)
   | code (s : String)
   | ref (tag : String) (text : String)
+  /-- A cross-reference to a **section of this document**, by the tag its `%%% tag := … %%%` block
+  gives it. Distinct from `ref`, which addresses a *blueprint node* (`{bpref "def_…"}`): the two
+  resolve in different domains, so a section tag passed to `ref` would be a dead link. This is what
+  the catalogue tables use to reach the prose that explains each row. -/
+  | secref (tag : String) (text : String)
   | md (s : String)
   /-- A comma-separated list of cross-references, each a `(tag, text)` pair. An
   empty `tag` renders its `text` as inline code (no link); a non-empty `tag`
@@ -183,6 +188,13 @@ def cellBlock : Cell → DocElabM Term
       { label := Informal.LabelNameParsing.parse tag, block := none }
     `(Verso.Doc.Block.para
         #[Verso.Doc.Inline.other (Informal.Inline.informal $(quote data))
+            #[Verso.Doc.Inline.text $(quote txt)]])
+  | .secref tag txt =>
+    -- The node the `{ref "tag"}[text]` role produces: the domain is left `none` so the traversal
+    -- resolves it in the section domain, and the destination is filled in at traversal time.
+    `(Verso.Doc.Block.para
+        #[Verso.Doc.Inline.other
+            (Verso.Genre.Manual.Inline.ref $(quote tag) none none none)
             #[Verso.Doc.Inline.text $(quote txt)]])
   | .md s => do
     let inls ← (parseRuns s).toArray.mapM runInline

@@ -45,12 +45,18 @@ name, because doc-gen4 resolves such a span to a link to that declaration's page
 name would not resolve.
 
 A `prose` cell passes through unparsed: it is already markdown, and this is the one surface that
-renders markdown, so the emphasis survives and its code spans become doc-gen4 links. -/
+renders markdown, so the emphasis survives and its code spans become doc-gen4 links.
+
+A `tag` reference loses its link here and keeps its display text as a code span: the target is a
+section of a *rendered document*, and a doc-gen4 module page has no way to address one. Emitting a
+relative link on a guess would produce a link that breaks silently, which is worse than the plain
+text a reader can search for. -/
 def IndexCell.toMarkdown : IndexCell → String
   | .text s      => mdEscape s
   | .prose s     => mdEscape s
   | .code s      => if s.isEmpty then "" else "`" ++ mdEscape s ++ "`"
   | .decl n _    => "`" ++ mdEscape (toString n) ++ "`"
+  | .tag _ d     => if d.isEmpty then "" else "`" ++ mdEscape d ++ "`"
   | .links items =>
     String.intercalate ", " (items.toList.map fun (n, _) => "`" ++ mdEscape (toString n) ++ "`")
 

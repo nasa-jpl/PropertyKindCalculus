@@ -33,6 +33,9 @@ exponents adding — which is exactly the bookkeeping of everyday dimensional
 analysis, stated and proved here as a law rather than performed by hand.
 
 # The forgetful map (Dybkær Ch. 19)
+%%%
+tag := "dimensioned-kind"
+%%%
 
 :::group "dimension"
 A kind is given a dimension by forgetting everything but its SI base-quantity

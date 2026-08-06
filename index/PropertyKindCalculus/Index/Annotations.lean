@@ -61,6 +61,11 @@ structure Annotation where
   enforcement : Enforcement
   /-- The index table listing its occurrences, or `""` when another index already covers it. -/
   table : String
+  /-- The tag of the document section that documents it, or `""` when none does. A reference table
+  whose rows do not reach the prose that explains them is a table a reader has to search *around*,
+  so the catalogue carries the link target rather than leaving each document to re-derive it.
+  Documents that define no section by this tag fall back to rendering the syntax as inline code. -/
+  section_ : String := ""
 deriving Repr, Inhabited
 
 /-- Every annotation PropertyKindCalculus defines.
@@ -74,22 +79,26 @@ def catalogue : Array Annotation := #[
     effect := "Declares the one carrier-level place two kinds genuinely meet. The kinds are stated \
       in the signature; the mint or erasure inside is the crossing's mechanism, reviewed once."
     enforcement := .checked "#kind_boundary_audit reports an untagged boundary site as a violation"
-    table := "crossings" },
+    table := "crossings"
+    section_ := "annotation-kindCrossing" },
   { syntax_ := "@[carrierVocab]", attachesTo := "a definition"
     effect := "Registers kind-preserving representation plumbing — an operation the kind algebra \
       does not name (a branchless min, a map over a coefficient table) that must drop to the carrier."
     enforcement := .checked "#kind_boundary_audit reports an untagged boundary site as a violation"
-    table := "crossings" },
+    table := "crossings"
+    section_ := "annotation-carrierVocab" },
   { syntax_ := "@[kindEmission]", attachesTo := "a definition"
     effect := "Marks a genuine emission boundary: a kinded value becomes a naked one for a consumer \
       outside the calculus (a deploy driver, a tape recorder)."
     enforcement := .checked "#kind_boundary_audit reports an untagged boundary site as a violation"
-    table := "crossings" },
+    table := "crossings"
+    section_ := "annotation-kindEmission" },
   { syntax_ := "@[kindCarrier]", attachesTo := "a structure"
     effect := "Registers a downstream single-field quantity-like carrier, so the boundary audit \
       recognizes its mints and erasures — and so its records and operations are indexed."
     enforcement := .checked "rejected at elaboration if the declaration is not a structure"
-    table := "carriers" },
+    table := "carriers"
+    section_ := "annotation-kindCarrier" },
   -- The rendering family — RENDERING.md.
   { syntax_ := "@[pkc_math]", attachesTo := "a Quantity-valued definition"
     effect := "Renders the definition as typeset LaTeX into its own docstring, so doc-gen4 and the \
@@ -97,46 +106,138 @@ def catalogue : Array Annotation := #[
       derivations; a literal string argument overrides the rendering entirely."
     enforcement := .checked "rejected if `keeping` names an unbound let, if `substituting` names a \
       recursive definition, or if a literal override is combined with either clause"
-    table := "pkc-math" },
+    table := "pkc-math"
+    section_ := "annotation-pkc-math" },
   { syntax_ := "@[pkc_math_symbol \"…\"]", attachesTo := "any declaration"
     effect := "Fixes the LaTeX a token renders as, overriding every naming heuristic. The optional \
       `operator` modifier prints a one-argument application as juxtaposition rather than a call."
     enforcement := .advisory
-    table := "pkc-math-symbol" },
+    table := "pkc-math-symbol"
+    section_ := "annotation-pkc-math-symbol" },
   { syntax_ := "@[pkc_math_config]", attachesTo := "a structure"
     effect := "Declares a configuration type: its field projections render as the qualified constant \
       `Struct.field` rather than as a function applied to the configuration value."
     enforcement := .checked "rejected at elaboration if the declaration is not a structure"
-    table := "pkc-math-config" },
+    table := "pkc-math-config"
+    section_ := "annotation-pkc-math-config" },
   { syntax_ := "@[pkc_math_transparent]", attachesTo := "a definition"
     effect := "Marks a notational wrapper the renderer should see through, so the wrapped term is \
       rendered in place of a call to the wrapper."
     enforcement := .advisory
-    table := "pkc-math-transparent" },
+    table := "pkc-math-transparent"
+    section_ := "annotation-pkc-math-transparent" },
   -- The metadata family — already indexed by their own directives.
   { syntax_ := "@[requirement \"…\" role]", attachesTo := "any declaration"
     effect := "Records that the declaration specifies, proves, implements or exemplifies a numbered \
       requirement."
     enforcement := .advisory
-    table := "" },
+    table := ""
+    section_ := "annotations-metadata-family" },
   { syntax_ := "@[dybkaer \"…\" \"…\"]", attachesTo := "any declaration"
     effect := "Records the Dybkær *Ontology on Property* section and term this declaration formalizes."
     enforcement := .advisory
-    table := "" },
+    table := ""
+    section_ := "annotations-metadata-family" },
   { syntax_ := "@[vim4 \"…\" \"…\"]", attachesTo := "any declaration"
     effect := "Records the VIM 4 2CD entry and term this declaration corresponds to."
     enforcement := .advisory
-    table := "" }]
+    table := ""
+    section_ := "annotations-metadata-family" }]
 
 /-- The annotation reference table. Pure data — it describes the surface, and so needs no
-environment. -/
+environment.
+
+The first column links into the prose that explains each annotation, so the table is an entry point
+rather than a summary a reader has to leave in order to use. A document that defines no section by
+the recorded tag renders the syntax as inline code, exactly as before. -/
 def annotationsTable : IndexTable :=
   { id := "annotations"
     title := "The annotations PropertyKindCalculus defines"
     headers := #["Annotation", "Attaches to", "Effect", "Enforcement"]
     rows := catalogue.map fun a => #[
-      .code a.syntax_, .text a.attachesTo, .prose a.effect,
+      if a.section_.isEmpty then .code a.syntax_ else .tag a.section_ a.syntax_,
+      .text a.attachesTo, .prose a.effect,
       .prose a.enforcement.description] }
+
+/-! ## The commands
+
+The annotations state what an author *declares*; the commands are what an author *asks*. Both are
+curated text for the same reason — what a command is for is not derivable from its `elab` — and both
+are listed here so that neither can be added to the library and silently missed by the chapter that
+documents the surface.
+
+The distinction the table draws is between a command that is merely *read* and one that is
+**pinned**. `#kind_edges` answers a question; `#kind_boundary_audit` answers a question that a probe
+file freezes with `#guard_msgs`, at which point the answer changing is a build failure. That is what
+makes the audits part of the type discipline rather than reports about it. -/
+
+/-- One command of the library's surface. -/
+structure Command where
+  /-- How it is written, as an author writes it. -/
+  syntax_ : String
+  /-- The library that defines it — which decides what a document must import to run it. -/
+  library : String
+  /-- What it answers, in one sentence. -/
+  effect : String
+  /-- What pinning it with `#guard_msgs` buys, or `""` if it is a reading aid rather than a gate. -/
+  gate : String
+  /-- The tag of the document section that documents it, or `""` when none does. -/
+  section_ : String := ""
+deriving Repr, Inhabited
+
+/-- Every command PropertyKindCalculus defines, grouped as the chapter presents them: the boundary
+audit, the edge audits, and the index-reading commands. -/
+def commands : Array Command := #[
+  { syntax_ := "#kind_boundary_audit ns …", library := "PropertyKindCalculus"
+    effect := "Walks every compute definition in the namespaces and reports each that mints or \
+      erases a registered carrier, with the kinds it mints and the tier that sanctions it; an \
+      untagged boundary site is reported as a violation."
+    gate := "a new anonymous interior mint fails the build, the way a new axiom fails a pinned \
+      axiom profile"
+    section_ := "boundary-family" },
+  { syntax_ := "#kind_crossings [ns …]", library := "PropertyKindCalculus"
+    effect := "Enumerates the tagged boundary registry — every sanctioned site with the first line \
+      of its docstring, grouped by tier."
+    gate := ""
+    section_ := "boundary-family" },
+  { syntax_ := "#kind_edges k", library := "PropertyKindCalculus"
+    effect := "Prints every authored kind-algebra edge mentioning the kind `k` — named witness \
+      theorems, call-site witnesses lifted out of definitions, and operator-table registrations."
+    gate := "the complete set of edges a kind supports is fixed, so a new one is a visible change"
+    section_ := "edge-audits" },
+  { syntax_ := "#kind_dimensional_coverage ns …", library := "Dimension"
+    effect := "Resolves every authored edge's kinds to their declared DimensionedKind and evaluates \
+      the family's dimensional rule, reporting each edge as coherent, parametric, undimensioned, \
+      conflicting, or incoherent."
+    gate := "an edge over a kind carrying no dimension, or one whose dimensions do not balance, \
+      fails the build"
+    section_ := "edge-audits" },
+  { syntax_ := "#pkc_index \"…\" [ns …]", library := "Index"
+    effect := "Prints one generated index as plain text — the same table a document renders, \
+      available without building a document."
+    gate := "a derived table that stops matching is a build failure rather than an absence nobody \
+      notices"
+    section_ := "reading-an-index" },
+  { syntax_ := "#pkc_summary_overflow [ns …]", library := "Index"
+    effect := "Reports the docstrings an index table quotes whose first paragraph is too long for \
+      the column that quotes it, widest first."
+    gate := ""
+    section_ := "reading-an-index" },
+  { syntax_ := "#pkc_index_page \"…\" [\"…\", …] [ns …]", library := "Index"
+    effect := "Writes the named indexes into the elaborating module's own module docstring, so \
+      doc-gen4 renders them as that module's page."
+    gate := ""
+    section_ := "reading-an-index" }]
+
+/-- The command reference table. Pure data, like `annotationsTable`. -/
+def commandsTable : IndexTable :=
+  { id := "commands"
+    title := "The commands PropertyKindCalculus defines"
+    headers := #["Command", "Library", "What it answers", "Pinned"]
+    rows := commands.map fun c => #[
+      if c.section_.isEmpty then .code c.syntax_ else .tag c.section_ c.syntax_,
+      .code c.library, .prose c.effect,
+      if c.gate.isEmpty then .text "—" else .prose c.gate] }
 
 /-! ## Occurrences
 

@@ -37,15 +37,30 @@ about a proposition. `@[pkc_math_symbol]` changes only how something reads. The 
 column below draws that line for every annotation at once.
 
 Everything in the *Generated indexes* section at the end is computed from the environment when this
-chapter is built. No row is maintained by hand, so a renamed declaration is a build error rather than
-a stale table.
+chapter is built, scoped to this package's own worked examples. No row is maintained by hand, so a
+renamed declaration is a build error rather than a stale table.
 
 # The annotations at a glance
+
+Each row links to the section that explains it.
 
 :::pkc_annotations
 :::
 
+# The commands at a glance
+
+What the annotations *declare*, the commands *ask*. The column that matters is the last one: a
+command whose answer a probe file freezes with `#guard_msgs` stops being a report about the code and
+becomes part of the discipline the build enforces — a changed answer is a failed build. The three
+audits are pinned that way; the reading commands are not, because their job is to be run by hand.
+
+:::pkc_index "commands"
+:::
+
 # Where the calculus is left — the boundary family
+%%%
+tag := "boundary-family"
+%%%
 
 A kind crossing must be *authored*. The calculus will not infer that two kinds may meet, and the
 audit will not accept that they did without being told. That is the whole design: the set of
@@ -60,6 +75,9 @@ walks the environment instead, and reports every declaration that constructs or 
 registered carrier.
 
 ## `@[kindCrossing]` — an authored crossing
+%%%
+tag := "annotation-kindCrossing"
+%%%
 
 The one carrier-level place two kinds genuinely meet. The kinds are stated in the signature; the
 mint or erasure inside is the crossing's mechanism, reviewed once.
@@ -90,6 +108,9 @@ discipline by which a pinned axiom profile catches a proof silently relocated be
 mints, taken from the audit's own walk so the two cannot disagree.
 
 ## `@[carrierVocab]` — a carrier-vocabulary exception
+%%%
+tag := "annotation-carrierVocab"
+%%%
 
 Representation plumbing for an operation the kind algebra does not name: a branchless minimum, a
 square root on the complex carrier, a `map` over a coefficient table. Kind-preserving by
@@ -103,6 +124,9 @@ def probeVocab (a b : Quantity gainKind Float) : Quantity gainKind Float :=
 ```
 
 ## `@[kindEmission]` — a genuine emission boundary
+%%%
+tag := "annotation-kindEmission"
+%%%
 
 Where a kinded value legitimately becomes a naked one for a consumer outside the calculus: a deploy
 driver, a tape recorder, a serializer.
@@ -114,6 +138,9 @@ def probeEmission (x : Quantity outputKind Float) : Float := x.magnitude
 ```
 
 ## `@[kindCarrier]` — teaching the audit a new carrier
+%%%
+tag := "annotation-kindCarrier"
+%%%
 
 The audit recognizes a boundary as an application of a *carrier structure*'s constructor or
 first-field projection. `Quantity` and `CertifiedQuantity` are built in; a downstream layer
@@ -141,6 +168,52 @@ so crossings live downstream. The populated table — twenty-three sites, with t
 crosses — is in soil-moisture-model's technical reference. This chapter's boundary examples come
 from the validation probe that pins the audit's behaviour.
 
+# What the kind algebra rests on — the edge audits
+%%%
+tag := "edge-audits"
+%%%
+
+The boundary audit asks where the calculus is *left*. These two ask what it *rests on*.
+
+A kind-level law — `ProductKind k₁ k₂ k`, a `KindMul` table entry, a `PowerKind` — is authored, not
+derived. The calculus signs any ratio-scale triple its author writes, exactly as a proof assistant
+accepts any axiom its author declares, and for the same reason: a claim about which physical
+quantities compose to which is not something a type checker can settle. What follows from that is
+not that the claims go unchecked, but that they must be *enumerable*.
+
+`#kind_edges k` is that enumeration, per kind. It finds all three authoring styles in one scan over
+constant types — named witness theorems, the `_proof_N` auxiliaries Lean lifts out of call-site
+witnesses, and operator-table instances — so a reader sees every edge a kind participates in
+regardless of how it was written. This is what makes the *Algebra* column of the kind tables below
+worth reading: a kind whose Algebra cell is empty supports no arithmetic at all.
+
+`#kind_dimensional_coverage ns …` then cross-checks those edges against the dimension layer, and it
+is the one place an authored edge can be *refuted* rather than merely listed. Each edge's kinds are
+resolved to their declared {ref "dimensioned-kind"}[dimensioned kinds] and the family's rule is
+evaluated in PhysLib's `Dimension` group — products add exponents, quotients subtract, powers scale
+by the rational exponent, a transcendental demands dimension one on both sides. An edge reports as:
+
+```
+[coherent]      relPermKind · relPermKind → relPermSqKind
+[parametric]    pureNumber · k → k
+⚠ UNDIMENSIONED angFreqKind · relaxTimeKind → dimlessKind — no DimensionedKind for: relaxTimeKind
+⚠ INCOHERENT    angFreqKind · relaxTimeKind → angFreqKind
+⚠ CONFLICTING   … — disagreeing DimensionedKinds for: …
+```
+
+`[parametric]` is generic vocabulary — an edge quantified over a kind variable has no fixed
+dimensional content, and its instantiations are audited as their own rows. The two `⚠` verdicts that
+matter are different failures: *undimensioned* is a coverage gap, an edge nobody mirrored into the
+dimension layer, while *incoherent* is a genuine error, `T⁻¹ · T = T⁻¹` asserted where the group
+says otherwise.
+
+The division of labour with the curated {ref "interaction-algebra"}[interaction algebras] is worth
+stating, because the two look similar and are not. This command is *total* and mechanical: it can
+only affirm that an edge's dimensions balance, and every dimension-one triple balances trivially — which
+is most of a soil-moisture model. An `InteractionAlgebra` is *curated*: it says which products are
+physically sanctioned, which is the thing dimensional analysis discards and no walk can recover.
+Coverage is checked; curation stays authored.
+
 # How a definition reads — the rendering family
 
 `@[pkc_math]` renders a `Quantity` definition to LaTeX and writes it into that declaration's
@@ -153,6 +226,9 @@ not perform. The full policy, and the escape hatch for the cases it cannot serve
 `RENDERING.md`.
 
 ## `@[pkc_math]` — render this definition
+%%%
+tag := "annotation-pkc-math"
+%%%
 
 ```
 /-- The vegetation attenuation `τ = exp(−2·b·ndvi)`, kind `attenuationK`. -/
@@ -172,6 +248,9 @@ several outputs, where inlining both explodes the LaTeX and hides the structure 
 helpers, so a reader sees the equation as written and then the same equation expanded.
 
 ## `@[pkc_math_symbol]` — fix the notation
+%%%
+tag := "annotation-pkc-math-symbol"
+%%%
 
 Overrides every naming heuristic for one token.
 
@@ -189,6 +268,9 @@ where a heuristic was deliberately overruled.
 :::
 
 ## `@[pkc_math_config]` — a configuration type
+%%%
+tag := "annotation-pkc-math-config"
+%%%
 
 A projection of an ordinary structure renders as a function applied to its receiver:
 $`\mathrm{two}\left(\mathrm{cfg}\right)`, which is the field name stripped of the type it belongs to
@@ -209,6 +291,9 @@ about a `def` parameter rather than report what the definition computes.
 :::
 
 ## `@[pkc_math_transparent]` — a notational wrapper
+%%%
+tag := "annotation-pkc-math-transparent"
+%%%
 
 Marks a wrapper the renderer should see through, so the wrapped term is rendered in place of a call
 to it. The carrier's numeral injection is the motivating case: without this, every literal in a
@@ -225,6 +310,9 @@ Every `@[pkc_math]` application in the worked examples, with the clauses each re
 :::
 
 # External correspondence — the metadata family
+%%%
+tag := "annotations-metadata-family"
+%%%
 
 `@[requirement]`, `@[dybkaer]` and `@[vim4]` record what an external document says about a
 declaration. All three are advisory, and all three already have their own generated index: the
@@ -234,6 +322,24 @@ declarations that specify, prove, implement or exemplify it, and the two corresp
 They are listed in the reference table above for completeness and are not duplicated here.
 
 # The generated indexes
+
+*What these tables index.* Every table in this section is scoped to `PropertyKindCalculus.Examples`
+— the calculus's own worked examples, which are what this package has to index. They are *not* the
+soil-moisture model: that model is a separate downstream repository, and its technical reference
+renders the same eight tables over its own namespaces, populated with its real kinds and crossings.
+
+The rows nonetheless read as soil-moisture material, and it is worth saying why rather than letting
+it look like a leak. The calculus's worked examples deliberately run on the domain that motivated
+it: a vegetation-attenuation forward model, Mironov coefficients, soil and soil-water as systems.
+That is the point of a worked example — it has to be *of* something — and the alternative, examples
+over invented quantities, would demonstrate the machinery while hiding whether it survives contact
+with a real model. The generic examples are here too, in the same tables: length and width as
+distinct kinds, a blood group as a nominal scale, Mohs hardness as an ordinal one, the
+principle/method/procedure examination chain.
+
+So the reading to avoid is that these tables document the model. They document *the examples this
+package ships*, and they exist here for the same reason the boundary probe does: a derived table
+nobody renders is a table nobody notices has broken.
 
 ## Kinds and their algebra
 
@@ -297,6 +403,9 @@ is already a row of the table above.
 :::
 
 # Reading an index without building a document
+%%%
+tag := "reading-an-index"
+%%%
 
 Every table above is also available from the InfoView, under the name the directive uses:
 

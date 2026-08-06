@@ -90,6 +90,7 @@ def toCell : IndexCell → DocElabM Cell
   | .decl n display => do
     let label ← labelFor n
     return if label.isEmpty then .code display else .ref label display
+  | .tag t display => return .secref t display
   | .links items => do
     let resolved ← items.toList.mapM fun (n, display) => do
       return ((← labelFor n), display)

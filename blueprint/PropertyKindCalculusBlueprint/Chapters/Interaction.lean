@@ -25,6 +25,9 @@ module: the curated product, its division dual, the multiplication–division
 round-trip, and the worked torque-versus-energy instance.
 
 # The ternary product of kinds (Flater App. C)
+%%%
+tag := "interaction-algebra"
+%%%
 
 :::group "interaction"
 Combination of kinds is a ternary relation, not a binary function: a pair of
