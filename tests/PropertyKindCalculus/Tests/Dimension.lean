@@ -10,3 +10,4 @@ import PropertyKindCalculus.Tests.Dimension.DimensionBridges
 import PropertyKindCalculus.Tests.Dimension.AngleReform
 import PropertyKindCalculus.Tests.Dimension.IsqBase
 import PropertyKindCalculus.Tests.Dimension.BoundsReal
+import PropertyKindCalculus.Tests.Dimension.DimensionalCoverage
