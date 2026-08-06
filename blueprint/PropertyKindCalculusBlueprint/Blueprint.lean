@@ -529,9 +529,17 @@ set (so a quantity's dimensional decomposition is relative to a choice of genera
 expressing e.g. Gaussian-CGS electromagnetism, natural units, or the four-base Finkelstein
 system) — was out of scope in an earlier draft and is now *delivered*. We made PhysLib's
 `Dimension` itself parametric in its basis and contributed the change upstream
-(`github.com/leanprover-community/physlib/issues/1441`, pull request 1447, under review);
-the former fixed five-generator type is recovered as the default instance, so no existing
-result changes. PKC then *realizes* the angle-augmented basis — PhysLib's five generators
+(`github.com/leanprover-community/physlib/issues/1441`, pull request 1447), where it has
+since been *merged*; PKC consumes it from `leanprover-community/physlib` master. The
+former fixed five-generator type is recovered as the default instance, so no existing
+result changes. The contribution did not stop at the dimension side: the *unit* twin is
+parametrized in the same basis (`UnitScale B` with its conversion-factor homomorphism
+`dimScale`, which PKC's VIM4 §1.22 prefix conversion instantiates at a single generator),
+and the seven-generator ISQ basis together with the embedding/projection bridge to the
+five-generator one are upstream as well. The division of labour that leaves is the one this
+development argues for throughout: the dimensional algebra — bases, homomorphisms between
+them, unit scaling — belongs in the physics library, while the kind layer and the
+catalogue's *stances* belong here. PKC then *realizes* the angle-augmented basis — PhysLib's five generators
 together with *angle* — as one instantiation among several (Gaussian-CGS, natural units,
 the four-base Finkelstein system, the seven-generator current-based ISQ of ISO/IEC 80000-1):
 in it plane angle, solid angle, and a pure number are
@@ -543,7 +551,9 @@ injective embedding of those generators, with every kind invariant under the lif
 change-of-basis theorem. Not every such lift is an embedding of generators: passing to the
 current-based ISQ sends the charge generator to the *product* `I·T` (the coulomb as
 ampere-second), so it is realized not by reindexing generators but as a genuine group
-homomorphism, proved injective and hence lossless (`IsqBase.toISQ`, `toISQ_injective`). The
+homomorphism, proved injective and hence lossless, and paired upstream with a projection
+that retracts it (`Dimension.toISQHom`, `toISQHom_injective`, `fromISQHom_comp_toISQHom`;
+consumed in `IsqBase`). The
 catalogue turns this to account for *citation*: its kinds are dimensioned internally over
 PhysLib's charge generator, yet the item-index dimensional formulae it prints are rendered in
 the ISQ base quantity current, so a capacitance reads `M⁻¹·L⁻²·T⁴·I²` exactly as IEC 80000-6

@@ -84,7 +84,24 @@ interaction algebra (`PropertyKindCalculus.Interaction`), and the `ℝ` quantity
 carrier (`PropertyKindCalculus.QuantityReal`), with its worked examples in the
 `DimensionExamples` library — the layer where PhysLib + Mathlib enter, so a plain
 `import PropertyKindCalculus` stays Mathlib-free. PhysLib tracks the same toolchain
-this package pins (`leanprover/lean4:v4.30.0`). The soil-moisture *retrieval* model
+this package pins (`leanprover/lean4:v4.30.0`).
+
+Part of that substrate is **this project's own contribution to PhysLib**, made because
+the layer the calculus needs did not exist: `Dimension` was hardwired to one
+five-generator base, and it is now *parametric in its basis* (issue #1441 → PR #1447,
+merged; PKC consumes `leanprover-community/physlib` master, not a fork). The same
+contribution line carries the **unit twin** parametrized in that basis (`UnitScale B`
+with its conversion-factor homomorphism `dimScale` — PKC's VIM4 §1.22 prefix conversion
+is its single-generator instance, `PropertyKindCalculus.UnitConversion`) and the
+**seven-generator ISQ basis with its embedding/projection bridge** to the five-generator
+one (`Physlib.Units.ISQDimensionBase`, `ISQBridge`, consumed by
+`PropertyKindCalculus.IsqBase`). The split is deliberate: the dimensional algebra —
+bases, homomorphisms between bases, unit scaling — belongs upstream in the physics
+library; what stays here is the kind layer above it and the catalogue's *stances* (the
+mole/candela reduction, the SI plane-angle convention, the charge-vs-current citation
+choice).
+
+The soil-moisture *retrieval* model
 lives in a **separate downstream repository** that `require`s this package — an
 application of the calculus, kept out of PKC so the package stays focused on
 metrology and the ISO/IEC 80000 parts.

@@ -1,15 +1,17 @@
 /-
 # Validation probes — the ISQ base (base-agnosticism + citation fidelity)
 
-Inhabitation and axiom-profile probes for `IsqBase`, which realizes ISO 80000-1's
-seven-generator, *current*-based ISQ and settles what each departure of PKC's canonical
-charge-based `LTMCTDimensionBase` costs. Each result is applied to concrete witnesses. The Rule-2
-boundaries are (a) the charge → current change of basis is a genuine *product*-valued
-homomorphism `charge ↦ current · time`, not a generator reindexing, and it is injective
-(lossless); and (b) the mole/candela reduction is a modeling *stance*, not a lack — it
-survives the lift into a base that *offers* the two generators, which the catalogue then
-declines. The Mathlib-backed proofs legitimately use `[propext, Classical.choice,
-Quot.sound]`; the gate confirms **no `sorryAx`** creeps in.
+Inhabitation and axiom-profile probes for `IsqBase`, which consumes PhysLib's contributed
+`ISQDimensionBase`/`ISQBridge` (the upstreamed strengthening of PKC's original local ISQ
+realization) and keeps the catalogue's residue: preserved-generator laws, citation fidelity,
+and the mole/candela stance. The Rule-2 boundaries are (a) the charge → current change of
+basis is a genuine *product*-valued homomorphism `charge ↦ current · time`, not a generator
+reindexing; it is injective (upstream `Dimension.toISQHom_injective`) and now moreover a
+**retraction** — the contributed projection recovers every PhysLib dimension exactly; and
+(b) the mole/candela reduction is a modeling *stance*, not a lack — it survives the lift into
+a base that *offers* the two generators, which the catalogue then declines. The Mathlib-backed
+proofs legitimately use `[propext, Classical.choice, Quot.sound]`; the gate confirms
+**no `sorryAx`** creeps in.
 -/
 
 import PropertyKindCalculus.IsqBase
@@ -18,45 +20,53 @@ namespace PropertyKindCalculus.Tests.IsqBase
 
 open PropertyKindCalculus PropertyKindCalculus.IsqBase Dimension
 
-/-! ## The charge → current change of basis, done as a genuine hom -/
+/-! ## The charge → current change of basis, consumed from the contributed bridge -/
 
--- Inhabitation: charge is the ISQ *derived* current·time, and PhysLib's internal ampere
--- `C·T⁻¹` collapses to the bare current generator — the citation-faithful base dimension.
+-- Inhabitation: charge is the ISQ *derived* current·time (the upstream-named
+-- `ISQDimensionBase.charge`), and PhysLib's internal ampere `C·T⁻¹` collapses to the bare
+-- current generator — the citation-faithful base dimension.
 theorem isq_charge_and_ampere :
-    toISQ Dim.charge = single .current * single .time ∧
-    toISQ Dim.current = single .current :=
-  ⟨toISQ_charge, toISQ_current⟩
+    toISQHom Dim.charge = ISQDimensionBase.charge ∧
+    toISQHom Dim.current = single ISQDimensionBase.current :=
+  ⟨toISQHom_charge, toISQHom_current⟩
 
 -- Boundary: the change of basis is injective — no dimensional information is lost passing
--- from the charge basis to the current basis (`extend`'s generator reindexing could not
--- express `charge ↦ current · time` in the first place).
-theorem isq_lossless : Function.Injective toISQ := toISQ_injective
+-- from the charge basis to the current basis — and, strengthened upstream, a *retraction*:
+-- the contributed projection `fromISQHom` recovers every PhysLib dimension on the nose.
+theorem isq_lossless_and_retracts :
+    Function.Injective toISQHom ∧ ∀ d, fromISQHom (toISQHom d) = d :=
+  ⟨toISQHom_injective, fromISQHom_toISQHom⟩
 
 /-! ## The mole/candela reduction is a stance, not a lack -/
 
--- Boundary: `ISQBase` provides `amount` and `luminousIntensity` generators, yet PKC's
--- catalogue declines both — the mole stays dimension one and the candela stays power under
--- the lift, so the reductions are a modeling choice, not an artefact of `LTMCTDimensionBase`.
+-- Boundary: `ISQDimensionBase` provides `amount` and `luminousIntensity` generators, yet
+-- PKC's catalogue declines both — the mole stays dimension one and the candela stays power
+-- under the lift, so the reductions are a modeling choice, not an artefact of
+-- `LTMCTDimensionBase`.
 theorem isq_reduction_is_a_stance :
-    toISQ Dim.amountOfSubstance = 1 ∧
-    single (.amount : ISQBase) ≠ toISQ Dim.amountOfSubstance ∧
-    single (.luminousIntensity : ISQBase) ≠ toISQ Dim.luminousIntensity :=
-  ⟨toISQ_amountOfSubstance, isq_amount_generator_declined, isq_luminous_generator_declined⟩
+    toISQHom Dim.amountOfSubstance = 1 ∧
+    single (.amount : ISQDimensionBase) ≠ toISQHom Dim.amountOfSubstance ∧
+    single (.luminousIntensity : ISQDimensionBase) ≠ toISQHom Dim.luminousIntensity :=
+  ⟨toISQHom_amountOfSubstance, isq_amount_generator_declined,
+    isq_luminous_generator_declined⟩
 
 /-! ## The catalogue lifts into ISQ, kind invariant -/
 
 -- Inhabitation: re-expressing a dimensioned kind over ISQ fixes its kind (base-agnosticism)
 -- and the ampere reads as a base quantity (citation fidelity).
 theorem isq_lift_kind_invariant :
-    (electricCurrentKind.mapDim toISQ).kind = electricCurrentKind.kind ∧
-    (electricCurrentKind.mapDim toISQ).toDimension = single .current :=
+    (electricCurrentKind.mapDim toISQHom).kind = electricCurrentKind.kind ∧
+    (electricCurrentKind.mapDim toISQHom).toDimension = single ISQDimensionBase.current :=
   ⟨electricCurrentKind_lift_kind, electricCurrentKind_lift_dim⟩
 
-/-- info: 'PropertyKindCalculus.IsqBase.toISQ_charge' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in #print axioms toISQ_charge
+/-- info: 'PropertyKindCalculus.IsqBase.toISQHom_charge' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in #print axioms toISQHom_charge
 
-/-- info: 'PropertyKindCalculus.IsqBase.toISQ_injective' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in #print axioms toISQ_injective
+/-- info: 'Dimension.toISQHom_injective' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in #print axioms Dimension.toISQHom_injective
+
+/-- info: 'PropertyKindCalculus.IsqBase.fromISQHom_toISQHom' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in #print axioms fromISQHom_toISQHom
 
 /-- info: 'PropertyKindCalculus.IsqBase.isq_luminous_generator_declined' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in #print axioms isq_luminous_generator_declined

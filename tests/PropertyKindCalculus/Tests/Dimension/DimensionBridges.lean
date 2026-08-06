@@ -98,4 +98,22 @@ theorem r17_real_roundtrip (x : ℝ) : km.convertReal cm (cm.convertReal km x) =
 /-- info: 'PropertyKindCalculus.PrefixedUnit.convertReal_roundtrip' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in #print axioms PrefixedUnit.convertReal_roundtrip
 
+/-! ## R17 — §1.22 is the single-generator instance of the contributed unit twin
+
+`UnitScale B` and `UnitScale.dimScale` (PhysLib `ParametricUnits`, the unit twin of the
+basis-parametric `Dimension B`) are the generic *chosen-reference* unit the prefix work
+anticipated. The bridge exhibits the §1.22 factor as `dimScale` at a generator, applied here
+to the concrete cm → km pair over the canonical basis. -/
+
+-- Inhabitation: the generic conversion factor of the two induced unit choices, read at the
+-- length generator, is exactly the prefix factor `10 ^ (−2 − 3)` the §1.22 layer computes.
+theorem r17_dimScale_is_prefix_factor :
+    (((cm.toUnitScale LTMCTDimensionBase.length (by decide)).dimScale
+        (km.toUnitScale LTMCTDimensionBase.length (by decide))
+        (Dimension.single LTMCTDimensionBase.length) : ℝ)) = cm.realFactor km :=
+  PrefixedUnit.dimScale_toUnitScale_single cm km rfl (by decide) _
+
+/-- info: 'PropertyKindCalculus.PrefixedUnit.dimScale_toUnitScale_single' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in #print axioms PrefixedUnit.dimScale_toUnitScale_single
+
 end PropertyKindCalculus.Tests.DimensionBridges

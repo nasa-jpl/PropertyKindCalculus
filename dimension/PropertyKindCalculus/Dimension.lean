@@ -20,6 +20,30 @@ cannot tell apart, yet which the kind layer keeps distinct.
 This is the **only** library in the package that depends on PhysLib (hence
 Mathlib); the core spine stays Mathlib-free. It lives in its own source tree
 (`dimension/`) and builds with `lake build Dimension`.
+
+## Provenance — what PKC uses, and what it contributed
+
+The dimensional substrate this library sits on is not a fixed external given: the
+**basis-parametric `Dimension B`** (and its unit twin) is this project's own contribution
+to PhysLib, made because the layer PKC needs did not exist. PhysLib's `Dimension` was
+hardwired to a single five-generator base; the parametrization was designed here, upstreamed
+as PR #1447 (with the v4.32.0 toolchain bump #1445), merged, and is now consumed from
+`leanprover-community/physlib` master — not from a fork. The same contribution line carries:
+
+  * `Physlib.Units.Dimension` — the parametric `Dimension B` itself, with `extend`
+    (change of basis by generator reindexing) and its exponent-faithfulness lemma;
+  * `Physlib.Units.ParametricUnits` — `UnitScale B` and `UnitScale.dimScale`, the *unit*
+    twin parametrized in the same basis (`PropertyKindCalculus.UnitConversion` exhibits the
+    VIM4 §1.22 prefix factor as its single-generator instance);
+  * `Physlib.Units.ISQDimensionBase` + `ISQBridge` — the seven-generator ISQ basis and the
+    embedding/projection pair between it and `LTMCTDimensionBase`
+    (`PropertyKindCalculus.IsqBase` consumes them).
+
+The division of labour is deliberate and worth stating: what belongs upstream is the
+*dimensional algebra* — bases, homs between bases, unit scaling; what stays here is the
+*kind* layer above it, together with the catalogue's **stances** (the mole/candela
+reduction, the SI plane-angle convention, the charge-vs-current citation choice). PhysLib
+now offers the coordinates; PKC chooses among them and says why.
 -/
 import Physlib.Units.LTMCTDimensionBase
 import PropertyKindCalculus
@@ -162,10 +186,12 @@ are of different kinds:
   choice is only a lossless, invertible change of coordinates. It is invisible to the kinds
   and to every distinctness theorem; it surfaces only in how a dimension is *printed*. For
   citation fidelity the catalogue's renderer re-expresses the electromagnetic axis in
-  current (`Iso80000.renderDimension`), and `IsqBase` exhibits the change of basis as a
-  genuine group homomorphism `Dimension LTMCTDimensionBase →* Dimension ISQBase` sending
+  current (`Iso80000.renderDimension`), and `IsqBase` consumes the contributed bridge
+  `Dimension.toISQHom : Dimension LTMCTDimensionBase →* Dimension ISQDimensionBase` sending
   `charge ↦ current · time` — a map a mere generator reindexing (`Dimension.extend`) cannot
-  express, since a generator goes to a *product*.
+  express, since a generator goes to a *product*. Upstream it comes paired with its
+  projection and a retraction law, so the change of coordinates is invertible in the strong
+  sense, not merely injective.
 
 * **The mole and candela reduced — a modeling stance.** ISQ carries amount of substance and
   luminous intensity as independent base quantities. PKC does **not**: following the
@@ -173,7 +199,7 @@ are of different kinds:
   human-selected dimensionless count (`Dim.amountOfSubstance = 1`) and the candela is the
   dimension of *power* (`Dim.luminousIntensity = Dim.power`). This is a *considered choice*,
   not a limitation forced by `LTMCTDimensionBase`: even over a basis that offers the two generators
-  (`IsqBase.ISQBase`), the catalogue declines them — the mole stays dimension one and the
+  (`ISQDimensionBase`), the catalogue declines them — the mole stays dimension one and the
   candela stays power under the lift — and the distinctions the reduced dimension conflates
   (the `J/mol` energies, luminous vs. radiant flux) are carried by the **kind** layer, which
   is the whole point of this development.
