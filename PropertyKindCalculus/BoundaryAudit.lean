@@ -14,7 +14,7 @@ The paradigm's guarantee is *machine-enumerable*, exactly as `#print axioms` is 
 sorry-freeness and `#kind_edges` is the audit for edge-soundness: every boundary site is either
 tagged with the tier that sanctions it, or it is a violation the build fails on.
 
-## The sanctioned-site registry — three tier attributes
+## The sanctioned-site registry — four tier attributes
 
   * `@[kindCrossing]` — an authored *crossing*: a named `def` whose body is the one
     carrier-level place two kinds genuinely meet (`nkToEps`, `clayPctOfMassFraction`,
@@ -24,9 +24,15 @@ tagged with the tier that sanctions it, or it is a violation the build fails on.
     that legitimately drops to the carrier for an operation the kind algebra does not name
     (`complexSqrtPos`, `qMin`, `qRelu`, a `map` over a coefficient table), kind-preserving by
     construction.
-  * `@[kindEmission]` — a genuine *emission boundary* (invariant 4): the grandfathered naked
-    erasure layer (until it is retired), the deploy drivers, the tape recorders — where a
-    kinded value legitimately becomes a naked one for a consumer outside the calculus.
+  * `@[kindConst]` — a declared *constant mint* (invariant 6, evidence tier iii): a
+    declaration whose boundary activity is minting adjudicated values — a cited coefficient
+    table, a configuration bound or box, a seed, a threshold, or a structural constant of the
+    model (a zero accumulator, the vacuum index `1`, a literal exponent). The mint's value is
+    data, not dataflow; its provenance is the declaration's docstring.
+  * `@[kindEmission]` — a genuine *emission boundary* (invariant 4): the deploy drivers, the
+    tape recorders, and the parity apparatus — the kinded ↔ bare re-typings the erasure
+    theorems are stated over — where a kinded value legitimately becomes a naked one for a
+    consumer outside the calculus.
 
 ## The carrier registry — `@[kindCarrier]`
 
@@ -61,12 +67,14 @@ open Lean
 
 /-! ## The tier registry -/
 
-/-- The three sanctioned boundary tiers, strongest (most-constrained) first. -/
+/-- The four sanctioned boundary tiers, strongest (most-constrained) first. -/
 inductive BoundaryTier where
   /-- An authored crossing where two kinds genuinely meet (`@[kindCrossing]`). -/
   | kindCrossing
   /-- A carrier-vocabulary exception — representation plumbing (`@[carrierVocab]`). -/
   | carrierVocab
+  /-- A declared constant mint — an adjudicated value enters the calculus (`@[kindConst]`). -/
+  | kindConst
   /-- A genuine emission boundary — a naked value leaves the calculus (`@[kindEmission]`). -/
   | kindEmission
 deriving DecidableEq, Repr, Inhabited
@@ -75,6 +83,7 @@ deriving DecidableEq, Repr, Inhabited
 def BoundaryTier.label : BoundaryTier → String
   | .kindCrossing => "kindCrossing"
   | .carrierVocab => "carrierVocab"
+  | .kindConst   => "kindConst"
   | .kindEmission => "kindEmission"
 
 /-- One tagged boundary site: the declaration and the tier that sanctions it. -/
@@ -86,7 +95,7 @@ structure BoundaryTag where
 deriving Repr, Inhabited
 
 /-- The environment extension collecting every `@[kindCrossing]`/`@[carrierVocab]`/
-`@[kindEmission]`-tagged declaration. -/
+`@[kindConst]`/`@[kindEmission]`-tagged declaration. -/
 initialize boundaryExt :
     SimplePersistentEnvExtension BoundaryTag (Array BoundaryTag) ←
   registerSimplePersistentEnvExtension {
@@ -96,6 +105,7 @@ initialize boundaryExt :
 
 syntax (name := kindCrossingAttr) "kindCrossing" : attr
 syntax (name := carrierVocabAttr) "carrierVocab" : attr
+syntax (name := kindConstAttr) "kindConst" : attr
 syntax (name := kindEmissionAttr) "kindEmission" : attr
 
 initialize registerBuiltinAttribute {
@@ -110,6 +120,13 @@ initialize registerBuiltinAttribute {
   descr := "A carrier-vocabulary exception — kind-preserving representation plumbing (invariant 7)."
   add   := fun decl _stx _kind =>
     modifyEnv fun env => boundaryExt.addEntry env { decl := decl, tier := .carrierVocab }
+}
+
+initialize registerBuiltinAttribute {
+  name  := `kindConstAttr
+  descr := "A declared constant mint — a cited table, config bound, seed, threshold, or structural constant (invariant 6, tier iii)."
+  add   := fun decl _stx _kind =>
+    modifyEnv fun env => boundaryExt.addEntry env { decl := decl, tier := .kindConst }
 }
 
 initialize registerBuiltinAttribute {
@@ -291,6 +308,9 @@ def boundarySites (scope : Array Name) : MetaM (Array BoundarySite) := do
     if isGeneratedMachinery env specs parent then continue
     let some body := info.value? | continue
     if ← Meta.isProp info.type then continue
+    -- A Prop-former (`def P … : Prop`) is a specification, not compute: like a theorem, it is
+    -- legitimately *about* `.magnitude`, so it is not a boundary site.
+    if ← Meta.forallTelescopeReducing info.type fun _ resTy => return resTy.isProp then continue
     let (mints, erases) := collectBoundary specs body #[] false
     if mints.isEmpty && !erases then continue
     let mintStrs ← mints.mapM fun a => return toString (← Meta.ppExpr a)
@@ -325,7 +345,7 @@ the build. Theorems and `Prop`-valued declarations are skipped — a parity stat
 elab "#kind_boundary_audit" nss:ident+ : command => liftTermElabM do
   let sites ← boundarySites (nss.map (·.getId))
   -- Lines are sorted *as rendered*, so the report groups by tier tag (`[carrierVocab]` <
-  -- `[kindCrossing]` < `[kindEmission]` < `⚠ UNTAGGED`) and only then by name.
+  -- `[kindConst]` < `[kindCrossing]` < `[kindEmission]` < `⚠ UNTAGGED`) and only then by name.
   let mut lines : Array String := #[]
   let mut nSanctioned := 0
   let mut nViolations := 0
@@ -353,7 +373,7 @@ elab "#kind_boundary_audit" nss:ident+ : command => liftTermElabM do
 
 open Elab Command in
 /-- `#kind_crossings [ns …]` enumerates the tagged boundary registry — every
-`@[kindCrossing]`/`@[carrierVocab]`/`@[kindEmission]` site with the first line of its docstring —
+`@[kindCrossing]`/`@[carrierVocab]`/`@[kindConst]`/`@[kindEmission]` site with the first line of its docstring —
 grouped by tier and sorted, optionally filtered to the given namespaces. The invariant-5-style
 enumeration for boundaries: a reviewer reads the sanctioned sites the way `#kind_edges` reads the
 sanctioned edges. -/
