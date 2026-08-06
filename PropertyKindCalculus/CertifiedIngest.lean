@@ -202,9 +202,28 @@ def slot (k : KindOfProperty) (name admissibility : String) (unitNote : String :
     IngestSlot :=
   { name := name, kindId := k.id, admissibility := admissibility, unitNote := unitNote }
 
+/-- **Build a kindless slot** for a nominal channel (a flag word, an enumeration) whose
+adjudication is that it carries *no* kind — a bitmask has no magnitude, and inventing a kind
+for one is exactly what the role-named-kind invariant forbids — so the contract records the
+absence explicitly instead of faking a kind id. -/
+def nominalSlot (name admissibility : String) (unitNote : String := "") : IngestSlot :=
+  { name := name, kindId := "(none: nominal channel)", admissibility := admissibility,
+    unitNote := unitNote }
+
 /-- The kinds claimed by the contract, in slot order (the provenance census a reviewer
 reads against the producer's documentation). -/
 def kindIds (c : IngestContract) : List String := c.slots.map (·.kindId)
+
+/-- The slot names, in declared (producer) order — for a positionally packed interface this
+*is* the channel order, so it is the census a positional reader pins its hardcoded channel
+indices against. -/
+def names (c : IngestContract) : List String := c.slots.map (·.name)
+
+/-- The declared position of the named slot — its channel index, for a positionally packed
+interface — if present. The consumer-side pin: `#guard c.idxOf? "clay" == some 6` ties a
+hardcoded channel read to the declared table, so reordering either side fails the build. -/
+def idxOf? (c : IngestContract) (name : String) : Option Nat :=
+  c.slots.findIdx? (·.name == name)
 
 /-- **Emit the contract as pretty-printed JSON** — the document the upstream data producer
 signs. Both sides then target one artefact: the producer's output schema and the code's
