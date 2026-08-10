@@ -99,6 +99,7 @@ def diamondRep : AiReport :=
 
 #guard diamondRep.maxLive == 3
 #guard diamondRep.nInputs == 1
+#guard diamondRep.fusedBytesPerElem == (1 + 1) * 4
 #guard diamondRep.fusedPeakBytes 10 == (1 + 1) * 10 * 4
 #guard diamondRep.eagerPeakBytes 10 == 3 * 10 * 4
 #guard diamondRep.eagerHostBytesPerElem == 8 * (1 + 1) + 4 * 3
@@ -139,6 +140,15 @@ def diamondRep : AiReport :=
 #guard maxConcurrentWorkers { fixedBytes := 100, bytesPerElem := 2.0 } 1000 150 == some 0
 -- A zero-cost shape cannot constrain.
 #guard maxConcurrentWorkers { fixedBytes := 0, bytesPerElem := 0.0 } 50 1000 == none
+
+-- Single-launch shape: ⌊(1000 − 100)/2⌋ = 450 elements fit one resident batch.
+#guard MemShape.maxElems { fixedBytes := 100, bytesPerElem := 2.0 } 1000 == some 450
+-- The fixed term (bound tables) alone exceeds the budget.
+#guard MemShape.maxElems { fixedBytes := 100, bytesPerElem := 2.0 } 50 == some 0
+-- No per-element term: memory does not constrain the batch size.
+#guard MemShape.maxElems { fixedBytes := 100, bytesPerElem := 0.0 } 1000 == none
+-- Fractional per-element (a calibrated factor): ⌊900/2.5⌋ = 360, and bytesFor 360 = 1000 exactly.
+#guard MemShape.maxElems { fixedBytes := 100, bytesPerElem := 2.5 } 1000 == some 360
 
 -- Split shape: the variable term 2·400 = 800 is invariant in N; ⌊(1000−800)/100⌋ = 2.
 #guard maxShardsSplit { fixedBytes := 100, bytesPerElem := 2.0 } 400 1000 == some 2

@@ -218,6 +218,17 @@ deriving Repr
 def MemShape.bytesFor (shape : MemShape) (elems : Nat) : Nat :=
   shape.fixedBytes + (shape.bytesPerElem * elems.toFloat).ceil.toUInt64.toNat
 
+/-- SOLVER, single-launch shape (a megakernel driver: ONE resident batch, choose its element
+count): the largest `elems` with `bytesFor elems ≤ budgetBytes`, i.e.
+`⌊(budget − fixed) / bytesPerElem⌋`. `none` = no per-element term, memory does not constrain
+the batch; `some 0` = the fixed term alone exceeds the budget. Floor-safe against `bytesFor`'s
+ceiling: the quotient `q` has `bytesPerElem·q ≤ budget − fixed` with an integer right side, so
+`⌈bytesPerElem·q⌉` still fits. -/
+def MemShape.maxElems (shape : MemShape) (budgetBytes : Nat) : Option Nat :=
+  if shape.bytesPerElem ≤ 0 then none
+  else if shape.fixedBytes > budgetBytes then some 0
+  else some (((budgetBytes - shape.fixedBytes).toFloat / shape.bytesPerElem).floor.toUInt64.toNat)
+
 /-- SOLVER, worker shape (a `chunk_fit`-style driver: fixed `elemsPerWorker` per worker,
 choose how many run concurrently): `⌊headroom / bytesFor(elemsPerWorker)⌋`. `headroomBytes`
 is the budget minus everything already resident. `none` = the shape is degenerate (zero

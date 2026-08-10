@@ -725,10 +725,16 @@ The AI section above accounts *traffic*; deployment sizing needs *residency*: `b
 style. They are priors — a measured probe (allocator `peakBytes` on device, child peak RSS on
 the host) is the authority, because fixed overheads and free-promptness are runtime facts. -/
 
+/-- Per-pixel **device** bytes of the FUSED megakernel: the fp32 input and output planes only —
+every intermediate is a register. The marginal term of `fusedPeakBytes`, exposed on its own so a
+descriptor emitter can bake the constant without restating the formula. -/
+def AiReport.fusedBytesPerElem (rep : AiReport) : Nat :=
+  (rep.nInputs + rep.nOut) * 4
+
 /-- Peak **device** bytes of a `P`-pixel launch of the FUSED megakernel: inputs + outputs only
 (every intermediate is a register), plus the bound tables once per launch. -/
 def AiReport.fusedPeakBytes (rep : AiReport) (pixels : Nat) : Nat :=
-  (rep.nInputs + rep.nOut) * pixels * 4 + rep.tableBytes
+  rep.fusedBytesPerElem * pixels + rep.tableBytes
 
 /-- Peak **device (or CPU-stub) buffer** bytes of a `P`-pixel batch on the EAGER elementwise
 carrier — the ideal-promptness lower bound `maxLive · P · 4` (see `maxLiveNodes`), plus the
