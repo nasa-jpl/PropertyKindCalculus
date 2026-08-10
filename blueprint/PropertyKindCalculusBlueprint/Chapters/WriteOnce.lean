@@ -340,6 +340,56 @@ sweep, unrolled past a hundred gigabytes at elaboration until the fold was threa
 accumulator per sweep — after which the same recording completed in seconds, the generated kernel
 unchanged.
 
+## Right-sizing the deployment — the memory shape is computed, the platform is asked
+
+Choosing a strategy is only half of a deployment decision; the other half is a _number_ — how many
+task-shards the multi-threaded strategy forks, or how many pixels a device batch carries. Both are
+bounded by memory before they are bounded by compute: the eager device carrier materializes a full
+buffer per live intermediate, and the sharded CPU path holds every concurrent slice at once. And the
+bound is a property of _this model on this machine_, so a hand-set constant is wrong somewhere —
+cores idle on the large host, or an out-of-memory kill on the confined worker. The calculus
+therefore treats sizing the way it treats everything else in this chapter: the model's memory shape
+is _computed_, from the same recording that already proves faithfulness and computes arithmetic
+intensity; the platform is _asked_ what it will actually grant; and a small solver combines the two —
+with an explicit operator override that wins verbatim when someone knows better.
+
+The model half is computed, not cited — the same standard the intensity accounting set. Memory use
+is affine in the pixel count for every strategy, `bytes(P) = fixed + perElement · P`, and the
+per-element term falls out of the recorded DAG per strategy. For the fused megakernel it is exact:
+inputs plus outputs, four bytes each — every intermediate is a register — with a bound table charged
+once per launch. For the eager carrier it is the _peak count of simultaneously-live buffers_ when
+the DAG is evaluated in tape order, each buffer freed after its last consumer: one pass recovers
+every node's last use, one walk takes the running peak (`maxLiveNodes`, reported beside the
+intensity numbers by the same `aiReport`), and the sharded CPU path adds its host marshaling columns
+on top. One honesty clause belongs here: the eager number is a _lower bound_, because "freed
+promptly after its last consumer" is what a garbage-collected finalizer approaches rather than
+guarantees, and a driver that loops a recorded step holds its carry across iterations. So the static
+shape is the _prior_ — what makes a freshly authored model safely sizable before it has ever run —
+and a measured probe of a real block (allocator peak on the device, child peak memory on the host)
+is the _authority_ that calibrates it.
+
+The platform half is asked with its provenance kept, because the budget that matters is the one
+enforcement reads. A confined process is killed at its cgroup limit, not at the host's advertised
+available memory — a container capped at 28 GiB on a host reporting 62 GiB is the observed norm on
+shared worker queues — so the budget query asks cgroup v2 first (the process's own cgroup, minimum
+over its ancestors), falls back to cgroup v1, and only then to the host's own figure, every answer
+labeled with its source so the log records _which limit the sizing believed_. Core counts get the
+same discipline: the scheduler's affinity mask intersected with the cgroup CPU quota, never the raw
+host core count. On the device the query is the CUDA free-memory figure, taken _after_ the carrier's
+warm-up — the context's fixed tax is then already netted out of it, which is one fixed overhead
+nobody has to specify.
+
+Two solver shapes close the loop, because the two knobs constrain differently. Task-sharding
+partitions _one resident tile_ among concurrent shards, so the variable term is invariant in the
+shard count and only a per-shard fixed cost scales with it — and when the resident term _alone_
+exceeds the budget, no shard count fits, and the solver says exactly that (shrink the tile, not the
+count) instead of clamping to a plausible-looking answer. Block-concurrency — a fixed block size,
+choosing how many run at once — divides the remaining headroom by the per-worker cost. Either way
+the decision is announced on one line with every term and its source, so an out-of-memory kill or an
+inexplicably idle machine is diagnosable from the log alone; and the validation suite pins the
+peak-residency walk on hand-computed live-set structures and the capacity parsers on captured
+platform records, so the shapes are checked facts under the same CI as the parity theorems.
+
 ## The through-line
 
 The four strategies are one source. The single-threaded baseline runs anything and is the oracle; the
@@ -349,4 +399,7 @@ hardware's peak. What licenses the automatic parallelization and fusion of the l
 heroic compiler analysis but the `NumCarrier` discipline itself: a model that typechecks against it is
 _already_ branchless and fusible, so "go fast, automatically" is earned at authoring time by the same
 type that made "write once, correctly" true. The performance is a corollary of the specification, not
-a second, hand-written artifact that must be kept in step with it.
+a second, hand-written artifact that must be kept in step with it. And the deployment's _size_ is
+earned the same way: the recording that licenses fusion also yields the model's memory shape, so how
+much of the spectrum a given machine can sustain is computed from the same single source — asked of
+the platform at run time, never tuned into the model.

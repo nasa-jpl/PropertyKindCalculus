@@ -26,6 +26,7 @@ and `Buffer.size`/`.release` in `fitAvsTR` with `BatchCarrier.liveSize`/`.releas
 `lake build tile_gpu tile_retrieve` to verify before relying on it.
 -/
 import PropertyKindCalculus.Torch.Paradigm.CudaCarrier
+import PropertyKindCalculus.Torch.Paradigm.Platform
 
 open Spec
 open PropertyKindCalculus.Paradigm (NumCarrier)
@@ -101,6 +102,18 @@ def warmup (C : Shape → Type) [BatchCarrier C] : IO Unit := do
   let a := BatchCarrier.toFloatArray (BatchCarrier.const (C := C) (s := Shape.dim 1 Shape.scalar) 0.0)
   IO.println s!"[batch] carrier warm ({a.size} elt)"
 
+/-- The DEVICE capacity twin of `Platform.hostMemLimit` (`cudaMemGetInfo`, via the
+allocator stats): what a batch-sizing decision may still claim on the current device.
+`none` on the CPU stub, where there is no device and both counters read 0. Query AFTER
+`warmup`: the CUDA context / library fixed tax is then already netted out of
+`deviceFreeBytes`, so the answer needs no fixed-overhead model — solve the batch size
+against it with the algorithm's per-pixel shape (`TapeCodegen.AiReport.fusedPeakBytes` /
+`eagerPeakBytes`) and a safety factor for allocator fragmentation. -/
+def deviceMemBudget : IO (Option Platform.MemBudget) := do
+  let st ← Buffer.allocatorStats
+  if st.deviceTotalBytes == 0 then return none
+  return some { bytes := st.deviceFreeBytes.toNat, source := "cudaMemGetInfo:free" }
+
 end BatchCarrier
 
 /-! ### Coarse-grained, pixel-axis Task parallelism (the CPU deployment lever) -/
@@ -158,5 +171,23 @@ def runSharded (nChunks total nOut : Nat) (inCols : Array FloatArray)
   for j in [0:nOut] do
     result := result.push (concatFA (chunkOuts.map (fun cols => cols[j]!)))
   return result
+
+/-- `runSharded` with the shard count DECIDED rather than passed: `Platform.decideShards`
+solves the algorithm's memory shape against THIS host's capacity (affinity/quota cores,
+cgroup-aware memory budget), an explicit `override` (a `TILE_SHARDS`-style env contract)
+winning verbatim when present. The decision — every term, with provenance — is announced on
+one line before running, so an OOM-kill or an idle machine is diagnosable from the log
+alone. `reservedBytes` is what the caller already holds regardless of the count (input
+columns, outputs to be stitched); the shard count is additionally capped at `total` (a
+shard needs at least one element). Returns the outputs and the decision, so callers can
+report the count they actually ran. -/
+def runShardedAuto (shape : Platform.MemShape) (total nOut : Nat)
+    (inCols : Array FloatArray) (k : Nat → Array FloatArray → IO (Array FloatArray))
+    (override : Option Nat := none) (reservedBytes : Nat := 0) :
+    IO (Array FloatArray × Platform.ShardDecision) := do
+  let d ← Platform.decideShards shape total reservedBytes override (hardCap := some total)
+  IO.println s!"[batch] {d.describe}"
+  let outs ← runSharded d.nShards total nOut inCols k
+  return (outs, d)
 
 end PropertyKindCalculus.Paradigm

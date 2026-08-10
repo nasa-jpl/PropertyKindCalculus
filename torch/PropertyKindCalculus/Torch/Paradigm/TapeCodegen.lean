@@ -582,6 +582,49 @@ def flopWeight : Option String → Nat
   | some nm                 => if (lutNodeName? nm).isSome then 4 else 1
   | none                    => 1
 
+/-- Peak number of simultaneously-live node buffers when the recorded DAG is evaluated by the
+**eager** elementwise carrier in tape order, freeing each buffer immediately after its last
+consumer. Named input leaves are live from launch (they are marshaled to the carrier before
+the kernel runs, wherever their leaf id happens to sit); unnamed const leaves allocate at
+their tape position; terminal nodes (nothing ever consumes them — the outputs) stay live to
+the end. Ids are append-order and parents always lower, so one ascending pass yields each
+node's last consumer.
+
+This is the `perElement` multiplier of the affine memory model `bytes(P) = fixed +
+perElement·P`: peak eager residency of a `P`-pixel batch is `maxLiveNodes t · P · 4` bytes
+(fp32 buffers), where `eagerBytes` is the *traffic* of the same walk. It is an idealized
+**lower bound** — GC-finalizer lag delays frees, and a loop-with-carry driver holds carry
+state across recorded steps — so it is the static *prior* a measured probe calibrates,
+never the authority. -/
+def maxLiveNodes (t : Tape Float) : Nat := Id.run do
+  let n := t.nodes.size
+  if n == 0 then return 0
+  -- last consumer of each node: ascending walk, so the final write is the max consumer id
+  let mut lastUse : Array (Option Nat) := Array.replicate n none
+  let mut j := 0
+  for nd in t.nodes do
+    for p in nd.parents do
+      lastUse := lastUse.set! p (some j)
+    j := j + 1
+  -- freeAt[k] = how many buffers die right after node k executes (terminal nodes never do)
+  let mut freeAt : Array Nat := Array.replicate n 0
+  for i in [0:n] do
+    if let some k := lastUse[i]! then
+      freeAt := freeAt.set! k (freeAt[k]! + 1)
+  -- forward walk: named inputs pre-counted, each other node allocates at its id, operands
+  -- last used at a node are freed only after it executes (op reads them, then writes)
+  let isInput := fun (nd : Node Float) => nd.parents.isEmpty && nd.name.isSome
+  let mut live := t.nodes.foldl (fun acc nd => if isInput nd then acc + 1 else acc) 0
+  let mut peak := live
+  j := 0
+  for nd in t.nodes do
+    unless isInput nd do
+      live := live + 1
+    peak := max peak live
+    live := live - freeAt[j]!
+    j := j + 1
+  return peak
+
 structure AiReport where
   nNodes  : Nat
   nInputs : Nat
@@ -601,6 +644,12 @@ structure AiReport where
   pure-arithmetic tapes. Per-fetch texture-cache traffic is an L1-level effect and is documented,
   not charged (a ≤ tens-of-KB table is cache-resident — which is the texture encoding's point). -/
   tableBytes : Nat := 0
+  /-- Peak simultaneously-live node buffers of the eager carrier (`maxLiveNodes`): the
+  `perElement` residency multiplier — peak eager memory of a `P`-pixel batch ≈
+  `maxLive · P · 4` bytes, where `eagerBytes` is the corresponding *traffic*. A static
+  lower bound (see `maxLiveNodes`); the fused megakernel's counterpart is
+  `nInputs + nOut` registers-only residency. -/
+  maxLive : Nat := 0
 
 def aiReport (t : Tape Float) (nOut : Nat) (tables : Array LutTable := #[]) :
     AiReport := Id.run do
@@ -624,7 +673,8 @@ def aiReport (t : Tape Float) (nOut : Nat) (tables : Array LutTable := #[]) :
   let histL := (hist.toList.toArray.qsort (fun a b => a.2 > b.2)).toList
   let tableBytes := tables.foldl (init := 0) fun acc tb => acc + tb.width * tb.layers * 4
   pure { nNodes := t.nodes.size, nInputs, nConsts, nOps, nOut, flops
-       , eagerBytes := eagerWords * 4, hist := histL, tableBytes }
+       , eagerBytes := eagerWords * 4, hist := histL, tableBytes
+       , maxLive := maxLiveNodes t }
 
 /-- The intensity numbers for a recorded kernel — the FUSED and EAGER arithmetic intensities, both
 computed from the same recorded DAG (identical FLOPs, different DRAM traffic).
@@ -666,5 +716,31 @@ def intensityWithTables (rep : AiReport) (iters pixels : Nat) : Intensity :=
   let aiFit   := Float.ofNat (rep.flops * iters) / Float.ofNat fusedBytes
   let aiEager := Float.ofNat rep.flops / Float.ofNat rep.eagerBytes
   { aiStep, aiFit, aiEager, fusedBytes, eagerBytes := rep.eagerBytes }
+
+/-! ### Peak-memory shapes — the auto-scaling prior
+
+The AI section above accounts *traffic*; deployment sizing needs *residency*: `bytes(P)` for a
+`P`-pixel batch, so a driver can solve `P` (or a shard count) against a queried capacity
+(`paradigm.platform`). Three static shapes fall out of the same `aiReport`, one per execution
+style. They are priors — a measured probe (allocator `peakBytes` on device, child peak RSS on
+the host) is the authority, because fixed overheads and free-promptness are runtime facts. -/
+
+/-- Peak **device** bytes of a `P`-pixel launch of the FUSED megakernel: inputs + outputs only
+(every intermediate is a register), plus the bound tables once per launch. -/
+def AiReport.fusedPeakBytes (rep : AiReport) (pixels : Nat) : Nat :=
+  (rep.nInputs + rep.nOut) * pixels * 4 + rep.tableBytes
+
+/-- Peak **device (or CPU-stub) buffer** bytes of a `P`-pixel batch on the EAGER elementwise
+carrier — the ideal-promptness lower bound `maxLive · P · 4` (see `maxLiveNodes`), plus the
+bound tables. -/
+def AiReport.eagerPeakBytes (rep : AiReport) (pixels : Nat) : Nat :=
+  rep.maxLive * pixels * 4 + rep.tableBytes
+
+/-- Per-pixel **host** bytes of a sharded CPU deployment around the eager stub carrier: the
+fp64 input-column slices and stitched fp64 output columns (`8·(nInputs+nOut)` — each shard
+copies its slice, and the totals are invariant in the shard count) plus the fp32 stub buffers
+(`4·maxLive`). The static prior for a `Platform.MemShape.bytesPerElem`. -/
+def AiReport.eagerHostBytesPerElem (rep : AiReport) : Nat :=
+  8 * (rep.nInputs + rep.nOut) + 4 * rep.maxLive
 
 end PropertyKindCalculus.Paradigm.TapeCodegen
