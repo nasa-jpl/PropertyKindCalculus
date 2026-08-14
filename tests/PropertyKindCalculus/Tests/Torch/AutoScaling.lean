@@ -106,55 +106,75 @@ def diamondRep : AiReport :=
 
 /-! ## Platform parsers on captured content -/
 
-#guard parseCpuList "0-3,8,10-11" == 7
-#guard parseCpuList "0-11" == 12
-#guard parseCpuList "7" == 1
-#guard parseCpuList "" == 0
+-- The parsers are kinded on BOTH sides (the ingest boundary): inputs are `NominalValue`
+-- texts of per-format kinds, outputs kinded indications. The `⟨…⟩` literals below are
+-- typed by each guard's left-hand side.
+#guard parseCpuList ⟨"0-3,8,10-11"⟩ == ⟨7⟩
+#guard parseCpuList ⟨"0-11"⟩ == ⟨12⟩
+#guard parseCpuList ⟨"7"⟩ == ⟨1⟩
+#guard parseCpuList ⟨""⟩ == ⟨0⟩
 
-#guard parseCpusAllowed "Name:\tfit\nCpus_allowed:\t10f\nCpus_allowed_list:\t0-3,8\n" == some 5
-#guard parseCpusAllowed "Name:\tfit\n" == none
+#guard parseCpusAllowed ⟨"Name:\tfit\nCpus_allowed:\t10f\nCpus_allowed_list:\t0-3,8\n"⟩
+    == some ⟨5⟩
+#guard parseCpusAllowed ⟨"Name:\tfit\n"⟩ == none
 
 -- v2 unlimited and the v1 no-limit sentinel are "no limit", never a colossal budget
-#guard parseLimitBytes "max\n" == none
-#guard parseLimitBytes "30064771072\n" == some 30064771072
-#guard parseLimitBytes "9223372036854771712\n" == none
+#guard parseLimitBytes ⟨"max\n"⟩ == none
+#guard parseLimitBytes ⟨"30064771072\n"⟩ == some ⟨30064771072⟩
+#guard parseLimitBytes ⟨"9223372036854771712\n"⟩ == none
 
-#guard parseCpuMaxCores "150000 100000\n" == some 2   -- 1.5 cores rounds UP: it can burst
-#guard parseCpuMaxCores "100000 100000\n" == some 1
-#guard parseCpuMaxCores "max 100000\n" == none
+#guard parseCpuMaxCores ⟨"150000 100000\n"⟩ == some ⟨2⟩   -- 1.5 cores rounds UP: it can burst
+#guard parseCpuMaxCores ⟨"100000 100000\n"⟩ == some ⟨1⟩
+#guard parseCpuMaxCores ⟨"max 100000\n"⟩ == none
 
+-- The dump and the key are different NOMINAL kinds — `parseMemInfoBytes key dump`
+-- (the classic swap) no longer type-checks.
 #guard parseMemInfoBytes
-  "MemTotal:       65486356 kB\nMemFree:         4200000 kB\nMemAvailable:   40316000 kB\n"
-  "MemAvailable" == some (40316000 * 1024)
-#guard parseMemInfoBytes "MemTotal: 1 kB\n" "MemAvailable" == none
+  ⟨"MemTotal:       65486356 kB\nMemFree:         4200000 kB\nMemAvailable:   40316000 kB\n"⟩
+  ⟨"MemAvailable"⟩ == some ⟨40316000 * 1024⟩
+#guard parseMemInfoBytes ⟨"MemTotal: 1 kB\n"⟩ ⟨"MemAvailable"⟩ == none
 
-#guard parseCgroupV2Path "0::/kubepods/burstable/pod12\n" == some "/kubepods/burstable/pod12"
-#guard parseCgroupV2Path "12:memory:/docker/abc\n0::/\n" == some "/"
-#guard parseCgroupV2Path "12:memory:/docker/abc\n" == none
+-- Input dump and extracted path are different kinds of text; the expected answers are
+-- `cgroupPathText` designations.
+#guard parseCgroupV2Path ⟨"0::/kubepods/burstable/pod12\n"⟩ == some ⟨"/kubepods/burstable/pod12"⟩
+#guard parseCgroupV2Path ⟨"12:memory:/docker/abc\n0::/\n"⟩ == some ⟨"/"⟩
+#guard parseCgroupV2Path ⟨"12:memory:/docker/abc\n"⟩ == none
 
 /-! ## The two solver shapes on hand-solved budgets -/
 
--- Worker shape: bytes(50) = 100 + 2·50 = 200; ⌊1000/200⌋ = 5.
-#guard maxConcurrentWorkers { fixedBytes := 100, bytesPerElem := 2.0 } 50 1000 == some 5
+-- Worker shape: bytes(50) = 100 + 2·50 = 200; ⌊1000/200⌋ = 5 WORKERS (the
+-- `workersOfHeadroom` law — each worker adds its own resident block).
+#guard maxConcurrentWorkers { fixedBytes := ⟨100⟩, bytesPerElem := ⟨2.0⟩ } ⟨50⟩ ⟨1000⟩
+    == some ⟨5⟩
 -- Not even one worker fits — the caller must shrink the block, not the count.
-#guard maxConcurrentWorkers { fixedBytes := 100, bytesPerElem := 2.0 } 1000 150 == some 0
+#guard maxConcurrentWorkers { fixedBytes := ⟨100⟩, bytesPerElem := ⟨2.0⟩ } ⟨1000⟩ ⟨150⟩
+    == some ⟨0⟩
 -- A zero-cost shape cannot constrain.
-#guard maxConcurrentWorkers { fixedBytes := 0, bytesPerElem := 0.0 } 50 1000 == none
+#guard maxConcurrentWorkers { fixedBytes := ⟨0⟩, bytesPerElem := ⟨0.0⟩ } ⟨50⟩ ⟨1000⟩ == none
 
 -- Single-launch shape: ⌊(1000 − 100)/2⌋ = 450 elements fit one resident batch.
-#guard MemShape.maxElems { fixedBytes := 100, bytesPerElem := 2.0 } 1000 == some 450
+#guard MemShape.maxElems { fixedBytes := ⟨100⟩, bytesPerElem := ⟨2.0⟩ } ⟨1000⟩ == some ⟨450⟩
 -- The fixed term (bound tables) alone exceeds the budget.
-#guard MemShape.maxElems { fixedBytes := 100, bytesPerElem := 2.0 } 50 == some 0
+#guard MemShape.maxElems { fixedBytes := ⟨100⟩, bytesPerElem := ⟨2.0⟩ } ⟨50⟩ == some ⟨0⟩
 -- No per-element term: memory does not constrain the batch size.
-#guard MemShape.maxElems { fixedBytes := 100, bytesPerElem := 0.0 } 1000 == none
+#guard MemShape.maxElems { fixedBytes := ⟨100⟩, bytesPerElem := ⟨0.0⟩ } ⟨1000⟩ == none
 -- Fractional per-element (a calibrated factor): ⌊900/2.5⌋ = 360, and bytesFor 360 = 1000 exactly.
-#guard MemShape.maxElems { fixedBytes := 100, bytesPerElem := 2.5 } 1000 == some 360
+#guard MemShape.maxElems { fixedBytes := ⟨100⟩, bytesPerElem := ⟨2.5⟩ } ⟨1000⟩ == some ⟨360⟩
 
--- Split shape: the variable term 2·400 = 800 is invariant in N; ⌊(1000−800)/100⌋ = 2.
-#guard maxShardsSplit { fixedBytes := 100, bytesPerElem := 2.0 } 400 1000 == some 2
+-- Split shape: the variable term 2·400 = 800 is invariant in N; ⌊(1000−800)/100⌋ = 2
+-- SHARDS (the `shardsOfHeadroom` law — the shards partition ONE resident total).
+#guard maxShardsSplit { fixedBytes := ⟨100⟩, bytesPerElem := ⟨2.0⟩ } ⟨400⟩ ⟨1000⟩ == some ⟨2⟩
 -- The resident total alone overflows: NO count fits — row-chunk externally instead.
-#guard maxShardsSplit { fixedBytes := 100, bytesPerElem := 2.0 } 600 1000 == some 0
+#guard maxShardsSplit { fixedBytes := ⟨100⟩, bytesPerElem := ⟨2.0⟩ } ⟨600⟩ ⟨1000⟩ == some ⟨0⟩
 -- No per-shard fixed term: memory does not constrain the count at all.
-#guard maxShardsSplit { fixedBytes := 0, bytesPerElem := 2.0 } 400 1000 == none
+#guard maxShardsSplit { fixedBytes := ⟨0⟩, bytesPerElem := ⟨2.0⟩ } ⟨400⟩ ⟨1000⟩ == none
+
+-- The same numbers through the two same-signature laws: equal magnitudes, DIFFERENT
+-- kinds — `workerCount` vs `shardCount`. Comparing the two results directly would not
+-- even type-check; that unwritable comparison is the point of the split vocabulary.
+#guard (Quantity.div workersOfHeadroom (⟨1000⟩ : Quantity storageCapacity Nat) ⟨200⟩
+    : Quantity workerCount Nat).magnitude
+    == (Quantity.div shardsOfHeadroom (⟨1000⟩ : Quantity storageCapacity Nat) ⟨200⟩
+    : Quantity shardCount Nat).magnitude
 
 end PropertyKindCalculus.Tests.AutoScaling

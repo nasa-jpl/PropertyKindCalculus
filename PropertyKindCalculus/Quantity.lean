@@ -234,6 +234,48 @@ instance instSub [Sub R] : Sub (Quantity k R) := ⟨fun x y => ⟨x.magnitude - 
 @[simp] theorem sub_magnitude [Sub R] (x y : Quantity k R) :
     (x - y).magnitude = x.magnitude - y.magnitude := rfl
 
+/-! ### Same-kind comparison — the computational world, continued
+
+Equality and order never mix kinds (the type index already forbids comparing a
+`Quantity k₁ R` with a `Quantity k₂ R`), so — like `+`/`-` above — they get plain
+operator instances delegating to the carrier. Whether an order is *meaningful* is a
+scale question (`ScaleType.AllowsOrder`, ordinal and above); these instances are the
+kind-gated computational face, exactly as `+` is to `Quantity.add`. -/
+
+/-- Same-kind `==` over the carrier's `BEq` (kind-gated: cross-kind `==` is a type error). -/
+instance instBEq [BEq R] : BEq (Quantity k R) := ⟨fun x y => x.magnitude == y.magnitude⟩
+/-- Same-kind `≤` over the carrier's order (kind-gated). -/
+instance instLE [LE R] : LE (Quantity k R) := ⟨fun x y => x.magnitude ≤ y.magnitude⟩
+/-- Same-kind `<` over the carrier's order (kind-gated). -/
+instance instLT [LT R] : LT (Quantity k R) := ⟨fun x y => x.magnitude < y.magnitude⟩
+
+instance instDecidableLE [LE R] [DecidableLE R] (x y : Quantity k R) : Decidable (x ≤ y) :=
+  inferInstanceAs (Decidable (x.magnitude ≤ y.magnitude))
+instance instDecidableLT [LT R] [DecidableLT R] (x y : Quantity k R) : Decidable (x < y) :=
+  inferInstanceAs (Decidable (x.magnitude < y.magnitude))
+
+@[simp] theorem beq_iff [BEq R] (x y : Quantity k R) :
+    (x == y) = (x.magnitude == y.magnitude) := rfl
+@[simp] theorem le_iff [LE R] (x y : Quantity k R) :
+    (x ≤ y) ↔ (x.magnitude ≤ y.magnitude) := Iff.rfl
+@[simp] theorem lt_iff [LT R] (x y : Quantity k R) :
+    (x < y) ↔ (x.magnitude < y.magnitude) := Iff.rfl
+
+/-- Render as the magnitude (a `Quantity` in a log line or `Repr` dump shows its number;
+the kind is carried by the type, not re-printed). -/
+instance instRepr [Repr R] : Repr (Quantity k R) := ⟨fun q p => reprPrec q.magnitude p⟩
+
+/-- **Kind-preserving representation change.** Apply a carrier map `f : R → S` to the
+magnitude, keeping the kind fixed: rounding (`Float.ceil` then truncation), widening
+(`Nat.toFloat`), and narrowing casts are *representation* operations — the quantity they
+carry is the same kind throughout, so this is deliberately **not** a kind conversion
+(there is no way to change `k` with it). The disciplined alternative to erasing with
+`.magnitude` and re-minting `⟨…⟩` around every numeric cast. -/
+def castCarrier {S : Type} (f : R → S) (q : Quantity k R) : Quantity k S := ⟨f q.magnitude⟩
+
+@[simp] theorem castCarrier_magnitude {S : Type} (f : R → S) (q : Quantity k R) :
+    (q.castCarrier f).magnitude = f q.magnitude := rfl
+
 end Quantity
 
 /-! ## Concrete carriers

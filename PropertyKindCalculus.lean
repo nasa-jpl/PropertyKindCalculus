@@ -17,6 +17,7 @@ import PropertyKindCalculus.DedicatedKind
 import PropertyKindCalculus.Specialization
 import PropertyKindCalculus.Examination
 import PropertyKindCalculus.PropertyValue
+import PropertyKindCalculus.NominalValue
 import PropertyKindCalculus.ValueScale
 import PropertyKindCalculus.Unit
 import PropertyKindCalculus.UnitPrefix

@@ -112,7 +112,9 @@ against it with the algorithm's per-pixel shape (`TapeCodegen.AiReport.fusedPeak
 def deviceMemBudget : IO (Option Platform.MemBudget) := do
   let st ← Buffer.allocatorStats
   if st.deviceTotalBytes == 0 then return none
-  return some { bytes := st.deviceFreeBytes.toNat, source := "cudaMemGetInfo:free" }
+  -- Ingest boundary: `cudaMemGetInfo`'s free-bytes indication IS a storage capacity —
+  -- the mint is licensed by the driver API contract (adjudicated tier).
+  return some { bytes := ⟨st.deviceFreeBytes.toNat⟩, source := ⟨"cudaMemGetInfo:free"⟩ }
 
 end BatchCarrier
 
@@ -181,13 +183,18 @@ alone. `reservedBytes` is what the caller already holds regardless of the count 
 columns, outputs to be stitched); the shard count is additionally capped at `total` (a
 shard needs at least one element). Returns the outputs and the decision, so callers can
 report the count they actually ran. -/
-def runShardedAuto (shape : Platform.MemShape) (total nOut : Nat)
+def runShardedAuto (shape : Platform.MemShape) (total : Quantity Platform.elementCount Nat)
+    (nOut : Nat)
     (inCols : Array FloatArray) (k : Nat → Array FloatArray → IO (Array FloatArray))
-    (override : Option Nat := none) (reservedBytes : Nat := 0) :
+    (override : Option (Quantity Platform.shardCount Nat) := none)
+    (reservedBytes : Quantity Platform.storageCapacity Nat := ⟨0⟩) :
     IO (Array FloatArray × Platform.ShardDecision) := do
-  let d ← Platform.decideShards shape total reservedBytes override (hardCap := some total)
+  let d ← Platform.decideShards shape total reservedBytes override
+    (hardCap := some (Platform.elementsAsShardCap total))
   IO.println s!"[batch] {d.describe}"
-  let outs ← runSharded d.nShards total nOut inCols k
+  -- Erasure boundary: `runSharded` is the naked task machinery (chunk lengths, slice
+  -- indices); the decision's kinds have done their work by here.
+  let outs ← runSharded d.nShards.magnitude total.magnitude nOut inCols k
   return (outs, d)
 
 end PropertyKindCalculus.Paradigm
