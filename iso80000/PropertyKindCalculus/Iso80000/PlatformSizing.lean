@@ -106,8 +106,8 @@ theorem platform_dims_conflated :
      coreCountDK, workerCountDK, shardCountDK].map DimensionedKind.toDimension
       = List.replicate 6 Dim.one := rfl
 
-/-- The emblematic pair, stated the way the AVS layer states its own conflations:
-same dimension, different kinds. -/
+/-- The emblematic pair, stated in the canonical conflation form: same dimension,
+different kinds. -/
 theorem workers_shards_dimension_conflated :
     workerCountDK.toDimension = shardCountDK.toDimension ∧
     workerCountDK.kind ≠ shardCountDK.kind :=
