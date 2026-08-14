@@ -57,7 +57,7 @@ package «PropertyKindCalculus» where
   -- The package version — the single source of truth. `scripts/bump-version.sh`
   -- reads and bumps it here, and the blueprint reads this same line at build time
   -- (its `{version}[]` role) so the published document never drifts from the source.
-  version := v!"0.36.4"
+  version := v!"0.37.0"
   leanOptions := #[
     ⟨`autoImplicit, false⟩,
     ⟨`relaxedAutoImplicit, false⟩]
@@ -70,37 +70,43 @@ package «PropertyKindCalculus» where
 -- `v4.32.0` toolchain bump (PR #1445). Both are now merged upstream, so we track
 -- the upstream `leanprover-community/physlib` `master` branch directly; the exact
 -- commit is recorded in `lake-manifest.json`, so the build stays reproducible.
--- Upstream `master` carries the `leanprover/lean4:v4.32.0` toolchain, matching this
--- package's `leanprover/lean4:v4.32.0` and the `require mathlib` at `v4.32.0` kept
--- *last* below (Lake resolves later requires over earlier ones, so Mathlib
--- `v4.32.0`'s own dependency versions take precedence and `lake exe cache get`
--- computes matching hashes).
+-- NOTE (2026-08-14, v4.33 bump): upstream `master` (a7a6d465) does NOT compile under
+-- Lean/Mathlib `v4.33.0` — NNReal mk-coercion proofs in the five `*Unit` modules and
+-- the derived `Fintype` on `LTMCTDimensionBase` rot. Until upstream bumps, we track
+-- the fork branch `NicolasRouquette/physlib` `lean-4.33` = upstream `master` + those
+-- proof repairs (candidate upstream PR). A dependency's `lean-toolchain` is
+-- informational (the ROOT toolchain builds the closure); the `require mathlib` at
+-- `v4.33.0` is kept *last* below (Lake resolves later requires over earlier ones, so
+-- Mathlib `v4.33.0`'s own dependency versions take precedence and
+-- `lake exe cache get` computes matching hashes). When upstream physlib lands its
+-- own v4.33 bump, flip this back to `leanprover-community/physlib` @ `master`.
 require «Physlib» from git
-  "https://github.com/leanprover-community/physlib.git" @
-  "master"
+  "https://github.com/NicolasRouquette/physlib.git" @
+  "lean-4.33"
 
 -- TorchLean (this work's fork, `combined` branch) backs *only* the `Torch` library
 -- below: the concrete IEEE-754 binary32 carriers (`FP32` rounding spec,
 -- `IEEE32Exec` executable) that instantiate the R10 exec/spec refinement bridge.
--- Its `combined` branch was rebased onto Lean `v4.31.0` / Mathlib `v4.31.0`; this
--- package pins the same toolchain. Required after PhysLib so its `doc-gen4 v4.31.0`
--- wins. The core spine never imports it, so `import PropertyKindCalculus` stays
--- Mathlib-free.
+-- Its `combined` branch carries upstream's Lean `v4.33.0` / Mathlib `v4.33.0`
+-- upgrade; this package pins the same toolchain. Required after PhysLib so its
+-- `doc-gen4 v4.33.0` wins. The core spine never imports it, so
+-- `import PropertyKindCalculus` stays Mathlib-free.
 require «TorchLean» from git
   "https://github.com/NicolasRouquette/TorchLean.git" @
   "combined"
   with torchLeanOpts
 
--- Mathlib is pinned directly at the root, at `v4.31.0`, and kept LAST so that its
+-- Mathlib is pinned directly at the root, at `v4.33.0`, and kept LAST so that its
 -- dependency versions win over PhysLib's older transitive pins (see above). This
 -- is the same discipline TorchLean's lakefile follows. The core spine never
 -- imports Mathlib, so a plain `import PropertyKindCalculus` stays Mathlib-free.
 require mathlib from git
   "https://github.com/leanprover-community/mathlib4" @
-  "v4.32.0"
+  "v4.33.0"
 
 -- NOTE (2026-08-04): there is deliberately **no doc-gen4 require here**. doc-gen4 is pulled
--- transitively (PhysLib and TorchLean each require it, at the stock `leanprover/doc-gen4` `v4.32.0`
+-- transitively (PhysLib and TorchLean each require it; TorchLean's stock `leanprover/doc-gen4` `v4.33.0`
+-- pin wins, being required later — see the ordering discipline above; formerly both sat at `v4.32.0`
 -- tag `092d631`), so it stays in the closure regardless — but this package no longer *overrides* it.
 -- As of the pivot in `RENDERING.md` §6 v2 (after doc-gen4 PR #403 was closed on maintainer feedback),
 -- `@[pkc_math]` writes its rendered math + source into each declaration's own docstring via core Lean's

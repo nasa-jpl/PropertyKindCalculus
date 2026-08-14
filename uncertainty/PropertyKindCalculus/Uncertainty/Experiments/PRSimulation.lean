@@ -250,6 +250,7 @@ def addBackward {s : Shape} (aId bId : Nat) : Any → Res (List (Nat × Any)) :=
 @[simp] theorem requireGrad_mkAny {s : Shape} (δ : Tensor ℝ s) :
     Runtime.Autograd.Tape.requireGrad (α := ℝ) (τ := s) (mkAny δ) = .ok δ := by
   simp [Runtime.Autograd.Tape.requireGrad, mkAny, Runtime.Autograd.AnyTensor.mk, Tensor.castShape]
+  rfl
 
 /-- R's `mul` backward on a minted cotangent `δ` returns the product-rule contributions. PROVEN. -/
 theorem mulBackward_mkAny {s : Shape} (a b δ : Tensor ℝ s) (aId bId : Nat) :
@@ -626,6 +627,7 @@ theorem backwardShapeWF_add {s : Shape} (t : RTape) (hwf : BackwardShapeWF t)
   intro d
   refine ⟨[(aId, mkAny d), (bId, mkAny d)], ?_, ?_⟩
   · simp [Runtime.Autograd.Tape.requireGrad, mkAny, Runtime.Autograd.AnyTensor.mk]
+    rfl
   · intro pc hpc
     simp only [List.mem_cons, List.not_mem_nil, or_false] at hpc
     rcases hpc with rfl | rfl
@@ -653,7 +655,7 @@ theorem backwardShapeWF_mul {s : Shape} (t : RTape) (hwf : BackwardShapeWF t)
   refine backwardShapeWF_addNode t hwf _ ?_
   intro d
   refine ⟨[(aId, mkAny (mulSpec d b)), (bId, mkAny (mulSpec d a))], ?_, ?_⟩
-  · simp [Runtime.Autograd.Tape.requireGrad, mkAny, Runtime.Autograd.AnyTensor.mk]
+  · exact mulBackward_mkAny a b d aId bId
   · intro pc hpc
     simp only [List.mem_cons, List.not_mem_nil, or_false] at hpc
     rcases hpc with rfl | rfl

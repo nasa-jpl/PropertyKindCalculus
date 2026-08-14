@@ -41,7 +41,14 @@ time, mass, charge, temperature) augmented with **`angle`**, adopting the reform
 which plane angle is a base dimension and solid angle its square. -/
 inductive Base
   | length | time | mass | charge | temperature | angle
-  deriving DecidableEq, Fintype
+  deriving DecidableEq
+
+-- The `Fintype` derive handler produces an ill-typed `Finset` under Lean v4.33
+-- (its generated `Membership` rewrite no longer typechecks at reducible
+-- transparency), so the instance is written out.
+instance : Fintype Base where
+  elems := {.length, .time, .mass, .charge, .temperature, .angle}
+  complete := fun x => by cases x <;> decide
 
 namespace AngleReform
 
