@@ -52,7 +52,7 @@
    "type": "git",
    "subDir": null,
    "scope": "",
-   "rev": "fd877270da2d54c16f3a81b0e5662b0776905b0c",
+   "rev": "f4fa33a3a22878b22f6be953a45ca31b9b8646e1",
    "name": "Physlib",
    "manifestFile": "lake-manifest.json",
    "inputRev": "lean-4.33",
