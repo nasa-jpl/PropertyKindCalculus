@@ -182,16 +182,19 @@ one line before running, so an OOM-kill or an idle machine is diagnosable from t
 alone. `reservedBytes` is what the caller already holds regardless of the count (input
 columns, outputs to be stitched); the shard count is additionally capped at `total` (a
 shard needs at least one element). Returns the outputs and the decision, so callers can
-report the count they actually ran. -/
+report the count they actually ran. `emitter` attributes the announced line: a caller with
+its own designation vocabulary crosses into `decisionEmitter` at the call site, and the
+default is honest about being this generic driver rather than the application. -/
 def runShardedAuto (shape : Platform.MemShape) (total : Quantity Platform.elementCount Nat)
     (nOut : Nat)
     (inCols : Array FloatArray) (k : Nat → Array FloatArray → IO (Array FloatArray))
     (override : Option (Quantity Platform.shardCount Nat) := none)
-    (reservedBytes : Quantity Platform.storageCapacity Nat := ⟨0⟩) :
+    (reservedBytes : Quantity Platform.storageCapacity Nat := ⟨0⟩)
+    (emitter : NominalValue Platform.decisionEmitter String := ⟨"batch"⟩) :
     IO (Array FloatArray × Platform.ShardDecision) := do
   let d ← Platform.decideShards shape total reservedBytes override
     (hardCap := some (Platform.elementsAsShardCap total))
-  IO.println s!"[batch] {d.describe}"
+  IO.println (d.describe emitter)
   -- Erasure boundary: `runSharded` is the naked task machinery (chunk lengths, slice
   -- indices); the decision's kinds have done their work by here.
   let outs ← runSharded d.nShards.magnitude total.magnitude nOut inCols k

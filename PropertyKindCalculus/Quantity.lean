@@ -276,6 +276,30 @@ def castCarrier {S : Type} (f : R → S) (q : Quantity k R) : Quantity k S := �
 @[simp] theorem castCarrier_magnitude {S : Type} (f : R → S) (q : Quantity k R) :
     (q.castCarrier f).magnitude = f q.magnitude := rfl
 
+/-! ### The integer ↔ real round-trip, named in both directions
+
+An affine model over integer resources (`bytes(P) = fixed + perElement·P`) computes
+through a real-valued slope and must land back on an integer, so every such computation
+widens and then narrows. The narrowing has TWO correct answers and picking the wrong one
+is a resource error, not a rounding wart — which is the whole reason these are named
+definitions rather than a lambda written afresh at each site. -/
+
+/-- Widen a `Nat`-carried magnitude to `Float`: the entry half of the round-trip, and the
+harmless half — no information is lost and no decision rides on it. -/
+def asFloat (q : Quantity k Nat) : Quantity k Float := q.castCarrier Nat.toFloat
+
+/-- Narrow back to `Nat`, rounding **up**. For a *demand* — bytes that must be allocated,
+work that must be scheduled: understating it is what an out-of-memory kill is made of, so
+the fractional part is charged in full. -/
+def ceilToNat (q : Quantity k Float) : Quantity k Nat :=
+  q.castCarrier (fun x => x.ceil.toUInt64.toNat)
+
+/-- Narrow back to `Nat`, rounding **down**. The dual of `ceilToNat` and the other half of
+its argument: for an *allowance* — how many elements a budget sustains, how many shards
+fit — overstating it authorizes exactly the excess the solver exists to prevent. -/
+def floorToNat (q : Quantity k Float) : Quantity k Nat :=
+  q.castCarrier (fun x => x.floor.toUInt64.toNat)
+
 end Quantity
 
 /-! ## Concrete carriers

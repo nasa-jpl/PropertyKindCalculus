@@ -177,4 +177,33 @@ def diamondRep : AiReport :=
     == (Quantity.div shardsOfHeadroom (⟨1000⟩ : Quantity storageCapacity Nat) ⟨200⟩
     : Quantity shardCount Nat).magnitude
 
+/-! ## The integer ↔ real round-trip: the rounding DIRECTION is the claim -/
+
+-- A demand rounds up, an allowance rounds down. Same magnitude in, different answers —
+-- which is why each direction is a named definition rather than a lambda per call site.
+#guard (⟨2.5⟩ : Quantity storageCapacity Float).ceilToNat == ⟨3⟩
+#guard (⟨2.5⟩ : Quantity elementCount Float).floorToNat == ⟨2⟩
+#guard (⟨7⟩ : Quantity storageCapacity Nat).asFloat == ⟨7.0⟩
+-- Exact values are fixed points of both — the directions differ only where it matters.
+#guard (⟨4.0⟩ : Quantity shardCount Float).ceilToNat == (⟨4.0⟩ : Quantity shardCount Float).floorToNat
+
+/-! ## The decision line — both labels, one erasure -/
+
+-- MiB display truncates and is `String`-valued: a rounded figure must not be able to
+-- re-enter the arithmetic that decides whether a batch fits.
+#guard showMiB ⟨30064771072⟩ == "28672 MiB"        -- the 28 GiB cgroup cap of the motivating case
+#guard showMiB ⟨(1 <<< 20) - 1⟩ == "0 MiB"
+#guard showMiB ⟨0⟩ == "0 MiB"
+
+-- The whole line, both labels in their own slots: the emitter says who decided, the
+-- budget's `source` says which limit was believed. Swapping them is a type error, not a
+-- confusing log entry.
+#guard ShardDecision.describe
+    { nShards := ⟨4⟩, cores := { cores := ⟨16⟩ },
+      budget := some { bytes := ⟨30064771072⟩, source := ⟨"cgroup-v2:/kubepods/burstable"⟩ },
+      memCap := some ⟨4⟩, overflow := false, overridden := false }
+    ⟨"tile_retrieve"⟩
+  == "[tile_retrieve] shards=4 (auto; cores=16, mem-cap 4, " ++
+     "budget 28672 MiB [cgroup-v2:/kubepods/burstable])"
+
 end PropertyKindCalculus.Tests.AutoScaling

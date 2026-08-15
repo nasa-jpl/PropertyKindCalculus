@@ -91,8 +91,10 @@ signature is the same argument-swap hole the quantity kinds close — a `/proc/m
 dump and the field key to look up in it both type-check in either slot. So the TEXTS are
 kinded too, as `NominalValue`s of nominal-scale kinds (§13.2.1: strings are properties
 compared for equality, not quantities — `Quantity` would be the wrong wrapper, by
-`nominal_not_quantity`). Each kind is one kernel-interface format; the parser for that
-format is the authority on it. -/
+`nominal_not_quantity`). Each parser kind is one kernel-interface format, and the parser
+for that format is the authority on it; the two label kinds at the end run the other
+direction — designations the solvers *produce*, one per slot of the decision line they
+emit. -/
 
 /-- A kernel CPU-list (`"0-3,8,10-11"`) — the `Cpus_allowed_list` payload format. -/
 def cpuListText : KindOfProperty := { id := "kernel CPU-list text", scale := .nominal }
@@ -116,6 +118,18 @@ def cgroupPathText : KindOfProperty := { id := "cgroup-v2 relative path", scale 
 def capacityProvenance : KindOfProperty :=
   { id := "capacity-source provenance label", scale := .nominal }
 
+/-- The component a sizing decision is attributed to — the `[…]` prefix of the decision
+line, and the twin of `capacityProvenance` on that same line: the provenance answers
+"believed from where", the emitter "decided by whom". Deliberately GENERIC: an
+application designates itself in its own vocabulary (an executable name, a stage id, a
+DPS algorithm name — which are themselves distinct kinds, and confusable, in a
+deployment that carries all three) and crosses into this kind through an authored
+crossing at the call site, exactly as the count kinds do. Kinding it is what stops a log
+line from being the one place in the decision where an unattributed `String` decides what
+the reader believes about which program spoke. -/
+def decisionEmitter : KindOfProperty :=
+  { id := "sizing-decision emitter label", scale := .nominal }
+
 /-- The swap that motivated the text kinds: the dump and the key that indexes it are
 different kinds, so `parseMemInfoBytes key meminfo` is a compile error. -/
 theorem meminfoText_ne_meminfoFieldKey : meminfoText ≠ meminfoFieldKey := by decide
@@ -123,6 +137,28 @@ theorem meminfoText_ne_meminfoFieldKey : meminfoText ≠ meminfoFieldKey := by d
 /-- Input and output of `parseCgroupV2Path` are different kinds of text: feeding the
 extracted path back to the extractor is a compile error. -/
 theorem procCgroupText_ne_cgroupPathText : procCgroupText ≠ cgroupPathText := by decide
+
+/-- The two labels of one decision line are different kinds — "decided by whom" is not
+"believed from where" — so neither can be printed into the other's slot. -/
+theorem decisionEmitter_ne_capacityProvenance : decisionEmitter ≠ capacityProvenance := by
+  decide
+
+/-! ### The display erasure of a storage capacity
+
+Kinds erase at the log line (`Platform`'s module header names that as one of the two
+sanctioned boundaries), but the *spelling* of the erasure should not be re-invented
+per consumer: three repos printing `x / (1 <<< 20)` inline is three chances to divide by
+the wrong power and no way to change the unit once. -/
+
+/-- Render a storage capacity in **mebibytes** (IEC 80000-13 binary prefix `Mi` = 2²⁰),
+the unit every budget line in and around these solvers reports.
+
+Deliberately `String`-valued and one-way. Returning a rounded `Quantity` would put a
+display figure back in reach of arithmetic that must run on the exact byte count — and a
+budget comparison off by up to a mebibyte is precisely the class of error the solvers are
+here to remove. -/
+def showMiB (q : Quantity storageCapacity Nat) : String :=
+  s!"{q.magnitude / (1 <<< 20)} MiB"
 
 /-! ### The kind laws the solvers invoke -/
 

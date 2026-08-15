@@ -268,8 +268,7 @@ deriving Repr
 def MemShape.bytesFor (shape : MemShape) (elems : Quantity elementCount Nat) :
     Quantity storageCapacity Nat :=
   shape.fixedBytes +
-    (Quantity.mul bytesOfElements shape.bytesPerElem
-        (elems.castCarrier Nat.toFloat)).castCarrier (fun x => x.ceil.toUInt64.toNat)
+    (Quantity.mul bytesOfElements shape.bytesPerElem elems.asFloat).ceilToNat
 
 /-- SOLVER, single-launch shape (a megakernel driver: ONE resident batch, choose its element
 count): the largest `elems` with `bytesFor elems ≤ budget`, i.e. the `elementsOfBudget`
@@ -281,9 +280,8 @@ def MemShape.maxElems (shape : MemShape) (budget : Quantity storageCapacity Nat)
     Option (Quantity elementCount Nat) :=
   if shape.bytesPerElem ≤ ⟨0⟩ then none
   else if shape.fixedBytes > budget then some ⟨0⟩
-  else some ((Quantity.div elementsOfBudget
-    ((budget - shape.fixedBytes).castCarrier Nat.toFloat)
-    shape.bytesPerElem).castCarrier (fun x => x.floor.toUInt64.toNat))
+  else some (Quantity.div elementsOfBudget
+    (budget - shape.fixedBytes).asFloat shape.bytesPerElem).floorToNat
 
 /-- SOLVER, worker shape (a `chunk_fit`-style driver: fixed `elemsPerWorker` per worker,
 choose how many run concurrently): the `workersOfHeadroom` quotient
@@ -304,8 +302,8 @@ fits — the tile must shrink (row-chunk externally), not the count. Same quotie
 as `maxConcurrentWorkers`, different law, different count — see `PlatformKinds`. -/
 def maxShardsSplit (shape : MemShape) (totalElems : Quantity elementCount Nat)
     (headroom : Quantity storageCapacity Nat) : Option (Quantity shardCount Nat) :=
-  let varBytes := (Quantity.mul bytesOfElements shape.bytesPerElem
-    (totalElems.castCarrier Nat.toFloat)).castCarrier (fun x => x.ceil.toUInt64.toNat)
+  let varBytes :=
+    (Quantity.mul bytesOfElements shape.bytesPerElem totalElems.asFloat).ceilToNat
   if varBytes > headroom then some ⟨0⟩
   else if shape.fixedBytes == ⟨0⟩ then none
   else some (Quantity.div shardsOfHeadroom (headroom - varBytes) shape.fixedBytes)
@@ -327,11 +325,18 @@ structure ShardDecision where
 deriving Repr
 
 /-- One log line with every term and its provenance — the `chunked.py` budget-table UX:
-what was decided, from which numbers, believed from which source. (The `.magnitude` reads
-here are the sanctioned display erasure: the log line is where kinds leave the calculus.) -/
-def ShardDecision.describe (d : ShardDecision) : String :=
+what was decided, from which numbers, believed from which source, **and by whom**. The
+`emitter` is the line's own attribution: a decision is only actionable if the reader knows
+which program made it, and on a host running six deployment executables that is not
+inferable from the numbers. Applications pass their own designation across an authored
+crossing into `decisionEmitter` rather than a bare `String` — the emitter and the budget's
+`source` are the two labels of this line, and `decisionEmitter_ne_capacityProvenance`
+keeps them out of each other's slot. (The `.magnitude`/`.value` reads and `showMiB` here
+are the sanctioned display erasure: the log line is where kinds leave the calculus.) -/
+def ShardDecision.describe (d : ShardDecision)
+    (emitter : NominalValue decisionEmitter String) : String :=
   let mem := match d.budget with
-    | some b => s!"budget {b.bytes.magnitude / (1 <<< 20)} MiB [{b.source.value}]"
+    | some b => s!"budget {showMiB b.bytes} [{b.source.value}]"
     | none => "budget unknown"
   let cap := match d.memCap with
     | some m => s!"mem-cap {m.magnitude}"
@@ -340,7 +345,8 @@ def ShardDecision.describe (d : ShardDecision) : String :=
   let over := if d.overflow then
       "  ⚠ resident set alone exceeds the budget — shrink the tile/block, not the count"
     else ""
-  s!"shards={d.nShards.magnitude} ({how}; cores={d.cores.cores.magnitude}, {cap}, {mem}){over}"
+  s!"[{emitter.value}] shards={d.nShards.magnitude} ({how}; \
+cores={d.cores.cores.magnitude}, {cap}, {mem}){over}"
 
 /-- **Decide a `runSharded` shard count**: `min(cores-implied cap, memory cap, hardCap)`,
 floor 1 — or the explicit `override` when the caller has one (a `TILE_SHARDS`-style env
