@@ -292,12 +292,31 @@ one element, so no more shards than elements are useful. -/
 def elementsAsShardCap (n : Quantity elementCount Nat) : Quantity shardCount Nat :=
   ⟨n.magnitude⟩
 
-/-- **The shard count that minimizes `t(N) = W/N + a·N`**: the stationary point `N* = √(W/a)`,
-rounded to whichever of its integer neighbours is actually better.
+/-- **The shard count that minimizes the modelled wall clock**: the stationary point
+`N* = √(W/a)`, rounded to whichever of its integer neighbours is actually better.
 
-**The model, in full, because it is what this function is a solution *of*.** `W = w·P` is the
-total work; `a` is the fixed cost of one shard. Four claims about a runtime are packed into those
-two terms, and every one of them can be false while the units stay perfectly consistent:
+**The model, because it is what this function is a solution *of*.** One term of work the shards
+divide between them, one fixed cost every shard pays:
+
+$$ t(N) \;=\; \underbrace{\frac{W}{N}}_{\text{shared work}} \;+\; \underbrace{a\,N}_{\text{per-shard cost}},
+\qquad W = w\,P. $$
+
+`t` is convex on `N > 0` (its second derivative is `2W/N³ > 0`), so the stationary point is the
+minimum, and there is exactly one:
+
+$$ \frac{dt}{dN} \;=\; -\frac{W}{N^{2}} + a \;=\; 0 \quad\Longrightarrow\quad N^{*} = \sqrt{W/a}. $$
+
+A pleasant check, and a useful one for reading a measurement: at `N*` the two terms are *equal*,
+each `√(Wa)`, so the minimum is
+
+$$ t(N^{*}) \;=\; 2\sqrt{W a}. $$
+
+That is the sanity test to apply to any candidate optimum — if the measured split between shared
+work and per-shard overhead is far from even, either the count is not the optimum or the model is
+not the right one.
+
+**The four assumptions**, packed into those two terms, every one of which can be false while the
+units stay perfectly consistent:
 
   * *the work divides evenly* — each shard takes exactly `W/N`. With `P` not divisible by `N` the
     wall clock is set by the largest shard, `⌈P/N⌉·w`, which is worse and not smooth;

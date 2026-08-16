@@ -256,6 +256,17 @@ def beatenBy (shape : TimeShape) (total : Quantity elementCount Nat)
     | some n => !beatenBy (shape i) ⟨1⟩ n 40
     | none => false
 
+-- **The equal-terms identity**, which is the derivation's own sanity check made executable: at
+-- `N* = √(W/a)` the shared-work and per-shard terms are *equal*, each `√(Wa)`, so the minimum is
+-- `t(N*) = 2√(Wa)`. Pinned at a shape where `W/a` is a perfect square, so `N*` is an exact integer
+-- and rounding cannot blur the equality: `a = 1 s`, `W = 16 s` ⇒ `N* = 4`, both terms `4 s`,
+-- `t = 8 s`. A measured optimum whose two terms are far from even is either not the optimum or
+-- not this model.
+#guard
+  let s : TimeShape := { perElement := ⟨16.0⟩, perShard := ⟨1.0⟩ }
+  let n := s.optimalShards ⟨1⟩
+  n == some ⟨4⟩ && (s.wallClock ⟨1⟩ ⟨4⟩).magnitude == 8.0
+
 -- The specific case round-to-nearest gets wrong, pinned so the repair cannot silently regress:
 -- `N* = 1.45` rounds to 1, but two shards are genuinely faster (3.051 s against 3.103 s).
 #guard
