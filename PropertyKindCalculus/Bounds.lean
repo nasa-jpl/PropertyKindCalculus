@@ -197,6 +197,34 @@ def gtb [LT R] [∀ x y : R, Decidable (x < y)] (x y : Quantity k R) : Bool := y
 
 end Quantity
 
+/-- **Does `x` satisfy this lower bound?** The `Bool` counterpart of `LowerBound.le`, and
+like it the only orientation a `LowerBound` can be queried in: the bound stays on the left
+of the `≤`, so an endpoint can never be used as if it bounded from above.
+
+Distinct from `hitBy`, and the pair is worth keeping straight because both are non-strict
+and they coincide exactly at the endpoint. `leb` is a **conformity** test — is this value
+admissible — and is the one a calibration range, an acceptance limit or a validity check
+asks. `hitBy` is a **saturation** test — has this value reached the constraint — and is the
+one a clamped retrieval's QC asks. Same operands, opposite senses, and the reason a single
+`≤` on magnitudes is not an adequate spelling of either. -/
+def LowerBound.leb {k : KindOfProperty} {R : Type} [LE R] [∀ x y : R, Decidable (x ≤ y)]
+    (b : LowerBound k R) (x : Quantity k R) : Bool :=
+  decide (b.q.magnitude ≤ x.magnitude)
+
+/-- **Does `x` satisfy this upper bound?** The `Bool` counterpart of `UpperBound.ge` — the
+dual of `LowerBound.leb`, with the bound on the right of the `≤`. -/
+def UpperBound.geb {k : KindOfProperty} {R : Type} [LE R] [∀ x y : R, Decidable (x ≤ y)]
+    (b : UpperBound k R) (x : Quantity k R) : Bool :=
+  decide (x.magnitude ≤ b.q.magnitude)
+
+/-- **Executable membership** `x ∈ [lo, hi]` — the `Bool` counterpart of `IccQ.Mem`, built
+from the two directional deciders so that each endpoint contributes only the orientation its
+role can state. A consumer testing a value against a range never writes the comparison, and
+therefore cannot write it backwards. -/
+def IccQ.memb {k : KindOfProperty} {R : Type} [LE R] [∀ x y : R, Decidable (x ≤ y)]
+    (I : IccQ k R) (x : Quantity k R) : Bool :=
+  I.lo.leb x && I.hi.geb x
+
 /-- **An upper bound is hit from below**: `x` sits at or beyond the bound — the
 executable counterpart of the *negation* of strict interiority, and the only direction
 an `UpperBound` can be queried in (the bound-hit test of a box-constrained fit's QC). -/

@@ -89,10 +89,29 @@ def massK : KindOfProperty := { id := "mass", scale := .ratio }
 #guard lb.hitBy (⟨-2⟩ : Quantity lengthK Int) == true
 #guard lb.hitBy (⟨1⟩ : Quantity lengthK Int) == false
 
+-- Conformity is the OTHER non-strict question, and it is not `hitBy`: `leb`/`geb` ask
+-- whether a value is admissible, `hitBy` whether it has reached the constraint. The two
+-- coincide exactly at the endpoint and are opposites everywhere else, which is why both
+-- exist and why neither is spelled as a bare `≤` on magnitudes.
+#guard lb.leb (⟨0⟩ : Quantity lengthK Int) == true    -- at the bound: admissible …
+#guard lb.hitBy (⟨0⟩ : Quantity lengthK Int) == true  -- … and saturated
+#guard lb.leb (⟨5⟩ : Quantity lengthK Int) == true
+#guard lb.hitBy (⟨5⟩ : Quantity lengthK Int) == false
+#guard lb.leb (⟨-1⟩ : Quantity lengthK Int) == false
+#guard ub.geb (⟨10⟩ : Quantity lengthK Int) == true
+#guard ub.geb (⟨11⟩ : Quantity lengthK Int) == false
+
+-- Executable membership is built from the two directional deciders, so a consumer testing
+-- a value against a range never writes the comparison and cannot write it backwards.
+#guard box.memb (⟨0⟩ : Quantity lengthK Int) == true
+#guard box.memb (⟨10⟩ : Quantity lengthK Int) == true
+#guard box.memb (⟨-1⟩ : Quantity lengthK Int) == false
+#guard box.memb (⟨11⟩ : Quantity lengthK Int) == false
+
 -- Directionality is API-shape, executably too: a `LowerBound` has no `≥`-style query
--- of its own — `hitBy` is its only Bool former, and it asks the one meaningful
--- question (saturation from above); there is no way to ask an upper-bound question
--- of a lower bound.
+-- of its own — `leb` and `hitBy` are its only Bool formers, and both keep it on its own
+-- side of the comparison; there is no way to ask an upper-bound question of a lower bound.
 #check_failure (fun (x : Quantity lengthK Int) => lb.exceededBy x)
+#check_failure (fun (x : Quantity lengthK Int) => lb.geb x)
 
 end PropertyKindCalculus.Tests.Bounds
