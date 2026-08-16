@@ -241,6 +241,28 @@ def beatenBy (shape : TimeShape) (total : Quantity elementCount Nat)
   | some n => !beatenBy fitShape ⟨p⟩ n 56
   | none => false
 
+-- **The dense sweep, which is the probe that matters.** Six hand-picked sizes are exactly the
+-- test that let a rounding error through: `t` is convex so the integer optimum is one of `N*`'s
+-- neighbours, but the changeover is at the GEOMETRIC mean `√(n(n+1))`, not the arithmetic
+-- `n + ½`, and a round-to-nearest implementation is wrong throughout the band between them —
+-- about 0.9 % of the `N*` line, concentrated at small `n` where the band is widest. Sweeping
+-- `W/a` continuously is what catches it, and a handful of sizes is what does not.
+#guard
+  let shape (i : Nat) : TimeShape :=
+    -- `a = 1 s`, so `W` in seconds IS `N*²`: walks `N*` from ~1 to ~24 in 600 steps.
+    { perElement := ⟨(1.0 + i.toFloat * 0.04) * (1.0 + i.toFloat * 0.04)⟩, perShard := ⟨1.0⟩ }
+  (List.range 600).all fun i =>
+    match (shape i).optimalShards ⟨1⟩ with
+    | some n => !beatenBy (shape i) ⟨1⟩ n 40
+    | none => false
+
+-- The specific case round-to-nearest gets wrong, pinned so the repair cannot silently regress:
+-- `N* = 1.45` rounds to 1, but two shards are genuinely faster (3.051 s against 3.103 s).
+#guard
+  let s : TimeShape := { perElement := ⟨1.45 * 1.45⟩, perShard := ⟨1.0⟩ }
+  s.optimalShards ⟨1⟩ == some ⟨2⟩
+  && (s.wallClock ⟨1⟩ ⟨2⟩).magnitude < (s.wallClock ⟨1⟩ ⟨1⟩).magnitude
+
 -- The optimum moves as `√P` — it is not a roofline, whose corner would sit at a fixed size.
 -- Sixteen times the elements, four times the shards, at a pair where the rounding is clean.
 #guard match fitShape.optimalShards ⟨6400⟩, fitShape.optimalShards ⟨102400⟩ with

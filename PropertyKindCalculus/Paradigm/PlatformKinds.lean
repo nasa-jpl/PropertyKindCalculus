@@ -292,27 +292,52 @@ one element, so no more shards than elements are useful. -/
 def elementsAsShardCap (n : Quantity elementCount Nat) : Quantity shardCount Nat :=
   ⟨n.magnitude⟩
 
-/-- **The shard count that minimizes `t(N) = W/N + a·N`**: `N* = √(W/a)`, the stationary point of
-a convex function of `N` and therefore its minimum.
+/-- **The shard count that minimizes `t(N) = W/N + a·N`**: the stationary point `N* = √(W/a)`,
+rounded to whichever of its integer neighbours is actually better.
 
-A named crossing rather than a law, for two reasons that are worth keeping apart. The *kind*
-reason: the quotient `W/a` passes through a transient kind — seconds over seconds-per-shard is
-shards **squared** — which nothing in this vocabulary names and which the square root immediately
-removes, so the sensible treatment is `Budget.combinedQ`'s (compute on the carrier, re-stamp the
-result) rather than minting a `shardCount²`. The *metrological* reason, which matters more: this
-is not a units cancellation at all. It is the closed-form solution of a particular model, and if
-the model is wrong the equation is wrong while the units stay perfectly consistent. A law would
-claim the first; a named crossing claims only what it is.
+**The model, in full, because it is what this function is a solution *of*.** `W = w·P` is the
+total work; `a` is the fixed cost of one shard. Four claims about a runtime are packed into those
+two terms, and every one of them can be false while the units stay perfectly consistent:
+
+  * *the work divides evenly* — each shard takes exactly `W/N`. With `P` not divisible by `N` the
+    wall clock is set by the largest shard, `⌈P/N⌉·w`, which is worse and not smooth;
+  * *the shards are concurrent* — `W/N` is a duration only if all `N` run at once, so the model
+    presumes at least `N` cores and no contention for them. Past the core count it is wrong in a
+    way this term does not detect; the cores cap beside it is what covers that;
+  * *the per-shard cost is serial* — `a·N` charges every shard's fixed cost to the critical path.
+    **This is the assumption that creates the optimum.** If spawning and joining were themselves
+    parallel the term would be `a·N/cores` or `a·log N`, `t` would fall monotonically, and there
+    would be no interior minimum to find;
+  * *`w` does not depend on `N`* — the marginal cost per element is the same at 1 shard and at 56.
+    On the *memory* axis this deployment has already found that false (allocator arena retention
+    and the mmap knee both move with `N`); on the time axis it is assumed and untested.
+
+A named crossing rather than a law, for two reasons worth keeping apart. The *kind* reason: the
+quotient `W/a` passes through a transient kind — seconds over seconds-per-shard is shards
+**squared** — which nothing in this vocabulary names and which the square root immediately
+removes, so the treatment is `Budget.combinedQ`'s (compute on the carrier, re-stamp the result)
+rather than minting a `shardCount²`. The *metrological* reason, which matters more: this is not a
+units cancellation at all, so a law would claim a check nobody performed. The four bullets above
+are the content of that distinction.
 
 `none` when there is no fixed per-shard cost: the modelled time is then monotonically decreasing
-in `N`, so time does not constrain the count and the answer is the same `none` `maxShardsSplit`
-gives when memory does not constrain it. Rounded to the nearest shard, not floored — `N*` is
-the stationary point of a smooth curve and the better of its two integer neighbours is as often
-above it as below. -/
+in `N`, so time does not constrain the count — the same `none` `maxShardsSplit` gives when memory
+does not constrain it.
+
+**The rounding is not to nearest, and the difference is real.** `t` is convex, so the integer
+minimum is one of `N*`'s two neighbours; but `t(n) ≤ t(n+1)` exactly when `W/a ≤ n(n+1)`, i.e.
+when `N*` is below the **geometric** mean `√(n(n+1))` — which is strictly less than the arithmetic
+`n + ½`. Rounding to nearest therefore returns `n` throughout a band where `n+1` is genuinely
+faster: the band is widest at small `n` (at `n = 1` it is `[1.414, 1.5)`) and it costs a real
+1.7 % of wall clock there. -/
 def optimalShardsOfWork (work : Quantity elapsedTime Float)
     (perShard : Quantity timePerShard Float) : Option (Quantity shardCount Nat) :=
   if perShard.magnitude ≤ 0.0 || work.magnitude ≤ 0.0 then none
-  else some ⟨(Float.sqrt (work.magnitude / perShard.magnitude) + 0.5).toUInt64.toNat⟩
+  else
+    -- `N*²`, in the transient shards-squared kind the square root removes.
+    let ratio := work.magnitude / perShard.magnitude
+    let n := Nat.max 1 (Float.sqrt ratio).floor.toUInt64.toNat
+    some ⟨if ratio ≤ (n * (n + 1)).toFloat then n else n + 1⟩
 
 /-! ### Distinctness — the swap hazards, as theorems -/
 
