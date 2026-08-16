@@ -497,11 +497,23 @@ uncertainty/PropertyKindCalculus/Uncertainty/
   UncertainQuantity.lean✅ Quantity k R paired with its InputDist
   Mcm.lean              ✅ Monte Carlo reference propagator → (E(Y), u(Y))
   Combine.lean          ✅ gumStdUnc, willinkCombine, Pearson k₉₅/k₉₉ (eqs. 6/7)   [Area 1]
+  EvidenceKinds.lean    ✅ the kind vocabulary of the two modules below:            [Area 1]
+                           probability, coverageFactor, degreesOfFreedom, indicationCount — four
+                           kinds, not one "dimensionless", because k = Φ⁻¹(1−p) and ν = n−1 put each
+                           in the others' slots; plus the expansion / band-reading / cost-ratio laws
   Evidence.lean         ✅ evidence ACROSS repeated measurements of one measurand   [Area 1]
                            (Combine is across contributors WITHIN one budget): GUM 4.2 Type A from
-                           n indications, t-based coverage factor (Table G.2), Welch–Satterthwaite
-                           ν_eff, inverse-variance pooling — with Type B → Type A as a DISPLACEMENT,
+                           n indications, t-based coverage factor (COMPUTED — Lanczos lgamma, Lentz
+                           continued fraction, bisection — with Table G.2 as its oracle),
+                           Welch–Satterthwaite ν_eff over Budget's own contributions,
+                           inverse-variance pooling — with Type B → Type A as a DISPLACEMENT,
                            since pooling a statement of ignorance would anchor the estimate forever
+  Conformity.lean       ✅ ISO/IEC Guide 98-4 (JCGM 106): the guard band as an      [Area 1]
+                           OUTPUT. Tolerance/acceptance limits as Bounds.lean roles (a band's sign is
+                           fixed by the endpoint's role, so guarded acceptance cannot silently become
+                           guarded rejection); coverage factor from a stated consumer's risk; that
+                           risk from the two costs of being wrong; readBand — coverage, or a
+                           systematic the model does not carry?
   Ssprc.lean            ✅ executable SSPRC: systematic sampling, separated        [Stage 2]
                            propagation, empirical deviation dists, discrete convolution (Float)
   Method.lean           ▫ UncertaintyMethod structure + monoid laws               [Area 1 core, deferred]

@@ -268,7 +268,9 @@ lean_lib «Uncertainty» where
     .one `PropertyKindCalculus.Uncertainty.UncertainQuantity,
     .one `PropertyKindCalculus.Uncertainty.Mcm,
     .one `PropertyKindCalculus.Uncertainty.Combine,
+    .one `PropertyKindCalculus.Uncertainty.EvidenceKinds,
     .one `PropertyKindCalculus.Uncertainty.Evidence,
+    .one `PropertyKindCalculus.Uncertainty.Conformity,
     .one `PropertyKindCalculus.Uncertainty.Ssprc,
     .one `PropertyKindCalculus.Uncertainty.Allocation,
     .one `PropertyKindCalculus.Uncertainty.Adequacy]

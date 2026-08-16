@@ -11,12 +11,24 @@ Stage 0 delivers the reference layer:
   * `UncertainQuantity`— a kinded quantity paired with its `InputDist`.
   * `Mcm`              — the Monte Carlo reference propagator.
   * `Combine`          — the linearized GUM and Willink moment-combine methods.
+  * `EvidenceKinds`    — the kind vocabulary of the two modules below: probability, coverage factor,
+                         degrees of freedom, indication count. All dimension one, deliberately four
+                         kinds and not one, because `k = Φ⁻¹(1 − p)` and `ν = n − 1` put each of them
+                         in the others' slots. Plus the expansion, band-reading and cost-ratio laws.
   * `Evidence`         — the orthogonal combination: evidence *across* repeated measurements of one
                          measurand. The GUM 4.2 Type A evaluation from `n` indications, the `t`-based
-                         coverage factor (Table G.2), Welch–Satterthwaite effective degrees of
-                         freedom, and inverse-variance pooling — with the Type B → Type A transition
-                         as a *displacement*, since pooling a statement of ignorance with data would
-                         let an asserted half-width anchor the estimate forever.
+                         coverage factor (computed, with Table G.2 as its oracle),
+                         Welch–Satterthwaite effective degrees of freedom, and inverse-variance
+                         pooling — with the Type B → Type A transition as a *displacement*, since
+                         pooling a statement of ignorance with data would let an asserted half-width
+                         anchor the estimate forever.
+  * `Conformity`       — ISO/IEC Guide 98-4 (JCGM 106): the guard band as an *output*. Tolerance and
+                         acceptance limits as `Bounds.lean` roles (so a band's sign is fixed by the
+                         endpoint's role, and guarded acceptance cannot silently become guarded
+                         rejection), the coverage factor from a stated consumer's risk, that risk
+                         from the two costs of being wrong, and `readBand` — which divides a deployed
+                         margin by its own `u` and says whether it is coverage or a systematic the
+                         model does not carry.
   * `Ssprc`            — the derivative-free SSPRC pipeline (systematic sampling, separated
                          propagation, empirical deviation distributions, discrete convolution).
   * `Allocation`       — sensitivity-driven per-input sample allocation: split an SSPRC budget by
@@ -35,6 +47,7 @@ import PropertyKindCalculus.Uncertainty.UncertainQuantity
 import PropertyKindCalculus.Uncertainty.Mcm
 import PropertyKindCalculus.Uncertainty.Combine
 import PropertyKindCalculus.Uncertainty.Evidence
+import PropertyKindCalculus.Uncertainty.Conformity
 import PropertyKindCalculus.Uncertainty.Ssprc
 import PropertyKindCalculus.Uncertainty.Allocation
 import PropertyKindCalculus.Uncertainty.Adequacy

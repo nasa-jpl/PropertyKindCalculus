@@ -71,6 +71,47 @@ def normalQuantile (p : Float) : Float :=
     let q := Float.sqrt (-2.0 * Float.log (1.0 - p))
     (0.0 - (((((c1*q+c2)*q+c3)*q+c4)*q+c5)*q+c6)) / ((((d1*q+d2)*q+d3)*q+d4)*q+1.0)
 
+/-- **CDF** of the standard normal, `Φ(x)` — Hart's double-precision rational algorithm (as given
+by West, *Better approximations to cumulative normal functions*, Wilmott 2005), agreeing with a
+`erfc`-based reference to full double precision on both sides of its `|x| = 7.0711` branch.
+
+The forward direction, unlike every other function in this module, because a *risk* is a
+probability read off an interval rather than a sample drawn from one: the conformity assessment
+asks "given this estimate and this uncertainty, what is the probability the measurand is past the
+limit?", which is `Φ` and not `Φ⁻¹`. Accuracy in the far tail is the whole requirement — a
+consumer's risk of `1e-9` is a meaningful answer and an approximation with `1.5e-7` absolute
+error (Abramowitz & Stegun 26.2.17, the usual quick one) cannot express it. -/
+def normalCDF (x : Float) : Float :=
+  let a := x.abs
+  let tail :=
+    if a > 37.0 then 0.0
+    else
+      let e := Float.exp (-(a * a) / 2.0)
+      if a < 7.07106781186547 then
+        let n := 3.52624965998911e-02 * a + 0.700383064443688
+        let n := n * a + 6.37396220353165
+        let n := n * a + 33.912866078383
+        let n := n * a + 112.079291497871
+        let n := n * a + 221.213596169931
+        let n := n * a + 220.206867912376
+        let d := 8.83883476483184e-02 * a + 1.75566716318264
+        let d := d * a + 16.064177579207
+        let d := d * a + 86.7807322029461
+        let d := d * a + 296.564248779674
+        let d := d * a + 637.333633378831
+        let d := d * a + 793.826512519948
+        let d := d * a + 440.413735824752
+        e * n / d
+      else
+        -- Continued-fraction tail, where the rational form above loses its accuracy.
+        let b := a + 0.65
+        let b := a + 4.0 / b
+        let b := a + 3.0 / b
+        let b := a + 2.0 / b
+        let b := a + 1.0 / b
+        e / b / 2.506628274631
+  if x > 0.0 then 1.0 - tail else tail
+
 /-- Inverse CDF of a symmetric triangular distribution on `[μ-δ, μ+δ]` (mode `μ`). -/
 def triangularQuantile (μ δ p : Float) : Float :=
   if p ≤ 0.5 then (μ - δ) + δ * Float.sqrt (2.0 * p)
@@ -78,5 +119,100 @@ def triangularQuantile (μ δ p : Float) : Float :=
 
 /-- Inverse CDF of a uniform distribution on `[μ-δ, μ+δ]`. -/
 def uniformQuantile (μ δ p : Float) : Float := μ + δ * (2.0 * p - 1.0)
+
+/-! ## Student's `t` — the distribution of an estimate whose `u` was itself estimated
+
+The `t` enters wherever a standard uncertainty came from a *finite* number of indications: the
+estimate is then not normally distributed, its tails are heavier, and a Gaussian coverage factor
+under-covers by an amount that is largest in exactly the small-`n` regime a calibration loop
+starts in. `Evidence.lean` is the consumer; the numerics live here beside the normal's.
+
+The chain is the standard one: the `t` CDF is a regularized incomplete beta, the incomplete beta
+is a Lentz continued fraction, and the quantile is a bisection on the CDF (derivative-free, and
+the CDF is monotone, so it cannot land on a wrong root). The whole chain is validated against
+GUM Table G.2 in the probes — 46 tabulated entries, reproduced to the digits the table prints. -/
+
+/-- `log Γ(z)` for `z ≥ 0.5` — Lanczos, `g = 7`, nine coefficients. Only ever called at `ν/2`,
+`1/2` and `(ν+1)/2`, all of which are `≥ 0.5` for `ν ≥ 1`, so the reflection formula for small
+`z` is deliberately absent rather than untested. -/
+def logGamma (z : Float) : Float :=
+  let c : Array Float := #[0.99999999999980993, 676.5203681218851, -1259.1392167224028,
+    771.32342877765313, -176.61502916214059, 12.507343278686905, -0.13857109526572012,
+    9.9843695780195716e-6, 1.5056327351493116e-7]
+  let z := z - 1.0
+  let x := Id.run do
+    let mut x := c[0]!
+    for i in [1:9] do x := x + c[i]! / (z + i.toFloat)
+    return x
+  let t := z + 7.5
+  -- `log √(2π)` = 0.9189385332046727
+  0.9189385332046727 + (z + 0.5) * Float.log t - t + Float.log x
+
+/-- The continued fraction of the incomplete beta function, evaluated by Lentz's method. Iterated
+a fixed 200 times with an early exit at double-precision convergence: a bounded loop needs no
+termination argument, and 200 is far beyond where this converges for the arguments the `t` CDF
+supplies. -/
+def betaContinuedFraction (a b x : Float) : Float := Id.run do
+  let fpmin := 1e-300
+  let qab := a + b
+  let qap := a + 1.0
+  let qam := a - 1.0
+  let mut c := 1.0
+  let mut d := 1.0 - qab * x / qap
+  if d.abs < fpmin then d := fpmin
+  d := 1.0 / d
+  let mut h := d
+  for m in [1:201] do
+    let m2 := (2 * m).toFloat
+    let mf := m.toFloat
+    let aa := mf * (b - mf) * x / ((qam + m2) * (a + m2))
+    d := 1.0 + aa * d; if d.abs < fpmin then d := fpmin
+    c := 1.0 + aa / c; if c.abs < fpmin then c := fpmin
+    d := 1.0 / d
+    h := h * d * c
+    let aa := -(a + mf) * (qab + mf) * x / ((a + m2) * (qap + m2))
+    d := 1.0 + aa * d; if d.abs < fpmin then d := fpmin
+    c := 1.0 + aa / c; if c.abs < fpmin then c := fpmin
+    d := 1.0 / d
+    let de := d * c
+    h := h * de
+    if (de - 1.0).abs < 3e-16 then break
+  return h
+
+/-- The **regularized incomplete beta function** `I_x(a, b)`. The continued fraction converges
+quickly only on one side of `x = (a+1)/(a+b+2)`; the symmetry `I_x(a,b) = 1 − I_{1−x}(b,a)`
+carries the other side. -/
+def incompleteBeta (a b x : Float) : Float :=
+  if x ≤ 0.0 then 0.0
+  else if x ≥ 1.0 then 1.0
+  else
+    let bt := Float.exp (logGamma (a + b) - logGamma a - logGamma b
+      + a * Float.log x + b * Float.log (1.0 - x))
+    if x < (a + 1.0) / (a + b + 2.0) then bt * betaContinuedFraction a b x / a
+    else 1.0 - bt * betaContinuedFraction b a (1.0 - x) / b
+
+/-- **CDF of Student's `t`** with `ν` degrees of freedom: `P(T ≤ t)`. -/
+def studentTCDF (t ν : Float) : Float :=
+  let half := 0.5 * incompleteBeta (ν / 2.0) 0.5 (ν / (ν + t * t))
+  if t ≥ 0.0 then 1.0 - half else half
+
+/-- **Quantile of Student's `t`** with `ν` degrees of freedom: the `p` for which `P(T ≤ t) = p`.
+Bisection on the monotone CDF, after bracketing the root by doubling; symmetric about zero, so
+only the upper half is searched. A non-finite `ν` is the normal limit and is answered by
+`normalQuantile` directly — the bisection would not converge there and the limit is exact. -/
+def studentTQuantile (p ν : Float) : Float :=
+  if !(ν < 1.0 / 0.0) then normalQuantile p
+  else if p ≤ 0.5 then -(upperHalf (1.0 - p) ν) else upperHalf p ν
+where
+  /-- The quantile for `p ≥ 0.5`, where the root is at or above zero. -/
+  upperHalf (p ν : Float) : Float := Id.run do
+    let mut lo := 0.0
+    let mut hi := 1.0
+    for _ in [0:200] do
+      if studentTCDF hi ν ≥ p then break else hi := hi * 2.0
+    for _ in [0:200] do
+      let mid := 0.5 * (lo + hi)
+      if studentTCDF mid ν < p then lo := mid else hi := mid
+    return 0.5 * (lo + hi)
 
 end PropertyKindCalculus.Uncertainty.Sampling

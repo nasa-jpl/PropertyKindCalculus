@@ -134,6 +134,26 @@ def ofLE [LE R] (lo hi : Quantity k R) (_h : lo.magnitude ≤ hi.magnitude)
 theorem ofLE_ordered [LE R] {lo hi : Quantity k R} (h : lo.magnitude ≤ hi.magnitude)
     (ord : OrderKind k) : (IccQ.ofLE lo hi h ord).Ordered := h
 
+/-- **The interval `centre ± halfWidth`** — the `[c − h, c + h]` form, as opposed to `of`'s
+`[lo, hi]`. Both endpoints are derived from the same pair, so the two cannot disagree and the
+orientation is fixed by construction for any non-negative half-width: this is the constructor to
+reach for whenever the interval *is* a value with a symmetric allowance around it (a coverage
+interval, an agreement interval, a mechanical tolerance written as `±`), where spelling out two
+endpoints is an opportunity to get one of them wrong.
+
+Both arguments are `k`-quantities: an allowance on a quantity is a quantity of that same kind. -/
+def about [Add R] [Sub R] (centre halfWidth : Quantity k R)
+    (_ord : OrderKind k := by exact OrderKind.ofScale) : IccQ k R :=
+  ⟨⟨⟨centre.magnitude - halfWidth.magnitude⟩⟩, ⟨⟨centre.magnitude + halfWidth.magnitude⟩⟩⟩
+
+@[simp] theorem about_lo [Add R] [Sub R] (centre halfWidth : Quantity k R) (ord : OrderKind k) :
+    (IccQ.about centre halfWidth ord).lo.q.magnitude = centre.magnitude - halfWidth.magnitude :=
+  rfl
+
+@[simp] theorem about_hi [Add R] [Sub R] (centre halfWidth : Quantity k R) (ord : OrderKind k) :
+    (IccQ.about centre halfWidth ord).hi.q.magnitude = centre.magnitude + halfWidth.magnitude :=
+  rfl
+
 /-- **Membership** `x ∈ [lo, hi]`, as the conjunction of the two directional facts —
 each endpoint contributes only the orientation its role can state. -/
 def Mem [LE R] (I : IccQ k R) (x : Quantity k R) : Prop := I.lo.le x ∧ I.hi.ge x
