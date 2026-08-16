@@ -11,6 +11,12 @@ Stage 0 delivers the reference layer:
   * `UncertainQuantity`— a kinded quantity paired with its `InputDist`.
   * `Mcm`              — the Monte Carlo reference propagator.
   * `Combine`          — the linearized GUM and Willink moment-combine methods.
+  * `Evidence`         — the orthogonal combination: evidence *across* repeated measurements of one
+                         measurand. The GUM 4.2 Type A evaluation from `n` indications, the `t`-based
+                         coverage factor (Table G.2), Welch–Satterthwaite effective degrees of
+                         freedom, and inverse-variance pooling — with the Type B → Type A transition
+                         as a *displacement*, since pooling a statement of ignorance with data would
+                         let an asserted half-width anchor the estimate forever.
   * `Ssprc`            — the derivative-free SSPRC pipeline (systematic sampling, separated
                          propagation, empirical deviation distributions, discrete convolution).
   * `Allocation`       — sensitivity-driven per-input sample allocation: split an SSPRC budget by
@@ -28,6 +34,7 @@ import PropertyKindCalculus.Uncertainty.InputDist
 import PropertyKindCalculus.Uncertainty.UncertainQuantity
 import PropertyKindCalculus.Uncertainty.Mcm
 import PropertyKindCalculus.Uncertainty.Combine
+import PropertyKindCalculus.Uncertainty.Evidence
 import PropertyKindCalculus.Uncertainty.Ssprc
 import PropertyKindCalculus.Uncertainty.Allocation
 import PropertyKindCalculus.Uncertainty.Adequacy

@@ -497,6 +497,11 @@ uncertainty/PropertyKindCalculus/Uncertainty/
   UncertainQuantity.lean✅ Quantity k R paired with its InputDist
   Mcm.lean              ✅ Monte Carlo reference propagator → (E(Y), u(Y))
   Combine.lean          ✅ gumStdUnc, willinkCombine, Pearson k₉₅/k₉₉ (eqs. 6/7)   [Area 1]
+  Evidence.lean         ✅ evidence ACROSS repeated measurements of one measurand   [Area 1]
+                           (Combine is across contributors WITHIN one budget): GUM 4.2 Type A from
+                           n indications, t-based coverage factor (Table G.2), Welch–Satterthwaite
+                           ν_eff, inverse-variance pooling — with Type B → Type A as a DISPLACEMENT,
+                           since pooling a statement of ignorance would anchor the estimate forever
   Ssprc.lean            ✅ executable SSPRC: systematic sampling, separated        [Stage 2]
                            propagation, empirical deviation dists, discrete convolution (Float)
   Method.lean           ▫ UncertaintyMethod structure + monoid laws               [Area 1 core, deferred]
