@@ -513,7 +513,11 @@ uncertainty/PropertyKindCalculus/Uncertainty/
                            fixed by the endpoint's role, so guarded acceptance cannot silently become
                            guarded rejection); coverage factor from a stated consumer's risk; that
                            risk from the two costs of being wrong; readBand — coverage, or a
-                           systematic the model does not carry?
+                           systematic the model does not carry? THREE POSTERIORS, and choosing is a
+                           reading of the evaluation: §9.5.2's Gaussian; the t at the evidence's own
+                           ν (riskForFactorAt — a CHOSEN 4.5u band buys 5.4e-3 at ν=4, not 3.4e-6);
+                           and GUM 4.3.7's rectangular, which is BOUNDED, so the Gaussian prices a
+                           tail the evaluation denies and asks for a limit outside its own bracket
   Ssprc.lean            ✅ executable SSPRC: systematic sampling, separated        [Stage 2]
                            propagation, empirical deviation dists, discrete convolution (Float)
   Method.lean           ▫ UncertaintyMethod structure + monoid laws               [Area 1 core, deferred]

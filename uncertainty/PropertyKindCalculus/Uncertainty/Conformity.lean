@@ -62,13 +62,25 @@ carry**. The distinction matters because the two have opposite repairs: dispersi
 evidence, a missing term does not, and a conformity assessment that cannot tell them apart will
 tighten a band that was never covering dispersion in the first place.
 
-**Scope, stated.** The risk arithmetic is §9.5.2's: a Gaussian posterior for the measurand given
-the measured value. That is exact when `u` is known (`ν = ∞`) and optimistic when `u` was itself
-estimated from few readings, since the posterior is then a `t` with heavier tails — so
-`factorForEvidence` takes the `t` factor at the evidence's own `ν`, which agrees with the Gaussian
-one at `ν = ∞` and exceeds it everywhere else. Global (as opposed to specific) risks, which
-integrate over a prior for the measurand across a production run, are deliberately out of scope:
-they need a prior this library has no business inventing.
+**Three posteriors, and choosing between them is a reading of the evaluation.** §9.5.2's own
+arithmetic is Gaussian, and `factorForRisk`/`riskForFactor` are that pair. It is exact only when
+`u` is *known*; the two commonest ways of arriving at a `u` each replace it, and each replacement
+moves the answer by more than a careful practitioner would guess.
+
+  * `u` estimated from few readings (GUM 4.2) makes the posterior a `t` with heavier tails, so the
+    Gaussian factor **under-covers**. `factorForEvidence` takes the `t` factor at the evidence's
+    own `ν` — which *is* the Gaussian one at `ν = ∞`, so the correction appears and disappears by
+    itself. `riskForFactorAt` is its inverse, and is the direction that matters for a band somebody
+    already chose: at `ν = 4`, `4.5 u` buys `5.4e-3`, not the `3.4e-6` a Gaussian reads off it.
+  * `u` from bounds and nothing else (GUM 4.3.7) makes the posterior *rectangular*, which is
+    **bounded**, so the Gaussian is not merely imprecise — it prices a tail the evaluation asserts
+    does not exist, and will ask for an acceptance limit outside the bracket that produced the `u`.
+    `factorForRiskRectangular`/`riskForFactorRectangular` are exact and closed-form in both
+    directions, and saturate at `√3 u`, where the risk is zero.
+
+Global (as opposed to specific) risks, which integrate over a prior for the measurand across a
+production run, are deliberately out of scope: they need a prior this library has no business
+inventing.
 
 Mathlib-free, like `Combine` and `Evidence`. Carrier-generic wherever the structure allows it; the
 risk arithmetic is `Float`-carried, because a probability read off a normal tail is a concrete
@@ -142,6 +154,31 @@ somebody else chose. `1 − Φ(k)`. -/
 def riskForFactor (f : Quantity coverageFactor Float) : Quantity probability Float :=
   ⟨certainty.magnitude - Sampling.normalCDF f.magnitude⟩
 
+/-- **The specific consumer's risk of a `k`-fold band, at the degrees of freedom that qualify the
+`u` it multiplies** — `1 − T_ν(k)`, and `1 − Φ(k)` when `ν` is not finite. The exact inverse of
+`Evidence.coverageFactorOneSided`, standing to it as `riskForFactor` stands to `factorForRisk`.
+
+**This is the direction in which a small `ν` is dangerous, and it is the one usually taken.** The
+forward direction is safe by construction: ask for 1 % at `ν = 4` and the `t` quantile hands back
+`3.75 u` rather than the Gaussian's `2.33 u`, so a factor derived from a risk is already correct.
+But a band that was *chosen* — an envelope rule, a round number, an instinct — is priced backwards,
+and pricing it against a Gaussian when the `u` came from five readings does not misstate the risk
+by a factor of two. At `ν = 4` a band of `4.5 u` buys `5.4e-3`, not the `3.4e-6` a Gaussian reads
+off it: three orders of magnitude, in the optimistic direction, on the number an operator would
+use to decide the margin is generous.
+
+`none` when `ν` is `NaN` or below one — the same refusal `Evidence.coverageFactorOneSided` makes,
+and for the same reason: fewer than two indications support no statement about a tail. Not a
+Gaussian fallback, which would answer the question by discarding what makes it hard. -/
+def riskForFactorAt (f : Quantity coverageFactor Float)
+    (dof : Quantity degreesOfFreedom Float) : Option (Quantity probability Float) :=
+  if dof.magnitude < dofUnbounded.magnitude then
+    if dof.magnitude ≥ 1.0 then
+      some ⟨certainty.magnitude - Sampling.studentTCDF f.magnitude dof.magnitude⟩
+    else none
+  else if dof.magnitude.isNaN then none
+  else some (riskForFactor f)
+
 /-- **The coverage factor for a target risk, at the degrees of freedom the evidence has.** The
 Gaussian `Φ⁻¹(1 − p)` of `factorForRisk` is §9.5.2's own assumption and is exact only when `u` is
 known; with `ν` finite the posterior is a `t`, whose heavier tails make the Gaussian factor
@@ -154,6 +191,56 @@ readings. -/
 def factorForEvidence (e : Evidence k) (p : Quantity probability Float) :
     Option (Quantity coverageFactor Float) :=
   e.coverageFactorOneSided p
+
+/-! ### The rectangular posterior — when §9.5.2's Gaussian is not the distribution the evaluation
+named
+
+§9.5.2's arithmetic assumes a Gaussian posterior for the measurand, and `factorForRisk` inherits
+that assumption. But the single commonest Type B evaluation — GUM 4.3.7, bounds and nothing else,
+which prescribes a *rectangular* distribution — states a posterior that is **bounded**, and there
+the Gaussian answer is not an approximation in the ordinary sense. It is wrong in a known
+direction: it places mass beyond an endpoint the evaluation itself asserts the measurand cannot
+pass, and so asks for a guard band outside the support of the very distribution it was derived
+from. A band of `2.25 u` on a rectangular `u` is `1.30` half-widths — a limit past the bracket,
+bought at a risk that was already zero at `√3 u`.
+
+So the two forms below are not a refinement of the Gaussian pair; they are the pair that applies
+when the record says `uniform`, and choosing between them is a *reading of the evaluation*, not a
+modelling preference. The rectangular family is exact and closed-form in both directions, which is
+the other half of the point: nothing here is approximated, so a disagreement with the Gaussian
+figure is a disagreement about the posterior and cannot be dismissed as numerical. -/
+
+/-- **`√3` — the coverage factor at which a rectangular band reaches its own support.** With
+`u = h/√3` for a half-width `h` (GUM 4.3.7), the acceptance limit `estimate + √3·u` *is* the upper
+bound of the bracket, where the specific consumer's risk is exactly zero. No larger factor buys
+anything, and a rule that asks for one is pricing a tail the evaluation says does not exist. -/
+def rectangularFactorLimit : Quantity coverageFactor Float := ⟨Float.sqrt 3.0⟩
+
+/-- **The coverage factor holding the consumer's risk to `p` under a rectangular posterior**:
+`k = √3·(1 − 2p)`, exactly. At `p = 0.5` it is zero (at the estimate itself the measurand is as
+likely to be past the limit as not — true of any symmetric posterior); at `p = 0` it is `√3`, the
+support; and it is linear in between, because a uniform density's tail is.
+
+`none` outside `0 ≤ p ≤ 1`. Both endpoints are admitted, unlike `factorForRisk`'s open interval,
+because a bounded posterior *can* deliver a risk of exactly zero — which is the whole difference
+between the two families. -/
+def factorForRiskRectangular (p : Quantity probability Float) :
+    Option (Quantity coverageFactor Float) :=
+  if 0.0 ≤ p.magnitude && p.magnitude ≤ certainty.magnitude then
+    some ⟨rectangularFactorLimit.magnitude * (certainty.magnitude - 2.0 * p.magnitude)⟩
+  else none
+
+/-- **The consumer's risk a `k`-fold band buys under a rectangular posterior**: `(√3 − k)/(2√3)`,
+saturating at `0` beyond the support and at certainty below it. The exact inverse of
+`factorForRiskRectangular`, and the function that prices a band chosen against a rectangular
+evaluation — where the Gaussian reading is not merely imprecise but *optimistic in the middle and
+pessimistic in the tail*: at `1.45 u` it reads `7.4 %` where the true figure is `8.2 %`, and at
+`3 u` it reads `1.3e-3` where the true figure is `0`. -/
+def riskForFactorRectangular (f : Quantity coverageFactor Float) : Quantity probability Float :=
+  let lim := rectangularFactorLimit.magnitude
+  if f.magnitude ≥ lim then ⟨0.0⟩
+  else if f.magnitude ≤ -lim then certainty
+  else ⟨(lim - f.magnitude) / (2.0 * lim)⟩
 
 /-- **The break-even risk implied by the two costs of being wrong.** Accepting a non-conforming
 value costs `costOfWrongAccept`; rejecting a conforming one costs `costOfWrongReject`. At a
@@ -264,8 +351,10 @@ inductive BandReading where
   measurement that is imprecise. It does not shrink with evidence, and tightening it as though it
   did is how a fleet walks into a correlated failure. -/
   | systematic (factor : Quantity coverageFactor Float)
-  /-- No uncertainty to divide by, so the band cannot be read at all. Not the same as a band of
-  zero: it is a band whose meaning is unavailable. -/
+  /-- The band cannot be read at all — no `u` to divide by, or a `u` that nothing qualifies (a
+  `ν` below one, which supports no statement about a tail). Not the same as a band of zero: it is
+  a band whose meaning is unavailable, and the two causes are one statement from the consumer's
+  side, because a factor nobody can price is not a reading. -/
   | unstated
   deriving Repr
 
@@ -287,6 +376,34 @@ def readBand (g u : Quantity k Float)
     let factor := Quantity.div (bandReadingLaw k hk) g u
     if factor.magnitude ≤ systematicAt.magnitude then .coverage factor (riskForFactor factor)
     else .systematic factor
+
+/-- **Read a deployed band against the evidence that qualifies the quantity it guards** — the same
+division as `readBand`, priced at the evidence's own `ν` instead of at the Gaussian limit.
+
+This is the form to reach for whenever the `u` came from a *record*, because a record that states
+a `u` states a `ν` beside it, and the two are not separable: `4.5 u` from eighty readings and
+`4.5 u` from five are different claims about the same margin, differing by three orders of
+magnitude in the risk they buy, and only the second is the regime a calibration loop starts in.
+`readBand`'s Gaussian pricing is the right answer exactly when `ν` is unbounded, and
+`riskForFactorAt` returns it there on its own.
+
+The threshold above which a band stops being a coverage statement is *not* re-priced: a factor of
+tens is a systematic whatever the degrees of freedom, because no risk target produces it under any
+posterior. What `ν` changes is the price of the bands that are coverage statements.
+
+Declared into `Evidence`'s own namespace rather than this one, because it is an operation *on*
+evidence — `e.readBand g` at the call site is what keeps the `ν` from being dropped, and a
+`Conformity.readBandOf e g` would put the two arguments back in the order that invites forgetting
+one. -/
+def _root_.PropertyKindCalculus.Uncertainty.Evidence.readBand (e : Evidence k) (g : Quantity k Float)
+    (systematicAt : Quantity coverageFactor Float := systematicThreshold) : BandReading :=
+  if !(e.stdUnc.magnitude > 0.0) || e.stdUnc.magnitude.isNaN || g.magnitude.isNaN then .unstated
+  else
+    let factor := Quantity.div (bandReadingLaw k e.rational) g e.stdUnc
+    if factor.magnitude > systematicAt.magnitude then .systematic factor
+    else match riskForFactorAt factor e.dof with
+      | some risk => .coverage factor risk
+      | none => .unstated
 
 /-! ## The evidence-driven entry point -/
 

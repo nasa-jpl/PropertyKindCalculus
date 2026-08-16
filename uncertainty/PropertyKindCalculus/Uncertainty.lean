@@ -28,7 +28,11 @@ Stage 0 delivers the reference layer:
                          rejection), the coverage factor from a stated consumer's risk, that risk
                          from the two costs of being wrong, and `readBand` — which divides a deployed
                          margin by its own `u` and says whether it is coverage or a systematic the
-                         model does not carry.
+                         model does not carry — at the posterior the evaluation itself names, since
+                         a *chosen* band priced against a Gaussian when its `u` came from five
+                         readings reads three orders of magnitude too low, and GUM 4.3.7's
+                         rectangular posterior is bounded, so the Gaussian prices a tail the
+                         evaluation denies and asks for a limit outside its own bracket.
   * `Ssprc`            — the derivative-free SSPRC pipeline (systematic sampling, separated
                          propagation, empirical deviation distributions, discrete convolution).
   * `Allocation`       — sensitivity-driven per-input sample allocation: split an SSPRC budget by

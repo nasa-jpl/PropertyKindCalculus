@@ -37,6 +37,11 @@ private abbrev K := Paradigm.Platform.storageCapacity
 /-- A `K`-quantity, for the probes' literals. -/
 private def q (x : Float) : Quantity K Float := ⟨x⟩
 
+/-- A coverage factor, for the probes that price one directly. Distinct from `q` because that is
+the distinction the vocabulary exists to make: `4.50` the band and `4.50` the factor are the same
+`Float` and different quantities, and only one of them can be handed to `riskForFactorAt`. -/
+private def q' (x : Float) : Quantity coverageFactor Float := ⟨x⟩
+
 /-! ### Agreement, as a kinded interval
 
 `Quantity.closeTo` is the comparison, at whatever kind the values carry: a probe cannot compare a
@@ -249,6 +254,71 @@ private abbrev Kc := Paradigm.Platform.storageCapacity
 #guard match readBand (q (1700.0 - prior.estimate.magnitude)) prior.stdUnc with
   | .coverage f r => f.closeTo ⟨1.4489⟩ tableTol && r.closeTo ⟨0.07368⟩ tableTol
   | _ => false
+
+/-! ### Pricing a chosen band at the `ν` that qualifies its `u`
+
+The forward direction is safe by construction; this is the direction a chosen band is read in, and
+the direction in which a Gaussian reading is optimistic by orders of magnitude. -/
+
+-- **Three orders of magnitude, in the optimistic direction.** The same `4.5 u` band: `3.4e-6` read
+-- against a Gaussian, `5.4e-3` against the `t` that the five readings behind its `u` actually give.
+#guard (riskForFactorAt (q' 4.50) ⟨4.0⟩).any fun r => r.closeTo ⟨0.0054113⟩ tableTol
+#guard (riskForFactor (q' 4.50)).closeTo ⟨3.3977e-6⟩ tableTol
+#guard (riskForFactorAt (q' 4.39) ⟨4.0⟩).any fun r => r.closeTo ⟨0.0058913⟩ tableTol
+
+-- At `ν = 1` — three points and two parameters, the worker-RSS record's own case — the same band
+-- buys **7 %**. That record's note says a Gaussian factor "would be badly wrong" at `ν = 1`; this
+-- is the number it was describing.
+#guard (riskForFactorAt (q' 4.50) ⟨1.0⟩).any fun r => r.closeTo ⟨0.0696045⟩ tableTol
+
+-- Unbounded `ν` **is** the Gaussian reading — the correction disappears on its own rather than
+-- being switched off, which is what makes it safe to apply everywhere.
+#guard (riskForFactorAt (q' 2.3263478740408408) dofUnbounded).any fun r =>
+  r.closeTo ⟨0.01⟩ exactTol
+-- Exact inverses at a finite `ν`, in both directions.
+#guard ((atDof 4.0).coverageFactorOneSided ⟨0.01⟩).any fun f =>
+  (riskForFactorAt f ⟨4.0⟩).any fun r => r.closeTo ⟨0.01⟩ exactTol
+-- Fewer than two indications qualify no tail: a refusal, not a Gaussian fallback.
+#guard (riskForFactorAt (q' 4.50) ⟨0.5⟩).isNone
+
+-- `Evidence.readBand` is the same reading taken against a record's own evidence, so the `ν` cannot
+-- be forgotten at the call site — which is the whole failure mode, since `u` and `ν` arrive
+-- together and only `u` has a slot in the arithmetic.
+#guard match (atDof 4.0).readBand (q 4.50) with
+  | .coverage f r => f.closeTo ⟨4.50⟩ exactTol && r.closeTo ⟨0.0054113⟩ tableTol
+  | _ => false
+-- A factor of tens is a systematic at every `ν`: no posterior produces it from a risk target.
+#guard match (atDof 4.0).readBand (q 41.0) with | .systematic _ => true | _ => false
+-- A `u` nothing qualifies reads no band, for the same reason no `u` does: the meaning is
+-- unavailable either way.
+#guard match (atDof 0.5).readBand (q 4.50) with | .unstated => true | _ => false
+
+/-! ### GUM 4.3.7's posterior is bounded, and the Gaussian prices a tail it does not have -/
+
+-- `√3 u` **is** the bracket's own endpoint, where the risk is exactly zero — so no larger band
+-- buys anything, and a Gaussian rule that asks for one is pricing a tail the evaluation denies.
+#guard (riskForFactorRectangular rectangularFactorLimit).closeTo ⟨0.0⟩ exactTol ⟨1e-12⟩
+#guard (riskForFactorRectangular (q' 3.0)).closeTo ⟨0.0⟩ exactTol ⟨1e-12⟩
+#guard (riskForFactor (q' 3.0)).closeTo ⟨1.3499e-3⟩ tableTol
+-- At the estimate itself the measurand is as likely to be past the limit as not.
+#guard (riskForFactorRectangular (q' 0.0)).closeTo ⟨0.5⟩ exactTol
+
+-- Exact inverses, in closed form, in both directions — so a disagreement with the Gaussian figure
+-- is a disagreement about the posterior and cannot be blamed on numerics.
+#guard (factorForRiskRectangular ⟨0.05⟩).any fun f =>
+  (riskForFactorRectangular f).closeTo ⟨0.05⟩ exactTol
+#guard (factorForRiskRectangular ⟨0.0⟩).any fun f => f.closeTo rectangularFactorLimit exactTol
+
+-- **The deployment's own case.** The T4 prior is rectangular by its own evaluation, so the `1700`
+-- in force buys `8.2 %`, not the `7.4 %` a Gaussian reads — and the cost-derived 1.23 % target
+-- asks for `1.69 u`, which is *inside* the bracket, where the Gaussian's `2.25 u` is not.
+#guard match prior.readBand (q (1700.0 - prior.estimate.magnitude)) with
+  | .coverage f _ => (riskForFactorRectangular f).closeTo ⟨0.081785⟩ tableTol
+  | _ => false
+#guard ((riskFromCosts (⟨480.0⟩ : Quantity Kc Float) ⟨6.0⟩).bind factorForRiskRectangular).any
+  fun f => f.magnitude < rectangularFactorLimit.magnitude && f.closeTo ⟨1.6892841⟩ tableTol
+#guard ((riskFromCosts (⟨480.0⟩ : Quantity Kc Float) ⟨6.0⟩).bind factorForRisk).any
+  fun f => f.magnitude > rectangularFactorLimit.magnitude
 
 -- **The whole assessment.** A 28 497 MiB budget, a need estimated at 26 000 with `u = 900` from
 -- five readings, at a 1 % target consumer's risk. The small-sample factor is 3.75 against the
