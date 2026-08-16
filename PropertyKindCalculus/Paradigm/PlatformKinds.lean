@@ -113,6 +113,28 @@ def procCgroupText : KindOfProperty := { id := "/proc/self/cgroup text", scale :
 /-- A cgroup-v2 relative path (`"/kubepods/…"`) — the *extracted* half of
 `parseCgroupV2Path`, a different kind of text than the dump it came from. -/
 def cgroupPathText : KindOfProperty := { id := "cgroup-v2 relative path", scale := .nominal }
+/-- A cgroup memory-*usage* file's content (`memory.current`, `memory.peak`,
+`memory.max_usage_in_bytes`) — a bare byte count. A different kind from `memLimitText`
+even though both are byte-valued text, because they do not admit the same values: a limit
+may read `"max"` and a usage never does, so the limit parser's unlimited-sentinel handling
+is wrong for a usage and would silently turn a real reading into `none`. -/
+def memUsageText : KindOfProperty := { id := "cgroup memory-usage text", scale := .nominal }
+/-- cgroup v2 `memory.events` content — `"low N\nhigh N\nmax N\noom N\noom_kill N"`. -/
+def memEventsText : KindOfProperty := { id := "cgroup memory.events text", scale := .nominal }
+/-- A `memory.events` field key (`"oom"`, `"oom_kill"`) — NOT the dump it indexes into,
+the same distinction `meminfoFieldKey` draws against `meminfoText`. -/
+def memEventsFieldKey : KindOfProperty :=
+  { id := "cgroup memory.events field key", scale := .nominal }
+
+/-- Count of memory-pressure events a cgroup level has recorded (`oom`, `oom_kill`). A
+count, and deliberately NOT any of the four concurrency counts: nothing divides a headroom
+by it and no solver adds it to a core, worker, shard or element. It is evidence *about* a
+level rather than a term of the sizing arithmetic, which is exactly why it wants its own
+kind — a level that has been killing things is a fact a reader must not be able to
+arithmetic into a capacity. -/
+def oomEventCount : KindOfProperty :=
+  { id := "cgroup OOM event count", scale := .ratio }
+
 /-- A capacity-source provenance label (`"cgroup-v2:<dir>"`, `"meminfo:MemAvailable"`,
 `"cudaMemGetInfo:free"`) — what a `MemBudget` answers "believed from where" with. -/
 def capacityProvenance : KindOfProperty :=
@@ -133,6 +155,19 @@ def decisionEmitter : KindOfProperty :=
 /-- The swap that motivated the text kinds: the dump and the key that indexes it are
 different kinds, so `parseMemInfoBytes key meminfo` is a compile error. -/
 theorem meminfoText_ne_meminfoFieldKey : meminfoText ≠ meminfoFieldKey := by decide
+
+/-- The same swap, one file down: `memory.events` and a key into it. -/
+theorem memEventsText_ne_memEventsFieldKey : memEventsText ≠ memEventsFieldKey := by decide
+
+/-- A cgroup limit and a cgroup usage are different kinds of text. This is the one that
+would otherwise read plausibly: both files sit in the same directory and both hold bytes,
+and feeding a `memory.current` to the limit parser costs nothing visible until a level
+whose usage happens to exceed the v1 no-limit sentinel reports "no limit". -/
+theorem memLimitText_ne_memUsageText : memLimitText ≠ memUsageText := by decide
+
+/-- An OOM-event count is not a capacity: the census reports both per level, and the one
+thing a reader must never do is arithmetic across them. -/
+theorem oomEventCount_ne_storageCapacity : oomEventCount ≠ storageCapacity := by decide
 
 /-- Input and output of `parseCgroupV2Path` are different kinds of text: feeding the
 extracted path back to the extractor is a compile error. -/

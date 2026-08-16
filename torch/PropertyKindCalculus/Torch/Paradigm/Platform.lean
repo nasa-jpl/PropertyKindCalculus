@@ -113,6 +113,24 @@ def parseCpuMaxCores (s : NominalValue cpuMaxText String) :
       | _, _ => none
   | _ => none
 
+/-- A cgroup memory-*usage* file's content → a storage capacity. Deliberately not
+`parseLimitBytes`: a usage admits no `"max"` and has no unlimited sentinel, so the limit
+parser's `n ≥ 2^60 → none` rule would turn a real reading into "no limit" on any level whose
+usage is large. The kinds keep the two apart (`memLimitText_ne_memUsageText`). -/
+def parseUsageBytes (s : NominalValue memUsageText String) :
+    Option (Quantity storageCapacity Nat) :=
+  (s.value.trimAscii.toString).toNat?.map (⟨·⟩)
+
+/-- A `memory.events` counter (`"oom 0\noom_kill 0"`) → an event count. Same dump-vs-key
+kinding as `parseMemInfoBytes`, for the same reason. -/
+def parseMemEventCount (events : NominalValue memEventsText String)
+    (key : NominalValue memEventsFieldKey String) : Option (Quantity oomEventCount Nat) :=
+  Id.run do
+    for line in events.value.splitOn "\n" do
+      if line.startsWith (key.value ++ " ") then
+        return ((line.drop (key.value.length + 1)).toString.trimAscii.toString).toNat?.map (⟨·⟩)
+    return none
+
 /-- A `/proc/meminfo` field (`"MemAvailable:   40316 kB"`) → a storage capacity. The dump
 and the key are DIFFERENT nominal kinds: the swapped call is a type error, not a silent
 `none`. -/
@@ -246,6 +264,124 @@ def availableCores : IO CoreBudget := do
     | none,   some q => Quantity.max ⟨1⟩ q
     | none,   none   => ⟨1⟩
   return { cores, affinity, quota }
+
+/-! ### The container census — evidence about the environment, not about the algorithm
+
+`hostMemLimit` answers *what may I use*, which is the one number a solver needs. It answers
+it by taking a minimum and discarding everything else it read. The census keeps the rest,
+because a different question is asked after the fact and cannot be answered from a minimum:
+**where** does the binding limit sit, what sits above it, and who else is holding memory.
+
+Per-level attribution rather than a total is the whole point. "The host is busy" is not
+reportable to anyone; "the sibling of my container is holding 34 GiB" is. The difference is
+`parent.memory.current − own.memory.current`, which needs the chain and not its minimum.
+
+The known limitation belongs here rather than in a footnote: under a **private cgroup
+namespace** (the Docker default on current engines) a container sees its own cgroup as the
+root and the ancestors are simply not there. The census then reports one level and no parent,
+which is itself the finding — not a failure to read — and `/proc/meminfo`, usually not
+namespaced without `lxcfs`, is what remains. -/
+
+/-- One cgroup level's readable facts. Every field is optional because every one of them is
+absent on some real configuration (v1, a namespaced view, a kernel below 5.19 for
+`memory.peak`, a tighter sandbox), and an absent reading is evidence too. -/
+structure CgroupLevel where
+  /-- The level's directory under the cgroup mount — `/sys/fs/cgroup` is the root. -/
+  dir : String
+  /-- `memory.max` at this level: the limit this level imposes, if it imposes one. -/
+  memMax : Option (Quantity storageCapacity Nat) := none
+  /-- `memory.current`: usage of this level's ENTIRE subtree, which is what makes the
+  sibling subtraction possible. -/
+  memCurrent : Option (Quantity storageCapacity Nat) := none
+  /-- `memory.peak` (v2, kernel ≥ 5.19) or v1's `memory.max_usage_in_bytes` — the same
+  attribution at the worst moment rather than at sampling time. -/
+  memPeak : Option (Quantity storageCapacity Nat) := none
+  /-- `memory.events oom` — times this level hit its limit. -/
+  oom : Option (Quantity oomEventCount Nat) := none
+  /-- `memory.events oom_kill` — times this level actually killed something. -/
+  oomKill : Option (Quantity oomEventCount Nat) := none
+deriving Repr, Inhabited
+
+/-- What one job can establish about the machine it woke up inside. -/
+structure Census where
+  /-- The `0::` path from `/proc/self/cgroup`. Its *shape* names the orchestrator —
+  `/docker/…`, `/ecs/…`, `/kubepods/…` are different answers — and its depth says whether
+  there is a slot layer at all. -/
+  cgroupPath : Option (NominalValue cgroupPathText String) := none
+  /-- Own cgroup first, then each ancestor up to the root. A single entry means no parent
+  was visible, which under a private namespace is the expected reading. -/
+  levels : List CgroupLevel := []
+  /-- `/proc/meminfo MemTotal` — the machine, which this job does not own. -/
+  memTotal : Option (Quantity storageCapacity Nat) := none
+  /-- `/proc/meminfo MemAvailable` — already nets out reclaimable cache, so
+  `MemTotal − MemAvailable` less this job's own usage is everything else on the box. -/
+  memAvailable : Option (Quantity storageCapacity Nat) := none
+  /-- What the solver will actually use: affinity ∧ quota. -/
+  cores : CoreBudget := { cores := ⟨1⟩ }
+  /-- The host's online CPU count — the third leg of the core-axis disagreement, and the
+  one a naive `nproc` would have taken. -/
+  hostCores : Option (Quantity coreCount Nat) := none
+deriving Repr, Inhabited
+
+/-- Read one cgroup level. -/
+def readCgroupLevel (dir : System.FilePath) : IO CgroupLevel := do
+  let read? (name : String) : IO (Option String) := readFile? (dir / name)
+  let events := (← read? "memory.events").getD ""
+  return {
+    dir := dir.toString
+    memMax := (← read? "memory.max").bind (fun t => parseLimitBytes ⟨t⟩)
+    memCurrent := (← read? "memory.current").bind (fun t => parseUsageBytes ⟨t⟩)
+    -- v2 ≥ 5.19 first, then v1's spelling of the same quantity.
+    memPeak := (← read? "memory.peak").bind (fun t => parseUsageBytes ⟨t⟩) <|>
+               (← read? "memory.max_usage_in_bytes").bind (fun t => parseUsageBytes ⟨t⟩)
+    oom := parseMemEventCount ⟨events⟩ ⟨"oom"⟩
+    oomKill := parseMemEventCount ⟨events⟩ ⟨"oom_kill"⟩ }
+
+/-- **The census.** Reads what an unprivileged process inside a container can establish about
+the limits it is running under and who it is sharing with. Never fails: every field is
+optional and an absent one is a reading. -/
+def containerCensus : IO Census := do
+  let cgPath := (← readFile? "/proc/self/cgroup").bind (fun t => parseCgroupV2Path ⟨t⟩)
+  let levels ← match cgPath with
+    | some rel => (cgroupV2Dirs rel).mapM readCgroupLevel
+    | none => pure []
+  let meminfo := (← readFile? "/proc/meminfo").getD ""
+  -- `/sys/devices/system/cpu/online` is a kernel CPU-list, the same format the affinity
+  -- mask uses — so the host figure and the affinity figure are parsed by one authority
+  -- rather than by two spellings that could disagree about what a range means.
+  let hostCores := (← readFile? "/sys/devices/system/cpu/online").map
+    (fun t => parseCpuList ⟨t.trimAscii.toString⟩)
+  return {
+    cgroupPath := cgPath
+    levels
+    memTotal := parseMemInfoBytes ⟨meminfo⟩ ⟨"MemTotal"⟩
+    memAvailable := parseMemInfoBytes ⟨meminfo⟩ ⟨"MemAvailable"⟩
+    cores := ← availableCores
+    hostCores }
+
+/-- Which level's `memory.max` actually binds, and what it is — the question `hostMemLimit`
+answers with a bare minimum. `none` = no level states a limit. -/
+def Census.bindingLevel (c : Census) : Option CgroupLevel :=
+  c.levels.foldl (init := none) fun best l =>
+    match l.memMax with
+    | none => best
+    | some b => if best.all (fun (m : CgroupLevel) => m.memMax.all (b < ·)) then some l else best
+
+/-- **What the siblings hold**: the parent's whole-subtree usage less this job's own. The
+number an "excessive neighbour" claim needs, and the reason the census keeps the chain
+instead of a minimum.
+
+`none` when there is no visible parent (a private cgroup namespace — the expected reading
+under Docker's default, and a finding rather than an error) or when either level's
+`memory.current` is unreadable. Saturating subtraction: the two files are sampled a moment
+apart, so a parent that reads *below* its own child is a race and not a negative quantity. -/
+def Census.siblingBytes (c : Census) : Option (Quantity storageCapacity Nat) :=
+  match c.levels with
+  | own :: parent :: _ => do
+    let o ← own.memCurrent
+    let p ← parent.memCurrent
+    pure ⟨p.magnitude - o.magnitude⟩
+  | _ => none
 
 /-! ### The solvers -/
 
