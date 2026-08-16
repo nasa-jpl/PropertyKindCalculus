@@ -444,6 +444,57 @@ def maxShardsSplit (shape : MemShape) (totalElems : Quantity elementCount Nat)
   else if shape.fixedBytes == ⟨0⟩ then none
   else some (Quantity.div shardsOfHeadroom (headroom - varBytes) shape.fixedBytes)
 
+/-! ### The time shape — the fourth cap
+
+`decideShards` used to answer only "how many shards *fit*". Measured, that is not the same
+question as "how many shards are worth having": past an optimum the fixed cost of spawning a task
+exceeds the work it takes away. On one measured algorithm, picking 56 shards costs **3.93×** the
+wall clock of picking 8 at 25 600 elements and **2.20×** at 102 400 — the range production blocks
+land in — so the cap is not a refinement, it is the difference between a rule that is right and
+one that is right about memory and wrong about time.
+
+Optional, and that is a finding rather than an escape hatch: on the same host three other
+algorithms need no such cap at all, because their per-task overhead is negligible against their
+work. The term binds for one algorithm and not the others, which is exactly why it belongs in a
+keyed measurement a caller supplies and not in this solver's constants. -/
+
+/-- The time model of a sharded run: `t(N) = perElement·total/N + perShard·N`. A *fixed* cost per
+spawned shard, amortized against work that shrinks as it is divided — the shape §2.3 of the
+deployment's own analysis settles, and deliberately not a roofline (a roofline's corner sits at a
+fixed problem size; this optimum moves as `√total`).
+
+Zero `perShard` is the honest default: with no measured per-task cost the model says more shards
+are always faster, and the solver correctly declines to cap. -/
+structure TimeShape where
+  /-- `w` — marginal seconds per batch element. Divided by the shard count: shards share it. -/
+  perElement : Quantity timePerElement Float := ⟨0⟩
+  /-- `a` — fixed seconds per shard. Multiplied by the shard count: every shard pays it. -/
+  perShard : Quantity timePerShard Float := ⟨0⟩
+deriving Repr
+
+/-- The total work `W = w·total` this shape predicts, through the `workOfElements` product law —
+the numerator of the time model, before any shard count is chosen. -/
+def TimeShape.work (shape : TimeShape) (totalElems : Quantity elementCount Nat) :
+    Quantity elapsedTime Float :=
+  Quantity.mul workOfElements shape.perElement totalElems.asFloat
+
+/-- The modelled wall clock at a given shard count: `W/N + a·N`, each term through its own law
+(`durationOfSharedWork` and `overheadOfShards`) and summed as the same-kind duration both are.
+Exposed because a cap a caller cannot check is a cap a caller has to trust: this is the function
+`optimalShards` claims to minimize, and comparing the two is one line. -/
+def TimeShape.wallClock (shape : TimeShape) (totalElems : Quantity elementCount Nat)
+    (n : Quantity shardCount Nat) : Quantity elapsedTime Float :=
+  let shared := Quantity.div durationOfSharedWork (shape.work totalElems) n.asFloat
+  let overhead := Quantity.mul overheadOfShards shape.perShard n.asFloat
+  ⟨shared.magnitude + overhead.magnitude⟩
+
+/-- SOLVER, time shape: the shard count minimizing the modelled wall clock, `N* = √(W/a)`
+through the `optimalShardsOfWork` crossing. `none` = time does not constrain the count (no
+measured per-shard cost, or no work), the same reading `maxShardsSplit` gives for memory. -/
+def TimeShape.optimalShards (shape : TimeShape) (totalElems : Quantity elementCount Nat) :
+    Option (Quantity shardCount Nat) :=
+  optimalShardsOfWork (shape.work totalElems) shape.perShard
+
 /-- The audited outcome of `decideShards`: the count, plus every term that produced it.
 The two `Bool`s are decision *flags* (facts about the derivation), not quantities. -/
 structure ShardDecision where
@@ -453,6 +504,10 @@ structure ShardDecision where
   budget : Option MemBudget
   /-- The memory-implied cap (`maxShardsSplit`); `none` = memory did not constrain. -/
   memCap : Option (Quantity shardCount Nat)
+  /-- The time-implied cap (`TimeShape.optimalShards`); `none` = no time model was supplied, or
+  the one supplied has no per-shard cost, so time did not constrain. The three caps beside it
+  answer "how many shards fit"; this one answers "how many are worth having". -/
+  timeCap : Option (Quantity shardCount Nat)
   /-- The resident variable term alone exceeds the budget: even `nShards = 1` risks the
   cap. The fix is a smaller total (external row-chunking), not a smaller count. -/
   overflow : Bool
@@ -477,12 +532,15 @@ def ShardDecision.describe (d : ShardDecision)
   let cap := match d.memCap with
     | some m => s!"mem-cap {m.magnitude}"
     | none => "mem-cap none"
+  let tcap := match d.timeCap with
+    | some t => s!", time-cap {t.magnitude}"
+    | none => ""
   let how := if d.overridden then "override" else "auto"
   let over := if d.overflow then
       "  ⚠ resident set alone exceeds the budget — shrink the tile/block, not the count"
     else ""
   s!"[{emitter.value}] shards={d.nShards.magnitude} ({how}; \
-cores={d.cores.cores.magnitude}, {cap}, {mem}){over}"
+cores={d.cores.cores.magnitude}, {cap}{tcap}, {mem}){over}"
 
 /-- **Decide a `runSharded` shard count**: `min(cores-implied cap, memory cap, hardCap)`,
 floor 1 — or the explicit `override` when the caller has one (a `TILE_SHARDS`-style env
@@ -492,27 +550,39 @@ stitched outputs) — subtracted here because the budget has LIMIT semantics
 (`hostMemLimit`), so holdings must be charged exactly once. `hardCap` bounds by useful
 parallelism; a caller capping by element count states the license through
 `elementsAsShardCap`. The cores bound enters through the authored `coresAsShardCap`
-crossing — the one place two count kinds meet, each conversion named and licensed. -/
+crossing — the one place two count kinds meet, each conversion named and licensed.
+
+`time` is the fourth cap and the only one that answers a different *question*: the other three
+bound what fits, and this one bounds what is worth running. It is an `Option` because whether a
+per-task cost is worth charging is a measured fact about one algorithm — on the host this was
+established, one of four algorithms needs it — so an absent time model means "not measured here",
+which is exactly the reading `none` should have. -/
 def decideShards (shape : MemShape) (totalElems : Quantity elementCount Nat)
     (reservedBytes : Quantity storageCapacity Nat := ⟨0⟩)
     (override : Option (Quantity shardCount Nat) := none)
-    (hardCap : Option (Quantity shardCount Nat) := none) : IO ShardDecision := do
+    (hardCap : Option (Quantity shardCount Nat) := none)
+    (time : Option TimeShape := none) : IO ShardDecision := do
   let cores ← availableCores
   let budget ← hostMemLimit
   let memCap := match budget with
     | some b => maxShardsSplit shape totalElems (b.bytes - reservedBytes)
     | none => none
   let overflow := memCap == some ⟨0⟩
+  let timeCap := time.bind (·.optimalShards totalElems)
   let auto :=
     let c := match memCap with
       | some m => Quantity.min (coresAsShardCap cores.cores) m
       | none => coresAsShardCap cores.cores
-    match hardCap with
-    | some h => Quantity.min c h
+    let c := match hardCap with
+      | some h => Quantity.min c h
+      | none => c
+    match timeCap with
+    | some t => Quantity.min c t
     | none => c
   let n := match override with
     | some o => Quantity.max ⟨1⟩ o
     | none => Quantity.max ⟨1⟩ auto
-  return { nShards := n, cores, budget, memCap, overflow, overridden := override.isSome }
+  return { nShards := n, cores, budget, memCap, timeCap, overflow,
+           overridden := override.isSome }
 
 end PropertyKindCalculus.Paradigm.Platform

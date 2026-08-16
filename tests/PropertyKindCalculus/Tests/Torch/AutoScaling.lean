@@ -201,9 +201,76 @@ def diamondRep : AiReport :=
 #guard ShardDecision.describe
     { nShards := ⟨4⟩, cores := { cores := ⟨16⟩ },
       budget := some { bytes := ⟨30064771072⟩, source := ⟨"cgroup-v2:/kubepods/burstable"⟩ },
-      memCap := some ⟨4⟩, overflow := false, overridden := false }
+      memCap := some ⟨4⟩, timeCap := none, overflow := false, overridden := false }
     ⟨"tile_retrieve"⟩
   == "[tile_retrieve] shards=4 (auto; cores=16, mem-cap 4, " ++
      "budget 28672 MiB [cgroup-v2:/kubepods/burstable])"
+
+-- A supplied time model prints beside the memory cap rather than replacing it: the reader has
+-- to be able to see WHICH cap bound, because "fits" and "worth having" have different repairs.
+#guard ShardDecision.describe
+    { nShards := ⟨8⟩, cores := { cores := ⟨56⟩ },
+      budget := some { bytes := ⟨30064771072⟩, source := ⟨"cgroup-v2:/kubepods/burstable"⟩ },
+      memCap := some ⟨2704⟩, timeCap := some ⟨8⟩, overflow := false, overridden := false }
+    ⟨"avs_fit_linearized"⟩
+  == "[avs_fit_linearized] shards=8 (auto; cores=56, mem-cap 2704, time-cap 8, " ++
+     "budget 28672 MiB [cgroup-v2:/kubepods/burstable])"
+
+/-! ## The time cap — `t(N) = W/N + a·N`, and the closed form that minimizes it
+
+The strongest available check on a closed-form optimum is not a pinned number: it is that the
+`N` it returns really does minimize the very function the module says it minimizes. So the probe
+brute-forces `wallClock` over the whole shard ladder and compares. The closed form rounds to an
+integer, so the test is that no integer `N` in range beats it — not that it equals the argmin of
+a continuous relaxation, which is a different and weaker claim. -/
+
+/-- The measured shape of the one algorithm on this host that needs the cap: `w ≈ 45 µs` per
+element, `a ≈ 19 ms` per task. Seconds, which is the kind's stated unit. -/
+def fitShape : TimeShape := { perElement := ⟨45.0e-6⟩, perShard := ⟨19.0e-3⟩ }
+
+/-- Brute force: is there any shard count in `1..limit` with a strictly smaller modelled time? -/
+def beatenBy (shape : TimeShape) (total : Quantity elementCount Nat)
+    (n : Quantity shardCount Nat) (limit : Nat) : Bool :=
+  (List.range limit).any fun i =>
+    let m : Quantity shardCount Nat := ⟨i + 1⟩
+    (shape.wallClock total m).magnitude < (shape.wallClock total n).magnitude
+
+-- Across the block sizes production lands in, the closed form is never beaten on the ladder.
+#guard [1600, 6400, 25600, 102400, 409600, 1638400].all fun p =>
+  match fitShape.optimalShards ⟨p⟩ with
+  | some n => !beatenBy fitShape ⟨p⟩ n 56
+  | none => false
+
+-- The optimum moves as `√P` — it is not a roofline, whose corner would sit at a fixed size.
+-- Sixteen times the elements, four times the shards, at a pair where the rounding is clean.
+#guard match fitShape.optimalShards ⟨6400⟩, fitShape.optimalShards ⟨102400⟩ with
+  | some a, some b => b.magnitude == 4 * a.magnitude
+  | _, _ => false
+
+-- The cost of ignoring it, at the block sizes production lands in: taking every core is a real
+-- multiple of the optimum's wall clock, not a rounding. These are the *model's* ratios at the
+-- shape recorded above (3.66× and 1.94×); the measurement that motivated the cap read 3.93× and
+-- 2.20× on the algorithm itself, which is the same conclusion from the readings rather than from
+-- the fit — and the reason this probe bounds rather than pins.
+#guard
+  let ratio (p : Nat) : Float :=
+    match fitShape.optimalShards ⟨p⟩ with
+    | some n => (fitShape.wallClock ⟨p⟩ ⟨56⟩).magnitude / (fitShape.wallClock ⟨p⟩ n).magnitude
+    | none => 0.0
+  ratio 25600 > 3.0 && ratio 102400 > 1.9
+
+-- No measured per-shard cost ⇒ the model says more shards are always faster, so time does not
+-- constrain the count. `none`, the same reading `maxShardsSplit` gives for memory.
+#guard (({ perElement := ⟨45.0e-6⟩ } : TimeShape).optimalShards ⟨102400⟩).isNone
+-- No work either way: nothing to optimize.
+#guard (fitShape.optimalShards ⟨0⟩).isNone
+
+-- The three algorithms whose per-task overhead is negligible against their work are not capped
+-- into uselessness by a shared rule: with `a` a thousand times smaller, the optimum is past the
+-- core count and the cores cap binds, exactly as it did before this term existed.
+#guard match ({ perElement := ⟨45.0e-6⟩, perShard := ⟨19.0e-6⟩ } : TimeShape).optimalShards
+    ⟨102400⟩ with
+  | some n => n.magnitude > 56
+  | none => false
 
 end PropertyKindCalculus.Tests.AutoScaling

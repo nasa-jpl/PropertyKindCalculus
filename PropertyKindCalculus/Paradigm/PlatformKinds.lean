@@ -84,6 +84,43 @@ Deliberately distinct from `workerCount` — confusing the two silently authoriz
 def shardCount : KindOfProperty :=
   { id := "resident-split shard count", scale := .ratio }
 
+/-! ### The time kinds — the term `decideShards` had no way to state
+
+The three count caps answer "how many shards *fit*". None of them answers "how many shards are
+worth having", and measured, the two questions have different answers: past an optimum the fixed
+cost of spawning a task exceeds the work it takes away, so more parallelism is slower. The shape
+is a fixed per-task cost amortized against shrinking per-task work, `t(N) = w·P/N + a·N`, which
+is NOT a roofline — a roofline's corner sits at a fixed problem size, and this optimum moves as
+`√P`.
+
+Two kinds and not one composite. The closed-form optimum is `N* = √(w·P/a)`, and it is tempting
+to record the single number `√(w/a)` that multiplies `√P` — but that quantity has dimension
+`element^(−1/2)`, names nothing, and cannot be measured on its own: it is an artefact of solving,
+not a property of the algorithm. `w` and `a` are separately measurable, separately meaningful,
+and separately liable to change (a faster kernel moves `w`; a different task runtime moves `a`),
+so they are the kinds, and the composite is what the solver computes. -/
+
+/-- Elapsed wall-clock time, in **seconds** — the quantity a time model predicts and a stopwatch
+reads. Ratio-scale: durations have a true zero and their ratios mean something ("twice as long"),
+which is what licenses the whole model. -/
+def elapsedTime : KindOfProperty :=
+  { id := "elapsed wall-clock time", scale := .ratio }
+
+/-- The marginal wall-clock cost per batch element (`w`, seconds/element) — the *work* rate. The
+term that divides by the shard count, because it is work the shards share out. -/
+def timePerElement : KindOfProperty :=
+  { id := "time per batch element", scale := .ratio }
+
+/-- The fixed wall-clock cost of one shard (`a`, seconds/shard) — spawn, schedule, join, and
+whatever the runtime charges per task regardless of the work in it. The term that MULTIPLIES the
+shard count, which is the whole reason an optimum exists.
+
+Deliberately not the same kind as `timePerElement`, though both are seconds over a dimension-one
+count: one is divided by `N` and the other multiplied by it, so a swap does not merely mis-scale
+the answer — it inverts which way the optimum moves. -/
+def timePerShard : KindOfProperty :=
+  { id := "time per shard", scale := .ratio }
+
 /-! ### The nominal text kinds — the parsers' input/output vocabulary
 
 The capacity parsers all consume and produce `String`s, and two different texts in one
@@ -221,6 +258,21 @@ different result kind — see the module header. -/
 theorem shardsOfHeadroom : QuotientKind storageCapacity storageCapacity shardCount :=
   QuotientKind.ofRatio storageCapacity storageCapacity shardCount
 
+/-- `timePerElement × elementCount = elapsedTime` — the *work* term `W = w·P` of the time
+model, the exact analogue of `bytesOfElements` on the memory side. -/
+theorem workOfElements : ProductKind timePerElement elementCount elapsedTime :=
+  ProductKind.ofRatio timePerElement elementCount elapsedTime
+
+/-- `timePerShard × shardCount = elapsedTime` — the *overhead* term `a·N`. The one term in
+either model that grows with the count rather than shrinking with it. -/
+theorem overheadOfShards : ProductKind timePerShard shardCount elapsedTime :=
+  ProductKind.ofRatio timePerShard shardCount elapsedTime
+
+/-- `elapsedTime / shardCount = elapsedTime` — the *shared* term `W/N`: total work handed to `N`
+shards takes a duration, and dividing a duration by a dimension-one count leaves a duration. -/
+theorem durationOfSharedWork : QuotientKind elapsedTime shardCount elapsedTime :=
+  QuotientKind.ofRatio elapsedTime shardCount elapsedTime
+
 /-! ### The authored crossings
 
 The one place counts of different kinds meet is the final `min` of `decideShards`:
@@ -240,11 +292,42 @@ one element, so no more shards than elements are useful. -/
 def elementsAsShardCap (n : Quantity elementCount Nat) : Quantity shardCount Nat :=
   ⟨n.magnitude⟩
 
+/-- **The shard count that minimizes `t(N) = W/N + a·N`**: `N* = √(W/a)`, the stationary point of
+a convex function of `N` and therefore its minimum.
+
+A named crossing rather than a law, for two reasons that are worth keeping apart. The *kind*
+reason: the quotient `W/a` passes through a transient kind — seconds over seconds-per-shard is
+shards **squared** — which nothing in this vocabulary names and which the square root immediately
+removes, so the sensible treatment is `Budget.combinedQ`'s (compute on the carrier, re-stamp the
+result) rather than minting a `shardCount²`. The *metrological* reason, which matters more: this
+is not a units cancellation at all. It is the closed-form solution of a particular model, and if
+the model is wrong the equation is wrong while the units stay perfectly consistent. A law would
+claim the first; a named crossing claims only what it is.
+
+`none` when there is no fixed per-shard cost: the modelled time is then monotonically decreasing
+in `N`, so time does not constrain the count and the answer is the same `none` `maxShardsSplit`
+gives when memory does not constrain it. Rounded to the nearest shard, not floored — `N*` is
+the stationary point of a smooth curve and the better of its two integer neighbours is as often
+above it as below. -/
+def optimalShardsOfWork (work : Quantity elapsedTime Float)
+    (perShard : Quantity timePerShard Float) : Option (Quantity shardCount Nat) :=
+  if perShard.magnitude ≤ 0.0 || work.magnitude ≤ 0.0 then none
+  else some ⟨(Float.sqrt (work.magnitude / perShard.magnitude) + 0.5).toUInt64.toNat⟩
+
 /-! ### Distinctness — the swap hazards, as theorems -/
 
 /-- The load-bearing pair: a worker count is not a shard count (the ~N× residency
 confusion, made unwritable). -/
 theorem workerCount_ne_shardCount : workerCount ≠ shardCount := by decide
+
+/-- The time model's own load-bearing pair: `w` is divided by the shard count and `a` is
+multiplied by it, so swapping them does not mis-scale the optimum — it inverts the direction the
+optimum moves in. -/
+theorem timePerElement_ne_timePerShard : timePerElement ≠ timePerShard := by decide
+
+/-- A duration is not a rate. `w·P` and `a·N` are durations; `w` and `a` are not, and the model
+adds the first pair while never adding the second. -/
+theorem elapsedTime_ne_timePerElement : elapsedTime ≠ timePerElement := by decide
 
 theorem coreCount_ne_shardCount : coreCount ≠ shardCount := by decide
 theorem coreCount_ne_workerCount : coreCount ≠ workerCount := by decide
