@@ -348,4 +348,44 @@ the direction in which a Gaussian reading is optimistic by orders of magnitude. 
     riskAtLimit (Tolerance.atMost (q 28497.0)) (q 900.0) f).any fun r =>
   r.closeTo ⟨0.01⟩ exactTol
 
+/-! ### The invariance the ratchet rests on, at `Float`
+
+`ConformityLadder.riskAt_acceptanceLimit` proves over `ℝ` that the risk at the acceptance limit
+does not depend on `u`: the band and the uncertainty shrink together, so the standardized deviate
+the tail is read at is `k` whatever they shrink to. These are its executable witnesses — the same
+arithmetic on the rounding carrier, which is the only place a deployment ever evaluates it. -/
+
+/-- The risk this rule runs at its own acceptance limit, at a stated `u`. The quantity the theorem
+says is constant in `u`. -/
+private def riskAtLimitFor (uv : Float) : Option (Quantity probability Float) :=
+  let limit := Tolerance.atMost (q 28497.0)
+  (factorForRisk ⟨0.01⟩).bind fun f => riskAtLimit limit (q uv) f
+
+-- **Four uncertainties spanning two orders of magnitude, one risk.** The acceptance limit moves
+-- from 26 403 to 28 474 as `u` falls from 900 to 10 — a 2 071-unit gain in what the deployment
+-- may accept — and the consumer's risk at it is 1 % throughout. That is the fleet's speedup and
+-- the risk bound being the same statement, which is what makes automatic tightening defensible.
+#guard [900.0, 300.0, 100.0, 10.0].all fun uv =>
+  (riskAtLimitFor uv).any fun r => r.closeTo ⟨0.01⟩ exactTol
+
+-- The limit itself really does move, so the probe above is not constant for the trivial reason.
+#guard ((factorForRisk ⟨0.01⟩).map fun f =>
+    (28497.0 - f.magnitude * 900.0, 28497.0 - f.magnitude * 10.0)).any fun (lo, hi) =>
+  (⟨lo⟩ : Quantity K Float).closeTo (q 26403.28) tableTol && (⟨hi⟩ : Quantity K Float).closeTo (q 28473.74) tableTol
+
+-- And it never rises past the tolerance limit, however small `u` gets — the ceiling of
+-- `ConformityLadder.acceptanceLimit_le`, checked at a `u` far below anything this deployment
+-- will ever pool to.
+#guard ((factorForRisk ⟨0.01⟩).map fun f => 28497.0 - f.magnitude * 1e-6).any fun a =>
+  a < 28497.0
+
+-- **The scope boundary, as a checked fact rather than a caveat.** `riskAtLimit` is §9.5.2's own
+-- Gaussian, so pricing a `t`-derived factor with it disagrees with the target that factor was
+-- built for — 8.9e-5 where the rule asked for 1 %. Not a defect: it is why `riskForFactorAt`
+-- exists and why a consumer must price a band under the posterior it was derived from.
+#guard (((atDof 4.0).coverageFactorOneSided ⟨0.01⟩).map riskForFactor).any fun r =>
+  r.closeTo ⟨8.9455e-5⟩ tableTol
+#guard (((atDof 4.0).coverageFactorOneSided ⟨0.01⟩).bind (riskForFactorAt · ⟨4.0⟩)).any fun r =>
+  r.closeTo ⟨0.01⟩ exactTol
+
 end PropertyKindCalculus.Tests.Evidence

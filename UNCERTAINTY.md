@@ -524,6 +524,12 @@ uncertainty/PropertyKindCalculus/Uncertainty/
   Sensitivity.lean      ✅ autograd bridge: cᵢ via TapeBuilder reverse tape; 3.5 retarget onto the
                            soundness-covered total entry `Tape.backwardDenseFrom`  [Axis N, Stages 1+3.5]
   Ladder.lean           ✅ T1 (cumulant additivity), T2 (gum = willink|κ₄=0) / ℝ  [rigor, Stage 1]
+  ConformityLadder.lean ✅ why an acceptance limit may TIGHTEN itself / ℝ         [rigor, Area 1]
+                           A(u) = L − k·u is antitone in u and never passes L; and the risk AT
+                           that limit is Q(k) — INDEPENDENT of u, since band and uncertainty
+                           shrink together — so a rule built for a target risk runs it at every
+                           stage of evidence, cold start included. The fleet's speedup is then a
+                           corollary of a risk bound. Q abstract; both posterior families qualify
   Convolution.lean      ✅ Dist/conv over ℝ; T5 (convolution adds cumulants),      [rigor, Stage 2]
                            T3 (willink = linearized-ssprc|κ₄), T4 (affine R = E(Y)) — sorry-free
   Adequacy.lean         ✅ executable Adequacy NumCarrier over Float: ulp₃₂,        [Area 2, Stage 3]

@@ -282,6 +282,11 @@ namespace but built as a separate library so the dependency expansion lands *her
 stays toolchain-only:
   * `PropertyKindCalculus.Uncertainty.Ladder`      — the GUM ⊂ Willink nesting theorems T1
     (cumulant additivity) and T2 (`gum = willink|κ₄=0`), stated and proved over Mathlib's `ℝ`.
+  * `PropertyKindCalculus.Uncertainty.ConformityLadder` — why an acceptance limit may tighten
+    itself: it rises as `u` falls, never past the tolerance limit, and — the load-bearing one —
+    the specific consumer's risk AT that limit does not depend on `u` at all, so a rule built for
+    a target risk runs it at every stage of evidence including the first. The fleet's speedup is
+    then a corollary of a risk bound rather than a hope.
   * `PropertyKindCalculus.Uncertainty.Sensitivity` — the autograd bridge sourcing the GUM/Willink
     sensitivity coefficients `cᵢ = ∂f/∂Xᵢ` from a WO1 kernel via TorchLean's reverse-mode tape
     (`TapeBuilder`), reusing the model with no rewrite.
@@ -291,6 +296,7 @@ lean_lib «UncertaintyRigor» where
   srcDir := "uncertainty"
   globs := #[
     .one `PropertyKindCalculus.Uncertainty.Ladder,
+    .one `PropertyKindCalculus.Uncertainty.ConformityLadder,
     .one `PropertyKindCalculus.Uncertainty.BudgetDagLaws,
     .one `PropertyKindCalculus.Uncertainty.Convolution,
     .one `PropertyKindCalculus.Uncertainty.Coverage,
