@@ -527,21 +527,32 @@ def SplitShape.memCap : SplitShape → Quantity elementCount Nat →
   | .simple s, total, headroom => maxShardsSplit s total headroom
   | .piecewise b a t, total, headroom => maxShardsSplitPiecewise b a t total headroom
 
-/-- **Which piece is in force at a given count** — the shape a decision actually ran under,
-for the log line and the account of the run. Splitting a total `n` ways makes slices of
+/-- **Is the far piece in force at this count?** Splitting a total `n` ways makes slices of
 `total/n`, and `above` governs strictly past the threshold.
 
-`n = 0` cannot arise from a decision (the count is floored at 1) and answers with the base
-piece, which is the conservative reading of a question that was not asked. -/
-def SplitShape.pieceAt : SplitShape → Quantity elementCount Nat →
-    Quantity shardCount Nat → MemShape
-  | .simple s, _, _ => s
-  | .piecewise b a t, total, n =>
-    if n.magnitude == 0 then b
+The regime rule lives here and nowhere else: a decision needs the SHAPE it ran under and its
+account needs the NAME of that shape, and two functions deciding the same boundary
+independently is how a log line comes to disagree with the arithmetic it describes.
+
+`n = 0` cannot arise from a decision (the count is floored at 1) and answers `false`, the
+conservative reading of a question that was not asked. A simple shape is never "above": it has
+no far piece to be in. -/
+def SplitShape.aboveAt : SplitShape → Quantity elementCount Nat → Quantity shardCount Nat → Bool
+  | .simple _, _, _ => false
+  | .piecewise _ _ t, total, n =>
+    if n.magnitude == 0 then false
     else
       let slice : Quantity sliceElementCount Float :=
         Quantity.div elementsOfSlice total.asFloat ⟨n.magnitude.toFloat⟩
-      if slice.magnitude > t.magnitude then a else b
+      slice.magnitude > t.magnitude
+
+/-- **Which piece is in force at a given count** — the shape a decision actually ran under,
+for the solver's own re-reading and for a caller reporting what it charged. -/
+def SplitShape.pieceAt (s : SplitShape) (total : Quantity elementCount Nat)
+    (n : Quantity shardCount Nat) : MemShape :=
+  match s with
+  | .simple sh => sh
+  | .piecewise b a _ => if s.aboveAt total n then a else b
 
 /-! ### The time shape — the fourth cap
 

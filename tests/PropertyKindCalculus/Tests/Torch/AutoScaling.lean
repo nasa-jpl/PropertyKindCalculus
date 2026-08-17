@@ -234,6 +234,12 @@ depends on the per-shard fixed term. -/
     == ⟨2.0⟩
 #guard ((SplitShape.simple { fixedBytes := ⟨7⟩, bytesPerElem := ⟨2.0⟩ }).pieceAt
     ⟨400⟩ ⟨9⟩).fixedBytes == ⟨7⟩
+-- The same boundary, as the name an account of the run carries: one rule, asked two ways.
+#guard (SplitShape.piecewise { fixedBytes := ⟨100⟩, bytesPerElem := ⟨2.0⟩ }
+    { fixedBytes := ⟨100⟩, bytesPerElem := ⟨1.0⟩ } ⟨100.0⟩).aboveAt ⟨400⟩ ⟨3⟩ == true
+#guard (SplitShape.piecewise { fixedBytes := ⟨100⟩, bytesPerElem := ⟨2.0⟩ }
+    { fixedBytes := ⟨100⟩, bytesPerElem := ⟨1.0⟩ } ⟨100.0⟩).aboveAt ⟨400⟩ ⟨4⟩ == false
+#guard (SplitShape.simple { fixedBytes := ⟨7⟩, bytesPerElem := ⟨2.0⟩ }).aboveAt ⟨400⟩ ⟨1⟩ == false
 
 -- The slice is a quotient of two counts, and the two ways of reading that division answer
 -- different questions at the same magnitudes: 400 elements over 4 shards is a slice of 100,
