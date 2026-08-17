@@ -169,6 +169,62 @@ def diamondRep : AiReport :=
 -- No per-shard fixed term: memory does not constrain the count at all.
 #guard maxShardsSplit { fixedBytes := ⟨0⟩, bytesPerElem := ⟨2.0⟩ } ⟨400⟩ ⟨1000⟩ == none
 
+/-! ### The split shape whose slope changes at a slice threshold
+
+`maxShardsSplitPiecewise`. The shapes below are the measured knee in caricature: past the
+threshold ONE SHARD's slice is mapped directly and costs less per element; at and below it the
+slice is served from retained arenas and costs more. Every cell is hand-solved, and the pair
+that matters is the first two — the same threshold and the same pieces answer with the *cheap*
+regime in one and the *expensive* one in the other, because which regime can be reached at all
+depends on the per-shard fixed term. -/
+
+-- The cheap regime wins. total = 400, threshold = 100 ⇒ the boundary is N = 4, so `above`
+-- governs N ≤ 3 and `base` governs N ≥ 4. Above: ⌊(1000 − 1·400)/100⌋ = 6, clamped to its
+-- regime = 3. Base: ⌊(1000 − 2·400)/100⌋ = 2, which is not in `N ≥ 4` and so is no answer at
+-- all. Three shards — where the conservative single-piece solve would have said two.
+#guard maxShardsSplitPiecewise { fixedBytes := ⟨100⟩, bytesPerElem := ⟨2.0⟩ }
+    { fixedBytes := ⟨100⟩, bytesPerElem := ⟨1.0⟩ } ⟨100.0⟩ ⟨400⟩ ⟨1000⟩ == some ⟨3⟩
+#guard maxShardsSplit { fixedBytes := ⟨100⟩, bytesPerElem := ⟨2.0⟩ } ⟨400⟩ ⟨1000⟩ == some ⟨2⟩
+
+-- The expensive regime wins, with the SAME slopes and threshold: a per-shard overhead of 10
+-- instead of 100 puts ⌊(1000 − 800)/10⌋ = 20 shards inside `N ≥ 4`, and 20 beats the 3 the
+-- cheap regime is boxed into by its own boundary. The two answers are not a ranking of the
+-- pieces — each piece is solved only where it is in force, and the better feasible count wins.
+#guard maxShardsSplitPiecewise { fixedBytes := ⟨10⟩, bytesPerElem := ⟨2.0⟩ }
+    { fixedBytes := ⟨10⟩, bytesPerElem := ⟨1.0⟩ } ⟨100.0⟩ ⟨400⟩ ⟨1000⟩ == some ⟨20⟩
+
+-- **The base piece owns the boundary.** At N = 4 the slice is exactly 100 = the threshold, and
+-- `above` is in force *strictly* past it — so however much room the cheap piece has (here
+-- ⌊(1000 − 400)/1⌋ = 600), it is never credited with the boundary count itself.
+#guard maxShardsSplitPiecewise { fixedBytes := ⟨100⟩, bytesPerElem := ⟨2.0⟩ }
+    { fixedBytes := ⟨1⟩, bytesPerElem := ⟨1.0⟩ } ⟨100.0⟩ ⟨400⟩ ⟨1000⟩ == some ⟨3⟩
+
+-- Neither regime fits: both variable terms alone overflow the headroom (1.8·600 = 1080 and
+-- 2·600 = 1200 against 1000). `some 0` — the same reading the single-piece solver gives, and
+-- the same remedy: a smaller total, not a smaller count.
+#guard maxShardsSplitPiecewise { fixedBytes := ⟨100⟩, bytesPerElem := ⟨2.0⟩ }
+    { fixedBytes := ⟨100⟩, bytesPerElem := ⟨1.8⟩ } ⟨100.0⟩ ⟨600⟩ ⟨1000⟩ == some ⟨0⟩
+
+-- No per-shard fixed term in the regime that governs the large counts: the count is
+-- unconstrained by memory, which is `none` and not a very large number.
+#guard maxShardsSplitPiecewise { fixedBytes := ⟨0⟩, bytesPerElem := ⟨2.0⟩ }
+    { fixedBytes := ⟨100⟩, bytesPerElem := ⟨1.0⟩ } ⟨100.0⟩ ⟨400⟩ ⟨1000⟩ == none
+
+-- A threshold no slice can fail to exceed is not a piecewise question: one regime governs the
+-- whole axis, and the answer is that piece's own single-piece solve.
+#guard maxShardsSplitPiecewise { fixedBytes := ⟨100⟩, bytesPerElem := ⟨2.0⟩ }
+    { fixedBytes := ⟨100⟩, bytesPerElem := ⟨1.0⟩ } ⟨0.0⟩ ⟨400⟩ ⟨1000⟩
+    == maxShardsSplit { fixedBytes := ⟨100⟩, bytesPerElem := ⟨1.0⟩ } ⟨400⟩ ⟨1000⟩
+
+-- The slice is a quotient of two counts, and the two ways of reading that division answer
+-- different questions at the same magnitudes: 400 elements over 4 shards is a slice of 100,
+-- and 400 elements at a slice of 100 is 4 shards. Neither result can be handed to the other's
+-- slot — `sliceElementCount` and `shardCount` are distinct kinds.
+#guard (Quantity.div elementsOfSlice (⟨400⟩ : Quantity elementCount Nat) ⟨4⟩
+    : Quantity sliceElementCount Nat) == ⟨100⟩
+#guard (Quantity.div shardsOfSlice (⟨400⟩ : Quantity elementCount Nat) ⟨100⟩
+    : Quantity shardCount Nat) == ⟨4⟩
+
 -- The same numbers through the two same-signature laws: equal magnitudes, DIFFERENT
 -- kinds — `workerCount` vs `shardCount`. Comparing the two results directly would not
 -- even type-check; that unwritable comparison is the point of the split vocabulary.

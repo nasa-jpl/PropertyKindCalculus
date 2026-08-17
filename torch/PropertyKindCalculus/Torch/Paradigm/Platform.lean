@@ -444,6 +444,68 @@ def maxShardsSplit (shape : MemShape) (totalElems : Quantity elementCount Nat)
   else if shape.fixedBytes == ⟨0⟩ then none
   else some (Quantity.div shardsOfHeadroom (headroom - varBytes) shape.fixedBytes)
 
+/-- SOLVER, split shape whose SLOPE CHANGES at a slice threshold: the largest shard count that
+fits when `bytesPerElem` is not one constant but two, selected by how big ONE shard's slice is.
+
+**Why a solver needs this at all.** `maxShardsSplit`'s model has the variable term invariant in
+`N` — the shards partition one resident total, so only the per-shard fixed overhead scales. That
+is exact while the marginal cost per element is a constant of the algorithm, and it is measurably
+false across an allocator regime change: a slice large enough to be mapped and unmapped directly
+costs *fewer* bytes per element than one served out of retained arenas, so the same tile cut into
+fewer, larger pieces can hold less than it does cut into many. Which regime a run lands in is a
+fact about `total / N` — the slice, `sliceElementCount` — and about neither factor alone.
+
+**Selected, never combined.** `above` is in force strictly past `threshold`, `base` at and below
+it. An envelope over the two pieces (a `max`) would be the wrong answer and not merely a loose
+one: an envelope of affine pieces is convex and can only ever ascend, while the regime change
+this exists for is a *descent*, so the envelope would charge the retained-arena slope in the very
+configuration that does not pay it.
+
+**How it is solved: two clamped solves, not an iteration.** Each piece is `maxShardsSplit`'s own
+model within the regime it governs, and the regimes are an interval each — `above` for
+`N < total/threshold`, `base` for the rest — so the answer is the larger of (that piece's cap,
+clamped to its own regime) over the two, with no fixed point to chase. A search that fed one
+piece's answer back through the selector could oscillate across the boundary; this cannot,
+because neither solve is ever asked about a count its own regime does not contain.
+
+`none` = memory does not constrain `N` (the base regime carries no per-shard fixed term, so
+counts above the boundary are unbounded). `some 0` = neither regime fits at any count — the
+variable term alone overflows both ways, and the fix is a smaller total, not a smaller count. -/
+def maxShardsSplitPiecewise (base above : MemShape)
+    (threshold : Quantity sliceElementCount Float)
+    (totalElems : Quantity elementCount Nat)
+    (headroom : Quantity storageCapacity Nat) : Option (Quantity shardCount Nat) :=
+  if threshold ≤ ⟨0⟩ then
+    -- Every slice of a non-empty total is bigger than a non-positive threshold, so one regime
+    -- governs the whole axis and the piecewise question does not arise.
+    maxShardsSplit above totalElems headroom
+  else
+    -- The boundary on the SHARD axis: the count at which one slice is exactly the threshold.
+    -- `above` governs strictly below it, so its last count is the largest integer under the
+    -- boundary — `⌈boundary⌉ − 1`, which is `boundary − 1` when the division comes out whole.
+    let boundary : Quantity shardCount Nat :=
+      (Quantity.div shardsOfSlice totalElems.asFloat threshold).ceilToNat
+    let lastAbove : Quantity shardCount Nat := ⟨boundary.magnitude - 1⟩
+    let firstBase : Quantity shardCount Nat := ⟨lastAbove.magnitude + 1⟩
+    -- Each piece, capped by its own regime. A cap of `0` is `maxShardsSplit`'s "not at any
+    -- count", which contributes nothing rather than a candidate of zero shards.
+    let fromAbove : Option (Quantity shardCount Nat) :=
+      if lastAbove.magnitude == 0 then none
+      else match maxShardsSplit above totalElems headroom with
+        | none => some lastAbove
+        | some c => if c.magnitude == 0 then none else some (Quantity.min c lastAbove)
+    match maxShardsSplit base totalElems headroom with
+    -- The base regime is unbounded above the boundary: memory does not constrain the count.
+    | none => none
+    | some c =>
+      let fromBase : Option (Quantity shardCount Nat) :=
+        if c.magnitude ≥ firstBase.magnitude then some c else none
+      match fromAbove, fromBase with
+      | none, none => some ⟨0⟩
+      | some a, none => some a
+      | none, some b => some b
+      | some a, some b => some (Quantity.max a b)
+
 /-! ### The time shape — the fourth cap
 
 `decideShards` used to answer only "how many shards *fit*". Measured, that is not the same

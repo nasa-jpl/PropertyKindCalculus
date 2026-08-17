@@ -12,7 +12,7 @@ Anchors:
     (`platform_storage_is_13_9` is `rfl`): the Platform vocabulary's byte kind IS the
     catalogued kind, so everything Part 13 proves about it — dimension one, unit bit,
     incommensurable with the shannon of information content — transfers verbatim.
-  * **The counts — ISO 80000-9 item 9-1 (number of entities).** The four count kinds are
+  * **The counts — ISO 80000-9 item 9-1 (number of entities).** The five count kinds are
     deliberately NOT 9-1 itself (they are role-named: elements, cores, workers, shards);
     each *specializes* 9-1 through an explicit direct-parent edge, so any two are
     `MutuallyComparable` as counts (Flater's lattice, NIST TN 1943 §6.2) while remaining
@@ -20,7 +20,7 @@ Anchors:
     the cores→shards bound in `decideShards` is licensed by comparability and still has
     to pass through the authored `coresAsShardCap` crossing.
 
-The capstone is the sizing instance of `dim_not_injective`: all six kinds collapse to
+The capstone is the sizing instance of `dim_not_injective`: all seven kinds collapse to
 dimension one under `toDimension` while staying pairwise distinct — a dimension-only
 type system (PhysLib alone, QUDT, F# units, Boost.Units) checks NOTHING in a sizing
 formula, which is why the solver module carries kinds in the first place.
@@ -57,14 +57,20 @@ def coreCountDK : DimensionedKind := { kind := Platform.coreCount, dim := Dim.on
 def workerCountDK : DimensionedKind := { kind := Platform.workerCount, dim := Dim.one }
 /-- Resident-split shard count — dimension one (a 9-1 specialization). -/
 def shardCountDK : DimensionedKind := { kind := Platform.shardCount, dim := Dim.one }
+/-- Per-shard slice element count — dimension one (a 9-1 specialization). The quotient of two
+kinds that are both dimension one is dimension one too, which is exactly why the slice needs a
+kind: nothing about its dimension distinguishes it from the total it was divided out of. -/
+def sliceElementCountDK : DimensionedKind :=
+  { kind := Platform.sliceElementCount, dim := Dim.one }
 
 /-- Every count kind carries exactly 9-1's dimension (one) — the anchor agreement. -/
 theorem counts_dim_matches_9_1 :
     elementCountDK.toDimension = Part9.numberOfEntities.toDimension ∧
     coreCountDK.toDimension = Part9.numberOfEntities.toDimension ∧
     workerCountDK.toDimension = Part9.numberOfEntities.toDimension ∧
-    shardCountDK.toDimension = Part9.numberOfEntities.toDimension :=
-  ⟨rfl, rfl, rfl, rfl⟩
+    shardCountDK.toDimension = Part9.numberOfEntities.toDimension ∧
+    sliceElementCountDK.toDimension = Part9.numberOfEntities.toDimension :=
+  ⟨rfl, rfl, rfl, rfl, rfl⟩
 
 /-! ## The 9-1 specialization lattice -/
 
@@ -76,6 +82,7 @@ inductive CountEdge : KindOfProperty → KindOfProperty → Prop
   | core    : CountEdge Platform.coreCount    Part9.numberOfEntities.kind
   | worker  : CountEdge Platform.workerCount  Part9.numberOfEntities.kind
   | shard   : CountEdge Platform.shardCount   Part9.numberOfEntities.kind
+  | slice   : CountEdge Platform.sliceElementCount Part9.numberOfEntities.kind
 
 /-- Workers and shards are mutually comparable *as counts* (common super-kind 9-1) —
 which is what licenses a cross-count bound like `min(cores, shards)` conceptually —
@@ -92,10 +99,11 @@ theorem cores_shards_comparable_as_counts :
 
 /-! ## The capstone — `dim_not_injective` at the sizing layer -/
 
-/-- All six sizing kinds are pairwise distinct … -/
+/-- All seven sizing kinds are pairwise distinct … -/
 theorem platform_kinds_pairwise_distinct :
     ([Platform.storageCapacity, Platform.storagePerElement, Platform.elementCount,
-      Platform.coreCount, Platform.workerCount, Platform.shardCount]
+      Platform.coreCount, Platform.workerCount, Platform.shardCount,
+      Platform.sliceElementCount]
       : List KindOfProperty).Pairwise (· ≠ ·) := by decide
 
 /-- … and the dimension functor collapses every one of them to `1`: the sizing instance
@@ -103,8 +111,17 @@ of `dim_not_injective`. A dimension-only checker accepts every mis-wiring the ki
 rejects — including the worker/shard confusion that authorizes ~N× the safe residency. -/
 theorem platform_dims_conflated :
     [storageCapacityDK, storagePerElementDK, elementCountDK,
-     coreCountDK, workerCountDK, shardCountDK].map DimensionedKind.toDimension
-      = List.replicate 6 Dim.one := rfl
+     coreCountDK, workerCountDK, shardCountDK, sliceElementCountDK].map
+       DimensionedKind.toDimension
+      = List.replicate 7 Dim.one := rfl
+
+/-- The piecewise solver's pair, in the same form: a slice and the total it came from are the
+same dimension and must not be the same kind, or a regime threshold would be tested against the
+whole tile and every run would claim the cheaper side of the knee. -/
+theorem total_slice_dimension_conflated :
+    elementCountDK.toDimension = sliceElementCountDK.toDimension ∧
+    elementCountDK.kind ≠ sliceElementCountDK.kind :=
+  ⟨rfl, Platform.elementCount_ne_sliceElementCount⟩
 
 /-- The emblematic pair, stated in the canonical conflation form: same dimension,
 different kinds. -/

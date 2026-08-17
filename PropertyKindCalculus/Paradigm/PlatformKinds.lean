@@ -84,6 +84,19 @@ Deliberately distinct from `workerCount` — confusing the two silently authoriz
 def shardCount : KindOfProperty :=
   { id := "resident-split shard count", scale := .ratio }
 
+/-- The elements ONE shard of a split holds: `elementCount / shardCount`.
+
+Distinct from `elementCount` for the reason `shardCount` is distinct from `workerCount` — the
+two counts are the two sides of a division, and a total handed to a solver expecting a slice
+authorizes `N×` the residency the slice implies. It exists because a memory shape's slope is
+not always a constant of the algorithm: an allocator that maps a large block and unmaps it
+again, rather than retaining it in an arena, has a **different marginal cost per element**, and
+which regime a run lands in is decided by the size of ONE SHARD's block — not the tile's, and
+not the shard count's. That threshold is a property of this quotient and of nothing else, which
+is what makes it a kind rather than an arithmetic convenience. -/
+def sliceElementCount : KindOfProperty :=
+  { id := "per-shard slice element count", scale := .ratio }
+
 /-! ### The time kinds — the term `decideShards` had no way to state
 
 The three count caps answer "how many shards *fit*". None of them answers "how many shards are
@@ -258,6 +271,21 @@ different result kind — see the module header. -/
 theorem shardsOfHeadroom : QuotientKind storageCapacity storageCapacity shardCount :=
   QuotientKind.ofRatio storageCapacity storageCapacity shardCount
 
+/-- `elementCount / shardCount = sliceElementCount` — what ONE shard of a split holds
+(`maxShardsSplitPiecewise`): the quantity a regime threshold is a fact about. The quotient
+of two counts is a count, and the result kind is the slice's rather than the total's, so the
+two can never be compared against each other's thresholds. -/
+theorem elementsOfSlice : QuotientKind elementCount shardCount sliceElementCount :=
+  QuotientKind.ofRatio elementCount shardCount sliceElementCount
+
+/-- `elementCount / sliceElementCount = shardCount` — the same division read for the other
+factor: how many shards a total must be cut into for one slice to reach a stated size. This is
+what locates a regime boundary on the shard axis (`maxShardsSplitPiecewise`), and it is a
+separate law rather than an inversion of `elementsOfSlice` because the two answer different
+questions and only one of them is a count of shards. -/
+theorem shardsOfSlice : QuotientKind elementCount sliceElementCount shardCount :=
+  QuotientKind.ofRatio elementCount sliceElementCount shardCount
+
 /-- `timePerElement × elementCount = elapsedTime` — the *work* term `W = w·P` of the time
 model, the exact analogue of `bytesOfElements` on the memory side. -/
 theorem workOfElements : ProductKind timePerElement elementCount elapsedTime :=
@@ -372,6 +400,11 @@ theorem timePerElement_ne_timePerShard : timePerElement ≠ timePerShard := by d
 /-- A duration is not a rate. `w·P` and `a·N` are durations; `w` and `a` are not, and the model
 adds the first pair while never adding the second. -/
 theorem elapsedTime_ne_timePerElement : elapsedTime ≠ timePerElement := by decide
+
+/-- The piecewise solver's own pair: a slice is not a total. Handing `maxShardsSplitPiecewise`
+the tile's element count where its threshold expects one shard's would put every run on the
+far side of the knee and size it by the cheaper regime — the unsafe direction. -/
+theorem elementCount_ne_sliceElementCount : elementCount ≠ sliceElementCount := by decide
 
 theorem coreCount_ne_shardCount : coreCount ≠ shardCount := by decide
 theorem coreCount_ne_workerCount : coreCount ≠ workerCount := by decide
