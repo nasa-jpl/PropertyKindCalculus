@@ -160,8 +160,16 @@ def Dispersion.factorOf [Div R] [Zero R] [BEq R] (u : Dispersion k R) (g : Quant
 /-! ## Where the two roles meet the bounds
 
 The endpoints of a coverage interval. Returned at their **roles** rather than as two quantities
-called lo and hi, so that everything `Bounds` and `Decimal` say about an endpoint — including
-which direction it may be rounded in — applies to them with nothing further stated. -/
+called lo and hi, so that what `Bounds` says about an endpoint — that a comparison against it
+cannot be written backwards — applies to them unchanged.
+
+One thing does *not* come free, and the distinction is worth carrying here because this is the
+module that produces the endpoints. A coverage interval is **asserted**: it claims the measurand
+lies inside, so shortening either endpoint outward keeps the claim true and gives coverage away,
+which is `Decimal`'s `roundedDown`/`roundedUp` pair. A **tolerance** or acceptance limit
+(`Conformity.Tolerance`) is imposed, and wants the opposite pair. Both are `LowerBound` /
+`UpperBound`; the geometric role is the same and the safe rounding is inverted, so the reading
+has to be supplied by whoever knows why the bound exists. -/
 
 /-- **The lower endpoint of the coverage interval** `y − U`, as a lower bound. -/
 def Estimate.minus [Sub R] (y : Estimate k R) (u : Dispersion k R) : LowerBound k R :=

@@ -272,9 +272,36 @@ wrong way" is therefore the same one, and it is the safe one.
 
 There is no `roundToNearest`, here or in `Bounds`, and none is coming. To-nearest is the
 default everywhere else and it is right for a **value** — where the requirement is not a
-direction at all but exactness, which is `showExact?` — while for the two roles below it is
-wrong half the time and silently. A rounding mode is not a formatting preference; it is part of
-what the number claims. -/
+direction at all but exactness, which is `showExact?` — while for the roles below it is wrong
+half the time and silently. A rounding mode is not a formatting preference; it is part of what
+the number claims.
+
+### Which way is safe depends on something `Bounds` does not record
+
+`LowerBound`/`UpperBound` carry a **geometric** role — which side of the number the endpoint is
+on — and that is exactly what they were built for: it makes a comparison written backwards
+unstateable. It is *not* enough to fix a rounding direction, and the gap is worth being precise
+about, because the two readings look identical in the type and want opposite answers.
+
+An endpoint is either **asserted** about a quantity or **imposed** upon one.
+
+  * *Asserted*: "this process holds at most `X`" — the claim is `actual ≤ X`. Raising `X` keeps
+    the claim true and gives slack away. **Safe direction: away from the quantity.**
+  * *Imposed*: "`y` must be at most `L`" — the requirement is `y ≤ L`. Raising `L` admits values
+    that should have failed. **Safe direction: toward the constrained region.**
+
+So for the same geometric side the safe rounding is *inverted* between the two readings, and
+all four combinations occur in this library. A residency ceiling and a coverage interval's upper
+endpoint are asserted, and want `roundedUp`. A tolerance limit and the guarded acceptance limit
+derived from it (`Uncertainty.Conformity.Tolerance`) are imposed, and want
+`roundedDownAsRequirement` — rounding one *up* buys a larger consumer's risk than the record
+stating it says it buys, which is the very failure the guard band exists to price.
+
+Both pairs are provided and neither is the default, because no rule here can tell them apart:
+the reading is a fact about why the bound exists, it lives in the caller, and a library that
+guessed would be wrong silently in half the cases. The `AsRequirement` names are deliberately
+the longer ones — not because that reading is rarer, but because it is the one where a reader
+who is skimming would otherwise assume the wrong thing. -/
 
 variable {k : KindOfProperty} {R : Type} [DecimalCarrier R]
   [LE R] [∀ x y : R, Decidable (x ≤ y)]
@@ -314,6 +341,57 @@ theorem LowerBound.roundedDown_safe (b : LowerBound k R) (places : Nat) :
 theorem UpperBound.roundedUp_safe (b : UpperBound k R) (places : Nat) :
     b.roundedUp places = b ∨ b.q.magnitude ≤ (b.roundedUp places).q.magnitude := by
   unfold UpperBound.roundedUp
+  split
+  · rename_i y _
+    by_cases h : b.q.magnitude ≤ y
+    · exact Or.inr (by simp [h])
+    · exact Or.inl (by simp [h])
+  · exact Or.inl rfl
+
+/-- **Shorten an upper endpoint that is a REQUIREMENT, without letting it rise.**
+
+The mirror of `roundedUp`, for the reading in which the endpoint is a limit something must not
+exceed rather than a claim about what something holds. A tolerance limit, a budget a job is
+allowed, a guarded acceptance limit: shortening one *upward* would admit values that should
+have failed, and the size of the move is irrelevant — what broke is that the constraint is now
+weaker than the one that was specified and priced.
+
+Not a synonym for `LowerBound.roundedDown` despite moving the same way. This is an *upper*
+endpoint, so every comparison against it still reads from above; only the admissible rounding
+direction is shared, and conflating the two would put the comparison back the wrong way round —
+which is what `Bounds` exists to prevent. -/
+def UpperBound.roundedDownAsRequirement (b : UpperBound k R) (places : Nat) : UpperBound k R :=
+  match DecimalCarrier.roundTo? b.q.magnitude places .down with
+  | some y => if y ≤ b.q.magnitude then ⟨⟨y⟩⟩ else b
+  | none => b
+
+/-- **Shorten a lower endpoint that is a REQUIREMENT, without letting it fall** — the dual of
+`UpperBound.roundedDownAsRequirement`, for a minimum something must meet rather than a floor
+something is claimed to sit above. -/
+def LowerBound.roundedUpAsRequirement (b : LowerBound k R) (places : Nat) : LowerBound k R :=
+  match DecimalCarrier.roundTo? b.q.magnitude places .up with
+  | some y => if b.q.magnitude ≤ y then ⟨⟨y⟩⟩ else b
+  | none => b
+
+/-- **A shortened upper requirement never rises**, so what it admits is never more than what
+the specified limit admitted. -/
+theorem UpperBound.roundedDownAsRequirement_safe (b : UpperBound k R) (places : Nat) :
+    b.roundedDownAsRequirement places = b ∨
+      (b.roundedDownAsRequirement places).q.magnitude ≤ b.q.magnitude := by
+  unfold UpperBound.roundedDownAsRequirement
+  split
+  · rename_i y _
+    by_cases h : y ≤ b.q.magnitude
+    · exact Or.inr (by simp [h])
+    · exact Or.inl (by simp [h])
+  · exact Or.inl rfl
+
+/-- **A shortened lower requirement never falls** — the dual of
+`UpperBound.roundedDownAsRequirement_safe`. -/
+theorem LowerBound.roundedUpAsRequirement_safe (b : LowerBound k R) (places : Nat) :
+    b.roundedUpAsRequirement places = b ∨
+      b.q.magnitude ≤ (b.roundedUpAsRequirement places).q.magnitude := by
+  unfold LowerBound.roundedUpAsRequirement
   split
   · rename_i y _
     by_cases h : b.q.magnitude ≤ y

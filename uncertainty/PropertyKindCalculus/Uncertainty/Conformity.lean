@@ -103,7 +103,16 @@ variable {k : KindOfProperty} {R : Type}
 measurand, carried as `Bounds.lean` *roles* so that each endpoint can only ever be used from its
 own side. Either bound may be absent: a one-sided requirement is the common case (a memory budget
 bounds from above and not from below), and an absent bound is `none` rather than an infinity, so
-"unbounded below" cannot be confused with a bound whose value was lost. -/
+"unbounded below" cannot be confused with a bound whose value was lost.
+
+**These limits are IMPOSED, not asserted**, and it matters as soon as one is written down. A
+tolerance limit — and the guarded acceptance limit `guardedBy` derives from it — is a constraint
+a value must satisfy, not a claim about what some quantity holds. So the safe direction to
+shorten one is *inward*: `Decimal`'s `UpperBound.roundedDownAsRequirement` and
+`LowerBound.roundedUpAsRequirement`, and **not** the `roundedUp`/`roundedDown` pair, which is
+right for the asserted reading and would here buy a larger consumer's risk than the number says
+it buys. `Bounds` records which side an endpoint is on and cannot record which of the two
+readings it is; that is why both pairs exist and neither is a default. -/
 structure Tolerance (k : KindOfProperty) (R : Type) where
   /-- The lower tolerance limit `T_L`, if there is one. -/
   lower : Option (LowerBound k R) := none

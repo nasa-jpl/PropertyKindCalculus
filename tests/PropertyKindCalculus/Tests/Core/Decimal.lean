@@ -95,11 +95,51 @@ def bandB : UpperBound rateK Float := ⟨⟨1754.0339⟩⟩
 #guard (floorB.roundedDown 400).q.magnitude == floorB.q.magnitude
 #guard (bandB.roundedUp 400).q.magnitude == bandB.q.magnitude
 
--- Boundary: the roles do not share operations. A lower endpoint has no upward shortening and
--- an upper endpoint has no downward one — the direction cannot be selected at the call site,
--- which is the whole of the guarantee.
+-- Boundary: the direction is never selectable by direction. There is no `roundedUp` on a lower
+-- endpoint and no `roundedDown` on an upper one, so a caller cannot ask for the other way by
+-- naming it — the only way to move an endpoint the other way is to say which READING makes that
+-- safe, which is what the two operations below are called after.
 #check_failure floorB.roundedUp 8
 #check_failure bandB.roundedDown 2
+
+/-! ## The same side, the opposite safe direction
+
+The geometric role — which side — does not fix the rounding. What fixes it is whether the
+endpoint is **asserted** about a quantity or **imposed** upon one, which `Bounds` does not
+record and cannot: it is a fact about why the bound exists.
+
+`bandB` above is asserted ("the margin is at least this wide"), so shortening it upward keeps
+it true. The same magnitude read as a *limit* ("the job may use at most 1754.0339") wants the
+opposite move, because raising a limit admits values that should have failed. Both are
+`UpperBound rateK Float`; nothing but the operation's name distinguishes them. -/
+
+def budget : UpperBound rateK Float := ⟨⟨1754.0339⟩⟩
+def minSpec : LowerBound rateK Float := ⟨⟨4.26266e-05⟩⟩
+
+-- The requirement reading moves the other way, at the same side, from the same number.
+#guard (budget.roundedDownAsRequirement 2).q.magnitude == 1754.03
+#guard (bandB.roundedUp 2).q.magnitude == 1754.04
+-- Which is the whole point: one number, one geometric side, two answers two decimals apart, and
+-- the one that is correct is decided by something no rule in this file can see.
+#guard (budget.roundedDownAsRequirement 2).q.magnitude != (bandB.roundedUp 2).q.magnitude
+
+#guard (budget.roundedDownAsRequirement 2).q.magnitude ≤ budget.q.magnitude
+#guard minSpec.q.magnitude ≤ (minSpec.roundedUpAsRequirement 8).q.magnitude
+-- Eight places, rounded up: 0.0000426266 → 0.00004263. The asserted reading of the same
+-- endpoint (`floorB.roundedDown 8`) gives 0.00004262 — adjacent representable decimals, and
+-- only one of them holds for a given reading.
+#guard (minSpec.roundedUpAsRequirement 8).q.magnitude == 4.263e-05
+#guard (floorB.roundedDown 8).q.magnitude == 4.262e-05
+
+-- A requirement that cannot be rendered at that precision keeps its original value, on the same
+-- fallback rule the asserted pair uses: refusing to shorten is always admissible.
+#guard (budget.roundedDownAsRequirement 400).q.magnitude == budget.q.magnitude
+#guard (minSpec.roundedUpAsRequirement 400).q.magnitude == minSpec.q.magnitude
+
+-- And the requirement operations are still side-locked: there is no way to spell "loosen this
+-- requirement", because that is the move nothing here should make easy.
+#check_failure budget.roundedUpAsRequirement 2
+#check_failure minSpec.roundedDownAsRequirement 8
 
 -- And no role offers a to-nearest. `RoundingDirection.nearest` exists — `showExact?` renders
 -- with it — but no operation on a bound accepts a direction, so it cannot be selected at a

@@ -271,6 +271,15 @@ the two roles above carry.
 `LowerBound.roundedDown` and `UpperBound.roundedUp` are therefore part of this family, but they
 live in `PropertyKindCalculus.Decimal` and not here, so that the many consumers of a bound do
 not acquire a dependency on decimal text to get one. That module also explains why neither it
-nor this one offers a `roundToNearest`. -/
+nor this one offers a `roundToNearest`.
+
+**The role above is not the whole of what fixes the direction**, and the limit is worth knowing
+here rather than being discovered downstream. What these two types record is *which side* the
+endpoint is on — enough to make a comparison written backwards unstateable, which is what they
+were built for. It is not enough to say which way the endpoint may be shortened, because that
+also depends on whether the bound is **asserted** about a quantity ("this holds at most `X`",
+where raising `X` keeps the claim true) or **imposed** upon one ("`y` must be at most `L`",
+where raising `L` admits values that should have failed). Same side, opposite safe direction.
+`Decimal` carries both pairs for that reason, and the second is named `…AsRequirement`. -/
 
 end PropertyKindCalculus
