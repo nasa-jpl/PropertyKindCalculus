@@ -280,10 +280,15 @@ def riskFromCosts {kc : KindOfProperty} (costOfWrongAccept costOfWrongReject : Q
 /-- **The guard band** `g = k·u` — a quantity of the measurand's own kind, since it is an offset
 applied to a limit on that measurand. Built through `Quantity.mul` on `expansionLaw`, so the kind
 of the product is derived from a stated law rather than asserted: a coverage factor is dimension
-one *in the specific role of expanding an uncertainty*, and that role is what the law records. -/
-def guardBand (u : Quantity k Float) (factor : Quantity coverageFactor Float)
+one *in the specific role of expanding an uncertainty*, and that role is what the law records.
+
+The input is a `Dispersion` and the output is not. A guard band **is** an expanded uncertainty —
+which is why the body is `Dispersion.expanded` and not a second copy of `k·u` — but what it is
+*used as* is a displacement of a limit, and `Tolerance.guardedBy` wants a displacement. The
+unwrapping is the change of role, and it happens once, here. -/
+def guardBand (u : Dispersion k Float) (factor : Quantity coverageFactor Float)
     (hk : k.IsRational := by rfl) : Quantity k Float :=
-  Quantity.mul (expansionLaw k hk) factor u
+  (u.expanded factor hk).q
 
 /-- **Guarded acceptance limits** (JCGM 106 §8.2): the band is subtracted from an upper tolerance
 limit and added to a lower one, so a two-sided tolerance narrows from both ends.
@@ -299,10 +304,17 @@ def Tolerance.guardedBy [Add R] [Sub R] (t : Tolerance k R) (band : Quantity k R
     upper := t.upper.map (fun b => ⟨⟨b.q.magnitude - band.magnitude⟩⟩) }
 
 /-- **The decision.** Accept iff the estimate lies within the *acceptance* limits — equivalently
-`y + k·u ≤ T_U` and `y − k·u ≥ T_L`, which is the form the rule is usually written in. -/
-def accepts (t : Tolerance k Float) (y u : Quantity k Float)
+`y + k·u ≤ T_U` and `y − k·u ≥ T_L`, which is the form the rule is usually written in.
+
+`y` and `u` are at their **roles** and not both at `k`. They were `y u : Quantity k Float` — two
+adjacent arguments of one type, in the one function whose answer is a decision — and exchanging
+them type-checked. What that mistake produces is not a wrong number but an *inverted* rule: the
+band becomes `k·y` and the value tested becomes `u`, so a small uncertainty on a large estimate
+guards enormously and rejects everything, while a large uncertainty on a small estimate guards
+nothing and accepts everything. The second is the direction that ships. -/
+def accepts (t : Tolerance k Float) (y : Estimate k Float) (u : Dispersion k Float)
     (factor : Quantity coverageFactor Float) (hk : k.IsRational := by rfl) : Bool :=
-  (t.guardedBy (guardBand u factor hk) (differenceOfRational hk)).admits y
+  (t.guardedBy (guardBand u factor hk) (differenceOfRational hk)).admits y.q
 
 /-! ## The risks actually run -/
 
@@ -316,7 +328,8 @@ in: each tail is a quotient of two `k`-quantities before `Φ` sees it, and the r
 `u ≤ 0` is not a degenerate case to be smoothed over: with no dispersion the measurand *is* the
 estimate, so the risk is certainty or its complement and the conformity question has a definite
 answer. -/
-def consumerRisk (t : Tolerance k Float) (y u : Quantity k Float) : Quantity probability Float :=
+def consumerRisk (t : Tolerance k Float) (y : Estimate k Float) (u : Dispersion k Float) :
+    Quantity probability Float :=
   if u.magnitude > 0.0 then
     let above := (t.upper.map fun b =>
       certainty.magnitude
@@ -324,26 +337,30 @@ def consumerRisk (t : Tolerance k Float) (y u : Quantity k Float) : Quantity pro
     let below := (t.lower.map fun b =>
       Sampling.normalCDF ((b.q.magnitude - y.magnitude) / u.magnitude)).getD 0.0
     ⟨above + below⟩
-  else if t.admits y then ⟨0.0⟩ else certainty
+  else if t.admits y.q then ⟨0.0⟩ else certainty
 
 /-- **The specific producer's risk** at a rejected estimate: the probability that a value the rule
 rejected would in fact have conformed. It is `1 − R_C(y)` by construction, and it is named
 separately because the two are charged to different parties and, in an asymmetric application,
 priced very differently. -/
-def producerRisk (t : Tolerance k Float) (y u : Quantity k Float) : Quantity probability Float :=
+def producerRisk (t : Tolerance k Float) (y : Estimate k Float) (u : Dispersion k Float) :
+    Quantity probability Float :=
   ⟨certainty.magnitude - (consumerRisk t y u).magnitude⟩
 
 /-- The specific consumer's risk a rule runs **at its own acceptance limit** — the number a stated
 guard band actually buys, obtained by evaluating `consumerRisk` exactly where the rule stops
 accepting. For a one-sided tolerance this is `riskForFactor factor`; the general form is here so a
 two-sided rule, whose far tail is not zero, is priced with both tails. -/
-def riskAtLimit (t : Tolerance k Float) (u : Quantity k Float)
+def riskAtLimit (t : Tolerance k Float) (u : Dispersion k Float)
     (factor : Quantity coverageFactor Float) (hk : k.IsRational := by rfl) :
     Option (Quantity probability Float) :=
   let a := t.guardedBy (guardBand u factor hk) (differenceOfRational hk)
+  -- The acceptance limit, read *as an estimate*: this prices the risk run by a measurement that
+  -- landed exactly where the rule stops accepting. The wrap is the change of role and is stated
+  -- rather than implicit, because an acceptance limit is not otherwise anything's estimate.
   match a.upper, a.lower with
-  | some b, _ => some (consumerRisk t b.q u)
-  | none, some b => some (consumerRisk t b.q u)
+  | some b, _ => some (consumerRisk t ⟨b.q⟩ u)
+  | none, some b => some (consumerRisk t ⟨b.q⟩ u)
   | none, none => none
 
 /-! ## Reading a guard band that already exists -/
@@ -407,15 +424,21 @@ def BandReading.label : BandReading → BandReadingLabel
   | .unstated => .unstated
 
 /-- Read a deployed guard band `g` against the standard uncertainty `u` of the quantity it
-qualifies — both quantities of the measurand's kind, so their quotient is the coverage factor
+qualifies — both at the measurand's kind, so their quotient is the coverage factor
 `bandReadingLaw` says it is, and a band accidentally compared against the uncertainty of something
-else is a type error. -/
-def readBand (g u : Quantity k Float)
+else is a type error.
+
+The band is a plain `Quantity` and the `u` is a `Dispersion`, which is what stops the two from
+being exchanged. Being at the same kind is not enough here and this is the function that proves
+it: `g/u` and `u/g` are both well-kinded coverage factors, and the transposition turns a band of
+`42 u` — a systematic that must never be tightened — into `1/42` of a `u`, which every rule
+downstream will happily shrink. Same kind, same arity, opposite conclusion, no error. -/
+def readBand (g : Quantity k Float) (u : Dispersion k Float)
     (systematicAt : Quantity coverageFactor Float := systematicThreshold)
     (hk : k.IsRational := by rfl) : BandReading :=
   if !(u.magnitude > 0.0) || u.magnitude.isNaN || g.magnitude.isNaN then .unstated
   else
-    let factor := Quantity.div (bandReadingLaw k hk) g u
+    let factor := Quantity.div (bandReadingLaw k hk) g u.q
     if factor.magnitude ≤ systematicAt.magnitude then .coverage factor (riskForFactor factor)
     else .systematic factor
 
@@ -475,10 +498,10 @@ target that is not a probability. A refusal, rather than a factor nothing justif
 def assess (t : Tolerance k Float) (e : Evidence k) (targetRisk : Quantity probability Float) :
     Option (Assessment k) :=
   (factorForEvidence e targetRisk).map fun factor =>
-    let band := guardBand e.stdUnc.q factor e.rational
+    let band := guardBand e.stdUnc factor e.rational
     { factor := factor, band := band,
       acceptance := t.guardedBy band (differenceOfRational e.rational),
-      accepted := accepts t e.estimate.q e.stdUnc.q factor e.rational,
-      risk := consumerRisk t e.estimate.q e.stdUnc.q }
+      accepted := accepts t e.estimate e.stdUnc factor e.rational,
+      risk := consumerRisk t e.estimate e.stdUnc }
 
 end PropertyKindCalculus.Uncertainty.Conformity

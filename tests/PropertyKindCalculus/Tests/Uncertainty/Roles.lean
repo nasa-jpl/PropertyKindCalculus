@@ -106,6 +106,37 @@ prints, kept in this library so a consumer cannot invent a fourth. -/
 #guard (Conformity.BandReading.coverage ⟨2.0⟩ ⟨0.01⟩).label == .coverage
 #guard Conformity.BandReading.unstated.label == .unstated
 
+/-! ## The decision itself, at the roles
+
+Where the transposition actually costs something. `accepts`, `consumerRisk` and `readBand` each
+took two adjacent arguments of one type — the estimate and its dispersion, or the band and the
+dispersion it is read against — so exchanging them type-checked and returned a number of the
+right kind. These probes are what says it no longer does.
+
+The stakes differ by function and both directions ship. Exchanging `accepts`' pair guards by
+`k·y` instead of `k·u`, so a small `u` on a large estimate rejects everything (visible on the
+first run) and a large `u` on a small estimate accepts everything (visible never). -/
+
+def tol : Conformity.Tolerance K Float := Conformity.Tolerance.atMost ⟨600.0⟩
+
+#guard Conformity.accepts tol y u k2 == true
+#guard (Conformity.consumerRisk tol y u).magnitude < 1e-6
+-- The band `11.972` against this `u` is `4.39 u`: a coverage statement, and a tight one.
+#guard match Conformity.readBand ⟨11.972⟩ u with
+  | .coverage f _ => (f.magnitude - 4.39017234).abs < 1e-6
+  | _ => false
+
+-- Exchanged, every one of the three is now an elaboration error rather than a plausible number.
+#check_failure Conformity.accepts tol u y k2
+#check_failure Conformity.consumerRisk tol u y
+#check_failure Conformity.readBand u.q y
+
+-- And the guard band takes the dispersion, not the estimate — `k·u`, never `k·y`.
+#guard ((Conformity.guardBand u k2).magnitude - 5.454).abs < 1e-12
+#check_failure Conformity.guardBand y.q k2
+-- It IS the expanded uncertainty, re-read as a displacement; that is a fact and not a comment.
+#guard (Conformity.guardBand u k2).magnitude == (u.expanded k2).magnitude
+
 /-! ## Axiom profiles -/
 
 /-- info: 'PropertyKindCalculus.Uncertainty.Estimate.minus_magnitude' does not depend on any axioms -/

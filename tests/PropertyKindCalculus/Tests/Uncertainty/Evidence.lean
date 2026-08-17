@@ -239,19 +239,19 @@ private abbrev Kc := Paradigm.Platform.storageCapacity
 
 -- **Reading the three deployed guard bands.** Two are coverage statements at a few `u`; the third
 -- is not a coverage statement at all, and saying so is this function's whole purpose.
-#guard match readBand (q 4.50) (q 1.0) with
+#guard match readBand (q 4.50) ⟨q 1.0⟩ with
   | .coverage f r => f.closeTo ⟨4.50⟩ exactTol && r.closeTo ⟨3.3977e-6⟩ tableTol
   | _ => false
-#guard match readBand (q 4.39) (q 1.0) with | .coverage _ _ => true | _ => false
-#guard match readBand (q 41.0) (q 1.0) with
+#guard match readBand (q 4.39) ⟨q 1.0⟩ with | .coverage _ _ => true | _ => false
+#guard match readBand (q 41.0) ⟨q 1.0⟩ with
   | .systematic f => f.closeTo ⟨41.0⟩ exactTol
   | _ => false
 -- No uncertainty to divide by ⇒ the band's meaning is unavailable, which is not a band of zero.
-#guard match readBand (q 4.50) (q 0.0) with | .unstated => true | _ => false
+#guard match readBand (q 4.50) ⟨q 0.0⟩ with | .unstated => true | _ => false
 
 -- The deployed `1700` sits `1.45 u` above its own rectangular estimate, and that band was never
 -- named: it buys a 7.4 % consumer's risk.
-#guard match readBand (q (1700.0 - prior.estimate.q.magnitude)) prior.stdUnc.q with
+#guard match readBand (q (1700.0 - prior.estimate.q.magnitude)) prior.stdUnc with
   | .coverage f r => f.closeTo ⟨1.4489⟩ tableTol && r.closeTo ⟨0.07368⟩ tableTol
   | _ => false
 
@@ -345,7 +345,7 @@ the direction in which a Gaussian reading is optimistic by orders of magnitude. 
 
 -- The risk a rule runs **at its own acceptance limit** is exactly the target it was built from.
 #guard ((factorForRisk ⟨0.01⟩).bind fun f =>
-    riskAtLimit (Tolerance.atMost (q 28497.0)) (q 900.0) f).any fun r =>
+    riskAtLimit (Tolerance.atMost (q 28497.0)) ⟨q 900.0⟩ f).any fun r =>
   r.closeTo ⟨0.01⟩ exactTol
 
 /-! ### The invariance the ratchet rests on, at `Float`
@@ -359,7 +359,7 @@ arithmetic on the rounding carrier, which is the only place a deployment ever ev
 says is constant in `u`. -/
 private def riskAtLimitFor (uv : Float) : Option (Quantity probability Float) :=
   let limit := Tolerance.atMost (q 28497.0)
-  (factorForRisk ⟨0.01⟩).bind fun f => riskAtLimit limit (q uv) f
+  (factorForRisk ⟨0.01⟩).bind fun f => riskAtLimit limit ⟨q uv⟩ f
 
 -- **Four uncertainties spanning two orders of magnitude, one risk.** The acceptance limit moves
 -- from 26 403 to 28 474 as `u` falls from 900 to 10 — a 2 071-unit gain in what the deployment
