@@ -273,7 +273,8 @@ lean_lib «Uncertainty» where
     .one `PropertyKindCalculus.Uncertainty.Conformity,
     .one `PropertyKindCalculus.Uncertainty.Ssprc,
     .one `PropertyKindCalculus.Uncertainty.Allocation,
-    .one `PropertyKindCalculus.Uncertainty.Adequacy]
+    .one `PropertyKindCalculus.Uncertainty.Adequacy,
+    .one `PropertyKindCalculus.Uncertainty.Adequacy.Serialization]
 
 /-- **Stage 1 of the uncertainty workstream** (see `UNCERTAINTY.md` §6): the rigor and
 sensitivity layer that the Mathlib- and TorchLean-free Stage-0 `Uncertainty` library above cannot

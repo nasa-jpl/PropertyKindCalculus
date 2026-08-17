@@ -341,11 +341,33 @@ lemmas we need are proven; the adequacy theorems are thin wrappers we author on 
 | **Exact cancellation, amplified uncertainty** | `a ⊖ b`, `a≈b`: subtraction is *exact* (no rounding) but *relative* uncertainty blows up | FLX Sterbenz `neural_generic_format_FLX_sterbenz` (`Analysis/Sterbenz.lean:146`) + FLT↔FLX transport (`Error/Multiplication.lean:157`); **FP32/FLT instance ✅ Stage 3.2** (`neural_generic_format_FLT_sterbenz`, `FP32.sub_exact_of_sterbenz`) | ~~FP32/FLT Sterbenz instance~~ (done); the relative-amplification bound (UQ-level, from `cᵢ`) |
 | **Bounded accumulated rounding error** | total FP noise over the whole evaluation ≤ a fraction of the output uncertainty | `(1+δ)` model `neural_round_relative_error_ulp` (`Error/Bounds.lean:139`); FP32 `u=2⁻²⁴` `round_relative_error_of_normal` (`FP32/Error.lean:79`); per-op `add/sub/mul/div_abs_error` (`FP32/Error.lean:99–148`) | DAG-composition of per-op bounds; comparison to `u_Y` |
 | **Adequate dynamic range** | no overflow/underflow on the input box | `RInterval` sound enclosures (`Interval/Quantized.lean`), `minNormal=2⁻¹²⁶`, `ieeeMaxFinite` (`FP32/Core.lean:150,160`) | range check vs. `InputDist.support` |
+| **No serialization loss** | a magnitude written as decimal text and read back is the *same* magnitude — and where it is not, it moved the way its role permits | `Decimal.showExact?` (the check is the specification), `LowerBound.roundedDown_safe` / `UpperBound.roundedUp_safe` (`Bounds`/`Decimal`), `Adequacy.Serialization.displacement_eq_zero_of_exact` — **✅ done** | carrier instances beyond binary64 (a binary32 one is 9 significant digits and the same code); a scientific-notation renderer if a magnitude below ≈`10⁻²⁹⁰` ever needs writing |
 
 Half-ULP workhorse already available: `FP32.round_abs_error : |round₃₂ x − x| ≤ eps₃₂ x`
 (`FP32/Error.lean:73`), `eps₃₂ x = ulp₃₂ x / 2`. Error-free transforms
 (`FP32.add_residual_isRepresentable`, `FP32/Error.lean:111`) give exact residuals for
 compensated-summation reasoning if we want tighter accumulation bounds.
+
+**The fifth row is graded differently from the other four, and that is the point of having it.**
+The first four are roundings the carrier *forces*: the width is what it is, half a ulp is the
+price of the operation, and the right question is whether the loss is invisible at the scale of
+`u` — which is §4.1's principle exactly. The fifth is a rounding at the **edge** of the
+evaluation, where the digits are *chosen*, and there the same question gives the wrong answer
+three times over. The error is avoidable, so spending budget on it buys nothing. It is
+systematic rather than dispersive — identical on every read of that value, forever — so
+`u_c² = Σ cᵢ²u(xᵢ)²` is the wrong machine for it and a budget that absorbed it would be
+reporting a bias as a dispersion. And for a magnitude with a **role**, it is not a size question
+at all: a floor written up by one part in a million has stopped being a floor, and no tolerance
+reaches that, because what broke is the direction. So the criterion is exactness, with one
+exception granted to bounds — a shortening that gives slack away still holds — and the verdict
+type has four outcomes rather than a Boolean for precisely that reason
+(`Adequacy.Serialization.SerializationVerdict`).
+
+It is deliberately **not** a counter in `AdequacyReport`. That report accumulates sites found
+while a model runs at the `Adequacy` carrier, and that carrier never serializes: the boundary is
+crossed before it is seeded and after it has finished. A third counter there would let an
+evaluation that is adequate throughout be reported inadequate for something that happened before
+it started, and would have `merge` combine boundary crossings that never composed.
 
 ### 4.3 Numerical adequacy *as a carrier* (the PKC-idiomatic move)
 
@@ -567,6 +589,13 @@ uncertainty/PropertyKindCalculus/Uncertainty/
                            (`ofInputDist`); `analyzeQ (h : ProductKind kₛ kᵢ kₒ)` instantiates one carrier-raw WO1 kernel at
                            both `TapeBuilder .scalar` (for `cᵢ`) and `Adequacy` (for the verdict) and folds them into a
                            kind-typed `CouplingResultQ kₒ` (contributions + combined = `Quantity kₒ`; no naked field swap)
+  Adequacy/Serialization.lean ✅ the fifth sub-property (§4.2): the rounding at the EDGE of an evaluation, where a
+                           magnitude crosses to decimal text and back. `SerializationVerdict` has four outcomes because
+                           the same text against the same magnitude is adequate or not depending on the ROLE it plays
+                           (`verdictOfValue` / `verdictAtLower` / `verdictAtUpper`); `displacement` reports the crossing
+                           in the budget's own terms as *evidence*, never as a tolerance, and
+                           `displacement_eq_zero_of_exact` is the theorem that an exact crossing costs nothing.
+                           Stage 0 — the whole content is `PropertyKindCalculus.Decimal`'s reader against the value
   Experiments/PRSimulation.lean ✅ direct P↔R simulation, closed (Stage 3.6): the vectorization homomorphisms
                            (`mulSpec_ofVecT`/`addSpec_ofVecT`, `Shape` induction); the value-free `.ok` totality of
                            `backwardDenseFrom` via the `AccShapeAligned` fold invariant under `BackwardShapeWF`

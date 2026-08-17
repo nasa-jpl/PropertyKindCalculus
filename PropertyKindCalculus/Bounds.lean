@@ -259,4 +259,18 @@ def LowerBound.hitBy {k : KindOfProperty} {R : Type} [LE R] [∀ x y : R, Decida
     (b : LowerBound k R) (x : Quantity k R) : Bool :=
   decide (x.magnitude ≤ b.q.magnitude)
 
+/-! ## Rounding an endpoint — see `PropertyKindCalculus.Decimal`
+
+Shortening a magnitude to fewer digits is a rounding, and **which way it may move is decided by
+the role the magnitude plays, not by which neighbour is nearer**: a floor rounded up is no
+longer under what it was constructed to sit under, and a ceiling rounded down no longer covers
+it. The consequence is unbounded while the size of the change is arbitrarily small, so no
+tolerance argument reaches it — direction is the whole question, and direction is exactly what
+the two roles above carry.
+
+`LowerBound.roundedDown` and `UpperBound.roundedUp` are therefore part of this family, but they
+live in `PropertyKindCalculus.Decimal` and not here, so that the many consumers of a bound do
+not acquire a dependency on decimal text to get one. That module also explains why neither it
+nor this one offers a `roundToNearest`. -/
+
 end PropertyKindCalculus
