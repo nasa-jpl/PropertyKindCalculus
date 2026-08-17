@@ -216,6 +216,25 @@ depends on the per-shard fixed term. -/
     { fixedBytes := ⟨100⟩, bytesPerElem := ⟨1.0⟩ } ⟨0.0⟩ ⟨400⟩ ⟨1000⟩
     == maxShardsSplit { fixedBytes := ⟨100⟩, bytesPerElem := ⟨1.0⟩ } ⟨400⟩ ⟨1000⟩
 
+-- The sum a decision is solved against dispatches to the two solvers and answers the same
+-- readings, so a caller that switches shapes does not have to re-learn what `none` means.
+#guard (SplitShape.simple { fixedBytes := ⟨100⟩, bytesPerElem := ⟨2.0⟩ }).memCap ⟨400⟩ ⟨1000⟩
+    == some ⟨2⟩
+#guard (SplitShape.piecewise { fixedBytes := ⟨100⟩, bytesPerElem := ⟨2.0⟩ }
+    { fixedBytes := ⟨100⟩, bytesPerElem := ⟨1.0⟩ } ⟨100.0⟩).memCap ⟨400⟩ ⟨1000⟩ == some ⟨3⟩
+
+-- Which piece a decision RAN under, which is what its log line and its artifact have to say:
+-- at 3 shards the slice is 133 and the cheap piece is in force; at 4 it is exactly the
+-- threshold and the base piece owns it; a simple shape answers itself at every count.
+#guard ((SplitShape.piecewise { fixedBytes := ⟨100⟩, bytesPerElem := ⟨2.0⟩ }
+    { fixedBytes := ⟨100⟩, bytesPerElem := ⟨1.0⟩ } ⟨100.0⟩).pieceAt ⟨400⟩ ⟨3⟩).bytesPerElem
+    == ⟨1.0⟩
+#guard ((SplitShape.piecewise { fixedBytes := ⟨100⟩, bytesPerElem := ⟨2.0⟩ }
+    { fixedBytes := ⟨100⟩, bytesPerElem := ⟨1.0⟩ } ⟨100.0⟩).pieceAt ⟨400⟩ ⟨4⟩).bytesPerElem
+    == ⟨2.0⟩
+#guard ((SplitShape.simple { fixedBytes := ⟨7⟩, bytesPerElem := ⟨2.0⟩ }).pieceAt
+    ⟨400⟩ ⟨9⟩).fixedBytes == ⟨7⟩
+
 -- The slice is a quotient of two counts, and the two ways of reading that division answer
 -- different questions at the same magnitudes: 400 elements over 4 shards is a slice of 100,
 -- and 400 elements at a slice of 100 is 4 shards. Neither result can be handed to the other's

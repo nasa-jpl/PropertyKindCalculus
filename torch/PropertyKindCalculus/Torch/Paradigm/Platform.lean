@@ -506,6 +506,43 @@ def maxShardsSplitPiecewise (base above : MemShape)
       | none, some b => some b
       | some a, some b => some (Quantity.max a b)
 
+/-- **What a split is solved against**: one affine shape, or two selected by the slice.
+
+A sum and not a `MemShape` with optional extra fields, because the two are different claims and
+the difference must be visible at the call site. `simple` says the marginal cost per element is
+a constant of the algorithm — the case where the piecewise question does not arise, not a
+degenerate instance of it. `piecewise` says a threshold on ONE SHARD's slice selects between two
+costs, and carries the threshold with the pieces it separates, so no caller can pair one
+regime's slope with another's boundary. -/
+inductive SplitShape where
+  /-- One affine model, `bytes(N) = fixed·N + perElem·total`, at every count. -/
+  | simple (shape : MemShape)
+  /-- Two, with `above` in force strictly past the slice threshold and `base` at and below it. -/
+  | piecewise (base above : MemShape) (threshold : Quantity sliceElementCount Float)
+
+/-- The memory-implied cap on the shard count, by whichever solver the shape calls for.
+Same reading either way: `none` = memory does not constrain, `some 0` = no count fits. -/
+def SplitShape.memCap : SplitShape → Quantity elementCount Nat →
+    Quantity storageCapacity Nat → Option (Quantity shardCount Nat)
+  | .simple s, total, headroom => maxShardsSplit s total headroom
+  | .piecewise b a t, total, headroom => maxShardsSplitPiecewise b a t total headroom
+
+/-- **Which piece is in force at a given count** — the shape a decision actually ran under,
+for the log line and the account of the run. Splitting a total `n` ways makes slices of
+`total/n`, and `above` governs strictly past the threshold.
+
+`n = 0` cannot arise from a decision (the count is floored at 1) and answers with the base
+piece, which is the conservative reading of a question that was not asked. -/
+def SplitShape.pieceAt : SplitShape → Quantity elementCount Nat →
+    Quantity shardCount Nat → MemShape
+  | .simple s, _, _ => s
+  | .piecewise b a t, total, n =>
+    if n.magnitude == 0 then b
+    else
+      let slice : Quantity sliceElementCount Float :=
+        Quantity.div elementsOfSlice total.asFloat ⟨n.magnitude.toFloat⟩
+      if slice.magnitude > t.magnitude then a else b
+
 /-! ### The time shape — the fourth cap
 
 `decideShards` used to answer only "how many shards *fit*". Measured, that is not the same
@@ -619,7 +656,7 @@ bound what fits, and this one bounds what is worth running. It is an `Option` be
 per-task cost is worth charging is a measured fact about one algorithm — on the host this was
 established, one of four algorithms needs it — so an absent time model means "not measured here",
 which is exactly the reading `none` should have. -/
-def decideShards (shape : MemShape) (totalElems : Quantity elementCount Nat)
+def decideShardsOf (shape : SplitShape) (totalElems : Quantity elementCount Nat)
     (reservedBytes : Quantity storageCapacity Nat := ⟨0⟩)
     (override : Option (Quantity shardCount Nat) := none)
     (hardCap : Option (Quantity shardCount Nat) := none)
@@ -627,7 +664,7 @@ def decideShards (shape : MemShape) (totalElems : Quantity elementCount Nat)
   let cores ← availableCores
   let budget ← hostMemLimit
   let memCap := match budget with
-    | some b => maxShardsSplit shape totalElems (b.bytes - reservedBytes)
+    | some b => shape.memCap totalElems (b.bytes - reservedBytes)
     | none => none
   let overflow := memCap == some ⟨0⟩
   let timeCap := time.bind (·.optimalShards totalElems)
@@ -646,5 +683,16 @@ def decideShards (shape : MemShape) (totalElems : Quantity elementCount Nat)
     | none => Quantity.max ⟨1⟩ auto
   return { nShards := n, cores, budget, memCap, timeCap, overflow,
            overridden := override.isSome }
+
+/-- **Decide a `runSharded` shard count** against ONE affine shape — `decideShardsOf` at the
+shape every caller had before a slope could change under a threshold. Kept as the name the
+callers use, and as a definition rather than a default argument, because the simple shape is
+not a degenerate piecewise one: it is the case where the question does not arise. -/
+def decideShards (shape : MemShape) (totalElems : Quantity elementCount Nat)
+    (reservedBytes : Quantity storageCapacity Nat := ⟨0⟩)
+    (override : Option (Quantity shardCount Nat) := none)
+    (hardCap : Option (Quantity shardCount Nat) := none)
+    (time : Option TimeShape := none) : IO ShardDecision :=
+  decideShardsOf (.simple shape) totalElems reservedBytes override hardCap time
 
 end PropertyKindCalculus.Paradigm.Platform
