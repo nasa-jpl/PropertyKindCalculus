@@ -70,8 +70,8 @@ private def five : List (Quantity K Float) := [q 10.0, q 10.2, q 9.8, q 10.1, q 
 
 -- The estimate is the mean, `u` is `s/√n` (**not** `s`), and `ν = n − 1` through `dofOfMean`.
 #guard (typeA five).any fun e =>
-  closeK e.estimate (q 10.0)
-  && closeK e.stdUnc (q 0.0707106781186547)
+  closeK e.estimate.q (q 10.0)
+  && closeK e.stdUnc.q (q 0.0707106781186547)
   && e.dof.closeTo ⟨4.0⟩ exactTol ⟨1e-9⟩
 
 -- One indication supports an estimate and no dispersion: the honest result is *no evaluation*.
@@ -85,7 +85,7 @@ private def five : List (Quantity K Float) := [q 10.0, q 10.2, q 9.8, q 10.1, q 
 them the truth lies. `u = a/√3`. -/
 private def prior : Evidence K := typeBRectangular (q 985.5) (q 1763.6)
 
-#guard closeK prior.estimate (q 1374.55) && closeK prior.stdUnc (q 224.61812246)
+#guard closeK prior.estimate.q (q 1374.55) && closeK prior.stdUnc.q (q 224.61812246)
 #guard !prior.dofIsFinite
 -- An asserted bound has no sampling variability, so its coverage factor is the Gaussian one.
 #guard prior.coverageFactor95.any fun f => f.closeTo ⟨1.960⟩ tableTol
@@ -105,7 +105,7 @@ private def tableG2 : List (Float × Float × Float) :=
 
 /-- Evidence at a stated `ν` and a unit uncertainty — the shape the table is indexed by. -/
 private def atDof (nu : Float) : Evidence K :=
-  { estimate := q 0.0, stdUnc := q 1.0, dof := ⟨nu⟩, evalKind := .typeA }
+  { estimate := ⟨q 0.0⟩, stdUnc := ⟨q 1.0⟩, dof := ⟨nu⟩, evalKind := .typeA }
 
 #guard tableG2.all fun row =>
   let (nu, t95, t99) := row
@@ -126,7 +126,7 @@ private def atDof (nu : Float) : Evidence K :=
 
 -- The expanded uncertainty is `t·u`, at the measurand's own kind, through the expansion law.
 #guard (typeA five).any fun e =>
-  e.expanded95.any fun U => closeK U ⟨2.776445 * e.stdUnc.magnitude⟩
+  e.expanded95.any fun U => closeK U ⟨2.776445 * e.stdUnc.q.magnitude⟩
 
 /-! ## The `t` moments — and where they stop existing -/
 
@@ -135,7 +135,7 @@ private def atDof (nu : Float) : Evidence K :=
 #guard ((typeA five).bind (·.momentsT)).isNone
 -- `ν = ∞`: the `t` reading collapses to the Gaussian one, which is the same statement.
 #guard prior.momentsT.any fun m =>
-  (⟨m.variance⟩ : Quantity K Float).closeTo ⟨prior.stdUnc.magnitude * prior.stdUnc.magnitude⟩
+  (⟨m.variance⟩ : Quantity K Float).closeTo ⟨prior.stdUnc.q.magnitude * prior.stdUnc.q.magnitude⟩
       exactTol floorK
   && (⟨m.fourthCumulant⟩ : Quantity K Float).closeTo (q 0.0) exactTol floorK
 
@@ -172,7 +172,7 @@ private def atDof (nu : Float) : Evidence K :=
 #guard (combinedEvidence (q 42.0)
   [ { value := q 3.0, dof := (⟨10.0⟩ : Quantity degreesOfFreedom Float) },
     { value := q 4.0, dof := ⟨10.0⟩ } ]).any fun e =>
-  closeK e.stdUnc (q 5.0) && e.evalKind = .combined
+  closeK e.stdUnc.q (q 5.0) && e.evalKind = .combined
 
 /-! ## Accumulation — the four rules -/
 
@@ -184,7 +184,7 @@ private def b5 : Evidence K :=
 -- guard band `k·u` tightens because `u` shrinks *and* because the `k` that qualifies it does.
 #guard match a5.accumulate b5 with
   | .pooled e =>
-    e.stdUnc.magnitude < a5.stdUnc.magnitude && e.stdUnc.magnitude < b5.stdUnc.magnitude
+    e.stdUnc.q.magnitude < a5.stdUnc.q.magnitude && e.stdUnc.q.magnitude < b5.stdUnc.q.magnitude
       && e.dof.magnitude > a5.dof.magnitude
       && e.coverageFactor95.any (·.magnitude < 2.776)
   | _ => false
@@ -193,12 +193,12 @@ private def b5 : Evidence K :=
 -- alternative is what this rule exists to forbid — inverse-variance weighting would leave the
 -- prior's estimate visible forever, since an asserted half-width never shrinks.
 #guard match prior.accumulate a5 with
-  | .displaced e => closeK e.estimate a5.estimate && closeK e.stdUnc a5.stdUnc
+  | .displaced e => closeK e.estimate.q a5.estimate.q && closeK e.stdUnc.q a5.stdUnc.q
   | _ => false
 
 -- **Retained.** A fresh assertion is not an observation; evidence in hand outranks it.
 #guard match a5.accumulate prior with
-  | .retained e => closeK e.estimate a5.estimate
+  | .retained e => closeK e.estimate.q a5.estimate.q
   | _ => false
 #guard match prior.accumulate prior with | .retained _ => true | _ => false
 
@@ -206,13 +206,13 @@ private def b5 : Evidence K :=
 -- dispersion to evaluate — and carries infinite weight, so pooling it would silently *replace*
 -- the other evaluation while looking like a combination.
 #guard match
-    ({ estimate := q 100.0, stdUnc := q 0.0, dof := dofUnbounded,
+    ({ estimate := ⟨q 100.0⟩, stdUnc := ⟨q 0.0⟩, dof := dofUnbounded,
        evalKind := .typeA } : Evidence K).accumulate a5 with
-  | .refused e _ => closeK e.estimate (q 100.0)
+  | .refused e _ => closeK e.estimate.q (q 100.0)
   | _ => false
 
 -- Every case carries the evidence to hold afterwards, so a caller always has a number.
-#guard closeK (a5.accumulate b5).evidence.estimate (q 10.0)
+#guard closeK (a5.accumulate b5).evidence.estimate.q (q 10.0)
 
 /-! ## JCGM 106 — the conformity assessment -/
 
@@ -251,7 +251,7 @@ private abbrev Kc := Paradigm.Platform.storageCapacity
 
 -- The deployed `1700` sits `1.45 u` above its own rectangular estimate, and that band was never
 -- named: it buys a 7.4 % consumer's risk.
-#guard match readBand (q (1700.0 - prior.estimate.magnitude)) prior.stdUnc with
+#guard match readBand (q (1700.0 - prior.estimate.q.magnitude)) prior.stdUnc.q with
   | .coverage f r => f.closeTo ⟨1.4489⟩ tableTol && r.closeTo ⟨0.07368⟩ tableTol
   | _ => false
 
@@ -312,7 +312,7 @@ the direction in which a Gaussian reading is optimistic by orders of magnitude. 
 -- **The deployment's own case.** The T4 prior is rectangular by its own evaluation, so the `1700`
 -- in force buys `8.2 %`, not the `7.4 %` a Gaussian reads — and the cost-derived 1.23 % target
 -- asks for `1.69 u`, which is *inside* the bracket, where the Gaussian's `2.25 u` is not.
-#guard match prior.readBand (q (1700.0 - prior.estimate.magnitude)) with
+#guard match prior.readBand (q (1700.0 - prior.estimate.q.magnitude)) with
   | .coverage f _ => (riskForFactorRectangular f).closeTo ⟨0.081785⟩ tableTol
   | _ => false
 #guard ((riskFromCosts (⟨480.0⟩ : Quantity Kc Float) ⟨6.0⟩).bind factorForRiskRectangular).any
@@ -325,7 +325,7 @@ the direction in which a Gaussian reading is optimistic by orders of magnitude. 
 -- Gaussian 2.33 — a **61 % wider** band from the same five readings — and on this evidence that
 -- is exactly the difference between accepting and refusing.
 #guard
-  let need : Evidence K := { estimate := q 26000.0, stdUnc := q 900.0, dof := ⟨4.0⟩,
+  let need : Evidence K := { estimate := ⟨q 26000.0⟩, stdUnc := ⟨q 900.0⟩, dof := ⟨4.0⟩,
                              evalKind := .typeA }
   (assess (Tolerance.atMost (q 28497.0)) need ⟨0.01⟩).any fun a =>
     a.factor.closeTo ⟨3.746947⟩ tableTol
@@ -338,7 +338,7 @@ the direction in which a Gaussian reading is optimistic by orders of magnitude. 
 -- difference, and it disappears on its own as evidence accumulates — which is the mechanism, not
 -- a special case: the acceptance limit rises from 25 125 to 26 403 with nothing re-tuned.
 #guard
-  let known : Evidence K := { estimate := q 26000.0, stdUnc := q 900.0, dof := dofUnbounded,
+  let known : Evidence K := { estimate := ⟨q 26000.0⟩, stdUnc := ⟨q 900.0⟩, dof := dofUnbounded,
                               evalKind := .typeB }
   (assess (Tolerance.atMost (q 28497.0)) known ⟨0.01⟩).any fun a =>
     a.factor.closeTo ⟨2.3263478740408408⟩ exactTol && a.accepted = true

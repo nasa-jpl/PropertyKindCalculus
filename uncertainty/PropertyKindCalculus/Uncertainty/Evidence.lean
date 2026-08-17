@@ -65,6 +65,7 @@ the same reason.
 approximation, and a coverage factor read off one is a concrete number.
 -/
 import PropertyKindCalculus.Uncertainty.EvidenceKinds
+import PropertyKindCalculus.Uncertainty.Roles
 import PropertyKindCalculus.Uncertainty.Budget
 import PropertyKindCalculus.Uncertainty.Carriers
 
@@ -105,9 +106,14 @@ is licensed by it: a standard uncertainty presupposes a ratio-scale measurand, a
 autoParam, so a record built at a concrete kind never mentions it. -/
 structure Evidence (k : KindOfProperty) where
   /-- The estimate of the measurand. -/
-  estimate : Quantity k Float
-  /-- The standard uncertainty `u` of that estimate, at the measurand's own kind. -/
-  stdUnc : Quantity k Float
+  estimate : Estimate k Float
+  /-- The standard uncertainty `u` of that estimate, at the measurand's own kind.
+
+  `Dispersion` and not `Quantity`, which is the point of `Roles`: this field and the one above
+  it are the same kind, sit adjacent, and are passed positionally at every construction site, so
+  nothing but a type distinction stops them being exchanged — and exchanging them turns a band
+  reading of `42 u` into one of `1/42`, in the safe-looking direction. -/
+  stdUnc : Dispersion k Float
   /-- The degrees of freedom `ν` qualifying `stdUnc`; `dofUnbounded` when unqualified. -/
   dof : Quantity degreesOfFreedom Float
   /-- How `stdUnc` was arrived at. -/
@@ -151,7 +157,7 @@ def typeA (xs : List (Quantity k Float)) (hk : k.IsRational := by rfl) : Option 
     let mean := (xs.foldl (fun acc x => acc + x.magnitude) 0.0) / n.magnitude
     let ss := xs.foldl (fun acc x => acc + (x.magnitude - mean) * (x.magnitude - mean)) 0.0
     let variance := ss / (n.magnitude - 1.0)
-    some { estimate := ⟨mean⟩, stdUnc := ⟨Float.sqrt (variance / n.magnitude)⟩,
+    some { estimate := ⟨⟨mean⟩⟩, stdUnc := ⟨⟨Float.sqrt (variance / n.magnitude)⟩⟩,
            dof := dofOfMean n, evalKind := .typeA, rational := hk }
 
 /-- **GUM 4.3.7 — the rectangular prior.** Given only that the value lies in `[lo, hi]` and
@@ -162,7 +168,7 @@ purest Type B evaluation there is, it is a statement of *ignorance*, and it is e
 the half-width itself (GUM G.4.3). -/
 def typeBRectangular (lo hi : Quantity k Float) (hk : k.IsRational := by rfl) : Evidence k :=
   let a := (hi.magnitude - lo.magnitude) / 2.0
-  { estimate := ⟨(lo.magnitude + hi.magnitude) / 2.0⟩, stdUnc := ⟨a / Float.sqrt 3.0⟩,
+  { estimate := ⟨⟨(lo.magnitude + hi.magnitude) / 2.0⟩⟩, stdUnc := ⟨⟨a / Float.sqrt 3.0⟩⟩,
     dof := dofUnbounded, evalKind := .typeB, rational := hk }
 
 /-! ## The crossing into the moment-combine methods
@@ -237,7 +243,7 @@ record's own `rational` field. -/
 def Evidence.expanded (e : Evidence k) (coverage : Quantity probability Float) :
     Option (Quantity k Float) :=
   (e.coverageFactorTwoSided coverage).map fun f =>
-    Quantity.mul (expansionLaw k e.rational) f e.stdUnc
+    Quantity.mul (expansionLaw k e.rational) f e.stdUnc.q
 
 /-- The 95 % expanded uncertainty `U₉₅`. -/
 def Evidence.expanded95 (e : Evidence k) : Option (Quantity k Float) := e.expanded p95
@@ -293,7 +299,7 @@ factor it has not earned. -/
 def combinedEvidence {kO : KindOfProperty} (estimate : Quantity kO Float)
     (cs : List (Contribution kO)) (hk : kO.IsRational := by rfl) : Option (Evidence kO) :=
   (welchSatterthwaite cs).map fun nu =>
-    { estimate := estimate, stdUnc := combinedQ (cs.map (·.value)), dof := nu,
+    { estimate := ⟨estimate⟩, stdUnc := ⟨combinedQ (cs.map (·.value))⟩, dof := nu,
       evalKind := .combined, rational := hk }
 
 /-! ## Accumulating evidence across measurements -/
@@ -334,8 +340,8 @@ private def poolTwo (a b : Evidence k) : Evidence k :=
   let wb := 1.0 / (ub * ub)
   let w := wa + wb
   let uPooled := Float.sqrt (1.0 / w)
-  { estimate := ⟨(a.estimate.magnitude * wa + b.estimate.magnitude * wb) / w⟩,
-    stdUnc := ⟨uPooled⟩,
+  { estimate := ⟨⟨(a.estimate.magnitude * wa + b.estimate.magnitude * wb) / w⟩⟩,
+    stdUnc := ⟨⟨uPooled⟩⟩,
     dof := (welchSatterthwaite
       [ { value := (⟨wa / w * ua⟩ : Quantity k Float), dof := a.dof },
         { value := (⟨wb / w * ub⟩ : Quantity k Float), dof := b.dof } ]).getD dofUnbounded,

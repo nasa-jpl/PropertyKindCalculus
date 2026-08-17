@@ -8,4 +8,5 @@ this tier brings those theorems and their worked witnesses under CI regression.
 
 import PropertyKindCalculus.Tests.Uncertainty.UncertaintyLadder
 import PropertyKindCalculus.Tests.Uncertainty.Evidence
+import PropertyKindCalculus.Tests.Uncertainty.Roles
 import PropertyKindCalculus.Tests.Uncertainty.Serialization

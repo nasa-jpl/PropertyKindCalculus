@@ -523,6 +523,17 @@ uncertainty/PropertyKindCalculus/Uncertainty/
                            probability, coverageFactor, degreesOfFreedom, indicationCount — four
                            kinds, not one "dimensionless", because k = Φ⁻¹(1−p) and ν = n−1 put each
                            in the others' slots; plus the expansion / band-reading / cost-ratio laws
+  Roles.lean            ✅ an estimate is NOT its dispersion, at the type level     [Area 1]
+                           — the two live at the same kind (u of a length is a length), sit
+                           adjacent in every evidence record, and are passed positionally, so
+                           nothing but this stops them being exchanged: and exchanging them reads
+                           a band of 42 u as 1/42, in the safe-looking direction. Estimate and
+                           Dispersion are role wrappers exactly as Bounds' endpoints are, and the
+                           algebra is what the distinction is FOR — no `Add` on a Dispersion,
+                           because uncertainties combine in quadrature; no `Add` on an Estimate,
+                           because a sum of estimates is a model; a deviation of two Estimates is
+                           a plain value; and y ∓ U comes back as a LowerBound / UpperBound, so
+                           Decimal's role-directed rounding applies to a coverage interval unsaid
   Evidence.lean         ✅ evidence ACROSS repeated measurements of one measurand   [Area 1]
                            (Combine is across contributors WITHIN one budget): GUM 4.2 Type A from
                            n indications, t-based coverage factor (COMPUTED — Lanczos lgamma, Lentz

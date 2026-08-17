@@ -364,6 +364,39 @@ from a risk target. A judgement, which is why `readBand` takes it as an argument
 that then applies uniformly, which is the improvement over judging each band on its own. -/
 def systematicThreshold : Quantity coverageFactor Float := ⟨6.0⟩
 
+/-- **The three outcomes of a band reading, without the evidence for them.**
+
+`BandReading` carries the factor and the risk it was read at; this is the classification alone,
+which is what gets *stated* — in a report line, in a record's field, in a comparison between what
+a document claims and what the arithmetic now says. Those are the places where a three-valued
+answer is needed and the payload is not, and where writing the three cases as text would put the
+value set outside this library, so that a consumer could invent a fourth or misspell one of the
+three and nothing here would know.
+
+The classification is this library's, and the *designation* for it is not: how a given format
+spells `coverage` belongs to that format, and any two spellings of it resolve through their own
+kind on the way in. What must not be re-invented downstream is the set of three. -/
+inductive BandReadingLabel where
+  /-- A coverage statement: dispersion, and it shrinks as evidence accumulates. -/
+  | coverage
+  /-- A systematic the model does not carry. It does not shrink, and tightening it as though it
+  did is how a fleet walks into a correlated failure. -/
+  | systematic
+  /-- Not readable: no `u` to divide by, or a `u` nothing qualifies. -/
+  | unstated
+deriving DecidableEq, Repr, Inhabited
+
+/-- **What a reading classifies as**, forgetting the evidence.
+
+Total and one-directional, which is the honest shape: every reading has a label, and a label
+does not determine a reading — recovering one would mean inventing the factor and the risk. A
+record that states a label is stating what it *concluded*, and the check that matters is against
+this projection of what the arithmetic concludes now. -/
+def BandReading.label : BandReading → BandReadingLabel
+  | .coverage _ _ => .coverage
+  | .systematic _ => .systematic
+  | .unstated => .unstated
+
 /-- Read a deployed guard band `g` against the standard uncertainty `u` of the quantity it
 qualifies — both quantities of the measurand's kind, so their quotient is the coverage factor
 `bandReadingLaw` says it is, and a band accidentally compared against the uncertainty of something
@@ -399,7 +432,7 @@ def _root_.PropertyKindCalculus.Uncertainty.Evidence.readBand (e : Evidence k) (
     (systematicAt : Quantity coverageFactor Float := systematicThreshold) : BandReading :=
   if !(e.stdUnc.magnitude > 0.0) || e.stdUnc.magnitude.isNaN || g.magnitude.isNaN then .unstated
   else
-    let factor := Quantity.div (bandReadingLaw k e.rational) g e.stdUnc
+    let factor := Quantity.div (bandReadingLaw k e.rational) g e.stdUnc.q
     if factor.magnitude > systematicAt.magnitude then .systematic factor
     else match riskForFactorAt factor e.dof with
       | some risk => .coverage factor risk
@@ -433,10 +466,10 @@ target that is not a probability. A refusal, rather than a factor nothing justif
 def assess (t : Tolerance k Float) (e : Evidence k) (targetRisk : Quantity probability Float) :
     Option (Assessment k) :=
   (factorForEvidence e targetRisk).map fun factor =>
-    let band := guardBand e.stdUnc factor e.rational
+    let band := guardBand e.stdUnc.q factor e.rational
     { factor := factor, band := band,
       acceptance := t.guardedBy band (differenceOfRational e.rational),
-      accepted := accepts t e.estimate e.stdUnc factor e.rational,
-      risk := consumerRisk t e.estimate e.stdUnc }
+      accepted := accepts t e.estimate.q e.stdUnc.q factor e.rational,
+      risk := consumerRisk t e.estimate.q e.stdUnc.q }
 
 end PropertyKindCalculus.Uncertainty.Conformity
