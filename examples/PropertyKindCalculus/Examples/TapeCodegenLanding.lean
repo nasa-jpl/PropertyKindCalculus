@@ -184,6 +184,14 @@ def resjacLandingHolds : Bool :=
         && hasSub cu "avs_resjac_launch"
         && hasSub stub "avs_resjac_launch"
         && hasSub cu "__global__ void avs_resjac"
+        -- The device clock: the CUDA landing brackets its launch with events and both
+        -- translation units export the same accessor, so a Lean binding compiled against
+        -- either build links — and the portable one answers the value no clock can read.
+        && hasSub cu "cudaEventElapsedTime"
+        && hasSub cu "avs_resjac_device_seconds"
+        && hasSub stub "avs_resjac_device_seconds"
+        && hasSub stub "return -1.0;"
+        && hasSub (landingLeanBinding "avs_resjac") "avs_resjacDeviceSeconds"
 
 #guard resjacLandingHolds
 

@@ -450,10 +450,51 @@ def lutTexGetter (mode : LutFilterMode) (tbl : LutTable) : String :=
     , "}"
     ]
 
+/-! ### The device clock
+
+A host stopwatch around `<name>_launch` reads the *whole* landing: upload, kernel, download. That
+is the right number for a deployment — the transfers are paid — and the wrong number for a time
+model of the kernel, and until now it was the only number there was, so a device time model had
+no readings it could be fitted from at all.
+
+So the landing carries a **CUDA event bracket** around the launch itself and exposes the last
+reading through a second symbol, `<name>_device_seconds`. Beside, never instead: both numbers are
+wanted, and their difference is the transfer path — the one term §2.3 of the deployment's own
+analysis could only infer from a bytes-over-bandwidth fit.
+
+Three details that are decisions rather than mechanics. It reports **seconds**, because that is
+the unit `Platform.elapsedTime` is stated in and a conversion left to a caller is a conversion
+some caller gets wrong; `cudaEventElapsedTime` answers milliseconds and the generated line divides
+once, here. It answers **−1.0** when no launch has been timed, which is the portable stub's answer
+always: a negative elapsed time is not a reading any clock can produce, so it cannot be confused
+with a fast kernel the way `0` could. And it takes an ignored `token`, the pattern the CUDA
+allocator counters already use — the value changes between calls, so a Lean binding must not be
+free to treat two reads of it as one pure expression. -/
+
+/-- The device-clock state and accessor for the CUDA landing TU: the last bracketed launch's
+elapsed time in seconds, `-1.0` before the first. -/
+def deviceClockDecls (name : String) : String :=
+  String.intercalate "\n"
+    [ s!"static double tl_{name}_device_seconds = -1.0;"
+    , s!"extern \"C\" LEAN_EXPORT double {name}_device_seconds(uint32_t token) \{"
+    , "  (void)token;"
+    , s!"  return tl_{name}_device_seconds;"
+    , "}" ]
+
+/-- The same accessor in the portable stub: a build with no device has no device clock, and says
+so with the one value a clock cannot return. -/
+def deviceClockStubDecls (name : String) : String :=
+  String.intercalate "\n"
+    [ s!"LEAN_EXPORT double {name}_device_seconds(uint32_t token) \{"
+    , "  (void)token;"
+    , "  return -1.0;   /* no device clock in a portable build */"
+    , "}" ]
+
 /-- The `.cu` translation unit: the device kernel plus an `extern "C"` host launcher that marshals the
 packed `FloatArray` across the FFI, uploads inputs, launches one thread per pixel, and downloads the
 packed outputs. Tables (if any) are baked as `static const float` data with create-once texture
-getters. Compile with `nvcc --fmad=false -prec-div=true -prec-sqrt=true`. -/
+getters. The launch itself is bracketed by CUDA events, readable through `<name>_device_seconds`.
+Compile with `nvcc --fmad=false -prec-div=true -prec-sqrt=true`. -/
 def emitCudaLanding (name : String) (cg : Codegen) : String :=
   let ins := cg.inputs.toList
   let nOut := cg.numOutputs
@@ -478,6 +519,7 @@ def emitCudaLanding (name : String) (cg : Codegen) : String :=
     , ""
     , tableDecls
     , emitCuda name cg
+    , deviceClockDecls name
     , s!"extern \"C\" LEAN_EXPORT lean_obj_res {name}_launch(uint32_t P, uint32_t nIns, b_lean_obj_arg InsObj) \{"
     , "  (void)nIns;"
     , "  const size_t np = (size_t)P;"
@@ -490,8 +532,15 @@ def emitCudaLanding (name : String) (cg : Codegen) : String :=
     , s!"  float* d_out; cudaMalloc((void**)&d_out, (size_t){nOut} * nb);"
     , "  const int threads = 256;"
     , "  const int blocks = (int)((np + (size_t)threads - 1) / (size_t)threads);"
+    , "  cudaEvent_t tl_ev0, tl_ev1;"
+    , "  cudaEventCreate(&tl_ev0); cudaEventCreate(&tl_ev1);"
+    , "  cudaEventRecord(tl_ev0);"
     , s!"  {name}<<<blocks, threads>>>({kernelArgs});"
+    , "  cudaEventRecord(tl_ev1);"
     , "  cudaDeviceSynchronize();"
+    , "  float tl_ms = 0.0f; cudaEventElapsedTime(&tl_ms, tl_ev0, tl_ev1);"
+    , s!"  tl_{name}_device_seconds = (double)tl_ms / 1000.0;"
+    , "  cudaEventDestroy(tl_ev0); cudaEventDestroy(tl_ev1);"
     , "  lean_object* outObj = lean_mk_empty_float_array(lean_box(no));"
     , "  lean_sarray_set_size(outObj, no);"
     , "  double* dst = lean_float_array_cptr(outObj);"
@@ -530,6 +579,7 @@ def emitStubLanding (name : String) (cg : Codegen) : String :=
     , ""
     , tableDecls
     , emitStub name cg
+    , deviceClockStubDecls name
     , s!"LEAN_EXPORT lean_obj_res {name}_launch(uint32_t P, uint32_t nIns, b_lean_obj_arg InsObj) \{"
     , "  (void)nIns;"
     , "  const size_t np = (size_t)P;"
@@ -548,10 +598,17 @@ def emitStubLanding (name : String) (cg : Codegen) : String :=
     , "}"
     , "" ]
 
-/-- The Lean `@[extern]` binding for the generated launcher (tape-independent signature). Emitted as a
-string so a downstream `extern_lib` client can drop it in verbatim. -/
+/-- The Lean `@[extern]` bindings for the generated launcher and its device clock
+(tape-independent signatures). Emitted as a string so a downstream `extern_lib` client can drop
+them in verbatim.
+
+The clock's `token` is ignored by the C side and exists only to keep Lean from treating two reads
+as one pure expression — the same reason `Cuda.allocatorStatsWithToken` takes one. A call site
+that reads it once per launch passes something that varies per launch, and gets an answer about
+the launch it just made rather than about the first one of the process. -/
 def landingLeanBinding (name : String) : String :=
-  s!"@[extern \"{name}_launch\"] opaque {name}Launch (P : UInt32) (nIns : UInt32) (ins : @& FloatArray) : FloatArray"
+  s!"@[extern \"{name}_launch\"] opaque {name}Launch (P : UInt32) (nIns : UInt32) (ins : @& FloatArray) : FloatArray\n" ++
+  s!"@[extern \"{name}_device_seconds\"] opaque {name}DeviceSeconds (token : UInt32) : Float"
 
 /-- A `buildNativeBackendLib`-style spec naming the two generated translation units for an `extern_lib`
 slot (CUDA source → nvcc under `-K cuda`, `.c` stub → `cc` otherwise). -/
