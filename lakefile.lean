@@ -70,19 +70,22 @@ package «PropertyKindCalculus» where
 -- `v4.32.0` toolchain bump (PR #1445). Both are now merged upstream, so we track
 -- the upstream `leanprover-community/physlib` `master` branch directly; the exact
 -- commit is recorded in `lake-manifest.json`, so the build stays reproducible.
--- NOTE (2026-08-14, v4.33 bump): upstream `master` (a7a6d465) does NOT compile under
--- Lean/Mathlib `v4.33.0` — NNReal mk-coercion proofs in the five `*Unit` modules and
--- the derived `Fintype` on `LTMCTDimensionBase` rot. Until upstream bumps, we track
--- the fork branch `NicolasRouquette/physlib` `lean-4.33` = upstream `master` + those
--- proof repairs (candidate upstream PR). A dependency's `lean-toolchain` is
--- informational (the ROOT toolchain builds the closure); the `require mathlib` at
--- `v4.33.0` is kept *last* below (Lake resolves later requires over earlier ones, so
--- Mathlib `v4.33.0`'s own dependency versions take precedence and
--- `lake exe cache get` computes matching hashes). When upstream physlib lands its
--- own v4.33 bump, flip this back to `leanprover-community/physlib` @ `master`.
+-- NOTE (2026-08-18, v4.33 bump landed upstream): upstream `master` (a7a6d465) did not
+-- compile under Lean/Mathlib `v4.33.0` — NNReal mk-coercion proofs in the five `*Unit`
+-- modules and the derived `Fintype` on `LTMCTDimensionBase` had rotted. Those repairs
+-- were carried on the fork branch `NicolasRouquette/physlib` `lean-4.33` and are now
+-- **merged upstream** as PR #1521 (merge commit `a50684a1`, 2026-08-17), so this
+-- require is back on `leanprover-community/physlib` `master`. Do not re-pin the fork
+-- branch: GitHub deletes a merged PR's head branch, which makes the fork commit
+-- unreachable from every remote ref and breaks any *fresh* clone (`fatal: reference is
+-- not a tree`) even while a stale local tracking ref still resolves it. A dependency's
+-- `lean-toolchain` is informational (the ROOT toolchain builds the closure); the
+-- `require mathlib` at `v4.33.0` is kept *last* below (Lake resolves later requires over
+-- earlier ones, so Mathlib `v4.33.0`'s own dependency versions take precedence and
+-- `lake exe cache get` computes matching hashes).
 require «Physlib» from git
-  "https://github.com/NicolasRouquette/physlib.git" @
-  "lean-4.33"
+  "https://github.com/leanprover-community/physlib.git" @
+  "master"
 
 -- TorchLean (this work's fork, `combined` branch) backs *only* the `Torch` library
 -- below: the concrete IEEE-754 binary32 carriers (`FP32` rounding spec,
