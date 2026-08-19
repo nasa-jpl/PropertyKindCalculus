@@ -393,9 +393,11 @@ slot to `float` in its own buffer — one `for` loop per slot, and unavoidable, 
 fp32 and a `FloatArray` is fp64. Given a *packed* input the caller must first concatenate its
 slots into one `nIns*P` buffer for that loop to read out of again: a full copy of the inputs, on
 the host, whose only consumer immediately undoes it. Given *columns* the same loop reads the
-caller's own arrays and the concatenation never happens. Measured on a 7-slot 11.9 Mpx tile that
-copy was ~650 ms and a 669 MB allocation — the largest single term in the deploying executable's
-peak — and it is the whole of what this shape removes.
+caller's own arrays and the concatenation never happens. Measured in a deploying application on a
+7-slot 11.9 Mpx tile, as a paired A/B: that copy is ~256 ms and a 669 MB allocation, and removing
+it takes 250 ms off the marshal and 278 MB off peak RSS. It does not move that executable's wall,
+whose single launch is 7.9 s — a term can be worth removing on shape while being invisible in the
+job that contains it.
 
 It also costs the caller nothing to supply. A generated kernel's slot order is a by-product of
 CSE, so a caller that owns its data by *name* must permute; with columns that permutation moves
