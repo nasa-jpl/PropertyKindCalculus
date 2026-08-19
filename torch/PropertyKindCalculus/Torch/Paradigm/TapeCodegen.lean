@@ -376,17 +376,32 @@ def emitStub (name : String) (cg : Codegen) : String :=
 `Codegen` so the ABI cannot drift from the kernel:
 
 * a `.cu` translation unit = the device kernel + an `extern "C"` host launcher
-  `<name>_launch(P, nIns, ins) : FloatArray` (upload packed inputs, one thread per pixel, download
-  packed outputs);
+  `<name>_launch(P, nIns, cols) : FloatArray` (upload one column per slot, one thread per pixel,
+  download packed outputs);
 * a `.c` **stub** twin = the portable host loop behind the identical launcher symbol, so a CUDA-free
   build links the same entry point (the `torchlean_dgemm_cuda.cu` / `_stub.c` precedent);
 * the Lean `@[extern]` binding + a `NativeBackendLib`-style `{stem, cudaSrc, stubSrc}` spec.
 
-**Packed layout** (tape-independent, so the Lean signature never changes with the tape): the `k`-th
-distinct named input occupies `ins[k*P .. (k+1)*P)`, output `j` occupies `out[j*P .. (j+1)*P)` — the
-same `out[j*P + p]` the kernel writes. `Float` is 64-bit while the kernel is `float`, so the launcher
-casts `double ↔ float32` at the boundary (the fp64 `evalTape` denotation is the oracle the fp32 kernel
-is validated against). -/
+**Layout: columns in, packed out** (tape-independent, so the Lean signature never changes with the
+tape). The `k`-th distinct named input arrives as `cols[k]`, its own `P`-element `FloatArray`;
+output `j` occupies `out[j*P .. (j+1)*P)` — the same `out[j*P + p]` the kernel writes. `Float` is
+64-bit while the kernel is `float`, so the launcher casts `double ↔ float32` at the boundary (the
+fp64 `evalTape` denotation is the oracle the fp32 kernel is validated against).
+
+**Why the inputs are columns and the outputs are not.** The landing's first act is to narrow each
+slot to `float` in its own buffer — one `for` loop per slot, and unavoidable, since the kernel is
+fp32 and a `FloatArray` is fp64. Given a *packed* input the caller must first concatenate its
+slots into one `nIns*P` buffer for that loop to read out of again: a full copy of the inputs, on
+the host, whose only consumer immediately undoes it. Given *columns* the same loop reads the
+caller's own arrays and the concatenation never happens. Measured on a 7-slot 11.9 Mpx tile that
+copy was ~650 ms and a 669 MB allocation — the largest single term in the deploying executable's
+peak — and it is the whole of what this shape removes.
+
+It also costs the caller nothing to supply. A generated kernel's slot order is a by-product of
+CSE, so a caller that owns its data by *name* must permute; with columns that permutation moves
+seven pointers, and with a packed buffer it moves every element. The outputs stay packed because
+the reverse argument does not hold: the landing allocates them, so there is no caller-side buffer
+for it to write into and nothing to un-copy. -/
 
 /-- The kernel's parameter list as tokens (`paramList` renders it): `int P`, one
 `const float* in_<nm>` per distinct named input, one `cudaTextureObject_t tex_<nm>` per referenced
@@ -490,9 +505,9 @@ def deviceClockStubDecls (name : String) : String :=
     , "  return -1.0;   /* no device clock in a portable build */"
     , "}" ]
 
-/-- The `.cu` translation unit: the device kernel plus an `extern "C"` host launcher that marshals the
-packed `FloatArray` across the FFI, uploads inputs, launches one thread per pixel, and downloads the
-packed outputs. Tables (if any) are baked as `static const float` data with create-once texture
+/-- The `.cu` translation unit: the device kernel plus an `extern "C"` host launcher that reads one
+`FloatArray` column per slot across the FFI, narrows and uploads each, launches one thread per
+pixel, and downloads the packed outputs. Tables (if any) are baked as `static const float` data with create-once texture
 getters. The launch itself is bracketed by CUDA events, readable through `<name>_device_seconds`.
 Compile with `nvcc --fmad=false -prec-div=true -prec-sqrt=true`. -/
 def emitCudaLanding (name : String) (cg : Codegen) : String :=
@@ -502,7 +517,8 @@ def emitCudaLanding (name : String) (cg : Codegen) : String :=
   let uploads := String.intercalate "\n" <| ins.zipIdx.map (fun (nm, k) =>
     String.intercalate "\n"
       [ s!"  float* d_in_{nm}; cudaMalloc((void**)&d_in_{nm}, nb);"
-      , s!"  for (size_t i = 0; i < np; ++i) hbuf[i] = (float)src[(size_t){k} * np + i];"
+      , s!"  \{ const double* src = lean_float_array_cptr(cols[{k}]);"
+      , "    for (size_t i = 0; i < np; ++i) hbuf[i] = (float)src[i]; }"
       , s!"  cudaMemcpy(d_in_{nm}, hbuf, nb, cudaMemcpyHostToDevice);" ])
   let tableDecls := String.intercalate "\n" <| cg.tables.toList.map (fun tb =>
     lutDataDecl tb ++ "\n" ++ lutTexGetter cg.lutMode tb)
@@ -520,12 +536,12 @@ def emitCudaLanding (name : String) (cg : Codegen) : String :=
     , tableDecls
     , emitCuda name cg
     , deviceClockDecls name
-    , s!"extern \"C\" LEAN_EXPORT lean_obj_res {name}_launch(uint32_t P, uint32_t nIns, b_lean_obj_arg InsObj) \{"
+    , s!"extern \"C\" LEAN_EXPORT lean_obj_res {name}_launch(uint32_t P, uint32_t nIns, b_lean_obj_arg ColsObj) \{"
     , "  (void)nIns;"
     , "  const size_t np = (size_t)P;"
     , "  const size_t nb = np * sizeof(float);"
     , s!"  const size_t no = (size_t){nOut} * np;"
-    , "  const double* src = lean_float_array_cptr((lean_object*)InsObj);"
+    , "  lean_object * const * cols = lean_array_cptr((lean_object*)ColsObj);"
     , "  float* hbuf = (float*)malloc(nb);"
     , uploads
     , texGets
@@ -568,7 +584,8 @@ def emitStubLanding (name : String) (cg : Codegen) : String :=
   let allocs := String.intercalate "\n" <| ins.zipIdx.map (fun (nm, k) =>
     String.intercalate "\n"
       [ s!"  float* in_{nm} = (float*)malloc(np * sizeof(float));"
-      , s!"  for (size_t i = 0; i < np; ++i) in_{nm}[i] = (float)src[(size_t){k} * np + i];" ])
+      , s!"  \{ const double* src = lean_float_array_cptr(cols[{k}]);"
+      , s!"    for (size_t i = 0; i < np; ++i) in_{nm}[i] = (float)src[i]; }" ])
   let frees := String.intercalate "\n" <| ins.map (fun nm => s!"  free(in_{nm});")
   String.intercalate "\n"
     [ "// generated by paradigm.tape_codegen — FFI landing translation unit (portable C stub)."
@@ -580,11 +597,11 @@ def emitStubLanding (name : String) (cg : Codegen) : String :=
     , tableDecls
     , emitStub name cg
     , deviceClockStubDecls name
-    , s!"LEAN_EXPORT lean_obj_res {name}_launch(uint32_t P, uint32_t nIns, b_lean_obj_arg InsObj) \{"
+    , s!"LEAN_EXPORT lean_obj_res {name}_launch(uint32_t P, uint32_t nIns, b_lean_obj_arg ColsObj) \{"
     , "  (void)nIns;"
     , "  const size_t np = (size_t)P;"
     , s!"  const size_t no = (size_t){nOut} * np;"
-    , "  const double* src = lean_float_array_cptr((lean_object*)InsObj);"
+    , "  lean_object * const * cols = lean_array_cptr((lean_object*)ColsObj);"
     , allocs
     , "  float* out = (float*)malloc(no * sizeof(float));"
     , s!"  {name}_stub({computeArgs});"
@@ -607,7 +624,7 @@ as one pure expression — the same reason `Cuda.allocatorStatsWithToken` takes 
 that reads it once per launch passes something that varies per launch, and gets an answer about
 the launch it just made rather than about the first one of the process. -/
 def landingLeanBinding (name : String) : String :=
-  s!"@[extern \"{name}_launch\"] opaque {name}Launch (P : UInt32) (nIns : UInt32) (ins : @& FloatArray) : FloatArray\n" ++
+  s!"@[extern \"{name}_launch\"] opaque {name}Launch (P : UInt32) (nIns : UInt32) (cols : @& Array FloatArray) : FloatArray\n" ++
   s!"@[extern \"{name}_device_seconds\"] opaque {name}DeviceSeconds (token : UInt32) : Float"
 
 /-- A `buildNativeBackendLib`-style spec naming the two generated translation units for an `extern_lib`

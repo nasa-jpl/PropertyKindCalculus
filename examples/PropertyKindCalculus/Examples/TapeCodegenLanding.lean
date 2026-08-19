@@ -18,7 +18,7 @@ the FFI call silently corrupts memory on the device. This module certifies that 
 * `gen_inputs_eq` / `gen_numOutputs` — the generated ABI's input list and output arity are pure
   functions of the tape / caller (they do not depend on the fallible node walk);
 * `collectInputs_nodup` — the generated input parameter list is duplicate-free, so no two kernel
-  parameters collide (`in_x` declared twice) and every packed input slot maps to a distinct name.
+  parameters collide (`in_x` declared twice) and every input column maps to a distinct name.
 
 Inhabitation (`demo_landing_wf`, `resjac_landing_wf`, and the `#guard`s) discharges these on the
 concrete `demoTape` and on the actually-recorded AVS Stage-2 `resJac` tape — the kernel that lands on
