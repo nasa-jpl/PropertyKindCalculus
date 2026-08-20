@@ -313,7 +313,13 @@ def boundarySites (scope : Array Name) : MetaM (Array BoundarySite) := do
     if ← Meta.forallTelescopeReducing info.type fun _ resTy => return resTy.isProp then continue
     let (mints, erases) := collectBoundary specs body #[] false
     if mints.isEmpty && !erases then continue
-    let mintStrs ← mints.mapM fun a => return toString (← Meta.ppExpr a)
+    -- A mint under a binder carries loose bvars (`collectBoundary` does not abstract), so its
+    -- kind argument is a *variable* of the site, not a nameable kind: render it as the one
+    -- stable word rather than a de Bruijn index or a pretty-printer failure. `eraseDups`
+    -- below then collapses however many parametric mints a site has into one entry.
+    let mintStrs ← mints.mapM fun a =>
+      if a.hasLooseBVars then return "(kind-parametric)"
+      else return toString (← Meta.ppExpr a)
     parents := parents.insert parent
     if !mintStrs.isEmpty then
       mintMap := mintMap.insert parent ((mintMap.getD parent #[]) ++ mintStrs)
