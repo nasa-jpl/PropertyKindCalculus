@@ -34,7 +34,9 @@ empty table that reads as "there are none".
 
 `dimensioned-kinds` is absent by design: that layer's type lives behind PhysLib and Mathlib, which
 this library does not import. A document that imports it calls `kindsTable` with its own
-`KindLayer` — see `KindLayer.core` for the shape. -/
+`KindLayer` — see `KindLayer.core` for the shape. `dimensional-coverage` is gated the same way:
+a document that imports `PropertyKindCalculus.DimensionalCoverage` calls its `coverageTable`
+directly. -/
 def tableById (id : String) (scope : Scope := #[]) : MetaM IndexTable := withHarvestBudget do
   match id with
   | "annotations"          => return annotationsTable

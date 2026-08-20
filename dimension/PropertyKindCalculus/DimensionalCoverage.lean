@@ -55,10 +55,16 @@ enumeration, not the notion.
 Like `KindEdges`, edges are harvested from constant *types* (a call-site witness is lifted into
 a `_proof_N` auxiliary whose type is the edge), but only from the **conclusion** — an edge
 taken as a *hypothesis* (`(h : ProductKind …) → …`) is assumed, not authored.
+
+The walk has two surfaces over one row producer (`coverageRows`): the command renders the
+pinnable text report, and `coverageTable` renders the same rows as a generated `IndexTable`
+so a document can carry the report beside the other indexes — the Mathlib-gated sibling of
+`Index.tableById`'s `dimensioned-kinds` route.
 -/
 import Lean
 import PropertyKindCalculus.KindEdges
 import PropertyKindCalculus.Dimension
+import PropertyKindCalculus.Index.Basic
 
 namespace PropertyKindCalculus.DimensionalCoverage
 
@@ -198,27 +204,35 @@ inductive Verdict where
   | coherent | parametric | conflicting | incoherent | undimensioned
 deriving DecidableEq, Repr, Inhabited
 
-open Elab Command in
-/-- `#kind_dimensional_coverage ns …` walks every authored kind-algebra edge under the given
-namespaces, resolves each participating kind to its declared `DimensionedKind`, and evaluates
-the family's dimensional rule in the PhysLib `Dimension` group. Edges are deduplicated as
-rendered (the same edge authored at many call sites is one row — `#kind_edges` locates the
-authors); one sorted `info` message, suitable for `#guard_msgs` pinning. `⚠ UNDIMENSIONED`
-(no counterpart), `⚠ CONFLICTING` (disagreeing counterparts), and `⚠ INCOHERENT` (the rule
-fails — a refuted edge) are violations; `[parametric]` generic vocabulary is not. -/
-elab "#kind_dimensional_coverage" nss:ident+ : command => liftTermElabM do
+/-- One audited edge: its verdict, its rendered form, and — for the `⚠` verdicts — the kinds at
+issue. The walk produces these rows once; the `#kind_dimensional_coverage` renderer and the
+document-facing `coverageTable` are two surfaces over them. -/
+structure CoverageRow where
+  /-- The edge's verdict. -/
+  verdict : Verdict
+  /-- The edge as authored, pretty-printed (`k₁ · k₂ → k`). -/
+  edge : String
+  /-- For the `⚠ UNDIMENSIONED`/`⚠ CONFLICTING` verdicts: the kinds that triggered it,
+  comma-separated; empty otherwise. -/
+  detail : String := ""
+deriving Repr, Inhabited
+
+/-- Walk every authored kind-algebra edge under `scope` and produce one deduplicated
+`CoverageRow` per edge. The enumeration, the rules, and the verdicts are documented on the
+command below, which renders these rows as its report; `coverageTable` renders the same rows
+as a generated table for a document. -/
+def coverageRows (scope : Array Name) : MetaM (Array CoverageRow) := do
   let env ← getEnv
-  let scope := nss.map (·.getId)
   let inScope : Name → Bool := fun d => scope.any (fun ns => ns.isPrefixOf d)
   let dks ← dimensionedKindDecls
   let gens ← generatorCtors
   let cache ← IO.mkRef ({} : Std.HashMap String KindRes)
   let seen ← IO.mkRef ({} : Std.HashSet String)
-  let mut out : Array (Verdict × String) := #[]
+  let mut out : Array CoverageRow := #[]
   for (name, info) in env.constants.toList do
     unless inScope (KindEdges.parentOf name) do continue
     let found ← forallTelescopeReducing info.type fun _ concl => do
-      let mut res : Array (Verdict × String) := #[]
+      let mut res : Array CoverageRow := #[]
       for (spec, args) in KindEdges.collectEdges concl #[] do
         let some rule := ruleOf spec.const | continue
         let pps ← args.mapM fun a => return toString (← ppExpr a)
@@ -230,7 +244,7 @@ elab "#kind_dimensional_coverage" nss:ident+ : command => liftTermElabM do
           | .power => (args[1:].toArray, pps[1:].toArray, some args[0]!)
           | _      => (args, pps, none)
         if kindArgs.any (·.hasFVar) || (p?.map (·.hasFVar)).getD false then
-          res := res.push (.parametric, s!"[parametric] {edge}")
+          res := res.push ⟨.parametric, edge, ""⟩
           continue
         let ress ← kindArgs.mapM (m := MetaM) (resolveKind dks gens cache)
         let missing := (kindPps.zip ress).filterMap fun (pp, r) =>
@@ -238,39 +252,84 @@ elab "#kind_dimensional_coverage" nss:ident+ : command => liftTermElabM do
         let conflicts := (kindPps.zip ress).filterMap fun (pp, r) =>
           if r matches .conflict then some pp else none
         if !missing.isEmpty then
-          res := res.push (.undimensioned,
-            s!"⚠ UNDIMENSIONED {edge} — no DimensionedKind for: {String.intercalate ", " missing.toList.eraseDups}")
+          res := res.push ⟨.undimensioned, edge, String.intercalate ", " missing.toList.eraseDups⟩
         else if !conflicts.isEmpty then
-          res := res.push (.conflicting,
-            s!"⚠ CONFLICTING {edge} — disagreeing DimensionedKinds for: {String.intercalate ", " conflicts.toList.eraseDups}")
+          res := res.push ⟨.conflicting, edge, String.intercalate ", " conflicts.toList.eraseDups⟩
         else
           let resolved := ress.filterMap fun | .ok dk => some dk | _ => none
           if ← checkCoherent gens rule resolved p? then
-            res := res.push (.coherent, s!"[coherent] {edge}")
+            res := res.push ⟨.coherent, edge, ""⟩
           else
-            res := res.push (.incoherent, s!"⚠ INCOHERENT {edge}")
+            res := res.push ⟨.incoherent, edge, ""⟩
       return res
     out := out ++ found
+  return out
+
+/-- A row as the command's report line. -/
+def CoverageRow.line : CoverageRow → String
+  | ⟨.coherent, e, _⟩   => s!"[coherent] {e}"
+  | ⟨.parametric, e, _⟩ => s!"[parametric] {e}"
+  | ⟨.incoherent, e, _⟩ => s!"⚠ INCOHERENT {e}"
+  | ⟨.undimensioned, e, d⟩ => s!"⚠ UNDIMENSIONED {e} — no DimensionedKind for: {d}"
+  | ⟨.conflicting, e, d⟩   => s!"⚠ CONFLICTING {e} — disagreeing DimensionedKinds for: {d}"
+
+/-- The report's summary line: the counts, and `clean` exactly when no verdict is a violation. -/
+def coverageSummary (rows : Array CoverageRow) : String :=
+  let count : Verdict → Nat := fun v =>
+    rows.foldl (fun n r => if r.verdict == v then n + 1 else n) 0
+  let (nCoh, nPar) := (count .coherent, count .parametric)
+  let (nUnd, nInc, nCon) := (count .undimensioned, count .incoherent, count .conflicting)
+  if nUnd + nInc + nCon == 0 then
+    if nPar == 0 then
+      s!"{rows.size} kind edge(s), all dimensionally coherent — clean"
+    else
+      s!"{rows.size} kind edge(s): {nCoh} coherent, {nPar} parametric — clean"
+  else
+    let parts := #[s!"{nCoh} coherent"]
+      ++ (if nPar > 0 then #[s!"{nPar} parametric"] else #[])
+      ++ (if nUnd > 0 then #[s!"{nUnd} UNDIMENSIONED"] else #[])
+      ++ (if nInc > 0 then #[s!"{nInc} INCOHERENT"] else #[])
+      ++ (if nCon > 0 then #[s!"{nCon} CONFLICTING"] else #[])
+    s!"{rows.size} kind edge(s): {String.intercalate ", " parts.toList} — dimensional-coverage violation"
+
+open Elab Command in
+/-- `#kind_dimensional_coverage ns …` walks every authored kind-algebra edge under the given
+namespaces, resolves each participating kind to its declared `DimensionedKind`, and evaluates
+the family's dimensional rule in the PhysLib `Dimension` group. Edges are deduplicated as
+rendered (the same edge authored at many call sites is one row — `#kind_edges` locates the
+authors); one sorted `info` message, suitable for `#guard_msgs` pinning. `⚠ UNDIMENSIONED`
+(no counterpart), `⚠ CONFLICTING` (disagreeing counterparts), and `⚠ INCOHERENT` (the rule
+fails — a refuted edge) are violations; `[parametric]` generic vocabulary is not. -/
+elab "#kind_dimensional_coverage" nss:ident+ : command => liftTermElabM do
+  let out ← coverageRows (nss.map (·.getId))
   if out.isEmpty then
     logInfo m!"dimensional coverage — no authored kind edges in the given namespaces"
     return
-  let count : Verdict → Nat := fun v => out.foldl (fun n (w, _) => if w == v then n + 1 else n) 0
-  let (nCoh, nPar) := (count .coherent, count .parametric)
-  let (nUnd, nInc, nCon) := (count .undimensioned, count .incoherent, count .conflicting)
-  let sorted := (out.map (·.2)).qsort (· < ·)
-  let summary :=
-    if nUnd + nInc + nCon == 0 then
-      if nPar == 0 then
-        s!"{out.size} kind edge(s), all dimensionally coherent — clean"
-      else
-        s!"{out.size} kind edge(s): {nCoh} coherent, {nPar} parametric — clean"
-    else
-      let parts := #[s!"{nCoh} coherent"]
-        ++ (if nPar > 0 then #[s!"{nPar} parametric"] else #[])
-        ++ (if nUnd > 0 then #[s!"{nUnd} UNDIMENSIONED"] else #[])
-        ++ (if nInc > 0 then #[s!"{nInc} INCOHERENT"] else #[])
-        ++ (if nCon > 0 then #[s!"{nCon} CONFLICTING"] else #[])
-      s!"{out.size} kind edge(s): {String.intercalate ", " parts.toList} — dimensional-coverage violation"
-  logInfo m!"dimensional coverage:\n{String.intercalate "\n" sorted.toList}\n{summary}"
+  let sorted := (out.map (·.line)).qsort (· < ·)
+  logInfo m!"dimensional coverage:\n{String.intercalate "\n" sorted.toList}\n{coverageSummary out}"
+
+open PropertyKindCalculus.Index in
+/-- **The coverage report as a generated table**, for documents — the same rows the command
+reports, one edge per row, sorted as the report sorts.
+
+Deliberately not a `tableById` case: that dispatcher lives in the Mathlib-free index library,
+and this layer sits behind PhysLib and Mathlib. A document that imports this module calls it
+directly and renders the result with its own adapter — the `dimensioned-kinds` route
+(`Index.tableById`'s docstring), one audit over. Qualified names are shortened exactly as the
+scoped index tables shorten them; the pinned probes keep the full spellings. -/
+def coverageTable (scope : Index.Scope := #[]) : MetaM IndexTable := withHarvestBudget do
+  let rows ← coverageRows scope
+  let sorted := rows.qsort (fun a b => a.line < b.line)
+  let cells := sorted.map fun r =>
+    #[IndexCell.code (shortenNames r.edge),
+      IndexCell.text (match r.verdict with
+        | .coherent => "coherent"
+        | .parametric => "parametric"
+        | .undimensioned => "⚠ undimensioned"
+        | .conflicting => "⚠ conflicting"
+        | .incoherent => "⚠ incoherent"),
+      IndexCell.text (shortenNames r.detail)]
+  return { id := "dimensional-coverage", title := "Dimensional coverage",
+           headers := #["Edge", "Verdict", "Kinds at issue"], rows := cells }
 
 end PropertyKindCalculus.DimensionalCoverage

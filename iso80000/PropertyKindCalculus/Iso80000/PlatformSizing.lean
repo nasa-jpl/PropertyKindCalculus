@@ -12,6 +12,12 @@ Anchors:
     (`platform_storage_is_13_9` is `rfl`): the Platform vocabulary's byte kind IS the
     catalogued kind, so everything Part 13 proves about it — dimension one, unit bit,
     incommensurable with the shannon of information content — transfers verbatim.
+  * **The time vocabulary — ISO 80000-3 item 3-9 (duration), plus two uncatalogued
+    slopes.** `elapsedTime` specializes 3-9 (what a stopwatch reads around a deployment
+    is a duration); the `w`/`a` slopes of the time model `t(N) = w·P/N + a·N` are
+    modelling constructs with no catalogue item, dimension `T` because a count is
+    dimension one. Time is the one dimension this vocabulary does *not* collapse —
+    see the closing section.
   * **The counts — ISO 80000-9 item 9-1 (number of entities).** The five count kinds are
     deliberately NOT 9-1 itself (they are role-named: elements, cores, workers, shards);
     each *specializes* 9-1 through an explicit direct-parent edge, so any two are
@@ -20,12 +26,17 @@ Anchors:
     the cores→shards bound in `decideShards` is licensed by comparability and still has
     to pass through the authored `coresAsShardCap` crossing.
 
-The capstone is the sizing instance of `dim_not_injective`: all seven kinds collapse to
-dimension one under `toDimension` while staying pairwise distinct — a dimension-only
-type system (PhysLib alone, QUDT, F# units, Boost.Units) checks NOTHING in a sizing
-formula, which is why the solver module carries kinds in the first place.
+The capstone is the sizing instance of `dim_not_injective`: all seven byte-and-count kinds
+collapse to dimension one under `toDimension` while staying pairwise distinct — a
+dimension-only type system (PhysLib alone, QUDT, F# units, Boost.Units) checks NOTHING in a
+sizing formula, which is why the solver module carries kinds in the first place. The time
+family is the counterpoint that sharpens the claim rather than weakening it: dimension does
+separate seconds from bytes (the two currencies cannot be exchanged even dimensionally), and
+that is *all* it separates — within the time family the functor conflates again, and the
+swap that inverts the optimum (`w` for `a`) is invisible to it.
 -/
 
+import PropertyKindCalculus.Iso80000.Part3
 import PropertyKindCalculus.Iso80000.Part9
 import PropertyKindCalculus.Iso80000.Part13
 import PropertyKindCalculus.Paradigm.PlatformKinds
@@ -129,5 +140,69 @@ theorem workers_shards_dimension_conflated :
     workerCountDK.toDimension = shardCountDK.toDimension ∧
     workerCountDK.kind ≠ shardCountDK.kind :=
   ⟨rfl, Platform.workerCount_ne_shardCount⟩
+
+/-! ## The time vocabulary — the one dimension the functor does not collapse
+
+The time model `t(N) = w·P/N + a·N` brought three kinds, and they are the sizing
+vocabulary's one family a dimension-only checker can tell apart from the seven above:
+seconds against dimension one. That separation is real and worth stating — a byte slope
+cannot be exchanged for a time slope even dimensionally. It is also *all* the separation
+dimension offers here: within the family the functor conflates again, and the swap that
+matters most — `w` for `a`, work-shared-out for overhead-multiplied-in — is exactly as
+invisible to it as the worker/shard confusion is among the counts. -/
+
+/-- Elapsed wall-clock time — dimension `T`, anchored at ISO 80000-3 item 3-9 (*duration*).
+The platform kind is role-named (what a stopwatch reads around a deployment) and
+*specializes* the catalogued kind rather than being it — the same relation the counts bear
+to 9-1. -/
+def elapsedTimeDK : DimensionedKind := { kind := Platform.elapsedTime, dim := Dim.time }
+
+/-- The work rate `w` (seconds per batch element) — dimension `T`, a batch element being a
+9-1 count of dimension one. A slope, not a duration of anything, so no catalogue item —
+exactly as the byte slopes carry none. -/
+def timePerElementDK : DimensionedKind := { kind := Platform.timePerElement, dim := Dim.time }
+
+/-- The per-shard overhead `a` (seconds per shard) — dimension `T`, by the same argument. -/
+def timePerShardDK : DimensionedKind := { kind := Platform.timePerShard, dim := Dim.time }
+
+/-- The three time kinds carry exactly 3-9's dimension — the anchor agreement, as
+`counts_dim_matches_9_1` is for 9-1. -/
+theorem times_dim_matches_3_9 :
+    elapsedTimeDK.toDimension = Part3.duration.toDimension ∧
+    timePerElementDK.toDimension = Part3.duration.toDimension ∧
+    timePerShardDK.toDimension = Part3.duration.toDimension :=
+  ⟨rfl, rfl, rfl⟩
+
+/-- The specialization edge: elapsed wall-clock time is a *duration* (3-9). The slopes are
+deliberately not edged — a rate is not the duration of anything, and the catalogue has no
+item for it. Open hierarchy, per Flater, like `CountEdge`. -/
+inductive TimeEdge : KindOfProperty → KindOfProperty → Prop
+  /-- What a stopwatch reads is a duration. -/
+  | elapsed : TimeEdge Platform.elapsedTime Part3.duration.kind
+
+/-- What the dimension functor DOES separate here — the two currencies. A time term and a
+storage term cannot be exchanged even dimensionally, which is more than any pair of the
+seven sizing kinds above can say. -/
+theorem elapsed_storage_dimension_separated :
+    elapsedTimeDK.toDimension ≠ storageCapacityDK.toDimension := by
+  intro h
+  have : (Dim.time).time = (Dim.one).time := congrArg Dimension.time h
+  simp [Dim.time, Dim.one] at this
+
+/-- And what it does not: within the time family the functor conflates again. `w` is
+divided by the shard count and `a` multiplied by it, so the swap does not mis-scale the
+optimum — it inverts which way the optimum moves — and both are dimension `T`. The kind
+layer is still the only instrument, one dimension over. -/
+theorem work_overhead_dimension_conflated :
+    timePerElementDK.toDimension = timePerShardDK.toDimension ∧
+    timePerElementDK.kind ≠ timePerShardDK.kind :=
+  ⟨rfl, Platform.timePerElement_ne_timePerShard⟩
+
+/-- A stopwatch reading is not a rate: same dimension, different kinds — the conflation
+form, completing the family. -/
+theorem elapsed_slope_dimension_conflated :
+    elapsedTimeDK.toDimension = timePerElementDK.toDimension ∧
+    elapsedTimeDK.kind ≠ timePerElementDK.kind :=
+  ⟨rfl, Platform.elapsedTime_ne_timePerElement⟩
 
 end PropertyKindCalculus.Iso80000.PlatformSizing
