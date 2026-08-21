@@ -13,6 +13,10 @@ rounding actually happens.
 R11's witness is a real `Fin 3` vector quantity, which forces the pointwise `LawfulCarrier`
 instance to resolve and its additivity laws to hold by the same parametric proof used for scalars.
 (Core is Mathlib-free, so the vector is built by an explicit function, not `![…]`.)
+
+The array carrier's one honest default is probed both ways: `default` at `Array` *is* the empty
+table (it asserts no magnitude), while a scalar `default` is **rejected** at compile time — a
+default scalar quantity would be a fabricated magnitude, so no instance provides one.
 -/
 
 import PropertyKindCalculus
@@ -90,5 +94,16 @@ theorem r11_vector_laws :
 
 /-- info: 'PropertyKindCalculus.instLawfulCarrierPi' depends on axioms: [Quot.sound] -/
 #guard_msgs in #print axioms instLawfulCarrierPi
+
+-- The one honest default: at the executable array carrier, `default` is the EMPTY table — no
+-- components, so no magnitude is asserted (the panic fallback `xs[i]!` needs on an array of
+-- vector quantities) …
+#guard (default : Quantity lengthK (Array Int)).magnitude == #[]
+-- … while a scalar default stays rejected: a default scalar quantity would be a fabricated
+-- magnitude, so no `Inhabited` instance provides one.
+#check_failure (default : Quantity lengthK Int)
+
+/-- info: 'PropertyKindCalculus.instInhabitedQuantityArray' does not depend on any axioms -/
+#guard_msgs in #print axioms instInhabitedQuantityArray
 
 end PropertyKindCalculus.Tests.Representation
