@@ -315,10 +315,16 @@ def boundarySites (scope : Array Name) : MetaM (Array BoundarySite) := do
     if mints.isEmpty && !erases then continue
     -- A mint under a binder carries loose bvars (`collectBoundary` does not abstract), so its
     -- kind argument is a *variable* of the site, not a nameable kind: render it as the one
-    -- stable word rather than a de Bruijn index or a pretty-printer failure. `eraseDups`
-    -- below then collapses however many parametric mints a site has into one entry.
+    -- stable word rather than a de Bruijn index or a pretty-printer failure. When the mint is
+    -- a named kind *family* applied to the site's variables (`famK s`), the head constant is
+    -- still real information — only the argument is unnameable — so the family keeps its name
+    -- and the stable word marks the application. `eraseDups` below then collapses however many
+    -- same-rendering parametric mints a site has into one entry.
     let mintStrs ← mints.mapM fun a =>
-      if a.hasLooseBVars then return "(kind-parametric)"
+      if a.hasLooseBVars then
+        match a.getAppFn with
+        | .const n _ => return s!"{n} (kind-parametric)"
+        | _ => return "(kind-parametric)"
       else return toString (← Meta.ppExpr a)
     parents := parents.insert parent
     if !mintStrs.isEmpty then

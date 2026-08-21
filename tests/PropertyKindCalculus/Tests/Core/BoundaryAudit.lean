@@ -5,7 +5,9 @@
 and `#print axioms` is to its proofs: the machine enumeration that a probe pins, so a new
 untagged interior mint fails the build. This probe authors one site of each sanctioned tier
 (`@[kindCrossing]`, `@[carrierVocab]`, `@[kindConst]`, `@[kindEmission]`), a kind-parametric
-site (whose mint must render `(kind-parametric)`, not a loose de Bruijn index), one **untagged**
+site (whose mint must render `(kind-parametric)`, not a loose de Bruijn index), an *applied*
+kind-parametric site (a named kind family applied to the site's variable — the family keeps
+its name and only the argument renders as the stable word), one **untagged**
 mint (the violation the audit must catch), a clean pass-through and a Prop-former (which must
 *not* register — a specification is legitimately about `.magnitude`, exactly as a theorem is),
 and a downstream carrier registered through `@[kindCarrier]`, then pins the sorted report and
@@ -34,6 +36,16 @@ report renders `(kind-parametric)` — never a bare de Bruijn index or a pretty-
 failure, both of which would poison a pinned block. -/
 @[carrierVocab]
 def parametricSite (k : KindOfProperty) (x : Float) : Quantity k Float := ⟨x⟩
+
+/-- A probe kind *family*: one kind per label — the applied-parametric case's target. -/
+def probeFamily (label : String) : KindOfProperty :=
+  { id := s!"boundary-audit probe family {label}", scale := .ratio }
+
+/-- An applied kind-parametric site: the minted kind is a named family at a variable argument.
+The family's head is real information and keeps its name in the report; only the argument is
+unnameable, so the stable word marks the application: `probeFamily (kind-parametric)`. -/
+@[carrierVocab]
+def parametricFamilySite (label : String) (x : Float) : Quantity (probeFamily label) Float := ⟨x⟩
 
 /-- A declared constant mint: an adjudicated value enters the calculus as data. -/
 @[kindConst]
@@ -70,6 +82,7 @@ def taggedSite (x : Float) : Tagged probeKind Float := ⟨x⟩
 
 /--
 info: boundary audit:
+[carrierVocab] PropertyKindCalculus.Tests.BoundaryAudit.parametricFamilySite — mints: PropertyKindCalculus.Tests.BoundaryAudit.probeFamily (kind-parametric)
 [carrierVocab] PropertyKindCalculus.Tests.BoundaryAudit.parametricSite — mints: (kind-parametric)
 [carrierVocab] PropertyKindCalculus.Tests.BoundaryAudit.vocabSite — mints: probeKind
 [kindConst] PropertyKindCalculus.Tests.BoundaryAudit.constSite — mints: probeKind
@@ -77,13 +90,14 @@ info: boundary audit:
 [kindCrossing] PropertyKindCalculus.Tests.BoundaryAudit.taggedSite — mints: probeKind
 [kindEmission] PropertyKindCalculus.Tests.BoundaryAudit.emissionSite — erases (emission-only)
 ⚠ UNTAGGED PropertyKindCalculus.Tests.BoundaryAudit.violationSite — mints: probeKind
-7 boundary site(s): 6 tagged, 1 UNTAGGED — invariant 6/7 violation
+8 boundary site(s): 7 tagged, 1 UNTAGGED — invariant 6/7 violation
 -/
 #guard_msgs in
 #kind_boundary_audit PropertyKindCalculus.Tests.BoundaryAudit
 
 /--
 info: tagged boundary crossings:
+[carrierVocab] PropertyKindCalculus.Tests.BoundaryAudit.parametricFamilySite — An applied kind-parametric site: the minted kind is a named family at a variable argument.
 [carrierVocab] PropertyKindCalculus.Tests.BoundaryAudit.parametricSite — A kind-parametric vocabulary site: the minted kind is a *variable* of the site, so the
 [carrierVocab] PropertyKindCalculus.Tests.BoundaryAudit.vocabSite — A carrier-vocabulary exception: a branchless min dropping to the carrier.
 [kindConst] PropertyKindCalculus.Tests.BoundaryAudit.constSite — A declared constant mint: an adjudicated value enters the calculus as data.
