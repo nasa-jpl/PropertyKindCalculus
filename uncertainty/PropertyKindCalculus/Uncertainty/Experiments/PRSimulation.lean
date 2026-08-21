@@ -39,7 +39,7 @@ How the five original obligations closed (Stage 3.6, ordered per `UNCERTAINTY.md
    and neighbours), and re-deriving it against P would duplicate those ~800 lines.
 4. `direct_PR_soundness` — CLOSED as `direct_PR_soundness_compiled` (§7): for a *compiled*
    tape it is the `Γ`-prefix projection of the Stage-3.5 endpoint
-   `backwardDenseFrom_compileAux_adjoint_fderiv` (`Runtime/Link/FDeriv.lean`), transported
+   `backwardDenseFrom_lowerGraphToTape_adjoint_fderiv` (`Runtime/Link/FDeriv.lean`), transported
    to this file's `ArrCorr` phrasing by `getRaw_flattenCtx` (§1) and
    `toAnyArray_extract_takeLeft` (§7). For an *arbitrary* `ForwardSim` tape the statement is
    unprovable for the same reason as (2) — `ForwardSim` does not pin the closures. For the
@@ -124,29 +124,29 @@ theorem toAnyArray_getElem? {ss : List Shape} (xs : Algebra.TList ℝ ss) (i : F
   rw [Array.getElem?_eq_getElem hlt]
   exact congrArg some (Algebra.TList.get_toAnyArray (α := ℝ) (ss := ss) xs i)
 
-/-- **`ForwardSim` is realised by compiled tapes**: `compileAux` on the algebraic embedding of a
+/-- **`ForwardSim` is realised by compiled tapes**: `lowerGraphToTape` on the algebraic embedding of a
     P graph produces a tape forward-simulating that graph.  (So the simulation relation of this
     file is not hypothetical — the Stage-3.5 compile path inhabits it.) -/
-theorem forwardSim_compileAux {Γ ss : List Shape} (g : Graph Γ ss) (x : TList Γ) :
+theorem forwardSim_lowerGraphToTape {Γ ss : List Shape} (g : Graph Γ ss) (x : TList Γ) :
     ForwardSim g (flattenCtx x)
-      (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss) g.toAlgebra x ()).1 := by
+      (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss) g.toAlgebra x ()).1 := by
   have hsize :=
-    Algebra.Graph.compileAux_nodes_size (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss) g.toAlgebra x ()
+    Algebra.Graph.lowerGraphToTape_nodes_size (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss) g.toAlgebra x ()
   have hvals :=
-    Algebra.Graph.compileAux_values_eq (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss) g.toAlgebra x ()
+    Algebra.Graph.lowerGraphToTape_values_eq (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss) g.toAlgebra x ()
   have hctx :=
-    Algebra.Graph.compileAux_ctx_eq_eval (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss) g.toAlgebra x ()
+    Algebra.Graph.lowerGraphToTape_ctx_eq_eval (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss) g.toAlgebra x ()
   have heval : Algebra.Graph.eval (α := ℝ) (Δ := Unit) g.toAlgebra x () = Graph.eval g x := by
     rw [← Algebra.Graph.toReal_eval]
     simp
   refine ⟨by simp [hsize], ?_⟩
   intro i
-  -- Read the stored value through `compileAux_values_eq`.
+  -- Read the stored value through `lowerGraphToTape_values_eq`.
   have hread :
-      (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) g.toAlgebra x ()).1.getValue? i.val
+      (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) g.toAlgebra x ()).1.getValue? i.val
         = (Algebra.TList.toAnyArray (α := ℝ) (ss := Γ ++ ss) (Graph.eval g x))[i.val]? := by
     have hmap :
-        ((Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) g.toAlgebra x ()).1.nodes.map
+        ((Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) g.toAlgebra x ()).1.nodes.map
             (fun node => node.value))[i.val]?
           = (Algebra.TList.toAnyArray (α := ℝ) (ss := Γ ++ ss) (Graph.eval g x))[i.val]? := by
       rw [hvals, hctx, heval]
@@ -669,7 +669,7 @@ theorem backwardShapeWF_mul {s : Shape} (t : RTape) (hwf : BackwardShapeWF t)
    first `Γ.length` slots, equals P's `backpropVec` = `(fderiv ℝ evalVec).adjoint`.  We do NOT
    chain §5 (that would re-derive the A-bridge's fold argument).  Instead the composed value
    statement is the `Γ`-prefix projection of the Stage-3.5 endpoint
-   `backwardDenseFrom_compileAux_adjoint_fderiv`, transported into this file's `ArrCorr`
+   `backwardDenseFrom_lowerGraphToTape_adjoint_fderiv`, transported into this file's `ArrCorr`
    phrasing.  The projection matters because P's `backpropVec` returns INPUT grads only while
    R retains a gradient per node — `Algebra.TList.takeLeft` names the projection on the typed
    side, `Array.extract` on the runtime side, and the two commute with erasure (below).
@@ -717,7 +717,7 @@ theorem direct_PR_soundness_compiled {Γ ss : List Shape}
     (g : Graph Γ ss) (hg : GraphFDerivCorrect g) (x : TList Γ) (seed : TList (Γ ++ ss)) :
     ∃ out : Array Any,
       Runtime.Autograd.Tape.backwardDenseFrom
-          (t := (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
+          (t := (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
             g.toAlgebra x ()).1)
           (grads0 := Algebra.TList.toAnyArray (α := ℝ) (ss := Γ ++ ss) seed)
         = .ok out ∧
@@ -726,7 +726,7 @@ theorem direct_PR_soundness_compiled {Γ ss : List Shape}
   have hg' : GraphFDerivCorrect
       (Algebra.Graph.toReal (Δ := Unit) g.toAlgebra ()) := by simpa using hg
   obtain ⟨h1, h2⟩ :=
-    Algebra.Graph.backwardDenseFrom_compileAux_adjoint_fderiv (Δ := Unit)
+    Algebra.Graph.backwardDenseFrom_lowerGraphToTape_adjoint_fderiv (Δ := Unit)
       g.toAlgebra x () seed hg'
   refine ⟨_, h1, ?_⟩
   rw [toAnyArray_extract_takeLeft]
@@ -744,7 +744,7 @@ theorem direct_PR_soundness_compiled_at {Γ ss : List Shape}
     (hg : GraphFDerivCorrectAt g (flattenCtx x)) (seed : TList (Γ ++ ss)) :
     ∃ out : Array Any,
       Runtime.Autograd.Tape.backwardDenseFrom
-          (t := (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
+          (t := (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
             g.toAlgebra x ()).1)
           (grads0 := Algebra.TList.toAnyArray (α := ℝ) (ss := Γ ++ ss) seed)
         = .ok out ∧
@@ -753,7 +753,7 @@ theorem direct_PR_soundness_compiled_at {Γ ss : List Shape}
   have hg' : GraphFDerivCorrectAt
       (Algebra.Graph.toReal (Δ := Unit) g.toAlgebra ()) (flattenCtx x) := by simpa using hg
   obtain ⟨h1, h2⟩ :=
-    Algebra.Graph.backwardDenseFrom_compileAux_adjoint_fderiv_at (Δ := Unit)
+    Algebra.Graph.backwardDenseFrom_lowerGraphToTape_adjoint_fderiv_at (Δ := Unit)
       g.toAlgebra x () seed hg'
   refine ⟨_, h1, ?_⟩
   rw [toAnyArray_extract_takeLeft]

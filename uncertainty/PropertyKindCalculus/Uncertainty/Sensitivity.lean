@@ -51,13 +51,13 @@ linearized GUM/Willink methods consume (UNCERTAINTY.md §3.2 item 1).
 
 **Stage 3.5 retarget.** The reverse pass is the *total dense* engine entry
 `Tape.backwardDenseFrom` — the very function TorchLean's soundness theorem
-`backwardDenseFrom_compileAux_adjoint_fderiv` (`NN/Proofs/Autograd/Runtime/Link/FDeriv.lean`)
+`backwardDenseFrom_lowerGraphToTape_adjoint_fderiv` (`NN/Proofs/Autograd/Runtime/Link/FDeriv.lean`)
 characterizes: on a compiled graph at the `ℝ` carrier, its input-prefix output is the adjoint of
 the Fréchet derivative of the forward evaluation. The seed is `1` at the scalar output and `0`
 everywhere else, which on a topologically-ordered tape computes the same accumulation as the
 previous reachability-pruned `backwardScalar` path (a dead subexpression now contributes an exact
 `0` instead of being skipped). The two honest gaps that remain are recorded in UNCERTAINTY.md
-§3.2/§6: this tape is built eagerly rather than by `compileAux` (provenance), and it runs at
+§3.2/§6: this tape is built eagerly rather than by `lowerGraphToTape` (provenance), and it runs at
 `Float` while the theorem speaks at `ℝ` (the deviation is this workstream's own Adequacy claim). -/
 def gradient (model : ScalarModel) (point : List Float) : Except String (List Float) := do
   let ((ids, outId), t) ← TapeM.run Tape.empty do

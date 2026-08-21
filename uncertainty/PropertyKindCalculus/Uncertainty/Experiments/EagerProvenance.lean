@@ -3,7 +3,7 @@
 
 Stage 3.6 closed the direct P↔R simulation for *compiled* tapes and left one residual: the tape
 PKC's `Sensitivity.gradient` actually runs on is built *eagerly* by the runtime constructors
-(`Tape.leaf`/`Tape.add`/`Tape.mul`, via the `TapeM` sugar), not by `compileAux` — and `ForwardSim`
+(`Tape.leaf`/`Tape.add`/`Tape.mul`, via the `TapeM` sugar), not by `lowerGraphToTape` — and `ForwardSim`
 alone cannot identify the two, because it does not pin the opaque backward closures
 (`PRSimulation.lean` §6/§7). This module closes that identification for the `leaf`/`add`/`sub`/`mul`
 fragment, as pure accounting:
@@ -13,7 +13,7 @@ fragment, as pure accounting:
   one `Tape.add`/`Tape.sub`/`Tape.mul` call per `TapeNodes.add`/`TapeNodes.sub`/`TapeNodes.mul`
   node).
 * **`backwardDenseFrom_eager_eq_compiled`** (§F): on such a tape the total dense reverse pass
-  computes *exactly* what it computes on `compileAux g.toAlgebra x ()` — same `Result`, same
+  computes *exactly* what it computes on `lowerGraphToTape g.toAlgebra x ()` — same `Result`, same
   array. The proof never re-derives the reverse-pass fold: the compiled node's dense
   contribution list is folded by the upstream accumulation bridge
   (`foldlM_addGradAll_toIndexedAnyList_eq_add`), the eager node's sparse two-element list by the
@@ -1017,9 +1017,9 @@ theorem eval_toAlgebra {Γ : List Shape} {ss : List Shape} (g : Graph Γ ss) (x 
   simp
 
 /-- The eager base tape is the compiled tape of the empty graph. -/
-theorem addLeaves_eq_compileAux_nil {Γ : List Shape} (x : TList Γ) :
+theorem addLeaves_eq_lowerGraphToTape_nil {Γ : List Shape} (x : TList Γ) :
     Algebra.Graph.addLeaves (α := ℝ) (t := Runtime.Autograd.Tape.empty) x
-      = (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := [])
+      = (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := [])
           (Graph.toAlgebra .nil) x ()).1 := rfl
 
 /-- Sizes: an eagerly built tape has one node per context slot. -/
@@ -1201,14 +1201,14 @@ theorem eagerBuilds_rg {Γ : List Shape} :
   | nil x =>
     intro i node hnode
     have hi := lt_of_getNode?_eq_some hnode
-    have := Algebra.Graph.compileAux_requires_grad_true (α := ℝ) (Δ := Unit) (Γ := Γ)
+    have := Algebra.Graph.lowerGraphToTape_requires_grad_true (α := ℝ) (Δ := Unit) (Γ := Γ)
       (ss := []) (Graph.toAlgebra .nil) x ()
-    rw [addLeaves_eq_compileAux_nil] at hnode hi
+    rw [addLeaves_eq_lowerGraphToTape_nil] at hnode hi
     have hval := this i hi
-    have : node = (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := [])
+    have : node = (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := [])
         (Graph.toAlgebra .nil) x ()).1.nodes[i]'hi := by
-      have hn : (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := [])
-          (Graph.toAlgebra .nil) x ()).1.getNode? i = some ((Algebra.Graph.compileAux (α := ℝ)
+      have hn : (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := [])
+          (Graph.toAlgebra .nil) x ()).1.getNode? i = some ((Algebra.Graph.lowerGraphToTape (α := ℝ)
             (Δ := Unit) (Γ := Γ) (ss := []) (Graph.toAlgebra .nil) x ()).1.nodes[i]'hi) := by
         simp [Runtime.Autograd.Tape.getNode?, Array.getElem?_eq_getElem hi]
       rw [hn] at hnode
@@ -1275,8 +1275,8 @@ theorem eagerBuilds_pids {Γ : List Shape} :
   induction h with
   | nil x =>
     intro i node hnode dc cs hback pc hpc
-    rw [addLeaves_eq_compileAux_nil] at hnode
-    exact Algebra.Graph.compileAux_backward_pids_lt_id (α := ℝ) (Δ := Unit) (Γ := Γ)
+    rw [addLeaves_eq_lowerGraphToTape_nil] at hnode
+    exact Algebra.Graph.lowerGraphToTape_backward_pids_lt_id (α := ℝ) (Δ := Unit) (Γ := Γ)
       (ss := []) (Graph.toAlgebra .nil) x () i node hnode dc cs hback hpc
   | add a b hg hop ih =>
     rename_i ss τ g x t t' id
@@ -1467,7 +1467,7 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
         Runtime.Autograd.Tape.backwardDenseFromLoop (t := t) ((Γ ++ ss).length)
             (Algebra.TList.toAnyArray (α := ℝ) S)
           = Runtime.Autograd.Tape.backwardDenseFromLoop
-              (t := (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
+              (t := (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
                 g.toAlgebra x ()).1)
               ((Γ ++ ss).length) (Algebra.TList.toAnyArray (α := ℝ) S) := by
   intro ss g x t h
@@ -1490,25 +1490,25 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
     subst ht'
     intro S
     -- compiled prefix tape and its facts
-    set tc := (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
+    set tc := (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
       g.toAlgebra x ()).1 with htc
     have hsize_c : tc.nodes.size = (Γ ++ ss).length := by
-      rw [htc, Algebra.Graph.compileAux_nodes_size]
+      rw [htc, Algebra.Graph.lowerGraphToTape_nodes_size]
       simp
-    have hctxc : (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
+    have hctxc : (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
         g.toAlgebra x ()).2 = Graph.eval g x := by
-      rw [Algebra.Graph.compileAux_ctx_eq_eval, eval_toAlgebra]
+      rw [Algebra.Graph.lowerGraphToTape_ctx_eq_eval, eval_toAlgebra]
     have hvals_c : tc.nodes.map (fun node => node.value)
         = Algebra.TList.toAnyArray (α := ℝ) (Graph.eval g x) := by
-      rw [htc, Algebra.Graph.compileAux_values_eq, hctxc]
+      rw [htc, Algebra.Graph.lowerGraphToTape_values_eq, hctxc]
     -- the compiled snoc tape is `tc` extended with the compiled node
-    have hcomp : (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
+    have hcomp : (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
         (Graph.snoc g (TapeNodes.mul a b)).toAlgebra x ()).1
       = (tc.addNode
-          { name := some "proof-compiled"
+          { name := some "proof-carrying-graph"
             value := Runtime.Autograd.AnyTensor.mk
               (((TapeNodes.mul a b).toAlgebra).forward
-                ((Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
+                ((Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
                   g.toAlgebra x ()).2) ())
             requires_grad := true
             parents := []
@@ -1516,7 +1516,7 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
               if hsh : dLdyAny.s = τ then
                 .ok (Algebra.TList.toIndexedAnyList (α := ℝ) (ss := Γ ++ ss)
                   (((TapeNodes.mul a b).toAlgebra).vjp
-                    ((Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
+                    ((Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
                       g.toAlgebra x ()).2) ()
                     (Tensor.castShape dLdyAny.t hsh)) 0)
               else .error "autograd: upstream gradient shape mismatch" }).1 := rfl
@@ -1599,12 +1599,12 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
         List.foldlM_cons, List.foldlM_nil, bind, Except.bind, pure, Except.pure,
         Except.map] using hpush
     -- compiled step at the last id
-    have hnodeN_c : (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
+    have hnodeN_c : (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
         (Graph.snoc g (TapeNodes.mul a b)).toAlgebra x ()).1.getNode? ((Γ ++ ss).length)
-      = some { name := some "proof-compiled"
+      = some { name := some "proof-carrying-graph"
                value := Runtime.Autograd.AnyTensor.mk
                  (((TapeNodes.mul a b).toAlgebra).forward
-                   ((Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
+                   ((Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
                      g.toAlgebra x ()).2) ())
                requires_grad := true
                parents := []
@@ -1612,14 +1612,14 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
                  if hsh : dLdyAny.s = τ then
                    .ok (Algebra.TList.toIndexedAnyList (α := ℝ) (ss := Γ ++ ss)
                      (((TapeNodes.mul a b).toAlgebra).vjp
-                       ((Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
+                       ((Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
                          g.toAlgebra x ()).2) ()
                        (Tensor.castShape dLdyAny.t hsh)) 0)
                  else .error "autograd: upstream gradient shape mismatch" } := by
       rw [hcomp, ← hsize_c]
       exact getNode?_addNode_size tc _
     have hupstream := Algebra.Graph.foldlM_addGradAll_toIndexedAnyList_eq_add (α := ℝ)
-      (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
+      (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
         (Graph.snoc g (TapeNodes.mul a b)).toAlgebra x ()).1
       (ss := Γ ++ ss) #[] u
       ((TapeNodes.mul (Γ := Γ ++ ss) (s := τ) a b).vjp (Graph.eval g x) y)
@@ -1634,7 +1634,7 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
           show (tc.addNode _).1.getNode? (#[].size + i) = some node
           simpa using (getNode?_addNode_lt tc _ hlt).trans hnode
         · -- all compiled nodes are live
-          have := Algebra.Graph.compileAux_requires_grad_true (α := ℝ) (Δ := Unit)
+          have := Algebra.Graph.lowerGraphToTape_requires_grad_true (α := ℝ) (Δ := Unit)
             (Γ := Γ) (ss := ss) g.toAlgebra x ()
           have hnode' : tc.getNode? i = some (tc.nodes[i]'hlt) := by
             simp [Runtime.Autograd.Tape.getNode?, Array.getElem?_eq_getElem hlt]
@@ -1648,7 +1648,7 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
           rw [he]
           rfl)
     have hstep_c : Runtime.Autograd.Tape.backwardDenseFromStep
-        (t := (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
+        (t := (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
           (Graph.snoc g (TapeNodes.mul a b)).toAlgebra x ()).1)
         ((Algebra.TList.toAnyArray (α := ℝ) u).push (mkAny y)) ((Γ ++ ss).length)
       = .ok ((Algebra.TList.toAnyArray (α := ℝ)
@@ -1671,7 +1671,7 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
         bind, Except.bind, pure, Except.pure]
       rw [hpre, hpost]
       have harg : ((TapeNodes.mul a b).toAlgebra).vjp
-          ((Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
+          ((Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
             g.toAlgebra x ()).2) () y
         = (TapeNodes.mul (Γ := Γ ++ ss) (s := τ) a b).vjp (Graph.eval g x) y := by
         rw [hctxc]
@@ -1689,25 +1689,25 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
           (t := (t.addNode (eagerMulNode a.i.val b.i.val (getIdx (Graph.eval g x) a) (getIdx (Graph.eval g x) b))).1)
           ((Γ ++ ss).length) acc')
       = (Runtime.Autograd.Tape.backwardDenseFromStep
-          (t := (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
+          (t := (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
             (Graph.snoc g (TapeNodes.mul a b)).toAlgebra x ()).1)
           ((Algebra.TList.toAnyArray (α := ℝ) u).push (mkAny y)) ((Γ ++ ss).length)
         >>= fun acc' => Runtime.Autograd.Tape.backwardDenseFromLoop
-          (t := (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
+          (t := (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
             (Graph.snoc g (TapeNodes.mul a b)).toAlgebra x ()).1)
           ((Γ ++ ss).length) acc')
     rw [hstep_e, hstep_c]
     show Runtime.Autograd.Tape.backwardDenseFromLoop
         (t := (t.addNode (eagerMulNode a.i.val b.i.val (getIdx (Graph.eval g x) a) (getIdx (Graph.eval g x) b))).1) ((Γ ++ ss).length) _
       = Runtime.Autograd.Tape.backwardDenseFromLoop
-        (t := (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
+        (t := (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
           (Graph.snoc g (TapeNodes.mul a b)).toAlgebra x ()).1) ((Γ ++ ss).length) _
     rw [hcomp]
     rw [backwardDenseFromLoop_push t _ (eagerBuilds_pids hg) ((Γ ++ ss).length)
       (by rw [hsize]) _ (mkAny y) (by simp [hsize]),
       backwardDenseFromLoop_push tc _
         (fun i node hnode dc cs hback pc hpc =>
-          Algebra.Graph.compileAux_backward_pids_lt_id (α := ℝ) (Δ := Unit) (Γ := Γ)
+          Algebra.Graph.lowerGraphToTape_backward_pids_lt_id (α := ℝ) (Δ := Unit) (Γ := Γ)
             (ss := ss) g.toAlgebra x () i node hnode dc cs hback hpc)
         ((Γ ++ ss).length) (by rw [hsize_c]) _ (mkAny y) (by simp [hsize_c])]
     rw [ih]
@@ -1727,24 +1727,24 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
     rw [haT, hbT] at ht'
     subst ht'
     intro S
-    set tc := (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
+    set tc := (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
       g.toAlgebra x ()).1 with htc
     have hsize_c : tc.nodes.size = (Γ ++ ss).length := by
-      rw [htc, Algebra.Graph.compileAux_nodes_size]
+      rw [htc, Algebra.Graph.lowerGraphToTape_nodes_size]
       simp
-    have hctxc : (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
+    have hctxc : (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
         g.toAlgebra x ()).2 = Graph.eval g x := by
-      rw [Algebra.Graph.compileAux_ctx_eq_eval, eval_toAlgebra]
+      rw [Algebra.Graph.lowerGraphToTape_ctx_eq_eval, eval_toAlgebra]
     have hvals_c : tc.nodes.map (fun node => node.value)
         = Algebra.TList.toAnyArray (α := ℝ) (Graph.eval g x) := by
-      rw [htc, Algebra.Graph.compileAux_values_eq, hctxc]
-    have hcomp : (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
+      rw [htc, Algebra.Graph.lowerGraphToTape_values_eq, hctxc]
+    have hcomp : (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
         (Graph.snoc g (TapeNodes.add a b)).toAlgebra x ()).1
       = (tc.addNode
-          { name := some "proof-compiled"
+          { name := some "proof-carrying-graph"
             value := Runtime.Autograd.AnyTensor.mk
               (((TapeNodes.add a b).toAlgebra).forward
-                ((Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
+                ((Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
                   g.toAlgebra x ()).2) ())
             requires_grad := true
             parents := []
@@ -1752,7 +1752,7 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
               if hsh : dLdyAny.s = τ then
                 .ok (Algebra.TList.toIndexedAnyList (α := ℝ) (ss := Γ ++ ss)
                   (((TapeNodes.add a b).toAlgebra).vjp
-                    ((Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
+                    ((Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
                       g.toAlgebra x ()).2) ()
                     (Tensor.castShape dLdyAny.t hsh)) 0)
               else .error "autograd: upstream gradient shape mismatch" }).1 := rfl
@@ -1830,12 +1830,12 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
       simpa [eagerAddNode, mkAny, Runtime.Autograd.AnyTensor.mk, hrgY,
         List.foldlM_cons, List.foldlM_nil, bind, Except.bind, pure, Except.pure,
         Except.map] using hpush
-    have hnodeN_c : (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
+    have hnodeN_c : (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
         (Graph.snoc g (TapeNodes.add a b)).toAlgebra x ()).1.getNode? ((Γ ++ ss).length)
-      = some { name := some "proof-compiled"
+      = some { name := some "proof-carrying-graph"
                value := Runtime.Autograd.AnyTensor.mk
                  (((TapeNodes.add a b).toAlgebra).forward
-                   ((Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
+                   ((Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
                      g.toAlgebra x ()).2) ())
                requires_grad := true
                parents := []
@@ -1843,14 +1843,14 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
                  if hsh : dLdyAny.s = τ then
                    .ok (Algebra.TList.toIndexedAnyList (α := ℝ) (ss := Γ ++ ss)
                      (((TapeNodes.add a b).toAlgebra).vjp
-                       ((Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
+                       ((Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
                          g.toAlgebra x ()).2) ()
                        (Tensor.castShape dLdyAny.t hsh)) 0)
                  else .error "autograd: upstream gradient shape mismatch" } := by
       rw [hcomp, ← hsize_c]
       exact getNode?_addNode_size tc _
     have hupstream := Algebra.Graph.foldlM_addGradAll_toIndexedAnyList_eq_add (α := ℝ)
-      (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
+      (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
         (Graph.snoc g (TapeNodes.add a b)).toAlgebra x ()).1
       (ss := Γ ++ ss) #[] u
       ((TapeNodes.add (Γ := Γ ++ ss) (s := τ) a b).vjp (Graph.eval g x) y)
@@ -1864,7 +1864,7 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
         · rw [hcomp]
           show (tc.addNode _).1.getNode? (#[].size + i) = some node
           simpa using (getNode?_addNode_lt tc _ hlt).trans hnode
-        · have := Algebra.Graph.compileAux_requires_grad_true (α := ℝ) (Δ := Unit)
+        · have := Algebra.Graph.lowerGraphToTape_requires_grad_true (α := ℝ) (Δ := Unit)
             (Γ := Γ) (ss := ss) g.toAlgebra x ()
           have hnode' : tc.getNode? i = some (tc.nodes[i]'hlt) := by
             simp [Runtime.Autograd.Tape.getNode?, Array.getElem?_eq_getElem hlt]
@@ -1878,7 +1878,7 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
           rw [he]
           rfl)
     have hstep_c : Runtime.Autograd.Tape.backwardDenseFromStep
-        (t := (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
+        (t := (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
           (Graph.snoc g (TapeNodes.add a b)).toAlgebra x ()).1)
         ((Algebra.TList.toAnyArray (α := ℝ) u).push (mkAny y)) ((Γ ++ ss).length)
       = .ok ((Algebra.TList.toAnyArray (α := ℝ)
@@ -1901,7 +1901,7 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
         bind, Except.bind, pure, Except.pure]
       rw [hpre, hpost]
       have harg : ((TapeNodes.add a b).toAlgebra).vjp
-          ((Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
+          ((Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
             g.toAlgebra x ()).2) () y
         = (TapeNodes.add (Γ := Γ ++ ss) (s := τ) a b).vjp (Graph.eval g x) y := by
         rw [hctxc]
@@ -1918,25 +1918,25 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
           (t := (t.addNode (eagerAddNode a.i.val b.i.val (getIdx (Graph.eval g x) a) (getIdx (Graph.eval g x) b))).1)
           ((Γ ++ ss).length) acc')
       = (Runtime.Autograd.Tape.backwardDenseFromStep
-          (t := (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
+          (t := (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
             (Graph.snoc g (TapeNodes.add a b)).toAlgebra x ()).1)
           ((Algebra.TList.toAnyArray (α := ℝ) u).push (mkAny y)) ((Γ ++ ss).length)
         >>= fun acc' => Runtime.Autograd.Tape.backwardDenseFromLoop
-          (t := (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
+          (t := (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
             (Graph.snoc g (TapeNodes.add a b)).toAlgebra x ()).1)
           ((Γ ++ ss).length) acc')
     rw [hstep_e, hstep_c]
     show Runtime.Autograd.Tape.backwardDenseFromLoop
         (t := (t.addNode (eagerAddNode a.i.val b.i.val (getIdx (Graph.eval g x) a) (getIdx (Graph.eval g x) b))).1) ((Γ ++ ss).length) _
       = Runtime.Autograd.Tape.backwardDenseFromLoop
-        (t := (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
+        (t := (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
           (Graph.snoc g (TapeNodes.add a b)).toAlgebra x ()).1) ((Γ ++ ss).length) _
     rw [hcomp]
     rw [backwardDenseFromLoop_push t _ (eagerBuilds_pids hg) ((Γ ++ ss).length)
       (by rw [hsize]) _ (mkAny y) (by simp [hsize]),
       backwardDenseFromLoop_push tc _
         (fun i node hnode dc cs hback pc hpc =>
-          Algebra.Graph.compileAux_backward_pids_lt_id (α := ℝ) (Δ := Unit) (Γ := Γ)
+          Algebra.Graph.lowerGraphToTape_backward_pids_lt_id (α := ℝ) (Δ := Unit) (Γ := Γ)
             (ss := ss) g.toAlgebra x () i node hnode dc cs hback hpc)
         ((Γ ++ ss).length) (by rw [hsize_c]) _ (mkAny y) (by simp [hsize_c])]
     rw [ih]
@@ -1956,24 +1956,24 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
     rw [haT, hbT] at ht'
     subst ht'
     intro S
-    set tc := (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
+    set tc := (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
       g.toAlgebra x ()).1 with htc
     have hsize_c : tc.nodes.size = (Γ ++ ss).length := by
-      rw [htc, Algebra.Graph.compileAux_nodes_size]
+      rw [htc, Algebra.Graph.lowerGraphToTape_nodes_size]
       simp
-    have hctxc : (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
+    have hctxc : (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
         g.toAlgebra x ()).2 = Graph.eval g x := by
-      rw [Algebra.Graph.compileAux_ctx_eq_eval, eval_toAlgebra]
+      rw [Algebra.Graph.lowerGraphToTape_ctx_eq_eval, eval_toAlgebra]
     have hvals_c : tc.nodes.map (fun node => node.value)
         = Algebra.TList.toAnyArray (α := ℝ) (Graph.eval g x) := by
-      rw [htc, Algebra.Graph.compileAux_values_eq, hctxc]
-    have hcomp : (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
+      rw [htc, Algebra.Graph.lowerGraphToTape_values_eq, hctxc]
+    have hcomp : (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
         (Graph.snoc g (TapeNodes.sub a b)).toAlgebra x ()).1
       = (tc.addNode
-          { name := some "proof-compiled"
+          { name := some "proof-carrying-graph"
             value := Runtime.Autograd.AnyTensor.mk
               (((TapeNodes.sub a b).toAlgebra).forward
-                ((Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
+                ((Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
                   g.toAlgebra x ()).2) ())
             requires_grad := true
             parents := []
@@ -1981,7 +1981,7 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
               if hsh : dLdyAny.s = τ then
                 .ok (Algebra.TList.toIndexedAnyList (α := ℝ) (ss := Γ ++ ss)
                   (((TapeNodes.sub a b).toAlgebra).vjp
-                    ((Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
+                    ((Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
                       g.toAlgebra x ()).2) ()
                     (Tensor.castShape dLdyAny.t hsh)) 0)
               else .error "autograd: upstream gradient shape mismatch" }).1 := rfl
@@ -2059,12 +2059,12 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
       simpa [eagerSubNode, mkAny, Runtime.Autograd.AnyTensor.mk, hrgY,
         List.foldlM_cons, List.foldlM_nil, bind, Except.bind, pure, Except.pure,
         Except.map] using hpush
-    have hnodeN_c : (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
+    have hnodeN_c : (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
         (Graph.snoc g (TapeNodes.sub a b)).toAlgebra x ()).1.getNode? ((Γ ++ ss).length)
-      = some { name := some "proof-compiled"
+      = some { name := some "proof-carrying-graph"
                value := Runtime.Autograd.AnyTensor.mk
                  (((TapeNodes.sub a b).toAlgebra).forward
-                   ((Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
+                   ((Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
                      g.toAlgebra x ()).2) ())
                requires_grad := true
                parents := []
@@ -2072,14 +2072,14 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
                  if hsh : dLdyAny.s = τ then
                    .ok (Algebra.TList.toIndexedAnyList (α := ℝ) (ss := Γ ++ ss)
                      (((TapeNodes.sub a b).toAlgebra).vjp
-                       ((Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
+                       ((Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
                          g.toAlgebra x ()).2) ()
                        (Tensor.castShape dLdyAny.t hsh)) 0)
                  else .error "autograd: upstream gradient shape mismatch" } := by
       rw [hcomp, ← hsize_c]
       exact getNode?_addNode_size tc _
     have hupstream := Algebra.Graph.foldlM_addGradAll_toIndexedAnyList_eq_add (α := ℝ)
-      (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
+      (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
         (Graph.snoc g (TapeNodes.sub a b)).toAlgebra x ()).1
       (ss := Γ ++ ss) #[] u
       ((TapeNodes.sub (Γ := Γ ++ ss) (s := τ) a b).vjp (Graph.eval g x) y)
@@ -2093,7 +2093,7 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
         · rw [hcomp]
           show (tc.addNode _).1.getNode? (#[].size + i) = some node
           simpa using (getNode?_addNode_lt tc _ hlt).trans hnode
-        · have := Algebra.Graph.compileAux_requires_grad_true (α := ℝ) (Δ := Unit)
+        · have := Algebra.Graph.lowerGraphToTape_requires_grad_true (α := ℝ) (Δ := Unit)
             (Γ := Γ) (ss := ss) g.toAlgebra x ()
           have hnode' : tc.getNode? i = some (tc.nodes[i]'hlt) := by
             simp [Runtime.Autograd.Tape.getNode?, Array.getElem?_eq_getElem hlt]
@@ -2107,7 +2107,7 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
           rw [he]
           rfl)
     have hstep_c : Runtime.Autograd.Tape.backwardDenseFromStep
-        (t := (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
+        (t := (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
           (Graph.snoc g (TapeNodes.sub a b)).toAlgebra x ()).1)
         ((Algebra.TList.toAnyArray (α := ℝ) u).push (mkAny y)) ((Γ ++ ss).length)
       = .ok ((Algebra.TList.toAnyArray (α := ℝ)
@@ -2130,7 +2130,7 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
         bind, Except.bind, pure, Except.pure]
       rw [hpre, hpost]
       have harg : ((TapeNodes.sub a b).toAlgebra).vjp
-          ((Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
+          ((Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
             g.toAlgebra x ()).2) () y
         = (TapeNodes.sub (Γ := Γ ++ ss) (s := τ) a b).vjp (Graph.eval g x) y := by
         rw [hctxc]
@@ -2147,25 +2147,25 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
           (t := (t.addNode (eagerSubNode a.i.val b.i.val (getIdx (Graph.eval g x) a) (getIdx (Graph.eval g x) b))).1)
           ((Γ ++ ss).length) acc')
       = (Runtime.Autograd.Tape.backwardDenseFromStep
-          (t := (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
+          (t := (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
             (Graph.snoc g (TapeNodes.sub a b)).toAlgebra x ()).1)
           ((Algebra.TList.toAnyArray (α := ℝ) u).push (mkAny y)) ((Γ ++ ss).length)
         >>= fun acc' => Runtime.Autograd.Tape.backwardDenseFromLoop
-          (t := (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
+          (t := (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
             (Graph.snoc g (TapeNodes.sub a b)).toAlgebra x ()).1)
           ((Γ ++ ss).length) acc')
     rw [hstep_e, hstep_c]
     show Runtime.Autograd.Tape.backwardDenseFromLoop
         (t := (t.addNode (eagerSubNode a.i.val b.i.val (getIdx (Graph.eval g x) a) (getIdx (Graph.eval g x) b))).1) ((Γ ++ ss).length) _
       = Runtime.Autograd.Tape.backwardDenseFromLoop
-        (t := (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
+        (t := (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
           (Graph.snoc g (TapeNodes.sub a b)).toAlgebra x ()).1) ((Γ ++ ss).length) _
     rw [hcomp]
     rw [backwardDenseFromLoop_push t _ (eagerBuilds_pids hg) ((Γ ++ ss).length)
       (by rw [hsize]) _ (mkAny y) (by simp [hsize]),
       backwardDenseFromLoop_push tc _
         (fun i node hnode dc cs hback pc hpc =>
-          Algebra.Graph.compileAux_backward_pids_lt_id (α := ℝ) (Δ := Unit) (Γ := Γ)
+          Algebra.Graph.lowerGraphToTape_backward_pids_lt_id (α := ℝ) (Δ := Unit) (Γ := Γ)
             (ss := ss) g.toAlgebra x () i node hnode dc cs hback hpc)
         ((Γ ++ ss).length) (by rw [hsize_c]) _ (mkAny y) (by simp [hsize_c])]
     rw [ih]
@@ -2185,24 +2185,24 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
     rw [haT, hbT] at ht'
     subst ht'
     intro S
-    set tc := (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
+    set tc := (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
       g.toAlgebra x ()).1 with htc
     have hsize_c : tc.nodes.size = (Γ ++ ss).length := by
-      rw [htc, Algebra.Graph.compileAux_nodes_size]
+      rw [htc, Algebra.Graph.lowerGraphToTape_nodes_size]
       simp
-    have hctxc : (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
+    have hctxc : (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
         g.toAlgebra x ()).2 = Graph.eval g x := by
-      rw [Algebra.Graph.compileAux_ctx_eq_eval, eval_toAlgebra]
+      rw [Algebra.Graph.lowerGraphToTape_ctx_eq_eval, eval_toAlgebra]
     have hvals_c : tc.nodes.map (fun node => node.value)
         = Algebra.TList.toAnyArray (α := ℝ) (Graph.eval g x) := by
-      rw [htc, Algebra.Graph.compileAux_values_eq, hctxc]
-    have hcomp : (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
+      rw [htc, Algebra.Graph.lowerGraphToTape_values_eq, hctxc]
+    have hcomp : (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
         (Graph.snoc g (TapeNodes.div a b)).toAlgebra x ()).1
       = (tc.addNode
-          { name := some "proof-compiled"
+          { name := some "proof-carrying-graph"
             value := Runtime.Autograd.AnyTensor.mk
               (((TapeNodes.div a b).toAlgebra).forward
-                ((Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
+                ((Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
                   g.toAlgebra x ()).2) ())
             requires_grad := true
             parents := []
@@ -2210,7 +2210,7 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
               if hsh : dLdyAny.s = τ then
                 .ok (Algebra.TList.toIndexedAnyList (α := ℝ) (ss := Γ ++ ss)
                   (((TapeNodes.div a b).toAlgebra).vjp
-                    ((Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
+                    ((Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
                       g.toAlgebra x ()).2) ()
                     (Tensor.castShape dLdyAny.t hsh)) 0)
               else .error "autograd: upstream gradient shape mismatch" }).1 := rfl
@@ -2310,12 +2310,12 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
       simpa [eagerDivNode, mkAny, Runtime.Autograd.AnyTensor.mk, hrgY,
         List.foldlM_cons, List.foldlM_nil, bind, Except.bind, pure, Except.pure,
         Except.map] using hpush
-    have hnodeN_c : (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
+    have hnodeN_c : (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
         (Graph.snoc g (TapeNodes.div a b)).toAlgebra x ()).1.getNode? ((Γ ++ ss).length)
-      = some { name := some "proof-compiled"
+      = some { name := some "proof-carrying-graph"
                value := Runtime.Autograd.AnyTensor.mk
                  (((TapeNodes.div a b).toAlgebra).forward
-                   ((Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
+                   ((Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
                      g.toAlgebra x ()).2) ())
                requires_grad := true
                parents := []
@@ -2323,14 +2323,14 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
                  if hsh : dLdyAny.s = τ then
                    .ok (Algebra.TList.toIndexedAnyList (α := ℝ) (ss := Γ ++ ss)
                      (((TapeNodes.div a b).toAlgebra).vjp
-                       ((Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
+                       ((Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
                          g.toAlgebra x ()).2) ()
                        (Tensor.castShape dLdyAny.t hsh)) 0)
                  else .error "autograd: upstream gradient shape mismatch" } := by
       rw [hcomp, ← hsize_c]
       exact getNode?_addNode_size tc _
     have hupstream := Algebra.Graph.foldlM_addGradAll_toIndexedAnyList_eq_add (α := ℝ)
-      (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
+      (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
         (Graph.snoc g (TapeNodes.div a b)).toAlgebra x ()).1
       (ss := Γ ++ ss) #[] u
       ((TapeNodes.div (Γ := Γ ++ ss) (s := τ) a b).vjp (Graph.eval g x) y)
@@ -2344,7 +2344,7 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
         · rw [hcomp]
           show (tc.addNode _).1.getNode? (#[].size + i) = some node
           simpa using (getNode?_addNode_lt tc _ hlt).trans hnode
-        · have := Algebra.Graph.compileAux_requires_grad_true (α := ℝ) (Δ := Unit)
+        · have := Algebra.Graph.lowerGraphToTape_requires_grad_true (α := ℝ) (Δ := Unit)
             (Γ := Γ) (ss := ss) g.toAlgebra x ()
           have hnode' : tc.getNode? i = some (tc.nodes[i]'hlt) := by
             simp [Runtime.Autograd.Tape.getNode?, Array.getElem?_eq_getElem hlt]
@@ -2358,7 +2358,7 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
           rw [he]
           rfl)
     have hstep_c : Runtime.Autograd.Tape.backwardDenseFromStep
-        (t := (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
+        (t := (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
           (Graph.snoc g (TapeNodes.div a b)).toAlgebra x ()).1)
         ((Algebra.TList.toAnyArray (α := ℝ) u).push (mkAny y)) ((Γ ++ ss).length)
       = .ok ((Algebra.TList.toAnyArray (α := ℝ)
@@ -2381,7 +2381,7 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
         bind, Except.bind, pure, Except.pure]
       rw [hpre, hpost]
       have harg : ((TapeNodes.div a b).toAlgebra).vjp
-          ((Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
+          ((Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
             g.toAlgebra x ()).2) () y
         = (TapeNodes.div (Γ := Γ ++ ss) (s := τ) a b).vjp (Graph.eval g x) y := by
         rw [hctxc]
@@ -2398,25 +2398,25 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
           (t := (t.addNode (eagerDivNode a.i.val b.i.val (getIdx (Graph.eval g x) a) (getIdx (Graph.eval g x) b))).1)
           ((Γ ++ ss).length) acc')
       = (Runtime.Autograd.Tape.backwardDenseFromStep
-          (t := (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
+          (t := (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
             (Graph.snoc g (TapeNodes.div a b)).toAlgebra x ()).1)
           ((Algebra.TList.toAnyArray (α := ℝ) u).push (mkAny y)) ((Γ ++ ss).length)
         >>= fun acc' => Runtime.Autograd.Tape.backwardDenseFromLoop
-          (t := (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
+          (t := (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
             (Graph.snoc g (TapeNodes.div a b)).toAlgebra x ()).1)
           ((Γ ++ ss).length) acc')
     rw [hstep_e, hstep_c]
     show Runtime.Autograd.Tape.backwardDenseFromLoop
         (t := (t.addNode (eagerDivNode a.i.val b.i.val (getIdx (Graph.eval g x) a) (getIdx (Graph.eval g x) b))).1) ((Γ ++ ss).length) _
       = Runtime.Autograd.Tape.backwardDenseFromLoop
-        (t := (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
+        (t := (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
           (Graph.snoc g (TapeNodes.div a b)).toAlgebra x ()).1) ((Γ ++ ss).length) _
     rw [hcomp]
     rw [backwardDenseFromLoop_push t _ (eagerBuilds_pids hg) ((Γ ++ ss).length)
       (by rw [hsize]) _ (mkAny y) (by simp [hsize]),
       backwardDenseFromLoop_push tc _
         (fun i node hnode dc cs hback pc hpc =>
-          Algebra.Graph.compileAux_backward_pids_lt_id (α := ℝ) (Δ := Unit) (Γ := Γ)
+          Algebra.Graph.lowerGraphToTape_backward_pids_lt_id (α := ℝ) (Δ := Unit) (Γ := Γ)
             (ss := ss) g.toAlgebra x () i node hnode dc cs hback hpc)
         ((Γ ++ ss).length) (by rw [hsize_c]) _ (mkAny y) (by simp [hsize_c])]
     rw [ih]
@@ -2432,24 +2432,24 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
     rw [hxT] at ht'
     subst ht'
     intro S
-    set tc := (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
+    set tc := (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
       g.toAlgebra x ()).1 with htc
     have hsize_c : tc.nodes.size = (Γ ++ ss).length := by
-      rw [htc, Algebra.Graph.compileAux_nodes_size]
+      rw [htc, Algebra.Graph.lowerGraphToTape_nodes_size]
       simp
-    have hctxc : (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
+    have hctxc : (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
         g.toAlgebra x ()).2 = Graph.eval g x := by
-      rw [Algebra.Graph.compileAux_ctx_eq_eval, eval_toAlgebra]
+      rw [Algebra.Graph.lowerGraphToTape_ctx_eq_eval, eval_toAlgebra]
     have hvals_c : tc.nodes.map (fun node => node.value)
         = Algebra.TList.toAnyArray (α := ℝ) (Graph.eval g x) := by
-      rw [htc, Algebra.Graph.compileAux_values_eq, hctxc]
-    have hcomp : (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
+      rw [htc, Algebra.Graph.lowerGraphToTape_values_eq, hctxc]
+    have hcomp : (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
         (Graph.snoc g (TapeNodes.scale idx c)).toAlgebra x ()).1
       = (tc.addNode
-          { name := some "proof-compiled"
+          { name := some "proof-carrying-graph"
             value := Runtime.Autograd.AnyTensor.mk
               (((TapeNodes.scale idx c).toAlgebra).forward
-                ((Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
+                ((Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
                   g.toAlgebra x ()).2) ())
             requires_grad := true
             parents := []
@@ -2457,7 +2457,7 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
               if hsh : dLdyAny.s = τ then
                 .ok (Algebra.TList.toIndexedAnyList (α := ℝ) (ss := Γ ++ ss)
                   (((TapeNodes.scale idx c).toAlgebra).vjp
-                    ((Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
+                    ((Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
                       g.toAlgebra x ()).2) ()
                     (Tensor.castShape dLdyAny.t hsh)) 0)
               else .error "autograd: upstream gradient shape mismatch" }).1 := rfl
@@ -2521,12 +2521,12 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
       simpa [eagerScaleNode, mkAny, Runtime.Autograd.AnyTensor.mk, hrgY,
         List.foldlM_cons, List.foldlM_nil, bind, Except.bind, pure, Except.pure,
         Except.map] using hpush
-    have hnodeN_c : (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
+    have hnodeN_c : (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
         (Graph.snoc g (TapeNodes.scale idx c)).toAlgebra x ()).1.getNode? ((Γ ++ ss).length)
-      = some { name := some "proof-compiled"
+      = some { name := some "proof-carrying-graph"
                value := Runtime.Autograd.AnyTensor.mk
                  (((TapeNodes.scale idx c).toAlgebra).forward
-                   ((Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
+                   ((Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
                      g.toAlgebra x ()).2) ())
                requires_grad := true
                parents := []
@@ -2534,14 +2534,14 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
                  if hsh : dLdyAny.s = τ then
                    .ok (Algebra.TList.toIndexedAnyList (α := ℝ) (ss := Γ ++ ss)
                      (((TapeNodes.scale idx c).toAlgebra).vjp
-                       ((Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
+                       ((Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
                          g.toAlgebra x ()).2) ()
                        (Tensor.castShape dLdyAny.t hsh)) 0)
                  else .error "autograd: upstream gradient shape mismatch" } := by
       rw [hcomp, ← hsize_c]
       exact getNode?_addNode_size tc _
     have hupstream := Algebra.Graph.foldlM_addGradAll_toIndexedAnyList_eq_add (α := ℝ)
-      (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
+      (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
         (Graph.snoc g (TapeNodes.scale idx c)).toAlgebra x ()).1
       (ss := Γ ++ ss) #[] u
       ((TapeNodes.scale (Γ := Γ ++ ss) (s := τ) idx c).vjp (Graph.eval g x) y)
@@ -2555,7 +2555,7 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
         · rw [hcomp]
           show (tc.addNode _).1.getNode? (#[].size + i) = some node
           simpa using (getNode?_addNode_lt tc _ hlt).trans hnode
-        · have := Algebra.Graph.compileAux_requires_grad_true (α := ℝ) (Δ := Unit)
+        · have := Algebra.Graph.lowerGraphToTape_requires_grad_true (α := ℝ) (Δ := Unit)
             (Γ := Γ) (ss := ss) g.toAlgebra x ()
           have hnode' : tc.getNode? i = some (tc.nodes[i]'hlt) := by
             simp [Runtime.Autograd.Tape.getNode?, Array.getElem?_eq_getElem hlt]
@@ -2569,7 +2569,7 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
           rw [he]
           rfl)
     have hstep_c : Runtime.Autograd.Tape.backwardDenseFromStep
-        (t := (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
+        (t := (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
           (Graph.snoc g (TapeNodes.scale idx c)).toAlgebra x ()).1)
         ((Algebra.TList.toAnyArray (α := ℝ) u).push (mkAny y)) ((Γ ++ ss).length)
       = .ok ((Algebra.TList.toAnyArray (α := ℝ)
@@ -2592,7 +2592,7 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
         bind, Except.bind, pure, Except.pure]
       rw [hpre, hpost]
       have harg : ((TapeNodes.scale idx c).toAlgebra).vjp
-          ((Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
+          ((Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
             g.toAlgebra x ()).2) () y
         = (TapeNodes.scale (Γ := Γ ++ ss) (s := τ) idx c).vjp (Graph.eval g x) y := by
         rw [hctxc]
@@ -2609,25 +2609,25 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
           (t := (t.addNode (eagerScaleNode idx.i.val c (getIdx (Graph.eval g x) idx))).1)
           ((Γ ++ ss).length) acc')
       = (Runtime.Autograd.Tape.backwardDenseFromStep
-          (t := (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
+          (t := (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
             (Graph.snoc g (TapeNodes.scale idx c)).toAlgebra x ()).1)
           ((Algebra.TList.toAnyArray (α := ℝ) u).push (mkAny y)) ((Γ ++ ss).length)
         >>= fun acc' => Runtime.Autograd.Tape.backwardDenseFromLoop
-          (t := (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
+          (t := (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
             (Graph.snoc g (TapeNodes.scale idx c)).toAlgebra x ()).1)
           ((Γ ++ ss).length) acc')
     rw [hstep_e, hstep_c]
     show Runtime.Autograd.Tape.backwardDenseFromLoop
         (t := (t.addNode (eagerScaleNode idx.i.val c (getIdx (Graph.eval g x) idx))).1) ((Γ ++ ss).length) _
       = Runtime.Autograd.Tape.backwardDenseFromLoop
-        (t := (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
+        (t := (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
           (Graph.snoc g (TapeNodes.scale idx c)).toAlgebra x ()).1) ((Γ ++ ss).length) _
     rw [hcomp]
     rw [backwardDenseFromLoop_push t _ (eagerBuilds_pids hg) ((Γ ++ ss).length)
       (by rw [hsize]) _ (mkAny y) (by simp [hsize]),
       backwardDenseFromLoop_push tc _
         (fun i node hnode dc cs hback pc hpc =>
-          Algebra.Graph.compileAux_backward_pids_lt_id (α := ℝ) (Δ := Unit) (Γ := Γ)
+          Algebra.Graph.lowerGraphToTape_backward_pids_lt_id (α := ℝ) (Δ := Unit) (Γ := Γ)
             (ss := ss) g.toAlgebra x () i node hnode dc cs hback hpc)
         ((Γ ++ ss).length) (by rw [hsize_c]) _ (mkAny y) (by simp [hsize_c])]
     rw [ih]
@@ -2643,24 +2643,24 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
     rw [hxT] at ht'
     subst ht'
     intro S
-    set tc := (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
+    set tc := (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
       g.toAlgebra x ()).1 with htc
     have hsize_c : tc.nodes.size = (Γ ++ ss).length := by
-      rw [htc, Algebra.Graph.compileAux_nodes_size]
+      rw [htc, Algebra.Graph.lowerGraphToTape_nodes_size]
       simp
-    have hctxc : (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
+    have hctxc : (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
         g.toAlgebra x ()).2 = Graph.eval g x := by
-      rw [Algebra.Graph.compileAux_ctx_eq_eval, eval_toAlgebra]
+      rw [Algebra.Graph.lowerGraphToTape_ctx_eq_eval, eval_toAlgebra]
     have hvals_c : tc.nodes.map (fun node => node.value)
         = Algebra.TList.toAnyArray (α := ℝ) (Graph.eval g x) := by
-      rw [htc, Algebra.Graph.compileAux_values_eq, hctxc]
-    have hcomp : (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
+      rw [htc, Algebra.Graph.lowerGraphToTape_values_eq, hctxc]
+    have hcomp : (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
         (Graph.snoc g (TapeNodes.elemwise idx f f')).toAlgebra x ()).1
       = (tc.addNode
-          { name := some "proof-compiled"
+          { name := some "proof-carrying-graph"
             value := Runtime.Autograd.AnyTensor.mk
               (((TapeNodes.elemwise idx f f').toAlgebra).forward
-                ((Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
+                ((Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
                   g.toAlgebra x ()).2) ())
             requires_grad := true
             parents := []
@@ -2668,7 +2668,7 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
               if hsh : dLdyAny.s = τ then
                 .ok (Algebra.TList.toIndexedAnyList (α := ℝ) (ss := Γ ++ ss)
                   (((TapeNodes.elemwise idx f f').toAlgebra).vjp
-                    ((Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
+                    ((Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
                       g.toAlgebra x ()).2) ()
                     (Tensor.castShape dLdyAny.t hsh)) 0)
               else .error "autograd: upstream gradient shape mismatch" }).1 := rfl
@@ -2739,12 +2739,12 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
       simpa [eagerUnaryNode, mkAny, Runtime.Autograd.AnyTensor.mk, hrgY,
         List.foldlM_cons, List.foldlM_nil, bind, Except.bind, pure, Except.pure,
         Except.map] using hpush
-    have hnodeN_c : (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
+    have hnodeN_c : (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
         (Graph.snoc g (TapeNodes.elemwise idx f f')).toAlgebra x ()).1.getNode? ((Γ ++ ss).length)
-      = some { name := some "proof-compiled"
+      = some { name := some "proof-carrying-graph"
                value := Runtime.Autograd.AnyTensor.mk
                  (((TapeNodes.elemwise idx f f').toAlgebra).forward
-                   ((Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
+                   ((Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
                      g.toAlgebra x ()).2) ())
                requires_grad := true
                parents := []
@@ -2752,14 +2752,14 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
                  if hsh : dLdyAny.s = τ then
                    .ok (Algebra.TList.toIndexedAnyList (α := ℝ) (ss := Γ ++ ss)
                      (((TapeNodes.elemwise idx f f').toAlgebra).vjp
-                       ((Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
+                       ((Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
                          g.toAlgebra x ()).2) ()
                        (Tensor.castShape dLdyAny.t hsh)) 0)
                  else .error "autograd: upstream gradient shape mismatch" } := by
       rw [hcomp, ← hsize_c]
       exact getNode?_addNode_size tc _
     have hupstream := Algebra.Graph.foldlM_addGradAll_toIndexedAnyList_eq_add (α := ℝ)
-      (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
+      (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
         (Graph.snoc g (TapeNodes.elemwise idx f f')).toAlgebra x ()).1
       (ss := Γ ++ ss) #[] u
       ((TapeNodes.elemwise (Γ := Γ ++ ss) (s := τ) idx f f').vjp (Graph.eval g x) y)
@@ -2773,7 +2773,7 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
         · rw [hcomp]
           show (tc.addNode _).1.getNode? (#[].size + i) = some node
           simpa using (getNode?_addNode_lt tc _ hlt).trans hnode
-        · have := Algebra.Graph.compileAux_requires_grad_true (α := ℝ) (Δ := Unit)
+        · have := Algebra.Graph.lowerGraphToTape_requires_grad_true (α := ℝ) (Δ := Unit)
             (Γ := Γ) (ss := ss) g.toAlgebra x ()
           have hnode' : tc.getNode? i = some (tc.nodes[i]'hlt) := by
             simp [Runtime.Autograd.Tape.getNode?, Array.getElem?_eq_getElem hlt]
@@ -2787,7 +2787,7 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
           rw [he]
           rfl)
     have hstep_c : Runtime.Autograd.Tape.backwardDenseFromStep
-        (t := (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
+        (t := (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
           (Graph.snoc g (TapeNodes.elemwise idx f f')).toAlgebra x ()).1)
         ((Algebra.TList.toAnyArray (α := ℝ) u).push (mkAny y)) ((Γ ++ ss).length)
       = .ok ((Algebra.TList.toAnyArray (α := ℝ)
@@ -2810,7 +2810,7 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
         bind, Except.bind, pure, Except.pure]
       rw [hpre, hpost]
       have harg : ((TapeNodes.elemwise idx f f').toAlgebra).vjp
-          ((Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
+          ((Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
             g.toAlgebra x ()).2) () y
         = (TapeNodes.elemwise (Γ := Γ ++ ss) (s := τ) idx f f').vjp (Graph.eval g x) y := by
         rw [hctxc]
@@ -2829,11 +2829,11 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
             (getIdx (Graph.eval g x) idx))).1)
           ((Γ ++ ss).length) acc')
       = (Runtime.Autograd.Tape.backwardDenseFromStep
-          (t := (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
+          (t := (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
             (Graph.snoc g (TapeNodes.elemwise idx f f')).toAlgebra x ()).1)
           ((Algebra.TList.toAnyArray (α := ℝ) u).push (mkAny y)) ((Γ ++ ss).length)
         >>= fun acc' => Runtime.Autograd.Tape.backwardDenseFromLoop
-          (t := (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
+          (t := (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
             (Graph.snoc g (TapeNodes.elemwise idx f f')).toAlgebra x ()).1)
           ((Γ ++ ss).length) acc')
     rw [hstep_e, hstep_c]
@@ -2841,14 +2841,14 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
         (t := (t.addNode (eagerUnaryNode name idx.i.val fwdSpec bwdSpec
           (getIdx (Graph.eval g x) idx))).1) ((Γ ++ ss).length) _
       = Runtime.Autograd.Tape.backwardDenseFromLoop
-        (t := (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
+        (t := (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
           (Graph.snoc g (TapeNodes.elemwise idx f f')).toAlgebra x ()).1) ((Γ ++ ss).length) _
     rw [hcomp]
     rw [backwardDenseFromLoop_push t _ (eagerBuilds_pids hg) ((Γ ++ ss).length)
       (by rw [hsize]) _ (mkAny y) (by simp [hsize]),
       backwardDenseFromLoop_push tc _
         (fun i node hnode dc cs hback pc hpc =>
-          Algebra.Graph.compileAux_backward_pids_lt_id (α := ℝ) (Δ := Unit) (Γ := Γ)
+          Algebra.Graph.lowerGraphToTape_backward_pids_lt_id (α := ℝ) (Δ := Unit) (Γ := Γ)
             (ss := ss) g.toAlgebra x () i node hnode dc cs hback hpc)
         ((Γ ++ ss).length) (by rw [hsize_c]) _ (mkAny y) (by simp [hsize_c])]
     rw [ih]
@@ -2858,13 +2858,13 @@ theorem backwardDenseFrom_eager_eq_compiled {Γ ss : List Shape} {g : Graph Γ s
     {x : TList Γ} {t : RTape} (h : EagerBuilds g x t) (S : TList (Γ ++ ss)) :
     Runtime.Autograd.Tape.backwardDenseFrom (t := t) (Algebra.TList.toAnyArray (α := ℝ) S)
       = Runtime.Autograd.Tape.backwardDenseFrom
-          (t := (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
+          (t := (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
             g.toAlgebra x ()).1)
           (Algebra.TList.toAnyArray (α := ℝ) S) := by
   have hsz_e := eagerBuilds_size h
-  have hsz_c : (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
+  have hsz_c : (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
       g.toAlgebra x ()).1.nodes.size = (Γ ++ ss).length := by
-    rw [Algebra.Graph.compileAux_nodes_size]
+    rw [Algebra.Graph.lowerGraphToTape_nodes_size]
     simp
   have hS : (Algebra.TList.toAnyArray (α := ℝ) S).size = (Γ ++ ss).length := by simp
   show (if (Algebra.TList.toAnyArray (α := ℝ) S).size = t.nodes.size then
@@ -2873,12 +2873,12 @@ theorem backwardDenseFrom_eager_eq_compiled {Γ ss : List Shape} {g : Graph Γ s
     else throw "autograd: initial dense gradient array has wrong length") = _
   rw [if_pos (by rw [hS, hsz_e]), hsz_e]
   show _ = (if (Algebra.TList.toAnyArray (α := ℝ) S).size
-      = (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
+      = (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
         g.toAlgebra x ()).1.nodes.size then
       Runtime.Autograd.Tape.backwardDenseFromLoop
-        (t := (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
+        (t := (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
           g.toAlgebra x ()).1)
-        (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
+        (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
           g.toAlgebra x ()).1.nodes.size
         (Algebra.TList.toAnyArray (α := ℝ) S)
     else throw "autograd: initial dense gradient array has wrong length")

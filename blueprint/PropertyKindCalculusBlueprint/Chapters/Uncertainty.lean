@@ -293,7 +293,7 @@ source run at `Float` for Monte Carlo — is interpreted at TorchLean's reverse-
 carrier; each input enters as a differentiable leaf, and one *total dense* reverse pass
 (`Tape.backwardDenseFrom`, seeded $`1` at the scalar output) reads every $`c_i`, with no model
 rewrite. Since Stage 3.5 this is the very entry point TorchLean's soundness theorem
-`backwardDenseFrom_compileAux_adjoint_fderiv` characterizes: on a compiled graph at the `ℝ`
+`backwardDenseFrom_lowerGraphToTape_adjoint_fderiv` characterizes: on a compiled graph at the `ℝ`
 carrier its input-prefix output *is* the adjoint of the Fréchet derivative of the forward
 evaluation (the eager-tape provenance — narrowed at Stage 3.6 to a closure-provenance question,
 see the direct-simulation theorem below — and the `Float`-vs-`ℝ` deviation remain the two
@@ -314,7 +314,7 @@ to provide, constructor by constructor.
 
 :::proof "thm_uq_direct_sim"
 Realized (`PRSim.direct_PR_soundness_compiled`, with `backwardDenseFrom_ok` for the totality half
-and `forwardSim_compileAux` inhabiting the simulation relation; `Experiments/PRSimulation.lean`,
+and `forwardSim_lowerGraphToTape` inhabiting the simulation relation; `Experiments/PRSimulation.lean`,
 sorry-free). The endpoint is the input-prefix projection of the Stage-3.5 theorem transported to
 the runtime array by two erasure lemmas (block-reads invert context flattening; `Array.extract` is
 the erased typed prefix) — no reverse-pass fold argument is re-derived, so the adjoint mathematics

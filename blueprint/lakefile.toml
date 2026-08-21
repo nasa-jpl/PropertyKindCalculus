@@ -1,27 +1,31 @@
 name = "propertykindcalculus-blueprint"
 defaultTargets = ["PropertyKindCalculusBlueprint", "blueprint-gen"]
 
-# Verso + the Blueprint genre, on the v4.32.0 toolchain (matching the core
-# PropertyKindCalculus library after the v4.32.0 migration). `verso` is pinned to the
-# immutable `v4.32.0` *tag*, so its manifest `rev` is stable.
+# Verso + the Blueprint genre, on the v4.33.0 toolchain — the verso-stack pins move in
+# LOCKSTEP (the verso tag, the VersoBlueprint SHA, and the subverso rev verso's own
+# manifest names): a mixed stack fails at `VersoLiterate.Basic` against this toolchain's
+# core. `verso` is pinned to the immutable `v4.33.0-rc2` *tag*, so its manifest `rev` is
+# stable.
 #
-# `verso-blueprint`, however, only ships a *moving* `v4.32.0` *branch* (no tag), so it
-# MUST be pinned to an exact commit SHA — NOT the branch ref. Using the branch name has
-# two costs: (1) `ci-pages.sh` runs `lake update`, which re-resolves the branch to its
-# current tip on every build and rewrites this repo's `lake-manifest.json` (a spurious
-# dirty file each time); and (2) tracking the branch once drifted verso-blueprint to a
+# `verso-blueprint` only ships a *moving* branch (no tag), so it MUST be pinned to an
+# exact commit SHA — NOT the branch ref. Using the branch name has two costs: (1)
+# `ci-pages.sh` runs `lake update`, which re-resolves the branch to its current tip on
+# every build and rewrites this repo's `lake-manifest.json` (a spurious dirty file each
+# time); and (2) tracking the branch once drifted verso-blueprint to a
 # `manualMainWithPreviewData` that regressed and killed `blueprint-gen` with exit 137.
 # Pinning the SHA fixes both. Bump it deliberately (re-test `lake exe blueprint-gen`)
-# rather than tracking the branch; the SHA below is the v4.32.0 branch tip as vendored.
+# rather than tracking the branch; the SHA below is the one the sibling
+# `soil-moisture-model` technical reference and `soil-moisture-workflows` blueprint
+# build against.
 [[require]]
 name = "verso"
 git = "https://github.com/leanprover/verso"
-rev = "v4.32.0"
+rev = "v4.33.0-rc2"
 
 [[require]]
 name = "VersoBlueprint"
 git = "https://github.com/leanprover/verso-blueprint"
-rev = "3889162eb5ea06c3a9d3bd4c3585f65cc17a667b"
+rev = "c3b8a93c5b97ff26f3ae23c5d0d06411ae416b42"
 
 # The library being documented. Linking `(lean := "PropertyKindCalculus.…")` nodes to
 # real declarations (and reading their proved/`sorry` status) requires the
