@@ -7,7 +7,8 @@ untagged interior mint fails the build. This probe authors one site of each sanc
 (`@[kindCrossing]`, `@[carrierVocab]`, `@[kindConst]`, `@[kindEmission]`), a kind-parametric
 site (whose mint must render `(kind-parametric)`, not a loose de Bruijn index), an *applied*
 kind-parametric site (a named kind family applied to the site's variable — the family keeps
-its name and only the argument renders as the stable word), one **untagged**
+its name and the argument renders `(parametric)`, a token deliberately NOT containing the
+bare case's, so the two cases are grep-distinct), one **untagged**
 mint (the violation the audit must catch), a clean pass-through and a Prop-former (which must
 *not* register — a specification is legitimately about `.magnitude`, exactly as a theorem is),
 and a downstream carrier registered through `@[kindCarrier]`, then pins the sorted report and
@@ -43,7 +44,9 @@ def probeFamily (label : String) : KindOfProperty :=
 
 /-- An applied kind-parametric site: the minted kind is a named family at a variable argument.
 The family's head is real information and keeps its name in the report; only the argument is
-unnameable, so the stable word marks the application: `probeFamily (kind-parametric)`. -/
+unnameable, so its own stable word marks the application — `probeFamily (parametric)`, a
+token that does not contain the bare case's `(kind-parametric)`, so neither case can be
+mistaken for (or found by a search for) the other. -/
 @[carrierVocab]
 def parametricFamilySite (label : String) (x : Float) : Quantity (probeFamily label) Float := ⟨x⟩
 
@@ -82,7 +85,7 @@ def taggedSite (x : Float) : Tagged probeKind Float := ⟨x⟩
 
 /--
 info: boundary audit:
-[carrierVocab] PropertyKindCalculus.Tests.BoundaryAudit.parametricFamilySite — mints: PropertyKindCalculus.Tests.BoundaryAudit.probeFamily (kind-parametric)
+[carrierVocab] PropertyKindCalculus.Tests.BoundaryAudit.parametricFamilySite — mints: PropertyKindCalculus.Tests.BoundaryAudit.probeFamily (parametric)
 [carrierVocab] PropertyKindCalculus.Tests.BoundaryAudit.parametricSite — mints: (kind-parametric)
 [carrierVocab] PropertyKindCalculus.Tests.BoundaryAudit.vocabSite — mints: probeKind
 [kindConst] PropertyKindCalculus.Tests.BoundaryAudit.constSite — mints: probeKind

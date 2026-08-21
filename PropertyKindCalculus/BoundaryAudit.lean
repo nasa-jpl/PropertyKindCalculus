@@ -314,16 +314,18 @@ def boundarySites (scope : Array Name) : MetaM (Array BoundarySite) := do
     let (mints, erases) := collectBoundary specs body #[] false
     if mints.isEmpty && !erases then continue
     -- A mint under a binder carries loose bvars (`collectBoundary` does not abstract), so its
-    -- kind argument is a *variable* of the site, not a nameable kind: render it as the one
-    -- stable word rather than a de Bruijn index or a pretty-printer failure. When the mint is
-    -- a named kind *family* applied to the site's variables (`famK s`), the head constant is
-    -- still real information — only the argument is unnameable — so the family keeps its name
-    -- and the stable word marks the application. `eraseDups` below then collapses however many
-    -- same-rendering parametric mints a site has into one entry.
+    -- kind argument is a *variable* of the site, not a nameable kind: render it as one stable
+    -- word rather than a de Bruijn index or a pretty-printer failure. Two cases, two DISTINCT
+    -- tokens — neither a substring of the other, so a reader (or a grep) can never mistake one
+    -- for the other: a wholly-parametric kind renders `(kind-parametric)`; a named kind
+    -- *family* applied to the site's variables (`famK s`) keeps its head — the family is real
+    -- information, only the argument is unnameable — and renders `famK (parametric)`.
+    -- `eraseDups` below then collapses however many same-rendering parametric mints a site
+    -- has into one entry.
     let mintStrs ← mints.mapM fun a =>
       if a.hasLooseBVars then
         match a.getAppFn with
-        | .const n _ => return s!"{n} (kind-parametric)"
+        | .const n _ => return s!"{n} (parametric)"
         | _ => return "(kind-parametric)"
       else return toString (← Meta.ppExpr a)
     parents := parents.insert parent
