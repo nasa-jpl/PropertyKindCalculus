@@ -67,4 +67,29 @@ be a fabricated magnitude — a mint the boundary audit never sees. -/
 instance instInhabitedQuantityArray {k : KindOfProperty} {α : Type} :
     Inhabited (Quantity k (Array α)) := ⟨⟨#[]⟩⟩
 
+/-- **Component access — a component of a vector quantity is a quantity of the table's own
+kind** (the §18 reading: the numerical array holds components; the kind — and unit — is the
+whole vector's, so reading one component *keeps* it). Kind-preserving *by parametricity*: `k`
+flows from the table to the component and nothing can change it — the array-carrier analogue of
+`castCarrier`, and the licensed alternative to erasing with `.magnitude` and re-minting `⟨…⟩`
+around every element read. The index stays bare `Nat` — index space is the documented erasure
+boundary, not a quantity — and the panic fallback inhabits the *carrier* (`default : R`), not
+the quantity, so the header's doctrine stands: scalar quantities stay uninhabited. -/
+def Quantity.get! {k : KindOfProperty} {R : Type} [Inhabited R]
+    (v : Quantity k (Array R)) (i : Nat) : Quantity k R :=
+  ⟨v.magnitude[i]!⟩
+
+@[simp] theorem Quantity.get!_magnitude {k : KindOfProperty} {R : Type} [Inhabited R]
+    (v : Quantity k (Array R)) (i : Nat) :
+    (v.get! i).magnitude = v.magnitude[i]! := rfl
+
+/-- **Extent.** The component count of a vector quantity's numerical array — bare `Nat` by
+design: an extent is structural (how many components the representation holds), not a magnitude
+at `k`, so it leaves the calculus the way an index enters it. -/
+def Quantity.size {k : KindOfProperty} {R : Type} (v : Quantity k (Array R)) : Nat :=
+  v.magnitude.size
+
+@[simp] theorem Quantity.size_eq {k : KindOfProperty} {R : Type}
+    (v : Quantity k (Array R)) : v.size = v.magnitude.size := rfl
+
 end PropertyKindCalculus

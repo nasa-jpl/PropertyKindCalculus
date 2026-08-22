@@ -276,6 +276,23 @@ def castCarrier {S : Type} (f : R → S) (q : Quantity k R) : Quantity k S := �
 @[simp] theorem castCarrier_magnitude {S : Type} (f : R → S) (q : Quantity k R) :
     (q.castCarrier f).magnitude = f q.magnitude := rfl
 
+/-- **An authored mint, on the record.** Wrap a raw magnitude at kind `k`, stating the reason.
+Semantically this *is* `⟨m⟩` — nothing is checked — but the assertion becomes *enumerable*: the
+boundary audit recognizes registered attestors (`@[kindAttest]`; this one is built in) and
+reports every call site with its harvested `why`, so each surviving authored mint is a one-line
+review artifact rather than an anonymous `⟨…⟩` a declaration-level tier tag silently covers.
+
+The discipline (`BoundaryAudit`'s header): `attest` is the *last* resort, for a classification
+with no machine-checkable evidence — `why` should say why no check applies. Where evidence
+exists, take the licensed route instead: a `CertifiedIngest`/`KindAdmissible` check at ingest, a
+`ProductKind`/`QuotientKind` witness edge (`Quantity.mul`/`div`), `castCarrier` for a
+representation change, `Quantity.get!` for component access, the empty-array `default` for a
+missing table. -/
+@[inline] def attest (_why : String) (m : R) : Quantity k R := ⟨m⟩
+
+@[simp] theorem attest_magnitude (why : String) (m : R) :
+    (attest (k := k) why m).magnitude = m := rfl
+
 /-! ### The integer ↔ real round-trip, named in both directions
 
 An affine model over integer resources (`bytes(P) = fixed + perElement·P`) computes

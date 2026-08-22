@@ -59,10 +59,30 @@ story point for point); downstream layers add their own (the soil-moisture model
 audit recognizes its mints and erasures — the same open-registry discipline as the kind
 declarations themselves.
 
+## The attestor registry — `@[kindAttest]`
+
+An *attested* mint is an authored `⟨…⟩` written through a registered attestor
+(`Quantity.attest` is built in) that names its reason at the call site. The walk cannot see
+through ANY named wrapper — a helper's body is walked once, under the helper's own name, so a
+declaration that mints through a wrapper shows nothing at its own site. Registration is what
+turns that hiding into accountability: the audit recognizes a registered attestor's
+applications, reports each site with the reason string it harvests from the argument, and
+*skips the attestor's own body* — its one raw mint is the sanctioned mechanism, reviewed at
+registration, the same reason a carrier's own `.mk` is not a site. An unregistered wrapper
+remains what it always was — invisible — which is why attestors are registered, never ad hoc.
+
+The discipline the split serves: raw mints are the *suspect* column (a declaration-level tier
+tag covers however many its body holds, multiplicity unseen), attested mints the *reviewed*
+one — each surviving site carries its own one-line justification into the pinned report. An
+attestation is a claim with no machine-checkable evidence; where evidence exists, the licensed
+route (a `CertifiedIngest`/`KindAdmissible` check, a `ProductKind`/`QuotientKind` witness edge,
+`castCarrier`, `Quantity.get!`, the empty-array `default`) is the answer, not `attest`.
+
 ## The commands
 
   * `#kind_boundary_audit ns …` — walks every compute `def` in the namespaces, reporting each
-    declaration that mints (constructs) or erases (projects) a carrier, with the kinds it mints;
+    declaration that mints (constructs) or erases (projects) a carrier, with the kinds it mints
+    and each attested mint's kind and harvested reason;
     a boundary-active declaration that carries no tier attribute is a **violation**. Pinned by
     `#guard_msgs` in an indexed probe, a new interior boundary then fails the build the way a new
     axiom fails the profile guard.
@@ -245,6 +265,65 @@ partial def mentionsCarrier (env : Environment) (specs : Array CarrierSpec) (fue
             | _ => false
     | _ => false
 
+/-! ## The attestor registry — `@[kindAttest]`
+
+Header doctrine: an attested mint is an authored `⟨…⟩` written through a *registered* wrapper
+that names its reason at the call site. Registration closes the wrapper loophole (a named
+helper hides its mint from the walk) by turning the wrapper into a recognized, enumerated
+site class. -/
+
+/-- The environment extension collecting every `@[kindAttest]`-registered attestor. -/
+initialize kindAttestExt :
+    SimplePersistentEnvExtension Name (Array Name) ←
+  registerSimplePersistentEnvExtension {
+    addEntryFn    := fun a e => a.push e
+    addImportedFn := fun ess => ess.foldl (init := #[]) (· ++ ·)
+  }
+
+/-- A registered attestor's detection footprint, derived from its signature: the full
+application arity, the position of the `KindOfProperty` argument (the attested kind), and the
+position of the `String` argument (the reason). -/
+structure AttestSpec where
+  /-- The attestor declaration (a mint through it is a fully-applied occurrence). -/
+  declName : Name
+  /-- The attestor's full application arity (its whole binder telescope). -/
+  arity : Nat
+  /-- The index of the first `KindOfProperty` argument — the attested kind. -/
+  kindIdx : Nat
+  /-- The index of the first `String` argument — the reason. -/
+  reasonIdx : Nat
+deriving Inhabited
+
+/-- Build an `AttestSpec` from an attestor's signature, or `none` if the signature does not
+carry both a `KindOfProperty` argument and a `String` argument — the shape the harvest needs. -/
+def mkAttestSpec (env : Environment) (n : Name) : Option AttestSpec := do
+  let info ← env.find? n
+  let args := piArgTypes info.type
+  let kindIdx ← args.findIdx? (·.isConstOf ``KindOfProperty)
+  let reasonIdx ← args.findIdx? (·.isConstOf ``String)
+  return { declName := n, arity := args.length, kindIdx, reasonIdx }
+
+syntax (name := kindAttestAttr) "kindAttest" : attr
+
+initialize registerBuiltinAttribute {
+  name  := `kindAttestAttr
+  descr := "Register an authored-mint attestor: the audit reports each call site with its harvested reason and skips the attestor's own body."
+  add   := fun decl _stx _kind => do
+    let env ← getEnv
+    unless (mkAttestSpec env decl).isSome do
+      throwError "`@[kindAttest]` expects a declaration taking a `KindOfProperty` argument \
+        (the attested kind) and a `String` argument (the reason) — '{decl}' has neither or \
+        only one. Without both, attested sites could not be harvested, and the wrapper would \
+        HIDE its mint from the walk instead of putting it on the record."
+    modifyEnv fun env => kindAttestExt.addEntry env decl
+}
+
+/-- Every attestor the audit recognizes: the built-in `Quantity.attest` (built in for the same
+reason the three carriers are — an attribute is not active in its own defining module), plus
+every `@[kindAttest]`-registered attestor from downstream layers. -/
+def kindAttestNames (env : Environment) : Array Name :=
+  #[``PropertyKindCalculus.Quantity.attest] ++ kindAttestExt.getState env
+
 /-! ## The tier attributes -/
 
 syntax (name := kindCrossingAttr) "kindCrossing" : attr
@@ -340,6 +419,35 @@ partial def collectBoundary (specs : Array CarrierSpec) (e : Expr)
   | .proj _ _ b => collectBoundary specs b mints erases
   | _ => (mints, erases)
 
+/-- Walk an expression, collecting every *attested* mint — a fully-applied registered attestor —
+as the pair (attested-kind argument, reason if the reason argument is a string literal; `none`
+marks a dynamically-built reason). Multiplicity is kept: each application is one site. -/
+partial def collectAttests (specs : Array AttestSpec) (e : Expr)
+    (acc : Array (Expr × Option String)) : Array (Expr × Option String) :=
+  let acc := Id.run do
+    let mut a := acc
+    for s in specs do
+      if e.isAppOfArity s.declName s.arity then
+        let args := e.getAppArgs
+        if let some kindArg := args[s.kindIdx]? then
+          let reason := match args[s.reasonIdx]? with
+            | some (.lit (.strVal str)) => some str
+            | _ => none
+          a := a.push (kindArg, reason)
+    return a
+  match e with
+  | .app f a =>
+      collectAttests specs a (collectAttests specs f acc)
+  | .lam _ t b _ =>
+      collectAttests specs b (collectAttests specs t acc)
+  | .forallE _ t b _ =>
+      collectAttests specs b (collectAttests specs t acc)
+  | .letE _ t v b _ =>
+      collectAttests specs b (collectAttests specs v (collectAttests specs t acc))
+  | .mdata _ b => collectAttests specs b acc
+  | .proj _ _ b => collectAttests specs b acc
+  | _ => acc
+
 /-- Strip internal name components (`._proof_N`, `.match_N`, numeric suffixes) so a lifted
 call-site mint is attributed to the definition that authored it — the `KindEdges.parentOf`
 precedent, widened to the matcher/equation auxiliaries a compute body generates. -/
@@ -387,6 +495,10 @@ structure BoundarySite where
   tier : Option BoundaryTier
   /-- The kinds minted here, pretty-printed, deduplicated and sorted. -/
   mints : Array String
+  /-- The attested mints: each registered-attestor application, rendered as the attested kind
+  followed by the harvested reason (`‹…›`, or `(dynamic reason)` for a non-literal), identical
+  renderings grouped with an explicit `(×n)` count — multiplicity is the point. -/
+  attests : Array String
   /-- Whether the body erases a carrier (projects its first field). -/
   erases : Bool
 deriving Repr, Inhabited
@@ -399,9 +511,12 @@ Theorems and `Prop`-valued declarations are skipped: a parity statement is legit
 def boundarySites (scope : Array Name) : MetaM (Array BoundarySite) := do
   let env ← getEnv
   let specs := (kindCarrierNames env).filterMap (mkCarrierSpec env)
+  let attNames := kindAttestNames env
+  let attSpecs := attNames.filterMap (mkAttestSpec env)
   let tags := boundaryTags env
   let inScope : Name → Bool := fun d => scope.isEmpty || scope.any (fun ns => ns.isPrefixOf d)
   let mut mintMap : Std.HashMap Name (Array String) := {}
+  let mut attMap : Std.HashMap Name (Array String) := {}
   let mut eraseSet : Std.HashSet Name := {}
   let mut parents : Std.HashSet Name := {}
   for (name, info) in env.constants.toList do
@@ -409,13 +524,17 @@ def boundarySites (scope : Array Name) : MetaM (Array BoundarySite) := do
     unless inScope parent do continue
     if info matches .thmInfo _ then continue
     if isGeneratedMachinery env specs parent then continue
+    -- A registered attestor's own body is the sanctioned mint *mechanism*, reviewed at
+    -- registration — not a site (the same reason a carrier's own `.mk` is skipped).
+    if attNames.any (fun a => a == name || a == parent) then continue
     let some body := info.value? | continue
     if ← Meta.isProp info.type then continue
     -- A Prop-former (`def P … : Prop`) is a specification, not compute: like a theorem, it is
     -- legitimately *about* `.magnitude`, so it is not a boundary site.
     if ← Meta.forallTelescopeReducing info.type fun _ resTy => return resTy.isProp then continue
     let (mints, erases) := collectBoundary specs body #[] false
-    if mints.isEmpty && !erases then continue
+    let atts := collectAttests attSpecs body #[]
+    if mints.isEmpty && !erases && atts.isEmpty then continue
     -- A mint under a binder carries loose bvars (`collectBoundary` does not abstract), so its
     -- kind argument is a *variable* of the site, not a nameable kind: render it as one stable
     -- word rather than a de Bruijn index or a pretty-printer failure. Two cases, two DISTINCT
@@ -431,24 +550,52 @@ def boundarySites (scope : Array Name) : MetaM (Array BoundarySite) := do
         | .const n _ => return s!"{n} (parametric)"
         | _ => return "(kind-parametric)"
       else return toString (← Meta.ppExpr a)
+    -- An attested site renders as its kind (the same parametric-token rules as a raw mint)
+    -- followed by the harvested reason.
+    let attStrs ← atts.mapM fun (kArg, reason) => do
+      -- NOT `return` in the else-branch: inside this do-lambda a `return` would exit the
+      -- whole per-site rendering, dropping the reason suffix (the do-early-exit footgun).
+      let kStr ←
+        if kArg.hasLooseBVars then
+          match kArg.getAppFn with
+          | .const n _ => pure s!"{n} (parametric)"
+          | _ => pure "(kind-parametric)"
+        else toString <$> Meta.ppExpr kArg
+      match reason with
+      | some r => pure s!"{kStr} ‹{r}›"
+      | none   => pure s!"{kStr} (dynamic reason)"
     parents := parents.insert parent
     if !mintStrs.isEmpty then
       mintMap := mintMap.insert parent ((mintMap.getD parent #[]) ++ mintStrs)
+    if !attStrs.isEmpty then
+      attMap := attMap.insert parent ((attMap.getD parent #[]) ++ attStrs)
     if erases then eraseSet := eraseSet.insert parent
   let tierOf : Name → Option BoundaryTier := fun p => (tags.find? (·.decl == p)).map (·.tier)
   let mut sites : Array BoundarySite := #[]
   for parent in parents.toList do
+    -- Attested mints keep their multiplicity (dedup would hide exactly what the split exists
+    -- to show); identical renderings are grouped with an explicit count instead.
+    let rawAtts := attMap.getD parent #[]
+    let groupedAtts := rawAtts.toList.eraseDups.map fun s =>
+      let n := (rawAtts.filter (· == s)).size
+      if n > 1 then s!"{s} (×{n})" else s
     sites := sites.push {
-      decl   := parent
-      tier   := tierOf parent
-      mints  := (mintMap.getD parent #[]).toList.eraseDups.toArray.qsort (· < ·)
-      erases := eraseSet.contains parent }
+      decl    := parent
+      tier    := tierOf parent
+      mints   := (mintMap.getD parent #[]).toList.eraseDups.toArray.qsort (· < ·)
+      attests := groupedAtts.toArray.qsort (· < ·)
+      erases  := eraseSet.contains parent }
   return sites.qsort (fun a b => toString a.decl < toString b.decl)
 
-/-- How a site reads in the audit report: the kinds it mints, or emission-only if it merely erases. -/
+/-- How a site reads in the audit report: the kinds it mints raw, then its attested mints with
+their reasons, or emission-only if it merely erases. The two columns are the split the attestor
+registry exists for — raw is the suspect column, attested the reviewed one. -/
 def BoundarySite.description (s : BoundarySite) : String :=
-  if s.mints.isEmpty then "erases (emission-only)"
-  else s!"mints: {String.intercalate ", " s.mints.toList}"
+  let parts : List String :=
+    (if s.mints.isEmpty then [] else [s!"mints: {String.intercalate ", " s.mints.toList}"])
+    ++ (if s.attests.isEmpty then [] else [s!"attests: {String.intercalate ", " s.attests.toList}"])
+  if parts.isEmpty then "erases (emission-only)"
+  else String.intercalate "; " parts
 
 /-! ## `#kind_boundary_audit` -/
 

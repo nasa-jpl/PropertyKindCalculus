@@ -17,7 +17,13 @@ the crossings enumeration.
 `crossingSite` and `taggedSite` take a KINDED argument (`probeKind2`), not a raw `Float` —
 `@[kindCrossing]`'s own `add` now rejects a naked-argument declaration (a crossing must have
 something already kinded to cross FROM); `ingestSite` is the naked-argument shape's correct
-home instead, one site of the new `@[kindIngest]` tier. -/
+home instead, one site of the new `@[kindIngest]` tier.
+
+The attest probes pin the *attested-mint* column: a literal-reason site whose duplicate
+renders with an explicit `(×2)` count, a parametric-kind site (the stable token, with the
+reason alongside), and a DOWNSTREAM attestor registered through `@[kindAttest]` — whose own
+body holds the sanctioned raw mint the walk must *skip*, exactly as it skips a carrier's own
+`.mk`: were the skip wrong, `taggedAttest` would appear `⚠ UNTAGGED` and break the pin. -/
 import PropertyKindCalculus.BoundaryAudit
 
 namespace PropertyKindCalculus.Tests.BoundaryAudit
@@ -95,12 +101,44 @@ structure Tagged (k : KindOfProperty) (R : Type) where
 @[kindCrossing]
 def taggedSite (x : Quantity probeKind2 Float) : Tagged probeKind Float := ⟨x.magnitude⟩
 
+/-! ## The attest probes — the attested-mint column -/
+
+/-- An attested interior mint, twice with one reason: the report carries the harvested reason
+and groups the two identical sites with an explicit count — multiplicity is the point of the
+attested column, never deduplicated away. -/
+@[carrierVocab]
+def attestSite (x : Quantity probeKind Float) : Quantity probeKind Float :=
+  let seed : Quantity probeKind Float := .attest "an authored accumulator seed" 0.0
+  let bias : Quantity probeKind Float := .attest "an authored accumulator seed" 0.0
+  x + seed + bias
+
+/-- An attested parametric mint: the attested kind is a *variable* of the site, rendering the
+same stable token a raw parametric mint does — with the reason alongside. -/
+@[carrierVocab]
+def attestParametricSite (k : KindOfProperty) (x : Float) : Quantity k Float :=
+  .attest "an authored parametric wrap" x
+
+/-- A downstream attestor registered through `@[kindAttest]`, standing in for a model layer's
+wrapper over its own carrier: its body holds the one sanctioned raw mint — the mechanism,
+reviewed at registration — so the walk must skip it rather than flag it UNTAGGED. -/
+@[kindAttest]
+def taggedAttest (k : KindOfProperty) (_why : String) (m : Float) : Tagged k Float := ⟨m⟩
+
+/-- A site minting the downstream carrier through the downstream attestor: the report shows the
+attested site here, and `taggedAttest` itself never appears. -/
+@[carrierVocab]
+def taggedAttestSite (x : Quantity probeKind Float) : Tagged probeKind Float :=
+  taggedAttest probeKind "a downstream carrier's authored wrap" x.magnitude
+
 /-! ## The pinned audit report and crossings enumeration -/
 
 /--
 info: boundary audit:
+[carrierVocab] PropertyKindCalculus.Tests.BoundaryAudit.attestParametricSite — attests: (kind-parametric) ‹an authored parametric wrap›
+[carrierVocab] PropertyKindCalculus.Tests.BoundaryAudit.attestSite — attests: probeKind ‹an authored accumulator seed› (×2)
 [carrierVocab] PropertyKindCalculus.Tests.BoundaryAudit.parametricFamilySite — mints: PropertyKindCalculus.Tests.BoundaryAudit.probeFamily (parametric)
 [carrierVocab] PropertyKindCalculus.Tests.BoundaryAudit.parametricSite — mints: (kind-parametric)
+[carrierVocab] PropertyKindCalculus.Tests.BoundaryAudit.taggedAttestSite — attests: probeKind ‹a downstream carrier's authored wrap›
 [carrierVocab] PropertyKindCalculus.Tests.BoundaryAudit.vocabSite — mints: probeKind
 [kindConst] PropertyKindCalculus.Tests.BoundaryAudit.constSite — mints: probeKind
 [kindCrossing] PropertyKindCalculus.Tests.BoundaryAudit.crossingSite — mints: probeKind
@@ -108,15 +146,18 @@ info: boundary audit:
 [kindEmission] PropertyKindCalculus.Tests.BoundaryAudit.emissionSite — erases (emission-only)
 [kindIngest] PropertyKindCalculus.Tests.BoundaryAudit.ingestSite — mints: probeKind
 ⚠ UNTAGGED PropertyKindCalculus.Tests.BoundaryAudit.violationSite — mints: probeKind
-9 boundary site(s): 8 tagged, 1 UNTAGGED — invariant 6/7 violation
+12 boundary site(s): 11 tagged, 1 UNTAGGED — invariant 6/7 violation
 -/
 #guard_msgs in
 #kind_boundary_audit PropertyKindCalculus.Tests.BoundaryAudit
 
 /--
 info: tagged boundary crossings:
+[carrierVocab] PropertyKindCalculus.Tests.BoundaryAudit.attestParametricSite — An attested parametric mint: the attested kind is a *variable* of the site, rendering the
+[carrierVocab] PropertyKindCalculus.Tests.BoundaryAudit.attestSite — An attested interior mint, twice with one reason: the report carries the harvested reason
 [carrierVocab] PropertyKindCalculus.Tests.BoundaryAudit.parametricFamilySite — An applied kind-parametric site: the minted kind is a named family at a variable argument.
 [carrierVocab] PropertyKindCalculus.Tests.BoundaryAudit.parametricSite — A kind-parametric vocabulary site: the minted kind is a *variable* of the site, so the
+[carrierVocab] PropertyKindCalculus.Tests.BoundaryAudit.taggedAttestSite — A site minting the downstream carrier through the downstream attestor: the report shows the
 [carrierVocab] PropertyKindCalculus.Tests.BoundaryAudit.vocabSite — A carrier-vocabulary exception: a branchless min dropping to the carrier.
 [kindConst] PropertyKindCalculus.Tests.BoundaryAudit.constSite — A declared constant mint: an adjudicated value enters the calculus as data.
 [kindCrossing] PropertyKindCalculus.Tests.BoundaryAudit.crossingSite — A tagged crossing that mints probeKind from an already-kinded probeKind2 value.
