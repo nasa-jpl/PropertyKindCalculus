@@ -23,6 +23,7 @@ import PropertyKindCalculus.Paradigm.NumCarrier
 import PropertyKindCalculus.Torch.Paradigm.NumCarrierContext
 import NN.Tensor
 import NN.Runtime.Autograd.Engine.Cuda.Buffer
+import NN.Runtime.Autograd.Engine.Cuda.Kernels
 
 open Spec
 open PropertyKindCalculus.Paradigm (NumCarrier)
@@ -65,6 +66,26 @@ instance : MathFunctions (CudaT s) where
 
 /-- The GPU carrier: the same branchless `+ − × ÷ min max exp sqrt` surface, on the device. -/
 instance : NumCarrier (CudaT s) where
+
+/-! ### Indexing (the one non-elementwise op this carrier exposes) -/
+
+/-- **Gather** `Shape.size t` scalars from a length-`Shape.size s` device buffer at HOST indices
+— `NN.Runtime.Autograd.Engine.Cuda.Kernels.Buffer.gatherVec`
+(`torchlean_cuda_buffer_gather_vec`), one import away and already backed by both a real CUDA
+kernel and a CPU parity stub, exactly the same "portable stub behind the same extern symbol"
+shape every other op in this file already has — no new native code lands here, only a new Lean
+name for an FFI TorchLean already ships. Indices are HOST data (a plain `Array Nat`), not a
+second `CudaT` operand: the index computation itself is non-differentiable, data-dependent
+control flow that stays off-device, the same division of labor
+`NN.Runtime.Autograd.Engine.Cuda.Ops.Indexing`'s own tape wrappers already draw ("Indices are
+non-differentiable and remain on the host"). `indices.size = Shape.size t` is UNCHECKED by this
+wrapper — the same "caller's own responsibility" convention `ofFloatArray` already carries for
+its own length match — and the underlying kernel "totalizes representable out-of-bounds indices
+to 0" rather than faulting (`Kernels.gatherVec`'s own docstring), so a caller that wants an
+exact index-out-of-range result (rather than silently reading element `0`) must route those
+indices to a sentinel it controls, not rely on the kernel to refuse them. -/
+@[inline] def gather {t : Shape} (src : CudaT s) (indices : Array Nat) : CudaT t :=
+  ⟨Buffer.gatherVec src.buf (szU s) indices (szU t)⟩
 
 /-! ### Host ↔ device bridges (for building inputs and reading results) -/
 
