@@ -207,14 +207,18 @@ def piArgTypes : Expr → List Expr
 
 /-- Bounded structural search: does `ty` mention a registered carrier's structure name, either
 directly, through one of the container formers a real signature here actually uses (`List`/
-`Array`/`Option`/`Prod`/`Except`/`Sum`), or through the field types of a monomorphic,
-single-constructor, non-carrier structure — so a plain data record built OVER kinded fields
-(`Marker`, `SizingLine`) reads as kinded even though the record itself is not a registered
-carrier, while a plain data record over bare `Float`s (an affine transform's six coefficients)
-correctly does not? `fuel` bounds the unwrap depth: every shape the check actually needs to see
-through is shallow (a record of quantities, a product, a list of records), so a small fixed
-fuel is enough, and a type that would need more is, correctly, treated as opaque rather than
-risking a loop on a self-referential type. -/
+`Array`/`Option`/`Prod`/`Except`/`Sum`), or through the field types of a single-constructor,
+non-carrier structure — so a plain data record built OVER kinded fields (`Marker`, `SizingLine`,
+or a PARAMETRIC one like `CholQ α`, four `Quantity _ α` fields at four different kinds) reads as
+kinded even though the record itself is not a registered carrier, while a plain data record
+over bare `Float`s (an affine transform's six coefficients) correctly does not? The constructor's
+own (unapplied, generic) type is walked directly — a structure's leading parameter binders
+(`α : Type`) are included in that walk along with its fields, but they simply never match a
+carrier, so there is nothing to gain by singling monomorphic structures out and something to
+lose (`CholQ`'s own crossing, rejected until this was widened). `fuel` bounds the unwrap depth:
+every shape the check actually needs to see through is shallow (a record of quantities, a
+product, a list of records), so a small fixed fuel is enough, and a type that would need more
+is, correctly, treated as opaque rather than risking a loop on a self-referential type. -/
 partial def mentionsCarrier (env : Environment) (specs : Array CarrierSpec) (fuel : Nat)
     (ty : Expr) : Bool :=
   match fuel with
@@ -231,14 +235,13 @@ partial def mentionsCarrier (env : Environment) (specs : Array CarrierSpec) (fue
             mentionsCarrier env specs fuel args[0]! || mentionsCarrier env specs fuel args[1]!
           else match env.find? n with
             | some (.inductInfo iv) =>
-                iv.numParams == 0 &&
-                  (match iv.ctors with
-                   | [ctorName] =>
-                       match env.find? ctorName with
-                       | some (.ctorInfo cv) =>
-                           (piArgTypes cv.type).any (mentionsCarrier env specs fuel)
-                       | _ => false
-                   | _ => false)
+                (match iv.ctors with
+                 | [ctorName] =>
+                     match env.find? ctorName with
+                     | some (.ctorInfo cv) =>
+                         (piArgTypes cv.type).any (mentionsCarrier env specs fuel)
+                     | _ => false
+                 | _ => false)
             | _ => false
     | _ => false
 
