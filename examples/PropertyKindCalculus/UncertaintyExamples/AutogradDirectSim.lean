@@ -12,7 +12,7 @@ meaning what it says — under CI.
     endpoint `direct_PR_soundness_compiled` then says: the executable dense reverse pass on the
     compiled tape succeeds, and the input-prefix of its output realises `(fderiv ℝ eval x)† seed`.
   * **`ForwardSim` inhabited** — the compiled tape forward-simulates `prodGraph`
-    (`forwardSim_compileAux`), so the spike's simulation relation is realised, not hypothetical.
+    (`forwardSim_lowerGraphToTape`), so the spike's simulation relation is realised, not hypothetical.
   * **An eager well-formed tape** — two `Tape.leaf`s then `Tape.mul` on the *runtime* engine:
     the constructor lemmas discharge `BackwardShapeWF`, the closure hypothesis under which the
     total reverse pass provably returns `.ok` (`backwardDenseFrom_ok`).
@@ -76,7 +76,7 @@ def prodCorrect : GraphFDerivCorrect prodGraph := ⟨PUnit.unit, TapeNodes.mulFd
 example (x : TList Γ2) (seed : TList (Γ2 ++ [Shape.scalar])) :
     ∃ out : Array PRSim.Any,
       Runtime.Autograd.Tape.backwardDenseFrom
-          (t := (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) prodGraph.toAlgebra x ()).1)
+          (t := (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) prodGraph.toAlgebra x ()).1)
           (grads0 := Algebra.TList.toAnyArray (α := ℝ) (ss := Γ2 ++ [Shape.scalar]) seed)
         = .ok out ∧
       PRSim.ArrCorr ((fderiv ℝ (prodGraph.evalVec) (flattenCtx x)).adjoint (flattenCtx seed))
@@ -86,8 +86,8 @@ example (x : TList Γ2) (seed : TList (Γ2 ++ [Shape.scalar])) :
 /-- The compiled tape forward-simulates the graph — the simulation relation is inhabited. -/
 example (x : TList Γ2) :
     PRSim.ForwardSim prodGraph (flattenCtx x)
-      (Algebra.Graph.compileAux (α := ℝ) (Δ := Unit) prodGraph.toAlgebra x ()).1 :=
-  PRSim.forwardSim_compileAux prodGraph x
+      (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) prodGraph.toAlgebra x ()).1 :=
+  PRSim.forwardSim_lowerGraphToTape prodGraph x
 
 /-! ## An eager runtime tape with provably shape-total closures -/
 
@@ -359,8 +359,8 @@ example (x : TList Γ2) (t' : PRSim.RTape) (id : Nat)
 /-- info: 'PRSim.backwardDenseFrom_ok' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in #print axioms PRSim.backwardDenseFrom_ok
 
-/-- info: 'PRSim.forwardSim_compileAux' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in #print axioms PRSim.forwardSim_compileAux
+/-- info: 'PRSim.forwardSim_lowerGraphToTape' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in #print axioms PRSim.forwardSim_lowerGraphToTape
 
 /--
 info: 'PRSim.direct_PR_soundness_compiled' depends on axioms: [propext, Classical.choice, Quot.sound]
