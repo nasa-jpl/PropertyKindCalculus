@@ -52,9 +52,13 @@ reduction of the ℚ exponent arithmetic. Kinds dimensioned only over another ba
 reform's `Base`) are outside this walk's registry — a base-parametric walk would generalize the
 enumeration, not the notion.
 
-Like `KindEdges`, edges are harvested from constant *types* (a call-site witness is lifted into
-a `_proof_N` auxiliary whose type is the edge), but only from the **conclusion** — an edge
-taken as a *hypothesis* (`(h : ProductKind …) → …`) is assumed, not authored.
+Like `KindEdges`, edges are harvested on both channels: from constant *types* (a call-site
+witness the elaborator lifts into a `_proof_N` auxiliary has the edge as its type) — but only
+from the **conclusion**, since an edge taken as a *hypothesis* (`(h : ProductKind …) → …`) is
+assumed, not authored — and from definition *bodies*, reading witness-producer applications
+the elaborator left inline (`KindEdges.collectProducedEdges`; nothing obliges it to lift). A
+producer application is always a construction, never a hypothesis, so the body channel keeps
+the same authored-not-assumed line.
 
 The walk has two surfaces over one row producer (`coverageRows`): the command renders the
 pinnable text report, and `coverageTable` renders the same rows as a generated `IndexTable`
@@ -223,17 +227,20 @@ command below, which renders these rows as its report; `coverageTable` renders t
 as a generated table for a document. -/
 def coverageRows (scope : Array Name) : MetaM (Array CoverageRow) := do
   let env ← getEnv
+  let reachable := KindEdges.producerModules env
   let inScope : Name → Bool := fun d => scope.any (fun ns => ns.isPrefixOf d)
   let dks ← dimensionedKindDecls
   let gens ← generatorCtors
   let cache ← IO.mkRef ({} : Std.HashMap String KindRes)
   let seen ← IO.mkRef ({} : Std.HashSet String)
-  let mut out : Array CoverageRow := #[]
-  for (name, info) in env.constants.toList do
-    unless inScope (KindEdges.parentOf name) do continue
-    let found ← forallTelescopeReducing info.type fun _ concl => do
+  -- One row builder over harvested `(family, args)` pairs, shared by the type scan and
+  -- the body scan; `seen` deduplicates by the rendered edge ACROSS the two channels, so
+  -- an edge both lifted into a `._proof_N` auxiliary and read off a producer
+  -- application is one row. Must run inside the telescope that binds the args' fvars.
+  let rowsOf : Array (KindEdges.EdgeSpec × Array Expr) → MetaM (Array CoverageRow) :=
+    fun harvested => do
       let mut res : Array CoverageRow := #[]
-      for (spec, args) in KindEdges.collectEdges concl #[] do
+      for (spec, args) in harvested do
         let some rule := ruleOf spec.const | continue
         let pps ← args.mapM fun a => return toString (← ppExpr a)
         let edge := spec.fmt pps
@@ -243,7 +250,8 @@ def coverageRows (scope : Array Name) : MetaM (Array CoverageRow) := do
           match rule with
           | .power => (args[1:].toArray, pps[1:].toArray, some args[0]!)
           | _      => (args, pps, none)
-        if kindArgs.any (·.hasFVar) || (p?.map (·.hasFVar)).getD false then
+        if kindArgs.any (fun a => a.hasFVar || a.hasLooseBVars)
+            || (p?.map (·.hasFVar)).getD false then
           res := res.push ⟨.parametric, edge, ""⟩
           continue
         let ress ← kindArgs.mapM (m := MetaM) (resolveKind dks gens cache)
@@ -262,7 +270,19 @@ def coverageRows (scope : Array Name) : MetaM (Array CoverageRow) := do
           else
             res := res.push ⟨.incoherent, edge, ""⟩
       return res
+  let mut out : Array CoverageRow := #[]
+  for (name, info) in env.constants.toList do
+    unless inScope (KindEdges.parentOf name) do continue
+    let found ← forallTelescopeReducing info.type fun _ concl =>
+      rowsOf (KindEdges.collectEdges concl #[])
     out := out ++ found
+    -- The body scan: inline call-site witnesses the elaborator left unlifted (nothing
+    -- obliges it to lift them into auxiliaries), read off the producer applications
+    -- under the value's own telescope so parametric kinds print their binder names.
+    if ← KindEdges.bodyScannable reachable env name info then
+      let fromBody ← lambdaTelescope info.value! fun _ body =>
+        rowsOf (KindEdges.collectProducedEdges body #[])
+      out := out ++ fromBody
   return out
 
 /-- A row as the command's report line. -/
