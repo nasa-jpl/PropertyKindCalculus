@@ -77,10 +77,25 @@ def catalogue : Array Annotation := #[
   -- The boundary family — invariants 4, 6 and 7.
   { syntax_ := "@[kindCrossing]", attachesTo := "a definition"
     effect := "Declares the one carrier-level place two kinds genuinely meet. The kinds are stated \
-      in the signature; the mint or erasure inside is the crossing's mechanism, reviewed once."
-    enforcement := .checked "#kind_boundary_audit reports an untagged boundary site as a violation"
+      in the signature, on the argument side as much as the result; the mint or erasure inside is \
+      the crossing's mechanism, reviewed once."
+    enforcement := .checked "rejected at elaboration if no argument carries a registered carrier; \
+      #kind_boundary_audit also reports an untagged boundary site as a violation"
     table := "crossings"
     section_ := "annotation-kindCrossing" },
+  { syntax_ := "@[kindIngest]", attachesTo := "a definition"
+    effect := "Declares a checked ingest mint: raw external/host data enters the calculus for the \
+      first time, admitted through some check. The dual of @[kindCrossing] — no argument need \
+      carry a kind, because none has been established yet."
+    enforcement := .checked "#kind_boundary_audit reports an untagged boundary site as a violation"
+    table := "crossings"
+    section_ := "annotation-kindIngest" },
+  { syntax_ := "@[kindConst]", attachesTo := "a definition"
+    effect := "Declares a constant mint: an adjudicated value enters the calculus as data — a \
+      cited table, a configuration bound, a seed, a threshold, or a structural constant."
+    enforcement := .checked "#kind_boundary_audit reports an untagged boundary site as a violation"
+    table := "crossings"
+    section_ := "" },
   { syntax_ := "@[carrierVocab]", attachesTo := "a definition"
     effect := "Registers kind-preserving representation plumbing — an operation the kind algebra \
       does not name (a branchless min, a map over a coefficient table) that must drop to the carrier."
@@ -276,7 +291,9 @@ open, so a reader wants to see what downstream layers added. -/
 def carriersTable : MetaM IndexTable := do
   let env ← getEnv
   let carriers := BoundaryAudit.kindCarrierNames env
-  let builtin : Array Name := #[``PropertyKindCalculus.Quantity, ``PropertyKindCalculus.CertifiedQuantity]
+  let builtin : Array Name :=
+    #[``PropertyKindCalculus.Quantity, ``PropertyKindCalculus.CertifiedQuantity,
+      ``PropertyKindCalculus.NominalValue]
   let mut rows : Array (Array IndexCell) := #[]
   for c in carriers do
     rows := rows.push #[

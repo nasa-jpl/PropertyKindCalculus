@@ -63,13 +63,22 @@ structure ProbeConfig (α : Type) where
   /-- The sole configured constant. -/
   offset : Quantity outputKind α
 
-/-- A tagged crossing minting the probe output kind. -/
+/-- A tagged crossing minting the probe output kind from an already-kinded gain value.
+
+`@[kindCrossing]`'s `add` requires a kinded argument (a crossing goes FROM something already
+kinded), so this is not the raw-`Float` mint it once was; `probeIngest` below is that shape's
+correct home instead. -/
 @[kindCrossing]
-def probeCrossing (x : Float) : Quantity outputKind Float := ⟨x⟩
+def probeCrossing (g : Quantity gainKind Float) : Quantity outputKind Float := ⟨g.magnitude⟩
+
+/-- A checked ingest mint: a raw carrier value enters the calculus as the probe output kind,
+admitted by an inline (trivial, here) check. -/
+@[kindIngest]
+def probeIngest (x : Float) : Quantity outputKind Float := ⟨x⟩
 
 /-- A kinded operation that reaches the calculus through the authored crossing — the case the
 operations table's *Crossings* column exists to report. -/
-def probeFromRaw (x : Float) : Quantity outputKind Float := probeCrossing x
+def probeFromRaw (g : Quantity gainKind Float) : Quantity outputKind Float := probeCrossing g
 
 /-- A carrier-vocabulary exception on the probe kinds. -/
 @[carrierVocab]
@@ -112,10 +121,11 @@ probeDedicated | probeSystem | probeComponent | outputKind |
 #pkc_index "dedicated-kinds" PropertyKindCalculus.Tests.Index
 
 /--
-info: Authored kind crossings (3 row(s))
+info: Authored kind crossings (4 row(s))
 Site | Tier | Kinds minted | What it does
-probeCrossing | kindCrossing | outputKind | A tagged crossing minting the probe output kind.
+probeCrossing | kindCrossing | outputKind | A tagged crossing minting the probe output kind from an already-kinded gain value.
 probeEmission | kindEmission |  | An emission boundary out of the probe world.
+probeIngest | kindIngest | outputKind | A checked ingest mint: a raw carrier value enters the calculus as the probe output kind, admitted by an inline (trivial, here) check.
 probeVocab | carrierVocab | gainKind | A carrier-vocabulary exception on the probe kinds.
 -/
 #guard_msgs in
@@ -135,16 +145,18 @@ ProbePair | gain | Quantity | gainKind | g
 #guard_msgs in
 #pkc_index "records" PropertyKindCalculus.Tests.Index
 
-/-! Three operations, and the two exclusions are as load-bearing as the inclusions: `ProbePair.gain`
+/-! Four operations, and the two exclusions are as load-bearing as the inclusions: `ProbePair.gain`
 and `ProbeConfig.offset` are *projections*, so they are not listed (they are already record rows),
 and `probeEmission` returns a bare `Float`, so it is not kinded. `probeFromRaw` shows the *Crossings*
-column doing its job — it reaches the calculus only through the authored `probeCrossing`. -/
+column doing its job — it reaches the calculus only through the authored `probeCrossing`; `probeIngest`
+is the ingest tier's own operation, with no argument kind (nothing was kinded on the way in). -/
 
 /--
-info: Kinded operations (3 row(s))
+info: Kinded operations (4 row(s))
 Operation | Argument kinds | Result kind | Crossings
-probeCrossing |  | outputKind |
-probeFromRaw |  | outputKind | probeCrossing
+probeCrossing | gainKind | outputKind |
+probeFromRaw | gainKind | outputKind | probeCrossing
+probeIngest |  | outputKind |
 probeVocab | gainKind, gainKind | gainKind |
 -/
 #guard_msgs in

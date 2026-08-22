@@ -79,16 +79,24 @@ registered carrier.
 tag := "annotation-kindCrossing"
 %%%
 
-The one carrier-level place two kinds genuinely meet. The kinds are stated in the signature; the
-mint or erasure inside is the crossing's mechanism, reviewed once.
+The one carrier-level place two kinds genuinely meet. The kinds are stated in the signature — on
+the argument side as much as the result: `add` rejects a `@[kindCrossing]` declaration none of
+whose arguments carries a registered carrier, because a crossing goes FROM an already-kinded
+value, and a declaration with no kinded argument has nothing to cross from. The mint or erasure
+inside is the crossing's mechanism, reviewed once.
 
 ```
-/-- A tagged crossing minting the probe output kind. -/
+/-- A tagged crossing minting the probe output kind from an already-kinded gain value. -/
 @[kindCrossing]
-def probeCrossing (x : Float) : Quantity outputKind Float := ⟨x⟩
+def probeCrossing (g : Quantity gainKind Float) : Quantity outputKind Float := ⟨g.magnitude⟩
 ```
 
-*In the InfoView.* Nothing changes on the declaration itself. The effect is on the audit:
+A declaration with no kinded argument at all — `probeCrossing (x : Float) : Quantity outputKind
+Float := ⟨x⟩` — is rejected at the `@[kindCrossing]` line itself, with a message pointing at the
+two tiers below it is actually one of: `@[kindIngest]` if something is checked on the way in,
+`@[kindConst]` if it is a fixed literal.
+
+*In the InfoView.* Nothing else changes on the declaration itself. The effect is on the audit:
 `#kind_boundary_audit` prints one line per boundary-active declaration, and the tier tag is what
 distinguishes a sanctioned site from a violation.
 
@@ -97,6 +105,7 @@ boundary audit:
 [kindCrossing] …probeCrossing — mints: outputKind
 [carrierVocab] …probeVocab — mints: gainKind
 [kindEmission] …probeEmission — erases (emission-only)
+[kindIngest] …probeIngest — mints: outputKind
 ⚠ UNTAGGED …violationSite — mints: outputKind
 ```
 
@@ -106,6 +115,24 @@ discipline by which a pinned axiom profile catches a proof silently relocated be
 
 *In the generated indexes.* Every tagged site appears in the kind-crossing table with the kinds it
 mints, taken from the audit's own walk so the two cannot disagree.
+
+## `@[kindIngest]` — a checked ingest mint
+%%%
+tag := "annotation-kindIngest"
+%%%
+
+The dual of `@[kindCrossing]`: raw, external data — a host column, a JSON blob, an env-var's text
+— enters the calculus for the first time, admitted through some check (a `KindAdmissible`/
+`BatchAdmissible` instance, an inline range test, a fallible parse). No argument carries a kind,
+because none has been established yet — that is the entire point of an ingest boundary, and the
+reason `@[kindCrossing]`'s own check must not reject it: the check performed is this
+declaration's evidence, stated once, rather than presupposed.
+
+```
+/-- A checked ingest mint: a raw carrier value enters the calculus as the probe output kind. -/
+@[kindIngest]
+def probeIngest (x : Float) : Quantity outputKind Float := ⟨x⟩
+```
 
 ## `@[carrierVocab]` — a carrier-vocabulary exception
 %%%

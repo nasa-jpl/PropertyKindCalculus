@@ -14,21 +14,35 @@ The paradigm's guarantee is *machine-enumerable*, exactly as `#print axioms` is 
 sorry-freeness and `#kind_edges` is the audit for edge-soundness: every boundary site is either
 tagged with the tier that sanctions it, or it is a violation the build fails on.
 
-## The sanctioned-site registry — four tier attributes
+## The sanctioned-site registry — five tier attributes
 
   * `@[kindCrossing]` — an authored *crossing*: a named `def` whose body is the one
     carrier-level place two kinds genuinely meet (`nkToEps`, `clayPctOfMassFraction`,
     `fresnelGeomOfAngleQ`, the dedicated ↔ generic re-typings). The kinds are stated in its
-    signature; the mint/erasure inside is the crossing's mechanism, reviewed once.
+    signature, on the ARGUMENT side as much as the result — enforced, not just documented:
+    `add` rejects a `@[kindCrossing]` declaration none of whose arguments carries a registered
+    carrier, because a crossing by definition goes FROM an already-kinded value, and a
+    declaration with no kinded argument at all has nothing to cross from (invariant 6, tier (i)
+    — "by construction," where the *whole* evidence is that the inputs were already kinded).
+  * `@[kindIngest]` — an authored *checked ingest mint* (invariant 6, evidence tier (ii)): raw,
+    external/host data — a raw npy column, a JSON blob, an env-var's text, an inline geometric
+    bounds check — enters the calculus for the first time and is admitted through SOME check (a
+    `KindAdmissible`/`BatchAdmissible` instance, an ad hoc range test, or a fallible parse). No
+    argument carries a kind, because none has been established yet — that is the entire point
+    of an ingest boundary; the check performed is this declaration's evidence, reviewed once.
+    The dual of `@[kindCrossing]`: a crossing REQUIRES a kinded argument, an ingest requires
+    that NONE be presupposed.
   * `@[carrierVocab]` — a registered *carrier-vocabulary exception*: representation plumbing
     that legitimately drops to the carrier for an operation the kind algebra does not name
     (`complexSqrtPos`, `qMin`, `qRelu`, a `map` over a coefficient table), kind-preserving by
     construction.
-  * `@[kindConst]` — a declared *constant mint* (invariant 6, evidence tier iii): a
+  * `@[kindConst]` — a declared *constant mint* (invariant 6, evidence tier (iii)): a
     declaration whose boundary activity is minting adjudicated values — a cited coefficient
     table, a configuration bound or box, a seed, a threshold, or a structural constant of the
     model (a zero accumulator, the vacuum index `1`, a literal exponent). The mint's value is
-    data, not dataflow; its provenance is the declaration's docstring.
+    data, not dataflow; its provenance is the declaration's docstring. A NULLARY
+    `@[kindCrossing]` candidate — one with no argument at all — is definitionally this tier and
+    not tier (i): a fixed literal has nothing to cross from either.
   * `@[kindEmission]` — a genuine *emission boundary* (invariant 4): the deploy drivers, the
     tape recorders, and the parity apparatus — the kinded ↔ bare re-typings the erasure
     theorems are stated over — where a kinded value legitimately becomes a naked one for a
@@ -37,8 +51,10 @@ tagged with the tier that sanctions it, or it is a violation the build fails on.
 ## The carrier registry — `@[kindCarrier]`
 
 The audit detects a boundary as an application of a *carrier structure*'s constructor (a mint)
-or first-field projection (an erasure). `Quantity` is the universal carrier; `CertifiedQuantity`
-is its certified sibling; downstream layers add their own (the soil-moisture model's
+or first-field projection (an erasure). `Quantity` is the universal ratio/interval/ordinal
+carrier, `CertifiedQuantity` its certified sibling, and `NominalValue` the nominal-scale
+carrier (§13.2.1 — a magnitude-free designation, ingest and erasure mirroring `Quantity`'s own
+story point for point); downstream layers add their own (the soil-moisture model's
 `DedicatedQuantity`). `@[kindCarrier]` registers a single-field quantity-like structure so the
 audit recognizes its mints and erasures — the same open-registry discipline as the kind
 declarations themselves.
@@ -59,6 +75,7 @@ the prelude-only `import PropertyKindCalculus` spine.
 
 import Lean
 import PropertyKindCalculus.Quantity
+import PropertyKindCalculus.NominalValue
 import PropertyKindCalculus.CertifiedIngest
 
 namespace PropertyKindCalculus.BoundaryAudit
@@ -67,10 +84,12 @@ open Lean
 
 /-! ## The tier registry -/
 
-/-- The four sanctioned boundary tiers, strongest (most-constrained) first. -/
+/-- The five sanctioned boundary tiers. -/
 inductive BoundaryTier where
   /-- An authored crossing where two kinds genuinely meet (`@[kindCrossing]`). -/
   | kindCrossing
+  /-- A checked ingest mint — raw/host data enters through some check (`@[kindIngest]`). -/
+  | kindIngest
   /-- A carrier-vocabulary exception — representation plumbing (`@[carrierVocab]`). -/
   | carrierVocab
   /-- A declared constant mint — an adjudicated value enters the calculus (`@[kindConst]`). -/
@@ -82,6 +101,7 @@ deriving DecidableEq, Repr, Inhabited
 /-- How a tier prints in the audit report. -/
 def BoundaryTier.label : BoundaryTier → String
   | .kindCrossing => "kindCrossing"
+  | .kindIngest   => "kindIngest"
   | .carrierVocab => "carrierVocab"
   | .kindConst   => "kindConst"
   | .kindEmission => "kindEmission"
@@ -94,8 +114,8 @@ structure BoundaryTag where
   tier : BoundaryTier
 deriving Repr, Inhabited
 
-/-- The environment extension collecting every `@[kindCrossing]`/`@[carrierVocab]`/
-`@[kindConst]`/`@[kindEmission]`-tagged declaration. -/
+/-- The environment extension collecting every `@[kindCrossing]`/`@[kindIngest]`/
+`@[carrierVocab]`/`@[kindConst]`/`@[kindEmission]`-tagged declaration. -/
 initialize boundaryExt :
     SimplePersistentEnvExtension BoundaryTag (Array BoundaryTag) ←
   registerSimplePersistentEnvExtension {
@@ -103,43 +123,11 @@ initialize boundaryExt :
     addImportedFn := fun ess => ess.foldl (init := #[]) (· ++ ·)
   }
 
-syntax (name := kindCrossingAttr) "kindCrossing" : attr
-syntax (name := carrierVocabAttr) "carrierVocab" : attr
-syntax (name := kindConstAttr) "kindConst" : attr
-syntax (name := kindEmissionAttr) "kindEmission" : attr
+/-! ## The carrier registry
 
-initialize registerBuiltinAttribute {
-  name  := `kindCrossingAttr
-  descr := "An authored kind crossing — the one carrier-level place two kinds meet (invariant 7)."
-  add   := fun decl _stx _kind =>
-    modifyEnv fun env => boundaryExt.addEntry env { decl := decl, tier := .kindCrossing }
-}
-
-initialize registerBuiltinAttribute {
-  name  := `carrierVocabAttr
-  descr := "A carrier-vocabulary exception — kind-preserving representation plumbing (invariant 7)."
-  add   := fun decl _stx _kind =>
-    modifyEnv fun env => boundaryExt.addEntry env { decl := decl, tier := .carrierVocab }
-}
-
-initialize registerBuiltinAttribute {
-  name  := `kindConstAttr
-  descr := "A declared constant mint — a cited table, config bound, seed, threshold, or structural constant (invariant 6, tier iii)."
-  add   := fun decl _stx _kind =>
-    modifyEnv fun env => boundaryExt.addEntry env { decl := decl, tier := .kindConst }
-}
-
-initialize registerBuiltinAttribute {
-  name  := `kindEmissionAttr
-  descr := "A genuine emission boundary — a kinded value becomes naked for a consumer (invariant 4)."
-  add   := fun decl _stx _kind =>
-    modifyEnv fun env => boundaryExt.addEntry env { decl := decl, tier := .kindEmission }
-}
-
-/-- Every boundary tag harvested into `env`. -/
-def boundaryTags (env : Environment) : Array BoundaryTag := boundaryExt.getState env
-
-/-! ## The carrier registry -/
+Moved ahead of the tier attributes below: `@[kindCrossing]`'s own `add` callback needs
+`kindCarrierNames`/`mkCarrierSpec` to check an argument for a carrier, so the registry they
+belong to must already be in scope. -/
 
 /-- The environment extension collecting every `@[kindCarrier]`-registered structure. -/
 initialize kindCarrierExt :
@@ -160,15 +148,16 @@ initialize registerBuiltinAttribute {
     modifyEnv fun env => kindCarrierExt.addEntry env decl
 }
 
-/-- Every carrier structure the audit recognizes: the two universal PKC carriers `Quantity` and
-`CertifiedQuantity` (built in, since a `registerBuiltinAttribute` attribute is not active in its
-own defining module), plus every `@[kindCarrier]`-registered structure from downstream layers
-(e.g. the model's `DedicatedQuantity`). -/
+/-- Every carrier structure the audit recognizes: the three built-in PKC carriers `Quantity`
+(ratio/interval/ordinal, magnitude-bearing), `CertifiedQuantity` (its certified sibling), and
+`NominalValue` (the nominal-scale designation carrier — built in for the same reason
+`Quantity`/`CertifiedQuantity` are: a `registerBuiltinAttribute` attribute is not active in its
+own defining module, and none of the three is defined here), plus every `@[kindCarrier]`-
+registered structure from downstream layers (e.g. the model's `DedicatedQuantity`). -/
 def kindCarrierNames (env : Environment) : Array Name :=
-  #[``PropertyKindCalculus.Quantity, ``PropertyKindCalculus.CertifiedQuantity]
+  #[``PropertyKindCalculus.Quantity, ``PropertyKindCalculus.CertifiedQuantity,
+    ``PropertyKindCalculus.NominalValue]
     ++ kindCarrierExt.getState env
-
-/-! ## The environment walk -/
 
 /-- A registered carrier's detection footprint: its constructor (a mint) and its first-field
 projection (an erasure), with the arities that fully-applied occurrences carry. -/
@@ -200,6 +189,117 @@ def mkCarrierSpec (env : Environment) (cn : Name) : Option CarrierSpec := do
     projName   := cn ++ field₀
     projArity  := cv.numParams + 1
   }
+
+/-! ## The `@[kindCrossing]` argument check
+
+A crossing's whole claim is that two kinds meet — so its signature must actually SHOW a kind on
+the way in, not just on the way out. `mentionsCarrier` decides that, structurally, at the point
+`@[kindCrossing]` is applied (so a miscategorized ingest fails the build where it is written,
+not three imports later at `#kind_boundary_audit`). -/
+
+/-- The domain types of a Pi-type's leading binder chain, in declaration order — every
+explicit, implicit, and instance-implicit argument a signature states, before its return type.
+Binder info is not inspected: an instance argument can no more be a carrier than an implicit
+type can, so a filter would only be something to remember, never something to gain. -/
+def piArgTypes : Expr → List Expr
+  | .forallE _ d b _ => d :: piArgTypes b
+  | _ => []
+
+/-- Bounded structural search: does `ty` mention a registered carrier's structure name, either
+directly, through one of the container formers a real signature here actually uses (`List`/
+`Array`/`Option`/`Prod`/`Except`/`Sum`), or through the field types of a monomorphic,
+single-constructor, non-carrier structure — so a plain data record built OVER kinded fields
+(`Marker`, `SizingLine`) reads as kinded even though the record itself is not a registered
+carrier, while a plain data record over bare `Float`s (an affine transform's six coefficients)
+correctly does not? `fuel` bounds the unwrap depth: every shape the check actually needs to see
+through is shallow (a record of quantities, a product, a list of records), so a small fixed
+fuel is enough, and a type that would need more is, correctly, treated as opaque rather than
+risking a loop on a self-referential type. -/
+partial def mentionsCarrier (env : Environment) (specs : Array CarrierSpec) (fuel : Nat)
+    (ty : Expr) : Bool :=
+  match fuel with
+  | 0 => false
+  | fuel + 1 =>
+    match ty.getAppFn with
+    | .const n _ =>
+        if specs.any (·.structName == n) then true
+        else
+          let args := ty.getAppArgs
+          if (n == ``List || n == ``Array || n == ``Option) && args.size == 1 then
+            mentionsCarrier env specs fuel args[0]!
+          else if (n == ``Prod || n == ``Except || n == ``Sum) && args.size == 2 then
+            mentionsCarrier env specs fuel args[0]! || mentionsCarrier env specs fuel args[1]!
+          else match env.find? n with
+            | some (.inductInfo iv) =>
+                iv.numParams == 0 &&
+                  (match iv.ctors with
+                   | [ctorName] =>
+                       match env.find? ctorName with
+                       | some (.ctorInfo cv) =>
+                           (piArgTypes cv.type).any (mentionsCarrier env specs fuel)
+                       | _ => false
+                   | _ => false)
+            | _ => false
+    | _ => false
+
+/-! ## The tier attributes -/
+
+syntax (name := kindCrossingAttr) "kindCrossing" : attr
+syntax (name := kindIngestAttr) "kindIngest" : attr
+syntax (name := carrierVocabAttr) "carrierVocab" : attr
+syntax (name := kindConstAttr) "kindConst" : attr
+syntax (name := kindEmissionAttr) "kindEmission" : attr
+
+initialize registerBuiltinAttribute {
+  name  := `kindCrossingAttr
+  descr := "An authored kind crossing — the one carrier-level place two kinds meet (invariant 7)."
+  add   := fun decl _stx _kind => do
+    let env ← getEnv
+    let some info := env.find? decl
+      | throwError "`@[kindCrossing]` could not find '{decl}' in the environment"
+    let specs := (kindCarrierNames env).filterMap (mkCarrierSpec env)
+    unless (piArgTypes info.type).any (mentionsCarrier env specs 6) do
+      throwError "`@[kindCrossing]` requires at least one argument whose type is (or contains) \
+        a registered carrier (`Quantity`, `NominalValue`, or a `@[kindCarrier]`-registered \
+        structure) — '{decl}' takes none. A crossing is where an ALREADY-KINDED value meets its \
+        target kind; a declaration with no kinded argument is a boundary MINT, not a crossing. \
+        Tag a checked ingest (raw/host data admitted through some check) `@[kindIngest]`, or a \
+        fixed literal/adjudicated constant `@[kindConst]`, instead."
+    modifyEnv fun env => boundaryExt.addEntry env { decl := decl, tier := .kindCrossing }
+}
+
+initialize registerBuiltinAttribute {
+  name  := `kindIngestAttr
+  descr := "An authored checked ingest mint — raw/host data enters the calculus through some check (invariant 6, tier ii)."
+  add   := fun decl _stx _kind =>
+    modifyEnv fun env => boundaryExt.addEntry env { decl := decl, tier := .kindIngest }
+}
+
+initialize registerBuiltinAttribute {
+  name  := `carrierVocabAttr
+  descr := "A carrier-vocabulary exception — kind-preserving representation plumbing (invariant 7)."
+  add   := fun decl _stx _kind =>
+    modifyEnv fun env => boundaryExt.addEntry env { decl := decl, tier := .carrierVocab }
+}
+
+initialize registerBuiltinAttribute {
+  name  := `kindConstAttr
+  descr := "A declared constant mint — a cited table, config bound, seed, threshold, or structural constant (invariant 6, tier iii)."
+  add   := fun decl _stx _kind =>
+    modifyEnv fun env => boundaryExt.addEntry env { decl := decl, tier := .kindConst }
+}
+
+initialize registerBuiltinAttribute {
+  name  := `kindEmissionAttr
+  descr := "A genuine emission boundary — a kinded value becomes naked for a consumer (invariant 4)."
+  add   := fun decl _stx _kind =>
+    modifyEnv fun env => boundaryExt.addEntry env { decl := decl, tier := .kindEmission }
+}
+
+/-- Every boundary tag harvested into `env`. -/
+def boundaryTags (env : Environment) : Array BoundaryTag := boundaryExt.getState env
+
+/-! ## The environment walk -/
 
 /-- Walk an expression, collecting every carrier *mint* (the kind argument of a fully-applied
 constructor) and recording whether any carrier *erasure* (a first-field projection, in either
@@ -359,7 +459,8 @@ the build. Theorems and `Prop`-valued declarations are skipped — a parity stat
 elab "#kind_boundary_audit" nss:ident+ : command => liftTermElabM do
   let sites ← boundarySites (nss.map (·.getId))
   -- Lines are sorted *as rendered*, so the report groups by tier tag (`[carrierVocab]` <
-  -- `[kindConst]` < `[kindCrossing]` < `[kindEmission]` < `⚠ UNTAGGED`) and only then by name.
+  -- `[kindConst]` < `[kindCrossing]` < `[kindEmission]` < `[kindIngest]` < `⚠ UNTAGGED`) and
+  -- only then by name.
   let mut lines : Array String := #[]
   let mut nSanctioned := 0
   let mut nViolations := 0
@@ -387,10 +488,10 @@ elab "#kind_boundary_audit" nss:ident+ : command => liftTermElabM do
 
 open Elab Command in
 /-- `#kind_crossings [ns …]` enumerates the tagged boundary registry — every
-`@[kindCrossing]`/`@[carrierVocab]`/`@[kindConst]`/`@[kindEmission]` site with the first line of its docstring —
-grouped by tier and sorted, optionally filtered to the given namespaces. The invariant-5-style
-enumeration for boundaries: a reviewer reads the sanctioned sites the way `#kind_edges` reads the
-sanctioned edges. -/
+`@[kindCrossing]`/`@[kindIngest]`/`@[carrierVocab]`/`@[kindConst]`/`@[kindEmission]` site with
+the first line of its docstring — grouped by tier and sorted, optionally filtered to the given
+namespaces. The invariant-5-style enumeration for boundaries: a reviewer reads the sanctioned
+sites the way `#kind_edges` reads the sanctioned edges. -/
 elab "#kind_crossings" nss:ident* : command => liftTermElabM do
   let env ← getEnv
   let targets := nss.map (·.getId)
