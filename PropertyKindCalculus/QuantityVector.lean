@@ -28,9 +28,10 @@ In plain engineering terms: a vector quantity is *one* typed array of numbers wi
 *one* unit on it, not a bag of separately-united numbers.
 
 The *executable* array carrier additionally gets the one honest default — the empty
-table (`Inhabited (Quantity k (Array α))`), the well-typed fallback array-indexing
-idioms demand. Scalar quantities stay uninhabited on purpose: a default scalar would
-be a fabricated magnitude.
+table (`Inhabited (Quantity k (Array α))`, and its capacity-hinted spelling
+`Quantity.emptyWithCapacity`), the well-typed fallback array-indexing idioms demand.
+Scalar quantities stay uninhabited on purpose: a default scalar would be a fabricated
+magnitude.
 -/
 
 import PropertyKindCalculus.Quantity
@@ -82,6 +83,33 @@ def Quantity.get! {k : KindOfProperty} {R : Type} [Inhabited R]
 @[simp] theorem Quantity.get!_magnitude {k : KindOfProperty} {R : Type} [Inhabited R]
     (v : Quantity k (Array R)) (i : Nat) :
     (v.get! i).magnitude = v.magnitude[i]! := rfl
+
+/-- **Component append — the write dual of `Quantity.get!`.** Extending a table with a value
+*of its own kind* keeps the kind by parametricity: `k` flows from both the table and the new
+component, and nothing can change it. This is the licensed accumulator idiom — build a vector
+quantity by pushing kinded components — replacing the pattern of collecting bare magnitudes in
+an `Array Float` and re-minting the finished table with `⟨…⟩`. The §18 reading again: pushing
+a component changes the *extent* of the numerical array, not the kind (or unit) of the vector
+quantity. -/
+def Quantity.push {k : KindOfProperty} {R : Type}
+    (v : Quantity k (Array R)) (x : Quantity k R) : Quantity k (Array R) :=
+  ⟨v.magnitude.push x.magnitude⟩
+
+@[simp] theorem Quantity.push_magnitude {k : KindOfProperty} {R : Type}
+    (v : Quantity k (Array R)) (x : Quantity k R) :
+    (v.push x).magnitude = v.magnitude.push x.magnitude := rfl
+
+/-- The empty table with reserved storage — `default` plus a capacity hint. Capacity is pure
+representation (how much the array *can* hold, never what it does hold), so this asserts
+exactly what `Inhabited`'s default does: nothing, at any kind. The natural seed for a
+`Quantity.push` accumulation loop of known extent. -/
+def Quantity.emptyWithCapacity {k : KindOfProperty} {R : Type} (n : Nat) :
+    Quantity k (Array R) := ⟨Array.emptyWithCapacity n⟩
+
+@[simp] theorem Quantity.emptyWithCapacity_magnitude {k : KindOfProperty} {R : Type}
+    (n : Nat) :
+    (Quantity.emptyWithCapacity (k := k) (R := R) n).magnitude = Array.emptyWithCapacity n :=
+  rfl
 
 /-- **Extent.** The component count of a vector quantity's numerical array — bare `Nat` by
 design: an extent is structural (how many components the representation holds), not a magnitude
