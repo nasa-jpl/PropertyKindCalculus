@@ -32,3 +32,4 @@ import PropertyKindCalculus.QuantityFunction
 import PropertyKindCalculus.Complex
 import PropertyKindCalculus.QuantityRefinement
 import PropertyKindCalculus.QuantityVector
+import PropertyKindCalculus.Provenance

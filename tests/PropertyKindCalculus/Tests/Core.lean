@@ -19,4 +19,5 @@ import PropertyKindCalculus.Tests.Core.Decimal
 import PropertyKindCalculus.Tests.Core.KindEdges
 import PropertyKindCalculus.Tests.Core.CertifiedIngest
 import PropertyKindCalculus.Tests.Core.BoundaryAudit
+import PropertyKindCalculus.Tests.Core.Provenance
 import PropertyKindCalculus.Tests.Core.Index
