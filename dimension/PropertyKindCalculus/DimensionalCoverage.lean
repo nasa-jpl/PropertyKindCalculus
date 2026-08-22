@@ -55,10 +55,12 @@ enumeration, not the notion.
 Like `KindEdges`, edges are harvested on both channels: from constant *types* (a call-site
 witness the elaborator lifts into a `_proof_N` auxiliary has the edge as its type) — but only
 from the **conclusion**, since an edge taken as a *hypothesis* (`(h : ProductKind …) → …`) is
-assumed, not authored — and from definition *bodies*, reading witness-producer applications
-the elaborator left inline (`KindEdges.collectProducedEdges`; nothing obliges it to lift). A
-producer application is always a construction, never a hypothesis, so the body channel keeps
-the same authored-not-assumed line.
+assumed, not authored — and from definition *bodies*, reading every constant-headed
+application whose instantiated conclusion is a witness-family `Prop`
+(`KindEdges.collectInlineEdges`) — the direct smart-constructor application, the lifted or
+*shared* `._proof_N` auxiliary reference, the named-theorem reference. A free-variable-headed
+witness is a hypothesis and is not collected, so the body channel keeps the same
+authored-not-assumed line.
 
 The walk has two surfaces over one row producer (`coverageRows`): the command renders the
 pinnable text report, and `coverageTable` renders the same rows as a generated `IndexTable`
@@ -281,7 +283,7 @@ def coverageRows (scope : Array Name) : MetaM (Array CoverageRow) := do
     -- under the value's own telescope so parametric kinds print their binder names.
     if ← KindEdges.bodyScannable reachable env name info then
       let fromBody ← lambdaTelescope info.value! fun _ body =>
-        rowsOf (KindEdges.collectProducedEdges body #[])
+        rowsOf (KindEdges.collectInlineEdges env body #[])
       out := out ++ fromBody
   return out
 

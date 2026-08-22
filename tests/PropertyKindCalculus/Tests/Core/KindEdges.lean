@@ -5,8 +5,9 @@ The trust model says a model's kind algebra is exactly its authored witnesses, j
 enumeration (`QuantityClassification`, "The trust model"; the command is the kind-algebra
 analog of `#print axioms`). This probe authors one edge in each of the three styles the
 command must find — a named witness theorem, a call-site witness inside a definition body
-(on both of the elaborator's spellings: lifted into a `._proof_N` auxiliary found by the
-type scan, or left inline and read off the producer application by the body scan), and an
+(on every one of the elaborator's spellings: lifted into a `._proof_N` auxiliary found by
+the type scan, left inline, or shared with another definition's alpha-equivalent witness —
+the latter two read off the value by the body scan), and an
 operator-table instance — and pins the complete sorted enumeration with `#guard_msgs`. A
 probe kind with no authored edges pins the empty report. The body-scan collector is
 additionally probed in isolation, on a hand-built expression, so its reading does not
@@ -75,7 +76,7 @@ under a binder to exercise the recursion. -/
   let a := kc ``alphaK
   let app := Lean.mkApp6 (kc ``ProductKind.ofRatio) a (kc ``betaK) (kc ``gammaK) a a a
   let wrapped := Lean.mkLambda `x .default (kc ``Nat) app
-  for (spec, args) in PropertyKindCalculus.KindEdges.collectProducedEdges wrapped #[] do
+  for (spec, args) in PropertyKindCalculus.KindEdges.collectInlineEdges (← Lean.getEnv) wrapped #[] do
     let pps ← args.mapM fun e => return toString (← Lean.Meta.ppExpr e)
     Lean.logInfo (spec.fmt pps)
 

@@ -16,14 +16,19 @@ found by two complementary scans:
     the edges sit in the theorem's type, conjunctions included; the *type* scan
     (`collectEdges`) sees them;
   * **call-site witnesses** (`Quantity.mul (ProductKind.ofRatio k₁ k₂ k) x y` inside a
-    definition body) — found on both of the elaborator's spellings. When the inline
-    proof is lifted into an auxiliary theorem (`<def>._proof_N`) its *type is the edge
-    itself*, so the type scan sees it. But nothing obliges the elaborator to lift — a
-    witness it leaves inline lives only in the body, invisible to any type scan — so the
-    *body* scan (`collectProducedEdges`) reads such an edge directly off the
-    witness-producer application (`producers`). Either way the line is attributed to the
-    authoring definition (internal name components stripped), and the two channels
-    render identically, so a pinned report is stable against the lifting heuristic;
+    definition body) — found on every spelling the elaborator produces. It may lift the
+    inline proof into an auxiliary theorem (`<def>._proof_N`) whose *type is the edge*
+    (the type scan sees it), it may leave it inline, and it may **share** one auxiliary
+    across alpha-equivalent witnesses of several definitions — the later definitions'
+    values then hold nothing but a reference, and the type scan alone would attribute
+    their edges to the first definition. The *body* scan (`collectInlineEdges`) closes
+    both gaps: any constant-headed application whose instantiated conclusion is a
+    witness-family `Prop` — the direct smart-constructor application, the lifted or
+    shared auxiliary reference, the named-theorem reference — is an edge at its use
+    site, attributed to the definition being scanned (internal name components
+    stripped). The channels render identically, so a pinned report is stable against
+    the elaborator's choice. A free-variable-headed witness is a *hypothesis* —
+    assumed, not authored — and is not collected;
   * **operator-table registrations** (`instance : KindMul k₁ k₂ k := …`) — the edge is
     the instance's type, printed with a `[table]` marker (`#instances KindMul` lists the
     same registrations per class; this command lists them per *kind*).
@@ -78,60 +83,74 @@ partial def collectEdges (e : Expr) (acc : Array (EdgeSpec × Array Expr)) :
   | .proj _ _ b => collectEdges b acc
   | _ => acc
 
-/-- A witness *producer*: a constructor or smart constructor whose application inside a
-definition body builds an edge-family witness inline. The elaborator MAY lift such a proof
-into a `._proof_N` auxiliary — whose type `collectEdges` then sees — but it is under no
-obligation to, and a witness it leaves inline lives only in the body. `family` names the
-scanned family whose formatter renders the edge; `argIdxs` picks the producer's arguments
-in that formatter's order. -/
-structure ProducerSpec where
-  const : Name
-  arity : Nat
-  family : Name
-  argIdxs : Array Nat
+/-- The five witness `Prop` families — the conclusions the inline scan recognizes. The
+table classes are deliberately absent: a `KindMul`/`KindDiv` registration is an instance,
+owned by the type scan, and an instance *reference* in a value is resolution, not
+authorship. -/
+def propFamilies : Array Name := #[
+  ``PropertyKindCalculus.ProductKind,
+  ``PropertyKindCalculus.QuotientKind,
+  ``PropertyKindCalculus.ReciprocalKind,
+  ``PropertyKindCalculus.TranscendentalKind,
+  ``PropertyKindCalculus.PowerKind]
 
-/-- The inline producers of the scanned families: each witness `Prop`'s structure
-constructor (the anonymous `⟨…⟩`) and its smart constructor where one exists. The table
-classes are absent by design — their registrations are instances, which the type scan
-owns. -/
-def producers : Array ProducerSpec := #[
-  ⟨``PropertyKindCalculus.ProductKind.mk, 6, ``PropertyKindCalculus.ProductKind, #[0, 1, 2]⟩,
-  ⟨``PropertyKindCalculus.ProductKind.ofRatio, 6, ``PropertyKindCalculus.ProductKind, #[0, 1, 2]⟩,
-  ⟨``PropertyKindCalculus.QuotientKind.mk, 6, ``PropertyKindCalculus.QuotientKind, #[0, 1, 2]⟩,
-  ⟨``PropertyKindCalculus.QuotientKind.ofRatio, 6, ``PropertyKindCalculus.QuotientKind, #[0, 1, 2]⟩,
-  ⟨``PropertyKindCalculus.ReciprocalKind.mk, 4, ``PropertyKindCalculus.ReciprocalKind, #[0, 1]⟩,
-  ⟨``PropertyKindCalculus.TranscendentalKind.mk, 4, ``PropertyKindCalculus.TranscendentalKind, #[0, 1]⟩,
-  ⟨``PropertyKindCalculus.PowerKind.mk, 5, ``PropertyKindCalculus.PowerKind, #[0, 1, 2]⟩,
-  ⟨``PropertyKindCalculus.PowerKind.ofRatio, 5, ``PropertyKindCalculus.PowerKind, #[0, 1, 2]⟩]
+/-- Does a declaration's type mention a witness family at all? The cheap pre-check that
+keeps the inline scan from instantiating every application head's type. -/
+def typeMentionsFamily (t : Expr) : Bool :=
+  (t.find? fun s => propFamilies.any (fun f => s.isConstOf f)).isSome
 
-/-- Collect every witness-producer application in an expression — the *body* complement of
-`collectEdges`' type scan, for inline call-site witnesses the elaborator did not lift.
-Same result shape as `collectEdges`, arguments already in the family formatter's order. -/
-partial def collectProducedEdges (e : Expr) (acc : Array (EdgeSpec × Array Expr)) :
-    Array (EdgeSpec × Array Expr) :=
+/-- Peel `args.size` quantifiers off a declaration's type, substituting the application's
+arguments, and expose the conclusion (any leftover quantifiers are stripped, leaving
+their variables loose — rendered as parametric). `none` when the type runs out of
+quantifiers first. -/
+def instantiatedConclusion (declTy : Expr) (args : Array Expr) : Option Expr := Id.run do
+  let mut ty := declTy
+  for a in args do
+    match ty with
+    | .forallE _ _ body _ => ty := body.instantiate1 a
+    | _ => return none
+  return some ty.getForallBody
+
+/-- Collect every **inline edge** of an expression — the *body* complement of
+`collectEdges`\' type scan. A constant-headed application whose instantiated conclusion
+is a witness-family `Prop` *is* an edge at its use site, whatever spelling the elaborator
+chose: the direct smart-constructor application (`ProductKind.ofRatio k₁ k₂ k …`), the
+reference to a lifted `._proof_N` auxiliary, the reference to a **shared** auxiliary
+(the elaborator dedups alpha-equivalent nested proofs of several definitions into one
+auxiliary — the later definitions\' values then hold nothing but this reference, and the
+type scan alone would attribute their edges to the first definition), and the reference
+to a named witness theorem. A *free-variable*-headed witness is deliberately not
+collected: that is a hypothesis — assumed, not authored. Returns the same shape as
+`collectEdges`, arguments in the family formatter\'s order. -/
+partial def collectInlineEdges (env : Environment) (e : Expr)
+    (acc : Array (EdgeSpec × Array Expr)) : Array (EdgeSpec × Array Expr) :=
   let acc := Id.run do
-    for p in producers do
-      if e.isAppOfArity p.const p.arity then
-        let some spec := specs.find? (·.const == p.family) | return acc
-        let args := e.getAppArgs
-        return acc.push (spec, p.argIdxs.map (fun i => args[i]!))
+    let fn := e.getAppFn
+    let .const n _ := fn | return acc
+    let some ci := env.find? n | return acc
+    unless typeMentionsFamily ci.type do return acc
+    let some concl := instantiatedConclusion ci.type e.getAppArgs | return acc
+    for spec in specs do
+      if propFamilies.contains spec.const && concl.isAppOfArity spec.const spec.arity then
+        return acc.push (spec, concl.getAppArgs)
     return acc
+  -- Recurse into the application's arguments (each argument's own spine is processed at
+  -- its root — never into this spine's prefixes, which would re-read the edge partially
+  -- applied), into a non-constant head, and under binders.
   match e with
-  | .app f a => collectProducedEdges a (collectProducedEdges f acc)
-  | .lam _ t b _ => collectProducedEdges b (collectProducedEdges t acc)
-  | .forallE _ t b _ => collectProducedEdges b (collectProducedEdges t acc)
-  | .letE _ t v b _ => collectProducedEdges b (collectProducedEdges v (collectProducedEdges t acc))
-  | .mdata _ b => collectProducedEdges b acc
-  | .proj _ _ b => collectProducedEdges b acc
+  | .app .. =>
+    let acc := if e.getAppFn.isConst then acc else collectInlineEdges env e.getAppFn acc
+    e.getAppArgs.foldl (fun acc a => collectInlineEdges env a acc) acc
+  | .lam _ t b _ => collectInlineEdges env b (collectInlineEdges env t acc)
+  | .forallE _ t b _ => collectInlineEdges env b (collectInlineEdges env t acc)
+  | .letE _ t v b _ =>
+    collectInlineEdges env b (collectInlineEdges env v (collectInlineEdges env t acc))
+  | .mdata _ b => collectInlineEdges env b acc
+  | .proj _ _ b => collectInlineEdges env b acc
   | _ => acc
 
-/-- Does the expression mention a producer constant at all? The value-level pre-filter of
-the body scan. -/
-def mentionsProducer (e : Expr) : Bool :=
-  (e.find? fun s => producers.any (fun p => s.isConstOf p.const)).isSome
-
 /-- The module indices whose import closure contains the module defining the witness
-families — the only modules whose definitions can possibly apply a producer. The body
+families — the only modules whose definitions can possibly reference them. The body
 scan skips every other module's constants without touching their values: walking every
 value in an `import Lean` environment costs hundreds of millions of allocation
 heartbeats, and this filter reduces the walk to the calculus's own downstream. Constants
@@ -169,7 +188,6 @@ def bodyScannable (reachable : Std.HashSet Nat) (env : Environment)
   if let some idx := env.getModuleIdxFor? name then
     unless reachable.contains idx.toNat do return false
   if name.isInternalDetail || isAuxRecursor env name then return false
-  unless (info.value?.map mentionsProducer).getD false do return false
   return !(← Meta.isInstance name)
 
 /-- Strip internal name components (`._proof_N`, numeric suffixes) so a lifted call-site
@@ -218,7 +236,7 @@ def edgesMentioning (target : Name) : MetaM (Array KindEdge) := do
     -- which is what lets the dedup collapse the two channels.
     if ← bodyScannable reachable env name info then
       let fromBody ← Meta.lambdaTelescope info.value! fun _ body =>
-        (collectProducedEdges body #[]).filterMapM fun (spec, args) => do
+        (collectInlineEdges env body #[]).filterMapM fun (spec, args) => do
           if args.any (·.isConstOf target) then
             let pps ← args.mapM fun a => return toString (← Meta.ppExpr a)
             return some (spec.fmt pps)
@@ -258,7 +276,7 @@ def edgesByKind (targets : Array Name) : MetaM (Std.HashMap Name (Array KindEdge
     let bodyEdges ← do
       if ← bodyScannable reachable env name info then
         Meta.lambdaTelescope info.value! fun _ body => do
-          let found := collectProducedEdges body #[]
+          let found := collectInlineEdges env body #[]
           found.mapM fun (spec, args) => do
             let mentioned := args.filterMap fun a =>
               match a with
