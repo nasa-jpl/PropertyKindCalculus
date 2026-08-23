@@ -1,5 +1,5 @@
 /-
-# `#kind_graph` — the step harvest: one constructed object, rendered four ways
+# `#kind_graph` — the step harvest: one constructed object, rendered per reading
 
 A step is a declaration, and this module reads it into the metrological provenance
 hypergraph as *data*: `stepGraphOf` constructs the `Provenance` value — ports off the
@@ -12,6 +12,8 @@ off a report by a person:
     #kind_occurrences myStep   -- the authored licenses discharged inline, with incidence
     #kind_graph myStep         -- the whole object, with its well-formedness verdict
     #kind_graph_decide myStep  -- the kernel checks the wiring (an added `decide` theorem)
+    #kind_assembly [a, b, …]        -- the multi-step graph of a pipeline, one object
+    #kind_assembly_decide [a, b, …] -- the kernel checks the assembled wiring
 
 **Ports** are read off what the signature *states*: the telescope's carrier-typed
 binders are input ports (in signature order), the result type's carrier-typed right-spine
@@ -54,13 +56,24 @@ through the identity wire (`Provenance`, "The identity wire — `copy`"). An att
 application (`Quantity.attest` and every `@[kindAttest]` registration) introduces an
 `attested` source carrying its harvested reason; a `@[kindIngest]`-headed application
 introduces a `gated` source; a `@[kindConst]` declaration's own value is wired through an
-`attested "[kindConst]"` source — the audit's tiers, carried into the graph. A carrier
-projection marks its operand as an **exit**: the erasure boundary, beyond which the byte
-gate carries the claim. What no reading recognizes — a raw `⟨…⟩` mint, an opaque
-sub-step call, a monadic wrapper, a point-free body — produces nothing, and the verdict
-says so: an unreached derivation target is exactly an anonymous mint. (A record-carried
-quantity is not yet a port: the signature reading recognizes carrier-headed binders, so
-record parameters enter the graph story when their carrier maps do.)
+`attested "[kindConst]"` source; a `@[kindEmission]` declaration's carrier-constructor
+mints — the sanctioned grid↔kernel shell — enter through `attested "[kindEmission]"`
+sources: the audit's tiers, carried into the graph. A carrier projection marks its
+operand as an **exit**: the erasure boundary, beyond which the byte gate carries the
+claim. The do-elaboration's administrative heads (`Id.run`, `pure`, `bind`, `letFun`,
+`ite`/`dite`, and a single-alternative matcher — tuple destructuring) are transparent
+to the walk, so a straight-line monadic body wires exactly like its pure spelling; a
+loop or genuine multi-alternative control flow stays opaque. What no reading
+recognizes — a raw `⟨…⟩` mint, an opaque sub-step call outside an assembly, a loop
+body's result, a point-free body — produces nothing, and the verdict says so: an
+unreached derivation target is exactly an anonymous mint. (A record-carried quantity is
+not yet a port: the signature reading recognizes carrier-headed binders, so record
+parameters enter the graph story when their carrier maps do.)
+
+**Assembly** reads a pipeline as ONE graph (section, "The assembly"): the members
+become each other's sub-steps, a call becomes a `step` procedure edge, walked call
+sites dissect into the callee's box, and the verdict — with its kernel theorem — is
+computed on the assembled multi-step object.
 
 The byte-identical renderings are the spot check, not the license: `#kind_ports` and
 `#kind_occurrences` print exactly the lines they printed as free-standing harvests, now
@@ -287,8 +300,12 @@ def StepOccurrence.renderWired (o : StepOccurrence) : String :=
   s!"{o.render} ⇒ {o.occ.result}{marker}"
 
 /-- The registries and attribution the walk carries: the audit's carrier, boundary, and
-attestor registries, the occurrence site, and whether the harvested declaration is
-itself a `@[kindConst]` mint (its value then wires through a declared source). -/
+attestor registries, the occurrence site, whether the harvested declaration is itself a
+`@[kindConst]` mint (its value then wires through a declared source) or a
+`@[kindEmission]` shell (its carrier-constructor mints are the sanctioned grid↔kernel
+boundary, wired through `attested "[kindEmission]"` sources), and the assembly set —
+the declarations an assembly reads as sub-step procedure edges rather than opaque
+calls. -/
 structure HarvestCtx where
   env : Environment
   carriers : Array Name
@@ -298,6 +315,8 @@ structure HarvestCtx where
   attestors : Array BoundaryAudit.AttestSpec
   site : String
   declKindConst : Bool
+  declEmission : Bool := false
+  subSteps : Array Name := #[]
 
 /-- The walk's accumulator: occurrences, introduction events, exits, and the counter
 behind synthesized interior nodes (`_1`, `_2`, … in walk order). -/
@@ -330,9 +349,10 @@ inductive Target where
   /-- Produce onto this node; `owned` says the walk owns its introduction event (a
   `let` binder or synthesized interior node — never a port). -/
   | one (node kind : String) (owned : Bool)
-  /-- The root of a multi-output step: one slot per result-type component, `none` for
-  an un-kinded component. -/
-  | tuple (comps : List (Option (String × String)))
+  /-- The root of a multi-output producer: one slot per component — `none` for an
+  un-kinded one — each kinded slot a node, its kind, and whether the walk owns its
+  introduction (an output port's slot is not owned; a matcher binder's is). -/
+  | tuple (comps : List (Option (String × String × Bool)))
 
 /-- The single-node view of an optional target. -/
 def Target.asOne? : Option Target → Option (String × String × Bool)
@@ -373,6 +393,14 @@ def opaqueTarget (h : HarvestCtx) (t1 : Option (String × String × Bool))
     else st
   | none => st
 
+/-- The rendered name of a step declaration — the pretty printer's spelling in the
+current namespace context, without the explicit-argument `@` marker a signature with
+implicit binders would carry: the name labels a procedure edge and prefixes a node
+namespace, where the marker is noise. -/
+def stepNameOf (ci : ConstantInfo) : MetaM String := do
+  let s := toString (← Meta.ppExpr (mkConst ci.name (ci.levelParams.map mkLevelParam)))
+  return if s.startsWith "@" then (s.drop 1).toString else s
+
 /-- One edge stated by a consuming application's binders, kinds rendered. -/
 structure BinderEdge where
   family : EdgeFamily
@@ -408,14 +436,18 @@ def binderEdges (h : HarvestCtx) (ctx : BinderCtx) (args : Array Expr)
   return edges
 
 /-- Would this expression, as an operand, produce a node of its own — an attestor
-application, a gated ingest, or a consuming application (an edge stated directly or one
-instance-unfold away)? Such an operand is walked onto a synthesized node so the outer
-occurrence and the inner producer name the same thing. -/
+application, a gated ingest, an emission-shell mint, a sub-step application, or a
+consuming application (an edge stated directly or one instance-unfold away)? Such an
+operand is walked onto a synthesized node so the outer occurrence and the inner
+producer name the same thing. -/
 def isProducerApp (h : HarvestCtx) (a : Expr) : Bool :=
   match a.getAppFn with
   | .const c _ =>
     (h.attestors.any fun s => s.declName == c && a.getAppNumArgs == s.arity)
       || h.ingestConsts.contains c
+      || (h.subSteps.contains c && a.getAppNumArgs > 0)
+      || (h.declEmission && h.carrierSpecs.any fun s =>
+            s.ctorName == c && a.getAppNumArgs == s.ctorArity)
       || (match h.env.find? c with
           | some ci =>
             match KindEdges.instantiatedBinderTypes ci.type a.getAppArgs with
@@ -467,7 +499,7 @@ partial def walk (h : HarvestCtx) (e : Expr) (ctx : BinderCtx)
     | some (n, k, owned) => return st.copyTo h.site (← refName ctx e) n k owned
     | none => return st
   | _ =>
-    -- a multi-output root: split a literal tuple onto its component ports
+    -- a multi-output root: split a literal tuple onto its component slots
     if let some (.tuple comps) := target then
       if e.isAppOfArity ``Prod.mk 4 then
         let args := e.getAppArgs
@@ -475,24 +507,76 @@ partial def walk (h : HarvestCtx) (e : Expr) (ctx : BinderCtx)
         let st ← walk h args[1]! ctx none st
         match comps with
         | c :: rest =>
-          let st ← walk h args[2]! ctx (c.map fun (n, k) => .one n k false) st
+          let st ← walk h args[2]! ctx (c.map fun (n, k, o) => .one n k o) st
           let restT : Option Target := match rest with
-            | [c'] => c'.map fun (n, k) => .one n k false
+            | [c'] => c'.map fun (n, k, o) => .one n k o
             | _ => some (.tuple rest)
           walk h args[3]! ctx restT st
         | [] => walk h args[3]! ctx none st
       else
-        -- an opaque multi-output producer: the outputs stay unwired
-        walkApp h e ctx none st
+        match e.getAppFn with
+        | .const c _ =>
+          -- a multi-output sub-step call: one procedure edge per kinded slot
+          if h.subSteps.contains c && e.isApp then
+            walkSubStep h c e ctx (.inr comps) st
+          else
+            -- an opaque multi-output producer: the outputs stay unwired
+            walkApp h e ctx none st
+        | _ => walkApp h e ctx none st
     else
       walkApp h e ctx (Target.asOne? target) st
 
-/-- The application readings, in order: attested mint, gated ingest, erasure,
-consuming application, configuration read, opaque. -/
+/-- The application readings, in order: do-elaboration transparency, attested mint,
+gated ingest, emission-shell mint, sub-step procedure edge, erasure, consuming
+application, tuple destructuring, configuration read, opaque. -/
 partial def walkApp (h : HarvestCtx) (e : Expr) (ctx : BinderCtx)
     (t1 : Option (String × String × Bool)) (st : WalkSt) : MetaM WalkSt := do
   let fn := e.getAppFn
   let args := e.getAppArgs
+  -- the do-elaboration's administrative heads are transparent to dataflow: reading
+  -- through them lets a straight-line monadic body wire exactly like its pure
+  -- spelling (loops and multi-alternative control flow stay opaque)
+  if e.isAppOfArity ``Id.run 2 then
+    return ← walk h args[1]! ctx (t1.map fun (n, k, o) => .one n k o) st
+  if e.isAppOfArity ``Pure.pure 4 then
+    return ← walk h args[3]! ctx (t1.map fun (n, k, o) => .one n k o) st
+  if e.isAppOfArity ``Bind.bind 6 then
+    match args[5]! with
+    | .lam nm t b _ =>
+      let st ← walk h t ctx none st
+      let st ← match ← carrierKind? h.env h.carriers ctx t with
+        | some k => walk h args[4]! ctx (some (.one (toString nm) k true)) st
+        | none => walk h args[4]! ctx none st
+      return ← walk h b ((nm, none) :: ctx) (t1.map fun (n, k, o) => .one n k o) st
+    | f =>
+      let st ← walk h args[4]! ctx none st
+      return ← walk h f ctx none st
+  if e.isAppOfArity ``letFun 4 then
+    match args[3]! with
+    | .lam nm t b _ =>
+      let st ← walk h t ctx none st
+      let st ← match ← carrierKind? h.env h.carriers ctx t with
+        | some k => walk h args[2]! ctx (some (.one (toString nm) k true)) st
+        | none => walk h args[2]! ctx none st
+      return ← walk h b ((nm, some args[2]!) :: ctx) (t1.map fun (n, k, o) => .one n k o) st
+    | f =>
+      let st ← walk h args[2]! ctx none st
+      return ← walk h f ctx none st
+  if e.isAppOfArity ``ite 5 || e.isAppOfArity ``dite 5 then
+    let st ← walk h args[1]! ctx none st
+    -- both branches produce the target; an owned introduction happens once, here
+    let (t1', st) := match t1 with
+      | some (n, k, true) =>
+        (some (n, k, false), { st with intros := st.intros.push ⟨n, k, .derived⟩ })
+      | t => (t, st)
+    let branch (st : WalkSt) (b : Expr) : MetaM WalkSt :=
+      match b with
+      | .lam nm t bb _ => do
+        let st ← walk h t ctx none st
+        walk h bb ((nm, none) :: ctx) (t1'.map fun (n, k, o) => .one n k o) st
+      | b => walk h b ctx (t1'.map fun (n, k, o) => .one n k o) st
+    let st ← branch st args[3]!
+    return ← branch st args[4]!
   let .const c _ := fn
     | do
       let st := opaqueTarget h t1 st
@@ -517,6 +601,17 @@ partial def walkApp (h : HarvestCtx) (e : Expr) (ctx : BinderCtx)
     let kind := (t1.map fun (_, k, _) => k).getD "_"
     let st := sourceAt h .gated kind t1 st
     return ← args.foldlM (fun st a => walk h a ctx none st) st
+  -- an emission-shell mint: `@[kindEmission]` sanctions this declaration's carrier
+  -- constructors as the grid↔kernel boundary — the mint enters through a declared
+  -- source carrying the tier as its reason
+  if h.declEmission && h.carrierSpecs.any (fun s =>
+      s.ctorName == c && args.size == s.ctorArity) then
+    let kind := (t1.map fun (_, k, _) => k).getD "_"
+    let st := sourceAt h (.attested "[kindEmission]") kind t1 st
+    return ← args.foldlM (fun st a => walk h a ctx none st) st
+  -- a sub-step application: the assembly reads the whole call as a procedure edge
+  if h.subSteps.contains c && !args.isEmpty then
+    return ← walkSubStep h c e ctx (.inl t1) st
   -- an erasure: the operand's value leaves the calculus for the bare carrier
   if let some victim := h.carrierSpecs.findSome? (fun s =>
       if e.isAppOfArity s.projName s.projArity then e.getAppArgs[s.projArity - 1]?
@@ -574,6 +669,28 @@ partial def walkApp (h : HarvestCtx) (e : Expr) (ctx : BinderCtx)
           for j in [0:args.size] do
             st := (← walk h args[j]! ctx (opTargets.get? j) st)
           return st
+  -- a single-alternative matcher: tuple destructuring — the discriminant produces
+  -- onto the alternative's binders, and the alternative is the continuation
+  if let some ma ← Meta.matchMatcherApp? e (alsoCasesOn := true) then
+    if ma.discrs.size == 1 && ma.alts.size == 1 then
+      let mut binders : Array (Name × Expr) := #[]
+      let mut body := ma.alts[0]!
+      let mut peeled := true
+      for _ in [0:ma.altNumParams[0]!] do
+        match body with
+        | .lam nm t b _ => binders := binders.push (nm, t); body := b
+        | _ => peeled := false
+      if peeled then
+        -- kinded slots, each binder type read in the progressively extended context
+        let mut ctx' := ctx
+        let mut slots : List (Option (String × String × Bool)) := []
+        for (nm, t) in binders do
+          let k? ← carrierKind? h.env h.carriers ctx' t
+          slots := slots ++ [k?.map fun k => (toString nm, k, true)]
+          ctx' := (nm, none) :: ctx'
+        let st ← walk h ma.discrs[0]! ctx (some (.tuple slots)) st
+        let st ← walk h body ctx' (t1.map fun (n, k, o) => .one n k o) st
+        return ← ma.remaining.foldlM (fun st a => walk h a ctx none st) st
   -- a configuration read: the identity wire from the constant's port node
   if h.configConsts.contains c then
     if let some (n, k, owned) := t1 then
@@ -582,6 +699,77 @@ partial def walkApp (h : HarvestCtx) (e : Expr) (ctx : BinderCtx)
   -- opaque: no reading applies (a raw mint, a sub-step call, a bare computation)
   let st := opaqueTarget h t1 st
   args.foldlM (fun st a => walk h a ctx none st) st
+
+/-- A sub-step application read as a procedure edge (assembly mode). The callee's
+carrier-typed argument positions are the incidence — named like a consuming
+application's operands, nested producers landing on synthesized nodes — and the edge
+derives the call's target: the single target node (or a synthesized one), or one
+occurrence per kinded slot when the caller destructures a multi-output callee. Operand
+kinds are the callee's *instantiated* binder kinds and a synthesized result's kind its
+instantiated conclusion kind — the call site is where a kind-generic step becomes
+concrete. -/
+partial def walkSubStep (h : HarvestCtx) (c : Name) (e : Expr) (ctx : BinderCtx)
+    (targets : Sum (Option (String × String × Bool))
+      (List (Option (String × String × Bool))))
+    (st : WalkSt) : MetaM WalkSt := do
+  let args := e.getAppArgs
+  let fallback (st : WalkSt) : MetaM WalkSt := do
+    let st := match targets with
+      | .inl t1 => opaqueTarget h t1 st
+      | .inr _ => st
+    args.foldlM (fun st a => walk h a ctx none st) st
+  let some ci := h.env.find? c | fallback st
+  let some btys := KindEdges.instantiatedBinderTypes ci.type args | fallback st
+  let stepName ← stepNameOf ci
+  let operandIdxs := (Array.range args.size).filter fun j =>
+    match btys[j]!.consumeTypeAnnotations.getAppFn with
+    | .const cc _ => h.carriers.contains cc
+    | _ => false
+  let mut opKinds : Array String := #[]
+  for j in operandIdxs do
+    opKinds := opKinds.push ((← carrierKind? h.env h.carriers ctx btys[j]!).getD "_")
+  -- name the operands; a nested producer gets a synthesized node to land on
+  let mut st := st
+  let mut opNames : Array String := #[]
+  let mut opTargets : Std.HashMap Nat Target := {}
+  for j in operandIdxs do
+    let a := args[j]!
+    if isProducerApp h a then
+      let (m, st') := st.nextFresh
+      st := st'
+      let bk := (← carrierKind? h.env h.carriers ctx btys[j]!).getD "_"
+      opNames := opNames.push m
+      opTargets := opTargets.insert j (.one m bk true)
+    else
+      opNames := opNames.push (← refName ctx a)
+  let ops := (opNames.zip opKinds).toList
+  let fam := Provenance.EdgeFamily.step stepName operandIdxs.size
+  let emit (st : WalkSt) (node kind : String) (owned : Bool) : WalkSt :=
+    let st := if owned then { st with intros := st.intros.push ⟨node, kind, .derived⟩ }
+              else st
+    let so : StepOccurrence := ⟨⟨fam, ops, node, kind, h.site⟩, opKinds, false, false⟩
+    { st with occs := st.occs.push so }
+  match targets with
+  | .inl t1 =>
+    match t1 with
+    | some (n, k, owned) => st := emit st n k owned
+    | none =>
+      -- an unassigned single result still derives: onto a synthesized node, at the
+      -- callee's instantiated conclusion kind
+      let kind ← match KindEdges.instantiatedConclusion ci.type args with
+        | some concl => pure ((← carrierKind? h.env h.carriers ctx concl).getD "_")
+        | none => pure "_"
+      let (m, st') := st.nextFresh
+      st := emit st' m kind true
+  | .inr comps =>
+    for c? in comps do
+      match c? with
+      | some (n, k, owned) => st := emit st n k owned
+      | none => pure ()
+  -- recurse into the arguments, nested producers onto their nodes
+  for j in [0:args.size] do
+    st := (← walk h args[j]! ctx (opTargets.get? j) st)
+  return st
 
 end
 
@@ -636,8 +824,10 @@ def StepGraph.renderLines (s : StepGraph) : List String :=
 /-- Construct the step graph of a declaration: the interface off the signature (inputs
 in signature order, configuration reads in body order, outputs in component order —
 a binder or component at a non-carrier type is no port, and output node names keep
-component positions), then the wiring off the elaborated value. -/
-def stepGraphOf (decl : Name) : MetaM StepGraph := do
+component positions), then the wiring off the elaborated value. `subSteps` is the
+assembly set: constant heads the walk reads as procedure edges rather than opaque
+calls. -/
+def stepGraphOf (decl : Name) (subSteps : Array Name := #[]) : MetaM StepGraph := do
   let env ← getEnv
   let some info := env.find? decl
     | throwError "unknown declaration '{decl}'"
@@ -653,7 +843,10 @@ def stepGraphOf (decl : Name) : MetaM StepGraph := do
         (BoundaryAudit.mkAttestSpec env)
       site := toString decl
       declKindConst := (BoundaryAudit.boundaryTags env).any fun t =>
-        t.decl == decl && t.tier == .kindConst }
+        t.decl == decl && t.tier == .kindConst
+      declEmission := (BoundaryAudit.boundaryTags env).any fun t =>
+        t.decl == decl && t.tier == .kindEmission
+      subSteps }
   Meta.forallTelescope info.type fun fvars resultTy => do
     let mut ports : Array (Port String String) := #[]
     for fv in fvars do
@@ -669,13 +862,13 @@ def stepGraphOf (decl : Name) : MetaM StepGraph := do
           return (← carrierKind? env carriers [] resTy).getD "_"
         ports := ports.push { node := node, kind := kind, dir := .config }
     let comps := prodComponents resultTy
-    let mut outSlots : Array (Option (String × String)) := #[]
+    let mut outSlots : Array (Option (String × String × Bool)) := #[]
     for i in [0:comps.size] do
       match ← carrierKind? env carriers [] comps[i]! with
       | some k =>
         let node := if comps.size == 1 then "result" else s!"result.{i + 1}"
         ports := ports.push { node := node, kind := k, dir := .output }
-        outSlots := outSlots.push (some (node, k))
+        outSlots := outSlots.push (some (node, k, false))
       | none => outSlots := outSlots.push none
     let st ← match info.value? with
       | none => pure {}
@@ -683,7 +876,7 @@ def stepGraphOf (decl : Name) : MetaM StepGraph := do
         Meta.lambdaTelescope v fun _ body => do
           let rootTarget : Option Target :=
             if comps.size == 1 then
-              outSlots[0]!.map fun (n, k) => .one n k false
+              outSlots[0]!.map fun (n, k, _) => .one n k false
             else if outSlots.any (·.isSome) then
               some (.tuple outSlots.toList)
             else
@@ -691,6 +884,165 @@ def stepGraphOf (decl : Name) : MetaM StepGraph := do
           walk h body [] rootTarget {}
     return { ports := ports.toList, intros := st.intros.toList, occs := st.occs,
              exits := st.exits.toList }
+
+/-! ## The assembly — the multi-step graph
+
+An assembly reads a set of declarations as ONE pipeline. Each member contributes a
+*level*: its walked graph, with the other members read as sub-step procedure edges,
+when that graph is well-formed — the body exhibits its wiring (`walked`) — and
+otherwise its signature box: ports plus the level's own procedure edge deriving each
+output port from the input ports, interior accountability left to the boundary audit's
+per-declaration tiers (`interface`). Levels are renamed into per-step namespaces
+(`step/node`) and unioned, and every walked call site is dissected into the callee's
+box: the caller's operands wire to the callee's input ports by `copy` — those ports
+demote to derived interior nodes — the callee's own level derives its outputs, and the
+caller's procedure edge stands as the call's derivation. A kind-generic callee is
+monomorphized by its call site: the wires state the instantiated kinds, so the box is
+renamed through the call's kind assignment — the assembly's form of "carrier-generic
+code becomes concrete where its witnesses are discharged". A callee wired from two
+call sites shares one box, conflating the invocations' operands; per-invocation box
+instancing is recorded future work, and a pilot chain wires each callee once.
+
+The *citation* relation — which member's value references which — is harvested by
+constant scan and rendered (`cites: a → b`), never wired: a call inside an interior
+the walk cannot wire is a citation a figure may draw dashed, not an edge of the
+checked object. Well-formedness is checked on the assembled object, and
+`#kind_assembly_decide` has the kernel re-derive it. -/
+
+/-- One level of an assembly: the declaration, its rendered name (the node-namespace
+prefix), its inclusion mode (`walked` — the wired interior; otherwise the interface
+box), and the level graph contributed — in its own node namespace, monomorphized by
+its wired call sites, call-fed input ports already demoted. -/
+structure AssemblyLevel where
+  decl : Name
+  name : String
+  walked : Bool
+  graph : Provenance String String
+
+/-- A multi-step assembly: the levels with their modes, the one union graph the
+verdict and the kernel theorem are stated on, and the citation relation. -/
+structure Assembly where
+  levels : Array AssemblyLevel
+  graph : Provenance String String
+  cites : Array (String × String)
+
+/-- The signature box of an interface-mode level: its ports, plus the level's own
+procedure edge deriving each output port from the input ports — the signature's claim,
+with interior accountability the audit's. -/
+def interfaceBox (name : String) (g : StepGraph) : Provenance String String :=
+  let ins := g.ports.filter (·.dir == .input)
+  let outs := g.ports.filter (·.dir == .output)
+  { ports := g.ports
+    intros := []
+    occurrences := outs.map fun o =>
+      ⟨.step name ins.length, ins.map (fun p => (p.node, p.kind)), o.node, o.kind, name⟩
+    exits := [] }
+
+/-- Assemble a set of declarations into one multi-step graph (module section, "The
+assembly"): per-level harvests with the other members as sub-steps, walked-or-interface
+inclusion, call-site dissection with monomorphizing kind maps and port demotion,
+namespaced union, and the citation scan. -/
+def assemble (decls : Array Name) : MetaM Assembly := do
+  let env ← getEnv
+  -- rendered names — the node-namespace prefixes and procedure-edge labels
+  let mut names : Array String := #[]
+  for d in decls do
+    let some ci := env.find? d | throwError "unknown declaration '{d}'"
+    names := names.push (← stepNameOf ci)
+  -- per-level harvests: walked exactly when the wired interior is well-formed
+  let mut walkedFlags : Array Bool := #[]
+  let mut contribs : Array (Provenance String String) := #[]
+  for i in [0:decls.size] do
+    let d := decls[i]!
+    let g ← stepGraphOf d (subSteps := decls.filter (· != d))
+    let p := g.provenance
+    if p.wellFormed then
+      walkedFlags := walkedFlags.push true
+      contribs := contribs.push p
+    else
+      walkedFlags := walkedFlags.push false
+      contribs := contribs.push (interfaceBox names[i]! g)
+  -- call-site dissection: wires, demotions, and per-callee kind assignments (a
+  -- multi-output call emits one procedure edge per slot, so its input wires dedup)
+  let mut wires : Array (Provenance.Occurrence String String) := #[]
+  let mut wireKeys : Std.HashSet String := {}
+  let mut demoted : Array String := #[]
+  let mut kindPairs : Array (Array (String × String)) := .replicate decls.size #[]
+  for i in [0:decls.size] do
+    unless walkedFlags[i]! do continue
+    let caller := names[i]!
+    let mut seenPerCallee : Std.HashMap Nat Nat := {}
+    for o in contribs[i]!.occurrences do
+      let .step t _ := o.family | continue
+      let some j := names.findIdx? (· == t) | continue
+      let callee := names[j]!
+      let calleeIns := contribs[j]!.ports.filter (·.dir == .input)
+      let calleeOuts := contribs[j]!.ports.filter (·.dir == .output)
+      -- operands wire the callee's input ports, positionally
+      for (p, opc) in calleeIns.zip o.operands do
+        let key := s!"{caller}/{opc.1}⇒{callee}/{p.node}"
+        unless wireKeys.contains key do
+          wireKeys := wireKeys.insert key
+          wires := wires.push
+            ⟨.copy, [(s!"{caller}/{opc.1}", opc.2)], s!"{callee}/{p.node}", opc.2, caller⟩
+          if !demoted.contains s!"{callee}/{p.node}" then
+            demoted := demoted.push s!"{callee}/{p.node}"
+        kindPairs := kindPairs.modify j (·.push (p.kind, opc.2))
+      -- the call's results monomorphize the callee's output kinds, in slot order
+      let k := (seenPerCallee.get? j).getD 0
+      seenPerCallee := seenPerCallee.insert j (k + 1)
+      if let some out := calleeOuts[k % (max calleeOuts.length 1)]? then
+        kindPairs := kindPairs.modify j (·.push (out.kind, o.resultKind))
+  -- transform each level: monomorphize, namespace, demote — then union
+  let mut levels : Array AssemblyLevel := #[]
+  let mut graph : Provenance String String := ⟨[], [], [], []⟩
+  for i in [0:decls.size] do
+    let name := names[i]!
+    let kmap : Std.HashMap String String :=
+      kindPairs[i]!.foldl (init := {}) fun m pr =>
+        if m.contains pr.1 then m else m.insert pr.1 pr.2
+    let p := contribs[i]!
+    let p := p.mapKinds (fun k => (kmap.get? k).getD k)
+    let p := p.mapNodes (s!"{name}/{·}")
+    let (demotedPorts, keptPorts) := p.ports.partition fun q =>
+      q.dir == .input && demoted.contains q.node
+    let p := { p with
+      ports := keptPorts
+      intros := demotedPorts.map (fun q => ⟨q.node, q.kind, .derived⟩) ++ p.intros }
+    levels := levels.push ⟨decls[i]!, name, walkedFlags[i]!, p⟩
+    graph := graph.union p
+  graph := graph.union ⟨[], [], wires.toList, []⟩
+  -- the citation relation: which member's value references which
+  let mut cites : Array (String × String) := #[]
+  for i in [0:decls.size] do
+    let d := decls[i]!
+    let others : NameSet :=
+      (decls.filter (· != d)).foldl (init := {}) (·.insert ·)
+    if let some v := (env.find? d).bind (·.value?) then
+      for c in configReads others v do
+        if let some j := decls.findIdx? (· == c) then
+          cites := cites.push (names[i]!, names[j]!)
+  return { levels, graph, cites }
+
+/-- Render one graph occurrence in the wired grammar: the edge equation over the kinds
+its operands state, the incidence, the result node. -/
+def renderOccurrence (o : Provenance.Occurrence String String) : String :=
+  let names := o.operands.map (·.1)
+  let eq := o.family.render (o.operands.map (·.2)) o.resultKind
+  s!"{eq} ⟨{String.intercalate ", " names}⟩ ⇒ {o.result}"
+
+/-- The assembly rendering: each level with its inclusion mode, the union graph's
+ports, introductions, occurrences, and exits, the citation relation, and the evaluated
+verdict. -/
+def Assembly.renderLines (a : Assembly) : List String :=
+  (a.levels.toList.map fun l =>
+      s!"level {l.name}: {if l.walked then "walked" else "interface"}")
+    ++ a.graph.ports.map renderPort
+    ++ a.graph.intros.map renderIntro
+    ++ a.graph.occurrences.map renderOccurrence
+    ++ a.graph.exits.map (fun n => s!"exit {n}")
+    ++ a.cites.toList.map (fun (x, y) => s!"cites: {x} → {y}")
+    ++ [s!"well-formed: {a.graph.wellFormed}"]
 
 /-! ## Reflection — the harvested graph as a term, for the kernel
 
@@ -726,6 +1078,8 @@ instance : ToExpr EdgeFamily where
     | .tableMul => mkConst ``Provenance.EdgeFamily.tableMul
     | .tableDiv => mkConst ``Provenance.EdgeFamily.tableDiv
     | .copy => mkConst ``Provenance.EdgeFamily.copy
+    | .step nm a =>
+      mkApp2 (mkConst ``Provenance.EdgeFamily.step) (toExpr nm) (toExpr a)
 
 instance : ToExpr (Port String String) where
   toTypeExpr := mkApp2 (mkConst ``Provenance.Port) strE strE
@@ -754,12 +1108,13 @@ open Elab Command in
 /-- `#kind_occurrences d` prints every authored license discharged inline in `d`'s
 value — each consuming application's edge with the operand quantities that met there, in
 body order, with multiplicity — as a single `info` message suitable for `#guard_msgs`
-pinning. Assumed occurrences (hypothesis- or instance-binder licenses) and identity
-wires are the graph's business, not the enumeration's. -/
+pinning. Assumed occurrences (hypothesis- or instance-binder licenses), identity
+wires, and procedure edges are the graph's and the assembly's business, not the
+enumeration's. -/
 elab "#kind_occurrences " id:ident : command => liftTermElabM do
   let decl ← realizeGlobalConstNoOverload id
   let occs := (← stepGraphOf decl).occs.filter fun o =>
-    !o.assumed && !(o.occ.family matches .copy)
+    !o.assumed && !(o.occ.family matches .copy) && !(o.occ.family matches .step _ _)
   if occs.isEmpty then
     logInfo m!"no inline kind occurrences in '{decl}'"
   else
@@ -804,5 +1159,34 @@ elab "#kind_graph_decide " id:ident : command => liftTermElabM do
   let name := decl ++ `kindGraphWf
   addDecl (.thmDecl { name, levelParams := [], type := prop, value := proof })
   logInfo m!"kernel-accepted: the kind graph of '{decl}' is well-formed (theorem '{name}')"
+
+open Elab Command in
+/-- `#kind_assembly [d₁, d₂, …]` assembles the listed declarations into one multi-step
+graph (module section, "The assembly") and prints it — each level with its inclusion
+mode, the union graph, the citation relation, and the evaluated verdict — as a single
+`info` message suitable for `#guard_msgs` pinning. -/
+elab "#kind_assembly " "[" ids:ident,* "]" : command => liftTermElabM do
+  let decls ← ids.getElems.mapM fun id => realizeGlobalConstNoOverload id
+  if decls.isEmpty then throwError "#kind_assembly expects at least one declaration"
+  let a ← assemble decls
+  logInfo m!"kind assembly of {decls.size} steps:\n{String.intercalate "\n" a.renderLines}"
+
+open Elab Command in
+/-- `#kind_assembly_decide [d₁, d₂, …]` assembles the listed declarations, reflects
+the union graph into a term, and adds the theorem `d₁.kindAssemblyWf :
+(graph).WellFormed`, proved by `decide` — kernel reduction of the structural checker
+on the assembled multi-step object. Errors out (before troubling the kernel) when the
+assembly is not well-formed. -/
+elab "#kind_assembly_decide " "[" ids:ident,* "]" : command => liftTermElabM do
+  let decls ← ids.getElems.mapM fun id => realizeGlobalConstNoOverload id
+  if decls.isEmpty then throwError "#kind_assembly_decide expects at least one declaration"
+  let a ← assemble decls
+  unless a.graph.wellFormed do
+    throwError "the kind assembly is not well-formed — render it with #kind_assembly"
+  let prop ← Meta.mkAppM ``Provenance.WellFormed #[toExpr a.graph]
+  let proof ← Meta.mkDecideProof prop
+  let name := decls[0]! ++ `kindAssemblyWf
+  addDecl (.thmDecl { name, levelParams := [], type := prop, value := proof })
+  logInfo m!"kernel-accepted: the kind assembly is well-formed (theorem '{name}')"
 
 end PropertyKindCalculus.KindIncidence

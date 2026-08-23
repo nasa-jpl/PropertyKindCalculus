@@ -496,4 +496,149 @@ error: the kind graph of 'PropertyKindCalculus.Tests.KindIncidence.rawStep' is n
 -/
 #guard_msgs in #kind_graph_decide rawStep
 
+/-! ### The audit's emission tier — the sanctioned grid↔kernel shell -/
+
+/-- An emission shell: the tag sanctions this declaration's carrier-constructor mint,
+which enters through a declared source carrying the tier as its reason — where the
+same `⟨…⟩` in an untagged step (`rawStep`) is refused. -/
+@[kindEmission] def liftRaw (v : Nat) : Quantity alphaK Nat := ⟨v⟩
+
+/--
+info: kind graph of 'PropertyKindCalculus.Tests.KindIncidence.liftRaw':
+output result : alphaK
+attested "[kindEmission]" _1 : alphaK
+alphaK → alphaK ⟨_1⟩ ⇒ result
+well-formed: true
+-/
+#guard_msgs in #kind_graph liftRaw
+
+/-! ### Do-elaboration transparency — a straight-line monadic body wires -/
+
+/-- Both branches of an `ite` produce the target — the graph carries one occurrence
+per branch — and the condition's erasure marks its exit on the way. -/
+def clamped (x : Quantity alphaK Nat) : Quantity epsilonK Nat :=
+  if x.magnitude == 0 then Quantity.div (QuotientKind.ofRatio alphaK alphaK epsilonK) x x
+  else Quantity.div (QuotientKind.ofRatio alphaK alphaK epsilonK) x x
+
+/--
+info: kind graph of 'PropertyKindCalculus.Tests.KindIncidence.clamped':
+input x : alphaK
+output result : epsilonK
+alphaK / alphaK → epsilonK ⟨x, x⟩ ⇒ result
+alphaK / alphaK → epsilonK ⟨x, x⟩ ⇒ result
+exit x
+well-formed: true
+-/
+#guard_msgs in #kind_graph clamped
+
+/-! ### The assembly — `#kind_assembly`, one multi-step graph
+
+The members become each other's sub-steps: a call is a procedure edge, a walked call
+site is dissected into the callee's box (operands `copy` onto the demoted input ports,
+the callee's own level derives its outputs), a kind-generic callee is monomorphized by
+its call site, and the verdict — with its kernel theorem — is computed on the
+assembled object. -/
+
+-- The partial-incidence boundary closes at assembly: `halved`'s one-operand view of
+-- `halve` was refused per step, and the assembled pair is well-formed — the helper's
+-- full incidence lives in its own box, fed by the caller's wire.
+/--
+info: kind assembly of 2 steps:
+level halved: walked
+level halve: walked
+input halved/q : alphaK
+output halved/result : epsilonK
+output halve/result : epsilonK
+derived halve/q : alphaK
+[step halve] alphaK → epsilonK ⟨halved/q⟩ ⇒ halved/result
+alphaK / alphaK → epsilonK ⟨halve/q, halve/q⟩ ⇒ halve/result
+alphaK → alphaK ⟨halved/q⟩ ⇒ halve/q
+cites: halved → halve
+well-formed: true
+-/
+#guard_msgs in #kind_assembly [halved, halve]
+
+/--
+info: kernel-accepted: the kind assembly is well-formed (theorem 'PropertyKindCalculus.Tests.KindIncidence.halved.kindAssemblyWf')
+-/
+#guard_msgs in #kind_assembly_decide [halved, halve]
+
+/-- A multi-output sub-step: its own graph wires each component port by a copy. -/
+def splitQ (x : Quantity alphaK Nat) : Quantity alphaK Nat × Quantity alphaK Nat :=
+  (x, x)
+
+/-- A straight-line monadic caller destructuring a multi-output sub-step: `Id.run`,
+the single-alternative matcher, and `pure` are transparent, so the binders `u` and `v`
+name the callee's slots and the quotient consumes them. Per step the call is opaque —
+the graph shows the named-but-underived operands and refuses. -/
+def joinedVia (x : Quantity alphaK Nat) : Quantity epsilonK Nat := Id.run do
+  let (u, v) := splitQ x
+  return Quantity.div (QuotientKind.ofRatio alphaK alphaK epsilonK) u v
+
+/--
+info: kind graph of 'PropertyKindCalculus.Tests.KindIncidence.joinedVia':
+input x : alphaK
+output result : epsilonK
+alphaK / alphaK → epsilonK ⟨u, v⟩ ⇒ result
+well-formed: false
+-/
+#guard_msgs in #kind_graph joinedVia
+
+-- Assembled, the destructured call emits one procedure edge per kinded slot, the
+-- shared operand wire dedups, and the callee's box derives its component ports.
+/--
+info: kind assembly of 2 steps:
+level joinedVia: walked
+level splitQ: walked
+input joinedVia/x : alphaK
+output joinedVia/result : epsilonK
+output splitQ/result.1 : alphaK
+output splitQ/result.2 : alphaK
+derived joinedVia/u : alphaK
+derived joinedVia/v : alphaK
+derived splitQ/x : alphaK
+[step splitQ] alphaK → alphaK ⟨joinedVia/x⟩ ⇒ joinedVia/u
+[step splitQ] alphaK → alphaK ⟨joinedVia/x⟩ ⇒ joinedVia/v
+alphaK / alphaK → epsilonK ⟨joinedVia/u, joinedVia/v⟩ ⇒ joinedVia/result
+alphaK → alphaK ⟨splitQ/x⟩ ⇒ splitQ/result.1
+alphaK → alphaK ⟨splitQ/x⟩ ⇒ splitQ/result.2
+alphaK → alphaK ⟨joinedVia/x⟩ ⇒ splitQ/x
+cites: joinedVia → splitQ
+well-formed: true
+-/
+#guard_msgs in #kind_assembly [joinedVia, splitQ]
+
+/-- A monomorphic caller of the kind-generic pass-through: the assembly renames the
+callee's box through the call's kind assignment. -/
+def lerped (tab : Quantity alphaK (Array Float)) : Quantity alphaK (Array Float) :=
+  genericLerp tab
+
+/--
+info: kind assembly of 2 steps:
+level lerped: walked
+level genericLerp: walked
+input lerped/tab : alphaK
+output lerped/result : alphaK
+output genericLerp/result : alphaK
+derived genericLerp/tab : alphaK
+[step genericLerp] alphaK → alphaK ⟨lerped/tab⟩ ⇒ lerped/result
+alphaK → alphaK ⟨genericLerp/tab⟩ ⇒ genericLerp/result
+alphaK → alphaK ⟨lerped/tab⟩ ⇒ genericLerp/tab
+cites: lerped → genericLerp
+well-formed: true
+-/
+#guard_msgs in #kind_assembly [lerped, genericLerp]
+
+-- A member whose interior the walk cannot wire contributes its interface box: ports
+-- plus its own procedure edge, interior accountability the audit's — rendered as such.
+/--
+info: kind assembly of 1 steps:
+level rawStep: interface
+input rawStep/x : alphaK
+output rawStep/result : alphaK
+[step rawStep] alphaK → alphaK ⟨rawStep/x⟩ ⇒ rawStep/result
+well-formed: true
+-/
+#guard_msgs in #kind_assembly [rawStep]
+
 end PropertyKindCalculus.Tests.KindIncidence

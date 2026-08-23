@@ -61,6 +61,22 @@ content `wellFormed` itself checks — a copy must preserve the kind — where e
 family's equation remains the authored claim the trust model reviews by enumeration.
 Enumeration surfaces list authored licenses, so they never show a `copy`; it belongs to
 the wiring, and to the graph renderings of it.
+
+## The procedure edge — `step`, and assembly
+
+A multi-step pipeline is itself one graph, and at the assembly level a whole step is a
+hyperedge: `step name arity` relates a step's kinded inputs to one of its outputs — the
+formal counterpart of Dybkær's *procedure* element. Its equation is licensed not by a
+witness family but by the step itself: by the step's own well-formed graph where its
+body exhibits the wiring, and by the boundary audit's per-declaration accountability
+where the interior is opaque to the walk. Like every family except `copy`, the
+procedure edge's equation is a recorded claim, not something `wellFormed`
+re-adjudicates; a step edge is wiring vocabulary for assemblies, so enumeration
+surfaces exclude it the way they exclude `copy`. `mapNodes` and `union` are the
+assembly combinators: level graphs are renamed into disjoint node spaces and unioned,
+call sites wire caller operands to callee ports by `copy`, and well-formedness is then
+checked *on the assembled object* — no preservation theorem is owed, because the
+doctrine is to decide the object, never to trust the construction.
 -/
 
 namespace PropertyKindCalculus
@@ -112,7 +128,11 @@ def Provenance.IntroTier.label : Provenance.IntroTier → String
 `QuotientKind`, `ReciprocalKind`, `TranscendentalKind`, `PowerKind` (carrying its
 rational exponent — an exponent is data of the edge, not an operand node), and the
 operator-table registrations `KindMul`/`KindDiv` — plus `copy`, the identity wire
-(header, "The identity wire"): harvested wiring, never an authored license. -/
+(header, "The identity wire"): harvested wiring, never an authored license — and
+`step`, the procedure edge (header, "The procedure edge"): a whole step applied as a
+hyperedge at the assembly level, carrying the step's rendered name and its operand
+count, its equation licensed by the step's own graph and audit tier rather than by a
+witness. -/
 inductive Provenance.EdgeFamily where
   | product
   | quotient
@@ -122,13 +142,17 @@ inductive Provenance.EdgeFamily where
   | tableMul
   | tableDiv
   | copy
+  | step (name : String) (arity : Nat)
 deriving DecidableEq, Repr, Inhabited
 
 /-- The number of operand nodes an occurrence of this family relates (its result is not
-counted; a `power` edge's exponent is carried by the label, not an operand). -/
+counted; a `power` edge's exponent is carried by the label, not an operand). A `step`
+edge's count is the step's kinded input count, carried by the label — a procedure
+relates however many inputs its interface states. -/
 def Provenance.EdgeFamily.operandCount : Provenance.EdgeFamily → Nat
   | .product | .quotient | .tableMul | .tableDiv => 2
   | .reciprocal | .transcendental | .power _ | .copy => 1
+  | .step _ a => a
 
 /-- Render a `power` exponent in the enumeration commands' grammar: the spelling the
 pretty printer gives the authored literal — `1 / 2`, `-1`, `3` — so an edge renders one
@@ -138,7 +162,9 @@ def Provenance.EdgeFamily.renderExp (p : Rat) : String :=
 
 /-- Render an edge in the kind-equation grammar the enumeration commands print
 (`a · b → c`, `a / b → c`, `1 / a → b`, `transcendental : a → b`, `a ^ p → b`,
-`[table] …`; a `copy` is `a → b`), from already-rendered operand and result names. -/
+`[table] …`; a `copy` is `a → b`; a `step` is `[step name] a · b → c`, its inputs
+joined however many the interface states), from already-rendered operand and result
+names. -/
 def Provenance.EdgeFamily.render (f : Provenance.EdgeFamily)
     (operands : List String) (result : String) : String :=
   let o (i : Nat) : String := operands.getD i "_"
@@ -151,6 +177,9 @@ def Provenance.EdgeFamily.render (f : Provenance.EdgeFamily)
   | .tableMul => s!"[table] {o 0} · {o 1} → {result}"
   | .tableDiv => s!"[table] {o 0} / {o 1} → {result}"
   | .copy => s!"{o 0} → {result}"
+  | .step nm _ =>
+    if operands.isEmpty then s!"[step {nm}] → {result}"
+    else s!"[step {nm}] {String.intercalate " · " operands} → {result}"
 
 /-- A kind-typed port: one node of a step's interface, with the kind its signature
 states and the role it plays. Input and configuration ports are sources; an output port
@@ -162,7 +191,7 @@ structure Provenance.Port (ν κ : Type) where
   kind : κ
   /-- The port's role: input, configuration, or output. -/
   dir : Provenance.PortDir
-deriving Repr, Inhabited
+deriving Repr, Inhabited, BEq
 
 /-- A node-introduction event for an interior or source node that is not a port: the
 node, the kind it is introduced at, and the evidence tier that introduces it. -/
@@ -173,7 +202,7 @@ structure Provenance.Intro (ν κ : Type) where
   kind : κ
   /-- The evidence tier: derived interior node, gated ingest, or attested mint. -/
   tier : Provenance.IntroTier
-deriving Repr, Inhabited
+deriving Repr, Inhabited, BEq
 
 /-- One hyperedge occurrence: a use of an edge family at a site — a witness family
 discharged, or the identity `copy` wired — relating its ordered operand nodes (each with
@@ -193,7 +222,7 @@ structure Provenance.Occurrence (ν κ : Type) where
   /-- The use site the occurrence is attributed to (rendered; a declaration name). Two
   uses of one witness are two occurrences. -/
   site : String
-deriving Repr, Inhabited
+deriving Repr, Inhabited, BEq
 
 /-- **The metrological provenance hypergraph**, as data: kind-typed ports, node
 introductions carrying the audit's evidence tiers, witness-family occurrences with
@@ -209,7 +238,7 @@ structure Provenance (ν κ : Type) where
   occurrences : List (Provenance.Occurrence ν κ)
   /-- The marked exits: nodes whose values leave the calculus for the bare carrier. -/
   exits : List ν
-deriving Repr, Inhabited
+deriving Repr, Inhabited, BEq
 
 namespace Provenance
 
@@ -301,6 +330,38 @@ def WellFormed (g : Provenance ν κ) : Prop := g.wellFormed = true
 
 instance (g : Provenance ν κ) : Decidable g.WellFormed :=
   inferInstanceAs (Decidable (g.wellFormed = true))
+
+/-! ## The assembly combinators — namespaced union (header, "The procedure edge") -/
+
+/-- Rename every node through `f` — ports, introductions, occurrence incidence and
+results, exits. An assembly renames each level graph into its own namespace before
+taking the union, so two steps' interior `_1`s can never collide. -/
+def mapNodes {ν' : Type} (f : ν → ν') (g : Provenance ν κ) : Provenance ν' κ where
+  ports := g.ports.map fun p => ⟨f p.node, p.kind, p.dir⟩
+  intros := g.intros.map fun i => ⟨f i.node, i.kind, i.tier⟩
+  occurrences := g.occurrences.map fun o =>
+    ⟨o.family, o.operands.map (fun oc => (f oc.1, oc.2)), f o.result, o.resultKind, o.site⟩
+  exits := g.exits.map f
+
+/-- Rename every kind through `f` — the assembly's monomorphization: a kind-generic
+callee's level graph states its kinds by binder name, and the call site that wires it
+supplies the instantiated kinds, so the box is renamed through the call's kind
+assignment before the union. -/
+def mapKinds {κ' : Type} (f : κ → κ') (g : Provenance ν κ) : Provenance ν κ' where
+  ports := g.ports.map fun p => ⟨p.node, f p.kind, p.dir⟩
+  intros := g.intros.map fun i => ⟨i.node, f i.kind, i.tier⟩
+  occurrences := g.occurrences.map fun o =>
+    ⟨o.family, o.operands.map (fun oc => (oc.1, f oc.2)), o.result, f o.resultKind, o.site⟩
+  exits := g.exits
+
+/-- Field-wise union. On namespaced (node-disjoint) operands this is the assembly's
+disjoint sum; the cross-wires that connect the levels are ordinary `copy` occurrences
+added on top, and well-formedness is then checked on the assembled object itself. -/
+def union (g h : Provenance ν κ) : Provenance ν κ where
+  ports := g.ports ++ h.ports
+  intros := g.intros ++ h.intros
+  occurrences := g.occurrences ++ h.occurrences
+  exits := g.exits ++ h.exits
 
 end Provenance
 

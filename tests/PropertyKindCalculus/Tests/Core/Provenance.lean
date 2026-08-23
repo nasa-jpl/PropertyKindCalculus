@@ -201,4 +201,65 @@ def passThrough : Provenance String String where
            occurrences := [⟨.copy, [("tab", "kx")], "result", "ky", "passThrough"⟩],
            exits := [] } : Provenance String String).wellFormed
 
+/-! ## The procedure edge — `step`, and the assembly combinators
+
+A whole step applied as a hyperedge: its operand count is the interface's input count,
+carried by the label, and its equation is licensed by the step's own graph — so the
+structural checker enforces the arity and the node typing, never the equation. The
+combinator probes build a two-box assembly by hand — namespaced levels, a `copy`
+cross-wire, the callee's fed input demoted to a derived node — and the union checks. -/
+
+-- The procedure edge renders with its name, inputs joined per the interface's count.
+#guard (EdgeFamily.step "resample" 2).render ["kr", "kv"] "kv"
+  == "[step resample] kr · kv → kv"
+#guard (EdgeFamily.step "mint" 0).render [] "kv" == "[step mint] → kv"
+#guard (EdgeFamily.step "resample" 2).operandCount == 2
+
+/-- A signature box: the output derived from the input through the step's own
+procedure edge. -/
+def procBox : Provenance String String where
+  ports := [⟨"x", "kx", .input⟩, ⟨"result", "ky", .output⟩]
+  intros := []
+  occurrences := [⟨.step "procBox" 1, [("x", "kx")], "result", "ky", "procBox"⟩]
+  exits := []
+
+#guard procBox.wellFormed
+
+-- A procedure edge at the wrong arity is refused by the family's operand count.
+#guard !({ procBox with occurrences :=
+  [⟨.step "procBox" 2, [("x", "kx")], "result", "ky", "procBox"⟩] }
+    : Provenance String String).wellFormed
+
+-- `mapNodes` renames every incidence; `mapKinds` is the monomorphization map.
+#guard (procBox.mapNodes ("A/" ++ ·)).occurrences
+  == [⟨.step "procBox" 1, [("A/x", "kx")], "A/result", "ky", "procBox"⟩]
+#guard ((procBox.mapKinds fun k => if k == "kx" then "alphaK" else k).ports.map (·.kind))
+  == ["alphaK", "ky"]
+
+/-- The hand-built assembly: caller box `A` calling `procBox` as `B` — the caller's
+operand cross-wired onto `B`'s demoted input, `B`'s own procedure edge deriving its
+output, the caller's procedure edge standing as the call's derivation. -/
+def assembled : Provenance String String :=
+  let A : Provenance String String :=
+    { ports := [⟨"x", "kx", .input⟩, ⟨"result", "ky", .output⟩]
+      intros := []
+      occurrences := [⟨.step "B" 1, [("x", "kx")], "result", "ky", "A"⟩]
+      exits := [] }
+  let B : Provenance String String :=
+    { ports := [⟨"result", "ky", .output⟩]
+      intros := [⟨"x", "kx", .derived⟩]  -- the fed input, demoted
+      occurrences := [⟨.step "B" 1, [("x", "kx")], "result", "ky", "B"⟩]
+      exits := [] }
+  let wires : Provenance String String :=
+    ⟨[], [], [⟨.copy, [("A/x", "kx")], "B/x", "kx", "A"⟩], []⟩
+  ((A.mapNodes ("A/" ++ ·)).union (B.mapNodes ("B/" ++ ·))).union wires
+
+#guard assembled.wellFormed
+
+-- Un-wired, the demoted input is an anonymous mint and the union is refused: the
+-- cross-wire is load-bearing, not decoration.
+#guard !({ assembled with
+  occurrences := assembled.occurrences.filter (fun o => !(o.family matches .copy)) }
+    : Provenance String String).wellFormed
+
 end PropertyKindCalculus.Tests.Provenance
