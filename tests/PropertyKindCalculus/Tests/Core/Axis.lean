@@ -164,4 +164,26 @@ well-formed: true
 -/
 #guard_msgs in #kind_graph nodeOf
 
+/-! ### A configured extent is still a port
+
+The deployment shape: one table size declared as a `@[kindConst]` and *read* by the steps
+that walk it rather than passed to them. A constant of container type expands the way a
+container binder does — one config port per field path — so an extent that travels in its
+role reaches the same node a callee's roled binder ports at. -/
+
+/-- The deployed axis extent, configured once. -/
+@[kindConst] def nDeployed : Extent rowAxisK Nat := ⟨⟨256⟩⟩
+
+/-- A step that reads the configured extent instead of taking it. -/
+def nodeOfDeployed (i : Position rowAxisK Nat) : Quantity rowAxisK Nat :=
+  nodeOf nDeployed i
+
+/--
+info: kind ports of 'PropertyKindCalculus.Tests.Axis.nodeOfDeployed':
+input i.q : rowAxisK
+config nDeployed.q : rowAxisK
+output result : rowAxisK
+-/
+#guard_msgs in #kind_ports nodeOfDeployed
+
 end PropertyKindCalculus.Tests.Axis

@@ -40,9 +40,12 @@ and a bundled signature states MORE than the loose one, not less. The same expan
 what an *operand* gets: a container handed whole to an edge-bearing or sub-step
 application contributes one incidence position per field path, named as the wrapper spells
 it, so putting a quantity into a role — a portion, a total, an axis extent — costs the
-graph no operand. A sum type has no field path (which constructor a value took is not a
-signature fact), and a carrier is a leaf, never a container — its own field is the erasure
-boundary.
+graph no operand. A `@[kindConst]` constant of container type expands the same way, into
+one config port per field path: a configured quantity does not stop being one for
+travelling in a role, and the deployment constant that fills a roled binder must reach the
+same node the callee's port names. A sum type has no field path (which constructor a value
+took is not a signature fact), and a carrier is a leaf, never a container — its own field
+is the erasure boundary.
 
 **Occurrences** sit on the consuming application: any constant-headed application with a
 binder whose instantiated type is a witness-family `Prop` — the smart constructors, and
@@ -1147,9 +1150,18 @@ def stepGraphOf (decl : Name) (subSteps : Array Name := #[]) : MetaM StepGraph :
       for c in configReads cfgConsts v do
         let some ci := env.find? c | continue
         let node := toString (← Meta.ppExpr (mkConst c (ci.levelParams.map mkLevelParam)))
-        let kind ← Meta.forallTelescope ci.type fun _ resTy =>
-          return (← carrierKind? env carriers [] resTy).getD "_"
-        ports := ports.push { node := node, kind := kind, dir := .config }
+        -- a container-typed constant states its kinds the way a container binder does:
+        -- one config port per carrier field path (a configured quantity does not stop
+        -- being one for travelling in a role)
+        let slots ← Meta.forallTelescope ci.type fun _ resTy => do
+          match ← carrierKind? env carriers [] resTy with
+          | some k => return #[("", k)]
+          | none => carrierPaths env carriers [] resTy
+        if slots.isEmpty then
+          ports := ports.push { node := node, kind := "_", dir := .config }
+        else
+          for (p, k) in slots do
+            ports := ports.push { node := s!"{node}{p}", kind := k, dir := .config }
     let comps := prodComponents resultTy
     let mut outSlots : Array (List (String × String × Bool)) := #[]
     for i in [0:comps.size] do
