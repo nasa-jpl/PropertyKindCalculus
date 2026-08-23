@@ -227,6 +227,31 @@ unkinded output result.2 : Nat
 -/
 #guard_msgs in #kind_ports swapPair
 
+/-- A **container** position: a direction-locked interval bundles two endpoints, and the
+signature states its kind through their field paths — the ports name the paths the body
+spells (`box.lo.q`, `box.hi.q`), so bundling a pair of same-kind scalars into an `IccQ`
+(where a swapped construction is a type error) costs the interface reading nothing. -/
+def lowerEnd (box : IccQ alphaK Float) : Quantity alphaK Float := box.lo.q
+
+/--
+info: kind ports of 'PropertyKindCalculus.Tests.KindIncidence.lowerEnd':
+input box.lo.q : alphaK
+input box.hi.q : alphaK
+output result : alphaK
+-/
+#guard_msgs in #kind_ports lowerEnd
+
+/-- A container *result*: the field paths port on the output side the same way. -/
+def degenerate (x : Quantity alphaK Float) : IccQ alphaK Float := IccQ.of x x
+
+/--
+info: kind ports of 'PropertyKindCalculus.Tests.KindIncidence.degenerate':
+input x : alphaK
+output result.lo.q : alphaK
+output result.hi.q : alphaK
+-/
+#guard_msgs in #kind_ports degenerate
+
 /-- A signature with no carrier-typed positions at all: every position is named by the
 unkinded reading — the report states the nonconformance instead of narrowing to an
 empty kinded slice. -/
@@ -298,6 +323,30 @@ alphaK → alphaK ⟨x⟩ ⇒ result.3
 well-formed: true
 -/
 #guard_msgs in #kind_graph swapPair
+
+-- A container field path names an interface node, so it reaches the output port through
+-- the identity wire — exactly as a binder does.
+/--
+info: kind graph of 'PropertyKindCalculus.Tests.KindIncidence.lowerEnd':
+input box.lo.q : alphaK
+input box.hi.q : alphaK
+output result : alphaK
+alphaK → alphaK ⟨box.lo.q⟩ ⇒ result
+well-formed: true
+-/
+#guard_msgs in #kind_graph lowerEnd
+
+-- … but a container ASSEMBLED inline produces nothing: the constructor is not a reading,
+-- so both ported endpoints stay unreached and the verdict refuses — the same answer a
+-- raw mint gets, and the reason a container is built where its endpoints are accountable.
+/--
+info: kind graph of 'PropertyKindCalculus.Tests.KindIncidence.degenerate':
+input x : alphaK
+output result.lo.q : alphaK
+output result.hi.q : alphaK
+well-formed: false
+-/
+#guard_msgs in #kind_graph degenerate
 
 -- A configuration read is a source port, and the occurrence consumes it by name.
 /--

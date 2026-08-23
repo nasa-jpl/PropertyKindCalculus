@@ -27,6 +27,19 @@ application is found generically — the argument whose instantiated binder type
 its kind parameter sits. Roles are `Provenance.PortDir`: the harvest speaks the graph
 structure's vocabulary directly.
 
+A **container** position — a single-constructor structure that is not itself a carrier,
+whose fields reach carriers — states its kinds through those fields, and ports as one
+node per carrier **field path** (`carrierPaths`): a `Quantity`-endpoint interval states
+its kind twice, at `span.lo.q` and `span.hi.q`, and a bundle of quantities states one
+port per constituent. The path is the node name, so a port reads exactly as the body
+spells the projection and the two readings meet at the same node; a field path reaching a
+target is an identity wire, like a binder. This is what lets an interface bundle its
+arguments — a direction-locked interval instead of a pair of scalars a call site could
+swap — without the graph losing sight of what crosses it: the reading follows the type,
+and a bundled signature states MORE than the loose one, not less. A sum type has no field
+path (which constructor a value took is not a signature fact), and a carrier is a leaf,
+never a container — its own field is the erasure boundary.
+
 **Occurrences** sit on the consuming application: any constant-headed application with a
 binder whose instantiated type is a witness-family `Prop` — the smart constructors, and
 equally a downstream helper that threads a witness parameter. Reading the edge off the
@@ -66,9 +79,10 @@ to the walk, so a straight-line monadic body wires exactly like its pure spellin
 loop or genuine multi-alternative control flow stays opaque. What no reading
 recognizes — a raw `⟨…⟩` mint, an opaque sub-step call outside an assembly, a loop
 body's result, a point-free body — produces nothing, and the verdict says so: an
-unreached derivation target is exactly an anonymous mint. (A record-carried quantity is
-not yet a port: the signature reading recognizes carrier-headed binders, so record
-parameters enter the graph story when their carrier maps do.)
+unreached derivation target is exactly an anonymous mint. A container *value* is
+attributed where the structure assigns its slots — a call destructured into a container
+binder derives each of that binder's field paths — and a container assembled inline by
+its own constructor produces nothing, the same verdict a raw mint gets.
 
 **Unkinded positions** are read alongside the ports: an explicit binder or result
 component whose type carries no kind information at all — no registered carrier, no
@@ -81,9 +95,10 @@ application (attested, gated, emission) flows into that mint's node — unkinded
 information minting kinded information — and one occurring in a kinded output's
 defining expression *outside* every mint steers that output through logic the kinded
 algebra never sees; both render as `unkinded flow: nR ⇒ _1` and draw red in the
-figure. A kind-bearing type that is merely not ported — a record or container whose
-constituents carry kinds — is the record limitation above, not an unkinded position;
-propositions and sorts are interface logic, not data, and are not read.
+figure. A kind-bearing type with no carrier field path — a sum over quantities, a
+function returning them — is neither ported nor red: it carries kinds, and what crosses
+the interface is not a quantity; propositions and sorts are interface logic, not data,
+and are not read.
 
 **Assembly** reads a pipeline as ONE graph (section, "The assembly"): the members
 become each other's sub-steps, a call becomes a `step` procedure edge, walked call
@@ -154,12 +169,23 @@ partial def witnessAuthored (ctx : BinderCtx) (w : Expr) : Bool :=
   | .letE nm _ v b _ => witnessAuthored ((nm, some v) :: ctx) b
   | _ => false
 
-/-- Render an operand as a *name* — a binder name for a variable, the head constant for
-an application (`let` bodies and projections descended), the literal for a literal: the
-granularity the incidence relation records. -/
-partial def refName (ctx : BinderCtx) (e : Expr) : MetaM String :=
+/-- Render an operand as a *name* — a binder name for a variable, a **field path** for a
+container projection (`span.lo.q`: the node its port carries), the head constant for any
+other application (`let` bodies descended), the literal for a literal: the granularity
+the incidence relation records.
+
+A *carrier's* own projection is not a path: taking a magnitude is the erasure boundary,
+reported against the operand it erases, so a registered carrier's field keeps the plain
+naming its exit line has always had. -/
+partial def refName (ctx : BinderCtx) (e : Expr) : MetaM String := do
   match e with
-  | .app f _ => refName ctx f
+  | .app f _ =>
+    if let .const c _ := e.getAppFn then
+      if let some path ← containerField? c then
+        let args := e.getAppArgs
+        if let some s := args[path.1]? then
+          return s!"{← refName ctx s}.{path.2}"
+    refName ctx f
   | .mdata _ b => refName ctx b
   | .const .. => return toString (← Meta.ppExpr e)
   | .fvar id => return toString (← id.getDecl).userName
@@ -168,10 +194,24 @@ partial def refName (ctx : BinderCtx) (e : Expr) : MetaM String :=
     | some (nm, _) => return toString nm
     | none => return "_"
   | .letE nm _ v b _ => refName ((nm, some v) :: ctx) b
-  | .proj _ i b => return s!"{← refName ctx b}.{i}"
+  | .proj sn i b =>
+    let env ← getEnv
+    if !(operandCarriers env).contains sn then
+      if let some f := (getStructureFields env sn)[i]? then
+        return s!"{← refName ctx b}.{f}"
+    return s!"{← refName ctx b}.{i}"
   | .lit (.natVal v) => return toString v
   | .lit (.strVal s) => return s!"\"{s}\""
   | _ => return "_"
+where
+  /-- Is `c` a *container* structure's projection function — the structure argument's
+  position and the field's name — or `none` for a non-projection and for every
+  registered carrier's own field? -/
+  containerField? (c : Name) : MetaM (Option (Nat × String)) := do
+    let env ← getEnv
+    let some pi := env.getProjectionFnInfo? c | return none
+    if (operandCarriers env).contains c.getPrefix then return none
+    return some (pi.numParams, c.getString!)
 
 /-- Render a kind (or exponent) argument of an instantiated binder type:
 pretty-printed when closed; by binder name when it still carries loose bound variables —
@@ -197,12 +237,49 @@ def carrierKind? (env : Environment) (carriers : Array Name) (ctx : BinderCtx)
   let ks ← kindIdxs.mapM fun i => renderKindArg ctx args[i]!
   return some (String.intercalate ", " ks.toList)
 
+/-- **The carrier field paths of a container type** — the ports a record-carried
+quantity contributes. A type that is not itself carrier-headed but is a
+single-constructor structure states its kinds through its fields: an `IccQ k R` states
+`k` twice, at `.lo.q` and `.hi.q`; a pair of quantities states one kind per component.
+Each carrier-headed field (recursively, through nested single-constructor structures,
+fuel-bounded) yields one `(path, kind)` — the path appended to the binder or result
+name, so the port node reads exactly as the body spells the projection
+(`refName`, "a field path for a container projection") and the two readings meet at the
+same node.
+
+A sum type has no field path (which constructor a value took is not a signature fact),
+and a carrier is a leaf, never a container: its own field is the erasure boundary. -/
+partial def carrierPaths (env : Environment) (carriers : Array Name) (ctx : BinderCtx)
+    (ty : Expr) (fuel : Nat := 3) : MetaM (Array (String × String)) := do
+  let ty := ty.consumeTypeAnnotations
+  if ty.hasLooseBVars then return #[]
+  if (← carrierKind? env carriers ctx ty).isSome then return #[]
+  match fuel, ty.getAppFn with
+  | fuel + 1, .const c _ =>
+    unless isStructure env c do return #[]
+    let some (.inductInfo ii) := env.find? c | return #[]
+    unless ii.ctors.length == 1 do return #[]
+    let x ← Meta.mkFreshExprMVar ty
+    let mut out : Array (String × String) := #[]
+    for f in getStructureFields env c do
+      let some fty ← (try pure (some (← Meta.inferType (← Meta.mkProjection x f)))
+                      catch _ => pure none) | continue
+      match ← carrierKind? env carriers ctx fty with
+      | some k => out := out.push (s!".{f}", k)
+      | none =>
+        for (p, k) in ← carrierPaths env carriers ctx fty fuel do
+          out := out.push (s!".{f}{p}", k)
+    return out
+  | _, _ => return #[]
+
 /-- Does a type carry kind information at all — a registered carrier or the kind
 vocabulary itself, mentioned anywhere in the expression, or (one structure level down,
 fuel-bounded) in the fields of the single-constructor inductive at its head? The
 negative answer classifies a signature position as *unkinded* (module header,
 "Unkinded positions"): naked data, red in every report. The positive answer without a
-port is the record/container limitation — kind-bearing, merely not yet ported. -/
+carrier field path (`carrierPaths`) is a kind-bearing position that ports nothing — a
+sum over quantities, a function returning them: not naked data, and not an interface
+node either. -/
 partial def kindBearing (env : Environment) (carriers : Array Name) (ty : Expr)
     (fuel : Nat := 3) : Bool :=
   let mentions := (ty.find? fun sub =>
@@ -415,10 +492,12 @@ inductive Target where
   /-- Produce onto this node; `owned` says the walk owns its introduction event (a
   `let` binder or synthesized interior node — never a port). -/
   | one (node kind : String) (owned : Bool)
-  /-- The root of a multi-output producer: one slot per component — `none` for an
-  un-kinded one — each kinded slot a node, its kind, and whether the walk owns its
-  introduction (an output port's slot is not owned; a matcher binder's is). -/
-  | tuple (comps : List (Option (String × String × Bool)))
+  /-- The root of a multi-output producer: one slot per component — empty for an
+  un-kinded one, one entry for a carrier-typed one, and one entry *per carrier field
+  path* for a container-typed one (`carrierPaths`) — each entry a node, its kind, and
+  whether the walk owns its introduction (an output port's slot is not owned; a matcher
+  binder's is). -/
+  | tuple (comps : List (List (String × String × Bool)))
 
 /-- The single-node view of an optional target. -/
 def Target.asOne? : Option Target → Option (String × String × Bool)
@@ -559,6 +638,29 @@ def isProducerApp (h : HarvestCtx) (a : Expr) : Bool :=
           | none => false)
   | _ => false
 
+/-- Is `e` a **field path** — one or more container projections rooted at a variable
+(`span.lo.q`)? Such an expression names an interface node (`carrierPaths` ported it),
+so it reaches a target the way a binder does: through the identity wire. A *carrier's*
+projection is excluded — that is the erasure boundary, read as an exit. -/
+partial def containerPath (env : Environment) (carriers : Array Name) (e : Expr)
+    (depth : Nat := 0) : Bool :=
+  match e with
+  | .mdata _ b => containerPath env carriers b depth
+  | .fvar .. | .bvar .. => depth > 0
+  | .proj sn _ b => !carriers.contains sn && containerPath env carriers b (depth + 1)
+  | .app .. =>
+    match e.getAppFn with
+    | .const c _ =>
+      match env.getProjectionFnInfo? c with
+      | some pi =>
+        !carriers.contains c.getPrefix &&
+          (match e.getAppArgs[pi.numParams]? with
+           | some s => containerPath env carriers s (depth + 1)
+           | none => false)
+      | none => false
+    | _ => false
+  | _ => false
+
 mutual
 
 /-- The value walk: every subexpression visited in body order (a `let` value before its
@@ -581,6 +683,10 @@ partial def walk (h : HarvestCtx) (e : Expr) (ctx : BinderCtx)
     let st ← walk h t ctx none st
     walk h b ((nm, none) :: ctx) none st
   | .proj sn _ b =>
+    if containerPath h.env h.carriers e then
+      match Target.asOne? target with
+      | some (n, k, owned) => return st.copyTo h.site (← refName ctx e) n k owned
+      | none => return st
     let st := opaqueTarget h (Target.asOne? target) st
     let st ← if h.carrierSpecs.any (·.structName == sn) then
         pure (st.exit (← refName ctx b))
@@ -597,11 +703,17 @@ partial def walk (h : HarvestCtx) (e : Expr) (ctx : BinderCtx)
         let args := e.getAppArgs
         let st ← walk h args[0]! ctx none st
         let st ← walk h args[1]! ctx none st
+        -- a component's slot is single-node or it stays unwired: a literal tuple
+        -- component that is itself a container is produced by its own expression, and
+        -- the walk attributes a container value only where a call assigns its slots
+        let oneOf : List (String × String × Bool) → Option Target
+          | [(n, k, o)] => some (.one n k o)
+          | _ => none
         match comps with
         | c :: rest =>
-          let st ← walk h args[2]! ctx (c.map fun (n, k, o) => .one n k o) st
+          let st ← walk h args[2]! ctx (oneOf c) st
           let restT : Option Target := match rest with
-            | [c'] => c'.map fun (n, k, o) => .one n k o
+            | [c'] => oneOf c'
             | _ => some (.tuple rest)
           walk h args[3]! ctx restT st
         | [] => walk h args[3]! ctx none st
@@ -615,6 +727,11 @@ partial def walk (h : HarvestCtx) (e : Expr) (ctx : BinderCtx)
             -- an opaque multi-output producer: the outputs stay unwired
             walkApp h e ctx none st
         | _ => walkApp h e ctx none st
+    else if containerPath h.env h.carriers e then
+      -- a container field: its port node reaches the target through the identity wire
+      match Target.asOne? target with
+      | some (n, k, owned) => return st.copyTo h.site (← refName ctx e) n k owned
+      | none => return st
     else
       walkApp h e ctx (Target.asOne? target) st
 
@@ -776,12 +893,18 @@ partial def walkApp (h : HarvestCtx) (e : Expr) (ctx : BinderCtx)
         | .lam nm t b _ => binders := binders.push (nm, t); body := b
         | _ => peeled := false
       if peeled then
-        -- kinded slots, each binder type read in the progressively extended context
+        -- kinded slots, each binder type read in the progressively extended context;
+        -- a container binder takes one slot per carrier field path, the nodes named as
+        -- the continuation spells the projections
         let mut ctx' := ctx
-        let mut slots : List (Option (String × String × Bool)) := []
+        let mut slots : List (List (String × String × Bool)) := []
         for (nm, t) in binders do
-          let k? ← carrierKind? h.env h.carriers ctx' t
-          slots := slots ++ [k?.map fun k => (toString nm, k, true)]
+          let slot ← match ← carrierKind? h.env h.carriers ctx' t with
+            | some k => pure [(toString nm, k, true)]
+            | none => do
+              let paths ← carrierPaths h.env h.carriers ctx' t
+              pure (paths.toList.map fun (p, k) => (s!"{nm}{p}", k, true))
+          slots := slots ++ [slot]
           ctx' := (nm, none) :: ctx'
         let st ← walk h ma.discrs[0]! ctx (some (.tuple slots)) st
         let st ← walk h body ctx' (t1.map fun (n, k, o) => .one n k o) st
@@ -805,7 +928,7 @@ instantiated conclusion kind — the call site is where a kind-generic step beco
 concrete. -/
 partial def walkSubStep (h : HarvestCtx) (c : Name) (e : Expr) (ctx : BinderCtx)
     (targets : Sum (Option (String × String × Bool))
-      (List (Option (String × String × Bool))))
+      (List (List (String × String × Bool))))
     (st : WalkSt) : MetaM WalkSt := do
   let args := e.getAppArgs
   let fallback (st : WalkSt) : MetaM WalkSt := do
@@ -816,29 +939,35 @@ partial def walkSubStep (h : HarvestCtx) (c : Name) (e : Expr) (ctx : BinderCtx)
   let some ci := h.env.find? c | fallback st
   let some btys := KindEdges.instantiatedBinderTypes ci.type args | fallback st
   let stepName ← stepNameOf ci
-  let operandIdxs := (Array.range args.size).filter fun j =>
-    match btys[j]!.consumeTypeAnnotations.getAppFn with
-    | .const cc _ => h.carriers.contains cc
-    | _ => false
-  let mut opKinds : Array String := #[]
-  for j in operandIdxs do
-    opKinds := opKinds.push ((← carrierKind? h.env h.carriers ctx btys[j]!).getD "_")
+  -- the incidence slots: a carrier-typed argument position, and one per carrier field
+  -- path of a container-typed one — the callee's input ports, in the same order
+  let mut opSlots : Array (Nat × String × String) := #[]
+  for j in [0:args.size] do
+    let bty := btys[j]!
+    let isCarrier := match bty.consumeTypeAnnotations.getAppFn with
+      | .const cc _ => h.carriers.contains cc
+      | _ => false
+    if isCarrier then
+      opSlots := opSlots.push (j, "", (← carrierKind? h.env h.carriers ctx bty).getD "_")
+    else
+      for (p, k) in ← carrierPaths h.env h.carriers ctx bty do
+        opSlots := opSlots.push (j, p, k)
+  let opKinds : Array String := opSlots.map (·.2.2)
   -- name the operands; a nested producer gets a synthesized node to land on
   let mut st := st
   let mut opNames : Array String := #[]
   let mut opTargets : Std.HashMap Nat Target := {}
-  for j in operandIdxs do
+  for (j, p, k) in opSlots do
     let a := args[j]!
-    if isProducerApp h a then
+    if p.isEmpty && isProducerApp h a then
       let (m, st') := st.nextFresh
       st := st'
-      let bk := (← carrierKind? h.env h.carriers ctx btys[j]!).getD "_"
       opNames := opNames.push m
-      opTargets := opTargets.insert j (.one m bk true)
+      opTargets := opTargets.insert j (.one m k true)
     else
-      opNames := opNames.push (← refName ctx a)
+      opNames := opNames.push s!"{← refName ctx a}{p}"
   let ops := (opNames.zip opKinds).toList
-  let fam := Provenance.EdgeFamily.step stepName operandIdxs.size
+  let fam := Provenance.EdgeFamily.step stepName opSlots.size
   let emit (st : WalkSt) (node kind : String) (owned : Bool) : WalkSt :=
     let st := if owned then { st with intros := st.intros.push ⟨node, kind, .derived⟩ }
               else st
@@ -857,10 +986,11 @@ partial def walkSubStep (h : HarvestCtx) (c : Name) (e : Expr) (ctx : BinderCtx)
       let (m, st') := st.nextFresh
       st := emit st' m kind true
   | .inr comps =>
-    for c? in comps do
-      match c? with
-      | some (n, k, owned) => st := emit st n k owned
-      | none => pure ()
+    -- one procedure edge per kinded node of every slot: a container component derives
+    -- each of its field paths from the same call
+    for c in comps do
+      for (n, k, owned) in c do
+        st := emit st n k owned
   -- recurse into the arguments, nested producers onto their nodes
   for j in [0:args.size] do
     st := (← walk h args[j]! ctx (opTargets.get? j) st)
@@ -984,14 +1114,22 @@ def stepGraphOf (decl : Name) (subSteps : Array Name := #[]) : MetaM StepGraph :
         ports := ports.push
           { node := toString (← fv.fvarId!.getUserName), kind := k, dir := .input }
       else
-        -- the unkinded reading: an explicit data binder whose type carries no kind
-        -- information at all (propositions and sorts are interface logic, not data)
-        let bi := (← fv.fvarId!.getDecl).binderInfo
-        if bi.isExplicit && !ty.isSort && !(← Meta.isProp ty)
-            && !kindBearing env carriers ty then
+        -- a container binder states its kinds through its fields: one port per carrier
+        -- field path, named as the body spells the projection
+        let paths ← carrierPaths env carriers [] ty
+        if !paths.isEmpty then
           let nm := toString (← fv.fvarId!.getUserName)
-          unkinded := unkinded.push ⟨nm, toString (← Meta.ppExpr ty), .input⟩
-          unkIdx := unkIdx.push (idx, nm)
+          for (p, k) in paths do
+            ports := ports.push { node := s!"{nm}{p}", kind := k, dir := .input }
+        else
+          -- the unkinded reading: an explicit data binder whose type carries no kind
+          -- information at all (propositions and sorts are interface logic, not data)
+          let bi := (← fv.fvarId!.getDecl).binderInfo
+          if bi.isExplicit && !ty.isSort && !(← Meta.isProp ty)
+              && !kindBearing env carriers ty then
+            let nm := toString (← fv.fvarId!.getUserName)
+            unkinded := unkinded.push ⟨nm, toString (← Meta.ppExpr ty), .input⟩
+            unkIdx := unkIdx.push (idx, nm)
     if let some v := info.value? then
       for c in configReads cfgConsts v do
         let some ci := env.find? c | continue
@@ -1000,18 +1138,25 @@ def stepGraphOf (decl : Name) (subSteps : Array Name := #[]) : MetaM StepGraph :
           return (← carrierKind? env carriers [] resTy).getD "_"
         ports := ports.push { node := node, kind := kind, dir := .config }
     let comps := prodComponents resultTy
-    let mut outSlots : Array (Option (String × String × Bool)) := #[]
+    let mut outSlots : Array (List (String × String × Bool)) := #[]
     for i in [0:comps.size] do
       let node := if comps.size == 1 then "result" else s!"result.{i + 1}"
       match ← carrierKind? env carriers [] comps[i]! with
       | some k =>
         ports := ports.push { node := node, kind := k, dir := .output }
-        outSlots := outSlots.push (some (node, k, false))
+        outSlots := outSlots.push [(node, k, false)]
       | none =>
-        outSlots := outSlots.push none
         let cty := comps[i]!
-        if !cty.isSort && !(← Meta.isProp cty) && !kindBearing env carriers cty then
-          unkinded := unkinded.push ⟨node, toString (← Meta.ppExpr cty), .output⟩
+        let paths ← carrierPaths env carriers [] cty
+        if !paths.isEmpty then
+          for (p, k) in paths do
+            ports := ports.push { node := s!"{node}{p}", kind := k, dir := .output }
+          outSlots := outSlots.push
+            (paths.toList.map fun (p, k) => (s!"{node}{p}", k, false))
+        else
+          outSlots := outSlots.push []
+          if !cty.isSort && !(← Meta.isProp cty) && !kindBearing env carriers cty then
+            unkinded := unkinded.push ⟨node, toString (← Meta.ppExpr cty), .output⟩
     let st ← match info.value? with
       | none => pure {}
       | some v =>
@@ -1020,8 +1165,10 @@ def stepGraphOf (decl : Name) (subSteps : Array Name := #[]) : MetaM StepGraph :
             lamFvars[idx]?.map fun fv => (fv.fvarId!, nm) }
           let rootTarget : Option Target :=
             if comps.size == 1 then
-              outSlots[0]!.map fun (n, k, _) => .one n k false
-            else if outSlots.any (·.isSome) then
+              match outSlots[0]! with
+              | [(n, k, _)] => some (.one n k false)
+              | _ => none
+            else if outSlots.any (!·.isEmpty) then
               some (.tuple outSlots.toList)
             else
               none
@@ -1035,12 +1182,12 @@ def stepGraphOf (decl : Name) (subSteps : Array Name := #[]) : MetaM StepGraph :
             match vcomps? with
             | some vs =>
               for ci in [0:vs.size] do
-                if let some (n, _, _) := outSlots[ci]! then
+                for (n, _, _) in outSlots[ci]! do
                   if (maskMints hv vs[ci]!).containsFVar fv then st := st.leak nm n
             | none =>
               if (maskMints hv body).containsFVar fv then
                 for slot in outSlots do
-                  if let some (n, _, _) := slot then st := st.leak nm n
+                  for (n, _, _) in slot do st := st.leak nm n
           pure st
     return { ports := ports.toList, intros := st.intros.toList, occs := st.occs,
              exits := st.exits.toList, unkinded := unkinded.toList,
