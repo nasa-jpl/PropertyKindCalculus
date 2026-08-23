@@ -708,4 +708,83 @@ well-formed: true
 -/
 #guard_msgs in #kind_assembly [rawStep]
 
+/-! ### A container travelling between two steps
+
+A step's value may travel bundled — an interval, a role wrapper — and the consumer takes
+it bundled too. The producer then lands on one node **per carrier field path**, the same
+paths the consumer's ports name, so the composition wires: `degenerate` mints an interval
+and `lowerEnd` reads an endpoint off its role. The pair is written both ways below,
+because the reading must not depend on the spelling: a `let`-bound intermediate and an
+inline call differ in the node's *name* (`b.lo.q` against the synthesized `_1.lo.q`) and
+in nothing else. -/
+
+/-- The composition with the interval bound to a `let`. -/
+def endOfBoxLet (x : Quantity alphaK Float) : Quantity alphaK Float :=
+  let b : IccQ alphaK Float := degenerate x
+  lowerEnd b
+
+/-- The same composition written inline. -/
+def endOfBoxInline (x : Quantity alphaK Float) : Quantity alphaK Float :=
+  lowerEnd (degenerate x)
+
+/--
+info: kind assembly of 3 steps:
+level endOfBoxLet: walked
+level degenerate: interface
+level lowerEnd: walked
+input endOfBoxLet/x : alphaK
+output endOfBoxLet/result : alphaK
+output degenerate/result.lo.q : alphaK
+output degenerate/result.hi.q : alphaK
+output lowerEnd/result : alphaK
+derived endOfBoxLet/b.lo.q : alphaK
+derived endOfBoxLet/b.hi.q : alphaK
+derived degenerate/x : alphaK
+derived lowerEnd/box.lo.q : alphaK
+derived lowerEnd/box.hi.q : alphaK
+[step degenerate] alphaK → alphaK ⟨endOfBoxLet/x⟩ ⇒ endOfBoxLet/b.lo.q
+[step degenerate] alphaK → alphaK ⟨endOfBoxLet/x⟩ ⇒ endOfBoxLet/b.hi.q
+[step lowerEnd] alphaK · alphaK → alphaK ⟨endOfBoxLet/b.lo.q, endOfBoxLet/b.hi.q⟩ ⇒ endOfBoxLet/result
+[step degenerate] alphaK → alphaK ⟨degenerate/x⟩ ⇒ degenerate/result.lo.q
+[step degenerate] alphaK → alphaK ⟨degenerate/x⟩ ⇒ degenerate/result.hi.q
+alphaK → alphaK ⟨lowerEnd/box.lo.q⟩ ⇒ lowerEnd/result
+alphaK → alphaK ⟨endOfBoxLet/x⟩ ⇒ degenerate/x
+alphaK → alphaK ⟨endOfBoxLet/b.lo.q⟩ ⇒ lowerEnd/box.lo.q
+alphaK → alphaK ⟨endOfBoxLet/b.hi.q⟩ ⇒ lowerEnd/box.hi.q
+cites: endOfBoxLet → degenerate
+cites: endOfBoxLet → lowerEnd
+well-formed: true
+-/
+#guard_msgs in #kind_assembly [endOfBoxLet, degenerate, lowerEnd]
+
+/--
+info: kind assembly of 3 steps:
+level endOfBoxInline: walked
+level degenerate: interface
+level lowerEnd: walked
+input endOfBoxInline/x : alphaK
+output endOfBoxInline/result : alphaK
+output degenerate/result.lo.q : alphaK
+output degenerate/result.hi.q : alphaK
+output lowerEnd/result : alphaK
+derived endOfBoxInline/_1.lo.q : alphaK
+derived endOfBoxInline/_1.hi.q : alphaK
+derived degenerate/x : alphaK
+derived lowerEnd/box.lo.q : alphaK
+derived lowerEnd/box.hi.q : alphaK
+[step lowerEnd] alphaK · alphaK → alphaK ⟨endOfBoxInline/_1.lo.q, endOfBoxInline/_1.hi.q⟩ ⇒ endOfBoxInline/result
+[step degenerate] alphaK → alphaK ⟨endOfBoxInline/x⟩ ⇒ endOfBoxInline/_1.lo.q
+[step degenerate] alphaK → alphaK ⟨endOfBoxInline/x⟩ ⇒ endOfBoxInline/_1.hi.q
+[step degenerate] alphaK → alphaK ⟨degenerate/x⟩ ⇒ degenerate/result.lo.q
+[step degenerate] alphaK → alphaK ⟨degenerate/x⟩ ⇒ degenerate/result.hi.q
+alphaK → alphaK ⟨lowerEnd/box.lo.q⟩ ⇒ lowerEnd/result
+alphaK → alphaK ⟨endOfBoxInline/_1.lo.q⟩ ⇒ lowerEnd/box.lo.q
+alphaK → alphaK ⟨endOfBoxInline/_1.hi.q⟩ ⇒ lowerEnd/box.hi.q
+alphaK → alphaK ⟨endOfBoxInline/x⟩ ⇒ degenerate/x
+cites: endOfBoxInline → lowerEnd
+cites: endOfBoxInline → degenerate
+well-formed: true
+-/
+#guard_msgs in #kind_assembly [endOfBoxInline, degenerate, lowerEnd]
+
 end PropertyKindCalculus.Tests.KindIncidence

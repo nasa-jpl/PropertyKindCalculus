@@ -43,9 +43,15 @@ it, so putting a quantity into a role — a portion, a total, an axis extent —
 graph no operand. A `@[kindConst]` constant of container type expands the same way, into
 one config port per field path: a configured quantity does not stop being one for
 travelling in a role, and the deployment constant that fills a roled binder must reach the
-same node the callee's port names. A sum type has no field path (which constructor a value
-took is not a signature fact), and a carrier is a leaf, never a container — its own field
-is the erasure boundary.
+same node the callee's port names. And a *produced* container expands at its binding: a
+`let` whose type is a container, or a nested call whose value one consumes, lands on one
+node per field path rather than on a single opaque node, so a step that computes a bundled
+value and hands it on is wired rather than read as having computed nothing. Interface,
+operand, configuration constant, binding: the expansion is the same at every position a
+bundle can occupy, which is the property that makes bundling free — a container costs the
+reading nothing wherever it appears, so an author never has to choose between a role and a
+graph. A sum type has no field path (which constructor a value took is not a signature
+fact), and a carrier is a leaf, never a container — its own field is the erasure boundary.
 
 **Occurrences** sit on the consuming application: any constant-headed application with a
 binder whose instantiated type is a witness-family `Prop` — the smart constructors, and
@@ -668,6 +674,23 @@ partial def containerPath (env : Environment) (carriers : Array Name) (e : Expr)
     | _ => false
   | _ => false
 
+/-- The target a binder of type `t` assigns to its producer: the binder's own node when
+the type is a carrier, and one node **per carrier field path** when it is a container —
+`u.q`, `span.lo.q` — so a producer that returns a bundled value lands on the same nodes
+the consumer's ports name. Without the container case a bundled result would leave its
+producer targetless, and a step that merely re-bundles what it computed would read as
+having computed nothing: the same gap container ports, container operands and container
+configuration constants each closed at their own position, here at a binding. `none`
+when the type is neither. -/
+def bindingTarget (h : HarvestCtx) (ctx : BinderCtx) (nm : String) (t : Expr) :
+    MetaM (Option Target) := do
+  match ← carrierKind? h.env h.carriers ctx t with
+  | some k => return some (.one nm k true)
+  | none =>
+    let paths ← carrierPaths h.env h.carriers ctx t
+    if paths.isEmpty then return none
+    return some (.tuple [paths.toList.map fun (p, k) => (s!"{nm}{p}", k, true)])
+
 mutual
 
 /-- The value walk: every subexpression visited in body order (a `let` value before its
@@ -679,9 +702,7 @@ partial def walk (h : HarvestCtx) (e : Expr) (ctx : BinderCtx)
   | .mdata _ b => walk h b ctx target st
   | .letE nm t v b _ =>
     let st ← walk h t ctx none st
-    let st ← match ← carrierKind? h.env h.carriers ctx t with
-      | some k => walk h v ctx (some (.one (toString nm) k true)) st
-      | none => walk h v ctx none st
+    let st ← walk h v ctx (← bindingTarget h ctx (toString nm) t) st
     walk h b ((nm, some v) :: ctx) target st
   | .lam nm t b _ =>
     let st ← walk h t ctx none st
@@ -760,9 +781,7 @@ partial def walkApp (h : HarvestCtx) (e : Expr) (ctx : BinderCtx)
     match args[5]! with
     | .lam nm t b _ =>
       let st ← walk h t ctx none st
-      let st ← match ← carrierKind? h.env h.carriers ctx t with
-        | some k => walk h args[4]! ctx (some (.one (toString nm) k true)) st
-        | none => walk h args[4]! ctx none st
+      let st ← walk h args[4]! ctx (← bindingTarget h ctx (toString nm) t) st
       return ← walk h b ((nm, none) :: ctx) (t1.map fun (n, k, o) => .one n k o) st
     | f =>
       let st ← walk h args[4]! ctx none st
@@ -771,9 +790,7 @@ partial def walkApp (h : HarvestCtx) (e : Expr) (ctx : BinderCtx)
     match args[3]! with
     | .lam nm t b _ =>
       let st ← walk h t ctx none st
-      let st ← match ← carrierKind? h.env h.carriers ctx t with
-        | some k => walk h args[2]! ctx (some (.one (toString nm) k true)) st
-        | none => walk h args[2]! ctx none st
+      let st ← walk h args[2]! ctx (← bindingTarget h ctx (toString nm) t) st
       return ← walk h b ((nm, some args[2]!) :: ctx) (t1.map fun (n, k, o) => .one n k o) st
     | f =>
       let st ← walk h args[2]! ctx none st
@@ -969,19 +986,30 @@ partial def walkSubStep (h : HarvestCtx) (c : Name) (e : Expr) (ctx : BinderCtx)
       for (p, k) in ← carrierPaths h.env h.carriers ctx bty do
         opSlots := opSlots.push (j, p, k)
   let opKinds : Array String := opSlots.map (·.2.2)
-  -- name the operands; a nested producer gets a synthesized node to land on
+  -- name the operands; a nested producer gets a synthesized node to land on — one node
+  -- per carrier field path when its value is a container, so the outer occurrence and
+  -- the inner producer name the same thing whichever shape the value travels in
   let mut st := st
+  let mut fresh : Std.HashMap Nat String := {}
+  for (j, _, _) in opSlots do
+    unless fresh.contains j do
+      if isProducerApp h args[j]! then
+        let (m, st') := st.nextFresh
+        st := st'
+        fresh := fresh.insert j m
   let mut opNames : Array String := #[]
+  for (j, p, _) in opSlots do
+    match fresh[j]? with
+    | some m => opNames := opNames.push s!"{m}{p}"
+    | none => opNames := opNames.push s!"{← refName ctx args[j]!}{p}"
   let mut opTargets : Std.HashMap Nat Target := {}
-  for (j, p, k) in opSlots do
-    let a := args[j]!
-    if p.isEmpty && isProducerApp h a then
-      let (m, st') := st.nextFresh
-      st := st'
-      opNames := opNames.push m
-      opTargets := opTargets.insert j (.one m k true)
-    else
-      opNames := opNames.push s!"{← refName ctx a}{p}"
+  for (j, m) in fresh.toList do
+    let slots := (opSlots.filterMap fun (j', p, k) =>
+      if j' == j then some (s!"{m}{p}", k, true) else none).toList
+    opTargets := opTargets.insert j
+      (match slots with
+       | [(n, k, o)] => .one n k o
+       | ss => .tuple [ss])
   let ops := (opNames.zip opKinds).toList
   let fam := Provenance.EdgeFamily.step stepName opSlots.size
   let emit (st : WalkSt) (node kind : String) (owned : Bool) : WalkSt :=
