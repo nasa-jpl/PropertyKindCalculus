@@ -911,13 +911,19 @@ checked object. Well-formedness is checked on the assembled object, and
 
 /-- One level of an assembly: the declaration, its rendered name (the node-namespace
 prefix), its inclusion mode (`walked` — the wired interior; otherwise the interface
-box), and the level graph contributed — in its own node namespace, monomorphized by
-its wired call sites, call-fed input ports already demoted. -/
+box), the level graph contributed — in its own node namespace, monomorphized by
+its wired call sites, call-fed input ports already demoted — and `src`, the assembly's
+own provenance: the member's declaring source file, working-directory-relative when it
+resolves under it (the go-to-definition search path answers), the module name when no
+file resolves, empty when unattributed — so a rendering can state where each assembled
+definition lives. -/
 structure AssemblyLevel where
   decl : Name
   name : String
   walked : Bool
   graph : Provenance String String
+  src : String := ""
+deriving Inhabited
 
 /-- A multi-step assembly: the levels with their modes, the one union graph the
 verdict and the kernel theorem are stated on, and the citation relation. -/
@@ -949,6 +955,22 @@ def assemble (decls : Array Name) : MetaM Assembly := do
   for d in decls do
     let some ci := env.find? d | throwError "unknown declaration '{d}'"
     names := names.push (← stepNameOf ci)
+  -- the assembly's own provenance: each member's declaring module resolved to its
+  -- source file through the go-to-definition search path, rendered relative to the
+  -- working directory when under it; the module name stands in when no file resolves
+  let srcSearch ← getSrcSearchPath
+  let cwd := (← IO.FS.realPath (← IO.currentDir)).toString ++ "/"
+  let mut srcs : Array String := #[]
+  for d in decls do
+    let mod := match env.getModuleIdxFor? d with
+      | some idx => env.allImportedModuleNames[idx.toNat]!
+      | none => env.mainModule
+    let src ← match (← srcSearch.findModuleWithExt "lean" mod) with
+      | some p =>
+        let ps := (← IO.FS.realPath p).toString
+        pure (if ps.startsWith cwd then (ps.drop cwd.length).toString else ps)
+      | none => pure (toString mod)
+    srcs := srcs.push src
   -- per-level harvests: walked exactly when the wired interior is well-formed
   let mut walkedFlags : Array Bool := #[]
   let mut contribs : Array (Provenance String String) := #[]
@@ -1009,7 +1031,7 @@ def assemble (decls : Array Name) : MetaM Assembly := do
     let p := { p with
       ports := keptPorts
       intros := demotedPorts.map (fun q => ⟨q.node, q.kind, .derived⟩) ++ p.intros }
-    levels := levels.push ⟨decls[i]!, name, walkedFlags[i]!, p⟩
+    levels := levels.push ⟨decls[i]!, name, walkedFlags[i]!, p, srcs[i]!⟩
     graph := graph.union p
   graph := graph.union ⟨[], [], wires.toList, []⟩
   -- the citation relation: which member's value references which

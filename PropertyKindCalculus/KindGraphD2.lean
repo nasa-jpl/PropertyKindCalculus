@@ -10,8 +10,13 @@ with their step name, identity wires thin and gray, the citation relation dashed
 between containers (a reference the walk could not wire is a citation, never an edge
 of the checked object). The emitter is a *pure* function of the `Assembly` value the
 verdict and the kernel theorem are stated on, so the figure cannot drift from the
-object: what `#kind_assembly_decide` accepted is what is drawn, and the verdict line
-repeats the evaluated judgment.
+object: what `#kind_assembly_decide` accepted is what is drawn, and the provenance box
+carries the figure's own accountability — the evaluated verdict beside the assembled
+declarations with their source files (`AssemblyLevel.src`), so the reader is told
+which definitions, in which files, the graph is a reading of. A shape legend repeats
+the row palette and the arrow classes as the shapes themselves. Every label is plain
+text: a markdown label would render as a foreignObject HTML island, which librsvg and
+LaTeX pipelines silently drop, so the emitted document stays pure SVG.
 
 The output is D2 text (https://d2lang.com) requesting the ELK layered engine. The
 division of labor is deliberate: WHAT the figure claims — which nodes meet at which
@@ -146,19 +151,77 @@ def emit (a : Assembly) (title : String := "kind assembly") : String := Id.run d
   out := out ++ put "  }"
   out := out ++ put "}"
   out := out ++ put "direction: right"
-  -- the header claims, pinned outside the drawing: title, the evaluated verdict, and
-  -- the reading legend
+  -- the header claims, pinned outside the drawing: the title; the provenance box —
+  -- the evaluated verdict with the assembled declarations and their source files, the
+  -- assembly's own provenance beside its judgment; and the shape legend. All three
+  -- are plain-text rows chained by invisible edges into rows/columns: a markdown
+  -- label would render as a foreignObject HTML island, which librsvg and LaTeX
+  -- pipelines silently drop, so the emitted document stays pure SVG
   let ok := a.graph.wellFormed
   let (vc, vt) := if ok then ("#16a34a", "well-formed: true")
     else ("#dc2626", "well-formed: false")
   out := out ++ put ("\"__title\": {label: " ++ q title
     ++ "; shape: text; near: top-center; style: {font-size: 20; bold: true}}")
-  out := out ++ put ("\"__verdict\": {label: \"" ++ vt
-    ++ "\"; shape: text; near: top-left; style: {font-size: 14; font-color: \""
-    ++ vc ++ "\"}}")
-  out := out ++ put ("\"__legend\": {label: "
-    ++ q ("rows: input / config / output ports · derived / gated / attested introductions (ⓘ carries the attested reason) · ⊗ exit — arrows: black witness edge · indigo procedure edge · gray identity wire · dashed citation")
-    ++ "; shape: text; near: bottom-center; style: {font-size: 12; font-color: \"#6b7280\"}}")
+  let boxStyle := "  style: {stroke: \"#9ca3af\"; fill: \"#ffffff\"; border-radius: 8; font-size: 13; font-color: \"#374151\"}"
+  out := out ++ put "\"__provenance\": {"
+  out := out ++ put ("  label: " ++ q "assembled from (in list order)")
+  out := out ++ put "  near: top-left"
+  out := out ++ put "  direction: down"
+  out := out ++ put boxStyle
+  out := out ++ put ("  \"v\": {label: \"" ++ vt
+    ++ "\"; shape: text; style: {font-size: 13; font-color: \"" ++ vc ++ "\"; bold: true}}")
+  for i in [0:a.levels.size] do
+    let l := a.levels[i]!
+    let line := if l.src.isEmpty then s!"{l.decl}" else s!"{l.decl} — {l.src}"
+    out := out ++ put ("  " ++ q s!"s{i}" ++ ": {label: " ++ q line
+      ++ "; shape: text; style: {font-size: 12; font: mono; font-color: \"#374151\"}}")
+  let mut prev := "\"v\""
+  for i in [0:a.levels.size] do
+    let cur := q s!"s{i}"
+    out := out ++ put ("  " ++ prev ++ " -> " ++ cur ++ ": {style: {opacity: 0}}")
+    prev := cur
+  out := out ++ put "}"
+  out := out ++ put "\"__legend\": {"
+  out := out ++ put ("  label: " ++ q "legend")
+  out := out ++ put "  near: bottom-center"
+  out := out ++ put "  direction: right"
+  out := out ++ put boxStyle
+  let swatches : Array (String × String × String) :=
+    #[("input port", portFill .input, portStroke .input),
+      ("config port", portFill .config, portStroke .config),
+      ("output port", portFill .output, portStroke .output),
+      ("derived", tierFill .derived, tierStroke .derived),
+      ("gated", tierFill .gated, tierStroke .gated),
+      ("attested ⓘ", tierFill (.attested ""), tierStroke (.attested ""))]
+  for i in [0:swatches.size] do
+    let (lbl, f, s) := swatches[i]!
+    out := out ++ put ("  " ++ q s!"sw{i}" ++ ": {label: " ++ q lbl
+      ++ "; style: {fill: " ++ q f ++ "; stroke: " ++ q s
+      ++ "; border-radius: 6; font-size: 12}}")
+    if i > 0 then
+      out := out ++ put ("  " ++ q s!"sw{i-1}" ++ " -> " ++ q s!"sw{i}"
+        ++ ": {style: {opacity: 0}}")
+  let samples : Array (String × String × String) :=
+    #[("witness", "#111827", ""),
+      ("procedure [step]", "#4f46e5", ""),
+      ("identity wire", "#9ca3af", ""),
+      ("citation", "#4f46e5", "; stroke-dash: 4")]
+  for i in [0:samples.size] do
+    let (lbl, stroke, dash) := samples[i]!
+    let dot := ": {label: \"\"; shape: circle; width: 10; height: 10; style: {fill: "
+      ++ q stroke ++ "; stroke: " ++ q stroke ++ "}}"
+    out := out ++ put ("  " ++ q s!"l{i}a" ++ dot)
+    out := out ++ put ("  " ++ q s!"l{i}b" ++ dot)
+    out := out ++ put ("  " ++ q s!"l{i}a" ++ " -> " ++ q s!"l{i}b" ++ ": {label: "
+      ++ q lbl ++ "; style: {stroke: " ++ q stroke ++ dash
+      ++ "; font-size: 12; font-color: \"#374151\"}}")
+    if i > 0 then
+      out := out ++ put ("  " ++ q s!"l{i-1}b" ++ " -> " ++ q s!"l{i}a"
+        ++ ": {style: {opacity: 0}}")
+  out := out ++ put ("  \"note\": {label: "
+    ++ q "⊗ exit at the erasure boundary · ⓘ carries the attested reason"
+    ++ "; shape: text; style: {font-size: 12; font-color: \"#374151\"}}")
+  out := out ++ put "}"
   -- the level containers: one box per level, its mode on the label and — interface
   -- mode — on a dashed border; every row registers its graph node's D2 path and its
   -- level (junction nesting below asks which container an endpoint lives in)

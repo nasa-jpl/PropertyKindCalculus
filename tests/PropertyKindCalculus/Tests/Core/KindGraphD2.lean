@@ -42,7 +42,7 @@ def probe : Assembly :=
   let wires : Provenance String String :=
     ⟨[], [], [⟨.copy, [("A/x", "kx")], "B/x", "kx", "A"⟩,
               ⟨.product, [("A/y", "ky"), ("B/x", "kx")], "B/result", "kz", "A"⟩], []⟩
-  { levels := #[⟨`A, "A", true, gA⟩, ⟨`B, "B", false, gB⟩]
+  { levels := #[⟨`A, "A", true, gA, "src/a.lean"⟩, ⟨`B, "B", false, gB, ""⟩]
     graph := (gA.union gB).union wires
     cites := #[("A", "B")] }
 
@@ -52,10 +52,21 @@ def d2 : String := emit probe (title := "probe assembly")
 #guard d2.startsWith "vars: {"
 #guard hasSub d2 "layout-engine: elk"
 #guard hasSub d2 "direction: right"
--- the header repeats the evaluated judgment on the object
+-- the provenance box: the evaluated judgment beside the assembled declarations and
+-- their source files — the module name line when a source resolves, the bare
+-- declaration when unattributed
 #guard probe.graph.wellFormed
 #guard hasSub d2 "well-formed: true"
 #guard hasSub d2 "label: \"probe assembly\""
+#guard hasSub d2 "\"__provenance\": {"
+#guard hasSub d2 "label: \"assembled from (in list order)\""
+#guard hasSub d2 "label: \"A — src/a.lean\""
+#guard hasSub d2 "\"s1\": {label: \"B\";"
+-- the shape legend repeats the palette and arrow classes as shapes
+#guard hasSub d2 "\"__legend\": {"
+#guard hasSub d2 "label: \"input port\""
+#guard hasSub d2 "label: \"attested ⓘ\"; style: {fill: \"#fde68a\""
+#guard hasSub d2 "label: \"citation\""
 -- containers carry their names and inclusion modes; interface borders dash
 #guard hasSub d2 "label: \"A (walked)\""
 #guard hasSub d2 "label: \"B (interface)\""
