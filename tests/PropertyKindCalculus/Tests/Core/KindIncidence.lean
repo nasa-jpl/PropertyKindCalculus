@@ -877,4 +877,41 @@ boundary agrees: false
 -/
 #guard_msgs in #kind_contract endOfBoxMisconfigured
 
+-- The wiring readings over the same declared scope: the member list named once, and the
+-- rendering identical to the bracket form's above, because it is the same assembly.
+/--
+info: kind assembly of 3 steps:
+level endOfBoxLet: walked
+level degenerate: interface
+level lowerEnd: walked
+input endOfBoxLet/x : alphaK
+output endOfBoxLet/result : alphaK
+derived endOfBoxLet/b.lo.q : alphaK
+derived endOfBoxLet/b.hi.q : alphaK
+derived degenerate/x : alphaK
+derived degenerate/result.lo.q : alphaK
+derived degenerate/result.hi.q : alphaK
+derived lowerEnd/box.lo.q : alphaK
+derived lowerEnd/box.hi.q : alphaK
+derived lowerEnd/result : alphaK
+[step degenerate] alphaK → alphaK ⟨endOfBoxLet/x⟩ ⇒ endOfBoxLet/b.lo.q
+[step degenerate] alphaK → alphaK ⟨endOfBoxLet/x⟩ ⇒ endOfBoxLet/b.hi.q
+[step lowerEnd] alphaK · alphaK → alphaK ⟨endOfBoxLet/b.lo.q, endOfBoxLet/b.hi.q⟩ ⇒ endOfBoxLet/result
+[step degenerate] alphaK → alphaK ⟨degenerate/x⟩ ⇒ degenerate/result.lo.q
+[step degenerate] alphaK → alphaK ⟨degenerate/x⟩ ⇒ degenerate/result.hi.q
+alphaK → alphaK ⟨lowerEnd/box.lo.q⟩ ⇒ lowerEnd/result
+alphaK → alphaK ⟨endOfBoxLet/x⟩ ⇒ degenerate/x
+alphaK → alphaK ⟨endOfBoxLet/b.lo.q⟩ ⇒ lowerEnd/box.lo.q
+alphaK → alphaK ⟨endOfBoxLet/b.hi.q⟩ ⇒ lowerEnd/box.hi.q
+cites: endOfBoxLet → degenerate
+cites: endOfBoxLet → lowerEnd
+well-formed: true
+-/
+#guard_msgs in #kind_assembly endOfBoxBoundary
+
+/--
+info: kernel-accepted: the kind assembly is well-formed (theorem 'PropertyKindCalculus.Tests.KindIncidence.endOfBoxLet.kindAssemblyWf')
+-/
+#guard_msgs in #kind_assembly_decide endOfBoxBoundary
+
 end PropertyKindCalculus.Tests.KindIncidence

@@ -17,6 +17,11 @@ off a report by a person:
     #kind_contract c                -- the declared boundary against the computed one
     #kind_contract_decide c         -- the kernel checks the declared boundary
 
+Wherever a scope has a contract, the two assembly commands take its name in place of the
+bracket list — `#kind_assembly c` — so the member list is spelled once, in the
+declaration that answers for it, and every reading of that scope is a reading of the
+same members.
+
 **Ports** are read off what the signature *states*: the telescope's carrier-typed
 binders are input ports (in signature order), the result type's carrier-typed right-spine
 product components are output ports (positions kept — `result.1`, `result.3` across an
@@ -1552,6 +1557,26 @@ proposition rests on it. -/
 private def evalContract (_e : Expr) : MetaM (Provenance.Contract String String) :=
   throwError "contract values cannot be read in this environment"
 
+/-- The declared contract's value, with the type check that gives a legible error before
+the evaluator is asked for one. -/
+def contractValueOf (cname : Name) : MetaM (Provenance.Contract String String) := do
+  let want := mkApp2 (mkConst ``Provenance.Contract) strE strE
+  unless ← Meta.isDefEq (← Meta.inferType (mkConst cname)) want do
+    throwError "'{cname}' is not a 'Provenance.Contract String String'"
+  evalContract (mkConst cname)
+
+/-- The wiring theorem of an assembly, however its scope was named: `d₁.kindAssemblyWf`,
+by kernel reduction of the structural checker on the assembled object. Errors out —
+before troubling the kernel — when the assembly is not well-formed. -/
+def assemblyWfDecl (a : Assembly) : Elab.TermElabM Unit := do
+  unless a.graph.wellFormed do
+    throwError "the kind assembly is not well-formed — render it with #kind_assembly"
+  let prop ← Meta.mkAppM ``Provenance.WellFormed #[toExpr a.graph]
+  let proof ← Meta.mkDecideProof prop
+  let name := a.levels[0]!.decl ++ `kindAssemblyWf
+  addDecl (.thmDecl { name, levelParams := [], type := prop, value := proof })
+  Lean.logInfo m!"kernel-accepted: the kind assembly is well-formed (theorem '{name}')"
+
 /-- The scope a contract declares, as the assembly its members compute. The one place a
 member list becomes a graph, so a probe and a figure generator that name the same
 contract are looking at the same object. -/
@@ -1654,6 +1679,15 @@ elab "#kind_assembly " "[" ids:ident,* "]" : command => liftTermElabM do
   logInfo m!"kind assembly of {decls.size} steps:\n{String.intercalate "\n" a.renderLines}"
 
 open Elab Command in
+/-- `#kind_assembly c` is the same rendering over the scope a contract declares: the
+members come off `c` rather than off the call site, so the graph shown is the one whose
+boundary `#kind_contract c` judges, and a scope is spelled once however many readings it
+has. -/
+elab "#kind_assembly " c:ident : command => liftTermElabM do
+  let a ← assembleContract (← contractValueOf (← realizeGlobalConstNoOverload c))
+  logInfo m!"kind assembly of {a.levels.size} steps:\n{String.intercalate "\n" a.renderLines}"
+
+open Elab Command in
 /-- `#kind_assembly_decide [d₁, d₂, …]` assembles the listed declarations, reflects
 the union graph into a term, and adds the theorem `d₁.kindAssemblyWf :
 (graph).WellFormed`, proved by `decide` — kernel reduction of the structural checker
@@ -1663,22 +1697,15 @@ elab "#kind_assembly_decide " "[" ids:ident,* "]" : command => liftTermElabM do
   let decls ← ids.getElems.mapM fun id => realizeGlobalConstNoOverload id
   if decls.isEmpty then throwError "#kind_assembly_decide expects at least one declaration"
   let a ← assemble decls
-  unless a.graph.wellFormed do
-    throwError "the kind assembly is not well-formed — render it with #kind_assembly"
-  let prop ← Meta.mkAppM ``Provenance.WellFormed #[toExpr a.graph]
-  let proof ← Meta.mkDecideProof prop
-  let name := decls[0]! ++ `kindAssemblyWf
-  addDecl (.thmDecl { name, levelParams := [], type := prop, value := proof })
-  logInfo m!"kernel-accepted: the kind assembly is well-formed (theorem '{name}')"
+  assemblyWfDecl a
 
-/-- The declared contract's value, with the type check that gives a legible error before
-the evaluator is asked for one. -/
-private def contractValueOf (cname : Name) :
-    MetaM (Provenance.Contract String String) := do
-  let want := mkApp2 (mkConst ``Provenance.Contract) strE strE
-  unless ← Meta.isDefEq (← Meta.inferType (mkConst cname)) want do
-    throwError "'{cname}' is not a 'Provenance.Contract String String'"
-  evalContract (mkConst cname)
+open Elab Command in
+/-- `#kind_assembly_decide c` proves the same wiring theorem over the scope a contract
+declares — the wiring verdict and the boundary verdict then stand on one member list,
+named once. -/
+elab "#kind_assembly_decide " c:ident : command => liftTermElabM do
+  let a ← assembleContract (← contractValueOf (← realizeGlobalConstNoOverload c))
+  assemblyWfDecl a
 
 open Elab Command in
 /-- `#kind_contract c` assembles the members the contract `c` declares and compares that
