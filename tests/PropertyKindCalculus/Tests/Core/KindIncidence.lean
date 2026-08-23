@@ -181,14 +181,14 @@ def normalized (y : Quantity betaK Nat) : Quantity epsilonK Nat :=
 /--
 info: kind ports of 'PropertyKindCalculus.Tests.KindIncidence.normalized':
 input y : betaK
-config refQ : deltaK
+config PropertyKindCalculus.Tests.KindIncidence.refQ : deltaK
 output result : epsilonK
 -/
 #guard_msgs in #kind_ports normalized
 
 /--
 info: inline kind occurrences in 'PropertyKindCalculus.Tests.KindIncidence.normalized':
-deltaK / betaK → epsilonK ⟨refQ, y⟩
+deltaK / betaK → epsilonK ⟨PropertyKindCalculus.Tests.KindIncidence.refQ, y⟩
 -/
 #guard_msgs in #kind_occurrences normalized
 
@@ -199,14 +199,14 @@ def selfRef : Quantity epsilonK Nat :=
 
 /--
 info: kind ports of 'PropertyKindCalculus.Tests.KindIncidence.selfRef':
-config refQ : deltaK
+config PropertyKindCalculus.Tests.KindIncidence.refQ : deltaK
 output result : epsilonK
 -/
 #guard_msgs in #kind_ports selfRef
 
 /--
 info: inline kind occurrences in 'PropertyKindCalculus.Tests.KindIncidence.selfRef':
-deltaK / deltaK → epsilonK ⟨refQ, refQ⟩
+deltaK / deltaK → epsilonK ⟨PropertyKindCalculus.Tests.KindIncidence.refQ, PropertyKindCalculus.Tests.KindIncidence.refQ⟩
 -/
 #guard_msgs in #kind_occurrences selfRef
 
@@ -352,9 +352,9 @@ well-formed: false
 /--
 info: kind graph of 'PropertyKindCalculus.Tests.KindIncidence.normalized':
 input y : betaK
-config refQ : deltaK
+config PropertyKindCalculus.Tests.KindIncidence.refQ : deltaK
 output result : epsilonK
-deltaK / betaK → epsilonK ⟨refQ, y⟩ ⇒ result
+deltaK / betaK → epsilonK ⟨PropertyKindCalculus.Tests.KindIncidence.refQ, y⟩ ⇒ result
 well-formed: true
 -/
 #guard_msgs in #kind_graph normalized

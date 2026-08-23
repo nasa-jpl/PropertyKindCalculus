@@ -196,7 +196,7 @@ def nodeOfDeployed (i : Position rowAxisK Nat) : Quantity rowAxisK Nat :=
 /--
 info: kind ports of 'PropertyKindCalculus.Tests.Axis.nodeOfDeployed':
 input i.q : rowAxisK
-config nDeployed.q : rowAxisK
+config PropertyKindCalculus.Tests.Axis.nDeployed.q : rowAxisK
 output result : rowAxisK
 -/
 #guard_msgs in #kind_ports nodeOfDeployed

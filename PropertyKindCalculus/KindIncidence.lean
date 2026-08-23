@@ -130,6 +130,15 @@ scope, so it is compared against a declared one — `Provenance.Contract` — an
 reported: the wiring verdict is monotone under adding an unrelated member, and the
 boundary is what changes when the membership does.
 
+A **node name is an address, a kind name is a term**. Addresses are absolute — a member
+prefixes its node namespace with its own last component, a constant names itself in full,
+a binder and a field path name themselves — because a boundary someone declares must mean
+one thing wherever it is checked, and a name that shortened with the reader's open
+namespaces would make one contract two claims. Kinds are the other way: they are rendered
+in the vocabulary of the site that reads them, the way every quantity in this library is
+written, so a contract states its kinds as the module that owns them spells them and is
+checked where that vocabulary is in scope.
+
 The byte-identical renderings are the spot check, not the license: `#kind_ports` and
 `#kind_occurrences` print exactly the lines they printed as free-standing harvests, now
 as projections of the constructed object.
@@ -212,7 +221,9 @@ partial def refName (ctx : BinderCtx) (e : Expr) : MetaM String := do
           return s!"{← refName ctx s}.{path.2}"
     refName ctx f
   | .mdata _ b => refName ctx b
-  | .const .. => return toString (← Meta.ppExpr e)
+  -- a constant names itself in full: the same node a config port declares, and a node
+  -- identity that the reader's open namespaces must not move
+  | .const c _ => return toString c
   | .fvar id => return toString (← id.getDecl).userName
   | .bvar i =>
     match ctx[i]? with
@@ -589,13 +600,16 @@ def opaqueTarget (h : HarvestCtx) (t1 : Option (String × String × Bool))
     else st
   | none => st
 
-/-- The rendered name of a step declaration — the pretty printer's spelling in the
-current namespace context, without the explicit-argument `@` marker a signature with
-implicit binders would carry: the name labels a procedure edge and prefixes a node
-namespace, where the marker is noise. -/
-def stepNameOf (ci : ConstantInfo) : MetaM String := do
-  let s := toString (← Meta.ppExpr (mkConst ci.name (ci.levelParams.map mkLevelParam)))
-  return if s.startsWith "@" then (s.drop 1).toString else s
+/-- The name of a step declaration — its last component, which labels a procedure edge
+and prefixes a node namespace. Not the pretty printer's spelling: this string is an
+*address*, part of every node identity the graph and a `Provenance.Contract` name, and an
+address that changed with the reader's open namespaces would let one declared boundary be
+two different claims. Members whose last components collide are refused at assembly, where
+the collision is visible. -/
+def stepNameOf (ci : ConstantInfo) : MetaM String :=
+  return match ci.name with
+    | .str _ s => s
+    | n => toString n
 
 /-- One edge stated by a consuming application's binders, kinds rendered. -/
 structure BinderEdge where
@@ -1189,7 +1203,9 @@ def stepGraphOf (decl : Name) (subSteps : Array Name := #[]) : MetaM StepGraph :
     if let some v := info.value? then
       for c in configReads cfgConsts v do
         let some ci := env.find? c | continue
-        let node := toString (← Meta.ppExpr (mkConst c (ci.levelParams.map mkLevelParam)))
+        -- the constant's full name, for the reason `stepNameOf` gives: a config port is
+        -- an interface node, and its identity cannot depend on who is reading
+        let node := toString c
         -- a container-typed constant states its kinds the way a container binder does:
         -- one config port per carrier field path (a configured quantity does not stop
         -- being one for travelling in a role)
@@ -1344,11 +1360,15 @@ inclusion, call-site dissection with monomorphizing kind maps and port demotion,
 namespaced union, and the citation scan. -/
 def assemble (decls : Array Name) : MetaM Assembly := do
   let env ← getEnv
-  -- rendered names — the node-namespace prefixes and procedure-edge labels
+  -- the node-namespace prefixes and procedure-edge labels; two members sharing one
+  -- would share a node namespace, so the collision is refused rather than merged
   let mut names : Array String := #[]
   for d in decls do
     let some ci := env.find? d | throwError "unknown declaration '{d}'"
-    names := names.push (← stepNameOf ci)
+    let n ← stepNameOf ci
+    if names.contains n then
+      throwError "two assembly members are named '{n}' — one node namespace cannot hold both"
+    names := names.push n
   -- the assembly's own provenance: each member's declaring module resolved to its
   -- source file through the go-to-definition search path, rendered relative to the
   -- working directory when under it; the module name stands in when no file resolves
