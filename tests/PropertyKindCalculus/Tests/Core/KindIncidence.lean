@@ -604,7 +604,9 @@ The members become each other's sub-steps: a call is a procedure edge, a walked 
 site is dissected into the callee's box (operands `copy` onto the demoted input ports,
 the callee's own level derives its outputs), a kind-generic callee is monomorphized by
 its call site, and the verdict — with its kernel theorem — is computed on the
-assembled object. -/
+assembled object. Demotion runs at both ends of a wired call, so what stays a port is
+the assembly's boundary: in each pin below only the top member's interface survives,
+and every callee result the caller consumes reads `derived`. -/
 
 -- The partial-incidence boundary closes at assembly: `halved`'s one-operand view of
 -- `halve` was refused per step, and the assembled pair is well-formed — the helper's
@@ -615,8 +617,8 @@ level halved: walked
 level halve: walked
 input halved/q : alphaK
 output halved/result : epsilonK
-output halve/result : epsilonK
 derived halve/q : alphaK
+derived halve/result : epsilonK
 [step halve] alphaK → epsilonK ⟨halved/q⟩ ⇒ halved/result
 alphaK / alphaK → epsilonK ⟨halve/q, halve/q⟩ ⇒ halve/result
 alphaK → alphaK ⟨halved/q⟩ ⇒ halve/q
@@ -659,11 +661,11 @@ level joinedVia: walked
 level splitQ: walked
 input joinedVia/x : alphaK
 output joinedVia/result : epsilonK
-output splitQ/result.1 : alphaK
-output splitQ/result.2 : alphaK
 derived joinedVia/u : alphaK
 derived joinedVia/v : alphaK
 derived splitQ/x : alphaK
+derived splitQ/result.1 : alphaK
+derived splitQ/result.2 : alphaK
 [step splitQ] alphaK → alphaK ⟨joinedVia/x⟩ ⇒ joinedVia/u
 [step splitQ] alphaK → alphaK ⟨joinedVia/x⟩ ⇒ joinedVia/v
 alphaK / alphaK → epsilonK ⟨joinedVia/u, joinedVia/v⟩ ⇒ joinedVia/result
@@ -686,8 +688,8 @@ level lerped: walked
 level genericLerp: walked
 input lerped/tab : alphaK
 output lerped/result : alphaK
-output genericLerp/result : alphaK
 derived genericLerp/tab : alphaK
+derived genericLerp/result : alphaK
 [step genericLerp] alphaK → alphaK ⟨lerped/tab⟩ ⇒ lerped/result
 alphaK → alphaK ⟨genericLerp/tab⟩ ⇒ genericLerp/result
 alphaK → alphaK ⟨lerped/tab⟩ ⇒ genericLerp/tab
@@ -734,14 +736,14 @@ level degenerate: interface
 level lowerEnd: walked
 input endOfBoxLet/x : alphaK
 output endOfBoxLet/result : alphaK
-output degenerate/result.lo.q : alphaK
-output degenerate/result.hi.q : alphaK
-output lowerEnd/result : alphaK
 derived endOfBoxLet/b.lo.q : alphaK
 derived endOfBoxLet/b.hi.q : alphaK
 derived degenerate/x : alphaK
+derived degenerate/result.lo.q : alphaK
+derived degenerate/result.hi.q : alphaK
 derived lowerEnd/box.lo.q : alphaK
 derived lowerEnd/box.hi.q : alphaK
+derived lowerEnd/result : alphaK
 [step degenerate] alphaK → alphaK ⟨endOfBoxLet/x⟩ ⇒ endOfBoxLet/b.lo.q
 [step degenerate] alphaK → alphaK ⟨endOfBoxLet/x⟩ ⇒ endOfBoxLet/b.hi.q
 [step lowerEnd] alphaK · alphaK → alphaK ⟨endOfBoxLet/b.lo.q, endOfBoxLet/b.hi.q⟩ ⇒ endOfBoxLet/result
@@ -764,14 +766,14 @@ level degenerate: interface
 level lowerEnd: walked
 input endOfBoxInline/x : alphaK
 output endOfBoxInline/result : alphaK
-output degenerate/result.lo.q : alphaK
-output degenerate/result.hi.q : alphaK
-output lowerEnd/result : alphaK
 derived endOfBoxInline/_1.lo.q : alphaK
 derived endOfBoxInline/_1.hi.q : alphaK
 derived degenerate/x : alphaK
+derived degenerate/result.lo.q : alphaK
+derived degenerate/result.hi.q : alphaK
 derived lowerEnd/box.lo.q : alphaK
 derived lowerEnd/box.hi.q : alphaK
+derived lowerEnd/result : alphaK
 [step lowerEnd] alphaK · alphaK → alphaK ⟨endOfBoxInline/_1.lo.q, endOfBoxInline/_1.hi.q⟩ ⇒ endOfBoxInline/result
 [step degenerate] alphaK → alphaK ⟨endOfBoxInline/x⟩ ⇒ endOfBoxInline/_1.lo.q
 [step degenerate] alphaK → alphaK ⟨endOfBoxInline/x⟩ ⇒ endOfBoxInline/_1.hi.q
@@ -786,5 +788,82 @@ cites: endOfBoxInline → degenerate
 well-formed: true
 -/
 #guard_msgs in #kind_assembly [endOfBoxInline, degenerate, lowerEnd]
+
+/-! ### The declared boundary — `#kind_contract`
+
+The wiring verdict is monotone under adding an unrelated member, so it cannot judge the
+membership choice; the boundary can, because a member brings ports with it. The contract
+below declares the interval composition's interface — one input, one output, the three
+levels' intermediate results interior — and the pins judge it three ways: against the
+members it belongs to, against those members plus an unrelated pair, and with the input
+declared a `param`, which is the one refinement a declaration may make over a computed
+role. -/
+
+/-- The declared boundary of the interval composition. -/
+def endOfBoxBoundary : Provenance.Contract String String where
+  name := "endOfBox"
+  ports := [
+    ⟨"endOfBoxLet/x", "alphaK", .input⟩,
+    ⟨"endOfBoxLet/result", "alphaK", .output⟩]
+  exits := []
+
+/--
+info: kind contract over 3 steps:
+contract 'endOfBox': 2 ports, 0 exits
+boundary agrees: true
+-/
+#guard_msgs in #kind_contract endOfBoxBoundary [endOfBoxLet, degenerate, lowerEnd]
+
+/--
+info: kernel-accepted: 'PropertyKindCalculus.Tests.KindIncidence.endOfBoxBoundary' is the boundary of the 3-step assembly (theorem 'PropertyKindCalculus.Tests.KindIncidence.endOfBoxBoundary.kindContractOk')
+-/
+#guard_msgs in #kind_contract_decide endOfBoxBoundary [endOfBoxLet, degenerate, lowerEnd]
+
+-- The scope reading: two unrelated members join the assembly, the wiring verdict is
+-- unmoved (`#kind_assembly` above says `true` for each part and the union is disjoint),
+-- and the boundary reports exactly what they brought.
+/--
+info: kind contract over 5 steps:
+contract 'endOfBox': 2 ports, 0 exits
+undeclared input halved/q : alphaK
+undeclared output halved/result : epsilonK
+boundary agrees: false
+-/
+#guard_msgs in
+#kind_contract endOfBoxBoundary [endOfBoxLet, degenerate, lowerEnd, halved, halve]
+
+/-- The same boundary with the input declared a parameter — a claim about binding time,
+which the walk cannot read and the comparison therefore accepts. -/
+def endOfBoxParametric : Provenance.Contract String String :=
+  { endOfBoxBoundary with
+    name := "endOfBox (parametric)"
+    ports := endOfBoxBoundary.ports.map fun p =>
+      if p.node == "endOfBoxLet/x" then { p with dir := .param } else p }
+
+/--
+info: kind contract over 3 steps:
+contract 'endOfBox (parametric)': 2 ports, 0 exits
+params: endOfBoxLet/x
+boundary agrees: true
+-/
+#guard_msgs in #kind_contract endOfBoxParametric [endOfBoxLet, degenerate, lowerEnd]
+
+/-- The same boundary claiming the input is a constant this tier binds. -/
+def endOfBoxMisconfigured : Provenance.Contract String String :=
+  { endOfBoxBoundary with
+    name := "endOfBox (misconfigured)"
+    ports := endOfBoxBoundary.ports.map fun p =>
+      if p.node == "endOfBoxLet/x" then { p with dir := .config } else p }
+
+-- `config` says the tier binds the value, which is a harvested fact and not a claim the
+-- contract may make: the port is at once undeclared and unrealized.
+/--
+info: kind contract over 3 steps:
+contract 'endOfBox (misconfigured)': 2 ports, 0 exits
+undeclared input endOfBoxLet/x : alphaK
+unrealized config endOfBoxLet/x : alphaK
+boundary agrees: false
+-/
+#guard_msgs in #kind_contract endOfBoxMisconfigured [endOfBoxLet, degenerate, lowerEnd]
 
 end PropertyKindCalculus.Tests.KindIncidence

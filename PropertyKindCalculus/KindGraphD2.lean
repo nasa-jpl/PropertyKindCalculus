@@ -55,16 +55,20 @@ def esc (s : String) : String :=
 node names. -/
 def q (s : String) : String := "\"" ++ esc s ++ "\""
 
-/-- The row fill of a port role (light, so the row text reads dark). -/
+/-- The row fill of a port role (light, so the row text reads dark) — a `param`, bound
+by the tier below rather than here, reads as its own colour and not as a configuration
+this tier fixed. -/
 def portFill : PortDir → String
   | .input => "#dbeafe"
   | .config => "#fef3c7"
+  | .param => "#ede9fe"
   | .output => "#dcfce7"
 
 /-- The row border of a port role. -/
 def portStroke : PortDir → String
   | .input => "#2563eb"
   | .config => "#d97706"
+  | .param => "#7c3aed"
   | .output => "#16a34a"
 
 /-- The row fill of an unkinded signature position — red: outside the kinded

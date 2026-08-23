@@ -14,13 +14,21 @@ reached, so "is the result of some occurrence" is not the condition — reachabi
 the sources is. The identity wire closes the file: a pass-through wired by `copy`
 passes, and a kind-changing copy is refused by the one clause `wellFormed` owns
 semantically.
+
+The scope probes judge the second verdict on the same object. `wellFormed` is monotone
+under disjoint union, so the union of two unrelated graphs passes; `Contract.agrees`
+compares the boundary the graph has with the one an author declared, and that comparison
+turns on exactly the membership the wiring verdict is blind to. The role probes pin the
+one refinement a declaration may make — `param`, a source the tier below binds, which no
+signature harvest can read — against `config`, which is harvested and therefore not a
+claim the contract may make.
 -/
 import PropertyKindCalculus.Provenance
 
 namespace PropertyKindCalculus.Tests.Provenance
 
 open PropertyKindCalculus
-open PropertyKindCalculus.Provenance (EdgeFamily)
+open PropertyKindCalculus.Provenance (EdgeFamily Contract)
 
 /-! A two-occurrence step over string-named nodes and kinds: `x · y → z` interior, then
 `z / y → out`, with the output erased at the exit. The shape of a harvested compute body:
@@ -103,6 +111,74 @@ def unrelatedN : Provenance Nat Nat where
   exits := []
 
 example : (stepN.union unrelatedN).WellFormed := by decide
+
+/-! ## The declared boundary — the judgment the verdict cannot make
+
+`Contract` states the boundary someone means, and `agrees` compares it with the one the
+graph has, in both directions. The doctrinal pair is the union again: the wiring verdict
+stays `true` when an unrelated member joins, and the boundary comparison turns `false`
+and names what the member brought. The two are verdicts on one object — the first that
+the graph holds together, the second that it is the graph someone meant.
+
+Roles carry binding time, and `param` is the one refinement a declaration may make over
+a computed role: it says a source is bound by the tier below, which a signature harvest
+cannot see. Claiming `config` — a constant *this* tier binds — is a harvested fact, so
+declaring one where the walk found an input is a disagreement in both directions at
+once. -/
+
+/-- The boundary `step` actually has. -/
+def stepBoundary : Contract String String where
+  name := "step"
+  ports := [
+    ⟨"x", "alphaK", .input⟩,
+    ⟨"y", "betaK", .input⟩,
+    ⟨"out", "deltaK", .output⟩]
+  exits := ["out"]
+
+#guard stepBoundary.agrees step
+
+-- The scope judgment: the same declaration against the widened membership. The wiring
+-- verdict above says `true`; this says `false`, and names the two ports that arrived.
+#guard !(stepBoundary.agrees (step.union unrelated))
+#guard (stepBoundary.undeclared (step.union unrelated)).map (·.node) == ["p", "q"]
+#guard (stepBoundary.unrealized (step.union unrelated)).isEmpty
+
+-- Narrowing is the other direction: a port declared that the graph does not exhibit.
+#guard ((({ stepBoundary with
+  ports := ⟨"w", "alphaK", .input⟩ :: stepBoundary.ports } : Contract String String)).unrealized
+    step).map (·.node) == ["w"]
+
+-- `param` refines a computed `input` — the tier below binds it — and the parameters are
+-- the obligations that tier inherits.
+#guard ({ stepBoundary with ports := stepBoundary.ports.map fun p =>
+  if p.node == "y" then { p with dir := .param } else p } : Contract String String).agrees step
+#guard ({ stepBoundary with ports := stepBoundary.ports.map fun p =>
+  if p.node == "y" then { p with dir := .param } else p } : Contract String String).params == ["y"]
+
+-- `config` does not refine: it claims this tier binds the value, which is harvested.
+#guard !({ stepBoundary with ports := stepBoundary.ports.map fun p =>
+  if p.node == "y" then { p with dir := .config } else p } : Contract String String).agrees step
+
+-- An exit is part of the boundary: where a value leaves the calculus is declared too.
+#guard (({ stepBoundary with exits := [] } : Contract String String).undeclaredExits step) == ["out"]
+#guard !({ stepBoundary with exits := [] } : Contract String String).agrees step
+
+-- The claim gets the hygiene the graph gets: a node declared twice covers nothing.
+#guard !({ stepBoundary with
+  ports := ⟨"x", "alphaK", .input⟩ :: stepBoundary.ports } : Contract String String).agrees step
+
+/-- `stepBoundary` on the numeric twin, with the second input declared a parameter — the
+kernel route for the boundary comparison, as `decide` reduces it. -/
+def stepNBoundary : Contract Nat Nat where
+  name := "stepN"
+  ports := [⟨0, 10, .input⟩, ⟨1, 11, .param⟩, ⟨3, 13, .output⟩]
+  exits := [3]
+
+example : stepNBoundary.Agrees stepN := by decide
+
+-- And the scope judgment in the kernel: the union above is well-formed, and it is not
+-- the declared boundary.
+example : ¬ stepNBoundary.Agrees (stepN.union unrelatedN) := by decide
 
 /-! ## The anonymous-mint flip — "raw mints = 0", compositional
 

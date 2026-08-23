@@ -56,6 +56,29 @@ someone declared. `reachableFrom` is the query that states connectivity — it i
 chosen start set and never assumed of the whole — and the probes carry the witness, an
 unrelated pair whose union passes while neither part reaches the other.
 
+## The declared boundary — `Contract`
+
+`Contract` is that declaration: a name, the ports the author claims the graph exposes with
+the role each plays, and the exits. `Contract.agrees` compares it with the computed
+boundary in both directions — nothing computed left undeclared, nothing declared left
+unexhibited — and the two difference lists are the report, because a boundary that cannot
+disagree checks nothing. This is the judgment `wellFormed` structurally cannot make, and
+it closes scope without a scope checker: add a member and the inputs nothing feeds surface
+as `undeclared` ports, drop one and its caller's operand stops wiring, so the port that
+covered it turns up `unrealized`. What the contract does *not* re-adjudicate is the wiring
+itself: `wellFormed` and `agrees` are two verdicts on one object, the first that the graph
+holds together and the second that it is the graph someone meant.
+
+Roles carry **binding time**, which is why there are four. A `config` is a constant *this
+tier binds* — a cited coefficient, a threshold — harvested from the declaration that binds
+it. A `param` is a source this tier does **not** bind: an algorithm states its table extent
+and its incidence angle as parameters, and the application below it binds them to
+configuration constants of its own. A signature harvest cannot read binding time — it sees
+an argument, not when the argument is filled — so `param` is a claim the contract makes
+about a computed `input`, and `PortDir.refines` is exactly that one refinement. The tiers
+are then contracts over the same vocabulary: an algorithm's parameters unbound, an
+application's bound, a deployment's inputs and outputs bound to artifacts.
+
 What well-formedness deliberately does not check is the *truth* of any edge. Per the
 trust model (`QuantityClassification`, "The trust model — witnesses are authored, not
 checked"), whether `k` really is the product kind of `k₁` and `k₂` is the author's
@@ -96,21 +119,36 @@ doctrine is to decide the object, never to trust the construction.
 
 namespace PropertyKindCalculus
 
-/-- The role a port plays in a step's interface: an input the step consumes, a
-configuration value it reads (a declared constant mint — a cited coefficient table, a
-bound, a threshold), or an output it produces. Inputs and configuration are sources of
-the graph; outputs are derivation targets. -/
+/-- The role a port plays in a step's interface, and with it the time the port's value is
+bound: an `input` the step consumes, varying per datum; a `config` it reads — a declared
+constant mint this tier binds, a cited coefficient table, a bound, a threshold; a `param`
+this tier leaves for the tier below to bind, fixed for a deployment but not here; or an
+`output` it produces. Everything but `output` is a source of the graph; outputs are
+derivation targets. -/
 inductive Provenance.PortDir where
   | input
   | config
+  | param
   | output
 deriving DecidableEq, Repr, Inhabited
 
-/-- How a port role prints in a rendered report: `input` / `config` / `output`. -/
+/-- How a port role prints in a rendered report: `input` / `config` / `param` /
+`output`. -/
 def Provenance.PortDir.label : Provenance.PortDir → String
   | .input => "input"
   | .config => "config"
+  | .param => "param"
   | .output => "output"
+
+/-- Does a *declared* role stand for a *computed* one? Every role stands for itself, and
+`param` additionally stands for a computed `input`: a signature harvest sees an argument,
+never the tier that fills it, so binding time is a claim the contract makes and not a fact
+the walk can read. Nothing else refines — a `config` is harvested from the declaration
+that binds it, so claiming one where the walk found none is a disagreement, not a
+refinement. -/
+def Provenance.PortDir.refines : Provenance.PortDir → Provenance.PortDir → Bool
+  | .param, .input => true
+  | a, b => a == b
 
 /-- The evidence tier of a node-introduction event — the boundary audit's tiers, carried
 into the graph. `derived` is the interior case: the kind is reached through an authored
@@ -255,6 +293,23 @@ structure Provenance (ν κ : Type) where
   exits : List ν
 deriving Repr, Inhabited, BEq
 
+/-- **A declared boundary** (header, "The declared boundary"): the interface an author
+claims for a graph — a rendered name, the ports with the role and binding time each
+carries, and the exits where values leave the calculus. It is the statement a
+membership choice can be wrong about: `Contract.agrees` holds exactly when the boundary
+the graph computes is the boundary declared here, so a member added or dropped changes a
+difference list rather than passing silently. Same port vocabulary as the graph's own
+interface, because it is a claim about that interface and not a second notation for
+it. -/
+structure Provenance.Contract (ν κ : Type) where
+  /-- The rendered name of what the boundary belongs to — an algorithm, an application. -/
+  name : String
+  /-- The declared interface, with each port's role and binding time. -/
+  ports : List (Provenance.Port ν κ)
+  /-- The declared exits: where the contract says values leave the calculus. -/
+  exits : List ν
+deriving Repr, Inhabited, BEq
+
 namespace Provenance
 
 variable {ν κ : Type} [BEq ν] [BEq κ]
@@ -266,8 +321,9 @@ def kindOf? (g : Provenance ν κ) (n : ν) : Option κ :=
   | some p => some p.kind
   | none => (g.intros.find? (·.node == n)).map (·.kind)
 
-/-- The sources: the nodes known before any occurrence fires — input and configuration
-ports, gated ingests, and attested mints. -/
+/-- The sources: the nodes known before any occurrence fires — every port that is not an
+output (inputs, configuration reads, and the parameters a tier leaves unbound), gated
+ingests, and attested mints. -/
 def sources (g : Provenance ν κ) : List ν :=
   (g.ports.filter (fun p => !(p.dir == .output))).map (·.node)
     ++ (g.intros.filter (·.tier.isSource)).map (·.node)
@@ -353,6 +409,66 @@ def WellFormed (g : Provenance ν κ) : Prop := g.wellFormed = true
 
 instance (g : Provenance ν κ) : Decidable g.WellFormed :=
   inferInstanceAs (Decidable (g.wellFormed = true))
+
+/-! ## The declared boundary — scope as a comparison (header, "The declared boundary") -/
+
+/-- Does a declared port stand for a computed one: the same node at the same kind, under
+a role that refines the computed role (`PortDir.refines` — only `param` for `input`). -/
+def Contract.standsFor (q p : Port ν κ) : Bool :=
+  q.node == p.node && q.kind == p.kind && q.dir.refines p.dir
+
+/-- The computed boundary ports the contract does not declare. This is where a widened
+scope surfaces: a member whose inputs nothing in the assembly feeds contributes ports
+nobody claimed, and a member whose kinds the wiring instantiates differently contributes
+a port at a kind nobody claimed. -/
+def Contract.undeclared (c : Contract ν κ) (g : Provenance ν κ) : List (Port ν κ) :=
+  g.ports.filter fun p => !(c.ports.any (Contract.standsFor · p))
+
+/-- The declared ports the computed boundary does not exhibit. This is where a narrowed
+scope surfaces: drop the member that fed an operand and the wire disappears with it, so
+the port the contract promised is no longer there to be found. -/
+def Contract.unrealized (c : Contract ν κ) (g : Provenance ν κ) : List (Port ν κ) :=
+  c.ports.filter fun q => !(g.ports.any fun p => Contract.standsFor q p)
+
+/-- The computed exits the contract does not declare — a value leaving the calculus where
+the boundary says none does. -/
+def Contract.undeclaredExits (c : Contract ν κ) (g : Provenance ν κ) : List ν :=
+  g.exits.filter fun n => !(c.exits.contains n)
+
+/-- The declared exits the graph does not exhibit. -/
+def Contract.unrealizedExits (c : Contract ν κ) (g : Provenance ν κ) : List ν :=
+  c.exits.filter fun n => !(g.exits.contains n)
+
+/-- The contract declares each node once — the hygiene `uniquelyDeclared` demands of the
+graph, asked of the claim, so two declarations cannot jointly cover one computed port
+while one of them stands for nothing. -/
+def Contract.declaresUniquely (c : Contract ν κ) : Bool :=
+  let ids := c.ports.map (·.node)
+  ids.all fun n => (ids.filter (· == n)).length == 1
+
+/-- The parameters the contract leaves unbound: the source ports whose values a tier
+below binds. Every one of them is an obligation on that tier, which either binds it to a
+configuration constant or restates it as a parameter of its own. -/
+def Contract.params (c : Contract ν κ) : List ν :=
+  (c.ports.filter (·.dir == .param)).map (·.node)
+
+/-- **The declared boundary is the computed one**: every computed port declared, every
+declared port exhibited, the same for exits, over a contract that declares each node
+once. The scope judgment `wellFormed` structurally cannot make (header, "What
+well-formedness does not claim"), decided by evaluation in a probe and by kernel
+reduction in a proof exactly as the wiring verdict is. It re-adjudicates no wiring: the
+two verdicts stand on one object, the first saying the graph holds together and this one
+saying it is the graph someone meant. -/
+def Contract.agrees (c : Contract ν κ) (g : Provenance ν κ) : Bool :=
+  c.declaresUniquely
+    && (c.undeclared g).isEmpty && (c.unrealized g).isEmpty
+    && (c.undeclaredExits g).isEmpty && (c.unrealizedExits g).isEmpty
+
+/-- `Prop`-level agreement, for statements and `decide`. -/
+def Contract.Agrees (c : Contract ν κ) (g : Provenance ν κ) : Prop := c.agrees g = true
+
+instance (c : Contract ν κ) (g : Provenance ν κ) : Decidable (c.Agrees g) :=
+  inferInstanceAs (Decidable (c.agrees g = true))
 
 /-! ## The assembly combinators — namespaced union (header, "The procedure edge") -/
 

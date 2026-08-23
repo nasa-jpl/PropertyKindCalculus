@@ -14,6 +14,8 @@ off a report by a person:
     #kind_graph_decide myStep  -- the kernel checks the wiring (an added `decide` theorem)
     #kind_assembly [a, b, …]        -- the multi-step graph of a pipeline, one object
     #kind_assembly_decide [a, b, …] -- the kernel checks the assembled wiring
+    #kind_contract c [a, b, …]        -- the declared boundary against the computed one
+    #kind_contract_decide c [a, b, …] -- the kernel checks the declared boundary
 
 **Ports** are read off what the signature *states*: the telescope's carrier-typed
 binders are input ports (in signature order), the result type's carrier-typed right-spine
@@ -116,7 +118,12 @@ and are not read.
 **Assembly** reads a pipeline as ONE graph (section, "The assembly"): the members
 become each other's sub-steps, a call becomes a `step` procedure edge, walked call
 sites dissect into the callee's box, and the verdict — with its kernel theorem — is
-computed on the assembled multi-step object.
+computed on the assembled multi-step object. What the assembly's ports state after
+dissection is its **boundary**: the inputs no member feeds and the outputs no member
+takes, since demotion runs at both ends of a wired call. A boundary is a claim about
+scope, so it is compared against a declared one — `Provenance.Contract` — and not merely
+reported: the wiring verdict is monotone under adding an unrelated member, and the
+boundary is what changes when the membership does.
 
 The byte-identical renderings are the spot check, not the license: `#kind_ports` and
 `#kind_occurrences` print exactly the lines they printed as free-standing harvests, now
@@ -1257,7 +1264,11 @@ per-declaration tiers (`interface`). Levels are renamed into per-step namespaces
 (`step/node`) and unioned, and every walked call site is dissected into the callee's
 box: the caller's operands wire to the callee's input ports by `copy` — those ports
 demote to derived interior nodes — the callee's own level derives its outputs, and the
-caller's procedure edge stands as the call's derivation. A kind-generic callee is
+caller's procedure edge stands as the call's derivation. **Demotion runs both ways**: the
+output slot a call consumes demotes too, because a result some member of the assembly
+takes is interior to the assembly, and an interface that reported it would count every
+intermediate value as something the pipeline hands out. What survives both demotions is
+the assembly's boundary — the value a `Contract` is compared against. A kind-generic callee is
 monomorphized by its call site: the wires state the instantiated kinds, so the box is
 renamed through the call's kind assignment — the assembly's form of "carrier-generic
 code becomes concrete where its witnesses are discharged". A callee wired from two
@@ -1268,7 +1279,15 @@ The *citation* relation — which member's value references which — is harvest
 constant scan and rendered (`cites: a → b`), never wired: a call inside an interior
 the walk cannot wire is a citation a figure may draw dashed, not an edge of the
 checked object. Well-formedness is checked on the assembled object, and
-`#kind_assembly_decide` has the kernel re-derive it. -/
+`#kind_assembly_decide` has the kernel re-derive it.
+
+The membership choice itself is judged by `#kind_contract` / `#kind_contract_decide`,
+against a `Provenance.Contract` the author declares: the assembly's surviving ports and
+exits must be the ones the contract states, so a member added or dropped moves the
+boundary and the comparison says which way. Well-formedness cannot make that judgment —
+it is monotone under disjoint union (`Provenance`, "What well-formedness does not
+claim") — which is why the boundary is declared rather than inferred, and why the
+rendering prints the two difference lists whenever they are non-empty. -/
 
 /-- One level of an assembly: the declaration, its rendered name (the node-namespace
 prefix), its inclusion mode (`walked` — the wired interior; otherwise the interface
@@ -1362,6 +1381,7 @@ def assemble (decls : Array Name) : MetaM Assembly := do
   let mut wires : Array (Provenance.Occurrence String String) := #[]
   let mut wireKeys : Std.HashSet String := {}
   let mut demoted : Array String := #[]
+  let mut demotedOuts : Array String := #[]
   let mut kindPairs : Array (Array (String × String)) := .replicate decls.size #[]
   for i in [0:decls.size] do
     unless walkedFlags[i]! do continue
@@ -1383,11 +1403,15 @@ def assemble (decls : Array Name) : MetaM Assembly := do
           if !demoted.contains s!"{callee}/{p.node}" then
             demoted := demoted.push s!"{callee}/{p.node}"
         kindPairs := kindPairs.modify j (·.push (p.kind, opc.2))
-      -- the call's results monomorphize the callee's output kinds, in slot order
+      -- the call's results monomorphize the callee's output kinds, in slot order, and
+      -- the consumed slot demotes: what a caller in the assembly takes is interior to
+      -- the assembly, the dual of the input demotion above
       let k := (seenPerCallee.get? j).getD 0
       seenPerCallee := seenPerCallee.insert j (k + 1)
       if let some out := calleeOuts[k % (max calleeOuts.length 1)]? then
         kindPairs := kindPairs.modify j (·.push (out.kind, o.resultKind))
+        if !demotedOuts.contains s!"{callee}/{out.node}" then
+          demotedOuts := demotedOuts.push s!"{callee}/{out.node}"
   -- transform each level: monomorphize, namespace, demote — then union
   let mut levels : Array AssemblyLevel := #[]
   let mut graph : Provenance String String := ⟨[], [], [], []⟩
@@ -1400,7 +1424,8 @@ def assemble (decls : Array Name) : MetaM Assembly := do
     let p := p.mapKinds (fun k => (kmap.get? k).getD k)
     let p := p.mapNodes (s!"{name}/{·}")
     let (demotedPorts, keptPorts) := p.ports.partition fun q =>
-      q.dir == .input && demoted.contains q.node
+      (q.dir == .input && demoted.contains q.node)
+        || (q.dir == .output && demotedOuts.contains q.node)
     let p := { p with
       ports := keptPorts
       intros := demotedPorts.map (fun q => ⟨q.node, q.kind, .derived⟩) ++ p.intros }
@@ -1458,6 +1483,7 @@ instance : ToExpr PortDir where
   toExpr
     | .input => mkConst ``Provenance.PortDir.input
     | .config => mkConst ``Provenance.PortDir.config
+    | .param => mkConst ``Provenance.PortDir.param
     | .output => mkConst ``Provenance.PortDir.output
 
 instance : ToExpr IntroTier where
@@ -1501,6 +1527,48 @@ instance : ToExpr (Provenance String String) where
   toTypeExpr := mkApp2 (mkConst ``PropertyKindCalculus.Provenance) strE strE
   toExpr g := mkApp6 (mkConst ``PropertyKindCalculus.Provenance.mk) strE strE
     (toExpr g.ports) (toExpr g.intros) (toExpr g.occurrences) (toExpr g.exits)
+
+/-! ## The declared boundary — reading a contract, rendering the comparison
+
+A contract is an ordinary declaration, so the commands take its *name* and state the
+kernel proposition on that constant: what the kernel checks is the author's definition,
+never a copy of it. The value is additionally read out — by evaluation — so a
+disagreement can be *rendered* as the two difference lists instead of a `decide`
+failure. The split is deliberate: evaluation informs the message, the kernel carries the
+claim. -/
+
+private unsafe def evalContractUnsafe (e : Expr) :
+    MetaM (Provenance.Contract String String) :=
+  Meta.evalExpr (Provenance.Contract String String)
+    (mkApp2 (mkConst ``Provenance.Contract) strE strE) e
+
+/-- The declared contract's value, for rendering the comparison. Replaced at run time by
+the evaluator; the safe body stands only where no evaluator is available, and no
+proposition rests on it. -/
+@[implemented_by evalContractUnsafe]
+private def evalContract (_e : Expr) : MetaM (Provenance.Contract String String) :=
+  throwError "contract values cannot be read in this environment"
+
+/-- Render one declared or computed boundary port, in `#kind_ports`' own grammar. -/
+def renderContractPort (p : Port String String) : String :=
+  s!"{p.dir.label} {p.node} : {p.kind}"
+
+/-- The boundary comparison as lines: the contract's name, its parameters — the
+obligations it hands to the tier below — and then either agreement or the two difference
+lists, an undeclared port being a boundary the graph has and the contract does not, an
+unrealized one the reverse. -/
+def renderContractLines (c : Provenance.Contract String String)
+    (g : Provenance String String) : List String :=
+  let params := c.params
+  [s!"contract '{c.name}': {c.ports.length} ports, {c.exits.length} exits"]
+    ++ (if params.isEmpty then [] else
+        [s!"params: {String.intercalate ", " params}"])
+    ++ (if c.declaresUniquely then [] else ["declared twice: the contract repeats a node"])
+    ++ (c.undeclared g).map (fun p => s!"undeclared {renderContractPort p}")
+    ++ (c.unrealized g).map (fun p => s!"unrealized {renderContractPort p}")
+    ++ (c.undeclaredExits g).map (fun n => s!"undeclared exit {n}")
+    ++ (c.unrealizedExits g).map (fun n => s!"unrealized exit {n}")
+    ++ [s!"boundary agrees: {c.agrees g}"]
 
 /-! ## The commands — four renderings of one producer -/
 
@@ -1589,5 +1657,52 @@ elab "#kind_assembly_decide " "[" ids:ident,* "]" : command => liftTermElabM do
   let name := decls[0]! ++ `kindAssemblyWf
   addDecl (.thmDecl { name, levelParams := [], type := prop, value := proof })
   logInfo m!"kernel-accepted: the kind assembly is well-formed (theorem '{name}')"
+
+/-- The declared contract's value, with the type check that gives a legible error before
+the evaluator is asked for one. -/
+private def contractValueOf (cname : Name) :
+    MetaM (Provenance.Contract String String) := do
+  let want := mkApp2 (mkConst ``Provenance.Contract) strE strE
+  unless ← Meta.isDefEq (← Meta.inferType (mkConst cname)) want do
+    throwError "'{cname}' is not a 'Provenance.Contract String String'"
+  evalContract (mkConst cname)
+
+open Elab Command in
+/-- `#kind_contract c [d₁, d₂, …]` assembles the listed declarations and compares the
+assembly's boundary with the boundary the contract `c` declares — its parameters, then
+the ports and exits each side has and the other does not, then the verdict — as a single
+`info` message suitable for `#guard_msgs` pinning. This is the scope reading:
+`#kind_assembly` says whether the wiring holds together, and this says whether the
+members are the ones the declared interface belongs to. -/
+elab "#kind_contract " c:ident " [" ids:ident,* "]" : command => liftTermElabM do
+  let cname ← realizeGlobalConstNoOverload c
+  let decls ← ids.getElems.mapM fun id => realizeGlobalConstNoOverload id
+  if decls.isEmpty then throwError "#kind_contract expects at least one declaration"
+  let a ← assemble decls
+  let ctr ← contractValueOf cname
+  logInfo m!"kind contract over {decls.size} steps:\n\
+    {String.intercalate "\n" (renderContractLines ctr a.graph)}"
+
+open Elab Command in
+/-- `#kind_contract_decide c [d₁, d₂, …]` assembles the listed declarations, reflects the
+union graph into a term, and adds the theorem `c.kindContractOk : c.Agrees (graph)`,
+proved by `decide` — kernel reduction of the boundary comparison against the author's own
+contract definition, which the proposition names rather than copies. Errors out (before
+troubling the kernel) when the boundaries disagree, printing the difference lists. -/
+elab "#kind_contract_decide " c:ident " [" ids:ident,* "]" : command => liftTermElabM do
+  let cname ← realizeGlobalConstNoOverload c
+  let decls ← ids.getElems.mapM fun id => realizeGlobalConstNoOverload id
+  if decls.isEmpty then throwError "#kind_contract_decide expects at least one declaration"
+  let a ← assemble decls
+  let ctr ← contractValueOf cname
+  unless ctr.agrees a.graph do
+    throwError "the boundary declared by '{cname}' is not the one the assembly computes:\n\
+      {String.intercalate "\n" (renderContractLines ctr a.graph)}"
+  let prop ← Meta.mkAppM ``Provenance.Contract.Agrees #[mkConst cname, toExpr a.graph]
+  let proof ← Meta.mkDecideProof prop
+  let name := cname ++ `kindContractOk
+  addDecl (.thmDecl { name, levelParams := [], type := prop, value := proof })
+  logInfo m!"kernel-accepted: '{cname}' is the boundary of the {decls.size}-step \
+    assembly (theorem '{name}')"
 
 end PropertyKindCalculus.KindIncidence
