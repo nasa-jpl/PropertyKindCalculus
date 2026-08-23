@@ -12,6 +12,9 @@ operator-table instance — and pins the complete sorted enumeration with `#guar
 probe kind with no authored edges pins the empty report. The body-scan collector is
 additionally probed in isolation, on a hand-built expression, so its reading does not
 depend on which spelling the elaborator happens to choose for any probe definition.
+The *occurrence* reading of these same definitions is probed in `Core.KindIncidence` —
+a separate file because its command's module imports the boundary audit, which would
+put meta-heavy bodies into the environment walk the pins here pay for.
 -/
 import PropertyKindCalculus.KindEdges
 

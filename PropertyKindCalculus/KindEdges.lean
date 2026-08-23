@@ -37,6 +37,13 @@ The edge families scanned are the witness `Prop`s of the core calculus: `Product
 `QuotientKind`, `ReciprocalKind` (`QuantityClassification`), `TranscendentalKind`,
 `PowerKind` (`QuantityFunction`), and the table classes `KindMul`/`KindDiv`
 (`OperatorTable`).
+
+This module also holds the *occurrence collector* (`collectOccurrences`) — the incidence
+reading of the same witness families, where a consuming application's operand quantities
+are recorded alongside the edge. Its user surface (`#kind_occurrences`, and the carrier
+registry that identifies operand positions) is `KindIncidence`: that module imports the
+boundary audit, whose meta-heavy bodies would otherwise enter this module's environment
+walk in every consumer (`producerModules` below is the cost model).
 -/
 import Lean
 import PropertyKindCalculus.QuantityFunction
@@ -150,10 +157,12 @@ partial def collectInlineEdges (env : Environment) (e : Expr)
   | _ => acc
 
 /-- The module indices whose import closure contains the module defining the witness
-families — the only modules whose definitions can possibly reference them. The body
-scan skips every other module's constants without touching their values: walking every
-value in an `import Lean` environment costs hundreds of millions of allocation
-heartbeats, and this filter reduces the walk to the calculus's own downstream. Constants
+families — the only modules whose declarations can possibly reference them. *Both* scans
+skip every other module's constants: a type, like a body, can only mention a family
+whose defining module its own module transitively imports, so the walk scales with the
+calculus's own downstream, not with the environment (type-scanning every constant of an
+`import Lean` environment alone costs a default command's whole heartbeat budget, and
+walking every value costs hundreds of millions of allocation heartbeats). Constants
 of the module currently elaborating have no module index and are always scanned. The
 header's module arrays are in load order (an import precedes its importer), which is what
 makes the single forward pass a fixpoint. -/
@@ -198,6 +207,161 @@ def parentOf (n : Name) : Name :=
   | .num p _ => parentOf p
   | _ => n
 
+/-! ## The incidence harvest — occurrences with operands
+
+The scans above enumerate *edges* — the authored licenses. The provenance hypergraph's
+occurrence relation needs more: *which values met* at an edge (incidence). That datum is
+not on the witness — it is on the **consuming application**: in
+`Quantity.mul (ProductKind.ofRatio k₁ k₂ k) x y` the witness argument licenses the edge,
+and the sibling arguments `x`, `y` are the operand quantities. So the incidence reader
+sits on the consumer, generically: any constant-headed application with a binder whose
+instantiated type is a witness-family `Prop` is a consuming site — the smart
+constructors, and equally a downstream helper that threads a witness parameter. Reading
+the edge off the instantiated *binder type*, not the witness argument's own spelling, is
+what keeps the rendering channel-agnostic: the inline constructor, the lifted or shared
+`._proof_N` reference, and the `let`-bound witness all print the same line.
+
+Two doctrinal boundaries, both inherited from the scans above. A *hypothesis* witness —
+free or lambda-bound — contributes no occurrence: the occurrence sits at the caller that
+discharges the license against actual operands, which is also where carrier-generic code
+becomes concrete. And the operator-table families contribute no occurrences here: a
+`[table]` multiplication's use site (`x * y`) carries its license in an instance
+argument, so reading its incidence is instance unfolding — deferred to the
+graph-construction step, with the registration itself still enumerated by the type
+scan.
+
+The operand-position test — *which binder types are quantity carriers* — is the audit's
+carrier registry, so the collector takes the carrier heads as a parameter and the
+registry-coupled surface (`occurrencesIn`, `#kind_occurrences`) lives in
+`KindIncidence`. -/
+
+/-- Peel `args.size` quantifiers off a declaration's type as `instantiatedConclusion`
+does, but return the *binder types* passed on the way, each instantiated with the
+preceding arguments — position `i` is the type the application's `i`-th argument is
+checked against. `none` when the type runs out of quantifiers first. -/
+def instantiatedBinderTypes (declTy : Expr) (args : Array Expr) : Option (Array Expr) :=
+  Id.run do
+    let mut ty := declTy
+    let mut out : Array Expr := #[]
+    for a in args do
+      match ty with
+      | .forallE _ d body _ =>
+        out := out.push d
+        ty := body.instantiate1 a
+      | _ => return none
+    return some out
+
+/-- One inline occurrence: an authored edge discharged at a consuming application, with
+the operand quantities that met there. Both parts are rendered strings — the edge by its
+family's formatter, the operands by binder name or head constant. -/
+structure KindOccurrence where
+  /-- The edge, as its family's kind equation (`a · b → c`, …). -/
+  edge : String
+  /-- The operand quantities, in application order (a quotient's numerator first). -/
+  operands : Array String
+deriving Repr, Inhabited, BEq
+
+/-- `alphaK · betaK → gammaK ⟨x, y⟩` — the edge with its incidence. -/
+def KindOccurrence.render (o : KindOccurrence) : String :=
+  s!"{o.edge} ⟨{String.intercalate ", " o.operands.toList}⟩"
+
+/-- The binder context of a value walk, innermost first: each entry a binder's user name
+and, for a `let`, its value — the name renders `.bvar` operands, the value resolves a
+`let`-bound witness to its authored head. A `let` value is an expression of the *outer*
+context, so resolution drops the entries above it. -/
+abbrev BinderCtx := List (Name × Option Expr)
+
+/-- Is a witness argument *authored* — headed by a constant (a smart-constructor
+application, a lifted or shared auxiliary reference, a named-theorem reference), possibly
+through a `let` binding? A free or lambda-bound variable is a hypothesis: assumed, not
+authored, so its site contributes no occurrence (the caller's discharging site does). -/
+partial def witnessAuthored (ctx : BinderCtx) (w : Expr) : Bool :=
+  match w with
+  | .app f _ => witnessAuthored ctx f
+  | .mdata _ b => witnessAuthored ctx b
+  | .const .. => true
+  | .bvar i =>
+    match ctx[i]? with
+    | some (_, some v) => witnessAuthored (ctx.drop (i + 1)) v
+    | _ => false
+  | .letE nm _ v b _ => witnessAuthored ((nm, some v) :: ctx) b
+  | _ => false
+
+/-- Render an operand as a *name* — a binder name for a variable, the head constant for
+an application (`let` bodies and projections descended), the literal for a literal: the
+granularity the incidence relation records. -/
+partial def refName (ctx : BinderCtx) (e : Expr) : MetaM String :=
+  match e with
+  | .app f _ => refName ctx f
+  | .mdata _ b => refName ctx b
+  | .const .. => return toString (← Meta.ppExpr e)
+  | .fvar id => return toString (← id.getDecl).userName
+  | .bvar i =>
+    match ctx[i]? with
+    | some (nm, _) => return toString nm
+    | none => return "_"
+  | .letE nm _ v b _ => refName ((nm, some v) :: ctx) b
+  | .proj _ i b => return s!"{← refName ctx b}.{i}"
+  | .lit (.natVal v) => return toString v
+  | .lit (.strVal s) => return s!"\"{s}\""
+  | _ => return "_"
+
+/-- Render a kind (or exponent) argument of the instantiated binder type:
+pretty-printed when closed; by binder name when it still carries loose bound variables —
+a parametric kind under an inner binder, where the pretty printer has no context. -/
+def renderKindArg (ctx : BinderCtx) (e : Expr) : MetaM String :=
+  if e.hasLooseBVars then refName ctx e else return toString (← Meta.ppExpr e)
+
+/-- Collect every inline occurrence of an expression, in body order (an occurrence in a
+`let` value precedes the occurrences consuming the binder). At each constant-headed
+application: a binder whose instantiated type is a witness-family `Prop` marks a
+consuming site, and the occurrence is recorded when the witness argument is authored
+and at least one sibling binder is carrier-typed — the operands, in application order.
+An adapter that only transposes a witness has no operands and is not an occurrence. -/
+partial def collectOccurrences (env : Environment) (carriers : Array Name)
+    (e : Expr) (ctx : BinderCtx := []) (acc : Array KindOccurrence := #[]) :
+    MetaM (Array KindOccurrence) := do
+  let acc ← do
+    let mut acc := acc
+    if let .const n _ := e.getAppFn then
+      if let some ci := env.find? n then
+        if typeMentionsFamily ci.type then
+          let args := e.getAppArgs
+          if let some tys := instantiatedBinderTypes ci.type args then
+            let operandIdxs := (Array.range args.size).filter fun j =>
+              match tys[j]!.getAppFn with
+              | .const c _ => carriers.contains c
+              | _ => false
+            unless operandIdxs.isEmpty do
+              for i in [0:args.size] do
+                let ty := tys[i]!
+                for spec in specs do
+                  if propFamilies.contains spec.const
+                      && ty.isAppOfArity spec.const spec.arity
+                      && witnessAuthored ctx args[i]! then
+                    let kinds ← ty.getAppArgs.mapM (renderKindArg ctx)
+                    let ops ← operandIdxs.mapM fun j => refName ctx args[j]!
+                    acc := acc.push { edge := spec.fmt kinds, operands := ops }
+    pure acc
+  match e with
+  | .app .. =>
+    let acc ← if e.getAppFn.isConst then pure acc
+              else collectOccurrences env carriers e.getAppFn ctx acc
+    e.getAppArgs.foldlM (fun acc a => collectOccurrences env carriers a ctx acc) acc
+  | .lam nm t b _ =>
+    collectOccurrences env carriers b ((nm, none) :: ctx)
+      (← collectOccurrences env carriers t ctx acc)
+  | .forallE nm t b _ =>
+    collectOccurrences env carriers b ((nm, none) :: ctx)
+      (← collectOccurrences env carriers t ctx acc)
+  | .letE nm t v b _ =>
+    collectOccurrences env carriers b ((nm, some v) :: ctx)
+      (← collectOccurrences env carriers v ctx
+        (← collectOccurrences env carriers t ctx acc))
+  | .mdata _ b => collectOccurrences env carriers b ctx acc
+  | .proj _ _ b => collectOccurrences env carriers b ctx acc
+  | _ => pure acc
+
 /-! ## The harvest
 
 `#kind_edges` below is a *renderer* over `edgesMentioning`. The split exists for the same reason
@@ -224,6 +388,9 @@ def edgesMentioning (target : Name) : MetaM (Array KindEdge) := do
   let mut seen : Std.HashSet String := {}
   let mut out : Array KindEdge := #[]
   for (name, info) in env.constants.toList do
+    -- Neither scan can find anything outside the family-reaching modules (`producerModules`).
+    if let some idx := env.getModuleIdxFor? name then
+      unless reachable.contains idx.toNat do continue
     -- The type scan: named theorems, lifted call-site auxiliaries, instances …
     let mut rendered : Array String := #[]
     for (spec, args) in collectEdges info.type #[] do
@@ -270,6 +437,9 @@ def edgesByKind (targets : Array Name) : MetaM (Std.HashMap Name (Array KindEdge
   let mut acc : Std.HashMap Name (Array KindEdge) := {}
   for t in targets do acc := acc.insert t #[]
   for (name, info) in env.constants.toList do
+    -- Neither scan can find anything outside the family-reaching modules (`producerModules`).
+    if let some idx := env.getModuleIdxFor? name then
+      unless reachable.contains idx.toNat do continue
     -- Both channels of `edgesMentioning`: the type scan, then the body scan for inline
     -- witnesses the elaborator left unlifted (rendered inside the value's telescope).
     let typeEdges := collectEdges info.type #[]
