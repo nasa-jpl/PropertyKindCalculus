@@ -897,16 +897,21 @@ partial def walkApp (h : HarvestCtx) (e : Expr) (ctx : BinderCtx)
   -- value took is the interface's claim (`conditionalPaths`), not a step in the
   -- derivation, so the wrapper carries no edge of its own; a case with no quantity in
   -- it — `none`, an error payload — produces nothing, and nothing is what it means.
-  if let some (.ctorInfo ci) := h.env.find? c then
-    if let some (.inductInfo ii) := h.env.find? ci.induct then
-      if ii.ctors.length > 1 && args.size == ci.numParams + ci.numFields then
-        let mut carried : Array Expr := #[]
-        for i in [ci.numParams:args.size] do
-          if (← carrierKind? h.env h.carriers ctx (← Meta.inferType args[i]!)).isSome then
-            carried := carried.push args[i]!
-        if let #[x] := carried then
-          return ← walk h x ctx (t1.map fun (n, k, o) => .one n k o) st
-        return ← args.foldlM (fun st a => walk h a ctx none st) st
+  if t1.isSome then
+    if let some (.ctorInfo ci) := h.env.find? c then
+      if let some (.inductInfo ii) := h.env.find? ci.induct then
+        if ii.ctors.length > 1 && args.size == ci.numParams + ci.numFields then
+          -- the walk carries bound variables of its own, and only a closed argument has
+          -- a type to read; an open one leaves the case opaque, as every open reading is
+          let mut carried : Array Expr := #[]
+          for i in [ci.numParams:args.size] do
+            let a := args[i]!
+            unless a.hasLooseBVars do
+              if (← carrierKind? h.env h.carriers ctx (← Meta.inferType a)).isSome then
+                carried := carried.push a
+          if let #[x] := carried then
+            return ← walk h x ctx (t1.map fun (n, k, o) => .one n k o) st
+          return ← args.foldlM (fun st a => walk h a ctx none st) st
   -- an attested mint: a declared source carrying its harvested reason
   if let some asp := h.attestors.find? (fun a => a.declName == c) then
     if args.size == asp.arity then
