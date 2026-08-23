@@ -26,6 +26,7 @@ import PropertyKindCalculus.Quantity
 import PropertyKindCalculus.QuantityClassification
 import PropertyKindCalculus.OperatorTable
 import PropertyKindCalculus.Bounds
+import PropertyKindCalculus.Axis
 import PropertyKindCalculus.Decimal
 import PropertyKindCalculus.IndividualQuantity
 import PropertyKindCalculus.QuantityFunction
