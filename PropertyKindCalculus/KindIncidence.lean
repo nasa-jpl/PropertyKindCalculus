@@ -1549,10 +1549,6 @@ proposition rests on it. -/
 private def evalContract (_e : Expr) : MetaM (Provenance.Contract String String) :=
   throwError "contract values cannot be read in this environment"
 
-/-- Render one declared or computed boundary port, in `#kind_ports`' own grammar. -/
-def renderContractPort (p : Port String String) : String :=
-  s!"{p.dir.label} {p.node} : {p.kind}"
-
 /-- The boundary comparison as lines: the contract's name, its parameters — the
 obligations it hands to the tier below — and then either agreement or the two difference
 lists, an undeclared port being a boundary the graph has and the contract does not, an
@@ -1564,8 +1560,8 @@ def renderContractLines (c : Provenance.Contract String String)
     ++ (if params.isEmpty then [] else
         [s!"params: {String.intercalate ", " params}"])
     ++ (if c.declaresUniquely then [] else ["declared twice: the contract repeats a node"])
-    ++ (c.undeclared g).map (fun p => s!"undeclared {renderContractPort p}")
-    ++ (c.unrealized g).map (fun p => s!"unrealized {renderContractPort p}")
+    ++ (c.undeclared g).map (fun p => s!"undeclared {renderPort p}")
+    ++ (c.unrealized g).map (fun p => s!"unrealized {renderPort p}")
     ++ (c.undeclaredExits g).map (fun n => s!"undeclared exit {n}")
     ++ (c.unrealizedExits g).map (fun n => s!"unrealized exit {n}")
     ++ [s!"boundary agrees: {c.agrees g}"]
