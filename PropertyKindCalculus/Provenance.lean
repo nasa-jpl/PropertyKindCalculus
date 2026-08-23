@@ -61,6 +61,12 @@ inductive Provenance.PortDir where
   | output
 deriving DecidableEq, Repr, Inhabited
 
+/-- How a port role prints in a rendered report: `input` / `config` / `output`. -/
+def Provenance.PortDir.label : Provenance.PortDir → String
+  | .input => "input"
+  | .config => "config"
+  | .output => "output"
+
 /-- The evidence tier of a node-introduction event — the boundary audit's tiers, carried
 into the graph. `derived` is the interior case: the kind is reached through an authored
 occurrence, and well-formedness demands the occurrence exist. `gated` is a source with
