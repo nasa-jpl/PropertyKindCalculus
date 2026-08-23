@@ -36,9 +36,13 @@ spells the projection and the two readings meet at the same node; a field path r
 target is an identity wire, like a binder. This is what lets an interface bundle its
 arguments — a direction-locked interval instead of a pair of scalars a call site could
 swap — without the graph losing sight of what crosses it: the reading follows the type,
-and a bundled signature states MORE than the loose one, not less. A sum type has no field
-path (which constructor a value took is not a signature fact), and a carrier is a leaf,
-never a container — its own field is the erasure boundary.
+and a bundled signature states MORE than the loose one, not less. The same expansion is
+what an *operand* gets: a container handed whole to an edge-bearing or sub-step
+application contributes one incidence position per field path, named as the wrapper spells
+it, so putting a quantity into a role — a portion, a total, an axis extent — costs the
+graph no operand. A sum type has no field path (which constructor a value took is not a
+signature fact), and a carrier is a leaf, never a container — its own field is the erasure
+boundary.
 
 **Occurrences** sit on the consuming application: any constant-headed application with a
 binder whose instantiated type is a witness-family `Prop` — the smart constructors, and
@@ -836,29 +840,38 @@ partial def walkApp (h : HarvestCtx) (e : Expr) (ctx : BinderCtx)
     if !args.isEmpty then
       if let some btys := KindEdges.instantiatedBinderTypes ci.type args then
         let edges ← binderEdges h ctx args btys
-        let operandIdxs := (Array.range args.size).filter fun j =>
-          match btys[j]!.consumeTypeAnnotations.getAppFn with
-          | .const cc _ => h.carriers.contains cc
-          | _ => false
-        if !edges.isEmpty && !operandIdxs.isEmpty then
+        -- the incidence slots: a carrier-typed argument position, and one per carrier
+        -- field path of a container-typed one — an operand handed over inside a role
+        -- wrapper is the quantity it wraps, named as the wrapper spells it
+        let mut opSlots : Array (Nat × String × String) := #[]
+        for j in [0:args.size] do
+          let bty := btys[j]!
+          let isCarrier := match bty.consumeTypeAnnotations.getAppFn with
+            | .const cc _ => h.carriers.contains cc
+            | _ => false
+          if isCarrier then
+            opSlots := opSlots.push (j, "", (← carrierKind? h.env h.carriers ctx bty).getD "_")
+          else
+            for (p, k) in ← carrierPaths h.env h.carriers ctx bty do
+              opSlots := opSlots.push (j, p, k)
+        if !edges.isEmpty && !opSlots.isEmpty then
           -- name the operands; a nested producer gets a synthesized node to land on
           let mut st := st
           let mut opNames : Array String := #[]
           let mut opTargets : Std.HashMap Nat Target := {}
-          for j in operandIdxs do
+          for (j, p, k) in opSlots do
             let a := args[j]!
-            if isProducerApp h a then
+            if p.isEmpty && isProducerApp h a then
               let (m, st') := st.nextFresh
               st := st'
-              let bk := (← carrierKind? h.env h.carriers ctx btys[j]!).getD "_"
               opNames := opNames.push m
-              opTargets := opTargets.insert j (.one m bk true)
+              opTargets := opTargets.insert j (.one m k true)
             else
-              opNames := opNames.push (← refName ctx a)
+              opNames := opNames.push s!"{← refName ctx a}{p}"
           -- emit, the first full edge landing on the target node
           let mut consumed := false
           for be in edges do
-            let partialInc := operandIdxs.size < be.family.operandCount
+            let partialInc := opSlots.size < be.family.operandCount
             let ops := (opNames.zip be.opKinds).toList
             let mut resNode := ""
             if !partialInc && !consumed && t1.isSome then

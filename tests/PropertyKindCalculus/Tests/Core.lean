@@ -16,6 +16,7 @@ import PropertyKindCalculus.Tests.Core.Classification
 import PropertyKindCalculus.Tests.Core.OperatorTable
 import PropertyKindCalculus.Tests.Core.Bounds
 import PropertyKindCalculus.Tests.Core.Axis
+import PropertyKindCalculus.Tests.Core.PartWhole
 import PropertyKindCalculus.Tests.Core.Decimal
 import PropertyKindCalculus.Tests.Core.KindEdges
 import PropertyKindCalculus.Tests.Core.KindIncidence
