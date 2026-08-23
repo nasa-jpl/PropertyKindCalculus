@@ -285,8 +285,9 @@ name, so the port node reads exactly as the body spells the projection
 (`refName`, "a field path for a container projection") and the two readings meet at the
 same node.
 
-A sum type has no field path (which constructor a value took is not a signature fact),
-and a carrier is a leaf, never a container: its own field is the erasure boundary. -/
+A sum type has no field path — its payload is not there in every case — and gets
+`conditionalPaths` instead; a carrier is a leaf, never a container: its own field is the
+erasure boundary. -/
 partial def carrierPaths (env : Environment) (carriers : Array Name) (ctx : BinderCtx)
     (ty : Expr) (fuel : Nat := 3) : MetaM (Array (String × String)) := do
   let ty := ty.consumeTypeAnnotations
@@ -309,6 +310,51 @@ partial def carrierPaths (env : Environment) (carriers : Array Name) (ctx : Bind
           out := out.push (s!".{f}{p}", k)
     return out
   | _, _ => return #[]
+
+/-- **The conditional paths of a sum type** — the ports a result produced only in some
+cases contributes. A multi-constructor inductive states its kinds through the payloads of
+its cases, and each carrier-bearing payload yields one `(path, kind)` addressed by the
+*case*: `Option (Quantity k R)` states `k` once, at `.some`, and a case carrying several
+quantities states one path per field beneath its own (`.ok.lo.q`), the same rule
+`carrierPaths` follows one level up — no path component where there is nothing to
+disambiguate.
+
+The case is in the address because the case is the claim: a value at `result.some` is the
+one the interface produces when it produces one, and the port that carries it is
+`conditional`, so a validity domain is stated at the boundary instead of living in a
+constructor nobody downstream can see. A case with no quantity in it — `none`, an error
+string — contributes nothing, which is exactly right: there is no measurement there. -/
+def conditionalPaths (env : Environment) (carriers : Array Name) (ctx : BinderCtx)
+    (ty : Expr) : MetaM (Array (String × String)) := do
+  let ty := ty.consumeTypeAnnotations
+  if ty.hasLooseBVars then return #[]
+  if (← carrierKind? env carriers ctx ty).isSome then return #[]
+  let .const c us := ty.getAppFn | return #[]
+  let some (.inductInfo ii) := env.find? c | return #[]
+  if ii.ctors.length ≤ 1 then return #[]
+  let params := ty.getAppArgs.extract 0 ii.numParams
+  if params.size != ii.numParams then return #[]
+  let mut out : Array (String × String) := #[]
+  for ctor in ii.ctors do
+    let case := s!".{ctor.getString!}"
+    -- the constructor's fields at *this* instance: a case's payload is a quantity
+    -- only once the inductive's parameters are the ones the result states
+    let ctorTy ← Meta.instantiateForall (← Meta.inferType (mkConst ctor us)) params
+    let payload ← Meta.forallTelescope ctorTy fun fvars _ => do
+      let mut slots : Array (String × String) := #[]
+      for fv in fvars do
+        let fty ← Meta.inferType fv
+        let nm := s!".{← fv.fvarId!.getUserName}"
+        match ← carrierKind? env carriers ctx fty with
+        | some k => slots := slots.push (nm, k)
+        | none =>
+          for (p, k) in ← carrierPaths env carriers ctx fty do
+            slots := slots.push (s!"{nm}{p}", k)
+      return slots
+    match payload with
+    | #[(_, k)] => out := out.push (case, k)
+    | ps => for (p, k) in ps do out := out.push (s!"{case}{p}", k)
+  return out
 
 /-- Does a type carry kind information at all — a registered carrier or the kind
 vocabulary itself, mentioned anywhere in the expression, or (one structure level down,
@@ -846,6 +892,21 @@ partial def walkApp (h : HarvestCtx) (e : Expr) (ctx : BinderCtx)
         args.foldlM (fun st a => walk h a ctx none st) st
       else
         pure st
+  -- a sum constructor is transparent toward the quantity it wraps: `some x` produces
+  -- whatever `x` produces, onto the conditional port the case addresses. Which case a
+  -- value took is the interface's claim (`conditionalPaths`), not a step in the
+  -- derivation, so the wrapper carries no edge of its own; a case with no quantity in
+  -- it — `none`, an error payload — produces nothing, and nothing is what it means.
+  if let some (.ctorInfo ci) := h.env.find? c then
+    if let some (.inductInfo ii) := h.env.find? ci.induct then
+      if ii.ctors.length > 1 && args.size == ci.numParams + ci.numFields then
+        let mut carried : Array Expr := #[]
+        for i in [ci.numParams:args.size] do
+          if (← carrierKind? h.env h.carriers ctx (← Meta.inferType args[i]!)).isSome then
+            carried := carried.push args[i]!
+        if let #[x] := carried then
+          return ← walk h x ctx (t1.map fun (n, k, o) => .one n k o) st
+        return ← args.foldlM (fun st a => walk h a ctx none st) st
   -- an attested mint: a declared source carrying its harvested reason
   if let some asp := h.attestors.find? (fun a => a.declName == c) then
     if args.size == asp.arity then
@@ -1231,11 +1292,18 @@ def stepGraphOf (decl : Name) (subSteps : Array Name := #[]) : MetaM StepGraph :
       | none =>
         let cty := comps[i]!
         let paths ← carrierPaths env carriers [] cty
+        let cases ← if paths.isEmpty then conditionalPaths env carriers [] cty
+                    else pure #[]
         if !paths.isEmpty then
           for (p, k) in paths do
             ports := ports.push { node := s!"{node}{p}", kind := k, dir := .output }
           outSlots := outSlots.push
             (paths.toList.map fun (p, k) => (s!"{node}{p}", k, false))
+        else if !cases.isEmpty then
+          for (p, k) in cases do
+            ports := ports.push { node := s!"{node}{p}", kind := k, dir := .conditional }
+          outSlots := outSlots.push
+            (cases.toList.map fun (p, k) => (s!"{node}{p}", k, false))
         else
           outSlots := outSlots.push []
           if !cty.isSort && !(← Meta.isProp cty) && !kindBearing env carriers cty then
@@ -1349,7 +1417,7 @@ procedure edge deriving each output port from the input ports — the signature'
 with interior accountability the audit's. -/
 def interfaceBox (name : String) (g : StepGraph) : Provenance String String :=
   let ins := g.ports.filter (·.dir == .input)
-  let outs := g.ports.filter (·.dir == .output)
+  let outs := g.ports.filter (·.dir.produced)
   { ports := g.ports
     intros := []
     occurrences := outs.map fun o =>
@@ -1422,7 +1490,7 @@ def assemble (decls : Array Name) : MetaM Assembly := do
       let some j := names.findIdx? (· == t) | continue
       let callee := names[j]!
       let calleeIns := contribs[j]!.ports.filter (·.dir == .input)
-      let calleeOuts := contribs[j]!.ports.filter (·.dir == .output)
+      let calleeOuts := contribs[j]!.ports.filter (·.dir.produced)
       -- operands wire the callee's input ports, positionally
       for (p, opc) in calleeIns.zip o.operands do
         let key := s!"{caller}/{opc.1}⇒{callee}/{p.node}"
@@ -1455,7 +1523,7 @@ def assemble (decls : Array Name) : MetaM Assembly := do
     let p := p.mapNodes (s!"{name}/{·}")
     let (demotedPorts, keptPorts) := p.ports.partition fun q =>
       (q.dir == .input && demoted.contains q.node)
-        || (q.dir == .output && demotedOuts.contains q.node)
+        || (q.dir.produced && demotedOuts.contains q.node)
     let p := { p with
       ports := keptPorts
       intros := demotedPorts.map (fun q => ⟨q.node, q.kind, .derived⟩) ++ p.intros }
@@ -1515,6 +1583,7 @@ instance : ToExpr PortDir where
     | .config => mkConst ``Provenance.PortDir.config
     | .param => mkConst ``Provenance.PortDir.param
     | .output => mkConst ``Provenance.PortDir.output
+    | .conditional => mkConst ``Provenance.PortDir.conditional
 
 instance : ToExpr IntroTier where
   toTypeExpr := mkConst ``Provenance.IntroTier

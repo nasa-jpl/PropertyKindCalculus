@@ -57,12 +57,14 @@ def q (s : String) : String := "\"" ++ esc s ++ "\""
 
 /-- The row fill of a port role (light, so the row text reads dark) — a `param`, bound
 by the tier below rather than here, reads as its own colour and not as a configuration
-this tier fixed. -/
+this tier fixed, and a `conditional` output reads as its own shade of the output green,
+because it is produced in some cases of the result and not others. -/
 def portFill : PortDir → String
   | .input => "#dbeafe"
   | .config => "#fef3c7"
   | .param => "#ede9fe"
   | .output => "#dcfce7"
+  | .conditional => "#ecfccb"
 
 /-- The row border of a port role. -/
 def portStroke : PortDir → String
@@ -70,6 +72,7 @@ def portStroke : PortDir → String
   | .config => "#d97706"
   | .param => "#7c3aed"
   | .output => "#16a34a"
+  | .conditional => "#65a30d"
 
 /-- The row fill of an unkinded signature position — red: outside the kinded
 algebra. -/
@@ -222,6 +225,7 @@ def emit (a : Assembly) (title : String := "kind assembly") : String := Id.run d
     #[("input port", portFill .input, portStroke .input),
       ("config port", portFill .config, portStroke .config),
       ("output port", portFill .output, portStroke .output),
+      ("conditional output", portFill .conditional, portStroke .conditional),
       ("derived", tierFill .derived, tierStroke .derived),
       ("gated", tierFill .gated, tierStroke .gated),
       ("attested ⓘ", tierFill (.attested ""), tierStroke (.attested "")),

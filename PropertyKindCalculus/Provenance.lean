@@ -32,8 +32,8 @@ lifted or shared the proof term.
 
 `wellFormed` checks the wiring: every node declared exactly once; every occurrence typed
 (operands and result carry the kinds their node declarations state, at the family's
-operand count); results land only on derivation targets — a `derived` node or an output
-port, never on a source, whose whole point is that it is *not* derived; and every derived
+operand count); results land only on derivation targets — a `derived` node or a port the
+step produces, never on a source, whose whole point is that it is *not* derived; and every derived
 node, output port, and exit is reached from the sources (input and configuration ports,
 gated ingests, attested mints) through the occurrences — reached through the *closure*,
 so a cycle of occurrences feeding each other licenses nothing. That last condition is the
@@ -77,7 +77,7 @@ again — the contract would be checked against whichever members the caller hap
 name — so every consumer, the probe and the figure alike, reads the scope off the one
 declaration that answers for it.
 
-Roles carry **binding time**, which is why there are four. A `config` is a constant *this
+Roles carry **binding time**, which is why there are several. A `config` is a constant *this
 tier binds* — a cited coefficient, a threshold — harvested from the declaration that binds
 it. A `param` is a source this tier does **not** bind: an algorithm states its table extent
 and its incidence angle as parameters, and the application below it binds them to
@@ -86,6 +86,15 @@ an argument, not when the argument is filled — so `param` is a claim the contr
 about a computed `input`, and `PortDir.refines` is exactly that one refinement. The tiers
 are then contracts over the same vocabulary: an algorithm's parameters unbound, an
 application's bound, a deployment's inputs and outputs bound to artifacts.
+
+`conditional` is the one role that answers a different question — not when the value is
+bound but whether it is produced at all. An algorithm with a validity domain returns a
+quantity in some cases and nothing in others, and the case is the interface's business:
+declaring the port conditional is how the domain gets stated where a consumer reads it,
+instead of being carried in a constructor choice no boundary can see. A contract may not
+trade the two: claiming an unconditional output where the result has cases, or the
+reverse, disagrees in both directions, because whether an interface always produces a
+value is the plainest thing it has to say.
 
 `Contract.discharges` is that ladder, and it is a relation between two *declarations*
 rather than between a declaration and a graph — no harvest, so a deployment can state
@@ -139,23 +148,32 @@ namespace PropertyKindCalculus
 /-- The role a port plays in a step's interface, and with it the time the port's value is
 bound: an `input` the step consumes, varying per datum; a `config` it reads — a declared
 constant mint this tier binds, a cited coefficient table, a bound, a threshold; a `param`
-this tier leaves for the tier below to bind, fixed for a deployment but not here; or an
-`output` it produces. Everything but `output` is a source of the graph; outputs are
-derivation targets. -/
+this tier leaves for the tier below to bind, fixed for a deployment but not here; an
+`output` it produces; or a `conditional` output it produces *in some cases of its result
+and not others*, which is how an algorithm with a validity domain states that domain at
+its interface instead of burying it in a constructor choice. The two output roles are
+derivation targets; every other role is a source of the graph. -/
 inductive Provenance.PortDir where
   | input
   | config
   | param
   | output
+  | conditional
 deriving DecidableEq, Repr, Inhabited
 
+/-- Is this role a derivation target — an output, conditional or not? -/
+def Provenance.PortDir.produced : Provenance.PortDir → Bool
+  | .output | .conditional => true
+  | _ => false
+
 /-- How a port role prints in a rendered report: `input` / `config` / `param` /
-`output`. -/
+`output` / `conditional`. -/
 def Provenance.PortDir.label : Provenance.PortDir → String
   | .input => "input"
   | .config => "config"
   | .param => "param"
   | .output => "output"
+  | .conditional => "conditional"
 
 /-- Does a *declared* role stand for a *computed* one? Every role stands for itself, and
 `param` additionally stands for a computed `input`: a signature harvest sees an argument,
@@ -343,11 +361,11 @@ def kindOf? (g : Provenance ν κ) (n : ν) : Option κ :=
   | some p => some p.kind
   | none => (g.intros.find? (·.node == n)).map (·.kind)
 
-/-- The sources: the nodes known before any occurrence fires — every port that is not an
-output (inputs, configuration reads, and the parameters a tier leaves unbound), gated
-ingests, and attested mints. -/
+/-- The sources: the nodes known before any occurrence fires — every port the step does
+not produce (inputs, configuration reads, and the parameters a tier leaves unbound),
+gated ingests, and attested mints. -/
 def sources (g : Provenance ν κ) : List ν :=
-  (g.ports.filter (fun p => !(p.dir == .output))).map (·.node)
+  (g.ports.filter (fun p => !p.dir.produced)).map (·.node)
     ++ (g.intros.filter (·.tier.isSource)).map (·.node)
 
 /-- One monotone sweep of the closure: each occurrence whose operands are all known
@@ -405,7 +423,7 @@ is *not* derived — and never an input or configuration port. -/
 def resultsAreDerivations (g : Provenance ν κ) : Bool :=
   g.occurrences.all fun o =>
     g.intros.any (fun i => i.node == o.result && i.tier == .derived)
-      || g.ports.any (fun p => p.node == o.result && p.dir == .output)
+      || g.ports.any (fun p => p.node == o.result && p.dir.produced)
 
 /-- The central condition — the boundary audit's "raw mints = 0", compositional: every
 `derived` introduction, every output port, and every exit is in `known`, i.e. reached
@@ -415,7 +433,7 @@ because the closure starts from the sources. -/
 def sourcesReach (g : Provenance ν κ) : Bool :=
   let ks := g.known
   g.intros.all (fun i => !(i.tier == .derived) || ks.contains i.node)
-    && g.ports.all (fun p => !(p.dir == .output) || ks.contains p.node)
+    && g.ports.all (fun p => !p.dir.produced || ks.contains p.node)
     && g.exits.all ks.contains
 
 /-- Structural well-formedness of the provenance hypergraph: unique declarations, typed

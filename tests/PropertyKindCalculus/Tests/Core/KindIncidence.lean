@@ -994,4 +994,99 @@ discharges: false
 -/
 #guard_msgs in #kind_discharges endOfBoxBoundary halvingBoundary
 
+/-! ### The conditional output — a validity domain stated at the interface
+
+A step that returns a quantity in some cases and nothing in others states the cases at
+its boundary: the sum's carrier-bearing payload ports at the *case* that carries it, in
+the `conditional` role. The wrapper itself is transparent to the walk — which case a
+value took is the interface's claim, not a step in the derivation — so the guarded body
+produces onto the conditional port exactly where the unguarded one produces onto a plain
+output, and a case with no quantity in it contributes nothing. -/
+
+/-- The partial-incidence helper, guarded by a domain check: the quotient in the valid
+case and nothing outside it. -/
+def halvedInDomain (lo q : Quantity alphaK Nat) : Option (Quantity epsilonK Nat) :=
+  if lo ≤ q then some (halved q) else none
+
+/--
+info: kind ports of 'PropertyKindCalculus.Tests.KindIncidence.halvedInDomain':
+input lo : alphaK
+input q : alphaK
+conditional result.some : epsilonK
+-/
+#guard_msgs in #kind_ports halvedInDomain
+
+-- `none` carries no quantity and produces nothing, so standalone — where the sub-step is
+-- opaque — the conditional port stays unreached and the verdict refuses, exactly as a
+-- plain output would.
+/--
+info: kind graph of 'PropertyKindCalculus.Tests.KindIncidence.halvedInDomain':
+input lo : alphaK
+input q : alphaK
+conditional result.some : epsilonK
+well-formed: false
+-/
+#guard_msgs in #kind_graph halvedInDomain
+
+/-- The declared boundary of the guarded chain, with the case stated. -/
+def halvedInDomainBoundary : Provenance.Contract String String where
+  name := "halvedInDomain"
+  members := [
+    "PropertyKindCalculus.Tests.KindIncidence.halvedInDomain",
+    "PropertyKindCalculus.Tests.KindIncidence.halved",
+    "PropertyKindCalculus.Tests.KindIncidence.halve"]
+  ports := [
+    ⟨"halvedInDomain/lo", "alphaK", .input⟩,
+    ⟨"halvedInDomain/q", "alphaK", .input⟩,
+    ⟨"halvedInDomain/result.some", "epsilonK", .conditional⟩]
+  exits := []
+
+/--
+info: kind assembly of 3 steps:
+level halvedInDomain: walked
+level halved: walked
+level halve: walked
+input halvedInDomain/lo : alphaK
+input halvedInDomain/q : alphaK
+conditional halvedInDomain/result.some : epsilonK
+derived halved/q : alphaK
+derived halved/result : epsilonK
+derived halve/q : alphaK
+derived halve/result : epsilonK
+[step halved] alphaK → epsilonK ⟨halvedInDomain/q⟩ ⇒ halvedInDomain/result.some
+[step halve] alphaK → epsilonK ⟨halved/q⟩ ⇒ halved/result
+alphaK / alphaK → epsilonK ⟨halve/q, halve/q⟩ ⇒ halve/result
+alphaK → alphaK ⟨halvedInDomain/q⟩ ⇒ halved/q
+alphaK → alphaK ⟨halved/q⟩ ⇒ halve/q
+cites: halvedInDomain → halved
+cites: halved → halve
+well-formed: true
+-/
+#guard_msgs in #kind_assembly halvedInDomainBoundary
+
+/--
+info: kind contract over 3 steps:
+contract 'halvedInDomain': 3 ports, 0 exits
+boundary agrees: true
+-/
+#guard_msgs in #kind_contract halvedInDomainBoundary
+
+/-- The same boundary claiming the result is always there. -/
+def halvedInDomainTotal : Provenance.Contract String String :=
+  { halvedInDomainBoundary with
+    name := "halvedInDomain (claimed total)"
+    ports := halvedInDomainBoundary.ports.map fun p =>
+      if p.dir == .conditional then { p with dir := .output } else p }
+
+-- Whether an interface always produces a value is the plainest thing it has to say, so
+-- the two output roles do not refine one another in either direction.
+/--
+info: kind contract over 3 steps:
+contract 'halvedInDomain (claimed total)': 3 ports, 0 exits
+undeclared conditional halvedInDomain/result.some : epsilonK
+unrealized output halvedInDomain/result.some : epsilonK
+boundary agrees: false
+-/
+#guard_msgs in #kind_contract halvedInDomainTotal
+
 end PropertyKindCalculus.Tests.KindIncidence
