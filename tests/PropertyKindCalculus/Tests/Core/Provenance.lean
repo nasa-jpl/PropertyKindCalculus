@@ -11,7 +11,9 @@ no occurrence produces fails, and the *same* graph with the node re-introduced a
 `attested` — the declared source carrying its one-line reason — passes. The cycle probe
 pins the closure semantics: results of occurrences that only feed each other are not
 reached, so "is the result of some occurrence" is not the condition — reachability from
-the sources is.
+the sources is. The identity wire closes the file: a pass-through wired by `copy`
+passes, and a kind-changing copy is refused by the one clause `wellFormed` owns
+semantically.
 -/
 import PropertyKindCalculus.Provenance
 
@@ -162,11 +164,41 @@ def repeatedOperand : Provenance String String where
 
 #guard repeatedOperand.wellFormed
 
--- The renderer prints the enumeration commands' kind-equation grammar.
+-- The renderer prints the enumeration commands' kind-equation grammar — the power
+-- exponent in the pretty printer's spelling of the authored literal (`^ 1 / 2`, `^ -1`,
+-- `^ 3`), so an edge renders one way whether read off a witness type or carried as
+-- edge data.
 #guard EdgeFamily.product.render ["alphaK", "betaK"] "gammaK" == "alphaK · betaK → gammaK"
 #guard EdgeFamily.reciprocal.render ["periodK"] "frequencyK" == "1 / periodK → frequencyK"
-#guard (EdgeFamily.power (1/2)).render ["areaK"] "lengthK" == "areaK ^ 1/2 → lengthK"
+#guard (EdgeFamily.power (1/2)).render ["areaK"] "lengthK" == "areaK ^ 1 / 2 → lengthK"
+#guard (EdgeFamily.power (-1)).render ["kx"] "ky" == "kx ^ -1 → ky"
 #guard EdgeFamily.tableMul.render ["alphaK", "betaK"] "gammaK"
   == "[table] alphaK · betaK → gammaK"
+#guard EdgeFamily.copy.render ["kx"] "kx" == "kx → kx"
+
+/-! ## The identity wire — `copy`
+
+A pass-through interface restates a node the wiring already has: the output port is the
+input under a second name, and without an occurrence reaching it the port would read as
+an anonymous mint. The `copy` family is that occurrence. Its claim is structural — the
+same value under two names — so it is the one family whose equation `wellFormed` itself
+checks: a copy that changes the kind is refused. -/
+
+/-- A pass-through step: two ports, one identity wire, nothing else. -/
+def passThrough : Provenance String String where
+  ports := [⟨"tab", "kx", .input⟩, ⟨"result", "kx", .output⟩]
+  intros := []
+  occurrences := [⟨.copy, [("tab", "kx")], "result", "kx", "passThrough"⟩]
+  exits := []
+
+#guard passThrough.wellFormed
+
+-- A kind-changing copy is refused even though every node carries its declared kind:
+-- the identity wire must preserve the kind, and that clause — not the per-node typing —
+-- is what rejects it.
+#guard !({ ports := [⟨"tab", "kx", .input⟩, ⟨"result", "ky", .output⟩],
+           intros := [],
+           occurrences := [⟨.copy, [("tab", "kx")], "result", "ky", "passThrough"⟩],
+           exits := [] } : Provenance String String).wellFormed
 
 end PropertyKindCalculus.Tests.Provenance

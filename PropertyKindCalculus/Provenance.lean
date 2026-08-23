@@ -47,6 +47,20 @@ checked"), whether `k` really is the product kind of `k₁` and `k₂` is the au
 metrological claim, judged by enumerating the authored witnesses; the graph records which
 claims were used where, and inherits its soundness story from that enumeration rather
 than re-adjudicating it.
+
+## The identity wire — `copy`
+
+One edge family is not a witness family: `copy`, the identity wire. It exists because an
+interface can restate a node the wiring already has — a pass-through step's output *is*
+its input, and a multi-output step's components are the interior nodes its body names —
+and the graph still owes an occurrence that reaches the output port, or the port is
+indistinguishable from an anonymous mint. A `copy` relates one operand to its result and
+claims nothing metrological: the value is the same value under a second name. Because
+that claim is structural rather than authored, it is the one family whose semantic
+content `wellFormed` itself checks — a copy must preserve the kind — where every witness
+family's equation remains the authored claim the trust model reviews by enumeration.
+Enumeration surfaces list authored licenses, so they never show a `copy`; it belongs to
+the wiring, and to the graph renderings of it.
 -/
 
 namespace PropertyKindCalculus
@@ -86,10 +100,19 @@ def Provenance.IntroTier.isSource : Provenance.IntroTier → Bool
   | .gated => true
   | .attested _ => true
 
-/-- The witness families of the core calculus, as hyperedge labels: `ProductKind`,
+/-- How an introduction tier prints in a rendered report: `derived` / `gated` /
+`attested "reason"` — the attested case shows its one-line justification, per the
+header's doctrine that every rendering carries it at the node that rests on it. -/
+def Provenance.IntroTier.label : Provenance.IntroTier → String
+  | .derived => "derived"
+  | .gated => "gated"
+  | .attested r => s!"attested \"{r}\""
+
+/-- The hyperedge labels: the witness families of the core calculus — `ProductKind`,
 `QuotientKind`, `ReciprocalKind`, `TranscendentalKind`, `PowerKind` (carrying its
 rational exponent — an exponent is data of the edge, not an operand node), and the
-operator-table registrations `KindMul`/`KindDiv`. -/
+operator-table registrations `KindMul`/`KindDiv` — plus `copy`, the identity wire
+(header, "The identity wire"): harvested wiring, never an authored license. -/
 inductive Provenance.EdgeFamily where
   | product
   | quotient
@@ -98,17 +121,24 @@ inductive Provenance.EdgeFamily where
   | power (exp : Rat)
   | tableMul
   | tableDiv
+  | copy
 deriving DecidableEq, Repr, Inhabited
 
 /-- The number of operand nodes an occurrence of this family relates (its result is not
 counted; a `power` edge's exponent is carried by the label, not an operand). -/
 def Provenance.EdgeFamily.operandCount : Provenance.EdgeFamily → Nat
   | .product | .quotient | .tableMul | .tableDiv => 2
-  | .reciprocal | .transcendental | .power _ => 1
+  | .reciprocal | .transcendental | .power _ | .copy => 1
+
+/-- Render a `power` exponent in the enumeration commands' grammar: the spelling the
+pretty printer gives the authored literal — `1 / 2`, `-1`, `3` — so an edge renders one
+way whether it was read off a witness type or carried as edge data. -/
+def Provenance.EdgeFamily.renderExp (p : Rat) : String :=
+  if p.den == 1 then toString p.num else s!"{p.num} / {p.den}"
 
 /-- Render an edge in the kind-equation grammar the enumeration commands print
 (`a · b → c`, `a / b → c`, `1 / a → b`, `transcendental : a → b`, `a ^ p → b`,
-`[table] …`), from already-rendered operand and result names. -/
+`[table] …`; a `copy` is `a → b`), from already-rendered operand and result names. -/
 def Provenance.EdgeFamily.render (f : Provenance.EdgeFamily)
     (operands : List String) (result : String) : String :=
   let o (i : Nat) : String := operands.getD i "_"
@@ -117,9 +147,10 @@ def Provenance.EdgeFamily.render (f : Provenance.EdgeFamily)
   | .quotient => s!"{o 0} / {o 1} → {result}"
   | .reciprocal => s!"1 / {o 0} → {result}"
   | .transcendental => s!"transcendental : {o 0} → {result}"
-  | .power p => s!"{o 0} ^ {p} → {result}"
+  | .power p => s!"{o 0} ^ {Provenance.EdgeFamily.renderExp p} → {result}"
   | .tableMul => s!"[table] {o 0} · {o 1} → {result}"
   | .tableDiv => s!"[table] {o 0} / {o 1} → {result}"
+  | .copy => s!"{o 0} → {result}"
 
 /-- A kind-typed port: one node of a step's interface, with the kind its signature
 states and the role it plays. Input and configuration ports are sources; an output port
@@ -144,11 +175,11 @@ structure Provenance.Intro (ν κ : Type) where
   tier : Provenance.IntroTier
 deriving Repr, Inhabited
 
-/-- One hyperedge occurrence: a use of a witness family at a site, relating its ordered
-operand nodes (each with the kind the witness names for that position) to its result
-node. Order matters and repetition counts — a quotient's numerator and denominator are
-distinct positions even when one node fills both — which is why incidence is a list of
-pairs and not a set. -/
+/-- One hyperedge occurrence: a use of an edge family at a site — a witness family
+discharged, or the identity `copy` wired — relating its ordered operand nodes (each with
+the kind the edge names for that position) to its result node. Order matters and
+repetition counts — a quotient's numerator and denominator are distinct positions even
+when one node fills both — which is why incidence is a list of pairs and not a set. -/
 structure Provenance.Occurrence (ν κ : Type) where
   /-- The witness family this occurrence uses. -/
   family : Provenance.EdgeFamily
@@ -227,12 +258,16 @@ def uniquelyDeclared (g : Provenance ν κ) : Bool :=
 
 /-- Every occurrence is typed: its operand count is its family's, and each operand and
 the result carry exactly the kind the corresponding node's declaration states — so an
-occurrence cannot re-kind a node, and cannot touch an undeclared one. -/
+occurrence cannot re-kind a node, and cannot touch an undeclared one. A `copy` must
+additionally preserve the kind: the identity wire's claim is structural, so it is the
+one family whose equation well-formedness itself checks (header, "The identity
+wire"). -/
 def occurrencesTyped (g : Provenance ν κ) : Bool :=
   g.occurrences.all fun o =>
     o.operands.length == o.family.operandCount
       && o.operands.all (fun oc => g.kindOf? oc.1 == some oc.2)
       && g.kindOf? o.result == some o.resultKind
+      && (!(o.family matches .copy) || o.operands.all (fun oc => oc.2 == o.resultKind))
 
 /-- Every occurrence's result is a derivation target: a `derived` introduction or an
 output port. Never a source — a gated or attested node's whole point is that its kind
