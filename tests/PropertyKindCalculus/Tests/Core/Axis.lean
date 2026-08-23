@@ -88,6 +88,18 @@ def sumPositions (n : Extent rowAxisK Nat) : Nat := Id.run do
 #guard sumPositions n8 == 28
 #guard sumPositions n0 == 0
 
+/-! ## The carrier bridge — a role survives a representation cast
+
+One axis kind carries its extent as a count and its positions continuously; the roles
+travel across that cast rather than duplicating along it, which is the module's own
+argument for roles over per-role kinds. -/
+
+#guard (p3.castCarrier Nat.toFloat).q.magnitude == 3.0
+#guard (n8.castCarrier Nat.toFloat).q.magnitude == 8.0
+-- The last position read at the continuous carrier — the "axis ceiling" a fetch floors
+-- against, derived from the extent rather than asserted beside it.
+#guard (n8.lastPos?.map (Position.castCarrier Nat.toFloat)).map (·.q.magnitude) == some 7.0
+
 /-! ## Boundary (Rule 2) — what the roles make unwritable -/
 
 set_option linter.unusedVariables false in
@@ -104,6 +116,9 @@ example : Quantity rowAxisK Nat := nodeOf n8 p3
 -- neither slot, so the role has to be stated where the value is born.
 #check_failure (nodeOf n8 (⟨3⟩ : Quantity rowAxisK Nat))
 #check_failure (nodeOf (⟨8⟩ : Quantity rowAxisK Nat) p3)
+-- A representation cast is not a role change: a cast extent still does not fit the
+-- position slot.
+#check_failure (nodeOf n8 (n8.castCarrier id))
 
 -- Directional: the relation exists only with the extent on the right. There is no
 -- `Extent.Within`, so "the count lies within the index" cannot be written at all.

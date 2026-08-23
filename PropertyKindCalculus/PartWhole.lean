@@ -60,6 +60,16 @@ namespace Part
 
 variable {k : KindOfProperty} {R : Type}
 
+/-- **A role survives a representation cast** — the counterpart of `Quantity.castCarrier`
+for this role. A portion counted at `Nat` and read at `Float` is the same portion of the
+same total; what changes is how the number is written, which is precisely what
+`castCarrier` is for. The eliminator below needs both sides at one carrier, so a pair born
+as counts reaches it through this. -/
+def castCarrier {S : Type} (f : R → S) (p : Part k R) : Part k S := ⟨p.q.castCarrier f⟩
+
+@[simp] theorem castCarrier_magnitude {S : Type} (f : R → S) (p : Part k R) :
+    (p.castCarrier f).q.magnitude = f p.q.magnitude := rfl
+
 /-- **The directional Prop former**: the portion does not exceed the total it is taken
 from. The only relation statable between the two roles — with the part on the left, where
 the mereology puts it — so the reversed reading is unwritable rather than merely wrong. -/
@@ -95,5 +105,19 @@ def fractionOf [Div R] (kFrac : KindOfProperty) (p : Part k R) (w : Whole k R)
     (p.fractionOf kFrac w h).magnitude = p.q.magnitude / w.q.magnitude := rfl
 
 end Part
+
+namespace Whole
+
+variable {k : KindOfProperty} {R : Type}
+
+/-- **A role survives a representation cast** — `Part.castCarrier`'s dual, and the reason
+it exists: the eliminator takes the portion and the total at one carrier, so a pair born as
+counts crosses to `Float` in the same step on both sides, in its own role on each. -/
+def castCarrier {S : Type} (f : R → S) (w : Whole k R) : Whole k S := ⟨w.q.castCarrier f⟩
+
+@[simp] theorem castCarrier_magnitude {S : Type} (f : R → S) (w : Whole k R) :
+    (w.castCarrier f).q.magnitude = f w.q.magnitude := rfl
+
+end Whole
 
 end PropertyKindCalculus

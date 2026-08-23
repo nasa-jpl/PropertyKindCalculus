@@ -91,6 +91,16 @@ namespace Position
 
 variable {k : KindOfProperty} {R : Type}
 
+/-- **A role survives a representation cast** — the counterpart of `Quantity.castCarrier`
+for this role, and what makes the carrier-parametric reading of an axis usable: a fetch row
+narrowed from a continuous coordinate, or a discrete index read back at `Float` for the
+arithmetic that spaces it, is the same position on the same axis. -/
+def castCarrier {S : Type} (f : R → S) (i : Position k R) : Position k S :=
+  ⟨i.q.castCarrier f⟩
+
+@[simp] theorem castCarrier_magnitude {S : Type} (f : R → S) (i : Position k R) :
+    (i.castCarrier f).q.magnitude = f i.q.magnitude := rfl
+
 /-- **The directional Prop former**: this position lies on the axis of that extent —
 `i < n`, the half-open reading indexing already uses. It is the *only* relation statable
 between the two roles, and the extent can only appear on the right of it: there is no
@@ -115,6 +125,16 @@ end Position
 namespace Extent
 
 variable {k : KindOfProperty}
+
+/-- **A role survives a representation cast** — `Position.castCarrier`'s dual. This is the
+bridge the module's own argument for roles-over-kinds rests on: one axis kind carries the
+extent as a `Nat` count and the same axis continuously, and a per-role *kind* would have
+had to duplicate itself along the carrier as well. -/
+def castCarrier {R S : Type} (f : R → S) (n : Extent k R) : Extent k S :=
+  ⟨n.q.castCarrier f⟩
+
+@[simp] theorem castCarrier_magnitude {R S : Type} (f : R → S) (n : Extent k R) :
+    (n.castCarrier f).q.magnitude = f n.q.magnitude := rfl
 
 /-- **Has the axis no positions at all?** The one degenerate case this vocabulary carries,
 and the reason the position-producing operations below return `Option`. -/

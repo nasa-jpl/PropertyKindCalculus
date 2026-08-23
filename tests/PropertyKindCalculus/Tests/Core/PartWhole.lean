@@ -44,6 +44,23 @@ def total : Whole rawWeightK Float := ⟨⟨6.0⟩⟩
 #guard (⟨⟨9.0⟩⟩ : Part rawWeightK Float).withinWhole total == false
 #guard (⟨⟨6.0⟩⟩ : Part rawWeightK Float).withinWhole total == true
 
+/-! ## The carrier bridge — counts reach the eliminator in their roles
+
+The common shape: a portion and its total are born as *counts* and the fraction is wanted
+at `Float`. Both sides cross in the same step, each still in its own role, so the pair
+reaches `fractionOf` at one carrier without ever being two loose numbers. -/
+
+/-- A count kind — valid items within a window, the shape a coverage is read from. -/
+def itemCountK : KindOfProperty := { id := "part-whole probe item count", scale := .ratio }
+
+#guard (((⟨⟨3⟩⟩ : Part itemCountK Nat).castCarrier Nat.toFloat).fractionOf coverageK
+  ((⟨⟨4⟩⟩ : Whole itemCountK Nat).castCarrier Nat.toFloat)).magnitude == 0.75
+-- Swapped, it is still a type error after the cast — a representation change is not a
+-- role change.
+#check_failure (Part.fractionOf coverageK
+  ((⟨⟨4⟩⟩ : Whole itemCountK Nat).castCarrier Nat.toFloat)
+  ((⟨⟨3⟩⟩ : Part itemCountK Nat).castCarrier Nat.toFloat))
+
 /-! ## Boundary (Rule 2) — what the roles make unwritable -/
 
 /-- A normalization step, the shape a bare pair of same-kind magnitudes leaves open to a
