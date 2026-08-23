@@ -9,7 +9,9 @@ carrying its reason as the tooltip; a multi-operand procedure edge meets at a di
 junction — arrowhead-suppressed directed legs in, one arrowed leg out carrying the
 step name — nested inside the level container when the hyperedge is interior to it
 and at top level when it spans levels; the identity wire draws gray; the citation
-relation draws dashed; and the header repeats
+relation draws dashed; an unkinded signature position draws as a red row and an
+unkinded flow as a red arrow, the provenance box pairing the wiring verdict with the
+unkinded count; and the header repeats
 the evaluated verdict — the figure is generated from the checked object, never drawn
 beside it.
 -/
@@ -26,7 +28,9 @@ def hasSub (s sub : String) : Bool := (s.splitOn sub).length > 1
 
 /-- The hand-built two-box assembly of the core probes: caller `A` wired into callee
 `B` by a two-operand procedure edge interior to `A`, a cross-level product occurrence
-spanning both boxes, an attested source carrying its reason, and one exit. -/
+spanning both boxes, an attested source carrying its reason, one exit, and the red
+reading — an unkinded argument `n : Nat` on `A` whose flows reach the attested mint
+and the output. -/
 def probe : Assembly :=
   let gA : Provenance String String :=
     { ports := [⟨"A/x", "kx", .input⟩, ⟨"A/y", "ky", .input⟩,
@@ -42,7 +46,9 @@ def probe : Assembly :=
   let wires : Provenance String String :=
     ⟨[], [], [⟨.copy, [("A/x", "kx")], "B/x", "kx", "A"⟩,
               ⟨.product, [("A/y", "ky"), ("B/x", "kx")], "B/result", "kz", "A"⟩], []⟩
-  { levels := #[⟨`A, "A", true, gA, "src/a.lean"⟩, ⟨`B, "B", false, gB, ""⟩]
+  { levels := #[⟨`A, "A", true, gA, "src/a.lean", [⟨"A/n", "Nat", .input⟩],
+                 [("A/n", "A/seed"), ("A/n", "A/result")]⟩,
+                ⟨`B, "B", false, gB, "", [], []⟩]
     graph := (gA.union gB).union wires
     cites := #[("A", "B")] }
 
@@ -91,5 +97,15 @@ def d2 : String := emit probe (title := "probe assembly")
 -- the identity wire draws gray; the citation draws dashed between the containers
 #guard hasSub d2 "\"A\".\"x\" -> \"B\".\"x\": {style: {stroke: \"#9ca3af\""
 #guard hasSub d2 "\"A\" -> \"B\": {style: {stroke: \"#4f46e5\"; stroke-dash: 4"
+-- the red reading: the unkinded position is a red row, its flows red arrows into the
+-- mint and the output, the provenance box pairs the verdict with the count, and the
+-- legend states the color's meaning
+#guard hasSub d2 "label: \"unkinded input n : Nat\"; style: {fill: \"#fee2e2\"; stroke: \"#dc2626\""
+#guard hasSub d2 "\"A\".\"n\" -> \"A\".\"seed\": {style: {stroke: \"#dc2626\"}}"
+#guard hasSub d2 "\"A\".\"n\" -> \"A\".\"result\": {style: {stroke: \"#dc2626\"}}"
+#guard hasSub d2 "unkinded positions: 1 — outside the kinded algebra"
+#guard hasSub d2 "label: \"unkinded\"; style: {fill: \"#fee2e2\""
+#guard hasSub d2 "label: \"unkinded flow\""
+#guard hasSub d2 "red = outside the kinded algebra"
 
 end PropertyKindCalculus.Tests.KindGraphD2

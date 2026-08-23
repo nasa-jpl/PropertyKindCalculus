@@ -70,6 +70,21 @@ unreached derivation target is exactly an anonymous mint. (A record-carried quan
 not yet a port: the signature reading recognizes carrier-headed binders, so record
 parameters enter the graph story when their carrier maps do.)
 
+**Unkinded positions** are read alongside the ports: an explicit binder or result
+component whose type carries no kind information at all — no registered carrier, no
+kind vocabulary anywhere in it — is naked data crossing the interface, which does not
+conform to the calculus's methodology. The kinded readings gap-keep such a position;
+the harvest additionally *names* it (`unkinded input nR : Nat`), so a report marks it
+red instead of silently narrowing to the kinded slice. The value walk pairs the
+inventory with the **unkinded flows**: an unkinded argument occurring in a minting
+application (attested, gated, emission) flows into that mint's node — unkinded
+information minting kinded information — and one occurring in a kinded output's
+defining expression *outside* every mint steers that output through logic the kinded
+algebra never sees; both render as `unkinded flow: nR ⇒ _1` and draw red in the
+figure. A kind-bearing type that is merely not ported — a record or container whose
+constituents carry kinds — is the record limitation above, not an unkinded position;
+propositions and sorts are interface logic, not data, and are not read.
+
 **Assembly** reads a pipeline as ONE graph (section, "The assembly"): the members
 become each other's sub-steps, a call becomes a `step` procedure edge, walked call
 sites dissect into the callee's box, and the verdict — with its kernel theorem — is
@@ -182,6 +197,30 @@ def carrierKind? (env : Environment) (carriers : Array Name) (ctx : BinderCtx)
   let ks ← kindIdxs.mapM fun i => renderKindArg ctx args[i]!
   return some (String.intercalate ", " ks.toList)
 
+/-- Does a type carry kind information at all — a registered carrier or the kind
+vocabulary itself, mentioned anywhere in the expression, or (one structure level down,
+fuel-bounded) in the fields of the single-constructor inductive at its head? The
+negative answer classifies a signature position as *unkinded* (module header,
+"Unkinded positions"): naked data, red in every report. The positive answer without a
+port is the record/container limitation — kind-bearing, merely not yet ported. -/
+partial def kindBearing (env : Environment) (carriers : Array Name) (ty : Expr)
+    (fuel : Nat := 3) : Bool :=
+  let mentions := (ty.find? fun sub =>
+    match sub with
+    | .const c _ => carriers.contains c || c == ``KindOfProperty
+    | _ => false).isSome
+  mentions ||
+    match fuel, ty.getAppFn with
+    | fuel + 1, .const c _ =>
+      match env.find? c with
+      | some (.inductInfo ii) =>
+        ii.ctors.length == 1 &&
+          (match ii.ctors.head?.bind env.find? with
+           | some ctor => kindBearing env carriers ctor.type fuel
+           | none => false)
+      | _ => false
+    | _, _ => false
+
 /-- The result type's right-spine product components — `A × B × C` is three output
 positions. A parenthesized left factor stays one component: positions follow what the
 signature spells. -/
@@ -191,6 +230,20 @@ partial def prodComponents (ty : Expr) (acc : Array Expr := #[]) : Array Expr :=
     prodComponents args[1]! (acc.push args[0]!)
   else
     acc.push ty
+
+/-- The value-side view of the result tuple: the right-spine `Prod.mk` components when
+the body is a literal spine of the expected width — the per-component attribution
+behind the output-flow reading — and `none` when the body computes its tuple another
+way (a branch, a call), where attribution falls back to every kinded output. -/
+partial def prodValueComps (e : Expr) (n : Nat) (acc : Array Expr := #[]) :
+    Option (Array Expr) :=
+  match e with
+  | .mdata _ b => prodValueComps b n acc
+  | _ =>
+    if acc.size + 1 == n then some (acc.push e)
+    else if e.isAppOfArity ``Prod.mk 4 then
+      prodValueComps e.getAppArgs[3]! n (acc.push e.getAppArgs[2]!)
+    else none
 
 /-- The `@[kindConst]` constants `e` references, in body order, deduplicated — a port is
 an interface node, so a constant read twice is one port (the occurrence reading keeps
@@ -317,14 +370,22 @@ structure HarvestCtx where
   declKindConst : Bool
   declEmission : Bool := false
   subSteps : Array Name := #[]
+  /-- The declaration's unkinded explicit arguments as the value walk sees them — the
+  lambda binders at the gap-kept positions, each with its rendered name — so a minting
+  application can be checked for the unkinded information it consumes (module header,
+  "Unkinded positions"). -/
+  unkindedFVars : Array (FVarId × String) := #[]
 
-/-- The walk's accumulator: occurrences, introduction events, exits, and the counter
-behind synthesized interior nodes (`_1`, `_2`, … in walk order). -/
+/-- The walk's accumulator: occurrences, introduction events, exits, the counter
+behind synthesized interior nodes (`_1`, `_2`, … in walk order), and the unkinded
+flows — each an unkinded argument reaching a kinded node outside the kinded
+algebra. -/
 structure WalkSt where
   occs : Array StepOccurrence := #[]
   intros : Array (Intro String String) := #[]
   exits : Array String := #[]
   freshCount : Nat := 0
+  leaks : Array (String × String) := #[]
 
 /-- The next synthesized interior node. -/
 def WalkSt.nextFresh (st : WalkSt) : String × WalkSt :=
@@ -334,6 +395,11 @@ def WalkSt.nextFresh (st : WalkSt) : String × WalkSt :=
 /-- Record an exit, once per node. -/
 def WalkSt.exit (st : WalkSt) (n : String) : WalkSt :=
   if st.exits.contains n then st else { st with exits := st.exits.push n }
+
+/-- Record an unkinded flow, once per (source, target) pair. -/
+def WalkSt.leak (st : WalkSt) (src dst : String) : WalkSt :=
+  if st.leaks.contains (src, dst) then st
+  else { st with leaks := st.leaks.push (src, dst) }
 
 /-- Wire `node` from the named `src` by the identity `copy`, introducing `node` as
 `derived` when the walk owns its introduction (a `let` binder or synthesized node —
@@ -361,19 +427,45 @@ def Target.asOne? : Option Target → Option (String × String × Bool)
 
 /-- Introduce a *source* (an attested or gated mint) at the target: directly on a node
 the walk owns, or through a synthesized source node wired to a port by `copy`. With no
-target the source is still recorded — a mint is a mint wherever it sits. -/
+target the source is still recorded — a mint is a mint wherever it sits. Returns the
+source node introduced, so the minting site can attribute its unkinded flows to it. -/
 def sourceAt (h : HarvestCtx) (tier : IntroTier) (kind : String)
-    (t1 : Option (String × String × Bool)) (st : WalkSt) : WalkSt :=
+    (t1 : Option (String × String × Bool)) (st : WalkSt) : String × WalkSt :=
   match t1 with
-  | some (n, k, true) => { st with intros := st.intros.push ⟨n, k, tier⟩ }
+  | some (n, k, true) => (n, { st with intros := st.intros.push ⟨n, k, tier⟩ })
   | some (n, k, false) =>
     let (m, st) := st.nextFresh
     let st := { st with intros := st.intros.push ⟨m, k, tier⟩ }
     let so : StepOccurrence := ⟨⟨.copy, [(m, k)], n, k, h.site⟩, #[k], false, false⟩
-    { st with occs := st.occs.push so }
+    (m, { st with occs := st.occs.push so })
   | none =>
     let (m, st) := st.nextFresh
-    { st with intros := st.intros.push ⟨m, kind, tier⟩ }
+    (m, { st with intros := st.intros.push ⟨m, kind, tier⟩ })
+
+/-- The unkinded flows into a mint: each unkinded argument occurring in the minting
+application flows into the mint's node — unkinded information minting kinded
+information, the reading the red arrows draw (module header, "Unkinded
+positions"). -/
+def mintLeaks (h : HarvestCtx) (e : Expr) (node : String) (st : WalkSt) : WalkSt :=
+  h.unkindedFVars.foldl (init := st) fun st (fv, nm) =>
+    if e.containsFVar fv then st.leak nm node else st
+
+/-- The body with every minting application replaced by a closed marker: what remains
+is the logic the kinded algebra never licensed, so an unkinded argument surviving the
+mask into a kinded output's defining expression steers that output from outside the
+algebra. (The replacement is type-incorrect and never elaborated — it exists only for
+the free-variable containment check.) -/
+def maskMints (h : HarvestCtx) (e : Expr) : Expr :=
+  e.replace fun sub =>
+    match sub.getAppFn with
+    | .const c _ =>
+      if (h.attestors.any fun s => s.declName == c && sub.getAppNumArgs == s.arity)
+          || h.ingestConsts.contains c
+          || (h.declEmission && h.carrierSpecs.any fun s =>
+                s.ctorName == c && sub.getAppNumArgs == s.ctorArity) then
+        some (mkConst ``Unit)
+      else none
+    | _ => none
 
 /-- No reading produced the target. A `let` binder the walk owns is still introduced
 (`derived`, with nothing deriving it — the verdict then refuses, which is the point: an
@@ -594,12 +686,14 @@ partial def walkApp (h : HarvestCtx) (e : Expr) (ctx : BinderCtx)
       let kind ← match args[asp.kindIdx]? with
         | some ka => renderKindArg ctx ka
         | none => pure "_"
-      let st := sourceAt h (.attested reason) kind t1 st
+      let (n, st) := sourceAt h (.attested reason) kind t1 st
+      let st := mintLeaks h e n st
       return ← args.foldlM (fun st a => walk h a ctx none st) st
   -- a gated ingest: raw data admitted through a check
   if h.ingestConsts.contains c then
     let kind := (t1.map fun (_, k, _) => k).getD "_"
-    let st := sourceAt h .gated kind t1 st
+    let (n, st) := sourceAt h .gated kind t1 st
+    let st := mintLeaks h e n st
     return ← args.foldlM (fun st a => walk h a ctx none st) st
   -- an emission-shell mint: `@[kindEmission]` sanctions this declaration's carrier
   -- constructors as the grid↔kernel boundary — the mint enters through a declared
@@ -607,7 +701,8 @@ partial def walkApp (h : HarvestCtx) (e : Expr) (ctx : BinderCtx)
   if h.declEmission && h.carrierSpecs.any (fun s =>
       s.ctorName == c && args.size == s.ctorArity) then
     let kind := (t1.map fun (_, k, _) => k).getD "_"
-    let st := sourceAt h (.attested "[kindEmission]") kind t1 st
+    let (n, st) := sourceAt h (.attested "[kindEmission]") kind t1 st
+    let st := mintLeaks h e n st
     return ← args.foldlM (fun st a => walk h a ctx none st) st
   -- a sub-step application: the assembly reads the whole call as a procedure edge
   if h.subSteps.contains c && !args.isEmpty then
@@ -785,14 +880,42 @@ def occurrencesOfValue (env : Environment) (carriers : Array Name) (e : Expr) :
 
 /-! ## The constructed object and its renderings -/
 
+/-- An unkinded signature position (module header, "Unkinded positions"): an explicit
+binder or result component whose type carries no kind information at all — naked data
+crossing the interface, which does not conform to the calculus's methodology. The
+kinded ports gap-keep the position; the harvest names it, so every report marks it
+red. -/
+structure UnkindedSlot where
+  /-- The binder name, or the gap-kept `result.{i}` position. -/
+  node : String
+  /-- The rendered type — what the signature states instead of a kind. -/
+  type : String
+  /-- `input` for a binder, `output` for a result component. -/
+  dir : PortDir
+deriving Repr, Inhabited, BEq
+
+/-- One unkinded line: `unkinded input nR : Nat`. -/
+def renderUnkinded (u : UnkindedSlot) : String :=
+  s!"unkinded {u.dir.label} {u.node} : {u.type}"
+
+/-- One unkinded-flow line: `unkinded flow: nR ⇒ _1` — the path by which unkinded
+information mints or steers kinded information, outside the kinded algebra. -/
+def renderLeak (l : String × String) : String :=
+  s!"unkinded flow: {l.1} ⇒ {l.2}"
+
 /-- The harvest of one step: the graph's constituents, with the two markers
-(`assumed` / `partialIncidence`) the graph value does not carry. `provenance` is the
-constructed object; the renderings below are projections of this one producer. -/
+(`assumed` / `partialIncidence`) the graph value does not carry, the unkinded
+positions of its signature, and their flows into the kinded nodes. `provenance` is the
+constructed object — the unkinded reading deliberately stays outside it: the wiring
+judgment the kernel decides is about the kinded algebra, and the red inventory is the
+record of what falls outside that algebra, carried by the renderings. -/
 structure StepGraph where
   ports : List (Port String String)
   intros : List (Intro String String)
   occs : Array StepOccurrence
   exits : List String
+  unkinded : List UnkindedSlot := []
+  leaks : List (String × String) := []
 
 /-- **The constructed graph value.** Partial-incidence occurrences are excluded from
 the wiring — a sub-step boundary is not an edge of this step's graph — so a step that
@@ -812,13 +935,16 @@ def renderPort (p : Port String String) : String :=
 def renderIntro (i : Intro String String) : String :=
   s!"{i.tier.label} {i.node} : {i.kind}"
 
-/-- The full graph rendering: ports, introductions, wired occurrences (markers kept),
-exits, and the evaluated well-formedness verdict. -/
+/-- The full graph rendering: ports, unkinded positions, introductions, wired
+occurrences (markers kept), exits, unkinded flows, and the evaluated well-formedness
+verdict. -/
 def StepGraph.renderLines (s : StepGraph) : List String :=
   s.ports.map renderPort
+    ++ s.unkinded.map renderUnkinded
     ++ s.intros.map renderIntro
     ++ (s.occs.map (·.renderWired)).toList
     ++ s.exits.map (fun n => s!"exit {n}")
+    ++ s.leaks.map renderLeak
     ++ [s!"well-formed: {s.provenance.wellFormed}"]
 
 /-- Construct the step graph of a declaration: the interface off the signature (inputs
@@ -849,11 +975,23 @@ def stepGraphOf (decl : Name) (subSteps : Array Name := #[]) : MetaM StepGraph :
       subSteps }
   Meta.forallTelescope info.type fun fvars resultTy => do
     let mut ports : Array (Port String String) := #[]
-    for fv in fvars do
+    let mut unkinded : Array UnkindedSlot := #[]
+    let mut unkIdx : Array (Nat × String) := #[]
+    for idx in [0:fvars.size] do
+      let fv := fvars[idx]!
       let ty ← fv.fvarId!.getType
       if let some k ← carrierKind? env carriers [] ty then
         ports := ports.push
           { node := toString (← fv.fvarId!.getUserName), kind := k, dir := .input }
+      else
+        -- the unkinded reading: an explicit data binder whose type carries no kind
+        -- information at all (propositions and sorts are interface logic, not data)
+        let bi := (← fv.fvarId!.getDecl).binderInfo
+        if bi.isExplicit && !ty.isSort && !(← Meta.isProp ty)
+            && !kindBearing env carriers ty then
+          let nm := toString (← fv.fvarId!.getUserName)
+          unkinded := unkinded.push ⟨nm, toString (← Meta.ppExpr ty), .input⟩
+          unkIdx := unkIdx.push (idx, nm)
     if let some v := info.value? then
       for c in configReads cfgConsts v do
         let some ci := env.find? c | continue
@@ -864,16 +1002,22 @@ def stepGraphOf (decl : Name) (subSteps : Array Name := #[]) : MetaM StepGraph :
     let comps := prodComponents resultTy
     let mut outSlots : Array (Option (String × String × Bool)) := #[]
     for i in [0:comps.size] do
+      let node := if comps.size == 1 then "result" else s!"result.{i + 1}"
       match ← carrierKind? env carriers [] comps[i]! with
       | some k =>
-        let node := if comps.size == 1 then "result" else s!"result.{i + 1}"
         ports := ports.push { node := node, kind := k, dir := .output }
         outSlots := outSlots.push (some (node, k, false))
-      | none => outSlots := outSlots.push none
+      | none =>
+        outSlots := outSlots.push none
+        let cty := comps[i]!
+        if !cty.isSort && !(← Meta.isProp cty) && !kindBearing env carriers cty then
+          unkinded := unkinded.push ⟨node, toString (← Meta.ppExpr cty), .output⟩
     let st ← match info.value? with
       | none => pure {}
       | some v =>
-        Meta.lambdaTelescope v fun _ body => do
+        Meta.lambdaTelescope v fun lamFvars body => do
+          let hv := { h with unkindedFVars := unkIdx.filterMap fun (idx, nm) =>
+            lamFvars[idx]?.map fun fv => (fv.fvarId!, nm) }
           let rootTarget : Option Target :=
             if comps.size == 1 then
               outSlots[0]!.map fun (n, k, _) => .one n k false
@@ -881,9 +1025,26 @@ def stepGraphOf (decl : Name) (subSteps : Array Name := #[]) : MetaM StepGraph :
               some (.tuple outSlots.toList)
             else
               none
-          walk h body [] rootTarget {}
+          let mut st ← walk hv body [] rootTarget {}
+          -- the output flows: an unkinded argument surviving the mint mask into a
+          -- kinded output's defining expression steers that output from outside the
+          -- kinded algebra — per component on a literal tuple spine, else every
+          -- kinded output
+          let vcomps? := prodValueComps body comps.size
+          for (fv, nm) in hv.unkindedFVars do
+            match vcomps? with
+            | some vs =>
+              for ci in [0:vs.size] do
+                if let some (n, _, _) := outSlots[ci]! then
+                  if (maskMints hv vs[ci]!).containsFVar fv then st := st.leak nm n
+            | none =>
+              if (maskMints hv body).containsFVar fv then
+                for slot in outSlots do
+                  if let some (n, _, _) := slot then st := st.leak nm n
+          pure st
     return { ports := ports.toList, intros := st.intros.toList, occs := st.occs,
-             exits := st.exits.toList }
+             exits := st.exits.toList, unkinded := unkinded.toList,
+             leaks := st.leaks.toList }
 
 /-! ## The assembly — the multi-step graph
 
@@ -923,6 +1084,12 @@ structure AssemblyLevel where
   walked : Bool
   graph : Provenance String String
   src : String := ""
+  /-- The member's unkinded signature positions, in the level's node namespace — the
+  red inventory a rendering marks (module header, "Unkinded positions"). -/
+  unkinded : List UnkindedSlot := []
+  /-- The member's unkinded flows, namespaced, kept where the target node is declared
+  in the level's contributed graph — the red arrows. -/
+  leaks : List (String × String) := []
 deriving Inhabited
 
 /-- A multi-step assembly: the levels with their modes, the one union graph the
@@ -971,12 +1138,18 @@ def assemble (decls : Array Name) : MetaM Assembly := do
         pure (if ps.startsWith cwd then (ps.drop cwd.length).toString else ps)
       | none => pure (toString mod)
     srcs := srcs.push src
-  -- per-level harvests: walked exactly when the wired interior is well-formed
+  -- per-level harvests: walked exactly when the wired interior is well-formed; the
+  -- unkinded reading rides along either way (a signature fact and a body fact — the
+  -- interface box changes neither)
   let mut walkedFlags : Array Bool := #[]
   let mut contribs : Array (Provenance String String) := #[]
+  let mut unks : Array (List UnkindedSlot) := #[]
+  let mut lks : Array (List (String × String)) := #[]
   for i in [0:decls.size] do
     let d := decls[i]!
     let g ← stepGraphOf d (subSteps := decls.filter (· != d))
+    unks := unks.push g.unkinded
+    lks := lks.push g.leaks
     let p := g.provenance
     if p.wellFormed then
       walkedFlags := walkedFlags.push true
@@ -1031,7 +1204,10 @@ def assemble (decls : Array Name) : MetaM Assembly := do
     let p := { p with
       ports := keptPorts
       intros := demotedPorts.map (fun q => ⟨q.node, q.kind, .derived⟩) ++ p.intros }
-    levels := levels.push ⟨decls[i]!, name, walkedFlags[i]!, p, srcs[i]!⟩
+    let nsUnk := unks[i]!.map fun u => { u with node := s!"{name}/{u.node}" }
+    let nsLks := (lks[i]!.map fun (s, t) => (s!"{name}/{s}", s!"{name}/{t}")).filter
+      fun (_, t) => (p.kindOf? t).isSome
+    levels := levels.push ⟨decls[i]!, name, walkedFlags[i]!, p, srcs[i]!, nsUnk, nsLks⟩
     graph := graph.union p
   graph := graph.union ⟨[], [], wires.toList, []⟩
   -- the citation relation: which member's value references which
@@ -1054,8 +1230,8 @@ def renderOccurrence (o : Provenance.Occurrence String String) : String :=
   s!"{eq} ⟨{String.intercalate ", " names}⟩ ⇒ {o.result}"
 
 /-- The assembly rendering: each level with its inclusion mode, the union graph's
-ports, introductions, occurrences, and exits, the citation relation, and the evaluated
-verdict. -/
+ports, introductions, occurrences, and exits, the levels' unkinded positions and
+flows, the citation relation, and the evaluated verdict. -/
 def Assembly.renderLines (a : Assembly) : List String :=
   (a.levels.toList.map fun l =>
       s!"level {l.name}: {if l.walked then "walked" else "interface"}")
@@ -1063,6 +1239,8 @@ def Assembly.renderLines (a : Assembly) : List String :=
     ++ a.graph.intros.map renderIntro
     ++ a.graph.occurrences.map renderOccurrence
     ++ a.graph.exits.map (fun n => s!"exit {n}")
+    ++ (a.levels.toList.flatMap fun l => l.unkinded.map renderUnkinded)
+    ++ (a.levels.toList.flatMap fun l => l.leaks.map renderLeak)
     ++ a.cites.toList.map (fun (x, y) => s!"cites: {x} → {y}")
     ++ [s!"well-formed: {a.graph.wellFormed}"]
 
@@ -1145,15 +1323,16 @@ elab "#kind_occurrences " id:ident : command => liftTermElabM do
 
 open Elab Command in
 /-- `#kind_ports d` prints every port `d`'s kind-typed signature states — inputs,
-configuration reads, outputs, each with its stated kind — as a single `info` message
-suitable for `#guard_msgs` pinning. -/
+configuration reads, outputs, each with its stated kind — followed by the signature's
+unkinded positions, red in the figure (module header, "Unkinded positions"), as a
+single `info` message suitable for `#guard_msgs` pinning. -/
 elab "#kind_ports " id:ident : command => liftTermElabM do
   let decl ← realizeGlobalConstNoOverload id
-  let ports := (← stepGraphOf decl).ports
-  if ports.isEmpty then
+  let g ← stepGraphOf decl
+  let lines := g.ports.map renderPort ++ g.unkinded.map renderUnkinded
+  if lines.isEmpty then
     logInfo m!"no kind ports in '{decl}'"
   else
-    let lines := ports.map renderPort
     logInfo m!"kind ports of '{decl}':\n{String.intercalate "\n" lines}"
 
 open Elab Command in

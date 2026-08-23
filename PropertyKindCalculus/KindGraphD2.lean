@@ -13,7 +13,12 @@ verdict and the kernel theorem are stated on, so the figure cannot drift from th
 object: what `#kind_assembly_decide` accepted is what is drawn, and the provenance box
 carries the figure's own accountability — the evaluated verdict beside the assembled
 declarations with their source files (`AssemblyLevel.src`), so the reader is told
-which definitions, in which files, the graph is a reading of. A shape legend repeats
+which definitions, in which files, the graph is a reading of. **Red is the
+nonconformance reading** (`KindIncidence`, "Unkinded positions"): an unkinded
+signature position draws as a red row, an unkinded flow — unkinded information
+minting or steering kinded information — as a red arrow, and the provenance box
+pairs the wiring verdict with the unkinded count, so a figure with red in it says so
+in its own header. A shape legend repeats
 the row palette and the arrow classes as the shapes themselves. Every label is plain
 text: a markdown label would render as a foreignObject HTML island, which librsvg and
 LaTeX pipelines silently drop, so the emitted document stays pure SVG.
@@ -61,6 +66,14 @@ def portStroke : PortDir → String
   | .input => "#2563eb"
   | .config => "#d97706"
   | .output => "#16a34a"
+
+/-- The row fill of an unkinded signature position — red: outside the kinded
+algebra. -/
+def unkindedFill : String := "#fee2e2"
+
+/-- The row border of an unkinded position, and the color of an unkinded-flow
+arrow. -/
+def unkindedStroke : String := "#dc2626"
 
 /-- The row fill of an introduction tier. -/
 def tierFill : IntroTier → String
@@ -117,8 +130,8 @@ structure Row where
   tooltip : Option String
 deriving Inhabited
 
-/-- The rows of one level: ports in graph order, then introduction events, exits
-marked `⊗` at the erasure boundary. -/
+/-- The rows of one level: ports in graph order, the signature's unkinded positions in
+red, then introduction events, exits marked `⊗` at the erasure boundary. -/
 def levelRows (l : AssemblyLevel) : Array Row := Id.run do
   let strip (n : String) : String :=
     if n.startsWith (l.name ++ "/") then (n.drop (l.name.length + 1)).toString else n
@@ -130,6 +143,11 @@ def levelRows (l : AssemblyLevel) : Array Row := Id.run do
       ⟨p.node, strip p.node,
         s!"{p.dir.label} {strip p.node} : {p.kind}{exitMark p.node}",
         portFill p.dir, portStroke p.dir, none⟩
+  for u in l.unkinded do
+    rows := rows.push
+      ⟨u.node, strip u.node,
+        s!"unkinded {u.dir.label} {strip u.node} : {u.type}",
+        unkindedFill, unkindedStroke, none⟩
   for i in l.graph.intros do
     let tip := match i.tier with
       | .attested r => some r
@@ -170,12 +188,22 @@ def emit (a : Assembly) (title : String := "kind assembly") : String := Id.run d
   out := out ++ put boxStyle
   out := out ++ put ("  \"v\": {label: \"" ++ vt
     ++ "\"; shape: text; style: {font-size: 13; font-color: \"" ++ vc ++ "\"; bold: true}}")
+  -- the wiring verdict's red twin: the unkinded count, so a figure with red rows and
+  -- arrows in it says so in its own header
+  let unkCount := a.levels.foldl (init := 0) fun n l => n + l.unkinded.length
+  let (uc, ut) := if unkCount == 0 then
+      ("#16a34a", "unkinded positions: none — fully kinded")
+    else
+      ("#dc2626", s!"unkinded positions: {unkCount} — outside the kinded algebra")
+  out := out ++ put ("  \"u\": {label: \"" ++ ut
+    ++ "\"; shape: text; style: {font-size: 13; font-color: \"" ++ uc ++ "\"; bold: true}}")
+  out := out ++ put "  \"v\" -> \"u\": {style: {opacity: 0}}"
   for i in [0:a.levels.size] do
     let l := a.levels[i]!
     let line := if l.src.isEmpty then s!"{l.decl}" else s!"{l.decl} — {l.src}"
     out := out ++ put ("  " ++ q s!"s{i}" ++ ": {label: " ++ q line
       ++ "; shape: text; style: {font-size: 12; font: mono; font-color: \"#374151\"}}")
-  let mut prev := "\"v\""
+  let mut prev := "\"u\""
   for i in [0:a.levels.size] do
     let cur := q s!"s{i}"
     out := out ++ put ("  " ++ prev ++ " -> " ++ cur ++ ": {style: {opacity: 0}}")
@@ -192,7 +220,8 @@ def emit (a : Assembly) (title : String := "kind assembly") : String := Id.run d
       ("output port", portFill .output, portStroke .output),
       ("derived", tierFill .derived, tierStroke .derived),
       ("gated", tierFill .gated, tierStroke .gated),
-      ("attested ⓘ", tierFill (.attested ""), tierStroke (.attested ""))]
+      ("attested ⓘ", tierFill (.attested ""), tierStroke (.attested "")),
+      ("unkinded", unkindedFill, unkindedStroke)]
   for i in [0:swatches.size] do
     let (lbl, f, s) := swatches[i]!
     out := out ++ put ("  " ++ q s!"sw{i}" ++ ": {label: " ++ q lbl
@@ -205,7 +234,8 @@ def emit (a : Assembly) (title : String := "kind assembly") : String := Id.run d
     #[("witness", "#111827", ""),
       ("procedure [step]", "#4f46e5", ""),
       ("identity wire", "#9ca3af", ""),
-      ("citation", "#4f46e5", "; stroke-dash: 4")]
+      ("citation", "#4f46e5", "; stroke-dash: 4"),
+      ("unkinded flow", unkindedStroke, "")]
   for i in [0:samples.size] do
     let (lbl, stroke, dash) := samples[i]!
     let dot := ": {label: \"\"; shape: circle; width: 10; height: 10; style: {fill: "
@@ -219,7 +249,7 @@ def emit (a : Assembly) (title : String := "kind assembly") : String := Id.run d
       out := out ++ put ("  " ++ q s!"l{i-1}b" ++ " -> " ++ q s!"l{i}a"
         ++ ": {style: {opacity: 0}}")
   out := out ++ put ("  \"note\": {label: "
-    ++ q "⊗ exit at the erasure boundary · ⓘ carries the attested reason"
+    ++ q "⊗ exit at the erasure boundary · ⓘ carries the attested reason · red = outside the kinded algebra"
     ++ "; shape: text; style: {font-size: 12; font-color: \"#374151\"}}")
   out := out ++ put "}"
   -- the level containers: one box per level, its mode on the label and — interface
@@ -276,6 +306,15 @@ def emit (a : Assembly) (title : String := "kind assembly") : String := Id.run d
         out := out ++ put (s!"{src} -> {j}: " ++ "{style: {stroke: " ++ q stroke
           ++ "}; target-arrowhead: {shape: none}}")
       out := out ++ put (s!"{j} -> {dst}: " ++ "{" ++ lbl ++ eStyle ++ "}")
+  -- the unkinded flows, red: an unkinded signature position minting or steering a
+  -- kinded node — a path outside the kinded algebra ("Red is the nonconformance
+  -- reading", module header)
+  for l in a.levels do
+    for (s, t) in l.leaks do
+      let some src := path.get? s | continue
+      let some dst := path.get? t | continue
+      out := out ++ put (s!"{src} -> {dst}: " ++ "{style: {stroke: "
+        ++ q unkindedStroke ++ "}}")
   -- the citation relation, dashed between containers — drawn, never wired
   for (src, dst) in a.cites do
     out := out ++ put (s!"{q src} -> {q dst}: "

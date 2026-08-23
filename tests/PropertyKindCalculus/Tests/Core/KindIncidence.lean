@@ -223,13 +223,21 @@ input x : alphaK
 input y : betaK
 output result.1 : betaK
 output result.3 : alphaK
+unkinded output result.2 : Nat
 -/
 #guard_msgs in #kind_ports swapPair
 
-/-- A signature with no carrier-typed positions at all. -/
+/-- A signature with no carrier-typed positions at all: every position is named by the
+unkinded reading — the report states the nonconformance instead of narrowing to an
+empty kinded slice. -/
 def plainAdd (a b : Nat) : Nat := a + b
 
-/-- info: no kind ports in 'PropertyKindCalculus.Tests.KindIncidence.plainAdd' -/
+/--
+info: kind ports of 'PropertyKindCalculus.Tests.KindIncidence.plainAdd':
+unkinded input a : Nat
+unkinded input b : Nat
+unkinded output result : Nat
+-/
 #guard_msgs in #kind_ports plainAdd
 
 /-! ## The constructed graph — `#kind_graph`
@@ -284,6 +292,7 @@ input x : alphaK
 input y : betaK
 output result.1 : betaK
 output result.3 : alphaK
+unkinded output result.2 : Nat
 betaK → betaK ⟨y⟩ ⇒ result.1
 alphaK → alphaK ⟨x⟩ ⇒ result.3
 well-formed: true
@@ -342,15 +351,20 @@ well-formed: true
 /-! ### Sources — the audit's tiers, carried into the graph -/
 
 /-- A step whose output is an authored mint through the built-in attestor: the graph
-introduces the attested source with its harvested reason and wires it to the output. -/
+introduces the attested source with its harvested reason and wires it to the output.
+The naked `Float` argument is the unkinded reading's exhibit — the red row — and its
+occurrence inside the minting application is the unkinded flow: unkinded information
+minting kinded information, the red arrow. -/
 def attestedStep (m : Float) : Quantity deltaK Float :=
   Quantity.attest "vendor calibration sheet, 2026-08" m
 
 /--
 info: kind graph of 'PropertyKindCalculus.Tests.KindIncidence.attestedStep':
 output result : deltaK
+unkinded input m : Float
 attested "vendor calibration sheet, 2026-08" _1 : deltaK
 deltaK → deltaK ⟨_1⟩ ⇒ result
+unkinded flow: m ⇒ _1
 well-formed: true
 -/
 #guard_msgs in #kind_graph attestedStep
@@ -364,8 +378,10 @@ def gatedStep (x : Float) : Quantity deltaK Float := gateIn x
 /--
 info: kind graph of 'PropertyKindCalculus.Tests.KindIncidence.gatedStep':
 output result : deltaK
+unkinded input x : Float
 gated _1 : deltaK
 deltaK → deltaK ⟨_1⟩ ⇒ result
+unkinded flow: x ⇒ _1
 well-formed: true
 -/
 #guard_msgs in #kind_graph gatedStep
@@ -506,8 +522,10 @@ same `⟨…⟩` in an untagged step (`rawStep`) is refused. -/
 /--
 info: kind graph of 'PropertyKindCalculus.Tests.KindIncidence.liftRaw':
 output result : alphaK
+unkinded input v : Nat
 attested "[kindEmission]" _1 : alphaK
 alphaK → alphaK ⟨_1⟩ ⇒ result
+unkinded flow: v ⇒ _1
 well-formed: true
 -/
 #guard_msgs in #kind_graph liftRaw
