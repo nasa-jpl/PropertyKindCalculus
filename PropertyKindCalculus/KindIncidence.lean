@@ -16,6 +16,8 @@ off a report by a person:
     #kind_assembly_decide [a, b, …] -- the kernel checks the assembled wiring
     #kind_contract c                -- the declared boundary against the computed one
     #kind_contract_decide c         -- the kernel checks the declared boundary
+    #kind_discharges c d            -- what a deploying contract did with what it inherited
+    #kind_discharges_decide c d     -- the kernel checks that the tiers stack
 
 Wherever a scope has a contract, the two assembly commands take its name in place of the
 bracket list — `#kind_assembly c` — so the member list is spelled once, in the
@@ -1628,6 +1630,19 @@ def renderContractLines (c : Provenance.Contract String String)
     ++ (c.unrealizedExits g).map (fun n => s!"unrealized exit {n}")
     ++ [s!"boundary agrees: {c.agrees g}"]
 
+/-- The tier comparison as lines: what the deploying contract did with each parameter it
+inherited — `bound` where the wider scope feeds it, `restated` where it is passed on —
+followed by whatever is unanswered, then the verdict. Two declarations, no graph. -/
+def renderDischargeLines (c d : Provenance.Contract String String) : List String :=
+  [s!"tier '{c.name}' over '{d.name}': {d.members.length} members inherited, \
+     {d.params.length} parameters"]
+    ++ (c.bound d).map (fun n => s!"bound {n}")
+    ++ (c.params.filter (d.params.contains ·)).map (fun n => s!"restated {n}")
+    ++ (c.unscoped d).map (fun m => s!"outside the scope: {m}")
+    ++ (c.undischarged d).map (fun n => s!"undischarged {n}")
+    ++ (c.droppedExits d).map (fun n => s!"dropped exit {n}")
+    ++ [s!"discharges: {c.discharges d}"]
+
 /-! ## The commands — four renderings of one producer -/
 
 open Elab Command in
@@ -1760,5 +1775,33 @@ elab "#kind_contract_decide " c:ident : command => liftTermElabM do
   addDecl (.thmDecl { name, levelParams := [], type := prop, value := proof })
   logInfo m!"kernel-accepted: '{cname}' is the boundary of its {ctr.members.length}-step \
     assembly (theorem '{name}')"
+
+open Elab Command in
+/-- `#kind_discharges c d` compares two contracts — no graph, no harvest: what the
+deploying contract `c` did with each parameter the deployed contract `d` handed it, and
+whether anything was left unanswered. -/
+elab "#kind_discharges " c:ident d:ident : command => liftTermElabM do
+  let ctr ← contractValueOf (← realizeGlobalConstNoOverload c)
+  let inner ← contractValueOf (← realizeGlobalConstNoOverload d)
+  logInfo m!"kind tier:\n{String.intercalate "\n" (renderDischargeLines ctr inner)}"
+
+open Elab Command in
+/-- `#kind_discharges_decide c d` adds the theorem `c.kindDischarges.d : c.Discharges d`,
+proved by `decide` — kernel reduction of the tier relation on the two authors' own
+contract definitions, which the proposition names rather than copies. Errors out (before
+troubling the kernel) when the tiers do not stack, printing what is unanswered. -/
+elab "#kind_discharges_decide " c:ident d:ident : command => liftTermElabM do
+  let cname ← realizeGlobalConstNoOverload c
+  let dname ← realizeGlobalConstNoOverload d
+  let ctr ← contractValueOf cname
+  let inner ← contractValueOf dname
+  unless ctr.discharges inner do
+    throwError "'{cname}' does not discharge '{dname}':\n\
+      {String.intercalate "\n" (renderDischargeLines ctr inner)}"
+  let prop ← Meta.mkAppM ``Provenance.Contract.Discharges #[mkConst cname, mkConst dname]
+  let proof ← Meta.mkDecideProof prop
+  let name := cname ++ `kindDischarges ++ .mkSimple (dname.getString!)
+  addDecl (.thmDecl { name, levelParams := [], type := prop, value := proof })
+  logInfo m!"kernel-accepted: '{cname}' discharges '{dname}' (theorem '{name}')"
 
 end PropertyKindCalculus.KindIncidence

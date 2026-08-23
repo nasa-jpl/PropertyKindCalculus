@@ -914,4 +914,84 @@ info: kernel-accepted: the kind assembly is well-formed (theorem 'PropertyKindCa
 -/
 #guard_msgs in #kind_assembly_decide endOfBoxBoundary
 
+/-! ### The tier relation — `#kind_discharges`
+
+Two declarations, no graph: what a deploying contract did with the parameters it
+inherited. `endOfBoxParametric` above hands one down; the contracts below answer for it
+three ways — bound within a wider scope, restated as a parameter of the wider scope, and
+quietly relabelled per-datum data, which is the case the relation exists to refuse. -/
+
+/-- A wider scope that binds the inherited parameter: `endOfBoxLet/x` is fed inside it,
+so the port is interior and gone from this boundary. Members and exits are its own; only
+the discharge is at issue here. -/
+def endOfBoxDeployed : Provenance.Contract String String where
+  name := "endOfBox (deployed)"
+  members := endOfBoxParametric.members ++ [
+    "PropertyKindCalculus.Tests.KindIncidence.halved"]
+  ports := [⟨"endOfBoxLet/result", "alphaK", .output⟩]
+  exits := []
+
+/--
+info: kind tier:
+tier 'endOfBox (deployed)' over 'endOfBox (parametric)': 3 members inherited, 1 parameters
+bound endOfBoxLet/x
+discharges: true
+-/
+#guard_msgs in #kind_discharges endOfBoxDeployed endOfBoxParametric
+
+/--
+info: kernel-accepted: 'PropertyKindCalculus.Tests.KindIncidence.endOfBoxDeployed' discharges 'PropertyKindCalculus.Tests.KindIncidence.endOfBoxParametric' (theorem 'PropertyKindCalculus.Tests.KindIncidence.endOfBoxDeployed.kindDischarges.endOfBoxParametric')
+-/
+#guard_msgs in #kind_discharges_decide endOfBoxDeployed endOfBoxParametric
+
+/-- A wider scope that does not bind the inherited parameter but keeps calling it one:
+the obligation stays named, for the tier after this one. -/
+def endOfBoxPassedOn : Provenance.Contract String String where
+  name := "endOfBox (passed on)"
+  members := endOfBoxDeployed.members
+  ports := endOfBoxParametric.ports ++ [⟨"halved/result", "epsilonK", .output⟩]
+  exits := []
+
+-- Passing it on is the other lawful answer.
+/--
+info: kind tier:
+tier 'endOfBox (passed on)' over 'endOfBox (parametric)': 3 members inherited, 1 parameters
+restated endOfBoxLet/x
+discharges: true
+-/
+#guard_msgs in #kind_discharges endOfBoxPassedOn endOfBoxParametric
+
+-- And the case the relation exists for: the boundary is unchanged, the wiring verdict is
+-- unchanged, `agrees` is unchanged — the only thing that moved is a role, and with it an
+-- obligation that now belongs to nobody.
+/--
+info: kind tier:
+tier 'endOfBox' over 'endOfBox (parametric)': 3 members inherited, 1 parameters
+undischarged endOfBoxLet/x
+discharges: false
+-/
+#guard_msgs in #kind_discharges endOfBoxBoundary endOfBoxParametric
+
+/-- An unrelated scope, to ask the relation about a pair that does not stack. -/
+def halvingBoundary : Provenance.Contract String String where
+  name := "halving"
+  members := [
+    "PropertyKindCalculus.Tests.KindIncidence.halved",
+    "PropertyKindCalculus.Tests.KindIncidence.halve"]
+  ports := [
+    ⟨"halved/q", "alphaK", .input⟩,
+    ⟨"halved/result", "epsilonK", .output⟩]
+  exits := []
+
+-- A scope that is not a deployment of the algorithm at all: the members do not contain
+-- it, so nothing it says about parameters is about this.
+/--
+info: kind tier:
+tier 'endOfBox' over 'halving': 2 members inherited, 0 parameters
+outside the scope: PropertyKindCalculus.Tests.KindIncidence.halved
+outside the scope: PropertyKindCalculus.Tests.KindIncidence.halve
+discharges: false
+-/
+#guard_msgs in #kind_discharges endOfBoxBoundary halvingBoundary
+
 end PropertyKindCalculus.Tests.KindIncidence

@@ -87,6 +87,15 @@ about a computed `input`, and `PortDir.refines` is exactly that one refinement. 
 are then contracts over the same vocabulary: an algorithm's parameters unbound, an
 application's bound, a deployment's inputs and outputs bound to artifacts.
 
+`Contract.discharges` is that ladder, and it is a relation between two *declarations*
+rather than between a declaration and a graph — no harvest, so a deployment can state
+what it did with an algorithm's parameters with the algorithm's contract merely imported.
+It asks three things: that the deploying contract contains every member of the deployed
+one, that every inherited parameter is either bound within the wider scope or restated as
+a parameter of it, and that no exit is lost on the way up. The middle one is the content:
+binding a parameter is an act — a constant declared, a wire run — and relabelling it
+per-datum data is not that act, so a parameter is not discharged by being forgotten.
+
 What well-formedness deliberately does not check is the *truth* of any edge. Per the
 trust model (`QuantityClassification`, "The trust model — witnesses are authored, not
 checked"), whether `k` really is the product kind of `k₁` and `k₂` is the author's
@@ -482,6 +491,52 @@ def Contract.Agrees (c : Contract ν κ) (g : Provenance ν κ) : Prop := c.agre
 
 instance (c : Contract ν κ) (g : Provenance ν κ) : Decidable (c.Agrees g) :=
   inferInstanceAs (Decidable (c.agrees g = true))
+
+/-! ### The tier relation — a parameter is not discharged by being forgotten
+
+`agrees` needs the graph; this does not. A deployment states what it did with an
+algorithm's parameters by comparing two *declarations*, so the ladder can be stated
+across a repository boundary — with the algorithm's contract imported and its members
+never re-walked. -/
+
+/-- The members of the deployed contract `d` that the deploying contract `c` does not
+contain. Non-empty means `c` is not a deployment of `d` at all: it left part of the
+algorithm out, and whatever it discharges it is not discharging this. -/
+def Contract.unscoped (c d : Contract ν κ) : List String :=
+  d.members.filter fun m => !(c.members.contains m)
+
+/-- The parameters of `d` that `c` **binds**: they are gone from `c`'s boundary, which
+means a member of `c` feeds them — the wire that discharges an obligation is the wire
+that makes the port interior. -/
+def Contract.bound (c d : Contract ν κ) : List ν :=
+  d.params.filter fun n => !(c.ports.any fun p => p.node == n)
+
+/-- The parameters of `d` that `c` inherits and does not answer for: still at `c`'s
+boundary, and no longer called parameters there. Binding one is an act — a constant, a
+wire — and relabelling it per-datum data is not that act, so the obligation would leave
+the ladder without anyone taking it. -/
+def Contract.undischarged (c d : Contract ν κ) : List ν :=
+  d.params.filter fun n =>
+    (c.ports.any fun p => p.node == n) && !(c.params.contains n)
+
+/-- The exits of `d` that `c` does not exhibit: a value that left the calculus one tier
+down cannot stop having left it one tier up. -/
+def Contract.droppedExits (c d : Contract ν κ) : List ν :=
+  d.exits.filter fun n => !(c.exits.contains n)
+
+/-- **`c` is a deployment of `d`, and it has answered for what `d` handed down**: it
+contains every member of `d`, every parameter of `d` is either bound within `c` or
+restated as a parameter of `c`, and every exit of `d` is still an exit of `c`. The
+tier ladder as one decidable relation between declarations — where `agrees` says a
+contract is the boundary its own members compute, this says the tiers stack. -/
+def Contract.discharges (c d : Contract ν κ) : Bool :=
+  (c.unscoped d).isEmpty && (c.undischarged d).isEmpty && (c.droppedExits d).isEmpty
+
+/-- `Prop`-level discharge, for statements and `decide`. -/
+def Contract.Discharges (c d : Contract ν κ) : Prop := c.discharges d = true
+
+instance (c d : Contract ν κ) : Decidable (c.Discharges d) :=
+  inferInstanceAs (Decidable (c.discharges d = true))
 
 /-! ## The assembly combinators — namespaced union (header, "The procedure edge") -/
 
