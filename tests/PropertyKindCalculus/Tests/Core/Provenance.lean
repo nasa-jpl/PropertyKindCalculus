@@ -60,6 +60,50 @@ def stepN : Provenance Nat Nat where
 
 example : stepN.WellFormed := by decide
 
+/-! ## Scope — what the verdict does not judge (module header, "What well-formedness
+does not claim")
+
+`wellFormed` is monotone under disjoint union, so it cannot judge a *membership* choice:
+two graphs sharing no node union to a well-formed graph however unrelated they are. The
+witness matters because an assembly harvest reads a *set* of declarations, and a green
+verdict on the union is no evidence that the set belongs together — scope is a boundary
+property, not a wiring property. `reachableFrom` is what states connectivity, and it is
+asked of a chosen start set. -/
+
+/-- A second well-formed step over its own nodes and kinds, sharing nothing with `step`:
+a different measurement entirely. -/
+def unrelated : Provenance String String where
+  ports := [⟨"p", "muK", .input⟩, ⟨"q", "nuK", .output⟩]
+  intros := []
+  occurrences := [⟨.transcendental, [("p", "muK")], "q", "nuK", "unrelated"⟩]
+  exits := []
+
+#guard unrelated.wellFormed
+
+-- The scope witness: the union of two unrelated well-formed graphs is well-formed.
+#guard (step.union unrelated).wellFormed
+
+-- And they are genuinely unrelated — neither part's sources derive the other's output.
+-- That is the claim the verdict does not make and `reachableFrom` does.
+#guard !((step.union unrelated).reachableFrom step.sources).contains "q"
+#guard !((step.union unrelated).reachableFrom unrelated.sources).contains "out"
+
+-- Derivability is conjunctive: `x` alone derives nothing, because the product edge needs
+-- `y` as well. (Whether `x` *influences* `out` is a different, disjunctive query over the
+-- same incidence — not this one.)
+#guard step.reachableFrom ["x"] == ["x"]
+#guard step.reachableFrom ["x", "y"] == ["x", "y", "z", "out"]
+
+/-- `stepN`'s unrelated twin, for the kernel route: the scope witness decided, not
+evaluated. -/
+def unrelatedN : Provenance Nat Nat where
+  ports := [⟨4, 14, .input⟩, ⟨5, 15, .output⟩]
+  intros := []
+  occurrences := [⟨.transcendental, [(4, 14)], 5, 15, "unrelated"⟩]
+  exits := []
+
+example : (stepN.union unrelatedN).WellFormed := by decide
+
 /-! ## The anonymous-mint flip — "raw mints = 0", compositional
 
 Delete the occurrence that derives `z`: now `z` is a `derived` node nothing produces —

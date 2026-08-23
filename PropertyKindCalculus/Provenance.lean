@@ -41,6 +41,21 @@ boundary audit's "raw mints = 0" made compositional: a node that is neither a so
 reachable through authored occurrences is exactly an anonymous mint, and the predicate
 refuses the graph that contains one.
 
+## What well-formedness does not claim — the graph's scope
+
+`wellFormed` judges the wiring of the graph it is given, and it is **monotone under
+disjoint union**: unique-declaration survives on node-disjoint operands, typing and
+results-are-derivations are per-occurrence, and the closure of a union contains each
+part's closure. Two well-formed graphs sharing no node therefore union to a well-formed
+graph however unrelated they are, and a harvest that assembles a *set* of declarations
+gets no verdict on the set — adding a member belonging to no pipeline leaves the verdict
+`true`, and the assembled ports are a by-product of the membership choice rather than a
+claim that choice can be checked against. Scope is a **boundary** property, not a wiring
+property: a member set is justified exactly when the boundary it computes is the boundary
+someone declared. `reachableFrom` is the query that states connectivity — it is asked of a
+chosen start set and never assumed of the whole — and the probes carry the witness, an
+unrelated pair whose union passes while neither part reaches the other.
+
 What well-formedness deliberately does not check is the *truth* of any edge. Per the
 trust model (`QuantityClassification`, "The trust model — witnesses are authored, not
 checked"), whether `k` really is the product kind of `k₁` and `k₂` is the author's
@@ -270,13 +285,21 @@ def sweeps (occs : List (Occurrence ν κ)) : Nat → List ν → List ν
   | 0, ks => ks
   | fuel + 1, ks => sweeps occs fuel (sweep occs ks)
 
-/-- The nodes reached from the sources through the occurrences: the least fixpoint of
-"an occurrence whose operands are all known makes its result known", in discovery
-order. One sweep per occurrence saturates, since each productive sweep adds at least
-one result. This is forward reachability on the hypergraph, and the engine of
-`wellFormed`'s central condition. -/
-def known (g : Provenance ν κ) : List ν :=
-  sweeps g.occurrences g.occurrences.length g.sources
+/-- The nodes *derivable* from a chosen starting set through the occurrences: the least
+fixpoint of "an occurrence whose operands are ALL known makes its result known", in
+discovery order. One sweep per occurrence saturates, since each productive sweep adds at
+least one result. Forward derivability on the hypergraph, asked of whatever start set the
+question is about rather than assumed of the whole graph. The conjunctive rule is what
+`wellFormed`'s central condition needs — a node is accounted for only once everything it
+is built from is — and it is deliberately *not* the influence relation a sensitivity query
+asks for: whether *some* operand carries a value onward is a disjunctive closure over the
+same incidence, a different query on the same data. -/
+def reachableFrom (g : Provenance ν κ) (start : List ν) : List ν :=
+  sweeps g.occurrences g.occurrences.length start
+
+/-- The nodes reached from the sources through the occurrences — `reachableFrom` at the
+start set `wellFormed`'s central condition asks about. -/
+def known (g : Provenance ν κ) : List ν := g.reachableFrom g.sources
 
 /-- Every node is declared exactly once, ports and introductions jointly: a node with
 two declarations would have two kinds or two tiers, and every lookup would silently
