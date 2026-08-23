@@ -20,7 +20,11 @@ evaluation on the emitted text; WHERE a box sits is the layout engine's problem
 (crossing minimization, orthogonal edge routing through nested boxes), a solved one no
 hand-rolled coordinate pass should re-solve. A multi-operand hyperedge meets at a
 small diamond junction node — the standard drawing of a hyperedge in a binary-edge
-grammar — with undirected legs from the operands and one arrowed leg to the result.
+grammar — with arrowhead-suppressed legs from the operands and one arrowed leg to the
+result: legs stay directed so the layered engine orders operands before the junction
+and the junction before the result. A junction whose operands and result all live in
+one level nests inside that level's container — a hyperedge interior to a step is
+drawn interior to its box, not routed out and back in.
 -/
 import PropertyKindCalculus.KindIncidence
 
@@ -156,8 +160,10 @@ def emit (a : Assembly) (title : String := "kind assembly") : String := Id.run d
     ++ q ("rows: input / config / output ports · derived / gated / attested introductions (ⓘ carries the attested reason) · ⊗ exit — arrows: black witness edge · indigo procedure edge · gray identity wire · dashed citation")
     ++ "; shape: text; near: bottom-center; style: {font-size: 12; font-color: \"#6b7280\"}}")
   -- the level containers: one box per level, its mode on the label and — interface
-  -- mode — on a dashed border; every row registers its graph node's D2 path
+  -- mode — on a dashed border; every row registers its graph node's D2 path and its
+  -- level (junction nesting below asks which container an endpoint lives in)
   let mut path : Std.HashMap String String := {}
+  let mut level : Std.HashMap String String := {}
   for l in a.levels do
     let rows := levelRows l
     out := out ++ put (q l.name ++ ": {")
@@ -173,10 +179,12 @@ def emit (a : Assembly) (title : String := "kind assembly") : String := Id.run d
         ++ "; style: {fill: " ++ q r.fill ++ "; stroke: " ++ q r.stroke
         ++ "; border-radius: 6; font-size: 13}" ++ tip ++ "}")
       path := path.insert r.node (q l.name ++ "." ++ q r.key)
+      level := level.insert r.node l.name
     out := out ++ put "}"
   -- the occurrences: a single-operand edge draws direct with its glyph; a
-  -- multi-operand hyperedge meets at a diamond junction — undirected legs in, one
-  -- arrowed leg out carrying the glyph
+  -- multi-operand hyperedge meets at a diamond junction — arrowhead-suppressed
+  -- directed legs in (the layered engine orders them), one arrowed leg out carrying
+  -- the glyph; a junction interior to one level nests inside that level's container
   let mut jIdx := 0
   for o in a.graph.occurrences do
     let some dst := path.get? o.result | continue
@@ -190,12 +198,20 @@ def emit (a : Assembly) (title : String := "kind assembly") : String := Id.run d
     if srcs.length == 1 then
       out := out ++ put (s!"{srcs[0]!} -> {dst}: " ++ "{" ++ lbl ++ eStyle ++ "}")
     else
-      let j := q s!"__j{jIdx}"
+      let home : Option String := Id.run do
+        let some l := level.get? o.result | return none
+        for oc in o.operands do
+          unless level.get? oc.1 == some l do return none
+        return some l
+      let j := match home with
+        | some l => q l ++ "." ++ q s!"__j{jIdx}"
+        | none => q s!"__j{jIdx}"
       jIdx := jIdx + 1
       out := out ++ put (j ++ ": {label: \"\"; shape: diamond; width: 16; height: 16; style: {fill: \"#ffffff\"; stroke: "
         ++ q stroke ++ "}}")
       for src in srcs do
-        out := out ++ put (s!"{src} -- {j}: " ++ "{style: {stroke: " ++ q stroke ++ "}}")
+        out := out ++ put (s!"{src} -> {j}: " ++ "{style: {stroke: " ++ q stroke
+          ++ "}; target-arrowhead: {shape: none}}")
       out := out ++ put (s!"{j} -> {dst}: " ++ "{" ++ lbl ++ eStyle ++ "}")
   -- the citation relation, dashed between containers — drawn, never wired
   for (src, dst) in a.cites do
