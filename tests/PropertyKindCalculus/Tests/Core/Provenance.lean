@@ -124,11 +124,17 @@ Roles carry binding time, and `param` is the one refinement a declaration may ma
 a computed role: it says a source is bound by the tier below, which a signature harvest
 cannot see. Claiming `config` — a constant *this* tier binds — is a harvested fact, so
 declaring one where the walk found an input is a disagreement in both directions at
-once. -/
+once.
+
+A contract also names the members it is claimed for, which is what a harvest assembles
+to get the graph. The graphs here are written by hand rather than harvested, so the
+scope names nothing and the comparison stands on the boundary alone — `agrees` reads the
+ports and the exits, never the member list. -/
 
 /-- The boundary `step` actually has. -/
 def stepBoundary : Contract String String where
   name := "step"
+  members := []
   ports := [
     ⟨"x", "alphaK", .input⟩,
     ⟨"y", "betaK", .input⟩,
@@ -171,6 +177,7 @@ def stepBoundary : Contract String String where
 kernel route for the boundary comparison, as `decide` reduces it. -/
 def stepNBoundary : Contract Nat Nat where
   name := "stepN"
+  members := []
   ports := [⟨0, 10, .input⟩, ⟨1, 11, .param⟩, ⟨3, 13, .output⟩]
   exits := [3]
 

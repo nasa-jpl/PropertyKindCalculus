@@ -14,8 +14,8 @@ off a report by a person:
     #kind_graph_decide myStep  -- the kernel checks the wiring (an added `decide` theorem)
     #kind_assembly [a, b, …]        -- the multi-step graph of a pipeline, one object
     #kind_assembly_decide [a, b, …] -- the kernel checks the assembled wiring
-    #kind_contract c [a, b, …]        -- the declared boundary against the computed one
-    #kind_contract_decide c [a, b, …] -- the kernel checks the declared boundary
+    #kind_contract c                -- the declared boundary against the computed one
+    #kind_contract_decide c         -- the kernel checks the declared boundary
 
 **Ports** are read off what the signature *states*: the telescope's carrier-typed
 binders are input ports (in signature order), the result type's carrier-typed right-spine
@@ -1287,7 +1287,10 @@ exits must be the ones the contract states, so a member added or dropped moves t
 boundary and the comparison says which way. Well-formedness cannot make that judgment —
 it is monotone under disjoint union (`Provenance`, "What well-formedness does not
 claim") — which is why the boundary is declared rather than inferred, and why the
-rendering prints the two difference lists whenever they are non-empty. -/
+rendering prints the two difference lists whenever they are non-empty. The contract names
+its own members, so those commands take no bracket list: the scope is assembled *from the
+declaration under judgment*, and every other consumer of the same scope — a figure
+generator, a downstream tier — reads the member list off it instead of restating it. -/
 
 /-- One level of an assembly: the declaration, its rendered name (the node-namespace
 prefix), its inclusion mode (`walked` — the wired interior; otherwise the interface
@@ -1549,6 +1552,20 @@ proposition rests on it. -/
 private def evalContract (_e : Expr) : MetaM (Provenance.Contract String String) :=
   throwError "contract values cannot be read in this environment"
 
+/-- The scope a contract declares, as the assembly its members compute. The one place a
+member list becomes a graph, so a probe and a figure generator that name the same
+contract are looking at the same object. -/
+def assembleContract (c : Provenance.Contract String String) : MetaM Assembly := do
+  if c.members.isEmpty then
+    throwError "the contract '{c.name}' declares no members"
+  let env ← getEnv
+  let decls ← c.members.toArray.mapM fun m => do
+    let n := m.toName
+    unless env.contains n do
+      throwError "the contract '{c.name}' names '{m}', which is not a declaration"
+    pure n
+  assemble decls
+
 /-- The boundary comparison as lines: the contract's name, its parameters — the
 obligations it hands to the tier below — and then either agreement or the two difference
 lists, an undeclared port being a boundary the graph has and the contract does not, an
@@ -1664,41 +1681,37 @@ private def contractValueOf (cname : Name) :
   evalContract (mkConst cname)
 
 open Elab Command in
-/-- `#kind_contract c [d₁, d₂, …]` assembles the listed declarations and compares the
-assembly's boundary with the boundary the contract `c` declares — its parameters, then
-the ports and exits each side has and the other does not, then the verdict — as a single
-`info` message suitable for `#guard_msgs` pinning. This is the scope reading:
-`#kind_assembly` says whether the wiring holds together, and this says whether the
-members are the ones the declared interface belongs to. -/
-elab "#kind_contract " c:ident " [" ids:ident,* "]" : command => liftTermElabM do
+/-- `#kind_contract c` assembles the members the contract `c` declares and compares that
+assembly's boundary with the boundary `c` declares — its parameters, then the ports and
+exits each side has and the other does not, then the verdict — as a single `info` message
+suitable for `#guard_msgs` pinning. This is the scope reading: `#kind_assembly` says
+whether the wiring holds together, and this says whether the members are the ones the
+declared interface belongs to. -/
+elab "#kind_contract " c:ident : command => liftTermElabM do
   let cname ← realizeGlobalConstNoOverload c
-  let decls ← ids.getElems.mapM fun id => realizeGlobalConstNoOverload id
-  if decls.isEmpty then throwError "#kind_contract expects at least one declaration"
-  let a ← assemble decls
   let ctr ← contractValueOf cname
-  logInfo m!"kind contract over {decls.size} steps:\n\
+  let a ← assembleContract ctr
+  logInfo m!"kind contract over {ctr.members.length} steps:\n\
     {String.intercalate "\n" (renderContractLines ctr a.graph)}"
 
 open Elab Command in
-/-- `#kind_contract_decide c [d₁, d₂, …]` assembles the listed declarations, reflects the
-union graph into a term, and adds the theorem `c.kindContractOk : c.Agrees (graph)`,
+/-- `#kind_contract_decide c` assembles the members the contract `c` declares, reflects
+the union graph into a term, and adds the theorem `c.kindContractOk : c.Agrees (graph)`,
 proved by `decide` — kernel reduction of the boundary comparison against the author's own
 contract definition, which the proposition names rather than copies. Errors out (before
 troubling the kernel) when the boundaries disagree, printing the difference lists. -/
-elab "#kind_contract_decide " c:ident " [" ids:ident,* "]" : command => liftTermElabM do
+elab "#kind_contract_decide " c:ident : command => liftTermElabM do
   let cname ← realizeGlobalConstNoOverload c
-  let decls ← ids.getElems.mapM fun id => realizeGlobalConstNoOverload id
-  if decls.isEmpty then throwError "#kind_contract_decide expects at least one declaration"
-  let a ← assemble decls
   let ctr ← contractValueOf cname
+  let a ← assembleContract ctr
   unless ctr.agrees a.graph do
-    throwError "the boundary declared by '{cname}' is not the one the assembly computes:\n\
+    throwError "the boundary declared by '{cname}' is not the one its members compute:\n\
       {String.intercalate "\n" (renderContractLines ctr a.graph)}"
   let prop ← Meta.mkAppM ``Provenance.Contract.Agrees #[mkConst cname, toExpr a.graph]
   let proof ← Meta.mkDecideProof prop
   let name := cname ++ `kindContractOk
   addDecl (.thmDecl { name, levelParams := [], type := prop, value := proof })
-  logInfo m!"kernel-accepted: '{cname}' is the boundary of the {decls.size}-step \
+  logInfo m!"kernel-accepted: '{cname}' is the boundary of its {ctr.members.length}-step \
     assembly (theorem '{name}')"
 
 end PropertyKindCalculus.KindIncidence

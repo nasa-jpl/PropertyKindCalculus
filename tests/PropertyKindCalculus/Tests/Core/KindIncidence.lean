@@ -793,15 +793,19 @@ well-formed: true
 
 The wiring verdict is monotone under adding an unrelated member, so it cannot judge the
 membership choice; the boundary can, because a member brings ports with it. The contract
-below declares the interval composition's interface — one input, one output, the three
-levels' intermediate results interior — and the pins judge it three ways: against the
-members it belongs to, against those members plus an unrelated pair, and with the input
-declared a `param`, which is the one refinement a declaration may make over a computed
-role. -/
+below declares the interval composition's scope and interface together — three members,
+one input, one output, the levels' intermediate results interior — and the pins judge it
+three ways: as declared, with an unrelated pair added to the *declared* member list, and
+with the input declared a `param`, which is the one refinement a declaration may make
+over a computed role. -/
 
 /-- The declared boundary of the interval composition. -/
 def endOfBoxBoundary : Provenance.Contract String String where
   name := "endOfBox"
+  members := [
+    "PropertyKindCalculus.Tests.KindIncidence.endOfBoxLet",
+    "PropertyKindCalculus.Tests.KindIncidence.degenerate",
+    "PropertyKindCalculus.Tests.KindIncidence.lowerEnd"]
   ports := [
     ⟨"endOfBoxLet/x", "alphaK", .input⟩,
     ⟨"endOfBoxLet/result", "alphaK", .output⟩]
@@ -812,25 +816,32 @@ info: kind contract over 3 steps:
 contract 'endOfBox': 2 ports, 0 exits
 boundary agrees: true
 -/
-#guard_msgs in #kind_contract endOfBoxBoundary [endOfBoxLet, degenerate, lowerEnd]
+#guard_msgs in #kind_contract endOfBoxBoundary
 
 /--
-info: kernel-accepted: 'PropertyKindCalculus.Tests.KindIncidence.endOfBoxBoundary' is the boundary of the 3-step assembly (theorem 'PropertyKindCalculus.Tests.KindIncidence.endOfBoxBoundary.kindContractOk')
+info: kernel-accepted: 'PropertyKindCalculus.Tests.KindIncidence.endOfBoxBoundary' is the boundary of its 3-step assembly (theorem 'PropertyKindCalculus.Tests.KindIncidence.endOfBoxBoundary.kindContractOk')
 -/
-#guard_msgs in #kind_contract_decide endOfBoxBoundary [endOfBoxLet, degenerate, lowerEnd]
+#guard_msgs in #kind_contract_decide endOfBoxBoundary
+
+/-- The same interface claimed for a wider scope. -/
+def endOfBoxOverclaimed : Provenance.Contract String String :=
+  { endOfBoxBoundary with
+    name := "endOfBox (overclaimed)"
+    members := endOfBoxBoundary.members ++ [
+      "PropertyKindCalculus.Tests.KindIncidence.halved",
+      "PropertyKindCalculus.Tests.KindIncidence.halve"] }
 
 -- The scope reading: two unrelated members join the assembly, the wiring verdict is
 -- unmoved (`#kind_assembly` above says `true` for each part and the union is disjoint),
 -- and the boundary reports exactly what they brought.
 /--
 info: kind contract over 5 steps:
-contract 'endOfBox': 2 ports, 0 exits
+contract 'endOfBox (overclaimed)': 2 ports, 0 exits
 undeclared input halved/q : alphaK
 undeclared output halved/result : epsilonK
 boundary agrees: false
 -/
-#guard_msgs in
-#kind_contract endOfBoxBoundary [endOfBoxLet, degenerate, lowerEnd, halved, halve]
+#guard_msgs in #kind_contract endOfBoxOverclaimed
 
 /-- The same boundary with the input declared a parameter — a claim about binding time,
 which the walk cannot read and the comparison therefore accepts. -/
@@ -846,7 +857,7 @@ contract 'endOfBox (parametric)': 2 ports, 0 exits
 params: endOfBoxLet/x
 boundary agrees: true
 -/
-#guard_msgs in #kind_contract endOfBoxParametric [endOfBoxLet, degenerate, lowerEnd]
+#guard_msgs in #kind_contract endOfBoxParametric
 
 /-- The same boundary claiming the input is a constant this tier binds. -/
 def endOfBoxMisconfigured : Provenance.Contract String String :=
@@ -864,6 +875,6 @@ undeclared input endOfBoxLet/x : alphaK
 unrealized config endOfBoxLet/x : alphaK
 boundary agrees: false
 -/
-#guard_msgs in #kind_contract endOfBoxMisconfigured [endOfBoxLet, degenerate, lowerEnd]
+#guard_msgs in #kind_contract endOfBoxMisconfigured
 
 end PropertyKindCalculus.Tests.KindIncidence

@@ -58,16 +58,24 @@ unrelated pair whose union passes while neither part reaches the other.
 
 ## The declared boundary — `Contract`
 
-`Contract` is that declaration: a name, the ports the author claims the graph exposes with
-the role each plays, and the exits. `Contract.agrees` compares it with the computed
-boundary in both directions — nothing computed left undeclared, nothing declared left
-unexhibited — and the two difference lists are the report, because a boundary that cannot
-disagree checks nothing. This is the judgment `wellFormed` structurally cannot make, and
-it closes scope without a scope checker: add a member and the inputs nothing feeds surface
-as `undeclared` ports, drop one and its caller's operand stops wiring, so the port that
-covered it turns up `unrealized`. What the contract does *not* re-adjudicate is the wiring
-itself: `wellFormed` and `agrees` are two verdicts on one object, the first that the graph
-holds together and the second that it is the graph someone meant.
+`Contract` is that declaration: a name, the members it is claimed for, the ports the
+author claims those members expose with the role each plays, and the exits.
+`Contract.agrees` compares it with the computed boundary in both directions — nothing
+computed left undeclared, nothing declared left unexhibited — and the two difference
+lists are the report, because a boundary that cannot disagree checks nothing. This is the
+judgment `wellFormed` structurally cannot make, and it closes scope without a scope
+checker: add a member and the inputs nothing feeds surface as `undeclared` ports, drop
+one and its caller's operand stops wiring, so the port that covered it turns up
+`unrealized`. What the contract does *not* re-adjudicate is the wiring itself:
+`wellFormed` and `agrees` are two verdicts on one object, the first that the graph holds
+together and the second that it is the graph someone meant.
+
+The members belong *in* the declaration, because the sentence being checked is about
+them: a member set is justified exactly when the boundary it computes is the boundary
+declared for it. Carrying the two apart would leave the scope a per-call-site choice
+again — the contract would be checked against whichever members the caller happened to
+name — so every consumer, the probe and the figure alike, reads the scope off the one
+declaration that answers for it.
 
 Roles carry **binding time**, which is why there are four. A `config` is a constant *this
 tier binds* — a cited coefficient, a threshold — harvested from the declaration that binds
@@ -294,16 +302,21 @@ structure Provenance (ν κ : Type) where
 deriving Repr, Inhabited, BEq
 
 /-- **A declared boundary** (header, "The declared boundary"): the interface an author
-claims for a graph — a rendered name, the ports with the role and binding time each
-carries, and the exits where values leave the calculus. It is the statement a
-membership choice can be wrong about: `Contract.agrees` holds exactly when the boundary
-the graph computes is the boundary declared here, so a member added or dropped changes a
-difference list rather than passing silently. Same port vocabulary as the graph's own
-interface, because it is a claim about that interface and not a second notation for
-it. -/
+claims for a scope — a rendered name, the members claimed for, the ports with the role
+and binding time each carries, and the exits where values leave the calculus. It is the
+statement a membership choice can be wrong about: `Contract.agrees` holds exactly when
+the boundary those members compute is the boundary declared here, so a member added or
+dropped changes a difference list rather than passing silently. Same port vocabulary as
+the graph's own interface, because it is a claim about that interface and not a second
+notation for it. -/
 structure Provenance.Contract (ν κ : Type) where
   /-- The rendered name of what the boundary belongs to — an algorithm, an application. -/
   name : String
+  /-- The scope: the declarations whose harvested graphs the boundary is claimed for,
+  spelled as the environment names them. Not compared by `agrees`, which sees only the
+  graph they produced — they are what *selects* that graph, and stating them here is what
+  makes the selection a declaration rather than a habit of each call site. -/
+  members : List String
   /-- The declared interface, with each port's role and binding time. -/
   ports : List (Provenance.Port ν κ)
   /-- The declared exits: where the contract says values leave the calculus. -/
