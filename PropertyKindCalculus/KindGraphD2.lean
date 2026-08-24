@@ -68,7 +68,8 @@ import PropertyKindCalculus.KindIncidence
 namespace PropertyKindCalculus.KindGraphD2
 
 open PropertyKindCalculus.Provenance (Port Intro Occurrence EdgeFamily IntroTier PortDir)
-open PropertyKindCalculus.KindIncidence (Assembly AssemblyLevel LevelTally tallyOf crossings)
+open PropertyKindCalculus.KindIncidence
+  (Assembly AssemblyLevel LevelTally tallyOf crossings citeEdges)
 
 /-- Escape a fragment for a double-quoted D2 key or value. -/
 def esc (s : String) : String :=
@@ -423,8 +424,10 @@ def emit (a : Assembly) (title : String := "kind assembly") : String := Id.run d
       let some dst := path.get? t | continue
       out := out ++ put (s!"{src} -> {dst}: " ++ "{style: {stroke: "
         ++ q unkindedStroke ++ "}}")
-  -- the citation relation, dashed between containers — drawn, never wired
-  for (src, dst) in a.cites do
+  -- the citation relation, dashed between containers — drawn, never wired. Its
+  -- endpoints are resolved to levels first: a citation names a member, and a member
+  -- dissected at three call sites is three levels
+  for (src, dst) in citeEdges a do
     out := out ++ put (s!"{q src} -> {q dst}: "
       ++ "{style: {stroke: \"#4f46e5\"; stroke-dash: 4; opacity: 0.6}}")
   return out
@@ -468,7 +471,7 @@ def emitOverview (a : Assembly) (title : String := "kind assembly") : String := 
     let lbl := if c.2.2 == 1 then "1 wire" else s!"{c.2.2} wires"
     out := out ++ put (q c.1 ++ " -> " ++ q c.2.1 ++ ": {label: " ++ q lbl
       ++ "; style: {stroke: \"#4f46e5\"; font-size: 12; font-color: \"#4b5563\"}}")
-  for (src, dst) in a.cites do
+  for (src, dst) in citeEdges a do
     out := out ++ put (s!"{q src} -> {q dst}: "
       ++ "{style: {stroke: \"#4f46e5\"; stroke-dash: 4; opacity: 0.6}}")
   return out

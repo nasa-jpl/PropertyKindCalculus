@@ -20,7 +20,7 @@ import PropertyKindCalculus.KindGraphD2
 namespace PropertyKindCalculus.Tests.KindGraphD2
 
 open PropertyKindCalculus
-open PropertyKindCalculus.KindIncidence (Assembly AssemblyLevel)
+open PropertyKindCalculus.KindIncidence (Assembly AssemblyLevel citeEdges)
 open PropertyKindCalculus.KindGraphD2
 
 /-- Does `sub` occur in `s`? Evaluation-only probe helper. -/
@@ -142,6 +142,26 @@ label. -/
 #guard hasSub d2 "label: \"config Probe.One.dup.q : kx\""
 #guard hasSub d2 "label: \"config Probe.Two.dup.q : kx\""
 #guard !hasSub d2 "tooltip: \"Probe.One.dup.q\""
+
+/-! ## A citation names a member, and a member can be several levels
+
+The citation relation is harvested per declaration, so it names a *member*. A member
+dissected at three call sites is three levels, and a member the assembly never included
+is no level at all — drawing either name straight would put a box in the figure that the
+checked object does not have. Both endpoints resolve to levels first. -/
+
+/-- An assembly whose citations name a dissected member and a member that is not
+there. -/
+def instanced : Assembly :=
+  let g : Provenance String String := ⟨[], [], [], []⟩
+  { levels := #[⟨`A, "A", true, g, "", [], []⟩,
+                ⟨`B, "B#1", false, g, "", [], []⟩,
+                ⟨`B, "B#2", false, g, "", [], []⟩]
+    graph := g
+    cites := #[("A", "B"), ("A", "notAMember")] }
+
+#guard citeEdges instanced == #[("A", "B#1"), ("A", "B#2")]
+#guard !hasSub (emit instanced) "\"notAMember\""
 
 /-! ## The overview — the same object at the scale of its steps
 

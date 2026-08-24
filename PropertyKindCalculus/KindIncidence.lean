@@ -2328,4 +2328,22 @@ def crossings (a : Assembly) : Array (String × String × Nat) := Id.run do
       | none => acc := acc.push (src, dst, 1)
   return acc
 
+/-- The levels a member name stands for: itself, or its instances when the member was
+dissected at more than one call site. -/
+def levelsOfMember (a : Assembly) (m : String) : Array String :=
+  a.levels.filterMap fun l =>
+    if l.name == m || l.name.startsWith (m ++ "#") then some l.name else none
+
+/-- The citation relation with both endpoints resolved to levels, deduplicated. A
+citation names a *member*; a member dissected at several call sites is several levels,
+and an endpoint that resolves to no level at all is dropped — drawing it would put a box
+in the figure that the assembly does not have. -/
+def citeEdges (a : Assembly) : Array (String × String) := Id.run do
+  let mut out : Array (String × String) := #[]
+  for (src, dst) in a.cites do
+    for s in levelsOfMember a src do
+      for d in levelsOfMember a dst do
+        unless out.contains (s, d) do out := out.push (s, d)
+  return out
+
 end PropertyKindCalculus.KindIncidence
