@@ -57,7 +57,7 @@ package «PropertyKindCalculus» where
   -- The package version — the single source of truth. `scripts/bump-version.sh`
   -- reads and bumps it here, and the blueprint reads this same line at build time
   -- (its `{version}[]` role) so the published document never drifts from the source.
-  version := v!"0.67.3"
+  version := v!"0.67.4"
   leanOptions := #[
     ⟨`autoImplicit, false⟩,
     ⟨`relaxedAutoImplicit, false⟩]
@@ -79,10 +79,9 @@ package «PropertyKindCalculus» where
 -- branch: GitHub deletes a merged PR's head branch, which makes the fork commit
 -- unreachable from every remote ref and breaks any *fresh* clone (`fatal: reference is
 -- not a tree`) even while a stale local tracking ref still resolves it. A dependency's
--- `lean-toolchain` is informational (the ROOT toolchain builds the closure); the
--- `require mathlib` at `v4.33.0` is kept *last* below (Lake resolves later requires over
--- earlier ones, so Mathlib `v4.33.0`'s own dependency versions take precedence and
--- `lake exe cache get` computes matching hashes).
+-- `lean-toolchain` is informational (the ROOT toolchain builds the closure). Upstream
+-- `master` carries the same Mathlib `v4.33.0` pin this package's toolchain expects, so
+-- `lake exe cache get` computes matching hashes off the transitive resolution.
 require «Physlib» from git
   "https://github.com/leanprover-community/physlib.git" @
   "master"
@@ -99,13 +98,18 @@ require «TorchLean» from git
   "combined"
   with torchLeanOpts
 
--- Mathlib is pinned directly at the root, at `v4.33.0`, and kept LAST so that its
--- dependency versions win over PhysLib's older transitive pins (see above). This
--- is the same discipline TorchLean's lakefile follows. The core spine never
--- imports Mathlib, so a plain `import PropertyKindCalculus` stays Mathlib-free.
-require mathlib from git
-  "https://github.com/leanprover-community/mathlib4" @
-  "v4.33.0"
+-- NOTE (2026-08-24): there is deliberately **no mathlib require here**, for the same
+-- reason there is no doc-gen4 one (below). Mathlib arrives transitively, and the two
+-- packages that bring it agree: PhysLib `master` and TorchLean `combined` each require
+-- `v4.33.0`, so resolution is unambiguous and a root pin would only restate it. The core
+-- spine never imports Mathlib, so a plain `import PropertyKindCalculus` stays
+-- Mathlib-free either way.
+--
+-- What this hands to the dependencies is the *choice* of Mathlib version: PhysLib is
+-- tracked by branch, so a future move of its pin moves this package's Mathlib with it,
+-- and `lake-manifest.json` is where that shows up. Re-pinning at the root is the remedy
+-- if they ever disagree — Lake resolves later requires over earlier ones, so such a pin
+-- belongs last.
 
 -- NOTE (2026-08-04): there is deliberately **no doc-gen4 require here**. doc-gen4 is pulled
 -- transitively (PhysLib and TorchLean each require it; TorchLean's stock `leanprover/doc-gen4` `v4.33.0`
