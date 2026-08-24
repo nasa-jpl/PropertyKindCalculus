@@ -2275,6 +2275,97 @@ elab "#kind_discharges_decide " c:ident d:ident : command => liftTermElabM do
   addDecl (.thmDecl { name, levelParams := [], type := prop, value := proof })
   logInfo m!"kernel-accepted: '{cname}' discharges '{dname}' (theorem '{name}')"
 
+
+/-! ## The theorem edge (`Provenance`, "The theorem edge")
+
+A `Relation` names two contracts, what a theorem claims of them, and the theorem. None
+of that is decidable, so nothing here is reflected into a kernel proposition — the
+witness already *is* one. What this checks is everything around it, and it throws rather
+than reporting, so the pin cannot express a violation and needs no separate gate. -/
+
+private unsafe def evalRelationUnsafe (e : Expr) : MetaM Provenance.Relation :=
+  Meta.evalExpr Provenance.Relation (mkConst ``Provenance.Relation) e
+
+/-- The declared relation's value. Replaced at run time by the evaluator; the safe body
+stands only where no evaluator is available. -/
+@[implemented_by evalRelationUnsafe]
+private def evalRelation (_e : Expr) : MetaM Provenance.Relation :=
+  throwError "relation values cannot be read in this environment"
+
+/-- The declared relation's value, with the type check that gives a legible error before
+the evaluator is asked for one. -/
+def relationValueOf (rname : Name) : MetaM Provenance.Relation := do
+  unless ← Meta.isDefEq (← Meta.inferType (mkConst rname)) (mkConst ``Provenance.Relation) do
+    throwError "'{rname}' is not a 'Provenance.Relation'"
+  evalRelation (mkConst rname)
+
+/-- The members of a contract that a statement mentions by name. This is the check that
+keeps a theorem edge from being decoration: a theorem naming neither boundary is a true
+statement about something else. -/
+def mentionedMembers (c : Provenance.Contract String String) (mentions : NameSet) :
+    List String :=
+  c.members.filter fun m => mentions.contains m.toName
+
+open Elab Command in
+/-- `#kind_relation r` checks the theorem edge `r` declares between two contracts and
+prints it: the witness is a theorem (not a definition, not an axiom), its axiom profile
+carries no `sorryAx`, its conclusion has the shape the claimed kind names, and its
+statement mentions at least one member of *each* boundary. Every failure throws, so the
+command is the report and the gate at once — there is no reading of it that states a
+violation. -/
+elab "#kind_relation " r:ident : command => liftTermElabM do
+  let rname ← realizeGlobalConstNoOverload r
+  let rel ← relationValueOf rname
+  let env ← getEnv
+  let lname := rel.left.toName
+  let rname' := rel.right.toName
+  let left ← contractValueOf lname
+  let right ← contractValueOf rname'
+  let wname := rel.witness.toName
+  let some info := env.find? wname
+    | throwError "the witness '{rel.witness}' is not a declaration"
+  unless info matches .thmInfo _ do
+    throwError "the witness '{wname}' is not a theorem — a relation between two \
+      boundaries is carried by a proof, and a definition asserts nothing"
+  let axs ← Lean.collectAxioms wname
+  if axs.contains ``sorryAx then
+    throwError "the witness '{wname}' depends on 'sorryAx' — it proves nothing yet"
+  -- the shape of the conclusion, where the claimed kind names one. Checked *inside* the
+  -- telescope: outside it the statement's own binders have left scope and the message
+  -- would name them as raw metavariables
+  Meta.forallTelescopeReducing info.type fun _ concl => do
+    -- the head symbol, not the rendered conclusion: what the claim is about is the
+    -- relation the statement concludes with, and a pretty-printed statement wraps at a
+    -- width nothing here controls
+    let head := match concl.getAppFn with
+      | .const c _ => toString c
+      | _ => "no constant"
+    match rel.kind with
+    | .equals =>
+      unless concl.isAppOf ``Eq do
+        throwError "'{wname}' is claimed to state an equality, but its conclusion is \
+          headed by '{head}', not 'Eq'"
+    | .boundedBy =>
+      unless concl.isAppOf ``LE.le || concl.isAppOf ``LT.lt do
+        throwError "'{wname}' is claimed to state a bound, but its conclusion is headed \
+          by '{head}', which is not an order relation"
+    | _ => pure ()
+  let mentions := info.type.foldConsts ({} : NameSet) fun c s => s.insert c
+  let lm := mentionedMembers left mentions
+  let rm := mentionedMembers right mentions
+  if lm.isEmpty then
+    throwError "'{wname}' names no member of '{left.name}' — a theorem that does not \
+      mention a boundary is not about it"
+  if rm.isEmpty then
+    throwError "'{wname}' names no member of '{right.name}' — a theorem that does not \
+      mention a boundary is not about it"
+  let says := if rel.says.isEmpty then [] else [s!"says: {rel.says}"]
+  logInfo m!"kind relation: '{left.name}' {rel.kind.label} '{right.name}'\n\
+    {String.intercalate "\n" ([s!"witness: {wname}"] ++ says ++
+      [s!"names on the left: {String.intercalate ", " lm}",
+       s!"names on the right: {String.intercalate ", " rm}",
+       s!"axioms: {String.intercalate ", " (axs.toList.map toString)}"])}"
+
 /-! ## The assembly at the scale of its steps
 
 Every reading above is per node. Two facts about the *shape* of an assembly are asked

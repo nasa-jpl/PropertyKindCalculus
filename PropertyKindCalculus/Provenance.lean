@@ -105,6 +105,14 @@ a parameter of it, and that no exit is lost on the way up. The middle one is the
 binding a parameter is an act — a constant declared, a wire run — and relabelling it
 per-datum data is not that act, so a parameter is not discharged by being forgotten.
 
+Neither relation can say that one boundary *inverts* another, that two agree wherever a
+hypothesis holds, or that one departs from another by no more than a stated quantity.
+Those are theorems, not port lists, and `Relation` is the edge that carries one: the two
+boundaries, what is claimed of them, and the name of the proof. Nothing about it is
+decidable — the witness already is a kernel-checked proposition — so what `#kind_relation`
+checks is everything around the proof, including the one thing that keeps the edge from
+being decoration: that the statement mentions members of both boundaries.
+
 What well-formedness deliberately does not check is the *truth* of any edge. Per the
 trust model (`QuantityClassification`, "The trust model — witnesses are authored, not
 checked"), whether `k` really is the product kind of `k₁` and `k₂` is the author's
@@ -583,6 +591,65 @@ def Contract.Discharges (c d : Contract ν κ) : Prop := c.discharges d = true
 
 instance (c d : Contract ν κ) : Decidable (c.Discharges d) :=
   inferInstanceAs (Decidable (c.discharges d = true))
+
+/-! ### The theorem edge — what a tier cannot say
+
+`agrees` compares a declaration with the graph its members compute; `discharges` compares
+two declarations. Neither can say that one boundary *inverts* another, that two agree
+wherever a hypothesis holds, or that one departs from another by no more than a stated
+quantity. Those are theorems, and a theorem is not a port list — it is the one thing in
+this development that is proved rather than computed, and the tier ladder was silent about
+it. `Relation` is the edge that carries one: which two boundaries it is about, what it
+claims of them, and the name of the proof.
+
+Nothing about a `Relation` is decidable, which is why it is not a third `Bool` beside the
+two above. What *is* checkable is everything around the proof, and `#kind_relation` checks
+it: that the witness is a theorem rather than a definition or an axiom, that its axiom
+profile carries no `sorryAx`, that the shape of its conclusion is the shape the claimed
+kind names, and — the check that keeps the edge from being decoration — that the statement
+**mentions members of both boundaries**. A theorem naming neither is a true statement about
+something else, and citing it here would relate nothing. -/
+
+/-- What a theorem claims about two declared boundaries. -/
+inductive RelationKind where
+  /-- The left boundary recovers what the right one consumed — an inversion, at the
+  equation the witness states and on the domain it states it. -/
+  | inverts
+  /-- The left boundary answers as the right one does wherever a stated hypothesis holds:
+  the same value on a smaller domain. -/
+  | refines
+  /-- The two boundaries return the same value. The witness concludes with an `Eq`. -/
+  | equals
+  /-- The left boundary's departure from the right is bounded by a stated quantity. The
+  witness concludes with an order relation. -/
+  | boundedBy
+deriving DecidableEq, Repr, Inhabited
+
+/-- How a relation prints in a rendered report. -/
+def RelationKind.label : RelationKind → String
+  | .inverts => "inverts"
+  | .refines => "refines"
+  | .equals => "equals"
+  | .boundedBy => "bounded by"
+
+/-- **A theorem edge between two declared boundaries** (header, "The theorem edge"): the
+two contracts, spelled as the environment names them, what the theorem claims of them, the
+theorem itself, and the claim in the author's own words — the hypothesis a `refines` holds
+under, the quantity a `boundedBy` is bounded by. The prose is not checked and is not meant
+to be: what is checked is that the named theorem exists, is proved, and is about these two
+boundaries. -/
+structure Relation where
+  /-- The declaration name of the contract on the left of the claim. -/
+  left : String
+  /-- The declaration name of the contract on the right. -/
+  right : String
+  /-- What is claimed. -/
+  kind : RelationKind
+  /-- The declaration name of the theorem that proves it. -/
+  witness : String
+  /-- The claim in the author's words — the hypothesis, the bound, the domain. -/
+  says : String := ""
+deriving Repr, Inhabited
 
 /-! ## The assembly combinators — namespaced union (header, "The procedure edge") -/
 
