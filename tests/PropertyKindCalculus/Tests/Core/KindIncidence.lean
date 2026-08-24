@@ -1253,4 +1253,39 @@ well-formed: false
 -/
 #guard_msgs in #kind_graph convertByHand
 
+/-! ### The same-kind sum — an edge with no witness to author
+
+Family A states its law in the type: two quantities add when they share a kind index, and
+the shared index is the whole of the claim. So the edge is *structural* — harvested off the
+operation rather than looked for in a binder — and the two spellings a model can reach for,
+the gated `Quantity.sub` and the plain `-`, read identically. Without this a model that adds
+two quantities could never be well-formed, whatever else it did right. -/
+
+/-- The difference through the gate — the witness spelled, as `Quantity.add`/`sub` ask. -/
+def gappedGate (x y : Quantity alphaK Float) : Quantity alphaK Float :=
+  Quantity.sub (DifferenceKind.ofScale) x y
+
+/-- The same difference through the arithmetic instance — no witness anywhere. -/
+def gappedInstance (x y : Quantity alphaK Float) : Quantity alphaK Float := x - y
+
+/--
+info: kind graph of 'PropertyKindCalculus.Tests.KindIncidence.gappedGate':
+input x : alphaK
+input y : alphaK
+output result : alphaK
+alphaK ± alphaK → alphaK ⟨x, y⟩ ⇒ result
+well-formed: true
+-/
+#guard_msgs in #kind_graph gappedGate
+
+/--
+info: kind graph of 'PropertyKindCalculus.Tests.KindIncidence.gappedInstance':
+input x : alphaK
+input y : alphaK
+output result : alphaK
+alphaK ± alphaK → alphaK ⟨x, y⟩ ⇒ result
+well-formed: true
+-/
+#guard_msgs in #kind_graph gappedInstance
+
 end PropertyKindCalculus.Tests.KindIncidence

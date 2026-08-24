@@ -461,6 +461,10 @@ def edgeOfBinderType? (ty : Expr) :
   -- edge's configuration, and a signature that states them is stating its conversion,
   -- not taking two more inputs
   if ty.isAppOfArity ``ReferenceKind 2 then return some (.reference, #[a[0]!], a[1]!)
+  -- a same-kind sum or difference: the witness names one kind, and that one kind is both
+  -- operands and the result — the shared index is the whole of the claim
+  if ty.isAppOfArity ``DifferenceKind 1 then
+    return some (.additive, #[a[0]!, a[0]!], a[0]!)
   if ty.isAppOfArity ``PowerKind 3 then
     let some p := ratOfExpr? a[0]!
       | throwError "a power exponent here is not a rational literal — the graph's edge \
@@ -487,6 +491,7 @@ def statesEdgeType (ty : Expr) : Bool :=
   ty.isAppOfArity ``ProductKind 3 || ty.isAppOfArity ``QuotientKind 3
     || ty.isAppOfArity ``ReciprocalKind 2 || ty.isAppOfArity ``TranscendentalKind 2
     || ty.isAppOfArity ``PowerKind 3 || ty.isAppOfArity ``ReferenceKind 2
+    || ty.isAppOfArity ``DifferenceKind 1
     || ty.isAppOfArity ``KindMul 3 || ty.isAppOfArity ``KindDiv 3
 
 /-! ## The walk — occurrences, introductions, exits, wiring -/
@@ -1013,6 +1018,44 @@ partial def walkApp (h : HarvestCtx) (e : Expr) (ctx : BinderCtx)
     let st := opaqueTarget h t1 st
     let st := st.exit (← refName ctx victim)
     return ← args.foldlM (fun st a => walk h a ctx none st) st
+  -- a same-kind sum or difference written through the arithmetic instances. Family A
+  -- authors no witness — the shared kind index *is* the certificate, so the edge is
+  -- structural, harvested rather than looked for, exactly as the identity wire is. The
+  -- kinds are read off the operation's own type arguments, so no argument has to be
+  -- closed for this reading to apply.
+  if e.isAppOfArity ``HAdd.hAdd 6 || e.isAppOfArity ``HSub.hSub 6 then
+    let kx ← carrierKind? h.env h.carriers ctx args[0]!
+    let ky ← carrierKind? h.env h.carriers ctx args[1]!
+    let kr ← carrierKind? h.env h.carriers ctx args[2]!
+    if let (some kx, some ky, some kr) := (kx, ky, kr) then
+      if kx == ky && ky == kr then
+        let mut st := st
+        let mut opNames : Array String := #[]
+        let mut opTargets : Std.HashMap Nat Target := {}
+        for j in [4, 5] do
+          let a := args[j]!
+          if isProducerApp h a then
+            let (m, st') := st.nextFresh
+            st := st'
+            opNames := opNames.push m
+            opTargets := opTargets.insert j (.one m kr true)
+          else
+            opNames := opNames.push (← refName ctx a)
+        let mut resNode := ""
+        match t1 with
+        | some (n, k, owned) =>
+          if owned then st := { st with intros := st.intros.push ⟨n, k, .derived⟩ }
+          resNode := n
+        | none =>
+          let (m, st') := st.nextFresh
+          st := { st' with intros := st'.intros.push ⟨m, kr, .derived⟩ }
+          resNode := m
+        let ops := (opNames.zip #[kx, ky]).toList
+        let so : StepOccurrence := ⟨⟨.additive, ops, resNode, kr, h.site⟩, #[kx, ky], false, false⟩
+        st := { st with occs := st.occs.push so }
+        for j in [4, 5] do
+          st ← walk h args[j]! ctx (opTargets.get? j) st
+        return st
   -- a consuming application: binder-stated edges with carrier siblings
   if let some ci := h.env.find? c then
     if !args.isEmpty then
@@ -1681,6 +1724,7 @@ instance : ToExpr EdgeFamily where
     | .transcendental => mkConst ``Provenance.EdgeFamily.transcendental
     | .power p => mkApp (mkConst ``Provenance.EdgeFamily.power) (toExpr p)
     | .reference => mkConst ``Provenance.EdgeFamily.reference
+    | .additive => mkConst ``Provenance.EdgeFamily.additive
     | .tableMul => mkConst ``Provenance.EdgeFamily.tableMul
     | .tableDiv => mkConst ``Provenance.EdgeFamily.tableDiv
     | .copy => mkConst ``Provenance.EdgeFamily.copy

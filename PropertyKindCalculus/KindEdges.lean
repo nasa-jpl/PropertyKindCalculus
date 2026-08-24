@@ -35,8 +35,8 @@ found by two complementary scans:
 
 The edge families scanned are the witness `Prop`s of the core calculus: `ProductKind`,
 `QuotientKind`, `ReciprocalKind` (`QuantityClassification`), `TranscendentalKind`,
-`PowerKind`, `ReferenceKind` (`QuantityFunction`), and the table classes
-`KindMul`/`KindDiv` (`OperatorTable`).
+`PowerKind`, `ReferenceKind` (`QuantityFunction`), `DifferenceKind` (`Quantity`), and
+the table classes `KindMul`/`KindDiv` (`OperatorTable`).
 
 The *occurrence* reading of these same families — which values met at an edge, read per
 declaration — lives in `KindIncidence`, together with the port and graph harvests built
@@ -72,6 +72,7 @@ def specs : Array EdgeSpec := #[
   ⟨``PropertyKindCalculus.TranscendentalKind, 2, fun a => s!"transcendental : {a[0]!} → {a[1]!}"⟩,
   ⟨``PropertyKindCalculus.PowerKind, 3, fun a => s!"{a[1]!} ^ {a[0]!} → {a[2]!}"⟩,
   ⟨``PropertyKindCalculus.ReferenceKind, 2, fun a => s!"reference : {a[0]!} → {a[1]!}"⟩,
+  ⟨``PropertyKindCalculus.DifferenceKind, 1, fun a => s!"{a[0]!} ± {a[0]!} → {a[0]!}"⟩,
   ⟨``PropertyKindCalculus.KindMul, 3, fun a => s!"[table] {a[0]!} · {a[1]!} → {a[2]!}"⟩,
   ⟨``PropertyKindCalculus.KindDiv, 3, fun a => s!"[table] {a[0]!} / {a[1]!} → {a[2]!}"⟩]
 
@@ -93,7 +94,7 @@ partial def collectEdges (e : Expr) (acc : Array (EdgeSpec × Array Expr)) :
   | .proj _ _ b => collectEdges b acc
   | _ => acc
 
-/-- The six witness `Prop` families — the conclusions the inline scan recognizes. The
+/-- The seven witness `Prop` families — the conclusions the inline scan recognizes. The
 table classes are deliberately absent: a `KindMul`/`KindDiv` registration is an instance,
 owned by the type scan, and an instance *reference* in a value is resolution, not
 authorship. -/
@@ -103,7 +104,8 @@ def propFamilies : Array Name := #[
   ``PropertyKindCalculus.ReciprocalKind,
   ``PropertyKindCalculus.TranscendentalKind,
   ``PropertyKindCalculus.PowerKind,
-  ``PropertyKindCalculus.ReferenceKind]
+  ``PropertyKindCalculus.ReferenceKind,
+  ``PropertyKindCalculus.DifferenceKind]
 
 /-- Does a declaration's type mention a witness family at all? The cheap pre-check that
 keeps the inline scan from instantiating every application head's type. -/

@@ -216,7 +216,9 @@ def Provenance.IntroTier.label : Provenance.IntroTier → String
 `QuotientKind`, `ReciprocalKind`, `TranscendentalKind`, `PowerKind` (carrying its
 rational exponent — an exponent is data of the edge, not an operand node),
 `ReferenceKind` (the re-expression, whose two reference quantities are configuration of
-the edge rather than operands of it — the value converted is the one operand), and the
+the edge rather than operands of it — the value converted is the one operand),
+`DifferenceKind` (the same-kind sum or difference; one family for both, because one
+witness licenses both and the shared kind index is the whole of its claim), and the
 operator-table registrations `KindMul`/`KindDiv` — plus `copy`, the identity wire
 (header, "The identity wire"): harvested wiring, never an authored license — and
 `step`, the procedure edge (header, "The procedure edge"): a whole step applied as a
@@ -230,6 +232,7 @@ inductive Provenance.EdgeFamily where
   | transcendental
   | power (exp : Rat)
   | reference
+  | additive
   | tableMul
   | tableDiv
   | copy
@@ -241,7 +244,7 @@ counted; a `power` edge's exponent is carried by the label, not an operand). A `
 edge's count is the step's kinded input count, carried by the label — a procedure
 relates however many inputs its interface states. -/
 def Provenance.EdgeFamily.operandCount : Provenance.EdgeFamily → Nat
-  | .product | .quotient | .tableMul | .tableDiv => 2
+  | .product | .quotient | .tableMul | .tableDiv | .additive => 2
   | .reciprocal | .transcendental | .power _ | .reference | .copy => 1
   | .step _ a => a
 
@@ -266,6 +269,7 @@ def Provenance.EdgeFamily.render (f : Provenance.EdgeFamily)
   | .transcendental => s!"transcendental : {o 0} → {result}"
   | .power p => s!"{o 0} ^ {Provenance.EdgeFamily.renderExp p} → {result}"
   | .reference => s!"reference : {o 0} → {result}"
+  | .additive => s!"{o 0} ± {o 1} → {result}"
   | .tableMul => s!"[table] {o 0} · {o 1} → {result}"
   | .tableDiv => s!"[table] {o 0} / {o 1} → {result}"
   | .copy => s!"{o 0} → {result}"
