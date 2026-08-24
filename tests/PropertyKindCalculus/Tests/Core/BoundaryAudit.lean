@@ -168,4 +168,34 @@ info: tagged boundary crossings:
 #guard_msgs in
 #kind_crossings PropertyKindCalculus.Tests.BoundaryAudit
 
+
+/-! ## `#kind_boundary_clean` — the invariant, which cannot be re-blessed
+
+The audit pinned above is a `#guard_msgs` record of a namespace that deliberately contains one
+untagged site, and re-pinning such a record is exactly how the invariant would be signed away
+by accident. `#kind_boundary_clean` carries no message to re-pin: it throws while any site is
+untagged, so the two commands fail for independent reasons. -/
+
+/-- error: boundary audit: 1 UNTAGGED boundary site(s) — invariant 6/7 violation
+  ⚠ PropertyKindCalculus.Tests.BoundaryAudit.violationSite — mints: probeKind
+
+Every declaration that mints or erases a registered carrier must carry the tier that sanctions it (`@[kindCrossing]`/`@[kindIngest]`/`@[carrierVocab]`/`@[kindConst]`/`@[kindEmission]`), with the reason in its docstring. Tag each site at the tier it actually is — do NOT re-pin a `#kind_boundary_audit` message whose summary says `violation`, which turns the build green and the invariant off.
+-/
+#guard_msgs (whitespace := lax) in
+#kind_boundary_clean PropertyKindCalculus.Tests.BoundaryAudit
+
+/-! A namespace whose every boundary site is adjudicated: the command passes silently, so a
+clean scope adds nothing to the build output and only a violation is ever heard from. -/
+namespace Clean
+
+/-- A tagged constant mint — the whole boundary of this namespace, and it is sanctioned. -/
+@[kindConst]
+def onlySite : Quantity probeKind Float := ⟨1.0⟩
+
+end Clean
+
+-- no message: every site under `Clean` carries its tier
+#guard_msgs in
+#kind_boundary_clean PropertyKindCalculus.Tests.BoundaryAudit.Clean
+
 end PropertyKindCalculus.Tests.BoundaryAudit

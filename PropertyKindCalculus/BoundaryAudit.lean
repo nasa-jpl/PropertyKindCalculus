@@ -634,6 +634,38 @@ elab "#kind_boundary_audit" nss:ident+ : command => liftTermElabM do
         s!"{nSanctioned + nViolations} boundary site(s): {nSanctioned} tagged, {nViolations} UNTAGGED — invariant 6/7 violation"
     logInfo m!"boundary audit:\n{String.intercalate "\n" sorted.toList}\n{summary}"
 
+/-! ## `#kind_boundary_clean` -/
+
+open Elab Command in
+/-- `#kind_boundary_clean ns …` — **the invariant, stated separately from the inventory.**
+
+`#kind_boundary_audit` above logs its findings as one `info` message, which is pinned with
+`#guard_msgs` so that the boundary's whole contents are reviewable in the diff. That pin is a
+*record*, and a record can be re-blessed: re-pinning a message whose summary reads
+`… UNTAGGED — invariant 6/7 violation` leaves the build green with the invariant dead, and
+nothing about the pin itself distinguishes the two cases. The mechanism that makes the
+inventory reviewable is exactly the mechanism that lets the invariant be signed away.
+
+So this command carries no message and pins nothing: it throws when any boundary-active
+declaration in scope carries no tier attribute. The audit says what the boundary IS; this says
+that every one of its sites has been adjudicated. Re-blessing the first cannot silence the
+second, because there is nothing here to re-bless.
+
+Put it next to the `#guard_msgs`-pinned audit in the same module, over the same namespaces. -/
+elab "#kind_boundary_clean" nss:ident+ : command => liftTermElabM do
+  let sites ← boundarySites (nss.map (·.getId))
+  let untagged := sites.filter (fun s => s.tier.isNone)
+  unless untagged.isEmpty do
+    let rendered :=
+      (untagged.map (fun s => s!"  ⚠ {s.decl} — {s.description}")).qsort (· < ·)
+    throwError "boundary audit: {untagged.size} UNTAGGED boundary site(s) \
+      — invariant 6/7 violation\n{String.intercalate "\n" rendered.toList}\n\n\
+      Every declaration that mints or erases a registered carrier must carry the tier that \
+      sanctions it (`@[kindCrossing]`/`@[kindIngest]`/`@[carrierVocab]`/`@[kindConst]`/\
+      `@[kindEmission]`), with the reason in its docstring. Tag each site at the tier it \
+      actually is — do NOT re-pin a `#kind_boundary_audit` message whose summary says \
+      `violation`, which turns the build green and the invariant off."
+
 /-! ## `#kind_crossings` -/
 
 open Elab Command in
