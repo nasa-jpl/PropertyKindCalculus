@@ -55,11 +55,14 @@ travelling in a role, and the deployment constant that fills a roled binder must
 same node the callee's port names. And a *produced* container expands at its binding: a
 `let` whose type is a container, or a nested call whose value one consumes, lands on one
 node per field path rather than on a single opaque node, so a step that computes a bundled
-value and hands it on is wired rather than read as having computed nothing. Interface,
-operand, configuration constant, binding: the expansion is the same at every position a
-bundle can occupy, which is the property that makes bundling free — a container costs the
-reading nothing wherever it appears, so an author never has to choose between a role and a
-graph. A sum type has no field path (which constructor a value took is not a signature
+value and hands it on is wired rather than read as having computed nothing. And a
+container *assembled* — a single-constructor application, the anonymous `Prod.mk`
+included — splits at its constructor, each field landing on the slot its own path names,
+so a step that returns its components bundled wires exactly as the one that returns them
+loose. Interface, operand, configuration constant, binding, assembly: the expansion is the
+same at every position a bundle can occupy, which is the property that makes bundling free
+— a container costs the reading nothing wherever it appears, so an author never has to
+choose between a role and a graph. A sum type has no field path (which constructor a value took is not a signature
 fact), and a carrier is a leaf, never a container — its own field is the erasure boundary.
 
 **Occurrences** sit on the consuming application: any constant-headed application with a
@@ -103,8 +106,11 @@ recognizes — a raw `⟨…⟩` mint, an opaque sub-step call outside an assemb
 body's result, a point-free body — produces nothing, and the verdict says so: an
 unreached derivation target is exactly an anonymous mint. A container *value* is
 attributed where the structure assigns its slots — a call destructured into a container
-binder derives each of that binder's field paths — and a container assembled inline by
-its own constructor produces nothing, the same verdict a raw mint gets.
+binder derives each of that binder's field paths, and a container assembled by its own
+constructor splits per field (`ctorFieldSlots`), packaging being transparent to
+dataflow. An assembling *call* is not: a smart constructor is a step like any other,
+opaque outside an assembly, and its result's ports stay unreached until the assembly
+reads it.
 
 **Unkinded positions** are read alongside the ports: an explicit binder or result
 component whose type carries no kind information at all — no registered carrier, no
@@ -588,6 +594,15 @@ def Target.asOne? : Option Target → Option (String × String × Bool)
   | some (.one n k o) => some (n, k, o)
   | _ => none
 
+/-- The target a slot group assigns to the value that fills it: nothing where the group
+is empty (an un-kinded position), the node itself where the group is one, and a
+one-component `tuple` where it is several — a container's carrier field paths, which the
+value side splits at the constructor that assembles them (`ctorFieldSlots`). -/
+def Target.ofSlots : List (String × String × Bool) → Option Target
+  | [] => none
+  | [(n, k, o)] => some (.one n k o)
+  | ss => some (.tuple [ss])
+
 /-- Introduce a *source* (an attested or gated mint) at the target: directly on a node
 the walk owns, or through a synthesized source node wired to a port by `copy`. With no
 target the source is still recorded — a mint is a mint wherever it sits. Returns the
@@ -748,6 +763,42 @@ partial def containerPath (env : Environment) (carriers : Array Name) (e : Expr)
     | _ => false
   | _ => false
 
+/-- **The literal container assembly** — a single-constructor structure application read
+as its field arguments, each paired with the slot sub-group its own carrier paths name.
+Packaging is transparent to dataflow: a step that bundles what it computed lands its
+components on the very nodes the bundle's ports name, so re-typing a result from a naked
+tuple to the record that names its components moves no wire (`Prod.mk` is this same
+reading at the anonymous constructor, and it is where the reading came from).
+
+The grouping re-runs the enumeration that built the slots — one entry for a carrier-typed
+field, its path count for a container-typed one, in constructor order, which is
+`carrierPaths`'s own loop — and returns `none` when the two disagree, so any drift
+degrades to the opaque reading instead of misattributing a component. `none` too when the
+value is not such an application, and when its head is a **registered carrier**: a carrier
+is a leaf, never a container, and its constructor is a mint, not packaging. -/
+def ctorFieldSlots (h : HarvestCtx) (ctx : BinderCtx) (e : Expr)
+    (slots : List (String × String × Bool)) :
+    MetaM (Option (Array (Expr × List (String × String × Bool)))) := do
+  let .const c _ := e.getAppFn | return none
+  let some (.ctorInfo ci) := h.env.find? c | return none
+  if h.carriers.contains ci.induct then return none
+  unless isStructure h.env ci.induct do return none
+  let args := e.getAppArgs
+  unless args.size == ci.numParams + ci.numFields do return none
+  let mut rest := slots
+  let mut out : Array (Expr × List (String × String × Bool)) := #[]
+  for f in args.extract ci.numParams args.size do
+    let some fty ← (try pure (some (← Meta.inferType f)) catch _ => pure none)
+      | return none
+    let width ← match ← carrierKind? h.env h.carriers ctx fty with
+      | some _ => pure 1
+      | none => pure (← carrierPaths h.env h.carriers ctx fty).size
+    if rest.length < width then return none
+    out := out.push (f, rest.take width)
+    rest := rest.drop width
+  if !rest.isEmpty then return none
+  return some out
+
 /-- The target a binder of type `t` assigns to its producer: the binder's own node when
 the type is a carrier, and one node **per carrier field path** when it is a container —
 `u.q`, `span.lo.q` — so a producer that returns a bundled value lands on the same nodes
@@ -805,30 +856,39 @@ partial def walk (h : HarvestCtx) (e : Expr) (ctx : BinderCtx)
         let args := e.getAppArgs
         let st ← walk h args[0]! ctx none st
         let st ← walk h args[1]! ctx none st
-        -- a component's slot is single-node or it stays unwired: a literal tuple
-        -- component that is itself a container is produced by its own expression, and
-        -- the walk attributes a container value only where a call assigns its slots
-        let oneOf : List (String × String × Bool) → Option Target
-          | [(n, k, o)] => some (.one n k o)
-          | _ => none
+        -- a component's own slot group assigns its target: one node where the component
+        -- is carrier-typed, and the group itself where it is a container the component
+        -- expression assembles (`Target.ofSlots`)
         match comps with
         | c :: rest =>
-          let st ← walk h args[2]! ctx (oneOf c) st
+          let st ← walk h args[2]! ctx (Target.ofSlots c) st
           let restT : Option Target := match rest with
-            | [c'] => oneOf c'
+            | [c'] => Target.ofSlots c'
             | _ => some (.tuple rest)
           walk h args[3]! ctx restT st
         | [] => walk h args[3]! ctx none st
       else
-        match e.getAppFn with
-        | .const c _ =>
-          -- a multi-output sub-step call: one procedure edge per kinded slot
-          if h.subSteps.contains c && e.isApp then
-            walkSubStep h c e ctx (.inr comps) st
-          else
-            -- an opaque multi-output producer: the outputs stay unwired
-            walkApp h e ctx none st
-        | _ => walkApp h e ctx none st
+        -- a literal container assembly: the constructor is packaging, transparent to
+        -- dataflow, so each field lands on the slots its own path names
+        let fields? ← match comps with
+          | [ss] => ctorFieldSlots h ctx e ss
+          | _ => pure none
+        match fields? with
+        | some fields =>
+          let mut st := st
+          for (f, ss) in fields do
+            st ← walk h f ctx (Target.ofSlots ss) st
+          return st
+        | none =>
+          match e.getAppFn with
+          | .const c _ =>
+            -- a multi-output sub-step call: one procedure edge per kinded slot
+            if h.subSteps.contains c && e.isApp then
+              walkSubStep h c e ctx (.inr comps) st
+            else
+              -- an opaque multi-output producer: the outputs stay unwired
+              walkApp h e ctx none st
+          | _ => walkApp h e ctx none st
     else if containerPath h.env h.carriers e then
       -- a container field: its port node reaches the target through the identity wire
       match Target.asOne? target with
@@ -1320,10 +1380,7 @@ def stepGraphOf (decl : Name) (subSteps : Array Name := #[]) : MetaM StepGraph :
           let hv := { h with unkindedFVars := unkIdx.filterMap fun (idx, nm) =>
             lamFvars[idx]?.map fun fv => (fv.fvarId!, nm) }
           let rootTarget : Option Target :=
-            if comps.size == 1 then
-              match outSlots[0]! with
-              | [(n, k, _)] => some (.one n k false)
-              | _ => none
+            if comps.size == 1 then Target.ofSlots outSlots[0]!
             else if outSlots.any (!·.isEmpty) then
               some (.tuple outSlots.toList)
             else
@@ -1333,13 +1390,27 @@ def stepGraphOf (decl : Name) (subSteps : Array Name := #[]) : MetaM StepGraph :
           -- kinded output's defining expression steers that output from outside the
           -- kinded algebra — per component on a literal tuple spine, else every
           -- kinded output
-          let vcomps? := prodValueComps body comps.size
-          for (fv, nm) in hv.unkindedFVars do
-            match vcomps? with
-            | some vs =>
+          -- the defining expression behind each output slot: a literal tuple splits per
+          -- component, and a component the body assembles by its own constructor splits
+          -- again per field (`ctorFieldSlots`), so a bundled result is attributed per
+          -- port and not wholesale. `none` where the body computes its result another
+          -- way (a branch, a call), and attribution falls back to every kinded output.
+          let attrib? : Option (Array (Expr × List (String × String × Bool))) ←
+            match prodValueComps body comps.size with
+            | none => pure none
+            | some vs => do
+              let mut out : Array (Expr × List (String × String × Bool)) := #[]
               for ci in [0:vs.size] do
-                for (n, _, _) in outSlots[ci]! do
-                  if (maskMints hv vs[ci]!).containsFVar fv then st := st.leak nm n
+                match ← ctorFieldSlots hv [] vs[ci]! outSlots[ci]! with
+                | some fss => out := out ++ fss
+                | none => out := out.push (vs[ci]!, outSlots[ci]!)
+              pure (some out)
+          for (fv, nm) in hv.unkindedFVars do
+            match attrib? with
+            | some parts =>
+              for (ve, slot) in parts do
+                if (maskMints hv ve).containsFVar fv then
+                  for (n, _, _) in slot do st := st.leak nm n
             | none =>
               if (maskMints hv body).containsFVar fv then
                 for slot in outSlots do

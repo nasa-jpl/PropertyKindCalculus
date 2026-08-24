@@ -27,8 +27,10 @@ license wiring the helper's own graph; a nested producer landing on a synthesize
 the outer operand names exactly; a `[table]` product read through one level of instance
 unfolding, authored at the registered instance and assumed at a threaded instance
 binder; attested / gated / declared-constant sources carrying the audit's tiers; an
-erasure marking its exit; a raw mint refused — and `#kind_graph_decide` has the kernel
-re-derive a harvested verdict as a `decide` theorem.
+erasure marking its exit; a raw mint refused; a result returned bundled reading exactly
+as the loose tuple of the same components, because the container's own constructor is
+packaging the walk sees through — and `#kind_graph_decide` has the kernel re-derive a
+harvested verdict as a `decide` theorem.
 -/
 import PropertyKindCalculus.KindIncidence
 import PropertyKindCalculus.Tests.Core.KindEdges
@@ -252,6 +254,45 @@ output result.hi.q : alphaK
 -/
 #guard_msgs in #kind_ports degenerate
 
+/-- A **named result bundle** — the record twin of a two-component tuple, its fields
+carrying different kinds so the wiring per field is visible and a swap is a type
+error. -/
+structure Split (R : Type) where
+  /-- The derived component. -/
+  prod : Quantity deltaK R
+  /-- The pass-through component. -/
+  pass : Quantity alphaK R
+
+/-- A step returning its two components **bundled**: a product and a pass-through, handed
+back through the record's own constructor. -/
+def bundledSplit (x : Quantity alphaK Float) (y : Quantity betaK Float) : Split Float :=
+  ⟨Quantity.mul (ProductKind.ofRatio alphaK betaK deltaK) x y, x⟩
+
+/-- The naked-tuple twin of `bundledSplit`, pinned beside it: the claim under both
+readings is that re-typing a result from the loose tuple to the record that names its
+components moves nothing but the port names. -/
+def tupleSplit (x : Quantity alphaK Float) (y : Quantity betaK Float) :
+    Quantity deltaK Float × Quantity alphaK Float :=
+  (Quantity.mul (ProductKind.ofRatio alphaK betaK deltaK) x y, x)
+
+/--
+info: kind ports of 'PropertyKindCalculus.Tests.KindIncidence.bundledSplit':
+input x : alphaK
+input y : betaK
+output result.prod : deltaK
+output result.pass : alphaK
+-/
+#guard_msgs in #kind_ports bundledSplit
+
+/--
+info: kind ports of 'PropertyKindCalculus.Tests.KindIncidence.tupleSplit':
+input x : alphaK
+input y : betaK
+output result.1 : deltaK
+output result.2 : alphaK
+-/
+#guard_msgs in #kind_ports tupleSplit
+
 /-- A signature with no carrier-typed positions at all: every position is named by the
 unkinded reading — the report states the nonconformance instead of narrowing to an
 empty kinded slice. -/
@@ -336,9 +377,9 @@ well-formed: true
 -/
 #guard_msgs in #kind_graph lowerEnd
 
--- … but a container ASSEMBLED inline produces nothing: the constructor is not a reading,
--- so both ported endpoints stay unreached and the verdict refuses — the same answer a
--- raw mint gets, and the reason a container is built where its endpoints are accountable.
+-- … but a container assembled by a smart-constructor CALL produces nothing: `IccQ.of` is
+-- a step like any other, opaque outside an assembly, so both ported endpoints stay
+-- unreached and the verdict refuses — the same answer any un-read call gets.
 /--
 info: kind graph of 'PropertyKindCalculus.Tests.KindIncidence.degenerate':
 input x : alphaK
@@ -347,6 +388,35 @@ output result.hi.q : alphaK
 well-formed: false
 -/
 #guard_msgs in #kind_graph degenerate
+
+-- The container's own CONSTRUCTOR is a different matter: packaging is transparent to
+-- dataflow, so each field lands on the slot its own path names. The record and the
+-- tuple below are the same computation, and the two pins differ in exactly one thing —
+-- the record names its positions. This is what makes a bundled return free: an author
+-- who replaces `A × B` with the structure that says what A and B are keeps every wire.
+/--
+info: kind graph of 'PropertyKindCalculus.Tests.KindIncidence.bundledSplit':
+input x : alphaK
+input y : betaK
+output result.prod : deltaK
+output result.pass : alphaK
+alphaK · betaK → deltaK ⟨x, y⟩ ⇒ result.prod
+alphaK → alphaK ⟨x⟩ ⇒ result.pass
+well-formed: true
+-/
+#guard_msgs in #kind_graph bundledSplit
+
+/--
+info: kind graph of 'PropertyKindCalculus.Tests.KindIncidence.tupleSplit':
+input x : alphaK
+input y : betaK
+output result.1 : deltaK
+output result.2 : alphaK
+alphaK · betaK → deltaK ⟨x, y⟩ ⇒ result.1
+alphaK → alphaK ⟨x⟩ ⇒ result.2
+well-formed: true
+-/
+#guard_msgs in #kind_graph tupleSplit
 
 -- A configuration read is a source port, and the occurrence consumes it by name.
 /--
@@ -788,6 +858,43 @@ cites: endOfBoxInline → degenerate
 well-formed: true
 -/
 #guard_msgs in #kind_assembly [endOfBoxInline, degenerate, lowerEnd]
+
+/-- A consumer of the **bundled return**: it takes the record `bundledSplit` hands back
+and divides its two components. -/
+def usesSplit (x : Quantity alphaK Float) (y : Quantity betaK Float) :
+    Quantity epsilonK Float :=
+  let g := bundledSplit x y
+  Quantity.div (QuotientKind.ofRatio deltaK alphaK epsilonK) g.prod g.pass
+
+-- The payoff of reading the constructor: `bundledSplit` is a WALKED level, so the
+-- assembly states what its body actually did — `result.pass` is an identity wire from
+-- `x` alone. Read as an interface box it would instead carry the level's own procedure
+-- edge into every output, claiming the pass-through depends on `y` too: a bundled return
+-- that cannot be walked does not merely lose a verdict, it over-connects.
+/--
+info: kind assembly of 2 steps:
+level usesSplit: walked
+level bundledSplit: walked
+input usesSplit/x : alphaK
+input usesSplit/y : betaK
+output usesSplit/result : epsilonK
+derived usesSplit/g.prod : deltaK
+derived usesSplit/g.pass : alphaK
+derived bundledSplit/x : alphaK
+derived bundledSplit/y : betaK
+derived bundledSplit/result.prod : deltaK
+derived bundledSplit/result.pass : alphaK
+[step bundledSplit] alphaK · betaK → deltaK ⟨usesSplit/x, usesSplit/y⟩ ⇒ usesSplit/g.prod
+[step bundledSplit] alphaK · betaK → alphaK ⟨usesSplit/x, usesSplit/y⟩ ⇒ usesSplit/g.pass
+deltaK / alphaK → epsilonK ⟨usesSplit/g.prod, usesSplit/g.pass⟩ ⇒ usesSplit/result
+alphaK · betaK → deltaK ⟨bundledSplit/x, bundledSplit/y⟩ ⇒ bundledSplit/result.prod
+alphaK → alphaK ⟨bundledSplit/x⟩ ⇒ bundledSplit/result.pass
+alphaK → alphaK ⟨usesSplit/x⟩ ⇒ bundledSplit/x
+betaK → betaK ⟨usesSplit/y⟩ ⇒ bundledSplit/y
+cites: usesSplit → bundledSplit
+well-formed: true
+-/
+#guard_msgs in #kind_assembly [usesSplit, bundledSplit]
 
 /-! ### The declared boundary — `#kind_contract`
 
