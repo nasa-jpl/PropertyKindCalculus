@@ -851,6 +851,53 @@ well-formed: true
 -/
 #guard_msgs in #kind_assembly [lerped, genericLerp]
 
+/-! ### Two calls, two boxes — a level belongs to a call site
+
+A member wired from more than one call site is more than one instantiation. One box for
+both would have to state both, and it cannot: the two calls' operands would land on one
+input node — a conflation that *passes*, since both wires reach a declared node — and a
+kind-generic callee would additionally have to hold two kinds at once, which
+`occurrencesTyped` refuses. So the members expand into a call tree and each call takes
+its own instance, named `member#k` while there is more than one to tell apart. -/
+
+/-- A kind-generic pass-through on a scalar carrier — the shape a clamp or a saturation
+takes: whatever kind goes in comes out. -/
+def genericPass {k : KindOfProperty} {R : Type} (x : Quantity k R) : Quantity k R := x
+
+/-- The product of two passed-through operands: one member, two call sites, two kinds. -/
+def passedProduct {R : Type} [Mul R] (x : Quantity alphaK R) (y : Quantity betaK R) :
+    Quantity deltaK R :=
+  Quantity.mul (ProductKind.ofRatio alphaK betaK deltaK) (genericPass x) (genericPass y)
+
+/--
+info: kind assembly of 2 steps:
+level passedProduct: walked
+level genericPass#1: walked
+level genericPass#2: walked
+input passedProduct/x : alphaK
+input passedProduct/y : betaK
+output passedProduct/result : deltaK
+derived passedProduct/_1 : alphaK
+derived passedProduct/_2 : betaK
+derived genericPass#1/x : alphaK
+derived genericPass#1/result : alphaK
+derived genericPass#2/x : betaK
+derived genericPass#2/result : betaK
+alphaK · betaK → deltaK ⟨passedProduct/_1, passedProduct/_2⟩ ⇒ passedProduct/result
+[step genericPass#1] alphaK → alphaK ⟨passedProduct/x⟩ ⇒ passedProduct/_1
+[step genericPass#2] betaK → betaK ⟨passedProduct/y⟩ ⇒ passedProduct/_2
+alphaK → alphaK ⟨genericPass#1/x⟩ ⇒ genericPass#1/result
+betaK → betaK ⟨genericPass#2/x⟩ ⇒ genericPass#2/result
+alphaK → alphaK ⟨passedProduct/x⟩ ⇒ genericPass#1/x
+betaK → betaK ⟨passedProduct/y⟩ ⇒ genericPass#2/x
+cites: passedProduct → genericPass
+well-formed: true
+-/
+#guard_msgs in #kind_assembly [passedProduct, genericPass]
+
+/-- info: kernel-accepted: the kind assembly is well-formed (theorem 'PropertyKindCalculus.Tests.KindIncidence.passedProduct.kindAssemblyWf') -/
+#guard_msgs in #kind_assembly_decide [passedProduct, genericPass]
+
 -- A member whose interior the walk cannot wire contributes its interface box: ports
 -- plus its own procedure edge, interior accountability the audit's — rendered as such.
 /--

@@ -1532,9 +1532,14 @@ intermediate value as something the pipeline hands out. What survives both demot
 the assembly's boundary — the value a `Contract` is compared against. A kind-generic callee is
 monomorphized by its call site: the wires state the instantiated kinds, so the box is
 renamed through the call's kind assignment — the assembly's form of "carrier-generic
-code becomes concrete where its witnesses are discharged". A callee wired from two
-call sites shares one box, conflating the invocations' operands; per-invocation box
-instancing is recorded future work, and a pilot chain wires each callee once.
+code becomes concrete where its witnesses are discharged". **A level belongs to a call
+site, not to a member**: the members expand into a call tree and each call gets its own
+instance of the callee's box, monomorphized by that call and named `member#k` where
+there is more than one to tell apart. One box for two calls would either conflate the
+invocations' operands onto one input node — a false claim that passes, since both wires
+land on a declared node — or, for a kind-generic step called at two kinds, contradict
+itself on them. A call is identified by its operands, so a multi-output call's several
+procedure edges stay one call and their order is its slot order.
 
 The *citation* relation — which member's value references which — is harvested by
 constant scan and rendered (`cites: a → b`), never wired: a call inside an interior
@@ -1644,52 +1649,145 @@ def assemble (decls : Array Name) : MetaM Assembly := do
     else
       walkedFlags := walkedFlags.push false
       contribs := contribs.push (interfaceBox names[i]! g)
-  -- call-site dissection: wires, demotions, and per-callee kind assignments (a
-  -- multi-output call emits one procedure edge per slot, so its input wires dedup)
-  let mut wires : Array (Provenance.Occurrence String String) := #[]
-  let mut wireKeys : Std.HashSet String := {}
-  let mut demoted : Array String := #[]
-  let mut demotedOuts : Array String := #[]
-  let mut kindPairs : Array (Array (String × String)) := .replicate decls.size #[]
+  -- call-site dissection: the instance tree, its wires, demotions, and per-instance
+  -- kind assignments. **A level belongs to a call site, not to a member.** A callee
+  -- wired from two call sites is two instantiations — different operands, and for a
+  -- kind-generic step different kinds — and one box cannot state both: it would either
+  -- conflate the invocations' operands onto one input node or contradict itself on
+  -- their kinds, and the first of those passes silently. So the members expand into a
+  -- *call tree*: each call gets its own copy of the callee's box, in its own node
+  -- namespace, monomorphized by that call. A member with a single call site keeps its
+  -- plain name, because there is nothing to tell apart.
+  --
+  -- One call is one *group* of the caller's procedure edges: a multi-output call emits
+  -- one edge per output slot over the same operands, so the operand list is what
+  -- identifies the call and the group's order is the slot order.
+  --
+  -- the members some walked member calls; the rest are the tree's roots
+  let mut isCallee : Array Bool := .replicate decls.size false
   for i in [0:decls.size] do
     unless walkedFlags[i]! do continue
-    let caller := names[i]!
-    let mut seenPerCallee : Std.HashMap Nat Nat := {}
     for o in contribs[i]!.occurrences do
-      let .step t _ := o.family | continue
-      let some j := names.findIdx? (· == t) | continue
-      let callee := names[j]!
-      let calleeIns := contribs[j]!.ports.filter (·.dir == .input)
-      let calleeOuts := contribs[j]!.ports.filter (·.dir.produced)
-      -- operands wire the callee's input ports, positionally
-      for (p, opc) in calleeIns.zip o.operands do
-        let key := s!"{caller}/{opc.1}⇒{callee}/{p.node}"
-        unless wireKeys.contains key do
-          wireKeys := wireKeys.insert key
-          wires := wires.push
-            ⟨.copy, [(s!"{caller}/{opc.1}", opc.2)], s!"{callee}/{p.node}", opc.2, caller⟩
-          if !demoted.contains s!"{callee}/{p.node}" then
-            demoted := demoted.push s!"{callee}/{p.node}"
-        kindPairs := kindPairs.modify j (·.push (p.kind, opc.2))
-      -- the call's results monomorphize the callee's output kinds, in slot order, and
-      -- the consumed slot demotes: what a caller in the assembly takes is interior to
-      -- the assembly, the dual of the input demotion above
-      let k := (seenPerCallee.get? j).getD 0
-      seenPerCallee := seenPerCallee.insert j (k + 1)
-      if let some out := calleeOuts[k % (max calleeOuts.length 1)]? then
-        kindPairs := kindPairs.modify j (·.push (out.kind, o.resultKind))
-        if !demotedOuts.contains s!"{callee}/{out.node}" then
+      if let .step t _ := o.family then
+        if let some j := names.findIdx? (· == t) then
+          isCallee := isCallee.set! j true
+  -- the instances, in discovery order: the member, the calling instance, the call's
+  -- operands, and the caller-occurrence indices the call spans
+  let mut iMem : Array Nat := #[]
+  let mut iParent : Array (Option Nat) := #[]
+  let mut iOps : Array (List (String × String)) := #[]
+  let mut iOccs : Array (Array Nat) := #[]
+  let mut iChildren : Array (Array (Nat × Array Nat)) := #[]
+  for j in [0:decls.size] do
+    unless isCallee[j]! do
+      iMem := iMem.push j; iParent := iParent.push none
+      iOps := iOps.push []; iOccs := iOccs.push #[]
+  let mut cur := 0
+  let mut growing := true
+  while growing do
+    growing := false
+    while cur < iMem.size do
+      iChildren := iChildren.push #[]
+      let i := iMem[cur]!
+      if walkedFlags[i]! then
+        let occs := contribs[i]!.occurrences.toArray
+        let mut groups : Array (Nat × List (String × String) × Array Nat) := #[]
+        for oi in [0:occs.size] do
+          let o := occs[oi]!
+          if let .step t _ := o.family then
+            if let some j := names.findIdx? (· == t) then
+              match groups.findIdx? (fun g => g.1 == j && g.2.1 == o.operands) with
+              | some gi => groups := groups.modify gi fun g => (g.1, g.2.1, g.2.2.push oi)
+              | none => groups := groups.push (j, o.operands, #[oi])
+        for (j, ops, ois) in groups do
+          if iMem.size > 4096 then
+            throwError "the assembly's call tree does not close — a member reaches itself"
+          iChildren := iChildren.modify cur (·.push (iMem.size, ois))
+          iMem := iMem.push j; iParent := iParent.push (some cur)
+          iOps := iOps.push ops; iOccs := iOccs.push ois
+      cur := cur + 1
+    -- a member no root reaches is still a level: membership is the author's claim, and
+    -- a scope that mentions a declaration nothing in it calls still answers for it
+    for j in [0:decls.size] do
+      unless iMem.contains j do
+        iMem := iMem.push j; iParent := iParent.push none
+        iOps := iOps.push []; iOccs := iOccs.push #[]
+        growing := true
+  -- the instance names: the plain member name while there is one instance to name
+  let mut instCount : Array Nat := .replicate decls.size 0
+  for k in [0:iMem.size] do instCount := instCount.modify iMem[k]! (· + 1)
+  let mut seenInst : Array Nat := .replicate decls.size 0
+  let mut iName : Array String := #[]
+  for k in [0:iMem.size] do
+    let j := iMem[k]!
+    let n := seenInst[j]! + 1
+    seenInst := seenInst.set! j n
+    iName := iName.push (if instCount[j]! ≤ 1 then names[j]! else s!"{names[j]!}#{n}")
+  -- the wires: each call's operands onto its own instance's input ports, with that
+  -- instance's kind assignment and both demotions
+  let mut wires : Array (Provenance.Occurrence String String) := #[]
+  let mut demoted : Array String := #[]
+  let mut demotedOuts : Array String := #[]
+  let mut kindPairs : Array (Array (String × String)) := .replicate iMem.size #[]
+  for k in [0:iMem.size] do
+    let some pk := iParent[k]! | continue
+    let caller := iName[pk]!
+    let callee := iName[k]!
+    let j := iMem[k]!
+    let calleeIns := contribs[j]!.ports.filter (·.dir == .input)
+    let calleeOuts := contribs[j]!.ports.filter (·.dir.produced)
+    for (p, opc) in calleeIns.zip iOps[k]! do
+      wires := wires.push
+        ⟨.copy, [(s!"{caller}/{opc.1}", opc.2)], s!"{callee}/{p.node}", opc.2, caller⟩
+      unless demoted.contains s!"{callee}/{p.node}" do
+        demoted := demoted.push s!"{callee}/{p.node}"
+      kindPairs := kindPairs.modify k (·.push (p.kind, opc.2))
+    -- the call's results monomorphize the callee's output kinds, in slot order, and
+    -- the consumed slot demotes: what a caller in the assembly takes is interior to
+    -- the assembly, the dual of the input demotion above
+    let pocc := contribs[iMem[pk]!]!.occurrences.toArray
+    for s in [0:iOccs[k]!.size] do
+      if let some out := calleeOuts[s]? then
+        let o := pocc[iOccs[k]![s]!]!
+        kindPairs := kindPairs.modify k (·.push (out.kind, o.resultKind))
+        unless demotedOuts.contains s!"{callee}/{out.node}" do
           demotedOuts := demotedOuts.push s!"{callee}/{out.node}"
-  -- transform each level: monomorphize, namespace, demote — then union
+  -- transform each instance: name its calls after the instances they reach,
+  -- monomorphize, namespace, demote — then union, the members in declaration order
   let mut levels : Array AssemblyLevel := #[]
   let mut graph : Provenance String String := ⟨[], [], [], []⟩
-  for i in [0:decls.size] do
-    let name := names[i]!
+  let mut order : Array Nat := #[]
+  for j in [0:decls.size] do
+    for k in [0:iMem.size] do
+      if iMem[k]! == j then order := order.push k
+  for k in order do
+    let j := iMem[k]!
+    let name := iName[k]!
     let kmap : Std.HashMap String String :=
-      kindPairs[i]!.foldl (init := {}) fun m pr =>
+      kindPairs[k]!.foldl (init := {}) fun m pr =>
         if m.contains pr.1 then m else m.insert pr.1 pr.2
-    let p := contribs[i]!
-    let p := p.mapKinds (fun k => (kmap.get? k).getD k)
+    let p := contribs[j]!
+    -- a procedure edge names the instance it reaches, so two calls to one member are
+    -- two edges to two boxes rather than two edges that read alike
+    let mut calleeAt : Std.HashMap Nat String := {}
+    for (c, ois) in iChildren[k]! do
+      for oi in ois do
+        calleeAt := calleeAt.insert oi iName[c]!
+    let occArr := p.occurrences.toArray
+    let mut newOccs : Array (Provenance.Occurrence String String) := #[]
+    for oi in [0:occArr.size] do
+      let o := occArr[oi]!
+      newOccs := newOccs.push <|
+        match o.family with
+        | .step _ a =>
+          if walkedFlags[j]! then
+            match calleeAt[oi]? with
+            | some nm => { o with family := .step nm a }
+            | none => o
+          else { o with family := .step name a }
+        | _ => o
+    let p := { p with occurrences := newOccs.toList }
+    let p := p.mapKinds (fun kd => (kmap.get? kd).getD kd)
     let p := p.mapNodes (s!"{name}/{·}")
     let (demotedPorts, keptPorts) := p.ports.partition fun q =>
       (q.dir == .input && demoted.contains q.node)
@@ -1697,10 +1795,10 @@ def assemble (decls : Array Name) : MetaM Assembly := do
     let p := { p with
       ports := keptPorts
       intros := demotedPorts.map (fun q => ⟨q.node, q.kind, .derived⟩) ++ p.intros }
-    let nsUnk := unks[i]!.map fun u => { u with node := s!"{name}/{u.node}" }
-    let nsLks := (lks[i]!.map fun (s, t) => (s!"{name}/{s}", s!"{name}/{t}")).filter
+    let nsUnk := unks[j]!.map fun u => { u with node := s!"{name}/{u.node}" }
+    let nsLks := (lks[j]!.map fun (s, t) => (s!"{name}/{s}", s!"{name}/{t}")).filter
       fun (_, t) => (p.kindOf? t).isSome
-    levels := levels.push ⟨decls[i]!, name, walkedFlags[i]!, p, srcs[i]!, nsUnk, nsLks⟩
+    levels := levels.push ⟨decls[j]!, name, walkedFlags[j]!, p, srcs[j]!, nsUnk, nsLks⟩
     graph := graph.union p
   graph := graph.union ⟨[], [], wires.toList, []⟩
   -- the citation relation: which member's value references which
