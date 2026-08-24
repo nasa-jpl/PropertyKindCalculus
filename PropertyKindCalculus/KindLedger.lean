@@ -30,9 +30,18 @@ A signature position is *ported* (a carrier or a carrier field path — an inter
 its kind), *unkinded* (no kind information at all — a ledger row), or **kind-bearing and
 unported**: a function over quantities, a list of kinded records, a sum over them. The third
 is not debt. `List (Sample R)` is a plural of a kinded thing and there is nothing there to
-fix; counting it would make the ledger un-driveable to zero. The ledger records it as a
-`carried` row instead — visible, not red — so that a reviewer can see the whole interface
-and still read the debt off the count.
+fix; counting it would make the ledger un-driveable to zero. Only the second is a row.
+
+## The denominator
+
+A ledger driven to zero is a document with no rows in it, and a document with no rows says
+nothing about how much was read to get there. So the JSON carries the assembly's interface
+tally beside the rows: one entry per *level*, its ports by role and the size of its interior.
+Per level, not per member — the dedupe rule above is about a debt, which belongs to the
+declaration that states it, whereas an interface belongs to the call site that has one, and
+three instances of a helper really do present three interfaces. The tallies are
+`KindIncidence.tallyOf`, the same values the overview figure draws, so the two cannot
+disagree about the size of what they show.
 -/
 
 import PropertyKindCalculus.KindIncidence
@@ -42,7 +51,7 @@ namespace PropertyKindCalculus.KindLedger
 open Lean
 open PropertyKindCalculus.Provenance (PortDir)
 open PropertyKindCalculus.KindIncidence
-  (Assembly AssemblyLevel UnkindedSlot assembleContract contractValueOf)
+  (Assembly AssemblyLevel UnkindedSlot LevelTally tallyOf assembleContract contractValueOf)
 
 /-- What a ledger row records about one interface position or one flow. -/
 inductive Silence where
@@ -141,15 +150,48 @@ private def rowJson (r : Row) : String :=
     "{\"member\": \"" ++ esc r.member ++ "\", \"node\": \"" ++ esc r.node ++
       "\", \"silence\": \"flow\", \"target\": \"" ++ esc t ++ "\"}"
 
-/-- **The ledger as JSON** — the triage artifact. The scope, the two counts, and the rows.
-Emitted from the same assembled value the figure and the pins are read off, so a reviewer
-comparing the three is comparing three renderings of one object. -/
-def toJson (scope : String) (rows : Array Row) : String :=
+/-- One level's interface, as the JSON reports it (module section, "The denominator"):
+the level, the member it instantiates, whether the walk read its body, and its tally. -/
+structure MemberRow where
+  /-- The level's name — a call site, so `rOfSmQ#2` when the member has more than one. -/
+  level : String
+  /-- The declaration behind it. -/
+  member : String
+  /-- `walked` when the walk read the body, `interface` when it entered at the signature. -/
+  mode : String
+  /-- Its ports by role, and the size of the interior the walk introduced. -/
+  tally : LevelTally
+deriving Repr, Inhabited
+
+/-- The interface tallies of an assembly, one per level, in level order. -/
+def membersOf (a : Assembly) : Array MemberRow :=
+  a.levels.map fun l =>
+    ⟨l.name, memberOf l.name, if l.walked then "walked" else "interface", tallyOf l⟩
+
+/-- One member's interface as a JSON object. -/
+private def memberJson (m : MemberRow) : String :=
+  "{\"level\": \"" ++ esc m.level ++ "\", \"member\": \"" ++ esc m.member ++
+    "\", \"mode\": \"" ++ esc m.mode ++
+    "\", \"in\": " ++ toString m.tally.ins ++
+    ", \"config\": " ++ toString m.tally.cfgs ++
+    ", \"out\": " ++ toString m.tally.outs ++
+    ", \"interior\": " ++ toString m.tally.interior ++
+    ", \"unkinded\": " ++ toString m.tally.unkinded ++ "}"
+
+/-- **The ledger as JSON** — the triage artifact. The scope, the two counts, the interface
+each level presents, and the rows. Emitted from the same assembled value the figure and the
+pins are read off, so a reviewer comparing the three is comparing three renderings of one
+object. The `members` array is the denominator the counts are a numerator of: a scope driven
+to zero still says how much interface was read to get there. -/
+def toJson (scope : String) (ms : Array MemberRow) (rows : Array Row) : String :=
   let ps := (rows.filter (·.isPosition)).size
   let body := String.intercalate ",\n    " (rows.toList.map rowJson)
+  let mbody := String.intercalate ",\n    " (ms.toList.map memberJson)
   "{\n  \"scope\": \"" ++ esc scope ++ "\",\n" ++
     "  \"positions\": " ++ toString ps ++ ",\n" ++
     "  \"flows\": " ++ toString (rows.size - ps) ++ ",\n" ++
+    "  \"members\": [" ++ (if ms.isEmpty then "]" else "\n    " ++ mbody ++ "\n  ]") ++
+    ",\n" ++
     "  \"rows\": [" ++ (if rows.isEmpty then "]" else "\n    " ++ body ++ "\n  ]") ++
     "\n}\n"
 

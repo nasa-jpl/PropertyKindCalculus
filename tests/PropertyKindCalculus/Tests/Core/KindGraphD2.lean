@@ -34,6 +34,9 @@ and the output. -/
 def probe : Assembly :=
   let gA : Provenance String String :=
     { ports := [⟨"A/x", "kx", .input⟩, ⟨"A/y", "ky", .input⟩,
+                ⟨"Probe.Ns.tableC.lo", "kx", .config⟩,
+                ⟨"Probe.One.dup.q", "kx", .config⟩,
+                ⟨"Probe.Two.dup.q", "kx", .config⟩,
                 ⟨"A/result", "kz", .output⟩]
       intros := [⟨"A/seed", "kx", .attested "vendor sheet"⟩]
       occurrences := [⟨.step "B" 2, [("A/x", "kx"), ("A/y", "ky")], "A/result", "kz", "A"⟩]
@@ -56,7 +59,7 @@ def probe : Assembly :=
 def d2 : String := emit probe (title := "probe assembly")
 
 #guard d2.startsWith "vars: {"
-#guard hasSub d2 "layout-engine: elk"
+#guard hasSub d2 "layout-engine: dagre"
 #guard hasSub d2 "direction: right"
 -- the provenance box: the evaluated judgment beside the assembled declarations and
 -- their source files — the module name line when a source resolves, the bare
@@ -68,8 +71,12 @@ def d2 : String := emit probe (title := "probe assembly")
 #guard hasSub d2 "label: \"assembled from (in list order)\""
 #guard hasSub d2 "label: \"A — src/a.lean\""
 #guard hasSub d2 "\"s1\": {label: \"B\";"
--- the shape legend repeats the palette and arrow classes as shapes
+-- the shape legend is a two-column table — the row palette beside the arrow classes,
+-- so it reads as a caption and not as a strip the width of the drawing
 #guard hasSub d2 "\"__legend\": {"
+#guard hasSub d2 "label: \"node rows\""
+#guard hasSub d2 "label: \"arrow classes\""
+#guard hasSub d2 "\"rows\" -> \"arrows\": {style: {opacity: 0}}"
 #guard hasSub d2 "label: \"input port\""
 #guard hasSub d2 "label: \"attested ⓘ\"; style: {fill: \"#fde68a\""
 #guard hasSub d2 "label: \"citation\""
@@ -107,5 +114,57 @@ def d2 : String := emit probe (title := "probe assembly")
 #guard hasSub d2 "label: \"unkinded\"; style: {fill: \"#fee2e2\""
 #guard hasSub d2 "label: \"unkinded flow\""
 #guard hasSub d2 "red = outside the kinded algebra"
+
+/-! ## The address a label may drop, and the one it may not
+
+A node name is an address; a namespace is not what tells one row from another. The
+label drops the leading namespace components — but only where the short form still
+identifies the row in its box, so two configuration constants that would shorten to the
+same thing both keep their full addresses. The D2 key is the full address either way,
+and a shortened row carries it as the tooltip: nothing the figure claims is only in the
+label. -/
+
+#guard shortAddr "SoilMoisture.Algorithm.Batch.mironovCoeffsC.ndA0" == "mironovCoeffsC.ndA0"
+#guard shortAddr "coeffs.ndA0" == "coeffs.ndA0"
+-- always at least the last component, even when every component is a namespace
+#guard shortAddr "Outer.Inner" == "Inner"
+-- unique in its box: the label shortens, the key stays the address, the tooltip carries it
+#guard hasSub d2 "\"Probe.Ns.tableC.lo\": {label: \"config tableC.lo : kx\""
+#guard hasSub d2 "tooltip: \"Probe.Ns.tableC.lo\""
+-- the two that would collide at `dup.q` both keep their full addresses, and neither
+-- gets a tooltip it does not need
+#guard hasSub d2 "label: \"config Probe.One.dup.q : kx\""
+#guard hasSub d2 "label: \"config Probe.Two.dup.q : kx\""
+#guard !hasSub d2 "tooltip: \"Probe.One.dup.q\""
+
+/-! ## The overview — the same object at the scale of its steps
+
+`emitOverview` reads the assembled value at the scale of its members: one box per
+level with its interface tally and its unkinded count, one arrow per pair of levels
+information crosses between with how many wires cross, the citation dashed. It shares
+the preamble with the full figure, so the two carry the same verdict and the same
+provenance; and it is emitted from the same value, so a member the contract does not
+declare cannot appear in it either. -/
+
+/-- The overview document of the same probe. -/
+def ov : String := emitOverview probe (title := "probe assembly")
+
+#guard hasSub ov "label: \"probe assembly — overview\""
+#guard hasSub ov "well-formed: true"
+#guard hasSub ov "layout-engine: dagre"
+-- `A` is walked, states 2 inputs and 3 configuration ports, 1 output, 1 interior
+-- introduction, and one unkinded position — so its box is red and says so
+#guard hasSub ov "\"A\": {label: \"A\\nwalked · 2 in · 3 config · 1 out · 1 interior\\n⚠ 1 unkinded\"; style: {fill: \"#fee2e2\""
+-- `B` entered at its signature: dashed, and nothing red
+#guard hasSub ov "\"B\": {label: \"B\\ninterface · 0 in · 0 config · 1 out · 1 interior\"; style: {fill: \"#f9fafb\""
+#guard hasSub ov "stroke-dash: 2"
+-- two occurrences carry information from `A` into `B` — the identity wire and the
+-- product — so the crossing is one arrow labelled with its count
+#guard hasSub ov "\"A\" -> \"B\": {label: \"2 wires\""
+-- and the citation stays dashed, drawn but never wired
+#guard hasSub ov "\"A\" -> \"B\": {style: {stroke: \"#4f46e5\"; stroke-dash: 4"
+-- the overview's legend is one text block: it explains the boxes, not the palette
+#guard hasSub ov "solid border — the walk read this member's body"
+#guard hasSub ov "dashed arrow — a citation: referenced, never wired"
 
 end PropertyKindCalculus.Tests.KindGraphD2

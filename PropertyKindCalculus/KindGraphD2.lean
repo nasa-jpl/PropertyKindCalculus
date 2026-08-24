@@ -23,25 +23,52 @@ the row palette and the arrow classes as the shapes themselves. Every label is p
 text: a markdown label would render as a foreignObject HTML island, which librsvg and
 LaTeX pipelines silently drop, so the emitted document stays pure SVG.
 
-The output is D2 text (https://d2lang.com) requesting the ELK layered engine. The
+The output is D2 text (https://d2lang.com) requesting the `dagre` layered engine. The
 division of labor is deliberate: WHAT the figure claims — which nodes meet at which
 edges, at which kinds, under which tiers — is this module's output, decidable by
 evaluation on the emitted text; WHERE a box sits is the layout engine's problem
-(crossing minimization, orthogonal edge routing through nested boxes), a solved one no
-hand-rolled coordinate pass should re-solve. A multi-operand hyperedge meets at a
+(crossing minimization, edge routing through nested boxes), a solved one no
+hand-rolled coordinate pass should re-solve. The engine is named for a reason that
+belongs to the figure rather than to the layout: ELK sizes a node to hold one port per
+incident edge, so a heavily-wired row is drawn as a tall, mostly empty box. That makes
+*area* a picture of degree — a configuration constant eight steps read grows into a
+placard beside a measurand read once — and a reader being shown which rows matter must
+not be shown it by an artifact of the routing. `dagre` leaves a row the size of what it
+says. A multi-operand hyperedge meets at a
 small diamond junction node — the standard drawing of a hyperedge in a binary-edge
 grammar — with arrowhead-suppressed legs from the operands and one arrowed leg to the
 result: legs stay directed so the layered engine orders operands before the junction
 and the junction before the result. A junction whose operands and result all live in
 one level nests inside that level's container — a hyperedge interior to a step is
 drawn interior to its box, not routed out and back in.
+
+## The reading scale
+
+A declared boundary of any size draws as one container per level and one row per node.
+That is the reading a reviewer needs when checking a particular wire, and the one that
+is unreadable when asking what the scope *is*. So the same assembly emits two figures.
+`emit` is the full dissection. `emitOverview` is the same value at the scale of its
+members: one box per level carrying its interface tally and its unkinded count, one
+arrow per pair of levels information crosses between carrying how many wires cross.
+Both are pure functions of the one `Assembly`, so the overview is not a summary drawn
+beside the figure — it is the same object, and a box the contract does not declare
+cannot appear in either.
+
+A row's *label* may be shorter than its node name. A node name is an address, so a
+configuration port carries the namespace it was declared in; a namespace is not what
+tells one row of a box from another, and repeating it on every row is what makes a box
+wider than a screen. The label therefore drops the leading namespace components — and
+only where the result still *identifies* the row inside its box: a shortening that
+would collide with another row's leaves both at their full addresses. The D2 key stays
+the full address, and a shortened row carries its full address as its tooltip, so
+nothing the figure claims lives only in the label.
 -/
 import PropertyKindCalculus.KindIncidence
 
 namespace PropertyKindCalculus.KindGraphD2
 
 open PropertyKindCalculus.Provenance (Port Intro Occurrence EdgeFamily IntroTier PortDir)
-open PropertyKindCalculus.KindIncidence (Assembly AssemblyLevel)
+open PropertyKindCalculus.KindIncidence (Assembly AssemblyLevel LevelTally tallyOf crossings)
 
 /-- Escape a fragment for a double-quoted D2 key or value. -/
 def esc (s : String) : String :=
@@ -54,6 +81,12 @@ def esc (s : String) : String :=
 /-- A double-quoted D2 key or value — quoting also neutralizes D2's reserved words as
 node names. -/
 def q (s : String) : String := "\"" ++ esc s ++ "\""
+
+/-- A double-quoted D2 label of several lines. D2 reads `\n` inside a quoted string as
+a line break and renders it as `tspan`s — still pure SVG, unlike a markdown label,
+which becomes a foreignObject HTML island that librsvg and LaTeX pipelines drop. -/
+def qLines (ls : List String) : String :=
+  "\"" ++ String.intercalate "\\n" (ls.map esc) ++ "\""
 
 /-- The row fill of a port role (light, so the row text reads dark) — a `param`, bound
 by the tier below rather than here, reads as its own colour and not as a configuration
@@ -130,9 +163,30 @@ def tierShortLabel : IntroTier → String
 def modeLabel (l : AssemblyLevel) : String :=
   if l.walked then "walked" else "interface"
 
+/-- Is this dot-component a namespace rather than part of the declaration below it? A
+namespace is capitalized by Lean convention; a declaration and the field path under it
+are not. -/
+def isNamespaceComponent (s : String) : Bool :=
+  match s.toList with
+  | c :: _ => c.isUpper
+  | [] => false
+
+/-- Drop the leading namespace components of a dotted address, always keeping at least
+the last one. -/
+def dropNamespace : List String → List String
+  | [] => []
+  | [x] => [x]
+  | x :: rest => if isNamespaceComponent x then dropNamespace rest else x :: rest
+
+/-- The short display form of an address (module header, "The reading scale"):
+`SoilMoisture.Algorithm.Batch.mironovCoeffsC.ndA0` reads as `mironovCoeffsC.ndA0`. -/
+def shortAddr (n : String) : String :=
+  String.intercalate "." (dropNamespace (n.splitOn "."))
+
 /-- One row of a level's container: the graph node it stands for, its container-local
 key (the level's namespace prefix stripped), display label, fill and border colors,
-and the attested reason as an optional tooltip. -/
+and an optional tooltip — the attested reason, the row's full address when the label
+was shortened, or both. -/
 structure Row where
   node : String
   key : String
@@ -143,56 +197,71 @@ structure Row where
 deriving Inhabited
 
 /-- The rows of one level: ports in graph order, the signature's unkinded positions in
-red, then introduction events, exits marked `⊗` at the erasure boundary. -/
+red, then introduction events, exits marked `⊗` at the erasure boundary. A row's label
+carries the short form of its address wherever that still tells the row from the other
+rows of this box, and then carries the full address as the tooltip. -/
 def levelRows (l : AssemblyLevel) : Array Row := Id.run do
   let strip (n : String) : String :=
     if n.startsWith (l.name ++ "/") then (n.drop (l.name.length + 1)).toString else n
   let exitMark (n : String) : String :=
     if l.graph.exits.contains n then " ⊗" else ""
+  -- every address this box will show, so a shortening can be checked against the rest
+  -- of the box rather than assumed harmless
+  let addrs : List String :=
+    l.graph.ports.map (fun p => strip p.node)
+      ++ l.unkinded.map (fun u => strip u.node)
+      ++ l.graph.intros.map (fun i => strip i.node)
+  let shorts := addrs.map shortAddr
+  let disp (a : String) : String :=
+    let s := shortAddr a
+    if (shorts.filter (· == s)).length == 1 then s else a
+  let addrTip (a : String) : Option String :=
+    if disp a == a then none else some a
   let mut rows : Array Row := #[]
   for p in l.graph.ports do
+    let a := strip p.node
     rows := rows.push
-      ⟨p.node, strip p.node,
-        s!"{p.dir.label} {strip p.node} : {p.kind}{exitMark p.node}",
-        portFill p.dir, portStroke p.dir, none⟩
+      ⟨p.node, a, s!"{p.dir.label} {disp a} : {p.kind}{exitMark p.node}",
+        portFill p.dir, portStroke p.dir, addrTip a⟩
   for u in l.unkinded do
+    let a := strip u.node
     rows := rows.push
-      ⟨u.node, strip u.node,
-        s!"unkinded {u.dir.label} {strip u.node} : {u.type}",
-        unkindedFill, unkindedStroke, none⟩
+      ⟨u.node, a, s!"unkinded {u.dir.label} {disp a} : {u.type}",
+        unkindedFill, unkindedStroke, addrTip a⟩
   for i in l.graph.intros do
-    let tip := match i.tier with
-      | .attested r => some r
-      | _ => none
+    let a := strip i.node
+    let tip := match i.tier, addrTip a with
+      | .attested r, some full => some s!"{r} · {full}"
+      | .attested r, none => some r
+      | _, some full => some full
+      | _, none => none
     rows := rows.push
-      ⟨i.node, strip i.node,
-        s!"{tierShortLabel i.tier} {strip i.node} : {i.kind}{exitMark i.node}",
+      ⟨i.node, a, s!"{tierShortLabel i.tier} {disp a} : {i.kind}{exitMark i.node}",
         tierFill i.tier, tierStroke i.tier, tip⟩
   return rows
 
-/-- Emit the assembly as a D2 document (module header: the figure is a pure rendering
-of the checked object; layout is the engine's). -/
-def emit (a : Assembly) (title : String := "kind assembly") : String := Id.run do
+/-- The style of the two header boxes — the provenance box and the legend. -/
+def boxStyle : String :=
+  "  style: {stroke: \"#9ca3af\"; fill: \"#ffffff\"; border-radius: 8; font-size: 13; font-color: \"#374151\"}"
+
+/-- The preamble both figures share: the engine request, the flow direction, the
+title, and the provenance box — the evaluated verdict and the unkinded count beside
+the assembled declarations with their source files, so either figure carries its own
+accountability. -/
+def preamble (a : Assembly) (title : String) : String := Id.run do
   let mut out := ""
   let put (s : String) : String := s ++ "\n"
   out := out ++ put "vars: {"
   out := out ++ put "  d2-config: {"
-  out := out ++ put "    layout-engine: elk"
+  out := out ++ put "    layout-engine: dagre"
   out := out ++ put "  }"
   out := out ++ put "}"
   out := out ++ put "direction: right"
-  -- the header claims, pinned outside the drawing: the title; the provenance box —
-  -- the evaluated verdict with the assembled declarations and their source files, the
-  -- assembly's own provenance beside its judgment; and the shape legend. All three
-  -- are plain-text rows chained by invisible edges into rows/columns: a markdown
-  -- label would render as a foreignObject HTML island, which librsvg and LaTeX
-  -- pipelines silently drop, so the emitted document stays pure SVG
   let ok := a.graph.wellFormed
   let (vc, vt) := if ok then ("#16a34a", "well-formed: true")
     else ("#dc2626", "well-formed: false")
   out := out ++ put ("\"__title\": {label: " ++ q title
     ++ "; shape: text; near: top-center; style: {font-size: 20; bold: true}}")
-  let boxStyle := "  style: {stroke: \"#9ca3af\"; fill: \"#ffffff\"; border-radius: 8; font-size: 13; font-color: \"#374151\"}"
   out := out ++ put "\"__provenance\": {"
   out := out ++ put ("  label: " ++ q "assembled from (in list order)")
   out := out ++ put "  near: top-left"
@@ -221,14 +290,34 @@ def emit (a : Assembly) (title : String := "kind assembly") : String := Id.run d
     out := out ++ put ("  " ++ prev ++ " -> " ++ cur ++ ": {style: {opacity: 0}}")
     prev := cur
   out := out ++ put "}"
+  return out
+
+/-- Emit the assembly as a D2 document (module header: the figure is a pure rendering
+of the checked object; layout is the engine's). -/
+def emit (a : Assembly) (title : String := "kind assembly") : String := Id.run do
+  let mut out := preamble a title
+  let put (s : String) : String := s ++ "\n"
+  -- the shape legend, a two-column table: the row palette beside the arrow classes,
+  -- each column a chain of invisible edges. Every label is plain text — a markdown
+  -- label would render as a foreignObject HTML island, which librsvg and LaTeX
+  -- pipelines silently drop, so the emitted document stays pure SVG
   out := out ++ put "\"__legend\": {"
   out := out ++ put ("  label: " ++ q "legend")
   out := out ++ put "  near: bottom-center"
-  out := out ++ put "  direction: right"
+  out := out ++ put "  direction: down"
   out := out ++ put boxStyle
+  out := out ++ put "  \"cols\": {"
+  out := out ++ put ("    label: " ++ q "")
+  out := out ++ put "    direction: right"
+  out := out ++ put "    style: {stroke-width: 0; fill: \"#ffffff\"}"
+  out := out ++ put "    \"rows\": {"
+  out := out ++ put ("      label: " ++ q "node rows")
+  out := out ++ put "      direction: down"
+  out := out ++ put "      style: {stroke: \"#e5e7eb\"; fill: \"#ffffff\"; border-radius: 6; font-size: 12; font-color: \"#6b7280\"}"
   let swatches : Array (String × String × String) :=
     #[("input port", portFill .input, portStroke .input),
       ("config port", portFill .config, portStroke .config),
+      ("param port", portFill .param, portStroke .param),
       ("output port", portFill .output, portStroke .output),
       ("conditional output", portFill .conditional, portStroke .conditional),
       ("derived", tierFill .derived, tierStroke .derived),
@@ -237,15 +326,21 @@ def emit (a : Assembly) (title : String := "kind assembly") : String := Id.run d
       ("unkinded", unkindedFill, unkindedStroke)]
   for i in [0:swatches.size] do
     let (lbl, f, s) := swatches[i]!
-    out := out ++ put ("  " ++ q s!"sw{i}" ++ ": {label: " ++ q lbl
+    out := out ++ put ("      " ++ q s!"sw{i}" ++ ": {label: " ++ q lbl
       ++ "; style: {fill: " ++ q f ++ "; stroke: " ++ q s
       ++ "; border-radius: 6; font-size: 12}}")
     if i > 0 then
-      out := out ++ put ("  " ++ q s!"sw{i-1}" ++ " -> " ++ q s!"sw{i}"
+      out := out ++ put ("      " ++ q s!"sw{i-1}" ++ " -> " ++ q s!"sw{i}"
         ++ ": {style: {opacity: 0}}")
+  out := out ++ put "    }"
+  out := out ++ put "    \"arrows\": {"
+  out := out ++ put ("      label: " ++ q "arrow classes")
+  out := out ++ put "      direction: down"
+  out := out ++ put "      style: {stroke: \"#e5e7eb\"; fill: \"#ffffff\"; border-radius: 6; font-size: 12; font-color: \"#6b7280\"}"
   let samples : Array (String × String × String) :=
     #[("witness", "#111827", ""),
       ("procedure [step]", "#4f46e5", ""),
+      ("nominal selection", "#0d9488", ""),
       ("identity wire", "#9ca3af", ""),
       ("citation", "#4f46e5", "; stroke-dash: 4"),
       ("unkinded flow", unkindedStroke, "")]
@@ -253,17 +348,23 @@ def emit (a : Assembly) (title : String := "kind assembly") : String := Id.run d
     let (lbl, stroke, dash) := samples[i]!
     let dot := ": {label: \"\"; shape: circle; width: 10; height: 10; style: {fill: "
       ++ q stroke ++ "; stroke: " ++ q stroke ++ "}}"
-    out := out ++ put ("  " ++ q s!"l{i}a" ++ dot)
-    out := out ++ put ("  " ++ q s!"l{i}b" ++ dot)
-    out := out ++ put ("  " ++ q s!"l{i}a" ++ " -> " ++ q s!"l{i}b" ++ ": {label: "
+    out := out ++ put ("      " ++ q s!"l{i}a" ++ dot)
+    out := out ++ put ("      " ++ q s!"l{i}b" ++ dot)
+    out := out ++ put ("      " ++ q s!"l{i}a" ++ " -> " ++ q s!"l{i}b" ++ ": {label: "
       ++ q lbl ++ "; style: {stroke: " ++ q stroke ++ dash
       ++ "; font-size: 12; font-color: \"#374151\"}}")
     if i > 0 then
-      out := out ++ put ("  " ++ q s!"l{i-1}b" ++ " -> " ++ q s!"l{i}a"
+      out := out ++ put ("      " ++ q s!"l{i-1}b" ++ " -> " ++ q s!"l{i}a"
         ++ ": {style: {opacity: 0}}")
-  out := out ++ put ("  \"note\": {label: "
-    ++ q "⊗ exit at the erasure boundary · ⓘ carries the attested reason · red = outside the kinded algebra"
+  out := out ++ put "    }"
+  out := out ++ put "    \"rows\" -> \"arrows\": {style: {opacity: 0}}"
+  out := out ++ put "  }"
+  out := out ++ put ("  \"note\": {label: " ++ qLines
+      ["⊗ exit at the erasure boundary · ⓘ carries the attested reason",
+       "red = outside the kinded algebra",
+       "a row's tooltip carries its full address when the label was shortened"]
     ++ "; shape: text; style: {font-size: 12; font-color: \"#374151\"}}")
+  out := out ++ put "  \"cols\" -> \"note\": {style: {opacity: 0}}"
   out := out ++ put "}"
   -- the level containers: one box per level, its mode on the label and — interface
   -- mode — on a dashed border; every row registers its graph node's D2 path and its
@@ -329,6 +430,51 @@ def emit (a : Assembly) (title : String := "kind assembly") : String := Id.run d
       out := out ++ put (s!"{src} -> {dst}: " ++ "{style: {stroke: "
         ++ q unkindedStroke ++ "}}")
   -- the citation relation, dashed between containers — drawn, never wired
+  for (src, dst) in a.cites do
+    out := out ++ put (s!"{q src} -> {q dst}: "
+      ++ "{style: {stroke: \"#4f46e5\"; stroke-dash: 4; opacity: 0.6}}")
+  return out
+
+/-! ## The overview — the same object at the scale of its steps -/
+
+/-- **The overview figure** — the same `Assembly` the full figure draws, read at the
+scale of its members: one box per level carrying its interface tally and its unkinded
+count, one arrow per pair of levels information crosses between carrying how many
+wires cross, and the citation relation dashed. It is not a summary drawn beside the
+figure; it is the same checked value, so a box that is not in the contract cannot
+appear here either. -/
+def emitOverview (a : Assembly) (title : String := "kind assembly") : String := Id.run do
+  let mut out := preamble a (title ++ " — overview")
+  let put (s : String) : String := s ++ "\n"
+  out := out ++ put "\"__legend\": {"
+  out := out ++ put ("  label: " ++ q "legend")
+  out := out ++ put "  near: bottom-center"
+  out := out ++ put "  direction: right"
+  out := out ++ put boxStyle
+  out := out ++ put ("  \"n\": {label: " ++ qLines
+      ["solid border — the walk read this member's body",
+       "dashed border — the member entered at its signature",
+       "red box — the member states unkinded positions",
+       "arrow — information crosses, labelled with how many wires",
+       "dashed arrow — a citation: referenced, never wired"]
+    ++ "; shape: text; style: {font-size: 13; font-color: \"#374151\"}}")
+  out := out ++ put "}"
+  for l in a.levels do
+    let t := tallyOf l
+    let tally := s!"{t.ins} in · {t.cfgs} config · {t.outs} out · {t.interior} interior"
+    let red := t.unkinded > 0
+    let lines := [l.name, s!"{modeLabel l} · {tally}"]
+      ++ (if red then [s!"⚠ {t.unkinded} unkinded"] else [])
+    let (fill, stroke) := if red then (unkindedFill, unkindedStroke)
+      else ("#f9fafb", "#374151")
+    let dash := if l.walked then "" else "; stroke-dash: 2"
+    out := out ++ put (q l.name ++ ": {label: " ++ qLines lines ++ "; style: {fill: "
+      ++ q fill ++ "; stroke: " ++ q stroke
+      ++ "; border-radius: 8; font-size: 14" ++ dash ++ "}}")
+  for c in crossings a do
+    let lbl := if c.2.2 == 1 then "1 wire" else s!"{c.2.2} wires"
+    out := out ++ put (q c.1 ++ " -> " ++ q c.2.1 ++ ": {label: " ++ q lbl
+      ++ "; style: {stroke: \"#4f46e5\"; font-size: 12; font-color: \"#4b5563\"}}")
   for (src, dst) in a.cites do
     out := out ++ put (s!"{q src} -> {q dst}: "
       ++ "{style: {stroke: \"#4f46e5\"; stroke-dash: 4; opacity: 0.6}}")

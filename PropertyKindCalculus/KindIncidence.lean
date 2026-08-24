@@ -2275,4 +2275,57 @@ elab "#kind_discharges_decide " c:ident d:ident : command => liftTermElabM do
   addDecl (.thmDecl { name, levelParams := [], type := prop, value := proof })
   logInfo m!"kernel-accepted: '{cname}' discharges '{dname}' (theorem '{name}')"
 
+/-! ## The assembly at the scale of its steps
+
+Every reading above is per node. Two facts about the *shape* of an assembly are asked
+for often enough — by the overview figure, by the ledger's JSON — that computing them
+twice would be two chances to disagree: how big each level's interface is, and which
+pairs of levels information crosses between. Both are functions of the assembled value,
+so both live here, beside it. -/
+
+/-- What one level says at the scale of the whole assembly: the size of its interface
+by role, the size of the interior the walk introduced, and its unkinded count. -/
+structure LevelTally where
+  ins : Nat
+  cfgs : Nat
+  outs : Nat
+  interior : Nat
+  unkinded : Nat
+deriving Repr, Inhabited, BEq
+
+/-- The tally of a level. `param` counts with `config`: both are boundary values this
+tier does not compute, and the question at this scale is how much crosses the
+interface, not which tier below is expected to bind it. -/
+def tallyOf (l : AssemblyLevel) : LevelTally :=
+  { ins := (l.graph.ports.filter (fun p => p.dir == .input)).length
+    cfgs := (l.graph.ports.filter (fun p => p.dir == .config || p.dir == .param)).length
+    outs := (l.graph.ports.filter (fun p => p.dir.produced)).length
+    interior := l.graph.intros.length
+    unkinded := l.unkinded.length }
+
+/-- The level a namespaced node belongs to. The crossings below are exactly the
+occurrences whose operands and result disagree on it. -/
+def levelOfNode (n : String) : Option String :=
+  match n.splitOn "/" with
+  | l :: _ :: _ => some l
+  | _ => none
+
+/-- The cross-level wires, aggregated: one entry per ordered pair of levels that
+information crosses between, with how many occurrences cross it. An occurrence with two
+operands in one source level counts once — the entry says that information crosses
+here, and how often, not how wide each crossing is. -/
+def crossings (a : Assembly) : Array (String × String × Nat) := Id.run do
+  let mut acc : Array (String × String × Nat) := #[]
+  for o in a.graph.occurrences do
+    let some dst := levelOfNode o.result | continue
+    let mut seen : Array String := #[]
+    for oc in o.operands do
+      let some src := levelOfNode oc.1 | continue
+      if src == dst || seen.contains src then continue
+      seen := seen.push src
+      match acc.findIdx? (fun e => e.1 == src && e.2.1 == dst) with
+      | some i => acc := acc.set! i (src, dst, acc[i]!.2.2 + 1)
+      | none => acc := acc.push (src, dst, 1)
+  return acc
+
 end PropertyKindCalculus.KindIncidence

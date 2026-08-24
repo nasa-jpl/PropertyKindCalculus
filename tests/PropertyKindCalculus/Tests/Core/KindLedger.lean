@@ -130,29 +130,43 @@ unkinded: none — every position carries a kind
 A pure function of the same rows, so the figure, the pin and the file are three renderings
 of one value rather than three claims that have to be kept in agreement. -/
 
+/-- The interface tallies the emitter is checked on — the denominator beside the rows. -/
+def probeMembers : Array MemberRow :=
+  #[⟨"scaledBy#1", "scaledBy", "walked", ⟨1, 0, 1, 2, 1⟩⟩]
+
 /-- The rows the emitter is checked on. -/
 def probeRows : Array Row :=
   #[⟨"s", "scaledBy", "n", .position .input "Nat"⟩,
     ⟨"s", "scaledBy", "n", .flow "_1"⟩]
 
 /-- The counts are in the document, not only in the rows. -/
-example : hasSub (toJson "s" probeRows) "\"positions\": 1" := by native_decide
-example : hasSub (toJson "s" probeRows) "\"flows\": 1" := by native_decide
+example : hasSub (toJson "s" probeMembers probeRows) "\"positions\": 1" := by native_decide
+example : hasSub (toJson "s" probeMembers probeRows) "\"flows\": 1" := by native_decide
 
 /-- A position row carries its direction and the type the signature states. -/
 example :
-    hasSub (toJson "s" probeRows)
+    hasSub (toJson "s" probeMembers probeRows)
       "{\"member\": \"scaledBy\", \"node\": \"n\", \"silence\": \"position\", \"dir\": \"input\", \"type\": \"Nat\"}" := by
   native_decide
 
 /-- A flow row carries its target instead. -/
 example :
-    hasSub (toJson "s" probeRows)
+    hasSub (toJson "s" probeMembers probeRows)
       "{\"member\": \"scaledBy\", \"node\": \"n\", \"silence\": \"flow\", \"target\": \"_1\"}" := by
   native_decide
 
 /-- The empty ledger emits an empty array, not a missing key: a reviewer's tooling reads
 one shape whether or not there is debt. -/
-example : hasSub (toJson "s" #[]) "\"rows\": []" := by native_decide
+example : hasSub (toJson "s" probeMembers #[]) "\"rows\": []" := by native_decide
+
+/-- The denominator: a scope with no rows still reports the interface it was read over,
+one entry per *level* — a call site has an interface even when it contributes no debt. -/
+example :
+    hasSub (toJson "s" probeMembers #[])
+      "{\"level\": \"scaledBy#1\", \"member\": \"scaledBy\", \"mode\": \"walked\", \"in\": 1, \"config\": 0, \"out\": 1, \"interior\": 2, \"unkinded\": 1}" := by
+  native_decide
+
+/-- An assembly with no levels emits an empty array there too, for the same reason. -/
+example : hasSub (toJson "s" #[] #[]) "\"members\": []" := by native_decide
 
 end PropertyKindCalculus.Tests.KindLedger
