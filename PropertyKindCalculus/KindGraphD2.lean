@@ -262,10 +262,14 @@ def preamble (a : Assembly) (title : String) : String := Id.run do
     else ("#dc2626", "well-formed: false")
   out := out ++ put ("\"__title\": {label: " ++ q title
     ++ "; shape: text; near: top-center; style: {font-size: 20; bold: true}}")
+  -- a grid of one column, not a chain of invisible edges: a chained column is a
+  -- layered graph, and the engine spaces it like one — the accountability box grew
+  -- taller than the drawing it accounts for
   out := out ++ put "\"__provenance\": {"
   out := out ++ put ("  label: " ++ q "assembled from (in list order)")
   out := out ++ put "  near: top-left"
-  out := out ++ put "  direction: down"
+  out := out ++ put "  grid-columns: 1"
+  out := out ++ put "  grid-gap: 6"
   out := out ++ put boxStyle
   out := out ++ put ("  \"v\": {label: \"" ++ vt
     ++ "\"; shape: text; style: {font-size: 13; font-color: \"" ++ vc ++ "\"; bold: true}}")
@@ -278,17 +282,11 @@ def preamble (a : Assembly) (title : String) : String := Id.run do
       ("#dc2626", s!"unkinded positions: {unkCount} — outside the kinded algebra")
   out := out ++ put ("  \"u\": {label: \"" ++ ut
     ++ "\"; shape: text; style: {font-size: 13; font-color: \"" ++ uc ++ "\"; bold: true}}")
-  out := out ++ put "  \"v\" -> \"u\": {style: {opacity: 0}}"
   for i in [0:a.levels.size] do
     let l := a.levels[i]!
     let line := if l.src.isEmpty then s!"{l.decl}" else s!"{l.decl} — {l.src}"
     out := out ++ put ("  " ++ q s!"s{i}" ++ ": {label: " ++ q line
       ++ "; shape: text; style: {font-size: 12; font: mono; font-color: \"#374151\"}}")
-  let mut prev := "\"u\""
-  for i in [0:a.levels.size] do
-    let cur := q s!"s{i}"
-    out := out ++ put ("  " ++ prev ++ " -> " ++ cur ++ ": {style: {opacity: 0}}")
-    prev := cur
   out := out ++ put "}"
   return out
 
@@ -445,10 +443,10 @@ def emitOverview (a : Assembly) (title : String := "kind assembly") : String := 
   out := out ++ put boxStyle
   out := out ++ put ("  \"n\": {label: " ++ qLines
       ["solid border — the walk read this member's body",
-       "dashed border — the member entered at its signature",
-       "red box — the member states unkinded positions",
-       "arrow — information crosses, labelled with how many wires",
-       "dashed arrow — a citation: referenced, never wired"]
+       "dashed border — entered at its signature",
+       "red box — states unkinded positions",
+       "arrow — information crosses; label = wires",
+       "dashed arrow — cited, never wired"]
     ++ "; shape: text; style: {font-size: 13; font-color: \"#374151\"}}")
   out := out ++ put "}"
   for l in a.levels do

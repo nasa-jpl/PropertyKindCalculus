@@ -68,6 +68,10 @@ def d2 : String := emit probe (title := "probe assembly")
 #guard hasSub d2 "well-formed: true"
 #guard hasSub d2 "label: \"probe assembly\""
 #guard hasSub d2 "\"__provenance\": {"
+-- a grid of one column: a chained column is a layered graph, and the engine spaces it
+-- like one
+#guard hasSub d2 "  grid-columns: 1"
+#guard !hasSub d2 "\"v\" -> \"u\""
 #guard hasSub d2 "label: \"assembled from (in list order)\""
 #guard hasSub d2 "label: \"A — src/a.lean\""
 #guard hasSub d2 "\"s1\": {label: \"B\";"
@@ -167,6 +171,6 @@ def ov : String := emitOverview probe (title := "probe assembly")
 #guard hasSub ov "\"A\" -> \"B\": {style: {stroke: \"#4f46e5\"; stroke-dash: 4"
 -- the overview's legend is one text block: it explains the boxes, not the palette
 #guard hasSub ov "solid border — the walk read this member's body"
-#guard hasSub ov "dashed arrow — a citation: referenced, never wired"
+#guard hasSub ov "dashed arrow — cited, never wired"
 
 end PropertyKindCalculus.Tests.KindGraphD2
