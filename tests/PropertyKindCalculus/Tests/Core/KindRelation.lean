@@ -60,12 +60,12 @@ def retrievalInvertsForward : Provenance.Relation where
   right := "PropertyKindCalculus.Tests.KindRelation.fwdBoundary"
   kind := .inverts
   witness := "PropertyKindCalculus.Tests.KindRelation.probeInv_probeFwd"
-  says := "the retrieval recovers the argument the forward consumed"
+  claim := "the retrieval recovers the argument the forward consumed"
 
 /--
 info: kind relation: 'relation probe retrieval' inverts 'relation probe forward'
 witness: PropertyKindCalculus.Tests.KindRelation.probeInv_probeFwd
-says: the retrieval recovers the argument the forward consumed
+claims: the retrieval recovers the argument the forward consumed
 names on the left: PropertyKindCalculus.Tests.KindRelation.probeInv
 names on the right: PropertyKindCalculus.Tests.KindRelation.probeFwd
 axioms: propext
@@ -116,12 +116,12 @@ def boundClaimedAsBound : Provenance.Relation where
   right := "PropertyKindCalculus.Tests.KindRelation.fwdBoundary"
   kind := .boundedBy
   witness := "PropertyKindCalculus.Tests.KindRelation.probeBounded"
-  says := "the round trip moves the carrier by at most 2"
+  claim := "the round trip moves the carrier by at most 2"
 
 /--
 info: kind relation: 'relation probe retrieval' bounded by 'relation probe forward'
 witness: PropertyKindCalculus.Tests.KindRelation.probeBounded
-says: the round trip moves the carrier by at most 2
+claims: the round trip moves the carrier by at most 2
 names on the left: PropertyKindCalculus.Tests.KindRelation.probeInv
 names on the right: PropertyKindCalculus.Tests.KindRelation.probeFwd
 axioms: propext, Quot.sound

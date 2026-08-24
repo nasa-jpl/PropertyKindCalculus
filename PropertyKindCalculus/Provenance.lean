@@ -635,7 +635,9 @@ def RelationKind.label : RelationKind → String
 /-- **A theorem edge between two declared boundaries** (header, "The theorem edge"): the
 two contracts, spelled as the environment names them, what the theorem claims of them, the
 theorem itself, and the claim in the author's own words — the hypothesis a `refines` holds
-under, the quantity a `boundedBy` is bounded by. The prose is not checked and is not meant
+under, the quantity a `boundedBy` is bounded by. (The field is `claim` and not `says`
+because `says` is a Mathlib tactic keyword, and a field name that cannot be written in a
+`where` block downstream is not a field name.) The prose is not checked and is not meant
 to be: what is checked is that the named theorem exists, is proved, and is about these two
 boundaries. -/
 structure Relation where
@@ -648,7 +650,7 @@ structure Relation where
   /-- The declaration name of the theorem that proves it. -/
   witness : String
   /-- The claim in the author's words — the hypothesis, the bound, the domain. -/
-  says : String := ""
+  claim : String := ""
 deriving Repr, Inhabited
 
 /-! ## The assembly combinators — namespaced union (header, "The procedure edge") -/

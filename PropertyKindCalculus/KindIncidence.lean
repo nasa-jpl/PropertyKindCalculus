@@ -2359,9 +2359,9 @@ elab "#kind_relation " r:ident : command => liftTermElabM do
   if rm.isEmpty then
     throwError "'{wname}' names no member of '{right.name}' — a theorem that does not \
       mention a boundary is not about it"
-  let says := if rel.says.isEmpty then [] else [s!"says: {rel.says}"]
+  let claim := if rel.claim.isEmpty then [] else [s!"claims: {rel.claim}"]
   logInfo m!"kind relation: '{left.name}' {rel.kind.label} '{right.name}'\n\
-    {String.intercalate "\n" ([s!"witness: {wname}"] ++ says ++
+    {String.intercalate "\n" ([s!"witness: {wname}"] ++ claim ++
       [s!"names on the left: {String.intercalate ", " lm}",
        s!"names on the right: {String.intercalate ", " rm}",
        s!"axioms: {String.intercalate ", " (axs.toList.map toString)}"])}"
