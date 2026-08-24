@@ -1,0 +1,158 @@
+/-
+# Validation probes — `KindLedger` (the unkinded inventory of a declared scope)
+
+The ledger is the unkinded reading gathered over an assembly and made into a worklist.
+Three claims are checked here.
+
+**It dedupes by member.** A helper called twice is two levels, so a single naked binder
+would be counted twice — and dissecting a call would then *raise* the recorded debt while
+strictly improving the reading. The probe calls one helper twice and pins one row.
+
+**Its count is a predicate stated with its number**, and the empty case says what the
+number means rather than printing `0`.
+
+**Its gate is separate from its pin.** `#kind_unkinded` can express a violation, so it
+cannot also be the check that none exists; `#kind_unkinded_clean` errors on a non-empty
+ledger and is pinned on the scope that has reached zero.
+
+The JSON emitter is a pure function of the same rows, so it is decidable by evaluation.
+-/
+import PropertyKindCalculus.KindLedger
+
+namespace PropertyKindCalculus.Tests.KindLedger
+
+open PropertyKindCalculus
+open PropertyKindCalculus.KindLedger
+
+/-- Does `sub` occur in `s`? Evaluation-only probe helper. -/
+def hasSub (s sub : String) : Bool := (s.splitOn sub).length > 1
+
+/-- A probe kind — the scaled operand. -/
+def aK : KindOfProperty := { id := "kind-ledger probe a", scale := .ratio }
+/-- A probe kind — the scaling factor. -/
+def bK : KindOfProperty := { id := "kind-ledger probe b", scale := .ratio }
+/-- A probe kind — the product. -/
+def dK : KindOfProperty := { id := "kind-ledger probe d", scale := .ratio }
+
+/-- A registered attestor, so the probe's mint is a declared source rather than a raw
+one and the naked argument's flow into it is harvested. -/
+@[kindAttest]
+def probeAttest (k : KindOfProperty) (_reason : String) (m : Float) : Quantity k Float :=
+  ⟨m⟩
+
+/-- A helper with one naked binder: `n` carries no kind, and it mints the factor. -/
+def scaledBy (n : Nat) (x : Quantity aK Float) : Quantity dK Float :=
+  Quantity.mul (ProductKind.ofRatio aK bK dK) x (probeAttest bK "probe" n.toFloat)
+
+/-- Two calls to it — two levels, one member. -/
+def usesTwice (p q : Quantity aK Float) : Quantity dK Float :=
+  Quantity.add (DifferenceKind.ofScale) (scaledBy 1 p) (scaledBy 2 q)
+
+/-- The scope, declared as a contract so the ledger is read over a *boundary* rather than
+over an ad-hoc list. -/
+def probeScope : Provenance.Contract String String where
+  name := "kind-ledger probe scope"
+  members := ["PropertyKindCalculus.Tests.KindLedger.usesTwice",
+              "PropertyKindCalculus.Tests.KindLedger.scaledBy"]
+  ports := []
+  exits := []
+
+-- The assembly the ledger is read off: `scaledBy` appears at two call sites, so there
+-- are two instance levels of the one member — and TWO red rows.
+/--
+info: kind assembly of 3 steps:
+level usesTwice: walked
+level scaledBy#1: walked
+level scaledBy#2: walked
+input usesTwice/p : aK
+input usesTwice/q : aK
+output usesTwice/result : dK
+derived usesTwice/_1 : dK
+derived usesTwice/_2 : dK
+derived scaledBy#1/x : aK
+derived scaledBy#1/result : dK
+attested "probe" scaledBy#1/_1 : bK
+derived scaledBy#2/x : aK
+derived scaledBy#2/result : dK
+attested "probe" scaledBy#2/_1 : bK
+dK ± dK → dK ⟨usesTwice/_1, usesTwice/_2⟩ ⇒ usesTwice/result
+[step scaledBy#1] aK → dK ⟨usesTwice/p⟩ ⇒ usesTwice/_1
+[step scaledBy#2] aK → dK ⟨usesTwice/q⟩ ⇒ usesTwice/_2
+aK · bK → dK ⟨scaledBy#1/x, scaledBy#1/_1⟩ ⇒ scaledBy#1/result
+aK · bK → dK ⟨scaledBy#2/x, scaledBy#2/_1⟩ ⇒ scaledBy#2/result
+aK → aK ⟨usesTwice/p⟩ ⇒ scaledBy#1/x
+aK → aK ⟨usesTwice/q⟩ ⇒ scaledBy#2/x
+unkinded input scaledBy#1/n : Nat
+unkinded input scaledBy#2/n : Nat
+unkinded flow: scaledBy#1/n ⇒ scaledBy#1/_1
+unkinded flow: scaledBy#2/n ⇒ scaledBy#2/_1
+cites: usesTwice → scaledBy
+well-formed: true
+-/
+#guard_msgs in #kind_assembly probeScope
+
+-- Two instances, two red rows in the graph — and ONE row in the ledger, because the
+-- debt belongs to the declaration and a call site is not a second naked binder.
+/--
+info: unkinded ledger of 'kind-ledger probe scope':
+unkinded: 1 position(s), 1 flow(s)
+unkinded input scaledBy/n : Nat
+unkinded flow: scaledBy/n ⇒ scaledBy/_1
+-/
+#guard_msgs in #kind_unkinded probeScope
+
+/-- The same helper with the count kinded — the shape the fix takes. -/
+def scaledByQ (n : Quantity bK Float) (x : Quantity aK Float) : Quantity dK Float :=
+  Quantity.mul (ProductKind.ofRatio aK bK dK) x n
+
+/-- A scope with nothing naked in it. -/
+def cleanScope : Provenance.Contract String String where
+  name := "kind-ledger clean scope"
+  members := ["PropertyKindCalculus.Tests.KindLedger.scaledByQ"]
+  ports := [⟨"scaledByQ/n", "bK", .input⟩, ⟨"scaledByQ/x", "aK", .input⟩,
+            ⟨"scaledByQ/result", "dK", .output⟩]
+  exits := []
+
+-- The empty ledger says what the number means.
+/--
+info: unkinded ledger of 'kind-ledger clean scope':
+unkinded: none — every position carries a kind
+-/
+#guard_msgs in #kind_unkinded cleanScope
+
+-- And the gate — separate from the pin, because a pin that can express a violation is
+-- not a check that there is none.
+/-- info: unkinded-clean: every position of 'kind-ledger clean scope' carries a kind -/
+#guard_msgs in #kind_unkinded_clean cleanScope
+
+/-! ## The JSON emission
+
+A pure function of the same rows, so the figure, the pin and the file are three renderings
+of one value rather than three claims that have to be kept in agreement. -/
+
+/-- The rows the emitter is checked on. -/
+def probeRows : Array Row :=
+  #[⟨"s", "scaledBy", "n", .position .input "Nat"⟩,
+    ⟨"s", "scaledBy", "n", .flow "_1"⟩]
+
+/-- The counts are in the document, not only in the rows. -/
+example : hasSub (toJson "s" probeRows) "\"positions\": 1" := by native_decide
+example : hasSub (toJson "s" probeRows) "\"flows\": 1" := by native_decide
+
+/-- A position row carries its direction and the type the signature states. -/
+example :
+    hasSub (toJson "s" probeRows)
+      "{\"member\": \"scaledBy\", \"node\": \"n\", \"silence\": \"position\", \"dir\": \"input\", \"type\": \"Nat\"}" := by
+  native_decide
+
+/-- A flow row carries its target instead. -/
+example :
+    hasSub (toJson "s" probeRows)
+      "{\"member\": \"scaledBy\", \"node\": \"n\", \"silence\": \"flow\", \"target\": \"_1\"}" := by
+  native_decide
+
+/-- The empty ledger emits an empty array, not a missing key: a reviewer's tooling reads
+one shape whether or not there is debt. -/
+example : hasSub (toJson "s" #[]) "\"rows\": []" := by native_decide
+
+end PropertyKindCalculus.Tests.KindLedger
