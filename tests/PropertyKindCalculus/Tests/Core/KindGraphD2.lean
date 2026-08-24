@@ -71,15 +71,17 @@ def d2 : String := emit probe (title := "probe assembly")
 #guard hasSub d2 "label: \"assembled from (in list order)\""
 #guard hasSub d2 "label: \"A — src/a.lean\""
 #guard hasSub d2 "\"s1\": {label: \"B\";"
--- the shape legend is a two-column table — the row palette beside the arrow classes,
--- so it reads as a caption and not as a strip the width of the drawing
+-- the shape legend is a two-column table of grids — the row palette beside the arrow
+-- classes, so it reads as a caption and not as a strip the width of the drawing. Cells
+-- are packed by the grid, so no invisible edge orders them
 #guard hasSub d2 "\"__legend\": {"
+#guard hasSub d2 "  grid-columns: 2"
 #guard hasSub d2 "label: \"node rows\""
-#guard hasSub d2 "label: \"arrow classes\""
-#guard hasSub d2 "\"rows\" -> \"arrows\": {style: {opacity: 0}}"
+#guard hasSub d2 "label: \"arrow classes (line colour)\""
 #guard hasSub d2 "label: \"input port\""
 #guard hasSub d2 "label: \"attested ⓘ\"; style: {fill: \"#fde68a\""
-#guard hasSub d2 "label: \"citation\""
+-- an arrow class is its line colour on a pill's border, not a drawn arrow
+#guard hasSub d2 "label: \"citation (dashed)\"; style: {fill: \"#ffffff\"; stroke: \"#4f46e5\"; stroke-width: 3; stroke-dash: 4"
 -- containers carry their names and inclusion modes; interface borders dash
 #guard hasSub d2 "label: \"A (walked)\""
 #guard hasSub d2 "label: \"B (interface)\""
@@ -112,7 +114,7 @@ def d2 : String := emit probe (title := "probe assembly")
 #guard hasSub d2 "\"A\".\"n\" -> \"A\".\"result\": {style: {stroke: \"#dc2626\"}}"
 #guard hasSub d2 "unkinded positions: 1 — outside the kinded algebra"
 #guard hasSub d2 "label: \"unkinded\"; style: {fill: \"#fee2e2\""
-#guard hasSub d2 "label: \"unkinded flow\""
+#guard hasSub d2 "label: \"unkinded flow\"; style: {fill: \"#ffffff\"; stroke: \"#dc2626\""
 #guard hasSub d2 "red = outside the kinded algebra"
 
 /-! ## The address a label may drop, and the one it may not
@@ -154,9 +156,9 @@ def ov : String := emitOverview probe (title := "probe assembly")
 #guard hasSub ov "layout-engine: dagre"
 -- `A` is walked, states 2 inputs and 3 configuration ports, 1 output, 1 interior
 -- introduction, and one unkinded position — so its box is red and says so
-#guard hasSub ov "\"A\": {label: \"A\\nwalked · 2 in · 3 config · 1 out · 1 interior\\n⚠ 1 unkinded\"; style: {fill: \"#fee2e2\""
+#guard hasSub ov "\"A\": {label: \"A\\nwalked · 8 nodes\\n2 in · 3 config · 1 out · 1 interior\\n⚠ 1 unkinded\"; style: {fill: \"#fee2e2\""
 -- `B` entered at its signature: dashed, and nothing red
-#guard hasSub ov "\"B\": {label: \"B\\ninterface · 0 in · 0 config · 1 out · 1 interior\"; style: {fill: \"#f9fafb\""
+#guard hasSub ov "\"B\": {label: \"B\\ninterface · 2 nodes\\n0 in · 0 config · 1 out · 1 interior\"; style: {fill: \"#f9fafb\""
 #guard hasSub ov "stroke-dash: 2"
 -- two occurrences carry information from `A` into `B` — the identity wire and the
 -- product — so the crossing is one arrow labelled with its count

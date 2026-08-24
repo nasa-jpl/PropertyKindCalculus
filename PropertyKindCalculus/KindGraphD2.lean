@@ -297,23 +297,27 @@ of the checked object; layout is the engine's). -/
 def emit (a : Assembly) (title : String := "kind assembly") : String := Id.run do
   let mut out := preamble a title
   let put (s : String) : String := s ++ "\n"
-  -- the shape legend, a two-column table: the row palette beside the arrow classes,
-  -- each column a chain of invisible edges. Every label is plain text — a markdown
-  -- label would render as a foreignObject HTML island, which librsvg and LaTeX
-  -- pipelines silently drop, so the emitted document stays pure SVG
+  -- the shape legend: a two-column table, each column a grid of swatches. A grid
+  -- packs cells without needing an invisible edge to order them — and without the
+  -- layered engine's opinion about where an unconnected node belongs. An arrow class
+  -- shows as its line colour on a pill's border rather than as a drawn arrow: a legend
+  -- states the mapping colour ↦ meaning, and a drawn arrow costs three rows to say the
+  -- same thing. Every label is plain text — a markdown label would render as a
+  -- foreignObject HTML island, which librsvg and LaTeX pipelines silently drop, so the
+  -- emitted document stays pure SVG
   out := out ++ put "\"__legend\": {"
   out := out ++ put ("  label: " ++ q "legend")
   out := out ++ put "  near: bottom-center"
-  out := out ++ put "  direction: down"
+  out := out ++ put "  grid-columns: 2"
+  out := out ++ put "  grid-gap: 16"
   out := out ++ put boxStyle
-  out := out ++ put "  \"cols\": {"
-  out := out ++ put ("    label: " ++ q "")
-  out := out ++ put "    direction: right"
-  out := out ++ put "    style: {stroke-width: 0; fill: \"#ffffff\"}"
-  out := out ++ put "    \"rows\": {"
-  out := out ++ put ("      label: " ++ q "node rows")
-  out := out ++ put "      direction: down"
-  out := out ++ put "      style: {stroke: \"#e5e7eb\"; fill: \"#ffffff\"; border-radius: 6; font-size: 12; font-color: \"#6b7280\"}"
+  let subStyle :=
+    "    style: {stroke: \"#e5e7eb\"; fill: \"#ffffff\"; font-size: 12; font-color: \"#6b7280\"}"
+  out := out ++ put "  \"rows\": {"
+  out := out ++ put ("    label: " ++ q "node rows")
+  out := out ++ put "    grid-columns: 2"
+  out := out ++ put "    grid-gap: 8"
+  out := out ++ put subStyle
   let swatches : Array (String × String × String) :=
     #[("input port", portFill .input, portStroke .input),
       ("config port", portFill .config, portStroke .config),
@@ -325,46 +329,34 @@ def emit (a : Assembly) (title : String := "kind assembly") : String := Id.run d
       ("attested ⓘ", tierFill (.attested ""), tierStroke (.attested "")),
       ("unkinded", unkindedFill, unkindedStroke)]
   for i in [0:swatches.size] do
-    let (lbl, f, s) := swatches[i]!
-    out := out ++ put ("      " ++ q s!"sw{i}" ++ ": {label: " ++ q lbl
-      ++ "; style: {fill: " ++ q f ++ "; stroke: " ++ q s
+    let (lbl, f, st) := swatches[i]!
+    out := out ++ put ("    " ++ q s!"sw{i}" ++ ": {label: " ++ q lbl
+      ++ "; style: {fill: " ++ q f ++ "; stroke: " ++ q st
       ++ "; border-radius: 6; font-size: 12}}")
-    if i > 0 then
-      out := out ++ put ("      " ++ q s!"sw{i-1}" ++ " -> " ++ q s!"sw{i}"
-        ++ ": {style: {opacity: 0}}")
-  out := out ++ put "    }"
-  out := out ++ put "    \"arrows\": {"
-  out := out ++ put ("      label: " ++ q "arrow classes")
-  out := out ++ put "      direction: down"
-  out := out ++ put "      style: {stroke: \"#e5e7eb\"; fill: \"#ffffff\"; border-radius: 6; font-size: 12; font-color: \"#6b7280\"}"
+  out := out ++ put "  }"
+  out := out ++ put "  \"arrows\": {"
+  out := out ++ put ("    label: " ++ q "arrow classes (line colour)")
+  out := out ++ put "    grid-columns: 2"
+  out := out ++ put "    grid-gap: 8"
+  out := out ++ put subStyle
   let samples : Array (String × String × String) :=
     #[("witness", "#111827", ""),
       ("procedure [step]", "#4f46e5", ""),
       ("nominal selection", "#0d9488", ""),
       ("identity wire", "#9ca3af", ""),
-      ("citation", "#4f46e5", "; stroke-dash: 4"),
+      ("citation (dashed)", "#4f46e5", "; stroke-dash: 4"),
       ("unkinded flow", unkindedStroke, "")]
   for i in [0:samples.size] do
     let (lbl, stroke, dash) := samples[i]!
-    let dot := ": {label: \"\"; shape: circle; width: 10; height: 10; style: {fill: "
-      ++ q stroke ++ "; stroke: " ++ q stroke ++ "}}"
-    out := out ++ put ("      " ++ q s!"l{i}a" ++ dot)
-    out := out ++ put ("      " ++ q s!"l{i}b" ++ dot)
-    out := out ++ put ("      " ++ q s!"l{i}a" ++ " -> " ++ q s!"l{i}b" ++ ": {label: "
-      ++ q lbl ++ "; style: {stroke: " ++ q stroke ++ dash
-      ++ "; font-size: 12; font-color: \"#374151\"}}")
-    if i > 0 then
-      out := out ++ put ("      " ++ q s!"l{i-1}b" ++ " -> " ++ q s!"l{i}a"
-        ++ ": {style: {opacity: 0}}")
-  out := out ++ put "    }"
-  out := out ++ put "    \"rows\" -> \"arrows\": {style: {opacity: 0}}"
+    out := out ++ put ("    " ++ q s!"l{i}" ++ ": {label: " ++ q lbl
+      ++ "; style: {fill: \"#ffffff\"; stroke: " ++ q stroke ++ "; stroke-width: 3"
+      ++ dash ++ "; border-radius: 6; font-size: 12}}")
   out := out ++ put "  }"
   out := out ++ put ("  \"note\": {label: " ++ qLines
       ["⊗ exit at the erasure boundary · ⓘ carries the attested reason",
        "red = outside the kinded algebra",
-       "a row's tooltip carries its full address when the label was shortened"]
+       "a shortened label's full address is its tooltip"]
     ++ "; shape: text; style: {font-size: 12; font-color: \"#374151\"}}")
-  out := out ++ put "  \"cols\" -> \"note\": {style: {opacity: 0}}"
   out := out ++ put "}"
   -- the level containers: one box per level, its mode on the label and — interface
   -- mode — on a dashed border; every row registers its graph node's D2 path and its
@@ -461,9 +453,10 @@ def emitOverview (a : Assembly) (title : String := "kind assembly") : String := 
   out := out ++ put "}"
   for l in a.levels do
     let t := tallyOf l
-    let tally := s!"{t.ins} in · {t.cfgs} config · {t.outs} out · {t.interior} interior"
+    let nodes := t.ins + t.cfgs + t.outs + t.interior + t.unkinded
     let red := t.unkinded > 0
-    let lines := [l.name, s!"{modeLabel l} · {tally}"]
+    let lines := [l.name, s!"{modeLabel l} · {nodes} nodes",
+                  s!"{t.ins} in · {t.cfgs} config · {t.outs} out · {t.interior} interior"]
       ++ (if red then [s!"⚠ {t.unkinded} unkinded"] else [])
     let (fill, stroke) := if red then (unkindedFill, unkindedStroke)
       else ("#f9fafb", "#374151")
