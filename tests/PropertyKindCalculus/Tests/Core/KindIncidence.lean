@@ -898,6 +898,42 @@ well-formed: true
 /-- info: kernel-accepted: the kind assembly is well-formed (theorem 'PropertyKindCalculus.Tests.KindIncidence.passedProduct.kindAssemblyWf') -/
 #guard_msgs in #kind_assembly_decide [passedProduct, genericPass]
 
+/-- A step that cites a declared constant — the shape a threshold or a calibration read
+takes. -/
+def offsetByRef (x : Quantity deltaK Nat) : Quantity deltaK Nat := x + refQ
+
+/-- Two calls to it: two boxes, and *one* configuration port, because the constant is one
+source however many instantiations read it. -/
+def twiceOffset (x y : Quantity deltaK Nat) : Quantity epsilonK Nat :=
+  Quantity.div (QuotientKind.ofRatio deltaK deltaK epsilonK) (offsetByRef x) (offsetByRef y)
+
+/--
+info: kind assembly of 2 steps:
+level twiceOffset: walked
+level offsetByRef#1: walked
+level offsetByRef#2: walked
+input twiceOffset/x : deltaK
+input twiceOffset/y : deltaK
+output twiceOffset/result : epsilonK
+config offsetByRef/PropertyKindCalculus.Tests.KindIncidence.refQ : deltaK
+derived twiceOffset/_1 : deltaK
+derived twiceOffset/_2 : deltaK
+derived offsetByRef#1/x : deltaK
+derived offsetByRef#1/result : deltaK
+derived offsetByRef#2/x : deltaK
+derived offsetByRef#2/result : deltaK
+deltaK / deltaK → epsilonK ⟨twiceOffset/_1, twiceOffset/_2⟩ ⇒ twiceOffset/result
+[step offsetByRef#1] deltaK → deltaK ⟨twiceOffset/x⟩ ⇒ twiceOffset/_1
+[step offsetByRef#2] deltaK → deltaK ⟨twiceOffset/y⟩ ⇒ twiceOffset/_2
+deltaK ± deltaK → deltaK ⟨offsetByRef#1/x, offsetByRef/PropertyKindCalculus.Tests.KindIncidence.refQ⟩ ⇒ offsetByRef#1/result
+deltaK ± deltaK → deltaK ⟨offsetByRef#2/x, offsetByRef/PropertyKindCalculus.Tests.KindIncidence.refQ⟩ ⇒ offsetByRef#2/result
+deltaK → deltaK ⟨twiceOffset/x⟩ ⇒ offsetByRef#1/x
+deltaK → deltaK ⟨twiceOffset/y⟩ ⇒ offsetByRef#2/x
+cites: twiceOffset → offsetByRef
+well-formed: true
+-/
+#guard_msgs in #kind_assembly [twiceOffset, offsetByRef]
+
 -- A member whose interior the walk cannot wire contributes its interface box: ports
 -- plus its own procedure edge, interior accountability the audit's — rendered as such.
 /--

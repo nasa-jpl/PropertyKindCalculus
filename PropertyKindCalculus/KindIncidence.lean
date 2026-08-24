@@ -1539,7 +1539,13 @@ there is more than one to tell apart. One box for two calls would either conflat
 invocations' operands onto one input node — a false claim that passes, since both wires
 land on a declared node — or, for a kind-generic step called at two kinds, contradict
 itself on them. A call is identified by its operands, so a multi-output call's several
-procedure edges stay one call and their order is its slot order.
+procedure edges stay one call and their order is its slot order. What instances do *not*
+duplicate is what they cite: **a configuration port is an address, an argument is a
+position**, so a member's instances share its config ports and only the first declares
+them — the rule the signature harvest already keeps within a body, where a constant read
+twice is one port and two incidence positions. Three ports for one constant would tell a
+deployment to bind it three times and `Contract.discharges` would count it three times
+over; inputs are not shared, because two instances take two data.
 
 The *citation* relation — which member's value references which — is harvested by
 constant scan and rendered (`cites: a → b`), never wired: a call inside an interior
@@ -1756,6 +1762,7 @@ def assemble (decls : Array Name) : MetaM Assembly := do
   -- monomorphize, namespace, demote — then union, the members in declaration order
   let mut levels : Array AssemblyLevel := #[]
   let mut graph : Provenance String String := ⟨[], [], [], []⟩
+  let mut declaredCfg : Std.HashSet String := {}
   let mut order : Array Nat := #[]
   for j in [0:decls.size] do
     for k in [0:iMem.size] do
@@ -1788,10 +1795,26 @@ def assemble (decls : Array Name) : MetaM Assembly := do
         | _ => o
     let p := { p with occurrences := newOccs.toList }
     let p := p.mapKinds (fun kd => (kmap.get? kd).getD kd)
-    let p := p.mapNodes (s!"{name}/{·}")
+    -- **A configuration port is an address, an argument is a position.** A member's
+    -- instances are one member reading one constant, so their config ports carry the
+    -- *member's* namespace and only the first instance declares them — the same rule the
+    -- signature harvest already keeps within a body, where a constant read twice is one
+    -- port and two incidence positions. Three ports for one constant would tell a
+    -- deployment to bind it three times, and `Contract.discharges` would count it three
+    -- times over. Inputs are not shared: two instances take two data.
+    let member := names[j]!
+    let cfgNodes : Std.HashSet String :=
+      p.ports.foldl (init := {}) fun acc q =>
+        if q.dir == .config then acc.insert q.node else acc
+    let p := p.mapNodes fun n =>
+      if cfgNodes.contains n then s!"{member}/{n}" else s!"{name}/{n}"
     let (demotedPorts, keptPorts) := p.ports.partition fun q =>
       (q.dir == .input && demoted.contains q.node)
         || (q.dir.produced && demotedOuts.contains q.node)
+    let keptPorts := keptPorts.filter fun q =>
+      q.dir != .config || !declaredCfg.contains q.node
+    for q in keptPorts do
+      if q.dir == .config then declaredCfg := declaredCfg.insert q.node
     let p := { p with
       ports := keptPorts
       intros := demotedPorts.map (fun q => ⟨q.node, q.kind, .derived⟩) ++ p.intros }
