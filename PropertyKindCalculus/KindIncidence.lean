@@ -723,6 +723,7 @@ consuming application (an edge stated directly or one instance-unfold away)? Suc
 operand is walked onto a synthesized node so the outer occurrence and the inner
 producer name the same thing. -/
 def isProducerApp (h : HarvestCtx) (a : Expr) : Bool :=
+  if a.isAppOfArity ``HAdd.hAdd 6 || a.isAppOfArity ``HSub.hSub 6 then true else
   match a.getAppFn with
   | .const c _ =>
     (h.attestors.any fun s => s.declName == c && a.getAppNumArgs == s.arity)
@@ -794,11 +795,16 @@ def ctorFieldSlots (h : HarvestCtx) (ctx : BinderCtx) (e : Expr)
   unless isStructure h.env ci.induct do return none
   let args := e.getAppArgs
   unless args.size == ci.numParams + ci.numFields do return none
+  -- the field types come off the *constructor*, instantiated at this application's
+  -- parameters — not off the field values. A value the walk is carrying may be an open
+  -- binder with no type to read, and a container assembled from `let`-bound components is
+  -- the ordinary case, not the exception.
+  let some btys := KindEdges.instantiatedBinderTypes ci.type args | return none
   let mut rest := slots
   let mut out : Array (Expr × List (String × String × Bool)) := #[]
-  for f in args.extract ci.numParams args.size do
-    let some fty ← (try pure (some (← Meta.inferType f)) catch _ => pure none)
-      | return none
+  for j in [ci.numParams:args.size] do
+    let f := args[j]!
+    let fty := btys[j]!
     let width ← match ← carrierKind? h.env h.carriers ctx fty with
       | some _ => pure 1
       | none => pure (← carrierPaths h.env h.carriers ctx fty).size
