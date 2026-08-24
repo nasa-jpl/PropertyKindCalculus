@@ -101,7 +101,14 @@ operand as an **exit**: the erasure boundary, beyond which the byte gate carries
 claim. The do-elaboration's administrative heads (`Id.run`, `pure`, `bind`, `letFun`,
 `ite`/`dite`, and a single-alternative matcher — tuple destructuring) are transparent
 to the walk, so a straight-line monadic body wires exactly like its pure spelling; a
-loop or genuine multi-alternative control flow stays opaque. What no reading
+loop stays opaque. A multi-alternative matcher stays opaque too *unless its
+discriminant is a nominal designation* (`BoundaryAudit`, "The nominal designation
+registry"), in which case it is a **selection**: every alternative produces onto its own
+node at the result's kind, and one `select` edge relates the label and those nodes to
+the result. That is the one control flow the calculus can read, and it can read it for
+the reason the nominal scale exists — a `match` on a label set is an equality
+comparison, the only operation such a value licenses, and every branch of it already
+carries the kind the result does. What no reading
 recognizes — a raw `⟨…⟩` mint, an opaque sub-step call outside an assembly, a loop
 body's result, a point-free body — produces nothing, and the verdict says so: an
 unreached derivation target is exactly an anonymous mint. A container *value* is
@@ -113,8 +120,9 @@ opaque outside an assembly, and its result's ports stay unreached until the asse
 reads it.
 
 **Unkinded positions** are read alongside the ports: an explicit binder or result
-component whose type carries no kind information at all — no registered carrier, no
-kind vocabulary anywhere in it — is naked data crossing the interface, which does not
+component whose type carries no kind information at all — no registered carrier and no
+kind vocabulary anywhere in it, after reducible unfolding, beneath a single-constructor
+head's fields, or in a type argument — is naked data crossing the interface, which does not
 conform to the calculus's methodology. The kinded readings gap-keep such a position;
 the harvest additionally *names* it (`unkinded input nR : Nat`), so a report marks it
 red instead of silently narrowing to the kinded slice. The value walk pairs the
@@ -263,14 +271,31 @@ a parametric kind under an inner binder, where the pretty printer has no context
 def renderKindArg (ctx : BinderCtx) (e : Expr) : MetaM String :=
   if e.hasLooseBVars then refName ctx e else return toString (← Meta.ppExpr e)
 
+/-- The nominal kind a `@[kindNominal]`-registered designation set designates, or `none`.
+A bespoke finite label set states its kind by *being that type* (`BoundaryAudit`, "The
+nominal designation registry"), so the head constant is the whole reading — there is no
+kind argument to find, and none to get wrong. -/
+def nominalKind? (env : Environment) (ty : Expr) : Option Name :=
+  match ty.consumeTypeAnnotations.getAppFn with
+  | .const c _ => BoundaryAudit.nominalKindOf? env c
+  | _ => none
+
 /-- The kind a carrier-headed type states, or `none` if `ty` is not headed by a
 registered carrier: the argument(s) whose instantiated binder type is `KindOfProperty`,
 rendered. Positional generic — `Quantity k R` and `IndividualQuantity o k R` both
-resolve to `k`. -/
+resolve to `k`.
+
+A registered nominal designation set answers here too, at the kind it designates: a
+`Polarization` binder is an interface node of the radar-polarization kind exactly as a
+`Quantity relPermKind α` binder is one of the permittivity kind. The kind renders from
+its constant, so a designation port and a quantity port spell their kinds the same way
+and against the same open namespaces. -/
 def carrierKind? (env : Environment) (carriers : Array Name) (ctx : BinderCtx)
     (ty : Expr) : MetaM (Option String) := do
   let ty := ty.consumeTypeAnnotations
   let .const c _ := ty.getAppFn | return none
+  if let some kn := BoundaryAudit.nominalKindOf? env c then
+    return some (toString (← Meta.ppExpr (mkConst kn)))
   unless carriers.contains c do return none
   let some ci := env.find? c | return none
   let args := ty.getAppArgs
@@ -363,30 +388,48 @@ def conditionalPaths (env : Environment) (carriers : Array Name) (ctx : BinderCt
   return out
 
 /-- Does a type carry kind information at all — a registered carrier or the kind
-vocabulary itself, mentioned anywhere in the expression, or (one structure level down,
-fuel-bounded) in the fields of the single-constructor inductive at its head? The
-negative answer classifies a signature position as *unkinded* (module header,
-"Unkinded positions"): naked data, red in every report. The positive answer without a
-carrier field path (`carrierPaths`) is a kind-bearing position that ports nothing — a
-sum over quantities, a function returning them: not naked data, and not an interface
-node either. -/
-partial def kindBearing (env : Environment) (carriers : Array Name) (ty : Expr)
-    (fuel : Nat := 3) : Bool :=
+vocabulary itself, mentioned anywhere in the expression, or (fuel-bounded) in the
+fields of the single-constructor inductive at its head, or in one of its own type
+arguments? The negative answer classifies a signature position as *unkinded* (module
+header, "Unkinded positions"): naked data, red in every report. The positive answer
+without a carrier field path (`carrierPaths`) is a kind-bearing position that ports
+nothing — a sum over quantities, a function returning them: not naked data, and not an
+interface node either.
+
+Three ways a type says it, because an abbreviation and a plural are not naked data:
+
+  * the test reduces at **reducible** transparency first, so a signature that names an
+    abbreviation says what the abbreviation says — `AttenQ α`, spelled
+    `Quantity paramB α → Quantity vegetationIndex α → Quantity vegetationAttenuation α`,
+    is a function over quantities however the binder spells it;
+  * a single-constructor head states its kinds through its fields, one level at a time;
+  * **a container of kinded values is kinded** — a type argument is searched like the
+    type itself, so `List (ObsWQ α)` carries what an `ObsWQ α` carries. It ports
+    nothing (a list has no fixed arity, so there is no field path to name), which is
+    exactly the "carries kinds, is not an interface node" verdict — the plural of a
+    kinded thing is not naked data, and calling it naked over-reports the debt. -/
+partial def kindBearing (carriers : Array Name) (ty : Expr) (fuel : Nat := 3) :
+    MetaM Bool := do
+  let ty ← Meta.whnfR ty.consumeTypeAnnotations
   let mentions := (ty.find? fun sub =>
     match sub with
     | .const c _ => carriers.contains c || c == ``KindOfProperty
     | _ => false).isSome
-  mentions ||
-    match fuel, ty.getAppFn with
-    | fuel + 1, .const c _ =>
-      match env.find? c with
-      | some (.inductInfo ii) =>
-        ii.ctors.length == 1 &&
-          (match ii.ctors.head?.bind env.find? with
-           | some ctor => kindBearing env carriers ctor.type fuel
-           | none => false)
-      | _ => false
-    | _, _ => false
+  if mentions then return true
+  match fuel with
+  | 0 => return false
+  | fuel + 1 =>
+    if let .const c _ := ty.getAppFn then
+      if (BoundaryAudit.nominalKindOf? (← getEnv) c).isSome then return true
+      if let some (.inductInfo ii) := (← getEnv).find? c then
+        if ii.ctors.length == 1 then
+          if let some ctor := ii.ctors.head?.bind (← getEnv).find? then
+            if ← kindBearing carriers ctor.type fuel then return true
+    for a in ty.getAppArgs do
+      unless a.hasLooseBVars do
+        if (← Meta.isType a) then
+          if ← kindBearing carriers a fuel then return true
+    return false
 
 /-- The result type's right-spine product components — `A × B × C` is three output
 positions. A parenthesized left factor stays one component: positions follow what the
@@ -1159,6 +1202,64 @@ partial def walkApp (h : HarvestCtx) (e : Expr) (ctx : BinderCtx)
           for j in [0:args.size] do
             st := (← walk h args[j]! ctx (opTargets.get? j) st)
           return st
+  -- a nominal selection: a `match` on a designation of a registered nominal kind. Every
+  -- alternative carries the result's kind — the selector chooses between values of one
+  -- kind, which is the whole content of a nominal comparison — so the branches become
+  -- operand nodes of one `select` edge and the label is its first operand. Without this
+  -- the discriminant is naked data flowing into a kinded result, which is what a
+  -- selector genuinely looked like before it had a kind to be read at.
+  if let some ma ← Meta.matchMatcherApp? e (alsoCasesOn := true) then
+    if ma.discrs.size == 1 && ma.alts.size ≥ 2 then
+      if let some kn := nominalKind? h.env (← Meta.inferType ma.discrs[0]!) then
+        let selKind := toString (← Meta.ppExpr (mkConst kn))
+        let resK? ← match t1 with
+          | some (_, k, _) => pure (some k)
+          | none => carrierKind? h.env h.carriers ctx (← Meta.inferType e)
+        -- a nullary designation still arrives under a placeholder binder — the matcher
+        -- gives every alternative a parameter whether its constructor carries data or
+        -- not — so each alternative is peeled to the term it actually computes
+        let mut peeled : Array (Expr × BinderCtx) := #[]
+        for i in [0:ma.alts.size] do
+          let mut body := ma.alts[i]!
+          let mut ctx' := ctx
+          let mut ok := true
+          for _ in [0:ma.altNumParams[i]!] do
+            match body with
+            | .lam nm _ b _ => ctx' := (nm, none) :: ctx'; body := b
+            | _ => ok := false
+          if ok then peeled := peeled.push (body, ctx')
+        if peeled.size == ma.alts.size then
+        if let some resK := resK? then
+          let mut st := st
+          let d := ma.discrs[0]!
+          let mut selNode := ""
+          if namesNode h d then
+            selNode ← refName ctx d
+          else
+            let (m, st') := st.nextFresh
+            st := st'
+            selNode := m
+            st ← walk h d ctx (some (.one m selKind true)) st
+          let mut ops : List (String × String) := [(selNode, selKind)]
+          for (alt, ctx') in peeled do
+            let (m, st') := st.nextFresh
+            st := st'
+            st ← walk h alt ctx' (some (.one m resK true)) st
+            ops := ops ++ [(m, resK)]
+          let mut resNode := ""
+          match t1 with
+          | some (n, _, owned) =>
+            if owned then st := { st with intros := st.intros.push ⟨n, resK, .derived⟩ }
+            resNode := n
+          | none =>
+            let (m, st') := st.nextFresh
+            st := { st' with intros := st'.intros.push ⟨m, resK, .derived⟩ }
+            resNode := m
+          let so : StepOccurrence :=
+            ⟨⟨.select ma.alts.size, ops, resNode, resK, h.site⟩,
+             (ops.map (·.2)).toArray, false, false⟩
+          st := { st with occs := st.occs.push so }
+          return ← ma.remaining.foldlM (fun st a => walk h a ctx none st) st
   -- a single-alternative matcher: tuple destructuring — the discriminant produces
   -- onto the alternative's binders, and the alternative is the continuation
   if let some ma ← Meta.matchMatcherApp? e (alsoCasesOn := true) then
@@ -1222,8 +1323,13 @@ partial def walkSubStep (h : HarvestCtx) (c : Name) (e : Expr) (ctx : BinderCtx)
   let mut opSlots : Array (Nat × String × String) := #[]
   for j in [0:args.size] do
     let bty := btys[j]!
+    -- a leaf of the callee's interface: a registered carrier, or a registered nominal
+    -- designation set. The witness path above admits carriers only — a witness relates
+    -- kinds-of-QUANTITY, and an extra operand there would shift the positions its
+    -- equation names — but a procedure edge's operands are the callee's input ports,
+    -- and a designation port is one of those.
     let isCarrier := match bty.consumeTypeAnnotations.getAppFn with
-      | .const cc _ => h.carriers.contains cc
+      | .const cc _ => h.carriers.contains cc || (BoundaryAudit.nominalKindOf? h.env cc).isSome
       | _ => false
     if isCarrier then
       opSlots := opSlots.push (j, "", (← carrierKind? h.env h.carriers ctx bty).getD "_")
@@ -1418,7 +1524,7 @@ def stepGraphOf (decl : Name) (subSteps : Array Name := #[]) : MetaM StepGraph :
           -- information at all (propositions and sorts are interface logic, not data)
           let bi := (← fv.fvarId!.getDecl).binderInfo
           if bi.isExplicit && !ty.isSort && !(← Meta.isProp ty)
-              && !kindBearing env carriers ty then
+              && !(← kindBearing carriers ty) then
             let nm := toString (← fv.fvarId!.getUserName)
             unkinded := unkinded.push ⟨nm, toString (← Meta.ppExpr ty), .input⟩
             unkIdx := unkIdx.push (idx, nm)
@@ -1465,7 +1571,7 @@ def stepGraphOf (decl : Name) (subSteps : Array Name := #[]) : MetaM StepGraph :
             (cases.toList.map fun (p, k) => (s!"{node}{p}", k, false))
         else
           outSlots := outSlots.push []
-          if !cty.isSort && !(← Meta.isProp cty) && !kindBearing env carriers cty then
+          if !cty.isSort && !(← Meta.isProp cty) && !(← kindBearing carriers cty) then
             unkinded := unkinded.push ⟨node, toString (← Meta.ppExpr cty), .output⟩
     let st ← match info.value? with
       | none => pure {}
@@ -1900,6 +2006,7 @@ instance : ToExpr EdgeFamily where
     | .copy => mkConst ``Provenance.EdgeFamily.copy
     | .step nm a =>
       mkApp2 (mkConst ``Provenance.EdgeFamily.step) (toExpr nm) (toExpr a)
+    | .select n => mkApp (mkConst ``Provenance.EdgeFamily.select) (toExpr n)
 
 instance : ToExpr (Port String String) where
   toTypeExpr := mkApp2 (mkConst ``Provenance.Port) strE strE

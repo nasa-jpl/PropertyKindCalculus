@@ -108,12 +108,15 @@ def familyGlyph : EdgeFamily → String
   | .tableDiv => "[T]/"
   | .copy => ""
   | .step nm _ => s!"[{nm}]"
+  | .select _ => "select"
 
 /-- The arrow color of an edge family: identity wires gray, procedure edges indigo,
-witness edges near-black. -/
+nominal selections teal (a label chooses; it does not compute), witness edges
+near-black. -/
 def familyStroke : EdgeFamily → String
   | .copy => "#9ca3af"
   | .step _ _ => "#4f46e5"
+  | .select _ => "#0d9488"
   | _ => "#111827"
 
 /-- The tier label without the attested reason — the reason becomes the row's

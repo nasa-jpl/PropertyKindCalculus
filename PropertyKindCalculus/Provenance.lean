@@ -224,7 +224,13 @@ operator-table registrations `KindMul`/`KindDiv` — plus `copy`, the identity w
 `step`, the procedure edge (header, "The procedure edge"): a whole step applied as a
 hyperedge at the assembly level, carrying the step's rendered name and its operand
 count, its equation licensed by the step's own graph and audit tier rather than by a
-witness. -/
+witness — and `select`, the **nominal selection**: a designation of a nominal kind
+choosing among alternatives that all carry the result's kind. Its first operand is the
+selector, at its own nominal kind; the rest are the branches, each at the result kind,
+so the edge states that the choice is *between* values of one kind and that the label is
+what makes it. A selection licenses no kind equation — every branch already carries the
+kind the result does — which is exactly its content: the only thing a nominal value may
+do is be compared for equality, and a `match` is that comparison. -/
 inductive Provenance.EdgeFamily where
   | product
   | quotient
@@ -237,6 +243,7 @@ inductive Provenance.EdgeFamily where
   | tableDiv
   | copy
   | step (name : String) (arity : Nat)
+  | select (cases : Nat)
 deriving DecidableEq, Repr, Inhabited
 
 /-- The number of operand nodes an occurrence of this family relates (its result is not
@@ -247,6 +254,7 @@ def Provenance.EdgeFamily.operandCount : Provenance.EdgeFamily → Nat
   | .product | .quotient | .tableMul | .tableDiv | .additive => 2
   | .reciprocal | .transcendental | .power _ | .reference | .copy => 1
   | .step _ a => a
+  | .select n => n + 1
 
 /-- Render a `power` exponent in the enumeration commands' grammar: the spelling the
 pretty printer gives the authored literal — `1 / 2`, `-1`, `3` — so an edge renders one
@@ -276,6 +284,11 @@ def Provenance.EdgeFamily.render (f : Provenance.EdgeFamily)
   | .step nm _ =>
     if operands.isEmpty then s!"[step {nm}] → {result}"
     else s!"[step {nm}] {String.intercalate " · " operands} → {result}"
+  | .select _ =>
+    match operands with
+    | [] => s!"select → {result}"
+    | sel :: branches =>
+      s!"select {sel} : {String.intercalate " | " branches} → {result}"
 
 /-- A kind-typed port: one node of a step's interface, with the kind its signature
 states and the role it plays. Input and configuration ports are sources; an output port

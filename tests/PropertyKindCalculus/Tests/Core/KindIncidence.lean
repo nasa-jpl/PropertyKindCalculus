@@ -306,6 +306,44 @@ unkinded output result : Nat
 -/
 #guard_msgs in #kind_ports plainAdd
 
+/-! ### An abbreviation and a plural are not naked data
+
+The unkinded reading answers "does this type carry kind information at all", and two
+spellings used to answer no while carrying plenty. An **abbreviation** hides what it
+abbreviates — a signature naming `Scaling R` says exactly what the arrow it stands for
+says, so the test reduces at reducible transparency before looking. A **container** of
+kinded values carries what its elements carry — `List (Sample R)` is a plural of a
+kinded thing, not naked data — so a type argument is searched like the type itself.
+
+Neither position becomes a *port*: a function is not a quantity and a list has no fixed
+arity, so there is no field path to name. That is the third verdict the reading already
+had a name for — carries kinds, is not an interface node — and the point of the fix is
+that these two reach it instead of being called naked. Over-reporting the debt is the
+safe direction and still the wrong answer: a ledger that counts a function over
+quantities as unkinded data cannot be driven to zero, because there is nothing there
+to fix. -/
+
+/-- An abbreviation for a function over quantities — what a threaded model argument
+looks like at a call boundary. -/
+abbrev Scaling (R : Type) := Quantity alphaK R → Quantity betaK R
+
+/-- A single-constructor record of quantities — the element type below. -/
+structure Sample (R : Type) where
+  a : Quantity alphaK R
+  b : Quantity betaK R
+
+/-- Both spellings in one signature, alongside a genuinely naked position so the pin
+shows the reading still separates them. -/
+def foldSamples (f : Scaling Nat) (xs : List (Sample Nat)) (n : Nat) : Quantity deltaK Nat :=
+  ⟨xs.length + n + (f ⟨0⟩).magnitude⟩
+
+/--
+info: kind ports of 'PropertyKindCalculus.Tests.KindIncidence.foldSamples':
+output result : deltaK
+unkinded input n : Nat
+-/
+#guard_msgs in #kind_ports foldSamples
+
 /-! ## The constructed graph — `#kind_graph`
 
 Every pin above is a projection of the object pinned here. The wiring claims: an
@@ -1453,5 +1491,101 @@ alphaK ± alphaK → alphaK ⟨x, y⟩ ⇒ result
 well-formed: true
 -/
 #guard_msgs in #kind_graph gappedInstance
+
+/-! ## The nominal selection — a label that chooses
+
+A `match` on a bespoke label set used to read as naked data steering a kinded result:
+the discriminant carried no kind, so the harvest named it `unkinded` and drew a red
+flow into whatever the match produced. But a radar polarization, a band designation, a
+surface class *is* a property value — of a nominal kind, whose one licensed operation
+is the equality a `match` performs. `@[kindNominal k]` says so once, at the type, and
+three readings follow: the binder is an interface node at `k`, a caller's argument
+wires into it like any other port, and the match becomes a `select` edge whose first
+operand is the label and whose remaining operands are the branches, all at the result's
+kind.
+
+The edge licenses no kind equation, and that is its content: every branch already
+carries the kind the result does, so what the selection adds is *which* branch — the
+one thing a nominal comparison can say. -/
+
+/-- A probe nominal kind. Nominal scale: designations, no magnitude. -/
+def bandK : KindOfProperty := { id := "kind-incidence probe band", scale := .nominal }
+
+/-- Its designation set — a bespoke finite label set, so the type determines the kind
+and no wrapper is needed to state it. -/
+@[kindNominal bandK]
+inductive Band where
+  /-- The long-wavelength designation. -/
+  | L
+  /-- The short-wavelength designation. -/
+  | S
+deriving DecidableEq
+
+/-- The formula selected by the label: two products of the same two operands, so the
+branches differ in arithmetic and agree in kind. -/
+def scaledByBand (b : Band) (x : Quantity alphaK Float) (y : Quantity betaK Float) :
+    Quantity deltaK Float :=
+  match b with
+  | .L => Quantity.mul (ProductKind.ofRatio alphaK betaK deltaK) x y
+  | .S => Quantity.mul (ProductKind.ofRatio alphaK betaK deltaK) x (y + y)
+
+/--
+info: kind graph of 'PropertyKindCalculus.Tests.KindIncidence.scaledByBand':
+input b : bandK
+input x : alphaK
+input y : betaK
+output result : deltaK
+derived _1 : deltaK
+derived _2 : deltaK
+derived _3 : betaK
+alphaK · betaK → deltaK ⟨x, y⟩ ⇒ _1
+alphaK · betaK → deltaK ⟨x, _3⟩ ⇒ _2
+betaK ± betaK → betaK ⟨y, y⟩ ⇒ _3
+select bandK : deltaK | deltaK → deltaK ⟨b, _1, _2⟩ ⇒ result
+well-formed: true
+-/
+#guard_msgs in #kind_graph scaledByBand
+
+/-- A caller that fixes the designation — as a *declared* constant, because a label
+bound inside a call is a binding no boundary can read. -/
+@[kindConst]
+def deployedBand : Band := .L
+
+/-- The deployment: one configuration port for the label, wired into the callee's
+designation port like any other configured source. -/
+def deployedScaled (x : Quantity alphaK Float) (y : Quantity betaK Float) :
+    Quantity deltaK Float :=
+  scaledByBand deployedBand x y
+
+/--
+info: kind assembly of 2 steps:
+level deployedScaled: walked
+level scaledByBand: walked
+input deployedScaled/x : alphaK
+input deployedScaled/y : betaK
+config deployedScaled/PropertyKindCalculus.Tests.KindIncidence.deployedBand : bandK
+output deployedScaled/result : deltaK
+derived scaledByBand/b : bandK
+derived scaledByBand/x : alphaK
+derived scaledByBand/y : betaK
+derived scaledByBand/result : deltaK
+derived scaledByBand/_1 : deltaK
+derived scaledByBand/_2 : deltaK
+derived scaledByBand/_3 : betaK
+[step scaledByBand] bandK · alphaK · betaK → deltaK ⟨deployedScaled/PropertyKindCalculus.Tests.KindIncidence.deployedBand, deployedScaled/x, deployedScaled/y⟩ ⇒ deployedScaled/result
+alphaK · betaK → deltaK ⟨scaledByBand/x, scaledByBand/y⟩ ⇒ scaledByBand/_1
+alphaK · betaK → deltaK ⟨scaledByBand/x, scaledByBand/_3⟩ ⇒ scaledByBand/_2
+betaK ± betaK → betaK ⟨scaledByBand/y, scaledByBand/y⟩ ⇒ scaledByBand/_3
+select bandK : deltaK | deltaK → deltaK ⟨scaledByBand/b, scaledByBand/_1, scaledByBand/_2⟩ ⇒ scaledByBand/result
+bandK → bandK ⟨deployedScaled/PropertyKindCalculus.Tests.KindIncidence.deployedBand⟩ ⇒ scaledByBand/b
+alphaK → alphaK ⟨deployedScaled/x⟩ ⇒ scaledByBand/x
+betaK → betaK ⟨deployedScaled/y⟩ ⇒ scaledByBand/y
+cites: deployedScaled → scaledByBand
+well-formed: true
+-/
+#guard_msgs in #kind_assembly [deployedScaled, scaledByBand]
+
+/-- info: kernel-accepted: the kind assembly is well-formed (theorem 'PropertyKindCalculus.Tests.KindIncidence.deployedScaled.kindAssemblyWf') -/
+#guard_msgs in #kind_assembly_decide [deployedScaled, scaledByBand]
 
 end PropertyKindCalculus.Tests.KindIncidence

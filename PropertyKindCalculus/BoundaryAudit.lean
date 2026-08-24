@@ -179,6 +179,70 @@ def kindCarrierNames (env : Environment) : Array Name :=
     ``PropertyKindCalculus.NominalValue]
     ++ kindCarrierExt.getState env
 
+/-! ## The nominal designation registry — `@[kindNominal k]`
+
+A **nominal** kind-of-property (§13.2.1) has designations, not magnitudes, and there are two
+honest ways to carry one. When the designations ride a *shared* representation — a `String`
+path, a `UInt32` code — the type says nothing about which kind is meant, and `NominalValue k R`
+is what closes the argument-swap hole: a `/proc/meminfo` dump and the field key to look up in
+it are both `String`s. When the designations are a *bespoke finite label set*, the type already
+identifies the kind uniquely, and wrapping it re-states at every binder what the declaration
+said once. `@[kindNominal k]` is the declaration: **this inductive is the designation set of the
+nominal kind `k`**, registered once, so the harvest reads a `Polarization` binder as an
+interface node at its kind instead of as naked data.
+
+The registration is checked, because each condition is part of the claim:
+
+  * `k` must be a `KindOfProperty` whose `scale` reduces to `.nominal` — a designation set for a
+    ratio kind would be a magnitude wearing a label's clothes;
+  * the tagged declaration must be an inductive whose constructors are all **nullary** — a
+    designation is a label, and a constructor with an argument is a container, which is what
+    `NominalValue`'s `R` parameter is for;
+  * a designation type registers at exactly ONE kind — the whole reason the bespoke form needs
+    no wrapper is that its type determines its kind, and a second registration would take that
+    back. -/
+
+/-- The environment extension mapping each `@[kindNominal]`-registered designation type to the
+nominal kind it designates. -/
+initialize kindNominalExt :
+    SimplePersistentEnvExtension (Name × Name) (Array (Name × Name)) ←
+  registerSimplePersistentEnvExtension {
+    addEntryFn    := fun a e => a.push e
+    addImportedFn := fun ess => ess.foldl (init := #[]) (· ++ ·)
+  }
+
+/-- The nominal kind a type designates, or `none` if it is not a registered designation set. -/
+def nominalKindOf? (env : Environment) (typeName : Name) : Option Name :=
+  (kindNominalExt.getState env).findSome? fun (t, k) => if t == typeName then some k else none
+
+syntax (name := kindNominalAttr) "kindNominal" ident : attr
+
+initialize registerBuiltinAttribute {
+  name  := `kindNominalAttr
+  descr := "Register a bespoke finite label set as the designation set of a nominal kind."
+  add   := fun decl stx _kind => do
+    let kindName ← realizeGlobalConstNoOverload stx[1]
+    let env ← getEnv
+    let some ki := env.find? kindName
+      | throwError "`@[kindNominal]` could not find '{kindName}' in the environment"
+    unless ki.type.isConstOf ``PropertyKindCalculus.KindOfProperty do
+      throwError "`@[kindNominal]` expects a `KindOfProperty`; '{kindName}' is not one"
+    let scale ← Meta.MetaM.run' <| Meta.whnf <|
+      mkApp (mkConst ``PropertyKindCalculus.KindOfProperty.scale) (mkConst kindName)
+    unless scale.isConstOf ``PropertyKindCalculus.ScaleType.nominal do
+      throwError "`@[kindNominal]` expects a kind of NOMINAL scale; '{kindName}' is         '{scale}'. A designation set for a kind that has magnitudes would license equality         on something the calculus already gives richer operations to."
+    let some (.inductInfo ii) := env.find? decl
+      | throwError "`@[kindNominal]` expects an inductive type; '{decl}' is not one"
+    for c in ii.ctors do
+      let some ci := env.find? c | continue
+      unless ci.type.getForallBinderNames.length == ii.numParams do
+        throwError "`@[kindNominal]` expects every constructor to be nullary; '{c}' takes           arguments. A designation is a label — a constructor carrying data is a container,           which is what `NominalValue`'s representation parameter is for."
+    if let some prior := nominalKindOf? env decl then
+      unless prior == kindName do
+        throwError "'{decl}' already designates '{prior}'. A bespoke designation set needs no           wrapper precisely because its type determines its kind; registering it at a second           kind takes that back."
+    modifyEnv fun env => kindNominalExt.addEntry env (decl, kindName)
+}
+
 /-- A registered carrier's detection footprint: its constructor (a mint) and its first-field
 projection (an erasure), with the arities that fully-applied occurrences carry. -/
 structure CarrierSpec where
