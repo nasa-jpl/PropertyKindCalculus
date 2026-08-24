@@ -102,6 +102,7 @@ def familyGlyph : EdgeFamily → String
   | .reciprocal => "1/x"
   | .transcendental => "f"
   | .power p => s!"^{EdgeFamily.renderExp p}"
+  | .reference => "ref"
   | .tableMul => "[T]·"
   | .tableDiv => "[T]/"
   | .copy => ""

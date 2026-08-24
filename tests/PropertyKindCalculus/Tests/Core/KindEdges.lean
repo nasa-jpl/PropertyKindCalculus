@@ -68,6 +68,32 @@ PropertyKindCalculus.Tests.KindEdges.tableEntry: [table] alphaK · betaK → gam
 /-- info: no authored kind edges mention 'PropertyKindCalculus.Tests.KindEdges.orphanK' -/
 #guard_msgs in #kind_edges orphanK
 
+/-! ## Family F — a re-expression is an authored edge like any other
+
+The two references a conversion carries are quantities of the two kinds, so they mention
+those kinds without being edges; what the enumeration reports is the one authored
+`ReferenceKind`. -/
+
+/-- A probe kind — one reference for a quantity. -/
+def alphaPrimeK : KindOfProperty := { id := "kind-edges probe alpha (other reference)", scale := .ratio }
+
+/-- The authored re-expression law between the two references. -/
+theorem alpha_alphaPrime : ReferenceKind alphaK alphaPrimeK := ReferenceKind.ofRatio _ _
+
+/-- A conversion written at the call site: `a · ref / ref₁`, the references stated as
+quantities so the conversion data never leaves the calculus. The named witness it applies
+is attributed here too, exactly as a product's call site is. -/
+def toAlphaPrime {R : Type} [Mul R] [Div R] (x : Quantity alphaK R)
+    (ref : Quantity alphaPrimeK R) (ref₁ : Quantity alphaK R) : Quantity alphaPrimeK R :=
+  Quantity.reexpress alpha_alphaPrime x ref ref₁
+
+/--
+info: authored kind edges mentioning 'PropertyKindCalculus.Tests.KindEdges.alphaPrimeK':
+PropertyKindCalculus.Tests.KindEdges.alpha_alphaPrime: reference : alphaK → alphaPrimeK
+PropertyKindCalculus.Tests.KindEdges.toAlphaPrime: reference : alphaK → alphaPrimeK
+-/
+#guard_msgs in #kind_edges alphaPrimeK
+
 /- The body-scan collector in isolation, on a hand-built expression — deterministic
 regardless of the elaborator's lifting choice for the probe definitions above. The proof
 arguments are fillers (the collector reads only the kind positions), and the producer sits

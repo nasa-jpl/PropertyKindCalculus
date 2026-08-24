@@ -214,7 +214,9 @@ def Provenance.IntroTier.label : Provenance.IntroTier → String
 
 /-- The hyperedge labels: the witness families of the core calculus — `ProductKind`,
 `QuotientKind`, `ReciprocalKind`, `TranscendentalKind`, `PowerKind` (carrying its
-rational exponent — an exponent is data of the edge, not an operand node), and the
+rational exponent — an exponent is data of the edge, not an operand node),
+`ReferenceKind` (the re-expression, whose two reference quantities are configuration of
+the edge rather than operands of it — the value converted is the one operand), and the
 operator-table registrations `KindMul`/`KindDiv` — plus `copy`, the identity wire
 (header, "The identity wire"): harvested wiring, never an authored license — and
 `step`, the procedure edge (header, "The procedure edge"): a whole step applied as a
@@ -227,6 +229,7 @@ inductive Provenance.EdgeFamily where
   | reciprocal
   | transcendental
   | power (exp : Rat)
+  | reference
   | tableMul
   | tableDiv
   | copy
@@ -239,7 +242,7 @@ edge's count is the step's kinded input count, carried by the label — a proced
 relates however many inputs its interface states. -/
 def Provenance.EdgeFamily.operandCount : Provenance.EdgeFamily → Nat
   | .product | .quotient | .tableMul | .tableDiv => 2
-  | .reciprocal | .transcendental | .power _ | .copy => 1
+  | .reciprocal | .transcendental | .power _ | .reference | .copy => 1
   | .step _ a => a
 
 /-- Render a `power` exponent in the enumeration commands' grammar: the spelling the
@@ -262,6 +265,7 @@ def Provenance.EdgeFamily.render (f : Provenance.EdgeFamily)
   | .reciprocal => s!"1 / {o 0} → {result}"
   | .transcendental => s!"transcendental : {o 0} → {result}"
   | .power p => s!"{o 0} ^ {Provenance.EdgeFamily.renderExp p} → {result}"
+  | .reference => s!"reference : {o 0} → {result}"
   | .tableMul => s!"[table] {o 0} · {o 1} → {result}"
   | .tableDiv => s!"[table] {o 0} / {o 1} → {result}"
   | .copy => s!"{o 0} → {result}"

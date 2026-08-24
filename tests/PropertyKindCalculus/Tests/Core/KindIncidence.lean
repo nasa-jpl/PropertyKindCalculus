@@ -1196,4 +1196,61 @@ boundary agrees: false
 -/
 #guard_msgs in #kind_contract halvedInDomainTotal
 
+/-! ### Re-expression — a conversion that stays inside the calculus
+
+Two references for one kind-of-property are two kinds when a model keeps them apart, and
+carrying a value from one to the other is an edge like any other: the value is the single
+operand, and the two reference quantities are the edge's configuration. The reading that
+matters is the negative one — a conversion written by hand erases its argument and mints
+its result, so the input reaches nothing and the verdict refuses; written as the edge, the
+same arithmetic wires. -/
+
+/-- The other reference for `alphaK`'s kind-of-property. -/
+def alphaPrimeK : KindOfProperty := { id := "incidence probe alpha (other reference)", scale := .ratio }
+
+/-- The authored re-expression law between the two references. -/
+theorem alphaRef : ReferenceKind alphaK alphaPrimeK := ReferenceKind.ofRatio _ _
+
+/-- The conversion as the edge: one and the same quantity in both references, and the
+association `(a · ref) / ref₁` the floating-point result depends on. -/
+def convert (x : Quantity alphaK Float) (ref : Quantity alphaPrimeK Float)
+    (ref₁ : Quantity alphaK Float) : Quantity alphaPrimeK Float :=
+  Quantity.reexpress alphaRef x ref ref₁
+
+/-- The same arithmetic written through the carrier — the spelling a model reaches for
+when the calculus has no name for the conversion. -/
+def convertByHand (x : Quantity alphaK Float) (ref : Quantity alphaPrimeK Float)
+    (ref₁ : Quantity alphaK Float) : Quantity alphaPrimeK Float :=
+  ⟨x.magnitude * ref.magnitude / ref₁.magnitude⟩
+
+/-- The two agree definitionally — the edge is the same arithmetic, differently licensed. -/
+theorem convert_eq (x : Quantity alphaK Float) (ref : Quantity alphaPrimeK Float)
+    (ref₁ : Quantity alphaK Float) : convertByHand x ref ref₁ = convert x ref ref₁ := rfl
+
+/--
+info: kind graph of 'PropertyKindCalculus.Tests.KindIncidence.convert':
+input x : alphaK
+input ref : alphaPrimeK
+input ref₁ : alphaK
+output result : alphaPrimeK
+reference : alphaK → alphaPrimeK ⟨x⟩ ⇒ result
+well-formed: true
+-/
+#guard_msgs in #kind_graph convert
+
+-- by hand: the argument leaves the calculus and the result is an anonymous mint, so
+-- nothing reaches the output and the verdict refuses. Same floats, no provenance.
+/--
+info: kind graph of 'PropertyKindCalculus.Tests.KindIncidence.convertByHand':
+input x : alphaK
+input ref : alphaPrimeK
+input ref₁ : alphaK
+output result : alphaPrimeK
+exit x
+exit ref
+exit ref₁
+well-formed: false
+-/
+#guard_msgs in #kind_graph convertByHand
+
 end PropertyKindCalculus.Tests.KindIncidence

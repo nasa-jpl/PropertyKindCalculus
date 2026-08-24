@@ -457,6 +457,10 @@ def edgeOfBinderType? (ty : Expr) :
   if ty.isAppOfArity ``ReciprocalKind 2 then return some (.reciprocal, #[a[0]!], a[1]!)
   if ty.isAppOfArity ``TranscendentalKind 2 then
     return some (.transcendental, #[a[0]!], a[1]!)
+  -- a re-expression relates the value converted; the two reference quantities are the
+  -- edge's configuration, and a signature that states them is stating its conversion,
+  -- not taking two more inputs
+  if ty.isAppOfArity ``ReferenceKind 2 then return some (.reference, #[a[0]!], a[1]!)
   if ty.isAppOfArity ``PowerKind 3 then
     let some p := ratOfExpr? a[0]!
       | throwError "a power exponent here is not a rational literal — the graph's edge \
@@ -482,8 +486,8 @@ def statesEdgeType (ty : Expr) : Bool :=
   let ty := ty.cleanupAnnotations
   ty.isAppOfArity ``ProductKind 3 || ty.isAppOfArity ``QuotientKind 3
     || ty.isAppOfArity ``ReciprocalKind 2 || ty.isAppOfArity ``TranscendentalKind 2
-    || ty.isAppOfArity ``PowerKind 3 || ty.isAppOfArity ``KindMul 3
-    || ty.isAppOfArity ``KindDiv 3
+    || ty.isAppOfArity ``PowerKind 3 || ty.isAppOfArity ``ReferenceKind 2
+    || ty.isAppOfArity ``KindMul 3 || ty.isAppOfArity ``KindDiv 3
 
 /-! ## The walk — occurrences, introductions, exits, wiring -/
 
@@ -1676,6 +1680,7 @@ instance : ToExpr EdgeFamily where
     | .reciprocal => mkConst ``Provenance.EdgeFamily.reciprocal
     | .transcendental => mkConst ``Provenance.EdgeFamily.transcendental
     | .power p => mkApp (mkConst ``Provenance.EdgeFamily.power) (toExpr p)
+    | .reference => mkConst ``Provenance.EdgeFamily.reference
     | .tableMul => mkConst ``Provenance.EdgeFamily.tableMul
     | .tableDiv => mkConst ``Provenance.EdgeFamily.tableDiv
     | .copy => mkConst ``Provenance.EdgeFamily.copy

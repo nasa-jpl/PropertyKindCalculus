@@ -6,7 +6,7 @@ The product / quotient / reciprocal calculus (`QuantityClassification`) covers t
 to quantities — roots, exponentials, logarithms, the trigonometric functions — and
 each carries its own metrological discipline. This module adds that layer, reusing
 the same three-part pattern (kind-relation · smart constructor · coherence) the
-algebraic calculus uses, and grouping the functions into the five families that have
+algebraic calculus uses, and grouping the functions into the six families that have
 genuinely different kind signatures:
 
   * **A — kind-preserving** (`abs`, `neg`, `min`, `max`, `clamp`, `floor`, `ceil`,
@@ -31,6 +31,11 @@ genuinely different kind signatures:
     multiply them) — so the product/power calculus *correctly refuses* it. This is the
     family where the function layer talks to the **scale** layer (`ScaleType`), realized
     in the `Dimension` examples.
+  * **F — re-expression against another reference** (degree/radian, metre/foot): a
+    `ReferenceKind` relation. The one family that computes nothing — the quantity is
+    unchanged and only the reference its number counts against moves, so the conversion
+    is carried by one and the same quantity written in both references. Ratio-scale only:
+    an interval scale's reference carries an offset a ratio cannot express.
 
 ## Carrier capability
 
@@ -383,6 +388,75 @@ def atan2 {k₁ k : KindOfProperty} {R : Type} [MathCarrierExt R]
 @[simp] theorem tanh_magnitude {k₁ k : KindOfProperty} {R : Type} [MathCarrier R]
     (h : TranscendentalKind k₁ k) (a : Quantity k₁ R) :
     (Quantity.tanh h a).magnitude = MathCarrier.tanh a.magnitude := rfl
+
+end Quantity
+
+/-! ## Family F — re-expression against another reference (`ReferenceKind`)
+
+The families above all *compute* a new quantity. This one does not: it states the same
+quantity against a different reference. Degree and radian, metre and foot, hectopascal
+and millibar — the value is one quantity, and what changes is the reference the number
+counts. `Unit` makes that thesis at the level of kinds and numerals (§13.3.3's
+number-and-reference form, `quantity / unit = number` and `number × unit = quantity`);
+here it acts on a carrier, so a model can convert without leaving the calculus.
+
+The relation is between *kinds* because a system may choose to keep the two references
+apart at the type level — an incidence angle in degrees and the same angle in radians as
+distinct kinds, so that a routine expecting radians cannot be handed degrees. That is a
+strengthening of the ISQ, exactly as family D's curation is: commensurable quantities
+that a model deliberately refuses to confuse. A system that does *not* make that
+distinction instantiates `k₁ = k` and the law is the identity.
+
+The conversion is carried by two quantities rather than a bare factor: one and the same
+quantity stated in both references — a half turn as `π` and as `180`, a foot as `0.3048`
+and as `1`. That keeps the reference data inside the calculus (a bare factor would enter
+a kinded result as an un-kinded flow, which is what the provenance reading draws in red),
+and it is the ratio the definition of a metrological unit already names. -/
+
+/-- **A kind-level re-expression law.** `k₁` and `k` carry one kind-of-property against
+different references, so a `k₁`-quantity re-expresses as a `k`-quantity by the ratio of
+those references; both ratio-scale. Only a ratio-scale kind converts by a ratio alone —
+an interval scale's reference carries an offset too (Celsius and Fahrenheit), which this
+relation deliberately does not license. -/
+structure ReferenceKind (k₁ k : KindOfProperty) : Prop where
+  /-- The source kind is ratio-scale. -/
+  ratio₁ : k₁.IsRational
+  /-- The target kind is ratio-scale. -/
+  ratioResult : k.IsRational
+
+/-- **Smart constructor.** Build a re-expression law between two *named* ratio-scale
+kinds, the ratio-scale gate discharged by `rfl` for any concrete kinds. -/
+theorem ReferenceKind.ofRatio (k₁ k : KindOfProperty)
+    (h₁ : k₁.IsRational := by rfl) (h : k.IsRational := by rfl) : ReferenceKind k₁ k := ⟨h₁, h⟩
+
+/-- A re-expression is reflexive: every kind carries itself against its own reference. -/
+theorem ReferenceKind.refl {k : KindOfProperty} (h : k.IsRational) : ReferenceKind k k := ⟨h, h⟩
+
+/-- A re-expression is symmetric: the references convert both ways, which is what makes
+them references for one kind-of-property rather than a projection between two. -/
+theorem ReferenceKind.symm {k₁ k : KindOfProperty} (h : ReferenceKind k₁ k) :
+    ReferenceKind k k₁ := ⟨h.ratioResult, h.ratio₁⟩
+
+namespace Quantity
+
+/-- **Verified re-expression**, licensed by the re-expression law: `a` stated against the
+reference `k` counts by, given one and the same quantity written in both references
+(`ref` in `k`'s, `ref₁` in `k₁`'s). Degrees to radians is `reexpress h θ ⟨π⟩ ⟨180⟩` — a
+half turn, twice.
+
+The association is `(a · ref) / ref₁`, not `a · (ref / ref₁)`: the two differ in floating
+point (they agree at 40° and disagree at 89°), and a conversion that quietly re-associates
+would move every number downstream of it. -/
+def reexpress {k₁ k : KindOfProperty} {R : Type} [Mul R] [Div R]
+    (_h : ReferenceKind k₁ k) (a : Quantity k₁ R) (ref : Quantity k R)
+    (ref₁ : Quantity k₁ R) : Quantity k R :=
+  ⟨a.magnitude * ref.magnitude / ref₁.magnitude⟩
+
+@[simp] theorem reexpress_magnitude {k₁ k : KindOfProperty} {R : Type} [Mul R] [Div R]
+    (h : ReferenceKind k₁ k) (a : Quantity k₁ R) (ref : Quantity k R)
+    (ref₁ : Quantity k₁ R) :
+    (Quantity.reexpress h a ref ref₁).magnitude
+      = a.magnitude * ref.magnitude / ref₁.magnitude := rfl
 
 end Quantity
 
