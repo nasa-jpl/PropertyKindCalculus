@@ -343,6 +343,42 @@ elab "#kind_dimensional_coverage" nss:ident+ : command => liftTermElabM do
   let sorted := (out.map (·.line)).qsort (· < ·)
   logInfo m!"dimensional coverage:\n{String.intercalate "\n" sorted.toList}\n{coverageSummary out}"
 
+open Elab Command in
+/-- `#kind_dimensional_clean ns …` — **the invariant, stated apart from the record.**
+
+`#kind_dimensional_coverage` above logs one `info` message listing every audited edge, and
+consumers pin it with `#guard_msgs` so the whole coverage table is reviewable in the diff. That
+pin is a *record*, and re-pinning it is how the table legitimately follows the edges. It is
+also, unchanged, how a violation gets signed away: a message ending
+`— dimensional-coverage violation` re-pins exactly as easily as one ending `clean`, and the
+build goes green either way. The mechanism that keeps the report reviewable is the mechanism
+that lets the audit be switched off, and re-blessing is mechanical.
+
+So this command carries no message and pins nothing: it throws while any edge in scope is
+`⚠ UNDIMENSIONED` (no declared counterpart), `⚠ CONFLICTING` (disagreeing counterparts) or
+`⚠ INCOHERENT` (the family's rule is refuted). `[parametric]` generic vocabulary is not a
+violation and does not fire it. The coverage report says what the edges ARE; this says none of
+them is unaccounted for — and because there is no message here, re-blessing the report cannot
+silence it.
+
+The fix for a firing gate is never to re-pin the report: an `UNDIMENSIONED` edge wants its
+kinds given `DimensionedKind` declarations, and an `INCOHERENT` one is an authored edge the
+dimensional rule refutes — a finding, not a formatting problem.
+
+Put it next to the `#guard_msgs`-pinned coverage report, over the same namespaces. -/
+elab "#kind_dimensional_clean" nss:ident+ : command => liftTermElabM do
+  let rows ← coverageRows (nss.map (·.getId))
+  let bad := rows.filter fun r =>
+    r.verdict == .undimensioned || r.verdict == .conflicting || r.verdict == .incoherent
+  unless bad.isEmpty do
+    let rendered := (bad.map (fun r => s!"  {r.line}")).qsort (· < ·)
+    throwError "dimensional coverage: {bad.size} edge(s) not dimensionally accounted for \
+      — dimensional-coverage violation\n{String.intercalate "\n" rendered.toList}\n\n\
+      Give the kinds at issue their `DimensionedKind` declarations (`UNDIMENSIONED`), reconcile \
+      the disagreeing ones (`CONFLICTING`), or withdraw the authored edge the dimensional rule \
+      refutes (`INCOHERENT`). Do NOT re-pin a `#kind_dimensional_coverage` report whose summary \
+      says `violation` — that turns the build green and the audit off."
+
 open PropertyKindCalculus.Index in
 /-- **The coverage report as a generated table**, for documents — the same rows the command
 reports, one edge per row, sorted as the report sorts.

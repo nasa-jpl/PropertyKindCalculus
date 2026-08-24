@@ -85,4 +85,40 @@ info: dimensional coverage:
 #guard_msgs (whitespace := lax) in
 #kind_dimensional_coverage PropertyKindCalculus.Tests.Dimension.Coverage
 
+
+/-! ## `#kind_dimensional_clean` — the invariant, which cannot be re-blessed
+
+The report pinned above is a `#guard_msgs` record of a namespace deliberately holding one edge
+of each violating verdict, and re-pinning such a record is how a real violation would be signed
+away by accident. `#kind_dimensional_clean` carries no message to re-pin: it throws while any
+edge is undimensioned, conflicting or incoherent, so the two commands fail independently. -/
+
+/-- error: dimensional coverage: 3 edge(s) not dimensionally accounted for — dimensional-coverage violation
+  ⚠ CONFLICTING probeConf · probeNum → probeConf — disagreeing DimensionedKinds for: probeConf
+  ⚠ INCOHERENT probeLen · probeLen → probeLen
+  ⚠ UNDIMENSIONED probeLen · probeBad → probeArea — no DimensionedKind for: probeBad
+
+Give the kinds at issue their `DimensionedKind` declarations (`UNDIMENSIONED`), reconcile the disagreeing ones (`CONFLICTING`), or withdraw the authored edge the dimensional rule refutes (`INCOHERENT`). Do NOT re-pin a `#kind_dimensional_coverage` report whose summary says `violation` — that turns the build green and the audit off.
+-/
+#guard_msgs (whitespace := lax) in
+#kind_dimensional_clean PropertyKindCalculus.Tests.Dimension.Coverage
+
+/-! A namespace whose every edge is accounted for: the gate passes silently, so a clean scope
+adds nothing to the build output and only a violation is ever heard from. Its one `[parametric]`
+edge is the point — generic vocabulary is not a violation and must not fire the gate. -/
+namespace Clean
+
+/-- A coherent edge over the dimensioned probe kinds. -/
+theorem clean_len_sq : ProductKind probeLen probeLen probeArea := ProductKind.ofRatio _ _ _
+
+/-- A parametric edge: generic vocabulary, which the gate must tolerate. -/
+theorem clean_param (k : KindOfProperty) (h : ProductKind k probeLen probeArea) :
+    ProductKind k probeLen probeArea := h
+
+end Clean
+
+-- no message: every edge under `Clean` is dimensionally accounted for
+#guard_msgs in
+#kind_dimensional_clean PropertyKindCalculus.Tests.Dimension.Coverage.Clean
+
 end PropertyKindCalculus.Tests.Dimension.Coverage
