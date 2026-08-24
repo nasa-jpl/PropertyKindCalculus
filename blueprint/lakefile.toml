@@ -20,12 +20,12 @@ defaultTargets = ["PropertyKindCalculusBlueprint", "blueprint-gen"]
 [[require]]
 name = "verso"
 git = "https://github.com/leanprover/verso"
-rev = "v4.33.0-rc2"
+rev = "v4.33.0"
 
 [[require]]
 name = "VersoBlueprint"
 git = "https://github.com/leanprover/verso-blueprint"
-rev = "c3b8a93c5b97ff26f3ae23c5d0d06411ae416b42"
+rev = "v4.33.0"
 
 # The library being documented. Linking `(lean := "PropertyKindCalculus.…")` nodes to
 # real declarations (and reading their proved/`sorry` status) requires the
