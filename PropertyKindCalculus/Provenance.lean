@@ -384,10 +384,17 @@ def sweep (occs : List (Occurrence ν κ)) (ks : List ν) : List ν :=
       ks ++ [o.result]
     else ks
 
-/-- `fuel` sweeps of the closure, starting from `ks`. -/
+/-- `fuel` sweeps of the closure, starting from `ks`, stopping at the fixpoint. A sweep
+only ever appends, so a sweep that adds nothing has reached one, and — `sweep` being a
+function of `ks` alone — every later sweep would add nothing either. Running the fuel out
+regardless would cost one pass per occurrence where the graph's depth is what the closure
+actually needs, and this checker is reduced by the *kernel*: an assembly whose members
+carry several call sites multiplies its occurrences, and the sweep is the cubic term. -/
 def sweeps (occs : List (Occurrence ν κ)) : Nat → List ν → List ν
   | 0, ks => ks
-  | fuel + 1, ks => sweeps occs fuel (sweep occs ks)
+  | fuel + 1, ks =>
+    let ks' := sweep occs ks
+    if ks'.length == ks.length then ks else sweeps occs fuel ks'
 
 /-- The nodes *derivable* from a chosen starting set through the occurrences: the least
 fixpoint of "an occurrence whose operands are ALL known makes its result known", in
