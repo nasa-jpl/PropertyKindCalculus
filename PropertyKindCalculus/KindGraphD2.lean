@@ -284,8 +284,10 @@ def preamble (a : Assembly) (title : String) : String := Id.run do
     ++ "\"; shape: text; style: {font-size: 13; font-color: \"" ++ uc ++ "\"; bold: true}}")
   for i in [0:a.levels.size] do
     let l := a.levels[i]!
-    let line := if l.src.isEmpty then s!"{l.decl}" else s!"{l.decl} — {l.src}"
-    out := out ++ put ("  " ++ q s!"s{i}" ++ ": {label: " ++ q line
+    -- the declaration over its file, not beside it: the two together are the claim, and
+    -- side by side they make the accountability box wider than the title above it
+    let lines := if l.src.isEmpty then [s!"{l.decl}"] else [s!"{l.decl}", s!"  {l.src}"]
+    out := out ++ put ("  " ++ q s!"s{i}" ++ ": {label: " ++ qLines lines
       ++ "; shape: text; style: {font-size: 12; font: mono; font-color: \"#374151\"}}")
   out := out ++ put "}"
   return out
@@ -350,11 +352,13 @@ def emit (a : Assembly) (title : String := "kind assembly") : String := Id.run d
       ++ "; style: {fill: \"#ffffff\"; stroke: " ++ q stroke ++ "; stroke-width: 3"
       ++ dash ++ "; border-radius: 6; font-size: 12}}")
   out := out ++ put "  }"
+  -- a borderless box, not a `text` shape: a text shape does not size the grid cell it
+  -- sits in, and the note then runs out of the legend
   out := out ++ put ("  \"note\": {label: " ++ qLines
       ["⊗ exit at the erasure boundary · ⓘ carries the attested reason",
        "red = outside the kinded algebra",
        "a shortened label's full address is its tooltip"]
-    ++ "; shape: text; style: {font-size: 12; font-color: \"#374151\"}}")
+    ++ "; style: {stroke-width: 0; fill: \"#ffffff\"; font-size: 12; font-color: \"#374151\"}}")
   out := out ++ put "}"
   -- the level containers: one box per level, its mode on the label and — interface
   -- mode — on a dashed border; every row registers its graph node's D2 path and its
@@ -436,19 +440,17 @@ appear here either. -/
 def emitOverview (a : Assembly) (title : String := "kind assembly") : String := Id.run do
   let mut out := preamble a (title ++ " — overview")
   let put (s : String) : String := s ++ "\n"
-  out := out ++ put "\"__legend\": {"
-  out := out ++ put ("  label: " ++ q "legend")
-  out := out ++ put "  near: bottom-center"
-  out := out ++ put "  direction: right"
-  out := out ++ put boxStyle
-  out := out ++ put ("  \"n\": {label: " ++ qLines
-      ["solid border — the walk read this member's body",
-       "dashed border — entered at its signature",
-       "red box — states unkinded positions",
-       "arrow — information crosses; label = wires",
-       "dashed arrow — cited, never wired"]
-    ++ "; shape: text; style: {font-size: 13; font-color: \"#374151\"}}")
-  out := out ++ put "}"
+  -- one box, not a container: at this scale the legend explains the boxes and the
+  -- arrows, and nothing in it needs a shape of its own
+  out := out ++ put ("\"__legend\": {label: " ++ qLines
+      ["legend",
+       "solid border — the walk read this member's body",
+       "dashed border — the member entered at its signature",
+       "red box — the member states unkinded positions",
+       "arrow — information crosses; the label is how many wires",
+       "dashed arrow — a citation: referenced, never wired"]
+    ++ "; near: bottom-center; style: {stroke: \"#9ca3af\"; fill: \"#ffffff\"; \
+       border-radius: 8; font-size: 13; font-color: \"#374151\"}}")
   for l in a.levels do
     let t := tallyOf l
     let nodes := t.ins + t.cfgs + t.outs + t.interior + t.unkinded
