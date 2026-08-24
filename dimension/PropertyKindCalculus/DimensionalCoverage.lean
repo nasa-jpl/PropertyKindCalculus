@@ -11,8 +11,9 @@ curate. What no curated algebra can promise is *coverage*: an edge nobody mirror
 algebra is an edge whose dimensional side-condition nobody discharged.
 
 `#kind_dimensional_coverage ns …` closes that gap mechanically. It walks every authored
-kind-algebra edge under the given namespaces — the same seven witness families `#kind_edges`
-scans (`ProductKind`, `QuotientKind`, `ReciprocalKind`, `TranscendentalKind`, `PowerKind`, and
+kind-algebra edge under the given namespaces — the same nine witness families `#kind_edges`
+scans (`ProductKind`, `QuotientKind`, `ReciprocalKind`, `TranscendentalKind`, `PowerKind`,
+`ReferenceKind`, `DifferenceKind`, and
 the operator-table classes `KindMul`/`KindDiv`) — resolves each participating kind to its
 declared `DimensionedKind`, and **evaluates the family's dimensional rule** in the PhysLib
 `Dimension` group, exponent by exponent:
@@ -88,6 +89,13 @@ inductive EdgeRule where
   | transcendental
   /-- `k₁ ^ p → k₂`: the result dimension is the `p`-th power (exponents scale by `p`). -/
   | power
+  /-- `reference : k₁ → k`: the two dimensions are *equal*. Two references for one
+  kind-of-property cannot differ dimensionally — which is why the distinction between them
+  has to be a kind one, invisible to a dimension checker. -/
+  | reference
+  /-- `k ± k → k`: one kind throughout, so the rule is satisfied by the kind having a
+  dimension at all. What the check contributes here is the registration, not an equation. -/
+  | additive
 deriving DecidableEq, Repr, Inhabited
 
 /-- The rule for each of `KindEdges.specs`' witness families. The operator-table classes carry
@@ -101,6 +109,8 @@ def ruleOf : Name → Option EdgeRule
   | ``PropertyKindCalculus.ReciprocalKind     => some .reciprocal
   | ``PropertyKindCalculus.TranscendentalKind => some .transcendental
   | ``PropertyKindCalculus.PowerKind          => some .power
+  | ``PropertyKindCalculus.ReferenceKind      => some .reference
+  | ``PropertyKindCalculus.DifferenceKind     => some .additive
   | _ => none
 
 /-- Every constant of type `DimensionedKind LTMCTDimensionBase` in the environment — the
@@ -201,6 +211,9 @@ def checkCoherent (gens : Array Name) (rule : EdgeRule) (dks : Array Name)
           pure #[(← expAt dks[0]! g, zero), (← expAt dks[1]! g, zero)]
       | .power =>
           pure #[(← expAt dks[1]! g, ← mkAppM ``HMul.hMul #[p?.get!, ← expAt dks[0]! g])]
+      | .reference =>
+          pure #[(← expAt dks[0]! g, ← expAt dks[1]! g)]
+      | .additive => pure #[]
     for (lhs, rhs) in pairs do
       unless ← kernelDecideEq lhs rhs do return false
   return true
