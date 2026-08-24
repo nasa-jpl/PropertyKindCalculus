@@ -99,6 +99,8 @@ edge is undimensioned, conflicting or incoherent, so the two commands fail indep
   ⚠ UNDIMENSIONED probeLen · probeBad → probeArea — no DimensionedKind for: probeBad
 
 Give the kinds at issue their `DimensionedKind` declarations (`UNDIMENSIONED`), reconcile the disagreeing ones (`CONFLICTING`), or withdraw the authored edge the dimensional rule refutes (`INCOHERENT`). Do NOT re-pin a `#kind_dimensional_coverage` report whose summary says `violation` — that turns the build green and the audit off.
+
+If you expected these kinds to be dimensioned already, check this module's IMPORT CLOSURE before declaring anything: the harvest sees only what is imported, so an edge whose `DimensionedKind` declarations are out of scope reports UNDIMENSIONED while the codebase is coherent. Declaring them a second time here would be the wrong fix.
 -/
 #guard_msgs (whitespace := lax) in
 #kind_dimensional_clean PropertyKindCalculus.Tests.Dimension.Coverage

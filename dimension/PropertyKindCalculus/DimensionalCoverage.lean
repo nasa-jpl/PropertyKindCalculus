@@ -365,6 +365,17 @@ The fix for a firing gate is never to re-pin the report: an `UNDIMENSIONED` edge
 kinds given `DimensionedKind` declarations, and an `INCOHERENT` one is an authored edge the
 dimensional rule refutes — a finding, not a formatting problem.
 
+**IMPORT CLOSURE (the one false alarm this gate has).** Both the edges and the
+`DimensionedKind` declarations are harvested from the environment, so both are only as complete
+as the importing module's closure. A module that reaches an edge but *not* the module declaring
+its kinds' dimensions reports that edge `UNDIMENSIONED` while the codebase is perfectly
+coherent — the same closure sensitivity the index harvest has, in the opposite direction: an
+under-imported *report* silently misses edges, an under-imported *gate* invents violations.
+That asymmetry is the safe one, because a false alarm is loud and a silent omission is not; but
+it means the first thing to check when this fires unexpectedly is whether the dimension
+declarations are actually in scope, and the error says so. Place the gate in a module whose
+closure contains both, which is normally the module already pinning the report.
+
 Put it next to the `#guard_msgs`-pinned coverage report, over the same namespaces. -/
 elab "#kind_dimensional_clean" nss:ident+ : command => liftTermElabM do
   let rows ← coverageRows (nss.map (·.getId))
@@ -377,7 +388,11 @@ elab "#kind_dimensional_clean" nss:ident+ : command => liftTermElabM do
       Give the kinds at issue their `DimensionedKind` declarations (`UNDIMENSIONED`), reconcile \
       the disagreeing ones (`CONFLICTING`), or withdraw the authored edge the dimensional rule \
       refutes (`INCOHERENT`). Do NOT re-pin a `#kind_dimensional_coverage` report whose summary \
-      says `violation` — that turns the build green and the audit off."
+      says `violation` — that turns the build green and the audit off.\n\n\
+      If you expected these kinds to be dimensioned already, check this module's IMPORT CLOSURE \
+      before declaring anything: the harvest sees only what is imported, so an edge whose \
+      `DimensionedKind` declarations are out of scope reports UNDIMENSIONED while the codebase \
+      is coherent. Declaring them a second time here would be the wrong fix."
 
 open PropertyKindCalculus.Index in
 /-- **The coverage report as a generated table**, for documents — the same rows the command
