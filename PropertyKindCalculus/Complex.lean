@@ -243,4 +243,29 @@ def Quantity.csqrt {k₁ k : KindOfProperty} {R : Type}
     (h : PowerKind (1 / 2) k₁ k) (a : Quantity k₁ (Complex R)) :
     (Quantity.csqrt h a).magnitude = Complex.sqrt a.magnitude := rfl
 
+/-! ## Decomplexifying — a carrier projection, not a kind crossing
+
+Complex-ness is a property of the carrier and not of the kind (header): a complex
+permittivity is *one* kind of quantity whose value happens to be complex. So taking a real
+or imaginary part changes the carrier and leaves the kind alone —
+`Quantity k (Complex R) → Quantity k R`, with no witness argument, because no kind equation
+is being claimed and there is none to check. That is exactly why it belongs here rather
+than at each consumer: written inline it is an anonymous `⟨z.magnitude.re⟩`, which a
+boundary audit reads as a mint — a quantity conjured from a bare number — standing where a
+named carrier operation belongs. -/
+
+/-- **The real part of a complex-carried quantity**, at the same kind. -/
+def Quantity.re {k : KindOfProperty} {R : Type} (a : Quantity k (Complex R)) : Quantity k R :=
+  ⟨a.magnitude.re⟩
+
+/-- **The imaginary part of a complex-carried quantity**, at the same kind. -/
+def Quantity.im {k : KindOfProperty} {R : Type} (a : Quantity k (Complex R)) : Quantity k R :=
+  ⟨a.magnitude.im⟩
+
+@[simp] theorem Quantity.re_magnitude {k : KindOfProperty} {R : Type}
+    (a : Quantity k (Complex R)) : (Quantity.re a).magnitude = a.magnitude.re := rfl
+
+@[simp] theorem Quantity.im_magnitude {k : KindOfProperty} {R : Type}
+    (a : Quantity k (Complex R)) : (Quantity.im a).magnitude = a.magnitude.im := rfl
+
 end PropertyKindCalculus
