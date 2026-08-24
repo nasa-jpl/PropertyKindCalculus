@@ -88,6 +88,27 @@ def sumPositions (n : Extent rowAxisK Nat) : Nat := Id.run do
 #guard sumPositions n8 == 28
 #guard sumPositions n0 == 0
 
+/-! ### The loop reading — a trip count carried at its loop's kind
+
+`iterate` is the same walk where the body does not read the index. What the role buys is
+the argument the naked `Nat` leaves open: one loop's budget handed to another loop. -/
+
+/-- A budgeted refinement: halve the gap, `n` times. -/
+def halveN (n : Extent rowAxisK Nat) (x : Float) : Float :=
+  n.iterate (fun acc => acc / 2.0) x
+
+#guard halveN n8 256.0 == 1.0
+#guard halveN n0 256.0 == 256.0
+
+-- Erasure: the budgeted body IS the counted loop the generated code spells out.
+example (x : Float) :
+    halveN n8 x = (List.range 8).foldl (fun acc _ => acc / 2.0) x := rfl
+
+-- A budget of the column axis is not this loop's budget.
+#check_failure (halveN (⟨⟨8⟩⟩ : Extent colAxisK Nat) 256.0)
+-- And a naked count is not a budget at all.
+#check_failure (halveN 8 256.0)
+
 /-! ## The carrier bridge — a role survives a representation cast
 
 One axis kind carries its extent as a count and its positions continuously; the roles

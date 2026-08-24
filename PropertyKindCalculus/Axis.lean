@@ -21,6 +21,9 @@ the type.
     lies on that axis") is the sole former, and because its two arguments have different
     types there is no way to write it with the extent in the position's slot. A count
     handed to a position argument is a type error, not a plausible number.
+  * An axis that is a **loop** is an extent too, and `Extent.iterate` is its
+    position-blind walk: a trip count carried at the loop's own kind, so one loop's budget
+    cannot be handed to another. `positions` is the same walk where the index is read.
 
 **Roles, not new kinds.** The alternative — one kind for the extent and another for the
 position — was rejected on two counts. It doubles the pairwise-distinctness obligation
@@ -165,6 +168,25 @@ is in range *by construction* rather than by a check that could be forgotten
 (`positions_within`). Empty exactly when the axis is. -/
 def positions (n : Extent k Nat) : Array (Position k Nat) :=
   Array.ofFn (n := n.q.magnitude) fun i => ⟨⟨i.val⟩⟩
+
+/-- **The position-blind walk** — apply `f` once per position of the axis, starting from
+`init`. The eliminator for an axis that is a *loop* whose body does not read its index: an
+iteration budget, a fixed number of refinement sweeps, an unrolled trip count. Where the
+index *is* read, `positions` (or the `ForIn` instance) hands it over role-typed instead.
+
+Definitionally the `List.range` fold a counted loop spells out (`iterate_eq` is `rfl`), so
+a budgeted body authored over the extent erases op-for-op to its naked twin — which is
+what lets a kinded loop and the code generated from it be the same computation rather than
+two that agree.
+
+An extent is the right home for a budget for the reason the module exists: a naked `Nat`
+trip count is exactly the argument one loop's budget can be handed to another loop, and
+`Extent k Nat` at the loop's own kind makes that a type error. -/
+@[inline] def iterate {β : Type _} (n : Extent k Nat) (f : β → β) (init : β) : β :=
+  (List.range n.q.magnitude).foldl (fun acc _ => f acc) init
+
+@[simp] theorem iterate_eq {β : Type _} (n : Extent k Nat) (f : β → β) (init : β) :
+    n.iterate f init = (List.range n.q.magnitude).foldl (fun acc _ => f acc) init := rfl
 
 /-- **The axis as a closed interval of positions** — `[0, n−1]`, so that the interval
 vocabulary applies to an axis without anyone spelling the endpoints: `IccQ.memb` is the
