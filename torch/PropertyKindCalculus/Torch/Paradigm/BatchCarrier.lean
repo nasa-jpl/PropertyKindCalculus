@@ -27,6 +27,8 @@ and `Buffer.size`/`.release` in `fitAvsTR` with `BatchCarrier.liveSize`/`.releas
 -/
 import PropertyKindCalculus.Torch.Paradigm.CudaCarrier
 import PropertyKindCalculus.Torch.Paradigm.Platform
+import PropertyKindCalculus.Bounds
+import PropertyKindCalculus.BoundaryAudit
 
 open Spec
 open PropertyKindCalculus.Paradigm (NumCarrier)
@@ -65,6 +67,27 @@ instance : BatchCarrier CudaT where
   toFloatArray := fun t => CudaT.toFloatArray t
   liveSize     := fun t => Buffer.size t.buf
   release      := fun t => Buffer.release t.buf
+
+/-! ### An interval's endpoints at the batched carrier
+
+A configured bound is a quantity, and a kernel that compares against one is reading it. Lifted
+inline as `⟨BatchCarrier.const I.hi.q.magnitude⟩` it stops being a reading: the provenance
+harvest sees a quantity appear with no source — an **anonymous mint** — and the whole chain
+downstream of it goes unaccounted. Written through these two the lift is a declared step whose
+operands are the interval's own endpoint ports, so the graph records *which endpoint of which
+interval* the kernel read. -/
+
+/-- **An interval's upper endpoint as a uniform batch**, at the endpoint's own kind. -/
+@[carrierVocab]
+def IccQ.hiC {C : Shape → Type} [∀ s, NumCarrier (C s)] [BatchCarrier C] {s : Shape}
+    {k : KindOfProperty} (I : IccQ k Float) : Quantity k (C s) :=
+  ⟨BatchCarrier.const I.hi.q.magnitude⟩
+
+/-- **An interval's lower endpoint as a uniform batch**, at the endpoint's own kind. -/
+@[carrierVocab]
+def IccQ.loC {C : Shape → Type} [∀ s, NumCarrier (C s)] [BatchCarrier C] {s : Shape}
+    {k : KindOfProperty} (I : IccQ k Float) : Quantity k (C s) :=
+  ⟨BatchCarrier.const I.lo.q.magnitude⟩
 
 /-- **Fused forms** for a batched carrier (Layer 1) — a small, extensible family of *bit-exact
 single-op replacements* for hot composed sub-expressions. A carrier-parametric `[NumCarrier α]` model
