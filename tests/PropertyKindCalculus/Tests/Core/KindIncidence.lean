@@ -736,6 +736,55 @@ info: kernel-accepted: the kind assembly is well-formed (theorem 'PropertyKindCa
 -/
 #guard_msgs in #kind_assembly_decide [halved, halve]
 
+/-! #### A member's call site is an edge, not a port
+
+`@[kindConst]` on a *nullary* declaration says "a cited constant enters here", and the
+reader declares a configuration port for it. Applied to arguments the same tag says
+something else — the callee's result is a declared mint — and per step that is still
+read as a port, because an opaque call has nowhere else to put the result. Assembled,
+the call is dissected: the result comes off the procedure edge, so the port must go, or
+the boundary carries an orphan named after a function that every deploying contract
+would have to declare as configuration it does not configure. -/
+
+/-- A blessed helper *with* an argument, its witness written inside so no binder states
+the edge — the shape that separates the two readings. -/
+@[kindConst]
+def blessedHalve (q : Quantity alphaK Nat) : Quantity epsilonK Nat :=
+  Quantity.div (QuotientKind.ofRatio alphaK alphaK epsilonK) q q
+
+/-- Its caller. -/
+def blessedHalved (q : Quantity alphaK Nat) : Quantity epsilonK Nat := blessedHalve q
+
+-- per step: the call is opaque, so the callee's result is the declared constant and the
+-- port carries the callee's name
+/--
+info: kind graph of 'PropertyKindCalculus.Tests.KindIncidence.blessedHalved':
+input q : alphaK
+config PropertyKindCalculus.Tests.KindIncidence.blessedHalve : epsilonK
+output result : epsilonK
+epsilonK → epsilonK ⟨PropertyKindCalculus.Tests.KindIncidence.blessedHalve⟩ ⇒ result
+well-formed: true
+-/
+#guard_msgs in #kind_graph blessedHalved
+
+-- assembled: the same call is a procedure edge, and the config port is gone — the
+-- boundary is the caller's own interface, exactly as for the untagged `halve`
+/--
+info: kind assembly of 2 steps:
+level blessedHalved: walked
+level blessedHalve: walked
+input blessedHalved/q : alphaK
+output blessedHalved/result : epsilonK
+derived blessedHalve/q : alphaK
+derived blessedHalve/result : epsilonK
+[step blessedHalve] alphaK → epsilonK ⟨blessedHalved/q⟩ ⇒ blessedHalved/result
+alphaK / alphaK → epsilonK ⟨blessedHalve/q, blessedHalve/q⟩ ⇒ blessedHalve/result
+alphaK → alphaK ⟨blessedHalved/q⟩ ⇒ blessedHalve/q
+cites: blessedHalved → blessedHalve
+well-formed: true
+-/
+#guard_msgs in #kind_assembly [blessedHalved, blessedHalve]
+
 /-- A multi-output sub-step: its own graph wires each component port by a copy. -/
 def splitQ (x : Quantity alphaK Nat) : Quantity alphaK Nat × Quantity alphaK Nat :=
   (x, x)

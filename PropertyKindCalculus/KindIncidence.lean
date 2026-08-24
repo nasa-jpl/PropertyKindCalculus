@@ -414,17 +414,32 @@ partial def prodValueComps (e : Expr) (n : Nat) (acc : Array Expr := #[]) :
 
 /-- The `@[kindConst]` constants `e` references, in body order, deduplicated — a port is
 an interface node, so a constant read twice is one port (the occurrence reading keeps
-the two incidence positions). -/
-partial def configReads (consts : NameSet) (e : Expr) (acc : Array Name := #[]) :
-    Array Name :=
+the two incidence positions).
+
+`dissected` is the assembly's member set. **A member's call site is an edge, not a
+port**: the head of an application the walk reads as a procedure edge is not a
+configuration read, however the callee is tagged — its result comes off the edge, and
+declaring a port for it too would leave an orphan on the boundary that the deploying
+contract has to state. The call's *arguments* are read as usual, which is where a
+deployment's constants actually enter. -/
+partial def configReads (consts : NameSet) (dissected : NameSet) (e : Expr)
+    (acc : Array Name := #[]) : Array Name :=
   match e with
   | .const n _ =>
     if consts.contains n && !acc.contains n then acc.push n else acc
-  | .app f a => configReads consts a (configReads consts f acc)
-  | .lam _ t b _ | .forallE _ t b _ => configReads consts b (configReads consts t acc)
+  | .app .. =>
+    let f := e.getAppFn
+    let headDissected := match f with
+      | .const n _ => dissected.contains n
+      | _ => false
+    let acc := if headDissected then acc else configReads consts dissected f acc
+    e.getAppArgs.foldl (fun acc a => configReads consts dissected a acc) acc
+  | .lam _ t b _ | .forallE _ t b _ =>
+    configReads consts dissected b (configReads consts dissected t acc)
   | .letE _ t v b _ =>
-    configReads consts b (configReads consts v (configReads consts t acc))
-  | .mdata _ b | .proj _ _ b => configReads consts b acc
+    configReads consts dissected b
+      (configReads consts dissected v (configReads consts dissected t acc))
+  | .mdata _ b | .proj _ _ b => configReads consts dissected b acc
   | _ => acc
 
 /-! ## Reading an edge off a binder type -/
@@ -1408,7 +1423,7 @@ def stepGraphOf (decl : Name) (subSteps : Array Name := #[]) : MetaM StepGraph :
             unkinded := unkinded.push ⟨nm, toString (← Meta.ppExpr ty), .input⟩
             unkIdx := unkIdx.push (idx, nm)
     if let some v := info.value? then
-      for c in configReads cfgConsts v do
+      for c in configReads cfgConsts (subSteps.foldl NameSet.insert {}) v do
         let some ci := env.find? c | continue
         -- the constant's full name, for the reason `stepNameOf` gives: a config port is
         -- an interface node, and its identity cannot depend on who is reading
@@ -1695,7 +1710,9 @@ def assemble (decls : Array Name) : MetaM Assembly := do
     let others : NameSet :=
       (decls.filter (· != d)).foldl (init := {}) (·.insert ·)
     if let some v := (env.find? d).bind (·.value?) then
-      for c in configReads others v do
+      -- every reference counts here, dissected heads included: the citation relation is
+      -- who mentions whom, not who ports what
+      for c in configReads others {} v do
         if let some j := decls.findIdx? (· == c) then
           cites := cites.push (names[i]!, names[j]!)
   return { levels, graph, cites }
