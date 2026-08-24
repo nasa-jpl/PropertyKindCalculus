@@ -606,6 +606,40 @@ alphaK / alphaK → epsilonK ⟨q⟩
 -/
 #guard_msgs in #kind_occurrences halved
 
+/-! #### An operand that names no node gets one
+
+`refName` reads a binder, a `let`, a container field path and a declared constant
+faithfully, and reads an *application* by walking it down to its head constant — which
+names a **declaration, not a node**. An occurrence citing such a name refers to a node no
+introduction ever made, so `kindOf?` returns none and `occurrencesTyped` refuses. The
+verdict was right and its reason was invented: the body's real defect is that an interior
+value is unaccounted for, which is `sourcesReach`'s business. Operand naming and operand
+declaration have to agree, so an operand that names no node is given one. -/
+
+/-- A kind-preserving lift standing in for a carrier re-expression: it states no edge, so
+a call to it is not a producer the walk recognizes. -/
+def liftA (q : Quantity alphaK Nat) : Quantity alphaK Nat := q
+
+/-- The consumer, handed a *call* in its operand slot rather than a binder. -/
+def halvedLifted (q : Quantity alphaK Nat) : Quantity epsilonK Nat :=
+  halve (QuotientKind.ofRatio alphaK alphaK epsilonK) (liftA q)
+
+-- `_1` is the operand's own node, and it is `derived` with nothing deriving it: the
+-- reading now says what the body actually does — it hides a value behind a helper — and
+-- refuses on `sourcesReach`, the mint-accountability clause, instead of on a typing
+-- failure the naming invented. Naming it after `liftA` would have cited a node that was
+-- never introduced.
+/--
+info: kind graph of 'PropertyKindCalculus.Tests.KindIncidence.halvedLifted':
+input q : alphaK
+output result : epsilonK
+derived _2 : epsilonK
+derived _1 : alphaK
+alphaK / alphaK → epsilonK ⟨_1⟩ ⇒ _2 (partial)
+well-formed: false
+-/
+#guard_msgs in #kind_graph halvedLifted
+
 /--
 info: kind graph of 'PropertyKindCalculus.Tests.KindIncidence.halved':
 input q : alphaK

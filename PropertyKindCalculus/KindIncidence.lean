@@ -773,6 +773,29 @@ partial def containerPath (env : Environment) (carriers : Array Name) (e : Expr)
     | _ => false
   | _ => false
 
+/-- Does this operand expression **name an interface node the graph already has** — a
+binder, a `let`-bound name, a container field path rooted at one, a declared constant, a
+structure projection — or does it only name the *function* that computed it?
+
+`refName` answers the first cases faithfully and answers an application by walking it
+down to its head constant, which names a **declaration, not a node**. An occurrence
+citing such a name refers to a node no introduction ever made: `kindOf?` returns none,
+`occurrencesTyped` refuses, and the whole level falls to interface mode for a reason with
+nothing metrological in it. So operand naming and operand declaration must agree — an
+operand that names no node is given one of its own, and the walk produces onto it.
+
+A `@[kindConst]` read is the case that already agreed by construction: its call names the
+configuration port the constant declares, which is a node. -/
+def namesNode (h : HarvestCtx) (e : Expr) : Bool :=
+  match e.consumeMData with
+  | .fvar _ | .bvar _ | .letE .. | .const .. | .proj .. | .lit _ => true
+  | .app .. =>
+    containerPath h.env h.carriers e
+      || (match e.getAppFn with
+          | .const c _ => h.configConsts.contains c
+          | _ => false)
+  | _ => false
+
 /-- **The literal container assembly** — a single-constructor structure application read
 as its field arguments, each paired with the slot sub-group its own carrier paths name.
 Packaging is transparent to dataflow: a step that bundles what it computed lands its
@@ -1040,7 +1063,7 @@ partial def walkApp (h : HarvestCtx) (e : Expr) (ctx : BinderCtx)
         let mut opTargets : Std.HashMap Nat Target := {}
         for j in [4, 5] do
           let a := args[j]!
-          if isProducerApp h a then
+          if isProducerApp h a || !namesNode h a then
             let (m, st') := st.nextFresh
             st := st'
             opNames := opNames.push m
@@ -1088,7 +1111,7 @@ partial def walkApp (h : HarvestCtx) (e : Expr) (ctx : BinderCtx)
           let mut opTargets : Std.HashMap Nat Target := {}
           for (j, p, k) in opSlots do
             let a := args[j]!
-            if p.isEmpty && isProducerApp h a then
+            if p.isEmpty && (isProducerApp h a || !namesNode h a) then
               let (m, st') := st.nextFresh
               st := st'
               opNames := opNames.push m
@@ -1192,6 +1215,9 @@ partial def walkSubStep (h : HarvestCtx) (c : Name) (e : Expr) (ctx : BinderCtx)
     else
       for (p, k) in ← carrierPaths h.env h.carriers ctx bty do
         opSlots := opSlots.push (j, p, k)
+  -- no incidence exposed: the call relates nothing this graph can see, so it is not an
+  -- edge. A zero-operand `step` would be a mint wearing an edge's name.
+  if opSlots.isEmpty then return ← fallback st
   let opKinds : Array String := opSlots.map (·.2.2)
   -- name the operands; a nested producer gets a synthesized node to land on — one node
   -- per carrier field path when its value is a container, so the outer occurrence and
@@ -1200,7 +1226,7 @@ partial def walkSubStep (h : HarvestCtx) (c : Name) (e : Expr) (ctx : BinderCtx)
   let mut fresh : Std.HashMap Nat String := {}
   for (j, _, _) in opSlots do
     unless fresh.contains j do
-      if isProducerApp h args[j]! then
+      if isProducerApp h args[j]! || !namesNode h args[j]! then
         let (m, st') := st.nextFresh
         st := st'
         fresh := fresh.insert j m
