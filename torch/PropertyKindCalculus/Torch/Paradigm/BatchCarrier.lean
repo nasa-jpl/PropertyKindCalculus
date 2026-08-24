@@ -79,13 +79,13 @@ interval* the kernel read. -/
 
 /-- **An interval's upper endpoint as a uniform batch**, at the endpoint's own kind. -/
 @[carrierVocab]
-def IccQ.hiC {C : Shape → Type} [∀ s, NumCarrier (C s)] [BatchCarrier C] {s : Shape}
+def _root_.PropertyKindCalculus.IccQ.hiC {C : Shape → Type} [∀ s, NumCarrier (C s)] [BatchCarrier C] {s : Shape}
     {k : KindOfProperty} (I : IccQ k Float) : Quantity k (C s) :=
   ⟨BatchCarrier.const I.hi.q.magnitude⟩
 
 /-- **An interval's lower endpoint as a uniform batch**, at the endpoint's own kind. -/
 @[carrierVocab]
-def IccQ.loC {C : Shape → Type} [∀ s, NumCarrier (C s)] [BatchCarrier C] {s : Shape}
+def _root_.PropertyKindCalculus.IccQ.loC {C : Shape → Type} [∀ s, NumCarrier (C s)] [BatchCarrier C] {s : Shape}
     {k : KindOfProperty} (I : IccQ k Float) : Quantity k (C s) :=
   ⟨BatchCarrier.const I.lo.q.magnitude⟩
 
