@@ -321,8 +321,29 @@ end Quantity
 
 /-! ## Concrete carriers
 
-The same `Quantity` layer above, instantiated at three representation types. Two
-are *lawful* (the additivity laws hold); the third runs but is deliberately not. -/
+The same `Quantity` layer above, instantiated at four representation types. Three
+are *lawful* (the additivity laws hold); the last runs but is deliberately not. -/
+
+/-- **`Nat` is a numeric carrier** — the representation a *count* is held in. A count is the
+canonical dimension-one ratio-scale quantity, and a counting pipeline accumulates one the way
+any other quantity is accumulated: from a zero and by repeated same-kind addition. Without the
+instance neither former is available at `Nat`, so a counter has to start life as an anonymous
+`⟨0⟩` and grow by bare arithmetic under it — a mint and an unkinded fold standing in for the two
+operations the kind already licenses. The absence is what makes counts the last thing in a model
+to get kinded, which is backwards: they are the values a positional swap is easiest to hide in. -/
+instance instCarrierNat : Carrier Nat where
+  zero := 0
+  add := (· + ·)
+
+/-- `Nat` is a *lawful* carrier: `Nat` addition is an associative, commutative monoid with `0`
+as its unit, so every `Quantity.add_*` law holds at `R := Nat`. Counts differ from `Int` only in
+having no additive inverse, which the additive-monoid laws do not ask for. -/
+instance : LawfulCarrier Nat where
+  toCarrier := instCarrierNat
+  add_assoc := Nat.add_assoc
+  add_comm := Nat.add_comm
+  zero_add := Nat.zero_add
+  add_zero := Nat.add_zero
 
 /-- `Int` is a numeric carrier. -/
 instance instCarrierInt : Carrier Int where

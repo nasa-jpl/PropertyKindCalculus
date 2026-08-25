@@ -38,6 +38,40 @@ theorem r4_laws_at_length (x y z : Quantity lengthK Int) :
 -- and it computes: 3 + 4 = 7 over the executable carrier.
 example : (Quantity.add diffLength (⟨3⟩ : Quantity lengthK Int) ⟨4⟩).magnitude = 7 := rfl
 
+/-! ## The count carrier
+
+A count is the canonical dimension-one ratio-scale quantity, and `Nat` is what one is held in.
+The probes below are what the `Carrier Nat` instance commits the library to: a counter starts
+from the kind's own zero and grows by same-kind addition, so neither operation needs an
+anonymous `⟨…⟩` — which is what an accumulator written over a bare `Nat` under a quantity's
+name has to use for both. -/
+
+/-- A count kind — ratio scale, so it licenses differences. -/
+def tallyK : KindOfProperty := { id := "operation gating probe tally", scale := .ratio }
+
+/-- The scale gate for `tallyK`. -/
+theorem diffTally : DifferenceKind tallyK := DifferenceKind.ofScale
+
+-- The same R4/R10 laws hold at `Nat`, so a count is not a second-class quantity: it is lawful
+-- for the same reason `Int` is, and differs only in lacking an additive inverse the laws never
+-- ask for.
+theorem r4_laws_at_tally (x y z : Quantity tallyK Nat) :
+    Quantity.add diffTally x y = Quantity.add diffTally y x
+      ∧ Quantity.add diffTally (Quantity.add diffTally x y) z
+          = Quantity.add diffTally x (Quantity.add diffTally y z)
+      ∧ Quantity.add diffTally Quantity.zero x = x
+      ∧ Quantity.add diffTally x Quantity.zero = x :=
+  Quantity.laws_parametric diffTally x y z
+
+-- The accumulator idiom, with no mint in it: start at the kind's zero, add kinded increments.
+#guard ((Quantity.zero : Quantity tallyK Nat)).magnitude == 0
+#guard (Quantity.add diffTally (Quantity.zero : Quantity tallyK Nat) ⟨3⟩).magnitude == 3
+example : (Quantity.add diffTally (⟨2⟩ : Quantity tallyK Nat) ⟨5⟩).magnitude = 7 := rfl
+
+-- The zero is the *kind's* zero, so it cannot be handed to a neighbouring count: what the
+-- instance supplies is a magnitude, and the kind index still separates two tallies.
+#check_failure (Quantity.add diffLength (Quantity.zero : Quantity tallyK Nat) (⟨1⟩ : Quantity lengthK Int))
+
 -- Boundary (Rule 2): the gate genuinely *fires* on a nominal kind — `DifferenceKind colourK` is
 -- uninhabited, so same-kind addition of colours cannot even be formed. A gate that admitted
 -- everything would prove nothing.
