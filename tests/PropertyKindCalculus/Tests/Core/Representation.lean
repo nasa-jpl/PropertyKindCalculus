@@ -117,5 +117,8 @@ def packedLen : Quantity lengthK FloatArray := ⟨FloatArray.mk #[7.5, 8.5]⟩
 -- the kind is the table's own — a component of a length table IS a length:
 example : Quantity lengthK Int := boxedLen.get! 2
 example : Quantity lengthK Float := packedLen.get! 1
+-- and the packed table has the same one honest default the boxed one does — empty, asserting
+-- no magnitude — so an array OF kinded packed columns can index with `xs[i]!`:
+#guard (default : Quantity lengthK FloatArray).magnitude.size == 0
 
 end PropertyKindCalculus.Tests.Representation

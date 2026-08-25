@@ -68,6 +68,13 @@ be a fabricated magnitude — a mint the boundary audit never sees. -/
 instance instInhabitedQuantityArray {k : KindOfProperty} {α : Type} :
     Inhabited (Quantity k (Array α)) := ⟨⟨#[]⟩⟩
 
+/-- The empty *packed* table — the same one honest default at the executable packed carrier
+(`FloatArray`): no components, no asserted magnitude, an empty validity domain. What an array
+*of* kinded packed columns needs for its own `xs[i]!` panic branch, exactly as the boxed
+instance above. -/
+instance instInhabitedQuantityFloatArray {k : KindOfProperty} :
+    Inhabited (Quantity k FloatArray) := ⟨⟨FloatArray.empty⟩⟩
+
 /-- **Component access — a component of a vector quantity is a quantity of the table's own
 kind** (the §18 reading: the numerical array holds components; the kind — and unit — is the
 whole vector's, so reading one component *keeps* it). Kind-preserving *by parametricity*: `k`
