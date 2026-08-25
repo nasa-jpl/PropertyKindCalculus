@@ -90,7 +90,7 @@ jobs:
           # since the upstream TorchLean 4.32 module reorg was absorbed, and the
           # `Tests.Torch` tier probes its kind layer, so it is built here.)
           lake exe cache get
-          lake build Dimension Uncertainty UncertaintyRigor Torch
+          lake build Dimension Uncertainty UncertaintyRigor Torch ForMathlib Graph
           lake build Tests
 
       # -------------------------------------------------------
