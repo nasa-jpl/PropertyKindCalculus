@@ -130,12 +130,20 @@ attested site here, and `taggedAttest` itself never appears. -/
 def taggedAttestSite (x : Quantity probeKind Float) : Tagged probeKind Float :=
   taggedAttest probeKind "a downstream carrier's authored wrap" x.magnitude
 
+/-- A nominal designation entering by authored classification — the nominal carrier's own
+built-in attestor (`NominalValue.attest`), rendering in the reviewed column exactly as
+`Quantity.attest`'s sites do. -/
+@[carrierVocab]
+def nominalAttestSite (x : NominalValue probeKind String) : NominalValue probeKind String :=
+  .attest "a relabelled designation of the same kind" x.value
+
 /-! ## The pinned audit report and crossings enumeration -/
 
 /--
 info: boundary audit:
 [carrierVocab] PropertyKindCalculus.Tests.BoundaryAudit.attestParametricSite — attests: (kind-parametric) ‹an authored parametric wrap›
 [carrierVocab] PropertyKindCalculus.Tests.BoundaryAudit.attestSite — attests: probeKind ‹an authored accumulator seed› (×2)
+[carrierVocab] PropertyKindCalculus.Tests.BoundaryAudit.nominalAttestSite — attests: probeKind ‹a relabelled designation of the same kind›
 [carrierVocab] PropertyKindCalculus.Tests.BoundaryAudit.parametricFamilySite — mints: PropertyKindCalculus.Tests.BoundaryAudit.probeFamily (parametric)
 [carrierVocab] PropertyKindCalculus.Tests.BoundaryAudit.parametricSite — mints: (kind-parametric)
 [carrierVocab] PropertyKindCalculus.Tests.BoundaryAudit.taggedAttestSite — attests: probeKind ‹a downstream carrier's authored wrap›
@@ -146,7 +154,7 @@ info: boundary audit:
 [kindEmission] PropertyKindCalculus.Tests.BoundaryAudit.emissionSite — erases (emission-only)
 [kindIngest] PropertyKindCalculus.Tests.BoundaryAudit.ingestSite — mints: probeKind
 ⚠ UNTAGGED PropertyKindCalculus.Tests.BoundaryAudit.violationSite — mints: probeKind
-12 boundary site(s): 11 tagged, 1 UNTAGGED — invariant 6/7 violation
+13 boundary site(s): 12 tagged, 1 UNTAGGED — invariant 6/7 violation
 -/
 #guard_msgs in
 #kind_boundary_audit PropertyKindCalculus.Tests.BoundaryAudit
@@ -155,6 +163,7 @@ info: boundary audit:
 info: tagged boundary crossings:
 [carrierVocab] PropertyKindCalculus.Tests.BoundaryAudit.attestParametricSite — An attested parametric mint: the attested kind is a *variable* of the site, rendering the
 [carrierVocab] PropertyKindCalculus.Tests.BoundaryAudit.attestSite — An attested interior mint, twice with one reason: the report carries the harvested reason
+[carrierVocab] PropertyKindCalculus.Tests.BoundaryAudit.nominalAttestSite — A nominal designation entering by authored classification — the nominal carrier's own
 [carrierVocab] PropertyKindCalculus.Tests.BoundaryAudit.parametricFamilySite — An applied kind-parametric site: the minted kind is a named family at a variable argument.
 [carrierVocab] PropertyKindCalculus.Tests.BoundaryAudit.parametricSite — A kind-parametric vocabulary site: the minted kind is a *variable* of the site, so the
 [carrierVocab] PropertyKindCalculus.Tests.BoundaryAudit.taggedAttestSite — A site minting the downstream carrier through the downstream attestor: the report shows the

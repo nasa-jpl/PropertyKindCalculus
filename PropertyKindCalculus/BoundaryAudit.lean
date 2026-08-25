@@ -382,11 +382,13 @@ initialize registerBuiltinAttribute {
     modifyEnv fun env => kindAttestExt.addEntry env decl
 }
 
-/-- Every attestor the audit recognizes: the built-in `Quantity.attest` (built in for the same
-reason the three carriers are — an attribute is not active in its own defining module), plus
-every `@[kindAttest]`-registered attestor from downstream layers. -/
+/-- Every attestor the audit recognizes: the built-in `Quantity.attest` and
+`NominalValue.attest` (built in for the same reason the three carriers are — an attribute is
+not active in its own defining module), plus every `@[kindAttest]`-registered attestor from
+downstream layers. -/
 def kindAttestNames (env : Environment) : Array Name :=
-  #[``PropertyKindCalculus.Quantity.attest] ++ kindAttestExt.getState env
+  #[``PropertyKindCalculus.Quantity.attest, ``PropertyKindCalculus.NominalValue.attest]
+    ++ kindAttestExt.getState env
 
 /-! ## The tier attributes -/
 

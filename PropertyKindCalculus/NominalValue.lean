@@ -44,6 +44,12 @@ namespace NominalValue
 
 variable {k : KindOfProperty} {R : Type}
 
+/-- **The reviewed nominal mint** — `Quantity.attest`'s analogue at the nominal carrier:
+semantically the constructor, but the reason is harvested by the boundary audit (a built-in
+attestor, like `Quantity.attest`), so a designation that enters by authored classification
+lands in the reviewed column rather than the raw one. -/
+@[inline] def attest (_why : String) (v : R) : NominalValue k R := ⟨v⟩
+
 /-- Same-kind `==` — the ONE operation the nominal scale licenses (§13.2.1). Cross-kind
 equality is already a type error. -/
 instance instBEq [BEq R] : BEq (NominalValue k R) := ⟨fun a b => a.value == b.value⟩
