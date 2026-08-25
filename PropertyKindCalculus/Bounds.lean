@@ -39,6 +39,13 @@ carrier. A kinded kernel authored with `IccQ.clamp` therefore erases *bit-exactl
 op-for-op, to a naked `min (max x lo) hi` — which is what makes the kinded form
 eligible to be the authored source of an already-deployed kernel.
 
+**Roles survive representation change.** All three carry `castCarrier`, the counterpart
+of `Quantity.castCarrier`: a floor is a floor and an interval is an interval at whichever
+carrier the values they gate are held in, so lifting a host-side configuration box onto a
+batched or tape carrier is a representation operation and nothing more. Stating it here is
+what keeps a field-wise lift of a box of intervals from erasing and re-minting every
+endpoint — each of which the boundary audit reads, correctly, as an anonymous mint.
+
 The scale gate: an interval presupposes order, so forming one is licensed by the kind's
 scale allowing `<`/`>` (ordinal or richer — Dybkær §12.16). `OrderKind k` records that
 gate, uniform with `DifferenceKind` for `+`/`−` and `ProductKind` for `×`.
@@ -84,6 +91,18 @@ def le {k : KindOfProperty} {R : Type} [LE R] (b : LowerBound k R) (x : Quantity
     Prop :=
   b.q.magnitude ≤ x.magnitude
 
+/-- **A role survives a representation cast** — the counterpart of `Quantity.castCarrier`
+for this role. A floor is a floor at whichever carrier the value it gates is held in, so
+lifting a host-side bound onto a batched or tape carrier changes the representation and
+nothing else. Without it a lift has to open the role, erase the endpoint and re-mint it,
+which is three anonymous constructors standing where one representation change belongs. -/
+def castCarrier {k : KindOfProperty} {R S : Type} (f : R → S) (b : LowerBound k R) :
+    LowerBound k S :=
+  ⟨b.q.castCarrier f⟩
+
+@[simp] theorem castCarrier_magnitude {k : KindOfProperty} {R S : Type} (f : R → S)
+    (b : LowerBound k R) : (b.castCarrier f).q.magnitude = f b.q.magnitude := rfl
+
 end LowerBound
 
 namespace UpperBound
@@ -93,6 +112,16 @@ relation statable through an `UpperBound`. -/
 def ge {k : KindOfProperty} {R : Type} [LE R] (b : UpperBound k R) (x : Quantity k R) :
     Prop :=
   x.magnitude ≤ b.q.magnitude
+
+/-- **A role survives a representation cast** — `LowerBound.castCarrier`'s dual, and the
+half that makes `IccQ.castCarrier` a lift of the interval rather than of two loose
+endpoints. -/
+def castCarrier {k : KindOfProperty} {R S : Type} (f : R → S) (b : UpperBound k R) :
+    UpperBound k S :=
+  ⟨b.q.castCarrier f⟩
+
+@[simp] theorem castCarrier_magnitude {k : KindOfProperty} {R S : Type} (f : R → S)
+    (b : UpperBound k R) : (b.castCarrier f).q.magnitude = f b.q.magnitude := rfl
 
 end UpperBound
 
@@ -168,6 +197,26 @@ def clamp [Min R] [Max R] (I : IccQ k R) (x : Quantity k R) : Quantity k R :=
 @[simp] theorem clamp_magnitude [Min R] [Max R] (I : IccQ k R) (x : Quantity k R) :
     (I.clamp x).magnitude
       = Min.min (Max.max x.magnitude I.lo.q.magnitude) I.hi.q.magnitude := rfl
+
+/-- **The interval survives a representation cast** — both endpoints moved by the same
+carrier map, through their own roles. This is the whole of what a carrier lift of a
+configuration box *is*, and stating it once is what keeps it from being re-authored per
+box: a record of four intervals lifted field-wise erases and re-mints eight endpoints if
+this is missing, and the boundary audit reads every one of those as a mint.
+
+The cast needs no `OrderKind`: the interval already exists, so the scale gate was
+discharged where it was formed, and a representation change cannot revoke it. It does
+not preserve `Ordered` for an arbitrary `f` — an order-reversing or non-injective cast
+is a real possibility — which is why the orientation fact travels as a proof about the
+endpoints and not as an invariant of the structure. -/
+def castCarrier {S : Type} (f : R → S) (I : IccQ k R) : IccQ k S :=
+  ⟨I.lo.castCarrier f, I.hi.castCarrier f⟩
+
+@[simp] theorem castCarrier_lo {S : Type} (f : R → S) (I : IccQ k R) :
+    (I.castCarrier f).lo.q.magnitude = f I.lo.q.magnitude := rfl
+
+@[simp] theorem castCarrier_hi {S : Type} (f : R → S) (I : IccQ k R) :
+    (I.castCarrier f).hi.q.magnitude = f I.hi.q.magnitude := rfl
 
 @[simp] theorem of_lo (lo hi : Quantity k R) (ord : OrderKind k) :
     (IccQ.of lo hi ord).lo.q = lo := rfl

@@ -114,4 +114,42 @@ def massK : KindOfProperty := { id := "mass", scale := .ratio }
 #check_failure (fun (x : Quantity lengthK Int) => lb.exceededBy x)
 #check_failure (fun (x : Quantity lengthK Int) => lb.geb x)
 
+/-! ## The representation cast
+
+A carrier lift moves the numbers and leaves the roles alone. The probes below are what
+that commits the module to: an interval lifted whole is the two endpoints lifted through
+their own roles, so a lift cannot exchange them, and the cast takes no `OrderKind` — the
+scale gate was discharged where the interval was formed and a representation change
+cannot revoke it.
+
+What the cast is *for* is visible only at the call site: a configuration box lifted
+field-wise without it has to erase and re-mint every endpoint, and each of those is an
+anonymous constructor the boundary audit reads as a mint. -/
+
+-- The lift is definitional at each endpoint, so downstream analysis runs on the carrier
+-- arithmetic without a rewriting step of its own.
+example : (box.castCarrier Float.ofInt).lo.q.magnitude = Float.ofInt box.lo.q.magnitude := rfl
+example : (box.castCarrier Float.ofInt).hi.q.magnitude = Float.ofInt box.hi.q.magnitude := rfl
+
+#guard (box.castCarrier Float.ofInt).lo.q.magnitude == 0.0
+#guard (box.castCarrier Float.ofInt).hi.q.magnitude == 10.0
+
+-- The endpoints keep their roles across the cast, so the lifted box is still queried
+-- through the directional formers and still clamps with the deployed association.
+#guard (box.castCarrier Float.ofInt).memb (⟨5.0⟩ : Quantity lengthK Float) == true
+#guard (box.castCarrier Float.ofInt).memb (⟨11.0⟩ : Quantity lengthK Float) == false
+#guard ((box.castCarrier Float.ofInt).clamp ⟨12.0⟩).magnitude == 10.0
+
+-- Each role casts on its own, and the result is still that role: a lifted lower bound
+-- cannot be handed to an upper slot, so a field-wise lift of a box is swap-proof for the
+-- same reason its construction is.
+example : LowerBound lengthK Float := lb.castCarrier Float.ofInt
+example : UpperBound lengthK Float := ub.castCarrier Float.ofInt
+#check_failure (⟨lb.castCarrier Float.ofInt, lb.castCarrier Float.ofInt⟩ : IccQ lengthK Float)
+
+-- The cast is kind-preserving by parametricity — there is no way to change `k` with it,
+-- exactly as for `Quantity.castCarrier`.
+example : IccQ lengthK Float := box.castCarrier Float.ofInt
+#check_failure (box.castCarrier Float.ofInt : IccQ colourK Float)
+
 end PropertyKindCalculus.Tests.Bounds
