@@ -198,4 +198,63 @@ end Clean
 #guard_msgs in
 #kind_boundary_clean PropertyKindCalculus.Tests.BoundaryAudit.Clean
 
+/-! ## `#kind_mint_ratchet` — the phase-2 discipline: the raw column emptied where authored
+
+The audit's two-column split makes raw mints *visible*; the ratchet makes the raw column
+*empty* at the authored tiers (`[kindCrossing]`/`[carrierVocab]`): every mint there must be a
+licensed derivation (which never reaches the raw column) or an attested one (which lands in
+the reviewed column with its reason). `[kindConst]`/`[kindIngest]`/`[kindEmission]` keep raw
+mints legal at the def granularity. Like `#kind_boundary_clean` it throws and pins nothing, so
+it cannot be re-blessed. The parent namespace deliberately holds raw crossing/vocab mints, so
+the gate fails on it — the error pinned here — and the `Ratcheted` namespace below is the
+passing shape. -/
+
+/-- error: mint ratchet: 5 `[kindCrossing]`/`[carrierVocab]` site(s) with raw mints
+  ⚠ [carrierVocab] PropertyKindCalculus.Tests.BoundaryAudit.parametricFamilySite — mints: PropertyKindCalculus.Tests.BoundaryAudit.probeFamily (parametric)
+  ⚠ [carrierVocab] PropertyKindCalculus.Tests.BoundaryAudit.parametricSite — mints: (kind-parametric)
+  ⚠ [carrierVocab] PropertyKindCalculus.Tests.BoundaryAudit.vocabSite — mints: probeKind
+  ⚠ [kindCrossing] PropertyKindCalculus.Tests.BoundaryAudit.crossingSite — mints: probeKind
+  ⚠ [kindCrossing] PropertyKindCalculus.Tests.BoundaryAudit.taggedSite — mints: probeKind
+
+At these tiers every mint must be a licensed derivation (`castCarrier`, `Quantity.get!`, a witness edge) or a `Quantity.attest why m` whose reason is harvested — a raw `⟨…⟩` is an anonymous claim the reviewed column never sees.
+-/
+#guard_msgs (whitespace := lax) in
+#kind_mint_ratchet PropertyKindCalculus.Tests.BoundaryAudit
+
+namespace Ratcheted
+
+/-- A ratcheted crossing: the authored edge's mint carries its adjudication as an attest
+reason — reviewed column, not raw. -/
+@[kindCrossing]
+def adjudicatedCrossing (x : Quantity probeKind2 Float) : Quantity probeKind Float :=
+  .attest "the authored probe edge — kind 2's magnitude read at the probe kind" x.magnitude
+
+/-- A ratcheted vocabulary site: a representation move through `castCarrier`, which keeps the
+kind by parametricity — no mint anywhere, raw or reviewed. -/
+@[carrierVocab]
+def liftedVocab (x : Quantity probeKind Float) : Quantity probeKind (Array Float) :=
+  x.castCarrier (fun m => #[m])
+
+/-- A declared constant: raw `⟨…⟩` stays legal here — the value IS the data, and the def-level
+tag with this docstring is the adjudication. -/
+@[kindConst]
+def ratchetConst : Quantity probeKind Float := ⟨2.5⟩
+
+/-- A checked ingest: raw `⟨…⟩` stays legal here — the (trivial, here) check is the license. -/
+@[kindIngest]
+def ratchetIngest (x : Float) : Quantity probeKind Float := ⟨x⟩
+
+/-- An emission body with a residual re-entry mint: legal at the def granularity — the
+emission tier's own adjudication — so the ratchet does not fire on it. -/
+@[kindEmission]
+def ratchetEmission (x : Quantity probeKind Float) : Float × Quantity probeKind Float :=
+  (x.magnitude, ⟨x.magnitude⟩)
+
+end Ratcheted
+
+-- no message: every crossing/vocab mint under `Ratcheted` is licensed or attested, and the
+-- const/ingest/emission raw mints are at tiers the ratchet leaves at def granularity
+#guard_msgs in
+#kind_mint_ratchet PropertyKindCalculus.Tests.BoundaryAudit.Ratcheted
+
 end PropertyKindCalculus.Tests.BoundaryAudit

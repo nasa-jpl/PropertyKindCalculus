@@ -730,6 +730,48 @@ elab "#kind_boundary_clean" nss:ident+ : command => liftTermElabM do
       actually is — do NOT re-pin a `#kind_boundary_audit` message whose summary says \
       `violation`, which turns the build green and the invariant off."
 
+/-! ## `#kind_mint_ratchet` -/
+
+open Elab Command in
+/-- `#kind_mint_ratchet ns …` — **the phase-2 mint discipline, stated as a gate.**
+
+The tier attributes adjudicate at the *declaration*: one tag sanctions a whole body, and the
+audit collapses a body's raw mints to a deduplicated kind list, so multiplicity is invisible —
+def-level sanction can launder however many interior `⟨…⟩` a body holds. The two-column split
+(`mints:` raw / `attests:` reviewed) makes the raw column *visible*; this command makes it
+**empty** where the calculus claims to be authored:
+
+* `[kindCrossing]`/`[carrierVocab]`: a raw `⟨…⟩` here is a violation. Every mint must be a
+  *licensed derivation* (`castCarrier`, `Quantity.get!`, a `mul`/`div` witness edge, `zero` —
+  which never appear in the raw column at all) or a `Quantity.attest why m` whose reason is
+  harvested into the reviewed column. What the gate buys: at these tiers the raw column stays
+  empty, so a new anonymous mint *fails the build* instead of joining a list nobody re-reads.
+* `[kindConst]`/`[kindIngest]` keep raw `⟨…⟩` legal at the def granularity — a declared
+  constant's value **is** the data (the docstring carries the adjudication), and an ingest
+  mint is sanctioned by the check it discharges.
+* `[kindEmission]` likewise stays at def granularity: an emission body's residual mints are
+  the deployment boundary's own re-entries, adjudicated by the tier tag; ratcheting them is a
+  per-repo campaign, and a repo that has cleared its emission tail can state so by keeping
+  those bodies mint-free — this gate will not regress the tiers it covers either way.
+
+Like `#kind_boundary_clean`, this carries no message and pins nothing: it throws, so there is
+nothing to re-bless. Put it beside the pinned audit, over the same namespaces. -/
+elab "#kind_mint_ratchet" nss:ident+ : command => liftTermElabM do
+  let sites ← boundarySites (nss.map (·.getId))
+  let offending := sites.filter fun s =>
+    (s.tier == some .kindCrossing || s.tier == some .carrierVocab) && !s.mints.isEmpty
+  unless offending.isEmpty do
+    let rendered :=
+      (offending.map (fun s =>
+        let tag := match s.tier with | some t => t.label | none => "?"
+        s!"  ⚠ [{tag}] {s.decl} — {s.description}")).qsort (· < ·)
+    let body := String.intercalate "\n" rendered.toList
+    throwError "mint ratchet: {offending.size} `[kindCrossing]`/`[carrierVocab]` site(s) \
+      with raw mints\n{body}\n\n\
+      At these tiers every mint must be a licensed derivation (`castCarrier`, \
+      `Quantity.get!`, a witness edge) or a `Quantity.attest why m` whose reason is \
+      harvested — a raw `⟨…⟩` is an anonymous claim the reviewed column never sees."
+
 /-! ## `#kind_crossings` -/
 
 open Elab Command in

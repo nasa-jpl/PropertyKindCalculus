@@ -73,15 +73,21 @@ kind** (the §18 reading: the numerical array holds components; the kind — and
 whole vector's, so reading one component *keeps* it). Kind-preserving *by parametricity*: `k`
 flows from the table to the component and nothing can change it — the array-carrier analogue of
 `castCarrier`, and the licensed alternative to erasing with `.magnitude` and re-minting `⟨…⟩`
-around every element read. The index stays bare `Nat` — index space is the documented erasure
-boundary, not a quantity — and the panic fallback inhabits the *carrier* (`default : R`), not
-the quantity, so the header's doctrine stands: scalar quantities stay uninhabited. -/
-def Quantity.get! {k : KindOfProperty} {R : Type} [Inhabited R]
-    (v : Quantity k (Array R)) (i : Nat) : Quantity k R :=
+around every element read. The carrier is any `Nat`-indexed collection (`GetElem?`), so the
+boxed `Array R` and the packed executable columns (`FloatArray`, `ByteArray`) read through the
+same licensed form — a packed representation is a representation choice, not a different
+metrological object. The index stays bare `Nat` — index space is the documented erasure
+boundary, not a quantity — and the panic fallback inhabits the *element carrier*
+(`default : Elem`), not the quantity, so the header's doctrine stands: scalar quantities stay
+uninhabited. -/
+def Quantity.get! {k : KindOfProperty} {R Elem : Type} {valid : R → Nat → Prop}
+    [GetElem? R Nat Elem valid] [Inhabited Elem]
+    (v : Quantity k R) (i : Nat) : Quantity k Elem :=
   ⟨v.magnitude[i]!⟩
 
-@[simp] theorem Quantity.get!_magnitude {k : KindOfProperty} {R : Type} [Inhabited R]
-    (v : Quantity k (Array R)) (i : Nat) :
+@[simp] theorem Quantity.get!_magnitude {k : KindOfProperty} {R Elem : Type}
+    {valid : R → Nat → Prop} [GetElem? R Nat Elem valid] [Inhabited Elem]
+    (v : Quantity k R) (i : Nat) :
     (v.get! i).magnitude = v.magnitude[i]! := rfl
 
 /-- **Component append — the write dual of `Quantity.get!`.** Extending a table with a value

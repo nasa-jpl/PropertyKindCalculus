@@ -106,4 +106,16 @@ theorem r11_vector_laws :
 /-- info: 'PropertyKindCalculus.instInhabitedQuantityArray' does not depend on any axioms -/
 #guard_msgs in #print axioms instInhabitedQuantityArray
 
+-- Component access is ONE licensed form across representations: the boxed `Array` and the
+-- packed `FloatArray` read through the same `Quantity.get!` (any `Nat`-indexed `GetElem?`
+-- collection) — a packed column is a representation choice, not a different metrological
+-- object, and each component is a quantity of the table's own kind.
+def boxedLen : Quantity lengthK (Array Int) := ⟨#[7, 8, 9]⟩
+def packedLen : Quantity lengthK FloatArray := ⟨FloatArray.mk #[7.5, 8.5]⟩
+#guard (boxedLen.get! 1).magnitude == 8
+#guard (packedLen.get! 0).magnitude == 7.5
+-- the kind is the table's own — a component of a length table IS a length:
+example : Quantity lengthK Int := boxedLen.get! 2
+example : Quantity lengthK Float := packedLen.get! 1
+
 end PropertyKindCalculus.Tests.Representation
