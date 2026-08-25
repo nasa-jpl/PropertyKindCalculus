@@ -57,7 +57,7 @@ package «PropertyKindCalculus» where
   -- The package version — the single source of truth. `scripts/bump-version.sh`
   -- reads and bumps it here, and the blueprint reads this same line at build time
   -- (its `{version}[]` role) so the published document never drifts from the source.
-  version := v!"0.82.0"
+  version := v!"0.83.0"
   leanOptions := #[
     ⟨`autoImplicit, false⟩,
     ⟨`relaxedAutoImplicit, false⟩]
@@ -402,3 +402,15 @@ lean_lib «IndexPage» where
   srcDir := "index"
   roots := #[`PropertyKindCalculus.IndexPage]
   globs := #[.one `PropertyKindCalculus.IndexPage]
+
+/-- **The Mathlib holding pen.** The standing rule has two rungs: generic API goes to PKC
+first, and theory generic beyond PKC goes to Mathlib itself. This library is the staging
+area for the second rung — directed-graph and quiver theory the incidence-quiver bridge
+consumes and Mathlib does not yet have (`Combinatorics/Digraph/` is a two-file stub). Every
+declaration lives in the namespace it targets upstream (`Digraph`, `Quiver`, `Relation`),
+carries Mathlib-style statements and docstrings, and mentions no PKC vocabulary, so a module
+here upstreams by copy, not by translation. Mathlib arrives transitively (PhysLib/TorchLean),
+exactly as for `Dimension`; the core spine stays Mathlib-free. Build with
+`lake build ForMathlib`. -/
+lean_lib «ForMathlib» where
+  srcDir := "formathlib"

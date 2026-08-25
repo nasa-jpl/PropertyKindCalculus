@@ -20,7 +20,10 @@ Organized by dependency tier, matching the layering of the requirement catalogue
   * `Tests.Dimension` — the PhysLib/Mathlib-backed dimension layer (R1, R5, R7, R13, R17-ℝ);
   * `Tests.Uncertainty` — the Mathlib/Torch-backed uncertainty layer (R14, R15, R18);
   * `Tests.Torch` — the TorchLean-backed `Torch` library's kind layer (the kinded fused
-    forms), driven at a host stub carrier so it needs no GPU.
+    forms), driven at a host stub carrier so it needs no GPU;
+  * `Tests.ForMathlib` — the Mathlib staging area's digraph/quiver theory: classical theorems
+    applied to concrete witnesses, decidability instances driven by `decide`, axiom profiles
+    pinned.
 
 Every probe file is imported by its tier index and, through the `Tests` library's `.andSubmodules`
 glob, also built directly by `lake build Tests` — an *unindexed* probe would still be built here, so
@@ -30,5 +33,6 @@ sixteen verifiable requirements are CI-enforced, not just the nine in the core s
 
 import PropertyKindCalculus.Tests.Core
 import PropertyKindCalculus.Tests.Dimension
+import PropertyKindCalculus.Tests.ForMathlib
 import PropertyKindCalculus.Tests.Uncertainty
 import PropertyKindCalculus.Tests.Torch
