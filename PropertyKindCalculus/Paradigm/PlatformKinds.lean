@@ -119,6 +119,16 @@ which is what licenses the whole model. -/
 def elapsedTime : KindOfProperty :=
   { id := "elapsed wall-clock time", scale := .ratio }
 
+/-- A reading of the process's monotonic clock — a point on the clock's axis, whose same-kind
+differences are the `elapsedTime` spans a stopwatch reports. **Interval scale**: the origin is
+the clock's own arbitrary zero, so subtraction is meaningful and a ratio of two timestamps is
+not — which is exactly the operation gate a fence marker needs (two fences subtract into a
+span; nothing multiplies them). -/
+def monotonicTimestamp : KindOfProperty :=
+  { id := "monotonic-clock timestamp", scale := .interval }
+
+theorem monotonicTimestamp_ne_elapsedTime : monotonicTimestamp ≠ elapsedTime := by decide
+
 /-- The marginal wall-clock cost per batch element (`w`, seconds/element) — the *work* rate. The
 term that divides by the shard count, because it is work the shards share out. -/
 def timePerElement : KindOfProperty :=
