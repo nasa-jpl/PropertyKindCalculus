@@ -1714,6 +1714,7 @@ def interfaceBox (name : String) (g : StepGraph) : Provenance String String :=
 /-- Assemble a set of declarations into one multi-step graph (module section, "The
 assembly"): per-level harvests with the other members as sub-steps, walked-or-interface
 inclusion, call-site dissection with monomorphizing kind maps and port demotion,
+member-constant wiring,
 namespaced union, and the citation scan. -/
 def assemble (decls : Array Name) : MetaM Assembly := do
   let env ← getEnv
@@ -1864,6 +1865,42 @@ def assemble (decls : Array Name) : MetaM Assembly := do
         kindPairs := kindPairs.modify k (·.push (out.kind, o.resultKind))
         unless demotedOuts.contains s!"{callee}/{out.node}" do
           demotedOuts := demotedOuts.push s!"{callee}/{out.node}"
+  -- **A configuration constant that is also a member is a wire, not a source.** A
+  -- deployment constant read as `c.field` declares a configuration port at that address,
+  -- which is right when `c` is somebody else's business. When `c` is a *member of this
+  -- assembly* the address names a value this assembly computes, and reading it as a
+  -- source hides the computation behind it: a geometry read as two numbers states two
+  -- numbers, and the angle they were computed from never reaches the boundary at all. So
+  -- the read becomes an identity wire off the member's own result and both ends demote —
+  -- the consumer's port because what a member of the assembly feeds is interior to it,
+  -- the producer's output for the same reason a consumed call result demotes. What
+  -- surfaces in their place is the producing member's own interface, which is the thing
+  -- that was being hidden.
+  let mut cfgWires : Array (Provenance.Occurrence String String) := #[]
+  let mut demotedCfg : Array String := #[]
+  let mut wiredCite : Array (Nat × Nat) := #[]
+  for j in [0:decls.size] do
+    -- one instance only: a constant is read at an address, and an address that named
+    -- two instances would not be one
+    if instCount[j]! > 1 then continue
+    let full := toString decls[j]!
+    let prod := names[j]!
+    for j' in [0:decls.size] do
+      if j' == j then continue
+      for q in contribs[j']!.ports do
+        if q.dir != .config then continue
+        let path? :=
+          if q.node == full then some ""
+          else if q.node.startsWith (full ++ ".") then some (q.node.drop full.length).toString
+          else none
+        let some path := path? | continue
+        let src := s!"{prod}/result{path}"
+        let dst := s!"{names[j']!}/{q.node}"
+        unless demotedCfg.contains dst do
+          demotedCfg := demotedCfg.push dst
+          cfgWires := cfgWires.push ⟨.copy, [(src, q.kind)], dst, q.kind, prod⟩
+        unless demotedOuts.contains src do demotedOuts := demotedOuts.push src
+        unless wiredCite.contains (j', j) do wiredCite := wiredCite.push (j', j)
   -- transform each instance: name its calls after the instances they reach,
   -- monomorphize, namespace, demote — then union, the members in declaration order
   let mut levels : Array AssemblyLevel := #[]
@@ -1917,6 +1954,7 @@ def assemble (decls : Array Name) : MetaM Assembly := do
     let (demotedPorts, keptPorts) := p.ports.partition fun q =>
       (q.dir == .input && demoted.contains q.node)
         || (q.dir.produced && demotedOuts.contains q.node)
+        || (q.dir == .config && demotedCfg.contains q.node)
     let keptPorts := keptPorts.filter fun q =>
       q.dir != .config || !declaredCfg.contains q.node
     for q in keptPorts do
@@ -1929,7 +1967,7 @@ def assemble (decls : Array Name) : MetaM Assembly := do
       fun (_, t) => (p.kindOf? t).isSome
     levels := levels.push ⟨decls[j]!, name, walkedFlags[j]!, p, srcs[j]!, nsUnk, nsLks⟩
     graph := graph.union p
-  graph := graph.union ⟨[], [], wires.toList, []⟩
+  graph := graph.union ⟨[], [], wires.toList ++ cfgWires.toList, []⟩
   -- the citation relation: which member's value references which
   let mut cites : Array (String × String) := #[]
   for i in [0:decls.size] do
@@ -1941,7 +1979,10 @@ def assemble (decls : Array Name) : MetaM Assembly := do
       -- who mentions whom, not who ports what
       for c in configReads others {} v do
         if let some j := decls.findIdx? (· == c) then
-          cites := cites.push (names[i]!, names[j]!)
+          -- unless the walk *wired* it: a citation is a reference the graph could not
+          -- carry, and one that became an identity wire is carried
+          unless wiredCite.contains (i, j) do
+            cites := cites.push (names[i]!, names[j]!)
   return { levels, graph, cites }
 
 /-- Render one graph occurrence in the wired grammar: the edge equation over the kinds

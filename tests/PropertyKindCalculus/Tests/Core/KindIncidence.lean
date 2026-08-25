@@ -1588,4 +1588,108 @@ well-formed: true
 /-- info: kernel-accepted: the kind assembly is well-formed (theorem 'PropertyKindCalculus.Tests.KindIncidence.deployedScaled.kindAssemblyWf') -/
 #guard_msgs in #kind_assembly_decide [deployedScaled, scaledByBand]
 
+/-! ## A configuration constant that is also a member is a wire, not a source
+
+A deployment constant read at `c.field` declares a configuration port at that address,
+which is right when `c` is somebody else's business. When `c` is a **member of this
+assembly** the address names a value the assembly computes, and reading it as a source
+hides the computation behind it: a geometry read as two numbers states two numbers, and
+the angle they were computed from reaches no boundary at all — two deployments at
+different angles then agree on every port they declare. The two probes below are the same
+consumer, differing only in whether the constant is declared a member. -/
+
+/-- A probe kind — the angle a geometry is computed from. -/
+def thetaK : KindOfProperty := { id := "kind-incidence probe theta", scale := .ratio }
+
+/-- The bundle a geometry travels as: two components computed together from one angle. -/
+structure GeomQ where
+  /-- The first component. -/
+  a : Quantity alphaK Nat
+  /-- The second. -/
+  b : Quantity betaK Nat
+
+/-- The deployed angle — the one declaration that fixes it. -/
+@[kindConst] def probeAngle : Quantity thetaK Nat := ⟨40⟩
+
+/-- The geometry producer: both components computed from the one angle, so they cannot be
+assembled the wrong way round. -/
+def geomOfAngle (t : Quantity thetaK Nat) : GeomQ :=
+  ⟨Quantity.mul (ProductKind.ofRatio thetaK thetaK alphaK) t t,
+   Quantity.mul (ProductKind.ofRatio thetaK thetaK betaK) t t⟩
+
+/-- The deployed geometry — the producer applied to the deployed angle. -/
+@[kindConst] def deployedGeom : GeomQ := geomOfAngle probeAngle
+
+/-- The step that consumes a geometry — a container binder, so its kinds arrive as the
+field paths a projection spells. -/
+def usesGeom (g : GeomQ) (x : Quantity thetaK Nat) : Quantity deltaK Nat :=
+  Quantity.mul (ProductKind.ofRatio alphaK betaK deltaK) g.a
+    (Quantity.mul (ProductKind.ofRatio betaK thetaK betaK) g.b x)
+
+/-- The deployment: that step at the deployed geometry. -/
+def deployedUsesGeom (x : Quantity thetaK Nat) : Quantity deltaK Nat :=
+  usesGeom deployedGeom x
+
+-- Not a member: two configuration ports at their addresses, and the angle behind them
+-- nowhere on the boundary.
+/--
+info: kind assembly of 2 steps:
+level deployedUsesGeom: walked
+level usesGeom: walked
+input deployedUsesGeom/x : thetaK
+config deployedUsesGeom/PropertyKindCalculus.Tests.KindIncidence.deployedGeom.a : alphaK
+config deployedUsesGeom/PropertyKindCalculus.Tests.KindIncidence.deployedGeom.b : betaK
+output deployedUsesGeom/result : deltaK
+derived usesGeom/g.a : alphaK
+derived usesGeom/g.b : betaK
+derived usesGeom/x : thetaK
+derived usesGeom/result : deltaK
+derived usesGeom/_1 : betaK
+[step usesGeom] alphaK · betaK · thetaK → deltaK ⟨deployedUsesGeom/PropertyKindCalculus.Tests.KindIncidence.deployedGeom.a, deployedUsesGeom/PropertyKindCalculus.Tests.KindIncidence.deployedGeom.b, deployedUsesGeom/x⟩ ⇒ deployedUsesGeom/result
+alphaK · betaK → deltaK ⟨usesGeom/g.a, usesGeom/_1⟩ ⇒ usesGeom/result
+betaK · thetaK → betaK ⟨usesGeom/g.b, usesGeom/x⟩ ⇒ usesGeom/_1
+alphaK → alphaK ⟨deployedUsesGeom/PropertyKindCalculus.Tests.KindIncidence.deployedGeom.a⟩ ⇒ usesGeom/g.a
+betaK → betaK ⟨deployedUsesGeom/PropertyKindCalculus.Tests.KindIncidence.deployedGeom.b⟩ ⇒ usesGeom/g.b
+thetaK → thetaK ⟨deployedUsesGeom/x⟩ ⇒ usesGeom/x
+cites: deployedUsesGeom → usesGeom
+well-formed: true
+-/
+#guard_msgs in #kind_assembly [deployedUsesGeom, usesGeom]
+
+-- Declared a member: the two addresses become identity wires off the member's own
+-- result, both ends demote, and what surfaces in their place is the angle. The citation
+-- goes with them — a reference the graph carries is not a citation — while the one to
+-- `usesGeom` stays.
+/--
+info: kind assembly of 3 steps:
+level deployedUsesGeom: walked
+level usesGeom: walked
+level deployedGeom: interface
+input deployedUsesGeom/x : thetaK
+output deployedUsesGeom/result : deltaK
+config deployedGeom/PropertyKindCalculus.Tests.KindIncidence.probeAngle : thetaK
+derived deployedUsesGeom/PropertyKindCalculus.Tests.KindIncidence.deployedGeom.a : alphaK
+derived deployedUsesGeom/PropertyKindCalculus.Tests.KindIncidence.deployedGeom.b : betaK
+derived usesGeom/g.a : alphaK
+derived usesGeom/g.b : betaK
+derived usesGeom/x : thetaK
+derived usesGeom/result : deltaK
+derived usesGeom/_1 : betaK
+derived deployedGeom/result.a : alphaK
+derived deployedGeom/result.b : betaK
+[step usesGeom] alphaK · betaK · thetaK → deltaK ⟨deployedUsesGeom/PropertyKindCalculus.Tests.KindIncidence.deployedGeom.a, deployedUsesGeom/PropertyKindCalculus.Tests.KindIncidence.deployedGeom.b, deployedUsesGeom/x⟩ ⇒ deployedUsesGeom/result
+alphaK · betaK → deltaK ⟨usesGeom/g.a, usesGeom/_1⟩ ⇒ usesGeom/result
+betaK · thetaK → betaK ⟨usesGeom/g.b, usesGeom/x⟩ ⇒ usesGeom/_1
+[step deployedGeom] → alphaK ⟨⟩ ⇒ deployedGeom/result.a
+[step deployedGeom] → betaK ⟨⟩ ⇒ deployedGeom/result.b
+alphaK → alphaK ⟨deployedUsesGeom/PropertyKindCalculus.Tests.KindIncidence.deployedGeom.a⟩ ⇒ usesGeom/g.a
+betaK → betaK ⟨deployedUsesGeom/PropertyKindCalculus.Tests.KindIncidence.deployedGeom.b⟩ ⇒ usesGeom/g.b
+thetaK → thetaK ⟨deployedUsesGeom/x⟩ ⇒ usesGeom/x
+alphaK → alphaK ⟨deployedGeom/result.a⟩ ⇒ deployedUsesGeom/PropertyKindCalculus.Tests.KindIncidence.deployedGeom.a
+betaK → betaK ⟨deployedGeom/result.b⟩ ⇒ deployedUsesGeom/PropertyKindCalculus.Tests.KindIncidence.deployedGeom.b
+cites: deployedUsesGeom → usesGeom
+well-formed: true
+-/
+#guard_msgs in #kind_assembly [deployedUsesGeom, usesGeom, deployedGeom]
+
 end PropertyKindCalculus.Tests.KindIncidence
