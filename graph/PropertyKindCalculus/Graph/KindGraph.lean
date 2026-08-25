@@ -269,9 +269,11 @@ def d2Cluster (kg : KindGraph) (cl : Array Nat) : String := Id.run do
     lines := lines.push l
   return String.intercalate "\n" lines.toList ++ "\n"
 
-/-- The alphabetical representative of a vertex group, as a display name. -/
+/-- The alphabetical representative of a vertex group, as a display name — compared
+case-insensitively, so a capitalized namespace qualifier on a collider does not outrank
+the group's natural first kind name. -/
 private def repOf (names : Array String) (cl : Array Nat) : String :=
-  ((cl.map fun i => names[i]!).qsort (· < ·))[0]!
+  ((cl.map fun i => names[i]!).qsort fun a b => a.toLower < b.toLower)[0]!
 
 /-- The node identifier of a component in the condensation diagram: a singleton is its
 kind's own identifier; a nontrivial cluster is `scc_` plus its alphabetical
