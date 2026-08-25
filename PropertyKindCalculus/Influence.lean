@@ -51,6 +51,15 @@ namespace Provenance
 
 variable {ν κ : Type} [BEq ν] [BEq κ]
 
+/-- The node vocabulary of a graph, in first-mention order: every node a port, an
+introduction, an occurrence (operand or result), or an exit names. The closed universe a
+finite reading of the graph — an index, a figure, the incidence quiver — enumerates. -/
+def nodeList (g : Provenance ν κ) : List ν :=
+  (g.ports.map (·.node) ++ g.intros.map (·.node)
+    ++ g.occurrences.map (·.result)
+    ++ (g.occurrences.flatMap fun o => o.operands.map (·.1))
+    ++ g.exits).eraseDups
+
 /-! ## The disjunctive closure, forward: influence -/
 
 /-- One monotone sweep of the influence closure: each occurrence with **some** operand

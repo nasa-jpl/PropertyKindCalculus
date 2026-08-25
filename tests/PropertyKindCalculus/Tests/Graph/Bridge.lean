@@ -37,6 +37,11 @@ example : (G.flowDigraph).Reachable "in1" "out" :=
 example : IsPartialOrder String (G.flowDigraph).Reachable :=
   Provenance.Acyclic.isPartialOrder (by decide)
 
+-- Budgets are finite sums, applied: on the (executably) acyclic probe graph, the
+-- incidence-quiver paths between any two vertices form a finite type.
+example (v w : Provenance.IncidenceVert G) : Finite (Quiver.Path v w) :=
+  Provenance.Acyclic.finite_incidencePath (by decide) v w
+
 /-! ### The kind-level component computation, hand-built -/
 
 /-- Three kinds, a two-kind cycle, and a tail: cluster `{0, 1}`, hierarchy edge to
@@ -107,5 +112,10 @@ Classical.choice, Quot.sound] -/
 /-- info: 'PropertyKindCalculus.Provenance.acyclic_iff_isAcyclic' depends on axioms: [propext,
 Classical.choice, Quot.sound] -/
 #guard_msgs in #print axioms Provenance.acyclic_iff_isAcyclic
+
+/-- info: 'PropertyKindCalculus.Provenance.Acyclic.finite_incidencePath' depends on axioms: [propext,
+ Classical.choice,
+ Quot.sound] -/
+#guard_msgs in #print axioms Provenance.Acyclic.finite_incidencePath
 
 end PropertyKindCalculus.Tests.Graph

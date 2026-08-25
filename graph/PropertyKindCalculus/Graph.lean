@@ -1,4 +1,5 @@
 import PropertyKindCalculus.Graph.Flow
+import PropertyKindCalculus.Graph.IncidenceQuiver
 import PropertyKindCalculus.Graph.KindGraph
 
 /-!
