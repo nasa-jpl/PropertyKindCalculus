@@ -57,7 +57,7 @@ package «PropertyKindCalculus» where
   -- The package version — the single source of truth. `scripts/bump-version.sh`
   -- reads and bumps it here, and the blueprint reads this same line at build time
   -- (its `{version}[]` role) so the published document never drifts from the source.
-  version := v!"0.83.0"
+  version := v!"0.84.0"
   leanOptions := #[
     ⟨`autoImplicit, false⟩,
     ⟨`relaxedAutoImplicit, false⟩]
@@ -414,3 +414,15 @@ exactly as for `Dimension`; the core spine stays Mathlib-free. Build with
 `lake build ForMathlib`. -/
 lean_lib «ForMathlib» where
   srcDir := "formathlib"
+
+/-- **The incidence-quiver bridge** — the Mathlib-facing face of the provenance layer.
+The core's closures (`reachableFrom`, `influencedFrom`, `ancestorsOf`, `acyclic`) are
+prelude-only executables; this library states what they compute — each proved against the
+value-flow digraph and the incidence quiver of the same graph, on `ForMathlib`'s
+directed-graph theory — so a query's sound direction (absence of a path, finiteness of
+paths, acyclicity of a condensation) is a theorem about the number the probe evaluated,
+not a reading beside it. Outside the core so `import PropertyKindCalculus` stays
+Mathlib-free. Build with `lake build Graph`. -/
+lean_lib «Graph» where
+  srcDir := "graph"
+  roots := #[`PropertyKindCalculus.Graph]

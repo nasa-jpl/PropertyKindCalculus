@@ -27,4 +27,5 @@ import PropertyKindCalculus.Tests.Core.KindRelation
 import PropertyKindCalculus.Tests.Core.CertifiedIngest
 import PropertyKindCalculus.Tests.Core.BoundaryAudit
 import PropertyKindCalculus.Tests.Core.Provenance
+import PropertyKindCalculus.Tests.Core.Influence
 import PropertyKindCalculus.Tests.Core.Index
