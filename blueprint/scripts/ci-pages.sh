@@ -23,12 +23,20 @@ for arg in "$@"; do
       echo "usage: ci-pages.sh [--no-pdf] [--no-api]   (or SKIP_PDF=1 / SKIP_API=1)"
       echo "  --no-pdf  skip the ~5 min WeasyPrint PDF render"
       echo "  --no-api  skip the doc-gen4 API render staged under docs/api/"
+      echo "  (env: LAKE_UPDATE=1 also runs lake update; off by default)"
       exit 0 ;;
     *) echo "error: unknown argument '$arg' (try --no-pdf or --no-api)" >&2; exit 2 ;;
   esac
 done
 
-lake update
+# `lake update` re-resolves every dependency against the refs its lakefile NAMES, which for a
+# ref that is a moving branch means the workspace can silently land on revisions the committed
+# manifest does not record — and, if the new tip carries a different `lean-toolchain`, past the
+# toolchain Mathlib's cache is built for. A render does not need it: `lake build` fetches and
+# builds straight from the manifest, including on a clean CI checkout. So updating is opt-in.
+if [ "${LAKE_UPDATE:-0}" = "1" ]; then
+  lake update
+fi
 # Render into a CLEAN output dir: blueprint-gen never prunes superseded,
 # content-hashed `searchIndex_N.<hash>.js` search shards, so a reused
 # _out/blueprint accumulates stale shard sets that stage-docs.sh then copies
