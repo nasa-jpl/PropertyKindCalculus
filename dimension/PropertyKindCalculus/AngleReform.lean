@@ -50,6 +50,12 @@ instance : Fintype Base where
   elems := {.length, .time, .mass, .charge, .temperature, .angle}
   complete := fun x => by cases x <;> decide
 
+-- `Dimension B` takes `[DimensionBasis B]`: a basis must say what native tuple of exponents
+-- represents it. `DimensionBasis.pi` is PhysLib's function-backed representation, for a basis
+-- with no specialized tuple — which is this one. The specialized alternative buys a packed
+-- `Exponents` type (as `LTMCTDimensionBase` has), and nothing here reads the representation.
+instance : DimensionBasis Base := DimensionBasis.pi Base
+
 namespace AngleReform
 
 /-! ## Generators of the angle-augmented base -/

@@ -67,20 +67,23 @@ theorem fromISQHom_toISQHom (d : Dimension LTMCTDimensionBase) :
 theorem toISQHom_length : toISQHom Dim.length = single ISQDimensionBase.length := by
   ext b
   cases b <;> simp [toISQHom_apply, toISQFun, Dim.length, Dimension.L𝓭,
-    Dimension.ofLTMCTDimensionBase, single_exponent]
+    Dimension.ofLTMCTDimensionBase, single_exponent, Dimension.length, Dimension.time,
+    Dimension.mass, Dimension.charge, Dimension.temperature]
 
 /-- Mass is preserved by the change of basis. -/
 theorem toISQHom_mass : toISQHom Dim.mass = single ISQDimensionBase.mass := by
   ext b
   cases b <;> simp [toISQHom_apply, toISQFun, Dim.mass, Dimension.M𝓭,
-    Dimension.ofLTMCTDimensionBase, single_exponent]
+    Dimension.ofLTMCTDimensionBase, single_exponent, Dimension.length, Dimension.time,
+    Dimension.mass, Dimension.charge, Dimension.temperature]
 
 /-- Temperature is preserved by the change of basis. -/
 theorem toISQHom_temperature :
     toISQHom Dim.temperature = single ISQDimensionBase.temperature := by
   ext b
   cases b <;> simp [toISQHom_apply, toISQFun, Dim.temperature, Dimension.Θ𝓭,
-    Dimension.ofLTMCTDimensionBase, single_exponent]
+    Dimension.ofLTMCTDimensionBase, single_exponent, Dimension.length, Dimension.time,
+    Dimension.mass, Dimension.charge, Dimension.temperature]
 
 /-- **Charge is derived in the ISQ: `Q = I·T`.** The generator PhysLib takes as base maps to
 the upstream-named derived charge `ISQDimensionBase.charge` (defined there as
@@ -95,7 +98,8 @@ to the bare current generator: its charge and time factors cancel, leaving `sing
 theorem toISQHom_current : toISQHom Dim.current = single ISQDimensionBase.current := by
   ext b
   cases b <;> simp [toISQHom_apply, toISQFun, Dim.current, Dimension.C𝓭, Dimension.T𝓭,
-    Dimension.ofLTMCTDimensionBase, Dimension.div_exponent, single_exponent]
+    Dimension.ofLTMCTDimensionBase, Dimension.div_exponent, single_exponent, Dimension.length, Dimension.time,
+    Dimension.mass, Dimension.charge, Dimension.temperature]
 
 /-! ## The mole/candela reduction is a stance, not a lack
 

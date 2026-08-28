@@ -41,7 +41,7 @@ namespace PropertyKindCalculus.Paradigm.TapeCodegen
 
 /-- The scalar constant a node stores as its forward value (a scalar tape node holds one `Float`;
 the same accessor `paradigm.tape_cse.nodeKey` uses). -/
-def nodeScalar (n : Node Float) : Float := (Spec.toList n.value.t).headD 0.0
+def nodeScalar (n : Node Float) : Float := (Spec.Tensor.toList n.value.tensor).headD 0.0
 
 /-- A leaf has no parents; it is a graph **input** (a named leaf) or a **constant** (an unnamed
 `TapeBuilder.const` leaf). An op node has ≥1 parent and carries the op name. -/
@@ -78,7 +78,7 @@ def evalTape (env : String → Float) (t : Tape Float) : Except String (Array Fl
         | none    => pure (nodeScalar n)
       else
         match n.name with
-        | some nm => cOp nm (n.parents.map (fun p => vals.getD p 0.0))
+        | some nm => cOp nm ((n.parents.map (fun p => vals.getD p 0.0)).toList)
         | none    => .error "tape_codegen: op node with no op name")
     vals := vals.push v
   pure vals
@@ -118,7 +118,7 @@ def evalTapeT (tables : String → Option LutTable) (env : String → Float) (t 
         | none    => pure (nodeScalar n)
       else
         match n.name with
-        | some nm => cOpT tables nm (n.parents.map (fun p => vals.getD p 0.0))
+        | some nm => cOpT tables nm ((n.parents.map (fun p => vals.getD p 0.0)).toList)
         | none    => .error "tape_codegen: op node with no op name")
     vals := vals.push v
   pure vals
@@ -260,15 +260,15 @@ def genBody (t : Tape Float) (tables : Array LutTable := #[]) :
               -- a `lutfetch:<table>` node: backend-neutral macro call; the CUDA/stub emitters
               -- prepend the matching `TL_LUTFETCH` definition (texture fetch vs array lerp).
               match tables.find? (·.name == tn), n.parents with
-              | some tbl, [l, u] =>
+              | some tbl, #[l, u] =>
                   body := body.push
                     s!"  const float v{i} = TL_LUTFETCH({tbl.name}, {tbl.width}, {tbl.layers}, v{l}, v{u});"
               | some _, _ =>
-                  .error s!"tape_codegen: lutfetch node {i} expects parents [layer, u] (got {n.parents.length})"
+                  .error s!"tape_codegen: lutfetch node {i} expects parents [layer, u] (got {n.parents.size})"
               | none, _ =>
                   .error s!"tape_codegen: lutfetch node {i} references unknown table `{tn}`"
           | none =>
-              let e ← cExpr nm n.parents
+              let e ← cExpr nm n.parents.toList
               body := body.push s!"  const float v{i} = {e};"
       | none => .error s!"tape_codegen: op node {i} has no op name"
     i := i + 1
@@ -743,7 +743,7 @@ def aiReport (t : Tape Float) (nOut : Nat) (tables : Array LutTable := #[]) :
     else
       nOps := nOps + 1
       flops := flops + flopWeight n.name
-      eagerWords := eagerWords + n.parents.length + 1   -- reads each operand buffer, writes one result
+      eagerWords := eagerWords + n.parents.size + 1   -- reads each operand buffer, writes one result
       let k := n.name.getD "?"
       hist := hist.insert k ((hist.getD k 0) + 1)
   let histL := (hist.toList.toArray.qsort (fun a b => a.2 > b.2)).toList

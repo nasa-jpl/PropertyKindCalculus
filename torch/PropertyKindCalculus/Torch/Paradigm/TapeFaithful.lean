@@ -60,17 +60,17 @@ theorem requireValue_congr [DecidableEq Shape] {s : Shape}
 shape check passes via `cast_shape_self`). -/
 theorem requireValue_of_getValue [DecidableEq Shape] {s : Shape}
     (t : Tape α) (id : Nat) {y : Tensor α s}
-    (h : t.getValue? id = some (AnyTensor.mk y)) :
+    (h : t.getValue? id = some (Spec.SomeTensor.ofTensor y)) :
     t.requireValue (s := s) id = .ok y := by
   unfold Tape.requireValue
   rw [h]
-  simp [AnyTensor.mk]
+  simp [Spec.SomeTensor.ofTensor]
 
 /-- Reading back the value of a freshly-appended node returns its stored tensor. The new node's id
 is `t.size`. -/
 theorem requireValue_addNode_self [DecidableEq Shape] {s : Shape}
     (t : Tape α) (node : Node α) {y : Tensor α s}
-    (hval : node.value = AnyTensor.mk y) :
+    (hval : node.value = Spec.SomeTensor.ofTensor y) :
     (t.addNode node).1.requireValue (s := s) t.size = .ok y := by
   apply requireValue_of_getValue
   simp only [Tape.addNode, Tape.getValue?, Tape.getNode?, Tape.size]
@@ -101,7 +101,7 @@ theorem frameOver_addNode [DecidableEq Shape] (t : Tape α) (node : Node α) :
 /-- A leaf node reads back as the tensor it was created with. -/
 theorem leaf_value [DecidableEq Shape] {s : Shape}
     (t : Tape α) (x : Tensor α s) (name : Option String) (rg : Bool) :
-    (Tape.leaf (t := t) x (name := name) (requires_grad := rg)).1.requireValue (s := s) t.size
+    (Tape.leaf (t := t) x (name := name) (requiresGrad := rg)).1.requireValue (s := s) t.size
       = .ok x := by
   unfold Tape.leaf
   exact requireValue_addNode_self t _ rfl

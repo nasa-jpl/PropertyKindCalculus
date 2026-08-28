@@ -56,7 +56,7 @@ structure Adequacy where
 namespace Adequacy
 
 /-- The **unit in the last place** of binary32 (IEEE-754 single) at magnitude `x`:
-`ulp₃₂(x) = 2^(⌊log₂|x|⌋ − 23)`, the spacing of representable binary32 reals near `x` (24-bit
+`ulp32(x) = 2^(⌊log₂|x|⌋ − 23)`, the spacing of representable binary32 reals near `x` (24-bit
 significand). Computed over `Float`; `0` maps to the smallest subnormal `2⁻¹⁴⁹`. This is the concrete
 image of the abstract grid spacing `u` of `Adequacy.Grid`. -/
 def ulp32 (x : Float) : Float :=

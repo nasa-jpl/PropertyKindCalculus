@@ -68,7 +68,7 @@ basis is wanted (see `DimensionExamples`). Crucially the *kind* component does n
 mention `B` at all: re-coordinatizing the dimension into another basis leaves the
 kind fixed (`DimensionedKind.extend_kind`), the formal content of the base choice
 living strictly *below* the kind layer. -/
-structure DimensionedKind (B : Type := LTMCTDimensionBase) where
+structure DimensionedKind (B : Type := LTMCTDimensionBase) [DimensionBasis B] where
   /-- The underlying kind-of-property (the richer datum). -/
   kind : KindOfProperty
   /-- The physical dimension of the kind's quantities, over the base-dimension
@@ -77,7 +77,7 @@ structure DimensionedKind (B : Type := LTMCTDimensionBase) where
 
 namespace DimensionedKind
 
-variable {B : Type}
+variable {B : Type} [DimensionBasis B]
 
 /-- The **forgetful functor** on objects: drop the kind identity, keep only the
 dimension. Naming it as a standalone map is what lets the central fact — that it
@@ -128,17 +128,17 @@ kind, however its dimension is written. -/
 
 /-- **Change of basis** on a dimensioned kind: re-express its dimension over an
 extending basis `B'` along `f : B → B'`, leaving the kind identity fixed. -/
-def extend {B' : Type} [Fintype B] [DecidableEq B'] (f : B → B')
+def extend {B' : Type} [DimensionBasis B'] [Fintype B] [DecidableEq B'] (f : B → B')
     (dk : DimensionedKind B) : DimensionedKind B' :=
   { kind := dk.kind, dim := Dimension.extend f dk.dim }
 
 /-- **Kinds are invariant under change of basis.** Re-coordinatizing the dimension
 does not change the kind — the base choice is invisible at the kind layer. -/
-@[simp] theorem extend_kind {B' : Type} [Fintype B] [DecidableEq B'] (f : B → B')
+@[simp] theorem extend_kind {B' : Type} [DimensionBasis B'] [Fintype B] [DecidableEq B'] (f : B → B')
     (dk : DimensionedKind B) : (dk.extend f).kind = dk.kind := rfl
 
 /-- Change of basis acts on the forgotten dimension exactly by `Dimension.extend`. -/
-@[simp] theorem toDimension_extend {B' : Type} [Fintype B] [DecidableEq B'] (f : B → B')
+@[simp] theorem toDimension_extend {B' : Type} [DimensionBasis B'] [Fintype B] [DecidableEq B'] (f : B → B')
     (dk : DimensionedKind B) :
     (dk.extend f).toDimension = Dimension.extend f dk.toDimension := rfl
 
@@ -146,7 +146,7 @@ does not change the kind — the base choice is invisible at the kind layer. -/
 base-dimension exponent is preserved: the dimension re-expresses without loss, so no
 distinction is created or destroyed by re-coordinatizing (only new zero exponents are
 added for the fresh generators). -/
-theorem extend_toDimension_exponent {B' : Type} [Fintype B] [DecidableEq B']
+theorem extend_toDimension_exponent {B' : Type} [DimensionBasis B'] [Fintype B] [DecidableEq B']
     {f : B → B'} (hf : Function.Injective f) (dk : DimensionedKind B) (b : B) :
     (dk.extend f).toDimension.exponent (f b) = dk.toDimension.exponent b := by
   show (Dimension.extend f dk.dim).exponent (f b) = dk.dim.exponent b
@@ -159,17 +159,17 @@ genuine change of basis that sends a generator to a *product* of generators (Phy
 charge to the ISQ `current · time`; see `IsqBase`). The kind component is untouched, so
 kinds stay invariant under change of basis however the dimension is re-expressed
 (`mapDim_kind`) — the same invariance `extend` gives, now for a non-reindexing hom. -/
-def mapDim {B' : Type} (φ : Dimension B → Dimension B') (dk : DimensionedKind B) :
+def mapDim {B' : Type} [DimensionBasis B'] (φ : Dimension B → Dimension B') (dk : DimensionedKind B) :
     DimensionedKind B' :=
   { kind := dk.kind, dim := φ dk.dim }
 
 /-- **Kinds are invariant under any re-dimensioning.** The base choice, and how the
 dimension is re-expressed, is invisible at the kind layer. -/
-@[simp] theorem mapDim_kind {B' : Type} (φ : Dimension B → Dimension B')
+@[simp] theorem mapDim_kind {B' : Type} [DimensionBasis B'] (φ : Dimension B → Dimension B')
     (dk : DimensionedKind B) : (dk.mapDim φ).kind = dk.kind := rfl
 
 /-- Re-dimensioning acts on the forgotten dimension exactly by `φ`. -/
-@[simp] theorem toDimension_mapDim {B' : Type} (φ : Dimension B → Dimension B')
+@[simp] theorem toDimension_mapDim {B' : Type} [DimensionBasis B'] (φ : Dimension B → Dimension B')
     (dk : DimensionedKind B) : (dk.mapDim φ).toDimension = φ dk.dim := rfl
 
 end DimensionedKind

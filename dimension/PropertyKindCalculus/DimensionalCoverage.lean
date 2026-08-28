@@ -120,8 +120,13 @@ def dimensionedKindDecls : MetaM (Array Name) := do
   let mut out : Array Name := #[]
   for (name, info) in env.constants.toList do
     let t := info.type
-    if t.isAppOfArity ``PropertyKindCalculus.DimensionedKind 1
-        && t.appArg!.isConstOf ``LTMCTDimensionBase then
+    -- Arity **2**, not 1: `DimensionedKind` carries the basis AND its `[DimensionBasis B]`
+    -- instance, so the applied type is `DimensionedKind LTMCTDimensionBase inst`. Matching
+    -- arity 1 silently harvests NOTHING, and an empty registry does not fail loudly — it
+    -- reports every edge as UNDIMENSIONED, which reads as a coverage violation in the code
+    -- rather than as a broken checker. The basis is therefore the *second-to-last* argument.
+    if t.isAppOfArity ``PropertyKindCalculus.DimensionedKind 2
+        && (t.getArg! 0).isConstOf ``LTMCTDimensionBase then
       if info.value?.isSome then
         out := out.push name
   return out
@@ -188,9 +193,12 @@ def resolveKind (dks gens : Array Name) (cache : IO.Ref (Std.HashMap String Kind
   cache.modify (·.insert key res)
   return res
 
-/-- `(0 : ℚ)`, for the transcendental rule's dimension-one demand. -/
+/-- `(0 : Dimension.Exponent)`, for the transcendental rule's dimension-one demand.
+
+`Dimension.exponent` returns PhysLib's `Exponent`, not `ℚ`, so the constant this is compared
+against has to be built at that type — a `ℚ` zero here fails to elaborate against it. -/
 def qZero : MetaM Expr :=
-  mkAppOptM ``OfNat.ofNat #[mkConst ``Rat, mkRawNatLit 0, none]
+  mkAppOptM ``OfNat.ofNat #[mkConst ``Dimension.Exponent, mkRawNatLit 0, none]
 
 /-- Does the edge's dimensional rule hold for the resolved registry constants? Evaluated per
 generator: the equation between ℚ exponents is closed and literal, so kernel reduction
@@ -210,7 +218,12 @@ def checkCoherent (gens : Array Name) (rule : EdgeRule) (dks : Array Name)
       | .transcendental =>
           pure #[(← expAt dks[0]! g, zero), (← expAt dks[1]! g, zero)]
       | .power =>
-          pure #[(← expAt dks[1]! g, ← mkAppM ``HMul.hMul #[p?.get!, ← expAt dks[0]! g])]
+          -- `p?` is the rule's rational exponent and the factor beside it is an
+          -- `Exponent`; there is no `HMul ℚ Exponent`, so the rational is carried across
+          -- with `Exponent.ofRat` rather than the product being elaborated at `ℚ`.
+          pure #[(← expAt dks[1]! g,
+            ← mkAppM ``HMul.hMul
+              #[← mkAppM ``Dimension.Exponent.ofRat #[p?.get!], ← expAt dks[0]! g])]
       | .reference =>
           pure #[(← expAt dks[0]! g, ← expAt dks[1]! g)]
       | .additive => pure #[]

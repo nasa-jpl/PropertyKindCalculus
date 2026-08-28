@@ -80,7 +80,7 @@ scale-spanning candela. -/
 theorem current_not_mechanicallyReducible :
     ¬ Dimension.MechanicallyReducible Dim.current := by
   intro h
-  have : (1 : ℚ) = 0 := Dim.current_charge ▸ h.1
+  have : (1 : Dimension.Exponent) = 0 := Dim.current_charge ▸ h.1
   exact one_ne_zero this
 
 /-- **Thermodynamic temperature is *not* mechanically reducible in the conventional
@@ -92,7 +92,7 @@ of R13: scale-spanning is not a function of dimension. -/
 theorem temperature_not_mechanicallyReducible :
     ¬ Dimension.MechanicallyReducible Dim.temperature := by
   intro h
-  have : (1 : ℚ) = 0 := Dim.temperature_temperature ▸ h.2
+  have : (1 : Dimension.Exponent) = 0 := Dim.temperature_temperature ▸ h.2
   exact one_ne_zero this
 
 /-! ## The three unit categories (Finkelstein–Whitehead, Figure 1) -/

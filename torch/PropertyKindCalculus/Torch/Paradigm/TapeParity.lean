@@ -207,11 +207,11 @@ theorem Evaluates_un
 /-- **A leaf evaluates to its own tensor.** An input tensor entered as a named `TapeM.leaf`
 (as the ε kernel's `soilMoisture`/`clayFraction` are) reads back as exactly that tensor. -/
 theorem Evaluates_leaf (v : Tensor Float s) (name : Option String := none) (rg : Bool := true) :
-    Evaluates (⟨TapeM.leaf v (name := name) (requires_grad := rg)⟩ : TapeBuilder s) v := by
+    Evaluates (⟨TapeM.leaf v (name := name) (requiresGrad := rg)⟩ : TapeBuilder s) v := by
   intro t
-  have hval : (Tape.leaf (t := t) v (name := name) (requires_grad := rg)).1.requireValue
+  have hval : (Tape.leaf (t := t) v (name := name) (requiresGrad := rg)).1.requireValue
       (s := s) t.size = .ok v := leaf_value t v name rg
-  refine ⟨t.size, (Tape.leaf (t := t) v (name := name) (requires_grad := rg)).1,
+  refine ⟨t.size, (Tape.leaf (t := t) v (name := name) (requiresGrad := rg)).1,
     ?_, ?_, hval, extends_of_value hval (frameOver_addNode t _)⟩
   · unfold TapeM.leaf Tape.leaf Tape.addNode; rfl
   · exact requireValue_lt_of_ok _ t.size hval

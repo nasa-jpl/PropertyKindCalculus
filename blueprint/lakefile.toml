@@ -4,19 +4,29 @@ defaultTargets = ["PropertyKindCalculusBlueprint", "blueprint-gen"]
 # Verso + the Blueprint genre, on the v4.33.0 toolchain — the verso-stack pins move in
 # LOCKSTEP (the verso tag, the VersoBlueprint SHA, and the subverso rev verso's own
 # manifest names): a mixed stack fails at `VersoLiterate.Basic` against this toolchain's
-# core. `verso` is pinned to the immutable `v4.33.0-rc2` *tag*, so its manifest `rev` is
-# stable.
+# core. `verso`'s `v4.33.0` is a `refs/tags` ref and therefore immutable, so naming it is
+# already a SHA pin.
 #
-# `verso-blueprint` only ships a *moving* branch (no tag), so it MUST be pinned to an
-# exact commit SHA — NOT the branch ref. Using the branch name has two costs: (1)
-# `ci-pages.sh` runs `lake update`, which re-resolves the branch to its current tip on
-# every build and rewrites this repo's `lake-manifest.json` (a spurious dirty file each
-# time); and (2) tracking the branch once drifted verso-blueprint to a
-# `manualMainWithPreviewData` that regressed and killed `blueprint-gen` with exit 137.
-# Pinning the SHA fixes both. Bump it deliberately (re-test `lake exe blueprint-gen`)
-# rather than tracking the branch; the SHA below is the one the sibling
-# `soil-moisture-model` technical reference and `soil-moisture-workflows` blueprint
-# build against.
+# `verso-blueprint`'s `v4.33.0` is NOT. It is a `refs/heads` BRANCH — a release line that
+# keeps moving — so it must be pinned to an exact commit SHA, and naming the ref instead
+# is how this breaks. `lake update` re-resolves a branch to its current tip, which has
+# three costs, all seen here: (1) `ci-pages.sh` runs `lake update`, so the manifest is
+# rewritten and dirty on every build; (2) the branch once drifted to a
+# `manualMainWithPreviewData` that regressed and killed `blueprint-gen` with exit 137;
+# and (3) the tip moved onto toolchain **v4.33.1** while verso, TorchLean, Physlib and
+# mathlib are all v4.33.0 — which bumps `blueprint/lean-toolchain` out from under mathlib
+# and its cache stops resolving (`Dependency Mathlib uses a different lean-toolchain`).
+#
+# `9dd25554` is the last `v4.33.0`-branch commit that still pins toolchain v4.33.0, which
+# is what makes it the pin: the constraint is one Lean version across verso, TorchLean and
+# Physlib, and this is the newest verso-blueprint that satisfies it. Bump it deliberately
+# — check the candidate's own `lean-toolchain` first, then re-test `lake exe blueprint-gen`
+# — rather than tracking the branch.
+#
+# The siblings do NOT currently agree, and that is worth knowing before assuming a shared
+# pin: `soil-moisture-workflows/blueprint` names `c3b8a93c`, and
+# `soil-moisture-model/technical-reference` still names the BRANCH `v4.33.0` — so it is one
+# `lake update` away from the same break, and fixing it there is a separate edit.
 [[require]]
 name = "verso"
 git = "https://github.com/leanprover/verso"
@@ -25,7 +35,7 @@ rev = "v4.33.0"
 [[require]]
 name = "VersoBlueprint"
 git = "https://github.com/leanprover/verso-blueprint"
-rev = "v4.33.0"
+rev = "9dd255542ad41ba66492051395c0fd6cacd9f7a9"
 
 # The library being documented. Linking `(lean := "PropertyKindCalculus.…")` nodes to
 # real declarations (and reading their proved/`sorry` status) requires the

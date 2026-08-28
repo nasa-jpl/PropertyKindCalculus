@@ -10,14 +10,14 @@ analyses); we abstract it as an explicit `Expr` and interpret it two ways over t
 format (TorchLean's `FP32`):
 
   * `evalFP32 e ρ` — the rounded floating-point measurand: every `+`/`−` node rounds to binary32
-    (`(a + b).val = round₃₂ (a.val + b.val)`);
+    (`(a + b).val = round32 (a.val + b.val)`);
   * `evalExact e ρ` — the exact `ℝ` measurand (no rounding), the reference.
 
 Composing the *per-operation* rounding bounds `Fp32Grounding.{add32,sub32}_within_half_ulp` (the
 genuine, Flocq-backed `FP32.{add,sub}_abs_error`) along the DAG yields:
 
   * **`dag_fp32_error_bound`** — the forward-error accumulation: the FP32 measurand differs from the
-    `ℝ` one by at most `errBound e ρ`, the tree-sum of the per-node half-ulps `eps₃₂`.
+    `ℝ` one by at most `errBound e ρ`, the tree-sum of the per-node half-ulps `eps32`.
   * **A3′ — `dag_fp32_box_faithful`.** For *any* two inputs `ρ`, `σ` (in particular every input in a
     box around a nominal `ρ`), the FP32 output *variation* `evalFP32 σ − evalFP32 ρ` reproduces the
     exact `ℝ` output variation `evalExact σ − evalExact ρ` up to `errBound σ + errBound ρ`. So the
@@ -66,7 +66,7 @@ inductive Expr where
   | div : Expr → Expr → Expr
 
 /-- **The rounded (binary32) measurand.** Every `add`/`sub` node rounds its result to the binary32
-grid: `(a + b).val = round₃₂ (a.val + b.val)` (TorchLean's `FP32` `Add`/`Sub`). This is the
+grid: `(a + b).val = round32 (a.val + b.val)` (TorchLean's `FP32` `Add`/`Sub`). This is the
 floating-point evaluation a science model actually runs. -/
 noncomputable def evalFP32 : Expr → (ℕ → FP32) → FP32
   | .inp i,   ρ => ρ i
@@ -87,7 +87,7 @@ noncomputable def evalExact : Expr → (ℕ → FP32) → ℝ
   | .div a b, ρ => evalExact a ρ / evalExact b ρ
 
 /-- **The accumulated rounding budget** of the DAG: the tree-sum of the per-node rounding half-ulps
-`eps₃₂` *plus* the propagated operand error, composed from the per-operation bounds
+`eps32` *plus* the propagated operand error, composed from the per-operation bounds
 `Fp32Grounding.{add32,sub32,mul32,div32}_within_half_ulp`. For the *linear* nodes (`add`/`sub`) the
 operand errors pass through with coefficient one, so the budget is a plain sum. For the *nonlinear*
 nodes the propagation carries magnitude-dependent factors, exactly as in a first-order (GUM)
@@ -104,22 +104,22 @@ The `div` node uses the *FP32* denominator `|(evalFP32 b ρ).val|` and the *exac
 noncomputable def errBound : Expr → (ℕ → FP32) → ℝ
   | .inp _,   _ => 0
   | .const _, _ => 0
-  | .add a b, ρ => errBound a ρ + errBound b ρ + eps₃₂ ((evalFP32 a ρ).val + (evalFP32 b ρ).val)
-  | .sub a b, ρ => errBound a ρ + errBound b ρ + eps₃₂ ((evalFP32 a ρ).val - (evalFP32 b ρ).val)
+  | .add a b, ρ => errBound a ρ + errBound b ρ + eps32 ((evalFP32 a ρ).val + (evalFP32 b ρ).val)
+  | .sub a b, ρ => errBound a ρ + errBound b ρ + eps32 ((evalFP32 a ρ).val - (evalFP32 b ρ).val)
   | .mul a b, ρ =>
       |(evalFP32 a ρ).val| * errBound b ρ + |evalExact b ρ| * errBound a ρ
-        + eps₃₂ ((evalFP32 a ρ).val * (evalFP32 b ρ).val)
+        + eps32 ((evalFP32 a ρ).val * (evalFP32 b ρ).val)
   | .div a b, ρ =>
       errBound a ρ / |(evalFP32 b ρ).val|
         + |evalExact a ρ| * errBound b ρ / (|(evalFP32 b ρ).val| * |evalExact b ρ|)
-        + eps₃₂ ((evalFP32 a ρ).val / (evalFP32 b ρ).val)
+        + eps32 ((evalFP32 a ρ).val / (evalFP32 b ρ).val)
 
 /-- `|x − y| ≤ |x| + |y|`, the triangle bound used to split a difference of errors. -/
 private theorem abs_sub_bound (x y : ℝ) : |x - y| ≤ |x| + |y| := by
   rw [sub_eq_add_neg, ← abs_neg y]; exact abs_add_le x (-y)
 
 /-- Half a ulp is nonnegative — immediate from the rounding bound `round32_within_half_ulp`. -/
-private theorem eps_nonneg (x : ℝ) : 0 ≤ eps₃₂ x :=
+private theorem eps_nonneg (x : ℝ) : 0 ≤ eps32 x :=
   le_trans (abs_nonneg _) (round32_within_half_ulp x)
 
 /-- The rounding budget is nonnegative: it is a sum of half-ulps. -/

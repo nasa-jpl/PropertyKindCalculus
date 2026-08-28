@@ -5,7 +5,7 @@ The `PRSim` spike's five obligations are now theorems (`Uncertainty/Experiments/
 this probe instantiates them on concrete artifacts so the module keeps building — and keeps
 meaning what it says — under CI.
 
-  * **Vectorization homomorphisms** — `mulSpec_ofVecT`/`addSpec_ofVecT` applied at a concrete
+  * **Vectorization homomorphisms** — `mulSpec_vecToTensor`/`addSpec_vecToTensor` applied at a concrete
     vector shape (the R kernels are the Hadamard product / Euclidean `+` under vectorization).
   * **A concrete product graph** — `prodGraph = x₀ * x₁` over two scalar inputs, with its
     `GraphFDerivCorrect` witness assembled from the upstream per-node `mulFderiv`; the Stage-3.6
@@ -37,7 +37,7 @@ import PropertyKindCalculus.Uncertainty.Experiments.EagerProvenance
 
 namespace PropertyKindCalculus.UncertaintyExamples.AutogradDirectSim
 
-open Spec Tensor Proofs.Autograd
+open Spec Tensor Proofs.Autograd TorchLean
 
 noncomputable section
 
@@ -45,13 +45,13 @@ noncomputable section
 
 /-- `mulSpec` at a 3-vector shape is the Hadamard product under vectorization. -/
 example (u v : Vec (Shape.dim 3 Shape.scalar).size) :
-    mulSpec (ofVecT u) (ofVecT v) = ofVecT (PRSim.hadamardVec u v) :=
-  PRSim.mulSpec_ofVecT u v
+    mulSpec (vecToTensor u) (vecToTensor v) = vecToTensor (PRSim.hadamardVec u v) :=
+  PRSim.mulSpec_vecToTensor u v
 
 /-- `addSpec` at the same shape is Euclidean `+` under vectorization. -/
 example (u v : Vec (Shape.dim 3 Shape.scalar).size) :
-    addSpec (ofVecT u) (ofVecT v) = ofVecT (u + v) :=
-  PRSim.addSpec_ofVecT u v
+    addSpec (vecToTensor u) (vecToTensor v) = vecToTensor (u + v) :=
+  PRSim.addSpec_vecToTensor u v
 
 /-! ## A concrete P graph: the scalar product `x₀ * x₁` -/
 
@@ -73,18 +73,18 @@ def prodCorrect : GraphFDerivCorrect prodGraph := ⟨PUnit.unit, TapeNodes.mulFd
 /-- **The Stage-3.6 endpoint on the product graph**: the runtime dense reverse pass on the
     compiled tape succeeds, and the `Γ`-prefix of its output realises the adjoint of the Fréchet
     derivative of the graph's forward evaluation. -/
-example (x : TList Γ2) (seed : TList (Γ2 ++ [Shape.scalar])) :
+example (x : TorchLean.TensorPack ℝ Γ2) (seed : TorchLean.TensorPack ℝ (Γ2 ++ [Shape.scalar])) :
     ∃ out : Array PRSim.Any,
       Runtime.Autograd.Tape.backwardDenseFrom
           (t := (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) prodGraph.toAlgebra x ()).1)
-          (grads0 := Algebra.TList.toAnyArray (α := ℝ) (ss := Γ2 ++ [Shape.scalar]) seed)
+          (grads0 := TorchLean.TensorPack.toShapeErasedArray (α := ℝ) (ss := Γ2 ++ [Shape.scalar]) seed)
         = .ok out ∧
       PRSim.ArrCorr ((fderiv ℝ (prodGraph.evalVec) (flattenCtx x)).adjoint (flattenCtx seed))
         (out.extract 0 Γ2.length) :=
   PRSim.direct_PR_soundness_compiled prodGraph prodCorrect x seed
 
 /-- The compiled tape forward-simulates the graph — the simulation relation is inhabited. -/
-example (x : TList Γ2) :
+example (x : TorchLean.TensorPack ℝ Γ2) :
     PRSim.ForwardSim prodGraph (flattenCtx x)
       (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) prodGraph.toAlgebra x ()).1 :=
   PRSim.forwardSim_lowerGraphToTape prodGraph x
@@ -118,7 +118,7 @@ theorem eager_mul_wf (t' : PRSim.RTape) (id : Nat)
 set_option maxHeartbeats 1600000 in
 /-- The runtime tape built for `prodGraph`'s inputs: the `Tape.leaf` fold (= `addLeaves`),
     then one eager `Tape.mul 0 1` — exactly what `TapeM` does. `EagerBuilds` witnesses it. -/
-theorem eagerBuilds_prod (x : TList Γ2) (t' : PRSim.RTape) (id : Nat)
+theorem eagerBuilds_prod (x : TorchLean.TensorPack ℝ Γ2) (t' : PRSim.RTape) (id : Nat)
     (hop : Runtime.Autograd.Tape.mul (α := ℝ) (s := Shape.scalar)
       (Algebra.Graph.addLeaves (α := ℝ) (t := Runtime.Autograd.Tape.empty) x) 0 1
       = .ok (t', id)) :
@@ -129,20 +129,20 @@ theorem eagerBuilds_prod (x : TList Γ2) (t' : PRSim.RTape) (id : Nat)
 /-- **The endpoint on the eager tape**: the dense reverse pass on the runtime-constructed tape
     succeeds and its input-prefix realises `(fderiv ℝ eval x)† seed` — no compilation involved;
     this is the tape `Sensitivity.gradient`'s construction pattern produces. -/
-example (x : TList Γ2) (t' : PRSim.RTape) (id : Nat)
+example (x : TorchLean.TensorPack ℝ Γ2) (t' : PRSim.RTape) (id : Nat)
     (hop : Runtime.Autograd.Tape.mul (α := ℝ) (s := Shape.scalar)
       (Algebra.Graph.addLeaves (α := ℝ) (t := Runtime.Autograd.Tape.empty) x) 0 1
       = .ok (t', id))
-    (seed : TList (Γ2 ++ [Shape.scalar])) :
+    (seed : TorchLean.TensorPack ℝ (Γ2 ++ [Shape.scalar])) :
     ∃ out : Array PRSim.Any,
       Runtime.Autograd.Tape.backwardDenseFrom (t := t')
-          (Algebra.TList.toAnyArray (α := ℝ) seed) = .ok out ∧
+          (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) seed) = .ok out ∧
       PRSim.ArrCorr ((fderiv ℝ (prodGraph.evalVec) (flattenCtx x)).adjoint (flattenCtx seed))
         (out.extract 0 Γ2.length) :=
   PRSim.direct_PR_soundness_eager prodGraph prodCorrect x (eagerBuilds_prod x t' id hop) seed
 
 /-- Eager tapes inhabit the forward simulation relation too. -/
-example (x : TList Γ2) (t' : PRSim.RTape) (id : Nat)
+example (x : TorchLean.TensorPack ℝ Γ2) (t' : PRSim.RTape) (id : Nat)
     (hop : Runtime.Autograd.Tape.mul (α := ℝ) (s := Shape.scalar)
       (Algebra.Graph.addLeaves (α := ℝ) (t := Runtime.Autograd.Tape.empty) x) 0 1
       = .ok (t', id)) :
@@ -165,7 +165,7 @@ def subCorrect : GraphFDerivCorrect subGraph := ⟨PUnit.unit, TapeNodes.subFder
 set_option maxHeartbeats 1600000 in
 /-- The runtime tape built for `subGraph`'s inputs: the `Tape.leaf` fold (= `addLeaves`), then one
     eager `Tape.sub 0 1`. `EagerBuilds` witnesses it via the new `sub` constructor. -/
-theorem eagerBuilds_sub (x : TList Γ2) (t' : PRSim.RTape) (id : Nat)
+theorem eagerBuilds_sub (x : TorchLean.TensorPack ℝ Γ2) (t' : PRSim.RTape) (id : Nat)
     (hop : Runtime.Autograd.Tape.sub (α := ℝ) (s := Shape.scalar)
       (Algebra.Graph.addLeaves (α := ℝ) (t := Runtime.Autograd.Tape.empty) x) 0 1
       = .ok (t', id)) :
@@ -175,20 +175,20 @@ theorem eagerBuilds_sub (x : TList Γ2) (t' : PRSim.RTape) (id : Nat)
 
 /-- **The endpoint on the eager `sub` tape**: the dense reverse pass on the runtime-constructed
     difference tape succeeds and its input-prefix realises `(fderiv ℝ eval x)† seed`. -/
-example (x : TList Γ2) (t' : PRSim.RTape) (id : Nat)
+example (x : TorchLean.TensorPack ℝ Γ2) (t' : PRSim.RTape) (id : Nat)
     (hop : Runtime.Autograd.Tape.sub (α := ℝ) (s := Shape.scalar)
       (Algebra.Graph.addLeaves (α := ℝ) (t := Runtime.Autograd.Tape.empty) x) 0 1
       = .ok (t', id))
-    (seed : TList (Γ2 ++ [Shape.scalar])) :
+    (seed : TorchLean.TensorPack ℝ (Γ2 ++ [Shape.scalar])) :
     ∃ out : Array PRSim.Any,
       Runtime.Autograd.Tape.backwardDenseFrom (t := t')
-          (Algebra.TList.toAnyArray (α := ℝ) seed) = .ok out ∧
+          (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) seed) = .ok out ∧
       PRSim.ArrCorr ((fderiv ℝ (subGraph.evalVec) (flattenCtx x)).adjoint (flattenCtx seed))
         (out.extract 0 Γ2.length) :=
   PRSim.direct_PR_soundness_eager subGraph subCorrect x (eagerBuilds_sub x t' id hop) seed
 
 /-- Eager `sub` tapes inhabit the forward simulation relation too. -/
-example (x : TList Γ2) (t' : PRSim.RTape) (id : Nat)
+example (x : TorchLean.TensorPack ℝ Γ2) (t' : PRSim.RTape) (id : Nat)
     (hop : Runtime.Autograd.Tape.sub (α := ℝ) (s := Shape.scalar)
       (Algebra.Graph.addLeaves (α := ℝ) (t := Runtime.Autograd.Tape.empty) x) 0 1
       = .ok (t', id)) :
@@ -210,7 +210,7 @@ def scaleCorrect : GraphFDerivCorrect scaleGraph := ⟨PUnit.unit, TapeNodes.sca
 
 set_option maxHeartbeats 1600000 in
 /-- `EagerBuilds` witnesses the runtime `Tape.scale 0 3` tape via the new `scale` constructor. -/
-theorem eagerBuilds_scale (x : TList Γ2) (t' : PRSim.RTape) (id : Nat)
+theorem eagerBuilds_scale (x : TorchLean.TensorPack ℝ Γ2) (t' : PRSim.RTape) (id : Nat)
     (hop : Runtime.Autograd.Tape.scale (α := ℝ) (s := Shape.scalar)
       (Algebra.Graph.addLeaves (α := ℝ) (t := Runtime.Autograd.Tape.empty) x) 0 3
       = .ok (t', id)) :
@@ -220,14 +220,14 @@ theorem eagerBuilds_scale (x : TList Γ2) (t' : PRSim.RTape) (id : Nat)
 
 /-- **The endpoint on the eager `scale` tape**: the dense reverse pass on the runtime-constructed
     one-parent tape succeeds and its input-prefix realises `(fderiv ℝ eval x)† seed`. -/
-example (x : TList Γ2) (t' : PRSim.RTape) (id : Nat)
+example (x : TorchLean.TensorPack ℝ Γ2) (t' : PRSim.RTape) (id : Nat)
     (hop : Runtime.Autograd.Tape.scale (α := ℝ) (s := Shape.scalar)
       (Algebra.Graph.addLeaves (α := ℝ) (t := Runtime.Autograd.Tape.empty) x) 0 3
       = .ok (t', id))
-    (seed : TList (Γ2 ++ [Shape.scalar])) :
+    (seed : TorchLean.TensorPack ℝ (Γ2 ++ [Shape.scalar])) :
     ∃ out : Array PRSim.Any,
       Runtime.Autograd.Tape.backwardDenseFrom (t := t')
-          (Algebra.TList.toAnyArray (α := ℝ) seed) = .ok out ∧
+          (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) seed) = .ok out ∧
       PRSim.ArrCorr ((fderiv ℝ (scaleGraph.evalVec) (flattenCtx x)).adjoint (flattenCtx seed))
         (out.extract 0 Γ2.length) :=
   PRSim.direct_PR_soundness_eager scaleGraph scaleCorrect x (eagerBuilds_scale x t' id hop) seed
@@ -237,7 +237,7 @@ example (x : TList Γ2) (t' : PRSim.RTape) (id : Nat)
 `exp` is a genuine activation instance of the abstracted unary crank: the P-node is
 `TapeNodes.elemwise Real.exp Real.exp`, the runtime is `Tape.exp` (defeq to the shared
 `Tape.unary` shape with `fwdSpec = bwdSpec = expSpec = mapSpec Real.exp`), and the two per-op
-bridges are the *single* pointwise fact `toVecT_mapSpec_apply`. No new §E/§F reasoning: the whole
+bridges are the *single* pointwise fact `tensorToVec_mapSpec_apply`. No new §E/§F reasoning: the whole
 `{exp, log, tanh, sigmoid, sinh, cosh, softplus, …}` family reuses `EagerBuilds.unary`. -/
 
 /-- The one-node exponential graph `exp(x₀)`.  `TapeNodes.exp ix0` unfolds to exactly
@@ -253,32 +253,32 @@ def expCorrect : GraphFDerivCorrect expGraph :=
 set_option maxHeartbeats 6400000 in
 /-- `EagerBuilds` witnesses the runtime `exp` tape via the generic `unary` constructor —
     `exp = elemwise Real.exp Real.exp`, `fwdSpec = bwdSpec = expSpec`, both bridges from
-    `toVecT_mapSpec_apply` (since `MathFunctions.exp = Real.exp` on `ℝ`).
+    `tensorToVec_mapSpec_apply` (since `MathFunctions.exp = Real.exp` on `ℝ`).
 
     The runtime op is written here in the shared `Tape.unary "exp" … expSpec …` shape it reduces to;
     `Runtime.Autograd.Tape.exp t 0` is *definitionally* this call, so this is the genuine `exp`
     activation, presented in the form that makes the one-parent node shape manifest. -/
-theorem eagerBuilds_exp (x : TList Γ2) (t' : PRSim.RTape) (id : Nat)
+theorem eagerBuilds_exp (x : TorchLean.TensorPack ℝ Γ2) (t' : PRSim.RTape) (id : Nat)
     (hop : Runtime.Autograd.Tape.unary (α := ℝ) (σ := Shape.scalar) (τ := Shape.scalar)
       (Algebra.Graph.addLeaves (α := ℝ) (t := Runtime.Autograd.Tape.empty) x) "exp" 0
       expSpec (fun xv d => mulSpec (expSpec xv) d) = .ok (t', id)) :
     PRSim.EagerBuilds expGraph x t' := by
   show PRSim.EagerBuilds (.snoc .nil (TapeNodes.elemwise ix0 Real.exp Real.exp)) x t'
   exact PRSim.EagerBuilds.unary (g := .nil) ix0 "exp" Real.exp Real.exp expSpec expSpec
-    (fun u i => PRSim.toVecT_mapSpec_apply u i) (fun u i => PRSim.toVecT_mapSpec_apply u i)
+    (fun u i => PRSim.tensorToVec_mapSpec_apply u i) (fun u i => PRSim.tensorToVec_mapSpec_apply u i)
     (PRSim.EagerBuilds.nil x) hop
 
 set_option maxHeartbeats 6400000 in
 /-- **The endpoint on the eager `exp` tape** — the *same* generic `direct_PR_soundness_eager`
     transfers the fderiv-adjoint endpoint to this activation tape, no per-op change. -/
-example (x : TList Γ2) (t' : PRSim.RTape) (id : Nat)
+example (x : TorchLean.TensorPack ℝ Γ2) (t' : PRSim.RTape) (id : Nat)
     (hop : Runtime.Autograd.Tape.unary (α := ℝ) (σ := Shape.scalar) (τ := Shape.scalar)
       (Algebra.Graph.addLeaves (α := ℝ) (t := Runtime.Autograd.Tape.empty) x) "exp" 0
       expSpec (fun xv d => mulSpec (expSpec xv) d) = .ok (t', id))
-    (seed : TList (Γ2 ++ [Shape.scalar])) :
+    (seed : TorchLean.TensorPack ℝ (Γ2 ++ [Shape.scalar])) :
     ∃ out : Array PRSim.Any,
       Runtime.Autograd.Tape.backwardDenseFrom (t := t')
-          (Algebra.TList.toAnyArray (α := ℝ) seed) = .ok out ∧
+          (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) seed) = .ok out ∧
       PRSim.ArrCorr ((fderiv ℝ (expGraph.evalVec) (flattenCtx x)).adjoint (flattenCtx seed))
         (out.extract 0 Γ2.length) :=
   PRSim.direct_PR_soundness_eager expGraph expCorrect x (eagerBuilds_exp x t' id hop) seed
@@ -299,7 +299,7 @@ def divGraph : Graph Γ2 [Shape.scalar] := .snoc .nil (TapeNodes.div ix0 ix1)
 /-- Pointwise differentiability witness at the input `x`, under the denominator-nonzero
     hypothesis (the standard mathematical domain of the quotient rule), assembled from the
     upstream per-node `divFderivAt`. -/
-def divCorrectAt (x : TList Γ2)
+def divCorrectAt (x : TorchLean.TensorPack ℝ Γ2)
     (hb : ∀ i : Fin (Spec.Shape.size Shape.scalar),
       CtxVec.get (Γ := Γ2) (s := Shape.scalar) ix1
         (Graph.evalVec (Γ := Γ2) (ss := []) .nil (flattenCtx x)) i ≠ 0) :
@@ -309,7 +309,7 @@ def divCorrectAt (x : TList Γ2)
 set_option maxHeartbeats 6400000 in
 /-- The runtime tape built for `divGraph`'s inputs: the `Tape.leaf` fold (= `addLeaves`), then one
     eager `Tape.div 0 1`. `EagerBuilds` witnesses it via the new `div` constructor. -/
-theorem eagerBuilds_div (x : TList Γ2) (t' : PRSim.RTape) (id : Nat)
+theorem eagerBuilds_div (x : TorchLean.TensorPack ℝ Γ2) (t' : PRSim.RTape) (id : Nat)
     (hop : Runtime.Autograd.Tape.div (α := ℝ) (s := Shape.scalar)
       (Algebra.Graph.addLeaves (α := ℝ) (t := Runtime.Autograd.Tape.empty) x) 0 1
       = .ok (t', id)) :
@@ -322,7 +322,7 @@ set_option maxHeartbeats 6400000 in
     concrete input, the dense reverse pass on the runtime-constructed quotient tape succeeds and
     its input-prefix realises `(fderiv ℝ eval x)† seed` — via the *pointwise*
     `direct_PR_soundness_eager_at`. -/
-example (x : TList Γ2)
+example (x : TorchLean.TensorPack ℝ Γ2)
     (hb : ∀ i : Fin (Spec.Shape.size Shape.scalar),
       CtxVec.get (Γ := Γ2) (s := Shape.scalar) ix1
         (Graph.evalVec (Γ := Γ2) (ss := []) .nil (flattenCtx x)) i ≠ 0)
@@ -330,10 +330,10 @@ example (x : TList Γ2)
     (hop : Runtime.Autograd.Tape.div (α := ℝ) (s := Shape.scalar)
       (Algebra.Graph.addLeaves (α := ℝ) (t := Runtime.Autograd.Tape.empty) x) 0 1
       = .ok (t', id))
-    (seed : TList (Γ2 ++ [Shape.scalar])) :
+    (seed : TorchLean.TensorPack ℝ (Γ2 ++ [Shape.scalar])) :
     ∃ out : Array PRSim.Any,
       Runtime.Autograd.Tape.backwardDenseFrom (t := t')
-          (Algebra.TList.toAnyArray (α := ℝ) seed) = .ok out ∧
+          (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) seed) = .ok out ∧
       PRSim.ArrCorr ((fderiv ℝ (divGraph.evalVec) (flattenCtx x)).adjoint (flattenCtx seed))
         (out.extract 0 Γ2.length) :=
   PRSim.direct_PR_soundness_eager_at divGraph x (divCorrectAt x hb)
@@ -341,7 +341,7 @@ example (x : TList Γ2)
 
 /-- Eager `div` tapes inhabit the forward simulation relation too (no differentiability, hence no
     nonzero hypothesis, is needed for the forward direction). -/
-example (x : TList Γ2) (t' : PRSim.RTape) (id : Nat)
+example (x : TorchLean.TensorPack ℝ Γ2) (t' : PRSim.RTape) (id : Nat)
     (hop : Runtime.Autograd.Tape.div (α := ℝ) (s := Shape.scalar)
       (Algebra.Graph.addLeaves (α := ℝ) (t := Runtime.Autograd.Tape.empty) x) 0 1
       = .ok (t', id)) :
@@ -350,11 +350,11 @@ example (x : TList Γ2) (t' : PRSim.RTape) (id : Nat)
 
 /-! ## Axiom profiles — closed means closed -/
 
-/-- info: 'PRSim.mulSpec_ofVecT' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in #print axioms PRSim.mulSpec_ofVecT
+/-- info: 'PRSim.mulSpec_vecToTensor' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in #print axioms PRSim.mulSpec_vecToTensor
 
-/-- info: 'PRSim.addSpec_ofVecT' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in #print axioms PRSim.addSpec_ofVecT
+/-- info: 'PRSim.addSpec_vecToTensor' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in #print axioms PRSim.addSpec_vecToTensor
 
 /-- info: 'PRSim.backwardDenseFrom_ok' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in #print axioms PRSim.backwardDenseFrom_ok
@@ -416,7 +416,7 @@ A second activation instance of the abstracted unary crank, with *nothing* new: 
 `TapeNodes.elemwise Activation.Math.sigmoidSpec Activation.Math.sigmoidDerivSpec`, the runtime is
 `Tape.sigmoid` (defeq to the shared `Tape.unary` shape with `fwdSpec = Activation.sigmoidSpec` and
 `bwdSpec = Activation.sigmoidDerivSpec`, each `mapSpec` of the *same* scalar spec), and the two
-per-op bridges are again the single pointwise fact `toVecT_mapSpec_apply`. No new §E/§F
+per-op bridges are again the single pointwise fact `tensorToVec_mapSpec_apply`. No new §E/§F
 reasoning: this is the promised `{exp, log, tanh, sigmoid, …}` reuse of `EagerBuilds.unary`,
 cranked once more. -/
 
@@ -439,13 +439,13 @@ set_option maxHeartbeats 6400000 in
 /-- `EagerBuilds` witnesses the runtime `sigmoid` tape via the generic `unary` constructor —
     `sigmoid = elemwise Activation.Math.sigmoidSpec Activation.Math.sigmoidDerivSpec`,
     `fwdSpec = Activation.sigmoidSpec`, `bwdSpec = Activation.sigmoidDerivSpec` (each is
-    `mapSpec` of the corresponding scalar spec), both bridges from `toVecT_mapSpec_apply`.
+    `mapSpec` of the corresponding scalar spec), both bridges from `tensorToVec_mapSpec_apply`.
 
     The runtime op is written here in the shared `Tape.unary "sigmoid" … Activation.sigmoidSpec …`
     shape it reduces to; `Runtime.Autograd.Tape.sigmoid t 0` is *definitionally* this call (its
     `let dsig` ζ-reduces into the `mulSpec (bwdSpec x) dLdy` contribution), so this is the genuine
     `sigmoid` activation, presented in the form that makes the one-parent node shape manifest. -/
-theorem eagerBuilds_sigmoid (x : TList Γ2) (t' : PRSim.RTape) (id : Nat)
+theorem eagerBuilds_sigmoid (x : TorchLean.TensorPack ℝ Γ2) (t' : PRSim.RTape) (id : Nat)
     (hop : Runtime.Autograd.Tape.unary (α := ℝ) (σ := Shape.scalar) (τ := Shape.scalar)
       (Algebra.Graph.addLeaves (α := ℝ) (t := Runtime.Autograd.Tape.empty) x) "sigmoid" 0
       Activation.sigmoidSpec
@@ -457,22 +457,22 @@ theorem eagerBuilds_sigmoid (x : TList Γ2) (t' : PRSim.RTape) (id : Nat)
   exact PRSim.EagerBuilds.unary (g := .nil) ix0 "sigmoid"
     Activation.Math.sigmoidSpec Activation.Math.sigmoidDerivSpec
     Activation.sigmoidSpec Activation.sigmoidDerivSpec
-    (fun u i => PRSim.toVecT_mapSpec_apply u i) (fun u i => PRSim.toVecT_mapSpec_apply u i)
+    (fun u i => PRSim.tensorToVec_mapSpec_apply u i) (fun u i => PRSim.tensorToVec_mapSpec_apply u i)
     (PRSim.EagerBuilds.nil x) hop
 
 set_option maxHeartbeats 6400000 in
 /-- **The endpoint on the eager `sigmoid` tape** — the *same* generic `direct_PR_soundness_eager`
     transfers the fderiv-adjoint endpoint to this activation tape, no per-op change (the scalar
     derivative fact is global, so the universal endpoint applies — no `_at` threading needed). -/
-example (x : TList Γ2) (t' : PRSim.RTape) (id : Nat)
+example (x : TorchLean.TensorPack ℝ Γ2) (t' : PRSim.RTape) (id : Nat)
     (hop : Runtime.Autograd.Tape.unary (α := ℝ) (σ := Shape.scalar) (τ := Shape.scalar)
       (Algebra.Graph.addLeaves (α := ℝ) (t := Runtime.Autograd.Tape.empty) x) "sigmoid" 0
       Activation.sigmoidSpec
       (fun xv d => mulSpec (Activation.sigmoidDerivSpec xv) d) = .ok (t', id))
-    (seed : TList (Γ2 ++ [Shape.scalar])) :
+    (seed : TorchLean.TensorPack ℝ (Γ2 ++ [Shape.scalar])) :
     ∃ out : Array PRSim.Any,
       Runtime.Autograd.Tape.backwardDenseFrom (t := t')
-          (Algebra.TList.toAnyArray (α := ℝ) seed) = .ok out ∧
+          (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) seed) = .ok out ∧
       PRSim.ArrCorr ((fderiv ℝ (sigmoidGraph.evalVec) (flattenCtx x)).adjoint (flattenCtx seed))
         (out.extract 0 Γ2.length) :=
   PRSim.direct_PR_soundness_eager sigmoidGraph sigmoidCorrect x
@@ -498,7 +498,7 @@ reasoning: the P-node is `TapeNodes.elemwise Activation.Math.tanhSpec Activation
 (exactly what `TapeNodes.tanh` unfolds to), the runtime `Tape.tanh` is defeq to the shared
 `Tape.unary "tanh" … Activation.tanhSpec …` shape (forward `tanhSpec = mapSpec Math.tanhSpec`,
 backward `mulSpec (tanhDerivSpec x) dLdy` with `tanhDerivSpec = mapSpec Math.tanhDerivSpec`), and
-both per-op bridges are again the *single* pointwise fact `toVecT_mapSpec_apply` — this time with
+both per-op bridges are again the *single* pointwise fact `tensorToVec_mapSpec_apply` — this time with
 no instance unfolding at all, since the node's scalar functions *are* the `Math` specs. -/
 
 /-- The one-node hyperbolic-tangent graph `tanh(x₀)`.  `TapeNodes.tanh ix0` unfolds to exactly
@@ -518,13 +518,13 @@ set_option maxHeartbeats 6400000 in
 /-- `EagerBuilds` witnesses the runtime `tanh` tape via the generic `unary` constructor —
     `tanh = elemwise Math.tanhSpec Math.tanhDerivSpec`, `fwdSpec = Activation.tanhSpec =
     mapSpec Math.tanhSpec`, `bwdSpec = Activation.tanhDerivSpec = mapSpec Math.tanhDerivSpec`,
-    both bridges from `toVecT_mapSpec_apply` (on `ℝ`, `MathFunctions.tanh = Real.tanh`).
+    both bridges from `tensorToVec_mapSpec_apply` (on `ℝ`, `MathFunctions.tanh = Real.tanh`).
 
     The runtime op is written here in the shared `Tape.unary "tanh" … Activation.tanhSpec …`
     shape it reduces to; `Runtime.Autograd.Tape.tanh t 0` is *definitionally* this call (the
     node-literal's `let dtanh := …` zeta-reduces to the generic backward), so this is the genuine
     `tanh` activation, presented in the form that makes the one-parent node shape manifest. -/
-theorem eagerBuilds_tanh (x : TList Γ2) (t' : PRSim.RTape) (id : Nat)
+theorem eagerBuilds_tanh (x : TorchLean.TensorPack ℝ Γ2) (t' : PRSim.RTape) (id : Nat)
     (hop : Runtime.Autograd.Tape.unary (α := ℝ) (σ := Shape.scalar) (τ := Shape.scalar)
       (Algebra.Graph.addLeaves (α := ℝ) (t := Runtime.Autograd.Tape.empty) x) "tanh" 0
       Activation.tanhSpec (fun xv d => mulSpec (Activation.tanhDerivSpec xv) d) = .ok (t', id)) :
@@ -535,21 +535,21 @@ theorem eagerBuilds_tanh (x : TList Γ2) (t' : PRSim.RTape) (id : Nat)
   exact PRSim.EagerBuilds.unary (g := .nil) ix0 "tanh"
     Activation.Math.tanhSpec Activation.Math.tanhDerivSpec
     Activation.tanhSpec Activation.tanhDerivSpec
-    (fun u i => PRSim.toVecT_mapSpec_apply u i) (fun u i => PRSim.toVecT_mapSpec_apply u i)
+    (fun u i => PRSim.tensorToVec_mapSpec_apply u i) (fun u i => PRSim.tensorToVec_mapSpec_apply u i)
     (PRSim.EagerBuilds.nil x) hop
 
 set_option maxHeartbeats 6400000 in
 /-- **The endpoint on the eager `tanh` tape** — the *same* generic `direct_PR_soundness_eager`
     transfers the fderiv-adjoint endpoint to this activation tape, no per-op change (the upstream
     `tanh` derivative fact is global, so no pointwise `_at` threading is needed). -/
-example (x : TList Γ2) (t' : PRSim.RTape) (id : Nat)
+example (x : TorchLean.TensorPack ℝ Γ2) (t' : PRSim.RTape) (id : Nat)
     (hop : Runtime.Autograd.Tape.unary (α := ℝ) (σ := Shape.scalar) (τ := Shape.scalar)
       (Algebra.Graph.addLeaves (α := ℝ) (t := Runtime.Autograd.Tape.empty) x) "tanh" 0
       Activation.tanhSpec (fun xv d => mulSpec (Activation.tanhDerivSpec xv) d) = .ok (t', id))
-    (seed : TList (Γ2 ++ [Shape.scalar])) :
+    (seed : TorchLean.TensorPack ℝ (Γ2 ++ [Shape.scalar])) :
     ∃ out : Array PRSim.Any,
       Runtime.Autograd.Tape.backwardDenseFrom (t := t')
-          (Algebra.TList.toAnyArray (α := ℝ) seed) = .ok out ∧
+          (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) seed) = .ok out ∧
       PRSim.ArrCorr ((fderiv ℝ (tanhGraph.evalVec) (flattenCtx x)).adjoint (flattenCtx seed))
         (out.extract 0 Γ2.length) :=
   PRSim.direct_PR_soundness_eager tanhGraph tanhCorrect x (eagerBuilds_tanh x t' id hop) seed
@@ -571,7 +571,7 @@ Activation.Math.softplusDerivSpec` (scalar softplus and its derivative, sigmoid)
 `fwdSpec = Activation.softplusSpec` and backward contribution
 `mulSpec (Activation.softplusDerivSpec x) dLdy`.  Both runtime specs are literally `mapSpec` of
 the *same* scalar maps the P-node carries, so — with `exp` as the baseline — the two bridges need
-no instance-rfl step at all: both are `toVecT_mapSpec_apply` verbatim.  The upstream derivative
+no instance-rfl step at all: both are `tensorToVec_mapSpec_apply` verbatim.  The upstream derivative
 witness `Proofs.softplus_deriv_correct` is *global* (`∀ x, HasDerivAt`), so the *universal*
 endpoint `direct_PR_soundness_eager` applies, exactly as for `exp`. -/
 
@@ -594,13 +594,13 @@ set_option maxHeartbeats 6400000 in
 /-- `EagerBuilds` witnesses the runtime `softplus` tape via the generic `unary` constructor —
     `softplus = elemwise Activation.Math.softplusSpec Activation.Math.softplusDerivSpec`,
     `fwdSpec = Activation.softplusSpec`, `bwdSpec = Activation.softplusDerivSpec` (each `mapSpec`
-    of the corresponding scalar map), both bridges from `toVecT_mapSpec_apply`.
+    of the corresponding scalar map), both bridges from `tensorToVec_mapSpec_apply`.
 
     The runtime op is written here in the shared
     `Tape.unary "softplus" … Activation.softplusSpec …` shape it reduces to;
     `Runtime.Autograd.Tape.softplus t 0` is *definitionally* this call, so this is the genuine
     `softplus` activation, presented in the form that makes the one-parent node shape manifest. -/
-theorem eagerBuilds_softplus (x : TList Γ2) (t' : PRSim.RTape) (id : Nat)
+theorem eagerBuilds_softplus (x : TorchLean.TensorPack ℝ Γ2) (t' : PRSim.RTape) (id : Nat)
     (hop : Runtime.Autograd.Tape.unary (α := ℝ) (σ := Shape.scalar) (τ := Shape.scalar)
       (Algebra.Graph.addLeaves (α := ℝ) (t := Runtime.Autograd.Tape.empty) x) "softplus" 0
       Activation.softplusSpec
@@ -613,7 +613,7 @@ theorem eagerBuilds_softplus (x : TList Γ2) (t' : PRSim.RTape) (id : Nat)
   exact PRSim.EagerBuilds.unary (g := .nil) ix0 "softplus"
     Activation.Math.softplusSpec Activation.Math.softplusDerivSpec
     Activation.softplusSpec Activation.softplusDerivSpec
-    (fun u i => PRSim.toVecT_mapSpec_apply u i) (fun u i => PRSim.toVecT_mapSpec_apply u i)
+    (fun u i => PRSim.tensorToVec_mapSpec_apply u i) (fun u i => PRSim.tensorToVec_mapSpec_apply u i)
     (PRSim.EagerBuilds.nil x) hop
 
 set_option maxHeartbeats 6400000 in
@@ -621,15 +621,15 @@ set_option maxHeartbeats 6400000 in
     `direct_PR_soundness_eager` transfers the fderiv-adjoint endpoint to this activation tape, no
     per-op change (the upstream derivative witness is global, so the universal endpoint applies
     rather than the pointwise `_at` variant). -/
-example (x : TList Γ2) (t' : PRSim.RTape) (id : Nat)
+example (x : TorchLean.TensorPack ℝ Γ2) (t' : PRSim.RTape) (id : Nat)
     (hop : Runtime.Autograd.Tape.unary (α := ℝ) (σ := Shape.scalar) (τ := Shape.scalar)
       (Algebra.Graph.addLeaves (α := ℝ) (t := Runtime.Autograd.Tape.empty) x) "softplus" 0
       Activation.softplusSpec
       (fun xv d => mulSpec (Activation.softplusDerivSpec xv) d) = .ok (t', id))
-    (seed : TList (Γ2 ++ [Shape.scalar])) :
+    (seed : TorchLean.TensorPack ℝ (Γ2 ++ [Shape.scalar])) :
     ∃ out : Array PRSim.Any,
       Runtime.Autograd.Tape.backwardDenseFrom (t := t')
-          (Algebra.TList.toAnyArray (α := ℝ) seed) = .ok out ∧
+          (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) seed) = .ok out ∧
       PRSim.ArrCorr ((fderiv ℝ (softplusGraph.evalVec) (flattenCtx x)).adjoint (flattenCtx seed))
         (out.extract 0 Γ2.length) :=
   PRSim.direct_PR_soundness_eager softplusGraph softplusCorrect x
@@ -656,7 +656,7 @@ the P-witness is the *pointwise* `TapeNodes.reluFderivAt` (inputs `≠ 0`), so t
 pointwise `direct_PR_soundness_eager_at` (`GraphFDerivCorrectAt` at the actual input) with the
 domain hypothesis threaded through the example binders. Both tensor specs are `mapSpec` of the
 *same* scalar specs the P-node carries (`Activation.reluSpec = mapSpec Activation.Math.reluSpec`,
-likewise the derivative), so both bridges are again `toVecT_mapSpec_apply` — no per-op scalar
+likewise the derivative), so both bridges are again `tensorToVec_mapSpec_apply` — no per-op scalar
 bridging at all. -/
 
 /-- The one-node rectifier graph `relu(x₀)`.  `TapeNodes.relu ix0` unfolds to exactly
@@ -670,7 +670,7 @@ def reluGraph : Graph Γ2 [Shape.scalar] :=
     domain hypothesis that the input coordinates avoid the kink at `0`.  The hypothesis is stated
     at `Graph.evalVec .nil (flattenCtx x)` — the exact basepoint `GraphFDerivCorrectAt` computes
     for the single node. -/
-def reluCorrectAt (x : TList Γ2)
+def reluCorrectAt (x : TorchLean.TensorPack ℝ Γ2)
     (hx : ∀ i : Fin (Spec.Shape.size Shape.scalar),
       CtxVec.get (Γ := Γ2) (s := Shape.scalar) ix0
         (Graph.evalVec (Γ := Γ2) .nil (flattenCtx x)) i ≠ 0) :
@@ -681,13 +681,13 @@ set_option maxHeartbeats 6400000 in
 /-- `EagerBuilds` witnesses the runtime `relu` tape via the generic `unary` constructor —
     `relu = elemwise Activation.Math.reluSpec Activation.Math.reluDerivSpec`,
     `fwdSpec = Activation.reluSpec`, `bwdSpec = Activation.reluDerivSpec` (each the `mapSpec` of
-    the matching scalar spec), both bridges from `toVecT_mapSpec_apply`.
+    the matching scalar spec), both bridges from `tensorToVec_mapSpec_apply`.
 
     The runtime op is written here in the shared `Tape.unary "relu" … Activation.reluSpec …` shape
     it reduces to; `Runtime.Autograd.Tape.relu t 0` is *definitionally* this call, so this is the
     genuine `relu` activation, presented in the form that makes the one-parent node shape
     manifest. -/
-theorem eagerBuilds_relu (x : TList Γ2) (t' : PRSim.RTape) (id : Nat)
+theorem eagerBuilds_relu (x : TorchLean.TensorPack ℝ Γ2) (t' : PRSim.RTape) (id : Nat)
     (hop : Runtime.Autograd.Tape.unary (α := ℝ) (σ := Shape.scalar) (τ := Shape.scalar)
       (Algebra.Graph.addLeaves (α := ℝ) (t := Runtime.Autograd.Tape.empty) x) "relu" 0
       Activation.reluSpec (fun xv d => mulSpec (Activation.reluDerivSpec xv) d) = .ok (t', id)) :
@@ -697,24 +697,24 @@ theorem eagerBuilds_relu (x : TList Γ2) (t' : PRSim.RTape) (id : Nat)
     x t'
   exact PRSim.EagerBuilds.unary (g := .nil) ix0 "relu" Activation.Math.reluSpec
     Activation.Math.reluDerivSpec Activation.reluSpec Activation.reluDerivSpec
-    (fun u i => PRSim.toVecT_mapSpec_apply u i) (fun u i => PRSim.toVecT_mapSpec_apply u i)
+    (fun u i => PRSim.tensorToVec_mapSpec_apply u i) (fun u i => PRSim.tensorToVec_mapSpec_apply u i)
     (PRSim.EagerBuilds.nil x) hop
 
 set_option maxHeartbeats 6400000 in
 /-- **The endpoint on the eager `relu` tape** — the *pointwise* `direct_PR_soundness_eager_at`
     transfers the fderiv-adjoint endpoint to this activation tape under the away-from-the-kink
     domain hypothesis; no per-op change beyond threading `hx`. -/
-example (x : TList Γ2) (t' : PRSim.RTape) (id : Nat)
+example (x : TorchLean.TensorPack ℝ Γ2) (t' : PRSim.RTape) (id : Nat)
     (hop : Runtime.Autograd.Tape.unary (α := ℝ) (σ := Shape.scalar) (τ := Shape.scalar)
       (Algebra.Graph.addLeaves (α := ℝ) (t := Runtime.Autograd.Tape.empty) x) "relu" 0
       Activation.reluSpec (fun xv d => mulSpec (Activation.reluDerivSpec xv) d) = .ok (t', id))
     (hx : ∀ i : Fin (Spec.Shape.size Shape.scalar),
       CtxVec.get (Γ := Γ2) (s := Shape.scalar) ix0
         (Graph.evalVec (Γ := Γ2) .nil (flattenCtx x)) i ≠ 0)
-    (seed : TList (Γ2 ++ [Shape.scalar])) :
+    (seed : TorchLean.TensorPack ℝ (Γ2 ++ [Shape.scalar])) :
     ∃ out : Array PRSim.Any,
       Runtime.Autograd.Tape.backwardDenseFrom (t := t')
-          (Algebra.TList.toAnyArray (α := ℝ) seed) = .ok out ∧
+          (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) seed) = .ok out ∧
       PRSim.ArrCorr ((fderiv ℝ (reluGraph.evalVec) (flattenCtx x)).adjoint (flattenCtx seed))
         (out.extract 0 Γ2.length) :=
   PRSim.direct_PR_soundness_eager_at reluGraph x (reluCorrectAt x hx)
@@ -729,10 +729,10 @@ info: 'PropertyKindCalculus.UncertaintyExamples.AutogradDirectSim.eagerBuilds_re
 
 /-- Pointwise: `invSpec` acts coordinatewise as `(·)⁻¹` under vectorization.  `invSpec` is
     `mapSpec (fun x => 1 / x)` (`Spec/Core/TensorOps.lean:216`), *not* literally `mapSpec (·⁻¹)`,
-    so the `log` backward bridge is `toVecT_mapSpec_apply` composed with `one_div`. -/
-theorem toVecT_invSpec_apply {s : Shape} (u : Tensor ℝ s) (i : Fin (Spec.Shape.size s)) :
-    toVecT (t := invSpec u) i = (toVecT (t := u) i)⁻¹ :=
-  (PRSim.toVecT_mapSpec_apply u i).trans (one_div _)
+    so the `log` backward bridge is `tensorToVec_mapSpec_apply` composed with `one_div`. -/
+theorem tensorToVec_invSpec_apply {s : Shape} (u : Tensor ℝ s) (i : Fin (Spec.Shape.size s)) :
+    tensorToVec (t := invSpec u) i = (tensorToVec (t := u) i)⁻¹ :=
+  (PRSim.tensorToVec_mapSpec_apply u i).trans (one_div _)
 
 /-! ### The pointwise (`At`) crank of the generic unary machine: `log`, differentiable off zero
 
@@ -743,7 +743,7 @@ inputs, so the witness is `GraphFDerivCorrectAt` (assembled from `elemwiseFderiv
 the pointwise `direct_PR_soundness_eager_at`, with the nonzero-input hypothesis threaded through
 the binders.  Bridges: `logSpec = mapSpec MathFunctions.log` with `MathFunctions.log = Real.log`
 on `ℝ` (instance-`rfl`, like `exp`), while `invSpec = mapSpec (1 / ·)`, so its bridge is
-`toVecT_invSpec_apply` (= `toVecT_mapSpec_apply` composed with `one_div`). -/
+`tensorToVec_invSpec_apply` (= `tensorToVec_mapSpec_apply` composed with `one_div`). -/
 
 /-- The one-node logarithm graph `log(x₀)`.  `TapeNodes.log ix0` unfolds to exactly
     `TapeNodes.elemwise ix0 Real.log (fun z => z⁻¹)`; spelling the `elemwise` form here keeps the
@@ -756,7 +756,7 @@ def logGraph : Graph Γ2 [Shape.scalar] :=
     assembled from the upstream per-node `elemwiseFderivAt` + `Real.hasDerivAt_log` exactly as
     `TapeNodes.logFderivAt` does, spelled at the `elemwise` form and at basepoint `flattenCtx x`
     (`Graph.evalVec .nil` is the identity cast on the literal `Γ2`). -/
-def logCorrectAt (x : TList Γ2)
+def logCorrectAt (x : TorchLean.TensorPack ℝ Γ2)
     (hx : ∀ i : Fin (Spec.Shape.size Shape.scalar),
       CtxVec.get (Γ := Γ2) (s := Shape.scalar) ix0 (flattenCtx x) i ≠ 0) :
     GraphFDerivCorrectAt logGraph (flattenCtx x) :=
@@ -766,8 +766,8 @@ def logCorrectAt (x : TList Γ2)
 set_option maxHeartbeats 6400000 in
 /-- `EagerBuilds` witnesses the runtime `log` tape via the generic `unary` constructor —
     `log = elemwise Real.log (fun z => z⁻¹)`, `fwdSpec = logSpec`, `bwdSpec = invSpec`, forward
-    bridge from `toVecT_mapSpec_apply` (since `MathFunctions.log = Real.log` on `ℝ`), backward
-    bridge from `toVecT_invSpec_apply` (`invSpec = mapSpec (1 / ·)` and `1 / z = z⁻¹`).
+    bridge from `tensorToVec_mapSpec_apply` (since `MathFunctions.log = Real.log` on `ℝ`), backward
+    bridge from `tensorToVec_invSpec_apply` (`invSpec = mapSpec (1 / ·)` and `1 / z = z⁻¹`).
 
     Unlike `exp` (where `Tape.exp t 0` is *definitionally* the `Tape.unary` call), the runtime
     `Runtime.Autograd.Tape.log` first guards: it throws unless every input is `> 0`
@@ -776,14 +776,14 @@ set_option maxHeartbeats 6400000 in
     path `Tape.log` pushes exactly this node (name `"log"`, forward `logSpec`, backward
     `fun xv d => mulSpec (invSpec xv) d`), so the shared `Tape.unary` form below is the honest
     hypothesis for the probe. -/
-theorem eagerBuilds_log (x : TList Γ2) (t' : PRSim.RTape) (id : Nat)
+theorem eagerBuilds_log (x : TorchLean.TensorPack ℝ Γ2) (t' : PRSim.RTape) (id : Nat)
     (hop : Runtime.Autograd.Tape.unary (α := ℝ) (σ := Shape.scalar) (τ := Shape.scalar)
       (Algebra.Graph.addLeaves (α := ℝ) (t := Runtime.Autograd.Tape.empty) x) "log" 0
       logSpec (fun xv d => mulSpec (invSpec xv) d) = .ok (t', id)) :
     PRSim.EagerBuilds logGraph x t' := by
   show PRSim.EagerBuilds (.snoc .nil (TapeNodes.elemwise ix0 Real.log (fun z => z⁻¹))) x t'
   exact PRSim.EagerBuilds.unary (g := .nil) ix0 "log" Real.log (fun z => z⁻¹) logSpec invSpec
-    (fun u i => PRSim.toVecT_mapSpec_apply u i) (fun u i => toVecT_invSpec_apply u i)
+    (fun u i => PRSim.tensorToVec_mapSpec_apply u i) (fun u i => tensorToVec_invSpec_apply u i)
     (PRSim.EagerBuilds.nil x) hop
 
 set_option maxHeartbeats 6400000 in
@@ -791,17 +791,17 @@ set_option maxHeartbeats 6400000 in
     `direct_PR_soundness_eager_at` transfers the fderiv-adjoint endpoint to this domain-restricted
     activation tape, with the nonzero-input hypothesis threaded through the binders; no per-op
     §E/§F reasoning. -/
-example (x : TList Γ2)
+example (x : TorchLean.TensorPack ℝ Γ2)
     (hx : ∀ i : Fin (Spec.Shape.size Shape.scalar),
       CtxVec.get (Γ := Γ2) (s := Shape.scalar) ix0 (flattenCtx x) i ≠ 0)
     (t' : PRSim.RTape) (id : Nat)
     (hop : Runtime.Autograd.Tape.unary (α := ℝ) (σ := Shape.scalar) (τ := Shape.scalar)
       (Algebra.Graph.addLeaves (α := ℝ) (t := Runtime.Autograd.Tape.empty) x) "log" 0
       logSpec (fun xv d => mulSpec (invSpec xv) d) = .ok (t', id))
-    (seed : TList (Γ2 ++ [Shape.scalar])) :
+    (seed : TorchLean.TensorPack ℝ (Γ2 ++ [Shape.scalar])) :
     ∃ out : Array PRSim.Any,
       Runtime.Autograd.Tape.backwardDenseFrom (t := t')
-          (Algebra.TList.toAnyArray (α := ℝ) seed) = .ok out ∧
+          (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) seed) = .ok out ∧
       PRSim.ArrCorr ((fderiv ℝ (logGraph.evalVec) (flattenCtx x)).adjoint (flattenCtx seed))
         (out.extract 0 Γ2.length) :=
   PRSim.direct_PR_soundness_eager_at logGraph x (logCorrectAt x hx)
@@ -827,11 +827,11 @@ theorem sign_ite_eq (v : ℝ) {d1 : Decidable (v > 0)} {d2 : Decidable (v < 0)} 
     simp [h0]
 
 /-- Pointwise bridge for the `abs` backward: vectorizing the runtime `signSpec` applies the
-    `SignType.sign` coercion coordinatewise — `toVecT_mapSpec_apply` composed with the scalar
+    `SignType.sign` coercion coordinatewise — `tensorToVec_mapSpec_apply` composed with the scalar
     trichotomy fact (the per-op analog of the instance-`rfl` step `exp` gets for free). -/
-theorem toVecT_signSpec_apply {s : Shape} (u : Tensor ℝ s) (i : Fin (Spec.Shape.size s)) :
-    toVecT (t := signSpec u) i = (SignType.sign (toVecT (t := u) i) : ℝ) :=
-  (PRSim.toVecT_mapSpec_apply u i).trans (sign_ite_eq (toVecT (t := u) i))
+theorem tensorToVec_signSpec_apply {s : Shape} (u : Tensor ℝ s) (i : Fin (Spec.Shape.size s)) :
+    tensorToVec (t := signSpec u) i = (SignType.sign (tensorToVec (t := u) i) : ℝ) :=
+  (PRSim.tensorToVec_mapSpec_apply u i).trans (sign_ite_eq (tensorToVec (t := u) i))
 
 /-! ### The pointwise (`At`) unary crank: `abs` through the same generic machine
 
@@ -840,9 +840,9 @@ theorem toVecT_signSpec_apply {s : Shape} (u : Tensor ℝ s) (i : Fin (Spec.Shap
 derivative only away from `0` — so the correctness witness is the *pointwise*
 `GraphFDerivCorrectAt` (upstream `TapeNodes.absFderivAt` under the input-nonzero hypothesis at
 the concrete input) and the endpoint transfers through `direct_PR_soundness_eager_at`. The
-forward bridge is the same `toVecT_mapSpec_apply` (`absSpec = mapSpec MathFunctions.abs` and
+forward bridge is the same `tensorToVec_mapSpec_apply` (`absSpec = mapSpec MathFunctions.abs` and
 `MathFunctions.abs = |·|` on `ℝ`); the backward bridge is the one genuine per-op fact
-`toVecT_signSpec_apply`, because the runtime `signSpec` (a `>`/`<` `ite`) and the P-side
+`tensorToVec_signSpec_apply`, because the runtime `signSpec` (a `>`/`<` `ite`) and the P-side
 `SignType.sign` coercion differ syntactically — they agree by trichotomy at `0`. -/
 
 /-- The one-node absolute-value graph `|x₀|`.  `TapeNodes.abs ix0` unfolds to exactly
@@ -855,7 +855,7 @@ def absGraph : Graph Γ2 [Shape.scalar] :=
 /-- Pointwise differentiability witness at the input `x`, under the input-nonzero hypothesis
     (the standard mathematical domain of `d|v| = sign v`), assembled from the upstream per-node
     `absFderivAt`. -/
-def absCorrectAt (x : TList Γ2)
+def absCorrectAt (x : TorchLean.TensorPack ℝ Γ2)
     (hx : ∀ i : Fin (Spec.Shape.size Shape.scalar),
       CtxVec.get (Γ := Γ2) (s := Shape.scalar) ix0
         (Graph.evalVec (Γ := Γ2) (ss := []) .nil (flattenCtx x)) i ≠ 0) :
@@ -865,14 +865,14 @@ def absCorrectAt (x : TList Γ2)
 set_option maxHeartbeats 6400000 in
 /-- `EagerBuilds` witnesses the runtime `abs` tape via the same generic `unary` constructor —
     `abs = elemwise (fun v => |v|) (fun v => (SignType.sign v : ℝ))`, `fwdSpec = absSpec`
-    (bridged by `toVecT_mapSpec_apply`, since `MathFunctions.abs = |·|` on `ℝ`),
-    `bwdSpec = signSpec` (bridged by the trichotomy fact `toVecT_signSpec_apply`).
+    (bridged by `tensorToVec_mapSpec_apply`, since `MathFunctions.abs = |·|` on `ℝ`),
+    `bwdSpec = signSpec` (bridged by the trichotomy fact `tensorToVec_signSpec_apply`).
 
     The runtime op is written here in the shared `Tape.unary "abs" … absSpec …` shape it reduces
     to; `Runtime.Autograd.Tape.abs t 0` is *definitionally* this call (its `let`-bound backward
     zeta-reduces to `fun xv d => mulSpec (signSpec xv) d`), so this is the genuine `abs` op,
     presented in the form that makes the one-parent node shape manifest. -/
-theorem eagerBuilds_abs (x : TList Γ2) (t' : PRSim.RTape) (id : Nat)
+theorem eagerBuilds_abs (x : TorchLean.TensorPack ℝ Γ2) (t' : PRSim.RTape) (id : Nat)
     (hop : Runtime.Autograd.Tape.unary (α := ℝ) (σ := Shape.scalar) (τ := Shape.scalar)
       (Algebra.Graph.addLeaves (α := ℝ) (t := Runtime.Autograd.Tape.empty) x) "abs" 0
       absSpec (fun xv d => mulSpec (signSpec xv) d) = .ok (t', id)) :
@@ -882,14 +882,14 @@ theorem eagerBuilds_abs (x : TList Γ2) (t' : PRSim.RTape) (id : Nat)
     x t'
   exact PRSim.EagerBuilds.unary (g := .nil) ix0 "abs" (fun v : ℝ => |v|)
     (fun v => (SignType.sign v : ℝ)) absSpec signSpec
-    (fun u i => PRSim.toVecT_mapSpec_apply u i) (fun u i => toVecT_signSpec_apply u i)
+    (fun u i => PRSim.tensorToVec_mapSpec_apply u i) (fun u i => tensorToVec_signSpec_apply u i)
     (PRSim.EagerBuilds.nil x) hop
 
 set_option maxHeartbeats 6400000 in
 /-- **The endpoint on the eager `abs` tape**: under the input-nonzero hypothesis at the concrete
     input, the dense reverse pass on the runtime-constructed tape succeeds and its input-prefix
     realises `(fderiv ℝ eval x)† seed` — via the *pointwise* `direct_PR_soundness_eager_at`. -/
-example (x : TList Γ2)
+example (x : TorchLean.TensorPack ℝ Γ2)
     (hx : ∀ i : Fin (Spec.Shape.size Shape.scalar),
       CtxVec.get (Γ := Γ2) (s := Shape.scalar) ix0
         (Graph.evalVec (Γ := Γ2) (ss := []) .nil (flattenCtx x)) i ≠ 0)
@@ -897,10 +897,10 @@ example (x : TList Γ2)
     (hop : Runtime.Autograd.Tape.unary (α := ℝ) (σ := Shape.scalar) (τ := Shape.scalar)
       (Algebra.Graph.addLeaves (α := ℝ) (t := Runtime.Autograd.Tape.empty) x) "abs" 0
       absSpec (fun xv d => mulSpec (signSpec xv) d) = .ok (t', id))
-    (seed : TList (Γ2 ++ [Shape.scalar])) :
+    (seed : TorchLean.TensorPack ℝ (Γ2 ++ [Shape.scalar])) :
     ∃ out : Array PRSim.Any,
       Runtime.Autograd.Tape.backwardDenseFrom (t := t')
-          (Algebra.TList.toAnyArray (α := ℝ) seed) = .ok out ∧
+          (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) seed) = .ok out ∧
       PRSim.ArrCorr ((fderiv ℝ (absGraph.evalVec) (flattenCtx x)).adjoint (flattenCtx seed))
         (out.extract 0 Γ2.length) :=
   PRSim.direct_PR_soundness_eager_at absGraph x (absCorrectAt x hx)
@@ -962,7 +962,7 @@ strict-positivity hypothesis on the node's inputs, weakened to the `≠ 0` the w
 and the endpoint transfers through `direct_PR_soundness_eager_at`.  The eager witness itself
 needs no differentiability: `EagerBuilds.unary` covers the runtime op with forward `sqrtSpec`
 (the *clamped* `√(max v 0)`, invisible over `ℝ`) and backward the literal `mapSpec`-with-`if`
-lambda (the totalized `1 / (2·√v)`), both bridged pointwise by `toVecT_mapSpec_apply`
+lambda (the totalized `1 / (2·√v)`), both bridged pointwise by `tensorToVec_mapSpec_apply`
 composed with the scalar facts `sqrt_clamp_scalar_eq` / `sqrt_bwd_scalar_eq`. -/
 
 /-- The runtime `sqrt` backward tensor spec — the literal `mapSpec`-with-`if` lambda that
@@ -981,7 +981,7 @@ def sqrtGraph : Graph Γ2 [Shape.scalar] :=
 /-- Pointwise differentiability witness at the input `x`, under strict positivity of the node's
     input coordinates (the natural `sqrt` domain, weakened to the `≠ 0` the upstream per-node
     `sqrtFderivAt` wants). -/
-def sqrtCorrectAt (x : TList Γ2)
+def sqrtCorrectAt (x : TorchLean.TensorPack ℝ Γ2)
     (hx : ∀ i : Fin (Spec.Shape.size Shape.scalar),
       0 < CtxVec.get (Γ := Γ2) (s := Shape.scalar) ix0
         (Graph.evalVec (Γ := Γ2) (ss := []) .nil (flattenCtx x)) i) :
@@ -992,13 +992,13 @@ set_option maxHeartbeats 6400000 in
 /-- `EagerBuilds` witnesses the runtime `sqrt` tape via the generic `unary` constructor —
     `sqrt = elemwise Real.sqrt (fun v => 1 / (2 * Real.sqrt v))`, `fwdSpec = sqrtSpec`,
     `bwdSpec = sqrtBwdSpec` (the literal `mapSpec`-with-`if` backward of `Tape.sqrt`), both
-    bridges from `toVecT_mapSpec_apply` composed with the scalar facts above.
+    bridges from `tensorToVec_mapSpec_apply` composed with the scalar facts above.
 
     The runtime op is written here in the shared `Tape.unary "sqrt" … sqrtSpec …` shape it
     reduces to; `Runtime.Autograd.Tape.sqrt t 0` reduces *definitionally* to this call (its
     `let`-bound backward zeta-reduces to the `mulSpec`-composed form), so this is the genuine
     `sqrt` node, presented in the form that makes the one-parent node shape manifest. -/
-theorem eagerBuilds_sqrt (x : TList Γ2) (t' : PRSim.RTape) (id : Nat)
+theorem eagerBuilds_sqrt (x : TorchLean.TensorPack ℝ Γ2) (t' : PRSim.RTape) (id : Nat)
     (hop : Runtime.Autograd.Tape.unary (α := ℝ) (σ := Shape.scalar) (τ := Shape.scalar)
       (Algebra.Graph.addLeaves (α := ℝ) (t := Runtime.Autograd.Tape.empty) x) "sqrt" 0
       sqrtSpec (fun xv d => mulSpec (sqrtBwdSpec xv) d) = .ok (t', id)) :
@@ -1007,8 +1007,8 @@ theorem eagerBuilds_sqrt (x : TList Γ2) (t' : PRSim.RTape) (id : Nat)
     (.snoc .nil (TapeNodes.elemwise ix0 Real.sqrt (fun v => 1 / (2 * Real.sqrt v)))) x t'
   exact PRSim.EagerBuilds.unary (g := .nil) ix0 "sqrt" Real.sqrt
     (fun v => 1 / (2 * Real.sqrt v)) sqrtSpec sqrtBwdSpec
-    (fun u i => (PRSim.toVecT_mapSpec_apply u i).trans (sqrt_clamp_scalar_eq (toVecT (t := u) i)))
-    (fun u i => (PRSim.toVecT_mapSpec_apply u i).trans (sqrt_bwd_scalar_eq (toVecT (t := u) i)))
+    (fun u i => (PRSim.tensorToVec_mapSpec_apply u i).trans (sqrt_clamp_scalar_eq (tensorToVec (t := u) i)))
+    (fun u i => (PRSim.tensorToVec_mapSpec_apply u i).trans (sqrt_bwd_scalar_eq (tensorToVec (t := u) i)))
     (PRSim.EagerBuilds.nil x) hop
 
 set_option maxHeartbeats 6400000 in
@@ -1016,7 +1016,7 @@ set_option maxHeartbeats 6400000 in
     the concrete `x`, the *pointwise* generic `direct_PR_soundness_eager_at` transfers the
     fderiv-adjoint endpoint to this activation tape; the domain hypothesis `hx` is threaded
     through the pointwise witness `sqrtCorrectAt`. -/
-example (x : TList Γ2)
+example (x : TorchLean.TensorPack ℝ Γ2)
     (hx : ∀ i : Fin (Spec.Shape.size Shape.scalar),
       0 < CtxVec.get (Γ := Γ2) (s := Shape.scalar) ix0
         (Graph.evalVec (Γ := Γ2) (ss := []) .nil (flattenCtx x)) i)
@@ -1024,10 +1024,10 @@ example (x : TList Γ2)
     (hop : Runtime.Autograd.Tape.unary (α := ℝ) (σ := Shape.scalar) (τ := Shape.scalar)
       (Algebra.Graph.addLeaves (α := ℝ) (t := Runtime.Autograd.Tape.empty) x) "sqrt" 0
       sqrtSpec (fun xv d => mulSpec (sqrtBwdSpec xv) d) = .ok (t', id))
-    (seed : TList (Γ2 ++ [Shape.scalar])) :
+    (seed : TorchLean.TensorPack ℝ (Γ2 ++ [Shape.scalar])) :
     ∃ out : Array PRSim.Any,
       Runtime.Autograd.Tape.backwardDenseFrom (t := t')
-          (Algebra.TList.toAnyArray (α := ℝ) seed) = .ok out ∧
+          (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) seed) = .ok out ∧
       PRSim.ArrCorr ((fderiv ℝ (sqrtGraph.evalVec) (flattenCtx x)).adjoint (flattenCtx seed))
         (out.extract 0 Γ2.length) :=
   PRSim.direct_PR_soundness_eager_at sqrtGraph x (sqrtCorrectAt x hx)

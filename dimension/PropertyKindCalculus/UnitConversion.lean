@@ -87,7 +87,7 @@ open scoped NNReal in
 /-- The unit choice a prefixed unit induces over a basis `B`: at the designated base
 dimension `b₀` the chosen unit is the prefix factor `radix ^ exponent`; every other base
 dimension keeps the reference unit `1`. -/
-noncomputable def toUnitScale {B : Type} [DecidableEq B] (p : PrefixedUnit) (b₀ : B)
+noncomputable def toUnitScale {B : Type} [DimensionBasis B] [DecidableEq B] (p : PrefixedUnit) (b₀ : B)
     (hr : 0 < p.radix) : UnitScale B where
   scale b := if b = b₀ then (p.radix : ℝ≥0) ^ p.exponent else 1
   scale_pos b := by
@@ -100,7 +100,7 @@ noncomputable def toUnitScale {B : Type} [DecidableEq B] (p : PrefixedUnit) (b�
 generic conversion factor of their induced unit choices, evaluated at the designated base
 dimension `single b₀`, is exactly the §1.22 factor `radix ^ shift` — the prefix conversion
 of `convertReal` is the single-generator instance of the contributed `UnitScale.dimScale`. -/
-theorem dimScale_toUnitScale_single {B : Type} [Fintype B] [DecidableEq B]
+theorem dimScale_toUnitScale_single {B : Type} [DimensionBasis B] [Fintype B] [DecidableEq B]
     (p q : PrefixedUnit) (hpq : p.SameRadix q) (hr : 0 < p.radix) (b₀ : B) :
     ((p.toUnitScale b₀ hr).dimScale (q.toUnitScale b₀ (hpq ▸ hr))
         (Dimension.single b₀) : ℝ) = p.realFactor q := by

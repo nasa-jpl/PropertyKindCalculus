@@ -33,16 +33,16 @@ def diffModel {α : Type} [NumCarrier α] (a b : α) : α := a - b
 
 /-! ## The binary32 ulp is what the check turns on -/
 
--- ulp₃₂(10⁸) = 2^(26−23) = 8, so an uncertainty below 4 sits under half a ulp; ulp₃₂(100) ≈ 7.6·10⁻⁶.
-#eval s!"ulp₃₂(1e8) = {Adequacy.ulp32 1e8}   ulp₃₂(100) = {Adequacy.ulp32 100.0}"
+-- ulp32(10⁸) = 2^(26−23) = 8, so an uncertainty below 4 sits under half a ulp; ulp32(100) ≈ 7.6·10⁻⁶.
+#eval s!"ulp32(1e8) = {Adequacy.ulp32 1e8}   ulp32(100) = {Adequacy.ulp32 100.0}"
 #guard Float.abs (Adequacy.ulp32 1e8 - 8.0) < 1e-9
 #guard Adequacy.ulp32 100.0 < 1e-4
 
 /-! ## Swamping — the same `accModel`, flagged then clean
 
-An input `x = 1 ± 1` added to a large bias `10⁸`: the uncertainty `1` is below `½ ulp₃₂(10⁸) = 4`, so
+An input `x = 1 ± 1` added to a large bias `10⁸`: the uncertainty `1` is below `½ ulp32(10⁸) = 4`, so
 it is swamped — the carrier records an absorption. Added to a small bias `100`, the same uncertainty
-`1` far exceeds `½ ulp₃₂(100)`, so it survives — no violation. -/
+`1` far exceeds `½ ulp32(100)`, so it survives — no violation. -/
 
 /-- Inadequate: large accumulator swamps the input uncertainty. -/
 def swamped : Adequacy := accModel (Adequacy.exact 1e8) (Adequacy.input 1.0 1.0)

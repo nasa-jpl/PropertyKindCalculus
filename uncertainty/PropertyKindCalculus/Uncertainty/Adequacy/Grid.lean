@@ -4,8 +4,8 @@
 
 A binary floating-point format is, *near any fixed magnitude*, a uniform grid of representable reals
 spaced one unit in the last place (`ulp`) apart. TorchLean's `FP32` layer realizes exactly this grid
-over `ℝ`: `TorchLean.Floats.ulp₃₂` is the spacing and
-`FP32.round_abs_error : |round₃₂ x − x| ≤ ulp₃₂ x / 2` its half-ulp bound (both `noncomputable` ℝ
+over `ℝ`: `TorchLean.Floats.ulp32` is the spacing and
+`FP32.round_abs_error : |round32 x − x| ≤ ulp32 x / 2` its half-ulp bound (both `noncomputable` ℝ
 specs — see `Adequacy.Fp32Grounding`). This module abstracts that grid to a *uniform spacing*
 `u = ulp > 0`, which is all the absorption/soundness arguments (`Absorption`, `Soundness`) and the
 cancellation argument (`Sterbenz32`) need: they are local statements at one magnitude, where the
@@ -64,7 +64,7 @@ theorem gridRound_onGrid {u x : ℝ} (hu : u ≠ 0) (h : OnGrid u x) : gridRound
   ring
 
 /-- **The half-ulp bound** `|gridRound u x − x| ≤ u/2` — the local mirror of TorchLean's
-`FP32.round_abs_error : |round₃₂ x − x| ≤ ulp₃₂ x / 2`. -/
+`FP32.round_abs_error : |round32 x − x| ≤ ulp32 x / 2`. -/
 theorem abs_sub_gridRound_le {u : ℝ} (x : ℝ) (hu : 0 < u) : |gridRound u x - x| ≤ u / 2 := by
   have hune : u ≠ 0 := ne_of_gt hu
   have h : gridRound u x - x = u * ((round (x / u) : ℝ) - x / u) := by

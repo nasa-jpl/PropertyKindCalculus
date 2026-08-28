@@ -19,7 +19,7 @@ Three things are checked here:
     uncertainty where a sensitivity is expected, cannot combine contributions of different kinds, and
     cannot swap the `CouplingResultQ` fields — the exact misuses two naked `List Float` fields allowed.
   * **A swamped contribution.** A large accumulator `baseline + δ` swamps `δ`'s contribution
-    (`cₓ·uₓ = 1 < ½ ulp₃₂(10⁸) = 4`); the verdict flags it, and the closing A3 theorem is applied at
+    (`cₓ·uₓ = 1 < ½ ulp32(10⁸) = 4`); the verdict flags it, and the closing A3 theorem is applied at
     that contribution scale.
 
 Everything here is a **checked fact** (the module builds under CI). Depends on TorchLean (the tape
@@ -111,7 +111,7 @@ Each `#check_failure` is a misuse two naked `List Float` fields silently allowed
 
 `baseline + δ` with `baseline = 10⁸` (exact) and `δ = 0 ± 1`, all at kind `deflection`. The
 sensitivity is dimensionless (`∂(a+b)/∂b = 1`), so `δ`'s contribution is `1·1 = 1`, which the carrier
-flags swamped below `½ ulp₃₂(10⁸) = 4`. -/
+flags swamped below `½ ulp32(10⁸) = 4`. -/
 
 /-- A measurement kind and the (dimensionless) sensitivity of an accumulator w.r.t. one sample. -/
 def deflection : KindOfProperty := { id := "beam deflection", scale := .ratio }

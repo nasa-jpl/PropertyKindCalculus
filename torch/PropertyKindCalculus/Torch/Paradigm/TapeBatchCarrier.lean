@@ -43,7 +43,7 @@ instance instBatchCarrier : BatchCarrier TapeBuilder where
     match TapeM.run Tape.empty b.run with
     | .ok (id, t) =>
         match t.nodes[id]? with
-        | some node => (Spec.toList node.value.t).foldl (fun acc x => acc.push x)
+        | some node => (Spec.Tensor.toList node.value.tensor).foldl (fun acc x => acc.push x)
                           (FloatArray.emptyWithCapacity (Shape.size s))
         | none      => FloatArray.emptyWithCapacity 0
     | .error _  => FloatArray.emptyWithCapacity 0

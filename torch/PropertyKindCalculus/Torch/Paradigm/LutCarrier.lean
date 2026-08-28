@@ -24,7 +24,7 @@ INSTANCES.
 * `Float` — `LutTable.refFetch`, the fp64 reference/oracle (the `evalTapeT` denotation).
 * `TapeBuilder s` — records ONE tape node `name := "lutfetch:<tbl.name>"`, `parents :=
   [layerId, uId]`, storing the elementwise `refFetch` of the parents' stored tensors. Forward-only
-  (`requires_grad := false`, empty backward). The table's identity travels in the node NAME, so
+  (`requiresGrad := false`, empty backward). The table's identity travels in the node NAME, so
   `paradigm.tape_cse`'s `nodeKey` (which keys on the name) distinguishes fetches into different
   tables with no CSE change — the "scalar-baking op" hazard its docstring warns about is resolved
   by construction, PROVIDED distinct tables carry distinct names (the codegen rejects duplicates).
@@ -118,10 +118,10 @@ def TapeBuilder.lutFetchM {s : Shape} (tbl : LutTable) (l u : TapeBuilder s) : T
     let v := map2Spec (fun a b => tbl.refFetch a b) lVal uVal
     let (t', id) := Tape.addNode t
       { name := some tbl.nodeName
-      , value := AnyTensor.mk v
-      , requires_grad := false
-      , parents := [lId, uId]
-      , backward := fun _ => .ok [] }
+      , value := Spec.SomeTensor.ofTensor v
+      , requiresGrad := false
+      , parents := #[lId, uId]
+      , backward := fun _ => .ok #[] }
     set t'
     pure id⟩
 

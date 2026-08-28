@@ -42,7 +42,7 @@ open PropertyKindCalculus.Paradigm.TapeCSE (nodeKey cseCompact)
 
 namespace PropertyKindCalculus.Examples.TapeCseStructural
 
-abbrev Key := Option String × List Nat × List UInt64
+abbrev Key := Option String × Array Nat × List UInt64
 abbrev CseState := Tape Float × Array Nat × Std.HashMap Key Nat
 
 /-! ## `cseCompact` as a left fold
@@ -97,7 +97,7 @@ theorem cseCompact_eq_foldl (t : Tape Float) :
 
 theorem getNode?_addNode_self (t : Tape Float) (n : Node Float) :
     (t.addNode n).1.getNode? t.size
-      = some { n with value := Runtime.Autograd.AnyTensor.materialize n.value } := by
+      = some { n with value := Spec.SomeTensor.materialize n.value } := by
   simp [Tape.getNode?, Tape.addNode, Tape.size]
 
 theorem getNode?_addNode_lt (t : Tape Float) (n : Node Float) (id : Nat) (h : id < t.size) :
@@ -119,16 +119,16 @@ theorem getD_push_at {α} (xs : Array α) (x d : α) (k : Nat) (hk : k = xs.size
 
 /-- Mapping parents through `rm.push x` equals mapping through `rm`, when every parent is in bounds —
 the fact that lets a later `remap` growth leave an already-recorded node's remapped parents fixed. -/
-theorem map_getD_push {ps : List Nat} {rm : Array Nat} {x : Nat}
+theorem map_getD_push {ps : Array Nat} {rm : Array Nat} {x : Nat}
     (hps : ∀ p ∈ ps, p < rm.size) :
     ps.map (fun p => (rm.push x).getD p p) = ps.map (fun p => rm.getD p p) :=
-  List.map_congr_left (fun p hp => getD_push_lt rm x p p (hps p hp))
+  Array.map_congr_left (fun p hp => getD_push_lt rm x p p (hps p hp))
 
 theorem key_name (rm : Array Nat) (n : Node Float) : (nodeKey rm n).1 = n.name := rfl
 theorem key_parents (rm : Array Nat) (n : Node Float) :
     (nodeKey rm n).2.1 = n.parents.map (fun p => rm.getD p p) := rfl
 theorem key_bits (rm : Array Nat) (n : Node Float) :
-    (nodeKey rm n).2.2 = (Spec.toList n.value.t).map Float.toBits := rfl
+    (nodeKey rm n).2.2 = (Spec.Tensor.toList n.value.tensor).map Float.toBits := rfl
 
 /-! ## Well-formedness and the loop invariant -/
 
@@ -152,11 +152,11 @@ def Inv (t : Tape Float) (k : Nat) (st : CseState) : Prop :=
      ∃ nNew nOld, st.1.getNode? (st.2.1.getD id id) = some nNew ∧ t.getNode? id = some nOld ∧
        nNew.name = nOld.name ∧
        nNew.parents = nOld.parents.map (fun p => st.2.1.getD p p) ∧
-       (Spec.toList nNew.value.t).map Float.toBits = (Spec.toList nOld.value.t).map Float.toBits) ∧
+       (Spec.Tensor.toList nNew.value.tensor).map Float.toBits = (Spec.Tensor.toList nOld.value.tensor).map Float.toBits) ∧
   (∀ (key : Key) (nid : Nat), st.2.2[key]? = some nid → nid < st.1.size ∧
      ∃ nNew, st.1.getNode? nid = some nNew ∧
        nNew.name = key.1 ∧ nNew.parents = key.2.1 ∧
-       (Spec.toList nNew.value.t).map Float.toBits = key.2.2)
+       (Spec.Tensor.toList nNew.value.tensor).map Float.toBits = key.2.2)
 
 theorem inv_base (t : Tape Float) : Inv t 0 (cseInit t) := by
   refine ⟨by simp [cseInit, Array.mkEmpty], ?_, ?_, ?_⟩
@@ -214,7 +214,7 @@ theorem inv_step (t : Tape Float) (hwf : WF t) (i : Fin t.nodes.size) (st : CseS
         subst hnd
         intro p hp
         rw [hnode'_par] at hp
-        obtain ⟨q, hq, rfl⟩ := List.mem_map.mp hp
+        obtain ⟨q, hq, rfl⟩ := Array.mem_map.mp hp
         rw [hid_eq]; exact hpar_valid q hq
       · have hidlt : id < st.1.size := by
           rcases Nat.lt_or_ge id st.1.nodes.size with h | h
@@ -238,7 +238,7 @@ theorem inv_step (t : Tape Float) (hwf : WF t) (i : Fin t.nodes.size) (st : CseS
           ?_, ?_, ?_⟩
         · simp only [hnode'_name]
         · simp only [hnode'_par]; rw [map_getD_push hpar_ltsz]
-        · rw [hnode'_val, Runtime.Autograd.AnyTensor.materialize_eq]
+        · rw [hnode'_val, Spec.SomeTensor.materialize_eq]
     · -- memo soundness (insert)
       intro key nid hkey
       dsimp only at hkey ⊢
@@ -251,7 +251,7 @@ theorem inv_step (t : Tape Float) (hwf : WF t) (i : Fin t.nodes.size) (st : CseS
         refine ⟨by rw [Tape.size_addNode]; exact Nat.lt_succ_self _, _, hself, ?_, ?_, ?_⟩
         · rw [← hkeq, key_name]
         · rw [← hkeq, key_parents]
-        · rw [← hkeq, key_bits, hnode'_val, Runtime.Autograd.AnyTensor.materialize_eq]
+        · rw [← hkeq, key_bits, hnode'_val, Spec.SomeTensor.materialize_eq]
       · obtain ⟨hnidlt, nNew, hnNew, hnName, hnPar, hnbits⟩ := hmemo _ _ hkey
         exact ⟨by rw [Tape.size_addNode]; exact Nat.lt_succ_of_lt hnidlt, nNew,
           by rw [getNode?_addNode_lt _ _ _ hnidlt]; exact hnNew, hnName, hnPar, hnbits⟩
@@ -273,7 +273,7 @@ theorem cseCompact_structural (t : Tape Float) (hwf : WF t) (id : Nat) (h : id <
     ∃ nNew nOld, (cseCompact t).1.getNode? ((cseCompact t).2.getD id id) = some nNew ∧
       t.getNode? id = some nOld ∧ nNew.name = nOld.name ∧
       nNew.parents = nOld.parents.map (fun p => (cseCompact t).2.getD p p) ∧
-      (Spec.toList nNew.value.t).map Float.toBits = (Spec.toList nOld.value.t).map Float.toBits := by
+      (Spec.Tensor.toList nNew.value.tensor).map Float.toBits = (Spec.Tensor.toList nOld.value.tensor).map Float.toBits := by
   obtain ⟨_, _, hcorr, _⟩ := cseFold_inv t hwf
   rw [cseCompact_eq_foldl]
   exact hcorr id h
@@ -291,7 +291,7 @@ the value stored at its CSE-remapped node. The read-back never moves; only the n
 theorem cseCompact_preserves_stored (t : Tape Float) (hwf : WF t) (id : Nat) (h : id < t.size) :
     ∃ nNew nOld, (cseCompact t).1.getNode? ((cseCompact t).2.getD id id) = some nNew ∧
       t.getNode? id = some nOld ∧
-      (Spec.toList nNew.value.t).map Float.toBits = (Spec.toList nOld.value.t).map Float.toBits := by
+      (Spec.Tensor.toList nNew.value.tensor).map Float.toBits = (Spec.Tensor.toList nOld.value.tensor).map Float.toBits := by
   obtain ⟨_, nNew, nOld, ha, hb, _, _, hbits⟩ := cseCompact_structural t hwf id h
   exact ⟨nNew, nOld, ha, hb, hbits⟩
 
@@ -315,8 +315,8 @@ def demoTape : Tape Float :=
   let t1 := (t0.leaf (fill (0.0 : Float) Shape.scalar) (name := some "a")).1
   let t2 := (t1.leaf (fill (0.0 : Float) Shape.scalar) (name := some "b")).1
   (t2.addNode { name := some "add",
-                value := Runtime.Autograd.AnyTensor.mk (fill (0.0 : Float) Shape.scalar),
-                parents := [0, 1], backward := fun _ => .ok [] }).1
+                value := Spec.SomeTensor.ofTensor (fill (0.0 : Float) Shape.scalar),
+                parents := #[0, 1], backward := fun _ => .ok #[] }).1
 
 theorem demoTape_size : demoTape.size = 3 := by decide
 theorem demoTape_wf : WF demoTape := wf_of_bounded demoTape (by decide)
@@ -332,7 +332,7 @@ example : WF (cseCompact demoTape).1 := cseCompact_wellFormed demoTape demoTape_
 def demoStructuralCheck : Bool :=
   let (t', rm) := cseCompact demoTape
   match t'.getNode? (rm.getD 2 2) with
-  | some nd => nd.name == some "add" && nd.parents.length == 2
+  | some nd => nd.name == some "add" && nd.parents.size == 2
   | none => false
 
 #guard demoStructuralCheck

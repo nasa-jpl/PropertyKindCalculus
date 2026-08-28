@@ -62,7 +62,7 @@ def stepValT (tables : String → Option LutTable) (env : String → Float)
     | none => pure (nodeScalar n)
   else
     match n.name with
-    | some nm => cOpT tables nm (n.parents.map (fun p => vals.getD p 0.0))
+    | some nm => cOpT tables nm ((n.parents.map (fun p => vals.getD p 0.0)).toList)
     | none => .error "tape_codegen: op node with no op name"
 
 theorem evalTapeT_eq_foldlM (tables : String → Option LutTable) (env : String → Float)
@@ -87,7 +87,7 @@ theorem evalTapeT_addNode (tables : String → Option LutTable) (env : String �
       = (evalTapeT tables env t) >>= fun vals =>
           (stepValT tables env vals n).map (fun v => vals.push v) := by
   rw [evalTapeT_eq_foldlM tables env (t.addNode n).1, evalTapeT_eq_foldlM tables env t]
-  simp only [Tape.addNode, Array.foldlM_push, Runtime.Autograd.AnyTensor.materialize_eq]
+  simp only [Tape.addNode, Array.foldlM_push, Spec.SomeTensor.materialize_eq]
 
 /-- On any non-`lutfetch` op name the extended alphabet defers to the base `cOp` — this is what
 feeds the arithmetic `FaithfulT` instances below. -/
@@ -158,8 +158,8 @@ theorem FaithfulT_bin (tables : String → Option LutTable) (env : String → Fl
     (hrun : ∀ (tt : Tape Float) (idA idB : Nat) {va vb : T},
        tt.requireValue (s := S) idA = .ok va → tt.requireValue (s := S) idB = .ok vb →
        ∃ nd : Node Float, (top idA idB).run tt = .ok (tt.size, (tt.addNode nd).1) ∧
-         nd.name = some nm ∧ nd.parents = [idA, idB] ∧
-         nd.value = Runtime.Autograd.AnyTensor.mk (sop va vb))
+         nd.name = some nm ∧ nd.parents = #[idA, idB] ∧
+         nd.value = Spec.SomeTensor.ofTensor (sop va vb))
     (hcop : ∀ a b : Float, cOpT tables nm [a, b] = .ok (fop a b))
     {a b : TB} {va vb : T} {xa xb : Float}
     (ha : FaithfulT tables env a va xa) (hb : FaithfulT tables env b vb xb) :
@@ -185,7 +185,8 @@ theorem FaithfulT_bin (tables : String → Option LutTable) (env : String → Fl
   case ev =>
     have hstep : stepValT tables env valsB nd = .ok (fop xa xb) := by
       unfold stepValT
-      simp only [hndName, hndPar, List.isEmpty_cons, List.map_cons, List.map_nil,
+      simp only [hndName, hndPar, List.isEmpty_toArray, List.isEmpty_cons, List.map_toArray, List.map_cons,
+        List.map_nil,
         Bool.false_eq_true, if_false]
       rw [hxa, hbVal]; exact hcop xa xb
     rw [evalTapeT_addNode, hbEv]
@@ -239,10 +240,10 @@ theorem FaithfulT_mul (tables : String → Option LutTable) (env : String → Fl
 tensors. -/
 def lutNode (tbl : LutTable) (idA idB : Nat) (vl vu : T) : Node Float :=
   { name := some tbl.nodeName
-  , value := Runtime.Autograd.AnyTensor.mk (map2Spec (fun a b => tbl.refFetch a b) vl vu)
-  , requires_grad := false
-  , parents := [idA, idB]
-  , backward := fun _ => .ok [] }
+  , value := Spec.SomeTensor.ofTensor (map2Spec (fun a b => tbl.refFetch a b) vl vu)
+  , requiresGrad := false
+  , parents := #[idA, idB]
+  , backward := fun _ => .ok #[] }
 
 /-- Run bridge for the recording action: given the operand sub-runs and their stored tensors on
 the final operand tape, `lutFetchM`'s run appends exactly `lutNode` (the `requireValue` reads
@@ -295,7 +296,8 @@ theorem FaithfulT_lutfetch (tables : String → Option LutTable) (env : String �
     have hstep : stepValT tables env valsB (lutNode tbl idA idB vl vu)
         = .ok (tbl.refFetch xl xu) := by
       unfold stepValT lutNode
-      simp only [List.isEmpty_cons, List.map_cons, List.map_nil,
+      simp only [List.isEmpty_toArray, List.isEmpty_cons, List.map_toArray, List.map_cons,
+        List.map_nil,
         Bool.false_eq_true, if_false]
       rw [hxa, hbVal]
       exact cOpT_lutfetch hn tables tbl ht xl xu

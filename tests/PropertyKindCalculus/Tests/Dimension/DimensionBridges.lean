@@ -29,7 +29,11 @@ theorem r1_distinct_kinds_one_dimension :
   match dim_not_injective with
   | ⟨a, b, hne, hdim, _⟩ => ⟨a, b, hne, hdim⟩
 
-/-- info: 'PropertyKindCalculus.dim_not_injective' depends on axioms: [propext, Quot.sound] -/
+-- `Classical.choice` enters from PhysLib, not from this proof: since the `Exponent` reform,
+-- `Dimension.exponent` is defined through the basis's `exponentEquiv : Exponents ≃+ (B → Exponent)`,
+-- and `#print axioms Dimension.exponent` reports `[propext, Classical.choice, Quot.sound]` on its
+-- own. The pin records that, rather than hiding a dependency this statement did not choose.
+/-- info: 'PropertyKindCalculus.dim_not_injective' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in #print axioms dim_not_injective
 
 /-! ## R5 — the interaction algebra is a partial, typed, ternary product -/

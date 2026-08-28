@@ -25,7 +25,7 @@ library alongside the Mathlib-backed `Ladder`, keeping Stage 0 toolchain-only).
 -/
 import PropertyKindCalculus.Torch.Paradigm.TapeCarrier
 import PropertyKindCalculus.Uncertainty.InputDist
-import NN.Tensor.API
+import NN.Tensor
 import Std.Data.HashMap
 
 open Spec
@@ -66,9 +66,9 @@ def gradient (model : ScalarModel) (point : List Float) : Except String (List Fl
     let outId ← out.run
     pure (ids, outId)
   if h : outId < t.nodes.size then
-    let grads0 : Array (Runtime.AnyTensor Float) :=
-      (t.nodes.map fun node => AnyTensor.mk (fill (0 : Float) node.value.s)).set outId
-        (AnyTensor.mk (Tensor.scalar (1 : Float))) (h := by simpa using h)
+    let grads0 : Array (SomeTensor Float) :=
+      (t.nodes.map fun node => SomeTensor.ofTensor (fill (0 : Float) node.value.shape)).set outId
+        (SomeTensor.ofTensor (Tensor.scalar (1 : Float))) (h := by simpa using h)
     let grads ← Tape.backwardDenseFrom (t := t) grads0
     ids.mapM fun i =>
       match grads[i]? with

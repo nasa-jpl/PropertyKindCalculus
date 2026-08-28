@@ -65,7 +65,7 @@ def stepVal (env : String → Float) (vals : Array Float) (n : Node Float) : Exc
     | none => pure (nodeScalar n)
   else
     match n.name with
-    | some nm => cOp nm (n.parents.map (fun p => vals.getD p 0.0))
+    | some nm => cOp nm ((n.parents.map (fun p => vals.getD p 0.0)).toList)
     | none => .error "tape_codegen: op node with no op name"
 
 theorem evalTape_eq_foldlM (env : String → Float) (t : Tape Float) :
@@ -85,12 +85,12 @@ theorem evalTape_addNode (env : String → Float) (t : Tape Float) (n : Node Flo
     evalTape env (t.addNode n).1
       = (evalTape env t) >>= fun vals => (stepVal env vals n).map (fun v => vals.push v) := by
   rw [evalTape_eq_foldlM env (t.addNode n).1, evalTape_eq_foldlM env t]
-  simp only [Tape.addNode, Array.foldlM_push, Runtime.Autograd.AnyTensor.materialize_eq]
+  simp only [Tape.addNode, Array.foldlM_push, Spec.SomeTensor.materialize_eq]
 
 /-- `nodeScalar` of a constant scalar leaf is its fill value. -/
 theorem nodeScalar_scalarLeaf (x : Float) :
-    nodeScalar { name := none, value := Runtime.Autograd.AnyTensor.mk (fill x Shape.scalar),
-                 backward := fun _ => .ok [] } = x := rfl
+    nodeScalar { name := none, value := Spec.SomeTensor.ofTensor (fill x Shape.scalar),
+                 backward := fun _ => .ok #[] } = x := rfl
 
 theorem getD_push_size (vals : Array Float) (x : Float) :
     (vals.push x).getD vals.size 0.0 = x := by simp
@@ -154,29 +154,29 @@ theorem Faithful_const (env : String → Float) (x : Float) :
 theorem tapeAdd_addNode (tt : Tape Float) (idA idB : Nat) {va vb : T}
     (hA : tt.requireValue (s := S) idA = .ok va) (hB : tt.requireValue (s := S) idB = .ok vb) :
     ∃ nd : Node Float, Tape.add (t := tt) (s := S) idA idB = .ok (tt.addNode nd) ∧
-      nd.name = some "add" ∧ nd.parents = [idA, idB] ∧
-      nd.value = Runtime.Autograd.AnyTensor.mk (addSpec va vb) := by
+      nd.name = some "add" ∧ nd.parents = #[idA, idB] ∧
+      nd.value = Spec.SomeTensor.ofTensor (addSpec va vb) := by
   unfold Tape.add; rw [hA, hB]; exact ⟨_, rfl, rfl, rfl, rfl⟩
 
 theorem tapeSub_addNode (tt : Tape Float) (idA idB : Nat) {va vb : T}
     (hA : tt.requireValue (s := S) idA = .ok va) (hB : tt.requireValue (s := S) idB = .ok vb) :
     ∃ nd : Node Float, Tape.sub (t := tt) (s := S) idA idB = .ok (tt.addNode nd) ∧
-      nd.name = some "sub" ∧ nd.parents = [idA, idB] ∧
-      nd.value = Runtime.Autograd.AnyTensor.mk (subSpec va vb) := by
+      nd.name = some "sub" ∧ nd.parents = #[idA, idB] ∧
+      nd.value = Spec.SomeTensor.ofTensor (subSpec va vb) := by
   unfold Tape.sub; rw [hA, hB]; exact ⟨_, rfl, rfl, rfl, rfl⟩
 
 theorem tapeMul_addNode (tt : Tape Float) (idA idB : Nat) {va vb : T}
     (hA : tt.requireValue (s := S) idA = .ok va) (hB : tt.requireValue (s := S) idB = .ok vb) :
     ∃ nd : Node Float, Tape.mul (t := tt) (s := S) idA idB = .ok (tt.addNode nd) ∧
-      nd.name = some "mul" ∧ nd.parents = [idA, idB] ∧
-      nd.value = Runtime.Autograd.AnyTensor.mk (mulSpec va vb) := by
+      nd.name = some "mul" ∧ nd.parents = #[idA, idB] ∧
+      nd.value = Spec.SomeTensor.ofTensor (mulSpec va vb) := by
   unfold Tape.mul; rw [hA, hB]; exact ⟨_, rfl, rfl, rfl, rfl⟩
 
 theorem tapeExp_addNode (tt : Tape Float) (xId : Nat) {vx : T}
     (hx : tt.requireValue (s := S) xId = .ok vx) :
     ∃ nd : Node Float, Tape.exp (t := tt) (s := S) xId = .ok (tt.addNode nd) ∧
-      nd.name = some "exp" ∧ nd.parents = [xId] ∧
-      nd.value = Runtime.Autograd.AnyTensor.mk (expSpec vx) := by
+      nd.name = some "exp" ∧ nd.parents = #[xId] ∧
+      nd.value = Spec.SomeTensor.ofTensor (expSpec vx) := by
   unfold Tape.exp; rw [hx]; exact ⟨_, rfl, rfl, rfl, rfl⟩
 
 /-! ### Generic op-preservation for the bridge, then the arithmetic instances. -/
@@ -189,8 +189,8 @@ theorem Faithful_bin (env : String → Float) (top : Nat → Nat → TapeM Float
     (hrun : ∀ (tt : Tape Float) (idA idB : Nat) {va vb : T},
        tt.requireValue (s := S) idA = .ok va → tt.requireValue (s := S) idB = .ok vb →
        ∃ nd : Node Float, (top idA idB).run tt = .ok (tt.size, (tt.addNode nd).1) ∧
-         nd.name = some nm ∧ nd.parents = [idA, idB] ∧
-         nd.value = Runtime.Autograd.AnyTensor.mk (sop va vb))
+         nd.name = some nm ∧ nd.parents = #[idA, idB] ∧
+         nd.value = Spec.SomeTensor.ofTensor (sop va vb))
     (hcop : ∀ a b : Float, cOp nm [a, b] = .ok (fop a b))
     {a b : TB} {va vb : T} {xa xb : Float}
     (ha : Faithful env a va xa) (hb : Faithful env b vb xb) :
@@ -216,7 +216,8 @@ theorem Faithful_bin (env : String → Float) (top : Nat → Nat → TapeM Float
   case ev =>
     have hstep : stepVal env valsB nd = .ok (fop xa xb) := by
       unfold stepVal
-      simp only [hndName, hndPar, List.isEmpty_cons, List.map_cons, List.map_nil,
+      simp only [hndName, hndPar, List.isEmpty_toArray, List.isEmpty_cons, List.map_toArray, List.map_cons,
+        List.map_nil,
         Bool.false_eq_true, if_false]
       rw [hxa, hbVal]; exact hcop xa xb
     rw [evalTape_addNode, hbEv]
@@ -236,8 +237,8 @@ theorem Faithful_un (env : String → Float) (top : Nat → TapeM Float Nat) (nm
     (hrun : ∀ (tt : Tape Float) (xId : Nat) {vx : T},
        tt.requireValue (s := S) xId = .ok vx →
        ∃ nd : Node Float, (top xId).run tt = .ok (tt.size, (tt.addNode nd).1) ∧
-         nd.name = some nm ∧ nd.parents = [xId] ∧
-         nd.value = Runtime.Autograd.AnyTensor.mk (sop vx))
+         nd.name = some nm ∧ nd.parents = #[xId] ∧
+         nd.value = Spec.SomeTensor.ofTensor (sop vx))
     (hcop : ∀ a : Float, cOp nm [a] = .ok (fop a))
     {a : TB} {vx : T} {xx : Float} (ha : Faithful env a vx xx) :
     Faithful env (TapeBuilder.un top a) (sop vx) (fop xx) := by
@@ -256,7 +257,8 @@ theorem Faithful_un (env : String → Float) (top : Nat → TapeM Float Nat) (nm
   case ev =>
     have hstep : stepVal env valsA nd = .ok (fop xx) := by
       unfold stepVal
-      simp only [hndName, hndPar, List.isEmpty_cons, List.map_cons, List.map_nil,
+      simp only [hndName, hndPar, List.isEmpty_toArray, List.isEmpty_cons, List.map_toArray, List.map_cons,
+        List.map_nil,
         Bool.false_eq_true, if_false]
       rw [haVal]; exact hcop xx
     rw [evalTape_addNode, haEv]
@@ -471,7 +473,7 @@ theorem stepVal_of_op (env : String → Float) (vals : Array Float) (m : Node Fl
     (h : m.parents.isEmpty = false) :
     stepVal env vals m
       = (match m.name with
-         | some nm => cOp nm (m.parents.map (fun p => vals.getD p 0.0))
+         | some nm => cOp nm ((m.parents.map (fun p => vals.getD p 0.0)).toList)
          | none => .error "tape_codegen: op node with no op name") := by
   simp [stepVal, h]
 
@@ -486,15 +488,9 @@ theorem cseKey_denotation_sound (remap : Array Nat) (n₁ n₂ : Node Float)
   simp only [nodeKey, Prod.mk.injEq] at hkey
   obtain ⟨hname, hpar, _hbits⟩ := hkey
   have h1 : (cseRemapNode remap n₁).parents.isEmpty = false := by
-    unfold cseRemapNode
-    cases hpp : n₁.parents with
-    | nil => rw [hpp] at hop; simp at hop
-    | cons p ps => simp
+    unfold cseRemapNode; simpa using hop
   have h2 : (cseRemapNode remap n₂).parents.isEmpty = false := by
-    unfold cseRemapNode; simp only [← hpar]
-    cases hpp : n₁.parents with
-    | nil => rw [hpp] at hop; simp at hop
-    | cons p ps => simp
+    unfold cseRemapNode; simp only [← hpar]; simpa using hop
   rw [stepVal_of_op env vals _ h1, stepVal_of_op env vals _ h2]
   unfold cseRemapNode
   simp only [hname, hpar]
@@ -516,7 +512,7 @@ def cseStoredPreserved (t : Tape Float) : Bool :=
   let (t', remap) := cseCompact t
   (List.range t.size).all (fun id =>
     match t.getValue? id, t'.getValue? (remap.getD id id) with
-    | some a, some b => (Spec.toList a.t).map Float.toBits == (Spec.toList b.t).map Float.toBits
+    | some a, some b => (Spec.Tensor.toList a.tensor).map Float.toBits == (Spec.Tensor.toList b.tensor).map Float.toBits
     | _, _ => false)
 
 /-- `cseCompact` preserves the recorded AVS `resJac` tape's stored values bit-for-bit — the docstring's

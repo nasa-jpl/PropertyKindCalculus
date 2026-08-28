@@ -16,9 +16,9 @@ fragment, as pure accounting:
   computes *exactly* what it computes on `lowerGraphToTape g.toAlgebra x ()` — same `Result`, same
   array. The proof never re-derives the reverse-pass fold: the compiled node's dense
   contribution list is folded by the upstream accumulation bridge
-  (`foldlM_addGradAll_toIndexedAnyList_eq_add`), the eager node's sparse two-element list by the
+  (`foldlM_addGradAll_toIndexedShapeErasedArray_eq_add`), the eager node's sparse two-element list by the
   single-slot lemma `addGradAll_toAnyArray_single` (§C), and the two context updates coincide by
-  the vectorization homomorphisms of Stage 3.6 (`toVecT_mulSpec` &c.) through flatten-injectivity
+  the vectorization homomorphisms of Stage 3.6 (`tensorToVec_mulSpec` &c.) through flatten-injectivity
   (§B). Push-invariance lemmas (§D) restrict the loop over the extended tape to the prefix, so
   the induction consumes its hypothesis directly.
 * **`direct_PR_soundness_eager`** (§F): therefore the Stage-3.5/3.6 endpoint transfers verbatim —
@@ -28,7 +28,7 @@ fragment, as pure accounting:
 
 `sub` is the second binary crank (§B `sub_vjp_add_eq`, §E/§F `sub` cases): the same machine as
 `add`, save that the runtime `Tape.sub` backward feeds the *negated* cotangent `subSpec (fill 0) δ`
-to the right parent — closed by two extra facts, `toVecT_subSpec` (vectorization is subtractive)
+to the right parent — closed by two extra facts, `tensorToVec_subSpec` (vectorization is subtractive)
 and `single_neg` (the one-hot injection is odd). It demonstrates that a further op is genuinely
 "one crank": nothing in §C/§D/§F's structure changed, only the per-op §B accounting.
 
@@ -39,13 +39,13 @@ backward feeds the quotient-rule cotangents — `divSpec δ b` to the left paren
 accounting is *unconditional* (it is pure bookkeeping over the totalized `0⁻¹ = 0` division), the
 nonzero-denominator side condition only enters at the endpoint through the pointwise
 `direct_PR_soundness_eager_at`/`divFderivAt` route. The extra fact is the pointwise
-`toVecT_divSpec_apply` (vectorization divides coordinatewise); the rest is `ring` over ℝ.
+`tensorToVec_divSpec_apply` (vectorization divides coordinatewise); the rest is `ring` over ℝ.
 
 `scale` is the first *unary* crank (§B `scale_vjp_add_eq`, §E/§F `scale` cases): one parent, one
 contribution `scaleSpec δ c`, so it exercises the reduced (one-`addGradAll`) variant of the machine
 — the shape every `Arithmetic`/`Elementwise` unary shares (activations included: each is
-`[(xId, mulSpec (f'Spec x) δ)]`, structurally identical to `scale`). The extra fact is that `toVecT`
-intertwines `scaleSpec` with the scalar action (`toVecT_scaleSpec`, via the unary `toVecT_mapSpec_apply`).
+`[(xId, mulSpec (f'Spec x) δ)]`, structurally identical to `scale`). The extra fact is that `tensorToVec`
+intertwines `scaleSpec` with the scalar action (`tensorToVec_scaleSpec`, via the unary `tensorToVec_mapSpec_apply`).
 
 What this does *not* cover, honestly: the remaining named unary ops (the `TapeNodes.elemwise`
 activation family — `exp`/`log`/`tanh`/`sigmoid`/…), each a `scale`-shaped instance of this unary
@@ -58,7 +58,7 @@ different machine, out of this file's frame.
 
 import PropertyKindCalculus.Uncertainty.Experiments.PRSimulation
 
-open Spec Tensor Proofs.Autograd
+open Spec Tensor Proofs.Autograd TorchLean
 
 noncomputable section
 
@@ -73,33 +73,33 @@ theorem castVec_self {n : Nat} (h : n = n) (v : Vec n) : castVec h v = v := by
   ext i
   simp
 
-/-- `toVecT` commutes with `castShape` (as a `castVec` on coordinates). -/
-theorem toVecT_castShape {s₁ s₂ : Shape} (h : s₁ = s₂) (t : Tensor ℝ s₁) :
-    toVecT (t := Tensor.castShape t h)
-      = castVec (congrArg Spec.Shape.size h) (toVecT (t := t)) := by
+/-- `tensorToVec` commutes with `castShape` (as a `castVec` on coordinates). -/
+theorem tensorToVec_castShape {s₁ s₂ : Shape} (h : s₁ = s₂) (t : Tensor ℝ s₁) :
+    tensorToVec (t := Tensor.castShape t h)
+      = castVec (congrArg Spec.Shape.size h) (tensorToVec (t := t)) := by
   cases h
   rw [castVec_self]
   simp
 
 /-- Pointwise: every coordinate of a `fill` tensor is the fill value. -/
-theorem toVecT_fill_apply (c : ℝ) :
-    ∀ {s : Shape} (i : Fin (Spec.Shape.size s)), toVecT (t := fill c s) i = c
+theorem tensorToVec_fill_apply (c : ℝ) :
+    ∀ {s : Shape} (i : Fin (Spec.Shape.size s)), tensorToVec (t := fill c s) i = c
   | .scalar, i => by
       rw [show fill c Shape.scalar = Tensor.scalar c from rfl]
-      exact toVecT_scalar_apply c i
+      exact tensorToVec_scalar_apply c i
   | .dim n s, i => by
       by_cases hm : Spec.Shape.size s = 0
       · exact absurd i.isLt (by simp [Spec.Shape.size, hm])
       · have hmpos : 0 < Spec.Shape.size s := Nat.pos_of_ne_zero hm
         obtain ⟨p, rfl⟩ := finProdFinEquiv.surjective i
         have hstep : fill c (Shape.dim n s) = Tensor.dim (fun _ => fill c s) := rfl
-        rw [hstep, toVecT_dim_apply hmpos]
-        exact toVecT_fill_apply c p.2
+        rw [hstep, tensorToVec_dim_apply hmpos]
+        exact tensorToVec_fill_apply c p.2
 
 /-- The zero-filled tensor vectorizes to the zero vector. -/
-theorem toVecT_fill_zero {s : Shape} : toVecT (t := fill (0 : ℝ) s) = 0 := by
+theorem tensorToVec_fill_zero {s : Shape} : tensorToVec (t := fill (0 : ℝ) s) = 0 := by
   ext i
-  simp [toVecT_fill_apply]
+  simp [tensorToVec_fill_apply]
 
 /-- `vecOfFun` of the constant-zero function is the zero vector. -/
 theorem vecOfFun_zero {n : Nat} : vecOfFun (n := n) (fun _ => (0 : ℝ)) = 0 := by
@@ -115,17 +115,17 @@ theorem appendVec_zero {m n : Nat} :
   | right i => simp [appendVec, Fin.append_right]
 
 /-- `flattenCtx` on a cons cell is `appendVec` of the vectorized head and flattened tail. -/
-theorem flattenCtx_cons {s : Shape} {Γ' : List Shape} (x : Tensor ℝ s) (xs : TList Γ') :
-    flattenCtx (Γ := s :: Γ') (TList.cons x xs)
-      = appendVec (toVecT (t := x)) (flattenCtx xs) := rfl
+theorem flattenCtx_cons {s : Shape} {Γ' : List Shape} (x : Tensor ℝ s) (xs : TorchLean.TensorPack ℝ Γ') :
+    flattenCtx (Γ := s :: Γ') (TensorPack.cons x xs)
+      = appendVec (tensorToVec (t := x)) (flattenCtx xs) := rfl
 
 /-- The all-zero context flattens to the zero vector. -/
 theorem flattenCtx_zero :
-    ∀ {Γ' : List Shape}, flattenCtx (Γ := Γ') (TList.zero) = 0
+    ∀ {Γ' : List Shape}, flattenCtx (Γ := Γ') (TensorPack.zero) = 0
   | [] => rfl
   | s :: Γ' => by
-      show flattenCtx (TList.cons (fill (0 : ℝ) s) TList.zero) = 0
-      rw [flattenCtx_cons, toVecT_fill_zero, flattenCtx_zero (Γ' := Γ'), appendVec_zero]
+      show flattenCtx (TensorPack.cons (fill (0 : ℝ) s) TensorPack.zero) = 0
+      rw [flattenCtx_cons, tensorToVec_fill_zero, flattenCtx_zero (Γ' := Γ'), appendVec_zero]
       rfl
 
 /-- Adding the all-zero context on the right is the identity. -/
@@ -139,51 +139,51 @@ theorem addSpec_fill_zero : ∀ {s : Shape} (t : Tensor ℝ s), addSpec t (fill 
 
 /-- Adding the all-zero context on the right is the identity (context level). -/
 theorem tlist_add_zero :
-    ∀ {Γ' : List Shape} (w : TList Γ'), Algebra.TList.add (α := ℝ) w TList.zero = w
+    ∀ {Γ' : List Shape} (w : TorchLean.TensorPack ℝ Γ'), TorchLean.TensorPack.add (α := ℝ) w TensorPack.zero = w
   | [], .nil => rfl
   | s :: Γ', .cons x xs => by
-      show TList.cons (addSpec x (fill (0 : ℝ) s)) (Algebra.TList.add (α := ℝ) xs TList.zero)
-          = TList.cons x xs
+      show TensorPack.cons (addSpec x (fill (0 : ℝ) s)) (TorchLean.TensorPack.add (α := ℝ) xs TensorPack.zero)
+          = TensorPack.cons x xs
       rw [addSpec_fill_zero, tlist_add_zero xs]
 
-/-- `flattenCtx` maps the one-hot context `TList.single` to the one-hot vector `CtxVec.single`. -/
+/-- `flattenCtx` maps the one-hot context `TensorPack.single` to the one-hot vector `CtxVec.single`. -/
 theorem flattenCtx_single :
     ∀ {Γ' : List Shape} {s : Shape} (c : Idx Γ' s) (u : Tensor ℝ s),
-      flattenCtx (TList.single c u) = CtxVec.single c (toVecT (t := u))
+      flattenCtx (TensorPack.single c u) = CtxVec.single c (tensorToVec (t := u))
   | s0 :: Γ', s, ⟨⟨0, h0⟩, h⟩, u => by
-      show flattenCtx (TList.cons (Tensor.castShape u h.symm) TList.zero)
-          = CtxVec.singleRaw (Γ := s0 :: Γ') ⟨0, h0⟩
-              (castVec (congrArg Spec.Shape.size h).symm (toVecT (t := u)))
-      rw [flattenCtx_cons, flattenCtx_zero, toVecT_castShape]
-      show appendVec (castVec (congrArg Spec.Shape.size h.symm) (toVecT (t := u))) 0
-          = appendVec (castVec (congrArg Spec.Shape.size h).symm (toVecT (t := u)))
+      show flattenCtx (TensorPack.cons (Tensor.castShape u h.symm) TensorPack.zero)
+          = CtxVec.singleBlock (Γ := s0 :: Γ') ⟨0, h0⟩
+              (castVec (congrArg Spec.Shape.size h).symm (tensorToVec (t := u)))
+      rw [flattenCtx_cons, flattenCtx_zero, tensorToVec_castShape]
+      show appendVec (castVec (congrArg Spec.Shape.size h.symm) (tensorToVec (t := u))) 0
+          = appendVec (castVec (congrArg Spec.Shape.size h).symm (tensorToVec (t := u)))
               (vecOfFun fun _ => (0 : ℝ))
       rw [vecOfFun_zero]
   | s0 :: Γ', s, ⟨⟨Nat.succ j, hj⟩, h⟩, u => by
-      show flattenCtx (TList.cons (fill (0 : ℝ) s0)
-            (TList.single (Γ := Γ') ⟨⟨j, Nat.lt_of_succ_lt_succ hj⟩, by simpa using h⟩ u))
-          = CtxVec.singleRaw (Γ := s0 :: Γ') ⟨Nat.succ j, hj⟩
-              (castVec (congrArg Spec.Shape.size h).symm (toVecT (t := u)))
-      rw [flattenCtx_cons, toVecT_fill_zero,
+      show flattenCtx (TensorPack.cons (fill (0 : ℝ) s0)
+            (TensorPack.single (Γ := Γ') ⟨⟨j, Nat.lt_of_succ_lt_succ hj⟩, by simpa using h⟩ u))
+          = CtxVec.singleBlock (Γ := s0 :: Γ') ⟨Nat.succ j, hj⟩
+              (castVec (congrArg Spec.Shape.size h).symm (tensorToVec (t := u)))
+      rw [flattenCtx_cons, tensorToVec_fill_zero,
         flattenCtx_single (Γ' := Γ') ⟨⟨j, Nat.lt_of_succ_lt_succ hj⟩, by simpa using h⟩ u]
       show appendVec 0
-            (CtxVec.singleRaw (Γ := Γ') ⟨j, Nat.lt_of_succ_lt_succ hj⟩
+            (CtxVec.singleBlock (Γ := Γ') ⟨j, Nat.lt_of_succ_lt_succ hj⟩
               (castVec (congrArg Spec.Shape.size (by simpa using h :
-                Γ'.get ⟨j, Nat.lt_of_succ_lt_succ hj⟩ = s)).symm (toVecT (t := u))))
+                Γ'.get ⟨j, Nat.lt_of_succ_lt_succ hj⟩ = s)).symm (tensorToVec (t := u))))
           = appendVec (vecOfFun fun _ => (0 : ℝ))
-              (CtxVec.singleRaw (Γ := Γ') ⟨j, Nat.lt_of_succ_lt_succ hj⟩
-                (castVec (congrArg Spec.Shape.size h).symm (toVecT (t := u))))
+              (CtxVec.singleBlock (Γ := Γ') ⟨j, Nat.lt_of_succ_lt_succ hj⟩
+                (castVec (congrArg Spec.Shape.size h).symm (tensorToVec (t := u))))
       rw [vecOfFun_zero]
 
 /-- Reading a block through `CtxVec.get` after flattening is the vectorized `getIdx`. -/
-theorem getIdx_flattenCtx {Γ' : List Shape} {s : Shape} (c : Idx Γ' s) (w : TList Γ') :
-    CtxVec.get c (flattenCtx w) = toVecT (t := getIdx w c) := by
-  show castVec (congrArg Spec.Shape.size c.h) (CtxVec.getRaw c.i (flattenCtx w))
-      = toVecT (t := Tensor.castShape (Algebra.TList.get (α := ℝ) w c.i) c.h)
-  rw [getRaw_flattenCtx, toVecT_castShape]
+theorem getIdx_flattenCtx {Γ' : List Shape} {s : Shape} (c : Idx Γ' s) (w : TorchLean.TensorPack ℝ Γ') :
+    CtxVec.get c (flattenCtx w) = tensorToVec (t := getIdx w c) := by
+  show castVec (congrArg Spec.Shape.size c.h) (CtxVec.getBlock c.i (flattenCtx w))
+      = tensorToVec (t := Tensor.castShape (TorchLean.TensorPack.get (α := ℝ) w c.i) c.h)
+  rw [getRaw_flattenCtx, tensorToVec_castShape]
 
 /-- Contexts with equal flattenings are equal. -/
-theorem flattenCtx_inj {Γ' : List Shape} {x y : TList Γ'}
+theorem flattenCtx_inj {Γ' : List Shape} {x y : TorchLean.TensorPack ℝ Γ'}
     (h : flattenCtx x = flattenCtx y) : x = y := by
   rw [← unflattenCtx_flattenCtx (xs := x), h, unflattenCtx_flattenCtx]
 
@@ -193,95 +193,95 @@ theorem flattenCtx_inj {Γ' : List Shape} {x y : TList Γ'}
    =========================================================================================== -/
 
 /-- The eager `mul` forward value is the P `mul` node's forward map. -/
-theorem mul_forward_eq {Γ' : List Shape} {s : Shape} (a b : Idx Γ' s) (w : TList Γ') :
+theorem mul_forward_eq {Γ' : List Shape} {s : Shape} (a b : Idx Γ' s) (w : TorchLean.TensorPack ℝ Γ') :
     (TapeNodes.mul (Γ := Γ') (s := s) a b).forward w = mulSpec (getIdx w a) (getIdx w b) := by
   have hvec : vecOfFun (n := Spec.Shape.size s)
-        (fun i => toVecT (t := getIdx w a) i * toVecT (t := getIdx w b) i)
-      = toVecT (t := mulSpec (getIdx w a) (getIdx w b)) :=
-    (toVecT_mulSpec (getIdx w a) (getIdx w b)).symm
-  show ofVecT (vecOfFun (n := Spec.Shape.size s)
+        (fun i => tensorToVec (t := getIdx w a) i * tensorToVec (t := getIdx w b) i)
+      = tensorToVec (t := mulSpec (getIdx w a) (getIdx w b)) :=
+    (tensorToVec_mulSpec (getIdx w a) (getIdx w b)).symm
+  show vecToTensor (vecOfFun (n := Spec.Shape.size s)
         (fun i => CtxVec.get a (flattenCtx w) i * CtxVec.get b (flattenCtx w) i))
       = mulSpec (getIdx w a) (getIdx w b)
-  rw [getIdx_flattenCtx, getIdx_flattenCtx, hvec, ofVecT_toVecT]
+  rw [getIdx_flattenCtx, getIdx_flattenCtx, hvec, vecToTensor_tensorToVec]
 
 /-- The eager `add` forward value is the P `add` node's forward map. -/
-theorem add_forward_eq {Γ' : List Shape} {s : Shape} (a b : Idx Γ' s) (w : TList Γ') :
+theorem add_forward_eq {Γ' : List Shape} {s : Shape} (a b : Idx Γ' s) (w : TorchLean.TensorPack ℝ Γ') :
     (TapeNodes.add (Γ := Γ') (s := s) a b).forward w = addSpec (getIdx w a) (getIdx w b) := by
-  show ofVecT (CtxVec.get a (flattenCtx w) + CtxVec.get b (flattenCtx w))
+  show vecToTensor (CtxVec.get a (flattenCtx w) + CtxVec.get b (flattenCtx w))
       = addSpec (getIdx w a) (getIdx w b)
-  rw [getIdx_flattenCtx, getIdx_flattenCtx, ← toVecT_addSpec, ofVecT_toVecT]
+  rw [getIdx_flattenCtx, getIdx_flattenCtx, ← tensorToVec_addSpec, vecToTensor_tensorToVec]
 
 /-- **The `mul` accounting identity**: accumulating the eager sparse product-rule contributions
     is accumulating the compiled node's dense vjp context. -/
-theorem mul_vjp_add_eq {Γ' : List Shape} {s : Shape} (a b : Idx Γ' s) (w : TList Γ')
-    (d : Tensor ℝ s) (u : TList Γ') :
-    Algebra.TList.add (α := ℝ)
-        (Algebra.TList.add (α := ℝ) u (TList.single a (mulSpec d (getIdx w b))))
-        (TList.single b (mulSpec d (getIdx w a)))
-      = Algebra.TList.add (α := ℝ) u ((TapeNodes.mul (Γ := Γ') (s := s) a b).vjp w d) := by
+theorem mul_vjp_add_eq {Γ' : List Shape} {s : Shape} (a b : Idx Γ' s) (w : TorchLean.TensorPack ℝ Γ')
+    (d : Tensor ℝ s) (u : TorchLean.TensorPack ℝ Γ') :
+    TorchLean.TensorPack.add (α := ℝ)
+        (TorchLean.TensorPack.add (α := ℝ) u (TensorPack.single a (mulSpec d (getIdx w b))))
+        (TensorPack.single b (mulSpec d (getIdx w a)))
+      = TorchLean.TensorPack.add (α := ℝ) u ((TapeNodes.mul (Γ := Γ') (s := s) a b).vjp w d) := by
   apply flattenCtx_inj
   have hA : vecOfFun (n := Spec.Shape.size s)
-        (fun i => toVecT (t := d) i * CtxVec.get b (flattenCtx w) i)
-      = toVecT (t := mulSpec d (getIdx w b)) := by
+        (fun i => tensorToVec (t := d) i * CtxVec.get b (flattenCtx w) i)
+      = tensorToVec (t := mulSpec d (getIdx w b)) := by
     rw [getIdx_flattenCtx]
-    exact (toVecT_mulSpec d (getIdx w b)).symm
+    exact (tensorToVec_mulSpec d (getIdx w b)).symm
   have hB : vecOfFun (n := Spec.Shape.size s)
-        (fun i => toVecT (t := d) i * CtxVec.get a (flattenCtx w) i)
-      = toVecT (t := mulSpec d (getIdx w a)) := by
+        (fun i => tensorToVec (t := d) i * CtxVec.get a (flattenCtx w) i)
+      = tensorToVec (t := mulSpec d (getIdx w a)) := by
     rw [getIdx_flattenCtx]
-    exact (toVecT_mulSpec d (getIdx w a)).symm
-  show flattenCtx (Algebra.TList.add (α := ℝ)
-        (Algebra.TList.add (α := ℝ) u (TList.single a (mulSpec d (getIdx w b))))
-        (TList.single b (mulSpec d (getIdx w a))))
-      = flattenCtx (Algebra.TList.add (α := ℝ) u
+    exact (tensorToVec_mulSpec d (getIdx w a)).symm
+  show flattenCtx (TorchLean.TensorPack.add (α := ℝ)
+        (TorchLean.TensorPack.add (α := ℝ) u (TensorPack.single a (mulSpec d (getIdx w b))))
+        (TensorPack.single b (mulSpec d (getIdx w a))))
+      = flattenCtx (TorchLean.TensorPack.add (α := ℝ) u
           (unflattenCtx
             (CtxVec.single a (vecOfFun (n := Spec.Shape.size s)
-                (fun i => toVecT (t := d) i * CtxVec.get b (flattenCtx w) i))
+                (fun i => tensorToVec (t := d) i * CtxVec.get b (flattenCtx w) i))
               + CtxVec.single b (vecOfFun (n := Spec.Shape.size s)
-                (fun i => toVecT (t := d) i * CtxVec.get a (flattenCtx w) i)))))
+                (fun i => tensorToVec (t := d) i * CtxVec.get a (flattenCtx w) i)))))
   rw [flattenCtx_add, flattenCtx_add, flattenCtx_add, flattenCtx_unflattenCtx,
     flattenCtx_single, flattenCtx_single, hA, hB, add_assoc]
 
 /-- **The `add` accounting identity**: same statement for the copy rule of `add`. -/
-theorem add_vjp_add_eq {Γ' : List Shape} {s : Shape} (a b : Idx Γ' s) (w : TList Γ')
-    (d : Tensor ℝ s) (u : TList Γ') :
-    Algebra.TList.add (α := ℝ)
-        (Algebra.TList.add (α := ℝ) u (TList.single a d))
-        (TList.single b d)
-      = Algebra.TList.add (α := ℝ) u ((TapeNodes.add (Γ := Γ') (s := s) a b).vjp w d) := by
+theorem add_vjp_add_eq {Γ' : List Shape} {s : Shape} (a b : Idx Γ' s) (w : TorchLean.TensorPack ℝ Γ')
+    (d : Tensor ℝ s) (u : TorchLean.TensorPack ℝ Γ') :
+    TorchLean.TensorPack.add (α := ℝ)
+        (TorchLean.TensorPack.add (α := ℝ) u (TensorPack.single a d))
+        (TensorPack.single b d)
+      = TorchLean.TensorPack.add (α := ℝ) u ((TapeNodes.add (Γ := Γ') (s := s) a b).vjp w d) := by
   apply flattenCtx_inj
-  show flattenCtx (Algebra.TList.add (α := ℝ)
-        (Algebra.TList.add (α := ℝ) u (TList.single a d)) (TList.single b d))
-      = flattenCtx (Algebra.TList.add (α := ℝ) u
-          (unflattenCtx (CtxVec.single a (toVecT (t := d)) + CtxVec.single b (toVecT (t := d)))))
+  show flattenCtx (TorchLean.TensorPack.add (α := ℝ)
+        (TorchLean.TensorPack.add (α := ℝ) u (TensorPack.single a d)) (TensorPack.single b d))
+      = flattenCtx (TorchLean.TensorPack.add (α := ℝ) u
+          (unflattenCtx (CtxVec.single a (tensorToVec (t := d)) + CtxVec.single b (tensorToVec (t := d)))))
   rw [flattenCtx_add, flattenCtx_add, flattenCtx_add, flattenCtx_unflattenCtx,
     flattenCtx_single, flattenCtx_single, add_assoc]
 
 /- -------------------------------------------------------------------------------------------
    The `sub` op (second binary crank): identical machine to `add`, save that the runtime `Tape.sub`
    backward feeds the *negated* cotangent `subSpec (fill 0) δ` to the right parent.  Two extra
-   facts close the gap: vectorization is subtractive (`toVecT_subSpec`, the `subSpec` analog of the
-   upstream `toVecT_addSpec`) and the one-hot injection is odd (`single_neg`).
+   facts close the gap: vectorization is subtractive (`tensorToVec_subSpec`, the `subSpec` analog of the
+   upstream `tensorToVec_addSpec`) and the one-hot injection is odd (`single_neg`).
    ------------------------------------------------------------------------------------------- -/
 
-/-- Vectorization is subtractive: `toVecT` maps `subSpec` to vector subtraction (the `subSpec`
-    analog of `toVecT_addSpec`; proved coordinatewise through `toVecT_map2Spec_apply`). -/
-theorem toVecT_subSpec {s : Shape} (a b : Tensor ℝ s) :
-    toVecT (t := subSpec a b) = toVecT (t := a) - toVecT (t := b) := by
-  have h : ∀ i, toVecT (t := subSpec a b) i = toVecT (t := a) i - toVecT (t := b) i :=
-    fun i => toVecT_map2Spec_apply (f := (· - ·)) a b i
-  calc toVecT (t := subSpec a b)
-      = vecOfFun (fun i => toVecT (t := subSpec a b) i) := (vecOfFun_eta _).symm
-    _ = vecOfFun (fun i => toVecT (t := a) i - toVecT (t := b) i) :=
+/-- Vectorization is subtractive: `tensorToVec` maps `subSpec` to vector subtraction (the `subSpec`
+    analog of `tensorToVec_addSpec`; proved coordinatewise through `tensorToVec_map2Spec_apply`). -/
+theorem tensorToVec_subSpec {s : Shape} (a b : Tensor ℝ s) :
+    tensorToVec (t := subSpec a b) = tensorToVec (t := a) - tensorToVec (t := b) := by
+  have h : ∀ i, tensorToVec (t := subSpec a b) i = tensorToVec (t := a) i - tensorToVec (t := b) i :=
+    fun i => tensorToVec_map2Spec_apply (f := (· - ·)) a b i
+  calc tensorToVec (t := subSpec a b)
+      = vecOfFun (fun i => tensorToVec (t := subSpec a b) i) := (vecOfFun_eta _).symm
+    _ = vecOfFun (fun i => tensorToVec (t := a) i - tensorToVec (t := b) i) :=
         congrArg (vecOfFun (n := Spec.Shape.size s)) (funext h)
-    _ = toVecT (t := a) - toVecT (t := b) := by ext i; simp [PiLp.sub_apply]
+    _ = tensorToVec (t := a) - tensorToVec (t := b) := by ext i; simp [PiLp.sub_apply]
 
 /-- The eager `sub` forward value is the P `sub` node's forward map. -/
-theorem sub_forward_eq {Γ' : List Shape} {s : Shape} (a b : Idx Γ' s) (w : TList Γ') :
+theorem sub_forward_eq {Γ' : List Shape} {s : Shape} (a b : Idx Γ' s) (w : TorchLean.TensorPack ℝ Γ') :
     (TapeNodes.sub (Γ := Γ') (s := s) a b).forward w = subSpec (getIdx w a) (getIdx w b) := by
-  show ofVecT (CtxVec.get a (flattenCtx w) - CtxVec.get b (flattenCtx w))
+  show vecToTensor (CtxVec.get a (flattenCtx w) - CtxVec.get b (flattenCtx w))
       = subSpec (getIdx w a) (getIdx w b)
-  rw [getIdx_flattenCtx, getIdx_flattenCtx, ← toVecT_subSpec, ofVecT_toVecT]
+  rw [getIdx_flattenCtx, getIdx_flattenCtx, ← tensorToVec_subSpec, vecToTensor_tensorToVec]
 
 /-- The one-hot context injection is odd: `single c (-v) = - single c v`.  (Proved by
     inner-product extensionality through the `get`/`single` adjunction `inner_get_single`.) -/
@@ -294,20 +294,20 @@ theorem single_neg {Γ' : List Shape} {s : Shape} (c : Idx Γ' s) (v : Vec (Spec
 /-- **The `sub` accounting identity**: accumulating the eager sparse contributions — the cotangent
     `δ` to `a`, its negation `subSpec (fill 0) δ` to `b` — is accumulating the compiled node's dense
     vjp context. -/
-theorem sub_vjp_add_eq {Γ' : List Shape} {s : Shape} (a b : Idx Γ' s) (w : TList Γ')
-    (d : Tensor ℝ s) (u : TList Γ') :
-    Algebra.TList.add (α := ℝ)
-        (Algebra.TList.add (α := ℝ) u (TList.single a d))
-        (TList.single b (subSpec (fill (0 : ℝ) s) d))
-      = Algebra.TList.add (α := ℝ) u ((TapeNodes.sub (Γ := Γ') (s := s) a b).vjp w d) := by
+theorem sub_vjp_add_eq {Γ' : List Shape} {s : Shape} (a b : Idx Γ' s) (w : TorchLean.TensorPack ℝ Γ')
+    (d : Tensor ℝ s) (u : TorchLean.TensorPack ℝ Γ') :
+    TorchLean.TensorPack.add (α := ℝ)
+        (TorchLean.TensorPack.add (α := ℝ) u (TensorPack.single a d))
+        (TensorPack.single b (subSpec (fill (0 : ℝ) s) d))
+      = TorchLean.TensorPack.add (α := ℝ) u ((TapeNodes.sub (Γ := Γ') (s := s) a b).vjp w d) := by
   apply flattenCtx_inj
-  have hneg : toVecT (t := subSpec (fill (0 : ℝ) s) d) = - toVecT (t := d) := by
-    rw [toVecT_subSpec, toVecT_fill_zero, zero_sub]
-  show flattenCtx (Algebra.TList.add (α := ℝ)
-        (Algebra.TList.add (α := ℝ) u (TList.single a d))
-        (TList.single b (subSpec (fill (0 : ℝ) s) d)))
-      = flattenCtx (Algebra.TList.add (α := ℝ) u
-          (unflattenCtx (CtxVec.single a (toVecT (t := d)) - CtxVec.single b (toVecT (t := d)))))
+  have hneg : tensorToVec (t := subSpec (fill (0 : ℝ) s) d) = - tensorToVec (t := d) := by
+    rw [tensorToVec_subSpec, tensorToVec_fill_zero, zero_sub]
+  show flattenCtx (TorchLean.TensorPack.add (α := ℝ)
+        (TorchLean.TensorPack.add (α := ℝ) u (TensorPack.single a d))
+        (TensorPack.single b (subSpec (fill (0 : ℝ) s) d)))
+      = flattenCtx (TorchLean.TensorPack.add (α := ℝ) u
+          (unflattenCtx (CtxVec.single a (tensorToVec (t := d)) - CtxVec.single b (tensorToVec (t := d)))))
   rw [flattenCtx_add, flattenCtx_add, flattenCtx_add, flattenCtx_unflattenCtx,
     flattenCtx_single, flattenCtx_single, hneg, single_neg]
   abel
@@ -317,84 +317,84 @@ theorem sub_vjp_add_eq {Γ' : List Shape} {s : Shape} (a b : Idx Γ' s) (w : TLi
    backward feeds the quotient-rule cotangents — `divSpec δ b` to the left parent and the negated
    `subSpec (fill 0) (mulSpec δ (divSpec a (mulSpec b b)))` to the right parent — matching the
    `b⁻¹` / `-a·(b²)⁻¹` vjp blocks of the P node `TapeNodes.div`.  The extra fact is the pointwise
-   `toVecT_divSpec_apply` (vectorization divides coordinatewise); the accounting is then `ring`
+   `tensorToVec_divSpec_apply` (vectorization divides coordinatewise); the accounting is then `ring`
    over ℝ (unconditional under the totalized `0⁻¹ = 0` division).
    ------------------------------------------------------------------------------------------- -/
 
 /-- Pointwise: vectorization intertwines `divSpec` with coordinatewise division (the `divSpec`
-    analog of the pointwise reading of `toVecT_subSpec`, via `toVecT_map2Spec_apply`). -/
-theorem toVecT_divSpec_apply {s : Shape} (a b : Tensor ℝ s) (i : Fin (Spec.Shape.size s)) :
-    toVecT (t := divSpec a b) i = toVecT (t := a) i / toVecT (t := b) i := by
+    analog of the pointwise reading of `tensorToVec_subSpec`, via `tensorToVec_map2Spec_apply`). -/
+theorem tensorToVec_divSpec_apply {s : Shape} (a b : Tensor ℝ s) (i : Fin (Spec.Shape.size s)) :
+    tensorToVec (t := divSpec a b) i = tensorToVec (t := a) i / tensorToVec (t := b) i := by
   simp only [divSpec]
-  exact toVecT_map2Spec_apply (f := (· / ·)) a b i
+  exact tensorToVec_map2Spec_apply (f := (· / ·)) a b i
 
 /-- The eager `div` forward value is the P `div` node's forward map. -/
-theorem div_forward_eq {Γ' : List Shape} {s : Shape} (a b : Idx Γ' s) (w : TList Γ') :
+theorem div_forward_eq {Γ' : List Shape} {s : Shape} (a b : Idx Γ' s) (w : TorchLean.TensorPack ℝ Γ') :
     (TapeNodes.div (Γ := Γ') (s := s) a b).forward w = divSpec (getIdx w a) (getIdx w b) := by
   have hvec : vecOfFun (n := Spec.Shape.size s)
-        (fun i => toVecT (t := getIdx w a) i / toVecT (t := getIdx w b) i)
-      = toVecT (t := divSpec (getIdx w a) (getIdx w b)) := by
+        (fun i => tensorToVec (t := getIdx w a) i / tensorToVec (t := getIdx w b) i)
+      = tensorToVec (t := divSpec (getIdx w a) (getIdx w b)) := by
     calc vecOfFun (n := Spec.Shape.size s)
-          (fun i => toVecT (t := getIdx w a) i / toVecT (t := getIdx w b) i)
-        = vecOfFun (fun i => toVecT (t := divSpec (getIdx w a) (getIdx w b)) i) :=
+          (fun i => tensorToVec (t := getIdx w a) i / tensorToVec (t := getIdx w b) i)
+        = vecOfFun (fun i => tensorToVec (t := divSpec (getIdx w a) (getIdx w b)) i) :=
           congrArg (vecOfFun (n := Spec.Shape.size s))
-            (funext fun i => (toVecT_divSpec_apply (getIdx w a) (getIdx w b) i).symm)
-      _ = toVecT (t := divSpec (getIdx w a) (getIdx w b)) := vecOfFun_eta _
-  show ofVecT (vecOfFun (n := Spec.Shape.size s)
+            (funext fun i => (tensorToVec_divSpec_apply (getIdx w a) (getIdx w b) i).symm)
+      _ = tensorToVec (t := divSpec (getIdx w a) (getIdx w b)) := vecOfFun_eta _
+  show vecToTensor (vecOfFun (n := Spec.Shape.size s)
         (fun i => CtxVec.get a (flattenCtx w) i / CtxVec.get b (flattenCtx w) i))
       = divSpec (getIdx w a) (getIdx w b)
-  rw [getIdx_flattenCtx, getIdx_flattenCtx, hvec, ofVecT_toVecT]
+  rw [getIdx_flattenCtx, getIdx_flattenCtx, hvec, vecToTensor_tensorToVec]
 
 /-- **The `div` accounting identity**: accumulating the eager sparse quotient-rule contributions —
     `divSpec δ b` to `a`, the negated `subSpec (fill 0) (mulSpec δ (divSpec a (mulSpec b b)))` to
     `b` — is accumulating the compiled node's dense vjp context. -/
-theorem div_vjp_add_eq {Γ' : List Shape} {s : Shape} (a b : Idx Γ' s) (w : TList Γ')
-    (d : Tensor ℝ s) (u : TList Γ') :
-    Algebra.TList.add (α := ℝ)
-        (Algebra.TList.add (α := ℝ) u (TList.single a (divSpec d (getIdx w b))))
-        (TList.single b (subSpec (fill (0 : ℝ) s)
+theorem div_vjp_add_eq {Γ' : List Shape} {s : Shape} (a b : Idx Γ' s) (w : TorchLean.TensorPack ℝ Γ')
+    (d : Tensor ℝ s) (u : TorchLean.TensorPack ℝ Γ') :
+    TorchLean.TensorPack.add (α := ℝ)
+        (TorchLean.TensorPack.add (α := ℝ) u (TensorPack.single a (divSpec d (getIdx w b))))
+        (TensorPack.single b (subSpec (fill (0 : ℝ) s)
           (mulSpec d (divSpec (getIdx w a) (mulSpec (getIdx w b) (getIdx w b))))))
-      = Algebra.TList.add (α := ℝ) u ((TapeNodes.div (Γ := Γ') (s := s) a b).vjp w d) := by
+      = TorchLean.TensorPack.add (α := ℝ) u ((TapeNodes.div (Γ := Γ') (s := s) a b).vjp w d) := by
   apply flattenCtx_inj
   have hA : vecOfFun (n := Spec.Shape.size s)
-        (fun i => toVecT (t := d) i * (CtxVec.get b (flattenCtx w) i)⁻¹)
-      = toVecT (t := divSpec d (getIdx w b)) := by
+        (fun i => tensorToVec (t := d) i * (CtxVec.get b (flattenCtx w) i)⁻¹)
+      = tensorToVec (t := divSpec d (getIdx w b)) := by
     rw [getIdx_flattenCtx]
     calc vecOfFun (n := Spec.Shape.size s)
-          (fun i => toVecT (t := d) i * (toVecT (t := getIdx w b) i)⁻¹)
-        = vecOfFun (fun i => toVecT (t := divSpec d (getIdx w b)) i) :=
+          (fun i => tensorToVec (t := d) i * (tensorToVec (t := getIdx w b) i)⁻¹)
+        = vecOfFun (fun i => tensorToVec (t := divSpec d (getIdx w b)) i) :=
           congrArg (vecOfFun (n := Spec.Shape.size s)) (funext fun i => by
-            rw [toVecT_divSpec_apply]
+            rw [tensorToVec_divSpec_apply]
             ring)
-      _ = toVecT (t := divSpec d (getIdx w b)) := vecOfFun_eta _
+      _ = tensorToVec (t := divSpec d (getIdx w b)) := vecOfFun_eta _
   have hB : vecOfFun (n := Spec.Shape.size s)
-        (fun i => toVecT (t := d) i *
+        (fun i => tensorToVec (t := d) i *
           (-(CtxVec.get a (flattenCtx w) i) * ((CtxVec.get b (flattenCtx w) i) ^ 2)⁻¹))
-      = toVecT (t := subSpec (fill (0 : ℝ) s)
+      = tensorToVec (t := subSpec (fill (0 : ℝ) s)
           (mulSpec d (divSpec (getIdx w a) (mulSpec (getIdx w b) (getIdx w b))))) := by
     rw [getIdx_flattenCtx, getIdx_flattenCtx]
     calc vecOfFun (n := Spec.Shape.size s)
-          (fun i => toVecT (t := d) i *
-            (-(toVecT (t := getIdx w a) i) * ((toVecT (t := getIdx w b) i) ^ 2)⁻¹))
-        = vecOfFun (fun i => toVecT (t := subSpec (fill (0 : ℝ) s)
+          (fun i => tensorToVec (t := d) i *
+            (-(tensorToVec (t := getIdx w a) i) * ((tensorToVec (t := getIdx w b) i) ^ 2)⁻¹))
+        = vecOfFun (fun i => tensorToVec (t := subSpec (fill (0 : ℝ) s)
             (mulSpec d (divSpec (getIdx w a) (mulSpec (getIdx w b) (getIdx w b))))) i) :=
           congrArg (vecOfFun (n := Spec.Shape.size s)) (funext fun i => by
-            simp only [subSpec, mulSpec, toVecT_map2Spec_apply, toVecT_divSpec_apply,
-              toVecT_fill_apply]
+            simp only [subSpec, mulSpec, tensorToVec_map2Spec_apply, tensorToVec_divSpec_apply,
+              tensorToVec_fill_apply]
             ring)
-      _ = toVecT (t := subSpec (fill (0 : ℝ) s)
+      _ = tensorToVec (t := subSpec (fill (0 : ℝ) s)
             (mulSpec d (divSpec (getIdx w a) (mulSpec (getIdx w b) (getIdx w b))))) :=
           vecOfFun_eta _
-  show flattenCtx (Algebra.TList.add (α := ℝ)
-        (Algebra.TList.add (α := ℝ) u (TList.single a (divSpec d (getIdx w b))))
-        (TList.single b (subSpec (fill (0 : ℝ) s)
+  show flattenCtx (TorchLean.TensorPack.add (α := ℝ)
+        (TorchLean.TensorPack.add (α := ℝ) u (TensorPack.single a (divSpec d (getIdx w b))))
+        (TensorPack.single b (subSpec (fill (0 : ℝ) s)
           (mulSpec d (divSpec (getIdx w a) (mulSpec (getIdx w b) (getIdx w b)))))))
-      = flattenCtx (Algebra.TList.add (α := ℝ) u
+      = flattenCtx (TorchLean.TensorPack.add (α := ℝ) u
           (unflattenCtx
             (CtxVec.single a (vecOfFun (n := Spec.Shape.size s)
-                (fun i => toVecT (t := d) i * (CtxVec.get b (flattenCtx w) i)⁻¹))
+                (fun i => tensorToVec (t := d) i * (CtxVec.get b (flattenCtx w) i)⁻¹))
               + CtxVec.single b (vecOfFun (n := Spec.Shape.size s)
-                (fun i => toVecT (t := d) i *
+                (fun i => tensorToVec (t := d) i *
                   (-(CtxVec.get a (flattenCtx w) i) * ((CtxVec.get b (flattenCtx w) i) ^ 2)⁻¹))))))
   rw [flattenCtx_add, flattenCtx_add, flattenCtx_add, flattenCtx_unflattenCtx,
     flattenCtx_single, flattenCtx_single, hA, hB, add_assoc]
@@ -403,51 +403,51 @@ theorem div_vjp_add_eq {Γ' : List Shape} {s : Shape} (a b : Idx Γ' s) (w : TLi
    The `scale` op (first *unary* crank): one parent, one contribution `scaleSpec δ c`.  This is the
    one-parent variant of the machine — the whole `Arithmetic`/`Elementwise` unary family (`scale`,
    and every `TapeNodes.elemwise`-based activation) has this shape.  The extra vectorization fact is
-   that `toVecT` intertwines `scaleSpec` with the scalar action `c • ·`.
+   that `tensorToVec` intertwines `scaleSpec` with the scalar action `c • ·`.
    ------------------------------------------------------------------------------------------- -/
 
 /-- Pointwise: `mapSpec f` acts coordinatewise under vectorization (unary analog of
-    `toVecT_map2Spec_apply`). -/
-theorem toVecT_mapSpec_apply {f : ℝ → ℝ} :
+    `tensorToVec_map2Spec_apply`). -/
+theorem tensorToVec_mapSpec_apply {f : ℝ → ℝ} :
     ∀ {s : Shape} (t : Tensor ℝ s) (i : Fin (Spec.Shape.size s)),
-      toVecT (t := mapSpec f t) i = f (toVecT (t := t) i)
+      tensorToVec (t := mapSpec f t) i = f (tensorToVec (t := t) i)
   | .scalar, .scalar x, i => by
-      simp only [mapSpec]
-      rw [toVecT_scalar_apply, toVecT_scalar_apply]
+      have hstep : mapSpec f (Tensor.scalar x) = Tensor.scalar (f x) := rfl
+      rw [hstep, tensorToVec_scalar_apply, tensorToVec_scalar_apply]
   | .dim n s, .dim fa, i => by
       by_cases hm : Spec.Shape.size s = 0
       · exact absurd i.isLt (by simp [Spec.Shape.size, hm])
       · have hmpos : 0 < Spec.Shape.size s := Nat.pos_of_ne_zero hm
         obtain ⟨p, rfl⟩ := finProdFinEquiv.surjective i
         have hstep : mapSpec f (Tensor.dim fa) = Tensor.dim (fun j => mapSpec f (fa j)) := rfl
-        rw [hstep, toVecT_dim_apply hmpos, toVecT_dim_apply hmpos]
-        exact toVecT_mapSpec_apply (fa p.1) p.2
+        rw [hstep, tensorToVec_dim_apply hmpos, tensorToVec_dim_apply hmpos]
+        exact tensorToVec_mapSpec_apply (fa p.1) p.2
 
 /-- Vectorization intertwines `scaleSpec` (a `mapSpec (· * c)`) with the scalar action `c • ·`. -/
-theorem toVecT_scaleSpec {s : Shape} (t : Tensor ℝ s) (c : ℝ) :
-    toVecT (t := scaleSpec t c) = c • toVecT (t := t) := by
+theorem tensorToVec_scaleSpec {s : Shape} (t : Tensor ℝ s) (c : ℝ) :
+    tensorToVec (t := scaleSpec t c) = c • tensorToVec (t := t) := by
   ext i
-  have h : toVecT (t := scaleSpec t c) i = toVecT (t := t) i * c := by
-    simpa [scaleSpec] using toVecT_mapSpec_apply (f := fun x => x * c) t i
+  have h : tensorToVec (t := scaleSpec t c) i = tensorToVec (t := t) i * c := by
+    simpa [scaleSpec] using tensorToVec_mapSpec_apply (f := fun x => x * c) t i
   rw [h, PiLp.smul_apply, smul_eq_mul, mul_comm]
 
 /-- The eager `scale` forward value is the P `scale` node's forward map. -/
-theorem scale_forward_eq {Γ' : List Shape} {s : Shape} (idx : Idx Γ' s) (c : ℝ) (w : TList Γ') :
+theorem scale_forward_eq {Γ' : List Shape} {s : Shape} (idx : Idx Γ' s) (c : ℝ) (w : TorchLean.TensorPack ℝ Γ') :
     (TapeNodes.scale (Γ := Γ') (s := s) idx c).forward w = scaleSpec (getIdx w idx) c := by
-  show ofVecT (c • CtxVec.get idx (flattenCtx w)) = scaleSpec (getIdx w idx) c
-  rw [getIdx_flattenCtx, ← toVecT_scaleSpec, ofVecT_toVecT]
+  show vecToTensor (c • CtxVec.get idx (flattenCtx w)) = scaleSpec (getIdx w idx) c
+  rw [getIdx_flattenCtx, ← tensorToVec_scaleSpec, vecToTensor_tensorToVec]
 
 /-- **The `scale` accounting identity**: accumulating the single eager contribution `scaleSpec δ c`
     at the parent slot is accumulating the compiled node's dense vjp context. -/
-theorem scale_vjp_add_eq {Γ' : List Shape} {s : Shape} (idx : Idx Γ' s) (c : ℝ) (w : TList Γ')
-    (d : Tensor ℝ s) (u : TList Γ') :
-    Algebra.TList.add (α := ℝ) u (TList.single idx (scaleSpec d c))
-      = Algebra.TList.add (α := ℝ) u ((TapeNodes.scale (Γ := Γ') (s := s) idx c).vjp w d) := by
+theorem scale_vjp_add_eq {Γ' : List Shape} {s : Shape} (idx : Idx Γ' s) (c : ℝ) (w : TorchLean.TensorPack ℝ Γ')
+    (d : Tensor ℝ s) (u : TorchLean.TensorPack ℝ Γ') :
+    TorchLean.TensorPack.add (α := ℝ) u (TensorPack.single idx (scaleSpec d c))
+      = TorchLean.TensorPack.add (α := ℝ) u ((TapeNodes.scale (Γ := Γ') (s := s) idx c).vjp w d) := by
   apply flattenCtx_inj
-  show flattenCtx (Algebra.TList.add (α := ℝ) u (TList.single idx (scaleSpec d c)))
-      = flattenCtx (Algebra.TList.add (α := ℝ) u
-          (unflattenCtx (CtxVec.single idx (c • toVecT (t := d)))))
-  rw [flattenCtx_add, flattenCtx_add, flattenCtx_unflattenCtx, flattenCtx_single, toVecT_scaleSpec]
+  show flattenCtx (TorchLean.TensorPack.add (α := ℝ) u (TensorPack.single idx (scaleSpec d c)))
+      = flattenCtx (TorchLean.TensorPack.add (α := ℝ) u
+          (unflattenCtx (CtxVec.single idx (c • tensorToVec (t := d)))))
+  rw [flattenCtx_add, flattenCtx_add, flattenCtx_unflattenCtx, flattenCtx_single, tensorToVec_scaleSpec]
 
 /- -------------------------------------------------------------------------------------------
    The elementwise family (`TapeNodes.elemwise idx f f'`), generic in the scalar map `f` and its
@@ -466,18 +466,18 @@ theorem scale_vjp_add_eq {Γ' : List Shape} {s : Shape} (idx : Idx Γ' s) (c : �
 theorem elemwise_forward_eq {Γ' : List Shape} {s : Shape} (idx : Idx Γ' s) (f f' : ℝ → ℝ)
     (fwdSpec : Tensor ℝ s → Tensor ℝ s)
     (hfs : ∀ (u : Tensor ℝ s) (i : Fin (Spec.Shape.size s)),
-        toVecT (t := fwdSpec u) i = f (toVecT (t := u) i))
-    (w : TList Γ') :
+        tensorToVec (t := fwdSpec u) i = f (tensorToVec (t := u) i))
+    (w : TorchLean.TensorPack ℝ Γ') :
     (TapeNodes.elemwise (Γ := Γ') (s := s) idx f f').forward w = fwdSpec (getIdx w idx) := by
-  have hfwd_vec : toVecT (t := fwdSpec (getIdx w idx))
-      = vecOfFun (n := Spec.Shape.size s) (fun i => f (toVecT (t := getIdx w idx) i)) := by
-    calc toVecT (t := fwdSpec (getIdx w idx))
-        = vecOfFun (fun i => toVecT (t := fwdSpec (getIdx w idx)) i) := (vecOfFun_eta _).symm
-      _ = vecOfFun (fun i => f (toVecT (t := getIdx w idx) i)) :=
+  have hfwd_vec : tensorToVec (t := fwdSpec (getIdx w idx))
+      = vecOfFun (n := Spec.Shape.size s) (fun i => f (tensorToVec (t := getIdx w idx) i)) := by
+    calc tensorToVec (t := fwdSpec (getIdx w idx))
+        = vecOfFun (fun i => tensorToVec (t := fwdSpec (getIdx w idx)) i) := (vecOfFun_eta _).symm
+      _ = vecOfFun (fun i => f (tensorToVec (t := getIdx w idx) i)) :=
           congrArg (vecOfFun (n := Spec.Shape.size s)) (funext fun i => hfs _ i)
-  show ofVecT (vecOfFun (n := Spec.Shape.size s)
+  show vecToTensor (vecOfFun (n := Spec.Shape.size s)
         (fun i => f (CtxVec.get idx (flattenCtx w) i))) = fwdSpec (getIdx w idx)
-  rw [getIdx_flattenCtx, ← hfwd_vec, ofVecT_toVecT]
+  rw [getIdx_flattenCtx, ← hfwd_vec, vecToTensor_tensorToVec]
 
 /-- **The elementwise accounting identity**: accumulating the single eager contribution
     `mulSpec (f'Spec x) δ` is accumulating the compiled `elemwise` node's dense vjp context,
@@ -485,77 +485,93 @@ theorem elemwise_forward_eq {Γ' : List Shape} {s : Shape} (idx : Idx Γ' s) (f 
 theorem elemwise_vjp_add_eq {Γ' : List Shape} {s : Shape} (idx : Idx Γ' s) (f f' : ℝ → ℝ)
     (f'Spec : Tensor ℝ s → Tensor ℝ s)
     (hf's : ∀ (u : Tensor ℝ s) (i : Fin (Spec.Shape.size s)),
-        toVecT (t := f'Spec u) i = f' (toVecT (t := u) i))
-    (w : TList Γ') (d : Tensor ℝ s) (u : TList Γ') :
-    Algebra.TList.add (α := ℝ) u (TList.single idx (mulSpec (f'Spec (getIdx w idx)) d))
-      = Algebra.TList.add (α := ℝ) u ((TapeNodes.elemwise (Γ := Γ') (s := s) idx f f').vjp w d) := by
+        tensorToVec (t := f'Spec u) i = f' (tensorToVec (t := u) i))
+    (w : TorchLean.TensorPack ℝ Γ') (d : Tensor ℝ s) (u : TorchLean.TensorPack ℝ Γ') :
+    TorchLean.TensorPack.add (α := ℝ) u (TensorPack.single idx (mulSpec (f'Spec (getIdx w idx)) d))
+      = TorchLean.TensorPack.add (α := ℝ) u ((TapeNodes.elemwise (Γ := Γ') (s := s) idx f f').vjp w d) := by
   apply flattenCtx_inj
-  have hcontrib : toVecT (t := mulSpec (f'Spec (getIdx w idx)) d)
+  have hcontrib : tensorToVec (t := mulSpec (f'Spec (getIdx w idx)) d)
       = vecOfFun (n := Spec.Shape.size s)
-          (fun i => toVecT (t := d) i * f' (toVecT (t := getIdx w idx) i)) := by
-    calc toVecT (t := mulSpec (f'Spec (getIdx w idx)) d)
-        = vecOfFun (fun i => toVecT (t := mulSpec (f'Spec (getIdx w idx)) d) i) := (vecOfFun_eta _).symm
-      _ = vecOfFun (fun i => toVecT (t := d) i * f' (toVecT (t := getIdx w idx) i)) :=
+          (fun i => tensorToVec (t := d) i * f' (tensorToVec (t := getIdx w idx) i)) := by
+    calc tensorToVec (t := mulSpec (f'Spec (getIdx w idx)) d)
+        = vecOfFun (fun i => tensorToVec (t := mulSpec (f'Spec (getIdx w idx)) d) i) := (vecOfFun_eta _).symm
+      _ = vecOfFun (fun i => tensorToVec (t := d) i * f' (tensorToVec (t := getIdx w idx) i)) :=
           congrArg (vecOfFun (n := Spec.Shape.size s)) (funext fun i => by
-            simp only [mulSpec]; rw [toVecT_map2Spec_apply (f := (· * ·)), hf's]; ring)
-  show flattenCtx (Algebra.TList.add (α := ℝ) u (TList.single idx (mulSpec (f'Spec (getIdx w idx)) d)))
-      = flattenCtx (Algebra.TList.add (α := ℝ) u
+            simp only [mulSpec]; rw [tensorToVec_map2Spec_apply (f := (· * ·)), hf's]; ring)
+  show flattenCtx (TorchLean.TensorPack.add (α := ℝ) u (TensorPack.single idx (mulSpec (f'Spec (getIdx w idx)) d)))
+      = flattenCtx (TorchLean.TensorPack.add (α := ℝ) u
           (unflattenCtx (CtxVec.single idx (vecOfFun (n := Spec.Shape.size s)
-            (fun i => toVecT (t := d) i * f' (CtxVec.get idx (flattenCtx w) i))))))
+            (fun i => tensorToVec (t := d) i * f' (CtxVec.get idx (flattenCtx w) i))))))
   rw [flattenCtx_add, flattenCtx_add, flattenCtx_unflattenCtx, flattenCtx_single, hcontrib,
     getIdx_flattenCtx]
 
 /- ===========================================================================================
    §C.  The eager sparse accumulate: one `addGradAll` call at slot `c` performs the one-hot
         context addition.  (The compiled dense list is handled by the upstream bridge
-        `foldlM_addGradAll_toIndexedAnyList_eq_add`; this is its two-line sparse counterpart.)
+        `foldlM_addGradAll_toIndexedShapeErasedArray_eq_add`; this is its two-line sparse counterpart.)
    =========================================================================================== -/
+
+/-- The shape-erased *list* view of a typed context.  Upstream carries only the `Array` form
+(`toShapeErasedArray`); the inductions below are stated on its list reading, which has the
+`cons` computation rule they recurse on. -/
+def toAnyList : {Γ' : List Shape} → TorchLean.TensorPack ℝ Γ' → List Any
+  | [], .nil => []
+  | _ :: _, .cons x xs => mkAny x :: toAnyList xs
+
+/-- The list view is the `toList` of the upstream array view. -/
+@[simp] theorem toList_toShapeErasedArray :
+    ∀ {Γ' : List Shape} (w : TorchLean.TensorPack ℝ Γ'),
+      (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) (ss := Γ') w).toList = toAnyList w
+  | [], .nil => rfl
+  | _ :: Γ', .cons x xs => by
+      simp [TorchLean.TensorPack.toShapeErasedArray, toAnyList, mkAny,
+        toList_toShapeErasedArray xs]
 
 /-- List-level: adding a one-hot context is a `List.set` at its slot. -/
 theorem toAnyList_add_single :
-    ∀ {Γ' : List Shape} {s : Shape} (w : TList Γ') (c : Idx Γ' s) (u : Tensor ℝ s),
-      Algebra.TList.toAnyList (α := ℝ)
-          (Algebra.TList.add (α := ℝ) w (TList.single c u))
-        = (Algebra.TList.toAnyList (α := ℝ) w).set c.i.val
-            (mkAny (addSpec (Algebra.TList.get (α := ℝ) w c.i) (Tensor.castShape u c.h.symm)))
+    ∀ {Γ' : List Shape} {s : Shape} (w : TorchLean.TensorPack ℝ Γ') (c : Idx Γ' s) (u : Tensor ℝ s),
+      toAnyList
+          (TorchLean.TensorPack.add (α := ℝ) w (TensorPack.single c u))
+        = (toAnyList w).set c.i.val
+            (mkAny (addSpec (TorchLean.TensorPack.get (α := ℝ) w c.i) (Tensor.castShape u c.h.symm)))
   | s0 :: Γ', s, .cons x xs, ⟨⟨0, h0⟩, h⟩, u => by
-      show Algebra.TList.toAnyList (α := ℝ)
-            (TList.cons (addSpec x (Tensor.castShape u h.symm))
-              (Algebra.TList.add (α := ℝ) xs TList.zero))
-          = (mkAny x :: Algebra.TList.toAnyList (α := ℝ) xs).set 0
+      show toAnyList
+            (TensorPack.cons (addSpec x (Tensor.castShape u h.symm))
+              (TorchLean.TensorPack.add (α := ℝ) xs TensorPack.zero))
+          = (mkAny x :: toAnyList xs).set 0
               (mkAny (addSpec x (Tensor.castShape u h.symm)))
       rw [tlist_add_zero]
       rfl
   | s0 :: Γ', s, .cons x xs, ⟨⟨Nat.succ j, hj⟩, h⟩, u => by
-      show Algebra.TList.toAnyList (α := ℝ)
-            (TList.cons (addSpec x (fill (0 : ℝ) s0))
-              (Algebra.TList.add (α := ℝ) xs
-                (TList.single ⟨⟨j, Nat.lt_of_succ_lt_succ hj⟩, by simpa using h⟩ u)))
-          = (mkAny x :: Algebra.TList.toAnyList (α := ℝ) xs).set (j + 1)
+      show toAnyList
+            (TensorPack.cons (addSpec x (fill (0 : ℝ) s0))
+              (TorchLean.TensorPack.add (α := ℝ) xs
+                (TensorPack.single ⟨⟨j, Nat.lt_of_succ_lt_succ hj⟩, by simpa using h⟩ u)))
+          = (mkAny x :: toAnyList xs).set (j + 1)
               (mkAny (addSpec
-                (Algebra.TList.get (α := ℝ) xs ⟨j, Nat.lt_of_succ_lt_succ hj⟩)
+                (TorchLean.TensorPack.get (α := ℝ) xs ⟨j, Nat.lt_of_succ_lt_succ hj⟩)
                 (Tensor.castShape u (by simpa using h :
                   Γ'.get ⟨j, Nat.lt_of_succ_lt_succ hj⟩ = s).symm)))
       rw [addSpec_fill_zero]
-      show mkAny x :: Algebra.TList.toAnyList (α := ℝ)
-            (Algebra.TList.add (α := ℝ) xs
-              (TList.single ⟨⟨j, Nat.lt_of_succ_lt_succ hj⟩, by simpa using h⟩ u))
-          = mkAny x :: (Algebra.TList.toAnyList (α := ℝ) xs).set j
+      show mkAny x :: toAnyList
+            (TorchLean.TensorPack.add (α := ℝ) xs
+              (TensorPack.single ⟨⟨j, Nat.lt_of_succ_lt_succ hj⟩, by simpa using h⟩ u))
+          = mkAny x :: (toAnyList xs).set j
               (mkAny (addSpec
-                (Algebra.TList.get (α := ℝ) xs ⟨j, Nat.lt_of_succ_lt_succ hj⟩)
+                (TorchLean.TensorPack.get (α := ℝ) xs ⟨j, Nat.lt_of_succ_lt_succ hj⟩)
                 (Tensor.castShape u (by simpa using h :
                   Γ'.get ⟨j, Nat.lt_of_succ_lt_succ hj⟩ = s).symm)))
       rw [toAnyList_add_single xs ⟨⟨j, Nat.lt_of_succ_lt_succ hj⟩, by simpa using h⟩ u]
 
 /-- Array-level form of `toAnyList_add_single`. -/
-theorem toAnyArray_add_single {Γ' : List Shape} {s : Shape} (w : TList Γ') (c : Idx Γ' s)
-    (u : Tensor ℝ s) (hc : c.i.val < (Algebra.TList.toAnyArray (α := ℝ) w).size) :
-    Algebra.TList.toAnyArray (α := ℝ) (Algebra.TList.add (α := ℝ) w (TList.single c u))
-      = (Algebra.TList.toAnyArray (α := ℝ) w).set c.i.val
-          (mkAny (addSpec (Algebra.TList.get (α := ℝ) w c.i) (Tensor.castShape u c.h.symm)))
+theorem toAnyArray_add_single {Γ' : List Shape} {s : Shape} (w : TorchLean.TensorPack ℝ Γ') (c : Idx Γ' s)
+    (u : Tensor ℝ s) (hc : c.i.val < (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) w).size) :
+    TorchLean.TensorPack.toShapeErasedArray (α := ℝ) (TorchLean.TensorPack.add (α := ℝ) w (TensorPack.single c u))
+      = (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) w).set c.i.val
+          (mkAny (addSpec (TorchLean.TensorPack.get (α := ℝ) w c.i) (Tensor.castShape u c.h.symm)))
           hc := by
   apply Array.ext'
-  simp [Algebra.TList.toAnyArray, toAnyList_add_single]
+  simp [TorchLean.TensorPack.toShapeErasedArray, toAnyList_add_single]
 
 /-- **The sparse accumulate**: one `addGradAll` at slot `c` on an erased context performs the
     one-hot context addition — provided the tape's node at `c` is live and carries the slot's
@@ -563,12 +579,12 @@ theorem toAnyArray_add_single {Γ' : List Shape} {s : Shape} (w : TList Γ') (c 
 theorem addGradAll_toAnyArray_single {Γ' : List Shape} {s : Shape} (t : RTape)
     (c : Idx Γ' s) (u : Tensor ℝ s) (node : RNode)
     (hn : t.getNode? c.i.val = some node)
-    (hrg : node.requires_grad = true)
-    (hs : node.value.s = Γ'.get c.i) (w : TList Γ') :
+    (hrg : node.requiresGrad = true)
+    (hs : node.value.shape = Γ'.get c.i) (w : TorchLean.TensorPack ℝ Γ') :
     Runtime.Autograd.Tape.addGradAll (t := t)
-        (Algebra.TList.toAnyArray (α := ℝ) w) c.i.val (mkAny u)
-      = .ok (Algebra.TList.toAnyArray (α := ℝ)
-          (Algebra.TList.add (α := ℝ) w (TList.single c u))) := by
+        (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) w) c.i.val (mkAny u)
+      = .ok (TorchLean.TensorPack.toShapeErasedArray (α := ℝ)
+          (TorchLean.TensorPack.add (α := ℝ) w (TensorPack.single c u))) := by
   obtain ⟨i, h⟩ := c
   subst h
   -- expose the node's stored shape as a variable and substitute it away
@@ -576,14 +592,14 @@ theorem addGradAll_toAnyArray_single {Γ' : List Shape} {s : Shape} (t : RTape)
   have hs' : vs = Γ'.get i := hs
   subst hs'
   have hrg' : rg = true := hrg
-  have hlt : i.val < (Algebra.TList.toAnyArray (α := ℝ) w).size := by simp
-  have harr : (Algebra.TList.toAnyArray (α := ℝ) w)[i.val]'hlt
-      = mkAny (Algebra.TList.get (α := ℝ) w i) := by
-    simpa using Algebra.TList.get_toAnyArray (α := ℝ) (ss := Γ') w i
+  have hlt : i.val < (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) w).size := by simp
+  have harr : (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) w)[i.val]'hlt
+      = mkAny (TorchLean.TensorPack.get (α := ℝ) w i) := by
+    simpa using TorchLean.TensorPack.get_toShapeErasedArray (α := ℝ) (ss := Γ') w i
   rw [toAnyArray_add_single (hc := hlt)]
   simp [Runtime.Autograd.Tape.addGradAll, hn, hrg', harr,
-    Runtime.Autograd.AnyTensor.add, Runtime.Autograd.AnyTensor.materialize, mkAny,
-    Runtime.Autograd.AnyTensor.mk, bind, Except.bind, pure, Except.pure]
+    Runtime.Autograd.SomeTensor.add, Spec.SomeTensor.materialize, Spec.SomeTensor.cast, mkAny,
+    Spec.SomeTensor.ofTensor, bind, Except.bind, pure, Except.pure]
 
 /- ===========================================================================================
    §D.  Push-invariance: the reverse pass over an extended tape, on an extended accumulator,
@@ -639,28 +655,28 @@ theorem addGradAll_push (t : RTape) (nd : RNode) (acc : Array Any) (y : Any)
     exact hnode
   set node := t.nodes[pid]'hpid with hnode_def
   have hpacc : pid < acc.size := by rw [hacc]; exact hpid
-  by_cases hreq : node.requires_grad = false
+  by_cases hreq : node.requiresGrad = false
   · simp [Runtime.Autograd.Tape.addGradAll, hnode, hnode', hreq,
       bind, Except.bind, pure, Except.pure, Except.map]
-  · have hreq' : node.requires_grad = true := by
-      cases hb : node.requires_grad
+  · have hreq' : node.requiresGrad = true := by
+      cases hb : node.requiresGrad
       · exact absurd hb hreq
       · rfl
-    by_cases hshape : pg.s = node.value.s
+    by_cases hshape : pg.shape = node.value.shape
     · have hgets : (acc.push y)[pid]? = some (acc[pid]'hpacc) := Array.getElem?_push_lt hpacc
       have hget : acc[pid]? = some (acc[pid]'hpacc) := Array.getElem?_eq_getElem hpacc
       have hpushed : (acc.push y)[pid]'(by simpa using Nat.lt_succ_of_lt hpacc)
           = acc[pid]'hpacc := Array.getElem_push_lt hpacc
-      by_cases hex : (acc[pid]'hpacc).s = node.value.s
+      by_cases hex : (acc[pid]'hpacc).shape = node.value.shape
       · obtain ⟨summed, hsummed, _⟩ :=
           anyAdd_ok_of_shape_eq
-            ⟨node.value.s, Tensor.castShape (acc[pid]'hpacc).t hex⟩
-            ⟨node.value.s, Tensor.castShape pg.t hshape⟩ rfl
+            ⟨node.value.shape, Tensor.castShape (acc[pid]'hpacc).tensor hex⟩
+            ⟨node.value.shape, Tensor.castShape pg.tensor hshape⟩ rfl
         have hset : (acc.push y).set pid summed (by simpa using Nat.lt_succ_of_lt hpacc)
             = (acc.set pid summed hpacc).push y := by
           rw [Array.set_push]
           simp [hpacc]
-        simp [Runtime.Autograd.Tape.addGradAll, hnode, hnode', hreq', hshape,
+        simp [Runtime.Autograd.Tape.addGradAll, Spec.SomeTensor.cast, hnode, hnode', hreq', hshape,
           hpushed, hex, hpacc, Nat.le_of_lt hpacc, hsummed, hset,
           bind, Except.bind, pure, Except.pure, Except.map]
       · simp [Runtime.Autograd.Tape.addGradAll, hnode, hnode', hreq', hshape, hgets, hget,
@@ -702,11 +718,26 @@ theorem foldContribs_push (t : RTape) (nd : RNode) :
         simp only [Except.map, bind, Except.bind]
         exact hrest
 
+/-- The `Array` form of `foldContribs_push`: `backwardDenseFromStep` folds an `Array` of
+    contributions, which `Array.foldlM_toList` identifies with the list fold above. -/
+theorem foldContribsArray_push (t : RTape) (nd : RNode) (cs : Array (Nat × Any))
+    (acc : Array Any) (y : Any) (hacc : acc.size = t.nodes.size)
+    (hbound : ∀ pc ∈ cs, pc.1 < t.nodes.size) :
+    cs.foldlM
+        (fun acc2 (pid, pg) =>
+          Runtime.Autograd.Tape.addGradAll (t := (t.addNode nd).1) acc2 pid pg) (acc.push y)
+      = (cs.foldlM
+          (fun acc2 (pid, pg) =>
+            Runtime.Autograd.Tape.addGradAll (t := t) acc2 pid pg) acc).map
+          (fun a : Array Any => a.push y) := by
+  have h := foldContribs_push t nd cs.toList acc y hacc (fun q hq => hbound q (by simpa using hq))
+  rwa [Array.foldlM_toList, Array.foldlM_toList] at h
+
 /-- One reverse step on the extended tape, below the old size, restricts to the prefix. -/
 theorem backwardDenseFromStep_push (t : RTape) (nd : RNode) (id : Nat)
     (hid : id < t.nodes.size) (acc : Array Any) (y : Any) (hacc : acc.size = t.nodes.size)
     (hpids : ∀ node : RNode, t.getNode? id = some node →
-      ∀ (dc : Any) (cs : List (Nat × Any)), node.backward dc = .ok cs →
+      ∀ (dc : Any) (cs : Array (Nat × Any)), node.backward dc = .ok cs →
         ∀ pc ∈ cs, pc.1 < t.nodes.size) :
     Runtime.Autograd.Tape.backwardDenseFromStep (t := (t.addNode nd).1) (acc.push y) id
       = (Runtime.Autograd.Tape.backwardDenseFromStep (t := t) acc id).map
@@ -718,34 +749,33 @@ theorem backwardDenseFromStep_push (t : RTape) (nd : RNode) (id : Nat)
     exact hnode
   set node := t.nodes[id]'hid with hnode_def
   have hid_acc : id < acc.size := by rw [hacc]; exact hid
-  by_cases hreq : node.requires_grad = false
-  · simp [Runtime.Autograd.Tape.backwardDenseFromStep, hnode, hnode', hreq,
+  by_cases hreq : node.requiresGrad = false
+  · simp [Runtime.Autograd.Tape.backwardDenseFromStep, Spec.SomeTensor.cast, hnode, hnode', hreq,
       bind, Except.bind, pure, Except.pure, Except.map]
-  · have hreq' : node.requires_grad = true := by
-      cases hb : node.requires_grad
+  · have hreq' : node.requiresGrad = true := by
+      cases hb : node.requiresGrad
       · exact absurd hb hreq
       · rfl
     have hgets : (acc.push y)[id]? = some (acc[id]'hid_acc) := Array.getElem?_push_lt hid_acc
     have hget : acc[id]? = some (acc[id]'hid_acc) := Array.getElem?_eq_getElem hid_acc
-    by_cases hshape : (acc[id]'hid_acc).s = node.value.s
-    · cases hback : node.backward ⟨node.value.s, Tensor.castShape (acc[id]'hid_acc).t hshape⟩ with
+    by_cases hshape : (acc[id]'hid_acc).shape = node.value.shape
+    · cases hback : node.backward ⟨node.value.shape, Tensor.castShape (acc[id]'hid_acc).tensor hshape⟩ with
       | error e =>
-        simp [Runtime.Autograd.Tape.backwardDenseFromStep, hnode, hnode', hreq', hgets, hget,
+        simp [Runtime.Autograd.Tape.backwardDenseFromStep, Spec.SomeTensor.cast, hnode, hnode', hreq', hgets, hget,
           hshape, hback, bind, Except.bind, pure, Except.pure, Except.map]
       | ok cs =>
         have hbound : ∀ pc ∈ cs, pc.1 < t.nodes.size :=
           hpids node hnode _ cs hback
-        have hfold := foldContribs_push t nd cs acc y hacc hbound
-        simp only [Runtime.Autograd.Tape.backwardDenseFromStep, hnode, hnode', hreq', hgets,
-          hget, hshape, hback, bind, Except.bind, pure, Except.pure]
-        exact hfold
-    · simp [Runtime.Autograd.Tape.backwardDenseFromStep, hnode, hnode', hreq', hgets, hget,
+        have hfold := foldContribsArray_push t nd cs acc y hacc hbound
+        simpa [Runtime.Autograd.Tape.backwardDenseFromStep, Spec.SomeTensor.cast, hnode, hnode',
+          hreq', hgets, hget, hshape, hback, bind, Except.bind, pure, Except.pure] using hfold
+    · simp [Runtime.Autograd.Tape.backwardDenseFromStep, Spec.SomeTensor.cast, hnode, hnode', hreq', hgets, hget,
         hshape, bind, Except.bind, pure, Except.pure, Except.map, res_throw_def]
 
 /-- The reverse loop over the first `n` ids of the extended tape restricts to the prefix. -/
 theorem backwardDenseFromLoop_push (t : RTape) (nd : RNode)
     (hpids : ∀ (i : Nat) (node : RNode), t.getNode? i = some node →
-      ∀ (dc : Any) (cs : List (Nat × Any)), node.backward dc = .ok cs →
+      ∀ (dc : Any) (cs : Array (Nat × Any)), node.backward dc = .ok cs →
         ∀ pc ∈ cs, pc.1 < i) :
     ∀ (n : Nat), n ≤ t.nodes.size → ∀ (acc : Array Any) (y : Any),
       acc.size = t.nodes.size →
@@ -806,37 +836,37 @@ theorem backwardDenseFromLoop_push (t : RTape) (nd : RNode)
 /-- **Eager provenance**: `EagerBuilds g x t` says the runtime tape `t` is what the eager
     constructors build for the P-graph `g` at input `x` — `Tape.leaf` folds for the inputs
     (`addLeaves` *is* that fold), then one `Tape.add`/`Tape.mul` call per graph node. -/
-inductive EagerBuilds {Γ : List Shape} : {ss : List Shape} → Graph Γ ss → TList Γ → RTape → Prop
-  | nil (x : TList Γ) :
+inductive EagerBuilds {Γ : List Shape} : {ss : List Shape} → Graph Γ ss → TorchLean.TensorPack ℝ Γ → RTape → Prop
+  | nil (x : TorchLean.TensorPack ℝ Γ) :
       EagerBuilds .nil x
         (Algebra.Graph.addLeaves (α := ℝ) (t := Runtime.Autograd.Tape.empty) x)
-  | add {ss : List Shape} {τ : Shape} {g : Graph Γ ss} {x : TList Γ} {t t' : RTape} {id : Nat}
+  | add {ss : List Shape} {τ : Shape} {g : Graph Γ ss} {x : TorchLean.TensorPack ℝ Γ} {t t' : RTape} {id : Nat}
       (a b : Idx (Γ ++ ss) τ) (hg : EagerBuilds g x t)
       (hop : Runtime.Autograd.Tape.add (α := ℝ) (s := τ) t a.i.val b.i.val = .ok (t', id)) :
       EagerBuilds (.snoc g (TapeNodes.add a b)) x t'
-  | mul {ss : List Shape} {τ : Shape} {g : Graph Γ ss} {x : TList Γ} {t t' : RTape} {id : Nat}
+  | mul {ss : List Shape} {τ : Shape} {g : Graph Γ ss} {x : TorchLean.TensorPack ℝ Γ} {t t' : RTape} {id : Nat}
       (a b : Idx (Γ ++ ss) τ) (hg : EagerBuilds g x t)
       (hop : Runtime.Autograd.Tape.mul (α := ℝ) (s := τ) t a.i.val b.i.val = .ok (t', id)) :
       EagerBuilds (.snoc g (TapeNodes.mul a b)) x t'
-  | sub {ss : List Shape} {τ : Shape} {g : Graph Γ ss} {x : TList Γ} {t t' : RTape} {id : Nat}
+  | sub {ss : List Shape} {τ : Shape} {g : Graph Γ ss} {x : TorchLean.TensorPack ℝ Γ} {t t' : RTape} {id : Nat}
       (a b : Idx (Γ ++ ss) τ) (hg : EagerBuilds g x t)
       (hop : Runtime.Autograd.Tape.sub (α := ℝ) (s := τ) t a.i.val b.i.val = .ok (t', id)) :
       EagerBuilds (.snoc g (TapeNodes.sub a b)) x t'
-  | div {ss : List Shape} {τ : Shape} {g : Graph Γ ss} {x : TList Γ} {t t' : RTape} {id : Nat}
+  | div {ss : List Shape} {τ : Shape} {g : Graph Γ ss} {x : TorchLean.TensorPack ℝ Γ} {t t' : RTape} {id : Nat}
       (a b : Idx (Γ ++ ss) τ) (hg : EagerBuilds g x t)
       (hop : Runtime.Autograd.Tape.div (α := ℝ) (s := τ) t a.i.val b.i.val = .ok (t', id)) :
       EagerBuilds (.snoc g (TapeNodes.div a b)) x t'
-  | scale {ss : List Shape} {τ : Shape} {g : Graph Γ ss} {x : TList Γ} {t t' : RTape} {id : Nat}
+  | scale {ss : List Shape} {τ : Shape} {g : Graph Γ ss} {x : TorchLean.TensorPack ℝ Γ} {t t' : RTape} {id : Nat}
       (idx : Idx (Γ ++ ss) τ) (c : ℝ) (hg : EagerBuilds g x t)
       (hop : Runtime.Autograd.Tape.scale (α := ℝ) (s := τ) t idx.i.val c = .ok (t', id)) :
       EagerBuilds (.snoc g (TapeNodes.scale idx c)) x t'
-  | unary {ss : List Shape} {τ : Shape} {g : Graph Γ ss} {x : TList Γ} {t t' : RTape} {id : Nat}
+  | unary {ss : List Shape} {τ : Shape} {g : Graph Γ ss} {x : TorchLean.TensorPack ℝ Γ} {t t' : RTape} {id : Nat}
       (idx : Idx (Γ ++ ss) τ) (name : String) (f f' : ℝ → ℝ)
       (fwdSpec bwdSpec : Tensor ℝ τ → Tensor ℝ τ)
       (hfs : ∀ (u : Tensor ℝ τ) (i : Fin (Spec.Shape.size τ)),
-          toVecT (t := fwdSpec u) i = f (toVecT (t := u) i))
+          tensorToVec (t := fwdSpec u) i = f (tensorToVec (t := u) i))
       (hf's : ∀ (u : Tensor ℝ τ) (i : Fin (Spec.Shape.size τ)),
-          toVecT (t := bwdSpec u) i = f' (toVecT (t := u) i))
+          tensorToVec (t := bwdSpec u) i = f' (tensorToVec (t := u) i))
       (hg : EagerBuilds g x t)
       (hop : Runtime.Autograd.Tape.unary (α := ℝ) (σ := τ) (τ := τ) t name idx.i.val
           fwdSpec (fun xv d => mulSpec (bwdSpec xv) d) = .ok (t', id)) :
@@ -844,58 +874,58 @@ inductive EagerBuilds {Γ : List Shape} : {ss : List Shape} → Graph Γ ss → 
 
 /-- The eager `add` node literal (what `Tape.add` pushes). -/
 def eagerAddNode {s : Shape} (aId bId : Nat) (aT bT : Tensor ℝ s) : RNode :=
-  { name := some "add", value := Runtime.Autograd.AnyTensor.mk (addSpec aT bT),
-    requires_grad := true, parents := [aId, bId],
+  { name := some "add", value := Spec.SomeTensor.ofTensor (addSpec aT bT),
+    requiresGrad := true, parents := #[aId, bId],
     backward := fun dLdyAny => do
       let dLdy ← Runtime.Autograd.Tape.requireGrad (α := ℝ) (τ := s) dLdyAny
-      pure [(aId, Runtime.Autograd.AnyTensor.mk dLdy),
-        (bId, Runtime.Autograd.AnyTensor.mk dLdy)] }
+      pure #[(aId, Spec.SomeTensor.ofTensor dLdy),
+        (bId, Spec.SomeTensor.ofTensor dLdy)] }
 
 /-- The eager `mul` node literal (what `Tape.mul` pushes). -/
 def eagerMulNode {s : Shape} (aId bId : Nat) (aT bT : Tensor ℝ s) : RNode :=
-  { name := some "mul", value := Runtime.Autograd.AnyTensor.mk (mulSpec aT bT),
-    requires_grad := true, parents := [aId, bId],
+  { name := some "mul", value := Spec.SomeTensor.ofTensor (mulSpec aT bT),
+    requiresGrad := true, parents := #[aId, bId],
     backward := fun dLdyAny => do
       let dLdy ← Runtime.Autograd.Tape.requireGrad (α := ℝ) (τ := s) dLdyAny
       let da : Tensor ℝ s := mulSpec dLdy bT
       let db : Tensor ℝ s := mulSpec dLdy aT
-      pure [(aId, Runtime.Autograd.AnyTensor.mk da),
-        (bId, Runtime.Autograd.AnyTensor.mk db)] }
+      pure #[(aId, Spec.SomeTensor.ofTensor da),
+        (bId, Spec.SomeTensor.ofTensor db)] }
 
 /-- The eager `sub` node literal (what `Tape.sub` pushes — the right parent receives the negated
     cotangent `subSpec (fill 0) dLdy`, mirroring `Engine/Core/Elementwise.lean`). -/
 def eagerSubNode {s : Shape} (aId bId : Nat) (aT bT : Tensor ℝ s) : RNode :=
-  { name := some "sub", value := Runtime.Autograd.AnyTensor.mk (subSpec aT bT),
-    requires_grad := true, parents := [aId, bId],
+  { name := some "sub", value := Spec.SomeTensor.ofTensor (subSpec aT bT),
+    requiresGrad := true, parents := #[aId, bId],
     backward := fun dLdyAny => do
       let dLdy ← Runtime.Autograd.Tape.requireGrad (α := ℝ) (τ := s) dLdyAny
       let neg_dLdy : Tensor ℝ s := subSpec (fill (0 : ℝ) s) dLdy
-      pure [(aId, Runtime.Autograd.AnyTensor.mk dLdy),
-        (bId, Runtime.Autograd.AnyTensor.mk neg_dLdy)] }
+      pure #[(aId, Spec.SomeTensor.ofTensor dLdy),
+        (bId, Spec.SomeTensor.ofTensor neg_dLdy)] }
 
 /-- The eager `div` node literal (what `Tape.div` pushes — the left parent receives the quotient
     cotangent `divSpec dLdy bT`, the right parent the negated
     `subSpec (fill 0) (mulSpec dLdy (divSpec aT (mulSpec bT bT)))`, mirroring
     `Engine/Core/Elementwise.lean`). -/
 def eagerDivNode {s : Shape} (aId bId : Nat) (aT bT : Tensor ℝ s) : RNode :=
-  { name := some "div", value := Runtime.Autograd.AnyTensor.mk (divSpec aT bT),
-    requires_grad := true, parents := [aId, bId],
+  { name := some "div", value := Spec.SomeTensor.ofTensor (divSpec aT bT),
+    requiresGrad := true, parents := #[aId, bId],
     backward := fun dLdyAny => do
       let dLdy ← Runtime.Autograd.Tape.requireGrad (α := ℝ) (τ := s) dLdyAny
       let da : Tensor ℝ s := divSpec dLdy bT
       let dLdyA : Tensor ℝ s := mulSpec dLdy (divSpec aT (mulSpec bT bT))
       let db : Tensor ℝ s := subSpec (fill (0 : ℝ) s) dLdyA
-      pure [(aId, Runtime.Autograd.AnyTensor.mk da),
-        (bId, Runtime.Autograd.AnyTensor.mk db)] }
+      pure #[(aId, Spec.SomeTensor.ofTensor da),
+        (bId, Spec.SomeTensor.ofTensor db)] }
 
 /-- The eager `scale` node literal (what `Tape.scale` pushes — one parent, contribution
     `scaleSpec dLdy c`, mirroring `Engine/Core/Elementwise.lean:113`). -/
 def eagerScaleNode {s : Shape} (xId : Nat) (c : ℝ) (xT : Tensor ℝ s) : RNode :=
-  { name := some "scale", value := Runtime.Autograd.AnyTensor.mk (scaleSpec xT c),
-    requires_grad := true, parents := [xId],
+  { name := some "scale", value := Spec.SomeTensor.ofTensor (scaleSpec xT c),
+    requiresGrad := true, parents := #[xId],
     backward := fun dLdyAny => do
       let dLdy ← Runtime.Autograd.Tape.requireGrad (α := ℝ) (τ := s) dLdyAny
-      pure [(xId, Runtime.Autograd.AnyTensor.mk (scaleSpec dLdy c))] }
+      pure #[(xId, Spec.SomeTensor.ofTensor (scaleSpec dLdy c))] }
 
 /-- Inversion of a successful eager `Tape.add`. -/
 theorem tape_add_inv {s : Shape} {t t' : RTape} {aId bId id : Nat}
@@ -988,11 +1018,11 @@ theorem tape_scale_inv {s : Shape} {t t' : RTape} {xId id : Nat} {c : ℝ}
     and the inline activations of `ActivationsLoss`). -/
 def eagerUnaryNode {s : Shape} (name : String) (xId : Nat)
     (fwdSpec bwdSpec : Tensor ℝ s → Tensor ℝ s) (xT : Tensor ℝ s) : RNode :=
-  { name := some name, value := Runtime.Autograd.AnyTensor.mk (fwdSpec xT),
-    requires_grad := true, parents := [xId],
+  { name := some name, value := Spec.SomeTensor.ofTensor (fwdSpec xT),
+    requiresGrad := true, parents := #[xId],
     backward := fun dLdyAny => do
       let dLdy ← Runtime.Autograd.Tape.requireGrad (α := ℝ) (τ := s) dLdyAny
-      pure [(xId, Runtime.Autograd.AnyTensor.mk (mulSpec (bwdSpec xT) dLdy))] }
+      pure #[(xId, Spec.SomeTensor.ofTensor (mulSpec (bwdSpec xT) dLdy))] }
 
 /-- Inversion of a successful eager `Tape.unary` (elementwise family). -/
 theorem tape_unary_inv {s : Shape} {t t' : RTape} {xId id : Nat} {name : String}
@@ -1011,20 +1041,20 @@ theorem tape_unary_inv {s : Shape} {t t' : RTape} {xId id : Nat} {name : String}
   exact (congrArg Prod.fst hpair).symm
 
 /-- A→P evaluation agreement (the `Δ := Unit` slice evaluates as the P graph). -/
-theorem eval_toAlgebra {Γ : List Shape} {ss : List Shape} (g : Graph Γ ss) (x : TList Γ) :
+theorem eval_toAlgebra {Γ : List Shape} {ss : List Shape} (g : Graph Γ ss) (x : TorchLean.TensorPack ℝ Γ) :
     Algebra.Graph.eval (α := ℝ) (Δ := Unit) g.toAlgebra x () = Graph.eval g x := by
   rw [← Algebra.Graph.toReal_eval]
   simp
 
 /-- The eager base tape is the compiled tape of the empty graph. -/
-theorem addLeaves_eq_lowerGraphToTape_nil {Γ : List Shape} (x : TList Γ) :
+theorem addLeaves_eq_lowerGraphToTape_nil {Γ : List Shape} (x : TorchLean.TensorPack ℝ Γ) :
     Algebra.Graph.addLeaves (α := ℝ) (t := Runtime.Autograd.Tape.empty) x
       = (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := [])
           (Graph.toAlgebra .nil) x ()).1 := rfl
 
 /-- Sizes: an eagerly built tape has one node per context slot. -/
 theorem eagerBuilds_size {Γ : List Shape} :
-    ∀ {ss : List Shape} {g : Graph Γ ss} {x : TList Γ} {t : RTape},
+    ∀ {ss : List Shape} {g : Graph Γ ss} {x : TorchLean.TensorPack ℝ Γ} {t : RTape},
       EagerBuilds g x t → t.nodes.size = (Γ ++ ss).length := by
   intro ss g x t h
   induction h with
@@ -1074,29 +1104,29 @@ theorem eagerBuilds_size {Γ : List Shape} :
     omega
 
 /-- A successful `requireValue`, on a tape whose values erase a context, reads that context. -/
-theorem requireValue_eq_of_values {Γ' : List Shape} {s : Shape} {t : RTape} {ctx : TList Γ'}
+theorem requireValue_eq_of_values {Γ' : List Shape} {s : Shape} {t : RTape} {ctx : TorchLean.TensorPack ℝ Γ'}
     (hvals : t.nodes.map (fun node => node.value)
-      = Algebra.TList.toAnyArray (α := ℝ) (ss := Γ') ctx)
+      = TorchLean.TensorPack.toShapeErasedArray (α := ℝ) (ss := Γ') ctx)
     (c : Idx Γ' s) {v : Tensor ℝ s}
     (h : Runtime.Autograd.Tape.requireValue (α := ℝ) (t := t) (s := s) c.i.val = .ok v) :
     v = getIdx ctx c := by
-  have hval : t.getValue? c.i.val = some (mkAny (Algebra.TList.get (α := ℝ) ctx c.i)) := by
+  have hval : t.getValue? c.i.val = some (mkAny (TorchLean.TensorPack.get (α := ℝ) ctx c.i)) := by
     have : t.getValue? c.i.val = (t.nodes.map (fun node => node.value))[c.i.val]? := by
       simp [Runtime.Autograd.Tape.getValue?, Runtime.Autograd.Tape.getNode?,
         Array.getElem?_map]
     rw [this, hvals, toAnyArray_getElem?]
   obtain ⟨i, hidx⟩ := c
   subst hidx
-  simp [Runtime.Autograd.Tape.requireValue, hval, mkAny, Runtime.Autograd.AnyTensor.mk] at h
+  simp [Runtime.Autograd.Tape.requireValue, hval, mkAny, Spec.SomeTensor.ofTensor] at h
   simp [getIdx]
   exact h.symm
 
 /-- Values: an eagerly built tape stores exactly the erased evaluation context. -/
 theorem eagerBuilds_values {Γ : List Shape} :
-    ∀ {ss : List Shape} {g : Graph Γ ss} {x : TList Γ} {t : RTape},
+    ∀ {ss : List Shape} {g : Graph Γ ss} {x : TorchLean.TensorPack ℝ Γ} {t : RTape},
       EagerBuilds g x t →
       t.nodes.map (fun node => node.value)
-        = Algebra.TList.toAnyArray (α := ℝ) (ss := Γ ++ ss) (Graph.eval g x) := by
+        = TorchLean.TensorPack.toShapeErasedArray (α := ℝ) (ss := Γ ++ ss) (Graph.eval g x) := by
   intro ss g x t h
   induction h with
   | nil x =>
@@ -1109,13 +1139,13 @@ theorem eagerBuilds_values {Γ : List Shape} :
     have hbT : bT = getIdx (Graph.eval g x) b := requireValue_eq_of_values ih b hB
     subst ht'
     rw [addNode_nodes, Array.map_push, ih]
-    show (Algebra.TList.toAnyArray (α := ℝ) (Graph.eval g x)).push
-          (Runtime.Autograd.AnyTensor.mk (addSpec aT bT))
-        = Algebra.TList.toAnyArray (α := ℝ)
-            (Algebra.TList.cast (α := ℝ) (List.append_assoc Γ ss [τ])
-              (Algebra.TList.snoc (α := ℝ) (Graph.eval g x)
+    show (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) (Graph.eval g x)).push
+          (Spec.SomeTensor.ofTensor (addSpec aT bT))
+        = TorchLean.TensorPack.toShapeErasedArray (α := ℝ)
+            (TorchLean.TensorPack.cast (α := ℝ) (List.append_assoc Γ ss [τ])
+              (TorchLean.TensorPack.snoc (α := ℝ) (Graph.eval g x)
                 ((TapeNodes.add a b).forward (Graph.eval g x))))
-    rw [Algebra.TList.toAnyArray_cast, Algebra.TList.toAnyArray_snoc,
+    rw [TorchLean.TensorPack.toShapeErasedArray_cast, TorchLean.TensorPack.toShapeErasedArray_snoc,
       add_forward_eq, haT, hbT]
   | mul a b hg hop ih =>
     rename_i ss τ g x t t' id
@@ -1124,13 +1154,13 @@ theorem eagerBuilds_values {Γ : List Shape} :
     have hbT : bT = getIdx (Graph.eval g x) b := requireValue_eq_of_values ih b hB
     subst ht'
     rw [addNode_nodes, Array.map_push, ih]
-    show (Algebra.TList.toAnyArray (α := ℝ) (Graph.eval g x)).push
-          (Runtime.Autograd.AnyTensor.mk (mulSpec aT bT))
-        = Algebra.TList.toAnyArray (α := ℝ)
-            (Algebra.TList.cast (α := ℝ) (List.append_assoc Γ ss [τ])
-              (Algebra.TList.snoc (α := ℝ) (Graph.eval g x)
+    show (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) (Graph.eval g x)).push
+          (Spec.SomeTensor.ofTensor (mulSpec aT bT))
+        = TorchLean.TensorPack.toShapeErasedArray (α := ℝ)
+            (TorchLean.TensorPack.cast (α := ℝ) (List.append_assoc Γ ss [τ])
+              (TorchLean.TensorPack.snoc (α := ℝ) (Graph.eval g x)
                 ((TapeNodes.mul a b).forward (Graph.eval g x))))
-    rw [Algebra.TList.toAnyArray_cast, Algebra.TList.toAnyArray_snoc,
+    rw [TorchLean.TensorPack.toShapeErasedArray_cast, TorchLean.TensorPack.toShapeErasedArray_snoc,
       mul_forward_eq, haT, hbT]
   | sub a b hg hop ih =>
     rename_i ss τ g x t t' id
@@ -1139,13 +1169,13 @@ theorem eagerBuilds_values {Γ : List Shape} :
     have hbT : bT = getIdx (Graph.eval g x) b := requireValue_eq_of_values ih b hB
     subst ht'
     rw [addNode_nodes, Array.map_push, ih]
-    show (Algebra.TList.toAnyArray (α := ℝ) (Graph.eval g x)).push
-          (Runtime.Autograd.AnyTensor.mk (subSpec aT bT))
-        = Algebra.TList.toAnyArray (α := ℝ)
-            (Algebra.TList.cast (α := ℝ) (List.append_assoc Γ ss [τ])
-              (Algebra.TList.snoc (α := ℝ) (Graph.eval g x)
+    show (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) (Graph.eval g x)).push
+          (Spec.SomeTensor.ofTensor (subSpec aT bT))
+        = TorchLean.TensorPack.toShapeErasedArray (α := ℝ)
+            (TorchLean.TensorPack.cast (α := ℝ) (List.append_assoc Γ ss [τ])
+              (TorchLean.TensorPack.snoc (α := ℝ) (Graph.eval g x)
                 ((TapeNodes.sub a b).forward (Graph.eval g x))))
-    rw [Algebra.TList.toAnyArray_cast, Algebra.TList.toAnyArray_snoc,
+    rw [TorchLean.TensorPack.toShapeErasedArray_cast, TorchLean.TensorPack.toShapeErasedArray_snoc,
       sub_forward_eq, haT, hbT]
   | div a b hg hop ih =>
     rename_i ss τ g x t t' id
@@ -1154,13 +1184,13 @@ theorem eagerBuilds_values {Γ : List Shape} :
     have hbT : bT = getIdx (Graph.eval g x) b := requireValue_eq_of_values ih b hB
     subst ht'
     rw [addNode_nodes, Array.map_push, ih]
-    show (Algebra.TList.toAnyArray (α := ℝ) (Graph.eval g x)).push
-          (Runtime.Autograd.AnyTensor.mk (divSpec aT bT))
-        = Algebra.TList.toAnyArray (α := ℝ)
-            (Algebra.TList.cast (α := ℝ) (List.append_assoc Γ ss [τ])
-              (Algebra.TList.snoc (α := ℝ) (Graph.eval g x)
+    show (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) (Graph.eval g x)).push
+          (Spec.SomeTensor.ofTensor (divSpec aT bT))
+        = TorchLean.TensorPack.toShapeErasedArray (α := ℝ)
+            (TorchLean.TensorPack.cast (α := ℝ) (List.append_assoc Γ ss [τ])
+              (TorchLean.TensorPack.snoc (α := ℝ) (Graph.eval g x)
                 ((TapeNodes.div a b).forward (Graph.eval g x))))
-    rw [Algebra.TList.toAnyArray_cast, Algebra.TList.toAnyArray_snoc,
+    rw [TorchLean.TensorPack.toShapeErasedArray_cast, TorchLean.TensorPack.toShapeErasedArray_snoc,
       div_forward_eq, haT, hbT]
   | scale idx c hg hop ih =>
     rename_i ss τ g x t t' id
@@ -1168,13 +1198,13 @@ theorem eagerBuilds_values {Γ : List Shape} :
     have hxT : xT = getIdx (Graph.eval g x) idx := requireValue_eq_of_values ih idx hX
     subst ht'
     rw [addNode_nodes, Array.map_push, ih]
-    show (Algebra.TList.toAnyArray (α := ℝ) (Graph.eval g x)).push
-          (Runtime.Autograd.AnyTensor.mk (scaleSpec xT c))
-        = Algebra.TList.toAnyArray (α := ℝ)
-            (Algebra.TList.cast (α := ℝ) (List.append_assoc Γ ss [τ])
-              (Algebra.TList.snoc (α := ℝ) (Graph.eval g x)
+    show (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) (Graph.eval g x)).push
+          (Spec.SomeTensor.ofTensor (scaleSpec xT c))
+        = TorchLean.TensorPack.toShapeErasedArray (α := ℝ)
+            (TorchLean.TensorPack.cast (α := ℝ) (List.append_assoc Γ ss [τ])
+              (TorchLean.TensorPack.snoc (α := ℝ) (Graph.eval g x)
                 ((TapeNodes.scale idx c).forward (Graph.eval g x))))
-    rw [Algebra.TList.toAnyArray_cast, Algebra.TList.toAnyArray_snoc,
+    rw [TorchLean.TensorPack.toShapeErasedArray_cast, TorchLean.TensorPack.toShapeErasedArray_snoc,
       scale_forward_eq, hxT]
   | unary idx name f f' fwdSpec bwdSpec hfs hf's hg hop ih =>
     rename_i ss τ g x t t' id
@@ -1182,20 +1212,20 @@ theorem eagerBuilds_values {Γ : List Shape} :
     have hxT : xT = getIdx (Graph.eval g x) idx := requireValue_eq_of_values ih idx hX
     subst ht'
     rw [addNode_nodes, Array.map_push, ih]
-    show (Algebra.TList.toAnyArray (α := ℝ) (Graph.eval g x)).push
-          (Runtime.Autograd.AnyTensor.mk (fwdSpec xT))
-        = Algebra.TList.toAnyArray (α := ℝ)
-            (Algebra.TList.cast (α := ℝ) (List.append_assoc Γ ss [τ])
-              (Algebra.TList.snoc (α := ℝ) (Graph.eval g x)
+    show (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) (Graph.eval g x)).push
+          (Spec.SomeTensor.ofTensor (fwdSpec xT))
+        = TorchLean.TensorPack.toShapeErasedArray (α := ℝ)
+            (TorchLean.TensorPack.cast (α := ℝ) (List.append_assoc Γ ss [τ])
+              (TorchLean.TensorPack.snoc (α := ℝ) (Graph.eval g x)
                 ((TapeNodes.elemwise idx f f').forward (Graph.eval g x))))
-    rw [Algebra.TList.toAnyArray_cast, Algebra.TList.toAnyArray_snoc,
+    rw [TorchLean.TensorPack.toShapeErasedArray_cast, TorchLean.TensorPack.toShapeErasedArray_snoc,
       elemwise_forward_eq idx f f' fwdSpec hfs, hxT]
 
 /-- Liveness: every node of an eagerly built tape participates in backward. -/
 theorem eagerBuilds_rg {Γ : List Shape} :
-    ∀ {ss : List Shape} {g : Graph Γ ss} {x : TList Γ} {t : RTape},
+    ∀ {ss : List Shape} {g : Graph Γ ss} {x : TorchLean.TensorPack ℝ Γ} {t : RTape},
       EagerBuilds g x t →
-      ∀ (i : Nat) (node : RNode), t.getNode? i = some node → node.requires_grad = true := by
+      ∀ (i : Nat) (node : RNode), t.getNode? i = some node → node.requiresGrad = true := by
   intro ss g x t h
   induction h with
   | nil x =>
@@ -1266,10 +1296,10 @@ theorem eagerBuilds_rg {Γ : List Shape} :
 
 /-- Bounded contributions: every backward closure only targets strictly earlier ids. -/
 theorem eagerBuilds_pids {Γ : List Shape} :
-    ∀ {ss : List Shape} {g : Graph Γ ss} {x : TList Γ} {t : RTape},
+    ∀ {ss : List Shape} {g : Graph Γ ss} {x : TorchLean.TensorPack ℝ Γ} {t : RTape},
       EagerBuilds g x t →
       ∀ (i : Nat) (node : RNode), t.getNode? i = some node →
-        ∀ (dc : Any) (cs : List (Nat × Any)), node.backward dc = .ok cs →
+        ∀ (dc : Any) (cs : Array (Nat × Any)), node.backward dc = .ok cs →
           ∀ pc ∈ cs, pc.1 < i := by
   intro ss g x t h
   induction h with
@@ -1299,10 +1329,10 @@ theorem eagerBuilds_pids {Γ : List Shape} :
         simp [eagerAddNode, hrg, bind, Except.bind] at hback
       | ok dLdy =>
         simp only [eagerAddNode, hrg, bind, Except.bind, pure, Except.pure] at hback
-        have hcs : [(a.i.val, Runtime.Autograd.AnyTensor.mk dLdy),
-            (b.i.val, Runtime.Autograd.AnyTensor.mk dLdy)] = cs := Except.ok.inj hback
+        have hcs : #[(a.i.val, Spec.SomeTensor.ofTensor dLdy),
+            (b.i.val, Spec.SomeTensor.ofTensor dLdy)] = cs := Except.ok.inj hback
         rw [← hcs] at hpc
-        simp only [List.mem_cons, List.not_mem_nil, or_false] at hpc
+        simp at hpc
         rcases hpc with rfl | rfl
         · exact haLt
         · exact hbLt
@@ -1326,11 +1356,11 @@ theorem eagerBuilds_pids {Γ : List Shape} :
         simp [eagerMulNode, hrg, bind, Except.bind] at hback
       | ok dLdy =>
         simp only [eagerMulNode, hrg, bind, Except.bind, pure, Except.pure] at hback
-        have hcs : [(a.i.val, Runtime.Autograd.AnyTensor.mk (mulSpec dLdy bT)),
-            (b.i.val, Runtime.Autograd.AnyTensor.mk (mulSpec dLdy aT))] = cs :=
+        have hcs : #[(a.i.val, Spec.SomeTensor.ofTensor (mulSpec dLdy bT)),
+            (b.i.val, Spec.SomeTensor.ofTensor (mulSpec dLdy aT))] = cs :=
           Except.ok.inj hback
         rw [← hcs] at hpc
-        simp only [List.mem_cons, List.not_mem_nil, or_false] at hpc
+        simp at hpc
         rcases hpc with rfl | rfl
         · exact haLt
         · exact hbLt
@@ -1354,11 +1384,11 @@ theorem eagerBuilds_pids {Γ : List Shape} :
         simp [eagerSubNode, hrg, bind, Except.bind] at hback
       | ok dLdy =>
         simp only [eagerSubNode, hrg, bind, Except.bind, pure, Except.pure] at hback
-        have hcs : [(a.i.val, Runtime.Autograd.AnyTensor.mk dLdy),
-            (b.i.val, Runtime.Autograd.AnyTensor.mk (subSpec (fill (0 : ℝ) τ) dLdy))] = cs :=
+        have hcs : #[(a.i.val, Spec.SomeTensor.ofTensor dLdy),
+            (b.i.val, Spec.SomeTensor.ofTensor (subSpec (fill (0 : ℝ) τ) dLdy))] = cs :=
           Except.ok.inj hback
         rw [← hcs] at hpc
-        simp only [List.mem_cons, List.not_mem_nil, or_false] at hpc
+        simp at hpc
         rcases hpc with rfl | rfl
         · exact haLt
         · exact hbLt
@@ -1382,12 +1412,12 @@ theorem eagerBuilds_pids {Γ : List Shape} :
         simp [eagerDivNode, hrg, bind, Except.bind] at hback
       | ok dLdy =>
         simp only [eagerDivNode, hrg, bind, Except.bind, pure, Except.pure] at hback
-        have hcs : [(a.i.val, Runtime.Autograd.AnyTensor.mk (divSpec dLdy bT)),
-            (b.i.val, Runtime.Autograd.AnyTensor.mk (subSpec (fill (0 : ℝ) τ)
+        have hcs : #[(a.i.val, Spec.SomeTensor.ofTensor (divSpec dLdy bT)),
+            (b.i.val, Spec.SomeTensor.ofTensor (subSpec (fill (0 : ℝ) τ)
               (mulSpec dLdy (divSpec aT (mulSpec bT bT)))))] = cs :=
           Except.ok.inj hback
         rw [← hcs] at hpc
-        simp only [List.mem_cons, List.not_mem_nil, or_false] at hpc
+        simp at hpc
         rcases hpc with rfl | rfl
         · exact haLt
         · exact hbLt
@@ -1408,10 +1438,10 @@ theorem eagerBuilds_pids {Γ : List Shape} :
         simp [eagerScaleNode, hrg, bind, Except.bind] at hback
       | ok dLdy =>
         simp only [eagerScaleNode, hrg, bind, Except.bind, pure, Except.pure] at hback
-        have hcs : [(idx.i.val, Runtime.Autograd.AnyTensor.mk (scaleSpec dLdy c))] = cs :=
+        have hcs : #[(idx.i.val, Spec.SomeTensor.ofTensor (scaleSpec dLdy c))] = cs :=
           Except.ok.inj hback
         rw [← hcs] at hpc
-        simp only [List.mem_cons, List.not_mem_nil, or_false] at hpc
+        simp at hpc
         rcases hpc with rfl
         exact hxLt
   | unary idx name f f' fwdSpec bwdSpec hfs hf's hg hop ih =>
@@ -1431,11 +1461,11 @@ theorem eagerBuilds_pids {Γ : List Shape} :
         simp [eagerUnaryNode, hrg, bind, Except.bind] at hback
       | ok dLdy =>
         simp only [eagerUnaryNode, hrg, bind, Except.bind, pure, Except.pure] at hback
-        have hcs : [(idx.i.val,
-            Runtime.Autograd.AnyTensor.mk (mulSpec (bwdSpec xT) dLdy))] = cs :=
+        have hcs : #[(idx.i.val,
+            Spec.SomeTensor.ofTensor (mulSpec (bwdSpec xT) dLdy))] = cs :=
           Except.ok.inj hback
         rw [← hcs] at hpc
-        simp only [List.mem_cons, List.not_mem_nil, or_false] at hpc
+        simp at hpc
         rcases hpc with rfl
         exact hxLt
 
@@ -1444,11 +1474,11 @@ theorem eagerBuilds_pids {Γ : List Shape} :
    =========================================================================================== -/
 
 /-- Node/value facts from a values-array equation (works for eager and compiled tapes alike). -/
-theorem node_facts_of_values {Γ' : List Shape} {t : RTape} {ctx : TList Γ'}
-    (hvals : t.nodes.map (fun node => node.value) = Algebra.TList.toAnyArray (α := ℝ) ctx)
+theorem node_facts_of_values {Γ' : List Shape} {t : RTape} {ctx : TorchLean.TensorPack ℝ Γ'}
+    (hvals : t.nodes.map (fun node => node.value) = TorchLean.TensorPack.toShapeErasedArray (α := ℝ) ctx)
     (hsize : t.nodes.size = Γ'.length) (i : Fin Γ'.length) :
     ∃ node : RNode, t.getNode? i.val = some node
-      ∧ node.value = mkAny (Algebra.TList.get (α := ℝ) ctx i) := by
+      ∧ node.value = mkAny (TorchLean.TensorPack.get (α := ℝ) ctx i) := by
   have hi : i.val < t.nodes.size := by rw [hsize]; exact i.isLt
   refine ⟨t.nodes[i.val]'hi, by
     simp [Runtime.Autograd.Tape.getNode?, Array.getElem?_eq_getElem hi], ?_⟩
@@ -1461,15 +1491,15 @@ theorem node_facts_of_values {Γ' : List Shape} {t : RTape} {ctx : TList Γ'}
 /-- **Eager = compiled, loop by loop**: the total reverse loop on an eagerly built tape computes
     exactly the loop on the compiled tape, from any erased-context seed. -/
 theorem loop_eager_eq_compiled {Γ : List Shape} :
-    ∀ {ss : List Shape} {g : Graph Γ ss} {x : TList Γ} {t : RTape},
+    ∀ {ss : List Shape} {g : Graph Γ ss} {x : TorchLean.TensorPack ℝ Γ} {t : RTape},
       EagerBuilds g x t →
-      ∀ S : TList (Γ ++ ss),
+      ∀ S : TorchLean.TensorPack ℝ (Γ ++ ss),
         Runtime.Autograd.Tape.backwardDenseFromLoop (t := t) ((Γ ++ ss).length)
-            (Algebra.TList.toAnyArray (α := ℝ) S)
+            (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) S)
           = Runtime.Autograd.Tape.backwardDenseFromLoop
               (t := (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
                 g.toAlgebra x ()).1)
-              ((Γ ++ ss).length) (Algebra.TList.toAnyArray (α := ℝ) S) := by
+              ((Γ ++ ss).length) (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) S) := by
   intro ss g x t h
   induction h with
   | nil x => intro S; rfl
@@ -1499,91 +1529,91 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
         g.toAlgebra x ()).2 = Graph.eval g x := by
       rw [Algebra.Graph.lowerGraphToTape_ctx_eq_eval, eval_toAlgebra]
     have hvals_c : tc.nodes.map (fun node => node.value)
-        = Algebra.TList.toAnyArray (α := ℝ) (Graph.eval g x) := by
+        = TorchLean.TensorPack.toShapeErasedArray (α := ℝ) (Graph.eval g x) := by
       rw [htc, Algebra.Graph.lowerGraphToTape_values_eq, hctxc]
     -- the compiled snoc tape is `tc` extended with the compiled node
     have hcomp : (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
         (Graph.snoc g (TapeNodes.mul a b)).toAlgebra x ()).1
       = (tc.addNode
           { name := some "proof-carrying-graph"
-            value := Runtime.Autograd.AnyTensor.mk
+            value := Spec.SomeTensor.ofTensor
               (((TapeNodes.mul a b).toAlgebra).forward
                 ((Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
                   g.toAlgebra x ()).2) ())
-            requires_grad := true
-            parents := []
+            requiresGrad := true
+            parents := #[]
             backward := fun dLdyAny =>
-              if hsh : dLdyAny.s = τ then
-                .ok (Algebra.TList.toIndexedAnyList (α := ℝ) (ss := Γ ++ ss)
+              if hsh : dLdyAny.shape = τ then
+                .ok (TorchLean.TensorPack.toIndexedShapeErasedArray (α := ℝ) (ss := Γ ++ ss)
                   (((TapeNodes.mul a b).toAlgebra).vjp
                     ((Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
                       g.toAlgebra x ()).2) ()
-                    (Tensor.castShape dLdyAny.t hsh)) 0)
+                    (Tensor.castShape dLdyAny.tensor hsh)) 0)
               else .error "autograd: upstream gradient shape mismatch" }).1 := rfl
     -- seed decomposition: S = snoc u y (after reassociation)
-    set S' := Algebra.TList.cast (α := ℝ) (List.append_assoc Γ ss [τ]).symm S with hS'def
-    have hSS : Algebra.TList.toAnyArray (α := ℝ) S = Algebra.TList.toAnyArray (α := ℝ) S' := by
-      rw [hS'def, Algebra.TList.toAnyArray_cast]
-    obtain ⟨u, y, huy⟩ : ∃ (u : TList (Γ ++ ss)) (y : Tensor ℝ τ),
-        S' = Algebra.TList.snoc (α := ℝ) u y :=
-      ⟨(Algebra.TList.unsnoc S').1, (Algebra.TList.unsnoc S').2,
-        (Algebra.TList.snoc_unsnoc (α := ℝ) (xs := S')).symm⟩
-    have harr : Algebra.TList.toAnyArray (α := ℝ) S
-        = (Algebra.TList.toAnyArray (α := ℝ) u).push (mkAny y) := by
-      rw [hSS, huy, Algebra.TList.toAnyArray_snoc]
-    have husize : (Algebra.TList.toAnyArray (α := ℝ) u).size = (Γ ++ ss).length := by simp
+    set S' := TorchLean.TensorPack.cast (α := ℝ) (List.append_assoc Γ ss [τ]).symm S with hS'def
+    have hSS : TorchLean.TensorPack.toShapeErasedArray (α := ℝ) S = TorchLean.TensorPack.toShapeErasedArray (α := ℝ) S' := by
+      rw [hS'def, TorchLean.TensorPack.toShapeErasedArray_cast]
+    obtain ⟨u, y, huy⟩ : ∃ (u : TorchLean.TensorPack ℝ (Γ ++ ss)) (y : Tensor ℝ τ),
+        S' = TorchLean.TensorPack.snoc (α := ℝ) u y :=
+      ⟨(TorchLean.TensorPack.unsnoc S').1, (TorchLean.TensorPack.unsnoc S').2,
+        (TorchLean.TensorPack.snoc_unsnoc (α := ℝ) (xs := S')).symm⟩
+    have harr : TorchLean.TensorPack.toShapeErasedArray (α := ℝ) S
+        = (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u).push (mkAny y) := by
+      rw [hSS, huy, TorchLean.TensorPack.toShapeErasedArray_snoc]
+    have husize : (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u).size = (Γ ++ ss).length := by simp
     -- target node facts at the two parents (for the sparse accumulate)
     obtain ⟨na, hna, hna_val⟩ := node_facts_of_values hvals hsize a.i
     obtain ⟨nb, hnb, hnb_val⟩ := node_facts_of_values hvals hsize b.i
-    have hna_rg : na.requires_grad = true := eagerBuilds_rg hg a.i.val na hna
-    have hnb_rg : nb.requires_grad = true := eagerBuilds_rg hg b.i.val nb hnb
-    have hna_s : na.value.s = (Γ ++ ss).get a.i := by rw [hna_val]; rfl
-    have hnb_s : nb.value.s = (Γ ++ ss).get b.i := by rw [hnb_val]; rfl
+    have hna_rg : na.requiresGrad = true := eagerBuilds_rg hg a.i.val na hna
+    have hnb_rg : nb.requiresGrad = true := eagerBuilds_rg hg b.i.val nb hnb
+    have hna_s : na.value.shape = (Γ ++ ss).get a.i := by rw [hna_val]; rfl
+    have hnb_s : nb.value.shape = (Γ ++ ss).get b.i := by rw [hnb_val]; rfl
     -- the two-element eager fold = the double one-hot accumulation
     have hfold2 :
         [(a.i.val, mkAny (mulSpec y (getIdx (Graph.eval g x) b))), (b.i.val, mkAny (mulSpec y (getIdx (Graph.eval g x) a)))].foldlM
             (fun acc2 (pid, pg) => Runtime.Autograd.Tape.addGradAll (t := t) acc2 pid pg)
-            (Algebra.TList.toAnyArray (α := ℝ) u)
-          = .ok (Algebra.TList.toAnyArray (α := ℝ)
-              (Algebra.TList.add (α := ℝ)
-                (Algebra.TList.add (α := ℝ) u (TList.single a (mulSpec y (getIdx (Graph.eval g x) b))))
-                (TList.single b (mulSpec y (getIdx (Graph.eval g x) a))))) := by
+            (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u)
+          = .ok (TorchLean.TensorPack.toShapeErasedArray (α := ℝ)
+              (TorchLean.TensorPack.add (α := ℝ)
+                (TorchLean.TensorPack.add (α := ℝ) u (TensorPack.single a (mulSpec y (getIdx (Graph.eval g x) b))))
+                (TensorPack.single b (mulSpec y (getIdx (Graph.eval g x) a))))) := by
       show (Runtime.Autograd.Tape.addGradAll (t := t)
-            (Algebra.TList.toAnyArray (α := ℝ) u) a.i.val (mkAny (mulSpec y (getIdx (Graph.eval g x) b))) >>= fun a1 =>
+            (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u) a.i.val (mkAny (mulSpec y (getIdx (Graph.eval g x) b))) >>= fun a1 =>
           (Runtime.Autograd.Tape.addGradAll (t := t) a1 b.i.val (mkAny (mulSpec y (getIdx (Graph.eval g x) a)))
             >>= fun a2 => pure a2))
         = _
       rw [addGradAll_toAnyArray_single t a (mulSpec y (getIdx (Graph.eval g x) b)) na hna hna_rg hna_s u]
       show (Runtime.Autograd.Tape.addGradAll (t := t)
-            (Algebra.TList.toAnyArray (α := ℝ)
-              (Algebra.TList.add (α := ℝ) u (TList.single a (mulSpec y (getIdx (Graph.eval g x) b)))))
+            (TorchLean.TensorPack.toShapeErasedArray (α := ℝ)
+              (TorchLean.TensorPack.add (α := ℝ) u (TensorPack.single a (mulSpec y (getIdx (Graph.eval g x) b)))))
             b.i.val (mkAny (mulSpec y (getIdx (Graph.eval g x) a))) >>= fun a2 => pure a2)
         = _
       rw [addGradAll_toAnyArray_single t b (mulSpec y (getIdx (Graph.eval g x) a)) nb hnb hnb_rg hnb_s
-        (Algebra.TList.add (α := ℝ) u (TList.single a (mulSpec y (getIdx (Graph.eval g x) b))))]
+        (TorchLean.TensorPack.add (α := ℝ) u (TensorPack.single a (mulSpec y (getIdx (Graph.eval g x) b))))]
       rfl
     -- eager step at the last id
     have hnodeN : (t.addNode (eagerMulNode a.i.val b.i.val (getIdx (Graph.eval g x) a) (getIdx (Graph.eval g x) b))).1.getNode?
         ((Γ ++ ss).length) = some (eagerMulNode a.i.val b.i.val (getIdx (Graph.eval g x) a) (getIdx (Graph.eval g x) b)) := by
       have h := getNode?_addNode_size t (eagerMulNode a.i.val b.i.val (getIdx (Graph.eval g x) a) (getIdx (Graph.eval g x) b))
       rwa [hsize] at h
-    have hgetsN : ((Algebra.TList.toAnyArray (α := ℝ) u).push (mkAny y))[(Γ ++ ss).length]?
+    have hgetsN : ((TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u).push (mkAny y))[(Γ ++ ss).length]?
         = some (mkAny y) := by
-      have h := Array.getElem?_push_size (xs := Algebra.TList.toAnyArray (α := ℝ) u)
+      have h := Array.getElem?_push_size (xs := TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u)
         (x := mkAny y)
       rwa [husize] at h
     have hstep_e : Runtime.Autograd.Tape.backwardDenseFromStep
         (t := (t.addNode (eagerMulNode a.i.val b.i.val (getIdx (Graph.eval g x) a) (getIdx (Graph.eval g x) b))).1)
-        ((Algebra.TList.toAnyArray (α := ℝ) u).push (mkAny y)) ((Γ ++ ss).length)
-      = .ok ((Algebra.TList.toAnyArray (α := ℝ)
-          (Algebra.TList.add (α := ℝ) u
+        ((TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u).push (mkAny y)) ((Γ ++ ss).length)
+      = .ok ((TorchLean.TensorPack.toShapeErasedArray (α := ℝ)
+          (TorchLean.TensorPack.add (α := ℝ) u
             ((TapeNodes.mul (Γ := Γ ++ ss) (s := τ) a b).vjp (Graph.eval g x) y))).push
           (mkAny y)) := by
       have hfold2' := hfold2
       rw [mul_vjp_add_eq] at hfold2'
       have hpush := foldContribs_push t (eagerMulNode a.i.val b.i.val (getIdx (Graph.eval g x) a) (getIdx (Graph.eval g x) b))
         [(a.i.val, mkAny (mulSpec y (getIdx (Graph.eval g x) b))), (b.i.val, mkAny (mulSpec y (getIdx (Graph.eval g x) a)))]
-        (Algebra.TList.toAnyArray (α := ℝ) u) (mkAny y) (by rw [husize, hsize])
+        (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u) (mkAny y) (by rw [husize, hsize])
         (by
           intro pc hpc
           simp only [List.mem_cons, List.not_mem_nil, or_false] at hpc
@@ -1593,32 +1623,32 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
       rw [hfold2'] at hpush
       have hrgY : Runtime.Autograd.Tape.requireGrad (α := ℝ) (τ := τ) ⟨τ, y⟩ = .ok y := by
         simp [Runtime.Autograd.Tape.requireGrad]
-      simp only [Runtime.Autograd.Tape.backwardDenseFromStep, hnodeN, hgetsN,
+      simp only [Runtime.Autograd.Tape.backwardDenseFromStep, Spec.SomeTensor.cast, hnodeN, hgetsN,
         bind, Except.bind, pure, Except.pure]
-      simpa [eagerMulNode, mkAny, Runtime.Autograd.AnyTensor.mk, hrgY,
+      simpa [eagerMulNode, mkAny, Spec.SomeTensor.ofTensor, hrgY,
         List.foldlM_cons, List.foldlM_nil, bind, Except.bind, pure, Except.pure,
         Except.map] using hpush
     -- compiled step at the last id
     have hnodeN_c : (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
         (Graph.snoc g (TapeNodes.mul a b)).toAlgebra x ()).1.getNode? ((Γ ++ ss).length)
       = some { name := some "proof-carrying-graph"
-               value := Runtime.Autograd.AnyTensor.mk
+               value := Spec.SomeTensor.ofTensor
                  (((TapeNodes.mul a b).toAlgebra).forward
                    ((Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
                      g.toAlgebra x ()).2) ())
-               requires_grad := true
-               parents := []
+               requiresGrad := true
+               parents := #[]
                backward := fun dLdyAny =>
-                 if hsh : dLdyAny.s = τ then
-                   .ok (Algebra.TList.toIndexedAnyList (α := ℝ) (ss := Γ ++ ss)
+                 if hsh : dLdyAny.shape = τ then
+                   .ok (TorchLean.TensorPack.toIndexedShapeErasedArray (α := ℝ) (ss := Γ ++ ss)
                      (((TapeNodes.mul a b).toAlgebra).vjp
                        ((Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
                          g.toAlgebra x ()).2) ()
-                       (Tensor.castShape dLdyAny.t hsh)) 0)
+                       (Tensor.castShape dLdyAny.tensor hsh)) 0)
                  else .error "autograd: upstream gradient shape mismatch" } := by
       rw [hcomp, ← hsize_c]
       exact getNode?_addNode_size tc _
-    have hupstream := Algebra.Graph.foldlM_addGradAll_toIndexedAnyList_eq_add (α := ℝ)
+    have hupstream := Algebra.Graph.foldlM_addGradAll_toIndexedShapeErasedArray_eq_add (α := ℝ)
       (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
         (Graph.snoc g (TapeNodes.mul a b)).toAlgebra x ()).1
       (ss := Γ ++ ss) #[] u
@@ -1642,32 +1672,32 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
           rw [(Option.some.inj hnode).symm]
           exact this i hlt
         · rw [hval]
-          have he : (Algebra.TList.toAnyArray (α := ℝ) u)[i]'(by simpa using hi)
-              = mkAny (Algebra.TList.get (α := ℝ) u ⟨i, hi⟩) := by
-            simpa using Algebra.TList.get_toAnyArray (α := ℝ) (ss := Γ ++ ss) u ⟨i, hi⟩
+          have he : (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u)[i]'(by simpa using hi)
+              = mkAny (TorchLean.TensorPack.get (α := ℝ) u ⟨i, hi⟩) := by
+            simpa using TorchLean.TensorPack.get_toShapeErasedArray (α := ℝ) (ss := Γ ++ ss) u ⟨i, hi⟩
           rw [he]
           rfl)
     have hstep_c : Runtime.Autograd.Tape.backwardDenseFromStep
         (t := (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
           (Graph.snoc g (TapeNodes.mul a b)).toAlgebra x ()).1)
-        ((Algebra.TList.toAnyArray (α := ℝ) u).push (mkAny y)) ((Γ ++ ss).length)
-      = .ok ((Algebra.TList.toAnyArray (α := ℝ)
-          (Algebra.TList.add (α := ℝ) u
+        ((TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u).push (mkAny y)) ((Γ ++ ss).length)
+      = .ok ((TorchLean.TensorPack.toShapeErasedArray (α := ℝ)
+          (TorchLean.TensorPack.add (α := ℝ) u
             ((TapeNodes.mul (Γ := Γ ++ ss) (s := τ) a b).vjp (Graph.eval g x) y))).push
           (mkAny y)) := by
-      have hpre : (Algebra.TList.toAnyArray (α := ℝ) u).push (mkAny y)
-          = #[] ++ Algebra.TList.toAnyArray (α := ℝ) u ++ #[(mkAny y : Any)] := by
+      have hpre : (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u).push (mkAny y)
+          = #[] ++ TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u ++ #[(mkAny y : Any)] := by
         simp
-      have hpost : (Algebra.TList.toAnyArray (α := ℝ)
-            (Algebra.TList.add (α := ℝ) u
+      have hpost : (TorchLean.TensorPack.toShapeErasedArray (α := ℝ)
+            (TorchLean.TensorPack.add (α := ℝ) u
               ((TapeNodes.mul (Γ := Γ ++ ss) (s := τ) a b).vjp (Graph.eval g x) y))).push
             (mkAny y)
-          = #[] ++ Algebra.TList.toAnyArray (α := ℝ)
-              (Algebra.TList.add (α := ℝ) u
+          = #[] ++ TorchLean.TensorPack.toShapeErasedArray (α := ℝ)
+              (TorchLean.TensorPack.add (α := ℝ) u
                 ((TapeNodes.mul (Γ := Γ ++ ss) (s := τ) a b).vjp (Graph.eval g x) y))
               ++ #[(mkAny y : Any)] := by
         simp
-      simp only [Runtime.Autograd.Tape.backwardDenseFromStep, hnodeN_c, hgetsN,
+      simp only [Runtime.Autograd.Tape.backwardDenseFromStep, Spec.SomeTensor.cast, hnodeN_c, hgetsN,
         bind, Except.bind, pure, Except.pure]
       rw [hpre, hpost]
       have harg : ((TapeNodes.mul a b).toAlgebra).vjp
@@ -1676,7 +1706,7 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
         = (TapeNodes.mul (Γ := Γ ++ ss) (s := τ) a b).vjp (Graph.eval g x) y := by
         rw [hctxc]
         rfl
-      simpa [mkAny, Runtime.Autograd.AnyTensor.mk, harg] using hupstream
+      simpa [mkAny, Spec.SomeTensor.ofTensor, harg] using hupstream
     -- assemble: unfold both loops one step and use the push-invariance + IH
     have hN' : (Γ ++ (ss ++ [τ])).length = (Γ ++ ss).length + 1 := by
       simp only [List.length_append, List.length_cons, List.length_nil]
@@ -1684,14 +1714,14 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
     rw [harr, hN']
     show (Runtime.Autograd.Tape.backwardDenseFromStep
           (t := (t.addNode (eagerMulNode a.i.val b.i.val (getIdx (Graph.eval g x) a) (getIdx (Graph.eval g x) b))).1)
-          ((Algebra.TList.toAnyArray (α := ℝ) u).push (mkAny y)) ((Γ ++ ss).length)
+          ((TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u).push (mkAny y)) ((Γ ++ ss).length)
         >>= fun acc' => Runtime.Autograd.Tape.backwardDenseFromLoop
           (t := (t.addNode (eagerMulNode a.i.val b.i.val (getIdx (Graph.eval g x) a) (getIdx (Graph.eval g x) b))).1)
           ((Γ ++ ss).length) acc')
       = (Runtime.Autograd.Tape.backwardDenseFromStep
           (t := (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
             (Graph.snoc g (TapeNodes.mul a b)).toAlgebra x ()).1)
-          ((Algebra.TList.toAnyArray (α := ℝ) u).push (mkAny y)) ((Γ ++ ss).length)
+          ((TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u).push (mkAny y)) ((Γ ++ ss).length)
         >>= fun acc' => Runtime.Autograd.Tape.backwardDenseFromLoop
           (t := (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
             (Graph.snoc g (TapeNodes.mul a b)).toAlgebra x ()).1)
@@ -1736,86 +1766,86 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
         g.toAlgebra x ()).2 = Graph.eval g x := by
       rw [Algebra.Graph.lowerGraphToTape_ctx_eq_eval, eval_toAlgebra]
     have hvals_c : tc.nodes.map (fun node => node.value)
-        = Algebra.TList.toAnyArray (α := ℝ) (Graph.eval g x) := by
+        = TorchLean.TensorPack.toShapeErasedArray (α := ℝ) (Graph.eval g x) := by
       rw [htc, Algebra.Graph.lowerGraphToTape_values_eq, hctxc]
     have hcomp : (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
         (Graph.snoc g (TapeNodes.add a b)).toAlgebra x ()).1
       = (tc.addNode
           { name := some "proof-carrying-graph"
-            value := Runtime.Autograd.AnyTensor.mk
+            value := Spec.SomeTensor.ofTensor
               (((TapeNodes.add a b).toAlgebra).forward
                 ((Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
                   g.toAlgebra x ()).2) ())
-            requires_grad := true
-            parents := []
+            requiresGrad := true
+            parents := #[]
             backward := fun dLdyAny =>
-              if hsh : dLdyAny.s = τ then
-                .ok (Algebra.TList.toIndexedAnyList (α := ℝ) (ss := Γ ++ ss)
+              if hsh : dLdyAny.shape = τ then
+                .ok (TorchLean.TensorPack.toIndexedShapeErasedArray (α := ℝ) (ss := Γ ++ ss)
                   (((TapeNodes.add a b).toAlgebra).vjp
                     ((Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
                       g.toAlgebra x ()).2) ()
-                    (Tensor.castShape dLdyAny.t hsh)) 0)
+                    (Tensor.castShape dLdyAny.tensor hsh)) 0)
               else .error "autograd: upstream gradient shape mismatch" }).1 := rfl
-    set S' := Algebra.TList.cast (α := ℝ) (List.append_assoc Γ ss [τ]).symm S with hS'def
-    have hSS : Algebra.TList.toAnyArray (α := ℝ) S = Algebra.TList.toAnyArray (α := ℝ) S' := by
-      rw [hS'def, Algebra.TList.toAnyArray_cast]
-    obtain ⟨u, y, huy⟩ : ∃ (u : TList (Γ ++ ss)) (y : Tensor ℝ τ),
-        S' = Algebra.TList.snoc (α := ℝ) u y :=
-      ⟨(Algebra.TList.unsnoc S').1, (Algebra.TList.unsnoc S').2,
-        (Algebra.TList.snoc_unsnoc (α := ℝ) (xs := S')).symm⟩
-    have harr : Algebra.TList.toAnyArray (α := ℝ) S
-        = (Algebra.TList.toAnyArray (α := ℝ) u).push (mkAny y) := by
-      rw [hSS, huy, Algebra.TList.toAnyArray_snoc]
-    have husize : (Algebra.TList.toAnyArray (α := ℝ) u).size = (Γ ++ ss).length := by simp
+    set S' := TorchLean.TensorPack.cast (α := ℝ) (List.append_assoc Γ ss [τ]).symm S with hS'def
+    have hSS : TorchLean.TensorPack.toShapeErasedArray (α := ℝ) S = TorchLean.TensorPack.toShapeErasedArray (α := ℝ) S' := by
+      rw [hS'def, TorchLean.TensorPack.toShapeErasedArray_cast]
+    obtain ⟨u, y, huy⟩ : ∃ (u : TorchLean.TensorPack ℝ (Γ ++ ss)) (y : Tensor ℝ τ),
+        S' = TorchLean.TensorPack.snoc (α := ℝ) u y :=
+      ⟨(TorchLean.TensorPack.unsnoc S').1, (TorchLean.TensorPack.unsnoc S').2,
+        (TorchLean.TensorPack.snoc_unsnoc (α := ℝ) (xs := S')).symm⟩
+    have harr : TorchLean.TensorPack.toShapeErasedArray (α := ℝ) S
+        = (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u).push (mkAny y) := by
+      rw [hSS, huy, TorchLean.TensorPack.toShapeErasedArray_snoc]
+    have husize : (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u).size = (Γ ++ ss).length := by simp
     obtain ⟨na, hna, hna_val⟩ := node_facts_of_values hvals hsize a.i
     obtain ⟨nb, hnb, hnb_val⟩ := node_facts_of_values hvals hsize b.i
-    have hna_rg : na.requires_grad = true := eagerBuilds_rg hg a.i.val na hna
-    have hnb_rg : nb.requires_grad = true := eagerBuilds_rg hg b.i.val nb hnb
-    have hna_s : na.value.s = (Γ ++ ss).get a.i := by rw [hna_val]; rfl
-    have hnb_s : nb.value.s = (Γ ++ ss).get b.i := by rw [hnb_val]; rfl
+    have hna_rg : na.requiresGrad = true := eagerBuilds_rg hg a.i.val na hna
+    have hnb_rg : nb.requiresGrad = true := eagerBuilds_rg hg b.i.val nb hnb
+    have hna_s : na.value.shape = (Γ ++ ss).get a.i := by rw [hna_val]; rfl
+    have hnb_s : nb.value.shape = (Γ ++ ss).get b.i := by rw [hnb_val]; rfl
     have hfold2 :
         [(a.i.val, mkAny y), (b.i.val, mkAny y)].foldlM
             (fun acc2 (pid, pg) => Runtime.Autograd.Tape.addGradAll (t := t) acc2 pid pg)
-            (Algebra.TList.toAnyArray (α := ℝ) u)
-          = .ok (Algebra.TList.toAnyArray (α := ℝ)
-              (Algebra.TList.add (α := ℝ)
-                (Algebra.TList.add (α := ℝ) u (TList.single a y))
-                (TList.single b y))) := by
+            (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u)
+          = .ok (TorchLean.TensorPack.toShapeErasedArray (α := ℝ)
+              (TorchLean.TensorPack.add (α := ℝ)
+                (TorchLean.TensorPack.add (α := ℝ) u (TensorPack.single a y))
+                (TensorPack.single b y))) := by
       show (Runtime.Autograd.Tape.addGradAll (t := t)
-            (Algebra.TList.toAnyArray (α := ℝ) u) a.i.val (mkAny y) >>= fun a1 =>
+            (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u) a.i.val (mkAny y) >>= fun a1 =>
           (Runtime.Autograd.Tape.addGradAll (t := t) a1 b.i.val (mkAny y)
             >>= fun a2 => pure a2))
         = _
       rw [addGradAll_toAnyArray_single t a y na hna hna_rg hna_s u]
       show (Runtime.Autograd.Tape.addGradAll (t := t)
-            (Algebra.TList.toAnyArray (α := ℝ)
-              (Algebra.TList.add (α := ℝ) u (TList.single a y)))
+            (TorchLean.TensorPack.toShapeErasedArray (α := ℝ)
+              (TorchLean.TensorPack.add (α := ℝ) u (TensorPack.single a y)))
             b.i.val (mkAny y) >>= fun a2 => pure a2)
         = _
       rw [addGradAll_toAnyArray_single t b y nb hnb hnb_rg hnb_s
-        (Algebra.TList.add (α := ℝ) u (TList.single a y))]
+        (TorchLean.TensorPack.add (α := ℝ) u (TensorPack.single a y))]
       rfl
     have hnodeN : (t.addNode (eagerAddNode a.i.val b.i.val (getIdx (Graph.eval g x) a) (getIdx (Graph.eval g x) b))).1.getNode?
         ((Γ ++ ss).length) = some (eagerAddNode a.i.val b.i.val (getIdx (Graph.eval g x) a) (getIdx (Graph.eval g x) b)) := by
       have h := getNode?_addNode_size t (eagerAddNode a.i.val b.i.val (getIdx (Graph.eval g x) a) (getIdx (Graph.eval g x) b))
       rwa [hsize] at h
-    have hgetsN : ((Algebra.TList.toAnyArray (α := ℝ) u).push (mkAny y))[(Γ ++ ss).length]?
+    have hgetsN : ((TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u).push (mkAny y))[(Γ ++ ss).length]?
         = some (mkAny y) := by
-      have h := Array.getElem?_push_size (xs := Algebra.TList.toAnyArray (α := ℝ) u)
+      have h := Array.getElem?_push_size (xs := TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u)
         (x := mkAny y)
       rwa [husize] at h
     have hstep_e : Runtime.Autograd.Tape.backwardDenseFromStep
         (t := (t.addNode (eagerAddNode a.i.val b.i.val (getIdx (Graph.eval g x) a) (getIdx (Graph.eval g x) b))).1)
-        ((Algebra.TList.toAnyArray (α := ℝ) u).push (mkAny y)) ((Γ ++ ss).length)
-      = .ok ((Algebra.TList.toAnyArray (α := ℝ)
-          (Algebra.TList.add (α := ℝ) u
+        ((TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u).push (mkAny y)) ((Γ ++ ss).length)
+      = .ok ((TorchLean.TensorPack.toShapeErasedArray (α := ℝ)
+          (TorchLean.TensorPack.add (α := ℝ) u
             ((TapeNodes.add (Γ := Γ ++ ss) (s := τ) a b).vjp (Graph.eval g x) y))).push
           (mkAny y)) := by
       have hfold2' := hfold2
       rw [add_vjp_add_eq] at hfold2'
       have hpush := foldContribs_push t (eagerAddNode a.i.val b.i.val (getIdx (Graph.eval g x) a) (getIdx (Graph.eval g x) b))
         [(a.i.val, mkAny y), (b.i.val, mkAny y)]
-        (Algebra.TList.toAnyArray (α := ℝ) u) (mkAny y) (by rw [husize, hsize])
+        (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u) (mkAny y) (by rw [husize, hsize])
         (by
           intro pc hpc
           simp only [List.mem_cons, List.not_mem_nil, or_false] at hpc
@@ -1825,31 +1855,31 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
       rw [hfold2'] at hpush
       have hrgY : Runtime.Autograd.Tape.requireGrad (α := ℝ) (τ := τ) ⟨τ, y⟩ = .ok y := by
         simp [Runtime.Autograd.Tape.requireGrad]
-      simp only [Runtime.Autograd.Tape.backwardDenseFromStep, hnodeN, hgetsN,
+      simp only [Runtime.Autograd.Tape.backwardDenseFromStep, Spec.SomeTensor.cast, hnodeN, hgetsN,
         bind, Except.bind, pure, Except.pure]
-      simpa [eagerAddNode, mkAny, Runtime.Autograd.AnyTensor.mk, hrgY,
+      simpa [eagerAddNode, mkAny, Spec.SomeTensor.ofTensor, hrgY,
         List.foldlM_cons, List.foldlM_nil, bind, Except.bind, pure, Except.pure,
         Except.map] using hpush
     have hnodeN_c : (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
         (Graph.snoc g (TapeNodes.add a b)).toAlgebra x ()).1.getNode? ((Γ ++ ss).length)
       = some { name := some "proof-carrying-graph"
-               value := Runtime.Autograd.AnyTensor.mk
+               value := Spec.SomeTensor.ofTensor
                  (((TapeNodes.add a b).toAlgebra).forward
                    ((Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
                      g.toAlgebra x ()).2) ())
-               requires_grad := true
-               parents := []
+               requiresGrad := true
+               parents := #[]
                backward := fun dLdyAny =>
-                 if hsh : dLdyAny.s = τ then
-                   .ok (Algebra.TList.toIndexedAnyList (α := ℝ) (ss := Γ ++ ss)
+                 if hsh : dLdyAny.shape = τ then
+                   .ok (TorchLean.TensorPack.toIndexedShapeErasedArray (α := ℝ) (ss := Γ ++ ss)
                      (((TapeNodes.add a b).toAlgebra).vjp
                        ((Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
                          g.toAlgebra x ()).2) ()
-                       (Tensor.castShape dLdyAny.t hsh)) 0)
+                       (Tensor.castShape dLdyAny.tensor hsh)) 0)
                  else .error "autograd: upstream gradient shape mismatch" } := by
       rw [hcomp, ← hsize_c]
       exact getNode?_addNode_size tc _
-    have hupstream := Algebra.Graph.foldlM_addGradAll_toIndexedAnyList_eq_add (α := ℝ)
+    have hupstream := Algebra.Graph.foldlM_addGradAll_toIndexedShapeErasedArray_eq_add (α := ℝ)
       (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
         (Graph.snoc g (TapeNodes.add a b)).toAlgebra x ()).1
       (ss := Γ ++ ss) #[] u
@@ -1872,32 +1902,32 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
           rw [(Option.some.inj hnode).symm]
           exact this i hlt
         · rw [hval]
-          have he : (Algebra.TList.toAnyArray (α := ℝ) u)[i]'(by simpa using hi)
-              = mkAny (Algebra.TList.get (α := ℝ) u ⟨i, hi⟩) := by
-            simpa using Algebra.TList.get_toAnyArray (α := ℝ) (ss := Γ ++ ss) u ⟨i, hi⟩
+          have he : (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u)[i]'(by simpa using hi)
+              = mkAny (TorchLean.TensorPack.get (α := ℝ) u ⟨i, hi⟩) := by
+            simpa using TorchLean.TensorPack.get_toShapeErasedArray (α := ℝ) (ss := Γ ++ ss) u ⟨i, hi⟩
           rw [he]
           rfl)
     have hstep_c : Runtime.Autograd.Tape.backwardDenseFromStep
         (t := (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
           (Graph.snoc g (TapeNodes.add a b)).toAlgebra x ()).1)
-        ((Algebra.TList.toAnyArray (α := ℝ) u).push (mkAny y)) ((Γ ++ ss).length)
-      = .ok ((Algebra.TList.toAnyArray (α := ℝ)
-          (Algebra.TList.add (α := ℝ) u
+        ((TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u).push (mkAny y)) ((Γ ++ ss).length)
+      = .ok ((TorchLean.TensorPack.toShapeErasedArray (α := ℝ)
+          (TorchLean.TensorPack.add (α := ℝ) u
             ((TapeNodes.add (Γ := Γ ++ ss) (s := τ) a b).vjp (Graph.eval g x) y))).push
           (mkAny y)) := by
-      have hpre : (Algebra.TList.toAnyArray (α := ℝ) u).push (mkAny y)
-          = #[] ++ Algebra.TList.toAnyArray (α := ℝ) u ++ #[(mkAny y : Any)] := by
+      have hpre : (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u).push (mkAny y)
+          = #[] ++ TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u ++ #[(mkAny y : Any)] := by
         simp
-      have hpost : (Algebra.TList.toAnyArray (α := ℝ)
-            (Algebra.TList.add (α := ℝ) u
+      have hpost : (TorchLean.TensorPack.toShapeErasedArray (α := ℝ)
+            (TorchLean.TensorPack.add (α := ℝ) u
               ((TapeNodes.add (Γ := Γ ++ ss) (s := τ) a b).vjp (Graph.eval g x) y))).push
             (mkAny y)
-          = #[] ++ Algebra.TList.toAnyArray (α := ℝ)
-              (Algebra.TList.add (α := ℝ) u
+          = #[] ++ TorchLean.TensorPack.toShapeErasedArray (α := ℝ)
+              (TorchLean.TensorPack.add (α := ℝ) u
                 ((TapeNodes.add (Γ := Γ ++ ss) (s := τ) a b).vjp (Graph.eval g x) y))
               ++ #[(mkAny y : Any)] := by
         simp
-      simp only [Runtime.Autograd.Tape.backwardDenseFromStep, hnodeN_c, hgetsN,
+      simp only [Runtime.Autograd.Tape.backwardDenseFromStep, Spec.SomeTensor.cast, hnodeN_c, hgetsN,
         bind, Except.bind, pure, Except.pure]
       rw [hpre, hpost]
       have harg : ((TapeNodes.add a b).toAlgebra).vjp
@@ -1906,21 +1936,21 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
         = (TapeNodes.add (Γ := Γ ++ ss) (s := τ) a b).vjp (Graph.eval g x) y := by
         rw [hctxc]
         rfl
-      simpa [mkAny, Runtime.Autograd.AnyTensor.mk, harg] using hupstream
+      simpa [mkAny, Spec.SomeTensor.ofTensor, harg] using hupstream
     have hN' : (Γ ++ (ss ++ [τ])).length = (Γ ++ ss).length + 1 := by
       simp only [List.length_append, List.length_cons, List.length_nil]
       omega
     rw [harr, hN']
     show (Runtime.Autograd.Tape.backwardDenseFromStep
           (t := (t.addNode (eagerAddNode a.i.val b.i.val (getIdx (Graph.eval g x) a) (getIdx (Graph.eval g x) b))).1)
-          ((Algebra.TList.toAnyArray (α := ℝ) u).push (mkAny y)) ((Γ ++ ss).length)
+          ((TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u).push (mkAny y)) ((Γ ++ ss).length)
         >>= fun acc' => Runtime.Autograd.Tape.backwardDenseFromLoop
           (t := (t.addNode (eagerAddNode a.i.val b.i.val (getIdx (Graph.eval g x) a) (getIdx (Graph.eval g x) b))).1)
           ((Γ ++ ss).length) acc')
       = (Runtime.Autograd.Tape.backwardDenseFromStep
           (t := (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
             (Graph.snoc g (TapeNodes.add a b)).toAlgebra x ()).1)
-          ((Algebra.TList.toAnyArray (α := ℝ) u).push (mkAny y)) ((Γ ++ ss).length)
+          ((TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u).push (mkAny y)) ((Γ ++ ss).length)
         >>= fun acc' => Runtime.Autograd.Tape.backwardDenseFromLoop
           (t := (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
             (Graph.snoc g (TapeNodes.add a b)).toAlgebra x ()).1)
@@ -1965,86 +1995,86 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
         g.toAlgebra x ()).2 = Graph.eval g x := by
       rw [Algebra.Graph.lowerGraphToTape_ctx_eq_eval, eval_toAlgebra]
     have hvals_c : tc.nodes.map (fun node => node.value)
-        = Algebra.TList.toAnyArray (α := ℝ) (Graph.eval g x) := by
+        = TorchLean.TensorPack.toShapeErasedArray (α := ℝ) (Graph.eval g x) := by
       rw [htc, Algebra.Graph.lowerGraphToTape_values_eq, hctxc]
     have hcomp : (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
         (Graph.snoc g (TapeNodes.sub a b)).toAlgebra x ()).1
       = (tc.addNode
           { name := some "proof-carrying-graph"
-            value := Runtime.Autograd.AnyTensor.mk
+            value := Spec.SomeTensor.ofTensor
               (((TapeNodes.sub a b).toAlgebra).forward
                 ((Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
                   g.toAlgebra x ()).2) ())
-            requires_grad := true
-            parents := []
+            requiresGrad := true
+            parents := #[]
             backward := fun dLdyAny =>
-              if hsh : dLdyAny.s = τ then
-                .ok (Algebra.TList.toIndexedAnyList (α := ℝ) (ss := Γ ++ ss)
+              if hsh : dLdyAny.shape = τ then
+                .ok (TorchLean.TensorPack.toIndexedShapeErasedArray (α := ℝ) (ss := Γ ++ ss)
                   (((TapeNodes.sub a b).toAlgebra).vjp
                     ((Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
                       g.toAlgebra x ()).2) ()
-                    (Tensor.castShape dLdyAny.t hsh)) 0)
+                    (Tensor.castShape dLdyAny.tensor hsh)) 0)
               else .error "autograd: upstream gradient shape mismatch" }).1 := rfl
-    set S' := Algebra.TList.cast (α := ℝ) (List.append_assoc Γ ss [τ]).symm S with hS'def
-    have hSS : Algebra.TList.toAnyArray (α := ℝ) S = Algebra.TList.toAnyArray (α := ℝ) S' := by
-      rw [hS'def, Algebra.TList.toAnyArray_cast]
-    obtain ⟨u, y, huy⟩ : ∃ (u : TList (Γ ++ ss)) (y : Tensor ℝ τ),
-        S' = Algebra.TList.snoc (α := ℝ) u y :=
-      ⟨(Algebra.TList.unsnoc S').1, (Algebra.TList.unsnoc S').2,
-        (Algebra.TList.snoc_unsnoc (α := ℝ) (xs := S')).symm⟩
-    have harr : Algebra.TList.toAnyArray (α := ℝ) S
-        = (Algebra.TList.toAnyArray (α := ℝ) u).push (mkAny y) := by
-      rw [hSS, huy, Algebra.TList.toAnyArray_snoc]
-    have husize : (Algebra.TList.toAnyArray (α := ℝ) u).size = (Γ ++ ss).length := by simp
+    set S' := TorchLean.TensorPack.cast (α := ℝ) (List.append_assoc Γ ss [τ]).symm S with hS'def
+    have hSS : TorchLean.TensorPack.toShapeErasedArray (α := ℝ) S = TorchLean.TensorPack.toShapeErasedArray (α := ℝ) S' := by
+      rw [hS'def, TorchLean.TensorPack.toShapeErasedArray_cast]
+    obtain ⟨u, y, huy⟩ : ∃ (u : TorchLean.TensorPack ℝ (Γ ++ ss)) (y : Tensor ℝ τ),
+        S' = TorchLean.TensorPack.snoc (α := ℝ) u y :=
+      ⟨(TorchLean.TensorPack.unsnoc S').1, (TorchLean.TensorPack.unsnoc S').2,
+        (TorchLean.TensorPack.snoc_unsnoc (α := ℝ) (xs := S')).symm⟩
+    have harr : TorchLean.TensorPack.toShapeErasedArray (α := ℝ) S
+        = (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u).push (mkAny y) := by
+      rw [hSS, huy, TorchLean.TensorPack.toShapeErasedArray_snoc]
+    have husize : (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u).size = (Γ ++ ss).length := by simp
     obtain ⟨na, hna, hna_val⟩ := node_facts_of_values hvals hsize a.i
     obtain ⟨nb, hnb, hnb_val⟩ := node_facts_of_values hvals hsize b.i
-    have hna_rg : na.requires_grad = true := eagerBuilds_rg hg a.i.val na hna
-    have hnb_rg : nb.requires_grad = true := eagerBuilds_rg hg b.i.val nb hnb
-    have hna_s : na.value.s = (Γ ++ ss).get a.i := by rw [hna_val]; rfl
-    have hnb_s : nb.value.s = (Γ ++ ss).get b.i := by rw [hnb_val]; rfl
+    have hna_rg : na.requiresGrad = true := eagerBuilds_rg hg a.i.val na hna
+    have hnb_rg : nb.requiresGrad = true := eagerBuilds_rg hg b.i.val nb hnb
+    have hna_s : na.value.shape = (Γ ++ ss).get a.i := by rw [hna_val]; rfl
+    have hnb_s : nb.value.shape = (Γ ++ ss).get b.i := by rw [hnb_val]; rfl
     have hfold2 :
         [(a.i.val, mkAny y), (b.i.val, mkAny (subSpec (fill (0 : ℝ) τ) y))].foldlM
             (fun acc2 (pid, pg) => Runtime.Autograd.Tape.addGradAll (t := t) acc2 pid pg)
-            (Algebra.TList.toAnyArray (α := ℝ) u)
-          = .ok (Algebra.TList.toAnyArray (α := ℝ)
-              (Algebra.TList.add (α := ℝ)
-                (Algebra.TList.add (α := ℝ) u (TList.single a y))
-                (TList.single b (subSpec (fill (0 : ℝ) τ) y)))) := by
+            (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u)
+          = .ok (TorchLean.TensorPack.toShapeErasedArray (α := ℝ)
+              (TorchLean.TensorPack.add (α := ℝ)
+                (TorchLean.TensorPack.add (α := ℝ) u (TensorPack.single a y))
+                (TensorPack.single b (subSpec (fill (0 : ℝ) τ) y)))) := by
       show (Runtime.Autograd.Tape.addGradAll (t := t)
-            (Algebra.TList.toAnyArray (α := ℝ) u) a.i.val (mkAny y) >>= fun a1 =>
+            (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u) a.i.val (mkAny y) >>= fun a1 =>
           (Runtime.Autograd.Tape.addGradAll (t := t) a1 b.i.val (mkAny (subSpec (fill (0 : ℝ) τ) y))
             >>= fun a2 => pure a2))
         = _
       rw [addGradAll_toAnyArray_single t a y na hna hna_rg hna_s u]
       show (Runtime.Autograd.Tape.addGradAll (t := t)
-            (Algebra.TList.toAnyArray (α := ℝ)
-              (Algebra.TList.add (α := ℝ) u (TList.single a y)))
+            (TorchLean.TensorPack.toShapeErasedArray (α := ℝ)
+              (TorchLean.TensorPack.add (α := ℝ) u (TensorPack.single a y)))
             b.i.val (mkAny (subSpec (fill (0 : ℝ) τ) y)) >>= fun a2 => pure a2)
         = _
       rw [addGradAll_toAnyArray_single t b (subSpec (fill (0 : ℝ) τ) y) nb hnb hnb_rg hnb_s
-        (Algebra.TList.add (α := ℝ) u (TList.single a y))]
+        (TorchLean.TensorPack.add (α := ℝ) u (TensorPack.single a y))]
       rfl
     have hnodeN : (t.addNode (eagerSubNode a.i.val b.i.val (getIdx (Graph.eval g x) a) (getIdx (Graph.eval g x) b))).1.getNode?
         ((Γ ++ ss).length) = some (eagerSubNode a.i.val b.i.val (getIdx (Graph.eval g x) a) (getIdx (Graph.eval g x) b)) := by
       have h := getNode?_addNode_size t (eagerSubNode a.i.val b.i.val (getIdx (Graph.eval g x) a) (getIdx (Graph.eval g x) b))
       rwa [hsize] at h
-    have hgetsN : ((Algebra.TList.toAnyArray (α := ℝ) u).push (mkAny y))[(Γ ++ ss).length]?
+    have hgetsN : ((TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u).push (mkAny y))[(Γ ++ ss).length]?
         = some (mkAny y) := by
-      have h := Array.getElem?_push_size (xs := Algebra.TList.toAnyArray (α := ℝ) u)
+      have h := Array.getElem?_push_size (xs := TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u)
         (x := mkAny y)
       rwa [husize] at h
     have hstep_e : Runtime.Autograd.Tape.backwardDenseFromStep
         (t := (t.addNode (eagerSubNode a.i.val b.i.val (getIdx (Graph.eval g x) a) (getIdx (Graph.eval g x) b))).1)
-        ((Algebra.TList.toAnyArray (α := ℝ) u).push (mkAny y)) ((Γ ++ ss).length)
-      = .ok ((Algebra.TList.toAnyArray (α := ℝ)
-          (Algebra.TList.add (α := ℝ) u
+        ((TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u).push (mkAny y)) ((Γ ++ ss).length)
+      = .ok ((TorchLean.TensorPack.toShapeErasedArray (α := ℝ)
+          (TorchLean.TensorPack.add (α := ℝ) u
             ((TapeNodes.sub (Γ := Γ ++ ss) (s := τ) a b).vjp (Graph.eval g x) y))).push
           (mkAny y)) := by
       have hfold2' := hfold2
       rw [sub_vjp_add_eq] at hfold2'
       have hpush := foldContribs_push t (eagerSubNode a.i.val b.i.val (getIdx (Graph.eval g x) a) (getIdx (Graph.eval g x) b))
         [(a.i.val, mkAny y), (b.i.val, mkAny (subSpec (fill (0 : ℝ) τ) y))]
-        (Algebra.TList.toAnyArray (α := ℝ) u) (mkAny y) (by rw [husize, hsize])
+        (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u) (mkAny y) (by rw [husize, hsize])
         (by
           intro pc hpc
           simp only [List.mem_cons, List.not_mem_nil, or_false] at hpc
@@ -2054,31 +2084,31 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
       rw [hfold2'] at hpush
       have hrgY : Runtime.Autograd.Tape.requireGrad (α := ℝ) (τ := τ) ⟨τ, y⟩ = .ok y := by
         simp [Runtime.Autograd.Tape.requireGrad]
-      simp only [Runtime.Autograd.Tape.backwardDenseFromStep, hnodeN, hgetsN,
+      simp only [Runtime.Autograd.Tape.backwardDenseFromStep, Spec.SomeTensor.cast, hnodeN, hgetsN,
         bind, Except.bind, pure, Except.pure]
-      simpa [eagerSubNode, mkAny, Runtime.Autograd.AnyTensor.mk, hrgY,
+      simpa [eagerSubNode, mkAny, Spec.SomeTensor.ofTensor, hrgY,
         List.foldlM_cons, List.foldlM_nil, bind, Except.bind, pure, Except.pure,
         Except.map] using hpush
     have hnodeN_c : (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
         (Graph.snoc g (TapeNodes.sub a b)).toAlgebra x ()).1.getNode? ((Γ ++ ss).length)
       = some { name := some "proof-carrying-graph"
-               value := Runtime.Autograd.AnyTensor.mk
+               value := Spec.SomeTensor.ofTensor
                  (((TapeNodes.sub a b).toAlgebra).forward
                    ((Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
                      g.toAlgebra x ()).2) ())
-               requires_grad := true
-               parents := []
+               requiresGrad := true
+               parents := #[]
                backward := fun dLdyAny =>
-                 if hsh : dLdyAny.s = τ then
-                   .ok (Algebra.TList.toIndexedAnyList (α := ℝ) (ss := Γ ++ ss)
+                 if hsh : dLdyAny.shape = τ then
+                   .ok (TorchLean.TensorPack.toIndexedShapeErasedArray (α := ℝ) (ss := Γ ++ ss)
                      (((TapeNodes.sub a b).toAlgebra).vjp
                        ((Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
                          g.toAlgebra x ()).2) ()
-                       (Tensor.castShape dLdyAny.t hsh)) 0)
+                       (Tensor.castShape dLdyAny.tensor hsh)) 0)
                  else .error "autograd: upstream gradient shape mismatch" } := by
       rw [hcomp, ← hsize_c]
       exact getNode?_addNode_size tc _
-    have hupstream := Algebra.Graph.foldlM_addGradAll_toIndexedAnyList_eq_add (α := ℝ)
+    have hupstream := Algebra.Graph.foldlM_addGradAll_toIndexedShapeErasedArray_eq_add (α := ℝ)
       (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
         (Graph.snoc g (TapeNodes.sub a b)).toAlgebra x ()).1
       (ss := Γ ++ ss) #[] u
@@ -2101,32 +2131,32 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
           rw [(Option.some.inj hnode).symm]
           exact this i hlt
         · rw [hval]
-          have he : (Algebra.TList.toAnyArray (α := ℝ) u)[i]'(by simpa using hi)
-              = mkAny (Algebra.TList.get (α := ℝ) u ⟨i, hi⟩) := by
-            simpa using Algebra.TList.get_toAnyArray (α := ℝ) (ss := Γ ++ ss) u ⟨i, hi⟩
+          have he : (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u)[i]'(by simpa using hi)
+              = mkAny (TorchLean.TensorPack.get (α := ℝ) u ⟨i, hi⟩) := by
+            simpa using TorchLean.TensorPack.get_toShapeErasedArray (α := ℝ) (ss := Γ ++ ss) u ⟨i, hi⟩
           rw [he]
           rfl)
     have hstep_c : Runtime.Autograd.Tape.backwardDenseFromStep
         (t := (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
           (Graph.snoc g (TapeNodes.sub a b)).toAlgebra x ()).1)
-        ((Algebra.TList.toAnyArray (α := ℝ) u).push (mkAny y)) ((Γ ++ ss).length)
-      = .ok ((Algebra.TList.toAnyArray (α := ℝ)
-          (Algebra.TList.add (α := ℝ) u
+        ((TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u).push (mkAny y)) ((Γ ++ ss).length)
+      = .ok ((TorchLean.TensorPack.toShapeErasedArray (α := ℝ)
+          (TorchLean.TensorPack.add (α := ℝ) u
             ((TapeNodes.sub (Γ := Γ ++ ss) (s := τ) a b).vjp (Graph.eval g x) y))).push
           (mkAny y)) := by
-      have hpre : (Algebra.TList.toAnyArray (α := ℝ) u).push (mkAny y)
-          = #[] ++ Algebra.TList.toAnyArray (α := ℝ) u ++ #[(mkAny y : Any)] := by
+      have hpre : (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u).push (mkAny y)
+          = #[] ++ TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u ++ #[(mkAny y : Any)] := by
         simp
-      have hpost : (Algebra.TList.toAnyArray (α := ℝ)
-            (Algebra.TList.add (α := ℝ) u
+      have hpost : (TorchLean.TensorPack.toShapeErasedArray (α := ℝ)
+            (TorchLean.TensorPack.add (α := ℝ) u
               ((TapeNodes.sub (Γ := Γ ++ ss) (s := τ) a b).vjp (Graph.eval g x) y))).push
             (mkAny y)
-          = #[] ++ Algebra.TList.toAnyArray (α := ℝ)
-              (Algebra.TList.add (α := ℝ) u
+          = #[] ++ TorchLean.TensorPack.toShapeErasedArray (α := ℝ)
+              (TorchLean.TensorPack.add (α := ℝ) u
                 ((TapeNodes.sub (Γ := Γ ++ ss) (s := τ) a b).vjp (Graph.eval g x) y))
               ++ #[(mkAny y : Any)] := by
         simp
-      simp only [Runtime.Autograd.Tape.backwardDenseFromStep, hnodeN_c, hgetsN,
+      simp only [Runtime.Autograd.Tape.backwardDenseFromStep, Spec.SomeTensor.cast, hnodeN_c, hgetsN,
         bind, Except.bind, pure, Except.pure]
       rw [hpre, hpost]
       have harg : ((TapeNodes.sub a b).toAlgebra).vjp
@@ -2135,21 +2165,21 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
         = (TapeNodes.sub (Γ := Γ ++ ss) (s := τ) a b).vjp (Graph.eval g x) y := by
         rw [hctxc]
         rfl
-      simpa [mkAny, Runtime.Autograd.AnyTensor.mk, harg] using hupstream
+      simpa [mkAny, Spec.SomeTensor.ofTensor, harg] using hupstream
     have hN' : (Γ ++ (ss ++ [τ])).length = (Γ ++ ss).length + 1 := by
       simp only [List.length_append, List.length_cons, List.length_nil]
       omega
     rw [harr, hN']
     show (Runtime.Autograd.Tape.backwardDenseFromStep
           (t := (t.addNode (eagerSubNode a.i.val b.i.val (getIdx (Graph.eval g x) a) (getIdx (Graph.eval g x) b))).1)
-          ((Algebra.TList.toAnyArray (α := ℝ) u).push (mkAny y)) ((Γ ++ ss).length)
+          ((TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u).push (mkAny y)) ((Γ ++ ss).length)
         >>= fun acc' => Runtime.Autograd.Tape.backwardDenseFromLoop
           (t := (t.addNode (eagerSubNode a.i.val b.i.val (getIdx (Graph.eval g x) a) (getIdx (Graph.eval g x) b))).1)
           ((Γ ++ ss).length) acc')
       = (Runtime.Autograd.Tape.backwardDenseFromStep
           (t := (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
             (Graph.snoc g (TapeNodes.sub a b)).toAlgebra x ()).1)
-          ((Algebra.TList.toAnyArray (α := ℝ) u).push (mkAny y)) ((Γ ++ ss).length)
+          ((TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u).push (mkAny y)) ((Γ ++ ss).length)
         >>= fun acc' => Runtime.Autograd.Tape.backwardDenseFromLoop
           (t := (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
             (Graph.snoc g (TapeNodes.sub a b)).toAlgebra x ()).1)
@@ -2194,59 +2224,59 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
         g.toAlgebra x ()).2 = Graph.eval g x := by
       rw [Algebra.Graph.lowerGraphToTape_ctx_eq_eval, eval_toAlgebra]
     have hvals_c : tc.nodes.map (fun node => node.value)
-        = Algebra.TList.toAnyArray (α := ℝ) (Graph.eval g x) := by
+        = TorchLean.TensorPack.toShapeErasedArray (α := ℝ) (Graph.eval g x) := by
       rw [htc, Algebra.Graph.lowerGraphToTape_values_eq, hctxc]
     have hcomp : (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
         (Graph.snoc g (TapeNodes.div a b)).toAlgebra x ()).1
       = (tc.addNode
           { name := some "proof-carrying-graph"
-            value := Runtime.Autograd.AnyTensor.mk
+            value := Spec.SomeTensor.ofTensor
               (((TapeNodes.div a b).toAlgebra).forward
                 ((Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
                   g.toAlgebra x ()).2) ())
-            requires_grad := true
-            parents := []
+            requiresGrad := true
+            parents := #[]
             backward := fun dLdyAny =>
-              if hsh : dLdyAny.s = τ then
-                .ok (Algebra.TList.toIndexedAnyList (α := ℝ) (ss := Γ ++ ss)
+              if hsh : dLdyAny.shape = τ then
+                .ok (TorchLean.TensorPack.toIndexedShapeErasedArray (α := ℝ) (ss := Γ ++ ss)
                   (((TapeNodes.div a b).toAlgebra).vjp
                     ((Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
                       g.toAlgebra x ()).2) ()
-                    (Tensor.castShape dLdyAny.t hsh)) 0)
+                    (Tensor.castShape dLdyAny.tensor hsh)) 0)
               else .error "autograd: upstream gradient shape mismatch" }).1 := rfl
-    set S' := Algebra.TList.cast (α := ℝ) (List.append_assoc Γ ss [τ]).symm S with hS'def
-    have hSS : Algebra.TList.toAnyArray (α := ℝ) S = Algebra.TList.toAnyArray (α := ℝ) S' := by
-      rw [hS'def, Algebra.TList.toAnyArray_cast]
-    obtain ⟨u, y, huy⟩ : ∃ (u : TList (Γ ++ ss)) (y : Tensor ℝ τ),
-        S' = Algebra.TList.snoc (α := ℝ) u y :=
-      ⟨(Algebra.TList.unsnoc S').1, (Algebra.TList.unsnoc S').2,
-        (Algebra.TList.snoc_unsnoc (α := ℝ) (xs := S')).symm⟩
-    have harr : Algebra.TList.toAnyArray (α := ℝ) S
-        = (Algebra.TList.toAnyArray (α := ℝ) u).push (mkAny y) := by
-      rw [hSS, huy, Algebra.TList.toAnyArray_snoc]
-    have husize : (Algebra.TList.toAnyArray (α := ℝ) u).size = (Γ ++ ss).length := by simp
+    set S' := TorchLean.TensorPack.cast (α := ℝ) (List.append_assoc Γ ss [τ]).symm S with hS'def
+    have hSS : TorchLean.TensorPack.toShapeErasedArray (α := ℝ) S = TorchLean.TensorPack.toShapeErasedArray (α := ℝ) S' := by
+      rw [hS'def, TorchLean.TensorPack.toShapeErasedArray_cast]
+    obtain ⟨u, y, huy⟩ : ∃ (u : TorchLean.TensorPack ℝ (Γ ++ ss)) (y : Tensor ℝ τ),
+        S' = TorchLean.TensorPack.snoc (α := ℝ) u y :=
+      ⟨(TorchLean.TensorPack.unsnoc S').1, (TorchLean.TensorPack.unsnoc S').2,
+        (TorchLean.TensorPack.snoc_unsnoc (α := ℝ) (xs := S')).symm⟩
+    have harr : TorchLean.TensorPack.toShapeErasedArray (α := ℝ) S
+        = (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u).push (mkAny y) := by
+      rw [hSS, huy, TorchLean.TensorPack.toShapeErasedArray_snoc]
+    have husize : (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u).size = (Γ ++ ss).length := by simp
     obtain ⟨na, hna, hna_val⟩ := node_facts_of_values hvals hsize a.i
     obtain ⟨nb, hnb, hnb_val⟩ := node_facts_of_values hvals hsize b.i
-    have hna_rg : na.requires_grad = true := eagerBuilds_rg hg a.i.val na hna
-    have hnb_rg : nb.requires_grad = true := eagerBuilds_rg hg b.i.val nb hnb
-    have hna_s : na.value.s = (Γ ++ ss).get a.i := by rw [hna_val]; rfl
-    have hnb_s : nb.value.s = (Γ ++ ss).get b.i := by rw [hnb_val]; rfl
+    have hna_rg : na.requiresGrad = true := eagerBuilds_rg hg a.i.val na hna
+    have hnb_rg : nb.requiresGrad = true := eagerBuilds_rg hg b.i.val nb hnb
+    have hna_s : na.value.shape = (Γ ++ ss).get a.i := by rw [hna_val]; rfl
+    have hnb_s : nb.value.shape = (Γ ++ ss).get b.i := by rw [hnb_val]; rfl
     have hfold2 :
         [(a.i.val, mkAny (divSpec y (getIdx (Graph.eval g x) b))),
             (b.i.val, mkAny (subSpec (fill (0 : ℝ) τ)
               (mulSpec y (divSpec (getIdx (Graph.eval g x) a)
                 (mulSpec (getIdx (Graph.eval g x) b) (getIdx (Graph.eval g x) b))))))].foldlM
             (fun acc2 (pid, pg) => Runtime.Autograd.Tape.addGradAll (t := t) acc2 pid pg)
-            (Algebra.TList.toAnyArray (α := ℝ) u)
-          = .ok (Algebra.TList.toAnyArray (α := ℝ)
-              (Algebra.TList.add (α := ℝ)
-                (Algebra.TList.add (α := ℝ) u
-                  (TList.single a (divSpec y (getIdx (Graph.eval g x) b))))
-                (TList.single b (subSpec (fill (0 : ℝ) τ)
+            (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u)
+          = .ok (TorchLean.TensorPack.toShapeErasedArray (α := ℝ)
+              (TorchLean.TensorPack.add (α := ℝ)
+                (TorchLean.TensorPack.add (α := ℝ) u
+                  (TensorPack.single a (divSpec y (getIdx (Graph.eval g x) b))))
+                (TensorPack.single b (subSpec (fill (0 : ℝ) τ)
                   (mulSpec y (divSpec (getIdx (Graph.eval g x) a)
                     (mulSpec (getIdx (Graph.eval g x) b) (getIdx (Graph.eval g x) b)))))))) := by
       show (Runtime.Autograd.Tape.addGradAll (t := t)
-            (Algebra.TList.toAnyArray (α := ℝ) u) a.i.val
+            (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u) a.i.val
             (mkAny (divSpec y (getIdx (Graph.eval g x) b))) >>= fun a1 =>
           (Runtime.Autograd.Tape.addGradAll (t := t) a1 b.i.val
             (mkAny (subSpec (fill (0 : ℝ) τ)
@@ -2257,9 +2287,9 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
       rw [addGradAll_toAnyArray_single t a (divSpec y (getIdx (Graph.eval g x) b))
         na hna hna_rg hna_s u]
       show (Runtime.Autograd.Tape.addGradAll (t := t)
-            (Algebra.TList.toAnyArray (α := ℝ)
-              (Algebra.TList.add (α := ℝ) u
-                (TList.single a (divSpec y (getIdx (Graph.eval g x) b)))))
+            (TorchLean.TensorPack.toShapeErasedArray (α := ℝ)
+              (TorchLean.TensorPack.add (α := ℝ) u
+                (TensorPack.single a (divSpec y (getIdx (Graph.eval g x) b)))))
             b.i.val (mkAny (subSpec (fill (0 : ℝ) τ)
               (mulSpec y (divSpec (getIdx (Graph.eval g x) a)
                 (mulSpec (getIdx (Graph.eval g x) b) (getIdx (Graph.eval g x) b))))))
@@ -2269,23 +2299,23 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
           (mulSpec y (divSpec (getIdx (Graph.eval g x) a)
             (mulSpec (getIdx (Graph.eval g x) b) (getIdx (Graph.eval g x) b)))))
         nb hnb hnb_rg hnb_s
-        (Algebra.TList.add (α := ℝ) u
-          (TList.single a (divSpec y (getIdx (Graph.eval g x) b))))]
+        (TorchLean.TensorPack.add (α := ℝ) u
+          (TensorPack.single a (divSpec y (getIdx (Graph.eval g x) b))))]
       rfl
     have hnodeN : (t.addNode (eagerDivNode a.i.val b.i.val (getIdx (Graph.eval g x) a) (getIdx (Graph.eval g x) b))).1.getNode?
         ((Γ ++ ss).length) = some (eagerDivNode a.i.val b.i.val (getIdx (Graph.eval g x) a) (getIdx (Graph.eval g x) b)) := by
       have h := getNode?_addNode_size t (eagerDivNode a.i.val b.i.val (getIdx (Graph.eval g x) a) (getIdx (Graph.eval g x) b))
       rwa [hsize] at h
-    have hgetsN : ((Algebra.TList.toAnyArray (α := ℝ) u).push (mkAny y))[(Γ ++ ss).length]?
+    have hgetsN : ((TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u).push (mkAny y))[(Γ ++ ss).length]?
         = some (mkAny y) := by
-      have h := Array.getElem?_push_size (xs := Algebra.TList.toAnyArray (α := ℝ) u)
+      have h := Array.getElem?_push_size (xs := TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u)
         (x := mkAny y)
       rwa [husize] at h
     have hstep_e : Runtime.Autograd.Tape.backwardDenseFromStep
         (t := (t.addNode (eagerDivNode a.i.val b.i.val (getIdx (Graph.eval g x) a) (getIdx (Graph.eval g x) b))).1)
-        ((Algebra.TList.toAnyArray (α := ℝ) u).push (mkAny y)) ((Γ ++ ss).length)
-      = .ok ((Algebra.TList.toAnyArray (α := ℝ)
-          (Algebra.TList.add (α := ℝ) u
+        ((TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u).push (mkAny y)) ((Γ ++ ss).length)
+      = .ok ((TorchLean.TensorPack.toShapeErasedArray (α := ℝ)
+          (TorchLean.TensorPack.add (α := ℝ) u
             ((TapeNodes.div (Γ := Γ ++ ss) (s := τ) a b).vjp (Graph.eval g x) y))).push
           (mkAny y)) := by
       have hfold2' := hfold2
@@ -2295,7 +2325,7 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
           (b.i.val, mkAny (subSpec (fill (0 : ℝ) τ)
             (mulSpec y (divSpec (getIdx (Graph.eval g x) a)
               (mulSpec (getIdx (Graph.eval g x) b) (getIdx (Graph.eval g x) b))))))]
-        (Algebra.TList.toAnyArray (α := ℝ) u) (mkAny y) (by rw [husize, hsize])
+        (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u) (mkAny y) (by rw [husize, hsize])
         (by
           intro pc hpc
           simp only [List.mem_cons, List.not_mem_nil, or_false] at hpc
@@ -2305,31 +2335,31 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
       rw [hfold2'] at hpush
       have hrgY : Runtime.Autograd.Tape.requireGrad (α := ℝ) (τ := τ) ⟨τ, y⟩ = .ok y := by
         simp [Runtime.Autograd.Tape.requireGrad]
-      simp only [Runtime.Autograd.Tape.backwardDenseFromStep, hnodeN, hgetsN,
+      simp only [Runtime.Autograd.Tape.backwardDenseFromStep, Spec.SomeTensor.cast, hnodeN, hgetsN,
         bind, Except.bind, pure, Except.pure]
-      simpa [eagerDivNode, mkAny, Runtime.Autograd.AnyTensor.mk, hrgY,
+      simpa [eagerDivNode, mkAny, Spec.SomeTensor.ofTensor, hrgY,
         List.foldlM_cons, List.foldlM_nil, bind, Except.bind, pure, Except.pure,
         Except.map] using hpush
     have hnodeN_c : (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
         (Graph.snoc g (TapeNodes.div a b)).toAlgebra x ()).1.getNode? ((Γ ++ ss).length)
       = some { name := some "proof-carrying-graph"
-               value := Runtime.Autograd.AnyTensor.mk
+               value := Spec.SomeTensor.ofTensor
                  (((TapeNodes.div a b).toAlgebra).forward
                    ((Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
                      g.toAlgebra x ()).2) ())
-               requires_grad := true
-               parents := []
+               requiresGrad := true
+               parents := #[]
                backward := fun dLdyAny =>
-                 if hsh : dLdyAny.s = τ then
-                   .ok (Algebra.TList.toIndexedAnyList (α := ℝ) (ss := Γ ++ ss)
+                 if hsh : dLdyAny.shape = τ then
+                   .ok (TorchLean.TensorPack.toIndexedShapeErasedArray (α := ℝ) (ss := Γ ++ ss)
                      (((TapeNodes.div a b).toAlgebra).vjp
                        ((Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
                          g.toAlgebra x ()).2) ()
-                       (Tensor.castShape dLdyAny.t hsh)) 0)
+                       (Tensor.castShape dLdyAny.tensor hsh)) 0)
                  else .error "autograd: upstream gradient shape mismatch" } := by
       rw [hcomp, ← hsize_c]
       exact getNode?_addNode_size tc _
-    have hupstream := Algebra.Graph.foldlM_addGradAll_toIndexedAnyList_eq_add (α := ℝ)
+    have hupstream := Algebra.Graph.foldlM_addGradAll_toIndexedShapeErasedArray_eq_add (α := ℝ)
       (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
         (Graph.snoc g (TapeNodes.div a b)).toAlgebra x ()).1
       (ss := Γ ++ ss) #[] u
@@ -2352,32 +2382,32 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
           rw [(Option.some.inj hnode).symm]
           exact this i hlt
         · rw [hval]
-          have he : (Algebra.TList.toAnyArray (α := ℝ) u)[i]'(by simpa using hi)
-              = mkAny (Algebra.TList.get (α := ℝ) u ⟨i, hi⟩) := by
-            simpa using Algebra.TList.get_toAnyArray (α := ℝ) (ss := Γ ++ ss) u ⟨i, hi⟩
+          have he : (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u)[i]'(by simpa using hi)
+              = mkAny (TorchLean.TensorPack.get (α := ℝ) u ⟨i, hi⟩) := by
+            simpa using TorchLean.TensorPack.get_toShapeErasedArray (α := ℝ) (ss := Γ ++ ss) u ⟨i, hi⟩
           rw [he]
           rfl)
     have hstep_c : Runtime.Autograd.Tape.backwardDenseFromStep
         (t := (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
           (Graph.snoc g (TapeNodes.div a b)).toAlgebra x ()).1)
-        ((Algebra.TList.toAnyArray (α := ℝ) u).push (mkAny y)) ((Γ ++ ss).length)
-      = .ok ((Algebra.TList.toAnyArray (α := ℝ)
-          (Algebra.TList.add (α := ℝ) u
+        ((TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u).push (mkAny y)) ((Γ ++ ss).length)
+      = .ok ((TorchLean.TensorPack.toShapeErasedArray (α := ℝ)
+          (TorchLean.TensorPack.add (α := ℝ) u
             ((TapeNodes.div (Γ := Γ ++ ss) (s := τ) a b).vjp (Graph.eval g x) y))).push
           (mkAny y)) := by
-      have hpre : (Algebra.TList.toAnyArray (α := ℝ) u).push (mkAny y)
-          = #[] ++ Algebra.TList.toAnyArray (α := ℝ) u ++ #[(mkAny y : Any)] := by
+      have hpre : (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u).push (mkAny y)
+          = #[] ++ TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u ++ #[(mkAny y : Any)] := by
         simp
-      have hpost : (Algebra.TList.toAnyArray (α := ℝ)
-            (Algebra.TList.add (α := ℝ) u
+      have hpost : (TorchLean.TensorPack.toShapeErasedArray (α := ℝ)
+            (TorchLean.TensorPack.add (α := ℝ) u
               ((TapeNodes.div (Γ := Γ ++ ss) (s := τ) a b).vjp (Graph.eval g x) y))).push
             (mkAny y)
-          = #[] ++ Algebra.TList.toAnyArray (α := ℝ)
-              (Algebra.TList.add (α := ℝ) u
+          = #[] ++ TorchLean.TensorPack.toShapeErasedArray (α := ℝ)
+              (TorchLean.TensorPack.add (α := ℝ) u
                 ((TapeNodes.div (Γ := Γ ++ ss) (s := τ) a b).vjp (Graph.eval g x) y))
               ++ #[(mkAny y : Any)] := by
         simp
-      simp only [Runtime.Autograd.Tape.backwardDenseFromStep, hnodeN_c, hgetsN,
+      simp only [Runtime.Autograd.Tape.backwardDenseFromStep, Spec.SomeTensor.cast, hnodeN_c, hgetsN,
         bind, Except.bind, pure, Except.pure]
       rw [hpre, hpost]
       have harg : ((TapeNodes.div a b).toAlgebra).vjp
@@ -2386,21 +2416,21 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
         = (TapeNodes.div (Γ := Γ ++ ss) (s := τ) a b).vjp (Graph.eval g x) y := by
         rw [hctxc]
         rfl
-      simpa [mkAny, Runtime.Autograd.AnyTensor.mk, harg] using hupstream
+      simpa [mkAny, Spec.SomeTensor.ofTensor, harg] using hupstream
     have hN' : (Γ ++ (ss ++ [τ])).length = (Γ ++ ss).length + 1 := by
       simp only [List.length_append, List.length_cons, List.length_nil]
       omega
     rw [harr, hN']
     show (Runtime.Autograd.Tape.backwardDenseFromStep
           (t := (t.addNode (eagerDivNode a.i.val b.i.val (getIdx (Graph.eval g x) a) (getIdx (Graph.eval g x) b))).1)
-          ((Algebra.TList.toAnyArray (α := ℝ) u).push (mkAny y)) ((Γ ++ ss).length)
+          ((TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u).push (mkAny y)) ((Γ ++ ss).length)
         >>= fun acc' => Runtime.Autograd.Tape.backwardDenseFromLoop
           (t := (t.addNode (eagerDivNode a.i.val b.i.val (getIdx (Graph.eval g x) a) (getIdx (Graph.eval g x) b))).1)
           ((Γ ++ ss).length) acc')
       = (Runtime.Autograd.Tape.backwardDenseFromStep
           (t := (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
             (Graph.snoc g (TapeNodes.div a b)).toAlgebra x ()).1)
-          ((Algebra.TList.toAnyArray (α := ℝ) u).push (mkAny y)) ((Γ ++ ss).length)
+          ((TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u).push (mkAny y)) ((Γ ++ ss).length)
         >>= fun acc' => Runtime.Autograd.Tape.backwardDenseFromLoop
           (t := (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
             (Graph.snoc g (TapeNodes.div a b)).toAlgebra x ()).1)
@@ -2441,48 +2471,48 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
         g.toAlgebra x ()).2 = Graph.eval g x := by
       rw [Algebra.Graph.lowerGraphToTape_ctx_eq_eval, eval_toAlgebra]
     have hvals_c : tc.nodes.map (fun node => node.value)
-        = Algebra.TList.toAnyArray (α := ℝ) (Graph.eval g x) := by
+        = TorchLean.TensorPack.toShapeErasedArray (α := ℝ) (Graph.eval g x) := by
       rw [htc, Algebra.Graph.lowerGraphToTape_values_eq, hctxc]
     have hcomp : (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
         (Graph.snoc g (TapeNodes.scale idx c)).toAlgebra x ()).1
       = (tc.addNode
           { name := some "proof-carrying-graph"
-            value := Runtime.Autograd.AnyTensor.mk
+            value := Spec.SomeTensor.ofTensor
               (((TapeNodes.scale idx c).toAlgebra).forward
                 ((Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
                   g.toAlgebra x ()).2) ())
-            requires_grad := true
-            parents := []
+            requiresGrad := true
+            parents := #[]
             backward := fun dLdyAny =>
-              if hsh : dLdyAny.s = τ then
-                .ok (Algebra.TList.toIndexedAnyList (α := ℝ) (ss := Γ ++ ss)
+              if hsh : dLdyAny.shape = τ then
+                .ok (TorchLean.TensorPack.toIndexedShapeErasedArray (α := ℝ) (ss := Γ ++ ss)
                   (((TapeNodes.scale idx c).toAlgebra).vjp
                     ((Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
                       g.toAlgebra x ()).2) ()
-                    (Tensor.castShape dLdyAny.t hsh)) 0)
+                    (Tensor.castShape dLdyAny.tensor hsh)) 0)
               else .error "autograd: upstream gradient shape mismatch" }).1 := rfl
-    set S' := Algebra.TList.cast (α := ℝ) (List.append_assoc Γ ss [τ]).symm S with hS'def
-    have hSS : Algebra.TList.toAnyArray (α := ℝ) S = Algebra.TList.toAnyArray (α := ℝ) S' := by
-      rw [hS'def, Algebra.TList.toAnyArray_cast]
-    obtain ⟨u, y, huy⟩ : ∃ (u : TList (Γ ++ ss)) (y : Tensor ℝ τ),
-        S' = Algebra.TList.snoc (α := ℝ) u y :=
-      ⟨(Algebra.TList.unsnoc S').1, (Algebra.TList.unsnoc S').2,
-        (Algebra.TList.snoc_unsnoc (α := ℝ) (xs := S')).symm⟩
-    have harr : Algebra.TList.toAnyArray (α := ℝ) S
-        = (Algebra.TList.toAnyArray (α := ℝ) u).push (mkAny y) := by
-      rw [hSS, huy, Algebra.TList.toAnyArray_snoc]
-    have husize : (Algebra.TList.toAnyArray (α := ℝ) u).size = (Γ ++ ss).length := by simp
+    set S' := TorchLean.TensorPack.cast (α := ℝ) (List.append_assoc Γ ss [τ]).symm S with hS'def
+    have hSS : TorchLean.TensorPack.toShapeErasedArray (α := ℝ) S = TorchLean.TensorPack.toShapeErasedArray (α := ℝ) S' := by
+      rw [hS'def, TorchLean.TensorPack.toShapeErasedArray_cast]
+    obtain ⟨u, y, huy⟩ : ∃ (u : TorchLean.TensorPack ℝ (Γ ++ ss)) (y : Tensor ℝ τ),
+        S' = TorchLean.TensorPack.snoc (α := ℝ) u y :=
+      ⟨(TorchLean.TensorPack.unsnoc S').1, (TorchLean.TensorPack.unsnoc S').2,
+        (TorchLean.TensorPack.snoc_unsnoc (α := ℝ) (xs := S')).symm⟩
+    have harr : TorchLean.TensorPack.toShapeErasedArray (α := ℝ) S
+        = (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u).push (mkAny y) := by
+      rw [hSS, huy, TorchLean.TensorPack.toShapeErasedArray_snoc]
+    have husize : (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u).size = (Γ ++ ss).length := by simp
     obtain ⟨nx, hnx, hnx_val⟩ := node_facts_of_values hvals hsize idx.i
-    have hnx_rg : nx.requires_grad = true := eagerBuilds_rg hg idx.i.val nx hnx
-    have hnx_s : nx.value.s = (Γ ++ ss).get idx.i := by rw [hnx_val]; rfl
+    have hnx_rg : nx.requiresGrad = true := eagerBuilds_rg hg idx.i.val nx hnx
+    have hnx_s : nx.value.shape = (Γ ++ ss).get idx.i := by rw [hnx_val]; rfl
     have hfold1 :
         [(idx.i.val, mkAny (scaleSpec y c))].foldlM
             (fun acc2 (pid, pg) => Runtime.Autograd.Tape.addGradAll (t := t) acc2 pid pg)
-            (Algebra.TList.toAnyArray (α := ℝ) u)
-          = .ok (Algebra.TList.toAnyArray (α := ℝ)
-              (Algebra.TList.add (α := ℝ) u (TList.single idx (scaleSpec y c)))) := by
+            (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u)
+          = .ok (TorchLean.TensorPack.toShapeErasedArray (α := ℝ)
+              (TorchLean.TensorPack.add (α := ℝ) u (TensorPack.single idx (scaleSpec y c)))) := by
       show (Runtime.Autograd.Tape.addGradAll (t := t)
-            (Algebra.TList.toAnyArray (α := ℝ) u) idx.i.val (mkAny (scaleSpec y c))
+            (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u) idx.i.val (mkAny (scaleSpec y c))
             >>= fun a1 => pure a1)
         = _
       rw [addGradAll_toAnyArray_single t idx (scaleSpec y c) nx hnx hnx_rg hnx_s u]
@@ -2491,23 +2521,23 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
         ((Γ ++ ss).length) = some (eagerScaleNode idx.i.val c (getIdx (Graph.eval g x) idx)) := by
       have h := getNode?_addNode_size t (eagerScaleNode idx.i.val c (getIdx (Graph.eval g x) idx))
       rwa [hsize] at h
-    have hgetsN : ((Algebra.TList.toAnyArray (α := ℝ) u).push (mkAny y))[(Γ ++ ss).length]?
+    have hgetsN : ((TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u).push (mkAny y))[(Γ ++ ss).length]?
         = some (mkAny y) := by
-      have h := Array.getElem?_push_size (xs := Algebra.TList.toAnyArray (α := ℝ) u)
+      have h := Array.getElem?_push_size (xs := TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u)
         (x := mkAny y)
       rwa [husize] at h
     have hstep_e : Runtime.Autograd.Tape.backwardDenseFromStep
         (t := (t.addNode (eagerScaleNode idx.i.val c (getIdx (Graph.eval g x) idx))).1)
-        ((Algebra.TList.toAnyArray (α := ℝ) u).push (mkAny y)) ((Γ ++ ss).length)
-      = .ok ((Algebra.TList.toAnyArray (α := ℝ)
-          (Algebra.TList.add (α := ℝ) u
+        ((TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u).push (mkAny y)) ((Γ ++ ss).length)
+      = .ok ((TorchLean.TensorPack.toShapeErasedArray (α := ℝ)
+          (TorchLean.TensorPack.add (α := ℝ) u
             ((TapeNodes.scale (Γ := Γ ++ ss) (s := τ) idx c).vjp (Graph.eval g x) y))).push
           (mkAny y)) := by
       have hfold1' := hfold1
       rw [scale_vjp_add_eq] at hfold1'
       have hpush := foldContribs_push t (eagerScaleNode idx.i.val c (getIdx (Graph.eval g x) idx))
         [(idx.i.val, mkAny (scaleSpec y c))]
-        (Algebra.TList.toAnyArray (α := ℝ) u) (mkAny y) (by rw [husize, hsize])
+        (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u) (mkAny y) (by rw [husize, hsize])
         (by
           intro pc hpc
           simp only [List.mem_cons, List.not_mem_nil, or_false] at hpc
@@ -2516,31 +2546,31 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
       rw [hfold1'] at hpush
       have hrgY : Runtime.Autograd.Tape.requireGrad (α := ℝ) (τ := τ) ⟨τ, y⟩ = .ok y := by
         simp [Runtime.Autograd.Tape.requireGrad]
-      simp only [Runtime.Autograd.Tape.backwardDenseFromStep, hnodeN, hgetsN,
+      simp only [Runtime.Autograd.Tape.backwardDenseFromStep, Spec.SomeTensor.cast, hnodeN, hgetsN,
         bind, Except.bind, pure, Except.pure]
-      simpa [eagerScaleNode, mkAny, Runtime.Autograd.AnyTensor.mk, hrgY,
+      simpa [eagerScaleNode, mkAny, Spec.SomeTensor.ofTensor, hrgY,
         List.foldlM_cons, List.foldlM_nil, bind, Except.bind, pure, Except.pure,
         Except.map] using hpush
     have hnodeN_c : (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
         (Graph.snoc g (TapeNodes.scale idx c)).toAlgebra x ()).1.getNode? ((Γ ++ ss).length)
       = some { name := some "proof-carrying-graph"
-               value := Runtime.Autograd.AnyTensor.mk
+               value := Spec.SomeTensor.ofTensor
                  (((TapeNodes.scale idx c).toAlgebra).forward
                    ((Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
                      g.toAlgebra x ()).2) ())
-               requires_grad := true
-               parents := []
+               requiresGrad := true
+               parents := #[]
                backward := fun dLdyAny =>
-                 if hsh : dLdyAny.s = τ then
-                   .ok (Algebra.TList.toIndexedAnyList (α := ℝ) (ss := Γ ++ ss)
+                 if hsh : dLdyAny.shape = τ then
+                   .ok (TorchLean.TensorPack.toIndexedShapeErasedArray (α := ℝ) (ss := Γ ++ ss)
                      (((TapeNodes.scale idx c).toAlgebra).vjp
                        ((Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
                          g.toAlgebra x ()).2) ()
-                       (Tensor.castShape dLdyAny.t hsh)) 0)
+                       (Tensor.castShape dLdyAny.tensor hsh)) 0)
                  else .error "autograd: upstream gradient shape mismatch" } := by
       rw [hcomp, ← hsize_c]
       exact getNode?_addNode_size tc _
-    have hupstream := Algebra.Graph.foldlM_addGradAll_toIndexedAnyList_eq_add (α := ℝ)
+    have hupstream := Algebra.Graph.foldlM_addGradAll_toIndexedShapeErasedArray_eq_add (α := ℝ)
       (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
         (Graph.snoc g (TapeNodes.scale idx c)).toAlgebra x ()).1
       (ss := Γ ++ ss) #[] u
@@ -2563,32 +2593,32 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
           rw [(Option.some.inj hnode).symm]
           exact this i hlt
         · rw [hval]
-          have he : (Algebra.TList.toAnyArray (α := ℝ) u)[i]'(by simpa using hi)
-              = mkAny (Algebra.TList.get (α := ℝ) u ⟨i, hi⟩) := by
-            simpa using Algebra.TList.get_toAnyArray (α := ℝ) (ss := Γ ++ ss) u ⟨i, hi⟩
+          have he : (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u)[i]'(by simpa using hi)
+              = mkAny (TorchLean.TensorPack.get (α := ℝ) u ⟨i, hi⟩) := by
+            simpa using TorchLean.TensorPack.get_toShapeErasedArray (α := ℝ) (ss := Γ ++ ss) u ⟨i, hi⟩
           rw [he]
           rfl)
     have hstep_c : Runtime.Autograd.Tape.backwardDenseFromStep
         (t := (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
           (Graph.snoc g (TapeNodes.scale idx c)).toAlgebra x ()).1)
-        ((Algebra.TList.toAnyArray (α := ℝ) u).push (mkAny y)) ((Γ ++ ss).length)
-      = .ok ((Algebra.TList.toAnyArray (α := ℝ)
-          (Algebra.TList.add (α := ℝ) u
+        ((TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u).push (mkAny y)) ((Γ ++ ss).length)
+      = .ok ((TorchLean.TensorPack.toShapeErasedArray (α := ℝ)
+          (TorchLean.TensorPack.add (α := ℝ) u
             ((TapeNodes.scale (Γ := Γ ++ ss) (s := τ) idx c).vjp (Graph.eval g x) y))).push
           (mkAny y)) := by
-      have hpre : (Algebra.TList.toAnyArray (α := ℝ) u).push (mkAny y)
-          = #[] ++ Algebra.TList.toAnyArray (α := ℝ) u ++ #[(mkAny y : Any)] := by
+      have hpre : (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u).push (mkAny y)
+          = #[] ++ TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u ++ #[(mkAny y : Any)] := by
         simp
-      have hpost : (Algebra.TList.toAnyArray (α := ℝ)
-            (Algebra.TList.add (α := ℝ) u
+      have hpost : (TorchLean.TensorPack.toShapeErasedArray (α := ℝ)
+            (TorchLean.TensorPack.add (α := ℝ) u
               ((TapeNodes.scale (Γ := Γ ++ ss) (s := τ) idx c).vjp (Graph.eval g x) y))).push
             (mkAny y)
-          = #[] ++ Algebra.TList.toAnyArray (α := ℝ)
-              (Algebra.TList.add (α := ℝ) u
+          = #[] ++ TorchLean.TensorPack.toShapeErasedArray (α := ℝ)
+              (TorchLean.TensorPack.add (α := ℝ) u
                 ((TapeNodes.scale (Γ := Γ ++ ss) (s := τ) idx c).vjp (Graph.eval g x) y))
               ++ #[(mkAny y : Any)] := by
         simp
-      simp only [Runtime.Autograd.Tape.backwardDenseFromStep, hnodeN_c, hgetsN,
+      simp only [Runtime.Autograd.Tape.backwardDenseFromStep, Spec.SomeTensor.cast, hnodeN_c, hgetsN,
         bind, Except.bind, pure, Except.pure]
       rw [hpre, hpost]
       have harg : ((TapeNodes.scale idx c).toAlgebra).vjp
@@ -2597,21 +2627,21 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
         = (TapeNodes.scale (Γ := Γ ++ ss) (s := τ) idx c).vjp (Graph.eval g x) y := by
         rw [hctxc]
         rfl
-      simpa [mkAny, Runtime.Autograd.AnyTensor.mk, harg] using hupstream
+      simpa [mkAny, Spec.SomeTensor.ofTensor, harg] using hupstream
     have hN' : (Γ ++ (ss ++ [τ])).length = (Γ ++ ss).length + 1 := by
       simp only [List.length_append, List.length_cons, List.length_nil]
       omega
     rw [harr, hN']
     show (Runtime.Autograd.Tape.backwardDenseFromStep
           (t := (t.addNode (eagerScaleNode idx.i.val c (getIdx (Graph.eval g x) idx))).1)
-          ((Algebra.TList.toAnyArray (α := ℝ) u).push (mkAny y)) ((Γ ++ ss).length)
+          ((TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u).push (mkAny y)) ((Γ ++ ss).length)
         >>= fun acc' => Runtime.Autograd.Tape.backwardDenseFromLoop
           (t := (t.addNode (eagerScaleNode idx.i.val c (getIdx (Graph.eval g x) idx))).1)
           ((Γ ++ ss).length) acc')
       = (Runtime.Autograd.Tape.backwardDenseFromStep
           (t := (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
             (Graph.snoc g (TapeNodes.scale idx c)).toAlgebra x ()).1)
-          ((Algebra.TList.toAnyArray (α := ℝ) u).push (mkAny y)) ((Γ ++ ss).length)
+          ((TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u).push (mkAny y)) ((Γ ++ ss).length)
         >>= fun acc' => Runtime.Autograd.Tape.backwardDenseFromLoop
           (t := (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
             (Graph.snoc g (TapeNodes.scale idx c)).toAlgebra x ()).1)
@@ -2652,49 +2682,49 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
         g.toAlgebra x ()).2 = Graph.eval g x := by
       rw [Algebra.Graph.lowerGraphToTape_ctx_eq_eval, eval_toAlgebra]
     have hvals_c : tc.nodes.map (fun node => node.value)
-        = Algebra.TList.toAnyArray (α := ℝ) (Graph.eval g x) := by
+        = TorchLean.TensorPack.toShapeErasedArray (α := ℝ) (Graph.eval g x) := by
       rw [htc, Algebra.Graph.lowerGraphToTape_values_eq, hctxc]
     have hcomp : (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
         (Graph.snoc g (TapeNodes.elemwise idx f f')).toAlgebra x ()).1
       = (tc.addNode
           { name := some "proof-carrying-graph"
-            value := Runtime.Autograd.AnyTensor.mk
+            value := Spec.SomeTensor.ofTensor
               (((TapeNodes.elemwise idx f f').toAlgebra).forward
                 ((Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
                   g.toAlgebra x ()).2) ())
-            requires_grad := true
-            parents := []
+            requiresGrad := true
+            parents := #[]
             backward := fun dLdyAny =>
-              if hsh : dLdyAny.s = τ then
-                .ok (Algebra.TList.toIndexedAnyList (α := ℝ) (ss := Γ ++ ss)
+              if hsh : dLdyAny.shape = τ then
+                .ok (TorchLean.TensorPack.toIndexedShapeErasedArray (α := ℝ) (ss := Γ ++ ss)
                   (((TapeNodes.elemwise idx f f').toAlgebra).vjp
                     ((Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
                       g.toAlgebra x ()).2) ()
-                    (Tensor.castShape dLdyAny.t hsh)) 0)
+                    (Tensor.castShape dLdyAny.tensor hsh)) 0)
               else .error "autograd: upstream gradient shape mismatch" }).1 := rfl
-    set S' := Algebra.TList.cast (α := ℝ) (List.append_assoc Γ ss [τ]).symm S with hS'def
-    have hSS : Algebra.TList.toAnyArray (α := ℝ) S = Algebra.TList.toAnyArray (α := ℝ) S' := by
-      rw [hS'def, Algebra.TList.toAnyArray_cast]
-    obtain ⟨u, y, huy⟩ : ∃ (u : TList (Γ ++ ss)) (y : Tensor ℝ τ),
-        S' = Algebra.TList.snoc (α := ℝ) u y :=
-      ⟨(Algebra.TList.unsnoc S').1, (Algebra.TList.unsnoc S').2,
-        (Algebra.TList.snoc_unsnoc (α := ℝ) (xs := S')).symm⟩
-    have harr : Algebra.TList.toAnyArray (α := ℝ) S
-        = (Algebra.TList.toAnyArray (α := ℝ) u).push (mkAny y) := by
-      rw [hSS, huy, Algebra.TList.toAnyArray_snoc]
-    have husize : (Algebra.TList.toAnyArray (α := ℝ) u).size = (Γ ++ ss).length := by simp
+    set S' := TorchLean.TensorPack.cast (α := ℝ) (List.append_assoc Γ ss [τ]).symm S with hS'def
+    have hSS : TorchLean.TensorPack.toShapeErasedArray (α := ℝ) S = TorchLean.TensorPack.toShapeErasedArray (α := ℝ) S' := by
+      rw [hS'def, TorchLean.TensorPack.toShapeErasedArray_cast]
+    obtain ⟨u, y, huy⟩ : ∃ (u : TorchLean.TensorPack ℝ (Γ ++ ss)) (y : Tensor ℝ τ),
+        S' = TorchLean.TensorPack.snoc (α := ℝ) u y :=
+      ⟨(TorchLean.TensorPack.unsnoc S').1, (TorchLean.TensorPack.unsnoc S').2,
+        (TorchLean.TensorPack.snoc_unsnoc (α := ℝ) (xs := S')).symm⟩
+    have harr : TorchLean.TensorPack.toShapeErasedArray (α := ℝ) S
+        = (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u).push (mkAny y) := by
+      rw [hSS, huy, TorchLean.TensorPack.toShapeErasedArray_snoc]
+    have husize : (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u).size = (Γ ++ ss).length := by simp
     obtain ⟨nx, hnx, hnx_val⟩ := node_facts_of_values hvals hsize idx.i
-    have hnx_rg : nx.requires_grad = true := eagerBuilds_rg hg idx.i.val nx hnx
-    have hnx_s : nx.value.s = (Γ ++ ss).get idx.i := by rw [hnx_val]; rfl
+    have hnx_rg : nx.requiresGrad = true := eagerBuilds_rg hg idx.i.val nx hnx
+    have hnx_s : nx.value.shape = (Γ ++ ss).get idx.i := by rw [hnx_val]; rfl
     have hfold1 :
         [(idx.i.val, mkAny (mulSpec (bwdSpec (getIdx (Graph.eval g x) idx)) y))].foldlM
             (fun acc2 (pid, pg) => Runtime.Autograd.Tape.addGradAll (t := t) acc2 pid pg)
-            (Algebra.TList.toAnyArray (α := ℝ) u)
-          = .ok (Algebra.TList.toAnyArray (α := ℝ)
-              (Algebra.TList.add (α := ℝ) u
-                (TList.single idx (mulSpec (bwdSpec (getIdx (Graph.eval g x) idx)) y)))) := by
+            (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u)
+          = .ok (TorchLean.TensorPack.toShapeErasedArray (α := ℝ)
+              (TorchLean.TensorPack.add (α := ℝ) u
+                (TensorPack.single idx (mulSpec (bwdSpec (getIdx (Graph.eval g x) idx)) y)))) := by
       show (Runtime.Autograd.Tape.addGradAll (t := t)
-            (Algebra.TList.toAnyArray (α := ℝ) u) idx.i.val
+            (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u) idx.i.val
             (mkAny (mulSpec (bwdSpec (getIdx (Graph.eval g x) idx)) y))
             >>= fun a1 => pure a1)
         = _
@@ -2707,17 +2737,17 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
       have h := getNode?_addNode_size t
         (eagerUnaryNode name idx.i.val fwdSpec bwdSpec (getIdx (Graph.eval g x) idx))
       rwa [hsize] at h
-    have hgetsN : ((Algebra.TList.toAnyArray (α := ℝ) u).push (mkAny y))[(Γ ++ ss).length]?
+    have hgetsN : ((TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u).push (mkAny y))[(Γ ++ ss).length]?
         = some (mkAny y) := by
-      have h := Array.getElem?_push_size (xs := Algebra.TList.toAnyArray (α := ℝ) u)
+      have h := Array.getElem?_push_size (xs := TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u)
         (x := mkAny y)
       rwa [husize] at h
     have hstep_e : Runtime.Autograd.Tape.backwardDenseFromStep
         (t := (t.addNode (eagerUnaryNode name idx.i.val fwdSpec bwdSpec
           (getIdx (Graph.eval g x) idx))).1)
-        ((Algebra.TList.toAnyArray (α := ℝ) u).push (mkAny y)) ((Γ ++ ss).length)
-      = .ok ((Algebra.TList.toAnyArray (α := ℝ)
-          (Algebra.TList.add (α := ℝ) u
+        ((TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u).push (mkAny y)) ((Γ ++ ss).length)
+      = .ok ((TorchLean.TensorPack.toShapeErasedArray (α := ℝ)
+          (TorchLean.TensorPack.add (α := ℝ) u
             ((TapeNodes.elemwise (Γ := Γ ++ ss) (s := τ) idx f f').vjp (Graph.eval g x) y))).push
           (mkAny y)) := by
       have hfold1' := hfold1
@@ -2725,7 +2755,7 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
       have hpush := foldContribs_push t
         (eagerUnaryNode name idx.i.val fwdSpec bwdSpec (getIdx (Graph.eval g x) idx))
         [(idx.i.val, mkAny (mulSpec (bwdSpec (getIdx (Graph.eval g x) idx)) y))]
-        (Algebra.TList.toAnyArray (α := ℝ) u) (mkAny y) (by rw [husize, hsize])
+        (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u) (mkAny y) (by rw [husize, hsize])
         (by
           intro pc hpc
           simp only [List.mem_cons, List.not_mem_nil, or_false] at hpc
@@ -2734,31 +2764,31 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
       rw [hfold1'] at hpush
       have hrgY : Runtime.Autograd.Tape.requireGrad (α := ℝ) (τ := τ) ⟨τ, y⟩ = .ok y := by
         simp [Runtime.Autograd.Tape.requireGrad]
-      simp only [Runtime.Autograd.Tape.backwardDenseFromStep, hnodeN, hgetsN,
+      simp only [Runtime.Autograd.Tape.backwardDenseFromStep, Spec.SomeTensor.cast, hnodeN, hgetsN,
         bind, Except.bind, pure, Except.pure]
-      simpa [eagerUnaryNode, mkAny, Runtime.Autograd.AnyTensor.mk, hrgY,
+      simpa [eagerUnaryNode, mkAny, Spec.SomeTensor.ofTensor, hrgY,
         List.foldlM_cons, List.foldlM_nil, bind, Except.bind, pure, Except.pure,
         Except.map] using hpush
     have hnodeN_c : (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
         (Graph.snoc g (TapeNodes.elemwise idx f f')).toAlgebra x ()).1.getNode? ((Γ ++ ss).length)
       = some { name := some "proof-carrying-graph"
-               value := Runtime.Autograd.AnyTensor.mk
+               value := Spec.SomeTensor.ofTensor
                  (((TapeNodes.elemwise idx f f').toAlgebra).forward
                    ((Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
                      g.toAlgebra x ()).2) ())
-               requires_grad := true
-               parents := []
+               requiresGrad := true
+               parents := #[]
                backward := fun dLdyAny =>
-                 if hsh : dLdyAny.s = τ then
-                   .ok (Algebra.TList.toIndexedAnyList (α := ℝ) (ss := Γ ++ ss)
+                 if hsh : dLdyAny.shape = τ then
+                   .ok (TorchLean.TensorPack.toIndexedShapeErasedArray (α := ℝ) (ss := Γ ++ ss)
                      (((TapeNodes.elemwise idx f f').toAlgebra).vjp
                        ((Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
                          g.toAlgebra x ()).2) ()
-                       (Tensor.castShape dLdyAny.t hsh)) 0)
+                       (Tensor.castShape dLdyAny.tensor hsh)) 0)
                  else .error "autograd: upstream gradient shape mismatch" } := by
       rw [hcomp, ← hsize_c]
       exact getNode?_addNode_size tc _
-    have hupstream := Algebra.Graph.foldlM_addGradAll_toIndexedAnyList_eq_add (α := ℝ)
+    have hupstream := Algebra.Graph.foldlM_addGradAll_toIndexedShapeErasedArray_eq_add (α := ℝ)
       (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
         (Graph.snoc g (TapeNodes.elemwise idx f f')).toAlgebra x ()).1
       (ss := Γ ++ ss) #[] u
@@ -2781,32 +2811,32 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
           rw [(Option.some.inj hnode).symm]
           exact this i hlt
         · rw [hval]
-          have he : (Algebra.TList.toAnyArray (α := ℝ) u)[i]'(by simpa using hi)
-              = mkAny (Algebra.TList.get (α := ℝ) u ⟨i, hi⟩) := by
-            simpa using Algebra.TList.get_toAnyArray (α := ℝ) (ss := Γ ++ ss) u ⟨i, hi⟩
+          have he : (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u)[i]'(by simpa using hi)
+              = mkAny (TorchLean.TensorPack.get (α := ℝ) u ⟨i, hi⟩) := by
+            simpa using TorchLean.TensorPack.get_toShapeErasedArray (α := ℝ) (ss := Γ ++ ss) u ⟨i, hi⟩
           rw [he]
           rfl)
     have hstep_c : Runtime.Autograd.Tape.backwardDenseFromStep
         (t := (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
           (Graph.snoc g (TapeNodes.elemwise idx f f')).toAlgebra x ()).1)
-        ((Algebra.TList.toAnyArray (α := ℝ) u).push (mkAny y)) ((Γ ++ ss).length)
-      = .ok ((Algebra.TList.toAnyArray (α := ℝ)
-          (Algebra.TList.add (α := ℝ) u
+        ((TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u).push (mkAny y)) ((Γ ++ ss).length)
+      = .ok ((TorchLean.TensorPack.toShapeErasedArray (α := ℝ)
+          (TorchLean.TensorPack.add (α := ℝ) u
             ((TapeNodes.elemwise (Γ := Γ ++ ss) (s := τ) idx f f').vjp (Graph.eval g x) y))).push
           (mkAny y)) := by
-      have hpre : (Algebra.TList.toAnyArray (α := ℝ) u).push (mkAny y)
-          = #[] ++ Algebra.TList.toAnyArray (α := ℝ) u ++ #[(mkAny y : Any)] := by
+      have hpre : (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u).push (mkAny y)
+          = #[] ++ TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u ++ #[(mkAny y : Any)] := by
         simp
-      have hpost : (Algebra.TList.toAnyArray (α := ℝ)
-            (Algebra.TList.add (α := ℝ) u
+      have hpost : (TorchLean.TensorPack.toShapeErasedArray (α := ℝ)
+            (TorchLean.TensorPack.add (α := ℝ) u
               ((TapeNodes.elemwise (Γ := Γ ++ ss) (s := τ) idx f f').vjp (Graph.eval g x) y))).push
             (mkAny y)
-          = #[] ++ Algebra.TList.toAnyArray (α := ℝ)
-              (Algebra.TList.add (α := ℝ) u
+          = #[] ++ TorchLean.TensorPack.toShapeErasedArray (α := ℝ)
+              (TorchLean.TensorPack.add (α := ℝ) u
                 ((TapeNodes.elemwise (Γ := Γ ++ ss) (s := τ) idx f f').vjp (Graph.eval g x) y))
               ++ #[(mkAny y : Any)] := by
         simp
-      simp only [Runtime.Autograd.Tape.backwardDenseFromStep, hnodeN_c, hgetsN,
+      simp only [Runtime.Autograd.Tape.backwardDenseFromStep, Spec.SomeTensor.cast, hnodeN_c, hgetsN,
         bind, Except.bind, pure, Except.pure]
       rw [hpre, hpost]
       have harg : ((TapeNodes.elemwise idx f f').toAlgebra).vjp
@@ -2815,7 +2845,7 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
         = (TapeNodes.elemwise (Γ := Γ ++ ss) (s := τ) idx f f').vjp (Graph.eval g x) y := by
         rw [hctxc]
         rfl
-      simpa [mkAny, Runtime.Autograd.AnyTensor.mk, harg] using hupstream
+      simpa [mkAny, Spec.SomeTensor.ofTensor, harg] using hupstream
     have hN' : (Γ ++ (ss ++ [τ])).length = (Γ ++ ss).length + 1 := by
       simp only [List.length_append, List.length_cons, List.length_nil]
       omega
@@ -2823,7 +2853,7 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
     show (Runtime.Autograd.Tape.backwardDenseFromStep
           (t := (t.addNode (eagerUnaryNode name idx.i.val fwdSpec bwdSpec
             (getIdx (Graph.eval g x) idx))).1)
-          ((Algebra.TList.toAnyArray (α := ℝ) u).push (mkAny y)) ((Γ ++ ss).length)
+          ((TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u).push (mkAny y)) ((Γ ++ ss).length)
         >>= fun acc' => Runtime.Autograd.Tape.backwardDenseFromLoop
           (t := (t.addNode (eagerUnaryNode name idx.i.val fwdSpec bwdSpec
             (getIdx (Graph.eval g x) idx))).1)
@@ -2831,7 +2861,7 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
       = (Runtime.Autograd.Tape.backwardDenseFromStep
           (t := (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
             (Graph.snoc g (TapeNodes.elemwise idx f f')).toAlgebra x ()).1)
-          ((Algebra.TList.toAnyArray (α := ℝ) u).push (mkAny y)) ((Γ ++ ss).length)
+          ((TorchLean.TensorPack.toShapeErasedArray (α := ℝ) u).push (mkAny y)) ((Γ ++ ss).length)
         >>= fun acc' => Runtime.Autograd.Tape.backwardDenseFromLoop
           (t := (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss ++ [τ])
             (Graph.snoc g (TapeNodes.elemwise idx f f')).toAlgebra x ()).1)
@@ -2855,24 +2885,24 @@ theorem loop_eager_eq_compiled {Γ : List Shape} :
 
 /-- **The eager tape's total dense reverse pass is the compiled tape's.** -/
 theorem backwardDenseFrom_eager_eq_compiled {Γ ss : List Shape} {g : Graph Γ ss}
-    {x : TList Γ} {t : RTape} (h : EagerBuilds g x t) (S : TList (Γ ++ ss)) :
-    Runtime.Autograd.Tape.backwardDenseFrom (t := t) (Algebra.TList.toAnyArray (α := ℝ) S)
+    {x : TorchLean.TensorPack ℝ Γ} {t : RTape} (h : EagerBuilds g x t) (S : TorchLean.TensorPack ℝ (Γ ++ ss)) :
+    Runtime.Autograd.Tape.backwardDenseFrom (t := t) (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) S)
       = Runtime.Autograd.Tape.backwardDenseFrom
           (t := (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
             g.toAlgebra x ()).1)
-          (Algebra.TList.toAnyArray (α := ℝ) S) := by
+          (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) S) := by
   have hsz_e := eagerBuilds_size h
   have hsz_c : (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
       g.toAlgebra x ()).1.nodes.size = (Γ ++ ss).length := by
     rw [Algebra.Graph.lowerGraphToTape_nodes_size]
     simp
-  have hS : (Algebra.TList.toAnyArray (α := ℝ) S).size = (Γ ++ ss).length := by simp
-  show (if (Algebra.TList.toAnyArray (α := ℝ) S).size = t.nodes.size then
+  have hS : (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) S).size = (Γ ++ ss).length := by simp
+  show (if (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) S).size = t.nodes.size then
       Runtime.Autograd.Tape.backwardDenseFromLoop (t := t) t.nodes.size
-        (Algebra.TList.toAnyArray (α := ℝ) S)
+        (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) S)
     else throw "autograd: initial dense gradient array has wrong length") = _
   rw [if_pos (by rw [hS, hsz_e]), hsz_e]
-  show _ = (if (Algebra.TList.toAnyArray (α := ℝ) S).size
+  show _ = (if (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) S).size
       = (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
         g.toAlgebra x ()).1.nodes.size then
       Runtime.Autograd.Tape.backwardDenseFromLoop
@@ -2880,13 +2910,13 @@ theorem backwardDenseFrom_eager_eq_compiled {Γ ss : List Shape} {g : Graph Γ s
           g.toAlgebra x ()).1)
         (Algebra.Graph.lowerGraphToTape (α := ℝ) (Δ := Unit) (Γ := Γ) (ss := ss)
           g.toAlgebra x ()).1.nodes.size
-        (Algebra.TList.toAnyArray (α := ℝ) S)
+        (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) S)
     else throw "autograd: initial dense gradient array has wrong length")
   rw [if_pos (by rw [hS, hsz_c]), hsz_c]
   exact loop_eager_eq_compiled h S
 
 /-- Eager tapes inhabit the forward simulation relation. -/
-theorem forwardSim_eager {Γ ss : List Shape} {g : Graph Γ ss} {x : TList Γ} {t : RTape}
+theorem forwardSim_eager {Γ ss : List Shape} {g : Graph Γ ss} {x : TorchLean.TensorPack ℝ Γ} {t : RTape}
     (h : EagerBuilds g x t) : ForwardSim g (flattenCtx x) t := by
   refine ⟨eagerBuilds_size h, ?_⟩
   intro i
@@ -2896,17 +2926,17 @@ theorem forwardSim_eager {Γ ss : List Shape} {g : Graph Γ ss} {x : TList Γ} {
     simp [Runtime.Autograd.Tape.getValue?, hnode]
   rw [this, hval]
   unfold ctxSlotValue
-  rw [Graph.evalVec_flattenCtx, getRaw_flattenCtx, ofVecT_toVecT]
+  rw [Graph.evalVec_flattenCtx, getRaw_flattenCtx, vecToTensor_tensorToVec]
 
 /-- **The Stage-3.5/3.6 endpoint, on the eagerly built tape**: the dense reverse pass on the
     runtime-constructed `leaf`/`add`/`mul` tape succeeds, and the input-prefix of its output
     realises the adjoint of the Fréchet derivative of the graph's forward evaluation. -/
 theorem direct_PR_soundness_eager {Γ ss : List Shape}
-    (g : Graph Γ ss) (hg : GraphFDerivCorrect g) (x : TList Γ) {t : RTape}
-    (ht : EagerBuilds g x t) (seed : TList (Γ ++ ss)) :
+    (g : Graph Γ ss) (hg : GraphFDerivCorrect g) (x : TorchLean.TensorPack ℝ Γ) {t : RTape}
+    (ht : EagerBuilds g x t) (seed : TorchLean.TensorPack ℝ (Γ ++ ss)) :
     ∃ out : Array Any,
       Runtime.Autograd.Tape.backwardDenseFrom (t := t)
-          (Algebra.TList.toAnyArray (α := ℝ) seed) = .ok out ∧
+          (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) seed) = .ok out ∧
       ArrCorr ((fderiv ℝ (g.evalVec) (flattenCtx x)).adjoint (flattenCtx seed))
         (out.extract 0 Γ.length) := by
   obtain ⟨out, h1, h2⟩ := direct_PR_soundness_compiled g hg x seed
@@ -2914,11 +2944,11 @@ theorem direct_PR_soundness_eager {Γ ss : List Shape}
 
 /-- Pointwise-differentiability variant of `direct_PR_soundness_eager`. -/
 theorem direct_PR_soundness_eager_at {Γ ss : List Shape}
-    (g : Graph Γ ss) (x : TList Γ) (hg : GraphFDerivCorrectAt g (flattenCtx x)) {t : RTape}
-    (ht : EagerBuilds g x t) (seed : TList (Γ ++ ss)) :
+    (g : Graph Γ ss) (x : TorchLean.TensorPack ℝ Γ) (hg : GraphFDerivCorrectAt g (flattenCtx x)) {t : RTape}
+    (ht : EagerBuilds g x t) (seed : TorchLean.TensorPack ℝ (Γ ++ ss)) :
     ∃ out : Array Any,
       Runtime.Autograd.Tape.backwardDenseFrom (t := t)
-          (Algebra.TList.toAnyArray (α := ℝ) seed) = .ok out ∧
+          (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) seed) = .ok out ∧
       ArrCorr ((fderiv ℝ (g.evalVec) (flattenCtx x)).adjoint (flattenCtx seed))
         (out.extract 0 Γ.length) := by
   obtain ⟨out, h1, h2⟩ := direct_PR_soundness_compiled_at g x hg seed

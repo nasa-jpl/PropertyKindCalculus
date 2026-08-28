@@ -70,7 +70,7 @@ replay with the same closure tactic. -/
 structure IsNumCarrierHom (R : TapeBuilder s → Tensor Float s → Prop) : Prop where
   /-- A named input leaf relates to exactly its own tensor. -/
   leaf  : ∀ (v : Tensor Float s) (name : Option String) (rg : Bool),
-            R (⟨TapeM.leaf v (name := name) (requires_grad := rg)⟩ : TapeBuilder s) v
+            R (⟨TapeM.leaf v (name := name) (requiresGrad := rg)⟩ : TapeBuilder s) v
   /-- A constant leaf relates to the filled tensor. -/
   const : ∀ (x : Float), R (TapeBuilder.const (s := s) x) (fill x s)
   /-- `+` maps to `addSpec`. -/

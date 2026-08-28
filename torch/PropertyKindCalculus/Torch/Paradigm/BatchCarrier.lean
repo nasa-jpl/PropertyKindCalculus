@@ -55,8 +55,21 @@ class BatchCarrier (C : Shape → Type) where
   degenerate-tile guard (`if touched == 0 then throw …`). Real element count on `CudaT`; a
   pure/GC carrier should return `Shape.size s` so the guard still discriminates. -/
   liveSize     : ∀ {s : Shape}, C s → UInt32 := fun _ => 0
-  /-- Eagerly free a batch's storage, returning the amount reclaimed (0/no-op on GC-managed
-  carriers; releases the device buffer on `CudaT`). -/
+  /-- Eagerly free a batch's storage, returning the amount reclaimed.
+
+  **No carrier implements this, and a pure one cannot.** TorchLean withdrew the pure
+  `Buffer.release : Buffer → UInt32` precisely because a pure release is erasable: nothing
+  downstream consumes its result, so Lean is free to delete the call and the device
+  allocation simply survives. Its replacements both create a dependency the compiler must
+  respect — `Buffer.releaseIO` threads a monotonic-clock token through `IO`, and
+  `Buffer.releaseThen` returns the buffer that is kept — and neither fits a field of type
+  `C s → UInt32`.
+
+  So the field stands at its `0` default on every carrier, including `CudaT`, and it means
+  "nothing was reclaimed" rather than "reclaimed silently". Giving it back a real
+  implementation is a change of TYPE, not of instance: either `∀ {s}, C s → IO UInt32`, or
+  a `releaseThen`-shaped `∀ {s}, C s → C s' → C s'` that threads the survivor. Deciding
+  which is what a first consumer should settle; `liveSize` above has one and this does not. -/
   release      : ∀ {s : Shape}, C s → UInt32 := fun _ => 0
 
 /-- The GPU/CPU-stub carrier as a `BatchCarrier`. One instance for both builds — `-K cuda`
@@ -66,7 +79,9 @@ instance : BatchCarrier CudaT where
   ofFloatArray := fun a => CudaT.ofFloatArray a
   toFloatArray := fun t => CudaT.toFloatArray t
   liveSize     := fun t => Buffer.size t.buf
-  release      := fun t => Buffer.release t.buf
+  -- `release` is deliberately left at its default — see the field's docstring. `Buffer.size`
+  -- is still pure upstream and still meaningful; `Buffer.release` no longer exists in a form
+  -- this signature can hold.
 
 /-! ### An interval's endpoints at the batched carrier
 

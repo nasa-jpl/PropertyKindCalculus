@@ -69,7 +69,7 @@ theorem stepVal_push_stable (env : String → Float) (acc : Array Float) (v : Fl
     | some nm =>
       simp only
       congr 1
-      exact List.map_congr_left (fun p hp' => getD_push_lt acc v p (hp p hp'))
+      exact congrArg Array.toList (Array.map_congr_left (fun p hp' => getD_push_lt acc v p (hp p hp')))
 
 /-- **The `foldlM` invariant, over a node sublist with an id offset `s`.** If the fold over `l` (the
 nodes at ids `s, s+1, …`) succeeds, then every processed id's value is exactly what `stepVal` computes
@@ -203,11 +203,11 @@ theorem cseCompact_denotation (t : Tape Float) (hwf : WF t) (env : String → Fl
         rw [hval_eq]; exact hleaf id nOld hOld he hn
       | some nm =>
         -- named leaf: both interpreters read `env nm`
-        have hpe : nOld.parents = [] := by
-          cases hh : nOld.parents with
-          | nil => rfl
-          | cons a as => rw [hh] at he; simp at he
-        have hNewEmpty : nNew.parents.isEmpty = true := by rw [hpar, hpe]; rfl
+        -- `parents` is an `Array`, which has no nil/cons alternatives: emptiness comes
+        -- straight from `he` instead of a case split on the constructor.
+        have hpe : nOld.parents = #[] := by
+          simpa using he
+        have hNewEmpty : nNew.parents.isEmpty = true := by rw [hpar, hpe]; simp
         have hNewName : nNew.name = some nm := by rw [hname, hn]
         have e1 : vals.getD id 0.0 = env nm := by
           have hred : stepVal env vals nOld = .ok (env nm) := by
@@ -225,10 +225,7 @@ theorem cseCompact_denotation (t : Tape Float) (hwf : WF t) (env : String → Fl
         | false => rfl
       have hpar_lt : ∀ p ∈ nOld.parents, p < id := hwf id nOld hOld
       have hNewEmpty : nNew.parents.isEmpty = false := by
-        rw [hpar]
-        cases hh : nOld.parents with
-        | nil => rw [hh] at heF; simp at heF
-        | cons a as => simp
+        rw [hpar]; simpa using heF
       cases hn : nOld.name with
       | none =>
         -- a nameless op node cannot occur in a successfully-evaluated tape
@@ -244,8 +241,9 @@ theorem cseCompact_denotation (t : Tape Float) (hwf : WF t) (env : String → Fl
           simp only [if_neg (show ¬ nNew.parents.isEmpty = true by simp [hNewEmpty]),
             if_neg (show ¬ nOld.parents.isEmpty = true by simp [heF]), hn, hNewName]
           congr 1
-          rw [hpar, List.map_map]
-          apply List.map_congr_left
+          rw [hpar, Array.map_map]
+          apply congrArg Array.toList
+          apply Array.map_congr_left
           intro p hp
           show valsC.getD ((cseCompact t).2.getD p p) 0.0 = vals.getD p 0.0
           exact IH p (hpar_lt p hp) (Nat.lt_trans (hpar_lt p hp) h)

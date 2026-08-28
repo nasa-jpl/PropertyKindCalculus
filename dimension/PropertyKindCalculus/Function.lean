@@ -137,6 +137,11 @@ theorem sqrt_area_coherent : DimPowerKind (1 / 2) areaK lengthKind := by
   ext b
   simp only [lengthKind, areaK, Dim.length, Dim.area, Dimension.qpow_exponent,
     Dimension.mul_exponent]
+  -- Exponents are `Dimension.Exponent`, whose arithmetic is sealed, so `ring` has no
+  -- normal form to work with. PhysLib's `coe_inj` is the sanctioned route: transport the
+  -- equation to `ℚ`, where the half-power is ordinary rational arithmetic.
+  rw [← Dimension.Exponent.coe_inj]
+  simp [Dimension.Exponent.coe_mul, Dimension.Exponent.ofRat]
   ring
 
 /-! ## Family C — transcendentals are dimension-one in, dimension-one out

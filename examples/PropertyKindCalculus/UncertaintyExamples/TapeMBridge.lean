@@ -27,7 +27,7 @@ import NN.Runtime.Autograd.Engine.TapeM
 
 namespace PropertyKindCalculus.UncertaintyExamples.TapeMBridge
 
-open Spec Tensor Proofs.Autograd
+open Spec Tensor Proofs.Autograd TorchLean
 open PropertyKindCalculus.UncertaintyExamples.AutogradDirectSim
 open Runtime.Autograd (Tape TapeM Result)
 
@@ -261,7 +261,7 @@ theorem progMulScale_exec_eagerBuilds (c : ℝ) (x0T x1T : Tensor ℝ Shape.scal
       (Runtime.Autograd.Tape.leaf
         (t := (Runtime.Autograd.Tape.leaf (t := Runtime.Autograd.Tape.empty) x0T).1) x1T).1
       = Algebra.Graph.addLeaves (α := ℝ) (t := Runtime.Autograd.Tape.empty)
-          (TList.cons x0T (TList.cons x1T TList.nil)) := rfl
+          (TensorPack.cons x0T (TensorPack.cons x1T TensorPack.nil)) := rfl
   rw [htape] at hmul
   -- the mul id is the pre-append size of the two-leaf tape: 2
   have hm2 : m = 2 := by rw [tape_mul_id hmul]; rfl
@@ -269,7 +269,7 @@ theorem progMulScale_exec_eagerBuilds (c : ℝ) (x0T x1T : Tensor ℝ Shape.scal
   -- assemble the two constructors
   exact PRSim.EagerBuilds.scale (g := .snoc .nil (TapeNodes.mul ix0 ix1)) ixm c
     (PRSim.EagerBuilds.mul (g := .nil) ix0 ix1
-      (PRSim.EagerBuilds.nil (TList.cons x0T (TList.cons x1T TList.nil))) hmul)
+      (PRSim.EagerBuilds.nil (TensorPack.cons x0T (TensorPack.cons x1T TensorPack.nil))) hmul)
     hscale
 
 /-- Differentiability witness for the chained graph, from the upstream per-node facts. -/
@@ -282,17 +282,17 @@ set_option maxHeartbeats 6400000 in
     the adjoint of the Fréchet derivative of the program's own forward evaluation. -/
 example (c : ℝ) (x0T x1T : Tensor ℝ Shape.scalar) {t' : PRSim.RTape}
     (h : TapeM.exec (Runtime.Autograd.Tape.empty) (progMulScale c x0T x1T) = .ok t')
-    (seed : TList (Γ2 ++ [Shape.scalar, Shape.scalar])) :
+    (seed : TorchLean.TensorPack ℝ (Γ2 ++ [Shape.scalar, Shape.scalar])) :
     ∃ out : Array PRSim.Any,
       Runtime.Autograd.Tape.backwardDenseFrom (t := t')
-          (Algebra.TList.toAnyArray (α := ℝ) seed) = .ok out ∧
+          (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) seed) = .ok out ∧
       PRSim.ArrCorr
         ((fderiv ℝ ((mulScaleGraph c).evalVec)
-            (flattenCtx (TList.cons x0T (TList.cons x1T TList.nil)))).adjoint
+            (flattenCtx (TensorPack.cons x0T (TensorPack.cons x1T TensorPack.nil)))).adjoint
           (flattenCtx seed))
         (out.extract 0 Γ2.length) :=
   PRSim.direct_PR_soundness_eager (mulScaleGraph c) (mulScaleCorrect c)
-    (TList.cons x0T (TList.cons x1T TList.nil))
+    (TensorPack.cons x0T (TensorPack.cons x1T TensorPack.nil))
     (progMulScale_exec_eagerBuilds c x0T x1T h) seed
 
 /--

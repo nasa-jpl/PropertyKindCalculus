@@ -53,10 +53,10 @@ namespace PropertyKindCalculus.Paradigm.TapeCSE
 (so duplicates of a shared input collapse before the node is keyed), and the bit pattern of its
 stored forward value (disambiguates constant leaves, and bulletproofs the key against any future
 scalar-baking op). Two nodes share a key iff they are the same op on the same canonical inputs. -/
-def nodeKey (remap : Array Nat) (node : Node Float) : Option String × List Nat × List UInt64 :=
+def nodeKey (remap : Array Nat) (node : Node Float) : Option String × Array Nat × List UInt64 :=
   ( node.name
   , node.parents.map (fun p => remap.getD p p)
-  , (Spec.toList node.value.t).map Float.toBits )
+  , (Spec.Tensor.toList node.value.tensor).map Float.toBits )
 
 /-- **Hash-cons a recorded tape.** Walks the nodes in id order (parents precede children, so the
 remap of every parent is already known), collapsing structurally-identical nodes onto one. Returns
@@ -65,7 +65,7 @@ node carries the original's stored value, so reading any remapped id yields the 
 def cseCompact (t : Tape Float) : Tape Float × Array Nat := Id.run do
   let mut newTape : Tape Float := Tape.empty
   let mut remap : Array Nat := Array.mkEmpty t.size
-  let mut memo : Std.HashMap (Option String × List Nat × List UInt64) Nat := {}
+  let mut memo : Std.HashMap (Option String × Array Nat × List UInt64) Nat := {}
   for node in t.nodes do
     let key := nodeKey remap node
     match memo[key]? with
