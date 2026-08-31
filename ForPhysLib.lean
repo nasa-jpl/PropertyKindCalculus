@@ -18,3 +18,4 @@ import ForPhysLib.CaseStudies
 import ForPhysLib.Kinds
 import ForPhysLib.Examination
 import ForPhysLib.Metrology
+import ForPhysLib.Kinded

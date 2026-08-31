@@ -76,6 +76,14 @@ it.
 the erasure. This is the invariant that makes the transition non-disruptive to a library
 whose value is its proofs.
 
+**Status: Done for `SpaceAndTime/Space`** — `ForPhysLib.Kinded.Space`: the directory's
+four length-readings authored kinded (`distanceQ`, `positionQ`, `displacementQ`,
+`lengthOf`), each mint carrying its boundary tier; the naked form is `rfl`-equal to
+`.magnitude` (`rawDistance_eq_dist`), and the invariant is exhibited rather than claimed
+— PhysLib's `Space.dist_eq`, Mathlib's `dist_triangle` and `dist_eq_norm_vsub` close
+kinded goals verbatim, while distance + length and position + displacement stop
+elaborating (`#check_failure`).
+
 ### Stage 3. The operator table
 
 `KindMul`/`KindDiv` instances registered once per model, with scoped `HMul`/`HDiv` so that
@@ -397,6 +405,8 @@ ForPhysLib/
     Space.lean                       ✓   principles declared, examinedBy proved, distinctness derived
   Metrology.lean  Metrology/         ✓ Stage 1: DimensionedKind pairings + pinned coverage
     Space.lean                       ✓   the Stage-0 lookup proved against Iso80000.Part3 by decide
+  Kinded.lean  Kinded/               ✓ Stage 2: the kinded author-forms, naked = `.magnitude` by rfl
+    Space.lean                       ✓   four length-readings; PhysLib/Mathlib theorems close kinded goals verbatim
   Exhibits/                          one directory per exhibit above
     RigidBody/  ReferenceFrame/  HarmonicOscillator/  TwoRovers/  Electromagnetism/
   Scorecard.lean                     verdicts re-derived so the tables cannot drift from the files
