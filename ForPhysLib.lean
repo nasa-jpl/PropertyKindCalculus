@@ -15,3 +15,6 @@ and are not yet probes — converting them is rule 2 of `PLAN.md`'s rules of eng
 Build with `lake build ForPhysLib`.
 -/
 import ForPhysLib.CaseStudies
+import ForPhysLib.Kinds
+import ForPhysLib.Examination
+import ForPhysLib.Metrology

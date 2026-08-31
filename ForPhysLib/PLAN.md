@@ -348,7 +348,10 @@ it; Tier 8 proposed as the thing that makes the rest affordable.
 3. **Stage 0 + Stage 1 for one directory** — `SpaceAndTime/Space` is the right first choice:
    small, foundational, and its API map already contains the `LengthUnit` requirement that
    makes [MR29](REQUIREMENTS.md#mr29-every-satisfied-requirement-has-a-machine-checkable-witness)
-   concrete.
+   concrete. **Done** — `ForPhysLib.Kinds.Space` / `Examination.Space` / `Metrology.Space`:
+   six ISO 80000-3 kinds (the position/displacement pair the directory's own torsor keeps
+   apart, named at the kind level), the lookup proved against `Iso80000.Part3` by `decide`,
+   and `#kind_dimensional_coverage` pinned clean over the directory's two authored edges.
 4. **Exhibit C**, which is where the ergonomic question is settled either way.
 5. **Exhibit D**, because it depends on the others and argues a different point.
 6. **Exhibit E**, last — the confirmation pass: it presupposes the minted machinery
@@ -377,9 +380,12 @@ ForPhysLib/
     HarmonicOscillator/            ✓   README.md beside the five sources it scores
       Attempt1Reals.lean           ✓   Attempt2Dimension.lean ✓
       Attempt3Tagged.lean          ✓   Attempt4Pkc.lean ✓   Scorecard.lean ✓
-  Kinds/                             Stage 0: bare KindOfProperty, Mathlib-free
-  Examination/                       the physics that individuates them, mirroring Kinds/ file-for-file
-  Metrology/                         Stage 1: DimensionedKind pairings + coverage
+  Kinds.lean  Kinds/                 ✓ Stage 0: bare KindOfProperty, Mathlib-free
+    Space.lean                       ✓   the first directory: SpaceAndTime/Space
+  Examination.lean  Examination/     ✓ the physics that individuates them, mirroring Kinds/ file-for-file
+    Space.lean                       ✓   principles declared, examinedBy proved, distinctness derived
+  Metrology.lean  Metrology/         ✓ Stage 1: DimensionedKind pairings + pinned coverage
+    Space.lean                       ✓   the Stage-0 lookup proved against Iso80000.Part3 by decide
   Exhibits/                          one directory per exhibit above
     RigidBody/  ReferenceFrame/  HarmonicOscillator/  TwoRovers/  Electromagnetism/
   Scorecard.lean                     verdicts re-derived so the tables cannot drift from the files
