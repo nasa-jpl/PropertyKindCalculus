@@ -380,6 +380,23 @@ link budget on `LevelKind`, and the AC-power lattice with the refused join. E–
 under boosts stays with the field-strength tensor, as PhysLib already has it — the kind
 layer records what survives a boost (MR18), it does not re-derive electrodynamics.
 
+**Status: built** — `ForPhysLib/Exhibits/Electromagnetism/Findings.lean`. All five problems
+stand as artifacts. (1) `ElectricField 3 = MagneticField 3` by `rfl`, `expectsE B` accepted,
+a temperature field accepted as a `ChargeDensity` — and the kinded swaps all
+`#check_failure`. (2) A Gaussian–CGS basis is stood up on PhysLib's own parametric
+`Dimension`; `dimE = dimB` is proved (`M^½ L^-½ T⁻¹` both) while
+`electricFieldK ≠ magneticFieldK` decides — the repair `WithDim` cannot make
+basis-stable. (3) The `(c : SpeedOfLight := 1)` default probed at a bare call site; the
+kinded answer is one attested declaration. (4) The scalar potential at *interval* scale:
+differences licensed, `QuotientKind.ofRatio` refused at the gate. (5) The annex: phasor
+impedance as `v / i` at `Complex Float` through the table; `dBm ≠ dBW` by `decide` with
+gains one kind by `rfl`, `dBm + dBm` structurally unavailable, and a worked link budget
+exact at `Int` (30 → +3 → −100 → +2 = −65 dBm); the AC power lattice comparable by
+`MutuallyComparable` with `P + Q` refused (no join registered) and `S² = P² + Q²` the
+licensed combination — while the energy family in the same file registers `KindJoin` and
+`T + V` elaborates. The same table says yes and no on the same page: curation, not a
+loophole.
+
 ### Ranking
 
 | | exhibit | why it earns its place |
@@ -451,6 +468,9 @@ it; Tier 8 proposed as the thing that makes the rest affordable.
    (`kind_algebra`, `SpecializationLift`, `Level`) and its whole value is showing that
    machinery solving problems it was not built against.
 
+All six items now stand: the five exhibits are built — each carries a **Status: built**
+line in its section above — and the ladder is complete for its first directory.
+
 Nothing goes upstream before Stage 1 exists for at least one directory, because Stage 1 is
 the part that costs a maintainer nothing and therefore the part that should arrive first.
 
@@ -492,7 +512,7 @@ ForPhysLib/
       Findings.lean  ReferenceFrame.checked_by.yaml ✓
     HarmonicOscillator.lean  HarmonicOscillator/ ✓  C: four findings closed; MR11 measured; ℝ/Float32 by one rfl
     TwoRovers.lean  TwoRovers/       ✓   D: totals proved, contamination and undercount refused, licence two-sided
-    Electromagnetism/
+    Electromagnetism.lean  Electromagnetism/ ✓ E: five problems closed; the annex built on the minted machinery
   Scorecard.lean                     verdicts re-derived so the tables cannot drift from the files
 ```
 

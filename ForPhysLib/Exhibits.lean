@@ -9,3 +9,4 @@ import ForPhysLib.Exhibits.RigidBody
 import ForPhysLib.Exhibits.ReferenceFrame
 import ForPhysLib.Exhibits.HarmonicOscillator
 import ForPhysLib.Exhibits.TwoRovers
+import ForPhysLib.Exhibits.Electromagnetism

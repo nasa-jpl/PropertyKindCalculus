@@ -1,0 +1,8 @@
+/-
+# Exhibit E — Electromagnetism
+
+The fifth and last exhibit of [PLAN.md](../PLAN.md#exhibit-e-electromagnetism--the-confirmation-exhibit):
+the confirmation pass — machinery minted by the oscillator benchmark, played against a
+real PhysLib directory it was not minted from. `Findings.lean` holds the build artifacts.
+-/
+import ForPhysLib.Exhibits.Electromagnetism.Findings
