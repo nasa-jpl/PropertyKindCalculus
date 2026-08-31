@@ -94,6 +94,14 @@ elaborate**.
 paid down, and it must be demonstrated with the operator idiom, never the longhand witness
 form — see [MR28](REQUIREMENTS.md#mr28-kind-generic).
 
+**Status: Done for `SpaceAndTime/Space`** — `ForPhysLib.Operators.Space`: the two Stage-1
+laws registered as `KindMul`/`KindDiv` instances, `a * b : Quantity area ℝ` and
+`arc / radius : Quantity planeAngle ℝ` elaborating through the table, `spanArea`
+composing the Stage-2 author-forms with `rfl` erasure — and two refusals pinned:
+`area · area` (unregistered) and `distance · distance` (dimensionally admissible, never
+sanctioned — curation per kind, not per dimension). `#kind_dimensional_coverage` is
+re-pinned clean over the registrations, rendered `[table]`.
+
 ### Stage 4. Audits and the API map
 
 `#kind_boundary_audit`, `#kind_unkinded` with the Mathlib-interface tier
@@ -407,6 +415,8 @@ ForPhysLib/
     Space.lean                       ✓   the Stage-0 lookup proved against Iso80000.Part3 by decide
   Kinded.lean  Kinded/               ✓ Stage 2: the kinded author-forms, naked = `.magnitude` by rfl
     Space.lean                       ✓   four length-readings; PhysLib/Mathlib theorems close kinded goals verbatim
+  Operators.lean  Operators/         ✓ Stage 3: KindMul/KindDiv registrations — `*`/`/` through the table
+    Space.lean                       ✓   two entries, two refusals; coverage re-pinned over the table
   Exhibits/                          one directory per exhibit above
     RigidBody/  ReferenceFrame/  HarmonicOscillator/  TwoRovers/  Electromagnetism/
   Scorecard.lean                     verdicts re-derived so the tables cannot drift from the files
