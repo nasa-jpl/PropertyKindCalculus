@@ -115,11 +115,13 @@ the family but rejects its sum has traded one failure for the other — Attempt 
 the sum by collapsing the family into one kind cannot state which term is which.
 
 *Fails today:* PhysLib's `HarmonicOscillator` types `kineticEnergy`, `potentialEnergy` and
-`energy` all as `Time → ℝ` or `ℝ`. And it is the one requirement in this list that **PKC
-itself does not sweep**: the lattice half is theorems (`Specializes`, `MutuallyComparable`
-— R2's machinery), but nothing at the quantity level consumes them — `Quantity`'s addition
-is same-kind, so the licensed sum at the join is missing machinery. Scored ⚠️ against PKC
-by rule 5 (`CaseStudies/HarmonicOscillator/Attempt4Pkc.lean`, section MR32).
+`energy` all as `Time → ℝ` or `ℝ`. At first scoring it was also a requirement **PKC itself
+did not sweep**: the lattice half was theorems (`Specializes`, `MutuallyComparable` — R2's
+machinery), but nothing at the quantity level consumed them, so the licensed sum at the
+join was missing machinery — scored ⚠️ against PKC by rule 5. That machinery has since
+landed, built to this requirement's specification: `PropertyKindCalculus.SpecializationLift`
+(`Quantity.widen`, the curated `KindJoin` table, the sum and the comparison at the join),
+and the cell is ✅ (`CaseStudies/HarmonicOscillator/Attempt4Pkc.lean`, section MR32).
 
 ---
 
@@ -169,7 +171,9 @@ to stand a model up before any formula can be written at all.
 
 This is the strongest objection to the whole proposal and it is
 [partly correct](CaseStudies/HarmonicOscillator/README.md#tier-4-the-ranking-reverses).
-[MR28](#mr28-kind-generic) is the answer to it.
+[MR28](#mr28-kind-generic) is the answer to it — and `kind_algebra`
+(`PropertyKindCalculus.KindAlgebra`, minted from this MR's verdict) has since collapsed the
+stand-up cost to the kind equations themselves, one declaration per model.
 
 ### MR12. Rendering ergonomics
 
@@ -453,7 +457,7 @@ the ForPhysLib benchmark* section.
 | MR29 | R12 + R24 | a witness is a certificate; the API map is its adoption vehicle |
 | MR30 | **R24** | *minted from this MR* — the enumerable unkinded surface, with the interface tier |
 | MR31 | **R24** | *minted from this MR* — the scoped, monotone ratchet |
-| MR32 | **R2** | *the near miss, closed* — comparability without identity, on the oscillator's own `H = T + V`; the lattice is R2's theorems, and the quantity-level sum at the join is machinery PKC still owes |
+| MR32 | **R2** | *the near miss, closed in both directions* — comparability without identity, on the oscillator's own `H = T + V`; the lattice is R2's theorems, and the quantity-level sum at the join is now R2's machinery too (`SpecializationLift`, minted from this MR) |
 
 **Not validated by this benchmark:**
 
@@ -469,8 +473,8 @@ the ForPhysLib benchmark* section.
 R2 was the fifth entry — the near miss, its subject matter (`H = T + V`) on the page with
 no MR asking anything of it. [MR32](#mr32-specialization-keeps-kinds-comparable), appended,
 now asks; the probes are in the case study, so R2 has left the list — validated in both
-directions, since the same probes also expose the quantity-level machinery R2's lattice
-still lacks.
+directions: the same probes first exposed the quantity-level machinery R2's lattice still
+lacked, and that machinery (`SpecializationLift`) has since landed and flipped the probe.
 
 [PLAN.md](PLAN.md#what-this-benchmark-did-to-pkcs-own-requirements) stages a hypothetical
 case study for each of the remaining four.

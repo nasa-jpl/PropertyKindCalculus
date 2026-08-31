@@ -25,7 +25,9 @@ import PropertyKindCalculus.Extensivity
 import PropertyKindCalculus.Quantity
 import PropertyKindCalculus.QuantityClassification
 import PropertyKindCalculus.OperatorTable
+import PropertyKindCalculus.SpecializationLift
 import PropertyKindCalculus.Bounds
+import PropertyKindCalculus.Level
 import PropertyKindCalculus.Axis
 import PropertyKindCalculus.PartWhole
 import PropertyKindCalculus.Decimal

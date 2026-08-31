@@ -40,6 +40,18 @@ attribute [requirement "R2" specifies "individuation by examination principle, n
   ExaminationPrinciple
 attribute [requirement "R2" proves "kinds with different examination principles are distinct"]
   KindOfProperty.distinct_of_examPrinciple
+attribute [requirement "R2" specifies "widening: the one-way lift of a quantity along a proved specialization, magnitude untouched"]
+  Quantity.widen
+attribute [requirement "R2" proves "widening is functorial on the specialization preorder"]
+  Quantity.widen_widen
+attribute [requirement "R2" specifies "the sum of comparable kinds lands at the join, and only there"]
+  Quantity.addAt
+attribute [requirement "R2" specifies "the comparison of comparable kinds, gated by order at the join"]
+  Quantity.leAt
+attribute [requirement "R2" specifies "the curated join table: T + V elaborates at the kind both terms provably specialize"]
+  KindJoin
+attribute [requirement "R2" proves "a registered join is a witnessed comparability fact"]
+  KindJoin.comparable
 
 attribute [requirement "R3" specifies "a kind is a type"] KindOfProperty
 attribute [requirement "R3" specifies "an individual measured value is a term of that type"] Quantity
@@ -197,5 +209,27 @@ attribute [requirement "R24" implements "enumeration of the unkinded boundary si
   BoundaryAudit.boundarySites
 attribute [requirement "R24" implements "the per-scope kind ledger the ratchet compares against"]
   KindLedger.ledgerOf
+
+
+/-! ## Scale-spanning units, the logarithmic extreme: level quantities (R13)
+
+The unit-layer half of R13 (base / derived / scale-spanning, the kelvin example) is
+annotated in `DimensionAnnotations`; the level construction — the category's nonlinear,
+chart-bearing member — lives in the core spine and is annotated here. -/
+
+attribute [requirement "R13" specifies "a level kind: the logarithmic presentation of a ratio root kind against a named reference — reference and power-role are kind identity (dBm ≠ dBW)"]
+  LevelKind
+attribute [requirement "R13" specifies "ISO 80000-1's power / root-power dichotomy, as kind data fixing the level factor (10 vs 20)"]
+  PowerRole
+attribute [requirement "R13" specifies "a level is ordinal as a kind: its only same-kind operation is order; its differences are heterogeneous"]
+  LevelKind.toKind
+attribute [requirement "R13" proves "the certified addition is unprovable at a level kind — L₁ + L₂ is a type error, not a lint"]
+  LevelKind.toKind_not_allowsDifference
+attribute [requirement "R13" proves "the reference cancels in differences: the gain kind is reference-independent, by rfl"]
+  LevelKind.gainKind_ref_irrelevant
+attribute [requirement "R13" specifies "the torsor pair: level − level = gain, level + gain = level — the whole additive vocabulary of a level"]
+  LevelKind.sub
+attribute [requirement "R13" specifies "the licensed energetic combination: incoherent sources add in power, role-independently — forbidding + costs no expressiveness"]
+  LevelKind.combineEnergetic
 
 end PropertyKindCalculus

@@ -342,12 +342,14 @@ theorem the_benchmark :
    Attempt4.angFreq_not_extensive,
    Attempt4.xiSq_dimension⟩
 
-/-! ## MR32 — appended: one family, three failures, no winner
+/-! ## MR32 — appended: one family, three failures — and, since the lift landed, a sweep
 
 Attempts 1–2 collapse the family into one type: the sum for free, the confusion for free.
 Attempt 3 distinguishes it and loses the sum — its `tagging_dilemma`, transposed from
-objects to specializations. Attempt 4 proves the lattice and stops at the sum. The verdict
-worth recording cross-attempt is that the two rejections are different *kinds* of failure: -/
+objects to specializations. Attempt 4, at first scoring, proved the lattice and stopped at
+the sum — the absence that minted `PropertyKindCalculus.SpecializationLift`. With the lift
+landed, attempt 4 holds both halves at once, and the two rejections that remain are
+different *kinds* of failure, still worth recording: -/
 
 /-- Attempt 3's obstruction is *structural* — the distinguishing tag provably carries no
 physical content, yet cannot be removed without destroying what it bought. -/
@@ -356,12 +358,17 @@ theorem mr32_attempt3_structural :
       Attempt3.forget (Attempt3.kineticDim .A) = Attempt3.forget (Attempt3.potentialDim .A) :=
   Attempt3.mr32_over_rejection
 
-/-- Attempt 4's obstruction is *absence*: the comparability that would license the sum is
-already a theorem — what is missing is any quantity-level operation that consumes it. The
-first requirement in the benchmark that no attempt sweeps. -/
-theorem mr32_attempt4_lattice_proved :
-    Attempt4.kineticEnergy ≠ Attempt4.potentialEnergy ∧
-      MutuallyComparable Attempt4.EnergyEdge Attempt4.kineticEnergy Attempt4.potentialEnergy :=
-  ⟨Attempt4.mr32_kinds_distinct, Attempt4.mr32_comparable⟩
+/-- Attempt 4's first-scoring obstruction was *absence* — and absence is repairable:
+`Quantity.widen` and the `KindJoin` table now consume the lattice `mr32_comparable`
+proves, so the kinds are distinct, mutually comparable, **and** the Hamiltonian is
+writable at the join, erasing to the bare-real sum. The one cell of the appended row that
+moved, and the benchmark working as intended: the ⚠️ named machinery, the machinery
+landed, the probe flipped. -/
+theorem mr32_attempt4_swept :
+    Attempt4.kineticEnergy ≠ Attempt4.potentialEnergy
+      ∧ MutuallyComparable Attempt4.EnergyEdge Attempt4.kineticEnergy Attempt4.potentialEnergy
+      ∧ ∀ (T : Quantity Attempt4.kineticEnergy Float) (V : Quantity Attempt4.potentialEnergy Float),
+          (Attempt4.hamiltonian T V).magnitude = T.magnitude + V.magnitude :=
+  Attempt4.mr32_capstone
 
 end PropertyKindCalculus.Examples.HarmonicOscillator.Scorecard

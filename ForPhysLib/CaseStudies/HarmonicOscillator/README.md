@@ -99,15 +99,19 @@ failed, per [rule 2](../../PLAN.md#rules-of-engagement)
 | | [MR17](../../REQUIREMENTS.md#mr17-a-vector-quantity-is-one-quantity) vector quantity is one quantity | ❌ | ⚠️ | ⚠️ | ✅ |
 | | [MR18](../../REQUIREMENTS.md#mr18-frame-covariance-and-what-survives-it) frame covariance | ❌ | ❌ | ❌ | ✅ |
 | | [MR19](../../REQUIREMENTS.md#mr19-an-indexed-family-is-not-a-set-of-vector-components) indexed family ≠ vector | ❌ | ❌ | ❌ | ✅ |
-| **App.** | [MR32](../../REQUIREMENTS.md#mr32-specialization-keeps-kinds-comparable) specialization keeps kinds comparable | ❌ | ❌ | ❌ | ⚠️ |
+| **App.** | [MR32](../../REQUIREMENTS.md#mr32-specialization-keeps-kinds-comparable) specialization keeps kinds comparable | ❌ | ❌ | ❌ | ✅ |
 
 **MR32 is the appended row** — Tier 2 by content, numbered at the end, the same append
-discipline as PKC's own catalogue. It is also the first row with no ✅ anywhere: Attempts
-1–2 collapse the energy family into one type, Attempt 3 distinguishes it and loses
-`H = T + V` (`kinetic_ne_potential` — proved before the requirement was stated), and PKC
-proves the lattice (`mr32_comparable`) but ships no quantity-level operation that consumes
-it, so the licensed sum at the join is missing machinery (`Attempt4Pkc.lean`, section MR32,
-scored ⚠️ by rule 5).
+discipline as PKC's own catalogue. At first scoring it was also the first row with no ✅
+anywhere: Attempts 1–2 collapse the energy family into one type, Attempt 3 distinguishes it
+and loses `H = T + V` (`kinetic_ne_potential` — proved before the requirement was stated),
+and PKC proved the lattice (`mr32_comparable`) but shipped no quantity-level operation that
+consumed it — scored ⚠️ by rule 5, the licensed sum at the join named as missing machinery.
+That machinery has since landed, built to this row's specification
+(`PropertyKindCalculus.SpecializationLift`: `Quantity.widen` plus the curated `KindJoin`
+table), and the cell flipped to ✅: the kinds stay distinct and the Hamiltonian lands at the
+join (`Attempt4Pkc.lean`, section MR32; `Scorecard.mr32_attempt4_swept`). The benchmark
+working as intended — the ⚠️ named the gap, the gap was closed, the probe moved.
 ---
 
 ## What the table says
@@ -159,10 +163,12 @@ still in the elaborated term and MR12 is untouched. Attempt 4's formula is then
 guarantee enforced, and `Scorecard.ho11_operators_same_term` proves the operator form is the
 same term as the longhand one.
 
-**MR11 is therefore ⚠️ and not ✅.** Writing formulas costs nothing; standing a model up costs
-three kind declarations and four table entries. That is a genuine burden attempt 1 does not
-have — though it is paid **per model** where attempt 2's cast is paid **per formula**, so the
-two scale in opposite directions. That observation is the whole basis for
+**MR11 is therefore ⚠️ and not ✅.** Writing formulas costs nothing; standing a model up now
+costs one base-kind declaration and one `kind_algebra` block — the macro
+(`PropertyKindCalculus.KindAlgebra`, minted from this verdict) expands each line to the
+derived kind and its table entry, so what remains to write is the kind equations
+themselves. That is still a genuine burden attempt 1 does not have — though it is paid
+**per model** where attempt 2's cast is paid **per formula**, so the two scale in opposite directions. That observation is the whole basis for
 [MR28](../../REQUIREMENTS.md#mr28-kind-generic): in a *library*, per-model is the favourable
 denominator.
 

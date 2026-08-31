@@ -7,6 +7,7 @@ in the whole core tier; the `Tests` library's `.andSubmodules` glob also builds 
 so a probe cannot silently go unbuilt.
 -/
 
+import PropertyKindCalculus.Tests.Core.Level
 import PropertyKindCalculus.Tests.Core.KindStructure
 import PropertyKindCalculus.Tests.Core.OperationGating
 import PropertyKindCalculus.Tests.Core.SoundnessBridges
@@ -15,6 +16,7 @@ import PropertyKindCalculus.Tests.Core.Representation
 import PropertyKindCalculus.Tests.Core.Classification
 import PropertyKindCalculus.Tests.Core.Complex
 import PropertyKindCalculus.Tests.Core.OperatorTable
+import PropertyKindCalculus.Tests.Core.SpecializationLift
 import PropertyKindCalculus.Tests.Core.Bounds
 import PropertyKindCalculus.Tests.Core.Axis
 import PropertyKindCalculus.Tests.Core.PartWhole

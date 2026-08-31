@@ -26,3 +26,8 @@ attribute [requirement "R21" exemplifies "the OperatorTable form `m * (ω * ω) 
 
 attribute [requirement "R22" exemplifies "same kind, different object: the tagging dilemma resolved by two independent axes rather than a dimension tag"]
   PropertyKindCalculus.Examples.HarmonicOscillator.Attempt4.no_dilemma
+
+/-! ## Specialization at the quantity level (R2) -/
+
+attribute [requirement "R2" exemplifies "kinetic and potential energy: distinct kinds, mutually comparable, and the Hamiltonian lands at the join — the benchmark probe that minted the specialization lift"]
+  PropertyKindCalculus.Examples.HarmonicOscillator.Scorecard.mr32_attempt4_swept

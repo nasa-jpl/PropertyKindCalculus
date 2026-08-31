@@ -231,7 +231,9 @@ Height, and Diameter each specialize Length, and a kind may specialize several
 parents at once — a lattice, not a tree. Specialization is a preorder (reflexive
 and transitive) and induces a *one-way* coercion: a `Quantity Width` may be used
 where a `Quantity Length` is wanted, never the reverse, and that up-cast is a
-visible, deliberate loss of information. Width and Height remain *mutually
+visible, deliberate loss of information — realized as `Quantity.widen`, the lift along a
+proved `Specializes`, with the sum and the comparison of comparable kinds licensed *at
+the join* (`SpecializationLift`). Width and Height remain *mutually
 comparable* — they share the super-kind Length — while staying distinct kinds. This
 requirement is now realized on the real standard: the ISO 80000-3 length family
 (width, height, distance, radius, … of items 3-1.2 … 3-1.12, all of dimension `L`)
@@ -551,7 +553,18 @@ carries the electromagnetic generator), a genuine base unit — so the third cat
 non-empty and distinct from the first. In plain engineering terms: just as a *kind* carries
 more than its dimension, a *unit's category* carries more than its dimension; the candela
 and mole (ISO 80000-7) and the kelvin (ISO 80000-5) are where this lands on the standard,
-the ampere (IEC 80000-6) the base-unit foil.
+the ampere (IEC 80000-6) the base-unit foil. The category's *nonlinear* extreme is the
+level — the decibel of ISO 80000-8 and of EM practice (dBm, field levels) — and it is now
+construction rather than aspiration: `LevelKind` presents a ratio root kind through a
+logarithmic chart against a *named reference*, with the reference and the ISO 80000-1
+power/root-power role carried as kind identity (dBm and dBW are distinct kinds), the
+level kind ordinal-as-a-kind so the certified addition is unprovable at it (`L₁ + L₂`,
+the classic domain error, is a type error), differences landing in a provably
+reference-free *gain* kind that composes by ordinary certified addition, and the
+role-independent energetic combination as the licensed way two sources meet. The kelvin
+is the linear member of R13's category; the decibel is its chart-bearing one, and it
+lives beside the kind — deliberately not in a unit system of pure rescalings, which
+cannot express even the affine °C, let alone a logarithm with a reference.
 
 ## Uncertainty and numerical adequacy (R14, R15)
 
@@ -712,12 +725,16 @@ The trace, in both directions:
 * *Validated late, in both directions* — R2 (the specialization lattice) was the near
   miss: the oscillator's `H = T + V` is a specialization family the first scoring pass
   never interrogated. MR32, appended, now does — probes in all four attempts and the
-  scorecard — and validates R2's lattice while exposing what nothing above it consumes:
-  `Quantity`'s addition is same-kind and no quantity-level operation takes a
+  scorecard — and validates R2's lattice while exposing what nothing above it consumed:
+  `Quantity`'s addition was same-kind and no quantity-level operation took a
   `Specializes` proof, so the licensed sum at the join (`T + V` landing at the kind
-  both terms provably specialize) is machinery still owed — the specialization twin of
-  R9's licensed aggregation, and after MR11 the second requirement the calculus's own
-  benchmark does not let it sweep.
+  both terms provably specialize) was machinery owed — the specialization twin of
+  R9's licensed aggregation. That debt is now paid: `SpecializationLift` supplies
+  `Quantity.widen` (the one-way lift along a proved specialization), the sum and the
+  comparison at the join, and the curated `KindJoin` table through which `T + V`
+  elaborates — and the MR32 probes flipped from ⚠️ to ✅, leaving MR11 (whose residue
+  `kind_algebra` has since pushed to the kind equations themselves) as the one
+  requirement the calculus's own benchmark does not let it sweep.
 
 ## Out of scope (for now)
 

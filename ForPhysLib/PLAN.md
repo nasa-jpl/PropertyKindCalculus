@@ -88,7 +88,7 @@ to the module root, and the `checked_by:` field in the directory's `API-map.yaml
 
 ## Exhibits to build
 
-Four, ordered by what they demonstrate. Each must produce build artifacts per rule 2 of the
+Five, ordered by what they demonstrate. Each must produce build artifacts per rule 2 of the
 [rules of engagement](#rules-of-engagement) — a `#check_failure`, a theorem exhibiting the
 wrong answer, or an `example` showing that something which should be rejected type-checks.
 
@@ -229,6 +229,66 @@ the pattern against a system with many more parts than a rover. Exhibit D's job 
 discover whether `System`/`Component`/`DedicatedKind` holds up under an assembly — that is
 known — but to show a PhysLib reader what it buys, on a system built out of PhysLib's own
 rigid-body mechanics.
+### Exhibit E. Electromagnetism — the confirmation exhibit
+
+**Built last, and on purpose after the machinery.** Exhibits A–D were designed before the
+benchmark forced `kind_algebra`, `SpecializationLift` and `Level` into the core; E is the
+application that *confirms the approach*: the machinery the oscillator minted, played
+against a real PhysLib directory it was not minted from, on defects that are in the source
+today and on physics PhysLib does not have yet.
+
+**Requirements.** [MR4](REQUIREMENTS.md#mr4-same-dimension-kinds-stay-apart),
+[MR11](REQUIREMENTS.md#mr11-authoring-ergonomics),
+[MR14](REQUIREMENTS.md#mr14-complex-valued-quantities),
+[MR18](REQUIREMENTS.md#mr18-frame-covariance-and-what-survives-it)–[MR19](REQUIREMENTS.md#mr19-an-indexed-family-is-not-a-set-of-vector-components),
+[MR32](REQUIREMENTS.md#mr32-specialization-keeps-kinds-comparable), and R13's level
+machinery.
+
+**The genuine problems, all verifiable in `Physlib/Electromagnetism/` as it stands:**
+
+1. **An electric field *is* a magnetic field.** `Basic.lean` declares
+   `abbrev ElectricField (d := 3) := Time → Space d → EuclideanSpace ℝ (Fin d)` and
+   `abbrev MagneticField` with the *same* right-hand side — abbreviations, so
+   `example : ElectricField 3 = MagneticField 3 := rfl` holds and a function expecting
+   `E` accepts `B` with no error; `ChargeDensity := Time → Space → ℝ` likewise accepts any
+   scalar field. This is [M5](MOTIVATION.md#m5-a-correctness-constraint-enforced-by-not-using-an-abbreviation)'s
+   theme — correctness resting on *not being an abbreviation* — recurring at the heart of
+   a second directory, and it is the exhibit's opening build artifact, in PhysLib's own
+   terms.
+2. **The dimension layer cannot fix it in every basis.** In SI, `E` and `B` differ
+   dimensionally (by a velocity); in Gaussian-CGS — expressible since PhysLib's
+   `Dimension` became basis-parametric (physlib#1441, PR 1447, merged) — they share one
+   dimension, so a `WithDim` repair of problem 1 is *basis-relative*. Kinds are not: the
+   probe declares `E` and `B` as distinct kinds over the *Gaussian* basis, where the
+   dimensions provably coincide — MR4 on a directory that actually exercises the
+   parametric bases.
+3. **Natural units are a silent default.** `electricField (c : SpeedOfLight := 1)` — the
+   unit system rides in an optional argument that defaults at every call site. The kinded
+   re-authoring makes the choice a stated, greppable declaration rather than an elision.
+4. **A potential is a position, not a value.** The scalar potential is gauge-dependent;
+   PhysLib rightly proves invariance of the field strength, but the potential's own values
+   still carry no trace of the convention. The torsor pattern (`Level`'s `sub`/`shift`,
+   the affine sibling) states it: potential *differences* are the physical extents.
+5. **The green field.** PhysLib has no AC or RF physics at all — no impedance, no phasors,
+   no power factor, no link budgets. That is where the new machinery bites first-hand:
+   impedance at the complex carrier (MR14); **dBm, dBW and field levels** on `LevelKind`
+   (dBm ≠ dBW by decide, the energetic combination, a worked RF link budget — probes
+   already standing in the core test suite); and the AC power family — active, reactive,
+   apparent, one dimension, three unit strings (`W`, `var`, `VA`) — as a specialization
+   lattice, with a deliberate **curation contrast**: energy registered `T + V` at its join
+   (MR32), while this family registers *no* join sum, because `P + Q` is the domain error
+   (powers orthogonal, `S² = P² + Q²`) — comparable kinds whose sum is refused is the same
+   machinery exercised in the opposite direction, and the pair is the proof that the join
+   table is curation rather than a loophole.
+
+**Deliverables, per rule 2.** (i) The abbreviation probe against PhysLib's own modules —
+the swap that type-checks today, then the kinded vocabulary (one `kind_algebra` block —
+MR11's answer measured on a real directory) where it fails. (ii) The Gaussian-basis probe:
+kinds apart where dimensions provably coincide. (iii) The RF/AC annex: impedance, the
+link budget on `LevelKind`, and the AC-power lattice with the refused join. E–B mixing
+under boosts stays with the field-strength tensor, as PhysLib already has it — the kind
+layer records what survives a boost (MR18), it does not re-derive electrodynamics.
+
 ### Ranking
 
 | | exhibit | why it earns its place |
@@ -237,6 +297,7 @@ rigid-body mechanics.
 | 2 | **B · ReferenceFrame** | a stated requirement that is not satisfiable without the layer — design input, not retrofit |
 | 3 | **C · HarmonicOscillator** | continuity with the case study; where MR11 must be paid down or conceded |
 | 4 | **D · Two rovers** | the reach argument; the only exhibit about capability rather than defects |
+| 5 | **E · Electromagnetism** | the confirmation: machinery minted by the benchmark, applied to a directory it was not minted from |
 
 ---
 
@@ -289,7 +350,10 @@ it; Tier 8 proposed as the thing that makes the rest affordable.
    makes [MR29](REQUIREMENTS.md#mr29-every-satisfied-requirement-has-a-machine-checkable-witness)
    concrete.
 4. **Exhibit C**, which is where the ergonomic question is settled either way.
-5. **Exhibit D**, last, because it depends on the others and argues a different point.
+5. **Exhibit D**, because it depends on the others and argues a different point.
+6. **Exhibit E**, last — the confirmation pass: it presupposes the minted machinery
+   (`kind_algebra`, `SpecializationLift`, `Level`) and its whole value is showing that
+   machinery solving problems it was not built against.
 
 Nothing goes upstream before Stage 1 exists for at least one directory, because Stage 1 is
 the part that costs a maintainer nothing and therefore the part that should arrive first.
@@ -317,7 +381,7 @@ ForPhysLib/
   Examination/                       the physics that individuates them, mirroring Kinds/ file-for-file
   Metrology/                         Stage 1: DimensionedKind pairings + coverage
   Exhibits/                          one directory per exhibit above
-    RigidBody/  ReferenceFrame/  HarmonicOscillator/  TwoRovers/
+    RigidBody/  ReferenceFrame/  HarmonicOscillator/  TwoRovers/  Electromagnetism/
   Scorecard.lean                     verdicts re-derived so the tables cannot drift from the files
 ```
 
@@ -369,11 +433,16 @@ R2 (the specialization lattice) *was* the fifth: the oscillator's `H = T + V` is
 specialization family the MR list never interrogated. It has since graduated —
 [MR32](REQUIREMENTS.md#mr32-specialization-keeps-kinds-comparable), appended after the
 first scoring pass, now asks, with probes in all four attempts and the scorecard. What
-they expose is a **PKC work item**, not a PhysLib one: `Specializes` is consumed by no
+they exposed was a **PKC work item**, not a PhysLib one: `Specializes` was consumed by no
 quantity-level operation, so the licensed sum at the join — `T + V` landing at the kind
-both terms provably specialize — is missing machinery, the specialization twin of
-`Extensive`'s licensed aggregation. Until it lands, MR32 is the second requirement
-(after MR11) that PKC itself does not sweep.
+both terms provably specialize — was missing machinery, the specialization twin of
+`Extensive`'s licensed aggregation. That machinery has since landed
+(`PropertyKindCalculus.SpecializationLift`: `Quantity.widen`, the curated `KindJoin`
+table, the sum and the comparison at the join), and the MR32 probes flipped ⚠️ → ✅ — the
+second time this benchmark changed the core library rather than the scorecard. MR11 is
+now the one requirement PKC itself does not sweep, and `kind_algebra`
+(`PropertyKindCalculus.KindAlgebra`, likewise minted here) has pushed its residue to the
+kind equations themselves.
 
 Rather than an exhaustive search of all 572 files for evidence, the
 honest instrument is the same one used everywhere else in this plan: a case study each,
@@ -392,7 +461,14 @@ hypothetical until built, chosen so the requirement is load-bearing rather than 
   (ISO 80000-8): `20·log₁₀(p/p₀)` is neither base nor derived, and adding two SPLs is the
   classic domain error. PhysLib has no acoustics directory yet — which makes this the
   *green-field* case study: the first module written kinded from the start, rather than
-  re-authored.
+  re-authored. The groundwork has since landed (`PropertyKindCalculus.Level`): a level is
+  a *construction* over a ratio root kind — reference and power/root-power role as kind
+  identity, levels ordinal-as-a-kind so `L₁ + L₂` is structurally unavailable, differences
+  landing in a reference-free gain kind, and the role-independent energetic combination —
+  not a fifth scale type. The same machinery is what a kinded treatment of PhysLib's
+  *electromagnetism* needs first: dBm vs dBW (same root, same role, different reference —
+  different kinds) and field level vs power level (same dB figure, disambiguated by kind)
+  are already probes in the core test suite.
 - **R14 — measuring g with PhysLib's own pendulum.** `SimplePendulum` gives
   `g = 4π²ℓ/T²`; a case study that takes measured `ℓ` and `T` *with uncertainties* and
   propagates to `u(g)` — GUM linearization checked against Monte Carlo, the ladder's
@@ -429,10 +505,13 @@ These exist so the comparison is a comparison and not a strawman parade.
    object identity — it fails it because `Dimension` is a free abelian group, which is exactly
    what makes it good at Tier 1.
 5. **PKC is scored by the same rules.** It loses [MR11](REQUIREMENTS.md#mr11-authoring-ergonomics)
-   outright as a ⚠️, and it *failed* two Tier 6 requirements when they were written, which is
-   why the core library changed rather than the scorecard. A benchmark its own author cannot
-   lose is not a benchmark.
+   outright as a ⚠️, it *failed* two Tier 6 requirements when they were written, and it was
+   ⚠️ on MR32 at first scoring — each time the core library changed rather than the
+   scorecard (`SpecializationLift` and `kind_algebra` are the MR32 and MR11 repairs). A
+   benchmark its own author cannot lose is not a benchmark.
 6. **PhysLib is not scored against requirements it never adopted.** Tiers 7 and 8 are
    requirements for *applying* PhysLib, not defects in it. Exhibits A–C report defects against
    PhysLib's own stated intent — its docstrings, its API maps, its module docs — and nothing
-   else. Exhibit D reports no defects at all.
+   else. Exhibit D reports no defects at all; Exhibit E reports both — the abbreviation and
+   the silent `c := 1` are defects against stated intent, the RF/AC annex is capability on
+   physics PhysLib does not yet have, and the two are kept as separate artifacts.

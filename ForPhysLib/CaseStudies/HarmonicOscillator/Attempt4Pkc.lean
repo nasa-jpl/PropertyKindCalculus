@@ -43,7 +43,7 @@ Scored against `README.md`:
 - MR17 ✅
 - MR18 ✅
 - MR19 ✅
-- MR32 ⚠️ (appended)
+- MR32 ✅ (appended — ⚠️ at first scoring; the lift it exposed as owed has since landed)
 
 **Where this attempt loses is MR11**, and the file says so in the same terms it uses for
 everyone else. Written longhand, every multiplication carries a `ProductKind` witness and
@@ -51,7 +51,12 @@ every witness needs its result kind declared first, so the infix operators vanis
 source and PKC is the *worst* of the four at authoring ergonomics. Two things soften that
 without erasing it: the witness is exactly what `@[pkc_math]` deletes when rendering (Tier 4,
 MR12), and `OperatorTable` moves the cost from the call site to a one-time per-model
-registration — which is what turns MR11 from ❌ into ⚠️ rather than into ✅.
+registration — which is what turns MR11 from ❌ into ⚠️ rather than into ✅. A third move,
+`kind_algebra` (minted from this very verdict), collapses the registration itself to one
+declaration whose lines are the model's kind equations, so the residue sits at its floor:
+what remains is the information, not its scaffolding. The verdict stays ⚠️ all the same, by
+this file's own criterion — a per-model burden attempt 1 does not have, however small, is a
+burden.
 
 The file runs the requirements in order, tier by tier, so it can be read end to end as one
 account of a single idea rather than as a row of a table.
@@ -60,6 +65,8 @@ import PropertyKindCalculus.Dimension
 import PropertyKindCalculus.QuantityReal
 import PropertyKindCalculus.Complex
 import PropertyKindCalculus.FrameReal
+import PropertyKindCalculus.SpecializationLift
+import PropertyKindCalculus.KindAlgebra
 import PropertyKindCalculus.DocGenMath
 import Physlib.Units.WithDim.Basic
 
@@ -614,18 +621,48 @@ elaborate: the compile error a naked magnitude cannot give. Infix notation did n
 gate — it made the gate silent until it is violated, which is what one wants from a gate. -/
 #check_failure (fun (o : System) (m₁ m₂ : IndividualQuantity o mass.kind ℝ) => m₁ * m₂)
 
+/-! ## MR11 with `kind_algebra` — the registration, generated
+
+`PropertyKindCalculus.KindAlgebra` (minted from this verdict) collapses what remains — the
+derived-kind declarations and their table entries — to the kind equations themselves, one
+line each. The block below stands up the *kinetic* side of the oscillator's energy
+(`T = m·v²`, again without the `½`): one base kind by hand — base kinds carry the
+semantics, the examination principle, and stay hand-written — then both derived kinds and
+both table entries in one declaration. The expansion is exactly the hand-written spelling
+above, so nothing is weakened, and the block is the authored declaration `grep` finds. -/
+
+/-- Velocity, a ratio kind — a base kind, declared by hand as base kinds are. -/
+def velocityK : KindOfProperty := { id := "velocity", scale := .ratio }
+
+kind_algebra
+  kv2      : "velocity squared"  := velocityK * velocityK
+  kineticK : "mass × velocity²"  := mass.kind * kv2
+
+/-- **MR11, with the algebra generated.** The formula is attempt 1's, and the whole
+stand-up cost for it was one base-kind declaration and one two-line `kind_algebra`
+block. -/
+noncomputable def kineticPkc (o : System)
+    (m : IndividualQuantity o mass.kind ℝ)
+    (v : IndividualQuantity o velocityK ℝ) : IndividualQuantity o kineticK ℝ :=
+  m * (v * v)
+
 /-! ## The MR11 verdict
 
 | | per-formula cost | per-model cost | operators visible |
 |---|---|---|---|
 | longhand | 4 witnesses | 3 kind declarations | **no** |
 | with the table | **none** | 3 kind declarations + 4 table entries | **yes** |
+| with `kind_algebra` | **none** | 1 base kind + 1 block, one line per kind equation | **yes** |
 
 So MR11 is ⚠️ rather than ❌ or ✅, and the honest statement is narrower than "PKC is
 unergonomic": *writing formulas* costs nothing once the table is registered, and what remains
 is a one-time declaration burden attempt 1 does not have. It is still a real cost. It is paid
 where a model's algebra is declared, and it does not grow with the size of the formulas —
-which is the opposite of attempt 2, whose cast is paid at every named result. -/
+which is the opposite of attempt 2, whose cast is paid at every named result. And
+`kind_algebra` collapses even that to the kind equations themselves, so the burden sits at
+its information floor: what remains to write is the model's algebra, which is precisely
+what the guarantees are about. The verdict stays ⚠️ by this file's own criterion — a
+per-model cost attempt 1 does not pay, however small, is a cost. -/
 
 /-! ## MR12 ✅ — rendering ergonomics
 
@@ -1193,21 +1230,30 @@ theorem mr19_capstone :
 
 end Tier6
 
-/-! ## MR32 ⚠️ — the lattice is theorems, the licensed sum is not (appended)
+/-! ## MR32 ✅ — the lattice is theorems, and now the sum consumes them (appended)
 
-Appended after the first scoring pass; see `Attempt1Reals` for the occasion. This is the
-requirement PKC's own R2 machinery was built for — `Specializes` and `MutuallyComparable`
-carry it at the *kind* level, below — and the requirement that exposes what nothing above
-that level consumes: `Quantity`'s addition is same-kind, and there is no lift of a
-`Quantity kineticEnergy R` to the join it provably specializes. So with the kinds kept
-honest, `H = T + V` is exactly as unwritable here as in Attempt 3 — with a difference that
-matters: Attempt 3's obstruction is *structural* (the tag is a group element; removing it
-destroys what it bought), while this one is *missing machinery with a stated design* — a
+Appended after the first scoring pass; see `Attempt1Reals` for the occasion. At first
+scoring this cell was ⚠️: `Specializes` and `MutuallyComparable` carried the lattice at the
+*kind* level, but nothing above that level consumed them — `Quantity`'s addition was
+same-kind, and there was no lift of a `Quantity kineticEnergy R` to the join it provably
+specializes — so with the kinds kept honest, `H = T + V` was exactly as unwritable here as
+in Attempt 3. The difference between the two failures was named then and mattered:
+Attempt 3's obstruction is *structural* (the tag is a group element; removing it destroys
+what it bought), while this one was *missing machinery with a stated design* — a
 kind-changing map licensed by a `Specializes` proof, the specialization twin of
-`Extensive`'s licensed aggregation. Scored ⚠️ by rule 5: a benchmark its own author cannot
-lose is not a benchmark. -/
+`Extensive`'s licensed aggregation.
+
+That machinery has since landed, built to this benchmark's specification
+(`PropertyKindCalculus.SpecializationLift`): `Quantity.widen` re-classifies a quantity
+along a proved specialization, magnitude untouched, and the curated `KindJoin` table — the
+join twin of `KindMul` — licenses the sum *at the join*, through the same scoped operator
+discipline as the rest of the algebra. The probes below now show both halves at once:
+the kinds stay distinct, and the Hamiltonian is writable, landing where physics says it
+lives. -/
 
 section MR32
+
+open scoped PropertyKindCalculus.OperatorTable
 
 /-- The join of the family: energy, unqualified. -/
 def energyGeneral : KindOfProperty :=
@@ -1237,12 +1283,60 @@ join — R2's lattice, as a theorem rather than a convention. -/
 theorem mr32_comparable : MutuallyComparable EnergyEdge kineticEnergy potentialEnergy :=
   ⟨energyGeneral, .of_edge .kinetic, .of_edge .potential⟩
 
-/-- At the join, the sum is licensed and lands where physics says: energy. -/
+/-- The join-table entry: kinetic and potential energy join at energy — the same two edge
+proofs `mr32_comparable` exhibits, plus the scale gate for `+` discharged at the join. -/
+instance : KindJoin EnergyEdge kineticEnergy potentialEnergy energyGeneral :=
+  ⟨.of_edge .kinetic, .of_edge .potential, .ofScale⟩
+
+/-- The symmetric entry, so `V + T` lands too — from the first, witnesses unrestated. -/
+instance : KindJoin EnergyEdge potentialEnergy kineticEnergy energyGeneral :=
+  KindJoin.symm inferInstance
+
+/-- At the join, the sum was always licensed: energy + energy is energy. -/
 example (T V : Quantity energyGeneral Float) : Quantity energyGeneral Float := T + V
 
-/-! **The gap, honestly.** With the kinds kept distinct, `T + V` does not elaborate: -/
+/-- **The gap, closed.** With the kinds kept distinct, the Hamiltonian is writable — and
+it lands at the join, where physics says it lives, not at either sub-kind. -/
+def hamiltonian (T : Quantity kineticEnergy Float)
+    (V : Quantity potentialEnergy Float) : Quantity energyGeneral Float :=
+  T + V
+
+/-- The join sum is not a new addition — it erases to the bare-real sum, `rfl`. -/
+theorem hamiltonian_magnitude (T : Quantity kineticEnergy Float)
+    (V : Quantity potentialEnergy Float) :
+    (hamiltonian T V).magnitude = T.magnitude + V.magnitude := rfl
+
+/-! **Still not identity.** Comparability licenses the sum at the join and only there —
+the Hamiltonian does not land at either sub-kind: -/
 #check_failure (fun (T : Quantity kineticEnergy Float) (V : Quantity potentialEnergy Float) =>
-  T + V)
+  (T + V : Quantity kineticEnergy Float))
+
+/-! **And the curation still gates.** Kinds with no registered join do not add: a mass and
+a kinetic energy have no common super-kind on file, so their sum does not elaborate — the
+compile error the bare magnitude cannot give, preserved through the lift. -/
+#check_failure (fun (m : Quantity mass.kind Float) (T : Quantity kineticEnergy Float) =>
+  m + T)
+
+/-- **And the object gate survives the join.** On one oscillator, the join sum carries the
+object through: A's total energy is A's. -/
+example (T : IndividualQuantity oscA kineticEnergy Float)
+    (V : IndividualQuantity oscA potentialEnergy Float) :
+    IndividualQuantity oscA energyGeneral Float := T + V
+
+/-! Oscillator A's kinetic energy does not add to oscillator B's potential energy,
+licensed lattice or not — instance resolution fails to unify the objects: -/
+#check_failure (fun (T : IndividualQuantity oscA kineticEnergy Float)
+    (V : IndividualQuantity oscB potentialEnergy Float) => T + V)
+
+/-- **MR32, the capstone.** Both requirements at once, in one `Prop`: the kinds are
+distinct, they are mutually comparable, and the Hamiltonian erases to the bare-real sum.
+Distinctness without over-rejection — the conjunction no other attempt can state. -/
+theorem mr32_capstone :
+    kineticEnergy ≠ potentialEnergy
+      ∧ MutuallyComparable EnergyEdge kineticEnergy potentialEnergy
+      ∧ ∀ (T : Quantity kineticEnergy Float) (V : Quantity potentialEnergy Float),
+          (hamiltonian T V).magnitude = T.magnitude + V.magnitude :=
+  ⟨mr32_kinds_distinct, mr32_comparable, fun _ _ => rfl⟩
 
 end MR32
 
