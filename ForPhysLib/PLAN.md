@@ -305,6 +305,21 @@ discover whether `System`/`Component`/`DedicatedKind` holds up under an assembly
 known — but to show a PhysLib reader what it buys, on a system built out of PhysLib's own
 rigid-body mechanics.
 
+**Status: built** — `ForPhysLib/Exhibits/TwoRovers/Findings.lean`. Two `System`s, ten
+`RoverPart`s each, every part mass an object-indexed quantity and the §20 triple rendered
+(`"rover 1 — chassis ; mass"` by `rfl`, cross-rover distinctness by
+`DedicatedKind.distinct_of_system`). The three artifacts hold as promised:
+`rover1_total_is_sum` proves the stated total against the assembled parts list;
+rover 2's chassis mass neither adds to rover 1's nor splices into its assembly
+(`#check_failure` ×2); `undercount_caught` proves the nine-part sum that drops a wheel is
+not the total. Two-sidedness (MR21): mass carries the `Assembles` licence and sums, and
+the sum of the parts' angular velocities fails to *elaborate* — no licence, no instance.
+The wheelbase is the system's own quantity and refuses part-level addition (MR22); the
+motor-to-wheel torque names both endpoints and cannot be delivered to the other wheel
+(MR23); every mass carries a measured/specified/derived/assumed tag with the "what rests
+on an assumption?" audit a `decide` (MR24); and `assemble`, carrier-generic, executes at
+`Float32` under a `#guard` (MR27).
+
 ### Exhibit E. Electromagnetism — the confirmation exhibit
 
 **Built last, and on purpose after the machinery.** Exhibits A–D were designed before the
@@ -476,7 +491,8 @@ ForPhysLib/
     ReferenceFrame.lean  ReferenceFrame/ ✓   B: three laws one type, closed by KVector; req 17 discharged kinded
       Findings.lean  ReferenceFrame.checked_by.yaml ✓
     HarmonicOscillator.lean  HarmonicOscillator/ ✓  C: four findings closed; MR11 measured; ℝ/Float32 by one rfl
-    TwoRovers/  Electromagnetism/
+    TwoRovers.lean  TwoRovers/       ✓   D: totals proved, contamination and undercount refused, licence two-sided
+    Electromagnetism/
   Scorecard.lean                     verdicts re-derived so the tables cannot drift from the files
 ```
 
