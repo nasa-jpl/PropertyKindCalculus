@@ -62,6 +62,11 @@ dimension claims into statements a build can fail on —
 **This is the stage to propose first, and possibly the only one to propose at first.** It is
 the whole argument in a form that costs a maintainer nothing to accept.
 
+**Status: Done for `SpaceAndTime/Space`** — `ForPhysLib.Metrology.Space`: six
+`DimensionedKind` pairings, the Stage-0 lookup proved against `Iso80000.Part3` (`decide`
+on the kinds, `rfl` on the dimensions), the directory's two-edge kind algebra authored,
+and `#kind_dimensional_coverage` pinned clean over it. Landed with Sequencing item 3.
+
 ### Stage 2. Kinded re-authoring, with definitional erasure
 
 The kinded form becomes the authored form; the naked form is `rfl`-equal to `.magnitude` of
