@@ -111,6 +111,16 @@ to the module root, and the `checked_by:` field in the directory's `API-map.yaml
 
 **Cost: CI.**
 
+**Status: Done for `SpaceAndTime/Space`** — `ForPhysLib.Audits.Space`: the boundary audit
+and its crossings enumeration pinned (five sites, all tagged), `#kind_boundary_clean` and
+`#kind_mint_ratchet` passing silently over the Kinded and Operators scopes, and the
+unkinded ledger read over two declared contracts — the *interior* gated empty
+(`#kind_unkinded_clean`), the *ingest boundary* measured at eight naked positions, every
+one a `Space d` point or the emitted `ℝ`: MR30's Mathlib-interface tier, counted rather
+than hidden. The `checked_by:` delta proposed for the directory's `API-map.yaml` sits
+beside the module as `Audits/Space.checked_by.yaml`. **The ladder now stands complete,
+Stage 0 through Stage 4, for its first directory.**
+
 ---
 
 ## Exhibits to build
@@ -379,6 +389,8 @@ it; Tier 8 proposed as the thing that makes the rest affordable.
    six ISO 80000-3 kinds (the position/displacement pair the directory's own torsor keeps
    apart, named at the kind level), the lookup proved against `Iso80000.Part3` by `decide`,
    and `#kind_dimensional_coverage` pinned clean over the directory's two authored edges.
+   The ladder has since been climbed to the top for this directory: Stages 2–4
+   (`Kinded`, `Operators`, `Audits`) carry their own Status lines in the ladder above.
 4. **Exhibit C**, which is where the ergonomic question is settled either way.
 5. **Exhibit D**, because it depends on the others and argues a different point.
 6. **Exhibit E**, last — the confirmation pass: it presupposes the minted machinery
@@ -417,6 +429,9 @@ ForPhysLib/
     Space.lean                       ✓   four length-readings; PhysLib/Mathlib theorems close kinded goals verbatim
   Operators.lean  Operators/         ✓ Stage 3: KindMul/KindDiv registrations — `*`/`/` through the table
     Space.lean                       ✓   two entries, two refusals; coverage re-pinned over the table
+  Audits.lean  Audits/               ✓ Stage 4: pinned boundary audit, silent gates, measured ledger
+    Space.lean                       ✓   five sites tagged; interior gated empty, ingest boundary measured
+    Space.checked_by.yaml            ✓   the API-map delta: checked_by for four existing requirements
   Exhibits/                          one directory per exhibit above
     RigidBody/  ReferenceFrame/  HarmonicOscillator/  TwoRovers/  Electromagnetism/
   Scorecard.lean                     verdicts re-derived so the tables cannot drift from the files

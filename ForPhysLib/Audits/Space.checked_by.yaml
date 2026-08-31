@@ -1,0 +1,27 @@
+# The Stage-4 API-map delta proposed for `Physlib/SpaceAndTime/Space/API-map.yaml`
+# (MR29: every satisfied requirement has a machine-checkable witness).
+#
+# Shape: each existing `Requirements:` entry this proposal covers gains one field,
+# `checked_by:` — the module(s) whose build now checks the claim, so `done: true`
+# stops being prose. Entries are keyed here by their current `description:` text.
+# Nothing else in the map changes; a directory that adopts nothing keeps its map.
+
+deltas:
+
+  - description: "The API contains a norm, an inner product and a metric on `Space d`, making it a finite-dimensional real inner-product space and metric space."
+    checked_by:
+      - "ForPhysLib.Kinded.Space"      # the metric authored at its kind (distanceQ); Space.dist_eq closes the kinded goal verbatim
+      - "ForPhysLib.Audits.Space"      # its mint pinned at the kindIngest tier
+
+  - description: "The API contains a choice of origin (the vector-space zero) and the standard affine-isometry chart to `EuclideanSpace`."
+    checked_by:
+      - "ForPhysLib.Kinded.Space"      # the origin-read authored as positionQ (position vector, from-origin) vs displacementQ (between-points)
+      - "ForPhysLib.Kinds.Space"       # position vector ≠ displacement, decided from the examination principles
+
+  - description: "The API contains the type `LengthUnit` of choices of length unit, with scaling and concrete units."
+    checked_by:
+      - "ForPhysLib.Metrology.Space"   # every kind of the family paired with dimension L and pinned coherent
+
+  - description: "The API contains the cross product on `EuclideanSpace ℝ (Fin 3)` with properties relating it to time derivatives and inner products."
+    checked_by:
+      - "ForPhysLib.Operators.Space"   # length · length → area registered once; unregistered products fail to elaborate
