@@ -22,3 +22,4 @@ import ForPhysLib.Kinded
 import ForPhysLib.Operators
 import ForPhysLib.Audits
 import ForPhysLib.Exhibits
+import ForPhysLib.Scorecard

@@ -513,7 +513,7 @@ ForPhysLib/
     HarmonicOscillator.lean  HarmonicOscillator/ ✓  C: four findings closed; MR11 measured; ℝ/Float32 by one rfl
     TwoRovers.lean  TwoRovers/       ✓   D: totals proved, contamination and undercount refused, licence two-sided
     Electromagnetism.lean  Electromagnetism/ ✓ E: five problems closed; the annex built on the minted machinery
-  Scorecard.lean                     verdicts re-derived so the tables cannot drift from the files
+  Scorecard.lean                     ✓ verdicts re-derived so the tables cannot drift from the files
 ```
 
 `lake build ForPhysLib` builds all of it. The library takes the package directory as its
