@@ -6,3 +6,4 @@ Five, per [PLAN.md](PLAN.md#exhibits-to-build), each producing build artifacts â
 something which should be rejected type-checks â€” against the real PhysLib sources.
 -/
 import ForPhysLib.Exhibits.RigidBody
+import ForPhysLib.Exhibits.ReferenceFrame

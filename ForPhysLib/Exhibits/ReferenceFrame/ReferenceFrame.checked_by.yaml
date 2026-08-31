@@ -1,0 +1,14 @@
+# The Exhibit-B API-map delta proposed for `Physlib/SpaceAndTime/ReferenceFrame/API-map.yaml`
+# (MR29). Two kinds of entry: an undone requirement discharged kinded by the exhibit, and
+# an undone requirement whose statement the exhibit shows is unsatisfiable as written.
+# Entries are keyed by their current `description:` text.
+
+deltas:
+
+  - description: "The API shall contain the defining property of an inertial frame's origin velocity, and the origin and basis of a frame built from reference points."
+    checked_by:
+      - "ForPhysLib.Exhibits.ReferenceFrame.Findings"   # origin_displacement_eq: the defining property, proved by Classical.choose_spec, with every erasure a visible .magnitude (the fromReferencePoints half stays open)
+
+  - description: "The API shall contain the relative motion of two inertial frames, expressed as the boost, rotation and translation carrying one to the other, together with the induced transformation law for frame vectors."
+    finding:
+      - "ForPhysLib.Exhibits.ReferenceFrame.Findings"   # 'the induced transformation law' is three laws (geometricTransport, boostTransport, originShiftTransport — one type, one example applies all three to the same vector); satisfiable once Vector carries a kind (kBoostTransport rejects a displacement)

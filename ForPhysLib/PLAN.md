@@ -206,6 +206,19 @@ the kind is dropped and it stays exactly where it is; every instance — `AddCom
 and the `Fact frame.IsMetricConserved` machinery is untouched. The current `Vector` is the
 erasure.
 
+**Status: built** — `ForPhysLib/Exhibits/ReferenceFrame/Findings.lean`. The three candidate
+laws (`geometricTransport`, `boostTransport`, `originShiftTransport`) all inhabit
+`F.Vector → G.Vector`, and one `example` applies all three to the same vector — the finding
+that requirement 16's "the induced transformation law" is three laws the type cannot tell
+apart. The design input follows in the same file: `KVector` is `Vector` with a kind index,
+`kComponentEquiv` still the definitional place the kind is dropped, `AddCommGroup`/`Module`
+transferred per kind by the same one-liners, and `kBoostTransport` rejecting a displacement
+by `#check_failure`. Finding 2 lands at the MR30 tier as promised: `origin_displacement_eq`
+discharges the API map's undone requirement 17 with PhysLib's own proof term and every
+erasure a visible `.magnitude`, and `#kind_unkinded` pins the exhibit's own boundary at
+2 positions / 2 flows (both `Time`). `ReferenceFrame.checked_by.yaml` carries the proposed
+map delta for both entries.
+
 ### Exhibit C. HarmonicOscillator
 
 **Source.** `ClassicalMechanics/HarmonicOscillator/Basic.lean`,
@@ -445,7 +458,9 @@ ForPhysLib/
     Space.checked_by.yaml            ✓   the API-map delta: checked_by for four existing requirements
   Exhibits.lean  Exhibits/           ✓ one directory per exhibit above
     RigidBody.lean  RigidBody/       ✓   A: three findings probed and closed; the contraction bridged back
-    ReferenceFrame/  HarmonicOscillator/  TwoRovers/  Electromagnetism/
+    ReferenceFrame.lean  ReferenceFrame/ ✓   B: three laws one type, closed by KVector; req 17 discharged kinded
+      Findings.lean  ReferenceFrame.checked_by.yaml ✓
+    HarmonicOscillator/  TwoRovers/  Electromagnetism/
   Scorecard.lean                     verdicts re-derived so the tables cannot drift from the files
 ```
 
