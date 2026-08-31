@@ -19,6 +19,8 @@ declaration; the attribute simply records each (decl, requirement, role) triple.
 -/
 
 import PropertyKindCalculus
+import PropertyKindCalculus.BoundaryAudit
+import PropertyKindCalculus.KindLedger
 import PropertyKindCalculus.Requirements.Attributes
 
 namespace PropertyKindCalculus
@@ -143,5 +145,57 @@ attribute [requirement "R12" specifies "the reciprocal kind-law family"] Recipro
 attribute [requirement "R12" specifies "the by-construction product certificate"] Quantity.IsProduct
 attribute [requirement "R12" proves "the smart-constructed product satisfies its certificate by construction"]
   Quantity.mul_isProduct
+
+/-! ## Dedication to a system's component (R22)
+
+R22 is the sharpened successor of the part of R19 that "object identity" undersold: not
+merely *an* object in the type, but a **named component of a named system**, with
+cross-system substitution provably impossible. Minted from the ForPhysLib benchmark's
+MR20 (two rovers: rover 1's total mass cannot draw on rover 2's parts) — see the blueprint's
+*Requirement validation* section. `DedicatedKind.distinct_of_system` keeps its R19
+annotation too: one theorem, two obligations. -/
+
+attribute [requirement "R22" specifies "the System — Component ; kind dedication triple"]
+  DedicatedKind
+attribute [requirement "R22" proves "dedications of distinct systems are distinct, so cross-system substitution is a type error"]
+  DedicatedKind.distinct_of_system
+
+/-! ## Ergonomics and erasure (R21)
+
+Minted from the ForPhysLib benchmark's MR11 — the one requirement PKC does not win, so the
+one the specification most needs to state. What *is* verifiable is that the ceremony is
+pure: the kinded form computes exactly the bare form, and the curated-operator form is the
+same term as the longhand form. The benchmark's `Scorecard.mr11_pkc_same_value` and
+`Scorecard.mr11_operators_same_term` exemplify both at a concrete model (annotated in
+`ForPhysLibAnnotations`). -/
+
+attribute [requirement "R21" specifies "the curated multiplication table: kind-directed `*` with the output kind an outParam"]
+  KindMul
+attribute [requirement "R21" specifies "the curated division table"]
+  KindDiv
+attribute [requirement "R21" proves "the operator form is definitionally the longhand form — one rfl transports every certificate"]
+  OperatorTable.hmul_eq_mul
+attribute [requirement "R21" proves "the division twin of the same erasure"]
+  OperatorTable.hdiv_eq_div
+
+/-! ## Provenance (R23) -/
+
+attribute [requirement "R23" specifies "the kind-typed value-flow graph: ports, evidence-tiered intros, hyperedge occurrences, exits"]
+  Provenance
+attribute [requirement "R23" specifies "the declared boundary an author claims for a scope"]
+  Provenance.Contract
+attribute [requirement "R23" implements "well-formedness of the recorded graph, decidably"]
+  Provenance.wellFormed
+attribute [requirement "R23" implements "whether one contract discharges another — the claim checked against what the scope computes"]
+  Provenance.Contract.discharges
+
+/-! ## Audit scope (R24) -/
+
+attribute [requirement "R24" specifies "the boundary tier vocabulary — including the interface tier that keeps an audit honest about its scope"]
+  BoundaryAudit.BoundaryTier
+attribute [requirement "R24" implements "enumeration of the unkinded boundary sites of a scope"]
+  BoundaryAudit.boundarySites
+attribute [requirement "R24" implements "the per-scope kind ledger the ratchet compares against"]
+  KindLedger.ledgerOf
 
 end PropertyKindCalculus

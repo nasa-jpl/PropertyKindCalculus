@@ -189,6 +189,7 @@ lean_lib «Dimension» where
     .one `PropertyKindCalculus.Function,
     .one `PropertyKindCalculus.DimensionalCoverage,
     .one `PropertyKindCalculus.QuantityReal,
+    .one `PropertyKindCalculus.FrameReal,
     .one `PropertyKindCalculus.BoundsReal,
     .one `PropertyKindCalculus.UnitConversion]
 
@@ -426,3 +427,31 @@ Mathlib-free. Build with `lake build Graph`. -/
 lean_lib «Graph» where
   srcDir := "graph"
   roots := #[`PropertyKindCalculus.Graph]
+
+/-- **The PhysLib proposal** (source tree `ForPhysLib/`; see `ForPhysLib/README.md`). The
+metrology layer proposed to PhysLib in
+[#1579](https://github.com/leanprover-community/physlib/pull/1579), as four prose documents
+(`README.md`, `REQUIREMENTS.md`, `MOTIVATION.md`, `PLAN.md`) plus the case studies that supply
+their evidence — `ForPhysLib.CaseStudies.HarmonicOscillator`, the oscillator typed four ways
+(plain reals, PhysLib `WithDim`, Buckingham-π object tagging, PKC), each run against the whole
+MR1–MR19 requirement list (plus the appended MR32) and scored, with every verdict a build artifact (`#check_failure`
+probes, `#guard_msgs` pins and theorems, never prose).
+
+Its own library, not a slice of `DimensionExamples`, because the proposal is a **deliverable
+with an audience**: it is read as a directory, prose beside the sources that back each claim,
+and `lake build ForPhysLib` is the one command that says the claims still hold.
+
+It takes the package directory as its `srcDir` — the same shape as the core
+`PropertyKindCalculus` library above — so the tree a PhysLib reader browses is the module path,
+with no intermediate mirror of this package's namespace to navigate. That is also why the
+directory is `ForPhysLib/CaseStudies/` and not `forphyslib/case-study/`: a module's name is its
+directory path, so every component has to be a legal Lean identifier, and the plural leaves
+room for the second case study. `PLAN.md`'s `Exhibits/`, `Kinds/`, `Examination/` and
+`Metrology/` trees join as siblings under the same root when they land.
+
+`roots` is explicit because the doc build renders `lib.rootModules` (see the NOTE above).
+Pulls in PhysLib + Mathlib through the `Dimension` layer it imports. Build with
+`lake build ForPhysLib`. -/
+lean_lib «ForPhysLib» where
+  roots := #[`ForPhysLib]
+  globs := #[.andSubmodules `ForPhysLib]

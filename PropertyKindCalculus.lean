@@ -34,5 +34,6 @@ import PropertyKindCalculus.QuantityFunction
 import PropertyKindCalculus.Complex
 import PropertyKindCalculus.QuantityRefinement
 import PropertyKindCalculus.QuantityVector
+import PropertyKindCalculus.Frame
 import PropertyKindCalculus.Provenance
 import PropertyKindCalculus.Influence

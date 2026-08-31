@@ -96,11 +96,11 @@ total is precisely the operation that creates a "fraction of total" role out of 
 quantities that carried no such meaning separately, so it is licensed by a `QuotientKind`
 edge (ratio-scale on both operands and on the quotient — the autoParam discharges it for
 concrete kinds) rather than being free. -/
-def fractionOf [Div R] (kFrac : KindOfProperty) (p : Part k R) (w : Whole k R)
+def fractionOf [Div R] [ScalarCarrier R] (kFrac : KindOfProperty) (p : Part k R) (w : Whole k R)
     (h : QuotientKind k k kFrac := by exact QuotientKind.ofRatio _ _ _) : Quantity kFrac R :=
   Quantity.div h p.q w.q
 
-@[simp] theorem fractionOf_magnitude [Div R] (kFrac : KindOfProperty)
+@[simp] theorem fractionOf_magnitude [Div R] [ScalarCarrier R] (kFrac : KindOfProperty)
     (p : Part k R) (w : Whole k R) (h : QuotientKind k k kFrac) :
     (p.fractionOf kFrac w h).magnitude = p.q.magnitude / w.q.magnitude := rfl
 

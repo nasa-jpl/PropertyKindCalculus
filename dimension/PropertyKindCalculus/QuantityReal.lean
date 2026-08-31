@@ -35,4 +35,10 @@ noncomputable instance : LawfulCarrier ℝ where
   zero_add := _root_.zero_add
   add_zero := _root_.add_zero
 
+/-- **`ℝ` is a *scalar* carrier**: a real magnitude is one number, and `ℝ`'s `*` is the
+multiplication of magnitudes. This is what makes `Quantity.mul` available at the proof
+representation — and, by its absence at `Fin n → ℝ`, what keeps the componentwise product
+of two vector quantities from being signed as a product of kinds. -/
+instance : ScalarCarrier ℝ := ⟨⟩
+
 end PropertyKindCalculus

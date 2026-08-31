@@ -76,7 +76,8 @@ def sysmlComparisonTable : DocTable := mdTable true
    "a type error"],
   ["Scalar / vector / tensor, frames, transforms",
    "first-class and rich",
-   "not yet specified (owed — an orthogonal index)"],
+   "an orthogonal index (R20): Cartesian frames, three variances, invariance proved; \
+    curvilinear and the covariant/contravariant split still owed"],
   ["Algebraic laws",
    "a modelling library; none machine-checked",
    "proved theorems (preorder, homomorphism, monotonicity)"]
@@ -208,7 +209,7 @@ The requirements fall into four groups: how kinds are *structured*, how
 *operations* on them are gated, how the kind layer is kept *consistent* with the
 coarser dimension and unit layers, and how values *aggregate* over parts.
 
-## Kind structure (R1, R2, R3)
+## Kind structure (R1, R2, R3, R19, R22)
 
 *R1 — Kinds are first-class and discriminate within a dimension.* Two properties
 of the same physical dimension can still be different kinds, and the type system
@@ -254,6 +255,25 @@ type). `Length` is a type; the length of this pencil is a term of type
 `Quantity Length`. The two are never conflated — the punning OWL permits between a
 class and its instances is structurally impossible here.
 
+*R19 — A quantity characterizes an object; object identity is carried in the type.*
+R3 separates the general from the individual; R19 says *whose* individual. A measured
+value characterizes some object — this pencil, oscillator A — and that object rides in
+the type (`IndividualQuantity o k R`), so two same-kind quantities of different objects
+are different types and `ω_A · x_B` is a compile-time error, not a naming convention.
+Same kind, different object; the object axis is independent of the kind axis, which is
+exactly what dissolves the tagging dilemma (a dimension tag can make masses
+distinguishable *or* addable, never both — the object index makes them both).
+
+*R22 — A quantity is dedicated to a named component of a named system; dedications of
+distinct systems are provably distinct.* The sharpened successor of the part of R19
+that "object identity" undersold, minted from the ForPhysLib benchmark's two-rover
+construction (see *Requirement validation* below): with one system there is no way to
+distinguish "the sum of the parts" from "the sum of some masses of the right
+dimension", because every mass in scope is a correct summand. `DedicatedKind` records
+the full `System — Component ; kind` triple, and `distinct_of_system` makes
+cross-system substitution — rover 1's total mass drawing on rover 2's wheel — a type
+error rather than a modeling discipline.
+
 ## Operation gating (R4, R5, R6)
 
 *R4 — Operations are gated by kind (the additive law).* Arithmetic that keeps a
@@ -287,7 +307,7 @@ potential is gauge-dependent (fixed only up to an additive reference), hence
 interval-scale, while electric potential difference, of the same dimension `V`, is
 ratio-scale (see the _IEC 80000-6_ chapter).
 
-## Soundness bridges (R7, R8)
+## Soundness bridges (R7, R8, R16, R17)
 
 *R7 — Dimension certifies coherence; it does not decide legality.* Every kind has
 a dimension, but dimension is a *consistency check*, not the authorization:
@@ -314,6 +334,24 @@ measured quantity is a number times a unit. Converting a quantity from one unit
 to another of the *same* kind and back is the identity — conversion is
 multiplication by a ratio, defined only within a kind. There is no conversion
 between units of *different* kinds; that too is a type error, not a runtime check.
+
+*R16 — Unit references are faithful.* R8 states the capability; R16 and R17 are its
+proof obligations, split so each can be discharged exactly. R16 covers the *reference*
+side: commensurability of unit references is an equivalence relation, and the VIM's
+number-and-reference form of a quantity value round-trips — decompose a value into its
+number and its unit reference and recompose, and nothing is lost. Faithfulness here is
+what makes a recorded measurement citable: the reference is part of the value's
+identity, not a display convention.
+
+*R17 — Unit conversion between commensurable units is a faithful round-trip.* The
+*conversion* side of R8's claim, made exact: converting between commensurable units is
+multiplication by an exact, reciprocal power-of-radix factor — SI decimal or IEC
+binary — so converting there and back is the identity *on the nose*, not up to
+floating-point error. The exactness is the point: a conversion factor that is a
+power of the radix commutes with the carrier's rounding, which is what lets the
+round-trip law hold at `Float` and not only at $`\mathbb{R}`. R20's frame
+functoriality (`toFrameVector_id`, `toFrameVector_comp`) is this requirement's frame
+twin: what R17 proves for the unit axis, R20 proves for the frame axis.
 
 ## Aggregation (R9)
 
@@ -403,7 +441,66 @@ the *same* parametric proof used for scalars (the pointwise `Carrier (Fin n → 
 It is the ISO 80000-2 §18 *numerical-array* reading of value representation, and it
 aligns with the VIM's "a quantity is scalar; a vector/tensor is a composite of
 scalar quantities" — the priority SysML v2 inverts (see *Why a calculus, not a
-taxonomy*). The fuller *structural* apparatus is a separate axis, still owed below.
+taxonomy*). The *structural* apparatus is a separate axis, specified as R20 below.
+
+One consequence of the numerical-array reading needs stating here because it is a
+gate rather than a capability. A carrier supplying `Mul` is not thereby supplying
+*the* multiplication of magnitudes: Lean's `Mul (Fin n → R)` is pointwise, so the
+componentwise product of two position vectors would elaborate through `Quantity.mul`
+as a correctly kinded, correctly dimensioned area that is no physical quantity at
+all. `ScalarCarrier` is the carrier-side gate that refuses it — the missing half of
+the doctrine `QuantityClassification` already stated, that a kind's scale says an
+operation is *meaningful* while a carrier's tier says the representation can
+*compute* it. It is a marker class, and deliberately so: the same $`\iota \to R` is a
+scalar carrier when its indices are independent *samples* (the batch carriers) and
+not when they are *components*, and no property of the type decides which. The
+operations §18 does license on a vector quantity — the scalar and vector products —
+are not pointwise and belong to R20.
+
+## Value representation in the structural sense: frames and variance (R20)
+
+*R20 — Components carry the frame they were read in and the variance they transform
+with; a scalar product is invariant under an orthonormal change of frame and a
+component is not.* R11 above specifies the numerical half of ISO 80000-2 §18 and is
+silent on the sentence the standard puts next to it: the quantity is independent of
+the choice of coordinate system while its numerical components are not. Independence
+of a choice is not a property an array has — it is a property of how the array
+behaves when the choice changes — so `Quantity k (Fin n → R)` does not record that a
+choice was made at all.
+
+`InFrame f var k R` adds the two indices that do: the `Frame` the components were
+read in, and the `Variance` (scalar, vector, rank-2) whose transformation law they
+obey. Three points make this an axis of its own rather than a second kind of unit:
+
+  * *A frame change is dimension-blind.* A *unit* change acts through the
+    dimension — the factor `UnitScale.dimScale` computes is a function of it — so the
+    dimension layer supplies unit covariance unaided (R7, R17). A *frame* change acts
+    through the carrier: position, velocity, force and field all turn by the same
+    matrix, and their dimensions have no bearing on it. Nothing multiplicative
+    reaches variance, so no refinement of the dimension basis reaches it either.
+  * *The frame is an index, where the unit is not.* A kind determines a canonical
+    unit and a conversion is recoverable from the dimensions; neither holds of a
+    frame, and two readings of one quantity in two frames agree in kind, dimension,
+    unit, object and carrier. There is nothing else left to catch the mixture.
+  * *What survives is a theorem.* `dot_toFrameVector` proves the scalar product
+    invariant under an orthonormal change, and `component_not_invariant` exhibits a
+    component that differs — stated with a witness so the first result cannot be
+    over-read. Together with the functoriality of the action (`toFrameVector_id`,
+    `toFrameVector_comp`) these are the frame twin of R17's unit round-trip.
+
+The definitions are carrier-parametric and Mathlib-free, so a change of frame runs
+at `Float` and specifies at $`\mathbb{R}`; the laws live in `FrameReal`, the same
+split `Quantity`/`QuantityReal` already uses.
+
+*Scope, stated as scope.* The transformations are linear changes of *Cartesian*
+frame, and under an orthonormal change the covariant and contravariant laws coincide
+($`C^{-1} = C^{\top}`), so one `vector` variance suffices. `IsOrthonormal` is a
+hypothesis on the theorems that need it and never a field of `FrameChange`, so a
+general linear change remains expressible while the results state their price. Still
+owed, and named here rather than assumed away: the covariant/contravariant split for
+non-orthogonal changes, curvilinear coordinates, bound-versus-free vectors, and
+affine frames — an origin as well as a basis, which positions need and velocities do
+not.
 
 ## Verified classification: kind-laws that instantiate at the quantity level (R12)
 
@@ -522,6 +619,106 @@ descriptor) for the verdict — so a model is adequacy-checked at the scale `c�
 descriptor defines (the soundness inherited from the A3 verdict). What remains is extending the DAG to
 `×`/`÷`, scoped in the project's `UNCERTAINTY.md`.
 
+## Ergonomics and erasure (R21, R25)
+
+*R21 — The kind layer erases: the ceremony is pure.* The standing objection to any kind
+layer is authoring cost, and the honest answer is not that the cost is zero — the
+ForPhysLib benchmark scores PKC *worst* of four designs at longhand authoring — but that
+the cost buys checking and nothing else: the kinded authoring computes *exactly* the
+bare-carrier value, and the curated-operator form (`KindMul`/`KindDiv`, the
+`OperatorTable`) elaborates to the *same term* as the longhand form
+(`hmul_eq_mul`, one `rfl` that transports every certificate). So `m * (ω * ω) * (x * x)`
+is character-identical to bare reals, and what remains of the cost is the per-model
+operator-table setup — a price the requirement makes measurable rather than deniable.
+This is the *write once correctly, go fast automatically* slogan stated as an
+obligation: correctness lives in the types and is paid at compile time, and the number
+that runs is the one a hand-written kernel would compute.
+
+*R25 — A kinded definition renders back as typeset mathematics.* The reading-side twin
+of R21's writing-side claim. A definition annotated `@[pkc_math]` is lifted from its
+own elaborated term into a presentation language (`MathTerm`), normalized faithfully,
+and pretty-printed to a LaTeX equation in the declaration's docstring — with the kind
+bookkeeping suppressed and the notation (an object index as a subscript, a
+conventional symbol like $`\sigma^0`) recovered rather than lost. The rendering is
+pinned with `#guard_msgs`, so it is a regression artifact, not a comment.
+
+## Provenance and audit (R23, R24)
+
+*R23 — A value's provenance is recordable and auditable.* Beyond *what kind* a
+quantity is (R1) and *whose* it is (R19, R22): *where it came from*. `Provenance ν κ`
+records a kind-typed value-flow graph — ports, node introductions each carrying an
+evidence tier, hyperedge occurrences, and the exits where values leave the calculus
+for the bare carrier — and `Contract` is the boundary an author *declares* for a
+scope, checkable against the boundary the scope actually computes
+(`Contract.discharges`). A membership choice can be wrong, and this is the structure
+it can be wrong *about*: a changed part list changes a difference list, never passes
+silently.
+
+*R24 — An audit is a claim about its scope, never about the library.* The discipline
+that keeps every other requirement's evidence honest at adoption time. The unkinded
+surface of a scope is *enumerable* (`boundarySites`), reported against a tier
+vocabulary that includes the interface tier — the boundary where erasing to a bare
+carrier is the sanctioned design, so an audit does not score a Mathlib `fderiv` call
+as a defect — and a blessed scope only grows: the ratchet (`#kind_mint_ratchet`)
+compares the current ledger against the pinned one and *throws* on regression, so a
+clean audit cannot silently shrink to stay clean.
+
+## Requirement validation — the ForPhysLib benchmark
+
+R21–R25 did not come from introspection; they came from *validation*, in the systems
+engineering sense: not "did we build the calculus right" (verification — the
+traceability matrix below) but "did we specify the right calculus". The instrument is
+the ForPhysLib benchmark (`ForPhysLib/REQUIREMENTS.md`, MR1–MR31): thirty-one
+requirements stated design-neutrally against concrete physics — the same harmonic
+oscillator typed four honest ways, and a survey of PhysLib's twelve
+`API-map.yaml` files — where each MR is scored not only for PKC but for three rival
+designs and for a shipping library none of them authored. Where an MR restates an R,
+that is the R *validated adversarially*: R1 asserts PKC discriminates within a
+dimension; MR4 hands the same claim a physics problem that plain reals, `WithDim`, and
+Buckingham-π tagging attempt first and fail structurally. The benchmark can also
+*fail* PKC — it scores MR11 against it — which is what makes its confirmations
+evidence rather than advertising.
+
+The trace, in both directions:
+
+* *Adversarial restatements* — the MR is the R given a physics test case: MR4 ↔ R1;
+  MR5 ↔ R6; MR7 ↔ R19; MR8 ↔ R9; MR13 and MR27 ↔ R10; MR17 ↔ R11; MR18 and MR26 ↔
+  R20; MR28 ↔ R12; MR20 ↔ R22; MR24 ↔ R23; MR30 and MR31 ↔ R24; MR11 ↔ R21;
+  MR12 ↔ R25.
+* *Delegated* — the MR is discharged by the layer *beneath* the kind layer, which the
+  calculus consumes rather than reproves: MR1 → R7 + R4, MR2 → R5 + R7, MR3 → R17 +
+  R16. This is why the benchmark's Tier 1 is the tier PhysLib's own `WithDim` wins
+  outright, and it is a feature of the layering, not a gap in it.
+* *A numbering trap, recorded so it stays harmless:* MR15 (exec and spec agree)
+  traces to *R10* — the `CarrierRefinement` bridge and `Quantity.add_refines` —
+  and *not* to R15, despite the number. R15 is the strictly sharper claim
+  (adequacy relative to the *input uncertainties*, not mere rounding-step
+  refinement), and no MR states it yet; it appears in the unvalidated list below.
+* *Minted* — MRs whose obligations no R stated, now R21–R25: the erasure and
+  operator-table purity of MR11 (R21), the rendering of MR12 (R25), the
+  system-scale dedication of MR20 (R22), the provenance of MR24 (R23), and the
+  audit-scope discipline of MR30/MR31 (R24).
+* *Deliberately not minted* — MR23 (interface quantities naming both systems they
+  join) and MR25 (genericity over the geometric dimension) have no PKC machinery to
+  annotate yet, and a catalogue row with no possible annotation is exactly the drift
+  the matrix exists to prevent. They are staged in `ForPhysLib/PLAN.md` and enter the
+  catalogue when their first declaration does.
+* *Not yet validated* — R13 (scale-spanning units), R14 (the uncertainty ladder),
+  R15 (numerical adequacy), and R18 (coverage intervals) have no MR counterpart. For
+  R13, R14 and R18 the benchmark's physics lacks the phenomena; R15 falls with R14,
+  being defined relative to input uncertainties. That bounds what the benchmark's
+  confirmation is evidence *for*, and
+  `ForPhysLib/PLAN.md` stages the case studies that would reach them.
+* *Validated late, in both directions* — R2 (the specialization lattice) was the near
+  miss: the oscillator's `H = T + V` is a specialization family the first scoring pass
+  never interrogated. MR32, appended, now does — probes in all four attempts and the
+  scorecard — and validates R2's lattice while exposing what nothing above it consumes:
+  `Quantity`'s addition is same-kind and no quantity-level operation takes a
+  `Specializes` proof, so the licensed sum at the join (`T + V` landing at the kind
+  both terms provably specialize) is machinery still owed — the specialization twin of
+  R9's licensed aggregation, and after MR11 the second requirement the calculus's own
+  benchmark does not let it sweep.
+
 ## Out of scope (for now)
 
 *User-specified base units* — making the dimension system parametric in the chosen base
@@ -568,15 +765,21 @@ units are base is answered on both layers: a kind is invariant under the choice 
 only its dimensional shadow changes. R13 captures the specific base/scale-spanning/derived
 controversy over the five-generator basis.
 
-*Value representation in the structural sense* — coordinate frames, tensor
-variance (the covariant/contravariant split), bound-versus-free vectors, and frame
-transformations — is *not yet specified* here, beyond the ISO 80000-2 §18
-numerical-array reading now specified as R11. This *structural* axis is distinct
-from R10's *numeric carrier* $`R` and R11's *numerical array*. It is a genuine
-systems-engineering requirement, but a *separate, orthogonal* axis: its principled
-home is an index *over* the kind, never a layer the kind hangs beneath (the
-inversion the *Why a calculus, not a taxonomy* section charges against SysML v2).
-Stating it as owed keeps the boundary honest.
+*Value representation in the structural sense* — coordinate frames, tensor variance,
+bound-versus-free vectors, and frame transformations — is a *separate, orthogonal*
+axis, distinct from R10's *numeric carrier* $`R` and R11's *numerical array*. Its
+principled home is an index *over* the kind, never a layer the kind hangs beneath
+(the inversion the *Why a calculus, not a taxonomy* section charges against SysML
+v2), and R20 above now occupies exactly that position: `InFrame f var k R` indexes a
+reading by its frame and its variance, and the invariance of a scalar product under
+an orthonormal change of frame is a theorem rather than a convention.
+
+The axis is *specified for Cartesian frames*, which is less than the full
+requirement. What R20 states as owed, and this section keeps owed with it: the
+covariant/contravariant split for non-orthogonal changes (under an orthonormal
+change the two laws coincide, which is why one `vector` variance suffices there),
+curvilinear coordinates, bound-versus-free vectors, and affine frames. Naming the
+remainder is what keeps the boundary honest now that the first part is discharged.
 
 ## The requirements at a glance — the traceability matrix
 
@@ -850,9 +1053,10 @@ that *certifies* coherence without *deciding* what is allowed (developed in the
 next section). Two consequences fall out directly: two kinds that share a
 dimension remain distinct types — so the dimension-1 disambiguation is
 expressible — and an operation across kinds is a type error rather than a silent
-success. Value representation — the axis SysML v2 puts at the root — is, candidly,
-*not yet specified* here; its principled home is an *orthogonal* index over the
-kind, never a layer the kind hangs beneath.
+success. Value representation — the axis SysML v2 puts at the root — sits here as an
+*orthogonal* index over the kind, never a layer the kind hangs beneath: R20's
+`InFrame f var k R` adds the frame and the variance above a `Quantity k R` whose kind
+was already fixed without reference to either.
 
 ### The two designs side by side
 
@@ -861,9 +1065,13 @@ kind, never a layer the kind hangs beneath.
 
 The table is honest in both directions: SysML v2's representation-first design
 buys real, first-class machinery for coordinate frames, transformations, and
-stress and strain tensors that systems engineering genuinely needs — machinery
-PropertyKindCalculus does not yet have. The claim is not that one model is right; it is
-that the axes are *orthogonal and should not be nested*.
+stress and strain tensors that systems engineering genuinely needs. R20 supplies the
+Cartesian part of it — frames, the three variances, the scalar product and its
+invariance — while curvilinear coordinates and the covariant/contravariant split
+remain machinery PropertyKindCalculus does not yet have. The claim is not that one
+model is right; it is that the axes are *orthogonal and should not be nested*, and
+R20 is that claim carried out rather than asserted: the frame index sits *over* a
+kind that was fixed without it.
 
 ### Limitations of the SysML v2 approach
 

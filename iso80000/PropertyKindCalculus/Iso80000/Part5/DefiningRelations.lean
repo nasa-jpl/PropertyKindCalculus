@@ -44,6 +44,7 @@ import PropertyKindCalculus.Iso80000.Part3
 import PropertyKindCalculus.Iso80000.Part4
 import PropertyKindCalculus.Iso80000.Part5
 import PropertyKindCalculus.QuantityClassification
+import PropertyKindCalculus.QuantityReal
 
 namespace PropertyKindCalculus.Iso80000.Part5.DefiningRelations
 

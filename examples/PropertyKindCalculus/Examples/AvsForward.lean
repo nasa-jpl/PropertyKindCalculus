@@ -22,6 +22,7 @@ import PropertyKindCalculus.QuantityClassification
 import PropertyKindCalculus.QuantityFunction
 import PropertyKindCalculus.Paradigm.NumCarrier
 import PropertyKindCalculus.DocGenMath
+import PropertyKindCalculus.QuantityReal
 
 namespace PropertyKindCalculus.Examples.AvsForward
 

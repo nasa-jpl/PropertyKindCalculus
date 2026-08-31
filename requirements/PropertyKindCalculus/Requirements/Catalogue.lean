@@ -1,7 +1,7 @@
 /-
-# The requirement catalogue — the 19 axes the calculus is specified against
+# The requirement catalogue — the 25 axes the calculus is specified against
 
-The canonical identity of each blueprint requirement: its identifier (R1 … R19),
+The canonical identity of each blueprint requirement: its identifier (R1 … R25),
 a one-line title, the group it belongs to, and its headline status. This is the
 *spine* of the traceability matrix — the rows the harvested `@[requirement …]`
 annotations are grouped under — so the matrix always shows every requirement, even
@@ -14,10 +14,11 @@ requirement; the *design* text lives in the blueprint chapters.
 
 namespace PropertyKindCalculus.Requirements
 
-/-- The four (plus two) groups the requirements fall into, matching the blueprint's
+/-- The groups the requirements fall into, matching the blueprint's
 "Requirements" section headings. -/
 inductive RequirementGroup where
-  /-- R1–R3, R19: how kinds are structured, and how quantities characterize objects. -/
+  /-- R1–R3, R19, R22: how kinds are structured, and how quantities characterize objects
+  and named parts of named systems. -/
   | kindStructure
   /-- R4–R6: how operations on kinds are gated. -/
   | operationGating
@@ -25,19 +26,24 @@ inductive RequirementGroup where
   | soundnessBridges
   /-- R9: how values aggregate over parts. -/
   | aggregation
-  /-- R10–R11: numeric representation and value representation. -/
+  /-- R10–R11, R20: numeric representation, value representation, and frames/variance. -/
   | representation
   /-- R12–R13: verified classification and unit classification. -/
   | classification
   /-- R14–R15, R18: uncertainty propagation, numerical adequacy, and coverage. -/
   | uncertainty
+  /-- R21, R25: what the kind layer costs the author — erasure to the bare carrier,
+  and rendering back to mathematics. -/
+  | ergonomics
+  /-- R23–R24: provenance of values and the audit discipline over a scope. -/
+  | evidence
   deriving Repr, Inhabited, DecidableEq, BEq
 
 /-- The requirement groups in presentation order — the section order of the
 traceability matrix. -/
 def requirementGroups : List RequirementGroup :=
   [ .kindStructure, .operationGating, .soundnessBridges, .aggregation,
-    .representation, .classification, .uncertainty ]
+    .representation, .classification, .uncertainty, .ergonomics, .evidence ]
 
 /-- What would *count* as discharging a requirement — an intrinsic property of the
 requirement, not of the evidence. Two obligations of fundamentally different
@@ -77,6 +83,8 @@ def RequirementGroup.label : RequirementGroup → String
   | .representation   => "Representation parametricity"
   | .classification   => "Classification"
   | .uncertainty      => "Uncertainty and numerical adequacy"
+  | .ergonomics       => "Ergonomics and erasure"
+  | .evidence         => "Provenance and audit"
 
 /-- The identity of one requirement: its identifier, one-line title, and group.
 
@@ -87,7 +95,7 @@ fact *derived* from the `@[requirement …]` annotations — see
 annotations already witness (or fail to), so recording it twice would only
 reintroduce the drift this layer exists to eliminate. -/
 structure Requirement where
-  /-- The identifier, as printed — `"R1"` … `"R19"`. -/
+  /-- The identifier, as printed — `"R1"` … `"R25"`. -/
   id : String
   /-- A one-line title. -/
   title : String
@@ -114,6 +122,10 @@ def catalogue : List Requirement :=
       title := "General versus individual is type versus term" }
   , { id := "R19", group := .kindStructure, kind := .expressiveness,
       title := "A quantity characterizes an object; object identity is carried in the type" }
+  , { id := "R22", group := .kindStructure, kind := .verifiable,
+      title := "A quantity is dedicated to a named component of a named system; dedications \
+                of distinct systems are provably distinct, so a part-quantity of one system \
+                cannot stand in for a part-quantity of another" }
   , { id := "R4",  group := .operationGating,
       title := "Operations are gated by kind (the additive law)" }
   , { id := "R5",  group := .operationGating,
@@ -136,6 +148,12 @@ def catalogue : List Requirement :=
       title := "A quantity value is parametric in its numeric representation type" }
   , { id := "R11", group := .representation,
       title := "Units are scalar; a vector quantity is a numerical array times one scalar unit" }
+  , { id := "R20", group := .representation, kind := .verifiable,
+      title := "A vector quantity's numbers are coefficients in a chosen basis, so a reading \
+                is indexed by that basis and by the law its coefficients obey when the basis \
+                changes; readings in different bases do not combine, the change acts \
+                functorially, and a contraction of two readings is basis-independent while \
+                each coefficient separately is not" }
   , { id := "R12", group := .classification,
       title := "A classification is a certificate, not an assertion" }
   , { id := "R13", group := .classification,
@@ -147,7 +165,21 @@ def catalogue : List Requirement :=
                 information at the scale of the input uncertainties" }
   , { id := "R18", group := .uncertainty, kind := .verifiable,
       title := "The recorded variance certifies a coverage interval: distribution-free \
-                (Chebyshev ≥ 1 − 1/k²), exact for bounded families" } ]
+                (Chebyshev ≥ 1 − 1/k²), exact for bounded families" }
+  , { id := "R21", group := .ergonomics, kind := .verifiable,
+      title := "The kind layer erases: the kinded authoring computes exactly the bare-carrier \
+                value, and the operator-table form elaborates to the same term as the \
+                longhand form — the ceremony is pure" }
+  , { id := "R25", group := .ergonomics, kind := .expressiveness,
+      title := "A kinded definition renders back as typeset mathematics from its own \
+                elaborated source, with the kind bookkeeping suppressed" }
+  , { id := "R23", group := .evidence, kind := .expressiveness,
+      title := "A value's provenance is recordable and auditable: a kind-typed value-flow \
+                graph with a declared boundary contract, checked against what the scope \
+                actually computes" }
+  , { id := "R24", group := .evidence, kind := .expressiveness,
+      title := "An audit is a claim about its scope, never about the library: the unkinded \
+                surface of a scope is enumerable, and a blessed scope only grows" } ]
 
 /-- Look up a requirement by id. -/
 def requirementById? (id : String) : Option Requirement :=

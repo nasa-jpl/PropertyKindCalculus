@@ -36,7 +36,7 @@ theorem alpha_beta_gamma : ProductKind alphaK betaK gammaK := ProductKind.ofRati
 
 /-- Style 2 — a call-site witness: the edge is written inline in the body and lifted by
 Lean into `combine._proof_1 : ProductKind alphaK betaK gammaK`, found via its type. -/
-def combine {R : Type} [Mul R] (x : Quantity alphaK R) (y : Quantity betaK R) :
+def combine {R : Type} [Mul R] [ScalarCarrier R] (x : Quantity alphaK R) (y : Quantity betaK R) :
     Quantity gammaK R :=
   Quantity.mul (ProductKind.ofRatio alphaK betaK gammaK) x y
 
@@ -50,7 +50,7 @@ instance tableEntry : KindMul alphaK betaK gammaK := ⟨ProductKind.ofRatio _ _ 
 below is stable *whichever* spelling this toolchain chooses: a lifted auxiliary's type
 and the inline producer application render the same line, attributed to this
 definition. -/
-def combineInline {R : Type} [Mul R] (x : Quantity alphaK R) (y : Quantity betaK R)
+def combineInline {R : Type} [Mul R] [ScalarCarrier R] (x : Quantity alphaK R) (y : Quantity betaK R)
     (h : alphaK.IsRational := by rfl) : Quantity gammaK R := Id.run do
   let w : ProductKind alphaK betaK gammaK :=
     ProductKind.ofRatio alphaK betaK gammaK h

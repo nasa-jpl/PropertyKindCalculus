@@ -46,6 +46,24 @@ instance instCarrierPi {ι : Type} {R : Type} [Carrier R] : Carrier (ι → R) w
   zero := fun _ => Carrier.zero
   add f g := fun i => Carrier.add (f i) (g i)
 
+/-! **And is deliberately not a `ScalarCarrier`.** The instance above is the *additive*
+half of the story and the only half that is unambiguous: components of one quantity add
+componentwise, which is what §18's "numerical vector" means. Lean also supplies a
+pointwise `Mul (ι → R)`, and that one is a trap — the componentwise product of two
+position vectors is not a physical quantity of any kind, yet it is correctly kinded and
+correctly dimensioned, so nothing below `ScalarCarrier` refuses it. The absence of the
+instance here is what makes `Quantity.mul` fail to synthesize at a vector carrier instead
+of signing a Hadamard product as an area (`PropertyKindCalculus.Quantity`, the scalar-gate
+section, for why this is a marker rather than a structural test — the same `ι → R` is a
+scalar carrier when its indices are independent *samples* and not when they are
+*components*).
+
+The operations §18 does license on vector quantities — the scalar product and the vector
+product — are not pointwise and do not have the `Quantity.mul` shape: their operands and
+result sit at different variances, and both are frame-relative. They live in
+`PropertyKindCalculus.Frame`, with the frame-invariance theorems that make them
+representation-independent. -/
+
 /-- The pointwise carrier is **lawful** whenever `R` is — the additive-monoid laws
 hold coordinatewise (`funext` + the laws on `R`). Hence the quantity additivity
 laws transfer to vector (and, with nested function spaces, tensor) carriers by the

@@ -39,6 +39,7 @@ restated in this work's own formalism.
 import PropertyKindCalculus.Iso80000.Part3
 import PropertyKindCalculus.Iso80000.Part4
 import PropertyKindCalculus.QuantityClassification
+import PropertyKindCalculus.QuantityReal
 
 namespace PropertyKindCalculus.Iso80000.Part4.DefiningRelations
 

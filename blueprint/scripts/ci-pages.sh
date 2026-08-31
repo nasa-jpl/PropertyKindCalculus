@@ -48,19 +48,54 @@ rm -rf "$OUT"
 # as a file.
 lake exe blueprint-gen --output _out/blueprint --with-html-single
 
+# Pick a Python 3 for the stdlib-only post-processing below. Preference order: an
+# already-active pixi env, then pixi's pinned env, then whatever the host ships.
+#
+# Two things this deliberately does NOT do. It does not require pixi — `file-links.py`
+# imports only `re`, `sys` and `pathlib`, so the pinned env buys nothing there; pixi is
+# genuinely needed only for the PDF, whose WeasyPrint dependency is the reason the env
+# exists. And it does not trust `command -v`: the Microsoft Store ships `python` and
+# `python3` shims that resolve on PATH and then exit 49 with an install advert, so each
+# candidate is *run* before it is accepted. Running the candidate also covers a pixi
+# that is installed but cannot resolve this platform (`pyproject.toml` currently lists
+# only linux-64 and osx-arm64), which is exactly the Windows case.
+PY=()
+py_works() { "$@" -c 'import sys; raise SystemExit(0 if sys.version_info[0] == 3 else 1)' \
+               >/dev/null 2>&1; }
+pick_python() {
+  if [ -n "${PIXI_PROJECT_ROOT:-}" ] && py_works python; then PY=(python); return 0; fi
+  if command -v pixi >/dev/null 2>&1 \
+     && py_works pixi run --manifest-path "$ROOT/pyproject.toml" python; then
+    PY=(pixi run --manifest-path "$ROOT/pyproject.toml" python); return 0
+  fi
+  local c
+  for c in python3 python; do
+    if command -v "$c" >/dev/null 2>&1 && py_works "$c"; then PY=("$c"); return 0; fi
+  done
+  return 1
+}
+
 # Verso writes multi-page links as directory URLs (`Chapter/#anchor`); a browser
 # opening a file:// directory shows the folder instead of its `index.html`. This
 # pass spells out `index.html` in those links so html-multi is navigable over
 # file:// too. It is a no-op for the served site (HTTP maps `Chapter/` to the
-# same file) and for html-single (no inter-page links). Python comes from pixi
-# (pyproject.toml + pixi.lock), the pinned env shared with the PDF render and CI.
-pixi run python "$ROOT/scripts/file-links.py" "$OUT/html-multi"
+# same file) and for html-single (no inter-page links) — so when no Python is
+# available it is skipped with a note rather than failing the render.
+if pick_python; then
+  "${PY[@]}" "$ROOT/scripts/file-links.py" "$OUT/html-multi"
+else
+  echo "note: no working Python 3 found (tried pixi, python3, python) — skipping the file:// link fixup. The HTML is complete and correct over HTTP; only inter-page links opened directly as file:// will land on a directory listing." >&2
+fi
 
 # Render a beautifully paginated PDF from the self-contained single page (which
 # Verso emits in document order), via the shared scripts/render-pdf.sh — the same
 # script the CI workflow calls, so the PDF name and placement live in one place.
-# render-pdf.sh invokes WeasyPrint through the same pixi env. Best-effort here: if
-# pixi is not installed the HTML outputs are still produced and only the PDF is skipped.
+# render-pdf.sh invokes WeasyPrint through the same pixi env — the one step that
+# genuinely needs it, since WeasyPrint is not stdlib. Best-effort here: if pixi is not
+# installed the HTML outputs are still produced and only the PDF is skipped. (That was
+# not true before the Python selection above was made non-fatal: the unguarded
+# `pixi run` for file-links.py aborted under `set -e` long before this branch, on every
+# platform, so the "only the PDF is skipped" promise never held.)
 PDF_NAME="PropertyKindCalculus-Blueprint.pdf"
 PDF="$OUT/$PDF_NAME"
 if [ -n "$SKIP_PDF" ]; then

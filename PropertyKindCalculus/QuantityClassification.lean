@@ -96,11 +96,11 @@ theorem ProductKind.ofRatio (k₁ k₂ k : KindOfProperty)
 
 /-- **Verified construction.** Build a `k`-quantity from a `k₁`- and a `k₂`-quantity,
 licensed by the product law: the result is classified `k` *by construction*. -/
-def Quantity.mul [Mul R] {k₁ k₂ k : KindOfProperty}
+def Quantity.mul [Mul R] [ScalarCarrier R] {k₁ k₂ k : KindOfProperty}
     (_h : ProductKind k₁ k₂ k) (a : Quantity k₁ R) (b : Quantity k₂ R) : Quantity k R :=
   ⟨a.magnitude * b.magnitude⟩
 
-@[simp] theorem Quantity.mul_magnitude [Mul R] {k₁ k₂ k : KindOfProperty}
+@[simp] theorem Quantity.mul_magnitude [Mul R] [ScalarCarrier R] {k₁ k₂ k : KindOfProperty}
     (h : ProductKind k₁ k₂ k) (a : Quantity k₁ R) (b : Quantity k₂ R) :
     (Quantity.mul h a b).magnitude = a.magnitude * b.magnitude := rfl
 
@@ -108,20 +108,20 @@ def Quantity.mul [Mul R] {k₁ k₂ k : KindOfProperty}
 `k₂`): its magnitude is the product of theirs. A proof of this *certifies* `q`'s
 classification as `k`, rather than merely asserting it. Kept a separate `Prop` so
 `Quantity` stays a clean tag and certificates are carried only when needed. -/
-def Quantity.IsProduct [Mul R] {k₁ k₂ k : KindOfProperty}
+def Quantity.IsProduct [Mul R] [ScalarCarrier R] {k₁ k₂ k : KindOfProperty}
     (_h : ProductKind k₁ k₂ k) (q : Quantity k R)
     (a : Quantity k₁ R) (b : Quantity k₂ R) : Prop :=
   q.magnitude = a.magnitude * b.magnitude
 
 /-- The smart-constructed product satisfies the certificate **by construction**. -/
-theorem Quantity.mul_isProduct [Mul R] {k₁ k₂ k} (h : ProductKind k₁ k₂ k)
+theorem Quantity.mul_isProduct [Mul R] [ScalarCarrier R] {k₁ k₂ k} (h : ProductKind k₁ k₂ k)
     (a : Quantity k₁ R) (b : Quantity k₂ R) :
     (Quantity.mul h a b).IsProduct h a b := rfl
 
 /-- **A kind-law that instantiates at the quantity level.** A quantity certified as the
 product of `a` and `b` is unique — supply any concrete `a`, `b` to get the
 quantity-level fact by application. -/
-theorem Quantity.isProduct_unique [Mul R] {k₁ k₂ k} (h : ProductKind k₁ k₂ k)
+theorem Quantity.isProduct_unique [Mul R] [ScalarCarrier R] {k₁ k₂ k} (h : ProductKind k₁ k₂ k)
     {q q' : Quantity k R} {a : Quantity k₁ R} {b : Quantity k₂ R}
     (hq : q.IsProduct h a b) (hq' : q'.IsProduct h a b) : q = q' := by
   cases q; cases q'
@@ -130,7 +130,7 @@ theorem Quantity.isProduct_unique [Mul R] {k₁ k₂ k} (h : ProductKind k₁ k�
 
 /-- **Canonicity.** Any quantity certified as the product of `a` and `b` *equals* the
 smart-constructed product — the certificate determines the quantity. -/
-theorem Quantity.eq_mul_of_isProduct [Mul R] {k₁ k₂ k} (h : ProductKind k₁ k₂ k)
+theorem Quantity.eq_mul_of_isProduct [Mul R] [ScalarCarrier R] {k₁ k₂ k} (h : ProductKind k₁ k₂ k)
     {q : Quantity k R} {a : Quantity k₁ R} {b : Quantity k₂ R}
     (hq : q.IsProduct h a b) : q = Quantity.mul h a b :=
   Quantity.isProduct_unique h hq (Quantity.mul_isProduct h a b)
@@ -161,30 +161,30 @@ theorem QuotientKind.ofRatio (k₁ k₂ k : KindOfProperty)
 /-- **Verified construction.** Build a `k`-quantity as the quotient of a `k₁`- by a
 `k₂`-quantity, licensed by the quotient law: the result is classified `k` *by
 construction*. -/
-def Quantity.div [Div R] {k₁ k₂ k : KindOfProperty}
+def Quantity.div [Div R] [ScalarCarrier R] {k₁ k₂ k : KindOfProperty}
     (_h : QuotientKind k₁ k₂ k) (a : Quantity k₁ R) (b : Quantity k₂ R) : Quantity k R :=
   ⟨a.magnitude / b.magnitude⟩
 
-@[simp] theorem Quantity.div_magnitude [Div R] {k₁ k₂ k : KindOfProperty}
+@[simp] theorem Quantity.div_magnitude [Div R] [ScalarCarrier R] {k₁ k₂ k : KindOfProperty}
     (h : QuotientKind k₁ k₂ k) (a : Quantity k₁ R) (b : Quantity k₂ R) :
     (Quantity.div h a b).magnitude = a.magnitude / b.magnitude := rfl
 
 /-- **The certificate.** `q` (of kind `k`) is the quotient of `a` (of `k₁`) by `b` (of
 `k₂`): its magnitude is the quotient of theirs. A proof *certifies* `q`'s classification
 as `k`. -/
-def Quantity.IsQuotient [Div R] {k₁ k₂ k : KindOfProperty}
+def Quantity.IsQuotient [Div R] [ScalarCarrier R] {k₁ k₂ k : KindOfProperty}
     (_h : QuotientKind k₁ k₂ k) (q : Quantity k R)
     (a : Quantity k₁ R) (b : Quantity k₂ R) : Prop :=
   q.magnitude = a.magnitude / b.magnitude
 
 /-- The smart-constructed quotient satisfies the certificate **by construction**. -/
-theorem Quantity.div_isQuotient [Div R] {k₁ k₂ k} (h : QuotientKind k₁ k₂ k)
+theorem Quantity.div_isQuotient [Div R] [ScalarCarrier R] {k₁ k₂ k} (h : QuotientKind k₁ k₂ k)
     (a : Quantity k₁ R) (b : Quantity k₂ R) :
     (Quantity.div h a b).IsQuotient h a b := rfl
 
 /-- **A kind-law that instantiates at the quantity level.** A quantity certified as the
 quotient of `a` by `b` is unique. -/
-theorem Quantity.isQuotient_unique [Div R] {k₁ k₂ k} (h : QuotientKind k₁ k₂ k)
+theorem Quantity.isQuotient_unique [Div R] [ScalarCarrier R] {k₁ k₂ k} (h : QuotientKind k₁ k₂ k)
     {q q' : Quantity k R} {a : Quantity k₁ R} {b : Quantity k₂ R}
     (hq : q.IsQuotient h a b) (hq' : q'.IsQuotient h a b) : q = q' := by
   cases q; cases q'
@@ -193,7 +193,7 @@ theorem Quantity.isQuotient_unique [Div R] {k₁ k₂ k} (h : QuotientKind k₁ 
 
 /-- **Canonicity.** Any quantity certified as the quotient of `a` by `b` *equals* the
 smart-constructed quotient. -/
-theorem Quantity.eq_div_of_isQuotient [Div R] {k₁ k₂ k} (h : QuotientKind k₁ k₂ k)
+theorem Quantity.eq_div_of_isQuotient [Div R] [ScalarCarrier R] {k₁ k₂ k} (h : QuotientKind k₁ k₂ k)
     {q : Quantity k R} {a : Quantity k₁ R} {b : Quantity k₂ R}
     (hq : q.IsQuotient h a b) : q = Quantity.div h a b :=
   Quantity.isQuotient_unique h hq (Quantity.div_isQuotient h a b)

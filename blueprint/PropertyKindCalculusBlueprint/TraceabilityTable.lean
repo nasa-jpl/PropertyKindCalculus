@@ -3,7 +3,7 @@
 
 `{traceability}` expands into the requirement-traceability matrix built from the
 typed `@[requirement …]` annotations harvested by `PropertyKindCalculus.Requirements`.
-For each requirement in the catalogue (R1 … R17) it lists every declaration that
+For each requirement in the catalogue (R1 … R25) it lists every declaration that
 *specifies*, *proves*, *implements*, or *exemplifies* it, linked to that
 declaration's blueprint node.
 

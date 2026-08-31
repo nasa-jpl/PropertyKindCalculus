@@ -38,6 +38,15 @@ class NumCarrier (α : Type) extends
   Zero α, One α, Add α, Sub α, Mul α, Div α, Min α, Max α,
   MathCarrier α, Coe Nat α
 
+/-- **Every `NumCarrier` is a `ScalarCarrier`.** The defining property above is that a kernel
+over `[NumCarrier α]` lowers to a *single fused elementwise kernel* — so whatever `α`'s lanes
+are, they are independent, and `α`'s `*` is the multiplication of magnitudes lane by lane.
+That is exactly the claim `ScalarCarrier` records, which is why the batch carriers qualify
+(`N` samples of one scalar quantity) while a numerical-array carrier holding the `n`
+*components of one* vector quantity does not — the latter is not a `NumCarrier` either, for
+the same reason. Low priority so a carrier that states the claim directly still wins. -/
+instance (priority := low) numCarrierIsScalar {α : Type} [NumCarrier α] : ScalarCarrier α := ⟨⟩
+
 /-- ReLU as the branchless `max x 0` — the rectifier the moisture-mixing collapse uses for the
 free-water increment `max(mv − m_vt, 0)`. -/
 def NumCarrier.relu {α : Type} [NumCarrier α] (x : α) : α := Max.max x 0

@@ -61,7 +61,7 @@ def epsilonK : KindOfProperty := { id := "kind-incidence probe epsilon", scale :
 
 /-- A two-step chain: the product lands in a `let`, and the quotient consumes the
 binder — ordered incidence (`t` is the numerator) with the intermediate named. -/
-def chainQ {R : Type} [Mul R] [Div R] (x : Quantity alphaK R) (y : Quantity betaK R) :
+def chainQ {R : Type} [Mul R] [Div R] [ScalarCarrier R] (x : Quantity alphaK R) (y : Quantity betaK R) :
     Quantity epsilonK R :=
   let t := Quantity.mul (ProductKind.ofRatio alphaK betaK deltaK) x y
   Quantity.div (QuotientKind.ofRatio deltaK betaK epsilonK) t y
@@ -75,7 +75,7 @@ deltaK / betaK → epsilonK ⟨t, y⟩
 
 /-- The helper's witness is a *hypothesis* — lambda-bound, assumed: no enumerated
 occurrence here (the graph below wires it, marked). -/
-def scaleBy {R : Type} [Mul R] (h : ProductKind alphaK betaK deltaK)
+def scaleBy {R : Type} [Mul R] [ScalarCarrier R] (h : ProductKind alphaK betaK deltaK)
     (x : Quantity alphaK R) (y : Quantity betaK R) : Quantity deltaK R :=
   Quantity.mul h x y
 
@@ -85,7 +85,7 @@ def scaleBy {R : Type} [Mul R] (h : ProductKind alphaK betaK deltaK)
 /-- The caller discharges the license, so the occurrence sits here — and the *helper* is
 the consuming application: the reader is generic over consumers, not a list of smart
 constructors. -/
-def scaled {R : Type} [Mul R] (x : Quantity alphaK R) (y : Quantity betaK R) :
+def scaled {R : Type} [Mul R] [ScalarCarrier R] (x : Quantity alphaK R) (y : Quantity betaK R) :
     Quantity deltaK R :=
   scaleBy (ProductKind.ofRatio alphaK betaK deltaK) x y
 
@@ -97,7 +97,7 @@ alphaK · betaK → deltaK ⟨x, y⟩
 
 /-- A repeated operand is two incidence positions: the same quantity fills numerator and
 denominator. -/
-def selfRatio {R : Type} [Div R] (q : Quantity alphaK R) : Quantity epsilonK R :=
+def selfRatio {R : Type} [Div R] [ScalarCarrier R] (q : Quantity alphaK R) : Quantity epsilonK R :=
   Quantity.div (QuotientKind.ofRatio alphaK alphaK epsilonK) q q
 
 /--
@@ -126,7 +126,8 @@ probe definitions above. -/
   let kc : Lean.Name → Lean.Expr := fun n => Lean.mkConst n
   let qty : Lean.Expr → Lean.Expr := fun k => Lean.mkApp2 (kc ``Quantity) k (kc ``Nat)
   let pk := Lean.mkApp3 (kc ``ProductKind) (kc ``alphaK) (kc ``betaK) (kc ``gammaK)
-  let app := Lean.mkApp8 (kc ``Quantity.mul) (kc ``Nat) (kc ``instMulNat)
+  let app := Lean.mkApp9 (kc ``Quantity.mul) (kc ``Nat) (kc ``instMulNat)
+    (kc ``instScalarCarrierNat)
     (kc ``alphaK) (kc ``betaK) (kc ``gammaK)
     (.bvar 0) (.bvar 2) (.bvar 1)
   let body := Lean.Expr.letE `w pk (kc ``alpha_beta_gamma) app false
@@ -481,7 +482,7 @@ well-formed: true
 /-- A producer in an operand position: the inner product lands on a synthesized
 interior node, and the outer quotient's operand names exactly that node — the wiring
 connects, whichever occurrence the walk reaches first. -/
-def nested {R : Type} [Mul R] [Div R] (x : Quantity alphaK R) (y : Quantity betaK R) :
+def nested {R : Type} [Mul R] [Div R] [ScalarCarrier R] (x : Quantity alphaK R) (y : Quantity betaK R) :
     Quantity epsilonK R :=
   Quantity.div (QuotientKind.ofRatio deltaK betaK epsilonK)
     (Quantity.mul (ProductKind.ofRatio alphaK betaK deltaK) x y) y
@@ -585,7 +586,7 @@ well-formed: true
 
 /-- The instance-binder twin of `scaleBy`: the table license is threaded, not
 resolved — assumed, so the enumeration is empty while the helper's own graph wires. -/
-def tHelperT {R : Type} [Mul R] [KindMul alphaK betaK gammaK]
+def tHelperT {R : Type} [Mul R] [ScalarCarrier R] [KindMul alphaK betaK gammaK]
     (x : Quantity alphaK R) (y : Quantity betaK R) : Quantity gammaK R :=
   x * y
 
@@ -618,7 +619,7 @@ info: inline kind occurrences in 'PropertyKindCalculus.Tests.KindIncidence.tCall
 /-- A helper exposing *one* of the family's two operands: full incidence inside (both
 positions filled by `q`), so its own graph wires — assumed, like every hypothesis
 license. -/
-def halve {R : Type} [Div R] (h : QuotientKind alphaK alphaK epsilonK)
+def halve {R : Type} [Div R] [ScalarCarrier R] (h : QuotientKind alphaK alphaK epsilonK)
     (q : Quantity alphaK R) : Quantity epsilonK R :=
   Quantity.div h q q
 
@@ -903,7 +904,7 @@ takes: whatever kind goes in comes out. -/
 def genericPass {k : KindOfProperty} {R : Type} (x : Quantity k R) : Quantity k R := x
 
 /-- The product of two passed-through operands: one member, two call sites, two kinds. -/
-def passedProduct {R : Type} [Mul R] (x : Quantity alphaK R) (y : Quantity betaK R) :
+def passedProduct {R : Type} [Mul R] [ScalarCarrier R] (x : Quantity alphaK R) (y : Quantity betaK R) :
     Quantity deltaK R :=
   Quantity.mul (ProductKind.ofRatio alphaK betaK deltaK) (genericPass x) (genericPass y)
 

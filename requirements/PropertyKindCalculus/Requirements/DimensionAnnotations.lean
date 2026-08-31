@@ -17,6 +17,7 @@ import PropertyKindCalculus.Dimension
 import PropertyKindCalculus.Interaction
 import PropertyKindCalculus.ScaleSpanning
 import PropertyKindCalculus.UnitConversion
+import PropertyKindCalculus.FrameReal
 import PropertyKindCalculus.DimensionExamples.UnitConversion
 import PropertyKindCalculus.Requirements.Attributes
 
@@ -75,5 +76,36 @@ attribute [requirement "R17" exemplifies "over ℝ, a cm magnitude converted to 
   PropertyKindCalculus.Examples.UnitConversion.cm_km_real_roundtrip
 attribute [requirement "R17" exemplifies "over ℝ at radix 2, a KiB magnitude converted to MiB and back returns exactly — the same theorem"]
   PropertyKindCalculus.Examples.UnitConversion.kib_mib_real_roundtrip
+
+/-! ## R20 — frames and variance: the structural half of value representation
+
+R11 specifies the ISO 80000-2 §18 *numerical* reading — one kind, one scalar unit, an
+indexed array. R20 is the sentence §18 puts next to it: the quantity is independent of the
+choice of coordinate system while its components are not. Independence of a choice is not a
+property an array has, so the frame and the transformation law are carried as indices, and
+what survives a change of frame is a theorem rather than a convention.
+
+The definitions are Mathlib-free (`Frame`), so a change of frame runs at `Float`; the laws
+need ring reasoning and so live over `ℝ` (`FrameReal`) — the same core/`QuantityReal` split
+`Quantity` uses. -/
+
+attribute [requirement "R20" specifies "a coordinate frame: the choice components are read relative to"]
+  Frame
+attribute [requirement "R20" specifies "the transformation law a quantity's components obey (scalar / vector / rank-2)"]
+  Variance
+attribute [requirement "R20" specifies "components read in a named frame at a stated variance"]
+  InFrame
+attribute [requirement "R20" specifies "a change of frame, and orthonormality as a hypothesis on it rather than a field of it"]
+  FrameChange.IsOrthonormal
+attribute [requirement "R20" proves "a change of frame is an action: the identity change acts as the identity"]
+  toFrameVector_id
+attribute [requirement "R20" proves "a change of frame is an action: composing two changes is the composite change"]
+  toFrameVector_comp
+attribute [requirement "R20" proves "the scalar product is invariant under an orthonormal change of frame — the sense in which a change of representation does not change the physics"]
+  dot_toFrameVector
+attribute [requirement "R20" proves "and a component is not invariant — stated with a witness, so the previous result cannot be over-read"]
+  component_not_invariant
+attribute [requirement "R20" specifies "the scalar gate: which carriers' × is the multiplication of magnitudes, so a numerical-array carrier cannot sign a pointwise product as a product of kinds"]
+  ScalarCarrier
 
 end PropertyKindCalculus

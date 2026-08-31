@@ -140,7 +140,8 @@ Through `expansionLaw`, so the product of a coverage factor and a dispersion is 
 `k` rather than re-stamped there — and the result is a `Dispersion` again, because `U` is still a
 width and not a location. `k.IsRational` is what licenses the whole thing, and it is the same
 precondition `Evidence` carries. -/
-def Dispersion.expanded [Mul R] (u : Dispersion k R) (factor : Quantity coverageFactor R)
+def Dispersion.expanded [Mul R] [ScalarCarrier R] (u : Dispersion k R)
+    (factor : Quantity coverageFactor R)
     (hk : k.IsRational := by rfl) : Dispersion k R :=
   ⟨Quantity.mul (expansionLaw k hk) factor u.q⟩
 
@@ -152,7 +153,7 @@ margin measured against no dispersion is not a large coverage factor, it is a fa
 meaning, and the two must not produce the same answer. The numerator is a plain `Quantity`
 because what gets divided is a margin or a deviation — a displacement, never an estimate, and
 the type now says so. -/
-def Dispersion.factorOf [Div R] [Zero R] [BEq R] (u : Dispersion k R) (g : Quantity k R)
+def Dispersion.factorOf [Div R] [ScalarCarrier R] [Zero R] [BEq R] (u : Dispersion k R) (g : Quantity k R)
     (hk : k.IsRational := by rfl) : Option (Quantity coverageFactor R) :=
   if u.magnitude == (0 : R) then none
   else some (Quantity.div (bandReadingLaw k hk) g u.q)
@@ -209,7 +210,7 @@ reader has to trust. -/
 /-- **A factor is refused at a dispersion of zero**, never computed. The statement that a
 consumer relies on when it treats `none` as "unreadable" rather than as "unavailable for some
 other reason". -/
-theorem Dispersion.factorOf_eq_none [Div R] [Zero R] [BEq R] (u : Dispersion k R)
+theorem Dispersion.factorOf_eq_none [Div R] [ScalarCarrier R] [Zero R] [BEq R] (u : Dispersion k R)
     (g : Quantity k R)
     (hk : k.IsRational) (h : u.magnitude == (0 : R)) :
     u.factorOf g hk = none := by

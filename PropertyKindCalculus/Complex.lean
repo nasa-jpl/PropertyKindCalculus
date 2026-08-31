@@ -104,8 +104,8 @@ def ofReal [Zero R] (a : R) : Complex R := ⟨a, 0⟩
 /-! ## The toolchain arithmetic of `Complex R`
 
 Each instance lifts the real operations of `R` to the standard complex formulas, so the
-kind calculus' smart constructors (`Quantity.mul` over `[Mul R]`, `Quantity.div` over
-`[Div R]`, …) work over `Complex R` with no further plumbing. -/
+kind calculus' smart constructors (`Quantity.mul` over `[Mul R] [ScalarCarrier R]`,
+`Quantity.div` likewise, …) work over `Complex R` with no further plumbing. -/
 
 instance [Add R] : Add (Complex R) := ⟨fun z w => ⟨z.re + w.re, z.im + w.im⟩⟩
 instance [Sub R] : Sub (Complex R) := ⟨fun z w => ⟨z.re - w.re, z.im - w.im⟩⟩
@@ -135,6 +135,15 @@ kind-gated `Quantity.add`/`Quantity.zero` are available over complex quantities.
 instance [Carrier R] : Carrier (Complex R) where
   zero := ⟨Carrier.zero, Carrier.zero⟩
   add z w := ⟨Carrier.add z.re w.re, Carrier.add z.im w.im⟩
+
+/-- **`Complex R` is a *scalar* carrier whenever `R` is.** A complex magnitude is one
+number, not two: `Mul (Complex R)` above is the complex product `(ac − bd) + (ad + bc)j`,
+which mixes the components rather than acting on them independently — precisely what
+distinguishes it from the pointwise `Mul` of a numerical-array carrier. So an impedance,
+a phasor, or a complex eigenfrequency multiplies through `Quantity.mul` exactly as a real
+magnitude does, and the two-component *representation* buys no license the kind layer did
+not already grant. -/
+instance [ScalarCarrier R] : ScalarCarrier (Complex R) := ⟨⟩
 
 /-- Extensionality for complex carriers: equal real and imaginary parts ⇒ equal. -/
 @[ext] theorem ext {z w : Complex R} (hre : z.re = w.re) (him : z.im = w.im) : z = w := by

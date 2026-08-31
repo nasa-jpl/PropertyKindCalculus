@@ -97,13 +97,28 @@ jobs:
       # Phase 2: Build + render the Verso design blueprint
       # (a separate Lake package under blueprint/ that pulls in Verso)
       # -------------------------------------------------------
+      - name: Reuse the root package's dependency checkouts in blueprint/
+        # blueprint/ is a separate Lake package, so without this Lake materializes the
+        # WHOLE transitive git closure a second time under blueprint/.lake/packages —
+        # its own Mathlib, Batteries, Physlib, TorchLean, doc-gen4… all re-fetched and
+        # rebuilt, even though Phase 1 above has just built the identical revisions in
+        # the root. The generator emits path overrides for every dependency the two
+        # packages pin at the SAME rev (it reports, and refuses to wire up, any that
+        # disagree); Lake reads blueprint/.lake/package-overrides.json automatically
+        # during resolution, so the `lake build` below needs no extra flag.
+        #
+        # Must run AFTER Phase 1 — it points at the root's .lake/packages, which only
+        # exist once the root has been resolved.
+        run: scripts/gen-package-overrides.sh --target blueprint --exclude PropertyKindCalculus
+
       - name: Build and render the design blueprint
         run: |
           cd blueprint
           # `lake build` (not `lake update`) so the pinned, committed
           # blueprint/lake-manifest.json governs the Verso revisions — transitive
           # deps tracked on `main` cannot drift and break a reproducible render.
-          # Missing packages are still fetched at their pinned revs on a fresh runner.
+          # Missing packages are still fetched at their pinned revs on a fresh runner
+          # — now only the verso stack, the rest being redirected by the step above.
           lake build
           # Render into a CLEAN output dir. `blueprint-gen` never prunes superseded,
           # content-hashed `searchIndex_N.<hash>.js` search shards, so on a persistent

@@ -29,7 +29,11 @@ This module closes the ergonomics gap **without weakening the discipline**. Two 
     left — the same association as the corresponding naked-magnitude expression, so a
     kinded kernel and its `.magnitude` erasure are the *same* expression tree (this is
     load-bearing for bit-exact, `rfl`-provable erasure on `Float` and for op order on a
-    tape carrier).
+    tape carrier). The instances come in pairs — one for `Quantity`, one for the
+    object-indexed `IndividualQuantity` — reading the *same* table, so an application
+    registers its algebra once and authors with operators at either layer. On the instance
+    layer the object index rides through untouched, so the shared-object gate is enforced by
+    instance resolution failing to unify rather than by anything the author writes.
 
 Discipline for table curation (the instances are the algebra, so curate them):
 
@@ -51,6 +55,7 @@ midway between the full witness spelling and a table registration.
 -/
 
 import PropertyKindCalculus.QuantityClassification
+import PropertyKindCalculus.IndividualQuantity
 
 namespace PropertyKindCalculus
 
@@ -76,42 +81,110 @@ variable {R : Type} {k₁ k₂ k : KindOfProperty}
 
 /-- `x * y` through the curated table: `Quantity.mul` of the registered witness. Scoped —
 `open scoped PropertyKindCalculus.OperatorTable` opts a file in. -/
-scoped instance instHMulQuantity [Mul R] [KindMul k₁ k₂ k] :
+scoped instance instHMulQuantity [Mul R] [ScalarCarrier R] [KindMul k₁ k₂ k] :
     HMul (Quantity k₁ R) (Quantity k₂ R) (Quantity k R) :=
   ⟨fun x y => Quantity.mul KindMul.law x y⟩
 
 /-- `x / y` through the curated table: `Quantity.div` of the registered witness. -/
-scoped instance instHDivQuantity [Div R] [KindDiv k₁ k₂ k] :
+scoped instance instHDivQuantity [Div R] [ScalarCarrier R] [KindDiv k₁ k₂ k] :
     HDiv (Quantity k₁ R) (Quantity k₂ R) (Quantity k R) :=
   ⟨fun x y => Quantity.div KindDiv.law x y⟩
 
 /-- The table operator **is** the named verified constructor, witness supplied by the
 instance — the one `rfl` that transports every certificate and kind-law of the named
 calculus to operator-built terms. -/
-theorem hmul_eq_mul [Mul R] [KindMul k₁ k₂ k] (x : Quantity k₁ R) (y : Quantity k₂ R) :
+theorem hmul_eq_mul [Mul R] [ScalarCarrier R] [KindMul k₁ k₂ k] (x : Quantity k₁ R) (y : Quantity k₂ R) :
     x * y = Quantity.mul (KindMul.law (k₁ := k₁) (k₂ := k₂) (k := k)) x y := rfl
 
 /-- The division dual of `hmul_eq_mul`. -/
-theorem hdiv_eq_div [Div R] [KindDiv k₁ k₂ k] (x : Quantity k₁ R) (y : Quantity k₂ R) :
+theorem hdiv_eq_div [Div R] [ScalarCarrier R] [KindDiv k₁ k₂ k] (x : Quantity k₁ R) (y : Quantity k₂ R) :
     x / y = Quantity.div (KindDiv.law (k₁ := k₁) (k₂ := k₂) (k := k)) x y := rfl
 
-@[simp] theorem hmul_magnitude [Mul R] [KindMul k₁ k₂ k]
+@[simp] theorem hmul_magnitude [Mul R] [ScalarCarrier R] [KindMul k₁ k₂ k]
     (x : Quantity k₁ R) (y : Quantity k₂ R) :
     (x * y).magnitude = x.magnitude * y.magnitude := rfl
 
-@[simp] theorem hdiv_magnitude [Div R] [KindDiv k₁ k₂ k]
+@[simp] theorem hdiv_magnitude [Div R] [ScalarCarrier R] [KindDiv k₁ k₂ k]
     (x : Quantity k₁ R) (y : Quantity k₂ R) :
     (x / y).magnitude = x.magnitude / y.magnitude := rfl
 
 /-- An operator-built product satisfies the product **certificate** of the table's
 witness — classification by construction survives the sugar. -/
-theorem hmul_isProduct [Mul R] [KindMul k₁ k₂ k] (x : Quantity k₁ R) (y : Quantity k₂ R) :
+theorem hmul_isProduct [Mul R] [ScalarCarrier R] [KindMul k₁ k₂ k] (x : Quantity k₁ R) (y : Quantity k₂ R) :
     (x * y).IsProduct KindMul.law x y := rfl
 
 /-- An operator-built quotient satisfies the quotient certificate of the table's
 witness. -/
-theorem hdiv_isQuotient [Div R] [KindDiv k₁ k₂ k] (x : Quantity k₁ R) (y : Quantity k₂ R) :
+theorem hdiv_isQuotient [Div R] [ScalarCarrier R] [KindDiv k₁ k₂ k] (x : Quantity k₁ R) (y : Quantity k₂ R) :
     (x / y).IsQuotient KindDiv.law x y := rfl
+
+/-! ## The same table, on object-indexed quantities
+
+`IndividualQuantity o k R` (the instance layer) gates every operation on a *shared object* `o`
+as well as on the kinds, so a product of two quantities belonging to different objects does not
+type-check. That gate is worth nothing if the layer is unusable to write in, and the ceremony
+the table removes for `Quantity` is if anything heavier here: an object-indexed model is where
+the interior kinds of a chained product are most tedious to name.
+
+The instances below read the **same** `KindMul` / `KindDiv` table — an application registers its
+algebra once and gets operators at both layers. The object rides through untouched: it is the
+same `o` on both operands and on the result, so instance resolution simply fails to unify when
+the operands belong to different objects, and the object gate is enforced exactly as before,
+without the author writing anything. Curation is likewise unchanged: an unregistered operand
+pair has no entry and the product does not elaborate. -/
+
+variable {o : Object}
+
+/-- `x * y` on object-indexed quantities, through the curated table:
+`IndividualQuantity.mul` of the registered witness, on the shared object `o`. Scoped, like its
+`Quantity` twin. -/
+scoped instance instHMulIndividualQuantity [Mul R] [ScalarCarrier R] [KindMul k₁ k₂ k] :
+    HMul (IndividualQuantity o k₁ R) (IndividualQuantity o k₂ R) (IndividualQuantity o k R) :=
+  ⟨fun x y => IndividualQuantity.mul KindMul.law x y⟩
+
+/-- `x / y` on object-indexed quantities, through the curated table. -/
+scoped instance instHDivIndividualQuantity [Div R] [ScalarCarrier R] [KindDiv k₁ k₂ k] :
+    HDiv (IndividualQuantity o k₁ R) (IndividualQuantity o k₂ R) (IndividualQuantity o k R) :=
+  ⟨fun x y => IndividualQuantity.div KindDiv.law x y⟩
+
+/-- The table operator **is** the named verified constructor at the instance layer too — the
+`rfl` that transports every certificate and kind-law of `IndividualQuantity` to operator-built
+terms, and the reason the operator sugar is invisible to anything downstream that reads the
+elaborated term (the `@[pkc_math]` renderer included). -/
+theorem hmul_eq_mul_individual [Mul R] [ScalarCarrier R] [KindMul k₁ k₂ k]
+    (x : IndividualQuantity o k₁ R) (y : IndividualQuantity o k₂ R) :
+    x * y = IndividualQuantity.mul (KindMul.law (k₁ := k₁) (k₂ := k₂) (k := k)) x y := rfl
+
+/-- The quotient twin of `hmul_eq_mul_individual`. -/
+theorem hdiv_eq_div_individual [Div R] [ScalarCarrier R] [KindDiv k₁ k₂ k]
+    (x : IndividualQuantity o k₁ R) (y : IndividualQuantity o k₂ R) :
+    x / y = IndividualQuantity.div (KindDiv.law (k₁ := k₁) (k₂ := k₂) (k := k)) x y := rfl
+
+@[simp] theorem hmul_magnitude_individual [Mul R] [ScalarCarrier R] [KindMul k₁ k₂ k]
+    (x : IndividualQuantity o k₁ R) (y : IndividualQuantity o k₂ R) :
+    (x * y).magnitude = x.magnitude * y.magnitude := rfl
+
+@[simp] theorem hdiv_magnitude_individual [Div R] [ScalarCarrier R] [KindDiv k₁ k₂ k]
+    (x : IndividualQuantity o k₁ R) (y : IndividualQuantity o k₂ R) :
+    (x / y).magnitude = x.magnitude / y.magnitude := rfl
+
+/-- An operator-built product of object-indexed quantities satisfies the product certificate of
+the table's witness — classification by construction survives the sugar at this layer too. -/
+theorem hmul_isProduct_individual [Mul R] [ScalarCarrier R] [KindMul k₁ k₂ k]
+    (x : IndividualQuantity o k₁ R) (y : IndividualQuantity o k₂ R) :
+    (x * y).IsProduct KindMul.law x y := rfl
+
+/-- The quotient certificate, likewise. -/
+theorem hdiv_isQuotient_individual [Div R] [ScalarCarrier R] [KindDiv k₁ k₂ k]
+    (x : IndividualQuantity o k₁ R) (y : IndividualQuantity o k₂ R) :
+    (x / y).IsQuotient KindDiv.law x y := rfl
+
+/-- **The operator sugar does not cross objects.** Forgetting an operator-built product to the
+plain `Quantity` layer is the plain layer's operator-built product of the forgotten operands, so
+the object index is carried and dropped coherently rather than being quietly discarded. -/
+theorem toQuantity_hmul_individual [Mul R] [ScalarCarrier R] [KindMul k₁ k₂ k]
+    (x : IndividualQuantity o k₁ R) (y : IndividualQuantity o k₂ R) :
+    (x * y).toQuantity = Quantity.mul KindMul.law x.toQuantity y.toQuantity := rfl
 
 end OperatorTable
 
@@ -119,23 +192,23 @@ end OperatorTable
 table entry: `Quantity.mulK area w h` reads as the kind equation it stands for, with the
 ratio-scale gate discharged by autoParam for concrete kinds (exactly
 `ProductKind.ofRatio`'s own defaults). -/
-def Quantity.mulK {R : Type} [Mul R] {k₁ k₂ : KindOfProperty} (k : KindOfProperty)
+def Quantity.mulK {R : Type} [Mul R] [ScalarCarrier R] {k₁ k₂ : KindOfProperty} (k : KindOfProperty)
     (a : Quantity k₁ R) (b : Quantity k₂ R)
     (h : ProductKind k₁ k₂ k := by exact ProductKind.ofRatio _ _ _) : Quantity k R :=
   Quantity.mul h a b
 
 /-- **One-off quotient, result kind named at the call site** — the division dual of
 `Quantity.mulK`. -/
-def Quantity.divK {R : Type} [Div R] {k₁ k₂ : KindOfProperty} (k : KindOfProperty)
+def Quantity.divK {R : Type} [Div R] [ScalarCarrier R] {k₁ k₂ : KindOfProperty} (k : KindOfProperty)
     (a : Quantity k₁ R) (b : Quantity k₂ R)
     (h : QuotientKind k₁ k₂ k := by exact QuotientKind.ofRatio _ _ _) : Quantity k R :=
   Quantity.div h a b
 
-@[simp] theorem Quantity.mulK_magnitude {R : Type} [Mul R] {k₁ k₂ : KindOfProperty}
+@[simp] theorem Quantity.mulK_magnitude {R : Type} [Mul R] [ScalarCarrier R] {k₁ k₂ : KindOfProperty}
     (k : KindOfProperty) (a : Quantity k₁ R) (b : Quantity k₂ R) (h : ProductKind k₁ k₂ k) :
     (Quantity.mulK k a b h).magnitude = a.magnitude * b.magnitude := rfl
 
-@[simp] theorem Quantity.divK_magnitude {R : Type} [Div R] {k₁ k₂ : KindOfProperty}
+@[simp] theorem Quantity.divK_magnitude {R : Type} [Div R] [ScalarCarrier R] {k₁ k₂ : KindOfProperty}
     (k : KindOfProperty) (a : Quantity k₁ R) (b : Quantity k₂ R) (h : QuotientKind k₁ k₂ k) :
     (Quantity.divK k a b h).magnitude = a.magnitude / b.magnitude := rfl
 

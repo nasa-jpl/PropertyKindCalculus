@@ -38,6 +38,14 @@ dropping the kind-law `Prop` witnesses, the instance arguments, the carrier/kind
   the reader. `Registry.resolveToken` then qualifies it by its type (`\mathrm{AvsConfig.two}`).
 * **`@[pkc_math_transparent]` wrappers.** An application of a tagged notational wrapper renders as
   its argument, so a carrier's numeral injection `ofN 2` reads `2` instead of `\mathrm{ofN}(2)`.
+* **Object-indexed quantities.** `IndividualQuantity o k R` gates its operations on a shared
+  object as well as on the kinds, and a leaf of that type renders with the object as a
+  **subscript** (`objectLabel?`): `V_A = m_A\,\omega_A^2\,x_A^2`. Without it two systems'
+  equations are distinct types that reach the page as the same string. A definition generic in
+  its object renders unsubscripted. The layer's named combinators (`IndividualQuantity.mul`,
+  `div`, `add`) join their `Quantity` twins in the operator alphabet; a model written through
+  `OperatorTable`'s instances arrives as `HMul.hMul` and needs no separate case, since the
+  binary branch reads the last two arguments and is indifferent to what precedes them.
 
 `substitute` is the opt-in **delta** counterpart to the `let`-zeta: given a set of declaration names
 it inlines their bodies, so `@[pkc_math substituting attenuationQ]` can show a model's equation with
@@ -122,6 +130,44 @@ implicit/instance arguments precede them). -/
 private def lastTwo (args : Array Expr) : Expr × Expr :=
   (args[args.size - 2]!, args[args.size - 1]!)
 
+/-- **The object subscript of a leaf.** For a leaf whose type is `IndividualQuantity o k R` with
+a *concrete* object `o`, the label to subscript its symbol with; `none` for every other type.
+
+An object-indexed model is the one that keeps the quantities of two systems apart, and without
+this the distinction is invisible on the page: the potential energies of two oscillators are
+rigorously distinct types that would otherwise render to the same string — the very confusion
+the object index exists to prevent, reappearing in the presentation. Subscripting is also what a
+physicist writes (`V_A = m_A\,\omega_A^2\,x_A^2`), so the index becomes the notation rather than
+bookkeeping the reader has to be told about.
+
+The label is the `@[pkc_math_symbol]` override registered on the object's own declaration when
+there is one — which is how an author gets a short `A` out of a system named
+`"oscillator A"` — and otherwise the system's `id` in a `\text{…}` box, which is always valid
+and never silently wrong.
+
+A definition *generic* in its object (`(o : System)` still a binder) has no concrete object to
+name, so it renders unsubscripted: `whnf` cannot reach a `System.mk` and this returns `none`. -/
+def objectLabel? (ty : Expr) : MetaM (Option String) := do
+  let ty ← whnf ty
+  unless ty.isAppOfArity ``PropertyKindCalculus.IndividualQuantity 3 do return none
+  let o := ty.getAppArgs[0]!
+  -- an override registered on the object's own declaration wins
+  if let .const c _ := o.getAppFn then
+    if let some nota := getMathSymbol? (← getEnv) c then return some nota.latex
+  -- otherwise unfold the object to its `System.mk "…"` literal and take the id
+  let o ← whnf o
+  unless o.isAppOfArity ``PropertyKindCalculus.System.mk 1 do return none
+  match ← whnf o.getAppArgs[0]! with
+  | .lit (.strVal s) =>
+    -- A short token-like id is usable as a symbol directly (`"A"`, `"rotor2"`), through the same
+    -- heuristics an atom name gets — so a system named for its subscript needs no override at
+    -- all. Anything with spaces or punctuation is not LaTeX and goes in a `\text{…}` box, which
+    -- is verbose but never silently malformed; `@[pkc_math_symbol]` is how such a system gets a
+    -- short label.
+    if !s.isEmpty && s.all Char.isAlphanum then return some (builtinSymbol s)
+    else return some (latexText s)
+  | _                => return none
+
 /-- The names of the transcendental/trig unary functions, rendered as `fn <base> #[arg]`. -/
 private def unaryFns : List Name :=
   [``PropertyKindCalculus.Quantity.exp, ``PropertyKindCalculus.Quantity.log,
@@ -189,7 +235,14 @@ partial def liftTerm (policy : KeepPolicy) (e : Expr) : LiftM MathTerm := do
     else
       liftTerm policy (b.instantiate1 v)          -- zeta: inline the `let`-bound value
   | .lit (.natVal n)   => return .num (Int.ofNat n)
-  | .fvar fid          => return .sym (toString (← fid.getUserName))
+  | .fvar fid          => do
+    let nm := toString (← fid.getUserName)
+    match ← objectLabel? (← fid.getType) with
+    -- an object-indexed leaf carries its object as a subscript. The base token is resolved
+    -- *here* rather than left to the printer because the result is composed LaTeX, not a token
+    -- the registry could look up — hence `raw`, which shares `sym`'s atom precedence.
+    | some lbl => return .raw ((resolveToken (← getEnv) nm).latex ++ "_{" ++ lbl ++ "}")
+    | none     => return .sym nm
   | .bvar _            => return .raw (latexText "?")   -- should not occur after a telescope
   | _ =>
     -- a `match` is not an ordinary application: its motive and alternatives are lambdas, and
@@ -219,8 +272,9 @@ partial def liftApp (policy : KeepPolicy) (name : Name) (args : Array Expr) (e :
   if name == ``Nat.cast || name == ``Int.cast || name == ``NatCast.natCast
       || name == ``IntCast.intCast then
     if args.size ≥ 1 then return ← liftTerm policy (lastArg args)
-  -- the `Quantity` wrapper: `⟨r⟩` — render its magnitude
-  if name == ``PropertyKindCalculus.Quantity.mk then
+  -- the `Quantity` / `IndividualQuantity` wrapper: `⟨r⟩` — render its magnitude
+  if name == ``PropertyKindCalculus.Quantity.mk
+      || name == ``PropertyKindCalculus.IndividualQuantity.mk then
     if args.size ≥ 1 then return ← liftTerm policy (lastArg args)
   -- an authored notational wrapper (`ofN 2`): render the argument it wraps
   if isTransparentWrapper (← getEnv) name then
@@ -233,13 +287,16 @@ partial def liftApp (policy : KeepPolicy) (name : Name) (args : Array Expr) (e :
   -- binary ring operators (ergonomic `+ - * /` and the named kind-gated forms)
   if args.size ≥ 2 then
     let (x, y) := lastTwo args
-    if name == ``HAdd.hAdd || name == ``PropertyKindCalculus.Quantity.add then
+    if name == ``HAdd.hAdd || name == ``PropertyKindCalculus.Quantity.add
+        || name == ``PropertyKindCalculus.IndividualQuantity.add then
       return .add (addArgs (← liftTerm policy x) ++ addArgs (← liftTerm policy y))
     if name == ``HSub.hSub || name == ``PropertyKindCalculus.Quantity.sub then
       return .add (addArgs (← liftTerm policy x) ++ #[.neg (← liftTerm policy y)])
-    if name == ``HMul.hMul || name == ``PropertyKindCalculus.Quantity.mul then
+    if name == ``HMul.hMul || name == ``PropertyKindCalculus.Quantity.mul
+        || name == ``PropertyKindCalculus.IndividualQuantity.mul then
       return .mul (mulArgs (← liftTerm policy x) ++ mulArgs (← liftTerm policy y))
-    if name == ``HDiv.hDiv || name == ``PropertyKindCalculus.Quantity.div then
+    if name == ``HDiv.hDiv || name == ``PropertyKindCalculus.Quantity.div
+        || name == ``PropertyKindCalculus.IndividualQuantity.div then
       return .frac (← liftTerm policy x) (← liftTerm policy y)
     if name == ``HPow.hPow then
       return .pow (← liftTerm policy x) (← liftTerm policy y)

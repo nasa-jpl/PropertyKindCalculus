@@ -45,9 +45,24 @@ algebraic laws) is deliberate and is the whole point of R10: a law proved once
 over `LawfulCarrier R` transfers to *every* lawful carrier (`Int`, `ℝ`), while an
 executable float is a `Carrier` but **not** a `LawfulCarrier` — floating-point
 addition is not associative — so the laws are *unavailable* at the float that
-runs. Closing that gap is the exec/spec *refinement* bridge (still planned): the
-executable result is the rounding of the real result, which lets an `ℝ`-proved law
-descend to the run with a bounded error.
+runs. That gap is closed for `+` by the exec/spec *refinement* bridge
+(`QuantityRefinement`): `CarrierRefinement E S` states that the executable result,
+forgotten to the spec carrier, is the rounding of the spec result, and
+`Quantity.add_refines` lifts it along the kind index. `Torch.Fp32` instantiates it
+at genuine IEEE binary32, so the descent is realized and not merely specified.
+
+**What the bridge covers, precisely.** `CarrierRefinement` carries two laws —
+`toSpec_zero` and `toSpec_add` — so the descent is available for aggregation and
+*not* for the multiplicative operations. A model whose formulas are products
+(`k = m·ω²`, a scalar product, an impedance squared) has no `mul_refines` to appeal
+to. The forward-error story for a whole expression tree, products and quotients
+included, exists in a different shape and a different layer:
+`Uncertainty.Adequacy.DagBound`'s `dag_fp32_error_bound` accumulates per-node
+half-ulp budgets over an `add`/`sub`/`mul`/`div` DAG, grounded in TorchLean's own
+`FP32.{mul,div}_abs_error`. Whether that soundness should route *through*
+`CarrierRefinement` or stay direct is the open item recorded in `UNCERTAINTY.md` §7
+("`CarrierRefinement` consolidation"), and it is the reason this paragraph names the
+boundary rather than claiming the whole of it.
 -/
 
 import PropertyKindCalculus.Kind
@@ -379,13 +394,17 @@ standard-Lean arithmetic a representation `R` must supply to carry a quantity of
 scale, and the `extends` chain reproduces the lattice order `ordinal ⊏ interval ⊏ ratio`
 (`ScaleType.le`). They **require** Lean's classes (`LE`/`Add`/`Sub`/`Mul`/…) rather than
 redefining them, so they compose with the field operations the rest of the library already
-rides — `Quantity.mul` over `[Mul R]`, `Quantity.sqrt` over `MathCarrier` — and add no
-instance diamonds.
+rides — `Quantity.mul` over `[Mul R] [ScalarCarrier R]`, `Quantity.sqrt` over `MathCarrier`
+— and add no instance diamonds.
 
 Two complementary gates, then: a *kind*'s scale says an operation is **meaningful**
 (`DifferenceKind`, `ProductKind`, … on the kind index); a *carrier*'s tier says the
 representation can **compute** it (`IntervalCarrier`, `RatioCarrier`, … on `R`). A sound
-quantity operation needs both. -/
+quantity operation needs both.
+
+`ScalarCarrier`, at the end of this section, is the third gate the first two leave open:
+supplying `×` is not the same as supplying *the* `×`, and a numerical-array carrier
+supplies a pointwise one. -/
 
 /-- **Ordinal carrier** — a representation that can be *ordered* (`<`, `>`), the least a
 non-nominal magnitude needs. Mirrors `ScaleType.ordinal`. -/
@@ -419,5 +438,57 @@ theorem ratioCarrier_isIntervalCarrier {R : Type}
 theorem intervalCarrier_isOrdinalCarrier {R : Type}
     [LE R] [LT R] [Zero R] [Add R] [Sub R] [Neg R] [IntervalCarrier R] :
     OrdinalCarrier R := inferInstance
+
+/-! ## The scalar gate — whose `×` is the multiplication of magnitudes
+
+The tower above says how *much* arithmetic a representation supplies. It does not say
+whether that arithmetic **is** the arithmetic of magnitudes, and for the product and
+quotient families that is the load-bearing question.
+
+A numerical-array carrier — `QuantityVector`'s `ι → R`, the ISO 80000-2 §18
+representation of a vector quantity — carries a perfectly good `Mul`: Lean's pointwise
+one. The componentwise product of two position vectors is not a physical quantity of any
+kind. Left ungated, `Quantity.mul` signs it anyway, because the `ProductKind` witness
+licenses `length × length = area` on the *kind* side and the *carrier* then silently
+chooses the operation. What comes out is a `Quantity area (Fin 3 → R)` holding a Hadamard
+product: correctly kinded, correctly dimensioned, and not a thing.
+
+`ScalarCarrier` is the missing half of this module's own doctrine — *a kind's scale says
+an operation is meaningful; a carrier's tier says the representation can compute it; a
+sound quantity operation needs both* — finally applied to `×` and `÷`.
+`Quantity.mul`/`Quantity.div` require it, so a vector carrier **fails to synthesize**
+rather than quietly multiplying componentwise.
+
+**Why this cannot be a structural test.** The same Lean type `ι → R` is a scalar carrier
+under one reading and not under another, and no property of the type decides which:
+
+  * a **batch** carrier holds `N` independent samples *of one scalar quantity* — the
+    Stage-4 propagators' whole design — and there elementwise `×` is exactly right;
+  * a **vector** carrier holds `n` components *of one quantity* — and there elementwise
+    `×` is meaningless.
+
+So membership is a claim about what the representation *represents*, which is why this is
+a marker class in the manner of `RatioCarrier` above and `ProductKind.ofRatio` in
+`QuantityClassification`: nothing stops someone writing `ScalarCarrier (Fin 3 → ℝ)`. The
+guarantee is this library's trust model throughout — **the default is refusal, and the
+claim must be written, in full, where it is made.**
+
+**Why it carries no law.** The obvious separating law is absence of zero divisors, and it
+is wrong here: it holds at `ℝ` and at `Complex ℝ` and *fails* at `Float`, where two
+nonzero magnitudes underflow to a zero product. A law-bearing class would exclude the
+executable carrier the whole representation axis exists to keep.
+
+The operations a vector carrier *does* license — the scalar product and the vector product
+of ISO 80000-2 §18 — are not pointwise and do not have the `Quantity.mul` shape at all:
+their operands and their result sit at different *variances*. Those belong to
+`PropertyKindCalculus.Frame`. -/
+class ScalarCarrier (R : Type) : Prop
+
+/-- `Nat` is scalar: a count is one number. -/
+instance instScalarCarrierNat : ScalarCarrier Nat := ⟨⟩
+/-- `Int` is scalar. -/
+instance instScalarCarrierInt : ScalarCarrier Int := ⟨⟩
+/-- `Float` is scalar — the executable representation of a single magnitude. -/
+instance instScalarCarrierFloat : ScalarCarrier Float := ⟨⟩
 
 end PropertyKindCalculus

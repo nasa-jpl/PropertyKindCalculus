@@ -22,6 +22,7 @@ Two certificate forms, both for the one area kind:
 import PropertyKindCalculus.Quantity
 import PropertyKindCalculus.QuantityClassification
 import PropertyKindCalculus.Iso80000.Part3.AreaElement
+import PropertyKindCalculus.QuantityReal
 
 namespace PropertyKindCalculus.Iso80000.Part3.AreaClassification
 

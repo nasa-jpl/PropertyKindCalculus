@@ -111,7 +111,14 @@ def isTransparentWrapper (env : Environment) (declName : Name) : Bool :=
 
 /-! ### Heuristic atom table (used when there is no `@[pkc_math_symbol]` override) -/
 
-/-- Greek-letter spellings recognized in atom names. -/
+/-- Greek-letter spellings recognized in atom names, **and the Greek characters themselves**.
+
+Lean identifiers may be Greek characters directly — `ω` is a perfectly ordinary binder name, and
+models written by physicists use them in preference to the ASCII spellings. Without the character
+entries such a binder falls through to the single-letter branch and reaches the page as a literal
+`ω`, which is not LaTeX: it renders only if the document happens to load a Unicode-math engine, and
+it is typeset as text rather than as a math variable even then. The character and its spelling
+resolve to the same control sequence, so `ω` and `omega` are interchangeable in a model's source. -/
 private def greek : List (String × String) :=
   [ ("alpha", "\\alpha"), ("beta", "\\beta"), ("gamma", "\\gamma"), ("delta", "\\delta"),
     ("epsilon", "\\epsilon"), ("varepsilon", "\\varepsilon"), ("zeta", "\\zeta"),
@@ -120,7 +127,17 @@ private def greek : List (String × String) :=
     ("rho", "\\rho"), ("sigma", "\\sigma"), ("tau", "\\tau"), ("phi", "\\phi"),
     ("varphi", "\\varphi"), ("chi", "\\chi"), ("psi", "\\psi"), ("omega", "\\omega"),
     ("Gamma", "\\Gamma"), ("Delta", "\\Delta"), ("Theta", "\\Theta"), ("Lambda", "\\Lambda"),
-    ("Sigma", "\\Sigma"), ("Phi", "\\Phi"), ("Psi", "\\Psi"), ("Omega", "\\Omega") ]
+    ("Sigma", "\\Sigma"), ("Phi", "\\Phi"), ("Psi", "\\Psi"), ("Omega", "\\Omega"),
+    -- the characters themselves
+    ("α", "\\alpha"), ("β", "\\beta"), ("γ", "\\gamma"), ("δ", "\\delta"),
+    ("ε", "\\epsilon"), ("ϵ", "\\epsilon"), ("ζ", "\\zeta"), ("η", "\\eta"),
+    ("θ", "\\theta"), ("ι", "\\iota"), ("κ", "\\kappa"), ("λ", "\\lambda"),
+    ("μ", "\\mu"), ("ν", "\\nu"), ("ξ", "\\xi"), ("π", "\\pi"), ("ρ", "\\rho"),
+    ("σ", "\\sigma"), ("τ", "\\tau"), ("υ", "\\upsilon"), ("φ", "\\phi"), ("ϕ", "\\varphi"),
+    ("χ", "\\chi"), ("ψ", "\\psi"), ("ω", "\\omega"),
+    ("Γ", "\\Gamma"), ("Δ", "\\Delta"), ("Θ", "\\Theta"), ("Λ", "\\Lambda"),
+    ("Ξ", "\\Xi"), ("Π", "\\Pi"), ("Σ", "\\Sigma"), ("Υ", "\\Upsilon"),
+    ("Φ", "\\Phi"), ("Ψ", "\\Psi"), ("Ω", "\\Omega") ]
 
 /-- A small dictionary of domain identifiers with a conventional typeset form. -/
 private def dictionary : List (String × String) :=

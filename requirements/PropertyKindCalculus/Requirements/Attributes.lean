@@ -104,7 +104,7 @@ syntax (name := requirementAttr) "requirement " str ident (str)? : attr
 
 initialize registerBuiltinAttribute {
   name  := `requirementAttr
-  descr := "Traceability link from a declaration to a blueprint requirement (R1–R17)."
+  descr := "Traceability link from a declaration to a blueprint requirement (R1–R25)."
   add   := fun decl stx _kind => do
     match stx with
     | `(attr| requirement $req:str $role:ident $[$note:str]?) =>

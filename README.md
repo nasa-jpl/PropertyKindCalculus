@@ -62,6 +62,7 @@ The package ships six libraries so the core is exportable on its own:
 | `DimensionExamples` | `examples/` | worked examples for the Mathlib-backed `Dimension` layer (dimension functor, interaction algebra, `ℝ` quantity carrier, the ISO 80000 catalogue, and the ISO 80000-2 §18 vector quantity) — kept under `examples/` so no library module carries example code; PhysLib + Mathlib-backed (transitively) | `lake build DimensionExamples` |
 | `Iso80000` | `iso80000/` | the standards-grounded layer: a references catalogue citing the ISO/IEC 80000 parts by name + version only (no normative content), plus the full catalogues of **eleven** of the thirteen parts — ISO 80000-3 *Space and time* (42 items), ISO 80000-4 *Mechanics* (54 items), ISO 80000-5 *Thermodynamics* (54 items), IEC 80000-6 *Electromagnetism* (85 items), ISO 80000-7 *Light and radiation* (66 items), ISO 80000-8 *Acoustics* (18), ISO 80000-9 *Physical chemistry and molecular physics* (62), ISO 80000-10 *Atomic and nuclear physics* (125), ISO 80000-11 *Characteristic numbers* (115, all dimension one), ISO 80000-12 *Condensed matter physics* (60), and IEC 80000-13 *Information science and technology* (42) — quantity-kinds, units, the length/force/energy/power/radiation specialization lattices, the sub-suffixed characteristic-number homonyms, the gray/sievert and mole-reduction collisions, the dimension-collision, scale-type, and scale-spanning (R13) capstones, and the formalized *Remarks* (several crossing between parts); PhysLib-backed | `lake build Iso80000` |
 | `Torch` | `torch/` | the TorchLean-backed instance of the R10 exec/spec refinement bridge — the binary32 `FP32` (rounding spec) and `IEEE32Exec` (executable) carriers realizing `CarrierRefinement`; depends on TorchLean | `lake build Torch` |
+| `ForPhysLib` | `ForPhysLib/` | **the PhysLib proposal** ([`ForPhysLib/README.md`](ForPhysLib/README.md)) — a metrology layer offered to PhysLib in [#1579](https://github.com/leanprover-community/physlib/pull/1579), as four prose documents (overview, 31 requirements in 9 tiers, 11 reasons, the staged adoption ladder) plus the worked case study that supplies their evidence: the harmonic oscillator typed four ways, each scored against MR1–MR19 plus the appended MR32, every verdict a build artifact. Takes the package directory as its `srcDir`, as the core library does, so the browsable tree *is* the module path (`ForPhysLib.CaseStudies.HarmonicOscillator.Attempt4Pkc`) with no intermediate namespace mirror; PhysLib + Mathlib-backed | `lake build ForPhysLib` |
 
 The core spine and its `import PropertyKindCalculus` stay Mathlib-free. Note that
 `require`-ing the package now also *resolves* the TorchLean dependency (it backs only
@@ -119,11 +120,44 @@ generated dependency graph and status summary. It is a **separate Lake package**
 (it pulls in Verso) so a plain `import PropertyKindCalculus` stays lightweight:
 
 ```bash
+scripts/gen-package-overrides.sh --target blueprint --exclude PropertyKindCalculus
 cd blueprint
-lake update && lake build   # type-check the doc + its Lean links
+lake build                  # type-check the doc + its Lean links
 ./scripts/ci-pages.sh       # render both outputs + print absolute paths to open
 ./scripts/ci-pages.sh --no-pdf   # fast HTML-only loop (~50 s vs ~5.5 min; skips the WeasyPrint PDF)
 ```
+
+### Don't build Mathlib twice
+
+Because `blueprint/` is a separate Lake package, Lake by default materializes the
+**whole transitive git closure a second time** under `blueprint/.lake/packages/` — its
+own Mathlib, Batteries, Physlib, TorchLean, doc-gen4 — even though the root package has
+already fetched and built the identical revisions. Measured here: 2.3 GB of duplicate
+checkouts, 1.2 GB of it Mathlib, and a cold blueprint build recompiling all of it.
+
+[`scripts/gen-package-overrides.sh`](scripts/gen-package-overrides.sh) removes the
+duplication. It emits a Lake `package-overrides.json` redirecting each shared dependency
+to the root's existing checkout; Lake reads `blueprint/.lake/package-overrides.json`
+automatically during resolution, so no flag and no lakefile edit is needed. All 16 of the
+root's dependencies are pinned at identical revisions in the blueprint, so all 16
+redirect and only the 5 verso-stack packages stay local. Add `--reclaim` to delete the
+now-dead duplicates (2.3 GB → 723 MB here).
+
+A path override is **unverified by Lake** — it means "trust me, this directory is that
+package" — so the script cross-checks both manifests and refuses to wire up any package
+whose revisions disagree, naming it instead. Re-run it after any `lake update` on either
+side. The technique is `lake --packages=FILE`, borrowed from `lean-store-sync.sh` in the
+author's `torchlean-development-slim`, which uses it to collapse a multi-repo Lean store
+to one copy of each shared dependency; the CI workflow runs the same script between its
+root and blueprint phases.
+
+*Rendering needs a C toolchain.* `ci-pages.sh` runs `lake exe blueprint-gen`, and linking
+that executable builds native code from `leansqlite`, `UnicodeBasic` and `TorchLean`. On
+a host with no `cc` on `PATH` those targets fail (`failed to execute 'cc'`) and the render
+cannot proceed — the Lean *library* still type-checks fine (`lake build
+PropertyKindCalculusBlueprint`), so this bites only at render time. It is unrelated to
+the package overrides above: the same targets fail identically in the root package with
+no overrides in play.
 
 Open either `_out/blueprint/html-single/index.html` (one self-contained page) or
 `_out/blueprint/html-multi/index.html` (the full per-chapter site) directly as a
@@ -506,6 +540,7 @@ Status: ✅ built & proved · 🚧 next · ⬜ planned
 | `PropertyKindCalculus.Examples.ScaleSpanning` (in the `DimensionExamples` lib) — the candela/mole reducible, the kelvin invisible, the ampere a genuine base, and the R13 capstone as checked facts | — | ✅ |
 | `Interaction` — `KMul`/`KDiv` as a curated partial product, the multiplication–division round-trip, and the `dim`-homomorphism coherence capstone | Flater App. C | ✅ |
 | `PropertyKindCalculus.Examples.Interaction` (in the `DimensionExamples` lib) — the SI-mechanics algebra: torque × angle = energy holds while torque × angle = torque is rejected; energy ≠ torque yet one dimension; coherence and round-trip as checked facts | — | ✅ |
+| `PropertyKindCalculus.Examples.HarmonicOscillator.*` (in the **`ForPhysLib`** lib, under [`ForPhysLib/CaseStudies/`](ForPhysLib/CaseStudies/HarmonicOscillator/README.md)) — **the harmonic oscillator as a metrology benchmark** (occasioned by [physlib#1579](https://github.com/leanprover-community/physlib/pull/1579), where the oscillator was proposed as a first place to apply PhysLib's `Dimension`/`Unit`): four *honest attempts* at typing the same physics — plain reals in a bundle, PhysLib `WithDim`, **Buckingham-π object tagging** on a basis-parametric `Dimension B`, and PKC — each scored against the **MR1–MR19 (+ appended MR32)** requirements of [`ForPhysLib/REQUIREMENTS.md`](ForPhysLib/REQUIREMENTS.md) in six tiers (dimensional analysis, what dimension cannot see, two oscillators, **ergonomics**, **computation**, **geometry**), with every verdict a build artifact (`#check_failure` probes, `#guard`s and theorems, never prose). Results worth citing: `Attempt2.withDim_discriminates_only_dimension` (equal dimensions give *equal quantity types*, so the rad/s trap, cross-oscillator substitution and normal-mode confusion are one failure); `Attempt3.tagging_dilemma` (within `WithDim`, "addable" and "distinguishable" are each other's negation) together with `Attempt3.kinetic_ne_potential` (a tag exponent counts *how many tagged factors* went in, so kinetic `m·v²` carries `⟨o⟩³` and potential `m·ω²·x²` carries `⟨o⟩⁵` — **`H = T + V` does not type-check for one oscillator**); and `Attempt4.no_dilemma`, which resolves it with two independent axes — same *kind*, different *object*. **The ergonomics tier is the one PKC does not sweep**: written longhand it is the worst of the four at authoring (`Scorecard.mr11_pkc_same_value` proves the ceremony is *pure* — the most verbose definition computes exactly the least verbose one), and through `OperatorTable`'s curated instances the formula becomes `m * (ω * ω) * (x * x)`, character-identical to bare reals and the *same term* as the longhand version (`Scorecard.mr11_operators_same_term`), leaving a per-model setup cost that bare reals do not have (MR11 ⚠️). MR12 is ✅: the equation, a `substituting` derivation, and the **object index as a subscript** (`V = m_{A}\,\omega_{A}^{2}\,x_{A}^{2}`) all pinned with `#guard_msgs` | — | ✅ |
 | `Extensivity` — extensive kinds (additivity over a decomposition) + the n-ary aggregation capstone + a non-extensive counterexample | §13.5 | ✅ |
 | `PropertyKindCalculus.Examples.MiniExtensivity` (in the `Examples` lib) — mass aggregates over a three-part assembly (3+5+7=15); volume on mixing is sub-additive (96 < 50+50) as checked facts | — | ✅ |
 | `Quantity` — representation-parametric value `Quantity k R` over a `Carrier`-typed numeric carrier; same-kind addition (R4) + additivity laws proved **once** over any lawful carrier; carriers `Int` + `ℝ` (lawful), `Float` (executable) (R10) | — | ✅ |

@@ -85,29 +85,29 @@ theorem toQuantity_add [Carrier R] (h : DifferenceKind k) (x y : IndividualQuant
 characterize the *same* object `o`, licensed by the product kind-law `ProductKind k₁ k₂ k`,
 yielding a `k`-quantity of that object. The shared `o` is the gate a dimensionless numeric
 model cannot express: the two factors must be *of the same object*. -/
-def mul [Mul R] {k₁ k₂ k : KindOfProperty} (_h : ProductKind k₁ k₂ k)
+def mul [Mul R] [ScalarCarrier R] {k₁ k₂ k : KindOfProperty} (_h : ProductKind k₁ k₂ k)
     (a : IndividualQuantity o k₁ R) (b : IndividualQuantity o k₂ R) : IndividualQuantity o k R :=
   ⟨a.magnitude * b.magnitude⟩
 
-@[simp] theorem mul_magnitude [Mul R] {k₁ k₂ k : KindOfProperty} (h : ProductKind k₁ k₂ k)
+@[simp] theorem mul_magnitude [Mul R] [ScalarCarrier R] {k₁ k₂ k : KindOfProperty} (h : ProductKind k₁ k₂ k)
     (a : IndividualQuantity o k₁ R) (b : IndividualQuantity o k₂ R) :
     (mul h a b).magnitude = a.magnitude * b.magnitude := rfl
 
 /-- The product commutes with the forgetful map to `Quantity`. -/
-theorem toQuantity_mul [Mul R] {k₁ k₂ k : KindOfProperty} (h : ProductKind k₁ k₂ k)
+theorem toQuantity_mul [Mul R] [ScalarCarrier R] {k₁ k₂ k : KindOfProperty} (h : ProductKind k₁ k₂ k)
     (a : IndividualQuantity o k₁ R) (b : IndividualQuantity o k₂ R) :
     (mul h a b).toQuantity = Quantity.mul h a.toQuantity b.toQuantity := rfl
 
 /-- **The product certificate.** `q` (kind `k`, object `o`) is the product of `a` and `b`: its
 magnitude is the product of theirs. A proof *certifies* `q`'s classification, rather than
 merely asserting it (R12). -/
-def IsProduct [Mul R] {k₁ k₂ k : KindOfProperty} (_h : ProductKind k₁ k₂ k)
+def IsProduct [Mul R] [ScalarCarrier R] {k₁ k₂ k : KindOfProperty} (_h : ProductKind k₁ k₂ k)
     (q : IndividualQuantity o k R) (a : IndividualQuantity o k₁ R) (b : IndividualQuantity o k₂ R) :
     Prop :=
   q.magnitude = a.magnitude * b.magnitude
 
 /-- The smart-constructed product satisfies the certificate **by construction**. -/
-theorem mul_isProduct [Mul R] {k₁ k₂ k : KindOfProperty} (h : ProductKind k₁ k₂ k)
+theorem mul_isProduct [Mul R] [ScalarCarrier R] {k₁ k₂ k : KindOfProperty} (h : ProductKind k₁ k₂ k)
     (a : IndividualQuantity o k₁ R) (b : IndividualQuantity o k₂ R) :
     (mul h a b).IsProduct h a b := rfl
 
@@ -116,27 +116,27 @@ theorem mul_isProduct [Mul R] {k₁ k₂ k : KindOfProperty} (h : ProductKind k�
 /-- **Same-object, kind-licensed quotient.** Divides a `k₁`- by a `k₂`-quantity that
 characterize the *same* object `o`, licensed by the quotient kind-law. Dividing across objects
 does not type-check. -/
-def div [Div R] {k₁ k₂ k : KindOfProperty} (_h : QuotientKind k₁ k₂ k)
+def div [Div R] [ScalarCarrier R] {k₁ k₂ k : KindOfProperty} (_h : QuotientKind k₁ k₂ k)
     (a : IndividualQuantity o k₁ R) (b : IndividualQuantity o k₂ R) : IndividualQuantity o k R :=
   ⟨a.magnitude / b.magnitude⟩
 
-@[simp] theorem div_magnitude [Div R] {k₁ k₂ k : KindOfProperty} (h : QuotientKind k₁ k₂ k)
+@[simp] theorem div_magnitude [Div R] [ScalarCarrier R] {k₁ k₂ k : KindOfProperty} (h : QuotientKind k₁ k₂ k)
     (a : IndividualQuantity o k₁ R) (b : IndividualQuantity o k₂ R) :
     (div h a b).magnitude = a.magnitude / b.magnitude := rfl
 
 /-- The quotient commutes with the forgetful map to `Quantity`. -/
-theorem toQuantity_div [Div R] {k₁ k₂ k : KindOfProperty} (h : QuotientKind k₁ k₂ k)
+theorem toQuantity_div [Div R] [ScalarCarrier R] {k₁ k₂ k : KindOfProperty} (h : QuotientKind k₁ k₂ k)
     (a : IndividualQuantity o k₁ R) (b : IndividualQuantity o k₂ R) :
     (div h a b).toQuantity = Quantity.div h a.toQuantity b.toQuantity := rfl
 
 /-- **The quotient certificate** (R12): `q` (kind `k`, object `o`) is the quotient of `a` by `b`. -/
-def IsQuotient [Div R] {k₁ k₂ k : KindOfProperty} (_h : QuotientKind k₁ k₂ k)
+def IsQuotient [Div R] [ScalarCarrier R] {k₁ k₂ k : KindOfProperty} (_h : QuotientKind k₁ k₂ k)
     (q : IndividualQuantity o k R) (a : IndividualQuantity o k₁ R) (b : IndividualQuantity o k₂ R) :
     Prop :=
   q.magnitude = a.magnitude / b.magnitude
 
 /-- The smart-constructed quotient satisfies the certificate **by construction**. -/
-theorem div_isQuotient [Div R] {k₁ k₂ k : KindOfProperty} (h : QuotientKind k₁ k₂ k)
+theorem div_isQuotient [Div R] [ScalarCarrier R] {k₁ k₂ k : KindOfProperty} (h : QuotientKind k₁ k₂ k)
     (a : IndividualQuantity o k₁ R) (b : IndividualQuantity o k₂ R) :
     (div h a b).IsQuotient h a b := rfl
 

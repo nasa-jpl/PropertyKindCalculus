@@ -27,6 +27,7 @@ this work's own formalism.
 import PropertyKindCalculus.Iso80000.Part5
 import PropertyKindCalculus.Iso80000.Part12
 import PropertyKindCalculus.QuantityClassification
+import PropertyKindCalculus.QuantityReal
 
 namespace PropertyKindCalculus.Iso80000.Part12.DefiningRelations
 

@@ -79,3 +79,8 @@ attribute [requirement "R12" exemplifies "the kind-law `length = speed × time` 
   PropertyKindCalculus.Examples.Classification.length_is_speed_times_time
 attribute [requirement "R12" exemplifies "a length built through the kind-law, classified `length` by construction (60 × 2 = 120)"]
   PropertyKindCalculus.Examples.Classification.d
+
+/-! ## Rendering ergonomics (R25) -/
+
+attribute [requirement "R25" exemplifies "the AVS backscatter model rendered to `σ⁰ = a·ndvi + …` by @[pkc_math], with the rendering pinned by #guard_msgs"]
+  PropertyKindCalculus.Examples.DocGenMathDemo.avsForward
