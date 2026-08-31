@@ -7,3 +7,4 @@ something which should be rejected type-checks — against the real PhysLib sour
 -/
 import ForPhysLib.Exhibits.RigidBody
 import ForPhysLib.Exhibits.ReferenceFrame
+import ForPhysLib.Exhibits.HarmonicOscillator

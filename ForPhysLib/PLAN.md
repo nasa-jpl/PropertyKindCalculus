@@ -244,6 +244,21 @@ weight, and where the same definition must be instantiated at `ℝ` and at `Floa
 agreement as a theorem. **If that cannot be shown here, the MR11 objection stands and the
 proposal should say so.**
 
+**Status: built** — `ForPhysLib/Exhibits/HarmonicOscillator/Findings.lean`. The four
+findings stand as compiling probes against the real files: the Hamiltonian called with
+`p` and `x` swapped (the collision behind `hamiltonian_eq`'s transposed `funext t x p`);
+`S.force` fed the canonical momentum; the momentum of a momentum through
+`toCanonicalMomentum : E ≃ₗ E`; and `√(m/k)` / `√(ℓ/g)` as well-typed as the correct
+recipes. The MR11 answer is measured, not asserted: five base kinds, one `kind_algebra`
+block, two hand-registered entries joining at `energyK`, a scoped `SMul` restoring the
+`½` — then `(1/2 : ℝ) • (m * (v * v))` against PhysLib's `1 / (2 : ℝ) * S.m * ⟪v, v⟫_ℝ`,
+and `√((S.k / S.m).magnitude)` (one `.magnitude`, one attestation) against `√(S.k / S.m)`,
+with `ω_sq` proved by PhysLib's own proof term. Every finding closes as a
+`#check_failure` — the reciprocal dies *before* the root, `m / k` being no edge of the
+algebra — and `kineticE` instantiates unchanged at `ℝ` and `Float32` with the magnitude
+law one carrier-quantified `rfl` and a `#guard` executing at binary32 (MR27; the MR15
+scope honesty unchanged from the case study).
+
 ### Exhibit D. TwoRovers
 
 **Not a refactor.** Built *on* Exhibits A–C, to make the cost of *not* having Tier 7 visible
@@ -460,7 +475,8 @@ ForPhysLib/
     RigidBody.lean  RigidBody/       ✓   A: three findings probed and closed; the contraction bridged back
     ReferenceFrame.lean  ReferenceFrame/ ✓   B: three laws one type, closed by KVector; req 17 discharged kinded
       Findings.lean  ReferenceFrame.checked_by.yaml ✓
-    HarmonicOscillator/  TwoRovers/  Electromagnetism/
+    HarmonicOscillator.lean  HarmonicOscillator/ ✓  C: four findings closed; MR11 measured; ℝ/Float32 by one rfl
+    TwoRovers/  Electromagnetism/
   Scorecard.lean                     verdicts re-derived so the tables cannot drift from the files
 ```
 

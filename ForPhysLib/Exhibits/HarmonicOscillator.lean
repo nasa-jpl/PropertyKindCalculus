@@ -1,0 +1,8 @@
+/-
+# Exhibit C — HarmonicOscillator
+
+The third exhibit of [PLAN.md](../PLAN.md#exhibit-c-harmonicoscillator): continuity with
+the case study — the same system, now in PhysLib's own authoring, where the ergonomic
+question (MR11) is settled either way. `Findings.lean` holds the build artifacts.
+-/
+import ForPhysLib.Exhibits.HarmonicOscillator.Findings
