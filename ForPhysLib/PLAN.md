@@ -41,6 +41,12 @@ Alongside it, `examination/` — the physics that individuates each kind — mir
 file for file, under the organising rule *a kind lives in the file named by its own
 examination principle*.
 
+**Status: Done for `SpaceAndTime/Space`** — `ForPhysLib.Kinds.Space` (six ISO 80000-3
+kinds, ids/scales/principles verbatim from `Iso80000.Part3`, the position/displacement
+pair distinct by `decide`) with `ForPhysLib.Examination.Space` mirroring it file for file
+(principles declared, `examinedBy` proved by `rfl`, the distinctness derived from the
+principles alone). Landed with Sequencing item 3.
+
 ### Stage 1. The metrology annex
 
 A `metrology/` module pairing each kind with its PhysLib `Dimension` as a `DimensionedKind`,
