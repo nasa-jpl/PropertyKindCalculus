@@ -159,6 +159,16 @@ kind-generic statement of the König split over `Variance.rank2` for the inertia
 `Variance.vector` for `ω` is dimension-generic for free. Build this exhibit for that reason
 as much as for the defect.
 
+**Status: built** — `ForPhysLib/Exhibits/RigidBody/Findings.lean`. The three findings stand
+as `example`s against the imported sources: position `+` momentum and velocity `+` position
+at `Space 3`; the body-fixed inertia tensor contracted with the *spatial* `ω` (and the
+lab + body sum); the pointwise `ω * ω`. The counter-form `rotationalContraction` states
+`ω · (I ω)` once — kind-, dimension- and carrier-generic, exercised verbatim at `n = 7` —
+and a `#check_failure` closes each finding; `rotationalContraction_eq_physlib` bridges the
+body-frame form back to `2 * rotationalKineticEnergy ω_body` in two lines, and
+`koenigTwiceTotal` states the König split with its halves read in *different* frames,
+joined only through `toFrameScalar`.
+
 ### Exhibit B. ReferenceFrame
 
 **Source.** `SpaceAndTime/ReferenceFrame.lean` + `ReferenceFrame/API-map.yaml`
@@ -266,6 +276,7 @@ the pattern against a system with many more parts than a rover. Exhibit D's job 
 discover whether `System`/`Component`/`DedicatedKind` holds up under an assembly — that is
 known — but to show a PhysLib reader what it buys, on a system built out of PhysLib's own
 rigid-body mechanics.
+
 ### Exhibit E. Electromagnetism — the confirmation exhibit
 
 **Built last, and on purpose after the machinery.** Exhibits A–D were designed before the
@@ -432,8 +443,9 @@ ForPhysLib/
   Audits.lean  Audits/               ✓ Stage 4: pinned boundary audit, silent gates, measured ledger
     Space.lean                       ✓   five sites tagged; interior gated empty, ingest boundary measured
     Space.checked_by.yaml            ✓   the API-map delta: checked_by for four existing requirements
-  Exhibits/                          one directory per exhibit above
-    RigidBody/  ReferenceFrame/  HarmonicOscillator/  TwoRovers/  Electromagnetism/
+  Exhibits.lean  Exhibits/           ✓ one directory per exhibit above
+    RigidBody.lean  RigidBody/       ✓   A: three findings probed and closed; the contraction bridged back
+    ReferenceFrame/  HarmonicOscillator/  TwoRovers/  Electromagnetism/
   Scorecard.lean                     verdicts re-derived so the tables cannot drift from the files
 ```
 
