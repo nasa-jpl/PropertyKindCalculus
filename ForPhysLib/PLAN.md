@@ -707,17 +707,18 @@ half-power rule at the states) and the `L⁻ᵈ·Lᵈ = 1` coherence parametric 
 is why the density pair has no registry pairing; the level spacing `ℏωᵢ` through the
 scale-gated `Quantity.sub` (reference-free) against the zero-point energy that reads on
 the *pinned* silent `V(0) = 0` (`potential_zero_at_equilibrium`); and `SatisfiesTISE`
-with the `E •` crossing attested once (`energySMul`). M-T4 is split at the
-generic/quantum seam: PKC's core owns the vocabulary
-(`PropertyKindCalculus/Measurand.lean` — the VIM measurand with estimate, variance
-gated by the carried square edge, indications, and σ/`upper`/`lower` derived once),
-and the directory's `Measurand.lean` realizes it — `Observable` (self-adjointness as
-a field), `Observable.toMeasurand` (`⟪ψ, Âψ⟫` the estimate, the operator's domain the
-states), the Hamiltonian measurand on the Stage-1 square edge with the eigenvalue set
-as indications, and `expectation_eigenstate` — the vocabulary composing across F1,
-the fold, M-T3 and the discharged orthonormality, conditional on exactly the two open
-upstream TODOs it names. Axiom profile of every theorem named here: `propext,
-Classical.choice, Quot.sound`.
+with the `E •` crossing attested once (`energySMul`). M-T4's vocabulary is PKC's at
+both levels: the core owns the measurand (`PropertyKindCalculus/Measurand.lean` — the
+VIM interface with estimate, variance gated by the carried square edge, indications,
+and σ/`upper`/`lower` derived once), the Mathlib-facing layer owns its operator
+realization (`PropertyKindCalculus/Observable.lean` — a self-adjoint operator
+quantity over any `RCLike` field, with `Observable.toMeasurand` the identification),
+and the directory's `Measurand.lean` only instantiates — the Hamiltonian at `𝕜 = ℂ`
+on the Stage-1 square edge with the eigenvalue set as indications, and
+`expectation_eigenstate` — the vocabulary composing across F1, the fold, M-T3 and the
+discharged orthonormality, conditional on exactly the two open upstream TODOs it
+names. Axiom profile of every theorem named here: `propext, Classical.choice,
+Quot.sound`.
 
 ---
 
@@ -763,7 +764,7 @@ ForPhysLib/
       Feasibility.lean               ✓   F1–F4 as build artifacts
       Kinds.lean  Metrology.lean      ✓   Stages 0–1: the lookup written, then proved; coverage pinned
       Kinded.lean                     ✓   Stage 2: licensed-fold eigenvalue, Born density, spacings, kinded TISE
-      Measurand.lean                  ✓   M-T4: PKC's core measurand vocabulary, realized on the Hamiltonian
+      Measurand.lean                  ✓   M-T4: PKC's measurand + observable vocabulary, instantiated on Ĥ
       Orthonormality.lean             ✓   the upstream sorryful `eigenstates_orthonormal`, discharged
   Scorecard.lean                     ✓ verdicts re-derived so the tables cannot drift from the files
 ```

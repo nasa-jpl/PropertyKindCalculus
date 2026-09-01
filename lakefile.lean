@@ -189,6 +189,7 @@ lean_lib «Dimension» where
     .one `PropertyKindCalculus.Function,
     .one `PropertyKindCalculus.DimensionalCoverage,
     .one `PropertyKindCalculus.QuantityReal,
+    .one `PropertyKindCalculus.Observable,
     .one `PropertyKindCalculus.FrameReal,
     .one `PropertyKindCalculus.BoundsReal,
     .one `PropertyKindCalculus.UnitConversion]
