@@ -476,6 +476,140 @@ the part that costs a maintainer nothing and therefore the part that should arri
 
 ---
 
+## The three-directory campaign
+
+The ladder is complete for one directory and the exhibits probe four more — but every
+completed *stage* stands on geometry. `SpaceAndTime/Space` is the right first directory for
+exactly the reasons that make it the wrong last one: small, foundational, nearly
+dimension-one. The maintainer's obvious next question is *"fine for geometry — what does
+this cost on actual physics?"*, and the campaign answers it on three directories, each
+re-authored with the PhysLib files as the literal reference, each chosen because it proves
+something the Space ladder cannot:
+
+| | directory | scope | what it uniquely proves |
+|---|---|---|---|
+| 1 | `QuantumMechanics/HarmonicOscillator` | all 8 files (~1.7k lines; `LadderOperators` is a stub of TODOs) | the capability frontier: kinds over an operator-valued carrier at `ℂ`, half-power dimensions, nondimensionalization as a kind-level event |
+| 2 | `Electromagnetism` | the `Kinematics` chain (potentials → fields → boosts → gauge) | joins and frames where the physics forces them — Exhibit E's five findings paid down as a ladder rather than probed |
+| 3 | `ClassicalMechanics` | the `HarmonicOscillator` and `RigidBody` subtrees | same-dimension discrimination at theorem scale: four energies at one dimension, with `equationOfMotion_tfae` as the verbatim-survival stress test |
+
+### The campaign's four rules
+
+**1. Mirror-and-import, never rewrite.** Each campaign module *imports* the PhysLib module
+it mirrors and builds the kinded layer on top: the Stage-2 invariant (the naked form is
+`rfl`-equal to `.magnitude`) is exhibited per directory, PhysLib's own theorems close
+kinded goals verbatim, and the refusals are pinned beside them. A side-by-side rewrite
+would invite a 20k-line diff review and read as "your library is wrong"; the annex form
+invites accepting a directory of new files that changes nothing. Where the existing
+carrier genuinely cannot support the layer — the requirement-16 situation of Exhibit B —
+that is recorded as a design-input *finding* in the M-series style, never silently
+rewritten around.
+
+**2. Representative subtrees, not every file.** `ClassicalMechanics` and
+`Electromagnetism` are ~10k lines each; the campaign takes the subtrees named above and
+says so. A maintainer extrapolates from three honest subtrees; nobody reads 78 files
+either way. `QuantumMechanics/HarmonicOscillator` is taken whole because it is small and
+because it is the frontier.
+
+**3. The campaign is evidence; the ask stays Stage 1.** "PKC belongs in PhysLib" is a
+conclusion the campaign may some day support — it is not the proposal, and the dependency
+argument for it is not even clean until the parametric dimension/unit branch lands
+upstream. The decision ladder for the maintainer is unchanged from
+[the shape of the proposal](#the-shape-of-the-proposal): (i) the parametric
+dimension/unit PR first — self-contained, independently valuable; (ii) ForPhysLib
+presented as a *browsable downstream artifact* — three directories re-authored, every
+theorem statement surviving, findings and costs measured — with the question put to the
+maintainer being *where they want that conversation*, not whether to merge anything;
+(iii) the first mergeable unit stays Stage 0 + Stage 1 for one directory. And the
+standing constraint: every message to the maintainer is drafted to a file and posted by
+a human (AI-POLICY §3.1).
+
+**4. The pilot goes first because it can falsify.** The quantum oscillator's quantities
+are partial linear operators on a Hilbert space (`Q.HS →ₗ.[ℂ] Q.HS`), its scalars are
+`ℂ`, its characteristic length is built from half-integer-dimension intermediates, and
+its `ξEquiv` rescaling is textbook nondimensionalization. None of that had faced the
+calculus. If the pilot forces core changes, they land in PKC first — which would be the
+third time this benchmark changed the calculus rather than the scorecard, and per rule 5
+of the [rules of engagement](#rules-of-engagement) that is the instrument working.
+
+### The cost line
+
+The one number a maintainer needs that nobody publishes: what the layer costs, measured.
+Each campaign directory ships a README whose cost table counts, against the mirrored
+source, (i) kinds minted (base vs derived-by-`kind_algebra`), (ii) operator-table and
+join entries, (iii) attestations and visible `.magnitude` crossings, and (iv) lines of
+ceremony per line of physics re-authored — every number quoting a build artifact, per
+rule 2 of the [rules of engagement](#rules-of-engagement). This is
+[MR11](REQUIREMENTS.md#mr11-authoring-ergonomics) paid down in public, directory by
+directory.
+
+### Layout: directory-major, mirroring the source
+
+The Space ladder keeps its stage-major tree (`Kinds/Space.lean`, `Metrology/Space.lean`,
+…) as the reference implementation of the ladder itself. Campaign directories are
+**directory-major**: the module path mirrors the PhysLib path, and the files inside are
+named by stage —
+
+```
+ForPhysLib/QuantumMechanics/HarmonicOscillator/
+  Feasibility.lean     the pilot's capability probes (before any ladder stage)
+  Kinds.lean  Metrology.lean  Kinded.lean  Operators.lean  Audits.lean
+  README.md            the findings and the cost line
+```
+
+— because the unit of adoption is a module root and a maintainer browses by physics
+area: `ForPhysLib/QuantumMechanics/HarmonicOscillator/Kinded.lean` reads as *what
+`Physlib/QuantumMechanics/HarmonicOscillator` becomes*.
+
+### The pilot: `QuantumMechanics/HarmonicOscillator`
+
+Feasibility before ladder: the capability questions are answered as build artifacts in
+`Feasibility.lean` before any stage is climbed, because each one could force a core
+change and the cheap time to find out is before the campaign is committed to.
+
+- **F1 — the operator carrier.** `Quantity` stood up at `Q.HS →ₗ.[ℂ] Q.HS`: `T̂` and
+  `V̂` wrapped at kinetic/potential kinds, `T̂ + V̂` elaborating through the curated
+  `KindJoin` at energy and *definitionally equal* to PhysLib's `hamiltonian`
+  (`hamiltonianOpQ_eq`, a `rfl`); the sum of `T̂` with the momentum-squared operator
+  refused (`#check_failure`). The `(2·m)⁻¹ • p̂²` construction is the named crossing: a
+  dimensionful scalar rides Mathlib's `SMul` where no table can see it — the
+  [MR30](REQUIREMENTS.md#mr30-the-unkinded-surface-is-measured) tier, recurring at an
+  operator carrier.
+- **F2 — half-power dimensions.** The library spells the same characteristic length both
+  ways: root-first in the `d`-dimensional file (`ξ i = √ℏ/(√m·√ωᵢ)`, whose intermediates
+  carry half-integer dimension and are named by no kind — half-power kinds are
+  deliberately absent) and radicand-first in the 1D file (`ξ = √(ℏ/(m·ω))`, whose
+  radicand is a two-edge `kind_algebra` chain landing at length²). The probe builds the
+  radicand-first form kinded with one attested root, equal to PhysLib's `ξ` (`xiQ_eq`),
+  and proves the respelling from PhysLib's own `ξ_sq` in one line
+  (`xi_radicand_first`) — only one of the two spellings survives kinding, and the 1D
+  file already writes that one.
+- **F3 — the SI numeral.** `Constants.ℏ` is `⟨1.054571817e-34, _⟩` — the unit system
+  (J·s) committed by docstring prose alone, the QM twin of Exhibit E's `(c := 1)`,
+  pinned by `rfl`; the kinded form is one attested action quantity naming the crossing.
+  And the 1D oscillator's docstring promises "three real parameters … a value of
+  Planck's constant `ℏ`" while the structure carries two fields and takes ℏ from the
+  global constant — a prose finding for the directory README.
+- **F4 — the eigenvalues.** `ℏ ωᵢ (nᵢ + ½)` kinded per mode — action × angular frequency
+  landing at energy through the table, the dimensionless `nᵢ + ½` on the scoped numeral
+  action — with the mode sum proved equal to PhysLib's `eigenEnergy`
+  (`eigenEnergy_eq_sum_modes`; magnitude-level, because aggregating a mode *family* at
+  the kind layer is Stage-2 work, and `Extensive`'s licensed aggregation is the
+  machinery it will use).
+
+**Held for the ladder, deliberately.** The `ξEquiv` nondimensionalization (a kind-level
+reading of a dimensionful rescaling), the Schwartz-space eigenfunctions, and the
+`LadderOperators` stub — a green-field co-authoring opportunity in the RF-annex style:
+`a`, `a†` and `N` are dimensionless, and the file does not exist yet to be re-authored.
+
+**Status: built** — `ForPhysLib/QuantumMechanics/HarmonicOscillator/Feasibility.lean`:
+F1–F4 close as the artifacts named above, and the feasibility verdict is *no core change
+forced* — with one deliberate upstream exception: the carrier vocabulary an operator type
+needs went to the core as `Carrier.ofZeroAdd` (a smart constructor, not an instance, so
+the curated per-application carrier discipline is unchanged) rather than living in the
+probe.
+
+---
+
 ## Layout
 
 What exists today is marked ✓; the rest is what this plan builds.
@@ -513,6 +647,9 @@ ForPhysLib/
     HarmonicOscillator.lean  HarmonicOscillator/ ✓  C: four findings closed; MR11 measured; ℝ/Float32 by one rfl
     TwoRovers.lean  TwoRovers/       ✓   D: totals proved, contamination and undercount refused, licence two-sided
     Electromagnetism.lean  Electromagnetism/ ✓ E: five problems closed; the annex built on the minted machinery
+  QuantumMechanics.lean  QuantumMechanics/ ✓ the campaign, directory-major (see “The three-directory campaign”)
+    HarmonicOscillator.lean  HarmonicOscillator/ ✓ the pilot directory, mirroring the PhysLib path
+      Feasibility.lean               ✓   F1–F4 as build artifacts; the ladder stages follow here
   Scorecard.lean                     ✓ verdicts re-derived so the tables cannot drift from the files
 ```
 

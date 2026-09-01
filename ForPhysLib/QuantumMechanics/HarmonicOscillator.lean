@@ -1,0 +1,9 @@
+/-
+# The pilot directory — `Physlib/QuantumMechanics/HarmonicOscillator`, mirrored
+
+The three-directory campaign's first directory (see `PLAN.md`): directory-major, so this
+tree reads as *what the PhysLib directory becomes*. `Feasibility.lean` answers the
+capability questions first; the ladder stages (`Kinds`, `Metrology`, `Kinded`,
+`Operators`, `Audits`) follow it here.
+-/
+import ForPhysLib.QuantumMechanics.HarmonicOscillator.Feasibility

@@ -103,6 +103,15 @@ class Carrier (R : Type) where
   /-- Addition of magnitudes — the operation extensive aggregation (§13.5) is built from. -/
   add : R → R → R
 
+/-- **Generic carrier from the ambient algebra.** A `Carrier` for any type that already has a
+`Zero` and an `Add` — the one-liner that admits a *non-numeric* carrier (an operator, a
+matrix, a function space) to the quantity layer. A definition, not an instance: which types
+join the curated carrier vocabulary stays a per-application decision (the R10 line), so an
+application registers `instance : Carrier X := Carrier.ofZeroAdd X` for the `X` it means. -/
+@[instance_reducible]
+def Carrier.ofZeroAdd (R : Type) [Zero R] [Add R] : Carrier R :=
+  ⟨0, (· + ·)⟩
+
 /-- **A lawful numeric carrier (the R10 line).** A `Carrier` whose addition additionally obeys
 the additive-monoid laws (associative, commutative, with `zero` a unit). These are exactly the
 laws that hold over `ℝ` (the proof carrier) and `Int`, and that *fail* over an executable
