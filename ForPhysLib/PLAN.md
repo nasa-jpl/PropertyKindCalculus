@@ -637,6 +637,58 @@ with `eigenCoeff`'s normalization cancelling exactly. This is rule 1's "patch, n
 finding" delivered at theorem scale: the mirror directory that costs PhysLib nothing
 also *pays* something. The offer upstream is a human's to make (AI-POLICY §3.1).
 
+**The Stage-2 metrological TODO slate — what the upstream list could not ask for.**
+`Eigenstates.lean` opens with six analysis TODOs; each casts a metrological shadow the
+analysis statement cannot express, because the vocabulary to state it does not exist
+without the kind layer — a sentence that belongs in the directory README verbatim. The
+slate, each item with the artifact it owes (rule 2 of the
+[rules of engagement](#rules-of-engagement)):
+
+- **M-T1 — the wavefunction's half-power dimension** (from orthonormality, discharged).
+  The Born density `|ψ|²` is the kinded object — a probability density over position,
+  dimension `L⁻ᵈ` — and ψ is its attested root at `L^(−d/2)`: F2's radicand-first rule
+  recurring at the states themselves, visible in the source as the `1/√ξᵢ` each
+  `eigenCoeff` carries. *Artifact* (`Kinded.lean`): the density kinded; the
+  orthonormality integrand exhibited as density × volume = dimension one; the quantum
+  numbers `n` looked up from `Iso80000.Part10` (items 10-13.x), not minted.
+- **M-T2 — nondimensionalization and the silent reference** (from the ladder shift).
+  `a = (x/ξ + iξp/ℏ)/√2` is the textbook nondimensionalization event: two ratio edges
+  landing at dimension one, `N = a†a` a Part-10 count, the shift `±1` a count operation.
+  And the eigenvalues `ℏωᵢ(nᵢ+½)` inherit the silently declared potential zero
+  (`V(0) = 0` at equilibrium — a convention riding in a definition, the `c := 1`
+  pattern again); only the spacings are reference-free. *Artifact* (`Kinded.lean`):
+  eigenvalue *differences* landing in a spacing kind through `DifferenceKind`; the
+  zero-point energy read against the declared reference; the missing declaration
+  recorded as a finding.
+- **M-T3 — the eigenvalue equation is the operator→scalar bridge** (from the TISE).
+  `Ĥψ = Eψ` equates an energy-kinded *operator* quantity with an energy-kinded *scalar*
+  acting through Mathlib's `SMul` — F1d's crossing recurring on the right-hand side of
+  the subject's defining equation. *Artifact* (`Kinded.lean`): the kinded TISE
+  connecting `hamiltonianOpQ` (F1) with `modeEnergyQ` (F4) through the eigenstate, the
+  `E •` crossing attested — statable now, while the analysis TISE stays open upstream.
+- **M-T4 — the measurand vocabulary** (from spectrum and self-adjointness). Its own
+  file, `Measurand.lean`, because this is new vocabulary rather than re-authoring:
+  self-adjointness is the mathematical form of *observable*, i.e. VIM's **measurand**;
+  the spectrum is the set of possible **indications**, carrying the operator's kind;
+  `⟪ψ, Ĥψ⟫` is the expectation — an energy, GUM's best estimate — the variance an
+  energy², its σ one attested root (radicand-first again). *Artifact*
+  (`Measurand.lean`): the vocabulary declared and exercised on `hamiltonianOpQ`, with
+  expectation and variance kinded and the R14 uncertainty-ladder hook named.
+
+**The second patch, queued.** Heisenberg's `σ_x · σ_p ≥ ℏ/2` is a *kind-checked*
+inequality — length · momentum is an authored edge landing at action, and the
+comparison against `ℏ/2` is same-kind — and the ground state saturates it with
+`σ_x = ξ/√2`: the characteristic-length species in its metrological role as a
+definitional uncertainty. The saturation is provable with `Orthonormality.lean`'s
+integral machinery (Gaussian second moments) — the natural sibling of the orthonormality
+discharge, again physics the upstream TODO list could not request.
+
+**Held with the spherical/ladder green field.** The `L_z = m·ℏ` crossing — an *angular
+momentum* equated with a count times a constant catalogued as *action*, the catalogue's
+own same-dimension pair (4-11 / 4-32) played at theorem scale, `IsqLift`'s torque/energy
+move on a new pair; and degeneracy as a Part-10-style count — one line, not a
+workstream.
+
 ---
 
 ## Layout
