@@ -615,6 +615,28 @@ needs went to the core as `Carrier.ofZeroAdd` (a smart constructor, not an insta
 the curated per-application carrier discipline is unchanged) rather than living in the
 probe.
 
+**Status: Stages 0–1 climbed** — `Kinds.lean`: eleven kinds, eight of them catalogue
+lookups written as verbatim literals, plus the length species and the named mints (each
+mint saying why the standard does not list it); the three-energy collision decided; the
+directory's lattice with `T̂`/`V̂` mutually comparable at mechanical energy — the pair the
+Hamiltonian joins. `Metrology.lean`: twelve `DimensionedKind` pairings, the Stage-0
+lookup proved against `Iso80000` Parts 3–4 (`decide` on kinds, `rfl` on dimensions), six
+authored edges — the radicand chain (`ℏ/m`, then `/ω`), `ξ·ξ` landing back in the
+radicand, `ℏ·ω` an energy, `p̂·p̂`, and `p̂²/m` a kinetic energy (the law the source's
+`SMul` spelling cannot consume) — with `#kind_dimensional_coverage` pinned clean over
+all six.
+
+**And the pilot discharges the first item of the upstream TODO list.**
+`Orthonormality.lean` proves `eigenstates_orthonormal` — the `@[sorryful]` lemma opening
+`Eigenstates.lean`'s TODO list — statement verbatim, sorry-free (axioms: `propext`,
+`Classical.choice`, `Quot.sound`). The missing piece was exactly the sorry's own hint:
+the `Space d` product-splitting lemma (`integral_prod_coord`, ~25 lines from
+`Space.basis`'s measure-preserving repr plus Mathlib's unconditional n-variable Fubini);
+the 1D content is PhysLib's own `physHermite_orthogonal_cons`/`physHermite_norm_cons`
+with `eigenCoeff`'s normalization cancelling exactly. This is rule 1's "patch, not a
+finding" delivered at theorem scale: the mirror directory that costs PhysLib nothing
+also *pays* something. The offer upstream is a human's to make (AI-POLICY §3.1).
+
 ---
 
 ## Layout
@@ -656,7 +678,9 @@ ForPhysLib/
     Electromagnetism.lean  Electromagnetism/ ✓ E: five problems closed; the annex built on the minted machinery
   QuantumMechanics.lean  QuantumMechanics/ ✓ the campaign, directory-major (see “The three-directory campaign”)
     HarmonicOscillator.lean  HarmonicOscillator/ ✓ the pilot directory, mirroring the PhysLib path
-      Feasibility.lean               ✓   F1–F4 as build artifacts; the ladder stages follow here
+      Feasibility.lean               ✓   F1–F4 as build artifacts
+      Kinds.lean  Metrology.lean      ✓   Stages 0–1: the lookup written, then proved; coverage pinned
+      Orthonormality.lean             ✓   the upstream sorryful `eigenstates_orthonormal`, discharged
   Scorecard.lean                     ✓ verdicts re-derived so the tables cannot drift from the files
 ```
 
