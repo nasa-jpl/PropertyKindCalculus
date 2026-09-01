@@ -126,3 +126,4 @@ import PropertyKindCalculus.Iso80000.Part12
 import PropertyKindCalculus.Iso80000.Part12.DefiningRelations
 import PropertyKindCalculus.Iso80000.Part13
 import PropertyKindCalculus.Iso80000.Part13.DefiningRelations
+import PropertyKindCalculus.Iso80000.IsqLift

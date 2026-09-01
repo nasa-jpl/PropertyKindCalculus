@@ -512,10 +512,12 @@ because it is the frontier.
 
 **3. The campaign is evidence; the ask stays Stage 1.** "PKC belongs in PhysLib" is a
 conclusion the campaign may some day support — it is not the proposal, and the dependency
-argument for it is not even clean until the parametric dimension/unit branch lands
-upstream. The decision ladder for the maintainer is unchanged from
-[the shape of the proposal](#the-shape-of-the-proposal): (i) the parametric
-dimension/unit PR first — self-contained, independently valuable; (ii) ForPhysLib
+argument for it is not even clean until the unit-side parametrization (the
+`parametrize-unit` branch — the unit sibling of the parametric `Dimension B`, whose PRs
+#1447 and #1521 are already merged upstream) lands too. The decision ladder for the
+maintainer is unchanged from
+[the shape of the proposal](#the-shape-of-the-proposal): (i) the unit-side
+parametrization PR first — self-contained, independently valuable; (ii) ForPhysLib
 presented as a *browsable downstream artifact* — three directories re-authored, every
 theorem statement surviving, findings and costs measured — with the question put to the
 maintainer being *where they want that conversation*, not whether to merge anything;
