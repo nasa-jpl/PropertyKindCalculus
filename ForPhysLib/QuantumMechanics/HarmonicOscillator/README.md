@@ -24,8 +24,9 @@ as generic API; nothing quantum-specific remained in either.
 | `Kinded.lean` | Stage 2 | the re-authoring: the licensed-fold eigenvalue, the radicand-first ξ, the Born density, spacings vs the silent reference, the kinded TISE (M-T1–M-T3) |
 | `Measurand.lean` | Stage 2 | M-T4 realized: the Hamiltonian as PKC's `Observable` at `𝕜 = ℂ`, identified as a `Measurand` with the eigenvalue set as indications |
 | `Operators.lean` | Stage 3 | the kind algebra as `KindMul`/`KindDiv` table entries: `*` and `/` elaborate through the table, unregistered pairs refuse |
-| `Audits.lean` | Stage 4 | the directory namespace under CI: the 18-site boundary audit pinned, silent clean/ratchet/dimensional gates, the interior gated empty, the ingest boundary measured |
-| `Orthonormality.lean` | the patch | upstream's `@[sorryful]` `eigenstates_orthonormal`, discharged — statement verbatim, sorry-free |
+| `Audits.lean` | Stage 4 | the directory namespace under CI: the 20-site boundary audit pinned, silent clean/ratchet/dimensional gates, the interior gated empty, the ingest boundary measured |
+| `Orthonormality.lean` | the first patch | upstream's `@[sorryful]` `eigenstates_orthonormal`, discharged — statement verbatim, sorry-free |
+| `Heisenberg.lean` | the second patch | `ℏ/2 ≤ σ_x σ_p` proved for every normalized Schwartz state from upstream's own Robertson bound and CCR; the ground state's `σ_x = ξᵢ/√2` by the Gaussian second moment; the bound kinded through the `length · momentum → action` entry |
 | `HarmonicOscillator.checked_by.yaml` | Stage 4 | the API-map delta, keyed by the upstream `TODO` texts |
 
 ## The cost line
@@ -38,10 +39,10 @@ What the layer costs, measured — every number quoting a build artifact at this
 | dimensional pairings | 16, plus 2 kinds unpaired on purpose (their dimensions `L⁻ᵈ`/`Lᵈ` are the model's parameter; the coherence is the parametric theorem `bornDensity_dim_coherent`) | `Metrology.lean` |
 | kind edges | 21 — 10 authored laws, 10 operator-table entries (7 in Stage 3, 3 probe-era), 1 aggregation license (`±`) | `#kind_dimensional_coverage` pins in `Metrology.lean`/`Operators.lean`; the silent directory-wide `#kind_dimensional_clean` in `Audits.lean` |
 | join entries | 1 — `T̂ + V̂` at mechanical energy; `T̂ + p̂²` refused | `Feasibility.lean` (F1a, F1c) |
-| boundary sites | 18 — 13 attested, 3 raw ingest mints, 2 erasure-only; by tier: 10 ingest, 5 crossings, 1 constant, 1 carrier-vocabulary, 1 emission | the pinned `#kind_boundary_audit` in `Audits.lean` |
-| unkinded surface | interior: 0 positions (gated); ingest boundary: 12 naked positions, all the oscillator structure, its occupation labels, its Hilbert space, or the one emitted `ℝ` | the `#kind_unkinded` ledgers in `Audits.lean` |
-| lines | 1,596 total, of which 622 are code (the rest is documentation, including the pinned audit reports); the mirrored source is 1,727 total / 1,085 code, none of which changed | `wc -l`; comment-stripped count |
-| proof debt | 0 `sorry`; every theorem here at `propext, Classical.choice, Quot.sound`; 1 upstream `@[sorryful]` discharged | `#print axioms` |
+| boundary sites | 20 — 15 attested, 3 raw ingest mints, 2 erasure-only; by tier: 12 ingest, 5 crossings, 1 constant, 1 carrier-vocabulary, 1 emission | the pinned `#kind_boundary_audit` in `Audits.lean` |
+| unkinded surface | interior: 0 positions (gated); ingest boundary: 15 naked positions, all the oscillator structure, its occupation labels, coordinate indices, its Hilbert space, its operator domains, or the one emitted `ℝ` | the `#kind_unkinded` ledgers in `Audits.lean` |
+| lines | 2,099 total, of which 994 are code (the rest is documentation, including the pinned audit reports); the mirrored source is 1,727 total / 1,085 code, none of which changed | `wc -l`; comment-stripped count |
+| proof debt | 0 `sorry`; every theorem here at `propext, Classical.choice, Quot.sound`; 1 upstream `@[sorryful]` discharged and 1 theorem upstream never stated (`heisenberg_uncertainty`) proved | `#print axioms` |
 
 Two cost notes the table cannot carry. First, the ceremony per declaration is small
 and front-loaded: a kinded quantity is one `def` with one attestation or mint, its
@@ -90,6 +91,13 @@ checked, with the layer on.
    probe's catalogue lookups and Stage 0's literals are the same kinds by `rfl`, but
    the operator table is found only at the spelling an instance head is written in —
    so Stage 3 spells each head at the kinds the quantities actually carry.
+9. **Upstream owns every part of Heisenberg's inequality and has never joined them.**
+   The abstract Robertson bound, the canonical commutator, and the self-adjoint
+   position operator all exist upstream, but the bound is instantiated nowhere and
+   `ℏ/2` appears nowhere else in the library. `heisenberg_uncertainty` is that join —
+   for every normalized Schwartz state — and the position side of its ground-state
+   saturation is `σ_x = ξᵢ/√2`, proved by the same Hermite machinery as the
+   orthonormality discharge; the momentum moment is the named remaining analysis.
 
 ## The metrological TODO slate
 
@@ -97,7 +105,9 @@ checked, with the layer on.
 analysis statement cannot express, because the vocabulary to state it does not exist
 without the kind layer. The four shadows are delivered here as M-T1–M-T4 (`Kinded.lean`
 and `Measurand.lean`), and the mirror also *pays*: `Orthonormality.lean` discharges the
-first upstream TODO outright, statement verbatim, and the kinded TISE and the
-indication predicate hold the statements of two more, waiting on the upstream analysis.
+first upstream TODO outright, statement verbatim; `Heisenberg.lean` proves a theorem
+the upstream TODO list could not even request (`ℏ/2 ≤ σ_x σ_p`, from parts the library
+already owned); and the kinded TISE and the indication predicate hold the statements
+of two more, waiting on the upstream analysis.
 The offer upstream is a human's to make
 ([AI-POLICY §3.1](https://github.com/leanprover-community/physlib/blob/master/AI-POLICY.md)).

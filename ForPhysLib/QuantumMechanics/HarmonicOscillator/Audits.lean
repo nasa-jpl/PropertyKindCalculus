@@ -6,7 +6,7 @@ the pilot directory: the whole directory's kinded surface put under CI — probe
 included, because the probe's quantities *are* directory mints and each now carries the
 tier that sanctions it. Five gates, each in the discipline its command enforces:
 
-  * `#kind_boundary_audit` **pinned** over the full directory namespace: eighteen
+  * `#kind_boundary_audit` **pinned** over the full directory namespace: twenty
     boundary sites — every mint, attestation and erasure from `Feasibility.lean`'s
     catalogue readings to `Kinded.lean`'s crossings — each with its tier. A new
     untagged site breaks the pin.
@@ -15,8 +15,9 @@ tier that sanctions it. Five gates, each in the discipline its command enforces:
     ratchet is why `numeralSMul`'s mint is *attested*, not raw: `[carrierVocab]` keeps
     an empty raw column.
   * `#kind_unkinded` over two declared contracts: the *interior* gated empty, and the
-    *ingest boundary* measured — twelve naked positions, all of them the oscillator
-    structure, its occupation labels, its Hilbert space, or the one emitted `ℝ`:
+    *ingest boundary* measured — fifteen naked positions, all of them the oscillator
+    structure, its occupation labels, a coordinate index, its Hilbert space, its
+    operator domains, or the one emitted `ℝ`:
     exactly the Mathlib/PhysLib-interface tier, unkinded by design, counted rather
     than hidden. **The gate placed one crossing during authoring**: `ξEquiv`'s kinded
     reading consumes the raw oscillator (the `ξᵢ` scale factors ride inside `Q`), so
@@ -35,6 +36,7 @@ ForPhysLib module whose build now checks the claim or holds its statement ready.
 -/
 
 import ForPhysLib.QuantumMechanics.HarmonicOscillator.Operators
+import ForPhysLib.QuantumMechanics.HarmonicOscillator.Heisenberg
 import PropertyKindCalculus.BoundaryAudit
 import PropertyKindCalculus.KindLedger
 import PropertyKindCalculus.DimensionalCoverage
@@ -55,6 +57,8 @@ info: boundary audit:
 [kindCrossing] ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinded.xiRoot — attests: lengthK ‹the square root of the registered ξ² chain — roots are not a kind operation›
 [kindCrossing] ForPhysLib.QuantumMechanics.HarmonicOscillator.kineticFromMomentumQ — attests: kineticEnergyK ‹(2·mass)⁻¹ carries momentum² to kinetic energy across Mathlib's SMul›
 [kindEmission] ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinded.rawEigenEnergy — erases (emission-only)
+[kindIngest] ForPhysLib.QuantumMechanics.HarmonicOscillator.Heisenberg.momentumSigmaQ — attests: Kinds.momentum ‹standard deviation of PhysLib's momentumOperator›
+[kindIngest] ForPhysLib.QuantumMechanics.HarmonicOscillator.Heisenberg.positionOpQ — attests: Kinds.length ‹reading of PhysLib's positionOperator›
 [kindIngest] ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinded.bornDensityQ — mints: Kinds.bornDensity
 [kindIngest] ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinded.mQd — mints: massK
 [kindIngest] ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinded.occupationQ — mints: Kinds.quantumNumber
@@ -65,7 +69,7 @@ info: boundary audit:
 [kindIngest] ForPhysLib.QuantumMechanics.HarmonicOscillator.xiQ — attests: lengthK ‹the square root of the registered ξ² chain — roots are not a kind operation›
 [kindIngest] ForPhysLib.QuantumMechanics.HarmonicOscillator.ωQ — attests: angularFrequencyK ‹PhysLib's bare ℝ family ω i›
 [kindIngest] ForPhysLib.QuantumMechanics.HarmonicOscillator.ωQ1 — attests: angularFrequencyK ‹PhysLib's bare ℝ field ω›
-18 boundary site(s), all tagged — clean
+20 boundary site(s), all tagged — clean
 -/
 #guard_msgs (whitespace := lax) in
 #kind_boundary_audit ForPhysLib.QuantumMechanics.HarmonicOscillator
@@ -80,6 +84,8 @@ info: tagged boundary crossings:
 [kindCrossing] ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinded.xiRoot — One attested root carries the radicand to the characteristic length — roots are
 [kindCrossing] ForPhysLib.QuantumMechanics.HarmonicOscillator.kineticFromMomentumQ — **F1d — the named crossing.** PhysLib builds `T̂` as `(2·m)⁻¹ • p̂²`: a dimensionful
 [kindEmission] ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinded.rawEigenEnergy — The emission boundary, stated once as a `def` so it carries its tier: downstream
+[kindIngest] ForPhysLib.QuantumMechanics.HarmonicOscillator.Heisenberg.momentumSigmaQ — The momentum uncertainty read at its kind. Momentum's *essential*
+[kindIngest] ForPhysLib.QuantumMechanics.HarmonicOscillator.Heisenberg.positionOpQ — The position operator read at its kind — self-adjointness is *proved* upstream
 [kindIngest] ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinded.bornDensityQ — **The Born density, kinded** — `|ψ|²` as a probability density over position. The
 [kindIngest] ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinded.mQd — The `d`-dimensional mass, read at its kind (the 1D twin is Feasibility's `mQ`).
 [kindIngest] ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinded.occupationQ — The occupation labels, looked up from the catalogue (ISO 80000-10 item 10-13.1),
@@ -136,13 +142,15 @@ def ingestBoundary : Provenance.Contract String String where
               "ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinded.bornDensityQ",
               "ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinded.rawEigenEnergy",
               "ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinded.energySMul",
-              "ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinded.positionOfDimensionless"]
+              "ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinded.positionOfDimensionless",
+              "ForPhysLib.QuantumMechanics.HarmonicOscillator.Heisenberg.positionOpQ",
+              "ForPhysLib.QuantumMechanics.HarmonicOscillator.Heisenberg.momentumSigmaQ"]
   ports := []
   exits := []
 
 /--
 info: unkinded ledger of 'QuantumMechanics/HarmonicOscillator ingest boundary':
-unkinded: 12 position(s), 6 flow(s)
+unkinded: 15 position(s), 9 flow(s)
 unkinded input mQd/Q : QuantumMechanics.HarmonicOscillator d
 unkinded flow: mQd/Q ⇒ mQd/result
 unkinded input occupationQ/n : Fin d → ℕ
@@ -161,6 +169,12 @@ unkinded input energySMul/ψ : Q.HS
 unkinded output energySMul/result : Q.HS
 unkinded input positionOfDimensionless/Q : QuantumMechanics.HarmonicOscillator d
 unkinded flow: positionOfDimensionless/Q ⇒ positionOfDimensionless/_1
+unkinded input positionOpQ/i : Fin d
+unkinded flow: positionOpQ/i ⇒ positionOpQ/_1
+unkinded input momentumSigmaQ/i : Fin d
+unkinded input momentumSigmaQ/ψ : ↥(𝓟 i).domain
+unkinded flow: momentumSigmaQ/i ⇒ momentumSigmaQ/_1
+unkinded flow: momentumSigmaQ/ψ ⇒ momentumSigmaQ/_1
 -/
 #guard_msgs (whitespace := lax) in #kind_unkinded ingestBoundary
 

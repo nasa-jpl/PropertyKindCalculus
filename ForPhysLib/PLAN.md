@@ -680,19 +680,42 @@ slate, each item with the artifact it owes (rule 2 of the
   (`PropertyKindCalculus/Measurand.lean` + the directory's `Measurand.lean`): the
   vocabulary minted in the Mathlib-free core and realized on `hamiltonianOpQ`.
 
-**The second patch, queued.** Heisenberg's `σ_x · σ_p ≥ ℏ/2` is a *kind-checked*
-inequality — length · momentum is an authored edge landing at action, and the
-comparison against `ℏ/2` is same-kind — and the ground state saturates it with
-`σ_x = ξ/√2`: the characteristic-length species in its metrological role as a
-definitional uncertainty. The saturation is provable with `Orthonormality.lean`'s
-integral machinery (Gaussian second moments) — the natural sibling of the orthonormality
-discharge, again physics the upstream TODO list could not request.
+**The second patch, delivered.** Heisenberg's `σ_x · σ_p ≥ ℏ/2` turned out to be a
+theorem upstream owns every part of and has never joined: the abstract Robertson bound
+(`Operators/Uncertainty.lean`), the canonical commutator (`Commutation.lean`), and the
+self-adjoint position operator all exist there, the bound is instantiated nowhere, and
+`ℏ/2` appears nowhere else in the library. `Heisenberg.lean` proves
+`heisenberg_uncertainty` — `ℏ/2 ≤ σ_xᵢ σ_pᵢ` for every normalized Schwartz state, in
+upstream's own vocabulary, sorry-free — and the ground state's position side,
+`σ_x = ξᵢ/√2`, by the same Hermite–Gaussian machinery as the orthonormality discharge
+(`H₁ = 2X` turns the moments into `integral_hermite_pair` rows). The kind layer then
+closes the loop: position becomes a PKC `Observable`/`Measurand` (its self-adjointness
+is *proved* upstream, so unlike the Hamiltonian's no hypothesis rides along), the
+kinded bound runs the product through Stage 3's `length · momentum → action` entry,
+and saturation at the ground state is delivered conditional on the one Gaussian
+integral that needs the eigenfunction's Schwartz derivative — the momentum moment
+`σ_p(ψ₀) = ℏ/(√2 ξᵢ)`, named as remaining analysis the way the TISE is.
 
 **Held with the spherical/ladder green field.** The `L_z = m·ℏ` crossing — an *angular
 momentum* equated with a count times a constant catalogued as *action*, the catalogue's
 own same-dimension pair (4-11 / 4-32) played at theorem scale, `IsqLift`'s torque/energy
 move on a new pair; and degeneracy as a Part-10-style count — one line, not a
 workstream.
+
+**Status: ladder complete, Stage 0 through Stage 4, plus both patches — the pilot is
+done.** Stage 3 (`Operators.lean`): the directory's seven remaining edges registered as
+`KindMul`/`KindDiv` instances at the kinds the quantities actually carry (instance
+search does not cross the `rfl` bridge between the two kind spellings — a finding),
+with PhysLib's own `ξ_sq` closing the table-built erasure, three refusals pinned, and
+coverage re-pinned over the table; Stage 1 grew the two edges the uncertainty work
+needs (`x·x` and `x·p`, coverage at ten). Stage 4 (`Audits.lean`): the whole directory
+namespace under CI — probe files tier-tagged too — with the 20-site boundary audit and
+crossings registry pinned, boundary-clean + mint-ratchet + dimensional-clean silent,
+the end-to-end-kinded interior gated empty (the gate refused `ξEquiv`'s crossing during
+authoring — correctly), the 15-position ingest boundary measured, and the
+`checked_by.yaml` delta keyed on the upstream TODO texts. The README carries the
+findings and the measured cost line. Axiom profile of every theorem in the directory:
+`propext, Classical.choice, Quot.sound`.
 
 **Status: Stage 2 climbed — the slate's first four items delivered.** Stages 0–1 grew
 the vocabulary the slate needs (quantum number as a Part-10 lookup; the dimensionless
@@ -765,7 +788,12 @@ ForPhysLib/
       Kinds.lean  Metrology.lean      ✓   Stages 0–1: the lookup written, then proved; coverage pinned
       Kinded.lean                     ✓   Stage 2: licensed-fold eigenvalue, Born density, spacings, kinded TISE
       Measurand.lean                  ✓   M-T4: PKC's measurand + observable vocabulary, instantiated on Ĥ
+      Operators.lean                  ✓   Stage 3: the table; PhysLib's ξ_sq closes the table-built erasure
+      Audits.lean                     ✓   Stage 4: 20-site audit pinned; silent gates; interior gated, boundary measured
+      HarmonicOscillator.checked_by.yaml ✓ the API-map delta, keyed on the upstream TODO texts
+      README.md                       ✓   the findings and the measured cost line
       Orthonormality.lean             ✓   the upstream sorryful `eigenstates_orthonormal`, discharged
+      Heisenberg.lean                 ✓   the second patch: ℏ/2 ≤ σ_x·σ_p proved; ground-state σ_x = ξᵢ/√2; kinded bound
   Scorecard.lean                     ✓ verdicts re-derived so the tables cannot drift from the files
 ```
 
