@@ -666,14 +666,19 @@ slate, each item with the artifact it owes (rule 2 of the
   the subject's defining equation. *Artifact* (`Kinded.lean`): the kinded TISE
   connecting `hamiltonianOpQ` (F1) with `modeEnergyQ` (F4) through the eigenstate, the
   `E •` crossing attested — statable now, while the analysis TISE stays open upstream.
-- **M-T4 — the measurand vocabulary** (from spectrum and self-adjointness). Its own
-  file, `Measurand.lean`, because this is new vocabulary rather than re-authoring:
-  self-adjointness is the mathematical form of *observable*, i.e. VIM's **measurand**;
-  the spectrum is the set of possible **indications**, carrying the operator's kind;
-  `⟪ψ, Ĥψ⟫` is the expectation — an energy, GUM's best estimate — the variance an
-  energy², its σ one attested root (radicand-first again). *Artifact*
-  (`Measurand.lean`): the vocabulary declared and exercised on `hamiltonianOpQ`, with
-  expectation and variance kinded and the R14 uncertainty-ladder hook named.
+- **M-T4 — the measurand vocabulary** (from spectrum and self-adjointness). New
+  vocabulary rather than re-authoring, and application-generic, so the vocabulary
+  itself lives in the PKC core: `PropertyKindCalculus/Measurand.lean` is VIM's
+  measurand as a kinded interface — estimate at `k`, variance at the squared kind
+  through a carried `ProductKind k k k₂` edge, the indication predicate, σ and the
+  `estimate ± σ` bounds derived once for every model (the R14 attachment point). The
+  directory then supplies the *quantum realization*: self-adjointness is the
+  mathematical form of *observable*, i.e. the measurand; the spectrum is the set of
+  possible **indications**, carrying the operator's kind; `⟪ψ, Ĥψ⟫` is the
+  expectation — an energy, GUM's best estimate — the variance an energy², its σ the
+  core's attested root (radicand-first again). *Artifact*
+  (`PropertyKindCalculus/Measurand.lean` + the directory's `Measurand.lean`): the
+  vocabulary minted in the Mathlib-free core and realized on `hamiltonianOpQ`.
 
 **The second patch, queued.** Heisenberg's `σ_x · σ_p ≥ ℏ/2` is a *kind-checked*
 inequality — length · momentum is an authored edge landing at action, and the
@@ -702,13 +707,17 @@ half-power rule at the states) and the `L⁻ᵈ·Lᵈ = 1` coherence parametric 
 is why the density pair has no registry pairing; the level spacing `ℏωᵢ` through the
 scale-gated `Quantity.sub` (reference-free) against the zero-point energy that reads on
 the *pinned* silent `V(0) = 0` (`potential_zero_at_equilibrium`); and `SatisfiesTISE`
-with the `E •` crossing attested once (`energySMul`). `Measurand.lean` delivers M-T4:
-`Measurand` (self-adjointness as a field), expectation/variance/σ with the variance
-gated by the authored square edge and σ one attested root back (the R14 attachment
-point), the kinded indication set membership, and `expectation_eigenstate` — the
-vocabulary composing across F1, the fold, M-T3 and the discharged orthonormality,
-conditional on exactly the two open upstream TODOs it names. Axiom profile of every
-theorem named here: `propext, Classical.choice, Quot.sound`.
+with the `E •` crossing attested once (`energySMul`). M-T4 is split at the
+generic/quantum seam: PKC's core owns the vocabulary
+(`PropertyKindCalculus/Measurand.lean` — the VIM measurand with estimate, variance
+gated by the carried square edge, indications, and σ/`upper`/`lower` derived once),
+and the directory's `Measurand.lean` realizes it — `Observable` (self-adjointness as
+a field), `Observable.toMeasurand` (`⟪ψ, Âψ⟫` the estimate, the operator's domain the
+states), the Hamiltonian measurand on the Stage-1 square edge with the eigenvalue set
+as indications, and `expectation_eigenstate` — the vocabulary composing across F1,
+the fold, M-T3 and the discharged orthonormality, conditional on exactly the two open
+upstream TODOs it names. Axiom profile of every theorem named here: `propext,
+Classical.choice, Quot.sound`.
 
 ---
 
@@ -754,7 +763,7 @@ ForPhysLib/
       Feasibility.lean               ✓   F1–F4 as build artifacts
       Kinds.lean  Metrology.lean      ✓   Stages 0–1: the lookup written, then proved; coverage pinned
       Kinded.lean                     ✓   Stage 2: licensed-fold eigenvalue, Born density, spacings, kinded TISE
-      Measurand.lean                  ✓   M-T4: the measurand vocabulary, exercised on the Hamiltonian
+      Measurand.lean                  ✓   M-T4: PKC's core measurand vocabulary, realized on the Hamiltonian
       Orthonormality.lean             ✓   the upstream sorryful `eigenstates_orthonormal`, discharged
   Scorecard.lean                     ✓ verdicts re-derived so the tables cannot drift from the files
 ```

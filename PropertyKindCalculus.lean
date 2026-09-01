@@ -33,6 +33,7 @@ import PropertyKindCalculus.PartWhole
 import PropertyKindCalculus.Decimal
 import PropertyKindCalculus.IndividualQuantity
 import PropertyKindCalculus.QuantityFunction
+import PropertyKindCalculus.Measurand
 import PropertyKindCalculus.Complex
 import PropertyKindCalculus.QuantityRefinement
 import PropertyKindCalculus.QuantityVector
