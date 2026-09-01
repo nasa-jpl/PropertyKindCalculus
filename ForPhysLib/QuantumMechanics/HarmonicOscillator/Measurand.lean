@@ -74,13 +74,15 @@ spectrum. -/
 def hamiltonianMeasurand (Q : PhysHO d) (hsa : IsSelfAdjoint Q.hamiltonian) :
     Measurand energyK energySquared (hamiltonianOpQ Q).magnitude.domain ℝ :=
   (hamiltonianObservable Q hsa).toMeasurand Metrology.mechanicalEnergy_mul_self
-    (fun E => ∃ n : Fin d → ℕ, E.magnitude = Q.eigenEnergy n)
+    (fun E => ∃ n : Fin d → ℕ, E = Kinded.eigenEnergyQ Q n)
 
-/-- The licensed-fold eigenvalue is an indication. -/
+/-- The licensed-fold eigenvalue is an indication — and the membership is stated at
+the kind layer (quantity equality, not magnitude equality), so the indication set
+never reads a naked value. -/
 theorem eigenEnergyQ_isIndication (Q : PhysHO d) (n : Fin d → ℕ)
     (hsa : IsSelfAdjoint Q.hamiltonian) :
     (hamiltonianMeasurand Q hsa).IsIndication (Kinded.eigenEnergyQ Q n) :=
-  ⟨n, Kinded.eigenEnergyQ_magnitude Q n⟩
+  ⟨n, rfl⟩
 
 /-- **The vocabulary composes**: under the kinded TISE (M-T3) and self-adjointness —
 the two named open upstream TODOs — the measurand's best estimate in an eigenstate is

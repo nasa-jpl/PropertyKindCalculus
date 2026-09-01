@@ -38,6 +38,7 @@ are dimensionless).
 import Physlib.QuantumMechanics.HarmonicOscillator.Basic
 import Physlib.QuantumMechanics.HarmonicOscillator.Eigenstates
 import Physlib.QuantumMechanics.HarmonicOscillator.OneDimension.Basic
+import PropertyKindCalculus.BoundaryAudit
 import PropertyKindCalculus.KindAlgebra
 import PropertyKindCalculus.SpecializationLift
 import PropertyKindCalculus.QuantityReal
@@ -114,9 +115,13 @@ open scoped PropertyKindCalculus.OperatorTable
 /-- A dimensionless numeral scales a quantity without changing its kind — the `nᵢ + ½`
 below. Same honesty as Exhibit C's copy of this instance: the action is the
 Mathlib-interface tier (MR30) — a dimensioned magnitude smuggled in as a bare numeral is
-what the audit measures, not what the type prevents. -/
-scoped instance {k : KindOfProperty} {R : Type} [Mul R] : SMul R (Quantity k R) :=
-  ⟨fun c q => ⟨c * q.magnitude⟩⟩
+what the audit measures, not what the type prevents. The mint is attested, not raw,
+so the tier survives the mint ratchet: the reason column carries the adjudication. -/
+@[carrierVocab]
+scoped instance numeralSMul {k : KindOfProperty} {R : Type} [Mul R] :
+    SMul R (Quantity k R) :=
+  ⟨fun c q => .attest "a dimensionless numeral scales; the kind is unchanged"
+    (c * q.magnitude)⟩
 
 /-! ## F1 — the operator carrier -/
 
@@ -129,16 +134,19 @@ noncomputable instance {d : ℕ} : Carrier (HSpace d →ₗ.[ℂ] HSpace d) :=
 variable {d : ℕ}
 
 /-- `T̂` at its kind, at the operator carrier. -/
+@[kindIngest]
 noncomputable def kineticOpQ (Q : PhysHO d) :
     Quantity kineticEnergyK (Q.HS →ₗ.[ℂ] Q.HS) :=
   .attest "reading of PhysLib's kineticOperator" Q.kineticOperator
 
 /-- `V̂` at its kind. -/
+@[kindIngest]
 noncomputable def potentialOpQ (Q : PhysHO d) :
     Quantity potentialEnergyK (Q.HS →ₗ.[ℂ] Q.HS) :=
   .attest "reading of PhysLib's potentialOperator" Q.potentialOperator
 
 /-- `p̂²` at its kind. -/
+@[kindIngest]
 noncomputable def momentumSqOpQ (Q : PhysHO d) :
     Quantity momentumSqK (Q.HS →ₗ.[ℂ] Q.HS) :=
   .attest "reading of PhysLib's momentumSqOperator"
@@ -163,13 +171,15 @@ and heterogeneous kinds have no other `+`. `p̂²` is not an energy until `(2m)�
 scalar rides Mathlib's `SMul`, which no kind table sees — the MR30 Mathlib-interface
 tier, recurring at an operator carrier. The kinded spelling attests the crossing and is
 definitionally PhysLib's `kineticOperator`. -/
-noncomputable def kineticFromMomentumQ (Q : PhysHO d) :
+@[kindCrossing]
+noncomputable def kineticFromMomentumQ (Q : PhysHO d)
+    (psq : Quantity momentumSqK (Q.HS →ₗ.[ℂ] Q.HS)) :
     Quantity kineticEnergyK (Q.HS →ₗ.[ℂ] Q.HS) :=
   .attest "(2·mass)⁻¹ carries momentum² to kinetic energy across Mathlib's SMul"
-    ((2 * Q.m)⁻¹ • (momentumSqOpQ Q).magnitude)
+    ((2 * Q.m)⁻¹ • psq.magnitude)
 
 theorem kineticFromMomentumQ_eq (Q : PhysHO d) :
-    (kineticFromMomentumQ Q).magnitude = Q.kineticOperator := rfl
+    (kineticFromMomentumQ Q (momentumSqOpQ Q)).magnitude = Q.kineticOperator := rfl
 
 /-- Same-kind sums also live at the operator carrier, through the ordinary homogeneous
 instance — nothing about the carrier is special-cased. -/
@@ -180,13 +190,16 @@ noncomputable example (Q : PhysHO d) : Quantity kineticEnergyK (Q.HS →ₗ.[ℂ
 
 /-- ℏ as an action quantity — one attestation naming what the source's type does not
 carry (F3 pins what the numeral commits to). -/
+@[kindConst]
 def hbarQ : Quantity actionK ℝ :=
   .attest "Constants.ℏ — SI numeral; the J·s commitment lives in docstring prose" (ℏ : ℝ)
 
 /-- The 1D mass, read at its kind. -/
+@[kindIngest]
 def mQ (Q₁ : PhysHO1) : Quantity massK ℝ := .attest "PhysLib's bare ℝ field m" Q₁.m
 
 /-- The 1D angular frequency. -/
+@[kindIngest]
 def ωQ1 (Q₁ : PhysHO1) : Quantity angularFrequencyK ℝ :=
   .attest "PhysLib's bare ℝ field ω" Q₁.ω
 
@@ -197,7 +210,11 @@ noncomputable def xiSqQ (Q₁ : PhysHO1) : Quantity xiSqK ℝ := hbarQ / mQ Q₁
 theorem xiSqQ_eq (Q₁ : PhysHO1) : (xiSqQ Q₁).magnitude = (ℏ : ℝ) / (Q₁.m * Q₁.ω) :=
   div_div _ _ _
 
-/-- **F2b.** One attested root lands the length: kinded `ξ`, equal to PhysLib's own. -/
+/-- **F2b.** One attested root lands the length: kinded `ξ`, equal to PhysLib's own.
+The tier is ingest, not crossing, by the audit's own binder rule: the argument is the
+oscillator, not a kinded quantity — the probe mints from the source in one step. The
+Stage-2 `xiRoot` is the same root factored as a crossing (`Quantity xiSqK → lengthK`). -/
+@[kindIngest]
 noncomputable def xiQ (Q₁ : PhysHO1) : Quantity lengthK ℝ :=
   .attest "the square root of the registered ξ² chain — roots are not a kind operation"
     (√((xiSqQ Q₁).magnitude))
@@ -225,6 +242,7 @@ example : (ℏ : ℝ) = 1.054571817e-34 := rfl
 /-! ## F4 — the eigenvalues -/
 
 /-- The `d`-dimensional mode frequency at its kind. -/
+@[kindIngest]
 def ωQ (Q : PhysHO d) (i : Fin d) : Quantity angularFrequencyK ℝ :=
   .attest "PhysLib's bare ℝ family ω i" (Q.ω i)
 

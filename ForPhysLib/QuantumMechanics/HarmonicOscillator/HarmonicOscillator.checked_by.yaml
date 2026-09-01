@@ -1,0 +1,25 @@
+# The Stage-4 API-map delta proposed for `Physlib/QuantumMechanics/HarmonicOscillator`
+# (MR29: every satisfied requirement has a machine-checkable witness).
+#
+# This directory has no `API-map.yaml` upstream; its requirement ledger is the `TODO`
+# command list opening `Eigenstates.lean`. So the proposed delta has two parts: the
+# `API-map.yaml` the directory would gain if the maintainer wants one (whose
+# `Requirements:` would begin as the TODO list, verbatim), and — the part this file
+# actually carries — a `checked_by:` field per TODO, keyed by its current text,
+# naming the ForPhysLib module whose build now checks the claim or holds its
+# statement ready. Nothing upstream changes; a TODO with no entry here is untouched.
+
+deltas:
+
+  - description: "Prove that the QHO eigenstates in the Cartesian basis (Hermite polynomials) are orthonormal."
+    checked_by:
+      - "ForPhysLib.QuantumMechanics.HarmonicOscillator.Orthonormality"  # discharged: eigenstates_orthonormal, statement verbatim, sorry-free (axioms: propext, Classical.choice, Quot.sound)
+      - "ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinded"          # its diagonal consumed: the Born density's ∫ρ = 1 is a theorem off the discharge
+
+  - description: "Prove that the QHO eigenstates in the Cartesian basis (Hermite polynomials) satisfy the TISE."
+    checked_by:
+      - "ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinded"          # statement held ready: SatisfiesTISE — the kinded TISE with the E• crossing attested; the proof stays this TODO
+
+  - description: "Prove that the (point) spectrum of the self-adjoint Hamiltonian is `Set.range Q.eigenEnergy`."
+    checked_by:
+      - "ForPhysLib.QuantumMechanics.HarmonicOscillator.Measurand"       # the eigenvalue set held as the Hamiltonian measurand's indication predicate; this TODO is the statement that the predicate IS the spectrum
