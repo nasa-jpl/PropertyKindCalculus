@@ -602,7 +602,12 @@ reading of a dimensionful rescaling), the Schwartz-space eigenfunctions, and the
 `a`, `a†` and `N` are dimensionless, and the file does not exist yet to be re-authored.
 
 **Status: built** — `ForPhysLib/QuantumMechanics/HarmonicOscillator/Feasibility.lean`:
-F1–F4 close as the artifacts named above, and the feasibility verdict is *no core change
+F1–F4 close as the artifacts named above. The base kinds are **catalogue lookups**, not
+local mints — the Stage-0 asymmetry exercised: mass (4-1), action (4-32), angular
+frequency (3-18) and the kinetic/potential/mechanical energy family (4-28.1–3) come from
+`Iso80000` Parts 3 and 4, and the characteristic length is a species in Part 3's own
+`lengthSpecies` pattern; only what the standard does not list (the radicand chain, the
+momentum-squared mint) is local. The feasibility verdict is *no core change
 forced* — with one deliberate upstream exception: the carrier vocabulary an operator type
 needs went to the core as `Carrier.ofZeroAdd` (a smart constructor, not an instance, so
 the curated per-application carrier discipline is unchanged) rather than living in the
