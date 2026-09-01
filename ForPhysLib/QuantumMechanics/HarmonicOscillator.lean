@@ -11,4 +11,5 @@ import ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinds
 import ForPhysLib.QuantumMechanics.HarmonicOscillator.Metrology
 import ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinded
 import ForPhysLib.QuantumMechanics.HarmonicOscillator.Measurand
+import ForPhysLib.QuantumMechanics.HarmonicOscillator.Operators
 import ForPhysLib.QuantumMechanics.HarmonicOscillator.Orthonormality

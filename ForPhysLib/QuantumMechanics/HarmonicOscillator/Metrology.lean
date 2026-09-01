@@ -12,13 +12,16 @@ principles from PKC's ISO 80000 catalogue; this module imports that catalogue an
 the agreement by `decide` — kind by kind, and dimension by dimension. A Stage-0 edit
 that drifts from the standard stops compiling here.
 
-**The laws are the directory's own equations.** Eight edges, each one a formula the
-PhysLib files already write: `ℏ/m` and then `/ω` (the ξ² radicand chain of the 1D
+**The laws are the directory's own equations.** Ten edges, each one a formula the
+directory's physics writes: `ℏ/m` and then `/ω` (the ξ² radicand chain of the 1D
 file), `ξ·ξ` landing back in the radicand (PhysLib's own `ξ_sq`), `ℏ·ω` an energy (the
-eigenvalues), `p̂·p̂` (the squared momentum operator), and `p̂²/m` a kinetic energy —
+eigenvalues), `p̂·p̂` (the squared momentum operator), `p̂²/m` a kinetic energy —
 the law behind `kineticOperator = (2m)⁻¹ • p̂²`, authored here even though the source's
 spelling rides Mathlib's `SMul` where no table sees it (the F1d crossing; the audit
-stage measures that gap, this stage states the law it fails to consume).
+stage measures that gap, this stage states the law it fails to consume) — `x/ξ` (the
+Hermite argument), energy · energy (the variance's kind), `x·x` (the potential's
+quadratic form, and a position variance's radicand), and `x·p` landing at action (the
+uncertainty product, comparable with `ℏ/2` because both are actions).
 -/
 
 import ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinds
@@ -122,7 +125,7 @@ example : quantumNumberDK.dim = (Iso80000.Part10.quantumNumber).dim := rfl
 
 /-! ## The directory's kind algebra, and its dimensional audit
 
-Eight authored edges — the equations the directory's files actually write.
+Ten authored edges — the equations the directory's physics actually writes.
 `#kind_dimensional_coverage` then walks every authored edge and checks it in PhysLib's
 dimension group. -/
 
@@ -171,17 +174,31 @@ theorem mechanicalEnergy_mul_self :
     ProductKind mechanicalEnergy mechanicalEnergy energySquared :=
   ProductKind.ofRatio _ _ _
 
+/-- Length · length lands at length squared — the `x²` of the potential's quadratic
+form, and the radicand of a position uncertainty: a position measurand's variance
+lives at this kind, its σ one attested root back to length (radicand-first again). -/
+theorem length_mul_length : ProductKind length length xiSqRadicand :=
+  ProductKind.ofRatio _ _ _
+
+/-- Length · momentum lands at action — the uncertainty product's kind law: `σ_x · σ_p`
+is comparable with `ℏ/2` because both sides are actions, and that comparability is this
+edge plus the same-kind order, nothing else. -/
+theorem length_mul_momentum : ProductKind length momentum action :=
+  ProductKind.ofRatio _ _ _
+
 /--
 info: dimensional coverage:
 [coherent] action / mass → specificAction
 [coherent] action · angularFrequency → mechanicalEnergy
 [coherent] characteristicLength · characteristicLength → xiSqRadicand
 [coherent] length / characteristicLength → dimensionlessCoordinate
+[coherent] length · length → xiSqRadicand
+[coherent] length · momentum → action
 [coherent] mechanicalEnergy · mechanicalEnergy → energySquared
 [coherent] momentum · momentum → momentumSquared
 [coherent] momentumSquared / mass → kineticEnergy
 [coherent] specificAction / angularFrequency → xiSqRadicand
-8 kind edge(s), all dimensionally coherent — clean
+10 kind edge(s), all dimensionally coherent — clean
 -/
 #guard_msgs (whitespace := lax) in
 #kind_dimensional_coverage ForPhysLib.QuantumMechanics.HarmonicOscillator.Metrology
