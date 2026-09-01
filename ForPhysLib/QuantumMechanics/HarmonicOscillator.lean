@@ -9,4 +9,6 @@ capability questions first; the ladder stages (`Kinds`, `Metrology`, `Kinded`,
 import ForPhysLib.QuantumMechanics.HarmonicOscillator.Feasibility
 import ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinds
 import ForPhysLib.QuantumMechanics.HarmonicOscillator.Metrology
+import ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinded
+import ForPhysLib.QuantumMechanics.HarmonicOscillator.Measurand
 import ForPhysLib.QuantumMechanics.HarmonicOscillator.Orthonormality

@@ -68,6 +68,11 @@ def momentum : KindOfProperty := { id := "momentum", scale := .ratio }
 /-- Length — item 3-1.1, the genus the characteristic length specializes. -/
 def length : KindOfProperty := { id := "length", scale := .ratio }
 
+/-- Quantum number — ISO 80000-10 item 10-13.1: the occupation labels `n : Fin d → ℕ`
+that index the eigenstates. A catalogue lookup, not a mint — the standard lists the
+kind the directory's `n` already is. -/
+def quantumNumber : KindOfProperty := { id := "quantum number", scale := .ratio }
+
 /-! ## The species and the local mints — what the standard does not list -/
 
 /-- The characteristic length `ξ` — a species of length (item 3-1.1) in Part 3's
@@ -90,6 +95,36 @@ root-first spelling's half-power intermediates are named by no kind here, on pur
 def xiSqRadicand : KindOfProperty :=
   { id := "length squared — the ξ² radicand", scale := .ratio }
 
+/-- The dimensionless coordinate `x̃ᵢ = xᵢ/ξᵢ` — the argument the eigenfunctions hand
+to the Hermite polynomials (`eigenfunction_apply` writes `x i / Q.ξ i`), and the
+coordinate `ξEquiv` rescales. The nondimensionalization event, named as a kind. -/
+def dimensionlessCoordinate : KindOfProperty :=
+  { id := "dimensionless coordinate", scale := .ratio }
+
+/-- The Born density `|ψ|²` — a probability density over position, the kinded object
+the wavefunction is the root of. ψ itself carries the half-power dimension `L^(−d/2)`
+and is named by **no kind here, on purpose** — the F2 radicand-first rule recurring at
+the states themselves (the `1/√ξᵢ` each `eigenCoeff` carries is that root's trace). -/
+def bornDensity : KindOfProperty :=
+  { id := "probability density over position", scale := .ratio }
+
+/-- The `d`-dimensional volume element the Born density integrates against. *Not* the
+catalogue's volume (item 3-4, `L³`): its dimension is `Lᵈ`, fixed by the model's `d`,
+which is why its dimensional pairing is a parametric theorem rather than a registry
+entry. -/
+def spatialVolume : KindOfProperty :=
+  { id := "spatial volume — the d-dimensional volume element", scale := .ratio }
+
+/-- Probability — dimension one, but not a bare number: the kind `∫ρ dV` lands in,
+distinct from the quantum numbers that share its dimension. -/
+def probability : KindOfProperty := { id := "probability", scale := .ratio }
+
+/-- Energy squared — the energy variance's kind (`⟪Ĥψ,Ĥψ⟫ − ⟪ψ,Ĥψ⟫²`); its root, the
+standard uncertainty σ, is one attested crossing back to energy (radicand-first
+again). -/
+def energySquared : KindOfProperty :=
+  { id := "energy squared — the variance's kind", scale := .ratio }
+
 /-! ## Distinctness — the collisions the vocabulary exists to prevent
 
 The three energies share the dimension `M·L²·T⁻²`; nothing dimensional separates
@@ -109,6 +144,13 @@ theorem potentialEnergy_ne_mechanicalEnergy : potentialEnergy ≠ mechanicalEner
 /-- The characteristic length is not bare length — the species carries its
 examination principle (the ground-state width), the genus carries none. -/
 theorem characteristicLength_ne_length : characteristicLength ≠ length := by decide
+
+/-- A probability is not a quantum number, though both live at dimension one — the
+dimension-1 conflation is exactly what the kind layer exists to prevent. -/
+theorem probability_ne_quantumNumber : probability ≠ quantumNumber := by decide
+
+/-- The variance's kind is not the energy it is the variance of. -/
+theorem energySquared_ne_mechanicalEnergy : energySquared ≠ mechanicalEnergy := by decide
 
 /-! ## The directory's specialization lattice
 

@@ -689,6 +689,27 @@ own same-dimension pair (4-11 / 4-32) played at theorem scale, `IsqLift`'s torqu
 move on a new pair; and degeneracy as a Part-10-style count — one line, not a
 workstream.
 
+**Status: Stage 2 climbed — the slate's first four items delivered.** Stages 0–1 grew
+the vocabulary the slate needs (quantum number as a Part-10 lookup; the dimensionless
+coordinate, Born density, volume element, probability and energy-squared mints; two new
+edges — `x/ξ` and `energy · energy` — with the coverage pin at eight, all coherent).
+`Kinded.lean` delivers the re-authoring and M-T1–M-T3: the eigenvalue as a
+`DifferenceKind`-licensed fold over the mode family erasing to `eigenEnergy`; the
+`d`-dimensional ξ radicand-first, its erasure to the root-first source *being* the F2
+respelling; `ξEquiv` read as the `x/ξ` edge run backwards; the Born density kinded with
+`∫ρ dV = 1` a theorem off the discharged orthonormality (ψ itself named by no kind — the
+half-power rule at the states) and the `L⁻ᵈ·Lᵈ = 1` coherence parametric in `d`, which
+is why the density pair has no registry pairing; the level spacing `ℏωᵢ` through the
+scale-gated `Quantity.sub` (reference-free) against the zero-point energy that reads on
+the *pinned* silent `V(0) = 0` (`potential_zero_at_equilibrium`); and `SatisfiesTISE`
+with the `E •` crossing attested once (`energySMul`). `Measurand.lean` delivers M-T4:
+`Measurand` (self-adjointness as a field), expectation/variance/σ with the variance
+gated by the authored square edge and σ one attested root back (the R14 attachment
+point), the kinded indication set membership, and `expectation_eigenstate` — the
+vocabulary composing across F1, the fold, M-T3 and the discharged orthonormality,
+conditional on exactly the two open upstream TODOs it names. Axiom profile of every
+theorem named here: `propext, Classical.choice, Quot.sound`.
+
 ---
 
 ## Layout
@@ -732,6 +753,8 @@ ForPhysLib/
     HarmonicOscillator.lean  HarmonicOscillator/ ✓ the pilot directory, mirroring the PhysLib path
       Feasibility.lean               ✓   F1–F4 as build artifacts
       Kinds.lean  Metrology.lean      ✓   Stages 0–1: the lookup written, then proved; coverage pinned
+      Kinded.lean                     ✓   Stage 2: licensed-fold eigenvalue, Born density, spacings, kinded TISE
+      Measurand.lean                  ✓   M-T4: the measurand vocabulary, exercised on the Hamiltonian
       Orthonormality.lean             ✓   the upstream sorryful `eigenstates_orthonormal`, discharged
   Scorecard.lean                     ✓ verdicts re-derived so the tables cannot drift from the files
 ```

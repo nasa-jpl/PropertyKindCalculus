@@ -12,7 +12,7 @@ principles from PKC's ISO 80000 catalogue; this module imports that catalogue an
 the agreement by `decide` — kind by kind, and dimension by dimension. A Stage-0 edit
 that drifts from the standard stops compiling here.
 
-**The laws are the directory's own equations.** Six edges, each one a formula the
+**The laws are the directory's own equations.** Eight edges, each one a formula the
 PhysLib files already write: `ℏ/m` and then `/ω` (the ξ² radicand chain of the 1D
 file), `ξ·ξ` landing back in the radicand (PhysLib's own `ξ_sq`), `ℏ·ω` an energy (the
 eigenvalues), `p̂·p̂` (the squared momentum operator), and `p̂²/m` a kinetic energy —
@@ -26,6 +26,7 @@ import PropertyKindCalculus.Dimension
 import PropertyKindCalculus.DimensionalCoverage
 import PropertyKindCalculus.Iso80000.Part3
 import PropertyKindCalculus.Iso80000.Part4
+import PropertyKindCalculus.Iso80000.Part10
 
 namespace ForPhysLib.QuantumMechanics.HarmonicOscillator.Metrology
 
@@ -68,6 +69,22 @@ def specificActionDK : DimensionedKind :=
   { kind := specificAction, dim := Iso80000.Part4.MDim.angularMomentum / Dim.mass }
 /-- The ξ² radicand is `L²`. -/
 def xiSqRadicandDK : DimensionedKind := { kind := xiSqRadicand, dim := Dim.area }
+/-- A quantum number is dimension one. -/
+def quantumNumberDK : DimensionedKind := { kind := quantumNumber, dim := Dim.one }
+/-- The dimensionless coordinate `x/ξ` is dimension one. -/
+def dimensionlessCoordinateDK : DimensionedKind :=
+  { kind := dimensionlessCoordinate, dim := Dim.one }
+/-- Probability is dimension one — a third kind at that dimension (with the quantum
+numbers and the dimensionless coordinate): the dimension-1 conflation, again. -/
+def probabilityDK : DimensionedKind := { kind := probability, dim := Dim.one }
+/-- Energy squared — the variance's dimension. -/
+def energySquaredDK : DimensionedKind :=
+  { kind := energySquared, dim := Iso80000.Part4.MDim.energy * Iso80000.Part4.MDim.energy }
+
+/- The Born density and the `d`-dimensional volume element have **no entry here, on
+purpose**: their dimensions (`L⁻ᵈ`, `Lᵈ`) are parameters of the model, not constants of
+the vocabulary, so their dimensional coherence is a parametric *theorem* in `Kinded.lean`
+rather than a registry pairing the coverage walk could pin once. -/
 
 /-! ## The lookup, proved
 
@@ -88,6 +105,7 @@ example : length           = Iso80000.Part3.length.kind           := by decide
 example : characteristicLength
     = (Iso80000.Part3.lengthSpecies "characteristic length"
         { id := "ground-state-width" }).kind := by decide
+example : quantumNumber = (Iso80000.Part10.quantumNumber).kind := by decide
 
 example : massDK.dim             = Iso80000.Part4.mass.dim             := rfl
 example : actionDK.dim           = Iso80000.Part4.action.dim           := rfl
@@ -100,10 +118,11 @@ example : lengthDK.dim           = Iso80000.Part3.length.dim           := rfl
 example : characteristicLengthDK.dim
     = (Iso80000.Part3.lengthSpecies "characteristic length"
         { id := "ground-state-width" }).dim := rfl
+example : quantumNumberDK.dim = (Iso80000.Part10.quantumNumber).dim := rfl
 
 /-! ## The directory's kind algebra, and its dimensional audit
 
-Six authored edges — the equations the directory's files actually write.
+Eight authored edges — the equations the directory's files actually write.
 `#kind_dimensional_coverage` then walks every authored edge and checks it in PhysLib's
 dimension group. -/
 
@@ -140,15 +159,29 @@ theorem momentumSquared_div_mass :
     QuotientKind momentumSquared mass kineticEnergy :=
   QuotientKind.ofRatio _ _ _
 
+/-- `x / ξ` lands at the dimensionless coordinate — the nondimensionalization edge the
+eigenfunctions write (`eigenfunction_apply`'s Hermite argument is `x i / Q.ξ i`). -/
+theorem length_div_characteristicLength :
+    QuotientKind length characteristicLength dimensionlessCoordinate :=
+  QuotientKind.ofRatio _ _ _
+
+/-- Energy · energy is the variance's kind — the edge `Measurand.lean`'s variance
+lands through; its root back to energy is one attested crossing, not an edge. -/
+theorem mechanicalEnergy_mul_self :
+    ProductKind mechanicalEnergy mechanicalEnergy energySquared :=
+  ProductKind.ofRatio _ _ _
+
 /--
 info: dimensional coverage:
 [coherent] action / mass → specificAction
 [coherent] action · angularFrequency → mechanicalEnergy
 [coherent] characteristicLength · characteristicLength → xiSqRadicand
+[coherent] length / characteristicLength → dimensionlessCoordinate
+[coherent] mechanicalEnergy · mechanicalEnergy → energySquared
 [coherent] momentum · momentum → momentumSquared
 [coherent] momentumSquared / mass → kineticEnergy
 [coherent] specificAction / angularFrequency → xiSqRadicand
-6 kind edge(s), all dimensionally coherent — clean
+8 kind edge(s), all dimensionally coherent — clean
 -/
 #guard_msgs (whitespace := lax) in
 #kind_dimensional_coverage ForPhysLib.QuantumMechanics.HarmonicOscillator.Metrology
