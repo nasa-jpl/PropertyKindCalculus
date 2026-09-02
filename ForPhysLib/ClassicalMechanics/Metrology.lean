@@ -17,12 +17,12 @@ at the joule (kinetic, potential, mechanical, the Lagrangian, König's two speci
 two at `T⁻¹` (the two ω's), two at `T` (duration and period): ten of the
 twenty-two rows collide with another row. Upstream, every one of the ten is `ℝ`.
 
-**The laws are the two subtrees' own equations.** Thirteen edges, each one a formula
+**The laws are the two subtrees' own equations.** Fourteen edges, each one a formula
 the directory's physics writes: Hooke's `F = −k·x`; the radicand `ω² = k/m`; the
 canonical momentum in both directions (`m·v` and `p/m`); Newton's `m·a`; the Legendre
 `⟪p, v⟫`; the trig boundary's `ω·t`; the trajectory's `v₀/ω` and the amplitude–phase
 `A·ω`; the period's `2π/ω` (the `2π` a full turn of phase); the rigid body's `I·ω`
-and `ω·L`; and conservation's `∂ₜE`.
+and `ω·L`; the decomposition's `ω × r`; and conservation's `∂ₜE`.
 -/
 
 import ForPhysLib.ClassicalMechanics.Kinds
@@ -159,7 +159,7 @@ example : squaredAngularFrequencyDK.dim = Iso80000.Part3.angularAcceleration.dim
 
 /-! ## The directory's kind algebra, and its dimensional audit
 
-Thirteen authored edges — the equations the two subtrees actually write.
+Fourteen authored edges — the equations the two subtrees actually write.
 `#kind_dimensional_coverage` then walks every authored edge and checks it in PhysLib's
 dimension group. -/
 
@@ -235,6 +235,14 @@ theorem angularVelocity_mul_angularMomentum :
     ProductKind angularVelocity angularMomentum rotationalKineticEnergy :=
   ProductKind.ofRatio _ _ _
 
+/-- `ω × r` — the Landau–Lifshitz velocity decomposition's rotational term
+(`velocity_eq_angularVelocity`): an angular velocity times a displacement from the
+centre of mass is a velocity. Grown at Stage-2 time for the rigid body's
+decomposition — the pilot's stage-growth pattern. -/
+theorem angularVelocity_mul_displacement :
+    ProductKind angularVelocity displacement velocity :=
+  ProductKind.ofRatio _ _ _
+
 /-- `∂ₜE` — what energy conservation says vanishes
 (`energy_conservation_of_equationOfMotion`): a mechanical energy per duration is a
 power. -/
@@ -247,6 +255,7 @@ info: dimensional coverage:
 [coherent] angularFrequency · displacement → velocity
 [coherent] angularFrequency · duration → phaseAngle
 [coherent] angularVelocity · angularMomentum → rotationalKineticEnergy
+[coherent] angularVelocity · displacement → velocity
 [coherent] mass · acceleration → force
 [coherent] mass · velocity → momentum
 [coherent] mechanicalEnergy / duration → power
@@ -257,7 +266,7 @@ info: dimensional coverage:
 [coherent] springConstant / mass → squaredAngularFrequency
 [coherent] springConstant · displacement → force
 [coherent] velocity / angularFrequency → displacement
-13 kind edge(s), all dimensionally coherent — clean
+14 kind edge(s), all dimensionally coherent — clean
 -/
 #guard_msgs (whitespace := lax) in
 #kind_dimensional_coverage ForPhysLib.ClassicalMechanics.Metrology

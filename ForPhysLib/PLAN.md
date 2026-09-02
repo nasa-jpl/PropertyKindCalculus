@@ -1041,6 +1041,31 @@ radicand shares 3-13's dimension as a different kind); thirteen authored edge la
 each a formula the subtrees write, with `#kind_dimensional_coverage` pinned clean
 over all thirteen.
 
+**Status: Stage 2 climbed, both subtrees** — `Kinded/HarmonicOscillator.lean` and
+`Kinded/RigidBody.lean`, one namespace, with the 21-example `rfl` bridge stated once.
+The oscillator half: the kinetic energy authored through the Legendre edge
+(`½⟪p,v⟫` — two table products, one numeral) erasing to `½m⟪ẋ,ẋ⟫` by the inner
+product's one-component expansion; **the pentad passed at the strongest grade** — all
+five formulations of the equation of motion re-stated with kinded readings (Newton
+through the table, Hamilton's momentum trajectory through the kinded canonical
+momentum, both variational integrands *being* the Lagrangian mint and the kinded
+Hamiltonian by `rfl`) and the `List.TFAE` closed by `S.equationOfMotion_tfae xₜ hx`
+**as the literal proof term**, because every kinded spelling erases definitionally;
+the trajectory authored from its data (phase and `v₀/ω` edges, numeral trig, same-kind
+sum) with the normal form and the periodicity consumed at the same reading;
+conservation as a kind statement (`∂ₜE` read at the *watt*, vanishing on shell); and
+the geometric subtree at one reading (the mass metric is `2T`, upstream's coordinate
+formula the erasure). The rigid-body half: the functional's moments ingested and the
+**parallel-axis theorem consumed** as a same-kind sum at 4-7; the two ω-tensors both
+at 3-12 with skew-symmetry a same-kind negation and the conjugation riding the
+numeral action (direction cosines are dimensionless); the Landau–Lifshitz
+`v = V + ω × r` with the cross product *fully table-expressed* (two edge products and
+a same-kind subtraction per component — Stage 1 grew the `ω·r` edge for it, the
+pilot's stage-growth pattern, coverage re-pinned at fourteen); the rotational energy
+contracted through the table (three `I·ω`, three `ω·L`, one numeral) erasing by
+upstream's own `T = ½ω·L`; and the motion-preservation theorems consumed at the
+ingests (mass, centre-of-mass tracking, the solid sphere's zero first moment).
+
 
 ---
 
