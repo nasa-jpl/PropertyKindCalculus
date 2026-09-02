@@ -6,3 +6,6 @@ blueprint/scripts/__pycache__/
 # artifact (churning HTML + content-hashed search shards + PDF) never pollutes main's history.
 /docs
 /docs.new
+
+# temporary files
+/Scratch
