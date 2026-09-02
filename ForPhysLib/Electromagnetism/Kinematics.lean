@@ -8,3 +8,4 @@ answers the capability questions first; the ladder stages follow it here.
 import ForPhysLib.Electromagnetism.Kinematics.Feasibility
 import ForPhysLib.Electromagnetism.Kinematics.Kinds
 import ForPhysLib.Electromagnetism.Kinematics.Metrology
+import ForPhysLib.Electromagnetism.Kinematics.Kinded

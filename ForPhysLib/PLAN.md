@@ -848,6 +848,29 @@ a difference quotient), the chart edge, the tensor's electric reading, both boos
 mixings, the gauge edge, and the Poincaré-gauge line integrals — with
 `#kind_dimensional_coverage` pinned clean over all twelve.
 
+**Status: Stage 2 climbed** — `Kinded.lean` re-authors the chain in its own derivation
+order. The slices are named crossings (`timeSlice` re-parameterizes by `c·t ↦ t` where
+no table sees it). The electric field is *built from its parts* and erases
+definitionally: `−∇φ` and `∂ₜ𝐀` as two attested derivative crossings — the gradient one
+carrying the scale fact that a derivative of the interval-scale potential is a
+difference quotient — and their same-kind difference *is* upstream's `electricField` by
+`rfl`. The curl and matrix readings erase by `rfl` too. The chart/extent pair delivers
+the two mints: `derivQ` at the gauge-dependent kind, `fieldStrengthQ` at the
+frame-covariant one, with `pureGauge_extent_zero` (a pure translation has zero extent —
+upstream's `toFieldStrength_ofGradient` at the kinded reading) witnessing that the
+antisymmetrization is what erases the gauge dependence; the frame-bound readings come
+off the tensor exactly as Stage 1's edges say (`electricReadingQ` = `−c·F⁰ⁱ` through
+the registered edge, `magneticReadingQ` the spatial block). The boost ledger closes:
+the magnetic mirror `B' = γ(B + (β/c)·E)` consumed whole through the downward edge, and
+the transverse-transverse block proved fixed. And **gauge invariance reaches the
+fields**: `electricField_gaugeTransform` and `magneticFieldMatrix_gaugeTransform` are
+proved here and stated nowhere upstream — a candidate patch in the orthonormality
+pattern — then consumed at the kinded readings. Axiom profile of every theorem:
+`propext, Classical.choice, Quot.sound`. One instance-search note for Stage 3: the
+`rfl` bridge between Feasibility's catalogue lookups and Stage 0's literals again does
+not carry instance search (the pilot's finding 8) — `boostedBQ` needed one type
+ascription across it.
+
 ---
 
 ## Layout
@@ -903,7 +926,8 @@ ForPhysLib/
     Kinematics.lean  Kinematics/     ✓ the chain: potentials → fields → boosts → gauge
       Feasibility.lean               ✓   F1–F5 as build artifacts
       Kinds.lean  Metrology.lean     ✓   Stages 0–1: lookups + two mints; twelve edges, coverage pinned
-      Kinded.lean  Operators.lean  Audits.lean  README.md
+      Kinded.lean                    ✓   Stage 2: the chain re-authored; E rebuilt by rfl; gauge reaches the fields
+      Operators.lean  Audits.lean  README.md
   Scorecard.lean                     ✓ verdicts re-derived so the tables cannot drift from the files
 ```
 
