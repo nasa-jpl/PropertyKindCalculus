@@ -743,6 +743,93 @@ discharged orthonormality, conditional on exactly the two open upstream TODOs it
 names. Axiom profile of every theorem named here: `propext, Classical.choice,
 Quot.sound`.
 
+### Directory 2: `Electromagnetism/Kinematics`
+
+The chain, taken whole — eight files, ~3.2k lines, `EMPotential.lean` at the root and
+everything else derived from it: the potential split into `ScalarPotential`/`VectorPotential`,
+the `FieldStrength` tensor, the `ElectricField`/`MagneticField` readings, `Boosts`, and
+`GaugeTransformation`. What this directory uniquely proves: **joins and frames where the
+physics forces them** — Exhibit E's five problems paid down as a ladder rather than probed.
+
+The structural fact the whole plan hangs on, read from `toTimeAndSpace` and to be pinned as
+the first feasibility artifact: the library's spacetime coordinate is `x⁰ = c·t` — a
+*length* — so `SpaceTime d` is dimensionally uniform, and the `φ/c` in `ofPotentials` is
+not a convention but the move that makes the four-vector `A^μ = (φ/c, 𝐀)` a *single kind*:
+the magnetic vector potential (item 6-32, a catalogue lookup). Everything the chain then
+does is one homogeneous tensor being read back into frame-bound kinds through one velocity
+edge, and the feasibility questions follow that spine:
+
+- **F1 — the classical-field carrier, and the abbreviation paid down at the chain's own
+  types.** `Quantity` stood up at `Time → Space d → EuclideanSpace ℝ (Fin d)` (a field of
+  vectors — `Carrier.ofZeroAdd` over Mathlib's pointwise instances) and at the *structure*
+  `ElectromagneticPotential d` (upstream's own `AddCommGroup`). `E` and `B` wrapped at the
+  Part-6 kinds over the same naked carrier; Exhibit E's swap — `expectsE B` accepted, a
+  temperature accepted as a charge density — re-run and `#check_failure`ed at the types the
+  chain actually uses. [MR19](REQUIREMENTS.md#mr19-an-indexed-family-is-not-a-set-of-vector-components):
+  the wrap is of the whole field; components stay plain indexing under it.
+- **F2 — one homogeneous tensor, two readings, one velocity edge.** `scalarPotential` is
+  `c · A⁰` — the 6-32 → 6-11 crossing *is* multiplication by the speed of light, and
+  upstream's `ofPotentials_scalarPotential` closes the kinded round trip. The same edge
+  recurs one level up: `F = ∂A − ∂A` is uniformly at the flux-density dimension (`∂` is a
+  per-length operation on a length-coordinate spacetime), the spatial block *is* the
+  magnetic field (`fieldStrengthMatrix_inr_inr_eq_magneticFieldMatrix`), and the electric
+  reading exists only through the crossing: `E_i = −c · F⁰ᵢ`
+  (`electricField_eq_fieldStrengthMatrix`). `E` and `B` remain distinct kinds — the
+  Gaussian-basis point, [MR4](REQUIREMENTS.md#mr4-same-dimension-kinds-stay-apart) — so the
+  tensor's entries carry a *third*, frame-covariant kind that erases to both.
+- **F3 — the silent numeral, now load-bearing.** `(c : SpeedOfLight := 1)` rides an
+  optional argument on *every* definition in the chain — `scalarPotential`,
+  `vectorPotential`, `electricField`, `magneticField`, `magneticFieldMatrix` — and defaults
+  at every bare call site; Exhibit E pinned this once, the ladder must now carry the
+  declared alternative through every re-authored definition. One attested quantity at
+  6-35.2, declared once, consumed everywhere.
+- **F4 — boosts are the forced joins.** `E'_⊥ = γ(E + cβ·B)` sums an electric-field reading
+  with a velocity-scaled magnetic one — a sum that elaborates *only* through F2's edge —
+  and `B' = γ(B + (β/c)·E)` is its mirror
+  (`electricField_apply_x_boost_succ`, `magneticFieldMatrix_apply_x_boost_zero_succ`).
+  [MR18](REQUIREMENTS.md#mr18-frame-covariance-and-what-survives-it) answered at theorem
+  scale: the kind that survives a boost is the tensor's; the `E` and `B` kinds are
+  frame-bound readings, licensed to mix exactly where the physics mixes them.
+- **F5 — gauge freedom is the interval scale, and χ is a flux.** The catalogue itself
+  records electric potential (6-11.1) as interval-scale; upstream now *proves* the torsor
+  structure — `gaugeTransform_zero` and `gaugeTransform_gaugeTransform` are the additive
+  action, `toFieldStrength_gaugeTransform` says the field strength is the reference-free
+  extent. And the gauge function is not dimensionless: `∂^μ χ` lands at 6-32, so `χ` is a
+  *magnetic flux* field (6-22.1 — a lookup, not a mint). Exhibit E problem 4's torsor
+  pattern, paid down at the four-potential with the group action already proved upstream.
+
+**The ladder then follows the pilot's stages** — `Kinds.lean` (Part-6 lookups should
+dominate; the field-strength kind is the expected mint, saying why the standard does not
+list a frame-covariant entry), `Metrology.lean` (the velocity edge in both directions, the
+per-length derivative edges `∇φ`, `∂ₜ𝐀`, `∇×𝐀`, coverage pinned), `Kinded.lean` (the
+re-authored chain: potential → fields → the boost laws → gauge as the scale-gated
+subtraction), `Operators.lean`, `Audits.lean`, `README.md` with the cost line —
+directory-major at `ForPhysLib/Electromagnetism/Kinematics/`, every module importing the
+PhysLib module it mirrors.
+
+**Held, deliberately.** The `Distributional/` twin of the chain (a second spelling of the
+same physics — a finding about duplication, not a re-authoring target); Maxwell's equations
+(`ThreeDimension/`, `Dynamics/` — the next subtree, not this one); and the RF/AC annex,
+which stays with Exhibit E where it was built.
+
+**Status: feasibility built** — `ForPhysLib/Electromagnetism/Kinematics/Feasibility.lean`:
+F1–F5 close as the artifacts named above. The Stage-0 vocabulary is **lookups only** —
+every kind the file needs is in IEC 80000-6, the mirror image of the pilot's mint-heavy
+opening (the one expected mint, the field-strength tensor's frame-covariant entry kind,
+is deferred to `Kinds.lean`). The velocity edge is registered twice (6-32-side landing at
+the ratio-scale 6-11.2, tesla-side landing at 6-10) with all four dimensional
+certificates discharged by `decide` in the catalogue's own dimension group, and the
+interval-scale 6-11.1 *refusing* both `ofRatio` forms — the catalogue's scale
+adjudicating where upstream's `ℝ` cannot. The chain's own derived `magneticField` is
+accepted as an `ElectricField` (F1a) and the kinded swap refused; the `/c` is pinned at
+`ofPotentials`'s time slot by `rfl` and `scalarPotential = c·A⁰` closed round-trip by
+upstream's own lemma; the bare-call-site default is pinned; the boost law is consumed
+whole (`boost_reads_through_the_edge` — upstream's `electricField_apply_x_boost_succ`
+erasing the kinded `γ·(E + c·(β·B))`, with `E + B` refused beside it); and the gauge
+torsor is three theorems off upstream's own invariance and group-action lemmas, with the
+gauge function at 6-22.1. Axiom profile of every theorem: `propext, Classical.choice,
+Quot.sound`.
+
 ---
 
 ## Layout
@@ -794,6 +881,10 @@ ForPhysLib/
       README.md                       ✓   the findings and the measured cost line
       Orthonormality.lean             ✓   the upstream sorryful `eigenstates_orthonormal`, discharged
       Heisenberg.lean                 ✓   the second patch: ℏ/2 ≤ σ_x·σ_p proved; ground-state σ_x = ξᵢ/√2; kinded bound
+  Electromagnetism.lean  Electromagnetism/ ✓ the campaign's second directory (see “Directory 2”)
+    Kinematics.lean  Kinematics/     ✓ the chain: potentials → fields → boosts → gauge
+      Feasibility.lean               ✓   F1–F5 as build artifacts
+      Kinds.lean  Metrology.lean  Kinded.lean  Operators.lean  Audits.lean  README.md
   Scorecard.lean                     ✓ verdicts re-derived so the tables cannot drift from the files
 ```
 

@@ -23,4 +23,5 @@ import ForPhysLib.Operators
 import ForPhysLib.Audits
 import ForPhysLib.Exhibits
 import ForPhysLib.QuantumMechanics
+import ForPhysLib.Electromagnetism
 import ForPhysLib.Scorecard
