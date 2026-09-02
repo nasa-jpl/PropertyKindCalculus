@@ -571,7 +571,7 @@ theorem toAnyArray_add_single {Γ' : List Shape} {s : Shape} (w : TorchLean.Tens
           (mkAny (addSpec (TorchLean.TensorPack.get (α := ℝ) w c.i) (Tensor.castShape u c.h.symm)))
           hc := by
   apply Array.ext'
-  simp [TorchLean.TensorPack.toShapeErasedArray, toAnyList_add_single]
+  simp [toAnyList_add_single]
 
 /-- **The sparse accumulate**: one `addGradAll` at slot `c` on an erased context performs the
     one-hot context addition — provided the tape's node at `c` is live and carries the slot's
@@ -750,7 +750,7 @@ theorem backwardDenseFromStep_push (t : RTape) (nd : RNode) (id : Nat)
   set node := t.nodes[id]'hid with hnode_def
   have hid_acc : id < acc.size := by rw [hacc]; exact hid
   by_cases hreq : node.requiresGrad = false
-  · simp [Runtime.Autograd.Tape.backwardDenseFromStep, Spec.SomeTensor.cast, hnode, hnode', hreq,
+  · simp [Runtime.Autograd.Tape.backwardDenseFromStep, hnode, hnode', hreq,
       bind, Except.bind, pure, Except.pure, Except.map]
   · have hreq' : node.requiresGrad = true := by
       cases hb : node.requiresGrad
@@ -769,7 +769,7 @@ theorem backwardDenseFromStep_push (t : RTape) (nd : RNode) (id : Nat)
         have hfold := foldContribsArray_push t nd cs acc y hacc hbound
         simpa [Runtime.Autograd.Tape.backwardDenseFromStep, Spec.SomeTensor.cast, hnode, hnode',
           hreq', hgets, hget, hshape, hback, bind, Except.bind, pure, Except.pure] using hfold
-    · simp [Runtime.Autograd.Tape.backwardDenseFromStep, Spec.SomeTensor.cast, hnode, hnode', hreq', hgets, hget,
+    · simp [Runtime.Autograd.Tape.backwardDenseFromStep, hnode, hnode', hreq', hgets, hget,
         hshape, bind, Except.bind, pure, Except.pure, Except.map, res_throw_def]
 
 /-- The reverse loop over the first `n` ids of the extended tape restricts to the prefix. -/

@@ -315,7 +315,7 @@ end Dist
 
 /-! ## T3/T4 — the linearized SSPRC deviation, and its identity with the Willink combine -/
 
-open Dist
+open _root_.PropertyKindCalculus.Uncertainty.Dist
 
 /-- The point mass at `0` — the convolution identity and the empty-model deviation. -/
 def deltaZero : Dist := [(0, 1)]

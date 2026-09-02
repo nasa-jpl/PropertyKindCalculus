@@ -100,14 +100,14 @@ theorem getRaw_flattenCtx :
   | s :: Γ, .cons x xs, ⟨0, h0⟩ => by
       show CtxVec.getBlock (Γ := s :: Γ) ⟨0, h0⟩ (flattenCtx (TensorPack.cons x xs)) = tensorToVec (t := x)
       ext j
-      simp [CtxVec.getBlock, flattenCtx, Fin.append, Fin.addCases]
+      simp [CtxVec.getBlock]
   | s :: Γ, .cons x xs, ⟨Nat.succ k, hk⟩ => by
       have htail :
           (vecOfFun (n := ctxSize Γ) fun j =>
               flattenCtx (Γ := s :: Γ) (TensorPack.cons x xs) (Fin.natAdd (Spec.Shape.size s) j))
             = flattenCtx (Γ := Γ) xs := by
         ext j
-        simp [flattenCtx, Fin.append_right]
+        simp
       show CtxVec.getBlock (Γ := Γ) ⟨k, Nat.lt_of_succ_lt_succ hk⟩
           (vecOfFun (n := ctxSize Γ) fun j =>
             flattenCtx (Γ := s :: Γ) (TensorPack.cons x xs) (Fin.natAdd (Spec.Shape.size s) j))
@@ -709,7 +709,7 @@ theorem toAnyArray_extract_takeLeft {Γ ss : List Shape} (w : TorchLean.TensorPa
       | cons x xs =>
         simp [Algebra.TensorPack.takeLeft, TorchLean.TensorPack.toShapeErasedArray, List.take_succ_cons, ih xs]
   apply Array.ext'
-  simp [TorchLean.TensorPack.toShapeErasedArray, hlist Γ w]
+  simp [hlist Γ w]
 
 /-- An erased typed context realises its own flattening (`ArrCorr` is inhabited by erasure). -/
 theorem arrCorr_flattenCtx {Γ : List Shape} (u : TorchLean.TensorPack ℝ Γ) :

@@ -111,8 +111,8 @@ def massK : KindOfProperty := { id := "mass", scale := .ratio }
 -- Directionality is API-shape, executably too: a `LowerBound` has no `≥`-style query
 -- of its own — `leb` and `hitBy` are its only Bool formers, and both keep it on its own
 -- side of the comparison; there is no way to ask an upper-bound question of a lower bound.
-#check_failure (fun (x : Quantity lengthK Int) => lb.exceededBy x)
-#check_failure (fun (x : Quantity lengthK Int) => lb.geb x)
+#check_failure (fun (_x : Quantity lengthK Int) => lb.exceededBy _x)
+#check_failure (fun (_x : Quantity lengthK Int) => lb.geb _x)
 
 /-! ## The representation cast
 
