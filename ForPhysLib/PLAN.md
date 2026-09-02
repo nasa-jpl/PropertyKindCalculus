@@ -871,6 +871,21 @@ pattern — then consumed at the kinded readings. Axiom profile of every theorem
 not carry instance search (the pilot's finding 8) — `boostedBQ` needed one type
 ascription across it.
 
+**Status: Stage 3 climbed** — `Operators.lean` registers the three remaining edges
+that have scalar call sites (`φ-difference/c`, `c·F⁰ⁱ`, `E/c`; the two upward entries
+predate it in Feasibility), with the coverage re-pinned over the table. The seven
+law-only edges stay laws, and that is the directory's Stage-3 finding: in a field
+theory the *majority* of the kind algebra rides `fderiv` and `∫` where no table sees
+it — the pilot's `p̂²/m` precedent as the common case, left to the audit stage to
+measure. The interval potential gets its torsor: `potentialSubQ` (`−ᵥ` to the
+ratio-scale extent) feeds the `φ/c` entry while `φ/c` on the potential itself is
+refused — the only outbound arithmetic 6-11.1 has. `electricReadingFromTable` shows
+the one-`*` spelling is *definitionally* Stage 2's call-site witness, with upstream's
+lemma closing its magnitude; the boost's downward mixing is one `/`. The refusals are
+subtree boundaries: `E·B` (Poynting needs `μ₀` — `Vacuum/`), `F·F` (the Lagrangian
+density — `Dynamics/`), and chart + extent (same tesla, no join: antisymmetrization is
+a crossing, never an addition).
+
 ---
 
 ## Layout
@@ -927,7 +942,8 @@ ForPhysLib/
       Feasibility.lean               ✓   F1–F5 as build artifacts
       Kinds.lean  Metrology.lean     ✓   Stages 0–1: lookups + two mints; twelve edges, coverage pinned
       Kinded.lean                    ✓   Stage 2: the chain re-authored; E rebuilt by rfl; gauge reaches the fields
-      Operators.lean  Audits.lean  README.md
+      Operators.lean                 ✓   Stage 3: three entries + the torsor demo; law-only majority named; refusals = subtree boundaries
+      Audits.lean  README.md
   Scorecard.lean                     ✓ verdicts re-derived so the tables cannot drift from the files
 ```
 
