@@ -34,7 +34,7 @@ has to be reconstructed from the Status lines scattered below.
 | Review + post the Stage-1 ask | Nicolas (AI-POLICY §3.1) |
 | Decision-ladder step (iii): the Stage-0+1 PR for `SpaceAndTime/Space` | Claude drafts it if question 2 of the ask gets a yes |
 | Materialize the QM patch offer (Orthonormality + Heisenberg) and the EM gauge pair as fork branches | Claude, on request — same recipe as `solid-sphere-inertia` |
-| Held physics, not on the ladder: the Distributional twin, Maxwell dynamics (DONE: σ_p moment — saturation unconditional; L_z = m·ℏ — `AngularMomentum.lean`; degeneracy — `Degeneracy.lean`; `LadderOperators.lean` — upstream's eleven-TODO stub delivered at the Schwartz-CLM layer) | Claude, in progress |
+| Held physics, not on the ladder: Maxwell dynamics (DONE: σ_p moment — saturation unconditional; L_z = m·ℏ; degeneracy; `LadderOperators.lean` — the eleven-TODO stub delivered; `DistributionalTwin.lean` — the duplication finding pinned) | Claude, in progress |
 | Campaign wrap-up artifact (cross-directory scorecard) | undecided whether wanted |
 
 ---
@@ -841,10 +841,12 @@ subtraction), `Operators.lean`, `Audits.lean`, `README.md` with the cost line �
 directory-major at `ForPhysLib/Electromagnetism/Kinematics/`, every module importing the
 PhysLib module it mirrors.
 
-**Held, deliberately.** The `Distributional/` twin of the chain (a second spelling of the
-same physics — a finding about duplication, not a re-authoring target); Maxwell's equations
-(`ThreeDimension/`, `Dynamics/` — the next subtree, not this one); and the RF/AC annex,
-which stays with Exhibit E where it was built.
+**Held, deliberately.** Maxwell's equations (`ThreeDimension/`, `Dynamics/` — the next
+subtree, not this one); and the RF/AC annex, which stays with Exhibit E where it was
+built. The `Distributional/` twin's duplication finding is delivered:
+`DistributionalTwin.lean` pins the re-authored law by `rfl`, prices the twin's kind cost
+at zero, and pins the missing smooth → distributional embedding as the statement a
+deduplication theorem still needs.
 
 **Status: feasibility built** — `ForPhysLib/Electromagnetism/Kinematics/Feasibility.lean`:
 F1–F5 close as the artifacts named above. The Stage-0 vocabulary is **lookups only** —

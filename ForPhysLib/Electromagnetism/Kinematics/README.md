@@ -25,8 +25,9 @@ either: every capability the chain needed was already minted.
 | `Metrology.lean` | Stage 1 | 12 `DimensionedKind` pairings with the collisions visible, the Stage-0 lookup proved by `decide`/`rfl`, twelve authored edge laws, coverage pinned clean |
 | `Kinded.lean` | Stage 2 | the re-authoring: the slices, `E = −∇φ − ∂ₜ𝐀` rebuilt and erasing by `rfl`, chart vs extent, the frame readings off the tensor, the boost's magnetic mirror, gauge invariance reaching the fields |
 | `Operators.lean` | Stage 3 | three table registrations + the interval potential's torsor; the law-only majority named; the refusals are subtree boundaries |
-| `Audits.lean` | Stage 4 | the directory namespace under CI: the 24-site boundary audit pinned, silent clean/ratchet/dimensional gates, a **12-crossing interior** gated empty, the ingest boundary measured |
+| `Audits.lean` | Stage 4 | the directory namespace under CI: the 27-site boundary audit pinned, silent clean/ratchet/dimensional gates, a **12-crossing interior** gated empty, the ingest boundary measured |
 | `Kinematics.checked_by.yaml` | Stage 4 | the API-map delta, keyed by the upstream `TODO` texts |
+| `DistributionalTwin.lean` | the duplication finding | upstream's `Distributional/` chain re-spells the same physics at the distribution carrier — the twin's `E` is definitionally the chain's `−∇φ − ∂ₜ𝐀` (pinned by `rfl`), its readings land at the chain's existing kinds at **zero vocabulary cost** (the mint ratchet enforces it), and the missing smooth→distributional embedding — the statement a deduplication theorem needs — is pinned as a `#check_failure` |
 
 ## The cost line
 
@@ -38,7 +39,7 @@ What the layer costs, measured — every number quoting a build artifact at this
 | dimensional pairings | 12, with the collisions visible in the registry: three kinds at the tesla, two at the volt | `Metrology.lean` |
 | kind edges | 12 authored laws, of which 5 are table-registered (2 in `Feasibility.lean`, 3 in Stage 3) and 7 are law-only — their divisions live inside `fderiv` and `∫`, where no table sees them | `#kind_dimensional_coverage` pins in `Metrology.lean`/`Operators.lean`; the silent directory-wide `#kind_dimensional_clean` in `Audits.lean` |
 | join entries | **0** — every sum the chain writes (`E = −∇φ − ∂ₜ𝐀`, the boost mixings, the gauge shift) is same-kind after an edge or a crossing | `Kinds.lean` header; the `#check_failure` beside each |
-| boundary sites | 24 — 23 attested, 1 erasure-only, **0 raw mints**; by tier: 10 ingest, 12 crossings, 1 carrier-vocabulary, 1 emission | the pinned `#kind_boundary_audit` in `Audits.lean` |
+| boundary sites | 27 — 26 attested, 1 erasure-only, **0 raw mints**; by tier: 11 ingest, 14 crossings, 1 carrier-vocabulary, 1 emission | the pinned `#kind_boundary_audit` in `Audits.lean` |
 | unkinded surface | interior: 0 positions across **12 end-to-end-kinded crossings** (gated); ingest boundary: 28 naked positions over 11 readings — all the potential structure, the evaluation points, the `SpeedOfLight`, or the one emitted field | the `#kind_unkinded` ledgers in `Audits.lean` |
 | lines | 1,560 total, of which 620 are code (the rest is documentation, including the pinned audit reports); the mirrored source is 3,214 total / 2,016 code, none of which changed | `wc -l`; comment-stripped count |
 | proof debt | 0 `sorry`; every theorem here at `propext, Classical.choice, Quot.sound`; 2 theorems upstream never stated (`electricField_gaugeTransform`, `magneticFieldMatrix_gaugeTransform`) proved | `#print axioms` |

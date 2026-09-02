@@ -31,6 +31,7 @@ claim or holds its statement ready.
 -/
 
 import ForPhysLib.Electromagnetism.Kinematics.Operators
+import ForPhysLib.Electromagnetism.Kinematics.DistributionalTwin
 import PropertyKindCalculus.BoundaryAudit
 import PropertyKindCalculus.KindLedger
 import PropertyKindCalculus.DimensionalCoverage
@@ -44,6 +45,8 @@ open PropertyKindCalculus
 /--
 info: boundary audit:
 [carrierVocab] ForPhysLib.Electromagnetism.Kinematics.numeralSMul — attests: (kind-parametric) ‹a dimensionless numeral scales; the kind is unchanged›
+[kindCrossing] ForPhysLib.Electromagnetism.Kinematics.DistributionalTwin.distElectricFieldQ — attests: electricFieldK ‹the twin's -∇φ - ∂ₜ𝐀 — distributional derivatives ride the same crossing›
+[kindCrossing] ForPhysLib.Electromagnetism.Kinematics.DistributionalTwin.distFieldStrengthQ — attests: Kinds.fieldStrength ‹the twin's F = dA — the antisymmetrized distributional derivative›
 [kindCrossing] ForPhysLib.Electromagnetism.Kinematics.Kinded.derivQ — attests: Kinds.potentialGradient ‹∂_μ A^ν — the per-coordinate chart; gauge-dependent until antisymmetrized›
 [kindCrossing] ForPhysLib.Electromagnetism.Kinematics.Kinded.fieldStrengthMatrixQ — attests: Kinds.fieldStrength ‹the extent in the standard basis›
 [kindCrossing] ForPhysLib.Electromagnetism.Kinematics.Kinded.fieldStrengthQ — attests: Kinds.fieldStrength ‹η∂A − η∂A — the antisymmetrization erases the gauge dependence›
@@ -57,6 +60,7 @@ info: boundary audit:
 [kindCrossing] ForPhysLib.Electromagnetism.Kinematics.gaugeShiftQ — attests: vectorPotentialK ‹the gauge translation: the potential moves, the kind does not›
 [kindCrossing] ForPhysLib.Electromagnetism.Kinematics.scalarPotentialQ — attests: electricPotentialK ‹c·A⁰ — the velocity edge, landing on the interval-scale potential›
 [kindEmission] ForPhysLib.Electromagnetism.Kinematics.Kinded.rawElectricField — erases (emission-only)
+[kindIngest] ForPhysLib.Electromagnetism.Kinematics.DistributionalTwin.distPotentialQ — attests: vectorPotentialK ‹the distributional A^μ — the twin carrier at the chain's kind›
 [kindIngest] ForPhysLib.Electromagnetism.Kinematics.Kinded.fieldStrengthAtQ — attests: Kinds.fieldStrength ‹pointwise reading of the chain's fieldStrengthMatrix›
 [kindIngest] ForPhysLib.Electromagnetism.Kinematics.Operators.scalarPotentialAtQ — attests: electricPotentialK ‹pointwise reading of the chain's scalarPotential — gauge-fixed, interval›
 [kindIngest] ForPhysLib.Electromagnetism.Kinematics.electricFieldAtQ — attests: electricFieldK ‹pointwise reading of the chain's electricField›
@@ -67,7 +71,7 @@ info: boundary audit:
 [kindIngest] ForPhysLib.Electromagnetism.Kinematics.potentialQ — attests: vectorPotentialK ‹the four-potential — homogeneous at 6-32 because A⁰ = φ/c›
 [kindIngest] ForPhysLib.Electromagnetism.Kinematics.speedQ — attests: speedOfLightK ‹the unit-system choice, declared once instead of defaulted per call site›
 [kindIngest] ForPhysLib.Electromagnetism.Kinematics.speedRQ — attests: speedOfLightK ‹the declared speed, at the table's carrier›
-24 boundary site(s), all tagged — clean
+27 boundary site(s), all tagged — clean
 -/
 #guard_msgs (whitespace := lax) in
 #kind_boundary_audit ForPhysLib.Electromagnetism.Kinematics
@@ -75,6 +79,8 @@ info: boundary audit:
 /--
 info: tagged boundary crossings:
 [carrierVocab] ForPhysLib.Electromagnetism.Kinematics.numeralSMul — A dimensionless numeral scales a quantity without changing its kind — `β` and `γ`
+[kindCrossing] ForPhysLib.Electromagnetism.Kinematics.DistributionalTwin.distElectricFieldQ — The twin's electric field at the chain's 6-10: the same `-∇φ - ∂ₜ𝐀`, with the
+[kindCrossing] ForPhysLib.Electromagnetism.Kinematics.DistributionalTwin.distFieldStrengthQ — The twin's field-strength tensor at the chain's one mint — the frame-covariant
 [kindCrossing] ForPhysLib.Electromagnetism.Kinematics.Kinded.derivQ — The derivative tensor `∂_μ A^ν` at the **gauge-dependent** chart kind — a vector
 [kindCrossing] ForPhysLib.Electromagnetism.Kinematics.Kinded.fieldStrengthMatrixQ — The tensor in the standard basis, at the same extent kind.
 [kindCrossing] ForPhysLib.Electromagnetism.Kinematics.Kinded.fieldStrengthQ — The field strength `F^{μν}` at the **frame-covariant, gauge-invariant** extent
@@ -88,6 +94,7 @@ info: tagged boundary crossings:
 [kindCrossing] ForPhysLib.Electromagnetism.Kinematics.gaugeShiftQ — **F5a — the torsor translation.** The gauge shift `A ↦ A + ∂^μχ` moves the
 [kindCrossing] ForPhysLib.Electromagnetism.Kinematics.scalarPotentialQ — **F2b — the crossing back.** `scalarPotential = c·A⁰`: the 6-32 → 6-11.1 velocity
 [kindEmission] ForPhysLib.Electromagnetism.Kinematics.Kinded.rawElectricField — The emission boundary, stated once as a `def` so it carries its tier: downstream
+[kindIngest] ForPhysLib.Electromagnetism.Kinematics.DistributionalTwin.distPotentialQ — The distributional potential, read at the chain's 6-32 — the *same* kind the
 [kindIngest] ForPhysLib.Electromagnetism.Kinematics.Kinded.fieldStrengthAtQ — A pointwise extent entry, read at its kind.
 [kindIngest] ForPhysLib.Electromagnetism.Kinematics.Operators.scalarPotentialAtQ — A pointwise reading of the scalar potential, at the **interval-scale** 6-11.1.
 [kindIngest] ForPhysLib.Electromagnetism.Kinematics.electricFieldAtQ — A pointwise electric-field reading — the boost law mixes *values*, so the probe
