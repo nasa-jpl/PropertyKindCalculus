@@ -44,7 +44,7 @@ What the layer costs, measured — every number quoting a build artifact at this
 | join entries | 1 — `T̂ + V̂` at mechanical energy; `T̂ + p̂²` refused | `Feasibility.lean` (F1a, F1c) |
 | boundary sites | 22 — 17 attested, 3 raw ingest mints, 2 erasure-only; by tier: 13 ingest, 6 crossings, 1 constant, 1 carrier-vocabulary, 1 emission | the pinned `#kind_boundary_audit` in `Audits.lean` |
 | unkinded surface | interior: 0 positions (gated); ingest boundary: 15 naked positions, all the oscillator structure, its occupation labels, coordinate indices, its Hilbert space, its operator domains, or the one emitted `ℝ` | the `#kind_unkinded` ledgers in `Audits.lean` |
-| lines | 2,099 total, of which 994 are code (the rest is documentation, including the pinned audit reports); the mirrored source is 1,727 total / 1,085 code, none of which changed | `wc -l`; comment-stripped count |
+| lines | 3,101 total, of which 1,698 are code (the rest is documentation, including the pinned audit reports); the mirrored source is 1,727 total / 1,085 code, none of which changed | `wc -l`; comment-stripped count |
 | proof debt | 0 `sorry`; every theorem here at `propext, Classical.choice, Quot.sound`; 1 upstream `@[sorryful]` discharged and 1 theorem upstream never stated (`heisenberg_uncertainty`) proved | `#print axioms` |
 
 Two cost notes the table cannot carry. First, the ceremony per declaration is small
