@@ -887,7 +887,7 @@ density — `Dynamics/`), and chart + extent (same tesla, no join: antisymmetriz
 a crossing, never an addition).
 
 **Status: Stage 4 climbed** — `Audits.lean` puts the whole directory namespace under
-CI: the 24-site boundary audit and crossings registry pinned (13 crossings, 10
+CI: the 24-site boundary audit and crossings registry pinned (12 crossings, 10
 ingests, 1 emission, 1 carrier-vocabulary tier — every attestation's reason column in
 the pin), boundary-clean + mint-ratchet + dimensional-clean silent, and the unkinded
 ledger *inverting the pilot's ratio*: **twelve** crossings are kinded end to end (the
@@ -897,6 +897,16 @@ PhysLib's carriers enter. The `Kinematics.checked_by.yaml` delta keys on the ups
 TODO texts — the constructor-properties TODO now points at the two gauge-invariance
 lemmas upstream does not state, and the `FieldStrength` refactor TODOs are noted as a
 dependency of the mirror, not claims about it.
+
+**Status: directory 2 complete — ladder, patch candidate, README.** The README carries
+nine findings and the measured cost line (12 kinds — 10 lookups; 12 laws, 5 tabled, 7
+law-only; 0 joins; 24 boundary sites, 0 raw mints; a 12-crossing gated interior against
+28 measured boundary positions; 1,560 lines / 620 code against an unchanged
+3,214-line source; 0 sorry). The directory's patch candidate is the gauge-invariance
+pair (`electricField_gaugeTransform`, `magneticFieldMatrix_gaugeTransform`) — theorems
+the chain's own TODO asks for and upstream does not state — whose offer upstream is a
+human's to make (AI-POLICY §3.1). Next: directory 3, the `ClassicalMechanics`
+`HarmonicOscillator` + `RigidBody` subtrees.
 
 ---
 
@@ -957,7 +967,7 @@ ForPhysLib/
       Operators.lean                 ✓   Stage 3: three entries + the torsor demo; law-only majority named; refusals = subtree boundaries
       Audits.lean                    ✓   Stage 4: 24-site audit pinned; silent gates; 12-crossing interior gated empty
       Kinematics.checked_by.yaml     ✓   the API-map delta, keyed on the upstream TODO texts
-      README.md
+      README.md                      ✓   the findings and the measured cost line
   Scorecard.lean                     ✓ verdicts re-derived so the tables cannot drift from the files
 ```
 
