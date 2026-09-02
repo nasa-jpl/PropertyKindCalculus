@@ -3,7 +3,8 @@
 
 The second rung of [the adoption ladder](../PLAN.md#stage-1-the-metrology-annex), for
 the campaign's third directory: each Stage-0 kind paired with its PhysLib `Dimension`
-as a `DimensionedKind`, the directory's kind algebra authored as laws, and
+as a `DimensionedKind` — the lookups by *referencing the catalogue's own entries*, the
+mints alone as constructed records — the directory's kind algebra authored as laws, and
 `#kind_dimensional_coverage` pinned over it with `#guard_msgs` — at **zero cost to
 existing code**: nothing in PhysLib changes, or even imports this.
 
@@ -38,21 +39,17 @@ open PropertyKindCalculus ForPhysLib.ClassicalMechanics.Kinds
 /-! ## The pairings -/
 
 /-- Mass is `M`. -/
-def massDK : DimensionedKind := { kind := mass, dim := Dim.mass }
+def massDK : DimensionedKind := Iso80000.Part4.mass
 /-- Momentum is `M·L·T⁻¹`. -/
-def momentumDK : DimensionedKind :=
-  { kind := momentum, dim := Iso80000.Part4.MDim.momentum }
+def momentumDK : DimensionedKind := Iso80000.Part4.momentum
 /-- Force is `M·L·T⁻²`. -/
-def forceDK : DimensionedKind := { kind := force, dim := Iso80000.Part4.MDim.force }
+def forceDK : DimensionedKind := Iso80000.Part4.force
 /-- Potential energy is `M·L²·T⁻²` — the joule. -/
-def potentialEnergyDK : DimensionedKind :=
-  { kind := potentialEnergy, dim := Iso80000.Part4.MDim.energy }
+def potentialEnergyDK : DimensionedKind := Iso80000.Part4.potentialEnergy
 /-- Kinetic energy is the *same* joule — the first collision. -/
-def kineticEnergyDK : DimensionedKind :=
-  { kind := kineticEnergy, dim := Iso80000.Part4.MDim.energy }
+def kineticEnergyDK : DimensionedKind := Iso80000.Part4.kineticEnergy
 /-- Mechanical energy — the same joule again. -/
-def mechanicalEnergyDK : DimensionedKind :=
-  { kind := mechanicalEnergy, dim := Iso80000.Part4.MDim.energy }
+def mechanicalEnergyDK : DimensionedKind := Iso80000.Part4.mechanicalEnergy
 /-- The Lagrangian — the same joule, fourth kind. -/
 def lagrangianDK : DimensionedKind :=
   { kind := lagrangian, dim := Iso80000.Part4.MDim.energy }
@@ -64,34 +61,29 @@ collision family. -/
 def rotationalKineticEnergyDK : DimensionedKind :=
   { kind := rotationalKineticEnergy, dim := Iso80000.Part4.MDim.energy }
 /-- Power is `M·L²·T⁻³`. -/
-def powerDK : DimensionedKind := { kind := power, dim := Iso80000.Part4.MDim.power }
+def powerDK : DimensionedKind := Iso80000.Part4.power
 /-- The moment of inertia is `M·L²`. -/
-def momentOfInertiaDK : DimensionedKind :=
-  { kind := momentOfInertia, dim := Iso80000.Part4.MDim.momentOfInertia }
+def momentOfInertiaDK : DimensionedKind := Iso80000.Part4.momentOfInertia
 /-- Angular momentum is `M·L²·T⁻¹`. -/
-def angularMomentumDK : DimensionedKind :=
-  { kind := angularMomentum, dim := Iso80000.Part4.MDim.angularMomentum }
+def angularMomentumDK : DimensionedKind := Iso80000.Part4.angularMomentum
 /-- Displacement is `L`. -/
-def displacementDK : DimensionedKind := { kind := displacement, dim := Dim.length }
+def displacementDK : DimensionedKind := Iso80000.Part3.displacement
 /-- Velocity is `L·T⁻¹`. -/
-def velocityDK : DimensionedKind := { kind := velocity, dim := Dim.speed }
+def velocityDK : DimensionedKind := Iso80000.Part3.velocity
 /-- Acceleration is `L·T⁻²`. -/
-def accelerationDK : DimensionedKind :=
-  { kind := acceleration, dim := Dim.length / (Dim.time * Dim.time) }
+def accelerationDK : DimensionedKind := Iso80000.Part3.acceleration
 /-- Angular velocity is `T⁻¹` — the rigid body's `ω`. -/
-def angularVelocityDK : DimensionedKind :=
-  { kind := angularVelocity, dim := Dim.time⁻¹ }
+def angularVelocityDK : DimensionedKind := Iso80000.Part3.angularVelocity
 /-- Angular frequency is the *same* `T⁻¹` — the oscillator's `ω`: the shared-letter
 collision, visible as a repeated dimension. -/
-def angularFrequencyDK : DimensionedKind :=
-  { kind := angularFrequency, dim := Dim.time⁻¹ }
+def angularFrequencyDK : DimensionedKind := Iso80000.Part3.angularFrequency
 /-- Period duration is `T`. -/
-def periodDurationDK : DimensionedKind := { kind := periodDuration, dim := Dim.time }
+def periodDurationDK : DimensionedKind := Iso80000.Part3.periodDuration
 /-- Duration is the *same* `T` — the repetition interval is not the trajectory
 parameter. -/
-def durationDK : DimensionedKind := { kind := duration, dim := Dim.time }
+def durationDK : DimensionedKind := Iso80000.Part3.duration
 /-- The phase angle is dimensionless — the trig boundary's licence. -/
-def phaseAngleDK : DimensionedKind := { kind := phaseAngle, dim := Dim.one }
+def phaseAngleDK : DimensionedKind := Iso80000.Part3.phaseAngle
 /-- The spring constant is `M·T⁻²` — the mint's dimension, certified below as force
 per displacement. -/
 def springConstantDK : DimensionedKind :=

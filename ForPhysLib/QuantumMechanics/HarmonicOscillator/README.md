@@ -20,7 +20,7 @@ as generic API; nothing quantum-specific remained in either.
 |---|---|---|
 | `Feasibility.lean` | before the ladder | F1–F4 as build artifacts: the operator carrier stands up, only the radicand-first ξ survives kinding, the SI numeral pinned, the eigenvalues kinded per mode |
 | `Kinds.lean` | Stage 0 | 19 kinds — 11 proved against PKC's ISO 80000 catalogue, 8 local mints each saying why the standard does not list it; the three-energy collision decided |
-| `Metrology.lean` | Stage 1 | 17 `DimensionedKind` pairings, the Stage-0 lookup proved by `decide`/`rfl`, ten authored edge laws, coverage pinned clean |
+| `Metrology.lean` | Stage 1 | 17 `DimensionedKind` pairings — the 11 catalogue-expressible ones referencing the catalogue's own entries (the characteristic length by its `lengthSpecies` constructor, the quantum number by Part 10's row), the 6 mints alone constructed — the Stage-0 lookup proved by `decide`/`rfl`, ten authored edge laws, coverage pinned clean |
 | `Kinded.lean` | Stage 2 | the re-authoring: the licensed-fold eigenvalue, the radicand-first ξ, the Born density, spacings vs the silent reference, the kinded TISE (M-T1–M-T3) |
 | `Measurand.lean` | Stage 2 | M-T4 realized: the Hamiltonian as PKC's `Observable` at `𝕜 = ℂ`, identified as a `Measurand` with the eigenvalue set as indications |
 | `Operators.lean` | Stage 3 | the kind algebra as `KindMul`/`KindDiv` table entries: `*` and `/` elaborate through the table, unregistered pairs refuse |

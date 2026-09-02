@@ -3,7 +3,10 @@
 
 The second rung of [the adoption ladder](../../PLAN.md#stage-1-the-metrology-annex), for
 the pilot directory: each Stage-0 kind paired with its PhysLib `Dimension` as a
-`DimensionedKind`, the directory's kind algebra authored as laws, and
+`DimensionedKind` — the lookups by *referencing the catalogue's own entries* (the
+characteristic length by the catalogue's own species constructor, the quantum number by
+Part 10's entry), the mints alone as constructed records — the directory's kind algebra
+authored as laws, and
 `#kind_dimensional_coverage` pinned over it with `#guard_msgs` — at **zero cost to
 existing code**: nothing in PhysLib changes, or even imports this.
 
@@ -38,33 +41,27 @@ open PropertyKindCalculus ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinds
 /-! ## The pairings -/
 
 /-- Mass is `M`. -/
-def massDK : DimensionedKind := { kind := mass, dim := Dim.mass }
+def massDK : DimensionedKind := Iso80000.Part4.mass
 /-- Action is `M·L²·T⁻¹` — ℏ's dimension, shared with angular momentum. -/
-def actionDK : DimensionedKind :=
-  { kind := action, dim := Iso80000.Part4.MDim.angularMomentum }
+def actionDK : DimensionedKind := Iso80000.Part4.action
 /-- Angular momentum is the *same* `M·L²·T⁻¹` — the collision the registry decides. -/
-def angularMomentumDK : DimensionedKind :=
-  { kind := angularMomentum, dim := Iso80000.Part4.MDim.angularMomentum }
+def angularMomentumDK : DimensionedKind := Iso80000.Part4.angularMomentum
 /-- Angular frequency is `T⁻¹`. -/
-def angularFrequencyDK : DimensionedKind :=
-  { kind := angularFrequency, dim := Dim.time⁻¹ }
+def angularFrequencyDK : DimensionedKind := Iso80000.Part3.angularFrequency
 /-- Kinetic energy is `M·L²·T⁻²`. -/
-def kineticEnergyDK : DimensionedKind :=
-  { kind := kineticEnergy, dim := Iso80000.Part4.MDim.energy }
+def kineticEnergyDK : DimensionedKind := Iso80000.Part4.kineticEnergy
 /-- Potential energy is `M·L²·T⁻²` — the same dimension, a distinct kind. -/
-def potentialEnergyDK : DimensionedKind :=
-  { kind := potentialEnergy, dim := Iso80000.Part4.MDim.energy }
+def potentialEnergyDK : DimensionedKind := Iso80000.Part4.potentialEnergy
 /-- Mechanical energy is `M·L²·T⁻²` — the third kind at the one dimension. -/
-def mechanicalEnergyDK : DimensionedKind :=
-  { kind := mechanicalEnergy, dim := Iso80000.Part4.MDim.energy }
+def mechanicalEnergyDK : DimensionedKind := Iso80000.Part4.mechanicalEnergy
 /-- Momentum is `M·L·T⁻¹`. -/
-def momentumDK : DimensionedKind :=
-  { kind := momentum, dim := Iso80000.Part4.MDim.momentum }
+def momentumDK : DimensionedKind := Iso80000.Part4.momentum
 /-- Length is `L`. -/
-def lengthDK : DimensionedKind := { kind := length, dim := Dim.length }
-/-- The characteristic length is `L` (individuated by principle, not dimension). -/
+def lengthDK : DimensionedKind := Iso80000.Part3.length
+/-- The characteristic length is `L` (individuated by principle, not dimension) —
+the catalogue's own `lengthSpecies` constructor, at this directory's species. -/
 def characteristicLengthDK : DimensionedKind :=
-  { kind := characteristicLength, dim := Dim.length }
+  Iso80000.Part3.lengthSpecies "characteristic length" { id := "ground-state-width" }
 /-- Momentum squared is `M²·L²·T⁻²` — *not* an energy's dimension: the `M` mismatch
 is exactly what `(2m)⁻¹` repairs. -/
 def momentumSquaredDK : DimensionedKind :=
@@ -75,8 +72,8 @@ def specificActionDK : DimensionedKind :=
   { kind := specificAction, dim := Iso80000.Part4.MDim.angularMomentum / Dim.mass }
 /-- The ξ² radicand is `L²`. -/
 def xiSqRadicandDK : DimensionedKind := { kind := xiSqRadicand, dim := Dim.area }
-/-- A quantum number is dimension one. -/
-def quantumNumberDK : DimensionedKind := { kind := quantumNumber, dim := Dim.one }
+/-- A quantum number is dimension one — the catalogue's own 10-13. -/
+def quantumNumberDK : DimensionedKind := Iso80000.Part10.quantumNumber
 /-- The dimensionless coordinate `x/ξ` is dimension one. -/
 def dimensionlessCoordinateDK : DimensionedKind :=
   { kind := dimensionlessCoordinate, dim := Dim.one }

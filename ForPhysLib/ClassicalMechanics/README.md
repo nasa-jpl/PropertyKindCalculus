@@ -23,7 +23,7 @@ The verdict: **no core change forced, no upstream API needed — and the subtree
 |---|---|---|
 | `Feasibility.lean` | before the ladder | F1–F6 as build artifacts: the radicand edge and the refused reciprocal, the first join with the Lagrangian refused beside it, the M6 collisions refused, the tfae consumed, the trig boundary, König as the second join |
 | `Kinds.lean` | Stage 0 | 22 kinds — 17 catalogue lookups verbatim, 5 mints in two findings; six joules, two ω's, two clocks separated by `decide`; the four-edge two-level lattice; `lagrangian_no_edge` |
-| `Metrology.lean` | Stage 1 | 22 `DimensionedKind` pairings with ten rows colliding, the 17-lookup agreement by `decide`, fourteen authored edge laws, coverage pinned clean |
+| `Metrology.lean` | Stage 1 | 22 `DimensionedKind` pairings with ten rows colliding — the 17 lookups referencing the catalogue's own entries, the 5 mints alone constructed — the Stage-0 agreement by `decide`, fourteen authored edge laws, coverage pinned clean |
 | `Kinded/HarmonicOscillator.lean` | Stage 2 | the re-authoring: the Legendre kinetic witness, **the pentad closed by the upstream proof term**, the trajectory from its data with normal form and periodicity, conservation at the watt, the geometric metric at one reading |
 | `Kinded/RigidBody.lean` | Stage 2 | the functional's moments with the parallel-axis theorem consumed, the two ω-tensors, `v = V + ω × r` fully table-expressed, the rotational contraction, the motion-preservation theorems |
 | `Operators.lean` | Stage 3 | seven registrations on their Stage-1 laws, each demonstrated at a source equation; the `@[kindConst]` full turn; the shared-letter refusal at the table |

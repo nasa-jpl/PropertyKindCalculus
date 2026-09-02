@@ -3,7 +3,8 @@
 
 The second rung of [the adoption ladder](../PLAN.md#stage-1-the-metrology-annex), for the
 same first directory as Stage 0: each Stage-0 kind paired with its PhysLib `Dimension` as
-a `DimensionedKind`, the directory's small kind algebra authored, and
+a `DimensionedKind` — the lookups by *referencing the catalogue's own entries* — the
+directory's small kind algebra authored, and
 `#kind_dimensional_coverage` pinned over it with `#guard_msgs` — the stage that converts
 prose dimension claims into statements a build can fail on, at **zero cost to existing
 code**: nothing in PhysLib changes, or even imports this.
@@ -26,17 +27,17 @@ open PropertyKindCalculus ForPhysLib.Kinds.Space
 /-! ## The pairings -/
 
 /-- Length is `L`. -/
-def lengthDK : DimensionedKind := { kind := length, dim := Dim.length }
+def lengthDK : DimensionedKind := Iso80000.Part3.length
 /-- Distance is `L` — the metric's values, in the directory's own `LengthUnit`. -/
-def distanceDK : DimensionedKind := { kind := distance, dim := Dim.length }
+def distanceDK : DimensionedKind := Iso80000.Part3.distance
 /-- A position vector is `L` (from the origin). -/
-def positionVectorDK : DimensionedKind := { kind := positionVector, dim := Dim.length }
+def positionVectorDK : DimensionedKind := Iso80000.Part3.positionVector
 /-- A displacement is `L` (between points). -/
-def displacementDK : DimensionedKind := { kind := displacement, dim := Dim.length }
+def displacementDK : DimensionedKind := Iso80000.Part3.displacement
 /-- Plane angle is dimension one — the `T⁻¹`-free member of the rotation API. -/
-def planeAngleDK : DimensionedKind := { kind := planeAngle, dim := 1 }
+def planeAngleDK : DimensionedKind := Iso80000.Part3.planeAngle
 /-- Area is `L²` — where the cross product and the slice product structure land. -/
-def areaDK : DimensionedKind := { kind := area, dim := Dim.area }
+def areaDK : DimensionedKind := Iso80000.Part3.area
 
 /-! ## The lookup, proved
 
