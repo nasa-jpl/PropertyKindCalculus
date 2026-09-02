@@ -10,3 +10,4 @@ import ForPhysLib.Electromagnetism.Kinematics.Kinds
 import ForPhysLib.Electromagnetism.Kinematics.Metrology
 import ForPhysLib.Electromagnetism.Kinematics.Kinded
 import ForPhysLib.Electromagnetism.Kinematics.Operators
+import ForPhysLib.Electromagnetism.Kinematics.Audits

@@ -886,6 +886,18 @@ subtree boundaries: `E·B` (Poynting needs `μ₀` — `Vacuum/`), `F·F` (the L
 density — `Dynamics/`), and chart + extent (same tesla, no join: antisymmetrization is
 a crossing, never an addition).
 
+**Status: Stage 4 climbed** — `Audits.lean` puts the whole directory namespace under
+CI: the 24-site boundary audit and crossings registry pinned (13 crossings, 10
+ingests, 1 emission, 1 carrier-vocabulary tier — every attestation's reason column in
+the pin), boundary-clean + mint-ratchet + dimensional-clean silent, and the unkinded
+ledger *inverting the pilot's ratio*: **twelve** crossings are kinded end to end (the
+interior, gated empty — once the potential is read in, the chain's whole derivation
+tree runs inside the kind layer) against eleven measured boundary readings where
+PhysLib's carriers enter. The `Kinematics.checked_by.yaml` delta keys on the upstream
+TODO texts — the constructor-properties TODO now points at the two gauge-invariance
+lemmas upstream does not state, and the `FieldStrength` refactor TODOs are noted as a
+dependency of the mirror, not claims about it.
+
 ---
 
 ## Layout
@@ -943,7 +955,9 @@ ForPhysLib/
       Kinds.lean  Metrology.lean     ✓   Stages 0–1: lookups + two mints; twelve edges, coverage pinned
       Kinded.lean                    ✓   Stage 2: the chain re-authored; E rebuilt by rfl; gauge reaches the fields
       Operators.lean                 ✓   Stage 3: three entries + the torsor demo; law-only majority named; refusals = subtree boundaries
-      Audits.lean  README.md
+      Audits.lean                    ✓   Stage 4: 24-site audit pinned; silent gates; 12-crossing interior gated empty
+      Kinematics.checked_by.yaml     ✓   the API-map delta, keyed on the upstream TODO texts
+      README.md
   Scorecard.lean                     ✓ verdicts re-derived so the tables cannot drift from the files
 ```
 

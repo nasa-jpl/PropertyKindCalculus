@@ -1,0 +1,28 @@
+# The Stage-4 API-map delta proposed for `Physlib/Electromagnetism/Kinematics`
+# (MR29: every satisfied requirement has a machine-checkable witness).
+#
+# This directory has no `API-map.yaml` upstream; its requirement ledger is the `TODO`
+# commands spread through the chain (`EMPotential.lean`, `FieldStrength.lean`). So the
+# proposed delta has two parts: the `API-map.yaml` the directory would gain if the
+# maintainer wants one (whose `Requirements:` would begin as the TODO list, verbatim),
+# and — the part this file actually carries — a `checked_by:` field per TODO, keyed by
+# its current text, naming the ForPhysLib module whose build now checks the claim or
+# holds its statement ready. Nothing upstream changes; a TODO with no entry here is
+# untouched.
+
+deltas:
+
+  - description: "Write lemmas for the various properties (e.g. the electric field) of the electromagnetic potential from the various constructors."
+    checked_by:
+      - "ForPhysLib.Electromagnetism.Kinematics"          # Feasibility: scalarPotentialQ_roundtrip consumes the constructor round trip; the bare-call-site default is pinned beside it
+      - "ForPhysLib.Electromagnetism.Kinematics.Kinded"   # two property lemmas the TODO asks for that exist nowhere upstream: electricField_gaugeTransform and magneticFieldMatrix_gaugeTransform (the derived fields are gauge-invariant) — a candidate patch, sorry-free (axioms: propext, Classical.choice, Quot.sound)
+
+  - description: "Add results related to the differentiability of the derivative of the Electromagnetic potential."
+    checked_by:
+      - "ForPhysLib.Electromagnetism.Kinematics.Kinded"   # gaugeTransform_differentiable: the gauge shift of a differentiable potential is differentiable — one such result, consumed by the gauge-invariance lemmas above
+
+# The two `FieldStrength.lean` TODOs (replace `fieldStrengthMatrix` by tensor-eval
+# API; remove the basis-component lemmas) are refactoring plans, not claims; the
+# kinded layer takes no position on them, but note the dependency: `Kinded.lean`'s
+# readings and both boost consumptions quote `fieldStrengthMatrix` — if the refactor
+# lands, the mirror follows the new spelling.
