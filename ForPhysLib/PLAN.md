@@ -34,7 +34,7 @@ has to be reconstructed from the Status lines scattered below.
 | Review + post the Stage-1 ask | Nicolas (AI-POLICY §3.1) |
 | Decision-ladder step (iii): the Stage-0+1 PR for `SpaceAndTime/Space` | Claude drafts it if question 2 of the ask gets a yes |
 | Materialize the QM patch offer (Orthonormality + Heisenberg) and the EM gauge pair as fork branches | Claude, on request — same recipe as `solid-sphere-inertia` |
-| Held physics, not on the ladder: L_z = m·ℏ crossing, degeneracy count, `LadderOperators` green field, σ_p ground-state moment (would un-conditionalize Heisenberg saturation), the Distributional twin, Maxwell dynamics | Claude, on request |
+| Held physics, not on the ladder: L_z = m·ℏ crossing, degeneracy count, `LadderOperators` green field, the Distributional twin, Maxwell dynamics (σ_p ground-state moment DONE — Heisenberg saturation now unconditional) | Claude, in progress |
 | Campaign wrap-up artifact (cross-directory scorecard) | undecided whether wanted |
 
 ---
@@ -725,9 +725,10 @@ upstream's own vocabulary, sorry-free — and the ground state's position side,
 closes the loop: position becomes a PKC `Observable`/`Measurand` (its self-adjointness
 is *proved* upstream, so unlike the Hamiltonian's no hypothesis rides along), the
 kinded bound runs the product through Stage 3's `length · momentum → action` entry,
-and saturation at the ground state is delivered conditional on the one Gaussian
-integral that needs the eigenfunction's Schwartz derivative — the momentum moment
-`σ_p(ψ₀) = ℏ/(√2 ξᵢ)`, named as remaining analysis the way the TISE is.
+and saturation at the ground state is exact: the momentum moment
+`σ_p(ψ₀) = ℏ/(√2 ξᵢ)` follows from the Gaussian's eigen-relation
+`𝐩 ψ₀ = (iℏ/ξᵢ²) • 𝐱 ψ₀` (one `HasFDerivAt` computation), which carries the
+already-proved position moments through `𝐩`.
 
 **Held with the spherical/ladder green field.** The `L_z = m·ℏ` crossing — an *angular
 momentum* equated with a count times a constant catalogued as *action*, the catalogue's

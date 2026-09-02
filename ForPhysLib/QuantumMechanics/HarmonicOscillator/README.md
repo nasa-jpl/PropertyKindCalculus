@@ -26,7 +26,7 @@ as generic API; nothing quantum-specific remained in either.
 | `Operators.lean` | Stage 3 | the kind algebra as `KindMul`/`KindDiv` table entries: `*` and `/` elaborate through the table, unregistered pairs refuse |
 | `Audits.lean` | Stage 4 | the directory namespace under CI: the 20-site boundary audit pinned, silent clean/ratchet/dimensional gates, the interior gated empty, the ingest boundary measured |
 | `Orthonormality.lean` | the first patch | upstream's `@[sorryful]` `eigenstates_orthonormal`, discharged — statement verbatim, sorry-free |
-| `Heisenberg.lean` | the second patch | `ℏ/2 ≤ σ_x σ_p` proved for every normalized Schwartz state from upstream's own Robertson bound and CCR; the ground state's `σ_x = ξᵢ/√2` by the Gaussian second moment; the bound kinded through the `length · momentum → action` entry |
+| `Heisenberg.lean` | the second patch | `ℏ/2 ≤ σ_x σ_p` proved for every normalized Schwartz state from upstream's own Robertson bound and CCR; the ground state's `σ_x = ξᵢ/√2` by the Gaussian second moment and `σ_p = ℏ/(√2 ξᵢ)` by differentiating the Gaussian, so saturation `σ_x σ_p = ℏ/2` is exact; the bound kinded through the `length · momentum → action` entry |
 | `HarmonicOscillator.checked_by.yaml` | Stage 4 | the API-map delta, keyed by the upstream `TODO` texts |
 
 ## The cost line
@@ -95,9 +95,10 @@ checked, with the layer on.
    The abstract Robertson bound, the canonical commutator, and the self-adjoint
    position operator all exist upstream, but the bound is instantiated nowhere and
    `ℏ/2` appears nowhere else in the library. `heisenberg_uncertainty` is that join —
-   for every normalized Schwartz state — and the position side of its ground-state
-   saturation is `σ_x = ξᵢ/√2`, proved by the same Hermite machinery as the
-   orthonormality discharge; the momentum moment is the named remaining analysis.
+   for every normalized Schwartz state — and the ground state saturates it exactly:
+   `σ_x = ξᵢ/√2` by the same Hermite machinery as the orthonormality discharge, and
+   `σ_p = ℏ/(√2 ξᵢ)` because `𝐩` sends the Gaussian to `(iℏ/ξᵢ²) ·` its `𝐱`-image,
+   so the momentum moments are the position moments already computed.
 
 ## The metrological TODO slate
 

@@ -26,10 +26,10 @@ kind layer closes the loop:
 * `heisenberg_kinded`: `(1/2) • ℏ ≤ σ_x * σ_p` with the product landing at action
   through Stage 3's `length · momentum` entry — the comparison is same-kind because
   the table says so, which is the kind-layer content of "uncertainty principle";
-* saturation: `σ_x · σ_p = ℏ/2` at the ground state, conditional on the momentum
-  moment `σ_p(ψ₀) = ℏ/(√2 ξᵢ)` — the one Gaussian integral that needs the Schwartz
-  derivative of the eigenfunction, named here as the remaining analysis the way the
-  TISE and self-adjointness are named in `Kinded.lean` and `Measurand.lean`.
+* saturation: `σ_x · σ_p = ℏ/2` at the ground state, exactly. The momentum moment
+  `σ_p(ψ₀) = ℏ/(√2 ξᵢ)` comes from differentiating the Gaussian: `𝐩` sends the
+  ground state to `(iℏ/ξᵢ²) ·` its `𝐱`-image, so both momentum moments are the
+  position moments already computed.
 -/
 
 import ForPhysLib.QuantumMechanics.HarmonicOscillator.Operators
@@ -369,6 +369,137 @@ lemma inner_position_position :
   rw [integral_coord_pow_ground i Q 2]
   simp_rw [integral_sq_mul_groundDensity]
 
+/-! ## The momentum moment — the Gaussian's eigen-relation carries the position
+moments through `𝐩` -/
+
+/-- The ground state as a single Gaussian: the Hermite factors are `H₀ = 1` and the
+per-coordinate exponentials combine. -/
+lemma groundState_apply (y : Space d) :
+    Q.eigenfunction 0 y = (↑(∏ k, Q.eigenCoeff 0 k) : ℂ) *
+      Complex.exp (((∑ k, -2⁻¹ * (Q.ξ k)⁻¹ ^ 2 * (y k) ^ 2 : ℝ)) : ℂ) := by
+  rw [eigenfunction_apply]
+  have h : ∀ k : Fin d,
+      (Q.eigenCoeff 0 k : ℂ) *
+          ((Polynomial.physHermite ((0 : Fin d → ℕ) k) : ℝ → ℝ) (y k / Q.ξ k) : ℂ) *
+          cexp (-2⁻¹ * ((y k : ℂ) / ((Q.ξ k : ℝ) : ℂ)) ^ 2)
+        = ((Q.eigenCoeff 0 k * Real.exp (-2⁻¹ * (Q.ξ k)⁻¹ ^ 2 * (y k) ^ 2) : ℝ) : ℂ) := by
+    intro k
+    have hw : (-2⁻¹ * ((y k : ℂ) / ((Q.ξ k : ℝ) : ℂ)) ^ 2)
+        = ((-2⁻¹ * (Q.ξ k)⁻¹ ^ 2 * (y k) ^ 2 : ℝ) : ℂ) := by
+      push_cast
+      ring
+    rw [hw, ← Complex.ofReal_exp]
+    simp only [Pi.zero_apply]
+    norm_cast
+    rw [Polynomial.physHermite_zero_coe]
+    ring
+  simp only [h]
+  rw [← Complex.ofReal_prod, Finset.prod_mul_distrib, ← Real.exp_sum]
+  push_cast
+  ring
+
+/-- The coordinate functions have the coordinate CLMs as derivatives. -/
+lemma hasFDerivAt_coord (k : Fin d) (x : Space d) :
+    HasFDerivAt (fun y : Space d => y k) (Space.coordCLM k) x := by
+  have h : ⇑(Space.coordCLM (d := d) k) = fun y : Space d => y k :=
+    funext fun y => by rw [Space.coordCLM_apply, Space.coord_apply]
+  rw [← h]
+  exact (Space.coordCLM k).hasFDerivAt
+
+/-- The directional derivative of the ground state: `∂ᵢ ψ₀ = -(xᵢ/ξᵢ²) ψ₀`. -/
+lemma deriv_groundState (x : Space d) :
+    Space.deriv i (⇑(Q.eigenfunction 0)) x
+      = -((x i : ℂ) / (Q.ξ i : ℂ) ^ 2) * Q.eigenfunction 0 x := by
+  have hu := HasFDerivAt.fun_sum (u := Finset.univ)
+    (A := fun (k : Fin d) (y : Space d) => -2⁻¹ * (Q.ξ k)⁻¹ ^ 2 * (y k) ^ 2)
+    (fun k _ => ((hasFDerivAt_coord k x).pow 2).const_mul (-2⁻¹ * (Q.ξ k)⁻¹ ^ 2))
+  have hre := Complex.ofRealCLM.hasFDerivAt.comp x hu
+  have hexp := hre.cexp
+  have hf := hexp.const_mul (↑(∏ k, Q.eigenCoeff 0 k) : ℂ)
+  have hEq : ⇑(Q.eigenfunction 0) =ᶠ[nhds x]
+      (fun y => (↑(∏ k, Q.eigenCoeff 0 k) : ℂ) *
+        cexp ((⇑Complex.ofRealCLM ∘ fun y : Space d =>
+          ∑ k, -2⁻¹ * (Q.ξ k)⁻¹ ^ 2 * (y k) ^ 2) y)) :=
+    Filter.Eventually.of_forall fun y => by
+      rw [groundState_apply Q y]
+      simp
+  have hf' := hf.congr_of_eventuallyEq hEq
+  rw [Space.deriv_eq, hf'.fderiv, groundState_apply Q x]
+  simp only [FunLike.coe_smul, Pi.smul_apply, ContinuousLinearMap.coe_comp,
+    Function.comp_apply, FunLike.coe_sum, Finset.sum_apply,
+    _root_.smul_apply, Space.coordCLM_apply, Space.coord_apply,
+    Space.basis_apply, smul_eq_mul, Complex.ofRealCLM_apply, mul_ite, mul_one, mul_zero,
+    Finset.sum_ite_eq, Finset.mem_univ, if_true, nsmul_eq_mul]
+  have hξ : ((Q.ξ i : ℝ) : ℂ) ≠ 0 :=
+    Complex.ofReal_ne_zero.mpr (ne_of_gt (Q.ξ_pos i))
+  push_cast
+  field_simp
+
+/-- The momentum CLM sends the ground state to `(iℏ/ξᵢ²) ·` the position CLM's image:
+the Gaussian's own eigen-relation for the annihilation combination. -/
+lemma momentumCLM_groundState :
+    𝐩 i (Q.eigenfunction 0)
+      = ((Complex.I * (ℏ : ℝ)) / ((Q.ξ i : ℝ) : ℂ) ^ 2) • 𝐱 i (Q.eigenfunction 0) := by
+  ext x
+  have hξ : ((Q.ξ i : ℝ) : ℂ) ≠ 0 :=
+    Complex.ofReal_ne_zero.mpr (ne_of_gt (Q.ξ_pos i))
+  rw [_root_.smul_apply, momentumCLM_apply, positionCLM_apply, deriv_groundState]
+  rw [smul_eq_mul]
+  ring
+
+/-- The momentum operator's value on the ground state, as `(iℏ/ξᵢ²) ·` the position
+operator's value. -/
+lemma momentumOperator_groundState :
+    𝓟 i (Q.eigenstate 0)
+      = ((Complex.I * (ℏ : ℝ)) / ((Q.ξ i : ℝ) : ℂ) ^ 2) •
+          𝓧 volume i ⟨_, groundState_mem_position_domain i Q⟩ := by
+  have hBapp : 𝓟 i (Q.eigenstate 0)
+      = ((schwartzEquiv volume (𝐩 i (Q.eigenfunction 0)) : SchwartzSubmodule d) :
+          SpaceDHilbertSpace d) := by
+    have h := momentumOperator_apply i (Q.eigenstate 0)
+    rw [eigenstate_eq, LinearEquiv.symm_apply_apply] at h
+    rw [eigenstate_eq]
+    exact h
+  rw [show (⟨_, groundState_mem_position_domain i Q⟩ : (𝓧 volume i).domain)
+      = ⟨((schwartzEquiv volume (Q.eigenfunction 0) : SchwartzSubmodule d) :
+            SpaceDHilbertSpace d),
+          schwartz_mem_positionOperator_domain i (Q.eigenfunction 0)⟩ from rfl,
+    hBapp, momentumCLM_groundState, _root_.map_smul,
+    positionOperator_apply_schwartz i (Q.eigenfunction 0)]
+  norm_cast
+
+/-- The ground state's momentum variance is `ℏ²/(2ξᵢ²)` — the position second moment
+carried through the Gaussian's eigen-relation. -/
+lemma variance_momentum_groundState :
+    variance (𝓟 i) (Q.eigenstate 0) = (ℏ : ℝ) ^ 2 / (2 * Q.ξ i ^ 2) := by
+  rw [variance_eq_norm_sq_sub_expectedValue_sq _ (momentumOperator_isSymmetric i) _
+    (groundState_norm Q)]
+  have hXnorm : ‖𝓧 volume i ⟨_, groundState_mem_position_domain i Q⟩‖ ^ 2
+      = Q.ξ i ^ 2 / 2 := by
+    rw [← inner_self_eq_norm_sq (𝕜 := ℂ), inner_position_position]
+    simp [-Complex.ofReal_pow]
+  have hexp0 : expectedValue (𝓟 i) (Q.eigenstate 0) = 0 := by
+    rw [expectedValue_eq_re_inner (𝓟 i) (Q.eigenstate 0), momentumOperator_groundState,
+      inner_smul_right, inner_groundState_position]
+    simp
+  have hc : ‖((Complex.I * (ℏ : ℝ)) / ((Q.ξ i : ℝ) : ℂ) ^ 2)‖ = (ℏ : ℝ) / Q.ξ i ^ 2 := by
+    simp [Complex.norm_I, Complex.norm_real, Real.norm_eq_abs, norm_pow,
+      abs_of_pos ℏ_pos, abs_of_pos (Q.ξ_pos i)]
+  rw [momentumOperator_groundState, norm_smul, hexp0, mul_pow, hXnorm, hc]
+  have hξ : Q.ξ i ≠ 0 := ne_of_gt (Q.ξ_pos i)
+  field_simp
+  ring
+
+/-- **`σ_p(ψ₀) = ℏ/(√2 ξᵢ)`** — the momentum moment. -/
+theorem sigma_momentum_groundState :
+    standardDeviation (𝓟 i) (Q.eigenstate 0) = (ℏ : ℝ) / (√2 * Q.ξ i) := by
+  rw [standardDeviation_eq_sqrt_variance (𝓟 i) (Q.eigenstate 0),
+    variance_momentum_groundState]
+  have h : (ℏ : ℝ) ^ 2 / (2 * Q.ξ i ^ 2) = ((ℏ : ℝ) / (√2 * Q.ξ i)) ^ 2 := by
+    rw [div_pow, mul_pow, Real.sq_sqrt (by norm_num : (0:ℝ) ≤ 2)]
+  rw [h, Real.sqrt_sq (div_nonneg ℏ_pos.le
+    (mul_nonneg (Real.sqrt_nonneg 2) (Q.ξ_pos i).le))]
+
 /-! ## The kinded layer — position as observable and measurand, and the bound -/
 
 /-- The position operator read at its kind — self-adjointness is *proved* upstream
@@ -466,18 +597,14 @@ theorem heisenberg_kinded (g : 𝓢(Space d, ℂ))
   rw [hσ] at h
   linarith
 
-/-- **Saturation at the ground state, conditional on the momentum moment.** With
-`σ_x(ψ₀) = ξᵢ/√2` proved above, the product collapses to `ℏ/2` exactly when
-`σ_p(ψ₀) = ℏ/(√2 ξᵢ)` — the momentum Gaussian moment, which needs the Schwartz
-derivative of the eigenfunction: the remaining analysis, named the way `Kinded.lean`
-names the TISE. -/
-theorem heisenberg_saturation_groundState
-    (hp : standardDeviation (𝓟 i) (Q.eigenstate 0) = (ℏ : ℝ) / (√2 * Q.ξ i)) :
+/-- **Saturation at the ground state.** `σ_x(ψ₀) = ξᵢ/√2` and `σ_p(ψ₀) = ℏ/(√2 ξᵢ)`
+multiply to exactly `ℏ/2`: the ground state meets the kinded bound with equality. -/
+theorem heisenberg_saturation_groundState :
     ((positionMeasurand i).sigma ⟨_, groundState_mem_position_domain i Q⟩
         * momentumSigmaQ i (Q.eigenstate 0)).magnitude = (ℏ : ℝ) / 2 := by
   show ((positionMeasurand i).sigma ⟨_, groundState_mem_position_domain i Q⟩).magnitude
       * standardDeviation (𝓟 i) (Q.eigenstate 0) = _
-  rw [sigma_position_groundState, hp]
+  rw [sigma_position_groundState, sigma_momentum_groundState]
   have hξ : Q.ξ i ≠ 0 := Q.ξ_ne_zero i
   have h2 : √2 ≠ 0 := ne_of_gt (Real.sqrt_pos.mpr (by norm_num))
   field_simp
