@@ -1004,6 +1004,43 @@ Held, deliberately: `DampedHarmonicOscillator/` and `Pendulum/` stay with Exhibi
 are machinery the subtrees import, not members of them; `FreeParticle/`, `Vibrations/`,
 `Scattering/`, `WaveEquation/`, `OrbitalMechanics/` are out of the named scope.
 
+**Status: feasibility built** — `ForPhysLib/ClassicalMechanics/Feasibility.lean`
+answers all six questions as build artifacts. F1: the `k/m` radicand through a
+registered edge, the root attested and erased to `S.ω` by `rfl` and to the radicand by
+upstream's `ω_sq`; `m/k` refused; both `√` recipes pinned well-typed upstream. F2: the
+`T + V` join at mechanical energy erasing to `S.energy` by `rfl`, the on-trajectory
+Hamiltonian erased onto the same join by `hamiltonian_eq_energy`, the Lagrangian mint's
+crossing erased by upstream's own equality, and `L + E` refused at the same joule. F3:
+all three M6 collisions pinned compiling upstream and refused kinded (momentum of a
+momentum, force fed a momentum, the swapped Hamiltonian), plus the substrate's
+position-plus-momentum. F4: `equationOfMotion_tfae` consumed verbatim — the kinded
+Newton reading (`m·a` through the table at component 0) equivalent to
+`EquationOfMotion` by `.out 0 1`, only component bookkeeping proved here. F5: `ω·t`
+to the phase angle and `v₀/ω` to displacement as one-`*`/one-`/` probes; the period
+crossing and the amplitude's complex packing both erasing by `rfl` to upstream's
+`period` and `fromInitialConditions`; the two ω's separated by `decide`. F6: the
+mass-distribution functional's moments ingested (mass, inertia entries), `L = I·ω`
+contracted through the table and closed by `angularMomentum_eq_inertiaTensor_mulVec`,
+and König consumed as the *second* join — translational + rotational at kinetic
+energy, closed by the body-frame König theorem — with the lab + body `ω` sum pinned as
+scope honesty (kinds separate kinds, not frames).
+
+**Status: Stages 0–1 climbed** — `Kinds.lean` and `Metrology.lean`. Stage 0: 22 kinds,
+17 verbatim catalogue literals (ISO 80000-4 and -3, down to the phase angle and the
+period — the displacement literal carries the catalogue's examination principle) and 5
+mints in two findings (the input datum `k` + its radicand; the Lagrangian + König's
+two species); six kinds at the joule with the collisions separated by `decide`
+(including the shared-letter `ω` pair and duration/period); the four-edge two-level
+lattice with both joins' comparability facts and the transitive
+`rotational ⊑ mechanical`; `lagrangian_no_edge` making "the difference without a
+home" a theorem about the lattice. Stage 1: 22 `DimensionedKind` pairings — six rows
+at `MDim.energy`, two at `T⁻¹`, two at `T`, ten of twenty-two colliding — the
+17-lookup agreement by `decide` and every dimension by `rfl` (the mints' dimensions
+checked against the catalogue's arithmetic: Hooke fixes the spring constant, the
+radicand shares 3-13's dimension as a different kind); thirteen authored edge laws,
+each a formula the subtrees write, with `#kind_dimensional_coverage` pinned clean
+over all thirteen.
+
 
 ---
 
