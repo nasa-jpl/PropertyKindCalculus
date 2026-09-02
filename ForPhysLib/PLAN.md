@@ -6,6 +6,39 @@ useful on its own.
 
 ---
 
+## Status ledger
+
+Last updated 2026-09-01. One table each way, so "what is done and what is left" never
+has to be reconstructed from the Status lines scattered below.
+
+### Done
+
+| item | where it lives |
+|---|---|
+| Exhibits A–E | `Exhibits/`; per-exhibit **Status: built** lines below |
+| The full ladder (Stages 0–4) for `SpaceAndTime/Space` | Sequencing item 3; per-stage Status lines below |
+| Campaign directory 1 — `QuantumMechanics/HarmonicOscillator`, whole | `QuantumMechanics/HarmonicOscillator/` + README cost line; includes the two patch candidates (`Orthonormality`, `Heisenberg`) |
+| Campaign directory 2 — `Electromagnetism/Kinematics` | `Electromagnetism/Kinematics/` + README cost line |
+| Campaign directory 3 — `ClassicalMechanics` HO + RigidBody subtrees | `ClassicalMechanics/` + README cost line; the subtree's one `sorry` discharged |
+| Decision-ladder step (i): the unit-side parametrization | **merged upstream** — physlib PR #1481, 2026-08-05 |
+| The ClassicalMechanics patch offer, materialized | physlib fork branch `solid-sphere-inertia` (2 commits, all upstream gates green); PR draft at `scratchpad/physlib-pr-solid-sphere-inertia.md` |
+| Decision-ladder step (ii), drafted | the Stage-1 ask at `scratchpad/physlib-ask-stage1.md` |
+
+### Open
+
+| item | whose move |
+|---|---|
+| Push PKC `main` (ahead of `maap/main`) | Nicolas |
+| Decide where the maintainer browses ForPhysLib — the only remote is the MAAP GitLab; a public mirror or rendered docs may be needed | Nicolas |
+| Push fork branch `solid-sphere-inertia`; post its PR(s) from the draft | Nicolas (AI-POLICY §3.1) |
+| Review + post the Stage-1 ask | Nicolas (AI-POLICY §3.1) |
+| Decision-ladder step (iii): the Stage-0+1 PR for `SpaceAndTime/Space` | Claude drafts it if question 2 of the ask gets a yes |
+| Materialize the QM patch offer (Orthonormality + Heisenberg) and the EM gauge pair as fork branches | Claude, on request — same recipe as `solid-sphere-inertia` |
+| Held physics, not on the ladder: L_z = m·ℏ crossing, degeneracy count, `LadderOperators` green field, σ_p ground-state moment (would un-conditionalize Heisenberg saturation), the Distributional twin, Maxwell dynamics | Claude, on request |
+| Campaign wrap-up artifact (cross-directory scorecard) | undecided whether wanted |
+
+---
+
 ## The shape of the proposal
 
 **Additive, per-directory, monotone.** Nothing here asks PhysLib to change a theorem
