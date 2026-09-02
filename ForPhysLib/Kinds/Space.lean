@@ -3,14 +3,15 @@
 
 The first rung of [the adoption ladder](../PLAN.md#stage-0-the-kind-vocabulary), built for
 the directory the plan names first: *"small, foundational, and its API map already contains
-the `LengthUnit` requirement."* One file, bare `KindOfProperty` declarations, Mathlib-free
-— importable by anything, costing nothing until something imports it.
+the `LengthUnit` requirement."* One file of `KindOfProperty` declarations, Mathlib-free and
+PhysLib-free — the only import beyond the calculus is PKC's own `Iso80000` catalogue,
+itself Mathlib-free.
 
 **This is a lookup, not a design.** Every kind below is an ISO 80000-3 item, already
-catalogued with its examination principle in PKC's `Iso80000.Part3`; ids, scales and
-principle strings are copied *verbatim* from that catalogue, and Stage 1
-(`ForPhysLib.Metrology.Space`) proves the agreement by `decide` — so this file cannot
-silently drift from the standard it looks up. That is the asymmetry
+catalogued with its examination principle in PKC's `Iso80000.Part3` — and each `def`
+*is* that catalogue entry, projected to its kind. Nothing is re-typed, so nothing can
+drift: Stage 1 (`ForPhysLib.Metrology.Space`) records the identification definitionally
+(`rfl`). That is the asymmetry
 [MR11](../REQUIREMENTS.md#mr11-authoring-ergonomics) priced: PhysLib's kinds exist already;
 Stage 0 writes them down.
 
@@ -26,6 +27,7 @@ as lengths, which is exactly the torsor the code already has, said at the kind l
 -/
 
 import PropertyKindCalculus
+import PropertyKindCalculus.Iso80000.Part3
 
 namespace ForPhysLib.Kinds.Space
 
@@ -33,31 +35,28 @@ open PropertyKindCalculus
 
 /-- Length — ISO 80000-3 item 3-1.1, the genus of the family. Ratio-scale, no
 distinguishing examination principle. What the directory's norm and `LengthUnit` measure. -/
-def length : KindOfProperty := { id := "length", scale := .ratio }
+def length : KindOfProperty := (Iso80000.Part3.length).kind
 
 /-- Distance — item 3-1.8, the shortest path length between two points: the directory's
 `Dist`/metric structure. -/
-def distance : KindOfProperty :=
-  { id := "distance", scale := .ratio, examPrinciple := some "shortest-path" }
+def distance : KindOfProperty := (Iso80000.Part3.distance).kind
 
 /-- Position vector — item 3-1.10, examined *from the chosen origin*: what a point of
 `Space d` reports once `Origin.lean`'s conventional zero is fixed. The origin-dependence
 the API map states in prose ("arbitrary but fixed choice of … origin") is carried here as
 the examination principle. -/
-def positionVector : KindOfProperty :=
-  { id := "position vector", scale := .ratio, examPrinciple := some "from-origin" }
+def positionVector : KindOfProperty := (Iso80000.Part3.positionVector).kind
 
 /-- Displacement — item 3-1.11, examined *between two points*: what the torsor's
 `EuclideanSpace` vectors are, origin-free. -/
-def displacement : KindOfProperty :=
-  { id := "displacement", scale := .ratio, examPrinciple := some "between-points" }
+def displacement : KindOfProperty := (Iso80000.Part3.displacement).kind
 
 /-- Plane angle — item 3-5, dimension one: what `EuclideanGroup`'s rotations turn by. -/
-def planeAngle : KindOfProperty := { id := "plane angle", scale := .ratio }
+def planeAngle : KindOfProperty := (Iso80000.Part3.planeAngle).kind
 
 /-- Area — item 3-3: where the directory's cross product (`⨯ₑ₃`) and the slice product
 structure `Space (d+1) ≃ ℝ × Space d` land dimensionally. -/
-def area : KindOfProperty := { id := "area", scale := .ratio }
+def area : KindOfProperty := (Iso80000.Part3.area).kind
 
 /-! ## Distinctness — the collisions the vocabulary exists to prevent
 

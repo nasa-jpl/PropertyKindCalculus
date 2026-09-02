@@ -20,7 +20,7 @@ as generic API; nothing quantum-specific remained in either.
 |---|---|---|
 | `Feasibility.lean` | before the ladder | F1–F4 as build artifacts: the operator carrier stands up, only the radicand-first ξ survives kinding, the SI numeral pinned, the eigenvalues kinded per mode |
 | `Kinds.lean` | Stage 0 | 19 kinds — 11 proved against PKC's ISO 80000 catalogue, 8 local mints each saying why the standard does not list it; the three-energy collision decided |
-| `Metrology.lean` | Stage 1 | 17 `DimensionedKind` pairings — the 11 catalogue-expressible ones referencing the catalogue's own entries (the characteristic length by its `lengthSpecies` constructor, the quantum number by Part 10's row), the 6 mints alone constructed — the Stage-0 lookup proved by `decide`/`rfl`, ten authored edge laws, coverage pinned clean |
+| `Metrology.lean` | Stage 1 | 17 `DimensionedKind` pairings — the 11 catalogue-expressible ones referencing the catalogue's own entries (the characteristic length by its `lengthSpecies` constructor, the quantum number by Part 10's row), the 6 mints alone constructed — the Stage-0 identification definitional (`rfl`), ten authored edge laws, coverage pinned clean |
 | `Kinded.lean` | Stage 2 | the re-authoring: the licensed-fold eigenvalue, the radicand-first ξ, the Born density, spacings vs the silent reference, the kinded TISE (M-T1–M-T3) |
 | `Measurand.lean` | Stage 2 | M-T4 realized: the Hamiltonian as PKC's `Observable` at `𝕜 = ℂ`, identified as a `Measurand` with the eigenvalue set as indications |
 | `Operators.lean` | Stage 3 | the kind algebra as `KindMul`/`KindDiv` table entries: `*` and `/` elaborate through the table, unregistered pairs refuse |
@@ -38,7 +38,7 @@ What the layer costs, measured — every number quoting a build artifact at this
 
 | | count | artifact |
 |---|---|---|
-| kinds | 19 — 11 catalogue-checked (10 verbatim lookups + the length species by the catalogue's own constructor), 8 local mints | `Kinds.lean`; the `decide`/`rfl` blocks in `Metrology.lean` |
+| kinds | 19 — 11 the catalogue's own (10 entries referenced + the length species by the catalogue's own constructor), 8 local mints | `Kinds.lean`; the `decide`/`rfl` blocks in `Metrology.lean` |
 | dimensional pairings | 17, plus 2 kinds unpaired on purpose (their dimensions `L⁻ᵈ`/`Lᵈ` are the model's parameter; the coherence is the parametric theorem `bornDensity_dim_coherent`) | `Metrology.lean` |
 | kind edges | 21 — 10 authored laws, 10 operator-table entries (7 in Stage 3, 3 probe-era), 1 aggregation license (`±`) | `#kind_dimensional_coverage` pins in `Metrology.lean`/`Operators.lean`; the silent directory-wide `#kind_dimensional_clean` in `Audits.lean` |
 | join entries | 1 — `T̂ + V̂` at mechanical energy; `T̂ + p̂²` refused | `Feasibility.lean` (F1a, F1c) |
@@ -91,7 +91,7 @@ checked, with the layer on.
    the interior contract refused it and it sits on the measured boundary — the Stage-4
    gate doing its job during authoring, not after.
 8. **Definitional equality does not make one vocabulary for instance search.** The
-   probe's catalogue lookups and Stage 0's literals are the same kinds by `rfl`, but
+   probe's catalogue lookups and Stage 0's kinds are the same kinds by `rfl`, but
    the operator table is found only at the spelling an instance head is written in —
    so Stage 3 spells each head at the kinds the quantities actually carry.
 9. **Upstream owns every part of Heisenberg's inequality and has never joined them.**

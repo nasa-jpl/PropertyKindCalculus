@@ -10,10 +10,10 @@ authored as laws, and
 `#kind_dimensional_coverage` pinned over it with `#guard_msgs` — at **zero cost to
 existing code**: nothing in PhysLib changes, or even imports this.
 
-**And the lookup is now a theorem.** Stage 0 copied its ids, scales and examination
-principles from PKC's ISO 80000 catalogue; this module imports that catalogue and proves
-the agreement by `decide` — kind by kind, and dimension by dimension. A Stage-0 edit
-that drifts from the standard stops compiling here.
+**And the lookup is definitional.** Stage 0's kinds *are* the catalogue entries'
+own projections; this module records the identification kind by kind (`rfl` — there
+is no second spelling to drift) and checks each pairing's dimension against the
+catalogue's.
 
 **The laws are the directory's own equations.** Ten edges, each one a formula the
 directory's physics writes: `ℏ/m` and then `/ω` (the ξ² radicand chain of the 1D
@@ -89,27 +89,26 @@ purpose**: their dimensions (`L⁻ᵈ`, `Lᵈ`) are parameters of the model, not
 the vocabulary, so their dimensional coherence is a parametric *theorem* in `Kinded.lean`
 rather than a registry pairing the coverage walk could pin once. -/
 
-/-! ## The lookup, proved
+/-! ## The lookup, definitional
 
-Stage 0's vocabulary agrees with `Iso80000` Parts 3 and 4 — same kinds (ids, scales,
-examination principles) and same dimensions. Decided, so drift is a build failure. The
-characteristic length is checked against the catalogue's own `lengthSpecies` pattern:
-the species this directory mints is well-formed by the same constructor the standard's
-listed species use. -/
+Stage 0's vocabulary *is* the catalogue's — each lookup kind is the catalogue entry's
+own projection (Parts 3, 4 and 10), and the characteristic length is Part 3's own
+`lengthSpecies` constructor at this directory's species — so every identification is
+`rfl` and drift is impossible by construction. -/
 
-example : mass             = Iso80000.Part4.mass.kind             := by decide
-example : action           = Iso80000.Part4.action.kind           := by decide
-example : angularMomentum  = Iso80000.Part4.angularMomentum.kind  := by decide
-example : angularFrequency = Iso80000.Part3.angularFrequency.kind := by decide
-example : kineticEnergy    = Iso80000.Part4.kineticEnergy.kind    := by decide
-example : potentialEnergy  = Iso80000.Part4.potentialEnergy.kind  := by decide
-example : mechanicalEnergy = Iso80000.Part4.mechanicalEnergy.kind := by decide
-example : momentum         = Iso80000.Part4.momentum.kind         := by decide
-example : length           = Iso80000.Part3.length.kind           := by decide
+example : mass             = Iso80000.Part4.mass.kind             := rfl
+example : action           = Iso80000.Part4.action.kind           := rfl
+example : angularMomentum  = Iso80000.Part4.angularMomentum.kind  := rfl
+example : angularFrequency = Iso80000.Part3.angularFrequency.kind := rfl
+example : kineticEnergy    = Iso80000.Part4.kineticEnergy.kind    := rfl
+example : potentialEnergy  = Iso80000.Part4.potentialEnergy.kind  := rfl
+example : mechanicalEnergy = Iso80000.Part4.mechanicalEnergy.kind := rfl
+example : momentum         = Iso80000.Part4.momentum.kind         := rfl
+example : length           = Iso80000.Part3.length.kind           := rfl
 example : characteristicLength
     = (Iso80000.Part3.lengthSpecies "characteristic length"
-        { id := "ground-state-width" }).kind := by decide
-example : quantumNumber = (Iso80000.Part10.quantumNumber).kind := by decide
+        { id := "ground-state-width" }).kind := rfl
+example : quantumNumber = (Iso80000.Part10.quantumNumber).kind := rfl
 
 example : massDK.dim             = Iso80000.Part4.mass.dim             := rfl
 example : actionDK.dim           = Iso80000.Part4.action.dim           := rfl

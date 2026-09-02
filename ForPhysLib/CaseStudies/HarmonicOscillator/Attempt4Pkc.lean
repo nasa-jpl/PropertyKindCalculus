@@ -62,6 +62,8 @@ The file runs the requirements in order, tier by tier, so it can be read end to 
 account of a single idea rather than as a row of a table.
 -/
 import PropertyKindCalculus.Dimension
+import PropertyKindCalculus.Iso80000.Part3
+import PropertyKindCalculus.Iso80000.Part4
 import PropertyKindCalculus.QuantityReal
 import PropertyKindCalculus.Complex
 import PropertyKindCalculus.FrameReal
@@ -80,23 +82,16 @@ Each is a `DimensionedKind`: a `KindOfProperty` (identity, scale type, optionall
 examination principle) paired with the PhysLib `Dimension` of its quantities. The dimension
 component is attempt 2's, unchanged. -/
 
-/-- Angular frequency ω (rad/s), `T⁻¹`. ISO 80000-3 item 3-16. -/
-def angularFrequency : DimensionedKind :=
-  { kind := { id := "angular frequency", scale := .ratio,
-              examPrinciple := some "phase advance per unit time" }
-    dim := Dim.time⁻¹ }
+/-- Angular frequency ω (rad/s), `T⁻¹`. ISO 80000-3 item 3-18 — the catalogue's own
+entry. -/
+def angularFrequency : DimensionedKind := Iso80000.Part3.angularFrequency
 
-/-- Ordinary frequency ν (Hz), `T⁻¹`. ISO 80000-3 item 3-15 — a *different item* at the same
-dimension, individuated by its examination principle (cycles counted per unit time, not
-radians). -/
-def frequency : DimensionedKind :=
-  { kind := { id := "frequency", scale := .ratio,
-              examPrinciple := some "cycles counted per unit time" }
-    dim := Dim.time⁻¹ }
+/-- Ordinary frequency f (Hz), `T⁻¹`. ISO 80000-3 item 3-17.1 — a *different item* of the
+catalogue at the same dimension (cycles counted per unit time, not radians). -/
+def frequency : DimensionedKind := Iso80000.Part3.frequency
 
-/-- Mass, `M`. -/
-def mass : DimensionedKind :=
-  { kind := { id := "mass", scale := .ratio }, dim := Dim.mass }
+/-- Mass, `M` — ISO 80000-4 item 4-1, the catalogue's own entry. -/
+def mass : DimensionedKind := Iso80000.Part4.mass
 
 /-- The **absolute energy of a Hamiltonian** — gauge-dependent, because the zero of the
 potential is a free choice, so *interval* scale: differences are meaningful, ratios are not.
@@ -114,9 +109,9 @@ def energyDifference : DimensionedKind :=
 def energyRatio : DimensionedKind :=
   { kind := { id := "ratio of energy differences", scale := .ratio }, dim := 1 }
 
-/-- Action, `M·L²·T⁻¹` — the kind of `ℏ`. -/
-def action : DimensionedKind :=
-  { kind := { id := "action", scale := .ratio }, dim := Dim.energy * Dim.time }
+/-- Action, `M·L²·T⁻¹` — the kind of `ℏ`. ISO 80000-4 item 4-32, the catalogue's own
+entry. -/
+def action : DimensionedKind := Iso80000.Part4.action
 
 /-- The characteristic length squared, `L²`. -/
 def characteristicArea : DimensionedKind :=
@@ -163,10 +158,11 @@ theorem dimScale_of_kind_product (u₁ u₂ : LTMCTUnitChoices) (a b : Dimension
 
 /-! ## MR4 ✅ — the rad/s trap, closed
 
-Frequency and angular frequency share a dimension and are *not* the same kind: they are
-individuated by their examination principle (§7.5), which is a defining aspect in Dybkær's
-sense, not a label chosen for convenience. So the collapse attempt 2 proved by `rfl` is
-exactly what fails to happen here. -/
+Frequency and angular frequency share a dimension and are *not* the same kind: the
+standard itself lists them as two items (3-17.1 and 3-18), and the two kinds here are
+those two catalogue entries' own projections — the individuation is the standard's, not
+a label chosen for convenience. So the collapse attempt 2 proved by `rfl` is exactly
+what fails to happen here. -/
 
 /-- The dimension layer still cannot tell them apart — PKC does not pretend otherwise. -/
 theorem freq_same_dimension : frequency.toDimension = angularFrequency.toDimension := rfl
@@ -174,10 +170,14 @@ theorem freq_same_dimension : frequency.toDimension = angularFrequency.toDimensi
 /-- **MR4 holds.** But they are distinct *kinds*. -/
 theorem freq_ne_angFreq : frequency.kind ≠ angularFrequency.kind := by decide
 
-/-- **MR4 holds** — and distinct for a *reason*: the examination principle differs, so the
-distinction is a defining aspect rather than a hand-chosen identity string. -/
-theorem freq_individuated_by_principle :
-    frequency.kind.examPrinciple ≠ angularFrequency.kind.examPrinciple := by decide
+/-- **MR4 holds** — and distinct for a *reason*: the two kinds are the catalogue's own
+entries for two separately listed items, so the distinction is the standard's rather
+than a hand-chosen identity string. -/
+theorem freq_individuated_by_catalogue :
+    Iso80000.Part3.frequencyCK.item ≠ Iso80000.Part3.angularFrequencyCK.item
+      ∧ Iso80000.Part3.frequencyCK.qk = frequency
+      ∧ Iso80000.Part3.angularFrequencyCK.qk = angularFrequency :=
+  ⟨by decide, rfl, rfl⟩
 
 /-! **MR4 holds, at the type level.** A frequency in hertz is not accepted where an angular
 frequency is required. This is attempt 2's silent `2π` bug, rejected at elaboration. -/
@@ -541,16 +541,16 @@ symbols have disappeared.
 This is the real ergonomic complaint about PKC and it should be stated without softening: the
 formula below is unreadable as physics. -/
 
-/-- Displacement, a ratio kind. -/
-def lengthK : KindOfProperty := { id := "displacement", scale := .ratio }
+/-- Displacement — the catalogue's own 3-1.11. -/
+def lengthK : KindOfProperty := (Iso80000.Part3.displacement).kind
 /-- Intermediate: angular frequency squared. -/
 def kω2 : KindOfProperty := { id := "angular frequency squared", scale := .ratio }
 /-- Intermediate: displacement squared. -/
 def kx2 : KindOfProperty := { id := "displacement squared", scale := .ratio }
 /-- Intermediate: `mass × angular frequency²` (a spring constant). -/
 def kmω2 : KindOfProperty := { id := "mass × angular frequency²", scale := .ratio }
-/-- The result: potential energy. -/
-def energyK : KindOfProperty := { id := "potential energy", scale := .ratio }
+/-- The result: potential energy — the catalogue's own 4-28.1. -/
+def energyK : KindOfProperty := (Iso80000.Part4.potentialEnergy).kind
 
 theorem pω2 : ProductKind angularFrequency.kind angularFrequency.kind kω2 :=
   ProductKind.ofRatio _ _ _
@@ -631,8 +631,8 @@ semantics, the examination principle, and stay hand-written — then both derive
 both table entries in one declaration. The expansion is exactly the hand-written spelling
 above, so nothing is weakened, and the block is the authored declaration `grep` finds. -/
 
-/-- Velocity, a ratio kind — a base kind, declared by hand as base kinds are. -/
-def velocityK : KindOfProperty := { id := "velocity", scale := .ratio }
+/-- Velocity — a base kind, and a catalogue lookup (3-10.1) as base kinds should be. -/
+def velocityK : KindOfProperty := (Iso80000.Part3.velocity).kind
 
 kind_algebra
   kv2      : "velocity squared"  := velocityK * velocityK
@@ -1045,13 +1045,12 @@ That is `Quantity k (Fin n → R)`: one kind, one unit, `n` components.
 
 The two oscillators now sit in a plane, so a position is a `Fin 2 → ℝ`. -/
 
-/-- Position, `L` — one kind for the whole vector. -/
-def position : DimensionedKind :=
-  { kind := { id := "position", scale := .ratio }, dim := Dim.length }
+/-- Position, `L` — one kind for the whole vector: the catalogue's own position vector
+(3-1.10). -/
+def position : DimensionedKind := Iso80000.Part3.positionVector
 
-/-- Velocity, `L·T⁻¹`. -/
-def velocity : DimensionedKind :=
-  { kind := { id := "velocity", scale := .ratio }, dim := Dim.length * Dim.time⁻¹ }
+/-- Velocity, `L·T⁻¹` — the catalogue's own 3-10.1. -/
+def velocity : DimensionedKind := Iso80000.Part3.velocity
 
 /-- Speed squared, `L²·T⁻²` — what a velocity contracted with itself lands at. -/
 def speedSq : DimensionedKind :=
@@ -1255,20 +1254,16 @@ section MR32
 
 open scoped PropertyKindCalculus.OperatorTable
 
-/-- The join of the family: energy, unqualified. -/
-def energyGeneral : KindOfProperty :=
-  { id := "energy", scale := .ratio, examPrinciple := some "work exchanged with the system" }
+/-- The join of the family: the catalogue's mechanical energy (4-28.3) — exactly the
+`T + V` sum the join licenses. -/
+def energyGeneral : KindOfProperty := (Iso80000.Part4.mechanicalEnergy).kind
 
-/-- Kinetic energy, individuated by its examination: `½·m·⟪v,v⟫` from a mass and a speed. -/
-def kineticEnergy : KindOfProperty :=
-  { id := "kinetic energy", scale := .ratio,
-    examPrinciple := some "half the mass times the squared speed" }
+/-- Kinetic energy — the catalogue's own 4-28.2 (`½·m·⟪v,v⟫` from a mass and a speed). -/
+def kineticEnergy : KindOfProperty := (Iso80000.Part4.kineticEnergy).kind
 
-/-- Potential energy, individuated by its examination: `½·k·⟪x,x⟫` from a stiffness and a
-displacement. -/
-def potentialEnergy : KindOfProperty :=
-  { id := "potential energy", scale := .ratio,
-    examPrinciple := some "work stored against the restoring force" }
+/-- Potential energy — the catalogue's own 4-28.1 (`½·k·⟪x,x⟫` from a stiffness and a
+displacement). -/
+def potentialEnergy : KindOfProperty := (Iso80000.Part4.potentialEnergy).kind
 
 /-- The specialization edges of the family. -/
 inductive EnergyEdge : KindOfProperty → KindOfProperty → Prop where

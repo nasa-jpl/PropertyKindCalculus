@@ -22,8 +22,8 @@ The verdict: **no core change forced, no upstream API needed — and the subtree
 | file | ladder rung | what it holds |
 |---|---|---|
 | `Feasibility.lean` | before the ladder | F1–F6 as build artifacts: the radicand edge and the refused reciprocal, the first join with the Lagrangian refused beside it, the M6 collisions refused, the tfae consumed, the trig boundary, König as the second join |
-| `Kinds.lean` | Stage 0 | 22 kinds — 17 catalogue lookups verbatim, 5 mints in two findings; six joules, two ω's, two clocks separated by `decide`; the four-edge two-level lattice; `lagrangian_no_edge` |
-| `Metrology.lean` | Stage 1 | 22 `DimensionedKind` pairings with ten rows colliding — the 17 lookups referencing the catalogue's own entries, the 5 mints alone constructed — the Stage-0 agreement by `decide`, fourteen authored edge laws, coverage pinned clean |
+| `Kinds.lean` | Stage 0 | 22 kinds — 17 the catalogue's own entries referenced, 5 mints in two findings; six joules, two ω's, two clocks separated by `decide`; the four-edge two-level lattice; `lagrangian_no_edge` |
+| `Metrology.lean` | Stage 1 | 22 `DimensionedKind` pairings with ten rows colliding — the 17 lookups referencing the catalogue's own entries, the 5 mints alone constructed — the Stage-0 identification definitional (`rfl`), fourteen authored edge laws, coverage pinned clean |
 | `Kinded/HarmonicOscillator.lean` | Stage 2 | the re-authoring: the Legendre kinetic witness, **the pentad closed by the upstream proof term**, the trajectory from its data with normal form and periodicity, conservation at the watt, the geometric metric at one reading |
 | `Kinded/RigidBody.lean` | Stage 2 | the functional's moments with the parallel-axis theorem consumed, the two ω-tensors, `v = V + ω × r` fully table-expressed, the rotational contraction, the motion-preservation theorems |
 | `Operators.lean` | Stage 3 | seven registrations on their Stage-1 laws, each demonstrated at a source equation; the `@[kindConst]` full turn; the shared-letter refusal at the table |
@@ -37,7 +37,7 @@ What the layer costs, measured — every number quoting a build artifact at this
 
 | | count | artifact |
 |---|---|---|
-| kinds | 22 — 17 catalogue lookups written as verbatim literals (ISO 80000-4 and -3, down to the phase angle and the period duration), 5 mints in two findings: the input datum `k` and its `k/m` radicand; the Lagrangian and König's two kinetic species | `Kinds.lean`; the `decide`/`rfl` blocks in `Metrology.lean` |
+| kinds | 22 — 17 lookups referencing the catalogue's own entries (ISO 80000-4 and -3, down to the phase angle and the period duration), 5 mints in two findings: the input datum `k` and its `k/m` radicand; the Lagrangian and König's two kinetic species | `Kinds.lean`; the `decide`/`rfl` blocks in `Metrology.lean` |
 | dimensional pairings | 22, with the collisions visible in the registry: **six kinds at the joule**, two at `T⁻¹`, two at `T` — ten of twenty-two rows collide | `Metrology.lean` |
 | kind edges | 14 authored laws, of which 13 are table-registered (6 in `Feasibility.lean`, 7 in Stage 3) and **1** is law-only — conservation's `∂ₜE`, riding `fderiv` | `#kind_dimensional_coverage` pins in `Metrology.lean`/`Operators.lean`; the silent directory-wide `#kind_dimensional_clean` in `Audits.lean` |
 | join entries | **2**, on a two-level lattice that composes: `T + V` at mechanical energy (the total energy and the on-trajectory Hamiltonian), translational + rotational at kinetic energy (König) | the `KindJoin` instances in `Feasibility.lean`; `Kinds.lean`'s lattice |
@@ -132,7 +132,7 @@ checked, with the layer on.
     orthonormality pattern.
 
 And one re-confirmation: the `rfl` bridge between the probe kinds and Stage 0's
-literals again does not carry instance search (the pilot's finding 8) — the Stage-2
+kinds again does not carry instance search (the pilot's finding 8) — the Stage-2
 composites cite the Metrology laws explicitly where no instance is registered, and one
 type ascription rides each table spelling.
 

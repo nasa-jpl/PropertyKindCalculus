@@ -2,9 +2,10 @@
 # Stage 0 — the kind vocabulary of `Physlib/ClassicalMechanics` (two subtrees)
 
 The first rung of [the adoption ladder](../PLAN.md#stage-0-the-kind-vocabulary), for
-the campaign's third directory. One file, bare `KindOfProperty` declarations,
-Mathlib-free and PhysLib-free — importable by anything, costing nothing until
-something imports it. One vocabulary for both subtrees (`HarmonicOscillator/` and
+the campaign's third directory. One file of `KindOfProperty` declarations,
+Mathlib-free and PhysLib-free — the only import beyond the calculus is PKC's own
+`Iso80000` catalogue, itself Mathlib-free. Each lookup *is* the catalogue's entry,
+projected to its kind; only the five mints are constructed here. One vocabulary for both subtrees (`HarmonicOscillator/` and
 `RigidBody/`): the directory's title finding — same-dimension discrimination — is a
 *directory-level* fact, and splitting the vocabulary would hide it.
 
@@ -36,6 +37,8 @@ transitively.
 -/
 
 import PropertyKindCalculus
+import PropertyKindCalculus.Iso80000.Part3
+import PropertyKindCalculus.Iso80000.Part4
 
 namespace ForPhysLib.ClassicalMechanics.Kinds
 
@@ -44,69 +47,68 @@ open PropertyKindCalculus
 /-! ## The lookups — ISO 80000-4 and ISO 80000-3, verbatim -/
 
 /-- Mass — item 4-1 (`m`, kg): both subtrees' first input datum (`S.m`, `R.mass`). -/
-def mass : KindOfProperty := { id := "mass", scale := .ratio }
+def mass : KindOfProperty := (Iso80000.Part4.mass).kind
 
 /-- Momentum — item 4-8 (`p`, kg·m/s): what `toCanonicalMomentum` produces, and the
 rigid body's `linearMomentum`. -/
-def momentum : KindOfProperty := { id := "momentum", scale := .ratio }
+def momentum : KindOfProperty := (Iso80000.Part4.momentum).kind
 
 /-- Force — item 4-9.1 (`F`, N): the oscillator's `force = −∇V`, and Newton's reading
 in the tfae. -/
-def force : KindOfProperty := { id := "force", scale := .ratio }
+def force : KindOfProperty := (Iso80000.Part4.force).kind
 
 /-- Potential energy — item 4-28.1 (`V`, J): `½k⟪x,x⟫`. First of the six joules. -/
-def potentialEnergy : KindOfProperty := { id := "potential energy", scale := .ratio }
+def potentialEnergy : KindOfProperty := (Iso80000.Part4.potentialEnergy).kind
 
 /-- Kinetic energy — item 4-28.2 (`T`, J): `½m⟪ẋ,ẋ⟫`, and the König split's
 join. Second joule. -/
-def kineticEnergy : KindOfProperty := { id := "kinetic energy", scale := .ratio }
+def kineticEnergy : KindOfProperty := (Iso80000.Part4.kineticEnergy).kind
 
 /-- Mechanical energy — item 4-28.3 (`E`, J): the `T + V` join, the total energy, and
 the on-trajectory Hamiltonian (`hamiltonian_eq_energy`). Third joule. -/
-def mechanicalEnergy : KindOfProperty := { id := "mechanical energy", scale := .ratio }
+def mechanicalEnergy : KindOfProperty := (Iso80000.Part4.mechanicalEnergy).kind
 
 /-- Power — item 4-27 (`P`, W): `∂ₜE`'s kind — what energy conservation says is
 zero. -/
-def power : KindOfProperty := { id := "power", scale := .ratio }
+def power : KindOfProperty := (Iso80000.Part4.power).kind
 
 /-- Moment of inertia — item 4-7 (`J`, kg·m²): the inertia tensor's entries — the
 second moments of the mass-distribution functional. -/
-def momentOfInertia : KindOfProperty := { id := "moment of inertia", scale := .ratio }
+def momentOfInertia : KindOfProperty := (Iso80000.Part4.momentOfInertia).kind
 
 /-- Angular momentum — item 4-11 (`L`, kg·m²/s): `L = I·ω`. -/
-def angularMomentum : KindOfProperty := { id := "angular momentum", scale := .ratio }
+def angularMomentum : KindOfProperty := (Iso80000.Part4.angularMomentum).kind
 
 /-- Displacement — item 3-1.11 (`Δr`, m): the oscillator's `x`, a displacement from
 equilibrium in this coordinate model, and the rigid body's `y − c`. The catalogue's
-examination principle (between two points) is part of the literal. -/
-def displacement : KindOfProperty :=
-  { id := "displacement", scale := .ratio, examPrinciple := some "between-points" }
+examination principle (between two points) rides in with the entry. -/
+def displacement : KindOfProperty := (Iso80000.Part3.displacement).kind
 
 /-- Velocity — item 3-10.1 (`v`, m/s): `∂ₜ xₜ`, `V = ∂ₜ comTrajectory`. -/
-def velocity : KindOfProperty := { id := "velocity", scale := .ratio }
+def velocity : KindOfProperty := (Iso80000.Part3.velocity).kind
 
 /-- Acceleration — item 3-11 (`a`, m/s²): `∂ₜ∂ₜ xₜ`, Newton's other factor. -/
-def acceleration : KindOfProperty := { id := "acceleration", scale := .ratio }
+def acceleration : KindOfProperty := (Iso80000.Part3.acceleration).kind
 
 /-- Angular velocity — item 3-12 (`ω`, rad/s): the *rigid body's* `ω` — the dual of
 `Ṙ Rᵀ`, lab- or body-frame. -/
-def angularVelocity : KindOfProperty := { id := "angular velocity", scale := .ratio }
+def angularVelocity : KindOfProperty := (Iso80000.Part3.angularVelocity).kind
 
 /-- Angular frequency — item 3-18 (`ω`, rad/s): the *oscillator's* `ω = √(k/m)`. Same
 dimension and same letter as 3-12 — a different catalogue item, and the two subtrees'
 shared-letter collision. -/
-def angularFrequency : KindOfProperty := { id := "angular frequency", scale := .ratio }
+def angularFrequency : KindOfProperty := (Iso80000.Part3.angularFrequency).kind
 
 /-- Period duration — item 3-14 (`T`, s): `2π/ω`. Same dimension as duration — the
 repetition interval is not the trajectory parameter. -/
-def periodDuration : KindOfProperty := { id := "period duration", scale := .ratio }
+def periodDuration : KindOfProperty := (Iso80000.Part3.periodDuration).kind
 
 /-- Phase angle — item 3-7 (`φ`, rad): where `ω·t` (and the amplitude–phase `φ`)
 lands — the licence `cos` and `sin` consume at the trig boundary. -/
-def phaseAngle : KindOfProperty := { id := "phase angle", scale := .ratio }
+def phaseAngle : KindOfProperty := (Iso80000.Part3.phaseAngle).kind
 
 /-- Duration — item 3-9 (`t`, s): the trajectory parameter, `∂ₜ`'s denominator. -/
-def duration : KindOfProperty := { id := "duration", scale := .ratio }
+def duration : KindOfProperty := (Iso80000.Part3.duration).kind
 
 /-! ## The five mints — what the standard leaves to the application -/
 

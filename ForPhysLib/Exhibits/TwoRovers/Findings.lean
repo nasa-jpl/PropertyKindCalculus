@@ -31,6 +31,8 @@ soil-moisture model; this file shows a PhysLib reader what they buy, small.
 
 import PropertyKindCalculus
 import PropertyKindCalculus.QuantityReal
+import PropertyKindCalculus.Iso80000.Part3
+import PropertyKindCalculus.Iso80000.Part4
 import Mathlib.Tactic.NormNum
 
 namespace ForPhysLib.Exhibits.TwoRovers
@@ -39,17 +41,19 @@ open PropertyKindCalculus
 
 /-! ## The vocabulary and the two systems -/
 
-/-- Mass — extensive, and licensed to assemble below. -/
-def massK : KindOfProperty := { id := "mass", scale := .ratio }
+/-- Mass — extensive, and licensed to assemble below; the catalogue's own 4-1. -/
+def massK : KindOfProperty := (Iso80000.Part4.mass).kind
 
-/-- Length — the wheelbase's kind. -/
-def lengthK : KindOfProperty := { id := "length", scale := .ratio }
+/-- Length — the wheelbase's kind; the catalogue's own 3-1.1. -/
+def lengthK : KindOfProperty := (Iso80000.Part3.length).kind
 
-/-- Angular velocity — deliberately *not* licensed to assemble. -/
-def angularVelocityK : KindOfProperty := { id := "angular velocity", scale := .ratio }
+/-- Angular velocity — deliberately *not* licensed to assemble; the catalogue's own
+3-12. -/
+def angularVelocityK : KindOfProperty := (Iso80000.Part3.angularVelocity).kind
 
-/-- Torque — the interface quantity between a motor and its wheel. -/
-def torqueK : KindOfProperty := { id := "torque", scale := .ratio }
+/-- Torque — the interface quantity between a motor and its wheel; the catalogue's own
+4-12.2. -/
+def torqueK : KindOfProperty := (Iso80000.Part4.torque).kind
 
 /-- The first rover. -/
 def rover1 : System := ⟨"rover 1"⟩

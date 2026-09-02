@@ -2,14 +2,14 @@
 # Stage 0 — the kind vocabulary of `Physlib/Electromagnetism/Kinematics`
 
 The first rung of [the adoption ladder](../../PLAN.md#stage-0-the-kind-vocabulary), for
-the campaign's second directory. One file, bare `KindOfProperty` declarations,
-Mathlib-free and PhysLib-free — importable by anything, costing nothing until something
-imports it.
+the campaign's second directory. One file of `KindOfProperty` declarations,
+Mathlib-free and PhysLib-free — the only import beyond the calculus is PKC's own
+`Iso80000` catalogue, itself Mathlib-free.
 
 **Almost entirely a lookup — the mirror image of the pilot.** Every kind the chain's
-API speaks is copied *verbatim* from PKC's IEC 80000-6 catalogue (plus three Part-3
-coordinates), and Stage 1 (`Metrology.lean`) proves the agreement by `decide`, so this
-file cannot silently drift from the standard it looks up. **Eight** kinds are minted,
+API speaks *is* the corresponding IEC 80000-6 catalogue entry (plus three Part-3
+coordinates), projected to its kind — nothing is re-typed, so nothing can drift;
+Stage 1 (`Metrology.lean`) records the identification definitionally (`rfl`). **Eight** kinds are minted,
 and they are one finding three ways: the standard catalogues *frame-bound, gauge-fixed,
 measurable readings* (`E`, `B`, `φ`), so the readings the chain's own key results
 export that are none of those — the two tensor entries, Maxwell's three derivative
@@ -41,6 +41,8 @@ already make.
 -/
 
 import PropertyKindCalculus
+import PropertyKindCalculus.Iso80000.Part3
+import PropertyKindCalculus.Iso80000.Part6
 
 namespace ForPhysLib.Electromagnetism.Kinematics.Kinds
 
@@ -51,82 +53,71 @@ open PropertyKindCalculus
 /-- Magnetic vector potential — item 6-32 (`A`, Wb/m): the four-potential's *one*
 kind. `A⁰ = φ/c` is made homogeneous with the spatial components by the `/c`
 (Feasibility F2); the whole Lorentz vector sits here. -/
-def magneticVectorPotential : KindOfProperty :=
-  { id := "magnetic vector potential", scale := .ratio }
+def magneticVectorPotential : KindOfProperty := (Iso80000.Part6.magneticVectorPotential).kind
 
 /-- Electric potential — item 6-11.1 (`V`, V), **interval-scale in the standard
 itself**: fixed only up to gauge freedom. The scale is load-bearing: the ratio table
 refuses to land on it (Feasibility's pinned refusal), so `scalarPotential = c·A⁰` is a
 named crossing, never a table edge. -/
-def electricPotential : KindOfProperty :=
-  { id := "electric potential", scale := .interval }
+def electricPotential : KindOfProperty := (Iso80000.Part6.electricPotential).kind
 
 /-- Electric potential difference — item 6-11.2 (`U`, V), ratio-scale: the physical
 extent, and the only member of the 6-11 family a table edge may target. -/
-def electricPotentialDifference : KindOfProperty :=
-  { id := "electric potential difference", scale := .ratio }
+def electricPotentialDifference : KindOfProperty := (Iso80000.Part6.electricPotentialDifference).kind
 
 /-- Electric field strength — item 6-10 (`E`, V/m): the chain's `electricField`, a
 frame-bound reading (the boost laws mix it). -/
-def electricFieldStrength : KindOfProperty :=
-  { id := "electric field strength", scale := .ratio }
+def electricFieldStrength : KindOfProperty := (Iso80000.Part6.electricFieldStrength).kind
 
 /-- Magnetic flux density — item 6-21 (`B`, T): the chain's `magneticField` and the
 entries of `magneticFieldMatrix` — the spatial block of the field strength, read in a
 chosen frame. -/
-def magneticFluxDensity : KindOfProperty :=
-  { id := "magnetic flux density", scale := .ratio }
+def magneticFluxDensity : KindOfProperty := (Iso80000.Part6.magneticFluxDensity).kind
 
 /-- Magnetic flux — item 6-22.1 (`Φ`, Wb): the *gauge function's* kind — `∂^μχ` sits
 at the vector potential, so `χ` is a flux field. A lookup, not a mint: the standard
 already lists the kind the gauge freedom is parameterized by (Feasibility F5). -/
-def magneticFlux : KindOfProperty :=
-  { id := "magnetic flux", scale := .ratio }
+def magneticFlux : KindOfProperty := (Iso80000.Part6.magneticFlux).kind
 
 /-- Speed of light in vacuum — item 6-35.2 (`c₀`, m/s): the unit-system choice the
 source elides behind `(c : SpeedOfLight := 1)` and the kinded chain declares once
 (Feasibility F3); the velocity edge's other factor. -/
-def speedOfLight : KindOfProperty :=
-  { id := "speed of light in vacuum", scale := .ratio }
+def speedOfLight : KindOfProperty := (Iso80000.Part6.speedOfLight).kind
 
 /-- Speed — ISO 80000-3 item 3-10.2, the genus 6-35.2 specializes. -/
-def speed : KindOfProperty := { id := "speed", scale := .ratio }
+def speed : KindOfProperty := (Iso80000.Part3.speed).kind
 
 /-- Length — item 3-1.1: the spacetime coordinate's kind (`x⁰ = c·t` — upstream's
 `toTimeAndSpace` stores `c·t` in the time slot), and `∇`'s denominator. -/
-def length : KindOfProperty := { id := "length", scale := .ratio }
+def length : KindOfProperty := (Iso80000.Part3.length).kind
 
 /-- Duration — item 3-9: `Time`'s kind, `∂ₜ`'s denominator in the sliced readings. -/
-def duration : KindOfProperty := { id := "duration", scale := .ratio }
+def duration : KindOfProperty := (Iso80000.Part3.duration).kind
 
 /-- Electric charge density — item 6-3 (`ρ`, C/m³): the source Gauss's law reads. -/
-def electricChargeDensity : KindOfProperty :=
-  { id := "electric charge density", scale := .ratio }
+def electricChargeDensity : KindOfProperty := (Iso80000.Part6.electricChargeDensity).kind
 
 /-- Electric current density — item 6-8 (`J`, A/m²): Ampère's source — and where the
 displacement current `ε₀·∂ₜE` lands, by the catalogue's own item. -/
-def electricCurrentDensity : KindOfProperty :=
-  { id := "electric current density", scale := .ratio }
+def electricCurrentDensity : KindOfProperty := (Iso80000.Part6.electricCurrentDensity).kind
 
 /-- The electric constant — item 6-14.1 (`ε₀`, F/m): `FreeSpace.ε₀`, a bare `ℝ`
 field upstream. -/
-def electricConstant : KindOfProperty := { id := "electric constant", scale := .ratio }
+def electricConstant : KindOfProperty := (Iso80000.Part6.electricConstant).kind
 
 /-- The magnetic constant — item 6-26.1 (`μ₀`, H/m): `FreeSpace.μ₀`, a bare `ℝ`
 field upstream — and `c = 1/√(ε₀μ₀)` is upstream's *definition* of `FreeSpace.c`. -/
-def magneticConstant : KindOfProperty := { id := "magnetic constant", scale := .ratio }
+def magneticConstant : KindOfProperty := (Iso80000.Part6.magneticConstant).kind
 
 /-- Electromagnetic energy density — item 6-33 (`w`, J/m³): the Hamiltonian's kind.
 The identification is upstream's own theorem — `hamiltonian_eq_electricField_magneticField`
 writes `H` as the catalogue's `½(ε₀E² + B²/μ₀)` plus the source terms. -/
-def electromagneticEnergyDensity : KindOfProperty :=
-  { id := "electromagnetic energy density", scale := .ratio }
+def electromagneticEnergyDensity : KindOfProperty := (Iso80000.Part6.electromagneticEnergyDensity).kind
 
 /-- Linear electric current density — item 6-9 (`J_S`, A/m): registered as the
 canonical momentum's *collision partner* — `π = ∂L/∂(∂₀A)` has exactly this dimension
 and is not this kind (the decide below). -/
-def linearElectricCurrentDensity : KindOfProperty :=
-  { id := "linear electric current density", scale := .ratio }
+def linearElectricCurrentDensity : KindOfProperty := (Iso80000.Part6.linearCurrentDensity).kind
 
 /-! ## The eight mints — the readings the standard does not list
 

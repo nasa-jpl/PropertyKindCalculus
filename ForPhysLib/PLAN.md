@@ -57,8 +57,10 @@ proposal to replace or modify it.
 
 ### Stage 0. The kind vocabulary
 
-One `kinds/` file per directory: bare `KindOfProperty` declarations, Mathlib-free, imported
-by nothing. A kind carries an id, a `ScaleType`, and an examination principle.
+One `kinds/` file per directory: `KindOfProperty` declarations, Mathlib-free, imported by
+nothing — each lookup *being* the corresponding `Iso80000` catalogue entry's own kind
+projection, so a lookup cannot drift from the standard; only the mints are constructed. A
+kind carries an id, a `ScaleType`, and an examination principle.
 
 **Cost to existing code: none.** Nothing imports it yet.
 
@@ -76,10 +78,10 @@ file for file, under the organising rule *a kind lives in the file named by its 
 examination principle*.
 
 **Status: Done for `SpaceAndTime/Space`** — `ForPhysLib.Kinds.Space` (six ISO 80000-3
-kinds, ids/scales/principles verbatim from `Iso80000.Part3`, the position/displacement
-pair distinct by `decide`) with `ForPhysLib.Examination.Space` mirroring it file for file
-(principles declared, `examinedBy` proved by `rfl`, the distinctness derived from the
-principles alone). Landed with Sequencing item 3.
+kinds, each `Iso80000.Part3`'s own entry, the position/displacement pair distinct by
+`decide`) with `ForPhysLib.Examination.Space` mirroring it file for file (the catalogue's
+principles, `examinedBy` proved by `rfl`, the distinctness derived from the principles
+alone). Landed with Sequencing item 3.
 
 ### Stage 1. The metrology annex
 
@@ -1077,7 +1079,7 @@ scope honesty (kinds separate kinds, not frames).
 
 **Status: Stages 0–1 climbed** — `Kinds.lean` and `Metrology.lean`. Stage 0: 22 kinds,
 17 verbatim catalogue literals (ISO 80000-4 and -3, down to the phase angle and the
-period — the displacement literal carries the catalogue's examination principle) and 5
+period — each lookup the catalogue's own entry, examination principles included) and 5
 mints in two findings (the input datum `k` + its radicand; the Lagrangian + König's
 two species); six kinds at the joule with the collisions separated by `decide`
 (including the shared-letter `ω` pair and duration/period); the four-edge two-level
@@ -1085,7 +1087,7 @@ lattice with both joins' comparability facts and the transitive
 `rotational ⊑ mechanical`; `lagrangian_no_edge` making "the difference without a
 home" a theorem about the lattice. Stage 1: 22 `DimensionedKind` pairings — six rows
 at `MDim.energy`, two at `T⁻¹`, two at `T`, ten of twenty-two colliding — the
-17-lookup agreement by `decide` and every dimension by `rfl` (the mints' dimensions
+17-lookup identification definitional (`rfl`) and every dimension `rfl` (the mints' dimensions
 checked against the catalogue's arithmetic: Hooke fixes the spring constant, the
 radicand shares 3-13's dimension as a different kind); thirteen authored edge laws,
 each a formula the subtrees write, with `#kind_dimensional_coverage` pinned clean
@@ -1202,12 +1204,12 @@ ForPhysLib/
     HarmonicOscillator/            ✓   README.md beside the five sources it scores
       Attempt1Reals.lean           ✓   Attempt2Dimension.lean ✓
       Attempt3Tagged.lean          ✓   Attempt4Pkc.lean ✓   Scorecard.lean ✓
-  Kinds.lean  Kinds/                 ✓ Stage 0: bare KindOfProperty, Mathlib-free
+  Kinds.lean  Kinds/                 ✓ Stage 0: KindOfProperty lookups = the catalogue's own entries, Mathlib-free
     Space.lean                       ✓   the first directory: SpaceAndTime/Space
   Examination.lean  Examination/     ✓ the physics that individuates them, mirroring Kinds/ file-for-file
     Space.lean                       ✓   principles declared, examinedBy proved, distinctness derived
   Metrology.lean  Metrology/         ✓ Stage 1: DimensionedKind pairings + pinned coverage
-    Space.lean                       ✓   the Stage-0 lookup proved against Iso80000.Part3 by decide
+    Space.lean                       ✓   the Stage-0 identification with Iso80000.Part3, definitional
   Kinded.lean  Kinded/               ✓ Stage 2: the kinded author-forms, naked = `.magnitude` by rfl
     Space.lean                       ✓   four length-readings; PhysLib/Mathlib theorems close kinded goals verbatim
   Operators.lean  Operators/         ✓ Stage 3: KindMul/KindDiv registrations — `*`/`/` through the table

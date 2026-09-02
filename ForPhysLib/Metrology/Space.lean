@@ -9,10 +9,10 @@ directory's small kind algebra authored, and
 prose dimension claims into statements a build can fail on, at **zero cost to existing
 code**: nothing in PhysLib changes, or even imports this.
 
-**And the lookup is now a theorem.** Stage 0 copied its ids, scales and examination
-principles from PKC's ISO 80000-3 catalogue; this module imports that catalogue and proves
-the agreement by `decide` — kind by kind, and dimension by dimension. A Stage-0 edit that
-drifts from the standard stops compiling here. -/
+**And the lookup is definitional.** Stage 0's kinds *are* the catalogue entries'
+own projections; this module records the identification kind by kind (`rfl` — there
+is no second spelling to drift) and checks each pairing's dimension against the
+catalogue's. -/
 
 import ForPhysLib.Kinds.Space
 import ForPhysLib.Examination.Space
@@ -39,17 +39,17 @@ def planeAngleDK : DimensionedKind := Iso80000.Part3.planeAngle
 /-- Area is `L²` — where the cross product and the slice product structure land. -/
 def areaDK : DimensionedKind := Iso80000.Part3.area
 
-/-! ## The lookup, proved
+/-! ## The lookup, definitional
 
-Stage 0's vocabulary agrees with `Iso80000.Part3` — same kinds (ids, scales, examination
-principles) and same dimensions. Decided, so drift is a build failure. -/
+Stage 0's vocabulary *is* `Iso80000.Part3`'s — each kind is the catalogue entry's own
+projection, so the identification is `rfl` and drift is impossible by construction. -/
 
-example : length         = Iso80000.Part3.length.kind         := by decide
-example : distance       = Iso80000.Part3.distance.kind       := by decide
-example : positionVector = Iso80000.Part3.positionVector.kind := by decide
-example : displacement   = Iso80000.Part3.displacement.kind   := by decide
-example : planeAngle     = Iso80000.Part3.planeAngle.kind     := by decide
-example : area           = Iso80000.Part3.area.kind           := by decide
+example : length         = Iso80000.Part3.length.kind         := rfl
+example : distance       = Iso80000.Part3.distance.kind       := rfl
+example : positionVector = Iso80000.Part3.positionVector.kind := rfl
+example : displacement   = Iso80000.Part3.displacement.kind   := rfl
+example : planeAngle     = Iso80000.Part3.planeAngle.kind     := rfl
+example : area           = Iso80000.Part3.area.kind           := rfl
 
 example : lengthDK.dim         = Iso80000.Part3.length.dim         := rfl
 example : distanceDK.dim       = Iso80000.Part3.distance.dim       := rfl

@@ -42,6 +42,9 @@ import Physlib.Electromagnetism.Basic
 import Physlib.Electromagnetism.Kinematics.ElectricField
 import Physlib.Units.Dimension
 import PropertyKindCalculus.KindAlgebra
+import PropertyKindCalculus.Iso80000.Part4
+import PropertyKindCalculus.Iso80000.Part5
+import PropertyKindCalculus.Iso80000.Part6
 import PropertyKindCalculus.SpecializationLift
 import PropertyKindCalculus.Level
 import PropertyKindCalculus.Complex
@@ -72,19 +75,18 @@ example (temperature : Time → Space → ℝ) :
 
 /-! ### The kinded vocabulary — where the swap fails
 
-Base kinds by hand; the electrical algebra below arrives in one `kind_algebra` block
-(the MR11 answer, measured on this directory). -/
+Base kinds are the catalogue's own entries; the electrical algebra below arrives in
+one `kind_algebra` block (the MR11 answer, measured on this directory). -/
 
-/-- Electric field strength — ISO 80000-6 item 6-10. -/
-def electricFieldK : KindOfProperty :=
-  { id := "electric field strength", scale := .ratio, examPrinciple := some "force per charge" }
+/-- Electric field strength — the catalogue's own IEC 80000-6 item 6-10. -/
+def electricFieldK : KindOfProperty := (Iso80000.Part6.electricFieldStrength).kind
 
-/-- Magnetic flux density — item 6-21. Distinct examination: force per moving charge. -/
-def magneticFieldK : KindOfProperty :=
-  { id := "magnetic flux density", scale := .ratio, examPrinciple := some "force per current element" }
+/-- Magnetic flux density — the catalogue's own item 6-21, a distinct entry at its own
+dimension. -/
+def magneticFieldK : KindOfProperty := (Iso80000.Part6.magneticFluxDensity).kind
 
-/-- Charge density — a density, not any scalar field. -/
-def chargeDensityK : KindOfProperty := { id := "electric charge density", scale := .ratio }
+/-- Charge density — the catalogue's own 6-3: a density, not any scalar field. -/
+def chargeDensityK : KindOfProperty := (Iso80000.Part6.electricChargeDensity).kind
 
 /-- A kinded field reading: the carrier is the directory's own function type; only the
 reading changed. -/
@@ -96,7 +98,7 @@ def expectsEK (E : Quantity electricFieldK (_root_.Electromagnetism.ElectricFiel
   expectsEK B
 
 /- Nor does a temperature field pass as a charge density. -/
-#check_failure fun (temp : Quantity ({ id := "temperature", scale := .ratio } : KindOfProperty)
+#check_failure fun (temp : Quantity (Iso80000.Part5.thermodynamicTemperature).kind
     (Time → Space → ℝ)) => (temp : Quantity chargeDensityK (Time → Space → ℝ))
 
 /-! ## Problem 2 — the Gaussian basis: dimensions coincide, kinds stay apart -/
@@ -138,7 +140,7 @@ noncomputable example (A : _root_.Electromagnetism.ElectromagneticPotential 3) :
 
 /-- The kinded answer: the choice is a *declaration* — named, attested, greppable —
 rather than an elision repeated at every call site. -/
-def speedOfLightK : KindOfProperty := { id := "speed of light in vacuum", scale := .ratio }
+def speedOfLightK : KindOfProperty := (Iso80000.Part6.speedOfLight).kind
 
 /-- "This development works in natural units": stated once. -/
 noncomputable def chosenC : Quantity speedOfLightK ℝ :=
@@ -151,13 +153,13 @@ licensed, ratios not. The physical extents are the differences; PhysLib's proof 
 the field strength is gauge-invariant is the calculus-level fact, and this is its
 value-level shadow. -/
 
-/-- The scalar potential — interval scale: no absolute zero, by gauge freedom. -/
-def potentialK : KindOfProperty :=
-  { id := "electric scalar potential", scale := .interval
-    examPrinciple := some "gauge-dependent chart" }
+/-- The scalar potential — the catalogue's own 6-11.1, **interval-scale in the standard
+itself**: no absolute zero, by gauge freedom. -/
+def potentialK : KindOfProperty := (Iso80000.Part6.electricPotential).kind
 
-/-- A potential difference — the physical extent; ratio scale. -/
-def potentialDiffK : KindOfProperty := { id := "electric potential difference", scale := .ratio }
+/-- A potential difference — the catalogue's own 6-11.2: the physical extent; ratio
+scale. -/
+def potentialDiffK : KindOfProperty := (Iso80000.Part6.electricPotentialDifference).kind
 
 /-- The torsor's `-ᵥ`: two positions on the potential axis determine an extent. -/
 def potentialSub (x y : Quantity potentialK ℝ) : Quantity potentialDiffK ℝ :=
@@ -174,11 +176,11 @@ PhysLib has no AC or RF physics; this is where the minted machinery bites first-
 
 /-! ### Impedance, at the complex carrier (MR14) -/
 
-/-- Voltage (AC phasor-valued below). -/
-def voltageK : KindOfProperty := { id := "voltage", scale := .ratio }
+/-- Voltage — the catalogue's own 6-11.3 (AC phasor-valued below). -/
+def voltageK : KindOfProperty := (Iso80000.Part6.voltage).kind
 
-/-- Current. -/
-def currentK : KindOfProperty := { id := "electric current", scale := .ratio }
+/-- Current — the catalogue's own 6-1. -/
+def currentK : KindOfProperty := (Iso80000.Part6.electricCurrent).kind
 
 kind_algebra
   impedanceK     : "impedance"      := voltageK / currentK
@@ -197,8 +199,8 @@ def impedanceOf (v : Quantity voltageK (Complex Float))
 
 /-! ### dBm, dBW and the link budget (`LevelKind`) -/
 
-/-- Electrical power — the root kind of dBm and dBW. -/
-def elPowerK : KindOfProperty := { id := "electrical power", scale := .ratio }
+/-- Power — the catalogue's own 6-45, the root kind of dBm and dBW. -/
+def elPowerK : KindOfProperty := (Iso80000.Part6.power).kind
 
 /-- Power level re 1 mW — the dBm. -/
 def dBm : LevelKind := ⟨elPowerK, .power, "1 mW"⟩
@@ -234,20 +236,18 @@ are **deliberately unregistered**, because `P + Q` is the domain error: powers a
 quadrature, `S² = P² + Q²`. The energy family alongside registers its join, so the pair
 exhibits the same table saying yes and saying no. -/
 
-/-- The genus: AC power. -/
-def acPowerK : KindOfProperty := { id := "AC power", scale := .ratio }
+/-- The genus: power — the catalogue's own 6-45 (the same entry `elPowerK` names: the
+standard's broad genus covers DC and AC alike). -/
+def acPowerK : KindOfProperty := (Iso80000.Part6.power).kind
 
-/-- Active power — `W`, the in-phase mean. -/
-def activePowerK : KindOfProperty :=
-  { id := "active power", scale := .ratio, examPrinciple := some "in-phase mean" }
+/-- Active power — the catalogue's own 6-56 (`W`, the time-averaged real component). -/
+def activePowerK : KindOfProperty := (Iso80000.Part6.activePower).kind
 
-/-- Reactive power — `var`, the quadrature component. -/
-def reactivePowerK : KindOfProperty :=
-  { id := "reactive power", scale := .ratio, examPrinciple := some "quadrature mean" }
+/-- Reactive power — the catalogue's own 6-60 (`var`, the quadrature component). -/
+def reactivePowerK : KindOfProperty := (Iso80000.Part6.reactivePower).kind
 
-/-- Apparent power — `VA`, the phasor magnitude. -/
-def apparentPowerK : KindOfProperty :=
-  { id := "apparent power", scale := .ratio, examPrinciple := some "phasor magnitude" }
+/-- Apparent power — the catalogue's own 6-57 (`VA`, the RMS product). -/
+def apparentPowerK : KindOfProperty := (Iso80000.Part6.apparentPower).kind
 
 /-- The AC power family's specialization edges. -/
 inductive PowerEdge : KindOfProperty → KindOfProperty → Prop
@@ -278,16 +278,14 @@ noncomputable def apparentFrom (P : Quantity activePowerK ℝ) (Q : Quantity rea
 
 /-! ### The contrast: energy registers its join -/
 
-/-- Kinetic energy, a species of energy. -/
-def kineticK : KindOfProperty :=
-  { id := "kinetic energy", scale := .ratio, examPrinciple := some "by motion" }
+/-- Kinetic energy — the catalogue's own 4-28.2. -/
+def kineticK : KindOfProperty := (Iso80000.Part4.kineticEnergy).kind
 
-/-- Potential energy, another. -/
-def potentialEnergyK : KindOfProperty :=
-  { id := "potential energy", scale := .ratio, examPrinciple := some "by configuration" }
+/-- Potential energy — the catalogue's own 4-28.1. -/
+def potentialEnergyK : KindOfProperty := (Iso80000.Part4.potentialEnergy).kind
 
-/-- Energy, their join. -/
-def energyK : KindOfProperty := { id := "energy", scale := .ratio }
+/-- Their join — the catalogue's own mechanical energy (4-28.3). -/
+def energyK : KindOfProperty := (Iso80000.Part4.mechanicalEnergy).kind
 
 /-- The energy family's edges. -/
 inductive EnergyEdge : KindOfProperty → KindOfProperty → Prop

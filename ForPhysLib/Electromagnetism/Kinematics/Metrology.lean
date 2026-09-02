@@ -8,10 +8,10 @@ mints alone as constructed records — the chain's kind algebra authored as laws
 `#kind_dimensional_coverage` pinned over it with `#guard_msgs` — at **zero cost to
 existing code**: nothing in PhysLib changes, or even imports this.
 
-**And the lookup is now a theorem.** Stage 0 copied its ids and scales from PKC's
-IEC 80000-6 catalogue (and three Part-3 coordinates); this module imports the catalogue
-and proves the agreement by `decide` — kind by kind, and dimension by dimension. A
-Stage-0 edit that drifts from the standard stops compiling here.
+**And the lookup is definitional.** Stage 0's kinds *are* the catalogue entries'
+own projections; this module records the identification kind by kind (`rfl` — there
+is no second spelling to drift) and checks each pairing's dimension against the
+catalogue's.
 
 **The registry now shows the collisions.** Three pairings at the tesla (`B`, the
 potential-gradient entry, the field-strength entry) and two at the volt (the interval
@@ -118,12 +118,13 @@ reading, not a current through a line. -/
 def canonicalMomentumDensityDK : DimensionedKind :=
   { kind := canonicalMomentumDensity, dim := Iso80000.Part6.EDim.linearCurrentDensity }
 
-/-! ## The lookup, proved
+/-! ## The lookup, definitional
 
-Stage 0's vocabulary agrees with `Iso80000` Parts 3 and 6 — same kinds (ids, scales)
-and same dimensions. Decided, so drift is a build failure. The two mints have no
-catalogue row to check — that they *cannot* be looked up is their finding — but their
-dimension (the tesla) is checked against the catalogue's below. -/
+Stage 0's vocabulary *is* `Iso80000` Parts 3 and 6's — each lookup kind is the
+catalogue entry's own projection, so the identification is `rfl` and drift is
+impossible by construction. The mints have no catalogue row — that they *cannot* be
+looked up is their finding — but their dimensions are checked against the
+catalogue's below. -/
 
 /-- The registry's speed of light is the catalogue's *vacuum* item, and Part 7's
 `speedOfLight` (7-1.1, "speed of light in a medium") is decidably a different kind —
@@ -132,26 +133,25 @@ example : Iso80000.Part6.speedOfLight.kind ≠ Iso80000.Part7.speedOfLight.kind 
   decide
 
 
-example : magneticVectorPotential = Iso80000.Part6.magneticVectorPotential.kind := by
-  decide
-example : electricPotential = Iso80000.Part6.electricPotential.kind := by decide
+example : magneticVectorPotential = Iso80000.Part6.magneticVectorPotential.kind := rfl
+example : electricPotential = Iso80000.Part6.electricPotential.kind := rfl
 example : electricPotentialDifference
-    = Iso80000.Part6.electricPotentialDifference.kind := by decide
-example : electricFieldStrength = Iso80000.Part6.electricFieldStrength.kind := by decide
-example : magneticFluxDensity = Iso80000.Part6.magneticFluxDensity.kind := by decide
-example : magneticFlux = Iso80000.Part6.magneticFlux.kind := by decide
-example : speedOfLight = Iso80000.Part6.speedOfLight.kind := by decide
-example : speed = Iso80000.Part3.speed.kind := by decide
-example : length = Iso80000.Part3.length.kind := by decide
-example : duration = Iso80000.Part3.duration.kind := by decide
-example : electricChargeDensity  = Iso80000.Part6.electricChargeDensity.kind  := by decide
-example : electricCurrentDensity = Iso80000.Part6.electricCurrentDensity.kind := by decide
-example : electricConstant       = Iso80000.Part6.electricConstant.kind       := by decide
-example : magneticConstant       = Iso80000.Part6.magneticConstant.kind       := by decide
+    = Iso80000.Part6.electricPotentialDifference.kind := rfl
+example : electricFieldStrength = Iso80000.Part6.electricFieldStrength.kind := rfl
+example : magneticFluxDensity = Iso80000.Part6.magneticFluxDensity.kind := rfl
+example : magneticFlux = Iso80000.Part6.magneticFlux.kind := rfl
+example : speedOfLight = Iso80000.Part6.speedOfLight.kind := rfl
+example : speed = Iso80000.Part3.speed.kind := rfl
+example : length = Iso80000.Part3.length.kind := rfl
+example : duration = Iso80000.Part3.duration.kind := rfl
+example : electricChargeDensity  = Iso80000.Part6.electricChargeDensity.kind  := rfl
+example : electricCurrentDensity = Iso80000.Part6.electricCurrentDensity.kind := rfl
+example : electricConstant       = Iso80000.Part6.electricConstant.kind       := rfl
+example : magneticConstant       = Iso80000.Part6.magneticConstant.kind       := rfl
 example : electromagneticEnergyDensity
-    = Iso80000.Part6.electromagneticEnergyDensity.kind := by decide
+    = Iso80000.Part6.electromagneticEnergyDensity.kind := rfl
 example : linearElectricCurrentDensity
-    = Iso80000.Part6.linearCurrentDensity.kind := by decide
+    = Iso80000.Part6.linearCurrentDensity.kind := rfl
 
 example : magneticVectorPotentialDK.dim
     = Iso80000.Part6.magneticVectorPotential.dim := rfl

@@ -22,8 +22,8 @@ either: every capability the chain needed was already minted.
 | file | ladder rung | what it holds |
 |---|---|---|
 | `Feasibility.lean` | before the ladder | F1–F5 as build artifacts: the field carrier stands up, the `/c` pinned, the interval scale refuses the ratio table, the boost law consumed whole, the gauge torsor |
-| `Kinds.lean` | Stage 0 | 19 kinds — 14 catalogue lookups verbatim (Maxwell's sources and constants included), 5 mints; three teslas separated by `decide`; the interval scale pinned; no join, and that is a finding |
-| `Metrology.lean` | Stage 1 | 24 `DimensionedKind` pairings — the lookups referencing the catalogue's own entries, the mints alone constructed — with the collisions visible, the Stage-0 lookup proved by `decide`/`rfl` (including that Part 7's `speedOfLight` is the *in-medium* kind, decidably not the chain's vacuum 6-35.2), twenty-five authored edge laws (Maxwell's seven and the variational six included), coverage pinned clean |
+| `Kinds.lean` | Stage 0 | 24 kinds — 16 the catalogue's own entries referenced (Maxwell's sources and constants included), 8 mints; three teslas separated by `decide`; the interval scale pinned; no join, and that is a finding |
+| `Metrology.lean` | Stage 1 | 24 `DimensionedKind` pairings — the lookups referencing the catalogue's own entries, the mints alone constructed — with the collisions visible, the Stage-0 identification definitional (`rfl`) (including that Part 7's `speedOfLight` is the *in-medium* kind, decidably not the chain's vacuum 6-35.2), twenty-five authored edge laws (Maxwell's seven and the variational six included), coverage pinned clean |
 | `Kinded.lean` | Stage 2 | the re-authoring: the slices, `E = −∇φ − ∂ₜ𝐀` rebuilt and erasing by `rfl`, chart vs extent, the frame readings off the tensor, the boost's magnetic mirror, gauge invariance reaching the fields |
 | `Operators.lean` | Stage 3 | three table registrations + the interval potential's torsor; the law-only majority named; the refusals are subtree boundaries |
 | `Audits.lean` | Stage 4 | the directory namespace under CI: the 39-site boundary audit pinned, silent clean/ratchet/dimensional gates, a **12-crossing interior** gated empty, the ingest boundary measured |
@@ -38,7 +38,7 @@ What the layer costs, measured — every number quoting a build artifact at this
 
 | | count | artifact |
 |---|---|---|
-| kinds | 24 — 16 catalogue lookups written as verbatim literals (IEC 80000-6 + ISO 80000-3; Maxwell adds 6-3, 6-8, 6-14.1, 6-26.1; Dynamics adds 6-33, 6-9), 8 local mints (the chart and extent entries, Maxwell's three derivative readings, and the variational three: the Lagrangian density, the variational gradient, the canonical momentum) | `Kinds.lean`; the `decide`/`rfl` blocks in `Metrology.lean` |
+| kinds | 24 — 16 lookups referencing the catalogue's own entries (IEC 80000-6 + ISO 80000-3; Maxwell adds 6-3, 6-8, 6-14.1, 6-26.1; Dynamics adds 6-33, 6-9), 8 local mints (the chart and extent entries, Maxwell's three derivative readings, and the variational three: the Lagrangian density, the variational gradient, the canonical momentum) | `Kinds.lean`; the `decide`/`rfl` blocks in `Metrology.lean` |
 | dimensional pairings | 24, with the collisions visible in the registry: three kinds at the tesla, two at the volt, two at the energy density's J/m³, two at the current density's A/m², two at the linear current density's A/m | `Metrology.lean` |
 | kind edges | 25 authored laws, of which 5 are table-registered (2 in `Feasibility.lean`, 3 in Stage 3) and 20 are law-only — their divisions live inside `fderiv`, `∫` and the variational `δ`, where no table sees them | `#kind_dimensional_coverage` pins in `Metrology.lean`/`Operators.lean`; the silent directory-wide `#kind_dimensional_clean` in `Audits.lean` |
 | join entries | **0** — every sum the chain writes (`E = −∇φ − ∂ₜ𝐀`, the boost mixings, the gauge shift) is same-kind after an edge or a crossing | `Kinds.lean` header; the `#check_failure` beside each |
@@ -118,8 +118,8 @@ checked, with the layer on.
     to introduce", but every definition already takes `𝓕 : FreeSpace` — a two-line
     docstring patch candidate.
 
-And one re-confirmation: the `rfl` bridge between catalogue lookups and Stage-0
-literals again does not carry instance search (the pilot's finding 8) — Stage 2 needed
+And one re-confirmation: the `rfl` bridge between catalogue lookups and Stage-0's
+kinds again does not carry instance search (the pilot's finding 8) — Stage 2 needed
 exactly one type ascription across it.
 
 The offer of the gauge-invariance patch upstream is a human's to make

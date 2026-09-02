@@ -36,6 +36,8 @@ transfer — now per kind. The current `Vector` is the erasure of this one.
 import Physlib.SpaceAndTime.ReferenceFrame
 import ForPhysLib.Kinded.Space
 import PropertyKindCalculus.KindLedger
+import PropertyKindCalculus.Iso80000.Part3
+import PropertyKindCalculus.Iso80000.Part4
 
 namespace ForPhysLib.Exhibits.ReferenceFrame
 
@@ -79,14 +81,15 @@ The kind rides along; the components and every structure transfer exactly as bef
 `kComponentEquiv` is the analogue of `componentEquiv`: still the place the kind is
 dropped, still definitional, and it stays exactly where it is. -/
 
-/-- Velocity — what requirement 16's boost acts on. -/
-def velocityK : KindOfProperty := { id := "velocity", scale := .ratio }
+/-- Velocity — what requirement 16's boost acts on; the catalogue's own 3-10.1. -/
+def velocityK : KindOfProperty := (Iso80000.Part3.velocity).kind
 
-/-- Force — sharing `frame.Vector` today with velocity and position. -/
-def forceK : KindOfProperty := { id := "force", scale := .ratio }
+/-- Force — sharing `frame.Vector` today with velocity and position; the catalogue's
+own 4-9.1. -/
+def forceK : KindOfProperty := (Iso80000.Part4.force).kind
 
-/-- Duration — what `(t₂ - t₁).val` silently erases. -/
-def durationK : KindOfProperty := { id := "duration", scale := .ratio }
+/-- Duration — what `(t₂ - t₁).val` silently erases; the catalogue's own 3-9. -/
+def durationK : KindOfProperty := (Iso80000.Part3.duration).kind
 
 /-- `frame.Vector`, with the physical role stated: one carrier *per kind* instead of one
 carrier. The current `Vector` is the erasure of this one. -/

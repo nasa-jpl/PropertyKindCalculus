@@ -33,6 +33,8 @@ free exactly because energy is scalar-variance (MR18: what survives a change of 
 
 import Physlib.ClassicalMechanics.RigidBody.KineticEnergy
 import PropertyKindCalculus.Frame
+import PropertyKindCalculus.Iso80000.Part3
+import PropertyKindCalculus.Iso80000.Part4
 import PropertyKindCalculus.QuantityReal
 import ForPhysLib.Kinds.Space
 
@@ -82,23 +84,26 @@ A small vocabulary for the directory — all ratio-scale, with the two product l
 rotational contraction uses. The two frames are the ones the source's own docstrings
 name: the inertial lab frame and the co-rotating body frame. -/
 
-/-- Angular velocity — what `RigidBodyMotion.angularVelocity` reads. -/
-def angularVelocityK : KindOfProperty := { id := "angular velocity", scale := .ratio }
+/-- Angular velocity — what `RigidBodyMotion.angularVelocity` reads; the catalogue's
+own 3-12. -/
+def angularVelocityK : KindOfProperty := (Iso80000.Part3.angularVelocity).kind
 
-/-- Moment of inertia — what `RigidBody.inertiaTensor` holds, body-fixed. -/
-def momentOfInertiaK : KindOfProperty := { id := "moment of inertia", scale := .ratio }
+/-- Moment of inertia — what `RigidBody.inertiaTensor` holds, body-fixed; the
+catalogue's own 4-7. -/
+def momentOfInertiaK : KindOfProperty := (Iso80000.Part4.momentOfInertia).kind
 
-/-- Angular momentum — `L = I ω`. -/
-def angularMomentumK : KindOfProperty := { id := "angular momentum", scale := .ratio }
+/-- Angular momentum — `L = I ω`; the catalogue's own 4-11. -/
+def angularMomentumK : KindOfProperty := (Iso80000.Part4.angularMomentum).kind
 
-/-- Kinetic energy — where both halves of the König split land. -/
-def kineticEnergyK : KindOfProperty := { id := "kinetic energy", scale := .ratio }
+/-- Kinetic energy — where both halves of the König split land; the catalogue's own
+4-28.2. -/
+def kineticEnergyK : KindOfProperty := (Iso80000.Part4.kineticEnergy).kind
 
-/-- Velocity — the translational half's first factor. -/
-def velocityK : KindOfProperty := { id := "velocity", scale := .ratio }
+/-- Velocity — the translational half's first factor; the catalogue's own 3-10.1. -/
+def velocityK : KindOfProperty := (Iso80000.Part3.velocity).kind
 
-/-- Linear momentum — the translational half's second factor. -/
-def linearMomentumK : KindOfProperty := { id := "linear momentum", scale := .ratio }
+/-- Momentum — the translational half's second factor; the catalogue's own 4-8. -/
+def linearMomentumK : KindOfProperty := (Iso80000.Part4.momentum).kind
 
 /-- `I · ω` lands at angular momentum. -/
 theorem inertia_mul_angularVelocity :

@@ -8,10 +8,10 @@ mints alone as constructed records — the directory's kind algebra authored as 
 `#kind_dimensional_coverage` pinned over it with `#guard_msgs` — at **zero cost to
 existing code**: nothing in PhysLib changes, or even imports this.
 
-**And the lookup is now a theorem.** Stage 0 copied its ids and scales from PKC's
-ISO 80000-4 and -3 catalogues; this module imports the catalogues and proves the
-agreement by `decide` — kind by kind, and dimension by dimension. A Stage-0 edit that
-drifts from the standard stops compiling here.
+**And the lookup is definitional.** Stage 0's kinds *are* the catalogue entries'
+own projections; this module records the identification kind by kind (`rfl` — there
+is no second spelling to drift) and checks each pairing's dimension against the
+catalogue's.
 
 **The registry now shows the collisions — this directory's whole point.** Six pairings
 at the joule (kinetic, potential, mechanical, the Lagrangian, König's two species),
@@ -92,30 +92,31 @@ def springConstantDK : DimensionedKind :=
 def squaredAngularFrequencyDK : DimensionedKind :=
   { kind := squaredAngularFrequency, dim := (Dim.time * Dim.time)⁻¹ }
 
-/-! ## The lookup, proved
+/-! ## The lookup, definitional
 
-Stage 0's vocabulary agrees with `Iso80000` Parts 3 and 4 — same kinds (ids, scales,
-examination principles) and same dimensions. Decided, so drift is a build failure.
-The five mints have no catalogue row to check — that they *cannot* be looked up is
-their finding — but their dimensions are checked against the catalogue's below. -/
+Stage 0's vocabulary *is* `Iso80000` Parts 3 and 4's — each lookup kind is the
+catalogue entry's own projection, so the identification is `rfl` and drift is
+impossible by construction. The five mints have no catalogue row — that they *cannot*
+be looked up is their finding — but their dimensions are checked against the
+catalogue's below. -/
 
-example : mass = Iso80000.Part4.mass.kind := by decide
-example : momentum = Iso80000.Part4.momentum.kind := by decide
-example : force = Iso80000.Part4.force.kind := by decide
-example : potentialEnergy = Iso80000.Part4.potentialEnergy.kind := by decide
-example : kineticEnergy = Iso80000.Part4.kineticEnergy.kind := by decide
-example : mechanicalEnergy = Iso80000.Part4.mechanicalEnergy.kind := by decide
-example : power = Iso80000.Part4.power.kind := by decide
-example : momentOfInertia = Iso80000.Part4.momentOfInertia.kind := by decide
-example : angularMomentum = Iso80000.Part4.angularMomentum.kind := by decide
-example : displacement = Iso80000.Part3.displacement.kind := by decide
-example : velocity = Iso80000.Part3.velocity.kind := by decide
-example : acceleration = Iso80000.Part3.acceleration.kind := by decide
-example : angularVelocity = Iso80000.Part3.angularVelocity.kind := by decide
-example : angularFrequency = Iso80000.Part3.angularFrequency.kind := by decide
-example : periodDuration = Iso80000.Part3.periodDuration.kind := by decide
-example : phaseAngle = Iso80000.Part3.phaseAngle.kind := by decide
-example : duration = Iso80000.Part3.duration.kind := by decide
+example : mass = Iso80000.Part4.mass.kind := rfl
+example : momentum = Iso80000.Part4.momentum.kind := rfl
+example : force = Iso80000.Part4.force.kind := rfl
+example : potentialEnergy = Iso80000.Part4.potentialEnergy.kind := rfl
+example : kineticEnergy = Iso80000.Part4.kineticEnergy.kind := rfl
+example : mechanicalEnergy = Iso80000.Part4.mechanicalEnergy.kind := rfl
+example : power = Iso80000.Part4.power.kind := rfl
+example : momentOfInertia = Iso80000.Part4.momentOfInertia.kind := rfl
+example : angularMomentum = Iso80000.Part4.angularMomentum.kind := rfl
+example : displacement = Iso80000.Part3.displacement.kind := rfl
+example : velocity = Iso80000.Part3.velocity.kind := rfl
+example : acceleration = Iso80000.Part3.acceleration.kind := rfl
+example : angularVelocity = Iso80000.Part3.angularVelocity.kind := rfl
+example : angularFrequency = Iso80000.Part3.angularFrequency.kind := rfl
+example : periodDuration = Iso80000.Part3.periodDuration.kind := rfl
+example : phaseAngle = Iso80000.Part3.phaseAngle.kind := rfl
+example : duration = Iso80000.Part3.duration.kind := rfl
 
 example : massDK.dim = Iso80000.Part4.mass.dim := rfl
 example : momentumDK.dim = Iso80000.Part4.momentum.dim := rfl

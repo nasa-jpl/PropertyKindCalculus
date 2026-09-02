@@ -21,7 +21,7 @@ with its refused join, and the dB link budget on `LevelKind`.
 
 | | count | artifact |
 |---|---|---|
-| kinds | 17 — all verbatim IEC 80000-6 lookups, **0 mints** (the Kinematics chain minted 8; the annex's vocabulary is the standard's home ground — that asymmetry is the finding) | `Kinds.lean`; the `decide` block in `Metrology.lean` |
+| kinds | 17 — all the catalogue's own IEC 80000-6 entries, referenced, **0 mints** (the Kinematics chain minted 8; the annex's vocabulary is the standard's home ground — that asymmetry is the finding) | `Kinds.lean`; the `decide` block in `Metrology.lean` |
 | dimensional pairings | 17, with the campaign's densest collisions visible: 2 kinds at the ohm (+ the catalogue's own 6-46 = 6-51.3 identification, proved), 2 at the siemens, 6 at the watt, 2 at dimension one, 2 phasor/base pairs | `Metrology.lean` |
 | kind edges | 10 — 5 consumed from `Part6.DefiningRelations` (the proof *is* the catalogue's theorem), 5 authored phasor laws; 4 table-registered in Stage 3 | the coverage pin; the `KindDiv`/`KindMul` instances |
 | join entries | **0** — `P + Q` refused while `MutuallyComparable` holds; the licensed combination is the quadrature crossing. The pilot's energy family registers its join: same table, opposite verdict, both pinned | `Circuits.lean` |
@@ -32,8 +32,8 @@ with its refused join, and the dB link budget on `LevelKind`.
 
 ## The findings
 
-1. **Zero mints.** Every kind the annex speaks — phasors included — is a verbatim
-   IEC 80000-6 item, examination principles and all. The mirrored directories mint
+1. **Zero mints.** Every kind the annex speaks — phasors included — *is* the
+   catalogue's IEC 80000-6 entry, examination principles and all. The mirrored directories mint
    where the standard stops (frame-, gauge-, variational-relative readings); the
    annex shows the complement: where practice is the standard's home ground, Stage 0
    is pure lookup.

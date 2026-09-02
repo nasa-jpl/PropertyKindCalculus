@@ -33,6 +33,8 @@ definition, at `ℝ` and at `Float32`, with the magnitude law one carrier-quanti
 import Physlib.ClassicalMechanics.HarmonicOscillator.Basic
 import Physlib.ClassicalMechanics.Pendulum.SimplePendulum.Basic
 import PropertyKindCalculus.KindAlgebra
+import PropertyKindCalculus.Iso80000.Part3
+import PropertyKindCalculus.Iso80000.Part4
 import PropertyKindCalculus.QuantityReal
 
 namespace ForPhysLib.Exhibits.HarmonicOscillator
@@ -79,21 +81,21 @@ the derived algebra, and two hand-registered entries where two products *join* a
 same kind — energy is one kind with two licensed factorizations, which a generated block
 deliberately cannot say. -/
 
-/-- Mass — the oscillator's `m`. -/
-def massK : KindOfProperty := { id := "mass", scale := .ratio }
+/-- Mass — the oscillator's `m`; the catalogue's own 4-1. -/
+def massK : KindOfProperty := (Iso80000.Part4.mass).kind
 
 /-- Stiffness — the oscillator's `k`, examined as restoring force per displacement. -/
 def stiffnessK : KindOfProperty :=
   { id := "stiffness", scale := .ratio, examPrinciple := some "restoring-per-displacement" }
 
-/-- Displacement from equilibrium — the oscillator's `x`. -/
-def dispK : KindOfProperty := { id := "displacement", scale := .ratio }
+/-- Displacement from equilibrium — the oscillator's `x`; the catalogue's own 3-1.11. -/
+def dispK : KindOfProperty := (Iso80000.Part3.displacement).kind
 
-/-- Velocity — the oscillator's `v`. -/
-def velK : KindOfProperty := { id := "velocity", scale := .ratio }
+/-- Velocity — the oscillator's `v`; the catalogue's own 3-10.1. -/
+def velK : KindOfProperty := (Iso80000.Part3.velocity).kind
 
-/-- Angular frequency — the `ω` the square root lands at. -/
-def angularFrequencyK : KindOfProperty := { id := "angular frequency", scale := .ratio }
+/-- Angular frequency — the `ω` the square root lands at; the catalogue's own 3-18. -/
+def angularFrequencyK : KindOfProperty := (Iso80000.Part3.angularFrequency).kind
 
 kind_algebra
   momentumK : "mass × velocity"          := massK * velK
@@ -103,8 +105,9 @@ kind_algebra
   kω2       : "angular frequency squared" := stiffnessK / massK
   forceK    : "stiffness × displacement" := stiffnessK * dispK
 
-/-- Energy — one kind, reached by two licensed factorizations below. -/
-def energyK : KindOfProperty := { id := "energy", scale := .ratio }
+/-- Energy — the catalogue's own mechanical energy (4-28.3): one kind, reached by two
+licensed factorizations below. -/
+def energyK : KindOfProperty := (Iso80000.Part4.mechanicalEnergy).kind
 
 /-- `m · v²` is an energy — the kinetic factorization. -/
 instance : KindMul massK kv2 energyK := ⟨ProductKind.ofRatio _ _ _⟩

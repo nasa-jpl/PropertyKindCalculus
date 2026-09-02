@@ -2,18 +2,20 @@
 # Stage 0 — the kind vocabulary of `Physlib/QuantumMechanics/HarmonicOscillator`
 
 The first rung of [the adoption ladder](../../PLAN.md#stage-0-the-kind-vocabulary), for
-the campaign's pilot directory. One file, bare `KindOfProperty` declarations,
-Mathlib-free and PhysLib-free — importable by anything, costing nothing until something
-imports it.
+the campaign's pilot directory. One file of `KindOfProperty` declarations,
+Mathlib-free and PhysLib-free — the only import beyond the calculus is PKC's own
+`Iso80000` catalogue, itself Mathlib-free.
 
 **Mostly a lookup, not a design — and the remainder is named.** Every kind the standard
-lists is copied *verbatim* from PKC's ISO 80000 catalogue — ids, scales, principles —
-and Stage 1 (`Metrology.lean`) proves the agreement by `decide`, so this file cannot
-silently drift from the standard it looks up. What stays local is exactly what the
-standard does not list, and each mint says why it exists:
+lists *is* the catalogue's entry, projected to its kind — nothing is re-typed, so
+nothing can drift; Stage 1 (`Metrology.lean`) records the identification definitionally
+(`rfl`). What stays local is exactly what the standard does not list, and each mint
+says why it exists:
 
-* the **characteristic length** `ξ` — a *species* of length in Part 3's own
-  `lengthSpecies` pattern, individuated as the oscillator's ground-state width;
+* the **characteristic length** `ξ` — built by Part 3's own `lengthSpecies`
+  constructor, individuated as the oscillator's ground-state width (the catalogue's
+  species pattern, at this directory's species — a construction the catalogue itself
+  provides, not a mint);
 * **momentum squared** — `p̂²`'s kind, deliberately *not* an energy until `(2m)⁻¹`
   acts (the F1 refusal of `Feasibility.lean`);
 * the **radicand chain** — "action per mass" and the ξ² radicand, the two derived
@@ -33,6 +35,9 @@ vocabulary exists to prevent.
 -/
 
 import PropertyKindCalculus
+import PropertyKindCalculus.Iso80000.Part3
+import PropertyKindCalculus.Iso80000.Part4
+import PropertyKindCalculus.Iso80000.Part10
 
 namespace ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinds
 
@@ -42,50 +47,49 @@ open PropertyKindCalculus
 
 /-- Mass — ISO 80000-4 item 4-1: the particle's `m`, a bare `ℝ` field in both
 oscillator structures. -/
-def mass : KindOfProperty := { id := "mass", scale := .ratio }
+def mass : KindOfProperty := (Iso80000.Part4.mass).kind
 
 /-- Action — item 4-32 (`S`, J·s): ℏ's kind. The same dimension as angular momentum,
 a distinct kind. -/
-def action : KindOfProperty := { id := "action", scale := .ratio }
+def action : KindOfProperty := (Iso80000.Part4.action).kind
 
 /-- Angular momentum — item 4-11 (`L`, kg·m²/s): the eigenvalue scale of `𝐋ᵢⱼ`. The
 other half of the J·s collision: `m·ℏ` is an angular-momentum *reading* built from the
 action constant, and the registry keeps the two kinds apart at their one shared
 dimension. -/
-def angularMomentum : KindOfProperty := { id := "angular momentum", scale := .ratio }
+def angularMomentum : KindOfProperty := (Iso80000.Part4.angularMomentum).kind
 
 /-- Angular frequency — ISO 80000-3 item 3-18 (`ω`, rad/s): the mode frequencies
 `Q.ω i`. -/
-def angularFrequency : KindOfProperty := { id := "angular frequency", scale := .ratio }
+def angularFrequency : KindOfProperty := (Iso80000.Part3.angularFrequency).kind
 
 /-- Kinetic energy — item 4-28.2: `T̂`'s kind. -/
-def kineticEnergy : KindOfProperty := { id := "kinetic energy", scale := .ratio }
+def kineticEnergy : KindOfProperty := (Iso80000.Part4.kineticEnergy).kind
 
 /-- Potential energy — item 4-28.1: `V̂`'s kind. -/
-def potentialEnergy : KindOfProperty := { id := "potential energy", scale := .ratio }
+def potentialEnergy : KindOfProperty := (Iso80000.Part4.potentialEnergy).kind
 
 /-- Mechanical energy — item 4-28.3: the family's join target — exactly the `T̂ + V̂`
 sum the Hamiltonian is, and where the eigenvalues `ℏ ωᵢ (nᵢ + ½)` land. -/
-def mechanicalEnergy : KindOfProperty := { id := "mechanical energy", scale := .ratio }
+def mechanicalEnergy : KindOfProperty := (Iso80000.Part4.mechanicalEnergy).kind
 
 /-- Momentum — item 4-8: `p̂`'s kind (the momentum operator the directory squares). -/
-def momentum : KindOfProperty := { id := "momentum", scale := .ratio }
+def momentum : KindOfProperty := (Iso80000.Part4.momentum).kind
 
 /-- Length — item 3-1.1, the genus the characteristic length specializes. -/
-def length : KindOfProperty := { id := "length", scale := .ratio }
+def length : KindOfProperty := (Iso80000.Part3.length).kind
 
 /-- Quantum number — ISO 80000-10 item 10-13.1: the occupation labels `n : Fin d → ℕ`
 that index the eigenstates. A catalogue lookup, not a mint — the standard lists the
 kind the directory's `n` already is. -/
-def quantumNumber : KindOfProperty := { id := "quantum number", scale := .ratio }
+def quantumNumber : KindOfProperty := (Iso80000.Part10.quantumNumber).kind
 
 /-! ## The species and the local mints — what the standard does not list -/
 
-/-- The characteristic length `ξ` — a species of length (item 3-1.1) in Part 3's
-`lengthSpecies` pattern, individuated as the oscillator's ground-state width. -/
+/-- The characteristic length `ξ` — a species of length (item 3-1.1), built by Part 3's
+own `lengthSpecies` constructor, individuated as the oscillator's ground-state width. -/
 def characteristicLength : KindOfProperty :=
-  { id := "characteristic length", scale := .ratio,
-    examPrinciple := some "ground-state-width" }
+  (Iso80000.Part3.lengthSpecies "characteristic length" { id := "ground-state-width" }).kind
 
 /-- Momentum squared — `p̂²`'s kind. Deliberately *not* joined to the energy family:
 `p̂²` is not an energy until `(2m)⁻¹` acts, and `T̂ + p̂²` must be refused. -/

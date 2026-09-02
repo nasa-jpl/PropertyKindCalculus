@@ -8,8 +8,8 @@ this file declares the principles as objects (Dybkær §7.5), proves each link
 (`examinedBy`), and derives the distinctness the vocabulary rests on — kinds are
 individuated **not by fiat but by how they are examined**.
 
-Principle ids are, like the kind ids, copied verbatim from `Iso80000.Part3`'s
-`LengthPrinciple` namespace — the lookup discipline again, checkable there. -/
+The principles are, like the kinds, the catalogue's own — each `def` *is* the entry
+from `Iso80000.Part3`'s `LengthPrinciple` namespace, so nothing can drift. -/
 
 import ForPhysLib.Kinds.Space
 
@@ -18,13 +18,13 @@ namespace ForPhysLib.Examination.Space
 open PropertyKindCalculus ForPhysLib.Kinds.Space
 
 /-- Distance — the shortest path length between two points (`Dist`, the metric). -/
-def shortestPath : ExaminationPrinciple := { id := "shortest-path" }
+def shortestPath : ExaminationPrinciple := Iso80000.Part3.LengthPrinciple.shortestPath
 
 /-- Position vector — from the chosen origin (`Origin.lean`'s conventional zero). -/
-def fromOrigin : ExaminationPrinciple := { id := "from-origin" }
+def fromOrigin : ExaminationPrinciple := Iso80000.Part3.LengthPrinciple.fromOrigin
 
 /-- Displacement — between two points (the torsor's free vectors). -/
-def betweenPoints : ExaminationPrinciple := { id := "between-points" }
+def betweenPoints : ExaminationPrinciple := Iso80000.Part3.LengthPrinciple.betweenPoints
 
 /-- The metric's kind is examined by the shortest path. -/
 theorem distance_examinedBy : distance.examinedBy shortestPath := rfl

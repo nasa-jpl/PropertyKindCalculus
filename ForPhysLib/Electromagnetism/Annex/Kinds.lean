@@ -8,8 +8,10 @@ physics the library does not yet have, in the ladder form the mirrored directori
 use. Exhibit E built the probes; this directory is their promotion to catalogue
 rigor.
 
-**Every kind is a lookup — zero mints.** The RF/AC vocabulary is *entirely* in
-IEC 80000-6: impedance and its family (6-51.1/6-51.4), admittance (6-52.1), the
+**Every kind is a lookup — zero mints.** Each `def` below *is* the corresponding
+IEC 80000-6 catalogue entry, projected to its kind — nothing is re-typed, so nothing
+can drift; Stage 1 records the identification definitionally (`rfl`). The RF/AC
+vocabulary is *entirely* in IEC 80000-6: impedance and its family (6-51.1/6-51.4), admittance (6-52.1), the
 phasors (6-49/6-50), the phase difference (6-48), and the whole AC power family
 (6-56 … 6-61) with the examination principles that individuate it. The Kinematics
 chain minted eight kinds because the standard does not catalogue frame- or
@@ -31,6 +33,7 @@ table is curation, not a loophole.
 -/
 
 import PropertyKindCalculus
+import PropertyKindCalculus.Iso80000.Part6
 
 namespace ForPhysLib.Electromagnetism.Annex.Kinds
 
@@ -39,71 +42,65 @@ open PropertyKindCalculus
 /-! ## The lookups — IEC 80000-6, verbatim -/
 
 /-- Electric current — item 6-1 (`I`, A): the DC/RMS current, the phasor's root. -/
-def electricCurrent : KindOfProperty := { id := "electric current", scale := .ratio }
+def electricCurrent : KindOfProperty := (Iso80000.Part6.electricCurrent).kind
 
 /-- Voltage — item 6-11.3 (`U`, V): the DC/RMS voltage. -/
-def voltage : KindOfProperty := { id := "voltage", scale := .ratio }
+def voltage : KindOfProperty := (Iso80000.Part6.voltage).kind
 
 /-- Resistance — item 6-46 (`R`, Ω): Ohm's law's quotient. The catalogue gives
 6-51.3 (the real part of impedance) the *same* id — one kind, deliberately. -/
-def resistance : KindOfProperty := { id := "resistance", scale := .ratio }
+def resistance : KindOfProperty := (Iso80000.Part6.resistance).kind
 
 /-- Conductance — item 6-47 (`G`, S): resistance's reciprocal. -/
-def conductance : KindOfProperty := { id := "conductance", scale := .ratio }
+def conductance : KindOfProperty := (Iso80000.Part6.conductance).kind
 
 /-- Impedance — item 6-51.1 (`Z`, Ω): the phasor quotient `U/I` — complex-carried
 below, the ohm-dimensioned kind that is *not* resistance. -/
-def impedance : KindOfProperty := { id := "impedance", scale := .ratio }
+def impedance : KindOfProperty := (Iso80000.Part6.impedance).kind
 
 /-- Reactance — item 6-51.4 (`X`, Ω): the imaginary part of impedance — the third
 ohm-dimensioned reading. -/
-def reactance : KindOfProperty := { id := "reactance", scale := .ratio }
+def reactance : KindOfProperty := (Iso80000.Part6.reactance).kind
 
 /-- Admittance — item 6-52.1 (`Y`, S): impedance's reciprocal. -/
-def admittance : KindOfProperty := { id := "admittance", scale := .ratio }
+def admittance : KindOfProperty := (Iso80000.Part6.admittance).kind
 
 /-- Phase difference — item 6-48 (`φ`, rad): dimension one, and not a power factor
 (the other dimension-one kind here); `cos φ` relates them at the carrier, not the
 table. -/
-def phaseDifference : KindOfProperty := { id := "phase difference", scale := .ratio }
+def phaseDifference : KindOfProperty := (Iso80000.Part6.phaseDifference).kind
 
 /-- Electric current phasor — item 6-49 (`Î`, A): the complex-valued current — the
 catalogue's own item, not a convenience; the carrier is where the complexity lives
 (MR14). -/
-def electricCurrentPhasor : KindOfProperty :=
-  { id := "electric current phasor", scale := .ratio }
+def electricCurrentPhasor : KindOfProperty := (Iso80000.Part6.electricCurrentPhasor).kind
 
 /-- Voltage phasor — item 6-50 (`Û`, V). -/
-def voltagePhasor : KindOfProperty := { id := "voltage phasor", scale := .ratio }
+def voltagePhasor : KindOfProperty := (Iso80000.Part6.voltagePhasor).kind
 
 /-- Power — item 6-45 (`P`, W): the broad genus the five AC species specialize. -/
-def power : KindOfProperty := { id := "power", scale := .ratio }
+def power : KindOfProperty := (Iso80000.Part6.power).kind
 
 /-- Active power — item 6-56 (`P`, W): the time-averaged real component. The
 examination principle is the catalogue's own — the species are individuated by *how
 they are examined*. -/
-def activePower : KindOfProperty :=
-  { id := "active power", scale := .ratio, examPrinciple := some "time-averaged-real" }
+def activePower : KindOfProperty := (Iso80000.Part6.activePower).kind
 
 /-- Apparent power — item 6-57 (`S`, VA): RMS voltage times RMS current. -/
-def apparentPower : KindOfProperty :=
-  { id := "apparent power", scale := .ratio, examPrinciple := some "rms-product" }
+def apparentPower : KindOfProperty := (Iso80000.Part6.apparentPower).kind
 
 /-- Power factor — item 6-58 (`λ`, 1): active over apparent — dimension one by its
 own defining relation. -/
-def powerFactor : KindOfProperty := { id := "power factor", scale := .ratio }
+def powerFactor : KindOfProperty := (Iso80000.Part6.powerFactor).kind
 
 /-- Complex power — item 6-59 (`S̲`, VA): `P + jQ`. -/
-def complexPower : KindOfProperty :=
-  { id := "complex power", scale := .ratio, examPrinciple := some "complex-P-jQ" }
+def complexPower : KindOfProperty := (Iso80000.Part6.complexPower).kind
 
 /-- Reactive power — item 6-60 (`Q`, var): the imaginary component. -/
-def reactivePower : KindOfProperty :=
-  { id := "reactive power", scale := .ratio, examPrinciple := some "reactive-imaginary" }
+def reactivePower : KindOfProperty := (Iso80000.Part6.reactivePower).kind
 
 /-- Non-active power — item 6-61 (`Q`, VA): the residual `√(S² − P²)`. -/
-def nonActivePower : KindOfProperty :=
-  { id := "non-active power", scale := .ratio, examPrinciple := some "non-active-residual" }
+def nonActivePower : KindOfProperty := (Iso80000.Part6.nonActivePower).kind
 
 /-! ## Distinctness — the densest collisions in the campaign -/
 

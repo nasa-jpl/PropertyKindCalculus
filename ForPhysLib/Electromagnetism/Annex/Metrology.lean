@@ -2,9 +2,10 @@
 # Stage 1 — the metrology annex of the RF/AC vocabulary
 
 The dimensional layer over `Kinds.lean`, in the Kinematics pattern: every Stage-0
-literal is proved to agree with PKC's IEC 80000-6 catalogue by `decide`; every
-pairing's dimension is the catalogue's by `rfl`; and the kind algebra is authored as
-edge laws with `#kind_dimensional_coverage` pinned over it.
+kind *is* a PKC IEC 80000-6 catalogue entry's own projection (the identification
+recorded by `rfl`); every pairing's dimension is the catalogue's by `rfl`; and the
+kind algebra is authored as edge laws with `#kind_dimensional_coverage` pinned over
+it.
 
 **Most of the algebra ships with the standard.** Five of the ten edges below are
 *consumed* from the catalogue's own `Part6.DefiningRelations` — Ohm's law, the
@@ -16,7 +17,7 @@ which the catalogue states as remarks and this file states as kind laws.
 **The registry shows the collisions.** Three kinds at the ohm's dimension, two at
 the siemens, six at the watt, two at dimension one, and each phasor at its base
 quantity's dimension — every one visible as a repeated `dim` below, and every one
-separated by a Stage-0 `decide`.
+separated by a Stage-0 `decide` over the catalogue's own kinds.
 -/
 
 import ForPhysLib.Electromagnetism.Annex.Kinds
@@ -73,25 +74,25 @@ def nonActivePowerDK : DimensionedKind := Iso80000.Part6.nonActivePower
 (`powerFactor_dim_from_powers`). -/
 def powerFactorDK : DimensionedKind := Iso80000.Part6.powerFactor
 
-/-! ## Stage 0 is the catalogue — proved, not asserted -/
+/-! ## Stage 0 is the catalogue — definitionally, so each identification is `rfl` -/
 
-example : electricCurrent = Iso80000.Part6.electricCurrent.kind := by decide
-example : voltage = Iso80000.Part6.voltage.kind := by decide
-example : resistance = Iso80000.Part6.resistance.kind := by decide
-example : conductance = Iso80000.Part6.conductance.kind := by decide
-example : impedance = Iso80000.Part6.impedance.kind := by decide
-example : reactance = Iso80000.Part6.reactance.kind := by decide
-example : admittance = Iso80000.Part6.admittance.kind := by decide
-example : phaseDifference = Iso80000.Part6.phaseDifference.kind := by decide
-example : electricCurrentPhasor = Iso80000.Part6.electricCurrentPhasor.kind := by decide
-example : voltagePhasor = Iso80000.Part6.voltagePhasor.kind := by decide
-example : power = Iso80000.Part6.power.kind := by decide
-example : activePower = Iso80000.Part6.activePower.kind := by decide
-example : apparentPower = Iso80000.Part6.apparentPower.kind := by decide
-example : powerFactor = Iso80000.Part6.powerFactor.kind := by decide
-example : complexPower = Iso80000.Part6.complexPower.kind := by decide
-example : reactivePower = Iso80000.Part6.reactivePower.kind := by decide
-example : nonActivePower = Iso80000.Part6.nonActivePower.kind := by decide
+example : electricCurrent = Iso80000.Part6.electricCurrent.kind := rfl
+example : voltage = Iso80000.Part6.voltage.kind := rfl
+example : resistance = Iso80000.Part6.resistance.kind := rfl
+example : conductance = Iso80000.Part6.conductance.kind := rfl
+example : impedance = Iso80000.Part6.impedance.kind := rfl
+example : reactance = Iso80000.Part6.reactance.kind := rfl
+example : admittance = Iso80000.Part6.admittance.kind := rfl
+example : phaseDifference = Iso80000.Part6.phaseDifference.kind := rfl
+example : electricCurrentPhasor = Iso80000.Part6.electricCurrentPhasor.kind := rfl
+example : voltagePhasor = Iso80000.Part6.voltagePhasor.kind := rfl
+example : power = Iso80000.Part6.power.kind := rfl
+example : activePower = Iso80000.Part6.activePower.kind := rfl
+example : apparentPower = Iso80000.Part6.apparentPower.kind := rfl
+example : powerFactor = Iso80000.Part6.powerFactor.kind := rfl
+example : complexPower = Iso80000.Part6.complexPower.kind := rfl
+example : reactivePower = Iso80000.Part6.reactivePower.kind := rfl
+example : nonActivePower = Iso80000.Part6.nonActivePower.kind := rfl
 
 /-- The catalogue *identifies* 6-46 with 6-51.3 — resistance and the real part of
 impedance are one kind, by the standard's own id. Not a defect: the collision that
