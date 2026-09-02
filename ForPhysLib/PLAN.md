@@ -1084,7 +1084,7 @@ upstream `informal_lemma`, not formalized surface). Coverage re-pinned: seven
 `[table]` rows, clean.
 
 **Status: Stage 4 climbed** — `Audits.lean` puts the whole directory namespace under
-CI: the **42-site** boundary audit and crossings registry pinned (30 ingests, 8
+CI: the **42-site** boundary audit and crossings registry pinned (29 ingests, 8
 crossings, 1 constant, 3 emissions, 1 carrier-vocabulary — every attestation's reason
 in the pin; all four tiers present, and the `@[kindConst]` full turn plus the two
 trig emissions are firsts for the campaign), boundary-clean + mint-ratchet +
@@ -1118,6 +1118,19 @@ scaling as `R³·vol(B₁)` (`Measure.addHaar_closedBall`) — PhysLib's own
 `volume_metricBall_three_real` supplies `vol(B₁) = 4π/3`, though only its
 positivity survives to the final ratio. The offer upstream is a human's to make
 (AI-POLICY §3.1).
+
+**Status: directory 3 complete — ladder, patch, README — and with it the
+three-directory campaign.** The README carries twelve findings and the measured cost
+line (22 kinds — 17 lookups, 5 mints; 22 pairings with ten colliding rows; 14 laws,
+13 tabled, 1 law-only; 2 joins on a composing lattice; 42 boundary sites, 0 raw
+mints; a 9-member gated interior against a 30-reading measured boundary; 2,509 lines
+/ 1,104 code against an unchanged 3,814-line source; 0 sorry here and 1 upstream
+sorry discharged). The directory's patch candidate is `SolidSphereInertia.lean`; the
+stress-test verdict is the pentad closed by the upstream proof term. All three
+campaign directories now stand — the operator-valued frontier (QM/HO), the
+frame-covariant chain (EM/Kinematics), and same-dimension discrimination at theorem
+scale (CM) — each with a full ladder, a measured cost line, and a patch candidate;
+the ask stays Stage 1, per campaign rule 3.
 
 
 ---
@@ -1180,6 +1193,16 @@ ForPhysLib/
       Audits.lean                    ✓   Stage 4: 24-site audit pinned; silent gates; 12-crossing interior gated empty
       Kinematics.checked_by.yaml     ✓   the API-map delta, keyed on the upstream TODO texts
       README.md                      ✓   the findings and the measured cost line
+  ClassicalMechanics.lean  ClassicalMechanics/ ✓ the campaign's third directory (see “Directory 3”)
+    Feasibility.lean                 ✓   F1–F6 as build artifacts, both subtrees probed
+    Kinds.lean  Metrology.lean       ✓   Stages 0–1: one vocabulary; six joules, two ω's; fourteen edges, coverage pinned
+    Kinded/HarmonicOscillator.lean   ✓   Stage 2: the pentad closed by the upstream proof term; trajectory, conservation, geometry
+    Kinded/RigidBody.lean            ✓   Stage 2: the functional's moments; parallel axis consumed; ω×r table-expressed
+    Operators.lean                   ✓   Stage 3: seven entries; the shared-letter ω refused at the table; one law stays law-only
+    Audits.lean                      ✓   Stage 4: 42-site audit pinned; silent gates; interior gated, boundary measured
+    ClassicalMechanics.checked_by.yaml ✓ the API-map delta, keyed on the upstream TODO texts + the sorryful lemma
+    README.md                        ✓   the findings and the measured cost line
+    SolidSphereInertia.lean          ✓   the upstream sorryful `solidSphere_inertiaTensor`, discharged
   Scorecard.lean                     ✓ verdicts re-derived so the tables cannot drift from the files
 ```
 
