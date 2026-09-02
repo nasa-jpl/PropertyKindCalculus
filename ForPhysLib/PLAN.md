@@ -908,6 +908,103 @@ the chain's own TODO asks for and upstream does not state — whose offer upstre
 human's to make (AI-POLICY §3.1). Next: directory 3, the `ClassicalMechanics`
 `HarmonicOscillator` + `RigidBody` subtrees.
 
+### Directory 3: `ClassicalMechanics` — the `HarmonicOscillator` and `RigidBody` subtrees
+
+The scope campaign rule 2 names: two subtrees, taken whole. `HarmonicOscillator/` is
+`Basic.lean` (the energies, the Lagrangian and Hamiltonian formulations, and
+`equationOfMotion_tfae`), `Solution.lean` (trajectories, four initial-condition
+parametrizations, amplitude–phase normal form, periodicity), and the three `Geometric/`
+files (the configuration manifold, the mass Riemannian metric, geometric trajectories) —
+2,582 lines. `RigidBody/` is `Basic.lean` (the mass-distribution functional, centre of
+mass, inertia tensor, parallel-axis theorem), `Motion.lean`, `AngularVelocity.lean`,
+`AngularMomentum.lean`, `KineticEnergy.lean` (König in three forms), and
+`SolidSphere.lean` — 1,232 lines. What this directory uniquely proves:
+**same-dimension discrimination at theorem scale** — four energies at one dimension,
+with `equationOfMotion_tfae` as the verbatim-survival stress test.
+
+The structural fact this plan hangs on, the inverse of directory 2's: where the EM chain
+was one frame-covariant object whose entries range over many dimensions, classical
+mechanics is **many kinds crowded onto few dimensions**. Within these two subtrees alone:
+at the joule, kinetic energy (4-28.2), potential energy (4-28.1), mechanical energy
+(4-28.3), and the Lagrangian — with the catalogue's own moment of force (4-12.1) sitting
+at the same `MDim.energy` one aisle over; at `T⁻¹`, the oscillator's angular *frequency*
+(3-18) and the rigid body's angular *velocity* (3-12) — two different catalogue items
+that both subtrees write with the same letter `ω`. Everything upstream types at
+`ℝ` or `EuclideanSpace ℝ (Fin 1)`, so every one of these coincidences is invisible
+there; the exhibits (A and C) probed the resulting collisions, and this directory pays
+them down as a ladder. The feasibility questions:
+
+- **F1 — the bare-real input data, and the reciprocal that must die before the root.**
+  `HarmonicOscillator { m k : ℝ }`: the mass is a lookup, but the spring constant has no
+  ISO 80000 item — a *mint* at `M·T⁻²` — and `ω = √(k/m)` is the directory's kind-level
+  event (the pilot's ξ pattern: mint the radicand, attest the root, erase by upstream's
+  own `ω_sq`). Exhibit C's finding — `√(m/k)` as well-typed as the correct recipe — must
+  close here as a ladder refusal: `m / k` is no edge of the algebra.
+- **F2 — four energies, one dimension, and the sum that outruns the difference.**
+  `E = T + V` is the pilot's curated `KindJoin`, now at PhysLib's own `energy`;
+  `hamiltonian_eq_energy` erases the kinded Hamiltonian to the same join. But the
+  Lagrangian `L = T − V` is *not* the join sum, and the join table has no subtraction —
+  deliberately: the standard's vocabulary has a home for the sum of the comparable pair
+  (mechanical energy) and none for its difference, which is why the Lagrangian is a mint.
+  Same dimension, four kinds, two of them local — the directory's title finding.
+- **F3 — the collisions of M6, paid down as refusals beside the re-authoring.**
+  `toCanonicalMomentum : E ≃ₗ[ℝ] E` carries a velocity to a momentum between *identical
+  types*; its kinded twin is kind-changing (`m·v`, the 4-8 edge), so the momentum of a
+  momentum refuses. `S.force` fed the canonical momentum refuses. The
+  `hamiltonian`/`lagrangian` argument-order collision — the one behind `hamiltonian_eq`'s
+  transposed `funext t x p`, which compiles upstream *because* `p` and `x` share a type —
+  becomes a `#check_failure` at the kinded signature.
+- **F4 — the tfae is the stress test.** `equationOfMotion_tfae` gathers five
+  formulations — Euler–Lagrange, Newton, Hamilton, two variational principles — and the
+  campaign invariant is that the kinded layer consumes it *verbatim*: each formulation
+  re-authored with its mixed-kind sides elaborating through the table (`m·a = F` through
+  the 4-9.1 edge; `p = m·v` through 4-8; `H` through F2's join), each pairwise equivalence
+  closed by `.out` of the upstream lemma, nothing re-proved.
+- **F5 — two ω's, the trig boundary, and the complex number that packs two lengths.**
+  `ω·t` lands at the phase angle (3-7) — the edge that licenses `cos`/`sin` at the
+  boundary; `T = 2π/ω` at the period duration (3-14). The amplitude–phase inverse embeds
+  `(x₀, v₀/ω)` as one complex number — licensed exactly because `v₀/ω` is a *length*
+  (the velocity/angular-frequency edge), so `‖z‖` is the amplitude and `arg z` the
+  phase. And the directory registry pins angular frequency ≠ angular velocity by
+  `decide` — the two subtrees' shared letter, separated.
+- **F6 — the functional ingest, the second join, and frame honesty.** `RigidBody.ρ` is a
+  linear functional on test functions: each moment read off it is an ingest whose kind is
+  the product of mass with the test function's kind (mass at `1`, length at `x i` over
+  the mass for the centre of mass, moment of inertia at the quadratic). `L = I·ω` and
+  `T_rot = ½ ω·(I·ω)` are table edges at 4-7/4-11/3-12. König's split is the directory's
+  *second* join: translational and rotational kinetic energy as species of 4-28.2,
+  summing at their parent — against directory 2's zero joins, this directory is where
+  curation earns its keep. Frame honesty per Exhibit A: `angularVelocity` and
+  `bodyAngularVelocity` are both readings at 3-12 — the kind layer separates kinds, not
+  frames, and the exhibit's `toFrameScalar` machinery is where the frame discrimination
+  lives.
+
+And the directory has a patch-candidate slot before any file is written:
+`solidSphere_inertiaTensor` — `(2/5) m R² • 1` — is `@[sorryful]` upstream, the only
+`sorry` in either subtree. The pilot's `Orthonormality.lean` pattern applies: attempt the
+discharge as a standalone file after the ladder; if the ball integrals resist, record the
+attempt honestly and hold.
+
+The layout: one directory, one vocabulary — the four-energies point *is* directory-level,
+so Stage 0/1 are shared and only Stage 2 splits by subtree, mirroring the source inside
+the stage the way the Space ladder's stage-major tree does:
+
+```
+ForPhysLib/ClassicalMechanics/
+  Feasibility.lean     F1–F6 as build artifacts, both subtrees probed
+  Kinds.lean  Metrology.lean          Stages 0–1: the one vocabulary, the collisions pinned
+  Kinded/HarmonicOscillator.lean      Stage 2 for the oscillator chain
+  Kinded/RigidBody.lean               Stage 2 for the rigid-body chain
+  Operators.lean  Audits.lean         Stages 3–4 over the whole directory namespace
+  ClassicalMechanics.checked_by.yaml  README.md
+```
+
+Held, deliberately: `DampedHarmonicOscillator/` and `Pendulum/` stay with Exhibit C
+(probed, not re-authored — rule 2); `EulerLagrange.lean` and `HamiltonsEquations.lean`
+are machinery the subtrees import, not members of them; `FreeParticle/`, `Vibrations/`,
+`Scattering/`, `WaveEquation/`, `OrbitalMechanics/` are out of the named scope.
+
+
 ---
 
 ## Layout
