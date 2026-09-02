@@ -66,7 +66,8 @@ def muQ : Quantity magneticConstant ℝ :=
 /-- `J^μ` — homogeneous at 6-8 for the same reason `A^μ` was homogeneous at 6-32:
 the time slot stores `c·ρ`, one velocity edge below. -/
 @[kindIngest]
-def currentFourQ : Quantity electricCurrentDensity (LorentzCurrentDensity 3) :=
+def currentFourQ {d : ℕ} (J₄ : LorentzCurrentDensity d) :
+    Quantity electricCurrentDensity (LorentzCurrentDensity d) :=
   .attest "J^μ — one kind; the time slot is c·ρ" J₄
 
 /-- `ρ = J⁰/c` — the velocity edge down to 6-3, the mirror of `φ = c·A⁰`. -/

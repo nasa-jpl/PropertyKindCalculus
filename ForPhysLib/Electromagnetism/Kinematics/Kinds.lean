@@ -9,11 +9,12 @@ imports it.
 **Almost entirely a lookup — the mirror image of the pilot.** Every kind the chain's
 API speaks is copied *verbatim* from PKC's IEC 80000-6 catalogue (plus three Part-3
 coordinates), and Stage 1 (`Metrology.lean`) proves the agreement by `decide`, so this
-file cannot silently drift from the standard it looks up. Exactly **two** kinds are
-minted, and they are the same finding twice: the standard catalogues *frame-bound,
-gauge-fixed readings* (`E`, `B`, `φ`), so the two tensor-entry kinds the chain's own
-key results export — the derivative tensor `∂_μ A^ν` and the field strength `F^{μν}` —
-have no catalogue item to look up:
+file cannot silently drift from the standard it looks up. **Eight** kinds are minted,
+and they are one finding three ways: the standard catalogues *frame-bound, gauge-fixed,
+measurable readings* (`E`, `B`, `φ`), so the readings the chain's own key results
+export that are none of those — the two tensor entries, Maxwell's three derivative
+readings, and the variational subtree's three (the Lagrangian density, the variational
+gradient, the canonical momentum) — have no catalogue item to look up. The first two:
 
 * the **potential-gradient entry** — `∂A`'s kind: *gauge-dependent* (it moves under
   `A ↦ A + ∂χ`), the tesla-dimensioned chart;
@@ -115,7 +116,19 @@ def electricConstant : KindOfProperty := { id := "electric constant", scale := .
 field upstream — and `c = 1/√(ε₀μ₀)` is upstream's *definition* of `FreeSpace.c`. -/
 def magneticConstant : KindOfProperty := { id := "magnetic constant", scale := .ratio }
 
-/-! ## The five mints — the readings the standard does not list
+/-- Electromagnetic energy density — item 6-33 (`w`, J/m³): the Hamiltonian's kind.
+The identification is upstream's own theorem — `hamiltonian_eq_electricField_magneticField`
+writes `H` as the catalogue's `½(ε₀E² + B²/μ₀)` plus the source terms. -/
+def electromagneticEnergyDensity : KindOfProperty :=
+  { id := "electromagnetic energy density", scale := .ratio }
+
+/-- Linear electric current density — item 6-9 (`J_S`, A/m): registered as the
+canonical momentum's *collision partner* — `π = ∂L/∂(∂₀A)` has exactly this dimension
+and is not this kind (the decide below). -/
+def linearElectricCurrentDensity : KindOfProperty :=
+  { id := "linear electric current density", scale := .ratio }
+
+/-! ## The eight mints — the readings the standard does not list
 
 The standard catalogues frame-bound, gauge-fixed readings; the chain's two exported
 tensors are neither, so their entry kinds are minted here — both at the flux density's
@@ -151,6 +164,29 @@ displacement current density — landing back at the catalogue's 6-8. -/
 def electricFieldRate : KindOfProperty :=
   { id := "electric field rate", scale := .ratio }
 
+/-- The Lagrangian density — `L = −¼μ₀⁻¹·F·F − A·J` (`Dynamics/`), at the *energy
+density's* dimension (J/m³) and deliberately not at 6-33: `L` is **gauge-dependent**
+(`freeCurrentPotential_add_const` moves it; only its kinetic part is invariant), where
+6-33 is the measurable field energy. The same-dimension discrimination that separated
+the three teslas, at the density. -/
+def lagrangianDensity : KindOfProperty :=
+  { id := "Lagrangian density — the gauge-dependent volumetric reading", scale := .ratio }
+
+/-- The variational gradient's entry kind — `δS/δA` (`gradLagrangian`,
+`gradKineticTerm`), at the *current density's* dimension (A/m²) and deliberately not
+at 6-8: it is the reading `IsExtrema` sets to zero, not a transported charge. The
+Euler–Lagrange equation `gradKineticTerm − gradFreeCurrentPotential = 0` is a
+same-kind subtraction *here*. -/
+def variationalGradient : KindOfProperty :=
+  { id := "variational gradient — the Euler–Lagrange reading", scale := .ratio }
+
+/-- The canonical momentum's entry kind — `π = ∂L/∂(∂₀A)` (`Hamiltonian.lean`), at
+6-9's dimension (A/m) and not 6-9: the Legendre-conjugate reading, `−E/(μ₀c)` in the
+spatial slots (upstream's `canonicalMomentum_eq_electricField`), not a current
+through a line. -/
+def canonicalMomentumDensity : KindOfProperty :=
+  { id := "canonical momentum — the Legendre-conjugate reading", scale := .ratio }
+
 /-! ## Distinctness — the collisions the vocabulary exists to prevent
 
 Three kinds at the tesla, two at the volt, and a field pair whose dimensional
@@ -184,6 +220,23 @@ theorem electricPotential_ne_electricPotentialDifference :
 standard writes it, and the reason every ratio edge at the potential is refused. -/
 theorem electricPotential_isInterval :
     electricPotential.scale = .interval := rfl
+
+/-- **The Lagrangian density is not the energy density** — one dimension (J/m³),
+separated by gauge behavior: `H`'s reading is measurable, `L`'s moves under
+`A ↦ A + c`. -/
+theorem lagrangianDensity_ne_electromagneticEnergyDensity :
+    lagrangianDensity ≠ electromagneticEnergyDensity := by decide
+
+/-- **The variational gradient is not a current density** — one dimension (A/m²);
+Euler–Lagrange *equates* it to `μ₀`-scaled sources, which is an edge, not an
+identity. -/
+theorem variationalGradient_ne_electricCurrentDensity :
+    variationalGradient ≠ electricCurrentDensity := by decide
+
+/-- **The canonical momentum is not a linear current density** — one dimension
+(A/m); the conjugate of a field coordinate is not a current through a line. -/
+theorem canonicalMomentumDensity_ne_linearElectricCurrentDensity :
+    canonicalMomentumDensity ≠ linearElectricCurrentDensity := by decide
 
 /-- The speed of light is not bare speed — the constant species is not its genus. -/
 theorem speedOfLight_ne_speed : speedOfLight ≠ speed := by decide

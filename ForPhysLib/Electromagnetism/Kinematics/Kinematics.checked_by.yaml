@@ -21,6 +21,10 @@ deltas:
     checked_by:
       - "ForPhysLib.Electromagnetism.Kinematics.Kinded"   # gaugeTransform_differentiable: the gauge shift of a differentiable potential is differentiable — one such result, consumed by the gauge-invariance lemmas above
 
+  - description: "In this implementation we have set `μ₀ = 1`. It is a TODO to introduce this constant."
+    checked_by:
+      - "ForPhysLib.Electromagnetism.Kinematics.Dynamics"  # the TODO is stale: the constant IS introduced — every definition in the subtree takes `𝓕 : FreeSpace` and the kinetic term reads `−1/(4·𝓕.μ₀)`; the kinded layer reads ε₀/μ₀ at 6-14.1/6-26.1 and `FreeSpace.c` as a crossing. Proposed delta: delete the TODO sentence from the `KineticTerm.lean` and `Lagrangian.lean` overviews (a two-line docstring patch)
+
 # The two `FieldStrength.lean` TODOs (replace `fieldStrengthMatrix` by tensor-eval
 # API; remove the basis-component lemmas) are refactoring plans, not claims; the
 # kinded layer takes no position on them, but note the dependency: `Kinded.lean`'s

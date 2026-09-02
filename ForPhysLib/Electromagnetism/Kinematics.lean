@@ -13,3 +13,4 @@ import ForPhysLib.Electromagnetism.Kinematics.Operators
 import ForPhysLib.Electromagnetism.Kinematics.Audits
 import ForPhysLib.Electromagnetism.Kinematics.DistributionalTwin
 import ForPhysLib.Electromagnetism.Kinematics.Maxwell
+import ForPhysLib.Electromagnetism.Kinematics.Dynamics

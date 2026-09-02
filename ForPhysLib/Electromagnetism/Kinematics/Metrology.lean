@@ -102,6 +102,26 @@ def electricFieldRateDK : DimensionedKind :=
   { kind := electricFieldRate,
     dim := Iso80000.Part6.EDim.electricFieldStrength / Dim.time }
 
+/-- The electromagnetic energy density is `M·L⁻¹·T⁻²` (J/m³). -/
+def electromagneticEnergyDensityDK : DimensionedKind :=
+  { kind := electromagneticEnergyDensity, dim := Iso80000.Part6.EDim.energyDensity }
+/-- The linear current density is `C·T⁻¹·L⁻¹` (A/m). -/
+def linearElectricCurrentDensityDK : DimensionedKind :=
+  { kind := linearElectricCurrentDensity,
+    dim := Iso80000.Part6.EDim.linearCurrentDensity }
+/-- The Lagrangian density is the *same* J/m³ — gauge-dependent, a distinct kind:
+the registry's density-level collision. -/
+def lagrangianDensityDK : DimensionedKind :=
+  { kind := lagrangianDensity, dim := Iso80000.Part6.EDim.energyDensity }
+/-- The variational gradient is the *same* A/m² as 6-8 — the Euler–Lagrange reading,
+not a current density. -/
+def variationalGradientDK : DimensionedKind :=
+  { kind := variationalGradient, dim := Iso80000.Part6.EDim.currentDensity }
+/-- The canonical momentum is the *same* A/m as 6-9 — the Legendre-conjugate
+reading, not a current through a line. -/
+def canonicalMomentumDensityDK : DimensionedKind :=
+  { kind := canonicalMomentumDensity, dim := Iso80000.Part6.EDim.linearCurrentDensity }
+
 /-! ## The lookup, proved
 
 Stage 0's vocabulary agrees with `Iso80000` Parts 3 and 6 — same kinds (ids, scales)
@@ -125,6 +145,10 @@ example : electricChargeDensity  = Iso80000.Part6.electricChargeDensity.kind  :=
 example : electricCurrentDensity = Iso80000.Part6.electricCurrentDensity.kind := by decide
 example : electricConstant       = Iso80000.Part6.electricConstant.kind       := by decide
 example : magneticConstant       = Iso80000.Part6.magneticConstant.kind       := by decide
+example : electromagneticEnergyDensity
+    = Iso80000.Part6.electromagneticEnergyDensity.kind := by decide
+example : linearElectricCurrentDensity
+    = Iso80000.Part6.linearCurrentDensity.kind := by decide
 
 example : magneticVectorPotentialDK.dim
     = Iso80000.Part6.magneticVectorPotential.dim := rfl
@@ -146,11 +170,20 @@ example : electricChargeDensityDK.dim  = Iso80000.Part6.electricChargeDensity.di
 example : electricCurrentDensityDK.dim = Iso80000.Part6.electricCurrentDensity.dim := rfl
 example : electricConstantDK.dim       = Iso80000.Part6.electricConstant.dim       := rfl
 example : magneticConstantDK.dim       = Iso80000.Part6.magneticConstant.dim       := rfl
+example : electromagneticEnergyDensityDK.dim
+    = Iso80000.Part6.electromagneticEnergyDensity.dim := rfl
+example : linearElectricCurrentDensityDK.dim
+    = Iso80000.Part6.linearCurrentDensity.dim := rfl
+example : lagrangianDensityDK.dim = Iso80000.Part6.electromagneticEnergyDensity.dim := rfl
+example : variationalGradientDK.dim = Iso80000.Part6.electricCurrentDensity.dim := rfl
+example : canonicalMomentumDensityDK.dim = Iso80000.Part6.linearCurrentDensity.dim := rfl
 
 /-! ## The chain's kind algebra, and its dimensional audit
 
-Nineteen authored edges — the equations the chain's physics actually writes,
-Maxwell's seven (the four laws' sides and the displacement chain) included.
+Twenty-five authored edges — the equations the chain's physics actually writes,
+Maxwell's seven (the four laws' sides and the displacement chain) and the variational
+subtree's six (the Lagrangian's two products, the Legendre pair, the two spellings of
+`δS/δA`) included.
 `#kind_dimensional_coverage` then walks every authored edge and checks it in PhysLib's
 dimension group. -/
 
@@ -276,8 +309,54 @@ theorem electricConstant_mul_electricFieldRate :
     ProductKind electricConstant electricFieldRate electricCurrentDensity :=
   ProductKind.ofRatio _ _ _
 
+/-- `π = −F⁰ⁱ/μ₀` — the canonical momentum's defining edge
+(`canonicalMomentum_eq_electricField` writes it `−E/(μ₀c)`, which is the same entry
+through the velocity edge): a field-strength entry per magnetic constant. -/
+theorem fieldStrength_div_magneticConstant :
+    QuotientKind fieldStrength magneticConstant canonicalMomentumDensity :=
+  QuotientKind.ofRatio _ _ _
+
+/-- `−¼·(F/μ₀)·F` — the kinetic term (`Dynamics/KineticTerm.lean`): the Lagrangian
+density's first product, factored through the canonical-momentum kind the previous
+edge lands on. -/
+theorem canonicalMomentumDensity_mul_fieldStrength :
+    ProductKind canonicalMomentumDensity fieldStrength lagrangianDensity :=
+  ProductKind.ofRatio _ _ _
+
+/-- `A·J` — `freeCurrentPotential = ⟪A x, J x⟫ₘ`: the interaction term's product,
+landing at the same Lagrangian density — which is what makes
+`lagrangian = kineticTerm − freeCurrentPotential` a *same-kind* subtraction. Still no
+join. -/
+theorem magneticVectorPotential_mul_electricCurrentDensity :
+    ProductKind magneticVectorPotential electricCurrentDensity lagrangianDensity :=
+  ProductKind.ofRatio _ _ _
+
+/-- `π·∂₀A` — the Legendre product (`hamiltonian`'s first term): a canonical momentum
+times a derivative-tensor entry is a Lagrangian density, so `H = π·∂₀A − L` is a
+same-kind subtraction too; the Hamiltonian's re-reading at 6-33 is then one attested
+crossing. -/
+theorem canonicalMomentumDensity_mul_potentialGradient :
+    ProductKind canonicalMomentumDensity potentialGradient lagrangianDensity :=
+  ProductKind.ofRatio _ _ _
+
+/-- `δS/δA` — the variational derivative's own arithmetic: a Lagrangian density per
+vector potential. Law-only: the `δ` lives in `HasVarGradientAt`, which no table
+sees. -/
+theorem lagrangianDensity_div_magneticVectorPotential :
+    QuotientKind lagrangianDensity magneticVectorPotential variationalGradient :=
+  QuotientKind.ofRatio _ _ _
+
+/-- `μ₀⁻¹·∑∂F` — the variational gradient as upstream computes it
+(`gradLagrangian_eq_sum_fieldStrengthMatrix`): a magnetic-field derivative per
+magnetic constant, same target — Euler–Lagrange holds at one kind. -/
+theorem magneticFieldDerivative_div_magneticConstant :
+    QuotientKind magneticFieldDerivative magneticConstant variationalGradient :=
+  QuotientKind.ofRatio _ _ _
+
 /--
 info: dimensional coverage:
+[coherent] canonicalMomentumDensity · fieldStrength → lagrangianDensity
+[coherent] canonicalMomentumDensity · potentialGradient → lagrangianDensity
 [coherent] electricChargeDensity / electricConstant → electricFieldDerivative
 [coherent] electricConstant · electricFieldRate → electricCurrentDensity
 [coherent] electricFieldStrength / duration → electricFieldRate
@@ -286,18 +365,22 @@ info: dimensional coverage:
 [coherent] electricFieldStrength · length → electricPotentialDifference
 [coherent] electricPotentialDifference / length → electricFieldStrength
 [coherent] electricPotentialDifference / speedOfLight → magneticVectorPotential
+[coherent] fieldStrength / magneticConstant → canonicalMomentumDensity
+[coherent] lagrangianDensity / magneticVectorPotential → variationalGradient
 [coherent] length · magneticFluxDensity → magneticVectorPotential
 [coherent] magneticConstant · electricCurrentDensity → magneticFieldDerivative
+[coherent] magneticFieldDerivative / magneticConstant → variationalGradient
 [coherent] magneticFlux / length → magneticVectorPotential
 [coherent] magneticFluxDensity / duration → electricFieldDerivative
 [coherent] magneticFluxDensity / length → magneticFieldDerivative
 [coherent] magneticVectorPotential / duration → electricFieldStrength
 [coherent] magneticVectorPotential / length → magneticFluxDensity
 [coherent] magneticVectorPotential / length → potentialGradient
+[coherent] magneticVectorPotential · electricCurrentDensity → lagrangianDensity
 [coherent] speedOfLight · fieldStrength → electricFieldStrength
 [coherent] speedOfLight · magneticFluxDensity → electricFieldStrength
 [coherent] speedOfLight · magneticVectorPotential → electricPotentialDifference
-19 kind edge(s), all dimensionally coherent — clean
+25 kind edge(s), all dimensionally coherent — clean
 -/
 #guard_msgs (whitespace := lax) in
 #kind_dimensional_coverage ForPhysLib.Electromagnetism.Kinematics.Metrology

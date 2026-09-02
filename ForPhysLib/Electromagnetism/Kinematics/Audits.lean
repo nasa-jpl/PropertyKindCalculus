@@ -5,10 +5,10 @@ The top rung of [the adoption ladder](../../PLAN.md#stage-4-audits-and-the-api-m
 the campaign's second directory: the whole directory's kinded surface put under CI —
 probe files included. Five gates, each in the discipline its command enforces:
 
-  * `#kind_boundary_audit` **pinned** over the full directory namespace: twenty-four
+  * `#kind_boundary_audit` **pinned** over the full directory namespace: forty-eight
     boundary sites — every mint, attestation and erasure from `Feasibility.lean`'s
-    readings to `Operators.lean`'s torsor — each with its tier. A new untagged site
-    breaks the pin.
+    readings through `Maxwell.lean`'s sources to `Dynamics.lean`'s variational
+    crossings — each with its tier. A new untagged site breaks the pin.
   * `#kind_boundary_clean` and `#kind_mint_ratchet` **silent**: they throw on
     violation and print nothing on a clean scope, so neither can be re-blessed by
     re-pinning. The ratchet is why `numeralSMul`'s mint is *attested*, not raw.
@@ -33,6 +33,7 @@ claim or holds its statement ready.
 import ForPhysLib.Electromagnetism.Kinematics.Operators
 import ForPhysLib.Electromagnetism.Kinematics.DistributionalTwin
 import ForPhysLib.Electromagnetism.Kinematics.Maxwell
+import ForPhysLib.Electromagnetism.Kinematics.Dynamics
 import PropertyKindCalculus.BoundaryAudit
 import PropertyKindCalculus.KindLedger
 import PropertyKindCalculus.DimensionalCoverage
@@ -50,6 +51,15 @@ info: boundary audit:
 [kindConst] ForPhysLib.Electromagnetism.Kinematics.Maxwell.muQ — attests: Kinds.magneticConstant ‹FreeSpace.μ₀ — the magnetic constant, a bare ℝ field upstream›
 [kindCrossing] ForPhysLib.Electromagnetism.Kinematics.DistributionalTwin.distElectricFieldQ — attests: electricFieldK ‹the twin's -∇φ - ∂ₜ𝐀 — distributional derivatives ride the same crossing›
 [kindCrossing] ForPhysLib.Electromagnetism.Kinematics.DistributionalTwin.distFieldStrengthQ — attests: Kinds.fieldStrength ‹the twin's F = dA — the antisymmetrized distributional derivative›
+[kindCrossing] ForPhysLib.Electromagnetism.Kinematics.Dynamics.canonicalMomentumQ — attests: Kinds.canonicalMomentumDensity ‹π = ∂L/∂(∂₀A) — the Legendre-conjugate reading›
+[kindCrossing] ForPhysLib.Electromagnetism.Kinematics.Dynamics.freeCurrentPotentialQ — attests: Kinds.lagrangianDensity ‹⟪A, J⟫ₘ — the interaction density; the Minkowski product is unseen by any table›
+[kindCrossing] ForPhysLib.Electromagnetism.Kinematics.Dynamics.freeSpaceSpeedQ — attests: speedOfLightK ‹c = 1/√(ε₀·μ₀) — FreeSpace.c, the defined constant›
+[kindCrossing] ForPhysLib.Electromagnetism.Kinematics.Dynamics.gradFreeCurrentPotentialQ — attests: Kinds.variationalGradient ‹δ(∫⟪A,J⟫ₘ)/δA = η·J — the current re-kinded by the variational derivative›
+[kindCrossing] ForPhysLib.Electromagnetism.Kinematics.Dynamics.gradKineticTermQ — attests: Kinds.variationalGradient ‹δ(∫L_kin)/δA = μ₀⁻¹·∑∂F — the Euler–Lagrange reading's field side›
+[kindCrossing] ForPhysLib.Electromagnetism.Kinematics.Dynamics.gradLagrangianQ — attests: Kinds.variationalGradient ‹δS/δA — the reading IsExtrema sets to zero›
+[kindCrossing] ForPhysLib.Electromagnetism.Kinematics.Dynamics.hamiltonianQ — attests: Kinds.electromagneticEnergyDensity ‹H = π·∂₀A − L — the Legendre transform, read at the field energy density›
+[kindCrossing] ForPhysLib.Electromagnetism.Kinematics.Dynamics.kineticTermQ — attests: Kinds.lagrangianDensity ‹−¼μ₀⁻¹·F·F — the kinetic term at the gauge-dependent density mint›
+[kindCrossing] ForPhysLib.Electromagnetism.Kinematics.Dynamics.lagrangianQ — attests: Kinds.lagrangianDensity ‹L = kineticTerm − freeCurrentPotential — a same-kind subtraction, no join›
 [kindCrossing] ForPhysLib.Electromagnetism.Kinematics.Kinded.derivQ — attests: Kinds.potentialGradient ‹∂_μ A^ν — the per-coordinate chart; gauge-dependent until antisymmetrized›
 [kindCrossing] ForPhysLib.Electromagnetism.Kinematics.Kinded.fieldStrengthMatrixQ — attests: Kinds.fieldStrength ‹the extent in the standard basis›
 [kindCrossing] ForPhysLib.Electromagnetism.Kinematics.Kinded.fieldStrengthQ — attests: Kinds.fieldStrength ‹η∂A − η∂A — the antisymmetrization erases the gauge dependence›
@@ -84,7 +94,7 @@ info: boundary audit:
 [kindIngest] ForPhysLib.Electromagnetism.Kinematics.potentialQ — attests: vectorPotentialK ‹the four-potential — homogeneous at 6-32 because A⁰ = φ/c›
 [kindIngest] ForPhysLib.Electromagnetism.Kinematics.speedQ — attests: speedOfLightK ‹the unit-system choice, declared once instead of defaulted per call site›
 [kindIngest] ForPhysLib.Electromagnetism.Kinematics.speedRQ — attests: speedOfLightK ‹the declared speed, at the table's carrier›
-39 boundary site(s), all tagged — clean
+48 boundary site(s), all tagged — clean
 -/
 #guard_msgs (whitespace := lax) in
 #kind_boundary_audit ForPhysLib.Electromagnetism.Kinematics
@@ -96,6 +106,15 @@ info: tagged boundary crossings:
 [kindConst] ForPhysLib.Electromagnetism.Kinematics.Maxwell.muQ — `FreeSpace.μ₀`, read at 6-26.1.
 [kindCrossing] ForPhysLib.Electromagnetism.Kinematics.DistributionalTwin.distElectricFieldQ — The twin's electric field at the chain's 6-10: the same `-∇φ - ∂ₜ𝐀`, with the
 [kindCrossing] ForPhysLib.Electromagnetism.Kinematics.DistributionalTwin.distFieldStrengthQ — The twin's field-strength tensor at the chain's one mint — the frame-covariant
+[kindCrossing] ForPhysLib.Electromagnetism.Kinematics.Dynamics.canonicalMomentumQ — `π = ∂L/∂(∂₀A)` — the canonical momentum, on the
+[kindCrossing] ForPhysLib.Electromagnetism.Kinematics.Dynamics.freeCurrentPotentialQ — `⟪A, J⟫ₘ` — the interaction density, on the `A·J` edge
+[kindCrossing] ForPhysLib.Electromagnetism.Kinematics.Dynamics.freeSpaceSpeedQ — `c = 1/√(ε₀·μ₀)` — upstream's definition of `FreeSpace.c`, read at the speed of
+[kindCrossing] ForPhysLib.Electromagnetism.Kinematics.Dynamics.gradFreeCurrentPotentialQ — `δ(∫⟪A, J⟫ₘ)/δA` — the metric-lowered current read as a variational gradient: the
+[kindCrossing] ForPhysLib.Electromagnetism.Kinematics.Dynamics.gradKineticTermQ — `δ(∫L_kin)/δA` — the kinetic term's variational gradient, on the
+[kindCrossing] ForPhysLib.Electromagnetism.Kinematics.Dynamics.gradLagrangianQ — `δS/δA` — the full variational gradient, on the
+[kindCrossing] ForPhysLib.Electromagnetism.Kinematics.Dynamics.hamiltonianQ — `H = π·∂₀A − L` — the Hamiltonian: the Legendre product rides the
+[kindCrossing] ForPhysLib.Electromagnetism.Kinematics.Dynamics.kineticTermQ — `−¼μ₀⁻¹·F·F` — the kinetic term, riding the `π` edge
+[kindCrossing] ForPhysLib.Electromagnetism.Kinematics.Dynamics.lagrangianQ — `L = L_kin − ⟪A, J⟫ₘ` — the Lagrangian density: the same-kind subtraction the two
 [kindCrossing] ForPhysLib.Electromagnetism.Kinematics.Kinded.derivQ — The derivative tensor `∂_μ A^ν` at the **gauge-dependent** chart kind — a vector
 [kindCrossing] ForPhysLib.Electromagnetism.Kinematics.Kinded.fieldStrengthMatrixQ — The tensor in the standard basis, at the same extent kind.
 [kindCrossing] ForPhysLib.Electromagnetism.Kinematics.Kinded.fieldStrengthQ — The field strength `F^{μν}` at the **frame-covariant, gauge-invariant** extent
