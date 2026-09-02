@@ -15,5 +15,6 @@ import ForPhysLib.QuantumMechanics.HarmonicOscillator.Operators
 import ForPhysLib.QuantumMechanics.HarmonicOscillator.Heisenberg
 import ForPhysLib.QuantumMechanics.HarmonicOscillator.AngularMomentum
 import ForPhysLib.QuantumMechanics.HarmonicOscillator.Degeneracy
+import ForPhysLib.QuantumMechanics.HarmonicOscillator.LadderOperators
 import ForPhysLib.QuantumMechanics.HarmonicOscillator.Audits
 import ForPhysLib.QuantumMechanics.HarmonicOscillator.Orthonormality

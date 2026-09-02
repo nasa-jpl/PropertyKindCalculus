@@ -24,11 +24,12 @@ as generic API; nothing quantum-specific remained in either.
 | `Kinded.lean` | Stage 2 | the re-authoring: the licensed-fold eigenvalue, the radicand-first ξ, the Born density, spacings vs the silent reference, the kinded TISE (M-T1–M-T3) |
 | `Measurand.lean` | Stage 2 | M-T4 realized: the Hamiltonian as PKC's `Observable` at `𝕜 = ℂ`, identified as a `Measurand` with the eigenvalue set as indications |
 | `Operators.lean` | Stage 3 | the kind algebra as `KindMul`/`KindDiv` table entries: `*` and `/` elaborate through the table, unregistered pairs refuse |
-| `Audits.lean` | Stage 4 | the directory namespace under CI: the 21-site boundary audit pinned, silent clean/ratchet/dimensional gates, the interior gated empty, the ingest boundary measured |
+| `Audits.lean` | Stage 4 | the directory namespace under CI: the 22-site boundary audit pinned, silent clean/ratchet/dimensional gates, the interior gated empty, the ingest boundary measured |
 | `Orthonormality.lean` | the first patch | upstream's `@[sorryful]` `eigenstates_orthonormal`, discharged — statement verbatim, sorry-free |
 | `Heisenberg.lean` | the second patch | `ℏ/2 ≤ σ_x σ_p` proved for every normalized Schwartz state from upstream's own Robertson bound and CCR; the ground state's `σ_x = ξᵢ/√2` by the Gaussian second moment and `σ_p = ℏ/(√2 ξᵢ)` by differentiating the Gaussian, so saturation `σ_x σ_p = ℏ/2` is exact; the bound kinded through the `length · momentum → action` entry |
 | `AngularMomentum.lean` | the J·s crossing | `L_z = m·ℏ` made explicit: the circular first-excited combinations are `m = ±1` eigenstates of `𝐋ᵢⱼ` and the isotropic ground state is `m = 0` — all by CLM algebra off the Gaussian eigen-relation; the 4-11/4-32 same-dimension re-kind is one `@[kindCrossing]` attest the eigenvalue theorems realize |
 | `Degeneracy.lean` | the count | label-level ground non-degeneracy for every oscillator (the label half of the upstream TODO); under isotropy the eigenvalue determines only the total occupation, and stars-and-bars counts the collision: `(d + N - 1).choose N` labels per level, off Mathlib's `piAntidiag` with no new combinatorics |
+| `LadderOperators.lean` | the green field | upstream's eleven-TODO stub delivered at the Schwartz-CLM layer: `a`/`a†` with the formal-adjoint pairing and full CCR, `N = a†a` symmetric with all number commutators, `H_N = ∑ℏωᵢ(Nᵢ+½)` equal to `T + V` (the scalar content is `ξ² = ℏ/(mω)`), `[H_N, a^{(†)}] = ∓ℏω a^{(†)}`, and the first two rungs realized against the labeled eigenfunctions; essential self-adjointness and the domain-level comparison stay named upstream |
 | `HarmonicOscillator.checked_by.yaml` | Stage 4 | the API-map delta, keyed by the upstream `TODO` texts |
 
 ## The cost line
@@ -41,7 +42,7 @@ What the layer costs, measured — every number quoting a build artifact at this
 | dimensional pairings | 17, plus 2 kinds unpaired on purpose (their dimensions `L⁻ᵈ`/`Lᵈ` are the model's parameter; the coherence is the parametric theorem `bornDensity_dim_coherent`) | `Metrology.lean` |
 | kind edges | 21 — 10 authored laws, 10 operator-table entries (7 in Stage 3, 3 probe-era), 1 aggregation license (`±`) | `#kind_dimensional_coverage` pins in `Metrology.lean`/`Operators.lean`; the silent directory-wide `#kind_dimensional_clean` in `Audits.lean` |
 | join entries | 1 — `T̂ + V̂` at mechanical energy; `T̂ + p̂²` refused | `Feasibility.lean` (F1a, F1c) |
-| boundary sites | 21 — 16 attested, 3 raw ingest mints, 2 erasure-only; by tier: 12 ingest, 6 crossings, 1 constant, 1 carrier-vocabulary, 1 emission | the pinned `#kind_boundary_audit` in `Audits.lean` |
+| boundary sites | 22 — 17 attested, 3 raw ingest mints, 2 erasure-only; by tier: 13 ingest, 6 crossings, 1 constant, 1 carrier-vocabulary, 1 emission | the pinned `#kind_boundary_audit` in `Audits.lean` |
 | unkinded surface | interior: 0 positions (gated); ingest boundary: 15 naked positions, all the oscillator structure, its occupation labels, coordinate indices, its Hilbert space, its operator domains, or the one emitted `ℝ` | the `#kind_unkinded` ledgers in `Audits.lean` |
 | lines | 2,099 total, of which 994 are code (the rest is documentation, including the pinned audit reports); the mirrored source is 1,727 total / 1,085 code, none of which changed | `wc -l`; comment-stripped count |
 | proof debt | 0 `sorry`; every theorem here at `propext, Classical.choice, Quot.sound`; 1 upstream `@[sorryful]` discharged and 1 theorem upstream never stated (`heisenberg_uncertainty`) proved | `#print axioms` |

@@ -27,3 +27,49 @@ deltas:
   - description: "Prove that the ground-state of the QHO is non-degenerate."
     checked_by:
       - "ForPhysLib.QuantumMechanics.HarmonicOscillator.Degeneracy"      # the label half discharged: eigenEnergy_eq_ground_iff (no label but 0 reaches the ground energy, any Q) + levelSet_zero; the Hilbert-space half (no other eigenvector) stays this TODO
+
+  # `LadderOperators.lean` upstream is a stub of TODOs; the ForPhysLib module of the
+  # same name delivers their content at the Schwartz-CLM layer. Per TODO:
+
+  - description: "Define the raising/lowering operators for the quantum harmonic oscillator."
+    checked_by:
+      - "ForPhysLib.QuantumMechanics.HarmonicOscillator.LadderOperators"  # lowerCLM/raiseCLM on 𝓢(Space d, ℂ), from upstream's 𝐱 and 𝐩
+
+  - description: "Prove that the raising/lowering operators are adjoints of one another (tag as simp?)."
+    checked_by:
+      - "ForPhysLib.QuantumMechanics.HarmonicOscillator.LadderOperators"  # inner_lower_raise/inner_raise_lower — the formal-adjoint pairing on Schwartz classes; adjointness of the closures stays upstream analysis
+
+  - description: "Prove the commutation relations for the ladder operators, `[a, a†] = δ`."
+    checked_by:
+      - "ForPhysLib.QuantumMechanics.HarmonicOscillator.LadderOperators"  # lower_commutation_raise + the vanishing pair commutators
+
+  - description: "Define the number operators for the quantum harmonic oscillator
+  in terms of the ladder operators."
+    checked_by:
+      - "ForPhysLib.QuantumMechanics.HarmonicOscillator.LadderOperators"  # numberCLM = a† ∘L a; expanded form numberCLM_eq
+
+  - description: "Prove that the number operators are symmetric/self-adjoint."
+    checked_by:
+      - "ForPhysLib.QuantumMechanics.HarmonicOscillator.LadderOperators"  # inner_number_symm (symmetric); essential self-adjointness stays this TODO's analysis half
+
+  - description: "Prove the commutation relations for the number operators, `[N i, N j] = 0`."
+    checked_by:
+      - "ForPhysLib.QuantumMechanics.HarmonicOscillator.LadderOperators"  # number_commutation_number
+
+  - description: "Prove the commutation relations between number and ladder operators,
+  `[N, a] = -δ a` and `[N, a†] = δ a†`."
+    checked_by:
+      - "ForPhysLib.QuantumMechanics.HarmonicOscillator.LadderOperators"  # number_commutation_lower / number_commutation_raise
+
+  - description: "Define a Hamiltonian in terms of the number operators."
+    checked_by:
+      - "ForPhysLib.QuantumMechanics.HarmonicOscillator.LadderOperators"  # numberHamiltonianCLM = ∑ ℏωᵢ(Nᵢ + ½)
+
+  - description: "Prove the commutation relations between the Hamiltonian and ladder/number operators."
+    checked_by:
+      - "ForPhysLib.QuantumMechanics.HarmonicOscillator.LadderOperators"  # numberHamiltonian_commutation_lower/_raise; [H_N, Nᵢ] is number_commutation_number summed
+
+  - description: "Relate the 'number operator' Hamiltonian to the 'K + T' Hamiltonian
+  (=/≤/≥ depending on their domains)."
+    checked_by:
+      - "ForPhysLib.QuantumMechanics.HarmonicOscillator.LadderOperators"  # numberHamiltonianCLM_eq — equality at the Schwartz layer (the scalar content is ξ² = ℏ/(mω)); the LinearPMap domain comparison stays this TODO

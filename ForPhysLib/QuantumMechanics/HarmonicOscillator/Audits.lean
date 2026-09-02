@@ -39,6 +39,7 @@ import ForPhysLib.QuantumMechanics.HarmonicOscillator.Operators
 import ForPhysLib.QuantumMechanics.HarmonicOscillator.Heisenberg
 import ForPhysLib.QuantumMechanics.HarmonicOscillator.AngularMomentum
 import ForPhysLib.QuantumMechanics.HarmonicOscillator.Degeneracy
+import ForPhysLib.QuantumMechanics.HarmonicOscillator.LadderOperators
 import PropertyKindCalculus.BoundaryAudit
 import PropertyKindCalculus.KindLedger
 import PropertyKindCalculus.DimensionalCoverage
@@ -65,6 +66,7 @@ info: boundary audit:
 [kindIngest] ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinded.bornDensityQ — mints: Kinds.bornDensity
 [kindIngest] ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinded.mQd — mints: massK
 [kindIngest] ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinded.occupationQ — mints: Kinds.quantumNumber
+[kindIngest] ForPhysLib.QuantumMechanics.HarmonicOscillator.Ladder.numberOpQ — attests: Kinds.quantumNumber ‹a†ᵢaᵢ — the occupation observable at its kind›
 [kindIngest] ForPhysLib.QuantumMechanics.HarmonicOscillator.kineticOpQ — attests: kineticEnergyK ‹reading of PhysLib's kineticOperator›
 [kindIngest] ForPhysLib.QuantumMechanics.HarmonicOscillator.mQ — attests: massK ‹PhysLib's bare ℝ field m›
 [kindIngest] ForPhysLib.QuantumMechanics.HarmonicOscillator.momentumSqOpQ — attests: momentumSqK ‹reading of PhysLib's momentumSqOperator›
@@ -72,7 +74,7 @@ info: boundary audit:
 [kindIngest] ForPhysLib.QuantumMechanics.HarmonicOscillator.xiQ — attests: lengthK ‹the square root of the registered ξ² chain — roots are not a kind operation›
 [kindIngest] ForPhysLib.QuantumMechanics.HarmonicOscillator.ωQ — attests: angularFrequencyK ‹PhysLib's bare ℝ family ω i›
 [kindIngest] ForPhysLib.QuantumMechanics.HarmonicOscillator.ωQ1 — attests: angularFrequencyK ‹PhysLib's bare ℝ field ω›
-21 boundary site(s), all tagged — clean
+22 boundary site(s), all tagged — clean
 -/
 #guard_msgs (whitespace := lax) in
 #kind_boundary_audit ForPhysLib.QuantumMechanics.HarmonicOscillator
@@ -93,6 +95,7 @@ info: tagged boundary crossings:
 [kindIngest] ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinded.bornDensityQ — **The Born density, kinded** — `|ψ|²` as a probability density over position. The
 [kindIngest] ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinded.mQd — The `d`-dimensional mass, read at its kind (the 1D twin is Feasibility's `mQ`).
 [kindIngest] ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinded.occupationQ — The occupation labels, looked up from the catalogue (ISO 80000-10 item 10-13.1),
+[kindIngest] ForPhysLib.QuantumMechanics.HarmonicOscillator.Ladder.numberOpQ — The number operator read at the quantum-number kind (ISO 80000-10 item 10-13.1):
 [kindIngest] ForPhysLib.QuantumMechanics.HarmonicOscillator.kineticOpQ — `T̂` at its kind, at the operator carrier.
 [kindIngest] ForPhysLib.QuantumMechanics.HarmonicOscillator.mQ — The 1D mass, read at its kind.
 [kindIngest] ForPhysLib.QuantumMechanics.HarmonicOscillator.momentumSqOpQ — `p̂²` at its kind.
@@ -108,6 +111,7 @@ info: tagged boundary crossings:
 
 #guard_msgs in #kind_boundary_clean ForPhysLib.QuantumMechanics.HarmonicOscillator
 #guard_msgs in #kind_mint_ratchet ForPhysLib.QuantumMechanics.HarmonicOscillator
+set_option maxHeartbeats 1600000 in
 #guard_msgs in #kind_dimensional_clean ForPhysLib.QuantumMechanics.HarmonicOscillator
 
 /-! ## The unkinded ledger — the interior gated, the boundary measured -/
