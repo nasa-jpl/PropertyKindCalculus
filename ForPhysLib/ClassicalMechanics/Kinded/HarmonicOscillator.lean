@@ -176,14 +176,25 @@ theorem equationOfMotion_pentad (S : HO) (xₜ : Time → E1) (hx : ContDiff ℝ
 
 /-! ## The trajectory from its data -/
 
+/-- **The trig boundary, made literal**: `cos` consumes a phase angle and returns a
+numeral — the sanctioned erasure of 3-7, tagged at the emission tier so the audit
+sees exactly where a kind leaves the layer to enter `Real.cos`. -/
+@[kindEmission]
+def cosPhase (φq : Quantity phaseAngleK ℝ) : ℝ := Real.cos φq.magnitude
+
+/-- `sin` consumes a phase angle — the boundary's other half. -/
+@[kindEmission]
+def sinPhase (φq : Quantity phaseAngleK ℝ) : ℝ := Real.sin φq.magnitude
+
 /-- The trajectory, authored from its initial data: the phase through the
-trig-boundary edge, `v₀/ω` through the velocity/angular-frequency edge, the numerals
-`cos`/`sin` on the numeral action, the sum same-kind. -/
+trig-boundary edge, consumed by the tagged `cos`/`sin` emissions, `v₀/ω` through the
+velocity/angular-frequency edge, the numerals on the numeral action, the sum
+same-kind. -/
 def trajectoryFromDataQ (S : HO)
     (IC : _root_.ClassicalMechanics.HarmonicOscillator.InitialConditions) (t : Time) :
     Quantity displacementK ℝ :=
-  Real.cos ((phaseQ (omegaQ (omegaSqQ S)) (durationQ t)).magnitude) • displacement0Q IC
-    + Real.sin ((phaseQ (omegaQ (omegaSqQ S)) (durationQ t)).magnitude) •
+  cosPhase (phaseQ (omegaQ (omegaSqQ S)) (durationQ t)) • displacement0Q IC
+    + sinPhase (phaseQ (omegaQ (omegaSqQ S)) (durationQ t)) •
         (velocity0Q IC / omegaQ (omegaSqQ S))
 
 /-- **The erasure**: the authored trajectory is upstream's, at component 0. -/
@@ -282,6 +293,17 @@ theorem geometricKineticEnergyQ_erases (S : HO)
           _root_.ClassicalMechanics.HarmonicOscillator.tangentCoord q v⟫_ℝ :=
   _root_.ClassicalMechanics.HarmonicOscillator.geometricKineticEnergy_massMetric_eq
     S q v
+
+/-! ## The emission boundary -/
+
+/-- The emission boundary, stated once as a `def` so it carries its tier: a
+downstream consumer (an integrator, a plot) takes the naked number, and the kind
+stops here — visible in the audit, not silently dropped. -/
+@[kindEmission]
+def rawTrajectoryValue (S : HO)
+    (IC : _root_.ClassicalMechanics.HarmonicOscillator.InitialConditions)
+    (t : Time) : ℝ :=
+  (trajectoryFromDataQ S IC t).magnitude
 
 end
 

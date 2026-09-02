@@ -1083,6 +1083,26 @@ refused (the action is the pilot's kind), `F·v` is refused (power delivery is a
 upstream `informal_lemma`, not formalized surface). Coverage re-pinned: seven
 `[table]` rows, clean.
 
+**Status: Stage 4 climbed** — `Audits.lean` puts the whole directory namespace under
+CI: the **42-site** boundary audit and crossings registry pinned (30 ingests, 8
+crossings, 1 constant, 3 emissions, 1 carrier-vocabulary — every attestation's reason
+in the pin; all four tiers present, and the `@[kindConst]` full turn plus the two
+trig emissions are firsts for the campaign), boundary-clean + mint-ratchet +
+dimensional-clean silent, the nine-member kinded interior gated empty, and the
+30-reading ingest boundary measured (72 naked positions, 68 flows). The gate earned
+its keep during authoring: it refused `trajectoryFromDataQ`'s inline `.magnitude`
+reads, which forced the trig boundary to become *literal* — `cosPhase`/`sinPhase` as
+tagged `@[kindEmission]` declarations, the one sanctioned place a phase leaves the
+layer to enter `Real.cos`. The ledger's shape is the directory's own: point mechanics
+has a *thin interior and a broad boundary* (every reading of upstream's bare-real
+structures is a boundary site; the algebra between readings is short) — directed
+opposite to directory 2's deep interior. The `ClassicalMechanics.checked_by.yaml`
+delta keys on the upstream TODO texts (the geometric-model TODO at the consumed
+coordinate erasure; the configuration-space-API TODO at the consumer datapoint; the
+continuous-linear-maps TODO as a mirror dependency) and names the `@[sorryful]`
+`solidSphere_inertiaTensor` as the patch-candidate slot. Axiom profile of fifteen key
+theorems, pentad included: `propext, Classical.choice, Quot.sound`.
+
 
 ---
 

@@ -1,0 +1,39 @@
+# The Stage-4 API-map delta proposed for `Physlib/ClassicalMechanics`
+# (HarmonicOscillator and RigidBody subtrees; MR29: every satisfied requirement has
+# a machine-checkable witness).
+#
+# Neither subtree has an `API-map.yaml` upstream; the requirement ledger is the
+# `TODO` commands and one `@[sorryful]` lemma. The proposed delta is a `checked_by:`
+# field per ledger item, keyed by its current text, naming the ForPhysLib module
+# whose build now checks the claim, holds its statement ready, or records a
+# dependency. Nothing upstream changes; an item with no entry here is untouched.
+
+deltas:
+
+  - description: "Create a new file for the geometric model which properly models the position as a configuration space and velocity as its tangent space, then show explicitly how this coordinate model is a simplification of the geometric model."
+    checked_by:
+      - "ForPhysLib.ClassicalMechanics.Kinded"   # the Geometric/ files now exist upstream; geometricKineticEnergyQ + geometricKineticEnergyQ_erases consume the coordinate formula, exhibiting the "simplification" half as a kinded erasure: the mass metric's energy reads at 4-28.2 and erases to the coordinate ½m⟪·,·⟫
+
+  - description: "The API around the configuration space should be improved to allow further development of a proper geometric model of the Harmonic Oscillator."
+    checked_by:
+      - "ForPhysLib.ClassicalMechanics.Kinded"   # a consumer datapoint for the API design: the kinded reading needed exactly geometricKineticEnergy, tangentCoord, and geometricKineticEnergy_massMetric_eq — the surface a kind layer asks of the improved API
+
+  - description: "The definition of a rigid body is currently defined via linear maps from the space of smooth functions to ℝ. When possible, it should be change to *continuous* linear maps. "
+    checked_by:
+      - "ForPhysLib.ClassicalMechanics.Kinded"   # a mirror dependency, not a claim: every moment reading (rbMassQ, comQ, inertiaAtQ, inertiaAboutAtQ) quotes ρ's current bundling; if the continuity refactor lands, the mirror follows the new spelling unchanged — the kinds attach to the moments, not to ρ's bundling
+
+# The `Solution.lean` TODO (split into smaller modules) and the `RigidBody/Basic.lean`
+# `cmap` relocation TODO are organizational; the kinded layer takes no position, but
+# note the dependency: `Feasibility.lean` and `Kinded/` import
+# `HarmonicOscillator.Solution` and quote `cmap`-built moments — module renames
+# propagate to the mirror's imports only.
+#
+# The `Motion.lean` TODO (group actions recovering `displacement`) is a design plan;
+# the kinded velocity decomposition (`velocity_decomposes_through_the_edge`) consumes
+# `displacement` only through `velocity_eq_angularVelocity`, so it survives the
+# refactor as long as that lemma does.
+#
+# `solidSphere_inertiaTensor` (`(2/5) m R² • 1`) is `@[sorryful]` — the two subtrees'
+# only `sorry`, and this directory's patch-candidate slot: see
+# `ForPhysLib/ClassicalMechanics/SolidSphereInertia.lean` if present, else the
+# README's held-items note.
