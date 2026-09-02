@@ -1103,6 +1103,22 @@ continuous-linear-maps TODO as a mirror dependency) and names the `@[sorryful]`
 `solidSphere_inertiaTensor` as the patch-candidate slot. Axiom profile of fifteen key
 theorems, pentad included: `propext, Classical.choice, Quot.sound`.
 
+**Status: the patch candidate is discharged** —
+`ForPhysLib/ClassicalMechanics/SolidSphereInertia.lean` proves upstream's
+`@[sorryful]` `solidSphere_inertiaTensor` (`(2/5) m R² • 1`), sorry-free at
+`propext, Classical.choice, Quot.sound` — the two subtrees' only `sorry`, in the
+pilot's orthonormality pattern. The proof is the textbook computation carried by
+three facts, each mechanized once: the off-diagonal moments vanish under the
+coordinate-reflection isometry (conjugated through `Space.basis.repr`,
+measure-preserving by Mathlib's `LinearIsometryEquiv.measurePreserving`,
+ball-preserving by `norm_map`); the diagonal moments agree under the
+coordinate-swap isometry, so each is a third of `∫‖x‖²`; and the radial integral
+reduces by `integral_fun_norm_addHaar` to `3·vol(B₁)·∫₀^R r⁴`, with the ball volume
+scaling as `R³·vol(B₁)` (`Measure.addHaar_closedBall`) — PhysLib's own
+`volume_metricBall_three_real` supplies `vol(B₁) = 4π/3`, though only its
+positivity survives to the final ratio. The offer upstream is a human's to make
+(AI-POLICY §3.1).
+
 
 ---
 

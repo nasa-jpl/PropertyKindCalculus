@@ -34,6 +34,7 @@ deltas:
 # refactor as long as that lemma does.
 #
 # `solidSphere_inertiaTensor` (`(2/5) m R² • 1`) is `@[sorryful]` — the two subtrees'
-# only `sorry`, and this directory's patch-candidate slot: see
-# `ForPhysLib/ClassicalMechanics/SolidSphereInertia.lean` if present, else the
-# README's held-items note.
+# only `sorry`. **Discharged**: `ForPhysLib/ClassicalMechanics/SolidSphereInertia.lean`
+# proves the exact statement sorry-free (axioms: propext, Classical.choice,
+# Quot.sound) — the directory's patch candidate, in the pilot's orthonormality
+# pattern; the offer upstream is a human's to make (AI-POLICY §3.1).

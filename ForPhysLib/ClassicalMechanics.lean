@@ -12,3 +12,4 @@ import ForPhysLib.ClassicalMechanics.Metrology
 import ForPhysLib.ClassicalMechanics.Kinded
 import ForPhysLib.ClassicalMechanics.Operators
 import ForPhysLib.ClassicalMechanics.Audits
+import ForPhysLib.ClassicalMechanics.SolidSphereInertia
