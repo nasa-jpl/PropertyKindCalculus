@@ -28,6 +28,7 @@ as generic API; nothing quantum-specific remained in either.
 | `Orthonormality.lean` | the first patch | upstream's `@[sorryful]` `eigenstates_orthonormal`, discharged — statement verbatim, sorry-free |
 | `Heisenberg.lean` | the second patch | `ℏ/2 ≤ σ_x σ_p` proved for every normalized Schwartz state from upstream's own Robertson bound and CCR; the ground state's `σ_x = ξᵢ/√2` by the Gaussian second moment and `σ_p = ℏ/(√2 ξᵢ)` by differentiating the Gaussian, so saturation `σ_x σ_p = ℏ/2` is exact; the bound kinded through the `length · momentum → action` entry |
 | `AngularMomentum.lean` | the J·s crossing | `L_z = m·ℏ` made explicit: the circular first-excited combinations are `m = ±1` eigenstates of `𝐋ᵢⱼ` and the isotropic ground state is `m = 0` — all by CLM algebra off the Gaussian eigen-relation; the 4-11/4-32 same-dimension re-kind is one `@[kindCrossing]` attest the eigenvalue theorems realize |
+| `Degeneracy.lean` | the count | label-level ground non-degeneracy for every oscillator (the label half of the upstream TODO); under isotropy the eigenvalue determines only the total occupation, and stars-and-bars counts the collision: `(d + N - 1).choose N` labels per level, off Mathlib's `piAntidiag` with no new combinatorics |
 | `HarmonicOscillator.checked_by.yaml` | Stage 4 | the API-map delta, keyed by the upstream `TODO` texts |
 
 ## The cost line

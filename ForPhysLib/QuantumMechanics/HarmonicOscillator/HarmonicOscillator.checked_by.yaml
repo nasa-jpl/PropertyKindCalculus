@@ -23,3 +23,7 @@ deltas:
   - description: "Prove that the (point) spectrum of the self-adjoint Hamiltonian is `Set.range Q.eigenEnergy`."
     checked_by:
       - "ForPhysLib.QuantumMechanics.HarmonicOscillator.Measurand"       # the eigenvalue set held as the Hamiltonian measurand's indication predicate; this TODO is the statement that the predicate IS the spectrum
+
+  - description: "Prove that the ground-state of the QHO is non-degenerate."
+    checked_by:
+      - "ForPhysLib.QuantumMechanics.HarmonicOscillator.Degeneracy"      # the label half discharged: eigenEnergy_eq_ground_iff (no label but 0 reaches the ground energy, any Q) + levelSet_zero; the Hilbert-space half (no other eigenvector) stays this TODO

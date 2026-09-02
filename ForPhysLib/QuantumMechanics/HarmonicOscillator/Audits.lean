@@ -38,6 +38,7 @@ ForPhysLib module whose build now checks the claim or holds its statement ready.
 import ForPhysLib.QuantumMechanics.HarmonicOscillator.Operators
 import ForPhysLib.QuantumMechanics.HarmonicOscillator.Heisenberg
 import ForPhysLib.QuantumMechanics.HarmonicOscillator.AngularMomentum
+import ForPhysLib.QuantumMechanics.HarmonicOscillator.Degeneracy
 import PropertyKindCalculus.BoundaryAudit
 import PropertyKindCalculus.KindLedger
 import PropertyKindCalculus.DimensionalCoverage
