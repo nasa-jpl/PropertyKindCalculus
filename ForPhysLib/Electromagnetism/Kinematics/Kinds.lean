@@ -98,7 +98,24 @@ def length : KindOfProperty := { id := "length", scale := .ratio }
 /-- Duration — item 3-9: `Time`'s kind, `∂ₜ`'s denominator in the sliced readings. -/
 def duration : KindOfProperty := { id := "duration", scale := .ratio }
 
-/-! ## The two mints — the readings the standard does not list
+/-- Electric charge density — item 6-3 (`ρ`, C/m³): the source Gauss's law reads. -/
+def electricChargeDensity : KindOfProperty :=
+  { id := "electric charge density", scale := .ratio }
+
+/-- Electric current density — item 6-8 (`J`, A/m²): Ampère's source — and where the
+displacement current `ε₀·∂ₜE` lands, by the catalogue's own item. -/
+def electricCurrentDensity : KindOfProperty :=
+  { id := "electric current density", scale := .ratio }
+
+/-- The electric constant — item 6-14.1 (`ε₀`, F/m): `FreeSpace.ε₀`, a bare `ℝ`
+field upstream. -/
+def electricConstant : KindOfProperty := { id := "electric constant", scale := .ratio }
+
+/-- The magnetic constant — item 6-26.1 (`μ₀`, H/m): `FreeSpace.μ₀`, a bare `ℝ`
+field upstream — and `c = 1/√(ε₀μ₀)` is upstream's *definition* of `FreeSpace.c`. -/
+def magneticConstant : KindOfProperty := { id := "magnetic constant", scale := .ratio }
+
+/-! ## The five mints — the readings the standard does not list
 
 The standard catalogues frame-bound, gauge-fixed readings; the chain's two exported
 tensors are neither, so their entry kinds are minted here — both at the flux density's
@@ -117,6 +134,22 @@ readings come off it through one velocity edge (`E_i = −c·F⁰ⁱ`) and one b
 identification (`B_ij = F^{ij}`). -/
 def fieldStrength : KindOfProperty :=
   { id := "field strength — the frame-covariant tensor entry", scale := .ratio }
+
+/-- The electric field's derivative reading (V/m²): `∇⬝E`, the entries of `∇⨯E`, and
+`∂ₜB` all land here — the kind Maxwell's Gauss-electric and Faraday sides speak.
+Unlisted: the standard catalogues fields, not their pointwise derivative readings. -/
+def electricFieldDerivative : KindOfProperty :=
+  { id := "electric field derivative", scale := .ratio }
+
+/-- The magnetic field's per-length reading (T/m): the entries of `∇⨯B` and `μ₀·J` —
+Ampère's two sides. -/
+def magneticFieldDerivative : KindOfProperty :=
+  { id := "magnetic field derivative", scale := .ratio }
+
+/-- The electric field's time rate (V/(m·s)): `∂ₜE`, whose `ε₀`-scaling is the
+displacement current density — landing back at the catalogue's 6-8. -/
+def electricFieldRate : KindOfProperty :=
+  { id := "electric field rate", scale := .ratio }
 
 /-! ## Distinctness — the collisions the vocabulary exists to prevent
 

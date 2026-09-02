@@ -21,13 +21,14 @@ either: every capability the chain needed was already minted.
 | file | ladder rung | what it holds |
 |---|---|---|
 | `Feasibility.lean` | before the ladder | F1–F5 as build artifacts: the field carrier stands up, the `/c` pinned, the interval scale refuses the ratio table, the boost law consumed whole, the gauge torsor |
-| `Kinds.lean` | Stage 0 | 12 kinds — 10 catalogue lookups verbatim, 2 mints that are one finding twice; three teslas separated by `decide`; the interval scale pinned; no join, and that is a finding |
-| `Metrology.lean` | Stage 1 | 12 `DimensionedKind` pairings with the collisions visible, the Stage-0 lookup proved by `decide`/`rfl`, twelve authored edge laws, coverage pinned clean |
+| `Kinds.lean` | Stage 0 | 19 kinds — 14 catalogue lookups verbatim (Maxwell's sources and constants included), 5 mints; three teslas separated by `decide`; the interval scale pinned; no join, and that is a finding |
+| `Metrology.lean` | Stage 1 | 19 `DimensionedKind` pairings with the collisions visible, the Stage-0 lookup proved by `decide`/`rfl`, nineteen authored edge laws (Maxwell's seven included), coverage pinned clean |
 | `Kinded.lean` | Stage 2 | the re-authoring: the slices, `E = −∇φ − ∂ₜ𝐀` rebuilt and erasing by `rfl`, chart vs extent, the frame readings off the tensor, the boost's magnetic mirror, gauge invariance reaching the fields |
 | `Operators.lean` | Stage 3 | three table registrations + the interval potential's torsor; the law-only majority named; the refusals are subtree boundaries |
-| `Audits.lean` | Stage 4 | the directory namespace under CI: the 27-site boundary audit pinned, silent clean/ratchet/dimensional gates, a **12-crossing interior** gated empty, the ingest boundary measured |
+| `Audits.lean` | Stage 4 | the directory namespace under CI: the 39-site boundary audit pinned, silent clean/ratchet/dimensional gates, a **12-crossing interior** gated empty, the ingest boundary measured |
 | `Kinematics.checked_by.yaml` | Stage 4 | the API-map delta, keyed by the upstream `TODO` texts |
 | `DistributionalTwin.lean` | the duplication finding | upstream's `Distributional/` chain re-spells the same physics at the distribution carrier — the twin's `E` is definitionally the chain's `−∇φ − ∂ₜ𝐀` (pinned by `rfl`), its readings land at the chain's existing kinds at **zero vocabulary cost** (the mint ratchet enforces it), and the missing smooth→distributional embedding — the statement a deduplication theorem needs — is pinned as a `#check_failure` |
+| `Maxwell.lean` | the sources | the four laws kinded: every side on a Metrology edge, still **no join** (`ε₀∂ₜE` lands at the catalogue's own 6-8, so Ampère's right side is a same-kind sum); `J^μ` one kind because the time slot is `c·ρ`; `μ₀ε₀c²` dimensionless by `decide` — and the finding that upstream's four laws are **module-private** (the one file in the subtree with no `@[expose] public section`), so the proofs are re-run here against the exported API; the patch candidate is one line |
 
 ## The cost line
 
@@ -35,21 +36,21 @@ What the layer costs, measured — every number quoting a build artifact at this
 
 | | count | artifact |
 |---|---|---|
-| kinds | 12 — 10 catalogue lookups written as verbatim literals (IEC 80000-6 + ISO 80000-3), 2 local mints (the gauge-dependent chart entry and the frame-covariant extent entry — the readings the standard does not list because it catalogues frame-bound, gauge-fixed quantities) | `Kinds.lean`; the `decide`/`rfl` blocks in `Metrology.lean` |
-| dimensional pairings | 12, with the collisions visible in the registry: three kinds at the tesla, two at the volt | `Metrology.lean` |
-| kind edges | 12 authored laws, of which 5 are table-registered (2 in `Feasibility.lean`, 3 in Stage 3) and 7 are law-only — their divisions live inside `fderiv` and `∫`, where no table sees them | `#kind_dimensional_coverage` pins in `Metrology.lean`/`Operators.lean`; the silent directory-wide `#kind_dimensional_clean` in `Audits.lean` |
+| kinds | 19 — 14 catalogue lookups written as verbatim literals (IEC 80000-6 + ISO 80000-3; Maxwell adds 6-3, 6-8, 6-14.1, 6-26.1), 5 local mints (the chart and extent entries, plus Maxwell's three derivative readings) | `Kinds.lean`; the `decide`/`rfl` blocks in `Metrology.lean` |
+| dimensional pairings | 19, with the collisions visible in the registry: three kinds at the tesla, two at the volt | `Metrology.lean` |
+| kind edges | 19 authored laws, of which 5 are table-registered (2 in `Feasibility.lean`, 3 in Stage 3) and 14 are law-only — their divisions live inside `fderiv` and `∫`, where no table sees them | `#kind_dimensional_coverage` pins in `Metrology.lean`/`Operators.lean`; the silent directory-wide `#kind_dimensional_clean` in `Audits.lean` |
 | join entries | **0** — every sum the chain writes (`E = −∇φ − ∂ₜ𝐀`, the boost mixings, the gauge shift) is same-kind after an edge or a crossing | `Kinds.lean` header; the `#check_failure` beside each |
-| boundary sites | 27 — 26 attested, 1 erasure-only, **0 raw mints**; by tier: 11 ingest, 14 crossings, 1 carrier-vocabulary, 1 emission | the pinned `#kind_boundary_audit` in `Audits.lean` |
+| boundary sites | 39 — 38 attested, 1 erasure-only, **0 raw mints**; by tier: 12 ingest, 23 crossings, 2 constants, 1 carrier-vocabulary, 1 emission | the pinned `#kind_boundary_audit` in `Audits.lean` |
 | unkinded surface | interior: 0 positions across **12 end-to-end-kinded crossings** (gated); ingest boundary: 28 naked positions over 11 readings — all the potential structure, the evaluation points, the `SpeedOfLight`, or the one emitted field | the `#kind_unkinded` ledgers in `Audits.lean` |
-| lines | 1,560 total, of which 620 are code (the rest is documentation, including the pinned audit reports); the mirrored source is 3,214 total / 2,016 code, none of which changed | `wc -l`; comment-stripped count |
+| lines | 2,044 total, of which 848 are code (the rest is documentation, including the pinned audit reports); the mirrored source is 3,214 total / 2,016 code, none of which changed | `wc -l`; comment-stripped count |
 | proof debt | 0 `sorry`; every theorem here at `propext, Classical.choice, Quot.sound`; 2 theorems upstream never stated (`electricField_gaugeTransform`, `magneticFieldMatrix_gaugeTransform`) proved | `#print axioms` |
 
 Two cost notes the table cannot carry. First, the per-declaration ceremony is the
 pilot's — one `def`, one attestation, one (usually `rfl`) erasure — but the *shape* of
 the cost moved: in a field theory the kind algebra mostly rides the analysis operators,
 so the ceremony concentrates in a handful of derivative crossings rather than in table
-entries. Second, the catalogue does almost all of the Stage-0 work here: 10 of 12 kinds
-are lookups the build re-checks, against the pilot's 10 of 18.
+entries. Second, the catalogue does almost all of the Stage-0 work here: 14 of 19 kinds
+are lookups the build re-checks, against the pilot's 11 of 19.
 
 ## The findings
 

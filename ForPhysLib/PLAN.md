@@ -34,7 +34,7 @@ has to be reconstructed from the Status lines scattered below.
 | Review + post the Stage-1 ask | Nicolas (AI-POLICY §3.1) |
 | Decision-ladder step (iii): the Stage-0+1 PR for `SpaceAndTime/Space` | Claude drafts it if question 2 of the ask gets a yes |
 | Materialize the QM patch offer (Orthonormality + Heisenberg) and the EM gauge pair as fork branches | Claude, on request — same recipe as `solid-sphere-inertia` |
-| Held physics, not on the ladder: Maxwell dynamics (DONE: σ_p moment — saturation unconditional; L_z = m·ℏ; degeneracy; `LadderOperators.lean` — the eleven-TODO stub delivered; `DistributionalTwin.lean` — the duplication finding pinned) | Claude, in progress |
+| Held physics — ALL SIX DELIVERED: σ_p moment (saturation unconditional); L_z = m·ℏ; degeneracy; `LadderOperators.lean` (the eleven-TODO stub); `DistributionalTwin.lean` (the duplication finding); `Maxwell.lean` (the four laws kinded + the module-private finding). Still held by choice: the `Dynamics/` variational subtree, the RF/AC annex | done 2026-09-01 |
 | Campaign wrap-up artifact (cross-directory scorecard) | undecided whether wanted |
 
 ---
@@ -841,9 +841,13 @@ subtraction), `Operators.lean`, `Audits.lean`, `README.md` with the cost line �
 directory-major at `ForPhysLib/Electromagnetism/Kinematics/`, every module importing the
 PhysLib module it mirrors.
 
-**Held, deliberately.** Maxwell's equations (`ThreeDimension/`, `Dynamics/` — the next
-subtree, not this one); and the RF/AC annex, which stays with Exhibit E where it was
-built. The `Distributional/` twin's duplication finding is delivered:
+**Held, deliberately.** The `Dynamics/` variational subtree (Lagrangian, kinetic term,
+`IsExtrema`, Hamiltonian) as a re-authoring target; and the RF/AC annex, which stays
+with Exhibit E where it was built. Maxwell's equations themselves are delivered:
+`Maxwell.lean` kindes the four laws (four new lookups, three derivative mints, seven
+edges; still no join — `ε₀∂ₜE` lands at the catalogue's own 6-8) and found that
+upstream's four laws are *module-private* (the one file in the subtree missing
+`@[expose] public section`) — a one-line patch candidate. The `Distributional/` twin's duplication finding is delivered:
 `DistributionalTwin.lean` pins the re-authored law by `rfl`, prices the twin's kind cost
 at zero, and pins the missing smooth → distributional embedding as the statement a
 deduplication theorem still needs.

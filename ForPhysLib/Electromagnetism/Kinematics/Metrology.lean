@@ -17,12 +17,15 @@ potential-gradient entry, the field-strength entry) and two at the volt (the int
 potential and its ratio-scale difference) — the same-dimension families whose
 separation is Stage 0's whole point, visible as repeated dimensions in one table.
 
-**The laws are the chain's own equations.** Twelve edges, each one a formula the
+**The laws are the chain's own equations.** Nineteen edges, each one a formula the
 directory's physics writes: the velocity edge in both directions (`c·A⁰` and `φ/c`),
 the three derivative edges (`∇φ`, `∂ₜ𝐀`, `∇×𝐀`), the derivative tensor's per-length
 entry, the tensor's electric reading (`E = −c·F⁰ⁱ`), the two boost mixings (`c·B` up to
 the electric kind, `E/c` down to the magnetic), the gauge edge (`∂χ`), and the two
-line-integral edges of the Poincaré-gauge constructor (`∫⟪E, dx⟫` and `∫ dx × B`).
+line-integral edges of the Poincaré-gauge constructor (`∫⟪E, dx⟫` and `∫ dx × B`) —
+plus Maxwell's seven: the field-derivative sides (`∇⬝E`/`∇⨯E`, `∂ₜB`, `∇⨯B`, `∂ₜE`),
+the sources (`ρ/ε₀`, `μ₀·J`), and the displacement current `ε₀·∂ₜE` landing at the
+catalogue's own 6-8.
 -/
 
 import ForPhysLib.Electromagnetism.Kinematics.Kinds
@@ -74,6 +77,30 @@ denominator. -/
 def lengthDK : DimensionedKind := { kind := length, dim := Dim.length }
 /-- Duration is `T` — the sliced readings' `∂ₜ` denominator. -/
 def durationDK : DimensionedKind := { kind := duration, dim := Dim.time }
+/-- The charge density is `C·L⁻³`. -/
+def electricChargeDensityDK : DimensionedKind :=
+  { kind := electricChargeDensity, dim := Iso80000.Part6.EDim.chargeDensity }
+/-- The current density is `C·T⁻¹·L⁻²`. -/
+def electricCurrentDensityDK : DimensionedKind :=
+  { kind := electricCurrentDensity, dim := Iso80000.Part6.EDim.currentDensity }
+/-- The electric constant is `C²·M⁻¹·L⁻³·T²` (the farad per metre). -/
+def electricConstantDK : DimensionedKind :=
+  { kind := electricConstant, dim := Iso80000.Part6.EDim.permittivity }
+/-- The magnetic constant is `M·L·C⁻²` (the henry per metre). -/
+def magneticConstantDK : DimensionedKind :=
+  { kind := magneticConstant, dim := Iso80000.Part6.EDim.permeability }
+/-- The electric-field derivative is `E` per length. -/
+def electricFieldDerivativeDK : DimensionedKind :=
+  { kind := electricFieldDerivative,
+    dim := Iso80000.Part6.EDim.electricFieldStrength / Dim.length }
+/-- The magnetic-field derivative is the tesla per length. -/
+def magneticFieldDerivativeDK : DimensionedKind :=
+  { kind := magneticFieldDerivative,
+    dim := Iso80000.Part6.EDim.magneticFluxDensity / Dim.length }
+/-- The electric-field rate is `E` per duration. -/
+def electricFieldRateDK : DimensionedKind :=
+  { kind := electricFieldRate,
+    dim := Iso80000.Part6.EDim.electricFieldStrength / Dim.time }
 
 /-! ## The lookup, proved
 
@@ -94,6 +121,10 @@ example : speedOfLight = Iso80000.Part6.speedOfLight.kind := by decide
 example : speed = Iso80000.Part3.speed.kind := by decide
 example : length = Iso80000.Part3.length.kind := by decide
 example : duration = Iso80000.Part3.duration.kind := by decide
+example : electricChargeDensity  = Iso80000.Part6.electricChargeDensity.kind  := by decide
+example : electricCurrentDensity = Iso80000.Part6.electricCurrentDensity.kind := by decide
+example : electricConstant       = Iso80000.Part6.electricConstant.kind       := by decide
+example : magneticConstant       = Iso80000.Part6.magneticConstant.kind       := by decide
 
 example : magneticVectorPotentialDK.dim
     = Iso80000.Part6.magneticVectorPotential.dim := rfl
@@ -111,10 +142,15 @@ example : durationDK.dim = Iso80000.Part3.duration.dim := rfl
 checked fact, not a slogan. -/
 example : potentialGradientDK.dim = Iso80000.Part6.magneticFluxDensity.dim := rfl
 example : fieldStrengthDK.dim = Iso80000.Part6.magneticFluxDensity.dim := rfl
+example : electricChargeDensityDK.dim  = Iso80000.Part6.electricChargeDensity.dim  := rfl
+example : electricCurrentDensityDK.dim = Iso80000.Part6.electricCurrentDensity.dim := rfl
+example : electricConstantDK.dim       = Iso80000.Part6.electricConstant.dim       := rfl
+example : magneticConstantDK.dim       = Iso80000.Part6.magneticConstant.dim       := rfl
 
 /-! ## The chain's kind algebra, and its dimensional audit
 
-Twelve authored edges — the equations the chain's physics actually writes.
+Nineteen authored edges — the equations the chain's physics actually writes,
+Maxwell's seven (the four laws' sides and the displacement chain) included.
 `#kind_dimensional_coverage` then walks every authored edge and checks it in PhysLib's
 dimension group. -/
 
@@ -198,21 +234,70 @@ theorem length_mul_magneticFluxDensity :
     ProductKind length magneticFluxDensity magneticVectorPotential :=
   ProductKind.ofRatio _ _ _
 
+/-- `∇⬝E` / `∇⨯E` — the electric field's per-length edge: Maxwell's homogeneous and
+Gauss-electric left-hand sides. The `∇` is Mathlib's `fderiv`; law-only, like the
+chain's other derivative edges. -/
+theorem electricFieldStrength_div_length :
+    QuotientKind electricFieldStrength length electricFieldDerivative :=
+  QuotientKind.ofRatio _ _ _
+
+/-- `ρ/ε₀` — Gauss's source edge: a charge density per electric constant lands at the
+electric-field derivative. -/
+theorem electricChargeDensity_div_electricConstant :
+    QuotientKind electricChargeDensity electricConstant electricFieldDerivative :=
+  QuotientKind.ofRatio _ _ _
+
+/-- `∂ₜB` — Faraday's right-hand side: a flux density per duration is an
+electric-field derivative (`T/s = V/m²`). -/
+theorem magneticFluxDensity_div_duration :
+    QuotientKind magneticFluxDensity duration electricFieldDerivative :=
+  QuotientKind.ofRatio _ _ _
+
+/-- `∇⨯B` — the magnetic field's per-length edge: Ampère's left-hand side. -/
+theorem magneticFluxDensity_div_length :
+    QuotientKind magneticFluxDensity length magneticFieldDerivative :=
+  QuotientKind.ofRatio _ _ _
+
+/-- `μ₀·J` — Ampère's source edge: the magnetic constant scales a current density to
+the magnetic-field derivative. -/
+theorem magneticConstant_mul_electricCurrentDensity :
+    ProductKind magneticConstant electricCurrentDensity magneticFieldDerivative :=
+  ProductKind.ofRatio _ _ _
+
+/-- `∂ₜE` — the displacement chain's first edge: an electric field per duration. -/
+theorem electricFieldStrength_div_duration :
+    QuotientKind electricFieldStrength duration electricFieldRate :=
+  QuotientKind.ofRatio _ _ _
+
+/-- `ε₀·∂ₜE` — the displacement current: the electric constant scales the field rate
+back to the catalogue's own 6-8. Ampère's right-hand side is then a *same-kind* sum
+after `μ₀·(J + ε₀∂ₜE)` — no join, continuing the chain's finding. -/
+theorem electricConstant_mul_electricFieldRate :
+    ProductKind electricConstant electricFieldRate electricCurrentDensity :=
+  ProductKind.ofRatio _ _ _
+
 /--
 info: dimensional coverage:
+[coherent] electricChargeDensity / electricConstant → electricFieldDerivative
+[coherent] electricConstant · electricFieldRate → electricCurrentDensity
+[coherent] electricFieldStrength / duration → electricFieldRate
+[coherent] electricFieldStrength / length → electricFieldDerivative
 [coherent] electricFieldStrength / speedOfLight → magneticFluxDensity
 [coherent] electricFieldStrength · length → electricPotentialDifference
 [coherent] electricPotentialDifference / length → electricFieldStrength
 [coherent] electricPotentialDifference / speedOfLight → magneticVectorPotential
 [coherent] length · magneticFluxDensity → magneticVectorPotential
+[coherent] magneticConstant · electricCurrentDensity → magneticFieldDerivative
 [coherent] magneticFlux / length → magneticVectorPotential
+[coherent] magneticFluxDensity / duration → electricFieldDerivative
+[coherent] magneticFluxDensity / length → magneticFieldDerivative
 [coherent] magneticVectorPotential / duration → electricFieldStrength
 [coherent] magneticVectorPotential / length → magneticFluxDensity
 [coherent] magneticVectorPotential / length → potentialGradient
 [coherent] speedOfLight · fieldStrength → electricFieldStrength
 [coherent] speedOfLight · magneticFluxDensity → electricFieldStrength
 [coherent] speedOfLight · magneticVectorPotential → electricPotentialDifference
-12 kind edge(s), all dimensionally coherent — clean
+19 kind edge(s), all dimensionally coherent — clean
 -/
 #guard_msgs (whitespace := lax) in
 #kind_dimensional_coverage ForPhysLib.Electromagnetism.Kinematics.Metrology

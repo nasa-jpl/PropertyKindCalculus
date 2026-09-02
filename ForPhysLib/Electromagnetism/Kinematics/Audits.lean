@@ -32,6 +32,7 @@ claim or holds its statement ready.
 
 import ForPhysLib.Electromagnetism.Kinematics.Operators
 import ForPhysLib.Electromagnetism.Kinematics.DistributionalTwin
+import ForPhysLib.Electromagnetism.Kinematics.Maxwell
 import PropertyKindCalculus.BoundaryAudit
 import PropertyKindCalculus.KindLedger
 import PropertyKindCalculus.DimensionalCoverage
@@ -45,6 +46,8 @@ open PropertyKindCalculus
 /--
 info: boundary audit:
 [carrierVocab] ForPhysLib.Electromagnetism.Kinematics.numeralSMul — attests: (kind-parametric) ‹a dimensionless numeral scales; the kind is unchanged›
+[kindConst] ForPhysLib.Electromagnetism.Kinematics.Maxwell.epsilonQ — attests: Kinds.electricConstant ‹FreeSpace.ε₀ — the electric constant, a bare ℝ field upstream›
+[kindConst] ForPhysLib.Electromagnetism.Kinematics.Maxwell.muQ — attests: Kinds.magneticConstant ‹FreeSpace.μ₀ — the magnetic constant, a bare ℝ field upstream›
 [kindCrossing] ForPhysLib.Electromagnetism.Kinematics.DistributionalTwin.distElectricFieldQ — attests: electricFieldK ‹the twin's -∇φ - ∂ₜ𝐀 — distributional derivatives ride the same crossing›
 [kindCrossing] ForPhysLib.Electromagnetism.Kinematics.DistributionalTwin.distFieldStrengthQ — attests: Kinds.fieldStrength ‹the twin's F = dA — the antisymmetrized distributional derivative›
 [kindCrossing] ForPhysLib.Electromagnetism.Kinematics.Kinded.derivQ — attests: Kinds.potentialGradient ‹∂_μ A^ν — the per-coordinate chart; gauge-dependent until antisymmetrized›
@@ -56,12 +59,22 @@ info: boundary audit:
 [kindCrossing] ForPhysLib.Electromagnetism.Kinematics.Kinded.negGradScalarQ — attests: electricFieldK ‹−∇φ — the difference-quotient edge, ridden through Mathlib's fderiv›
 [kindCrossing] ForPhysLib.Electromagnetism.Kinematics.Kinded.timeDerivVectorQ — attests: electricFieldK ‹∂ₜ𝐀 — the per-duration edge, ridden through Mathlib's fderiv›
 [kindCrossing] ForPhysLib.Electromagnetism.Kinematics.Kinded.vectorPotentialQ — attests: vectorPotentialK ‹the spatial slice — same kind; timeSlice re-parameterizes by c·t ↦ t›
+[kindCrossing] ForPhysLib.Electromagnetism.Kinematics.Maxwell.ampereSourceQ — attests: Kinds.magneticFieldDerivative ‹μ₀·(J + ε₀∂ₜE) — one edge over a same-kind sum›
+[kindCrossing] ForPhysLib.Electromagnetism.Kinematics.Maxwell.chargeDensitySliceQ — attests: Kinds.electricChargeDensity ‹J⁰/c — the velocity edge down to the charge density›
+[kindCrossing] ForPhysLib.Electromagnetism.Kinematics.Maxwell.curlBQ — attests: Kinds.magneticFieldDerivative ‹∇⨯B — the magnetic per-length edge, entrywise›
+[kindCrossing] ForPhysLib.Electromagnetism.Kinematics.Maxwell.curlEQ — attests: Kinds.electricFieldDerivative ‹∇⨯E — the electric per-length edge, entrywise›
+[kindCrossing] ForPhysLib.Electromagnetism.Kinematics.Maxwell.currentDensitySliceQ — attests: Kinds.electricCurrentDensity ‹the spatial slice — same kind; timeSlice re-parameterizes›
+[kindCrossing] ForPhysLib.Electromagnetism.Kinematics.Maxwell.divergenceBQ — attests: Kinds.magneticFieldDerivative ‹∇⬝B — the magnetic per-length edge›
+[kindCrossing] ForPhysLib.Electromagnetism.Kinematics.Maxwell.divergenceEQ — attests: Kinds.electricFieldDerivative ‹∇⬝E — the electric per-length edge, fderiv unseen›
+[kindCrossing] ForPhysLib.Electromagnetism.Kinematics.Maxwell.gaussSourceQ — attests: Kinds.electricFieldDerivative ‹ρ/ε₀ — Gauss's source edge›
+[kindCrossing] ForPhysLib.Electromagnetism.Kinematics.Maxwell.negTimeDerivBQ — attests: Kinds.electricFieldDerivative ‹-∂ₜB — the flux density per duration edge›
 [kindCrossing] ForPhysLib.Electromagnetism.Kinematics.Operators.potentialSubQ — attests: potentialDifferenceK ‹the torsor −ᵥ: interval positions determine a ratio-scale extent›
 [kindCrossing] ForPhysLib.Electromagnetism.Kinematics.gaugeShiftQ — attests: vectorPotentialK ‹the gauge translation: the potential moves, the kind does not›
 [kindCrossing] ForPhysLib.Electromagnetism.Kinematics.scalarPotentialQ — attests: electricPotentialK ‹c·A⁰ — the velocity edge, landing on the interval-scale potential›
 [kindEmission] ForPhysLib.Electromagnetism.Kinematics.Kinded.rawElectricField — erases (emission-only)
 [kindIngest] ForPhysLib.Electromagnetism.Kinematics.DistributionalTwin.distPotentialQ — attests: vectorPotentialK ‹the distributional A^μ — the twin carrier at the chain's kind›
 [kindIngest] ForPhysLib.Electromagnetism.Kinematics.Kinded.fieldStrengthAtQ — attests: Kinds.fieldStrength ‹pointwise reading of the chain's fieldStrengthMatrix›
+[kindIngest] ForPhysLib.Electromagnetism.Kinematics.Maxwell.currentFourQ — attests: Kinds.electricCurrentDensity ‹J^μ — one kind; the time slot is c·ρ›
 [kindIngest] ForPhysLib.Electromagnetism.Kinematics.Operators.scalarPotentialAtQ — attests: electricPotentialK ‹pointwise reading of the chain's scalarPotential — gauge-fixed, interval›
 [kindIngest] ForPhysLib.Electromagnetism.Kinematics.electricFieldAtQ — attests: electricFieldK ‹pointwise reading of the chain's electricField›
 [kindIngest] ForPhysLib.Electromagnetism.Kinematics.electricFieldQ — attests: electricFieldK ‹reading of the chain's electricField›
@@ -71,7 +84,7 @@ info: boundary audit:
 [kindIngest] ForPhysLib.Electromagnetism.Kinematics.potentialQ — attests: vectorPotentialK ‹the four-potential — homogeneous at 6-32 because A⁰ = φ/c›
 [kindIngest] ForPhysLib.Electromagnetism.Kinematics.speedQ — attests: speedOfLightK ‹the unit-system choice, declared once instead of defaulted per call site›
 [kindIngest] ForPhysLib.Electromagnetism.Kinematics.speedRQ — attests: speedOfLightK ‹the declared speed, at the table's carrier›
-27 boundary site(s), all tagged — clean
+39 boundary site(s), all tagged — clean
 -/
 #guard_msgs (whitespace := lax) in
 #kind_boundary_audit ForPhysLib.Electromagnetism.Kinematics
@@ -79,6 +92,8 @@ info: boundary audit:
 /--
 info: tagged boundary crossings:
 [carrierVocab] ForPhysLib.Electromagnetism.Kinematics.numeralSMul — A dimensionless numeral scales a quantity without changing its kind — `β` and `γ`
+[kindConst] ForPhysLib.Electromagnetism.Kinematics.Maxwell.epsilonQ — `FreeSpace.ε₀`, read at 6-14.1 — a bare `ℝ` field upstream; the F/m commitment
+[kindConst] ForPhysLib.Electromagnetism.Kinematics.Maxwell.muQ — `FreeSpace.μ₀`, read at 6-26.1.
 [kindCrossing] ForPhysLib.Electromagnetism.Kinematics.DistributionalTwin.distElectricFieldQ — The twin's electric field at the chain's 6-10: the same `-∇φ - ∂ₜ𝐀`, with the
 [kindCrossing] ForPhysLib.Electromagnetism.Kinematics.DistributionalTwin.distFieldStrengthQ — The twin's field-strength tensor at the chain's one mint — the frame-covariant
 [kindCrossing] ForPhysLib.Electromagnetism.Kinematics.Kinded.derivQ — The derivative tensor `∂_μ A^ν` at the **gauge-dependent** chart kind — a vector
@@ -90,12 +105,22 @@ info: tagged boundary crossings:
 [kindCrossing] ForPhysLib.Electromagnetism.Kinematics.Kinded.negGradScalarQ — `−∇φ` — the gradient crossing of `E = −∇φ − ∂ₜ𝐀`. The Stage-1 edge is stated at
 [kindCrossing] ForPhysLib.Electromagnetism.Kinematics.Kinded.timeDerivVectorQ — `∂ₜ𝐀` — the time-derivative crossing of the same equation: a vector potential per
 [kindCrossing] ForPhysLib.Electromagnetism.Kinematics.Kinded.vectorPotentialQ — The vector-potential slice — the spatial components at the same kind,
+[kindCrossing] ForPhysLib.Electromagnetism.Kinematics.Maxwell.ampereSourceQ — `μ₀J + μ₀ε₀∂ₜE` — Ampère's source: `ε₀∂ₜE` lands at 6-8 (the displacement
+[kindCrossing] ForPhysLib.Electromagnetism.Kinematics.Maxwell.chargeDensitySliceQ — `ρ = J⁰/c` — the velocity edge down to 6-3, the mirror of `φ = c·A⁰`.
+[kindCrossing] ForPhysLib.Electromagnetism.Kinematics.Maxwell.curlBQ — `∇⨯B` — Ampère's left side, on `magneticFluxDensity / length`.
+[kindCrossing] ForPhysLib.Electromagnetism.Kinematics.Maxwell.curlEQ — `∇⨯E` — entrywise on the same electric per-length edge.
+[kindCrossing] ForPhysLib.Electromagnetism.Kinematics.Maxwell.currentDensitySliceQ — The spatial current slice, at its own kind — `timeSlice` re-parameterizes, the
+[kindCrossing] ForPhysLib.Electromagnetism.Kinematics.Maxwell.divergenceBQ — `∇⬝B` — the magnetic per-length edge; Gauss-magnetic's left side.
+[kindCrossing] ForPhysLib.Electromagnetism.Kinematics.Maxwell.divergenceEQ — `∇⬝E` — the per-length edge `electricFieldStrength / length`; `∇` is Mathlib's
+[kindCrossing] ForPhysLib.Electromagnetism.Kinematics.Maxwell.gaussSourceQ — `ρ/ε₀` — Gauss's source, on the edge
+[kindCrossing] ForPhysLib.Electromagnetism.Kinematics.Maxwell.negTimeDerivBQ — `-∂ₜB` — Faraday's right side, on `magneticFluxDensity / duration`
 [kindCrossing] ForPhysLib.Electromagnetism.Kinematics.Operators.potentialSubQ — The torsor's `−ᵥ`: two positions on the potential axis determine an extent — the
 [kindCrossing] ForPhysLib.Electromagnetism.Kinematics.gaugeShiftQ — **F5a — the torsor translation.** The gauge shift `A ↦ A + ∂^μχ` moves the
 [kindCrossing] ForPhysLib.Electromagnetism.Kinematics.scalarPotentialQ — **F2b — the crossing back.** `scalarPotential = c·A⁰`: the 6-32 → 6-11.1 velocity
 [kindEmission] ForPhysLib.Electromagnetism.Kinematics.Kinded.rawElectricField — The emission boundary, stated once as a `def` so it carries its tier: downstream
 [kindIngest] ForPhysLib.Electromagnetism.Kinematics.DistributionalTwin.distPotentialQ — The distributional potential, read at the chain's 6-32 — the *same* kind the
 [kindIngest] ForPhysLib.Electromagnetism.Kinematics.Kinded.fieldStrengthAtQ — A pointwise extent entry, read at its kind.
+[kindIngest] ForPhysLib.Electromagnetism.Kinematics.Maxwell.currentFourQ — `J^μ` — homogeneous at 6-8 for the same reason `A^μ` was homogeneous at 6-32:
 [kindIngest] ForPhysLib.Electromagnetism.Kinematics.Operators.scalarPotentialAtQ — A pointwise reading of the scalar potential, at the **interval-scale** 6-11.1.
 [kindIngest] ForPhysLib.Electromagnetism.Kinematics.electricFieldAtQ — A pointwise electric-field reading — the boost law mixes *values*, so the probe
 [kindIngest] ForPhysLib.Electromagnetism.Kinematics.electricFieldQ — `E` read at its kind, at the field carrier — the wrap is of the *whole* field
