@@ -1,0 +1,220 @@
+/-
+# Stage 1 — the metrology annex of `Physlib/Electromagnetism/Kinematics`
+
+The second rung of [the adoption ladder](../../PLAN.md#stage-1-the-metrology-annex), for
+the campaign's second directory: each Stage-0 kind paired with its PhysLib `Dimension`
+as a `DimensionedKind`, the chain's kind algebra authored as laws, and
+`#kind_dimensional_coverage` pinned over it with `#guard_msgs` — at **zero cost to
+existing code**: nothing in PhysLib changes, or even imports this.
+
+**And the lookup is now a theorem.** Stage 0 copied its ids and scales from PKC's
+IEC 80000-6 catalogue (and three Part-3 coordinates); this module imports the catalogue
+and proves the agreement by `decide` — kind by kind, and dimension by dimension. A
+Stage-0 edit that drifts from the standard stops compiling here.
+
+**The registry now shows the collisions.** Three pairings at the tesla (`B`, the
+potential-gradient entry, the field-strength entry) and two at the volt (the interval
+potential and its ratio-scale difference) — the same-dimension families whose
+separation is Stage 0's whole point, visible as repeated dimensions in one table.
+
+**The laws are the chain's own equations.** Twelve edges, each one a formula the
+directory's physics writes: the velocity edge in both directions (`c·A⁰` and `φ/c`),
+the three derivative edges (`∇φ`, `∂ₜ𝐀`, `∇×𝐀`), the derivative tensor's per-length
+entry, the tensor's electric reading (`E = −c·F⁰ⁱ`), the two boost mixings (`c·B` up to
+the electric kind, `E/c` down to the magnetic), the gauge edge (`∂χ`), and the two
+line-integral edges of the Poincaré-gauge constructor (`∫⟪E, dx⟫` and `∫ dx × B`).
+-/
+
+import ForPhysLib.Electromagnetism.Kinematics.Kinds
+import PropertyKindCalculus.Dimension
+import PropertyKindCalculus.DimensionalCoverage
+import PropertyKindCalculus.Iso80000.Part3
+import PropertyKindCalculus.Iso80000.Part6
+
+namespace ForPhysLib.Electromagnetism.Kinematics.Metrology
+
+open PropertyKindCalculus ForPhysLib.Electromagnetism.Kinematics.Kinds
+
+/-! ## The pairings -/
+
+/-- The magnetic vector potential is `M·L·T⁻¹·C⁻¹` (Wb/m). -/
+def magneticVectorPotentialDK : DimensionedKind :=
+  { kind := magneticVectorPotential, dim := Iso80000.Part6.EDim.magneticVectorPotential }
+/-- The electric potential is `M·L²·T⁻²·C⁻¹` (the volt) — at interval scale. -/
+def electricPotentialDK : DimensionedKind :=
+  { kind := electricPotential, dim := Iso80000.Part6.EDim.voltage }
+/-- The potential difference is the *same* volt — a distinct kind at a distinct
+scale; the first of the registry's repeated dimensions. -/
+def electricPotentialDifferenceDK : DimensionedKind :=
+  { kind := electricPotentialDifference, dim := Iso80000.Part6.EDim.voltage }
+/-- The electric field strength is `M·L·T⁻²·C⁻¹` (V/m). -/
+def electricFieldStrengthDK : DimensionedKind :=
+  { kind := electricFieldStrength, dim := Iso80000.Part6.EDim.electricFieldStrength }
+/-- The magnetic flux density is `M·T⁻¹·C⁻¹` (the tesla). -/
+def magneticFluxDensityDK : DimensionedKind :=
+  { kind := magneticFluxDensity, dim := Iso80000.Part6.EDim.magneticFluxDensity }
+/-- The potential-gradient entry is the *same* tesla — gauge-dependent, a distinct
+kind. -/
+def potentialGradientDK : DimensionedKind :=
+  { kind := potentialGradient, dim := Iso80000.Part6.EDim.magneticFluxDensity }
+/-- The field-strength entry is the *same* tesla again — three kinds, one dimension:
+the collision the vocabulary exists to prevent, now visible in the registry. -/
+def fieldStrengthDK : DimensionedKind :=
+  { kind := fieldStrength, dim := Iso80000.Part6.EDim.magneticFluxDensity }
+/-- The magnetic flux is `M·L²·T⁻¹·C⁻¹` (the weber) — the gauge function's
+dimension. -/
+def magneticFluxDK : DimensionedKind :=
+  { kind := magneticFlux, dim := Iso80000.Part6.EDim.magneticFlux }
+/-- The speed of light is `L·T⁻¹`. -/
+def speedOfLightDK : DimensionedKind := { kind := speedOfLight, dim := Dim.speed }
+/-- Speed — the genus, same dimension. -/
+def speedDK : DimensionedKind := { kind := speed, dim := Dim.speed }
+/-- Length is `L` — the spacetime coordinate (`x⁰ = c·t`), and every `∇`'s
+denominator. -/
+def lengthDK : DimensionedKind := { kind := length, dim := Dim.length }
+/-- Duration is `T` — the sliced readings' `∂ₜ` denominator. -/
+def durationDK : DimensionedKind := { kind := duration, dim := Dim.time }
+
+/-! ## The lookup, proved
+
+Stage 0's vocabulary agrees with `Iso80000` Parts 3 and 6 — same kinds (ids, scales)
+and same dimensions. Decided, so drift is a build failure. The two mints have no
+catalogue row to check — that they *cannot* be looked up is their finding — but their
+dimension (the tesla) is checked against the catalogue's below. -/
+
+example : magneticVectorPotential = Iso80000.Part6.magneticVectorPotential.kind := by
+  decide
+example : electricPotential = Iso80000.Part6.electricPotential.kind := by decide
+example : electricPotentialDifference
+    = Iso80000.Part6.electricPotentialDifference.kind := by decide
+example : electricFieldStrength = Iso80000.Part6.electricFieldStrength.kind := by decide
+example : magneticFluxDensity = Iso80000.Part6.magneticFluxDensity.kind := by decide
+example : magneticFlux = Iso80000.Part6.magneticFlux.kind := by decide
+example : speedOfLight = Iso80000.Part6.speedOfLight.kind := by decide
+example : speed = Iso80000.Part3.speed.kind := by decide
+example : length = Iso80000.Part3.length.kind := by decide
+example : duration = Iso80000.Part3.duration.kind := by decide
+
+example : magneticVectorPotentialDK.dim
+    = Iso80000.Part6.magneticVectorPotential.dim := rfl
+example : electricPotentialDK.dim = Iso80000.Part6.electricPotential.dim := rfl
+example : electricPotentialDifferenceDK.dim
+    = Iso80000.Part6.electricPotentialDifference.dim := rfl
+example : electricFieldStrengthDK.dim = Iso80000.Part6.electricFieldStrength.dim := rfl
+example : magneticFluxDensityDK.dim = Iso80000.Part6.magneticFluxDensity.dim := rfl
+example : magneticFluxDK.dim = Iso80000.Part6.magneticFlux.dim := rfl
+example : speedOfLightDK.dim = Iso80000.Part6.speedOfLight.dim := rfl
+example : speedDK.dim = Iso80000.Part3.speed.dim := rfl
+example : lengthDK.dim = Iso80000.Part3.length.dim := rfl
+example : durationDK.dim = Iso80000.Part3.duration.dim := rfl
+/- The mints' dimension is the catalogue's tesla — the same-dimension collision is a
+checked fact, not a slogan. -/
+example : potentialGradientDK.dim = Iso80000.Part6.magneticFluxDensity.dim := rfl
+example : fieldStrengthDK.dim = Iso80000.Part6.magneticFluxDensity.dim := rfl
+
+/-! ## The chain's kind algebra, and its dimensional audit
+
+Twelve authored edges — the equations the chain's physics actually writes.
+`#kind_dimensional_coverage` then walks every authored edge and checks it in PhysLib's
+dimension group. -/
+
+/-- `c · A⁰` — the velocity edge at the four-potential: `scalarPotential`'s defining
+multiplication. The target is the **ratio-scale** 6-11.2, because 6-11.1's interval
+scale refuses `ofRatio` (Feasibility's pinned refusal); the crossing onto the interval
+potential itself stays attested, never tabled. -/
+theorem speedOfLight_mul_magneticVectorPotential :
+    ProductKind speedOfLight magneticVectorPotential electricPotentialDifference :=
+  ProductKind.ofRatio _ _ _
+
+/-- `φ / c` — the same edge in the direction `ofPotentials` writes it: the time slot
+stores `φ/c`, and that division is what makes the four-vector one kind. -/
+theorem electricPotentialDifference_div_speedOfLight :
+    QuotientKind electricPotentialDifference speedOfLight magneticVectorPotential :=
+  QuotientKind.ofRatio _ _ _
+
+/-- `∇φ` — the gradient edge of `electricField = −∇φ − ∂ₜ𝐀`. Stated at the potential's
+*differences* (6-11.2): a derivative of an interval-scale quantity is a difference
+quotient, so the gradient eats the gauge reference and its edge never touches
+6-11.1. -/
+theorem electricPotentialDifference_div_length :
+    QuotientKind electricPotentialDifference length electricFieldStrength :=
+  QuotientKind.ofRatio _ _ _
+
+/-- `∂ₜ𝐀` — the time-derivative edge of the same equation: a vector potential per
+duration is an electric field. -/
+theorem magneticVectorPotential_div_duration :
+    QuotientKind magneticVectorPotential duration electricFieldStrength :=
+  QuotientKind.ofRatio _ _ _
+
+/-- `∇×𝐀` — the curl edge: `magneticField = ∇ ⨯ vectorPotential`, a vector potential
+per space-length landing at the flux density. -/
+theorem magneticVectorPotential_div_length :
+    QuotientKind magneticVectorPotential length magneticFluxDensity :=
+  QuotientKind.ofRatio _ _ _
+
+/-- `∂_μ A^ν` — the derivative tensor's entry: a vector potential per *spacetime*
+coordinate (a length — `x⁰ = c·t`), landing at the gauge-dependent chart kind. Same
+dimensional arithmetic as the curl edge, a different target kind: the coordinate
+derivative keeps the gauge dependence the curl's antisymmetry cancels. -/
+theorem magneticVectorPotential_div_length_gradient :
+    QuotientKind magneticVectorPotential length potentialGradient :=
+  QuotientKind.ofRatio _ _ _
+
+/-- `E_i = −c·F⁰ⁱ` — the tensor's electric reading: the velocity edge one level up
+(`electricField_eq_fieldStrengthMatrix`). -/
+theorem speedOfLight_mul_fieldStrength :
+    ProductKind speedOfLight fieldStrength electricFieldStrength :=
+  ProductKind.ofRatio _ _ _
+
+/-- `c·β·B` — the boost's upward mixing (`electricField_apply_x_boost_succ`): a
+velocity-scaled flux density lands at the electric kind, which is the only way a
+magnetic term enters the boosted `E`. -/
+theorem speedOfLight_mul_magneticFluxDensity :
+    ProductKind speedOfLight magneticFluxDensity electricFieldStrength :=
+  ProductKind.ofRatio _ _ _
+
+/-- `(β/c)·E` — the boost's downward mixing, and the tensor's own storage of the
+electric block (`fieldStrengthMatrix_inl_inr_eq_electricField` writes `−(1/c)·E`). -/
+theorem electricFieldStrength_div_speedOfLight :
+    QuotientKind electricFieldStrength speedOfLight magneticFluxDensity :=
+  QuotientKind.ofRatio _ _ _
+
+/-- `∂^μχ` — the gauge edge: a flux field per spacetime coordinate is a vector
+potential (`ofGradient`), which is why the gauge function is 6-22.1 and the shift
+stays inside the potential's kind. -/
+theorem magneticFlux_div_length :
+    QuotientKind magneticFlux length magneticVectorPotential :=
+  QuotientKind.ofRatio _ _ _
+
+/-- `∫⟪E, dx⟫` — the Poincaré-gauge scalar potential (`ofElectromagneticField`): an
+electric field times a length is a potential difference. -/
+theorem electricFieldStrength_mul_length :
+    ProductKind electricFieldStrength length electricPotentialDifference :=
+  ProductKind.ofRatio _ _ _
+
+/-- `∫ dx ⨯ B` — the Poincaré-gauge vector potential: a length times a flux density
+is a vector potential. -/
+theorem length_mul_magneticFluxDensity :
+    ProductKind length magneticFluxDensity magneticVectorPotential :=
+  ProductKind.ofRatio _ _ _
+
+/--
+info: dimensional coverage:
+[coherent] electricFieldStrength / speedOfLight → magneticFluxDensity
+[coherent] electricFieldStrength · length → electricPotentialDifference
+[coherent] electricPotentialDifference / length → electricFieldStrength
+[coherent] electricPotentialDifference / speedOfLight → magneticVectorPotential
+[coherent] length · magneticFluxDensity → magneticVectorPotential
+[coherent] magneticFlux / length → magneticVectorPotential
+[coherent] magneticVectorPotential / duration → electricFieldStrength
+[coherent] magneticVectorPotential / length → magneticFluxDensity
+[coherent] magneticVectorPotential / length → potentialGradient
+[coherent] speedOfLight · fieldStrength → electricFieldStrength
+[coherent] speedOfLight · magneticFluxDensity → electricFieldStrength
+[coherent] speedOfLight · magneticVectorPotential → electricPotentialDifference
+12 kind edge(s), all dimensionally coherent — clean
+-/
+#guard_msgs (whitespace := lax) in
+#kind_dimensional_coverage ForPhysLib.Electromagnetism.Kinematics.Metrology
+
+end ForPhysLib.Electromagnetism.Kinematics.Metrology

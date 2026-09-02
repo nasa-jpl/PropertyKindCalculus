@@ -1,0 +1,176 @@
+/-
+# Stage 0 — the kind vocabulary of `Physlib/Electromagnetism/Kinematics`
+
+The first rung of [the adoption ladder](../../PLAN.md#stage-0-the-kind-vocabulary), for
+the campaign's second directory. One file, bare `KindOfProperty` declarations,
+Mathlib-free and PhysLib-free — importable by anything, costing nothing until something
+imports it.
+
+**Almost entirely a lookup — the mirror image of the pilot.** Every kind the chain's
+API speaks is copied *verbatim* from PKC's IEC 80000-6 catalogue (plus three Part-3
+coordinates), and Stage 1 (`Metrology.lean`) proves the agreement by `decide`, so this
+file cannot silently drift from the standard it looks up. Exactly **two** kinds are
+minted, and they are the same finding twice: the standard catalogues *frame-bound,
+gauge-fixed readings* (`E`, `B`, `φ`), so the two tensor-entry kinds the chain's own
+key results export — the derivative tensor `∂_μ A^ν` and the field strength `F^{μν}` —
+have no catalogue item to look up:
+
+* the **potential-gradient entry** — `∂A`'s kind: *gauge-dependent* (it moves under
+  `A ↦ A + ∂χ`), the tesla-dimensioned chart;
+* the **field-strength entry** — `F`'s kind: *gauge-invariant and frame-covariant*
+  (`toFieldStrength_gaugeTransform`, `toFieldStrength_equivariant` are upstream's own
+  proofs), the tesla-dimensioned extent.
+
+Both share the magnetic flux density's dimension; nothing dimensional separates the
+three teslas. The kind layer does, decidably — the same-dimension discrimination the
+pilot ran on three energies, recurring on gauge and frame.
+
+**No join, and that is a finding.** The pilot's directory needed a curated `KindJoin`
+(`T̂ + V̂` at mechanical energy). This chain needs none: every sum the physics writes —
+`E = −∇φ − ∂ₜ𝐀`, the boost's `γ(E + cβ·B)`, the gauge shift `A + ∂χ` — is a *same-kind*
+sum whose heterogeneous ingredient arrives through a registered edge or an attested
+crossing first. The joins here are edge-mediated, not curated.
+
+**The vocabulary is what the chain's own API speaks.** `EMPotential.lean` carries
+`A^μ` and its derivative tensor; `ScalarPotential`/`VectorPotential` the two
+time-sliced readings; `FieldStrength` the tensor and its matrix;
+`ElectricField`/`MagneticField` the frame-bound fields; `Boosts` the mixing laws;
+`GaugeTransformation` the shift by `χ`. Everything below names a reading those files
+already make.
+-/
+
+import PropertyKindCalculus
+
+namespace ForPhysLib.Electromagnetism.Kinematics.Kinds
+
+open PropertyKindCalculus
+
+/-! ## The lookups — IEC 80000-6 and ISO 80000-3, verbatim -/
+
+/-- Magnetic vector potential — item 6-32 (`A`, Wb/m): the four-potential's *one*
+kind. `A⁰ = φ/c` is made homogeneous with the spatial components by the `/c`
+(Feasibility F2); the whole Lorentz vector sits here. -/
+def magneticVectorPotential : KindOfProperty :=
+  { id := "magnetic vector potential", scale := .ratio }
+
+/-- Electric potential — item 6-11.1 (`V`, V), **interval-scale in the standard
+itself**: fixed only up to gauge freedom. The scale is load-bearing: the ratio table
+refuses to land on it (Feasibility's pinned refusal), so `scalarPotential = c·A⁰` is a
+named crossing, never a table edge. -/
+def electricPotential : KindOfProperty :=
+  { id := "electric potential", scale := .interval }
+
+/-- Electric potential difference — item 6-11.2 (`U`, V), ratio-scale: the physical
+extent, and the only member of the 6-11 family a table edge may target. -/
+def electricPotentialDifference : KindOfProperty :=
+  { id := "electric potential difference", scale := .ratio }
+
+/-- Electric field strength — item 6-10 (`E`, V/m): the chain's `electricField`, a
+frame-bound reading (the boost laws mix it). -/
+def electricFieldStrength : KindOfProperty :=
+  { id := "electric field strength", scale := .ratio }
+
+/-- Magnetic flux density — item 6-21 (`B`, T): the chain's `magneticField` and the
+entries of `magneticFieldMatrix` — the spatial block of the field strength, read in a
+chosen frame. -/
+def magneticFluxDensity : KindOfProperty :=
+  { id := "magnetic flux density", scale := .ratio }
+
+/-- Magnetic flux — item 6-22.1 (`Φ`, Wb): the *gauge function's* kind — `∂^μχ` sits
+at the vector potential, so `χ` is a flux field. A lookup, not a mint: the standard
+already lists the kind the gauge freedom is parameterized by (Feasibility F5). -/
+def magneticFlux : KindOfProperty :=
+  { id := "magnetic flux", scale := .ratio }
+
+/-- Speed of light in vacuum — item 6-35.2 (`c₀`, m/s): the unit-system choice the
+source elides behind `(c : SpeedOfLight := 1)` and the kinded chain declares once
+(Feasibility F3); the velocity edge's other factor. -/
+def speedOfLight : KindOfProperty :=
+  { id := "speed of light in vacuum", scale := .ratio }
+
+/-- Speed — ISO 80000-3 item 3-10.2, the genus 6-35.2 specializes. -/
+def speed : KindOfProperty := { id := "speed", scale := .ratio }
+
+/-- Length — item 3-1.1: the spacetime coordinate's kind (`x⁰ = c·t` — upstream's
+`toTimeAndSpace` stores `c·t` in the time slot), and `∇`'s denominator. -/
+def length : KindOfProperty := { id := "length", scale := .ratio }
+
+/-- Duration — item 3-9: `Time`'s kind, `∂ₜ`'s denominator in the sliced readings. -/
+def duration : KindOfProperty := { id := "duration", scale := .ratio }
+
+/-! ## The two mints — the readings the standard does not list
+
+The standard catalogues frame-bound, gauge-fixed readings; the chain's two exported
+tensors are neither, so their entry kinds are minted here — both at the flux density's
+dimension, individuated by what they are invariant under. -/
+
+/-- The derivative tensor's entry kind — `∂_μ A^ν` (`EMPotential.lean`'s `deriv`).
+Tesla-dimensioned but **gauge-dependent**: it moves under `A ↦ A + ∂χ` (only the
+antisymmetrization cancels the shift). The chart, not the extent. -/
+def potentialGradient : KindOfProperty :=
+  { id := "potential gradient — the gauge-dependent tensor entry", scale := .ratio }
+
+/-- The field-strength tensor's entry kind — `F^{μν}` (`FieldStrength.lean`).
+Tesla-dimensioned, **gauge-invariant and frame-covariant** — upstream proves both
+(`toFieldStrength_gaugeTransform`, `toFieldStrength_equivariant`). The frame-bound
+readings come off it through one velocity edge (`E_i = −c·F⁰ⁱ`) and one block
+identification (`B_ij = F^{ij}`). -/
+def fieldStrength : KindOfProperty :=
+  { id := "field strength — the frame-covariant tensor entry", scale := .ratio }
+
+/-! ## Distinctness — the collisions the vocabulary exists to prevent
+
+Three kinds at the tesla, two at the volt, and a field pair whose dimensional
+distinctness is basis-relative (Exhibit E problem 2: in Gaussian–CGS, `E` and `B`
+*share* a dimension). Kind identity is examination, not exponents; every separation
+below is decidable and none moves with the basis. -/
+
+/-- **An electric field is not a magnetic field** — in any basis. The dimensional
+separation is SI-relative (Gaussian units collapse it, proved in Exhibit E); the kind
+separation is not. -/
+theorem electricFieldStrength_ne_magneticFluxDensity :
+    electricFieldStrength ≠ magneticFluxDensity := by decide
+
+/-- **The tensor entry is not the magnetic field it contains** — same dimension in
+*every* basis (the spatial block *is* `B`); what separates them is frame behavior:
+`F`'s kind survives a boost, `B`'s is a frame-bound reading. -/
+theorem fieldStrength_ne_magneticFluxDensity :
+    fieldStrength ≠ magneticFluxDensity := by decide
+
+/-- **The extent is not the chart** — `F` and `∂A` share the tesla; what separates
+them is gauge behavior: `F` is invariant under `A ↦ A + ∂χ`, `∂A` is not. -/
+theorem fieldStrength_ne_potentialGradient :
+    fieldStrength ≠ potentialGradient := by decide
+
+/-- **A potential is not a potential difference** — same dimension (the volt), same
+`ℝ` upstream; the standard separates them by *scale*, and so does the vocabulary. -/
+theorem electricPotential_ne_electricPotentialDifference :
+    electricPotential ≠ electricPotentialDifference := by decide
+
+/-- The load-bearing scale, pinned: electric potential is interval — 6-11.1 as the
+standard writes it, and the reason every ratio edge at the potential is refused. -/
+theorem electricPotential_isInterval :
+    electricPotential.scale = .interval := rfl
+
+/-- The speed of light is not bare speed — the constant species is not its genus. -/
+theorem speedOfLight_ne_speed : speedOfLight ≠ speed := by decide
+
+/-! ## The directory's specialization lattice
+
+One edge. The chain's kinds are otherwise deliberately *flat*: its heterogeneous
+combinations are all frame- or gauge-mediated (registered edges and attested
+crossings), not genus/species relations, and no curated join exists because no sum in
+the chain needs one — the contrast with the pilot's energy family is the finding in
+this file's header. -/
+
+/-- The direct-parent edges of the kinematics directory's kind family. -/
+inductive Edge : KindOfProperty → KindOfProperty → Prop
+  /-- The speed of light in vacuum is a speed. -/
+  | speedOfLight_speed : Edge speedOfLight speed
+
+/-- The speed of light specializes speed — 6-35.2 under 3-10.2, the catalogue's own
+placement of the constant. -/
+theorem speedOfLight_specializes : Specializes Edge speedOfLight speed :=
+  .of_edge .speedOfLight_speed
+
+end ForPhysLib.Electromagnetism.Kinematics.Kinds

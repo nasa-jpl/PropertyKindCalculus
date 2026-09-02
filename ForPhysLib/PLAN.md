@@ -830,6 +830,24 @@ torsor is three theorems off upstream's own invariance and group-action lemmas, 
 gauge function at 6-22.1. Axiom profile of every theorem: `propext, Classical.choice,
 Quot.sound`.
 
+**Status: Stages 0–1 climbed** — `Kinds.lean`: twelve kinds, **ten of them catalogue
+lookups written as verbatim literals** (IEC 80000-6 plus the three Part-3 coordinates —
+the mirror image of the pilot's mint-heavy opening) and exactly two mints, the same
+finding twice: the standard catalogues frame-bound, gauge-fixed readings, so the
+gauge-dependent `∂A` entry and the gauge-invariant, frame-covariant `F` entry have no
+row to look up. Three kinds at the tesla and two at the volt, separated by `decide`;
+the 6-11.1 interval scale pinned by `rfl`; no `KindJoin` — every sum the chain writes
+is same-kind after an edge or a crossing, and that contrast with the pilot's `T̂ + V̂`
+is recorded as a finding. `Metrology.lean`: twelve `DimensionedKind` pairings with the
+repeated dimensions visible in the registry, the Stage-0 lookup proved against
+`Iso80000` Parts 3 and 6 (`decide` on kinds, `rfl` on dimensions, the mints' tesla
+checked against the catalogue's), and twelve authored edges — the velocity edge both
+ways, the three derivative edges of `E = −∇φ − ∂ₜ𝐀` and `B = ∇×𝐀` (the gradient edge
+stated at the potential's *differences*: a derivative of an interval-scale quantity is
+a difference quotient), the chart edge, the tensor's electric reading, both boost
+mixings, the gauge edge, and the Poincaré-gauge line integrals — with
+`#kind_dimensional_coverage` pinned clean over all twelve.
+
 ---
 
 ## Layout
@@ -884,7 +902,8 @@ ForPhysLib/
   Electromagnetism.lean  Electromagnetism/ ✓ the campaign's second directory (see “Directory 2”)
     Kinematics.lean  Kinematics/     ✓ the chain: potentials → fields → boosts → gauge
       Feasibility.lean               ✓   F1–F5 as build artifacts
-      Kinds.lean  Metrology.lean  Kinded.lean  Operators.lean  Audits.lean  README.md
+      Kinds.lean  Metrology.lean     ✓   Stages 0–1: lookups + two mints; twelve edges, coverage pinned
+      Kinded.lean  Operators.lean  Audits.lean  README.md
   Scorecard.lean                     ✓ verdicts re-derived so the tables cannot drift from the files
 ```
 
