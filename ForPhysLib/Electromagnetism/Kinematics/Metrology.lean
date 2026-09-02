@@ -3,7 +3,8 @@
 
 The second rung of [the adoption ladder](../../PLAN.md#stage-1-the-metrology-annex), for
 the campaign's second directory: each Stage-0 kind paired with its PhysLib `Dimension`
-as a `DimensionedKind`, the chain's kind algebra authored as laws, and
+as a `DimensionedKind` — the lookups by *referencing the catalogue's own entries*, the
+mints alone as constructed records — the chain's kind algebra authored as laws, and
 `#kind_dimensional_coverage` pinned over it with `#guard_msgs` — at **zero cost to
 existing code**: nothing in PhysLib changes, or even imports this.
 
@@ -17,7 +18,7 @@ potential-gradient entry, the field-strength entry) and two at the volt (the int
 potential and its ratio-scale difference) — the same-dimension families whose
 separation is Stage 0's whole point, visible as repeated dimensions in one table.
 
-**The laws are the chain's own equations.** Nineteen edges, each one a formula the
+**The laws are the chain's own equations.** Twenty-five edges, each one a formula the
 directory's physics writes: the velocity edge in both directions (`c·A⁰` and `φ/c`),
 the three derivative edges (`∇φ`, `∂ₜ𝐀`, `∇×𝐀`), the derivative tensor's per-length
 entry, the tensor's electric reading (`E = −c·F⁰ⁱ`), the two boost mixings (`c·B` up to
@@ -25,7 +26,8 @@ the electric kind, `E/c` down to the magnetic), the gauge edge (`∂χ`), and th
 line-integral edges of the Poincaré-gauge constructor (`∫⟪E, dx⟫` and `∫ dx × B`) —
 plus Maxwell's seven: the field-derivative sides (`∇⬝E`/`∇⨯E`, `∂ₜB`, `∇⨯B`, `∂ₜE`),
 the sources (`ρ/ε₀`, `μ₀·J`), and the displacement current `ε₀·∂ₜE` landing at the
-catalogue's own 6-8.
+catalogue's own 6-8 — plus the variational six: the `π` and `π·F` products, `A·J`,
+the Legendre product, and the two spellings of `δS/δA`.
 -/
 
 import ForPhysLib.Electromagnetism.Kinematics.Kinds
@@ -33,6 +35,7 @@ import PropertyKindCalculus.Dimension
 import PropertyKindCalculus.DimensionalCoverage
 import PropertyKindCalculus.Iso80000.Part3
 import PropertyKindCalculus.Iso80000.Part6
+import PropertyKindCalculus.Iso80000.Part7
 
 namespace ForPhysLib.Electromagnetism.Kinematics.Metrology
 
@@ -41,21 +44,17 @@ open PropertyKindCalculus ForPhysLib.Electromagnetism.Kinematics.Kinds
 /-! ## The pairings -/
 
 /-- The magnetic vector potential is `M·L·T⁻¹·C⁻¹` (Wb/m). -/
-def magneticVectorPotentialDK : DimensionedKind :=
-  { kind := magneticVectorPotential, dim := Iso80000.Part6.EDim.magneticVectorPotential }
+def magneticVectorPotentialDK : DimensionedKind := Iso80000.Part6.magneticVectorPotential
 /-- The electric potential is `M·L²·T⁻²·C⁻¹` (the volt) — at interval scale. -/
-def electricPotentialDK : DimensionedKind :=
-  { kind := electricPotential, dim := Iso80000.Part6.EDim.voltage }
+def electricPotentialDK : DimensionedKind := Iso80000.Part6.electricPotential
 /-- The potential difference is the *same* volt — a distinct kind at a distinct
 scale; the first of the registry's repeated dimensions. -/
 def electricPotentialDifferenceDK : DimensionedKind :=
-  { kind := electricPotentialDifference, dim := Iso80000.Part6.EDim.voltage }
+  Iso80000.Part6.electricPotentialDifference
 /-- The electric field strength is `M·L·T⁻²·C⁻¹` (V/m). -/
-def electricFieldStrengthDK : DimensionedKind :=
-  { kind := electricFieldStrength, dim := Iso80000.Part6.EDim.electricFieldStrength }
+def electricFieldStrengthDK : DimensionedKind := Iso80000.Part6.electricFieldStrength
 /-- The magnetic flux density is `M·T⁻¹·C⁻¹` (the tesla). -/
-def magneticFluxDensityDK : DimensionedKind :=
-  { kind := magneticFluxDensity, dim := Iso80000.Part6.EDim.magneticFluxDensity }
+def magneticFluxDensityDK : DimensionedKind := Iso80000.Part6.magneticFluxDensity
 /-- The potential-gradient entry is the *same* tesla — gauge-dependent, a distinct
 kind. -/
 def potentialGradientDK : DimensionedKind :=
@@ -66,29 +65,27 @@ def fieldStrengthDK : DimensionedKind :=
   { kind := fieldStrength, dim := Iso80000.Part6.EDim.magneticFluxDensity }
 /-- The magnetic flux is `M·L²·T⁻¹·C⁻¹` (the weber) — the gauge function's
 dimension. -/
-def magneticFluxDK : DimensionedKind :=
-  { kind := magneticFlux, dim := Iso80000.Part6.EDim.magneticFlux }
-/-- The speed of light is `L·T⁻¹`. -/
-def speedOfLightDK : DimensionedKind := { kind := speedOfLight, dim := Dim.speed }
+def magneticFluxDK : DimensionedKind := Iso80000.Part6.magneticFlux
+/-- The speed of light is `L·T⁻¹` — the catalogue's 6-35.2, the *vacuum* constant.
+Not Part 7's `speedOfLight`: that is item 7-1.1, "speed of light in a medium" — a
+medium-dependent quantity and a different kind (the two ids differ, decidably). The
+chain's `c` is `FreeSpace.c = 1/√(ε₀μ₀)` — vacuum by definition. -/
+def speedOfLightDK : DimensionedKind := Iso80000.Part6.speedOfLight
 /-- Speed — the genus, same dimension. -/
-def speedDK : DimensionedKind := { kind := speed, dim := Dim.speed }
+def speedDK : DimensionedKind := Iso80000.Part3.speed
 /-- Length is `L` — the spacetime coordinate (`x⁰ = c·t`), and every `∇`'s
 denominator. -/
-def lengthDK : DimensionedKind := { kind := length, dim := Dim.length }
+def lengthDK : DimensionedKind := Iso80000.Part3.length
 /-- Duration is `T` — the sliced readings' `∂ₜ` denominator. -/
-def durationDK : DimensionedKind := { kind := duration, dim := Dim.time }
+def durationDK : DimensionedKind := Iso80000.Part3.duration
 /-- The charge density is `C·L⁻³`. -/
-def electricChargeDensityDK : DimensionedKind :=
-  { kind := electricChargeDensity, dim := Iso80000.Part6.EDim.chargeDensity }
+def electricChargeDensityDK : DimensionedKind := Iso80000.Part6.electricChargeDensity
 /-- The current density is `C·T⁻¹·L⁻²`. -/
-def electricCurrentDensityDK : DimensionedKind :=
-  { kind := electricCurrentDensity, dim := Iso80000.Part6.EDim.currentDensity }
+def electricCurrentDensityDK : DimensionedKind := Iso80000.Part6.electricCurrentDensity
 /-- The electric constant is `C²·M⁻¹·L⁻³·T²` (the farad per metre). -/
-def electricConstantDK : DimensionedKind :=
-  { kind := electricConstant, dim := Iso80000.Part6.EDim.permittivity }
+def electricConstantDK : DimensionedKind := Iso80000.Part6.electricConstant
 /-- The magnetic constant is `M·L·C⁻²` (the henry per metre). -/
-def magneticConstantDK : DimensionedKind :=
-  { kind := magneticConstant, dim := Iso80000.Part6.EDim.permeability }
+def magneticConstantDK : DimensionedKind := Iso80000.Part6.magneticConstant
 /-- The electric-field derivative is `E` per length. -/
 def electricFieldDerivativeDK : DimensionedKind :=
   { kind := electricFieldDerivative,
@@ -104,11 +101,10 @@ def electricFieldRateDK : DimensionedKind :=
 
 /-- The electromagnetic energy density is `M·L⁻¹·T⁻²` (J/m³). -/
 def electromagneticEnergyDensityDK : DimensionedKind :=
-  { kind := electromagneticEnergyDensity, dim := Iso80000.Part6.EDim.energyDensity }
+  Iso80000.Part6.electromagneticEnergyDensity
 /-- The linear current density is `C·T⁻¹·L⁻¹` (A/m). -/
 def linearElectricCurrentDensityDK : DimensionedKind :=
-  { kind := linearElectricCurrentDensity,
-    dim := Iso80000.Part6.EDim.linearCurrentDensity }
+  Iso80000.Part6.linearCurrentDensity
 /-- The Lagrangian density is the *same* J/m³ — gauge-dependent, a distinct kind:
 the registry's density-level collision. -/
 def lagrangianDensityDK : DimensionedKind :=
@@ -128,6 +124,13 @@ Stage 0's vocabulary agrees with `Iso80000` Parts 3 and 6 — same kinds (ids, s
 and same dimensions. Decided, so drift is a build failure. The two mints have no
 catalogue row to check — that they *cannot* be looked up is their finding — but their
 dimension (the tesla) is checked against the catalogue's below. -/
+
+/-- The registry's speed of light is the catalogue's *vacuum* item, and Part 7's
+`speedOfLight` (7-1.1, "speed of light in a medium") is decidably a different kind —
+the constant and the medium-dependent speed separate at one dimension. -/
+example : Iso80000.Part6.speedOfLight.kind ≠ Iso80000.Part7.speedOfLight.kind := by
+  decide
+
 
 example : magneticVectorPotential = Iso80000.Part6.magneticVectorPotential.kind := by
   decide

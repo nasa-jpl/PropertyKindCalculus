@@ -30,60 +30,48 @@ namespace ForPhysLib.Electromagnetism.Annex.Metrology
 open PropertyKindCalculus
 open ForPhysLib.Electromagnetism.Annex.Kinds
 
-/-! ## The pairings — every kind at its catalogue dimension -/
+/-! ## The pairings — the catalogue's own entries, referenced
+
+Every pairing *is* the catalogue's `DimensionedKind` — no record is re-built here
+(the mirrored directories construct records only for their mints; the annex has
+none). The `decide`/`rfl` blocks below then check the Stage-0 literals against
+these same entries. -/
 
 /-- Electric current is `C·T⁻¹` (the ampere). -/
-def electricCurrentDK : DimensionedKind :=
-  { kind := electricCurrent, dim := Dim.current }
+def electricCurrentDK : DimensionedKind := Iso80000.Part6.electricCurrent
 /-- Voltage is `M·L²·T⁻²·C⁻¹` (the volt). -/
-def voltageDK : DimensionedKind :=
-  { kind := voltage, dim := Iso80000.Part6.EDim.voltage }
+def voltageDK : DimensionedKind := Iso80000.Part6.voltage
 /-- Resistance is `M·L²·T⁻¹·C⁻²` (the ohm). -/
-def resistanceDK : DimensionedKind :=
-  { kind := resistance, dim := Iso80000.Part6.EDim.resistance }
+def resistanceDK : DimensionedKind := Iso80000.Part6.resistance
 /-- Conductance is `M⁻¹·L⁻²·T·C²` (the siemens). -/
-def conductanceDK : DimensionedKind :=
-  { kind := conductance, dim := Iso80000.Part6.EDim.conductance }
+def conductanceDK : DimensionedKind := Iso80000.Part6.conductance
 /-- Impedance is the *same* ohm — a distinct kind at a repeated dimension. -/
-def impedanceDK : DimensionedKind :=
-  { kind := impedance, dim := Iso80000.Part6.EDim.resistance }
+def impedanceDK : DimensionedKind := Iso80000.Part6.impedance
 /-- Reactance is the *same* ohm again — three kinds, one dimension. -/
-def reactanceDK : DimensionedKind :=
-  { kind := reactance, dim := Iso80000.Part6.EDim.resistance }
+def reactanceDK : DimensionedKind := Iso80000.Part6.reactance
 /-- Admittance is the *same* siemens as conductance. -/
-def admittanceDK : DimensionedKind :=
-  { kind := admittance, dim := Iso80000.Part6.EDim.conductance }
+def admittanceDK : DimensionedKind := Iso80000.Part6.admittance
 /-- The phase difference is dimension one (an angle). -/
-def phaseDifferenceDK : DimensionedKind :=
-  { kind := phaseDifference, dim := Dim.one }
+def phaseDifferenceDK : DimensionedKind := Iso80000.Part6.phaseDifference
 /-- The current phasor is the ampere — the phasor collision. -/
-def electricCurrentPhasorDK : DimensionedKind :=
-  { kind := electricCurrentPhasor, dim := Dim.current }
+def electricCurrentPhasorDK : DimensionedKind := Iso80000.Part6.electricCurrentPhasor
 /-- The voltage phasor is the volt. -/
-def voltagePhasorDK : DimensionedKind :=
-  { kind := voltagePhasor, dim := Iso80000.Part6.EDim.voltage }
+def voltagePhasorDK : DimensionedKind := Iso80000.Part6.voltagePhasor
 /-- Power is `M·L²·T⁻³` (the watt) — the genus. -/
-def powerDK : DimensionedKind :=
-  { kind := power, dim := Iso80000.Part6.EDim.power }
+def powerDK : DimensionedKind := Iso80000.Part6.power
 /-- Active power — the same watt (`W`). -/
-def activePowerDK : DimensionedKind :=
-  { kind := activePower, dim := Iso80000.Part6.EDim.power }
+def activePowerDK : DimensionedKind := Iso80000.Part6.activePower
 /-- Apparent power — the same watt (unit string `VA`). -/
-def apparentPowerDK : DimensionedKind :=
-  { kind := apparentPower, dim := Iso80000.Part6.EDim.power }
+def apparentPowerDK : DimensionedKind := Iso80000.Part6.apparentPower
 /-- Complex power — the same watt (`VA`). -/
-def complexPowerDK : DimensionedKind :=
-  { kind := complexPower, dim := Iso80000.Part6.EDim.power }
+def complexPowerDK : DimensionedKind := Iso80000.Part6.complexPower
 /-- Reactive power — the same watt (unit string `var`). -/
-def reactivePowerDK : DimensionedKind :=
-  { kind := reactivePower, dim := Iso80000.Part6.EDim.power }
+def reactivePowerDK : DimensionedKind := Iso80000.Part6.reactivePower
 /-- Non-active power — the same watt (`VA`). -/
-def nonActivePowerDK : DimensionedKind :=
-  { kind := nonActivePower, dim := Iso80000.Part6.EDim.power }
+def nonActivePowerDK : DimensionedKind := Iso80000.Part6.nonActivePower
 /-- The power factor is dimension one — by its own defining relation
 (`powerFactor_dim_from_powers`). -/
-def powerFactorDK : DimensionedKind :=
-  { kind := powerFactor, dim := Dim.one }
+def powerFactorDK : DimensionedKind := Iso80000.Part6.powerFactor
 
 /-! ## Stage 0 is the catalogue — proved, not asserted -/
 
