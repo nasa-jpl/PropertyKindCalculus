@@ -1066,6 +1066,23 @@ contracted through the table (three `I·ω`, three `ω·L`, one numeral) erasing
 upstream's own `T = ½ω·L`; and the motion-preservation theorems consumed at the
 ingests (mass, centre-of-mass tracking, the solid sphere's zero first moment).
 
+**Status: Stage 3 climbed** — `Operators.lean` registers the seven remaining edges
+with scalar call sites (`⟪p,v⟫`, `p/m`, Hooke's `k·x`, the amplitude–phase `ω·A`, the
+period's `phase/ω`, the decomposition's `ω·r`, the contraction's `ω·L`; six predate it
+in Feasibility), each demonstrated at a source equation — Hooke one `*` closed by
+`force_eq_linear`, the period one `/` that is *definitionally* upstream's `period`
+(with `2π` a declared `@[kindConst]` full turn at 3-7, not a naked numeral), the
+amplitude–phase velocity, the end-to-end table spelling of the kinetic witness, the
+one-`*` rotational contraction, the one-`/` inverse momentum. Exactly **one** of the
+fourteen laws stays law-only — conservation's `∂ₜE`, riding `fderiv` — inverting
+directory 2's majority: classical point mechanics is scalar-multiplicative almost
+everywhere. No interval scale exists in this directory, so the whole discrimination
+burden falls on kind identity — and the refusals show it: the *oscillator's* `ω`
+times `L` is refused (the shared-letter pair, discriminated at the table), `E·t` is
+refused (the action is the pilot's kind), `F·v` is refused (power delivery is an
+upstream `informal_lemma`, not formalized surface). Coverage re-pinned: seven
+`[table]` rows, clean.
+
 
 ---
 
