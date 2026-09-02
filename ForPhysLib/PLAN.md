@@ -34,7 +34,7 @@ has to be reconstructed from the Status lines scattered below.
 | Review + post the Stage-1 ask | Nicolas (AI-POLICY §3.1) |
 | Decision-ladder step (iii): the Stage-0+1 PR for `SpaceAndTime/Space` | Claude drafts it if question 2 of the ask gets a yes |
 | Materialize the QM patch offer (Orthonormality + Heisenberg) and the EM gauge pair as fork branches | Claude, on request — same recipe as `solid-sphere-inertia` |
-| Held physics, not on the ladder: L_z = m·ℏ crossing, degeneracy count, `LadderOperators` green field, the Distributional twin, Maxwell dynamics (σ_p ground-state moment DONE — Heisenberg saturation now unconditional) | Claude, in progress |
+| Held physics, not on the ladder: degeneracy count, `LadderOperators` green field, the Distributional twin, Maxwell dynamics (DONE: σ_p moment — saturation unconditional; L_z = m·ℏ — `AngularMomentum.lean`, the 4-11/4-32 crossing + circular `m = ±1` eigenstates) | Claude, in progress |
 | Campaign wrap-up artifact (cross-directory scorecard) | undecided whether wanted |
 
 ---

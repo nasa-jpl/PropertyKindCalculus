@@ -42,6 +42,9 @@ def massDK : DimensionedKind := { kind := mass, dim := Dim.mass }
 /-- Action is `M·L²·T⁻¹` — ℏ's dimension, shared with angular momentum. -/
 def actionDK : DimensionedKind :=
   { kind := action, dim := Iso80000.Part4.MDim.angularMomentum }
+/-- Angular momentum is the *same* `M·L²·T⁻¹` — the collision the registry decides. -/
+def angularMomentumDK : DimensionedKind :=
+  { kind := angularMomentum, dim := Iso80000.Part4.MDim.angularMomentum }
 /-- Angular frequency is `T⁻¹`. -/
 def angularFrequencyDK : DimensionedKind :=
   { kind := angularFrequency, dim := Dim.time⁻¹ }
@@ -99,6 +102,7 @@ listed species use. -/
 
 example : mass             = Iso80000.Part4.mass.kind             := by decide
 example : action           = Iso80000.Part4.action.kind           := by decide
+example : angularMomentum  = Iso80000.Part4.angularMomentum.kind  := by decide
 example : angularFrequency = Iso80000.Part3.angularFrequency.kind := by decide
 example : kineticEnergy    = Iso80000.Part4.kineticEnergy.kind    := by decide
 example : potentialEnergy  = Iso80000.Part4.potentialEnergy.kind  := by decide

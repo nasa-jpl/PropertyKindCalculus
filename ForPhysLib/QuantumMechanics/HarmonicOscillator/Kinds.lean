@@ -48,6 +48,12 @@ def mass : KindOfProperty := { id := "mass", scale := .ratio }
 a distinct kind. -/
 def action : KindOfProperty := { id := "action", scale := .ratio }
 
+/-- Angular momentum — item 4-11 (`L`, kg·m²/s): the eigenvalue scale of `𝐋ᵢⱼ`. The
+other half of the J·s collision: `m·ℏ` is an angular-momentum *reading* built from the
+action constant, and the registry keeps the two kinds apart at their one shared
+dimension. -/
+def angularMomentum : KindOfProperty := { id := "angular momentum", scale := .ratio }
+
 /-- Angular frequency — ISO 80000-3 item 3-18 (`ω`, rad/s): the mode frequencies
 `Q.ω i`. -/
 def angularFrequency : KindOfProperty := { id := "angular frequency", scale := .ratio }

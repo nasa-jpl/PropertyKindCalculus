@@ -37,6 +37,7 @@ ForPhysLib module whose build now checks the claim or holds its statement ready.
 
 import ForPhysLib.QuantumMechanics.HarmonicOscillator.Operators
 import ForPhysLib.QuantumMechanics.HarmonicOscillator.Heisenberg
+import ForPhysLib.QuantumMechanics.HarmonicOscillator.AngularMomentum
 import PropertyKindCalculus.BoundaryAudit
 import PropertyKindCalculus.KindLedger
 import PropertyKindCalculus.DimensionalCoverage
@@ -51,6 +52,7 @@ open PropertyKindCalculus
 info: boundary audit:
 [carrierVocab] ForPhysLib.QuantumMechanics.HarmonicOscillator.numeralSMul — attests: (kind-parametric) ‹a dimensionless numeral scales; the kind is unchanged›
 [kindConst] ForPhysLib.QuantumMechanics.HarmonicOscillator.hbarQ — attests: actionK ‹Constants.ℏ — SI numeral; the J·s commitment lives in docstring prose›
+[kindCrossing] ForPhysLib.QuantumMechanics.HarmonicOscillator.AngularMomentum.angularMomentumReading — attests: Kinds.angularMomentum ‹m·ℏ read at 4-11 — the J·s collision crossed on purpose›
 [kindCrossing] ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinded.energySMul — erases (emission-only)
 [kindCrossing] ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinded.positionOfDimensionless — attests: Kinds.length ‹ξEquiv — the per-component ξᵢ· multiplication rides the equiv unseen›
 [kindCrossing] ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinded.totalProbabilityQ — attests: Kinds.probability ‹∫ρ dV — the density · volume edge aggregated by Mathlib's ∫, unseen›
@@ -69,7 +71,7 @@ info: boundary audit:
 [kindIngest] ForPhysLib.QuantumMechanics.HarmonicOscillator.xiQ — attests: lengthK ‹the square root of the registered ξ² chain — roots are not a kind operation›
 [kindIngest] ForPhysLib.QuantumMechanics.HarmonicOscillator.ωQ — attests: angularFrequencyK ‹PhysLib's bare ℝ family ω i›
 [kindIngest] ForPhysLib.QuantumMechanics.HarmonicOscillator.ωQ1 — attests: angularFrequencyK ‹PhysLib's bare ℝ field ω›
-20 boundary site(s), all tagged — clean
+21 boundary site(s), all tagged — clean
 -/
 #guard_msgs (whitespace := lax) in
 #kind_boundary_audit ForPhysLib.QuantumMechanics.HarmonicOscillator
@@ -78,6 +80,7 @@ info: boundary audit:
 info: tagged boundary crossings:
 [carrierVocab] ForPhysLib.QuantumMechanics.HarmonicOscillator.numeralSMul — A dimensionless numeral scales a quantity without changing its kind — the `nᵢ + ½`
 [kindConst] ForPhysLib.QuantumMechanics.HarmonicOscillator.hbarQ — ℏ as an action quantity — one attestation naming what the source's type does not
+[kindCrossing] ForPhysLib.QuantumMechanics.HarmonicOscillator.AngularMomentum.angularMomentumReading — **The `m·ℏ` crossing**: a dimensionless integer scales the action constant and the
 [kindCrossing] ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinded.energySMul — **F1d's crossing, on the right-hand side of the subject's defining equation**: an
 [kindCrossing] ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinded.positionOfDimensionless — `ξEquiv` at kinds: a dimensionless coordinate vector becomes a position.
 [kindCrossing] ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinded.totalProbabilityQ — **Density × volume crosses to probability** — the integral `∫ρ dV` aggregates the
