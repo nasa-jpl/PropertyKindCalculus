@@ -19,13 +19,13 @@ open PropertyKindCalculus
 def massKind : KindOfProperty := { id := "mass", scale := .ratio }
 
 /-- The number of atomic parts under a decomposition. -/
-def countLeaves : Decomposition → Int
+def countLeaves : Decomposition System → Int
   | .atom _      => 1
   | .union a b   => countLeaves a + countLeaves b
 
 /-- A genuinely additive mass measurement: each part reads its own leaf count, so a union reads
 the sum of its parts' readings — the defining shape of an extensive quantity. -/
-def massOf : Measurement := fun d => { kind := massKind, numeral := countLeaves d, reference := "kg" }
+def massOf : Measurement System := fun d => { kind := massKind, numeral := countLeaves d, reference := "kg" }
 
 /-- `massOf` is extensive for `massKind`: every part is of kind `massKind` (`ofKind`), and a union
 reads as the sum of its parts (`additive`) — both by `rfl`, so the witness is real, not assumed. -/
@@ -37,7 +37,7 @@ def s₂ : System := { id := "s2" }
 def s₃ : System := { id := "s3" }
 
 /-- A depth-2 decomposition `(s₁ ⊔ s₂) ⊔ s₃` — nested, so the aggregation recursion is exercised. -/
-def whole : Decomposition := .union (.union (.atom s₁) (.atom s₂)) (.atom s₃)
+def whole : Decomposition System := .union (.union (.atom s₁) (.atom s₂)) (.atom s₃)
 
 -- Inhabitation (Rule 2 — the non-degenerate, nested case): the value on the *whole* equals the
 -- sum over *all three* atomic parts, obtained by applying the capstone to a real decomposition.
@@ -52,7 +52,7 @@ theorem r9_whole_eq_leafSum : (massOf whole).numeral = leafSum massOf whole :=
 -- so `Extensive` genuinely rules something out. (Re-exhibits the source counterexample.)
 theorem r9_mixing_not_extensive : ¬ Extensive volume volMix := mixing_subadditive.2
 
-/-- info: 'PropertyKindCalculus.extensive_additive' depends on axioms: [propext] -/
+/-- info: 'PropertyKindCalculus.extensive_additive' does not depend on any axioms -/
 #guard_msgs in #print axioms extensive_additive
 
 /-- info: 'PropertyKindCalculus.mixing_subadditive' does not depend on any axioms -/

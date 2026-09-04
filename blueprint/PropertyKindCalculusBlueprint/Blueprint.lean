@@ -10,6 +10,7 @@ import PropertyKindCalculusBlueprint.Chapters.Dimension
 import PropertyKindCalculusBlueprint.Chapters.Interaction
 import PropertyKindCalculusBlueprint.Chapters.FunctionCalculus
 import PropertyKindCalculusBlueprint.Chapters.Extensivity
+import PropertyKindCalculusBlueprint.Chapters.ObjectTypes
 import PropertyKindCalculusBlueprint.Chapters.WriteOnce
 import PropertyKindCalculusBlueprint.Chapters.Uncertainty
 import PropertyKindCalculusBlueprint.Chapters.Iso80000
@@ -264,7 +265,11 @@ the type (`IndividualQuantity o k R`), so two same-kind quantities of different 
 are different types and `ω_A · x_B` is a compile-time error, not a naming convention.
 Same kind, different object; the object axis is independent of the kind axis, which is
 exactly what dissolves the tagging dilemma (a dimension tag can make masses
-distinguishable *or* addable, never both — the object index makes them both).
+distinguishable *or* addable, never both — the object index makes them both). The object
+is drawn from an *arbitrary type*, not from the nominal system carrier alone, so a host
+library's own objects — the particles of a mechanical system, the cells of a mesh — are
+admissible indices without that library changing; see the _The object type_ chapter for
+what that costs and what it does not buy.
 
 *R22 — A quantity is dedicated to a named component of a named system; dedications of
 distinct systems are provably distinct.* The sharpened successor of the part of R19
@@ -1217,6 +1222,8 @@ in-progress goals until formalized. The headline deliverables are tagged
 {include 0 PropertyKindCalculusBlueprint.Chapters.FunctionCalculus}
 
 {include 0 PropertyKindCalculusBlueprint.Chapters.Extensivity}
+
+{include 0 PropertyKindCalculusBlueprint.Chapters.ObjectTypes}
 
 {include 0 PropertyKindCalculusBlueprint.Chapters.WriteOnce}
 

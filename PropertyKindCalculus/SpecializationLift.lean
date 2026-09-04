@@ -42,6 +42,8 @@ import PropertyKindCalculus.OperatorTable
 
 namespace PropertyKindCalculus
 
+universe u
+
 variable {R : Type} {E : KindOfProperty → KindOfProperty → Prop}
 variable {k k₁ k₂ p p' : KindOfProperty}
 
@@ -84,7 +86,7 @@ theorem Quantity.widen_isWidening (h : Specializes E k p) (x : Quantity k R) :
 The object index rides through untouched: oscillator A's kinetic energy, viewed as an
 energy, is still oscillator A's. -/
 
-variable {o : Object}
+variable {O : Type u} {o : O}
 
 /-- Widening on an object-indexed quantity: the kind index moves up the lattice, the
 object index is carried unchanged. -/

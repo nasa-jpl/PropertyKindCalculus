@@ -18,6 +18,7 @@ ceremony, and this proposal is explicit about how much and where it is paid back
 | [MOTIVATION.md](MOTIVATION.md) | 10 reasons, strongest first, each with a stable heading |
 | [PLAN.md](PLAN.md) | the staged adoption ladder, the exhibits to build, and what to propose upstream |
 | [CaseStudies/HarmonicOscillator](CaseStudies/HarmonicOscillator/README.md) | the worked benchmark: four attempts at typing the same physics, scored — `lake build ForPhysLib` |
+| [Exhibits/](Exhibits) | six build-artifact exhibits, A–F; F is [physlib#1612](https://github.com/leanprover-community/physlib/pull/1612), a live PR that ties quantities to objects without a metrology layer |
 
 ## Where this came from
 
@@ -41,5 +42,8 @@ PhysLib in these documents was read from source; the case study is the part that
    — `ReferenceFrame` asks for something that cannot be written at the current layering.
 3. [Stage 1 is free](PLAN.md#stage-1-the-metrology-annex) — what adoption costs before any
    existing definition changes.
+4. [The exhibit upstream chose](PLAN.md#exhibit-f-pointparticle--an-object-index-that-is-not-a-name)
+   — physlib#1612 ties a force to its target with a *field*, and the layer gates the same
+   objects with an *index*, on the PR's own data structures and with the PR unmodified.
 
 Nothing in this proposal asks PhysLib to change a theorem statement.

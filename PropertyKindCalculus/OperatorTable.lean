@@ -59,6 +59,8 @@ import PropertyKindCalculus.IndividualQuantity
 
 namespace PropertyKindCalculus
 
+universe u
+
 /-- **A curated product-table entry.** The product of a `k₁`- and a `k₂`-quantity is
 sanctioned and lands in `k`, witnessed by the same kind-level law `Quantity.mul` takes.
 `k` is an `outParam`: instance search computes the result kind from the operand kinds, so
@@ -133,7 +135,7 @@ the operands belong to different objects, and the object gate is enforced exactl
 without the author writing anything. Curation is likewise unchanged: an unregistered operand
 pair has no entry and the product does not elaborate. -/
 
-variable {o : Object}
+variable {O : Type u} {o : O}
 
 /-- `x * y` on object-indexed quantities, through the curated table:
 `IndividualQuantity.mul` of the registered witness, on the shared object `o`. Scoped, like its

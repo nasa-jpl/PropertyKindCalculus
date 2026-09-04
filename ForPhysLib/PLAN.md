@@ -8,14 +8,14 @@ useful on its own.
 
 ## Status ledger
 
-Last updated 2026-09-01. One table each way, so "what is done and what is left" never
+Last updated 2026-09-03. One table each way, so "what is done and what is left" never
 has to be reconstructed from the Status lines scattered below.
 
 ### Done
 
 | item | where it lives |
 |---|---|
-| Exhibits A–E | `Exhibits/`; per-exhibit **Status: built** lines below |
+| Exhibits A–F | `Exhibits/`; per-exhibit **Status: built** lines below |
 | The full ladder (Stages 0–4) for `SpaceAndTime/Space` | Sequencing item 3; per-stage Status lines below |
 | Campaign directory 1 — `QuantumMechanics/HarmonicOscillator`, whole | `QuantumMechanics/HarmonicOscillator/` + README cost line; includes the two patch candidates (`Orthonormality`, `Heisenberg`) |
 | Campaign directory 2 — `Electromagnetism/Kinematics` | `Electromagnetism/Kinematics/` + README cost line |
@@ -23,6 +23,7 @@ has to be reconstructed from the Status lines scattered below.
 | Decision-ladder step (i): the unit-side parametrization | **merged upstream** — physlib PR #1481, 2026-08-05 |
 | The ClassicalMechanics patch offer, materialized | physlib fork branch `solid-sphere-inertia` (2 commits, all upstream gates green); PR draft at `scratchpad/physlib-pr-solid-sphere-inertia.md` |
 | Decision-ladder step (ii), drafted | the Stage-1 ask at `scratchpad/physlib-ask-stage1.md` |
+| The object-type parameterization: `IndividualQuantity` over an arbitrary object type, `Designated`, `Composite`/`Assembles`/`assemble` | PKC core + `CompositeReal`; blueprint chapter *The object type*; `MiniObjectTypes`, `Tests/Core/Composite`, Exhibit F |
 
 ### Open
 
@@ -36,6 +37,8 @@ has to be reconstructed from the Status lines scattered below.
 | Materialize the QM patch offer (Orthonormality + Heisenberg) and the EM gauge pair as fork branches | Claude, on request — same recipe as `solid-sphere-inertia` |
 | Held physics — ALL SIX DELIVERED: σ_p moment (saturation unconditional); L_z = m·ℏ; degeneracy; `LadderOperators.lean` (the eleven-TODO stub); `DistributionalTwin.lean` (the duplication finding); `Maxwell.lean` (the four laws kinded + the module-private finding) | done 2026-09-01 |
 | The last two held items — the `Dynamics/` variational subtree (`Kinematics/Dynamics.lean`: 2 lookups + 3 mints + 6 edges, the whole variational calculus same-kind, `H` at 6-33 by upstream's theorem, the stale-`μ₀`-TODO finding) and the RF/AC annex promoted to ladder form (`Electromagnetism/Annex/`: 17 kinds all lookups zero mints, 5 edges consumed from the catalogue's `DefiningRelations`, the refused `P + Q`, the dB budget on 6-45). Nothing remains held | done 2026-09-02 |
+| Decide whether anything from Exhibit F is offered to physlib#1612, and in what form | Nicolas (AI-POLICY §3.1) |
+| Re-point Exhibit F's `Replica` at the real `PointParticle.System` once #1612 merges | Claude, on request |
 | Campaign wrap-up artifact (cross-directory scorecard) | undecided whether wanted |
 
 ---
@@ -161,9 +164,11 @@ Stage 0 through Stage 4, for its first directory.**
 
 ## Exhibits to build
 
-Five, ordered by what they demonstrate. Each must produce build artifacts per rule 2 of the
+Six, ordered by what they demonstrate. Each must produce build artifacts per rule 2 of the
 [rules of engagement](#rules-of-engagement) — a `#check_failure`, a theorem exhibiting the
 wrong answer, or an `example` showing that something which should be rejected type-checks.
+A–E were chosen from the surveyed sources; F was chosen by upstream, being a live PR that
+reaches the same question from the other side.
 
 ### Exhibit A. RigidBody
 
@@ -433,6 +438,71 @@ licensed combination — while the energy family in the same file registers `Kin
 `T + V` elaborates. The same table says yes and no on the same page: curation, not a
 loophole.
 
+### Exhibit F. PointParticle — an object index that is not a name
+
+**The live PR.** [physlib#1612](https://github.com/leanprover-community/physlib/pull/1612)
+(head `3ae4ae20`, unmerged) ties a quantity to an object *without* a metrology layer:
+`Force` carries a `target` field, `InternalForce` a `source`, and a system's particles are a
+`Multiset` coerced to a type. It is the first place upstream has needed the question this
+proposal's Tier 3 asks, and it answers it a different way — so it is the exhibit that tests
+whether the layer fits an object PhysLib designed rather than one we did.
+
+**Requirements.** [MR7](REQUIREMENTS.md#mr7-object-identity)–[MR10](REQUIREMENTS.md#mr10-a-record-does-not-defeat-the-gate),
+[MR21](REQUIREMENTS.md#mr21-assembly-is-licensed-per-kind-and-two-sided)–[MR22](REQUIREMENTS.md#mr22-whole-system-quantities-are-not-part-quantities).
+
+**What #1612 gets right, and it is not nothing.** The `target` field ties a force to an
+object at all, which upstream had no way to say; the multiset keeps multiplicity, so two
+identical particles are two particles; and the objects are runtime-quantifiable, so
+`∀ particle : particles` is a statement Newton's laws can be *fields* of. None of that is
+available from a naming convention, and the assessment records it in full.
+
+**What it cannot check, and the three are one cause.** `target` is a *field*, not an index,
+so nothing about a force's type says whose it is: `netForce` filters on `target` with a
+`Classical` equality test at the value level, and the type system is not consulted. The kind
+is absent entirely — a displacement, a velocity and a force of one particle are all
+`frame.Vector`, and their sums elaborate. And the aggregate definitions
+(`System.mass`, `System.momentum`, and the sums a next PR will write for momentum
+conservation) are unlicensed folds: `∑ p, p.velocity t` is as well-typed as
+`∑ p, p.momentum t`.
+
+**What the exhibit shows.** That the layer applies to #1612's *own* data structures, with
+#1612 unmodified and PhysLib unchanged — because the object index of `IndividualQuantity`
+was generalized from the nominal `System` to an arbitrary type, and a particle of a multiset
+is a perfectly good index. Three findings, each a build artifact:
+
+1. **The gate holds on an anonymous object.** Two particles' masses do not add; particles of
+   two systems do not add; and a displacement and a force *of one particle* do not add — this
+   last at the frame-vector carrier, with the carrier registered first so the refusal is about
+   the kind and not about a missing instance. No `DecidableEq`, no designation, no new field
+   upstream, and **no kinded vector type**: the gate is on the quantity, over PhysLib's own
+   carrier.
+2. **The particle cannot be *named*, and the layer says so.** `Designated s.Particle` does not
+   synthesize — neither `System` nor `Particle` carries an identity field — and, since
+   `Designated` carries an injectivity obligation, the instance an author would write instead
+   (every particle to one name) is not writable either. The §20 systematic term is therefore
+   unavailable here, and wanting it is a *PhysLib-side* ask for a label field, to be made
+   separately if at all.
+3. **Assembly, and the PR's own totals recovered by `rfl`.** `Composite s.Particle` gives the
+   whole a place to live (MR22); `assembleAll` under an `Assembles` license gives the total;
+   and `(totalMass s).magnitude = s.mass` and `(totalMomentum s t).magnitude = s.momentum t`
+   are both `rfl`. The layer adds a gate and changes no arithmetic. The sums that would be
+   wrong — the particles' velocities, the particles' positions — have no license and do not
+   elaborate (MR21).
+
+**Status: built** — `ForPhysLib/Exhibits/PointParticle/Findings.lean`. Nine `#check_failure`s,
+each verified to fail for exactly one reason, and the two `rfl` erasures above. The PR is not
+in this repository's pinned PhysLib, so the exhibit reproduces its *shape* — the
+multiset-of-particles system, the coerced particle type, the `∑ p : s.Particle` aggregates —
+and says so; the PR's three files themselves were compiled verbatim out of tree against the
+same PhysLib commit, which is where the refusals were first established. When #1612 merges,
+the replica should be deleted and its uses re-pointed at the real
+`ClassicalMechanics.PointParticle.System`.
+
+**What this exhibit is *not*.** It is not a review of #1612 and not a request that #1612
+change. Everything above holds with the PR exactly as written; the layer is additive, per
+[MR31](REQUIREMENTS.md#mr31-adoption-is-scoped-and-monotone). If any of it is to reach the
+PR's author it is as an offer, and posting is a human's (AI-POLICY §3.1).
+
 ### Ranking
 
 | | exhibit | why it earns its place |
@@ -442,6 +512,7 @@ loophole.
 | 3 | **C · HarmonicOscillator** | continuity with the case study; where MR11 must be paid down or conceded |
 | 4 | **D · Two rovers** | the reach argument; the only exhibit about capability rather than defects |
 | 5 | **E · Electromagnetism** | the confirmation: machinery minted by the benchmark, applied to a directory it was not minted from |
+| 6 | **F · PointParticle** | the live test: a PR that ties quantities to objects without the layer, and objects PhysLib designed rather than we did |
 
 ---
 

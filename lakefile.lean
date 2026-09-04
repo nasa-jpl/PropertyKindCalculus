@@ -57,7 +57,7 @@ package «PropertyKindCalculus» where
   -- The package version — the single source of truth. `scripts/bump-version.sh`
   -- reads and bumps it here, and the blueprint reads this same line at build time
   -- (its `{version}[]` role) so the published document never drifts from the source.
-  version := v!"0.87.0"
+  version := v!"0.88.0"
   leanOptions := #[
     ⟨`autoImplicit, false⟩,
     ⟨`relaxedAutoImplicit, false⟩]
@@ -192,6 +192,7 @@ lean_lib «Dimension» where
     .one `PropertyKindCalculus.Observable,
     .one `PropertyKindCalculus.FrameReal,
     .one `PropertyKindCalculus.BoundsReal,
+    .one `PropertyKindCalculus.CompositeReal,
     .one `PropertyKindCalculus.UnitConversion]
 
 /-- Worked examples for the Mathlib-backed `Dimension` library — the dimension

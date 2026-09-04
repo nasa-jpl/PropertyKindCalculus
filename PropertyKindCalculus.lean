@@ -32,6 +32,7 @@ import PropertyKindCalculus.Axis
 import PropertyKindCalculus.PartWhole
 import PropertyKindCalculus.Decimal
 import PropertyKindCalculus.IndividualQuantity
+import PropertyKindCalculus.Composite
 import PropertyKindCalculus.QuantityFunction
 import PropertyKindCalculus.Measurand
 import PropertyKindCalculus.Complex

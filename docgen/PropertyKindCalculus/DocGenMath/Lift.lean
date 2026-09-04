@@ -145,12 +145,20 @@ there is one — which is how an author gets a short `A` out of a system named
 `"oscillator A"` — and otherwise the system's `id` in a `\text{…}` box, which is always valid
 and never silently wrong.
 
-A definition *generic* in its object (`(o : System)` still a binder) has no concrete object to
-name, so it renders unsubscripted: `whnf` cannot reach a `System.mk` and this returns `none`. -/
+A definition *generic* in its object (`(o : Object)` still a binder) has no concrete object to
+name, so it renders unsubscripted: `whnf` cannot reach a `System.mk` and this returns `none`.
+So does a quantity indexed by a **structural** object type — a host library's particle or mesh
+cell, which the layer gates but cannot name (`Foundations.lean`, `Designated`): there is no
+`System.mk` to reach, and an unsubscripted symbol is the honest rendering of an object that has
+no designation. An author who wants a label there registers `@[pkc_math_symbol]` on the object's
+own declaration, which is the first branch below and works for any object type.
+
+Arity 4, not 3: the object type is the layer's leading implicit parameter, so the object itself
+is argument 1. -/
 def objectLabel? (ty : Expr) : MetaM (Option String) := do
   let ty ← whnf ty
-  unless ty.isAppOfArity ``PropertyKindCalculus.IndividualQuantity 3 do return none
-  let o := ty.getAppArgs[0]!
+  unless ty.isAppOfArity ``PropertyKindCalculus.IndividualQuantity 4 do return none
+  let o := ty.getAppArgs[1]!
   -- an override registered on the object's own declaration wins
   if let .const c _ := o.getAppFn then
     if let some nota := getMathSymbol? (← getEnv) c then return some nota.latex

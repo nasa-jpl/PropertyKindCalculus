@@ -374,15 +374,15 @@ over the decomposition of the pair and angular frequency is not.
 what licenses the sum. -/
 
 /-- The pair, decomposed into its two oscillators. -/
-def pairDecomposition : Decomposition := .union (.atom oscA) (.atom oscB)
+def pairDecomposition : Decomposition System := .union (.atom oscA) (.atom oscB)
 
 /-- The mass numeral of any sub-system: `3` for A, `5` for B, and the *sum* over a union. -/
-def massNumeral : Decomposition → Int
+def massNumeral : Decomposition System → Int
   | .atom s => if s = oscA then 3 else if s = oscB then 5 else 0
   | .union a b => massNumeral a + massNumeral b
 
 /-- Mass, measured over the decomposition. -/
-def massMeasurement : Measurement :=
+def massMeasurement : Measurement System :=
   fun d => { kind := mass.kind, numeral := massNumeral d, reference := "kg" }
 
 /-- **MR8 holds (the accepting half).** Mass is extensive: the whole's mass is the sum of the
@@ -403,12 +403,12 @@ theorem total_mass_is_leafSum :
 
 /-- The angular-frequency numeral: `2` for A, `4` for B — and `5` for the pair, which is the
 upper normal mode `ω₊`, not `2 + 4`. -/
-def angFreqNumeral : Decomposition → Int
+def angFreqNumeral : Decomposition System → Int
   | .atom s => if s = oscA then 2 else if s = oscB then 4 else 0
   | .union _ _ => 5
 
 /-- Angular frequency, measured over the same decomposition. -/
-def angFreqMeasurement : Measurement :=
+def angFreqMeasurement : Measurement System :=
   fun d => { kind := angularFrequency.kind, numeral := angFreqNumeral d,
              reference := "rad/s" }
 
@@ -511,7 +511,7 @@ theorem no_dilemma :
     (mA.toIndividualProperty.kind = mB.toIndividualProperty.kind)
       ∧ (mA.toIndividualProperty.carrier ≠ mB.toIndividualProperty.carrier) := by
   refine ⟨rfl, ?_⟩
-  simp [IndividualQuantity.toIndividualProperty, oscA, oscB]
+  decide
 
 /-! # Tier 4 — ergonomics (MR11 ⚠️, MR12 ✅)
 

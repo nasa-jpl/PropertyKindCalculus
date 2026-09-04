@@ -27,7 +27,7 @@ def mass : KindOfProperty := { id := "mass", scale := .ratio }
 
 /-- An additive mass measurement built from a per-atom mass `w`: a leaf reads its
 own mass, a union reads the sum of its parts. -/
-def massMeasure (w : System → Int) : Measurement
+def massMeasure (w : System → Int) : Measurement System
   | .atom s => { kind := mass, numeral := w s, reference := "kg" }
   | .union a b =>
       { kind := mass,
@@ -44,7 +44,7 @@ def sampleMass : System → Int := fun s =>
   if s.id = "A" then 3 else if s.id = "B" then 5 else if s.id = "C" then 7 else 0
 
 /-- The assembly: A together with (B together with C). -/
-def assembly : Decomposition :=
+def assembly : Decomposition System :=
   .union (.atom ⟨"A"⟩) (.union (.atom ⟨"B"⟩) (.atom ⟨"C"⟩))
 
 -- The mass of the whole assembly is read directly as 15 …

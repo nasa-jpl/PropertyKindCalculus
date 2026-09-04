@@ -25,6 +25,23 @@ expresses at the kind level, now available on quantities without tagging kinds b
 Whether two individual quantities of one object are *equal in magnitude* (e.g. a square's
 length and width) remains, by contrast, a fact about the magnitudes — a theorem, never a
 type-check.
+
+## The object type is a parameter
+
+`o` ranges over an arbitrary type `O`, not over `Object` alone. The reason is a measurement
+of this module: of its declarations, **exactly one reads `o`** — `toIndividualProperty`,
+which names the object. Every gate below (`add`, `mul`, `div`, `recip`, and the three
+certificates) is `o`-blind: what stops a length of `R1` multiplying a width of `R2` is
+*definitional equality of the index*, a mechanism every type in Lean already has. So the
+object gate carries to a host library's own object type — a particle of a mechanical
+system, a cell of a mesh — with nothing to supply and no naming scheme to invent.
+
+The one declaration that does read `o` asks for `Designated O` (`Foundations.lean`), and
+that asymmetry is a finding rather than an inconvenience: an object type whose objects are
+*positions in a structure* rather than *names* can be gated but cannot be named, and the
+missing instance is how the layer says so instead of inventing a name that is not there.
+`Object` remains an instance of the parameterization — the nominal object type, where the
+name is the identity — so nothing written against the old signature changes.
 -/
 import PropertyKindCalculus.Foundations
 import PropertyKindCalculus.Quantity
@@ -32,17 +49,19 @@ import PropertyKindCalculus.QuantityClassification
 
 namespace PropertyKindCalculus
 
+universe u
+
 /-- **An individual quantity.** A magnitude of kind `k`, at representation `R`, that
 **characterizes the object** `o` (Dybkær Ch. 3). Indexed by `o` as well as by `k`, so the
 type system forbids combining quantities of *different objects* — the object-aware refinement
 of `Quantity k R`, and the quantitative form of `IndividualProperty`. -/
-structure IndividualQuantity (o : Object) (k : KindOfProperty) (R : Type) where
+structure IndividualQuantity {O : Type u} (o : O) (k : KindOfProperty) (R : Type) where
   /-- The magnitude, carried at the representation `R`. -/
   magnitude : R
 
 namespace IndividualQuantity
 
-variable {o : Object} {k : KindOfProperty} {R : Type}
+variable {O : Type u} {o : O} {k : KindOfProperty} {R : Type}
 
 /-- **Extensionality.** Two individual quantities of the same object, kind, and carrier are
 equal exactly when their magnitudes are. -/
@@ -50,8 +69,13 @@ equal exactly when their magnitudes are. -/
   cases x; cases y; cases h; rfl
 
 /-- Forget the magnitude: the underlying **individual property** (kind `k` characterizing the
-object `o`), tying this layer back to Dybkær's instance layer (`Kind.lean`). -/
-def toIndividualProperty (_a : IndividualQuantity o k R) : IndividualProperty := ⟨k, o⟩
+object `o`), tying this layer back to Dybkær's instance layer (`Kind.lean`).
+
+**The one declaration in this module that reads its object**, and therefore the one that
+needs `Designated O`: an individual property names its object, and a name is what a
+structural object type does not have. Everything else here gates on `o` without reading it. -/
+def toIndividualProperty [Designated O] (_a : IndividualQuantity o k R) : IndividualProperty :=
+  ⟨k, Designated.designation o⟩
 
 /-- Forget the object: the plain kind-indexed `Quantity k R`, so every `Quantity` law can be
 reused on an individual quantity by projection. -/
