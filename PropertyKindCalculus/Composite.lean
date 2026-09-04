@@ -36,7 +36,7 @@ import PropertyKindCalculus.IndividualQuantity
 
 namespace PropertyKindCalculus
 
-universe u v
+universe u v w
 
 /-! ## The composite object type -/
 
@@ -48,20 +48,23 @@ assembly, so a total mass has nowhere to live. `Composite P` adds exactly one in
 and it is *distinct as a term* from every part, which is the whole mechanism — a
 whole-system quantity and a part quantity do not add, definitionally, with nothing to
 prove and nothing to enforce. -/
-inductive Composite (P : Type u) where
+inductive Composite (σ : SortOfSystem) (P : Type u) where
   /-- The assembly itself — the bearer of whole-composite quantities. -/
   | whole
-  /-- One part of the assembly. -/
+  /-- One part of the assembly, *read as composing this sort of whole*. The bare `p` (at the
+  object type `P` itself) remains the part simpliciter; `Composite.part p` is the part in its
+  compositional role, which is why the sort reaches it. -/
   | part (p : P)
 deriving DecidableEq, Repr
 
-/-- A part reads as itself where a composite object is expected. This does **not** elide the
-object index of a quantity type (`IndividualQuantity`'s object argument determines its own
-object type, so there is nothing to coerce *to*); it is for the explicit positions — the
-part-injection handed to `assemble`, a predicate over composite objects. -/
-instance {P : Type u} : CoeHead P (Composite P) := ⟨Composite.part⟩
+/-- A part reads as itself where a composite object is expected — a `CoeTail`, since the
+sort of the composite comes from the expected type. This does **not** elide the object index
+of a quantity type (`IndividualQuantity`'s object argument determines its own object type, so
+there is nothing to coerce *to*); it is for the explicit positions — the part-injection handed
+to `assemble`, a predicate over composite objects. -/
+instance {σ : SortOfSystem} {P : Type u} : CoeTail P (Composite σ P) := ⟨Composite.part⟩
 
-/-- **Naming a composite** — a `Designated` structure for `Composite P`, given a name for
+/-- **Naming a composite** — a `Designated` structure for `Composite σ P`, given a name for
 the whole and the proof that no part already answers to it.
 
 A *definition*, not an instance, and the disjointness hypothesis is why: which nominal
@@ -69,8 +72,8 @@ system an assembly is called is a terminological commitment its author makes, no
 instance search can find, and a whole silently sharing a part's name would break the
 injectivity `Designated` exists to guarantee. -/
 @[instance_reducible]
-def Composite.designated {P : Type u} [Designated P] (w : Object)
-    (hw : ∀ p : P, Designated.designation p ≠ w) : Designated (Composite P) where
+def Composite.designated {σ : SortOfSystem} {P : Type u} [Designated P] (w : Object)
+    (hw : ∀ p : P, Designated.designation p ≠ w) : Designated (Composite σ P) where
   designation
     | .whole => w
     | .part p => Designated.designation p
@@ -83,41 +86,96 @@ def Composite.designated {P : Type u} [Designated P] (w : Object)
 
 /-! ## The license -/
 
-/-- **The aggregation license (§13.5, curated).** A kind whose quantities may be summed over
-the parts of a composite to give the quantity of the whole. Mass carries it; angular
-velocity deliberately does not, and the sum of the parts' angular velocities is then not a
-term anyone can write.
+/-- **The aggregation license (§13.5, curated) — keyed by the sort of the whole.** A kind
+whose quantities may be summed over the parts of a composite *of the given sort* to give the
+quantity of the whole. Mass carries it for every sort a mechanical model declares; angular
+velocity deliberately carries it for none, and the sum of the parts' angular velocities is
+then not a term anyone can write.
 
-Registration is opt-in — an unregistered kind has no instance and `assemble` does not
+The sort index is not decoration, and the library's own counterexample is why: **volume**.
+Over the parts of a rigid assembly, volume aggregates; over the parts of a mixture it
+contracts (`mixing_subadditive` — 50 mL of ethanol and 50 mL of water make 96 mL), and both
+facts are facts about *volume*. A registry keyed by the kind alone must either license the
+mixture or refuse the assembly, and either answer is wrong. Keyed by the sort, both answers
+are right at once — which is the neo-Aristotelian point that how parts unify into a whole is
+dictated by the *sort* of the whole, not by the attribute being summed and not by the parts.
+
+Registration is opt-in — an unregistered pair has no instance and `assemble` does not
 elaborate — and the entry is not a formality: its `diff` field is the same scale gate
 `Quantity.add` demands, so a nominal or ordinal kind cannot be licensed at all. What the
 class does *not* prove is that the sum is the physics; that is a fact about a measurement,
-and `assemble_eq_measured` is where an author discharges it. -/
-class Assembles (k : KindOfProperty) : Prop where
+and `assemble_eq_measured` is where an author discharges it, per sort. -/
+class Assembles (σ : SortOfSystem) (k : KindOfProperty) : Prop where
   /-- `k`'s scale licenses the sum the assembly is built from — interval or ratio. -/
   diff : DifferenceKind k
+
+/-! ## Joint objects
+
+A quantity can characterize an *ordered pair* of objects rather than one: a flow from a
+source to a sink, a torque delivered across a coupling, the force one body exerts on another.
+Under the parameterization that needs no construct at all — the object type is `O₁ × O₂`, and
+the ordering gate falls out of the pair's own equality, so a quantity of `(a, b)` and one of
+`(b, a)` do not combine.
+
+What the shape does need is its one *meaningful* re-indexing. Everything else about a joint
+object is ordinary. -/
+
+/-- **The transpose of a joint quantity** — the same magnitude, read as a quantity of the
+reversed pair.
+
+This is the equal-and-opposite reading, and it is the only re-indexing of an individual
+quantity this library offers. There is deliberately no general `reindex`: moving a magnitude
+from one object to another is exactly what the object index exists to prevent, and an
+operation that did it on request would return the layer to a naming convention. The transpose
+is safe because it is not a move — the pair `(a, b)` and the pair `(b, a)` are the same
+coupling read from its two ends, and which end is *source* is the whole content of a law like
+Newton's third.
+
+Its value is that the law becomes a type. A "reverse" that negates a magnitude and forgets to
+exchange the endpoints has the untransposed type, so it does not elaborate where a reversed
+force is expected. -/
+def IndividualQuantity.transpose {O₁ : Type u} {O₂ : Type v} {a : O₁} {b : O₂}
+    {k : KindOfProperty} {R : Type} (q : IndividualQuantity (a, b) k R) :
+    IndividualQuantity (b, a) k R :=
+  ⟨q.magnitude⟩
+
+@[simp] theorem IndividualQuantity.transpose_magnitude {O₁ : Type u} {O₂ : Type v} {a : O₁}
+    {b : O₂} {k : KindOfProperty} {R : Type} (q : IndividualQuantity (a, b) k R) :
+    q.transpose.magnitude = q.magnitude := rfl
+
+/-- **The transpose is an involution** — reading a coupling from the far end twice is reading
+it from the near end, with nothing lost. -/
+@[simp] theorem IndividualQuantity.transpose_transpose {O₁ : Type u} {O₂ : Type v} {a : O₁}
+    {b : O₂} {k : KindOfProperty} {R : Type} (q : IndividualQuantity (a, b) k R) :
+    q.transpose.transpose = q := rfl
 
 /-! ## The eliminator -/
 
 variable {O : Type u} {P : Type v} {k : KindOfProperty} {R : Type}
 
-/-- **Assembly — the quantity of the whole from the quantities of its parts.**
+/-- **Assembly — the quantity of the whole from the quantities of its parts, as a sort of
+whole.**
 
-The whole `whole` and the part-injection `part` are arguments, so this serves a bespoke
-`Composite P` (`assemble .whole .part`) and equally a host library's own object type with
-its own naming of parts (`assemble rover (partOf rover)`). `f` is *dependent*: the quantity
+The sort `σ` says *what kind of whole* is being composed, and it is the index the license is
+looked up at — assembling the same parts as a different sort of whole is a different act, with
+its own licenses (rigid assembly versus mixture is the canonical split). The whole `whole` and
+the part-injection `part` are arguments, so this serves a bespoke `Composite P`
+(`assemble σ .whole .part`) and equally a host library's own object type with its own
+naming of parts (`assemble σ rover (partOf rover)`). `f` is *dependent*: the quantity
 supplied for `p` must characterize `part p`, which is the gate — a part's quantity cannot
 be smuggled in under another part's name.
 
 The traversal is `Decomposition.fold`, the same one `leafSum` uses, so the arithmetic here
 and the §13.5 law are one recursion read at two carriers rather than two that agree. -/
-def assemble [Carrier R] [Assembles k] (whole : O) (part : P → O) (d : Decomposition P)
-    (f : (p : P) → IndividualQuantity (part p) k R) : IndividualQuantity whole k R :=
+def assemble [Carrier R] (σ : SortOfSystem) [Assembles σ k] (whole : O) (part : P → O)
+    (d : Decomposition P) (f : (p : P) → IndividualQuantity (part p) k R) :
+    IndividualQuantity whole k R :=
   ⟨d.fold (fun p => (f p).magnitude) Carrier.add⟩
 
-@[simp] theorem assemble_magnitude [Carrier R] [Assembles k] (whole : O) (part : P → O)
+@[simp] theorem assemble_magnitude [Carrier R] (σ : SortOfSystem) [Assembles σ k]
+    (whole : O) (part : P → O)
     (d : Decomposition P) (f : (p : P) → IndividualQuantity (part p) k R) :
-    (assemble whole part d f).magnitude
+    (assemble σ whole part d f).magnitude
       = d.fold (fun p => (f p).magnitude) Carrier.add := rfl
 
 /-- **The license, cashed (§13.5).** When the kind really is extensive under a measurement
@@ -129,9 +187,9 @@ This is what makes `Assembles` a claim about the world rather than a permission 
 class licenses the sum to be *written*, and this theorem is what an author shows to say the
 sum is *right*. Its absence is exactly the volume-on-mixing case — `volMix` has no
 `Extensive` witness, so no instance of this theorem exists for it. -/
-theorem assemble_eq_measured [Assembles k] (whole : O) (part : P → O)
+theorem assemble_eq_measured (σ : SortOfSystem) [Assembles σ k] (whole : O) (part : P → O)
     {m : Measurement P} (h : Extensive k m) (d : Decomposition P) :
-    (assemble (k := k) whole part d (fun p => ⟨(m (.atom p)).numeral⟩)).magnitude
+    (assemble (k := k) σ whole part d (fun p => ⟨(m (.atom p)).numeral⟩)).magnitude
       = (m d).numeral :=
   (extensive_additive h d).symm
 

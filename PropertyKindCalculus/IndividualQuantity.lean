@@ -46,6 +46,7 @@ name is the identity — so nothing written against the old signature changes.
 import PropertyKindCalculus.Foundations
 import PropertyKindCalculus.Quantity
 import PropertyKindCalculus.QuantityClassification
+import PropertyKindCalculus.QuantityVector
 
 namespace PropertyKindCalculus
 
@@ -163,6 +164,66 @@ def IsQuotient [Div R] [ScalarCarrier R] {k₁ k₂ k : KindOfProperty} (_h : Qu
 theorem div_isQuotient [Div R] [ScalarCarrier R] {k₁ k₂ k : KindOfProperty} (h : QuotientKind k₁ k₂ k)
     (a : IndividualQuantity o k₁ R) (b : IndividualQuantity o k₂ R) :
     (div h a b).IsQuotient h a b := rfl
+
+/-! ## Negation — the computational world, object-carried
+
+`Quantity` offers same-kind `+`/`-`/unary `-` as plain operators over Lean's own classes (the
+"two additions" note in `Quantity.lean`): kind-gated, not scale-gated, for code that reads as
+arithmetic. Negation is the one of the three this layer supplies as an operator, and it is
+supplied because a *law* depends on it: an equal-and-opposite reading is `-q` of a quantity,
+and if the only way to write it is to unwrap the magnitude and rewrap it (`⟨-q.magnitude⟩`),
+the rewrap lands at whatever object the context expects and the law it was meant to express is
+no longer checked.
+
+Addition and subtraction stay in their named, scale-gated form (`IndividualQuantity.add`),
+where the `DifferenceKind` witness has somewhere to live. -/
+
+/-- Same-object, same-kind negation over the carrier's own `Neg` — the equal-and-opposite
+reading, keeping both indices. -/
+def neg [Neg R] (a : IndividualQuantity o k R) : IndividualQuantity o k R := ⟨-a.magnitude⟩
+
+/-- `-q` on an object-indexed quantity. -/
+instance instNeg [Neg R] : Neg (IndividualQuantity o k R) := ⟨IndividualQuantity.neg⟩
+
+@[simp] theorem neg_magnitude [Neg R] (a : IndividualQuantity o k R) :
+    (-a).magnitude = -a.magnitude := rfl
+
+/-! ## Object-gated scalar action (`k = k₁ · k₂`, scalar on vector) -/
+
+/-- **Same-object, kind-licensed scalar action.** A scalar `k₁`-quantity of object `o` scaling
+a `k₂`-quantity of the *same* object at a vector carrier `V` (`QuantityVector`, ISO 80000-2
+§18). This is `p = m · v` and `F = m · a`: the operation vector mechanics is built from, which
+the homogeneous `mul` cannot express because its two operands share one carrier.
+
+The object gate is the point here as much as the kind law — the mass of one particle scaling
+another particle's acceleration is exactly the substitution an object-blind model cannot
+refuse. -/
+def smulK {V : Type} [SMul R V] [ScalarCarrier R] {k₁ k₂ k : KindOfProperty}
+    (_h : ProductKind k₁ k₂ k) (a : IndividualQuantity o k₁ R) (b : IndividualQuantity o k₂ V) :
+    IndividualQuantity o k V :=
+  ⟨a.magnitude • b.magnitude⟩
+
+@[simp] theorem smulK_magnitude {V : Type} [SMul R V] [ScalarCarrier R]
+    {k₁ k₂ k : KindOfProperty} (h : ProductKind k₁ k₂ k) (a : IndividualQuantity o k₁ R)
+    (b : IndividualQuantity o k₂ V) :
+    (smulK h a b).magnitude = a.magnitude • b.magnitude := rfl
+
+/-- The scalar action commutes with the forgetful map to `Quantity`, so the plain layer's
+laws transfer verbatim. -/
+theorem toQuantity_smulK {V : Type} [SMul R V] [ScalarCarrier R] {k₁ k₂ k : KindOfProperty}
+    (h : ProductKind k₁ k₂ k) (a : IndividualQuantity o k₁ R) (b : IndividualQuantity o k₂ V) :
+    (smulK h a b).toQuantity = Quantity.smulK h a.toQuantity b.toQuantity := rfl
+
+/-- **The scalar-action certificate** (R12), object-carried. -/
+def IsSMul {V : Type} [SMul R V] [ScalarCarrier R] {k₁ k₂ k : KindOfProperty}
+    (_h : ProductKind k₁ k₂ k) (q : IndividualQuantity o k V) (a : IndividualQuantity o k₁ R)
+    (b : IndividualQuantity o k₂ V) : Prop :=
+  q.magnitude = a.magnitude • b.magnitude
+
+/-- The smart-constructed scalar action satisfies its certificate **by construction**. -/
+theorem smulK_isSMul {V : Type} [SMul R V] [ScalarCarrier R] {k₁ k₂ k : KindOfProperty}
+    (h : ProductKind k₁ k₂ k) (a : IndividualQuantity o k₁ R) (b : IndividualQuantity o k₂ V) :
+    (smulK h a b).IsSMul h a b := rfl
 
 /-! ## Object-carried reciprocal (`k = 1 / k₁`) -/
 

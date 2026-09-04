@@ -18,6 +18,7 @@ ceremony, and this proposal is explicit about how much and where it is paid back
 | [MOTIVATION.md](MOTIVATION.md) | 10 reasons, strongest first, each with a stable heading |
 | [PLAN.md](PLAN.md) | the staged adoption ladder, the exhibits to build, and what to propose upstream |
 | [CaseStudies/HarmonicOscillator](CaseStudies/HarmonicOscillator/README.md) | the worked benchmark: four attempts at typing the same physics, scored — `lake build ForPhysLib` |
+| [CaseStudies/PointParticle](CaseStudies/PointParticle/README.md) | the second benchmark, on [physlib#1612](https://github.com/leanprover-community/physlib/pull/1612): where does the *object* live — a field, a kind, an index, or a field the value's type depends on |
 | [Exhibits/](Exhibits) | six build-artifact exhibits, A–F; F is [physlib#1612](https://github.com/leanprover-community/physlib/pull/1612), a live PR that ties quantities to objects without a metrology layer |
 
 ## Where this came from

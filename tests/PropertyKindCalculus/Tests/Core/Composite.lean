@@ -33,7 +33,10 @@ def angVelK : KindOfProperty := { id := "composite probe angular velocity", scal
 /-- An *ordinal* kind — the scale gate's target: no sum is meaningful, so no license exists. -/
 def hardnessK : KindOfProperty := { id := "composite probe hardness", scale := .ordinal }
 
-instance : Assembles massK := ⟨DifferenceKind.ofScale⟩
+/-- The sort of whole the probes assemble. -/
+def probeS : SortOfSystem := ⟨"composite probe assembly"⟩
+
+instance : Assembles probeS massK := ⟨DifferenceKind.ofScale⟩
 
 /-! ## The gate needs nothing from the object type -/
 
@@ -64,11 +67,11 @@ rather than a single atom. -/
 def four : Decomposition Part4 := Decomposition.ofParts 0 [1, 2, 3]
 
 /-- Two kilograms per part, each characterizing its own part. -/
-def partMass (c : Part4) : IndividualQuantity (Composite.part c) massK Int := ⟨2⟩
+def partMass (c : Part4) : IndividualQuantity (Composite.part (σ := probeS) c) massK Int := ⟨2⟩
 
 /-- The whole's mass, assembled. -/
-def wholeMass : IndividualQuantity (Composite.whole (P := Part4)) massK Int :=
-  assemble Composite.whole Composite.part four partMass
+def wholeMass : IndividualQuantity (Composite.whole : Composite probeS Part4) massK Int :=
+  assemble probeS Composite.whole Composite.part four partMass
 
 -- Inhabitation: four parts of two kilograms assemble to eight.
 #guard wholeMass.magnitude == 8
@@ -78,12 +81,13 @@ def wholeMass : IndividualQuantity (Composite.whole (P := Part4)) massK Int :=
 
 -- Boundary: the license is opt-in — `angVelK` is a ratio kind, so nothing about its *scale*
 -- stops the sum; what stops it is that no one registered it as assembling.
-#check_failure fun (f : (c : Part4) → IndividualQuantity (Composite.part c) angVelK Int) =>
-  assemble (k := angVelK) Composite.whole Composite.part four f
+#check_failure fun (f : (c : Part4) →
+      IndividualQuantity (Composite.part (σ := probeS) c) angVelK Int) =>
+  assemble (k := angVelK) probeS Composite.whole Composite.part four f
 
 -- Boundary: the license has content — an ordinal kind cannot be licensed at all, because
 -- `Assembles` carries the same scale gate `add` demands.
-#check_failure (⟨DifferenceKind.ofScale⟩ : Assembles hardnessK)
+#check_failure (⟨DifferenceKind.ofScale⟩ : Assembles probeS hardnessK)
 
 /-! ## Assembly is §13.5 aggregation -/
 
@@ -102,11 +106,67 @@ theorem leafMass_extensive : Extensive massK leafMass := ⟨fun _ => rfl, fun _ 
 -- Inhabitation of the bridge: the assembled magnitude *is* the value the measurement reports
 -- for the whole, on the nested decomposition — the license cashed against a real witness.
 theorem assembled_is_measured :
-    (assemble (k := massK) (Composite.whole (P := Part4)) Composite.part four
-      (fun p => ⟨(leafMass (.atom p)).numeral⟩)).magnitude = (leafMass four).numeral :=
-  assemble_eq_measured _ _ leafMass_extensive four
+    (assemble (k := massK) probeS (Composite.whole : Composite probeS Part4) Composite.part
+      four (fun p => ⟨(leafMass (.atom p)).numeral⟩)).magnitude = (leafMass four).numeral :=
+  assemble_eq_measured probeS _ _ leafMass_extensive four
 
 #guard (leafMass four).numeral == 4
+
+/-! ## The license is sort-relative — the volume split
+
+One kind, two sorts of whole, opposite verdicts, and both backed by a witness. Volume over
+the parts of a rigid assembly is additive by construction and is licensed; volume over the
+parts of a mixture contracts — the source's own ethanol/water counterexample — and no
+license exists to look up. A registry keyed by the kind alone would have to give one answer
+to both, and either answer is wrong. -/
+
+/-- The rigid sort of whole: volumes of disjoint rigid parts aggregate. -/
+def rigidS : SortOfSystem := ⟨"rigid assembly"⟩
+/-- The mixed sort of whole: volumes of miscible parts do not. -/
+def mixtureS : SortOfSystem := ⟨"liquid mixture"⟩
+
+/-- A rigid-assembly volume reading — additive by construction, one unit per leaf. -/
+def rigidVolume : Measurement Part4 :=
+  fun d => { kind := volume, numeral := countLeaves d, reference := "L" }
+
+/-- The `Extensive` witness that backs the rigid license — real, not assumed. -/
+theorem rigidVolume_extensive : Extensive volume rigidVolume := ⟨fun _ => rfl, fun _ _ => rfl⟩
+
+/-- Volume assembles into a *rigid* whole. -/
+instance : Assembles rigidS volume := ⟨DifferenceKind.ofScale⟩
+
+-- The mixture's refusal is not a missing registration; it has a *negative* witness — the
+-- source's ethanol/water contraction (96 < 50 + 50).
+theorem mixture_volume_not_extensive : ¬ Extensive volume volMix := mixing_subadditive.2
+
+-- Boundary: same kind, other sort — no license to look up, so the assembled mixture volume
+-- is not a term.
+#check_failure (inferInstance : Assembles mixtureS volume)
+
+-- Inhabitation: the rigid assembly's volume is a term, and it is the measured whole.
+theorem rigid_volume_assembles :
+    (assemble (k := volume) rigidS (Composite.whole : Composite rigidS Part4) Composite.part
+      four (fun p => ⟨(rigidVolume (.atom p)).numeral⟩)).magnitude
+      = (rigidVolume four).numeral :=
+  assemble_eq_measured rigidS _ _ rigidVolume_extensive four
+
+/-! ## Two wholes over one part type — the statue and the lump
+
+The sort index on `Composite` is what lets both stand: same parts, different sorts, different
+types, so a quantity of the one whole does not combine with a quantity of the other. Which
+whole a total belongs to is part of what the total is. -/
+
+/-- A statue, as a sort of whole over the probe parts. -/
+def statueS : SortOfSystem := ⟨"statue"⟩
+/-- The mere lump over the very same parts. -/
+def lumpS : SortOfSystem := ⟨"lump of clay"⟩
+
+-- Boundary: the statue's mass and the lump's mass do not add, though the parts are the same
+-- and the kind is the same.
+#check_failure fun
+    (x : IndividualQuantity (Composite.whole : Composite statueS Part4) massK Int)
+    (y : IndividualQuantity (Composite.whole : Composite lumpS Part4) massK Int) =>
+  IndividualQuantity.add DifferenceKind.ofScale x y
 
 /-! ## Designation is an obligation, not a formality -/
 

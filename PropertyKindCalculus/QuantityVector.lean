@@ -35,6 +35,9 @@ magnitude.
 -/
 
 import PropertyKindCalculus.Quantity
+-- The scalar action at the end of this module is licensed by the same `ProductKind` law
+-- `Quantity.mul` takes, which lives with the classification layer.
+import PropertyKindCalculus.QuantityClassification
 
 namespace PropertyKindCalculus
 
@@ -150,5 +153,46 @@ def Quantity.size {k : KindOfProperty} {R : Type} (v : Quantity k (Array R)) : N
 
 @[simp] theorem Quantity.size_eq {k : KindOfProperty} {R : Type}
     (v : Quantity k (Array R)) : v.size = v.magnitude.size := rfl
+
+/-! ## The scalar action — a scalar quantity acting on a vector quantity
+
+`Quantity.mul` asks for `[Mul R]` and `[ScalarCarrier R]` on **one** carrier, which is right
+for two scalars and unavailable for the operation vector mechanics is made of: a *scalar*
+quantity scaling a *vector* one. `p = m · v`, `F = m · a`, `L = m · (r × v)` all have a scalar
+on the left, a numerical vector on the right, and a kind law joining them.
+
+This is §18's own reading, not a new idea: a vector quantity is one numerical array with one
+scalar unit on its kind, so scaling it is the scalar's magnitude acting on the array and the
+kinds multiplying. The gate that keeps it honest is `[ScalarCarrier R]` on the **acting**
+side — a vector carrier is deliberately not a `ScalarCarrier` (see the note above), so this
+cannot be misread as a componentwise product of two vectors.
+
+Without it, an application that needs `m · v` has to mint an unlicensed action and attest it
+at the Mathlib-interface tier, which is where the kind stops being checked. -/
+
+/-- **Kind-licensed scalar action.** A `k₁`-quantity at a scalar carrier `R` scaling a
+`k₂`-quantity at any carrier `V`, licensed by the same `ProductKind` law `mul` takes, landing
+at `k`. The `SMul R V` is Mathlib's (or the carrier's own); the kind arithmetic is this
+library's. -/
+def Quantity.smulK {R V : Type} [SMul R V] [ScalarCarrier R] {k₁ k₂ k : KindOfProperty}
+    (_h : ProductKind k₁ k₂ k) (a : Quantity k₁ R) (b : Quantity k₂ V) : Quantity k V :=
+  ⟨a.magnitude • b.magnitude⟩
+
+@[simp] theorem Quantity.smulK_magnitude {R V : Type} [SMul R V] [ScalarCarrier R]
+    {k₁ k₂ k : KindOfProperty} (h : ProductKind k₁ k₂ k) (a : Quantity k₁ R)
+    (b : Quantity k₂ V) : (Quantity.smulK h a b).magnitude = a.magnitude • b.magnitude := rfl
+
+/-- **The scalar-action certificate** (R12): `q` at kind `k` is the scalar `a` acting on the
+vector `b`. A proof *certifies* the classification rather than asserting it, exactly as
+`IsProduct` does for the homogeneous product. -/
+def Quantity.IsSMul {R V : Type} [SMul R V] [ScalarCarrier R] {k₁ k₂ k : KindOfProperty}
+    (_h : ProductKind k₁ k₂ k) (q : Quantity k V) (a : Quantity k₁ R) (b : Quantity k₂ V) :
+    Prop :=
+  q.magnitude = a.magnitude • b.magnitude
+
+/-- The smart-constructed scalar action satisfies its certificate **by construction**. -/
+theorem Quantity.smulK_isSMul {R V : Type} [SMul R V] [ScalarCarrier R]
+    {k₁ k₂ k : KindOfProperty} (h : ProductKind k₁ k₂ k) (a : Quantity k₁ R)
+    (b : Quantity k₂ V) : (Quantity.smulK h a b).IsSMul h a b := rfl
 
 end PropertyKindCalculus

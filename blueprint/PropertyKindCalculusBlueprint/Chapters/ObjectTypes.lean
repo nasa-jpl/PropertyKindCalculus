@@ -107,6 +107,70 @@ is an _examination_. Whether a sample drawn at one moment is a
 different system from the sample drawn at the next is a modeling decision about the
 system, not something the parameterization settles.
 
+# The generality of the paradigm
+
+It is tempting to read the census as a taxonomy the calculus provides — six kinds of object,
+pick one. It is the opposite. *PKC contributes no taxonomy of objects; it contributes the fact
+that it needs none.*
+
+What a metrology layer must have of an object is discrimination, and discrimination is what a
+type *is*. So every entry in the census is either a type the host library already has
+(nominal, structural, indexed, singleton) or an ordinary type former applied to such types
+(composite, joint) — and the *gate* on all of them is definitional equality, which comes with
+the type and costs nothing to carry.
+
+That is why the shapes compose without any provision being made for it. A quantity of *this
+instrument*, at *this pixel*, of *that particle* is a quantity of the triple
+`Object × Cell × Particle`, and its gate is the triple's own equality: differ in any one
+factor and the sum is refused. Nothing in the library knows that this combination exists.
+
+## What the library ships, and what it refuses to ship
+
+Exactly two things do not come from the type former:
+
+_The one object type a host cannot have._ A whole is not one of its parts, so a part type
+does not contain the assembly, so the total has nowhere to live. The _composite_ is that type, and it is the only object *construction* this library ships.
+
+_Closure of designation._ Naming a derived object is a terminological commitment, not a
+derivation, and the library states the obligation instead of guessing the convention. The
+composition principle is that a designation travels along an injection; the injectivity is
+the author's claim, `decide` for a finite object type and a lemma otherwise.
+
+The refusal is the substantive half. An automatic designation for pairs would have to join two
+names into one, and the encoding an author reaches for first — concatenate with a separator —
+is not injective, because the separator can occur inside a name. Two different couplings, one
+name, silently. The `Examples` library carries that counterexample as a compiled fact; it is
+the reason `Designated` carries an injectivity field rather than a docstring.
+
+:::definition "def_designatedOfInjective" (parent := "object_types") (lean := "PropertyKindCalculus.Designated.ofInjective")
+_Designation travels along an injection._ An object type that injects into a {uses "def_designated"}[designated] one is designated: name each object by the name of its image. This is the composition principle for the whole census — an index family, a combination of factors, a sub-selection of a named set — and the only one most models need.
+:::
+
+:::proof "def_designatedOfInjective"
+Compose the two maps and the two injectivity proofs. A *definition*, not an instance: which naming a model uses is the model's decision, and instance search finding one by accident is the failure `designation_inj` exists to prevent. `Designated.prod` is its specialization to a pair, taking the join of two names and the proof that the join is injective.
+:::
+
+# Operations the object index changes
+
+Two operations look ordinary until the object is in the type, and then say something they
+could not say before.
+
+:::definition "def_smulK" (parent := "object_types") (lean := "PropertyKindCalculus.IndividualQuantity.smulK")
+_The kind-licensed scalar action._ A scalar quantity of an object scaling a vector quantity *of the same object*, licensed by the same product law the homogeneous product takes. `p = m·v` and `F = m·a` have this shape, and the homogeneous product cannot express them: it wants one carrier for both operands, and here one side is a number and the other a numerical vector.
+:::
+
+:::proof "def_smulK"
+The carrier's own `SMul` on the magnitudes, with `ScalarCarrier` demanded of the *acting* side — a vector carrier is deliberately not a `ScalarCarrier`, so this cannot be misread as a componentwise product of two vectors. The object gate is as much the point as the kind law: one particle's mass scaling another's acceleration is exactly the substitution an object-blind model has no way to refuse, and it is the shape of an ordinary copy-paste error. Without this operation an application has to mint an unlicensed action and attest it at the interface tier, which is where the kind stops being checked.
+:::
+
+:::definition "def_transpose" (parent := "object_types") (lean := "PropertyKindCalculus.IndividualQuantity.transpose")
+_The transpose of a joint quantity._ The same magnitude, read as a quantity of the reversed pair — the equal-and-opposite reading, and the *only* re-indexing of an individual quantity the library offers. Its value is that a law becomes a type: a "reverse" that negates a magnitude and forgets to exchange the endpoints has the untransposed type and does not elaborate where a reversed quantity is expected.
+:::
+
+:::proof "def_transpose"
+The magnitude, at the swapped index; the involution is `rfl`. There is deliberately no general re-indexing: moving a magnitude from one object to another is what the object index exists to prevent, and an operation that did it on request would return the layer to a naming convention. The transpose is safe because it is not a move — `(a, b)` and `(b, a)` are one coupling read from its two ends, and which end is the source is the content of a law like Newton's third.
+:::
+
 # Assembly over a composite
 
 Gating on the object refuses a sum across two objects, which is what it is for — and
@@ -114,20 +178,28 @@ it refuses, with equal correctness, the _total_ mass of an assembly, because the
 characterizes an object the part type does not contain. Aggregation therefore needs an
 eliminator, and the eliminator is where the §13.5 license enters.
 
+:::definition "def_sortOfSystem" (parent := "object_types") (lean := "PropertyKindCalculus.SortOfSystem")
+The _sort of system_ — the substantial *universal* as against the substantial *particular*: _plasma_ as against this sample, _rover_ as against rover 1. Dybkær's dedicated kind-of-property is defined over exactly this — "kind-of-property with given *sort of* system and any pertinent component" (Ch. 20, quoted from the source's own definition) — and the mereological registry is keyed by it, because how parts unify into a whole is dictated by the sort of the whole.
+:::
+
+:::proof "def_sortOfSystem"
+A one-field structure with `DecidableEq`, mirroring the {uses "def_system"}[system] carrier one ontological level up. `Sorted O` is the instantiation arrow from an object type to its sorts (`sortOf : O → SortOfSystem`), declared per model and never derived. With these, the calculus carries all four corners of the neo-Aristotelian square the user-facing ontology literature calls the four-category analysis: kinds-of-property (attributes), individual quantities (modes), objects (particulars), and now sorts of system (substantial universals) — of which three were already present and the fourth was being played, by convention, by the particular. One correction remains open: `DedicatedKind.system` currently stores a particular where the quoted definition asks for a sort.
+:::
+
 :::definition "def_composite" (parent := "object_types") (lean := "PropertyKindCalculus.Composite")
-The _composite_ object type over a part type: the whole, or one of its parts. The whole and the parts must inhabit one type or their quantities cannot be related at all; the whole is a distinct term from every part, so a whole-assembly quantity and a part quantity do not combine.
+The _composite_ object type over a part type, *as a {uses "def_sortOfSystem"}[sort] of whole*: the whole, or one of its parts. The whole and the parts must inhabit one type or their quantities cannot be related at all; the whole is a distinct term from every part, so a whole-assembly quantity and a part quantity do not combine. The sort index is what lets two wholes stand over one part type — the statue and the lump over the same clay — and their quantities do not combine either, because the types differ. Extensionality about objects is not assumed.
 :::
 
 :::proof "def_composite"
-A two-constructor inductive with `DecidableEq` and `Repr`. Naming a composite is a definition rather than an instance, taking the whole's name and the proof that no part already answers to it — a terminological commitment instance search has no business guessing.
+A two-constructor inductive with `DecidableEq` and `Repr`, indexed by the sort and the part type. Naming a composite is a definition rather than an instance, taking the whole's name and the proof that no part already answers to it — a terminological commitment instance search has no business guessing.
 :::
 
 :::definition "def_assembles" (parent := "object_types") (lean := "PropertyKindCalculus.Assembles")
-The _assembly license_: the kinds whose part quantities may be summed into the quantity of the whole. Registration is opt-in, so an unlicensed kind has no aggregation, and the entry carries the same scale gate addition demands, so a nominal or ordinal kind cannot be licensed at all.
+The _assembly license_, keyed by the {uses "def_sortOfSystem"}[sort of the whole] and the kind: which kinds' part quantities may be summed into a quantity of *that sort of* whole. Registration is opt-in, and the entry carries the same scale gate addition demands, so a nominal or ordinal kind cannot be licensed at all.
 :::
 
 :::proof "def_assembles"
-A `Prop`-valued class with one field, a `DifferenceKind` witness for the licensed kind. Mass and momentum are registered in the applications; angular velocity and displacement deliberately are not, and the sums that would be wrong are then not terms anyone can write.
+A `Prop`-valued class with one field, a `DifferenceKind` witness. The sort index is forced by the library's own counterexample: volume aggregates over the parts of a rigid assembly and contracts over the parts of a mixture (`mixing_subadditive`), and both facts are facts about volume — a registry keyed by the kind alone must either license the mixture or refuse the assembly, and either answer is wrong. The validation suite carries both verdicts side by side, each backed by its witness: an `Extensive` measurement for the rigid sort, the ethanol/water contraction for the mixture.
 :::
 
 :::definition "def_assemble" (parent := "object_types") (lean := "PropertyKindCalculus.assemble")
@@ -137,6 +209,24 @@ _Assembly_: the quantity of the whole, folded from the quantities of the parts o
 :::proof "def_assemble"
 `Decomposition.fold` of the parts' magnitudes under `Carrier.add`: the same traversal `leafSum` uses, so the quantity-level arithmetic and the §13.5 law are one recursion read at two carriers. The counterpart over a finite index (`assembleOver`, `assembleAll`) sums a `Finset` instead, which is the shape a host library's own aggregate is written in — a `Finset.sum`, recovered by `rfl` rather than by a rewriting lemma.
 :::
+
+## Two sums, and only the object tells them apart
+
+A sum of quantities appears in applied models in two shapes that are identical on the page.
+
+A _resultant_ combines several quantities *of one object and one kind* into one of the same
+object and kind: the forces acting on a particle, the currents into a node. Nothing about the
+object changes, so nothing beyond the scale gate addition already demands is needed.
+
+An _assembly_ combines the quantities of the *parts* into a quantity of the *whole*. The
+object changes, and whether that is meaningful at all is a fact about the kind — which is what
+the _license_ records.
+
+Summing the particles' velocities is refused because it is an assembly of an unlicensed kind.
+Summing the forces on one particle must not be refused, because it is not an assembly. A layer
+that indexes quantities only by kind writes both with the same `∑` at the same type and can
+refuse neither; this is the clearest single thing the object index buys, and the
+`PointParticle` case study scores four designs on exactly it.
 
 :::theorem "thm_assemble_eq_measured" (parent := "object_types") (lean := "PropertyKindCalculus.assemble_eq_measured") (tags := "capstone, proved") (effort := "medium")
 *The license, cashed.* For a kind that is genuinely {uses "def_extensiveKind"}[extensive] under a measurement, the assembled magnitude over any decomposition *is* the value that measurement reports for the whole. This is what makes the license a claim about the world rather than a permission slip: the class licenses the sum to be written, and this theorem is what shows the sum is right. Volume on mixing has no `Extensive` witness, so it has no instance of this.

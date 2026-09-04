@@ -34,8 +34,14 @@ def massK : KindOfProperty := { id := "mass", scale := .ratio }
 /-- Length — a second kind, so the kind gate can be exercised alongside the object gate. -/
 def lengthK : KindOfProperty := { id := "length", scale := .ratio }
 
-/-- Mass is licensed to assemble over the parts of a composite. -/
-instance : Assembles massK := ⟨DifferenceKind.ofScale⟩
+/-- The sort of whole this file assembles — §20's "sort of system", minted once. The license
+below is keyed by it: aggregation is a fact about *what sort of whole* is being composed, not
+about the kind alone (volume aggregates over a rigid assembly and contracts over a mixture —
+the probes in `Tests/Core/Composite.lean` pin both). -/
+def gridS : SortOfSystem := ⟨"four-cell grid"⟩
+
+/-- Mass is licensed to assemble into a grid. -/
+instance : Assembles gridS massK := ⟨DifferenceKind.ofScale⟩
 
 /-! ## 1. Nominal — identity *is* the name (`System`, §3.3)
 
@@ -112,6 +118,12 @@ instance : Designated Cell where
   designation i := ⟨"cell " ++ toString i.val⟩
   designation_inj {x y} h := by revert x y h; decide
 
+/-- And the cells *instantiate a sort* — the arrow from the particular to its universal
+(`Sorted`), declared once per model. Nothing in this file consumes it yet; it is the seam the
+§20 dedicated kind attaches to, where a kind-of-property is dedicated to a *sort* of system
+rather than to a particular. -/
+instance : Sorted Cell := ⟨fun _ => ⟨"grid cell"⟩⟩
+
 /-- Designation works, and reads as the position it came from. -/
 example (x : IndividualQuantity (0 : Cell) massK Int) :
     x.toIndividualProperty.carrier = ⟨"cell 0"⟩ := rfl
@@ -131,11 +143,11 @@ above — here from the indexed cells. -/
 def grid : Decomposition Cell := Decomposition.ofParts 0 [1, 2, 3]
 
 /-- One kilogram per cell, each quantity characterizing *its own* cell. -/
-def cellMass (c : Cell) : IndividualQuantity (Composite.part c) massK Int := ⟨1⟩
+def cellMass (c : Cell) : IndividualQuantity (Composite.part (σ := gridS) c) massK Int := ⟨1⟩
 
 /-- The total mass of the grid: assembled over the mereology, characterizing the whole. -/
-def gridMass : IndividualQuantity (Composite.whole (P := Cell)) massK Int :=
-  assemble Composite.whole Composite.part grid cellMass
+def gridMass : IndividualQuantity (Composite.whole : Composite gridS Cell) massK Int :=
+  assemble gridS Composite.whole Composite.part grid cellMass
 
 /-- Four cells of one kilogram assemble to four. -/
 example : gridMass.magnitude = 4 := rfl
@@ -146,13 +158,14 @@ different objects, and the object types now *say* so. -/
 
 /- **The license is opt-in.** `lengthK` has no `Assembles` instance, so the sum of the cells'
 lengths — which is not the grid's length — is not a term anyone can write. -/
-#check_failure fun (f : (c : Cell) → IndividualQuantity (Composite.part c) lengthK Int) =>
-  assemble (k := lengthK) Composite.whole Composite.part grid f
+#check_failure fun (f : (c : Cell) →
+      IndividualQuantity (Composite.part (σ := gridS) c) lengthK Int) =>
+  assemble (k := lengthK) gridS Composite.whole Composite.part grid f
 
 /-- Designating a composite is a *commitment*: the author names the whole and shows no part
 already answers to that name. `Composite.designated` takes the proof; there is no instance
 that would guess. -/
-example : Designated (Composite Cell) :=
+example : Designated (Composite gridS Cell) :=
   Composite.designated ⟨"the grid"⟩ (by decide)
 
 /-! ## 5. Joint — one quantity, two objects (MR23)
@@ -204,5 +217,72 @@ example (x y : IndividualQuantity () massK Int) : IndividualQuantity () massK In
 /-- And the designation still reads, so the terminological half is not given up. -/
 example (x : IndividualQuantity () massK Int) :
     x.toIndividualProperty.carrier = ⟨"the apparatus"⟩ := rfl
+
+/-! ## 7. Combinations — and the two halves compose differently
+
+The shapes above are not a closed list to choose from. They compose, because they are types
+and types compose, and a realistic model combines them: a quantity of *this instrument*
+(nominal), at *this pixel* (indexed), of *that particle* (structural) is a quantity of the
+triple.
+
+What is worth knowing is that the **gate** and the **designation** compose under different
+conditions, and the difference is exactly the one the census is organized around. -/
+
+section Combination
+variable {P : Type}
+
+/-- A three-way combination: a named instrument, an indexed cell, and a structural object
+supplied by a host library about which nothing is assumed. -/
+abbrev Site (P : Type) := Object × Cell × P
+
+/-- **The gate composes for free and unconditionally.** Two quantities of one site add, with
+no instance of any kind in scope for `P`. -/
+example (o : Object) (c : Cell) (p : P)
+    (x y : IndividualQuantity ((o, c, p) : Site P) massK Int) :
+    IndividualQuantity ((o, c, p) : Site P) massK Int :=
+  IndividualQuantity.add DifferenceKind.ofScale x y
+
+/- Differ in *any one* factor and the sum is refused — here in the indexed factor alone, with
+the instrument and the particle held fixed. -/
+#check_failure fun {P : Type} (o : Object) (p : P)
+    (x : IndividualQuantity ((o, (0 : Cell), p) : Site P) massK Int)
+    (y : IndividualQuantity ((o, (1 : Cell), p) : Site P) massK Int) =>
+  IndividualQuantity.add DifferenceKind.ofScale x y
+
+/- **The designation does not compose unconditionally**: one anonymous factor makes the whole
+triple anonymous. That is the right answer, not a limitation — a name for the triple would
+have to name the particle, and there is no name to give. -/
+#check_failure (inferInstance : Designated (Site P))
+
+end Combination
+
+/-- The naming is injective — 256 pairs of sites, checked. Over an infinite object type this
+is a lemma the author owes; over a finite one it is `decide`. -/
+theorem cellPairName_inj :
+    ∀ a b c d : Cell,
+      ("cell " ++ toString a.val ++ "/" ++ toString b.val)
+        = ("cell " ++ toString c.val ++ "/" ++ toString d.val) → a = c ∧ b = d := by decide
+
+/-- **When every factor is designated, one line does it.** `Designated.ofInjective` is the
+composition principle: name the combination however the model names it, and show the naming is
+injective. That is the whole of what composing a designation requires. -/
+instance : Designated (Cell × Cell) :=
+  Designated.ofInjective
+    (fun x : Cell × Cell => (⟨"cell " ++ toString x.1.val ++ "/" ++ toString x.2.val⟩ : Object))
+    (fun {x y} h => by
+      have hb := cellPairName_inj x.1 x.2 y.1 y.2 (by injection h)
+      cases x; cases y
+      simp only [Prod.mk.injEq]
+      exact hb)
+
+/-- The composed designation reads as the pair it came from. -/
+example (x : IndividualQuantity (((0 : Cell), (1 : Cell)) : Cell × Cell) massK Int) :
+    x.toIndividualProperty.carrier = ⟨"cell 0/1"⟩ := rfl
+
+/-! **So the shape of the answer is:** the object index needs no taxonomy, because a type is
+already whatever discrimination the model has; and the designation needs one combinator per
+way of building an object type, each carrying its own obligation. The library ships the
+combinators (`Composite`, `Designated.ofInjective`, `Designated.prod`) and refuses to ship the
+naming conventions, which is why every one of them takes a proof. -/
 
 end PropertyKindCalculus.Examples.MiniObjectTypes

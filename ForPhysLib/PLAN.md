@@ -24,6 +24,8 @@ has to be reconstructed from the Status lines scattered below.
 | The ClassicalMechanics patch offer, materialized | physlib fork branch `solid-sphere-inertia` (2 commits, all upstream gates green); PR draft at `scratchpad/physlib-pr-solid-sphere-inertia.md` |
 | Decision-ladder step (ii), drafted | the Stage-1 ask at `scratchpad/physlib-ask-stage1.md` |
 | The object-type parameterization: `IndividualQuantity` over an arbitrary object type, `Designated`, `Composite`/`Assembles`/`assemble` | PKC core + `CompositeReal`; blueprint chapter *The object type*; `MiniObjectTypes`, `Tests/Core/Composite`, Exhibit F |
+| Case study 2 — `PointParticle` (physlib#1612): four typings of one physics, ergonomics a scored axis; the win-win is the *dependent target field* | `CaseStudies/PointParticle/` — Common + Attempts 1–4 + Scorecard + README |
+| The mereological sort: `SortOfSystem` + `Sorted`, `Composite σ P`, `Assembles σ k`; statue/clay + rigid-vs-mixture volume probes; `smulK`, `resultantOver`/`assembleAll`, `transpose`, `IndividualQuantity.neg`, `Designated.ofInjective`/`.prod` | PKC core + `CompositeReal`; blueprint *The object type* §generality; probes in `Tests/Core/Composite` + `MiniObjectTypes` |
 
 ### Open
 
@@ -38,6 +40,8 @@ has to be reconstructed from the Status lines scattered below.
 | Held physics — ALL SIX DELIVERED: σ_p moment (saturation unconditional); L_z = m·ℏ; degeneracy; `LadderOperators.lean` (the eleven-TODO stub); `DistributionalTwin.lean` (the duplication finding); `Maxwell.lean` (the four laws kinded + the module-private finding) | done 2026-09-01 |
 | The last two held items — the `Dynamics/` variational subtree (`Kinematics/Dynamics.lean`: 2 lookups + 3 mints + 6 edges, the whole variational calculus same-kind, `H` at 6-33 by upstream's theorem, the stale-`μ₀`-TODO finding) and the RF/AC annex promoted to ladder form (`Electromagnetism/Annex/`: 17 kinds all lookups zero mints, 5 edges consumed from the catalogue's `DefiningRelations`, the refused `P + Q`, the dB budget on 6-45). Nothing remains held | done 2026-09-02 |
 | Decide whether anything from Exhibit F is offered to physlib#1612, and in what form | Nicolas (AI-POLICY §3.1) |
+| **Decide the `DedicatedKind` correction**: Dybkær Ch. 20 defines the dedicated kind over a *sort* of system (verified verbatim against the vendored PDF: "kind-of-property with given sort of system and any pertinent component"), but `DedicatedKind.system : System` stores a particular. The faithful fix — `system : System` → `sort : SortOfSystem`, with `Sorted` closing the instantiation square — ripples through ~20 files (Index/Ontology harvest, Attempt4Pkc, TwoRovers, minis, blueprint ch.) and re-reads TwoRovers' `"rover 1 — chassis ; mass"` as dedication-to-a-sort + individuation-by-object | Nicolas decides; Claude migrates on a yes |
+| Verify + add the four-category-ontology bibliographic reference (Lowe 2006) if the blueprint prose should cite it formally — AI-POLICY §2.1: citations are human-verified | Nicolas |
 | Re-point Exhibit F's `Replica` at the real `PointParticle.System` once #1612 merges | Claude, on request |
 | Campaign wrap-up artifact (cross-directory scorecard) | undecided whether wanted |
 
