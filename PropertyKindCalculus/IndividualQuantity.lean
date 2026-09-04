@@ -24,6 +24,13 @@ This is where the **particular** lives. The §20 `DedicatedKind` carries only th
 *sort* — one catalogue entry for every rover — and the object index here is what
 individuates within a sort: dedication to the sort, individuation by the object, with no
 kinds tagged by hand.
+
+In four-category terms (Lowe, Fig. 7.1) an `IndividualQuantity o k R` is the *Modes*
+corner, and both of the square's edges into it are **type indices**: the object index `o`
+is the bottom *characterized by* edge (a mode characterizes its substance — Dybkær's own
+verb), and the kind index `k` is the right *instantiated by* edge (a mode instantiates its
+attribute). That the edges are indices is exactly why they gate: crossing either one is a
+type error, not a runtime check.
 Whether two individual quantities of one object are *equal in magnitude* (e.g. a square's
 length and width) remains, by contrast, a fact about the magnitudes — a theorem, never a
 type-check.

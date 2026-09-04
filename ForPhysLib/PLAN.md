@@ -41,7 +41,7 @@ has to be reconstructed from the Status lines scattered below.
 | Held physics — ALL SIX DELIVERED: σ_p moment (saturation unconditional); L_z = m·ℏ; degeneracy; `LadderOperators.lean` (the eleven-TODO stub); `DistributionalTwin.lean` (the duplication finding); `Maxwell.lean` (the four laws kinded + the module-private finding) | done 2026-09-01 |
 | The last two held items — the `Dynamics/` variational subtree (`Kinematics/Dynamics.lean`: 2 lookups + 3 mints + 6 edges, the whole variational calculus same-kind, `H` at 6-33 by upstream's theorem, the stale-`μ₀`-TODO finding) and the RF/AC annex promoted to ladder form (`Electromagnetism/Annex/`: 17 kinds all lookups zero mints, 5 edges consumed from the catalogue's `DefiningRelations`, the refused `P + Q`, the dB budget on 6-45). Nothing remains held | done 2026-09-02 |
 | Decide whether anything from Exhibit F is offered to physlib#1612, and in what form | Nicolas (AI-POLICY §3.1) |
-| Verify + add the four-category-ontology bibliographic reference (Lowe 2006) if the blueprint prose should cite it formally — AI-POLICY §2.1: citations are human-verified | Nicolas |
+| The formal Lowe bibliography entry: the correspondence is now explicit in prose (corners + edges + the derivative diagonal, verified against the user's copy of Fig. 7.1, 2026-09-04), naming only title/year/figure; a full bibliographic entry (publisher, edition, pages) needs human-verified details — AI-POLICY §2.1 | Nicolas |
 | Re-point Exhibit F's `Replica` at the real `PointParticle.System` once #1612 merges | Claude, on request |
 | Campaign wrap-up artifact (cross-directory scorecard) | undecided whether wanted |
 

@@ -82,14 +82,21 @@ contracts over the parts of a mixture, and a registry keyed by the kind-of-prope
 cannot say so.
 
 Specified abstractly by identity, exactly as `System` is — the two are the same shape at two
-ontological levels, the universal and the particular. -/
+ontological levels. In Lowe's four-category ontology (*The Four-Category Ontology*, 2006,
+Fig. 7.1) the correspondence is exact: `SortOfSystem` is the **substantial universal**, his
+*Kinds* corner, and `System` the **substantial particular**, his *Substances*. The other
+column of the square is `KindOfProperty` (his *Attributes*) over `IndividualQuantity` (his
+*Modes*), and the calculus carries the square's edges as well as its corners: `Sorted.sortOf`
+below is the left *instantiated by* edge, and the other three edges live where the corners
+they join are defined (`IndividualQuantity`, `DedicatedKind`). -/
 structure SortOfSystem where
   /-- Terminological identity of the sort. -/
   id : String
 deriving DecidableEq, Repr
 
 /-- **An object type whose objects know their sort** — the instantiation arrow from the
-particular to its universal: every object of `O` is of some sort, and `sortOf` says which.
+particular to its universal, Lowe's left edge (*Kinds* instantiated by *Substances*,
+Fig. 7.1): every object of `O` is of some sort, and `sortOf` says which.
 
 A class, but never derived: what sort a model's objects instantiate is the model's claim, made
 once. There is deliberately no blanket instance for `Object` — a nominal identity string does

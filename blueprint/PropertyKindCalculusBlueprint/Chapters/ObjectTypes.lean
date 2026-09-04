@@ -184,8 +184,30 @@ The _sort of system_ — the substantial *universal* as against the substantial 
 :::
 
 :::proof "def_sortOfSystem"
-A one-field structure with `DecidableEq`, mirroring the {uses "def_system"}[system] carrier one ontological level up. `Sorted O` is the instantiation arrow from an object type to its sorts (`sortOf : O → SortOfSystem`), declared per model and never derived. With these, the calculus carries all four corners of the neo-Aristotelian square the user-facing ontology literature calls the four-category analysis: kinds-of-property (attributes), individual quantities (modes), objects (particulars), and now sorts of system (substantial universals) — of which three were already present and the fourth was being played, by convention, by the particular. `DedicatedKind.sort` stores exactly what the quoted definition asks for, and `dedicatedFor` closes the square: dedicating a kind through an object contributes the object's sort, so two objects of one sort instantiate one catalogue entry while their quantities stay apart by type.
+A one-field structure with `DecidableEq`, mirroring the {uses "def_system"}[system] carrier one ontological level up. `Sorted O` is the instantiation arrow from an object type to its sorts (`sortOf : O → SortOfSystem`), declared per model and never derived. With these, the calculus carries all four corners of Lowe's ontological square (the four-category analysis; the correspondence is spelled out edge by edge below) — of which three were already present and the fourth was being played, by convention, by the particular. `DedicatedKind.sort` stores exactly what the quoted definition asks for, and `dedicatedFor` closes the square: dedicating a kind through an object contributes the object's sort, so two objects of one sort instantiate one catalogue entry while their quantities stay apart by type.
 :::
+
+The correspondence with Lowe's four-category ontology (*The Four-Category Ontology*, 2006,
+Fig. 7.1 — the ontological square) is worth stating edge by edge, because the calculus
+carries the *relations* of the square and not only its corners. The corners: `SortOfSystem`
+is his _Kinds_ (the substantial universal), the object index his _Substances_ (the
+substantial particular), `KindOfProperty` his _Attributes_ (the non-substantial universal),
+`IndividualQuantity` his _Modes_. The edges: `Sorted.sortOf` is the left _instantiated by_
+edge — substances instantiate kinds. The right _instantiated by_ edge — modes instantiate
+attributes — is the kind index of an individual quantity, and the bottom _characterized by_
+edge — substances characterized by modes — is its object index: both edges into the mode
+are *type indices*, which is exactly why they gate arithmetic. The top _characterized by_
+edge — kinds characterized by attributes — is the dedicated kind, refined by Dybkær's
+pertinent component, a refinement the square itself does not carry.
+
+The diagonal is a structural agreement rather than a construct. Lowe's _exemplified by_ —
+a substance exemplifying an attribute — is derivative for him, factoring through either
+path around the square, and the calculus likewise has no primitive object-to-kind-of-property
+construct: the dispositional route (up the left edge, then across the top) is
+`dedicatedFor`, and the occurrent route (across the bottom, then up the right) is an
+inhabitant of `IndividualQuantity o k R`. Where the calculus narrows Lowe: the attributes
+here are kinds-of-property specifically — quantitative attributes carrying a scale and an
+examination — not attributes at large.
 
 :::definition "def_composite" (parent := "object_types") (lean := "PropertyKindCalculus.Composite")
 The _composite_ object type over a part type, *as a {uses "def_sortOfSystem"}[sort] of whole*: the whole, or one of its parts. The whole and the parts must inhabit one type or their quantities cannot be related at all; the whole is a distinct term from every part, so a whole-assembly quantity and a part quantity do not combine. The sort index is what lets two wholes stand over one part type — the statue and the lump over the same clay — and their quantities do not combine either, because the types differ. Extensionality about objects is not assumed.

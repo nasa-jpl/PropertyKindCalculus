@@ -23,6 +23,17 @@ value characterizes is carried one layer down, as the object index of an
 `IndividualQuantity` — dedication to the sort, individuation by the object — and
 `dedicatedFor` below is the arrow from that layer to this one.
 
+In four-category terms (Lowe, *The Four-Category Ontology*, 2006, Fig. 7.1) a dedicated
+kind is the **top edge** of the ontological square: the substantial universal (the sort)
+*characterized by* the attribute (the kind-of-property), refined by Dybkær's pertinent
+component — a refinement the square itself does not carry. The diagonal — a substance
+*exemplifying* an attribute — is derivative in Lowe, factoring through either path around
+the square, and the calculus agrees structurally: there is no primitive object-to-kind
+construct. His dispositional route (up the left edge, then across the top) is
+`dedicatedFor` — `Sorted.sortOf`, then the catalogue; his occurrent route (across the
+bottom, then up the right) is an inhabitant of `IndividualQuantity o k R`, which
+characterizes the object and instantiates the kind.
+
 This is the construct the QUDV → OML/OWL2 lineage cannot express. OWL2 can record
 that a quantity *has* a sort of system and a component, but it cannot make
 *"Soil — Water ; volume fraction"* and *"Soil — Water ; mass fraction"* provably
@@ -74,7 +85,8 @@ def KindOfProperty.dedicatedTo (k : KindOfProperty) (sort : SortOfSystem)
 /-- Dedicate a kind through an **object**: the object contributes exactly its sort.
 This is the instantiation square closing — the individual layer carries the
 particular, the dedicated kind its sort — and `Sorted` is the model's claim about
-which sort that is. -/
+which sort that is. In square terms, Lowe's dispositional route to exemplification:
+up the *instantiated by* edge, then across the top. -/
 def KindOfProperty.dedicatedFor {O : Type u} [Sorted O] (k : KindOfProperty)
     (o : O) (component : Component) : DedicatedKind :=
   k.dedicatedTo (Sorted.sortOf o) component

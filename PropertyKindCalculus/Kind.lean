@@ -25,7 +25,9 @@ import PropertyKindCalculus.Foundations
 namespace PropertyKindCalculus
 
 /-- **§6.19 kind-of-property** — common defining aspect of mutually comparable
-properties. -/
+properties. In four-category terms (Lowe, Fig. 7.1) this is the *Attributes* corner —
+the non-substantial universal, instantiated by individual quantities (its modes) and
+characterizing sorts of system through the §20 dedicated kinds. -/
 structure KindOfProperty where
   /-- Terminological identity (mirrors the OML `id`). -/
   id : String
