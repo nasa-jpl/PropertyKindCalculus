@@ -48,12 +48,14 @@ def tableById (id : String) (scope : Scope := #[]) : MetaM IndexTable := withHar
   | "pkc-math-config"      => configTable scope
   | "pkc-math-transparent" => transparentTable scope
   | "kinds"                => kindsTable .core scope
+  | "sorts"                => identityTable "sorts" "Sorts of system" "Sort"
+                                ``PropertyKindCalculus.SortOfSystem
+                                (some ``PropertyKindCalculus.DedicatedKind.sort) scope
   | "systems"              => identityTable "systems" "Systems" "System"
-                                ``PropertyKindCalculus.System
-                                ``PropertyKindCalculus.DedicatedKind.system scope
+                                ``PropertyKindCalculus.System none scope
   | "components"           => identityTable "components" "Components" "Component"
                                 ``PropertyKindCalculus.Component
-                                ``PropertyKindCalculus.DedicatedKind.component scope
+                                (some ``PropertyKindCalculus.DedicatedKind.component) scope
   | "dedicated-kinds"      => dedicatedKindsTable scope
   | "examinations"         => examinationsTable scope
   | "records"              => recordsTable scope
@@ -64,7 +66,7 @@ where
   tableIds : String :=
     String.intercalate ", "
       ["annotations", "commands", "crossings", "carriers", "pkc-math", "pkc-math-symbol",
-       "pkc-math-config", "pkc-math-transparent", "kinds", "systems", "components",
+       "pkc-math-config", "pkc-math-transparent", "kinds", "sorts", "systems", "components",
        "dedicated-kinds", "examinations", "records", "operations"]
 
 /-! ## Plain-text rendering, for the InfoView and for pinned probes -/

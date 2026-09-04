@@ -24,11 +24,12 @@ namespace PropertyKindCalculus
 /-! ## Dybkær (2009) — *An Ontology on Property* -/
 
 attribute [dybkaer "§3.3" "system"] System
+attribute [dybkaer "§20" "sort of system"] SortOfSystem
 attribute [dybkaer "§6.19" "kind-of-property"] KindOfProperty
 attribute [dybkaer "§12" "operator-based scale types" "the four-way division, Fig. 12.21"] ScaleType
 attribute [dybkaer "§20" "component"] Component
 attribute [dybkaer "§20" "dedicated kind-of-property"
-  "the System — Component ; kind-of-property triple (IUPAC/IFCC)"] DedicatedKind
+  "the System — Component ; kind-of-property triple (IUPAC/IFCC; the System slot names the sort)"] DedicatedKind
 attribute [dybkaer "§18.12" "metrological unit"] MetrologicalUnit
 attribute [dybkaer "§13.3.3" "quantity (number times reference)"] Quantity
 attribute [dybkaer "§13.5" "extensive kind"] Extensive

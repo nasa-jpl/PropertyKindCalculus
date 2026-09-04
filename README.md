@@ -574,7 +574,7 @@ Status: ✅ built & proved · 🚧 next · ⬜ planned
 | `Iso80000.Part12` (+ `.DefiningRelations`, in the `Iso80000` lib) — ISO 80000-12 *Condensed matter physics* **full catalogue** (all 60 items, 12-1.1 … 12-38.2): the part where **collisions are the rule** — thirteen lengths, seven energies, five *named* temperatures, five carrier densities, five reciprocal lengths, each family one dimension; Seebeck = voltage / temperature and Peltier = Seebeck × temperature as kind-laws crossing to ISO 80000-5 | ISO 80000-12 | ✅ |
 | `Iso80000.Part13` (+ `.DefiningRelations`, in the `Iso80000` lib) — IEC 80000-13 *Information science and technology* **full catalogue** (all 42 items, 13-1 … 13-42), the second IEC part: dimension one shared by distinct kinds with incommensurable **scale-spanning** special units (the shannon, the erlang, the bit; R13), the rates re-dimensioning to `T⁻¹`; signal energy = carrier power × bit period as a kind-law | IEC 80000-13 | ✅ |
 | `Iso80000` — the remaining parts (1 *General*, 2 *Mathematics*) quantity-kinds + units | ISO/IEC 80000 | ⬜ |
-| `DedicatedKind` — dedicated kind-of-property = system × component × kind-of-property (the IUPAC/IFCC `System — Component ; kind` syntax); the principled form of the vwc-vs-gwc distinctness (same target, different kind-of-property) | Dybkær Ch. 20 | ✅ |
+| `DedicatedKind` — dedicated kind-of-property = sort-of-system × component × kind-of-property (the IUPAC/IFCC `System — Component ; kind` syntax, the `System` slot naming the sort); the principled form of the vwc-vs-gwc distinctness (same target, different kind-of-property) | Dybkær Ch. 20 | ✅ |
 | `PropertyKindCalculus.Examples.Dedicated` (in the `Examples` lib) — *"soil — water ; volume fraction"* vs *"… ; mass fraction"* as distinct dedicated kinds (distinct **because the kinds-of-property differ**), the systematic-term rendering, and a different-component variant as checked facts | — | ✅ |
 | `Model.SI` — **subsumed by the `Iso80000` layer**: the SI base quantities are exercised against the real standard across Parts 3–13 (length / mass / time, Θ, electric current, luminous intensity & amount of substance), each with checked dimensional facts and coherent units | — | ✅ |
 | `Model.SoilMoisture` — **moved to a separate downstream repository**: soil-moisture retrieval is an *application* of the calculus, kept out of PKC to avoid conflating it with the metrology / ISO-IEC focus; the dimension-one witnesses (vwc, gwc, permittivity, reflectivity) stay in `Dimension` as the `dim_not_injective` capstone | — | → repo |
@@ -622,17 +622,19 @@ numerical array — not a per-coordinate bag of number×unit values — and the
 additivity laws transfer to it unchanged.
 
 The spine also specifies Dybkær's **dedicated kind-of-property** (Ch. 20): a
-generic kind-of-property bound to the *system* it characterizes and a *pertinent
-component*, in the IUPAC/IFCC `System — Component ; kind-of-property` syntax (the
-"NPU" form used in laboratory medicine). This gives the *principled* form of the
+generic kind-of-property bound to the *sort of system* it is about — the
+definition's "given sort of system" — and a *pertinent component*, in the
+IUPAC/IFCC `System — Component ; kind-of-property` syntax (the "NPU" form used in
+laboratory medicine); the *particular* system is the object index of an
+`IndividualQuantity`. This gives the *principled* form of the
 soil-moisture distinctness — volumetric and gravimetric water content are the
 *same measurement target* (soil — water) examined as two different
 kinds-of-property (volume fraction vs mass fraction), so `vwc ≠ gwc` is proved
-**because the kinds-of-property differ**, with the system and component held
+**because the kinds-of-property differ**, with the sort and component held
 identical, not from differing identity strings. It is exactly the construct the
 QUDV → OML/OWL2 lineage cannot express: OWL2 can record that a quantity *has* a
-system and a component, but it cannot make those two dedicated kinds provably
-distinct while keeping both dedicated to the same system and component.
+sort of system and a component, but it cannot make those two dedicated kinds
+provably distinct while keeping both dedicated to the same sort and component.
 
 `lake build Dimension` additionally checks the PhysLib-backed coherence layer
 (this is the one library that pulls in PhysLib + Mathlib). The dimension module

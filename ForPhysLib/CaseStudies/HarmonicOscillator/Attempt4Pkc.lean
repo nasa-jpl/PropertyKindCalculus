@@ -220,19 +220,21 @@ theorem mr5_capstone :
   refine ⟨rfl, ?_, rfl⟩
   simp [KindOfProperty.IsRational, absoluteEnergy]
 
-/-! ## The two oscillators, as systems and components
+/-! ## The two oscillators, as systems — and the pair's sort
 
-Dybkær Ch. 3: a *system* is a demarcated arrangement of elements. The pair is a system; each
-oscillator is a system; each degree of freedom of an oscillator is a system. `DedicatedKind`
-(Ch. 20) then binds a kind to a system *and* a pertinent component, in the IUPAC/IFCC
-`System — Component ; kind` syntax. -/
+Dybkær Ch. 3: a *system* is a demarcated arrangement of elements. Each oscillator is a
+system, and each is an object index below (MR7). `DedicatedKind` (Ch. 20) binds a kind to
+the **sort of system** it is about and a pertinent component, in the IUPAC/IFCC
+`System — Component ; kind` syntax — the `System` slot naming the sort, the particular
+staying with the object index. -/
 
 /-- Oscillator A, as a system. -/
 def oscA : System := { id := "oscillator A" }
 /-- Oscillator B, as a system. -/
 def oscB : System := { id := "oscillator B" }
-/-- The coupled pair, as a system — the whole that A and B are parts of. -/
-def pair : System := { id := "coupled pair A–B" }
+/-- The sort of the whole under study — a coupled oscillator pair. The dedicated kinds of
+MR9 attach to this sort; A and B are the particulars. -/
+def pairS : SortOfSystem := { id := "coupled oscillator pair" }
 
 /-! ## MR7 ✅ — object identity
 
@@ -431,29 +433,30 @@ theorem mr8_capstone :
 
 /-! ## MR9 ✅ — whole-system quantities
 
-`DedicatedKind` is the `System — Component ; kind` triple. The pair's normal modes and its
-coupling are dedicated kinds *of the pair*, distinguished by their **component** — which is
-exactly the datum neither a dimension nor an object index alone supplies. -/
+`DedicatedKind` is the `System — Component ; kind` triple, the `System` slot naming the
+sort. The pair's normal modes and its coupling are dedicated kinds *of the pair's sort*,
+distinguished by their **component** — which is exactly the datum neither a dimension nor
+an object index alone supplies. -/
 
-/-- *"coupled pair A–B — oscillator A ; angular frequency"* — A's bare frequency, read as a
-property of the pair. -/
+/-- *"coupled oscillator pair — oscillator A ; angular frequency"* — A's bare frequency,
+read as a property of the pair's sort. -/
 def dkOmegaA : DedicatedKind :=
-  angularFrequency.kind.dedicatedTo pair { id := "oscillator A" }
+  angularFrequency.kind.dedicatedTo pairS { id := "oscillator A" }
 
 /-- *"… — oscillator B ; angular frequency"*. -/
 def dkOmegaB : DedicatedKind :=
-  angularFrequency.kind.dedicatedTo pair { id := "oscillator B" }
+  angularFrequency.kind.dedicatedTo pairS { id := "oscillator B" }
 
 /-- *"… — normal mode + ; angular frequency"* — the upper normal mode. Same kind, same
 dimension, same unit, different component. -/
 def dkOmegaPlus : DedicatedKind :=
-  angularFrequency.kind.dedicatedTo pair { id := "normal mode +" }
+  angularFrequency.kind.dedicatedTo pairS { id := "normal mode +" }
 
 /-- *"… — coupling A↔B ; spring constant"* — the coupling constant. A property of the pair
 through a component that is **neither** oscillator, so it has no home in a per-object scheme
 at all. -/
 def dkCoupling : DedicatedKind :=
-  springConstant.kind.dedicatedTo pair { id := "coupling A↔B" }
+  springConstant.kind.dedicatedTo pairS { id := "coupling A↔B" }
 
 /-- **MR9 holds.** The normal-mode frequency is a different dedicated kind from either bare
 frequency — distinct **because the components differ**, not by a hand-chosen label. -/
@@ -475,10 +478,10 @@ theorem coupling_ne_omegaA : dkCoupling ≠ dkOmegaA :=
 
 /-- The systematic terms, rendered in the IUPAC/IFCC syntax the construct comes from. -/
 example : dkOmegaPlus.systematicTerm =
-    "coupled pair A–B — normal mode + ; angular frequency" := rfl
+    "coupled oscillator pair — normal mode + ; angular frequency" := rfl
 
 example : dkCoupling.systematicTerm =
-    "coupled pair A–B — coupling A↔B ; spring constant" := rfl
+    "coupled oscillator pair — coupling A↔B ; spring constant" := rfl
 
 /-- **MR9, the capstone — the object-level `dim_not_injective`.** Three pairwise-distinct
 dedicated kinds sharing one underlying kind, hence one dimension and one unit (rad/s). Every
@@ -910,21 +913,21 @@ components' (a modulus is ratio-scale, an argument is interval-scale, its origin
 of `t = 0`).
 
 That is a **kind-layer** statement, not a carrier one, and it is available: the two components
-are a `DedicatedKind` pair on one system, distinguished by component exactly as the normal
+are a `DedicatedKind` pair on one sort of system, distinguished by component exactly as the normal
 modes were in MR9. This is where MR14 hands back to Tier 2 — a dimension cannot say it, and
 neither can a carrier. -/
 
-/-- The driven oscillator, as a system. -/
-def driven : System := { id := "driven oscillator" }
+/-- The driven oscillator, as a sort of system. -/
+def drivenS : SortOfSystem := { id := "driven oscillator" }
 
 /-- Mechanical resistance — the in-phase component of the impedance. -/
 def resistance : DedicatedKind :=
-  impedance.kind.dedicatedTo driven { id := "in-phase component" }
+  impedance.kind.dedicatedTo drivenS { id := "in-phase component" }
 
 /-- Mechanical reactance — the quadrature component. Same dimension, same unit, distinct
 kind. -/
 def reactance : DedicatedKind :=
-  impedance.kind.dedicatedTo driven { id := "quadrature component" }
+  impedance.kind.dedicatedTo drivenS { id := "quadrature component" }
 
 /-- **The two components of one complex quantity are distinct dedicated kinds** — MR9's
 capstone, met again inside a single value. -/

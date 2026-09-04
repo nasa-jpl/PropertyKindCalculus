@@ -409,7 +409,7 @@ constants, so a table must not walk per-row: the harvests below take *arrays* of
 a map, and a document that renders a dozen tables should call each walk once. -/
 
 /-- Every authored constant in scope whose type is headed by `ty` — the membership test for all of
-the ontology tables (`KindOfProperty`, `System`, `Component`, `DedicatedKind`, the examination
+the ontology tables (`KindOfProperty`, `SortOfSystem`, `System`, `Component`, `DedicatedKind`, the examination
 layers, `InteractionAlgebra`). Sorted alphabetically.
 
 Headed by, not equal to: `DimensionedKind` takes a base-dimension parameter, so its inhabitants have

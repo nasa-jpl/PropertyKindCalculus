@@ -295,12 +295,16 @@ def R1 : Object := { id := "R1" }
 def R2 : Object := { id := "R2" }
 def sq : Object := { id := "square" }
 def side : Component := { id := "side" }
+/-- The sort every one of them instantiates. -/
+def rectangleS : SortOfSystem := { id := "rectangle" }
 
--- PRINCIPLED DISTINCTNESS (kind level): "length of R1" ≠ "length of R2" *because the objects
--- differ* — Dybkær Ch. 20's `distinct_of_system`, the dedication QUDV/OML can record but cannot
--- make provably distinct.
-example : length.kind.dedicatedTo R1 side ≠ length.kind.dedicatedTo R2 side :=
-  DedicatedKind.distinct_of_system (by decide)
+-- PRINCIPLED DEDICATION (kind level): the catalogue entry is dedicated to the *sort* —
+-- "rectangle — side ; length" is ONE dedicated kind for every rectangle (Dybkær Ch. 20's
+-- "given sort of system"). WHICH rectangle a measured length characterizes is the object
+-- index's to say: `lengthR1` and `widthR2` below elaborate at their own objects, and
+-- combining across them is the compile-time type error shown at (b).
+example : (length.kind.dedicatedTo rectangleS side).systematicTerm
+    = "rectangle — side ; length" := rfl
 
 -- area = length × width, as a product kind-law on the *catalogue* kinds (dimensional `L²` is
 -- `Part3.area_dim_length`).

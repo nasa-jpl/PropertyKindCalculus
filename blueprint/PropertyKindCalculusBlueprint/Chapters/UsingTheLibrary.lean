@@ -382,8 +382,13 @@ and being able to see that is the point.
 
 The Dybkær spine is inhabited by ordinary definitions, so nothing marks them as a family: the
 criterion is simply "a constant whose type is that structure". The dedicated-kind table renders each
-one as the `System — Component ; kind-of-property` triple it is, cross-linked to the system and
-component tables rather than repeating their identity strings.
+one as the `System — Component ; kind-of-property` triple it is — the `System` slot naming the
+*sort* — cross-linked to the sort and component tables rather than repeating their identity
+strings. The systems table lists the particulars; nothing dedicates to a particular, so it carries
+no dedicated-kinds column.
+
+:::pkc_index "sorts" (scope := PropertyKindCalculus.Examples)
+:::
 
 :::pkc_index "systems" (scope := PropertyKindCalculus.Examples)
 :::
@@ -394,7 +399,7 @@ component tables rather than repeating their identity strings.
 :::pkc_index "dedicated-kinds" (scope := PropertyKindCalculus.Examples)
 :::
 
-Two dedicated kinds that share a kind-of-property are held apart only by their system and component,
+Two dedicated kinds that share a kind-of-property are held apart only by their sort and component,
 and the *Theorems* column lists what proves it. A dedicated kind with no distinctness theorem is
 one that nothing yet relies on separating.
 

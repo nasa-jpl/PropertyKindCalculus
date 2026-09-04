@@ -140,8 +140,8 @@ relative-permittivity kind, different water phase — make them distinct with a
 *dedicated kind*: holding the component apart is enough to force distinct kinds,
 without inventing identity strings. -/
 
-/-- The system under examination. -/
-def soilWater : System := { id := "soil water" }
+/-- The sort of system under examination. -/
+def soilWater : SortOfSystem := { id := "soil water" }
 /-- One pertinent component. -/
 def boundWater : Component := { id := "bound water" }
 /-- A second pertinent component. -/
@@ -154,8 +154,8 @@ def boundStaticPerm : DedicatedKind := relPermKind.dedicatedTo soilWater boundWa
 /-- Free-water static permittivity = the *same* kind dedicated to soil-water / free water. -/
 def freeStaticPerm : DedicatedKind := relPermKind.dedicatedTo soilWater freeWater
 
--- Same system and same kind-of-property …
-example : boundStaticPerm.system = freeStaticPerm.system := rfl
+-- Same sort of system and same kind-of-property …
+example : boundStaticPerm.sort = freeStaticPerm.sort := rfl
 example : boundStaticPerm.kind = freeStaticPerm.kind := rfl
 -- … yet distinct dedicated kinds, because the *component* differs.
 example : boundStaticPerm ≠ freeStaticPerm := DedicatedKind.distinct_of_component (by decide)

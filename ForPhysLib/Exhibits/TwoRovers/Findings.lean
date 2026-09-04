@@ -89,20 +89,25 @@ def parts : List RoverPart :=
 
 /-! ## MR20 — a quantity belongs to a named part of a named system
 
-The §20 dedicated kind is the catalogue form; the object index `partOf r p` is the same
-identity, gating the arithmetic. -/
+Dybkær §20 dedicates a kind to a **sort** of system — one catalogue entry serves the whole
+fleet — while the *named* system of the requirement is the object index `partOf r p`, which
+is where the arithmetic is gated (artifact 2a below: the two chassis masses inhabit
+different types). Dedication to the sort, individuation by the object. -/
 
-/-- The systematic term renders as Dybkær §20 says it should. -/
-example :
-    (massK.dedicatedTo rover1 (RoverPart.component .chassis)).systematicTerm
-      = "rover 1 — chassis ; mass" := rfl
+/-- The sort both rovers instantiate. -/
+def roverS : SortOfSystem := ⟨"rover"⟩
 
-/-- The two chassis masses are distinct dedicated kinds *because the systems differ* —
-not because of any hand-chosen string on the quantity. -/
-theorem chassis_mass_ne_across_rovers :
-    massK.dedicatedTo rover1 (RoverPart.component .chassis)
-      ≠ massK.dedicatedTo rover2 (RoverPart.component .chassis) :=
-  DedicatedKind.distinct_of_system (by decide)
+/-- *The* catalogue entry for a chassis mass — one dedicated kind for the fleet. -/
+def chassisMassDK : DedicatedKind := massK.dedicatedTo roverS (RoverPart.component .chassis)
+
+/-- The systematic term names the sort, as §20 says it should ("given sort of system");
+the particular rover is the object index's to carry. -/
+theorem chassisMassDK_term : chassisMassDK.systematicTerm = "rover — chassis ; mass" := rfl
+
+/-- The two chassis are distinct *objects* — the distinctness that gates artifact 2a:
+rover 1's chassis mass and rover 2's inhabit different quantity types. -/
+theorem chassis_objects_distinct : partOf rover1 .chassis ≠ partOf rover2 .chassis := by
+  decide
 
 /-! ## MR21 — assembly is licensed per kind, and two-sided -/
 

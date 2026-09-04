@@ -33,7 +33,7 @@ something in an index.
 The **Algebra** column of the kind table is the one to read first. A kind's authored edges are the
 complete statement of what may be done with it arithmetically, because the calculus infers none of
 them — so an empty cell there means the kind supports no arithmetic at all."
-  ["annotations", "carriers", "crossings", "kinds", "systems", "components", "dedicated-kinds",
-   "examinations", "records", "operations", "pkc-math", "pkc-math-symbol", "pkc-math-config",
-   "pkc-math-transparent"]
+  ["annotations", "carriers", "crossings", "kinds", "sorts", "systems", "components",
+   "dedicated-kinds", "examinations", "records", "operations", "pkc-math", "pkc-math-symbol",
+   "pkc-math-config", "pkc-math-transparent"]
   PropertyKindCalculus

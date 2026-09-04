@@ -39,15 +39,16 @@ and the parameterization splits its obligations in two:
     definitionally, which is why the object *gate* needs no class and costs nothing to
     carry to a foreign object type.
   * **designation** — naming an object in the terminological vocabulary, which is what
-    `IndividualProperty` (Ch. 3) and the §20 dedicated kind consume. This is *not* free,
-    and `Designated` below is where an object type supplies it.
+    `IndividualProperty` (Ch. 3) consumes. This is *not* free, and `Designated` below is
+    where an object type supplies it. (The §20 dedicated kind consumes the object's
+    *sort*, not its name — that half is `Sorted`'s.)
 
 The nominal type supplies both; a structural one supplies only the first, and honestly
 saying so is the point of separating them. -/
 
 /-- **An object type with terminological identity.** A map from the object type into the
-nominal `Object`, so an individual property can name the object it characterizes (§3.3,
-Ch. 20) whatever the object type is.
+nominal `Object`, so an individual property can name the object it characterizes (§3.3)
+whatever the object type is.
 
 The injectivity field is the whole content of the class. Without it, an author facing a
 structural object type — physlib's particles, a mesh cell — can always satisfy the class by

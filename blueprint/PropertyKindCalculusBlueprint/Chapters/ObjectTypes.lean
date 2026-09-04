@@ -30,9 +30,10 @@ inspect it. What stops a length of `R1` multiplying a width of `R2` is that the 
 types differ, and nothing else.
 
 _Designation_ — naming an object in the terminological vocabulary — is what
-Dybkær's instance layer and the Chapter 20 dedicated kind consume, and it is not
-free. It is supplied by `Designated`, and an object type that has no identity of its
-own has no instance.
+Dybkær's instance layer consumes, and it is not free. It is supplied by
+`Designated`, and an object type that has no identity of its own has no instance.
+(The Chapter 20 dedicated kind consumes the object's _sort_, not its name — that
+half is `Sorted`'s.)
 
 The asymmetry is the point. A host library's own objects — the particles of a
 mechanical system, the cells of a mesh, the pixels of a scene — can be _gated_ with
@@ -183,7 +184,7 @@ The _sort of system_ — the substantial *universal* as against the substantial 
 :::
 
 :::proof "def_sortOfSystem"
-A one-field structure with `DecidableEq`, mirroring the {uses "def_system"}[system] carrier one ontological level up. `Sorted O` is the instantiation arrow from an object type to its sorts (`sortOf : O → SortOfSystem`), declared per model and never derived. With these, the calculus carries all four corners of the neo-Aristotelian square the user-facing ontology literature calls the four-category analysis: kinds-of-property (attributes), individual quantities (modes), objects (particulars), and now sorts of system (substantial universals) — of which three were already present and the fourth was being played, by convention, by the particular. One correction remains open: `DedicatedKind.system` currently stores a particular where the quoted definition asks for a sort.
+A one-field structure with `DecidableEq`, mirroring the {uses "def_system"}[system] carrier one ontological level up. `Sorted O` is the instantiation arrow from an object type to its sorts (`sortOf : O → SortOfSystem`), declared per model and never derived. With these, the calculus carries all four corners of the neo-Aristotelian square the user-facing ontology literature calls the four-category analysis: kinds-of-property (attributes), individual quantities (modes), objects (particulars), and now sorts of system (substantial universals) — of which three were already present and the fourth was being played, by convention, by the particular. `DedicatedKind.sort` stores exactly what the quoted definition asks for, and `dedicatedFor` closes the square: dedicating a kind through an object contributes the object's sort, so two objects of one sort instantiate one catalogue entry while their quantities stay apart by type.
 :::
 
 :::definition "def_composite" (parent := "object_types") (lean := "PropertyKindCalculus.Composite")

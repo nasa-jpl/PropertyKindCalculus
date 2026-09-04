@@ -271,13 +271,15 @@ library's own objects — the particles of a mechanical system, the cells of a m
 admissible indices without that library changing; see the _The object type_ chapter for
 what that costs and what it does not buy.
 
-*R22 — A quantity is dedicated to a named component of a named system; dedications of
-distinct systems are provably distinct.* The sharpened successor of the part of R19
-that "object identity" undersold, minted from the ForPhysLib benchmark's two-rover
-construction (see *Requirement validation* below): with one system there is no way to
-distinguish "the sum of the parts" from "the sum of some masses of the right
-dimension", because every mass in scope is a correct summand. `DedicatedKind` records
-the full `System — Component ; kind` triple, and `distinct_of_system` makes
+*R22 — A quantity is dedicated to a named component of a named sort of system;
+dedications of distinct sorts are provably distinct, and the particular is the object
+index's.* The sharpened successor of the part of R19 that "object identity" undersold,
+minted from the ForPhysLib benchmark's two-rover construction (see *Requirement
+validation* below): with one system there is no way to distinguish "the sum of the
+parts" from "the sum of some masses of the right dimension", because every mass in
+scope is a correct summand. `DedicatedKind` records the `System — Component ; kind`
+triple with the `System` slot naming the sort — one catalogue entry for the fleet
+(`distinct_of_sort`, `dedicatedFor_congr`) — and the object index is what makes
 cross-system substitution — rover 1's total mass drawing on rover 2's wheel — a type
 error rather than a modeling discipline.
 

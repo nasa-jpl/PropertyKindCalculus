@@ -60,8 +60,8 @@ attribute [requirement "R3" specifies "an individual measured value is a term of
 
 attribute [requirement "R19" specifies "a quantity that characterizes an object — the object rides in the type, alongside the kind"]
   IndividualQuantity
-attribute [requirement "R19" proves "quantities of different objects are provably distinct: differing systems ⇒ differing dedicated kinds"]
-  DedicatedKind.distinct_of_system
+attribute [requirement "R19" proves "the kind-level half: differing sorts ⇒ differing dedicated kinds; within a sort, differing objects ⇒ differing quantity *types*"]
+  DedicatedKind.distinct_of_sort
 
 /-! ## Operation gating (R4, R5, R6) -/
 
@@ -158,19 +158,20 @@ attribute [requirement "R12" specifies "the by-construction product certificate"
 attribute [requirement "R12" proves "the smart-constructed product satisfies its certificate by construction"]
   Quantity.mul_isProduct
 
-/-! ## Dedication to a system's component (R22)
+/-! ## Dedication to a sort's component (R22)
 
 R22 is the sharpened successor of the part of R19 that "object identity" undersold: not
-merely *an* object in the type, but a **named component of a named system**, with
-cross-system substitution provably impossible. Minted from the ForPhysLib benchmark's
-MR20 (two rovers: rover 1's total mass cannot draw on rover 2's parts) — see the blueprint's
-*Requirement validation* section. `DedicatedKind.distinct_of_system` keeps its R19
-annotation too: one theorem, two obligations. -/
+merely *an* object in the type, but a **named component of a named sort of system**, with
+the particular carried by the object index — where cross-system substitution (rover 1's
+total mass drawing on rover 2's parts, the ForPhysLib benchmark's MR20) is a type error.
+Minted from that two-rover construction — see the blueprint's *Requirement validation*
+section. `DedicatedKind.distinct_of_sort` keeps its R19 annotation too: one theorem, two
+obligations. -/
 
-attribute [requirement "R22" specifies "the System — Component ; kind dedication triple"]
+attribute [requirement "R22" specifies "the System — Component ; kind dedication triple, the System slot naming the sort"]
   DedicatedKind
-attribute [requirement "R22" proves "dedications of distinct systems are distinct, so cross-system substitution is a type error"]
-  DedicatedKind.distinct_of_system
+attribute [requirement "R22" proves "dedications of distinct sorts are distinct; the particular is the object index's, where cross-system substitution is a type error"]
+  DedicatedKind.distinct_of_sort
 
 /-! ## Ergonomics and erasure (R21)
 

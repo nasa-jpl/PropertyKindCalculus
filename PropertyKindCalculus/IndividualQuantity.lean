@@ -20,8 +20,10 @@ does. So the metrology gate the plain numeric model lacks becomes a *compile-tim
     width of `R2` does not type-check; and
   * two quantities add with `add` only when they share **both** the object and the kind.
 
-This is the first-class form of the object identity the `DedicatedKind` (Ch. 20) construct
-expresses at the kind level, now available on quantities without tagging kinds by hand.
+This is where the **particular** lives. The §20 `DedicatedKind` carries only the object's
+*sort* — one catalogue entry for every rover — and the object index here is what
+individuates within a sort: dedication to the sort, individuation by the object, with no
+kinds tagged by hand.
 Whether two individual quantities of one object are *equal in magnitude* (e.g. a square's
 length and width) remains, by contrast, a fact about the magnitudes — a theorem, never a
 type-check.

@@ -77,15 +77,15 @@ def fieldStringChain (declName : Name) (chain : Array Name) : MetaM String := do
 def fieldString (declName field : Name) : MetaM String :=
   fieldStringChain declName #[field]
 
-/-- The `System`/`Component`/`KindOfProperty` a dedicated kind projects to, as the *declaration*
-that defines it where one exists — so the cell can link — else as the rendered value.
+/-- The `SortOfSystem`/`Component`/`KindOfProperty` a dedicated kind projects to, as the
+*declaration* that defines it where one exists — so the cell can link — else as the rendered value.
 
-A `DedicatedKind` is built by `k.dedicatedTo sys comp`, so its fields *are* the very constants the
-model declared; recovering them is what lets the dedicated-kind table cross-link to the system and
+A `DedicatedKind` is built by `k.dedicatedTo sort comp`, so its fields *are* the very constants the
+model declared; recovering them is what lets the dedicated-kind table cross-link to the sort and
 component tables instead of repeating their identity strings.
 
-Reducing the *projection* is the wrong move and gives the wrong answer: `whnf (DedicatedKind.system
-vwc)` runs all the way to `System.mk "soil water"`, so the constant the author wrote is gone and the
+Reducing the *projection* is the wrong move and gives the wrong answer: `whnf (DedicatedKind.sort
+vwc)` runs all the way to `SortOfSystem.mk "soil"`, so the constant the author wrote is gone and the
 cell can only say `mk`. What is wanted is the argument *as written*. So reduce the declaration's own
 value just far enough to expose its constructor application — `waterKind.dedicatedTo soil water`
 becomes `DedicatedKind.mk soil water waterKind`, with the arguments still unreduced, because `whnf`
@@ -160,42 +160,50 @@ def kindsTable (layer : KindLayer) (scope : Scope) : MetaM IndexTable := do
       .links ((thms.getD k #[]).map fun t => (t, lastComponent t))])
   return { id := layer.id, title := layer.title, headers, rows }
 
-/-- The one-identity ontology values — `System` and `Component` — with the dedicated kinds built on
-them. `ty` is the structure, `dedicatedField` the `DedicatedKind` projection that points back here
-(`DedicatedKind.system` or `.component`), which is what turns the table into a two-way index. -/
-def identityTable (id title heading : String) (ty dedicatedField : Name) (scope : Scope) :
-    MetaM IndexTable := do
+/-- The one-identity ontology values — `SortOfSystem`, `System` and `Component` — with the
+dedicated kinds built on them. `ty` is the structure; `dedicatedField?` the `DedicatedKind`
+projection that points back here (`DedicatedKind.sort` or `.component`), which is what turns the
+table into a two-way index — or `none` for a layer nothing dedicates to (the particular systems:
+dedication is to the sort, so their table has no dedicated-kinds column at all rather than an
+always-empty one). -/
+def identityTable (id title heading : String) (ty : Name) (dedicatedField? : Option Name)
+    (scope : Scope) : MetaM IndexTable := do
   let env ← getEnv
   let values := constantsOfType env ty scope
-  let headers := #[heading, "Identity", "Dedicated kinds", "Theorems"]
+  let headers := match dedicatedField? with
+    | some _ => #[heading, "Identity", "Dedicated kinds", "Theorems"]
+    | none   => #[heading, "Identity", "Theorems"]
   if values.isEmpty then return IndexTable.empty id title headers
-  let dedicated := constantsOfType env ``PropertyKindCalculus.DedicatedKind scope
   -- Which dedicated kinds point back at each value.
   let mut back : Std.HashMap Name (Array Name) := {}
-  for d in dedicated do
-    if let some target ← fieldDecl? d dedicatedField then
-      back := back.insert target ((back.getD target #[]).push d)
+  if let some dedicatedField := dedicatedField? then
+    let dedicated := constantsOfType env ``PropertyKindCalculus.DedicatedKind scope
+    for d in dedicated do
+      if let some target ← fieldDecl? d dedicatedField then
+        back := back.insert target ((back.getD target #[]).push d)
   let thms := theoremsMentioning env values
   let mut rows : Array (Array IndexCell) := #[]
   for v in values do
-    rows := rows.push #[
-      .decl v (lastComponent v),
-      .text (← fieldString v (ty ++ `id)),
-      .links ((back.getD v #[]).map fun d => (d, lastComponent d)),
-      .links ((thms.getD v #[]).map fun t => (t, lastComponent t))]
+    let backCell : Array IndexCell := match dedicatedField? with
+      | some _ => #[.links ((back.getD v #[]).map fun d => (d, lastComponent d))]
+      | none   => #[]
+    rows := rows.push (#[
+      IndexCell.decl v (lastComponent v),
+      .text (← fieldString v (ty ++ `id))] ++ backCell ++ #[
+      .links ((thms.getD v #[]).map fun t => (t, lastComponent t))])
   return { id, title, headers, rows }
 
 /-- Dedicated kinds in scope, as the IUPAC/IFCC `System — Component ; kind-of-property` triple each
 one *is*, with the theorems that distinguish them.
 
 The distinctness theorems are the load-bearing column: two dedicated kinds that share a
-kind-of-property are held apart only by their system and component (`boundRelaxTime` vs
+kind-of-property are held apart only by their sort and component (`boundRelaxTime` vs
 `freeRelaxTime`, both relaxation times), and `DedicatedKind.distinct_of_component` is what proves
 it. A dedicated kind with no distinctness theorem is a kind nothing yet relies on separating. -/
 def dedicatedKindsTable (scope : Scope) : MetaM IndexTable := do
   let env ← getEnv
   let ds := constantsOfType env ``PropertyKindCalculus.DedicatedKind scope
-  let headers := #["Dedicated kind", "System", "Component", "Kind of property", "Theorems"]
+  let headers := #["Dedicated kind", "Sort of system", "Component", "Kind of property", "Theorems"]
   if ds.isEmpty then
     return IndexTable.empty "dedicated-kinds" "Dedicated kinds-of-property" headers
   let thms := theoremsMentioning env ds
@@ -209,7 +217,7 @@ def dedicatedKindsTable (scope : Scope) : MetaM IndexTable := do
       | none   => return .text (← fieldStringChain d #[proj, idProj])
     rows := rows.push #[
       .decl d (lastComponent d),
-      ← cellFor ``PropertyKindCalculus.DedicatedKind.system ``PropertyKindCalculus.System.id,
+      ← cellFor ``PropertyKindCalculus.DedicatedKind.sort ``PropertyKindCalculus.SortOfSystem.id,
       ← cellFor ``PropertyKindCalculus.DedicatedKind.component ``PropertyKindCalculus.Component.id,
       ← cellFor ``PropertyKindCalculus.DedicatedKind.kind ``PropertyKindCalculus.KindOfProperty.id,
       .links ((thms.getD d #[]).map fun t => (t, lastComponent t))]

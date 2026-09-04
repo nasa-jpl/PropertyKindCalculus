@@ -91,14 +91,34 @@ def vwcA : IndividualQuantity soilA vwc Int := ⟨30⟩
 /-- `soilB`'s volumetric water content — a *different type* (object `soilB`). -/
 def vwcB : IndividualQuantity soilB vwc Int := ⟨45⟩
 
--- Inhabitation of the proved half of R19: two dedicated kinds that agree on component and
--- kind-of-property but differ in system are provably distinct — the premise `soilA ≠ soilB`
--- is satisfiable (`decide`), so `distinct_of_system` is applied non-vacuously.
-theorem r19_distinct_by_system :
-    vwc.dedicatedTo soilA water ≠ vwc.dedicatedTo soilB water :=
-  DedicatedKind.distinct_of_system (by decide)
+/-- The sort both samples instantiate. -/
+def soilS : SortOfSystem := ⟨"soil"⟩
+/-- A different sort of system altogether. -/
+def sedimentS : SortOfSystem := ⟨"sediment"⟩
 
-/-- info: 'PropertyKindCalculus.DedicatedKind.distinct_of_system' does not depend on any axioms -/
-#guard_msgs in #print axioms DedicatedKind.distinct_of_system
+-- The proved half of R19 at the kind level: two dedicated kinds that agree on component and
+-- kind-of-property but differ in *sort* are provably distinct — the premise `soilS ≠ sedimentS`
+-- is satisfiable (`decide`), so `distinct_of_sort` is applied non-vacuously.
+theorem r19_distinct_by_sort :
+    vwc.dedicatedTo soilS water ≠ vwc.dedicatedTo sedimentS water :=
+  DedicatedKind.distinct_of_sort (by decide)
+
+/-- info: 'PropertyKindCalculus.DedicatedKind.distinct_of_sort' does not depend on any axioms -/
+#guard_msgs in #print axioms DedicatedKind.distinct_of_sort
+
+-- Within one sort, the catalogue cannot individuate — and is not supposed to: dedicating
+-- through two objects of one sort lands on one dedicated kind (`dedicatedFor_congr`), while
+-- `vwcA`/`vwcB` above are held apart by the quantity *type*.
+/-- The probe world's sort claim: every nominal object in this closed world is a soil
+sample. `scoped`, because the library deliberately has no blanket `Sorted System`
+instance — a test with a closed object population may make the claim for itself, opt-in. -/
+scoped instance : Sorted System := ⟨fun _ => soilS⟩
+
+theorem r19_one_catalogue_entry :
+    vwc.dedicatedFor soilA water = vwc.dedicatedFor soilB water :=
+  KindOfProperty.dedicatedFor_congr rfl water
+
+/-- info: 'PropertyKindCalculus.Tests.KindStructure.r19_one_catalogue_entry' does not depend on any axioms -/
+#guard_msgs in #print axioms r19_one_catalogue_entry
 
 end PropertyKindCalculus.Tests.KindStructure

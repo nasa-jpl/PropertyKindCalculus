@@ -245,8 +245,10 @@ addresses none of this, reasonably, because nothing in its charter said it shoul
 
 ### MR20. A quantity belongs to a named part of a named system
 
-`DedicatedKind`'s `System — Component ; kind` triple. A quantity is not "a mass"; it is "the
-mass of the left-front wheel of rover 1".
+`DedicatedKind`'s `System — Component ; kind` triple names the *sort* and the component —
+one catalogue entry per fleet — and the object index names the particular. A quantity is not
+"a mass"; it is "the mass of the left-front wheel of rover 1": catalogue entry
+`rover — wheel FL ; mass`, object index saying *which* rover.
 
 **Acceptance criterion — two rovers.** Declare two systems, `rover1` and `rover2`, each with
 chassis, four wheels, four drive motors, a mast. Then:

@@ -170,12 +170,13 @@ theorem exhibitD_undercount :
       ≠ rover1TotalMass.magnitude :=
   undercount_caught
 
-/-- **D's identity.** The two chassis masses are distinct dedicated kinds because the
-*systems* differ — Dybkær §20, not a hand-chosen string. -/
+/-- **D's identity.** One catalogue entry for the fleet — Dybkær §20 dedicates to the
+*sort* — while the two chassis remain distinct *objects*, which is what makes rover 1's
+chassis mass and rover 2's different quantity types (artifact 2a's `#check_failure`). -/
 theorem exhibitD_identity :
-    massK.dedicatedTo rover1 (RoverPart.component .chassis)
-      ≠ massK.dedicatedTo rover2 (RoverPart.component .chassis) :=
-  chassis_mass_ne_across_rovers
+    chassisMassDK.systematicTerm = "rover — chassis ; mass"
+      ∧ partOf rover1 .chassis ≠ partOf rover2 .chassis :=
+  ⟨chassisMassDK_term, chassis_objects_distinct⟩
 
 end ExhibitD
 

@@ -8,7 +8,7 @@ a membership test that stops matching produces an **empty table**, which renders
 rather than as a failure.
 
 So this probe authors a small closed world — three kinds with one authored edge between them, a
-system, a component, a dedicated kind, a kinded record, a kinded operation, and one site of each
+sort, a system, a component, a dedicated kind, a kinded record, a kinded operation, and one site of each
 boundary tier — and pins the rendered index of each. The pins are what turn "the table came back
 empty" into a build failure.
 
@@ -41,12 +41,15 @@ def outputKind : KindOfProperty := { id := "probe output", scale := .ratio }
 /-- The one authored edge of this world: gain times signal yields output. -/
 theorem gain_times_signal : ProductKind gainKind signalKind outputKind := ⟨rfl, rfl, rfl⟩
 
-/-- The probe system. -/
+/-- The probe sort of system — what the dedicated kind is dedicated to. -/
+def probeSort : SortOfSystem := ⟨"probe sort"⟩
+/-- The probe system — a particular; nothing dedicates to it, which the three-column
+`systems` pin below fixes. -/
 def probeSystem : System := ⟨"probe system"⟩
 /-- The probe component. -/
 def probeComponent : Component := ⟨"probe component"⟩
-/-- The probe dedicated kind — `probe system — probe component ; probe output`. -/
-def probeDedicated : DedicatedKind := outputKind.dedicatedTo probeSystem probeComponent
+/-- The probe dedicated kind — `probe sort — probe component ; probe output`. -/
+def probeDedicated : DedicatedKind := outputKind.dedicatedTo probeSort probeComponent
 
 /-- A kinded record: two quantities at different kinds, one carrying fixed notation. -/
 structure ProbePair (α : Type) where
@@ -105,17 +108,25 @@ signalKind | probe signal | ratio | gainKind · signalKind → outputKind | gain
 #pkc_index "kinds" PropertyKindCalculus.Tests.Index
 
 /--
+info: Sorts of system (1 row(s))
+Sort | Identity | Dedicated kinds | Theorems
+probeSort | probe sort | probeDedicated |
+-/
+#guard_msgs in
+#pkc_index "sorts" PropertyKindCalculus.Tests.Index
+
+/--
 info: Systems (1 row(s))
-System | Identity | Dedicated kinds | Theorems
-probeSystem | probe system | probeDedicated |
+System | Identity | Theorems
+probeSystem | probe system |
 -/
 #guard_msgs in
 #pkc_index "systems" PropertyKindCalculus.Tests.Index
 
 /--
 info: Dedicated kinds-of-property (1 row(s))
-Dedicated kind | System | Component | Kind of property | Theorems
-probeDedicated | probeSystem | probeComponent | outputKind |
+Dedicated kind | Sort of system | Component | Kind of property | Theorems
+probeDedicated | probeSort | probeComponent | outputKind |
 -/
 #guard_msgs in
 #pkc_index "dedicated-kinds" PropertyKindCalculus.Tests.Index
