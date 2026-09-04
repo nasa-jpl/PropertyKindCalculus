@@ -66,9 +66,10 @@ def dybkaer_units_for_quantities_of_dimension_one : Article where
 -- Verso has no Book entry type; publisher in the journal slot is this file's convention
 -- for non-journal items (see the SysML specs above). Bibliographic data human-verified
 -- (AI-POLICY §2.1): supplied by Nicolas Rouquette, 2026-09-04, from the OUP record.
--- The two chapter entries below it are verified against the vendored volume's own title
+-- The three chapter entries below it are verified against the vendored volume's own title
 -- and copyright pages (References/ontology-modality-and-mind-…​.pdf: OUP, 2018,
--- ISBN 978-0-19-879629-9, eds. Carruth, Gibb, Heil).
+-- ISBN 978-0-19-879629-9, eds. Carruth, Gibb, Heil); each chapter's title and author are
+-- read from that volume's table of contents and its own chapter opening page.
 def simons_basis_of_categorial_distinctions : InProceedings where
   title := inlines!"Lowe, the Primacy of Metaphysics, and the Basis of Categorial Distinctions"
   authors := #[inlines!"Peter Simons"]
@@ -82,6 +83,14 @@ def heil_existents_and_universals : InProceedings where
   year := 2018
   booktitle := inlines!"Ontology, Modality, and Mind: Themes from the Metaphysics of E. J. Lowe (Oxford University Press)"
   editors := some #[inlines!"Alexander Carruth", inlines!"Sophie Gibb", inlines!"John Heil"]
+/-- Chapter 4 of the volume; it opens at p. 60, and chapter 5 opens at p. 73. -/
+def marmodoro_whole_but_not_one : InProceedings where
+  title := inlines!"Whole, but not One"
+  authors := #[inlines!"Anna Marmodoro"]
+  year := 2018
+  booktitle := inlines!"Ontology, Modality, and Mind: Themes from the Metaphysics of E. J. Lowe (Oxford University Press)"
+  editors := some #[inlines!"Alexander Carruth", inlines!"Sophie Gibb", inlines!"John Heil"]
+
 def lowe_four_category_ontology : Article where
   authors := #[inlines!"E. J. Lowe"]
   journal := inlines!"Oxford University Press"

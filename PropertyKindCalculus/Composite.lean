@@ -28,7 +28,22 @@ velocity does not, and the failure of a library that sums it anyway is silent. `
 is the curation entry, carrying the scale gate as its content, and
 `assemble_eq_measured` below is where the entry meets §13.5: for a kind that is
 *actually* extensive under a measurement, the assembled magnitude **is** the measured
-value of the whole. The class is the author's claim; that theorem is what the claim buys.
+value of the whole. The class is the author's claim; that theorem is what the claim buys —
+and `assemble_ne_measured` is what it costs to claim it wrongly: for a *whole-proper* kind
+the same term still elaborates, and reports a number the whole does not have.
+
+**Whole, but not one.** Those two halves are Marmodoro's two kinds of structure. A
+`Decomposition` *unites*: it makes a whole out of parts and, being one carving among many,
+brings no count principle with it — "physical structure unites; while metaphysical structure
+unifies … But wholes are not always unities" (*Whole, but not One*, 2018, §3). What makes
+the many *one* is not found among the parts: it is the sort `σ`, declared once by a model —
+unification "under the individuation principle of the sortal", and Dybkær's sort of system
+is that sortal under another name. Hence the three design decisions of this module. The
+whole is *added* rather than derived, because no carving yields it. The same parts under two
+sorts are two object types with two sets of licenses, because the statue and the lump are
+two wholes. And the license is indexed by the sort rather than by the kind alone, because
+how parts make a whole is settled by what the whole is — which is exactly the claim the
+parts cannot make on their own behalf.
 -/
 
 import PropertyKindCalculus.Extensivity
@@ -192,5 +207,28 @@ theorem assemble_eq_measured (σ : SortOfSystem) [Assembles σ k] (whole : O) (p
     (assemble (k := k) σ whole part d (fun p => ⟨(m (.atom p)).numeral⟩)).magnitude
       = (m d).numeral :=
   (extensive_additive h d).symm
+
+/-- **The license refused.** For a *whole-proper* kind — one whose
+value the parts do not determine, in either of the two ways they could — there is a carving
+on which the assembled magnitude is **not** the value the whole has. Not merely unjustified:
+wrong, on an exhibited pair of parts.
+
+The `[Assembles σ k]` instance is still required, and that is the finding. The class licenses
+the sum to be *written*; nothing about writing it makes it true, so an author who registers a
+whole-proper kind gets a term that elaborates and a number that is not the physics. This is
+the negative counterpart of `assemble_eq_measured` — same eliminator, same measurement, the
+`Extensive` hypothesis replaced by its refutation — and it is why the registry is opt-in and
+its entries are curated per sort. -/
+theorem assemble_ne_measured (σ : SortOfSystem) [Assembles σ k] (whole : O)
+    (part : P → O) {m : Measurement P} (h : WholeProper k m) :
+    ∃ d : Decomposition P,
+      (assemble (k := k) (R := Int) σ whole part d
+        (fun p => ⟨(m (.atom p)).numeral⟩)).magnitude ≠ (m d).numeral := by
+  obtain ⟨p, q, hpq⟩ := h.notAdditive
+  refine ⟨.union (.atom p) (.atom q), fun he => hpq ?_⟩
+  have hfold : (assemble (k := k) (R := Int) σ whole part (.union (.atom p) (.atom q))
+      (fun p => ⟨(m (.atom p)).numeral⟩)).magnitude
+        = (m (.atom p)).numeral + (m (.atom q)).numeral := rfl
+  exact (hfold.symm.trans he).symm
 
 end PropertyKindCalculus

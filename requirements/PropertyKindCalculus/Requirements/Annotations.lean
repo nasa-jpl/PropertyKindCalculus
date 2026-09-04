@@ -133,6 +133,16 @@ attribute [requirement "R9" proves "the ∀-quantified additive law lifts to the
   extensive_additive
 attribute [requirement "R9" proves "volume on mixing is sub-additive — a checked non-extensive counterexample"]
   mixing_subadditive
+attribute [requirement "R9" specifies "intensive kinds are constant under composition, on parts that agree"]
+  Intensive
+attribute [requirement "R9" proves "a uniform carving reads its parts' common value, to arbitrary depth"]
+  intensive_uniform
+attribute [requirement "R9" proves "an intensive kind is not extensive wherever a reading is nonzero"]
+  not_extensive_of_intensive
+attribute [requirement "R9" specifies "whole-proper kinds — the whole's value produced by no aggregation"]
+  WholeProper
+attribute [requirement "R9" proves "assembling a whole-proper kind reports the wrong number on an exhibited carving"]
+  assemble_ne_measured
 
 /-! ## Representation parametricity (R10, R11) -/
 

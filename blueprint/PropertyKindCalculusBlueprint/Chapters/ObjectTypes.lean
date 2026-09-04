@@ -226,6 +226,23 @@ uninstantiated (Lowe 2012, quoted in Heil
 {Manual.citep heil_existents_and_universals}[]) — and it is the only reading a
 terminological ontology in Dybkær's style needs.
 
+A second correspondence runs alongside Lowe's and settles a different question: not what
+the four categories are, but why a whole needs a sort at all. Marmodoro distinguishes two
+kinds of structure — "physical structure unites; while metaphysical structure unifies. The
+former brings about wholes, the latter unities. But wholes are not always unities"
+{Manual.citep marmodoro_whole_but_not_one}[]. The extensivity layer is the first of those:
+a decomposition unites parts into a whole and, being one carving among many, brings no
+count principle with it. The second is what a model supplies when it declares a sort and
+instantiates a composite — unification "under the individuation principle of the sortal",
+and Dybkær's _sort of system_ is that sortal under another name. Three decisions of this
+chapter follow from taking the distinction seriously. The whole is _added_ rather than
+derived, because no carving yields it. The same parts under two sorts are two object types
+with two sets of licenses, because the statue and the lump are two wholes. And the license
+is indexed by the sort rather than by the kind alone, because how parts make a whole is
+settled by what the whole is — the one claim the parts cannot make on their own behalf.
+Her further distinction between structural and substantial powers lands in the extensivity
+chapter, where a whole-proper kind is one no aggregation produces.
+
 :::definition "def_composite" (parent := "object_types") (lean := "PropertyKindCalculus.Composite")
 The _composite_ object type over a part type, *as a {uses "def_sortOfSystem"}[sort] of whole*: the whole, or one of its parts. The whole and the parts must inhabit one type or their quantities cannot be related at all; the whole is a distinct term from every part, so a whole-assembly quantity and a part quantity do not combine. The sort index is what lets two wholes stand over one part type — the statue and the lump over the same clay — and their quantities do not combine either, because the types differ. Extensionality about objects is not assumed.
 :::
@@ -248,6 +265,14 @@ _Assembly_: the quantity of the whole, folded from the quantities of the parts o
 
 :::proof "def_assemble"
 `Decomposition.fold` of the parts' magnitudes under `Carrier.add`: the same traversal `leafSum` uses, so the quantity-level arithmetic and the §13.5 law are one recursion read at two carriers. The counterpart over a finite index (`assembleOver`, `assembleAll`) sums a `Finset` instead, which is the shape a host library's own aggregate is written in — a `Finset.sum`, recovered by `rfl` rather than by a rewriting lemma.
+:::
+
+:::theorem "thm_assemble_ne_measured" (parent := "object_types") (lean := "PropertyKindCalculus.assemble_ne_measured") (tags := "proved") (effort := "small")
+_The license refused._ For a whole-proper kind — one whose value the parts do not determine, in either of the two ways they could — there is a carving on which the assembled magnitude is _not_ the value the whole has. Not merely unjustified: wrong, on an exhibited pair of parts. Uses {uses "def_assemble"}[assembly].
+:::
+
+:::proof "thm_assemble_ne_measured"
+The `Assembles` instance is still required, and that is the finding: the class licenses the sum to be _written_, and nothing about writing it makes it true, so an author who registers a whole-proper kind gets a term that elaborates and a number that is not the physics. The witness's own non-additive pair supplies the carving; the negative twin of `assemble_eq_measured`, same eliminator and same measurement, with the extensivity hypothesis replaced by its refutation. This is why the registry is opt-in and curated per sort rather than derived.
 :::
 
 ## Two sums, and only the object tells them apart

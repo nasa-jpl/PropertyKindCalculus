@@ -183,6 +183,30 @@ def sysB : Object := ⟨"probe system B"⟩
 example : Designated.designation sysA = sysA ∧ (Designated.designation sysA ≠ sysB) :=
   ⟨rfl, by decide⟩
 
+/-! ## The license refused — a whole-proper kind assembled anyway
+
+`Assembles` licenses the sum to be *written*, and writing it is not what makes it true. Here
+the registry entry is made deliberately wrong — the coupled pair's normal-mode frequency is a
+kind no aggregation produces (`normalMode_wholeProper`, `Extensivity.lean`) — and the term
+still elaborates, so the probe can exhibit the carving on which it reports the wrong number.
+This is the negative twin of `rigid_volume_assembles` above. -/
+
+/-- The sort of the coupled pair, registered for a kind that does not aggregate at it. The
+mistake has to be writable for the probe to catch it. -/
+def pairS : SortOfSystem := ⟨"composite probe oscillator pair"⟩
+
+instance : Assembles pairS oscillatorFrequency := ⟨DifferenceKind.ofScale⟩
+
+-- Boundary: with the license in hand the sum elaborates, and is not the pair's frequency —
+-- 10 + 10 against a normal mode at 14.
+theorem pair_frequency_assembles_wrongly :
+    ∃ d : Decomposition System,
+      (assemble (k := oscillatorFrequency) (R := Int) pairS
+        (Composite.whole : Composite pairS System) Composite.part d
+        (fun p => ⟨(normalModeFreq (.atom p)).numeral⟩)).magnitude
+        ≠ (normalModeFreq d).numeral :=
+  assemble_ne_measured pairS _ _ normalMode_wholeProper
+
 /-! ## Axiom profiles -/
 
 /-- info: 'PropertyKindCalculus.assemble_eq_measured' depends on axioms: [propext] -/
@@ -190,5 +214,11 @@ example : Designated.designation sysA = sysA ∧ (Designated.designation sysA �
 
 /-- info: 'PropertyKindCalculus.Tests.Composite.assembled_is_measured' depends on axioms: [propext] -/
 #guard_msgs in #print axioms assembled_is_measured
+
+/-- info: 'PropertyKindCalculus.assemble_ne_measured' depends on axioms: [propext] -/
+#guard_msgs in #print axioms assemble_ne_measured
+
+/-- info: 'PropertyKindCalculus.Tests.Composite.pair_frequency_assembles_wrongly' depends on axioms: [propext] -/
+#guard_msgs in #print axioms pair_frequency_assembles_wrongly
 
 end PropertyKindCalculus.Tests.Composite

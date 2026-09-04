@@ -15,7 +15,7 @@ has to be reconstructed from the Status lines scattered below.
 
 | item | where it lives |
 |---|---|
-| Exhibits A–F | `Exhibits/`; per-exhibit **Status: built** lines below |
+| Exhibits A–G | `Exhibits/`; per-exhibit **Status: built** lines below |
 | The full ladder (Stages 0–4) for `SpaceAndTime/Space` | Sequencing item 3; per-stage Status lines below |
 | Campaign directory 1 — `QuantumMechanics/HarmonicOscillator`, whole | `QuantumMechanics/HarmonicOscillator/` + README cost line; includes the two patch candidates (`Orthonormality`, `Heisenberg`) |
 | Campaign directory 2 — `Electromagnetism/Kinematics` | `Electromagnetism/Kinematics/` + README cost line |
@@ -27,6 +27,7 @@ has to be reconstructed from the Status lines scattered below.
 | Case study 2 — `PointParticle` (physlib#1612): four typings of one physics, ergonomics a scored axis; the win-win is the *dependent target field* | `CaseStudies/PointParticle/` — Common + Attempts 1–4 + Scorecard + README |
 | The mereological sort: `SortOfSystem` + `Sorted`, `Composite σ P`, `Assembles σ k`; statue/clay + rigid-vs-mixture volume probes; `smulK`, `resultantOver`/`assembleAll`, `transpose`, `IndividualQuantity.neg`, `Designated.ofInjective`/`.prod` | PKC core + `CompositeReal`; blueprint *The object type* §generality; probes in `Tests/Core/Composite` + `MiniObjectTypes` |
 | The `DedicatedKind` correction, decided 2026-09-04 and migrated: `sort : SortOfSystem` stores what Dybkær Ch. 20's definition asks for ("kind-of-property with given sort of system…", verified verbatim against the vendored PDF); `dedicatedFor`/`dedicatedFor_congr` close the instantiation square; `distinct_of_sort` replaces the by-particular distinctness; TwoRovers' term reads `"rover — chassis ; mass"` with the particular carried by the object index; the self-index gains a `sorts` table and the `systems` table drops its dedicated-kinds column | PKC core `DedicatedKind`; Index harvest; `MiniDedicatedKind` §6, `MiniWriteOnce`, Iso 80000 Part 3 §9, `Tests/Core/{KindStructure,Index}`; TwoRovers + Scorecard + Attempt4Pkc; blueprint *Dedicated kinds-of-property* |
+| The Marmodoro pass, Options 1–3 of [the corpus](MARMODORO-CORPUS.md), decided 2026-09-04: (1) the unite/unify layering stated and cited — a verified `InProceedings` entry for ch. 4 of the vendored *Themes* volume, the carving paragraph in the *Extensivity* chapter and `Extensivity.lean`, the sortal paragraph in *The object type* and in `Composite.lean`/`Foundations.lean`; (2) two more aggregation modes formalized — `Intensive` (§13.5.4, carrying Dybkær's *of constant composition* as the law's hypothesis) + the `intensive_uniform` capstone + `not_extensive_of_intensive`, and `WholeProper` + its two refutations + `assemble_ne_measured`, with density and normal-mode witnesses; (3) Exhibit G | PKC core `Extensivity`/`Composite`/`Foundations`; blueprint *Extensivity* (five new nodes) + *The object type*; `Tests/Core/{Aggregation,Composite}`, `MiniExtensivity`; `Exhibits/Composition/` |
 | The Lowe correspondence, explicit and cited: corners in each docstring, edges + the derivative diagonal in the blueprint's *The object type* chapter; formal entry from Nicolas's verified BibTeX (OUP 2005, DOI) in `References.lean`; two chapter entries from the vendored *Ontology, Modality, and Mind* (OUP 2018) — Simons (exemplification definable; cited at the diagonal) and Heil (Lowe's immanentism; cited for the universals-as-catalogue-entries stance). Marmodoro's "Whole, but not One" flagged as a possible future pass for `Composite`/`Assembles` (unite vs unify; a whole carries no count principle) | blueprint `References.lean` + *The object type*; year corrected 2006→2005 per the verified citation |
 
 ### Open
@@ -42,7 +43,8 @@ has to be reconstructed from the Status lines scattered below.
 | Held physics — ALL SIX DELIVERED: σ_p moment (saturation unconditional); L_z = m·ℏ; degeneracy; `LadderOperators.lean` (the eleven-TODO stub); `DistributionalTwin.lean` (the duplication finding); `Maxwell.lean` (the four laws kinded + the module-private finding) | done 2026-09-01 |
 | The last two held items — the `Dynamics/` variational subtree (`Kinematics/Dynamics.lean`: 2 lookups + 3 mints + 6 edges, the whole variational calculus same-kind, `H` at 6-33 by upstream's theorem, the stale-`μ₀`-TODO finding) and the RF/AC annex promoted to ladder form (`Electromagnetism/Annex/`: 17 kinds all lookups zero mints, 5 edges consumed from the catalogue's `DefiningRelations`, the refused `P + Q`, the dB budget on 6-45). Nothing remains held | done 2026-09-02 |
 | Decide whether anything from Exhibit F is offered to physlib#1612, and in what form | Nicolas (AI-POLICY §3.1) |
-| Decide the Marmodoro scope — Options 1–4 in [the corpus](MARMODORO-CORPUS.md) (PhysLib scanned at `c17844a6`: oneness and aggregation licenses are the library's fault line; recommendation there is 1+2 now) | Nicolas decides; Claude executes on a yes |
+| Marmodoro Option 4 — the re-carving construct (generalizing `TenQuanta.reduce`: a map between part descriptions of one σ-whole plus the obligation that licensed aggregates are preserved) and count kinds. Options 1–3 are done; the corpus lists consumers for each Option-4 piece, and the standing rule is that each piece waits for a named one | Nicolas decides per piece |
+| Decide whether anything from Exhibit G is offered upstream, and where — the corpus's own recommendation was to hold it for a concrete conversation | Nicolas (AI-POLICY §3.1) |
 | Re-point Exhibit F's `Replica` at the real `PointParticle.System` once #1612 merges | Claude, on request |
 | Campaign wrap-up artifact (cross-directory scorecard) | undecided whether wanted |
 
@@ -508,6 +510,60 @@ change. Everything above holds with the PR exactly as written; the layer is addi
 [MR31](REQUIREMENTS.md#mr31-adoption-is-scoped-and-monotone). If any of it is to reach the
 PR's author it is as an offer, and posting is a human's (AI-POLICY §3.1).
 
+### Exhibit G. Composition — whole, but not one
+
+**Occasion.** The [Marmodoro corpus](MARMODORO-CORPUS.md), which scanned all of PhysLib for
+the places a many is treated as a one and found the same shape everywhere: abundant physical
+structure, and almost no formalized statement of what licenses oneness or aggregation. This
+exhibit is that finding made into artifacts, in the directory where it bites hardest.
+
+**Requirements.** [MR21](REQUIREMENTS.md#mr21-assembly-is-licensed-per-kind-and-two-sided)–[MR22](REQUIREMENTS.md#mr22-whole-system-quantities-are-not-part-quantities),
+with [MR1](REQUIREMENTS.md#mr1-quantities-of-different-kinds-do-not-combine) carrying the
+three-sums finding.
+
+**The five findings.**
+
+1. **The parts-to-whole bridge is data, not a theorem.** `informal_lemma` expands to
+   `def … : InformalLemma`, so the statements that would license aggregation — the total
+   power `P = ∑ Fᵢ·vᵢ = F_tot·V + M·ω`, the center of mass moving as a particle, the
+   carving-independence of ω, the normal modes — type-check as *values* of a two-field
+   structure. Four of them are inhabited in the exhibit.
+2. **A whole with no parts, and a mean with no license.** `RigidBody d` is one linear
+   functional, so `⟨0⟩` is a rigid body; `massless_mass` and `massless_centerOfMass` are
+   theorems that it has zero mass and a center of mass at the origin. `centerOfMass` divides
+   by `mass` with no hypothesis, and `1 / 0 = 0`.
+3. **Three aggregations, one syntax, and only one of them is a sum.** Composing two bodies
+   takes one line PhysLib does not have — `union`, adding the mass distributions — and with
+   it the directory's aggregates sort into three modes, all proved on PhysLib's own
+   definitions: `union_mass` and `union_inertiaTensor` are additive by the linearity of `ρ`
+   (the tensor only about the common origin, which is what the parallel-axis theorem
+   corrects), while `union_centerOfMass` is a mass-weighted mean whose law needs three
+   hypotheses — each part massive, the composite massive — that `centerOfMass` does not
+   carry. Four sums then type-check identically, including the centers of mass, whose sum is
+   the composite's center only when the masses are equal.
+4. **The three-way split, typed.** Mass is licensed at a rigid sort and cashed against an
+   `Extensive` witness (`body_mass_assembles`); angular velocity is `Intensive` over that
+   sort — every part of a rigid body shares it — and therefore provably *not* extensive
+   (`omegaOfHalf_not_extensive`), with no license registered, so the sum is unwritable
+   (`#check_failure`); a coupled pair's normal-mode frequency is `WholeProper`, refuting
+   both laws on an exhibited pair of parts. Three branches, three witnesses, one part type.
+5. **The center of mass, licensed.** A `WeightedCarving` carries the nonzero-total-weight
+   condition as a *field*, so finding 2's massless body is not a term of it, and
+   `mean_const` — the mean of a constant is that constant — is the law that says this
+   aggregation is a mean rather than a sum. This is the third aggregation mode, and the one
+   PhysLib's types currently spell the same way as the first.
+
+**What it does not claim.** Not that PhysLib's numbers are wrong: `centerOfMass` is the
+right formula wherever it is applied to a body with mass, and an `informal_lemma` is an
+honest marker of unformalized content. The claim is narrower and checkable — the library has
+no way to *state* which quantities aggregate, so the three cases of finding 3 are one case
+to the type system.
+
+**Status: built** — `ForPhysLib/Exhibits/Composition/Findings.lean`. Four `InformalLemma`
+inhabitants, two theorems about the massless body, the `union` operation with its three
+aggregation laws and four indistinguishable sums, three aggregation-mode witnesses with their two
+`#check_failure` boundaries, and the weighted-mean license with its constant law.
+
 ### Ranking
 
 | | exhibit | why it earns its place |
@@ -518,6 +574,7 @@ PR's author it is as an offer, and posting is a human's (AI-POLICY §3.1).
 | 4 | **D · Two rovers** | the reach argument; the only exhibit about capability rather than defects |
 | 5 | **E · Electromagnetism** | the confirmation: machinery minted by the benchmark, applied to a directory it was not minted from |
 | 6 | **F · PointParticle** | the live test: a PR that ties quantities to objects without the layer, and objects PhysLib designed rather than we did |
+| 7 | **G · Composition** | the mereological test: which quantities of a whole come from its parts, where the library has no vocabulary at all |
 
 ---
 

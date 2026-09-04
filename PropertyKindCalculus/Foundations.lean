@@ -88,7 +88,14 @@ Fig. 7.1) the correspondence is exact: `SortOfSystem` is the **substantial unive
 column of the square is `KindOfProperty` (his *Attributes*) over `IndividualQuantity` (his
 *Modes*), and the calculus carries the square's edges as well as its corners: `Sorted.sortOf`
 below is the left *instantiated by* edge, and the other three edges live where the corners
-they join are defined (`IndividualQuantity`, `DedicatedKind`). -/
+they join are defined (`IndividualQuantity`, `DedicatedKind`).
+
+The sort is also what answers a question the mereology cannot. A decomposition of a system
+makes a whole out of parts without settling how many entities that whole *is*; the count
+comes with the sortal, under whose "individuation principle" — Marmodoro, *Whole, but not
+One* (2018), §4, whence "[e]very science individuates its own individual subjects or
+substances" — a plurality is one thing of a kind. `SortOfSystem` is where a model states its
+own such principle, and `Composite` (with `Assembles`) is where the statement does work. -/
 structure SortOfSystem where
   /-- Terminological identity of the sort. -/
   id : String

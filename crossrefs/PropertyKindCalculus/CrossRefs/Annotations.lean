@@ -32,7 +32,11 @@ attribute [dybkaer "§20" "dedicated kind-of-property"
   "the System — Component ; kind-of-property triple (IUPAC/IFCC; the System slot names the sort)"] DedicatedKind
 attribute [dybkaer "§18.12" "metrological unit"] MetrologicalUnit
 attribute [dybkaer "§13.3.3" "quantity (number times reference)"] Quantity
-attribute [dybkaer "§13.5" "extensive kind"] Extensive
+attribute [dybkaer "§13.5.1" "unconditionally extensive unitary kind-of-quantity"
+  "the value for the total equals the arithmetic sum of the values for the parts"] Extensive
+attribute [dybkaer "§13.5.4" "intensive kind-of-quantity"
+  "invariant with the extent of a system OF CONSTANT COMPOSITION — the clause carried as the law's hypothesis"]
+  Intensive
 attribute [dybkaer "§10.14" "property value scale"] ValueScale
 attribute [dybkaer "§9.15" "property value"] PropertyValue
 attribute [dybkaer "§6" "quantities of the same kind"] MutuallyComparable

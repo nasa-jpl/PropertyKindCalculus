@@ -6,7 +6,11 @@ Inhabitation and axiom-profile probes for extensivity. The extensive-aggregation
 `Extensive` predicate that nothing satisfies. So the probe *builds* a genuine extensive
 measurement (leaf-counting mass) and drives the law through a **depth-2** decomposition — the
 Rule-2 boundary that exercises the inductive step, not just a single atom — then re-exhibits the
-source's non-extensive counterexample so the predicate is shown to be discriminating.
+source's non-extensive counterexample so the predicate is shown to be discriminating. The
+same two questions are then put to the other two aggregation modes: the §13.5.4 intensive
+capstone is driven through a depth-2 uniform carving, and the whole-proper case — the one
+Bunge's four types do not name — is shown to be occupied, by a witness that refutes *both*
+of the other laws.
 -/
 
 import PropertyKindCalculus
@@ -57,5 +61,57 @@ theorem r9_mixing_not_extensive : ¬ Extensive volume volMix := mixing_subadditi
 
 /-- info: 'PropertyKindCalculus.mixing_subadditive' does not depend on any axioms -/
 #guard_msgs in #print axioms mixing_subadditive
+
+/-! ## Intensity and whole-properness (R9)
+
+The same two dangers, for the two laws stated beside extensivity: a capstone proved for a
+predicate nothing satisfies, and a "neither" case that is empty because nothing can inhabit
+it. Both are answered by driving the law through a concrete, nested witness. -/
+
+/-- A depth-2 carving of one homogeneous fluid: `(A ⊔ B) ⊔ C`, three parcels of the same
+water — nested, so the intensive recursion is exercised past its base case. -/
+def parcels : Decomposition System :=
+  .union (.union (.atom ⟨"A"⟩) (.atom ⟨"B"⟩)) (.atom ⟨"C"⟩)
+
+/-- Every leaf of that carving reads 1000 kg/m³ — the hypothesis the intensive capstone
+consumes, discharged by `rfl` at each of the three leaves. -/
+theorem parcels_uniform :
+    Decomposition.Forall (fun s => (densityHomogeneous (.atom s)).numeral = 1000) parcels :=
+  ⟨⟨rfl, rfl⟩, rfl⟩
+
+-- Inhabitation (Rule 2 — the nested case): the whole of a uniform carving reads the parts'
+-- common value, obtained by applying the capstone to a real depth-2 decomposition.
+theorem r9_intensive_whole_eq : (densityHomogeneous parcels).numeral = 1000 :=
+  intensive_uniform densityHomogeneous_intensive parcels parcels_uniform
+
+-- Boundary — the two branches are exclusive, so `Intensive` is not a weakening of
+-- `Extensive`: the same measurement that satisfies one refutes the other.
+theorem r9_density_not_extensive : ¬ Extensive fluidDensity densityHomogeneous :=
+  density_not_extensive
+
+-- Inhabitation — the whole-proper case is occupied: the coupled pair's normal-mode frequency is
+-- neither summed from its parts nor shared with them, and both refutations are checked.
+theorem r9_normalMode_not_extensive : ¬ Extensive oscillatorFrequency normalModeFreq :=
+  normalMode_wholeProper.not_extensive
+
+theorem r9_normalMode_not_intensive : ¬ Intensive oscillatorFrequency normalModeFreq :=
+  normalMode_wholeProper.not_intensive
+
+-- … and the number an aggregating library would report is wrong on an exhibited carving.
+theorem r9_normalMode_leafSum_ne :
+    ∃ d : Decomposition System, (normalModeFreq d).numeral ≠ leafSum normalModeFreq d :=
+  normalMode_wholeProper.exists_leafSum_ne
+
+/-- info: 'PropertyKindCalculus.intensive_uniform' does not depend on any axioms -/
+#guard_msgs in #print axioms intensive_uniform
+
+/-- info: 'PropertyKindCalculus.not_extensive_of_intensive' depends on axioms: [propext] -/
+#guard_msgs in #print axioms not_extensive_of_intensive
+
+/-- info: 'PropertyKindCalculus.WholeProper.not_extensive' does not depend on any axioms -/
+#guard_msgs in #print axioms WholeProper.not_extensive
+
+/-- info: 'PropertyKindCalculus.WholeProper.not_intensive' does not depend on any axioms -/
+#guard_msgs in #print axioms WholeProper.not_intensive
 
 end PropertyKindCalculus.Tests.Aggregation

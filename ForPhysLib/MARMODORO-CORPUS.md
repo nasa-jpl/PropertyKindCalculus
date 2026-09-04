@@ -11,10 +11,12 @@ by fan-out search; a sample of every load-bearing claim below (the `RigidBody` s
 `informal_lemma` bridges, the hydrogen docstring, `Ensemble.mix`, `TenQuanta.reduce` and
 its preservation lemmas, the `N : ℝ` entropy, the `nsmul` docstring, `class Entropy`,
 the `HAdd` unit discard, `WithDim`'s `Add`, `Superadditive`) was verified against the
-source verbatim. **Nothing here is verified by compilation.** Any claim promoted into an
+source verbatim. **Nothing in §§1–5 is verified by compilation.** Any claim promoted into an
 exhibit or an upstream communication must first be compiled; the "tension findings" in
-§5 are text observations, not established bugs. Per AI-POLICY §3.1, this corpus is
-internal — nothing in it is posted anywhere.
+§5 are text observations, not established bugs. §6 records what was subsequently built, and
+that is compiled. Line numbers below are at `c17844a6`; the PhysLib that PKC *builds*
+against is the manifest pin `12e16cfc`, so Exhibit G cites the same declarations by name.
+Per AI-POLICY §3.1, this corpus is internal — nothing in it is posted anywhere.
 
 ---
 
@@ -56,10 +58,10 @@ The distinction is not foreign to PKC — the layering already is it, unsaid:
 | Physical structure (unites; numberless) | `Decomposition O` — a carving; `Measurement O` values arbitrary carvings; `extensive_additive` quantifies over **all** decompositions, so the total is carving-invariant | formal |
 | Metaphysical unification (sortal individuation) | Declaring `σ : SortOfSystem` and instantiating `Composite σ P` / a `Sorted` instance — the model's claim, made once; `Composite σ P` adds exactly one whole, and the same parts under two sorts are two different types with different licenses | formal |
 | The license to aggregate | `Assembles σ k` (keyed by the sort of the whole; content = the scale gate) + `assemble_eq_measured` cashing it against §13.5 extensivity; `mixing_subadditive` as the refutation exhibit | formal |
-| Substantial (whole-proper) powers | Dedicated kinds at the whole's sort — Attempt4Pkc's `"coupled oscillator pair — normal mode + ; angular frequency"` is one — but **nothing marks a kind as whole-proper**, i.e. borne by the whole yet produced by no aggregation | informal only |
+| Substantial (whole-proper) powers | `WholeProper k m` — the whole's value produced by no aggregation, inhabited only by exhibiting both refutations (not additive, not constant); `assemble_ne_measured` turns it into the wrong *number* at the quantity layer. Dedicated kinds at the whole's sort still carry the naming — Attempt4Pkc's `"coupled oscillator pair — normal mode + ; angular frequency"` is one | formal |
 | Identity disciplines | `Designated` (injectivity is the content) vs. its honest absence for structural object types | formal |
-| Intensive kinds (Dybkær §13.5's other branch) | One line of prose in `Extensivity.lean` — "constant under composition (temperature, density)" — **no construct, no law** | prose only |
-| Weighted-mean aggregation (center of mass) | nothing | absent |
+| Intensive kinds (Dybkær §13.5.4) | `Intensive k m` with Dybkær's *of constant composition* clause as the law's hypothesis (parts that *already agree*), the `intensive_uniform` capstone over any carving, and `not_extensive_of_intensive` making the two branches exclusive | formal |
+| Weighted-mean aggregation (center of mass) | `WeightedCarving` + `mean` + `mean_const`, in Exhibit G — the license (nonzero total weight) carried as a field. Not in the core: it waits on a consumer there | exhibit-local |
 | Re-carving (same whole, two part descriptions) | nothing (the transpose is the only re-indexing, deliberately) | absent |
 | Count kinds (a count as a quantity of a sort) | nothing; standing project rule "a count is a predicate" points the same way | absent |
 
@@ -228,11 +230,27 @@ Named consumers per candidate PKC construct, from the corpus:
 
 | candidate | PhysLib consumers found | count |
 |---|---|---|
-| Whole-proper (substantial) kinds: borne by the whole, produced by no aggregation | ω, `inertiaTensor`, `L`, `T_rot`; temperature, pressure, entropy of an ensemble; normal-mode frequencies (TODO'd); transport coefficients; EoF | many |
+| Whole-proper (substantial) kinds: borne by the whole, produced by no aggregation | normal-mode frequencies (TODO'd); entropy, temperature and pressure of an ensemble; transport coefficients; EoF. **Not** ω and **not** the inertia tensor — see the correction below | many |
 | Intensive branch of §13.5 (constant under composition, hypothesis explicit) | temperature, pressure, densities, `κl`/`κe`, every field quantity | many |
 | Weighted-mean license (the CoM mode) | `centerOfMass`, `centerOfMassVelocity`, `linearMomentum`, `meanEnergy`, `Mixable`/`expect_val` | several |
 | Re-carving with invariance obligations (the `reduce` pattern, generalized) | `TenQuanta.reduce`/`decompose` (exists, locally), reduced mass (absent), normal modes (absent), Bloch, Fock, partial trace | several, two of them absences PKC could fill |
 | Count kinds (a count as a quantity dedicated to a sort — the SI's "specified elementary entity") | `dof`, `N`, `numberCharges`, `numChiral… = 3`, mole↔Avogadro (absent) | several |
+
+**Correction (2026-09-04, on formalizing the split).** The row above — and Option 3's sketch
+in §5 — first listed ω and `inertiaTensor` among the whole-proper kinds. Both are misallocated, and the sharper reading
+is available now that the branches are formal. Angular velocity is **intensive** over a rigid
+sort: every part of a rigid body turns with the body's ω, which is what
+`velocity_decomposition` and `angular_velocity_is_well_defined` say, so it is constant under
+composition and therefore provably *not* extensive — a stronger statement than "unlicensed",
+and the one Exhibit G makes (`omegaOfHalf_intensive`, `omegaOfHalf_not_extensive`). The
+inertia tensor is **extensive about a common axis** — moments of inertia about one axis add
+over disjoint parts, and the parallel-axis theorem is the correction that makes the axes
+agree — so it aggregates, with a parameter the type does not currently carry. What survives
+of the original claim is Exhibit G's finding 3, which now proves the three modes on
+PhysLib's own definitions: composing two bodies by adding their mass distributions
+(`union`), mass and the inertia tensor are additive by the linearity of `ρ`, the center of
+mass is a weighted mean whose law needs three hypotheses `centerOfMass` does not carry — and
+all four sums type-check identically.
 
 ---
 
@@ -269,11 +287,34 @@ conversation to aim it at, and gate each Option 4 piece on a named consumer.** T
 DedicatedKind correction followed exactly this shape (corpus → cheap principled core
 change → exhibits) and landed cleanly.
 
+*The decision went further than this recommendation — Options 1, 2 and 3 — and §6 records
+what landed.*
+
+## 6. The decision, and what landed
+
+Nicolas decided Options 1, 2 and 3 on 2026-09-04 — Option 3 ahead of the recommendation
+above, which had proposed holding it. All three are built, and every artifact below compiles
+(`scripts/build-all-libs-examples.sh`, 20 targets green, plus `blueprint-gen`).
+
+| option | what landed |
+|---|---|
+| 1 — say it | `marmodoro_whole_but_not_one` in the blueprint's `References.lean`, its title and author read from the vendored volume's table of contents and chapter opening (ch. 4, p. 60; ch. 5 opens at p. 73). The carving/numberlessness paragraph in the *Extensivity* chapter and in `Extensivity.lean`'s module docstring; the unite/unify and sortal-individuation paragraphs in *The object type* and in `Composite.lean`; the individuation-principle sentence on `SortOfSystem` in `Foundations.lean` |
+| 2 — the two formal pieces | `Decomposition.Forall`, `Intensive` (hypothesis explicit) with the `intensive_uniform` capstone and `not_extensive_of_intensive`; `WholeProper` with `not_extensive`/`not_intensive`/`exists_leafSum_ne`; `assemble_ne_measured` in `Composite.lean` — the negative twin of `assemble_eq_measured`. Witnesses: `densityHomogeneous_intensive`, `normalMode_wholeProper`. Probes in `Tests/Core/{Aggregation,Composite}` (inhabitation on a depth-2 carving + axiom pins), worked examples in `MiniExtensivity`, five new blueprint nodes, `@[dybkaer]` and `@[requirement "R9"]` annotations |
+| 3 — the exhibit | `Exhibits/Composition/` — Exhibit G, five findings, `PLAN.md` section and ranking row |
+
+Two things were *not* done, deliberately. Option 4 (the re-carving construct, count kinds)
+stays gated on a named consumer, per the standing rule. And nothing here has been offered
+upstream: whether Exhibit G reaches a maintainer, and how, is Nicolas's call under
+AI-POLICY §3.1.
+
 ## Status ledger
 
 | item | owner | state |
 |---|---|---|
 | Corpus (this document) | Claude | Done 2026-09-04 |
-| Scope decision: which of Options 1–4 | Nicolas | **Open** |
-| Marmodoro `InProceedings` entry in `References.lean` (verified against the vendored volume, same pattern as Simons/Heil) | Claude, on a yes to Option 1 | Open |
+| Scope decision: which of Options 1–4 | Nicolas | Decided 2026-09-04 — 1, 2 and 3 |
+| Options 1–3, built | Claude | Done 2026-09-04 (§6) |
+| Marmodoro `InProceedings` entry in `References.lean` (verified against the vendored volume, same pattern as Simons/Heil) | Claude | Done 2026-09-04 |
+| Option 4 — re-carving construct; count kinds | Nicolas, per piece | **Open**, each gated on a named consumer |
+| Offer any of Exhibit G upstream | Nicolas (AI-POLICY §3.1) | **Open** |
 | Compile-verification of any corpus claim promoted into an exhibit or communication | Claude, per claim | standing rule |
