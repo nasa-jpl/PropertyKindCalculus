@@ -4,6 +4,13 @@ import VersoBlueprint
 -- The extensivity nodes below now link real declarations, so this chapter imports
 -- the (Mathlib-free, core) `Extensivity` module.
 import PropertyKindCalculus.Extensivity
+-- Three further nodes below link declarations outside the Mathlib-free core, each for a stated
+-- arithmetic reason: `Recarving` (core, but its own module), `AggregationLaws` (the weighted mean
+-- over `ℝ` and the parallel-axis correction, both needing Mathlib), and the §13.5.2 predicate,
+-- which lives with the uncertainty it is about.
+import PropertyKindCalculus.Recarving
+import PropertyKindCalculus.AggregationLaws
+import PropertyKindCalculus.Uncertainty.QuasiExtensive
 -- The carving/oneness discussion below cites Marmodoro, so the chapter imports the
 -- blueprint's `References`.
 import PropertyKindCalculusBlueprint.References
@@ -22,12 +29,19 @@ _conditionally extensive_ (§13.5.3, the addition exists but the total may diffe
 to the respective internal and environmental conditions" — volume on mixing), and
 _intensive_ (§13.5.4, no physical addition, the value "invariant with the extent of a
 system of constant composition"). These are quantified arithmetic laws over the
-mereology of systems — again something a description logic cannot state — and they are
-_realized_, sorry-free, in the Mathlib-free `Extensivity` module: the decomposition
-mereology, the predicates, the two inductions that lift a single split to the whole
-tree, and a checked witness for each — mass, density, and the volume-on-mixing
-counterexample. One further case, which Bunge's four do not name, is added: a value the
-parts do not determine at all.
+mereology of systems — again something a description logic cannot state — and all four
+are _realized_, sorry-free: three of them in the Mathlib-free `Extensivity` module
+— the decomposition mereology, the predicates, the two inductions that lift a single
+split to the whole tree, and a checked witness for each — and §13.5.2 in
+`Uncertainty.QuasiExtensive`, because "approximately" is a claim about measurement and
+not about the mereology.
+
+Three cases Bunge's four do not name are added. A value the parts do not determine at
+all (_whole-proper_); a value that adds only about a _shared parameter_, an axis or a
+datum, which is where the parallel-axis theorem lives; and a _weighted mean_, which is
+neither a sum nor a shared constant and whose license is that the total weight is not
+zero. The chapter closes on what a carving cannot say at all: how many parts there
+are.
 
 # Extensive and conditionally-extensive kinds (Dybkær §13.5)
 
@@ -168,4 +182,181 @@ not extensive, not intensive — follow from the exhibited pair alone. The quant
 consequence is {uses "thm_assemble_ne_measured"}[assembling it anyway], in the object-type
 chapter: with a license registered the sum still elaborates, and reports 20 rad/s for a mode
 at 14.
+:::
+
+
+# Additivity to within a tolerance (§13.5.2)
+
+The remaining branch of Bunge's four says the value for the total is "approximately equal" to
+the sum over the parts. _Approximately_ is a claim about measurement, so the predicate is
+stated where the uncertainty is, over $`\mathbb{R}` rather than over the numeral, and its
+tolerance is a coverage factor rather than a number chosen to make the claim come out true.
+
+:::definition "def_quasiExtensive" (parent := "extensivity") (lean := "PropertyKindCalculus.Uncertainty.QuasiExtensive")
+A kind is _quasiextensive to within_ $`t` (§13.5.2) when composing two parts is additive up to
+$`t` — at _each join_, not once for the whole. Naming the tolerance is what turns
+"approximately" into a claim: two quasiextensive claims about one measurement are then
+comparable, and the sharper is the one with the smaller $`t`. Refines
+{uses "def_extensiveKind"}[extensivity].
+:::
+
+:::proof "def_quasiExtensive"
+Realized as `Uncertainty.QuasiExtensive k m t`, the same two-field shape as
+{uses "def_extensiveKind"}[`Extensive`] with the additivity equation replaced by
+$`\lvert v(a \sqcup b) - (v(a) + v(b)) \rvert \le t`. Where the tolerance comes from is R18's
+business: `join_within_tolerance` specializes the Chebyshev
+{uses "thm_uq_coverage_chebyshev"}[coverage bound] to a mean-zero join discrepancy, so a
+per-join tolerance of $`k` standard uncertainties carries probability at least $`1 - 1/k^2`.
+:::
+
+:::theorem "thm_quasiExtensive_leafSum" (parent := "extensivity") (lean := "PropertyKindCalculus.Uncertainty.quasiExtensive_leafSum") (tags := "capstone, proved") (effort := "medium")
+*Quasiextensive aggregation.* For a kind quasiextensive to within $`t`, the value measured on
+the whole differs from the sum over all atomic parts by at most the carving's join count times
+the tolerance,
+$$`\Bigl\lvert v\Bigl(\bigsqcup_i s_i\Bigr) - \sum_i v(s_i) \Bigr\rvert \le \mathrm{joins} \cdot t.`
+That the bound grows with the carving is the content, not a weakness of the proof: a library
+reporting one tolerance for a total however the total was assembled is reporting the wrong
+number, and this says by how much. Builds on {uses "def_quasiExtensive"}[quasiextensive kinds].
+:::
+
+:::proof "thm_quasiExtensive_leafSum"
+By induction on the decomposition, exactly as the §13.5.1 capstone: at a leaf the discrepancy
+is zero over zero joins, and at a union the triangle inequality splits it into this join's
+tolerance plus the two sub-carvings' accumulated bounds. The witness is a balance whose
+composite readings carry one digit of rounding — quasiextensive to within 1, and not
+extensive, so the branch is occupied by something §13.5.1 excludes.
+:::
+
+:::theorem "thm_extensive_iff_quasi_zero" (parent := "extensivity") (lean := "PropertyKindCalculus.Uncertainty.extensive_iff_quasiExtensive_zero") (tags := "proved") (effort := "small")
+*§13.5.1 is §13.5.2 at zero tolerance.* A kind is extensive exactly when it is quasiextensive
+to within nothing at all — so the branches are nested rather than parallel, and a tolerance is
+not hiding a weaker law. Uses {uses "def_quasiExtensive"}[quasiextensive kinds] and
+{uses "def_extensiveKind"}[extensive kinds].
+:::
+
+:::proof "thm_extensive_iff_quasi_zero"
+Forward, the additivity equation makes the discrepancy zero; backward, $`\lvert x \rvert \le 0`
+forces $`x = 0`. The tolerance is shown to be doing work by the other direction of the same
+witness family: volume on mixing refutes _every_ tolerance below the 4 mL water and ethanol
+actually contract by (`mixing_not_quasiExtensive`), so §13.5.3 reads as §13.5.2 with a
+tolerance the conditions set.
+:::
+
+# Aggregating about a shared parameter
+
+Some quantities add only relative to something the parts must share — a moment of inertia about
+a common axis, an energy about a common datum. A `Measurement` reads a carving and nothing else,
+so the parameter is made an explicit argument; what that buys is not a weaker law but a statable
+one, about the case a library that forgets the axis actually hits.
+
+:::definition "def_extensiveAbout" (parent := "extensivity") (lean := "PropertyKindCalculus.ExtensiveAbout")
+A kind is _extensive about_ a parameter when fixing the parameter — an axis, an origin, a datum
+— makes the ordinary additivity law hold. This is {uses "def_extensiveKind"}[extensivity] at
+every parameter at once, not a weakening of it, which is what makes the mixed-parameter
+statement a claim about the predicate rather than about one lucky choice.
+:::
+
+:::proof "def_extensiveAbout"
+Realized as `ExtensiveAbout k m` over a `ParamMeasurement`, with `ExtensiveAbout.at` recovering
+`Extensive k (m a)` at each parameter so both §13.5 capstones apply unchanged. Its companion
+`Transports` carries the correction as an argument rather than defining it as the difference: a
+transport law is useful only when the correction is computable from data the part already
+carries.
+:::
+
+:::theorem "thm_parallel_axis" (parent := "extensivity") (lean := "PropertyKindCalculus.parallelAxis") (tags := "capstone, proved") (effort := "medium")
+*The parallel-axis theorem, over any carving.* The moment of inertia about $`a` is the moment
+about $`b` plus a correction built from the carving's own first moment and total mass,
+$$`I_a = I_b + 2(b-a)\sum_i w_i x_i + (a^2 - b^2)\sum_i w_i.`
+Both summaries are themselves extensive over the same carving, which is why this is a
+metrological statement and not only an algebraic identity: transporting an aggregate costs
+only quantities the parts already carry. Taking $`b` at the centre of mass kills the first
+moment and leaves the textbook $`M d^2`. Builds on {uses "def_extensiveAbout"}[extensivity
+about a parameter].
+:::
+
+:::proof "thm_parallel_axis"
+By induction on the carving: at a leaf it is ring normalization of
+$`w(x-a)^2 = w(x-b)^2 + 2(b-a)wx + (a^2-b^2)w`, and at a join the three folds distribute. The
+`Int` ring arithmetic is why it lives in the Mathlib-backed `AggregationLaws` rather than the
+core. What the core exhibits is the failure it corrects: two point masses read about axes
+through themselves contribute nothing each, where the rod about its centre reads 2.
+:::
+
+# The weighted mean, and its license
+
+A third aggregation mode, neither additive nor constant. Its side condition is the one a formula
+written without it silently violates — where a centre of mass defined as a ratio of integrals
+with no mass hypothesis returns the origin for a massless body.
+
+:::definition "def_weightedCarving" (parent := "extensivity") (lean := "PropertyKindCalculus.WeightedCarving")
+A _weighted carving_ is a carving, a weight per part, and the license the mean needs: the total
+weight is not zero. Carrying the condition as a field is the point — a whole with no weight is
+not a term of the type, so the degenerate case is unreachable rather than handled.
+:::
+
+:::proof "def_weightedCarving"
+Realized as `WeightedCarving P` over $`\mathbb{R}` in `AggregationLaws`, with
+`WeightedCarving.mean` the ratio of the weighted fold to the weight fold. Division is why it
+cannot live in the Mathlib-free core beside the other two modes.
+:::
+
+:::theorem "thm_weighted_mean_const" (parent := "extensivity") (lean := "PropertyKindCalculus.WeightedCarving.mean_const") (tags := "proved") (effort := "small")
+*The mean of a constant is that constant.* Put every part at the same place and the whole is at
+that place, whatever the weights — the law that distinguishes this mode from a sum and from a
+shared reading at once. Uses {uses "def_weightedCarving"}[weighted carvings].
+:::
+
+:::proof "thm_weighted_mean_const"
+A constant factors out of the fold (`fold_mul_const`, by induction), and the license discharges
+the cancellation. That the weights are load-bearing is checked separately: a carving weighted
+1 and 3 over values 3 and 1 has mean $`3/2` where the unweighted average of the same values is
+$`2`, so a `mean` ignoring its weights would fail the probe.
+:::
+
+# Re-carving, and what a count is keyed to
+
+A carving is not a census, and the two halves of that claim are provable. What survives a
+re-carving is every licensed aggregate; what does not is how many parts there are.
+
+:::definition "def_recarving" (parent := "extensivity") (lean := "PropertyKindCalculus.Recarving")
+A _re-carving_ is a map from one carving of a whole to another, carrying the obligation that the
+measured whole is the same whole. It is the generalization of a pattern physics libraries prove
+one functional at a time — merging indiscernible parts and checking that each additive
+functional is unchanged.
+:::
+
+:::proof "def_recarving"
+Realized as `Recarving m`, a map and its `preserves` field. The witness `coalesce` replaces any
+carving by the single part whose mass is the total: fewer entities, same whole, with `preserves`
+holding by `rfl`.
+:::
+
+:::theorem "thm_recarving_invariant" (parent := "extensivity") (lean := "PropertyKindCalculus.Recarving.leafSum_invariant") (tags := "capstone, proved") (effort := "medium")
+*Every licensed aggregate is re-carving invariant.* For an extensive kind the total over the
+parts is the value of the whole, so a map that preserves the whole preserves the total —
+whatever it does to the parts. Builds on {uses "def_recarving"}[re-carvings] and
+{uses "thm_extensive_additive"}[extensive aggregation].
+:::
+
+:::proof "thm_recarving_invariant"
+Two rewrites by the extensive capstone reduce the claim to the `preserves` field. This is what
+makes {uses "thm_extensive_additive"}[the $`\forall`-quantified form] the deliverable rather
+than a convenience: a total that depended on how the whole was cut would fail exactly here.
+:::
+
+:::theorem "thm_count_not_invariant" (parent := "extensivity") (lean := "PropertyKindCalculus.coalesce_count_ne") (tags := "proved") (effort := "small")
+*The count does not survive.* The same re-carving that preserves the mass takes a two-part
+carving to a one-part one. So there is no function from the whole to how many parts it has,
+and a count is licensed by a _sortal_ rather than by the whole — the SI's own reading of amount
+of substance as a count of a specified elementary entity. Uses {uses "def_recarving"}[re-carvings].
+:::
+
+:::proof "thm_count_not_invariant"
+`decide` on the exhibited pair, against `thm_recarving_invariant` on the same map: 2 kg before
+and after, two parts before and one after. `countMeasurement` takes the sortal as an argument
+and `count_sortal_ne` checks that the argument matters — one carving, two predicates, counts 2
+and 0 — so a count is extensive over a fixed carving and yet not a property of the whole. This
+is Marmodoro's "It is an open question how many entities a physical structure is"
+{Manual.citep marmodoro_whole_but_not_one}[] as a refutation rather than a remark.
 :::

@@ -10,6 +10,7 @@ is not Mathlib-free.
 import PropertyKindCalculus.Uncertainty.Combine
 import PropertyKindCalculus.Uncertainty.Ladder
 import PropertyKindCalculus.Uncertainty.Coverage
+import PropertyKindCalculus.Uncertainty.QuasiExtensive
 import PropertyKindCalculus.Uncertainty.Adequacy
 import PropertyKindCalculus.Uncertainty.Adequacy.Soundness
 import PropertyKindCalculus.Uncertainty.Adequacy.Sterbenz32
@@ -65,5 +66,18 @@ attribute [requirement "R18" proves "Tier 2 (uniform): the centred interval [m�
   Coverage.uniform_coverage_exact
 attribute [requirement "R18" exemplifies "the central half [-1,1] of a uniform on [-2,2] has coverage exactly 1/2"]
   PropertyKindCalculus.UncertaintyExamples.Coverage.central_half_coverage
+
+/-! ## R9 — §13.5.2 quasiextensive: additivity to within a stated tolerance -/
+
+attribute [requirement "R9" specifies "additivity to within a named per-join tolerance — §13.5.2, the branch of Bunge's four that is about measurement rather than mereology"]
+  QuasiExtensive
+attribute [requirement "R9" proves "the discrepancy over a whole carving is at most the join count times the tolerance"]
+  quasiExtensive_leafSum
+attribute [requirement "R9" proves "§13.5.1 is §13.5.2 at zero tolerance, in both directions"]
+  extensive_iff_quasiExtensive_zero
+attribute [requirement "R9" proves "a tolerance below the contraction is refuted: volume on mixing is not quasiextensive under 4 mL"]
+  mixing_not_quasiExtensive
+attribute [requirement "R18" proves "the per-join tolerance as a coverage statement: |D| < k·u holds with probability ≥ 1 − 1/k², distribution-free"]
+  join_within_tolerance
 
 end PropertyKindCalculus.Uncertainty

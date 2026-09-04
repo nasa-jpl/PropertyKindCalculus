@@ -1,10 +1,11 @@
 import Verso
 import VersoManual
 import VersoBlueprint
--- The dimension-1 disambiguation capstone below now links a real declaration, so
--- this chapter imports the `Dimension` library (the one PhysLib + Mathlib
--- dependency); the rest of its nodes remain planned.
+-- Every node below links a real declaration, so this chapter imports the `Dimension`
+-- library (the one PhysLib + Mathlib dependency) for the dimension-1 disambiguation
+-- capstone, and `UnitReal` for the real-valued chosen-reference unit.
 import PropertyKindCalculus.Dimension
+import PropertyKindCalculus.UnitReal
 
 open Verso.Genre
 open Verso.Genre.Manual
@@ -158,18 +159,28 @@ Realized as the pointwise `Carrier (ι → R)` / `LawfulCarrier (ι → R)` inst
 transforms — remains a separate, owed axis.
 :::
 
-:::definition "def_unit" (parent := "units")
-A _unit_ `Unit k` is a distinguished {uses "def_quantity"}[quantity] of kind $`k`
+:::definition "def_unit" (parent := "units") (lean := "PropertyKindCalculus.RealUnit")
+A _unit_ `RealUnit k` is a distinguished {uses "def_quantity"}[quantity] of kind $`k`
 chosen as the reference: measuring expresses any quantity of kind $`k` as
-$`\text{number} \times \text{unit}`. Because `Unit` is indexed by the same $`k`,
+$`\text{number} \times \text{unit}`. Because it is indexed by the same $`k`,
 "a metre" and "a unit of gravimetric water content" inhabit different types. This
 is the real-valued refinement of the proved {uses "def_metrologicalUnit"}[metrological unit]: it replaces the symbolic numeral-and-reference form with a magnitude in
 $`\mathbb{R}`, so that conversion _ratios_ become arithmetic.
 :::
 
 :::proof "def_unit"
-Planned. A `Unit k := { ref : Quantity k }` (or a chosen nonzero reference), with
-`measure : Quantity k → Unit k → ℝ` giving the numeric value in that unit.
+Realized as `RealUnit k`, a `Quantity k ℝ` chosen as the reference together with the one
+condition the choice must satisfy: `ref_ne_zero`. That field is what the phrase "express the
+ratio of the two quantities as a number" presupposes and the symbolic layer never has to
+state — a reference of magnitude zero expresses no ratio — and carrying it makes a degenerate
+unit not a term of the type. Measuring is `measure : Quantity k ℝ → RealUnit k → ℝ`, division
+by the reference; `ofNumber` is the multiplication back; and the §13.3.3 number-and-reference
+round-trip is then a bijection in both directions (`measure_ofNumber`, `ofNumber_measure`)
+rather than a definitional unfolding. `ratio` is the §1.22 conversion factor for an _arbitrary_
+chosen reference, nonzero from the two licenses and reciprocal in the two directions, of which
+the {uses "thm_unit_conversion_roundtrip"}[power-of-radix factor] is the special case. The
+refinement inherits the §9.13.4 exclusions rather than widening them: `WellFormed` is the
+symbolic layer's `BearsUnit`, so a nominal or ordinal kind bears no real-valued unit either.
 :::
 
 :::theorem "thm_unit_conversion_roundtrip" (parent := "units") (lean := "PropertyKindCalculus.PrefixedUnit.convertExp_roundtrip") (tags := "capstone, proved") (effort := "medium") (priority := "high")

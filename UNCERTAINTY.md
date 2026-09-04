@@ -565,6 +565,12 @@ uncertainty/PropertyKindCalculus/Uncertainty/
                            corollary of a risk bound. Q abstract; both posterior families qualify
   Convolution.lean      ✅ Dist/conv over ℝ; T5 (convolution adds cumulants),      [rigor, Stage 2]
                            T3 (willink = linearized-ssprc|κ₄), T4 (affine R = E(Y)) — sorry-free
+  QuasiExtensive.lean   ✅ Dybkær §13.5.2 over ℝ: additivity to within a NAMED     [rigor, Area 1]
+                           per-join tolerance; |whole − Σparts| ≤ joins·t over a carving; §13.5.1
+                           recovered exactly at t = 0 (both directions); volume-on-mixing refutes
+                           every t < 4, so §13.5.3 reads as §13.5.2 with a tolerance the
+                           conditions set; `join_within_tolerance` sources t from R18's Chebyshev
+                           bound, so the tolerance is a coverage factor and not a choice
   Adequacy.lean         ✅ executable Adequacy NumCarrier over Float: ulp₃₂,        [Area 2, Stage 3]
                            swamping + cancellation checks, isAdequate verdict (Mathlib/Torch-free)
   Adequacy/Grid.lean       ✅ local uniform-grid rounding spec over ℝ (gridRound, OnGrid, ½-ulp bound)

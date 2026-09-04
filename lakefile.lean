@@ -57,7 +57,7 @@ package «PropertyKindCalculus» where
   -- The package version — the single source of truth. `scripts/bump-version.sh`
   -- reads and bumps it here, and the blueprint reads this same line at build time
   -- (its `{version}[]` role) so the published document never drifts from the source.
-  version := v!"0.91.0"
+  version := v!"0.92.0"
   leanOptions := #[
     ⟨`autoImplicit, false⟩,
     ⟨`relaxedAutoImplicit, false⟩]
@@ -188,11 +188,13 @@ lean_lib «Dimension» where
     .one `PropertyKindCalculus.Interaction,
     .one `PropertyKindCalculus.Function,
     .one `PropertyKindCalculus.DimensionalCoverage,
+    .one `PropertyKindCalculus.AggregationLaws,
     .one `PropertyKindCalculus.QuantityReal,
     .one `PropertyKindCalculus.Observable,
     .one `PropertyKindCalculus.FrameReal,
     .one `PropertyKindCalculus.BoundsReal,
     .one `PropertyKindCalculus.CompositeReal,
+    .one `PropertyKindCalculus.UnitReal,
     .one `PropertyKindCalculus.UnitConversion]
 
 /-- Worked examples for the Mathlib-backed `Dimension` library — the dimension
@@ -312,6 +314,7 @@ lean_lib «UncertaintyRigor» where
     .one `PropertyKindCalculus.Uncertainty.BudgetDagLaws,
     .one `PropertyKindCalculus.Uncertainty.Convolution,
     .one `PropertyKindCalculus.Uncertainty.Coverage,
+    .one `PropertyKindCalculus.Uncertainty.QuasiExtensive,
     .one `PropertyKindCalculus.Uncertainty.Sensitivity,
     .one `PropertyKindCalculus.Uncertainty.Adequacy.Grid,
     .one `PropertyKindCalculus.Uncertainty.Adequacy.Absorption,

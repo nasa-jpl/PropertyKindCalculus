@@ -2,11 +2,13 @@
 # Requirement annotations reaching into the Dimension layer
 
 The requirements whose discharging declarations live in the PhysLib-backed
-`Dimension` / `Interaction` / `ScaleSpanning` / `UnitConversion` libraries: R1's
-dimension-1 disambiguation (`dim` is not injective), R5's interaction algebra, R7's
-dimension homomorphism, R13's scale-spanning unit classification, and R17's numeric
-(ℝ) unit-conversion round-trip. Applied from afar, so the layers being annotated
-need no import of this machinery.
+`Dimension` / `Interaction` / `ScaleSpanning` / `UnitConversion` / `AggregationLaws` /
+`UnitReal` libraries: R1's dimension-1 disambiguation (`dim` is not injective), R5's
+interaction algebra, R7's dimension homomorphism, R9's two aggregation laws whose
+arithmetic the Mathlib-free core cannot do (the weighted mean, the parallel-axis
+transport), R13's scale-spanning unit classification, and R17's unit conversion over
+`ℝ` — both the power-of-radix factor and the arbitrary chosen reference. Applied from
+afar, so the layers being annotated need no import of this machinery.
 
 These pull in PhysLib (and, transitively, Mathlib), so — like
 `CrossRefs.DimensionAnnotations` — this module is not Mathlib-free even though the
@@ -17,6 +19,8 @@ import PropertyKindCalculus.Dimension
 import PropertyKindCalculus.Interaction
 import PropertyKindCalculus.ScaleSpanning
 import PropertyKindCalculus.UnitConversion
+import PropertyKindCalculus.UnitReal
+import PropertyKindCalculus.AggregationLaws
 import PropertyKindCalculus.FrameReal
 import PropertyKindCalculus.DimensionExamples.UnitConversion
 import PropertyKindCalculus.Requirements.Attributes
@@ -107,5 +111,23 @@ attribute [requirement "R20" proves "and a component is not invariant — stated
   component_not_invariant
 attribute [requirement "R20" specifies "the scalar gate: which carriers' × is the multiplication of magnitudes, so a numerical-array carrier cannot sign a pointwise product as a product of kinds"]
   ScalarCarrier
+
+/-! ## R9 — the two aggregation laws whose arithmetic needs Mathlib -/
+
+attribute [requirement "R9" specifies "a weighted carving: parts, weights, and the nonzero-total license a mean needs"]
+  WeightedCarving
+attribute [requirement "R9" proves "the mean of a constant is that constant — the law that distinguishes a mean from a sum"]
+  WeightedCarving.mean_const
+attribute [requirement "R9" proves "the parallel-axis theorem: a moment of inertia transports between axes by a correction built from the carving's own first moment and total mass"]
+  parallelAxis
+
+/-! ## R17 — the real-valued unit: an arbitrary chosen reference -/
+
+attribute [requirement "R17" specifies "a unit as a chosen reference quantity of a kind, carrying the nonzero-magnitude license"]
+  RealUnit
+attribute [requirement "R17" proves "measuring and re-applying a real-valued unit is a bijection — the §13.3.3 number-and-reference round-trip over ℝ"]
+  RealUnit.ofNumber_measure
+attribute [requirement "R17" proves "the two conversion factors between two units of a kind are reciprocal, for an arbitrary chosen reference"]
+  RealUnit.ratio_mul_ratio_symm
 
 end PropertyKindCalculus

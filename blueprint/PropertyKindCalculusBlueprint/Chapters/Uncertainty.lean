@@ -366,7 +366,7 @@ Realized over `ℝ`: `willinkCumulants_cons`, with the `Cumulants` `AddCommMonoi
 independent fold well-defined.
 :::
 
-:::theorem "thm_uq_gum_is_willink" (parent := "uncertainty") (lean := "PropertyKindCalculus.Uncertainty.gum_eq_willink_of_normal") (tags := "capstone")
+:::theorem "thm_uq_gum_is_willink" (parent := "uncertainty") (lean := "PropertyKindCalculus.Uncertainty.gum_eq_willink_of_normal") (tags := "capstone, proved")
 *GUM is the $`\kappa_2`-projection of Willink (T2).* The second cumulant of the Willink combine is
 exactly the GUM combined variance, so $`\mathrm{gum}` is the cumulant-forgetting coarsening of
 $`\mathrm{willink}`. And when every input's fourth cumulant vanishes ($`w_i = 0`, as for normal
@@ -431,7 +431,7 @@ moment of the sum), not assumed. Sorry-free (`#print axioms` → `propext`, `Cla
 `Quot.sound`).
 :::
 
-:::theorem "thm_uq_ssprc_willink" (parent := "uncertainty") (lean := "PropertyKindCalculus.Uncertainty.cumulantsOf_combinedDeviation") (tags := "capstone")
+:::theorem "thm_uq_ssprc_willink" (parent := "uncertainty") (lean := "PropertyKindCalculus.Uncertainty.cumulantsOf_combinedDeviation") (tags := "capstone, proved")
 *Willink is the $`(\kappa_2,\kappa_4)`-projection of the linearized SSPRC (T3).* If each input's
 deviation distribution is a centered probability distribution realizing its declared moments, then
 the cumulants of the convolved combined deviation are *exactly* the Willink combined cumulants
@@ -532,7 +532,7 @@ difference rounds to itself). Sorry-free. Stage 3.2 carries this to the FLT/`fex
 actually uses (gradual underflow) — the genuine grounding is `thm_uq_sterbenz_fp32`.
 :::
 
-:::theorem "thm_uq_sterbenz_fp32" (parent := "uncertainty") (lean := "PropertyKindCalculus.Uncertainty.Adequacy.round32_sterbenz_exact") (tags := "capstone")
+:::theorem "thm_uq_sterbenz_fp32" (parent := "uncertainty") (lean := "PropertyKindCalculus.Uncertainty.Adequacy.round32_sterbenz_exact") (tags := "capstone, proved")
 *Sterbenz at the binary32 format (A2, Stage 3.2).* The same exactness at the format binary32 *actually
 uses* — TorchLean's `fexp32 = \mathrm{FLTExp}\,(-149)\,24`, an `FLT` format with gradual underflow: for
 representable binary32 `u`, `v` within a factor of two ($`u \le 2v`, $`v \le 2u`), the exact difference
@@ -553,7 +553,7 @@ collapses to *zero* in the Sterbenz regime. Sorry-free (`[propext, Classical.cho
 exercised by the `AdequacySterbenz32` example.
 :::
 
-:::theorem "thm_uq_adequacy_verdict" (parent := "uncertainty") (lean := "PropertyKindCalculus.Uncertainty.Adequacy.verdict_sound") (tags := "capstone")
+:::theorem "thm_uq_adequacy_verdict" (parent := "uncertainty") (lean := "PropertyKindCalculus.Uncertainty.Adequacy.verdict_sound") (tags := "capstone, proved")
 *Adequacy verdict soundness (A3).* At an addition site, the carrier's flag — the operand's
 uncertainty is below half the accumulator's ulp — holds *if and only if* the contribution is
 genuinely lost (the rounded sum is unchanged by that uncertainty). So the flag is *sound* (flag ⟹
@@ -569,7 +569,7 @@ it to concrete values with a sorry-free axiom profile. This is the per-site soun
 runtime carrier.
 :::
 
-:::theorem "thm_uq_adequacy_soundness" (parent := "uncertainty") (lean := "PropertyKindCalculus.Uncertainty.Adequacy.dag_fp32_box_faithful") (tags := "capstone")
+:::theorem "thm_uq_adequacy_soundness" (parent := "uncertainty") (lean := "PropertyKindCalculus.Uncertainty.Adequacy.dag_fp32_box_faithful") (tags := "capstone, proved")
 *Universal adequacy soundness (A3′, the capstone).* Abstract a write-once model as a binary32
 evaluation DAG over the full operator class `+`/`−`/`×`/`÷`. For *any* two inputs — in particular
 every input in a box around a nominal one — the `FP32`-computed measurand's *variation* reproduces the
@@ -596,7 +596,7 @@ node rounds* to the *minimal* no-absorption condition (the executable-carrier br
 {uses "thm_uq_exec_bridge"}[is built, Stage 3.3]).
 :::
 
-:::theorem "thm_uq_exec_bridge" (parent := "uncertainty") (lean := "PropertyKindCalculus.Uncertainty.Adequacy.exec_verdict_sound") (tags := "capstone")
+:::theorem "thm_uq_exec_bridge" (parent := "uncertainty") (lean := "PropertyKindCalculus.Uncertainty.Adequacy.exec_verdict_sound") (tags := "capstone, proved")
 *Executable↔spec bridge (Stage 3.3).* The verdicts above are stated over the `noncomputable` `ℝ`/`FP32`
 specification, but the *runtime* carrier must compute a verdict. Lean's host `Float` is an opaque FFI
 type no theorem can constrain, so the certified executable check runs on TorchLean's *computable*
@@ -681,7 +681,7 @@ $`u_c = \sqrt{657.25} \approx 25.637`, and `#check_failure` probes making the op
 heterogeneous quadrature, and the kind-misplaced leaf type errors.
 :::
 
-:::theorem "thm_uq_budget_dag_collapse" (parent := "uncertainty") (lean := "PropertyKindCalculus.Uncertainty.BudgetExpr.propagateQ_unc_eq_combinedQ") (tags := "capstone")
+:::theorem "thm_uq_budget_dag_collapse" (parent := "uncertainty") (lean := "PropertyKindCalculus.Uncertainty.BudgetExpr.propagateQ_unc_eq_combinedQ") (tags := "capstone, proved")
 *The threaded propagation collapses to the flat quadrature.* Over `ℝ`, the uncertainty the
 {uses "def_uq_budget_dag"}[budget DAG] accumulates node-by-node — a $`\sqrt{\ }` at every node,
 re-squared by the parent — telescopes *exactly*, not up to a bound, to the flat
@@ -692,7 +692,7 @@ budget, not a second authority over the same GUM content.
 :::
 
 :::proof "thm_uq_budget_dag_collapse"
-Realized over `ℝ` (`Uncertainty.BudgetDagLaws.propagateQ_unc_eq_combinedQ`), under a `NonnegUncs`
+Realized over `ℝ` (`Uncertainty.BudgetExpr.propagateQ_unc_eq_combinedQ`, in `BudgetDagLaws`), under a `NonnegUncs`
 hypothesis (nonnegativity of every leaf uncertainty — statable only at the ordered proof carrier, the
 core `NumCarrier` being deliberately branchless). Structural induction: `Quantity.ext` reduces each
 node to a magnitude identity in the `sumSq` sum-of-squares vocabulary (`sumSq_append`, the scaled
@@ -725,7 +725,7 @@ interval is measured. It is the square root of the $`\kappa_2` the moment descri
 Realized: `Coverage.stdUnc`, `Real.sqrt` of `ProbabilityTheory.variance`.
 :::
 
-:::theorem "thm_uq_coverage_chebyshev" (parent := "uncertainty") (lean := "PropertyKindCalculus.Uncertainty.Coverage.coverageBound_stdUnc") (tags := "capstone")
+:::theorem "thm_uq_coverage_chebyshev" (parent := "uncertainty") (lean := "PropertyKindCalculus.Uncertainty.Coverage.coverageBound_stdUnc") (tags := "capstone, proved")
 *Tier 1 — the distribution-free coverage bound.* For *any* distribution with a positive variance,
 the interval of $`k` standard uncertainties about the mean, $`[m - k u,\, m + k u]`, has coverage
 probability at least $`1 - 1/k^2`. This is the complement of Chebyshev's inequality and assumes

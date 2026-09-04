@@ -22,6 +22,7 @@ import PropertyKindCalculus.ValueScale
 import PropertyKindCalculus.Unit
 import PropertyKindCalculus.UnitPrefix
 import PropertyKindCalculus.Extensivity
+import PropertyKindCalculus.Recarving
 import PropertyKindCalculus.Quantity
 import PropertyKindCalculus.QuantityClassification
 import PropertyKindCalculus.OperatorTable

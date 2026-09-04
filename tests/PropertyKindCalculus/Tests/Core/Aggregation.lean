@@ -114,4 +114,48 @@ theorem r9_normalMode_leafSum_ne :
 /-- info: 'PropertyKindCalculus.WholeProper.not_intensive' does not depend on any axioms -/
 #guard_msgs in #print axioms WholeProper.not_intensive
 
+
+/-! ## Extensivity about a shared parameter (R9)
+
+The parametrized predicate carries the same two dangers, and one more of its own: a law about a
+parameter is worthless if the parameter never matters. So the probe drives the whole-tree law at
+a *chosen* axis, and then exhibits the case the parameter rules out — two parts read about their
+own axes, summing to a number that is not the whole's.
+-/
+
+-- Inhabitation: the rod's inertia is extensive about *every* axis, so the capstone applies at
+-- each — `ExtensiveAbout` is not a weaker predicate that only holds somewhere.
+theorem r9_rod_extensive_about (a : Int) : Extensive pointMassInertia (rodInertia a) :=
+  (inertiaMeasurement_extensiveAbout PointMass.mass PointMass.position).at a
+
+theorem r9_rod_leafSum (a : Int) :
+    (rodInertia a rod).numeral = leafSum (rodInertia a) rod :=
+  extensive_additive (r9_rod_extensive_about a) rod
+
+-- and it computes: 2 about the centre, 4 about the left mass — the same rod, two numbers.
+#guard (rodInertia 0 rod).numeral == 2
+#guard (rodInertia (-1) rod).numeral == 4
+
+-- Boundary — the parameter is load-bearing: parts read about axes through themselves sum to 0
+-- where the rod about its centre reads 2, so `ExtensiveAbout` genuinely rules something out.
+theorem r9_rod_mixed_axes_wrong :
+    (rodInertia 0 rod).numeral
+      ≠ (rodInertia (-1) rodLeft).numeral + (rodInertia 1 rodRight).numeral :=
+  rod_mixed_axes_wrong
+
+/-- info: 'PropertyKindCalculus.ExtensiveAbout.at' does not depend on any axioms -/
+#guard_msgs in #print axioms ExtensiveAbout.at
+
+/-- info: 'PropertyKindCalculus.extensiveAbout_mixed' does not depend on any axioms -/
+#guard_msgs in #print axioms extensiveAbout_mixed
+
+/-- info: 'PropertyKindCalculus.extensiveAbout_mixed_ne' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in #print axioms extensiveAbout_mixed_ne
+
+/-- info: 'PropertyKindCalculus.inertiaMeasurement_extensiveAbout' does not depend on any axioms -/
+#guard_msgs in #print axioms inertiaMeasurement_extensiveAbout
+
+/-- info: 'PropertyKindCalculus.rod_mixed_axes_wrong' does not depend on any axioms -/
+#guard_msgs in #print axioms rod_mixed_axes_wrong
+
 end PropertyKindCalculus.Tests.Aggregation

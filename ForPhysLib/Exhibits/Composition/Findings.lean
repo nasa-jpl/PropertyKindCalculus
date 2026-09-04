@@ -33,7 +33,8 @@ one aggregation with a side condition — the center of mass — is defined with
 5. **The center of mass, licensed.** A weighted carving carries the nonzero-total-weight
    condition as a field, so the massless body of finding 2 is not a term of it, and the mean
    of a constant is that constant — the law that says this aggregation is a mean and not a
-   sum.
+   sum. The mode is `PropertyKindCalculus.WeightedCarving`, beside the other two; the exhibit
+   supplies the instance at this body's halves.
 
 **What is *not* claimed.** Nothing here says PhysLib's numbers are wrong: `centerOfMass` is
 the right formula wherever it is applied to a body with mass, and the informal lemmas are
@@ -44,6 +45,7 @@ case to the type system.
 
 import Physlib.ClassicalMechanics.RigidBody.KineticEnergy
 import PropertyKindCalculus
+import PropertyKindCalculus.AggregationLaws
 import PropertyKindCalculus.Iso80000.Part3
 import PropertyKindCalculus.Iso80000.Part4
 
@@ -301,43 +303,29 @@ theorem modeOfPair_not_intensive : ¬ Intensive angularFrequencyK modeOfPair :=
 
 The center of mass is a third aggregation mode: a weighted mean, which is neither additive
 nor constant. Its license is that the total weight is nonzero — the very hypothesis
-`RigidBody.centerOfMass` does not carry, and finding 2 is what that costs. Carrying it as a
-*field* makes the massless body of finding 2 not a term of this type at all. -/
+`RigidBody.centerOfMass` does not carry, and finding 2 is what that costs. The mode and its
+law are `PropertyKindCalculus.WeightedCarving` and `WeightedCarving.mean_const`, beside the
+other two aggregation modes rather than in this exhibit; what the exhibit adds is the
+instance, at the halves of the rigid body findings 3 and 4 carve. -/
 
-/-- A **weighted carving**: parts, a weight for each, and the license the mean needs. The
-third field is the whole point — a mean is not a function of the parts alone. -/
-structure WeightedCarving (P : Type) where
-  /-- How the whole is carved. -/
-  parts : Decomposition P
-  /-- The weight of each part — mass, for a center of mass. -/
-  weight : P → ℝ
-  /-- **The license**: the total weight is not zero. -/
-  total_ne_zero : parts.fold weight (· + ·) ≠ 0
+/-- The halves of the rigid body, weighted by mass and carrying the license: one kilogram in
+each half, so the total is 2 and the mean is defined. Where PhysLib's `centerOfMass` returns
+the origin for a massless body (`massless_centerOfMass`, finding 2), there is here nothing to
+build a term from — the license is a field, and `⟨0⟩` cannot discharge it. -/
+noncomputable def halvesByMass : WeightedCarving Half where
+  parts := .union (.atom .left) (.atom .right)
+  weight := fun _ => 1
+  total_ne_zero := by norm_num [Decomposition.fold]
 
-/-- The weighted mean of a per-part value over a carving — the center-of-mass mode of
-aggregation, with the denominator's license already discharged by the carving. -/
-noncomputable def WeightedCarving.mean {P : Type} (c : WeightedCarving P) (v : P → ℝ) : ℝ :=
-  c.parts.fold (fun p => c.weight p * v p) (· + ·) / c.parts.fold c.weight (· + ·)
+/-- **The rigid body's center of mass, licensed.** Both halves at the same place put the whole
+at that place — the law that says this aggregation is a mean and not a sum, applied to a real
+carving of a real body rather than stated in the abstract. -/
+theorem halvesByMass_mean_const (v : ℝ) : halvesByMass.mean (fun _ => v) = v :=
+  halvesByMass.mean_const v
 
-/-- A constant factors out of the fold — the one arithmetic fact the mean law needs. -/
-theorem fold_mul_const {P : Type} (w : P → ℝ) (v : ℝ) : ∀ d : Decomposition P,
-    d.fold (fun p => w p * v) (· + ·) = d.fold w (· + ·) * v
-  | .atom _ => rfl
-  | .union a b => by
-      simp only [Decomposition.fold, fold_mul_const w v a, fold_mul_const w v b, add_mul]
-
-/-- **The mean of a constant is that constant.** The law that distinguishes this mode from a
-sum: put every part at the same place and the whole is at that place, whatever the weights.
-The proof uses the license, which is why it is a field. -/
-theorem WeightedCarving.mean_const {P : Type} (c : WeightedCarving P) (v : ℝ) :
-    c.mean (fun _ => v) = v := by
-  rw [WeightedCarving.mean, fold_mul_const]
-  exact mul_div_cancel_left₀ v c.total_ne_zero
-
-/-- The license travels with the carving, so a massless body cannot be handed to the mean:
-where PhysLib's `centerOfMass` returns the origin (`massless_centerOfMass`), there is here
-nothing to return it from. -/
-theorem carving_total_ne_zero (c : WeightedCarving Half) :
-    c.parts.fold c.weight (· + ·) ≠ 0 := c.total_ne_zero
+/-- The license travels with the carving, so a massless body cannot be handed to the mean. -/
+theorem halvesByMass_total_ne_zero :
+    halvesByMass.parts.fold halvesByMass.weight (· + ·) ≠ 0 :=
+  halvesByMass.total_ne_zero
 
 end ForPhysLib.Exhibits.Composition

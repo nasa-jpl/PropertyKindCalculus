@@ -143,6 +143,22 @@ attribute [requirement "R9" specifies "whole-proper kinds — the whole's value 
   WholeProper
 attribute [requirement "R9" proves "assembling a whole-proper kind reports the wrong number on an exhibited carving"]
   assemble_ne_measured
+attribute [requirement "R9" specifies "extensivity relative to a shared parameter — an axis, an origin, a datum"]
+  ExtensiveAbout
+attribute [requirement "R9" specifies "the transport law relating two parameters, with the correction as data"]
+  Transports
+attribute [requirement "R9" proves "parts read about their own parameters aggregate to the whole once each is transported"]
+  extensiveAbout_mixed
+attribute [requirement "R9" proves "summing readings taken about different parameters is wrong by exactly the corrections"]
+  extensiveAbout_mixed_ne
+attribute [requirement "R9" specifies "a re-carving of a whole, carrying the obligation that the whole is preserved"]
+  Recarving
+attribute [requirement "R9" proves "every licensed aggregate is re-carving invariant, however many parts the map leaves"]
+  Recarving.leafSum_invariant
+attribute [requirement "R9" specifies "a count kind — how many atomic parts fall under a sortal predicate"]
+  countMeasurement
+attribute [requirement "R9" proves "a count is extensive over a fixed carving, and yet not a property of the whole"]
+  coalesce_count_ne
 
 /-! ## Representation parametricity (R10, R11) -/
 

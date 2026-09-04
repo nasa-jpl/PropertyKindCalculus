@@ -293,18 +293,28 @@ what landed.*
 ## 6. The decision, and what landed
 
 Nicolas decided Options 1, 2 and 3 on 2026-09-04 — Option 3 ahead of the recommendation
-above, which had proposed holding it. All three are built, and every artifact below compiles
-(`scripts/build-all-libs-examples.sh`, 20 targets green, plus `blueprint-gen`).
+above, which had proposed holding it — and Option 4 on the same day, the recommendation's gate
+being satisfied by consumers this corpus already names (below). All four are built, and every
+artifact below compiles (`scripts/build-all-libs-examples.sh`, 20 targets green, plus
+`blueprint-gen`).
 
 | option | what landed |
 |---|---|
 | 1 — say it | `marmodoro_whole_but_not_one` in the blueprint's `References.lean`, its title and author read from the vendored volume's table of contents and chapter opening (ch. 4, p. 60; ch. 5 opens at p. 73). The carving/numberlessness paragraph in the *Extensivity* chapter and in `Extensivity.lean`'s module docstring; the unite/unify and sortal-individuation paragraphs in *The object type* and in `Composite.lean`; the individuation-principle sentence on `SortOfSystem` in `Foundations.lean` |
 | 2 — the two formal pieces | `Decomposition.Forall`, `Intensive` (hypothesis explicit) with the `intensive_uniform` capstone and `not_extensive_of_intensive`; `WholeProper` with `not_extensive`/`not_intensive`/`exists_leafSum_ne`; `assemble_ne_measured` in `Composite.lean` — the negative twin of `assemble_eq_measured`. Witnesses: `densityHomogeneous_intensive`, `normalMode_wholeProper`. Probes in `Tests/Core/{Aggregation,Composite}` (inhabitation on a depth-2 carving + axiom pins), worked examples in `MiniExtensivity`, five new blueprint nodes, `@[dybkaer]` and `@[requirement "R9"]` annotations |
 | 3 — the exhibit | `Exhibits/Composition/` — Exhibit G, five findings, `PLAN.md` section and ranking row |
+| 4 — the new machinery | `Recarving.lean` (core): `Recarving m` with its `preserves` obligation and `Recarving.leafSum_invariant`; `Decomposition.count` / `countMeasurement` with `countMeasurement_extensive`, `count_true_eq_joins_succ`, and the two refutations `coalesce_count_ne` and `count_sortal_ne`. Witness `coalesce`, whose `preserves` is `rfl`. Probes in `Tests/Core/Recarving` (inhabitation on a real re-carving + both counts computed + axiom pins), three new blueprint nodes, `@[requirement "R9"]` annotations |
 
-Two things were *not* done, deliberately. Option 4 (the re-carving construct, count kinds)
-stays gated on a named consumer, per the standing rule. And nothing here has been offered
-upstream: whether Exhibit G reaches a maintainer, and how, is Nicolas's call under
+**The named consumers**, per the standing rule. *Re-carving*: F5's `TenQuanta.reduce` /
+`reduce_sum_eq_sum_toCharges`, which proves carving-invariance one additive functional at a
+time — `leafSum_invariant` is that statement once, for any extensive kind. *Count kinds*: F3's
+`CanonicalEnsemble.dof` (with `dof_add`, i.e. the count is extensive),
+`ACCSystemCharges.numberCharges`, and the mole ↔ Avogadro gap — the SI's "count **of a
+specified elementary entity**" being exactly the sortal argument `countMeasurement` carries and
+`count_sortal_ne` shows to matter.
+
+One thing was *not* done, deliberately: nothing here has been offered upstream. Whether Exhibit
+G or any of this machinery reaches a maintainer, and how, is Nicolas's call under
 AI-POLICY §3.1.
 
 ## Status ledger
@@ -312,9 +322,9 @@ AI-POLICY §3.1.
 | item | owner | state |
 |---|---|---|
 | Corpus (this document) | Claude | Done 2026-09-04 |
-| Scope decision: which of Options 1–4 | Nicolas | Decided 2026-09-04 — 1, 2 and 3 |
+| Scope decision: which of Options 1–4 | Nicolas | Decided 2026-09-04 — all four |
 | Options 1–3, built | Claude | Done 2026-09-04 (§6) |
 | Marmodoro `InProceedings` entry in `References.lean` (verified against the vendored volume, same pattern as Simons/Heil) | Claude | Done 2026-09-04 |
-| Option 4 — re-carving construct; count kinds | Nicolas, per piece | **Open**, each gated on a named consumer |
+| Option 4 — re-carving construct; count kinds | Claude | Done 2026-09-04 (§6), both consumers named there |
 | Offer any of Exhibit G upstream | Nicolas (AI-POLICY §3.1) | **Open** |
 | Compile-verification of any corpus claim promoted into an exhibit or communication | Claude, per claim | standing rule |

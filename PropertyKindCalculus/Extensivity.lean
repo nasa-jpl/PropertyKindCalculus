@@ -21,8 +21,10 @@ to tell apart, and this module realizes them:
     content is.
 
 (§13.5.2, *quasiextensive* — the total "approximately equal" to the sum — is about
-measurement uncertainty rather than about the mereology, and belongs to the uncertainty
-layer, not here.)
+measurement uncertainty rather than about the mereology, so it is stated where the
+uncertainty is: `PropertyKindCalculus.Uncertainty.QuasiExtensive`, which reads `joins`
+below to bound how far a per-join tolerance accumulates over a whole carving, and has
+§13.5.1 back as its zero-tolerance case.)
 
 `WholeProper` adds a case the four types do not name: a value the parts do not determine at
 all — no addition, and no invariance with extent either, because the parts do not bear the
@@ -87,6 +89,15 @@ hands over (a `List`, a `Multiset`'s elements, a `Fintype`'s enumeration) reachi
 mereology without an empty case to invent a value for. -/
 def Decomposition.ofParts {O : Type u} (p : O) (ps : List O) : Decomposition O :=
   ps.foldl (fun d q => .union d (.atom q)) (.atom p)
+
+/-- **The number of joins of a carving** — its `union` nodes. The one number this module reads
+off the *shape* of a decomposition rather than off a measured value, and it is read for two
+reasons: it bounds how far a per-join tolerance can accumulate (§13.5.2, `Uncertainty.QuasiExtensive`),
+and it is precisely what a re-carving is free to change while the whole stays put
+(`Recarving.lean`). -/
+def Decomposition.joins {O : Type u} : Decomposition O → Nat
+  | .atom _ => 0
+  | .union a b => Decomposition.joins a + Decomposition.joins b + 1
 
 /-- A **measurement** of a fixed kind over a decomposition: the property value
 observed on the (sub-)system at each node — a leaf carries the value of that atomic
@@ -347,5 +358,150 @@ number, exhibited on the carving that produces it. -/
 theorem normalMode_leafSum_wrong :
     (normalModeFreq (.union oscillatorA oscillatorB)).numeral
       ≠ leafSum normalModeFreq (.union oscillatorA oscillatorB) := by decide
+
+/-! ## Extensivity about a shared parameter (§13.5.1, relative to an axis)
+
+Some quantities add only *relative to something the parts must share*: a moment of inertia
+about a common axis, a potential energy about a common datum, a position about a common
+origin. `Extensive` cannot say this, because a `Measurement` reads a carving and nothing
+else — so the parameter is made an explicit argument. What that buys is not a weaker law but
+a statable one: `ExtensiveAbout` is `Extensive` at *every* parameter at once, and on top of
+it one can say what happens when the parts are read about **different** parameters, which is
+the case a library that forgets the axis actually hits.
+
+The correction term is the content. `Transports` says the reading about `a` is the reading
+about `b` plus a term determined by the two parameters and the part — the shape of the
+parallel-axis theorem, of a change of datum, of a frame shift. The general parallel-axis
+instance needs ring normalization over `Int`, which the Mathlib-free core does not have, so
+it lives in `PropertyKindCalculus.AggregationLaws`; what is exhibited here is the failure it
+corrects, on two point masses. -/
+
+/-- **A measurement taken about a parameter** — an axis, an origin, a datum, a frame. The
+parameter is not part of the mereology: it is chosen before the parts are read, and reading
+two parts about different choices is exactly what `Transports` below prices. -/
+abbrev ParamMeasurement (A : Type) (O : Type u) := A → Measurement O
+
+/-- **§13.5.1 relative to a parameter.** `k` is extensive *about* each value of `A`: fix the
+axis and the ordinary additivity law holds. Every parameter at once — which is what makes the
+mixed-parameter statement below a statement about this predicate rather than about one
+lucky choice. -/
+structure ExtensiveAbout {A : Type} {O : Type u} (k : KindOfProperty)
+    (m : ParamMeasurement A O) : Prop where
+  /-- Every measured part is a value of the kind `k`, about every parameter. -/
+  ofKind : ∀ a d, (m a d).kind = k
+  /-- The single-split additivity law, at a fixed parameter. -/
+  additive : ∀ a d₁ d₂, (m a (.union d₁ d₂)).numeral = (m a d₁).numeral + (m a d₂).numeral
+
+/-- At a fixed parameter it **is** extensivity, so `extensive_additive` applies unchanged and
+the whole-tree law comes for free about each axis separately. -/
+theorem ExtensiveAbout.at {A : Type} {O : Type u} {k : KindOfProperty}
+    {m : ParamMeasurement A O} (h : ExtensiveAbout k m) (a : A) : Extensive k (m a) :=
+  ⟨h.ofKind a, h.additive a⟩
+
+/-- **A transport law.** The reading about `a` is the reading about `b` plus a correction
+determined by the two parameters and the part. Carrying `corr` as an argument rather than
+defining it as the difference is the whole point: a transport law is useful only when the
+correction is computable from data the part already carries — for the parallel-axis theorem,
+the part's total mass and first moment, both themselves extensive. -/
+structure Transports {A : Type} {O : Type u} (m : ParamMeasurement A O)
+    (corr : A → A → Decomposition O → Int) : Prop where
+  /-- The correction from `b` to `a`, on every part. -/
+  transport : ∀ a b d, (m a d).numeral = (m b d).numeral + corr a b d
+
+/-- **Aggregating parts that were read about their own parameters.** The whole about `a` is
+the sum of the parts about `a₁` and `a₂`, *each transported* — the general form of "add the
+moments of inertia after moving them to a common axis". -/
+theorem extensiveAbout_mixed {A : Type} {O : Type u} {k : KindOfProperty}
+    {m : ParamMeasurement A O} {corr : A → A → Decomposition O → Int}
+    (he : ExtensiveAbout k m) (ht : Transports m corr) (a a₁ a₂ : A)
+    (d₁ d₂ : Decomposition O) :
+    (m a (.union d₁ d₂)).numeral
+      = ((m a₁ d₁).numeral + corr a a₁ d₁) + ((m a₂ d₂).numeral + corr a a₂ d₂) := by
+  rw [he.additive a d₁ d₂, ht.transport a a₁ d₁, ht.transport a a₂ d₂]
+
+/-- **And summing them untransported is wrong by exactly the corrections.** Whenever the two
+corrections do not cancel, the naive sum of readings taken about different parameters is not
+the reading of the whole — the numerical statement of what a type that does not carry the
+axis cannot warn about. -/
+theorem extensiveAbout_mixed_ne {A : Type} {O : Type u} {k : KindOfProperty}
+    {m : ParamMeasurement A O} {corr : A → A → Decomposition O → Int}
+    (he : ExtensiveAbout k m) (ht : Transports m corr) {a a₁ a₂ : A}
+    {d₁ d₂ : Decomposition O} (hc : corr a a₁ d₁ + corr a a₂ d₂ ≠ 0) :
+    (m a (.union d₁ d₂)).numeral ≠ (m a₁ d₁).numeral + (m a₂ d₂).numeral := by
+  rw [extensiveAbout_mixed he ht a a₁ a₂ d₁ d₂]
+  omega
+
+/-! ### Witness — a moment of inertia is extensive about a common axis
+
+Point masses on a line, each carrying a mass `w` and a position `x`. About a fixed axis `a`
+every part contributes `w · (x − a)²` and a union contributes the sum, so the moment of
+inertia is extensive about each axis — by `rfl`, the fold's own union case. Read the two
+masses of a rod about axes through *themselves*, though, and each contributes nothing while
+the rod about its centre reads 2: the mixed-axis sum is wrong, exhibited rather than argued.
+The correction that repairs it is the parallel-axis theorem (`AggregationLaws`). -/
+
+/-- The moment of inertia of a system of point masses, a ratio kind. Named for its role
+rather than generically, so it does not shadow a host library's own `momentOfInertia`. -/
+def pointMassInertia : KindOfProperty := { id := "moment of inertia", scale := .ratio }
+
+/-- **The total of a per-part integer over a carving** — the mass of a part, when `w` is the
+mass of a point. Extensive by construction, and one of the two summaries the parallel-axis
+correction is built from. -/
+def partTotal {O : Type u} (w : O → Int) : Decomposition O → Int :=
+  Decomposition.fold w (· + ·)
+
+/-- **The first moment** `∑ wᵢ xᵢ` of a carving — the other summary the parallel-axis
+correction is built from, and the one that vanishes about the centre of mass. -/
+def firstMoment {O : Type u} (w x : O → Int) : Decomposition O → Int :=
+  Decomposition.fold (fun p => w p * x p) (· + ·)
+
+/-- **The moment of inertia about the axis at `a`**: `∑ wᵢ (xᵢ − a)²`, as a fold. -/
+def inertiaAbout {O : Type u} (w x : O → Int) (a : Int) : Decomposition O → Int :=
+  Decomposition.fold (fun p => w p * ((x p - a) * (x p - a))) (· + ·)
+
+/-- The inertia fold as a `ParamMeasurement`, so the predicates above apply to it. -/
+def inertiaMeasurement {O : Type u} (w x : O → Int) : ParamMeasurement Int O := fun a d =>
+  { kind := pointMassInertia, numeral := inertiaAbout w x a d, reference := "kg·m²" }
+
+/-- **A moment of inertia is extensive about every axis.** Both fields are `rfl`: additivity
+at a fixed axis is the fold's union case, and nothing about the axis enters the proof — which
+is why the mixed-axis failure below is a fact about the *parameter*, not about additivity. -/
+theorem inertiaMeasurement_extensiveAbout {O : Type u} (w x : O → Int) :
+    ExtensiveAbout pointMassInertia (inertiaMeasurement w x) :=
+  ⟨fun _ _ => rfl, fun _ _ _ => rfl⟩
+
+/-- A point mass on a line: where it sits, and how much of it there is. -/
+structure PointMass where
+  /-- The position of the mass along the line, in whole units. -/
+  position : Int
+  /-- The mass, in whole units. -/
+  mass : Int
+deriving DecidableEq, Repr
+
+/-- The inertia measurement of point masses, at their own mass and position. -/
+abbrev rodInertia : ParamMeasurement Int PointMass :=
+  inertiaMeasurement PointMass.mass PointMass.position
+
+/-- One unit mass at `x = −1`. -/
+def rodLeft : Decomposition PointMass := .atom { position := -1, mass := 1 }
+/-- One unit mass at `x = +1`. -/
+def rodRight : Decomposition PointMass := .atom { position := 1, mass := 1 }
+/-- The rod, carved into its two masses. -/
+def rod : Decomposition PointMass := .union rodLeft rodRight
+
+/-- About its centre the rod reads `1·1 + 1·1 = 2`. -/
+theorem rod_inertia_centre : (rodInertia 0 rod).numeral = 2 := by decide
+
+/-- About its left mass it reads `0 + 1·2² = 4` — the same rod, a different number, because
+the axis is a different axis. -/
+theorem rod_inertia_end : (rodInertia (-1) rod).numeral = 4 := by decide
+
+/-- **Reading each half about an axis through itself gets the rod wrong.** Each mass alone
+sits *on* its own axis and contributes nothing, so the untransported sum is 0 where the rod
+about its centre reads 2. This is `extensiveAbout_mixed_ne` with an exhibited witness: the
+failure is not that inertia fails to add, but that it adds only about a shared axis. -/
+theorem rod_mixed_axes_wrong :
+    (rodInertia 0 rod).numeral
+      ≠ (rodInertia (-1) rodLeft).numeral + (rodInertia 1 rodRight).numeral := by decide
 
 end PropertyKindCalculus

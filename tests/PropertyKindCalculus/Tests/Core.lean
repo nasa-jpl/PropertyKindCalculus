@@ -12,6 +12,7 @@ import PropertyKindCalculus.Tests.Core.KindStructure
 import PropertyKindCalculus.Tests.Core.OperationGating
 import PropertyKindCalculus.Tests.Core.SoundnessBridges
 import PropertyKindCalculus.Tests.Core.Aggregation
+import PropertyKindCalculus.Tests.Core.Recarving
 import PropertyKindCalculus.Tests.Core.Representation
 import PropertyKindCalculus.Tests.Core.Classification
 import PropertyKindCalculus.Tests.Core.Complex

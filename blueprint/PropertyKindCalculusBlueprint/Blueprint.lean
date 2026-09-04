@@ -851,8 +851,12 @@ First, each verifiable requirement's theorem has its _axiom profile_ pinned with
 `#guard_msgs` over `#print axioms`, so _proved_ means *sorry-free as certified by the
 axiom set*, not merely that no `sorry` keyword appears: a proof relocated behind a
 `sorry` raises no warning at its call sites, and only the axiom profile exposes it.
-(The exportable core stays axiom-free; the Mathlib-backed layers use only the three
-standard classical axioms — and the suite pins exactly that.) Second, each theorem is
+(The exportable core is largely axiom-free — most of its capstones depend on
+nothing at all, the rest on `propext` and `Quot.sound` from `omega` and structure
+equality, with `Classical.choice` reached by a single declaration; the Mathlib-backed
+layers use the three standard classical axioms. What the suite pins is each theorem's
+profile exactly, whatever it is, so a change to any of them is a build failure rather
+than a footnote.) Second, each theorem is
 applied to a _concrete witness_ whose premises are discharged — and, at the degenerate
 boundary where a premise _fails_, shown genuinely excluded — so that no requirement is
 satisfied *vacuously*: an empty quantifier or an unsatisfiable hypothesis would leave a
