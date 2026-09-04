@@ -82,7 +82,7 @@ contracts over the parts of a mixture, and a registry keyed by the kind-of-prope
 cannot say so.
 
 Specified abstractly by identity, exactly as `System` is — the two are the same shape at two
-ontological levels. In Lowe's four-category ontology (*The Four-Category Ontology*, 2006,
+ontological levels. In Lowe's four-category ontology (*The Four-Category Ontology*, 2005,
 Fig. 7.1) the correspondence is exact: `SortOfSystem` is the **substantial universal**, his
 *Kinds* corner, and `System` the **substantial particular**, his *Substances*. The other
 column of the square is `KindOfProperty` (his *Attributes*) over `IndividualQuantity` (his

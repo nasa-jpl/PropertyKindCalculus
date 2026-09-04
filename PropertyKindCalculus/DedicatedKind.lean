@@ -23,7 +23,7 @@ value characterizes is carried one layer down, as the object index of an
 `IndividualQuantity` — dedication to the sort, individuation by the object — and
 `dedicatedFor` below is the arrow from that layer to this one.
 
-In four-category terms (Lowe, *The Four-Category Ontology*, 2006, Fig. 7.1) a dedicated
+In four-category terms (Lowe, *The Four-Category Ontology*, 2005, Fig. 7.1) a dedicated
 kind is the **top edge** of the ontological square: the substantial universal (the sort)
 *characterized by* the attribute (the kind-of-property), refined by Dybkær's pertinent
 component — a refinement the square itself does not carry. The diagonal — a substance

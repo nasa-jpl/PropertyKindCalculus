@@ -6,6 +6,9 @@ import VersoBlueprint
 -- assembly over a finite index.
 import PropertyKindCalculus
 import PropertyKindCalculus.CompositeReal
+-- The four-category correspondence below cites Lowe, so the chapter imports the
+-- blueprint's `References`.
+import PropertyKindCalculusBlueprint.References
 
 open Verso.Genre
 open Verso.Genre.Manual
@@ -187,8 +190,9 @@ The _sort of system_ — the substantial *universal* as against the substantial 
 A one-field structure with `DecidableEq`, mirroring the {uses "def_system"}[system] carrier one ontological level up. `Sorted O` is the instantiation arrow from an object type to its sorts (`sortOf : O → SortOfSystem`), declared per model and never derived. With these, the calculus carries all four corners of Lowe's ontological square (the four-category analysis; the correspondence is spelled out edge by edge below) — of which three were already present and the fourth was being played, by convention, by the particular. `DedicatedKind.sort` stores exactly what the quoted definition asks for, and `dedicatedFor` closes the square: dedicating a kind through an object contributes the object's sort, so two objects of one sort instantiate one catalogue entry while their quantities stay apart by type.
 :::
 
-The correspondence with Lowe's four-category ontology (*The Four-Category Ontology*, 2006,
-Fig. 7.1 — the ontological square) is worth stating edge by edge, because the calculus
+The correspondence with Lowe's four-category ontology
+({Manual.citep lowe_four_category_ontology}[], Fig. 7.1 — the ontological square) is
+worth stating edge by edge, because the calculus
 carries the *relations* of the square and not only its corners. The corners: `SortOfSystem`
 is his _Kinds_ (the substantial universal), the object index his _Substances_ (the
 substantial particular), `KindOfProperty` his _Attributes_ (the non-substantial universal),
@@ -205,9 +209,22 @@ a substance exemplifying an attribute — is derivative for him, factoring throu
 path around the square, and the calculus likewise has no primitive object-to-kind-of-property
 construct: the dispositional route (up the left edge, then across the top) is
 `dedicatedFor`, and the occurrent route (across the bottom, then up the right) is an
-inhabitant of `IndividualQuantity o k R`. Where the calculus narrows Lowe: the attributes
-here are kinds-of-property specifically — quantitative attributes carrying a scale and an
-examination — not attributes at large.
+inhabitant of `IndividualQuantity o k R`. The reading is not idiosyncratic: surveying the
+square's grounding relations, Simons states the occurrent half as a definition — an object
+exemplifies an attribute "when a mode which instantiates an attribute characterizes an
+object" — and counts exemplification "definable in terms of instantiation, characterization,
+and some logic" {Manual.citep simons_basis_of_categorial_distinctions}[]. Where the
+calculus narrows Lowe: the attributes here are kinds-of-property specifically — quantitative
+attributes carrying a scale and an examination — not attributes at large.
+
+One stance the implementation takes silently is worth making explicit. The calculus's
+universals are catalogue *entries*: a `SortOfSystem` and a `KindOfProperty` are data,
+declared by a model, and a sort no object instantiates is idle data rather than a Platonic
+surplus. That is the immanentist reading Lowe himself settled on — universals as
+"abstractions from, or invariants across, particulars", incapable of existing
+uninstantiated (Lowe 2012, quoted in Heil
+{Manual.citep heil_existents_and_universals}[]) — and it is the only reading a
+terminological ontology in Dybkær's style needs.
 
 :::definition "def_composite" (parent := "object_types") (lean := "PropertyKindCalculus.Composite")
 The _composite_ object type over a part type, *as a {uses "def_sortOfSystem"}[sort] of whole*: the whole, or one of its parts. The whole and the parts must inhabit one type or their quantities cannot be related at all; the whole is a distinct term from every part, so a whole-assembly quantity and a part quantity do not combine. The sort index is what lets two wholes stand over one part type — the statue and the lump over the same clay — and their quantities do not combine either, because the types differ. Extensionality about objects is not assumed.

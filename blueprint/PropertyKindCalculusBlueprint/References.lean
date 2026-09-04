@@ -63,6 +63,35 @@ def dybkaer_units_for_quantities_of_dimension_one : Article where
   number  := inlines!"1"
   url     := some "https://iopscience.iop.org/article/10.1088/0026-1394/41/1/010"
 
+-- Verso has no Book entry type; publisher in the journal slot is this file's convention
+-- for non-journal items (see the SysML specs above). Bibliographic data human-verified
+-- (AI-POLICY §2.1): supplied by Nicolas Rouquette, 2026-09-04, from the OUP record.
+-- The two chapter entries below it are verified against the vendored volume's own title
+-- and copyright pages (References/ontology-modality-and-mind-…​.pdf: OUP, 2018,
+-- ISBN 978-0-19-879629-9, eds. Carruth, Gibb, Heil).
+def simons_basis_of_categorial_distinctions : InProceedings where
+  title := inlines!"Lowe, the Primacy of Metaphysics, and the Basis of Categorial Distinctions"
+  authors := #[inlines!"Peter Simons"]
+  year := 2018
+  booktitle := inlines!"Ontology, Modality, and Mind: Themes from the Metaphysics of E. J. Lowe (Oxford University Press)"
+  editors := some #[inlines!"Alexander Carruth", inlines!"Sophie Gibb", inlines!"John Heil"]
+
+def heil_existents_and_universals : InProceedings where
+  title := inlines!"Existents and Universals"
+  authors := #[inlines!"John Heil"]
+  year := 2018
+  booktitle := inlines!"Ontology, Modality, and Mind: Themes from the Metaphysics of E. J. Lowe (Oxford University Press)"
+  editors := some #[inlines!"Alexander Carruth", inlines!"Sophie Gibb", inlines!"John Heil"]
+def lowe_four_category_ontology : Article where
+  authors := #[inlines!"E. J. Lowe"]
+  journal := inlines!"Oxford University Press"
+  title   := inlines!"The Four-Category Ontology: A Metaphysical Foundation for Natural Science"
+  year    := 2005
+  month   := some inlines!"December"
+  volume  := inlines!""
+  number  := inlines!""
+  url     := some "https://doi.org/10.1093/0199254397.001.0001"
+
 def dybkaer_ontology_on_property : Thesis where
   author      := inlines!"René Dybkær"
   degree      := inlines!"PhD Thesis"
