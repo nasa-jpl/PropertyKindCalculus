@@ -112,11 +112,12 @@ attribute [requirement "R20" proves "and a component is not invariant — stated
 attribute [requirement "R20" specifies "the scalar gate: which carriers' × is the multiplication of magnitudes, so a numerical-array carrier cannot sign a pointwise product as a product of kinds"]
   ScalarCarrier
 
-/-! ## R9 — the two aggregation laws whose arithmetic needs Mathlib -/
+/-! ## R9 — the two aggregation laws whose arithmetic needs Mathlib
 
-attribute [requirement "R9" specifies "a weighted carving: parts, weights, and the nonzero-total license a mean needs"]
-  WeightedCarving
-attribute [requirement "R9" proves "the mean of a constant is that constant — the law that distinguishes a mean from a sum"]
+The weighted-mean *mode* is carrier-parametric and annotated in the core (`Annotations`); what
+is annotated here is its law, which cancels a denominator and so needs a field. -/
+
+attribute [requirement "R9" proves "the mean of a constant is that constant — the law that distinguishes a mean from a sum, at the carrier whose cancellation can prove it"]
   WeightedCarving.mean_const
 attribute [requirement "R9" proves "the parallel-axis theorem: a moment of inertia transports between axes by a correction built from the carving's own first moment and total mass"]
   parallelAxis

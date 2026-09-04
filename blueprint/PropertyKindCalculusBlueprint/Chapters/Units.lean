@@ -185,8 +185,8 @@ in the spec carrier is the rounding of the spec product.
 {uses "thm_representation_refinement"}[The additive bridge] preserves one kind
 throughout; this one does not, and that is its content. The kinds move, but they
 move under the same product law on both sides, so the rounding obligation and the
-kind licence are independent and compose: a rounding step cannot launder a product
-the kind calculus refuses, and a licensed product does not lose its licence by being
+kind license are independent and compose: a rounding step cannot launder a product
+the kind calculus refuses, and a licensed product does not lose its license by being
 computed in floats.
 :::
 

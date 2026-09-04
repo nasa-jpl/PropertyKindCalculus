@@ -159,6 +159,14 @@ attribute [requirement "R9" specifies "a count kind — how many atomic parts fa
   countMeasurement
 attribute [requirement "R9" proves "a count is extensive over a fixed carving, and yet not a property of the whole"]
   coalesce_count_ne
+attribute [requirement "R9" specifies "a weighted carving: parts, weights, and the nonzero-total license a mean needs, at any carrier"]
+  WeightedCarving
+attribute [requirement "R9" specifies "the weighted mean — the centre-of-mass mode, the one aggregation that divides"]
+  WeightedCarving.mean
+attribute [requirement "R9" implements "the license established at run time rather than assumed: a carving with no weight is refused"]
+  WeightedCarving.mk?
+attribute [requirement "R9" proves "the run-time constructor refuses exactly the carvings whose total weight is the carrier's zero"]
+  WeightedCarving.mk?_eq_none_iff
 
 /-! ## Representation parametricity (R10, R11) -/
 

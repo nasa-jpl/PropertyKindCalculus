@@ -49,6 +49,17 @@ refinement as a parameter means one carrier has one forgetful map and one roundi
 and the two extra classes say only that the *same* pair also commutes with `*` and
 with `/`.
 
+The line the split follows is data versus proof. `CarrierRefinement` carries
+*data* — `toSpec` and `round` are functions, and two of them are two different
+functions — so it must reach a use site by exactly one path. `MulRefinement` and
+`DivRefinement` carry only equations, and a class in `Prop` is a subsingleton: two
+instances of one are the same instance, so they may be inherited, re-derived and
+diamonded freely without a term ever depending on which arrived. Bundling the data
+class into them would have traded a harmless duplication for a harmful one. What the
+arrangement costs is binder length — a law about `/` names `[Carrier E] [Carrier S]
+[Div E] [Div S] [ScalarCarrier E] [ScalarCarrier S] [CarrierRefinement E S]
+[DivRefinement E S]` — and that is the price of the mixins staying mixins.
+
 **Where the zero denominator goes.** The division law here is unconditional, and can
 afford to be, because both sides share the specification carrier's total convention
 for `x / 0`. That is an artifact of the *spec* rung, not a claim about machines: on a
@@ -152,9 +163,9 @@ in the spec carrier is the rounding of the spec product.
 
 `add_refines` preserves one kind throughout; this one does not, and that is the point. The
 kinds move — `k₁`, `k₂` to `k` — but they move *under the product law*, the same law on
-both sides of the bridge, so the refinement and the kind licence are independent
+both sides of the bridge, so the refinement and the kind license are independent
 obligations that compose. A rounding step cannot launder a product the kind calculus
-refuses, and a licensed product does not lose its licence by being computed in floats. -/
+refuses, and a licensed product does not lose its license by being computed in floats. -/
 theorem mul_refines [Carrier E] [Carrier S] [Mul E] [Mul S] [ScalarCarrier E] [ScalarCarrier S]
     [CarrierRefinement E S] [MulRefinement E S] {k₁ k₂ k : KindOfProperty}
     (h : ProductKind k₁ k₂ k) (x : Quantity k₁ E) (y : Quantity k₂ E) :

@@ -6,12 +6,14 @@ value, in the Mathlib-free core: a sum (§13.5.1), a shared constant (§13.5.4),
 parts do not determine at all. Two further laws belong beside them and cannot be stated there,
 each for a specific arithmetic reason.
 
-  * **The weighted mean** — the centre-of-mass mode, neither a sum nor a constant. Its law is
-    that the mean of a constant is that constant, which needs *division*, and its side
-    condition is that the total weight is nonzero. `WeightedCarving` carries that condition as
-    a field, so a whole with no weight is not a term of the type: where a formula defined
-    without the hypothesis silently returns the origin for a massless body, there is here
-    nothing to return it from.
+  * **The weighted mean** — the centre-of-mass mode, neither a sum nor a constant. The mode
+    itself is carrier-parametric and lives in the core (`PropertyKindCalculus.Aggregation`):
+    `WeightedCarving R P`, its nonzero-total license, `mean`, and the `mk?` that establishes
+    the license at run time. What cannot live there is its *law* — that the mean of a constant
+    is that constant — because the proof cancels the denominator against the numerator, and
+    cancellation is a field law. So the structure travels down to every carrier and the law
+    stops at the lawful ones; `mean_const` is stated here, over `ℝ`, and is the only thing the
+    license is spent on.
   * **The parallel-axis theorem** — the general `Transports` law for `inertiaAbout`. A moment
     of inertia is extensive about each axis separately (`inertiaMeasurement_extensiveAbout`,
     proved in core by `rfl`); what the core exhibits but cannot prove is the correction that
@@ -25,7 +27,8 @@ Lives in the `Dimension` library because both need Mathlib — `ℝ` for the fir
 second — the one dependency kept out of the core spine.
 -/
 
-import PropertyKindCalculus.Extensivity
+import PropertyKindCalculus.Aggregation
+import PropertyKindCalculus.QuantityReal
 import Mathlib.Data.Real.Basic
 import Mathlib.Tactic.Ring
 
@@ -33,43 +36,27 @@ namespace PropertyKindCalculus
 
 universe u
 
-/-! ## The weighted mean, with its license attached -/
+/-! ## The law of the weighted mean, at the carrier that can prove it -/
 
-/-- A **weighted carving**: parts, a weight for each, and the license the mean needs. The
-third field is the whole point — a mean is not a function of the parts alone, and the
-denominator is where that shows. -/
-structure WeightedCarving (P : Type u) where
-  /-- How the whole is carved. -/
-  parts : Decomposition P
-  /-- The weight of each part — mass, for a centre of mass. -/
-  weight : P → ℝ
-  /-- **The license**: the total weight is not zero. -/
-  total_ne_zero : parts.fold weight (· + ·) ≠ 0
-
-/-- The weighted mean of a per-part value over a carving — the centre-of-mass mode of
-aggregation, with the denominator's license already discharged by the carving. -/
-noncomputable def WeightedCarving.mean {P : Type u} (c : WeightedCarving P) (v : P → ℝ) : ℝ :=
-  c.parts.fold (fun p => c.weight p * v p) (· + ·) / c.parts.fold c.weight (· + ·)
-
-/-- A constant factors out of the fold — the one arithmetic fact the mean law needs. -/
+/-- A constant factors out of the weighted fold — the one arithmetic fact the mean law needs.
+Stated over `ℝ`'s own `+` and `*`, which is what `weightedSum` and `totalWeight` unfold to at
+the real carrier. -/
 theorem fold_mul_const {P : Type u} (w : P → ℝ) (v : ℝ) : ∀ d : Decomposition P,
-    d.fold (fun p => w p * v) (· + ·) = d.fold w (· + ·) * v
+    weightedSum w (fun _ => v) d = totalWeight w d * v
   | .atom _ => rfl
   | .union a b => by
-      simp only [Decomposition.fold, fold_mul_const w v a, fold_mul_const w v b, add_mul]
+      show weightedSum w (fun _ => v) a + weightedSum w (fun _ => v) b
+        = (totalWeight w a + totalWeight w b) * v
+      rw [fold_mul_const w v a, fold_mul_const w v b, add_mul]
 
 /-- **The mean of a constant is that constant.** The law that distinguishes this mode from a
 sum and from a shared constant at once: put every part at the same place and the whole is at
-that place, whatever the weights. The proof uses the license, which is why it is a field. -/
-theorem WeightedCarving.mean_const {P : Type u} (c : WeightedCarving P) (v : ℝ) :
+that place, whatever the weights. The proof uses the license, which is why it is a field — and
+it uses cancellation, which is why the law is here and the structure is in the core. -/
+theorem WeightedCarving.mean_const {P : Type u} (c : WeightedCarving ℝ P) (v : ℝ) :
     c.mean (fun _ => v) = v := by
   rw [WeightedCarving.mean, fold_mul_const]
   exact mul_div_cancel_left₀ v c.total_ne_zero
-
-/-- **The license travels with the carving.** Every weighted carving has nonzero total weight
-by construction, so the massless case is not a term to be handled — it is unreachable. -/
-theorem WeightedCarving.total_ne_zero' {P : Type u} (c : WeightedCarving P) :
-    c.parts.fold c.weight (· + ·) ≠ 0 := c.total_ne_zero
 
 /-! ## The parallel-axis theorem as a transport law -/
 

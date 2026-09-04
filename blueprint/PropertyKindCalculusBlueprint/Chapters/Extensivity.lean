@@ -296,9 +296,29 @@ not a term of the type, so the degenerate case is unreachable rather than handle
 :::
 
 :::proof "def_weightedCarving"
-Realized as `WeightedCarving P` over $`\mathbb{R}` in `AggregationLaws`, with
-`WeightedCarving.mean` the ratio of the weighted fold to the weight fold. Division is why it
-cannot live in the Mathlib-free core beside the other two modes.
+Realized as `WeightedCarving R P` in the Mathlib-free core (`Aggregation`), carried at whatever
+numbers the task uses: `WeightedCarving.mean` is the ratio of the weighted fold to the weight
+fold, and needs the carrier's `*` and `/` beside the `+` every mode needs. What cannot live
+there is the mode's law — see below.
+:::
+
+:::definition "def_weightedCarving_mk" (parent := "extensivity") (lean := "PropertyKindCalculus.WeightedCarving.mk?")
+The license _decided_ rather than assumed. A program does not hold a proof that its weights sum
+to something nonzero; it holds the weights. The run-time constructor tests the total and either
+produces the carving — license included — or refuses. The refusal is the value a formula written
+without the hypothesis would have had to invent.
+:::
+
+:::proof "def_weightedCarving_mk"
+`WeightedCarving.mk?` is a `dif` on the carrier's own equality test, and
+`mk?_eq_none_iff` says it refuses exactly the carvings whose total is the carrier's zero.
+Uses {uses "def_weightedCarving"}[weighted carvings].
+
+What the test *rejects* is what the carrier calls zero, and that is where the ladder starts
+mattering. At `Float` the license is satisfied by `NaN`: an all-`NaN` carving is accepted and its
+mean of a constant is `NaN`, refuting at that carrier the law proved below. Nothing is wrong with
+the field; what is absent is a carrier law to spend it on, which is why the executable rungs state
+their own gate rather than inherit this one.
 :::
 
 :::theorem "thm_weighted_mean_const" (parent := "extensivity") (lean := "PropertyKindCalculus.WeightedCarving.mean_const") (tags := "proved") (effort := "small")
@@ -309,9 +329,38 @@ shared reading at once. Uses {uses "def_weightedCarving"}[weighted carvings].
 
 :::proof "thm_weighted_mean_const"
 A constant factors out of the fold (`fold_mul_const`, by induction), and the license discharges
-the cancellation. That the weights are load-bearing is checked separately: a carving weighted
-1 and 3 over values 3 and 1 has mean $`3/2` where the unweighted average of the same values is
-$`2`, so a `mean` ignoring its weights would fail the probe.
+the cancellation. Cancellation is a field law, which is why this statement is in the
+PhysLib-backed `AggregationLaws` over $`\mathbb{R}` while the mode it is about is in the core:
+the structure travels down to every carrier and the law stops at the lawful ones.
+
+That the weights are load-bearing is checked separately: a carving weighted 1 and 3 over values
+3 and 1 has mean $`3/2` where the unweighted average of the same values is $`2`, so a `mean`
+ignoring its weights would fail the probe.
+:::
+
+:::theorem "thm_mean_fp32_bound" (parent := "extensivity") (lean := "PropertyKindCalculus.Uncertainty.Adequacy.mean_fp32_within_errBound") (tags := "proved") (effort := "medium")
+*The binary32 weighted mean is within the evaluation DAG's rounding budget of the exact one.* The
+rung between the mode and its law: at genuine binary32 the mean is computed on a rounded grid, so
+the constant law holds only up to an accumulated budget, and the theorem says what that budget is.
+Uses {uses "def_weightedCarving"}[weighted carvings].
+:::
+
+:::proof "thm_mean_fp32_bound"
+A mean is the first aggregation mode that is not a fold — it multiplies, sums, and finally
+divides — so it is exactly the shape the adequacy layer's forward-error theorem
+(`dag_fp32_error_bound`) was built for. `MeanBound` compiles a carving into that layer's `Expr`
+(weights and values as exact binary32 constants, the folds as `add` nodes, the ratio as the one
+`div` node) and reads the bound off it. Every rounding the mean incurs is a node of the budget,
+and the quotient rule's magnitude factors are what a small total weight costs.
+
+The load-bearing detail is that the *license does not cross the bridge*. `WeightedCarving`'s
+field says the total is not the **carrier's** zero, which at binary32 is a statement about the
+**rounded** fold; the theorem also needs one about the **exact** fold, and neither implies the
+other. Both directions are ordinary floating-point behavior, and the probe exhibits one: three
+weights $`2^{24}`, $`1`, $`-2^{24}` sum exactly to $`1` while their binary32 fold is exactly
+$`+0`, because the first addition absorbs the $`1`. So forgetting a binary32 carving to the real
+carving it specifies takes the specification's license as an *argument*, and the signature is
+where that is recorded.
 :::
 
 # Re-carving, and what a count is keyed to

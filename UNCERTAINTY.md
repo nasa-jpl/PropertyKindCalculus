@@ -1,6 +1,6 @@
 # UNCERTAINTY.md — A rigor-first plan for uncertainty & numerical adequacy in PKC
 
-> Status: **Stages 0–3.6 implemented & CI-checked** (reference layer, GUM/Willink, autograd `cᵢ`,
+> Status: **Stages 0–3.7 implemented & CI-checked** (reference layer, GUM/Willink, autograd `cᵢ`,
 > the ladder theorems T1–T5, the executable SSPRC pipeline, the numerical-adequacy layer — the
 > executable `Adequacy` carrier plus the theorems A1 absorption, A2 Sterbenz, A3 verdict soundness
 > over `ℝ` — the **universal capstone A3′** (`DagBound`: FP32 measurand ≈ `ℝ` over an input box up
@@ -69,6 +69,7 @@ built tape).
 | 3.4 | Axis-U coupling + kinded GUM budget (`Budget`) | ✅ |
 | 3.5 | Autograd soundness (reverse pass = fderiv adjoint) — *TorchLean PR* | ✅ |
 | 3.6 | Direct-route completion + eager-provenance closure | ✅ |
+| 3.7 | The weighted mean at binary32 — the aggregation mode that divides (`MeanBound`) | ✅ |
 | **4** | **Scale — GPU SSPRC/MCM on `CudaT`, `Nᵢ` allocation, science-model capstone** | **◐ in progress** — batched SSPRC propagator landed (`SsprcBatched` + `ssprc_batched_parity` exe); sensitivity-driven `Nᵢ` allocation landed (`Allocation` + `DegenhardtAllocation` example, `#guard`-checked); science-model capstone landed (`WaterCloudModel` — one WO1 Water-Cloud-Model forward through the whole pipeline, `#guard`-checked); batched MCM remains |
 
 **Residuals / loose threads** (from the four honest residuals scoped after Stage 3.6):
@@ -583,6 +584,11 @@ uncertainty/PropertyKindCalculus/Uncertainty/
   Adequacy/DagBound.lean   ✅ A3′ universal capstone (Stage 3.1): FP32 `+`/`−` evaluation DAG (`evalFP32`
                            vs `evalExact`), forward-error accumulation (`dag_fp32_error_bound`), box
                            faithfulness (`dag_fp32_box_faithful`) + flag-free exactness — sorry-free
+  Adequacy/MeanBound.lean  ✅ the weighted mean at binary32: a `WeightedCarving` compiled into the DAG
+                           (`meanExpr`), so `mean_fp32_within_errBound` bounds the grid-computed mean
+                           against the exact real mean of the same data. The mean's one `div` node needs
+                           TWO licenses — the rounded total and the exact total — and neither implies the
+                           other, so `specCarving` takes the spec-side one as an argument — sorry-free
   Adequacy/ExecBridge.lean ✅ exec↔spec bridge (Stage 3.3): re-exposes the computable `IEEE32Exec`
                            ULP query `ulpExp?` (answers proved `= ulp₃₂`, `exec_ulp_grounds`) and absorption test `absorbs`
                            certified against `round₃₂` (`exec_verdict_sound`) — the computed verdict is the
@@ -1304,7 +1310,11 @@ The four residuals — all "one more crank of the same machine," none a new work
   `CarrierRefinement` or directly through the TorchLean `*_abs_error` lemmas. Note the two say
   different things about a zero denominator — the spec-rung `DivRefinement` is unconditional because
   `ℝ` totalizes `x / 0`, whereas `DagBound`'s division propagation carries `Regular`, and the
-  executable rung carries the divisor's nonzero decoded mantissa.
+  executable rung carries the divisor's nonzero decoded mantissa. `Adequacy/MeanBound.lean` is the
+  first place both routes are exercised on one expression, and it sharpens the choice: the two
+  `Regular` conditions at a `div` node are the *same side condition read at two rungs*, and the
+  weighted mean shows they are genuinely independent (weights `2²⁴`, `1`, `−2²⁴` sum exactly to `1`
+  and total exactly `+0` in binary32). A consolidated bridge has to keep both, not collapse them.
 
 ---
 

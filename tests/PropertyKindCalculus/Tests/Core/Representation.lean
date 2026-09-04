@@ -99,7 +99,7 @@ def gOne : Quantity lengthK Grid := ⟨⟨1⟩⟩
 def gArea : Quantity areaK Grid := ⟨⟨9⟩⟩
 
 -- Inhabitation: the exec product, viewed in the spec carrier, is the rounded spec product — and
--- the kinds move from `lengthK × lengthK` to `areaK` under the same licence on both sides.
+-- the kinds move from `lengthK × lengthK` to `areaK` under the same license on both sides.
 theorem r10_mul_refines :
     (Quantity.toSpec (Quantity.mul prodLen gx gx) : Quantity areaK Int)
       = Quantity.roundBy (CarrierRefinement.round (E := Grid))

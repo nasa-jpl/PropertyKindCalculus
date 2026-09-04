@@ -12,3 +12,4 @@ import PropertyKindCalculus.Tests.Uncertainty.QuasiExtensive
 import PropertyKindCalculus.Tests.Uncertainty.Evidence
 import PropertyKindCalculus.Tests.Uncertainty.Roles
 import PropertyKindCalculus.Tests.Uncertainty.Serialization
+import PropertyKindCalculus.Tests.Uncertainty.MeanBound

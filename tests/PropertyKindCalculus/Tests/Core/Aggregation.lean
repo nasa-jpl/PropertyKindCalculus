@@ -158,4 +158,67 @@ theorem r9_rod_mixed_axes_wrong :
 /-- info: 'PropertyKindCalculus.rod_mixed_axes_wrong' does not depend on any axioms -/
 #guard_msgs in #print axioms rod_mixed_axes_wrong
 
+/-! ## The weighted-mean mode, and what its license is worth per carrier (R9)
+
+The centre-of-mass mode is carrier-parametric, so the probe asks the same two questions of it at
+the *executable* carrier — where the law it is meant to support does not hold — rather than only
+at `ℝ`, where `Tests.AggregationLaws` drives `mean_const`.
+
+The danger a smart constructor carries is that it refuses nothing. So `mk?` is driven at a
+carving it must accept and at one it must refuse, and the refusal is checked to be the *only*
+one: the weights that sum to zero, not merely some weights.
+
+The danger the *license* carries is subtler and is the reason this section exists. `Float`'s
+`≠ 0` is a decidable test that `NaN` passes, so an all-`NaN` carving is licensed and its mean of
+a constant is `NaN` — the law `mean_const` states over `ℝ` is false here, and nothing in the
+structure could have caught it. That is not a defect to be repaired by strengthening the field;
+it is the reason the mode is carried across an explicit ladder of carriers and the law stops at
+the lawful ones. -/
+
+/-- Two parts, weighted 1 and 3 — a carving whose total is 4 at any carrier. -/
+def pairParts : Decomposition Bool := .union (.atom true) (.atom false)
+
+/-- The `Float` weights of that carving. -/
+def floatWeight : Bool → Float := fun b => if b then 1.0 else 3.0
+
+-- The total is what the fold says it is, and the licensed constructor accepts it.
+#guard totalWeight floatWeight pairParts == 4.0
+#guard (WeightedCarving.mk? pairParts floatWeight).isSome
+
+-- Boundary — `mk?` refuses, and refuses only, a carving with no weight. Weights that cancel
+-- are the interesting refusal: each part is weighted, the whole is not.
+#guard (WeightedCarving.mk? (R := Float) pairParts (fun _ => 0.0)).isNone
+#guard (WeightedCarving.mk? (R := Float) pairParts (fun b => if b then 2.0 else -2.0)).isNone
+
+/-- The mean at `Float`, computed through the licensed carving — `some` because the license
+holds, so this is the mean of the data and not a fallback. -/
+def floatMean (w : Bool → Float) (v : Bool → Float) : Option Float :=
+  (WeightedCarving.mk? pairParts w).map (fun c => c.mean v)
+
+-- Inhabitation: the weights are load-bearing at `Float` too — 1·3 + 3·1 over 4 is 3/2, where
+-- the unweighted average of the same two values is 2.
+#guard floatMean floatWeight (fun b => if b then 3.0 else 1.0) == some 1.5
+
+-- Boundary — **the license is worth nothing at `Float`.** Every weight is `NaN`; the total is
+-- `NaN`, which is not `0.0`, so the carving is licensed and `mk?` accepts it. The mean of the
+-- constant `1.0` is then `NaN`, not `1.0`: the law `mean_const` proves over `ℝ` is refuted at
+-- this carrier by a carving the type system admitted.
+#guard (WeightedCarving.mk? (R := Float) pairParts (fun _ => 0.0 / 0.0)).isSome
+#guard (floatMean (fun _ => 0.0 / 0.0) (fun _ => 1.0)).map (· == 1.0) == some false
+
+-- and the same `NaN` total is what passed the license: `≠ 0` is true of it.
+#guard !((0.0 / 0.0 : Float) == 0.0)
+
+/-- info: 'PropertyKindCalculus.WeightedCarving.mk?_eq_none_iff' depends on axioms: [propext] -/
+#guard_msgs in #print axioms WeightedCarving.mk?_eq_none_iff
+
+/-- info: 'PropertyKindCalculus.WeightedCarving.mk?_isSome_iff' depends on axioms: [propext] -/
+#guard_msgs in #print axioms WeightedCarving.mk?_isSome_iff
+
+/-- info: 'PropertyKindCalculus.WeightedCarving.mk?_eq_some' does not depend on any axioms -/
+#guard_msgs in #print axioms WeightedCarving.mk?_eq_some
+
+/-- info: 'PropertyKindCalculus.WeightedCarving.total_ne_zero'' does not depend on any axioms -/
+#guard_msgs in #print axioms WeightedCarving.total_ne_zero'
+
 end PropertyKindCalculus.Tests.Aggregation

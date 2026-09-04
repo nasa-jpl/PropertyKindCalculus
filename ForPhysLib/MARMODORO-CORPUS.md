@@ -61,7 +61,7 @@ The distinction is not foreign to PKC — the layering already is it, unsaid:
 | Substantial (whole-proper) powers | `WholeProper k m` — the whole's value produced by no aggregation, inhabited only by exhibiting both refutations (not additive, not constant); `assemble_ne_measured` turns it into the wrong *number* at the quantity layer. Dedicated kinds at the whole's sort still carry the naming — Attempt4Pkc's `"coupled oscillator pair — normal mode + ; angular frequency"` is one | formal |
 | Identity disciplines | `Designated` (injectivity is the content) vs. its honest absence for structural object types | formal |
 | Intensive kinds (Dybkær §13.5.4) | `Intensive k m` with Dybkær's *of constant composition* clause as the law's hypothesis (parts that *already agree*), the `intensive_uniform` capstone over any carving, and `not_extensive_of_intensive` making the two branches exclusive | formal |
-| Weighted-mean aggregation (center of mass) | `WeightedCarving` + `mean` + `mean_const`, in Exhibit G — the license (nonzero total weight) carried as a field. Not in the core: it waits on a consumer there | exhibit-local |
+| Weighted-mean aggregation (center of mass) | `WeightedCarving R P` + `mean` + `mk?` in the core (`Aggregation`), carrier-parametric like every other mode, with the license carried as a field; `mean_const` over `ℝ` in `AggregationLaws`, because cancelling the denominator needs a field. Exhibit G instantiates it at the halves of the rigid body | formal |
 | Re-carving (same whole, two part descriptions) | nothing (the transpose is the only re-indexing, deliberately) | absent |
 | Count kinds (a count as a quantity of a sort) | nothing; standing project rule "a count is a predicate" points the same way | absent |
 

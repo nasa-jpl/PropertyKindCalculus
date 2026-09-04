@@ -24,10 +24,10 @@ open PropertyKindCalculus
 
 /-- A carving of two parts with genuinely unequal weights: 1 and 3, so the total is 4 and the
 license is discharged by arithmetic rather than by assumption. -/
-noncomputable def unevenPair : WeightedCarving Bool where
+noncomputable def unevenPair : WeightedCarving ℝ Bool where
   parts := .union (.atom true) (.atom false)
   weight := fun b => if b then 1 else 3
-  total_ne_zero := by norm_num [Decomposition.fold]
+  total_ne_zero := by norm_num [totalWeight, Decomposition.fold, Carrier.add, Carrier.zero]
 
 /-- The values carried by the two parts: 3 on the heavy-weighted part, 1 on the other. -/
 noncomputable def unevenValue : Bool → ℝ := fun b => if b then 3 else 1
@@ -35,7 +35,8 @@ noncomputable def unevenValue : Bool → ℝ := fun b => if b then 3 else 1
 -- Boundary — the weights are load-bearing: the weighted mean is `6/4`, where the unweighted
 -- average of the same two values is `2`. A `mean` that ignored its weights would fail here.
 theorem r9_weighted_mean_ne_average : unevenPair.mean unevenValue = 3 / 2 := by
-  norm_num [WeightedCarving.mean, unevenPair, unevenValue, Decomposition.fold]
+  norm_num [WeightedCarving.mean, weightedSum, totalWeight, unevenPair, unevenValue,
+    Decomposition.fold, Carrier.add]
 
 -- Inhabitation: the constant law, applied to that same carving — a mean that is neither a sum
 -- nor a shared reading still sends a constant family to the constant.

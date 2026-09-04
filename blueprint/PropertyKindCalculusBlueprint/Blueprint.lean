@@ -372,6 +372,14 @@ sub-additive (ethanol and water), and that negation is stated to keep the
 extensive predicate honest. Tracking which kinds are extensive is the
 precondition for soundly summing measurements.
 
+Beside the sum and the shared constant sits a third mode that is neither: the
+weighted mean. It is the first aggregation that *divides*, so it is the first
+that carries a side condition — the total weight is not zero — and the first
+whose law does not survive the descent to an executable carrier. The mode is
+carried at any `Carrier`, its law is proved where cancellation is available, and
+its rung at genuine binary32 is a bound rather than an equation. Those three
+sentences are one structure read at three carriers, not three structures.
+
 ## Representation parametricity (R10)
 
 *R10 — A quantity value is parametric in its numeric representation type.* The
@@ -438,13 +446,22 @@ The bridge spans the whole arithmetic surface, not the additive part alone: `Mul
 and `DivRefinement` carry the same forgetful map and rounding to $`\times` and $`\div`, and
 `Quantity.mul_refines` / `Quantity.div_refines` lift them across a *licensed kind change* —
 the exec product of a `k₁` and a `k₂` quantity, viewed in the spec carrier, is the rounding
-of the spec product at the product kind `k`. The rounding obligation and the kind licence are
+of the spec product at the product kind `k`. The rounding obligation and the kind license are
 independent and compose, so a rounding step cannot launder a product the kind calculus
 refuses. This is what lets a weighted mean, a ratio, or a sensitivity coefficient cross at
 all — none of them is an addition. The division law is unconditional at the *specification*
 rung only because $`\mathbb{R}` totalizes $`x/0`; the executable rung's
 `Quantity.div_refines_exec` carries the divisor's nonzero decoded mantissa beside its
 finiteness hypotheses, which is where a zero denominator is actually caught.
+
+The weighted mean is where that pattern becomes measurable rather than merely stated.
+`Adequacy.MeanBound` compiles a carving into the adequacy layer's evaluation DAG and bounds
+the binary32 mean against the exact real mean of the same data by the DAG's accumulated
+half-ulp budget. What it shows about the side condition is sharper than the algebraic form:
+the carving's own license is about the **rounded** total, the bound also needs one about the
+**exact** total, and neither implies the other — three weights $`2^{24}`, $`1`, $`-2^{24}`
+sum exactly to $`1` and total exactly $`+0` on the grid. A license does not cross the bridge;
+each rung states its own.
 
 ## Value representation: vectors and scalar units (R11)
 

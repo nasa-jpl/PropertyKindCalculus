@@ -175,7 +175,7 @@ the zero denominator.** Beside the finiteness hypotheses the product needs, divi
 `hy0 : dy.mant ≠ 0`: the divisor's decoded mantissa is not zero. Where the spec-side
 `DivRefinement FP32 ℝ` is unconditional because `ℝ` totalizes `x / 0` to `0`, the executable
 format does not — it produces an infinity or a NaN, and no rounding of a real quotient
-equals either. So the metrological licence a mean's denominator needs (`WeightedCarving`'s
+equals either. So the metrological license a mean's denominator needs (`WeightedCarving`'s
 `total_ne_zero`) reappears here as an arithmetic hypothesis on the same computation, at the
 rung where it can actually fail. Lifts `toReal_div_eq_fp32Round` along the kind quotient. -/
 theorem Quantity.div_refines_exec {k₁ k₂ k : KindOfProperty} (h : QuotientKind k₁ k₂ k)

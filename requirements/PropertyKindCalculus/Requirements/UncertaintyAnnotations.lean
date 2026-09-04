@@ -14,6 +14,7 @@ import PropertyKindCalculus.Uncertainty.QuasiExtensive
 import PropertyKindCalculus.Uncertainty.Adequacy
 import PropertyKindCalculus.Uncertainty.Adequacy.Soundness
 import PropertyKindCalculus.Uncertainty.Adequacy.Sterbenz32
+import PropertyKindCalculus.Uncertainty.Adequacy.MeanBound
 import PropertyKindCalculus.UncertaintyExamples.LadderNesting
 import PropertyKindCalculus.UncertaintyExamples.AdequacyLadder
 import PropertyKindCalculus.UncertaintyExamples.Coverage
@@ -53,6 +54,17 @@ attribute [requirement "R15" exemplifies "the absorption verdict is exactly righ
   PropertyKindCalculus.UncertaintyExamples.AdequacyLadder.a3_verdict_sound
 attribute [requirement "R15" exemplifies "near-equal subtraction is Sterbenz-exact yet amplifies relative uncertainty to 100%"]
   PropertyKindCalculus.UncertaintyExamples.AdequacyLadder.a2_relunc
+
+/-! ## R15 — the weighted mean at binary32: the mode's own numerical adequacy -/
+
+attribute [requirement "R15" specifies "a weighted mean compiled into the evaluation DAG whose rounding the adequacy layer bounds"]
+  Adequacy.meanExpr
+attribute [requirement "R15" proves "the binary32 weighted mean is within the DAG's accumulated rounding budget of the exact real mean"]
+  Adequacy.mean_fp32_within_errBound
+attribute [requirement "R15" proves "the mean's regularity is two conditions, one per rung — the rounded total and the exact total"]
+  Adequacy.regular_meanExpr
+attribute [requirement "R15" specifies "forgetting a binary32 carving to the real carving it specifies, taking the specification's own license as an argument"]
+  Adequacy.specCarving
 
 /-! ## R18 — the recorded variance certifies a coverage interval (VIM 2.36–2.38) -/
 

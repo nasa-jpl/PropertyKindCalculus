@@ -312,10 +312,10 @@ instance, at the halves of the rigid body findings 3 and 4 carve. -/
 each half, so the total is 2 and the mean is defined. Where PhysLib's `centerOfMass` returns
 the origin for a massless body (`massless_centerOfMass`, finding 2), there is here nothing to
 build a term from — the license is a field, and `⟨0⟩` cannot discharge it. -/
-noncomputable def halvesByMass : WeightedCarving Half where
+noncomputable def halvesByMass : WeightedCarving ℝ Half where
   parts := .union (.atom .left) (.atom .right)
   weight := fun _ => 1
-  total_ne_zero := by norm_num [Decomposition.fold]
+  total_ne_zero := by norm_num [totalWeight, Decomposition.fold, Carrier.add, Carrier.zero]
 
 /-- **The rigid body's center of mass, licensed.** Both halves at the same place put the whole
 at that place — the law that says this aggregation is a mean and not a sum, applied to a real
@@ -324,8 +324,7 @@ theorem halvesByMass_mean_const (v : ℝ) : halvesByMass.mean (fun _ => v) = v :
   halvesByMass.mean_const v
 
 /-- The license travels with the carving, so a massless body cannot be handed to the mean. -/
-theorem halvesByMass_total_ne_zero :
-    halvesByMass.parts.fold halvesByMass.weight (· + ·) ≠ 0 :=
-  halvesByMass.total_ne_zero
+theorem halvesByMass_total_ne_zero : halvesByMass.total ≠ Carrier.zero :=
+  halvesByMass.total_ne_zero'
 
 end ForPhysLib.Exhibits.Composition
