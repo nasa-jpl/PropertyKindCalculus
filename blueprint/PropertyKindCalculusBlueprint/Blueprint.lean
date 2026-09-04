@@ -434,6 +434,18 @@ refinement of $`\mathbb{R}`) and `IEEE32Exec` (the *executable* kernel, refining
 $`\mathbb{R}` on the finite/no-overflow path, with overflow surfaced as an explicit
 side condition rather than silently dropped).
 
+The bridge spans the whole arithmetic surface, not the additive part alone: `MulRefinement`
+and `DivRefinement` carry the same forgetful map and rounding to $`\times` and $`\div`, and
+`Quantity.mul_refines` / `Quantity.div_refines` lift them across a *licensed kind change* —
+the exec product of a `k₁` and a `k₂` quantity, viewed in the spec carrier, is the rounding
+of the spec product at the product kind `k`. The rounding obligation and the kind licence are
+independent and compose, so a rounding step cannot launder a product the kind calculus
+refuses. This is what lets a weighted mean, a ratio, or a sensitivity coefficient cross at
+all — none of them is an addition. The division law is unconditional at the *specification*
+rung only because $`\mathbb{R}` totalizes $`x/0`; the executable rung's
+`Quantity.div_refines_exec` carries the divisor's nonzero decoded mantissa beside its
+finiteness hypotheses, which is where a zero denominator is actually caught.
+
 ## Value representation: vectors and scalar units (R11)
 
 *R11 — Units are scalar; a vector quantity is a numerical array times one scalar

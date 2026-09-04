@@ -70,6 +70,71 @@ theorem r10_add_refines :
 /-- info: 'PropertyKindCalculus.Quantity.add_refines' depends on axioms: [propext] -/
 #guard_msgs in #print axioms Quantity.add_refines
 
+/-! ### R10 across the multiplicative surface — the same bridge carries `×` and `÷`
+
+An additive bridge lets nothing but the extensive mode cross. `Grid` is given the *same* even-grid
+snap for `*` and `/` that it uses for `+`, so `MulRefinement`/`DivRefinement` hold by `rfl` over a
+genuinely lossy rounding, and the two kind-crossing capstones are applied where rounding bites. -/
+
+/-- `Grid`'s multiplication snaps to the even grid, exactly as its addition does. -/
+instance : Mul Grid where mul x y := ⟨2 * ((x.run * y.run) / 2)⟩
+
+/-- And so does its division. -/
+instance : Div Grid where div x y := ⟨2 * ((x.run / y.run) / 2)⟩
+
+/-- A `Grid` magnitude is one number, so its `*` is the multiplication of magnitudes. -/
+instance : ScalarCarrier Grid := ⟨⟩
+
+instance : MulRefinement Grid Int where toSpec_mul _ _ := rfl
+instance : DivRefinement Grid Int where toSpec_div _ _ := rfl
+
+/-- Area — the product kind of two lengths, so the bridge is applied across a kind change. -/
+def areaK : KindOfProperty := { id := "area", scale := .ratio }
+
+theorem prodLen : ProductKind lengthK lengthK areaK := .ofRatio _ _ _
+theorem quotArea : QuotientKind areaK lengthK lengthK := .ofRatio _ _ _
+
+/-- A unit exec length and a 9-unit exec area. -/
+def gOne : Quantity lengthK Grid := ⟨⟨1⟩⟩
+def gArea : Quantity areaK Grid := ⟨⟨9⟩⟩
+
+-- Inhabitation: the exec product, viewed in the spec carrier, is the rounded spec product — and
+-- the kinds move from `lengthK × lengthK` to `areaK` under the same licence on both sides.
+theorem r10_mul_refines :
+    (Quantity.toSpec (Quantity.mul prodLen gx gx) : Quantity areaK Int)
+      = Quantity.roundBy (CarrierRefinement.round (E := Grid))
+          (Quantity.mul prodLen (Quantity.toSpec gx) (Quantity.toSpec gx)) :=
+  Quantity.mul_refines prodLen gx gx
+
+theorem r10_div_refines :
+    (Quantity.toSpec (Quantity.div quotArea gArea gOne) : Quantity lengthK Int)
+      = Quantity.roundBy (CarrierRefinement.round (E := Grid))
+          (Quantity.div quotArea (Quantity.toSpec gArea) (Quantity.toSpec gOne)) :=
+  Quantity.div_refines quotArea gArea gOne
+
+-- and rounding is genuinely exercised at both: 3 × 3 is 9 exactly but forgets to 8, and
+-- 9 ÷ 1 is 9 exactly but forgets to 8. Neither capstone is vacuous.
+#guard (Quantity.toSpec gx : Quantity lengthK Int).magnitude
+        * (Quantity.toSpec gx : Quantity lengthK Int).magnitude == 9
+#guard (Quantity.toSpec (Quantity.mul prodLen gx gx) : Quantity areaK Int).magnitude == 8
+#guard (Quantity.toSpec gArea : Quantity areaK Int).magnitude
+        / (Quantity.toSpec gOne : Quantity lengthK Int).magnitude == 9
+#guard (Quantity.toSpec (Quantity.div quotArea gArea gOne) : Quantity lengthK Int).magnitude == 8
+
+-- Why `DivRefinement` can be unconditional here and cannot be on a machine: `Int` (like `ℝ`)
+-- totalizes `x / 0` to `0`, so both sides of the law agree with nothing to exclude, whereas IEEE
+-- division does not — which is why the executable rung carries `dy.mant ≠ 0` as a hypothesis
+-- (`Quantity.div_refines_exec`) and `Float` is given no refinement instance at all.
+#guard ((9 : Int) / 0) == 0
+#guard (((⟨9⟩ : Grid) / ⟨0⟩ : Grid)).run == 0
+#guard ((1.0 : Float) / 0.0) != 0.0
+
+/-- info: 'PropertyKindCalculus.Quantity.mul_refines' does not depend on any axioms -/
+#guard_msgs in #print axioms Quantity.mul_refines
+
+/-- info: 'PropertyKindCalculus.Quantity.div_refines' does not depend on any axioms -/
+#guard_msgs in #print axioms Quantity.div_refines
+
 /-! ## R11 — a vector quantity is a numerical array under one scalar unit -/
 
 /-- Two 3-vectors, `[1,2,3]` and `[4,5,6]`, as single kind-`lengthK` quantities over the pointwise

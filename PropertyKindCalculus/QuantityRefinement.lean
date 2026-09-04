@@ -32,9 +32,34 @@ PhysLib/TorchLean-backed library). In plain engineering terms `CarrierRefinement
 is the *rounding contract* between a slow exact number type and the fast machine
 number type that stands in for it; proving the contract once means every kind,
 unit, and aggregation written above the carrier inherits it.
+
+## The whole arithmetic surface, not just `+`
+
+`CarrierRefinement` carries the additive law alone, which is enough for the
+extensive mode (§13.5.1) and for nothing else. A weighted mean, a ratio, a
+conversion factor, a sensitivity coefficient — every one of them is a `+`/`*`/`/`
+expression, and none of them can cross the bridge on an additive contract. So the
+multiplicative surface is stated here too, as `MulRefinement` and `DivRefinement`.
+
+Both are `Prop` classes *parametrized by* a `CarrierRefinement`, not extensions of
+it. That is deliberate: a single expression uses all three operations at once, so
+`extends` would put two independent paths to `toSpec` and `round` in scope
+simultaneously, and instance resolution would be free to pick either. Taking the
+refinement as a parameter means one carrier has one forgetful map and one rounding,
+and the two extra classes say only that the *same* pair also commutes with `*` and
+with `/`.
+
+**Where the zero denominator goes.** The division law here is unconditional, and can
+afford to be, because both sides share the specification carrier's total convention
+for `x / 0`. That is an artifact of the *spec* rung, not a claim about machines: on a
+real executable format a zero (or subnormal, or NaN) denominator is exactly where the
+refinement stops holding. That hazard belongs one rung down, as an explicit
+hypothesis on the executable carrier's own theorem — which is where
+`Torch.Fp32` states it, and why `IEEE32Exec` is given no `CarrierRefinement`
+instance at all.
 -/
 
-import PropertyKindCalculus.Quantity
+import PropertyKindCalculus.QuantityClassification
 
 namespace PropertyKindCalculus
 
@@ -55,6 +80,35 @@ class CarrierRefinement (E S : Type) [Carrier E] [Carrier S] where
   addition of the forgotten summands. -/
   toSpec_add : ∀ x y : E,
     toSpec (Carrier.add x y) = round (Carrier.add (toSpec x) (toSpec y))
+
+/-! ## The multiplicative surface of the bridge -/
+
+/-- **The bridge law for multiplication.** The same forgetful map and rounding that
+`CarrierRefinement` supplies for `+` also relate the exec product to the spec product:
+$$ \mathrm{toSpec}(x \cdot_E y) = \mathrm{round}\,(\mathrm{toSpec}\,x \cdot_S \mathrm{toSpec}\,y). $$
+Held apart from `CarrierRefinement` rather than bundled into it, because `Carrier`
+supplies only zero and addition — a carrier can refine additively without having a `*`
+at all (and `Quantity.mul` likewise asks for `[Mul R] [ScalarCarrier R]` separately). -/
+class MulRefinement (E S : Type) [Carrier E] [Carrier S] [Mul E] [Mul S]
+    [CarrierRefinement E S] : Prop where
+  /-- Forgetting an exec product equals rounding the spec product of the forgotten factors. -/
+  toSpec_mul : ∀ x y : E,
+    CarrierRefinement.toSpec (S := S) (x * y)
+      = CarrierRefinement.round (E := E)
+          (CarrierRefinement.toSpec (S := S) x * CarrierRefinement.toSpec (S := S) y)
+
+/-- **The bridge law for division.** As for multiplication, with the caveat the module
+docstring records: this is unconditional only because the exec and spec carriers agree on
+what `x / 0` means, which a *specification* format can arrange and a machine format cannot.
+An executable carrier whose division produces an infinity or a NaN has no instance of this
+class; its refinement is a theorem with the denominator's nonzeroness as a hypothesis. -/
+class DivRefinement (E S : Type) [Carrier E] [Carrier S] [Div E] [Div S]
+    [CarrierRefinement E S] : Prop where
+  /-- Forgetting an exec quotient equals rounding the spec quotient of the forgotten operands. -/
+  toSpec_div : ∀ x y : E,
+    CarrierRefinement.toSpec (S := S) (x / y)
+      = CarrierRefinement.round (E := E)
+          (CarrierRefinement.toSpec (S := S) x / CarrierRefinement.toSpec (S := S) y)
 
 namespace Quantity
 
@@ -91,6 +145,35 @@ theorem add_refines [Carrier E] [Carrier S] [CarrierRefinement E S]
           (Quantity.add h (Quantity.toSpec x) (Quantity.toSpec y)) := by
   unfold Quantity.toSpec Quantity.roundBy Quantity.add
   rw [CarrierRefinement.toSpec_add]
+
+/-- **Exec refines spec across a kind product (R10).** The kind-crossing companion of
+`add_refines`: for a licensed product `ProductKind k₁ k₂ k`, the executable product viewed
+in the spec carrier is the rounding of the spec product.
+
+`add_refines` preserves one kind throughout; this one does not, and that is the point. The
+kinds move — `k₁`, `k₂` to `k` — but they move *under the product law*, the same law on
+both sides of the bridge, so the refinement and the kind licence are independent
+obligations that compose. A rounding step cannot launder a product the kind calculus
+refuses, and a licensed product does not lose its licence by being computed in floats. -/
+theorem mul_refines [Carrier E] [Carrier S] [Mul E] [Mul S] [ScalarCarrier E] [ScalarCarrier S]
+    [CarrierRefinement E S] [MulRefinement E S] {k₁ k₂ k : KindOfProperty}
+    (h : ProductKind k₁ k₂ k) (x : Quantity k₁ E) (y : Quantity k₂ E) :
+    (Quantity.toSpec (Quantity.mul h x y) : Quantity k S)
+      = Quantity.roundBy (CarrierRefinement.round (E := E))
+          (Quantity.mul h (Quantity.toSpec x) (Quantity.toSpec y)) := by
+  unfold Quantity.toSpec Quantity.roundBy Quantity.mul
+  rw [MulRefinement.toSpec_mul]
+
+/-- **Exec refines spec across a kind quotient (R10).** `mul_refines` for `QuotientKind` —
+the rung a ratio, a conversion factor, or the denominator of a weighted mean rides. -/
+theorem div_refines [Carrier E] [Carrier S] [Div E] [Div S] [ScalarCarrier E] [ScalarCarrier S]
+    [CarrierRefinement E S] [DivRefinement E S] {k₁ k₂ k : KindOfProperty}
+    (h : QuotientKind k₁ k₂ k) (x : Quantity k₁ E) (y : Quantity k₂ E) :
+    (Quantity.toSpec (Quantity.div h x y) : Quantity k S)
+      = Quantity.roundBy (CarrierRefinement.round (E := E))
+          (Quantity.div h (Quantity.toSpec x) (Quantity.toSpec y)) := by
+  unfold Quantity.toSpec Quantity.roundBy Quantity.div
+  rw [DivRefinement.toSpec_div]
 
 end Quantity
 

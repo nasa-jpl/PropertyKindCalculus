@@ -169,6 +169,14 @@ attribute [requirement "R10" specifies "the lawful carrier over which additivity
 attribute [requirement "R10" specifies "the exec/spec carrier refinement bridge"] CarrierRefinement
 attribute [requirement "R10" proves "a law over the spec carrier descends to the exec carrier as one rounding step"]
   Quantity.add_refines
+attribute [requirement "R10" specifies "the bridge's multiplicative law — the same forgetful map and rounding, for the product"]
+  MulRefinement
+attribute [requirement "R10" specifies "the bridge's division law, unconditional only because the spec carrier totalizes x / 0"]
+  DivRefinement
+attribute [requirement "R10" proves "the bridge crosses a licensed kind product: the exec product is the rounded spec product, at the product kind"]
+  Quantity.mul_refines
+attribute [requirement "R10" proves "and a licensed kind quotient — the rung a ratio, a conversion factor, or a weighted mean's denominator rides"]
+  Quantity.div_refines
 
 attribute [requirement "R11" implements "a function-space carrier: a vector quantity is a numerical array under one scalar unit"]
   instCarrierPi

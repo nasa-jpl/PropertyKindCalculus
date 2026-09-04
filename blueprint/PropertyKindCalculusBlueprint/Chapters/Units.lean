@@ -140,6 +140,81 @@ than a silent failure. This is TorchLean's `Bridge/FP32` pattern ("compute in
 $`\mathbb{R}`, then round").
 :::
 
+:::definition "def_mul_refinement" (parent := "units") (lean := "PropertyKindCalculus.MulRefinement")
+*The bridge's multiplicative law.* `MulRefinement E S` says that the _same_
+forgetful map and rounding a {uses "def_carrier_refinement"}[carrier refinement]
+supplies for $`+` also relate the exec product to the spec product,
+$$`\mathrm{toSpec}(x \cdot_E y) = \mathrm{round}\,(\mathrm{toSpec}\,x \cdot_S \mathrm{toSpec}\,y).`
+Held apart from the refinement rather than bundled into it, for two reasons. A
+carrier can refine additively without having a $`\times` at all — the carrier class
+supplies only zero and addition — and an expression that uses $`+`, $`\times` and
+$`\div` at once would, under bundling, put two independent paths to `toSpec` and
+`round` in scope simultaneously.
+:::
+
+:::proof "def_mul_refinement"
+Realized as the `MulRefinement` class (core, axiom-free), a `Prop` class
+parametrized by a `CarrierRefinement` rather than extending it, so one carrier has
+one forgetful map and one rounding. Instantiated at TorchLean's `FP32` in the
+separately built `Torch` library, where `NF` multiplication is `ofReal (a·b)` and
+the law is therefore `rfl`.
+:::
+
+:::definition "def_div_refinement" (parent := "units") (lean := "PropertyKindCalculus.DivRefinement")
+*The bridge's division law*, in the same shape as
+{uses "def_mul_refinement"}[the multiplicative one] — and unconditional, which is a
+statement about specification carriers and not about machines. Both sides read the
+spec carrier's total convention for $`x / 0`, so at a zero divisor there is nothing
+to exclude. A real executable format does not totalize division; it produces an
+infinity or a NaN, and no rounding of a real quotient is either. So the hazard sits
+one rung down, as an explicit hypothesis on the executable carrier's own theorem.
+:::
+
+:::proof "def_div_refinement"
+Realized as the `DivRefinement` class (core, axiom-free), with the unconditional
+`DivRefinement FP32 ℝ` instance in the `Torch` library. The executable rung's
+`Quantity.div_refines_exec` carries the divisor's nonzero decoded mantissa as a
+hypothesis beside the finiteness ones, and the Torch-tier probes discharge all four
+on concrete binary32 values and then refute two of them at a zero denominator.
+:::
+
+:::theorem "thm_refinement_product" (parent := "units") (lean := "PropertyKindCalculus.Quantity.mul_refines") (tags := "proved") (effort := "medium")
+*Exec refines spec across a licensed kind product (R10).* For a
+{uses "def_product_kind"}[product law] $`k_1 \times k_2 = k`, the exec product viewed
+in the spec carrier is the rounding of the spec product.
+{uses "thm_representation_refinement"}[The additive bridge] preserves one kind
+throughout; this one does not, and that is its content. The kinds move, but they
+move under the same product law on both sides, so the rounding obligation and the
+kind licence are independent and compose: a rounding step cannot launder a product
+the kind calculus refuses, and a licensed product does not lose its licence by being
+computed in floats.
+:::
+
+:::proof "thm_refinement_product"
+Proved as `Quantity.mul_refines` (core, depending on no axioms at all): the
+`MulRefinement` law lifted along the kind product. Specialized at binary32 as
+`Quantity.mul_refines_fp32`, and conditionally at the executable carrier as
+`Quantity.mul_refines_exec` under decoding and finiteness hypotheses.
+:::
+
+:::theorem "thm_refinement_quotient" (parent := "units") (lean := "PropertyKindCalculus.Quantity.div_refines") (tags := "proved") (effort := "medium")
+*And across a licensed kind quotient (R10)* — the rung a ratio, a conversion factor,
+or a {uses "def_weightedCarving"}[weighted carving]'s denominator rides. An additive
+bridge carries the {uses "def_extensiveKind"}[extensive mode] and nothing else; the mean
+of a constant, the parallel-axis correction, and every sensitivity coefficient are
+$`+`/$`\times`/$`\div` expressions, and none of them can cross on an additive
+contract alone.
+:::
+
+:::proof "thm_refinement_quotient"
+Proved as `Quantity.div_refines` (core, depending on no axioms at all), with
+`Quantity.div_refines_fp32` at the binary32 rounding spec and
+`Quantity.div_refines_exec` at the executable carrier. Both are exercised over a
+genuinely lossy toy carrier in the core probes — where $`3 \times 3` reads 9 exactly
+but forgets to 8 — so neither capstone is satisfied vacuously by an identity
+rounding.
+:::
+
 :::definition "def_vector_carrier" (parent := "units") (lean := "PropertyKindCalculus.instLawfulCarrierPi")
 *Vector quantities: numerical array × one scalar unit (R11, ISO 80000-2 §18).* A
 vector (or tensor) quantity is a _numerical_ array carried at one kind with one

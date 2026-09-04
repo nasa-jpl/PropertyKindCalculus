@@ -1296,10 +1296,15 @@ The four residuals — all "one more crank of the same machine," none a new work
 * **Pearson percentile fidelity.** Willink eqs. (6)/(7) are rational fits valid for `−1.2 ≤ γ ≤ 6`;
   outside that range the closure degrades. Decision: clamp + warn, or implement the exact Pearson
   quantile.
-* **`CarrierRefinement` consolidation.** It is PKC's class (`QuantityRefinement.lean:47`), instantiated
-  for `FP32↔ℝ` in the `Torch` lib; TorchLean itself has no such class (it uses `Context` + `toReal` +
-  per-op error bridges). Decide whether A3's soundness routes through `CarrierRefinement` or directly
-  through the TorchLean `*_abs_error` lemmas.
+* **`CarrierRefinement` consolidation.** It is PKC's class (`QuantityRefinement.lean:72`), with
+  `MulRefinement` and `DivRefinement` beside it, all three instantiated for `FP32↔ℝ` in the `Torch`
+  lib; TorchLean itself has no such class (it uses `Context` + `toReal` + per-op error bridges). The
+  bridge and `DagBound.Expr` now range over the same operator set (`+`/`−`/`×`/`÷`), so the two
+  routes are comparable rather than differently scoped: decide whether A3's soundness goes through
+  `CarrierRefinement` or directly through the TorchLean `*_abs_error` lemmas. Note the two say
+  different things about a zero denominator — the spec-rung `DivRefinement` is unconditional because
+  `ℝ` totalizes `x / 0`, whereas `DagBound`'s division propagation carries `Regular`, and the
+  executable rung carries the divisor's nonzero decoded mantissa.
 
 ---
 
