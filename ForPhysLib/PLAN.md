@@ -42,6 +42,7 @@ has to be reconstructed from the Status lines scattered below.
 | Held physics — ALL SIX DELIVERED: σ_p moment (saturation unconditional); L_z = m·ℏ; degeneracy; `LadderOperators.lean` (the eleven-TODO stub); `DistributionalTwin.lean` (the duplication finding); `Maxwell.lean` (the four laws kinded + the module-private finding) | done 2026-09-01 |
 | The last two held items — the `Dynamics/` variational subtree (`Kinematics/Dynamics.lean`: 2 lookups + 3 mints + 6 edges, the whole variational calculus same-kind, `H` at 6-33 by upstream's theorem, the stale-`μ₀`-TODO finding) and the RF/AC annex promoted to ladder form (`Electromagnetism/Annex/`: 17 kinds all lookups zero mints, 5 edges consumed from the catalogue's `DefiningRelations`, the refused `P + Q`, the dB budget on 6-45). Nothing remains held | done 2026-09-02 |
 | Decide whether anything from Exhibit F is offered to physlib#1612, and in what form | Nicolas (AI-POLICY §3.1) |
+| Decide the Marmodoro scope — Options 1–4 in [the corpus](MARMODORO-CORPUS.md) (PhysLib scanned at `c17844a6`: oneness and aggregation licenses are the library's fault line; recommendation there is 1+2 now) | Nicolas decides; Claude executes on a yes |
 | Re-point Exhibit F's `Replica` at the real `PointParticle.System` once #1612 merges | Claude, on request |
 | Campaign wrap-up artifact (cross-directory scorecard) | undecided whether wanted |
 
