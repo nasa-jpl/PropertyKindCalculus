@@ -4,6 +4,7 @@ import VersoBlueprint
 import VersoBlueprint.Commands.Graph
 import VersoBlueprint.Commands.Summary
 import PropertyKindCalculusBlueprint.Chapters.Spine
+import PropertyKindCalculusBlueprint.Chapters.Foundations
 import PropertyKindCalculusBlueprint.Chapters.DedicatedKind
 import PropertyKindCalculusBlueprint.Chapters.Units
 import PropertyKindCalculusBlueprint.Chapters.Dimension
@@ -108,7 +109,9 @@ _dimensions_, not kinds — the dimensional calculus is one part of metrology, a
 separate the confusions above.
 We present PropertyKindCalculus (PKC) {version}[], a machine-checked formalization, in the
 Lean 4 proof assistant, of Dybkær's seminal contribution to metrology
-{Manual.citep dybkaer_ontology_on_property}[] and several recent developments in this field
+{Manual.citep dybkaer_ontology_on_property}[] — read through Lowe's four-category ontology
+{Manual.citep lowe_four_category_ontology}[], which supplies the categorial frame Dybkær's
+part–whole vocabulary implies but never names — and several recent developments in this field
 (Flater {Manual.citep flater_architecture_for_software_assisted_quantity_calculus}[],
 Willink {Manual.citep willink_evaluation_of_measurement_uncertainty_based_on_moments}[], and
 Degenhardt {Manual.citep degenhardt_efficient_alternative_to_monte_carlo}[]). PKC makes a
@@ -1269,6 +1272,8 @@ in-progress goals until formalized. The headline deliverables are tagged
 `capstone`.
 
 {include 0 PropertyKindCalculusBlueprint.Chapters.Spine}
+
+{include 0 PropertyKindCalculusBlueprint.Chapters.Foundations}
 
 {include 0 PropertyKindCalculusBlueprint.Chapters.DedicatedKind}
 

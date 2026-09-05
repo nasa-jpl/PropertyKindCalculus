@@ -53,9 +53,9 @@ kinds are extensive is a precondition for soundly aggregating measurements.
 :::
 
 :::definition "def_extensiveKind" (parent := "extensivity") (lean := "PropertyKindCalculus.Extensive")
-A kind is _extensive_ when, for any partition of a {uses "def_system"}[system]
-into disjoint parts, the quantity of the whole equals the sum over the parts.
-This requires the mereological structure deferred from the foundations chapter.
+A kind is _extensive_ when, for any {uses "def_decomposition"}[carving] of a
+{uses "def_system"}[system] into parts, the quantity of the whole equals the sum
+over the parts — the mereological structure the foundations chapter supplies.
 :::
 
 :::proof "def_extensiveKind"
@@ -102,8 +102,8 @@ that depends on how the whole was cut is not a total. That is Marmodoro's point 
 physical structure, which "unites" without bringing a count principle with it, so that
 "It is an open question how many entities a physical structure is"
 {Manual.citep marmodoro_whole_but_not_one}[]. What a carving therefore cannot supply is
-the _whole_; that arrives with a sort of system and its aggregation license, in the
-object-type chapter.
+the _whole_; that arrives with a sort of system (the foundations chapter) and its
+aggregation license (the object-type chapter).
 
 Additivity is one answer to what composition does to a value, and the alternatives are not
 the absence of an answer. Both below are stated against the same measurement, so a model that

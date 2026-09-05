@@ -20,28 +20,10 @@ The point to keep in view: each of these is a law or an operation, not a class
 membership. A description-logic reasoner (OWL2/SROIQ) can record that `width`
 specializes `length`; it cannot state, let alone prove, that specialization is
 transitive or that operator availability is monotone in scale. Those are the
-entries below.
+entries below. The systems those properties characterize — and the part–whole and
+four-category structure they carry — are the foundations chapter's subject.
 
 :::author "author_nfr" (name := "Nicolas Rouquette")
-:::
-
-# Foundations — system and object (Dybkær Ch. 3)
-
-:::group "spine_foundations"
-The carrier layer: the systems (objects) whose features properties are.
-:::
-
-:::definition "def_system" (parent := "spine_foundations") (lean := "PropertyKindCalculus.System")
-A _system_ (Dybkær §3.3) is a demarcated arrangement of elements and their
-relationships; _object_ (§3.3 Note 6) is given as a synonym. Specified abstractly
-by identity here; the mereological structure that extensivity needs is added in a
-later module.
-:::
-
-:::proof "def_system"
-A one-field `structure` with `DecidableEq`; nothing to prove. The synonym
-`Object := System` keeps the instance layer reading as "characterizes an
-object".
 :::
 
 # Scale — the operator-based division of ⟨property⟩ (Dybkær Ch. 12)

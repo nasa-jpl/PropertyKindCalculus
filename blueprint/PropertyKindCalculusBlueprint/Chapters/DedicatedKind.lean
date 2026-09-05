@@ -58,7 +58,7 @@ A three-field `structure` with `DecidableEq`. `systematicTerm` is string interpo
 :::
 
 :::definition "def_dedicatedFor" (parent := "spine_dedicated") (lean := "PropertyKindCalculus.KindOfProperty.dedicatedFor")
-Dedicating a kind _through an object_: the object contributes exactly its sort, via the model's `Sorted` claim. This is the arrow from the {uses "def_individualQuantity"}[individual layer] to the catalogue — an individual quantity carries the particular in its type, and `dedicatedFor` says which catalogue entry that particular's readings instantiate. In the terms of the object-type chapter's ontological square, it is Lowe's dispositional route to exemplification: up the _instantiated by_ edge, then across the top.
+Dedicating a kind _through an object_: the object contributes exactly its sort, via the model's `Sorted` claim. This is the arrow from the {uses "def_individualQuantity"}[individual layer] to the catalogue — an individual quantity carries the particular in its type, and `dedicatedFor` says which catalogue entry that particular's readings instantiate. In the terms of the foundations chapter's ontological square, it is Lowe's dispositional route to exemplification: up the _instantiated by_ edge, then across the top.
 :::
 
 :::proof "def_dedicatedFor"

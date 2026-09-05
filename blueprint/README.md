@@ -8,7 +8,7 @@ status summary generated from the linked Lean code.
 
 ## What it documents
 
-25 chapters carrying **148 nodes, 32 of them capstones — every one of them
+26 chapters carrying **148 nodes, 32 of them capstones — every one of them
 `proved`**, each linking a real, sorry-free declaration through its `(lean := …)` field.
 The status summary and the dependency graph are therefore read off the checked source
 rather than asserted here; `scripts/check-doc-pins.py` gates these counts and the chapter
@@ -17,6 +17,7 @@ than quietly going unlisted.
 
 | Group | Chapters |
 |---|---|
+| The foundation | Foundations: system, part, and the ontological square |
 | The spine | The Proved Spine · Write Once, Correctly · Using the library: annotations and generated indexes · External Cross-References |
 | The kind layer | The object type · Dedicated kinds-of-property · Extensivity · The Interaction Algebra (Flater Appendix C) · The Function Calculus and Complex-Valued Carriers (R12) |
 | Units and dimension | Units and the Dimension-1 Problem · Dimension as a Forgetful Functor · Scale-spanning units — a third unit category (R13) |

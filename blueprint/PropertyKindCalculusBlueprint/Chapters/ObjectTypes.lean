@@ -6,9 +6,6 @@ import VersoBlueprint
 -- assembly over a finite index.
 import PropertyKindCalculus
 import PropertyKindCalculus.CompositeReal
--- The four-category correspondence below cites Lowe, so the chapter imports the
--- blueprint's `References`.
-import PropertyKindCalculusBlueprint.References
 
 open Verso.Genre
 open Verso.Genre.Manual
@@ -34,9 +31,9 @@ types differ, and nothing else.
 
 _Designation_ — naming an object in the terminological vocabulary — is what
 Dybkær's instance layer consumes, and it is not free. It is supplied by
-`Designated`, and an object type that has no identity of its own has no instance.
-(The Chapter 20 dedicated kind consumes the object's _sort_, not its name — that
-half is `Sorted`'s.)
+`Designated` (the foundations chapter), and an object type that has no identity of
+its own has no instance. (The Chapter 20 dedicated kind consumes the object's
+_sort_, not its name — that half is `Sorted`'s, in the same chapter.)
 
 The asymmetry is the point. A host library's own objects — the particles of a
 mechanical system, the cells of a mesh, the pixels of a scene — can be _gated_ with
@@ -46,25 +43,9 @@ _named_, and the layer says so rather than inventing a name that is not there.
 # What an object type supplies
 
 :::group "object_types"
-The object of an individual quantity ranges over an arbitrary type. The gate needs
-nothing from it; the designation needs `Designated`, whose injectivity field is what
-distinguishes a designation from a formality.
-:::
-
-:::definition "def_individualQuantity" (parent := "object_types") (lean := "PropertyKindCalculus.IndividualQuantity")
-An _individual quantity_ is a magnitude of a {uses "def_kindOfProperty"}[kind-of-property] that _characterizes an object_ (Ch. 3), with the object carried in the type alongside the kind. Its object is drawn from an arbitrary type, so a nominal {uses "def_system"}[system] and a host library's own structural object are both admissible indices.
-:::
-
-:::proof "def_individualQuantity"
-A one-field structure `IndividualQuantity {O : Type u} (o : O) (k : KindOfProperty) (R : Type)`. `add` is gated on the object, the kind, and a `DifferenceKind` scale witness; `mul`, `div` and `recip` on the object and a kind law. None of these reads `o`, which is why the generalization from `Object` to an arbitrary `O` changed no proof.
-:::
-
-:::definition "def_designated" (parent := "object_types") (lean := "PropertyKindCalculus.Designated")
-A _designated_ object type carries a map into the nominal {uses "def_system"}[system] type, injectively, so an individual quantity of such an object can name it. The nominal type designates itself; a type whose objects are positions in a structure has no instance.
-:::
-
-:::proof "def_designated"
-A two-field class: `designation : O → Object` and `designation_inj`. The injectivity field is the whole content. Without it, any object type is satisfiable by the constant map, and the resulting designation reports two distinct objects as one system — silently, wherever it is rendered. With it, the absence of an instance is a true report about the type.
+The object of an individual quantity (the foundations chapter's mode) ranges over an
+arbitrary type. The gate needs nothing from it; the designation needs `Designated`,
+whose injectivity field is what distinguishes a designation from a formality.
 :::
 
 # The census of object types
@@ -182,66 +163,13 @@ it refuses, with equal correctness, the _total_ mass of an assembly, because the
 characterizes an object the part type does not contain. Aggregation therefore needs an
 eliminator, and the eliminator is where the §13.5 license enters.
 
-:::definition "def_sortOfSystem" (parent := "object_types") (lean := "PropertyKindCalculus.SortOfSystem")
-The _sort of system_ — the substantial *universal* as against the substantial *particular*: _plasma_ as against this sample, _rover_ as against rover 1. Dybkær's dedicated kind-of-property is defined over exactly this — "kind-of-property with given *sort of* system and any pertinent component" (Ch. 20, quoted from the source's own definition) — and the mereological registry is keyed by it, because how parts unify into a whole is dictated by the sort of the whole.
-:::
-
-:::proof "def_sortOfSystem"
-A one-field structure with `DecidableEq`, mirroring the {uses "def_system"}[system] carrier one ontological level up. `Sorted O` is the instantiation arrow from an object type to its sorts (`sortOf : O → SortOfSystem`), declared per model and never derived. With these, the calculus carries all four corners of Lowe's ontological square (the four-category analysis; the correspondence is spelled out edge by edge below) — of which three were already present and the fourth was being played, by convention, by the particular. `DedicatedKind.sort` stores exactly what the quoted definition asks for, and `dedicatedFor` closes the square: dedicating a kind through an object contributes the object's sort, so two objects of one sort instantiate one catalogue entry while their quantities stay apart by type.
-:::
-
-The correspondence with Lowe's four-category ontology
-({Manual.citep lowe_four_category_ontology}[], Fig. 7.1 — the ontological square) is
-worth stating edge by edge, because the calculus
-carries the *relations* of the square and not only its corners. The corners: `SortOfSystem`
-is his _Kinds_ (the substantial universal), the object index his _Substances_ (the
-substantial particular), `KindOfProperty` his _Attributes_ (the non-substantial universal),
-`IndividualQuantity` his _Modes_. The edges: `Sorted.sortOf` is the left _instantiated by_
-edge — substances instantiate kinds. The right _instantiated by_ edge — modes instantiate
-attributes — is the kind index of an individual quantity, and the bottom _characterized by_
-edge — substances characterized by modes — is its object index: both edges into the mode
-are *type indices*, which is exactly why they gate arithmetic. The top _characterized by_
-edge — kinds characterized by attributes — is the dedicated kind, refined by Dybkær's
-pertinent component, a refinement the square itself does not carry.
-
-The diagonal is a structural agreement rather than a construct. Lowe's _exemplified by_ —
-a substance exemplifying an attribute — is derivative for him, factoring through either
-path around the square, and the calculus likewise has no primitive object-to-kind-of-property
-construct: the dispositional route (up the left edge, then across the top) is
-`dedicatedFor`, and the occurrent route (across the bottom, then up the right) is an
-inhabitant of `IndividualQuantity o k R`. The reading is not idiosyncratic: surveying the
-square's grounding relations, Simons states the occurrent half as a definition — an object
-exemplifies an attribute "when a mode which instantiates an attribute characterizes an
-object" — and counts exemplification "definable in terms of instantiation, characterization,
-and some logic" {Manual.citep simons_basis_of_categorial_distinctions}[]. Where the
-calculus narrows Lowe: the attributes here are kinds-of-property specifically — quantitative
-attributes carrying a scale and an examination — not attributes at large.
-
-One stance the implementation takes silently is worth making explicit. The calculus's
-universals are catalogue *entries*: a `SortOfSystem` and a `KindOfProperty` are data,
-declared by a model, and a sort no object instantiates is idle data rather than a Platonic
-surplus. That is the immanentist reading Lowe himself settled on — universals as
-"abstractions from, or invariants across, particulars", incapable of existing
-uninstantiated (Lowe 2012, quoted in Heil
-{Manual.citep heil_existents_and_universals}[]) — and it is the only reading a
-terminological ontology in Dybkær's style needs.
-
-A second correspondence runs alongside Lowe's and settles a different question: not what
-the four categories are, but why a whole needs a sort at all. Marmodoro distinguishes two
-kinds of structure — "physical structure unites; while metaphysical structure unifies. The
-former brings about wholes, the latter unities. But wholes are not always unities"
-{Manual.citep marmodoro_whole_but_not_one}[]. The extensivity layer is the first of those:
-a decomposition unites parts into a whole and, being one carving among many, brings no
-count principle with it. The second is what a model supplies when it declares a sort and
-instantiates a composite — unification "under the individuation principle of the sortal",
-and Dybkær's _sort of system_ is that sortal under another name. Three decisions of this
-chapter follow from taking the distinction seriously. The whole is _added_ rather than
-derived, because no carving yields it. The same parts under two sorts are two object types
-with two sets of licenses, because the statue and the lump are two wholes. And the license
-is indexed by the sort rather than by the kind alone, because how parts make a whole is
-settled by what the whole is — the one claim the parts cannot make on their own behalf.
-Her further distinction between structural and substantial powers lands in the extensivity
-chapter, where a whole-proper kind is one no aggregation produces.
+Three decisions shape the eliminator, each an application of the unite/unify
+distinction the foundations chapter states: the whole is *added* rather than derived,
+because no carving yields it; the same parts under two sorts (the foundations chapter)
+are two object types with two sets of licenses, because the statue and the lump are two
+wholes; and the license is indexed by the sort rather than by the kind alone, because
+how parts make a whole is settled by what the whole is — the one claim the parts cannot
+make on their own behalf.
 
 :::definition "def_composite" (parent := "object_types") (lean := "PropertyKindCalculus.Composite")
 The _composite_ object type over a part type, *as a {uses "def_sortOfSystem"}[sort] of whole*: the whole, or one of its parts. The whole and the parts must inhabit one type or their quantities cannot be related at all; the whole is a distinct term from every part, so a whole-assembly quantity and a part quantity do not combine. The sort index is what lets two wholes stand over one part type — the statue and the lump over the same clay — and their quantities do not combine either, because the types differ. Extensionality about objects is not assumed.
@@ -260,7 +188,7 @@ A `Prop`-valued class with one field, a `DifferenceKind` witness. The sort index
 :::
 
 :::definition "def_assemble" (parent := "object_types") (lean := "PropertyKindCalculus.assemble")
-_Assembly_: the quantity of the whole, folded from the quantities of the parts over a {uses "def_extensiveKind"}[decomposition]. The whole and the part injection are arguments rather than fixed, so the eliminator serves a {uses "def_composite"}[composite] and equally a host library's own object type with its own naming of parts. Its part function is dependent — the quantity supplied for a part must characterize _that_ part — which is the gate.
+_Assembly_: the quantity of the whole, folded from the quantities of the parts over a {uses "def_decomposition"}[carving]. The whole and the part injection are arguments rather than fixed, so the eliminator serves a {uses "def_composite"}[composite] and equally a host library's own object type with its own naming of parts. Its part function is dependent — the quantity supplied for a part must characterize _that_ part — which is the gate.
 :::
 
 :::proof "def_assemble"
