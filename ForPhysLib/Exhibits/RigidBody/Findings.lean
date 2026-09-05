@@ -8,9 +8,12 @@ artifact against the real modules, per rule 2 of the
 
 **The defects, each exhibited by an `example` that should not type-check but does:**
 
-1. **Position `+` momentum compiles** (MR1). `comTrajectory`, `centerOfMassVelocity` and
-   `linearMomentum` are all `Time → Space d`, so a position, a velocity and a momentum are
-   one type and any two of them add.
+1. **Velocity `+` momentum compiles, and either one displaces a position** (MR1).
+   `centerOfMassVelocity` and `linearMomentum` are both `Time → EuclideanSpace ℝ (Fin d)`,
+   so they add; `comTrajectory` is a `Space d` point over that same displacement space, so
+   `+ᵥ` takes a momentum as readily as a velocity. PhysLib's affine typing (#1603) separates
+   a point from a vector — the sum `position + momentum` is a type error below — and leaves
+   the two vector *kinds* sharing one type.
 2. **The lab/body mismatch** (M5). `angularVelocity` and `bodyAngularVelocity` are both
    `Time → Fin 3 → ℝ`; the inertia tensor is body-fixed, and
    `kineticEnergy_eq_translational_add_bodyAngularVelocity`'s own docstring is the only
@@ -42,18 +45,35 @@ namespace ForPhysLib.Exhibits.RigidBody
 
 open PropertyKindCalculus
 
-/-! ## Finding 1 — position + momentum compiles (MR1)
+/-! ## Finding 1 — velocity + momentum compiles (MR1)
 
-Three physically distinct roles, one type. Both sums below are wrong on their face and
-both elaborate. -/
+`comTrajectory` is a point of `Space 3`; `centerOfMassVelocity` and `linearMomentum` are
+vectors of `EuclideanSpace ℝ (Fin 3)`, the space that acts on it. The point/vector half of
+this finding is a type error upstream — the two `#check_failure`s record it, so a
+regression here fails the build. What the affine typing does not distinguish is one vector
+from another: a velocity and a momentum are one type, and the torsor action takes either. -/
 
-/-- A centre-of-mass position plus a linear momentum: `Space 3` accepts it. -/
-noncomputable example (M : RigidBodyMotion 3) (t : Time) : Space 3 :=
+/- A centre-of-mass position plus a linear momentum: no longer a sum. -/
+#check_failure fun (M : RigidBodyMotion 3) (t : Time) =>
   M.comTrajectory t + M.linearMomentum t
 
-/-- A velocity plus a position — the other pairing, equally well-typed. -/
-noncomputable example (M : RigidBodyMotion 3) (t : Time) : Space 3 :=
+/- A velocity plus a position — the other pairing, equally rejected. -/
+#check_failure fun (M : RigidBodyMotion 3) (t : Time) =>
   M.centerOfMassVelocity t + M.comTrajectory t
+
+/-- A velocity plus a momentum: one type, two kinds, and the sum elaborates. -/
+noncomputable example (M : RigidBodyMotion 3) (t : Time) : EuclideanSpace ℝ (Fin 3) :=
+  M.centerOfMassVelocity t + M.linearMomentum t
+
+/-- The torsor action displaces a centre-of-mass position by a *momentum*: `+ᵥ` asks for a
+vector of the displacement space, and a momentum is one. -/
+noncomputable example (M : RigidBodyMotion 3) (t : Time) : Space 3 :=
+  M.linearMomentum t +ᵥ M.comTrajectory t
+
+/-- The same action fed the velocity — the reading `+ᵥ` is built for, and the one it cannot
+tell from the line above. -/
+noncomputable example (M : RigidBodyMotion 3) (t : Time) : Space 3 :=
+  M.centerOfMassVelocity t +ᵥ M.comTrajectory t
 
 /-! ## Finding 2 — the lab/body mismatch (M5)
 
@@ -190,10 +210,17 @@ not one: the pointwise product is unwritable at a kinded vector. -/
 #check_failure fun (h : ProductKind angularVelocityK angularVelocityK kineticEnergyK)
     (x : Quantity angularVelocityK (Fin 3 → ℝ)) => Quantity.mul h x x
 
-/- **Finding 1, closed.** A position and a linear momentum on the same carrier no
-longer add — `Quantity`'s homogeneous `instAdd` refuses distinct kinds. -/
+/- **Finding 1, closed.** A position and a linear momentum on the same carrier do not
+add — `Quantity`'s homogeneous `instAdd` refuses distinct kinds. -/
 #check_failure fun (p : Quantity Kinds.Space.positionVector (EuclideanSpace ℝ (Fin 3)))
     (l : Quantity linearMomentumK (EuclideanSpace ℝ (Fin 3))) => p + l
+
+/- **Finding 1's residue, closed.** The half the affine typing leaves open closes at the
+same instance: a velocity and a momentum are distinct kinds on one carrier, so their sum is
+unwritable — and no displacement action can substitute one for the other, there being no
+carrier-blind `+ᵥ` at a kind. -/
+#check_failure fun (v : Quantity velocityK (EuclideanSpace ℝ (Fin 3)))
+    (l : Quantity linearMomentumK (EuclideanSpace ℝ (Fin 3))) => v + l
 
 /-- The contraction at `n = 7`, verbatim — the dimension-generality PhysLib's hat-map
 route gives up. -/
@@ -246,8 +273,8 @@ noncomputable example (M : RigidBodyMotion 3) (t : Time) :
     InFrame body .scalar kineticEnergyK ℝ :=
   koenigTwiceTotal kineticEnergy_diff velocity_mul_linearMomentum
     inertia_mul_angularVelocity angularVelocity_mul_angularMomentum
-    ⟨.attest "PhysLib's centre-of-mass velocity, lab frame" (M.centerOfMassVelocity t).val⟩
-    ⟨.attest "PhysLib's linear momentum, lab frame" (M.linearMomentum t).val⟩
+    ⟨.attest "PhysLib's centre-of-mass velocity, lab frame" (M.centerOfMassVelocity t).ofLp⟩
+    ⟨.attest "PhysLib's linear momentum, lab frame" (M.linearMomentum t).ofLp⟩
     (bodyInertia M) (bodyOmega M t)
 
 end ForPhysLib.Exhibits.RigidBody

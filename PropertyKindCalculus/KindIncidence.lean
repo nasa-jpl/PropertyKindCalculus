@@ -1209,12 +1209,18 @@ partial def walkApp (h : HarvestCtx) (e : Expr) (ctx : BinderCtx)
   -- the discriminant is naked data flowing into a kinded result, which is what a
   -- selector genuinely looked like before it had a kind to be read at.
   if let some ma ← Meta.matchMatcherApp? e (alsoCasesOn := true) then
-    if ma.discrs.size == 1 && ma.alts.size ≥ 2 then
+    -- the walk carries bound variables of its own, and only a closed term has a type to
+    -- read; a discriminant still under one of those binders leaves the selection opaque,
+    -- as every open reading is. Reading it anyway is not a wrong answer but a thrown one:
+    -- `inferType` rejects a loose bound variable, and the whole ledger fails with it.
+    if ma.discrs.size == 1 && ma.alts.size ≥ 2 && !ma.discrs[0]!.hasLooseBVars then
       if let some kn := nominalKind? h.env (← Meta.inferType ma.discrs[0]!) then
         let selKind := toString (← Meta.ppExpr (mkConst kn))
         let resK? ← match t1 with
           | some (_, k, _) => pure (some k)
-          | none => carrierKind? h.env h.carriers ctx (← Meta.inferType e)
+          | none =>
+            if e.hasLooseBVars then pure none
+            else carrierKind? h.env h.carriers ctx (← Meta.inferType e)
         -- a nullary designation still arrives under a placeholder binder — the matcher
         -- gives every alternative a parameter whether its constructor carries data or
         -- not — so each alternative is peeled to the term it actually computes

@@ -27,9 +27,9 @@ source's spelling is the one that needs respelling).
   and `pureGauge_extent_zero` is its witness: a pure translation has zero extent (the
   torsor fact, at the tensor). The frame-bound fields then come off the tensor exactly
   as Stage 1's edges say: `electricReadingQ` is `−c·F⁰ⁱ` through the registered
-  velocity edge (erasure by upstream's `electricField_eq_fieldStrengthMatrix`), and
+  velocity edge (erasure by upstream's `electricField_eq_toFieldStrength_eval`), and
   `magneticReadingQ` is the spatial block read in the frame the slicing chose
-  (erasure by `fieldStrengthMatrix_inr_inr_eq_magneticFieldMatrix`).
+  (erasure by `toFieldStrength_eval_inr_inr_eq_magneticFieldMatrix`).
 * **The boost's other half.** Feasibility delivered the electric law; this stage adds
   the magnetic mirror — `B' = γ(B + (β/c)·E)` through the downward edge — and the
   invariance of the transverse-transverse block, closing MR18's ledger: under a boost
@@ -49,6 +49,7 @@ import ForPhysLib.Electromagnetism.Kinematics.Feasibility
 
 open PropertyKindCalculus
 open Space Time SpaceTime TensorProduct
+open TensorSpecies Tensor Tensorial
 open ForPhysLib.Electromagnetism.Kinematics
 open ForPhysLib.Electromagnetism.Kinematics.Kinds
 
@@ -191,7 +192,7 @@ def fieldStrengthMatrixQ (Aq : Quantity vectorPotentialK (EMPot d)) :
     Quantity fieldStrength
       (SpaceTime d → (Fin 1 ⊕ Fin d) × (Fin 1 ⊕ Fin d) → ℝ) :=
   .attest "the extent in the standard basis"
-    (fun x => Aq.magnitude.fieldStrengthMatrix x)
+    (fun x μν => toField {Aq.magnitude.toFieldStrength x | [μν.1] [μν.2]}ᵀ)
 
 /-- **A pure translation has zero extent** — the torsor fact at the tensor: shifting
 the zero potential by any gauge function produces a potential whose field strength
@@ -210,8 +211,8 @@ theorem pureGauge_extent_zero (χ : SpaceTime d → ℝ) (hχ : ContDiff ℝ 2 �
 @[kindIngest]
 def fieldStrengthAtQ (A : EMPot d) (x : SpaceTime d)
     (μν : (Fin 1 ⊕ Fin d) × (Fin 1 ⊕ Fin d)) : Quantity fieldStrength ℝ :=
-  .attest "pointwise reading of the chain's fieldStrengthMatrix"
-    (A.fieldStrengthMatrix x μν)
+  .attest "pointwise reading of the chain's field-strength components"
+    (toField {A.toFieldStrength x | [μν.1] [μν.2]}ᵀ)
 
 /-- **The electric reading** — `E_i = −c·F⁰ⁱ`: the velocity edge one level up, taken
 through Stage 1's registered law at the call site; the sign is a numeral. -/
@@ -226,10 +227,10 @@ theorem electricReadingQ_erases (cS : SpeedOfLight) (A : EMPot d)
     (hA : Differentiable ℝ A) (t : Time) (x : Space d) (i : Fin d) :
     (electricReadingQ cS A ((toTimeAndSpace cS).symm (t, x)) i).magnitude =
       A.electricField cS t x i := by
-  rw [_root_.Electromagnetism.ElectromagneticPotential.electricField_eq_fieldStrengthMatrix
+  rw [_root_.Electromagnetism.ElectromagneticPotential.electricField_eq_toFieldStrength_eval
     A t x i hA]
-  show (-1 : ℝ) * (cS.val * A.fieldStrengthMatrix ((toTimeAndSpace cS).symm (t, x))
-    (Sum.inl 0, Sum.inr i)) = _
+  show (-1 : ℝ) * (cS.val *
+    toField {A.toFieldStrength ((toTimeAndSpace cS).symm (t, x)) | [Sum.inl 0] [Sum.inr i]}ᵀ) = _
   ring
 
 /-- **The magnetic reading** — the spatial block *is* the magnetic field matrix: a
@@ -247,7 +248,7 @@ theorem magneticReadingQ_erases (cS : SpeedOfLight) (A : EMPot d)
     (x : SpaceTime d) (i j : Fin d) :
     (magneticReadingQ (fieldStrengthAtQ A x (Sum.inr i, Sum.inr j))).magnitude =
       A.magneticFieldMatrix cS (x.time cS) x.space (i, j) :=
-  _root_.Electromagnetism.ElectromagneticPotential.fieldStrengthMatrix_inr_inr_eq_magneticFieldMatrix
+  _root_.Electromagnetism.ElectromagneticPotential.toFieldStrength_eval_inr_inr_eq_magneticFieldMatrix
     A x i j
 
 /-! ## The boost's other half -/
@@ -320,7 +321,7 @@ theorem boost_fixes_transverse_block {d : ℕ} (β : ℝ) (hβ : |β| < 1)
 
 /-! ## Gauge invariance reaches the fields
 
-Upstream proves the *tensor* gauge-invariant (`fieldStrengthMatrix_gaugeTransform`);
+Upstream proves the *tensor* gauge-invariant (`toFieldStrength_eval_gaugeTransform`);
 the chain's derived fields inherit the invariance, but no upstream lemma states it.
 The two theorems below are that gap closed — a candidate patch, in the pilot's
 orthonormality pattern — and the kinded corollary consumes them at the readings. -/
@@ -336,17 +337,17 @@ theorem gaugeTransform_differentiable (A : EMPot d) (χ : SpaceTime d → ℝ)
     (_root_.Electromagnetism.ElectromagneticPotential.differentiable_ofGradient hχ)
 
 /-- **The electric field is gauge-invariant** — inherited from the tensor's
-invariance through `electricField_eq_fieldStrengthMatrix`; not stated upstream. -/
+invariance through `electricField_eq_toFieldStrength_eval`; not stated upstream. -/
 theorem electricField_gaugeTransform (cS : SpeedOfLight) (A : EMPot d)
     (χ : SpaceTime d → ℝ) (hA : Differentiable ℝ A) (hχ : ContDiff ℝ 2 χ)
     (t : Time) (x : Space d) (i : Fin d) :
     (_root_.Electromagnetism.ElectromagneticPotential.gaugeTransform χ A).electricField
       cS t x i = A.electricField cS t x i := by
-  rw [_root_.Electromagnetism.ElectromagneticPotential.electricField_eq_fieldStrengthMatrix
+  rw [_root_.Electromagnetism.ElectromagneticPotential.electricField_eq_toFieldStrength_eval
       _ t x i (gaugeTransform_differentiable A χ hA hχ),
-    _root_.Electromagnetism.ElectromagneticPotential.electricField_eq_fieldStrengthMatrix
+    _root_.Electromagnetism.ElectromagneticPotential.electricField_eq_toFieldStrength_eval
       A t x i hA,
-    _root_.Electromagnetism.ElectromagneticPotential.fieldStrengthMatrix_gaugeTransform
+    _root_.Electromagnetism.ElectromagneticPotential.toFieldStrength_eval_gaugeTransform
       A χ hA hχ]
 
 /-- **The magnetic-field matrix is gauge-invariant** — same inheritance; not stated
@@ -357,7 +358,7 @@ theorem magneticFieldMatrix_gaugeTransform (cS : SpeedOfLight) (A : EMPot d)
     (_root_.Electromagnetism.ElectromagneticPotential.gaugeTransform χ A).magneticFieldMatrix
       cS t x ij = A.magneticFieldMatrix cS t x ij := by
   simp only [_root_.Electromagnetism.ElectromagneticPotential.magneticFieldMatrix_eq,
-    _root_.Electromagnetism.ElectromagneticPotential.fieldStrengthMatrix_gaugeTransform
+    _root_.Electromagnetism.ElectromagneticPotential.toFieldStrength_eval_gaugeTransform
       A χ hA hχ]
 
 /-- **The kinded corollary**: shifting the potential through the torsor moves nothing

@@ -83,7 +83,7 @@ info: boundary audit:
 [kindCrossing] ForPhysLib.Electromagnetism.Kinematics.scalarPotentialQ — attests: electricPotentialK ‹c·A⁰ — the velocity edge, landing on the interval-scale potential›
 [kindEmission] ForPhysLib.Electromagnetism.Kinematics.Kinded.rawElectricField — erases (emission-only)
 [kindIngest] ForPhysLib.Electromagnetism.Kinematics.DistributionalTwin.distPotentialQ — attests: vectorPotentialK ‹the distributional A^μ — the twin carrier at the chain's kind›
-[kindIngest] ForPhysLib.Electromagnetism.Kinematics.Kinded.fieldStrengthAtQ — attests: Kinds.fieldStrength ‹pointwise reading of the chain's fieldStrengthMatrix›
+[kindIngest] ForPhysLib.Electromagnetism.Kinematics.Kinded.fieldStrengthAtQ — attests: Kinds.fieldStrength ‹pointwise reading of the chain's field-strength components›
 [kindIngest] ForPhysLib.Electromagnetism.Kinematics.Maxwell.currentFourQ — attests: Kinds.electricCurrentDensity ‹J^μ — one kind; the time slot is c·ρ›
 [kindIngest] ForPhysLib.Electromagnetism.Kinematics.Operators.scalarPotentialAtQ — attests: electricPotentialK ‹pointwise reading of the chain's scalarPotential — gauge-fixed, interval›
 [kindIngest] ForPhysLib.Electromagnetism.Kinematics.electricFieldAtQ — attests: electricFieldK ‹pointwise reading of the chain's electricField›

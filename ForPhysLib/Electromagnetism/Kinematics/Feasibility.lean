@@ -262,7 +262,7 @@ noncomputable def electricFieldAtQ (cS : SpeedOfLight) (A : EMPot d) (t : Time)
 
 /-- A pointwise magnetic-field-matrix reading — the spatial block of the field
 strength, which *is* the magnetic field
-(`fieldStrengthMatrix_inr_inr_eq_magneticFieldMatrix`). -/
+(`toFieldStrength_eval_inr_inr_eq_magneticFieldMatrix`). -/
 @[kindIngest]
 noncomputable def magneticMatrixAtQ (cS : SpeedOfLight) (A : EMPot d) (t : Time)
     (x : Space d) (ij : Fin d × Fin d) : Quantity magneticFluxDensityK ℝ :=

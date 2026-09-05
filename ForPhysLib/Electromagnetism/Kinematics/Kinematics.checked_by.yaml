@@ -25,8 +25,8 @@ deltas:
     checked_by:
       - "ForPhysLib.Electromagnetism.Kinematics.Dynamics"  # the TODO is stale: the constant IS introduced — every definition in the subtree takes `𝓕 : FreeSpace` and the kinetic term reads `−1/(4·𝓕.μ₀)`; the kinded layer reads ε₀/μ₀ at 6-14.1/6-26.1 and `FreeSpace.c` as a crossing. Proposed delta: delete the TODO sentence from the `KineticTerm.lean` and `Lagrangian.lean` overviews (a two-line docstring patch)
 
-# The two `FieldStrength.lean` TODOs (replace `fieldStrengthMatrix` by tensor-eval
-# API; remove the basis-component lemmas) are refactoring plans, not claims; the
-# kinded layer takes no position on them, but note the dependency: `Kinded.lean`'s
-# readings and both boost consumptions quote `fieldStrengthMatrix` — if the refactor
-# lands, the mirror follows the new spelling.
+# `FieldStrength.lean` reads the tensor's components through index evaluation,
+# `toField {A.toFieldStrength x | [μ] [ν]}ᵀ`; the basis-component lemmas and the
+# `fieldStrengthMatrix` abbreviation are not part of its API. `Kinded.lean`'s readings
+# and both boost consumptions quote that same spelling, so the mirror tracks the
+# source — a rename upstream surfaces here as a build error, not as drifting prose.

@@ -2,7 +2,7 @@
 # Validation probes — `KindLedger` (the unkinded inventory of a declared scope)
 
 The ledger is the unkinded reading gathered over an assembly and made into a worklist.
-Three claims are checked here.
+Four claims are checked here.
 
 **It dedupes by member.** A helper called twice is two levels, so a single naked binder
 would be counted twice — and dissecting a call would then *raise* the recorded debt while
@@ -14,6 +14,11 @@ number means rather than printing `0`.
 **Its gate is separate from its pin.** `#kind_unkinded` can express a violation, so it
 cannot also be the check that none exists; `#kind_unkinded_clean` errors on a non-empty
 ledger and is pinned on the scope that has reached zero.
+
+**A subterm it cannot read leaves a row opaque, not the ledger empty.** A value may put a
+`match` under a lambda of its own, where the discriminant is a loose bound variable and
+`inferType` throws rather than answers. The reading is opaque there, and every row around
+it still reports.
 
 The JSON emitter is a pure function of the same rows, so it is decidable by evaluation.
 -/
@@ -124,6 +129,57 @@ unkinded: none — every position carries a kind
 -- not a check that there is none.
 /-- info: unkinded-clean: every position of 'kind-ledger clean scope' carries a kind -/
 #guard_msgs in #kind_unkinded_clean cleanScope
+
+/-! ## A selection under a binder the walk carries
+
+The ledger walks a declaration's value, and a value can put a `match` under a lambda of its
+own — an attested reading that is a *function*, selecting on that function's argument. The
+discriminant there is a loose bound variable, and asking for its type is not a wrong answer
+but a thrown one: `inferType` rejects a loose bound variable, and the exception takes the
+whole ledger with it, one unreadable subterm anywhere in a scope erasing every row in it.
+The reading a bound discriminant must get is the one every open reading gets — opaque —
+and the rows around it must survive. Both pins below fail if the walk reads it. -/
+
+/-- An attested reading that is a function, selecting on its own argument: the `match`
+sits under a binder the walk carries, so its discriminant is still bound when the walk
+arrives. -/
+def selectUnderBinder (p q : Float) : Quantity aK (Bool → Float) :=
+  .attest "a reading selected per argument" (fun b => match b with | true => p | false => q)
+
+/-- The scope: nothing is ported, so both naked magnitudes are rows — the point being
+that they are *reported*, not lost to an exception raised inside the selection. -/
+def selectScope : Provenance.Contract String String where
+  name := "kind-ledger selection scope"
+  members := ["PropertyKindCalculus.Tests.KindLedger.selectUnderBinder"]
+  ports := []
+  exits := []
+
+/--
+info: unkinded ledger of 'kind-ledger selection scope':
+unkinded: 2 position(s), 2 flow(s)
+unkinded input selectUnderBinder/p : Float
+unkinded input selectUnderBinder/q : Float
+unkinded flow: selectUnderBinder/p ⇒ selectUnderBinder/_1
+unkinded flow: selectUnderBinder/q ⇒ selectUnderBinder/_1
+-/
+#guard_msgs in #kind_unkinded selectScope
+
+-- The graph the ledger is gathered from reads the same way: one attested mint at `aK`,
+-- with both magnitudes flowing into it naked. The selection contributes no edge — an
+-- open discriminant is opaque, which is a reading, not a failure.
+/--
+info: kind assembly of 1 steps:
+level selectUnderBinder: walked
+output selectUnderBinder/result : aK
+attested "a reading selected per argument" selectUnderBinder/_1 : aK
+aK → aK ⟨selectUnderBinder/_1⟩ ⇒ selectUnderBinder/result
+unkinded input selectUnderBinder/p : Float
+unkinded input selectUnderBinder/q : Float
+unkinded flow: selectUnderBinder/p ⇒ selectUnderBinder/_1
+unkinded flow: selectUnderBinder/q ⇒ selectUnderBinder/_1
+well-formed: true
+-/
+#guard_msgs in #kind_assembly selectScope
 
 /-! ## The JSON emission
 

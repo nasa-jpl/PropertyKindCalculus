@@ -233,7 +233,7 @@ theorem magneticVectorPotential_div_length_gradient :
   QuotientKind.ofRatio _ _ _
 
 /-- `E_i = −c·F⁰ⁱ` — the tensor's electric reading: the velocity edge one level up
-(`electricField_eq_fieldStrengthMatrix`). -/
+(`electricField_eq_toFieldStrength_eval`). -/
 theorem speedOfLight_mul_fieldStrength :
     ProductKind speedOfLight fieldStrength electricFieldStrength :=
   ProductKind.ofRatio _ _ _
@@ -246,7 +246,7 @@ theorem speedOfLight_mul_magneticFluxDensity :
   ProductKind.ofRatio _ _ _
 
 /-- `(β/c)·E` — the boost's downward mixing, and the tensor's own storage of the
-electric block (`fieldStrengthMatrix_inl_inr_eq_electricField` writes `−(1/c)·E`). -/
+electric block (`toFieldStrength_eval_inl_inr_eq_electricField` writes `−(1/c)·E`). -/
 theorem electricFieldStrength_div_speedOfLight :
     QuotientKind electricFieldStrength speedOfLight magneticFluxDensity :=
   QuotientKind.ofRatio _ _ _
@@ -350,7 +350,7 @@ theorem lagrangianDensity_div_magneticVectorPotential :
   QuotientKind.ofRatio _ _ _
 
 /-- `μ₀⁻¹·∑∂F` — the variational gradient as upstream computes it
-(`gradLagrangian_eq_sum_fieldStrengthMatrix`): a magnetic-field derivative per
+(`gradLagrangian_eq_sum_toFieldStrength_eval`): a magnetic-field derivative per
 magnetic constant, same target — Euler–Lagrange holds at one kind. -/
 theorem magneticFieldDerivative_div_magneticConstant :
     QuotientKind magneticFieldDerivative magneticConstant variationalGradient :=

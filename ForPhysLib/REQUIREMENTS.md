@@ -45,8 +45,9 @@ A sum of quantities with different dimensions is rejected.
 
 *Fails today:* `IsInertial.velocity : EuclideanSpace ℝ (Fin d)` has the same type as the
 displacement `frame.origin t₂ -ᵥ frame.origin t₁` it is defined from, so `L + L·T⁻¹`
-compiles. In `RigidBody/Motion.lean`, `comTrajectory`, `centerOfMassVelocity` and
-`linearMomentum` are all `Time → Space d`, so position `+` momentum compiles.
+compiles. In `RigidBody/Motion.lean`, `centerOfMassVelocity` and `linearMomentum` are both
+`Time → EuclideanSpace ℝ (Fin d)`, so velocity `+` momentum compiles — and `+ᵥ`, the action
+of that space on the `comTrajectory` position, takes either one as a displacement.
 
 ### MR2. Derived dimensions are computed, not annotated
 

@@ -192,8 +192,10 @@ reaches the same question from the other side.
 
 **What it shows.** The lab/body angular-velocity mismatch that
 [M5](MOTIVATION.md#m5-a-correctness-constraint-enforced-by-not-using-an-abbreviation)
-describes, plus `comTrajectory`, `centerOfMassVelocity` and `linearMomentum` all typed
-`Time → Space d`, so position `+` momentum compiles.
+describes, plus `centerOfMassVelocity` and `linearMomentum` sharing one type
+(`Time → EuclideanSpace ℝ (Fin d)`), so velocity `+` momentum compiles and `+ᵥ` displaces a
+`comTrajectory` position by either. PhysLib's affine typing (#1603) separates the point from
+the vector; the two vector kinds remain one type.
 
 **The tension to raise carefully.** `ReferenceFrame`'s doc insists *"no point is automatically
 the zero point"*, while `Space/Origin.lean` supplies `Zero (Space d)` because the vector-space
@@ -209,11 +211,14 @@ kind-generic statement of the König split over `Variance.rank2` for the inertia
 as much as for the defect.
 
 **Status: built** — `ForPhysLib/Exhibits/RigidBody/Findings.lean`. The three findings stand
-as `example`s against the imported sources: position `+` momentum and velocity `+` position
-at `Space 3`; the body-fixed inertia tensor contracted with the *spatial* `ω` (and the
-lab + body sum); the pointwise `ω * ω`. The counter-form `rotationalContraction` states
+as `example`s against the imported sources: velocity `+` momentum, and either of them
+displacing a position through `+ᵥ` (the point/vector half is a `#check_failure`, so a
+regression upstream fails our build); the body-fixed inertia tensor contracted with the
+*spatial* `ω` (and the lab + body sum); the pointwise `ω * ω`. The counter-form
+`rotationalContraction` states
 `ω · (I ω)` once — kind-, dimension- and carrier-generic, exercised verbatim at `n = 7` —
-and a `#check_failure` closes each finding; `rotationalContraction_eq_physlib` bridges the
+and a `#check_failure` closes each finding — two for finding 1, the kind separation closing
+the half the affine split leaves open; `rotationalContraction_eq_physlib` bridges the
 body-frame form back to `2 * rotationalKineticEnergy ω_body` in two lines, and
 `koenigTwiceTotal` states the König split with its halves read in *different* frames,
 joined only through `toFrameScalar`.
@@ -943,9 +948,9 @@ edge, and the feasibility questions follow that spine:
   upstream's `ofPotentials_scalarPotential` closes the kinded round trip. The same edge
   recurs one level up: `F = ∂A − ∂A` is uniformly at the flux-density dimension (`∂` is a
   per-length operation on a length-coordinate spacetime), the spatial block *is* the
-  magnetic field (`fieldStrengthMatrix_inr_inr_eq_magneticFieldMatrix`), and the electric
+  magnetic field (`toFieldStrength_eval_inr_inr_eq_magneticFieldMatrix`), and the electric
   reading exists only through the crossing: `E_i = −c · F⁰ᵢ`
-  (`electricField_eq_fieldStrengthMatrix`). `E` and `B` remain distinct kinds — the
+  (`electricField_eq_toFieldStrength_eval`). `E` and `B` remain distinct kinds — the
   Gaussian-basis point, [MR4](REQUIREMENTS.md#mr4-same-dimension-kinds-stay-apart) — so the
   tensor's entries carry a *third*, frame-covariant kind that erases to both.
 - **F3 — the silent numeral, now load-bearing.** `(c : SpeedOfLight := 1)` rides an
