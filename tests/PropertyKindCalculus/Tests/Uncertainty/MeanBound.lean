@@ -173,7 +173,7 @@ noncomputable def wOne : Bool → FP32 := fun _ => ⟨(1 : ℝ)⟩
 theorem wOne_nonneg : ∀ p, 0 ≤ (wOne p).val := by
   intro p; show (0:ℝ) ≤ 1; norm_num
 
-theorem wOne_grid : ∀ p, (wOne p).IsRepresentable := fun _ => one_onGrid
+theorem wOne_grid : ∀ p, (wOne p).IsRepresentable := fun _ => one_representable
 
 /-- The exact total over the two-part carving is `2`. -/
 theorem wOne_pos : 0 < totalWeight (fun p => (wOne p).val) pairParts := by

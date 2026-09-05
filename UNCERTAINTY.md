@@ -1,6 +1,6 @@
 # UNCERTAINTY.md — A rigor-first plan for uncertainty & numerical adequacy in PKC
 
-> Status: **Stages 0–3.7 implemented & CI-checked** (reference layer, GUM/Willink, autograd `cᵢ`,
+> Status: **Stages 0–3.8 implemented & CI-checked** (reference layer, GUM/Willink, autograd `cᵢ`,
 > the ladder theorems T1–T5, the executable SSPRC pipeline, the numerical-adequacy layer — the
 > executable `Adequacy` carrier plus the theorems A1 absorption, A2 Sterbenz, A3 verdict soundness
 > over `ℝ` — the **universal capstone A3′** (`DagBound`: FP32 measurand ≈ `ℝ` over an input box up
@@ -70,6 +70,7 @@ built tape).
 | 3.5 | Autograd soundness (reverse pass = fderiv adjoint) — *TorchLean PR* | ✅ |
 | 3.6 | Direct-route completion + eager-provenance closure | ✅ |
 | 3.7 | The weighted mean at binary32 — the aggregation mode that divides (`MeanBound`) | ✅ |
+| 3.8 | Flag-freedom relocated to the exact evaluation (`ExactRepresentable`) and its regime exhibited | ✅ |
 | **4** | **Scale — GPU SSPRC/MCM on `CudaT`, `Nᵢ` allocation, science-model capstone** | **◐ in progress** — batched SSPRC propagator landed (`SsprcBatched` + `ssprc_batched_parity` exe); sensitivity-driven `Nᵢ` allocation landed (`Allocation` + `DegenhardtAllocation` example, `#guard`-checked); science-model capstone landed (`WaterCloudModel` — one WO1 Water-Cloud-Model forward through the whole pipeline, `#guard`-checked); batched MCM remains |
 
 **Residuals / loose threads** (from the four honest residuals scoped after Stage 3.6):
@@ -78,7 +79,7 @@ built tape).
 |---|---|---|---|
 | 1 | Autograd ops beyond the arithmetic core + `TapeM`/`StateT` sugar | ✅ CLOSED 2026-08-03 | (follow-up) upstream the generic `TapeM` reduction layer to TorchLean |
 | 2 | Kinded `×`/`÷` **budget** DAG (`BudgetDag`, Area 1) | ✅ CLOSED 2026-08-03 · v0.24.0 | — (honest limits: per-occurrence independence; `ofRatio`-liberal witnesses) |
-| 2′ | FP32-**adequacy** `×`/`÷` DAG (`DagBound`, Area 2) — *distinct from #2* | ✅ LANDED · v0.25.0 | refine `FlagFree` → the *minimal* no-absorption condition |
+| 2′ | FP32-**adequacy** `×`/`÷` DAG (`DagBound`, Area 2) — *distinct from #2* | ✅ LANDED · v0.25.0; flag-freedom relocated to the exact evaluation and its regime exhibited | the no-absorption regime — a *different conclusion* (resolution, not equality), lifting `Adequacy.resolve` along the DAG |
 | 3 | `Float`-vs-`ℝ` carrier gap | ✅ discharged in kind (Stages 3–3.3) | per-model application only; no separate deliverable |
 | 4 | `hᵢ`/HVP Taylor surrogate; trig VJP nodes (`sin/cos/tanh/sinh/cosh`) | ▫ optional | fund only if a model needs 2nd-order surrogates or transcendental diff |
 
@@ -93,11 +94,19 @@ built tape).
    forward driven through the Float forward, the autograd Jacobian, GUM/Willink, SSPRC, and the
    allocation; `#guard`-checked). Next within Stage 4: batched **MCM**.
 2. **TorchLean PR — the generic `TapeM` reduction layer** (residual #1's recorded follow-up):
-   `opM` + its run lemmas + the per-op `run_<op>_ok` family, generalized over the carrier `{α}`.
-   Purely additive, classical-trio axiom profile, no project terms; after it merges `TapeMBridge.lean`
-   shrinks to the demo + endpoint.
-3. **Area-2 refinement** — tighten the adequacy DAG's `FlagFree` (currently "no node rounds anywhere")
-   to the minimal no-absorption condition (thread #2′).
+   ✅ **written and verified**, awaiting a human to push and post it (AI-POLICY §3.1). Branch
+   `tapem-run-lemmas` off `upstream/main` in the TorchLean checkout, purely additive (+501/−0):
+   `TapeM.opM`, the three `opM_run_*` lemmas, `run_bind_inv`/`exec_inv`, and the `run_<op>_ok` family
+   for all 31 tape-threading wrappers, every one generic in the carrier. PR body drafted at
+   `scratchpad/torchlean-pr-tapem-run-lemmas.md`. After it merges `TapeMBridge.lean` shrinks to the
+   demo + endpoint, and what it keeps arrives generic rather than fixed at `ℝ`.
+3. **Area-2 refinement** — the *relocation* half is done: `ExactRepresentable` states flag-freedom on
+   the exact `ℝ` evaluation, `flagFree_iff_exactRepresentable` proves the two conditions cut out the
+   same inputs, and `AdequacyDag`'s doubling chain discharges one — so the flag-free theorems are
+   about an inhabited regime now, not only about a hypothesis. What remains is the genuinely weaker
+   no-absorption regime, which needs a different *conclusion*: rounding is allowed, equality of the
+   variations is then false, and the statement becomes a resolution one lifting `Adequacy.resolve`
+   along the DAG (thread #2′).
 4. **Ergonomics** — `attribute [local irreducible]` on *all* activation scalar specs to cut
    `AutogradDirectSim`'s ~25-min elaboration; the `safeLog` `EagerBuilds.unary` instance.
 
@@ -583,7 +592,11 @@ uncertainty/PropertyKindCalculus/Uncertainty/
                            grounding (`round32_sterbenz_exact`, `sub32_exact_of_sterbenz` over `fexp32`)
   Adequacy/DagBound.lean   ✅ A3′ universal capstone (Stage 3.1): FP32 `+`/`−` evaluation DAG (`evalFP32`
                            vs `evalExact`), forward-error accumulation (`dag_fp32_error_bound`), box
-                           faithfulness (`dag_fp32_box_faithful`) + flag-free exactness — sorry-free
+                           faithfulness (`dag_fp32_box_faithful`) + flag-free exactness — sorry-free.
+                           Stage 3.8 adds `ExactRepresentable` (flag-freedom read off the exact `ℝ`
+                           evaluation) and `flagFree_iff_exactRepresentable`: the same inputs, stated
+                           where a reader can check them, and minimal because `round32` fixes exactly
+                           the representable reals (`Fp32Grounding.round32_eq_self_iff`)
   Adequacy/MeanBound.lean  ✅ the weighted mean at binary32: a `WeightedCarving` compiled into the DAG
                            (`meanExpr`), so `mean_fp32_within_errBound` bounds the grid-computed mean
                            against the exact real mean of the same data. The mean's one `div` node needs
@@ -816,8 +829,8 @@ and FFT kernels under `NN/Runtime/Autograd/Engine/Cuda/Ops/*` for SSPRC's convol
   an add/sub variant, a 5-input tree in the `AdequacyDag` example), `#print axioms` →
   `[propext, Classical.choice, Quot.sound]` (no `sorryAx`). No TorchLean PR needed (the levers all
   existed, §4.6 B6/E13). Honest scope carried to 3.2/3.3: the DAG covers `+`/`−` (what A1/A2/A3 cover);
-  `×`/`÷` (their per-op bounds `FP32.{mul,div}_abs_error` exist) and refining `FlagFree` to the *minimal*
-  no-absorption condition remain.
+  `×`/`÷` (their per-op bounds `FP32.{mul,div}_abs_error` exist) remain, and so does the no-absorption
+  regime — which the Stage-3.8 row records as two separate things, only the first of them done.
 
 * **Stage 3.2 — FLT/FP32 Sterbenz (lift A2 to the real binary32 format). ✅ DONE (built & CI-checked).**
   A2 was proved over a self-contained FLX (fixed-precision, unbounded-exponent) model; binary32 is

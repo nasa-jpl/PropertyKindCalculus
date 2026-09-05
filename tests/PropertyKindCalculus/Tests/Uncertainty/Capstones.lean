@@ -39,4 +39,25 @@ open PropertyKindCalculus
 /-- info: 'PropertyKindCalculus.Uncertainty.Adequacy.exec_verdict_sound' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in #print axioms Uncertainty.Adequacy.exec_verdict_sound
 
+/-- info: 'PropertyKindCalculus.Uncertainty.Adequacy.flagFree_iff_exactRepresentable' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in #print axioms Uncertainty.Adequacy.flagFree_iff_exactRepresentable
+
+/-- info: 'PropertyKindCalculus.Uncertainty.Adequacy.dag_fp32_box_exact_of_exactRepresentable' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in #print axioms Uncertainty.Adequacy.dag_fp32_box_exact_of_exactRepresentable
+
+/-! ## The minimality lever, and that the relocated condition is not vacuous
+
+`round32_eq_self_iff` is what makes `ExactRepresentable` *minimal* rather than merely sufficient: it
+says the representable reals are exactly the fixed points of rounding, so no weaker condition on a
+node's exact value stops that node from rounding. The two probes below check the characterization
+fires in each direction on a value it can decide, so the pin above is a pin on something that
+discriminates. -/
+
+open TorchLean.Floats Uncertainty.Adequacy in
+example : round32 (1:ℝ) = 1 := (round32_eq_self_iff 1).mpr one_representable
+
+open TorchLean.Floats Uncertainty.Adequacy in
+example : neuralGenericFormat binaryRadix fexp32 (round32 (0.1 : ℝ)) :=
+  (round32_eq_self_iff _).mp (round32_fix (round32_representable 0.1))
+
 end PropertyKindCalculus.Tests.UncertaintyCapstones

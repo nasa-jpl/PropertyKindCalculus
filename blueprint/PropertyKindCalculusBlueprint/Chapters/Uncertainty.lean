@@ -591,9 +591,34 @@ equality. The *linear* nodes `+`/`−` pass operand error through with coefficie
 `×`/`÷` carry the GUM magnitude factors (`|b|`, `1/|b|`, `|a|/|b|²`), a `div` node's bound holding on
 the nonzero-denominator side condition `Regular` (vacuous on `÷`-free DAGs). Sorry-free (`#print
 axioms` → `[propext, Classical.choice, Quot.sound]`), instantiated on concrete `+`/`−`/`×`/`÷` DAGs in
-the `AdequacyDag` example. Remaining refinement (`UNCERTAINTY.md` §6): tightening `FlagFree` from *no
-node rounds* to the *minimal* no-absorption condition (the executable-carrier bridge
-{uses "thm_uq_exec_bridge"}[is built, Stage 3.3]).
+the `AdequacyDag` example (the executable-carrier bridge {uses "thm_uq_exec_bridge"}[is built, Stage
+3.3]).
+:::
+
+:::theorem "thm_uq_flagfree_relocated" (parent := "uncertainty") (lean := "PropertyKindCalculus.Uncertainty.Adequacy.flagFree_iff_exactRepresentable") (tags := "proved")
+*Flag-freedom is a condition on the exact evaluation.* The flag-free hypothesis of A3′ is phrased
+about the floating-point intermediates, so settling it means evaluating in binary32 first. Asking
+instead that every node's *exact* value be a binary32 number is a question about the `ℝ` model and
+its inputs — and it cuts out the same inputs.
+:::
+
+:::proof "thm_uq_flagfree_relocated"
+Realized as `ExactRepresentable` and `flagFree_iff_exactRepresentable` (Stage 3.8,
+`Adequacy.DagBound`). Both directions of the induction need the operand condition first, which is
+what identifies the two readings of a node's operands; the node step is then
+`Fp32Grounding.round32_eq_self_iff`, that `round32` fixes exactly the representable reals. That
+characterization is also what makes the relocated condition *minimal* for this conclusion: nothing
+weaker on a node's exact value keeps that node from rounding.
+
+The consequence worth stating is that the flag-free theorems are now about an inhabited regime.
+`AdequacyDag` discharges `ExactRepresentable` on a doubling chain at two input assignments and
+derives the box equality with no hypothesis left standing — where `mix_box_exact` and
+`prod_box_exact` assume flag-freedom and nothing supplies it.
+
+What is *not* done is the weaker regime the residual list still carries: a no-absorption condition
+would *allow* rounding and ask only that a tracked contribution survive it, which makes equality of
+the variations false and so requires a different conclusion — a resolution statement lifting A1's
+converse `resolve` along the DAG, as `dag_fp32_error_bound` lifts the half-ulp bound.
 :::
 
 :::theorem "thm_uq_exec_bridge" (parent := "uncertainty") (lean := "PropertyKindCalculus.Uncertainty.Adequacy.exec_verdict_sound") (tags := "capstone, proved")

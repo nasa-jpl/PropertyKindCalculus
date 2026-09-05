@@ -28,6 +28,16 @@ genuine, Flocq-backed `FP32.{add,sub}_abs_error`) along the DAG yields:
     regime by A2, `Adequacy.Sterbenz32.flx_sterbenz`), the bound collapses to **equality**: the FP32
     measurand's uncertainty over the box is *exactly* the `ℝ` one. Rounding is the *sole* source of
     the gap — which is precisely the adequacy hazard the carrier flags.
+  * **The same regime, checkable — `ExactRepresentable` and `flagFree_iff_exactRepresentable`.**
+    `FlagFree` is phrased about the floating-point intermediates, so nothing short of evaluating in
+    binary32 settles it. `ExactRepresentable` asks instead that each node's *exact* value be a
+    binary32 number, which is a question about the `ℝ` model and its inputs; the two cut out the same
+    inputs. It is minimal for this conclusion because `round32` fixes exactly the representable reals
+    (`Fp32Grounding.round32_eq_self_iff`), so nothing weaker on a node's exact value keeps that node
+    from rounding. `UncertaintyExamples.AdequacyDag` discharges it on a doubling chain, which is what
+    makes the flag-free theorems statements about inhabited regimes rather than about hypotheses.
+    That the regime is *proper* — that some evaluations fall outside it — is witnessed at the
+    executable rung by `Tests.Uncertainty.MeanBound`, where `2²⁴ ⊕ 1` returns `2²⁴`.
 
 Scope (`UNCERTAINTY.md` §6). The DAG covers the full arithmetic operator class `+`/`−`/`×`/`÷`. The
 *linear* nodes `+`/`−` are exactly the operations the per-site verdict A1/A2/A3 and the runtime
@@ -36,9 +46,16 @@ bounds `Fp32Grounding.{mul32,div32}_within_half_ulp` (the genuine `FP32.{mul,div
 first-order *propagation* of operand errors — the magnitude-dependent factors of a GUM sensitivity
 analysis (`∂(ab)/∂a = b`, `∂(a/b)/∂b = −a/b²`). Division propagation is a genuine bound only where the
 denominator is nonzero, so the forward-error theorem carries a `Regular` side condition (vacuous on
-any `÷`-free DAG). The one remaining refinement is tightening `FlagFree` from *no node rounds* to the
-*minimal* no-absorption condition (rounding allowed as long as the tracked contribution survives).
-Proved over `ℝ`/`FP32`, sorry-free (`[propext, Classical.choice, Quot.sound]`).
+any `÷`-free DAG).
+
+What remains open is a genuinely *weaker* regime, and it is a different theorem rather than a weaker
+hypothesis for this one. `ExactRepresentable` is minimal among conditions that stop every node from
+rounding; a no-absorption condition would instead **allow** rounding and ask only that a tracked
+contribution survive it. Equality of the variations is then false, so the conclusion has to change
+too — from `dag_fp32_box_exact_of_*`'s equality to a resolution statement, lifting A1-converse
+(`Adequacy.resolve`: a perturbation of at least half a ulp does move the result) along the DAG the
+way `dag_fp32_error_bound` lifts the half-ulp bound. Proved over `ℝ`/`FP32`, sorry-free
+(`[propext, Classical.choice, Quot.sound]`).
 -/
 import PropertyKindCalculus.Uncertainty.Adequacy.Fp32Grounding
 
@@ -349,5 +366,118 @@ theorem dag_fp32_box_exact_of_flagFree (e : Expr) (ρ σ : ℕ → FP32)
     (hρ : FlagFree e ρ) (hσ : FlagFree e σ) :
     (evalFP32 e σ).val - (evalFP32 e ρ).val = evalExact e σ - evalExact e ρ := by
   rw [evalFP32_val_eq_exact_of_flagFree σ e hσ, evalFP32_val_eq_exact_of_flagFree ρ e hρ]
+
+/-! ## The same regime, stated where it can be checked
+
+`FlagFree` is a hypothesis about the *floating-point* evaluation: it says each node's rounded
+operation happens to return its own operands' exact combination. A reader holding a model and a set
+of inputs cannot check that without evaluating in binary32 first, and it names the intermediates
+`evalFP32` produces rather than anything about the model.
+
+`ExactRepresentable` says the same thing about the *exact* evaluation: at every node, the exact
+result of that node is a binary32 number. That is checkable from the `ℝ` model and the inputs alone,
+and `flagFree_iff_exactRepresentable` proves the two conditions are the *same set of inputs* — so it
+is not merely a sufficient condition that happens to be convenient, it is `FlagFree` itself,
+relocated. Minimality follows: `round32` fixes exactly the representable reals
+(`round32_eq_self_iff`), so no weaker condition on a node's exact value keeps that node from
+rounding. -/
+
+/-- **Flag-freedom, read off the exact evaluation.** At every node the exact result lands on the
+binary32 grid. Equivalent to `FlagFree` (`flagFree_iff_exactRepresentable`) and stated without
+reference to any floating-point intermediate. -/
+def ExactRepresentable : Expr → (ℕ → FP32) → Prop
+  | .inp _,   _ => True
+  | .const _, _ => True
+  | .add a b, ρ => ExactRepresentable a ρ ∧ ExactRepresentable b ρ ∧
+      neuralGenericFormat binaryRadix fexp32 (evalExact a ρ + evalExact b ρ)
+  | .sub a b, ρ => ExactRepresentable a ρ ∧ ExactRepresentable b ρ ∧
+      neuralGenericFormat binaryRadix fexp32 (evalExact a ρ - evalExact b ρ)
+  | .mul a b, ρ => ExactRepresentable a ρ ∧ ExactRepresentable b ρ ∧
+      neuralGenericFormat binaryRadix fexp32 (evalExact a ρ * evalExact b ρ)
+  | .div a b, ρ => ExactRepresentable a ρ ∧ ExactRepresentable b ρ ∧
+      neuralGenericFormat binaryRadix fexp32 (evalExact a ρ / evalExact b ρ)
+
+/-- **The two conditions cut out the same inputs.** Each direction needs the other condition on the
+operands first — which is what the induction supplies — because the node's own statement is about
+the operands' *values*, and it is exactly the operand-level equality that identifies the two
+readings of them. -/
+theorem flagFree_iff_exactRepresentable (ρ : ℕ → FP32) :
+    ∀ e : Expr, FlagFree e ρ ↔ ExactRepresentable e ρ := by
+  intro e
+  induction e with
+  | inp i => exact Iff.rfl
+  | const c => exact Iff.rfl
+  | add a b iha ihb =>
+    constructor
+    · rintro ⟨ha, hb, hex⟩
+      refine ⟨iha.mp ha, ihb.mp hb, ?_⟩
+      rw [← evalFP32_val_eq_exact_of_flagFree ρ a ha, ← evalFP32_val_eq_exact_of_flagFree ρ b hb]
+      exact (round32_eq_self_iff _).mp hex
+    · rintro ⟨ha, hb, hg⟩
+      have ha' := iha.mpr ha
+      have hb' := ihb.mpr hb
+      refine ⟨ha', hb', ?_⟩
+      show round32 ((evalFP32 a ρ).val + (evalFP32 b ρ).val)
+          = (evalFP32 a ρ).val + (evalFP32 b ρ).val
+      rw [evalFP32_val_eq_exact_of_flagFree ρ a ha', evalFP32_val_eq_exact_of_flagFree ρ b hb']
+      exact round32_fix hg
+  | sub a b iha ihb =>
+    constructor
+    · rintro ⟨ha, hb, hex⟩
+      refine ⟨iha.mp ha, ihb.mp hb, ?_⟩
+      rw [← evalFP32_val_eq_exact_of_flagFree ρ a ha, ← evalFP32_val_eq_exact_of_flagFree ρ b hb]
+      exact (round32_eq_self_iff _).mp hex
+    · rintro ⟨ha, hb, hg⟩
+      have ha' := iha.mpr ha
+      have hb' := ihb.mpr hb
+      refine ⟨ha', hb', ?_⟩
+      show round32 ((evalFP32 a ρ).val - (evalFP32 b ρ).val)
+          = (evalFP32 a ρ).val - (evalFP32 b ρ).val
+      rw [evalFP32_val_eq_exact_of_flagFree ρ a ha', evalFP32_val_eq_exact_of_flagFree ρ b hb']
+      exact round32_fix hg
+  | mul a b iha ihb =>
+    constructor
+    · rintro ⟨ha, hb, hex⟩
+      refine ⟨iha.mp ha, ihb.mp hb, ?_⟩
+      rw [← evalFP32_val_eq_exact_of_flagFree ρ a ha, ← evalFP32_val_eq_exact_of_flagFree ρ b hb]
+      exact (round32_eq_self_iff _).mp hex
+    · rintro ⟨ha, hb, hg⟩
+      have ha' := iha.mpr ha
+      have hb' := ihb.mpr hb
+      refine ⟨ha', hb', ?_⟩
+      show round32 ((evalFP32 a ρ).val * (evalFP32 b ρ).val)
+          = (evalFP32 a ρ).val * (evalFP32 b ρ).val
+      rw [evalFP32_val_eq_exact_of_flagFree ρ a ha', evalFP32_val_eq_exact_of_flagFree ρ b hb']
+      exact round32_fix hg
+  | div a b iha ihb =>
+    constructor
+    · rintro ⟨ha, hb, hex⟩
+      refine ⟨iha.mp ha, ihb.mp hb, ?_⟩
+      rw [← evalFP32_val_eq_exact_of_flagFree ρ a ha, ← evalFP32_val_eq_exact_of_flagFree ρ b hb]
+      exact (round32_eq_self_iff _).mp hex
+    · rintro ⟨ha, hb, hg⟩
+      have ha' := iha.mpr ha
+      have hb' := ihb.mpr hb
+      refine ⟨ha', hb', ?_⟩
+      show round32 ((evalFP32 a ρ).val / (evalFP32 b ρ).val)
+          = (evalFP32 a ρ).val / (evalFP32 b ρ).val
+      rw [evalFP32_val_eq_exact_of_flagFree ρ a ha', evalFP32_val_eq_exact_of_flagFree ρ b hb']
+      exact round32_fix hg
+
+/-- **The FP32 measurand is exact when every node's exact value is representable.** The checkable
+form of `evalFP32_val_eq_exact_of_flagFree`. -/
+theorem evalFP32_val_eq_exact_of_exactRepresentable (ρ : ℕ → FP32) (e : Expr)
+    (h : ExactRepresentable e ρ) : (evalFP32 e ρ).val = evalExact e ρ :=
+  evalFP32_val_eq_exact_of_flagFree ρ e ((flagFree_iff_exactRepresentable ρ e).mpr h)
+
+/-- **A3′, exact-representable case.** `dag_fp32_box_exact_of_flagFree` under the checkable
+hypothesis: if every node's exact value is a binary32 number at both inputs, the FP32 measurand's
+variation over the box is *exactly* the `ℝ` one. -/
+theorem dag_fp32_box_exact_of_exactRepresentable (e : Expr) (ρ σ : ℕ → FP32)
+    (hρ : ExactRepresentable e ρ) (hσ : ExactRepresentable e σ) :
+    (evalFP32 e σ).val - (evalFP32 e ρ).val = evalExact e σ - evalExact e ρ :=
+  dag_fp32_box_exact_of_flagFree e ρ σ
+    ((flagFree_iff_exactRepresentable ρ e).mpr hρ)
+    ((flagFree_iff_exactRepresentable σ e).mpr hσ)
 
 end PropertyKindCalculus.Uncertainty.Adequacy

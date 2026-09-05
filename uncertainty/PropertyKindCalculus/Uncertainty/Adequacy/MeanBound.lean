@@ -237,43 +237,25 @@ The independence above is a statement about *signed* weights — both witnesses 
 cancel another. Metrology's weights are usually not signed, and this section proves that where
 they are not, the two licenses are equivalent and the carving's own field is enough. -/
 
-/-- Rounding fixes the grid. -/
-private theorem fp32Round_fix {x : ℝ} (h : neuralGenericFormat binaryRadix fexp32 x) :
-    IEEE32Exec.fp32Round x = x := neural_round_preserves_generic rnd32 x h
-
-/-- Rounding is monotone. -/
-private theorem fp32Round_mono {x y : ℝ} (h : x ≤ y) :
-    IEEE32Exec.fp32Round x ≤ IEEE32Exec.fp32Round y := neuralRound_mono rnd32 h
-
-/-- A rounded value is on the grid. -/
-private theorem fp32Round_onGrid (x : ℝ) :
-    neuralGenericFormat binaryRadix fexp32 (IEEE32Exec.fp32Round x) :=
-  neural_generic_format_round rnd32 x
-
 /-- **The one floating-point fact the positivity argument needs.** A grid point does not shrink
-when a nonnegative quantity is added to it and the sum is rounded: rounding is monotone, and it
-fixes `x` because `x` is on the grid. Absorption can make the sum return `x` unchanged — that is
-the whole phenomenon — but it cannot make it return anything *smaller*. -/
+when a nonnegative quantity is added to it and the sum is rounded: rounding is monotone
+(`round32_mono`), and it fixes `x` because `x` is on the grid (`round32_fix`). Absorption can make
+the sum return `x` unchanged — that is the whole phenomenon — but it cannot make it return anything
+*smaller*.
+
+The executable rung's rounding is the spec rung's: `IEEE32Exec.fp32Round` and `round32` are the same
+function, so the grid lemmas of `Fp32Grounding` apply here with no transport. -/
 theorem fp32Round_add_ge {x y : ℝ} (hx : neuralGenericFormat binaryRadix fexp32 x) (hy : 0 ≤ y) :
     x ≤ IEEE32Exec.fp32Round (x + y) := by
-  calc x = IEEE32Exec.fp32Round x := (fp32Round_fix hx).symm
-    _ ≤ IEEE32Exec.fp32Round (x + y) := fp32Round_mono (by linarith)
-
-/-- **`0` is on the binary32 grid.** -/
-theorem zero_onGrid : neuralGenericFormat binaryRadix fexp32 (0:ℝ) := neural_generic_format_zero
-
-/-- **And so is `1`** — the two values an indicator weighting uses, so a validity-masked mean can
-discharge the grid hypothesis below without reaching into the format theory itself. -/
-theorem one_onGrid : neuralGenericFormat binaryRadix fexp32 (1:ℝ) := by
-  have h := neural_generic_format_bpow (β := binaryRadix) (fexp := fexp32) 0 (by decide)
-  rwa [show neuralBpow binaryRadix 0 = (1:ℝ) by simp [neuralBpow]] at h
+  calc x = IEEE32Exec.fp32Round x := (round32_fix hx).symm
+    _ ≤ IEEE32Exec.fp32Round (x + y) := round32_mono (by linarith)
 
 /-- The rounded fold stays on the grid when the weights do — at a leaf by hypothesis, at a join
 because a rounded value is a grid value. -/
 theorem totalWeight_onGrid (w : P → FP32) (hg : ∀ p, (w p).IsRepresentable) :
     ∀ d : Decomposition P, neuralGenericFormat binaryRadix fexp32 (totalWeight w d).val
   | .atom p => hg p
-  | .union _ _ => fp32Round_onGrid _
+  | .union _ _ => round32_representable _
 
 /-- The rounded fold of nonnegative weights is nonnegative. -/
 theorem totalWeight_fp32_nonneg (w : P → FP32) (hnn : ∀ p, 0 ≤ (w p).val) :
@@ -284,7 +266,7 @@ theorem totalWeight_fp32_nonneg (w : P → FP32) (hnn : ∀ p, 0 ≤ (w p).val) 
       have hb := totalWeight_fp32_nonneg w hnn b
       show (0:ℝ) ≤ IEEE32Exec.fp32Round ((totalWeight w a).val + (totalWeight w b).val)
       calc (0:ℝ) = IEEE32Exec.fp32Round 0 := IEEE32Exec.fp32Round_zero.symm
-        _ ≤ _ := fp32Round_mono (by linarith)
+        _ ≤ _ := round32_mono (by linarith)
 
 /-- And so is the exact fold. -/
 theorem totalWeight_exact_nonneg (w : P → FP32) (hnn : ∀ p, 0 ≤ (w p).val) :

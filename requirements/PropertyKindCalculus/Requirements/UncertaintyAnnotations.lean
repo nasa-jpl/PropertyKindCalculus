@@ -17,6 +17,7 @@ import PropertyKindCalculus.Uncertainty.Adequacy.Sterbenz32
 import PropertyKindCalculus.Uncertainty.Adequacy.MeanBound
 import PropertyKindCalculus.UncertaintyExamples.LadderNesting
 import PropertyKindCalculus.UncertaintyExamples.AdequacyLadder
+import PropertyKindCalculus.UncertaintyExamples.AdequacyDag
 import PropertyKindCalculus.UncertaintyExamples.Coverage
 import PropertyKindCalculus.Requirements.Attributes
 
@@ -65,6 +66,17 @@ attribute [requirement "R15" proves "the mean's regularity is two conditions, on
   Adequacy.regular_meanExpr
 attribute [requirement "R15" specifies "forgetting a binary32 carving to the real carving it specifies, taking the specification's own license as an argument"]
   Adequacy.specCarving
+
+/-! ## R15 — flag-freedom stated where a reader can check it -/
+
+attribute [requirement "R15" specifies "flag-freedom as a condition on the exact real evaluation: every node's exact value is a binary32 number"]
+  Adequacy.ExactRepresentable
+attribute [requirement "R15" proves "the checkable condition and the floating-point one cut out the same inputs"]
+  Adequacy.flagFree_iff_exactRepresentable
+attribute [requirement "R15" proves "rounding fixes exactly the representable reals — what makes the checkable condition minimal"]
+  Adequacy.round32_eq_self_iff
+attribute [requirement "R15" exemplifies "a doubling chain is flag-free at both all-ones and all-zeros inputs, so the box equality holds with nothing assumed"]
+  PropertyKindCalculus.UncertaintyExamples.AdequacyDag.doubling_box_exact
 
 /-! ## R18 — the recorded variance certifies a coverage interval (VIM 2.36–2.38) -/
 

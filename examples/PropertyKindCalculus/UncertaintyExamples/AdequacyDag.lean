@@ -123,6 +123,74 @@ theorem prod_box_exact (ρ σ : ℕ → FP32) (hρ : FlagFree prod ρ) (hσ : Fl
     (evalFP32 prod σ).val - (evalFP32 prod ρ).val = evalExact prod σ - evalExact prod ρ :=
   dag_fp32_box_exact_of_flagFree prod ρ σ hρ hσ
 
+/-! ## The flag-free regime, exhibited rather than assumed
+
+`mix_box_exact` and `prod_box_exact` say what follows *if* the evaluation is flag-free. Nothing
+discharges such a hypothesis, and nothing could conveniently: `FlagFree` is stated about the
+floating-point intermediates, so checking it means evaluating in binary32 first. `ExactRepresentable`
+is the same condition read off the exact `ℝ` evaluation (`flagFree_iff_exactRepresentable`), and that
+one can be checked. Below it is. -/
+
+/-- A doubling chain `(x₀ + x₀) + (x₀ + x₀)` — three `add` nodes, each of which is exact at `x₀ = 1`
+because the only values it visits are `2` and `4`. -/
+def doubling : Expr := .add (.add (.inp 0) (.inp 0)) (.add (.inp 0) (.inp 0))
+
+/-- Every input is one. -/
+noncomputable def unitInputs : ℕ → FP32 := fun _ => (1 : FP32)
+
+/-- Every input is zero. -/
+noncomputable def zeroInputs : ℕ → FP32 := fun _ => (0 : FP32)
+
+/-- `1 : FP32` carries the real `1`: rounding fixes it, because `1` is on the grid. -/
+theorem unitInputs_val (i : ℕ) : (unitInputs i).val = 1 := round32_fix one_representable
+
+/-- And `0 : FP32` carries the real `0`. -/
+theorem zeroInputs_val (i : ℕ) : (zeroInputs i).val = 0 := round32_fix zero_representable
+
+/-- `2` is a binary32 number. -/
+theorem two_representable : neuralGenericFormat binaryRadix fexp32 (2 : ℝ) := by
+  have h := bpow_representable (e := 1) (by decide)
+  rwa [show neuralBpow binaryRadix 1 = (2:ℝ) by
+    simp [neuralBpow, NeuralRadix.toReal, binaryRadix]] at h
+
+/-- And so is `4`. -/
+theorem four_representable : neuralGenericFormat binaryRadix fexp32 (4 : ℝ) := by
+  have h := bpow_representable (e := 2) (by decide)
+  rwa [show neuralBpow binaryRadix 2 = (4:ℝ) by
+    simp [neuralBpow, NeuralRadix.toReal, binaryRadix]; norm_num] at h
+
+/-- **The doubling chain is flag-free at `unitInputs`** — the hypothesis discharged, not assumed.
+Its three nodes take the exact values `2`, `2` and `4`, all binary32 numbers. -/
+theorem doubling_exactRepresentable_unit : ExactRepresentable doubling unitInputs := by
+  refine ⟨⟨trivial, trivial, ?_⟩, ⟨trivial, trivial, ?_⟩, ?_⟩ <;>
+    simp only [evalExact, unitInputs_val]
+  · rw [show (1:ℝ) + 1 = 2 by norm_num]; exact two_representable
+  · rw [show (1:ℝ) + 1 = 2 by norm_num]; exact two_representable
+  · rw [show (1:ℝ) + 1 = 2 by norm_num, show (2:ℝ) + 2 = 4 by norm_num]
+    exact four_representable
+
+/-- **And at `zeroInputs`** — every node takes the exact value `0`. -/
+theorem doubling_exactRepresentable_zero : ExactRepresentable doubling zeroInputs := by
+  refine ⟨⟨trivial, trivial, ?_⟩, ⟨trivial, trivial, ?_⟩, ?_⟩ <;>
+    · simp only [evalExact, zeroInputs_val, add_zero]
+      exact zero_representable
+
+/-- **A3′ on `doubling`, with nothing left hypothetical.** Between the all-ones and the all-zeros
+input the FP32 variation is *exactly* the `ℝ` variation — no rounding anywhere, so no uncertainty
+lost. This is the first statement in the file whose flag-free hypothesis is discharged. -/
+theorem doubling_box_exact :
+    (evalFP32 doubling unitInputs).val - (evalFP32 doubling zeroInputs).val
+      = evalExact doubling unitInputs - evalExact doubling zeroInputs :=
+  dag_fp32_box_exact_of_exactRepresentable doubling zeroInputs unitInputs
+    doubling_exactRepresentable_zero doubling_exactRepresentable_unit
+
+/-- And the variation is `4`: the chain doubles `1` twice, exactly. -/
+theorem doubling_variation_eq_four :
+    (evalFP32 doubling unitInputs).val - (evalFP32 doubling zeroInputs).val = 4 := by
+  rw [doubling_box_exact]
+  simp only [doubling, evalExact, unitInputs_val, zeroInputs_val]
+  norm_num
+
 /-- The DAG's rounding budget is a genuine nonnegative bound. -/
 theorem acc_budget_nonneg (ρ : ℕ → FP32) : 0 ≤ errBound acc ρ :=
   errBound_nonneg ρ acc
@@ -134,5 +202,7 @@ theorem acc_budget_nonneg (ρ : ℕ → FP32) : 0 ≤ errBound acc ρ :=
 #print axioms acc_box_faithful
 #print axioms prod_box_faithful
 #print axioms ratio_error_bound
+#print axioms doubling_box_exact
+#print axioms doubling_variation_eq_four
 
 end PropertyKindCalculus.UncertaintyExamples.AdequacyDag
