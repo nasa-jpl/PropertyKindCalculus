@@ -33,12 +33,35 @@ So this structure is not a claim that a mean is safe. It is the place a mean's o
 is written down, so that each rung can say what it is worth there and the executable rungs can be
 made to state their own, stronger gate rather than inherit a license that does not travel.
 
-`mean_const` therefore lives in the `Dimension` library, over `ℝ`, beside the parallel-axis
-theorem — the two aggregation laws whose arithmetic the Mathlib-free core cannot do.
+## Two ways to make the license travel, and one that does not
+
+The general fact is that `total_ne_zero` mentions the *carrier's* arithmetic, so it is a different
+statement at every carrier and the statements are logically independent. A `WeightedCarving FP32`
+knows its **rounded** total is nonzero; a law about the mean it approximates needs the **exact**
+total to be nonzero; neither implies the other. Two remedies, in order of strength:
+
+  * **Do not round the denominator.** `totalWeight_toSpec_of_exact` below: where the refinement's
+    rounding is the identity — a count folded in `Nat`, an exact integer weight — forgetting the
+    total *is* the total of the forgotten weights, so there is one license rather than two and
+    `licenses_agree_of_exact` says so. This is the strongest fix and it is available whenever the
+    weights are counts or indicators, which is the common case: a validity mask, a sample count,
+    a pixel tally. It costs nothing and it removes the question instead of answering it.
+  * **Keep the weights nonnegative.** Where the denominator genuinely is a floating-point fold of
+    real-valued weights — masses, areas, durations — nonnegativity restores the equivalence, since
+    the failures in both directions need cancellation. That is a fact about a specific carrier's
+    rounding, so it is proved at that carrier
+    (`Uncertainty.Adequacy.licenses_agree_of_nonneg`) rather than here.
+
+What does **not** work is testing the computed total against zero and concluding the mean exists.
+That is a guard on the denominator the machine formed, not on the quantity being defined, and it
+fails in both directions.
+
+`mean_const` lives in the `Dimension` library, over `ℝ`, beside the parallel-axis theorem — the
+two aggregation laws whose arithmetic the Mathlib-free core cannot do.
 -/
 
 import PropertyKindCalculus.Extensivity
-import PropertyKindCalculus.Quantity
+import PropertyKindCalculus.QuantityRefinement
 
 namespace PropertyKindCalculus
 
@@ -130,5 +153,48 @@ theorem WeightedCarving.mk?_isSome_iff {R : Type} {P : Type u} [Carrier R] [Deci
       ↔ totalWeight weight parts ≠ Carrier.zero := by
   unfold WeightedCarving.mk?
   by_cases h : totalWeight weight parts = Carrier.zero <;> simp [h]
+
+/-! ## The license under a refinement: when there is one, and when there are two -/
+
+/-- **A refinement that does not round carries a carving's total exactly.** Where the spec-side
+`round` is the identity, `toSpec` is an additive homomorphism, so forgetting the executable total
+gives the total of the forgotten weights — the fold and the forgetting commute.
+
+The hypothesis is the whole content. A refinement whose rounding is *not* the identity relates the
+two totals only through the accumulated rounding of every join, and then they are two different
+numbers about which two different things must be known. -/
+theorem totalWeight_toSpec_of_exact {E S : Type} {P : Type u} [Carrier E] [Carrier S]
+    [CarrierRefinement E S] (hround : ∀ s : S, CarrierRefinement.round (E := E) s = s)
+    (w : P → E) : ∀ d : Decomposition P,
+      CarrierRefinement.toSpec (S := S) (totalWeight w d)
+        = totalWeight (fun p => CarrierRefinement.toSpec (S := S) (w p)) d
+  | .atom _ => rfl
+  | .union a b => by
+      show CarrierRefinement.toSpec (S := S) (Carrier.add (totalWeight w a) (totalWeight w b))
+        = Carrier.add _ _
+      rw [CarrierRefinement.toSpec_add, hround,
+        totalWeight_toSpec_of_exact hround w a, totalWeight_toSpec_of_exact hround w b]
+      rfl
+
+/-- **So a non-rounding carrier has one license, not two.** The executable carving's own field and
+the specification's precondition are then the same statement read through `toSpec`, and a run-time
+test of the computed total *is* a test of the quantity being defined. This is why a mean whose
+denominator is a count should fold that count in an exact carrier and convert once, rather than
+accumulate it in the same floating-point type as the numerator.
+
+The second hypothesis is that `toSpec` reflects zero — it sends only the exec zero to the spec
+zero. Every refinement in this library has it; it is stated rather than assumed because a lossy
+`toSpec` that collapsed a subnormal to zero would not. -/
+theorem licenses_agree_of_exact {E S : Type} {P : Type u} [Carrier E] [Carrier S]
+    [CarrierRefinement E S] (hround : ∀ s : S, CarrierRefinement.round (E := E) s = s)
+    (hzero : ∀ x : E, CarrierRefinement.toSpec (S := S) x = Carrier.zero → x = Carrier.zero)
+    (w : P → E) (d : Decomposition P) :
+    totalWeight w d ≠ Carrier.zero
+      ↔ totalWeight (fun p => CarrierRefinement.toSpec (S := S) (w p)) d ≠ Carrier.zero := by
+  rw [← totalWeight_toSpec_of_exact hround w d]
+  constructor
+  · exact fun hE hS => hE (hzero _ hS)
+  · intro hS hE
+    exact hS (by rw [hE]; exact CarrierRefinement.toSpec_zero)
 
 end PropertyKindCalculus

@@ -31,6 +31,18 @@ This is the numerical half of what `Torch.Fp32`'s `Quantity.div_refines_exec` re
 algebraically: the metrological side condition a mean's denominator carries reappears at every
 lower rung as a condition that rung can actually violate.
 
+## Nonnegative weights put the two licenses back together
+
+Both failure directions need cancellation, so ruling cancellation out restores the equivalence:
+`licenses_agree_of_nonneg` proves that for weights that are nonnegative and on the binary32 grid,
+the rounded total is zero exactly when the exact total is. The floating-point content is one
+lemma — `fp32Round_add_ge`, that a grid point does not shrink when a nonnegative is added to it
+and the sum is rounded, which is monotonicity plus the fact that rounding fixes the grid.
+
+That covers the weights metrology actually uses: masses, areas, durations, coverage fractions,
+validity indicators. It is the *second*-best fix; the best is not to round the denominator at all
+(`Aggregation.licenses_agree_of_exact`), which is available whenever the weights are counts.
+
 Proved over `ℝ`/`FP32`, sorry-free.
 -/
 import PropertyKindCalculus.Uncertainty.Adequacy.DagBound
@@ -218,5 +230,154 @@ theorem mean_fp32_within_errBound (c : WeightedCarving FP32 P) (v : P → FP32) 
 theorem errBound_meanExpr_nonneg (w v : P → FP32) (d : Decomposition P) (ρ : ℕ → FP32) :
     0 ≤ errBound (meanExpr w v d) ρ :=
   errBound_nonneg ρ (meanExpr w v d)
+
+/-! ## Nonnegative weights: when the two licenses coincide after all
+
+The independence above is a statement about *signed* weights — both witnesses need one weight to
+cancel another. Metrology's weights are usually not signed, and this section proves that where
+they are not, the two licenses are equivalent and the carving's own field is enough. -/
+
+/-- Rounding fixes the grid. -/
+private theorem fp32Round_fix {x : ℝ} (h : neuralGenericFormat binaryRadix fexp32 x) :
+    IEEE32Exec.fp32Round x = x := neural_round_preserves_generic rnd32 x h
+
+/-- Rounding is monotone. -/
+private theorem fp32Round_mono {x y : ℝ} (h : x ≤ y) :
+    IEEE32Exec.fp32Round x ≤ IEEE32Exec.fp32Round y := neuralRound_mono rnd32 h
+
+/-- A rounded value is on the grid. -/
+private theorem fp32Round_onGrid (x : ℝ) :
+    neuralGenericFormat binaryRadix fexp32 (IEEE32Exec.fp32Round x) :=
+  neural_generic_format_round rnd32 x
+
+/-- **The one floating-point fact the positivity argument needs.** A grid point does not shrink
+when a nonnegative quantity is added to it and the sum is rounded: rounding is monotone, and it
+fixes `x` because `x` is on the grid. Absorption can make the sum return `x` unchanged — that is
+the whole phenomenon — but it cannot make it return anything *smaller*. -/
+theorem fp32Round_add_ge {x y : ℝ} (hx : neuralGenericFormat binaryRadix fexp32 x) (hy : 0 ≤ y) :
+    x ≤ IEEE32Exec.fp32Round (x + y) := by
+  calc x = IEEE32Exec.fp32Round x := (fp32Round_fix hx).symm
+    _ ≤ IEEE32Exec.fp32Round (x + y) := fp32Round_mono (by linarith)
+
+/-- **`0` is on the binary32 grid.** -/
+theorem zero_onGrid : neuralGenericFormat binaryRadix fexp32 (0:ℝ) := neural_generic_format_zero
+
+/-- **And so is `1`** — the two values an indicator weighting uses, so a validity-masked mean can
+discharge the grid hypothesis below without reaching into the format theory itself. -/
+theorem one_onGrid : neuralGenericFormat binaryRadix fexp32 (1:ℝ) := by
+  have h := neural_generic_format_bpow (β := binaryRadix) (fexp := fexp32) 0 (by decide)
+  rwa [show neuralBpow binaryRadix 0 = (1:ℝ) by simp [neuralBpow]] at h
+
+/-- The rounded fold stays on the grid when the weights do — at a leaf by hypothesis, at a join
+because a rounded value is a grid value. -/
+theorem totalWeight_onGrid (w : P → FP32) (hg : ∀ p, (w p).IsRepresentable) :
+    ∀ d : Decomposition P, neuralGenericFormat binaryRadix fexp32 (totalWeight w d).val
+  | .atom p => hg p
+  | .union _ _ => fp32Round_onGrid _
+
+/-- The rounded fold of nonnegative weights is nonnegative. -/
+theorem totalWeight_fp32_nonneg (w : P → FP32) (hnn : ∀ p, 0 ≤ (w p).val) :
+    ∀ d : Decomposition P, 0 ≤ (totalWeight w d).val
+  | .atom p => hnn p
+  | .union a b => by
+      have ha := totalWeight_fp32_nonneg w hnn a
+      have hb := totalWeight_fp32_nonneg w hnn b
+      show (0:ℝ) ≤ IEEE32Exec.fp32Round ((totalWeight w a).val + (totalWeight w b).val)
+      calc (0:ℝ) = IEEE32Exec.fp32Round 0 := IEEE32Exec.fp32Round_zero.symm
+        _ ≤ _ := fp32Round_mono (by linarith)
+
+/-- And so is the exact fold. -/
+theorem totalWeight_exact_nonneg (w : P → FP32) (hnn : ∀ p, 0 ≤ (w p).val) :
+    ∀ d : Decomposition P, 0 ≤ totalWeight (fun p => (w p).val) d
+  | .atom p => hnn p
+  | .union a b => by
+      have ha := totalWeight_exact_nonneg w hnn a
+      have hb := totalWeight_exact_nonneg w hnn b
+      show (0:ℝ) ≤ totalWeight (fun p => (w p).val) a + totalWeight (fun p => (w p).val) b
+      linarith
+
+/-- **A positive exact total forces a positive rounded total, for nonnegative grid weights.** The
+direction that fails in general — the absorption witness has exact total `1` and rounded total
+`+0` — and the hypothesis that rules it out. At a join, one side's exact total is positive, so by
+induction its rounded total is; the other side's rounded total is nonnegative; and
+`fp32Round_add_ge` says the rounded sum is at least the positive one. -/
+theorem totalWeight_fp32_pos (w : P → FP32) (hnn : ∀ p, 0 ≤ (w p).val)
+    (hg : ∀ p, (w p).IsRepresentable) :
+    ∀ d : Decomposition P, 0 < totalWeight (fun p => (w p).val) d → 0 < (totalWeight w d).val
+  | .atom _ => fun h => h
+  | .union a b => by
+      intro h
+      have hexa := totalWeight_exact_nonneg w hnn a
+      have hexb := totalWeight_exact_nonneg w hnn b
+      have h' : 0 < totalWeight (fun p => (w p).val) a + totalWeight (fun p => (w p).val) b := h
+      show (0:ℝ) < IEEE32Exec.fp32Round ((totalWeight w a).val + (totalWeight w b).val)
+      rcases lt_or_ge 0 (totalWeight (fun p => (w p).val) a) with hL | hL
+      · have hLp := totalWeight_fp32_pos w hnn hg a hL
+        have hRn := totalWeight_fp32_nonneg w hnn b
+        have := fp32Round_add_ge (totalWeight_onGrid w hg a) hRn
+        linarith
+      · have hR : 0 < totalWeight (fun p => (w p).val) b := by linarith
+        have hRp := totalWeight_fp32_pos w hnn hg b hR
+        have hLn := totalWeight_fp32_nonneg w hnn a
+        have hcomm : (totalWeight w a).val + (totalWeight w b).val
+                   = (totalWeight w b).val + (totalWeight w a).val := by ring
+        rw [hcomm]
+        have := fp32Round_add_ge (totalWeight_onGrid w hg b) hLn
+        linarith
+
+/-- **And a zero exact total forces a zero rounded total.** The other direction — the witness with
+exact total `0` and rounded total `-2` — ruled out because a sum of nonnegatives is zero only when
+every summand is. -/
+theorem totalWeight_fp32_eq_zero (w : P → FP32) (hnn : ∀ p, 0 ≤ (w p).val) :
+    ∀ d : Decomposition P,
+      totalWeight (fun p => (w p).val) d = 0 → (totalWeight w d).val = 0
+  | .atom _ => fun h => h
+  | .union a b => by
+      intro h
+      have hexa := totalWeight_exact_nonneg w hnn a
+      have hexb := totalWeight_exact_nonneg w hnn b
+      have h' : totalWeight (fun p => (w p).val) a + totalWeight (fun p => (w p).val) b = 0 := h
+      have hfa := totalWeight_fp32_eq_zero w hnn a (by linarith)
+      have hfb := totalWeight_fp32_eq_zero w hnn b (by linarith)
+      show IEEE32Exec.fp32Round ((totalWeight w a).val + (totalWeight w b).val) = 0
+      rw [hfa, hfb, add_zero]
+      exact IEEE32Exec.fp32Round_zero
+
+/-- **The two licenses coincide on nonnegative grid weights.** So for masses, areas, durations,
+coverage fractions and validity indicators, a `WeightedCarving FP32`'s own field *is* the
+specification's precondition, and nothing further need be established.
+
+Both hypotheses are needed and neither is idle. Nonnegativity rules out the cancellation both
+counterexamples are built from. Grid membership is not automatic: `NF` is a bare record over `ℝ`
+with representability a separate predicate, so "this is a binary32 number" has to be said — and
+without it a weight below half the smallest subnormal would round away and the argument would
+fail at exactly the leaf it starts from. -/
+theorem licenses_agree_of_nonneg (w : P → FP32) (hnn : ∀ p, 0 ≤ (w p).val)
+    (hg : ∀ p, (w p).IsRepresentable) (d : Decomposition P) :
+    (totalWeight w d).val ≠ 0 ↔ totalWeight (fun p => (w p).val) d ≠ 0 := by
+  constructor
+  · intro hE hS; exact hE (totalWeight_fp32_eq_zero w hnn d hS)
+  · intro hS
+    exact (totalWeight_fp32_pos w hnn hg d
+      (lt_of_le_of_ne (totalWeight_exact_nonneg w hnn d) (Ne.symm hS))).ne'
+
+/-- **The carving a nonnegative weighting licenses**, built from the specification's condition
+alone — the executable one follows. -/
+noncomputable def carvingOfNonneg (w : P → FP32) (d : Decomposition P)
+    (hnn : ∀ p, 0 ≤ (w p).val) (hg : ∀ p, (w p).IsRepresentable)
+    (hpos : 0 < totalWeight (fun p => (w p).val) d) : WeightedCarving FP32 P :=
+  ⟨d, w, fp32_ne_zero_of_val (totalWeight_fp32_pos w hnn hg d hpos).ne'⟩
+
+/-- **The capstone with one hypothesis instead of two.** For nonnegative grid weights whose exact
+total is positive, the binary32 mean is within the DAG's rounding budget of the exact real mean —
+and the executable license, which the general statement asks for separately, is discharged by
+positivity rather than assumed. This is the form a science kernel can actually use. -/
+theorem mean_fp32_within_errBound_of_nonneg (w v : P → FP32) (d : Decomposition P)
+    (ρ : ℕ → FP32) (hnn : ∀ p, 0 ≤ (w p).val) (hg : ∀ p, (w p).IsRepresentable)
+    (hpos : 0 < totalWeight (fun p => (w p).val) d) :
+    |((carvingOfNonneg w d hnn hg hpos).mean v).val
+        - (specCarving (carvingOfNonneg w d hnn hg hpos) hpos.ne').mean (fun p => (v p).val)|
+      ≤ errBound (meanExpr w v d) ρ :=
+  mean_fp32_within_errBound (carvingOfNonneg w d hnn hg hpos) v ρ hpos.ne'
 
 end PropertyKindCalculus.Uncertainty.Adequacy

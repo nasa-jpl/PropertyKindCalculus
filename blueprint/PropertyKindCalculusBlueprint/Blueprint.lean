@@ -454,14 +454,40 @@ rung only because $`\mathbb{R}` totalizes $`x/0`; the executable rung's
 `Quantity.div_refines_exec` carries the divisor's nonzero decoded mantissa beside its
 finiteness hypotheses, which is where a zero denominator is actually caught.
 
-The weighted mean is where that pattern becomes measurable rather than merely stated.
-`Adequacy.MeanBound` compiles a carving into the adequacy layer's evaluation DAG and bounds
-the binary32 mean against the exact real mean of the same data by the DAG's accumulated
-half-ulp budget. What it shows about the side condition is sharper than the algebraic form:
-the carving's own license is about the **rounded** total, the bound also needs one about the
-**exact** total, and neither implies the other — three weights $`2^{24}`, $`1`, $`-2^{24}`
-sum exactly to $`1` and total exactly $`+0` on the grid. A license does not cross the bridge;
-each rung states its own.
+*Laws transfer across the ladder; side conditions do not.* That asymmetry is the
+counterpoint to everything above, and it is worth stating as a rule rather than as a
+property of one theorem. The bridge carries a *law* from the lawful carrier to the
+executable one at the cost of a single rounding step. It carries a *side condition* —
+a hypothesis a definition holds as a field, so that the degenerate case is not a term to
+be handled — not at all. The reason is visible in the statement: a condition phrased in
+the carrier's own arithmetic says a different thing at each carrier, and the different
+things are logically independent. A field that is one line of Lean, quantified over the
+carrier, is not thereby carrier-generic; it is carrier-relative.
+
+The weighted mean is the worked instance, because it is the first aggregation mode with a
+side condition at all. A carving's license says its total weight is not the *carrier's*
+zero. At binary32 that is a claim about the *rounded* fold; the bound relating the
+computed mean to the exact one also needs a claim about the *exact* fold; and neither
+implies the other, in either direction:
+
+- three weights $`2^{24}`, $`1`, $`-2^{24}` sum exactly to $`1` and total exactly $`+0`
+  on the grid — a mean that exists, refused;
+- four weights $`2^{24}`, $`1`, $`1`, $`-(2^{24}+2)` sum exactly to $`0` and total exactly
+  $`-2` on the grid — a mean that does not exist, computed, with a finite and plausible
+  value and no exceptional flag anywhere to catch it.
+
+So testing a computed denominator against zero is a guard on the number the machine formed,
+not on the quantity being defined. Two arrangements put the two conditions back together,
+and they rank. *Do not round the denominator*: where the refinement's rounding is the
+identity — a count folded in $`\mathbb{N}`, converted once — forgetting the total *is* the
+total of the forgotten weights, so there is one condition rather than two. This is the
+strongest fix and it is available whenever the weights are counts or indicators, which is
+the ordinary case for a validity-masked average. *Or keep the weights nonnegative*: both
+failures above are built from cancellation, and ruling it out restores the equivalence for
+weights that are genuinely real-valued — masses, areas, durations, coverage fractions.
+
+The reading generalizes to every $`\mathrm{Prop}` field phrased in carrier operations. The
+other instance already in the library is a real-valued unit's nonzero-magnitude license.
 
 ## Value representation: vectors and scalar units (R11)
 

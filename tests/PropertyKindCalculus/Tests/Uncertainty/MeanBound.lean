@@ -15,12 +15,28 @@ quotient rule's `1/|w|` factor on the first.
 the two folds hold at every carving, so they are driven through a depth-2 union — the join is
 where `denExpr`/`numExpr` recurse and where the `add` nodes of the budget come from.
 
-**The two licenses are not one license.** That claim is the reason `specCarving` takes the
-specification's license as an argument rather than reading it off the carving, so the probe
-exhibits the separation at the executable carrier: three binary32 weights whose exact sum is `1`
-and whose binary32 total is exactly `+0`. The exact arithmetic is checked in `Float`, where all
-three weights and both partial sums (`16777217`, `1`) are exactly representable, so the binary64
-computation *is* the real computation rather than an approximation of it.
+**The two licenses are not one license, in either direction.** That claim is the reason
+`specCarving` takes the specification's license as an argument rather than reading it off the
+carving, so the probe exhibits *both* separations at the executable carrier — an asserted
+independence with one witness would have evidenced only half of it:
+
+  * exact total `1`, binary32 total exactly `+0` (weights `2²⁴`, `1`, `−2²⁴`) — the guard rejects
+    a mean that exists;
+  * exact total `0`, binary32 total exactly `−2` (weights `2²⁴`, `1`, `1`, `−(2²⁴+2)`) — the guard
+    *passes* and the division returns a finite, plausible number for a mean that does not exist.
+    This is the direction with no error signal, and it is the reason the distinction is worth
+    carrying in a signature.
+
+The exact arithmetic is checked in `Float`, where every weight and every partial sum is exactly
+representable in binary64, so the binary64 computation *is* the real computation rather than an
+approximation of it.
+
+**And then the two ways to put the licenses back together.** Nonnegative weights make them
+equivalent (`licenses_agree_of_nonneg`), which is checked here by driving the capstone through a
+depth-2 carving of indicator weights with *both* conditions discharged by arithmetic — the join
+the earlier single-part witness could not reach without a rounding fact. Not rounding the
+denominator at all makes them the same statement (`Aggregation.licenses_agree_of_exact`), checked
+in the core tier.
 -/
 
 import PropertyKindCalculus.Uncertainty.Adequacy.MeanBound
@@ -132,6 +148,58 @@ def negBigE : IEEE32Exec := IEEE32Exec.ofBits 0xCB800000
 #guard ((16777216.0 : Float) + 1.0) == 16777217.0
 #guard (((16777216.0 : Float) + 1.0) - 16777216.0) == 1.0
 
+/-- `−(2²⁴+2)` at executable binary32 — representable, since the spacing at `2²⁴` is `2`. -/
+def negBigPlus2E : IEEE32Exec := IEEE32Exec.ofBits 0xCB800001
+
+-- It is the value claimed: mantissa 8388609 × 2¹ = 16777218 = 2²⁴+2, negated.
+#guard (IEEE32Exec.toDyadic? negBigPlus2E).map (fun d => (d.sign, d.mant, d.exp))
+        == some (true, 8388609, 1)
+
+-- The other direction. Fold `2²⁴, 1, 1, −(2²⁴+2)` left-associated: each `1` is absorbed, so the
+-- running total is still `2²⁴` when the last weight arrives, and the result is `−2` — bits
+-- 0xC0000000. The exact total is 0, so here the specification's license FAILS and the
+-- executable one HOLDS: the run-time guard passes and the mean does not exist.
+#guard (IEEE32Exec.add (IEEE32Exec.add bigE oneE) oneE).toBits == bigE.toBits
+#guard (IEEE32Exec.add (IEEE32Exec.add (IEEE32Exec.add bigE oneE) oneE) negBigPlus2E).toBits
+        == 0xC0000000
+#guard (((16777216.0 : Float) + 1.0 + 1.0) - 16777218.0) == 0.0
+
+/-! ## Nonnegative weights — the capstone with both licenses discharged, at depth 2 -/
+
+/-- An indicator weight: `1` at every part. Nonnegative and on the grid, which is what the
+positivity route asks for — and the shape a validity-masked mean has. -/
+noncomputable def wOne : Bool → FP32 := fun _ => ⟨(1 : ℝ)⟩
+
+theorem wOne_nonneg : ∀ p, 0 ≤ (wOne p).val := by
+  intro p; show (0:ℝ) ≤ 1; norm_num
+
+theorem wOne_grid : ∀ p, (wOne p).IsRepresentable := fun _ => one_onGrid
+
+/-- The exact total over the two-part carving is `2`. -/
+theorem wOne_pos : 0 < totalWeight (fun p => (wOne p).val) pairParts := by
+  show (0:ℝ) < (1:ℝ) + (1:ℝ)
+  norm_num
+
+-- Inhabitation at a JOIN: the capstone applied to a depth-2 carving whose *both* licenses are
+-- discharged by arithmetic. Positivity is what makes this reachable — the rounded total at a
+-- union is a `fp32Round` of a sum, and without nonnegativity there is no way to know it is
+-- nonzero without a rounding fact about the specific values.
+theorem r9_mean_fp32_bound_depth2_nonneg (ρ : ℕ → FP32) :
+    |((carvingOfNonneg wOne pairParts wOne_nonneg wOne_grid wOne_pos).mean v2).val
+        - (specCarving (carvingOfNonneg wOne pairParts wOne_nonneg wOne_grid wOne_pos)
+              wOne_pos.ne').mean (fun p => (v2 p).val)|
+      ≤ errBound (meanExpr wOne v2 pairParts) ρ :=
+  mean_fp32_within_errBound_of_nonneg wOne v2 pairParts ρ wOne_nonneg wOne_grid wOne_pos
+
+-- and the equivalence itself, at that carving: the executable license is now a consequence.
+theorem r9_licenses_agree_nonneg :
+    (totalWeight wOne pairParts).val ≠ 0
+      ↔ totalWeight (fun p => (wOne p).val) pairParts ≠ 0 :=
+  licenses_agree_of_nonneg wOne wOne_nonneg wOne_grid pairParts
+
+-- Boundary — nonnegativity is load-bearing, not decoration: the two witnesses above are exactly
+-- carvings it excludes, and each has a negative weight.
+
 /-! ## Axiom profiles -/
 
 /-- info: 'PropertyKindCalculus.Uncertainty.Adequacy.mean_fp32_within_errBound' depends on axioms: [propext, Classical.choice, Quot.sound] -/
@@ -145,5 +213,14 @@ def negBigE : IEEE32Exec := IEEE32Exec.ofBits 0xCB800000
 
 /-- info: 'PropertyKindCalculus.Uncertainty.Adequacy.fp32_val_ne_zero' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in #print axioms fp32_val_ne_zero
+
+/-- info: 'PropertyKindCalculus.Uncertainty.Adequacy.licenses_agree_of_nonneg' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in #print axioms licenses_agree_of_nonneg
+
+/-- info: 'PropertyKindCalculus.Uncertainty.Adequacy.mean_fp32_within_errBound_of_nonneg' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in #print axioms mean_fp32_within_errBound_of_nonneg
+
+/-- info: 'PropertyKindCalculus.Uncertainty.Adequacy.fp32Round_add_ge' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in #print axioms fp32Round_add_ge
 
 end PropertyKindCalculus.Tests.MeanBound

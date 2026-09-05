@@ -588,7 +588,10 @@ uncertainty/PropertyKindCalculus/Uncertainty/
                            (`meanExpr`), so `mean_fp32_within_errBound` bounds the grid-computed mean
                            against the exact real mean of the same data. The mean's one `div` node needs
                            TWO licenses — the rounded total and the exact total — and neither implies the
-                           other, so `specCarving` takes the spec-side one as an argument — sorry-free
+                           other (BOTH directions witnessed), so `specCarving` takes the spec-side one as
+                           an argument. `licenses_agree_of_nonneg` is the repair: both failures need
+                           cancellation, so nonnegative grid weights make the two conditions equivalent
+                           (`fp32Round_add_ge` is the only fp fact it needs) — sorry-free
   Adequacy/ExecBridge.lean ✅ exec↔spec bridge (Stage 3.3): re-exposes the computable `IEEE32Exec`
                            ULP query `ulpExp?` (answers proved `= ulp₃₂`, `exec_ulp_grounds`) and absorption test `absorbs`
                            certified against `round₃₂` (`exec_verdict_sound`) — the computed verdict is the
@@ -1313,8 +1316,12 @@ The four residuals — all "one more crank of the same machine," none a new work
   executable rung carries the divisor's nonzero decoded mantissa. `Adequacy/MeanBound.lean` is the
   first place both routes are exercised on one expression, and it sharpens the choice: the two
   `Regular` conditions at a `div` node are the *same side condition read at two rungs*, and the
-  weighted mean shows they are genuinely independent (weights `2²⁴`, `1`, `−2²⁴` sum exactly to `1`
-  and total exactly `+0` in binary32). A consolidated bridge has to keep both, not collapse them.
+  weighted mean shows they are genuinely independent in both directions (weights `2²⁴`, `1`, `−2²⁴`
+  sum exactly to `1` and total exactly `+0`; weights `2²⁴`, `1`, `1`, `−(2²⁴+2)` sum exactly to `0`
+  and total exactly `−2`). A consolidated bridge has to keep both, not collapse them — and the two
+  repairs (`Aggregation.licenses_agree_of_exact` for a non-rounding denominator,
+  `Adequacy.licenses_agree_of_nonneg` for a nonnegative one) are what a consumer reaches for
+  instead.
 
 ---
 

@@ -150,6 +150,14 @@ carrier can refine additively without having a $`\times` at all — the carrier 
 supplies only zero and addition — and an expression that uses $`+`, $`\times` and
 $`\div` at once would, under bundling, put two independent paths to `toSpec` and
 `round` in scope simultaneously.
+
+The line the split follows is data against proof, and it is what keeps the two extra
+classes from re-creating the problem they avoid. A carrier refinement carries
+*functions*, and two of them are two different functions, so it must reach a use site
+by exactly one path. These two carry only equations, and a class in $`\mathrm{Prop}` is
+a subsingleton — any two of its instances are the same instance — so they may be
+inherited, re-derived and diamonded freely without a term ever depending on which one
+arrived.
 :::
 
 :::proof "def_mul_refinement"

@@ -209,6 +209,55 @@ def floatMean (w : Bool → Float) (v : Bool → Float) : Option Float :=
 -- and the same `NaN` total is what passed the license: `≠ 0` is true of it.
 #guard !((0.0 / 0.0 : Float) == 0.0)
 
+/-! ## The strongest remedy: a denominator that is never rounded
+
+The license is carrier-relative — it says the total is not *this carrier's* zero — so at a
+rounding carrier the executable field and the specification's precondition are two independent
+statements. The way to have one statement instead of two is not to round: fold the denominator
+where addition is exact, and convert once.
+
+That is not a hypothetical arrangement. A validity-masked mean — the block average of the finite
+pixels in a tile — has exactly this shape: its weights are indicators, its denominator is a tally
+of contributing parts, and a tally belongs in `Nat`. The probe below is that shape, and it checks
+the consequence rather than asserting it. -/
+
+/-- **A count embeds into the integers exactly.** `round` is the identity, which is the whole
+point: this refinement loses nothing, so a fold across it commutes with the forgetting. -/
+instance : CarrierRefinement Nat Int where
+  toSpec := Int.ofNat
+  round := id
+  toSpec_zero := rfl
+  toSpec_add := fun _ _ => rfl
+
+-- Counts fold exactly — the fold is the tally, at any depth.
+#guard totalWeight (fun _ : Bool => 1) pairParts == 2
+#guard totalWeight (fun b : Bool => if b then 3 else 0) pairParts == 3
+
+-- Inhabitation: for ANY count weighting, the executable license and the specification's are the
+-- same statement — one `↔` holding of every `w`, not of a chosen one. This is what the two
+-- floating-point witnesses in `Tests.Uncertainty.MeanBound` show is unavailable at a rounding
+-- carrier, and what a mean whose denominator is a count gets for free.
+theorem r9_count_licenses_agree (w : Bool → Nat) :
+    totalWeight w pairParts ≠ Carrier.zero
+      ↔ totalWeight (fun p => CarrierRefinement.toSpec (S := Int) (w p)) pairParts
+          ≠ Carrier.zero :=
+  licenses_agree_of_exact (fun _ => rfl) (fun x h => by
+    have hx : (x : Int) = 0 := h
+    show x = 0
+    omega) w pairParts
+
+-- and the fold really does commute with the forgetting, which is the fact underneath it.
+theorem r9_count_total_exact (w : Bool → Nat) :
+    CarrierRefinement.toSpec (S := Int) (totalWeight w pairParts)
+      = totalWeight (fun p => CarrierRefinement.toSpec (S := Int) (w p)) pairParts :=
+  totalWeight_toSpec_of_exact (fun _ => rfl) w pairParts
+
+/-- info: 'PropertyKindCalculus.totalWeight_toSpec_of_exact' does not depend on any axioms -/
+#guard_msgs in #print axioms totalWeight_toSpec_of_exact
+
+/-- info: 'PropertyKindCalculus.licenses_agree_of_exact' does not depend on any axioms -/
+#guard_msgs in #print axioms licenses_agree_of_exact
+
 /-- info: 'PropertyKindCalculus.WeightedCarving.mk?_eq_none_iff' depends on axioms: [propext] -/
 #guard_msgs in #print axioms WeightedCarving.mk?_eq_none_iff
 

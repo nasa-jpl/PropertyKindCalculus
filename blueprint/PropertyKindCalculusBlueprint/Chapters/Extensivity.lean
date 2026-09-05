@@ -11,6 +11,7 @@ import PropertyKindCalculus.Extensivity
 import PropertyKindCalculus.Recarving
 import PropertyKindCalculus.AggregationLaws
 import PropertyKindCalculus.Uncertainty.QuasiExtensive
+import PropertyKindCalculus.Uncertainty.Adequacy.MeanBound
 -- The carving/oneness discussion below cites Marmodoro, so the chapter imports the
 -- blueprint's `References`.
 import PropertyKindCalculusBlueprint.References
@@ -354,13 +355,59 @@ divides — so it is exactly the shape the adequacy layer's forward-error theore
 and the quotient rule's magnitude factors are what a small total weight costs.
 
 The load-bearing detail is that the *license does not cross the bridge*. `WeightedCarving`'s
-field says the total is not the **carrier's** zero, which at binary32 is a statement about the
-**rounded** fold; the theorem also needs one about the **exact** fold, and neither implies the
-other. Both directions are ordinary floating-point behavior, and the probe exhibits one: three
-weights $`2^{24}`, $`1`, $`-2^{24}` sum exactly to $`1` while their binary32 fold is exactly
-$`+0`, because the first addition absorbs the $`1`. So forgetting a binary32 carving to the real
-carving it specifies takes the specification's license as an *argument*, and the signature is
-where that is recorded.
+field says the total is not the *carrier's* zero, which at binary32 is a statement about the
+*rounded* fold; the theorem also needs one about the *exact* fold, and neither implies the
+other. Both directions are ordinary floating-point behavior and both are exhibited: weights
+$`2^{24}`, $`1`, $`-2^{24}` sum exactly to $`1` while their binary32 fold is exactly $`+0`,
+because the first addition absorbs the $`1`; and weights $`2^{24}`, $`1`, $`1`, $`-(2^{24}+2)`
+sum exactly to $`0` while their binary32 fold is exactly $`-2`, because two absorbed $`1`s leave
+the running total short. So forgetting a binary32 carving to the real carving it specifies takes
+the specification's license as an *argument*, and the signature is where that is recorded.
+:::
+
+:::theorem "thm_licenses_agree_exact" (parent := "extensivity") (lean := "PropertyKindCalculus.licenses_agree_of_exact") (tags := "proved") (effort := "small")
+*A denominator that is never rounded has one license, not two.* Where the refinement's rounding
+is the identity, forgetting a carving's total gives the total of the forgotten weights, so the
+executable condition and the specification's are the same statement read through the forgetful
+map — and a run-time test of the computed total is a test of the quantity being defined. Uses
+{uses "def_weightedCarving"}[weighted carvings].
+:::
+
+:::proof "thm_licenses_agree_exact"
+By induction on the carving: identity rounding makes the bridge law an additive homomorphism, so
+the fold commutes with the forgetting. Stated in the core, over an arbitrary refinement, since
+nothing about binary32 enters.
+
+This is the strongest of the two remedies and the one to reach for first, because it removes the
+question rather than answering it. It is available exactly when the weights are counts or
+indicators — a validity mask, a sample tally, a pixel count — which is the ordinary shape of a
+masked average: fold the denominator where addition is exact and convert to the numerator's
+carrier once, rather than accumulating it in the same floating-point type as the numerator.
+:::
+
+:::theorem "thm_licenses_agree_nonneg" (parent := "extensivity") (lean := "PropertyKindCalculus.Uncertainty.Adequacy.licenses_agree_of_nonneg") (tags := "proved") (effort := "medium")
+*Nonnegative weights make the two licenses equivalent.* Where the denominator genuinely is a
+binary32 fold of real-valued weights, requiring them to be nonnegative and on the grid restores
+the equivalence: the rounded total is zero exactly when the exact total is. Uses
+{uses "def_weightedCarving"}[weighted carvings].
+:::
+
+:::proof "thm_licenses_agree_nonneg"
+Both counterexamples are built from cancellation, so nonnegativity is exactly what excludes them.
+The floating-point content is one lemma — a grid point does not shrink when a nonnegative is
+added to it and the sum is rounded, which is monotonicity of rounding together with rounding
+fixing the grid. Absorption may return the grid point unchanged; it cannot return anything
+smaller. Induction then gives both halves: a positive exact total forces a positive rounded one,
+and a zero exact total forces a zero rounded one.
+
+Grid membership is a real hypothesis, not bookkeeping: the rounding-spec format is a bare record
+over $`\mathbb{R}` with representability a separate predicate, so "this is a binary32 number" has
+to be said, and without it a weight below half the smallest subnormal would round away and the
+argument would fail at the leaf it starts from.
+
+This covers the weights metrology actually uses — masses, areas, durations, coverage fractions,
+validity indicators — but it is the second-best fix. Where the weights are counts, the theorem
+above applies and no floating-point reasoning is needed at all.
 :::
 
 # Re-carving, and what a count is keyed to
