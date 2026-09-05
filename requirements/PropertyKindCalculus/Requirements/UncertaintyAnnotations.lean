@@ -15,6 +15,7 @@ import PropertyKindCalculus.Uncertainty.Adequacy
 import PropertyKindCalculus.Uncertainty.Adequacy.Soundness
 import PropertyKindCalculus.Uncertainty.Adequacy.Sterbenz32
 import PropertyKindCalculus.Uncertainty.Adequacy.MeanBound
+import PropertyKindCalculus.Uncertainty.Adequacy.RefinementBridge
 import PropertyKindCalculus.UncertaintyExamples.LadderNesting
 import PropertyKindCalculus.UncertaintyExamples.AdequacyLadder
 import PropertyKindCalculus.UncertaintyExamples.AdequacyDag
@@ -77,6 +78,15 @@ attribute [requirement "R15" proves "rounding fixes exactly the representable re
   Adequacy.round32_eq_self_iff
 attribute [requirement "R15" exemplifies "a doubling chain is flag-free at both all-ones and all-zeros inputs, so the box equality holds with nothing assumed"]
   PropertyKindCalculus.UncertaintyExamples.AdequacyDag.doubling_box_exact
+
+/-! ## R10/R15 — which of the two bridges carries which half of the adequacy capstone -/
+
+attribute [requirement "R10" specifies "flag-freedom said with the refinement's own rounding rather than the format's"]
+  Adequacy.RefinementFixes
+attribute [requirement "R10" proves "the refinement's rounding is the format's, so the exactness half of the adequacy capstone is a CarrierRefinement statement"]
+  Adequacy.refinementFixes_iff_exactRepresentable
+attribute [requirement "R15" proves "the adequacy capstone's exact case in the bridge's vocabulary: forgetting the executable evaluation is the exact evaluation"]
+  Adequacy.toSpec_box_exact
 
 /-! ## R18 — the recorded variance certifies a coverage interval (VIM 2.36–2.38) -/
 

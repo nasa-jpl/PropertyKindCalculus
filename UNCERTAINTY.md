@@ -1,6 +1,6 @@
 # UNCERTAINTY.md — A rigor-first plan for uncertainty & numerical adequacy in PKC
 
-> Status: **Stages 0–3.8 implemented & CI-checked** (reference layer, GUM/Willink, autograd `cᵢ`,
+> Status: **Stages 0–3.9 implemented & CI-checked** (reference layer, GUM/Willink, autograd `cᵢ`,
 > the ladder theorems T1–T5, the executable SSPRC pipeline, the numerical-adequacy layer — the
 > executable `Adequacy` carrier plus the theorems A1 absorption, A2 Sterbenz, A3 verdict soundness
 > over `ℝ` — the **universal capstone A3′** (`DagBound`: FP32 measurand ≈ `ℝ` over an input box up
@@ -71,6 +71,7 @@ built tape).
 | 3.6 | Direct-route completion + eager-provenance closure | ✅ |
 | 3.7 | The weighted mean at binary32 — the aggregation mode that divides (`MeanBound`) | ✅ |
 | 3.8 | Flag-freedom relocated to the exact evaluation (`ExactRepresentable`) and its regime exhibited | ✅ |
+| 3.9 | §7's `CarrierRefinement` consolidation decided and its meeting point checked (`RefinementBridge`) | ✅ |
 | **4** | **Scale — GPU SSPRC/MCM on `CudaT`, `Nᵢ` allocation, science-model capstone** | **◐ in progress** — batched SSPRC propagator landed (`SsprcBatched` + `ssprc_batched_parity` exe); sensitivity-driven `Nᵢ` allocation landed (`Allocation` + `DegenhardtAllocation` example, `#guard`-checked); science-model capstone landed (`WaterCloudModel` — one WO1 Water-Cloud-Model forward through the whole pipeline, `#guard`-checked); batched MCM remains |
 
 **Residuals / loose threads** (from the four honest residuals scoped after Stage 3.6):
@@ -597,6 +598,12 @@ uncertainty/PropertyKindCalculus/Uncertainty/
                            evaluation) and `flagFree_iff_exactRepresentable`: the same inputs, stated
                            where a reader can check them, and minimal because `round32` fixes exactly
                            the representable reals (`Fp32Grounding.round32_eq_self_iff`)
+  Adequacy/RefinementBridge.lean ✅ which bridge carries which half of A3′ (§7's consolidation
+                           decision, recorded and checked): the algebraic route (`CarrierRefinement`)
+                           supplies the equation and hence the exactness regime, the metric route
+                           (`*_abs_error`) supplies the bound. `refinementFixes_iff_exactRepresentable`
+                           proves the two vocabularies agree; `toSpec_box_exact` is A3′'s exact case
+                           in the bridge's own terms
   Adequacy/MeanBound.lean  ✅ the weighted mean at binary32: a `WeightedCarving` compiled into the DAG
                            (`meanExpr`), so `mean_fp32_within_errBound` bounds the grid-computed mean
                            against the exact real mean of the same data. The mean's one `div` node needs
@@ -1319,23 +1326,39 @@ The four residuals — all "one more crank of the same machine," none a new work
 * **Pearson percentile fidelity.** Willink eqs. (6)/(7) are rational fits valid for `−1.2 ≤ γ ≤ 6`;
   outside that range the closure degrades. Decision: clamp + warn, or implement the exact Pearson
   quantile.
-* **`CarrierRefinement` consolidation.** It is PKC's class (`QuantityRefinement.lean:72`), with
-  `MulRefinement` and `DivRefinement` beside it, all three instantiated for `FP32↔ℝ` in the `Torch`
-  lib; TorchLean itself has no such class (it uses `Context` + `toReal` + per-op error bridges). The
-  bridge and `DagBound.Expr` now range over the same operator set (`+`/`−`/`×`/`÷`), so the two
-  routes are comparable rather than differently scoped: decide whether A3's soundness goes through
-  `CarrierRefinement` or directly through the TorchLean `*_abs_error` lemmas. Note the two say
-  different things about a zero denominator — the spec-rung `DivRefinement` is unconditional because
-  `ℝ` totalizes `x / 0`, whereas `DagBound`'s division propagation carries `Regular`, and the
-  executable rung carries the divisor's nonzero decoded mantissa. `Adequacy/MeanBound.lean` is the
-  first place both routes are exercised on one expression, and it sharpens the choice: the two
-  `Regular` conditions at a `div` node are the *same side condition read at two rungs*, and the
-  weighted mean shows they are genuinely independent in both directions (weights `2²⁴`, `1`, `−2²⁴`
-  sum exactly to `1` and total exactly `+0`; weights `2²⁴`, `1`, `1`, `−(2²⁴+2)` sum exactly to `0`
-  and total exactly `−2`). A consolidated bridge has to keep both, not collapse them — and the two
-  repairs (`Aggregation.licenses_agree_of_exact` for a non-rounding denominator,
-  `Adequacy.licenses_agree_of_nonneg` for a nonnegative one) are what a consumer reaches for
-  instead.
+* **`CarrierRefinement` consolidation — DECIDED: keep both routes, with a division of labour.**
+  The question was whether A3's soundness should go through PKC's `CarrierRefinement`
+  (`QuantityRefinement.lean:72`, with `MulRefinement`/`DivRefinement` beside it, all three
+  instantiated for `FP32↔ℝ` in the `Torch` lib) or directly through TorchLean's `*_abs_error`
+  lemmas. It goes through both, because they answer different questions:
+
+  * **An equation is not a bound.** `CarrierRefinement` says what the executable operation *is* in
+    the specification carrier — one equation per operator. The `*_abs_error` family says how far it
+    is — one bound per operator. The first implies the second given a bound on `round`; the second
+    implies nothing about the first.
+  * **Their side conditions are about different things, and merging them would conflate a
+    definedness question with a magnitude one.** `DivRefinement` is unconditional at the
+    specification rung only because `ℝ` totalizes `x / 0`, which is why the executable rung instead
+    carries the divisor's nonzero decoded mantissa — *definedness*. `DagBound`'s `Regular` is not
+    the companion of that: the per-operation bound `Fp32Grounding.div32_within_half_ulp` has **no**
+    hypothesis at all, and `Regular` guards the *propagation* factors `1/|b|` and `|a|/|b|²` —
+    *magnitude*. `Adequacy/MeanBound.lean` is where the cost of conflating them shows: at the
+    weighted mean's single `div` node the two rungs' licenses are genuinely independent in both
+    directions (weights `2²⁴`, `1`, `−2²⁴` sum exactly to `1` and total exactly `+0`; weights `2²⁴`,
+    `1`, `1`, `−(2²⁴+2)` sum exactly to `0` and total exactly `−2`), and the two repairs
+    (`Aggregation.licenses_agree_of_exact` for a non-rounding denominator,
+    `Adequacy.licenses_agree_of_nonneg` for a nonnegative one) are what a consumer reaches for.
+  * **They meet, and the meeting point is now machine-checked.** `Adequacy/RefinementBridge.lean`
+    records the decision and proves the identification it rests on: the refinement's rounding *is*
+    the format's (`CarrierRefinement.round (E := FP32) = round32`, by `rfl`), so
+    `DagBound.ExactRepresentable` — the condition under which the metric bound collapses to equality
+    — is exactly the statement that the refinement rounds nothing along the evaluation
+    (`refinementFixes_iff_exactRepresentable`), and `toSpec_box_exact` states A3′'s exact case in
+    the bridge's own vocabulary.
+
+  **So: the forward-error accumulation and box faithfulness are metric and stay on `*_abs_error`;
+  the exactness regime is algebraic and is a `CarrierRefinement` statement.** No code moves; what
+  changed is that the split is stated and checked rather than incidental.
 
 ---
 

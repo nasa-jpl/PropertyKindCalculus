@@ -19,6 +19,7 @@ import PropertyKindCalculus.Uncertainty.Adequacy.Soundness
 import PropertyKindCalculus.Uncertainty.Adequacy.DagBound
 import PropertyKindCalculus.Uncertainty.Adequacy.Fp32Grounding
 import PropertyKindCalculus.Uncertainty.Adequacy.ExecBridge
+import PropertyKindCalculus.Uncertainty.Adequacy.RefinementBridge
 import PropertyKindCalculus.Uncertainty.Adequacy.Significance
 import PropertyKindCalculus.Uncertainty.Experiments.PRSimulation
 import PropertyKindCalculus.Uncertainty.Experiments.EagerProvenance
@@ -619,6 +620,30 @@ What is *not* done is the weaker regime the residual list still carries: a no-ab
 would *allow* rounding and ask only that a tracked contribution survive it, which makes equality of
 the variations false and so requires a different conclusion — a resolution statement lifting A1's
 converse `resolve` along the DAG, as `dag_fp32_error_bound` lifts the half-ulp bound.
+:::
+
+:::theorem "thm_uq_which_bridge" (parent := "uncertainty") (lean := "PropertyKindCalculus.Uncertainty.Adequacy.refinementFixes_iff_exactRepresentable") (tags := "proved") (effort := "small")
+*Which bridge carries which half.* Two routes connect the executable rung to the specification: the
+{uses "def_carrier_refinement"}[algebraic one], whose content is one equation per operator, and the
+per-operation error bounds, whose content is one bound per operator. They are not alternatives. The
+forward-error accumulation is metric and rests on the bounds; the exactness regime is algebraic and
+is a statement about the refinement's rounding — which this theorem proves by showing the two
+vocabularies pick out the same evaluations.
+:::
+
+:::proof "thm_uq_which_bridge"
+Realized in `Adequacy.RefinementBridge`. The identification is definitional — the refinement rounds
+by the format's own rounding — so the induction does nothing but apply, at each node, that rounding
+fixes exactly the representable reals.
+
+The reason to keep both routes rather than consolidate is that their side conditions are about
+different things. The division law is unconditional at the specification rung only because $`\mathbb{R}`
+totalizes division by zero, which is why the executable rung instead carries the divisor's nonzero
+decoded mantissa — a question of *definedness*. The adequacy DAG's regularity condition is unrelated
+to that: the per-operation bound for division has no hypothesis at all, and regularity guards the
+*propagation* factors — a question of *magnitude*. Merging them would conflate the two, and the
+{uses "thm_licenses_agree_nonneg"}[weighted mean] is where that would cost something: at its single
+division node the two rungs' licenses are independent in both directions.
 :::
 
 :::theorem "thm_uq_exec_bridge" (parent := "uncertainty") (lean := "PropertyKindCalculus.Uncertainty.Adequacy.exec_verdict_sound") (tags := "capstone, proved")

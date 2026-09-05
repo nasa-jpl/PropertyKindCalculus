@@ -19,6 +19,7 @@ import PropertyKindCalculus.Uncertainty.BudgetDagLaws
 import PropertyKindCalculus.Uncertainty.Adequacy.Fp32Grounding
 import PropertyKindCalculus.Uncertainty.Adequacy.DagBound
 import PropertyKindCalculus.Uncertainty.Adequacy.ExecBridge
+import PropertyKindCalculus.Uncertainty.Adequacy.RefinementBridge
 
 namespace PropertyKindCalculus.Tests.UncertaintyCapstones
 
@@ -59,5 +60,25 @@ example : round32 (1:ℝ) = 1 := (round32_eq_self_iff 1).mpr one_representable
 open TorchLean.Floats Uncertainty.Adequacy in
 example : neuralGenericFormat binaryRadix fexp32 (round32 (0.1 : ℝ)) :=
   (round32_eq_self_iff _).mp (round32_fix (round32_representable 0.1))
+
+/-! ## Which bridge carries which half of A3′ (`UNCERTAINTY.md` §7)
+
+The consolidation question was whether the adequacy layer should route through `CarrierRefinement`
+or through TorchLean's per-operation error bounds. The answer is both, with a division of labour,
+and `Adequacy.RefinementBridge` is where that is checked rather than asserted: the refinement's
+rounding *is* the format's, so the exactness half of A3′ is a `CarrierRefinement` statement, while
+the forward-error accumulation stays metric. The pins below are on the identification itself. -/
+
+/-- info: 'PropertyKindCalculus.Uncertainty.Adequacy.refinementFixes_iff_exactRepresentable' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+  #print axioms Uncertainty.Adequacy.refinementFixes_iff_exactRepresentable
+
+/-- info: 'PropertyKindCalculus.Uncertainty.Adequacy.toSpec_box_exact' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in #print axioms Uncertainty.Adequacy.toSpec_box_exact
+
+-- The identification the whole argument rests on: the R10 bridge's rounding is `round32`, by
+-- definition and not by transport.
+open TorchLean.Floats Uncertainty.Adequacy in
+example (x : ℝ) : CarrierRefinement.round (E := FP32) x = round32 x := rfl
 
 end PropertyKindCalculus.Tests.UncertaintyCapstones
