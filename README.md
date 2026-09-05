@@ -85,7 +85,7 @@ interaction algebra (`PropertyKindCalculus.Interaction`), and the `ℝ` quantity
 carrier (`PropertyKindCalculus.QuantityReal`), with its worked examples in the
 `DimensionExamples` library — the layer where PhysLib + Mathlib enter, so a plain
 `import PropertyKindCalculus` stays Mathlib-free. PhysLib tracks the same toolchain
-this package pins (`leanprover/lean4:v4.30.0`).
+this package pins (`leanprover/lean4:v4.33.0`).
 
 Part of that substrate is **this project's own contribution to PhysLib**, made because
 the layer the calculus needs did not exist: `Dimension` was hardwired to one
@@ -814,6 +814,24 @@ A grep to sanity-check the declaration by hand:
 ```sh
 grep -n '^\s*version := v!' lakefile.lean
 ```
+
+### Checking the toolchain claims
+
+A bump moves `lean-toolchain`; the prose that names the pin does not follow on its own,
+and a stale sentence still compiles. [`scripts/check-doc-pins.py`](scripts/check-doc-pins.py)
+is the gate — CI runs it as Phase 0, before Elan, so a wrong version fails in seconds:
+
+```sh
+python3 scripts/check-doc-pins.py     # stdlib only; --quiet prints just the failures
+```
+
+It hard-fails on three things: `blueprint/lean-toolchain` disagreeing with the root, any
+release-tag `inputRev` in either `lake-manifest.json` naming a different version, and each
+curated sentence in `SITES` not occurring the recorded number of times — the count being
+what makes a deleted claim fail as loudly as a stale one. Everything else it finds is
+*reported*: some version claims are deliberately not the current pin (a dated measurement,
+a checkout outside this repository, an upstream PR named by the version it bumped), and
+those files carry their reason in `EXEMPT`.
 
 ### Cutting a release
 

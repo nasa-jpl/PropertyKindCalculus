@@ -11,9 +11,9 @@ ships MathJax, so docstring math typesets in its **hover popups** — note the *
 never a docstring, and VS Code's *native* editor hover has no math renderer), which the doc-gen-only hook
 never could. Rendering default = **F (faithful),
 CONFIRMED**. Remaining = follow-on (apply `@[pkc_math]` to real SMM/EM models). No library module imports
-doc-gen4; the `../doc-gen4` **dev override was removed** — doc-gen4 reverts to the stock `v4.32.0` tag
-(`092d631`) that PhysLib and TorchLean already pin transitively (it cannot be dropped *entirely* — both
-require it; this Mathlib pin does not), and is only ever resolved, never built here.
+doc-gen4; the `../doc-gen4` **dev override was removed** — doc-gen4 is resolved at the stock tag that
+PhysLib and TorchLean already pin transitively (`v4.33.0`, `aceca4ee`; it cannot be dropped *entirely* —
+both require it, this Mathlib pin does not), and is only ever resolved, never built here.
 **This file is the durable, multi-session tracker.** Update the checkboxes and the "Session log"
 at the bottom every time you make progress. A fresh session should read this header, §2 (repo map) and §4
 (checklist) first.
@@ -67,6 +67,10 @@ Two facts that shape B:
 ---
 
 ## 2. Repo & toolchain map — READ FIRST every session
+
+*Environment recorded 2026-08-04. The rows below name checkouts outside this repository, so
+`scripts/check-doc-pins.py` reports them rather than gating them; only this package's own pins are
+gated.*
 
 | Repo / clone | Path | Branch | Toolchain | Role |
 |---|---|---|---|---|

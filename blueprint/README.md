@@ -199,11 +199,12 @@ What helps further, in order of payoff vs. effort:
 3. **Verso precompilation — not currently available.** Setting
    `precompileModules := true` for `verso`/`verso-blueprint` would make their
    elaborators load as a native shared library and remove the interpreted cost
-   wholesale, but it was **tested on this package's pinned `v4.30.0` and fails**:
-   the native build reports `build cycle detected` and the generated dynlibs hit
+   wholesale. Measured at toolchain `v4.30.0` it **fails**: the native build
+   reports `build cycle detected` and the generated dynlibs hit
    `undefined symbol: initialize_subverso_SubVerso_Module` (Lean exits 127) — the
-   same issue for which Verso disabled it upstream. Revisit when a newer Verso /
-   toolchain re-enables it.
+   same issue for which Verso disabled it upstream. That measurement has not been
+   repeated at the current pin, so it dates the failure rather than establishing it
+   today; repeat it before relying on either outcome.
 
 The `blueprint-gen` render and `--with-html-single` add time *on top of* the
 `.olean` elaboration, but the elaboration of the root document is the dominant

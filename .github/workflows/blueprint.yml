@@ -28,6 +28,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # -------------------------------------------------------
+      # Phase 0: Cheapest possible signal — the prose agrees with the pin.
+      # -------------------------------------------------------
+      - name: Check version claims against lean-toolchain
+        # Runs before Elan so a doc that names the wrong toolchain fails in seconds
+        # rather than after the Mathlib-backed build. Needs nothing but the checkout
+        # and the runner's python3 (stdlib only). See the script's docstring for what
+        # is gated hard, what is reported, and why some claims may differ.
+        run: python3 scripts/check-doc-pins.py
+
       - name: Install Elan (Lean toolchain manager)
         run: |
           curl https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -sSf | sh -s -- -y --default-toolchain none
@@ -35,8 +45,10 @@ jobs:
 
       - name: Install Lean toolchain
         run: |
-          # Root and blueprint/ pin the same toolchain (leanprover/lean4:v4.32.0),
-          # so installing the root one is sufficient for both Lake packages.
+          # Root and blueprint/ pin the same toolchain, so installing the root one
+          # is sufficient for both Lake packages. scripts/check-doc-pins.py gates
+          # that equality, and every version claim written in prose, against
+          # lean-toolchain — so no literal version is spelled here.
           if [ -f lean-toolchain ]; then
             TOOLCHAIN="$(cat lean-toolchain)"
             echo "Lean toolchain: $TOOLCHAIN"
@@ -86,9 +98,8 @@ jobs:
           #
           # These layers need Mathlib oleans: fetch them from the Mathlib cache
           # rather than recompiling Mathlib from source. (PhysLib and TorchLean are
-          # compiled from their pinned sources. The `Torch` library builds again
-          # since the upstream TorchLean 4.32 module reorg was absorbed, and the
-          # `Tests.Torch` tier probes its kind layer, so it is built here.)
+          # compiled from their pinned sources. The `Tests.Torch` tier probes the
+          # `Torch` library's kind layer, so it is built here.)
           lake exe cache get
           lake build Dimension Uncertainty UncertaintyRigor Torch ForMathlib Graph
           lake build Tests

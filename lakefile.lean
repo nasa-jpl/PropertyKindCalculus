@@ -57,7 +57,7 @@ package «PropertyKindCalculus» where
   -- The package version — the single source of truth. `scripts/bump-version.sh`
   -- reads and bumps it here, and the blueprint reads this same line at build time
   -- (its `{version}[]` role) so the published document never drifts from the source.
-  version := v!"0.95.0"
+  version := v!"0.95.1"
   leanOptions := #[
     ⟨`autoImplicit, false⟩,
     ⟨`relaxedAutoImplicit, false⟩]
@@ -113,8 +113,8 @@ require «TorchLean» from git
 
 -- NOTE (2026-08-04): there is deliberately **no doc-gen4 require here**. doc-gen4 is pulled
 -- transitively (PhysLib and TorchLean each require it; TorchLean's stock `leanprover/doc-gen4` `v4.33.0`
--- pin wins, being required later — see the ordering discipline above; formerly both sat at `v4.32.0`
--- tag `092d631`), so it stays in the closure regardless — but this package no longer *overrides* it.
+-- pin wins, being required later — see the ordering discipline above), so it stays in the closure
+-- regardless — but this package does not *override* it.
 -- As of the pivot in `RENDERING.md` §6 v2 (after doc-gen4 PR #403 was closed on maintainer feedback),
 -- `@[pkc_math]` writes its rendered math + source into each declaration's own docstring via core Lean's
 -- `Lean.addDocStringCore`, so **no module here imports doc-gen4** — it is only ever resolved, never
