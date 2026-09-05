@@ -205,8 +205,10 @@ is quantified over all of them.
 
 :::proof "def_decomposition"
 A two-constructor inductive `Decomposition O` — `atom` and `union` — with `fold` as its
-one eliminator, realized in the Mathlib-free core (`Extensivity` module) beside the laws
-that consume it. The abstinence is load-bearing: `coalesce_count_ne` and
+one eliminator, realized in the Mathlib-free core as the `Mereology` module, which
+imports nothing at all: the carving is pure structure, and the laws that consume it
+(the `Extensivity` module) import it rather than housing it. The abstinence is
+load-bearing: `coalesce_count_ne` and
 `count_sortal_ne` (the extensivity chapter) prove that a part count is not a function of
 the whole, which is exactly what a carving-as-census would wrongly supply.
 :::

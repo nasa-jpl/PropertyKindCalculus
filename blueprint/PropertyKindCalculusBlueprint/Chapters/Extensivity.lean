@@ -32,8 +32,8 @@ _intensive_ (§13.5.4, no physical addition, the value "invariant with the exten
 system of constant composition"). These are quantified arithmetic laws over the
 mereology of systems — again something a description logic cannot state — and all four
 are _realized_, sorry-free: three of them in the Mathlib-free `Extensivity` module
-— the decomposition mereology, the predicates, the two inductions that lift a single
-split to the whole tree, and a checked witness for each — and §13.5.2 in
+— the predicates over the `Mereology` module's carving, the two inductions that lift a
+single split to the whole tree, and a checked witness for each — and §13.5.2 in
 `Uncertainty.QuasiExtensive`, because "approximately" is a claim about measurement and
 not about the mereology.
 

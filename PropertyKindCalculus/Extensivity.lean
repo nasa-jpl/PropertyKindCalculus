@@ -40,64 +40,20 @@ reference (so their numerals are commensurable and may be summed), and extensivi
 is additivity of those numerals over a {decomposition} of the system. Tracking
 which kinds are extensive is the precondition for soundly summing measurements.
 
-A `Decomposition` is a **carving**, and deliberately not a census: nothing here fixes
-how many parts a system has, and every law below is quantified over all carvings
-rather than stated for one. That is Marmodoro's point about physical structure — it
-unites without bringing a count principle, so "[i]t is an open question how many
-entities a physical structure is" (*Whole, but not One*, 2018, §3) — and it is why
-the ∀-quantified form of `extensive_additive` is the deliverable: a total that
-depends on how the whole was cut is not a total. What a carving cannot supply is the
-*whole*; that arrives one layer up, with a sort of system and the license to
-aggregate at it (`Composite.lean`).
+The carving itself — `Decomposition`, its fold, its join count, and the leaf-wise
+quantifier — is `Mereology.lean`'s, as pure structure with no imports; this module
+states the laws over it. A carving is not a census, and every law below is quantified
+over all carvings rather than stated for one: a total that depends on how the whole
+was cut is not a total, which is why the ∀-quantified form of `extensive_additive`
+is the deliverable.
 -/
 
+import PropertyKindCalculus.Mereology
 import PropertyKindCalculus.PropertyValue
 
 namespace PropertyKindCalculus
 
 universe u
-
-/-- A **decomposition** of a system into disjoint parts (the mereological structure
-deferred from the foundations chapter, §3.3): an atomic part, or the disjoint
-union of two sub-decompositions. The leaves are the atomic parts; each node stands
-for the whole they compose.
-
-Parameterized over the **part type** `O` for the reason `IndividualQuantity` is
-parameterized over its object type: the mereology of a host library's own objects — the
-particles of a mechanical system, the cells of a mesh — is the same mereology, and
-nothing here reads a part except to hand it to the measurement. `Decomposition System`
-is the nominal reading and the one the counterexample below uses. -/
-inductive Decomposition (O : Type u) where
-  /-- An atomic, indivisible part. -/
-  | atom : O → Decomposition O
-  /-- The disjoint union of two parts. -/
-  | union : Decomposition O → Decomposition O → Decomposition O
-deriving Repr
-
-/-- **The fold over a decomposition**: a value per leaf, combined at every union. The one
-recursion this module has over the mereology, so `leafSum` below and the quantity-level
-`assemble` (`Composite.lean`) are the *same* traversal at two carriers rather than two
-traversals that happen to agree. -/
-def Decomposition.fold {O : Type u} {R : Type} (leaf : O → R) (op : R → R → R) :
-    Decomposition O → R
-  | .atom s => leaf s
-  | .union a b => op (Decomposition.fold leaf op a) (Decomposition.fold leaf op b)
-
-/-- **A decomposition from a nonempty list of parts** — the head and the rest, so
-nonemptiness is in the signature rather than a side condition. The shape a host library
-hands over (a `List`, a `Multiset`'s elements, a `Fintype`'s enumeration) reaching the
-mereology without an empty case to invent a value for. -/
-def Decomposition.ofParts {O : Type u} (p : O) (ps : List O) : Decomposition O :=
-  ps.foldl (fun d q => .union d (.atom q)) (.atom p)
-
-/-- **The number of joins of a carving** — its `union` nodes. The one number this module reads
-off the *shape* of a decomposition rather than off a measured value, and it is read for two
-reasons: it bounds how far a per-join tolerance can accumulate (§13.5.2, `Uncertainty.QuasiExtensive`),
-and it is precisely what a re-carving is free to change while the whole stays put
-(`Recarving.lean`). -/
-def Decomposition.joins {O : Type u} : Decomposition O → Nat
-  | .atom _ => 0
-  | .union a b => Decomposition.joins a + Decomposition.joins b + 1
 
 /-- A **measurement** of a fixed kind over a decomposition: the property value
 observed on the (sub-)system at each node — a leaf carries the value of that atomic
@@ -140,13 +96,6 @@ are not the absence of an answer. An **intensive** kind answers *nothing changes
 condition Dybkær's definition states; a **whole-proper** kind answers *the parts do not
 determine it*. Both are stated here against the same `Measurement`, so a model that claims
 one is claiming something refutable. -/
-
-/-- **A property of every atomic part of a carving.** The leaf-wise quantifier the intensive
-law needs: `Extensive` reaches its leaves through arithmetic (`leafSum`), and intensivity
-has no arithmetic to reach them with. -/
-def Decomposition.Forall {O : Type u} (p : O → Prop) : Decomposition O → Prop
-  | .atom s => p s
-  | .union a b => Decomposition.Forall p a ∧ Decomposition.Forall p b
 
 /-- **§13.5.4 intensive kind-of-quantity.** A kind `k` is *intensive* under a measurement `m`
 when (i) every part is measured as a value of kind `k`, and (ii) composing two parts **that

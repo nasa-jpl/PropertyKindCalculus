@@ -1,7 +1,7 @@
 /-
 # Re-carving, and what a count is keyed to (Marmodoro §3; SI amount of substance)
 
-A `Decomposition` is a carving and not a census (`Extensivity.lean`). This module says what
+A `Decomposition` is a carving and not a census (`Mereology.lean`). This module says what
 follows from that, in two halves that answer each other.
 
 **Re-carving.** A `Recarving` is a map from one carving of a whole to another, carrying the
@@ -59,13 +59,10 @@ theorem leafSum_invariant {O : Type u} {k : KindOfProperty} {m : Measurement O}
 
 end Recarving
 
-/-! ## Counts, and the sortal they are keyed to -/
+/-! ## Counts, and the sortal they are keyed to
 
-/-- **A count over a carving**: how many atomic parts fall under a sortal predicate. The
-predicate is the argument that makes this a count *of* something — "a count of a specified
-elementary entity", in the SI's phrasing of amount of substance. -/
-def Decomposition.count {O : Type u} (p : O → Bool) : Decomposition O → Int :=
-  Decomposition.fold (fun s => if p s then 1 else 0) (· + ·)
+The count itself (`Decomposition.count`) and its equality with the join count are
+`Mereology.lean`'s; here the count meets the measurement layer and its refutations. -/
 
 /-- **A count kind**: the measurement whose value on a carving is that count, of kind `k` and
 in the unit one. -/
@@ -78,19 +75,6 @@ sit in §13.5.1 alongside mass — which is the law each of PhysLib's bare-scala
 theorem countMeasurement_extensive {O : Type u} (k : KindOfProperty) (p : O → Bool) :
     Extensive k (countMeasurement (O := O) k p) :=
   ⟨fun _ => rfl, fun _ _ => rfl⟩
-
-/-- **The count and the join count are the same number.** A carving with `n` joins exhibits
-`n + 1` parts, so "how many entities" is a fact about the tree and about nothing else. -/
-theorem count_true_eq_joins_succ {O : Type u} (d : Decomposition O) :
-    Decomposition.count (fun _ => true) d = (d.joins : Int) + 1 := by
-  induction d with
-  | atom _ => rfl
-  | union a b ha hb =>
-      show Decomposition.count (fun _ => true) a + Decomposition.count (fun _ => true) b = _
-      rw [ha, hb]
-      show _ = ((a.joins + b.joins + 1 : Nat) : Int) + 1
-      push_cast
-      omega
 
 /-! ### Witness — the whole survives a re-carving, the count does not
 

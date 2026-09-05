@@ -11,6 +11,7 @@ downstream application kept in a separate repository.)
 -/
 
 import PropertyKindCalculus.Foundations
+import PropertyKindCalculus.Mereology
 import PropertyKindCalculus.Scale
 import PropertyKindCalculus.Kind
 import PropertyKindCalculus.DedicatedKind
