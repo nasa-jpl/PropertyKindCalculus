@@ -150,6 +150,18 @@ noncomputable def k95 (g : ℝ) : ℝ :=
 noncomputable def k99 (g : ℝ) : ℝ :=
   (2.5758 + 2.6736 * g + 0.7685 * g ^ 2) / (1 + 0.8864 * g + 0.2362 * g ^ 2)
 
+/-- **The excess range Willink's rational fits are stated on.** `k95` and `k99` are fits to
+the Pearson-family percentage points, valid for `-1.2 ≤ γ ≤ 6`; outside that range the
+expression still evaluates and is no longer a coverage factor. The executable side
+(`Combine.inPearsonFitDomain`) carries the same two bounds and returns `none` outside them,
+so what the specification calls the domain and what the report refuses are one thing. -/
+def PearsonFitDomain (g : ℝ) : Prop := -1.2 ≤ g ∧ g ≤ 6
+
+/-- **The Gaussian case is interior to the fit's range**, so T2's collapse — which is stated
+at `γ = 0` — never reads the fit outside where it is stated. -/
+theorem zero_mem_pearsonFitDomain : PearsonFitDomain 0 := by
+  constructor <;> norm_num
+
 /-- When `κ₄ = 0` the coefficient of excess is `0` (the Gaussian shape). -/
 theorem excess_of_kappa4_zero {c : Cumulants} (h : c.kappa4 = 0) : excess c = 0 := by
   simp [excess, h]

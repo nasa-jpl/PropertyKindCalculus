@@ -31,11 +31,12 @@ jobs:
       # -------------------------------------------------------
       # Phase 0: Cheapest possible signal — the prose agrees with the pin.
       # -------------------------------------------------------
-      - name: Check version claims against lean-toolchain
-        # Runs before Elan so a doc that names the wrong toolchain fails in seconds
-        # rather than after the Mathlib-backed build. Needs nothing but the checkout
-        # and the runner's python3 (stdlib only). See the script's docstring for what
-        # is gated hard, what is reported, and why some claims may differ.
+      - name: Check version and blueprint-status claims
+        # Runs before Elan so a doc that names the wrong toolchain, or a chapter table
+        # that has drifted from the chapter sources, fails in seconds rather than after
+        # the Mathlib-backed build. Needs nothing but the checkout and the runner's
+        # python3 (stdlib only). See the script's docstring for what is gated hard, what
+        # is reported, and why some claims may differ.
         run: python3 scripts/check-doc-pins.py
 
       - name: Install Elan (Lean toolchain manager)
@@ -82,28 +83,38 @@ jobs:
           lake build Examples
 
       # -------------------------------------------------------
-      # Phase 1b: Build the Mathlib/PhysLib/TorchLean-backed layers and the
-      # validation-test suite that probes every verifiable requirement.
+      # Phase 1b: Build every library and executable the package declares.
       # -------------------------------------------------------
-      - name: Build the dimension/uncertainty layers and the validation suite
+      - name: Build every declared target
         run: |
-          # Seven of the sixteen verifiable requirements are discharged in the
-          # PhysLib/Mathlib-backed layers (R1/R5/R7/R13/R17-ℝ in `Dimension`;
-          # R14/R15/R18 in `Uncertainty`/`UncertaintyRigor`). Before the `Tests`
-          # library existed these theorems were never built by CI — a theorem CI
-          # never compiles is validated by nobody. Building them here, plus the
-          # `Tests` suite that pins each requirement theorem's axiom profile and
-          # drives a concrete inhabitation witness through it, brings all sixteen
-          # under regression.
+          # `scripts/build-all-libs-examples.sh` derives its target list from the
+          # `lean_lib «Name»` / `lean_exe «name»` declarations in lakefile.lean, so a newly
+          # added library is swept into CI without editing this workflow. Calling the script
+          # rather than naming targets here is the whole point: the scope of "the whole package
+          # still compiles" is defined in exactly one place, and CI and any local check agree by
+          # construction.
           #
-          # These layers need Mathlib oleans: fetch them from the Mathlib cache
-          # rather than recompiling Mathlib from source. (PhysLib and TorchLean are
-          # compiled from their pinned sources. The `Tests.Torch` tier probes the
-          # `Torch` library's kind layer, so it is built here.)
+          # Any target list written out here is a second copy of lakefile.lean, and a second
+          # copy drifts. Three libraries are reachable by no other route in this job —
+          # `ForPhysLib` (83 modules, 556 theorems), `UncertaintyExamples` (which carries the
+          # Stage-4 `WaterCloudModel` science capstone) and `DimensionExamples`; the others
+          # would also arrive transitively, since the blueprint's chapters import `Iso80000`,
+          # `CrossRefs`, `Requirements`, `DocGenMath` and `Index`, and `build-api-docs.sh`
+          # builds `IndexPage`. A library CI never compiles is validated by nobody — the
+          # argument that puts the `Tests` suite under regression is the same one.
+          #
+          # What the sweep now covers: the sixteen verifiable requirements (seven of them
+          # discharged in the PhysLib/Mathlib-backed layers — R1/R5/R7/R13/R17-ℝ in
+          # `Dimension`, R14/R15/R18 in `Uncertainty`/`UncertaintyRigor`), the `Tests` suite
+          # that pins each requirement theorem's axiom profile and drives a concrete
+          # inhabitation witness through it, the ISO/IEC 80000 catalogues, the ForPhysLib
+          # campaign, and every worked example.
+          #
+          # These layers need Mathlib oleans: fetch them from the Mathlib cache rather than
+          # recompiling Mathlib from source. (PhysLib and TorchLean are compiled from their
+          # pinned sources.)
           lake exe cache get
-          lake build Dimension Uncertainty UncertaintyRigor Torch ForMathlib Graph
-          lake build Tests
-          lake build UncertaintyBatch ssprc_batched_parity mcm_batched_parity
+          bash scripts/build-all-libs-examples.sh
 
       # -------------------------------------------------------
       # Phase 1c: Run the Stage-4 batched-propagator parity harnesses

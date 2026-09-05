@@ -65,8 +65,11 @@ theorem flx_model_sterbenz : FLX 24 (3 - 2) :=
 
 /-! ## Sorry-free — the axiom profile of the Stage-3.2 theorems -/
 
-#print axioms round32_sterbenz
-#print axioms fp32_sub_exact
-#print axioms sub32_error_vanishes
+/-- info: 'PropertyKindCalculus.UncertaintyExamples.AdequacySterbenz32.round32_sterbenz' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in #print axioms round32_sterbenz
+/-- info: 'PropertyKindCalculus.UncertaintyExamples.AdequacySterbenz32.fp32_sub_exact' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in #print axioms fp32_sub_exact
+/-- info: 'PropertyKindCalculus.UncertaintyExamples.AdequacySterbenz32.sub32_error_vanishes' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in #print axioms sub32_error_vanishes
 
 end PropertyKindCalculus.UncertaintyExamples.AdequacySterbenz32

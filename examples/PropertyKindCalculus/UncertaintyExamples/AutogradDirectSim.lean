@@ -563,6 +563,9 @@ info: 'PropertyKindCalculus.UncertaintyExamples.AutogradDirectSim.eagerBuilds_ta
 
 end
 
+section
+-- Same irreducibility shield as the sigmoid block (see comment there).
+attribute [local irreducible] Activation.Math.softplusSpec Activation.Math.softplusDerivSpec
 /-! ### `softplus`: a second activation instance of the generic unary machine
 
 The P-node is `TapeNodes.elemwise ix0 Activation.Math.softplusSpec
@@ -649,6 +652,11 @@ info: 'PropertyKindCalculus.UncertaintyExamples.AutogradDirectSim.eagerBuilds_so
 -/
 #guard_msgs in #print axioms eagerBuilds_softplus
 
+end
+
+section
+-- Same irreducibility shield as the sigmoid block (see comment there).
+attribute [local irreducible] Activation.Math.reluSpec Activation.Math.reluDerivSpec
 /-! ### A pointwise activation through the generic unary machine: `relu`
 
 Same `EagerBuilds.unary` crank as `exp`, but the scalar derivative only exists away from the kink:
@@ -726,6 +734,8 @@ info: 'PropertyKindCalculus.UncertaintyExamples.AutogradDirectSim.eagerBuilds_re
  Quot.sound]
 -/
 #guard_msgs in #print axioms eagerBuilds_relu
+
+end
 
 /-- Pointwise: `invSpec` acts coordinatewise as `(·)⁻¹` under vectorization.  `invSpec` is
     `mapSpec (fun x => 1 / x)` (`Spec/Core/TensorOps.lean:216`), *not* literally `mapSpec (·⁻¹)`,

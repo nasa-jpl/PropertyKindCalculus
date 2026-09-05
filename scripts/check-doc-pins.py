@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
-"""Gate every version claim in this package against `lean-toolchain`.
+"""Gate this package's version claims against `lean-toolchain`, and its
+blueprint-status claims against the blueprint source.
 
-The bug this exists to catch: `lean-toolchain` moves at a bump, and the prose that
-names the pin does not. Three READMEs and a CI comment drifted two minor versions
-behind the pin before anyone read them side by side, and nothing in the build could
-notice — a stale sentence still compiles.
+The bug this exists to catch: an artifact moves and the prose that describes it does
+not. `lean-toolchain` moves at a bump; three READMEs and a CI comment drifted two
+minor versions behind the pin before anyone read them side by side. A chapter gets
+written and proved; the table that called it "planned" keeps saying so. Nothing in the
+build can notice either — a stale sentence still compiles.
 
-Three checks, in increasing order of how easy they are to fool:
+Four checks, in increasing order of how easy they are to fool:
 
 1. **Machine pins (hard).** `blueprint/lean-toolchain` must equal `lean-toolchain`,
    and every `inputRev` in either `lake-manifest.json` that is shaped like a Lean
@@ -26,11 +28,23 @@ Three checks, in increasing order of how easy they are to fool:
    claims are allowed to differ; a line in a file that is in neither EXEMPT nor
    SITES is a new claim nobody has classified yet, and it fails the gate.
 
+4. **Blueprint status claims (hard, with counts).** `blueprint/README.md` describes a
+   document whose real status lives in the chapter sources: one `#doc (Manual) "…"`
+   title per chapter file, and one `(tags := "…")` list per node. So the README's
+   chapter list must name every chapter, its headline counts must equal the parsed
+   ones, and — while every node parses as `proved` — no chapter source may carry the
+   `_planned_` status italic and the README may carry no `🚧`/`⬜` marker. A count is
+   the point here for the same reason it is in check 2: a chapter added and never
+   listed, or a status glyph left behind after the node was proved, is exactly the
+   drift that a table nobody re-reads will keep.
+
 What this does not catch, stated plainly: EXEMPT is per *file*, not per line, so a
 newly stale claim written into an exempt file is reported and not failed. The two
 exempt files that also carry load-bearing pins (`lakefile.lean`,
 `blueprint/lakefile.toml`) have those pins in SITES, where they are gated hard — but
-a fourth claim added to either would only be noted. Read the notes.
+a fourth claim added to either would only be noted. And check 4 gates the chapter
+*inventory* and the counts, not the prose *about* a chapter: a paragraph that
+misdescribes a node it correctly lists still passes. Read the notes.
 
 Usage: `python3 scripts/check-doc-pins.py [--quiet]`; exits non-zero on any hard
 failure. Wired into `.github/workflows/blueprint.yml` ahead of the Lean build.
@@ -78,6 +92,40 @@ EXEMPT: dict[str, str] = {
     ),
 }
 
+# --- 4. Blueprint status: where the real status lives, and the claim that mirrors it -
+BP_CHAPTERS = "blueprint/PropertyKindCalculusBlueprint/Chapters"
+BP_SOURCE = "blueprint/PropertyKindCalculusBlueprint"
+BP_README = "blueprint/README.md"
+
+# The headline sentence in BP_README, with the parsed counts substituted. Written as a
+# template for the same reason SITES entries are: the gate fails on a reworded claim as
+# loudly as on a stale one.
+BP_HEADLINE = "{CHAPTERS} chapters carrying **{NODES} nodes, {CAPSTONES} of them capstones"
+
+# Curated status sites in the blueprint prose: (file, sentence with {NWORD}, occurrences).
+# `{NWORD}` is the number of entries in `Iso80000.catalogue`, spelled as the prose spells it.
+# Same discipline as SITES: the count is the point, so a reworded claim fails as loudly as a
+# stale one.
+BP_CATALOGUE_REFS = "iso80000/PropertyKindCalculus/Iso80000/References.lean"
+BP_CATALOGUE_SITES: list[tuple[str, str, int]] = [
+    ("blueprint/PropertyKindCalculusBlueprint/Chapters/Iso80000.lean",
+     "catalogues {NWORD} of its", 1),
+    ("blueprint/PropertyKindCalculusBlueprint/Chapters/Iso80000.lean",
+     "the list of the {NWORD} catalogued parts", 1),
+    ("blueprint/PropertyKindCalculusBlueprint/Chapters/Iso80000.lean",
+     "the {NWORD} definitions", 1),
+]
+NUMBER_WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight",
+                "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen",
+                "sixteen", "seventeen", "eighteen", "nineteen", "twenty"]
+CATALOGUE_LIST = re.compile(r"def catalogue : List StandardRef :=\s*\[(.*?)\]", re.DOTALL)
+
+CHAPTER_TITLE = re.compile(r'#doc \(Manual\) "([^"]+)" =>')
+NODE_TAGS = re.compile(r'\(tags := "([^"]*)"\)')
+# The blueprint's own status vocabulary, in the italic form its prose uses.
+PLANNED_ITALIC = "_planned_"
+STATUS_GLYPHS = ("\U0001f6a7", "\u2b1c")  # 🚧 in-progress, ⬜ planned
+
 PIN_WORDS = re.compile(r"\bpin(s|ned|ning)?\b|\btoolchain\b", re.IGNORECASE)
 VERSION_TOKEN = re.compile(r"\bv(\d+\.\d+\.\d+)\b")
 RELEASE_TAG = re.compile(r"^v\d+\.\d+\.\d+$")
@@ -87,6 +135,102 @@ SKIP_DIRS = {".lake", ".git", "_out", "docs", "Scratch", ".pixi"}
 
 def read(rel: str) -> str:
     return (ROOT / rel).read_text(encoding="utf-8")
+
+
+def check_blueprint_status(quiet: bool) -> list[str]:
+    """Check 4: the blueprint README's inventory and counts against the chapter sources.
+
+    Returns the failures; prints what it verified. The parse is deliberately the same
+    one a reader would do by hand — one title per chapter file, one tag list per node —
+    so what the gate believes and what the source says cannot come apart.
+    """
+    failures: list[str] = []
+
+    titles: dict[str, str] = {}
+    for path in sorted((ROOT / BP_CHAPTERS).glob("*.lean")):
+        m = CHAPTER_TITLE.search(path.read_text(encoding="utf-8"))
+        if m:
+            titles[path.stem] = m.group(1)
+    if not titles:
+        return [f"{BP_CHAPTERS}: parsed no chapter titles — the `#doc (Manual)` "
+                "pattern no longer matches how chapters are declared"]
+
+    tags = [t for path in sorted((ROOT / BP_SOURCE).rglob("*.lean"))
+            for t in NODE_TAGS.findall(path.read_text(encoding="utf-8"))]
+    nodes = len(tags)
+    proved = sum("proved" in t for t in tags)
+    capstones = sum("capstone" in t for t in tags)
+
+    readme = read(BP_README)
+
+    headline = (BP_HEADLINE
+                .replace("{CHAPTERS}", str(len(titles)))
+                .replace("{NODES}", str(nodes))
+                .replace("{CAPSTONES}", str(capstones)))
+    got = readme.count(headline)
+    if got != 1:
+        failures.append(f"{BP_README}: expected 1 occurrence of {headline!r}, found {got}")
+    elif not quiet:
+        print(f"ok    {BP_README}: {headline}")
+
+    unlisted = sorted(t for t in titles.values() if t not in readme)
+    if unlisted:
+        failures.append(
+            f"{BP_README}: {len(unlisted)} chapter(s) not named in it: "
+            + "; ".join(unlisted)
+        )
+    elif not quiet:
+        print(f"ok    {BP_README}: names all {len(titles)} chapters")
+
+    if proved == nodes:
+        for glyph in STATUS_GLYPHS:
+            if glyph in readme:
+                failures.append(
+                    f"{BP_README}: carries the {glyph!r} status marker while all "
+                    f"{nodes} nodes parse as proved"
+                )
+        for path in sorted((ROOT / BP_CHAPTERS).glob("*.lean")):
+            if PLANNED_ITALIC in path.read_text(encoding="utf-8"):
+                rel = path.relative_to(ROOT).as_posix()
+                failures.append(
+                    f"{rel}: calls a node {PLANNED_ITALIC} while all {nodes} nodes "
+                    "parse as proved"
+                )
+        if not quiet:
+            print(f"ok    blueprint: all {nodes} nodes proved, no stale status marker")
+    else:
+        # The honest branch: unproved nodes are legitimate, but the README has to say so.
+        claim = f"{nodes - proved} not yet proved"
+        if claim not in readme:
+            failures.append(
+                f"{BP_README}: {nodes - proved} node(s) are not tagged proved, but it "
+                f"does not say so — expected the phrase {claim!r}"
+            )
+        elif not quiet:
+            print(f"ok    {BP_README}: {claim}")
+
+    # The catalogued-parts count, named in the standards chapter's prose.
+    m = CATALOGUE_LIST.search(read(BP_CATALOGUE_REFS))
+    if not m:
+        failures.append(f"{BP_CATALOGUE_REFS}: could not parse `catalogue : List StandardRef`")
+    else:
+        n = len([e for e in m.group(1).replace("\n", " ").split(",") if e.strip()])
+        if n >= len(NUMBER_WORDS):
+            failures.append(f"{BP_CATALOGUE_REFS}: {n} parts, beyond the spelled-out range")
+        else:
+            word = NUMBER_WORDS[n]
+            for rel, template, want in BP_CATALOGUE_SITES:
+                sentence = template.replace("{NWORD}", word)
+                got = read(rel).count(sentence)
+                if got != want:
+                    failures.append(
+                        f"{rel}: expected {want} occurrence(s) of {sentence!r} "
+                        f"({n} parts in the catalogue), found {got}"
+                    )
+                elif not quiet:
+                    print(f"ok    {rel}: {sentence}")
+
+    return failures
 
 
 def main() -> int:
@@ -160,6 +304,9 @@ def main() -> int:
             print(f"  {entry}")
         failures.append(f"{len(unclassified)} unclassified version claim(s)")
 
+    # 4. Blueprint status claims.
+    failures.extend(check_blueprint_status(quiet))
+
     for rel, reason in EXEMPT.items():
         if not quiet:
             print(f"exempt {rel}: {reason}")
@@ -169,7 +316,8 @@ def main() -> int:
         for f in failures:
             print(f"  {f}")
         return 1
-    print("\nAll version claims agree with lean-toolchain.")
+    print("\nAll version claims agree with lean-toolchain; all blueprint status")
+    print("claims agree with the chapter sources.")
     return 0
 
 

@@ -9,3 +9,7 @@ blueprint/scripts/__pycache__/
 
 # temporary files
 /Scratch
+
+# The build log written by scripts/build-all-libs-examples.sh when a run is redirected
+# to it. A build artifact, and one that names absolute paths.
+/build.log

@@ -43,15 +43,31 @@ def terms : List (Float × MomentData Float) :=
 
 /-- `(u_Y, γ_Y)` — combined standard uncertainty and coefficient of excess. -/
 def combined : Float × Float := willinkCombine terms
-/-- 99% expanded-uncertainty half-width `h₀.₉₉`. -/
+/-- 99% expanded-uncertainty half-width `h₀.₉₉`, reported through the domain check: this is
+`some` exactly when the combined excess lies in the range Willink's eq. (7) is stated on. -/
+def h99? : Option Float := willinkHalfWidth99? terms
+
+/-- The same number without the check, for the `#guard`s below to compare against. -/
 def h99 : Float := willinkHalfWidth99 terms
 
-#eval s!"u_Y ≈ {combined.1} nm   γ_Y ≈ {combined.2}   k₀.₉₉ ≈ {willinkK99 combined.2}   h₀.₉₉ ≈ {h99} nm"
+#eval s!"u_Y ≈ {combined.1} nm   γ_Y ≈ {combined.2}   in fit range? {inPearsonFitDomain combined.2}   k₀.₉₉ ≈ {willinkK99 combined.2}   h₀.₉₉ ≈ {h99} nm"
+
+-- **The excess is inside the range eq. (7) is stated on**, so the quoted factor is a
+-- coverage factor and not an extrapolation of the fit. This is the guard that makes the
+-- three figures below quotable; without it they would be numbers of unknown standing.
+#guard inPearsonFitDomain combined.2
+#guard h99? == some h99
 
 -- Willink's reported figures (Table 4): u_Y = 33.4 nm, γ_Y = 0.124, h₀.₉₉ = 87.6 nm.
 #guard Float.abs (combined.1 - 33.4) < 0.1
 #guard Float.abs (combined.2 - 0.124) < 0.005
 #guard Float.abs (h99 - 87.6) < 0.2
+
+-- **The check refuses, rather than clamping.** At an excess of 10 — outside eq. (7)'s
+-- range — the fit still evaluates to a plausible-looking number, and the reporting form
+-- returns nothing instead of quoting it.
+#guard ¬ inPearsonFitDomain 10.0
+#guard willinkK99? 10.0 == none
 
 /-! The GUM procedure would quote a 99% half-width of 93 nm on the same data; the cumulants
 method's 87.6 nm is ~5% narrower with the same 99% coverage, because the (mostly negative)

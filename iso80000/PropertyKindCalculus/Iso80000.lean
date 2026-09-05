@@ -12,6 +12,32 @@ licensed and copyrighted).
     reused by every part: the `CataloguedKind` record (a {dimensioned kind} plus its
     citation locators), the `cite` renderer, and the `dimKind` builder. Defined once
     here rather than restated per part.
+  * `PropertyKindCalculus.Iso80000.Part1` — ISO 80000-1 *General*, the part that defines
+    no quantities: it defines the frame the others are written in, so the module is a
+    **conformance layer** rather than a catalogue. §5's own worked table of ten quantities
+    and their dimensions is discharged against the catalogued kinds of Parts 3–9, each row
+    stated as the defining relation its exponent vector comes from; the two rows carrying an
+    ISQ axis PhysLib does not generate (`J`, `N`) hold definitionally through the
+    scale-spanning reduction (R13). §5's stated implication sits beside the converse
+    `dim_not_injective` refutes (R1), §6.2/§6.3 are `RealUnit`'s laws and the `dim`
+    homomorphism plus the R12 kind-law, and **Annex A** (normative) becomes predicates over
+    catalogued kinds whose witnesses compose the certificates Parts 4/5/9 already prove —
+    with `powerFactor_is_factor_not_ratio` showing that the annex's own *factor* (same
+    dimension) and *ratio* (same kind) come apart on a quantity the standard tabulates.
+  * `PropertyKindCalculus.Iso80000.Part1.Rounding` — Annex B (normative), rounding of
+    numbers, checked against this work's rounding grid. **Not imported here**: it is the one
+    module in this library that reaches into the uncertainty stack (`Adequacy.Grid`), and
+    importing the standards catalogue should not drag that in. Build it with the library or
+    import it directly. The finding it records is that the fit is not clean — `gridRound`
+    breaks ties toward `+∞`, giving Rule B's answer at a positive tie and neither rule's at
+    a negative one.
+  * `PropertyKindCalculus.Iso80000.Part2` — ISO 80000-2 *Mathematics*, a table of
+    mathematical signs and symbols that defines no quantities and assigns no dimensions.
+    Rather than transcribe it, the module records the intersection that carries weight: §7's
+    standard number sets as the carriers of `Quantity k R` — and the carrier §7 does *not*
+    list, `Float`, which is exactly the one that instantiates `Carrier` without
+    `LawfulCarrier` (R15's premise at its source) — §7's closed interval as `IccQ`, §15's
+    complex numbers as a carrier and not a kind, and §18 as the clause R11 is drawn from.
   * `PropertyKindCalculus.Iso80000.Part3` — the full catalogue of ISO 80000-3 *Space
     and time* (all of items 3-1.1 … 3-26.3), with the length family as a
     specialization lattice (R2) and the dimension-collision capstones.
@@ -102,6 +128,8 @@ references catalogue alone is Mathlib-free.
 
 import PropertyKindCalculus.Iso80000.References
 import PropertyKindCalculus.Iso80000.Catalogue
+import PropertyKindCalculus.Iso80000.Part1
+import PropertyKindCalculus.Iso80000.Part2
 import PropertyKindCalculus.Iso80000.Part3
 import PropertyKindCalculus.Iso80000.Part3.AreaElement
 import PropertyKindCalculus.Iso80000.Part3.AreaClassification

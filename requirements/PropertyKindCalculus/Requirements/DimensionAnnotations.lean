@@ -23,6 +23,7 @@ import PropertyKindCalculus.UnitReal
 import PropertyKindCalculus.AggregationLaws
 import PropertyKindCalculus.FrameReal
 import PropertyKindCalculus.DimensionExamples.UnitConversion
+import PropertyKindCalculus.DimensionExamples.Frames
 import PropertyKindCalculus.Requirements.Attributes
 
 namespace PropertyKindCalculus
@@ -121,6 +122,18 @@ attribute [requirement "R9" proves "the mean of a constant is that constant — 
   WeightedCarving.mean_const
 attribute [requirement "R9" proves "the parallel-axis theorem: a moment of inertia transports between axes by a correction built from the carving's own first moment and total mass"]
   parallelAxis
+
+/-! ## R20 — the worked frame change
+
+The requirement's own scenario: a planar rover's velocity read in the lab frame and in a frame
+turned a quarter turn from it. The contraction that a kinetic energy is does not move; a
+component does, exhibited with the vector that shows it, so the first fact cannot be read as
+"nothing changes". -/
+
+attribute [requirement "R20" exemplifies "the kinetic-energy contraction `v·v` read in a quarter-turned frame equals the one read in the lab frame — the sense in which choosing coordinates does not change the physics"]
+  PropertyKindCalculus.DimensionExamples.Frames.contraction_invariant
+attribute [requirement "R20" exemplifies "and a component of the same quantity does move between the two frames — one quantity, two frames, not two quantities"]
+  PropertyKindCalculus.DimensionExamples.Frames.component_moves
 
 /-! ## R17 — the real-valued unit: an arbitrary chosen reference -/
 

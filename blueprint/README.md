@@ -2,24 +2,31 @@
 
 A [Verso](https://github.com/leanprover/verso) /
 [verso-blueprint](https://github.com/leanprover/verso-blueprint) design document
-for [PropertyKindCalculus](../). It records the **proved spine** (each node linked to a
-real, sorry-free declaration in the core library) and the **capstone theorems we
-plan to provide**, with a dependency graph and a status summary generated from
-the linked Lean code.
+for [PropertyKindCalculus](../). It records the **proved spine** — each node linked to
+a real, sorry-free declaration in the core library — with a dependency graph and a
+status summary generated from the linked Lean code.
 
 ## What it documents
 
-| Chapter | Status | Highlights |
-|---|---|---|
-| The Proved Spine | ✅ linked to real decls | scale linear order, **operator-availability monotonicity**, **specialization is a preorder**, mutual comparability |
-| Units and the Dimension-1 Problem | 🚧 planned | quantity/unit indexed by kind, **conversion round-trip**, **the dimension-1 disambiguation** (`vwc ≠ gwc` yet same dimension) |
-| Dimension as a Forgetful Functor | 🚧 planned | `dim` map, **`dim` is a homomorphism** (dimensional coherence) |
-| The Interaction Algebra (Flater App. C) | 🚧 planned | `KMul`/`KDiv`, **multiplication/division inverse on kinds**, torque × angle = energy |
-| Extensivity | 🚧 planned | **extensive aggregation** ∀-theorem, ethanol+water counterexample |
+25 chapters carrying **148 nodes, 32 of them capstones — every one of them
+`proved`**, each linking a real, sorry-free declaration through its `(lean := …)` field.
+The status summary and the dependency graph are therefore read off the checked source
+rather than asserted here; `scripts/check-doc-pins.py` gates these counts and the chapter
+list below against the chapter sources, so a new or renamed chapter fails the gate rather
+than quietly going unlisted.
 
-Capstone theorems are tagged `capstone`; proved nodes are tagged `proved`;
-not-yet-formalized nodes are tagged `planned` and show as in-progress goals in
-the graph until a `(lean := …)` declaration or a checked code block is attached.
+| Group | Chapters |
+|---|---|
+| The spine | The Proved Spine · Write Once, Correctly · Using the library: annotations and generated indexes · External Cross-References |
+| The kind layer | The object type · Dedicated kinds-of-property · Extensivity · The Interaction Algebra (Flater Appendix C) · The Function Calculus and Complex-Valued Carriers (R12) |
+| Units and dimension | Units and the Dimension-1 Problem · Dimension as a Forgetful Functor · Scale-spanning units — a third unit category (R13) |
+| Uncertainty | Uncertainty quantification and numerical adequacy |
+| The standards catalogue | ISO/IEC 80000 — The Standards Catalogue, and one chapter per part: ISO 80000-3 — Space and Time · ISO 80000-4 — Mechanics · ISO 80000-5 — Thermodynamics · IEC 80000-6 — Electromagnetism · ISO 80000-7 — Light and radiation · ISO 80000-8 — Acoustics · ISO 80000-9 — Physical chemistry and molecular physics · ISO 80000-10 — Atomic and nuclear physics · ISO 80000-11 — Characteristic numbers · ISO 80000-12 — Condensed matter physics · IEC 80000-13 — Information science and technology |
+
+Capstone theorems are tagged `capstone` and proved nodes are tagged `proved`. A node
+tagged `planned` carries an informal statement and a proof sketch only, and shows as an
+in-progress goal in the graph until a `(lean := …)` declaration or checked code block is
+attached.
 
 ## Prerequisites
 

@@ -1332,9 +1332,29 @@ The four residuals — all "one more crank of the same machine," none a new work
 * **`Adequacy` carrier laws.** It is a `NumCarrier` that *also* accumulates a report; the monoid/branchless
   discipline of `NumCarrier` must not be violated by the check (the check is a side-record, the numeric
   `value`/`range` stay branchless). Verify the instance is lawful.
-* **Pearson percentile fidelity.** Willink eqs. (6)/(7) are rational fits valid for `−1.2 ≤ γ ≤ 6`;
-  outside that range the closure degrades. Decision: clamp + warn, or implement the exact Pearson
-  quantile.
+* **Pearson percentile fidelity — DECIDED: refuse outside the fit's range, do not clamp.**
+  Willink eqs. (6)/(7) are rational fits to the Pearson percentage points, stated on
+  `−1.2 ≤ γ ≤ 6`. Both denominators have negative discriminant, so outside that range nothing
+  divides by zero and nothing signals: the expression returns a number that is no longer a
+  coverage factor. `Combine.lean` now names the range (`pearsonFitLo`/`pearsonFitHi`,
+  `inPearsonFitDomain`) and carries it in the return type of every function that *reports* a
+  factor or a half-width — `willinkK95?`/`willinkK99?`, `willinkHalfWidth95?`/`willinkHalfWidth99?`
+  return `none` outside it. `Ladder.PearsonFitDomain` is the same two bounds over `ℝ`, with
+  `zero_mem_pearsonFitDomain` recording that T2's collapse point is interior, so the capstone
+  never reads the fit outside where it is stated.
+
+  Clamping was the other option on the table and was rejected: returning `k(6)` for `γ = 10` and
+  labelling it the coverage factor for an excess of 10 is the same silent substitution one level
+  further in, and it would be invisible in exactly the regime where the method is least
+  trustworthy. A caller that wants a clamped value can clamp its own `γ` and say so. The fits
+  themselves (`willinkK95`, `willinkK99`, `willinkHalfWidth95/99`) stay total, because
+  `k95_zero` is a statement about the fit and T2 needs it unconditionally.
+
+  The two worked examples report the verdict beside the number — the gauge block at
+  `γ_Y ≈ 0.124` and the all-Gaussian ladder at `γ_Y = 0` both print `in fit range? true`, and
+  `#guard`s pin both the membership and the refusal at `γ = 10`. Implementing the exact Pearson
+  quantile remains available and is not scheduled; it would widen the domain rather than change
+  what happens outside it.
 * **`CarrierRefinement` consolidation — DECIDED: keep both routes, with a division of labour.**
   The question was whether A3's soundness should go through PKC's `CarrierRefinement`
   (`QuantityRefinement.lean:72`, with `MulRefinement`/`DivRefinement` beside it, all three

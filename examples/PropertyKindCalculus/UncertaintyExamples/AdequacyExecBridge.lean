@@ -62,7 +62,9 @@ theorem exec_verdict {s δ : IEEE32Exec} {ds dδ : TorchLean.Floats.IEEE754.IEEE
 
 /-! ## Sorry-free — the axiom profile of the Stage-3.3 bridge theorems -/
 
-#print axioms exec_ulp
-#print axioms exec_verdict
+/-- info: 'PropertyKindCalculus.UncertaintyExamples.AdequacyExecBridge.exec_ulp' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in #print axioms exec_ulp
+/-- info: 'PropertyKindCalculus.UncertaintyExamples.AdequacyExecBridge.exec_verdict' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in #print axioms exec_verdict
 
 end PropertyKindCalculus.UncertaintyExamples.AdequacyExecBridge

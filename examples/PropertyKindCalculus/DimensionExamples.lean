@@ -14,5 +14,6 @@ checks live under `examples/`.
 import PropertyKindCalculus.DimensionExamples.Dimension
 import PropertyKindCalculus.DimensionExamples.Interaction
 import PropertyKindCalculus.DimensionExamples.QuantityReal
+import PropertyKindCalculus.DimensionExamples.Frames
 import PropertyKindCalculus.DimensionExamples.UnitConversion
 import PropertyKindCalculus.DimensionExamples.Iso80000

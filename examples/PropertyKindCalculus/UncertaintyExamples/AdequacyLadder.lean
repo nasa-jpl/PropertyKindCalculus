@@ -66,8 +66,11 @@ theorem a2_relunc : (1 : ℝ) ≤ 100 / 1 :=
 
 /-! ## Sorry-free — the axiom profile of the adequacy theorems -/
 
-#print axioms a1_absorb
-#print axioms a3_verdict_sound
-#print axioms a2_sterbenz
+/-- info: 'PropertyKindCalculus.UncertaintyExamples.AdequacyLadder.a1_absorb' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in #print axioms a1_absorb
+/-- info: 'PropertyKindCalculus.UncertaintyExamples.AdequacyLadder.a3_verdict_sound' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in #print axioms a3_verdict_sound
+/-- info: 'PropertyKindCalculus.UncertaintyExamples.AdequacyLadder.a2_sterbenz' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in #print axioms a2_sterbenz
 
 end PropertyKindCalculus.UncertaintyExamples.AdequacyLadder

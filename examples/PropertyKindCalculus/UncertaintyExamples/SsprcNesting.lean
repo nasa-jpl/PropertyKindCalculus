@@ -104,7 +104,9 @@ example : (willinkCumulants (termsOf xs)).kappa2 = 41 ∧ (willinkCumulants (ter
       Cumulants.zero_kappa4] <;> norm_num
 
 -- Sorry-free: the axiom profile is the usual `propext`/`Classical.choice`/`Quot.sound`, no `sorryAx`.
-#print axioms cumulantsOf_combinedDeviation
-#print axioms kappa4_conv
+/-- info: 'PropertyKindCalculus.Uncertainty.cumulantsOf_combinedDeviation' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in #print axioms cumulantsOf_combinedDeviation
+/-- info: 'PropertyKindCalculus.Uncertainty.Dist.kappa4_conv' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in #print axioms kappa4_conv
 
 end PropertyKindCalculus.UncertaintyExamples.SsprcNesting

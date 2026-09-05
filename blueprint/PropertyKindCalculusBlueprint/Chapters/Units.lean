@@ -13,13 +13,10 @@ open Informal
 
 #doc (Manual) "Units and the Dimension-1 Problem" =>
 
-This chapter states the layer that originally motivated PropertyKindCalculus. Its
-motivating capstone — the dimension-1 disambiguation — is now _proved_ (see the
-_Dimension as a Forgetful Functor_ chapter for the forgetful map it rests on);
-the unit-arithmetic nodes around it remain _planned_, carrying
-informal statements and proof sketches that appear as in-progress goals in the
-dependency graph until a `(lean := …)` declaration or checked code block is
-attached.
+This chapter states the layer that originally motivated PropertyKindCalculus. Every
+node in it is _proved_ and carries a `(lean := …)` declaration: the motivating
+capstone — the dimension-1 disambiguation, whose forgetful map the _Dimension as a
+Forgetful Functor_ chapter supplies — and the unit-arithmetic nodes around it alike.
 
 PhysLib's `Dimension` (a ℚ-exponent free commutative group over the SI base
 quantities) makes every dimension-one quantity equal. Volumetric water content
@@ -293,8 +290,10 @@ the prefix exponents) and the shift back sum to zero (`shift_add_symm`). The
 round-trip on the decimal exponent is then $`x + (e_1 - e_2) + (e_2 - e_1) = x`,
 closed by `omega` with no rounding. The numeric $`\mathbb{R}` companion multiplies by
 $`10^{e_1-e_2}` then $`10^{e_2-e_1}`; `zpow_add₀` on $`10\neq 0` collapses the
-exponents to $`10^0 = 1`. Neither needs a chosen-reference nonzeroness hypothesis —
-that is what the general real-valued case (planned) must still supply.
+exponents to $`10^0 = 1`. Neither needs a chosen-reference nonzeroness hypothesis;
+the {uses "def_unit"}[general real-valued case] is where one is needed, and it carries
+`ref_ne_zero` as a field so that `ratio_ne_zero` follows from the two licenses and from
+nothing else.
 :::
 
 :::theorem "thm_dimensionless_kinds_distinct" (parent := "units") (lean := "PropertyKindCalculus.dim_not_injective") (tags := "capstone, proved") (effort := "small") (priority := "high")

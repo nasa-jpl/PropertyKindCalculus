@@ -39,7 +39,8 @@ example : willinkHalf95 normalTerms = gumHalf95 normalTerms :=
   gum_eq_willink_of_normal normalTerms (by intro t ht; fin_cases ht <;> rfl)
 
 -- Sorry-free: the axiom profile is the usual `propext`/`Classical.choice`/`Quot.sound`, no `sorryAx`.
-#print axioms gum_eq_willink_of_normal
+/-- info: 'PropertyKindCalculus.Uncertainty.gum_eq_willink_of_normal' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in #print axioms gum_eq_willink_of_normal
 
 /-! ## The executable shadow over `Float` -/
 
@@ -49,7 +50,13 @@ def normalTermsF : List (Float × MomentData Float) :=
     (4.0, { mean := 0.0, variance := 5.0, fourthCumulant := 0.0, thirdCumulant := 0.0 }) ]
 
 -- u_c = √(9·2 + 16·5) = √98 ≈ 9.8995 ;  γ_Y = 0 ⇒ k₀.₉₅ = 1.96.
-#eval s!"GUM u_c = {gumStdUnc normalTermsF}   Willink 95% = {willinkHalfWidth95 normalTermsF}   (= 1.96·u_c)"
+#eval s!"GUM u_c = {gumStdUnc normalTermsF}   Willink 95% = {willinkHalfWidth95 normalTermsF}   (= 1.96·u_c)   γ_Y = {willinkExcess normalTermsF}   in fit range? {inPearsonFitDomain (willinkExcess normalTermsF)}"
+
+-- T2's collapse point is `γ_Y = 0`, interior to the range eq. (6) is stated on
+-- (`Ladder.zero_mem_pearsonFitDomain` is the `ℝ` statement of the same fact), so the
+-- reporting form agrees with the unchecked one here rather than refusing.
+#guard inPearsonFitDomain (willinkExcess normalTermsF)
+#guard willinkHalfWidth95? normalTermsF == some (willinkHalfWidth95 normalTermsF)
 
 -- All-Gaussian inputs ⇒ `γ_Y = 0` ⇒ the Willink 95% half-width is exactly `1.96 · u_c`:
 -- the `Float` witness of T2's collapse.

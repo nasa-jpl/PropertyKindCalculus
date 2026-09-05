@@ -73,6 +73,18 @@ attribute [requirement "R9" exemplifies "mass is extensive: a three-sample rock 
 attribute [requirement "R10" exemplifies "the same Quantity layer runs at `R := Float` (3.0 + 0.5 = 3.5), not only at `Int`/`ℝ`"]
   PropertyKindCalculus.Examples.MiniQuantity.lenF
 
+/-! ## The vector quantity (R11)
+
+ISO 80000-2 §18's numerical reading, worked: one kind, one scalar unit, an indexed carrier.
+The laws transfer to the pointwise carrier with no vector-specific proof, and the licensed
+operation is a *scalar* quantity acting on a vector one — a pointwise product of two vector
+quantities is gated out by `ScalarCarrier`, which the array carrier does not instantiate. -/
+
+attribute [requirement "R11" exemplifies "a three-axis displacement is one kind over an indexed carrier, and additivity transfers to it with no vector-specific proof"]
+  PropertyKindCalculus.Examples.MiniVectorQuantity.vector_add_comm
+attribute [requirement "R11" exemplifies "the licensed operation is a scalar quantity acting on a vector one (2 · east = 6 on the first axis); a pointwise product of two displacements does not typecheck, because the unit is scalar"]
+  PropertyKindCalculus.Examples.MiniVectorQuantity.doubled_east
+
 /-! ## Verified classification (R12) -/
 
 attribute [requirement "R12" exemplifies "the kind-law `length = speed × time` (all three ratio-scale)"]

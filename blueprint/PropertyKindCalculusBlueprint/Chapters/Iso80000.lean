@@ -23,10 +23,11 @@ coverage of that part becomes available.
 # The references layer (citation metadata only)
 
 :::group "iso80000"
-The series is a joint ISO/IEC project published in twelve parts. Each part is
-issued under one body — in the catalogued copies part 6 (_Electromagnetism_) is
-IEC and the rest are ISO — and carries an edition designation and a publication
-date on its cover. Recording these as typed data lets a downstream model render or
+The series is a joint ISO/IEC project, and this work catalogues thirteen of its
+parts. Each part is issued under one body — in the catalogued copies parts 6
+(_Electromagnetism_) and 13 (_Information science and technology_) are IEC and the
+rest are ISO — and carries an edition designation and a publication date on its
+cover. Recording these as typed data lets a downstream model render or
 audit a citation rather than carry it as free text.
 :::
 
@@ -46,15 +47,15 @@ off each licensed part's cover page; nothing normative is transcribed.
 :::
 
 :::definition "def_standardCatalogue" (parent := "iso80000") (lean := "PropertyKindCalculus.Iso80000.catalogue")
-The _catalogue_ is the list of the twelve catalogued parts in part order, each a
+The _catalogue_ is the list of the thirteen catalogued parts in part order, each a
 {uses "def_standardRef"}[standard reference]. It is the single place this work
 names _which editions_ of ISO/IEC 80000 the catalogued quantity-kinds and units are
 grounded against, so the grounding is auditable rather than implicit.
 :::
 
 :::proof "def_standardCatalogue"
-Realized as `catalogue : List StandardRef`, the twelve definitions `iso80000_1` …
-`iso80000_12` (with `iec80000_6` the one IEC-published part). The edition is
-"Second edition" for every part except part 6's "Edition 2.0"; the dates are the
-cover dates of the licensed copies.
+Realized as `catalogue : List StandardRef`, the thirteen definitions `iso80000_1` …
+`iec80000_13` (with `iec80000_6` and `iec80000_13` the IEC-published parts). The
+edition is "Second edition" for every part except those two, both "Edition 2.0"; the
+dates are the cover dates of the licensed copies.
 :::

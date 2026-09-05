@@ -197,12 +197,19 @@ theorem acc_budget_nonneg (ρ : ℕ → FP32) : 0 ≤ errBound acc ρ :=
 
 /-! ## Sorry-free — the axiom profile of the A3′ theorems (all operators) -/
 
-#print axioms dag_fp32_box_faithful
-#print axioms dag_fp32_box_exact_of_flagFree
-#print axioms acc_box_faithful
-#print axioms prod_box_faithful
-#print axioms ratio_error_bound
-#print axioms doubling_box_exact
-#print axioms doubling_variation_eq_four
+/-- info: 'PropertyKindCalculus.Uncertainty.Adequacy.dag_fp32_box_faithful' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in #print axioms dag_fp32_box_faithful
+/-- info: 'PropertyKindCalculus.Uncertainty.Adequacy.dag_fp32_box_exact_of_flagFree' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in #print axioms dag_fp32_box_exact_of_flagFree
+/-- info: 'PropertyKindCalculus.UncertaintyExamples.AdequacyDag.acc_box_faithful' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in #print axioms acc_box_faithful
+/-- info: 'PropertyKindCalculus.UncertaintyExamples.AdequacyDag.prod_box_faithful' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in #print axioms prod_box_faithful
+/-- info: 'PropertyKindCalculus.UncertaintyExamples.AdequacyDag.ratio_error_bound' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in #print axioms ratio_error_bound
+/-- info: 'PropertyKindCalculus.UncertaintyExamples.AdequacyDag.doubling_box_exact' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in #print axioms doubling_box_exact
+/-- info: 'PropertyKindCalculus.UncertaintyExamples.AdequacyDag.doubling_variation_eq_four' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in #print axioms doubling_variation_eq_four
 
 end PropertyKindCalculus.UncertaintyExamples.AdequacyDag
