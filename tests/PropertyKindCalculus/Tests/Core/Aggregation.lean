@@ -209,6 +209,87 @@ def floatMean (w : Bool → Float) (v : Bool → Float) : Option Float :=
 -- and the same `NaN` total is what passed the license: `≠ 0` is true of it.
 #guard !((0.0 / 0.0 : Float) == 0.0)
 
+/-! ## The mode with its kinds on (R9 + R10)
+
+Everything above is at a bare carrier, where nothing stops a mean of a mass by a temperature, or a
+fold of a kind that does not sum. The kinded layer makes those two things unstateable rather than
+merely unwise: `WeightedCarvingQ` carries the weight kind's `DifferenceKind` as a field, and `mean`
+asks for the `ProductKind` and `QuotientKind` licenses that say the three kinds are related the way
+a mean needs them to be.
+
+The probes check three separate things: that a kinded mean can be built and computes what the
+carrier one does (inhabitation), that the erasure theorem holds on this witness rather than only in
+general, and that the kind gate discriminates — an interval-scale value kind has no product license,
+so it has no mean. -/
+
+/-- Mass — the weight kind, ratio-scale so it may be multiplied. -/
+def massK : KindOfProperty := { id := "mass", scale := .ratio }
+
+/-- Thermodynamic temperature — the value kind. Ratio-scale, unlike its Celsius sibling below. -/
+def tempK : KindOfProperty := { id := "thermodynamic temperature", scale := .ratio }
+
+/-- The product kind the numerator lands in. -/
+def massTempK : KindOfProperty := { id := "mass × thermodynamic temperature", scale := .ratio }
+
+/-- Celsius temperature — interval-scale, and so *not* a legal factor. -/
+def celsiusK : KindOfProperty := { id := "Celsius temperature", scale := .interval }
+
+/-- The author's product claim: a mass times a temperature is of the product kind. -/
+theorem massTemp_product : ProductKind massK tempK massTempK := ProductKind.ofRatio _ _ _
+
+/-- And dividing that by a mass lands back on temperature — which is what makes the result a mean
+*of the temperatures*. -/
+theorem massTemp_quotient : QuotientKind massTempK massK tempK := QuotientKind.ofRatio _ _ _
+
+/-- Masses sum. -/
+theorem massK_diff : DifferenceKind massK := DifferenceKind.ofScale
+
+/-- So do mass-temperatures, which is what the numerator's joins need. -/
+theorem massTempK_diff : DifferenceKind massTempK := DifferenceKind.ofScale
+
+/-- Masses of `1 kg` and `3 kg` over the two parts. -/
+def qWeight : Bool → Quantity massK Float := fun b => ⟨if b then 1.0 else 3.0⟩
+
+/-- Temperatures of `300 K` and `400 K`. -/
+def qValue : Bool → Quantity tempK Float := fun b => ⟨if b then 300.0 else 400.0⟩
+
+-- The kinded fold computes the total mass.
+#guard (totalWeightQ massK_diff qWeight pairParts).magnitude == 4.0
+
+/-- The carving, built through the licensed constructor. -/
+def qCarving : Option (WeightedCarvingQ Float massK Bool) :=
+  WeightedCarvingQ.mk? massK_diff pairParts qWeight
+
+#guard qCarving.isSome
+
+-- Inhabitation: the mass-weighted mean temperature is `(1·300 + 3·400)/4 = 375`, and the weights
+-- are load-bearing — the unweighted average of the same two readings is `350`.
+#guard (qCarving.map fun c =>
+  (c.mean massTemp_product massTemp_quotient massTempK_diff qValue).magnitude) == some 375.0
+
+/-- **The erasure theorem on this witness.** The kinded mean's magnitude is the carrier mean of the
+same data: the kind index gates which folds may be written and contributes nothing to the value. -/
+theorem r9_kinded_mean_erases (c : WeightedCarvingQ Float massK Bool) :
+    (c.mean massTemp_product massTemp_quotient massTempK_diff qValue).magnitude
+      = c.toCarving.mean (fun p => (qValue p).magnitude) :=
+  c.mean_magnitude massTemp_product massTemp_quotient massTempK_diff qValue
+
+/-- **The gate discriminates.** Celsius is interval-scale, so `ProductKind.ofRatio` cannot sign a
+mass-by-Celsius product: there is no license, hence no numerator, hence no mean. The refusal is
+checked here rather than asserted, so a later widening of the scale gate breaks this probe. -/
+theorem r9_celsius_not_rational : ¬ celsiusK.IsRational := by
+  intro h
+  cases h
+
+/-- info: 'PropertyKindCalculus.totalWeightQ_magnitude' depends on axioms: [propext] -/
+#guard_msgs (whitespace := lax) in #print axioms totalWeightQ_magnitude
+
+/-- info: 'PropertyKindCalculus.WeightedCarvingQ.mean_magnitude' depends on axioms: [propext] -/
+#guard_msgs (whitespace := lax) in #print axioms WeightedCarvingQ.mean_magnitude
+
+/-- info: 'PropertyKindCalculus.WeightedCarvingQ.mean_div_refines' depends on axioms: [propext] -/
+#guard_msgs (whitespace := lax) in #print axioms WeightedCarvingQ.mean_div_refines
+
 /-! ## The strongest remedy: a denominator that is never rounded
 
 The license is carrier-relative — it says the total is not *this carrier's* zero — so at a

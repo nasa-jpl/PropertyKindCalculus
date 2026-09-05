@@ -167,6 +167,12 @@ attribute [requirement "R9" implements "the license established at run time rath
   WeightedCarving.mk?
 attribute [requirement "R9" proves "the run-time constructor refuses exactly the carvings whose total weight is the carrier's zero"]
   WeightedCarving.mk?_eq_none_iff
+attribute [requirement "R9" specifies "the weighted carving with its kinds on: the weight kind's additivity is a field, so a carving of a kind that does not sum cannot be built"]
+  WeightedCarvingQ
+attribute [requirement "R9" specifies "the kinded weighted mean — the product and quotient licenses say the three kinds are related the way a mean needs"]
+  WeightedCarvingQ.mean
+attribute [requirement "R9" proves "the kinded mean erases to the carrier mean, so every numerical theorem about magnitudes applies to it unchanged"]
+  WeightedCarvingQ.mean_magnitude
 
 /-! ## Representation parametricity (R10, R11) -/
 
@@ -185,6 +191,8 @@ attribute [requirement "R10" proves "the bridge crosses a licensed kind product:
   Quantity.mul_refines
 attribute [requirement "R10" proves "and a licensed kind quotient — the rung a ratio, a conversion factor, or a weighted mean's denominator rides"]
   Quantity.div_refines
+attribute [requirement "R10" proves "the quotient bridge read at a model-level site: the mean's own division node"]
+  WeightedCarvingQ.mean_div_refines
 
 attribute [requirement "R11" implements "a function-space carrier: a vector quantity is a numerical array under one scalar unit"]
   instCarrierPi

@@ -197,4 +197,159 @@ theorem licenses_agree_of_exact {E S : Type} {P : Type u} [Carrier E] [Carrier S
   · intro hS hE
     exact hS (by rw [hE]; exact CarrierRefinement.toSpec_zero)
 
+/-! ## The mode at the kind layer
+
+Everything above ranges over a bare carrier `R`. That is the right level for the numerical
+statements — the binary32 bound in `Uncertainty.Adequacy.MeanBound` is about magnitudes and nothing
+else — but it is not the level a user writes a model at, and it leaves the kind calculus with
+nothing to say about a mean. Three things are missing at the carrier layer and appear here.
+
+* **The weight kind has to be additive.** `totalWeight` folds with `Carrier.add`, which is available
+  for every carrier and asks no permission. Folding *quantities* goes through `Quantity.add`, which
+  demands a `DifferenceKind` — so `WeightedCarvingQ` carries that proof as a field, and a carving of
+  a kind that does not sum cannot be built at all.
+* **The three kinds are related, not independent.** A weight of kind `kw` times a value of kind `kv`
+  is a quantity of some third kind, and dividing that by `kw` has to land back on `kv`. Those are
+  exactly a `ProductKind` and a `QuotientKind` license, and `mean` asks for both.
+* **The mean's own division is an R10 site.** `Quantity.div_refines` says what an executable
+  quotient becomes in the spec carrier; `meanQ_refines` is that law at the mean's `div` node, which
+  is the first place in the library where a model-level construct rides the quotient bridge.
+
+The kinded layer computes nothing new: `totalWeightQ_magnitude` and `weightedSumQ_magnitude` say the
+folds erase to the carrier ones, so every numerical theorem proved down there applies up here
+unchanged. What the kind index buys is the three obligations above, discharged once at construction
+instead of trusted at each use. -/
+
+/-- The kinded weight fold. Same shape as `totalWeight`, but each join is a `Quantity.add` and so
+needs the weight kind to admit differences. -/
+def totalWeightQ {P : Type u} {R : Type} [Carrier R] {kw : KindOfProperty}
+    (hd : DifferenceKind kw) (w : P → Quantity kw R) : Decomposition P → Quantity kw R
+  | .atom p => w p
+  | .union a b => Quantity.add hd (totalWeightQ hd w a) (totalWeightQ hd w b)
+
+/-- The kinded weighted sum `Σ wᵢ·vᵢ`. Each leaf is a licensed product at `kwv`; each join is an
+addition at `kwv`, which therefore has to admit differences too. -/
+def weightedSumQ {P : Type u} {R : Type} [Carrier R] [Mul R] [ScalarCarrier R]
+    {kw kv kwv : KindOfProperty} (hp : ProductKind kw kv kwv) (hd : DifferenceKind kwv)
+    (w : P → Quantity kw R) (v : P → Quantity kv R) : Decomposition P → Quantity kwv R
+  | .atom p => Quantity.mul hp (w p) (v p)
+  | .union a b => Quantity.add hd (weightedSumQ hp hd w v a) (weightedSumQ hp hd w v b)
+
+/-- **The kinded weight fold erases to the carrier one.** The kind index is a tag: it gates which
+folds may be written, and contributes nothing to the value. -/
+theorem totalWeightQ_magnitude {P : Type u} {R : Type} [Carrier R] {kw : KindOfProperty}
+    (hd : DifferenceKind kw) (w : P → Quantity kw R) :
+    ∀ d : Decomposition P,
+      (totalWeightQ hd w d).magnitude = totalWeight (fun p => (w p).magnitude) d
+  | .atom _ => rfl
+  | .union a b => by
+      show Carrier.add (totalWeightQ hd w a).magnitude (totalWeightQ hd w b).magnitude
+        = Carrier.add _ _
+      rw [totalWeightQ_magnitude hd w a, totalWeightQ_magnitude hd w b]
+      rfl
+
+/-- **And so does the weighted sum.** -/
+theorem weightedSumQ_magnitude {P : Type u} {R : Type} [Carrier R] [Mul R] [ScalarCarrier R]
+    {kw kv kwv : KindOfProperty} (hp : ProductKind kw kv kwv) (hd : DifferenceKind kwv)
+    (w : P → Quantity kw R) (v : P → Quantity kv R) :
+    ∀ d : Decomposition P,
+      (weightedSumQ hp hd w v d).magnitude
+        = weightedSum (fun p => (w p).magnitude) (fun p => (v p).magnitude) d
+  | .atom _ => rfl
+  | .union a b => by
+      show Carrier.add (weightedSumQ hp hd w v a).magnitude (weightedSumQ hp hd w v b).magnitude
+        = Carrier.add _ _
+      rw [weightedSumQ_magnitude hp hd w v a, weightedSumQ_magnitude hp hd w v b]
+      rfl
+
+/-- **A carving whose weights are quantities of a summable kind, with a nonzero total.** The
+`differenceKind` field is the permission to fold at all; `total_ne_zero` is the license to divide,
+stated on the magnitude because that is where division can fail. -/
+structure WeightedCarvingQ (R : Type) [Carrier R] (kw : KindOfProperty) (P : Type u) where
+  /-- The carving of the whole into parts. -/
+  parts : Decomposition P
+  /-- The weight borne by each part. -/
+  weight : P → Quantity kw R
+  /-- The weight kind admits differences, so the weights may be summed. -/
+  differenceKind : DifferenceKind kw
+  /-- The total weight is nonzero — the mean's denominator is licensed. -/
+  total_ne_zero : (totalWeightQ differenceKind weight parts).magnitude ≠ Carrier.zero
+
+/-- The carving's total weight, at the weight kind. -/
+def WeightedCarvingQ.total {R : Type} {P : Type u} [Carrier R] {kw : KindOfProperty}
+    (c : WeightedCarvingQ R kw P) : Quantity kw R :=
+  totalWeightQ c.differenceKind c.weight c.parts
+
+/-- **The kinded weighted mean.** `Σ wᵢ·vᵢ` at the product kind, divided by `Σ wᵢ` at the weight
+kind, landing back at the value kind — which is what the `QuotientKind` license asserts and what
+makes the result a mean *of the values* rather than of something else. -/
+def WeightedCarvingQ.mean {R : Type} {P : Type u} [Carrier R] [Mul R] [Div R] [ScalarCarrier R]
+    {kw kv kwv : KindOfProperty} (c : WeightedCarvingQ R kw P)
+    (hp : ProductKind kw kv kwv) (hq : QuotientKind kwv kw kv) (hd : DifferenceKind kwv)
+    (v : P → Quantity kv R) : Quantity kv R :=
+  Quantity.div hq (weightedSumQ hp hd c.weight v c.parts) c.total
+
+/-- Forget the kinds: the carrier-level carving the kinded one denotes. Its license is the kinded
+one's, transported along `totalWeightQ_magnitude`. -/
+def WeightedCarvingQ.toCarving {R : Type} {P : Type u} [Carrier R] {kw : KindOfProperty}
+    (c : WeightedCarvingQ R kw P) : WeightedCarving R P :=
+  ⟨c.parts, fun p => (c.weight p).magnitude,
+    by rw [← totalWeightQ_magnitude c.differenceKind c.weight c.parts]; exact c.total_ne_zero⟩
+
+/-- **The kinded mean erases to the carrier mean.** This is the bridge that lets the binary32 bound
+of `Uncertainty.Adequacy.MeanBound`, which is stated about magnitudes, apply to a mean a user wrote
+with kinds on. -/
+theorem WeightedCarvingQ.mean_magnitude {R : Type} {P : Type u}
+    [Carrier R] [Mul R] [Div R] [ScalarCarrier R] {kw kv kwv : KindOfProperty}
+    (c : WeightedCarvingQ R kw P) (hp : ProductKind kw kv kwv) (hq : QuotientKind kwv kw kv)
+    (hd : DifferenceKind kwv) (v : P → Quantity kv R) :
+    (c.mean hp hq hd v).magnitude = c.toCarving.mean (fun p => (v p).magnitude) := by
+  show (weightedSumQ hp hd c.weight v c.parts).magnitude / (totalWeightQ _ c.weight c.parts).magnitude
+    = _
+  rw [weightedSumQ_magnitude, totalWeightQ_magnitude]
+  rfl
+
+/-- Build a kinded carving when the total is decidably nonzero, or report that it is not. -/
+def WeightedCarvingQ.mk? {R : Type} {P : Type u} [Carrier R] [DecidableEq R] {kw : KindOfProperty}
+    (hd : DifferenceKind kw) (parts : Decomposition P) (weight : P → Quantity kw R) :
+    Option (WeightedCarvingQ R kw P) :=
+  if h : (totalWeightQ hd weight parts).magnitude = Carrier.zero then none
+  else some ⟨parts, weight, hd, h⟩
+
+/-- `mk?` refuses exactly when the total weight vanishes. -/
+theorem WeightedCarvingQ.mk?_eq_none_iff {R : Type} {P : Type u} [Carrier R] [DecidableEq R]
+    {kw : KindOfProperty} (hd : DifferenceKind kw) (parts : Decomposition P)
+    (weight : P → Quantity kw R) :
+    WeightedCarvingQ.mk? hd parts weight = none
+      ↔ (totalWeightQ hd weight parts).magnitude = Carrier.zero := by
+  unfold WeightedCarvingQ.mk?
+  by_cases h : (totalWeightQ hd weight parts).magnitude = Carrier.zero <;> simp [h]
+
+/-! ### The mean's division as an R10 site
+
+`Quantity.div_refines` is the exec/spec bridge across a kind quotient. Until now nothing in the
+library divided at the kind layer, so the law had no consumer that was not a test. The kinded mean
+is one: its single `div` node is exactly a `QuotientKind kwv kw kv` site, and the theorem below is
+`div_refines` read there.
+
+What it does *not* say is that the whole mean commutes with `toSpec` — the folds above it round at
+every join, and `licenses_agree_of_exact`'s hypothesis is precisely what would be needed to push
+`toSpec` through them. The division is one step of that argument, stated where it is true
+unconditionally. -/
+
+/-- **The mean's quotient refines (R10).** Forgetting the executable mean to the spec carrier is the
+rounding of the spec quotient of the forgotten numerator and denominator — `Quantity.div_refines` at
+the mean's own division node. -/
+theorem WeightedCarvingQ.mean_div_refines {E S : Type} {P : Type u}
+    [Carrier E] [Carrier S] [Mul E] [Mul S] [Div E] [Div S] [ScalarCarrier E] [ScalarCarrier S]
+    [CarrierRefinement E S] [DivRefinement E S] {kw kv kwv : KindOfProperty}
+    (c : WeightedCarvingQ E kw P) (hp : ProductKind kw kv kwv) (hq : QuotientKind kwv kw kv)
+    (hd : DifferenceKind kwv) (v : P → Quantity kv E) :
+    (Quantity.toSpec (c.mean hp hq hd v) : Quantity kv S)
+      = Quantity.roundBy (CarrierRefinement.round (E := E))
+          (Quantity.div hq
+            (Quantity.toSpec (weightedSumQ hp hd c.weight v c.parts))
+            (Quantity.toSpec c.total)) :=
+  Quantity.div_refines hq _ _
+
 end PropertyKindCalculus

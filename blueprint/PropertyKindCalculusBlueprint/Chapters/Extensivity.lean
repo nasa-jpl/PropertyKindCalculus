@@ -410,6 +410,51 @@ validity indicators — but it is the second-best fix. Where the weights are cou
 above applies and no floating-point reasoning is needed at all.
 :::
 
+:::definition "def_weightedCarvingQ" (parent := "extensivity") (lean := "PropertyKindCalculus.WeightedCarvingQ")
+*The mode with its kinds on.* A weighted carving over a bare carrier is silent about three things a
+kind layer can say. The weight kind has to be one that sums, so `WeightedCarvingQ` carries its
+{uses "def_weightedCarving"}[carving's] difference-kind proof as a field and a carving of a
+non-summable kind cannot be built. The weight, value and product kinds have to be related, so the
+mean asks for a product license and a quotient license that say so. And the quotient the mean
+performs is a licensed kind change, not a bare division.
+:::
+
+:::theorem "thm_kinded_mean_erases" (parent := "extensivity") (lean := "PropertyKindCalculus.WeightedCarvingQ.mean_magnitude") (tags := "proved") (effort := "small")
+*The kinded mean computes what the carrier mean computes.* Its magnitude is the carrier-level mean
+of the same data. So the kind index gates which folds may be written and contributes nothing to the
+value — which is what lets the {uses "thm_mean_fp32_bound"}[binary32 bound], stated about
+magnitudes, apply unchanged to a mean a user wrote with kinds on.
+:::
+
+:::proof "thm_kinded_mean_erases"
+Two inductions over the carving, one per fold, each with the same shape: a leaf is the erasure by
+definition, and a join is `Carrier.add` on both sides once the operands have been rewritten.
+Realized in the Mathlib-free core (`Aggregation.lean`), depending on `propext` alone.
+
+The theorem is what makes the kinded layer honest about its cost. Nothing is recomputed and no
+numerical claim is restated: the three obligations above are discharged once at construction, and
+everything proved downstream about magnitudes continues to hold.
+:::
+
+:::theorem "thm_mean_div_refines" (parent := "extensivity") (lean := "PropertyKindCalculus.WeightedCarvingQ.mean_div_refines") (tags := "proved") (effort := "small")
+*The mean's division is an R10 site.* Forgetting the executable kinded mean to the specification
+carrier is the rounding of the specification quotient of the forgotten numerator and denominator —
+the quotient bridge read at the mean's own division node.
+:::
+
+:::proof "thm_mean_div_refines"
+Immediate from the quotient bridge, and that is the point: until the mean acquired kinds, the
+bridge had no consumer that was not a test of itself. A weighted mean is the first model-level
+construct in the library that divides across a licensed kind change, so it is the first place the
+law does work.
+
+What the theorem does *not* say is that the whole mean commutes with the forgetful map. The folds
+above the division round at every join, and pushing the forgetful map through them is exactly what
+{uses "thm_licenses_agree_exact"}[the exact-carrier hypothesis] supplies. The division is one step
+of that argument, stated where it holds with no side condition. Instantiated at the binary32 rung on
+an indicator-weighted carving whose license is discharged rather than assumed.
+:::
+
 # Re-carving, and what a count is keyed to
 
 A carving is not a census, and the two halves of that claim are provable. What survives a

@@ -191,6 +191,65 @@ theorem r9_mean_fp32_bound_depth2_nonneg (ρ : ℕ → FP32) :
       ≤ errBound (meanExpr wOne v2 pairParts) ρ :=
   mean_fp32_within_errBound_of_nonneg wOne v2 pairParts ρ wOne_nonneg wOne_grid wOne_pos
 
+/-! ## The same mean with its kinds on — `Quantity.div_refines` at a model-level site
+
+`WeightedCarvingQ.mean_div_refines` reads the R10 quotient bridge at the mean's own `div` node.
+Instantiated here on the indicator-weighted carving above, at the binary32 spec rung: the weights
+are lengths, the values are lengths, the numerator is an area, and dividing that by a length lands
+back on length — which is the `QuotientKind` the mean asks for. This is the first place a
+model-level construct rides `div_refines` rather than a hand-built quotient. -/
+
+/-- Length, ratio-scale. -/
+def lengthK : KindOfProperty := { id := "length", scale := .ratio }
+
+/-- Area — the kind the numerator lands in. -/
+def areaK : KindOfProperty := { id := "area", scale := .ratio }
+
+theorem prodLen : ProductKind lengthK lengthK areaK := .ofRatio _ _ _
+theorem quotArea : QuotientKind areaK lengthK lengthK := .ofRatio _ _ _
+theorem diffLen : DifferenceKind lengthK := DifferenceKind.ofScale
+theorem diffArea : DifferenceKind areaK := DifferenceKind.ofScale
+
+/-- The indicator weights, with the kind on. -/
+noncomputable def qwOne : Bool → Quantity lengthK FP32 := fun p => ⟨wOne p⟩
+
+/-- The values, with the kind on. -/
+noncomputable def qv2 : Bool → Quantity lengthK FP32 := fun p => ⟨v2 p⟩
+
+/-- The kinded total is the carrier total — the erasure theorem, at this witness. -/
+theorem qwOne_total :
+    (totalWeightQ diffLen qwOne pairParts).magnitude = totalWeight wOne pairParts :=
+  totalWeightQ_magnitude diffLen qwOne pairParts
+
+/-- **The kinded carving exists**, with its license discharged rather than assumed: the exact total
+is `2`, positivity carries that to the rounded total, and the erasure theorem transports it to the
+kinded field. -/
+noncomputable def qCarving : WeightedCarvingQ FP32 lengthK Bool where
+  parts := pairParts
+  weight := qwOne
+  differenceKind := diffLen
+  total_ne_zero := by
+    rw [qwOne_total]
+    exact fp32_ne_zero_of_val
+      (totalWeight_fp32_pos wOne wOne_nonneg wOne_grid pairParts wOne_pos).ne'
+
+/-- **R10 at the mean's division.** Forgetting the binary32 mean to `ℝ` is the rounding of the real
+quotient of the forgotten numerator and denominator. -/
+theorem r10_mean_div_refines :
+    (Quantity.toSpec (qCarving.mean prodLen quotArea diffArea qv2) : Quantity lengthK ℝ)
+      = Quantity.roundBy (CarrierRefinement.round (E := FP32))
+          (Quantity.div quotArea
+            (Quantity.toSpec (weightedSumQ prodLen diffArea qCarving.weight qv2 qCarving.parts))
+            (Quantity.toSpec qCarving.total)) :=
+  qCarving.mean_div_refines prodLen quotArea diffArea qv2
+
+/-- And the kinded mean erases to the carrier mean of the same data, so the binary32 bound above
+applies to it unchanged. -/
+theorem r10_kinded_mean_erases :
+    (qCarving.mean prodLen quotArea diffArea qv2).magnitude
+      = qCarving.toCarving.mean (fun p => (qv2 p).magnitude) :=
+  qCarving.mean_magnitude prodLen quotArea diffArea qv2
+
 -- and the equivalence itself, at that carving: the executable license is now a consequence.
 theorem r9_licenses_agree_nonneg :
     (totalWeight wOne pairParts).val ≠ 0
