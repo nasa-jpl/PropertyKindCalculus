@@ -103,6 +103,24 @@ jobs:
           lake exe cache get
           lake build Dimension Uncertainty UncertaintyRigor Torch ForMathlib Graph
           lake build Tests
+          lake build UncertaintyBatch ssprc_batched_parity mcm_batched_parity
+
+      # -------------------------------------------------------
+      # Phase 1c: Run the Stage-4 batched-propagator parity harnesses
+      # -------------------------------------------------------
+      - name: Run the batched CudaT parity harnesses
+        run: |
+          # `CudaT`'s device ops are @[extern] FFI with no interpreter fallback, so a batched
+          # result cannot be `#guard`ed at build the way every other numeric claim in this
+          # package is — `lake build` typechecks `UncertaintyBatch` and links these executables,
+          # but never runs them. A harness nobody runs is not a gate, so CI runs them here.
+          #
+          # Each links the native code and asserts parity with its scalar reference, exiting 1 on
+          # mismatch. The default build uses the portable CPU stub (float32, no GPU), so what is
+          # gated is the batching structure — sample layout, reduction, moment arithmetic — not
+          # the device path, which is a different artifact with its own verification story.
+          lake exe ssprc_batched_parity
+          lake exe mcm_batched_parity
 
       # -------------------------------------------------------
       # Phase 2: Build + render the Verso design blueprint

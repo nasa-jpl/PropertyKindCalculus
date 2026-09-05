@@ -57,7 +57,7 @@ package «PropertyKindCalculus» where
   -- The package version — the single source of truth. `scripts/bump-version.sh`
   -- reads and bumps it here, and the blueprint reads this same line at build time
   -- (its `{version}[]` role) so the published document never drifts from the source.
-  version := v!"0.98.0"
+  version := v!"0.99.0"
   leanOptions := #[
     ⟨`autoImplicit, false⟩,
     ⟨`relaxedAutoImplicit, false⟩]
@@ -341,7 +341,8 @@ result is *run* — and checked against the scalar reference — only by the `ss
 executable below. Build with `lake build UncertaintyBatch`. -/
 lean_lib «UncertaintyBatch» where
   srcDir := "uncertainty"
-  globs := #[.one `PropertyKindCalculus.Uncertainty.SsprcBatched]
+  globs := #[.one `PropertyKindCalculus.Uncertainty.SsprcBatched,
+             .one `PropertyKindCalculus.Uncertainty.McmBatched]
 
 /-- **Stage-4 parity harness** (the one executable this package produces). `CudaT`'s device ops are
 `@[extern]` FFI with no interpreter fallback, and the TorchLean dependency graph cannot be
@@ -354,6 +355,16 @@ device. Exits `0` on parity, `1` on mismatch. -/
 lean_exe «ssprc_batched_parity» where
   srcDir := "apps"
   root := `PropertyKindCalculus.Apps.SsprcBatchedParity
+
+/-- **Stage-4 parity harness for the batched Monte Carlo propagator.** Same arrangement and same
+reason as `ssprc_batched_parity` above: `CudaT`'s numbers cannot be `#guard`ed at build, so a
+compiled executable links the native code and asserts parity with the scalar `Mcm.run`. Both sides
+consume the *same* PRNG draws — `McmBatched.sampleColumns` reproduces the scalar loop's interleaved
+order — so the comparison catches a structural bug rather than merely agreeing to within sampling
+noise. Run with `lake exe mcm_batched_parity`; exits `0` on parity, `1` on mismatch. -/
+lean_exe «mcm_batched_parity» where
+  srcDir := "apps"
+  root := `PropertyKindCalculus.Apps.McmBatchedParity
 
 /-- Worked uncertainty examples grounded in the two source papers (Degenhardt 2025 fictive
 example; Willink 2005 gauge-block), in the `examples/` source tree as a **separate library** so

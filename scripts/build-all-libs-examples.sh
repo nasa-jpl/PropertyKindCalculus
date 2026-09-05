@@ -21,9 +21,11 @@
 #
 # WHAT "BUILT" MEANS PER TARGET — three caveats the green tick does not carry:
 #   * `UncertaintyBatch` is only TYPECHECKED: its `CudaT` device ops are `@[extern]` FFI with
-#     no interpreter fallback. A batched result is *run* only by the `ssprc_batched_parity`
-#     executable — which this script LINKS (a build check that catches missing symbols) but
-#     does not execute. Run it separately: `lake exe ssprc_batched_parity`.
+#     no interpreter fallback. A batched result is *run* only by the parity executables —
+#     which this script LINKS (a build check that catches missing symbols) but does not
+#     execute. CI runs them; locally, run them separately:
+#       lake exe ssprc_batched_parity   # batched SSPRC vs the scalar Ssprc.run
+#       lake exe mcm_batched_parity     # batched MCM   vs the scalar Mcm.run
 #   * The default build uses the portable CPU stub for the batch carrier. A `-K cuda=true`
 #     container build is a different artifact with its own verification story (see the memory
 #     notes on stub linking); nothing here checks the device path.

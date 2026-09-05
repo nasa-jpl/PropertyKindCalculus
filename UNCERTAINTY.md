@@ -1,6 +1,6 @@
 # UNCERTAINTY.md — A rigor-first plan for uncertainty & numerical adequacy in PKC
 
-> Status: **Stages 0–3.9 implemented & CI-checked** (reference layer, GUM/Willink, autograd `cᵢ`,
+> Status: **Stages 0–4 implemented & CI-checked** (reference layer, GUM/Willink, autograd `cᵢ`,
 > the ladder theorems T1–T5, the executable SSPRC pipeline, the numerical-adequacy layer — the
 > executable `Adequacy` carrier plus the theorems A1 absorption, A2 Sterbenz, A3 verdict soundness
 > over `ℝ` — the **universal capstone A3′** (`DagBound`: FP32 measurand ≈ `ℝ` over an input box up
@@ -72,7 +72,7 @@ built tape).
 | 3.7 | The weighted mean at binary32 — the aggregation mode that divides (`MeanBound`) | ✅ |
 | 3.8 | Flag-freedom relocated to the exact evaluation (`ExactRepresentable`) and its regime exhibited | ✅ |
 | 3.9 | §7's `CarrierRefinement` consolidation decided and its meeting point checked (`RefinementBridge`) | ✅ |
-| **4** | **Scale — GPU SSPRC/MCM on `CudaT`, `Nᵢ` allocation, science-model capstone** | **◐ in progress** — batched SSPRC propagator landed (`SsprcBatched` + `ssprc_batched_parity` exe); sensitivity-driven `Nᵢ` allocation landed (`Allocation` + `DegenhardtAllocation` example, `#guard`-checked); science-model capstone landed (`WaterCloudModel` — one WO1 Water-Cloud-Model forward through the whole pipeline, `#guard`-checked); batched MCM remains |
+| 4 | Scale — GPU SSPRC/MCM on `CudaT`, `Nᵢ` allocation, science-model capstone | ✅ — batched SSPRC (`SsprcBatched` + `ssprc_batched_parity` exe) and batched MCM (`McmBatched` + `mcm_batched_parity` exe), both gated by CI; sensitivity-driven `Nᵢ` allocation (`Allocation` + `DegenhardtAllocation` example, `#guard`-checked); science-model capstone (`WaterCloudModel` — one WO1 Water-Cloud-Model forward through the whole pipeline, `#guard`-checked) |
 
 **Residuals / loose threads** (from the four honest residuals scoped after Stage 3.6):
 
@@ -86,14 +86,17 @@ built tape).
 
 **What to pick up next** (rough priority):
 
-1. **Stage 4 — Scale (in progress).** Three slices landed: the batched SSPRC propagator on `CudaT`
-   (`SsprcBatched.run`, checked by the `ssprc_batched_parity` executable — a build-time `#guard` of a
-   `CudaT` result is impossible here; see the Stage-4 note in §6), the sensitivity-driven **`Nᵢ`
-   allocation** (`Allocation.allocate`, a pure `List Nat` that ranks inputs by `|cᵢ|·uᵢ` and
-   largest-remainder-splits the budget; `#guard`-checked in `DegenhardtAllocation`), and the
-   soil-moisture **science-model capstone** (`WaterCloudModel` — one write-once Water-Cloud-Model
-   forward driven through the Float forward, the autograd Jacobian, GUM/Willink, SSPRC, and the
-   allocation; `#guard`-checked). Next within Stage 4: batched **MCM**.
+1. **Stage 4 — Scale. ✅ CLOSED.** Both batched propagators are on `CudaT` and both are gated:
+   `SsprcBatched.run` (one launch per input, because SSPRC's construction is per-input) and
+   `McmBatched.run` (one launch for the whole propagation, because MCM samples the joint directly).
+   A build-time `#guard` of a `CudaT` result is impossible here — see the Stage-4 note in §6 — so
+   each is checked by a compiled executable that links the native code and asserts parity with its
+   scalar reference, and CI now runs both rather than leaving them to be run by hand. The remaining
+   two slices landed earlier: the sensitivity-driven **`Nᵢ` allocation** (`Allocation.allocate`, a
+   pure `List Nat` that ranks inputs by `|cᵢ|·uᵢ` and largest-remainder-splits the budget;
+   `#guard`-checked in `DegenhardtAllocation`), and the soil-moisture **science-model capstone**
+   (`WaterCloudModel` — one write-once Water-Cloud-Model forward driven through the Float forward,
+   the autograd Jacobian, GUM/Willink, SSPRC, and the allocation; `#guard`-checked).
 2. **TorchLean PR — the generic `TapeM` reduction layer** (residual #1's recorded follow-up):
    ✅ **written and verified**, awaiting a human to push and post it (AI-POLICY §3.1). Branch
    `tapem-run-lemmas` off `upstream/main` in the TorchLean checkout, purely additive (+501/−0):
@@ -662,7 +665,13 @@ uncertainty/PropertyKindCalculus/Uncertainty/
                            contributions → drop negligible inputs (`dropRatio`) → largest-remainder split of the
                            budget (`Σ Nᵢ = total` exactly) → a pure `List Nat` feeding `Ssprc`/`SsprcBatched` `ns`.
                            `#guard`-checked (unlike CudaT) in `DegenhardtAllocation`
-  SsprcBatched.lean        ◐ batched SSPRC propagator (Stage 4, TorchLean `CudaT`): runs the WO1 kernel at
+  McmBatched.lean          ✅ batched Monte Carlo propagator (Stage 4, TorchLean `CudaT`): all `n` joint
+                           draws in ONE launch — MCM samples the joint directly, so unlike SSPRC there is
+                           nothing to hold fixed and nothing to iterate over. `sampleColumns` reproduces
+                           `Mcm.run`'s interleaved PRNG order, so the parity harness compares two
+                           evaluations of one experiment rather than two experiments. Verified by the
+                           `apps/` exe `mcm_batched_parity`, which CI runs
+  SsprcBatched.lean        ✅ batched SSPRC propagator (Stage 4, TorchLean `CudaT`): runs the WO1 kernel at
                            `CudaT (Shape.dim Nᵢ .scalar)` — input i's Nᵢ systematic samples as one batch
                            tensor, one launch per input (a GPU kernel per op under `-K cuda`, the portable CPU
                            float32 stub otherwise), `E(Aᵢ)`/`Var(Aᵢ)` via `Buffer.reduceMean`; `E(Y)`/`u(Y)`
