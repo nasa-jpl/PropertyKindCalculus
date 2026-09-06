@@ -49,6 +49,7 @@ Depends on TorchLean (the autograd column of rung 2).
 -/
 import PropertyKindCalculus.Uncertainty
 import PropertyKindCalculus.Uncertainty.Sensitivity
+import PropertyKindCalculus.Index.Commands
 import PropertyKindCalculus.DocGenMath
 
 namespace PropertyKindCalculus.UncertaintyExamples.WaterCloudModel
@@ -357,5 +358,80 @@ def ssprc150 : Float × Float := Ssprc.run modelF inputs ns150
 #guard Float.abs (ssprc150.2 - ssprc.2) < 1e-4
 -- …at 151 evaluations — half the flat 301, and ~132× fewer than the Monte Carlo reference.
 #guard Ssprc.evalCount ns150 == 151
+
+/-! ## Rung 6 — the budget at the boundary
+
+The join of the uncertainty stack and the `Provenance` stack: the forward's boundary is
+declared, and the rung-5 contributions attach to its output port as a `PortBudget` —
+one term per influencing *source*, checked by `#kind_budget` against the assembled
+graph. The report carries the metrology in both directions: the three uncertain inputs
+are the terms and their quadrature is the GUM `u_c` of rung 3, and the four calibration
+parameters render as `unbudgeted source(s)` — the WCM calibration is carried without
+an uncertainty, and the boundary now says so instead of leaving it implicit. -/
+
+/-- The forward's declared boundary: the three uncertain inputs, the four calibration
+parameters a deployment binds, and the σ⁰ output. -/
+def wcmBoundary : Provenance.Contract String String where
+  name := "WCM forward (σ⁰)"
+  members := ["PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.wcmForwardQ"]
+  ports := [
+    ⟨"wcmForwardQ/cfg.a", "vegGain", .param⟩,
+    ⟨"wcmForwardQ/cfg.c", "soilGain", .param⟩,
+    ⟨"wcmForwardQ/cfg.d", "backscatter", .param⟩,
+    ⟨"wcmForwardQ/cfg.two", "pureNumber", .param⟩,
+    ⟨"wcmForwardQ/mv", "soilMoisture", .input⟩,
+    ⟨"wcmForwardQ/ndvi", "vegetationIndex", .input⟩,
+    ⟨"wcmForwardQ/b", "attenRate", .input⟩,
+    ⟨"wcmForwardQ/result", "backscatter", .output⟩]
+  exits := []
+
+/--
+info: kind contract over 1 steps:
+contract 'WCM forward (σ⁰)': 8 ports, 0 exits
+params: wcmForwardQ/cfg.a, wcmForwardQ/cfg.c, wcmForwardQ/cfg.d, wcmForwardQ/cfg.two
+boundary agrees: true
+-/
+#guard_msgs in #kind_contract wcmBoundary
+
+/-- **The σ⁰ budget-per-output-port**: one term per uncertain input, each the
+output-kind contribution `|cᵢ|·u(xᵢ)` of rung 5, attached to the boundary's output.
+The combined line is the quadrature of the terms — the GUM `u_c` of rung 3, recomputed
+at the boundary rather than copied to it. -/
+def sigma0Budget : PortBudget :=
+  { port := "wcmForwardQ/result", kind := "backscatter",
+    terms := [("wcmForwardQ/mv", ws[0]!), ("wcmForwardQ/ndvi", ws[1]!),
+              ("wcmForwardQ/b", ws[2]!)] }
+
+/--
+info: budget for 'wcmForwardQ/result' : backscatter on 'WCM forward (σ⁰)': 3 term(s) over 7 influencing source(s)
+  term wcmForwardQ/mv: 0.002582
+  term wcmForwardQ/ndvi: 0.001189
+  term wcmForwardQ/b: 0.000158
+  combined: 0.002847
+  unbudgeted source(s): wcmForwardQ/cfg.a, wcmForwardQ/cfg.c, wcmForwardQ/cfg.d, wcmForwardQ/cfg.two
+-/
+#guard_msgs (whitespace := lax) in #kind_budget sigma0Budget wcmBoundary
+
+-- The self-index renders the attachment: one row, port and kind and terms and combined.
+/--
+info: Uncertainty budgets at the boundary (1 row(s))
+Budget | Port | Kind | Terms | Combined
+sigma0Budget | wcmForwardQ/result | backscatter | 3 | 0.002847
+-/
+#guard_msgs (whitespace := lax) in
+#pkc_index "port-budgets" PropertyKindCalculus.UncertaintyExamples
+
+-- The attachment's quadrature is rung 3's GUM combine — same terms, same number.
+#guard Float.abs (sigma0Budget.combined - gum) < 1e-12
+
+/-- **The coverage tolerance the budget licenses**: `k = 2` times the combined standard
+uncertainty, a `Quantity` at the output port's kind — exactly what a `boundedBy`
+relation names as its tolerance. Distribution-free, the factor buys at least
+`1 − 1/k² = 75 %` coverage (`Coverage.coverageBound_stdUnc`); under the Gaussian
+reading it is the usual 95 %. -/
+def sigma0CoverageTol : Quantity backscatter Float := ⟨2.0 * sigma0Budget.combined⟩
+
+-- The tolerance is a real, positive backscatter quantity.
+#guard sigma0CoverageTol.magnitude > 0.0
 
 end PropertyKindCalculus.UncertaintyExamples.WaterCloudModel

@@ -7,6 +7,7 @@ import PropertyKindCalculus.Index.Ontology
 import PropertyKindCalculus.Index.Structures
 import PropertyKindCalculus.Index.Annotations
 import PropertyKindCalculus.Index.Relations
+import PropertyKindCalculus.Index.Budgets
 
 /-!
 # `#pkc_index` — the index from the InfoView, and the table dispatcher documents call
@@ -62,6 +63,7 @@ def tableById (id : String) (scope : Scope := #[]) : MetaM IndexTable := withHar
   | "records"              => recordsTable scope
   | "operations"           => operationsTable scope
   | "relations"            => relationsTable scope
+  | "port-budgets"         => portBudgetsTable scope
   | other => throwError "unknown index table '{other}'; available: {tableIds}"
 where
   /-- The table identifiers, for the error message and for documents that enumerate them. -/
@@ -69,7 +71,8 @@ where
     String.intercalate ", "
       ["annotations", "commands", "crossings", "carriers", "pkc-math", "pkc-math-symbol",
        "pkc-math-config", "pkc-math-transparent", "kinds", "sorts", "systems", "components",
-       "dedicated-kinds", "examinations", "records", "operations", "relations"]
+       "dedicated-kinds", "examinations", "records", "operations", "relations",
+       "port-budgets"]
 
 /-! ## Plain-text rendering, for the InfoView and for pinned probes -/
 

@@ -50,6 +50,7 @@ import PropertyKindCalculus.Uncertainty.InputDist
 import PropertyKindCalculus.Uncertainty.UncertainQuantity
 import PropertyKindCalculus.Uncertainty.Mcm
 import PropertyKindCalculus.Uncertainty.Combine
+import PropertyKindCalculus.Uncertainty.BoundaryBudget
 import PropertyKindCalculus.Uncertainty.Evidence
 import PropertyKindCalculus.Uncertainty.Conformity
 import PropertyKindCalculus.Uncertainty.Ssprc

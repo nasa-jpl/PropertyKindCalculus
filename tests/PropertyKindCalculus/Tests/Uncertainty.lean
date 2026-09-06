@@ -13,3 +13,4 @@ import PropertyKindCalculus.Tests.Uncertainty.Evidence
 import PropertyKindCalculus.Tests.Uncertainty.Roles
 import PropertyKindCalculus.Tests.Uncertainty.Serialization
 import PropertyKindCalculus.Tests.Uncertainty.MeanBound
+import PropertyKindCalculus.Tests.Uncertainty.BoundaryBudget
