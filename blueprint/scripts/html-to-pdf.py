@@ -317,6 +317,31 @@ def merge_html(pages: list[Path]) -> str:
         size: letter;
         margin: 2cm 1.8cm 2cm 1.8cm;
         @bottom-center { content: counter(page); font-size: 9pt; color: #666; }
+        @footnote { border-top: 0.5pt solid #999; padding-top: 6pt; margin-top: 10pt; }
+      }
+
+      /* ── Margin notes → footnotes ──
+         Verso lays its margin notes (citations included) out entirely under
+         `@media screen` and `@container` rules; WeasyPrint renders print media and
+         implements no container queries, so without the rules below each note's full
+         text flows inline, mid-sentence. WeasyPrint implements CSS-GCPM footnotes,
+         so the print form of a margin note is a numbered footnote at the bottom of
+         its page (the @footnote area above draws the separator rule). */
+      .marginalia .note { float: footnote; font-size: 9pt; line-height: 1.4; }
+      /* Footnotes bring their own call mark and marker, so the screen design's
+         CSS-counter pair (superscript mark in the text, number on the note) is
+         suppressed in print. */
+      .marginalia::after { content: none !important; }
+      .marginalia .note::before { content: none !important; }
+      .marginalia .note::footnote-call {
+        content: counter(footnote);
+        vertical-align: super;
+        font-size: 0.7em;
+        font-weight: bold;
+      }
+      .marginalia .note::footnote-marker {
+        content: counter(footnote) ". ";
+        font-weight: bold;
       }
 
       /* ── Hide web-only chrome ──

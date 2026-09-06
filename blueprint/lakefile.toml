@@ -27,6 +27,13 @@ defaultTargets = ["PropertyKindCalculusBlueprint", "blueprint-gen"]
 # pin: `soil-moisture-workflows/blueprint` names `c3b8a93c`, and
 # `soil-moisture-model/technical-reference` still names the BRANCH `v4.33.0` — so it is one
 # `lake update` away from the same break, and fixing it there is a separate edit.
+#
+# verso `main` carries the fix for the margin-note numbering bug — under `v4.33.0` every
+# margin note and its in-text mark renders as "1" (PR #977, commit `a20c785b`) — but that
+# commit's own `lean-toolchain` is v4.34.0-rc2, two bumps past this stack, so it fails the
+# precheck above and cannot be the pin. The fix is one CSS rule; it is backported as
+# `extraCss` in `PropertyKindCalculusBlueprintMain.lean`. Drop that override when this pin
+# advances past #977.
 [[require]]
 name = "verso"
 git = "https://github.com/leanprover/verso"
