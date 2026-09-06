@@ -1,9 +1,11 @@
 # MODULARITY.md — Metrological modularity: metrology modules as a library-level capability
 
-> Status: **M0, M1, M1b, M2, M3 (PKC + SMM), M4, M5 (exact half), M6 landed**
-> (PKC v0.104.0–v0.108.0 + SMM + SMW validation, 2026-09-05). Open: M2b; M5's
-> approximate `boundedBy` edges (route decision (a)/(b)/(c), Nicolas); M3's SMW
-> derivation (awaits the SMW PKC-pin bump, which M6 did not force).
+> Status: **M0, M1, M1b, M2, M3 (PKC + SMM), M4, M5, M6 landed**
+> (PKC v0.104.0–v0.108.0 + SMM + SMW validation, 2026-09-05; M5's route (a) + stretch
+> executed the same day — contraction/residual bounds proved, first `boundedBy` edge).
+> Open: M2b; the Newton/LUT *edge* forms (route (b), only if ever wanted — their
+> mathematics is proved); M3's SMW derivation (awaits the SMW PKC-pin bump, which M6
+> did not force).
 > Assessment baseline 2026-09-05.
 > Audience: PKC maintainers.
 > Scope: make "metrology module" a first-class, machine-checked construct in PKC —
@@ -588,31 +590,66 @@ changes the pin), the two new boundaries' footprints are pinned (single-cluster 
 verdicts naming their compensation — the record fields and the correctness theorem),
 and the technical reference renders the relations table (`Ch07`).
 
-**What the survey found, and the decision it forces.** The plan's well-posedness edge
-cannot be declared: `retrieval_well_posed_boxQ` concludes `∃!`, and no `RelationKind`
-has that shape — it stays a member theorem, cited from the LUT edge's claim when that
-edge lands. The four approximate `boundedBy` edges (LUT gather, 12-step Newton,
-8-sweep inversion) are blocked structurally: a witness must be a sorry-free
-`≤`-theorem mentioning members of both boundaries, the deployed members are
-`Float`-carrier (opaque to `decide`/`norm_num`), and SMM currently contains **no**
-`native_decide`. The routes, for Nicolas to pick:
-  (a) **prove** residual/contraction bounds at the `ℝ` rung (the stretch as
-      originally costed — strongest, most expensive);
-  (b) **measure inside the theorem**: `native_decide` witnesses evaluating the
-      deployed `Float` members at pinned probe points against an attested tolerance —
-      cheap and honest (the `Lean.ofReduceBool` axiom renders in every
-      `#kind_relation` pin, so the evidence tier is machine-visible), but it is the
-      first `native_decide` in SMM and therefore an axiom-profile decision;
-  (c) leave the approximate behavior at member-level prose and pins (status quo).
+**What the survey found.** The plan's well-posedness edge cannot be declared:
+`retrieval_well_posed_boxQ` concludes `∃!`, and no `RelationKind` has that shape — it
+stays a member theorem. The approximate `boundedBy` edges were blocked structurally: a
+witness must be a sorry-free `≤`-theorem mentioning members of both boundaries, and the
+deployed members are `Float`-carrier. Three routes were put to Nicolas: (a) prove
+residual/contraction bounds at the `ℝ` rung (the stretch as originally costed), (b)
+`native_decide` witnesses at pinned probes (SMM's first — an axiom-profile decision),
+(c) status quo.
+
+**Route (a) + the stretch, executed (Nicolas's decision, 2026-09-05).** The contraction
+mathematics is proved and the repository's first `boundedBy` edge is declared and
+pinned:
+
+- `kernel.fixed_point_iteration` (new): the a priori bound — `n` steps of a per-step
+  contraction from inside the ball land within `q^n · |x₀ − x*|`, ball invariance
+  derived rather than hypothesized — and the projected-Newton step as an abstract real
+  map (`projNewtonR`, `clampCQ`'s association) with its fixed-point lemma (`0/d = 0`
+  disposes of the derivative hypothesis).
+- **The sweep edge**: `retrieveReflBoundedByDielectric` (closed-form retrieval bounded
+  by the dielectric forward), witness `lossSweepQ_iterate_error_le` — proved at the
+  `ℝ` rung over the deployed `Extent.iterate` fold spelling, the fixed point identified
+  as the dielectric's *own* loss through `mixedNK` (`v·u = n·k`, half of
+  `2uv = ε″ = 2nk`), the per-sweep Lipschitz constant the **named** hypothesis
+  (`LossSweepContractsQ`; its value, measured ≤ 0.18/sweep, stays the attested part),
+  and the tolerance the measured 8-sweep end-to-end number carried as a `@[kindConst]`
+  quantity at the output kind (`sweepTruncationTolQ`, 2.1·10⁻⁸ m³/m³).
+  `#kind_relations SoilMoisture` is pinned at **three** edges; the boundary audit
+  re-blessed at 181 sites (the tolerance is a declared mint, not an anonymous one).
+- **Newton**: the fixed-iteration residual certificate is proved at the forward seam
+  (`kernel.retrieve_newton_correct`): the true inverse is a fixed point of the
+  projected step's `ℝ` map over `fresnelReflectivityCoreQ ∘ mironovEpsBranchlessQ`
+  (`rOfSmSpecR`, the `epsMixQ` pattern), and the deployed 12-step budget decays the
+  residual by `q^12` under the named per-step Lipschitz condition; axiom profile
+  pinned in `examples.retrieve_kinds_examples`. **It cannot be an edge, and the reason
+  sharpens the survey's finding**: an edge's witness must mention the deployed
+  boundary's members, and every member of `retrieveNewtonBoundary` and of the two LUT
+  boundaries is batched-/`Float`-carrier *by construction* — `BatchCarrier` owes
+  `FloatArray` marshaling, its configuration seam is `Float → C s`, and core Lean has
+  no exact `Float → ℚ` reading — so no honest `ℝ` statement can name them. Route (a)
+  is complete for boundaries whose members are carrier-generic; the Newton and LUT
+  *edges* (as opposed to their mathematics, which is now proved) would still need
+  route (b) or new carrier-generic members.
+- **LUT**: the `ℝ` residual bound is proved — `resampled_lerp_error_le`
+  (`kernel.r_lut_uniform`): the lerp value and the exact inverse share the
+  coordinate's cell, so their departure is at most the local node spacing — with its
+  kinded restatement `resampled_lerp_error_leQ` (`kernel.r_lut_kinds`) beside the
+  monotonicity capstone. This is the `ℝ` shape behind `resampleMaxErrQ`'s measured
+  certificate; the edge form is blocked as above.
 
 A relation edge per declared boundary (nine, with the solver pair): `equals`/`inverts`
 where exact, `boundedBy` with a kinded, attested tolerance where behavior is
 approximate (LUT via a `resampleMaxErrQ`-derived declaration; the 12-step Newton and
 8-sweep inversion via measured bounds, attested with harvested review reasons).
-**Stretch (decision: Nicolas):** prove fixed-iteration residual bounds (a contraction
-argument would upgrade `boundedBy` from attested to proved).
-**Gate:** `#kind_relations` over `SoilMoisture.*` is a pinned report; the technical
-reference renders the relations table.
+**Stretch — done (2026-09-05):** the fixed-iteration residual bounds are proved (the
+contraction argument, `kernel.fixed_point_iteration` + the three instantiations above);
+the `boundedBy` upgrade from attested to proved landed where the members admit an `ℝ`
+statement (the sweep edge), and the carrier constraint on the remaining two is recorded
+above.
+**Gate:** `#kind_relations` over `SoilMoisture.*` is a pinned report (three edges); the
+technical reference renders the relations table.
 
 ### M6 — Deployment-plane erasure *(SMW + SMM `contracts.lean`)*
 **Status: DONE — SMW `b1847a2` (2026-09-05), at SMW's existing pins (no PKC/SMM bump
@@ -657,14 +694,15 @@ existing compile-time `#guard` pins stay.
 | M2b | Module-valued ports (function arguments at kind signatures) | PKC → SMM | Open |
 | M3 | Extensivity clause + distribution-license theorem | PKC → SMM/SMW | **Done (PKC + SMM)** — v0.107.0 `abf11ebb` + SMM `6f98755` (2026-09-05); SMW derivation rides M6 |
 | M4 | Budget ⇄ boundary join | PKC | **Done** — v0.108.0 `5b0c4b7c` (2026-09-05) |
-| M5 | Relations across SMM's boundaries | SMM | **Exact half done** — SMM `0840ab1`: solver boundaries + `solveInvertsMatVec`, 2-edge pin, tech-ref table (2026-09-05); approximate `boundedBy` edges await the (a)/(b)/(c) route decision (Nicolas) |
+| M5 | Relations across SMM's boundaries | SMM | **Done to the ℝ rung's reach** — exact half SMM `0840ab1` (solver boundaries + `solveInvertsMatVec`); route (a) + stretch executed 2026-09-05: contraction/residual bounds proved (`fixed_point_iteration`, sweep/Newton/LUT), first `boundedBy` edge declared, 3-edge pin, tech-ref table; Newton/LUT edge forms blocked by the `Float`-carrier members (route (b) if ever wanted) |
 | M6 | Sidecar generated + validated (data-plane drift check) | SMW + SMM | **Done** — SMW `b1847a2` (2026-09-05): packers write the generated contract face, `checkSidecar` refuses the permuted tile with the diff |
 
 **Decisions owned by Nicolas:** the paradigm/file name (this doc assumes *metrological
 modularity*); the M2 nominal-port mechanism ((a) retype the argument vs (b) register the
-carrier — the plan recommends (b)); R26/R27 wording at catalogue time; the M5 stretch
-(prove vs attest iteration bounds). The M1 design decision is settled by v0.104.0 as
-recommended: the edge is string-addressed data with elaborator checks, no `Prop` field.
+carrier — the plan recommends (b)); R26/R27 wording at catalogue time. The M1 design
+decision is settled by v0.104.0 as recommended (the edge is string-addressed data with
+elaborator checks, no `Prop` field); the M5 route decision is settled as (a) + stretch,
+executed 2026-09-05.
 
 ## 8. Out of scope
 
