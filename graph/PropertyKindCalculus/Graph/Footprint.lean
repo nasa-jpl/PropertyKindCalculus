@@ -111,8 +111,7 @@ elab "#kind_footprint " c:ident nss:ident* : command => liftTermElabM do
     s!"kind footprint of '{ctr.name}': {verts.size} kind(s) in the graph; \
       {nontrivial.size} derivation cluster(s) of size ≥ 2 touched, \
       {singletons} singleton kind(s)"
-      ++ (if unresolved.isEmpty then "" else
-          s!", {unresolved.size} outside the kind graph")
+      ++ (if unresolved.isEmpty then "" else s!", {unresolved.size} unresolved")
   for (ci, vs) in nontrivial do
     let names := (vs.map fun v => kindShortName kg.kinds[v]!).qsort (· < ·)
     lines := lines.push
@@ -123,13 +122,22 @@ elab "#kind_footprint " c:ident nss:ident* : command => liftTermElabM do
       s!"  ⚠ single-cluster footprint: every resolved kind lies in cluster {rep nontrivial[0]!.1}"
   unless unresolved.isEmpty do
     lines := lines.push
-      s!"  outside the graph: {String.intercalate ", " (unresolved.qsort (· < ·)).toList}"
-  -- the same-kind port groups: swappable regardless of component separation
+      s!"  unresolved (a kind variable, an ambiguous short name, or out of scope): \
+        {String.intercalate ", " (unresolved.qsort (· < ·)).toList}"
+  -- the same-kind port groups: swappable regardless of component separation. Grouped by
+  -- *graph vertex* where the kind resolves — a kind spelled short at one port and
+  -- qualified at another is one kind, and splitting the group would hide the swap pair —
+  -- and by the authored string where it does not (kind variables group by name)
+  let canonical := fun (k : String) =>
+    match resolveKind kg k with
+    | some v => kindShortName kg.kinds[v]!
+    | none => k
   let mut groups : Array (String × Array String) := #[]
   for p in ctr.ports do
-    match groups.findIdx? (·.1 == p.kind) with
-    | some i => groups := groups.set! i (p.kind, groups[i]!.2.push s!"{p.node} ({p.dir.label})")
-    | none => groups := groups.push (p.kind, #[s!"{p.node} ({p.dir.label})"])
+    let key := canonical p.kind
+    match groups.findIdx? (·.1 == key) with
+    | some i => groups := groups.set! i (key, groups[i]!.2.push s!"{p.node} ({p.dir.label})")
+    | none => groups := groups.push (key, #[s!"{p.node} ({p.dir.label})"])
   let sharedGroups := (groups.filter (·.2.size ≥ 2)).qsort fun x y => x.1 < y.1
   lines := lines.push s!"same-kind ports — {sharedGroups.size} group(s):"
   for (k, ns) in sharedGroups do
