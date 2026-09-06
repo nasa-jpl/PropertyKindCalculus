@@ -316,13 +316,14 @@ says, so the test reduces at reducible transparency before looking. A **containe
 kinded values carries what its elements carry — `List (Sample R)` is a plural of a
 kinded thing, not naked data — so a type argument is searched like the type itself.
 
-Neither position becomes a *port*: a function is not a quantity and a list has no fixed
-arity, so there is no field path to name. That is the third verdict the reading already
-had a name for — carries kinds, is not an interface node — and the point of the fix is
-that these two reach it instead of being called naked. Over-reporting the debt is the
-safe direction and still the wrong answer: a ledger that counts a function over
-quantities as unkinded data cannot be driven to zero, because there is nothing there
-to fix. -/
+The two then part ways. A **function over quantities ports at its kind signature** —
+the arrow is an anonymous contract of input kinds and an output kind, so the harvest
+reads the binder as a module-valued port (`alphaK → betaK` below), however an
+abbreviation spells it. A **list** stays the verdict the reading already had a name
+for — carries kinds, is not an interface node: a list has no fixed arity, so there is
+no field path to name, and calling it naked over-reports the debt: a ledger that
+counts a plural of quantities as unkinded data cannot be driven to zero, because
+there is nothing there to fix. -/
 
 /-- An abbreviation for a function over quantities — what a threaded model argument
 looks like at a call boundary. -/
@@ -340,6 +341,7 @@ def foldSamples (f : Scaling Nat) (xs : List (Sample Nat)) (n : Nat) : Quantity 
 
 /--
 info: kind ports of 'PropertyKindCalculus.Tests.KindIncidence.foldSamples':
+input f : alphaK → betaK
 output result : deltaK
 unkinded input n : Nat
 -/
@@ -1573,6 +1575,103 @@ def aggregationSortalDangles : Provenance.Contract String String :=
 error: the aggregation class for 'halvedInDomain/result.some' names 'PropertyKindCalculus.Tests.KindIncidence.noSuchSortal', which is not a declaration
 -/
 #guard_msgs in #kind_contract aggregationSortalDangles
+
+/-! ### The module-valued port — a functional argument ports at its kind signature
+
+A kind-typed arrow is an anonymous contract — input kinds, an output kind — so the
+harvest reads a functional binder as a port whose kind is that signature, joined with
+`→`. The `suppliers` clause then declares which module a tier binds to it, checked
+against the supplier's own type: the checks are the clause's hygiene — a supplier
+governs a signature port, names a declaration, and that declaration's own signature is
+the declared one. Whether two suppliers of one signature agree on *values* is a
+`Relation` edge's theorem, not a port list's. -/
+
+/-- A step that consumes a module: the map is a functional argument at a kind
+signature, so it ports at that signature — the module-valued port. -/
+def halvedThrough (f : Quantity alphaK Nat → Quantity epsilonK Nat)
+    (q : Quantity alphaK Nat) : Quantity epsilonK Nat :=
+  f q
+
+/--
+info: kind ports of 'PropertyKindCalculus.Tests.KindIncidence.halvedThrough':
+input f : alphaK → epsilonK
+input q : alphaK
+output result : epsilonK
+-/
+#guard_msgs in #kind_ports halvedThrough
+
+/-- The consuming step's boundary, with the module bound by name: `halved` supplies
+the `alphaK → epsilonK` signature. -/
+def halvedThroughBoundary : Provenance.Contract String String where
+  name := "halvedThrough"
+  members := ["PropertyKindCalculus.Tests.KindIncidence.halvedThrough"]
+  ports := [
+    ⟨"halvedThrough/f", "alphaK → epsilonK", .param⟩,
+    ⟨"halvedThrough/q", "alphaK", .input⟩,
+    ⟨"halvedThrough/result", "epsilonK", .output⟩]
+  exits := []
+  suppliers := [("halvedThrough/f", "PropertyKindCalculus.Tests.KindIncidence.halved")]
+
+/--
+info: kind contract over 1 steps:
+contract 'halvedThrough': 3 ports, 0 exits
+params: halvedThrough/f
+supplies halvedThrough/f: PropertyKindCalculus.Tests.KindIncidence.halved
+boundary agrees: true
+-/
+#guard_msgs in #kind_contract halvedThroughBoundary
+
+/-- A supplier hung on a single-kind port: a value is not a module. -/
+def supplierOnAValue : Provenance.Contract String String :=
+  { halvedThroughBoundary with
+    name := "halvedThrough (supplier misplaced)"
+    suppliers := [("halvedThrough/q", "PropertyKindCalculus.Tests.KindIncidence.halved")] }
+
+/--
+error: the supplier for 'halvedThrough/q' names a port at kind 'alphaK' — only a module-valued port (a signature kind, joined with '→') takes a supplier
+-/
+#guard_msgs in #kind_contract supplierOnAValue
+
+/-- A supplier that names no declaration. -/
+def supplierDangles : Provenance.Contract String String :=
+  { halvedThroughBoundary with
+    name := "halvedThrough (supplier dangles)"
+    suppliers := [("halvedThrough/f",
+                   "PropertyKindCalculus.Tests.KindIncidence.noSuchSupplier")] }
+
+/--
+error: the supplier 'PropertyKindCalculus.Tests.KindIncidence.noSuchSupplier' for 'halvedThrough/f' is not a declaration
+-/
+#guard_msgs in #kind_contract supplierDangles
+
+/-- A supplier that is not a function over quantities — the domain predicate, whose
+codomain is a `Prop`. -/
+def supplierNotAModule : Provenance.Contract String String :=
+  { halvedThroughBoundary with
+    name := "halvedThrough (supplier not a module)"
+    suppliers := [("halvedThrough/f",
+                   "PropertyKindCalculus.Tests.KindIncidence.halvedDomain")] }
+
+/--
+error: the supplier 'PropertyKindCalculus.Tests.KindIncidence.halvedDomain' for 'halvedThrough/f' states no kind signature — its explicit arguments are not a function over kinded quantities
+-/
+#guard_msgs in #kind_contract supplierNotAModule
+
+/-- A supplier of the wrong signature: same-kind identity where the port maps between
+kinds. -/
+def epsPass (q : Quantity epsilonK Nat) : Quantity epsilonK Nat := q
+
+/-- The boundary with a re-typing binding declared. -/
+def supplierWrongSignature : Provenance.Contract String String :=
+  { halvedThroughBoundary with
+    name := "halvedThrough (supplier at the wrong signature)"
+    suppliers := [("halvedThrough/f",
+                   "PropertyKindCalculus.Tests.KindIncidence.epsPass")] }
+
+/--
+error: the supplier 'PropertyKindCalculus.Tests.KindIncidence.epsPass' for 'halvedThrough/f' states the signature 'epsilonK → epsilonK', which is not the port's 'alphaK → epsilonK' — binding a module of a different signature re-types the argument
+-/
+#guard_msgs in #kind_contract supplierWrongSignature
 
 /-! ### Re-expression — a conversion that stays inside the calculus
 

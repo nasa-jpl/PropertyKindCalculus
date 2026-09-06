@@ -110,6 +110,18 @@ derived from it (`Recarving.distribution_license`) instead of assumed. Like an
 tolerance is a kinded quantity), and the mereology layer's theorems are what the
 claim buys or costs.
 
+A **functional argument ports at its kind signature** — a *module-valued port*. A
+kind-typed arrow (`Quantity k₁ α → … → Quantity k α`, however an abbreviation spells
+it) is already an anonymous contract — input kinds, an output kind — so the harvest
+reads the binder as a port whose kind is that signature, rendered with `→` between
+the components. This is the one port class whose payload is a contract rather than a
+kind, and it is what closes the paradigm under abstraction: modules may be parameters
+of modules. The contract's `suppliers` field then declares the binding — for a
+signature port this tier answers, the *name* of the module bound to it — checked
+against the supplier's own declared type, so which module a deployment bound is
+interface data rather than a call-site habit, and two suppliers of one signature can
+be related by a `Relation` edge instead of folklore.
+
 `Contract.discharges` is that ladder, and it is a relation between two *declarations*
 rather than between a declaration and a graph — no harvest, so a deployment can state
 what it did with an algorithm's parameters with the algorithm's contract merely imported.
@@ -488,6 +500,14 @@ structure Provenance.Contract (ν κ : Type) where
   produced port with no entry makes no distribution claim — and the license to shard
   it is then nobody's to derive. -/
   aggregations : List (ν × Provenance.AggregationClass) := []
+  /-- The suppliers of the module-valued ports: for a port whose kind is a *signature*
+  (the `→`-joined port form of a functional argument), the name of the module this
+  tier binds to it. One entry per supplied port, checked by `#kind_contract` to govern
+  a signature port and to name an existing declaration whose own kind signature is the
+  declared one — so *which* module a deployment bound is declared and checked, not
+  implicit in a call site. A signature port with no entry remains a parameter: which
+  module answers it is then the tier below's to declare. -/
+  suppliers : List (ν × String) := []
 deriving Repr, Inhabited, BEq
 
 namespace Provenance

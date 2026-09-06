@@ -306,6 +306,45 @@ def carrierKind? (env : Environment) (carriers : Array Name) (ctx : BinderCtx)
   let ks ← kindIdxs.mapM fun i => renderKindArg ctx args[i]!
   return some (String.intercalate ", " ks.toList)
 
+/-- The kind signature a function-over-quantities type states, or `none`: a
+non-dependent arrow chain whose every domain and result are carrier-kinded reads as
+`k₁ → … → k` — an anonymous contract of input kinds and an output kind, the port form
+of a functional argument (a **module-valued port**; `Provenance.Contract`, the
+`suppliers` clause). The test reduces at reducible transparency first, so a signature
+that names an abbreviation says what the abbreviation says — `AttenQ α` is
+`Quantity paramB α → Quantity vegetationIndex α → Quantity vegetationAttenuation α`
+however the binder spells it. A dependent arrow, or a domain the kind vocabulary does
+not cover, is no signature — the position then falls to the kind-bearing verdict, as
+any non-portable position does. -/
+partial def signatureKind? (env : Environment) (carriers : Array Name)
+    (ctx : BinderCtx) (ty : Expr) (acc : Array String := #[]) : MetaM (Option String) := do
+  let ty ← Meta.whnfR ty.consumeTypeAnnotations
+  match ty with
+  | .forallE _ dom body _ =>
+    if body.hasLooseBVars then return none
+    let some k ← carrierKind? env carriers ctx dom | return none
+    signatureKind? env carriers ctx body (acc.push k)
+  | _ =>
+    if acc.isEmpty then return none
+    let some k ← carrierKind? env carriers ctx ty | return none
+    return some (String.intercalate " → " (acc.push k).toList)
+
+/-- The kind signature a *supplier* declaration states: its leading implicit and
+instance binders — the carrier and its instances — filled with metavariables, the
+remaining explicit spine read exactly as the harvest reads a functional binder
+(`signatureKind?`). `none` where that spine is not a function over carrier-kinded
+values. -/
+partial def supplierSignature? (env : Environment) (carriers : Array Name)
+    (ty : Expr) : MetaM (Option String) := do
+  let ty ← Meta.whnfR ty
+  match ty with
+  | .forallE _ dom body bi =>
+    if bi.isExplicit then
+      signatureKind? env carriers [] ty
+    else
+      supplierSignature? env carriers (body.instantiate1 (← Meta.mkFreshExprMVar dom))
+  | _ => return none
+
 /-- **The carrier field paths of a container type** — the ports a record-carried
 quantity contributes. A type that is not itself carrier-headed but is a
 single-constructor structure states its kinds through its fields: an `IccQ k R` states
@@ -392,9 +431,10 @@ vocabulary itself, mentioned anywhere in the expression, or (fuel-bounded) in th
 fields of the single-constructor inductive at its head, or in one of its own type
 arguments? The negative answer classifies a signature position as *unkinded* (module
 header, "Unkinded positions"): naked data, red in every report. The positive answer
-without a carrier field path (`carrierPaths`) is a kind-bearing position that ports
-nothing — a sum over quantities, a function returning them: not naked data, and not an
-interface node either.
+without a carrier field path (`carrierPaths`) or a kind signature (`signatureKind?` —
+a function over quantities ports at its arrow of kinds, the module-valued port) is a
+kind-bearing position that ports nothing — a sum over quantities, a dependent or
+partially-kinded function: not naked data, and not an interface node either.
 
 Three ways a type says it, because an abbreviation and a plural are not naked data:
 
@@ -1525,6 +1565,12 @@ def stepGraphOf (decl : Name) (subSteps : Array Name := #[]) : MetaM StepGraph :
           let nm := toString (← fv.fvarId!.getUserName)
           for (p, k) in paths do
             ports := ports.push { node := s!"{nm}{p}", kind := k, dir := .input }
+        else if let some sig ← signatureKind? env carriers [] ty then
+          -- a functional binder ports at its kind signature — the module-valued port:
+          -- a kind-typed arrow is an anonymous contract, so the type is the declaration
+          -- and the harvest derives the port mechanically
+          ports := ports.push
+            { node := toString (← fv.fvarId!.getUserName), kind := sig, dir := .input }
         else
           -- the unkinded reading: an explicit data binder whose type carries no kind
           -- information at all (propositions and sorts are interface logic, not data)
@@ -2143,6 +2189,7 @@ def renderContractLines (c : Provenance.Contract String String)
         [s!"params: {String.intercalate ", " params}"])
     ++ c.deciders.map (fun (n, d) => s!"decides {n}: {d}")
     ++ c.aggregations.map (fun (n, a) => s!"aggregates {n}: {a.label}")
+    ++ c.suppliers.map (fun (n, s) => s!"supplies {n}: {s}")
     ++ (if c.declaresUniquely then [] else ["declared twice: the contract repeats a node"])
     ++ (c.undeclared g).map (fun p => s!"undeclared {renderPort p}")
     ++ (c.unrealized g).map (fun p => s!"unrealized {renderPort p}")
@@ -2316,6 +2363,37 @@ def checkAggregations (c : Provenance.Contract String String) : MetaM Unit := do
           declaration"
     | .extensive | .intensive | .wholeProper => pure ()
 
+/-- The supplier clause's checks (`Contract.suppliers`): each entry names a port of the
+contract whose kind is a *signature* — the `→`-joined module-valued port form, because
+a supplier bound to a single-kind port would be a value, not a module — and names a
+declaration whose own kind signature, read off its type exactly as the harvest reads a
+functional binder (implicit and instance binders filled first, `supplierSignature?`),
+is the declared one, component for component. What the checks do not adjudicate is
+behavior: two suppliers of one signature agree on the interface, and whether they
+agree on values is a `Relation` edge's theorem to carry, not a port list's. -/
+def checkSuppliers (c : Provenance.Contract String String) : MetaM Unit := do
+  let env ← getEnv
+  let carriers := operandCarriers env
+  let same := fun (a b : String) =>
+    a == b || a.endsWith ("." ++ b) || b.endsWith ("." ++ a)
+  for (n, s) in c.suppliers do
+    let some p := c.ports.find? (·.node == n)
+      | throwError "the supplier for '{n}' names no port of '{c.name}'"
+    let pks := p.kind.splitOn " → "
+    unless pks.length > 1 do
+      throwError "the supplier for '{n}' names a port at kind '{p.kind}' — only a \
+        module-valued port (a signature kind, joined with '→') takes a supplier"
+    let some sinfo := env.find? s.toName
+      | throwError "the supplier '{s}' for '{n}' is not a declaration"
+    let some ssig ← supplierSignature? env carriers sinfo.type
+      | throwError "the supplier '{s}' for '{n}' states no kind signature — its \
+          explicit arguments are not a function over kinded quantities"
+    let sks := ssig.splitOn " → "
+    unless pks.length == sks.length && (pks.zip sks).all (fun (a, b) => same a b) do
+      throwError "the supplier '{s}' for '{n}' states the signature '{ssig}', which \
+        is not the port's '{p.kind}' — binding a module of a different signature \
+        re-types the argument"
+
 open Elab Command in
 /-- `#kind_contract c` assembles the members the contract `c` declares and compares that
 assembly's boundary with the boundary `c` declares — its parameters and decided
@@ -2328,6 +2406,7 @@ elab "#kind_contract " c:ident : command => liftTermElabM do
   let ctr ← contractValueOf cname
   checkDeciders ctr
   checkAggregations ctr
+  checkSuppliers ctr
   let a ← assembleContract ctr
   logInfo m!"kind contract over {ctr.members.length} steps:\n\
     {String.intercalate "\n" (renderContractLines ctr a.graph)}"
@@ -2343,6 +2422,7 @@ elab "#kind_contract_decide " c:ident : command => liftTermElabM do
   let ctr ← contractValueOf cname
   checkDeciders ctr
   checkAggregations ctr
+  checkSuppliers ctr
   let a ← assembleContract ctr
   unless ctr.agrees a.graph do
     throwError "the boundary declared by '{cname}' is not the one its members compute:\n\
