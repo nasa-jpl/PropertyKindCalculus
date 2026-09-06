@@ -32,6 +32,7 @@ import PropertyKindCalculusBlueprint.Chapters.CrossReferences
 import PropertyKindCalculusBlueprint.Chapters.UsingTheLibrary
 import PropertyKindCalculusBlueprint.ItemIndex
 import PropertyKindCalculusBlueprint.TraceabilityTable
+import PropertyKindCalculusBlueprint.OntologicalSquare
 import PropertyKindCalculusBlueprint.References
 import PropertyKindCalculusBlueprint.Version
 
@@ -92,27 +93,109 @@ shortTitle := "A Property Kind Calculus for Metrology"
 tag := "kindcalculus-blueprint"
 %%%
 
-Models of physical systems are saturated with quantities, yet the languages used to
-manage them — SysML/QUDV, OWL-based vocabularies such as QUDT and OML, and
-dimension-checking type systems — verify _dimensions_, not _kinds_. Two quantities of
-the same dimension are therefore silently interchangeable: volumetric and gravimetric
-water content, relative permittivity and reflectivity, torque and energy. These
-descriptive languages record the metrology _taxonomy_ — which kinds exist, their
-dimensions and defining relations — but stop there: they cannot express the _calculus_
-that operates on those kinds — dimension arithmetic, the kind-interaction algebra,
-scale-gated operations, extensivity; cannot carry one model across the numeric carriers a
-quantity must inhabit; and cannot state, let alone check, a single law as a theorem. A property kind calculus _subsumes_ them: it
-retains the taxonomy and adds the _calculus_, _parametricity_ over the carrier, and
-machine-checked _proof_. The strongest prior formalization is no exception: the ISQ and
-SI have been mechanized in a proof assistant
-{Manual.citep foster_automated_reasoning_for_physical_quantities}[], yet that work checks
-_dimensions_, not kinds — the dimensional calculus is one part of metrology, and cannot
-separate the confusions above.
-We present PropertyKindCalculus (PKC) {version}[], a machine-checked formalization, in the
-Lean 4 proof assistant, of Dybkær's seminal contribution to metrology
-{Manual.citep dybkaer_ontology_on_property}[] — read through Lowe's four-category ontology
-{Manual.citep lowe_four_category_ontology}[], which supplies the categorial frame Dybkær's
-part–whole vocabulary implies but never names — and several recent developments in this field
+Measurement begins with a judgment that two properties are _mutually comparable_ — that
+it is meaningful to ask which of them is the greater, or by how much. Dybkær's ontology
+on property {Manual.citep dybkaer_ontology_on_property}[] takes that judgment as
+primitive and names what underwrites it: a _kind-of-property_ is the "common defining
+aspect of mutually comparable properties" (§6.19). It is a commitment a model _states_,
+not a coincidence a reader may infer. Nearly everything else about a quantity hangs on
+it — the _scale_, which fixes whether $`=,<,+,\times` are so much as defined between two
+values; the _unit_, which is one chosen value of one kind and of no other; and whether
+the values of the parts of a system bear on the value of the whole.
+
+What a _dimension_ contributes is real, and bounded. It records the SI base-quantity
+exponents of a kind and nothing else, and it records them homomorphically: the exponents
+of a product add. That is enough for dimensional analysis to do its work — to reject a
+length added to a time, to catch the formula that returned a rate where a total was
+wanted, to constrain the form of a law before its coefficients are known — by arithmetic
+alone, with no knowledge of what the quantities are quantities _of_. It is a genuine
+invariant, and worth keeping.
+
+What a dimension cannot do is separate two kinds it sends to the same point, and the map
+that sends them is many-to-one by construction. Torque and energy both carry
+$`\mathrm{M\,L^2\,T^{-2}}`, so no dimension check tells them apart. The limiting case is
+the quantities of _dimension one_
+{Manual.citep dybkaer_units_for_quantities_of_dimension_one}[], the ones usually called
+dimensionless: every ratio of like quantities lands on the single point $`1`. Volumetric
+and gravimetric water content, relative permittivity, reflectivity, and all 115
+characteristic numbers of ISO 80000-11 — Reynolds, Mach, and Prandtl among them — arrive
+there together. Inside that fiber dimensional analysis has no discriminating power left
+at all: it sees one type, _a real number_, for the whole family, and every substitution
+of one member for another is dimensionally correct. A language that checks dimensions
+therefore checks a necessary condition and reports it as a sufficient one — and what it
+admits, a gravimetric water content where a volumetric one was meant or a reflectivity
+where a permittivity was, does not halt the computation. It changes the number the
+computation returns.
+
+A kind is a kind _of_ something, and the second commitment concerns what. Lowe's
+four-category ontology {Manual.citep lowe_four_category_ontology}[] supplies the
+categorial frame Dybkær's vocabulary implies but never names. Two cuts make the four
+categories — universal against particular, and _substantial_, a thing, against
+_non-substantial_, a way a thing is — and every term of measurement lands in exactly one
+of the quadrants they produce. Here is Lowe's square (his Fig. 7.1), with the reading
+this calculus gives each corner set underneath his own:
+
+```diagram (cssWidth := "38em")
+PropertyKindCalculusBlueprint.ontologicalSquare
+```
+
+The four corners, taken in the order the square draws them, top row first (the numbers
+are Lowe's):
+
+- *(3) Kinds — the substantial universal.* A _sort of system_: soil, a reference cell, an
+  antenna. What a thing is, said once for all things of that sort.
+- *(4) Attributes — the non-substantial universal.* A _kind-of-property_, the commitment
+  of the first paragraph: volumetric water content in general, torque in general.
+- *(1) Substances — the substantial particular.* The _system_ at hand: this soil column,
+  under this footprint, at this hour.
+- *(2) Modes — the non-substantial particular.* An _individual quantity_: the volumetric
+  water content of _that_ column. Neither the general kind nor a bare number.
+
+And the three relations, which are why this is a square and not a list of four boxes:
+
+- *Instantiation* runs down the sides, universal to particular: a system instantiates its
+  sort, an individual quantity instantiates its kind-of-property. Both are declared by a
+  model and neither is inferred.
+- *Characterization* runs across, substantial to non-substantial: below, an individual
+  quantity characterizes the system it belongs to; above, a kind-of-property characterizes
+  a sort of system — the edge along which a kind may be _dedicated_ to a sort, water
+  content _of soil_ rather than water content at large. A dimension has no counterpart for
+  either.
+- *Exemplification* is the diagonal, and it is derived rather than primitive: an object
+  exemplifies an attribute by going either way around the square, so the calculus needs no
+  construct joining an object directly to a kind.
+
+Two consequences are load-bearing. First, an individual quantity is a _mode_ — the length
+of _this_ pencil, not length in general — so a magnitude detached from what it
+characterizes is a number rather than a quantity, and the general kind is never the same
+entity as the individual measurement. Second, characterization is not parthood: properties
+characterize objects, they do not compose them. Dybkær says as much in his own voice,
+refusing a partitive reading of the object–property relation on the ground that a
+duplicate object cannot be produced by putting an object's properties together (§2.23.3).
+
+Keeping those relations apart raises the third commitment, the one an unstated
+convention damages most: what composition does to a value. Marmodoro's distinction is
+that "physical structure unites; while metaphysical structure unifies", and that "wholes
+are not always unities"; a physical structure brings no principle of counting with it:
+"Alternative carvings of the world deliver alternative numbers of entities"
+{Manual.citep marmodoro_whole_but_not_one}[]. A description of a whole into parts is one
+carving among many, and no arithmetic follows from having made it. That the masses of
+the parts sum to the mass of the whole while the volumes of mixed liquids do not is a
+claim about the kind — refutable by a measurement, and therefore worth proving rather
+than assuming.
+
+Each of these three commitments is truth-apt: a model can state it and be wrong.
+Recording _which_ kinds exist, with their dimensions and defining relations — the
+metrology _taxonomy_ — leaves all three unstated. What has to be added is the _calculus_
+that operates on those kinds: dimension arithmetic, the algebra of which kinds interact
+and to what, operations gated by scale, aggregation laws quantified over every carving;
+_parametricity_ enough that one model definition survives the several numeric carriers a
+quantity must inhabit; and a logic in which each such law is _proved_ rather than
+documented.
+
+We present PropertyKindCalculus (PKC) {version}[], a machine-checked formalization, in
+the Lean 4 proof assistant, of Dybkær's seminal contribution to metrology — read through
+Lowe's square — and of several recent developments in this field
 (Flater {Manual.citep flater_architecture_for_software_assisted_quantity_calculus}[],
 Willink {Manual.citep willink_evaluation_of_measurement_uncertainty_based_on_moments}[], and
 Degenhardt {Manual.citep degenhardt_efficient_alternative_to_monte_carlo}[]). PKC makes a
@@ -186,7 +269,7 @@ In plain terms, _rigorous metrology_ here means:
 - *Summing only what may be summed.* The masses of the parts add up to the mass of
   the whole; the volumes of mixed liquids do not. The calculus tracks which
   quantities aggregate and refuses to assume it of the rest.
-- *Classifications you can trust because they are earned.* Labelling a value "an
+- *Classifications you can trust because they are earned.* Labeling a value "an
   area" requires a proof that it really is a width times a height; an arbitrary
   number cannot wear the label.
 - *The same model from proof to running code.* One quantity can carry exact real
@@ -723,7 +806,7 @@ about the mean. The `variance` the R14 descriptor already carries must certify o
 graded by what is assumed about the distribution's shape: distribution-free, the interval of $`k`
 standard uncertainties about the mean has coverage at least $`1 - 1/k^2` — the complement of
 Chebyshev's inequality, honest but conservative ($`k = 2` gives $`\ge 75\%`, not the Gaussian
-$`95\%`, which is a shape assumption); and, for a bounded family, *exact* — the centred interval of
+$`95\%`, which is a shape assumption); and, for a bounded family, *exact* — the centered interval of
 half-width $`h` of a uniform on $`[m - \delta, m + \delta]` has coverage exactly $`h/\delta`.
 Neither tier needs a *true value* — the sense in which coverage is provable while *accuracy*,
 closeness to nature, is not. The development is the *Coverage intervals* section of the
@@ -979,8 +1062,10 @@ theorem true but empty, and the witness is what rules that out.
 
 # Why a calculus, not a taxonomy
 
-PropertyKindCalculus continues a line of machine-checkable metrology modeling, and
-inherits its problem statement from exactly where that line stops.
+PropertyKindCalculus continues two lines of machine-checkable metrology modeling — the
+descriptive one, which runs from QUDV through an OML vocabulary to SysML v2, and the
+mechanized one, which indexes quantities by dimension inside a proof assistant — and
+inherits its problem statement from exactly where each of them stops.
 
 ## From QUDV to an OML metrology vocabulary
 
@@ -1240,6 +1325,24 @@ on PropertyKindCalculus's problem statement:
    length to a mass is well-typed; nothing gates an operation on agreeing kind or
    dimension
    ([SysML v2, 2026-04 — QuantityCalculations.sysml, line 29](https://github.com/Systems-Modeling/SysML-v2-Release/blob/2026-04/sysml.library/Domain%20Libraries/Quantities%20and%20Units/QuantityCalculations.sysml#L29)).
+
+## Mechanization: what a dimension index still cannot separate
+
+The other line is mechanization, and its strongest prior result is a formalization of
+the ISQ and the SI in a proof assistant
+{Manual.citep foster_automated_reasoning_for_physical_quantities}[]: a quantity carries
+its dimension as a type index, so dimensionally incoherent arithmetic is rejected by the
+type checker rather than deferred to a run-time check.
+
+That is a real calculus, and it is one this work carries too — as $`\dim`, the forgetful
+functor of point 5 of the next subsection, whose job is to certify. What it is not is a kind layer.
+Indexing on the dimension collapses the fibers of $`\dim`: volumetric and gravimetric
+water content, relative permittivity and reflectivity, torque and energy each share an
+index and are therefore one type, so the distinction a kind-of-property exists to draw
+cannot be stated there, let alone enforced. Neither do the axes that hang off a kind
+rather than off a dimension follow from it — the scale that decides which operators are
+defined, the interaction algebra, the dedicated kind, the aggregation laws. Dimensional
+coherence remains necessary; it was never sufficient.
 
 ## How the calculus maps into Lean
 
