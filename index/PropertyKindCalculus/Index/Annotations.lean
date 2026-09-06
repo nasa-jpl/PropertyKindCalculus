@@ -114,6 +114,16 @@ def catalogue : Array Annotation := #[
     enforcement := .checked "rejected at elaboration if the declaration is not a structure"
     table := "carriers"
     section_ := "annotation-kindCarrier" },
+  { syntax_ := "@[kindCounterexample]", attachesTo := "a Provenance.Contract or \
+      Provenance.Relation definition"
+    effect := "Marks a deliberate provenance counterexample — a falsification probe kept because \
+      its checker refuses it. The by-type sweeps (#kind_contracts, #kind_contracts_decide, \
+      #kind_relations) list it as exempted instead of gating on it, and the contracts and \
+      provenance-coverage tables neither count it as a witness nor as a coverage subject."
+    enforcement := .checked "rejected at elaboration if the declaration is not a \
+      Provenance.Contract or Provenance.Relation"
+    table := ""
+    section_ := "" },
   -- The rendering family — RENDERING.md.
   { syntax_ := "@[pkc_math]", attachesTo := "a Quantity-valued definition"
     effect := "Renders the definition as typeset LaTeX into its own docstring, so doc-gen4 and the \
@@ -227,6 +237,19 @@ def commands : Array Command := #[
     gate := "an edge over a kind carrying no dimension, or one whose dimensions do not balance, \
       fails the build"
     section_ := "edge-audits" },
+  { syntax_ := "#kind_contracts ns …", library := "PropertyKindCalculus"
+    effect := "Surveys every `Provenance.Contract` declared under the namespaces — membership is \
+      by type, so declaring a boundary enrolls it — re-checking each as `#kind_contract` does, \
+      with violations as ✗ rows and `@[kindCounterexample]` declarations as exempted ⊘ rows."
+    gate := "a boundary declared anywhere in scope and inconsistent with what its members \
+      compute fails the pin, including one nobody remembered to check by name"
+    section_ := "" },
+  { syntax_ := "#kind_contracts_decide ns …", library := "PropertyKindCalculus"
+    effect := "The same sweep as a hard gate with kernel receipts: any violation is an error, \
+      and each passing contract gains the kernel theorem `c.kindContractOk` unless it already \
+      stands."
+    gate := "the command is the gate; the pin freezes the kernel receipts"
+    section_ := "" },
   { syntax_ := "#pkc_index \"…\" [ns …]", library := "Index"
     effect := "Prints one generated index as plain text — the same table a document renders, \
       available without building a document."

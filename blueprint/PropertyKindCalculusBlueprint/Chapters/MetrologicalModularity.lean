@@ -65,7 +65,12 @@ is read off the boundary rather than excavated from a constructor choice. Roles 
 or restated, never forgotten, and no exit lost on the way up. `Contract.agrees` is the
 decidable scope judgment: the declared boundary is the one the members actually
 compute, in both directions. `#kind_contract_decide` and `#kind_discharges_decide`
-reflect both into kernel-checked theorems.
+reflect both into kernel-checked theorems. At scale the obligation moves off the
+author's memory: `#kind_contracts` sweeps every contract declared under a namespace —
+membership is by type, so declaring a boundary enrolls it — and `#kind_contracts_decide`
+is the same sweep as a hard gate, adding each passing boundary's kernel receipt. A
+deliberate falsification probe opts out explicitly with `@[kindCounterexample]`, and the
+sweeps count the exemptions in their pinned headers.
 :::
 
 :::proof "def_contract"
@@ -93,8 +98,9 @@ its table — yet the scientific claim has one shape in all three cases, and onl
 theorem edge states it uniformly. `#kind_relation` checks everything around the proof —
 the witness a sorry-free theorem, the conclusion in the claimed shape, members of both
 boundaries mentioned, every optional clause answered for by name — and
-`#kind_relations` surveys a namespace's edges as one pinnable report, violations
-rendered in the report itself.
+`#kind_relations` surveys a namespace's edges as one pinnable report — membership by
+type, violations rendered in the report itself, `@[kindCounterexample]`-marked probes as
+counted exemptions.
 :::
 
 :::proof "def_relation"

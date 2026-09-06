@@ -225,13 +225,47 @@ def probeRetrievalInvertsForward : Provenance.Relation where
   witness := "PropertyKindCalculus.Tests.Index.probeInvStep_probeFwdStep"
   claim := "the probe retrieval recovers the signal the forward consumed"
 
+/-- A deliberately broken edge kept as a counterexample: the `relations` table renders it
+with its mark (a table renders what is declared), while the `contracts` edge join and the
+`provenance-coverage` table below leave it out — a misdeclaration is not a witness. -/
+@[kindCounterexample]
+def probeKeptBrokenEdge : Provenance.Relation :=
+  { probeRetrievalInvertsForward with
+    witness := "PropertyKindCalculus.Tests.Index.probeFwdStep" }
+
 /--
-info: Theorem edges between boundaries (1 row(s))
+info: Theorem edges between boundaries (2 row(s))
 Edge | Claim | Witness | Clauses | In the author's words
+probeKeptBrokenEdge | 'probe retrieval' inverts 'probe forward' | probeFwdStep | counterexample | the probe retrieval recovers the signal the forward consumed
 probeRetrievalInvertsForward | 'probe retrieval' inverts 'probe forward' | probeInvStep_probeFwdStep |  | the probe retrieval recovers the signal the forward consumed
 -/
 #guard_msgs in
 #pkc_index "relations" PropertyKindCalculus.Tests.Index
+
+/-! ## The boundary table and the absences beside it
+
+Membership by type again: both declared contracts are rows, each carrying the one real
+theorem edge — the counterexample is not in the join. The coverage table renders what is
+*absent*: no budget attaches to either produced port, and the row count in the title is
+the claim, so a new unwitnessed boundary or unbudgeted output fails the pin. -/
+
+/--
+info: Declared boundaries (2 row(s))
+Contract | Boundary | Interface | Members | Clauses | Theorem edges
+probeFwdBoundary | 'probe forward' | 2 ports (0 params), 0 exits | 1 |  | probeRetrievalInvertsForward
+probeInvBoundary | 'probe retrieval' | 2 ports (0 params), 0 exits | 1 |  | probeRetrievalInvertsForward
+-/
+#guard_msgs in
+#pkc_index "contracts" PropertyKindCalculus.Tests.Index
+
+/--
+info: Provenance coverage absences (2 row(s))
+Absence | Contract | At
+no uncertainty budget | probeFwdBoundary | probeFwdStep/result : outputKind
+no uncertainty budget | probeInvBoundary | probeInvStep/result : signalKind
+-/
+#guard_msgs in
+#pkc_index "provenance-coverage" PropertyKindCalculus.Tests.Index
 
 /-! ## The prose grammar
 

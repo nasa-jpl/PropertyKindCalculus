@@ -28,6 +28,7 @@ import PropertyKindCalculus.Tests.Core.KindIncidence
 import PropertyKindCalculus.Tests.Core.KindGraphD2
 import PropertyKindCalculus.Tests.Core.KindLedger
 import PropertyKindCalculus.Tests.Core.KindRelation
+import PropertyKindCalculus.Tests.Core.KindContracts
 import PropertyKindCalculus.Tests.Core.CertifiedIngest
 import PropertyKindCalculus.Tests.Core.BoundaryAudit
 import PropertyKindCalculus.Tests.Core.Provenance

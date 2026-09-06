@@ -447,6 +447,52 @@ initialize registerBuiltinAttribute {
 /-- Every boundary tag harvested into `env`. -/
 def boundaryTags (env : Environment) : Array BoundaryTag := boundaryExt.getState env
 
+/-! ## The counterexample registry — `@[kindCounterexample]`
+
+The provenance sweeps (`#kind_contracts`, `#kind_contracts_decide`, `#kind_relations`) enroll
+by **type**: every `Provenance.Contract` and `Provenance.Relation` in scope is a subject, so
+declaring a value is enrolling it and a boundary cannot be declared and left unverified. A
+deliberate counterexample — a probe kept precisely because its checker refuses it, the way the
+falsification sections pin refusals beside the passing pins — would fail such a gate, so opting
+*out* is what takes an explicit mark. The asymmetry is the point: forgetting to enroll is
+impossible, and forgetting to exempt fails loudly at the sweep, so both forgetting mistakes land
+on the side a build catches.
+
+The registration check names the two types literally rather than by `` ``-resolution: this
+module does not import `Provenance` (the same layering reason the three built-in carriers above
+are named rather than resolved). -/
+
+/-- The environment extension collecting every `@[kindCounterexample]`-tagged declaration. -/
+initialize kindCounterexampleExt :
+    SimplePersistentEnvExtension Name (Array Name) ←
+  registerSimplePersistentEnvExtension {
+    addEntryFn    := fun a e => a.push e
+    addImportedFn := fun ess => ess.foldl (init := #[]) (· ++ ·)
+  }
+
+syntax (name := kindCounterexampleAttr) "kindCounterexample" : attr
+
+initialize registerBuiltinAttribute {
+  name  := `kindCounterexampleAttr
+  descr := "A deliberate provenance counterexample: the by-type sweeps list it as exempted instead of gating on it."
+  add   := fun decl _stx _kind => do
+    let env ← getEnv
+    let some info := env.find? decl
+      | throwError "`@[kindCounterexample]` could not find '{decl}' in the environment"
+    let head := info.type.getAppFn
+    let ok := head.isConstOf `PropertyKindCalculus.Provenance.Contract
+      || head.isConstOf `PropertyKindCalculus.Provenance.Relation
+    unless ok do
+      throwError "`@[kindCounterexample]` expects a 'Provenance.Contract' or a \
+        'Provenance.Relation' — '{decl}' is neither. The mark exempts a declaration from \
+        the by-type provenance sweeps, and only those two types are swept."
+    modifyEnv fun env => kindCounterexampleExt.addEntry env decl
+}
+
+/-- Every declaration marked a deliberate provenance counterexample. -/
+def kindCounterexamples (env : Environment) : Array Name :=
+  kindCounterexampleExt.getState env
+
 /-! ## The environment walk -/
 
 /-- Walk an expression, collecting every carrier *mint* (the kind argument of a fully-applied

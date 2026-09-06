@@ -38,14 +38,17 @@ def relationsTable (scope : Scope) : MetaM IndexTable := do
   let names := constantsOfType env ``PropertyKindCalculus.Provenance.Relation scope
   if names.isEmpty then
     return IndexTable.empty "relations" "Theorem edges between boundaries" headers
+  let exempt : NameSet :=
+    (BoundaryAudit.kindCounterexamples env).foldl (init := {}) (·.insert ·)
   let mut rows : Array (Array IndexCell) := #[]
   for n in names do
     let rel ← relationValueOf n
     let left ← contractValueOf rel.left.toName
     let right ← contractValueOf rel.right.toName
     let clauses := String.intercalate "; " <|
-      (if rel.tolerance.isEmpty then []
-       else [s!"tolerance {shortenNames rel.tolerance}"])
+      (if exempt.contains n then ["counterexample"] else [])
+        ++ (if rel.tolerance.isEmpty then []
+            else [s!"tolerance {shortenNames rel.tolerance}"])
         ++ (if rel.hypotheses.isEmpty then []
             else [s!"hypotheses {String.intercalate ", " (rel.hypotheses.map shortenNames)}"])
         ++ (if rel.licenses.isEmpty then []

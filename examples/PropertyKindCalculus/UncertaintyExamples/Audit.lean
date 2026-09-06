@@ -1,0 +1,91 @@
+/-
+# The provenance audit — the by-type gate over every boundary and edge in scope
+
+The sweeps below enroll by **type**: every `Provenance.Contract` and every
+`Provenance.Relation` declared anywhere under `PropertyKindCalculus.UncertaintyExamples`
+is a subject, so an author who declares a boundary or an edge has enrolled it — there is
+no per-declaration command to remember, and a new module's declarations are swept the
+moment this module imports it. That is also why this module imports every sibling: a
+sweep sees only its import closure, and an audit that under-imports under-reports
+silently. The umbrella imports this module last, so the audit builds whenever the
+library does.
+
+Three tiers, each pinned:
+
+  * `#kind_contracts` / `#kind_relations` — the reports: every subject re-checked as the
+    per-name commands check one, violations as `✗` rows, and the `WaterCloudModel`
+    falsification probes as `@[kindCounterexample]`-exempted `⊘` rows. The headers count
+    subjects, violations, and exemptions, so the pins fail on a new violation, a
+    vanished subject, or an exemption creep — not only on the rows they show.
+  * `#kind_contracts_decide` — the kernel receipts: each passing boundary gains the
+    theorem `c.kindContractOk : c.Agrees (graph)`, here rather than per name.
+  * the `contracts` and `provenance-coverage` tables — the join and its complement:
+    which theorem edges land on each boundary (counterexamples are not witnesses), and
+    the declared absences. The one absence pinned below is real and stands recorded:
+    the retrieval's soil-moisture output carries no declared uncertainty budget, while
+    the forward's σ⁰ output does (rung 6 of the capstone).
+-/
+import PropertyKindCalculus.UncertaintyExamples.DegenhardtFictive
+import PropertyKindCalculus.UncertaintyExamples.WillinkGaugeBlock
+import PropertyKindCalculus.UncertaintyExamples.DegenhardtSensitivity
+import PropertyKindCalculus.UncertaintyExamples.LadderNesting
+import PropertyKindCalculus.UncertaintyExamples.DegenhardtSsprc
+import PropertyKindCalculus.UncertaintyExamples.SsprcNesting
+import PropertyKindCalculus.UncertaintyExamples.DegenhardtAllocation
+import PropertyKindCalculus.UncertaintyExamples.WaterCloudModel
+import PropertyKindCalculus.UncertaintyExamples.AdequacySwamping
+import PropertyKindCalculus.UncertaintyExamples.AdequacyLadder
+import PropertyKindCalculus.UncertaintyExamples.AdequacyDag
+import PropertyKindCalculus.UncertaintyExamples.AdequacySterbenz32
+import PropertyKindCalculus.UncertaintyExamples.AdequacyExecBridge
+import PropertyKindCalculus.UncertaintyExamples.AdequacyCoupling
+import PropertyKindCalculus.UncertaintyExamples.AutogradDirectSim
+import PropertyKindCalculus.UncertaintyExamples.BudgetDagDensity
+import PropertyKindCalculus.UncertaintyExamples.Coverage
+import PropertyKindCalculus.Index
+
+/--
+info: kind contracts — 4 contract(s), 2 exempted
+  PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.wcmBoundary: 'WCM forward (σ⁰)' — 8 ports, 0 exits, 1 member step(s)
+  PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.wcmRetrievalBoundary: 'WCM retrieval (mv)' — 8 ports, 0 exits, 1 member step(s)
+  ⊘ PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.Falsification.forgottenParameter: counterexample, exempted
+  ⊘ PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.Falsification.misdeclaredKind: counterexample, exempted
+-/
+#guard_msgs in #kind_contracts PropertyKindCalculus.UncertaintyExamples
+
+/--
+info: kind relations — 4 theorem edge(s), 3 exempted
+  PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.retrievalInvertsForward: 'WCM retrieval (mv)' inverts 'WCM forward (σ⁰)' — PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.wcmRetrieveQ_wcmForwardQ
+  ⊘ PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.Falsification.misclaimedShape: counterexample, exempted
+  ⊘ PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.Falsification.strandedWitness: counterexample, exempted
+  ⊘ PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.Falsification.unstatedHypothesis: counterexample, exempted
+-/
+#guard_msgs in #kind_relations PropertyKindCalculus.UncertaintyExamples
+
+/--
+info: kind contracts — 2 contract(s) kernel-accepted, 2 exempted
+  PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.wcmBoundary: kernel-accepted (theorem 'PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.wcmBoundary.kindContractOk')
+  PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.wcmRetrievalBoundary: kernel-accepted (theorem 'PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.wcmRetrievalBoundary.kindContractOk')
+  ⊘ PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.Falsification.forgottenParameter: counterexample, exempted
+  ⊘ PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.Falsification.misdeclaredKind: counterexample, exempted
+-/
+#guard_msgs in #kind_contracts_decide PropertyKindCalculus.UncertaintyExamples
+
+/--
+info: Declared boundaries (4 row(s))
+Contract | Boundary | Interface | Members | Clauses | Theorem edges
+forgottenParameter | 'WCM retrieval (mv), cfg.d forgotten' | 7 ports (3 params), 0 exits | 1 | counterexample |
+misdeclaredKind | 'WCM retrieval (mv), σ0 misdeclared' | 8 ports (4 params), 0 exits | 1 | counterexample |
+wcmBoundary | 'WCM forward (σ⁰)' | 8 ports (4 params), 0 exits | 1 |  | retrievalInvertsForward
+wcmRetrievalBoundary | 'WCM retrieval (mv)' | 8 ports (4 params), 0 exits | 1 |  | retrievalInvertsForward
+-/
+#guard_msgs (whitespace := lax) in
+#pkc_index "contracts" PropertyKindCalculus.UncertaintyExamples
+
+/--
+info: Provenance coverage absences (1 row(s))
+Absence | Contract | At
+no uncertainty budget | wcmRetrievalBoundary | wcmRetrieveQ/result : soilMoisture
+-/
+#guard_msgs (whitespace := lax) in
+#pkc_index "provenance-coverage" PropertyKindCalculus.UncertaintyExamples

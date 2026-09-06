@@ -84,6 +84,14 @@ Residual-2 addition (the kinded ×/÷ budget DAG):
     `#check_failure` probes make the operand swap, the heterogeneous quadrature, and the
     kind-misplaced leaf type errors; the capstone's axiom pin is the classical trio only.
 
+The library-wide gate:
+  * `Audit` — the provenance audit: pinned by-type sweeps (`#kind_contracts`,
+    `#kind_relations`, `#kind_contracts_decide`) and the `contracts` /
+    `provenance-coverage` tables over everything declared under this namespace. It
+    imports every sibling and is imported last here, so declaring a boundary or a
+    theorem edge anywhere in the library enrolls it — no per-declaration command to
+    remember.
+
 Further paper examples (the AFM indenter model; Willink's asymmetric and Type-A cases) arrive with
 later sub-stages.
 -/
@@ -104,3 +112,4 @@ import PropertyKindCalculus.UncertaintyExamples.AdequacyCoupling
 import PropertyKindCalculus.UncertaintyExamples.AutogradDirectSim
 import PropertyKindCalculus.UncertaintyExamples.BudgetDagDensity
 import PropertyKindCalculus.UncertaintyExamples.Coverage
+import PropertyKindCalculus.UncertaintyExamples.Audit
