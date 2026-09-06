@@ -1,7 +1,9 @@
 # MODULARITY.md — Metrological modularity: metrology modules as a library-level capability
 
-> Status: **M0, M1, M1b, M2, M3 (PKC + SMM), M4 landed** (PKC v0.104.0–v0.108.0 + SMM
-> validation, 2026-09-05); M2b, M5, M6 open (M3's SMW derivation rides M6's SMW pass).
+> Status: **M0, M1, M1b, M2, M3 (PKC + SMM), M4, M5 (exact half), M6 landed**
+> (PKC v0.104.0–v0.108.0 + SMM + SMW validation, 2026-09-05). Open: M2b; M5's
+> approximate `boundedBy` edges (route decision (a)/(b)/(c), Nicolas); M3's SMW
+> derivation (awaits the SMW PKC-pin bump, which M6 did not force).
 > Assessment baseline 2026-09-05.
 > Audience: PKC maintainers.
 > Scope: make "metrology module" a first-class, machine-checked construct in PKC —
@@ -571,21 +573,72 @@ relation may source its tolerance from a coverage-derived quantity (R18's
 budget-per-output-port, rendered by the self-index.
 
 ### M5 — The field campaign *(SMM)*
-A relation edge per declared boundary (seven): `equals`/`inverts` where exact
-(`retrieveReflInvertsDielectric` exists; add the well-posedness edge for the LUT boundary
-and the solver edge for the Cholesky/fit boundary), `boundedBy` with a kinded, attested
-tolerance where behavior is approximate (LUT via a `resampleMaxErrQ`-derived declaration;
-the 12-step Newton and 8-sweep inversion via measured bounds, attested with harvested review
-reasons). **Stretch (decision: Nicolas):** prove fixed-iteration residual bounds (a
-contraction argument would upgrade `boundedBy` from attested to proved) — worth costing only
-after the attested form is landed and rendering.
+**Status: exact half DONE, approximate half BLOCKED on a decision (2026-09-05).** What
+landed: the **solver tier** — `matVec4Boundary` (the normal-equations model
+application) and `solveSPD4Boundary` (the Cholesky solve) declared beside the
+correctness proof, both agreeing and kernel-decided, with the theorem edge
+`solveInvertsMatVec` carrying `solveSPD4Q_correct` (`.inverts`, the round trip in the
+statement, `IsSPD4Q` named as the hypothesis, stated at the `ℝ` rung with **no
+executable-rung license claimed** — the honest form per §4.1). This is the fit's
+measurement model stated where it is exactly true: `trStepQ`'s clamp and damping make
+the step-level equality false at the box edge, so the edge lives one tier down and its
+claim says so. Both gates hold: `#kind_relations SoilMoisture` is pinned at two edges
+(the closed-form inversion and the solver inversion; a third edge or a violation
+changes the pin), the two new boundaries' footprints are pinned (single-cluster ⚠
+verdicts naming their compensation — the record fields and the correctness theorem),
+and the technical reference renders the relations table (`Ch07`).
+
+**What the survey found, and the decision it forces.** The plan's well-posedness edge
+cannot be declared: `retrieval_well_posed_boxQ` concludes `∃!`, and no `RelationKind`
+has that shape — it stays a member theorem, cited from the LUT edge's claim when that
+edge lands. The four approximate `boundedBy` edges (LUT gather, 12-step Newton,
+8-sweep inversion) are blocked structurally: a witness must be a sorry-free
+`≤`-theorem mentioning members of both boundaries, the deployed members are
+`Float`-carrier (opaque to `decide`/`norm_num`), and SMM currently contains **no**
+`native_decide`. The routes, for Nicolas to pick:
+  (a) **prove** residual/contraction bounds at the `ℝ` rung (the stretch as
+      originally costed — strongest, most expensive);
+  (b) **measure inside the theorem**: `native_decide` witnesses evaluating the
+      deployed `Float` members at pinned probe points against an attested tolerance —
+      cheap and honest (the `Lean.ofReduceBool` axiom renders in every
+      `#kind_relation` pin, so the evidence tier is machine-visible), but it is the
+      first `native_decide` in SMM and therefore an axiom-profile decision;
+  (c) leave the approximate behavior at member-level prose and pins (status quo).
+
+A relation edge per declared boundary (nine, with the solver pair): `equals`/`inverts`
+where exact, `boundedBy` with a kinded, attested tolerance where behavior is
+approximate (LUT via a `resampleMaxErrQ`-derived declaration; the 12-step Newton and
+8-sweep inversion via measured bounds, attested with harvested review reasons).
+**Stretch (decision: Nicolas):** prove fixed-iteration residual bounds (a contraction
+argument would upgrade `boundedBy` from attested to proved).
 **Gate:** `#kind_relations` over `SoilMoisture.*` is a pinned report; the technical
 reference renders the relations table.
 
 ### M6 — Deployment-plane erasure *(SMW + SMM `contracts.lean`)*
+**Status: DONE — SMW `b1847a2` (2026-09-05), at SMW's existing pins (no PKC/SMM bump
+was needed: the generated `contracts/*.json` and the `IngestContract` face predate
+M0).** The packers (`tools/pack_tile.py`, `tools/pack_retrieve.py`) copy the
+`interface` string and ordered `slots` verbatim from the generated contract documents
+via `tools/_contracts.py` (refusing at pack time if the document's layout is not the
+one the packer builds; `SM_CONTRACTS_DIR` overrides the location), and
+`cli.npy_io.checkSidecar` validates every layout claim a sidecar makes against the
+contract the executable was compiled with, before a byte of payload is decoded. Five
+Stage-3 CLIs check `stage3RetrieveIn`, the fit checks `stage2FitIn`; a tile with no
+sidecar makes no claim and stays governed by the compile-time pins (the
+synthetic/bench path). Gate met by `scripts/test-sidecar-check.sh`, run green: no
+sidecar accepted, matching face accepted, an ndvi/s0-permuted face refused with the
+contract diff; the `#guard` pins stand. The survey also closed a live drift instance:
+the hand-typed stage-2 sidecar spelled a slot `smap` where the contract says `sm`.
+Remaining at this boundary: `retrieve_newton_mk` reads through its own descriptor
+path (its `inMap` pins tie to the contract at compile time; no sidecar check yet),
+`tile_prep`'s interfaces have no `IngestContract` to check against (prep-tier
+contracts are `STAGE01_LEAN_PLAN` territory), and **M3's SMW derivation** (the
+shard/stitch license read off the declared aggregation classes) still awaits the SMW
+PKC-pin bump, which this stage turned out not to force.
+
 Extend the declaration → erasure → drift-check pattern from the argv plane (where
 `dps_interface` already holds YAML byte-exact) to the data plane: generate the `.npy`
-sidecar JSON from `IngestContract` (extend `scripts/emit_contracts.lean`; the Python packers
+sidecar JSON from `IngestContract` (the Python packers
 consume the generated document instead of hand-typing dicts), and validate on read in the
 Lean CLIs (`npy_io` checks the sidecar's interface string and channel names against the
 compiled contract). Closes the one seam where a foreign file with permuted channels is
@@ -604,8 +657,8 @@ existing compile-time `#guard` pins stay.
 | M2b | Module-valued ports (function arguments at kind signatures) | PKC → SMM | Open |
 | M3 | Extensivity clause + distribution-license theorem | PKC → SMM/SMW | **Done (PKC + SMM)** — v0.107.0 `abf11ebb` + SMM `6f98755` (2026-09-05); SMW derivation rides M6 |
 | M4 | Budget ⇄ boundary join | PKC | **Done** — v0.108.0 `5b0c4b7c` (2026-09-05) |
-| M5 | Relations across SMM's seven boundaries | SMM | Open — M1's `#kind_relations` gate now exists |
-| M6 | Sidecar generated + validated (data-plane drift check) | SMW + SMM | Open |
+| M5 | Relations across SMM's boundaries | SMM | **Exact half done** — SMM `0840ab1`: solver boundaries + `solveInvertsMatVec`, 2-edge pin, tech-ref table (2026-09-05); approximate `boundedBy` edges await the (a)/(b)/(c) route decision (Nicolas) |
+| M6 | Sidecar generated + validated (data-plane drift check) | SMW + SMM | **Done** — SMW `b1847a2` (2026-09-05): packers write the generated contract face, `checkSidecar` refuses the permuted tile with the diff |
 
 **Decisions owned by Nicolas:** the paradigm/file name (this doc assumes *metrological
 modularity*); the M2 nominal-port mechanism ((a) retype the argument vs (b) register the
