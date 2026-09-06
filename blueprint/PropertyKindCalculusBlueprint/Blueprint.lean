@@ -97,7 +97,8 @@ Measurement begins with a judgment that two properties are _mutually comparable_
 it is meaningful to ask which of them is the greater, or by how much. Dybkær's ontology
 on property {Manual.citep dybkaer_ontology_on_property}[] takes that judgment as
 primitive and names what underwrites it: a _kind-of-property_ is the "common defining
-aspect of mutually comparable properties" (§6.19). It is a commitment a model _states_,
+aspect of mutually comparable properties" (§6.19). That is the first commitment,
+*comparability*: which properties are mutually comparable is something a model _states_,
 not a coincidence a reader may infer. Nearly everything else about a quantity hangs on
 it — the _scale_, which fixes whether $`=,<,+,\times` are so much as defined between two
 values; the _unit_, which is one chosen value of one kind and of no other; and whether
@@ -127,10 +128,11 @@ admits, a gravimetric water content where a volumetric one was meant or a reflec
 where a permittivity was, does not halt the computation. It changes the number the
 computation returns.
 
-A kind is a kind _of_ something, and the second commitment concerns what. Lowe's
-four-category ontology {Manual.citep lowe_four_category_ontology}[] supplies the
-categorial frame Dybkær's vocabulary implies but never names. Two cuts make the four
-categories — universal against particular, and _substantial_, a thing, against
+A kind is a kind _of_ something, and the second commitment, *the bearer*, concerns what
+that something is. Lowe's four-category ontology
+{Manual.citep lowe_four_category_ontology}[] supplies the categorial frame Dybkær's
+vocabulary implies but never names. Two cuts make the four categories — universal
+against particular, and _substantial_, a thing, against
 _non-substantial_, a way a thing is — and every term of measurement lands in exactly one
 of the quadrants they produce. Here is Lowe's square (his Fig. 7.1), with the reading
 this calculus gives each corner set underneath his own:
@@ -144,23 +146,26 @@ are Lowe's):
 
 - *(3) Kinds — the substantial universal.* A _sort of system_: soil, a reference cell, an
   antenna. What a thing is, said once for all things of that sort.
-- *(4) Attributes — the non-substantial universal.* A _kind-of-property_, the commitment
-  of the first paragraph: volumetric water content in general, torque in general.
+- *(4) Attributes — the non-substantial universal.* A _kind-of-property_, the
+  *comparability* commitment above: volumetric water content in general, torque in
+  general.
 - *(1) Substances — the substantial particular.* The _system_ at hand: this soil column,
-  under this footprint, at this hour.
+  under this footprint, at this hour. Particular systems are the _objects_ of
+  measurement — whatever a measured value is a value _of_ — and object is the word the
+  rest of this document uses for a substance.
 - *(2) Modes — the non-substantial particular.* An _individual quantity_: the volumetric
   water content of _that_ column. Neither the general kind nor a bare number.
 
 And the three relations, which are why this is a square and not a list of four boxes:
 
-- *Instantiation* runs down the sides, universal to particular: a system instantiates its
-  sort, an individual quantity instantiates its kind-of-property. Both are declared by a
-  model and neither is inferred.
-- *Characterization* runs across, substantial to non-substantial: below, an individual
-  quantity characterizes the system it belongs to; above, a kind-of-property characterizes
-  a sort of system — the edge along which a kind may be _dedicated_ to a sort, water
-  content _of soil_ rather than water content at large. A dimension has no counterpart for
-  either.
+- *Instantiation* runs down the sides, universal to particular: a sort of system is
+  instantiated by the systems of that sort, a kind-of-property by the individual
+  quantities of that kind. Both edges are declared by a model; neither is inferred.
+- *Characterization* runs across each row, left to right, substantial to
+  non-substantial: below, a system is characterized by the individual quantities it
+  bears; above, a sort of system is characterized by the kinds-of-property that apply to
+  it — the edge along which a kind may be _dedicated_ to a sort, water content _of soil_
+  rather than water content at large. A dimension has no counterpart for either.
 - *Exemplification* is the diagonal, and it is derived rather than primitive: an object
   exemplifies an attribute by going either way around the square, so the calculus needs no
   construct joining an object directly to a kind.
@@ -173,10 +178,11 @@ characterize objects, they do not compose them. Dybkær says as much in his own 
 refusing a partitive reading of the object–property relation on the ground that a
 duplicate object cannot be produced by putting an object's properties together (§2.23.3).
 
-Keeping those relations apart raises the third commitment, the one an unstated
-convention damages most: what composition does to a value. Marmodoro's distinction is
-that "physical structure unites; while metaphysical structure unifies", and that "wholes
-are not always unities"; a physical structure brings no principle of counting with it:
+Keeping those relations apart raises the third commitment, *composition* — the one an
+unstated convention damages most: what a carving of a system into parts does to a value.
+Marmodoro's distinction is that "physical structure unites; while metaphysical structure
+unifies", and that "wholes are not always unities"; a physical structure brings no
+principle of counting with it:
 "Alternative carvings of the world deliver alternative numbers of entities"
 {Manual.citep marmodoro_whole_but_not_one}[]. A description of a whole into parts is one
 carving among many, and no arithmetic follows from having made it. That the masses of
@@ -184,9 +190,22 @@ the parts sum to the mass of the whole while the volumes of mixed liquids do not
 claim about the kind — refutable by a measurement, and therefore worth proving rather
 than assuming.
 
-Each of these three commitments is truth-apt: a model can state it and be wrong.
-Recording _which_ kinds exist, with their dimensions and defining relations — the
-metrology _taxonomy_ — leaves all three unstated. What has to be added is the _calculus_
+Each of the three is a claim about the world rather than a convention adopted for
+convenience: a model states it, and a measurement can refute it.
+
+- *Comparability.* Which properties share a kind-of-property, and may therefore be
+  compared, added, or given a common unit. Put torque and energy under one kind — their
+  dimensions raise no objection — and the model licenses a sum that denotes nothing.
+- *Bearer.* What each kind is a kind _of_: the sort of system it is dedicated to, and the
+  object an individual quantity characterizes. Leave it unstated and one system's water
+  content stands in for another's without complaint.
+- *Composition.* What a carving of a system into parts does to a value — which kinds
+  aggregate over that carving, and by what law. Assume additivity everywhere and the
+  volumes of mixed liquids refute the model.
+
+A metrology _taxonomy_ answers a different question. It records which kinds exist, with
+their dimensions and defining relations — a list of entries, and no list forbids the sum,
+dedicates the kind, or fixes the aggregation law. What has to be added is the _calculus_
 that operates on those kinds: dimension arithmetic, the algebra of which kinds interact
 and to what, operations gated by scale, aggregation laws quantified over every carving;
 _parametricity_ enough that one model definition survives the several numeric carriers a
@@ -200,25 +219,31 @@ Lowe's square — and of several recent developments in this field
 Willink {Manual.citep willink_evaluation_of_measurement_uncertainty_based_on_moments}[], and
 Degenhardt {Manual.citep degenhardt_efficient_alternative_to_monte_carlo}[]). PKC makes a
 kind a first-class type, kind-incompatible arithmetic a compile-time error, and
-classification a proof obligation. Of twenty-seven metrology requirements, the twenty
-truth-apt claims are all discharged as kernel-checked theorems; the remaining seven are
-capabilities a type system affords by construction, whose discharge is a construction
-that elaborates rather than a theorem. The standard is the test: all eleven
-quantity-and-unit parts of ISO/IEC 80000, item by item, 700+ kinds with checked
-dimensions and proved defining relations. Because a PKC model is carrier-polymorphic and
-its measurement uncertainty is an additive descriptor, a single model definition serves
-proof, calculation, sensitivity analysis, and uncertainty quantification with no
-rewrite — the design principle we abbreviate _write once, correctly; go fast,
-automatically_. Measurement uncertainty, its propagation, and the coverage of the
-resulting interval are thereby machine-checked, while _accuracy_ against nature — which
-needs a true value the kernel never has — remains an empirical matter; the boundary is
-exact, not rhetorical. The result is a modeling discipline whose specification
-documents — rendered from the checked sources — are verifiable rather than merely
-descriptive.
+classification a proof obligation. Of twenty-seven metrology requirements, twenty say
+something that is either true or false of the calculus — that two kinds of the same
+dimension stay distinct, that converting a value to another unit and back returns it
+unchanged — and every one of those is proved as a theorem the Lean kernel checks. The
+other seven ask a different question: not whether something is true, but whether the
+language can express it at all — that a general kind and an individual quantity are
+different sorts of thing, that a unit is one chosen value of one kind. Each of those is
+met by a definition that compiles, and a type error is what its failure would look like.
+The standard is the test: all eleven quantity-and-unit parts of ISO/IEC 80000, item by
+item, 700+ kinds with checked dimensions and proved defining relations. Because a PKC
+model is carrier-polymorphic and its measurement uncertainty is an additive descriptor,
+one model definition serves proof, calculation, sensitivity analysis, and uncertainty
+quantification: what changes between the four is the carrier the model is instantiated
+at, never the model. That is the design principle we abbreviate _write once, correctly;
+go fast, automatically_. Measurement uncertainty, its propagation, and the coverage of
+the resulting interval are thereby machine-checked, while _accuracy_ against nature —
+which needs a true value the kernel never has — remains an empirical matter; the
+boundary is exact, not rhetorical. The result is a modeling discipline whose
+specification documents — rendered from the checked sources — are verifiable rather than
+merely descriptive.
 
-This blueprint is the design map for that formalization: it records what is already
-proved (linked to real declarations) and the *capstone theorems we plan to provide*,
-with the dependency graph and a status summary at the end.
+This blueprint is the design map for that formalization: every theorem node names the
+declaration that discharges it and reports that declaration's checked status, with the
+headline results tagged *capstone*. The dependency graph and a status summary come at the
+end.
 
 The whole blueprint is also available as a single paginated document:
 [download the PDF](PropertyKindCalculus-Blueprint.pdf).
@@ -248,42 +273,90 @@ In plain terms, _rigorous metrology_ here means:
   moisture are both "just a ratio", yet confusing them corrupts a result. The
   calculus keeps such quantities distinct _types_, so the mix-up is impossible
   rather than merely discouraged; agreeing units (or dimensions) are treated as
-  necessary but never sufficient.
+  necessary but never sufficient (R1, R7).
 - *Rejecting nonsense arithmetic before it runs.* Adding a length to a mass — or
   even a torque to an energy, which share the same dimension — is a compile-time
   error, not something caught (or missed) at run time. Quantities that genuinely
   combine, such as a torque times an angle giving an energy, are sanctioned
-  explicitly; everything else is refused.
+  explicitly; everything else is refused (R4, R5).
 - *Knowing which operations even make sense.* What you may do to a measurement
   depends on its scale: you can rank mineral hardness but not average it; you can
   subtract Celsius temperatures but only take ratios of thermodynamic ones. These
-  rules are enforced automatically.
+  rules are enforced automatically (R6).
 - *A faithful hierarchy of kinds.* Width and height are special cases of length —
   usable where a length is wanted, never the reverse — while a general kind
   (length) is never confused with one individual measurement (the length of this
   pencil). A kind can even be tied to the system and component it is _dedicated_ to,
-  so "water content of soil" is named in its own right.
+  so "water content of soil" is named in its own right, and a value carries the object
+  it characterizes in its own type, so one soil column's water content cannot stand in
+  for another's (R2, R3, R19, R22).
 - *Units that convert safely and never silently.* A unit is a chosen reference of
   one specific kind; a conversion round-trips exactly, and there is simply no
-  conversion between units of different kinds.
+  conversion between units of different kinds (R8, R16, R17).
 - *Summing only what may be summed.* The masses of the parts add up to the mass of
   the whole; the volumes of mixed liquids do not. The calculus tracks which
-  quantities aggregate and refuses to assume it of the rest.
+  quantities aggregate and refuses to assume it of the rest (R9).
 - *Classifications you can trust because they are earned.* Labeling a value "an
   area" requires a proof that it really is a width times a height; an arbitrary
-  number cannot wear the label.
+  number cannot wear the label (R12).
 - *The same model from proof to running code.* One quantity can carry exact real
   numbers for proving properties and IEEE floating-point for execution — with a
   theorem guaranteeing the running code matches the proven specification, rounding
   and all — and a vector quantity is a list of numbers under a _single_ shared
-  unit, not a bag of separately-united components.
-- *Honest unit classification.* Not even the SI base units are all alike — some
-  (the mole, the candela) are derived in disguise — so the calculus names that
-  third category instead of pretending the base/derived split is clean.
+  unit, not a bag of separately-united components (R10, R11).
+- *Components that remember the frame they were read in.* A vector quantity's numbers
+  are coefficients in some chosen set of axes, and that choice is no part of the
+  physics: turn the axes and every component changes, while the scalar product of two
+  vectors does not. Readings taken in different frames do not combine, a change of
+  frame acts on them through the law their kind of index obeys, and the combinations
+  that are genuinely frame-independent are the ones proved to be (R20).
+- *Honest unit classification.* The SI sorts units into _base_ and _derived_, but not
+  even the seven base units are alike: the mole is dimensionally a pure number and the
+  candela a power, and each stays a base unit only because it carries a human-chosen
+  coefficient sized to keep everyday values readable. Units like these get a category
+  of their own — _scale-spanning_ — instead of being forced into a base/derived split
+  that does not fit them (R13).
+- *Uncertainty propagated, with the cheap method licensed by the expensive one.* An
+  input carries a spread as well as a magnitude, and the calculus carries it through
+  the model by one of three methods of rising cost and fidelity: a linearization, a
+  cumulant method that keeps the shape of the tails, and a sampling method that keeps
+  the full non-linearity. The three are proved to nest — each coarser one is a
+  projection of the finer one — so reaching for the cheap method is an approximation
+  with a stated relationship to the expensive one rather than an act of faith. The
+  variance that comes out then certifies a coverage interval: a conservative one that
+  assumes nothing about the distribution's shape, an exact one where the shape is
+  known (R14, R18).
+- *Knowing when single precision is enough.* Because one model runs at exact reals and
+  at floating point alike, the two can be compared where it matters. An input whose
+  contribution falls below half a unit in the last place of the running sum is
+  _numerically invisible_ — its uncertainty was silently dropped — and its dual is a
+  subtraction that is exact yet magnifies the relative uncertainty of what remains.
+  Both are flagged, so "enough precision" is a checkable property of a model at its
+  inputs rather than a habit (R15).
+- *Rigor that costs nothing at run time, and reads back as mathematics.* The kinded
+  expression compiles to exactly the term a hand-written bare-number kernel would —
+  same operations, same rounding, nothing added — so what the kinds buy is checking,
+  paid at compile time and not at run time. In the other direction, a definition is
+  rendered back out of its own elaborated form as a typeset equation with the kind
+  bookkeeping suppressed, so what a reviewer reads is generated from what the machine
+  checked, not written alongside it (R21, R25).
+- *Where a number came from, and how much of a program is answered for.* A value can
+  carry an auditable record of the graph that produced it — which inputs, through which
+  steps, and where values left the calculus for bare numbers — against a boundary the
+  author _declares_ and the machine checks against the boundary the code actually has.
+  Such an audit is always a claim about one named scope, never about the library, and a
+  scope once blessed may only grow: a regression fails the check instead of quietly
+  passing it (R23, R24).
+- *Modules that state what they compute, and what may be split.* A module's declared
+  boundary carries the relations its outputs stand in to its inputs — each backed by a
+  theorem the kernel checks, each numerical bound naming a kinded tolerance. The same
+  declaration says which outputs aggregate over a carving of the data, and that is what
+  licenses running the computation in tiles or shards: a theorem says the total is
+  preserved, rather than the schedule being trusted to preserve it (R26, R27).
 
-Each of these is stated precisely as one of the twenty-seven requirements below, and
-the status table at the end of that section maps every requirement to the checked
-declarations that address it.
+Between them these bullets name all twenty-seven requirements, each of which is stated
+precisely below; the status table at the end of that section maps every requirement to
+the checked declarations that address it.
 
 # Requirements
 
@@ -1005,14 +1078,14 @@ remainder is what keeps the boundary honest now that the first part is discharge
 
 ## The requirements at a glance — the traceability matrix
 
-The requirements fall into two kinds of obligation. A *verifiable* requirement is
-a truth-apt claim about the calculus, discharged by a *checked theorem* — PropertyKindCalculus
-*proves* it. An *expressiveness* requirement is a capability the type system must
-afford — general-versus-individual (R3), units as chosen values of a kind (R8) —
-discharged not by a theorem but by a *construction that typechecks*: that the
-witnessing declaration elaborates under CI *is* the demonstration. Conflating the
-two would make a capability look like an unfinished proof; separating them lets each
-be reported in its own honest vocabulary.
+The requirements fall into two kinds of obligation. A *verifiable* requirement is a
+truth-apt claim about the calculus — one that is either true or false of it — discharged
+by a *checked theorem*: PropertyKindCalculus *proves* it. An *expressiveness*
+requirement is a capability the type system must afford — general-versus-individual
+(R3), units as chosen values of a kind (R8) — discharged not by a theorem but by a
+*construction that typechecks*: that the witnessing declaration elaborates under CI *is*
+the demonstration. Conflating the two would make a capability look like an unfinished
+proof; separating them lets each be reported in its own honest vocabulary.
 
 :::traceability_summary
 :::
@@ -1426,10 +1499,10 @@ chapter.
 # How to read the status
 
 Nodes that link a real declaration with `(lean := "PropertyKindCalculus.…")` report
-their *proved* status straight from the checked, sorry-free core. Nodes tagged
-`planned` carry an informal statement and a proof sketch only; they show as
-in-progress goals until formalized. The headline deliverables are tagged
-`capstone`.
+their *proved* status straight from the checked, sorry-free core. The nodes that link
+none are the authoring steps of the _write once, correctly_ recipe: they say how a model
+is composed, and carry nothing to prove. The headline deliverables are tagged `capstone`,
+and the status summary at the end reports the current counts.
 
 {include 0 PropertyKindCalculusBlueprint.Chapters.Spine}
 

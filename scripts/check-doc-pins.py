@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Gate this package's version claims against `lean-toolchain`, its blueprint-status
-claims against the blueprint source, and its package-version declarations against
-each other.
+claims against the blueprint source, its package-version declarations against each
+other, and its plain-language gloss of the requirements against the catalogue.
 
 The bug this exists to catch: an artifact moves and the prose that describes it does
 not. `lean-toolchain` moves at a bump; three READMEs and a CI comment drifted two
@@ -9,7 +9,7 @@ minor versions behind the pin before anyone read them side by side. A chapter ge
 written and proved; the table that called it "planned" keeps saying so. Nothing in the
 build can notice either — a stale sentence still compiles.
 
-Five checks, the first four in increasing order of how easy they are to fool:
+Six checks, the first four in increasing order of how easy they are to fool:
 
 1. **Machine pins (hard).** `blueprint/lean-toolchain` must equal `lean-toolchain`,
    and every `inputRev` in either `lake-manifest.json` that is shaped like a Lean
@@ -45,6 +45,13 @@ Five checks, the first four in increasing order of how easy they are to fool:
    reads. Every site must declare the same version exactly once, and the site list
    must be the one `scripts/bump-version.sh` writes — a site added to the bumper and
    not to the gate is itself a failure.
+
+6. **Plain-terms coverage (hard, with counts).** The introduction glosses each
+   requirement in one bullet of a hand-written list, and closes by claiming the list
+   names all of them. So every id the bullets cite must exist in the requirement
+   catalogue, every catalogued id must be cited, and the spelled-out count in that
+   closing sentence must be the catalogue's. A requirement added and never glossed is
+   the drift here, and the completeness claim is what makes it checkable at all.
 
 What this does not catch, stated plainly: EXEMPT is per *file*, not per line, so a
 newly stale claim written into an exempt file is reported and not failed. The two
@@ -156,8 +163,21 @@ BP_CATALOGUE_SITES: list[tuple[str, str, int]] = [
 ]
 NUMBER_WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight",
                 "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen",
-                "sixteen", "seventeen", "eighteen", "nineteen", "twenty"]
+                "sixteen", "seventeen", "eighteen", "nineteen", "twenty"] + [
+                f"twenty-{u}" for u in
+                ("one", "two", "three", "four", "five", "six", "seven", "eight", "nine")
+                ] + ["thirty"]
 CATALOGUE_LIST = re.compile(r"def catalogue : List StandardRef :=\s*\[(.*?)\]", re.DOTALL)
+
+# Check 6: the introduction's plain-language gloss of the requirements. Its bullets
+# each end with the requirement ids they gloss, and the sentence that closes the list
+# claims the bullets name all of them.
+REQ_CATALOGUE = "requirements/PropertyKindCalculus/Requirements/Catalogue.lean"
+PLAIN_TERMS_FILE = "blueprint/PropertyKindCalculusBlueprint/Blueprint.lean"
+PLAIN_TERMS_OPEN = "In plain terms, _rigorous metrology_ here means:"
+PLAIN_TERMS_CLOSE = "Between them these bullets name all {NWORD} requirements"
+REQ_ID = re.compile(r'id := "R(\d+)"')
+PLAIN_TERMS_REF = re.compile(r"\bR(\d+)\b")
 
 CHAPTER_TITLE = re.compile(r'#doc \(Manual\) "([^"]+)" =>')
 NODE_TAGS = re.compile(r'\(tags := "([^"]*)"\)')
@@ -324,6 +344,66 @@ def check_blueprint_status(quiet: bool) -> list[str]:
     return failures
 
 
+def check_plain_terms(quiet: bool) -> list[str]:
+    """Check 6: the introduction's plain-terms bullets name every catalogued requirement.
+
+    The list is prose written by hand against a catalogue that grows, and it makes a
+    completeness claim in its closing sentence. Both halves fail here: an id cited that
+    the catalogue does not have (a typo, or a requirement renumbered out from under the
+    prose), and a catalogued id no bullet glosses. The spelled-out count in the closing
+    sentence is checked against the catalogue for the same reason check 2 counts its
+    sites — a sentence reworded out of the pattern's reach would otherwise pass by
+    matching nothing.
+    """
+    failures: list[str] = []
+
+    catalogued = sorted({int(n) for n in REQ_ID.findall(read(REQ_CATALOGUE))})
+    if not catalogued:
+        return [f"{REQ_CATALOGUE}: parsed no requirement ids — the `id := \"R…\"` "
+                "pattern no longer matches how requirements are declared"]
+
+    doc = read(PLAIN_TERMS_FILE)
+    if doc.count(PLAIN_TERMS_OPEN) != 1:
+        return [f"{PLAIN_TERMS_FILE}: expected 1 occurrence of {PLAIN_TERMS_OPEN!r}, "
+                f"found {doc.count(PLAIN_TERMS_OPEN)}"]
+
+    if len(catalogued) >= len(NUMBER_WORDS):
+        closing = None
+        failures.append(f"{REQ_CATALOGUE}: {len(catalogued)} requirements, beyond the "
+                        "spelled-out range check 6 can state")
+    else:
+        closing = PLAIN_TERMS_CLOSE.replace("{NWORD}", NUMBER_WORDS[len(catalogued)])
+        if doc.count(closing) != 1:
+            failures.append(
+                f"{PLAIN_TERMS_FILE}: expected 1 occurrence of {closing!r} "
+                f"({len(catalogued)} requirements in the catalogue), "
+                f"found {doc.count(closing)}"
+            )
+
+    start = doc.index(PLAIN_TERMS_OPEN)
+    end = doc.index(closing, start) if closing and closing in doc[start:] else -1
+    if end < 0:
+        return failures + [f"{PLAIN_TERMS_FILE}: cannot delimit the plain-terms list — "
+                           "its closing sentence was not found after the opening one"]
+
+    cited = sorted({int(n) for n in PLAIN_TERMS_REF.findall(doc[start:end])})
+    unknown = [n for n in cited if n not in catalogued]
+    missing = [n for n in catalogued if n not in cited]
+    if unknown:
+        failures.append(f"{PLAIN_TERMS_FILE}: plain-terms bullets cite "
+                        + ", ".join(f"R{n}" for n in unknown)
+                        + f", which {REQ_CATALOGUE} does not define")
+    if missing:
+        failures.append(f"{PLAIN_TERMS_FILE}: no plain-terms bullet glosses "
+                        + ", ".join(f"R{n}" for n in missing)
+                        + " — either add one or drop the list's completeness claim")
+    if not failures and not quiet:
+        print(f"ok    {PLAIN_TERMS_FILE}: plain-terms bullets name all "
+              f"{len(catalogued)} catalogued requirements")
+
+    return failures
+
+
 def main() -> int:
     quiet = "--quiet" in sys.argv
     failures: list[str] = []
@@ -401,6 +481,9 @@ def main() -> int:
     # 5. Package-version sites.
     failures.extend(check_package_version(quiet))
 
+    # 6. The introduction's plain-terms gloss of the requirement catalogue.
+    failures.extend(check_plain_terms(quiet))
+
     for rel, reason in EXEMPT.items():
         if not quiet:
             print(f"exempt {rel}: {reason}")
@@ -411,7 +494,8 @@ def main() -> int:
             print(f"  {f}")
         return 1
     print("\nAll version claims agree with lean-toolchain; all blueprint status")
-    print("claims agree with the chapter sources; all package-version sites agree.")
+    print("claims agree with the chapter sources; all package-version sites agree;")
+    print("the plain-terms bullets name every catalogued requirement.")
     return 0
 
 
