@@ -82,23 +82,25 @@ elab "#kind_footprint " c:ident nss:ident* : command => liftTermElabM do
   let clusterOf : Nat → Nat := fun v =>
     (clusters.findIdx? (·.contains v)).getD 0
   -- the footprint's kinds: every declared port kind, and the interior kinds the
-  -- assembled graph introduces beyond them
+  -- assembled graph introduces beyond them — deduplicated by *graph vertex*, because a
+  -- port spells a kind short while an interior introduction from another namespace
+  -- spells it qualified, and one kind counted twice would inflate every number below
   let portKinds := (ctr.ports.map (·.kind)).eraseDups
   let interiorKinds := ((a.graph.intros.map (·.kind)).eraseDups.filter
     (!portKinds.contains ·))
-  let mut resolved : Array (String × Nat) := #[]
+  let mut verts : Array Nat := #[]
   let mut unresolved : Array String := #[]
   for k in portKinds ++ interiorKinds do
     match resolveKind kg k with
-    | some v => resolved := resolved.push (k, v)
-    | none => unresolved := unresolved.push k
-  -- the touched components, each with the footprint kinds it holds
-  let mut touched : Array (Nat × Array String) := #[]
-  for (k, v) in resolved do
+    | some v => unless verts.contains v do verts := verts.push v
+    | none => unless unresolved.contains k do unresolved := unresolved.push k
+  -- the touched components, each with the footprint's vertices it holds
+  let mut touched : Array (Nat × Array Nat) := #[]
+  for v in verts do
     let ci := clusterOf v
     match touched.findIdx? (·.1 == ci) with
-    | some i => touched := touched.set! i (ci, touched[i]!.2.push k)
-    | none => touched := touched.push (ci, #[k])
+    | some i => touched := touched.set! i (ci, touched[i]!.2.push v)
+    | none => touched := touched.push (ci, #[v])
   let rep : Nat → String := fun ci =>
     ((clusters[ci]!.map fun v => kindShortName kg.kinds[v]!).qsort (· < ·)).getD 0 "?"
   let sortedTouched := touched.qsort fun x y => rep x.1 < rep y.1
@@ -106,16 +108,17 @@ elab "#kind_footprint " c:ident nss:ident* : command => liftTermElabM do
   let singletons := sortedTouched.size - nontrivial.size
   let mut lines : Array String := #[]
   lines := lines.push <|
-    s!"kind footprint of '{ctr.name}': {portKinds.length} port kind(s), \
-      {interiorKinds.length} interior kind(s); {nontrivial.size} derivation cluster(s) \
-      of size ≥ 2 touched, {singletons} singleton kind(s)"
+    s!"kind footprint of '{ctr.name}': {verts.size} kind(s) in the graph; \
+      {nontrivial.size} derivation cluster(s) of size ≥ 2 touched, \
+      {singletons} singleton kind(s)"
       ++ (if unresolved.isEmpty then "" else
           s!", {unresolved.size} outside the kind graph")
-  for (ci, ks) in nontrivial do
+  for (ci, vs) in nontrivial do
+    let names := (vs.map fun v => kindShortName kg.kinds[v]!).qsort (· < ·)
     lines := lines.push
       s!"  cluster {rep ci} ({clusters[ci]!.size} kinds): \
-        {String.intercalate ", " (ks.qsort (· < ·)).toList}"
-  if nontrivial.size == 1 && singletons == 0 && !resolved.isEmpty then
+        {String.intercalate ", " names.toList}"
+  if nontrivial.size == 1 && singletons == 0 && !verts.isEmpty then
     lines := lines.push
       s!"  ⚠ single-cluster footprint: every resolved kind lies in cluster {rep nontrivial[0]!.1}"
   unless unresolved.isEmpty do
@@ -163,7 +166,7 @@ elab "#kind_footprint " c:ident nss:ident* : command => liftTermElabM do
   -- the verdict: where does this module's guarantee actually come from?
   let components := nontrivial.size + singletons
   let base :=
-    if resolved.isEmpty then
+    if verts.isEmpty then
       "no kinds resolved against this graph — read the footprint over the namespaces \
        that declare the boundary's kinds"
     else if components ≥ 2 then

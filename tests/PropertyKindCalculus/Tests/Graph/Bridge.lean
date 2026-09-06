@@ -164,7 +164,7 @@ def clusterBoundary : Provenance.Contract String String where
   exits := []
 
 /--
-info: kind footprint of 'footprint probe': 3 port kind(s), 0 interior kind(s); 1 derivation cluster(s) of size ≥ 2 touched, 1 singleton kind(s)
+info: kind footprint of 'footprint probe': 3 kind(s) in the graph; 1 derivation cluster(s) of size ≥ 2 touched, 1 singleton kind(s)
   cluster kX (2 kinds): kX, kY
 same-kind ports — 1 group(s):
   kX: clusterStep/x (input), clusterStep/lo (input)
