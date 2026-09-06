@@ -49,6 +49,7 @@ Depends on TorchLean (the autograd column of rung 2).
 -/
 import PropertyKindCalculus.Uncertainty
 import PropertyKindCalculus.Uncertainty.Sensitivity
+import PropertyKindCalculus.Uncertainty.BudgetDagLaws
 import PropertyKindCalculus.Index.Commands
 import PropertyKindCalculus.DocGenMath
 
@@ -433,5 +434,125 @@ def sigma0CoverageTol : Quantity backscatter Float := ⟨2.0 * sigma0Budget.comb
 
 -- The tolerance is a real, positive backscatter quantity.
 #guard sigma0CoverageTol.magnitude > 0.0
+
+/-! ## Rung 7 — the theorem edge: the closed-form retrieval inverts the forward
+
+The behavior clause of a metrology module: what relates a retrieval to its forward is a
+*checked theorem edge* (`Provenance.Relation`), not prose. The WCM forward is affine in
+`mv` once `τ` is fixed, so the retrieval is closed-form:
+
+    mv = ((σ⁰ − veg)/τ + veg − d)/c
+
+`wcmRetrieveQ` is that inversion, kinded and literal-free like the forward — its two
+divisions ride `QuotientKind` edges, the mirror images of the forward's product edges.
+The witness is stated at the proof carrier `ℝ`, where the field algebra holds and
+`τ = exp(·)` is provably nonzero, for *any* calibration with a nonzero soil-moisture
+gain — the one named side condition. The edge's license list is empty: the claim stops
+at the witness's own rung, because at `Float` the divisions round — the executable
+round trip below agrees to well under the coverage tolerance, and that is *evidence*,
+deliberately not a claim on the edge. -/
+
+/-- **The closed-form WCM retrieval** `mv = ((σ⁰ − veg)/τ + veg − d)/c` — the forward
+solved for the soil moisture, over any branchless numeric carrier, kinded throughout.
+The divisions are kind-witnessed quotients: a backscatter divided by the dimension-one
+attenuation stays a `backscatter`, and a backscatter divided by the gain
+`c : σ⁰·mv⁻¹` lands at `soilMoisture` by construction. -/
+@[pkc_math "m_v = \\big(\\big(\\sigma^0 - a\\,\\mathrm{NDVI}\\big)\\,e^{2\\,b\\,\\mathrm{NDVI}} + a\\,\\mathrm{NDVI} - d\\big)/c"]
+def wcmRetrieveQ {α : Type} [NumCarrier α] (cfg : WcmConfig α)
+    (σ0 : Quantity backscatter α) (ndvi : Quantity vegetationIndex α)
+    (b : Quantity attenRate α) : Quantity soilMoisture α :=
+  -- τ = exp(−2·b·ndvi), veg = a·ndvi: the same two intermediates the forward builds.
+  let negTwo : Quantity pureNumber α := (⟨(0 : α)⟩ : Quantity pureNumber α) - cfg.two
+  let arg : Quantity attenExponent α :=
+    Quantity.mul (ProductKind.ofRatio attenRate vegetationIndex attenExponent)
+      (Quantity.mul (ProductKind.ofRatio pureNumber attenRate attenRate) negTwo b) ndvi
+  let τ : Quantity attenuation α :=
+    Quantity.exp (⟨rfl, rfl⟩ : TranscendentalKind attenExponent attenuation) arg
+  let veg : Quantity backscatter α :=
+    Quantity.mul (ProductKind.ofRatio vegGain vegetationIndex backscatter) cfg.a ndvi
+  -- soil = (σ⁰ − veg)/τ + veg, then mv = (soil − d)/c.
+  let soil : Quantity backscatter α :=
+    Quantity.div (QuotientKind.ofRatio backscatter attenuation backscatter) (σ0 - veg) τ + veg
+  Quantity.div (QuotientKind.ofRatio backscatter soilGain soilMoisture) (soil - cfg.d) cfg.c
+
+-- The executable round trip at the deployed calibration: Float evidence, not a claim.
+#eval s!"roundtrip |mv′ − mv| = {Float.abs ((wcmRetrieveQ deployed ⟨modelF means⟩ ndviU.value bU.value).magnitude - mvU.value.magnitude)}"
+#guard Float.abs ((wcmRetrieveQ deployed ⟨modelF means⟩ ndviU.value bU.value).magnitude
+  - mvU.value.magnitude) < 1e-12
+
+/-- The retrieval's declared boundary: the same four calibration parameters a deployment
+binds, the backscatter it consumes, the two covariates, and the soil-moisture output. -/
+def wcmRetrievalBoundary : Provenance.Contract String String where
+  name := "WCM retrieval (mv)"
+  members := ["PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.wcmRetrieveQ"]
+  ports := [
+    ⟨"wcmRetrieveQ/cfg.a", "vegGain", .param⟩,
+    ⟨"wcmRetrieveQ/cfg.c", "soilGain", .param⟩,
+    ⟨"wcmRetrieveQ/cfg.d", "backscatter", .param⟩,
+    ⟨"wcmRetrieveQ/cfg.two", "pureNumber", .param⟩,
+    ⟨"wcmRetrieveQ/σ0", "backscatter", .input⟩,
+    ⟨"wcmRetrieveQ/ndvi", "vegetationIndex", .input⟩,
+    ⟨"wcmRetrieveQ/b", "attenRate", .input⟩,
+    ⟨"wcmRetrieveQ/result", "soilMoisture", .output⟩]
+  exits := []
+
+/--
+info: kind contract over 1 steps:
+contract 'WCM retrieval (mv)': 8 ports, 0 exits
+params: wcmRetrieveQ/cfg.a, wcmRetrieveQ/cfg.c, wcmRetrieveQ/cfg.d, wcmRetrieveQ/cfg.two
+boundary agrees: true
+-/
+#guard_msgs in #kind_contract wcmRetrievalBoundary
+
+/-- The named side condition the inversion holds under: the soil-moisture gain `c`
+divides, so the calibration must not zero it. (`τ` needs no condition at `ℝ`: a real
+exponential is never zero.) -/
+def soilGainNonzero (cfg : WcmConfig ℝ) : Prop := cfg.c.magnitude ≠ 0
+
+/-- The scalar core of the round trip: inverting a forward affine in `m`, for any
+nonzero attenuation `τ` and gain `c`. Stated over bare reals so the kinded witness
+below closes by unification. -/
+theorem affine_roundtrip (τ c veg d m : ℝ) (hτ : τ ≠ 0) (hc : c ≠ 0) :
+    ((veg + τ * (c * m + d - veg) - veg) / τ + veg - d) / c = m := by
+  field_simp
+  ring
+
+/-- **The witness**: at the proof carrier `ℝ`, for any calibration with a nonzero
+soil-moisture gain, the retrieval recovers *exactly* the soil moisture the forward
+consumed. The round trip composes members of both boundaries — the conclusion shape
+`#kind_relation` demands of an `inverts` edge. -/
+theorem wcmRetrieveQ_wcmForwardQ (cfg : WcmConfig ℝ) (hc : soilGainNonzero cfg)
+    (mv : Quantity soilMoisture ℝ) (ndvi : Quantity vegetationIndex ℝ)
+    (b : Quantity attenRate ℝ) :
+    wcmRetrieveQ cfg (wcmForwardQ cfg mv ndvi b) ndvi b = mv := by
+  have hc' : cfg.c.magnitude ≠ 0 := hc
+  cases mv with | mk m =>
+  simp only [wcmRetrieveQ, wcmForwardQ, Quantity.mul, Quantity.div, Quantity.exp,
+    Quantity.mk.injEq, Quantity.add_magnitude, Quantity.sub_magnitude]
+  exact affine_roundtrip _ _ _ _ _ (Real.exp_ne_zero _) hc'
+
+/-- **The theorem edge**: the retrieval boundary *inverts* the forward boundary,
+witnessed by `wcmRetrieveQ_wcmForwardQ` under the one named side condition. The license
+list is empty — the claim is stated at the witness's own rung (`ℝ`) and extends to no
+other, which is the honest form of "the Float pipeline rounds". -/
+def retrievalInvertsForward : Provenance.Relation where
+  left := "PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.wcmRetrievalBoundary"
+  right := "PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.wcmBoundary"
+  kind := .inverts
+  witness := "PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.wcmRetrieveQ_wcmForwardQ"
+  claim := "at ℝ, for any calibration whose soil-moisture gain is nonzero, the \
+    closed-form retrieval recovers exactly the soil moisture the forward consumed"
+  hypotheses := ["PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.soilGainNonzero"]
+
+/--
+info: kind relation: 'WCM retrieval (mv)' inverts 'WCM forward (σ⁰)'
+witness: PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.wcmRetrieveQ_wcmForwardQ
+claims: at ℝ, for any calibration whose soil-moisture gain is nonzero, the closed-form retrieval recovers exactly the soil moisture the forward consumed
+hypotheses: PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.soilGainNonzero
+names on the left: PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.wcmRetrieveQ
+names on the right: PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.wcmForwardQ
+axioms: propext, Classical.choice, Quot.sound
+-/
+#guard_msgs in #kind_relation retrievalInvertsForward
 
 end PropertyKindCalculus.UncertaintyExamples.WaterCloudModel

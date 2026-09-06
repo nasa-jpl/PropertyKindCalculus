@@ -112,8 +112,8 @@ def summarySentence (t : RequirementTally) : String :=
       && t.expressivenessDemonstrated == t.expressivenessTotal then
     s!"PropertyKindCalculus *proves all {t.verifiableTotal} verifiable requirements* \
        and *demonstrates all {t.expressivenessTotal} expressiveness requirements* — \
-       the two capability requirements a type system supports by construction rather \
-       than by theorem."
+       the capabilities a type system affords by construction rather than by \
+       theorem."
   else
     s!"Of the {t.verifiableTotal} verifiable requirements, {t.verifiableProved} are \
        proved; of the {t.expressivenessTotal} expressiveness requirements, \

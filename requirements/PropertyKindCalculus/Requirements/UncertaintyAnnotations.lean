@@ -2,9 +2,11 @@
 # Requirement annotations reaching into the Uncertainty layer
 
 R14 (uncertainty propagation as a provably nested method ladder) and R15
-(numerical adequacy) are discharged in the `Uncertainty` workstream. Applied from
-afar. These modules pull in Mathlib (via the `Ladder` rigor layer), so this module
-is not Mathlib-free.
+(numerical adequacy) are discharged in the `Uncertainty` workstream; R23 (recordable
+provenance) and R26 (the checked measurement model) find their worked exemplars in
+the Water Cloud Model capstone. Applied from afar. These modules pull in Mathlib
+(via the `Ladder` rigor layer) and, through the WCM capstone, TorchLean, so this
+module is not Mathlib-free.
 -/
 
 import PropertyKindCalculus.Uncertainty.Combine
@@ -17,6 +19,7 @@ import PropertyKindCalculus.Uncertainty.Adequacy.Sterbenz32
 import PropertyKindCalculus.Uncertainty.Adequacy.MeanBound
 import PropertyKindCalculus.Uncertainty.Adequacy.RefinementBridge
 import PropertyKindCalculus.UncertaintyExamples.LadderNesting
+import PropertyKindCalculus.UncertaintyExamples.WaterCloudModel
 import PropertyKindCalculus.UncertaintyExamples.AdequacyLadder
 import PropertyKindCalculus.UncertaintyExamples.AdequacyDag
 import PropertyKindCalculus.UncertaintyExamples.Coverage
@@ -113,5 +116,15 @@ attribute [requirement "R9" proves "a tolerance below the contraction is refuted
   mixing_not_quasiExtensive
 attribute [requirement "R18" proves "the per-join tolerance as a coverage statement: |D| < k·u holds with probability ≥ 1 − 1/k², distribution-free"]
   join_within_tolerance
+
+/-! ## R23 — provenance recorded at a declared boundary, checked against the scope -/
+
+attribute [requirement "R23" exemplifies "the WCM forward's declared boundary — three uncertain inputs, four expert-carried calibration params — pinned to agree with what the scope computes, the calibration rendered as unbudgeted sources by the port budget"]
+  PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.wcmBoundary
+
+/-! ## R26 — the checked measurement model: the theorem edge between boundaries -/
+
+attribute [requirement "R26" exemplifies "the WCM theorem edge: the closed-form retrieval inverts the forward at ℝ, its side condition named (soilGainNonzero) and its license list honestly empty — nothing claimed beyond the witness's rung"]
+  PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.retrievalInvertsForward
 
 end PropertyKindCalculus.Uncertainty

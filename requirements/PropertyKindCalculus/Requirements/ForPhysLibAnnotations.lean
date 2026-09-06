@@ -4,7 +4,8 @@
 Attaches the `@[requirement …]` traceability attribute to the ForPhysLib case-study
 declarations that *exemplify* requirements minted from that benchmark — chiefly R21
 (ergonomics and erasure), whose evidence was proved in the benchmark's scorecard
-before the requirement existed in the catalogue.
+before the requirement existed in the catalogue — and to the ClassicalMechanics
+audit contracts, the worked exemplars of R24's scoped-audit discipline.
 
 The one place the Requirements library reaches into the `ForPhysLib` library, the
 same isolation discipline `DimensionAnnotations` follows for the Dimension layer.
@@ -13,6 +14,7 @@ this adds no dependency the library did not have.
 -/
 
 import ForPhysLib.CaseStudies.HarmonicOscillator.Scorecard
+import ForPhysLib.ClassicalMechanics.Audits
 import PropertyKindCalculus.Requirements.Attributes
 
 /-! ## Ergonomics and erasure (R21) -/
@@ -31,3 +33,10 @@ attribute [requirement "R22" exemplifies "same kind, different object: the taggi
 
 attribute [requirement "R2" exemplifies "kinetic and potential energy: distinct kinds, mutually comparable, and the Hamiltonian lands at the join — the benchmark probe that minted the specialization lift"]
   PropertyKindCalculus.Examples.HarmonicOscillator.Scorecard.mr32_attempt4_swept
+
+/-! ## The audit as a claim about its scope, never about the library (R24) -/
+
+attribute [requirement "R24" exemplifies "the kinded interior of a whole PhysLib directory, gated unkinded-empty: a naked binder added to the scope is a build failure"]
+  ForPhysLib.ClassicalMechanics.Audits.interiorScope
+attribute [requirement "R24" exemplifies "the same directory's ingest boundary, measured rather than gated — 72 unkinded positions enumerated so growth is visible — while the silent mint ratchet lets the blessed scope grow only by attestation"]
+  ForPhysLib.ClassicalMechanics.Audits.ingestBoundary
