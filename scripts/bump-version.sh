@@ -7,11 +7,13 @@
 #   scripts/bump-version.sh +M         # bump major  (X.Y.Z   -> (X+1).0.0)
 #
 # The version is declared once, in the Lean package (lakefile.lean's
-# `version := v!"X.Y.Z"`) — the single source of truth. The blueprint reads that
-# same line at build time (its `{version}[]` role), so the published document never
-# drifts from the source; there is nothing else to keep in lockstep. Adapted from
-# L4YAML's multi-manifest bumper, whose SITES array structure is kept so more
-# declaration sites (a future Python/Rust binding, say) can be added in one line.
+# `version := v!"X.Y.Z"`) — the single source of truth — and mirrored into the
+# blueprint's `{version}[]` role, whose Lean literal is the only channel Lake's
+# module trace watches (see that file's header). This script writes both sites and
+# refuses to bump while they disagree; `scripts/check-doc-pins.py` gates the same
+# agreement in CI. Adapted from L4YAML's multi-manifest bumper, whose SITES array
+# structure is kept so more declaration sites (a future Python/Rust binding, say)
+# can be added in one line.
 #
 # After a bump: commit, then `git tag vX.Y.Z` to cut the release.
 set -euo pipefail
@@ -24,6 +26,7 @@ cd "$ROOT"
 # version-declaration line so dependency versions are never touched.
 SITES=(
   'lakefile.lean|  version := v!"|"'
+  'blueprint/PropertyKindCalculusBlueprint/Version.lean|def versionStr : String := "|"'
 )
 
 SEMVER='[0-9]+\.[0-9]+\.[0-9]+'
@@ -97,5 +100,5 @@ echo "bumped $current -> $new in:"
 printf '%s\n' "${SITES[@]}" | cut -d'|' -f1 | sed 's/^/  /'
 echo
 echo "next:  git commit -am \"chore: bump version to $new\" && git tag v$new"
-echo "       (the blueprint reads the new version on its next build; run"
-echo "        'lake clean' in blueprint/ first if building incrementally)"
+echo "       (the blueprint's literal is a tracked source input, so its next"
+echo "        incremental build re-elaborates the document with $new)"

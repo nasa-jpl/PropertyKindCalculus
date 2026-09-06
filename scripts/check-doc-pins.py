@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-"""Gate this package's version claims against `lean-toolchain`, and its
-blueprint-status claims against the blueprint source.
+"""Gate this package's version claims against `lean-toolchain`, its blueprint-status
+claims against the blueprint source, and its package-version declarations against
+each other.
 
 The bug this exists to catch: an artifact moves and the prose that describes it does
 not. `lean-toolchain` moves at a bump; three READMEs and a CI comment drifted two
@@ -8,7 +9,7 @@ minor versions behind the pin before anyone read them side by side. A chapter ge
 written and proved; the table that called it "planned" keeps saying so. Nothing in the
 build can notice either — a stale sentence still compiles.
 
-Four checks, in increasing order of how easy they are to fool:
+Five checks, the first four in increasing order of how easy they are to fool:
 
 1. **Machine pins (hard).** `blueprint/lean-toolchain` must equal `lean-toolchain`,
    and every `inputRev` in either `lake-manifest.json` that is shaped like a Lean
@@ -37,6 +38,13 @@ Four checks, in increasing order of how easy they are to fool:
    the point here for the same reason it is in check 2: a chapter added and never
    listed, or a status glyph left behind after the node was proved, is exactly the
    drift that a table nobody re-reads will keep.
+
+5. **Package-version sites (hard, with counts).** The package version is declared in
+   `lakefile.lean` and mirrored into the blueprint's `{version}[]` literal, because
+   Lake's module trace watches a module's source text and not a file its elaborator
+   reads. Every site must declare the same version exactly once, and the site list
+   must be the one `scripts/bump-version.sh` writes — a site added to the bumper and
+   not to the gate is itself a failure.
 
 What this does not catch, stated plainly: EXEMPT is per *file*, not per line, so a
 newly stale claim written into an exempt file is reported and not failed. The two
@@ -102,6 +110,27 @@ EXEMPT: dict[str, str] = {
     ),
 }
 
+# --- 5. Package-version sites: the lakefile declaration and its Lean mirror ------
+# The package version is declared in `lakefile.lean` and mirrored into the blueprint's
+# `{version}[]` literal. The mirror is not redundancy for its own sake: Lake's module
+# trace is the module's source, its imports, the toolchain, the platform and the
+# library's `leanOptions`, so a version the *elaborator* reads out of the lakefile is
+# invisible to it and the `.olean` keeps the value it was first built with. Source text
+# is tracked; a literal is therefore the cheapest correct channel (see that module's
+# header for the `leanOptions` alternative and why it costs a full re-elaboration).
+#
+# Each entry is (file, text before the version, text after) — the triple shape
+# `scripts/bump-version.sh` bumps. Both must be anchored to the start of a line, and
+# both lists must name the same sites; the check below enforces that too, so a site
+# added to the bumper and not here cannot drift unnoticed.
+PKG_VERSION_SITES: list[tuple[str, str, str]] = [
+    ("lakefile.lean", '  version := v!"', '"'),
+    ("blueprint/PropertyKindCalculusBlueprint/Version.lean",
+     'def versionStr : String := "', '"'),
+]
+BUMPER = "scripts/bump-version.sh"
+BUMPER_SITES = re.compile(r"^SITES=\((.*?)^\)", re.DOTALL | re.MULTILINE)
+
 # --- 4. Blueprint status: where the real status lives, and the claim that mirrors it -
 BP_CHAPTERS = "blueprint/PropertyKindCalculusBlueprint/Chapters"
 BP_SOURCE = "blueprint/PropertyKindCalculusBlueprint"
@@ -145,6 +174,58 @@ SKIP_DIRS = {".lake", ".git", "_out", "docs", "Scratch", ".pixi"}
 
 def read(rel: str) -> str:
     return (ROOT / rel).read_text(encoding="utf-8")
+
+
+def check_package_version(quiet: bool) -> list[str]:
+    """Check 5: every package-version site declares the same version, exactly once.
+
+    Two writers of one value — `scripts/bump-version.sh` writes both sites, this reads
+    both back — so the gate is what makes the pair a mirror rather than two versions.
+    The occurrence count matters for the reason it does in check 2: a declaration
+    reworded out of the pattern's reach would otherwise pass by matching nothing.
+    """
+    failures: list[str] = []
+    found: dict[str, str] = {}
+
+    for rel, before, after in PKG_VERSION_SITES:
+        pat = re.compile("^" + re.escape(before) + r"(\d+\.\d+\.\d+)" + re.escape(after),
+                         re.MULTILINE)
+        hits = pat.findall(read(rel))
+        if len(hits) != 1:
+            failures.append(
+                f"{rel}: expected 1 version declaration matching "
+                f"{before + 'X.Y.Z' + after!r} at the start of a line, found {len(hits)}"
+            )
+        else:
+            found[rel] = hits[0]
+
+    versions = set(found.values())
+    if len(versions) > 1:
+        failures.append(
+            "package-version declarations disagree: "
+            + "; ".join(f"{rel} says {v}" for rel, v in sorted(found.items()))
+        )
+    elif versions and not quiet:
+        for rel in sorted(found):
+            print(f"ok    {rel}: package version {found[rel]}")
+
+    # The bumper and this gate must know the same sites, or one of them is writing a
+    # file nobody checks (or checking a file nobody writes).
+    m = BUMPER_SITES.search(read(BUMPER))
+    if not m:
+        failures.append(f"{BUMPER}: could not parse its `SITES=(…)` array")
+    else:
+        bumped = {line.strip().strip("'").split("|")[0]
+                  for line in m.group(1).splitlines() if line.strip().startswith("'")}
+        gated = {rel for rel, _, _ in PKG_VERSION_SITES}
+        if bumped != gated:
+            failures.append(
+                f"{BUMPER} bumps {sorted(bumped)} but this gate checks {sorted(gated)}"
+            )
+        elif not quiet:
+            print(f"ok    {BUMPER}: bumps the same {len(gated)} site(s) this gate checks")
+
+    return failures
 
 
 def check_blueprint_status(quiet: bool) -> list[str]:
@@ -317,6 +398,9 @@ def main() -> int:
     # 4. Blueprint status claims.
     failures.extend(check_blueprint_status(quiet))
 
+    # 5. Package-version sites.
+    failures.extend(check_package_version(quiet))
+
     for rel, reason in EXEMPT.items():
         if not quiet:
             print(f"exempt {rel}: {reason}")
@@ -327,7 +411,7 @@ def main() -> int:
             print(f"  {f}")
         return 1
     print("\nAll version claims agree with lean-toolchain; all blueprint status")
-    print("claims agree with the chapter sources.")
+    print("claims agree with the chapter sources; all package-version sites agree.")
     return 0
 
 

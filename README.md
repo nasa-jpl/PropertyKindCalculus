@@ -782,22 +782,32 @@ than silently dropped — the class of failure this rigor work exists to surface
 
 ## Versioning
 
-PropertyKindCalculus is a pure-Lean project, so its version is declared **once** — in
-the Lean package manifest — as the single source of truth:
+PropertyKindCalculus is a pure-Lean project. Its version is **declared** in the Lean
+package manifest — the single source of truth — and **mirrored** into the one place
+that has to quote it:
 
-| Location | Field |
-|---|---|
-| [lakefile.lean](lakefile.lean) | `version := v!"X.Y.Z"` |
+| Location | Field | Role |
+|---|---|---|
+| [lakefile.lean](lakefile.lean) | `version := v!"X.Y.Z"` | the declaration |
+| [`Version.lean`](blueprint/PropertyKindCalculusBlueprint/Version.lean) | `def versionStr : String := "X.Y.Z"` | the blueprint's `{version}[]` role |
 
-Nothing else needs to be kept in lockstep. In particular, the **blueprint reads that
-same line at build time** (via its `{version}[]` Verso role in
-[`Version.lean`](blueprint/PropertyKindCalculusBlueprint/Version.lean)), so the
-published document's version can never drift from the source — the front-page
-sentence *"PropertyKindCalculus X.Y.Z is a Lean 4 formalization…"* is generated, not
-hand-typed. (Lake does not track the parent `lakefile.lean` as a dependency of the
-blueprint, so after a bump an *incremental* local build may show the stale cached
-value; CI builds the document fresh, and `lake clean` in `blueprint/` forces a local
-refresh.)
+The front-page sentence *"PropertyKindCalculus X.Y.Z is a Lean 4 formalization…"* is
+generated from that role, not hand-typed. The mirror is what makes it *current*: Lake's
+trace for a module is its own source, its imports' artifacts, the toolchain, the
+platform and the library's `leanOptions` ([`Lake/Build/Module.lean`][lake-module]), so a
+version the elaborator reads out of the lakefile is invisible to the build system and
+the `.olean` keeps the value it was first built with. Source text is a tracked input, so
+the literal re-elaborates the document exactly when the version changes — and only that
+module and the page that quotes it, where a `-D` option carrying the version would
+re-elaborate every module in the package.
+
+Two writers of one value therefore need a gate, and have two:
+[`scripts/bump-version.sh`](scripts/bump-version.sh) writes both sites and refuses to
+bump while they disagree, and [`scripts/check-doc-pins.py`](scripts/check-doc-pins.py)
+reads both back — same version, exactly one declaration each, and the same site list the
+bumper writes — in CI, ahead of the Lean build.
+
+[lake-module]: https://github.com/leanprover/lean4/blob/master/src/lake/Lake/Build/Module.lean
 
 ### Bumping the version
 
@@ -811,10 +821,11 @@ scripts/bump-version.sh +m     # minor  X.Y.Z   -> X.(Y+1).0
 scripts/bump-version.sh +M     # major  (X+1).0.0
 ```
 
-A grep to sanity-check the declaration by hand:
+A grep to sanity-check both declarations by hand:
 
 ```sh
 grep -n '^\s*version := v!' lakefile.lean
+grep -n '^def versionStr' blueprint/PropertyKindCalculusBlueprint/Version.lean
 ```
 
 ### Checking the toolchain claims
@@ -827,10 +838,12 @@ is the gate — CI runs it as Phase 0, before Elan, so a wrong version fails in 
 python3 scripts/check-doc-pins.py     # stdlib only; --quiet prints just the failures
 ```
 
-It hard-fails on three things: `blueprint/lean-toolchain` disagreeing with the root, any
-release-tag `inputRev` in either `lake-manifest.json` naming a different version, and each
+It hard-fails on four things: `blueprint/lean-toolchain` disagreeing with the root, any
+release-tag `inputRev` in either `lake-manifest.json` naming a different version, each
 curated sentence in `SITES` not occurring the recorded number of times — the count being
-what makes a deleted claim fail as loudly as a stale one. Everything else it finds is
+what makes a deleted claim fail as loudly as a stale one — and the package-version sites
+above disagreeing, declaring more or fewer than one version each, or not being the set
+`bump-version.sh` writes. Everything else it finds is
 *reported*: some version claims are deliberately not the current pin (a dated measurement,
 a checkout outside this repository, an upstream PR named by the version it bumped), and
 those files carry their reason in `EXEMPT`.
@@ -845,7 +858,8 @@ git commit -am "chore: bump version to $(scripts/bump-version.sh)"
 git tag "v$(scripts/bump-version.sh)"
 ```
 
-The script keeps L4YAML's multi-site `SITES` structure, so if a language binding is
-ever added (a Python or Rust package, say), its manifest becomes one extra line in
-that array and the bumper will then keep all sites in lockstep and refuse to bump a
-divergent set.
+L4YAML's multi-site `SITES` structure is what carries the blueprint literal. A further
+declaration site — a language binding's manifest, say — is one extra line in that array
+and one in the gate's `PKG_VERSION_SITES`; the bumper then keeps all of them in lockstep
+and refuses to bump a divergent set, and the gate refuses a set the two lists disagree
+about.

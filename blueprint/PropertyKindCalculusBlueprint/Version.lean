@@ -1,17 +1,22 @@
 /-
 # Package-version role for the blueprint — `{version}[]`
 
-Reads the PropertyKindCalculus package version from the parent package's
-`lakefile.lean` (`version := v!"X.Y.Z"`) at *elaboration time*, and exposes it as
-the inline Verso role `{version}[]`. The lakefile is the single source of truth,
-kept in sync by `scripts/bump-version.sh`; because the blueprint reads that same
-line every build, the published document's version can never drift from the source.
+The declared PropertyKindCalculus version, exposed as the inline Verso role
+`{version}[]`. `lakefile.lean`'s `version := v!"X.Y.Z"` is the single source of truth;
+the literal below mirrors it. `scripts/bump-version.sh` writes both sites in one step
+and refuses to bump when they disagree, and `scripts/check-doc-pins.py` gates the
+agreement in CI ahead of the Lean build — so the published document's version cannot
+drift from the package's.
 
-Mirrors the approach L4YAML uses in its Verso manual. Note the `lake clean` caveat:
-Lake does not track the parent `lakefile.lean` as a dependency of this module, so a
-version bump followed by an *incremental* blueprint build may show the stale cached
-value — CI builds the document fresh, so the published version is always current;
-locally, `lake clean` in `blueprint/` forces a refresh after a bump.
+Why a mirrored literal and not a read of the lakefile: Lake's trace for a module is its
+own source, its imports' artifacts, the toolchain, the platform, and the library's
+`leanOptions` (`Lake/Build/Module.lean`, `Module.recBuildLean`). A version obtained
+*while this module elaborates* — by reading the file, by `include_str`, or by calling
+into Lake — is in none of them, so the `.olean` keeps whatever value it was first built
+with and no later bump gives Lake a reason to redo it. Of the two channels Lake does
+watch, `leanOptions` is library-granular (a `-D` carrying the version re-elaborates
+every module in the package on every bump), while source text is per-module: a literal
+rebuilds this module, the document that quotes it, and nothing else.
 -/
 import Lean
 import VersoManual
@@ -22,35 +27,11 @@ open Verso.Genre Manual
 
 namespace PropertyKindCalculusBlueprint.Version
 
-/-- Locate the parent PropertyKindCalculus package root — the directory holding the
-`lakefile.lean` that declares the version. The blueprint may be built from its own
-directory (`blueprint/`, so the root is `..`) or from the repo root, so both are
-tried; `blueprint/` itself has a `lakefile.toml`, not `.lean`, so it never matches. -/
-def resolveRepoRoot : IO System.FilePath := do
-  let cwd ← IO.currentDir
-  let candidates := #[cwd, cwd / ".."]
-  for c in candidates do
-    if ← (c / "lakefile.lean").pathExists then return c
-  throw (IO.userError s!"resolveRepoRoot: cannot find PropertyKindCalculus lakefile.lean from {cwd}")
-
-/-- The declared package version, read from `lakefile.lean`'s `version := v!"X.Y.Z"`
-line — the single source of truth (`scripts/bump-version.sh` keeps it authoritative). -/
-def readVersion : IO String := do
-  let txt ← IO.FS.readFile ((← resolveRepoRoot) / "lakefile.lean")
-  for line in txt.splitOn "\n" do
-    match line.splitOn "version := v!\"" with
-    | _ :: rest :: _ =>
-      match rest.splitOn "\"" with
-      | ver :: _ => return ver
-      | _ => pure ()
-    | _ => pure ()
-  throw (IO.userError "readVersion: no `version := v!\"…\"` line in lakefile.lean")
-
-elab "pkc_version_str" : term => do
-  return Lean.mkStrLit (← readVersion)
-
-/-- The declared package version, e.g. `"0.1.0"`. -/
-def versionStr : String := pkc_version_str
+/-- The declared package version, mirroring `lakefile.lean`'s `version := v!"X.Y.Z"`.
+Both sites are written by `scripts/bump-version.sh` and their agreement is gated by
+`scripts/check-doc-pins.py`; the line shape is what those two match on, so keep the
+literal on one line, starting at column 0. -/
+def versionStr : String := "0.112.0"
 
 /-- Inline role: `{version}[]` expands to the declared package version. -/
 @[role]
