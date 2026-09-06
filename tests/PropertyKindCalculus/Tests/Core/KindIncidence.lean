@@ -1451,6 +1451,129 @@ error: the decider 'PropertyKindCalculus.Tests.KindIncidence.noSuchDomain' for '
 -/
 #guard_msgs in #kind_contract deciderDangles
 
+/-! ### The aggregation clause — the declared mereology of the boundary
+
+A produced port may declare its aggregation class: what distributing the computation
+over a carving of a batch axis does to the value. The checks are the clause's hygiene —
+a class governs a *produced* port, since a source composes nothing, and each name the
+class carries answers for itself: a quasi-extensive tolerance is a `Quantity` at the
+governed port's kind, a named sortal or condition a declaration that exists. The truth
+of the class is the author's curated claim, exactly as an `Assembles` entry is; what an
+extensive claim buys is `Recarving.distribution_license`, exercised in
+`Tests/Core/Recarving.lean`. -/
+
+/-- The per-join tolerance of the guarded chain's output — a quantity at the governed
+port's kind, as a tolerance must be. -/
+def halvedJoinTol : Quantity epsilonK Nat := ⟨1⟩
+
+/-- A quantity at the input kind, to hang the wrong-kind refusal on. -/
+def halvedJoinTolAtAlpha : Quantity alphaK Nat := ⟨1⟩
+
+/-- The guarded boundary with its produced port declared extensive. -/
+def halvedExtensive : Provenance.Contract String String :=
+  { halvedInDomainBoundary with
+    name := "halvedInDomain (extensive)"
+    aggregations := [("halvedInDomain/result.some", .extensive)] }
+
+/--
+info: kind contract over 3 steps:
+contract 'halvedInDomain (extensive)': 3 ports, 0 exits
+aggregates halvedInDomain/result.some: extensive
+boundary agrees: true
+-/
+#guard_msgs in #kind_contract halvedExtensive
+
+/-- The same port, additive only to within a named per-join tolerance. -/
+def halvedQuasi : Provenance.Contract String String :=
+  { halvedInDomainBoundary with
+    name := "halvedInDomain (quasi-extensive)"
+    aggregations := [("halvedInDomain/result.some",
+      .quasiExtensive "PropertyKindCalculus.Tests.KindIncidence.halvedJoinTol")] }
+
+/--
+info: kind contract over 3 steps:
+contract 'halvedInDomain (quasi-extensive)': 3 ports, 0 exits
+aggregates halvedInDomain/result.some: quasi-extensive within PropertyKindCalculus.Tests.KindIncidence.halvedJoinTol
+boundary agrees: true
+-/
+#guard_msgs in #kind_contract halvedQuasi
+
+/-- The same port read as a count, keyed to the sortal that specifies what is
+counted. -/
+def halvedCounted : Provenance.Contract String String :=
+  { halvedInDomainBoundary with
+    name := "halvedInDomain (count keyed)"
+    aggregations := [("halvedInDomain/result.some",
+      .countKeyed "PropertyKindCalculus.Tests.KindIncidence.halvedDomain")] }
+
+/--
+info: kind contract over 3 steps:
+contract 'halvedInDomain (count keyed)': 3 ports, 0 exits
+aggregates halvedInDomain/result.some: count keyed by PropertyKindCalculus.Tests.KindIncidence.halvedDomain
+boundary agrees: true
+-/
+#guard_msgs in #kind_contract halvedCounted
+
+/-- An aggregation class hung on an input: a source composes nothing. -/
+def aggregationOnAnInput : Provenance.Contract String String :=
+  { halvedInDomainBoundary with
+    name := "halvedInDomain (class misplaced)"
+    aggregations := [("halvedInDomain/lo", .extensive)] }
+
+/--
+error: the aggregation class for 'halvedInDomain/lo' names a port with role 'input' — an aggregation class says how a produced value composes, and this port produces nothing
+-/
+#guard_msgs in #kind_contract aggregationOnAnInput
+
+/-- A tolerance that names no declaration. -/
+def aggregationTolDangles : Provenance.Contract String String :=
+  { halvedInDomainBoundary with
+    name := "halvedInDomain (tolerance dangles)"
+    aggregations := [("halvedInDomain/result.some",
+      .quasiExtensive "PropertyKindCalculus.Tests.KindIncidence.noSuchTol")] }
+
+/--
+error: the tolerance 'PropertyKindCalculus.Tests.KindIncidence.noSuchTol' for 'halvedInDomain/result.some' is not a declaration
+-/
+#guard_msgs in #kind_contract aggregationTolDangles
+
+/-- A tolerance that is not a quantity — the domain predicate, a `Prop`. -/
+def aggregationTolNotAQuantity : Provenance.Contract String String :=
+  { halvedInDomainBoundary with
+    name := "halvedInDomain (tolerance not a quantity)"
+    aggregations := [("halvedInDomain/result.some",
+      .quasiExtensive "PropertyKindCalculus.Tests.KindIncidence.halvedDomain")] }
+
+/--
+error: the tolerance 'PropertyKindCalculus.Tests.KindIncidence.halvedDomain' for 'halvedInDomain/result.some' is not a 'Quantity' — a per-join tolerance is a kinded quantity, not a bare number
+-/
+#guard_msgs in #kind_contract aggregationTolNotAQuantity
+
+/-- A tolerance at the wrong kind: a discrepancy in the *input* is not a claim about
+what the port produces. -/
+def aggregationTolWrongKind : Provenance.Contract String String :=
+  { halvedInDomainBoundary with
+    name := "halvedInDomain (tolerance at the wrong kind)"
+    aggregations := [("halvedInDomain/result.some",
+      .quasiExtensive "PropertyKindCalculus.Tests.KindIncidence.halvedJoinTolAtAlpha")] }
+
+/--
+error: the tolerance 'PropertyKindCalculus.Tests.KindIncidence.halvedJoinTolAtAlpha' for 'halvedInDomain/result.some' is a quantity at kind 'alphaK', which is not the port's kind 'epsilonK' — a join's discrepancy is a quantity of what the port produces
+-/
+#guard_msgs in #kind_contract aggregationTolWrongKind
+
+/-- A sortal that names no declaration: a count of nothing specified is not a count. -/
+def aggregationSortalDangles : Provenance.Contract String String :=
+  { halvedInDomainBoundary with
+    name := "halvedInDomain (sortal dangles)"
+    aggregations := [("halvedInDomain/result.some",
+      .countKeyed "PropertyKindCalculus.Tests.KindIncidence.noSuchSortal")] }
+
+/--
+error: the aggregation class for 'halvedInDomain/result.some' names 'PropertyKindCalculus.Tests.KindIncidence.noSuchSortal', which is not a declaration
+-/
+#guard_msgs in #kind_contract aggregationSortalDangles
+
 /-! ### Re-expression — a conversion that stays inside the calculus
 
 Two references for one kind-of-property are two kinds when a model keeps them apart, and

@@ -54,8 +54,54 @@ theorem r9_count_sortal_ne :
 -- The two shape numbers agree: a carving with `n` joins exhibits `n + 1` parts.
 #guard twoParts.joins == 1
 
+/-! ## The boundary-level form — one map, every extensive output preserved (R27)
+
+A module's boundary is a list of outputs, and the distribution license is the
+quantifier over that list: one re-carving of the batch axis, every declared-extensive
+output's total preserved. The probe needs a module with *two* extensive outputs so the
+list form says more than the per-output law — and the count is deliberately not among
+them, because `coalesce` does not preserve a count's whole and the license correctly
+has no instance for it. -/
+
+/-- A second extensive output over the same parts — twice the mass, as its own fold. -/
+def partMassDoubled : Measurement Int := fun d =>
+  { kind := partMassKind, numeral := 2 * Decomposition.fold id (· + ·) d,
+    reference := "kg" }
+
+/-- Twice an extensive fold is extensive: additivity is `Int.mul_add` at the union. -/
+theorem partMassDoubled_extensive : Extensive partMassKind partMassDoubled :=
+  ⟨fun _ => rfl, fun _ _ => Int.mul_add 2 _ _⟩
+
+/-- The module's declared-extensive outputs: both masses, one batch axis. -/
+def massOutputs : List (KindOfProperty × Measurement Int) :=
+  [(partMassKind, partMass), (partMassKind, partMassDoubled)]
+
+-- The boundary-level license, applied: `coalesce` re-carves the axis once, and both
+-- outputs' totals survive — from the one quantified law, not output by output.
+theorem r27_distribution_license :
+    ∀ o ∈ massOutputs, leafSum o.2 (coalesce.map twoParts) = leafSum o.2 twoParts :=
+  Recarving.distribution_license massOutputs coalesce.map
+    (by
+      intro o ho
+      simp only [massOutputs, List.mem_cons, List.not_mem_nil, or_false] at ho
+      rcases ho with rfl | rfl
+      · exact partMass_extensive
+      · exact partMassDoubled_extensive)
+    (by
+      intro o ho
+      simp only [massOutputs, List.mem_cons, List.not_mem_nil, or_false] at ho
+      rcases ho with rfl | rfl <;> intro d <;> rfl)
+    twoParts
+
+-- … and both sides carry content: 2 kg and 4 kg respectively, before and after.
+#guard leafSum partMassDoubled twoParts == 4
+#guard leafSum partMassDoubled (coalesce.map twoParts) == 4
+
 /-- info: 'PropertyKindCalculus.Recarving.leafSum_invariant' does not depend on any axioms -/
 #guard_msgs in #print axioms Recarving.leafSum_invariant
+
+/-- info: 'PropertyKindCalculus.Recarving.distribution_license' does not depend on any axioms -/
+#guard_msgs in #print axioms Recarving.distribution_license
 
 /-- info: 'PropertyKindCalculus.countMeasurement_extensive' does not depend on any axioms -/
 #guard_msgs in #print axioms countMeasurement_extensive

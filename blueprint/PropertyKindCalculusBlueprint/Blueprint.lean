@@ -755,12 +755,17 @@ the elaborator's (`#kind_relation`, surveyed by `#kind_relations`), pinned by ac
 and refusal probes for all four relation kinds.
 
 *R27 — A module's distribution is licensed by declared extensivity.* The mereology
-clause as a verifiable requirement: output ports carry aggregation classes, and
-recarving or sharding a module's batch axis is licensed by theorem from those
-declarations, with the quasi-extensive tolerance tied to the rounding budget where the
-carrier demands it. The class vocabulary and the aggregation theorems exist
-(the extensivity chapter); the port wiring does not yet, and the traceability matrix
-below is the honest record of that status.
+clause as a verifiable requirement: produced ports carry aggregation classes
+(`Provenance.AggregationClass` — the §13.5 vocabulary of the extensivity chapter,
+extended by the count-keyed, parameter-conditioned, and interface-licensed classes,
+each naming the tolerance, sortal, transport, or law that is the content of its
+claim), and recarving or sharding a module's batch axis is licensed by theorem from
+those declarations: `Recarving.distribution_license` — one map, every
+declared-extensive output's total preserved — with the quasi-extensive price at most
+both carvings' joins times the per-join tolerance, tied to the rounding budget where
+the carrier demands it. The clause's hygiene is the elaborator's
+(`checkAggregations`, rendered in every `#kind_contract` report), pinned by
+acceptance and refusal probes.
 
 ## Requirement validation — the ForPhysLib benchmark
 

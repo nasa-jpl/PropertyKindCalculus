@@ -99,6 +99,17 @@ contract's `deciders` field may additionally name, per conditional port, the dec
 that decides them — the predicate becomes data of the boundary, checked to exist and to
 govern a conditional port, rather than prose beside it.
 
+A produced port may additionally declare its **aggregation class** (`aggregations`):
+what distributing the computation over a carving of a batch axis — tiles, blocks,
+shards — does to the value, in the §13.5 vocabulary the mereology layer proves laws
+over (`AggregationClass` below). Every distribution decision rests on an extensivity
+claim; the clause is where that claim is declared so the license to shard can be
+derived from it (`Recarving.distribution_license`) instead of assumed. Like an
+`Assembles` entry, the class is the author's curated claim — the checks are hygiene
+(a class governs a produced port; each name the class carries exists, and a
+tolerance is a kinded quantity), and the mereology layer's theorems are what the
+claim buys or costs.
+
 `Contract.discharges` is that ladder, and it is a relation between two *declarations*
 rather than between a declaration and a graph — no harvest, so a deployment can state
 what it did with an algorithm's parameters with the algorithm's contract merely imported.
@@ -360,6 +371,86 @@ structure Provenance (ν κ : Type) where
   exits : List ν
 deriving Repr, Inhabited, BEq
 
+/-- **The aggregation class of a produced port** — how the value behaves when the
+module's computation is distributed over a carving of a batch axis and the pieces are
+recombined. The vocabulary is Dybkær §13.5's, extended by the classes the mereology
+layer has since earned, and each constructor points at the law that cashes it rather
+than restating it:
+
+  * `extensive` — §13.5.1: the total over the parts is the value of the whole
+    (`Extensive`, `extensive_additive`), so the port's total survives any re-carving
+    of the batch axis (`Recarving.leafSum_invariant`; the boundary-level form is
+    `Recarving.distribution_license`);
+  * `quasiExtensive tolerance` — §13.5.2: additive to within a *named* per-join
+    tolerance, a declaration whose type is a `Quantity` at this port's kind — without
+    the name, "approximately" is not a claim (`Uncertainty.QuasiExtensive`; what a
+    whole carving costs is `joins · t`, and what a re-carving costs is both carvings'
+    joins);
+  * `conditionallyExtensive condition` — §13.5.3: additive only under a named
+    condition the deployment must establish (volume off the mixing case;
+    `mixing_subadditive` is what claiming §13.5.1 anyway reports);
+  * `intensive` — §13.5.4: invariant with extent, of constant composition
+    (`Intensive`, `intensive_uniform`) — a port a shard may *read off any part* and
+    must never sum;
+  * `wholeProper` — the parts do not determine the value at all (`WholeProper`):
+    no distribution over a carving is licensed, and `assemble_ne_measured` is the
+    number a library that shards it anyway reports;
+  * `countKeyed sortal` — a count of a specified elementary entity, named by its
+    sortal predicate (`countMeasurement`). Extensive over a *fixed* carving and not a
+    property of the whole (`coalesce_count_ne`), so it travels with its carving — per
+    pixel, per shard — and does not survive a re-carving;
+  * `extensiveAbout transport` — additive only about a shared parameter (an axis, a
+    frame, a datum: `ExtensiveAbout`), with the named transport law pricing what
+    reading parts about different parameters costs (`Transports`,
+    `extensiveAbout_mixed`);
+  * `interfaceLicensed law` — additivity purchased by a named cancellation law over
+    pair-indexed interior actions (`InterfaceLedger.netMeasurement_extensive`); a
+    shard boundary is a cut, and `mutualTotal` is exactly what crossing it costs when
+    the law is dropped (`netTotal_union`). -/
+inductive Provenance.AggregationClass where
+  /-- §13.5.1: unconditionally additive over the parts. -/
+  | extensive
+  /-- §13.5.2: additive to within the named per-join tolerance — a declaration whose
+  type is a `Quantity` at the governed port's kind. -/
+  | quasiExtensive (tolerance : String)
+  /-- §13.5.3: additive only under the named condition. -/
+  | conditionallyExtensive (condition : String)
+  /-- §13.5.4: invariant with extent, of constant composition. -/
+  | intensive
+  /-- The parts do not determine the value: no aggregation is licensed. -/
+  | wholeProper
+  /-- A count keyed to the named sortal predicate — extensive over a fixed carving,
+  not a property of the whole. -/
+  | countKeyed (sortal : String)
+  /-- Additive about a shared parameter, with the named transport law pricing a
+  parameter change. -/
+  | extensiveAbout (transport : String)
+  /-- Additivity purchased by the named cancellation law over interior interfaces. -/
+  | interfaceLicensed (law : String)
+deriving DecidableEq, Repr, Inhabited, BEq
+
+/-- The declaration an aggregation class names as the content of its claim — the
+tolerance, condition, sortal, transport, or cancellation law; `none` for the three
+classes whose whole content is the §13.5 law itself. -/
+def Provenance.AggregationClass.evidence : Provenance.AggregationClass → Option String
+  | .extensive | .intensive | .wholeProper => none
+  | .quasiExtensive t => some t
+  | .conditionallyExtensive c => some c
+  | .countKeyed s => some s
+  | .extensiveAbout tr => some tr
+  | .interfaceLicensed l => some l
+
+/-- How an aggregation class prints in a rendered report. -/
+def Provenance.AggregationClass.label : Provenance.AggregationClass → String
+  | .extensive => "extensive"
+  | .quasiExtensive t => s!"quasi-extensive within {t}"
+  | .conditionallyExtensive c => s!"conditionally extensive on {c}"
+  | .intensive => "intensive"
+  | .wholeProper => "whole-proper"
+  | .countKeyed s => s!"count keyed by {s}"
+  | .extensiveAbout tr => s!"extensive about {tr}"
+  | .interfaceLicensed l => s!"interface-licensed by {l}"
+
 /-- **A declared boundary** (header, "The declared boundary"): the interface an author
 claims for a scope — a rendered name, the members claimed for, the ports with the role
 and binding time each carries, and the exits where values leave the calculus. It is the
@@ -388,6 +479,15 @@ structure Provenance.Contract (ν κ : Type) where
   conditional port with no entry remains a declared case whose predicate is stated
   elsewhere. -/
   deciders : List (ν × String) := []
+  /-- The aggregation classes of the produced ports: for an `output` or `conditional`
+  port, how its value behaves when the computation is distributed over a carving of a
+  batch axis — the declared mereology of the boundary (`AggregationClass`). One entry
+  per classed port, checked by `#kind_contract` to govern a produced port and, where
+  the class names a tolerance, condition, sortal, transport, or law, to name an
+  existing declaration (a tolerance additionally a `Quantity` at the port's kind). A
+  produced port with no entry makes no distribution claim — and the license to shard
+  it is then nobody's to derive. -/
+  aggregations : List (ν × Provenance.AggregationClass) := []
 deriving Repr, Inhabited, BEq
 
 namespace Provenance

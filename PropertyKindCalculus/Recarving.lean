@@ -57,6 +57,26 @@ theorem leafSum_invariant {O : Type u} {k : KindOfProperty} {m : Measurement O}
   rw [← extensive_additive h (r.map d), ← extensive_additive h d]
   exact r.preserves d
 
+/-- **The distribution license — the boundary-level form.** A module whose batched
+outputs are all extensive commutes with a re-carving of its batch axis: one map,
+every output's total preserved, however the axis is cut into tiles, blocks, or
+shards. Stated over the *list* of output measurements because a boundary is a list —
+the quantifier over it is the module-level claim, and each output alone is
+`leafSum_invariant`. This is what a declared `AggregationClass.extensive` clause
+buys; a count-keyed output is exactly the one it does not cover — `coalesce_count_ne`
+exhibits a map that preserves every extensive total while changing the count, which
+is why a count travels *with its carving* (per pixel, per shard) rather than with the
+whole. The §13.5.2 relaxation, where each total stands within `joins · t` of its
+whole, is priced in `Uncertainty.QuasiExtensive`. -/
+theorem distribution_license {O : Type u}
+    (outs : List (KindOfProperty × Measurement O))
+    (map : Decomposition O → Decomposition O)
+    (hext : ∀ o ∈ outs, Extensive o.1 o.2)
+    (hpres : ∀ o ∈ outs, ∀ d, (o.2 (map d)).numeral = (o.2 d).numeral)
+    (d : Decomposition O) :
+    ∀ o ∈ outs, leafSum o.2 (map d) = leafSum o.2 d := fun o ho =>
+  leafSum_invariant (hext o ho) ⟨map, hpres o ho⟩ d
+
 end Recarving
 
 /-! ## Counts, and the sortal they are keyed to

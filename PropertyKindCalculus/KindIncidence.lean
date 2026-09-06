@@ -2142,6 +2142,7 @@ def renderContractLines (c : Provenance.Contract String String)
     ++ (if params.isEmpty then [] else
         [s!"params: {String.intercalate ", " params}"])
     ++ c.deciders.map (fun (n, d) => s!"decides {n}: {d}")
+    ++ c.aggregations.map (fun (n, a) => s!"aggregates {n}: {a.label}")
     ++ (if c.declaresUniquely then [] else ["declared twice: the contract repeats a node"])
     ++ (c.undeclared g).map (fun p => s!"undeclared {renderPort p}")
     ++ (c.unrealized g).map (fun p => s!"unrealized {renderPort p}")
@@ -2275,6 +2276,46 @@ def checkDeciders (c : Provenance.Contract String String) : MetaM Unit := do
     unless (env.find? d.toName).isSome do
       throwError "the decider '{d}' for '{n}' is not a declaration"
 
+/-- The aggregation clause's checks (`Contract.aggregations`): each entry names a
+*produced* port of the contract — an aggregation class says how a value the module
+hands out composes, so a source port has none — and each name the class carries
+answers for itself. A quasi-extensive tolerance is a declaration whose type is a
+`Quantity` at the governed port's kind, because a per-join discrepancy is a quantity
+of what the port produces, not a bare number; a named condition, sortal, transport,
+or cancellation law is a declaration in the environment. What the checks do not
+adjudicate is the truth of the class — like an `Assembles` entry it is the author's
+curated claim, and `Recarving.distribution_license` is what an extensive claim buys
+while `assemble_ne_measured` is what a wrong one costs. -/
+def checkAggregations (c : Provenance.Contract String String) : MetaM Unit := do
+  let env ← getEnv
+  for (n, cls) in c.aggregations do
+    let some p := c.ports.find? (·.node == n)
+      | throwError "the aggregation class for '{n}' names no port of '{c.name}'"
+    unless p.dir.produced do
+      throwError "the aggregation class for '{n}' names a port with role \
+        '{p.dir.label}' — an aggregation class says how a produced value composes, \
+        and this port produces nothing"
+    match cls with
+    | .quasiExtensive t =>
+      let tname := t.toName
+      let some tinfo := env.find? tname
+        | throwError "the tolerance '{t}' for '{n}' is not a declaration"
+      let tk ← Meta.forallTelescopeReducing tinfo.type fun _ tconcl => do
+        unless tconcl.isAppOf ``Quantity do
+          throwError "the tolerance '{tname}' for '{n}' is not a 'Quantity' — a \
+            per-join tolerance is a kinded quantity, not a bare number"
+        renderKindArg [] (tconcl.getAppArgs[0]!)
+      unless p.kind == tk || p.kind.endsWith ("." ++ tk) || tk.endsWith ("." ++ p.kind) do
+        throwError "the tolerance '{tname}' for '{n}' is a quantity at kind '{tk}', \
+          which is not the port's kind '{p.kind}' — a join's discrepancy is a \
+          quantity of what the port produces"
+    | .conditionallyExtensive e | .countKeyed e | .extensiveAbout e
+    | .interfaceLicensed e =>
+      unless (env.find? e.toName).isSome do
+        throwError "the aggregation class for '{n}' names '{e}', which is not a \
+          declaration"
+    | .extensive | .intensive | .wholeProper => pure ()
+
 open Elab Command in
 /-- `#kind_contract c` assembles the members the contract `c` declares and compares that
 assembly's boundary with the boundary `c` declares — its parameters and decided
@@ -2286,6 +2327,7 @@ elab "#kind_contract " c:ident : command => liftTermElabM do
   let cname ← realizeGlobalConstNoOverload c
   let ctr ← contractValueOf cname
   checkDeciders ctr
+  checkAggregations ctr
   let a ← assembleContract ctr
   logInfo m!"kind contract over {ctr.members.length} steps:\n\
     {String.intercalate "\n" (renderContractLines ctr a.graph)}"
@@ -2300,6 +2342,7 @@ elab "#kind_contract_decide " c:ident : command => liftTermElabM do
   let cname ← realizeGlobalConstNoOverload c
   let ctr ← contractValueOf cname
   checkDeciders ctr
+  checkAggregations ctr
   let a ← assembleContract ctr
   unless ctr.agrees a.graph do
     throwError "the boundary declared by '{cname}' is not the one its members compute:\n\

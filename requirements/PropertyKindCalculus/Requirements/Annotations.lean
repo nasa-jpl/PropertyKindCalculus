@@ -272,6 +272,15 @@ attribute [requirement "R26" implements "the full check of one edge: witness a s
 attribute [requirement "R26" implements "the decider clause's hygiene: a named case-decider governs a conditional port and exists"]
   KindIncidence.checkDeciders
 
+/-! ## The licensed distribution (R27) -/
+
+attribute [requirement "R27" specifies "the aggregation class of a produced port — the declared mereology of a boundary, in the §13.5 vocabulary the mereology layer proves laws over"]
+  Provenance.AggregationClass
+attribute [requirement "R27" proves "the distribution license: one re-carving of the batch axis preserves every declared-extensive output's total — the quantified boundary-level form of leafSum_invariant"]
+  Recarving.distribution_license
+attribute [requirement "R27" implements "the aggregation clause's hygiene: a class governs a produced port; a named tolerance is a Quantity at that port's kind; a named condition, sortal, transport, or cancellation law exists"]
+  KindIncidence.checkAggregations
+
 
 /-! ## Scale-spanning units, the logarithmic extreme: level quantities (R13)
 

@@ -144,15 +144,58 @@ the refusal of an unanswered rung is a pinned probe.
 # The mereology clause, and the footprint audit
 
 :::group "metrological_modularity_mereology"
-The fifth clause is declared aggregation. The vocabulary already exists — a kind is
-{uses "def_extensiveKind"}[extensive], {uses "def_intensiveKind"}[intensive],
-{uses "def_wholeProper"}[whole-proper], or {uses "def_quasiExtensive"}[quasi-extensive],
-and a {uses "def_weightedCarving"}[weighted carving] carries the aggregation license —
-and the module clause is its port-level form: each output port carries its class, and
-the license to shard, tile, or stitch a module's batch axis is derived from the
-declarations rather than held as deployment convention. That port wiring is the one
-clause of the five not yet built; requirement R27 states it, and its row in the
-traceability matrix is the honest record of its status.
+The fifth clause is declared aggregation, and it is the port-level form of the
+mereology chapter's vocabulary: a kind is {uses "def_extensiveKind"}[extensive],
+{uses "def_intensiveKind"}[intensive], {uses "def_wholeProper"}[whole-proper], or
+{uses "def_quasiExtensive"}[quasi-extensive], and a
+{uses "def_weightedCarving"}[weighted carving] carries the aggregation license. The
+clause puts that vocabulary on the boundary — each produced port declares its class —
+so the license to shard, tile, or stitch a module's batch axis is derived from the
+declarations rather than held as deployment convention. Requirement R27 states the
+obligation; the distribution license below is the theorem that discharges it.
+:::
+
+:::definition "def_aggregation_class" (parent := "metrological_modularity_mereology") (lean := "PropertyKindCalculus.Provenance.AggregationClass")
+The *aggregation class* of a produced port — the declared mereology of a boundary.
+Dybkær's §13.5 vocabulary, extended by the classes the mereology layer proves laws
+over: `extensive`, `quasiExtensive` (naming its per-join tolerance, a declaration
+whose type is a `Quantity` at the governed port's kind — without the name,
+"approximately" is not a claim), `conditionallyExtensive` (naming its condition),
+`intensive`, `wholeProper`, `countKeyed` (naming the sortal the count is *of* — a
+count is extensive over a fixed carving yet not a property of the whole, so it
+travels with its carving rather than surviving a re-carving), `extensiveAbout`
+(naming the transport law that prices a parameter change), and `interfaceLicensed`
+(naming the cancellation law that purchases additivity over interior interfaces). A
+contract carries one entry per classed port; the checks are hygiene — a class governs
+a *produced* port, and each name the class carries exists, a tolerance as a kinded
+quantity. The truth of a class is the author's curated claim, exactly as an
+`Assembles` entry is.
+:::
+
+:::proof "def_aggregation_class"
+An eight-constructor enumeration whose payloads are the names the classes must
+answer for, plus the `aggregations` association list on the contract; the elaborator
+checks are pinned by acceptance and refusal probes, and the class renders in every
+`#kind_contract` report.
+:::
+
+:::theorem "thm_distribution_license" (parent := "metrological_modularity_mereology") (lean := "PropertyKindCalculus.Recarving.distribution_license") (tags := "capstone, proved") (effort := "small")
+*The distribution license.* A module whose batched outputs are all extensive commutes
+with a re-carving of its batch axis: one map, every output's total preserved, however
+the axis is cut into tiles, blocks, or shards. The quantified boundary-level form of
+{uses "thm_recarving_invariant"}[re-carving invariance], stated over the list of
+output measurements because a boundary is a list. What it deliberately does not
+cover: a count-keyed output — the re-carving that merges parts preserves every
+extensive total while changing the count, which is why a count travels per pixel or
+per shard; and the quasi-extensive case, where each total stands within its carving's
+`joins · t` of the preserved whole, so a re-carving costs at most both carvings'
+joins times the per-join tolerance.
+:::
+
+:::proof "thm_distribution_license"
+Each output alone is {uses "thm_recarving_invariant"}[the re-carving invariance
+capstone]; the license applies it under the quantifier. The quasi-extensive price is
+proved in the uncertainty layer beside the `joins · t` accumulation law.
 :::
 
 What the vocabulary *does* already support module-by-module is the audit of how much

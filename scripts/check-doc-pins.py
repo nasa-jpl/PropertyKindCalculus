@@ -90,6 +90,11 @@ EXEMPT: dict[str, str] = {
     "dimension/PropertyKindCalculus/Dimension.lean": (
         "names the same upstream PhysLib toolchain-bump PR by the version it bumped to"
     ),
+    "MODULARITY.md": (
+        "a staged plan whose status ledger records the version each stage landed at — "
+        "dated records of what was true when a stage shipped, not claims about the "
+        "current version"
+    ),
 }
 
 # --- 4. Blueprint status: where the real status lives, and the claim that mirrors it -

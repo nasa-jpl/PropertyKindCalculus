@@ -32,7 +32,7 @@ for coverage intervals says how often `|D| < k·u` holds. The tolerance a quasie
 carries is therefore a *coverage* statement, with a probability attached, and not a number
 chosen to make the claim come out true.
 -/
-import PropertyKindCalculus.Extensivity
+import PropertyKindCalculus.Recarving
 import PropertyKindCalculus.Uncertainty.Coverage
 
 open MeasureTheory ProbabilityTheory
@@ -103,6 +103,35 @@ theorem quasiExtensive_leafSum {O : Type u'} {k : KindOfProperty} {m : Measureme
         _ ≤ (t + (a.joins : ℝ) * t) + (b.joins : ℝ) * t := by gcongr
         _ = ((a.joins : ℝ) + (b.joins : ℝ) + 1) * t := by ring
         _ = ((Decomposition.joins (.union a b) : Nat) : ℝ) * t := by rw [hjoins]
+
+/-- **The distribution license at §13.5.2** — what re-carving a batch axis costs a
+quasiextensive output. The totals over the old and the new carving differ by at most
+the per-join tolerance times the joins of *both* carvings, because each total stands
+within its own `joins · t` of the same preserved whole. This is the quasi-extensive
+counterpart of `Recarving.leafSum_invariant`: the extensive case is this bound at
+`t = 0`, and that the price names both carvings' joins is the content — a re-carving
+that coarsens (fewer joins) tightens its own half of the budget, and none of it is
+free. -/
+theorem Recarving.leafSum_within {O : Type u'} {k : KindOfProperty} {m : Measurement O}
+    {t : ℝ} (h : QuasiExtensive k m t) (r : Recarving m) (d : Decomposition O) :
+    |(leafSum m (r.map d) : ℝ) - (leafSum m d : ℝ)|
+      ≤ (((r.map d).joins : ℝ) + (d.joins : ℝ)) * t := by
+  have h1 := quasiExtensive_leafSum h (r.map d)
+  have h2 := quasiExtensive_leafSum h d
+  have hp : ((m (r.map d)).numeral : ℝ) = ((m d).numeral : ℝ) := by
+    exact_mod_cast r.preserves d
+  calc |(leafSum m (r.map d) : ℝ) - (leafSum m d : ℝ)|
+      = |(((m d).numeral : ℝ) - (leafSum m d : ℝ))
+          - (((m (r.map d)).numeral : ℝ) - (leafSum m (r.map d) : ℝ))| := by
+        congr 1
+        rw [← hp]
+        ring
+    _ ≤ |((m d).numeral : ℝ) - (leafSum m d : ℝ)|
+          + |((m (r.map d)).numeral : ℝ) - (leafSum m (r.map d) : ℝ)| := by
+        rw [sub_eq_add_neg (((m d).numeral : ℝ) - (leafSum m d : ℝ))]
+        exact (abs_add_le _ _).trans_eq (by rw [abs_neg])
+    _ ≤ (d.joins : ℝ) * t + ((r.map d).joins : ℝ) * t := add_le_add h2 h1
+    _ = (((r.map d).joins : ℝ) + (d.joins : ℝ)) * t := by ring
 
 /-! ## §13.5.1 is the zero-tolerance case -/
 
