@@ -138,6 +138,43 @@ Each cluster's kinds can be manufactured from one another by licensed derivation
 -- Declared, the same cluster passes the gate.
 #kind_scc_clean PropertyKindCalculus.Tests.Graph (kX kY)
 
+/-! ### The SCC footprint of a declared boundary
+
+The footprint reads a `Provenance.Contract` against the same kind graph: which
+components the boundary's kinds fall into, which ports share a kind (swappable however
+separated the components), and where the guarantee is review-strength. The probe
+boundary touches the `{kX, kY}` cluster *and* the downstream `kZ`, carries a same-kind
+pair (`x`/`lo`, the swap no kind graph sees), and re-enters through one attest — so
+every section of the report is exercised non-vacuously. -/
+
+/-- A cluster-interior step: two same-kind operands — the swap the kind algebra cannot
+refuse — and a cluster partner, attested onto the downstream kind. -/
+def clusterStep (x lo : Quantity kX Nat) (y : Quantity kY Nat) : Quantity kZ Nat :=
+  Quantity.attest "probe re-entry" (x.magnitude + lo.magnitude + y.magnitude)
+
+/-- The probe step's declared boundary. -/
+def clusterBoundary : Provenance.Contract String String where
+  name := "footprint probe"
+  members := ["PropertyKindCalculus.Tests.Graph.clusterStep"]
+  ports := [
+    ⟨"clusterStep/x", "kX", .input⟩,
+    ⟨"clusterStep/lo", "kX", .input⟩,
+    ⟨"clusterStep/y", "kY", .input⟩,
+    ⟨"clusterStep/result", "kZ", .output⟩]
+  exits := []
+
+/--
+info: kind footprint of 'footprint probe': 3 port kind(s), 0 interior kind(s); 1 derivation cluster(s) of size ≥ 2 touched, 1 singleton kind(s)
+  cluster kX (2 kinds): kX, kY
+same-kind ports — 1 group(s):
+  kX: clusterStep/x (input), clusterStep/lo (input)
+review-strength sites — 0 crossing(s), 1 attested intro(s), 0 declared exit(s):
+  attested "probe re-entry" clusterStep/_1 : kZ
+verdict: type-strength: the kinds span 2 components; 1 same-kind group(s) swap invisibly to any cluster separation; review-strength at 1 site(s)
+-/
+#guard_msgs (whitespace := lax) in
+#kind_footprint clusterBoundary PropertyKindCalculus.Tests.Graph
+
 /-! ### Axiom profiles -/
 
 /-- info: 'PropertyKindCalculus.Provenance.mem_influencedFrom_iff' depends on axioms: [propext,
