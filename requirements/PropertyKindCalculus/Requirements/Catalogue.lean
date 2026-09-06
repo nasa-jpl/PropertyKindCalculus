@@ -1,7 +1,7 @@
 /-
-# The requirement catalogue — the 25 axes the calculus is specified against
+# The requirement catalogue — the 27 axes the calculus is specified against
 
-The canonical identity of each blueprint requirement: its identifier (R1 … R25),
+The canonical identity of each blueprint requirement: its identifier (R1 … R27),
 a one-line title, the group it belongs to, and its headline status. This is the
 *spine* of the traceability matrix — the rows the harvested `@[requirement …]`
 annotations are grouped under — so the matrix always shows every requirement, even
@@ -35,7 +35,8 @@ inductive RequirementGroup where
   /-- R21, R25: what the kind layer costs the author — erasure to the bare carrier,
   and rendering back to mathematics. -/
   | ergonomics
-  /-- R23–R24: provenance of values and the audit discipline over a scope. -/
+  /-- R23–R27: provenance of values, the audit discipline over a scope, the checked
+  measurement model on a boundary, and the licensed distribution of its computation. -/
   | evidence
   deriving Repr, Inhabited, DecidableEq, BEq
 
@@ -95,7 +96,7 @@ fact *derived* from the `@[requirement …]` annotations — see
 annotations already witness (or fail to), so recording it twice would only
 reintroduce the drift this layer exists to eliminate. -/
 structure Requirement where
-  /-- The identifier, as printed — `"R1"` … `"R25"`. -/
+  /-- The identifier, as printed — `"R1"` … `"R27"`. -/
   id : String
   /-- A one-line title. -/
   title : String
@@ -179,7 +180,18 @@ def catalogue : List Requirement :=
                 actually computes" }
   , { id := "R24", group := .evidence, kind := .expressiveness,
       title := "An audit is a claim about its scope, never about the library: the unkinded \
-                surface of a scope is enumerable, and a blessed scope only grows" } ]
+                surface of a scope is enumerable, and a blessed scope only grows" }
+  , { id := "R26", group := .evidence, kind := .expressiveness,
+      title := "A module's behavior is a checked measurement model: a declared boundary \
+                carries relation edges whose witnesses are kernel-checked theorems, every \
+                relation kind has a conclusion-shape check, a bound names a kinded \
+                tolerance, and every rung beyond the witness's own is answered for by a \
+                named repair or restatement" }
+  , { id := "R27", group := .evidence, kind := .verifiable,
+      title := "A module's distribution is licensed by declared extensivity: output ports \
+                carry aggregation classes, and recarving or sharding a batch axis is \
+                licensed by theorem from those declarations, with the quasi-extensive \
+                tolerance tied to the rounding budget where the carrier demands it" } ]
 
 /-- Look up a requirement by id. -/
 def requirementById? (id : String) : Option Requirement :=

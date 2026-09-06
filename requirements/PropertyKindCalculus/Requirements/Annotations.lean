@@ -261,6 +261,17 @@ attribute [requirement "R24" implements "enumeration of the unkinded boundary si
 attribute [requirement "R24" implements "the per-scope kind ledger the ratchet compares against"]
   KindLedger.ledgerOf
 
+/-! ## The checked measurement model (R26) -/
+
+attribute [requirement "R26" specifies "the theorem edge between two declared boundaries: what is claimed, the witness, the kinded tolerance, the named side conditions, the per-rung licenses"]
+  Provenance.Relation
+attribute [requirement "R26" specifies "one rung of an edge's license clause — a claim beyond the witness's own rung is answered for by a named repair or restatement, because side conditions do not transfer"]
+  Provenance.RelationLicense
+attribute [requirement "R26" implements "the full check of one edge: witness a sorry-free theorem, conclusion in the claimed shape per relation kind, tolerance a Quantity at an output port's kind, hypotheses mentioned, licenses answered for, both boundaries named"]
+  KindIncidence.checkRelation
+attribute [requirement "R26" implements "the decider clause's hygiene: a named case-decider governs a conditional port and exists"]
+  KindIncidence.checkDeciders
+
 
 /-! ## Scale-spanning units, the logarithmic extreme: level quantities (R13)
 

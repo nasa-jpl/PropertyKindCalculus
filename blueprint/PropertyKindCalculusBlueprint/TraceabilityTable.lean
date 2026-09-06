@@ -3,7 +3,7 @@
 
 `{traceability}` expands into the requirement-traceability matrix built from the
 typed `@[requirement …]` annotations harvested by `PropertyKindCalculus.Requirements`.
-For each requirement in the catalogue (R1 … R25) it lists every declaration that
+For each requirement in the catalogue (R1 … R27) it lists every declaration that
 *specifies*, *proves*, *implements*, or *exemplifies* it, linked to that
 declaration's blueprint node.
 
@@ -55,7 +55,7 @@ declaration to its blueprint node label. Rows are organized by **requirement
 group** (each introduced by a header row), then by requirement (in catalogue
 order), and within a requirement ordered specification → proof → implementation →
 example. A requirement with no annotation yet still gets a row, so the matrix
-always shows all nineteen. -/
+always shows the whole catalogue. -/
 def buildTable : DocElabM DocTable := do
   let env ← getEnv
   let refs := requirementRefs env

@@ -1,7 +1,7 @@
 /-
 # Requirement-traceability attributes — `@[requirement …]`
 
-The blueprint fixes a set of *requirements* (R1 … R17) the calculus is specified
+The blueprint fixes a set of *requirements* (R1 … R27) the calculus is specified
 to meet. Each requirement is discharged by real declarations — the type that
 *states* it, the theorem that *proves* it, the definition that *implements* it, or
 the worked example that *exercises* it. Those correspondences were, until now,
@@ -81,7 +81,7 @@ plays, and an optional note in this work's own words. -/
 structure RequirementRef where
   /-- The annotated Lean declaration (resolved, so it cannot dangle). -/
   decl : Name
-  /-- The requirement identifier, as printed — `"R1"` … `"R17"`. -/
+  /-- The requirement identifier, as printed — `"R1"` … `"R27"`. -/
   req : String
   /-- The role the declaration plays for the requirement. -/
   role : RequirementRole
@@ -104,7 +104,7 @@ syntax (name := requirementAttr) "requirement " str ident (str)? : attr
 
 initialize registerBuiltinAttribute {
   name  := `requirementAttr
-  descr := "Traceability link from a declaration to a blueprint requirement (R1–R25)."
+  descr := "Traceability link from a declaration to a blueprint requirement (R1–R27)."
   add   := fun decl stx _kind => do
     match stx with
     | `(attr| requirement $req:str $role:ident $[$note:str]?) =>

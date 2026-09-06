@@ -63,5 +63,9 @@ attribute [vim4 "1.33" "ordinal quantity"] KindOfProperty.IsOrdinal
 attribute [vim4 "2.4" "measurement principle"] ExaminationPrinciple
 attribute [vim4 "2.5" "measurement method"] ExaminationMethod
 attribute [vim4 "2.7" "measurement procedure"] ExaminationProcedure
+attribute [vim4 "2.12" "measurement model"
+  "the mathematical relation among the quantities involved, attached to a declared boundary as a checked theorem edge"] Provenance.Relation
+attribute [vim4 "2.13" "measurement function"
+  "\"f may symbolize an algorithm\" — the four ways an implementing function may relate to its model: equals, inverts, refines, bounded by"] Provenance.RelationKind
 
 end PropertyKindCalculus

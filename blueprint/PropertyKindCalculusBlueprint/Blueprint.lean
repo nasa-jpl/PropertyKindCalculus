@@ -13,6 +13,7 @@ import PropertyKindCalculusBlueprint.Chapters.FunctionCalculus
 import PropertyKindCalculusBlueprint.Chapters.Extensivity
 import PropertyKindCalculusBlueprint.Chapters.ObjectTypes
 import PropertyKindCalculusBlueprint.Chapters.WriteOnce
+import PropertyKindCalculusBlueprint.Chapters.MetrologicalModularity
 import PropertyKindCalculusBlueprint.Chapters.Uncertainty
 import PropertyKindCalculusBlueprint.Chapters.Iso80000
 import PropertyKindCalculusBlueprint.Chapters.ScaleSpanning
@@ -741,6 +742,26 @@ as a defect — and a blessed scope only grows: the ratchet (`#kind_mint_ratchet
 compares the current ledger against the pinned one and *throws* on regression, so a
 clean audit cannot silently shrink to stay clean.
 
+## The measurement model and licensed distribution (R26, R27)
+
+*R26 — A module's behavior is a checked measurement model.* The metrological-modularity
+chapter's behavior clause, stated as an expressiveness requirement: a declared boundary
+carries relation edges (`Provenance.Relation`) whose witnesses are kernel-checked
+theorems; every relation kind has a conclusion-shape check; a `boundedBy` edge names a
+kinded tolerance; named side conditions are checked against the witness statement; and
+every carrier rung beyond the witness's own is answered for by a named repair or
+restatement (`RelationLicense`) — a rung claimed with neither is refused. The checks are
+the elaborator's (`#kind_relation`, surveyed by `#kind_relations`), pinned by acceptance
+and refusal probes for all four relation kinds.
+
+*R27 — A module's distribution is licensed by declared extensivity.* The mereology
+clause as a verifiable requirement: output ports carry aggregation classes, and
+recarving or sharding a module's batch axis is licensed by theorem from those
+declarations, with the quasi-extensive tolerance tied to the rounding budget where the
+carrier demands it. The class vocabulary and the aggregation theorems exist
+(the extensivity chapter); the port wiring does not yet, and the traceability matrix
+below is the honest record of that status.
+
 ## Requirement validation — the ForPhysLib benchmark
 
 R21–R25 did not come from introspection; they came from *validation*, in the systems
@@ -1292,6 +1313,8 @@ in-progress goals until formalized. The headline deliverables are tagged
 {include 0 PropertyKindCalculusBlueprint.Chapters.ObjectTypes}
 
 {include 0 PropertyKindCalculusBlueprint.Chapters.WriteOnce}
+
+{include 0 PropertyKindCalculusBlueprint.Chapters.MetrologicalModularity}
 
 {include 0 PropertyKindCalculusBlueprint.Chapters.Uncertainty}
 
