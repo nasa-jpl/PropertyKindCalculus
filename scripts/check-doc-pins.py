@@ -95,6 +95,11 @@ EXEMPT: dict[str, str] = {
         "dated records of what was true when a stage shipped, not claims about the "
         "current version"
     ),
+    "blueprint/PropertyKindCalculusBlueprintMain.lean": (
+        "names the toolchain an upstream verso commit's own lean-toolchain declares — "
+        "the version this package deliberately does not take, recorded to explain why "
+        "the fix is a backport rather than a pin bump"
+    ),
 }
 
 # --- 4. Blueprint status: where the real status lives, and the claim that mirrors it -
