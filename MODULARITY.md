@@ -1,11 +1,11 @@
 # MODULARITY.md — Metrological modularity: metrology modules as a library-level capability
 
-> Status: **M0, M1, M1b, M2, M3 (PKC + SMM), M4, M5, M6 landed**
-> (PKC v0.104.0–v0.108.0 + SMM + SMW validation, 2026-09-05; M5's route (a) + stretch
-> executed the same day — contraction/residual bounds proved, first `boundedBy` edge).
-> Open: M2b; the Newton/LUT *edge* forms (route (b), only if ever wanted — their
-> mathematics is proved); M3's SMW derivation (awaits the SMW PKC-pin bump, which M6
-> did not force).
+> Status: **every stage landed — M0 through M6, M2b included**
+> (PKC v0.104.0–v0.109.0 + SMM + SMW validation, 2026-09-05; M5's route (a) + stretch
+> and M2b executed the same day). Open: the Newton/LUT *edge* forms (route (b), only
+> if ever wanted — their mathematics is proved); the supplier-interchangeability edge
+> (no fused ≡ composed theorem exists — M2b's survey finding); M3's SMW derivation
+> (awaits the SMW PKC-pin bump, which M6 did not force).
 > Assessment baseline 2026-09-05.
 > Audience: PKC maintainers.
 > Scope: make "metrology module" a first-class, machine-checked construct in PKC —
@@ -496,6 +496,34 @@ refusal; a functionally relevant nominal argument that remains unported stays vi
 the harvest's unkinded inventory — a worklist, no longer a resting place.
 
 ### M2b — Module-valued ports *(PKC core + SMM validation)*
+**Status: DONE — PKC v0.109.0 `3d8c12e9` + SMM validation (2026-09-05); the
+interchangeability edge corrected against the survey, below.** The harvest reads a
+functional binder as a port whose kind is the `→`-joined signature (`signatureKind?`,
+reducible-transparency first so `AttenQ` needs no annotation; a dependent or
+partially-kinded arrow keeps the ports-nothing verdict, and a list still does), and
+`Contract.suppliers` declares which module a tier binds to a signature port, checked
+by `#kind_contract` against the supplier's own type, component for component
+(`supplierSignature?` — implicit and instance binders filled first). Probes: the
+module-valued port pinned in `#kind_ports`, the supplied boundary accepted, four
+refusals (supplier on a value port / dangling / no signature / wrong signature).
+**SMM validation:** `trStepQ/atten : paramB → vegetationIndex → vegetationAttenuation`
+ports on `avsFitLinearizedBoundary` (65 ports, agrees re-pinned; the influence
+propagation now correctly reports the bound module reaching every fit output), with
+`supplies trStepQ/atten: AvsKinds.attenuationQ` — the binding all three deployments
+make, declared once instead of living at three call sites. Only `trStepQ` among the
+eleven members takes the argument (the plan's "`atten` port on the boundary" resolved
+to that member's port). **What the survey corrected:** the "existing bit-for-bit
+fused ≡ composed equivalence" the interchangeability edge was to cite does not exist —
+the evidence is a one-point `#guard` at a trivial stub carrier plus a stale reference
+to a deleted lemma (fixed in the SMM pass: the header now cites PKC's
+`scaledProdExp_magnitude` and states the probe's one-point scope). `FusedExp` carries
+no law, so fused ≡ composed is per-instance; an interchangeability `Relation` would
+need supplier-tier boundaries and a per-instance witness (`ℝ`-instance route), and
+neither supplier is a member of any declared contract today — the edge is recorded
+here as open, not fabricated. The footprint reads a signature port as an unresolved
+kind (it is not a kind); teaching `#kind_footprint` a signature verdict is a
+refinement left open.
+
 A port whose payload is a *kind signature* — an anonymous contract of input kinds and an
 output kind — rather than a single kind; a functional argument ports at it (§4.2, gap 8).
 Three pieces:
@@ -691,7 +719,7 @@ existing compile-time `#guard` pins stay.
 | M1 | Spec edge hardened (+ shape checks, kinded tolerance, hypotheses, index) | PKC | **Done** — v0.104.0 `fdd69223` (2026-09-05) |
 | M1b | SCC-footprint audit (`#kind_footprint` per boundary) | PKC → SMM | **Done** — PKC v0.105.0 `1f6ed66d` + v0.106.2 `4b241baf`; SMM `kind_footprint_examples` pins all seven boundaries (2026-09-05) |
 | M2 | Nominal ports + conditional predicate + per-rung license clause | PKC → SMM | **Done** — v0.104.0 + SMM deciders/docstring/pinned port (2026-09-05); the nominal capability itself landed in SMM `935f692` (2026-08-24) |
-| M2b | Module-valued ports (function arguments at kind signatures) | PKC → SMM | Open |
+| M2b | Module-valued ports (function arguments at kind signatures) | PKC → SMM | **Done** — v0.109.0 `3d8c12e9` + SMM atten port/supplier (2026-09-05); interchangeability edge recorded open (no fused ≡ composed theorem exists — survey finding) |
 | M3 | Extensivity clause + distribution-license theorem | PKC → SMM/SMW | **Done (PKC + SMM)** — v0.107.0 `abf11ebb` + SMM `6f98755` (2026-09-05); SMW derivation rides M6 |
 | M4 | Budget ⇄ boundary join | PKC | **Done** — v0.108.0 `5b0c4b7c` (2026-09-05) |
 | M5 | Relations across SMM's boundaries | SMM | **Done to the ℝ rung's reach** — exact half SMM `0840ab1` (solver boundaries + `solveInvertsMatVec`); route (a) + stretch executed 2026-09-05: contraction/residual bounds proved (`fixed_point_iteration`, sweep/Newton/LUT), first `boundedBy` edge declared, 3-edge pin, tech-ref table; Newton/LUT edge forms blocked by the `Float`-carrier members (route (b) if ever wanted) |
