@@ -187,4 +187,38 @@ def moduleCard (c : Contract String String)
   out := out ++ "}\n"
   return out
 
+/-! ## The prepared rows — checked objects in, card rows out -/
+
+open Lean Meta in
+/-- The theorem-edge rows of one boundary: every `Provenance.Relation` declared under
+`root`, re-checked exactly as `#kind_relation` checks one (a failing edge refuses the
+card), phrased from `decl`'s side — the active claim where `decl` is the left boundary,
+the passive reading where it is the right. `decl` is the contract's declaration name,
+as the relations spell it. -/
+def relationRows (root : Name) (decl : String) : MetaM (List RelationRow) := do
+  let env ← getEnv
+  let mut names : Array Name := #[]
+  for (n, info) in env.constants.toList do
+    if n.isInternal then continue
+    unless root.isPrefixOf n do continue
+    if info.type.isConstOf ``Provenance.Relation then names := names.push n
+  let sorted := names.qsort fun a b => a.toString < b.toString
+  let mut rows : List RelationRow := []
+  for n in sorted do
+    let c ← KindIncidence.checkRelation n
+    let rel := c.rel
+    if rel.left == decl then
+      rows := rows ++ [{ claim := s!"{rel.kind.label} '{c.rightName}'",
+                         witness := rel.witness, tolerance := rel.tolerance,
+                         hypotheses := rel.hypotheses }]
+    else if rel.right == decl then
+      let passive := match rel.kind with
+        | .inverts => s!"inverted by '{c.leftName}'"
+        | .boundedBy => s!"bounds '{c.leftName}'"
+        | .equals => s!"equals '{c.leftName}'"
+        | .refines => s!"refined by '{c.leftName}'"
+      rows := rows ++ [{ claim := passive, witness := rel.witness,
+                         tolerance := rel.tolerance, hypotheses := rel.hypotheses }]
+  return rows
+
 end PropertyKindCalculus.ModuleCard

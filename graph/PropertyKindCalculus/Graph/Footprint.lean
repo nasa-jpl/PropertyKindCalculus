@@ -1,5 +1,6 @@
 import PropertyKindCalculus.Graph.KindGraph
 import PropertyKindCalculus.KindIncidence
+import PropertyKindCalculus.ModuleCard
 
 /-!
 # The SCC footprint of a declared boundary — where a module's guarantee comes from
@@ -194,5 +195,27 @@ elab "#kind_footprint " c:ident nss:ident* : command => liftTermElabM do
           [s!"; erased beyond {ctr.exits.length} exit(s)"])
   lines := lines.push s!"verdict: {base}{caveats}"
   logInfo m!"{String.intercalate "\n" lines.toList}"
+
+/-- The cluster rows of one boundary's **module interface document**
+(`ModuleCard.ClusterRow`): for each inter-derivability cluster of two or more kinds,
+the boundary's own port kinds that resolve into it (`resolveKind` — an ambiguous or
+out-of-scope rendering resolves to nothing, exactly as in the footprint), with the
+cluster named by its alphabetical representative, compared case-insensitively — the
+same representative that names the cluster's diagram. A boundary touching no cluster
+contributes no rows. -/
+def clusterRows (kg : KindGraph) (c : Provenance.Contract String String) :
+    List ModuleCard.ClusterRow := Id.run do
+  let portKinds := (c.ports.map (·.kind)).eraseDups
+  let mut rows : List ModuleCard.ClusterRow := []
+  for cl in kg.clusters.filter (·.size ≥ 2) do
+    let hit := portKinds.filter fun k =>
+      match resolveKind kg k with
+      | some i => cl.contains i
+      | none => false
+    if hit.isEmpty then continue
+    let rep := ((cl.map fun i => kindShortName kg.kinds[i]!).qsort
+      fun a b => a.toLower < b.toLower)[0]!
+    rows := rows ++ [{ representative := rep, kinds := hit }]
+  return rows
 
 end PropertyKindCalculus.KindGraph
