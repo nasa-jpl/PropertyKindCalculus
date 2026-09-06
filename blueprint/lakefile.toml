@@ -23,10 +23,10 @@ defaultTargets = ["PropertyKindCalculusBlueprint", "blueprint-gen"]
 # — check the candidate's own `lean-toolchain` first, then re-test `lake exe blueprint-gen`
 # — rather than tracking the branch.
 #
-# The siblings do NOT currently agree, and that is worth knowing before assuming a shared
-# pin: `soil-moisture-workflows/blueprint` names `c3b8a93c`, and
-# `soil-moisture-model/technical-reference` still names the BRANCH `v4.33.0` — so it is one
-# `lake update` away from the same break, and fixing it there is a separate edit.
+# The siblings agree: `soil-moisture-model/technical-reference` and
+# `soil-moisture-workflows/blueprint` pin this identical verso + VersoBlueprint pair, and
+# `L4YAML/doc` pins the same verso tag (no VersoBlueprint there — it is a plain manual).
+# One Verso stack renders all four; a bump here is a bump everywhere, deliberately.
 #
 # verso `main` carries the fix for the margin-note numbering bug — under `v4.33.0` every
 # margin note and its in-text mark renders as "1" (PR #977, commit `a20c785b`) — but that
