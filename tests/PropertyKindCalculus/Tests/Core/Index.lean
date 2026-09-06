@@ -189,6 +189,50 @@ gain | g | function head
 #guard_msgs in
 #pkc_index "pkc-math-symbol" PropertyKindCalculus.Tests.Index
 
+/-! ## The theorem edge — membership by type, like the ontology tables -/
+
+/-- The probe forward: a signal becomes an output. -/
+def probeFwdStep (x : Quantity signalKind Int) : Quantity outputKind Int := ⟨x.magnitude⟩
+
+/-- The probe retrieval, inverting the forward. -/
+def probeInvStep (y : Quantity outputKind Int) : Quantity signalKind Int := ⟨y.magnitude⟩
+
+/-- The witness: the retrieval recovers the signal the forward consumed. -/
+theorem probeInvStep_probeFwdStep (x : Quantity signalKind Int) :
+    probeInvStep (probeFwdStep x) = x := rfl
+
+/-- The forward's declared boundary. -/
+def probeFwdBoundary : Provenance.Contract String String where
+  name := "probe forward"
+  members := ["PropertyKindCalculus.Tests.Index.probeFwdStep"]
+  ports := [⟨"probeFwdStep/x", "signalKind", .input⟩,
+            ⟨"probeFwdStep/result", "outputKind", .output⟩]
+  exits := []
+
+/-- The retrieval's declared boundary. -/
+def probeInvBoundary : Provenance.Contract String String where
+  name := "probe retrieval"
+  members := ["PropertyKindCalculus.Tests.Index.probeInvStep"]
+  ports := [⟨"probeInvStep/y", "outputKind", .input⟩,
+            ⟨"probeInvStep/result", "signalKind", .output⟩]
+  exits := []
+
+/-- The one theorem edge of this world. -/
+def probeRetrievalInvertsForward : Provenance.Relation where
+  left := "PropertyKindCalculus.Tests.Index.probeInvBoundary"
+  right := "PropertyKindCalculus.Tests.Index.probeFwdBoundary"
+  kind := .inverts
+  witness := "PropertyKindCalculus.Tests.Index.probeInvStep_probeFwdStep"
+  claim := "the probe retrieval recovers the signal the forward consumed"
+
+/--
+info: Theorem edges between boundaries (1 row(s))
+Edge | Claim | Witness | Clauses | In the author's words
+probeRetrievalInvertsForward | 'probe retrieval' inverts 'probe forward' | probeInvStep_probeFwdStep |  | the probe retrieval recovers the signal the forward consumed
+-/
+#guard_msgs in
+#pkc_index "relations" PropertyKindCalculus.Tests.Index
+
 /-! ## The prose grammar
 
 The `What it does` column of the tables above is a docstring quoted verbatim, so it arrives as

@@ -7,6 +7,7 @@ import PropertyKindCalculus.Index.Basic
 import PropertyKindCalculus.Index.Ontology
 import PropertyKindCalculus.Index.Structures
 import PropertyKindCalculus.Index.Annotations
+import PropertyKindCalculus.Index.Relations
 import PropertyKindCalculus.Index.Commands
 
 /-!

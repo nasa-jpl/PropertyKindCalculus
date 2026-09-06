@@ -94,7 +94,10 @@ declaring the port conditional is how the domain gets stated where a consumer re
 instead of being carried in a constructor choice no boundary can see. A contract may not
 trade the two: claiming an unconditional output where the result has cases, or the
 reverse, disagrees in both directions, because whether an interface always produces a
-value is the plainest thing it has to say.
+value is the plainest thing it has to say. The role records that cases exist; the
+contract's `deciders` field may additionally name, per conditional port, the declaration
+that decides them — the predicate becomes data of the boundary, checked to exist and to
+govern a conditional port, rather than prose beside it.
 
 `Contract.discharges` is that ladder, and it is a relation between two *declarations*
 rather than between a declaration and a graph — no harvest, so a deployment can state
@@ -377,6 +380,14 @@ structure Provenance.Contract (ν κ : Type) where
   ports : List (Provenance.Port ν κ)
   /-- The declared exits: where the contract says values leave the calculus. -/
   exits : List ν
+  /-- The deciders of the conditional ports: for a `conditional` port, the name of the
+  declaration that decides its cases — the `KindAdmissible` instance, domain predicate,
+  or validity check a consumer consults. The role states that cases exist; the decider
+  states *which*, by name, where a consumer reads it. One entry per decided port,
+  checked by `#kind_contract` to name a conditional port and an existing declaration; a
+  conditional port with no entry remains a declared case whose predicate is stated
+  elsewhere. -/
+  deciders : List (ν × String) := []
 deriving Repr, Inhabited, BEq
 
 namespace Provenance
@@ -606,17 +617,74 @@ Nothing about a `Relation` is decidable, which is why it is not a third `Bool` b
 two above. What *is* checkable is everything around the proof, and `#kind_relation` checks
 it: that the witness is a theorem rather than a definition or an axiom, that its axiom
 profile carries no `sorryAx`, that the shape of its conclusion is the shape the claimed
-kind names, and — the check that keeps the edge from being decoration — that the statement
-**mentions members of both boundaries**. A theorem naming neither is a true statement about
-something else, and citing it here would relate nothing. -/
+kind names — an `Eq` for `equals`, an order relation for `boundedBy`, for `inverts` an
+`Eq` one of whose sides composes members of both boundaries, and for `refines` an `Eq`
+under at least one stated hypothesis — and — the check that keeps the edge from being
+decoration — that the statement **mentions members of both boundaries**. A theorem naming
+neither is a true statement about something else, and citing it here would relate nothing.
+The optional clauses are checked the same way: a named `tolerance` must be a `Quantity` at
+the kind of an output port of the boundary it governs, a named hypothesis must be a
+declaration the witness statement mentions, and every `licenses` rung must name a
+sorry-free theorem as its repair or restatement — a rung claimed with neither is refused,
+because a side condition does not transfer by being assumed to (`RelationLicense`). -/
+
+/-- How a relation edge stands at one carrier rung, given that laws transfer across the
+carrier ladder and side conditions do not (`Aggregation`, "side conditions do not
+transfer"): a side condition checked at the spec carrier constrains the exact value, at an
+executable carrier the rounded one, and neither implies the other. So a relation claimed
+at more than the rung its witness is stated at owes, per additional rung, either the name
+of the repair theorem that carries it across — `exact` where rounding is the identity on
+the values in play (counts, indicator weights; the `licenses_agree_of_exact` shape) or
+`nonneg` where nonnegative on-grid weights rule the cancellation out (the
+`licenses_agree_of_nonneg` shape) — or `restated`: an independent witness proved at that
+rung, transferring nothing. -/
+inductive TransferStatus where
+  /-- Transferred because rounding is the identity on the values in play; the field names
+  the repair theorem. -/
+  | exact (repair : String)
+  /-- Transferred because nonnegative on-grid weights exclude the cancellation; the field
+  names the repair theorem. -/
+  | nonneg (repair : String)
+  /-- Not transferred: independently stated at this rung; the field names the per-rung
+  witness. -/
+  | restated (witness : String)
+deriving Repr, Inhabited
+
+/-- The theorem or repair a transfer status rests on. -/
+def TransferStatus.evidence : TransferStatus → String
+  | .exact r | .nonneg r | .restated r => r
+
+/-- How a transfer status prints in a rendered report. -/
+def TransferStatus.label : TransferStatus → String
+  | .exact r => s!"exact via '{r}'"
+  | .nonneg r => s!"nonneg via '{r}'"
+  | .restated w => s!"restated by '{w}'"
+
+/-- One rung of a relation's license clause: the carrier rung the claim is extended to,
+spelled as the ladder names it (`ℝ`, `FP32`, `Float`, …), and how the claim holds there.
+A relation with an empty license list is stated at its witness's own rung and claims
+nothing beyond it; each entry here is one further rung, answered for by name. -/
+structure RelationLicense where
+  /-- The carrier rung, as the ladder names it. -/
+  rung : String
+  /-- How the claim holds at this rung: transferred by a named repair, or restated by a
+  named per-rung witness. -/
+  transfer : TransferStatus
+deriving Repr, Inhabited
+
+/-- How a license rung prints in a rendered report. -/
+def RelationLicense.label (l : RelationLicense) : String :=
+  s!"{l.rung} — {l.transfer.label}"
 
 /-- What a theorem claims about two declared boundaries. -/
 inductive RelationKind where
   /-- The left boundary recovers what the right one consumed — an inversion, at the
-  equation the witness states and on the domain it states it. -/
+  equation the witness states and on the domain it states it. The witness concludes with
+  an `Eq` one of whose sides composes members of both boundaries — the round trip. -/
   | inverts
   /-- The left boundary answers as the right one does wherever a stated hypothesis holds:
-  the same value on a smaller domain. -/
+  the same value on a smaller domain. The witness concludes with an `Eq` and binds at
+  least one hypothesis — the domain it holds on. -/
   | refines
   /-- The two boundaries return the same value. The witness concludes with an `Eq`. -/
   | equals
@@ -651,6 +719,19 @@ structure Relation where
   witness : String
   /-- The claim in the author's words — the hypothesis, the bound, the domain. -/
   claim : String := ""
+  /-- For a `boundedBy` edge: the declaration naming the bounding quantity — a `Quantity`
+  at the kind of an output port of the left boundary, because a tolerance is a kinded
+  quantity governing what the boundary produces, not a float in prose. Empty where the
+  claim carries its bound inside the witness statement. -/
+  tolerance : String := ""
+  /-- The named side conditions the claim holds under: declarations the witness statement
+  mentions, so the domain a consumer must establish is listed at the edge rather than
+  excavated from the proof. Empty where the claim is unconditional. -/
+  hypotheses : List String := []
+  /-- The license clause: one entry per carrier rung the claim is extended to beyond the
+  rung its witness is stated at, each answered for by a named repair or a named per-rung
+  restatement (`RelationLicense`). Empty where the claim stops at its witness's rung. -/
+  licenses : List RelationLicense := []
 deriving Repr, Inhabited
 
 /-! ## The assembly combinators — namespaced union (header, "The procedure edge") -/

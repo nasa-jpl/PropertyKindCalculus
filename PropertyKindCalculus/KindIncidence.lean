@@ -2141,6 +2141,7 @@ def renderContractLines (c : Provenance.Contract String String)
   [s!"contract '{c.name}': {c.ports.length} ports, {c.exits.length} exits"]
     ++ (if params.isEmpty then [] else
         [s!"params: {String.intercalate ", " params}"])
+    ++ c.deciders.map (fun (n, d) => s!"decides {n}: {d}")
     ++ (if c.declaresUniquely then [] else ["declared twice: the contract repeats a node"])
     ++ (c.undeclared g).map (fun p => s!"undeclared {renderPort p}")
     ++ (c.unrealized g).map (fun p => s!"unrealized {renderPort p}")
@@ -2260,16 +2261,31 @@ elab "#kind_assembly_decide " c:ident : command => liftTermElabM do
   let a ← assembleContract (← contractValueOf (← realizeGlobalConstNoOverload c))
   assemblyWfDecl a
 
+/-- The decider clause's checks (`Contract.deciders`): each entry names a `conditional`
+port of the contract, so a decider cannot be hung on an output that has no cases, and
+its decider is a declaration in the environment, so the named predicate cannot dangle. -/
+def checkDeciders (c : Provenance.Contract String String) : MetaM Unit := do
+  let env ← getEnv
+  for (n, d) in c.deciders do
+    let some p := c.ports.find? (·.node == n)
+      | throwError "the decider for '{n}' names no port of '{c.name}'"
+    unless p.dir == .conditional do
+      throwError "the decider for '{n}' names a port with role '{p.dir.label}' — only a \
+        conditional port has cases to decide"
+    unless (env.find? d.toName).isSome do
+      throwError "the decider '{d}' for '{n}' is not a declaration"
+
 open Elab Command in
 /-- `#kind_contract c` assembles the members the contract `c` declares and compares that
-assembly's boundary with the boundary `c` declares — its parameters, then the ports and
-exits each side has and the other does not, then the verdict — as a single `info` message
-suitable for `#guard_msgs` pinning. This is the scope reading: `#kind_assembly` says
-whether the wiring holds together, and this says whether the members are the ones the
-declared interface belongs to. -/
+assembly's boundary with the boundary `c` declares — its parameters and decided
+conditional ports, then the ports and exits each side has and the other does not, then
+the verdict — as a single `info` message suitable for `#guard_msgs` pinning. This is the
+scope reading: `#kind_assembly` says whether the wiring holds together, and this says
+whether the members are the ones the declared interface belongs to. -/
 elab "#kind_contract " c:ident : command => liftTermElabM do
   let cname ← realizeGlobalConstNoOverload c
   let ctr ← contractValueOf cname
+  checkDeciders ctr
   let a ← assembleContract ctr
   logInfo m!"kind contract over {ctr.members.length} steps:\n\
     {String.intercalate "\n" (renderContractLines ctr a.graph)}"
@@ -2283,6 +2299,7 @@ troubling the kernel) when the boundaries disagree, printing the difference list
 elab "#kind_contract_decide " c:ident : command => liftTermElabM do
   let cname ← realizeGlobalConstNoOverload c
   let ctr ← contractValueOf cname
+  checkDeciders ctr
   let a ← assembleContract ctr
   unless ctr.agrees a.graph do
     throwError "the boundary declared by '{cname}' is not the one its members compute:\n\
@@ -2353,21 +2370,30 @@ def mentionedMembers (c : Provenance.Contract String String) (mentions : NameSet
     List String :=
   c.members.filter fun m => mentions.contains m.toName
 
-open Elab Command in
-/-- `#kind_relation r` checks the theorem edge `r` declares between two contracts and
-prints it: the witness is a theorem (not a definition, not an axiom), its axiom profile
-carries no `sorryAx`, its conclusion has the shape the claimed kind names, and its
-statement mentions at least one member of *each* boundary. Every failure throws, so the
-command is the report and the gate at once — there is no reading of it that states a
-violation. -/
-elab "#kind_relation " r:ident : command => liftTermElabM do
-  let rname ← realizeGlobalConstNoOverload r
+/-- The result of checking one theorem edge: the evaluated relation, the two boundary
+names as their contracts render them, and the report body — everything below the header
+line, one entry per rendered line. -/
+structure CheckedRelation where
+  rel : Provenance.Relation
+  leftName : String
+  rightName : String
+  lines : List String
+
+/-- The full check of one theorem edge — `#kind_relation`'s body, named so the survey
+command re-runs it per edge. Checks, throwing on the first violation: the witness is a
+theorem (not a definition, not an axiom); its axiom profile carries no `sorryAx`; its
+conclusion has the shape the claimed kind names (`equals` an `Eq`; `boundedBy` an order
+relation; `inverts` an `Eq` one of whose sides composes members of both boundaries;
+`refines` an `Eq` under at least one bound hypothesis); a named `tolerance` is a
+declaration whose type is a `Quantity` at the kind of an output port of the left
+boundary; every named hypothesis is a declaration the witness statement mentions; every
+license rung names a sorry-free theorem as its repair or restatement; and the statement
+mentions at least one member of *each* boundary. -/
+def checkRelation (rname : Name) : MetaM CheckedRelation := do
   let rel ← relationValueOf rname
   let env ← getEnv
-  let lname := rel.left.toName
-  let rname' := rel.right.toName
-  let left ← contractValueOf lname
-  let right ← contractValueOf rname'
+  let left ← contractValueOf rel.left.toName
+  let right ← contractValueOf rel.right.toName
   let wname := rel.witness.toName
   let some info := env.find? wname
     | throwError "the witness '{rel.witness}' is not a declaration"
@@ -2380,13 +2406,18 @@ elab "#kind_relation " r:ident : command => liftTermElabM do
   -- the shape of the conclusion, where the claimed kind names one. Checked *inside* the
   -- telescope: outside it the statement's own binders have left scope and the message
   -- would name them as raw metavariables
-  Meta.forallTelescopeReducing info.type fun _ concl => do
+  Meta.forallTelescopeReducing info.type fun fvars concl => do
     -- the head symbol, not the rendered conclusion: what the claim is about is the
     -- relation the statement concludes with, and a pretty-printed statement wraps at a
     -- width nothing here controls
     let head := match concl.getAppFn with
       | .const c _ => toString c
       | _ => "no constant"
+    -- does an expression mention a member of the contract — the per-side reading of
+    -- `mentionedMembers`, for the round-trip check
+    let mentionsMemberOf (e : Expr) (c : Provenance.Contract String String) : Bool :=
+      let ms := e.foldConsts ({} : NameSet) fun cn s => s.insert cn
+      !(mentionedMembers c ms).isEmpty
     match rel.kind with
     | .equals =>
       unless concl.isAppOf ``Eq do
@@ -2396,8 +2427,83 @@ elab "#kind_relation " r:ident : command => liftTermElabM do
       unless concl.isAppOf ``LE.le || concl.isAppOf ``LT.lt do
         throwError "'{wname}' is claimed to state a bound, but its conclusion is headed \
           by '{head}', which is not an order relation"
-    | _ => pure ()
+    | .inverts =>
+      unless concl.isAppOf ``Eq do
+        throwError "'{wname}' is claimed to state an inversion, but its conclusion is \
+          headed by '{head}', not 'Eq' — an inversion is a round-trip equality"
+      let args := concl.getAppArgs
+      let dflt := mkConst ``Unit
+      let sides := [args.getD (args.size - 2) dflt, args.getD (args.size - 1) dflt]
+      unless sides.any fun e => mentionsMemberOf e left && mentionsMemberOf e right do
+        throwError "'{wname}' is claimed to state an inversion, but neither side of its \
+          equality composes a member of '{left.name}' with a member of '{right.name}' — \
+          the round trip is not in the statement"
+    | .refines =>
+      unless concl.isAppOf ``Eq do
+        throwError "'{wname}' is claimed to state a refinement, but its conclusion is \
+          headed by '{head}', not 'Eq' — a refinement answers with the same value"
+      let hasHyp ← fvars.anyM fun fv => do Meta.isProp (← fv.fvarId!.getType)
+      unless hasHyp do
+        throwError "'{wname}' is claimed to hold under a stated hypothesis, but its \
+          statement binds none — a refinement with no hypothesis is an equality claim"
+  -- the tolerance: a bound is governed by a kinded quantity at a produced port's kind,
+  -- not by a bare number in prose
+  let mut toleranceLines : List String := []
+  unless rel.tolerance.isEmpty do
+    let tname := rel.tolerance.toName
+    let some tinfo := env.find? tname
+      | throwError "the tolerance '{rel.tolerance}' is not a declaration"
+    let tk ← Meta.forallTelescopeReducing tinfo.type fun _ tconcl => do
+      unless tconcl.isAppOf ``Quantity do
+        throwError "the tolerance '{tname}' is not a 'Quantity' — a tolerance is a \
+          kinded quantity, not a bare number"
+      renderKindArg [] (tconcl.getAppArgs[0]!)
+    let outKinds := (left.ports.filter (·.dir.produced)).map (·.kind)
+    let sameKind := fun (pk : String) =>
+      pk == tk || pk.endsWith ("." ++ tk) || tk.endsWith ("." ++ pk)
+    unless outKinds.any sameKind do
+      throwError "the tolerance '{tname}' is a quantity at kind '{tk}', which is not \
+        the kind of any output port of '{left.name}' — a bound governs what the \
+        boundary produces"
+    toleranceLines := [s!"tolerance: {tname} : {tk}"]
+  -- the named side conditions: each a declaration the witness statement mentions, so
+  -- the listed domain is the stated one
   let mentions := info.type.foldConsts ({} : NameSet) fun c s => s.insert c
+  let mut hypothesisLines : List String := []
+  unless rel.hypotheses.isEmpty do
+    for h in rel.hypotheses do
+      let hn := h.toName
+      unless (env.find? hn).isSome do
+        throwError "the hypothesis '{h}' is not a declaration"
+      unless mentions.contains hn do
+        throwError "'{wname}' does not mention the hypothesis '{h}' — a side condition \
+          the statement does not state is not one the claim holds under"
+    hypothesisLines := [s!"hypotheses: {String.intercalate ", " rel.hypotheses}"]
+  -- the license clause: each rung answered for by a named, sorry-free theorem — a rung
+  -- claimed with no repair and no restatement is refused, because a side condition does
+  -- not transfer by being assumed to
+  let mut licenseLines : List String := []
+  for l in rel.licenses do
+    if l.rung.isEmpty then
+      throwError "a license names the carrier rung it extends the claim to; one rung \
+        was left empty"
+    let ev := l.transfer.evidence
+    if ev.isEmpty then
+      throwError "the license at rung '{l.rung}' claims the relation with no repair and \
+        no restatement — name the repair theorem that carries it across, or the witness \
+        that restates it at that rung"
+    let en := ev.toName
+    let some einfo := env.find? en
+      | throwError "the license at rung '{l.rung}' names '{ev}', which is not a \
+          declaration"
+    unless einfo matches .thmInfo _ do
+      throwError "the license at rung '{l.rung}' names '{en}', which is not a theorem \
+        — a transfer is carried by a proof"
+    let eaxs ← Lean.collectAxioms en
+    if eaxs.contains ``sorryAx then
+      throwError "the license at rung '{l.rung}' rests on '{en}', which depends on \
+        'sorryAx' — it proves nothing yet"
+    licenseLines := licenseLines ++ [s!"license: {l.label}"]
   let lm := mentionedMembers left mentions
   let rm := mentionedMembers right mentions
   if lm.isEmpty then
@@ -2407,11 +2513,63 @@ elab "#kind_relation " r:ident : command => liftTermElabM do
     throwError "'{wname}' names no member of '{right.name}' — a theorem that does not \
       mention a boundary is not about it"
   let claim := if rel.claim.isEmpty then [] else [s!"claims: {rel.claim}"]
-  logInfo m!"kind relation: '{left.name}' {rel.kind.label} '{right.name}'\n\
-    {String.intercalate "\n" ([s!"witness: {wname}"] ++ claim ++
-      [s!"names on the left: {String.intercalate ", " lm}",
-       s!"names on the right: {String.intercalate ", " rm}",
-       s!"axioms: {String.intercalate ", " (axs.toList.map toString)}"])}"
+  return { rel, leftName := left.name, rightName := right.name,
+           lines := [s!"witness: {wname}"] ++ claim ++ toleranceLines ++ hypothesisLines
+             ++ licenseLines
+             ++ [s!"names on the left: {String.intercalate ", " lm}",
+                 s!"names on the right: {String.intercalate ", " rm}",
+                 s!"axioms: {String.intercalate ", " (axs.toList.map toString)}"] }
+
+open Elab Command in
+/-- `#kind_relation r` checks the theorem edge `r` declares between two contracts
+(`checkRelation` — the witness a sorry-free theorem, the conclusion in the claimed
+shape, the optional tolerance/hypothesis/license clauses each answered for by name, the
+statement mentioning members of both boundaries) and prints it. Every failure throws, so
+the command is the report and the gate at once — there is no reading of it that states a
+violation. -/
+elab "#kind_relation " r:ident : command => liftTermElabM do
+  let c ← checkRelation (← realizeGlobalConstNoOverload r)
+  logInfo m!"kind relation: '{c.leftName}' {c.rel.kind.label} '{c.rightName}'\n\
+    {String.intercalate "\n" c.lines}"
+
+open Elab Command in
+/-- `#kind_relations ns…` — the theorem-edge survey: every `Provenance.Relation`
+declared under the given namespaces, re-checked exactly as `#kind_relation` checks one,
+rendered one line per edge in declaration-name order as a single `info` message suitable
+for `#guard_msgs` pinning. An edge that fails its check renders as a `✗` row carrying the
+refusal — like `#kind_scc`'s `⚠` rows, the violation is *in* the report, so the pin is
+the gate: a passing scope pins clean rows and a newly violated edge fails the pin. The
+header counts the edges, so a scope with none pins `0` rather than passing invisibly. -/
+elab "#kind_relations " nss:ident* : command => liftTermElabM do
+  if nss.isEmpty then
+    throwError "#kind_relations expects at least one namespace"
+  let scopes := nss.map (·.getId)
+  let env ← getEnv
+  let mut names : Array Name := #[]
+  for (n, info) in env.constants.toList do
+    if n.isInternal then continue
+    unless scopes.any (·.isPrefixOf n) do continue
+    if info.type.isConstOf ``Provenance.Relation then names := names.push n
+  let sorted := names.qsort fun a b => a.toString < b.toString
+  let mut lines : Array String := #[]
+  let mut violated := 0
+  for n in sorted do
+    try
+      let c ← checkRelation n
+      let extras := String.join <|
+        (if c.rel.tolerance.isEmpty then [] else [s!" [tolerance: {c.rel.tolerance}]"])
+          ++ (if c.rel.licenses.isEmpty then []
+              else [s!" [rungs: {String.intercalate ", " (c.rel.licenses.map (·.rung))}]"])
+      lines := lines.push
+        s!"  {n}: '{c.leftName}' {c.rel.kind.label} '{c.rightName}' — \
+          {c.rel.witness}{extras}"
+    catch e =>
+      violated := violated + 1
+      lines := lines.push s!"  ✗ {n}: {← e.toMessageData.toString}"
+  let violations := if violated == 0 then "" else s!", {violated} violated"
+  let summary := s!"kind relations — {names.size} theorem edge(s){violations}"
+  if lines.isEmpty then logInfo m!"{summary}"
+  else logInfo m!"{summary}\n{String.intercalate "\n" lines.toList}"
 
 /-! ## The assembly at the scale of its steps
 

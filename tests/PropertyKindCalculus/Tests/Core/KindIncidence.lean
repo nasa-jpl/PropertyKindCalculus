@@ -1401,6 +1401,56 @@ boundary agrees: false
 -/
 #guard_msgs in #kind_contract halvedInDomainTotal
 
+/-! ### The decider — the case's predicate as data of the boundary
+
+The `conditional` role records that cases exist; the `deciders` field names, per
+conditional port, the declaration that decides them, so the domain a consumer must
+establish is read off the boundary rather than excavated from the body. The checks are
+the clause's hygiene: a decider must govern a conditional port — nothing else has cases
+— and must name a declaration that exists. -/
+
+/-- The domain that decides the guarded chain's case, named so a boundary can cite it. -/
+def halvedDomain (lo q : Quantity alphaK Nat) : Prop := lo ≤ q
+
+/-- The guarded boundary with its case decided by name. -/
+def halvedInDomainDecided : Provenance.Contract String String :=
+  { halvedInDomainBoundary with
+    name := "halvedInDomain (case decided)"
+    deciders := [("halvedInDomain/result.some",
+                  "PropertyKindCalculus.Tests.KindIncidence.halvedDomain")] }
+
+/--
+info: kind contract over 3 steps:
+contract 'halvedInDomain (case decided)': 3 ports, 0 exits
+decides halvedInDomain/result.some: PropertyKindCalculus.Tests.KindIncidence.halvedDomain
+boundary agrees: true
+-/
+#guard_msgs in #kind_contract halvedInDomainDecided
+
+/-- A decider hung on an input: nothing there has cases. -/
+def deciderOnAnInput : Provenance.Contract String String :=
+  { halvedInDomainBoundary with
+    name := "halvedInDomain (decider misplaced)"
+    deciders := [("halvedInDomain/lo",
+                  "PropertyKindCalculus.Tests.KindIncidence.halvedDomain")] }
+
+/--
+error: the decider for 'halvedInDomain/lo' names a port with role 'input' — only a conditional port has cases to decide
+-/
+#guard_msgs in #kind_contract deciderOnAnInput
+
+/-- A decider that names no declaration. -/
+def deciderDangles : Provenance.Contract String String :=
+  { halvedInDomainBoundary with
+    name := "halvedInDomain (decider dangles)"
+    deciders := [("halvedInDomain/result.some",
+                  "PropertyKindCalculus.Tests.KindIncidence.noSuchDomain")] }
+
+/--
+error: the decider 'PropertyKindCalculus.Tests.KindIncidence.noSuchDomain' for 'halvedInDomain/result.some' is not a declaration
+-/
+#guard_msgs in #kind_contract deciderDangles
+
 /-! ### Re-expression — a conversion that stays inside the calculus
 
 Two references for one kind-of-property are two kinds when a model keeps them apart, and
