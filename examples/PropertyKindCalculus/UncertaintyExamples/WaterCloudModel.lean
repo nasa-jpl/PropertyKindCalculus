@@ -555,4 +555,111 @@ axioms: propext, Classical.choice, Quot.sound
 -/
 #guard_msgs in #kind_relation retrievalInvertsForward
 
+/-! ## Falsification — the misdeclarations the boundary and edge checkers reject
+
+The `#check_failure` probes above certify the type system's rejections; these certify
+the provenance checkers'. Each probe perturbs the declared boundary or edge by one field
+and pins the refusal, so the discriminating power of the passing pins above — `boundary
+agrees: true`, the checked `inverts` edge — is itself a checked fact rather than a
+promise: forget a port and the assembly's re-harvest of `wcmRetrieveQ` surfaces it as
+`undeclared`; misdeclare a kind and the port lands on both difference lists at once; and
+the edge is refused when its witness proves the wrong statement, when it lists a side
+condition the witness does not state, or when its claimed kind does not match the
+conclusion's shape. The exhaustive refusal catalogue lives in the validation suite
+(`tests/…/Core/KindRelation.lean`); these are the refusals on *this* boundary and edge.
+The probe values are deliberate counterexamples, and a survey over this namespace
+(`#kind_relations`, the `relations` index table) lists them — by design. -/
+
+namespace Falsification
+
+/-- The retrieval boundary with the offset parameter `cfg.d` forgotten. `#kind_contract`
+re-harvests the member `wcmRetrieveQ` itself, so the port the declaration dropped
+surfaces as `undeclared` — computed, claimed by nobody — and the verdict flips. -/
+def forgottenParameter : Provenance.Contract String String :=
+  { wcmRetrievalBoundary with
+    name := "WCM retrieval (mv), cfg.d forgotten"
+    ports := wcmRetrievalBoundary.ports.filter (·.node != "wcmRetrieveQ/cfg.d") }
+
+/--
+info: kind contract over 1 steps:
+contract 'WCM retrieval (mv), cfg.d forgotten': 7 ports, 0 exits
+params: wcmRetrieveQ/cfg.a, wcmRetrieveQ/cfg.c, wcmRetrieveQ/cfg.two
+undeclared input wcmRetrieveQ/cfg.d : backscatter
+boundary agrees: false
+-/
+#guard_msgs in #kind_contract forgottenParameter
+
+-- The hard-gate tier refuses the same contract outright rather than reporting it.
+/--
+error: the boundary declared by 'PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.Falsification.forgottenParameter' is not the one its members compute:
+contract 'WCM retrieval (mv), cfg.d forgotten': 7 ports, 0 exits
+params: wcmRetrieveQ/cfg.a, wcmRetrieveQ/cfg.c, wcmRetrieveQ/cfg.two
+undeclared input wcmRetrieveQ/cfg.d : backscatter
+boundary agrees: false
+-/
+#guard_msgs in #kind_contract_decide forgottenParameter
+
+/-- The backscatter input declared at the wrong kind. A declared port stands for a
+computed one only at the same node, kind, *and* role, so one wrong kind produces both
+difference lists at once: the computed port at `backscatter` is undeclared, and the
+declared port at `vegetationIndex` stands for nothing. -/
+def misdeclaredKind : Provenance.Contract String String :=
+  { wcmRetrievalBoundary with
+    name := "WCM retrieval (mv), σ0 misdeclared"
+    ports := wcmRetrievalBoundary.ports.map fun p =>
+      if p.node == "wcmRetrieveQ/σ0" then { p with kind := "vegetationIndex" } else p }
+
+/--
+info: kind contract over 1 steps:
+contract 'WCM retrieval (mv), σ0 misdeclared': 8 ports, 0 exits
+params: wcmRetrieveQ/cfg.a, wcmRetrieveQ/cfg.c, wcmRetrieveQ/cfg.d, wcmRetrieveQ/cfg.two
+undeclared input wcmRetrieveQ/σ0 : backscatter
+unrealized input wcmRetrieveQ/σ0 : vegetationIndex
+boundary agrees: false
+-/
+#guard_msgs in #kind_contract misdeclaredKind
+
+/-- The edge with its witness swapped for the scalar core `affine_roundtrip`: a true,
+sorry-free theorem — about bare reals. Neither side of its equality composes a member of
+each boundary, so the round trip the `inverts` kind claims is not in the statement. -/
+def strandedWitness : Provenance.Relation :=
+  { retrievalInvertsForward with
+    witness := "PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.affine_roundtrip" }
+
+/--
+error: 'PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.affine_roundtrip' is claimed to state an inversion, but neither side of its equality composes a member of 'WCM retrieval (mv)' with a member of 'WCM forward (σ⁰)' — the round trip is not in the statement
+-/
+#guard_msgs in #kind_relation strandedWitness
+
+/-- A side condition the round trip does not need: the vegetation term cancels, so the
+witness never assumes `a ≠ 0`. -/
+def vegGainNonzero (cfg : WcmConfig ℝ) : Prop := cfg.a.magnitude ≠ 0
+
+/-- The edge listing that condition anyway, beside the real one. A listed hypothesis
+must be mentioned by the witness's statement — the declared domain is the stated one,
+never wider. -/
+def unstatedHypothesis : Provenance.Relation :=
+  { retrievalInvertsForward with
+    hypotheses := [
+      "PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.soilGainNonzero",
+      "PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.Falsification.vegGainNonzero"] }
+
+/--
+error: 'PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.wcmRetrieveQ_wcmForwardQ' does not mention the hypothesis 'PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.Falsification.vegGainNonzero' — a side condition the statement does not state is not one the claim holds under
+-/
+#guard_msgs in #kind_relation unstatedHypothesis
+
+/-- The edge with its kind misdeclared as a bound. The record's `kind` must match the
+shape of the witness's conclusion, and the round trip concludes with `Eq`, not an order
+relation. -/
+def misclaimedShape : Provenance.Relation :=
+  { retrievalInvertsForward with kind := .boundedBy }
+
+/--
+error: 'PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.wcmRetrieveQ_wcmForwardQ' is claimed to state a bound, but its conclusion is headed by 'Eq', which is not an order relation
+-/
+#guard_msgs in #kind_relation misclaimedShape
+
+end Falsification
+
 end PropertyKindCalculus.UncertaintyExamples.WaterCloudModel
