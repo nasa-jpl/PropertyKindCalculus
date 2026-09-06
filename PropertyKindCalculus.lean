@@ -24,6 +24,7 @@ import PropertyKindCalculus.Unit
 import PropertyKindCalculus.UnitPrefix
 import PropertyKindCalculus.Extensivity
 import PropertyKindCalculus.Recarving
+import PropertyKindCalculus.InterfaceLedger
 import PropertyKindCalculus.Quantity
 import PropertyKindCalculus.Aggregation
 import PropertyKindCalculus.QuantityClassification

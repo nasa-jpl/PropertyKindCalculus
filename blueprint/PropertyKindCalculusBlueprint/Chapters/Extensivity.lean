@@ -4,11 +4,12 @@ import VersoBlueprint
 -- The extensivity nodes below now link real declarations, so this chapter imports
 -- the (Mathlib-free, core) `Extensivity` module.
 import PropertyKindCalculus.Extensivity
--- Three further nodes below link declarations outside the Mathlib-free core, each for a stated
--- arithmetic reason: `Recarving` (core, but its own module), `AggregationLaws` (the weighted mean
--- over `ℝ` and the parallel-axis correction, both needing Mathlib), and the §13.5.2 predicate,
--- which lives with the uncertainty it is about.
+-- Further nodes below link declarations outside that module, each for a stated reason:
+-- `Recarving` and `InterfaceLedger` (core, but their own modules), `AggregationLaws` (the
+-- weighted mean over `ℝ` and the transport laws, all needing Mathlib), and the §13.5.2
+-- predicate, which lives with the uncertainty it is about.
 import PropertyKindCalculus.Recarving
+import PropertyKindCalculus.InterfaceLedger
 import PropertyKindCalculus.AggregationLaws
 import PropertyKindCalculus.Uncertainty.QuasiExtensive
 import PropertyKindCalculus.Uncertainty.Adequacy.MeanBound
@@ -37,11 +38,13 @@ single split to the whole tree, and a checked witness for each — and §13.5.2 
 `Uncertainty.QuasiExtensive`, because "approximately" is a claim about measurement and
 not about the mereology.
 
-Three cases Bunge's four do not name are added. A value the parts do not determine at
-all (_whole-proper_); a value that adds only about a _shared parameter_, an axis or a
-datum, which is where the parallel-axis theorem lives; and a _weighted mean_, which is
-neither a sum nor a shared constant and whose license is that the total weight is not
-zero. The chapter closes on what a carving cannot say at all: how many parts there
+Four cases Bunge's four do not name are added. A value the parts do not determine at
+all (_whole-proper_); a value that adds only about a _shared parameter_ — an axis, a
+frame, a reference point — where the parallel-axis theorem lives and the transport
+tower with it; a _weighted mean_, which is neither a sum nor a shared constant and
+whose license is that the total weight is not zero; and a value that reads no part at
+all but an _interface_ between two, whose additivity is purchased by a cancellation
+law. The chapter closes on what a carving cannot say at all: how many parts there
 are.
 
 # Extensive and conditionally-extensive kinds (Dybkær §13.5)
@@ -250,6 +253,14 @@ a common axis, an energy about a common datum. A `Measurement` reads a carving a
 so the parameter is made an explicit argument; what that buys is not a weaker law but a statable
 one, about the case a library that forgets the axis actually hits.
 
+The parameter is kind-specific — an axis for a moment of inertia, a *frame* for a momentum, a
+*reference point* for an angular momentum — and the transports relating two parameter values
+form a tower: each correction is priced in a summary that is itself extensive one rung down,
+grounding out in mass. The worked witness is a rover (`RoverExtensivity`, examples): whether
+its four wheels' spins, each read about its own axle, may be summed against the chassis is
+decided by the priced correction — each assembly's momentum — which vanishes parked and does
+not while driving.
+
 :::definition "def_extensiveAbout" (parent := "extensivity") (lean := "PropertyKindCalculus.ExtensiveAbout")
 A kind is _extensive about_ a parameter when fixing the parameter — an axis, an origin, a datum
 — makes the ordinary additivity law hold. This is {uses "def_extensiveKind"}[extensivity] at
@@ -282,6 +293,116 @@ $`w(x-a)^2 = w(x-b)^2 + 2(b-a)wx + (a^2-b^2)w`, and at a join the three folds di
 `Int` ring arithmetic is why it lives in the Mathlib-backed `AggregationLaws` rather than the
 core. What the core exhibits is the failure it corrects: two point masses read about axes
 through themselves contribute nothing each, where the rod about its centre reads 2.
+:::
+
+:::theorem "thm_momentum_boost" (parent := "extensivity") (lean := "PropertyKindCalculus.momentumBoost") (tags := "proved") (effort := "small")
+*A momentum transports between frames, priced in mass.* The momentum read in the frame at
+$`u_1` is the momentum read at $`u_2` plus the carving's mass times the frame difference,
+$$`p_{u_1} = p_{u_2} + \Bigl(\sum_i w_i\Bigr)(u_2 - u_1).`
+The parameter of {uses "def_extensiveAbout"}[extensivity about a parameter] is a *frame* here
+rather than an axis, and the failure it prices is reading each part in its own rest frame:
+every reading is zero, so the untransported sum reports a system with no momentum at all.
+:::
+
+:::proof "thm_momentum_boost"
+By induction on the carving: `ring` at a leaf on $`w(v-u_1) = w(v-u_2) + w(u_2-u_1)`, folds
+distributing at a join. The core exhibits the failure (`drift_rest_frames_wrong`: two drifting
+masses read 0 in their own rest frames where the laboratory reads the pair at 3) and
+`drift_rest_frames_corrected` closes the gap from the general law, with the two corrections
+being the parts' own laboratory momenta.
+:::
+
+:::theorem "thm_angular_momentum_transport" (parent := "extensivity") (lean := "PropertyKindCalculus.angularMomentumTransport") (tags := "proved") (effort := "small")
+*An angular momentum transports between reference points, priced in momentum.* Componentwise
+over any carving,
+$$`L_a = L_b + (b - a) \times p,`
+with the momentum components entering as the first moments of the velocities. This is the
+middle rung of the transport tower: {uses "thm_parallel_axis"}[inertia's correction] is priced
+in mass and first moment, this one in momentum, and {uses "thm_momentum_boost"}[momentum's] in
+mass — each price itself extensive one rung down, so mixed-parameter aggregation is checkable
+all the way to the ground.
+:::
+
+:::proof "thm_angular_momentum_transport"
+By induction on the carving, `ring` at a leaf. Taking $`b` at a part's own mass centre and
+$`a` at the system's shows the spin/orbital split of an angular momentum is this law and not
+a new principle, and a part whose momentum vanishes reads the same about every point. The
+rover instantiates both readings: each wheel's spin reads 2 about its own axle, parked or
+driving; parked, every assembly's momentum vanishes and the four spins sum against the
+chassis unchanged, while driving each transport costs −15 and the untransported sum misses
+the whole by exactly the four prices.
+:::
+
+# The interface ledger — what parts exert across a cut
+
+Every measurement above reads a *node* of a carving. A drive torque on a hub, a contact force
+at a joint, the heat crossing a wall read no node at all: each is indexed by an ordered *pair*
+of parts — an interface — and a `Measurement` has no slot for a pair. The ledger is that slot,
+and its one law is the reason such quantities nonetheless aggregate.
+
+:::definition "def_interfaceLedger" (parent := "extensivity") (lean := "PropertyKindCalculus.InterfaceLedger")
+An _interface ledger_ over the parts of a {uses "def_decomposition"}[carving] is a pairwise
+action carrying its cancellation law as a field: the two readings of one interface sum to
+zero — for mechanical actions, Newton's third law. A pair of readings that does not cancel is
+not two readings of one interface, so the obligation is a field for the reason a re-carving's
+whole-preservation is.
+:::
+
+:::proof "def_interfaceLedger"
+Realized as `InterfaceLedger` — `act` and `antisymm` — with `netOn` and `netTotal` reading
+per-part nets against a carving and `mutualTotal` the flow across a cut. A ledger is entered
+one direction at a time: `fun p q => raw p q - raw q p` antisymmetrizes any raw table, and
+its law is `omega`. `act_self` is the law's own erasure clause: a carving that merges the two
+ends of an interface hands both ends one name and the entry reads zero — which is why the
+rover example's two drive trains (2/2 and 3/1 hub-to-rim splits) coarsen to the *same*
+ledger, so internal-versus-external is the carving's fact rather than the machine's —
+Dybkær's observer clause (§3.3 Note 5) with a proof attached.
+:::
+
+:::theorem "thm_net_total_union" (parent := "extensivity") (lean := "PropertyKindCalculus.netTotal_union") (tags := "proved") (effort := "small")
+*The exact price of additivity.* For *any* pairwise action over a
+{uses "def_decomposition"}[carving], lawful or not, rolling up per-part nets over a union
+overshoots the two halves' own rollups by precisely the two cross-flows over the cut. A
+ledger that drops a reaction does not fail additivity vaguely — it fails it by this number.
+Stated with no law in scope, so it is the identity a violated law is measured against.
+:::
+
+:::proof "thm_net_total_union"
+Six instances of the fold's linearity, assembled by `omega`. The rover example presents the
+invoice: log the motor torques and forget the reactions, and the whole's rollup exceeds its
+halves' by 16 — four motors' worth of uncancelled flow across the chassis–arms cut.
+:::
+
+:::theorem "thm_net_rollup" (parent := "extensivity") (lean := "PropertyKindCalculus.InterfaceLedger.netTotal_eq_extTotal") (tags := "proved") (effort := "small")
+*The rollup.* Under the cancellation law the price at every cut is zero, so the sum over the
+parts of the per-part nets is the exogenous total alone. The reaction a motor induces on the
+body is real in the per-part net — it loads a bearing — and absent from the whole; both facts
+are this theorem, read at a part and at the carving. Builds on
+{uses "def_interfaceLedger"}[the ledger] and {uses "thm_net_total_union"}[the price identity].
+:::
+
+:::proof "thm_net_rollup"
+The flows across any cut cancel (`mutualTotal_cancel`, by induction from the field), so the
+interior of one carving cancels outright and only the exogenous column survives. In the
+rover: the chassis's net reads −16 (four motors' reactions), each hub's balances to zero, and
+the rover's total is the ground torque alone.
+:::
+
+:::theorem "thm_net_extensive" (parent := "extensivity") (lean := "PropertyKindCalculus.InterfaceLedger.netMeasurement_extensive") (tags := "capstone, proved") (effort := "medium")
+*Additivity, purchased.* The net over a ledger satisfies {uses "def_extensiveKind"}[the
+extensive law] — but where mass's `additive` field is the model's free choice, this one is a
+theorem with a hypothesis: delete the cancellation field and
+{uses "thm_net_total_union"}[the price identity] prices exactly what remains. One predicate,
+two different licenses, which is the sense in which the *scope* of extensivity is
+kind-specific: what varies between kinds is not whether a sum appears but which law licenses
+it.
+:::
+
+:::proof "thm_net_extensive"
+Both fields follow from {uses "thm_net_rollup"}[the rollup]: the kind is fixed by
+construction, and additivity collapses to the fold's union case once each rollup is its
+exogenous total. The rover example instantiates it at the torque kind, with the lawless
+counter-witness beside it.
 :::
 
 # The weighted mean, and its license

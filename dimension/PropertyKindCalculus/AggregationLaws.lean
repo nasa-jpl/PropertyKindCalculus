@@ -1,9 +1,9 @@
 /-
-# The two aggregation laws whose arithmetic the core cannot do
+# The aggregation laws whose arithmetic the core cannot do
 
 `PropertyKindCalculus.Extensivity` states the aggregation modes over the numeral of a property
 value, in the Mathlib-free core: a sum (§13.5.1), a shared constant (§13.5.4), and a value the
-parts do not determine at all. Two further laws belong beside them and cannot be stated there,
+parts do not determine at all. Further laws belong beside them and cannot be stated there,
 each for a specific arithmetic reason.
 
   * **The weighted mean** — the centre-of-mass mode, neither a sum nor a constant. The mode
@@ -22,9 +22,16 @@ each for a specific arithmetic reason.
     its first moment — and both are folds the core already has, which is the reason this is a
     *metrological* statement and not just an algebraic identity: transporting an aggregate
     costs only quantities the parts already carry.
+  * **The rest of the transport tower** — the Galilean boost for a momentum (`momentumBoost`,
+    priced in the carving's mass) and the change of reference point for an angular momentum
+    (`angularMomentumTransport`, priced in the carving's momentum). With the parallel-axis
+    theorem these share one shape: each correction is computable from summaries that are
+    themselves extensive one rung down, and the tower grounds out in the one unconditional
+    §13.5.1 kind — which is what makes mixed-parameter aggregation checkable all the way
+    down rather than conditionally correct at every rung.
 
-Lives in the `Dimension` library because both need Mathlib — `ℝ` for the first, `ring` for the
-second — the one dependency kept out of the core spine.
+Lives in the `Dimension` library because these need Mathlib — `ℝ` for the mean, `ring` for
+the transports — the one dependency kept out of the core spine.
 -/
 
 import PropertyKindCalculus.Aggregation
@@ -109,5 +116,79 @@ theorem rod_mixed_axes_corrected :
 /-- Each correction is 1 — a unit mass moved a unit distance — and they sum to the 2 the naive
 sum was missing. -/
 theorem rod_corrections : rodCorr 0 (-1) rodLeft = 1 ∧ rodCorr 0 1 rodRight = 1 := by decide
+
+/-! ## The rest of the transport tower — each correction priced one rung down -/
+
+/-- **The Galilean boost, as a transport law**: the momentum read in the frame at `u₁` is the
+momentum read at `u₂` plus the carving's mass times the frame difference — the correction is
+the one unconditionally extensive summary there is, which is the tower's ground floor. -/
+theorem momentumBoost {O : Type u} (w v : O → Int) (u₁ u₂ : Int) :
+    ∀ d : Decomposition O,
+      momentumIn w v u₁ d = momentumIn w v u₂ d + partTotal w d * (u₂ - u₁)
+  | .atom p => by
+      show w p * (v p - u₁) = w p * (v p - u₂) + w p * (u₂ - u₁)
+      ring
+  | .union a b => by
+      show momentumIn w v u₁ a + momentumIn w v u₁ b
+        = (momentumIn w v u₂ a + momentumIn w v u₂ b)
+          + (partTotal w a + partTotal w b) * (u₂ - u₁)
+      rw [momentumBoost w v u₁ u₂ a, momentumBoost w v u₁ u₂ b]
+      ring
+
+/-- So a momentum transports, and `extensiveAbout_mixed` applies to it. -/
+theorem momentumMeasurement_transports {O : Type u} (w v : O → Int) :
+    Transports (momentumMeasurement w v) (fun u₁ u₂ d => partTotal w d * (u₂ - u₁)) :=
+  ⟨fun u₁ u₂ d => momentumBoost w v u₁ u₂ d⟩
+
+/-- The boost correction at the drifting pair's own masses. -/
+abbrev driftCorr : Int → Int → Decomposition MovingPointMass → Int := fun u₁ u₂ d =>
+  partTotal MovingPointMass.mass d * (u₂ - u₁)
+
+/-- **The rest-frame sum, repaired.** Core exhibits each mass reading zero in its own rest
+frame where the laboratory reads the pair at 3; the two boost corrections close the gap, from
+the general law rather than from arithmetic on this pair. -/
+theorem drift_rest_frames_corrected :
+    (driftMomentum 0 driftPair).numeral
+      = ((driftMomentum 1 driftA).numeral + driftCorr 0 1 driftA)
+        + ((driftMomentum 2 driftB).numeral + driftCorr 0 2 driftB) :=
+  extensiveAbout_mixed (momentumMeasurement_extensiveAbout _ _)
+    (momentumMeasurement_transports _ _) 0 1 2 driftA driftB
+
+/-- Each correction is the part's own laboratory momentum — 1 and 2 — and they sum to the 3
+the rest-frame sum was missing. -/
+theorem drift_corrections : driftCorr 0 1 driftA = 1 ∧ driftCorr 0 2 driftB = 2 := by decide
+
+/-- **An angular momentum transports between reference points, priced in momentum**:
+`L_a = L_b + (b − a) × p`, componentwise over any carving, with the momentum components as
+the first moments of the velocities. Taking `b` at a part's own mass centre and `a` at the
+system's shows the split of an angular momentum into spin and orbital terms is this law and
+not a new principle — and a part whose momentum vanishes reads the same about every point,
+which is why a parked flywheel's spin may be summed untransported and a translating one's
+may not. -/
+theorem angularMomentumTransport {O : Type u} (w x y vx vy : O → Int) (a b : Int × Int) :
+    ∀ d : Decomposition O,
+      angularMomentumAbout w x y vx vy a d
+        = angularMomentumAbout w x y vx vy b d
+          + ((b.1 - a.1) * firstMoment w vy d - (b.2 - a.2) * firstMoment w vx d)
+  | .atom p => by
+      show w p * ((x p - a.1) * vy p - (y p - a.2) * vx p)
+        = w p * ((x p - b.1) * vy p - (y p - b.2) * vx p)
+          + ((b.1 - a.1) * (w p * vy p) - (b.2 - a.2) * (w p * vx p))
+      ring
+  | .union d₁ d₂ => by
+      show angularMomentumAbout w x y vx vy a d₁ + angularMomentumAbout w x y vx vy a d₂
+        = (angularMomentumAbout w x y vx vy b d₁ + angularMomentumAbout w x y vx vy b d₂)
+          + ((b.1 - a.1) * (firstMoment w vy d₁ + firstMoment w vy d₂)
+             - (b.2 - a.2) * (firstMoment w vx d₁ + firstMoment w vx d₂))
+      rw [angularMomentumTransport w x y vx vy a b d₁,
+        angularMomentumTransport w x y vx vy a b d₂]
+      ring
+
+/-- So an angular momentum transports, with the momentum components as the price. -/
+theorem angularMomentumMeasurement_transports {O : Type u} (w x y vx vy : O → Int) :
+    Transports (angularMomentumMeasurement w x y vx vy)
+      (fun a b d =>
+        (b.1 - a.1) * firstMoment w vy d - (b.2 - a.2) * firstMoment w vx d) :=
+  ⟨fun a b d => angularMomentumTransport w x y vx vy a b d⟩
 
 end PropertyKindCalculus

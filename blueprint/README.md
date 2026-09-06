@@ -8,7 +8,7 @@ status summary generated from the linked Lean code.
 
 ## What it documents
 
-26 chapters carrying **148 nodes, 32 of them capstones — every one of them
+26 chapters carrying **153 nodes, 33 of them capstones — every one of them
 `proved`**, each linking a real, sorry-free declaration through its `(lean := …)` field.
 The status summary and the dependency graph are therefore read off the checked source
 rather than asserted here; `scripts/check-doc-pins.py` gates these counts and the chapter

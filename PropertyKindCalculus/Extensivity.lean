@@ -453,4 +453,110 @@ theorem rod_mixed_axes_wrong :
     (rodInertia 0 rod).numeral
       ≠ (rodInertia (-1) rodLeft).numeral + (rodInertia 1 rodRight).numeral := by decide
 
+/-! ### The parameter is kind-specific — a momentum is extensive per frame
+
+`ExtensiveAbout` fixes no reading of its parameter: for a moment of inertia it is an axis,
+and for a momentum it is a *frame* — the velocity a part's motion is read against. Same
+predicate, same failure mode: read each part in its own rest frame and every reading is
+zero, so the untransported sum reports a system with no momentum at all. The transport that
+repairs it is the Galilean boost (`momentumBoost`, `AggregationLaws`), whose correction is
+priced by the carving's mass — the first rung of a tower in which each transport is paid in
+a quantity that is itself extensive one rung down: momentum's in mass, angular momentum's in
+momentum (`angularMomentumTransport`), the moment of inertia's in mass and first moment
+(`parallelAxis`). -/
+
+/-- Linear momentum of a system of point masses, a ratio kind. Role-named as
+`pointMassInertia` is, so it does not shadow a host library's own momentum. -/
+def pointMassMomentum : KindOfProperty := { id := "linear momentum", scale := .ratio }
+
+/-- **Momentum read in the frame moving at `u`**: `∑ wᵢ (vᵢ − u)`, as a fold. -/
+def momentumIn {O : Type u} (w v : O → Int) (u : Int) : Decomposition O → Int :=
+  Decomposition.fold (fun p => w p * (v p - u)) (· + ·)
+
+/-- In the frame at rest (`u = 0`) a momentum **is** the first moment of the velocities —
+the summary `parallelAxis` prices its correction in, read at velocity instead of position. -/
+theorem momentumIn_zero {O : Type u} (w v : O → Int) :
+    ∀ d : Decomposition O, momentumIn w v 0 d = firstMoment w v d
+  | .atom p => by show w p * (v p - 0) = w p * v p; rw [Int.sub_zero]
+  | .union a b => by
+      show momentumIn w v 0 a + momentumIn w v 0 b = firstMoment w v a + firstMoment w v b
+      rw [momentumIn_zero w v a, momentumIn_zero w v b]
+
+/-- The momentum fold as a `ParamMeasurement` over frames. -/
+def momentumMeasurement {O : Type u} (w v : O → Int) : ParamMeasurement Int O := fun u d =>
+  { kind := pointMassMomentum, numeral := momentumIn w v u d, reference := "kg·m/s" }
+
+/-- **A momentum is extensive in every frame** — both fields `rfl`, exactly as for the
+moment of inertia: nothing about the frame enters the proof, so the mixed-frame failure
+below is a fact about the parameter and not about additivity. -/
+theorem momentumMeasurement_extensiveAbout {O : Type u} (w v : O → Int) :
+    ExtensiveAbout pointMassMomentum (momentumMeasurement w v) :=
+  ⟨fun _ _ => rfl, fun _ _ _ => rfl⟩
+
+/-- A point mass in motion along the line. -/
+structure MovingPointMass where
+  /-- Where it sits. -/
+  position : Int
+  /-- How fast it moves, read in the laboratory frame. -/
+  velocity : Int
+  /-- The mass, in whole units. -/
+  mass : Int
+deriving DecidableEq, Repr
+
+/-- The momentum measurement of moving point masses, at their own mass and velocity. -/
+abbrev driftMomentum : ParamMeasurement Int MovingPointMass :=
+  momentumMeasurement MovingPointMass.mass MovingPointMass.velocity
+
+/-- One unit mass drifting at `v = 1`. -/
+def driftA : Decomposition MovingPointMass :=
+  .atom { position := 0, velocity := 1, mass := 1 }
+/-- Another unit mass drifting at `v = 2`. -/
+def driftB : Decomposition MovingPointMass :=
+  .atom { position := 1, velocity := 2, mass := 1 }
+/-- The drifting pair. -/
+def driftPair : Decomposition MovingPointMass := .union driftA driftB
+
+/-- In the laboratory frame the pair carries momentum 3. -/
+theorem drift_momentum_lab : (driftMomentum 0 driftPair).numeral = 3 := by decide
+
+/-- **Reading each mass in its own rest frame loses the pair.** Each part reads zero there,
+so the untransported sum reports 0 for a pair the laboratory reads at 3 — inertia's
+mixed-axis failure, at a parameter that is a frame rather than an axis. -/
+theorem drift_rest_frames_wrong :
+    (driftMomentum 0 driftPair).numeral
+      ≠ (driftMomentum 1 driftA).numeral + (driftMomentum 2 driftB).numeral := by decide
+
+/-! ### And an angular momentum is extensive per reference point
+
+Planar point masses: a position `(x, y)`, a velocity `(vx, vy)`, and the axial component of
+the moment of the motion about a chosen point. The parameter is now a *point*, and the
+transport that relates two points is priced by the carving's momentum
+(`angularMomentumTransport`, `AggregationLaws`) — zero for a part whose momentum vanishes,
+which is why a parked flywheel's spin reads the same about every point and a translating
+one's does not. -/
+
+/-- Angular momentum of a system of point masses (the axial component), a ratio kind. -/
+def pointMassAngularMomentum : KindOfProperty :=
+  { id := "angular momentum", scale := .ratio }
+
+/-- **Angular momentum about the point `c`**: `∑ wᵢ ((xᵢ − c₁)·vyᵢ − (yᵢ − c₂)·vxᵢ)` — the
+axial component of `∑ (rᵢ − c) × wᵢvᵢ`, as a fold. -/
+def angularMomentumAbout {O : Type u} (w x y vx vy : O → Int) (c : Int × Int) :
+    Decomposition O → Int :=
+  Decomposition.fold
+    (fun p => w p * ((x p - c.1) * vy p - (y p - c.2) * vx p)) (· + ·)
+
+/-- The angular-momentum fold as a `ParamMeasurement` over reference points. -/
+def angularMomentumMeasurement {O : Type u} (w x y vx vy : O → Int) :
+    ParamMeasurement (Int × Int) O := fun c d =>
+  { kind := pointMassAngularMomentum, numeral := angularMomentumAbout w x y vx vy c d,
+    reference := "kg·m²/s" }
+
+/-- **An angular momentum is extensive about every reference point** — `rfl` again, so the
+whole-tree law holds about each point separately and only the transport between points has
+content. -/
+theorem angularMomentumMeasurement_extensiveAbout {O : Type u} (w x y vx vy : O → Int) :
+    ExtensiveAbout pointMassAngularMomentum (angularMomentumMeasurement w x y vx vy) :=
+  ⟨fun _ _ => rfl, fun _ _ _ => rfl⟩
+
 end PropertyKindCalculus
