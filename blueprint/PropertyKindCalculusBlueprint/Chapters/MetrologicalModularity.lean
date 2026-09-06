@@ -13,8 +13,10 @@ open Informal
 
 The chapters so far give the calculus's vocabulary (kinds, quantities, units, dimensions)
 and its evidence discipline (provenance, audit, uncertainty). This chapter states the
-organizing principle they add up to: science software organized as *metrology modules*.
-A metrology module is a unit whose
+organizing principle they add up to: software organized as *metrology modules*. Nothing
+in the principle is specific to science software — it applies wherever a computed value
+is presented as a measurement result in the VIM sense, whatever the domain; science
+software is simply where this development exercises it. A metrology module is a unit whose
 
 1. *interface* is a declared boundary of kind-typed ports — input quantities, output
    quantities, parameters, configuration, and conditional outputs with their deciders;

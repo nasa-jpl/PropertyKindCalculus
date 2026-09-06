@@ -117,9 +117,10 @@ part–whole vocabulary implies but never names — and several recent developme
 Willink {Manual.citep willink_evaluation_of_measurement_uncertainty_based_on_moments}[], and
 Degenhardt {Manual.citep degenhardt_efficient_alternative_to_monte_carlo}[]). PKC makes a
 kind a first-class type, kind-incompatible arithmetic a compile-time error, and
-classification a proof obligation. Of nineteen metrology requirements, sixteen are
-discharged as kernel-checked theorems and three — the capabilities a type system affords
-by construction — are demonstrated by elaboration. The standard is the test: all eleven
+classification a proof obligation. Of twenty-seven metrology requirements, the twenty
+truth-apt claims are all discharged as kernel-checked theorems; the remaining seven are
+capabilities a type system affords by construction, whose discharge is a construction
+that elaborates rather than a theorem. The standard is the test: all eleven
 quantity-and-unit parts of ISO/IEC 80000, item by item, 700+ kinds with checked
 dimensions and proved defining relations. Because a PKC model is carrier-polymorphic and
 its measurement uncertainty is an additive descriptor, a single model definition serves
@@ -146,7 +147,7 @@ derived from.
 
 # What PropertyKindCalculus provides
 
-This project addresses *nineteen requirements* about formalizing _metrology_ — the
+This project addresses *twenty-seven requirements* about formalizing _metrology_ — the
 science of measurement — and discharges most of them as machine-checked theorems
 rather than prose. A substantial part of the library is grounded directly on the
 published *ISO and IEC 80000* metrology standards — _eleven_ of the thirteen parts (every
@@ -197,9 +198,9 @@ In plain terms, _rigorous metrology_ here means:
   (the mole, the candela) are derived in disguise — so the calculus names that
   third category instead of pretending the base/derived split is clean.
 
-Each of these is stated precisely as one of the nineteen requirements below, and
+Each of these is stated precisely as one of the twenty-seven requirements below, and
 the status table at the end of that section maps every requirement to the checked
-declaration that discharges it.
+declarations that address it.
 
 # Requirements
 
@@ -210,9 +211,27 @@ prove each requirement; this section states them up front, as the axes the desig
 is judged against, with a status table at the end mapping each axis to the
 declaration that discharges it.
 
-The requirements fall into four groups: how kinds are *structured*, how
-*operations* on them are gated, how the kind layer is kept *consistent* with the
-coarser dimension and unit layers, and how values *aggregate* over parts.
+The twenty-seven requirements, R1–R27, fall into nine groups — the section
+headings of the generated traceability matrix at the end of this section:
+- how kinds are *structured*, and how quantities characterize objects and named
+  parts of named systems (R1–R3, R19, R22);
+- how *operations* on kinds are gated (R4–R6);
+- how the kind layer is kept *consistent* with the coarser dimension and unit
+  layers (R7, R8, R16, R17);
+- how values *aggregate* over parts (R9);
+- how values are *represented* — the numeric carrier, vectors under one scalar
+  unit, frames and variance (R10, R11, R20);
+- how *classifications* are certified, of kinds and of units (R12, R13);
+- how *uncertainty* is propagated, judged numerically adequate, and covered by
+  intervals (R14, R15, R18);
+- what the discipline *costs the author* — erasure and rendering (R21, R25); and
+- what *evidence* a value and a module carry — provenance, audit, the checked
+  measurement model, and licensed distribution (R23–R27).
+
+Below, a group whose axes are best read separately takes one heading per axis.
+R21–R25 entered the catalogue from the ForPhysLib benchmark's design-neutral MR
+requirements; the trace between the two numberings runs in both directions in the
+*Requirement validation* subsection at the end of this section.
 
 ## Kind structure (R1, R2, R3, R19, R22)
 
@@ -632,7 +651,7 @@ is the linear member of R13's category; the decibel is its chart-bearing one, an
 lives beside the kind — deliberately not in a unit system of pure rescalings, which
 cannot express even the affine °C, let alone a logarithm with a reference.
 
-## Uncertainty and numerical adequacy (R14, R15)
+## Uncertainty and numerical adequacy (R14, R15, R18)
 
 *R14 — Output uncertainty is computed by a provably nested ladder of methods.* A measured input
 quantity carries not just a magnitude but a *dispersion*; given the uncertainty of the inputs of a
@@ -697,6 +716,18 @@ autograd carrier for the sensitivities `cᵢ` and at the adequacy carrier (seede
 descriptor) for the verdict — so a model is adequacy-checked at the scale `cᵢ·uᵢ` its own uncertainty
 descriptor defines (the soundness inherited from the A3 verdict). What remains is extending the DAG to
 `×`/`÷`, scoped in the project's `UNCERTAINTY.md`.
+
+*R18 — The recorded variance certifies a coverage interval.* Once an output's uncertainty is a
+distribution, VIM 2.36–2.38 ask for a *coverage interval* — a probability attached to an interval
+about the mean. The `variance` the R14 descriptor already carries must certify one, in two tiers
+graded by what is assumed about the distribution's shape: distribution-free, the interval of $`k`
+standard uncertainties about the mean has coverage at least $`1 - 1/k^2` — the complement of
+Chebyshev's inequality, honest but conservative ($`k = 2` gives $`\ge 75\%`, not the Gaussian
+$`95\%`, which is a shape assumption); and, for a bounded family, *exact* — the centred interval of
+half-width $`h` of a uniform on $`[m - \delta, m + \delta]` has coverage exactly $`h/\delta`.
+Neither tier needs a *true value* — the sense in which coverage is provable while *accuracy*,
+closeness to nature, is not. The development is the *Coverage intervals* section of the
+uncertainty chapter.
 
 ## Ergonomics and erasure (R21, R25)
 
@@ -772,7 +803,7 @@ acceptance and refusal probes.
 R21–R25 did not come from introspection; they came from *validation*, in the systems
 engineering sense: not "did we build the calculus right" (verification — the
 traceability matrix below) but "did we specify the right calculus". The instrument is
-the ForPhysLib benchmark (`ForPhysLib/REQUIREMENTS.md`, MR1–MR31): thirty-one
+the ForPhysLib benchmark (`ForPhysLib/REQUIREMENTS.md`, MR1–MR32): thirty-two
 requirements stated design-neutrally against concrete physics — the same harmonic
 oscillator typed four honest ways, and a survey of PhysLib's twelve
 `API-map.yaml` files — where each MR is scored not only for PKC but for three rival
@@ -927,8 +958,8 @@ a stale cell. (This replaces the hand-maintained requirements-at-a-glance table.
 A _proved_ status is stronger than "a theorem of that name compiles", and two
 guarantees that `lake build` does not enforce on its own are carried by a dedicated
 validation suite (`PropertyKindCalculus.Tests`, one probe per requirement group),
-built by CI alongside the dimension and uncertainty layers so that _all sixteen_
-verifiable requirements — not only the nine whose theorems live in the Mathlib-free
+built by CI alongside the dimension and uncertainty layers so that _all twenty_
+verifiable requirements — not only those whose theorems live in the Mathlib-free
 core — are under regression on every change.
 
 First, each verifiable requirement's theorem has its _axiom profile_ pinned with
