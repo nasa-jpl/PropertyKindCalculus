@@ -1,7 +1,8 @@
 # MODULARITY.md — Metrological modularity: metrology modules as a library-level capability
 
-> Status: **M0, M1, M1b, M2 landed** (PKC v0.104.0–v0.106.2 + SMM validation,
-> 2026-09-05); M2b, M3–M6 open. Assessment baseline 2026-09-05.
+> Status: **M0, M1, M1b, M2, M3 (PKC + SMM), M4 landed** (PKC v0.104.0–v0.108.0 + SMM
+> validation, 2026-09-05); M2b, M5, M6 open (M3's SMW derivation rides M6's SMW pass).
+> Assessment baseline 2026-09-05.
 > Audience: PKC maintainers.
 > Scope: make "metrology module" a first-class, machine-checked construct in PKC —
 > an interface of kinds, input/output quantities and parameters, whose *behavior* is a
@@ -509,12 +510,28 @@ discharged. **Gate:** `#kind_ports` shows the signature port (pinned); recorded 
 generated megakernels stay byte-identical.
 
 ### M3 — Extensivity clause and the distribution license *(PKC core + SMM/SMW validation; R27)*
-**Status: OPEN.** The class vocabulary to reference has since grown (v0.103.0 `b70d977e`):
-`InterfaceLedger` — additivity purchased by a cancellation law, with `netTotal_union`
-pricing its absence — and the `ExtensiveAbout`/`Transports` tower, whose corrections are
-extensive one rung down. The clause should admit interface-licensed and
-parameter-conditioned classes alongside the four named below (a shard boundary is a cut,
-and `mutualTotal` is exactly what crossing it costs).
+**Status: DONE (PKC + SMM) — v0.107.0 `abf11ebb` + SMM `6f98755` (2026-09-05); the SMW
+derivation rides M6's SMW pass.** `Provenance.AggregationClass` carries the §13.5
+vocabulary plus the three extended classes the v0.103.0 note asked for
+(`countKeyed`/`extensiveAbout`/`interfaceLicensed`, each naming its sortal, transport,
+or cancellation law); `Contract.aggregations` is the clause, `checkAggregations` the
+hygiene (a class governs a produced port; a quasi-extensive tolerance is a `Quantity`
+at that port's kind; every carried name exists), rendered in every `#kind_contract`
+report and pinned by acceptance + refusal probes. The core theorem is
+`Recarving.distribution_license` — one re-carving of the batch axis, every
+declared-extensive output's total preserved — with the §13.5.2 price
+(`Recarving.leafSum_within`: both carvings' joins times the per-join tolerance) in the
+uncertainty layer. R27 moves to *proved*; the traceability headline reads all 20
+verifiable requirements proved. **SMM validation:** the four retrieval outputs at
+`volumetricWaterContent` are declared `intensive` (a fraction never sums over a pixel
+carving), the fit's cost plane `extensive` (the map-reduce license for sharding the
+objective — the θ outputs deliberately claim nothing). What the survey found against
+the plan's expectations: `block_average`/`merge_nanmean` are `@[carrierVocab]`
+array-tier kernels with no declared contracts *by design* (§4.5 — the prep stage
+boundary is consumer-declared in SMW), and no declared SMM boundary produces a count
+port, so the `countKeyed` class validates in PKC's probes and its SMM/SMW
+instantiation (the `n_valid` plane on `stage2FitOut`) lands with the SMW pass in M6.
+The all-NaN and exact-zero refusals re-pass untouched (`Tests/Uncertainty/MeanBound`).
 
 Output ports declare aggregation class, referencing `Extensivity`/`Recarving`/`Assembles`/
 `QuasiExtensive`. Core theorem: a module whose batched outputs are all declared extensive
@@ -530,6 +547,21 @@ holding it as convention.
 remain pinned refusals at the module level.
 
 ### M4 — Join the uncertainty budget to the boundary *(PKC; first `uncertainty/` ⇄ `Provenance` import)*
+**Status: DONE — v0.108.0 `5b0c4b7c` (2026-09-05).** `BoundaryBudget.lean` is the
+join: `PortBudget` attaches a term list to one produced port, and `#kind_budget`
+checks it against the assembled graph — the port produced and at the stated kind, the
+assembly acyclic (`Provenance.acyclic`, path-finiteness as the well-formedness of the
+sum), every term an influencing source (`Provenance.influencers`, the term list of an
+uncertainty budget by its own name). The combined line is the quadrature of the terms
+through `combinedQ`, computed rather than stored, and influencing sources the budget
+does not carry render as `unbudgeted source(s)` — what the model is not propagating
+is in the report. The gate is met by the Water-Cloud capstone: its boundary declared
+and agreeing, the rung-5 contributions attached (combined = rung 3's GUM `u_c`,
+guarded), the four calibration parameters honestly unbudgeted, the `k = 2` coverage
+tolerance declared as a `Quantity` at the output kind (exactly what a `boundedBy`
+edge names — the `coverageBound_stdUnc` sourcing), and the attachment rendered by the
+self-index's `port-budgets` table, pinned.
+
 `Influence.influencers` becomes the term list it names: a budget (`Uncertainty.Budget` /
 `BudgetDag`) attaches to a contract's output port over the propagation edges;
 `IncidenceQuiver`'s path-finiteness is the well-formedness of that sum. A `boundedBy`
@@ -570,8 +602,8 @@ existing compile-time `#guard` pins stay.
 | M1b | SCC-footprint audit (`#kind_footprint` per boundary) | PKC → SMM | **Done** — PKC v0.105.0 `1f6ed66d` + v0.106.2 `4b241baf`; SMM `kind_footprint_examples` pins all seven boundaries (2026-09-05) |
 | M2 | Nominal ports + conditional predicate + per-rung license clause | PKC → SMM | **Done** — v0.104.0 + SMM deciders/docstring/pinned port (2026-09-05); the nominal capability itself landed in SMM `935f692` (2026-08-24) |
 | M2b | Module-valued ports (function arguments at kind signatures) | PKC → SMM | Open |
-| M3 | Extensivity clause + distribution-license theorem | PKC → SMM/SMW | Open — class vocabulary grown (v0.103.0 `b70d977e`) |
-| M4 | Budget ⇄ boundary join | PKC | Open |
+| M3 | Extensivity clause + distribution-license theorem | PKC → SMM/SMW | **Done (PKC + SMM)** — v0.107.0 `abf11ebb` + SMM `6f98755` (2026-09-05); SMW derivation rides M6 |
+| M4 | Budget ⇄ boundary join | PKC | **Done** — v0.108.0 `5b0c4b7c` (2026-09-05) |
 | M5 | Relations across SMM's seven boundaries | SMM | Open — M1's `#kind_relations` gate now exists |
 | M6 | Sidecar generated + validated (data-plane drift check) | SMW + SMM | Open |
 
