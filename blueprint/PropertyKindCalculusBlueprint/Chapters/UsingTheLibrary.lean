@@ -23,18 +23,32 @@ open PropertyKindCalculusBlueprint.IndexTables
 The preceding chapters develop the calculus. This one is about *working in it*: the annotations an
 author writes, what each one changes, and the indexes the library generates from them.
 
-Three things cannot be inferred from a definition and so must be stated by its author.
-*Where the calculus is left* — the one place two kinds genuinely meet, the plumbing that must drop
-to the carrier, the point at which a kinded value becomes a naked one. *How a definition should
-read* — the notation, the constants, the intermediate bindings a rendered equation should keep.
-*What an external document says* — which requirement a theorem discharges, which clause of Dybkær or
-VIM a definition formalizes. Each is a family of annotations below.
+Three things cannot be inferred from a definition and so must be stated by its author. Each is a
+family of annotations, and each has its own section below.
+- *Where the calculus is left* — each site at which a value already carrying one kind is re-typed
+as another, the plumbing that must drop to the carrier, the point at which a kinded value becomes
+a naked one. The
+{ref "boundary-family"}[boundary family]: `@[kindCrossing]`, `@[kindIngest]`, `@[kindConst]`,
+`@[carrierVocab]` and `@[kindEmission]` each name the tier that sanctions a boundary site;
+`@[kindCarrier]` is what brings a downstream carrier under the audit at all, and
+`@[kindCounterexample]` exempts a deliberate falsification probe from the provenance sweeps.
+- *How a definition should read* — the notation, the constants, the intermediate bindings a rendered
+equation should keep. The {ref "rendering-family"}[rendering family]: `@[pkc_math]`, steered by
+`@[pkc_math_symbol]`, `@[pkc_math_config]` and `@[pkc_math_transparent]`.
+- *What an external document says* — which requirement a theorem discharges, which clause of
+Dybkær or VIM a definition formalizes. The {ref "annotations-metadata-family"}[metadata family]:
+`@[requirement]`, `@[dybkaer]` and `@[vim4]`.
 
-The distinction that matters most is between the first family and the other two. `@[kindCrossing]`
-is not documentation: `#kind_boundary_audit` fails the build on a boundary site that carries no
-tier, so the annotation *discharges an obligation* about the code, in the way a proof discharges one
-about a proposition. `@[pkc_math_symbol]` changes only how something reads. The *Enforcement*
-column below draws that line for every annotation at once.
+The distinction that matters most is between the first family and the other two, and it is a
+distinction about what happens when an annotation is *absent*. A boundary site that carries no tier
+is reported as a violation by `#kind_boundary_audit`, and that report is pinned, so omitting
+`@[kindCrossing]` fails the build: the annotation *discharges an obligation* about the code, in the
+way a proof discharges one about a proposition. Omitting a rendering or metadata annotation fails
+nothing — `@[pkc_math_symbol]` changes only how something reads. Read the *Enforcement* column below
+with that asymmetry in mind: it says `checked` for `@[pkc_math]` and `@[pkc_math_config]` too, but
+what those checks reject is a *misuse* of the annotation — an argument naming a binding the
+definition does not have, an attribute attached to something that is not a structure — never its
+absence.
 
 Everything in the *Generated indexes* section at the end is computed from the environment when this
 chapter is built, scoped to this package's own worked examples. No row is maintained by hand, so a
@@ -49,10 +63,27 @@ Each row links to the section that explains it.
 
 # The commands at a glance
 
-What the annotations *declare*, the commands *ask*. The column that matters is the last one: a
-command whose answer a probe file freezes with `#guard_msgs` stops being a report about the code and
-becomes part of the discipline the build enforces — a changed answer is a failed build. The three
-audits are pinned that way; the reading commands are not, because their job is to be run by hand.
+What the annotations *declare*, the commands *ask*. There are three forms of asking, and a
+command's *suffix* names which form it is — so the table below reads in pairs and triples, each
+base command followed by its suffixed siblings.
+
+* A bare command *reads*: the answer goes to the InfoView, for a person.
+* A reading frozen with `#guard_msgs` becomes a *record*. The whole answer is now reviewable in
+  the diff, and a changed answer is a failed build. This is the form most of the audits take.
+* A `_clean` command is the *gate that a record cannot be*, and the distinction is the reason it
+  exists as a separate command rather than as a stricter pin. A record can be *re-blessed*:
+  re-pinning a message whose summary reads `⚠ UNTAGGED — invariant 6/7 violation` leaves the build
+  green with the invariant dead, and nothing about the pin itself distinguishes that from a
+  legitimate update. The mechanism that makes an inventory reviewable is exactly the mechanism that
+  lets the invariant be signed away. So a `_clean` command carries no message and pins nothing: it
+  throws. There is nothing there to re-bless.
+
+`_decide` is the fourth suffix and a different axis: the same check run in the *kernel*, leaving a
+theorem behind rather than a message. `#kind_contract_decide` does not print that a boundary agrees
+— it adds `c.kindContractOk` and lets `#print axioms` answer for it.
+
+Reading the table, then: the *Pinned* column says what freezing a command's answer buys, and reads
+`—` for the commands whose job is to be run by hand.
 
 :::pkc_index "commands"
 :::
@@ -79,10 +110,20 @@ registered carrier.
 tag := "annotation-kindCrossing"
 %%%
 
-The one carrier-level place two kinds genuinely meet. The kinds are stated in the signature — on
-the argument side as much as the result: `add` rejects a `@[kindCrossing]` declaration none of
-whose arguments carries a registered carrier, because a crossing goes FROM an already-kinded
-value, and a declaration with no kinded argument has nothing to cross from. The mint or erasure
+Two kinds can meet in two ways, and only one of them is a crossing. Under a *law* — an authored
+edge, `ProductKind k₁ k₂ k` or a `KindMul` entry — the calculus derives a third kind from two, and
+the use site needs no annotation at all, because the edge already licenses it. Those are the
+{ref "edge-audits"}[edge audits]' subject, not this family's.
+
+A *crossing* is the case no law covers: a value already carrying one kind is re-typed as another on
+the author's signature rather than on a derivation. An edge is a rule the calculus applies; a
+crossing is a place the calculus is left. That asymmetry is why one is inferred at every use and the
+other must be declared once and counted.
+
+Both kinds are stated in the signature — on the argument side as much as the result: `add` rejects a
+`@[kindCrossing]` declaration none of whose arguments carries a registered carrier, because a
+crossing goes FROM an already-kinded value, and a declaration with no kinded argument has nothing
+to cross from. The mint or erasure
 inside is the crossing's mechanism, reviewed once.
 
 ```
@@ -113,8 +154,22 @@ The last line is the point. An untagged mint is reported as a violation, and bec
 pinned with `#guard_msgs` in an indexed probe, a *new* interior boundary fails the build — the same
 discipline by which a pinned axiom profile catches a proof silently relocated behind a `sorry`.
 
+*And the two gates beside it.* `#kind_boundary_clean ns…` states the same invariant without a
+message: it throws when any boundary-active declaration in scope carries no tier. The audit says
+what the boundary *is*; this says every one of its sites has been adjudicated, and re-blessing the
+first cannot silence the second because there is nothing here to re-bless. `#kind_mint_ratchet ns…`
+tightens the granularity. A tier tag sanctions a whole *declaration*, so a `@[kindCrossing]` body
+can hold any number of interior `⟨…⟩` under one sanction; the ratchet requires that at the crossing
+and carrier-vocabulary tiers every mint be a licensed derivation or a `Quantity.attest` whose reason
+is harvested — the raw column stays empty, so a new anonymous mint fails the build instead of
+joining a list nobody re-reads. `@[kindConst]` and `@[kindIngest]` keep raw mints legal at the
+declaration granularity, because there the declaration's own evidence is the sanction.
+
 *In the generated indexes.* Every tagged site appears in the kind-crossing table with the kinds it
-mints, taken from the audit's own walk so the two cannot disagree.
+mints, taken from the audit's own walk so the two cannot disagree. `#kind_crossings [ns…]` is the
+same registry from the InfoView — every sanctioned site with the first line of its docstring,
+grouped by tier. It reads the *registry* where the audit walks the *environment*, which is why the
+audit can report a site the registry does not contain: that site is the violation.
 
 ## `@[kindIngest]` — a checked ingest mint
 %%%
@@ -133,6 +188,29 @@ declaration's evidence, stated once, rather than presupposed.
 @[kindIngest]
 def probeIngest (x : Float) : Quantity outputKind Float := ⟨x⟩
 ```
+
+## `@[kindConst]` — a constant mint
+%%%
+tag := "annotation-kindConst"
+%%%
+
+The third mint tier, and the one a nullary crossing candidate turns out to be. Where
+`@[kindCrossing]` goes *from* an already-kinded value and `@[kindIngest]` admits external data
+through a check, `@[kindConst]` mints from neither: the value is adjudicated *data* — a cited
+coefficient table, a configuration bound or box, a seed, a threshold, or a structural constant of
+the model such as a zero accumulator or the vacuum index `1`.
+
+```
+/-- The probe's adjudicated threshold, cited to the table it is read from. -/
+@[kindConst]
+def probeThreshold : Quantity outputKind Float := ⟨0.02⟩
+```
+
+The mint's value is data rather than dataflow, so its provenance is the declaration's docstring
+rather than its signature — there is no argument to trace it to. That is why the tier exists as its
+own tag instead of collapsing into `@[kindCrossing]`: a declaration with no kinded argument is
+*definitionally* this tier, having nothing to cross from, and the crossing attribute's rejection
+message names it for exactly that reason.
 
 ## `@[carrierVocab]` — a carrier-vocabulary exception
 %%%
@@ -200,7 +278,8 @@ from the validation probe that pins the audit's behaviour.
 tag := "edge-audits"
 %%%
 
-The boundary audit asks where the calculus is *left*. These two ask what it *rests on*.
+The boundary audit asks where the calculus is *left*. These ask what it *rests on* — the laws
+under which two kinds may meet without a crossing.
 
 A kind-level law — `ProductKind k₁ k₂ k`, a `KindMul` table entry, a `PowerKind` — is authored, not
 derived. The calculus signs any ratio-scale triple its author writes, exactly as a proof assistant
@@ -241,7 +320,151 @@ is most of a soil-moisture model. An `InteractionAlgebra` is *curated*: it says 
 physically sanctioned, which is the thing dimensional analysis discards and no walk can recover.
 Coverage is checked; curation stays authored.
 
+`#kind_dimensional_clean ns…` is the coverage report's gate, and stands to it exactly as
+`#kind_boundary_clean` stands to the boundary audit: no message, nothing pinned, it throws while any
+edge in scope is undimensioned, conflicting or incoherent. `[parametric]` does not fire it. It has
+one false alarm, and the error message says so: both the edges and the `DimensionedKind`
+declarations are harvested from the environment, so a module that reaches an edge but not the module
+declaring its kinds' dimensions reports that edge undimensioned while the codebase is coherent. That
+is the same import-closure sensitivity the generated indexes have, pointing the other way — an
+under-imported *report* silently misses rows, an under-imported *gate* invents violations. The
+asymmetry is the safe one, because a false alarm is loud and a silent omission is not.
+
+# What one declaration wires — the graph and incidence commands
+%%%
+tag := "graph-incidence"
+%%%
+
+The audits so far sweep *namespaces*. These read a single declaration, or the kind vocabulary as a
+whole, and they are what an author runs while writing rather than what a probe pins — though most of
+them pin, because a wiring that changes silently is the thing worth catching.
+
+*What a signature states, and what a body does.* `#kind_ports d` prints the ports the declaration's
+kind-typed signature states — inputs, configuration reads, outputs, each with its kind — and then
+the signature's *unkinded* positions, which is the half a reader forgets to ask for.
+`#kind_occurrences d` prints the other side: every authored license the body discharges inline,
+each consuming application's edge with the operands that met there, in body order and with
+multiplicity. `#kind_graph d` puts the two together as the constructed step graph and evaluates its
+well-formedness, and `#kind_graph_decide d` proves that verdict in the kernel, leaving
+`d.kindGraphWf` behind. `#kind_assembly` and `#kind_assembly_decide` are the same pair over a *list*
+of declarations, assembled into one multi-step graph — which is what a boundary spanning several
+definitions needs.
+
+*What the kind vocabulary looks like as a graph.* `#kind_scc [ns…]` reports the kinds in scope,
+their licensed-derivation edges, and — the finding it exists for — every *inter-derivability
+cluster*: a set of two or more kinds each manufacturable from the others by licensed steps. Inside
+such a cluster the kind algebra alone cannot refuse a substitution, so a cluster is a real weakening
+of the discipline and one worth knowing about. `#kind_scc_clean` is its gate, and it is declarative
+rather than absolute: every cluster must be declared as a parenthesized group at its exact size, so
+a new witness registration that merges two kind *roles* fails the build at the vocabulary level,
+before any value walks the new cycle. `#kind_scc_d2` writes the same findings as D2 diagram sources
+for rendering, and `#kind_footprint c ns…` asks the question a module owner asks: which of those
+clusters this boundary's own kinds land in, and therefore where the module's guarantee actually
+comes from.
+
+# What a boundary claims — the provenance sweeps
+%%%
+tag := "provenance-sweeps"
+%%%
+
+The boundary audit asks where the calculus is left; the edge audits ask what it rests on. These ask
+whether a declared boundary is *the one its members compute*.
+
+A `Provenance.Contract` is that declaration: the ports a boundary consumes, the exits it produces,
+and the member steps that realize it. It can disagree with itself — an input the members read and
+the contract never declared, a clause naming a supplier that answers no port — and the disagreement
+is not visible in any type, because a contract is data about a computation rather than a constraint
+on it.
+
+*Enrollment is by type, which is the design.* Every constant whose type is headed by
+`Provenance.Contract` under the swept namespaces is a subject, so declaring a boundary enrolls it.
+There is no per-declaration command to remember and no registration to forget: a boundary cannot be
+declared and left out of the sweep, which is the property a per-name command
+(`#kind_contract`, one contract) cannot offer however diligently it is used.
+
+`#kind_contracts ns…` re-checks every subject exactly as `#kind_contract` checks one — the
+decider, aggregation and supplier clauses, then the declared boundary against the one the members
+compute — and renders one line per contract in declaration-name order, as a single `info` message
+suitable for `#guard_msgs` pinning. Namespaces elided, this is the validation probe's own pinned
+output:
+
+```
+kind contracts — 4 contract(s), 1 violated, 1 exempted
+  ✗ …Bad.forgottenInput: 'sweep probe forward, x forgotten' — undeclared input fwd/x : aK
+  …Good.fwdBoundary: 'sweep probe forward' — 2 ports, 0 exits, 1 member step(s)
+  …Good.invBoundary: 'sweep probe retrieval' — 2 ports, 0 exits, 1 member step(s)
+  ⊘ …Exempt.keptCounterexample: counterexample, exempted
+```
+
+Three things in that header rather than one. Because it counts the *subjects* as well as the
+violations, a pin fails on a boundary that vanished as readily as on one that broke; because it
+counts the exemptions, exemption creep is a failed pin too. And a scope with no contracts pins
+`0 contract(s)` rather than passing invisibly — the distinction between *checked and clean* and
+*nothing was checked*, which an empty report cannot make.
+
+`#kind_contracts_decide ns…` is the same sweep as a hard gate. A violation is an error rather than a
+`✗` row, so no reading of the output can state one, and each passing contract gains the kernel
+theorem `c.kindContractOk`. Sweeping again re-proves nothing: a standing receipt reports as
+`already stands`. The two tiers answer different questions — whether the boundaries in scope agree,
+and whether the kernel has been made to say so.
+
+*The same three forms, per name.* `#kind_contract c` and `#kind_contract_decide c` are the sweep's
+singular siblings, and what they add over `#kind_assembly` is the comparison: the assembly says the
+wiring holds together, the contract says the members are the ones the declared interface belongs to.
+
+*And the edges between boundaries.* A `Provenance.Relation` states what one boundary claims of
+another — an inversion, a bound. `#kind_relation r` checks one: a sorry-free witness, the conclusion
+in the claimed shape, and the tolerance, hypothesis and license clauses each answered for by name.
+Every failure throws, so that command is report and gate at once. `#kind_relations ns…` is its
+by-type sweep, with the same `✗`/`⊘` rows and the same counted header.
+`#kind_discharges c d` asks the tier question instead — what a deploying contract did with each
+parameter the deployed one handed it — and `#kind_discharges_decide` proves the answer.
+
+*What is not kinded, and what is not propagated.* Two commands report *absences*, which is the
+thing a checker cannot notice on its own. `#kind_unkinded c` prints the naked positions and unkinded
+flows in a contract's scope; pinned, it fails when a silence appears *and* when one is fixed,
+which is what keeps the ledger honest about which direction it moved — and `#kind_unkinded_clean` is
+the gate for a scope that has cleared them. `#kind_budget b c` checks an uncertainty budget's
+attachment to a boundary and renders the influencing sources the budget *omits* as `unbudgeted
+source(s)`, so what the model is not propagating appears in the report rather than being absent from
+it. `#kind_contract_propagation` and `#kind_output_ledger` are the reading aids beside them: which
+source ports reach which produced ports, and the per-output assumption ledger.
+
+## `@[kindCounterexample]` — a deliberate misdeclaration, kept
+%%%
+tag := "annotation-kindCounterexample"
+%%%
+
+A sweep that enrolls by type has one cost: a *falsification probe* — a contract written wrong on
+purpose, kept because its checker refuses it — enrolls too, and would fail the gate it exists to
+demonstrate. Deleting it would leave the checker's refusal untested; leaving it untagged would make
+the gate unpinnable.
+
+```
+/-- A deliberately misdeclared boundary, kept because the sweep must refuse it. -/
+@[kindCounterexample]
+def keptCounterexample : Provenance.Contract := …
+```
+
+A tagged subject renders as a `⊘` row and is *not* checked, so the probe stands beside the gate it
+exercises. The exemption is not a way out of the discipline, because it is counted: the header's
+exemption count is part of the pin, so a contract quietly exempted to make a build pass changes the
+pinned output. The mark reaches the generated tables on the same terms — a tagged contract is not a
+coverage subject, and a tagged relation is not a witness, since a deliberate misdeclaration must not
+discharge a real boundary's edge obligation.
+
+The attribute checks what it is attached to, and says why:
+
+```
+`@[kindCounterexample]` expects a 'Provenance.Contract' or a 'Provenance.Relation' — '…stray' is
+neither. The mark exempts a declaration from the by-type provenance sweeps, and only those two
+types are swept.
+```
+
 # How a definition reads — the rendering family
+%%%
+tag := "rendering-family"
+%%%
 
 `@[pkc_math]` renders a `Quantity` definition to LaTeX and writes it into that declaration's
 *own docstring*. Nothing else in the toolchain has to know: doc-gen4 typesets the docstring with MathJax
@@ -462,6 +685,11 @@ in preference to its first line, which ends wherever a hard wrap fell. A paragra
 the column is cut, and the cut is made on the parsed inline runs rather than on characters, so a
 code span is dropped whole rather than severed and an emphasized phrase keeps its delimiters. No
 docstring length can produce a cell that fails to parse.
+
+The third writes rather than prints. `#pkc_index_page "…" […] ns…` renders the named indexes into
+the *elaborating module's own module docstring*, so doc-gen4 publishes them as that module's page —
+the same route `@[pkc_math]` takes to reach two surfaces through one docstring, applied to a table
+instead of an equation.
 
 What a length can still produce is a cell that says nothing: an ellipsis three words in, where a
 summary should be. `#pkc_summary_overflow` reports the quoted docstrings that will do that, widest

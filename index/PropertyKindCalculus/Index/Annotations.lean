@@ -76,9 +76,14 @@ Grouped as the chapter presents them: the boundary family (checked), the renderi
 def catalogue : Array Annotation := #[
   -- The boundary family — invariants 4, 6 and 7.
   { syntax_ := "@[kindCrossing]", attachesTo := "a definition"
-    effect := "Declares the one carrier-level place two kinds genuinely meet. The kinds are stated \
-      in the signature, on the argument side as much as the result; the mint or erasure inside is \
-      the crossing's mechanism, reviewed once."
+    effect := "Two kinds can meet in two ways. Under a *law* — an authored edge such as \
+      `ProductKind k₁ k₂ k` or a `KindMul` entry — the calculus derives a third kind from two, and \
+      the use site needs no annotation, because the edge already licenses it. A *crossing* is the \
+      case no law covers: a value already carrying one kind is re-typed as another on the author's \
+      signature rather than on a derivation. An edge is a rule the calculus applies; a crossing is \
+      a place the calculus is left, which is why it must be declared and why the audit counts it. \
+      Both kinds are stated in the signature, on the argument side as much as the result; the mint \
+      or erasure inside is the crossing's mechanism, reviewed once."
     enforcement := .checked "rejected at elaboration if no argument carries a registered carrier; \
       #kind_boundary_audit also reports an untagged boundary site as a violation"
     table := "crossings"
@@ -95,7 +100,7 @@ def catalogue : Array Annotation := #[
       cited table, a configuration bound, a seed, a threshold, or a structural constant."
     enforcement := .checked "#kind_boundary_audit reports an untagged boundary site as a violation"
     table := "crossings"
-    section_ := "" },
+    section_ := "annotation-kindConst" },
   { syntax_ := "@[carrierVocab]", attachesTo := "a definition"
     effect := "Registers kind-preserving representation plumbing — an operation the kind algebra \
       does not name (a branchless min, a map over a coefficient table) that must drop to the carrier."
@@ -123,7 +128,7 @@ def catalogue : Array Annotation := #[
     enforcement := .checked "rejected at elaboration if the declaration is not a \
       Provenance.Contract or Provenance.Relation"
     table := ""
-    section_ := "" },
+    section_ := "annotation-kindCounterexample" },
   -- The rendering family — RENDERING.md.
   { syntax_ := "@[pkc_math]", attachesTo := "a Quantity-valued definition"
     effect := "Renders the definition as typeset LaTeX into its own docstring, so doc-gen4 and the \
@@ -210,9 +215,18 @@ structure Command where
   section_ : String := ""
 deriving Repr, Inhabited
 
-/-- Every command PropertyKindCalculus defines, grouped as the chapter presents them: the boundary
-audit, the edge audits, and the index-reading commands. -/
+/-- Every command PropertyKindCalculus defines, ordered so that each base command is followed by
+its suffixed forms, and grouped as the chapter presents them: the boundary audit, the edge audits,
+the kind graph, the per-declaration incidence queries, the provenance layer, and the index readers.
+
+Three forms recur, and the suffix names which one a command is. A bare command *reads* — the answer
+goes to the InfoView. A `#guard_msgs`-pinned reading becomes a *record*: the whole answer is
+reviewable in the diff, and a changed answer fails the build. A `_clean` command is the *gate* that
+a record cannot be: it carries no message and pins nothing, it throws, so there is nothing to
+re-bless. `_decide` is the third form — the same check run in the kernel, leaving a theorem behind
+rather than a message. -/
 def commands : Array Command := #[
+  -- The boundary audit — the record, then the two gates a record cannot be.
   { syntax_ := "#kind_boundary_audit ns …", library := "PropertyKindCalculus"
     effect := "Walks every compute definition in the namespaces and reports each that mints or \
       erases a registered carrier, with the kinds it mints and the tier that sanctions it; an \
@@ -220,11 +234,26 @@ def commands : Array Command := #[
     gate := "a new anonymous interior mint fails the build, the way a new axiom fails a pinned \
       axiom profile"
     section_ := "boundary-family" },
+  { syntax_ := "#kind_boundary_clean ns …", library := "PropertyKindCalculus"
+    effect := "The invariant rather than the inventory: throws when any boundary-active \
+      declaration in scope carries no tier attribute. It carries no message and pins nothing, so \
+      re-blessing the audit's pin cannot silence it."
+    gate := "the command is the gate; there is no message to re-bless"
+    section_ := "boundary-family" },
+  { syntax_ := "#kind_mint_ratchet ns …", library := "PropertyKindCalculus"
+    effect := "Throws on a raw carrier mint inside a @[kindCrossing] or @[carrierVocab] body, \
+      where every mint must instead be a licensed derivation or a Quantity.attest whose reason is \
+      harvested. @[kindConst], @[kindIngest] and @[kindEmission] keep raw mints legal at the \
+      declaration granularity."
+    gate := "the command is the gate; at the ratcheted tiers a new anonymous mint fails the build \
+      instead of joining a list nobody re-reads"
+    section_ := "boundary-family" },
   { syntax_ := "#kind_crossings [ns …]", library := "PropertyKindCalculus"
     effect := "Enumerates the tagged boundary registry — every sanctioned site with the first line \
       of its docstring, grouped by tier."
     gate := ""
     section_ := "boundary-family" },
+  -- The edge audits — the coverage record, then its gate.
   { syntax_ := "#kind_edges k", library := "PropertyKindCalculus"
     effect := "Prints every authored kind-algebra edge mentioning the kind `k` — named witness \
       theorems, call-site witnesses lifted out of definitions, and operator-table registrations."
@@ -237,19 +266,158 @@ def commands : Array Command := #[
     gate := "an edge over a kind carrying no dimension, or one whose dimensions do not balance, \
       fails the build"
     section_ := "edge-audits" },
+  { syntax_ := "#kind_dimensional_clean ns …", library := "Dimension"
+    effect := "The coverage invariant rather than its record: throws while any edge in scope is \
+      undimensioned, conflicting or incoherent. Parametric generic vocabulary is not a violation. \
+      Its one false alarm is an under-imported closure, which the error says."
+    gate := "the command is the gate; there is no message to re-bless"
+    section_ := "edge-audits" },
+  -- The kind graph — the component report, its gate, and its diagram twin.
+  { syntax_ := "#kind_scc [ns …]", library := "Graph"
+    effect := "The kind-level component report: the authored kinds in scope, their \
+      licensed-derivation edge count, every inter-derivability cluster of two or more kinds with \
+      the edges that wire it, and whether the kind digraph is acyclic."
+    gate := "the reviewed enumeration to pin beside #kind_edges — a new cluster is a visible change"
+    section_ := "graph-incidence" },
+  { syntax_ := "#kind_scc_clean [ns …] [(k …) …]", library := "Graph"
+    effect := "Inter-derivability as a gate: every cluster of two or more mutually derivable kinds \
+      must be declared as a parenthesized group at the same size; an undeclared cluster throws \
+      with its wiring printed."
+    gate := "a new witness registration that merges two kind roles fails the build at the \
+      vocabulary level, before any value walks the new cycle"
+    section_ := "graph-incidence" },
+  { syntax_ := "#kind_scc_d2 \"dir\" [ns …]", library := "Graph"
+    effect := "Writes the D2 diagram sources of the component findings into a directory — the \
+      condensation and one file per inter-derivability cluster. The script-facing twin of \
+      #kind_scc, run from a `lake env lean` driver."
+    gate := ""
+    section_ := "graph-incidence" },
+  { syntax_ := "#kind_footprint c ns…", library := "Graph"
+    effect := "The SCC footprint of a declared boundary against the kind graph: the component \
+      partition of its port and interior kinds, the same-kind port groups, the review-strength \
+      sites, and the verdict naming where the module's guarantee comes from."
+    gate := "the boundary's exposure to inter-derivability is fixed, so a widened footprint is a \
+      visible change"
+    section_ := "graph-incidence" },
+  -- Per-declaration incidence — what one definition's signature and body state.
+  { syntax_ := "#kind_ports d", library := "PropertyKindCalculus"
+    effect := "Prints every port a declaration's kind-typed signature states — inputs, \
+      configuration reads, outputs, each with its stated kind — followed by the signature's \
+      unkinded positions."
+    gate := "a port that changes kind, or an unkinded position that appears, fails the pin"
+    section_ := "graph-incidence" },
+  { syntax_ := "#kind_occurrences d", library := "PropertyKindCalculus"
+    effect := "Prints every authored license discharged inline in a declaration's value — each \
+      consuming application's edge with the operand quantities that met there, in body order, \
+      with multiplicity."
+    gate := "the licenses a body actually discharges are fixed, so a new one is a visible change"
+    section_ := "graph-incidence" },
+  { syntax_ := "#kind_graph d", library := "PropertyKindCalculus"
+    effect := "Prints the constructed step graph — ports, introduction events, wired occurrences \
+      with their assumed/partial markers, exits — and the evaluated well-formedness verdict."
+    gate := "the wiring is fixed, so a rewired body is a visible change"
+    section_ := "graph-incidence" },
+  { syntax_ := "#kind_graph_decide d", library := "PropertyKindCalculus"
+    effect := "Reflects the constructed graph into a term and adds the theorem `d.kindGraphWf`, \
+      proved by `decide` — kernel reduction of the structural checker on the harvested object. \
+      Errors out before troubling the kernel when the graph is not well-formed."
+    gate := "the command is the gate; the pin freezes the kernel receipt"
+    section_ := "graph-incidence" },
+  { syntax_ := "#kind_assembly [d₁, d₂, …]", library := "PropertyKindCalculus"
+    effect := "Assembles the listed declarations into one multi-step graph and prints it — each \
+      level with its inclusion mode, the union graph, the citation relation, and the evaluated \
+      verdict."
+    gate := "the assembled wiring is fixed across the whole set, not one declaration at a time"
+    section_ := "graph-incidence" },
+  { syntax_ := "#kind_assembly_decide [d₁, d₂, …]", library := "PropertyKindCalculus"
+    effect := "Reflects the assembled union graph into a term and adds the theorem \
+      `d₁.kindAssemblyWf`, proved by `decide`. Errors out before troubling the kernel when the \
+      assembly is not well-formed."
+    gate := "the command is the gate; the pin freezes the kernel receipt"
+    section_ := "graph-incidence" },
+  -- The provenance layer — one contract, then the by-type sweep; the same for edges.
+  { syntax_ := "#kind_contract c", library := "PropertyKindCalculus"
+    effect := "Assembles the members a contract declares and compares that assembly's boundary \
+      with the boundary the contract declares — parameters and decided conditional ports, then \
+      what each side has and the other does not, then the verdict. Where #kind_assembly says the \
+      wiring holds together, this says the members are the ones the declared interface belongs to."
+    gate := "a boundary that stops being the one its members compute fails the pin"
+    section_ := "provenance-sweeps" },
+  { syntax_ := "#kind_contract_decide c", library := "PropertyKindCalculus"
+    effect := "Adds the theorem `c.kindContractOk : c.Agrees (graph)`, proved by `decide` — kernel \
+      reduction of the boundary comparison against the author's own contract definition, which the \
+      proposition names rather than copies. Errors out when the boundaries disagree."
+    gate := "the command is the gate; the pin freezes the kernel receipt"
+    section_ := "provenance-sweeps" },
   { syntax_ := "#kind_contracts ns …", library := "PropertyKindCalculus"
     effect := "Surveys every `Provenance.Contract` declared under the namespaces — membership is \
       by type, so declaring a boundary enrolls it — re-checking each as `#kind_contract` does, \
       with violations as ✗ rows and `@[kindCounterexample]` declarations as exempted ⊘ rows."
     gate := "a boundary declared anywhere in scope and inconsistent with what its members \
       compute fails the pin, including one nobody remembered to check by name"
-    section_ := "" },
+    section_ := "provenance-sweeps" },
   { syntax_ := "#kind_contracts_decide ns …", library := "PropertyKindCalculus"
     effect := "The same sweep as a hard gate with kernel receipts: any violation is an error, \
       and each passing contract gains the kernel theorem `c.kindContractOk` unless it already \
       stands."
     gate := "the command is the gate; the pin freezes the kernel receipts"
-    section_ := "" },
+    section_ := "provenance-sweeps" },
+  { syntax_ := "#kind_relation r", library := "PropertyKindCalculus"
+    effect := "Checks the theorem edge a `Provenance.Relation` declares between two contracts — a \
+      sorry-free witness, the conclusion in the claimed shape, the tolerance, hypothesis and \
+      license clauses each answered for by name — and prints it."
+    gate := "every failure throws, so the command is the report and the gate at once — there is no \
+      reading of it that states a violation"
+    section_ := "provenance-sweeps" },
+  { syntax_ := "#kind_relations ns …", library := "PropertyKindCalculus"
+    effect := "The by-type edge survey: every `Provenance.Relation` under the namespaces \
+      re-checked as `#kind_relation` checks one, failures as ✗ rows and counterexamples as ⊘ rows, \
+      the header counting edges, violations and exemptions."
+    gate := "a newly violated edge fails the pin, and so does a vanished one or an exemption \
+      nobody declared"
+    section_ := "provenance-sweeps" },
+  { syntax_ := "#kind_discharges c d", library := "PropertyKindCalculus"
+    effect := "Compares two contracts with no graph and no harvest: what the deploying contract \
+      did with each parameter the deployed contract handed it, and whether anything was left \
+      unanswered."
+    gate := "a parameter that stops being answered is a visible change"
+    section_ := "provenance-sweeps" },
+  { syntax_ := "#kind_discharges_decide c d", library := "PropertyKindCalculus"
+    effect := "Adds the theorem `c.kindDischarges.d : c.Discharges d`, proved by `decide` — kernel \
+      reduction of the tier relation on the two authors' own contract definitions. Errors out when \
+      the tiers do not stack, printing what is unanswered."
+    gate := "the command is the gate; the pin freezes the kernel receipt"
+    section_ := "provenance-sweeps" },
+  { syntax_ := "#kind_unkinded c", library := "PropertyKindCalculus"
+    effect := "Prints the unkinded ledger of the scope a contract declares: the count, then one \
+      line per naked position and per unkinded flow, deduplicated by member."
+    gate := "the pin fails when a silence appears AND when one is fixed, which is what keeps the \
+      ledger honest about which direction it moved"
+    section_ := "provenance-sweeps" },
+  { syntax_ := "#kind_unkinded_clean c", library := "PropertyKindCalculus"
+    effect := "The ledger as a gate: errors unless the scope's ledger is empty. Separate from the \
+      pin above for the reason every violation-capable pin needs a separate gate — pinning a \
+      violation is how it stops being noticed."
+    gate := "the command is the gate; there is no message to re-bless"
+    section_ := "provenance-sweeps" },
+  { syntax_ := "#kind_contract_propagation c", library := "PropertyKindCalculus"
+    effect := "The propagation relation of a contract over the assembly its members compute: which \
+      source ports reach which produced ports."
+    gate := ""
+    section_ := "provenance-sweeps" },
+  { syntax_ := "#kind_output_ledger c", library := "PropertyKindCalculus"
+    effect := "The per-output assumption ledger and trust decomposition of every produced port of \
+      a contract, over the assembly its members compute."
+    gate := ""
+    section_ := "provenance-sweeps" },
+  { syntax_ := "#kind_budget b c", library := "Uncertainty"
+    effect := "Checks an uncertainty budget's attachment to a boundary and renders it: the port \
+      must be a produced port at the budget's kind, the assembly acyclic, every term naming a \
+      source that influences the port — and the influencing sources the budget omits render as \
+      `unbudgeted source(s)`, so what is not propagated is in the report rather than absent."
+    gate := "every violation throws, so the command is the report and the gate at once"
+    section_ := "provenance-sweeps" },
+  -- The index readers — no gate but the first, whose job is a derived table that stops matching.
   { syntax_ := "#pkc_index \"…\" [ns …]", library := "Index"
     effect := "Prints one generated index as plain text — the same table a document renders, \
       available without building a document."

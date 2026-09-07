@@ -16,9 +16,11 @@ tagged with the tier that sanctions it, or it is a violation the build fails on.
 
 ## The sanctioned-site registry — five tier attributes
 
-  * `@[kindCrossing]` — an authored *crossing*: a named `def` whose body is the one
-    carrier-level place two kinds genuinely meet (`nkToEps`, `clayPctOfMassFraction`,
-    `fresnelGeomOfAngleQ`, the dedicated ↔ generic re-typings). The kinds are stated in its
+  * `@[kindCrossing]` — an authored *crossing*: a named `def` whose body is a carrier-level site
+    at which a value already carrying one kind is re-typed as another (`nkToEps`,
+    `clayPctOfMassFraction`, `fresnelGeomOfAngleQ`, the dedicated ↔ generic re-typings). Where an
+    authored *edge* (`ProductKind`, a `KindMul` entry) lets the calculus derive a kind from two
+    others under a law, a crossing is the case no law covers. The kinds are stated in its
     signature, on the ARGUMENT side as much as the result — enforced, not just documented:
     `add` rejects a `@[kindCrossing]` declaration none of whose arguments carries a registered
     carrier, because a crossing by definition goes FROM an already-kinded value, and a
@@ -400,7 +402,8 @@ syntax (name := kindEmissionAttr) "kindEmission" : attr
 
 initialize registerBuiltinAttribute {
   name  := `kindCrossingAttr
-  descr := "An authored kind crossing — the one carrier-level place two kinds meet (invariant 7)."
+  descr := "An authored kind crossing — a carrier-level re-typing of one kind as another, \
+    where no kind-algebra edge licenses the step (invariant 7)."
   add   := fun decl _stx _kind => do
     let env ← getEnv
     let some info := env.find? decl
