@@ -25,9 +25,21 @@ def versoMarginNoteCounterFix : String := r##"
 }
 "##
 
+/--
+`extraCss` is set **directly on the `HtmlConfig`**, not through a nested
+`toHtmlAssets := { … }`. The two are not interchangeable. `HtmlConfig extends HtmlAssets`
+and overrides one inherited default — `features := .all` (Html/Config.lean), where
+`HtmlAssets`'s own default is `.empty`. Supplying the parent record wholesale supplies
+`features` along with it, so the child's override never applies and the document is built
+with *no* `HtmlFeature`s: `.KaTeX` among them. Nothing fails. The pages still emit
+`<code class="bp_math inline">…</code>` for every `$`…`` and the KaTeX render loop for them,
+but `katex/katex.js` is never written and never linked, so the loop dies on
+`Uncaught ReferenceError: katex is not defined` at its first node and all 553 math elements
+stand as raw TeX. Naming `extraCss` here keeps the `HtmlConfig` defaults intact.
+-/
 def main (args : List String) : IO UInt32 :=
   Informal.PreviewManifest.blueprintMainWithPreviewData
     (%doc PropertyKindCalculusBlueprint.Blueprint)
     args
     (extensionImpls := by exact extension_impls%)
-    (config := { toHtmlConfig := { toHtmlAssets := { extraCss := [versoMarginNoteCounterFix] } } })
+    (config := { toHtmlConfig := { extraCss := [versoMarginNoteCounterFix] } })
