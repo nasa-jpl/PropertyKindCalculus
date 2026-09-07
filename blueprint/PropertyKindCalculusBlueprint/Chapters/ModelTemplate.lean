@@ -10,16 +10,16 @@ open PropertyKindCalculusBlueprint.RubricTemplate
 
 #doc (Manual) "Applying the calculus to a domain: the model template" =>
 
-The preceding chapters say what the calculus is and what it proves. This one is about the
-document on the other side of it: what a *domain model* built on the calculus owes its
-reader.
+The preceding chapters say what the calculus is and what it proves. This one is guidance
+for the domain expert who builds on them: what a *domain model* owes to its reader, and
+how a document can report, on every build, which of those obligations it has discharged.
 
 The obligation is not obvious, and getting it wrong is cheap. A model that declares its
 kinds, proves its algebra and ships green nodes can still leave a reader unable to answer
 the questions that decide whether the model may be used — what it is a model *of*, which
 of its quantities the dimension layer cannot separate, at which carrier each theorem
-holds, and which of its numbers were proved rather than measured. Those questions do not
-have a house style; they have answers, and a document either contains them or it does not.
+holds, and which of its numbers were proved rather than measured. None of those is a
+matter of taste: each has an answer, and a document either contains it or it does not.
 The template below is that list of questions.
 
 # What a template is, and what it is not
@@ -29,8 +29,9 @@ discharge the same rubric may look nothing alike: one may answer M2 in a paragra
 introduction and another in the closing page of a chapter, and both conform. What the
 template fixes is the question and the *kind of evidence* that settles it.
 
-That second half is the part worth stating carefully, because it is where a checklist
-usually goes soft. Four kinds of evidence appear, and they are not interchangeable:
+Of those two, it is the evidence that is worth stating carefully: a checklist that names
+its questions but not what settles them can be checked off by asserting the answers. Four
+kinds of evidence appear, and they are not interchangeable:
 
 - *Exposition.* A tagged section of the document states the answer. There is nothing to
   prove — the obligation is that a reader can find it — so the evidence is a
@@ -42,14 +43,15 @@ usually goes soft. Four kinds of evidence appear, and they are not interchangeab
   evidence required is not the table but the declaration that produces or gates it —
   which only the generated one has.
 - *Checked.* A kernel-checked declaration: a theorem edge, a proof, an audit that fails
-  the build.
-- *Measured.* A reported measurement. This is a weaker thing than a proof and the
-  template keeps it weaker on purpose: a measured result is discharged by naming the knob
-  it was swept over, the denominator it is relative to, and the statistic it reports.
+  the build when the property it checks does not hold.
+- *Measured.* A reported measurement. This is weaker evidence than a proof and the
+  template keeps it weaker on purpose: a measured result is discharged by naming the
+  parameter it was swept over, the denominator it is relative to, and the statistic it
+  reports.
 
-Reporting all four as a single "done" would let the cheapest evidence stand for the
-dearest. Reported separately, a document's own matrix says which of its answers are
-proved and which are merely written down.
+Reporting all four as a single "done" would let a cross-reference pass for a proof.
+Reported separately, a document's own matrix says which of its answers are proved and
+which are merely written down.
 
 :::rubric_count model
 :::
@@ -188,8 +190,8 @@ not weaker.
 M26 makes the measurement half of that concrete. A speedup is a curve and not a number; a
 best-of-`n` is biased by `n`; a threshold below the dispersion of the measurement it is
 compared against decides nothing. The rubric is discharged by naming, for each reported
-measurement, the knob it was swept over, the denominator it is relative to, and the
-statistic it reports.
+measurement, the parameter it was swept over, the denominator it is relative to, and
+the statistic it reports.
 
 # The template
 

@@ -127,9 +127,9 @@ evidence stand in for the strongest:
     drift from what it describes and a generated one cannot.
   * `checked` is discharged by **a kernel-checked declaration** — a theorem edge, a
     proof, an audit that gates the build.
-  * `measured` is discharged by **a reported measurement**, which is a weaker thing
-    than a proof and must be labeled as one: a measured result names the knob it was
-    taken over, the denominator it is relative to, and the statistic it reports.
+  * `measured` is discharged by **a reported measurement**, which is weaker evidence
+    than a proof and must be labeled as one: a measured result names the parameter it
+    was swept over, the denominator it is relative to, and the statistic it reports.
 
 Recording the kind lets each rubric be reported in its own honest vocabulary
 (*stated* / *generated* / *proved* / *measured*) instead of a single "done". -/
@@ -260,8 +260,8 @@ def modelTemplate : List Rubric :=
       title := "The limits of a green status are stated plainly: which rung each theorem \
                 holds at, and which results are measured rather than proved" }
   , { id := "M26", group := .assurance, evidence := .measured,
-      title := "Each reported measurement names the knob it was swept over, the denominator \
-                it is relative to, and the statistic it reports" } ]
+      title := "Each reported measurement names the parameter it was swept over, the \
+                denominator it is relative to, and the statistic it reports" } ]
 
 /-- **The deployment template.** What a document deploying a domain model must
 address. The single source of truth for the deployment conformance matrix's rows. -/
