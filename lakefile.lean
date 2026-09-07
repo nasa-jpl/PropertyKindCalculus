@@ -250,6 +250,16 @@ lean_lib «Requirements» where
   srcDir := "requirements"
   globs := #[.andSubmodules `PropertyKindCalculus.Requirements]
 
+/-- The **application-template** layer: the two templates a document built on this
+calculus answers to — the model template (M1–M26) and the deployment template
+(D1–D17) — together with the `@[rubric …]` conformance-site attribute and the derived
+status a downstream document's conformance matrix is generated from. Generic: the
+templates live here, the documents that answer to them live in their own
+repositories. Build with `lake build Rubrics`. -/
+lean_lib «Rubrics» where
+  srcDir := "rubrics"
+  globs := #[.andSubmodules `PropertyKindCalculus.Rubrics]
+
 /-- The **TorchLean-backed instance** of the R10 exec/spec refinement bridge: the
 concrete IEEE-754 binary32 carriers (TorchLean's `FP32` rounding spec and
 `IEEE32Exec` executable) realizing `CarrierRefinement` over `ℝ`. This is the one

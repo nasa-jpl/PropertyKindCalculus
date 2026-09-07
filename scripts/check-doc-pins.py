@@ -179,6 +179,16 @@ PLAIN_TERMS_CLOSE = "Between them these bullets name all {NWORD} requirements"
 REQ_ID = re.compile(r'id := "R(\d+)"')
 PLAIN_TERMS_REF = re.compile(r"\bR(\d+)\b")
 
+# Check 7 — the application-template chapters against the rubric catalogue. Each
+# chapter renders its template as a *generated* table, so the table cannot drift; what
+# can drift is the prose that argues each rubric, which is written by hand beside a
+# catalogue that grows. The pairing below is (catalogue prefix, chapter file).
+RUBRIC_CATALOGUE = "rubrics/PropertyKindCalculus/Rubrics/Catalogue.lean"
+RUBRIC_CHAPTERS = [
+    ("M", "blueprint/PropertyKindCalculusBlueprint/Chapters/ModelTemplate.lean"),
+    ("D", "blueprint/PropertyKindCalculusBlueprint/Chapters/DeploymentTemplate.lean"),
+]
+
 CHAPTER_TITLE = re.compile(r'#doc \(Manual\) "([^"]+)" =>')
 NODE_TAGS = re.compile(r'\(tags := "([^"]*)"\)')
 # The blueprint's own status vocabulary, in the italic form its prose uses.
@@ -404,6 +414,46 @@ def check_plain_terms(quiet: bool) -> list[str]:
     return failures
 
 
+def check_rubric_chapters(quiet: bool) -> list[str]:
+    """Check 7: each application-template chapter glosses every rubric of its template.
+
+    The template *tables* are generated from the catalogue and need no gate. The prose
+    around them is not: a rubric added to the catalogue appears in the table with no
+    paragraph arguing it, and one removed leaves a paragraph arguing something the
+    document no longer asks for. Both are caught here, in the two directions check 6
+    catches for the requirement catalogue.
+
+    The parse is asserted non-empty for the reason every check in this file is: a
+    pattern that stops matching how rubrics are declared would otherwise report a
+    catalogue of zero rubrics as fully glossed.
+    """
+    failures: list[str] = []
+    catalogue = read(RUBRIC_CATALOGUE)
+
+    for prefix, chapter in RUBRIC_CHAPTERS:
+        ids = re.findall(rf'id := "({prefix}\d+)"', catalogue)
+        if not ids:
+            failures.append(
+                f"{RUBRIC_CATALOGUE}: parsed no {prefix}-rubric ids — the "
+                f'`id := "{prefix}…"` pattern no longer matches how rubrics are declared'
+            )
+            continue
+        text = read(chapter)
+        cited = set(re.findall(rf"\b{prefix}\d+\b", text))
+        unknown = sorted(cited - set(ids), key=lambda i: int(i[1:]))
+        missing = [i for i in ids if i not in cited]
+        if unknown:
+            failures.append(f"{chapter}: cites " + ", ".join(unknown)
+                            + f", which {RUBRIC_CATALOGUE} does not define")
+        if missing:
+            failures.append(f"{chapter}: no paragraph glosses " + ", ".join(missing)
+                            + " — either add one or drop the rubric from the template")
+        if not unknown and not missing and not quiet:
+            print(f"ok    {chapter}: glosses all {len(ids)} rubrics of its template")
+
+    return failures
+
+
 def main() -> int:
     quiet = "--quiet" in sys.argv
     failures: list[str] = []
@@ -484,6 +534,9 @@ def main() -> int:
     # 6. The introduction's plain-terms gloss of the requirement catalogue.
     failures.extend(check_plain_terms(quiet))
 
+    # 7. The application-template chapters against the rubric catalogue.
+    failures.extend(check_rubric_chapters(quiet))
+
     for rel, reason in EXEMPT.items():
         if not quiet:
             print(f"exempt {rel}: {reason}")
@@ -495,7 +548,8 @@ def main() -> int:
         return 1
     print("\nAll version claims agree with lean-toolchain; all blueprint status")
     print("claims agree with the chapter sources; all package-version sites agree;")
-    print("the plain-terms bullets name every catalogued requirement.")
+    print("the plain-terms bullets name every catalogued requirement; the")
+    print("application-template chapters gloss every catalogued rubric.")
     return 0
 
 

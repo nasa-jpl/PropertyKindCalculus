@@ -30,6 +30,8 @@ import PropertyKindCalculusBlueprint.Chapters.Iso80000Part12
 import PropertyKindCalculusBlueprint.Chapters.Iso80000Part13
 import PropertyKindCalculusBlueprint.Chapters.CrossReferences
 import PropertyKindCalculusBlueprint.Chapters.UsingTheLibrary
+import PropertyKindCalculusBlueprint.Chapters.ModelTemplate
+import PropertyKindCalculusBlueprint.Chapters.DeploymentTemplate
 import PropertyKindCalculusBlueprint.ItemIndex
 import PropertyKindCalculusBlueprint.TraceabilityTable
 import PropertyKindCalculusBlueprint.OntologicalSquare
@@ -1557,6 +1559,10 @@ and the status summary at the end reports the current counts.
 {include 0 PropertyKindCalculusBlueprint.Chapters.CrossReferences}
 
 {include 0 PropertyKindCalculusBlueprint.Chapters.UsingTheLibrary}
+
+{include 0 PropertyKindCalculusBlueprint.Chapters.ModelTemplate}
+
+{include 0 PropertyKindCalculusBlueprint.Chapters.DeploymentTemplate}
 
 {blueprint_graph}
 

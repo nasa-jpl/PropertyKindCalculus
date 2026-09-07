@@ -34,3 +34,4 @@ import PropertyKindCalculus.Tests.Core.BoundaryAudit
 import PropertyKindCalculus.Tests.Core.Provenance
 import PropertyKindCalculus.Tests.Core.Influence
 import PropertyKindCalculus.Tests.Core.Index
+import PropertyKindCalculus.Tests.Core.Rubrics
