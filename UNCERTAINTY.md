@@ -47,7 +47,7 @@
 
 ---
 
-## Status at a glance (updated 2026-08-03)
+## Status at a glance (updated 2026-09-06)
 
 *The scannable tracker. Full detail lives in [§6](#6-staged-plan-each-stage-is-shippable-testable-rigor-first)
 (stages) and its **Remaining work** subsection (residuals). This table is the index — when a row here
@@ -83,6 +83,8 @@ built tape).
 | 2′ | FP32-**adequacy** `×`/`÷` DAG (`DagBound`, Area 2) — *distinct from #2* | ✅ LANDED · v0.25.0; flag-freedom relocated to the exact evaluation and its regime exhibited | the no-absorption regime — a *different conclusion* (resolution, not equality), lifting `Adequacy.resolve` along the DAG |
 | 3 | `Float`-vs-`ℝ` carrier gap | ✅ discharged in kind (Stages 3–3.3) | per-model application only; no separate deliverable |
 | 4 | `hᵢ`/HVP Taylor surrogate; trig VJP nodes (`sin/cos/tanh/sinh/cosh`) | ▫ optional | fund only if a model needs 2nd-order surrogates or transcendental diff |
+| 5 | `AdequacyReport`'s counts are **path multiplicities**, not site counts (`merge` adds; no node identity) | ▲ OPEN — [§7](#7-risks--open-decisions); pinned in `AdequacyLimits` | replace the two `Nat` fields with `Bool`s and `merge` with `||` — the sound content, 4 `#guard`s + 2 reads move |
+| 6 | A **0th-order `sqrt`** replaces a fixed point's damping factor with `1` (the arithmetic is fine) | ▲ OPEN — [§7](#7-risks--open-decisions); pinned in `AdequacyLimits` | one derivative per transcendental, `u(√x) = u(x)/(2√x)` etc. — the same coefficients `Budget.contributionQ` uses |
 
 **What to pick up next** (rough priority):
 
@@ -111,7 +113,14 @@ built tape).
    no-absorption regime, which needs a different *conclusion*: rounding is allowed, equality of the
    variations is then false, and the statement becomes a resolution one lifting `Adequacy.resolve`
    along the DAG (thread #2′).
-4. **Ergonomics** — `attribute [local irreducible]` on *all* activation scalar specs to cut
+4. **The two adequacy-carrier limits (threads #5, #6)** — found by scoring the first real model at
+   the carrier, reduced to a handful of lines each in
+   `UncertaintyExamples.AdequacyLimits`, and argued in §7. Neither is a soundness bug and both are
+   limits on *reading* a report, but #6 decides where the carrier may be used at all: the
+   cancellation half is unusable wherever a transcendental supplies a loop's damping. Take #5's
+   `Nat → Bool` repair first — it is small, it is exactly the sound content, and it removes a
+   public field whose obvious reading is wrong.
+5. **Ergonomics** — `attribute [local irreducible]` on *all* activation scalar specs to cut
    `AutogradDirectSim`'s ~25-min elaboration; the `safeLog` `EagerBuilds.unary` instance.
 
 ---
@@ -1388,6 +1397,65 @@ The four residuals — all "one more crank of the same machine," none a new work
   **So: the forward-error accumulation and box faithfulness are metric and stay on `*_abs_error`;
   the exactness regime is algebraic and is a `CarrierRefinement` statement.** No code moves; what
   changed is that the split is stated and checked rather than incidental.
+* **`AdequacyReport`'s counts are path multiplicities, not site counts — OPEN.**
+  `merge` adds its operands' counts and `Adequacy` is a plain value carrier with no node identity,
+  so a `let`-bound sub-expression used twice contributes its report twice: a flagged site is
+  counted once per *evaluation path* that reaches it. One absorption site reused by squaring
+  reports `1, 2, 4, 8, 16` (`UncertaintyExamples.AdequacyLimits`). On the first real model scored
+  at this carrier the count grew by a factor of exactly 98 per iteration of an 8-sweep fixed point,
+  reaching `2.95 × 10¹⁷` for a graph of a few thousand nodes.
+
+  Not a soundness bug: zero is preserved exactly in both directions — a count is non-zero iff some
+  path reaches a flagged site iff some site is flagged — so `isAdequate` is sound and is the only
+  part of a report that may be read today. `AdequacySwamping` and `AdequacyCoupling` do read
+  `.absorptions`/`.cancellations` directly; their pins are correct because their expressions are
+  straight-line, which is exactly the shape in which the problem is invisible.
+
+  Three options, cheapest repair first. **(1) Say it in the type:** replace the two `Nat` fields
+  with `Bool`s (`absorbed`, `cancelled`) and `merge` with `||`. That is precisely the sound
+  content, it cannot be misread, and it costs four `#guard`s in `AdequacySwamping.lean` and two
+  reads in `AdequacyCoupling.lean`; `isAdequate` keeps its signature and meaning and nothing else
+  moves. **(2) Make the counts true:** hash-cons the evaluation so each node is visited once —
+  a different carrier, closer to `TapeBuilder`, for a number nobody has yet asked for.
+  **(3) Document only:** leaves a public field whose obvious reading is wrong. Recommendation: (1).
+* **A 0th-order `sqrt` turns a contraction into an expansion — OPEN, and it decides where the
+  carrier may be used.** `Adequacy`'s `MathCarrier` maps the value through `exp`/`log`/`sqrt` and
+  carries the uncertainty through **unchanged**; §4.3 defers first-order sensitivities to Stage 3.x.
+  The cost of that deferral is larger than "the sensitivity is approximate": inside a fixed-point
+  iteration it replaces the loop's damping factor with `1`, and the multiplications then compound
+  unopposed.
+
+  The arithmetic is *not* implicated, which is what makes the diagnosis specific and is the part
+  a first reading got wrong. At this carrier `v ↦ ½·v + c` reaches the correct `u(v*) = 2·u(c)`,
+  and so does a loop with the uncertain value in a divisor — both pinned in `AdequacyLimits`.
+  The `sqrt` loop does not: `f(v) = C·√v` has fixed point `C²` and `f'(C²) = ½` for **every** `C`,
+  so the value contracts at one half always, while a carrier modelling `u(√x) = u(x)` multiplies
+  the uncertainty by `C` per step. At `C = 93` the value converges on `8649` while `u` runs
+  `10⁻³ → 5.6 × 10¹²` in eight steps.
+
+  Consequence for users: **the cancellation half of the carrier is unusable wherever a
+  transcendental supplies the damping**, because the flag fires when a subtraction's result falls
+  below the uncertainty reaching it, and under a propagation many decades too large it fires on
+  everything. Observed on the first real model scored: every node of a 2000-node domain flagged at
+  every input uncertainty from `10⁻²` to `10⁻⁹`, against a finite-difference first-order figure of
+  `1.3 × 10⁻²` where the carrier modelled more than `10¹⁸`. The swamping half is unaffected — it
+  compares an operand's *own* uncertainty against half a ulp before the accumulation reaches it —
+  and stayed informative, locating the representation's resolution floor.
+
+  The repair is one derivative per transcendental, with no new dependency:
+  `u(√x) = u(x)/(2√x)` (guarding `x = 0`), `u(exp x) = u(x)·exp x`, `u(log x) = u(x)/|x|`, `abs`
+  staying 0th order because it is exact, and the trigonometric family following the same rule.
+  These are the same first-order coefficients `Budget.contributionQ` already uses on the GUM side,
+  so the carrier would become consistent with the ladder rather than a separate story. Until it is
+  done, §4.3's warning should name the *shape* of model it excludes and not only that the treatment
+  is 0th order: a reader who sees "0th order" reasonably expects a loose bound, not a sign flip on
+  the loop's contraction.
+
+  Both limits are pinned in `examples/PropertyKindCalculus/UncertaintyExamples/AdequacyLimits.lean`
+  — every claim a `#guard`, importing the carrier and nothing else, so it reruns in under a second
+  before anyone touches `Adequacy`. Whether the frequency and magnitude seen on one retrieval are
+  representative is a separate question that more models would settle; each limit is a statement
+  about the carrier's arithmetic and is worth pinning either way.
 
 ---
 

@@ -84,6 +84,12 @@ Residual-2 addition (the kinded ×/÷ budget DAG):
     `#check_failure` probes make the operand swap, the heterogeneous quadrature, and the
     kind-misplaced leaf type errors; the capstone's axiom pin is the classical trio only.
 
+The limits of the same carrier (`UNCERTAINTY.md` §7):
+  * `AdequacyLimits` — the two places a report may not be read at face value: its site counts are
+    path multiplicities rather than counts of sites, and a 0th-order `sqrt` replaces a loop's
+    damping factor with one, so the cancellation flag fires on everything a fixed point touches.
+    Both reduced to a handful of lines; imports the carrier and nothing else.
+
 The library-wide gate:
   * `Audit` — the provenance audit: pinned by-type sweeps (`#kind_contracts`,
     `#kind_relations`, `#kind_contracts_decide`) and the `contracts` /
@@ -109,6 +115,7 @@ import PropertyKindCalculus.UncertaintyExamples.AdequacyDag
 import PropertyKindCalculus.UncertaintyExamples.AdequacySterbenz32
 import PropertyKindCalculus.UncertaintyExamples.AdequacyExecBridge
 import PropertyKindCalculus.UncertaintyExamples.AdequacyCoupling
+import PropertyKindCalculus.UncertaintyExamples.AdequacyLimits
 import PropertyKindCalculus.UncertaintyExamples.AutogradDirectSim
 import PropertyKindCalculus.UncertaintyExamples.BudgetDagDensity
 import PropertyKindCalculus.UncertaintyExamples.Coverage
