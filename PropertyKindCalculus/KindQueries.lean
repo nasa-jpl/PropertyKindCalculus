@@ -29,32 +29,33 @@ import PropertyKindCalculus.Influence
 namespace PropertyKindCalculus.KindQueries
 
 open Lean PropertyKindCalculus.KindIncidence
+open PropertyKindCalculus.Provenance (NodeId KindRef)
 
 /-- The propagation table of a contract over its assembled graph, one sorted line per
 source port. -/
-def propagationLines (c : Provenance.Contract String String)
-    (g : Provenance String String) : List String :=
+def propagationLines (c : Provenance.Contract NodeId KindRef)
+    (g : Provenance NodeId KindRef) : List String :=
   let pairs := c.propagation g
   let srcs := (c.ports.filter fun p => !p.dir.produced).map (·.node)
   (srcs.map fun s =>
-    let outs := (pairs.filter (·.1 == s)).map (·.2)
+    let outs := (pairs.filter (·.1 == s)).map (renderNode ·.2)
     if outs.isEmpty then
-      s!"{s} → (no produced port)"
+      s!"{renderNode s} → (no produced port)"
     else
-      s!"{s} → {String.intercalate ", " outs}").mergeSort (· ≤ ·)
+      s!"{renderNode s} → {String.intercalate ", " outs}").mergeSort (· ≤ ·)
 
 /-- The ledger lines of one produced port: sources split by what each is, then the
 trust decomposition tallies. -/
-def ledgerLines (g : Provenance String String) (out : String) : List String := Id.run do
+def ledgerLines (g : Provenance NodeId KindRef) (out : NodeId) : List String := Id.run do
   let ledger := g.assumptionLedger out
   let split := g.trustSplit out
   let mut lines : List String := []
-  let ports := (ledger.ports.map fun p => s!"    {p.dir.label} {p.node} : {p.kind}")
+  let ports := (ledger.ports.map renderPort).map ("    " ++ ·) |>.mergeSort (· ≤ ·)
+  let gated := (ledger.gated.map fun n => s!"    gated {renderNode n}").mergeSort (· ≤ ·)
+  let attested :=
+    (ledger.attested.map fun (n, why) => s!"    attested {renderNode n} — {why}")
     |>.mergeSort (· ≤ ·)
-  let gated := (ledger.gated.map fun n => s!"    gated {n}").mergeSort (· ≤ ·)
-  let attested := (ledger.attested.map fun (n, why) => s!"    attested {n} — {why}")
-    |>.mergeSort (· ≤ ·)
-  lines := lines ++ [s!"  {out}:"] ++ ports ++ gated ++ attested
+  lines := lines ++ [s!"  {renderNode out}:"] ++ ports ++ gated ++ attested
   lines := lines ++ [s!"    pedigree: {split.derived.length} derived, \
     {split.gated.length} gated, {split.attested.length} attested, \
     {split.exited.length} exit(s) crossed"]

@@ -141,7 +141,12 @@ def familyGlyph : EdgeFamily → String
   | .tableMul => "[T]·"
   | .tableDiv => "[T]/"
   | .copy => ""
-  | .step nm _ => s!"[{nm}]"
+  | .step m i _ =>
+    let nm := match i with
+      | some k => if k == 1 then Provenance.lastComponent m
+                  else s!"{Provenance.lastComponent m}#{k}"
+      | none => Provenance.lastComponent m
+    s!"[{nm}]"
   | .select _ => "select"
 
 /-- The arrow color of an edge family: identity wires gray, procedure edges indigo,
@@ -149,7 +154,7 @@ nominal selections teal (a label chooses; it does not compute), witness edges
 near-black. -/
 def familyStroke : EdgeFamily → String
   | .copy => "#9ca3af"
-  | .step _ _ => "#4f46e5"
+  | .step _ _ _ => "#4f46e5"
   | .select _ => "#0d9488"
   | _ => "#111827"
 
@@ -202,16 +207,18 @@ red, then introduction events, exits marked `⊗` at the erasure boundary. A row
 carries the short form of its address wherever that still tells the row from the other
 rows of this box, and then carries the full address as the tooltip. -/
 def levelRows (l : AssemblyLevel) : Array Row := Id.run do
-  let strip (n : String) : String :=
+  let stripN (n : Provenance.NodeId) : String :=
+    Provenance.NodeId.render { n with level := none }
+  let stripS (n : String) : String :=
     if n.startsWith (l.name ++ "/") then (n.drop (l.name.length + 1)).toString else n
-  let exitMark (n : String) : String :=
+  let exitMark (n : Provenance.NodeId) : String :=
     if l.graph.exits.contains n then " ⊗" else ""
   -- every address this box will show, so a shortening can be checked against the rest
   -- of the box rather than assumed harmless
   let addrs : List String :=
-    l.graph.ports.map (fun p => strip p.node)
-      ++ l.unkinded.map (fun u => strip u.node)
-      ++ l.graph.intros.map (fun i => strip i.node)
+    l.graph.ports.map (fun p => stripN p.node)
+      ++ l.unkinded.map (fun u => stripS u.node)
+      ++ l.graph.intros.map (fun i => stripN i.node)
   let shorts := addrs.map shortAddr
   let disp (a : String) : String :=
     let s := shortAddr a
@@ -220,24 +227,25 @@ def levelRows (l : AssemblyLevel) : Array Row := Id.run do
     if disp a == a then none else some a
   let mut rows : Array Row := #[]
   for p in l.graph.ports do
-    let a := strip p.node
+    let a := stripN p.node
     rows := rows.push
-      ⟨p.node, a, s!"{p.dir.label} {disp a} : {p.kind}{exitMark p.node}",
+      ⟨p.node.render, a, s!"{p.dir.label} {disp a} : {p.kind.render}{exitMark p.node}",
         portFill p.dir, portStroke p.dir, addrTip a⟩
   for u in l.unkinded do
-    let a := strip u.node
+    let a := stripS u.node
     rows := rows.push
       ⟨u.node, a, s!"unkinded {u.dir.label} {disp a} : {u.type}",
         unkindedFill, unkindedStroke, addrTip a⟩
   for i in l.graph.intros do
-    let a := strip i.node
+    let a := stripN i.node
     let tip := match i.tier, addrTip a with
       | .attested r, some full => some s!"{r} · {full}"
       | .attested r, none => some r
       | _, some full => some full
       | _, none => none
     rows := rows.push
-      ⟨i.node, a, s!"{tierShortLabel i.tier} {disp a} : {i.kind}{exitMark i.node}",
+      ⟨i.node.render, a,
+        s!"{tierShortLabel i.tier} {disp a} : {i.kind.render}{exitMark i.node}",
         tierFill i.tier, tierStroke i.tier, tip⟩
   return rows
 
@@ -389,8 +397,8 @@ def emit (a : Assembly) (title : String := "kind assembly") : String := Id.run d
   -- the glyph; a junction interior to one level nests inside that level's container
   let mut jIdx := 0
   for o in a.graph.occurrences do
-    let some dst := path.get? o.result | continue
-    let srcs := o.operands.filterMap fun oc => path.get? oc.1
+    let some dst := path.get? o.result.render | continue
+    let srcs := o.operands.filterMap fun oc => path.get? oc.1.render
     if srcs.isEmpty then continue
     let stroke := familyStroke o.family
     let glyph := familyGlyph o.family
@@ -401,9 +409,9 @@ def emit (a : Assembly) (title : String := "kind assembly") : String := Id.run d
       out := out ++ put (s!"{srcs[0]!} -> {dst}: " ++ "{" ++ lbl ++ eStyle ++ "}")
     else
       let home : Option String := Id.run do
-        let some l := level.get? o.result | return none
+        let some l := level.get? o.result.render | return none
         for oc in o.operands do
-          unless level.get? oc.1 == some l do return none
+          unless level.get? oc.1.render == some l do return none
         return some l
       let j := match home with
         | some l => q l ++ "." ++ q s!"__j{jIdx}"
@@ -421,7 +429,7 @@ def emit (a : Assembly) (title : String := "kind assembly") : String := Id.run d
   for l in a.levels do
     for (s, t) in l.leaks do
       let some src := path.get? s | continue
-      let some dst := path.get? t | continue
+      let some dst := path.get? t.render | continue
       out := out ++ put (s!"{src} -> {dst}: " ++ "{style: {stroke: "
         ++ q unkindedStroke ++ "}}")
   -- the citation relation, dashed between containers — drawn, never wired. Its

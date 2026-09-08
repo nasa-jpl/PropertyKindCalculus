@@ -202,9 +202,9 @@ def kindDiagnosticMarks (env : Environment) : Array ContractMark :=
 structure Subject where
   /-- The `Provenance.Contract` declaration. -/
   decl : Name
-  /-- Its value, or `none` when the constant is a `Provenance.Contract` at node or kind types
-  other than `String` and cannot be read as one. -/
-  value? : Option (Provenance.Contract String String)
+  /-- Its value, or `none` when the constant is a `Provenance.Contract` at node or kind
+  types other than `NodeId`/`KindRef` and cannot be read as one. -/
+  value? : Option (Provenance.Contract Provenance.NodeId Provenance.KindRef)
   /-- `@[kindCounterexample]`-marked: not a subject, listed as exempted. -/
   counterexample : Bool
 
@@ -241,8 +241,8 @@ def relationEntries : MetaM (Array (Name × Provenance.Relation)) := do
   return out.qsort fun a b => a.1.toString < b.1.toString
 
 /-- The witness join: contract declaration name → the edges naming it, on either side. -/
-def edgesByContract : MetaM (Std.HashMap String (Array Name)) := do
-  let mut acc : Std.HashMap String (Array Name) := {}
+def edgesByContract : MetaM (Std.HashMap Name (Array Name)) := do
+  let mut acc : Std.HashMap Name (Array Name) := {}
   for (n, rel) in ← relationEntries do
     for side in [rel.left, rel.right] do
       acc := acc.insert side ((acc.getD side #[]).push n)
@@ -250,8 +250,8 @@ def edgesByContract : MetaM (Std.HashMap String (Array Name)) := do
 
 /-- The inversion join: contract declaration name → the `inverts` edges whose *left* side it
 is — the boundaries that recover what another consumed. -/
-def invertersByContract : MetaM (Std.HashMap String (Array Name)) := do
-  let mut acc : Std.HashMap String (Array Name) := {}
+def invertersByContract : MetaM (Std.HashMap Name (Array Name)) := do
+  let mut acc : Std.HashMap Name (Array Name) := {}
   for (n, rel) in ← relationEntries do
     match rel.kind with
     | .inverts => acc := acc.insert rel.left ((acc.getD rel.left #[]).push n)
@@ -305,7 +305,7 @@ def relationRows (scope : Array Name) : Elab.TermElabM (Array Row) := do
     if s.counterexample then
       out := out.push ⟨.exempted, s!"⊘ exempted {s.decl} — counterexample"⟩
       continue
-    let es := edges.getD s.decl.toString #[]
+    let es := edges.getD s.decl #[]
     if !es.isEmpty then
       out := out.push ⟨.ok, s!"[witnessed] {s.decl} {s.tag} — edges: {names es}"⟩
     else match marks.find? (·.decl == s.decl) with
@@ -365,15 +365,15 @@ def mereologyRows (scope : Array Name) : Elab.TermElabM (Array Row) := do
       continue
     let some c := s.value?
       | out := out.push ⟨.violation,
-          s!"⚠ UNREADABLE {s.decl} — not a `Contract String String`"⟩
+          s!"⚠ UNREADABLE {s.decl} — not a `Contract NodeId KindRef`"⟩
         continue
     for p in c.ports do
       unless p.dir.produced do continue
       match c.aggregations.find? (·.1 == p.node) with
       | some (_, a) =>
-        out := out.push ⟨.ok, s!"[classed] {s.decl} :: {p.node} : {p.kind} — {a.label}"⟩
+        out := out.push ⟨.ok, s!"[classed] {s.decl} :: {p.node.render} : {p.kind.render} — {a.label}"⟩
       | none =>
-        out := out.push ⟨.violation, s!"⚠ UNDECLARED {s.decl} :: {p.node} : {p.kind}"⟩
+        out := out.push ⟨.violation, s!"⚠ UNDECLARED {s.decl} :: {p.node.render} : {p.kind.render}"⟩
   return out
 
 /-- The summary line: ports counted, exempted boundaries beside them, `clean` exactly when no
@@ -430,12 +430,13 @@ elab "#kind_mereology_clean" nss:ident+ : command => liftTermElabM do
 /-! ## M21 — inversion coverage (the domain half) -/
 
 /-- The conditional ports of a contract, each with its decider where one is named. -/
-private def guards (c : Provenance.Contract String String) : List String :=
+private def guards (c : Provenance.Contract Provenance.NodeId Provenance.KindRef) :
+    List String :=
   c.ports.filterMap fun p =>
     if p.dir matches .conditional then
       some (match c.deciders.find? (·.1 == p.node) with
-        | some (_, d) => s!"{p.node} (decider: {d})"
-        | none        => p.node)
+        | some (_, d) => s!"{p.node.render} (decider: {d})"
+        | none        => p.node.render)
     else none
 
 /-- One row per inverted boundary — a contract that is the left side of an `inverts` edge:
@@ -445,7 +446,7 @@ def inversionRows (scope : Array Name) : Elab.TermElabM (Array Row) := do
   let marks := kindInversionTotalMarks (← getEnv)
   let mut out : Array Row := #[]
   for s in ← subjects scope do
-    let by_ := inverters.getD s.decl.toString #[]
+    let by_ := inverters.getD s.decl #[]
     if by_.isEmpty then continue
     let via := s!"inverted by: {names by_}"
     if s.counterexample then
@@ -453,7 +454,7 @@ def inversionRows (scope : Array Name) : Elab.TermElabM (Array Row) := do
       continue
     let some c := s.value?
       | out := out.push ⟨.violation,
-          s!"⚠ UNREADABLE {s.decl} — not a `Contract String String`; {via}"⟩
+          s!"⚠ UNREADABLE {s.decl} — not a `Contract NodeId KindRef`; {via}"⟩
         continue
     let gs := guards c
     if !gs.isEmpty then
@@ -526,10 +527,10 @@ def wellPosednessRows (scope : Array Name) : Elab.TermElabM (Array Row) := do
     unless rel.kind matches .inverts do continue
     if exempt.contains n then
       out := out.push ⟨.exempted, s!"⊘ exempted {n} — counterexample"⟩
-    else if !rel.wellPosed.isEmpty && !rel.domain.isEmpty then
-      let amb := if rel.ambiguity.isEmpty then "" else s!"; ambiguity: {rel.ambiguity}"
+    else if !rel.wellPosed.isAnonymous && !rel.domain.isAnonymous then
+      let amb := if rel.ambiguity.isAnonymous then "" else s!"; ambiguity: {rel.ambiguity}"
       out := out.push ⟨.ok, s!"[well-posed] {n} — {rel.wellPosed} on {rel.domain}{amb}"⟩
-    else if !rel.ambiguity.isEmpty then
+    else if !rel.ambiguity.isAnonymous then
       out := out.push ⟨.ok, s!"[surfaced] {n} — ambiguity: {rel.ambiguity}"⟩
     else
       out := out.push ⟨.violation,
@@ -604,21 +605,19 @@ def diagnosticRows (scope : Array Name) : Elab.TermElabM (Array Row) := do
     if s.counterexample then continue
     if s.value?.isNone then
       out := out.push ⟨.violation,
-        s!"⚠ UNREADABLE {s.decl} — not a `Contract String String`"⟩
+        s!"⚠ UNREADABLE {s.decl} — not a `Contract NodeId KindRef`"⟩
   for m in marks.qsort (fun a b => a.decl.toString < b.decl.toString) do
-    let long := m.decl.toString
-    -- the same suffix tolerance the relation checker's kind comparison uses: a port
-    -- states its kind as the declaring module pretty-prints it, the mark as the
-    -- environment names it
-    let matchesKind := fun (pk : String) =>
-      pk == long || long.endsWith ("." ++ pk) || pk.endsWith ("." ++ long)
+    -- exact: a port states its kind by the name the environment resolves, which is the
+    -- same name the mark carries — two marks whose names merely share a suffix cannot
+    -- credit one another
     let mut hits : Array String := #[]
     for s in subs do
       if s.counterexample then continue
       let some c := s.value? | continue
       for p in c.ports do
         unless p.dir.produced do continue
-        if matchesKind p.kind then hits := hits.push s!"{s.decl} :: {p.node}"
+        if p.kind == .decl m.decl then
+          hits := hits.push s!"{s.decl} :: {p.node.render}"
     if hits.isEmpty then
       out := out.push ⟨.violation,
         s!"⚠ SIDECHANNELED {m.decl} ({m.reason}) — no produced port in scope carries it"⟩

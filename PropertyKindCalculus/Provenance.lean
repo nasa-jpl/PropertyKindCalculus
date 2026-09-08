@@ -246,6 +246,12 @@ def Provenance.IntroTier.label : Provenance.IntroTier → String
   | .gated => "gated"
   | .attested r => s!"attested \"{r}\""
 
+/-- The last component of a declaration name — the rendering grammar's short form for
+members and kind declarations. Purely a display form: identity is the full name. -/
+def Provenance.lastComponent : Lean.Name → String
+  | .str _ s => s
+  | n => toString n
+
 /-- The hyperedge labels: the witness families of the core calculus — `ProductKind`,
 `QuotientKind`, `ReciprocalKind`, `TranscendentalKind`, `PowerKind` (carrying its
 rational exponent — an exponent is data of the edge, not an operand node),
@@ -276,7 +282,7 @@ inductive Provenance.EdgeFamily where
   | tableMul
   | tableDiv
   | copy
-  | step (name : String) (arity : Nat)
+  | step (member : Lean.Name) (inst? : Option Nat) (arity : Nat)
   | select (cases : Nat)
 deriving DecidableEq, Repr, Inhabited
 
@@ -287,7 +293,7 @@ relates however many inputs its interface states. -/
 def Provenance.EdgeFamily.operandCount : Provenance.EdgeFamily → Nat
   | .product | .quotient | .tableMul | .tableDiv | .additive => 2
   | .reciprocal | .transcendental | .power _ | .reference | .copy => 1
-  | .step _ a => a
+  | .step _ _ a => a
   | .select n => n + 1
 
 /-- Render a `power` exponent in the enumeration commands' grammar: the spelling the
@@ -315,7 +321,11 @@ def Provenance.EdgeFamily.render (f : Provenance.EdgeFamily)
   | .tableMul => s!"[table] {o 0} · {o 1} → {result}"
   | .tableDiv => s!"[table] {o 0} / {o 1} → {result}"
   | .copy => s!"{o 0} → {result}"
-  | .step nm _ =>
+  | .step m i _ =>
+    let nm := match i with
+      | some k => if k == 1 then Provenance.lastComponent m
+                  else s!"{Provenance.lastComponent m}#{k}"
+      | none => Provenance.lastComponent m
     if operands.isEmpty then s!"[step {nm}] → {result}"
     else s!"[step {nm}] {String.intercalate " · " operands} → {result}"
   | .select _ =>
@@ -430,11 +440,26 @@ structure Provenance.NodeId where
   path : List String := []
 deriving DecidableEq, Repr, Inhabited, BEq
 
-/-- The last component of a declaration name — the rendering grammar's short form for
-members and kind declarations. Purely a display form: identity is the full name. -/
-def Provenance.lastComponent : Lean.Name → String
-  | .str _ s => s
-  | n => toString n
+/-- Substitute kind references — the assembly's monomorphization: an exact match in the
+assignment is replaced; a `sig` or `tuple` that matches nothing whole is substituted
+componentwise, which a rendering-keyed replacement never could; everything else
+stands. -/
+def Provenance.KindRef.subst (m : List (Provenance.KindRef × Provenance.KindRef)) :
+    Provenance.KindRef → Provenance.KindRef
+  | .sig cs => match m.find? (·.1 == .sig cs) with
+    | some (_, r) => r
+    | none => .sig (go cs)
+  | .tuple cs => match m.find? (·.1 == .tuple cs) with
+    | some (_, r) => r
+    | none => .tuple (go cs)
+  | k => match m.find? (·.1 == k) with
+    | some (_, r) => r
+    | none => k
+where
+  /-- Components in order. -/
+  go : List Provenance.KindRef → List Provenance.KindRef
+    | [] => []
+    | c :: cs => subst m c :: go cs
 
 /-- Render a kind reference in the established grammar: a `decl` by last component, a
 `sig` joined with `" → "`, a `tuple` with `", "`, an unkinded config slot as `"_"`. -/
@@ -461,19 +486,18 @@ def Provenance.NodeRef.render : Provenance.NodeRef → String
   | .fresh n => s!"_{n}"
   | .unresolved r => r
 
-/-- Render a level name: the member's last component, with `#ordinal` when the caller
-says this member has several instances to tell apart. -/
-def Provenance.Level.render (showOrdinal : Bool) : Provenance.Level → String
-  | .inst m k => if showOrdinal then s!"{Provenance.lastComponent m}#{k}"
-                 else Provenance.lastComponent m
+/-- Render a level name: the member's last component, with `#ordinal` from the second
+instance up — a member's only instance needs no telling apart, and the reference is the
+same either way because the ordinal lives in the identity, not in the name. -/
+def Provenance.Level.render : Provenance.Level → String
+  | .inst m 1 => Provenance.lastComponent m
+  | .inst m k => s!"{Provenance.lastComponent m}#{k}"
   | .member m => Provenance.lastComponent m
 
-/-- Render a node identifier — `level/root.path` — with the level naming supplied by the
-caller, because only an assembly knows which members need their instance ordinals shown. -/
-def Provenance.NodeId.render (levelName : Provenance.Level → String)
-    (id : Provenance.NodeId) : String :=
+/-- Render a node identifier — `level/root.path`. -/
+def Provenance.NodeId.render (id : Provenance.NodeId) : String :=
   let base := match id.level with
-    | some l => s!"{levelName l}/{id.root.render}"
+    | some l => s!"{l.render}/{id.root.render}"
     | none => id.root.render
   id.path.foldl (fun acc seg => s!"{acc}.{seg}") base
 
@@ -609,27 +633,27 @@ inductive Provenance.AggregationClass where
   | extensive
   /-- §13.5.2: additive to within the named per-join tolerance — a declaration whose
   type is a `Quantity` at the governed port's kind. -/
-  | quasiExtensive (tolerance : String)
+  | quasiExtensive (tolerance : Lean.Name)
   /-- §13.5.3: additive only under the named condition. -/
-  | conditionallyExtensive (condition : String)
+  | conditionallyExtensive (condition : Lean.Name)
   /-- §13.5.4: invariant with extent, of constant composition. -/
   | intensive
   /-- The parts do not determine the value: no aggregation is licensed. -/
   | wholeProper
   /-- A count keyed to the named sortal predicate — extensive over a fixed carving,
   not a property of the whole. -/
-  | countKeyed (sortal : String)
+  | countKeyed (sortal : Lean.Name)
   /-- Additive about a shared parameter, with the named transport law pricing a
   parameter change. -/
-  | extensiveAbout (transport : String)
+  | extensiveAbout (transport : Lean.Name)
   /-- Additivity purchased by the named cancellation law over interior interfaces. -/
-  | interfaceLicensed (law : String)
+  | interfaceLicensed (law : Lean.Name)
 deriving DecidableEq, Repr, Inhabited, BEq
 
 /-- The declaration an aggregation class names as the content of its claim — the
 tolerance, condition, sortal, transport, or cancellation law; `none` for the three
 classes whose whole content is the §13.5 law itself. -/
-def Provenance.AggregationClass.evidence : Provenance.AggregationClass → Option String
+def Provenance.AggregationClass.evidence : Provenance.AggregationClass → Option Lean.Name
   | .extensive | .intensive | .wholeProper => none
   | .quasiExtensive t => some t
   | .conditionallyExtensive c => some c
@@ -660,10 +684,10 @@ structure Provenance.Contract (ν κ : Type) where
   /-- The rendered name of what the boundary belongs to — an algorithm, an application. -/
   name : String
   /-- The scope: the declarations whose harvested graphs the boundary is claimed for,
-  spelled as the environment names them. Not compared by `agrees`, which sees only the
+  by the names the environment resolves. Not compared by `agrees`, which sees only the
   graph they produced — they are what *selects* that graph, and stating them here is what
   makes the selection a declaration rather than a habit of each call site. -/
-  members : List String
+  members : List Lean.Name
   /-- The declared interface, with each port's role and binding time. -/
   ports : List (Provenance.Port ν κ)
   /-- The declared exits: where the contract says values leave the calculus. -/
@@ -675,7 +699,7 @@ structure Provenance.Contract (ν κ : Type) where
   checked by `#kind_contract` to name a conditional port and an existing declaration; a
   conditional port with no entry remains a declared case whose predicate is stated
   elsewhere. -/
-  deciders : List (ν × String) := []
+  deciders : List (ν × Lean.Name) := []
   /-- The aggregation classes of the produced ports: for an `output` or `conditional`
   port, how its value behaves when the computation is distributed over a carving of a
   batch axis — the declared mereology of the boundary (`AggregationClass`). One entry
@@ -692,7 +716,7 @@ structure Provenance.Contract (ν κ : Type) where
   declared one — so *which* module a deployment bound is declared and checked, not
   implicit in a call site. A signature port with no entry remains a parameter: which
   module answers it is then the tier below's to declare. -/
-  suppliers : List (ν × String) := []
+  suppliers : List (ν × Lean.Name) := []
 deriving Repr, Inhabited, BEq
 
 namespace Provenance
@@ -872,7 +896,7 @@ never re-walked. -/
 /-- The members of the deployed contract `d` that the deploying contract `c` does not
 contain. Non-empty means `c` is not a deployment of `d` at all: it left part of the
 algorithm out, and whatever it discharges it is not discharging this. -/
-def Contract.unscoped (c d : Contract ν κ) : List String :=
+def Contract.unscoped (c d : Contract ν κ) : List Lean.Name :=
   d.members.filter fun m => !(c.members.contains m)
 
 /-- The parameters of `d` that `c` **binds**: they are gone from `c`'s boundary, which
@@ -952,17 +976,17 @@ rung, transferring nothing. -/
 inductive TransferStatus where
   /-- Transferred because rounding is the identity on the values in play; the field names
   the repair theorem. -/
-  | exact (repair : String)
+  | exact (repair : Lean.Name)
   /-- Transferred because nonnegative on-grid weights exclude the cancellation; the field
   names the repair theorem. -/
-  | nonneg (repair : String)
+  | nonneg (repair : Lean.Name)
   /-- Not transferred: independently stated at this rung; the field names the per-rung
   witness. -/
-  | restated (witness : String)
+  | restated (witness : Lean.Name)
 deriving Repr, Inhabited
 
 /-- The theorem or repair a transfer status rests on. -/
-def TransferStatus.evidence : TransferStatus → String
+def TransferStatus.evidence : TransferStatus → Lean.Name
   | .exact r | .nonneg r | .restated r => r
 
 /-- How a transfer status prints in a rendered report. -/
@@ -1021,43 +1045,44 @@ to be: what is checked is that the named theorem exists, is proved, and is about
 boundaries. -/
 structure Relation where
   /-- The declaration name of the contract on the left of the claim. -/
-  left : String
+  left : Lean.Name
   /-- The declaration name of the contract on the right. -/
-  right : String
+  right : Lean.Name
   /-- What is claimed. -/
   kind : RelationKind
   /-- The declaration name of the theorem that proves it. -/
-  witness : String
+  witness : Lean.Name
   /-- The claim in the author's words — the hypothesis, the bound, the domain. -/
   claim : String := ""
   /-- For a `boundedBy` edge: the declaration naming the bounding quantity — a `Quantity`
   at the kind of an output port of the left boundary, because a tolerance is a kinded
-  quantity governing what the boundary produces, not a float in prose. Empty where the
-  claim carries its bound inside the witness statement. -/
-  tolerance : String := ""
+  quantity governing what the boundary produces, not a float in prose. Anonymous where
+  the claim carries its bound inside the witness statement. -/
+  tolerance : Lean.Name := .anonymous
   /-- The named side conditions the claim holds under: declarations the witness statement
   mentions, so the domain a consumer must establish is listed at the edge rather than
   excavated from the proof. Empty where the claim is unconditional. -/
-  hypotheses : List String := []
+  hypotheses : List Lean.Name := []
   /-- The license clause: one entry per carrier rung the claim is extended to beyond the
   rung its witness is stated at, each answered for by a named repair or a named per-rung
   restatement (`RelationLicense`). Empty where the claim stops at its witness's rung. -/
   licenses : List RelationLicense := []
   /-- For an `inverts` edge: the declaration name of the theorem that proves the
   inversion's answer exists and is unique — a sorry-free theorem concluding with `∃!` —
-  on the domain named beside it. Empty where well-posedness is not (or not yet) claimed;
-  an edge whose inversion is *not* single-valued surfaces that in `ambiguity` instead. -/
-  wellPosed : String := ""
+  on the domain named beside it. Anonymous where well-posedness is not (or not yet)
+  claimed; an edge whose inversion is *not* single-valued surfaces that in `ambiguity`
+  instead. -/
+  wellPosed : Lean.Name := .anonymous
   /-- The declaration naming the domain the well-posedness holds on — the box or
   predicate the `wellPosed` statement mentions. Existence and uniqueness are proved *on a
   declared domain*, so a `wellPosed` with no `domain` is refused. -/
-  domain : String := ""
+  domain : Lean.Name := .anonymous
   /-- For an `inverts` edge: the declaration name of the theorem that surfaces the
   inversion's ambiguity — a sorry-free theorem concluding with the negation of an `∃!`,
   the uniqueness that fails (typically: without the domain's certificate). Ambiguity is
   surfaced as a declaration a consumer can read, not resolved to whichever root the
   algorithm reached first. -/
-  ambiguity : String := ""
+  ambiguity : Lean.Name := .anonymous
 deriving Repr, Inhabited
 
 /-! ## The assembly combinators — namespaced union (header, "The procedure edge") -/

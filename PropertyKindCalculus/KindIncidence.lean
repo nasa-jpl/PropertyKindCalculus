@@ -148,14 +148,16 @@ scope, so it is compared against a declared one — `Provenance.Contract` — an
 reported: the wiring verdict is monotone under adding an unrelated member, and the
 boundary is what changes when the membership does.
 
-A **node name is an address, a kind name is a term**. Addresses are absolute — a member
-prefixes its node namespace with its own last component, a constant names itself in full,
-a binder and a field path name themselves — because a boundary someone declares must mean
-one thing wherever it is checked, and a name that shortened with the reader's open
-namespaces would make one contract two claims. Kinds are the other way: they are rendered
-in the vocabulary of the site that reads them, the way every quantity in this library is
-written, so a contract states its kinds as the module that owns them spells them and is
-checked where that vocabulary is in scope.
+**A node identifier and a kind identifier are typed references** (`Provenance.lean`, "The
+reference vocabulary"): a `NodeId` says which class of thing it names — a signature
+binder, a body-named `let` or matcher binder, a result component, a constant address, a
+gensym — and a `KindRef` names a kind declaration by the name the environment resolves, a
+signature binder's kind parameter by its binder name, or a signature/tuple of those.
+Identity is absolute and structural — a boundary someone declares means one thing wherever
+it is checked, in no reader's namespace — and the familiar spellings (`step/span.lo.q`,
+`aK → bK`) are *renderings* of those references, produced for reports and never compared.
+The harvest refuses a member whose kind-bearing names are inaccessible or duplicated in
+their scope, so every reference that reaches a graph names its referent uniquely.
 
 The byte-identical renderings are the spot check, not the license: `#kind_ports` and
 `#kind_occurrences` print exactly the lines they printed as free-standing harvests, now
@@ -177,7 +179,8 @@ import PropertyKindCalculus.AuditReceipt
 namespace PropertyKindCalculus.KindIncidence
 
 open Lean
-open PropertyKindCalculus.Provenance (Port Intro Occurrence EdgeFamily IntroTier PortDir)
+open PropertyKindCalculus.Provenance (Port Intro Occurrence EdgeFamily IntroTier PortDir
+  KindRef NodeRef NodeId lastComponent)
 
 /-- The carrier heads an operand position is recognized by: the audit's registry
 (`Quantity`, `CertifiedQuantity`, `NominalValue`, plus every downstream `@[kindCarrier]`
@@ -268,11 +271,67 @@ where
     if (operandCarriers env).contains c.getPrefix then return none
     return some (pi.numParams, c.getString!)
 
-/-- Render a kind (or exponent) argument of an instantiated binder type:
-pretty-printed when closed; by binder name when it still carries loose bound variables —
-a parametric kind under an inner binder, where the pretty printer has no context. -/
-def renderKindArg (ctx : BinderCtx) (e : Expr) : MetaM String :=
-  if e.hasLooseBVars then refName ctx e else return toString (← Meta.ppExpr e)
+/-- The kind reference a kind argument of an instantiated binder type denotes: a kind
+declaration by its environment name, a signature kind binder by its binder name (a
+telescope free variable, or a loose bound variable under an inner binder), and anything
+outside the vocabulary as its rendering — `KindRef.rendered`, compared byte-exact and
+refused in contracts. -/
+def kindRefOf (ctx : BinderCtx) (e : Expr) : MetaM KindRef := do
+  let e := e.consumeMData.consumeTypeAnnotations
+  match e with
+  | .const c _ => return .decl c
+  | .fvar id => return .param (toString (← id.getDecl).userName)
+  | .bvar i =>
+    match ctx[i]? with
+    | some (nm, _) => return .param (toString nm)
+    | none => return .rendered "_"
+  | _ =>
+    if e.hasLooseBVars then return .rendered (← refName ctx e)
+    else return .rendered (toString (← Meta.ppExpr e))
+
+/-- The node identifier an operand expression denotes — the reference-typed reading of
+`refName`, minting the class each shape belongs to: a telescope free variable is a
+signature binder, a bound variable a body-named node (a `let`, a do-bind, a matcher
+binder), a container projection a field path on its base, a constant its own address, a
+literal or any other application an `unresolved` degradation the graph can report and no
+contract may cite. -/
+partial def nodeIdOf (ctx : BinderCtx) (e : Expr) : MetaM NodeId := do
+  match e with
+  | .app f _ =>
+    if let .const c _ := e.getAppFn then
+      if let some path ← containerField? c then
+        let args := e.getAppArgs
+        if let some s := args[path.1]? then
+          return (← nodeIdOf ctx s).field path.2
+    nodeIdOf ctx f
+  | .mdata _ b => nodeIdOf ctx b
+  | .const c _ => return NodeId.config c
+  | .fvar id => return NodeId.binder (toString (← id.getDecl).userName)
+  | .bvar i =>
+    match ctx[i]? with
+    | some (nm, _) => return NodeId.letBound (toString nm)
+    | none => return { root := .unresolved "_" }
+  | .letE nm _ v b _ => nodeIdOf ((nm, some v) :: ctx) b
+  | .proj sn i b =>
+    let env ← getEnv
+    if !(operandCarriers env).contains sn then
+      if let some f := (getStructureFields env sn)[i]? then
+        return (← nodeIdOf ctx b).field (toString f)
+    return (← nodeIdOf ctx b).field (toString i)
+  | .lit (.natVal v) => return { root := .unresolved (toString v) }
+  | .lit (.strVal s) => return { root := .unresolved s!"\"{s}\"" }
+  | _ => return { root := .unresolved "_" }
+where
+  /-- `refName.containerField?`, restated: is `c` a *container* structure's projection
+  function — the structure argument's position and the field's name? -/
+  containerField? (c : Name) : MetaM (Option (Nat × String)) := do
+    let env ← getEnv
+    let some pi := env.getProjectionFnInfo? c | return none
+    if (operandCarriers env).contains c.getPrefix then return none
+    return some (pi.numParams, c.getString!)
+
+/-- Render a node identifier — `NodeId.render`, locally named. -/
+def renderNode (n : NodeId) : String := n.render
 
 /-- The nominal kind a `@[kindNominal]`-registered designation set designates, or `none`.
 A bespoke finite label set states its kind by *being that type* (`BoundaryAudit`, "The
@@ -294,11 +353,11 @@ A registered nominal designation set answers here too, at the kind it designates
 its constant, so a designation port and a quantity port spell their kinds the same way
 and against the same open namespaces. -/
 def carrierKind? (env : Environment) (carriers : Array Name) (ctx : BinderCtx)
-    (ty : Expr) : MetaM (Option String) := do
+    (ty : Expr) : MetaM (Option KindRef) := do
   let ty := ty.consumeTypeAnnotations
   let .const c _ := ty.getAppFn | return none
   if let some kn := BoundaryAudit.nominalKindOf? env c then
-    return some (toString (← Meta.ppExpr (mkConst kn)))
+    return some (.decl kn)
   unless carriers.contains c do return none
   let some ci := env.find? c | return none
   let args := ty.getAppArgs
@@ -306,8 +365,10 @@ def carrierKind? (env : Environment) (carriers : Array Name) (ctx : BinderCtx)
   let kindIdxs := (Array.range args.size).filter fun i =>
     btys[i]!.isConstOf ``KindOfProperty
   if kindIdxs.isEmpty then return none
-  let ks ← kindIdxs.mapM fun i => renderKindArg ctx args[i]!
-  return some (String.intercalate ", " ks.toList)
+  let ks ← kindIdxs.mapM fun i => kindRefOf ctx args[i]!
+  match ks.toList with
+  | [k] => return some k
+  | ks => return some (.tuple ks)
 
 /-- The kind signature a function-over-quantities type states, or `none`: a
 non-dependent arrow chain whose every domain and result are carrier-kinded reads as
@@ -320,7 +381,7 @@ however the binder spells it. A dependent arrow, or a domain the kind vocabulary
 not cover, is no signature — the position then falls to the kind-bearing verdict, as
 any non-portable position does. -/
 partial def signatureKind? (env : Environment) (carriers : Array Name)
-    (ctx : BinderCtx) (ty : Expr) (acc : Array String := #[]) : MetaM (Option String) := do
+    (ctx : BinderCtx) (ty : Expr) (acc : Array KindRef := #[]) : MetaM (Option KindRef) := do
   let ty ← Meta.whnfR ty.consumeTypeAnnotations
   match ty with
   | .forallE _ dom body _ =>
@@ -330,7 +391,7 @@ partial def signatureKind? (env : Environment) (carriers : Array Name)
   | _ =>
     if acc.isEmpty then return none
     let some k ← carrierKind? env carriers ctx ty | return none
-    return some (String.intercalate " → " (acc.push k).toList)
+    return some (.sig (acc.push k).toList)
 
 /-- The kind signature a *supplier* declaration states: its leading implicit and
 instance binders — the carrier and its instances — filled with metavariables, the
@@ -338,7 +399,7 @@ remaining explicit spine read exactly as the harvest reads a functional binder
 (`signatureKind?`). `none` where that spine is not a function over carrier-kinded
 values. -/
 partial def supplierSignature? (env : Environment) (carriers : Array Name)
-    (ty : Expr) : MetaM (Option String) := do
+    (ty : Expr) : MetaM (Option KindRef) := do
   let ty ← Meta.whnfR ty
   match ty with
   | .forallE _ dom body bi =>
@@ -362,7 +423,7 @@ A sum type has no field path — its payload is not there in every case — and 
 `conditionalPaths` instead; a carrier is a leaf, never a container: its own field is the
 erasure boundary. -/
 partial def carrierPaths (env : Environment) (carriers : Array Name) (ctx : BinderCtx)
-    (ty : Expr) (fuel : Nat := 3) : MetaM (Array (String × String)) := do
+    (ty : Expr) (fuel : Nat := 3) : MetaM (Array (List String × KindRef)) := do
   let ty := ty.consumeTypeAnnotations
   if ty.hasLooseBVars then return #[]
   if (← carrierKind? env carriers ctx ty).isSome then return #[]
@@ -372,15 +433,15 @@ partial def carrierPaths (env : Environment) (carriers : Array Name) (ctx : Bind
     let some (.inductInfo ii) := env.find? c | return #[]
     unless ii.ctors.length == 1 do return #[]
     let x ← Meta.mkFreshExprMVar ty
-    let mut out : Array (String × String) := #[]
+    let mut out : Array (List String × KindRef) := #[]
     for f in getStructureFields env c do
       let some fty ← (try pure (some (← Meta.inferType (← Meta.mkProjection x f)))
                       catch _ => pure none) | continue
       match ← carrierKind? env carriers ctx fty with
-      | some k => out := out.push (s!".{f}", k)
+      | some k => out := out.push ([toString f], k)
       | none =>
         for (p, k) in ← carrierPaths env carriers ctx fty fuel do
-          out := out.push (s!".{f}{p}", k)
+          out := out.push (toString f :: p, k)
     return out
   | _, _ => return #[]
 
@@ -398,7 +459,7 @@ one the interface produces when it produces one, and the port that carries it is
 constructor nobody downstream can see. A case with no quantity in it — `none`, an error
 string — contributes nothing, which is exactly right: there is no measurement there. -/
 def conditionalPaths (env : Environment) (carriers : Array Name) (ctx : BinderCtx)
-    (ty : Expr) : MetaM (Array (String × String)) := do
+    (ty : Expr) : MetaM (Array (List String × KindRef)) := do
   let ty := ty.consumeTypeAnnotations
   if ty.hasLooseBVars then return #[]
   if (← carrierKind? env carriers ctx ty).isSome then return #[]
@@ -407,26 +468,26 @@ def conditionalPaths (env : Environment) (carriers : Array Name) (ctx : BinderCt
   if ii.ctors.length ≤ 1 then return #[]
   let params := ty.getAppArgs.extract 0 ii.numParams
   if params.size != ii.numParams then return #[]
-  let mut out : Array (String × String) := #[]
+  let mut out : Array (List String × KindRef) := #[]
   for ctor in ii.ctors do
-    let case := s!".{ctor.getString!}"
+    let case := ctor.getString!
     -- the constructor's fields at *this* instance: a case's payload is a quantity
     -- only once the inductive's parameters are the ones the result states
     let ctorTy ← Meta.instantiateForall (← Meta.inferType (mkConst ctor us)) params
     let payload ← Meta.forallTelescope ctorTy fun fvars _ => do
-      let mut slots : Array (String × String) := #[]
+      let mut slots : Array (List String × KindRef) := #[]
       for fv in fvars do
         let fty ← Meta.inferType fv
-        let nm := s!".{← fv.fvarId!.getUserName}"
+        let nm := toString (← fv.fvarId!.getUserName)
         match ← carrierKind? env carriers ctx fty with
-        | some k => slots := slots.push (nm, k)
+        | some k => slots := slots.push ([nm], k)
         | none =>
           for (p, k) in ← carrierPaths env carriers ctx fty do
-            slots := slots.push (s!"{nm}{p}", k)
+            slots := slots.push (nm :: p, k)
       return slots
     match payload with
-    | #[(_, k)] => out := out.push (case, k)
-    | ps => for (p, k) in ps do out := out.push (s!"{case}{p}", k)
+    | #[(_, k)] => out := out.push ([case], k)
+    | ps => for (p, k) in ps do out := out.push (case :: p, k)
   return out
 
 /-- Does a type carry kind information at all — a registered carrier or the kind
@@ -606,10 +667,10 @@ family relates: a sub-step boundary, excluded from the wiring, so the verdict re
 what one step's body cannot exhibit. -/
 structure StepOccurrence where
   /-- The occurrence, in the graph's vocabulary. -/
-  occ : Occurrence String String
+  occ : Occurrence NodeId KindRef
   /-- The full operand-kind list the license states — the edge's own equation, which a
   partial incidence does not truncate (the operand list is what the site exposes). -/
-  edgeKinds : Array String
+  edgeKinds : Array KindRef
   /-- License discharged from the step's own hypothesis or instance binder. -/
   assumed : Bool
   /-- Fewer operands exposed than the family relates — a sub-step boundary. -/
@@ -619,15 +680,16 @@ deriving Inhabited
 /-- `alphaK · betaK → gammaK ⟨x, y⟩` — the edge with its incidence, in the enumeration
 grammar (`EdgeFamily.render` over the kinds the license states). -/
 def StepOccurrence.render (o : StepOccurrence) : String :=
-  let names := o.occ.operands.map (·.1)
-  s!"{o.occ.family.render o.edgeKinds.toList o.occ.resultKind} ⟨{String.intercalate ", " names}⟩"
+  let names := o.occ.operands.map (renderNode ·.1)
+  s!"{o.occ.family.render (o.edgeKinds.toList.map (·.render)) o.occ.resultKind.render} \
+    ⟨{String.intercalate ", " names}⟩"
 
 /-- The graph rendering of an occurrence: the enumeration line, the result node it
 wires, and its marker if any. -/
 def StepOccurrence.renderWired (o : StepOccurrence) : String :=
   let marker :=
     if o.partialIncidence then " (partial)" else if o.assumed then " (assumed)" else ""
-  s!"{o.render} ⇒ {o.occ.result}{marker}"
+  s!"{o.render} ⇒ {renderNode o.occ.result}{marker}"
 
 /-- The registries and attribution the walk carries: the audit's carrier, boundary, and
 attestor registries, the occurrence site, whether the harvested declaration is itself a
@@ -659,29 +721,34 @@ flows — each an unkinded argument reaching a kinded node outside the kinded
 algebra. -/
 structure WalkSt where
   occs : Array StepOccurrence := #[]
-  intros : Array (Intro String String) := #[]
-  exits : Array String := #[]
+  intros : Array (Intro NodeId KindRef) := #[]
+  exits : Array NodeId := #[]
   freshCount : Nat := 0
-  leaks : Array (String × String) := #[]
+  leaks : Array (String × NodeId) := #[]
+  /-- The body's flat kind-bearing name namespace — every `let`, do-bind, or matcher
+  binder that minted a node. A second kind-bearing binding at a name already here is
+  refused: one flat namespace, or a contract naming it would name two things. -/
+  bodyNames : Array String := #[]
 
 /-- The next synthesized interior node. -/
-def WalkSt.nextFresh (st : WalkSt) : String × WalkSt :=
+def WalkSt.nextFresh (st : WalkSt) : NodeId × WalkSt :=
   let n := st.freshCount + 1
-  (s!"_{n}", { st with freshCount := n })
+  ({ root := .fresh n }, { st with freshCount := n })
 
 /-- Record an exit, once per node. -/
-def WalkSt.exit (st : WalkSt) (n : String) : WalkSt :=
+def WalkSt.exit (st : WalkSt) (n : NodeId) : WalkSt :=
   if st.exits.contains n then st else { st with exits := st.exits.push n }
 
 /-- Record an unkinded flow, once per (source, target) pair. -/
-def WalkSt.leak (st : WalkSt) (src dst : String) : WalkSt :=
+def WalkSt.leak (st : WalkSt) (src : String) (dst : NodeId) : WalkSt :=
   if st.leaks.contains (src, dst) then st
   else { st with leaks := st.leaks.push (src, dst) }
 
 /-- Wire `node` from the named `src` by the identity `copy`, introducing `node` as
 `derived` when the walk owns its introduction (a `let` binder or synthesized node —
 never a port). -/
-def WalkSt.copyTo (st : WalkSt) (site src node kind : String) (owned : Bool) : WalkSt :=
+def WalkSt.copyTo (st : WalkSt) (site : String) (src node : NodeId) (kind : KindRef)
+    (owned : Bool) : WalkSt :=
   let st := if owned then { st with intros := st.intros.push ⟨node, kind, .derived⟩ }
             else st
   let so : StepOccurrence := ⟨⟨.copy, [(src, kind)], node, kind, site⟩, #[kind], false, false⟩
@@ -691,16 +758,16 @@ def WalkSt.copyTo (st : WalkSt) (site src node kind : String) (owned : Bool) : W
 inductive Target where
   /-- Produce onto this node; `owned` says the walk owns its introduction event (a
   `let` binder or synthesized interior node — never a port). -/
-  | one (node kind : String) (owned : Bool)
+  | one (node : NodeId) (kind : KindRef) (owned : Bool)
   /-- The root of a multi-output producer: one slot per component — empty for an
   un-kinded one, one entry for a carrier-typed one, and one entry *per carrier field
   path* for a container-typed one (`carrierPaths`) — each entry a node, its kind, and
   whether the walk owns its introduction (an output port's slot is not owned; a matcher
   binder's is). -/
-  | tuple (comps : List (List (String × String × Bool)))
+  | tuple (comps : List (List (NodeId × KindRef × Bool)))
 
 /-- The single-node view of an optional target. -/
-def Target.asOne? : Option Target → Option (String × String × Bool)
+def Target.asOne? : Option Target → Option (NodeId × KindRef × Bool)
   | some (.one n k o) => some (n, k, o)
   | _ => none
 
@@ -708,7 +775,7 @@ def Target.asOne? : Option Target → Option (String × String × Bool)
 is empty (an un-kinded position), the node itself where the group is one, and a
 one-component `tuple` where it is several — a container's carrier field paths, which the
 value side splits at the constructor that assembles them (`ctorFieldSlots`). -/
-def Target.ofSlots : List (String × String × Bool) → Option Target
+def Target.ofSlots : List (NodeId × KindRef × Bool) → Option Target
   | [] => none
   | [(n, k, o)] => some (.one n k o)
   | ss => some (.tuple [ss])
@@ -717,8 +784,8 @@ def Target.ofSlots : List (String × String × Bool) → Option Target
 the walk owns, or through a synthesized source node wired to a port by `copy`. With no
 target the source is still recorded — a mint is a mint wherever it sits. Returns the
 source node introduced, so the minting site can attribute its unkinded flows to it. -/
-def sourceAt (h : HarvestCtx) (tier : IntroTier) (kind : String)
-    (t1 : Option (String × String × Bool)) (st : WalkSt) : String × WalkSt :=
+def sourceAt (h : HarvestCtx) (tier : IntroTier) (kind : KindRef)
+    (t1 : Option (NodeId × KindRef × Bool)) (st : WalkSt) : NodeId × WalkSt :=
   match t1 with
   | some (n, k, true) => (n, { st with intros := st.intros.push ⟨n, k, tier⟩ })
   | some (n, k, false) =>
@@ -734,7 +801,7 @@ def sourceAt (h : HarvestCtx) (tier : IntroTier) (kind : String)
 application flows into the mint's node — unkinded information minting kinded
 information, the reading the red arrows draw (module header, "Unkinded
 positions"). -/
-def mintLeaks (h : HarvestCtx) (e : Expr) (node : String) (st : WalkSt) : WalkSt :=
+def mintLeaks (h : HarvestCtx) (e : Expr) (node : NodeId) (st : WalkSt) : WalkSt :=
   h.unkindedFVars.foldl (init := st) fun st (fv, nm) =>
     if e.containsFVar fv then st.leak nm node else st
 
@@ -760,7 +827,7 @@ def maskMints (h : HarvestCtx) (e : Expr) : Expr :=
 unproduced derivation target is an anonymous mint). A port of a `@[kindConst]`
 declaration is the sanctioned exception: its value is the declared constant mint, wired
 through an `attested "[kindConst]"` source. -/
-def opaqueTarget (h : HarvestCtx) (t1 : Option (String × String × Bool))
+def opaqueTarget (h : HarvestCtx) (t1 : Option (NodeId × KindRef × Bool))
     (st : WalkSt) : WalkSt :=
   match t1 with
   | some (n, k, true) => { st with intros := st.intros.push ⟨n, k, .derived⟩ }
@@ -773,22 +840,18 @@ def opaqueTarget (h : HarvestCtx) (t1 : Option (String × String × Bool))
     else st
   | none => st
 
-/-- The name of a step declaration — its last component, which labels a procedure edge
-and prefixes a node namespace. Not the pretty printer's spelling: this string is an
-*address*, part of every node identity the graph and a `Provenance.Contract` name, and an
-address that changed with the reader's open namespaces would let one declared boundary be
-two different claims. Members whose last components collide are refused at assembly, where
-the collision is visible. -/
+/-- The rendered name of a step declaration — its last component, which labels a level
+in reports and figures. Purely a display form: node and edge identity carry the full
+declaration name. Members whose last components collide are refused at assembly, so the
+*renderings* stay unambiguous too. -/
 def stepNameOf (ci : ConstantInfo) : MetaM String :=
-  return match ci.name with
-    | .str _ s => s
-    | n => toString n
+  return lastComponent ci.name
 
-/-- One edge stated by a consuming application's binders, kinds rendered. -/
+/-- One edge stated by a consuming application's binders, kinds as references. -/
 structure BinderEdge where
   family : EdgeFamily
-  opKinds : Array String
-  resKind : String
+  opKinds : Array KindRef
+  resKind : KindRef
   assumed : Bool
 
 /-- Every edge a constant-headed application's instantiated binder types state —
@@ -801,8 +864,8 @@ def binderEdges (h : HarvestCtx) (ctx : BinderCtx) (args : Array Expr)
   let mut edges : Array BinderEdge := #[]
   for i in [0:args.size] do
     if let some (fam, opTys, resTy) ← edgeOfBinderType? btys[i]! then
-      let opKinds ← opTys.mapM (renderKindArg ctx)
-      let resKind ← renderKindArg ctx resTy
+      let opKinds ← opTys.mapM (kindRefOf ctx)
+      let resKind ← kindRefOf ctx resTy
       edges := edges.push
         { family := fam, opKinds, resKind, assumed := !witnessAuthored ctx args[i]! }
     else if let .const ic _ := args[i]!.getAppFn then
@@ -811,8 +874,8 @@ def binderEdges (h : HarvestCtx) (ctx : BinderCtx) (args : Array Expr)
         if let some ubtys := KindEdges.instantiatedBinderTypes ii.type uargs then
           for u in [0:uargs.size] do
             if let some (fam, opTys, resTy) := tableEdgeOfType? ubtys[u]! then
-              let opKinds ← opTys.mapM (renderKindArg ctx)
-              let resKind ← renderKindArg ctx resTy
+              let opKinds ← opTys.mapM (kindRefOf ctx)
+              let resKind ← kindRefOf ctx resTy
               edges := edges.push
                 { family := fam, opKinds, resKind,
                   assumed := !witnessAuthored ctx uargs[u]! }
@@ -897,6 +960,20 @@ def namesNode (h : HarvestCtx) (e : Expr) : Bool :=
           | _ => false)
   | _ => false
 
+/-- The node an erasure victim denotes, or a refusal. An erased value the graph cannot
+name — an inline compound, a literal — used to degrade the exit to a rendering of
+whatever expression stood there, an exit no contract could truthfully cite; the boundary
+is the one place degradation must not pass, so the harvest refuses instead: let-bind the
+value you erase, and the exit names that node. -/
+def exitVictim (h : HarvestCtx) (ctx : BinderCtx) (e : Expr) : MetaM NodeId := do
+  let id ← nodeIdOf ctx e
+  let nameable := namesNode h e &&
+    (match id.root with | .unresolved _ => false | _ => true)
+  unless nameable do
+    throwError "a value is erased here that the graph cannot name — let-bind the value \
+      you erase, so the exit names a node of the boundary"
+  return id
+
 /-- **The literal container assembly** — a single-constructor structure application read
 as its field arguments, each paired with the slot sub-group its own carrier paths name.
 Packaging is transparent to dataflow: a step that bundles what it computed lands its
@@ -911,8 +988,8 @@ degrades to the opaque reading instead of misattributing a component. `none` too
 value is not such an application, and when its head is a **registered carrier**: a carrier
 is a leaf, never a container, and its constructor is a mint, not packaging. -/
 def ctorFieldSlots (h : HarvestCtx) (ctx : BinderCtx) (e : Expr)
-    (slots : List (String × String × Bool)) :
-    MetaM (Option (Array (Expr × List (String × String × Bool)))) := do
+    (slots : List (NodeId × KindRef × Bool)) :
+    MetaM (Option (Array (Expr × List (NodeId × KindRef × Bool)))) := do
   let .const c _ := e.getAppFn | return none
   let some (.ctorInfo ci) := h.env.find? c | return none
   if h.carriers.contains ci.induct then return none
@@ -925,7 +1002,7 @@ def ctorFieldSlots (h : HarvestCtx) (ctx : BinderCtx) (e : Expr)
   -- the ordinary case, not the exception.
   let some btys := KindEdges.instantiatedBinderTypes ci.type args | return none
   let mut rest := slots
-  let mut out : Array (Expr × List (String × String × Bool)) := #[]
+  let mut out : Array (Expr × List (NodeId × KindRef × Bool)) := #[]
   for j in [ci.numParams:args.size] do
     let f := args[j]!
     let fty := btys[j]!
@@ -949,11 +1026,27 @@ when the type is neither. -/
 def bindingTarget (h : HarvestCtx) (ctx : BinderCtx) (nm : String) (t : Expr) :
     MetaM (Option Target) := do
   match ← carrierKind? h.env h.carriers ctx t with
-  | some k => return some (.one nm k true)
+  | some k => return some (.one (NodeId.letBound nm) k true)
   | none =>
     let paths ← carrierPaths h.env h.carriers ctx t
     if paths.isEmpty then return none
-    return some (.tuple [paths.toList.map fun (p, k) => (s!"{nm}{p}", k, true)])
+    return some (.tuple [paths.toList.map fun (p, k) =>
+      ({ NodeId.letBound nm with path := p }, k, true)])
+
+/-- Admit one body name into the flat kind-bearing namespace, or refuse: the name must
+be accessible — a machine-generated binder is nobody's interface — and not already
+minted by another kind-bearing `let`, do-bind, or matcher binder, across match arms
+included, because one flat namespace is what lets a contract's `letBound` reference name
+exactly one node (`Provenance.lean`, "The reference vocabulary"). -/
+def registerBodyName (st : WalkSt) (nm : Name) : MetaM WalkSt := do
+  if nm.hasMacroScopes || nm.isAnonymous then
+    throwError "a kind-bearing binding here has no accessible name — name it, so a \
+      boundary can refer to what it binds"
+  let s := toString nm
+  if st.bodyNames.contains s then
+    throwError "two kind-bearing bindings in this body are named '{s}' — one flat \
+      namespace cannot hold both; rename one"
+  return { st with bodyNames := st.bodyNames.push s }
 
 mutual
 
@@ -966,7 +1059,9 @@ partial def walk (h : HarvestCtx) (e : Expr) (ctx : BinderCtx)
   | .mdata _ b => walk h b ctx target st
   | .letE nm t v b _ =>
     let st ← walk h t ctx none st
-    let st ← walk h v ctx (← bindingTarget h ctx (toString nm) t) st
+    let bt ← bindingTarget h ctx (toString nm) t
+    let st ← if bt.isSome then registerBodyName st nm else pure st
+    let st ← walk h v ctx bt st
     walk h b ((nm, some v) :: ctx) target st
   | .lam nm t b _ =>
     let st ← walk h t ctx none st
@@ -977,16 +1072,16 @@ partial def walk (h : HarvestCtx) (e : Expr) (ctx : BinderCtx)
   | .proj sn _ b =>
     if containerPath h.env h.carriers e then
       match Target.asOne? target with
-      | some (n, k, owned) => return st.copyTo h.site (← refName ctx e) n k owned
+      | some (n, k, owned) => return st.copyTo h.site (← nodeIdOf ctx e) n k owned
       | none => return st
     let st := opaqueTarget h (Target.asOne? target) st
     let st ← if h.carrierSpecs.any (·.structName == sn) then
-        pure (st.exit (← refName ctx b))
+        pure (st.exit (← exitVictim h ctx b))
       else pure st
     walk h b ctx none st
   | .fvar .. | .bvar .. =>
     match Target.asOne? target with
-    | some (n, k, owned) => return st.copyTo h.site (← refName ctx e) n k owned
+    | some (n, k, owned) => return st.copyTo h.site (← nodeIdOf ctx e) n k owned
     | none => return st
   | _ =>
     -- a multi-output root: split a literal tuple onto its component slots
@@ -1031,7 +1126,7 @@ partial def walk (h : HarvestCtx) (e : Expr) (ctx : BinderCtx)
     else if containerPath h.env h.carriers e then
       -- a container field: its port node reaches the target through the identity wire
       match Target.asOne? target with
-      | some (n, k, owned) => return st.copyTo h.site (← refName ctx e) n k owned
+      | some (n, k, owned) => return st.copyTo h.site (← nodeIdOf ctx e) n k owned
       | none => return st
     else
       walkApp h e ctx (Target.asOne? target) st
@@ -1040,7 +1135,7 @@ partial def walk (h : HarvestCtx) (e : Expr) (ctx : BinderCtx)
 gated ingest, emission-shell mint, sub-step procedure edge, erasure, consuming
 application, tuple destructuring, configuration read, opaque. -/
 partial def walkApp (h : HarvestCtx) (e : Expr) (ctx : BinderCtx)
-    (t1 : Option (String × String × Bool)) (st : WalkSt) : MetaM WalkSt := do
+    (t1 : Option (NodeId × KindRef × Bool)) (st : WalkSt) : MetaM WalkSt := do
   let fn := e.getAppFn
   let args := e.getAppArgs
   -- the do-elaboration's administrative heads are transparent to dataflow: reading
@@ -1054,7 +1149,9 @@ partial def walkApp (h : HarvestCtx) (e : Expr) (ctx : BinderCtx)
     match args[5]! with
     | .lam nm t b _ =>
       let st ← walk h t ctx none st
-      let st ← walk h args[4]! ctx (← bindingTarget h ctx (toString nm) t) st
+      let bt ← bindingTarget h ctx (toString nm) t
+      let st ← if bt.isSome then registerBodyName st nm else pure st
+      let st ← walk h args[4]! ctx bt st
       return ← walk h b ((nm, none) :: ctx) (t1.map fun (n, k, o) => .one n k o) st
     | f =>
       let st ← walk h args[4]! ctx none st
@@ -1063,7 +1160,9 @@ partial def walkApp (h : HarvestCtx) (e : Expr) (ctx : BinderCtx)
     match args[3]! with
     | .lam nm t b _ =>
       let st ← walk h t ctx none st
-      let st ← walk h args[2]! ctx (← bindingTarget h ctx (toString nm) t) st
+      let bt ← bindingTarget h ctx (toString nm) t
+      let st ← if bt.isSome then registerBodyName st nm else pure st
+      let st ← walk h args[2]! ctx bt st
       return ← walk h b ((nm, some args[2]!) :: ctx) (t1.map fun (n, k, o) => .one n k o) st
     | f =>
       let st ← walk h args[2]! ctx none st
@@ -1118,14 +1217,14 @@ partial def walkApp (h : HarvestCtx) (e : Expr) (ctx : BinderCtx)
         | some (.lit (.strVal s)) => s
         | _ => "…"
       let kind ← match args[asp.kindIdx]? with
-        | some ka => renderKindArg ctx ka
-        | none => pure "_"
+        | some ka => kindRefOf ctx ka
+        | none => pure (.rendered "_")
       let (n, st) := sourceAt h (.attested reason) kind t1 st
       let st := mintLeaks h e n st
       return ← args.foldlM (fun st a => walk h a ctx none st) st
   -- a gated ingest: raw data admitted through a check
   if h.ingestConsts.contains c then
-    let kind := (t1.map fun (_, k, _) => k).getD "_"
+    let kind := (t1.map fun (_, k, _) => k).getD (.rendered "_")
     let (n, st) := sourceAt h .gated kind t1 st
     let st := mintLeaks h e n st
     return ← args.foldlM (fun st a => walk h a ctx none st) st
@@ -1134,7 +1233,7 @@ partial def walkApp (h : HarvestCtx) (e : Expr) (ctx : BinderCtx)
   -- source carrying the tier as its reason
   if h.declEmission && h.carrierSpecs.any (fun s =>
       s.ctorName == c && args.size == s.ctorArity) then
-    let kind := (t1.map fun (_, k, _) => k).getD "_"
+    let kind := (t1.map fun (_, k, _) => k).getD (.rendered "_")
     let (n, st) := sourceAt h (.attested "[kindEmission]") kind t1 st
     let st := mintLeaks h e n st
     return ← args.foldlM (fun st a => walk h a ctx none st) st
@@ -1146,7 +1245,7 @@ partial def walkApp (h : HarvestCtx) (e : Expr) (ctx : BinderCtx)
       if e.isAppOfArity s.projName s.projArity then e.getAppArgs[s.projArity - 1]?
       else none) then
     let st := opaqueTarget h t1 st
-    let st := st.exit (← refName ctx victim)
+    let st := st.exit (← exitVictim h ctx victim)
     return ← args.foldlM (fun st a => walk h a ctx none st) st
   -- a same-kind sum or difference written through the arithmetic instances. Family A
   -- authors no witness — the shared kind index *is* the certificate, so the edge is
@@ -1160,7 +1259,7 @@ partial def walkApp (h : HarvestCtx) (e : Expr) (ctx : BinderCtx)
     if let (some kx, some ky, some kr) := (kx, ky, kr) then
       if kx == ky && ky == kr then
         let mut st := st
-        let mut opNames : Array String := #[]
+        let mut opNames : Array NodeId := #[]
         let mut opTargets : Std.HashMap Nat Target := {}
         for j in [4, 5] do
           let a := args[j]!
@@ -1170,8 +1269,8 @@ partial def walkApp (h : HarvestCtx) (e : Expr) (ctx : BinderCtx)
             opNames := opNames.push m
             opTargets := opTargets.insert j (.one m kr true)
           else
-            opNames := opNames.push (← refName ctx a)
-        let mut resNode := ""
+            opNames := opNames.push (← nodeIdOf ctx a)
+        let mut resNode : NodeId := { root := .unresolved "" }
         match t1 with
         | some (n, k, owned) =>
           if owned then st := { st with intros := st.intros.push ⟨n, k, .derived⟩ }
@@ -1194,21 +1293,22 @@ partial def walkApp (h : HarvestCtx) (e : Expr) (ctx : BinderCtx)
         -- the incidence slots: a carrier-typed argument position, and one per carrier
         -- field path of a container-typed one — an operand handed over inside a role
         -- wrapper is the quantity it wraps, named as the wrapper spells it
-        let mut opSlots : Array (Nat × String × String) := #[]
+        let mut opSlots : Array (Nat × List String × KindRef) := #[]
         for j in [0:args.size] do
           let bty := btys[j]!
           let isCarrier := match bty.consumeTypeAnnotations.getAppFn with
             | .const cc _ => h.carriers.contains cc
             | _ => false
           if isCarrier then
-            opSlots := opSlots.push (j, "", (← carrierKind? h.env h.carriers ctx bty).getD "_")
+            opSlots := opSlots.push
+              (j, [], (← carrierKind? h.env h.carriers ctx bty).getD (.rendered "_"))
           else
             for (p, k) in ← carrierPaths h.env h.carriers ctx bty do
               opSlots := opSlots.push (j, p, k)
         if !edges.isEmpty && !opSlots.isEmpty then
           -- name the operands; a nested producer gets a synthesized node to land on
           let mut st := st
-          let mut opNames : Array String := #[]
+          let mut opNames : Array NodeId := #[]
           let mut opTargets : Std.HashMap Nat Target := {}
           for (j, p, k) in opSlots do
             let a := args[j]!
@@ -1218,13 +1318,14 @@ partial def walkApp (h : HarvestCtx) (e : Expr) (ctx : BinderCtx)
               opNames := opNames.push m
               opTargets := opTargets.insert j (.one m k true)
             else
-              opNames := opNames.push s!"{← refName ctx a}{p}"
+              let base ← nodeIdOf ctx a
+              opNames := opNames.push { base with path := base.path ++ p }
           -- emit, the first full edge landing on the target node
           let mut consumed := false
           for be in edges do
             let partialInc := opSlots.size < be.family.operandCount
             let ops := (opNames.zip be.opKinds).toList
-            let mut resNode := ""
+            let mut resNode : NodeId := { root := .unresolved "" }
             if !partialInc && !consumed && t1.isSome then
               let (n, k, owned) := t1.get!
               consumed := true
@@ -1258,7 +1359,7 @@ partial def walkApp (h : HarvestCtx) (e : Expr) (ctx : BinderCtx)
     -- `inferType` rejects a loose bound variable, and the whole ledger fails with it.
     if ma.discrs.size == 1 && ma.alts.size ≥ 2 && !ma.discrs[0]!.hasLooseBVars then
       if let some kn := nominalKind? h.env (← Meta.inferType ma.discrs[0]!) then
-        let selKind := toString (← Meta.ppExpr (mkConst kn))
+        let selKind : KindRef := .decl kn
         let resK? ← match t1 with
           | some (_, k, _) => pure (some k)
           | none =>
@@ -1281,21 +1382,21 @@ partial def walkApp (h : HarvestCtx) (e : Expr) (ctx : BinderCtx)
         if let some resK := resK? then
           let mut st := st
           let d := ma.discrs[0]!
-          let mut selNode := ""
+          let mut selNode : NodeId := { root := .unresolved "" }
           if namesNode h d then
-            selNode ← refName ctx d
+            selNode ← nodeIdOf ctx d
           else
             let (m, st') := st.nextFresh
             st := st'
             selNode := m
             st ← walk h d ctx (some (.one m selKind true)) st
-          let mut ops : List (String × String) := [(selNode, selKind)]
+          let mut ops : List (NodeId × KindRef) := [(selNode, selKind)]
           for (alt, ctx') in peeled do
             let (m, st') := st.nextFresh
             st := st'
             st ← walk h alt ctx' (some (.one m resK true)) st
             ops := ops ++ [(m, resK)]
-          let mut resNode := ""
+          let mut resNode : NodeId := { root := .unresolved "" }
           match t1 with
           | some (n, _, owned) =>
             if owned then st := { st with intros := st.intros.push ⟨n, resK, .derived⟩ }
@@ -1323,24 +1424,29 @@ partial def walkApp (h : HarvestCtx) (e : Expr) (ctx : BinderCtx)
       if peeled then
         -- kinded slots, each binder type read in the progressively extended context;
         -- a container binder takes one slot per carrier field path, the nodes named as
-        -- the continuation spells the projections
+        -- the continuation spells the projections. A matcher binder is a body name:
+        -- it joins the flat namespace the `let`s share, and is refused on reuse.
+        let mut st := st
         let mut ctx' := ctx
-        let mut slots : List (List (String × String × Bool)) := []
+        let mut slots : List (List (NodeId × KindRef × Bool)) := []
         for (nm, t) in binders do
           let slot ← match ← carrierKind? h.env h.carriers ctx' t with
-            | some k => pure [(toString nm, k, true)]
+            | some k => pure [(NodeId.letBound (toString nm), k, true)]
             | none => do
               let paths ← carrierPaths h.env h.carriers ctx' t
-              pure (paths.toList.map fun (p, k) => (s!"{nm}{p}", k, true))
+              pure (paths.toList.map fun (p, k) =>
+                ({ NodeId.letBound (toString nm) with path := p }, k, true))
+          unless slot.isEmpty do
+            st ← registerBodyName st nm
           slots := slots ++ [slot]
           ctx' := (nm, none) :: ctx'
-        let st ← walk h ma.discrs[0]! ctx (some (.tuple slots)) st
-        let st ← walk h body ctx' (t1.map fun (n, k, o) => .one n k o) st
+        st ← walk h ma.discrs[0]! ctx (some (.tuple slots)) st
+        st ← walk h body ctx' (t1.map fun (n, k, o) => .one n k o) st
         return ← ma.remaining.foldlM (fun st a => walk h a ctx none st) st
   -- a configuration read: the identity wire from the constant's port node
   if h.configConsts.contains c then
     if let some (n, k, owned) := t1 then
-      let st := st.copyTo h.site (← refName ctx e) n k owned
+      let st := st.copyTo h.site (← nodeIdOf ctx e) n k owned
       return ← args.foldlM (fun st a => walk h a ctx none st) st
   -- opaque: no reading applies (a raw mint, a sub-step call, a bare computation)
   let st := opaqueTarget h t1 st
@@ -1355,8 +1461,8 @@ kinds are the callee's *instantiated* binder kinds and a synthesized result's ki
 instantiated conclusion kind — the call site is where a kind-generic step becomes
 concrete. -/
 partial def walkSubStep (h : HarvestCtx) (c : Name) (e : Expr) (ctx : BinderCtx)
-    (targets : Sum (Option (String × String × Bool))
-      (List (List (String × String × Bool))))
+    (targets : Sum (Option (NodeId × KindRef × Bool))
+      (List (List (NodeId × KindRef × Bool))))
     (st : WalkSt) : MetaM WalkSt := do
   let args := e.getAppArgs
   let fallback (st : WalkSt) : MetaM WalkSt := do
@@ -1366,10 +1472,9 @@ partial def walkSubStep (h : HarvestCtx) (c : Name) (e : Expr) (ctx : BinderCtx)
     args.foldlM (fun st a => walk h a ctx none st) st
   let some ci := h.env.find? c | fallback st
   let some btys := KindEdges.instantiatedBinderTypes ci.type args | fallback st
-  let stepName ← stepNameOf ci
   -- the incidence slots: a carrier-typed argument position, and one per carrier field
   -- path of a container-typed one — the callee's input ports, in the same order
-  let mut opSlots : Array (Nat × String × String) := #[]
+  let mut opSlots : Array (Nat × List String × KindRef) := #[]
   for j in [0:args.size] do
     let bty := btys[j]!
     -- a leaf of the callee's interface: a registered carrier, or a registered nominal
@@ -1381,41 +1486,46 @@ partial def walkSubStep (h : HarvestCtx) (c : Name) (e : Expr) (ctx : BinderCtx)
       | .const cc _ => h.carriers.contains cc || (BoundaryAudit.nominalKindOf? h.env cc).isSome
       | _ => false
     if isCarrier then
-      opSlots := opSlots.push (j, "", (← carrierKind? h.env h.carriers ctx bty).getD "_")
+      opSlots := opSlots.push
+        (j, [], (← carrierKind? h.env h.carriers ctx bty).getD (.rendered "_"))
     else
       for (p, k) in ← carrierPaths h.env h.carriers ctx bty do
         opSlots := opSlots.push (j, p, k)
   -- no incidence exposed: the call relates nothing this graph can see, so it is not an
   -- edge. A zero-operand `step` would be a mint wearing an edge's name.
   if opSlots.isEmpty then return ← fallback st
-  let opKinds : Array String := opSlots.map (·.2.2)
+  let opKinds : Array KindRef := opSlots.map (·.2.2)
   -- name the operands; a nested producer gets a synthesized node to land on — one node
   -- per carrier field path when its value is a container, so the outer occurrence and
   -- the inner producer name the same thing whichever shape the value travels in
   let mut st := st
-  let mut fresh : Std.HashMap Nat String := {}
+  let mut fresh : Std.HashMap Nat NodeId := {}
   for (j, _, _) in opSlots do
     unless fresh.contains j do
       if isProducerApp h args[j]! || !namesNode h args[j]! then
         let (m, st') := st.nextFresh
         st := st'
         fresh := fresh.insert j m
-  let mut opNames : Array String := #[]
+  let mut opNames : Array NodeId := #[]
   for (j, p, _) in opSlots do
     match fresh[j]? with
-    | some m => opNames := opNames.push s!"{m}{p}"
-    | none => opNames := opNames.push s!"{← refName ctx args[j]!}{p}"
+    | some m => opNames := opNames.push { m with path := m.path ++ p }
+    | none =>
+      let base ← nodeIdOf ctx args[j]!
+      opNames := opNames.push { base with path := base.path ++ p }
   let mut opTargets : Std.HashMap Nat Target := {}
   for (j, m) in fresh.toList do
     let slots := (opSlots.filterMap fun (j', p, k) =>
-      if j' == j then some (s!"{m}{p}", k, true) else none).toList
+      if j' == j then some ({ m with path := m.path ++ p }, k, true) else none).toList
     opTargets := opTargets.insert j
       (match slots with
        | [(n, k, o)] => .one n k o
        | ss => .tuple [ss])
   let ops := (opNames.zip opKinds).toList
-  let fam := Provenance.EdgeFamily.step stepName opSlots.size
-  let emit (st : WalkSt) (node kind : String) (owned : Bool) : WalkSt :=
+  -- the procedure edge names the callee in full: identity, not rendering — the
+  -- assembly resolves it to a call-site instance and the renderer shortens it
+  let fam := Provenance.EdgeFamily.step c none opSlots.size
+  let emit (st : WalkSt) (node : NodeId) (kind : KindRef) (owned : Bool) : WalkSt :=
     let st := if owned then { st with intros := st.intros.push ⟨node, kind, .derived⟩ }
               else st
     let so : StepOccurrence := ⟨⟨fam, ops, node, kind, h.site⟩, opKinds, false, false⟩
@@ -1428,8 +1538,8 @@ partial def walkSubStep (h : HarvestCtx) (c : Name) (e : Expr) (ctx : BinderCtx)
       -- an unassigned single result still derives: onto a synthesized node, at the
       -- callee's instantiated conclusion kind
       let kind ← match KindEdges.instantiatedConclusion ci.type args with
-        | some concl => pure ((← carrierKind? h.env h.carriers ctx concl).getD "_")
-        | none => pure "_"
+        | some concl => pure ((← carrierKind? h.env h.carriers ctx concl).getD (.rendered "_"))
+        | none => pure (KindRef.rendered "_")
       let (m, st') := st.nextFresh
       st := emit st' m kind true
   | .inr comps =>
@@ -1477,8 +1587,8 @@ def renderUnkinded (u : UnkindedSlot) : String :=
 
 /-- One unkinded-flow line: `unkinded flow: nR ⇒ _1` — the path by which unkinded
 information mints or steers kinded information, outside the kinded algebra. -/
-def renderLeak (l : String × String) : String :=
-  s!"unkinded flow: {l.1} ⇒ {l.2}"
+def renderLeak (l : String × NodeId) : String :=
+  s!"unkinded flow: {l.1} ⇒ {renderNode l.2}"
 
 /-- The harvest of one step: the graph's constituents, with the two markers
 (`assumed` / `partialIncidence`) the graph value does not carry, the unkinded
@@ -1487,30 +1597,30 @@ constructed object — the unkinded reading deliberately stays outside it: the w
 judgment the kernel decides is about the kinded algebra, and the red inventory is the
 record of what falls outside that algebra, carried by the renderings. -/
 structure StepGraph where
-  ports : List (Port String String)
-  intros : List (Intro String String)
+  ports : List (Port NodeId KindRef)
+  intros : List (Intro NodeId KindRef)
   occs : Array StepOccurrence
-  exits : List String
+  exits : List NodeId
   unkinded : List UnkindedSlot := []
-  leaks : List (String × String) := []
+  leaks : List (String × NodeId) := []
 
 /-- **The constructed graph value.** Partial-incidence occurrences are excluded from
 the wiring — a sub-step boundary is not an edge of this step's graph — so a step that
 hides an operand behind a helper is refused until assembly closes it. -/
-def StepGraph.provenance (s : StepGraph) : Provenance String String :=
+def StepGraph.provenance (s : StepGraph) : Provenance NodeId KindRef :=
   { ports := s.ports
     intros := s.intros
     occurrences := ((s.occs.filter (!·.partialIncidence)).map (·.occ)).toList
     exits := s.exits }
 
 /-- One port line: `input x : alphaK`. -/
-def renderPort (p : Port String String) : String :=
-  s!"{p.dir.label} {p.node} : {p.kind}"
+def renderPort (p : Port NodeId KindRef) : String :=
+  s!"{p.dir.label} {renderNode p.node} : {p.kind.render}"
 
 /-- One introduction line: `derived t : deltaK`, `gated _1 : k`,
 `attested "reason" _1 : k`. -/
-def renderIntro (i : Intro String String) : String :=
-  s!"{i.tier.label} {i.node} : {i.kind}"
+def renderIntro (i : Intro NodeId KindRef) : String :=
+  s!"{i.tier.label} {renderNode i.node} : {i.kind.render}"
 
 /-- The full graph rendering: ports, unkinded positions, introductions, wired
 occurrences (markers kept), exits, unkinded flows, and the evaluated well-formedness
@@ -1520,7 +1630,7 @@ def StepGraph.renderLines (s : StepGraph) : List String :=
     ++ s.unkinded.map renderUnkinded
     ++ s.intros.map renderIntro
     ++ (s.occs.map (·.renderWired)).toList
-    ++ s.exits.map (fun n => s!"exit {n}")
+    ++ s.exits.map (fun n => s!"exit {renderNode n}")
     ++ s.leaks.map renderLeak
     ++ [s!"well-formed: {s.provenance.wellFormed}"]
 
@@ -1551,15 +1661,47 @@ def stepGraphOf (decl : Name) (subSteps : Array Name := #[]) : MetaM StepGraph :
         t.decl == decl && t.tier == .kindEmission
       subSteps }
   Meta.forallTelescope info.type fun fvars resultTy => do
-    let mut ports : Array (Port String String) := #[]
+    let mut ports : Array (Port NodeId KindRef) := #[]
     let mut unkinded : Array UnkindedSlot := #[]
     let mut unkIdx : Array (Nat × String) := #[]
+    -- the signature's name gates, before any port is minted. A kind-bearing binder or a
+    -- kind binder with an inaccessible name would put a machine-generated name on the
+    -- interface — nobody's reference — and two sharing one name would make one
+    -- reference two nodes; both are refused here, where the signature is the fix.
+    let mut portNames : Array String := #[]
+    let mut kindParams : Array String := #[]
+    for fv in fvars do
+      let ty ← fv.fvarId!.getType
+      let unm := (← fv.fvarId!.getDecl).userName
+      if ty.isConstOf ``KindOfProperty then
+        if unm.hasMacroScopes || unm.isAnonymous then
+          throwError "a kind binder of '{decl}' has no accessible name — name it, so \
+            ports can state their kind by it"
+        let s := toString unm
+        if kindParams.contains s then
+          throwError "two kind binders of '{decl}' are named '{s}' — a kind stated by \
+            that name would not say which; rename one"
+        kindParams := kindParams.push s
+      else
+        let kinded := (← carrierKind? env carriers [] ty).isSome
+          || !(← carrierPaths env carriers [] ty).isEmpty
+          || (← signatureKind? env carriers [] ty).isSome
+        if kinded then
+          if unm.hasMacroScopes || unm.isAnonymous then
+            throwError "a kind-bearing binder of '{decl}' has no accessible name — name \
+              it, so the port it states is a reference someone can write"
+          let s := toString unm
+          if portNames.contains s then
+            throwError "two kind-bearing binders of '{decl}' are named '{s}' — one \
+              reference cannot name both; rename one"
+          portNames := portNames.push s
     for idx in [0:fvars.size] do
       let fv := fvars[idx]!
       let ty ← fv.fvarId!.getType
       if let some k ← carrierKind? env carriers [] ty then
         ports := ports.push
-          { node := toString (← fv.fvarId!.getUserName), kind := k, dir := .input }
+          { node := NodeId.binder (toString (← fv.fvarId!.getUserName)), kind := k
+            dir := .input }
       else
         -- a container binder states its kinds through its fields: one port per carrier
         -- field path, named as the body spells the projection
@@ -1567,13 +1709,15 @@ def stepGraphOf (decl : Name) (subSteps : Array Name := #[]) : MetaM StepGraph :
         if !paths.isEmpty then
           let nm := toString (← fv.fvarId!.getUserName)
           for (p, k) in paths do
-            ports := ports.push { node := s!"{nm}{p}", kind := k, dir := .input }
+            ports := ports.push
+              { node := { NodeId.binder nm with path := p }, kind := k, dir := .input }
         else if let some sig ← signatureKind? env carriers [] ty then
           -- a functional binder ports at its kind signature — the module-valued port:
           -- a kind-typed arrow is an anonymous contract, so the type is the declaration
           -- and the harvest derives the port mechanically
           ports := ports.push
-            { node := toString (← fv.fvarId!.getUserName), kind := sig, dir := .input }
+            { node := NodeId.binder (toString (← fv.fvarId!.getUserName)), kind := sig
+              dir := .input }
         else
           -- the unkinded reading: an explicit data binder whose type carries no kind
           -- information at all (propositions and sorts are interface logic, not data)
@@ -1586,25 +1730,26 @@ def stepGraphOf (decl : Name) (subSteps : Array Name := #[]) : MetaM StepGraph :
     if let some v := info.value? then
       for c in configReads cfgConsts (subSteps.foldl NameSet.insert {}) v do
         let some ci := env.find? c | continue
-        -- the constant's full name, for the reason `stepNameOf` gives: a config port is
-        -- an interface node, and its identity cannot depend on who is reading
-        let node := toString c
+        -- the constant's full name: a config port is an interface node, and its
+        -- identity cannot depend on who is reading
+        let node := NodeId.config c
         -- a container-typed constant states its kinds the way a container binder does:
         -- one config port per carrier field path (a configured quantity does not stop
         -- being one for travelling in a role)
         let slots ← Meta.forallTelescope ci.type fun _ resTy => do
           match ← carrierKind? env carriers [] resTy with
-          | some k => return #[("", k)]
+          | some k => return #[(([] : List String), k)]
           | none => carrierPaths env carriers [] resTy
         if slots.isEmpty then
-          ports := ports.push { node := node, kind := "_", dir := .config }
+          ports := ports.push { node := node, kind := .unkinded, dir := .config }
         else
           for (p, k) in slots do
-            ports := ports.push { node := s!"{node}{p}", kind := k, dir := .config }
+            ports := ports.push
+              { node := { node with path := p }, kind := k, dir := .config }
     let comps := prodComponents resultTy
-    let mut outSlots : Array (List (String × String × Bool)) := #[]
+    let mut outSlots : Array (List (NodeId × KindRef × Bool)) := #[]
     for i in [0:comps.size] do
-      let node := if comps.size == 1 then "result" else s!"result.{i + 1}"
+      let node := if comps.size == 1 then NodeId.result else NodeId.resultAt (i + 1)
       match ← carrierKind? env carriers [] comps[i]! with
       | some k =>
         ports := ports.push { node := node, kind := k, dir := .output }
@@ -1616,18 +1761,21 @@ def stepGraphOf (decl : Name) (subSteps : Array Name := #[]) : MetaM StepGraph :
                     else pure #[]
         if !paths.isEmpty then
           for (p, k) in paths do
-            ports := ports.push { node := s!"{node}{p}", kind := k, dir := .output }
+            ports := ports.push
+              { node := { node with path := p }, kind := k, dir := .output }
           outSlots := outSlots.push
-            (paths.toList.map fun (p, k) => (s!"{node}{p}", k, false))
+            (paths.toList.map fun (p, k) => ({ node with path := p }, k, false))
         else if !cases.isEmpty then
           for (p, k) in cases do
-            ports := ports.push { node := s!"{node}{p}", kind := k, dir := .conditional }
+            ports := ports.push
+              { node := { node with path := p }, kind := k, dir := .conditional }
           outSlots := outSlots.push
-            (cases.toList.map fun (p, k) => (s!"{node}{p}", k, false))
+            (cases.toList.map fun (p, k) => ({ node with path := p }, k, false))
         else
           outSlots := outSlots.push []
           if !cty.isSort && !(← Meta.isProp cty) && !(← kindBearing carriers cty) then
-            unkinded := unkinded.push ⟨node, toString (← Meta.ppExpr cty), .output⟩
+            unkinded := unkinded.push
+              ⟨renderNode node, toString (← Meta.ppExpr cty), .output⟩
     let st ← match info.value? with
       | none => pure {}
       | some v =>
@@ -1650,11 +1798,11 @@ def stepGraphOf (decl : Name) (subSteps : Array Name := #[]) : MetaM StepGraph :
           -- again per field (`ctorFieldSlots`), so a bundled result is attributed per
           -- port and not wholesale. `none` where the body computes its result another
           -- way (a branch, a call), and attribution falls back to every kinded output.
-          let attrib? : Option (Array (Expr × List (String × String × Bool))) ←
+          let attrib? : Option (Array (Expr × List (NodeId × KindRef × Bool))) ←
             match prodValueComps body comps.size with
             | none => pure none
             | some vs => do
-              let mut out : Array (Expr × List (String × String × Bool)) := #[]
+              let mut out : Array (Expr × List (NodeId × KindRef × Bool)) := #[]
               for ci in [0:vs.size] do
                 match ← ctorFieldSlots hv [] vs[ci]! outSlots[ci]! with
                 | some fss => out := out ++ fss
@@ -1736,34 +1884,38 @@ definition lives. -/
 structure AssemblyLevel where
   decl : Name
   name : String
+  /-- The level's identity — the call-site instance the nodes of this level carry. -/
+  lvl : Provenance.Level
   walked : Bool
-  graph : Provenance String String
+  graph : Provenance NodeId KindRef
   src : String := ""
   /-- The member's unkinded signature positions, in the level's node namespace — the
   red inventory a rendering marks (module header, "Unkinded positions"). -/
   unkinded : List UnkindedSlot := []
   /-- The member's unkinded flows, namespaced, kept where the target node is declared
   in the level's contributed graph — the red arrows. -/
-  leaks : List (String × String) := []
+  leaks : List (String × NodeId) := []
 deriving Inhabited
 
 /-- A multi-step assembly: the levels with their modes, the one union graph the
-verdict and the kernel theorem are stated on, and the citation relation. -/
+verdict and the kernel theorem are stated on, and the citation relation (by member
+declaration name; renderings shorten). -/
 structure Assembly where
   levels : Array AssemblyLevel
-  graph : Provenance String String
-  cites : Array (String × String)
+  graph : Provenance NodeId KindRef
+  cites : Array (Name × Name)
 
 /-- The signature box of an interface-mode level: its ports, plus the level's own
 procedure edge deriving each output port from the input ports — the signature's claim,
 with interior accountability the audit's. -/
-def interfaceBox (name : String) (g : StepGraph) : Provenance String String :=
+def interfaceBox (member : Name) (g : StepGraph) : Provenance NodeId KindRef :=
   let ins := g.ports.filter (·.dir == .input)
   let outs := g.ports.filter (·.dir.produced)
   { ports := g.ports
     intros := []
     occurrences := outs.map fun o =>
-      ⟨.step name ins.length, ins.map (fun p => (p.node, p.kind)), o.node, o.kind, name⟩
+      ⟨.step member none ins.length, ins.map (fun p => (p.node, p.kind)), o.node, o.kind,
+       lastComponent member⟩
     exits := [] }
 
 /-- Assemble a set of declarations into one multi-step graph (module section, "The
@@ -1802,9 +1954,9 @@ def assemble (decls : Array Name) : MetaM Assembly := do
   -- unkinded reading rides along either way (a signature fact and a body fact — the
   -- interface box changes neither)
   let mut walkedFlags : Array Bool := #[]
-  let mut contribs : Array (Provenance String String) := #[]
+  let mut contribs : Array (Provenance NodeId KindRef) := #[]
   let mut unks : Array (List UnkindedSlot) := #[]
-  let mut lks : Array (List (String × String)) := #[]
+  let mut lks : Array (List (String × NodeId)) := #[]
   for i in [0:decls.size] do
     let d := decls[i]!
     let g ← stepGraphOf d (subSteps := decls.filter (· != d))
@@ -1816,7 +1968,7 @@ def assemble (decls : Array Name) : MetaM Assembly := do
       contribs := contribs.push p
     else
       walkedFlags := walkedFlags.push false
-      contribs := contribs.push (interfaceBox names[i]! g)
+      contribs := contribs.push (interfaceBox d g)
   -- call-site dissection: the instance tree, its wires, demotions, and per-instance
   -- kind assignments. **A level belongs to a call site, not to a member.** A callee
   -- wired from two call sites is two instantiations — different operands, and for a
@@ -1836,14 +1988,14 @@ def assemble (decls : Array Name) : MetaM Assembly := do
   for i in [0:decls.size] do
     unless walkedFlags[i]! do continue
     for o in contribs[i]!.occurrences do
-      if let .step t _ := o.family then
-        if let some j := names.findIdx? (· == t) then
+      if let .step t _ _ := o.family then
+        if let some j := decls.findIdx? (· == t) then
           isCallee := isCallee.set! j true
   -- the instances, in discovery order: the member, the calling instance, the call's
   -- operands, and the caller-occurrence indices the call spans
   let mut iMem : Array Nat := #[]
   let mut iParent : Array (Option Nat) := #[]
-  let mut iOps : Array (List (String × String)) := #[]
+  let mut iOps : Array (List (NodeId × KindRef)) := #[]
   let mut iOccs : Array (Array Nat) := #[]
   let mut iChildren : Array (Array (Nat × Array Nat)) := #[]
   for j in [0:decls.size] do
@@ -1859,11 +2011,11 @@ def assemble (decls : Array Name) : MetaM Assembly := do
       let i := iMem[cur]!
       if walkedFlags[i]! then
         let occs := contribs[i]!.occurrences.toArray
-        let mut groups : Array (Nat × List (String × String) × Array Nat) := #[]
+        let mut groups : Array (Nat × List (NodeId × KindRef) × Array Nat) := #[]
         for oi in [0:occs.size] do
           let o := occs[oi]!
-          if let .step t _ := o.family then
-            if let some j := names.findIdx? (· == t) then
+          if let .step t _ _ := o.family then
+            if let some j := decls.findIdx? (· == t) then
               match groups.findIdx? (fun g => g.1 == j && g.2.1 == o.operands) with
               | some gi => groups := groups.modify gi fun g => (g.1, g.2.1, g.2.2.push oi)
               | none => groups := groups.push (j, o.operands, #[oi])
@@ -1881,34 +2033,41 @@ def assemble (decls : Array Name) : MetaM Assembly := do
         iMem := iMem.push j; iParent := iParent.push none
         iOps := iOps.push []; iOccs := iOccs.push #[]
         growing := true
-  -- the instance names: the plain member name while there is one instance to name
+  -- the instance identities: the member's declaration name with a 1-based ordinal,
+  -- always present in the identity; `Level.render` collapses the ordinal in names
   let mut instCount : Array Nat := .replicate decls.size 0
   for k in [0:iMem.size] do instCount := instCount.modify iMem[k]! (· + 1)
   let mut seenInst : Array Nat := .replicate decls.size 0
   let mut iName : Array String := #[]
+  let mut iLevel : Array Provenance.Level := #[]
+  let mut iOrd : Array Nat := #[]
   for k in [0:iMem.size] do
     let j := iMem[k]!
     let n := seenInst[j]! + 1
     seenInst := seenInst.set! j n
-    iName := iName.push (if instCount[j]! ≤ 1 then names[j]! else s!"{names[j]!}#{n}")
+    let lvl := Provenance.Level.inst decls[j]! n
+    iLevel := iLevel.push lvl
+    iOrd := iOrd.push n
+    iName := iName.push lvl.render
   -- the wires: each call's operands onto its own instance's input ports, with that
   -- instance's kind assignment and both demotions
-  let mut wires : Array (Provenance.Occurrence String String) := #[]
-  let mut demoted : Array String := #[]
-  let mut demotedOuts : Array String := #[]
-  let mut kindPairs : Array (Array (String × String)) := .replicate iMem.size #[]
+  let mut wires : Array (Provenance.Occurrence NodeId KindRef) := #[]
+  let mut demoted : Array NodeId := #[]
+  let mut demotedOuts : Array NodeId := #[]
+  let mut kindPairs : Array (Array (KindRef × KindRef)) := .replicate iMem.size #[]
   for k in [0:iMem.size] do
     let some pk := iParent[k]! | continue
-    let caller := iName[pk]!
-    let callee := iName[k]!
+    let callerLvl := iLevel[pk]!
+    let calleeLvl := iLevel[k]!
     let j := iMem[k]!
     let calleeIns := contribs[j]!.ports.filter (·.dir == .input)
     let calleeOuts := contribs[j]!.ports.filter (·.dir.produced)
     for (p, opc) in calleeIns.zip iOps[k]! do
-      wires := wires.push
-        ⟨.copy, [(s!"{caller}/{opc.1}", opc.2)], s!"{callee}/{p.node}", opc.2, caller⟩
-      unless demoted.contains s!"{callee}/{p.node}" do
-        demoted := demoted.push s!"{callee}/{p.node}"
+      let src : NodeId := { opc.1 with level := some callerLvl }
+      let dst : NodeId := { p.node with level := some calleeLvl }
+      wires := wires.push ⟨.copy, [(src, opc.2)], dst, opc.2, iName[pk]!⟩
+      unless demoted.contains dst do
+        demoted := demoted.push dst
       kindPairs := kindPairs.modify k (·.push (p.kind, opc.2))
     -- the call's results monomorphize the callee's output kinds, in slot order, and
     -- the consumed slot demotes: what a caller in the assembly takes is interior to
@@ -1918,8 +2077,9 @@ def assemble (decls : Array Name) : MetaM Assembly := do
       if let some out := calleeOuts[s]? then
         let o := pocc[iOccs[k]![s]!]!
         kindPairs := kindPairs.modify k (·.push (out.kind, o.resultKind))
-        unless demotedOuts.contains s!"{callee}/{out.node}" do
-          demotedOuts := demotedOuts.push s!"{callee}/{out.node}"
+        let dst : NodeId := { out.node with level := some calleeLvl }
+        unless demotedOuts.contains dst do
+          demotedOuts := demotedOuts.push dst
   -- **A configuration constant that is also a member is a wire, not a source.** A
   -- deployment constant read as `c.field` declares a configuration port at that address,
   -- which is right when `c` is somebody else's business. When `c` is a *member of this
@@ -1931,36 +2091,32 @@ def assemble (decls : Array Name) : MetaM Assembly := do
   -- the producer's output for the same reason a consumed call result demotes. What
   -- surfaces in their place is the producing member's own interface, which is the thing
   -- that was being hidden.
-  let mut cfgWires : Array (Provenance.Occurrence String String) := #[]
-  let mut demotedCfg : Array String := #[]
+  let mut cfgWires : Array (Provenance.Occurrence NodeId KindRef) := #[]
+  let mut demotedCfg : Array NodeId := #[]
   let mut wiredCite : Array (Nat × Nat) := #[]
   for j in [0:decls.size] do
     -- one instance only: a constant is read at an address, and an address that named
     -- two instances would not be one
     if instCount[j]! > 1 then continue
-    let full := toString decls[j]!
-    let prod := names[j]!
+    let prodDecl := decls[j]!
     for j' in [0:decls.size] do
       if j' == j then continue
       for q in contribs[j']!.ports do
         if q.dir != .config then continue
-        let path? :=
-          if q.node == full then some ""
-          else if q.node.startsWith (full ++ ".") then some (q.node.drop full.length).toString
-          else none
-        let some path := path? | continue
-        let src := s!"{prod}/result{path}"
-        let dst := s!"{names[j']!}/{q.node}"
+        unless q.node.root == .const prodDecl do continue
+        let src : NodeId :=
+          { level := some (.inst prodDecl 1), root := .result none, path := q.node.path }
+        let dst : NodeId := { q.node with level := some (.member decls[j']!) }
         unless demotedCfg.contains dst do
           demotedCfg := demotedCfg.push dst
-          cfgWires := cfgWires.push ⟨.copy, [(src, q.kind)], dst, q.kind, prod⟩
+          cfgWires := cfgWires.push ⟨.copy, [(src, q.kind)], dst, q.kind, names[j]!⟩
         unless demotedOuts.contains src do demotedOuts := demotedOuts.push src
         unless wiredCite.contains (j', j) do wiredCite := wiredCite.push (j', j)
   -- transform each instance: name its calls after the instances they reach,
   -- monomorphize, namespace, demote — then union, the members in declaration order
   let mut levels : Array AssemblyLevel := #[]
-  let mut graph : Provenance String String := ⟨[], [], [], []⟩
-  let mut declaredCfg : Std.HashSet String := {}
+  let mut graph : Provenance NodeId KindRef := ⟨[], [], [], []⟩
+  let mut declaredCfg : Array NodeId := #[]
   let mut order : Array Nat := #[]
   for j in [0:decls.size] do
     for k in [0:iMem.size] do
@@ -1968,31 +2124,31 @@ def assemble (decls : Array Name) : MetaM Assembly := do
   for k in order do
     let j := iMem[k]!
     let name := iName[k]!
-    let kmap : Std.HashMap String String :=
-      kindPairs[k]!.foldl (init := {}) fun m pr =>
-        if m.contains pr.1 then m else m.insert pr.1 pr.2
+    let lvl := iLevel[k]!
+    -- first assignment wins, as ever: the association list is searched in push order
+    let kmap := kindPairs[k]!.toList
     let p := contribs[j]!
     -- a procedure edge names the instance it reaches, so two calls to one member are
     -- two edges to two boxes rather than two edges that read alike
-    let mut calleeAt : Std.HashMap Nat String := {}
+    let mut calleeAt : Std.HashMap Nat (Name × Nat) := {}
     for (c, ois) in iChildren[k]! do
       for oi in ois do
-        calleeAt := calleeAt.insert oi iName[c]!
+        calleeAt := calleeAt.insert oi (decls[iMem[c]!]!, iOrd[c]!)
     let occArr := p.occurrences.toArray
-    let mut newOccs : Array (Provenance.Occurrence String String) := #[]
+    let mut newOccs : Array (Provenance.Occurrence NodeId KindRef) := #[]
     for oi in [0:occArr.size] do
       let o := occArr[oi]!
       newOccs := newOccs.push <|
         match o.family with
-        | .step _ a =>
+        | .step _ _ a =>
           if walkedFlags[j]! then
             match calleeAt[oi]? with
-            | some nm => { o with family := .step nm a }
+            | some (m, ord) => { o with family := .step m (some ord) a }
             | none => o
-          else { o with family := .step name a }
+          else { o with family := .step decls[j]! (some iOrd[k]!) a }
         | _ => o
     let p := { p with occurrences := newOccs.toList }
-    let p := p.mapKinds (fun kd => (kmap.get? kd).getD kd)
+    let p := p.mapKinds (Provenance.KindRef.subst kmap)
     -- **A configuration port is an address, an argument is a position.** A member's
     -- instances are one member reading one constant, so their config ports carry the
     -- *member's* namespace and only the first instance declares them — the same rule the
@@ -2000,12 +2156,13 @@ def assemble (decls : Array Name) : MetaM Assembly := do
     -- port and two incidence positions. Three ports for one constant would tell a
     -- deployment to bind it three times, and `Contract.discharges` would count it three
     -- times over. Inputs are not shared: two instances take two data.
-    let member := names[j]!
-    let cfgNodes : Std.HashSet String :=
-      p.ports.foldl (init := {}) fun acc q =>
-        if q.dir == .config then acc.insert q.node else acc
+    let member := decls[j]!
+    let cfgNodes : Array NodeId :=
+      p.ports.foldl (init := #[]) fun acc q =>
+        if q.dir == .config then acc.push q.node else acc
     let p := p.mapNodes fun n =>
-      if cfgNodes.contains n then s!"{member}/{n}" else s!"{name}/{n}"
+      if cfgNodes.contains n then { n with level := some (.member member) }
+      else { n with level := some lvl }
     let (demotedPorts, keptPorts) := p.ports.partition fun q =>
       (q.dir == .input && demoted.contains q.node)
         || (q.dir.produced && demotedOuts.contains q.node)
@@ -2013,18 +2170,19 @@ def assemble (decls : Array Name) : MetaM Assembly := do
     let keptPorts := keptPorts.filter fun q =>
       q.dir != .config || !declaredCfg.contains q.node
     for q in keptPorts do
-      if q.dir == .config then declaredCfg := declaredCfg.insert q.node
+      if q.dir == .config then declaredCfg := declaredCfg.push q.node
     let p := { p with
       ports := keptPorts
       intros := demotedPorts.map (fun q => ⟨q.node, q.kind, .derived⟩) ++ p.intros }
     let nsUnk := unks[j]!.map fun u => { u with node := s!"{name}/{u.node}" }
-    let nsLks := (lks[j]!.map fun (s, t) => (s!"{name}/{s}", s!"{name}/{t}")).filter
+    let nsLks := (lks[j]!.map fun (s, t) =>
+        (s!"{name}/{s}", { t with level := some lvl })).filter
       fun (_, t) => (p.kindOf? t).isSome
-    levels := levels.push ⟨decls[j]!, name, walkedFlags[j]!, p, srcs[j]!, nsUnk, nsLks⟩
+    levels := levels.push ⟨decls[j]!, name, lvl, walkedFlags[j]!, p, srcs[j]!, nsUnk, nsLks⟩
     graph := graph.union p
   graph := graph.union ⟨[], [], wires.toList ++ cfgWires.toList, []⟩
   -- the citation relation: which member's value references which
-  let mut cites : Array (String × String) := #[]
+  let mut cites : Array (Name × Name) := #[]
   for i in [0:decls.size] do
     let d := decls[i]!
     let others : NameSet :=
@@ -2037,15 +2195,15 @@ def assemble (decls : Array Name) : MetaM Assembly := do
           -- unless the walk *wired* it: a citation is a reference the graph could not
           -- carry, and one that became an identity wire is carried
           unless wiredCite.contains (i, j) do
-            cites := cites.push (names[i]!, names[j]!)
+            cites := cites.push (decls[i]!, decls[j]!)
   return { levels, graph, cites }
 
 /-- Render one graph occurrence in the wired grammar: the edge equation over the kinds
 its operands state, the incidence, the result node. -/
-def renderOccurrence (o : Provenance.Occurrence String String) : String :=
-  let names := o.operands.map (·.1)
-  let eq := o.family.render (o.operands.map (·.2)) o.resultKind
-  s!"{eq} ⟨{String.intercalate ", " names}⟩ ⇒ {o.result}"
+def renderOccurrence (o : Provenance.Occurrence NodeId KindRef) : String :=
+  let names := o.operands.map (renderNode ·.1)
+  let eq := o.family.render (o.operands.map (·.2.render)) o.resultKind.render
+  s!"{eq} ⟨{String.intercalate ", " names}⟩ ⇒ {renderNode o.result}"
 
 /-- The assembly rendering: each level with its inclusion mode, the union graph's
 ports, introductions, occurrences, and exits, the levels' unkinded positions and
@@ -2056,20 +2214,61 @@ def Assembly.renderLines (a : Assembly) : List String :=
     ++ a.graph.ports.map renderPort
     ++ a.graph.intros.map renderIntro
     ++ a.graph.occurrences.map renderOccurrence
-    ++ a.graph.exits.map (fun n => s!"exit {n}")
+    ++ a.graph.exits.map (fun n => s!"exit {renderNode n}")
     ++ (a.levels.toList.flatMap fun l => l.unkinded.map renderUnkinded)
     ++ (a.levels.toList.flatMap fun l => l.leaks.map renderLeak)
-    ++ a.cites.toList.map (fun (x, y) => s!"cites: {x} → {y}")
+    ++ a.cites.toList.map (fun (x, y) =>
+        s!"cites: {lastComponent x} → {lastComponent y}")
     ++ [s!"well-formed: {a.graph.wellFormed}"]
 
 /-! ## Reflection — the harvested graph as a term, for the kernel
 
-`Provenance String String` reflected as an `Expr` literal, so `#kind_graph_decide` can
+`Provenance NodeId KindRef` reflected as an `Expr` literal, so `#kind_graph_decide` can
 state `WellFormed` on the constructed object and have the kernel reduce the checker —
 "the kernel checks the wiring", literally, on harvested graphs and not only hand-authored
 ones. -/
 
-private def strE : Expr := mkConst ``String
+private def nodeIdE : Expr := mkConst ``Provenance.NodeId
+private def kindRefE : Expr := mkConst ``Provenance.KindRef
+
+/-- `KindRef` as a term. Hand-recursive because the nested `List` defeats a derived
+instance the same way it defeats derived `BEq`. -/
+private partial def kindRefToExpr : KindRef → Expr
+  | .decl n => mkApp (mkConst ``Provenance.KindRef.decl) (toExpr n)
+  | .param b => mkApp (mkConst ``Provenance.KindRef.param) (toExpr b)
+  | .sig cs => mkApp (mkConst ``Provenance.KindRef.sig) (listE cs)
+  | .tuple cs => mkApp (mkConst ``Provenance.KindRef.tuple) (listE cs)
+  | .unkinded => mkConst ``Provenance.KindRef.unkinded
+  | .rendered s => mkApp (mkConst ``Provenance.KindRef.rendered) (toExpr s)
+where
+  listE (cs : List KindRef) : Expr :=
+    cs.foldr (init := mkApp (mkConst ``List.nil [levelZero]) kindRefE) fun c acc =>
+      mkApp3 (mkConst ``List.cons [levelZero]) kindRefE (kindRefToExpr c) acc
+
+instance : ToExpr KindRef where
+  toTypeExpr := kindRefE
+  toExpr := kindRefToExpr
+
+instance : ToExpr NodeRef where
+  toTypeExpr := mkConst ``Provenance.NodeRef
+  toExpr
+    | .binder n => mkApp (mkConst ``Provenance.NodeRef.binder) (toExpr n)
+    | .letBound n => mkApp (mkConst ``Provenance.NodeRef.letBound) (toExpr n)
+    | .result c => mkApp (mkConst ``Provenance.NodeRef.result) (toExpr c)
+    | .const n => mkApp (mkConst ``Provenance.NodeRef.const) (toExpr n)
+    | .fresh n => mkApp (mkConst ``Provenance.NodeRef.fresh) (toExpr n)
+    | .unresolved r => mkApp (mkConst ``Provenance.NodeRef.unresolved) (toExpr r)
+
+instance : ToExpr Provenance.Level where
+  toTypeExpr := mkConst ``Provenance.Level
+  toExpr
+    | .inst m k => mkApp2 (mkConst ``Provenance.Level.inst) (toExpr m) (toExpr k)
+    | .member m => mkApp (mkConst ``Provenance.Level.member) (toExpr m)
+
+instance : ToExpr NodeId where
+  toTypeExpr := nodeIdE
+  toExpr n := mkApp3 (mkConst ``Provenance.NodeId.mk)
+    (toExpr n.level) (toExpr n.root) (toExpr n.path)
 
 instance : ToExpr PortDir where
   toTypeExpr := mkConst ``Provenance.PortDir
@@ -2100,29 +2299,29 @@ instance : ToExpr EdgeFamily where
     | .tableMul => mkConst ``Provenance.EdgeFamily.tableMul
     | .tableDiv => mkConst ``Provenance.EdgeFamily.tableDiv
     | .copy => mkConst ``Provenance.EdgeFamily.copy
-    | .step nm a =>
-      mkApp2 (mkConst ``Provenance.EdgeFamily.step) (toExpr nm) (toExpr a)
+    | .step m i a =>
+      mkApp3 (mkConst ``Provenance.EdgeFamily.step) (toExpr m) (toExpr i) (toExpr a)
     | .select n => mkApp (mkConst ``Provenance.EdgeFamily.select) (toExpr n)
 
-instance : ToExpr (Port String String) where
-  toTypeExpr := mkApp2 (mkConst ``Provenance.Port) strE strE
-  toExpr p := mkApp5 (mkConst ``Provenance.Port.mk) strE strE
+instance : ToExpr (Port NodeId KindRef) where
+  toTypeExpr := mkApp2 (mkConst ``Provenance.Port) nodeIdE kindRefE
+  toExpr p := mkApp5 (mkConst ``Provenance.Port.mk) nodeIdE kindRefE
     (toExpr p.node) (toExpr p.kind) (toExpr p.dir)
 
-instance : ToExpr (Intro String String) where
-  toTypeExpr := mkApp2 (mkConst ``Provenance.Intro) strE strE
-  toExpr i := mkApp5 (mkConst ``Provenance.Intro.mk) strE strE
+instance : ToExpr (Intro NodeId KindRef) where
+  toTypeExpr := mkApp2 (mkConst ``Provenance.Intro) nodeIdE kindRefE
+  toExpr i := mkApp5 (mkConst ``Provenance.Intro.mk) nodeIdE kindRefE
     (toExpr i.node) (toExpr i.kind) (toExpr i.tier)
 
-instance : ToExpr (Occurrence String String) where
-  toTypeExpr := mkApp2 (mkConst ``Provenance.Occurrence) strE strE
-  toExpr o := mkApp7 (mkConst ``Provenance.Occurrence.mk) strE strE
+instance : ToExpr (Occurrence NodeId KindRef) where
+  toTypeExpr := mkApp2 (mkConst ``Provenance.Occurrence) nodeIdE kindRefE
+  toExpr o := mkApp7 (mkConst ``Provenance.Occurrence.mk) nodeIdE kindRefE
     (toExpr o.family) (toExpr o.operands) (toExpr o.result) (toExpr o.resultKind)
     (toExpr o.site)
 
-instance : ToExpr (Provenance String String) where
-  toTypeExpr := mkApp2 (mkConst ``PropertyKindCalculus.Provenance) strE strE
-  toExpr g := mkApp6 (mkConst ``PropertyKindCalculus.Provenance.mk) strE strE
+instance : ToExpr (Provenance NodeId KindRef) where
+  toTypeExpr := mkApp2 (mkConst ``PropertyKindCalculus.Provenance) nodeIdE kindRefE
+  toExpr g := mkApp6 (mkConst ``PropertyKindCalculus.Provenance.mk) nodeIdE kindRefE
     (toExpr g.ports) (toExpr g.intros) (toExpr g.occurrences) (toExpr g.exits)
 
 /-! ## The declared boundary — reading a contract, rendering the comparison
@@ -2135,23 +2334,23 @@ failure. The split is deliberate: evaluation informs the message, the kernel car
 claim. -/
 
 private unsafe def evalContractUnsafe (e : Expr) :
-    MetaM (Provenance.Contract String String) :=
-  Meta.evalExpr (Provenance.Contract String String)
-    (mkApp2 (mkConst ``Provenance.Contract) strE strE) e
+    MetaM (Provenance.Contract NodeId KindRef) :=
+  Meta.evalExpr (Provenance.Contract NodeId KindRef)
+    (mkApp2 (mkConst ``Provenance.Contract) nodeIdE kindRefE) e
 
 /-- The declared contract's value, for rendering the comparison. Replaced at run time by
 the evaluator; the safe body stands only where no evaluator is available, and no
 proposition rests on it. -/
 @[implemented_by evalContractUnsafe]
-private def evalContract (_e : Expr) : MetaM (Provenance.Contract String String) :=
+private def evalContract (_e : Expr) : MetaM (Provenance.Contract NodeId KindRef) :=
   throwError "contract values cannot be read in this environment"
 
 /-- The declared contract's value, with the type check that gives a legible error before
 the evaluator is asked for one. -/
-def contractValueOf (cname : Name) : MetaM (Provenance.Contract String String) := do
-  let want := mkApp2 (mkConst ``Provenance.Contract) strE strE
+def contractValueOf (cname : Name) : MetaM (Provenance.Contract NodeId KindRef) := do
+  let want := mkApp2 (mkConst ``Provenance.Contract) nodeIdE kindRefE
   unless ← Meta.isDefEq (← Meta.inferType (mkConst cname)) want do
-    throwError "'{cname}' is not a 'Provenance.Contract String String'"
+    throwError "'{cname}' is not a 'Provenance.Contract NodeId KindRef'"
   evalContract (mkConst cname)
 
 /-- The wiring theorem of an assembly, however its scope was named: `d₁.kindAssemblyWf`,
@@ -2169,14 +2368,13 @@ def assemblyWfDecl (a : Assembly) : Elab.TermElabM Unit := do
 /-- The scope a contract declares, as the assembly its members compute. The one place a
 member list becomes a graph, so a probe and a figure generator that name the same
 contract are looking at the same object. -/
-def assembleContract (c : Provenance.Contract String String) : MetaM Assembly := do
+def assembleContract (c : Provenance.Contract NodeId KindRef) : MetaM Assembly := do
   if c.members.isEmpty then
     throwError "the contract '{c.name}' declares no members"
   let env ← getEnv
-  let decls ← c.members.toArray.mapM fun m => do
-    let n := m.toName
+  let decls ← c.members.toArray.mapM fun n => do
     unless env.contains n do
-      throwError "the contract '{c.name}' names '{m}', which is not a declaration"
+      throwError "the contract '{c.name}' names '{n}', which is not a declaration"
     pure n
   assemble decls
 
@@ -2184,33 +2382,33 @@ def assembleContract (c : Provenance.Contract String String) : MetaM Assembly :=
 obligations it hands to the tier below — and then either agreement or the two difference
 lists, an undeclared port being a boundary the graph has and the contract does not, an
 unrealized one the reverse. -/
-def renderContractLines (c : Provenance.Contract String String)
-    (g : Provenance String String) : List String :=
+def renderContractLines (c : Provenance.Contract NodeId KindRef)
+    (g : Provenance NodeId KindRef) : List String :=
   let params := c.params
   [s!"contract '{c.name}': {c.ports.length} ports, {c.exits.length} exits"]
     ++ (if params.isEmpty then [] else
-        [s!"params: {String.intercalate ", " params}"])
-    ++ c.deciders.map (fun (n, d) => s!"decides {n}: {d}")
-    ++ c.aggregations.map (fun (n, a) => s!"aggregates {n}: {a.label}")
-    ++ c.suppliers.map (fun (n, s) => s!"supplies {n}: {s}")
+        [s!"params: {String.intercalate ", " (params.map renderNode)}"])
+    ++ c.deciders.map (fun (n, d) => s!"decides {renderNode n}: {d}")
+    ++ c.aggregations.map (fun (n, a) => s!"aggregates {renderNode n}: {a.label}")
+    ++ c.suppliers.map (fun (n, s) => s!"supplies {renderNode n}: {s}")
     ++ (if c.declaresUniquely then [] else ["declared twice: the contract repeats a node"])
     ++ (c.undeclared g).map (fun p => s!"undeclared {renderPort p}")
     ++ (c.unrealized g).map (fun p => s!"unrealized {renderPort p}")
-    ++ (c.undeclaredExits g).map (fun n => s!"undeclared exit {n}")
-    ++ (c.unrealizedExits g).map (fun n => s!"unrealized exit {n}")
+    ++ (c.undeclaredExits g).map (fun n => s!"undeclared exit {renderNode n}")
+    ++ (c.unrealizedExits g).map (fun n => s!"unrealized exit {renderNode n}")
     ++ [s!"boundary agrees: {c.agrees g}"]
 
 /-- The tier comparison as lines: what the deploying contract did with each parameter it
 inherited — `bound` where the wider scope feeds it, `restated` where it is passed on —
 followed by whatever is unanswered, then the verdict. Two declarations, no graph. -/
-def renderDischargeLines (c d : Provenance.Contract String String) : List String :=
+def renderDischargeLines (c d : Provenance.Contract NodeId KindRef) : List String :=
   [s!"tier '{c.name}' over '{d.name}': {d.members.length} members inherited, \
      {d.params.length} parameters"]
-    ++ (c.bound d).map (fun n => s!"bound {n}")
-    ++ (c.params.filter (d.params.contains ·)).map (fun n => s!"restated {n}")
+    ++ (c.bound d).map (fun n => s!"bound {renderNode n}")
+    ++ (c.params.filter (d.params.contains ·)).map (fun n => s!"restated {renderNode n}")
     ++ (c.unscoped d).map (fun m => s!"outside the scope: {m}")
-    ++ (c.undischarged d).map (fun n => s!"undischarged {n}")
-    ++ (c.droppedExits d).map (fun n => s!"dropped exit {n}")
+    ++ (c.undischarged d).map (fun n => s!"undischarged {renderNode n}")
+    ++ (c.droppedExits d).map (fun n => s!"dropped exit {renderNode n}")
     ++ [s!"discharges: {c.discharges d}"]
 
 /-! ## The commands — four renderings of one producer -/
@@ -2225,7 +2423,7 @@ enumeration's. -/
 elab "#kind_occurrences " id:ident : command => liftTermElabM do
   let decl ← realizeGlobalConstNoOverload id
   let occs := (← stepGraphOf decl).occs.filter fun o =>
-    !o.assumed && !(o.occ.family matches .copy) && !(o.occ.family matches .step _ _)
+    !o.assumed && !(o.occ.family matches .copy) && !(o.occ.family matches .step _ _ _)
   if occs.isEmpty then
     logInfo m!"no inline kind occurrences in '{decl}'"
   else
@@ -2315,16 +2513,16 @@ elab "#kind_assembly_decide " c:ident : command => liftTermElabM do
 /-- The decider clause's checks (`Contract.deciders`): each entry names a `conditional`
 port of the contract, so a decider cannot be hung on an output that has no cases, and
 its decider is a declaration in the environment, so the named predicate cannot dangle. -/
-def checkDeciders (c : Provenance.Contract String String) : MetaM Unit := do
+def checkDeciders (c : Provenance.Contract NodeId KindRef) : MetaM Unit := do
   let env ← getEnv
   for (n, d) in c.deciders do
     let some p := c.ports.find? (·.node == n)
-      | throwError "the decider for '{n}' names no port of '{c.name}'"
+      | throwError "the decider for '{renderNode n}' names no port of '{c.name}'"
     unless p.dir == .conditional do
-      throwError "the decider for '{n}' names a port with role '{p.dir.label}' — only a \
-        conditional port has cases to decide"
-    unless (env.find? d.toName).isSome do
-      throwError "the decider '{d}' for '{n}' is not a declaration"
+      throwError "the decider for '{renderNode n}' names a port with role \
+        '{p.dir.label}' — only a conditional port has cases to decide"
+    unless (env.find? d).isSome do
+      throwError "the decider '{d}' for '{renderNode n}' is not a declaration"
 
 /-- The aggregation clause's checks (`Contract.aggregations`): each entry names a
 *produced* port of the contract — an aggregation class says how a value the module
@@ -2336,34 +2534,33 @@ or cancellation law is a declaration in the environment. What the checks do not
 adjudicate is the truth of the class — like an `Assembles` entry it is the author's
 curated claim, and `Recarving.distribution_license` is what an extensive claim buys
 while `assemble_ne_measured` is what a wrong one costs. -/
-def checkAggregations (c : Provenance.Contract String String) : MetaM Unit := do
+def checkAggregations (c : Provenance.Contract NodeId KindRef) : MetaM Unit := do
   let env ← getEnv
   for (n, cls) in c.aggregations do
     let some p := c.ports.find? (·.node == n)
-      | throwError "the aggregation class for '{n}' names no port of '{c.name}'"
+      | throwError "the aggregation class for '{renderNode n}' names no port of '{c.name}'"
     unless p.dir.produced do
-      throwError "the aggregation class for '{n}' names a port with role \
+      throwError "the aggregation class for '{renderNode n}' names a port with role \
         '{p.dir.label}' — an aggregation class says how a produced value composes, \
         and this port produces nothing"
     match cls with
-    | .quasiExtensive t =>
-      let tname := t.toName
+    | .quasiExtensive tname =>
       let some tinfo := env.find? tname
-        | throwError "the tolerance '{t}' for '{n}' is not a declaration"
+        | throwError "the tolerance '{tname}' for '{renderNode n}' is not a declaration"
       let tk ← Meta.forallTelescopeReducing tinfo.type fun _ tconcl => do
         unless tconcl.isAppOf ``Quantity do
-          throwError "the tolerance '{tname}' for '{n}' is not a 'Quantity' — a \
-            per-join tolerance is a kinded quantity, not a bare number"
-        renderKindArg [] (tconcl.getAppArgs[0]!)
-      unless p.kind == tk || p.kind.endsWith ("." ++ tk) || tk.endsWith ("." ++ p.kind) do
-        throwError "the tolerance '{tname}' for '{n}' is a quantity at kind '{tk}', \
-          which is not the port's kind '{p.kind}' — a join's discrepancy is a \
-          quantity of what the port produces"
+          throwError "the tolerance '{tname}' for '{renderNode n}' is not a 'Quantity' \
+            — a per-join tolerance is a kinded quantity, not a bare number"
+        kindRefOf [] (tconcl.getAppArgs[0]!)
+      unless p.kind == tk do
+        throwError "the tolerance '{tname}' for '{renderNode n}' is a quantity at kind \
+          '{tk.render}', which is not the port's kind '{p.kind.render}' — a join's \
+          discrepancy is a quantity of what the port produces"
     | .conditionallyExtensive e | .countKeyed e | .extensiveAbout e
     | .interfaceLicensed e =>
-      unless (env.find? e.toName).isSome do
-        throwError "the aggregation class for '{n}' names '{e}', which is not a \
-          declaration"
+      unless (env.find? e).isSome do
+        throwError "the aggregation class for '{renderNode n}' names '{e}', which is \
+          not a declaration"
     | .extensive | .intensive | .wholeProper => pure ()
 
 /-- The supplier clause's checks (`Contract.suppliers`): each entry names a port of the
@@ -2374,28 +2571,25 @@ functional binder (implicit and instance binders filled first, `supplierSignatur
 is the declared one, component for component. What the checks do not adjudicate is
 behavior: two suppliers of one signature agree on the interface, and whether they
 agree on values is a `Relation` edge's theorem to carry, not a port list's. -/
-def checkSuppliers (c : Provenance.Contract String String) : MetaM Unit := do
+def checkSuppliers (c : Provenance.Contract NodeId KindRef) : MetaM Unit := do
   let env ← getEnv
   let carriers := operandCarriers env
-  let same := fun (a b : String) =>
-    a == b || a.endsWith ("." ++ b) || b.endsWith ("." ++ a)
   for (n, s) in c.suppliers do
     let some p := c.ports.find? (·.node == n)
-      | throwError "the supplier for '{n}' names no port of '{c.name}'"
-    let pks := p.kind.splitOn " → "
-    unless pks.length > 1 do
-      throwError "the supplier for '{n}' names a port at kind '{p.kind}' — only a \
-        module-valued port (a signature kind, joined with '→') takes a supplier"
-    let some sinfo := env.find? s.toName
-      | throwError "the supplier '{s}' for '{n}' is not a declaration"
+      | throwError "the supplier for '{renderNode n}' names no port of '{c.name}'"
+    unless p.kind matches .sig _ do
+      throwError "the supplier for '{renderNode n}' names a port at kind \
+        '{p.kind.render}' — only a module-valued port (a signature kind) takes a \
+        supplier"
+    let some sinfo := env.find? s
+      | throwError "the supplier '{s}' for '{renderNode n}' is not a declaration"
     let some ssig ← supplierSignature? env carriers sinfo.type
-      | throwError "the supplier '{s}' for '{n}' states no kind signature — its \
-          explicit arguments are not a function over kinded quantities"
-    let sks := ssig.splitOn " → "
-    unless pks.length == sks.length && (pks.zip sks).all (fun (a, b) => same a b) do
-      throwError "the supplier '{s}' for '{n}' states the signature '{ssig}', which \
-        is not the port's '{p.kind}' — binding a module of a different signature \
-        re-types the argument"
+      | throwError "the supplier '{s}' for '{renderNode n}' states no kind signature — \
+          its explicit arguments are not a function over kinded quantities"
+    unless ssig == p.kind do
+      throwError "the supplier '{s}' for '{renderNode n}' states the signature \
+        '{ssig.render}', which is not the port's '{p.kind.render}' — binding a module \
+        of a different signature re-types the argument"
 
 open Elab Command in
 /-- `#kind_contract c` assembles the members the contract `c` declares and compares that
@@ -2468,14 +2662,9 @@ boundary cannot be declared and left out of the sweep. A contract that fails ren
 a `✗` row carrying the refusal, so the pin is the gate; a `@[kindCounterexample]`-tagged
 declaration renders as a `⊘` row and is not checked, so a falsification probe can stand
 beside the gate it exercises. The header counts the contracts, the violations, and the
-exemptions, so a scope with none pins `0` rather than passing invisibly.
-
-Each contract is checked under its own declaration's namespace: the harvest's kind
-strings pretty-print relative to the elaborating context (`renderKindArg`), so the
-context a declared boundary answers in is its defining module's, not the auditing
-module's — a sweep from outside sees each boundary the way its own pins do. A boundary
-whose declared kind strings additionally lean on `open`s (short names for kinds from an
-unrelated namespace) needs those `open`s in the auditing module. -/
+exemptions, so a scope with none pins `0` rather than passing invisibly. The check is
+context-free: a boundary's references resolve in the environment, so the sweep needs no
+namespace replay and no `open`s from anywhere. -/
 elab "#kind_contracts " nss:ident* : command => liftTermElabM do
   if nss.isEmpty then
     throwError "#kind_contracts expects at least one namespace"
@@ -2483,13 +2672,8 @@ elab "#kind_contracts " nss:ident* : command => liftTermElabM do
   let mut lines : Array String := #[]
   let mut violated := 0
   for n in names do
-    -- Each contract is checked under its own declaration's namespace: the harvest's kind
-    -- strings pretty-print relative to the elaborating context (`renderKindArg`), and the
-    -- context a declared boundary answers in is the one its defining module pinned it in,
-    -- not the auditing module's.
     let res : Except String String ←
       try
-        withTheReader Core.Context (fun ctx => { ctx with currNamespace := n.getPrefix }) do
           let ctr ← contractValueOf n
           checkDeciders ctr
           checkAggregations ctr
@@ -2502,8 +2686,10 @@ elab "#kind_contracts " nss:ident* : command => liftTermElabM do
             let diffs :=
               (ctr.undeclared a.graph).map (fun p => s!"undeclared {renderPort p}")
                 ++ (ctr.unrealized a.graph).map (fun p => s!"unrealized {renderPort p}")
-                ++ (ctr.undeclaredExits a.graph).map (fun x => s!"undeclared exit {x}")
-                ++ (ctr.unrealizedExits a.graph).map (fun x => s!"unrealized exit {x}")
+                ++ (ctr.undeclaredExits a.graph).map
+                    (fun x => s!"undeclared exit {renderNode x}")
+                ++ (ctr.unrealizedExits a.graph).map
+                    (fun x => s!"unrealized exit {renderNode x}")
                 ++ (if ctr.declaresUniquely then [] else ["declared twice"])
             pure (.error s!"'{ctr.name}' — {String.intercalate "; " diffs}")
       catch e => pure (.error (← e.toMessageData.toString))
@@ -2536,9 +2722,7 @@ elab "#kind_contracts_decide " nss:ident* : command => liftTermElabM do
   let (names, exempted) ← contractSweepSubjects (nss.map (·.getId))
   let mut lines : Array String := #[]
   for n in names do
-    -- Checked under the declaration's own namespace, exactly as the report sweep is.
-    let a ←
-      withTheReader Core.Context (fun ctx => { ctx with currNamespace := n.getPrefix }) do
+    let a ← do
         let ctr ← contractValueOf n
         checkDeciders ctr
         checkAggregations ctr
@@ -2623,9 +2807,9 @@ def relationValueOf (rname : Name) : MetaM Provenance.Relation := do
 /-- The members of a contract that a statement mentions by name. This is the check that
 keeps a theorem edge from being decoration: a theorem naming neither boundary is a true
 statement about something else. -/
-def mentionedMembers (c : Provenance.Contract String String) (mentions : NameSet) :
-    List String :=
-  c.members.filter fun m => mentions.contains m.toName
+def mentionedMembers (c : Provenance.Contract NodeId KindRef) (mentions : NameSet) :
+    List Name :=
+  c.members.filter fun m => mentions.contains m
 
 /-- The result of checking one theorem edge: the evaluated relation, the two boundary
 names as their contracts render them, and the report body — everything below the header
@@ -2652,9 +2836,9 @@ and the statement mentions at least one member of *each* boundary. -/
 def checkRelation (rname : Name) : MetaM CheckedRelation := do
   let rel ← relationValueOf rname
   let env ← getEnv
-  let left ← contractValueOf rel.left.toName
-  let right ← contractValueOf rel.right.toName
-  let wname := rel.witness.toName
+  let left ← contractValueOf rel.left
+  let right ← contractValueOf rel.right
+  let wname := rel.witness
   let some info := env.find? wname
     | throwError "the witness '{rel.witness}' is not a declaration"
   unless info matches .thmInfo _ do
@@ -2675,7 +2859,7 @@ def checkRelation (rname : Name) : MetaM CheckedRelation := do
       | _ => "no constant"
     -- does an expression mention a member of the contract — the per-side reading of
     -- `mentionedMembers`, for the round-trip check
-    let mentionsMemberOf (e : Expr) (c : Provenance.Contract String String) : Bool :=
+    let mentionsMemberOf (e : Expr) (c : Provenance.Contract NodeId KindRef) : Bool :=
       let ms := e.foldConsts ({} : NameSet) fun cn s => s.insert cn
       !(mentionedMembers c ms).isEmpty
     match rel.kind with
@@ -2709,36 +2893,34 @@ def checkRelation (rname : Name) : MetaM CheckedRelation := do
   -- the tolerance: a bound is governed by a kinded quantity at a produced port's kind,
   -- not by a bare number in prose
   let mut toleranceLines : List String := []
-  unless rel.tolerance.isEmpty do
-    let tname := rel.tolerance.toName
+  unless rel.tolerance.isAnonymous do
+    let tname := rel.tolerance
     let some tinfo := env.find? tname
       | throwError "the tolerance '{rel.tolerance}' is not a declaration"
     let tk ← Meta.forallTelescopeReducing tinfo.type fun _ tconcl => do
       unless tconcl.isAppOf ``Quantity do
         throwError "the tolerance '{tname}' is not a 'Quantity' — a tolerance is a \
           kinded quantity, not a bare number"
-      renderKindArg [] (tconcl.getAppArgs[0]!)
+      kindRefOf [] (tconcl.getAppArgs[0]!)
     let outKinds := (left.ports.filter (·.dir.produced)).map (·.kind)
-    let sameKind := fun (pk : String) =>
-      pk == tk || pk.endsWith ("." ++ tk) || tk.endsWith ("." ++ pk)
-    unless outKinds.any sameKind do
-      throwError "the tolerance '{tname}' is a quantity at kind '{tk}', which is not \
-        the kind of any output port of '{left.name}' — a bound governs what the \
+    unless outKinds.contains tk do
+      throwError "the tolerance '{tname}' is a quantity at kind '{tk.render}', which \
+        is not the kind of any output port of '{left.name}' — a bound governs what the \
         boundary produces"
-    toleranceLines := [s!"tolerance: {tname} : {tk}"]
+    toleranceLines := [s!"tolerance: {tname} : {tk.render}"]
   -- the named side conditions: each a declaration the witness statement mentions, so
   -- the listed domain is the stated one
   let mentions := info.type.foldConsts ({} : NameSet) fun c s => s.insert c
   let mut hypothesisLines : List String := []
   unless rel.hypotheses.isEmpty do
-    for h in rel.hypotheses do
-      let hn := h.toName
+    for hn in rel.hypotheses do
       unless (env.find? hn).isSome do
-        throwError "the hypothesis '{h}' is not a declaration"
+        throwError "the hypothesis '{hn}' is not a declaration"
       unless mentions.contains hn do
-        throwError "'{wname}' does not mention the hypothesis '{h}' — a side condition \
+        throwError "'{wname}' does not mention the hypothesis '{hn}' — a side condition \
           the statement does not state is not one the claim holds under"
-    hypothesisLines := [s!"hypotheses: {String.intercalate ", " rel.hypotheses}"]
+    hypothesisLines :=
+      [s!"hypotheses: {String.intercalate ", " (rel.hypotheses.map toString)}"]
   -- the license clause: each rung answered for by a named, sorry-free theorem — a rung
   -- claimed with no repair and no restatement is refused, because a side condition does
   -- not transfer by being assumed to
@@ -2748,11 +2930,11 @@ def checkRelation (rname : Name) : MetaM CheckedRelation := do
       throwError "a license names the carrier rung it extends the claim to; one rung \
         was left empty"
     let ev := l.transfer.evidence
-    if ev.isEmpty then
+    if ev.isAnonymous then
       throwError "the license at rung '{l.rung}' claims the relation with no repair and \
         no restatement — name the repair theorem that carries it across, or the witness \
         that restates it at that rung"
-    let en := ev.toName
+    let en := ev
     let some einfo := env.find? en
       | throwError "the license at rung '{l.rung}' names '{ev}', which is not a \
           declaration"
@@ -2773,11 +2955,11 @@ def checkRelation (rname : Name) : MetaM CheckedRelation := do
     | .const c _ => toString c
     | _ => "no constant"
   let mut wellPosedLines : List String := []
-  unless rel.wellPosed.isEmpty do
+  unless rel.wellPosed.isAnonymous do
     unless rel.kind matches .inverts do
       throwError "the edge names a well-posedness witness but claims \
         '{rel.kind.label}' — existence and uniqueness answer an inversion"
-    let wpn := rel.wellPosed.toName
+    let wpn := rel.wellPosed
     let some wpinfo := env.find? wpn
       | throwError "the well-posedness witness '{rel.wellPosed}' is not a declaration"
     unless wpinfo matches .thmInfo _ do
@@ -2791,11 +2973,11 @@ def checkRelation (rname : Name) : MetaM CheckedRelation := do
       unless wpconcl.isAppOf `ExistsUnique do
         throwError "'{wpn}' is claimed to prove existence and uniqueness, but its \
           conclusion is headed by '{headOf wpconcl}', not '∃!'"
-    if rel.domain.isEmpty then
+    if rel.domain.isAnonymous then
       throwError "the well-posedness witness '{wpn}' comes with no domain — existence \
         and uniqueness are proved on a declared domain, so name the box or predicate \
         its statement mentions"
-    let dn := rel.domain.toName
+    let dn := rel.domain
     unless (env.find? dn).isSome do
       throwError "the domain '{rel.domain}' is not a declaration"
     let wpMentions := wpinfo.type.foldConsts ({} : NameSet) fun c s => s.insert c
@@ -2803,18 +2985,18 @@ def checkRelation (rname : Name) : MetaM CheckedRelation := do
       throwError "'{wpn}' does not mention the domain '{rel.domain}' — the declared \
         domain is the stated one, never wider"
     wellPosedLines := [s!"well-posed: {wpn} on {rel.domain}"]
-  if rel.wellPosed.isEmpty && !rel.domain.isEmpty then
+  if rel.wellPosed.isAnonymous && !rel.domain.isAnonymous then
     throwError "the edge names a domain with no well-posedness witness — the domain is \
       where existence and uniqueness hold, so it accompanies the witness"
   -- the ambiguity clause: where the inversion is not single-valued, the edge surfaces
   -- that as a declaration — a sorry-free theorem concluding with the negation of an
   -- `∃!` — rather than resolving it to whichever root the algorithm reached first
   let mut ambiguityLines : List String := []
-  unless rel.ambiguity.isEmpty do
+  unless rel.ambiguity.isAnonymous do
     unless rel.kind matches .inverts do
       throwError "the edge names an ambiguity witness but claims '{rel.kind.label}' — \
         ambiguity is an inversion's finding"
-    let an := rel.ambiguity.toName
+    let an := rel.ambiguity
     let some ainfo := env.find? an
       | throwError "the ambiguity witness '{rel.ambiguity}' is not a declaration"
     unless ainfo matches .thmInfo _ do
@@ -2842,8 +3024,8 @@ def checkRelation (rname : Name) : MetaM CheckedRelation := do
   return { rel, leftName := left.name, rightName := right.name,
            lines := [s!"witness: {wname}"] ++ claim ++ toleranceLines ++ hypothesisLines
              ++ licenseLines ++ wellPosedLines ++ ambiguityLines
-             ++ [s!"names on the left: {String.intercalate ", " lm}",
-                 s!"names on the right: {String.intercalate ", " rm}",
+             ++ [s!"names on the left: {String.intercalate ", " (lm.map toString)}",
+                 s!"names on the right: {String.intercalate ", " (rm.map toString)}",
                  s!"axioms: {String.intercalate ", " (axs.toList.map toString)}"] }
 
 open Elab Command in
@@ -2894,12 +3076,13 @@ elab "#kind_relations " nss:ident* : command => liftTermElabM do
     try
       let c ← checkRelation n
       let extras := String.join <|
-        (if c.rel.tolerance.isEmpty then [] else [s!" [tolerance: {c.rel.tolerance}]"])
+        (if c.rel.tolerance.isAnonymous then []
+         else [s!" [tolerance: {c.rel.tolerance}]"])
           ++ (if c.rel.licenses.isEmpty then []
               else [s!" [rungs: {String.intercalate ", " (c.rel.licenses.map (·.rung))}]"])
-          ++ (if c.rel.wellPosed.isEmpty then []
+          ++ (if c.rel.wellPosed.isAnonymous then []
               else [s!" [well-posed: {c.rel.wellPosed} on {c.rel.domain}]"])
-          ++ (if c.rel.ambiguity.isEmpty then []
+          ++ (if c.rel.ambiguity.isAnonymous then []
               else [s!" [ambiguity: {c.rel.ambiguity}]"])
       lines := lines.push
         s!"  {n}: '{c.leftName}' {c.rel.kind.label} '{c.rightName}' — \
@@ -2943,12 +3126,11 @@ def tallyOf (l : AssemblyLevel) : LevelTally :=
     interior := l.graph.intros.length
     unkinded := l.unkinded.length }
 
-/-- The level a namespaced node belongs to. The crossings below are exactly the
-occurrences whose operands and result disagree on it. -/
-def levelOfNode (n : String) : Option String :=
-  match n.splitOn "/" with
-  | l :: _ :: _ => some l
-  | _ => none
+/-- The level a namespaced node belongs to, by its rendered name — the grouping key the
+figures and the ledger use. The crossings below are exactly the occurrences whose
+operands and result disagree on it. -/
+def levelOfNode (n : NodeId) : Option String :=
+  n.level.map (·.render)
 
 /-- The cross-level wires, aggregated: one entry per ordered pair of levels that
 information crosses between, with how many occurrences cross it. An occurrence with two
@@ -2968,11 +3150,10 @@ def crossings (a : Assembly) : Array (String × String × Nat) := Id.run do
       | none => acc := acc.push (src, dst, 1)
   return acc
 
-/-- The levels a member name stands for: itself, or its instances when the member was
+/-- The levels a member stands for: itself, or its instances when the member was
 dissected at more than one call site. -/
-def levelsOfMember (a : Assembly) (m : String) : Array String :=
-  a.levels.filterMap fun l =>
-    if l.name == m || l.name.startsWith (m ++ "#") then some l.name else none
+def levelsOfMember (a : Assembly) (m : Name) : Array String :=
+  a.levels.filterMap fun l => if l.decl == m then some l.name else none
 
 /-- The citation relation with both endpoints resolved to levels, deduplicated. A
 citation names a *member*; a member dissected at several call sites is several levels,

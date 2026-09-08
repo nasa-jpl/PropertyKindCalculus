@@ -518,8 +518,8 @@ which.
 | phase | scope | gate |
 |---|---|---|
 | P1 | this plan section | doc only — **done 2026-09-07** |
-| P2 | the four inductives + `ToExpr`/`BEq`/`DecidableEq` instances + type-level probes, additive | `lake build` + new probes green |
-| P3 | the harvest and assembly (`KindIncidence`), checkers, `contractValueOf`, refusals; `Provenance.lean` breaking edits (A, C); core-library consumers (`ContractCoverage`, `KindLedger`, `KindGraphD2`, `ModuleCard`, `KindQueries`, `Influence` instantiations) | `lake build` (default target) green |
+| P2 | the four inductives + `ToExpr`/`BEq`/`DecidableEq` instances + type-level probes, additive | `lake build` + new probes green — **done 2026-09-07** |
+| P3 | the harvest and assembly (`KindIncidence`), checkers, `contractValueOf`, refusals; `Provenance.lean` breaking edits (A, C); core-library consumers (`ContractCoverage`, `KindLedger`, `KindGraphD2`, `ModuleCard`, `KindQueries`, `Influence` instantiations) | `lake build` (default target) green — **done 2026-09-07** |
 | P4 | secondary roots: `graph/` (Footprint), `index/` (Contracts), remaining srcDir roots | their targets green |
 | P5 | `tests/` migrated and re-pinned; the `PortNameScopes` pins flip to the designed refusals and cleanups | `lake build Tests` green; doc-pins gate |
 | P6 | `ForPhysLib/` + `examples/` migrated and re-pinned; document mentions updated; final sweep | all targets + `scripts/check-doc-pins.py` green |

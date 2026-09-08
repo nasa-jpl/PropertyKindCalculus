@@ -77,17 +77,21 @@ structure Row where
   silence : Silence
 deriving Repr, Inhabited, BEq
 
-/-- The member behind a level name: `rOfSmQ#2` is an instance of `rOfSmQ`, and the ledger
-counts the member. -/
-def memberOf (levelName : String) : String :=
-  match levelName.splitOn "#" with
-  | base :: _ :: _ => base
-  | _ => levelName
+/-- The member behind a level: the declaration's last component — the ledger counts the
+member, however many call-site instances it has. -/
+def memberOf (l : AssemblyLevel) : String :=
+  PropertyKindCalculus.Provenance.lastComponent l.decl
 
-/-- Strip a level's node namespace: `rOfSmQ#2/polarization` inside level `rOfSmQ#2` is the
-member's `polarization`. -/
+/-- Strip a level's node namespace from a rendered name: `rOfSmQ#2/polarization` inside
+level `rOfSmQ#2` is the member's `polarization` (the red inventory keeps rendered
+names). -/
 def stripLevel (l : AssemblyLevel) (n : String) : String :=
   if n.startsWith (l.name ++ "/") then (n.drop (l.name.length + 1)).toString else n
+
+/-- A node identifier without its level — the member-local rendering the ledger keys
+rows by. -/
+def stripNode (n : PropertyKindCalculus.Provenance.NodeId) : String :=
+  PropertyKindCalculus.Provenance.NodeId.render { n with level := none }
 
 /-- **The ledger of a scope** — every unkinded position and every unkinded flow its
 members state, deduplicated by `(member, node, silence)` and kept in level order so the
@@ -95,12 +99,12 @@ list reads down the pipeline. -/
 def ledgerOf (scope : String) (a : Assembly) : Array Row := Id.run do
   let mut out : Array Row := #[]
   for l in a.levels do
-    let m := memberOf l.name
+    let m := memberOf l
     for u in l.unkinded do
       let r : Row := ⟨scope, m, stripLevel l u.node, .position u.dir u.type⟩
       unless out.contains r do out := out.push r
     for (s, t) in l.leaks do
-      let r : Row := ⟨scope, m, stripLevel l s, .flow (stripLevel l t)⟩
+      let r : Row := ⟨scope, m, stripLevel l s, .flow (stripNode t)⟩
       unless out.contains r do out := out.push r
   return out
 
@@ -166,7 +170,7 @@ deriving Repr, Inhabited
 /-- The interface tallies of an assembly, one per level, in level order. -/
 def membersOf (a : Assembly) : Array MemberRow :=
   a.levels.map fun l =>
-    ⟨l.name, memberOf l.name, if l.walked then "walked" else "interface", tallyOf l⟩
+    ⟨l.name, memberOf l, if l.walked then "walked" else "interface", tallyOf l⟩
 
 /-- One member's interface as a JSON object. -/
 private def memberJson (m : MemberRow) : String :=
