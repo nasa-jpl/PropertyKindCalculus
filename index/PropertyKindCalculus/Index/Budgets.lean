@@ -40,8 +40,8 @@ def portBudgetsTable (scope : Scope) : MetaM IndexTable := do
     let b ← portBudgetValueOf n
     rows := rows.push #[
       .decl n (lastComponent n),
-      .code b.port,
-      .code b.kind,
+      .code b.port.render,
+      .code b.kind.render,
       .code (toString b.terms.length),
       .code (toString b.combined)]
   return { id := "port-budgets", title := "Uncertainty budgets at the boundary",

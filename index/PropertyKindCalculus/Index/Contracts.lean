@@ -45,7 +45,7 @@ open PropertyKindCalculus.Uncertainty (portBudgetValueOf)
 map from the contract declaration name it cites (left or right) to the edges citing it. This
 is `ContractCoverage.edgesByContract` — the same join the M12 census gates on, so the record
 and the gate cannot drift — kept under this name for the tables; the argument is unused. -/
-def edgesByContract (_env : Environment) : MetaM (Std.HashMap String (Array Name)) :=
+def edgesByContract (_env : Environment) : MetaM (Std.HashMap Name (Array Name)) :=
   PropertyKindCalculus.ContractCoverage.edgesByContract
 
 /-- The `contracts` table: every `Provenance.Contract` declared in scope, one row per
@@ -70,7 +70,7 @@ def contractsTable (scope : Scope) : MetaM IndexTable := do
         ++ (if c.deciders.isEmpty then [] else [s!"decides {c.deciders.length}"])
         ++ (if c.aggregations.isEmpty then [] else [s!"aggregates {c.aggregations.length}"])
         ++ (if c.suppliers.isEmpty then [] else [s!"supplies {c.suppliers.length}"])
-    let es := edges.getD n.toString #[]
+    let es := edges.getD n #[]
     rows := rows.push #[
       .decl n (lastComponent n),
       .code s!"'{c.name}'",
@@ -103,20 +103,20 @@ def provenanceCoverageTable (scope : Scope) : MetaM IndexTable := do
     return IndexTable.empty "provenance-coverage" "Provenance coverage absences" headers
   let edges ← edgesByContract env
   let budgetNames := constantsOfType env ``PropertyKindCalculus.Uncertainty.PortBudget #[]
-  let mut budgeted : Std.HashSet String := {}
+  let mut budgeted : Array PropertyKindCalculus.Provenance.NodeId := #[]
   for bn in budgetNames do
-    budgeted := budgeted.insert (← portBudgetValueOf bn).port
+    budgeted := budgeted.push (← portBudgetValueOf bn).port
   let mut rows : Array (Array IndexCell) := #[]
   for n in names do
     let c ← contractValueOf n
-    if (edges.getD n.toString #[]).isEmpty then
+    if (edges.getD n #[]).isEmpty then
       rows := rows.push #[
         .text "no theorem edge", .decl n (lastComponent n), .code s!"'{c.name}'"]
     for p in c.ports do
       if p.dir.produced && !budgeted.contains p.node then
         rows := rows.push #[
           .text "no uncertainty budget", .decl n (lastComponent n),
-          .code s!"{p.node} : {p.kind}"]
+          .code s!"{p.node.render} : {p.kind.render}"]
   return { id := "provenance-coverage", title := "Provenance coverage absences",
            headers, rows }
 

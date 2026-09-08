@@ -48,21 +48,14 @@ private def kindShortName (n : Name) : String :=
   | .str _ s => s
   | _ => toString n
 
-/-- Resolve a rendered kind string against the graph's vertices: an exact full-name
-match, else a unique short-name (dot-suffix) match. `none` for a kind variable, a
-multi-kind rendering, an out-of-scope kind — and for an ambiguous short name, because a
-report that silently picked one of two same-named kinds would attribute the footprint to
-the wrong vocabulary. -/
-def resolveKind (kg : KindGraph) (rendered : String) : Option Nat := Id.run do
-  let mut short : Option Nat := none
-  let mut ambiguous := false
-  for i in [0:kg.kinds.size] do
-    let full := toString kg.kinds[i]!
-    if full == rendered then return some i
-    if full == rendered || full.endsWith ("." ++ rendered) then
-      if short.isSome then ambiguous := true
-      short := some i
-  return if ambiguous then none else short
+/-- Resolve a kind reference against the graph's vertices: a `decl` by its environment
+name, exactly. `none` for everything else — a kind param, a signature or tuple, an
+out-of-scope declaration — because those denote no single vertex of this graph. -/
+def resolveKind (kg : KindGraph) (k : PropertyKindCalculus.Provenance.KindRef) :
+    Option Nat :=
+  match k with
+  | .decl n => kg.kinds.findIdx? (· == n)
+  | _ => none
 
 open Elab Command in
 /-- `#kind_footprint c ns…` — the SCC footprint of the declared boundary `c` against
@@ -94,7 +87,7 @@ elab "#kind_footprint " c:ident nss:ident* : command => liftTermElabM do
   for k in portKinds ++ interiorKinds do
     match resolveKind kg k with
     | some v => unless verts.contains v do verts := verts.push v
-    | none => unless unresolved.contains k do unresolved := unresolved.push k
+    | none => unless unresolved.contains k.render do unresolved := unresolved.push k.render
   -- the touched components, each with the footprint's vertices it holds
   let mut touched : Array (Nat × Array Nat) := #[]
   for v in verts do
@@ -129,16 +122,17 @@ elab "#kind_footprint " c:ident nss:ident* : command => liftTermElabM do
   -- *graph vertex* where the kind resolves — a kind spelled short at one port and
   -- qualified at another is one kind, and splitting the group would hide the swap pair —
   -- and by the authored string where it does not (kind variables group by name)
-  let canonical := fun (k : String) =>
+  let canonical := fun (k : PropertyKindCalculus.Provenance.KindRef) =>
     match resolveKind kg k with
     | some v => kindShortName kg.kinds[v]!
-    | none => k
+    | none => k.render
   let mut groups : Array (String × Array String) := #[]
   for p in ctr.ports do
     let key := canonical p.kind
     match groups.findIdx? (·.1 == key) with
-    | some i => groups := groups.set! i (key, groups[i]!.2.push s!"{p.node} ({p.dir.label})")
-    | none => groups := groups.push (key, #[s!"{p.node} ({p.dir.label})"])
+    | some i =>
+      groups := groups.set! i (key, groups[i]!.2.push s!"{p.node.render} ({p.dir.label})")
+    | none => groups := groups.push (key, #[s!"{p.node.render} ({p.dir.label})"])
   let sharedGroups := (groups.filter (·.2.size ≥ 2)).qsort fun x y => x.1 < y.1
   lines := lines.push s!"same-kind ports — {sharedGroups.size} group(s):"
   for (k, ns) in sharedGroups do
@@ -151,7 +145,7 @@ elab "#kind_footprint " c:ident nss:ident* : command => liftTermElabM do
       if t.tier == .kindCrossing then s.insert t.decl else s
   let mut crossings : Array String := #[]
   for m in ctr.members do
-    let mn := m.toName
+    let mn := m
     if crossingDecls.contains mn && !crossings.contains (toString mn) then
       crossings := crossings.push (toString mn)
     if let some info := env.find? mn then
@@ -169,9 +163,9 @@ elab "#kind_footprint " c:ident nss:ident* : command => liftTermElabM do
   for cn in sortedCrossings do
     lines := lines.push s!"  crossing {cn}"
   for i in attested do
-    lines := lines.push s!"  {i.tier.label} {i.node} : {i.kind}"
+    lines := lines.push s!"  {i.tier.label} {i.node.render} : {i.kind.render}"
   for e in ctr.exits do
-    lines := lines.push s!"  exit {e}"
+    lines := lines.push s!"  exit {e.render}"
   -- the verdict: where does this module's guarantee actually come from?
   let components := nontrivial.size + singletons
   let base :=
@@ -203,7 +197,8 @@ out-of-scope rendering resolves to nothing, exactly as in the footprint), with t
 cluster named by its alphabetical representative, compared case-insensitively — the
 same representative that names the cluster's diagram. A boundary touching no cluster
 contributes no rows. -/
-def clusterRows (kg : KindGraph) (c : Provenance.Contract String String) :
+def clusterRows (kg : KindGraph)
+    (c : Provenance.Contract Provenance.NodeId Provenance.KindRef) :
     List ModuleCard.ClusterRow := Id.run do
   let portKinds := (c.ports.map (·.kind)).eraseDups
   let mut rows : List ModuleCard.ClusterRow := []
@@ -215,7 +210,7 @@ def clusterRows (kg : KindGraph) (c : Provenance.Contract String String) :
     if hit.isEmpty then continue
     let rep := ((cl.map fun i => kindShortName kg.kinds[i]!).qsort
       fun a b => a.toLower < b.toLower)[0]!
-    rows := rows ++ [{ representative := rep, kinds := hit }]
+    rows := rows ++ [{ representative := rep, kinds := hit.map (·.render) }]
   return rows
 
 end PropertyKindCalculus.KindGraph

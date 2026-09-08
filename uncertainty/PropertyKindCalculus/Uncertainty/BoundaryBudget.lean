@@ -30,8 +30,8 @@ What the join asserts, and what it does not:
     uncertainty, an attested mint — render as `unbudgeted source(s)`, so the report
     names the uncertainty the model is *not* propagating.
 
-The attachment object is string-addressed data, exactly as `Provenance.Contract` is: the
-kinded truth (which contribution is at which kind, through which `ProductKind` gate)
+The attachment object is reference-addressed data, exactly as `Provenance.Contract` is:
+the kinded truth (which contribution is at which kind, through which `ProductKind` gate)
 lives in the declarations that computed the magnitudes (`Budget.contributionQ`,
 `Sensitivity.gradient`), and the attachment records their result at the boundary where a
 reader looks for it.
@@ -50,29 +50,30 @@ open PropertyKindCalculus.KindIncidence (contractValueOf assembleContract)
 /-- **A budget attached to a produced port** of a declared boundary: the port, the kind
 its combined uncertainty is stated at (the port's own kind), and the term list — one
 influencing source node per entry, with the magnitude of its output-kind contribution
-`uᵢ(y) = |cᵢ|·u(xᵢ)`. String-addressed data, like the contract it attaches to; the
+`uᵢ(y) = |cᵢ|·u(xᵢ)`. Reference-addressed data, like the contract it attaches to; the
 kinded formation of each magnitude is the business of the declarations that computed it
 (`Budget.contributionQ` — the `ProductKind kₛ kᵢ kₒ` gate — fed by autograd
 sensitivities and the inputs' moments). -/
 structure PortBudget where
-  /-- The produced port the budget attaches to, as the contract spells it. -/
-  port : String
+  /-- The produced port the budget attaches to, as the contract references it. -/
+  port : Provenance.NodeId
   /-- The kind the contributions and the combined uncertainty are stated at — checked
   to be the port's kind. -/
-  kind : String
+  kind : Provenance.KindRef
   /-- The term list: each influencing source node with its output-kind contribution
   magnitude. -/
-  terms : List (String × Float)
+  terms : List (Provenance.NodeId × Float)
 deriving Repr, Inhabited, BEq
 
 /-- **The combined standard uncertainty of the attachment** — the quadrature
 `√(Σ uᵢ²)` of the terms, through the budget layer's own `combinedQ` (the kind index
-erases, `combinedQ_magnitude`, so the attachment's string kind is read as a ratio kind
-for the fold and contributes nothing to the value). Computed, never stored: a stored
-copy could drift from its terms. -/
+erases, `combinedQ_magnitude`, so the attachment's kind is read as a ratio kind at its
+rendering for the fold and contributes nothing to the value). Computed, never stored: a
+stored copy could drift from its terms. -/
 def PortBudget.combined (b : PortBudget) : Float :=
-  (combinedQ (kO := { id := b.kind, scale := .ratio })
-    (b.terms.map fun t => (⟨t.2⟩ : Quantity { id := b.kind, scale := .ratio } Float))).magnitude
+  (combinedQ (kO := { id := b.kind.render, scale := .ratio })
+    (b.terms.map fun t =>
+      (⟨t.2⟩ : Quantity { id := b.kind.render, scale := .ratio } Float))).magnitude
 
 private unsafe def evalPortBudgetUnsafe (e : Expr) : MetaM PortBudget :=
   Meta.evalExpr PortBudget (mkConst ``PortBudget) e
@@ -107,15 +108,15 @@ elab "#kind_budget " b:ident c:ident : command => liftTermElabM do
   let cname ← realizeGlobalConstNoOverload c
   let ctr ← contractValueOf cname
   let some p := ctr.ports.find? (·.node == bud.port)
-    | throwError "the budget '{bname}' names '{bud.port}', which is no port of \
+    | throwError "the budget '{bname}' names '{bud.port.render}', which is no port of \
         '{ctr.name}'"
   unless p.dir.produced do
     throwError "the budget '{bname}' names a port with role '{p.dir.label}' — a \
       budget attaches to what the boundary produces"
   unless p.kind == bud.kind do
-    throwError "the budget for '{bud.port}' is stated at kind '{bud.kind}', but the \
-      port produces '{p.kind}' — contributions and combined uncertainty are \
-      quantities at the port's own kind"
+    throwError "the budget for '{bud.port.render}' is stated at kind \
+      '{bud.kind.render}', but the port produces '{p.kind.render}' — contributions and \
+      combined uncertainty are quantities at the port's own kind"
   let a ← assembleContract ctr
   let g := a.graph
   unless g.acyclic do
@@ -124,18 +125,19 @@ elab "#kind_budget " b:ident c:ident : command => liftTermElabM do
   let infl := g.influencers bud.port
   for (n, _) in bud.terms do
     unless infl.contains n do
-      throwError "the budget term '{n}' does not influence '{bud.port}' in \
-        '{ctr.name}' — a term of the sum must be a source among the port's ancestors"
+      throwError "the budget term '{n.render}' does not influence '{bud.port.render}' \
+        in '{ctr.name}' — a term of the sum must be a source among the port's ancestors"
   let unbudgeted := infl.filter fun n => !(bud.terms.any (·.1 == n))
   let mut lines : Array String :=
-    #[s!"budget for '{bud.port}' : {bud.kind} on '{ctr.name}': \
+    #[s!"budget for '{bud.port.render}' : {bud.kind.render} on '{ctr.name}': \
       {bud.terms.length} term(s) over {infl.length} influencing source(s)"]
   for (n, u) in bud.terms do
-    lines := lines.push s!"  term {n}: {u}"
+    lines := lines.push s!"  term {n.render}: {u}"
   lines := lines.push s!"  combined: {bud.combined}"
   unless unbudgeted.isEmpty do
     lines := lines.push
-      s!"  unbudgeted source(s): {String.intercalate ", " unbudgeted}"
+      s!"  unbudgeted source(s): \
+        {String.intercalate ", " (unbudgeted.map (·.render))}"
   logInfo m!"{String.intercalate "\n" lines.toList}"
 
 end PropertyKindCalculus.Uncertainty

@@ -44,24 +44,26 @@ def relationsTable (scope : Scope) : MetaM IndexTable := do
   let mut rows : Array (Array IndexCell) := #[]
   for n in names do
     let rel ← relationValueOf n
-    let left ← contractValueOf rel.left.toName
-    let right ← contractValueOf rel.right.toName
+    let left ← contractValueOf rel.left
+    let right ← contractValueOf rel.right
     let clauses := String.intercalate "; " <|
       (if exempt.contains n then ["counterexample"] else [])
-        ++ (if rel.tolerance.isEmpty then []
-            else [s!"tolerance {shortenNames rel.tolerance}"])
+        ++ (if rel.tolerance.isAnonymous then []
+            else [s!"tolerance {shortenNames (toString rel.tolerance)}"])
         ++ (if rel.hypotheses.isEmpty then []
-            else [s!"hypotheses {String.intercalate ", " (rel.hypotheses.map shortenNames)}"])
+            else [s!"hypotheses {String.intercalate ", "
+              ((rel.hypotheses.map toString).map shortenNames)}"])
         ++ (if rel.licenses.isEmpty then []
             else [s!"rungs {String.intercalate ", " (rel.licenses.map (·.rung))}"])
-        ++ (if rel.wellPosed.isEmpty then []
-            else [s!"well-posed {shortenNames rel.wellPosed} on {shortenNames rel.domain}"])
-        ++ (if rel.ambiguity.isEmpty then []
-            else [s!"ambiguity {shortenNames rel.ambiguity}"])
+        ++ (if rel.wellPosed.isAnonymous then []
+            else [s!"well-posed {shortenNames (toString rel.wellPosed)} on \
+              {shortenNames (toString rel.domain)}"])
+        ++ (if rel.ambiguity.isAnonymous then []
+            else [s!"ambiguity {shortenNames (toString rel.ambiguity)}"])
     rows := rows.push #[
       .decl n (lastComponent n),
       .code s!"'{left.name}' {rel.kind.label} '{right.name}'",
-      .decl rel.witness.toName (lastComponent rel.witness.toName),
+      .decl rel.witness (lastComponent rel.witness),
       if clauses.isEmpty then IndexCell.blank else .code clauses,
       .prose rel.claim]
   return { id := "relations", title := "Theorem edges between boundaries", headers, rows }
