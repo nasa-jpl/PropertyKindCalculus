@@ -199,6 +199,15 @@ def catalogue : Array Annotation := #[
     enforcement := .checked "rejected at elaboration unless the declaration is a \
       `Provenance.Contract` and the reason is non-empty"
     table := ""
+    section_ := "" },
+  { syntax_ := "@[kindDiagnostic \"…\"]", attachesTo := "a `KindOfProperty` definition"
+    effect := "Declares a kind to be a quality or conditioning output a consumer must read, \
+      with what it diagnoses: `#kind_diagnostic_coverage` then asks the declared boundaries \
+      in scope for a produced port carrying it. The mark is the census's enrollment — an \
+      unmarked kind is not walked, and removing a mark is the exemption."
+    enforcement := .checked "rejected at elaboration unless the declaration is a \
+      `KindOfProperty` and the description is non-empty"
+    table := ""
     section_ := "" }]
 
 /-- The annotation reference table. Pure data — it describes the surface, and so needs no
@@ -361,6 +370,17 @@ def commands : Array Command := #[
     effect := "The census as a gate: throws while any `inverts` edge in scope answers for its \
       inversion with neither a well-posedness witness nor a surfaced ambiguity. Records an \
       audit receipt exactly when it does not fire."
+    gate := "the command is the gate; there is no message to re-bless"
+    section_ := "" },
+  { syntax_ := "#kind_diagnostic_coverage ns …", library := "PropertyKindCalculus"
+    effect := "Walks every `@[kindDiagnostic]`-marked kind in the namespaces and reports each \
+      as exported by the produced ports carrying it or SIDECHANNELED — the census behind \
+      M22. Enrollment is the mark, so a scope with no marks records that visibly."
+    gate := "a marked kind no declared boundary exports fails the pin"
+    section_ := "" },
+  { syntax_ := "#kind_diagnostic_clean ns …", library := "PropertyKindCalculus"
+    effect := "The census as a gate: throws while any diagnostic kind in scope is carried by \
+      no produced port. Records an audit receipt exactly when it does not fire."
     gate := "the command is the gate; there is no message to re-bless"
     section_ := "" },
   -- The kind graph — the component report, its gate, and its diagram twin.

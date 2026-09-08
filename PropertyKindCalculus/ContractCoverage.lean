@@ -1,8 +1,8 @@
 /-
-# ContractCoverage — the censuses over declared boundaries (M12, M15, M20, M21)
+# ContractCoverage — the censuses over declared boundaries (M12, M15, M20, M21, M22)
 
 A declared boundary is a `Provenance.Contract` constant, and `#kind_contracts` already sweeps
-every one in scope for the consistency of what it declares. Four of the model template's
+every one in scope for the consistency of what it declares. Five of the model template's
 rubrics ask what a per-contract check cannot see — whether something *else* names the
 boundary, or whether the boundary or its edge declares something it was free to leave out —
 and each of those has a population that is a type and a per-member predicate that is
@@ -43,6 +43,13 @@ population has honest negatives, and an `AuditReceipt` at each success point.
     neither" is exactly the finding. Whether a named witness has the claimed `∃!` (or
     negated-`∃!`) shape is `#kind_relation`'s question; this census asks only whether the
     edge declares one.
+  * **M22 — `#kind_diagnostic_coverage ns …`.** The conditioning and quality outputs a
+    consumer must read are part of the declared contract, not a side channel. The population
+    is every `@[kindDiagnostic "what it diagnoses"]`-marked `KindOfProperty` under the
+    scope; the predicate is a produced port of some declared boundary carrying the kind.
+    Enrollment is the mark itself — a kind that is not a diagnostic is simply not marked, so
+    there is no exception mark, and a scope with no marks records that visibly rather than
+    passing in silence.
 
 A `@[kindCounterexample]` contract is not a subject of any of the censuses; it is listed as
 exempted so the census says what it skipped. A mark on a contract that satisfies the predicate
@@ -60,14 +67,15 @@ namespace PropertyKindCalculus.ContractCoverage
 open Lean Meta
 open PropertyKindCalculus.KindIncidence (contractSweepSubjects relationValueOf contractValueOf)
 
-/-! ## The two declared exceptions -/
+/-! ## The declared marks — two exceptions, one enrollment -/
 
-/-- One declared exemption on a contract: the declaration (resolved, so it cannot dangle) and
-the author's reason. -/
+/-- One declared mark: the declaration (resolved, so it cannot dangle) and the author's
+words — the reason a boundary is outside an obligation, or what a diagnostic kind
+diagnoses. -/
 structure ContractMark where
-  /-- The marked `Provenance.Contract` declaration. -/
+  /-- The marked declaration. -/
   decl : Name
-  /-- Why the boundary is legitimately outside the obligation, in the author's words. -/
+  /-- The author's words: why, or what. -/
   reason : String
   deriving Repr, Inhabited, BEq
 
@@ -94,6 +102,20 @@ syntax (name := kindRelationFreeAttr) "kindRelationFree " str : attr
 /-- `@[kindInversionTotal "<reason>"]` — declare that an inverted boundary legitimately has no
 conditional port: the inversion is total on its input type. -/
 syntax (name := kindInversionTotalAttr) "kindInversionTotal " str : attr
+
+/-- `@[kindDiagnostic "<what it diagnoses>"]`-marked kinds. -/
+initialize kindDiagnosticExt :
+    SimplePersistentEnvExtension ContractMark (Array ContractMark) ←
+  registerSimplePersistentEnvExtension {
+    addEntryFn    := fun a e => a.push e
+    addImportedFn := fun ess => ess.foldl (init := #[]) (· ++ ·)
+  }
+
+/-- `@[kindDiagnostic "<what it diagnoses>"]` — declare a `KindOfProperty` to be a quality or
+conditioning output a consumer must read. The mark enrolls the kind in
+`#kind_diagnostic_coverage`: some declared boundary in scope must carry it on a produced
+port, or the kind is a side channel. -/
+syntax (name := kindDiagnosticAttr) "kindDiagnostic " str : attr
 
 /-- The check both marks share: the target is a `Provenance.Contract` and the reason is not
 blank. -/
@@ -138,6 +160,30 @@ initialize registerBuiltinAttribute {
         `kindInversionTotal \"<reason>\"`"
 }
 
+initialize registerBuiltinAttribute {
+  name  := `kindDiagnosticAttr
+  descr := "A quality or conditioning kind a consumer must read: \
+    `#kind_diagnostic_coverage` asks the declared boundaries in scope for a produced \
+    port carrying it."
+  add   := fun decl stx _kind => do
+    match stx with
+    | `(attr| kindDiagnostic $reason:str) => do
+        let env ← getEnv
+        let some info := env.find? decl
+          | throwError "`@[kindDiagnostic]` could not find '{decl}' in the environment"
+        unless info.type.isConstOf ``PropertyKindCalculus.KindOfProperty do
+          throwError "`@[kindDiagnostic]` expects a 'KindOfProperty' — '{decl}' is not \
+            one. The mark declares a *kind* to be a quality or conditioning output, and \
+            the census then asks the boundaries for a port at that kind."
+        if reason.getString.all Char.isWhitespace then
+          throwError "`@[kindDiagnostic]` on '{decl}' needs to say what the kind \
+            diagnoses: a diagnostic no one can interpret is the side channel again"
+        modifyEnv fun env =>
+          kindDiagnosticExt.addEntry env { decl, reason := reason.getString }
+    | _ => throwError "invalid `kindDiagnostic` attribute; expected \
+        `kindDiagnostic \"<what it diagnoses>\"`"
+}
+
 /-- Every `@[kindRelationFree]` mark in the environment. -/
 def kindRelationFreeMarks (env : Environment) : Array ContractMark :=
   kindRelationFreeExt.getState env
@@ -145,6 +191,10 @@ def kindRelationFreeMarks (env : Environment) : Array ContractMark :=
 /-- Every `@[kindInversionTotal]` mark in the environment. -/
 def kindInversionTotalMarks (env : Environment) : Array ContractMark :=
   kindInversionTotalExt.getState env
+
+/-- Every `@[kindDiagnostic]` mark in the environment. -/
+def kindDiagnosticMarks (env : Environment) : Array ContractMark :=
+  kindDiagnosticExt.getState env
 
 /-! ## The population and the joins -/
 
@@ -535,5 +585,96 @@ elab "#kind_wellposedness_clean" nss:ident+ : command => liftTermElabM do
       answer is a declaration. Do NOT re-pin a `#kind_wellposedness_coverage` report whose \
       summary says `violation` — that turns the build green and the census off."
   recordAuditReceipt "kind_wellposedness_clean" scope
+
+/-! ## M22 — diagnostic coverage -/
+
+/-- One row per `@[kindDiagnostic]`-marked kind under the scope: `[exported]` by the
+produced ports carrying it, or `⚠ SIDECHANNELED`; one `⚠ UNREADABLE` row per boundary
+whose ports cannot be read (its ports cannot witness an export). Counterexample
+boundaries witness nothing. Empty when no kind in scope is marked — the census is
+enrolled by the mark, so an unmarked vocabulary reads empty *visibly*, in the record a
+conforming document pins. -/
+def diagnosticRows (scope : Array Name) : Elab.TermElabM (Array Row) := do
+  let marks := (kindDiagnosticMarks (← getEnv)).filter
+    (fun m => scope.any (·.isPrefixOf m.decl))
+  if marks.isEmpty then return #[]
+  let subs ← subjects scope
+  let mut out : Array Row := #[]
+  for s in subs do
+    if s.counterexample then continue
+    if s.value?.isNone then
+      out := out.push ⟨.violation,
+        s!"⚠ UNREADABLE {s.decl} — not a `Contract String String`"⟩
+  for m in marks.qsort (fun a b => a.decl.toString < b.decl.toString) do
+    let long := m.decl.toString
+    -- the same suffix tolerance the relation checker's kind comparison uses: a port
+    -- states its kind as the declaring module pretty-prints it, the mark as the
+    -- environment names it
+    let matchesKind := fun (pk : String) =>
+      pk == long || long.endsWith ("." ++ pk) || pk.endsWith ("." ++ long)
+    let mut hits : Array String := #[]
+    for s in subs do
+      if s.counterexample then continue
+      let some c := s.value? | continue
+      for p in c.ports do
+        unless p.dir.produced do continue
+        if matchesKind p.kind then hits := hits.push s!"{s.decl} :: {p.node}"
+    if hits.isEmpty then
+      out := out.push ⟨.violation,
+        s!"⚠ SIDECHANNELED {m.decl} ({m.reason}) — no produced port in scope carries it"⟩
+    else
+      out := out.push ⟨.ok,
+        s!"[exported] {m.decl} — {String.intercalate ", " (hits.qsort (· < ·)).toList}"⟩
+  return out
+
+/-- The summary line: the counts, and `clean` exactly when no row is a violation. -/
+def diagnosticSummary (rows : Array Row) : String :=
+  let nOk := count rows .ok
+  let bad := violations rows
+  let nUnread := (bad.filter (·.line.startsWith "⚠ UNREADABLE")).size
+  let nSide := bad.size - nUnread
+  let kinds := nOk + nSide
+  let unread := if nUnread > 0 then s!"; {nUnread} UNREADABLE" else ""
+  if bad.isEmpty then s!"{kinds} diagnostic kind(s): {nOk} exported — clean"
+  else s!"{kinds} diagnostic kind(s): {nOk} exported, {nSide} SIDECHANNELED{unread} \
+    — diagnostic-coverage violation"
+
+open Elab Command in
+/-- `#kind_diagnostic_coverage ns …` — the census behind M22: every
+`@[kindDiagnostic]`-marked kind under the namespaces, each `[exported]` by the produced
+ports carrying it or `⚠ SIDECHANNELED`. Enrollment is the mark itself, so there is no
+exception mark — a kind that is not a quality or conditioning output is simply not
+marked — and a scope with no marks records that visibly rather than passing in silence.
+One sorted `info` message to pin. Records an `AuditReceipt` for
+`kind_diagnostic_coverage`. -/
+elab "#kind_diagnostic_coverage" nss:ident+ : command => liftTermElabM do
+  let scope := nss.map (·.getId)
+  let rows ← diagnosticRows scope
+  recordAuditReceipt "kind_diagnostic_coverage" scope
+  if rows.isEmpty then
+    logInfo m!"diagnostic coverage — no diagnostic kinds declared in the given namespaces"
+    return
+  logInfo m!"diagnostic coverage:\n{body rows}\n{diagnosticSummary rows}"
+
+open Elab Command in
+/-- `#kind_diagnostic_clean ns …` — **the invariant, stated apart from the record.** No
+message; throws while any diagnostic kind in scope is `⚠ SIDECHANNELED` (or a boundary
+`UNREADABLE`). Records an `AuditReceipt` for `kind_diagnostic_clean` exactly when it does
+not fire. -/
+elab "#kind_diagnostic_clean" nss:ident+ : command => liftTermElabM do
+  let scope := nss.map (·.getId)
+  let bad := violations (← diagnosticRows scope)
+  unless bad.isEmpty do
+    throwError "diagnostic coverage: {bad.size} diagnostic kind(s) no declared boundary \
+      exports — diagnostic-coverage violation\n{indented bad}\n\n\
+      A quality or conditioning output a consumer must read is part of the declared \
+      contract, not a side channel a downstream stage may or may not read. Give some \
+      boundary in scope a produced port at each kind at issue — `conditional` where the \
+      value exists only in some cases, with its decider named — or, where the kind is \
+      not in fact a diagnostic a consumer needs, remove its `@[kindDiagnostic]` mark: \
+      enrollment is the mark, so the mark is also the exemption. Do NOT re-pin a \
+      `#kind_diagnostic_coverage` report whose summary says `violation` — that turns \
+      the build green and the census off."
+  recordAuditReceipt "kind_diagnostic_clean" scope
 
 end PropertyKindCalculus.ContractCoverage

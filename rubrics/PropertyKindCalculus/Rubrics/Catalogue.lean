@@ -457,10 +457,12 @@ def modelTemplate : List Rubric :=
                      rather than resolving it silently to whichever root the algorithm \
                      reached first" }
   , { id := "M22", group := .wellPosedness, evidence := .checked,
-      closure := .pending "quality and conditioning outputs a consumer needs that no \
-                           contract declares as ports — produced ports are enumerable, but \
-                           nothing marks a port or a kind as diagnostic, so the population \
-                           is not yet a type; the form comes first",
+      closure := .gate "`#kind_diagnostic_clean ns …` — every `@[kindDiagnostic]`-marked \
+                        kind is carried by a produced port of some declared boundary — with \
+                        `#kind_diagnostic_coverage` as the record; enrollment is the mark \
+                        itself, so removing a mark is the exemption, and a scope with no \
+                        marks records that visibly rather than passing in silence"
+                       ["kind_diagnostic_clean"],
       title := "The conditioning and quality outputs a consumer must read are part of the \
                 declared contract, not a side channel",
       obligation := "Put the conditioning and quality outputs a consumer must read into the \

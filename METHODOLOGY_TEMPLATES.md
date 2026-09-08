@@ -1,11 +1,11 @@
 # METHODOLOGY_TEMPLATES.md — closing the application templates: from exemplars to censuses
 
 > Status: **steps 1 and 2 landed; step 3 landed for M12, M15 and M21's domain half; step 4
-> landed for M20 and M21's ambiguity half — `Provenance.Relation` gained `wellPosed`,
-> `domain` and `ambiguity`, validated by `#kind_relation` and censused by
-> `#kind_wellposedness_coverage` / `_clean`; M6, M12, M15, M20 and M21 now read `gate` in
-> the catalogue. M17 and M22 (and M18, M19, M26, D6–D8, D13) still need their declaration
-> form first.** Steps 4 (rest) and 5 open.
+> landed for M20 and M21's ambiguity half (`Relation.wellPosed`/`domain`/`ambiguity`,
+> censused by `#kind_wellposedness_coverage`) and for M22 (`@[kindDiagnostic]`, censused by
+> `#kind_diagnostic_coverage`); M6, M12, M15, M20, M21 and M22 now read `gate` in the
+> catalogue. M17 (and M18, M19, M26, D6–D8, D13) still needs its declaration form
+> first.** Steps 4 (rest) and 5 open.
 > Baseline 2026-09-07.
 > Audience: PKC maintainers, and the author of any document that scores itself against
 > the model or deployment template.
@@ -73,8 +73,8 @@ deployment rubrics are not one kind of work.
 | bucket | rubrics | what the work actually is |
 |---|---|---|
 | population exists — write the sweep | M6, M12, M15, M21 (domain half) — **done** | a command of the `#kind_*` shape over a type already in the environment |
-| form declared, sweep written | M20, M21 (ambiguity half) — **done** | `Relation.wellPosed`/`domain`/`ambiguity`, validated by `#kind_relation`, censused by `#kind_wellposedness_coverage` |
-| population must be *declared* first | M17, M22, M18, M19, M26 (and D6, D7, D8, D13) | choose the declaration form — a bridge as data, a diagnostic port, a measurement, an adequacy claim, an uncertainty record — then the sweep is trivial |
+| form declared, sweep written | M20, M21 (ambiguity half), M22 — **done** | `Relation.wellPosed`/`domain`/`ambiguity` censused by `#kind_wellposedness_coverage`; `@[kindDiagnostic]` censused by `#kind_diagnostic_coverage` |
+| population must be *declared* first | M17, M18, M19, M26 (and D6, D7, D8, D13) | choose the declaration form — a bridge as data, a measurement, an adequacy claim, an uncertainty record — then the sweep is trivial |
 | a proxy must be chosen | M7 | "relied on" has no mechanical meaning; someone decides the proxy and writes down that it is one |
 | population lives downstream | D3 | the declared payload faces are a deployment repository's types (soil-moisture-workflows, sm-smap-nisar-lean), so the sweep is written there against PKC's receipt API, not here |
 
@@ -250,9 +250,25 @@ and either answer is a declaration, so the field pair is total over the honest n
   exist (`retrieval_well_posed_admissibleBox`, `retrieval_ambiguous_of_collision`); what
   was missing was only the field, which is exactly what step 3 found.
 
-**Open** — M17, M22 from step 3; M18, M19, M26 in the model template; D6, D7, D8, D13 in
-the deployment template. Each is `pending` because the thing to enumerate is a number in
-a sentence, or a fact with no field to live in. The candidates the step 3 exploration
+**Done — M22.** The form is `@[kindDiagnostic "what it diagnoses"]` on the
+`KindOfProperty` — the kind-mark candidate, but with the census asking for a *produced
+port* at the kind rather than crossing the boundary's harvested footprint: the predicate
+then reads only declared contract values, and it does not under-report where the
+diagnostic is computed by a sibling of the boundary's members rather than inside them.
+Enrollment is the mark itself, so there is no exception mark (removing a mark is the
+exemption), and `#kind_diagnostic_coverage` over a scope with no marks records that
+visibly instead of passing in silence — the opt-in analogue of M6's `UNDIMENSIONED`
+lesson. Two vocabularies met the census: the probe world (`[exported]` beside
+`⚠ SIDECHANNELED` and the `UNREADABLE` boundary), and soil-moisture-model by a
+population probe with the four `algorithm.qc.kinds` QC kinds standing in for the marks
+its pin cannot yet declare — **all four (`avsFitRmse`, `nValid`, `condPivot`, `qcLevel`)
+SIDECHANNELED over 9 readable boundaries**: they exist as kinds and as `IngestContract`
+slots, and no declared boundary exports any of them as a port, which is M22's finding
+stated mechanically.
+
+**Open** — M17 from step 3; M18, M19, M26 in the model template; D6, D7, D8, D13 in the
+deployment template. Each is `pending` because the thing to enumerate is a number in a
+sentence, or a fact with no field to live in. The candidate the step 3 exploration
 surfaced:
 
 * **M17** — a bridge as data on the carrier's instance: `@[carrierBridge "rung" witness]` /
@@ -260,10 +276,6 @@ surfaced:
   theorem, existing, sorry-free). Population unscoped (the worked instance declares no
   carrier instance of its own); `CudaT`/`TapeBuilder` carry `NumCarrier` only; parametric
   instances are derived, not owed a bridge.
-* **M22** — either a `Contract.diagnostics` clause (which produced ports are conditioning or
-  quality outputs, and what they diagnose) or a `@[kindDiagnostic]` mark on the kind, with
-  the census crossing a boundary's kind footprint against its declared ports. The second
-  reuses the most machinery and would flag the worked instance's `condPivot` mechanically.
 
 ### Step 5 — M7's proxy
 
@@ -367,3 +379,10 @@ number true.
   edges, both UNDECIDED until its PKC pin carries the fields. Catalogue: M20 → `gate`;
   M21's closure names both gates (`kind_inversion_clean`, `kind_wellposedness_clean`), so a
   conforming document must run both.
+* **2026-09-07** — Step 4, second form: M22. `@[kindDiagnostic "what it diagnoses"]` on a
+  `KindOfProperty`; `#kind_diagnostic_coverage` / `_clean` ask the declared boundaries in
+  scope for a produced port at each marked kind (declared values only — no harvest, so a
+  diagnostic computed beside the boundary's members is still owed a port). Probe pins
+  `[exported]`, `⚠ SIDECHANNELED`, the `UNREADABLE` boundary, the gate's refusal, a clean
+  sub-namespace, and the attribute's two refusals. SMM population probe: the four QC kinds
+  all SIDECHANNELED over 9 readable boundaries (table in step 4). Catalogue: M22 → `gate`.

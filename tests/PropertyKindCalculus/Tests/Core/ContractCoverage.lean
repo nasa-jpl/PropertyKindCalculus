@@ -1,8 +1,9 @@
 /-
-`Tests.Core.ContractCoverage` — the indexed probe for the four censuses over declared
+`Tests.Core.ContractCoverage` — the indexed probe for the five censuses over declared
 boundaries (`PropertyKindCalculus.ContractCoverage`): `#kind_relation_coverage` (M12),
 `#kind_mereology_coverage` (M15), `#kind_inversion_coverage` (M21's domain half),
-`#kind_wellposedness_coverage` (M20 and M21's ambiguity half), and their gates.
+`#kind_wellposedness_coverage` (M20 and M21's ambiguity half),
+`#kind_diagnostic_coverage` (M22), and their gates.
 
 One probe world, every verdict class of every census exercised, the full reports pinned:
 
@@ -14,6 +15,8 @@ One probe world, every verdict class of every census exercised, the full reports
   * a collapsing forward whose edge declares `ambiguity` and nothing else: `[surfaced]`,
     the honest negative that must not fire the gate — while the three field-free `inverts`
     edges read `⚠ UNDECIDED` and do;
+  * two `@[kindDiagnostic]`-marked kinds: one carried by a produced port of the retrieval
+    (`[exported]`), one that no boundary exports (`⚠ SIDECHANNELED`);
   * an inverted boundary with an `output` port and nothing else declared: witnessed (M12),
     `UNDECLARED` (M15), `UNGUARDED` (M21);
   * an orphan no edge names: `UNWITNESSED`, and outside M21's population;
@@ -42,6 +45,17 @@ open PropertyKindCalculus
 def aK : KindOfProperty := { id := "contract coverage probe a", scale := .ratio }
 /-- A probe kind — the forward's answer. -/
 def bK : KindOfProperty := { id := "contract coverage probe b", scale := .ratio }
+
+/-- A quality kind the retrieval exports: marked diagnostic, and carried by a produced
+port of `Good.invBoundary` below. -/
+@[kindDiagnostic "whether the retrieval's answer was decided inside its domain"]
+def qcK : KindOfProperty := { id := "contract coverage probe quality", scale := .ordinal }
+
+/-- A conditioning kind marked diagnostic that no boundary in scope exports — the side
+channel the census is for. -/
+@[kindDiagnostic "the fit's conditioning pivot"]
+def hiddenK : KindOfProperty :=
+  { id := "contract coverage probe conditioning", scale := .ratio }
 
 namespace Good
 
@@ -79,14 +93,16 @@ def fwdBoundary : Provenance.Contract String String where
   aggregations := [("fwd/result", .intensive)]
 
 /-- The retrieval's boundary: the left side of the inversion edge, guarded by a conditional
-port whose decider is named, its port classed. -/
+port whose decider is named, its ports classed, its quality flag exported as a port
+rather than a side channel. -/
 def invBoundary : Provenance.Contract String String where
   name := "coverage probe retrieval"
   members := ["PropertyKindCalculus.Tests.ContractCoverage.Good.inv"]
-  ports := [⟨"inv/y", "bK", .input⟩, ⟨"inv/result", "aK", .conditional⟩]
+  ports := [⟨"inv/y", "bK", .input⟩, ⟨"inv/result", "aK", .conditional⟩,
+            ⟨"inv/quality", "qcK", .output⟩]
   exits := []
   deciders := [("inv/result", "PropertyKindCalculus.Tests.ContractCoverage.Good.inDomain")]
-  aggregations := [("inv/result", .wholeProper)]
+  aggregations := [("inv/result", .wholeProper), ("inv/quality", .intensive)]
 
 /-- The theorem edge between them — answering for its inversion: the well-posedness
 witness on its declared domain. -/
@@ -254,12 +270,13 @@ info: mereology coverage:
 [classed] PropertyKindCalculus.Tests.ContractCoverage.Exempt.staleMarks :: inv/result : aK — intensive
 [classed] PropertyKindCalculus.Tests.ContractCoverage.Exempt.totalInverse :: inv/result : aK — intensive
 [classed] PropertyKindCalculus.Tests.ContractCoverage.Good.fwdBoundary :: fwd/result : bK — intensive
+[classed] PropertyKindCalculus.Tests.ContractCoverage.Good.invBoundary :: inv/quality : qcK — intensive
 [classed] PropertyKindCalculus.Tests.ContractCoverage.Good.invBoundary :: inv/result : aK — whole-proper
 ⊘ exempted PropertyKindCalculus.Tests.ContractCoverage.Exempt.keptCounterexample — counterexample
 ⚠ UNDECLARED PropertyKindCalculus.Tests.ContractCoverage.Bare.orphan :: fwd/result : bK
 ⚠ UNDECLARED PropertyKindCalculus.Tests.ContractCoverage.Bare.unguardedInverse :: inv/result : aK
 ⚠ UNREADABLE PropertyKindCalculus.Tests.ContractCoverage.Weird.unreadable — not a `Contract String String`
-8 produced port(s): 6 classed, 2 UNDECLARED; 1 boundary(ies) exempted; 1 UNREADABLE — mereology-coverage violation
+9 produced port(s): 7 classed, 2 UNDECLARED; 1 boundary(ies) exempted; 1 UNREADABLE — mereology-coverage violation
 -/
 #guard_msgs (whitespace := lax) in
 #kind_mereology_coverage PropertyKindCalculus.Tests.ContractCoverage
@@ -288,6 +305,16 @@ info: well-posedness coverage:
 -/
 #guard_msgs (whitespace := lax) in
 #kind_wellposedness_coverage PropertyKindCalculus.Tests.ContractCoverage
+
+/--
+info: diagnostic coverage:
+[exported] PropertyKindCalculus.Tests.ContractCoverage.qcK — PropertyKindCalculus.Tests.ContractCoverage.Good.invBoundary :: inv/quality
+⚠ SIDECHANNELED PropertyKindCalculus.Tests.ContractCoverage.hiddenK (the fit's conditioning pivot) — no produced port in scope carries it
+⚠ UNREADABLE PropertyKindCalculus.Tests.ContractCoverage.Weird.unreadable — not a `Contract String String`
+2 diagnostic kind(s): 1 exported, 1 SIDECHANNELED; 1 UNREADABLE — diagnostic-coverage violation
+-/
+#guard_msgs (whitespace := lax) in
+#kind_diagnostic_coverage PropertyKindCalculus.Tests.ContractCoverage
 
 /-! ## The gates — each fires on the probe world, and cannot be re-blessed -/
 
@@ -332,18 +359,34 @@ An inversion either has exactly one answer on a declared domain or it does not, 
 #guard_msgs (whitespace := lax) in
 #kind_wellposedness_clean PropertyKindCalculus.Tests.ContractCoverage
 
+/--
+error: diagnostic coverage: 2 diagnostic kind(s) no declared boundary exports — diagnostic-coverage violation
+  ⚠ SIDECHANNELED PropertyKindCalculus.Tests.ContractCoverage.hiddenK (the fit's conditioning pivot) — no produced port in scope carries it
+  ⚠ UNREADABLE PropertyKindCalculus.Tests.ContractCoverage.Weird.unreadable — not a `Contract String String`
+
+A quality or conditioning output a consumer must read is part of the declared contract, not a side channel a downstream stage may or may not read. Give some boundary in scope a produced port at each kind at issue — `conditional` where the value exists only in some cases, with its decider named — or, where the kind is not in fact a diagnostic a consumer needs, remove its `@[kindDiagnostic]` mark: enrollment is the mark, so the mark is also the exemption. Do NOT re-pin a `#kind_diagnostic_coverage` report whose summary says `violation` — that turns the build green and the census off.
+-/
+#guard_msgs (whitespace := lax) in
+#kind_diagnostic_clean PropertyKindCalculus.Tests.ContractCoverage
+
 /-! A namespace where everything is declared or exempted: every gate passes silently. The
 exemption is the point — it is not a violation and must not fire the gate. -/
 namespace Clean
 
-/-- Inverted, guarded, classed, witnessed. -/
+/-- The quality kind the clean retrieval exports. -/
+@[kindDiagnostic "whether the clean retrieval's answer was decided inside its domain"]
+def qualityK : KindOfProperty :=
+  { id := "contract coverage probe clean quality", scale := .ordinal }
+
+/-- Inverted, guarded, classed, witnessed, its diagnostic exported. -/
 def retrieval : Provenance.Contract String String where
   name := "coverage probe clean retrieval"
   members := ["PropertyKindCalculus.Tests.ContractCoverage.Good.inv"]
-  ports := [⟨"inv/y", "bK", .input⟩, ⟨"inv/result", "aK", .conditional⟩]
+  ports := [⟨"inv/y", "bK", .input⟩, ⟨"inv/result", "aK", .conditional⟩,
+            ⟨"inv/quality", "qualityK", .output⟩]
   exits := []
   deciders := [("inv/result", "PropertyKindCalculus.Tests.ContractCoverage.Good.inDomain")]
-  aggregations := [("inv/result", .intensive)]
+  aggregations := [("inv/result", .intensive), ("inv/quality", .intensive)]
 
 /-- Its edge, answering for its inversion. -/
 def retrievalInverts : Provenance.Relation where
@@ -381,6 +424,10 @@ end Clean
 #guard_msgs in
 #kind_wellposedness_clean PropertyKindCalculus.Tests.ContractCoverage.Clean
 
+-- no message: the one diagnostic kind under `Clean` is exported as a port
+#guard_msgs in
+#kind_diagnostic_clean PropertyKindCalculus.Tests.ContractCoverage.Clean
+
 /-! ## The attributes' own refusals -/
 
 /--
@@ -394,5 +441,17 @@ error: `@[kindInversionTotal]` on 'PropertyKindCalculus.Tests.ContractCoverage.B
 -/
 #guard_msgs (whitespace := lax) in
 attribute [kindInversionTotal "  "] Bare.orphan
+
+/--
+error: `@[kindDiagnostic]` expects a 'KindOfProperty' — 'PropertyKindCalculus.Tests.ContractCoverage.Good.fwdBoundary' is not one. The mark declares a *kind* to be a quality or conditioning output, and the census then asks the boundaries for a port at that kind.
+-/
+#guard_msgs (whitespace := lax) in
+attribute [kindDiagnostic "misplaced"] Good.fwdBoundary
+
+/--
+error: `@[kindDiagnostic]` on 'PropertyKindCalculus.Tests.ContractCoverage.aK' needs to say what the kind diagnoses: a diagnostic no one can interpret is the side channel again
+-/
+#guard_msgs (whitespace := lax) in
+attribute [kindDiagnostic "  "] aK
 
 end PropertyKindCalculus.Tests.ContractCoverage
