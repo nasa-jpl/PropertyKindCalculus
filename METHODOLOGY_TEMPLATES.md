@@ -271,11 +271,22 @@ deployment template. Each is `pending` because the thing to enumerate is a numbe
 sentence, or a fact with no field to live in. The candidate the step 3 exploration
 surfaced:
 
-* **M17** — a bridge as data on the carrier's instance: `@[carrierBridge "rung" witness]` /
+* **M17** — a bridge as data on the carrier's instance: `@[carrierBridge witness]` /
   `@[carrierBridgeFree "reason"]`, checked as `RelationLicense` rungs already are (a named
-  theorem, existing, sorry-free). Population unscoped (the worked instance declares no
-  carrier instance of its own); `CudaT`/`TapeBuilder` carry `NumCarrier` only; parametric
-  instances are derived, not owed a bridge.
+  theorem, existing, sorry-free), with an existing `CarrierRefinement` instance counting as
+  the declared bridge already. The population question is harder than the sketch: the
+  interesting carriers get `NumCarrier` through the parametric forwarding instance
+  `instNumCarrierOfContext` (`torch/…/NumCarrierContext.lean` — "ℝ, binary32, and `Float`
+  `NumCarrier`s with no new instance work"), so an instance-head walk enumerates none of
+  them; the enumerable ground vocabulary sits at `Carrier`/`LawfulCarrier` (core) and
+  `Context`/`MathCarrier` (torch) instances, split across libraries the core census cannot
+  both see. What is settled: `CarrierRefinement` is the data-bearing bridge form
+  (`QuantityRefinement.lean`), `Examples.MiniRefinement` its one instance the search
+  found, and `IEEE32Exec`'s unbridged status is deliberate with its reason in
+  `QuantityRefinement.lean`'s module docstring (a machine format's division needs the
+  nonzero-denominator hypothesis, so its refinement is a theorem, not an instance) — the
+  case `@[carrierBridgeFree]` exists to turn into data. The population definition comes
+  first, settled against the torch library's own vocabulary.
 
 ### Step 5 — M7's proxy
 
