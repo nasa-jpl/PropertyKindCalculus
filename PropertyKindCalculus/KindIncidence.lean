@@ -2644,8 +2644,11 @@ relation; `inverts` an `Eq` one of whose sides composes members of both boundari
 `refines` an `Eq` under at least one bound hypothesis); a named `tolerance` is a
 declaration whose type is a `Quantity` at the kind of an output port of the left
 boundary; every named hypothesis is a declaration the witness statement mentions; every
-license rung names a sorry-free theorem as its repair or restatement; and the statement
-mentions at least one member of *each* boundary. -/
+license rung names a sorry-free theorem as its repair or restatement; a named
+`wellPosed` is a sorry-free theorem concluding with `∃!`, on an `inverts` edge only,
+accompanied by the `domain` declaration its statement mentions; a named `ambiguity` is a
+sorry-free theorem concluding with the negation of an `∃!`, on an `inverts` edge only;
+and the statement mentions at least one member of *each* boundary. -/
 def checkRelation (rname : Name) : MetaM CheckedRelation := do
   let rel ← relationValueOf rname
   let env ← getEnv
@@ -2761,6 +2764,72 @@ def checkRelation (rname : Name) : MetaM CheckedRelation := do
       throwError "the license at rung '{l.rung}' rests on '{en}', which depends on \
         'sorryAx' — it proves nothing yet"
     licenseLines := licenseLines ++ [s!"license: {l.label}"]
+  -- the well-posedness clause: an inversion may claim that its answer exists and is
+  -- unique, and the claim is proved on a *declared* domain — the witness a sorry-free
+  -- theorem concluding with `∃!`, the domain a declaration that statement mentions.
+  -- `ExistsUnique` is matched by name, unresolved, so the check needs no import of the
+  -- library that defines `∃!`; an environment that can state one has it in scope.
+  let headOf (e : Expr) : String := match e.getAppFn with
+    | .const c _ => toString c
+    | _ => "no constant"
+  let mut wellPosedLines : List String := []
+  unless rel.wellPosed.isEmpty do
+    unless rel.kind matches .inverts do
+      throwError "the edge names a well-posedness witness but claims \
+        '{rel.kind.label}' — existence and uniqueness answer an inversion"
+    let wpn := rel.wellPosed.toName
+    let some wpinfo := env.find? wpn
+      | throwError "the well-posedness witness '{rel.wellPosed}' is not a declaration"
+    unless wpinfo matches .thmInfo _ do
+      throwError "the well-posedness witness '{wpn}' is not a theorem — existence and \
+        uniqueness are carried by a proof"
+    let wpaxs ← Lean.collectAxioms wpn
+    if wpaxs.contains ``sorryAx then
+      throwError "the well-posedness witness '{wpn}' depends on 'sorryAx' — it proves \
+        nothing yet"
+    Meta.forallTelescope wpinfo.type fun _ wpconcl => do
+      unless wpconcl.isAppOf `ExistsUnique do
+        throwError "'{wpn}' is claimed to prove existence and uniqueness, but its \
+          conclusion is headed by '{headOf wpconcl}', not '∃!'"
+    if rel.domain.isEmpty then
+      throwError "the well-posedness witness '{wpn}' comes with no domain — existence \
+        and uniqueness are proved on a declared domain, so name the box or predicate \
+        its statement mentions"
+    let dn := rel.domain.toName
+    unless (env.find? dn).isSome do
+      throwError "the domain '{rel.domain}' is not a declaration"
+    let wpMentions := wpinfo.type.foldConsts ({} : NameSet) fun c s => s.insert c
+    unless wpMentions.contains dn do
+      throwError "'{wpn}' does not mention the domain '{rel.domain}' — the declared \
+        domain is the stated one, never wider"
+    wellPosedLines := [s!"well-posed: {wpn} on {rel.domain}"]
+  if rel.wellPosed.isEmpty && !rel.domain.isEmpty then
+    throwError "the edge names a domain with no well-posedness witness — the domain is \
+      where existence and uniqueness hold, so it accompanies the witness"
+  -- the ambiguity clause: where the inversion is not single-valued, the edge surfaces
+  -- that as a declaration — a sorry-free theorem concluding with the negation of an
+  -- `∃!` — rather than resolving it to whichever root the algorithm reached first
+  let mut ambiguityLines : List String := []
+  unless rel.ambiguity.isEmpty do
+    unless rel.kind matches .inverts do
+      throwError "the edge names an ambiguity witness but claims '{rel.kind.label}' — \
+        ambiguity is an inversion's finding"
+    let an := rel.ambiguity.toName
+    let some ainfo := env.find? an
+      | throwError "the ambiguity witness '{rel.ambiguity}' is not a declaration"
+    unless ainfo matches .thmInfo _ do
+      throwError "the ambiguity witness '{an}' is not a theorem — a surfaced ambiguity \
+        is carried by a proof"
+    let aaxs ← Lean.collectAxioms an
+    if aaxs.contains ``sorryAx then
+      throwError "the ambiguity witness '{an}' depends on 'sorryAx' — it proves \
+        nothing yet"
+    Meta.forallTelescope ainfo.type fun _ aconcl => do
+      unless aconcl.isAppOf ``Not && aconcl.appArg!.isAppOf `ExistsUnique do
+        throwError "'{an}' is claimed to surface an ambiguity, but its conclusion is \
+          headed by '{headOf aconcl}', not the negation of an '∃!' — the uniqueness \
+          that fails is what the witness states"
+    ambiguityLines := [s!"ambiguity: {an}"]
   let lm := mentionedMembers left mentions
   let rm := mentionedMembers right mentions
   if lm.isEmpty then
@@ -2772,7 +2841,7 @@ def checkRelation (rname : Name) : MetaM CheckedRelation := do
   let claim := if rel.claim.isEmpty then [] else [s!"claims: {rel.claim}"]
   return { rel, leftName := left.name, rightName := right.name,
            lines := [s!"witness: {wname}"] ++ claim ++ toleranceLines ++ hypothesisLines
-             ++ licenseLines
+             ++ licenseLines ++ wellPosedLines ++ ambiguityLines
              ++ [s!"names on the left: {String.intercalate ", " lm}",
                  s!"names on the right: {String.intercalate ", " rm}",
                  s!"axioms: {String.intercalate ", " (axs.toList.map toString)}"] }
@@ -2780,10 +2849,10 @@ def checkRelation (rname : Name) : MetaM CheckedRelation := do
 open Elab Command in
 /-- `#kind_relation r` checks the theorem edge `r` declares between two contracts
 (`checkRelation` — the witness a sorry-free theorem, the conclusion in the claimed
-shape, the optional tolerance/hypothesis/license clauses each answered for by name, the
-statement mentioning members of both boundaries) and prints it. Every failure throws, so
-the command is the report and the gate at once — there is no reading of it that states a
-violation. -/
+shape, the optional tolerance/hypothesis/license/well-posedness/ambiguity clauses each
+answered for by name, the statement mentioning members of both boundaries) and prints
+it. Every failure throws, so the command is the report and the gate at once — there is
+no reading of it that states a violation. -/
 elab "#kind_relation " r:ident : command => liftTermElabM do
   let c ← checkRelation (← realizeGlobalConstNoOverload r)
   logInfo m!"kind relation: '{c.leftName}' {c.rel.kind.label} '{c.rightName}'\n\
@@ -2828,6 +2897,10 @@ elab "#kind_relations " nss:ident* : command => liftTermElabM do
         (if c.rel.tolerance.isEmpty then [] else [s!" [tolerance: {c.rel.tolerance}]"])
           ++ (if c.rel.licenses.isEmpty then []
               else [s!" [rungs: {String.intercalate ", " (c.rel.licenses.map (·.rung))}]"])
+          ++ (if c.rel.wellPosed.isEmpty then []
+              else [s!" [well-posed: {c.rel.wellPosed} on {c.rel.domain}]"])
+          ++ (if c.rel.ambiguity.isEmpty then []
+              else [s!" [ambiguity: {c.rel.ambiguity}]"])
       lines := lines.push
         s!"  {n}: '{c.leftName}' {c.rel.kind.label} '{c.rightName}' — \
           {c.rel.witness}{extras}"

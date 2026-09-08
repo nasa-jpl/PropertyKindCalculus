@@ -1,10 +1,11 @@
 # METHODOLOGY_TEMPLATES.md — closing the application templates: from exemplars to censuses
 
-> Status: **steps 1 and 2 landed; step 3 landed for M12, M15 and M21's domain half — each
-> a census with a record, a gate, a probe pinning every verdict class, and a run against
-> soil-moisture-model; M6, M12, M15 and M21 now read `gate` in the catalogue. M17, M20, M22
-> and M21's ambiguity half moved to step 4: the exploration found no declaration form for
-> the thing their predicate needs, so the form comes first.** Steps 4–5 open.
+> Status: **steps 1 and 2 landed; step 3 landed for M12, M15 and M21's domain half; step 4
+> landed for M20 and M21's ambiguity half — `Provenance.Relation` gained `wellPosed`,
+> `domain` and `ambiguity`, validated by `#kind_relation` and censused by
+> `#kind_wellposedness_coverage` / `_clean`; M6, M12, M15, M20 and M21 now read `gate` in
+> the catalogue. M17 and M22 (and M18, M19, M26, D6–D8, D13) still need their declaration
+> form first.** Steps 4 (rest) and 5 open.
 > Baseline 2026-09-07.
 > Audience: PKC maintainers, and the author of any document that scores itself against
 > the model or deployment template.
@@ -72,7 +73,8 @@ deployment rubrics are not one kind of work.
 | bucket | rubrics | what the work actually is |
 |---|---|---|
 | population exists — write the sweep | M6, M12, M15, M21 (domain half) — **done** | a command of the `#kind_*` shape over a type already in the environment |
-| population must be *declared* first | M17, M20, M22, M21 (ambiguity half), M18, M19, M26 (and D6, D7, D8, D13) | choose the declaration form — a bridge as data, a well-posedness witness and its domain, a diagnostic port, a measurement, an adequacy claim, an uncertainty record — then the sweep is trivial |
+| form declared, sweep written | M20, M21 (ambiguity half) — **done** | `Relation.wellPosed`/`domain`/`ambiguity`, validated by `#kind_relation`, censused by `#kind_wellposedness_coverage` |
+| population must be *declared* first | M17, M22, M18, M19, M26 (and D6, D7, D8, D13) | choose the declaration form — a bridge as data, a diagnostic port, a measurement, an adequacy claim, an uncertainty record — then the sweep is trivial |
 | a proxy must be chosen | M7 | "relied on" has no mechanical meaning; someone decides the proxy and writes down that it is one |
 | population lives downstream | D3 | the declared payload faces are a deployment repository's types (soil-moisture-workflows, sm-smap-nisar-lean), so the sweep is written there against PKC's receipt API, not here |
 
@@ -155,7 +157,8 @@ each. The three are built; the rest are re-bucketed below with the reason and th
 they need.
 
 `PropertyKindCalculus.ContractCoverage` (core, beside `KindIncidence`): three censuses over
-declared boundaries, each a record command, a `_clean` gate, receipts at the success points,
+declared boundaries (step 4's well-posedness census now makes it four), each a record
+command, a `_clean` gate, receipts at the success points,
 and a probe (`Tests.Core.ContractCoverage`) that pins every verdict class of every census,
 the three gate refusals, three silent gates over a clean sub-namespace, and the two
 attributes' own refusals.
@@ -194,7 +197,8 @@ M15 and M21 read `partial` until the gates run clean, which they will not until 
 declarations are made or the exemptions written. That is the mechanism working, not a
 regression. The pinned catalogue rows moved on the strength of the probe and the run, per §4.
 
-**Re-bucketed to step 4, with the code facts that decided it:**
+**Re-bucketed to step 4, with the code facts that decided it** (the M20 and M21 bullets
+record what decided the re-bucketing; step 4 has since resolved both — the fields exist):
 
 * **M17.** The population exists — the `Carrier`/`NumCarrier` instance vocabulary, with
   `LawfulCarrier` as the line between specification and executable — but the predicate does
@@ -213,25 +217,49 @@ regression. The pinned catalogue rows moved on the strength of the probe and the
   root, and said so"; `retrieval_ambiguous_of_collision` exists as a theorem hanging off no
   declaration.
 
-### Step 4 — the declaration designs
+### Step 4 — the declaration designs (M20 + M21's ambiguity half done 2026-09-07)
 
-M17, M20, M22 and M21's ambiguity half, from step 3; M18, M19, M26 in the model template;
-D6, D7, D8, D13 in the deployment template. Each is `pending` because the thing to
-enumerate is a number in a sentence, or a fact with no field to live in. The design question
-is the declaration form; it should be settled with the worked exception idioms (steps 2 and
-3) behind it, because a declaration that cannot express its own honest negative will be
-written around. The candidates the step 3 exploration surfaced:
+The design question is the declaration form; it is settled with the worked exception
+idioms (steps 2 and 3) behind it, because a declaration that cannot express its own
+honest negative will be written around.
+
+**Done — M20 and M21's ambiguity half**, one form because they share the edge. Three
+optional fields on `Provenance.Relation`: `wellPosed` (the declaration name of a
+sorry-free theorem concluding with `∃!`), `domain` (the box or predicate the `wellPosed`
+statement mentions — a witness with no domain is refused, because existence and
+uniqueness are proved *on a declared domain*), and `ambiguity` (a sorry-free theorem
+concluding with the negation of an `∃!` — non-uniqueness surfaced as a declaration).
+`checkRelation` validates all three the way it validates `tolerance` and `hypotheses`,
+on `inverts` edges only; `ExistsUnique` is matched by name, unresolved, so the
+Mathlib-free core needs no import of the library that defines `∃!`. The census
+`#kind_wellposedness_coverage` / `_clean` walks every `inverts` edge in scope:
+`[well-posed]`, `[surfaced]`, `⊘` (counterexample), or `⚠ UNDECIDED`. No exception
+mark — an inversion either has exactly one answer on a declared domain or it does not,
+and either answer is a declaration, so the field pair is total over the honest negatives
+(the M15 precedent). Two vocabularies met the census:
+
+* the Water Cloud Model edge declares all three — `wcmForwardQ_well_posed` (`∃!` on
+  `soilGainNonzero`, existence by `affine_surjective`, uniqueness by the round trip) and
+  `wcmForwardQ_ambiguous_of_degenerate` (zero the gain and no backscatter has a unique
+  preimage) — and `Audit.lean` pins the report `clean` with the gate's receipt, plus five
+  falsification refusals (`∃`-shaped witness, missing domain, unmentioned domain,
+  `Eq`-shaped ambiguity, well-posedness on a non-`inverts` edge);
+* soil-moisture-model, by a population probe in its own environment: **2 inverts edges,
+  both `UNDECIDED` by construction** — its pinned PKC's `Relation` has no such fields, so
+  M20 cannot be declared there until the pin bumps. The theorems it would name already
+  exist (`retrieval_well_posed_admissibleBox`, `retrieval_ambiguous_of_collision`); what
+  was missing was only the field, which is exactly what step 3 found.
+
+**Open** — M17, M22 from step 3; M18, M19, M26 in the model template; D6, D7, D8, D13 in
+the deployment template. Each is `pending` because the thing to enumerate is a number in
+a sentence, or a fact with no field to live in. The candidates the step 3 exploration
+surfaced:
 
 * **M17** — a bridge as data on the carrier's instance: `@[carrierBridge "rung" witness]` /
   `@[carrierBridgeFree "reason"]`, checked as `RelationLicense` rungs already are (a named
   theorem, existing, sorry-free). Population unscoped (the worked instance declares no
   carrier instance of its own); `CudaT`/`TapeBuilder` carry `NumCarrier` only; parametric
   instances are derived, not owed a bridge.
-* **M20** — two optional `Relation` fields, `wellPosed` (an `∃!`-concluding sorry-free
-  theorem) and `domain` (the declared box or predicate), checked in `checkRelation` the way
-  `tolerance` is; the sweep is then the `inverts` edges lacking them.
-* **M21 (ambiguity)** — a form naming the collision theorem beside the edge, or a port role
-  for "ambiguous"; to be chosen with M20's fields, since they share the edge.
 * **M22** — either a `Contract.diagnostics` clause (which produced ports are conditioning or
   quality outputs, and what they diagnose) or a `@[kindDiagnostic]` mark on the kind, with
   the census crossing a boundary's kind footprint against its declared ports. The second
@@ -327,3 +355,15 @@ number true.
 * **2026-09-07** — `scripts/gen-iso80000-coverage.py` committed as the generator of
   `Tests.Iso80000.Coverage`: regeneration is byte-identical on an unchanged catalogue, and
   `--check` diffs without writing.
+* **2026-09-07** — Step 4, first form: M20 and M21's ambiguity half. `Provenance.Relation`
+  gains `wellPosed`/`domain`/`ambiguity`; `checkRelation` validates them (shape by the
+  unresolved name `ExistsUnique`, so the Mathlib-free core states nothing it cannot
+  import); `#kind_wellposedness_coverage` / `_clean` census them; the survey and the index
+  `relations` table render them as clauses. Probes: `Tests.Core.ContractCoverage` pins all
+  four verdict classes (the `[surfaced]`-only collapsing forward included) and the gate's
+  refusal; the Water Cloud Model edge declares all three fields with real theorems and five
+  falsification probes pin `checkRelation`'s refusals; `Audit.lean` pins the census `clean`
+  over `UncertaintyExamples` with the gate's receipt. SMM population probe: 2 inverts
+  edges, both UNDECIDED until its PKC pin carries the fields. Catalogue: M20 → `gate`;
+  M21's closure names both gates (`kind_inversion_clean`, `kind_wellposedness_clean`), so a
+  conforming document must run both.

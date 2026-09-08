@@ -1,12 +1,12 @@
 /-
-# ContractCoverage — the censuses over declared boundaries (M12, M15, M21)
+# ContractCoverage — the censuses over declared boundaries (M12, M15, M20, M21)
 
 A declared boundary is a `Provenance.Contract` constant, and `#kind_contracts` already sweeps
-every one in scope for the consistency of what it declares. Three of the model template's
+every one in scope for the consistency of what it declares. Four of the model template's
 rubrics ask what a per-contract check cannot see — whether something *else* names the
-boundary, or whether the boundary declares something it was free to leave out — and each of
-those has, today, a population that is a type and a per-member predicate that is decidable.
-This module is their census, in the shape `#kind_examination_coverage` set
+boundary, or whether the boundary or its edge declares something it was free to leave out —
+and each of those has a population that is a type and a per-member predicate that is
+decidable. This module is their census, in the shape `#kind_examination_coverage` set
 (`ExaminationCoverage.lean`, the Dimension library): one record command whose sorted `info`
 message is pinned, one gate that throws and pins nothing, a declared exception where the
 population has honest negatives, and an `AuditReceipt` at each success point.
@@ -31,11 +31,20 @@ population has honest negatives, and an `AuditReceipt` at each success point.
     left side of an `inverts` relation — the boundary that recovers what another consumed; the
     predicate is a `conditional` port, the role Provenance gives to "produced in some cases and
     not others", with its decider named where one is. The exception is
-    `@[kindInversionTotal "reason"]`: an inversion with no outside to detect. The rubric's
-    other half — ambiguity surfaced rather than resolved — has no declaration form yet and is
-    not walked (`METHODOLOGY_TEMPLATES.md`, step 4).
+    `@[kindInversionTotal "reason"]`: an inversion with no outside to detect.
+  * **M20 and M21's ambiguity half — `#kind_wellposedness_coverage ns …`.** Where the model
+    is inverted, existence and uniqueness are proved on a declared domain — or the failure of
+    uniqueness is surfaced rather than resolved to whichever root the algorithm reached
+    first. The population is every `inverts` edge (`Provenance.Relation`) under the scope;
+    the predicate is that the edge answers for its inversion: a `wellPosed` witness with the
+    `domain` it holds on, or a surfaced `ambiguity`. There is no exception mark — the two
+    fields are total over the honest negatives (an inversion either has exactly one answer on
+    a declared domain or it does not, and either answer is a declaration), so "declares
+    neither" is exactly the finding. Whether a named witness has the claimed `∃!` (or
+    negated-`∃!`) shape is `#kind_relation`'s question; this census asks only whether the
+    edge declares one.
 
-A `@[kindCounterexample]` contract is not a subject of any of the three; it is listed as
+A `@[kindCounterexample]` contract is not a subject of any of the censuses; it is listed as
 exempted so the census says what it skipped. A mark on a contract that satisfies the predicate
 anyway is inert — the census reports the satisfaction — so a stale exemption cannot hide a
 later declaration. A contract declared at node or kind types other than `String` is in the
@@ -447,5 +456,84 @@ elab "#kind_inversion_clean" nss:ident+ : command => liftTermElabM do
       the sweep can read. Do NOT re-pin a `#kind_inversion_coverage` report whose summary \
       says `violation` — that turns the build green and the census off."
   recordAuditReceipt "kind_inversion_clean" scope
+
+/-! ## M20 and M21's ambiguity half — well-posedness coverage -/
+
+/-- One row per `inverts` edge under the scope: `[well-posed]` by its witness and domain,
+`[surfaced]` by its ambiguity witness, `⊘ exempted` as a counterexample, or `⚠ UNDECIDED`.
+A `wellPosed` with no `domain` does not count as well-posed — existence and uniqueness are
+proved on a declared domain — and `#kind_relation` refuses the combination outright. -/
+def wellPosednessRows (scope : Array Name) : Elab.TermElabM (Array Row) := do
+  let env ← getEnv
+  let exempt : NameSet :=
+    (BoundaryAudit.kindCounterexamples env).foldl (init := {}) (·.insert ·)
+  let mut out : Array Row := #[]
+  for (n, info) in env.constants.toList do
+    if n.isInternal then continue
+    unless scope.any (·.isPrefixOf n) do continue
+    unless info.type.isConstOf ``PropertyKindCalculus.Provenance.Relation do continue
+    let rel ← relationValueOf n
+    unless rel.kind matches .inverts do continue
+    if exempt.contains n then
+      out := out.push ⟨.exempted, s!"⊘ exempted {n} — counterexample"⟩
+    else if !rel.wellPosed.isEmpty && !rel.domain.isEmpty then
+      let amb := if rel.ambiguity.isEmpty then "" else s!"; ambiguity: {rel.ambiguity}"
+      out := out.push ⟨.ok, s!"[well-posed] {n} — {rel.wellPosed} on {rel.domain}{amb}"⟩
+    else if !rel.ambiguity.isEmpty then
+      out := out.push ⟨.ok, s!"[surfaced] {n} — ambiguity: {rel.ambiguity}"⟩
+    else
+      out := out.push ⟨.violation,
+        s!"⚠ UNDECIDED {n} — '{rel.left}' inverts '{rel.right}', no well-posedness \
+          witness, no surfaced ambiguity"⟩
+  return out
+
+/-- The summary line: the counts, and `clean` exactly when no row is a violation. -/
+def wellPosednessSummary (rows : Array Row) : String :=
+  let nWp := (rows.filter (·.line.startsWith "[well-posed]")).size
+  let nSf := (rows.filter (·.line.startsWith "[surfaced]")).size
+  let nEx := count rows .exempted
+  let bad := violations rows
+  let ex := if nEx > 0 then s!", {nEx} exempted" else ""
+  if bad.isEmpty then
+    s!"{rows.size} inverts edge(s): {nWp} well-posed, {nSf} ambiguity surfaced{ex} — clean"
+  else
+    s!"{rows.size} inverts edge(s): {nWp} well-posed, {nSf} ambiguity surfaced{ex}, \
+      {bad.size} UNDECIDED — well-posedness-coverage violation"
+
+open Elab Command in
+/-- `#kind_wellposedness_coverage ns …` — the census behind M20 and M21's ambiguity half:
+every `inverts` edge under the namespaces, each `[well-posed]` by a `wellPosed` witness with
+the `domain` it holds on, `[surfaced]` by an `ambiguity` witness, or `⚠ UNDECIDED`. There is
+no exception mark: the two fields are total over the honest negatives. One sorted `info`
+message to pin. Records an `AuditReceipt` for `kind_wellposedness_coverage`. -/
+elab "#kind_wellposedness_coverage" nss:ident+ : command => liftTermElabM do
+  let scope := nss.map (·.getId)
+  let rows ← wellPosednessRows scope
+  recordAuditReceipt "kind_wellposedness_coverage" scope
+  if rows.isEmpty then
+    logInfo m!"well-posedness coverage — no inverts edges in the given namespaces"
+    return
+  logInfo m!"well-posedness coverage:\n{body rows}\n{wellPosednessSummary rows}"
+
+open Elab Command in
+/-- `#kind_wellposedness_clean ns …` — **the invariant, stated apart from the record.** No
+message; throws while any `inverts` edge in scope is `⚠ UNDECIDED`. Records an
+`AuditReceipt` for `kind_wellposedness_clean` exactly when it does not fire. -/
+elab "#kind_wellposedness_clean" nss:ident+ : command => liftTermElabM do
+  let scope := nss.map (·.getId)
+  let bad := violations (← wellPosednessRows scope)
+  unless bad.isEmpty do
+    throwError "well-posedness coverage: {bad.size} inverts edge(s) with neither a \
+      well-posedness witness nor a surfaced ambiguity — well-posedness-coverage \
+      violation\n{indented bad}\n\n\
+      An inversion either has exactly one answer on a declared domain or it does not, and \
+      the edge records which. Give each edge at issue a `wellPosed` witness — a sorry-free \
+      theorem concluding with `∃!` — together with the `domain` declaration its statement \
+      mentions; or name in `ambiguity` the theorem concluding with the negation of an `∃!` \
+      that surfaces the collision, so non-uniqueness is data a consumer can read rather \
+      than a root the algorithm happened to reach. There is no exemption mark: either \
+      answer is a declaration. Do NOT re-pin a `#kind_wellposedness_coverage` report whose \
+      summary says `violation` — that turns the build green and the census off."
+  recordAuditReceipt "kind_wellposedness_clean" scope
 
 end PropertyKindCalculus.ContractCoverage

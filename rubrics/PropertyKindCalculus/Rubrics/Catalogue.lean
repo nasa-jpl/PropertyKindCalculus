@@ -431,11 +431,13 @@ def modelTemplate : List Rubric :=
       obligation := "Name, for each reported uncertainty, the rung of the method ladder it \
                      was computed at and the coverage its recorded variance certifies" }
   , { id := "M20", group := .wellPosedness, evidence := .checked,
-      closure := .pending "declared inverts edges with no existence-and-uniqueness witness \
-                           over a declared domain — the edges are enumerable, but a \
-                           `Provenance.Relation` has no field for such a witness or its \
-                           domain, and its `witness` must be a round-trip equality; the \
-                           form comes first",
+      closure := .gate "`#kind_wellposedness_clean ns …` — every `inverts` edge declares \
+                        its well-posedness (`wellPosed`, an `∃!`-concluding sorry-free \
+                        theorem, with the `domain` its statement mentions) or surfaces its \
+                        ambiguity — with `#kind_wellposedness_coverage` as the record; no \
+                        exception mark, the two fields are total over the honest negatives; \
+                        the fields themselves are validated by `#kind_relation`"
+                       ["kind_wellposedness_clean"],
       title := "Where the model is inverted, existence and uniqueness are proved on a \
                 declared domain",
       obligation := "Where the model is inverted, prove existence and uniqueness on a \
@@ -445,8 +447,10 @@ def modelTemplate : List Rubric :=
       closure := .gate "`#kind_inversion_clean ns …` for the domain half — every inverted \
                         boundary declares a `conditional` port — with \
                         `#kind_inversion_coverage` as the record and `@[kindInversionTotal]` \
-                        the declared exception; the ambiguity half has no declaration form \
-                        yet and is not walked" ["kind_inversion_clean"],
+                        the declared exception; `#kind_wellposedness_clean ns …` for the \
+                        ambiguity half — an inverts edge that does not prove well-posedness \
+                        surfaces its `ambiguity` as a declaration"
+                       ["kind_inversion_clean", "kind_wellposedness_clean"],
       title := "Failure outside that domain is detected and reported, and ambiguity is \
                 surfaced rather than silently resolved",
       obligation := "Detect and report failure outside that domain, and surface ambiguity \

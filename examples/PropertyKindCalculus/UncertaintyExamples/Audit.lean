@@ -10,13 +10,16 @@ sweep sees only its import closure, and an audit that under-imports under-report
 silently. The umbrella imports this module last, so the audit builds whenever the
 library does.
 
-Three tiers, each pinned:
+Four tiers, each pinned:
 
   * `#kind_contracts` / `#kind_relations` — the reports: every subject re-checked as the
     per-name commands check one, violations as `✗` rows, and the `WaterCloudModel`
     falsification probes as `@[kindCounterexample]`-exempted `⊘` rows. The headers count
     subjects, violations, and exemptions, so the pins fail on a new violation, a
     vanished subject, or an exemption creep — not only on the rows they show.
+  * `#kind_wellposedness_coverage` / `_clean` — the census over the `inverts` edges:
+    the one live edge answers for its inversion with its `∃!` on the declared domain
+    *and* the surfaced collapse outside it, so the gate passes and leaves its receipt.
   * `#kind_contracts_decide` — the kernel receipts: each passing boundary gains the
     theorem `c.kindContractOk : c.Agrees (graph)`, here rather than per name.
   * the `contracts` and `provenance-coverage` tables — the join and its complement:
@@ -54,13 +57,34 @@ info: kind contracts — 4 contract(s), 2 exempted
 #guard_msgs in #kind_contracts PropertyKindCalculus.UncertaintyExamples
 
 /--
-info: kind relations — 4 theorem edge(s), 3 exempted
-  PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.retrievalInvertsForward: 'WCM retrieval (mv)' inverts 'WCM forward (σ⁰)' — PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.wcmRetrieveQ_wcmForwardQ
+info: kind relations — 9 theorem edge(s), 8 exempted
+  PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.retrievalInvertsForward: 'WCM retrieval (mv)' inverts 'WCM forward (σ⁰)' — PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.wcmRetrieveQ_wcmForwardQ [well-posed: PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.wcmForwardQ_well_posed on PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.soilGainNonzero] [ambiguity: PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.wcmForwardQ_ambiguous_of_degenerate]
   ⊘ PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.Falsification.misclaimedShape: counterexample, exempted
+  ⊘ PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.Falsification.misplacedWellPosed: counterexample, exempted
   ⊘ PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.Falsification.strandedWitness: counterexample, exempted
+  ⊘ PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.Falsification.undomainedWellPosed: counterexample, exempted
+  ⊘ PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.Falsification.unmentionedDomain: counterexample, exempted
   ⊘ PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.Falsification.unstatedHypothesis: counterexample, exempted
+  ⊘ PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.Falsification.wrongShapeAmbiguity: counterexample, exempted
+  ⊘ PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.Falsification.wrongShapeWellPosed: counterexample, exempted
 -/
 #guard_msgs in #kind_relations PropertyKindCalculus.UncertaintyExamples
+
+/--
+info: well-posedness coverage:
+[well-posed] PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.retrievalInvertsForward — PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.wcmForwardQ_well_posed on PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.soilGainNonzero; ambiguity: PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.wcmForwardQ_ambiguous_of_degenerate
+⊘ exempted PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.Falsification.strandedWitness — counterexample
+⊘ exempted PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.Falsification.undomainedWellPosed — counterexample
+⊘ exempted PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.Falsification.unmentionedDomain — counterexample
+⊘ exempted PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.Falsification.unstatedHypothesis — counterexample
+⊘ exempted PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.Falsification.wrongShapeAmbiguity — counterexample
+⊘ exempted PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.Falsification.wrongShapeWellPosed — counterexample
+7 inverts edge(s): 1 well-posed, 0 ambiguity surfaced, 6 exempted — clean
+-/
+#guard_msgs in #kind_wellposedness_coverage PropertyKindCalculus.UncertaintyExamples
+
+-- no message: the one live inverts edge answers for its inversion both ways
+#guard_msgs in #kind_wellposedness_clean PropertyKindCalculus.UncertaintyExamples
 
 /--
 info: kind contracts — 2 contract(s) kernel-accepted, 2 exempted

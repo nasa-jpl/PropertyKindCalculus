@@ -531,10 +531,62 @@ theorem wcmRetrieveQ_wcmForwardQ (cfg : WcmConfig ℝ) (hc : soilGainNonzero cfg
     Quantity.mk.injEq, Quantity.add_magnitude, Quantity.sub_magnitude]
   exact affine_roundtrip _ _ _ _ _ (Real.exp_ne_zero _) hc'
 
+/-- The scalar core of surjectivity: the affine forward reaches any target, for any
+nonzero attenuation `τ` and gain `c`. Stated over bare reals so the kinded witness below
+closes by unification. -/
+theorem affine_surjective (τ c veg d y : ℝ) (hτ : τ ≠ 0) (hc : c ≠ 0) :
+    veg + τ * (c * (((y - veg) / τ + veg - d) / c) + d - veg) = y := by
+  field_simp
+  ring
+
+/-- **Well-posedness of the inversion**: at `ℝ`, for any calibration on the domain
+`soilGainNonzero` declares, every backscatter is the forward's image of *exactly one*
+soil moisture — the `∃!` the edge's `wellPosed` clause names, proved on that declared
+domain. Existence is the retrieval's answer (`affine_surjective`); uniqueness is the
+round trip (`wcmRetrieveQ_wcmForwardQ`). -/
+theorem wcmForwardQ_well_posed (cfg : WcmConfig ℝ) (hc : soilGainNonzero cfg)
+    (σ0 : Quantity backscatter ℝ) (ndvi : Quantity vegetationIndex ℝ)
+    (b : Quantity attenRate ℝ) :
+    ∃! mv : Quantity soilMoisture ℝ, wcmForwardQ cfg mv ndvi b = σ0 := by
+  have hc' : cfg.c.magnitude ≠ 0 := hc
+  refine ⟨wcmRetrieveQ cfg σ0 ndvi b, ?_, fun y hy => ?_⟩
+  · refine Quantity.ext ?_
+    simp only [wcmRetrieveQ, wcmForwardQ, Quantity.mul, Quantity.div, Quantity.exp,
+      Quantity.add_magnitude, Quantity.sub_magnitude]
+    exact affine_surjective _ _ _ _ _ (Real.exp_ne_zero _) hc'
+  · have h := wcmRetrieveQ_wcmForwardQ cfg hc y ndvi b
+    rw [hy] at h
+    exact h.symm
+
+/-- **The ambiguity, surfaced**: zero the soil-moisture gain — leave the domain the
+well-posedness is declared on — and the forward no longer separates soil moistures, so
+*no* backscatter in its image has a unique preimage. The conclusion is the negation of
+the `∃!` above: the uniqueness that fails is what the witness states, rather than a root
+an algorithm would silently pick. -/
+theorem wcmForwardQ_ambiguous_of_degenerate (cfg : WcmConfig ℝ)
+    (h0 : cfg.c.magnitude = 0) (ndvi : Quantity vegetationIndex ℝ)
+    (b : Quantity attenRate ℝ) :
+    ¬ ∃! mv : Quantity soilMoisture ℝ,
+        wcmForwardQ cfg mv ndvi b = wcmForwardQ cfg ⟨0⟩ ndvi b := by
+  rintro ⟨w, -, huniq⟩
+  have hcollide : ∀ m : ℝ,
+      wcmForwardQ cfg ⟨m⟩ ndvi b = wcmForwardQ cfg (⟨0⟩ : Quantity soilMoisture ℝ) ndvi b := by
+    intro m
+    refine Quantity.ext ?_
+    simp only [wcmForwardQ, Quantity.mul, Quantity.exp,
+      Quantity.add_magnitude, Quantity.sub_magnitude]
+    rw [h0]
+    ring
+  have h0w := huniq ⟨0⟩ (hcollide 0)
+  have h1w := huniq ⟨1⟩ (hcollide 1)
+  exact zero_ne_one (congrArg Quantity.magnitude (h0w.trans h1w.symm))
+
 /-- **The theorem edge**: the retrieval boundary *inverts* the forward boundary,
 witnessed by `wcmRetrieveQ_wcmForwardQ` under the one named side condition. The license
 list is empty — the claim is stated at the witness's own rung (`ℝ`) and extends to no
-other, which is the honest form of "the Float pipeline rounds". -/
+other, which is the honest form of "the Float pipeline rounds". The edge answers for its
+inversion both ways: `wellPosed` names the `∃!` on the declared domain, and `ambiguity`
+names the collapse that surfaces once the domain's certificate is dropped. -/
 def retrievalInvertsForward : Provenance.Relation where
   left := "PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.wcmRetrievalBoundary"
   right := "PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.wcmBoundary"
@@ -543,12 +595,19 @@ def retrievalInvertsForward : Provenance.Relation where
   claim := "at ℝ, for any calibration whose soil-moisture gain is nonzero, the \
     closed-form retrieval recovers exactly the soil moisture the forward consumed"
   hypotheses := ["PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.soilGainNonzero"]
+  wellPosed :=
+    "PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.wcmForwardQ_well_posed"
+  domain := "PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.soilGainNonzero"
+  ambiguity := "PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.\
+    wcmForwardQ_ambiguous_of_degenerate"
 
 /--
 info: kind relation: 'WCM retrieval (mv)' inverts 'WCM forward (σ⁰)'
 witness: PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.wcmRetrieveQ_wcmForwardQ
 claims: at ℝ, for any calibration whose soil-moisture gain is nonzero, the closed-form retrieval recovers exactly the soil moisture the forward consumed
 hypotheses: PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.soilGainNonzero
+well-posed: PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.wcmForwardQ_well_posed on PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.soilGainNonzero
+ambiguity: PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.wcmForwardQ_ambiguous_of_degenerate
 names on the left: PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.wcmRetrieveQ
 names on the right: PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.wcmForwardQ
 axioms: propext, Classical.choice, Quot.sound
@@ -667,6 +726,68 @@ def misclaimedShape : Provenance.Relation :=
 error: 'PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.wcmRetrieveQ_wcmForwardQ' is claimed to state a bound, but its conclusion is headed by 'Eq', which is not an order relation
 -/
 #guard_msgs in #kind_relation misclaimedShape
+
+/-- A well-posedness clause naming a theorem that concludes with an equality, not an
+`∃!`. A round trip states that one answer works; existence and uniqueness state that
+exactly one does, and the shapes are not interchangeable. -/
+@[kindCounterexample]
+def wrongShapeWellPosed : Provenance.Relation :=
+  { retrievalInvertsForward with
+    wellPosed := "PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.affine_roundtrip" }
+
+/--
+error: 'PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.affine_roundtrip' is claimed to prove existence and uniqueness, but its conclusion is headed by 'Eq', not '∃!'
+-/
+#guard_msgs in #kind_relation wrongShapeWellPosed
+
+/-- A well-posedness clause with the domain dropped. Existence and uniqueness are proved
+*on a declared domain*; a witness floating free of one is refused. -/
+@[kindCounterexample]
+def undomainedWellPosed : Provenance.Relation :=
+  { retrievalInvertsForward with domain := "" }
+
+/--
+error: the well-posedness witness 'PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.wcmForwardQ_well_posed' comes with no domain — existence and uniqueness are proved on a declared domain, so name the box or predicate its statement mentions
+-/
+#guard_msgs in #kind_relation undomainedWellPosed
+
+/-- A domain the well-posedness statement never mentions: the declared domain must be
+the stated one, exactly as a listed hypothesis must be. -/
+@[kindCounterexample]
+def unmentionedDomain : Provenance.Relation :=
+  { retrievalInvertsForward with
+    domain := "PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.Falsification.\
+      vegGainNonzero" }
+
+/--
+error: 'PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.wcmForwardQ_well_posed' does not mention the domain 'PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.Falsification.vegGainNonzero' — the declared domain is the stated one, never wider
+-/
+#guard_msgs in #kind_relation unmentionedDomain
+
+/-- An ambiguity clause naming a theorem that concludes with an equality. A surfaced
+ambiguity states that uniqueness *fails* — the negation of an `∃!` — not that some
+equation holds. -/
+@[kindCounterexample]
+def wrongShapeAmbiguity : Provenance.Relation :=
+  { retrievalInvertsForward with
+    ambiguity := "PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.affine_roundtrip" }
+
+/--
+error: 'PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.affine_roundtrip' is claimed to surface an ambiguity, but its conclusion is headed by 'Eq', not the negation of an '∃!' — the uniqueness that fails is what the witness states
+-/
+#guard_msgs in #kind_relation wrongShapeAmbiguity
+
+/-- A well-posedness clause on an edge that does not claim an inversion. Existence and
+uniqueness answer "which soil moisture produced this backscatter?" — a question only an
+`inverts` edge asks. -/
+@[kindCounterexample]
+def misplacedWellPosed : Provenance.Relation :=
+  { retrievalInvertsForward with kind := .equals, ambiguity := "" }
+
+/--
+error: the edge names a well-posedness witness but claims 'equals' — existence and uniqueness answer an inversion
+-/
+#guard_msgs in #kind_relation misplacedWellPosed
 
 end Falsification
 

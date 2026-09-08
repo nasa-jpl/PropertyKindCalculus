@@ -746,7 +746,13 @@ The optional clauses are checked the same way: a named `tolerance` must be a `Qu
 the kind of an output port of the boundary it governs, a named hypothesis must be a
 declaration the witness statement mentions, and every `licenses` rung must name a
 sorry-free theorem as its repair or restatement — a rung claimed with neither is refused,
-because a side condition does not transfer by being assumed to (`RelationLicense`). -/
+because a side condition does not transfer by being assumed to (`RelationLicense`). An
+`inverts` edge may further answer for its inversion: `wellPosed` names the sorry-free
+theorem concluding with `∃!` that proves the answer exists and is unique on the `domain`
+declared beside it (a well-posedness with no declared domain is refused), and `ambiguity`
+names the sorry-free theorem concluding with the negation of an `∃!` that surfaces where
+uniqueness fails — the two honest answers to the same question, and the census over
+`inverts` edges (`#kind_wellposedness_coverage`) asks each edge for one of them. -/
 
 /-- How a relation edge stands at one carrier rung, given that laws transfer across the
 carrier ladder and side conditions do not (`Aggregation`, "side conditions do not
@@ -852,6 +858,21 @@ structure Relation where
   rung its witness is stated at, each answered for by a named repair or a named per-rung
   restatement (`RelationLicense`). Empty where the claim stops at its witness's rung. -/
   licenses : List RelationLicense := []
+  /-- For an `inverts` edge: the declaration name of the theorem that proves the
+  inversion's answer exists and is unique — a sorry-free theorem concluding with `∃!` —
+  on the domain named beside it. Empty where well-posedness is not (or not yet) claimed;
+  an edge whose inversion is *not* single-valued surfaces that in `ambiguity` instead. -/
+  wellPosed : String := ""
+  /-- The declaration naming the domain the well-posedness holds on — the box or
+  predicate the `wellPosed` statement mentions. Existence and uniqueness are proved *on a
+  declared domain*, so a `wellPosed` with no `domain` is refused. -/
+  domain : String := ""
+  /-- For an `inverts` edge: the declaration name of the theorem that surfaces the
+  inversion's ambiguity — a sorry-free theorem concluding with the negation of an `∃!`,
+  the uniqueness that fails (typically: without the domain's certificate). Ambiguity is
+  surfaced as a declaration a consumer can read, not resolved to whichever root the
+  algorithm reached first. -/
+  ambiguity : String := ""
 deriving Repr, Inhabited
 
 /-! ## The assembly combinators — namespaced union (header, "The procedure edge") -/

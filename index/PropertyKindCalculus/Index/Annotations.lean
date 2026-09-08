@@ -350,6 +350,19 @@ def commands : Array Command := #[
       and unexempted. Records an audit receipt exactly when it does not fire."
     gate := "the command is the gate; there is no message to re-bless"
     section_ := "" },
+  { syntax_ := "#kind_wellposedness_coverage ns …", library := "PropertyKindCalculus"
+    effect := "Walks every `inverts` edge (`Provenance.Relation`) in the namespaces and reports \
+      each as well-posed by its `wellPosed` witness on its declared `domain`, surfaced by its \
+      `ambiguity` witness, or UNDECIDED — the census behind M20 and M21's ambiguity half. No \
+      exception mark: the two fields are total over the honest negatives."
+    gate := "an inverts edge declaring neither a well-posedness nor an ambiguity fails the pin"
+    section_ := "" },
+  { syntax_ := "#kind_wellposedness_clean ns …", library := "PropertyKindCalculus"
+    effect := "The census as a gate: throws while any `inverts` edge in scope answers for its \
+      inversion with neither a well-posedness witness nor a surfaced ambiguity. Records an \
+      audit receipt exactly when it does not fire."
+    gate := "the command is the gate; there is no message to re-bless"
+    section_ := "" },
   -- The kind graph — the component report, its gate, and its diagram twin.
   { syntax_ := "#kind_scc [ns …]", library := "Graph"
     effect := "The kind-level component report: the authored kinds in scope, their \

@@ -30,8 +30,9 @@ open PropertyKindCalculus.KindIncidence (relationValueOf contractValueOf)
 
 /-- The `relations` table: every `Provenance.Relation` declared in scope, one row per
 edge — the edge declaration, the claim (the two boundary names and the relation kind),
-the witness theorem, the optional clauses (tolerance, hypotheses, license rungs), and
-the claim in the author's own words. -/
+the witness theorem, the optional clauses (tolerance, hypotheses, license rungs,
+well-posedness with its domain, surfaced ambiguity), and the claim in the author's own
+words. -/
 def relationsTable (scope : Scope) : MetaM IndexTable := do
   let env ← getEnv
   let headers := #["Edge", "Claim", "Witness", "Clauses", "In the author's words"]
@@ -53,6 +54,10 @@ def relationsTable (scope : Scope) : MetaM IndexTable := do
             else [s!"hypotheses {String.intercalate ", " (rel.hypotheses.map shortenNames)}"])
         ++ (if rel.licenses.isEmpty then []
             else [s!"rungs {String.intercalate ", " (rel.licenses.map (·.rung))}"])
+        ++ (if rel.wellPosed.isEmpty then []
+            else [s!"well-posed {shortenNames rel.wellPosed} on {shortenNames rel.domain}"])
+        ++ (if rel.ambiguity.isEmpty then []
+            else [s!"ambiguity {shortenNames rel.ambiguity}"])
     rows := rows.push #[
       .decl n (lastComponent n),
       .code s!"'{left.name}' {rel.kind.label} '{right.name}'",

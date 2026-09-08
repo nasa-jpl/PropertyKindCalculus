@@ -1,13 +1,19 @@
 /-
-`Tests.Core.ContractCoverage` — the indexed probe for the three censuses over declared
+`Tests.Core.ContractCoverage` — the indexed probe for the four censuses over declared
 boundaries (`PropertyKindCalculus.ContractCoverage`): `#kind_relation_coverage` (M12),
-`#kind_mereology_coverage` (M15), `#kind_inversion_coverage` (M21's domain half), and their
-gates.
+`#kind_mereology_coverage` (M15), `#kind_inversion_coverage` (M21's domain half),
+`#kind_wellposedness_coverage` (M20 and M21's ambiguity half), and their gates.
 
 One probe world, every verdict class of every census exercised, the full reports pinned:
 
   * a forward and a retrieval, joined by an `inverts` edge — the retrieval guarded by a
-    `conditional` port with a named decider, both boundaries' produced ports classed;
+    `conditional` port with a named decider, both boundaries' produced ports classed, the
+    edge `[well-posed]` by a witness on its declared domain (stated in the expanded
+    `∃`-plus-uniqueness form: this tier is Mathlib-free, and the `∃!` spelling with its
+    shape check is `#kind_relation`'s business, pinned beside the Water Cloud Model edge);
+  * a collapsing forward whose edge declares `ambiguity` and nothing else: `[surfaced]`,
+    the honest negative that must not fire the gate — while the three field-free `inverts`
+    edges read `⚠ UNDECIDED` and do;
   * an inverted boundary with an `output` port and nothing else declared: witnessed (M12),
     `UNDECLARED` (M15), `UNGUARDED` (M21);
   * an orphan no edge names: `UNWITNESSED`, and outside M21's population;
@@ -52,6 +58,18 @@ theorem inv_fwd (x : Quantity aK Int) : inv (fwd x) = x := by
 /-- The domain predicate the retrieval's conditional port names as its decider. -/
 def inDomain (y : Quantity bK Int) : Bool := y.magnitude > 0
 
+/-- The domain the well-posedness below is declared on — `inDomain`'s `Prop` face. -/
+def InDomainP (y : Quantity bK Int) : Prop := y.magnitude > 0
+
+/-- Existence and uniqueness of the inversion's answer on `InDomainP`, in the expanded
+form this Mathlib-free tier can state (`∃` plus uniqueness). The census reads the
+*declaration*; the `∃!` spelling and its shape check are `#kind_relation`'s business,
+pinned beside the Water Cloud Model edge (`UncertaintyExamples`). -/
+theorem fwd_well_posed (y : Quantity bK Int) (_ : InDomainP y) :
+    ∃ x, fwd x = y ∧ ∀ x', fwd x' = y → x' = x := by
+  refine ⟨inv y, ?_, fun x' hx' => (inv_fwd x').symm.trans (congrArg inv hx')⟩
+  cases y; simp [fwd, inv]
+
 /-- The forward's boundary: witnessed by the edge below; its output classed. -/
 def fwdBoundary : Provenance.Contract String String where
   name := "coverage probe forward"
@@ -70,12 +88,15 @@ def invBoundary : Provenance.Contract String String where
   deciders := [("inv/result", "PropertyKindCalculus.Tests.ContractCoverage.Good.inDomain")]
   aggregations := [("inv/result", .wholeProper)]
 
-/-- The theorem edge between them. -/
+/-- The theorem edge between them — answering for its inversion: the well-posedness
+witness on its declared domain. -/
 def retrievalInvertsForward : Provenance.Relation where
   left := "PropertyKindCalculus.Tests.ContractCoverage.Good.invBoundary"
   right := "PropertyKindCalculus.Tests.ContractCoverage.Good.fwdBoundary"
   kind := .inverts
   witness := "PropertyKindCalculus.Tests.ContractCoverage.Good.inv_fwd"
+  wellPosed := "PropertyKindCalculus.Tests.ContractCoverage.Good.fwd_well_posed"
+  domain := "PropertyKindCalculus.Tests.ContractCoverage.Good.InDomainP"
 
 end Good
 
@@ -178,26 +199,57 @@ def unreadable : Provenance.Contract Nat Nat where
 
 end Weird
 
+namespace Amb
+
+/-- A forward that collapses everything: the inversion with more than one root. -/
+def collapse (x : Quantity aK Int) : Quantity bK Int := ⟨x.magnitude * 0⟩
+
+/-- The collision, surfaced as a declaration. The negated-`∃!` spelling and its shape
+check are `#kind_relation`'s business, pinned beside the Water Cloud Model edge. -/
+theorem collapse_collision : collapse ⟨0⟩ = collapse ⟨1⟩ := by simp [collapse]
+
+/-- The ambiguous retrieval's boundary — guarded and classed, so the domain story is in
+order; what fails is uniqueness, and the edge below surfaces it. -/
+def foldBoundary : Provenance.Contract String String where
+  name := "coverage probe retrieval, ambiguous"
+  members := ["PropertyKindCalculus.Tests.ContractCoverage.Good.inv"]
+  ports := [⟨"inv/y", "bK", .input⟩, ⟨"inv/result", "aK", .conditional⟩]
+  exits := []
+  deciders := [("inv/result", "PropertyKindCalculus.Tests.ContractCoverage.Good.inDomain")]
+  aggregations := [("inv/result", .wholeProper)]
+
+/-- The edge surfacing the ambiguity instead of claiming well-posedness. -/
+def foldInverts : Provenance.Relation where
+  left := "PropertyKindCalculus.Tests.ContractCoverage.Amb.foldBoundary"
+  right := "PropertyKindCalculus.Tests.ContractCoverage.Good.fwdBoundary"
+  kind := .inverts
+  witness := "PropertyKindCalculus.Tests.ContractCoverage.Good.inv_fwd"
+  ambiguity := "PropertyKindCalculus.Tests.ContractCoverage.Amb.collapse_collision"
+
+end Amb
+
 /-! ## The pinned reports -/
 
 /--
 info: relation coverage:
+[witnessed] PropertyKindCalculus.Tests.ContractCoverage.Amb.foldBoundary ('coverage probe retrieval, ambiguous') — edges: PropertyKindCalculus.Tests.ContractCoverage.Amb.foldInverts
 [witnessed] PropertyKindCalculus.Tests.ContractCoverage.Bare.unguardedInverse ('coverage probe retrieval, unguarded') — edges: PropertyKindCalculus.Tests.ContractCoverage.Bare.unguardedInverts
 [witnessed] PropertyKindCalculus.Tests.ContractCoverage.Exempt.staleMarks ('coverage probe, marks gone stale') — edges: PropertyKindCalculus.Tests.ContractCoverage.Exempt.staleInverts
 [witnessed] PropertyKindCalculus.Tests.ContractCoverage.Exempt.totalInverse ('coverage probe retrieval, total') — edges: PropertyKindCalculus.Tests.ContractCoverage.Exempt.totalInverts
-[witnessed] PropertyKindCalculus.Tests.ContractCoverage.Good.fwdBoundary ('coverage probe forward') — edges: PropertyKindCalculus.Tests.ContractCoverage.Bare.unguardedInverts, PropertyKindCalculus.Tests.ContractCoverage.Exempt.staleInverts, PropertyKindCalculus.Tests.ContractCoverage.Exempt.totalInverts, PropertyKindCalculus.Tests.ContractCoverage.Good.retrievalInvertsForward
+[witnessed] PropertyKindCalculus.Tests.ContractCoverage.Good.fwdBoundary ('coverage probe forward') — edges: PropertyKindCalculus.Tests.ContractCoverage.Amb.foldInverts, PropertyKindCalculus.Tests.ContractCoverage.Bare.unguardedInverts, PropertyKindCalculus.Tests.ContractCoverage.Exempt.staleInverts, PropertyKindCalculus.Tests.ContractCoverage.Exempt.totalInverts, PropertyKindCalculus.Tests.ContractCoverage.Good.retrievalInvertsForward
 [witnessed] PropertyKindCalculus.Tests.ContractCoverage.Good.invBoundary ('coverage probe retrieval') — edges: PropertyKindCalculus.Tests.ContractCoverage.Good.retrievalInvertsForward
 ⊘ exempted PropertyKindCalculus.Tests.ContractCoverage.Exempt.dataMove ('coverage probe data movement') — a data-movement boundary: its behavior is the identity on kinds, and there is no measurement model to carry
 ⊘ exempted PropertyKindCalculus.Tests.ContractCoverage.Exempt.keptCounterexample — counterexample
 ⚠ UNWITNESSED PropertyKindCalculus.Tests.ContractCoverage.Bare.orphan ('coverage probe orphan')
 ⚠ UNWITNESSED PropertyKindCalculus.Tests.ContractCoverage.Weird.unreadable (?)
-9 boundary(ies): 5 witnessed, 2 exempted, 2 UNWITNESSED — relation-coverage violation
+10 boundary(ies): 6 witnessed, 2 exempted, 2 UNWITNESSED — relation-coverage violation
 -/
 #guard_msgs (whitespace := lax) in
 #kind_relation_coverage PropertyKindCalculus.Tests.ContractCoverage
 
 /--
 info: mereology coverage:
+[classed] PropertyKindCalculus.Tests.ContractCoverage.Amb.foldBoundary :: inv/result : aK — whole-proper
 [classed] PropertyKindCalculus.Tests.ContractCoverage.Exempt.dataMove :: fwd/result : bK — count keyed by pixel
 [classed] PropertyKindCalculus.Tests.ContractCoverage.Exempt.staleMarks :: inv/result : aK — intensive
 [classed] PropertyKindCalculus.Tests.ContractCoverage.Exempt.totalInverse :: inv/result : aK — intensive
@@ -207,21 +259,35 @@ info: mereology coverage:
 ⚠ UNDECLARED PropertyKindCalculus.Tests.ContractCoverage.Bare.orphan :: fwd/result : bK
 ⚠ UNDECLARED PropertyKindCalculus.Tests.ContractCoverage.Bare.unguardedInverse :: inv/result : aK
 ⚠ UNREADABLE PropertyKindCalculus.Tests.ContractCoverage.Weird.unreadable — not a `Contract String String`
-7 produced port(s): 5 classed, 2 UNDECLARED; 1 boundary(ies) exempted; 1 UNREADABLE — mereology-coverage violation
+8 produced port(s): 6 classed, 2 UNDECLARED; 1 boundary(ies) exempted; 1 UNREADABLE — mereology-coverage violation
 -/
 #guard_msgs (whitespace := lax) in
 #kind_mereology_coverage PropertyKindCalculus.Tests.ContractCoverage
 
 /--
 info: inversion coverage:
+[guarded] PropertyKindCalculus.Tests.ContractCoverage.Amb.foldBoundary ('coverage probe retrieval, ambiguous') — conditional inv/result (decider: PropertyKindCalculus.Tests.ContractCoverage.Good.inDomain); inverted by: PropertyKindCalculus.Tests.ContractCoverage.Amb.foldInverts
 [guarded] PropertyKindCalculus.Tests.ContractCoverage.Exempt.staleMarks ('coverage probe, marks gone stale') — conditional inv/result; inverted by: PropertyKindCalculus.Tests.ContractCoverage.Exempt.staleInverts
 [guarded] PropertyKindCalculus.Tests.ContractCoverage.Good.invBoundary ('coverage probe retrieval') — conditional inv/result (decider: PropertyKindCalculus.Tests.ContractCoverage.Good.inDomain); inverted by: PropertyKindCalculus.Tests.ContractCoverage.Good.retrievalInvertsForward
 ⊘ exempted PropertyKindCalculus.Tests.ContractCoverage.Exempt.totalInverse ('coverage probe retrieval, total') — total on its input type: every integer is the forward's image of one, so there is no outside to detect; inverted by: PropertyKindCalculus.Tests.ContractCoverage.Exempt.totalInverts
 ⚠ UNGUARDED PropertyKindCalculus.Tests.ContractCoverage.Bare.unguardedInverse ('coverage probe retrieval, unguarded') — inverted by: PropertyKindCalculus.Tests.ContractCoverage.Bare.unguardedInverts
-4 inverted boundary(ies): 2 guarded, 1 exempted, 1 UNGUARDED — inversion-coverage violation
+5 inverted boundary(ies): 3 guarded, 1 exempted, 1 UNGUARDED — inversion-coverage violation
 -/
 #guard_msgs (whitespace := lax) in
 #kind_inversion_coverage PropertyKindCalculus.Tests.ContractCoverage
+
+/--
+info: well-posedness coverage:
+[surfaced] PropertyKindCalculus.Tests.ContractCoverage.Amb.foldInverts — ambiguity: PropertyKindCalculus.Tests.ContractCoverage.Amb.collapse_collision
+[well-posed] PropertyKindCalculus.Tests.ContractCoverage.Good.retrievalInvertsForward — PropertyKindCalculus.Tests.ContractCoverage.Good.fwd_well_posed on PropertyKindCalculus.Tests.ContractCoverage.Good.InDomainP
+⊘ exempted PropertyKindCalculus.Tests.ContractCoverage.Exempt.keptBrokenEdge — counterexample
+⚠ UNDECIDED PropertyKindCalculus.Tests.ContractCoverage.Bare.unguardedInverts — 'PropertyKindCalculus.Tests.ContractCoverage.Bare.unguardedInverse' inverts 'PropertyKindCalculus.Tests.ContractCoverage.Good.fwdBoundary', no well-posedness witness, no surfaced ambiguity
+⚠ UNDECIDED PropertyKindCalculus.Tests.ContractCoverage.Exempt.staleInverts — 'PropertyKindCalculus.Tests.ContractCoverage.Exempt.staleMarks' inverts 'PropertyKindCalculus.Tests.ContractCoverage.Good.fwdBoundary', no well-posedness witness, no surfaced ambiguity
+⚠ UNDECIDED PropertyKindCalculus.Tests.ContractCoverage.Exempt.totalInverts — 'PropertyKindCalculus.Tests.ContractCoverage.Exempt.totalInverse' inverts 'PropertyKindCalculus.Tests.ContractCoverage.Good.fwdBoundary', no well-posedness witness, no surfaced ambiguity
+6 inverts edge(s): 1 well-posed, 1 ambiguity surfaced, 1 exempted, 3 UNDECIDED — well-posedness-coverage violation
+-/
+#guard_msgs (whitespace := lax) in
+#kind_wellposedness_coverage PropertyKindCalculus.Tests.ContractCoverage
 
 /-! ## The gates — each fires on the probe world, and cannot be re-blessed -/
 
@@ -255,6 +321,17 @@ An inversion has a domain, and failure outside it is detected at the interface, 
 #guard_msgs (whitespace := lax) in
 #kind_inversion_clean PropertyKindCalculus.Tests.ContractCoverage
 
+/--
+error: well-posedness coverage: 3 inverts edge(s) with neither a well-posedness witness nor a surfaced ambiguity — well-posedness-coverage violation
+  ⚠ UNDECIDED PropertyKindCalculus.Tests.ContractCoverage.Bare.unguardedInverts — 'PropertyKindCalculus.Tests.ContractCoverage.Bare.unguardedInverse' inverts 'PropertyKindCalculus.Tests.ContractCoverage.Good.fwdBoundary', no well-posedness witness, no surfaced ambiguity
+  ⚠ UNDECIDED PropertyKindCalculus.Tests.ContractCoverage.Exempt.staleInverts — 'PropertyKindCalculus.Tests.ContractCoverage.Exempt.staleMarks' inverts 'PropertyKindCalculus.Tests.ContractCoverage.Good.fwdBoundary', no well-posedness witness, no surfaced ambiguity
+  ⚠ UNDECIDED PropertyKindCalculus.Tests.ContractCoverage.Exempt.totalInverts — 'PropertyKindCalculus.Tests.ContractCoverage.Exempt.totalInverse' inverts 'PropertyKindCalculus.Tests.ContractCoverage.Good.fwdBoundary', no well-posedness witness, no surfaced ambiguity
+
+An inversion either has exactly one answer on a declared domain or it does not, and the edge records which. Give each edge at issue a `wellPosed` witness — a sorry-free theorem concluding with `∃!` — together with the `domain` declaration its statement mentions; or name in `ambiguity` the theorem concluding with the negation of an `∃!` that surfaces the collision, so non-uniqueness is data a consumer can read rather than a root the algorithm happened to reach. There is no exemption mark: either answer is a declaration. Do NOT re-pin a `#kind_wellposedness_coverage` report whose summary says `violation` — that turns the build green and the census off.
+-/
+#guard_msgs (whitespace := lax) in
+#kind_wellposedness_clean PropertyKindCalculus.Tests.ContractCoverage
+
 /-! A namespace where everything is declared or exempted: every gate passes silently. The
 exemption is the point — it is not a violation and must not fire the gate. -/
 namespace Clean
@@ -268,12 +345,14 @@ def retrieval : Provenance.Contract String String where
   deciders := [("inv/result", "PropertyKindCalculus.Tests.ContractCoverage.Good.inDomain")]
   aggregations := [("inv/result", .intensive)]
 
-/-- Its edge. -/
+/-- Its edge, answering for its inversion. -/
 def retrievalInverts : Provenance.Relation where
   left := "PropertyKindCalculus.Tests.ContractCoverage.Clean.retrieval"
   right := "PropertyKindCalculus.Tests.ContractCoverage.Good.fwdBoundary"
   kind := .inverts
   witness := "PropertyKindCalculus.Tests.ContractCoverage.Good.inv_fwd"
+  wellPosed := "PropertyKindCalculus.Tests.ContractCoverage.Good.fwd_well_posed"
+  domain := "PropertyKindCalculus.Tests.ContractCoverage.Good.InDomainP"
 
 /-- Edge-free on purpose, its port classed, nothing inverting it. -/
 @[kindRelationFree "a reference boundary the edges are about, not a computation"]
@@ -297,6 +376,10 @@ end Clean
 -- no message: everything under `Clean` is declared or exempted
 #guard_msgs in
 #kind_inversion_clean PropertyKindCalculus.Tests.ContractCoverage.Clean
+
+-- no message: the one inverts edge under `Clean` declares its well-posedness
+#guard_msgs in
+#kind_wellposedness_clean PropertyKindCalculus.Tests.ContractCoverage.Clean
 
 /-! ## The attributes' own refusals -/
 
