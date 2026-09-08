@@ -188,6 +188,8 @@ lean_lib «Dimension» where
     .one `PropertyKindCalculus.Interaction,
     .one `PropertyKindCalculus.Function,
     .one `PropertyKindCalculus.DimensionalCoverage,
+    .one `PropertyKindCalculus.KindPrincipleFree,
+    .one `PropertyKindCalculus.ExaminationCoverage,
     .one `PropertyKindCalculus.AggregationLaws,
     .one `PropertyKindCalculus.QuantityReal,
     .one `PropertyKindCalculus.Observable,

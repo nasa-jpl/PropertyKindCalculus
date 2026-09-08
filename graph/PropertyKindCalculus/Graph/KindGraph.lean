@@ -1,5 +1,6 @@
 import PropertyKindCalculus.KindEdges
 import PropertyKindCalculus.Index.Basic
+import PropertyKindCalculus.AuditReceipt
 import ForMathlib.Combinatorics.Digraph.Condensation
 
 /-!
@@ -330,6 +331,7 @@ kinds with the edges that wire it, and whether the kind digraph is acyclic. The 
 enumeration to pin beside `#kind_edges`; `#kind_scc_clean` is its gate. -/
 elab "#kind_scc" nss:ident* : command => liftTermElabM do
   let kg ← KindGraph.kindGraphOf (nss.map (·.getId))
+  recordAuditReceipt "kind_scc" (nss.map (·.getId))
   let nontrivial := kg.clusters.filter (·.size ≥ 2)
   let mut lines : Array String := #[]
   for cl in nontrivial do
@@ -374,6 +376,7 @@ elab "#kind_scc_clean" nss:ident* grps:sccAllowGroup* : command =>
         (representation variants of one role), declare it: \
         `#kind_scc_clean … (kindA kindB)`. If it is not, one of the printed \
         witness registrations merges two roles and must be split or retired."
+    recordAuditReceipt "kind_scc_clean" (nss.map (·.getId))
 
 open Lean Elab Command in
 /-- `#kind_scc_d2 "dir" [ns …]` — write the D2 diagram sources of the kind-level

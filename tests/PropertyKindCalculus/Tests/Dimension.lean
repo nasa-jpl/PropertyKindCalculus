@@ -11,6 +11,7 @@ import PropertyKindCalculus.Tests.Dimension.AngleReform
 import PropertyKindCalculus.Tests.Dimension.IsqBase
 import PropertyKindCalculus.Tests.Dimension.BoundsReal
 import PropertyKindCalculus.Tests.Dimension.DimensionalCoverage
+import PropertyKindCalculus.Tests.Dimension.ExaminationCoverage
 import PropertyKindCalculus.Tests.Dimension.Frames
 import PropertyKindCalculus.Tests.Dimension.AggregationLaws
 import PropertyKindCalculus.Tests.Dimension.UnitReal

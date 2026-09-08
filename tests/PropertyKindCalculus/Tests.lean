@@ -34,6 +34,7 @@ twenty verifiable requirements are CI-enforced, not just those in the core spine
 
 import PropertyKindCalculus.Tests.Core
 import PropertyKindCalculus.Tests.Dimension
+import PropertyKindCalculus.Tests.Iso80000
 import PropertyKindCalculus.Tests.ForMathlib
 import PropertyKindCalculus.Tests.Graph
 import PropertyKindCalculus.Tests.Uncertainty

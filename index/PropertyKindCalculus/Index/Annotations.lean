@@ -172,7 +172,34 @@ def catalogue : Array Annotation := #[
     effect := "Records the VIM 4 2CD entry and term this declaration corresponds to."
     enforcement := .advisory
     table := ""
-    section_ := "annotations-metadata-family" }]
+    section_ := "annotations-metadata-family" },
+  -- The examination-coverage exception (Dimension library) — the declared negative of M6.
+  { syntax_ := "@[kindPrincipleFree \"…\"]", attachesTo := "a `DimensionedKind` definition"
+    effect := "Declares that a dimension-one kind is legitimately without an examination \
+      principle, with the reason: `#kind_examination_coverage` lists it as exempted and \
+      `#kind_examination_clean` does not fire on it. Inert on a kind that carries a principle."
+    enforcement := .checked "rejected at elaboration unless the declaration is a \
+      `DimensionedKind` and the reason is non-empty"
+    table := ""
+    section_ := "" },
+  -- The declared exceptions of the boundary censuses — M12's and M21's honest negatives.
+  { syntax_ := "@[kindRelationFree \"…\"]", attachesTo := "a `Provenance.Contract` definition"
+    effect := "Declares that a boundary legitimately has no theorem edge — its behavior is not \
+      a measurement model — with the reason: `#kind_relation_coverage` lists it as exempted \
+      and `#kind_relation_clean` does not fire on it. Inert on a boundary an edge names."
+    enforcement := .checked "rejected at elaboration unless the declaration is a \
+      `Provenance.Contract` and the reason is non-empty"
+    table := ""
+    section_ := "" },
+  { syntax_ := "@[kindInversionTotal \"…\"]", attachesTo := "a `Provenance.Contract` definition"
+    effect := "Declares that an inverted boundary legitimately has no conditional port — the \
+      inversion is total on its input type — with the reason: `#kind_inversion_coverage` \
+      lists it as exempted and `#kind_inversion_clean` does not fire on it. Inert on a \
+      boundary that declares a conditional port."
+    enforcement := .checked "rejected at elaboration unless the declaration is a \
+      `Provenance.Contract` and the reason is non-empty"
+    table := ""
+    section_ := "" }]
 
 /-- The annotation reference table. Pure data — it describes the surface, and so needs no
 environment.
@@ -272,6 +299,57 @@ def commands : Array Command := #[
       Its one false alarm is an under-imported closure, which the error says."
     gate := "the command is the gate; there is no message to re-bless"
     section_ := "edge-audits" },
+  -- The examination census — the model template's M6 as a walk, then its gate.
+  { syntax_ := "#kind_examination_coverage ns …", library := "Dimension"
+    effect := "Walks every dimension-one `DimensionedKind` in the namespaces and reports each as \
+      individuated by its examination principle, exempted by an `@[kindPrincipleFree]` mark, or \
+      UNINDIVIDUATED — the census behind the model template's M6, which the dimension functor \
+      cannot supply because it sends every such kind to `1`."
+    gate := "a dimension-one kind declared without a principle or a mark fails the pin"
+    section_ := "" },
+  { syntax_ := "#kind_examination_clean ns …", library := "Dimension"
+    effect := "The census as a gate: throws while any dimension-one kind in scope carries neither \
+      an examination principle nor a declared exemption. Records an audit receipt exactly when \
+      it does not fire, which is what lets a document's M6 read green only in a build where the \
+      census ran."
+    gate := "the command is the gate; there is no message to re-bless"
+    section_ := "" },
+  -- The boundary censuses (core) — M12, M15, and M21's domain half, each a record and a gate.
+  { syntax_ := "#kind_relation_coverage ns …", library := "PropertyKindCalculus"
+    effect := "Walks every `Provenance.Contract` in the namespaces and reports each as witnessed \
+      by the theorem edges naming it (relations walked unscoped, counterexamples excluded), \
+      exempted by a `@[kindRelationFree]` mark, or UNWITNESSED — the census behind M12."
+    gate := "a boundary declared anywhere in scope that no edge names fails the pin"
+    section_ := "" },
+  { syntax_ := "#kind_relation_clean ns …", library := "PropertyKindCalculus"
+    effect := "The census as a gate: throws while any declared boundary in scope is unwitnessed \
+      and unexempted. Records an audit receipt exactly when it does not fire."
+    gate := "the command is the gate; there is no message to re-bless"
+    section_ := "" },
+  { syntax_ := "#kind_mereology_coverage ns …", library := "PropertyKindCalculus"
+    effect := "Walks every produced port (`output` or `conditional`) of every `Provenance.Contract` \
+      in the namespaces and reports each as classed by its declared aggregation class or \
+      UNDECLARED — the census behind M15. No exception mark: the class vocabulary names \
+      every honest negative."
+    gate := "a produced port with no `aggregations` entry fails the pin"
+    section_ := "" },
+  { syntax_ := "#kind_mereology_clean ns …", library := "PropertyKindCalculus"
+    effect := "The census as a gate: throws while any produced port in scope carries no \
+      aggregation class. Records an audit receipt exactly when it does not fire."
+    gate := "the command is the gate; there is no message to re-bless"
+    section_ := "" },
+  { syntax_ := "#kind_inversion_coverage ns …", library := "PropertyKindCalculus"
+    effect := "Walks every `Provenance.Contract` in the namespaces that an `inverts` edge names as \
+      its left side and reports each as guarded by a `conditional` port (with its decider \
+      where named), exempted by a `@[kindInversionTotal]` mark, or UNGUARDED — the census \
+      behind M21's domain half."
+    gate := "an inverted boundary with no conditional port and no exemption fails the pin"
+    section_ := "" },
+  { syntax_ := "#kind_inversion_clean ns …", library := "PropertyKindCalculus"
+    effect := "The census as a gate: throws while any inverted boundary in scope is unguarded \
+      and unexempted. Records an audit receipt exactly when it does not fire."
+    gate := "the command is the gate; there is no message to re-bless"
+    section_ := "" },
   -- The kind graph — the component report, its gate, and its diagram twin.
   { syntax_ := "#kind_scc [ns …]", library := "Graph"
     effect := "The kind-level component report: the authored kinds in scope, their \

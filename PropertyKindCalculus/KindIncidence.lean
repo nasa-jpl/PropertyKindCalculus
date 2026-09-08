@@ -172,6 +172,7 @@ import PropertyKindCalculus.KindEdges
 import PropertyKindCalculus.IndividualQuantity
 import PropertyKindCalculus.BoundaryAudit
 import PropertyKindCalculus.Provenance
+import PropertyKindCalculus.AuditReceipt
 
 namespace PropertyKindCalculus.KindIncidence
 
@@ -2519,6 +2520,7 @@ elab "#kind_contracts " nss:ident* : command => liftTermElabM do
     contract(s){violations}{exemptions}"
   if lines.isEmpty then logInfo m!"{summary}"
   else logInfo m!"{summary}\n{String.intercalate "\n" lines.toList}"
+  recordAuditReceipt "kind_contracts" (nss.map (·.getId))
 
 open Elab Command in
 /-- `#kind_contracts_decide ns…` — the sweep as a hard gate with kernel receipts: every
@@ -2560,6 +2562,10 @@ elab "#kind_contracts_decide " nss:ident* : command => liftTermElabM do
   let summary := s!"kind contracts — {names.size} contract(s) kernel-accepted{exemptions}"
   if lines.isEmpty then logInfo m!"{summary}"
   else logInfo m!"{summary}\n{String.intercalate "\n" lines.toList}"
+  -- The decide sweep is the report sweep with kernel receipts, so it discharges both: a
+  -- document that runs only the stronger form must not read `partial` for the weaker.
+  recordAuditReceipt "kind_contracts_decide" (nss.map (·.getId))
+  recordAuditReceipt "kind_contracts" (nss.map (·.getId))
 
 open Elab Command in
 /-- `#kind_discharges c d` compares two contracts — no graph, no harvest: what the
@@ -2588,6 +2594,7 @@ elab "#kind_discharges_decide " c:ident d:ident : command => liftTermElabM do
   let name := cname ++ `kindDischarges ++ .mkSimple (dname.getString!)
   addDecl (.thmDecl { name, levelParams := [], type := prop, value := proof })
   logInfo m!"kernel-accepted: '{cname}' discharges '{dname}' (theorem '{name}')"
+  recordAuditReceipt "kind_discharges_decide" #[cname, dname]
 
 
 /-! ## The theorem edge (`Provenance`, "The theorem edge")
@@ -2833,6 +2840,7 @@ elab "#kind_relations " nss:ident* : command => liftTermElabM do
   let summary := s!"kind relations — {names.size} theorem edge(s){violations}{exemptions}"
   if lines.isEmpty then logInfo m!"{summary}"
   else logInfo m!"{summary}\n{String.intercalate "\n" lines.toList}"
+  recordAuditReceipt "kind_relations" (nss.map (·.getId))
 
 /-! ## The assembly at the scale of its steps
 

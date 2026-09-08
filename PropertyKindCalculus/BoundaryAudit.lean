@@ -99,6 +99,7 @@ import Lean
 import PropertyKindCalculus.Quantity
 import PropertyKindCalculus.NominalValue
 import PropertyKindCalculus.CertifiedIngest
+import PropertyKindCalculus.AuditReceipt
 
 namespace PropertyKindCalculus.BoundaryAudit
 
@@ -780,6 +781,7 @@ elab "#kind_boundary_clean" nss:ident+ : command => liftTermElabM do
       `@[kindEmission]`), with the reason in its docstring. Tag each site at the tier it \
       actually is — do NOT re-pin a `#kind_boundary_audit` message whose summary says \
       `violation`, which turns the build green and the invariant off."
+  recordAuditReceipt "kind_boundary_clean" (nss.map (·.getId))
 
 /-! ## `#kind_mint_ratchet` -/
 
@@ -822,6 +824,7 @@ elab "#kind_mint_ratchet" nss:ident+ : command => liftTermElabM do
       At these tiers every mint must be a licensed derivation (`castCarrier`, \
       `Quantity.get!`, a witness edge) or a `Quantity.attest why m` whose reason is \
       harvested — a raw `⟨…⟩` is an anonymous claim the reviewed column never sees."
+  recordAuditReceipt "kind_mint_ratchet" (nss.map (·.getId))
 
 /-! ## `#kind_crossings` -/
 

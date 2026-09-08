@@ -26,9 +26,19 @@ what separates each pair, because only the real one has a declaration to name.
 Status is therefore *computed* from the sites and the rubric's own evidence kind.
 There is no switch to forget to flip: adding the annotation is what moves a rubric
 to `proved`, and removing the declaration it names is a build failure.
+
+A site is one thing, and never a claim about the rest. For a rubric whose `closure`
+names audits, the status therefore asks a third question the document does not
+answer by declaring anything: whether each named audit left an `AuditReceipt`
+(`PropertyKindCalculus.AuditReceipt`) over a scope covering the document's
+`declScope`. A gated rubric annotated with two theorems and never audited reads
+`partial`, exactly as one with a section and no declaration does — the receipt is
+harvested from the audit probes in the import closure, so it cannot be supplied by
+annotating something else.
 -/
 
 import Lean
+import PropertyKindCalculus.AuditReceipt
 import PropertyKindCalculus.Rubrics.Catalogue
 
 open Lean
@@ -138,14 +148,23 @@ def Conformance.declSites (c : Conformance) (env : Environment) (id : String) :
 def Conformance.sectionSites (c : Conformance) (id : String) : List SectionRef :=
   c.sections.filter (·.rubric == id)
 
+/-- The audits a rubric's closure names that have left **no** receipt covering the
+document's scope: what stands between a rubric's sites and its green. Empty for a
+rubric whose closure names none. -/
+def Conformance.missingAudits (c : Conformance) (env : Environment) (r : Rubric) :
+    List String :=
+  r.closure.audits.filter fun a => (auditReceiptsFor env a c.declScope).isEmpty
+
 /-- The **evidence-derived status** of a rubric for a document — a computed fact
-about the sites it declared, never a hand-typed assertion:
+about the sites it declared and the audits that ran, never a hand-typed assertion:
 
   * the rubric's own `dischargedWord` (`stated` / `generated` / `proved` /
-    `measured`) once every channel its evidence kind requires has a site;
+    `measured`) once every channel its evidence kind requires has a site **and**
+    every audit its closure names has left a receipt covering `declScope`;
   * `"partial"` when it has sites but not in every required channel — the case a
     single "done" would hide, in either direction: a generated view cited by section
-    with no generator named, or a theorem annotated with no section citing it;
+    with no generator named, or a theorem annotated with no section citing it — or
+    when a named audit has not run (`missingAudits` says which);
   * `"unaddressed"` when the document offers no site at all.
 -/
 def Conformance.status (c : Conformance) (env : Environment) (r : Rubric) : String :=
@@ -155,7 +174,8 @@ def Conformance.status (c : Conformance) (env : Environment) (r : Rubric) : Stri
   else
     let declOk := !r.evidence.needsDecl || !decls.isEmpty
     let secOk := !r.evidence.needsSection || !secs.isEmpty
-    if declOk && secOk then r.evidence.dischargedWord else "partial"
+    let auditsOk := (c.missingAudits env r).isEmpty
+    if declOk && secOk && auditsOk then r.evidence.dischargedWord else "partial"
 
 /-- Whether a rubric is fully addressed by `c`. -/
 def Conformance.addressed (c : Conformance) (env : Environment) (r : Rubric) : Bool :=

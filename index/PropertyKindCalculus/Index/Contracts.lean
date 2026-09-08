@@ -5,6 +5,7 @@ Authors: Nicolas Rouquette
 -/
 import PropertyKindCalculus.Index.Basic
 import PropertyKindCalculus.KindIncidence
+import PropertyKindCalculus.ContractCoverage
 import PropertyKindCalculus.Uncertainty.BoundaryBudget
 
 /-!
@@ -41,20 +42,11 @@ open PropertyKindCalculus.KindIncidence (relationValueOf contractValueOf)
 open PropertyKindCalculus.Uncertainty (portBudgetValueOf)
 
 /-- The witness join: every non-counterexample `Provenance.Relation` in the environment, as a
-map from the contract declaration name it cites (left or right) to the edges citing it.
-Unscoped, like `theoremsMentioning`, and for the same reason: a theorem edge may live beside
-a deployment rather than beside the boundary it is about, so only the *contracts* are scoped. -/
-def edgesByContract (env : Environment) : MetaM (Std.HashMap String (Array Name)) := do
-  let exempt : NameSet :=
-    (BoundaryAudit.kindCounterexamples env).foldl (init := {}) (·.insert ·)
-  let relNames := (constantsOfType env ``PropertyKindCalculus.Provenance.Relation #[]).filter
-    (fun n => !exempt.contains n)
-  let mut acc : Std.HashMap String (Array Name) := {}
-  for rn in relNames do
-    let rel ← relationValueOf rn
-    for side in [rel.left, rel.right] do
-      acc := acc.insert side ((acc.getD side #[]).push rn)
-  return acc
+map from the contract declaration name it cites (left or right) to the edges citing it. This
+is `ContractCoverage.edgesByContract` — the same join the M12 census gates on, so the record
+and the gate cannot drift — kept under this name for the tables; the argument is unused. -/
+def edgesByContract (_env : Environment) : MetaM (Std.HashMap String (Array Name)) :=
+  PropertyKindCalculus.ContractCoverage.edgesByContract
 
 /-- The `contracts` table: every `Provenance.Contract` declared in scope, one row per
 boundary — the contract declaration, the boundary name it declares, the interface at a

@@ -72,6 +72,7 @@ import Lean
 import PropertyKindCalculus.KindEdges
 import PropertyKindCalculus.Dimension
 import PropertyKindCalculus.Index.Basic
+import PropertyKindCalculus.AuditReceipt
 
 namespace PropertyKindCalculus.DimensionalCoverage
 
@@ -350,6 +351,7 @@ authors); one sorted `info` message, suitable for `#guard_msgs` pinning. `⚠ UN
 fails — a refuted edge) are violations; `[parametric]` generic vocabulary is not. -/
 elab "#kind_dimensional_coverage" nss:ident+ : command => liftTermElabM do
   let out ← coverageRows (nss.map (·.getId))
+  recordAuditReceipt "kind_dimensional_coverage" (nss.map (·.getId))
   if out.isEmpty then
     logInfo m!"dimensional coverage — no authored kind edges in the given namespaces"
     return
@@ -406,6 +408,7 @@ elab "#kind_dimensional_clean" nss:ident+ : command => liftTermElabM do
       before declaring anything: the harvest sees only what is imported, so an edge whose \
       `DimensionedKind` declarations are out of scope reports UNDIMENSIONED while the codebase \
       is coherent. Declaring them a second time here would be the wrong fix."
+  recordAuditReceipt "kind_dimensional_clean" (nss.map (·.getId))
 
 open PropertyKindCalculus.Index in
 /-- **The coverage report as a generated table**, for documents — the same rows the command
