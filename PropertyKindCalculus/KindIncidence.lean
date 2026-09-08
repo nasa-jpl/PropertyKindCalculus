@@ -2062,8 +2062,15 @@ def assemble (decls : Array Name) : MetaM Assembly := do
     let j := iMem[k]!
     let calleeIns := contribs[j]!.ports.filter (·.dir == .input)
     let calleeOuts := contribs[j]!.ports.filter (·.dir.produced)
+    -- a caller operand that is one of the caller's own config addresses lives in the
+    -- member-wide scope, exactly where the caller's transform will declare that port
+    let callerCfg : List NodeId :=
+      (contribs[iMem[pk]!]!.ports.filter (·.dir == .config)).map (·.node)
     for (p, opc) in calleeIns.zip iOps[k]! do
-      let src : NodeId := { opc.1 with level := some callerLvl }
+      let src : NodeId :=
+        if callerCfg.contains opc.1 then
+          { opc.1 with level := some (.member decls[iMem[pk]!]!) }
+        else { opc.1 with level := some callerLvl }
       let dst : NodeId := { p.node with level := some calleeLvl }
       wires := wires.push ⟨.copy, [(src, opc.2)], dst, opc.2, iName[pk]!⟩
       unless demoted.contains dst do

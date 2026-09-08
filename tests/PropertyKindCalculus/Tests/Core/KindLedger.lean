@@ -27,6 +27,7 @@ import PropertyKindCalculus.KindLedger
 namespace PropertyKindCalculus.Tests.KindLedger
 
 open PropertyKindCalculus
+open PropertyKindCalculus.Provenance (NodeId KindRef)
 open PropertyKindCalculus.KindLedger
 
 /-- Does `sub` occur in `s`? Evaluation-only probe helper. -/
@@ -55,41 +56,41 @@ def usesTwice (p q : Quantity aK Float) : Quantity dK Float :=
 
 /-- The scope, declared as a contract so the ledger is read over a *boundary* rather than
 over an ad-hoc list. -/
-def probeScope : Provenance.Contract String String where
+def probeScope : Provenance.Contract NodeId KindRef where
   name := "kind-ledger probe scope"
-  members := ["PropertyKindCalculus.Tests.KindLedger.usesTwice",
-              "PropertyKindCalculus.Tests.KindLedger.scaledBy"]
+  members := [``usesTwice, ``scaledBy]
   ports := []
   exits := []
 
 -- The assembly the ledger is read off: `scaledBy` appears at two call sites, so there
 -- are two instance levels of the one member — and TWO red rows.
 /--
+
 info: kind assembly of 3 steps:
 level usesTwice: walked
-level scaledBy#1: walked
+level scaledBy: walked
 level scaledBy#2: walked
 input usesTwice/p : aK
 input usesTwice/q : aK
 output usesTwice/result : dK
 derived usesTwice/_1 : dK
 derived usesTwice/_2 : dK
-derived scaledBy#1/x : aK
-derived scaledBy#1/result : dK
-attested "probe" scaledBy#1/_1 : bK
+derived scaledBy/x : aK
+derived scaledBy/result : dK
+attested "probe" scaledBy/_1 : bK
 derived scaledBy#2/x : aK
 derived scaledBy#2/result : dK
 attested "probe" scaledBy#2/_1 : bK
 dK ± dK → dK ⟨usesTwice/_1, usesTwice/_2⟩ ⇒ usesTwice/result
-[step scaledBy#1] aK → dK ⟨usesTwice/p⟩ ⇒ usesTwice/_1
+[step scaledBy] aK → dK ⟨usesTwice/p⟩ ⇒ usesTwice/_1
 [step scaledBy#2] aK → dK ⟨usesTwice/q⟩ ⇒ usesTwice/_2
-aK · bK → dK ⟨scaledBy#1/x, scaledBy#1/_1⟩ ⇒ scaledBy#1/result
+aK · bK → dK ⟨scaledBy/x, scaledBy/_1⟩ ⇒ scaledBy/result
 aK · bK → dK ⟨scaledBy#2/x, scaledBy#2/_1⟩ ⇒ scaledBy#2/result
-aK → aK ⟨usesTwice/p⟩ ⇒ scaledBy#1/x
+aK → aK ⟨usesTwice/p⟩ ⇒ scaledBy/x
 aK → aK ⟨usesTwice/q⟩ ⇒ scaledBy#2/x
-unkinded input scaledBy#1/n : Nat
+unkinded input scaledBy/n : Nat
 unkinded input scaledBy#2/n : Nat
-unkinded flow: scaledBy#1/n ⇒ scaledBy#1/_1
+unkinded flow: scaledBy/n ⇒ scaledBy/_1
 unkinded flow: scaledBy#2/n ⇒ scaledBy#2/_1
 cites: usesTwice → scaledBy
 well-formed: true
@@ -111,11 +112,12 @@ def scaledByQ (n : Quantity bK Float) (x : Quantity aK Float) : Quantity dK Floa
   Quantity.mul (ProductKind.ofRatio aK bK dK) x n
 
 /-- A scope with nothing naked in it. -/
-def cleanScope : Provenance.Contract String String where
+def cleanScope : Provenance.Contract NodeId KindRef where
   name := "kind-ledger clean scope"
-  members := ["PropertyKindCalculus.Tests.KindLedger.scaledByQ"]
-  ports := [⟨"scaledByQ/n", "bK", .input⟩, ⟨"scaledByQ/x", "aK", .input⟩,
-            ⟨"scaledByQ/result", "dK", .output⟩]
+  members := [``scaledByQ]
+  ports := [⟨(NodeId.binder "n").within ``scaledByQ, .decl ``bK, .input⟩,
+            ⟨(NodeId.binder "x").within ``scaledByQ, .decl ``aK, .input⟩,
+            ⟨NodeId.result.within ``scaledByQ, .decl ``dK, .output⟩]
   exits := []
 
 -- The empty ledger says what the number means.
@@ -148,9 +150,9 @@ def selectUnderBinder (p q : Float) : Quantity aK (Bool → Float) :=
 
 /-- The scope: nothing is ported, so both naked magnitudes are rows — the point being
 that they are *reported*, not lost to an exception raised inside the selection. -/
-def selectScope : Provenance.Contract String String where
+def selectScope : Provenance.Contract NodeId KindRef where
   name := "kind-ledger selection scope"
-  members := ["PropertyKindCalculus.Tests.KindLedger.selectUnderBinder"]
+  members := [``selectUnderBinder]
   ports := []
   exits := []
 

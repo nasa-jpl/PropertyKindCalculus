@@ -202,27 +202,33 @@ theorem probeInvStep_probeFwdStep (x : Quantity signalKind Int) :
     probeInvStep (probeFwdStep x) = x := rfl
 
 /-- The forward's declared boundary. -/
-def probeFwdBoundary : Provenance.Contract String String where
+def probeFwdBoundary :
+    Provenance.Contract Provenance.NodeId Provenance.KindRef where
   name := "probe forward"
-  members := ["PropertyKindCalculus.Tests.Index.probeFwdStep"]
-  ports := [⟨"probeFwdStep/x", "signalKind", .input⟩,
-            ⟨"probeFwdStep/result", "outputKind", .output⟩]
+  members := [``probeFwdStep]
+  ports := [⟨(Provenance.NodeId.binder "x").within ``probeFwdStep,
+              .decl ``signalKind, .input⟩,
+            ⟨Provenance.NodeId.result.within ``probeFwdStep,
+              .decl ``outputKind, .output⟩]
   exits := []
 
 /-- The retrieval's declared boundary. -/
-def probeInvBoundary : Provenance.Contract String String where
+def probeInvBoundary :
+    Provenance.Contract Provenance.NodeId Provenance.KindRef where
   name := "probe retrieval"
-  members := ["PropertyKindCalculus.Tests.Index.probeInvStep"]
-  ports := [⟨"probeInvStep/y", "outputKind", .input⟩,
-            ⟨"probeInvStep/result", "signalKind", .output⟩]
+  members := [``probeInvStep]
+  ports := [⟨(Provenance.NodeId.binder "y").within ``probeInvStep,
+              .decl ``outputKind, .input⟩,
+            ⟨Provenance.NodeId.result.within ``probeInvStep,
+              .decl ``signalKind, .output⟩]
   exits := []
 
 /-- The one theorem edge of this world. -/
 def probeRetrievalInvertsForward : Provenance.Relation where
-  left := "PropertyKindCalculus.Tests.Index.probeInvBoundary"
-  right := "PropertyKindCalculus.Tests.Index.probeFwdBoundary"
+  left := ``probeInvBoundary
+  right := ``probeFwdBoundary
   kind := .inverts
-  witness := "PropertyKindCalculus.Tests.Index.probeInvStep_probeFwdStep"
+  witness := ``probeInvStep_probeFwdStep
   claim := "the probe retrieval recovers the signal the forward consumed"
 
 /-- A deliberately broken edge kept as a counterexample: the `relations` table renders it
@@ -230,8 +236,7 @@ with its mark (a table renders what is declared), while the `contracts` edge joi
 `provenance-coverage` table below leave it out — a misdeclaration is not a witness. -/
 @[kindCounterexample]
 def probeKeptBrokenEdge : Provenance.Relation :=
-  { probeRetrievalInvertsForward with
-    witness := "PropertyKindCalculus.Tests.Index.probeFwdStep" }
+  { probeRetrievalInvertsForward with witness := ``probeFwdStep }
 
 /--
 info: Theorem edges between boundaries (2 row(s))

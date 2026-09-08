@@ -38,6 +38,7 @@ import PropertyKindCalculus.ContractCoverage
 namespace PropertyKindCalculus.Tests.ContractCoverage
 
 open PropertyKindCalculus
+open PropertyKindCalculus.Provenance (NodeId KindRef)
 
 /-! ## The probe world -/
 
@@ -85,58 +86,63 @@ theorem fwd_well_posed (y : Quantity bK Int) (_ : InDomainP y) :
   cases y; simp [fwd, inv]
 
 /-- The forward's boundary: witnessed by the edge below; its output classed. -/
-def fwdBoundary : Provenance.Contract String String where
+def fwdBoundary : Provenance.Contract NodeId KindRef where
   name := "coverage probe forward"
-  members := ["PropertyKindCalculus.Tests.ContractCoverage.Good.fwd"]
-  ports := [⟨"fwd/x", "aK", .input⟩, ⟨"fwd/result", "bK", .output⟩]
+  members := [``Good.fwd]
+  ports := [⟨(NodeId.binder "x").within ``Good.fwd, .decl ``aK, .input⟩,
+            ⟨NodeId.result.within ``Good.fwd, .decl ``bK, .output⟩]
   exits := []
-  aggregations := [("fwd/result", .intensive)]
+  aggregations := [(NodeId.result.within ``Good.fwd, .intensive)]
 
 /-- The retrieval's boundary: the left side of the inversion edge, guarded by a conditional
 port whose decider is named, its ports classed, its quality flag exported as a port
 rather than a side channel. -/
-def invBoundary : Provenance.Contract String String where
+def invBoundary : Provenance.Contract NodeId KindRef where
   name := "coverage probe retrieval"
-  members := ["PropertyKindCalculus.Tests.ContractCoverage.Good.inv"]
-  ports := [⟨"inv/y", "bK", .input⟩, ⟨"inv/result", "aK", .conditional⟩,
-            ⟨"inv/quality", "qcK", .output⟩]
+  members := [``Good.inv]
+  ports := [⟨(NodeId.binder "y").within ``Good.inv, .decl ``bK, .input⟩,
+            ⟨NodeId.result.within ``Good.inv, .decl ``aK, .conditional⟩,
+            ⟨(NodeId.binder "quality").within ``Good.inv, .decl ``qcK, .output⟩]
   exits := []
-  deciders := [("inv/result", "PropertyKindCalculus.Tests.ContractCoverage.Good.inDomain")]
-  aggregations := [("inv/result", .wholeProper), ("inv/quality", .intensive)]
+  deciders := [(NodeId.result.within ``Good.inv, ``Good.inDomain)]
+  aggregations := [(NodeId.result.within ``Good.inv, .wholeProper),
+                   ((NodeId.binder "quality").within ``Good.inv, .intensive)]
 
 /-- The theorem edge between them — answering for its inversion: the well-posedness
 witness on its declared domain. -/
 def retrievalInvertsForward : Provenance.Relation where
-  left := "PropertyKindCalculus.Tests.ContractCoverage.Good.invBoundary"
-  right := "PropertyKindCalculus.Tests.ContractCoverage.Good.fwdBoundary"
+  left := ``Good.invBoundary
+  right := ``Good.fwdBoundary
   kind := .inverts
-  witness := "PropertyKindCalculus.Tests.ContractCoverage.Good.inv_fwd"
-  wellPosed := "PropertyKindCalculus.Tests.ContractCoverage.Good.fwd_well_posed"
-  domain := "PropertyKindCalculus.Tests.ContractCoverage.Good.InDomainP"
+  witness := ``Good.inv_fwd
+  wellPosed := ``Good.fwd_well_posed
+  domain := ``Good.InDomainP
 
 end Good
 
 namespace Bare
 
 /-- Inverted, with an `output` port and nothing else declared. -/
-def unguardedInverse : Provenance.Contract String String where
+def unguardedInverse : Provenance.Contract NodeId KindRef where
   name := "coverage probe retrieval, unguarded"
-  members := ["PropertyKindCalculus.Tests.ContractCoverage.Good.inv"]
-  ports := [⟨"inv/y", "bK", .input⟩, ⟨"inv/result", "aK", .output⟩]
+  members := [``Good.inv]
+  ports := [⟨(NodeId.binder "y").within ``Good.inv, .decl ``bK, .input⟩,
+            ⟨NodeId.result.within ``Good.inv, .decl ``aK, .output⟩]
   exits := []
 
 /-- The edge that makes it an inverted boundary. -/
 def unguardedInverts : Provenance.Relation where
-  left := "PropertyKindCalculus.Tests.ContractCoverage.Bare.unguardedInverse"
-  right := "PropertyKindCalculus.Tests.ContractCoverage.Good.fwdBoundary"
+  left := ``Bare.unguardedInverse
+  right := ``Good.fwdBoundary
   kind := .inverts
-  witness := "PropertyKindCalculus.Tests.ContractCoverage.Good.inv_fwd"
+  witness := ``Good.inv_fwd
 
 /-- No edge names it; its output is unclassed; nothing inverts it. -/
-def orphan : Provenance.Contract String String where
+def orphan : Provenance.Contract NodeId KindRef where
   name := "coverage probe orphan"
-  members := ["PropertyKindCalculus.Tests.ContractCoverage.Good.fwd"]
-  ports := [⟨"fwd/x", "aK", .input⟩, ⟨"fwd/result", "bK", .output⟩]
+  members := [``Good.fwd]
+  ports := [⟨(NodeId.binder "x").within ``Good.fwd, .decl ``aK, .input⟩,
+            ⟨NodeId.result.within ``Good.fwd, .decl ``bK, .output⟩]
   exits := []
 
 end Bare
@@ -146,60 +152,63 @@ namespace Exempt
 /-- No edge, on purpose. Its port is classed. -/
 @[kindRelationFree "a data-movement boundary: its behavior is the identity on kinds, and \
   there is no measurement model to carry"]
-def dataMove : Provenance.Contract String String where
+def dataMove : Provenance.Contract NodeId KindRef where
   name := "coverage probe data movement"
-  members := ["PropertyKindCalculus.Tests.ContractCoverage.Good.fwd"]
-  ports := [⟨"fwd/x", "aK", .input⟩, ⟨"fwd/result", "bK", .output⟩]
+  members := [``Good.fwd]
+  ports := [⟨(NodeId.binder "x").within ``Good.fwd, .decl ``aK, .input⟩,
+            ⟨NodeId.result.within ``Good.fwd, .decl ``bK, .output⟩]
   exits := []
-  aggregations := [("fwd/result", .countKeyed "pixel")]
+  aggregations := [(NodeId.result.within ``Good.fwd, .countKeyed `pixel)]
 
 /-- Inverted, no conditional port, exempted as total. -/
 @[kindInversionTotal "total on its input type: every integer is the forward's image of one, \
   so there is no outside to detect"]
-def totalInverse : Provenance.Contract String String where
+def totalInverse : Provenance.Contract NodeId KindRef where
   name := "coverage probe retrieval, total"
-  members := ["PropertyKindCalculus.Tests.ContractCoverage.Good.inv"]
-  ports := [⟨"inv/y", "bK", .input⟩, ⟨"inv/result", "aK", .output⟩]
+  members := [``Good.inv]
+  ports := [⟨(NodeId.binder "y").within ``Good.inv, .decl ``bK, .input⟩,
+            ⟨NodeId.result.within ``Good.inv, .decl ``aK, .output⟩]
   exits := []
-  aggregations := [("inv/result", .intensive)]
+  aggregations := [(NodeId.result.within ``Good.inv, .intensive)]
 
 /-- The edge that makes it an inverted boundary. -/
 def totalInverts : Provenance.Relation where
-  left := "PropertyKindCalculus.Tests.ContractCoverage.Exempt.totalInverse"
-  right := "PropertyKindCalculus.Tests.ContractCoverage.Good.fwdBoundary"
+  left := ``Exempt.totalInverse
+  right := ``Good.fwdBoundary
   kind := .inverts
-  witness := "PropertyKindCalculus.Tests.ContractCoverage.Good.inv_fwd"
+  witness := ``Good.inv_fwd
 
 /-- Both marks, stale: an edge now names the boundary and a conditional port guards it, and
 both declarations win over the marks. -/
 @[kindRelationFree "stale — an edge now names this boundary",
   kindInversionTotal "stale — a conditional port now guards it"]
-def staleMarks : Provenance.Contract String String where
+def staleMarks : Provenance.Contract NodeId KindRef where
   name := "coverage probe, marks gone stale"
-  members := ["PropertyKindCalculus.Tests.ContractCoverage.Good.inv"]
-  ports := [⟨"inv/y", "bK", .input⟩, ⟨"inv/result", "aK", .conditional⟩]
+  members := [``Good.inv]
+  ports := [⟨(NodeId.binder "y").within ``Good.inv, .decl ``bK, .input⟩,
+            ⟨NodeId.result.within ``Good.inv, .decl ``aK, .conditional⟩]
   exits := []
-  aggregations := [("inv/result", .intensive)]
+  aggregations := [(NodeId.result.within ``Good.inv, .intensive)]
 
 /-- The edge that arrived after the mark. -/
 def staleInverts : Provenance.Relation where
-  left := "PropertyKindCalculus.Tests.ContractCoverage.Exempt.staleMarks"
-  right := "PropertyKindCalculus.Tests.ContractCoverage.Good.fwdBoundary"
+  left := ``Exempt.staleMarks
+  right := ``Good.fwdBoundary
   kind := .inverts
-  witness := "PropertyKindCalculus.Tests.ContractCoverage.Good.inv_fwd"
+  witness := ``Good.inv_fwd
 
 /-- A deliberate misdeclaration kept: a subject of nothing, listed as exempted. -/
 @[kindCounterexample]
-def keptCounterexample : Provenance.Contract String String :=
+def keptCounterexample : Provenance.Contract NodeId KindRef :=
   { Bare.orphan with name := "coverage probe orphan, kept as a counterexample" }
 
 /-- A deliberately broken edge naming the orphan: it witnesses nothing and enrolls nothing. -/
 @[kindCounterexample]
 def keptBrokenEdge : Provenance.Relation where
-  left := "PropertyKindCalculus.Tests.ContractCoverage.Bare.orphan"
-  right := "PropertyKindCalculus.Tests.ContractCoverage.Good.fwdBoundary"
+  left := ``Bare.orphan
+  right := ``Good.fwdBoundary
   kind := .inverts
-  witness := "PropertyKindCalculus.Tests.ContractCoverage.Good.fwd"
+  witness := ``Good.fwd
 
 end Exempt
 
@@ -226,21 +235,22 @@ theorem collapse_collision : collapse ⟨0⟩ = collapse ⟨1⟩ := by simp [col
 
 /-- The ambiguous retrieval's boundary — guarded and classed, so the domain story is in
 order; what fails is uniqueness, and the edge below surfaces it. -/
-def foldBoundary : Provenance.Contract String String where
+def foldBoundary : Provenance.Contract NodeId KindRef where
   name := "coverage probe retrieval, ambiguous"
-  members := ["PropertyKindCalculus.Tests.ContractCoverage.Good.inv"]
-  ports := [⟨"inv/y", "bK", .input⟩, ⟨"inv/result", "aK", .conditional⟩]
+  members := [``Good.inv]
+  ports := [⟨(NodeId.binder "y").within ``Good.inv, .decl ``bK, .input⟩,
+            ⟨NodeId.result.within ``Good.inv, .decl ``aK, .conditional⟩]
   exits := []
-  deciders := [("inv/result", "PropertyKindCalculus.Tests.ContractCoverage.Good.inDomain")]
-  aggregations := [("inv/result", .wholeProper)]
+  deciders := [(NodeId.result.within ``Good.inv, ``Good.inDomain)]
+  aggregations := [(NodeId.result.within ``Good.inv, .wholeProper)]
 
 /-- The edge surfacing the ambiguity instead of claiming well-posedness. -/
 def foldInverts : Provenance.Relation where
-  left := "PropertyKindCalculus.Tests.ContractCoverage.Amb.foldBoundary"
-  right := "PropertyKindCalculus.Tests.ContractCoverage.Good.fwdBoundary"
+  left := ``Amb.foldBoundary
+  right := ``Good.fwdBoundary
   kind := .inverts
-  witness := "PropertyKindCalculus.Tests.ContractCoverage.Good.inv_fwd"
-  ambiguity := "PropertyKindCalculus.Tests.ContractCoverage.Amb.collapse_collision"
+  witness := ``Good.inv_fwd
+  ambiguity := ``Amb.collapse_collision
 
 end Amb
 
@@ -264,6 +274,7 @@ info: relation coverage:
 #kind_relation_coverage PropertyKindCalculus.Tests.ContractCoverage
 
 /--
+
 info: mereology coverage:
 [classed] PropertyKindCalculus.Tests.ContractCoverage.Amb.foldBoundary :: inv/result : aK — whole-proper
 [classed] PropertyKindCalculus.Tests.ContractCoverage.Exempt.dataMove :: fwd/result : bK — count keyed by pixel
@@ -275,7 +286,7 @@ info: mereology coverage:
 ⊘ exempted PropertyKindCalculus.Tests.ContractCoverage.Exempt.keptCounterexample — counterexample
 ⚠ UNDECLARED PropertyKindCalculus.Tests.ContractCoverage.Bare.orphan :: fwd/result : bK
 ⚠ UNDECLARED PropertyKindCalculus.Tests.ContractCoverage.Bare.unguardedInverse :: inv/result : aK
-⚠ UNREADABLE PropertyKindCalculus.Tests.ContractCoverage.Weird.unreadable — not a `Contract String String`
+⚠ UNREADABLE PropertyKindCalculus.Tests.ContractCoverage.Weird.unreadable — not a `Contract NodeId KindRef`
 9 produced port(s): 7 classed, 2 UNDECLARED; 1 boundary(ies) exempted; 1 UNREADABLE — mereology-coverage violation
 -/
 #guard_msgs (whitespace := lax) in
@@ -307,10 +318,11 @@ info: well-posedness coverage:
 #kind_wellposedness_coverage PropertyKindCalculus.Tests.ContractCoverage
 
 /--
+
 info: diagnostic coverage:
 [exported] PropertyKindCalculus.Tests.ContractCoverage.qcK — PropertyKindCalculus.Tests.ContractCoverage.Good.invBoundary :: inv/quality
 ⚠ SIDECHANNELED PropertyKindCalculus.Tests.ContractCoverage.hiddenK (the fit's conditioning pivot) — no produced port in scope carries it
-⚠ UNREADABLE PropertyKindCalculus.Tests.ContractCoverage.Weird.unreadable — not a `Contract String String`
+⚠ UNREADABLE PropertyKindCalculus.Tests.ContractCoverage.Weird.unreadable — not a `Contract NodeId KindRef`
 2 diagnostic kind(s): 1 exported, 1 SIDECHANNELED; 1 UNREADABLE — diagnostic-coverage violation
 -/
 #guard_msgs (whitespace := lax) in
@@ -329,11 +341,11 @@ A module's behavior is a measurement model carried as a theorem edge, not prose 
 #kind_relation_clean PropertyKindCalculus.Tests.ContractCoverage
 
 /--
+
 error: mereology coverage: 3 produced port(s) with no mereology declaration — mereology-coverage violation
   ⚠ UNDECLARED PropertyKindCalculus.Tests.ContractCoverage.Bare.orphan :: fwd/result : bK
   ⚠ UNDECLARED PropertyKindCalculus.Tests.ContractCoverage.Bare.unguardedInverse :: inv/result : aK
-  ⚠ UNREADABLE PropertyKindCalculus.Tests.ContractCoverage.Weird.unreadable — not a `Contract String String`
-
+  ⚠ UNREADABLE PropertyKindCalculus.Tests.ContractCoverage.Weird.unreadable — not a `Contract NodeId KindRef`
 A license to shard or recarve is derived from the port's declared aggregation class, not from the fact that a sharded run worked. Add an `aggregations` entry for each port at issue — `.intensive` for a value that must never be summed over a carving, `.wholeProper` for one its parts do not determine, `.extensive` (or a qualified class) where it composes. There is no exemption mark: the vocabulary already names every honest negative. Do NOT re-pin a `#kind_mereology_coverage` report whose summary says `violation` — that turns the build green and the census off.
 -/
 #guard_msgs (whitespace := lax) in
@@ -360,10 +372,10 @@ An inversion either has exactly one answer on a declared domain or it does not, 
 #kind_wellposedness_clean PropertyKindCalculus.Tests.ContractCoverage
 
 /--
+
 error: diagnostic coverage: 2 diagnostic kind(s) no declared boundary exports — diagnostic-coverage violation
   ⚠ SIDECHANNELED PropertyKindCalculus.Tests.ContractCoverage.hiddenK (the fit's conditioning pivot) — no produced port in scope carries it
-  ⚠ UNREADABLE PropertyKindCalculus.Tests.ContractCoverage.Weird.unreadable — not a `Contract String String`
-
+  ⚠ UNREADABLE PropertyKindCalculus.Tests.ContractCoverage.Weird.unreadable — not a `Contract NodeId KindRef`
 A quality or conditioning output a consumer must read is part of the declared contract, not a side channel a downstream stage may or may not read. Give some boundary in scope a produced port at each kind at issue — `conditional` where the value exists only in some cases, with its decider named — or, where the kind is not in fact a diagnostic a consumer needs, remove its `@[kindDiagnostic]` mark: enrollment is the mark, so the mark is also the exemption. Do NOT re-pin a `#kind_diagnostic_coverage` report whose summary says `violation` — that turns the build green and the census off.
 -/
 #guard_msgs (whitespace := lax) in
@@ -379,32 +391,34 @@ def qualityK : KindOfProperty :=
   { id := "contract coverage probe clean quality", scale := .ordinal }
 
 /-- Inverted, guarded, classed, witnessed, its diagnostic exported. -/
-def retrieval : Provenance.Contract String String where
+def retrieval : Provenance.Contract NodeId KindRef where
   name := "coverage probe clean retrieval"
-  members := ["PropertyKindCalculus.Tests.ContractCoverage.Good.inv"]
-  ports := [⟨"inv/y", "bK", .input⟩, ⟨"inv/result", "aK", .conditional⟩,
-            ⟨"inv/quality", "qualityK", .output⟩]
+  members := [``Good.inv]
+  ports := [⟨(NodeId.binder "y").within ``Good.inv, .decl ``bK, .input⟩,
+            ⟨NodeId.result.within ``Good.inv, .decl ``aK, .conditional⟩,
+            ⟨(NodeId.binder "quality").within ``Good.inv, .decl ``qualityK, .output⟩]
   exits := []
-  deciders := [("inv/result", "PropertyKindCalculus.Tests.ContractCoverage.Good.inDomain")]
-  aggregations := [("inv/result", .intensive), ("inv/quality", .intensive)]
+  deciders := [(NodeId.result.within ``Good.inv, ``Good.inDomain)]
+  aggregations := [(NodeId.result.within ``Good.inv, .intensive), ((NodeId.binder "quality").within ``Good.inv, .intensive)]
 
 /-- Its edge, answering for its inversion. -/
 def retrievalInverts : Provenance.Relation where
-  left := "PropertyKindCalculus.Tests.ContractCoverage.Clean.retrieval"
-  right := "PropertyKindCalculus.Tests.ContractCoverage.Good.fwdBoundary"
+  left := ``Clean.retrieval
+  right := ``Good.fwdBoundary
   kind := .inverts
-  witness := "PropertyKindCalculus.Tests.ContractCoverage.Good.inv_fwd"
-  wellPosed := "PropertyKindCalculus.Tests.ContractCoverage.Good.fwd_well_posed"
-  domain := "PropertyKindCalculus.Tests.ContractCoverage.Good.InDomainP"
+  witness := ``Good.inv_fwd
+  wellPosed := ``Good.fwd_well_posed
+  domain := ``Good.InDomainP
 
 /-- Edge-free on purpose, its port classed, nothing inverting it. -/
 @[kindRelationFree "a reference boundary the edges are about, not a computation"]
-def spec : Provenance.Contract String String where
+def spec : Provenance.Contract NodeId KindRef where
   name := "coverage probe clean spec"
-  members := ["PropertyKindCalculus.Tests.ContractCoverage.Good.fwd"]
-  ports := [⟨"fwd/x", "aK", .input⟩, ⟨"fwd/result", "bK", .output⟩]
+  members := [``Good.fwd]
+  ports := [⟨(NodeId.binder "x").within ``Good.fwd, .decl ``aK, .input⟩,
+            ⟨NodeId.result.within ``Good.fwd, .decl ``bK, .output⟩]
   exits := []
-  aggregations := [("fwd/result", .intensive)]
+  aggregations := [(NodeId.result.within ``Good.fwd, .intensive)]
 
 end Clean
 

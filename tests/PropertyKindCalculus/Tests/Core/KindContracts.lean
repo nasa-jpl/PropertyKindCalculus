@@ -19,6 +19,7 @@ import PropertyKindCalculus.KindIncidence
 namespace PropertyKindCalculus.Tests.KindContracts
 
 open PropertyKindCalculus
+open PropertyKindCalculus.Provenance (NodeId KindRef)
 
 /-- A probe kind — the forward's argument. -/
 def aK : KindOfProperty := { id := "contract sweep probe a", scale := .ratio }
@@ -38,25 +39,27 @@ theorem inv_fwd (x : Quantity aK Int) : inv (fwd x) = x := by
   cases x; simp [inv, fwd]
 
 /-- The forward's declared boundary — a subject the sweep accepts. -/
-def fwdBoundary : Provenance.Contract String String where
+def fwdBoundary : Provenance.Contract NodeId KindRef where
   name := "sweep probe forward"
-  members := ["PropertyKindCalculus.Tests.KindContracts.Good.fwd"]
-  ports := [⟨"fwd/x", "aK", .input⟩, ⟨"fwd/result", "bK", .output⟩]
+  members := [``fwd]
+  ports := [⟨(NodeId.binder "x").within ``fwd, .decl ``aK, .input⟩,
+            ⟨NodeId.result.within ``fwd, .decl ``bK, .output⟩]
   exits := []
 
 /-- The retrieval's declared boundary. -/
-def invBoundary : Provenance.Contract String String where
+def invBoundary : Provenance.Contract NodeId KindRef where
   name := "sweep probe retrieval"
-  members := ["PropertyKindCalculus.Tests.KindContracts.Good.inv"]
-  ports := [⟨"inv/y", "bK", .input⟩, ⟨"inv/result", "aK", .output⟩]
+  members := [``inv]
+  ports := [⟨(NodeId.binder "y").within ``inv, .decl ``bK, .input⟩,
+            ⟨NodeId.result.within ``inv, .decl ``aK, .output⟩]
   exits := []
 
 /-- The theorem edge between them — the subject `#kind_relations` accepts. -/
 def retrievalInvertsForward : Provenance.Relation where
-  left := "PropertyKindCalculus.Tests.KindContracts.Good.invBoundary"
-  right := "PropertyKindCalculus.Tests.KindContracts.Good.fwdBoundary"
+  left := ``invBoundary
+  right := ``fwdBoundary
   kind := .inverts
-  witness := "PropertyKindCalculus.Tests.KindContracts.Good.inv_fwd"
+  witness := ``inv_fwd
   claim := "the retrieval recovers the argument the forward consumed"
 
 end Good
@@ -66,10 +69,10 @@ namespace Bad
 /-- The boundary that forgot the forward's input port. Nobody hands this to a command by
 name — being a `Provenance.Contract` in scope is what makes it a subject, and that is
 the point of the sweep. -/
-def forgottenInput : Provenance.Contract String String where
+def forgottenInput : Provenance.Contract NodeId KindRef where
   name := "sweep probe forward, x forgotten"
-  members := ["PropertyKindCalculus.Tests.KindContracts.Good.fwd"]
-  ports := [⟨"fwd/result", "bK", .output⟩]
+  members := [``Good.fwd]
+  ports := [⟨NodeId.result.within ``Good.fwd, .decl ``bK, .output⟩]
   exits := []
 
 end Bad
@@ -79,14 +82,13 @@ namespace Exempt
 /-- The same misdeclaration kept deliberately: the mark is what lets a falsification
 probe live in a swept scope without failing its gate. -/
 @[kindCounterexample]
-def keptCounterexample : Provenance.Contract String String :=
+def keptCounterexample : Provenance.Contract NodeId KindRef :=
   { Bad.forgottenInput with name := "sweep probe forward, kept as a counterexample" }
 
 /-- A deliberately broken edge (the witness is a definition), exempted the same way. -/
 @[kindCounterexample]
 def keptBrokenEdge : Provenance.Relation :=
-  { Good.retrievalInvertsForward with
-    witness := "PropertyKindCalculus.Tests.KindContracts.Good.fwd" }
+  { Good.retrievalInvertsForward with witness := ``Good.fwd }
 
 end Exempt
 

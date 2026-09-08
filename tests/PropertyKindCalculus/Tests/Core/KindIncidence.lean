@@ -38,6 +38,7 @@ import PropertyKindCalculus.Tests.Core.KindEdges
 namespace PropertyKindCalculus.Tests.KindIncidence
 
 open PropertyKindCalculus
+open PropertyKindCalculus.Provenance (NodeId KindRef)
 open PropertyKindCalculus.Tests.KindEdges
 
 -- The two witness spellings pin the same line: the edge is read off the consumer's
@@ -335,9 +336,11 @@ structure Sample (R : Type) where
   b : Quantity betaK R
 
 /-- Both spellings in one signature, alongside a genuinely naked position so the pin
-shows the reading still separates them. -/
+shows the reading still separates them. The probed value is let-bound before its
+erasure — an inline compound there is refused, because an exit must name a node. -/
 def foldSamples (f : Scaling Nat) (xs : List (Sample Nat)) (n : Nat) : Quantity deltaK Nat :=
-  ⟨xs.length + n + (f ⟨0⟩).magnitude⟩
+  let probed := f ⟨0⟩
+  ⟨xs.length + n + probed.magnitude⟩
 
 /--
 info: kind ports of 'PropertyKindCalculus.Tests.KindIncidence.foldSamples':
@@ -911,25 +914,26 @@ def passedProduct {R : Type} [Mul R] [ScalarCarrier R] (x : Quantity alphaK R) (
   Quantity.mul (ProductKind.ofRatio alphaK betaK deltaK) (genericPass x) (genericPass y)
 
 /--
+
 info: kind assembly of 2 steps:
 level passedProduct: walked
-level genericPass#1: walked
+level genericPass: walked
 level genericPass#2: walked
 input passedProduct/x : alphaK
 input passedProduct/y : betaK
 output passedProduct/result : deltaK
 derived passedProduct/_1 : alphaK
 derived passedProduct/_2 : betaK
-derived genericPass#1/x : alphaK
-derived genericPass#1/result : alphaK
+derived genericPass/x : alphaK
+derived genericPass/result : alphaK
 derived genericPass#2/x : betaK
 derived genericPass#2/result : betaK
 alphaK · betaK → deltaK ⟨passedProduct/_1, passedProduct/_2⟩ ⇒ passedProduct/result
-[step genericPass#1] alphaK → alphaK ⟨passedProduct/x⟩ ⇒ passedProduct/_1
+[step genericPass] alphaK → alphaK ⟨passedProduct/x⟩ ⇒ passedProduct/_1
 [step genericPass#2] betaK → betaK ⟨passedProduct/y⟩ ⇒ passedProduct/_2
-alphaK → alphaK ⟨genericPass#1/x⟩ ⇒ genericPass#1/result
+alphaK → alphaK ⟨genericPass/x⟩ ⇒ genericPass/result
 betaK → betaK ⟨genericPass#2/x⟩ ⇒ genericPass#2/result
-alphaK → alphaK ⟨passedProduct/x⟩ ⇒ genericPass#1/x
+alphaK → alphaK ⟨passedProduct/x⟩ ⇒ genericPass/x
 betaK → betaK ⟨passedProduct/y⟩ ⇒ genericPass#2/x
 cites: passedProduct → genericPass
 well-formed: true
@@ -949,9 +953,10 @@ def twiceOffset (x y : Quantity deltaK Nat) : Quantity epsilonK Nat :=
   Quantity.div (QuotientKind.ofRatio deltaK deltaK epsilonK) (offsetByRef x) (offsetByRef y)
 
 /--
+
 info: kind assembly of 2 steps:
 level twiceOffset: walked
-level offsetByRef#1: walked
+level offsetByRef: walked
 level offsetByRef#2: walked
 input twiceOffset/x : deltaK
 input twiceOffset/y : deltaK
@@ -959,16 +964,16 @@ output twiceOffset/result : epsilonK
 config offsetByRef/PropertyKindCalculus.Tests.KindIncidence.refQ : deltaK
 derived twiceOffset/_1 : deltaK
 derived twiceOffset/_2 : deltaK
-derived offsetByRef#1/x : deltaK
-derived offsetByRef#1/result : deltaK
+derived offsetByRef/x : deltaK
+derived offsetByRef/result : deltaK
 derived offsetByRef#2/x : deltaK
 derived offsetByRef#2/result : deltaK
 deltaK / deltaK → epsilonK ⟨twiceOffset/_1, twiceOffset/_2⟩ ⇒ twiceOffset/result
-[step offsetByRef#1] deltaK → deltaK ⟨twiceOffset/x⟩ ⇒ twiceOffset/_1
+[step offsetByRef] deltaK → deltaK ⟨twiceOffset/x⟩ ⇒ twiceOffset/_1
 [step offsetByRef#2] deltaK → deltaK ⟨twiceOffset/y⟩ ⇒ twiceOffset/_2
-deltaK ± deltaK → deltaK ⟨offsetByRef#1/x, offsetByRef/PropertyKindCalculus.Tests.KindIncidence.refQ⟩ ⇒ offsetByRef#1/result
+deltaK ± deltaK → deltaK ⟨offsetByRef/x, offsetByRef/PropertyKindCalculus.Tests.KindIncidence.refQ⟩ ⇒ offsetByRef/result
 deltaK ± deltaK → deltaK ⟨offsetByRef#2/x, offsetByRef/PropertyKindCalculus.Tests.KindIncidence.refQ⟩ ⇒ offsetByRef#2/result
-deltaK → deltaK ⟨twiceOffset/x⟩ ⇒ offsetByRef#1/x
+deltaK → deltaK ⟨twiceOffset/x⟩ ⇒ offsetByRef/x
 deltaK → deltaK ⟨twiceOffset/y⟩ ⇒ offsetByRef#2/x
 cites: twiceOffset → offsetByRef
 well-formed: true
@@ -1114,15 +1119,15 @@ with the input declared a `param`, which is the one refinement a declaration may
 over a computed role. -/
 
 /-- The declared boundary of the interval composition. -/
-def endOfBoxBoundary : Provenance.Contract String String where
+def endOfBoxBoundary : Provenance.Contract NodeId KindRef where
   name := "endOfBox"
   members := [
-    "PropertyKindCalculus.Tests.KindIncidence.endOfBoxLet",
-    "PropertyKindCalculus.Tests.KindIncidence.degenerate",
-    "PropertyKindCalculus.Tests.KindIncidence.lowerEnd"]
+    ``endOfBoxLet,
+    ``degenerate,
+    ``lowerEnd]
   ports := [
-    ⟨"endOfBoxLet/x", "alphaK", .input⟩,
-    ⟨"endOfBoxLet/result", "alphaK", .output⟩]
+    ⟨((NodeId.binder "x").within ``endOfBoxLet), .decl ``alphaK, .input⟩,
+    ⟨(NodeId.result.within ``endOfBoxLet), .decl ``alphaK, .output⟩]
   exits := []
 
 /--
@@ -1138,12 +1143,12 @@ info: kernel-accepted: 'PropertyKindCalculus.Tests.KindIncidence.endOfBoxBoundar
 #guard_msgs in #kind_contract_decide endOfBoxBoundary
 
 /-- The same interface claimed for a wider scope. -/
-def endOfBoxOverclaimed : Provenance.Contract String String :=
+def endOfBoxOverclaimed : Provenance.Contract NodeId KindRef :=
   { endOfBoxBoundary with
     name := "endOfBox (overclaimed)"
     members := endOfBoxBoundary.members ++ [
-      "PropertyKindCalculus.Tests.KindIncidence.halved",
-      "PropertyKindCalculus.Tests.KindIncidence.halve"] }
+      ``halved,
+      ``halve] }
 
 -- The scope reading: two unrelated members join the assembly, the wiring verdict is
 -- unmoved (`#kind_assembly` above says `true` for each part and the union is disjoint),
@@ -1159,13 +1164,15 @@ boundary agrees: false
 
 /-- The same boundary with the input declared a parameter — a claim about binding time,
 which the walk cannot read and the comparison therefore accepts. -/
-def endOfBoxParametric : Provenance.Contract String String :=
+def endOfBoxParametric : Provenance.Contract NodeId KindRef :=
   { endOfBoxBoundary with
     name := "endOfBox (parametric)"
     ports := endOfBoxBoundary.ports.map fun p =>
-      if p.node == "endOfBoxLet/x" then { p with dir := .param } else p }
+      if p.node == (NodeId.binder "x").within ``endOfBoxLet then { p with dir := .param }
+      else p }
 
 /--
+
 info: kind contract over 3 steps:
 contract 'endOfBox (parametric)': 2 ports, 0 exits
 params: endOfBoxLet/x
@@ -1174,15 +1181,17 @@ boundary agrees: true
 #guard_msgs in #kind_contract endOfBoxParametric
 
 /-- The same boundary claiming the input is a constant this tier binds. -/
-def endOfBoxMisconfigured : Provenance.Contract String String :=
+def endOfBoxMisconfigured : Provenance.Contract NodeId KindRef :=
   { endOfBoxBoundary with
     name := "endOfBox (misconfigured)"
     ports := endOfBoxBoundary.ports.map fun p =>
-      if p.node == "endOfBoxLet/x" then { p with dir := .config } else p }
+      if p.node == (NodeId.binder "x").within ``endOfBoxLet then { p with dir := .config }
+      else p }
 
 -- `config` says the tier binds the value, which is a harvested fact and not a claim the
 -- contract may make: the port is at once undeclared and unrealized.
 /--
+
 info: kind contract over 3 steps:
 contract 'endOfBox (misconfigured)': 2 ports, 0 exits
 undeclared input endOfBoxLet/x : alphaK
@@ -1238,14 +1247,15 @@ quietly relabelled per-datum data, which is the case the relation exists to refu
 /-- A wider scope that binds the inherited parameter: `endOfBoxLet/x` is fed inside it,
 so the port is interior and gone from this boundary. Members and exits are its own; only
 the discharge is at issue here. -/
-def endOfBoxDeployed : Provenance.Contract String String where
+def endOfBoxDeployed : Provenance.Contract NodeId KindRef where
   name := "endOfBox (deployed)"
   members := endOfBoxParametric.members ++ [
-    "PropertyKindCalculus.Tests.KindIncidence.halved"]
-  ports := [⟨"endOfBoxLet/result", "alphaK", .output⟩]
+    ``halved]
+  ports := [⟨(NodeId.result.within ``endOfBoxLet), .decl ``alphaK, .output⟩]
   exits := []
 
 /--
+
 info: kind tier:
 tier 'endOfBox (deployed)' over 'endOfBox (parametric)': 3 members inherited, 1 parameters
 bound endOfBoxLet/x
@@ -1254,20 +1264,22 @@ discharges: true
 #guard_msgs in #kind_discharges endOfBoxDeployed endOfBoxParametric
 
 /--
+
 info: kernel-accepted: 'PropertyKindCalculus.Tests.KindIncidence.endOfBoxDeployed' discharges 'PropertyKindCalculus.Tests.KindIncidence.endOfBoxParametric' (theorem 'PropertyKindCalculus.Tests.KindIncidence.endOfBoxDeployed.kindDischarges.endOfBoxParametric')
 -/
 #guard_msgs in #kind_discharges_decide endOfBoxDeployed endOfBoxParametric
 
 /-- A wider scope that does not bind the inherited parameter but keeps calling it one:
 the obligation stays named, for the tier after this one. -/
-def endOfBoxPassedOn : Provenance.Contract String String where
+def endOfBoxPassedOn : Provenance.Contract NodeId KindRef where
   name := "endOfBox (passed on)"
   members := endOfBoxDeployed.members
-  ports := endOfBoxParametric.ports ++ [⟨"halved/result", "epsilonK", .output⟩]
+  ports := endOfBoxParametric.ports ++ [⟨(NodeId.result.within ``halved), .decl ``epsilonK, .output⟩]
   exits := []
 
 -- Passing it on is the other lawful answer.
 /--
+
 info: kind tier:
 tier 'endOfBox (passed on)' over 'endOfBox (parametric)': 3 members inherited, 1 parameters
 restated endOfBoxLet/x
@@ -1279,6 +1291,7 @@ discharges: true
 -- unchanged, `agrees` is unchanged — the only thing that moved is a role, and with it an
 -- obligation that now belongs to nobody.
 /--
+
 info: kind tier:
 tier 'endOfBox' over 'endOfBox (parametric)': 3 members inherited, 1 parameters
 undischarged endOfBoxLet/x
@@ -1287,14 +1300,14 @@ discharges: false
 #guard_msgs in #kind_discharges endOfBoxBoundary endOfBoxParametric
 
 /-- An unrelated scope, to ask the relation about a pair that does not stack. -/
-def halvingBoundary : Provenance.Contract String String where
+def halvingBoundary : Provenance.Contract NodeId KindRef where
   name := "halving"
   members := [
-    "PropertyKindCalculus.Tests.KindIncidence.halved",
-    "PropertyKindCalculus.Tests.KindIncidence.halve"]
+    ``halved,
+    ``halve]
   ports := [
-    ⟨"halved/q", "alphaK", .input⟩,
-    ⟨"halved/result", "epsilonK", .output⟩]
+    ⟨((NodeId.binder "q").within ``halved), .decl ``alphaK, .input⟩,
+    ⟨(NodeId.result.within ``halved), .decl ``epsilonK, .output⟩]
   exits := []
 
 -- A scope that is not a deployment of the algorithm at all: the members do not contain
@@ -1343,16 +1356,16 @@ well-formed: false
 #guard_msgs in #kind_graph halvedInDomain
 
 /-- The declared boundary of the guarded chain, with the case stated. -/
-def halvedInDomainBoundary : Provenance.Contract String String where
+def halvedInDomainBoundary : Provenance.Contract NodeId KindRef where
   name := "halvedInDomain"
   members := [
-    "PropertyKindCalculus.Tests.KindIncidence.halvedInDomain",
-    "PropertyKindCalculus.Tests.KindIncidence.halved",
-    "PropertyKindCalculus.Tests.KindIncidence.halve"]
+    ``halvedInDomain,
+    ``halved,
+    ``halve]
   ports := [
-    ⟨"halvedInDomain/lo", "alphaK", .input⟩,
-    ⟨"halvedInDomain/q", "alphaK", .input⟩,
-    ⟨"halvedInDomain/result.some", "epsilonK", .conditional⟩]
+    ⟨((NodeId.binder "lo").within ``halvedInDomain), .decl ``alphaK, .input⟩,
+    ⟨((NodeId.binder "q").within ``halvedInDomain), .decl ``alphaK, .input⟩,
+    ⟨((NodeId.result.field "some").within ``halvedInDomain), .decl ``epsilonK, .conditional⟩]
   exits := []
 
 /--
@@ -1386,7 +1399,7 @@ boundary agrees: true
 #guard_msgs in #kind_contract halvedInDomainBoundary
 
 /-- The same boundary claiming the result is always there. -/
-def halvedInDomainTotal : Provenance.Contract String String :=
+def halvedInDomainTotal : Provenance.Contract NodeId KindRef :=
   { halvedInDomainBoundary with
     name := "halvedInDomain (claimed total)"
     ports := halvedInDomainBoundary.ports.map fun p =>
@@ -1415,11 +1428,11 @@ the clause's hygiene: a decider must govern a conditional port — nothing else 
 def halvedDomain (lo q : Quantity alphaK Nat) : Prop := lo ≤ q
 
 /-- The guarded boundary with its case decided by name. -/
-def halvedInDomainDecided : Provenance.Contract String String :=
+def halvedInDomainDecided : Provenance.Contract NodeId KindRef :=
   { halvedInDomainBoundary with
     name := "halvedInDomain (case decided)"
-    deciders := [("halvedInDomain/result.some",
-                  "PropertyKindCalculus.Tests.KindIncidence.halvedDomain")] }
+    deciders := [(((NodeId.result.field "some").within ``halvedInDomain),
+                  ``halvedDomain)] }
 
 /--
 info: kind contract over 3 steps:
@@ -1430,11 +1443,11 @@ boundary agrees: true
 #guard_msgs in #kind_contract halvedInDomainDecided
 
 /-- A decider hung on an input: nothing there has cases. -/
-def deciderOnAnInput : Provenance.Contract String String :=
+def deciderOnAnInput : Provenance.Contract NodeId KindRef :=
   { halvedInDomainBoundary with
     name := "halvedInDomain (decider misplaced)"
-    deciders := [("halvedInDomain/lo",
-                  "PropertyKindCalculus.Tests.KindIncidence.halvedDomain")] }
+    deciders := [(((NodeId.binder "lo").within ``halvedInDomain),
+                  ``halvedDomain)] }
 
 /--
 error: the decider for 'halvedInDomain/lo' names a port with role 'input' — only a conditional port has cases to decide
@@ -1442,11 +1455,11 @@ error: the decider for 'halvedInDomain/lo' names a port with role 'input' — on
 #guard_msgs in #kind_contract deciderOnAnInput
 
 /-- A decider that names no declaration. -/
-def deciderDangles : Provenance.Contract String String :=
+def deciderDangles : Provenance.Contract NodeId KindRef :=
   { halvedInDomainBoundary with
     name := "halvedInDomain (decider dangles)"
-    deciders := [("halvedInDomain/result.some",
-                  "PropertyKindCalculus.Tests.KindIncidence.noSuchDomain")] }
+    deciders := [(((NodeId.result.field "some").within ``halvedInDomain),
+                  `PropertyKindCalculus.Tests.KindIncidence.noSuchDomain)] }
 
 /--
 error: the decider 'PropertyKindCalculus.Tests.KindIncidence.noSuchDomain' for 'halvedInDomain/result.some' is not a declaration
@@ -1472,10 +1485,10 @@ def halvedJoinTol : Quantity epsilonK Nat := ⟨1⟩
 def halvedJoinTolAtAlpha : Quantity alphaK Nat := ⟨1⟩
 
 /-- The guarded boundary with its produced port declared extensive. -/
-def halvedExtensive : Provenance.Contract String String :=
+def halvedExtensive : Provenance.Contract NodeId KindRef :=
   { halvedInDomainBoundary with
     name := "halvedInDomain (extensive)"
-    aggregations := [("halvedInDomain/result.some", .extensive)] }
+    aggregations := [(((NodeId.result.field "some").within ``halvedInDomain), .extensive)] }
 
 /--
 info: kind contract over 3 steps:
@@ -1486,11 +1499,11 @@ boundary agrees: true
 #guard_msgs in #kind_contract halvedExtensive
 
 /-- The same port, additive only to within a named per-join tolerance. -/
-def halvedQuasi : Provenance.Contract String String :=
+def halvedQuasi : Provenance.Contract NodeId KindRef :=
   { halvedInDomainBoundary with
     name := "halvedInDomain (quasi-extensive)"
-    aggregations := [("halvedInDomain/result.some",
-      .quasiExtensive "PropertyKindCalculus.Tests.KindIncidence.halvedJoinTol")] }
+    aggregations := [(((NodeId.result.field "some").within ``halvedInDomain),
+      .quasiExtensive ``halvedJoinTol)] }
 
 /--
 info: kind contract over 3 steps:
@@ -1502,11 +1515,11 @@ boundary agrees: true
 
 /-- The same port read as a count, keyed to the sortal that specifies what is
 counted. -/
-def halvedCounted : Provenance.Contract String String :=
+def halvedCounted : Provenance.Contract NodeId KindRef :=
   { halvedInDomainBoundary with
     name := "halvedInDomain (count keyed)"
-    aggregations := [("halvedInDomain/result.some",
-      .countKeyed "PropertyKindCalculus.Tests.KindIncidence.halvedDomain")] }
+    aggregations := [(((NodeId.result.field "some").within ``halvedInDomain),
+      .countKeyed ``halvedDomain)] }
 
 /--
 info: kind contract over 3 steps:
@@ -1517,10 +1530,10 @@ boundary agrees: true
 #guard_msgs in #kind_contract halvedCounted
 
 /-- An aggregation class hung on an input: a source composes nothing. -/
-def aggregationOnAnInput : Provenance.Contract String String :=
+def aggregationOnAnInput : Provenance.Contract NodeId KindRef :=
   { halvedInDomainBoundary with
     name := "halvedInDomain (class misplaced)"
-    aggregations := [("halvedInDomain/lo", .extensive)] }
+    aggregations := [(((NodeId.binder "lo").within ``halvedInDomain), .extensive)] }
 
 /--
 error: the aggregation class for 'halvedInDomain/lo' names a port with role 'input' — an aggregation class says how a produced value composes, and this port produces nothing
@@ -1528,11 +1541,11 @@ error: the aggregation class for 'halvedInDomain/lo' names a port with role 'inp
 #guard_msgs in #kind_contract aggregationOnAnInput
 
 /-- A tolerance that names no declaration. -/
-def aggregationTolDangles : Provenance.Contract String String :=
+def aggregationTolDangles : Provenance.Contract NodeId KindRef :=
   { halvedInDomainBoundary with
     name := "halvedInDomain (tolerance dangles)"
-    aggregations := [("halvedInDomain/result.some",
-      .quasiExtensive "PropertyKindCalculus.Tests.KindIncidence.noSuchTol")] }
+    aggregations := [(((NodeId.result.field "some").within ``halvedInDomain),
+      .quasiExtensive `PropertyKindCalculus.Tests.KindIncidence.noSuchTol)] }
 
 /--
 error: the tolerance 'PropertyKindCalculus.Tests.KindIncidence.noSuchTol' for 'halvedInDomain/result.some' is not a declaration
@@ -1540,11 +1553,11 @@ error: the tolerance 'PropertyKindCalculus.Tests.KindIncidence.noSuchTol' for 'h
 #guard_msgs in #kind_contract aggregationTolDangles
 
 /-- A tolerance that is not a quantity — the domain predicate, a `Prop`. -/
-def aggregationTolNotAQuantity : Provenance.Contract String String :=
+def aggregationTolNotAQuantity : Provenance.Contract NodeId KindRef :=
   { halvedInDomainBoundary with
     name := "halvedInDomain (tolerance not a quantity)"
-    aggregations := [("halvedInDomain/result.some",
-      .quasiExtensive "PropertyKindCalculus.Tests.KindIncidence.halvedDomain")] }
+    aggregations := [(((NodeId.result.field "some").within ``halvedInDomain),
+      .quasiExtensive ``halvedDomain)] }
 
 /--
 error: the tolerance 'PropertyKindCalculus.Tests.KindIncidence.halvedDomain' for 'halvedInDomain/result.some' is not a 'Quantity' — a per-join tolerance is a kinded quantity, not a bare number
@@ -1553,11 +1566,11 @@ error: the tolerance 'PropertyKindCalculus.Tests.KindIncidence.halvedDomain' for
 
 /-- A tolerance at the wrong kind: a discrepancy in the *input* is not a claim about
 what the port produces. -/
-def aggregationTolWrongKind : Provenance.Contract String String :=
+def aggregationTolWrongKind : Provenance.Contract NodeId KindRef :=
   { halvedInDomainBoundary with
     name := "halvedInDomain (tolerance at the wrong kind)"
-    aggregations := [("halvedInDomain/result.some",
-      .quasiExtensive "PropertyKindCalculus.Tests.KindIncidence.halvedJoinTolAtAlpha")] }
+    aggregations := [(((NodeId.result.field "some").within ``halvedInDomain),
+      .quasiExtensive ``halvedJoinTolAtAlpha)] }
 
 /--
 error: the tolerance 'PropertyKindCalculus.Tests.KindIncidence.halvedJoinTolAtAlpha' for 'halvedInDomain/result.some' is a quantity at kind 'alphaK', which is not the port's kind 'epsilonK' — a join's discrepancy is a quantity of what the port produces
@@ -1565,11 +1578,11 @@ error: the tolerance 'PropertyKindCalculus.Tests.KindIncidence.halvedJoinTolAtAl
 #guard_msgs in #kind_contract aggregationTolWrongKind
 
 /-- A sortal that names no declaration: a count of nothing specified is not a count. -/
-def aggregationSortalDangles : Provenance.Contract String String :=
+def aggregationSortalDangles : Provenance.Contract NodeId KindRef :=
   { halvedInDomainBoundary with
     name := "halvedInDomain (sortal dangles)"
-    aggregations := [("halvedInDomain/result.some",
-      .countKeyed "PropertyKindCalculus.Tests.KindIncidence.noSuchSortal")] }
+    aggregations := [(((NodeId.result.field "some").within ``halvedInDomain),
+      .countKeyed `PropertyKindCalculus.Tests.KindIncidence.noSuchSortal)] }
 
 /--
 error: the aggregation class for 'halvedInDomain/result.some' names 'PropertyKindCalculus.Tests.KindIncidence.noSuchSortal', which is not a declaration
@@ -1602,17 +1615,19 @@ output result : epsilonK
 
 /-- The consuming step's boundary, with the module bound by name: `halved` supplies
 the `alphaK → epsilonK` signature. -/
-def halvedThroughBoundary : Provenance.Contract String String where
+def halvedThroughBoundary : Provenance.Contract NodeId KindRef where
   name := "halvedThrough"
-  members := ["PropertyKindCalculus.Tests.KindIncidence.halvedThrough"]
+  members := [``halvedThrough]
   ports := [
-    ⟨"halvedThrough/f", "alphaK → epsilonK", .param⟩,
-    ⟨"halvedThrough/q", "alphaK", .input⟩,
-    ⟨"halvedThrough/result", "epsilonK", .output⟩]
+    ⟨(NodeId.binder "f").within ``halvedThrough,
+      .sig [.decl ``alphaK, .decl ``epsilonK], .param⟩,
+    ⟨((NodeId.binder "q").within ``halvedThrough), .decl ``alphaK, .input⟩,
+    ⟨(NodeId.result.within ``halvedThrough), .decl ``epsilonK, .output⟩]
   exits := []
-  suppliers := [("halvedThrough/f", "PropertyKindCalculus.Tests.KindIncidence.halved")]
+  suppliers := [(((NodeId.binder "f").within ``halvedThrough), ``halved)]
 
 /--
+
 info: kind contract over 1 steps:
 contract 'halvedThrough': 3 ports, 0 exits
 params: halvedThrough/f
@@ -1622,37 +1637,40 @@ boundary agrees: true
 #guard_msgs in #kind_contract halvedThroughBoundary
 
 /-- A supplier hung on a single-kind port: a value is not a module. -/
-def supplierOnAValue : Provenance.Contract String String :=
+def supplierOnAValue : Provenance.Contract NodeId KindRef :=
   { halvedThroughBoundary with
     name := "halvedThrough (supplier misplaced)"
-    suppliers := [("halvedThrough/q", "PropertyKindCalculus.Tests.KindIncidence.halved")] }
+    suppliers := [(((NodeId.binder "q").within ``halvedThrough), ``halved)] }
 
 /--
-error: the supplier for 'halvedThrough/q' names a port at kind 'alphaK' — only a module-valued port (a signature kind, joined with '→') takes a supplier
+
+error: the supplier for 'halvedThrough/q' names a port at kind 'alphaK' — only a module-valued port (a signature kind) takes a supplier
 -/
 #guard_msgs in #kind_contract supplierOnAValue
 
 /-- A supplier that names no declaration. -/
-def supplierDangles : Provenance.Contract String String :=
+def supplierDangles : Provenance.Contract NodeId KindRef :=
   { halvedThroughBoundary with
     name := "halvedThrough (supplier dangles)"
-    suppliers := [("halvedThrough/f",
-                   "PropertyKindCalculus.Tests.KindIncidence.noSuchSupplier")] }
+    suppliers := [(((NodeId.binder "f").within ``halvedThrough),
+                   `PropertyKindCalculus.Tests.KindIncidence.noSuchSupplier)] }
 
 /--
+
 error: the supplier 'PropertyKindCalculus.Tests.KindIncidence.noSuchSupplier' for 'halvedThrough/f' is not a declaration
 -/
 #guard_msgs in #kind_contract supplierDangles
 
 /-- A supplier that is not a function over quantities — the domain predicate, whose
 codomain is a `Prop`. -/
-def supplierNotAModule : Provenance.Contract String String :=
+def supplierNotAModule : Provenance.Contract NodeId KindRef :=
   { halvedThroughBoundary with
     name := "halvedThrough (supplier not a module)"
-    suppliers := [("halvedThrough/f",
-                   "PropertyKindCalculus.Tests.KindIncidence.halvedDomain")] }
+    suppliers := [(((NodeId.binder "f").within ``halvedThrough),
+                   ``halvedDomain)] }
 
 /--
+
 error: the supplier 'PropertyKindCalculus.Tests.KindIncidence.halvedDomain' for 'halvedThrough/f' states no kind signature — its explicit arguments are not a function over kinded quantities
 -/
 #guard_msgs in #kind_contract supplierNotAModule
@@ -1662,13 +1680,14 @@ kinds. -/
 def epsPass (q : Quantity epsilonK Nat) : Quantity epsilonK Nat := q
 
 /-- The boundary with a re-typing binding declared. -/
-def supplierWrongSignature : Provenance.Contract String String :=
+def supplierWrongSignature : Provenance.Contract NodeId KindRef :=
   { halvedThroughBoundary with
     name := "halvedThrough (supplier at the wrong signature)"
-    suppliers := [("halvedThrough/f",
-                   "PropertyKindCalculus.Tests.KindIncidence.epsPass")] }
+    suppliers := [(((NodeId.binder "f").within ``halvedThrough),
+                   ``epsPass)] }
 
 /--
+
 error: the supplier 'PropertyKindCalculus.Tests.KindIncidence.epsPass' for 'halvedThrough/f' states the signature 'epsilonK → epsilonK', which is not the port's 'alphaK → epsilonK' — binding a module of a different signature re-types the argument
 -/
 #guard_msgs in #kind_contract supplierWrongSignature
@@ -1831,6 +1850,7 @@ def deployedScaled (x : Quantity alphaK Float) (y : Quantity betaK Float) :
   scaledByBand deployedBand x y
 
 /--
+
 info: kind assembly of 2 steps:
 level deployedScaled: walked
 level scaledByBand: walked
@@ -1858,7 +1878,10 @@ well-formed: true
 -/
 #guard_msgs in #kind_assembly [deployedScaled, scaledByBand]
 
-/-- info: kernel-accepted: the kind assembly is well-formed (theorem 'PropertyKindCalculus.Tests.KindIncidence.deployedScaled.kindAssemblyWf') -/
+/--
+
+info: kernel-accepted: the kind assembly is well-formed (theorem 'PropertyKindCalculus.Tests.KindIncidence.deployedScaled.kindAssemblyWf')
+-/
 #guard_msgs in #kind_assembly_decide [deployedScaled, scaledByBand]
 
 /-! ## A configuration constant that is also a member is a wire, not a source
@@ -1906,6 +1929,7 @@ def deployedUsesGeom (x : Quantity thetaK Nat) : Quantity deltaK Nat :=
 -- Not a member: two configuration ports at their addresses, and the angle behind them
 -- nowhere on the boundary.
 /--
+
 info: kind assembly of 2 steps:
 level deployedUsesGeom: walked
 level usesGeom: walked
@@ -1934,6 +1958,7 @@ well-formed: true
 -- goes with them — a reference the graph carries is not a citation — while the one to
 -- `usesGeom` stays.
 /--
+
 info: kind assembly of 3 steps:
 level deployedUsesGeom: walked
 level usesGeom: walked

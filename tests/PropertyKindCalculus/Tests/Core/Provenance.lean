@@ -337,29 +337,34 @@ combinator probes build a two-box assembly by hand — namespaced levels, a `cop
 cross-wire, the callee's fed input demoted to a derived node — and the union checks. -/
 
 -- The procedure edge renders with its name, inputs joined per the interface's count.
-#guard (EdgeFamily.step "resample" 2).render ["kr", "kv"] "kv"
+#guard (EdgeFamily.step `resample none 2).render ["kr", "kv"] "kv"
   == "[step resample] kr · kv → kv"
-#guard (EdgeFamily.step "mint" 0).render [] "kv" == "[step mint] → kv"
-#guard (EdgeFamily.step "resample" 2).operandCount == 2
+#guard (EdgeFamily.step `mint none 0).render [] "kv" == "[step mint] → kv"
+#guard (EdgeFamily.step `resample none 2).operandCount == 2
+-- An instance-resolved edge shows its ordinal from the second instance up.
+#guard (EdgeFamily.step `resample (some 1) 2).render ["kr", "kv"] "kv"
+  == "[step resample] kr · kv → kv"
+#guard (EdgeFamily.step `resample (some 2) 2).render ["kr", "kv"] "kv"
+  == "[step resample#2] kr · kv → kv"
 
 /-- A signature box: the output derived from the input through the step's own
 procedure edge. -/
 def procBox : Provenance String String where
   ports := [⟨"x", "kx", .input⟩, ⟨"result", "ky", .output⟩]
   intros := []
-  occurrences := [⟨.step "procBox" 1, [("x", "kx")], "result", "ky", "procBox"⟩]
+  occurrences := [⟨.step `procBox none 1, [("x", "kx")], "result", "ky", "procBox"⟩]
   exits := []
 
 #guard procBox.wellFormed
 
 -- A procedure edge at the wrong arity is refused by the family's operand count.
 #guard !({ procBox with occurrences :=
-  [⟨.step "procBox" 2, [("x", "kx")], "result", "ky", "procBox"⟩] }
+  [⟨.step `procBox none 2, [("x", "kx")], "result", "ky", "procBox"⟩] }
     : Provenance String String).wellFormed
 
 -- `mapNodes` renames every incidence; `mapKinds` is the monomorphization map.
 #guard (procBox.mapNodes ("A/" ++ ·)).occurrences
-  == [⟨.step "procBox" 1, [("A/x", "kx")], "A/result", "ky", "procBox"⟩]
+  == [⟨.step `procBox none 1, [("A/x", "kx")], "A/result", "ky", "procBox"⟩]
 #guard ((procBox.mapKinds fun k => if k == "kx" then "alphaK" else k).ports.map (·.kind))
   == ["alphaK", "ky"]
 
@@ -370,12 +375,12 @@ def assembled : Provenance String String :=
   let A : Provenance String String :=
     { ports := [⟨"x", "kx", .input⟩, ⟨"result", "ky", .output⟩]
       intros := []
-      occurrences := [⟨.step "B" 1, [("x", "kx")], "result", "ky", "A"⟩]
+      occurrences := [⟨.step `B none 1, [("x", "kx")], "result", "ky", "A"⟩]
       exits := [] }
   let B : Provenance String String :=
     { ports := [⟨"result", "ky", .output⟩]
       intros := [⟨"x", "kx", .derived⟩]  -- the fed input, demoted
-      occurrences := [⟨.step "B" 1, [("x", "kx")], "result", "ky", "B"⟩]
+      occurrences := [⟨.step `B none 1, [("x", "kx")], "result", "ky", "B"⟩]
       exits := [] }
   let wires : Provenance String String :=
     ⟨[], [], [⟨.copy, [("A/x", "kx")], "B/x", "kx", "A"⟩], []⟩

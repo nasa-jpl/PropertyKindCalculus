@@ -153,14 +153,15 @@ def clusterStep (x lo : Quantity kX Nat) (y : Quantity kY Nat) : Quantity kZ Nat
   Quantity.attest "probe re-entry" (x.magnitude + lo.magnitude + y.magnitude)
 
 /-- The probe step's declared boundary. -/
-def clusterBoundary : Provenance.Contract String String where
+def clusterBoundary :
+    Provenance.Contract Provenance.NodeId Provenance.KindRef where
   name := "footprint probe"
-  members := ["PropertyKindCalculus.Tests.Graph.clusterStep"]
+  members := [``clusterStep]
   ports := [
-    ⟨"clusterStep/x", "kX", .input⟩,
-    ⟨"clusterStep/lo", "kX", .input⟩,
-    ⟨"clusterStep/y", "kY", .input⟩,
-    ⟨"clusterStep/result", "kZ", .output⟩]
+    ⟨(Provenance.NodeId.binder "x").within ``clusterStep, .decl ``kX, .input⟩,
+    ⟨(Provenance.NodeId.binder "lo").within ``clusterStep, .decl ``kX, .input⟩,
+    ⟨(Provenance.NodeId.binder "y").within ``clusterStep, .decl ``kY, .input⟩,
+    ⟨Provenance.NodeId.result.within ``clusterStep, .decl ``kZ, .output⟩]
   exits := []
 
 /--

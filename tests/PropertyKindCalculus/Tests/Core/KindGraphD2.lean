@@ -20,6 +20,7 @@ import PropertyKindCalculus.KindGraphD2
 namespace PropertyKindCalculus.Tests.KindGraphD2
 
 open PropertyKindCalculus
+open PropertyKindCalculus.Provenance (NodeId KindRef)
 open PropertyKindCalculus.KindIncidence (Assembly AssemblyLevel citeEdges)
 open PropertyKindCalculus.KindGraphD2
 
@@ -32,28 +33,37 @@ spanning both boxes, an attested source carrying its reason, one exit, and the r
 reading — an unkinded argument `n : Nat` on `A` whose flows reach the attested mint
 and the output. -/
 def probe : Assembly :=
-  let gA : Provenance String String :=
-    { ports := [⟨"A/x", "kx", .input⟩, ⟨"A/y", "ky", .input⟩,
-                ⟨"Probe.Ns.tableC.lo", "kx", .config⟩,
-                ⟨"Probe.One.dup.q", "kx", .config⟩,
-                ⟨"Probe.Two.dup.q", "kx", .config⟩,
-                ⟨"A/result", "kz", .output⟩]
-      intros := [⟨"A/seed", "kx", .attested "vendor sheet"⟩]
-      occurrences := [⟨.step "B" 2, [("A/x", "kx"), ("A/y", "ky")], "A/result", "kz", "A"⟩]
-      exits := ["A/x"] }
-  let gB : Provenance String String :=
-    { ports := [⟨"B/result", "kz", .output⟩]
-      intros := [⟨"B/x", "kx", .derived⟩]
-      occurrences := [⟨.step "B" 1, [("B/x", "kx")], "B/result", "kz", "B"⟩]
+  let ax := (NodeId.binder "x").within `A
+  let ay := (NodeId.binder "y").within `A
+  let ares := NodeId.result.within `A
+  let aseed := (NodeId.letBound "seed").within `A
+  let bx := (NodeId.letBound "x").within `B
+  let bres := NodeId.result.within `B
+  let kx : KindRef := .decl `kx
+  let ky : KindRef := .decl `ky
+  let kz : KindRef := .decl `kz
+  let gA : Provenance NodeId KindRef :=
+    { ports := [⟨ax, kx, .input⟩, ⟨ay, ky, .input⟩,
+                ⟨(NodeId.config `Probe.Ns.tableC).field "lo", kx, .config⟩,
+                ⟨(NodeId.config `Probe.One.dup).field "q", kx, .config⟩,
+                ⟨(NodeId.config `Probe.Two.dup).field "q", kx, .config⟩,
+                ⟨ares, kz, .output⟩]
+      intros := [⟨aseed, kx, .attested "vendor sheet"⟩]
+      occurrences := [⟨.step `B none 2, [(ax, kx), (ay, ky)], ares, kz, "A"⟩]
+      exits := [ax] }
+  let gB : Provenance NodeId KindRef :=
+    { ports := [⟨bres, kz, .output⟩]
+      intros := [⟨bx, kx, .derived⟩]
+      occurrences := [⟨.step `B none 1, [(bx, kx)], bres, kz, "B"⟩]
       exits := [] }
-  let wires : Provenance String String :=
-    ⟨[], [], [⟨.copy, [("A/x", "kx")], "B/x", "kx", "A"⟩,
-              ⟨.product, [("A/y", "ky"), ("B/x", "kx")], "B/result", "kz", "A"⟩], []⟩
-  { levels := #[⟨`A, "A", true, gA, "src/a.lean", [⟨"A/n", "Nat", .input⟩],
-                 [("A/n", "A/seed"), ("A/n", "A/result")]⟩,
-                ⟨`B, "B", false, gB, "", [], []⟩]
+  let wires : Provenance NodeId KindRef :=
+    ⟨[], [], [⟨.copy, [(ax, kx)], bx, kx, "A"⟩,
+              ⟨.product, [(ay, ky), (bx, kx)], bres, kz, "A"⟩], []⟩
+  { levels := #[⟨`A, "A", .inst `A 1, true, gA, "src/a.lean", [⟨"A/n", "Nat", .input⟩],
+                 [("A/n", aseed), ("A/n", ares)]⟩,
+                ⟨`B, "B", .inst `B 1, false, gB, "", [], []⟩]
     graph := (gA.union gB).union wires
-    cites := #[("A", "B")] }
+    cites := #[(`A, `B)] }
 
 /-- The emitted document. -/
 def d2 : String := emit probe (title := "probe assembly")
@@ -153,12 +163,12 @@ checked object does not have. Both endpoints resolve to levels first. -/
 /-- An assembly whose citations name a dissected member and a member that is not
 there. -/
 def instanced : Assembly :=
-  let g : Provenance String String := ⟨[], [], [], []⟩
-  { levels := #[⟨`A, "A", true, g, "", [], []⟩,
-                ⟨`B, "B#1", false, g, "", [], []⟩,
-                ⟨`B, "B#2", false, g, "", [], []⟩]
+  let g : Provenance NodeId KindRef := ⟨[], [], [], []⟩
+  { levels := #[⟨`A, "A", .inst `A 1, true, g, "", [], []⟩,
+                ⟨`B, "B#1", .inst `B 1, false, g, "", [], []⟩,
+                ⟨`B, "B#2", .inst `B 2, false, g, "", [], []⟩]
     graph := g
-    cites := #[("A", "B"), ("A", "notAMember")] }
+    cites := #[(`A, `B), (`A, `notAMember)] }
 
 #guard citeEdges instanced == #[("A", "B#1"), ("A", "B#2")]
 #guard !hasSub (emit instanced) "\"notAMember\""

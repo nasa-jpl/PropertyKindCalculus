@@ -22,6 +22,7 @@ import PropertyKindCalculus.KindIncidence
 namespace PropertyKindCalculus.Tests.KindRelation
 
 open PropertyKindCalculus
+open PropertyKindCalculus.Provenance (NodeId KindRef)
 
 /-- A probe kind — the forward's argument. -/
 def aK : KindOfProperty := { id := "relation probe a", scale := .ratio }
@@ -47,25 +48,25 @@ theorem probeBounded (x : Quantity aK Int) :
   cases x; simp [probeFwd, probeInv]; omega
 
 /-- The forward's declared boundary. -/
-def fwdBoundary : Provenance.Contract String String where
+def fwdBoundary : Provenance.Contract NodeId KindRef where
   name := "relation probe forward"
-  members := ["PropertyKindCalculus.Tests.KindRelation.probeFwd"]
-  ports := [⟨"probeFwd/x", "aK", .input⟩, ⟨"probeFwd/result", "bK", .output⟩]
+  members := [``probeFwd]
+  ports := [⟨((NodeId.binder "x").within ``probeFwd), .decl ``aK, .input⟩, ⟨(NodeId.result.within ``probeFwd), .decl ``bK, .output⟩]
   exits := []
 
 /-- The retrieval's declared boundary. -/
-def invBoundary : Provenance.Contract String String where
+def invBoundary : Provenance.Contract NodeId KindRef where
   name := "relation probe retrieval"
-  members := ["PropertyKindCalculus.Tests.KindRelation.probeInv"]
-  ports := [⟨"probeInv/y", "bK", .input⟩, ⟨"probeInv/result", "aK", .output⟩]
+  members := [``probeInv]
+  ports := [⟨((NodeId.binder "y").within ``probeInv), .decl ``bK, .input⟩, ⟨(NodeId.result.within ``probeInv), .decl ``aK, .output⟩]
   exits := []
 
 /-- The edge: the retrieval inverts the forward, and here is the proof. -/
 def retrievalInvertsForward : Provenance.Relation where
-  left := "PropertyKindCalculus.Tests.KindRelation.invBoundary"
-  right := "PropertyKindCalculus.Tests.KindRelation.fwdBoundary"
+  left := ``invBoundary
+  right := ``fwdBoundary
   kind := .inverts
-  witness := "PropertyKindCalculus.Tests.KindRelation.probeInv_probeFwd"
+  witness := ``probeInv_probeFwd
   claim := "the retrieval recovers the argument the forward consumed"
 
 /--
@@ -82,10 +83,10 @@ axioms: propext
 
 /-- A definition asserts nothing, so it cannot carry a relation. -/
 def witnessIsADefinition : Provenance.Relation where
-  left := "PropertyKindCalculus.Tests.KindRelation.invBoundary"
-  right := "PropertyKindCalculus.Tests.KindRelation.fwdBoundary"
+  left := ``invBoundary
+  right := ``fwdBoundary
   kind := .inverts
-  witness := "PropertyKindCalculus.Tests.KindRelation.probeInv"
+  witness := ``probeInv
 
 /--
 error: the witness 'PropertyKindCalculus.Tests.KindRelation.probeInv' is not a theorem — a relation between two boundaries is carried by a proof, and a definition asserts nothing
@@ -94,10 +95,10 @@ error: the witness 'PropertyKindCalculus.Tests.KindRelation.probeInv' is not a t
 
 /-- A theorem that names neither boundary is a true statement about something else. -/
 def witnessIsAStranger : Provenance.Relation where
-  left := "PropertyKindCalculus.Tests.KindRelation.invBoundary"
-  right := "PropertyKindCalculus.Tests.KindRelation.fwdBoundary"
+  left := ``invBoundary
+  right := ``fwdBoundary
   kind := .equals
-  witness := "PropertyKindCalculus.Tests.KindRelation.probeStranger"
+  witness := ``probeStranger
 
 /--
 error: 'PropertyKindCalculus.Tests.KindRelation.probeStranger' names no member of 'relation probe retrieval' — a theorem that does not mention a boundary is not about it
@@ -106,10 +107,10 @@ error: 'PropertyKindCalculus.Tests.KindRelation.probeStranger' names no member o
 
 /-- The claimed kind names a shape, and the conclusion has to have it. -/
 def boundClaimedAsEquality : Provenance.Relation where
-  left := "PropertyKindCalculus.Tests.KindRelation.invBoundary"
-  right := "PropertyKindCalculus.Tests.KindRelation.fwdBoundary"
+  left := ``invBoundary
+  right := ``fwdBoundary
   kind := .equals
-  witness := "PropertyKindCalculus.Tests.KindRelation.probeBounded"
+  witness := ``probeBounded
 
 /--
 error: 'PropertyKindCalculus.Tests.KindRelation.probeBounded' is claimed to state an equality, but its conclusion is headed by 'LE.le', not 'Eq'
@@ -118,10 +119,10 @@ error: 'PropertyKindCalculus.Tests.KindRelation.probeBounded' is claimed to stat
 
 /-- The same witness, claimed as what it is. -/
 def boundClaimedAsBound : Provenance.Relation where
-  left := "PropertyKindCalculus.Tests.KindRelation.invBoundary"
-  right := "PropertyKindCalculus.Tests.KindRelation.fwdBoundary"
+  left := ``invBoundary
+  right := ``fwdBoundary
   kind := .boundedBy
-  witness := "PropertyKindCalculus.Tests.KindRelation.probeBounded"
+  witness := ``probeBounded
   claim := "the round trip moves the carrier by at most 2"
 
 /--
@@ -151,23 +152,23 @@ theorem probeInvClamped_probeInv (y : Quantity bK Int) (h : probeDomain y) :
   | mk m => simp [probeInvClamped, probeInv, probeDomain] at h ⊢; omega
 
 /-- The clamped retrieval's declared boundary. -/
-def clampedBoundary : Provenance.Contract String String where
+def clampedBoundary : Provenance.Contract NodeId KindRef where
   name := "relation probe clamped retrieval"
-  members := ["PropertyKindCalculus.Tests.KindRelation.probeInvClamped"]
-  ports := [⟨"probeInvClamped/y", "bK", .input⟩,
-            ⟨"probeInvClamped/result", "aK", .output⟩]
+  members := [``probeInvClamped]
+  ports := [⟨((NodeId.binder "y").within ``probeInvClamped), .decl ``bK, .input⟩,
+            ⟨(NodeId.result.within ``probeInvClamped), .decl ``aK, .output⟩]
   exits := []
 
 /-- The edge: the clamped retrieval refines the retrieval, under the named domain — the
 side condition is listed at the edge, and the check demands the statement mention it. -/
 def clampedRefinesRetrieval : Provenance.Relation where
-  left := "PropertyKindCalculus.Tests.KindRelation.clampedBoundary"
-  right := "PropertyKindCalculus.Tests.KindRelation.invBoundary"
+  left := ``clampedBoundary
+  right := ``invBoundary
   kind := .refines
-  witness := "PropertyKindCalculus.Tests.KindRelation.probeInvClamped_probeInv"
+  witness := ``probeInvClamped_probeInv
   claim := "the clamped retrieval answers as the retrieval does wherever the input \
     magnitude is at least one"
-  hypotheses := ["PropertyKindCalculus.Tests.KindRelation.probeDomain"]
+  hypotheses := [``probeDomain]
 
 /--
 info: kind relation: 'relation probe clamped retrieval' refines 'relation probe retrieval'
@@ -183,10 +184,10 @@ axioms: propext, Quot.sound
 /-- The same claim with a witness that binds no hypothesis: a refinement with nothing
 stated is an equality claim, and is refused as one. -/
 def refinesWithoutHypothesis : Provenance.Relation where
-  left := "PropertyKindCalculus.Tests.KindRelation.clampedBoundary"
-  right := "PropertyKindCalculus.Tests.KindRelation.invBoundary"
+  left := ``clampedBoundary
+  right := ``invBoundary
   kind := .refines
-  witness := "PropertyKindCalculus.Tests.KindRelation.probeInv_probeFwd"
+  witness := ``probeInv_probeFwd
 
 /--
 error: 'PropertyKindCalculus.Tests.KindRelation.probeInv_probeFwd' is claimed to hold under a stated hypothesis, but its statement binds none — a refinement with no hypothesis is an equality claim
@@ -204,10 +205,10 @@ theorem probeSidesApart (x : Quantity aK Int) (y : Quantity bK Int) :
 /-- Claimed as an inversion, the split statement is refused: mentioning both boundaries
 is not the same as composing them. -/
 def invertsWithoutRoundTrip : Provenance.Relation where
-  left := "PropertyKindCalculus.Tests.KindRelation.invBoundary"
-  right := "PropertyKindCalculus.Tests.KindRelation.fwdBoundary"
+  left := ``invBoundary
+  right := ``fwdBoundary
   kind := .inverts
-  witness := "PropertyKindCalculus.Tests.KindRelation.probeSidesApart"
+  witness := ``probeSidesApart
 
 /--
 error: 'PropertyKindCalculus.Tests.KindRelation.probeSidesApart' is claimed to state an inversion, but neither side of its equality composes a member of 'relation probe retrieval' with a member of 'relation probe forward' — the round trip is not in the statement
@@ -225,12 +226,12 @@ def probeTolWrongKind : Quantity bK Int := ⟨2⟩
 /-- The bound edge, its tolerance named: the declaration is checked to be a `Quantity`
 at the kind of an output port of the left boundary. -/
 def boundWithTolerance : Provenance.Relation where
-  left := "PropertyKindCalculus.Tests.KindRelation.invBoundary"
-  right := "PropertyKindCalculus.Tests.KindRelation.fwdBoundary"
+  left := ``invBoundary
+  right := ``fwdBoundary
   kind := .boundedBy
-  witness := "PropertyKindCalculus.Tests.KindRelation.probeBounded"
+  witness := ``probeBounded
   claim := "the round trip moves the carrier by at most the declared tolerance"
-  tolerance := "PropertyKindCalculus.Tests.KindRelation.probeTol"
+  tolerance := ``probeTol
 
 /--
 info: kind relation: 'relation probe retrieval' bounded by 'relation probe forward'
@@ -246,11 +247,11 @@ axioms: propext, Quot.sound
 /-- The same edge with a tolerance at the wrong kind: `bK` is what the retrieval
 consumes, not what it produces, so no output port is governed by it. -/
 def toleranceAtTheWrongKind : Provenance.Relation where
-  left := "PropertyKindCalculus.Tests.KindRelation.invBoundary"
-  right := "PropertyKindCalculus.Tests.KindRelation.fwdBoundary"
+  left := ``invBoundary
+  right := ``fwdBoundary
   kind := .boundedBy
-  witness := "PropertyKindCalculus.Tests.KindRelation.probeBounded"
-  tolerance := "PropertyKindCalculus.Tests.KindRelation.probeTolWrongKind"
+  witness := ``probeBounded
+  tolerance := ``probeTolWrongKind
 
 /--
 error: the tolerance 'PropertyKindCalculus.Tests.KindRelation.probeTolWrongKind' is a quantity at kind 'bK', which is not the kind of any output port of 'relation probe retrieval' — a bound governs what the boundary produces
@@ -259,11 +260,11 @@ error: the tolerance 'PropertyKindCalculus.Tests.KindRelation.probeTolWrongKind'
 
 /-- The same edge with a tolerance that is not a quantity at all. -/
 def toleranceIsNotAQuantity : Provenance.Relation where
-  left := "PropertyKindCalculus.Tests.KindRelation.invBoundary"
-  right := "PropertyKindCalculus.Tests.KindRelation.fwdBoundary"
+  left := ``invBoundary
+  right := ``fwdBoundary
   kind := .boundedBy
-  witness := "PropertyKindCalculus.Tests.KindRelation.probeBounded"
-  tolerance := "PropertyKindCalculus.Tests.KindRelation.probeDomain"
+  witness := ``probeBounded
+  tolerance := ``probeDomain
 
 /--
 error: the tolerance 'PropertyKindCalculus.Tests.KindRelation.probeDomain' is not a 'Quantity' — a tolerance is a kinded quantity, not a bare number
@@ -276,11 +277,11 @@ error: the tolerance 'PropertyKindCalculus.Tests.KindRelation.probeDomain' is no
 mentions: a side condition the statement does not state is not one the claim holds
 under. -/
 def hypothesisNotInStatement : Provenance.Relation where
-  left := "PropertyKindCalculus.Tests.KindRelation.invBoundary"
-  right := "PropertyKindCalculus.Tests.KindRelation.fwdBoundary"
+  left := ``invBoundary
+  right := ``fwdBoundary
   kind := .inverts
-  witness := "PropertyKindCalculus.Tests.KindRelation.probeInv_probeFwd"
-  hypotheses := ["PropertyKindCalculus.Tests.KindRelation.probeTol"]
+  witness := ``probeInv_probeFwd
+  hypotheses := [``probeTol]
 
 /--
 error: 'PropertyKindCalculus.Tests.KindRelation.probeInv_probeFwd' does not mention the hypothesis 'PropertyKindCalculus.Tests.KindRelation.probeTol' — a side condition the statement does not state is not one the claim holds under
@@ -292,12 +293,12 @@ error: 'PropertyKindCalculus.Tests.KindRelation.probeInv_probeFwd' does not ment
 /-- The inversion extended to a second rung, restated by name: the evidence is checked
 to be a sorry-free theorem. -/
 def licensedInversion : Provenance.Relation where
-  left := "PropertyKindCalculus.Tests.KindRelation.invBoundary"
-  right := "PropertyKindCalculus.Tests.KindRelation.fwdBoundary"
+  left := ``invBoundary
+  right := ``fwdBoundary
   kind := .inverts
-  witness := "PropertyKindCalculus.Tests.KindRelation.probeInv_probeFwd"
+  witness := ``probeInv_probeFwd
   claim := "the retrieval recovers the argument the forward consumed"
-  licenses := [⟨"Int", .restated "PropertyKindCalculus.Tests.KindRelation.probeInv_probeFwd"⟩]
+  licenses := [⟨"Int", .restated ``probeInv_probeFwd⟩]
 
 /--
 info: kind relation: 'relation probe retrieval' inverts 'relation probe forward'
@@ -312,11 +313,11 @@ axioms: propext
 
 /-- A rung claimed with no repair and no restatement: transfer is not assumed. -/
 def licenseClaimsWithoutEvidence : Provenance.Relation where
-  left := "PropertyKindCalculus.Tests.KindRelation.invBoundary"
-  right := "PropertyKindCalculus.Tests.KindRelation.fwdBoundary"
+  left := ``invBoundary
+  right := ``fwdBoundary
   kind := .inverts
-  witness := "PropertyKindCalculus.Tests.KindRelation.probeInv_probeFwd"
-  licenses := [⟨"FP32", .exact ""⟩]
+  witness := ``probeInv_probeFwd
+  licenses := [⟨"FP32", .exact .anonymous⟩]
 
 /--
 error: the license at rung 'FP32' claims the relation with no repair and no restatement — name the repair theorem that carries it across, or the witness that restates it at that rung
@@ -325,11 +326,11 @@ error: the license at rung 'FP32' claims the relation with no repair and no rest
 
 /-- A rung resting on a definition: a transfer is carried by a proof. -/
 def licenseRestsOnADefinition : Provenance.Relation where
-  left := "PropertyKindCalculus.Tests.KindRelation.invBoundary"
-  right := "PropertyKindCalculus.Tests.KindRelation.fwdBoundary"
+  left := ``invBoundary
+  right := ``fwdBoundary
   kind := .inverts
-  witness := "PropertyKindCalculus.Tests.KindRelation.probeInv_probeFwd"
-  licenses := [⟨"FP32", .nonneg "PropertyKindCalculus.Tests.KindRelation.probeInv"⟩]
+  witness := ``probeInv_probeFwd
+  licenses := [⟨"FP32", .nonneg ``probeInv⟩]
 
 /--
 error: the license at rung 'FP32' names 'PropertyKindCalculus.Tests.KindRelation.probeInv', which is not a theorem — a transfer is carried by a proof

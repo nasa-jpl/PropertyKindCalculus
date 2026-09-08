@@ -63,15 +63,13 @@ example : ((NodeId.letBound "flag").within `M.step ==
 #guard (KindRef.tuple [.decl `aK, .decl `bK]).render == "aK, bK"
 #guard KindRef.unkinded.render == "_"
 
--- level/root.path, with the ordinal shown or collapsed by the caller's level naming
+-- level/root.path, the ordinal collapsed at 1 and shown from the second instance up
 #guard ((NodeId.binder "span").field "lo" |>.field "q" |>.within `M.step 2).render
-    (Level.render true) == "step#2/span.lo.q"
-#guard ((NodeId.binder "span").field "lo" |>.within `M.step).render
-    (Level.render false) == "step/span.lo"
+    == "step#2/span.lo.q"
+#guard ((NodeId.binder "span").field "lo" |>.within `M.step).render == "step/span.lo"
 #guard ((NodeId.config `Cfg.geom).field "angle" |>.shared `M.step).render
-    (Level.render true) == "step/Cfg.geom.angle"
-#guard (NodeId.resultAt 1 |>.within `M.retrieve).render (Level.render false)
-    == "retrieve/result.1"
+    == "step/Cfg.geom.angle"
+#guard (NodeId.resultAt 1 |>.within `M.retrieve).render == "retrieve/result.1"
 
 #guard lastComponent `A.b.c == "c"
 #guard lastComponent (.mkSimple "solo") == "solo"

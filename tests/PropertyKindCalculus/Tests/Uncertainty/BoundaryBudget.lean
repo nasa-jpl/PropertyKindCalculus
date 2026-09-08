@@ -18,13 +18,15 @@ import PropertyKindCalculus.Tests.Core.KindIncidence
 namespace PropertyKindCalculus.Tests.BoundaryBudget
 
 open PropertyKindCalculus
+open PropertyKindCalculus.Provenance (NodeId KindRef)
 open PropertyKindCalculus.Tests.KindIncidence (halvedInDomainBoundary)
 
 /-- The guarded chain's budget: one term for the one source that influences the
 conditional output through the occurrences. -/
 def halvedBudget : Uncertainty.PortBudget :=
-  { port := "halvedInDomain/result.some", kind := "epsilonK",
-    terms := [("halvedInDomain/q", 0.5)] }
+  { port := (NodeId.result.field "some").within ``KindIncidence.halvedInDomain
+    kind := .decl ``KindIncidence.epsilonK
+    terms := [((NodeId.binder "q").within ``KindIncidence.halvedInDomain, 0.5)] }
 
 /--
 info: budget for 'halvedInDomain/result.some' : epsilonK on 'halvedInDomain': 1 term(s) over 1 influencing source(s)
@@ -47,7 +49,8 @@ info: budget for 'halvedInDomain/result.some' : epsilonK on 'halvedInDomain': 0 
 
 /-- A term that influences nothing: not a node of the graph at all. -/
 def budgetTermUninfluential : Uncertainty.PortBudget :=
-  { halvedBudget with terms := [("halvedInDomain/nothing", 0.5)] }
+  { halvedBudget with
+    terms := [((NodeId.binder "nothing").within ``KindIncidence.halvedInDomain, 0.5)] }
 
 /--
 error: the budget term 'halvedInDomain/nothing' does not influence 'halvedInDomain/result.some' in 'halvedInDomain' — a term of the sum must be a source among the port's ancestors
@@ -56,9 +59,12 @@ error: the budget term 'halvedInDomain/nothing' does not influence 'halvedInDoma
 
 /-- A budget hung on an input: a source carries no combined uncertainty of the module. -/
 def budgetOnAnInput : Uncertainty.PortBudget :=
-  { halvedBudget with port := "halvedInDomain/lo", kind := "alphaK" }
+  { halvedBudget with
+    port := (NodeId.binder "lo").within ``KindIncidence.halvedInDomain
+    kind := .decl ``KindEdges.alphaK }
 
 /--
+
 error: the budget 'PropertyKindCalculus.Tests.BoundaryBudget.budgetOnAnInput' names a port with role 'input' — a budget attaches to what the boundary produces
 -/
 #guard_msgs in #kind_budget budgetOnAnInput halvedInDomainBoundary
@@ -66,18 +72,21 @@ error: the budget 'PropertyKindCalculus.Tests.BoundaryBudget.budgetOnAnInput' na
 /-- A budget stated at the wrong kind: the contributions would not be quantities of
 what the port produces. -/
 def budgetAtTheWrongKind : Uncertainty.PortBudget :=
-  { halvedBudget with kind := "alphaK" }
+  { halvedBudget with kind := .decl ``KindEdges.alphaK }
 
 /--
+
 error: the budget for 'halvedInDomain/result.some' is stated at kind 'alphaK', but the port produces 'epsilonK' — contributions and combined uncertainty are quantities at the port's own kind
 -/
 #guard_msgs in #kind_budget budgetAtTheWrongKind halvedInDomainBoundary
 
 /-- A budget naming no port of the boundary. -/
 def budgetOnNoPort : Uncertainty.PortBudget :=
-  { halvedBudget with port := "halvedInDomain/zzz" }
+  { halvedBudget with
+    port := (NodeId.binder "zzz").within ``KindIncidence.halvedInDomain }
 
 /--
+
 error: the budget 'PropertyKindCalculus.Tests.BoundaryBudget.budgetOnNoPort' names 'halvedInDomain/zzz', which is no port of 'halvedInDomain'
 -/
 #guard_msgs in #kind_budget budgetOnNoPort halvedInDomainBoundary

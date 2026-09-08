@@ -1,118 +1,47 @@
 /-
-# What a port name refers to — the resolution scopes of the `String String` vocabulary
+# What a port name refers to — the reference vocabulary, held to its scopes
 
 Every command that reads or compares a provenance graph instantiates `Provenance ν κ` and
-`Provenance.Contract ν κ` at `String String` (`contractValueOf` demands that instantiation;
-any other is invisible to the audits). This file states what those strings *denote* — the
-scope each class of name resolves in — and pins, one smallest-possible declaration per
-failure, the places where the flattening loses the referent. The pins hold the naming
-regime's actual semantics in the build: any change to how the harvest mints names, or to
-how the audits compare them, answers to every probe below.
+`Provenance.Contract ν κ` at `NodeId`/`KindRef` (`contractValueOf` demands that
+instantiation; any other is invisible to the audits). A reference says which *class* of
+thing it names and, for the environment-backed classes, carries the `Lean.Name` the
+environment resolves — the vocabulary and its resolution scopes are stated at the types
+(`Provenance.lean`, "The reference vocabulary"). This file pins that regime's semantics
+in the build, one smallest-possible declaration per rule: any change to how the harvest
+mints references, refuses a name, or matches a census answers to every probe below.
 
-## The node grammar (`ν`)
+Three properties carry the file.
 
-A node identifier is minted by the harvest, never chosen freely. Its grammar, with the
-minting site for each production:
+* **Distinct references coexist however alike they render.** A binder named `result` is a
+  `NodeRef.binder`, not the structural result; a kind-bearing `let` reusing an input
+  binder's name is a `letBound`, not that binder. Both render identically and neither
+  collides — the rendering is display, the reference is identity.
 
-```
-node  ::= level "/" local          (assembled; bare `local` in a single-step graph)
-level ::= shortMemberName ["#" n]  (`stepNameOf`: the declaration's last component —
-                                    an address, deliberately not the pretty printer —
-                                    with "#n" numbering the instances when one member
-                                    is called more than once; last-component collisions
-                                    between members are refused at assembly)
-local ::= binderName path          (an explicit binder — `stepGraphOf` telescopes the
-                                    declaration's *type*, never the value's lambdas)
-        | "result" ["." i] path    (the result, or component i of a product result)
-        | fullConstantName path    (a configuration constant the body reads — the full
-                                    environment name, so identity is reader-independent)
-        | letName                  (a kind-bearing `let` of the body — the bare user
-                                    name, at any nesting depth)
-        | "_" n                    (`WalkSt.nextFresh`: a synthesized interior node,
-                                    numbered in traversal order — graph-internal)
-path  ::= ("." fieldName)*         (carrier field paths through container structures)
-```
+* **A name that cannot serve as a reference is refused where the signature or body is the
+  fix.** An arrow-form binder with only a hygiene name, two kind-bearing binders or two
+  kind binders sharing one name, a second kind-bearing binding at a name the flat body
+  namespace already holds — `let`s, do-binds, and matcher binders, across match arms —
+  and an erased inline compound the graph cannot name: each is refused with the repair in
+  the message, instead of minting a graph whose ill-formedness names no cause or whose
+  wiring silently merges two things one name denoted.
 
-## The kind grammar (`κ`)
+* **A census matches by referent, never by rendering.** `#kind_diagnostic_coverage`
+  compares a port's `KindRef.decl` against the marked kind's environment name with
+  `Name` equality, so two marked kinds sharing a last component are two referents: the
+  port carrying one of them exports that one, and the other reads `SIDECHANNELED` — a
+  rendering cannot credit a mark it does not name.
 
-```
-kind ::= prettyPrintedConstant     (`renderKindArg`: `Meta.ppExpr`, relative to the
-                                    elaborating context's namespace and `open`s)
-       | binderName                (a parametric kind — the type-telescope binder name)
-       | kind (" → " kind)+       (`signatureKind?`: a module-valued port)
-       | kind (", " kind)+        (a multi-kind carrier)
-```
-
-## The scope table
-
-Where each name class resolves — the rule every reader of these strings depends on:
-
-| name class      | resolves in                                                       |
-|-----------------|-------------------------------------------------------------------|
-| binder node     | the member's signature telescope, explicit binders                |
-| parametric kind | the member's signature telescope, kind-typed binders              |
-| let node        | the body's kind-bearing `let`s — one flat namespace, no path      |
-| result node     | structural: the result position, or a product-component index     |
-| config node     | the environment, by full constant name                            |
-| level           | the environment, by last component                                |
-
-Two asymmetries follow from the flattening. First, the string does not say which class it
-is in, so no reader can check that a name resolves in its scope — a config node's full
-constant name is indistinguishable from a binder plus a long field path, and a kind that is
-a binder name is indistinguishable from a kind that is a constant. Second, of the
-`Contract` fields that reference declarations, the port *kind* is the only one never
-resolved against the environment: `deciders`, `aggregations`, `suppliers`, and the relation
-clauses all pass through `env.find?`, while a kind meets only another string —
-byte-for-byte in `Contract.standsFor` (which is why `#kind_contracts` replays each contract
-under its defining module's namespace), and by the `endsWith "." ++ ·` suffix tolerance
-in every census that must bridge a short-rendered port kind to a full environment name.
-
-## The probes
-
-Grouped by scope. Each is the smallest declaration exhibiting one loss, with the
-misbehavior pinned exactly as the commands report it.
-
-* **Signature scope.** `resultShadow` — a binder legally named `result` collides with the
-  reserved result node: two ports, one identity, and the graph is ill-formed with no cause
-  named. `arrowForm` — an arrow-form type has no source binder name, so the port's
-  identity is the toolchain's internal hygiene name: unaddressable by any author.
-  `shadowedBinders` — Lean permits two explicit binders with one user name; both ports
-  read `x`, and the graph is ill-formed with no cause named. `generic` and `twoParams` —
-  a parametric kind renders as its binder name; under shadowing the earlier parameter
-  renders with a hygiene dagger (`k✝`), a spelling no declared contract can write.
-
-* **Body scope: exits.** An exit names the node whose value leaves the calculus at a
-  carrier projection, and the victim is named by the body walk (`refName` over the walk's
-  binder context). `erasesBinder` and `erasesLet` behave: the victim is a signature binder
-  or a `let` the author named. `erasesInline` — a projection applied to an inline compound
-  records the *instance function's* name (`instHAdd.hAdd`) as the exit: a garbage
-  identity that is not a node of the graph, while the value itself sits on a synthesized
-  `_1`. `erasesTwoInline` — exits deduplicate by name, so two distinct inline erasures
-  collapse onto one nonexistent node.
-
-* **Body scope: the let namespace is flat, and nesting is not identity.** `walk`'s
-  `.letE` case names the node by bare user name at any depth; the binder context resolves
-  *references* and contributes nothing to identity. `nestedValue` pins that this is
-  correct for distinct names: `inner` and `m` coexist however deeply nested, so a nesting
-  path adds nothing where names are unique. The failures are all *reuse*: `shadowLets` —
-  sequential shadowing corrupts the wiring itself (`⟨m, m⟩ ⇒ m` merges the second
-  binding's operands with its result); `matchArms` — one `let t` per match arm collapses
-  the two arms' values onto one node and their two exits onto one. A nesting path would
-  repair neither: a path changes under hoisting (a semantic no-op would re-address every
-  contract naming the exit), is identical for same-depth shadowing, and is
-  matcher-generated — hence unwritable — through match arms. What a faithful flat reading
-  requires is name *uniqueness* among the body's kind-bearing `let`s; these pins exhibit
-  what its absence costs.
-
-* **Census matching.** `#kind_diagnostic_coverage` matches a mark's full environment name
-  against a port's short-rendered kind by suffix, so two marked kinds sharing a short name
-  both read `[exported]` from a single port — one port discharges two distinct
-  diagnostics, and the gate reads clean.
+The flat body namespace is deliberate: a nesting path is rejected as identity because it
+is unstable under hoisting (a semantic no-op would re-address every contract naming the
+node), identical for same-depth shadowing, and matcher-generated — hence unwritable —
+through match arms. `nestedValue` pins the coexistence that makes the flat reading
+sufficient; the refusals pin what uniqueness costs to violate, which is a rename.
 -/
 import PropertyKindCalculus.ContractCoverage
 
 namespace PropertyKindCalculus.Tests.PortNameScopes
 open PropertyKindCalculus
+open PropertyKindCalculus.Provenance (NodeId KindRef)
 
 def aK : KindOfProperty := { id := "port-name-scope probe a", scale := .ratio }
 
@@ -120,8 +49,9 @@ def bK : KindOfProperty := { id := "port-name-scope probe b", scale := .ratio }
 
 /-! ## Signature scope -/
 
-/-- A binder legally named `result` takes the reserved result node's identity: one name,
-two interface positions, and the ill-formedness names no cause. -/
+/-- A binder legally named `result` is its own reference: `NodeRef.binder "result"` and
+the structural result node render alike and are different nodes, so the wire from one to
+the other is an ordinary identity wire and the graph is well formed. -/
 def resultShadow (result : Quantity aK Float) : Quantity aK Float := result
 
 /--
@@ -129,40 +59,32 @@ info: kind graph of 'PropertyKindCalculus.Tests.PortNameScopes.resultShadow':
 input result : aK
 output result : aK
 aK → aK ⟨result⟩ ⇒ result
-well-formed: false
+well-formed: true
 -/
 #guard_msgs in #kind_graph resultShadow
 
-/-- An arrow-form type names no binder, so the port's identity is the internal hygiene
-name the elaborator minted for the arrow's domain — unaddressable by any author, and
-owned by the toolchain rather than the source. -/
+/-- An arrow-form type names no binder, so the port would carry a hygiene name nobody
+can write: refused, and naming the binder is the fix. -/
 def arrowForm : Quantity aK Float → Quantity aK Float := fun x => x
 
 /--
-info: kind ports of 'PropertyKindCalculus.Tests.PortNameScopes.arrowForm':
-input a._@._internal._hyg.0 : aK
-output result : aK
+error: a kind-bearing binder of 'PropertyKindCalculus.Tests.PortNameScopes.arrowForm' has no accessible name — name it, so the port it states is a reference someone can write
 -/
 #guard_msgs in #kind_ports arrowForm
 
 set_option linter.unusedVariables false in
-/-- Two explicit binders with one user name — legal Lean — mint two ports with one
-identity. -/
+/-- Two explicit binders with one user name — legal Lean — would mint one reference for
+two ports: refused. -/
 def shadowedBinders (x : Quantity aK Float) (x : Quantity bK Float) : Quantity bK Float :=
   x
 
 /--
-info: kind graph of 'PropertyKindCalculus.Tests.PortNameScopes.shadowedBinders':
-input x : aK
-input x : bK
-output result : bK
-bK → bK ⟨x⟩ ⇒ result
-well-formed: false
+error: two kind-bearing binders of 'PropertyKindCalculus.Tests.PortNameScopes.shadowedBinders' are named 'x' — one reference cannot name both; rename one
 -/
 #guard_msgs in #kind_graph shadowedBinders
 
-/-- The parametric baseline: a kind generic in the signature renders as its type-telescope
-binder name. -/
+/-- The parametric baseline: a kind generic in the signature is a `KindRef.param`,
+rendered as its binder name. -/
 def generic {k : KindOfProperty} (q : Quantity k Float) : Quantity k Float := q
 
 /--
@@ -173,23 +95,20 @@ output result : k
 #guard_msgs in #kind_ports generic
 
 set_option linter.unusedVariables false in
-/-- Shadowed kind parameters: the earlier one renders with a hygiene dagger — a kind no
-declared contract can spell. -/
+/-- Shadowed kind parameters: a `KindRef.param` names its binder, and two kind binders
+with one name would make one reference two kinds — refused. -/
 def twoParams {k : KindOfProperty} (p : Quantity k Float)
     {k : KindOfProperty} (q : Quantity k Float) : Quantity k Float := q
 
 /--
-info: kind ports of 'PropertyKindCalculus.Tests.PortNameScopes.twoParams':
-input p : k✝
-input q : k
-output result : k
+error: two kind binders of 'PropertyKindCalculus.Tests.PortNameScopes.twoParams' are named 'k' — a kind stated by that name would not say which; rename one
 -/
 #guard_msgs in #kind_ports twoParams
 
 /-! ## Body scope: exit victims -/
 
 /-- The behaving baseline: the erased value is a signature binder, and the exit carries
-its name. -/
+its reference. -/
 def erasesBinder (x : Quantity aK Float) : Float := x.magnitude
 
 /--
@@ -202,7 +121,7 @@ well-formed: true
 #guard_msgs in #kind_graph erasesBinder
 
 /-- The behaving body case: the erased value is a `let` the author named, and the exit
-carries that name. -/
+carries that `letBound` reference. -/
 def erasesLet (x : Quantity aK Float) : Float :=
   let m := x + x
   m.magnitude
@@ -218,42 +137,16 @@ well-formed: true
 -/
 #guard_msgs in #kind_graph erasesLet
 
-/-- An inline compound has no name, so the exit records the arithmetic *instance
-function* — a garbage identity that is not a node of the graph — while the value itself
-sits on the synthesized `_1`. -/
+/-- An inline compound has no reference for an exit to name: refused, and let-binding
+the erased value is the fix. -/
 def erasesInline (x : Quantity aK Float) : Float := (x + x).magnitude
 
 /--
-info: kind graph of 'PropertyKindCalculus.Tests.PortNameScopes.erasesInline':
-input x : aK
-unkinded output result : Float
-derived _1 : aK
-aK ± aK → aK ⟨x, x⟩ ⇒ _1
-exit instHAdd.hAdd
-well-formed: false
+error: a value is erased here that the graph cannot name — let-bind the value you erase, so the exit names a node of the boundary
 -/
 #guard_msgs in #kind_graph erasesInline
 
-/-- Exits deduplicate by name, so two distinct inline erasures collapse onto one
-nonexistent node. -/
-def erasesTwoInline (x : Quantity aK Float) (y : Quantity aK Float) : Float :=
-  (x + x).magnitude + (y + y).magnitude
-
-/--
-info: kind graph of 'PropertyKindCalculus.Tests.PortNameScopes.erasesTwoInline':
-input x : aK
-input y : aK
-unkinded output result : Float
-derived _1 : aK
-derived _2 : aK
-aK ± aK → aK ⟨x, x⟩ ⇒ _1
-aK ± aK → aK ⟨y, y⟩ ⇒ _2
-exit instHAdd.hAdd
-well-formed: false
--/
-#guard_msgs in #kind_graph erasesTwoInline
-
-/-! ## Body scope: the flat let namespace -/
+/-! ## Body scope: the flat kind-bearing name namespace -/
 
 /-- The behaving baseline: distinct let names, each node the author's own handle. -/
 def seqLets (x : Quantity aK Float) : Float :=
@@ -274,29 +167,39 @@ well-formed: true
 -/
 #guard_msgs in #kind_graph seqLets
 
-/-- Sequential shadowing — legal Lean — corrupts the wiring itself: the second binding's
-operands merge with its result into `⟨m, m⟩ ⇒ m`. -/
+/-- Sequential shadowing — legal Lean — would merge two bindings' nodes into one
+reference and corrupt the wiring: refused, and renaming one is the fix. -/
 def shadowLets (x : Quantity aK Float) : Float :=
   let m := x + x
   let m := m + m
   m.magnitude
 
 /--
-info: kind graph of 'PropertyKindCalculus.Tests.PortNameScopes.shadowLets':
-input x : aK
-unkinded output result : Float
-derived m : aK
-derived m : aK
-aK ± aK → aK ⟨x, x⟩ ⇒ m
-aK ± aK → aK ⟨m, m⟩ ⇒ m
-exit m
-well-formed: false
+error: two kind-bearing bindings in this body are named 'm' — one flat namespace cannot hold both; rename one
 -/
 #guard_msgs in #kind_graph shadowLets
 
+/-- A kind-bearing `let` reusing an *input binder's* name is not a collision: the
+`letBound` and the `binder` are different references in different scopes, both render
+`x`, and the graph is well formed — the class, not the spelling, is the identity. -/
+def shadowsBinder (x : Quantity aK Float) : Float :=
+  let x := x + x
+  x.magnitude
+
+/--
+info: kind graph of 'PropertyKindCalculus.Tests.PortNameScopes.shadowsBinder':
+input x : aK
+unkinded output result : Float
+derived x : aK
+aK ± aK → aK ⟨x, x⟩ ⇒ x
+exit x
+well-formed: true
+-/
+#guard_msgs in #kind_graph shadowsBinder
+
 /-- Nesting is not identity: a `let` inside a `let`'s value coexists with it in one flat
-namespace, correctly, because the names are distinct — a nesting path would add nothing
-here and would change under hoisting everywhere. -/
+namespace because the names are distinct — a nesting path would add nothing here and
+would change under hoisting everywhere. -/
 def nestedValue (x : Quantity aK Float) : Float :=
   let m := (let inner := x + x; inner + inner)
   m.magnitude
@@ -314,28 +217,19 @@ well-formed: true
 -/
 #guard_msgs in #kind_graph nestedValue
 
-/-- One `let t` per match arm — idiomatic Lean — collapses the two arms' values onto one
-node and their two erasures onto one exit. -/
+/-- One `let t` per match arm — the arms share the flat namespace, so the reuse is
+refused exactly as sequential shadowing is; naming the arms' values apart is the fix. -/
 def matchArms (b : Bool) (x : Quantity aK Float) : Float :=
   match b with
   | true => let t := x + x; t.magnitude
   | false => let t := x - x; t.magnitude
 
 /--
-info: kind graph of 'PropertyKindCalculus.Tests.PortNameScopes.matchArms':
-input x : aK
-unkinded input b : Bool
-unkinded output result : Float
-derived t : aK
-derived t : aK
-aK ± aK → aK ⟨x, x⟩ ⇒ t
-aK ± aK → aK ⟨x, x⟩ ⇒ t
-exit t
-well-formed: false
+error: two kind-bearing bindings in this body are named 't' — one flat namespace cannot hold both; rename one
 -/
 #guard_msgs in #kind_graph matchArms
 
-/-! ## Census matching by suffix -/
+/-! ## Census matching by referent -/
 
 namespace A
 @[kindDiagnostic "the first of two marked kinds sharing a short name"]
@@ -347,19 +241,20 @@ namespace B
 def qcK : KindOfProperty := { id := "port-name-scope probe quality B", scale := .ordinal }
 end B
 
-/-- One produced port whose declared kind is the bare short name both marks share. The
-census reads declared ports only, so the empty member list is immaterial. -/
-def box : Provenance.Contract String String where
-  name := "suffix probe"
+/-- One produced port whose declared kind names `A.qcK` by reference. `B.qcK` renders
+identically and is a different referent, so it is not credited. The census reads
+declared ports only, so the empty member list is immaterial. -/
+def box : Provenance.Contract NodeId KindRef where
+  name := "referent probe"
   members := []
-  ports := [⟨"step/flag", "qcK", .output⟩]
+  ports := [⟨(NodeId.letBound "flag").within `step, .decl ``A.qcK, .output⟩]
   exits := []
 
 /--
 info: diagnostic coverage:
 [exported] PropertyKindCalculus.Tests.PortNameScopes.A.qcK — PropertyKindCalculus.Tests.PortNameScopes.box :: step/flag
-[exported] PropertyKindCalculus.Tests.PortNameScopes.B.qcK — PropertyKindCalculus.Tests.PortNameScopes.box :: step/flag
-2 diagnostic kind(s): 2 exported — clean
+⚠ SIDECHANNELED PropertyKindCalculus.Tests.PortNameScopes.B.qcK (the second of two marked kinds sharing a short name) — no produced port in scope carries it
+2 diagnostic kind(s): 1 exported, 1 SIDECHANNELED — diagnostic-coverage violation
 -/
 #guard_msgs in #kind_diagnostic_coverage PropertyKindCalculus.Tests.PortNameScopes
 
