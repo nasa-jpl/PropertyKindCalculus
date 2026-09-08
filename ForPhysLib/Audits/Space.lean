@@ -65,10 +65,9 @@ info: tagged boundary crossings:
 
 /-- The interior scope: everything authored *inside* the calculus — the crossing and the
 table composite. Gated empty: a naked binder added here is a build failure. -/
-def interiorScope : Provenance.Contract String String where
+def interiorScope : Provenance.Contract Provenance.NodeId Provenance.KindRef where
   name := "SpaceAndTime/Space kinded interior"
-  members := ["ForPhysLib.Operators.Space.spanArea",
-              "ForPhysLib.Kinded.Space.lengthOf"]
+  members := [``ForPhysLib.Operators.Space.spanArea, ``ForPhysLib.Kinded.Space.lengthOf]
   ports := []
   exits := []
 
@@ -86,18 +85,16 @@ emission where a naked `ℝ` leaves. Its ledger is *not* empty and must not be g
 `Space d` points are carriers, not quantities, and the API map's own prose ("arbitrary
 but fixed choice of length unit and origin") is why they stay unkinded. MR30's tier
 discipline: measured, so growth is visible; never hidden behind a gate it would fail. -/
-def ingestBoundary : Provenance.Contract String String where
+def ingestBoundary : Provenance.Contract Provenance.NodeId Provenance.KindRef where
   name := "SpaceAndTime/Space ingest boundary"
-  members := ["ForPhysLib.Kinded.Space.distanceQ",
-              "ForPhysLib.Kinded.Space.positionQ",
-              "ForPhysLib.Kinded.Space.displacementQ",
-              "ForPhysLib.Kinded.Space.rawDistance"]
+  members := [``ForPhysLib.Kinded.Space.distanceQ, ``ForPhysLib.Kinded.Space.positionQ, ``ForPhysLib.Kinded.Space.displacementQ, ``ForPhysLib.Kinded.Space.rawDistance]
   ports := []
   exits := []
 
 /--
+
 info: unkinded ledger of 'SpaceAndTime/Space ingest boundary':
-unkinded: 8 position(s), 5 flow(s)
+unkinded: 8 position(s), 7 flow(s)
 unkinded input distanceQ/p : Space d
 unkinded input distanceQ/q : Space d
 unkinded flow: distanceQ/p ⇒ distanceQ/result
@@ -111,6 +108,8 @@ unkinded flow: displacementQ/q ⇒ displacementQ/result
 unkinded input rawDistance/p : Space d
 unkinded input rawDistance/q : Space d
 unkinded output rawDistance/result : ℝ
+unkinded flow: rawDistance/p ⇒ rawDistance/dq
+unkinded flow: rawDistance/q ⇒ rawDistance/dq
 -/
 #guard_msgs (whitespace := lax) in #kind_unkinded ingestBoundary
 

@@ -92,6 +92,21 @@ def keptBrokenEdge : Provenance.Relation :=
 
 end Exempt
 
+/-! ## Declaring a boundary is copying what the machine computed
+
+`#kind_boundary_syntax` prints the assembled scope's surviving boundary as the
+constructor syntax a `Provenance.Contract` declares — authored by paste, then owned. -/
+
+/--
+info: boundary of this scope, as declarable syntax:
+  members := [``PropertyKindCalculus.Tests.KindContracts.Good.fwd]
+  ports := [
+    ⟨((NodeId.binder "x").within ``PropertyKindCalculus.Tests.KindContracts.Good.fwd), .decl ``PropertyKindCalculus.Tests.KindContracts.aK, .input⟩,
+    ⟨(NodeId.result.within ``PropertyKindCalculus.Tests.KindContracts.Good.fwd), .decl ``PropertyKindCalculus.Tests.KindContracts.bK, .output⟩]
+  exits := []
+-/
+#guard_msgs in #kind_boundary_syntax [Good.fwd]
+
 /-! ## The report sweep — checked rows, the `✗` violation, the `⊘` exemption, all counted -/
 
 /--

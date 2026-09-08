@@ -122,7 +122,9 @@ theorem eigenEnergyQ_magnitude (Q : PhysHO d) (n : Fin d → ℕ) :
 /-- The emission boundary, stated once as a `def` so it carries its tier: downstream
 code that wants the naked eigenvalue gets it here. -/
 @[kindEmission]
-def rawEigenEnergy (Q : PhysHO d) (n : Fin d → ℕ) : ℝ := (eigenEnergyQ Q n).magnitude
+def rawEigenEnergy (Q : PhysHO d) (n : Fin d → ℕ) : ℝ :=
+  let eq := eigenEnergyQ Q n
+  eq.magnitude
 
 /-- **Existing theorem statements survive**: PhysLib's `eigenEnergy_strictMono` closes
 the kinded comparison — the kind-gated `<` is the carrier's `<` on magnitudes, and the

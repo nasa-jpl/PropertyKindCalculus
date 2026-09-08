@@ -120,10 +120,9 @@ set_option maxHeartbeats 1600000 in
 quantity out. Gated empty: a naked binder added here is a build failure. (`ξEquiv`'s
 crossing is *not* here: it reads the raw oscillator, so it belongs to the measured
 boundary below — the contract refused it, and the refusal was correct.) -/
-def interiorScope : Provenance.Contract String String where
+def interiorScope : Provenance.Contract Provenance.NodeId Provenance.KindRef where
   name := "QuantumMechanics/HarmonicOscillator kinded interior"
-  members := ["ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinded.xiRoot",
-              "ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinded.totalProbabilityQ"]
+  members := [``ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinded.xiRoot, ``ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinded.totalProbabilityQ]
   ports := []
   exits := []
 
@@ -143,20 +142,14 @@ Its ledger is *not* empty and must not be gated: the oscillator structure, the
 occupation labels and the Hilbert space are PhysLib's carriers, not quantities — the
 MR30 tier discipline: measured, so growth is visible; never hidden behind a gate it
 would fail. -/
-def ingestBoundary : Provenance.Contract String String where
+def ingestBoundary : Provenance.Contract Provenance.NodeId Provenance.KindRef where
   name := "QuantumMechanics/HarmonicOscillator ingest boundary"
-  members := ["ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinded.mQd",
-              "ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinded.occupationQ",
-              "ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinded.bornDensityQ",
-              "ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinded.rawEigenEnergy",
-              "ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinded.energySMul",
-              "ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinded.positionOfDimensionless",
-              "ForPhysLib.QuantumMechanics.HarmonicOscillator.Heisenberg.positionOpQ",
-              "ForPhysLib.QuantumMechanics.HarmonicOscillator.Heisenberg.momentumSigmaQ"]
+  members := [``ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinded.mQd, ``ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinded.occupationQ, ``ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinded.bornDensityQ, ``ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinded.rawEigenEnergy, ``ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinded.energySMul, ``ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinded.positionOfDimensionless, ``ForPhysLib.QuantumMechanics.HarmonicOscillator.Heisenberg.positionOpQ, ``ForPhysLib.QuantumMechanics.HarmonicOscillator.Heisenberg.momentumSigmaQ]
   ports := []
   exits := []
 
 /--
+
 info: unkinded ledger of 'QuantumMechanics/HarmonicOscillator ingest boundary':
 unkinded: 15 position(s), 9 flow(s)
 unkinded input mQd/Q : QuantumMechanics.HarmonicOscillator d

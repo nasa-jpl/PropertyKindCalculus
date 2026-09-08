@@ -378,7 +378,8 @@ code that wants the naked field gets it here. -/
 @[kindEmission]
 def rawElectricField (cS : SpeedOfLight) (A : EMPot d) :
     Time → Space d → EuclideanSpace ℝ (Fin d) :=
-  (electricFieldFromPotentialsQ (speedQ cS) (potentialQ A)).magnitude
+  let eq := electricFieldFromPotentialsQ (speedQ cS) (potentialQ A)
+  eq.magnitude
 
 end
 

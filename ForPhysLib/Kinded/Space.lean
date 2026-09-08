@@ -82,7 +82,9 @@ def lengthOf {d : ℕ} (v : Quantity displacement (EuclideanSpace ℝ (Fin d))) 
 /-- The emission boundary, stated once as a `def` so it carries its tier: downstream
 code that wants the naked real gets it here — and gets exactly `dist`, by `rfl`. -/
 @[kindEmission]
-def rawDistance {d : ℕ} (p q : _root_.Space d) : ℝ := (distanceQ p q).magnitude
+def rawDistance {d : ℕ} (p q : _root_.Space d) : ℝ :=
+  let dq := distanceQ p q
+  dq.magnitude
 
 /-- **The Stage-2 invariant, on the nose**: the naked form is definitionally the erasure
 of the kinded form, so a theorem stated over `dist` is a theorem about `rawDistance`

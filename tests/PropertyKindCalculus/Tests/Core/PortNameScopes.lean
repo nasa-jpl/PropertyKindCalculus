@@ -142,7 +142,7 @@ the erased value is the fix. -/
 def erasesInline (x : Quantity aK Float) : Float := (x + x).magnitude
 
 /--
-error: a value is erased here that the graph cannot name — let-bind the value you erase, so the exit names a node of the boundary
+error: a value erased in 'PropertyKindCalculus.Tests.PortNameScopes.erasesInline' is a compound the graph cannot name — let-bind the value you erase, so the exit names a node of the boundary
 -/
 #guard_msgs in #kind_graph erasesInline
 
@@ -175,7 +175,7 @@ def shadowLets (x : Quantity aK Float) : Float :=
   m.magnitude
 
 /--
-error: two kind-bearing bindings in this body are named 'm' — one flat namespace cannot hold both; rename one
+error: two kind-bearing bindings in 'PropertyKindCalculus.Tests.PortNameScopes.shadowLets' are named 'm' — one flat namespace cannot hold both; rename one
 -/
 #guard_msgs in #kind_graph shadowLets
 
@@ -225,7 +225,7 @@ def matchArms (b : Bool) (x : Quantity aK Float) : Float :=
   | false => let t := x - x; t.magnitude
 
 /--
-error: two kind-bearing bindings in this body are named 't' — one flat namespace cannot hold both; rename one
+error: two kind-bearing bindings in 'PropertyKindCalculus.Tests.PortNameScopes.matchArms' are named 't' — one flat namespace cannot hold both; rename one
 -/
 #guard_msgs in #kind_graph matchArms
 

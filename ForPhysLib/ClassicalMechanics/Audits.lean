@@ -153,17 +153,9 @@ quantity in, a quantity out. The radicand's root, the period, the Lagrangian, th
 amplitude, both joins, Newton's product, the phase, and the Legendre witness: the
 algebra *between* the readings never touches a naked carrier. Gated empty: a naked
 binder added here is a build failure. -/
-def interiorScope : Provenance.Contract String String where
+def interiorScope : Provenance.Contract Provenance.NodeId Provenance.KindRef where
   name := "ClassicalMechanics kinded interior"
-  members := ["ForPhysLib.ClassicalMechanics.omegaQ",
-              "ForPhysLib.ClassicalMechanics.periodQ",
-              "ForPhysLib.ClassicalMechanics.lagrangianQ",
-              "ForPhysLib.ClassicalMechanics.amplitudeQ",
-              "ForPhysLib.ClassicalMechanics.energyQ",
-              "ForPhysLib.ClassicalMechanics.koenigQ",
-              "ForPhysLib.ClassicalMechanics.newtonLHSQ",
-              "ForPhysLib.ClassicalMechanics.phaseQ",
-              "ForPhysLib.ClassicalMechanics.Kinded.kineticFromTableQ"]
+  members := [``ForPhysLib.ClassicalMechanics.omegaQ, ``ForPhysLib.ClassicalMechanics.periodQ, ``ForPhysLib.ClassicalMechanics.lagrangianQ, ``ForPhysLib.ClassicalMechanics.amplitudeQ, ``ForPhysLib.ClassicalMechanics.energyQ, ``ForPhysLib.ClassicalMechanics.koenigQ, ``ForPhysLib.ClassicalMechanics.newtonLHSQ, ``ForPhysLib.ClassicalMechanics.phaseQ, ``ForPhysLib.ClassicalMechanics.Kinded.kineticFromTableQ]
   ports := []
   exits := []
 
@@ -183,42 +175,14 @@ structures (`InitialConditions`, `AmplitudePhase`), the coordinates (`Time`,
 number leaves. Its ledger is *not* empty and must not be gated: those carriers are
 PhysLib's, not quantities — the MR30 tier discipline: measured, so growth is
 visible; never hidden behind a gate it would fail. -/
-def ingestBoundary : Provenance.Contract String String where
+def ingestBoundary : Provenance.Contract Provenance.NodeId Provenance.KindRef where
   name := "ClassicalMechanics ingest boundary"
-  members := ["ForPhysLib.ClassicalMechanics.massQ",
-              "ForPhysLib.ClassicalMechanics.springQ",
-              "ForPhysLib.ClassicalMechanics.kineticQ",
-              "ForPhysLib.ClassicalMechanics.potentialQ",
-              "ForPhysLib.ClassicalMechanics.hamiltonianAtQ",
-              "ForPhysLib.ClassicalMechanics.accelerationAtQ",
-              "ForPhysLib.ClassicalMechanics.forceAtQ",
-              "ForPhysLib.ClassicalMechanics.durationQ",
-              "ForPhysLib.ClassicalMechanics.displacement0Q",
-              "ForPhysLib.ClassicalMechanics.velocity0Q",
-              "ForPhysLib.ClassicalMechanics.rbMassQ",
-              "ForPhysLib.ClassicalMechanics.inertiaAtQ",
-              "ForPhysLib.ClassicalMechanics.omegaCompQ",
-              "ForPhysLib.ClassicalMechanics.translationalKEQ",
-              "ForPhysLib.ClassicalMechanics.rotationalKEQ",
-              "ForPhysLib.ClassicalMechanics.Kinded.velocityAtQ",
-              "ForPhysLib.ClassicalMechanics.Kinded.displacementE1Q",
-              "ForPhysLib.ClassicalMechanics.Kinded.velocityE1Q",
-              "ForPhysLib.ClassicalMechanics.Kinded.phaseOffsetQ",
-              "ForPhysLib.ClassicalMechanics.Kinded.energyRateQ",
-              "ForPhysLib.ClassicalMechanics.Kinded.geometricKineticEnergyQ",
-              "ForPhysLib.ClassicalMechanics.Kinded.comQ",
-              "ForPhysLib.ClassicalMechanics.Kinded.inertiaAboutAtQ",
-              "ForPhysLib.ClassicalMechanics.Kinded.omegaTensorAtQ",
-              "ForPhysLib.ClassicalMechanics.Kinded.bodyOmegaTensorAtQ",
-              "ForPhysLib.ClassicalMechanics.Kinded.comVelocityAtQ",
-              "ForPhysLib.ClassicalMechanics.Kinded.relPositionAtQ",
-              "ForPhysLib.ClassicalMechanics.Kinded.omegaVecAtQ",
-              "ForPhysLib.ClassicalMechanics.Operators.displacementAtQ",
-              "ForPhysLib.ClassicalMechanics.Kinded.rawTrajectoryValue"]
+  members := [``ForPhysLib.ClassicalMechanics.massQ, ``ForPhysLib.ClassicalMechanics.springQ, ``ForPhysLib.ClassicalMechanics.kineticQ, ``ForPhysLib.ClassicalMechanics.potentialQ, ``ForPhysLib.ClassicalMechanics.hamiltonianAtQ, ``ForPhysLib.ClassicalMechanics.accelerationAtQ, ``ForPhysLib.ClassicalMechanics.forceAtQ, ``ForPhysLib.ClassicalMechanics.durationQ, ``ForPhysLib.ClassicalMechanics.displacement0Q, ``ForPhysLib.ClassicalMechanics.velocity0Q, ``ForPhysLib.ClassicalMechanics.rbMassQ, ``ForPhysLib.ClassicalMechanics.inertiaAtQ, ``ForPhysLib.ClassicalMechanics.omegaCompQ, ``ForPhysLib.ClassicalMechanics.translationalKEQ, ``ForPhysLib.ClassicalMechanics.rotationalKEQ, ``ForPhysLib.ClassicalMechanics.Kinded.velocityAtQ, ``ForPhysLib.ClassicalMechanics.Kinded.displacementE1Q, ``ForPhysLib.ClassicalMechanics.Kinded.velocityE1Q, ``ForPhysLib.ClassicalMechanics.Kinded.phaseOffsetQ, ``ForPhysLib.ClassicalMechanics.Kinded.energyRateQ, ``ForPhysLib.ClassicalMechanics.Kinded.geometricKineticEnergyQ, ``ForPhysLib.ClassicalMechanics.Kinded.comQ, ``ForPhysLib.ClassicalMechanics.Kinded.inertiaAboutAtQ, ``ForPhysLib.ClassicalMechanics.Kinded.omegaTensorAtQ, ``ForPhysLib.ClassicalMechanics.Kinded.bodyOmegaTensorAtQ, ``ForPhysLib.ClassicalMechanics.Kinded.comVelocityAtQ, ``ForPhysLib.ClassicalMechanics.Kinded.relPositionAtQ, ``ForPhysLib.ClassicalMechanics.Kinded.omegaVecAtQ, ``ForPhysLib.ClassicalMechanics.Operators.displacementAtQ, ``ForPhysLib.ClassicalMechanics.Kinded.rawTrajectoryValue]
   ports := []
   exits := []
 
 /--
+
 info: unkinded ledger of 'ClassicalMechanics ingest boundary':
 unkinded: 72 position(s), 68 flow(s)
 unkinded input massQ/S : ClassicalMechanics.HarmonicOscillator

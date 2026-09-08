@@ -177,10 +177,9 @@ Not a score — a measurement, in the manner of Stage 4's ingest boundary: the e
 sites of this exhibit's own boundary, counted by the ledger. -/
 
 /-- The boundary this exhibit minted through: the frame velocity and the elapsed time. -/
-def inertialBoundary : Provenance.Contract String String where
+def inertialBoundary : Provenance.Contract Provenance.NodeId Provenance.KindRef where
   name := "ReferenceFrame inertial boundary"
-  members := ["ForPhysLib.Exhibits.ReferenceFrame.frameVelocityQ",
-              "ForPhysLib.Exhibits.ReferenceFrame.elapsedQ"]
+  members := [``ForPhysLib.Exhibits.ReferenceFrame.frameVelocityQ, ``ForPhysLib.Exhibits.ReferenceFrame.elapsedQ]
   ports := []
   exits := []
 

@@ -400,12 +400,13 @@ number true.
 
 ## 6. The port-vocabulary migration — `Provenance String String` → `Provenance NodeId KindRef`
 
-> Status: **approved 2026-09-07 (types, scoping doctrine, and decisions A–D below); phases
-> P1–P6 open.** Acceptance tests landed first, at
-> `tests/PropertyKindCalculus/Tests/Core/PortNameScopes.lean`: the module header carries the
-> analysis this section acts on, and its pinned probes are the record every phase answers to.
+> Status: **complete 2026-09-07 — all six phases landed.** The acceptance record is
+> `tests/PropertyKindCalculus/Tests/Core/PortNameScopes.lean`: its module header states the
+> reference regime and its pinned probes hold the refusals, the coexistences, and the
+> exact-match census in the build.
 > Audience: PKC maintainers; downstream authors of `Provenance.Contract` values (SMM, SMW),
-> who migrate at their own pin bump.
+> who migrate at their own pin bump — `#kind_boundary_syntax [members…]` prints a scope's
+> computed boundary as paste-able constructor syntax, which is how to migrate a contract.
 
 ### 6.1 The finding
 
@@ -505,9 +506,11 @@ last component, `sig` with `" → "` — so pins survive except where `ppExpr` e
 qualification, and those churn once and never depend on context again. Gates no longer ride
 on renderings. Authoring: kind and member positions are written as double-backtick name
 literals — resolved and checked at elaboration, so namespaces and `open`s work at
-authoring time while identity stays absolute — and nodes through smart constructors; a printer
-command emits a computed boundary as paste-able constructor syntax, which is how the
-existing 88 authoring sites across 22 files migrate mechanically.
+authoring time while identity stays absolute — and nodes through the `NodeId` smart
+constructors (`binder`/`letBound`/`result`/`resultAt`/`config`, with `within`/`shared`/
+`field`); `#kind_boundary_syntax [members…]` emits a computed boundary as paste-able
+constructor syntax, so declaring a boundary is copying what the machine computed and then
+owning it.
 
 ### 6.5 The phases
 
@@ -522,7 +525,7 @@ which.
 | P3 | the harvest and assembly (`KindIncidence`), checkers, `contractValueOf`, refusals; `Provenance.lean` breaking edits (A, C); core-library consumers (`ContractCoverage`, `KindLedger`, `KindGraphD2`, `ModuleCard`, `KindQueries`, `Influence` instantiations) | `lake build` (default target) green — **done 2026-09-07** |
 | P4 | secondary roots: `graph/` (Footprint), `index/` (Contracts, Relations, Budgets), `uncertainty/` (BoundaryBudget), remaining srcDir roots — `Requirements` excepted: it imports `ForPhysLib`, so it lands with P6 | their targets green — **done 2026-09-07** |
 | P5 | `tests/` migrated and re-pinned; the `PortNameScopes` pins flip to the designed refusals and cleanups | `lake build Tests` green; doc-pins gate — **done 2026-09-07** |
-| P6 | `ForPhysLib/` + `examples/` migrated and re-pinned; document mentions updated; final sweep | all targets + `scripts/check-doc-pins.py` green |
+| P6 | `ForPhysLib/` + `examples/` + `Requirements` migrated and re-pinned; `#kind_boundary_syntax`; document sweep | all targets + `scripts/check-doc-pins.py` green — **done 2026-09-07** |
 
 The acceptance flips P5 answers for: `resultShadow` becomes clean (`.binder "result"` is not
 `.result`); `arrowForm`, `shadowedBinders`, `twoParams`, `erasesInline`/`erasesTwoInline`,
@@ -532,3 +535,28 @@ census pin flips to `SIDECHANNELED` for the kind the suffix tolerance used to cr
 ### 6.6 Progress log
 
 * **2026-09-07** — Plan approved (types, doctrine, A–D); this section written; P1 done.
+* **2026-09-07** — P2: the vocabulary lands additively in `Provenance.lean` (hand-written
+  `BEq` where the nested `List` defeats the deriving handlers; kernel reducibility pinned
+  by `decide`; the planned `.opaque` spelled `.rendered` — `opaque` is a keyword); probes
+  in `Tests.Core.PortReferences`.
+* **2026-09-07** — P3: the break. The harvest, walk, assembly, checkers, reflection, and
+  every core-library consumer run on `NodeId`/`KindRef`; the four grammar mechanisms
+  (suffix tolerance, namespace replay, `" → "` re-parsing, `/`–`#` node parsing) deleted;
+  the new refusals live at `stepGraphOf` and in the walk. Instance ordinals are always in
+  the identity; renderings collapse `#1`, so node identity survives a member gaining a
+  call site.
+* **2026-09-07** — P4: `graph/`, `index/`, `uncertainty/BoundaryBudget`, and the remaining
+  roots (`Requirements` deferred to P6 — it imports `ForPhysLib`).
+* **2026-09-07** — P5: twelve test files re-authored; pins regenerated from compiler output
+  and reviewed — byte-identical except the designed ordinal collapse, verdict counts equal
+  to the pre-migration file. `PortNameScopes` rewritten as the acceptance record. One
+  regression the restored pins caught and fixed: an assembly wire from a caller's config
+  operand now carries the member-wide level its port is declared at.
+* **2026-09-07** — P6: `ForPhysLib` audits, the Water Cloud Model capstone, and
+  `Requirements` migrated; the four `raw*` emission exhibits let-bind their probed values,
+  as the erasure refusal prescribes (the measured ledgers then gained the let-bound nodes'
+  unkinded inflows — more rows, honestly counted); refusal messages name the offending
+  member (`h.site`), which is what made those four findable; `#kind_boundary_syntax`
+  ships the paste-able-boundary printer, pinned in `Tests.Core.KindContracts`. All
+  targets green; doc-pins green. **The workstream is closed; SMM/SMW migrate at their own
+  pin bumps, by pasting `#kind_boundary_syntax` output.**

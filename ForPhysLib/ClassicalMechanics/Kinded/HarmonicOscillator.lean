@@ -303,7 +303,8 @@ stops here — visible in the audit, not silently dropped. -/
 def rawTrajectoryValue (S : HO)
     (IC : _root_.ClassicalMechanics.HarmonicOscillator.InitialConditions)
     (t : Time) : ℝ :=
-  (trajectoryFromDataQ S IC t).magnitude
+  let tq := trajectoryFromDataQ S IC t
+  tq.magnitude
 
 end
 

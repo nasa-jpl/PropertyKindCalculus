@@ -166,20 +166,9 @@ quantity out. Twelve of them, against the pilot's two: once the potential is rea
 the chain's whole derivation tree — slices, field constructions, chart, extent, frame
 readings, the gauge shift, the torsor — runs inside the kind layer. Gated empty: a
 naked binder added here is a build failure. -/
-def interiorScope : Provenance.Contract String String where
+def interiorScope : Provenance.Contract Provenance.NodeId Provenance.KindRef where
   name := "Electromagnetism/Kinematics kinded interior"
-  members := ["ForPhysLib.Electromagnetism.Kinematics.scalarPotentialQ",
-              "ForPhysLib.Electromagnetism.Kinematics.gaugeShiftQ",
-              "ForPhysLib.Electromagnetism.Kinematics.Kinded.vectorPotentialQ",
-              "ForPhysLib.Electromagnetism.Kinematics.Kinded.negGradScalarQ",
-              "ForPhysLib.Electromagnetism.Kinematics.Kinded.timeDerivVectorQ",
-              "ForPhysLib.Electromagnetism.Kinematics.Kinded.magneticFieldFromPotentialQ",
-              "ForPhysLib.Electromagnetism.Kinematics.Kinded.magneticFieldMatrixQ",
-              "ForPhysLib.Electromagnetism.Kinematics.Kinded.derivQ",
-              "ForPhysLib.Electromagnetism.Kinematics.Kinded.fieldStrengthQ",
-              "ForPhysLib.Electromagnetism.Kinematics.Kinded.fieldStrengthMatrixQ",
-              "ForPhysLib.Electromagnetism.Kinematics.Kinded.magneticReadingQ",
-              "ForPhysLib.Electromagnetism.Kinematics.Operators.potentialSubQ"]
+  members := [``ForPhysLib.Electromagnetism.Kinematics.scalarPotentialQ, ``ForPhysLib.Electromagnetism.Kinematics.gaugeShiftQ, ``ForPhysLib.Electromagnetism.Kinematics.Kinded.vectorPotentialQ, ``ForPhysLib.Electromagnetism.Kinematics.Kinded.negGradScalarQ, ``ForPhysLib.Electromagnetism.Kinematics.Kinded.timeDerivVectorQ, ``ForPhysLib.Electromagnetism.Kinematics.Kinded.magneticFieldFromPotentialQ, ``ForPhysLib.Electromagnetism.Kinematics.Kinded.magneticFieldMatrixQ, ``ForPhysLib.Electromagnetism.Kinematics.Kinded.derivQ, ``ForPhysLib.Electromagnetism.Kinematics.Kinded.fieldStrengthQ, ``ForPhysLib.Electromagnetism.Kinematics.Kinded.fieldStrengthMatrixQ, ``ForPhysLib.Electromagnetism.Kinematics.Kinded.magneticReadingQ, ``ForPhysLib.Electromagnetism.Kinematics.Operators.potentialSubQ]
   ports := []
   exits := []
 
@@ -197,23 +186,14 @@ structure, the evaluation points, the `SpeedOfLight` — and the one emission wh
 naked field leaves. Its ledger is *not* empty and must not be gated: those carriers
 are PhysLib's, not quantities — the MR30 tier discipline: measured, so growth is
 visible; never hidden behind a gate it would fail. -/
-def ingestBoundary : Provenance.Contract String String where
+def ingestBoundary : Provenance.Contract Provenance.NodeId Provenance.KindRef where
   name := "Electromagnetism/Kinematics ingest boundary"
-  members := ["ForPhysLib.Electromagnetism.Kinematics.speedQ",
-              "ForPhysLib.Electromagnetism.Kinematics.speedRQ",
-              "ForPhysLib.Electromagnetism.Kinematics.potentialQ",
-              "ForPhysLib.Electromagnetism.Kinematics.gaugeFnQ",
-              "ForPhysLib.Electromagnetism.Kinematics.electricFieldQ",
-              "ForPhysLib.Electromagnetism.Kinematics.magneticFieldQ",
-              "ForPhysLib.Electromagnetism.Kinematics.electricFieldAtQ",
-              "ForPhysLib.Electromagnetism.Kinematics.magneticMatrixAtQ",
-              "ForPhysLib.Electromagnetism.Kinematics.Kinded.fieldStrengthAtQ",
-              "ForPhysLib.Electromagnetism.Kinematics.Operators.scalarPotentialAtQ",
-              "ForPhysLib.Electromagnetism.Kinematics.Kinded.rawElectricField"]
+  members := [``ForPhysLib.Electromagnetism.Kinematics.speedQ, ``ForPhysLib.Electromagnetism.Kinematics.speedRQ, ``ForPhysLib.Electromagnetism.Kinematics.potentialQ, ``ForPhysLib.Electromagnetism.Kinematics.gaugeFnQ, ``ForPhysLib.Electromagnetism.Kinematics.electricFieldQ, ``ForPhysLib.Electromagnetism.Kinematics.magneticFieldQ, ``ForPhysLib.Electromagnetism.Kinematics.electricFieldAtQ, ``ForPhysLib.Electromagnetism.Kinematics.magneticMatrixAtQ, ``ForPhysLib.Electromagnetism.Kinematics.Kinded.fieldStrengthAtQ, ``ForPhysLib.Electromagnetism.Kinematics.Operators.scalarPotentialAtQ, ``ForPhysLib.Electromagnetism.Kinematics.Kinded.rawElectricField]
   ports := []
   exits := []
 
 /--
+
 info: unkinded ledger of 'Electromagnetism/Kinematics ingest boundary':
 unkinded: 28 position(s), 23 flow(s)
 unkinded input speedQ/cS : SpeedOfLight

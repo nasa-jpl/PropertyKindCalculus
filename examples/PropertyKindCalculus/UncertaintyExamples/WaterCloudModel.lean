@@ -56,6 +56,7 @@ import PropertyKindCalculus.DocGenMath
 namespace PropertyKindCalculus.UncertaintyExamples.WaterCloudModel
 
 open PropertyKindCalculus PropertyKindCalculus.Paradigm PropertyKindCalculus.Uncertainty
+open PropertyKindCalculus.Provenance (NodeId KindRef)
 open PropertyKindCalculus.Uncertainty.Allocation
 open PropertyKindCalculus.Paradigm (TapeBuilder)
 
@@ -372,18 +373,18 @@ an uncertainty, and the boundary now says so instead of leaving it implicit. -/
 
 /-- The forward's declared boundary: the three uncertain inputs, the four calibration
 parameters a deployment binds, and the σ⁰ output. -/
-def wcmBoundary : Provenance.Contract String String where
+def wcmBoundary : Provenance.Contract NodeId KindRef where
   name := "WCM forward (σ⁰)"
-  members := ["PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.wcmForwardQ"]
+  members := [``wcmForwardQ]
   ports := [
-    ⟨"wcmForwardQ/cfg.a", "vegGain", .param⟩,
-    ⟨"wcmForwardQ/cfg.c", "soilGain", .param⟩,
-    ⟨"wcmForwardQ/cfg.d", "backscatter", .param⟩,
-    ⟨"wcmForwardQ/cfg.two", "pureNumber", .param⟩,
-    ⟨"wcmForwardQ/mv", "soilMoisture", .input⟩,
-    ⟨"wcmForwardQ/ndvi", "vegetationIndex", .input⟩,
-    ⟨"wcmForwardQ/b", "attenRate", .input⟩,
-    ⟨"wcmForwardQ/result", "backscatter", .output⟩]
+    ⟨(((NodeId.binder "cfg").field "a").within ``wcmForwardQ), .decl ``vegGain, .param⟩,
+    ⟨(((NodeId.binder "cfg").field "c").within ``wcmForwardQ), .decl ``soilGain, .param⟩,
+    ⟨(((NodeId.binder "cfg").field "d").within ``wcmForwardQ), .decl ``backscatter, .param⟩,
+    ⟨(((NodeId.binder "cfg").field "two").within ``wcmForwardQ), .decl ``pureNumber, .param⟩,
+    ⟨((NodeId.binder "mv").within ``wcmForwardQ), .decl ``soilMoisture, .input⟩,
+    ⟨((NodeId.binder "ndvi").within ``wcmForwardQ), .decl ``vegetationIndex, .input⟩,
+    ⟨((NodeId.binder "b").within ``wcmForwardQ), .decl ``attenRate, .input⟩,
+    ⟨(NodeId.result.within ``wcmForwardQ), .decl ``backscatter, .output⟩]
   exits := []
 
 /--
@@ -399,9 +400,11 @@ output-kind contribution `|cᵢ|·u(xᵢ)` of rung 5, attached to the boundary's
 The combined line is the quadrature of the terms — the GUM `u_c` of rung 3, recomputed
 at the boundary rather than copied to it. -/
 def sigma0Budget : PortBudget :=
-  { port := "wcmForwardQ/result", kind := "backscatter",
-    terms := [("wcmForwardQ/mv", ws[0]!), ("wcmForwardQ/ndvi", ws[1]!),
-              ("wcmForwardQ/b", ws[2]!)] }
+  { port := (NodeId.result.within ``wcmForwardQ)
+    kind := .decl ``backscatter
+    terms := [(((NodeId.binder "mv").within ``wcmForwardQ), ws[0]!),
+              (((NodeId.binder "ndvi").within ``wcmForwardQ), ws[1]!),
+              (((NodeId.binder "b").within ``wcmForwardQ), ws[2]!)] }
 
 /--
 info: budget for 'wcmForwardQ/result' : backscatter on 'WCM forward (σ⁰)': 3 term(s) over 7 influencing source(s)
@@ -482,18 +485,18 @@ def wcmRetrieveQ {α : Type} [NumCarrier α] (cfg : WcmConfig α)
 
 /-- The retrieval's declared boundary: the same four calibration parameters a deployment
 binds, the backscatter it consumes, the two covariates, and the soil-moisture output. -/
-def wcmRetrievalBoundary : Provenance.Contract String String where
+def wcmRetrievalBoundary : Provenance.Contract NodeId KindRef where
   name := "WCM retrieval (mv)"
-  members := ["PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.wcmRetrieveQ"]
+  members := [``wcmRetrieveQ]
   ports := [
-    ⟨"wcmRetrieveQ/cfg.a", "vegGain", .param⟩,
-    ⟨"wcmRetrieveQ/cfg.c", "soilGain", .param⟩,
-    ⟨"wcmRetrieveQ/cfg.d", "backscatter", .param⟩,
-    ⟨"wcmRetrieveQ/cfg.two", "pureNumber", .param⟩,
-    ⟨"wcmRetrieveQ/σ0", "backscatter", .input⟩,
-    ⟨"wcmRetrieveQ/ndvi", "vegetationIndex", .input⟩,
-    ⟨"wcmRetrieveQ/b", "attenRate", .input⟩,
-    ⟨"wcmRetrieveQ/result", "soilMoisture", .output⟩]
+    ⟨(((NodeId.binder "cfg").field "a").within ``wcmRetrieveQ), .decl ``vegGain, .param⟩,
+    ⟨(((NodeId.binder "cfg").field "c").within ``wcmRetrieveQ), .decl ``soilGain, .param⟩,
+    ⟨(((NodeId.binder "cfg").field "d").within ``wcmRetrieveQ), .decl ``backscatter, .param⟩,
+    ⟨(((NodeId.binder "cfg").field "two").within ``wcmRetrieveQ), .decl ``pureNumber, .param⟩,
+    ⟨((NodeId.binder "σ0").within ``wcmRetrieveQ), .decl ``backscatter, .input⟩,
+    ⟨((NodeId.binder "ndvi").within ``wcmRetrieveQ), .decl ``vegetationIndex, .input⟩,
+    ⟨((NodeId.binder "b").within ``wcmRetrieveQ), .decl ``attenRate, .input⟩,
+    ⟨(NodeId.result.within ``wcmRetrieveQ), .decl ``soilMoisture, .output⟩]
   exits := []
 
 /--
@@ -588,18 +591,16 @@ other, which is the honest form of "the Float pipeline rounds". The edge answers
 inversion both ways: `wellPosed` names the `∃!` on the declared domain, and `ambiguity`
 names the collapse that surfaces once the domain's certificate is dropped. -/
 def retrievalInvertsForward : Provenance.Relation where
-  left := "PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.wcmRetrievalBoundary"
-  right := "PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.wcmBoundary"
+  left := ``wcmRetrievalBoundary
+  right := ``wcmBoundary
   kind := .inverts
-  witness := "PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.wcmRetrieveQ_wcmForwardQ"
+  witness := ``wcmRetrieveQ_wcmForwardQ
   claim := "at ℝ, for any calibration whose soil-moisture gain is nonzero, the \
     closed-form retrieval recovers exactly the soil moisture the forward consumed"
-  hypotheses := ["PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.soilGainNonzero"]
-  wellPosed :=
-    "PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.wcmForwardQ_well_posed"
-  domain := "PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.soilGainNonzero"
-  ambiguity := "PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.\
-    wcmForwardQ_ambiguous_of_degenerate"
+  hypotheses := [``soilGainNonzero]
+  wellPosed := ``wcmForwardQ_well_posed
+  domain := ``soilGainNonzero
+  ambiguity := ``wcmForwardQ_ambiguous_of_degenerate
 
 /--
 info: kind relation: 'WCM retrieval (mv)' inverts 'WCM forward (σ⁰)'
@@ -638,10 +639,10 @@ namespace Falsification
 re-harvests the member `wcmRetrieveQ` itself, so the port the declaration dropped
 surfaces as `undeclared` — computed, claimed by nobody — and the verdict flips. -/
 @[kindCounterexample]
-def forgottenParameter : Provenance.Contract String String :=
+def forgottenParameter : Provenance.Contract NodeId KindRef :=
   { wcmRetrievalBoundary with
     name := "WCM retrieval (mv), cfg.d forgotten"
-    ports := wcmRetrievalBoundary.ports.filter (·.node != "wcmRetrieveQ/cfg.d") }
+    ports := wcmRetrievalBoundary.ports.filter (·.node != (((NodeId.binder "cfg").field "d").within ``wcmRetrieveQ)) }
 
 /--
 info: kind contract over 1 steps:
@@ -667,11 +668,11 @@ computed one only at the same node, kind, *and* role, so one wrong kind produces
 difference lists at once: the computed port at `backscatter` is undeclared, and the
 declared port at `vegetationIndex` stands for nothing. -/
 @[kindCounterexample]
-def misdeclaredKind : Provenance.Contract String String :=
+def misdeclaredKind : Provenance.Contract NodeId KindRef :=
   { wcmRetrievalBoundary with
     name := "WCM retrieval (mv), σ0 misdeclared"
     ports := wcmRetrievalBoundary.ports.map fun p =>
-      if p.node == "wcmRetrieveQ/σ0" then { p with kind := "vegetationIndex" } else p }
+      if p.node == ((NodeId.binder "σ0").within ``wcmRetrieveQ) then { p with kind := .decl ``vegetationIndex } else p }
 
 /--
 info: kind contract over 1 steps:
@@ -689,7 +690,7 @@ each boundary, so the round trip the `inverts` kind claims is not in the stateme
 @[kindCounterexample]
 def strandedWitness : Provenance.Relation :=
   { retrievalInvertsForward with
-    witness := "PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.affine_roundtrip" }
+    witness := ``affine_roundtrip }
 
 /--
 error: 'PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.affine_roundtrip' is claimed to state an inversion, but neither side of its equality composes a member of 'WCM retrieval (mv)' with a member of 'WCM forward (σ⁰)' — the round trip is not in the statement
@@ -707,8 +708,8 @@ never wider. -/
 def unstatedHypothesis : Provenance.Relation :=
   { retrievalInvertsForward with
     hypotheses := [
-      "PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.soilGainNonzero",
-      "PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.Falsification.vegGainNonzero"] }
+      ``soilGainNonzero,
+      ``Falsification.vegGainNonzero] }
 
 /--
 error: 'PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.wcmRetrieveQ_wcmForwardQ' does not mention the hypothesis 'PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.Falsification.vegGainNonzero' — a side condition the statement does not state is not one the claim holds under
@@ -733,7 +734,7 @@ exactly one does, and the shapes are not interchangeable. -/
 @[kindCounterexample]
 def wrongShapeWellPosed : Provenance.Relation :=
   { retrievalInvertsForward with
-    wellPosed := "PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.affine_roundtrip" }
+    wellPosed := ``affine_roundtrip }
 
 /--
 error: 'PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.affine_roundtrip' is claimed to prove existence and uniqueness, but its conclusion is headed by 'Eq', not '∃!'
@@ -744,7 +745,7 @@ error: 'PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.affine_roundtri
 *on a declared domain*; a witness floating free of one is refused. -/
 @[kindCounterexample]
 def undomainedWellPosed : Provenance.Relation :=
-  { retrievalInvertsForward with domain := "" }
+  { retrievalInvertsForward with domain := .anonymous }
 
 /--
 error: the well-posedness witness 'PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.wcmForwardQ_well_posed' comes with no domain — existence and uniqueness are proved on a declared domain, so name the box or predicate its statement mentions
@@ -756,8 +757,7 @@ the stated one, exactly as a listed hypothesis must be. -/
 @[kindCounterexample]
 def unmentionedDomain : Provenance.Relation :=
   { retrievalInvertsForward with
-    domain := "PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.Falsification.\
-      vegGainNonzero" }
+    domain := ``Falsification.vegGainNonzero }
 
 /--
 error: 'PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.wcmForwardQ_well_posed' does not mention the domain 'PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.Falsification.vegGainNonzero' — the declared domain is the stated one, never wider
@@ -770,7 +770,7 @@ equation holds. -/
 @[kindCounterexample]
 def wrongShapeAmbiguity : Provenance.Relation :=
   { retrievalInvertsForward with
-    ambiguity := "PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.affine_roundtrip" }
+    ambiguity := ``affine_roundtrip }
 
 /--
 error: 'PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.affine_roundtrip' is claimed to surface an ambiguity, but its conclusion is headed by 'Eq', not the negation of an '∃!' — the uniqueness that fails is what the witness states
@@ -782,7 +782,7 @@ uniqueness answer "which soil moisture produced this backscatter?" — a questio
 `inverts` edge asks. -/
 @[kindCounterexample]
 def misplacedWellPosed : Provenance.Relation :=
-  { retrievalInvertsForward with kind := .equals, ambiguity := "" }
+  { retrievalInvertsForward with kind := .equals, ambiguity := .anonymous }
 
 /--
 error: the edge names a well-posedness witness but claims 'equals' — existence and uniqueness answer an inversion

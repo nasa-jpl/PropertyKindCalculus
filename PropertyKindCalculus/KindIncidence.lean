@@ -970,8 +970,8 @@ def exitVictim (h : HarvestCtx) (ctx : BinderCtx) (e : Expr) : MetaM NodeId := d
   let nameable := namesNode h e &&
     (match id.root with | .unresolved _ => false | _ => true)
   unless nameable do
-    throwError "a value is erased here that the graph cannot name — let-bind the value \
-      you erase, so the exit names a node of the boundary"
+    throwError "a value erased in '{h.site}' is a compound the graph cannot name — \
+      let-bind the value you erase, so the exit names a node of the boundary"
   return id
 
 /-- **The literal container assembly** — a single-constructor structure application read
@@ -1038,13 +1038,13 @@ be accessible — a machine-generated binder is nobody's interface — and not a
 minted by another kind-bearing `let`, do-bind, or matcher binder, across match arms
 included, because one flat namespace is what lets a contract's `letBound` reference name
 exactly one node (`Provenance.lean`, "The reference vocabulary"). -/
-def registerBodyName (st : WalkSt) (nm : Name) : MetaM WalkSt := do
+def registerBodyName (st : WalkSt) (site : String) (nm : Name) : MetaM WalkSt := do
   if nm.hasMacroScopes || nm.isAnonymous then
-    throwError "a kind-bearing binding here has no accessible name — name it, so a \
-      boundary can refer to what it binds"
+    throwError "a kind-bearing binding in '{site}' has no accessible name — name it, \
+      so a boundary can refer to what it binds"
   let s := toString nm
   if st.bodyNames.contains s then
-    throwError "two kind-bearing bindings in this body are named '{s}' — one flat \
+    throwError "two kind-bearing bindings in '{site}' are named '{s}' — one flat \
       namespace cannot hold both; rename one"
   return { st with bodyNames := st.bodyNames.push s }
 
@@ -1060,7 +1060,7 @@ partial def walk (h : HarvestCtx) (e : Expr) (ctx : BinderCtx)
   | .letE nm t v b _ =>
     let st ← walk h t ctx none st
     let bt ← bindingTarget h ctx (toString nm) t
-    let st ← if bt.isSome then registerBodyName st nm else pure st
+    let st ← if bt.isSome then registerBodyName st h.site nm else pure st
     let st ← walk h v ctx bt st
     walk h b ((nm, some v) :: ctx) target st
   | .lam nm t b _ =>
@@ -1150,7 +1150,7 @@ partial def walkApp (h : HarvestCtx) (e : Expr) (ctx : BinderCtx)
     | .lam nm t b _ =>
       let st ← walk h t ctx none st
       let bt ← bindingTarget h ctx (toString nm) t
-      let st ← if bt.isSome then registerBodyName st nm else pure st
+      let st ← if bt.isSome then registerBodyName st h.site nm else pure st
       let st ← walk h args[4]! ctx bt st
       return ← walk h b ((nm, none) :: ctx) (t1.map fun (n, k, o) => .one n k o) st
     | f =>
@@ -1161,7 +1161,7 @@ partial def walkApp (h : HarvestCtx) (e : Expr) (ctx : BinderCtx)
     | .lam nm t b _ =>
       let st ← walk h t ctx none st
       let bt ← bindingTarget h ctx (toString nm) t
-      let st ← if bt.isSome then registerBodyName st nm else pure st
+      let st ← if bt.isSome then registerBodyName st h.site nm else pure st
       let st ← walk h args[2]! ctx bt st
       return ← walk h b ((nm, some args[2]!) :: ctx) (t1.map fun (n, k, o) => .one n k o) st
     | f =>
@@ -1437,7 +1437,7 @@ partial def walkApp (h : HarvestCtx) (e : Expr) (ctx : BinderCtx)
               pure (paths.toList.map fun (p, k) =>
                 ({ NodeId.letBound (toString nm) with path := p }, k, true))
           unless slot.isEmpty do
-            st ← registerBodyName st nm
+            st ← registerBodyName st h.site nm
           slots := slots ++ [slot]
           ctx' := (nm, none) :: ctx'
         st ← walk h ma.discrs[0]! ctx (some (.tuple slots)) st
@@ -2496,6 +2496,55 @@ has. -/
 elab "#kind_assembly " c:ident : command => liftTermElabM do
   let a ← assembleContract (← contractValueOf (← realizeGlobalConstNoOverload c))
   logInfo m!"kind assembly of {a.levels.size} steps:\n{String.intercalate "\n" a.renderLines}"
+
+/-- A kind reference as paste-able constructor syntax — what `#kind_boundary_syntax`
+prints, so a computed boundary can be declared by copying rather than retyped. -/
+partial def kindRefSyntax : KindRef → String
+  | .decl n => s!".decl ``{n}"
+  | .param b => s!".param \"{b}\""
+  | .sig cs => ".sig [" ++ String.intercalate ", " (cs.map kindRefSyntax) ++ "]"
+  | .tuple cs => ".tuple [" ++ String.intercalate ", " (cs.map kindRefSyntax) ++ "]"
+  | .unkinded => ".unkinded"
+  | .rendered s => s!".rendered \"{s}\""
+
+/-- A node identifier as paste-able constructor syntax, through the smart
+constructors. -/
+def nodeIdSyntax (n : NodeId) : String :=
+  let base := match n.root with
+    | .binder s => s!"(NodeId.binder \"{s}\")"
+    | .letBound s => s!"(NodeId.letBound \"{s}\")"
+    | .result none => "NodeId.result"
+    | .result (some i) => s!"(NodeId.resultAt {i})"
+    | .const c => s!"(NodeId.config ``{c})"
+    | .fresh i => s!"(NodeId — fresh {i}: graph-interior, not declarable)"
+    | .unresolved s => s!"(NodeId — unresolved \"{s}\": not declarable)"
+  let withPath := n.path.foldl (fun acc seg => s!"({acc}.field \"{seg}\")") base
+  match n.level with
+  | some (.inst m 1) => s!"({withPath}.within ``{m})"
+  | some (.inst m k) => s!"({withPath}.within ``{m} {k})"
+  | some (.member m) => s!"({withPath}.shared ``{m})"
+  | none => withPath
+
+open Elab Command in
+/-- `#kind_boundary_syntax [d₁, d₂, …]` assembles the listed declarations and prints
+the surviving boundary — the ports and exits a `Provenance.Contract` over this scope
+must declare — as paste-able constructor syntax, so declaring a boundary is copying
+what the machine computed and then owning it, not retyping it. -/
+elab "#kind_boundary_syntax " "[" ids:ident,* "]" : command => liftTermElabM do
+  let decls ← ids.getElems.mapM fun id => realizeGlobalConstNoOverload id
+  if decls.isEmpty then throwError "#kind_boundary_syntax expects at least one declaration"
+  let a ← assemble decls
+  let memberLines :=
+    "  members := [" ++ String.intercalate ", " (decls.toList.map fun d => s!"``{d}") ++ "]"
+  let portLines := a.graph.ports.map fun p =>
+    s!"    ⟨{nodeIdSyntax p.node}, {kindRefSyntax p.kind}, .{p.dir.label}⟩"
+  let exitLines := a.graph.exits.map fun n => s!"    {nodeIdSyntax n}"
+  let ports := if portLines.isEmpty then "  ports := []"
+    else "  ports := [\n" ++ String.intercalate ",\n" portLines ++ "]"
+  let exits := if exitLines.isEmpty then "  exits := []"
+    else "  exits := [\n" ++ String.intercalate ",\n" exitLines ++ "]"
+  logInfo m!"boundary of this scope, as declarable syntax:\n\
+    {memberLines}\n{ports}\n{exits}"
 
 open Elab Command in
 /-- `#kind_assembly_decide [d₁, d₂, …]` assembles the listed declarations, reflects
