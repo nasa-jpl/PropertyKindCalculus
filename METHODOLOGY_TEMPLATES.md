@@ -397,3 +397,138 @@ number true.
   `[exported]`, `⚠ SIDECHANNELED`, the `UNREADABLE` boundary, the gate's refusal, a clean
   sub-namespace, and the attribute's two refusals. SMM population probe: the four QC kinds
   all SIDECHANNELED over 9 readable boundaries (table in step 4). Catalogue: M22 → `gate`.
+
+## 6. The port-vocabulary migration — `Provenance String String` → `Provenance NodeId KindRef`
+
+> Status: **approved 2026-09-07 (types, scoping doctrine, and decisions A–D below); phases
+> P1–P6 open.** Acceptance tests landed first, at
+> `tests/PropertyKindCalculus/Tests/Core/PortNameScopes.lean`: the module header carries the
+> analysis this section acts on, and its pinned probes are the record every phase answers to.
+> Audience: PKC maintainers; downstream authors of `Provenance.Contract` values (SMM, SMW),
+> who migrate at their own pin bump.
+
+### 6.1 The finding
+
+`Provenance ν κ` is parametric in name only: `contractValueOf` demands
+`Contract String String` by defeq, so every census reads exactly one instantiation and any
+other is `⚠ UNREADABLE`. Both `String`s flatten a grammar:
+
+* **κ (kinds)** is a *rendering* — `Meta.ppExpr` relative to the defining module's namespace
+  when closed, a binder name when not. Four consequences, each pinned in `PortNameScopes`:
+  `Contract.standsFor` compares kinds byte-exact, so `#kind_contracts` must replay each
+  contract under its defining module's `currNamespace` and inherit its `open`s; a suffix
+  tolerance (`pk == long || long.endsWith ("." ++ pk) || …`) duplicated at four sites lets
+  one port kind match two declarations — the M22 census reads `clean` on a double-match it
+  should refuse; a signature kind is a `" → "`-joined string re-parsed by `splitOn`; and the
+  port kind is the only declaration-referencing `Contract` field never resolved against the
+  environment (deciders, aggregations, suppliers, tolerances all are).
+* **ν (nodes)** is a flattened five-class sum — signature binder, body-`let` name,
+  `result`/`result.N` structural, config constant full name, `_N` gensym — with level
+  (`step/`), instance (`#k`), and field-path (`.lo.q`) punctuation on top. A string cannot
+  say which class it is in: a binder named `result` collides with the output node; an
+  arrow-form signature ports at a hygiene name; shadowed binders and lets corrupt wiring
+  silently; an erased inline compound degrades to `exit instHAdd.hAdd`; a member's nodes are
+  all renamed when it gains a second call-site instance (`member/x` → `member#1/x`), so a
+  true contract breaks under a semantic no-op.
+
+### 6.2 The vocabulary (prelude-only; `Lean.Name` is prelude-level)
+
+```lean
+inductive KindRef
+  | decl (n : Lean.Name)              -- a kind declaration, by environment name
+  | param (binder : String)           -- a generic kind binder of the member's signature
+  | sig (components : List KindRef)   -- the module-valued port form (the " → " join)
+  | tuple (components : List KindRef) -- a carrier with several kind parameters (the ", " join)
+  | unkinded                          -- a config constant porting no kind (the "_" sentinel)
+  | opaque (rendered : String)        -- anything else; byte-exact comparison, contract-refused
+
+inductive NodeRef
+  | binder (name : String)            -- signature telescope
+  | letBound (name : String)          -- body-named: `let`s and single-alt matcher binders
+  | result (component : Option Nat)   -- structural; 1-based, matching the rendering
+  | const (n : Lean.Name)             -- a config port, or a constant-named operand
+  | fresh (n : Nat)                   -- gensym: graph-internal, contract-refused
+  | unresolved (rendered : String)    -- operand degradations, visible, contract-refused
+
+inductive Level
+  | inst (member : Lean.Name) (ordinal : Nat)  -- one call-site instance, ordinal 1-based
+  | member (member : Lean.Name)                -- member-scoped: shared config ports
+
+structure NodeId where
+  level : Option Level := none
+  root  : NodeRef
+  path  : List String := []           -- field projections, segments unjoined
+```
+
+`tuple`, `unkinded`, and `unresolved` are forced by the survey, not chosen: `carrierKind?`
+joins a multi-kind carrier with `", "`; a slotless config constant ports at kind `"_"`; and
+`refName`'s fallbacks can name an operand `"_"` or a literal in an already-ill-formed graph,
+where the verdict must still be able to say so. `Level` is a sum because config ports are
+member-scoped, not instance-scoped — one address, however many instances. `Level.inst`
+always carries the ordinal; only the rendering collapses `#1` when the member has one
+instance, which is what makes node identity stable under call-site growth.
+
+Scoping doctrine (settled): `.binder`/`.param` resolve in the member's signature telescope;
+`.letBound` in the body's kind-bearing names — `let` binders and single-alternative matcher
+binders, one flat namespace, no nesting path (path-as-identity rejected: unstable under
+hoisting, identical for same-depth shadowing, matcher-generated through match arms). All
+names checked accessible (no hygiene) and unique in scope, refused otherwise; an erasure
+victim that is not a nameable node is refused ("let-bind the value you erase"); gensyms and
+`unresolved` stay graph-internal — a contract mentioning either is refused. Renaming a
+binder or let a contract names is an interface change by doctrine.
+
+### 6.3 What the structure deletes
+
+The suffix tolerance at its four sites; `#kind_contracts`' `currNamespace` replay and its
+`open`s requirement; `splitOn " → "` in `checkSuppliers`; `levelOfNode`'s `splitOn "/"` and
+`memberOf`'s `splitOn "#"`; the `result` reserved word and its collision; the config
+full-name `startsWith` matching; and the whole-string monomorphization map — kind
+substitution becomes structural on `KindRef`, recursing into `sig`/`tuple` components,
+which whole-string replacement never could.
+
+### 6.4 Decisions (settled 2026-09-07)
+
+* **A — the other declaration references migrate in the same break**: `Contract.members`,
+  `deciders`/`suppliers` payloads, the `AggregationClass` tolerance/condition/sortal/
+  transport/law names, and `Relation`'s tolerance/hypotheses become `Lean.Name`. One API
+  break, not two.
+* **B — stays `String`**: `Contract.name` (a title), `Occurrence.site` (attribution, not
+  identity), `attested` reasons, the unkinded red inventory.
+* **C — `EdgeFamily.step` carries `(member : Lean.Name) (inst? : Option Nat)`**: the step
+  label participates in call grouping at assembly, so it is identity, not rendering.
+* **D — the last-component collision refusal at assembly stays**: it is rendering-only now,
+  and it keeps figures unambiguous.
+
+Rendering policy: renderers print the structured values in the established formats —
+`level/root.path`, `member#k` only when the assembly has more than one instance, `.decl` by
+last component, `sig` with `" → "` — so pins survive except where `ppExpr` emitted partial
+qualification, and those churn once and never depend on context again. Gates no longer ride
+on renderings. Authoring: kind and member positions are written as double-backtick name
+literals — resolved and checked at elaboration, so namespaces and `open`s work at
+authoring time while identity stays absolute — and nodes through smart constructors; a printer
+command emits a computed boundary as paste-able constructor syntax, which is how the
+existing 88 authoring sites across 22 files migrate mechanically.
+
+### 6.5 The phases
+
+Each phase ends green for every build target it touches, committed and pushed. P3 is the
+break: from P3 until P5 the roots not yet migrated are red, and each commit message says
+which.
+
+| phase | scope | gate |
+|---|---|---|
+| P1 | this plan section | doc only — **done 2026-09-07** |
+| P2 | the four inductives + `ToExpr`/`BEq`/`DecidableEq` instances + type-level probes, additive | `lake build` + new probes green |
+| P3 | the harvest and assembly (`KindIncidence`), checkers, `contractValueOf`, refusals; `Provenance.lean` breaking edits (A, C); core-library consumers (`ContractCoverage`, `KindLedger`, `KindGraphD2`, `ModuleCard`, `KindQueries`, `Influence` instantiations) | `lake build` (default target) green |
+| P4 | secondary roots: `graph/` (Footprint), `index/` (Contracts), remaining srcDir roots | their targets green |
+| P5 | `tests/` migrated and re-pinned; the `PortNameScopes` pins flip to the designed refusals and cleanups | `lake build Tests` green; doc-pins gate |
+| P6 | `ForPhysLib/` + `examples/` migrated and re-pinned; document mentions updated; final sweep | all targets + `scripts/check-doc-pins.py` green |
+
+The acceptance flips P5 answers for: `resultShadow` becomes clean (`.binder "result"` is not
+`.result`); `arrowForm`, `shadowedBinders`, `twoParams`, `erasesInline`/`erasesTwoInline`,
+`shadowLets`, and `matchArms` become refusals; `seqLets`/`nestedValue` stay green; the M22
+census pin flips to `SIDECHANNELED` for the kind the suffix tolerance used to credit.
+
+### 6.6 Progress log
+
+* **2026-09-07** — Plan approved (types, doctrine, A–D); this section written; P1 done.
