@@ -31,6 +31,7 @@ import PropertyKindCalculus.Tests.Core.KindRelation
 import PropertyKindCalculus.Tests.Core.KindContracts
 import PropertyKindCalculus.Tests.Core.ContractCoverage
 import PropertyKindCalculus.Tests.Core.PortNameScopes
+import PropertyKindCalculus.Tests.Core.PortReferences
 import PropertyKindCalculus.Tests.Core.CertifiedIngest
 import PropertyKindCalculus.Tests.Core.BoundaryAudit
 import PropertyKindCalculus.Tests.Core.Provenance

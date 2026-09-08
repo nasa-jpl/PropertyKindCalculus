@@ -324,6 +324,191 @@ def Provenance.EdgeFamily.render (f : Provenance.EdgeFamily)
     | sel :: branches =>
       s!"select {sel} : {String.intercalate " | " branches} → {result}"
 
+/-! ## The reference vocabulary — what a node identifier and a kind identifier denote
+
+A `Provenance` value's two type parameters are its identity vocabulary, and the harvest
+instantiates them with the two types below. Each constructor names the *class* of thing a
+reference denotes and, for the environment-backed classes, carries the `Lean.Name` the
+environment resolves — so two references are equal exactly when they denote the same thing,
+never because two different things render alike, and a rendering is something a reference
+*has*, not something it *is*.
+
+Resolution scopes: a `NodeRef.binder` and a `KindRef.param` resolve in the member's
+signature telescope; a `NodeRef.letBound` in the member body's kind-bearing names — `let`
+binders and single-alternative matcher binders, one flat namespace with no nesting path,
+because a path is unstable under hoisting, identical for same-depth shadowing, and
+matcher-generated through match arms. A `NodeRef.const` and a `KindRef.decl` resolve in the
+environment; a `NodeRef.result` is structural. The harvest refuses a member whose
+kind-bearing names are inaccessible or ambiguous in their scope, so every reference that
+reaches a graph names its referent uniquely; a contract mentioning a `fresh` or
+`unresolved` node, or a `rendered` kind, is refused — those classes are graph-interior.
+Under this doctrine, renaming a binder or a `let` that a contract names is an interface
+change. -/
+
+/-- **A kind reference** — what a port or introduction states its kind *is*. -/
+inductive Provenance.KindRef where
+  /-- A kind declaration, by the name the environment resolves. -/
+  | decl (n : Lean.Name)
+  /-- A generic kind binder of the member's own signature, by binder name. -/
+  | param (binder : String)
+  /-- A kind signature — the module-valued port form of a functional argument: the
+  domains' kinds in order, then the result kind, last. -/
+  | sig (components : List Provenance.KindRef)
+  /-- A carrier stating several kinds at once — one component per kind parameter, in
+  parameter order. -/
+  | tuple (components : List Provenance.KindRef)
+  /-- A configuration constant that states no kind: the port exists — the address is
+  interface — but no kind claim travels with it. -/
+  | unkinded
+  /-- A kind expression outside this vocabulary, kept as its rendering. Comparison is
+  byte-exact and a contract stating one is refused: the class exists so a graph can
+  *report* such a kind, not so a boundary can claim one. -/
+  | rendered (s : String)
+deriving Repr, Inhabited
+
+/-- Structural equality on kind references; the `BEq` instance below. `decl` compares by
+`Lean.Name` equality — never by rendering, which is what retires suffix-tolerant matching
+and namespace-relative comparison wholesale. -/
+def Provenance.KindRef.beq : Provenance.KindRef → Provenance.KindRef → Bool
+  | .decl a, .decl b => a == b
+  | .param a, .param b => a == b
+  | .sig as, .sig bs => go as bs
+  | .tuple as, .tuple bs => go as bs
+  | .unkinded, .unkinded => true
+  | .rendered a, .rendered b => a == b
+  | _, _ => false
+where
+  /-- Component lists, pointwise. -/
+  go : List Provenance.KindRef → List Provenance.KindRef → Bool
+    | [], [] => true
+    | a :: as, b :: bs => a.beq b && go as bs
+    | _, _ => false
+
+instance : BEq Provenance.KindRef := ⟨Provenance.KindRef.beq⟩
+
+/-- **A node root** — the class of thing a node identifier's unqualified part denotes. -/
+inductive Provenance.NodeRef where
+  /-- A kind-typed binder of the member's signature telescope, by accessible user name. -/
+  | binder (name : String)
+  /-- A body-named node: a kind-bearing `let` binder or a single-alternative matcher
+  binder, by accessible user name — one flat namespace per member body. -/
+  | letBound (name : String)
+  /-- The member's result: the whole result, or the 1-based component of a product
+  result. -/
+  | result (component : Option Nat)
+  /-- A constant address: a configuration port, or a constant-named operand. -/
+  | const (n : Lean.Name)
+  /-- A synthesized interior node, by mint order. Graph-interior: a contract naming one
+  is refused, because a gensym's number is the walk's business and nobody's interface. -/
+  | fresh (n : Nat)
+  /-- An operand the walk could not resolve into this vocabulary (a literal, a masked
+  application), kept as its rendering — visible so an ill-formed graph can say which
+  operand offends, and refused in any contract. -/
+  | unresolved (rendered : String)
+deriving DecidableEq, Repr, Inhabited, BEq
+
+/-- **A level** — the assembly scope a node belongs to. -/
+inductive Provenance.Level where
+  /-- One call-site instance of a member: the member's declaration name and the 1-based
+  instance ordinal. The ordinal is always present — identity does not change when a
+  member gains or loses call sites — and the *rendering* collapses it while the member
+  has a single instance. -/
+  | inst (member : Lean.Name) (ordinal : Nat)
+  /-- The member itself, across all its instances: the scope of a configuration port,
+  which is an address one deployment binds once however many instances read it. -/
+  | member (member : Lean.Name)
+deriving DecidableEq, Repr, Inhabited, BEq
+
+/-- **A node identifier**: the level it belongs to (`none` in a single-step graph), the
+root reference, and the field-projection path under that root, segments unjoined. -/
+structure Provenance.NodeId where
+  /-- The assembly scope, or `none` in a single-step graph. -/
+  level : Option Provenance.Level := none
+  /-- The root reference. -/
+  root : Provenance.NodeRef
+  /-- The field-projection path under the root, one segment per projection. -/
+  path : List String := []
+deriving DecidableEq, Repr, Inhabited, BEq
+
+/-- The last component of a declaration name — the rendering grammar's short form for
+members and kind declarations. Purely a display form: identity is the full name. -/
+def Provenance.lastComponent : Lean.Name → String
+  | .str _ s => s
+  | n => toString n
+
+/-- Render a kind reference in the established grammar: a `decl` by last component, a
+`sig` joined with `" → "`, a `tuple` with `", "`, an unkinded config slot as `"_"`. -/
+def Provenance.KindRef.render : Provenance.KindRef → String
+  | .decl n => Provenance.lastComponent n
+  | .param b => b
+  | .sig cs => String.intercalate " → " (go cs)
+  | .tuple cs => String.intercalate ", " (go cs)
+  | .unkinded => "_"
+  | .rendered s => s
+where
+  /-- Components in order. -/
+  go : List Provenance.KindRef → List String
+    | [] => []
+    | c :: cs => c.render :: go cs
+
+/-- Render a node root: names as themselves, `result` / `result.N`, a constant in full —
+a config address must not move with a reader's open namespaces — and `_N` for a gensym. -/
+def Provenance.NodeRef.render : Provenance.NodeRef → String
+  | .binder n | .letBound n => n
+  | .result none => "result"
+  | .result (some i) => s!"result.{i}"
+  | .const n => toString n
+  | .fresh n => s!"_{n}"
+  | .unresolved r => r
+
+/-- Render a level name: the member's last component, with `#ordinal` when the caller
+says this member has several instances to tell apart. -/
+def Provenance.Level.render (showOrdinal : Bool) : Provenance.Level → String
+  | .inst m k => if showOrdinal then s!"{Provenance.lastComponent m}#{k}"
+                 else Provenance.lastComponent m
+  | .member m => Provenance.lastComponent m
+
+/-- Render a node identifier — `level/root.path` — with the level naming supplied by the
+caller, because only an assembly knows which members need their instance ordinals shown. -/
+def Provenance.NodeId.render (levelName : Provenance.Level → String)
+    (id : Provenance.NodeId) : String :=
+  let base := match id.level with
+    | some l => s!"{levelName l}/{id.root.render}"
+    | none => id.root.render
+  id.path.foldl (fun acc seg => s!"{acc}.{seg}") base
+
+/-- A signature-binder node, level-free — the smart constructor authoring uses. -/
+def Provenance.NodeId.binder (name : String) : Provenance.NodeId := { root := .binder name }
+
+/-- A body-named node, level-free. -/
+def Provenance.NodeId.letBound (name : String) : Provenance.NodeId :=
+  { root := .letBound name }
+
+/-- The whole-result node, level-free. -/
+def Provenance.NodeId.result : Provenance.NodeId := { root := .result none }
+
+/-- A product-result component node (1-based), level-free. -/
+def Provenance.NodeId.resultAt (component : Nat) : Provenance.NodeId :=
+  { root := .result (some component) }
+
+/-- A constant-address node, level-free. -/
+def Provenance.NodeId.config (n : Lean.Name) : Provenance.NodeId := { root := .const n }
+
+/-- The same node inside one call-site instance of a member. -/
+def Provenance.NodeId.within (id : Provenance.NodeId) (member : Lean.Name)
+    (ordinal : Nat := 1) : Provenance.NodeId :=
+  { id with level := some (.inst member ordinal) }
+
+/-- The same node in a member's shared (all-instance) scope — a configuration port. -/
+def Provenance.NodeId.shared (id : Provenance.NodeId) (member : Lean.Name) :
+    Provenance.NodeId :=
+  { id with level := some (.member member) }
+
+/-- The same node one field projection deeper. -/
+def Provenance.NodeId.field (id : Provenance.NodeId) (segment : String) :
+    Provenance.NodeId :=
+  { id with path := id.path ++ [segment] }
+
 /-- A kind-typed port: one node of a step's interface, with the kind its signature
 states and the role it plays. Input and configuration ports are sources; an output port
 is a derivation target an occurrence must reach. -/
