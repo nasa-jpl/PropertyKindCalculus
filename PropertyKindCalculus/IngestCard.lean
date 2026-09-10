@@ -94,13 +94,19 @@ private def slotRow (dir : PortDir) (conditions : List String) (withKind : Bool)
     ++ s!"style: \{fill: {q fill}; stroke: {q stroke}; \
       border-radius: 6; font-size: 13; bold: false}}\n"
 
-/-- One plane group — the container captioned by the packed interface string, one row
-per slot in declared (channel) order. -/
-private def planeGroup (key caption : String) (dir : PortDir) (conditions : List String)
+/-- One plane group — a short caption (`takes` / `yields`), the packed interface string
+as its own sized text row (a long caption would overflow the container; a row widens
+it), then one row per slot in declared (channel) order. -/
+private def planeGroup (key : String) (dir : PortDir) (conditions : List String)
     (withKind : Bool) (c : IngestContract) : String := Id.run do
-  let mut out := s!"    {q key}: \{\n      label: {q caption}\n"
+  let mut out := s!"    {q key}: \{\n      label: {q key}\n"
   out := out ++ "      grid-columns: 1\n      grid-gap: 4\n"
   out := out ++ "      style: {stroke: \"#e5e7eb\"; fill: \"#ffffff\"; border-radius: 8; font-size: 13; bold: true}\n"
+  -- a borderless box rather than a text shape: grid-laid text shapes clip at their
+  -- tails, a box always sizes to its label
+  out := out ++ s!"      \"__iface\": \{label: {q c.interface}; style: \{\
+    fill: \"#ffffff\"; stroke: \"#ffffff\"; font-size: 12; \
+    font-color: \"#6b7280\"; bold: false}}\n"
   let mut i := 0
   for s in c.slots do
     out := out ++ slotRow dir conditions withKind i s
@@ -108,11 +114,14 @@ private def planeGroup (key caption : String) (dir : PortDir) (conditions : List
   out := out ++ "    }\n"
   return out
 
-/-- One stage box: title, the caller's note lines, and the takes / yields plane groups
-side by side. `withKind` selects the system reading (names only, kinds in tooltips) or
-the stage reading (kinds on the rows, evidence in tooltips). -/
-private def stageBox (s : StageSpec) (withKind : Bool) : String := Id.run do
-  let mut out := s!"{q s.id}: \{\n  label: {q s.title}\n"
+/-- One stage box: the given label (the stage's title on the system card, empty on the
+stage page whose title node already carries it), the caller's note lines, and the
+takes / yields plane groups side by side. `withKind` selects the system reading (names
+only, kinds in tooltips) or the stage reading (kinds on the rows, evidence in
+tooltips). -/
+private def stageBox (s : StageSpec) (withKind : Bool) (boxLabel : String) :
+    String := Id.run do
+  let mut out := s!"{q s.id}: \{\n  label: {q boxLabel}\n"
   out := out ++ "  grid-columns: 1\n  grid-gap: 8\n"
   out := out ++ "  style: {stroke: \"#d1d5db\"; fill: \"#fafafa\"; border-radius: 10; font-size: 16; bold: true}\n"
   if !s.notes.isEmpty then
@@ -126,9 +135,8 @@ private def stageBox (s : StageSpec) (withKind : Bool) : String := Id.run do
     out := out ++ "  }\n"
   out := out ++ "  \"__planes\": {\n    label: \"\"\n    grid-columns: 2\n    grid-gap: 8\n"
   out := out ++ boxStyle ++ "\n"
-  out := out ++ planeGroup "takes" s!"takes — {s.input.interface}" .input [] withKind s.input
-  out := out ++ planeGroup "yields" s!"yields — {s.output.interface}" .output s.conditions
-    withKind s.output
+  out := out ++ planeGroup "takes" .input [] withKind s.input
+  out := out ++ planeGroup "yields" .output s.conditions withKind s.output
   out := out ++ "  }\n"
   out := out ++ "}\n"
   return out
@@ -160,7 +168,7 @@ def systemCard (title : String) (stages : List StageSpec)
   out := out ++ ("\"__title\": {label: " ++ q title
     ++ "; shape: text; near: top-center; style: {font-size: 20; bold: true}}\n")
   for s in stages do
-    out := out ++ stageBox s (withKind := false)
+    out := out ++ stageBox s (withKind := false) (boxLabel := s.title)
   for c in couplings do
     out := out ++ s!"{q c.src} -> {q c.dst}: {q (String.intercalate " · " c.planes)}\n"
   return out
@@ -176,7 +184,7 @@ def stageCard (s : StageSpec) : Except String String := do
   out := out ++ "direction: right\n"
   out := out ++ ("\"__title\": {label: " ++ q s!"stage overview — {s.title}"
     ++ "; shape: text; near: top-center; style: {font-size: 20; bold: true}}\n")
-  out := out ++ stageBox s (withKind := true)
+  out := out ++ stageBox s (withKind := true) (boxLabel := "")
   return out
 
 end PropertyKindCalculus.IngestCard

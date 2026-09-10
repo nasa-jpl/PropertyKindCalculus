@@ -72,8 +72,11 @@ def stagePage : String := okOrError (stageCard prep)
 #guard hasSub system "probe system — end to end"
 #guard hasSub system "Stage P — the preparation"
 #guard hasSub system "Stage M — the main step"
-#guard hasSub system "takes — probe.prep.input (2,H,W)"
-#guard hasSub system "yields — probe.prep.output (2,H,W)"
+-- short captions; the packed interface string is its own sized text row
+#guard hasSub system "label: \"takes\""
+#guard hasSub system "label: \"yields\""
+#guard hasSub system "probe.prep.input (2,H,W)"
+#guard hasSub system "probe.prep.output (2,H,W)"
 -- names only on the rows; the kind rides the tooltip
 #guard hasSub system "{label: \"raw\";"
 #guard !hasSub system "raw : probe reading"
