@@ -26,6 +26,7 @@ import PropertyKindCalculus.Tests.Core.Decimal
 import PropertyKindCalculus.Tests.Core.KindEdges
 import PropertyKindCalculus.Tests.Core.KindIncidence
 import PropertyKindCalculus.Tests.Core.KindGraphD2
+import PropertyKindCalculus.Tests.Core.ModuleCard
 import PropertyKindCalculus.Tests.Core.KindLedger
 import PropertyKindCalculus.Tests.Core.KindRelation
 import PropertyKindCalculus.Tests.Core.KindContracts

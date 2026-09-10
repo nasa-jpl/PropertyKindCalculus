@@ -10,6 +10,10 @@ boundary to others, and the inter-derivable kind clusters its interface crosses.
 the reading a consumer of the module needs before deploying it, at the scale of the
 contract's own vocabulary.
 
+Two emitters share the contract value: `moduleCard`, the full specification sheet, and
+`moduleOverviewCard`, the first-contact reading — inputs and outputs only, sized for a
+landscape page, with everything else reduced to tally chips deferring to the sheet.
+
 The emitter is a pure function of the contract value and of *prepared* rows for the two
 readings the contract itself does not carry — the theorem edges (`RelationRow`, from
 `checkRelation`'s results) and the kind clusters (`ClusterRow`, from the kind graph's
@@ -94,6 +98,37 @@ private def panel (key label : String) (rows : List ClauseRow) : String := Id.ru
   out := out ++ "  }\n"
   return out
 
+/-- One interface role group — the container and its port rows, in the dissection palette,
+with exits marked `⊗` and deciders as tooltips. Shared by the full sheet and the overview
+card, so a port reads identically on both. -/
+def portGroup (c : Contract NodeId KindRef) (glabel : String)
+    (ps : List (Port NodeId KindRef)) : String := Id.run do
+  let deciderOf (n : NodeId) : Option Lean.Name :=
+    c.deciders.find? (·.1 == n) |>.map (·.2)
+  let mut out := s!"    {q glabel}: \{\n      grid-columns: 1\n      grid-gap: 4\n"
+  out := out ++ "      style: {stroke: \"#e5e7eb\"; fill: \"#ffffff\"; border-radius: 8; font-size: 13; bold: true}\n"
+  let mut i := 0
+  for p in ps do
+    let rn := p.node.render
+    let a := shortAddr rn
+    let disp := if (ps.filter (fun p' => shortAddr p'.node.render == a)).length == 1
+      then a else rn
+    let mark := if c.exits.contains p.node then " ⊗" else ""
+    let tip := match deciderOf p.node, disp == rn with
+      | some d, _ => some s!"decided by {d} · {rn}"
+      | none, false => some rn
+      | none, true => none
+    let row : ClauseRow :=
+      ⟨s!"{disp} : {p.kind.render}{mark}", portFill p.dir, portStroke p.dir, tip⟩
+    out := out ++ s!"      {q s!"p{i}"}: \{label: {q row.label}; "
+    if let some t := row.tooltip then
+      out := out ++ s!"tooltip: {q t}; "
+    out := out ++ s!"style: \{fill: {q row.fill}; stroke: {q row.stroke}; \
+      border-radius: 6; font-size: 13; bold: false}}\n"
+    i := i + 1
+  out := out ++ "    }\n"
+  return out
+
 /-- **The module interface document** as a D2 card: the header with the module's name
 and tallies, the interface panel (role groups side by side, ports as rows in the
 dissection palette), the clause panel (decides / aggregates / supplies / exits), the
@@ -134,31 +169,8 @@ def moduleCard (c : Contract NodeId KindRef)
     out := out ++ s!"    label: {q "interface"}\n"
     out := out ++ s!"    grid-columns: {groups.length}\n    grid-gap: 8\n"
     out := out ++ "    style: {stroke: \"#9ca3af\"; fill: \"#ffffff\"; border-radius: 8; font-size: 14; bold: true}\n"
-    let deciderOf (n : NodeId) : Option Lean.Name :=
-      c.deciders.find? (·.1 == n) |>.map (·.2)
     for (glabel, ps) in groups do
-      out := out ++ s!"    {q glabel}: \{\n      grid-columns: 1\n      grid-gap: 4\n"
-      out := out ++ "      style: {stroke: \"#e5e7eb\"; fill: \"#ffffff\"; border-radius: 8; font-size: 13; bold: true}\n"
-      let mut i := 0
-      for p in ps do
-        let rn := p.node.render
-        let a := shortAddr rn
-        let disp := if (ps.filter (fun p' => shortAddr p'.node.render == a)).length == 1
-          then a else rn
-        let mark := if c.exits.contains p.node then " ⊗" else ""
-        let tip := match deciderOf p.node, disp == rn with
-          | some d, _ => some s!"decided by {d} · {rn}"
-          | none, false => some rn
-          | none, true => none
-        let row : ClauseRow :=
-          ⟨s!"{disp} : {p.kind.render}{mark}", portFill p.dir, portStroke p.dir, tip⟩
-        out := out ++ s!"      {q s!"p{i}"}: \{label: {q row.label}; "
-        if let some t := row.tooltip then
-          out := out ++ s!"tooltip: {q t}; "
-        out := out ++ s!"style: \{fill: {q row.fill}; stroke: {q row.stroke}; \
-          border-radius: 6; font-size: 13; bold: false}}\n"
-        i := i + 1
-      out := out ++ "    }\n"
+      out := out ++ portGroup c glabel ps
     out := out ++ "  }\n"
   -- the clauses: what the contract says beyond its port list
   let clauseRows : List ClauseRow :=
@@ -187,6 +199,71 @@ def moduleCard (c : Contract NodeId KindRef)
       some "kinds mutually derivable through licensed edges — a same-cluster swap is \
         compensable, not impossible"⟩
   out := out ++ panel "clusters" "inter-derivable kind clusters at this interface" clRows
+  out := out ++ "}\n"
+  return out
+
+/-- **The module overview card** — the module at first contact, sized for a landscape page.
+The header carries the caller's notes (a variant tally, a default-binding statement); the
+interface shows the per-datum inputs and the produced outputs only, side by side; everything
+else the full sheet carries — parameters, configuration, clauses, theorem edges, clusters —
+is reduced to one horizontal strip of tally chips deferring to it. Derived from the same
+checked contract value as `moduleCard`, and the ports render through the same `portGroup`,
+so the overview and the sheet cannot disagree about an interface. -/
+def moduleOverviewCard (c : Contract NodeId KindRef)
+    (relationCount : Nat := 0) (clusterCount : Nat := 0)
+    (notes : List String := []) : String := Id.run do
+  let mut out := ""
+  out := out ++ "vars: {\n  d2-config: {\n    layout-engine: dagre\n  }\n}\n"
+  out := out ++ "direction: down\n"
+  out := out ++ ("\"__title\": {label: " ++ q s!"module overview — {c.name}"
+    ++ "; shape: text; near: top-center; style: {font-size: 20; bold: true}}\n")
+  out := out ++ "\"card\": {\n"
+  out := out ++ "  label: \"\"\n"
+  out := out ++ "  grid-columns: 1\n  grid-gap: 10\n"
+  out := out ++ "  style: {stroke: \"#d1d5db\"; fill: \"#fafafa\"; border-radius: 10}\n"
+  let inputs := c.ports.filter (·.dir == .input)
+  let outputs := c.ports.filter fun p => p.dir == .output || p.dir == .conditional
+  -- the header: what the module is at a glance, plus the caller's checked notes
+  let tally := s!"{c.members.length} member(s) · {inputs.length} input(s) · \
+    {outputs.length} output(s)"
+  out := out ++ "  \"__about\": {\n    label: \"\"\n    grid-columns: 1\n    grid-gap: 4\n"
+  out := out ++ boxStyle ++ "\n"
+  out := out ++ s!"    \"t\": \{label: {q tally}; shape: text; style: \{font-size: 13}}\n"
+  let mut ni := 0
+  for n in notes do
+    out := out ++ s!"    {q s!"n{ni}"}: \{label: {q n}; shape: text; \
+      style: \{font-size: 13; font-color: \"#374151\"}}\n"
+    ni := ni + 1
+  out := out ++ "  }\n"
+  -- the interface: the per-datum inputs and the produced outputs, side by side
+  let groups := [("inputs", inputs), ("outputs", outputs)].filter fun g => !g.2.isEmpty
+  if !groups.isEmpty then
+    out := out ++ "  \"interface\": {\n"
+    out := out ++ s!"    label: {q "interface"}\n"
+    out := out ++ s!"    grid-columns: {groups.length}\n    grid-gap: 8\n"
+    out := out ++ "    style: {stroke: \"#9ca3af\"; fill: \"#ffffff\"; border-radius: 8; font-size: 14; bold: true}\n"
+    for (glabel, ps) in groups do
+      out := out ++ portGroup c glabel ps
+    out := out ++ "  }\n"
+  -- everything else, as one horizontal strip of tallies deferring to the full sheet
+  let chip (n : Nat) (what : String) : Option ClauseRow :=
+    if n == 0 then none else some ⟨s!"{n} {what}", clauseFill, clauseStroke, none⟩
+  let nClauses := c.aggregations.length + c.suppliers.length + c.exits.length
+  let chips := [chip (c.ports.filter (·.dir == .param)).length "parameter(s)",
+                chip (c.ports.filter (·.dir == .config)).length "configuration binding(s)",
+                chip nClauses "declared clause(s)",
+                chip relationCount "theorem edge(s)",
+                chip clusterCount "inter-derivable cluster(s)"].filterMap id
+  if !chips.isEmpty then
+    out := out ++ s!"  \"deferred\": \{\n    label: {q "on the full sheet"}\n"
+    out := out ++ s!"    grid-columns: {chips.length}\n    grid-gap: 4\n"
+    out := out ++ "    style: {stroke: \"#9ca3af\"; fill: \"#ffffff\"; border-radius: 8; font-size: 14; bold: true}\n"
+    let mut i := 0
+    for r in chips do
+      out := out ++ s!"    {q s!"r{i}"}: \{label: {q r.label}; style: \{fill: {q r.fill}; \
+        stroke: {q r.stroke}; border-radius: 6; font-size: 13; bold: false}}\n"
+      i := i + 1
+    out := out ++ "  }\n"
   out := out ++ "}\n"
   return out
 
