@@ -137,8 +137,10 @@ mention them.
 
 The **Algebra** column is the one that justifies the table: it lists every authored edge mentioning
 the kind, which is the complete statement of what may be done with it — multiplied by what, divided
-into what, raised to what power. A kind with an empty Algebra cell is a kind that currently supports
-no arithmetic at all, and that is a fact worth being able to see. -/
+into what, raised to what power. The edges arrive deduplicated by equation and grouped as
+produced / consumed (`KindEdges.groupEdges`), one equation per rendered line. A kind with an empty
+Algebra cell is a kind that currently supports no arithmetic at all, and that is a fact worth being
+able to see. -/
 def kindsTable (layer : KindLayer) (scope : Scope) : MetaM IndexTable := do
   let env ← getEnv
   let headers :=
@@ -156,7 +158,7 @@ def kindsTable (layer : KindLayer) (scope : Scope) : MetaM IndexTable := do
     rows := rows.push (#[
       IndexCell.decl k (lastComponent k),
       .text (← fieldStringChain k layer.identity)] ++ extraCell ++ #[
-      .code (String.intercalate "; " ((edges.getD k #[]).map (·.edge)).toList),
+      .codeGroups (KindEdges.groupEdges (lastComponent k) (edges.getD k #[])),
       .links ((thms.getD k #[]).map fun t => (t, lastComponent t))])
   return { id := layer.id, title := layer.title, headers, rows }
 

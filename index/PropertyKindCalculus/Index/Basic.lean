@@ -89,6 +89,13 @@ inductive IndexCell where
   environment. Carrying the tag as a plain string keeps this library Verso-free; a document that
   defines no such section renders the display text instead of a dead link. -/
   | tag (tag : String) (display : String)
+  /-- Labeled groups of code lines — for a cell whose content is a list of formulas rather than a
+  sentence. Each group is a caption and its lines; a surface that can render one line per entry
+  does (a Verso table cell, a doc-gen4 markdown cell), and the plain-text pin surface joins each
+  group onto one line. The kind table's Algebra column is the client: its edges arrive grouped as
+  produced / consumed (`KindEdges.groupEdges`), because a semicolon-joined paragraph of them was
+  unreadable at production scale. -/
+  | codeGroups (groups : Array (String × Array String))
 deriving Repr, Inhabited, BEq
 
 /-- An empty cell. -/

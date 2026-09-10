@@ -95,6 +95,7 @@ def toCell : IndexCell → DocElabM Cell
     let resolved ← items.toList.mapM fun (n, display) => do
       return ((← labelFor n), display)
     return .links resolved
+  | .codeGroups gs => return .codeGroups (gs.toList.map fun (l, es) => (l, es.toList))
 
 /-- Assemble a harvested table as a renderable `DocTable`. -/
 def toDocTable (t : IndexTable) : DocElabM DocTable := do

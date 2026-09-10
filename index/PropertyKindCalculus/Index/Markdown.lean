@@ -59,6 +59,12 @@ def IndexCell.toMarkdown : IndexCell → String
   | .tag _ d     => if d.isEmpty then "" else "`" ++ mdEscape d ++ "`"
   | .links items =>
     String.intercalate ", " (items.toList.map fun (n, _) => "`" ++ mdEscape (toString n) ++ "`")
+  -- One line per equation inside the cell: `<br>` is the one line break a GFM table cell admits,
+  -- and doc-gen4's markdown renderer passes it through as the inline HTML it is.
+  | .codeGroups groups =>
+    String.intercalate "<br>" (groups.toList.map fun (l, es) =>
+      s!"**{mdEscape l}**<br>" ++
+        String.intercalate "<br>" (es.toList.map fun e => "`" ++ mdEscape e ++ "`"))
 
 /-- A table as a markdown section: a level-2 heading, the row count, and a GFM table. An empty table
 renders as a sentence rather than a headerless table, so a reader is told there are none instead of
@@ -130,7 +136,9 @@ def declarationBlocks (scope : Scope) : MetaM (Array (Name × String)) := withHa
   let sites ← BoundaryAudit.boundarySites scope
   let mut out : Array (Name × String) := #[]
   for k in kinds do
-    let es := (edges.getD k #[]).map (·.edge)
+    -- Deduplicated by equation and grouped produced / consumed, like the table's Algebra cell —
+    -- the raw per-author list shows one copy of an equation per authoring declaration.
+    let egroups := KindEdges.groupEdges (lastComponent k) (edges.getD k #[])
     let ts := thms.getD k #[]
     -- A crossing mints this kind if the audit recorded it among the kinds the site constructs. The
     -- audit renders mints with `ppExpr`, which qualifies or not depending on the ambient namespace,
@@ -138,8 +146,8 @@ def declarationBlocks (scope : Scope) : MetaM (Array (Name × String)) := withHa
     let crossings := sites.filter fun s =>
       s.tier.isSome && s.mints.any fun m => m == toString k || m == lastComponent k
     let mut parts : Array String := #[]
-    unless es.isEmpty do
-      parts := parts.push (htmlSection "Authored kind algebra" es.toList)
+    for (label, es) in egroups do
+      parts := parts.push (htmlSection s!"Authored kind algebra — {label}" es.toList)
     unless crossings.isEmpty do
       parts := parts.push (htmlSection "Authored crossings minting this kind"
         (crossings.toList.map fun s => s!"{s.decl} — {s.tier.map (·.label) |>.getD ""}"))

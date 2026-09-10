@@ -97,12 +97,17 @@ def probeEmission (x : Quantity outputKind Float) : Float := x.magnitude
 Each pin fixes both the row count and the content. A harvest that silently stops matching shows up
 as `(0 row(s))` and fails here. -/
 
+/-! The Algebra cell arrives grouped (`KindEdges.groupEdges`): deduplicated by equation, split
+into the edges *producing* the kind and the edges it enters as an operand. The one edge of this
+world is therefore `produced` on `outputKind`'s row and `consumed` on the two operands' rows —
+the pin fixes that classification as well as the membership. -/
+
 /--
 info: Kinds of property (3 row(s))
 Kind | Identity | Scale | Algebra | Theorems
-gainKind | probe gain | ratio | gainKind · signalKind → outputKind | gain_times_signal
-outputKind | probe output | ratio | gainKind · signalKind → outputKind | gain_times_signal
-signalKind | probe signal | ratio | gainKind · signalKind → outputKind | gain_times_signal
+gainKind | probe gain | ratio | consumed (1): gainKind · signalKind → outputKind | gain_times_signal
+outputKind | probe output | ratio | produced (1): gainKind · signalKind → outputKind | gain_times_signal
+signalKind | probe signal | ratio | consumed (1): gainKind · signalKind → outputKind | gain_times_signal
 -/
 #guard_msgs in
 #pkc_index "kinds" PropertyKindCalculus.Tests.Index

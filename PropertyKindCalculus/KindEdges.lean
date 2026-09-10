@@ -287,6 +287,31 @@ def edgesMentioning (target : Name) : MetaM (Array KindEdge) := do
         out := out.push e
   return out.qsort (fun a b => s!"{a.author}: {a.edge}" < s!"{b.author}: {b.edge}")
 
+/-! ### Grouping a kind's edges for a rendered cell
+
+`edgesByKind` deduplicates by *(author, edge)* — the right identity for the per-author report,
+and the wrong one for a rendered cell, which drops the author and would show one copy of
+`a · b → c` per authoring declaration. The renderers therefore share one grouping: deduplicate
+by the equation alone, then split by the side the kind stands on — the edges **producing** it
+(it is the right-hand side) from the edges **consuming** it (it enters as an operand). -/
+
+/-- The right-hand side of a rendered edge. Every formatter in `specs` ends with `→ <result>`,
+so the segment after the last ` → ` is the result kind. -/
+def edgeRhs (e : String) : String := ((e.splitOn " → ").getLast?).getD ""
+
+/-- The edges mentioning the kind displayed as `short`, deduplicated by equation and grouped for
+rendering: the `produced` group (the kind is the result) and the `consumed` group (the kind is an
+operand), each labeled with its count, empty groups omitted. The consumed group sorts by result
+first, so edges yielding a common kind sit together; an edge with the kind on both sides counts
+as produced. -/
+def groupEdges (short : String) (edges : Array KindEdge) : Array (String × Array String) :=
+  let all := (edges.map (·.edge)).toList.eraseDups
+  let produced := (all.filter (edgeRhs · == short)).toArray.qsort (· < ·)
+  let consumed := (all.filter (edgeRhs · != short)).toArray.qsort fun a b =>
+    edgeRhs a < edgeRhs b || (edgeRhs a == edgeRhs b && a < b)
+  (if produced.isEmpty then #[] else #[(s!"produced ({produced.size})", produced)]) ++
+  (if consumed.isEmpty then #[] else #[(s!"consumed ({consumed.size})", consumed)])
+
 /-- The edges mentioning **each** of `targets`, in one environment walk.
 
 The single-target `edgesMentioning` is the right shape for `#kind_edges`, which asks about one kind.

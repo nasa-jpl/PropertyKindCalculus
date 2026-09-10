@@ -52,6 +52,10 @@ inductive Cell where
   empty `tag` renders its `text` as inline code (no link); a non-empty `tag`
   renders a Blueprint cross-reference, exactly like `ref`. -/
   | links (items : List (String × String))
+  /-- Labeled groups of code lines: each group an emphasized caption over a list with one code
+  line per entry — the rendering of `IndexCell.codeGroups`, which the kind tables' Algebra
+  column uses for its produced / consumed equation groups. -/
+  | codeGroups (groups : List (String × List String))
 deriving Repr, Inhabited, BEq
 
 /-- A generated table: its header titles and its body rows (each a list of cells,
@@ -212,6 +216,17 @@ def cellBlock : Cell → DocElabM Term
     let inls := parts.foldl (init := (#[] : Array Term)) fun acc p =>
       if acc.isEmpty then #[p] else (acc.push sep).push p
     `(Verso.Doc.Block.para #[$inls,*])
+  | .codeGroups groups => do
+    -- One equation per line: each group is an emphasized caption over a list of code items,
+    -- and the cell is their concatenation.
+    let mut blocks : Array Term := #[]
+    for (label, lines) in groups do
+      blocks := blocks.push (← `(Verso.Doc.Block.para
+        #[Verso.Doc.Inline.emph #[Verso.Doc.Inline.text $(quote label)]]))
+      let items ← lines.toArray.mapM fun e =>
+        `(Verso.Doc.ListItem.mk #[Verso.Doc.Block.para #[Verso.Doc.Inline.code $(quote e)]])
+      blocks := blocks.push (← `(Verso.Doc.Block.ul #[$items,*]))
+    `(Verso.Doc.Block.concat #[$blocks,*])
 
 /-- Build the `Block.table` term from an evaluated `DocTable`. The header row is
 prepended and rendered as `<th>` (the table extension treats row 0 as the header
