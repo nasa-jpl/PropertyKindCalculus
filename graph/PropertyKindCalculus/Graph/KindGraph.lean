@@ -270,6 +270,72 @@ def d2Cluster (kg : KindGraph) (cl : Array Nat) : String := Id.run do
     lines := lines.push l
   return String.intercalate "\n" lines.toList ++ "\n"
 
+/-- The D2 source of one cluster rendered with **role-family containers** — the reading a
+document embeds when the flat cluster diagram is too dense to be legible. `groups` is the
+caller's assignment of the cluster's kinds to labeled families (matched by name or suffix,
+the allow-group convention), in the caller's narrative order. Each family renders as a
+container holding its member kinds; within-family licensed edges stay node-level (the
+witness family as the label, distinct authorings collapsed to `×n`); cross-family edges
+collapse to one container-to-container arrow per (source family, target family, witness
+family), carrying its count — the node-level cross-family detail remains the flat
+`d2Cluster`'s content.
+
+The assignment must partition the cluster, and an incomplete or ambiguous one is an
+**error, not a silent omission**: a member kind matched by no group, a member matched by
+two, and a listed name matching no member are each named. A figure that quietly dropped
+a kind would misreport the finding it exists to make visible. -/
+def d2ClusterGrouped (kg : KindGraph) (cl : Array Nat)
+    (groups : List (String × List Name)) : Except String String := do
+  let names := kg.d2Names
+  let matchesKind (a k : Name) : Bool := a == k || a.isSuffixOf k
+  let grps := groups.toArray
+  -- the partition: every member in exactly one group, every listed name matching someone
+  let mut assign : Array (Nat × Nat) := #[]   -- (vertex, group index)
+  for i in cl do
+    let hits := (Array.range grps.size).filter fun gi =>
+      (grps[gi]!.2.any fun a => matchesKind a kg.kinds[i]!)
+    match hits.size with
+    | 0 => throw s!"kind '{kg.kinds[i]!}' of the cluster is in no group"
+    | 1 => assign := assign.push (i, hits[0]!)
+    | _ => throw s!"kind '{kg.kinds[i]!}' of the cluster is in {hits.size} groups: \
+        {String.intercalate ", " (hits.toList.map fun gi => s!"'{grps[gi]!.1}'")}"
+  for (label, members) in groups do
+    for a in members do
+      unless cl.any (fun i => matchesKind a kg.kinds[i]!) do
+        throw s!"group '{label}' lists '{a}', which matches no kind of the cluster"
+  let groupOf (v : Nat) : Nat := ((assign.find? (·.1 == v)).map (·.2)).getD 0
+  let key (gi : Nat) : String := "\"" ++ (grps[gi]!.1.replace "\"" "'") ++ "\""
+  -- the containers, in the caller's order, nodes and within-family edges inside
+  let mut lines : Array String := #[d2Header, "direction: down"]
+  let inside := kg.edges.filter fun e => cl.contains e.src && cl.contains e.dst
+  for gi in [0:grps.size] do
+    lines := lines.push s!"{key gi}: \{"
+    let members := (assign.filter (·.2 == gi)).map (·.1)
+    for l in (members.map fun i => d2Node names[i]!).qsort (· < ·) do
+      lines := lines.push s!"  {l}"
+    let own := inside.filter fun e => groupOf e.src == gi && groupOf e.dst == gi
+    let triples := (own.map fun e =>
+      (d2Id names[e.src]!, d2Id names[e.dst]!, shortName e.via)).toList
+    let mut edgeLines : Array String := #[]
+    for t in triples.eraseDups do
+      let count := triples.count t
+      let label := if count > 1 then s!"{t.2.2} ×{count}" else t.2.2
+      edgeLines := edgeLines.push s!"  {t.1} -> {t.2.1}: \"{label}\""
+    for l in edgeLines.qsort (· < ·) do
+      lines := lines.push l
+    lines := lines.push "}"
+  -- the cross-family arrows, one per (source family, target family, witness family)
+  let crossing := (inside.filter fun e => groupOf e.src != groupOf e.dst).map fun e =>
+    (groupOf e.src, groupOf e.dst, shortName e.via)
+  let mut arrows : Array String := #[]
+  for t in crossing.toList.eraseDups do
+    let count := crossing.toList.count t
+    let label := if count > 1 then s!"{t.2.2} ×{count}" else t.2.2
+    arrows := arrows.push s!"{key t.1} -> {key t.2.1}: \"{label}\""
+  for l in arrows.qsort (· < ·) do
+    lines := lines.push l
+  return String.intercalate "\n" lines.toList ++ "\n"
+
 /-- The alphabetical representative of a vertex group, as a display name — compared
 case-insensitively, so a capitalized namespace qualifier on a collider does not outrank
 the group's natural first kind name. -/
