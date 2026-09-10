@@ -54,8 +54,10 @@ inductive Cell where
   | links (items : List (String × String))
   /-- Labeled groups of code lines: each group an emphasized caption over a list with one code
   line per entry — the rendering of `IndexCell.codeGroups`, which the kind tables' Algebra
-  column uses for its produced / consumed equation groups. -/
-  | codeGroups (groups : List (String × List String))
+  column uses for its produced / consumed equation groups. Each line is a `(tag, text)` pair
+  like `links`: an empty tag renders plain inline code, a non-empty one a Blueprint
+  cross-reference styled as code — for an equation, the declaration that authored it. -/
+  | codeGroups (groups : List (String × List (String × String)))
 deriving Repr, Inhabited, BEq
 
 /-- A generated table: its header titles and its body rows (each a list of cells,
@@ -218,13 +220,21 @@ def cellBlock : Cell → DocElabM Term
     `(Verso.Doc.Block.para #[$inls,*])
   | .codeGroups groups => do
     -- One equation per line: each group is an emphasized caption over a list of code items,
-    -- and the cell is their concatenation.
+    -- and the cell is their concatenation. A line with a tag links its code to that node.
     let mut blocks : Array Term := #[]
     for (label, lines) in groups do
       blocks := blocks.push (← `(Verso.Doc.Block.para
         #[Verso.Doc.Inline.emph #[Verso.Doc.Inline.text $(quote label)]]))
-      let items ← lines.toArray.mapM fun e =>
-        `(Verso.Doc.ListItem.mk #[Verso.Doc.Block.para #[Verso.Doc.Inline.code $(quote e)]])
+      let items ← lines.toArray.mapM fun (tag, txt) => do
+        let inl ←
+          if tag.isEmpty then
+            `(Verso.Doc.Inline.code $(quote txt))
+          else do
+            let data : Informal.InlineData :=
+              { label := Informal.LabelNameParsing.parse tag, block := none }
+            `(Verso.Doc.Inline.other (Informal.Inline.informal $(quote data))
+                #[Verso.Doc.Inline.code $(quote txt)])
+        `(Verso.Doc.ListItem.mk #[Verso.Doc.Block.para #[$inl]])
       blocks := blocks.push (← `(Verso.Doc.Block.ul #[$items,*]))
     `(Verso.Doc.Block.concat #[$blocks,*])
 

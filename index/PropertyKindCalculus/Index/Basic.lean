@@ -90,12 +90,21 @@ inductive IndexCell where
   defines no such section renders the display text instead of a dead link. -/
   | tag (tag : String) (display : String)
   /-- Labeled groups of code lines — for a cell whose content is a list of formulas rather than a
-  sentence. Each group is a caption and its lines; a surface that can render one line per entry
-  does (a Verso table cell, a doc-gen4 markdown cell), and the plain-text pin surface joins each
-  group onto one line. The kind table's Algebra column is the client: its edges arrive grouped as
-  produced / consumed (`KindEdges.groupEdges`), because a semicolon-joined paragraph of them was
-  unreadable at production scale. -/
-  | codeGroups (groups : Array (String × Array String))
+  sentence. Each group is a caption and its lines; a line pairs the code with the declaration a
+  document may link it to (for a kind equation, its authoring declaration — `.anonymous` renders
+  unlinked). A surface that can render one line per entry does (a Verso table cell, a doc-gen4
+  markdown cell), and the plain-text pin surface joins each group onto one line. The kind table's
+  Algebra column is the client: its edges arrive grouped as produced / consumed
+  (`KindEdges.groupEdges`), because a semicolon-joined paragraph of them was unreadable at
+  production scale. -/
+  | codeGroups (groups : Array (String × Array (String × Name)))
+  /-- A declaration reference whose display text is *content* rather than a name — an identity
+  string, a scale word. A surface that can attach a link to arbitrary text links the text to the
+  declaration's node or page (the Verso adapters); the markdown surface, which can only link
+  name-shaped code spans, keeps the text as it stands. Distinct from `decl`, whose display is a
+  form of the declaration's own name and which the markdown surface therefore renders as the
+  qualified name for doc-gen4 to resolve. -/
+  | declText (n : Name) (text : String)
 deriving Repr, Inhabited, BEq
 
 /-- An empty cell. -/

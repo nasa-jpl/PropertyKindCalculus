@@ -95,7 +95,16 @@ def toCell : IndexCell → DocElabM Cell
     let resolved ← items.toList.mapM fun (n, display) => do
       return ((← labelFor n), display)
     return .links resolved
-  | .codeGroups gs => return .codeGroups (gs.toList.map fun (l, es) => (l, es.toList))
+  -- The display text is content, so it links where the declaration has a node and otherwise
+  -- stays plain text — never code, which is a name's styling.
+  | .declText n text => do
+    let label ← labelFor n
+    return if label.isEmpty then .text text else .ref label text
+  | .codeGroups gs => do
+    let mapped ← gs.toList.mapM fun (l, es) => do
+      let items ← es.toList.mapM fun (txt, n) => do return ((← labelFor n), txt)
+      return (l, items)
+    return .codeGroups mapped
 
 /-- Assemble a harvested table as a renderable `DocTable`. -/
 def toDocTable (t : IndexTable) : DocElabM DocTable := do

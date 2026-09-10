@@ -90,9 +90,10 @@ def IndexCell.toText : IndexCell → String
   | .decl _ d    => d
   | .links items => String.intercalate ", " (items.toList.map (·.2))
   | .tag _ d     => d
+  | .declText _ t => t
   | .codeGroups groups =>
     String.intercalate " ‖ " (groups.toList.map fun (l, es) =>
-      l ++ ": " ++ String.intercalate "; " es.toList)
+      l ++ ": " ++ String.intercalate "; " (es.toList.map (·.1)))
 
 /-- A table as a plain-text block: a title line, the headers, and one ` | `-separated line per row.
 

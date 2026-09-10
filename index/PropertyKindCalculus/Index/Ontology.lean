@@ -77,6 +77,23 @@ def fieldStringChain (declName : Name) (chain : Array Name) : MetaM String := do
 def fieldString (declName field : Name) : MetaM String :=
   fieldStringChain declName #[field]
 
+/-- The head constant of the value reached from `declName` by `chain` — the declaration the cell
+links to when its rendered value is a constructor (a scale, an enum field). `none` when the value
+reduces to anything else (a literal, an `Option` payload, a lambda) or exhausts its reduction
+budget: the cell then degrades to unlinked text rather than failing the table. -/
+def fieldConstChain? (declName : Name) (chain : Array Name) : MetaM (Option Name) := do
+  let r ← bounded do
+    let mut e ← mkConstWithLevelParams declName
+    for p in chain do
+      e ← mkAppM p #[e]
+    let v ← Meta.whnf e
+    match v.getAppFn with
+    | .const c _ =>
+      if c == ``Option.some || c == ``Option.none then return (none : Option Name)
+      else return some c
+    | _ => return (none : Option Name)
+  return r.getD none
+
 /-- The `SortOfSystem`/`Component`/`KindOfProperty` a dedicated kind projects to, as the
 *declaration* that defines it where one exists — so the cell can link — else as the rendered value.
 
@@ -152,12 +169,18 @@ def kindsTable (layer : KindLayer) (scope : Scope) : MetaM IndexTable := do
   let thms := theoremsMentioning env kinds
   let mut rows : Array (Array IndexCell) := #[]
   for k in kinds do
+    -- The identity links back to the kind's own declaration, and the extra column (a scale) to
+    -- the constructor its value reduces to — so every cell of the row can jump to a definition.
     let extraCell : Array IndexCell ← match layer.extra with
-      | some (_, chain) => pure #[.code (← fieldStringChain k chain)]
+      | some (_, chain) => do
+        let txt ← fieldStringChain k chain
+        match ← fieldConstChain? k chain with
+        | some c => pure #[IndexCell.declText c txt]
+        | none   => pure #[.code txt]
       | none            => pure #[]
     rows := rows.push (#[
       IndexCell.decl k (lastComponent k),
-      .text (← fieldStringChain k layer.identity)] ++ extraCell ++ #[
+      .declText k (← fieldStringChain k layer.identity)] ++ extraCell ++ #[
       .codeGroups (KindEdges.groupEdges (lastComponent k) (edges.getD k #[])),
       .links ((thms.getD k #[]).map fun t => (t, lastComponent t))])
   return { id := layer.id, title := layer.title, headers, rows }

@@ -301,14 +301,27 @@ def edgeRhs (e : String) : String := ((e.splitOn " → ").getLast?).getD ""
 
 /-- The edges mentioning the kind displayed as `short`, deduplicated by equation and grouped for
 rendering: the `produced` group (the kind is the result) and the `consumed` group (the kind is an
-operand), each labeled with its count, empty groups omitted. The consumed group sorts by result
+operand), each labeled with its count, empty groups omitted. Each equation carries one authoring
+declaration — the alphabetically first, when several authored the same equation — so a rendered
+cell can link the equation to a declaration that authored it. The consumed group sorts by result
 first, so edges yielding a common kind sit together; an edge with the kind on both sides counts
 as produced. -/
-def groupEdges (short : String) (edges : Array KindEdge) : Array (String × Array String) :=
-  let all := (edges.map (·.edge)).toList.eraseDups
-  let produced := (all.filter (edgeRhs · == short)).toArray.qsort (· < ·)
-  let consumed := (all.filter (edgeRhs · != short)).toArray.qsort fun a b =>
-    edgeRhs a < edgeRhs b || (edgeRhs a == edgeRhs b && a < b)
+def groupEdges (short : String) (edges : Array KindEdge) :
+    Array (String × Array (String × Name)) :=
+  let eqs := (edges.map (·.edge)).toList.eraseDups
+  let authorOf (e : String) : Name := Id.run do
+    let mut best : Option Name := none
+    for k in edges do
+      if k.edge == e then
+        best := some <| match best with
+          | some b => if toString k.author < toString b then k.author else b
+          | none => k.author
+    return best.getD .anonymous
+  let produced := ((eqs.filter (edgeRhs · == short)).toArray.qsort (· < ·)).map
+    fun e => (e, authorOf e)
+  let consumed := ((eqs.filter (edgeRhs · != short)).toArray.qsort (fun a b =>
+      edgeRhs a < edgeRhs b || (edgeRhs a == edgeRhs b && a < b))).map
+    fun e => (e, authorOf e)
   (if produced.isEmpty then #[] else #[(s!"produced ({produced.size})", produced)]) ++
   (if consumed.isEmpty then #[] else #[(s!"consumed ({consumed.size})", consumed)])
 
