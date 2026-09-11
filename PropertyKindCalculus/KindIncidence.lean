@@ -751,7 +751,8 @@ def WalkSt.copyTo (st : WalkSt) (site : String) (src node : NodeId) (kind : Kind
     (owned : Bool) : WalkSt :=
   let st := if owned then { st with intros := st.intros.push ⟨node, kind, .derived⟩ }
             else st
-  let so : StepOccurrence := ⟨⟨.copy, [(src, kind)], node, kind, site⟩, #[kind], false, false⟩
+  let so : StepOccurrence :=
+    ⟨⟨.copy, [(src, kind)], node, kind, site, .anonymous⟩, #[kind], false, false⟩
   { st with occs := st.occs.push so }
 
 /-- A value's assignment target: the node its producer lands on. -/
@@ -791,7 +792,8 @@ def sourceAt (h : HarvestCtx) (tier : IntroTier) (kind : KindRef)
   | some (n, k, false) =>
     let (m, st) := st.nextFresh
     let st := { st with intros := st.intros.push ⟨m, k, tier⟩ }
-    let so : StepOccurrence := ⟨⟨.copy, [(m, k)], n, k, h.site⟩, #[k], false, false⟩
+    let so : StepOccurrence :=
+      ⟨⟨.copy, [(m, k)], n, k, h.site, .anonymous⟩, #[k], false, false⟩
     (m, { st with occs := st.occs.push so })
   | none =>
     let (m, st) := st.nextFresh
@@ -835,7 +837,8 @@ def opaqueTarget (h : HarvestCtx) (t1 : Option (NodeId × KindRef × Bool))
     if h.declKindConst then
       let (m, st) := st.nextFresh
       let st := { st with intros := st.intros.push ⟨m, k, .attested "[kindConst]"⟩ }
-      let so : StepOccurrence := ⟨⟨.copy, [(m, k)], n, k, h.site⟩, #[k], false, false⟩
+      let so : StepOccurrence :=
+        ⟨⟨.copy, [(m, k)], n, k, h.site, .anonymous⟩, #[k], false, false⟩
       { st with occs := st.occs.push so }
     else st
   | none => st
@@ -1280,7 +1283,9 @@ partial def walkApp (h : HarvestCtx) (e : Expr) (ctx : BinderCtx)
           st := { st' with intros := st'.intros.push ⟨m, kr, .derived⟩ }
           resNode := m
         let ops := (opNames.zip #[kx, ky]).toList
-        let so : StepOccurrence := ⟨⟨.additive, ops, resNode, kr, h.site⟩, #[kx, ky], false, false⟩
+        let addOp := if e.isAppOfArity ``HAdd.hAdd 6 then ``HAdd.hAdd else ``HSub.hSub
+        let so : StepOccurrence :=
+          ⟨⟨.additive, ops, resNode, kr, h.site, addOp⟩, #[kx, ky], false, false⟩
         st := { st with occs := st.occs.push so }
         for j in [4, 5] do
           st ← walk h args[j]! ctx (opTargets.get? j) st
@@ -1337,7 +1342,7 @@ partial def walkApp (h : HarvestCtx) (e : Expr) (ctx : BinderCtx)
               st := { st' with intros := st'.intros.push ⟨m, be.resKind, .derived⟩ }
               resNode := m
             let so : StepOccurrence :=
-              ⟨⟨be.family, ops, resNode, be.resKind, h.site⟩, be.opKinds, be.assumed,
+              ⟨⟨be.family, ops, resNode, be.resKind, h.site, c⟩, be.opKinds, be.assumed,
                partialInc⟩
             st := { st with occs := st.occs.push so }
           if !consumed then
@@ -1406,7 +1411,7 @@ partial def walkApp (h : HarvestCtx) (e : Expr) (ctx : BinderCtx)
             st := { st' with intros := st'.intros.push ⟨m, resK, .derived⟩ }
             resNode := m
           let so : StepOccurrence :=
-            ⟨⟨.select ma.alts.size, ops, resNode, resK, h.site⟩,
+            ⟨⟨.select ma.alts.size, ops, resNode, resK, h.site, .anonymous⟩,
              (ops.map (·.2)).toArray, false, false⟩
           st := { st with occs := st.occs.push so }
           return ← ma.remaining.foldlM (fun st a => walk h a ctx none st) st
@@ -1528,7 +1533,7 @@ partial def walkSubStep (h : HarvestCtx) (c : Name) (e : Expr) (ctx : BinderCtx)
   let emit (st : WalkSt) (node : NodeId) (kind : KindRef) (owned : Bool) : WalkSt :=
     let st := if owned then { st with intros := st.intros.push ⟨node, kind, .derived⟩ }
               else st
-    let so : StepOccurrence := ⟨⟨fam, ops, node, kind, h.site⟩, opKinds, false, false⟩
+    let so : StepOccurrence := ⟨⟨fam, ops, node, kind, h.site, c⟩, opKinds, false, false⟩
     { st with occs := st.occs.push so }
   match targets with
   | .inl t1 =>
@@ -1915,7 +1920,7 @@ def interfaceBox (member : Name) (g : StepGraph) : Provenance NodeId KindRef :=
     intros := []
     occurrences := outs.map fun o =>
       ⟨.step member none ins.length, ins.map (fun p => (p.node, p.kind)), o.node, o.kind,
-       lastComponent member⟩
+       lastComponent member, .anonymous⟩
     exits := [] }
 
 /-- Assemble a set of declarations into one multi-step graph (module section, "The
@@ -2072,7 +2077,7 @@ def assemble (decls : Array Name) : MetaM Assembly := do
           { opc.1 with level := some (.member decls[iMem[pk]!]!) }
         else { opc.1 with level := some callerLvl }
       let dst : NodeId := { p.node with level := some calleeLvl }
-      wires := wires.push ⟨.copy, [(src, opc.2)], dst, opc.2, iName[pk]!⟩
+      wires := wires.push ⟨.copy, [(src, opc.2)], dst, opc.2, iName[pk]!, .anonymous⟩
       unless demoted.contains dst do
         demoted := demoted.push dst
       kindPairs := kindPairs.modify k (·.push (p.kind, opc.2))
@@ -2116,7 +2121,7 @@ def assemble (decls : Array Name) : MetaM Assembly := do
         let dst : NodeId := { q.node with level := some (.member decls[j']!) }
         unless demotedCfg.contains dst do
           demotedCfg := demotedCfg.push dst
-          cfgWires := cfgWires.push ⟨.copy, [(src, q.kind)], dst, q.kind, names[j]!⟩
+          cfgWires := cfgWires.push ⟨.copy, [(src, q.kind)], dst, q.kind, names[j]!, .anonymous⟩
         unless demotedOuts.contains src do demotedOuts := demotedOuts.push src
         unless wiredCite.contains (j', j) do wiredCite := wiredCite.push (j', j)
   -- transform each instance: name its calls after the instances they reach,
@@ -2322,9 +2327,9 @@ instance : ToExpr (Intro NodeId KindRef) where
 
 instance : ToExpr (Occurrence NodeId KindRef) where
   toTypeExpr := mkApp2 (mkConst ``Provenance.Occurrence) nodeIdE kindRefE
-  toExpr o := mkApp7 (mkConst ``Provenance.Occurrence.mk) nodeIdE kindRefE
+  toExpr o := mkApp8 (mkConst ``Provenance.Occurrence.mk) nodeIdE kindRefE
     (toExpr o.family) (toExpr o.operands) (toExpr o.result) (toExpr o.resultKind)
-    (toExpr o.site)
+    (toExpr o.site) (toExpr o.op)
 
 instance : ToExpr (Provenance NodeId KindRef) where
   toTypeExpr := mkApp2 (mkConst ``PropertyKindCalculus.Provenance) nodeIdE kindRefE

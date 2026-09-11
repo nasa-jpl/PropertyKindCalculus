@@ -25,6 +25,7 @@ its edge and cluster tables under-report silently.
 -/
 import PropertyKindCalculus.Graph.Footprint
 import PropertyKindCalculus.Index.Basic
+import PropertyKindCalculus.KindEdges
 
 namespace PropertyKindCalculus.ModuleSheet
 
@@ -179,8 +180,11 @@ def sheetTablesOf (c : Contract NodeId KindRef) (rels : List RelationRow)
 /-- The tables of one **declared** boundary: `sheetTablesOf` over the values the card
 generator prepares the same way — the contract read from its declaration, the relation
 survey under `root`, the cluster rows of `root`'s kind graph, and each member's
-docstring summary. The closure-sensitivity note in the module docstring applies: the
-surveys see the elaborating document's imports. -/
+docstring summary — plus the one table only an environment walk can prepare: the
+kind-algebra equations at this interface, `KindEdges.groupEdges`'s produced/consumed
+groups restricted to the sheet's port kinds, each equation linked to its authoring
+declaration. The closure-sensitivity note in the module docstring applies: the surveys
+see the elaborating document's imports. -/
 def sheetTables (decl : Name) (root : Name) : MetaM (Array IndexTable) := do
   let c ← contractValueOf decl
   let rels ← relationRows root decl
@@ -190,6 +194,22 @@ def sheetTables (decl : Name) (root : Name) : MetaM (Array IndexTable) := do
   let mut docs : List (Name × String) := []
   for m in c.members do
     docs := docs ++ [(m, ← summaryLine env m)]
-  return sheetTablesOf c rels cls docs
+  let mut tables := sheetTablesOf c rels cls docs
+  let kindNames := ((c.ports.map (·.kind)).eraseDups.filterMap fun k =>
+    match k with | .decl n => some n | _ => none).toArray
+  let byKind ← KindEdges.edgesByKind kindNames
+  let mut kindRows : Array (Array IndexCell) := #[]
+  for n in kindNames do
+    let es := byKind.getD n #[]
+    if es.isEmpty then continue
+    kindRows := kindRows.push
+      #[.declText n (lastComponent n), .codeGroups (KindEdges.groupEdges (lastComponent n) es)]
+  if !kindRows.isEmpty then
+    tables := tables.push
+      { id := "sheet-kind-equations"
+        title := "Kind algebra at this interface — the licensed equations over the \
+          sheet's kinds, each linked to its authoring declaration"
+        headers := #["Kind", "Produced / consumed"], rows := kindRows }
+  return tables
 
 end PropertyKindCalculus.ModuleSheet

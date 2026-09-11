@@ -22,8 +22,8 @@ def G : Provenance String String where
   intros := [⟨"mid", "kB", .derived⟩, ⟨"att", "kA", .attested "vendor table reviewed"⟩,
     ⟨"gat", "kB", .gated⟩]
   occurrences := [
-    ⟨.product, [("in1", "kA"), ("att", "kA")], "mid", "kB", "probe"⟩,
-    ⟨.product, [("mid", "kB"), ("gat", "kB")], "out", "kC", "probe"⟩]
+    ⟨.product, [("in1", "kA"), ("att", "kA")], "mid", "kB", "probe", .anonymous⟩,
+    ⟨.product, [("mid", "kB"), ("gat", "kB")], "out", "kC", "probe", .anonymous⟩]
   exits := ["mid"]
 
 #guard G.wellFormed
@@ -91,8 +91,8 @@ def Gcyc : Provenance String String where
   ports := [⟨"a", "k", .input⟩]
   intros := [⟨"b", "k", .derived⟩]
   occurrences := [
-    ⟨.copy, [("a", "k")], "b", "k", "probe"⟩,
-    ⟨.copy, [("b", "k")], "a", "k", "probe"⟩]
+    ⟨.copy, [("a", "k")], "b", "k", "probe", .anonymous⟩,
+    ⟨.copy, [("b", "k")], "a", "k", "probe", .anonymous⟩]
   exits := []
 
 #guard !Gcyc.acyclic

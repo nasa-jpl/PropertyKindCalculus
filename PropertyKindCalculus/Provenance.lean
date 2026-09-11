@@ -574,6 +574,13 @@ structure Provenance.Occurrence (ν κ : Type) where
   /-- The use site the occurrence is attributed to (rendered; a declaration name). Two
   uses of one witness are two occurrences. -/
   site : String
+  /-- The operation discharging this occurrence, where the walk saw one: the callee of
+  the consuming application that stated the edge, or the scalar head of a same-kind
+  carrier sum (`HAdd.hAdd` / `HSub.hSub`). `.anonymous` where the edge has no single
+  operation — a wire, a signature box. This is what a value-equation rendering needs
+  and the family deliberately abstracts: `additive` covers sum and difference alike,
+  and `transcendental` does not say which function. -/
+  op : Lean.Name := .anonymous
 deriving Repr, Inhabited, BEq
 
 /-- **The metrological provenance hypergraph**, as data: kind-typed ports, node
@@ -1094,7 +1101,8 @@ def mapNodes {ν' : Type} (f : ν → ν') (g : Provenance ν κ) : Provenance �
   ports := g.ports.map fun p => ⟨f p.node, p.kind, p.dir⟩
   intros := g.intros.map fun i => ⟨f i.node, i.kind, i.tier⟩
   occurrences := g.occurrences.map fun o =>
-    ⟨o.family, o.operands.map (fun oc => (f oc.1, oc.2)), f o.result, o.resultKind, o.site⟩
+    ⟨o.family, o.operands.map (fun oc => (f oc.1, oc.2)), f o.result, o.resultKind, o.site,
+     o.op⟩
   exits := g.exits.map f
 
 /-- Rename every kind through `f` — the assembly's monomorphization: a kind-generic
@@ -1105,7 +1113,8 @@ def mapKinds {κ' : Type} (f : κ → κ') (g : Provenance ν κ) : Provenance �
   ports := g.ports.map fun p => ⟨p.node, f p.kind, p.dir⟩
   intros := g.intros.map fun i => ⟨i.node, f i.kind, i.tier⟩
   occurrences := g.occurrences.map fun o =>
-    ⟨o.family, o.operands.map (fun oc => (oc.1, f oc.2)), o.result, f o.resultKind, o.site⟩
+    ⟨o.family, o.operands.map (fun oc => (oc.1, f oc.2)), o.result, f o.resultKind, o.site,
+     o.op⟩
   exits := g.exits
 
 /-- Field-wise union. On namespaced (node-disjoint) operands this is the assembly's

@@ -43,8 +43,8 @@ def step : Provenance String String where
     ⟨"out", "deltaK", .output⟩]
   intros := [⟨"z", "gammaK", .derived⟩]
   occurrences := [
-    ⟨.product, [("x", "alphaK"), ("y", "betaK")], "z", "gammaK", "step"⟩,
-    ⟨.quotient, [("z", "gammaK"), ("y", "betaK")], "out", "deltaK", "step"⟩]
+    ⟨.product, [("x", "alphaK"), ("y", "betaK")], "z", "gammaK", "step", .anonymous⟩,
+    ⟨.quotient, [("z", "gammaK"), ("y", "betaK")], "out", "deltaK", "step", .anonymous⟩]
   exits := ["out"]
 
 #guard step.wellFormed
@@ -62,8 +62,8 @@ def stepN : Provenance Nat Nat where
   ports := [⟨0, 10, .input⟩, ⟨1, 11, .input⟩, ⟨3, 13, .output⟩]
   intros := [⟨2, 12, .derived⟩]
   occurrences := [
-    ⟨.product, [(0, 10), (1, 11)], 2, 12, "step"⟩,
-    ⟨.quotient, [(2, 12), (1, 11)], 3, 13, "step"⟩]
+    ⟨.product, [(0, 10), (1, 11)], 2, 12, "step", .anonymous⟩,
+    ⟨.quotient, [(2, 12), (1, 11)], 3, 13, "step", .anonymous⟩]
   exits := [3]
 
 example : stepN.WellFormed := by decide
@@ -83,7 +83,7 @@ a different measurement entirely. -/
 def unrelated : Provenance String String where
   ports := [⟨"p", "muK", .input⟩, ⟨"q", "nuK", .output⟩]
   intros := []
-  occurrences := [⟨.transcendental, [("p", "muK")], "q", "nuK", "unrelated"⟩]
+  occurrences := [⟨.transcendental, [("p", "muK")], "q", "nuK", "unrelated", .anonymous⟩]
   exits := []
 
 #guard unrelated.wellFormed
@@ -107,7 +107,7 @@ evaluated. -/
 def unrelatedN : Provenance Nat Nat where
   ports := [⟨4, 14, .input⟩, ⟨5, 15, .output⟩]
   intros := []
-  occurrences := [⟨.transcendental, [(4, 14)], 5, 15, "unrelated"⟩]
+  occurrences := [⟨.transcendental, [(4, 14)], 5, 15, "unrelated", .anonymous⟩]
   exits := []
 
 example : (stepN.union unrelatedN).WellFormed := by decide
@@ -225,8 +225,8 @@ def cycle : Provenance String String where
   ports := [⟨"x", "alphaK", .input⟩]
   intros := [⟨"a", "gammaK", .derived⟩, ⟨"b", "gammaK", .derived⟩]
   occurrences := [
-    ⟨.product, [("b", "gammaK"), ("x", "alphaK")], "a", "gammaK", "cycle"⟩,
-    ⟨.product, [("a", "gammaK"), ("x", "alphaK")], "b", "gammaK", "cycle"⟩]
+    ⟨.product, [("b", "gammaK"), ("x", "alphaK")], "a", "gammaK", "cycle", .anonymous⟩,
+    ⟨.product, [("a", "gammaK"), ("x", "alphaK")], "b", "gammaK", "cycle", .anonymous⟩]
   exits := []
 
 #guard !cycle.wellFormed
@@ -236,18 +236,18 @@ def cycle : Provenance String String where
 -- An occurrence stating an operand kind the node's declaration does not state: an
 -- occurrence cannot re-kind a node.
 #guard !({ step with occurrences := [
-  ⟨.product, [("x", "betaK"), ("y", "betaK")], "z", "gammaK", "step"⟩,
+  ⟨.product, [("x", "betaK"), ("y", "betaK")], "z", "gammaK", "step", .anonymous⟩,
   step.occurrences[1]!] } : Provenance String String).wellFormed
 
 -- An occurrence touching an undeclared node.
 #guard !({ step with occurrences := [
-  ⟨.product, [("ghost", "alphaK"), ("y", "betaK")], "z", "gammaK", "step"⟩,
+  ⟨.product, [("ghost", "alphaK"), ("y", "betaK")], "z", "gammaK", "step", .anonymous⟩,
   step.occurrences[1]!] } : Provenance String String).wellFormed
 
 -- A product occurrence with one operand: the family's operand count is part of the
 -- edge's type.
 #guard !({ step with occurrences := [
-  ⟨.product, [("x", "alphaK")], "z", "gammaK", "step"⟩,
+  ⟨.product, [("x", "alphaK")], "z", "gammaK", "step", .anonymous⟩,
   step.occurrences[1]!] } : Provenance String String).wellFormed
 
 -- An occurrence deriving an *attested* node: a source's whole point is that its kind
@@ -259,7 +259,7 @@ def cycle : Provenance String String where
 -- An occurrence deriving an *input* port.
 #guard !({ step with occurrences := [
   step.occurrences[0]!,
-  ⟨.quotient, [("z", "gammaK"), ("y", "betaK")], "x", "alphaK", "step"⟩] }
+  ⟨.quotient, [("z", "gammaK"), ("y", "betaK")], "x", "alphaK", "step", .anonymous⟩] }
     : Provenance String String).wellFormed
 
 -- A node declared twice — as a port and as an introduction.
@@ -275,7 +275,7 @@ def cycle : Provenance String String where
 def recipStep : Provenance String String where
   ports := [⟨"T", "periodK", .input⟩, ⟨"f", "frequencyK", .output⟩]
   intros := []
-  occurrences := [⟨.reciprocal, [("T", "periodK")], "f", "frequencyK", "recipStep"⟩]
+  occurrences := [⟨.reciprocal, [("T", "periodK")], "f", "frequencyK", "recipStep", .anonymous⟩]
   exits := []
 
 #guard recipStep.wellFormed
@@ -286,7 +286,7 @@ well-formed. -/
 def repeatedOperand : Provenance String String where
   ports := [⟨"q", "kx", .input⟩, ⟨"r", "fractionK", .output⟩]
   intros := []
-  occurrences := [⟨.quotient, [("q", "kx"), ("q", "kx")], "r", "fractionK", "ratio"⟩]
+  occurrences := [⟨.quotient, [("q", "kx"), ("q", "kx")], "r", "fractionK", "ratio", .anonymous⟩]
   exits := []
 
 #guard repeatedOperand.wellFormed
@@ -315,7 +315,7 @@ checks: a copy that changes the kind is refused. -/
 def passThrough : Provenance String String where
   ports := [⟨"tab", "kx", .input⟩, ⟨"result", "kx", .output⟩]
   intros := []
-  occurrences := [⟨.copy, [("tab", "kx")], "result", "kx", "passThrough"⟩]
+  occurrences := [⟨.copy, [("tab", "kx")], "result", "kx", "passThrough", .anonymous⟩]
   exits := []
 
 #guard passThrough.wellFormed
@@ -325,7 +325,7 @@ def passThrough : Provenance String String where
 -- is what rejects it.
 #guard !({ ports := [⟨"tab", "kx", .input⟩, ⟨"result", "ky", .output⟩],
            intros := [],
-           occurrences := [⟨.copy, [("tab", "kx")], "result", "ky", "passThrough"⟩],
+           occurrences := [⟨.copy, [("tab", "kx")], "result", "ky", "passThrough", .anonymous⟩],
            exits := [] } : Provenance String String).wellFormed
 
 /-! ## The procedure edge — `step`, and the assembly combinators
@@ -352,19 +352,19 @@ procedure edge. -/
 def procBox : Provenance String String where
   ports := [⟨"x", "kx", .input⟩, ⟨"result", "ky", .output⟩]
   intros := []
-  occurrences := [⟨.step `procBox none 1, [("x", "kx")], "result", "ky", "procBox"⟩]
+  occurrences := [⟨.step `procBox none 1, [("x", "kx")], "result", "ky", "procBox", .anonymous⟩]
   exits := []
 
 #guard procBox.wellFormed
 
 -- A procedure edge at the wrong arity is refused by the family's operand count.
 #guard !({ procBox with occurrences :=
-  [⟨.step `procBox none 2, [("x", "kx")], "result", "ky", "procBox"⟩] }
+  [⟨.step `procBox none 2, [("x", "kx")], "result", "ky", "procBox", .anonymous⟩] }
     : Provenance String String).wellFormed
 
 -- `mapNodes` renames every incidence; `mapKinds` is the monomorphization map.
 #guard (procBox.mapNodes ("A/" ++ ·)).occurrences
-  == [⟨.step `procBox none 1, [("A/x", "kx")], "A/result", "ky", "procBox"⟩]
+  == [⟨.step `procBox none 1, [("A/x", "kx")], "A/result", "ky", "procBox", .anonymous⟩]
 #guard ((procBox.mapKinds fun k => if k == "kx" then "alphaK" else k).ports.map (·.kind))
   == ["alphaK", "ky"]
 
@@ -375,15 +375,15 @@ def assembled : Provenance String String :=
   let A : Provenance String String :=
     { ports := [⟨"x", "kx", .input⟩, ⟨"result", "ky", .output⟩]
       intros := []
-      occurrences := [⟨.step `B none 1, [("x", "kx")], "result", "ky", "A"⟩]
+      occurrences := [⟨.step `B none 1, [("x", "kx")], "result", "ky", "A", .anonymous⟩]
       exits := [] }
   let B : Provenance String String :=
     { ports := [⟨"result", "ky", .output⟩]
       intros := [⟨"x", "kx", .derived⟩]  -- the fed input, demoted
-      occurrences := [⟨.step `B none 1, [("x", "kx")], "result", "ky", "B"⟩]
+      occurrences := [⟨.step `B none 1, [("x", "kx")], "result", "ky", "B", .anonymous⟩]
       exits := [] }
   let wires : Provenance String String :=
-    ⟨[], [], [⟨.copy, [("A/x", "kx")], "B/x", "kx", "A"⟩], []⟩
+    ⟨[], [], [⟨.copy, [("A/x", "kx")], "B/x", "kx", "A", .anonymous⟩], []⟩
   ((A.mapNodes ("A/" ++ ·)).union (B.mapNodes ("B/" ++ ·))).union wires
 
 #guard assembled.wellFormed

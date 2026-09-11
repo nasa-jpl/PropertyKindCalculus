@@ -49,16 +49,16 @@ def probe : Assembly :=
                 ⟨(NodeId.config `Probe.Two.dup).field "q", kx, .config⟩,
                 ⟨ares, kz, .output⟩]
       intros := [⟨aseed, kx, .attested "vendor sheet"⟩]
-      occurrences := [⟨.step `B none 2, [(ax, kx), (ay, ky)], ares, kz, "A"⟩]
+      occurrences := [⟨.step `B none 2, [(ax, kx), (ay, ky)], ares, kz, "A", .anonymous⟩]
       exits := [ax] }
   let gB : Provenance NodeId KindRef :=
     { ports := [⟨bres, kz, .output⟩]
       intros := [⟨bx, kx, .derived⟩]
-      occurrences := [⟨.step `B none 1, [(bx, kx)], bres, kz, "B"⟩]
+      occurrences := [⟨.step `B none 1, [(bx, kx)], bres, kz, "B", .anonymous⟩]
       exits := [] }
   let wires : Provenance NodeId KindRef :=
-    ⟨[], [], [⟨.copy, [(ax, kx)], bx, kx, "A"⟩,
-              ⟨.product, [(ay, ky), (bx, kx)], bres, kz, "A"⟩], []⟩
+    ⟨[], [], [⟨.copy, [(ax, kx)], bx, kx, "A", .anonymous⟩,
+              ⟨.product, [(ay, ky), (bx, kx)], bres, kz, "A", .anonymous⟩], []⟩
   { levels := #[⟨`A, "A", .inst `A 1, true, gA, "src/a.lean", [⟨"A/n", "Nat", .input⟩],
                  [("A/n", aseed), ("A/n", ares)]⟩,
                 ⟨`B, "B", .inst `B 1, false, gB, "", [], []⟩]
