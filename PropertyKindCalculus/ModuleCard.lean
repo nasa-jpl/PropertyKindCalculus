@@ -46,6 +46,16 @@ structure RelationRow where
   tolerance : String := ""
   /-- The named side conditions the claim holds under. -/
   hypotheses : List String := []
+  /-- The boundary on the other side of the edge, as a declaration — what the `claim`
+  string quotes by its rendered name. `.anonymous` where the row was built without it. -/
+  other : Lean.Name := .anonymous
+  /-- The witness as a declaration — what `witness` renders. -/
+  witnessName : Lean.Name := .anonymous
+  /-- The tolerance as a declaration — what `tolerance` renders; `.anonymous` where the
+  edge names none. -/
+  toleranceName : Lean.Name := .anonymous
+  /-- The hypotheses as declarations — what `hypotheses` renders. -/
+  hypothesisNames : List Lean.Name := []
 deriving Repr, Inhabited
 
 /-- One inter-derivable kind cluster crossing this module's interface: the cluster's
@@ -56,6 +66,9 @@ structure ClusterRow where
   representative : String
   /-- The kinds of this module's ports that belong to the cluster. -/
   kinds : List String
+  /-- The same kinds as references — what `kinds` renders, kept so a table surface can
+  link each to its declaration. Empty where the row was built without them. -/
+  refs : List Provenance.KindRef := []
 deriving Repr, Inhabited
 
 /-- The role groups of the interface panel, in reading order: what the module takes per
@@ -98,6 +111,14 @@ private def panel (key label : String) (rows : List ClauseRow) : String := Id.ru
   out := out ++ "  }\n"
   return out
 
+/-- The display form of a port among its role group: the short address where it is
+unambiguous within the group, the full rendering where two ports shorten alike. Shared
+by the card's `portGroup` and the table surfaces, so a port reads identically on all. -/
+def portDisplay (ps : List (Port NodeId KindRef)) (p : Port NodeId KindRef) : String :=
+  let rn := p.node.render
+  let a := shortAddr rn
+  if (ps.filter (fun p' => shortAddr p'.node.render == a)).length == 1 then a else rn
+
 /-- One interface role group — the container and its port rows, in the dissection palette,
 with exits marked `⊗` and deciders as tooltips. Shared by the full sheet and the overview
 card, so a port reads identically on both. -/
@@ -110,9 +131,7 @@ def portGroup (c : Contract NodeId KindRef) (glabel : String)
   let mut i := 0
   for p in ps do
     let rn := p.node.render
-    let a := shortAddr rn
-    let disp := if (ps.filter (fun p' => shortAddr p'.node.render == a)).length == 1
-      then a else rn
+    let disp := portDisplay ps p
     let mark := if c.exits.contains p.node then " ⊗" else ""
     let tip := match deciderOf p.node, disp == rn with
       | some d, _ => some s!"decided by {d} · {rn}"
@@ -291,7 +310,10 @@ def relationRows (root : Name) (decl : Name) : MetaM (List RelationRow) := do
     if rel.left == decl then
       rows := rows ++ [{ claim := s!"{rel.kind.label} '{c.rightName}'",
                          witness := toString rel.witness, tolerance := tolS,
-                         hypotheses := rel.hypotheses.map toString }]
+                         hypotheses := rel.hypotheses.map toString,
+                         other := rel.right, witnessName := rel.witness,
+                         toleranceName := rel.tolerance,
+                         hypothesisNames := rel.hypotheses }]
     else if rel.right == decl then
       let passive := match rel.kind with
         | .inverts => s!"inverted by '{c.leftName}'"
@@ -299,7 +321,10 @@ def relationRows (root : Name) (decl : Name) : MetaM (List RelationRow) := do
         | .equals => s!"equals '{c.leftName}'"
         | .refines => s!"refined by '{c.leftName}'"
       rows := rows ++ [{ claim := passive, witness := toString rel.witness,
-                         tolerance := tolS, hypotheses := rel.hypotheses.map toString }]
+                         tolerance := tolS, hypotheses := rel.hypotheses.map toString,
+                         other := rel.left, witnessName := rel.witness,
+                         toleranceName := rel.tolerance,
+                         hypothesisNames := rel.hypotheses }]
   return rows
 
 end PropertyKindCalculus.ModuleCard

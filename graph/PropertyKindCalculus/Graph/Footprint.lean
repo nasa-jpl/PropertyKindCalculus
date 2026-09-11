@@ -210,7 +210,7 @@ def clusterRows (kg : KindGraph)
     if hit.isEmpty then continue
     let rep := ((cl.map fun i => kindShortName kg.kinds[i]!).qsort
       fun a b => a.toLower < b.toLower)[0]!
-    rows := rows ++ [{ representative := rep, kinds := hit.map (·.render) }]
+    rows := rows ++ [{ representative := rep, kinds := hit.map (·.render), refs := hit }]
   return rows
 
 end PropertyKindCalculus.KindGraph

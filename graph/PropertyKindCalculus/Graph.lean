@@ -2,6 +2,7 @@ import PropertyKindCalculus.Graph.Flow
 import PropertyKindCalculus.Graph.IncidenceQuiver
 import PropertyKindCalculus.Graph.KindGraph
 import PropertyKindCalculus.Graph.Footprint
+import PropertyKindCalculus.Graph.ModuleSheet
 
 /-!
 # Graph — the incidence-quiver bridge
