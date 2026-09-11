@@ -84,8 +84,7 @@ def texApp (name : String) (args : List String) : String :=
 /-- One occurrence's right-hand side as TeX. Operands are nodes, so every argument is
 atomic and nothing needs parenthesizing. An `.anonymous` op renders the family's own
 name as the operator — stated ignorance, never an invented sign. -/
-def texOfOccurrence (o : Occurrence NodeId KindRef)
-    (cfgNodes : List NodeId := []) : String :=
+def texOfOccurrence (o : Occurrence NodeId KindRef) : String :=
   let a := (o.operands.map (texOfNode ·.1)).toArray
   let arg (i : Nat) : String := a.getD i "\\_"
   let named (fallback : String) (args : List String) : String :=
@@ -106,15 +105,16 @@ def texOfOccurrence (o : Occurrence NodeId KindRef)
   | .tableDiv => s!"\\frac\{{arg 0}}\{{arg 1}}"
   | .copy => arg 0
   | .step m _ _ =>
-    -- Configuration operands collapse to one `cfg` mark: the configuration table
-    -- names them, and an equation that lists twenty constant reads is a tally.
-    let (cfg, rest) := o.operands.partition fun (n, _) => cfgNodes.contains n
-    let restTex := rest.map (texOfNode ·.1)
-    let inner := (if restTex.length ≤ 6 then String.intercalate ", " restTex
-                  else "\\ldots")
-      ++ (if cfg.isEmpty then ""
-          else (if restTex.isEmpty then "" else ";\\;") ++ "\\mathrm{cfg}")
-    s!"\\operatorname\{{escapeTex (lastComponent m)}}({inner})"
+    -- Operands sharing a root are that root's fields, spread by the call-site
+    -- dissection — a configuration record, a produced pair — and render as the root,
+    -- once: the call consumed the thing, and the interface tables name its fields.
+    -- A solitary projected operand keeps its path.
+    let rootOf (n : NodeId) : NodeId := { n with path := [] }
+    let roots := o.operands.map fun (n, _) => rootOf n
+    let disp := o.operands.map fun (n, _) =>
+      if (roots.filter (· == rootOf n)).length ≥ 2 then texOfNode (rootOf n)
+      else texOfNode n
+    texApp (lastComponent m) disp.eraseDups
   | .select _ => named "select" a.toList
 
 /-- The line's link target: the recorded operation, or the callee of a `step`. -/
@@ -159,15 +159,14 @@ on its caller's. Pure over the assembled value, like every sheet emitter.
 Three readings keep a block an equation list rather than a trace: a bare copy of a
 synthesized node nothing in the block defines is dropped (it says only "the result is
 an unnamed interior expression", which the caller's application line already says
-better); the level's configuration-port operands collapse to one `cfg` mark inside a
-step application (the configuration table names them); and consecutive lines with one
+better); a step application's operands that share a root — a record's fields, spread
+by the call-site dissection — render as the root, once; and consecutive lines with one
 right-hand side — a multi-output application, one occurrence per produced component —
 merge into a single line with the tupled left-hand side. -/
 def equationBlocks (a : Assembly) : Array EquationBlock := Id.run do
   let mut blocks : Array EquationBlock := #[]
   for l in a.levels do
     unless l.walked do continue
-    let cfgNodes := (l.graph.ports.filter (·.dir == .config)).map (·.node)
     let occs := dependencyOrder l.graph.occurrences
     let definedHere := occs.map (·.result)
     let occs := occs.filter fun o =>
@@ -180,7 +179,7 @@ def equationBlocks (a : Assembly) : Array EquationBlock := Id.run do
     let mut groups : List (List String × String × Lean.Name) := []
     for o in occs do
       let lhs := texOfNode o.result
-      let rhs := texOfOccurrence o cfgNodes
+      let rhs := texOfOccurrence o
       let op := opOfOccurrence o
       -- an elided operand list can hide two different calls behind one rendering,
       -- so an rhs carrying an ellipsis never merges

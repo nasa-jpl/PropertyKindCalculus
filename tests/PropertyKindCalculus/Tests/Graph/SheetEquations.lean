@@ -60,6 +60,19 @@ def stepO : Occurrence NodeId KindRef :=
 #guard texOfOccurrence stepO == "\\operatorname{fwd}(\\mathit{x}, \\mathit{y})"
 #guard opOfOccurrence stepO == `Probe.fwd
 
+-- Step operands sharing a root — a record's fields, spread by the call-site
+-- dissection — render as the root, once; a solitary projected operand keeps its path.
+def ndp (s : String) (path : List String) : NodeId := { root := .letBound s, path }
+#guard texOfOccurrence
+    ⟨.step `Probe.fwd none 3,
+     [(ndp "c" ["a"], kx), (ndp "c" ["b"], kx), (nd "x", kx)], nd "z", kx, "probe",
+     .anonymous⟩
+  == "\\operatorname{fwd}(\\mathit{c}, \\mathit{x})"
+#guard texOfOccurrence
+    ⟨.step `Probe.fwd none 2, [(ndp "c" ["a"], kx), (nd "x", kx)], nd "z", kx, "probe",
+     .anonymous⟩
+  == "\\operatorname{fwd}(\\mathit{c.a}, \\mathit{x})"
+
 -- The structural forms.
 #guard texOfOccurrence
     ⟨.quotient, [(nd "a", kx), (nd "b", kx)], nd "q", kx, "probe", `Probe.divQ⟩
@@ -84,8 +97,8 @@ open PropertyKindCalculus.KindIncidence (Assembly)
 open PropertyKindCalculus.Provenance (PortDir)
 
 /-- One walked level: a copy of a synthesized node nothing defines (drops), and a
-two-output application of one member reading one configuration constant (merges, with
-the configuration collapsed to the `cfg` mark). -/
+two-output application of one member (merges into one line with the tupled left-hand
+side). -/
 def lvlGraph : PropertyKindCalculus.Provenance NodeId KindRef :=
   { ports := [⟨nd "x", kx, .input⟩, ⟨nd "cfgA", kx, .config⟩, ⟨nd "out", kx, .output⟩]
     intros := [⟨fr 1, kx, .derived⟩, ⟨fr 2, kx, .derived⟩]
@@ -104,7 +117,7 @@ def asm : Assembly :=
 #guard ((equationBlocks asm)[0]!).lines.length == 1
 #guard ((equationBlocks asm)[0]!).lines[0]!.lhs == "\\left(t_{1}, t_{2}\\right)"
 #guard ((equationBlocks asm)[0]!).lines[0]!.rhs
-  == "\\operatorname{f}(\\mathit{x};\\;\\mathrm{cfg})"
+  == "\\operatorname{f}(\\mathit{x}, \\mathit{cfgA})"
 #guard ((equationBlocks asm)[0]!).lines[0]!.op == `P.f
 
 end PropertyKindCalculus.Tests.SheetEquations
