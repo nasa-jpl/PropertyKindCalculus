@@ -78,4 +78,33 @@ def useFirst : List (Occurrence NodeId KindRef) :=
 
 #guard (dependencyOrder useFirst).map (·.result) == [fr 1, nd "r"]
 
+/-! ## Block assembly: the dangling copy drops, configuration elides, outputs merge -/
+
+open PropertyKindCalculus.KindIncidence (Assembly)
+open PropertyKindCalculus.Provenance (PortDir)
+
+/-- One walked level: a copy of a synthesized node nothing defines (drops), and a
+two-output application of one member reading one configuration constant (merges, with
+the configuration collapsed to the `cfg` mark). -/
+def lvlGraph : PropertyKindCalculus.Provenance NodeId KindRef :=
+  { ports := [⟨nd "x", kx, .input⟩, ⟨nd "cfgA", kx, .config⟩, ⟨nd "out", kx, .output⟩]
+    intros := [⟨fr 1, kx, .derived⟩, ⟨fr 2, kx, .derived⟩]
+    occurrences :=
+      [⟨.copy, [(fr 9, kx)], nd "out", kx, "probe", .anonymous⟩,
+       ⟨.step `P.f none 2, [(nd "x", kx), (nd "cfgA", kx)], fr 1, kx, "probe", .anonymous⟩,
+       ⟨.step `P.f none 2, [(nd "x", kx), (nd "cfgA", kx)], fr 2, kx, "probe", .anonymous⟩]
+    exits := [] }
+
+def asm : Assembly :=
+  { levels := #[{ decl := `P.g, name := "g", lvl := .inst `P.g 1, walked := true
+                  graph := lvlGraph }]
+    graph := lvlGraph, cites := #[] }
+
+#guard (equationBlocks asm).size == 1
+#guard ((equationBlocks asm)[0]!).lines.length == 1
+#guard ((equationBlocks asm)[0]!).lines[0]!.lhs == "\\left(t_{1}, t_{2}\\right)"
+#guard ((equationBlocks asm)[0]!).lines[0]!.rhs
+  == "\\operatorname{f}(\\mathit{x};\\;\\mathrm{cfg})"
+#guard ((equationBlocks asm)[0]!).lines[0]!.op == `P.f
+
 end PropertyKindCalculus.Tests.SheetEquations

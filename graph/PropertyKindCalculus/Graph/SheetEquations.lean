@@ -84,7 +84,8 @@ def texApp (name : String) (args : List String) : String :=
 /-- One occurrence's right-hand side as TeX. Operands are nodes, so every argument is
 atomic and nothing needs parenthesizing. An `.anonymous` op renders the family's own
 name as the operator — stated ignorance, never an invented sign. -/
-def texOfOccurrence (o : Occurrence NodeId KindRef) : String :=
+def texOfOccurrence (o : Occurrence NodeId KindRef)
+    (cfgNodes : List NodeId := []) : String :=
   let a := (o.operands.map (texOfNode ·.1)).toArray
   let arg (i : Nat) : String := a.getD i "\\_"
   let named (fallback : String) (args : List String) : String :=
@@ -104,7 +105,16 @@ def texOfOccurrence (o : Occurrence NodeId KindRef) : String :=
   | .tableMul => s!"{arg 0} \\cdot {arg 1}"
   | .tableDiv => s!"\\frac\{{arg 0}}\{{arg 1}}"
   | .copy => arg 0
-  | .step m _ _ => texApp (lastComponent m) a.toList
+  | .step m _ _ =>
+    -- Configuration operands collapse to one `cfg` mark: the configuration table
+    -- names them, and an equation that lists twenty constant reads is a tally.
+    let (cfg, rest) := o.operands.partition fun (n, _) => cfgNodes.contains n
+    let restTex := rest.map (texOfNode ·.1)
+    let inner := (if restTex.length ≤ 6 then String.intercalate ", " restTex
+                  else "\\ldots")
+      ++ (if cfg.isEmpty then ""
+          else (if restTex.isEmpty then "" else ";\\;") ++ "\\mathrm{cfg}")
+    s!"\\operatorname\{{escapeTex (lastComponent m)}}({inner})"
   | .select _ => named "select" a.toList
 
 /-- The line's link target: the recorded operation, or the callee of a `step`. -/
@@ -144,15 +154,48 @@ def dependencyOrder (occs : List (Occurrence NodeId KindRef)) :
 
 /-- **The equation blocks of an assembly**: one block per walked level, in level order —
 an interface-mode level contributes no block of its own because its application renders
-on its caller's. Pure over the assembled value, like every sheet emitter. -/
+on its caller's. Pure over the assembled value, like every sheet emitter.
+
+Three readings keep a block an equation list rather than a trace: a bare copy of a
+synthesized node nothing in the block defines is dropped (it says only "the result is
+an unnamed interior expression", which the caller's application line already says
+better); the level's configuration-port operands collapse to one `cfg` mark inside a
+step application (the configuration table names them); and consecutive lines with one
+right-hand side — a multi-output application, one occurrence per produced component —
+merge into a single line with the tupled left-hand side. -/
 def equationBlocks (a : Assembly) : Array EquationBlock := Id.run do
   let mut blocks : Array EquationBlock := #[]
   for l in a.levels do
     unless l.walked do continue
+    let cfgNodes := (l.graph.ports.filter (·.dir == .config)).map (·.node)
     let occs := dependencyOrder l.graph.occurrences
-    let lines := occs.map fun o =>
-      { lhs := texOfNode o.result, rhs := texOfOccurrence o, op := opOfOccurrence o
-        : EquationLine }
+    let definedHere := occs.map (·.result)
+    let occs := occs.filter fun o =>
+      match o.family, o.operands with
+      | .copy, [(n, _)] =>
+        (match n.root with
+         | .fresh _ => definedHere.contains n
+         | _ => true)
+      | _, _ => true
+    let mut groups : List (List String × String × Lean.Name) := []
+    for o in occs do
+      let lhs := texOfNode o.result
+      let rhs := texOfOccurrence o cfgNodes
+      let op := opOfOccurrence o
+      -- an elided operand list can hide two different calls behind one rendering,
+      -- so an rhs carrying an ellipsis never merges
+      let mergeable := (rhs.splitOn "\\ldots").length == 1
+      match groups.getLast? with
+      | some (ls, r, p) =>
+        if mergeable && r == rhs && p == op then
+          groups := groups.dropLast ++ [(ls ++ [lhs], r, p)]
+        else groups := groups ++ [([lhs], rhs, op)]
+      | none => groups := [([lhs], rhs, op)]
+    let lines := groups.map fun (ls, r, p) =>
+      { lhs := match ls with
+          | [only] => only
+          | _ => "\\left(" ++ String.intercalate ", " ls ++ "\\right)"
+        rhs := r, op := p : EquationLine }
     unless lines.isEmpty do
       blocks := blocks.push { member := l.decl, level := l.name, lines }
   return blocks
