@@ -255,6 +255,11 @@ The generated API reference for the checked sources is published alongside it:
 their defining equation as typeset mathematics there, next to the Lean source it was
 derived from.
 
+*Acknowledgment.* The task "ROSE-L Soil Moisture Retrieval Using the SMAP and NISAR
+Algorithm", along with this research, was carried out at the Jet Propulsion Laboratory,
+California Institute of Technology, under a contract with the National Aeronautics and
+Space Administration.
+
 # What PropertyKindCalculus provides
 
 This project addresses *twenty-seven requirements* about formalizing _metrology_ — the

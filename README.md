@@ -23,6 +23,11 @@ not a taxonomy").
 - **License:** Apache-2.0 — see [LICENSE](LICENSE)
 - **Toolchain:** `leanprover/lean4` (see [lean-toolchain](lean-toolchain))
 
+*Acknowledgment.* The task "ROSE-L Soil Moisture Retrieval Using the SMAP and NISAR
+Algorithm", along with this research, was carried out at the Jet Propulsion Laboratory,
+California Institute of Technology, under a contract with the National Aeronautics and
+Space Administration.
+
 ## On the name
 
 The calculus is over **kinds of *property*** — Dybkær's root notion (§6.19),
