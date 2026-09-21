@@ -25,7 +25,7 @@ import NN.Tensor
 import NN.Runtime.Autograd.Engine.Cuda.Buffer
 import NN.Runtime.Autograd.Engine.Cuda.Kernels
 
-open Spec
+open Spec TorchLean
 open PropertyKindCalculus.Paradigm (NumCarrier)
 open Runtime.Autograd.Cuda (Buffer)
 

@@ -143,7 +143,7 @@ theorem WeightedCarving.mk?_eq_some {R : Type} {P : Type u} [Carrier R] [Decidab
     {parts : Decomposition P} {weight : P → R}
     (h : totalWeight weight parts ≠ Carrier.zero) :
     WeightedCarving.mk? parts weight = some ⟨parts, weight, h⟩ :=
-  dif_neg h
+  dite_eq_right h
 
 /-- **Nothing is lost by going through `mk?`**: an accepted carving is the one whose parts and
 weights were offered, so a mean computed after the check is the mean of the data. -/

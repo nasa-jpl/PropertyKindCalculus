@@ -52,9 +52,10 @@ P. The adjoint mathematics enters exactly once, through the Stage-3.5 bridge.
 
 import NN.Proofs.Autograd.Tape.Nodes.Arithmetic
 import NN.Proofs.Autograd.Runtime.Link.FDeriv
+import NN.Proofs.Autograd.FDeriv.PrimitiveCoordinates
 import NN.Runtime.Autograd.Engine.Core
 
-open Spec Tensor Proofs.Autograd TorchLean
+open Spec TorchLean TorchLean.Tensor Proofs Proofs.Autograd
 
 noncomputable section
 
@@ -171,22 +172,12 @@ lemma tensorToVec_scalar_apply (x : ℝ) (i : Fin (Spec.Shape.size Shape.scalar)
     tensorToVec (t := (Tensor.scalar x : Tensor ℝ Shape.scalar)) i = x :=
   tensorToVec_scalar x i
 
-/-- Pointwise: `map2Spec f` acts coordinatewise under vectorization. -/
-theorem tensorToVec_map2Spec_apply {f : ℝ → ℝ → ℝ} :
-    ∀ {s : Shape} (a b : Tensor ℝ s) (i : Fin (Spec.Shape.size s)),
-      tensorToVec (t := map2Spec f a b) i = f (tensorToVec (t := a) i) (tensorToVec (t := b) i)
-  | .scalar, .scalar x, .scalar y, i => by
-      simp only [map2Spec]
-      rw [tensorToVec_scalar_apply, tensorToVec_scalar_apply, tensorToVec_scalar_apply]
-  | .dim n s, .dim fa, .dim fb, i => by
-      by_cases hm : Spec.Shape.size s = 0
-      · exact absurd i.isLt (by simp [Spec.Shape.size, hm])
-      · have hmpos : 0 < Spec.Shape.size s := Nat.pos_of_ne_zero hm
-        obtain ⟨p, rfl⟩ := finProdFinEquiv.surjective i
-        have hstep : map2Spec f (Tensor.dim fa) (Tensor.dim fb)
-            = Tensor.dim (fun j => map2Spec f (fa j) (fb j)) := rfl
-        rw [hstep, tensorToVec_dim_apply hmpos, tensorToVec_dim_apply hmpos, tensorToVec_dim_apply hmpos]
-        exact tensorToVec_map2Spec_apply (fa p.1) (fb p.1) p.2
+/-- Pointwise: `map2Spec f` acts coordinatewise under vectorization (TorchLean's
+`PrimitiveSpecs.tensorToVec_map2Spec_apply`, restated with the map implicit). -/
+theorem tensorToVec_map2Spec_apply {f : ℝ → ℝ → ℝ} {s : Shape} (a b : Tensor ℝ s)
+    (i : Fin (Spec.Shape.size s)) :
+    tensorToVec (t := map2Spec f a b) i = f (tensorToVec (t := a) i) (tensorToVec (t := b) i) :=
+  Proofs.Autograd.PrimitiveSpecs.tensorToVec_map2Spec_apply f a b i
 
 /-- `mulSpec` is the Hadamard product under `tensorToVec`. -/
 theorem tensorToVec_mulSpec {s : Shape} (a b : Tensor ℝ s) :

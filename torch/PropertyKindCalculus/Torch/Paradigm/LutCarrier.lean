@@ -42,8 +42,8 @@ import PropertyKindCalculus.Torch.Paradigm.TapeCarrier
 import PropertyKindCalculus.Torch.Paradigm.CudaCarrier
 import NN.Runtime.Autograd.Engine.Cuda.TexTable
 
-open Spec
-open Tensor
+open Spec TorchLean
+open TorchLean TorchLean.Tensor
 open Runtime.Autograd
 
 namespace PropertyKindCalculus.Paradigm

@@ -16,7 +16,7 @@ that exercise this transfer live in the `DimensionExamples` library.)
 -/
 
 import PropertyKindCalculus.Quantity
-import Mathlib.Data.Real.Basic
+import Mathlib.Basic.Real.Basic
 
 namespace PropertyKindCalculus
 

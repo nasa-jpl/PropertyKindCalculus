@@ -29,7 +29,7 @@ import PropertyKindCalculus.Torch.Paradigm.CudaCarrier
 
 namespace PropertyKindCalculus.Uncertainty.SsprcBatched
 
-open Spec
+open Spec TorchLean
 open PropertyKindCalculus.Paradigm (NumCarrier)
 open PropertyKindCalculus.Paradigm.CudaCarrier (CudaT)
 open Runtime.Autograd.Cuda (Buffer)

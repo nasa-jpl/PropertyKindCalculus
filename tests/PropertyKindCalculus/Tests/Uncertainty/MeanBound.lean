@@ -47,6 +47,8 @@ open PropertyKindCalculus
 open PropertyKindCalculus.Uncertainty.Adequacy
 open TorchLean.Floats
 open TorchLean.Floats.IEEE754
+open FloatLib.Floats (ExecFloat)
+open FloatLib.Floats.ExecFloat.Binary (isFinite toModel)
 
 /-! ## Inhabitation — a carving that discharges both licenses -/
 
@@ -123,24 +125,24 @@ so the specification's license holds and the executable one fails, on the same w
 path, which is the fold `WeightedCarving FP32`'s field is about. -/
 
 /-- `2²⁴` at executable binary32. -/
-def bigE : IEEE32Exec := IEEE32Exec.ofBits 0x4B800000
+def bigE : IEEE32Exec := ExecFloat.Binary.ofBits32 0x4B800000
 
 /-- `1` at executable binary32. -/
-def oneE : IEEE32Exec := IEEE32Exec.ofBits 0x3F800000
+def oneE : IEEE32Exec := ExecFloat.Binary.ofBits32 0x3F800000
 
 /-- `−2²⁴` at executable binary32. -/
-def negBigE : IEEE32Exec := IEEE32Exec.ofBits 0xCB800000
+def negBigE : IEEE32Exec := ExecFloat.Binary.ofBits32 0xCB800000
 
 -- The three bit patterns are the values claimed: mantissa × 2^exp reads 2²⁴, 1, −2²⁴.
-#guard (IEEE32Exec.toDyadic? bigE).map (fun d => (d.sign, d.mant, d.exp)) == some (false, 8388608, 1)
-#guard (IEEE32Exec.toDyadic? oneE).map (fun d => (d.sign, d.mant, d.exp)) == some (false, 8388608, -23)
-#guard (IEEE32Exec.toDyadic? negBigE).map (fun d => (d.sign, d.mant, d.exp)) == some (true, 8388608, 1)
+#guard (toModel bigE).toDyadic?.map (fun d => (d.negative, d.significand, d.exponent)) == some (false, 8388608, 1)
+#guard (toModel oneE).toDyadic?.map (fun d => (d.negative, d.significand, d.exponent)) == some (false, 8388608, -23)
+#guard (toModel negBigE).toDyadic?.map (fun d => (d.negative, d.significand, d.exponent)) == some (true, 8388608, 1)
 
 -- Absorption: the first addition returns its larger operand unchanged.
-#guard (IEEE32Exec.add bigE oneE).toBits == bigE.toBits
+#guard ExecFloat.Binary.toBits32 (ExecFloat.add bigE oneE) == ExecFloat.Binary.toBits32 bigE
 
 -- so the executable total is exactly +0 — the license `WeightedCarving FP32` carries fails.
-#guard (IEEE32Exec.add (IEEE32Exec.add bigE oneE) negBigE).toBits == 0
+#guard ExecFloat.Binary.toBits32 (ExecFloat.add (ExecFloat.add bigE oneE) negBigE) == 0
 
 -- while the exact total is 1 — the license the specification carving carries holds. Every value
 -- and every partial sum here is exactly representable in binary64, so this Float computation is
@@ -149,18 +151,18 @@ def negBigE : IEEE32Exec := IEEE32Exec.ofBits 0xCB800000
 #guard (((16777216.0 : Float) + 1.0) - 16777216.0) == 1.0
 
 /-- `−(2²⁴+2)` at executable binary32 — representable, since the spacing at `2²⁴` is `2`. -/
-def negBigPlus2E : IEEE32Exec := IEEE32Exec.ofBits 0xCB800001
+def negBigPlus2E : IEEE32Exec := ExecFloat.Binary.ofBits32 0xCB800001
 
 -- It is the value claimed: mantissa 8388609 × 2¹ = 16777218 = 2²⁴+2, negated.
-#guard (IEEE32Exec.toDyadic? negBigPlus2E).map (fun d => (d.sign, d.mant, d.exp))
+#guard (toModel negBigPlus2E).toDyadic?.map (fun d => (d.negative, d.significand, d.exponent))
         == some (true, 8388609, 1)
 
 -- The other direction. Fold `2²⁴, 1, 1, −(2²⁴+2)` left-associated: each `1` is absorbed, so the
 -- running total is still `2²⁴` when the last weight arrives, and the result is `−2` — bits
 -- 0xC0000000. The exact total is 0, so here the specification's license FAILS and the
 -- executable one HOLDS: the run-time guard passes and the mean does not exist.
-#guard (IEEE32Exec.add (IEEE32Exec.add bigE oneE) oneE).toBits == bigE.toBits
-#guard (IEEE32Exec.add (IEEE32Exec.add (IEEE32Exec.add bigE oneE) oneE) negBigPlus2E).toBits
+#guard ExecFloat.Binary.toBits32 (ExecFloat.add (ExecFloat.add bigE oneE) oneE) == ExecFloat.Binary.toBits32 bigE
+#guard ExecFloat.Binary.toBits32 (ExecFloat.add (ExecFloat.add (ExecFloat.add bigE oneE) oneE) negBigPlus2E)
         == 0xC0000000
 #guard (((16777216.0 : Float) + 1.0 + 1.0) - 16777218.0) == 0.0
 

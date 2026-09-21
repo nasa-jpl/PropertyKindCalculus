@@ -29,8 +29,7 @@ EXACTNESS SPLIT (inherited): everything here is the point-mode fp64 semantics
 import PropertyKindCalculus.Examples.TapeCodegenLut
 import PropertyKindCalculus.Examples.TapeCodegenEndToEnd
 
-open Spec
-open Spec.Tensor
+open Spec TorchLean TorchLean.Tensor
 open Runtime.Autograd (Tape Node TapeM)
 open PropertyKindCalculus.Paradigm (TapeBuilder NumCarrier LutTable LutInterp lutNodeName?)
 open PropertyKindCalculus.Paradigm.TapeParity
@@ -87,7 +86,7 @@ theorem evalTapeT_addNode (tables : String → Option LutTable) (env : String �
       = (evalTapeT tables env t) >>= fun vals =>
           (stepValT tables env vals n).map (fun v => vals.push v) := by
   rw [evalTapeT_eq_foldlM tables env (t.addNode n).1, evalTapeT_eq_foldlM tables env t]
-  simp only [Tape.addNode, Array.foldlM_push, Spec.SomeTensor.materialize_eq]
+  simp only [Tape.addNode, Array.foldlM_push]
 
 /-- On any non-`lutfetch` op name the extended alphabet defers to the base `cOp` — this is what
 feeds the arithmetic `FaithfulT` instances below. -/
@@ -135,15 +134,20 @@ theorem FaithfulT_named_leaf (tables : String → Option LutTable) (env : String
 
 /-- A constant scalar leaf: stored `fill x`, re-interpreted as `x`. -/
 theorem FaithfulT_const (tables : String → Option LutTable) (env : String → Float) (x : Float) :
-    FaithfulT tables env (TapeBuilder.const x : TB) (fill x S) x := by
+    FaithfulT tables env (TapeBuilder.const x : TB) (Tensor.full S x) x := by
   intro t vals hev hsz
-  refine ⟨t.size, (Tape.leaf (t := t) (fill x S) (name := none)).1,
+  refine ⟨t.size, (Tape.leaf (t := t) (Tensor.full S x) (name := none)).1,
     vals.push x, ?run, ?lt, ?store, ?ext, ?ev, ?sz, ?val, ?pre⟩
   case run => unfold TapeBuilder.const TapeM.leaf Tape.leaf Tape.addNode; rfl
-  case store => exact leaf_value t (fill x S) none true
-  case lt => exact requireValue_lt_of_ok _ t.size (leaf_value t (fill x S) none true)
-  case ext => exact extends_of_value (leaf_value t (fill x S) none true) (frameOver_addNode t _)
-  case ev => show evalTapeT tables env (t.addNode _).1 = _; rw [evalTapeT_addNode, hev]; rfl
+  case store => exact leaf_value t (Tensor.full S x) none true
+  case lt => exact requireValue_lt_of_ok _ t.size (leaf_value t (Tensor.full S x) none true)
+  case ext => exact extends_of_value (leaf_value t (Tensor.full S x) none true) (frameOver_addNode t _)
+  case ev =>
+    show evalTapeT tables env (t.addNode _).1 = _
+    rw [evalTapeT_addNode, hev]
+    simp [stepValT, nodeScalar, Tensor.full, TorchLean.Tensor.Internal.Rep.const,
+      TorchLean.Tensor.Internal.Rep.ofFlatFn, TorchLean.Storage.toArray_ofFn]
+    rfl
   case sz => rw [Array.size_push, hsz]; simp [Tape.leaf, Tape.addNode, Tape.size]
   case val => rw [← hsz]; exact getD_push_size vals x
   case pre => intro i hi; exact getD_push_lt vals x i hi
@@ -187,7 +191,7 @@ theorem FaithfulT_bin (tables : String → Option LutTable) (env : String → Fl
       unfold stepValT
       simp only [hndName, hndPar, List.isEmpty_toArray, List.isEmpty_cons, List.map_toArray, List.map_cons,
         List.map_nil,
-        Bool.false_eq_true, if_false]
+        Bool.false_eq_true, ite_false]
       rw [hxa, hbVal]; exact hcop xa xb
     rw [evalTapeT_addNode, hbEv]
     show Except.map (fun v => valsB.push v) (stepValT tables env valsB nd)
@@ -258,7 +262,7 @@ theorem lutFetchM_run (tbl : LutTable) (l u : TB) (t tA tB : Tape Float)
   unfold TapeBuilder.lutFetchM lutNode
   simp only [TapeM.run, StateT.run, StateT.bind, StateT.pure, StateT.lift, StateT.map,
     bind, Bind.bind, pure, Pure.pure, Functor.map, MonadState.get, MonadStateOf.get, getThe,
-    StateT.get, MonadStateOf.set, set, StateT.set, monadLift, MonadLift.monadLift, liftM,
+    StateT.get, MonadStateOf.set, StateT.set, monadLift, MonadLift.monadLift, liftM,
     Except.bind, Except.pure, Tape.addNode, Tape.size, hl, hu, hL, hU]
 
 /-- **Fetch faithfulness.** The recording instance's fetch stores the elementwise `refFetch` of
@@ -298,7 +302,7 @@ theorem FaithfulT_lutfetch (tables : String → Option LutTable) (env : String �
       unfold stepValT lutNode
       simp only [List.isEmpty_toArray, List.isEmpty_cons, List.map_toArray, List.map_cons,
         List.map_nil,
-        Bool.false_eq_true, if_false]
+        Bool.false_eq_true, ite_false]
       rw [hxa, hbVal]
       exact cOpT_lutfetch hn tables tbl ht xl xu
     rw [evalTapeT_addNode, hbEv]
@@ -345,9 +349,9 @@ theorem lut_kernel_faithful (env : String → Float) :
         lutModel (α := Float) (env "layer") (env "u") (env "bias") := by
   obtain ⟨id, t', vals, hrun, _, _, _, hev, _, hval, _⟩ :=
     lutModel_faithful env
-      (FaithfulT_named_leaf demoTables env "layer" (fill envLayer S))
-      (FaithfulT_named_leaf demoTables env "u" (fill envU S))
-      (FaithfulT_named_leaf demoTables env "bias" (fill envBias S))
+      (FaithfulT_named_leaf demoTables env "layer" (Tensor.full S envLayer))
+      (FaithfulT_named_leaf demoTables env "u" (Tensor.full S envU))
+      (FaithfulT_named_leaf demoTables env "bias" (Tensor.full S envBias))
       Tape.empty #[] (evalTapeT_empty demoTables env) rfl
   exact ⟨id, t', vals, hrun, hev, hval⟩
 

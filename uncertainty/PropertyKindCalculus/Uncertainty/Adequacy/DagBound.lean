@@ -62,6 +62,8 @@ import PropertyKindCalculus.Uncertainty.Adequacy.Fp32Grounding
 namespace PropertyKindCalculus.Uncertainty.Adequacy
 
 open TorchLean.Floats
+open FloatLib.Floats.Formats.Flocq (genericFormat)
+open FloatLib.Numerics (binaryRadix)
 
 /-! ## A finite `+`/`−` evaluation DAG and its two interpretations -/
 
@@ -389,13 +391,13 @@ def ExactRepresentable : Expr → (ℕ → FP32) → Prop
   | .inp _,   _ => True
   | .const _, _ => True
   | .add a b, ρ => ExactRepresentable a ρ ∧ ExactRepresentable b ρ ∧
-      neuralGenericFormat binaryRadix fexp32 (evalExact a ρ + evalExact b ρ)
+      genericFormat binaryRadix fexp32 (evalExact a ρ + evalExact b ρ)
   | .sub a b, ρ => ExactRepresentable a ρ ∧ ExactRepresentable b ρ ∧
-      neuralGenericFormat binaryRadix fexp32 (evalExact a ρ - evalExact b ρ)
+      genericFormat binaryRadix fexp32 (evalExact a ρ - evalExact b ρ)
   | .mul a b, ρ => ExactRepresentable a ρ ∧ ExactRepresentable b ρ ∧
-      neuralGenericFormat binaryRadix fexp32 (evalExact a ρ * evalExact b ρ)
+      genericFormat binaryRadix fexp32 (evalExact a ρ * evalExact b ρ)
   | .div a b, ρ => ExactRepresentable a ρ ∧ ExactRepresentable b ρ ∧
-      neuralGenericFormat binaryRadix fexp32 (evalExact a ρ / evalExact b ρ)
+      genericFormat binaryRadix fexp32 (evalExact a ρ / evalExact b ρ)
 
 /-- **The two conditions cut out the same inputs.** Each direction needs the other condition on the
 operands first — which is what the induction supplies — because the node's own statement is about

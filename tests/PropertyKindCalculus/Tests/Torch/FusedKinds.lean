@@ -17,7 +17,7 @@ import PropertyKindCalculus.Torch.Paradigm.FusedKinds
 
 namespace PropertyKindCalculus.Tests.FusedKinds
 
-open Spec
+open Spec TorchLean
 open PropertyKindCalculus
 open PropertyKindCalculus.Paradigm (FusedExp)
 

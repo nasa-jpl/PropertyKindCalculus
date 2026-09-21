@@ -18,7 +18,7 @@ confirms no `sorryAx`.
 -/
 
 import PropertyKindCalculus.BoundsReal
-import Mathlib.Data.Real.Basic
+import Mathlib.Basic.Real.Basic
 import Mathlib.Tactic.NormNum
 
 namespace PropertyKindCalculus.Tests.BoundsReal

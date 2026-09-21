@@ -53,6 +53,8 @@ namespace PropertyKindCalculus.Uncertainty.Adequacy
 
 open TorchLean.Floats
 open TorchLean.Floats.IEEE754
+open FloatLib.Floats.Formats.Flocq (genericFormat)
+open FloatLib.Numerics (binaryRadix)
 
 universe u
 
@@ -174,13 +176,13 @@ statement about the rounded fold, which is the number the `div` node divides by.
 is not implied, which is why `specCarving` below takes it as an argument. -/
 theorem fp32_val_ne_zero {x : FP32} (h : x ≠ Carrier.zero) : x.val ≠ 0 := by
   intro hv
-  exact h (fp32_val_inj (by rw [hv]; exact IEEE32Exec.fp32Round_zero.symm))
+  exact h (fp32_val_inj (by rw [hv]; exact fp32Round_zero.symm))
 
 /-- And conversely — so a carving's binary32 license can be established from arithmetic on its
 semantic values, which is how a witness for the capstone below is built. -/
 theorem fp32_ne_zero_of_val {x : FP32} (h : x.val ≠ 0) : x ≠ Carrier.zero := by
   intro hx
-  exact h (by rw [hx]; exact IEEE32Exec.fp32Round_zero)
+  exact h (by rw [hx]; exact fp32Round_zero)
 
 /-- **Forget a binary32 carving to the real carving it specifies — supplying the specification's
 own license.** The hypothesis is an argument, not a field lookup, and that is the content: the
@@ -245,7 +247,7 @@ the sum return `x` unchanged — that is the whole phenomenon — but it cannot 
 
 The executable rung's rounding is the spec rung's: `IEEE32Exec.fp32Round` and `round32` are the same
 function, so the grid lemmas of `Fp32Grounding` apply here with no transport. -/
-theorem fp32Round_add_ge {x y : ℝ} (hx : neuralGenericFormat binaryRadix fexp32 x) (hy : 0 ≤ y) :
+theorem fp32Round_add_ge {x y : ℝ} (hx : genericFormat binaryRadix fexp32 x) (hy : 0 ≤ y) :
     x ≤ IEEE32Exec.fp32Round (x + y) := by
   calc x = IEEE32Exec.fp32Round x := (round32_fix hx).symm
     _ ≤ IEEE32Exec.fp32Round (x + y) := round32_mono (by linarith)
@@ -253,7 +255,7 @@ theorem fp32Round_add_ge {x y : ℝ} (hx : neuralGenericFormat binaryRadix fexp3
 /-- The rounded fold stays on the grid when the weights do — at a leaf by hypothesis, at a join
 because a rounded value is a grid value. -/
 theorem totalWeight_onGrid (w : P → FP32) (hg : ∀ p, (w p).IsRepresentable) :
-    ∀ d : Decomposition P, neuralGenericFormat binaryRadix fexp32 (totalWeight w d).val
+    ∀ d : Decomposition P, genericFormat binaryRadix fexp32 (totalWeight w d).val
   | .atom p => hg p
   | .union _ _ => round32_representable _
 
@@ -265,7 +267,7 @@ theorem totalWeight_fp32_nonneg (w : P → FP32) (hnn : ∀ p, 0 ≤ (w p).val) 
       have ha := totalWeight_fp32_nonneg w hnn a
       have hb := totalWeight_fp32_nonneg w hnn b
       show (0:ℝ) ≤ IEEE32Exec.fp32Round ((totalWeight w a).val + (totalWeight w b).val)
-      calc (0:ℝ) = IEEE32Exec.fp32Round 0 := IEEE32Exec.fp32Round_zero.symm
+      calc (0:ℝ) = IEEE32Exec.fp32Round 0 := fp32Round_zero.symm
         _ ≤ _ := round32_mono (by linarith)
 
 /-- And so is the exact fold. -/
@@ -323,7 +325,7 @@ theorem totalWeight_fp32_eq_zero (w : P → FP32) (hnn : ∀ p, 0 ≤ (w p).val)
       have hfb := totalWeight_fp32_eq_zero w hnn b (by linarith)
       show IEEE32Exec.fp32Round ((totalWeight w a).val + (totalWeight w b).val) = 0
       rw [hfa, hfb, add_zero]
-      exact IEEE32Exec.fp32Round_zero
+      exact fp32Round_zero
 
 /-- **The two licenses coincide on nonnegative grid weights.** So for masses, areas, durations,
 coverage fractions and validity indicators, a `WeightedCarving FP32`'s own field *is* the

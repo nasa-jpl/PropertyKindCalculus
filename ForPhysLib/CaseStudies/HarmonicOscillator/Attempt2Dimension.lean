@@ -52,7 +52,7 @@ MR17's vector arithmetic in the same position.
 import PropertyKindCalculus.Dimension
 import PropertyKindCalculus.QuantityReal
 import Physlib.Units.WithDim.Basic
-import Mathlib.Data.Complex.Basic
+import Mathlib.Basic.Complex.Basic
 
 namespace PropertyKindCalculus.Examples.HarmonicOscillator.Attempt2
 

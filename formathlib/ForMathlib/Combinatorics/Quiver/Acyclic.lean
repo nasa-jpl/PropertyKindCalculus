@@ -1,6 +1,6 @@
 import Mathlib.Combinatorics.Quiver.Path
 import Mathlib.Data.Set.Finite.List
-import Mathlib.Data.Finite.Sigma
+import Mathlib.Basic.Finite.Sigma
 import Mathlib.Data.Fintype.Card
 
 /-!

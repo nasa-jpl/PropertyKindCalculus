@@ -29,7 +29,7 @@ those coincidences is invisible there.
   typecheck (pinned below); the kinded twins refuse all three.
 * **F4 — the tfae is the stress test.** The kinded Newton reading — `m·a` through the
   4-9.1 edge against the ingested force — is equivalent to `EquationOfMotion`, and the
-  equivalence is `equationOfMotion_tfae` consumed verbatim (`.out 0 1`), nothing
+  equivalence is `equationOfMotion_tfae` consumed verbatim (`.out 1 2`), nothing
   re-proved. The full pentad is Stage 2's.
 * **F5 — two ω's, the trig boundary, and the complex number that packs two lengths.**
   `ω·t` lands at the phase angle (3-7) through a registered edge — the licence `cos`
@@ -460,14 +460,14 @@ theorem newtonLHSQ_magnitude (mq : Quantity massK ℝ) (aq : Quantity accelerati
     (newtonLHSQ mq aq).magnitude = mq.magnitude * aq.magnitude := rfl
 
 /-- **`equationOfMotion_tfae`, consumed verbatim**: the equation of motion is
-equivalent to the kinded Newton reading — `.out 0 1` of the upstream pentad, with only
+equivalent to the kinded Newton reading — `.out 1 2` of the upstream pentad, with only
 the component bookkeeping proved here. -/
 theorem equationOfMotion_iff_kinded_newton (S : HO) (xₜ : Time → E1)
     (hx : ContDiff ℝ ∞ xₜ) :
     S.EquationOfMotion xₜ ↔
       ∀ t, (newtonLHSQ (massQ S) (accelerationAtQ xₜ t)).magnitude
         = (forceAtQ S xₜ t).magnitude := by
-  have htfae := (S.equationOfMotion_tfae xₜ hx).out 0 1
+  have htfae := (S.equationOfMotion_tfae xₜ hx).out 1 2
   rw [htfae]
   refine forall_congr' fun t => ?_
   rw [newtonLHSQ_magnitude]

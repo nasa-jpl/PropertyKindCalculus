@@ -28,8 +28,8 @@ import PropertyKindCalculus.Uncertainty.InputDist
 import NN.Tensor
 import Std.Data.HashMap
 
-open Spec
-open Tensor
+open Spec TorchLean
+open TorchLean TorchLean.Tensor
 open Runtime.Autograd
 open PropertyKindCalculus.Paradigm (TapeBuilder)
 
@@ -61,13 +61,13 @@ previous reachability-pruned `backwardScalar` path (a dead subexpression now con
 `Float` while the theorem speaks at `ℝ` (the deviation is this workstream's own Adequacy claim). -/
 def gradient (model : ScalarModel) (point : List Float) : Except String (List Float) := do
   let ((ids, outId), t) ← TapeM.run Tape.empty do
-    let ids ← point.mapM fun x => TapeM.leaf (α := Float) (fill x Shape.scalar)
+    let ids ← point.mapM fun x => TapeM.leaf (α := Float) (Tensor.full Shape.scalar x)
     let out : TapeBuilder Shape.scalar := model (ids.map fun i => (⟨pure i⟩ : TapeBuilder Shape.scalar))
     let outId ← out.run
     pure (ids, outId)
   if h : outId < t.nodes.size then
     let grads0 : Array (SomeTensor Float) :=
-      (t.nodes.map fun node => SomeTensor.ofTensor (fill (0 : Float) node.value.shape)).set outId
+      (t.nodes.map fun node => SomeTensor.ofTensor (Tensor.full node.value.shape (0 : Float))).set outId
         (SomeTensor.ofTensor (Tensor.scalar (1 : Float))) (h := by simpa using h)
     let grads ← Tape.backwardDenseFrom (t := t) grads0
     ids.mapM fun i =>

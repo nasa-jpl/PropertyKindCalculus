@@ -214,7 +214,7 @@ theorem Dispersion.factorOf_eq_none [Div R] [ScalarCarrier R] [Zero R] [BEq R] (
     (g : Quantity k R)
     (hk : k.IsRational) (h : u.magnitude == (0 : R)) :
     u.factorOf g hk = none := by
-  unfold Dispersion.factorOf; rw [if_pos h]
+  unfold Dispersion.factorOf; rw [ite_eq_left h]
 
 /-- **A correction moves an estimate by exactly the correction.** The law that makes `corrected`
 usable in a budget: the displacement introduced is the one that was asked for, so a bias

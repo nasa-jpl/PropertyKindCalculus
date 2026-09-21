@@ -36,7 +36,7 @@ the transports — the one dependency kept out of the core spine.
 
 import PropertyKindCalculus.Aggregation
 import PropertyKindCalculus.QuantityReal
-import Mathlib.Data.Real.Basic
+import Mathlib.Basic.Real.Basic
 import Mathlib.Tactic.Ring
 
 namespace PropertyKindCalculus

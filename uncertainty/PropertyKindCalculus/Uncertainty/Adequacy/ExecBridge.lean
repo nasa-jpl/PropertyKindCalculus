@@ -39,13 +39,17 @@ example. Mathlib- and TorchLean-backed.
 -/
 import PropertyKindCalculus.Uncertainty.Adequacy.Soundness
 import PropertyKindCalculus.Uncertainty.Adequacy.Fp32Grounding
-import NN.Floats.IEEEExec.Bridge.FP32.Ulp
+import NN.Proofs.RuntimeApprox.IEEE32.Contracts
 
 namespace PropertyKindCalculus.Uncertainty.Adequacy
 
 open TorchLean.Floats
 open TorchLean.Floats.IEEE754
 open TorchLean.Floats.IEEE754.IEEE32Exec
+open FloatLib.Floats (ExecFloat)
+open FloatLib.Floats.ExecFloat.Binary (isFinite toModel)
+open FloatLib.Floats.Formats.Flocq (bpow)
+open FloatLib.Numerics (binaryRadix)
 
 /-- **The executable ULP is the specified ULP.** When the bit-level ULP query answers —
 `ulpExp? x = some k`, with `k` computed directly from `x`'s decoded dyadic payload with `Nat.log2`
@@ -53,15 +57,15 @@ and the integer exponent selector `fexp32`; it answers on exactly the finite fra
 (`ulpExp?_isSome`) — then `2^k` reproduces exactly the real, `noncomputable` `ulp32 (toReal x)`.
 The first half of the "`Float.ulp` matching `ulp32`" the Stage-3.3 plan asks for, on the
 certifiable `IEEE32Exec` model rather than opaque host `Float`. -/
-theorem exec_ulp_grounds {x : IEEE32Exec} {k : Int} (hk : ulpExp? x = some k) :
-    neuralBpow binaryRadix k = ulp32 (toReal x) :=
-  neuralBpow_eq_ulp32_of_ulpExp?_eq_some hk
+theorem exec_ulp_grounds {x : ExecFloat.Binary 8 23} {k : Int} (hk : ulpExp? x = some k) :
+    bpow binaryRadix k = ulp32 (toModel x).toReal :=
+  bpow_eq_ulp32_of_ulpExp?_eq_some hk
 
 /-- **The executable half-ULP is the specified half-ULP.** `eps32` is the threshold `AbsorptionFlag`
 compares an operand's uncertainty against; here it is recovered from the executable `ulpExp?`
 answer. -/
-theorem exec_half_ulp_grounds {x : IEEE32Exec} {k : Int} (hk : ulpExp? x = some k) :
-    neuralBpow binaryRadix k / 2 = eps32 (toReal x) := by
+theorem exec_half_ulp_grounds {x : ExecFloat.Binary 8 23} {k : Int} (hk : ulpExp? x = some k) :
+    bpow binaryRadix k / 2 = eps32 (toModel x).toReal := by
   rw [exec_ulp_grounds hk]
 
 /-- **A3/A1 at the executable binary32 kernel — Stage 3.3.** When the executable kernel reports an
@@ -69,20 +73,20 @@ operand absorbed (`absorbs s δ = true`, i.e. the float32 sum equals `s` unchang
 *agrees*: the exact real sum rounds back to `toReal s` under `round32`. This is the executable image
 of `Soundness.verdict_sound`'s flag ⟹ contribution-lost direction — the abstract grid `gridRound u`
 replaced by the genuine binary32 rounding `round32` — so the *computed* adequacy verdict is provably
-the *specified* one, on the finite fragment (`toDyadic? s/δ = some _`, `isFinite (add s δ)`). -/
-theorem exec_verdict_sound {s δ : IEEE32Exec} {ds dδ : TorchLean.Floats.IEEE754.IEEE32Exec.Dyadic}
-    (hs : toDyadic? s = some ds) (hδ : toDyadic? δ = some dδ)
-    (hfin : isFinite (add s δ) = true) (hverdict : absorbs s δ = true) :
-    round32 (toReal s + toReal δ) = toReal s :=
+the *specified* one, on the finite fragment (`toDyadic? s/δ = some _`, `isFinite (ExecFloat.add s δ)`). -/
+theorem exec_verdict_sound {s δ : ExecFloat.Binary 8 23} {ds dδ : FloatLib.Numerics.Dyadic}
+    (hs : (toModel s).toDyadic? = some ds) (hδ : (toModel δ).toDyadic? = some dδ)
+    (hfin : isFinite (ExecFloat.add s δ) = true) (hverdict : absorbs s δ = true) :
+    round32 ((toModel s).toReal + (toModel δ).toReal) = (toModel s).toReal :=
   round32_add_eq_left_of_absorbs hs hδ hfin hverdict
 
 /-- `exec_verdict_sound` from the three *executable* finiteness checks alone: the dyadic decoding
 witnesses are recovered from `isFinite`, not assumed — the form a kernel driver can discharge
 entirely by running `isFinite`/`absorbs`. -/
-theorem exec_verdict_sound_of_isFinite {s δ : IEEE32Exec}
+theorem exec_verdict_sound_of_isFinite {s δ : ExecFloat.Binary 8 23}
     (hs : isFinite s = true) (hδ : isFinite δ = true)
-    (hfin : isFinite (add s δ) = true) (hverdict : absorbs s δ = true) :
-    round32 (toReal s + toReal δ) = toReal s :=
+    (hfin : isFinite (ExecFloat.add s δ) = true) (hverdict : absorbs s δ = true) :
+    round32 ((toModel s).toReal + (toModel δ).toReal) = (toModel s).toReal :=
   round32_add_eq_left_of_absorbs_of_isFinite hs hδ hfin hverdict
 
 end PropertyKindCalculus.Uncertainty.Adequacy

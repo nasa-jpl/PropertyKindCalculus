@@ -47,8 +47,8 @@ import PropertyKindCalculus.QuantityClassification
 import PropertyKindCalculus.QuantityFunction
 import PropertyKindCalculus.OperatorTable
 
-open Spec
-open Tensor
+open Spec TorchLean
+open TorchLean TorchLean.Tensor
 open Runtime.Autograd
 open PropertyKindCalculus
 open PropertyKindCalculus.Paradigm (TapeBuilder)
@@ -72,7 +72,7 @@ structure IsNumCarrierHom (R : TapeBuilder s → Tensor Float s → Prop) : Prop
   leaf  : ∀ (v : Tensor Float s) (name : Option String) (rg : Bool),
             R (⟨TapeM.leaf v (name := name) (requiresGrad := rg)⟩ : TapeBuilder s) v
   /-- A constant leaf relates to the filled tensor. -/
-  const : ∀ (x : Float), R (TapeBuilder.const (s := s) x) (fill x s)
+  const : ∀ (x : Float), R (TapeBuilder.const (s := s) x) (Tensor.full s x)
   /-- `+` maps to `addSpec`. -/
   add   : ∀ {x y : TapeBuilder s} {vx vy : Tensor Float s},
             R x vx → R y vy → R (x + y) (addSpec vx vy)

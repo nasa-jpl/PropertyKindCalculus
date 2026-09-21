@@ -123,7 +123,7 @@ theorem r10_div_refines :
 
 -- Why `DivRefinement` can be unconditional here and cannot be on a machine: `Int` (like `ℝ`)
 -- totalizes `x / 0` to `0`, so both sides of the law agree with nothing to exclude, whereas IEEE
--- division does not — which is why the executable rung carries `dy.mant ≠ 0` as a hypothesis
+-- division does not — which is why the executable rung carries `dy.significand ≠ 0` as a hypothesis
 -- (`Quantity.div_refines_exec`) and `Float` is given no refinement instance at all.
 #guard ((9 : Int) / 0) == 0
 #guard (((⟨9⟩ : Grid) / ⟨0⟩ : Grid)).run == 0

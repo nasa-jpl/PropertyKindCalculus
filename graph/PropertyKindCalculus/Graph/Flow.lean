@@ -74,7 +74,7 @@ private theorem influenceSweep_shape (occs : List (Occurrence ν κ)) :
     rw [influenceSweep_cons]
     by_cases hc : (o.operands.any (fun oc => ks.contains oc.1) && !ks.contains o.result) = true
     · have hstep : influenceSweep [o] ks = ks ++ [o.result] := by
-        rw [influenceSweep_singleton, if_pos hc]
+        rw [influenceSweep_singleton, ite_eq_left hc]
       have hfresh : o.result ∉ ks := by
         have := (Bool.and_eq_true .. ▸ hc).2
         simpa [List.contains_iff_mem] using this
@@ -90,7 +90,7 @@ private theorem influenceSweep_shape (occs : List (Occurrence ν κ)) :
           rcases List.mem_map.mp (hmem x hx).2 with ⟨o', ho', rfl⟩
           exact List.mem_map.mpr ⟨o', List.mem_cons_of_mem _ ho', rfl⟩
     · have hstep : influenceSweep [o] ks = ks := by
-        rw [influenceSweep_singleton, if_neg hc]
+        rw [influenceSweep_singleton, ite_eq_right hc]
       obtain ⟨l, hl, hnd, hmem⟩ := ih ks
       refine ⟨l, by rw [hstep, hl], hnd, fun x hx => ⟨(hmem x hx).1, ?_⟩⟩
       rcases List.mem_map.mp (hmem x hx).2 with ⟨o', ho', rfl⟩
@@ -103,9 +103,9 @@ private theorem influenceSweeps_shape (occs : List (Occurrence ν κ)) :
   | fuel + 1, ks => by
     rw [influenceSweeps]
     by_cases h : ((influenceSweep occs ks).length == ks.length) = true
-    · rw [if_pos h]
+    · rw [ite_eq_left h]
       exact ⟨[], by simp⟩
-    · rw [if_neg h]
+    · rw [ite_eq_right h]
       obtain ⟨l₁, hl₁, hnd₁, hmem₁⟩ := influenceSweep_shape occs ks
       obtain ⟨l₂, hl₂, hnd₂, hmem₂⟩ := influenceSweeps_shape occs fuel (influenceSweep occs ks)
       refine ⟨l₁ ++ l₂, ?_, ?_, ?_⟩
@@ -127,7 +127,7 @@ private theorem influenceSweeps_fix_or_grow (occs : List (Occurrence ν κ)) :
   | fuel + 1, ks => by
     rw [influenceSweeps]
     by_cases h : ((influenceSweep occs ks).length == ks.length) = true
-    · rw [if_pos h]
+    · rw [ite_eq_left h]
       left
       obtain ⟨l, hl, -, -⟩ := influenceSweep_shape occs ks
       have heq : (influenceSweep occs ks).length = ks.length := by simpa using h
@@ -135,7 +135,7 @@ private theorem influenceSweeps_fix_or_grow (occs : List (Occurrence ν κ)) :
         rw [hl, List.length_append] at heq
         omega
       rw [hl, List.length_eq_zero_iff.mp hlen, List.append_nil]
-    · rw [if_neg h]
+    · rw [ite_eq_right h]
       rcases influenceSweeps_fix_or_grow occs fuel (influenceSweep occs ks) with hfix | hgrow
       · exact Or.inl hfix
       · right
@@ -193,7 +193,7 @@ private theorem influenceSweep_mem (occs : List (Occurrence ν κ)) :
             · exact this
           · have hf : ks.contains o.result = false := by
               revert hr; cases ks.contains o.result <;> simp
-            rw [if_pos (by rw [hany, hf]; rfl)]
+            rw [ite_eq_left (by rw [hany, hf]; rfl)]
             exact List.mem_append_right _ (List.mem_singleton_self _)
         exact (ih (influenceSweep [o] ks)).1 _ hres
       · obtain ⟨oc, hoc, hmem⟩ := hop
@@ -211,13 +211,13 @@ private theorem influenceSweep_sound (occs : List (Occurrence ν κ)) {P : ν �
     intro y hy
     rw [influenceSweep_singleton] at hy
     by_cases hc : (o.operands.any (fun oc => ks.contains oc.1) && !ks.contains o.result) = true
-    · rw [if_pos hc] at hy
+    · rw [ite_eq_left hc] at hy
       rcases List.mem_append.mp hy with hy | hy
       · exact hks y hy
       · obtain rfl := List.mem_singleton.mp hy
         obtain ⟨oc, hoc, hmem⟩ := List.any_eq_true.mp (Bool.and_eq_true .. ▸ hc).1
         exact hstep o (List.mem_cons_self ..) ⟨oc, hoc, hks _ (List.contains_iff_mem.mp hmem)⟩
-    · rw [if_neg hc] at hy
+    · rw [ite_eq_right hc] at hy
       exact hks y hy
 
 private theorem influenceSweeps_sound (occs : List (Occurrence ν κ)) {P : ν → Prop}

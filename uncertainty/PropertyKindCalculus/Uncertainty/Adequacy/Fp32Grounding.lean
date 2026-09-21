@@ -33,11 +33,14 @@ import PropertyKindCalculus.Uncertainty.Adequacy.Grid
 import NN.Floats.FP32.Notation
 import NN.Floats.FP32.Error
 import NN.Floats.FP32.Sterbenz
-import NN.Floats.Interval.Quantized
+import FloatLib.Floats.Interval.Quantized
 
 namespace PropertyKindCalculus.Uncertainty.Adequacy
 
 open TorchLean.Floats
+open FloatLib.Floats
+open FloatLib.Floats.Formats.Flocq
+open FloatLib.Numerics (binaryRadix Radix)
 
 /-- **The binary32 half-ulp rounding bound.** Every FP32 round is within half a ulp of the exact
 real — the genuine, Flocq-backed form of the grid model's `Adequacy.abs_sub_gridRound_le`. -/
@@ -51,46 +54,46 @@ all*, which is the hypothesis an exactness argument needs. The two facts are the
 one characterization: a round lands on the grid, and the grid is exactly what a round fixes. -/
 
 /-- **Rounding fixes the grid.** A real already representable in binary32 is returned unchanged. -/
-theorem round32_fix {x : ℝ} (h : neuralGenericFormat binaryRadix fexp32 x) : round32 x = x :=
-  neural_round_preserves_generic rnd32 x h
+theorem round32_fix {x : ℝ} (h : genericFormat binaryRadix fexp32 x) : round32 x = x :=
+  round_preserves_generic rnd32 x h
 
 /-- **A rounded real is on the grid** — the range of `round32` is the representable set. -/
-theorem round32_representable (x : ℝ) : neuralGenericFormat binaryRadix fexp32 (round32 x) :=
-  neural_generic_format_round rnd32 x
+theorem round32_representable (x : ℝ) : genericFormat binaryRadix fexp32 (round32 x) :=
+  generic_format_round rnd32 x
 
 /-- **The characterization.** `round32` fixes exactly the representable reals. This is what makes
 "the exact value is representable" the *weakest* hypothesis under which a node does not round: any
 condition implying the node is exact implies this one. -/
 theorem round32_eq_self_iff (x : ℝ) :
-    round32 x = x ↔ neuralGenericFormat binaryRadix fexp32 x := by
+    round32 x = x ↔ genericFormat binaryRadix fexp32 x := by
   constructor
   · intro h; exact h ▸ round32_representable x
   · exact round32_fix
 
 /-- **`0` is representable.** -/
-theorem zero_representable : neuralGenericFormat binaryRadix fexp32 (0 : ℝ) :=
-  neural_generic_format_zero
+theorem zero_representable : genericFormat binaryRadix fexp32 (0 : ℝ) :=
+  generic_format_zero
 
 /-- **And so is `1`** — the two values an indicator weighting uses, so a masked aggregation can
 discharge a grid hypothesis without reaching into the format theory itself. -/
-theorem one_representable : neuralGenericFormat binaryRadix fexp32 (1 : ℝ) := by
-  have h := neural_generic_format_bpow (β := binaryRadix) (fexp := fexp32) 0 (by decide)
-  rwa [show neuralBpow binaryRadix 0 = (1:ℝ) by simp [neuralBpow]] at h
+theorem one_representable : genericFormat binaryRadix fexp32 (1 : ℝ) := by
+  have h := generic_format_bpow (β := binaryRadix) (fexp := fexp32) 0 (by decide)
+  rwa [show bpow binaryRadix 0 = (1:ℝ) by simp [bpow]] at h
 
 /-- **Rounding is monotone**, which is what lets a sign survive a rounded fold. -/
-theorem round32_mono {x y : ℝ} (h : x ≤ y) : round32 x ≤ round32 y := neuralRound_mono rnd32 h
+theorem round32_mono {x y : ℝ} (h : x ≤ y) : round32 x ≤ round32 y := round_mono rnd32 h
 
 /-- **Every power of the radix whose exponent clears the format's grid is representable.** This is
 the general lever `one_representable` is one instance of: a value the format can name exactly, and
 so a value at which a rounding node provably does nothing. `fexp32 (e + 1) ≤ e` is the format's own
 side condition, decidable at any concrete `e`. -/
 theorem bpow_representable {e : ℤ} (h : fexp32 (e + 1) ≤ e) :
-    neuralGenericFormat binaryRadix fexp32 (neuralBpow binaryRadix e) :=
-  neural_generic_format_bpow e h
+    genericFormat binaryRadix fexp32 (bpow binaryRadix e) :=
+  generic_format_bpow e h
 
-/-- The radix is two — the bridge from a `neuralBpow` to a numeral. -/
+/-- The radix is two — the bridge from a `bpow` to a numeral. -/
 theorem binaryRadix_toReal : binaryRadix.toReal = (2 : ℝ) := by
-  simp [NeuralRadix.toReal, binaryRadix]
+  simp [Radix.toReal, binaryRadix]
 
 /-- **The binary32 addition is within half a ulp** of the exact real sum: the per-operation rounding
 bound the accumulation argument composes over an evaluation. -/
@@ -133,7 +136,7 @@ This is the genuine binary32 realization — over TorchLean's `fexp32 = FLTExp (
 underflow — of the grid model's self-contained `Sterbenz32.flx_sterbenz`, discharging Stage 3.2:
 near-equal binary32 subtraction is lossless at *the format the model actually uses*. -/
 theorem round32_sterbenz_exact {u v : ℝ}
-    (hu : neuralGenericFormat binaryRadix fexp32 u) (hv : neuralGenericFormat binaryRadix fexp32 v)
+    (hu : genericFormat binaryRadix fexp32 u) (hv : genericFormat binaryRadix fexp32 v)
     (hupos : 0 < u) (hvpos : 0 < v) (huv : u ≤ 2 * v) (hvu : v ≤ 2 * u) :
     round32 (u - v) = u - v :=
   TorchLean.Floats.round32_sub_exact_of_sterbenz hu hv hupos hvpos huv hvu

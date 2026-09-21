@@ -27,12 +27,29 @@ Mathlib- and module-free.
 
 import PropertyKindCalculus.QuantityRefinement
 import PropertyKindCalculus.QuantityReal
-import NN.Floats.IEEEExec.Bridge.FP32.Ops
+import NN.Proofs.RuntimeApprox.IEEE32.Arithmetic
 
-open TorchLean.Floats          -- `FP32`
-open TorchLean.Floats.IEEE754  -- `IEEE32Exec`, `Dyadic`
+open TorchLean.Floats          -- `FP32`, `round32`
+open TorchLean.Floats.IEEE754  -- the `IEEE32Exec` theorem namespace (`fp32Round`, `toReal_*`)
+open FloatLib.Floats (ExecFloat)
+open FloatLib.Floats.ExecFloat.Binary (isFinite toModel)
+open FloatLib.Floats.Formats.Flocq (round_preserves_generic generic_format_zero)
 
 namespace PropertyKindCalculus
+
+/-- **The executable IEEE-754 binary32 carrier**: FloatLib's configured `ExecFloat.Binary 8 23`
+(eight exponent bits, twenty-three stored fraction bits), the word TorchLean's runtime-approximation
+theorems are stated over. Named here once so every kinded statement about executable binary32 reads
+against one carrier. -/
+abbrev IEEE32Exec : Type := ExecFloat.Binary 8 23
+
+/-- The real magnitude of an executable binary32 word: decode to FloatLib's model and read its real
+value (`0` for a non-finite word). -/
+noncomputable abbrev IEEE32Exec.toReal (x : IEEE32Exec) : ℝ := (toModel x).toReal
+
+/-- Binary32 rounding fixes `0`: it is on the grid. -/
+theorem fp32Round_zero : IEEE32Exec.fp32Round 0 = 0 :=
+  round_preserves_generic rnd32 0 generic_format_zero
 
 /-! ## The FP32 rounding-spec carrier and its (unconditional) refinement of ℝ -/
 
@@ -53,7 +70,7 @@ noncomputable instance instCarrierRefinementFP32 : CarrierRefinement FP32 ℝ wh
   round := IEEE32Exec.fp32Round
   toSpec_zero := by
     show (0 : FP32).val = (0 : ℝ)
-    exact IEEE32Exec.fp32Round_zero
+    exact fp32Round_zero
   toSpec_add := fun _ _ => rfl
 
 /-- **The R10 capstone at genuine binary32.** For any kind, the `FP32` sum forgotten
@@ -74,7 +91,7 @@ executable addition. (It is deliberately *not* given a `CarrierRefinement`, beca
 its bridge law holds only on the finite path — see below.) -/
 instance instCarrierIEEE32 : Carrier IEEE32Exec where
   zero := 0
-  add := IEEE32Exec.add
+  add := ExecFloat.add
 
 /-- Forget a kind-`k` executable-binary32 quantity to its real magnitude. -/
 noncomputable def Quantity.toRealExec {k : KindOfProperty}
@@ -82,26 +99,24 @@ noncomputable def Quantity.toRealExec {k : KindOfProperty}
   ⟨IEEE32Exec.toReal x.magnitude⟩
 
 /-- **Executable refinement, conditional (R10).** For kind-`k` quantities carried at
-the *executable* binary32, **if** both summands decode to finite values and the sum
-does not overflow, then forgetting the executable sum to `ℝ` equals the
-FP32-rounding of the real sum. The finiteness/no-overflow hypotheses are the
-explicit side condition: where they fail (overflow to ∞, a NaN operand), the
-refinement does not hold — exactly the silent failure the unconditional spec-side
-bridge abstracts away, made visible here. Lifts TorchLean's
-`toReal_add_eq_fp32Round` along the kind index. -/
+the *executable* binary32, **if** the executable sum is finite (neither operand a NaN or
+an infinity, no overflow), then forgetting the executable sum to `ℝ` equals the
+FP32-rounding of the real sum. The finiteness hypothesis is the explicit side
+condition: where it fails (overflow to ∞, a NaN operand), the refinement does not
+hold — exactly the silent failure the unconditional spec-side bridge abstracts away,
+made visible here. Lifts TorchLean's `toReal_add_eq_fp32Round_of_isFinite` along the
+kind index. -/
 theorem Quantity.add_refines_exec {k : KindOfProperty} (h : DifferenceKind k)
-    (x y : Quantity k IEEE32Exec) {dx dy : IEEE32Exec.Dyadic}
-    (hx : IEEE32Exec.toDyadic? x.magnitude = some dx)
-    (hy : IEEE32Exec.toDyadic? y.magnitude = some dy)
-    (hfin : IEEE32Exec.isFinite (IEEE32Exec.add x.magnitude y.magnitude) = true) :
+    (x y : Quantity k IEEE32Exec)
+    (hfin : isFinite (ExecFloat.add x.magnitude y.magnitude) = true) :
     (Quantity.add h x y).toRealExec
       = Quantity.roundBy IEEE32Exec.fp32Round (Quantity.add h x.toRealExec y.toRealExec) := by
-  show (Quantity.mk (IEEE32Exec.toReal (IEEE32Exec.add x.magnitude y.magnitude))
+  show (Quantity.mk (IEEE32Exec.toReal (ExecFloat.add x.magnitude y.magnitude))
         : Quantity k ℝ)
       = Quantity.mk
           (IEEE32Exec.fp32Round
             (IEEE32Exec.toReal x.magnitude + IEEE32Exec.toReal y.magnitude))
-  rw [IEEE32Exec.toReal_add_eq_fp32Round x.magnitude y.magnitude hx hy hfin]
+  rw [IEEE32Exec.toReal, IEEE32Exec.toReal_add_eq_fp32Round_of_isFinite hfin]
 
 /-! ## The multiplicative surface at binary32
 
@@ -151,47 +166,44 @@ theorem Quantity.div_refines_fp32 {k₁ k₂ k : KindOfProperty} (h : QuotientKi
           (Quantity.div h (Quantity.toSpec x) (Quantity.toSpec y)) :=
   Quantity.div_refines h x y
 
-/-- **Executable multiplicative refinement, conditional (R10).** If both factors decode to
-finite values and the product does not overflow, forgetting the executable product to `ℝ`
-equals the FP32-rounding of the real product. Lifts TorchLean's `toReal_mul_eq_fp32Round`
-along the kind product. -/
+/-- **Executable multiplicative refinement, conditional (R10).** If the executable product
+is finite, forgetting it to `ℝ` equals the FP32-rounding of the real product. Lifts
+TorchLean's `toReal_mul_eq_fp32Round_of_isFinite` along the kind product. -/
 theorem Quantity.mul_refines_exec {k₁ k₂ k : KindOfProperty} (h : ProductKind k₁ k₂ k)
-    (x : Quantity k₁ IEEE32Exec) (y : Quantity k₂ IEEE32Exec) {dx dy : IEEE32Exec.Dyadic}
-    (hx : IEEE32Exec.toDyadic? x.magnitude = some dx)
-    (hy : IEEE32Exec.toDyadic? y.magnitude = some dy)
-    (hfin : IEEE32Exec.isFinite (IEEE32Exec.mul x.magnitude y.magnitude) = true) :
+    (x : Quantity k₁ IEEE32Exec) (y : Quantity k₂ IEEE32Exec)
+    (hfin : isFinite (ExecFloat.mul x.magnitude y.magnitude) = true) :
     (Quantity.mul h x y).toRealExec
       = Quantity.roundBy IEEE32Exec.fp32Round
           (Quantity.mul h x.toRealExec y.toRealExec) := by
-  show (Quantity.mk (IEEE32Exec.toReal (IEEE32Exec.mul x.magnitude y.magnitude))
+  show (Quantity.mk (IEEE32Exec.toReal (ExecFloat.mul x.magnitude y.magnitude))
         : Quantity k ℝ)
       = Quantity.mk
           (IEEE32Exec.fp32Round
             (IEEE32Exec.toReal x.magnitude * IEEE32Exec.toReal y.magnitude))
-  rw [IEEE32Exec.toReal_mul_eq_fp32Round x.magnitude y.magnitude hx hy hfin]
+  rw [IEEE32Exec.toReal, IEEE32Exec.toReal_mul_eq_fp32Round_of_isFinite hfin]
 
 /-- **Executable division refinement, conditional (R10) — and this is the one that carries
 the zero denominator.** Beside the finiteness hypotheses the product needs, division needs
-`hy0 : dy.mant ≠ 0`: the divisor's decoded mantissa is not zero. Where the spec-side
+`hy0 : dy.significand ≠ 0`: the divisor's decoded significand is not zero. Where the spec-side
 `DivRefinement FP32 ℝ` is unconditional because `ℝ` totalizes `x / 0` to `0`, the executable
 format does not — it produces an infinity or a NaN, and no rounding of a real quotient
 equals either. So the metrological license a mean's denominator needs (`WeightedCarving`'s
 `total_ne_zero`) reappears here as an arithmetic hypothesis on the same computation, at the
 rung where it can actually fail. Lifts `toReal_div_eq_fp32Round` along the kind quotient. -/
 theorem Quantity.div_refines_exec {k₁ k₂ k : KindOfProperty} (h : QuotientKind k₁ k₂ k)
-    (x : Quantity k₁ IEEE32Exec) (y : Quantity k₂ IEEE32Exec) {dx dy : IEEE32Exec.Dyadic}
-    (hx : IEEE32Exec.toDyadic? x.magnitude = some dx)
-    (hy : IEEE32Exec.toDyadic? y.magnitude = some dy)
-    (hy0 : dy.mant ≠ 0)
-    (hfin : IEEE32Exec.isFinite (IEEE32Exec.div x.magnitude y.magnitude) = true) :
+    (x : Quantity k₁ IEEE32Exec) (y : Quantity k₂ IEEE32Exec) {dx dy : FloatLib.Numerics.Dyadic}
+    (hx : (toModel x.magnitude).toDyadic? = some dx)
+    (hy : (toModel y.magnitude).toDyadic? = some dy)
+    (hy0 : dy.significand ≠ 0)
+    (hfin : isFinite (ExecFloat.div x.magnitude y.magnitude) = true) :
     (Quantity.div h x y).toRealExec
       = Quantity.roundBy IEEE32Exec.fp32Round
           (Quantity.div h x.toRealExec y.toRealExec) := by
-  show (Quantity.mk (IEEE32Exec.toReal (IEEE32Exec.div x.magnitude y.magnitude))
+  show (Quantity.mk (IEEE32Exec.toReal (ExecFloat.div x.magnitude y.magnitude))
         : Quantity k ℝ)
       = Quantity.mk
           (IEEE32Exec.fp32Round
             (IEEE32Exec.toReal x.magnitude / IEEE32Exec.toReal y.magnitude))
-  rw [IEEE32Exec.toReal_div_eq_fp32Round x.magnitude y.magnitude hx hy hy0 hfin]
+  rw [IEEE32Exec.toReal, IEEE32Exec.toReal_div_eq_fp32Round hx hy hy0 hfin]
 
 end PropertyKindCalculus

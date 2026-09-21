@@ -29,7 +29,7 @@ import PropertyKindCalculus.Torch.Paradigm.TapeCarrier
 import PropertyKindCalculus.Torch.Paradigm.TapeCse
 import PropertyKindCalculus.Torch.Paradigm.LutCarrier
 
-open Spec
+open Spec TorchLean
 open Runtime.Autograd (Tape Node TapeM)
 open PropertyKindCalculus (MathCarrier)
 open PropertyKindCalculus.Paradigm (TapeBuilder NumCarrier LutTable lutNodeName?)
@@ -41,7 +41,7 @@ namespace PropertyKindCalculus.Paradigm.TapeCodegen
 
 /-- The scalar constant a node stores as its forward value (a scalar tape node holds one `Float`;
 the same accessor `paradigm.tape_cse.nodeKey` uses). -/
-def nodeScalar (n : Node Float) : Float := (Spec.Tensor.toList n.value.tensor).headD 0.0
+def nodeScalar (n : Node Float) : Float := (TorchLean.Storage.toArray n.value.tensor.buffer).toList.headD 0.0
 
 /-- A leaf has no parents; it is a graph **input** (a named leaf) or a **constant** (an unnamed
 `TapeBuilder.const` leaf). An op node has ≥1 parent and carries the op name. -/

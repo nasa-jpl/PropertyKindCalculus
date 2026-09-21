@@ -39,7 +39,7 @@ import PropertyKindCalculus.Uncertainty.Adequacy
 import PropertyKindCalculus.Uncertainty.Sensitivity
 import PropertyKindCalculus.Uncertainty.Budget
 
-open Spec Tensor
+open Spec TorchLean TorchLean.Tensor
 open PropertyKindCalculus (Quantity ProductKind KindOfProperty)
 open PropertyKindCalculus.Paradigm (TapeBuilder NumCarrier)
 

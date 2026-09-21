@@ -127,7 +127,7 @@ def velocityE1Q (xₜ : Time → E1) (t : Time) : Quantity velocityK E1 :=
 
 /-- **Hamilton's formulation, kinded**: the momentum trajectory is built through the
 kinded canonical momentum — the kind-changing map — and the equivalence is
-`equationOfMotion_tfae` consumed at positions 0 and 2, nothing re-proved. -/
+`equationOfMotion_tfae` consumed at positions 1 and 3, nothing re-proved. -/
 theorem equationOfMotion_iff_kinded_hamilton (S : HO) (xₜ : Time → E1)
     (hx : ContDiff ℝ ∞ xₜ) :
     S.EquationOfMotion xₜ ↔
@@ -135,7 +135,7 @@ theorem equationOfMotion_iff_kinded_hamilton (S : HO) (xₜ : Time → E1)
         (fun t =>
           (toCanonicalMomentumQ S t (displacementE1Q xₜ t) (velocityE1Q xₜ t)).magnitude)
         xₜ = 0 :=
-  (S.equationOfMotion_tfae xₜ hx).out 0 2
+  (S.equationOfMotion_tfae xₜ hx).out 1 3
 
 /-- The action's integrand *is* the Lagrangian mint — definitionally: upstream's
 `lagrangian S t (q' t) (fderiv ℝ q' t 1)` and the kinded `T − V` crossing erase to

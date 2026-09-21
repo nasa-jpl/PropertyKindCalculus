@@ -35,7 +35,7 @@ import PropertyKindCalculus.Uncertainty.SsprcBatched
 
 namespace PropertyKindCalculus.Uncertainty.McmBatched
 
-open Spec
+open Spec TorchLean
 open PropertyKindCalculus.Paradigm (NumCarrier)
 open PropertyKindCalculus.Paradigm.CudaCarrier (CudaT)
 open PropertyKindCalculus.Uncertainty (InputDist)

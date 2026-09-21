@@ -35,8 +35,8 @@ axiom audit at the end certifies it sorry-free.
 -/
 import PropertyKindCalculus.Torch.Paradigm.TapeCse
 
-open Spec
-open Spec.Tensor
+open Spec TorchLean
+open TorchLean TorchLean.Tensor
 open Runtime.Autograd (Tape Node TapeM)
 open PropertyKindCalculus.Paradigm.TapeCSE (nodeKey cseCompact)
 
@@ -97,7 +97,7 @@ theorem cseCompact_eq_foldl (t : Tape Float) :
 
 theorem getNode?_addNode_self (t : Tape Float) (n : Node Float) :
     (t.addNode n).1.getNode? t.size
-      = some { n with value := Spec.SomeTensor.materialize n.value } := by
+      = some n := by
   simp [Tape.getNode?, Tape.addNode, Tape.size]
 
 theorem getNode?_addNode_lt (t : Tape Float) (n : Node Float) (id : Nat) (h : id < t.size) :
@@ -128,7 +128,7 @@ theorem key_name (rm : Array Nat) (n : Node Float) : (nodeKey rm n).1 = n.name :
 theorem key_parents (rm : Array Nat) (n : Node Float) :
     (nodeKey rm n).2.1 = n.parents.map (fun p => rm.getD p p) := rfl
 theorem key_bits (rm : Array Nat) (n : Node Float) :
-    (nodeKey rm n).2.2 = (Spec.Tensor.toList n.value.tensor).map Float.toBits := rfl
+    (nodeKey rm n).2.2 = (TorchLean.Storage.toArray n.value.tensor.buffer).toList.map Float.toBits := rfl
 
 /-! ## Well-formedness and the loop invariant -/
 
@@ -152,11 +152,11 @@ def Inv (t : Tape Float) (k : Nat) (st : CseState) : Prop :=
      ∃ nNew nOld, st.1.getNode? (st.2.1.getD id id) = some nNew ∧ t.getNode? id = some nOld ∧
        nNew.name = nOld.name ∧
        nNew.parents = nOld.parents.map (fun p => st.2.1.getD p p) ∧
-       (Spec.Tensor.toList nNew.value.tensor).map Float.toBits = (Spec.Tensor.toList nOld.value.tensor).map Float.toBits) ∧
+       (TorchLean.Storage.toArray nNew.value.tensor.buffer).toList.map Float.toBits = (TorchLean.Storage.toArray nOld.value.tensor.buffer).toList.map Float.toBits) ∧
   (∀ (key : Key) (nid : Nat), st.2.2[key]? = some nid → nid < st.1.size ∧
      ∃ nNew, st.1.getNode? nid = some nNew ∧
        nNew.name = key.1 ∧ nNew.parents = key.2.1 ∧
-       (Spec.Tensor.toList nNew.value.tensor).map Float.toBits = key.2.2)
+       (TorchLean.Storage.toArray nNew.value.tensor.buffer).toList.map Float.toBits = key.2.2)
 
 theorem inv_base (t : Tape Float) : Inv t 0 (cseInit t) := by
   refine ⟨by simp [cseInit, Array.mkEmpty], ?_, ?_, ?_⟩
@@ -238,7 +238,7 @@ theorem inv_step (t : Tape Float) (hwf : WF t) (i : Fin t.nodes.size) (st : CseS
           ?_, ?_, ?_⟩
         · simp only [hnode'_name]
         · simp only [hnode'_par]; rw [map_getD_push hpar_ltsz]
-        · rw [hnode'_val, Spec.SomeTensor.materialize_eq]
+        · rw [hnode'_val]
     · -- memo soundness (insert)
       intro key nid hkey
       dsimp only at hkey ⊢
@@ -251,7 +251,7 @@ theorem inv_step (t : Tape Float) (hwf : WF t) (i : Fin t.nodes.size) (st : CseS
         refine ⟨by rw [Tape.size_addNode]; exact Nat.lt_succ_self _, _, hself, ?_, ?_, ?_⟩
         · rw [← hkeq, key_name]
         · rw [← hkeq, key_parents]
-        · rw [← hkeq, key_bits, hnode'_val, Spec.SomeTensor.materialize_eq]
+        · rw [← hkeq, key_bits, hnode'_val]
       · obtain ⟨hnidlt, nNew, hnNew, hnName, hnPar, hnbits⟩ := hmemo _ _ hkey
         exact ⟨by rw [Tape.size_addNode]; exact Nat.lt_succ_of_lt hnidlt, nNew,
           by rw [getNode?_addNode_lt _ _ _ hnidlt]; exact hnNew, hnName, hnPar, hnbits⟩
@@ -273,7 +273,7 @@ theorem cseCompact_structural (t : Tape Float) (hwf : WF t) (id : Nat) (h : id <
     ∃ nNew nOld, (cseCompact t).1.getNode? ((cseCompact t).2.getD id id) = some nNew ∧
       t.getNode? id = some nOld ∧ nNew.name = nOld.name ∧
       nNew.parents = nOld.parents.map (fun p => (cseCompact t).2.getD p p) ∧
-      (Spec.Tensor.toList nNew.value.tensor).map Float.toBits = (Spec.Tensor.toList nOld.value.tensor).map Float.toBits := by
+      (TorchLean.Storage.toArray nNew.value.tensor.buffer).toList.map Float.toBits = (TorchLean.Storage.toArray nOld.value.tensor.buffer).toList.map Float.toBits := by
   obtain ⟨_, _, hcorr, _⟩ := cseFold_inv t hwf
   rw [cseCompact_eq_foldl]
   exact hcorr id h
@@ -291,7 +291,7 @@ the value stored at its CSE-remapped node. The read-back never moves; only the n
 theorem cseCompact_preserves_stored (t : Tape Float) (hwf : WF t) (id : Nat) (h : id < t.size) :
     ∃ nNew nOld, (cseCompact t).1.getNode? ((cseCompact t).2.getD id id) = some nNew ∧
       t.getNode? id = some nOld ∧
-      (Spec.Tensor.toList nNew.value.tensor).map Float.toBits = (Spec.Tensor.toList nOld.value.tensor).map Float.toBits := by
+      (TorchLean.Storage.toArray nNew.value.tensor.buffer).toList.map Float.toBits = (TorchLean.Storage.toArray nOld.value.tensor.buffer).toList.map Float.toBits := by
   obtain ⟨_, nNew, nOld, ha, hb, _, _, hbits⟩ := cseCompact_structural t hwf id h
   exact ⟨nNew, nOld, ha, hb, hbits⟩
 
@@ -312,10 +312,10 @@ theorem wf_of_bounded (t : Tape Float)
 /-- A concrete well-formed tape: two named input leaves and one `add` op reading both. -/
 def demoTape : Tape Float :=
   let t0 := Tape.empty
-  let t1 := (t0.leaf (fill (0.0 : Float) Shape.scalar) (name := some "a")).1
-  let t2 := (t1.leaf (fill (0.0 : Float) Shape.scalar) (name := some "b")).1
+  let t1 := (t0.leaf (Tensor.full Shape.scalar (0.0 : Float)) (name := some "a")).1
+  let t2 := (t1.leaf (Tensor.full Shape.scalar (0.0 : Float)) (name := some "b")).1
   (t2.addNode { name := some "add",
-                value := Spec.SomeTensor.ofTensor (fill (0.0 : Float) Shape.scalar),
+                value := Spec.SomeTensor.ofTensor (Tensor.full Shape.scalar (0.0 : Float)),
                 parents := #[0, 1], backward := fun _ => .ok #[] }).1
 
 theorem demoTape_size : demoTape.size = 3 := by decide

@@ -15,9 +15,9 @@ starts its own, and every margin note and its in-text mark renders as "1". The r
 cannot sit on `<main>` itself either: a containment boundary blocks its own interior.
 Upstream resets on `.content-wrapper`, and this rule is that fix verbatim.
 
-Advancing the verso pin to `a20c785b` instead is blocked by the toolchain lockstep
-(see lakefile.toml): that commit's own `lean-toolchain` is v4.34.0-rc2, two bumps past
-this stack. Delete this override when the verso pin advances past #977.
+Advancing the verso pin past `a20c785b` instead is blocked by the lockstep (see
+lakefile.toml): verso-blueprint's `v4.34.0` line pins verso `52c8c955`, which predates
+#977. Delete this override when that pin advances past #977.
 -/
 def versoMarginNoteCounterFix : String := r##"
 .content-wrapper {

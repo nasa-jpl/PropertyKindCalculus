@@ -65,7 +65,7 @@ since it neither varies with the choice of axes nor survives one.
 -/
 import PropertyKindCalculus.Dimension
 import Physlib.Units.WithDim.Basic
-import Mathlib.Data.Complex.Basic
+import Mathlib.Basic.Complex.Basic
 
 namespace PropertyKindCalculus.Examples.HarmonicOscillator.Attempt3
 

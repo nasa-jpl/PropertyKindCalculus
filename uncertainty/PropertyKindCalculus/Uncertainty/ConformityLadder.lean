@@ -43,7 +43,7 @@ Mathlib's `ℝ`, like `Ladder.lean` and for the same reason: monotonicity is not
 can carry, and the executable counterparts in `Conformity.lean` are the same arithmetic on the
 rounding carrier.
 -/
-import Mathlib.Data.Real.Basic
+import Mathlib.Basic.Real.Basic
 import Mathlib.Order.Monotone.Basic
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.FieldSimp

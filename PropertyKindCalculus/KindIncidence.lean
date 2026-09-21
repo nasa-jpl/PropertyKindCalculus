@@ -2254,8 +2254,8 @@ private partial def kindRefToExpr : KindRef → Expr
   | .rendered s => mkApp (mkConst ``Provenance.KindRef.rendered) (toExpr s)
 where
   listE (cs : List KindRef) : Expr :=
-    cs.foldr (init := mkApp (mkConst ``List.nil [levelZero]) kindRefE) fun c acc =>
-      mkApp3 (mkConst ``List.cons [levelZero]) kindRefE (kindRefToExpr c) acc
+    cs.foldr (init := mkApp (mkConst ``List.nil [Level.zero]) kindRefE) fun c acc =>
+      mkApp3 (mkConst ``List.cons [Level.zero]) kindRefE (kindRefToExpr c) acc
 
 instance : ToExpr KindRef where
   toTypeExpr := kindRefE

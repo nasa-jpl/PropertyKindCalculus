@@ -211,7 +211,7 @@ def demoLandingHolds : Bool :=
 /-- info: 'PropertyKindCalculus.Examples.TapeCodegenLanding.landing_abi_consistent' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs (whitespace := lax) in #print axioms landing_abi_consistent
 
-/-- info: 'PropertyKindCalculus.Examples.TapeCodegenLanding.collectInputs_nodup' depends on axioms: [propext, Quot.sound] -/
+/-- info: 'PropertyKindCalculus.Examples.TapeCodegenLanding.collectInputs_nodup' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in #print axioms collectInputs_nodup
 
 /-- info: 'PropertyKindCalculus.Examples.TapeCodegenLanding.collectTableNames_nodup' depends on axioms: [propext, Classical.choice, Quot.sound] -/

@@ -23,7 +23,7 @@ import PropertyKindCalculus.Torch.Paradigm.Platform
 
 namespace PropertyKindCalculus.Tests.AutoScaling
 
-open Spec
+open Spec TorchLean
 open Runtime.Autograd (Tape TapeM)
 open PropertyKindCalculus (MathCarrier)
 open PropertyKindCalculus.Paradigm (TapeBuilder)
@@ -36,7 +36,7 @@ open PropertyKindCalculus.Paradigm.Platform
 abbrev TB := TapeBuilder Shape.scalar
 
 /-- A named input leaf (placeholder value `0`). -/
-def inLeaf (nm : String) : TB := ⟨TapeM.leaf (fill (0.0 : Float) Shape.scalar) (name := some nm)⟩
+def inLeaf (nm : String) : TB := ⟨TapeM.leaf (Tensor.full Shape.scalar (0.0 : Float)) (name := some nm)⟩
 
 /-- Record one output and hash-cons, exactly as the deployment recorders do. -/
 def record1 (b : TB) : Except String (Tape Float) := do

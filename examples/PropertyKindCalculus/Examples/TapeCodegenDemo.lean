@@ -14,7 +14,7 @@ byte-identical to the bare kernel while the model stays in the rigorous quantity
 import PropertyKindCalculus.Torch.Paradigm.TapeCodegen
 import PropertyKindCalculus.Examples.AvsForward
 
-open Spec
+open Spec TorchLean
 open Runtime.Autograd (Tape TapeM)
 open PropertyKindCalculus (MathCarrier)
 open PropertyKindCalculus.Paradigm (TapeBuilder NumCarrier)
@@ -32,7 +32,7 @@ boundary (the `.magnitude` of the kinded kernels), recorded here on the tape car
 abbrev TB := TapeBuilder Shape.scalar
 
 /-- A named input leaf (marks a kernel input pointer; placeholder value `0`). -/
-def inLeaf (nm : String) : TB := ⟨TapeM.leaf (fill (0.0 : Float) Shape.scalar) (name := some nm)⟩
+def inLeaf (nm : String) : TB := ⟨TapeM.leaf (Tensor.full Shape.scalar (0.0 : Float)) (name := some nm)⟩
 
 /-- Record `resJac`'s five outputs on one shared tape and hash-cons to the distinct-op DAG. -/
 def recordResJac : Except String (Tape Float × List Nat) := do

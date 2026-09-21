@@ -19,6 +19,8 @@ import PropertyKindCalculus.Torch.Fp32
 
 open TorchLean.Floats
 open TorchLean.Floats.IEEE754
+open FloatLib.Floats (ExecFloat)
+open FloatLib.Floats.ExecFloat.Binary (isFinite toModel)
 
 namespace PropertyKindCalculus.Tests.Refinement
 
@@ -65,36 +67,35 @@ theorem fp32_div_refines :
 conditional refinements applied with every hypothesis settled by `decide`. -/
 
 /-- Binary32 `2.0` and `3.0`, by bit pattern. -/
-def two : IEEE32Exec := IEEE32Exec.ofBits 0x40000000
+def two : IEEE32Exec := ExecFloat.Binary.ofBits32 0x40000000
 /-- Binary32 `3.0`. -/
-def three : IEEE32Exec := IEEE32Exec.ofBits 0x40400000
+def three : IEEE32Exec := ExecFloat.Binary.ofBits32 0x40400000
 
 /-- Exec length `2.0`. -/
 def qTwo : Quantity lengthK IEEE32Exec := ⟨two⟩
 /-- Exec length `3.0`. -/
 def qThree : Quantity lengthK IEEE32Exec := ⟨three⟩
 /-- Exec area `6.0`, formed by the executable multiplication. -/
-def qSix : Quantity areaK IEEE32Exec := ⟨IEEE32Exec.mul two three⟩
+def qSix : Quantity areaK IEEE32Exec := ⟨ExecFloat.mul two three⟩
 
 /-- The dyadic decoding of `2.0`. -/
-def dTwo : IEEE32Exec.Dyadic := { sign := false, mant := 8388608, exp := -22 }
+def dTwo : FloatLib.Numerics.Dyadic := { negative := false, significand := 8388608, exponent := -22 }
 /-- The dyadic decoding of `3.0`. -/
-def dThree : IEEE32Exec.Dyadic := { sign := false, mant := 12582912, exp := -22 }
+def dThree : FloatLib.Numerics.Dyadic := { negative := false, significand := 12582912, exponent := -22 }
 /-- The dyadic decoding of `6.0`. -/
-def dSix : IEEE32Exec.Dyadic := { sign := false, mant := 12582912, exp := -21 }
+def dSix : FloatLib.Numerics.Dyadic := { negative := false, significand := 12582912, exponent := -21 }
 
 -- The written-out dyadics are the real decodings, not guesses.
-#guard IEEE32Exec.toDyadic? two == some dTwo
-#guard IEEE32Exec.toDyadic? three == some dThree
-#guard IEEE32Exec.toDyadic? (IEEE32Exec.mul two three) == some dSix
+#guard (toModel two).toDyadic? == some dTwo
+#guard (toModel three).toDyadic? == some dThree
+#guard (toModel (ExecFloat.mul two three)).toDyadic? == some dSix
 
 -- Inhabitation: the executable product and quotient refine, every hypothesis discharged.
 theorem exec_mul_refines :
     (Quantity.mul prodLen qTwo qThree).toRealExec
       = Quantity.roundBy IEEE32Exec.fp32Round
           (Quantity.mul prodLen qTwo.toRealExec qThree.toRealExec) :=
-  Quantity.mul_refines_exec prodLen qTwo qThree (dx := dTwo) (dy := dThree)
-    (by decide) (by decide) (by decide)
+  Quantity.mul_refines_exec prodLen qTwo qThree (by decide)
 
 theorem exec_div_refines :
     (Quantity.div quotArea qSix qTwo).toRealExec
@@ -111,8 +112,8 @@ unconditional spec-side `DivRefinement FP32 ℝ` cannot express — a mean whose
 does not produce a wrong number at this rung, it produces one the bridge refuses to relate to any
 real quotient at all. -/
 
-#guard ((IEEE32Exec.toDyadic? (0 : IEEE32Exec)).map (·.mant)) == some 0
-#guard IEEE32Exec.isFinite (IEEE32Exec.div two 0) == false
+#guard ((toModel (0 : IEEE32Exec)).toDyadic?.map (·.significand)) == some 0
+#guard isFinite (ExecFloat.div two 0) == false
 
 /-! ## Axiom profiles -/
 

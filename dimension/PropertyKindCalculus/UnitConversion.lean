@@ -23,7 +23,7 @@ the one dependency kept out of the core.
 
 import PropertyKindCalculus.UnitPrefix
 import Mathlib.Algebra.Order.Field.Basic
-import Mathlib.Data.Real.Basic
+import Mathlib.Basic.Real.Basic
 import Physlib.Units.ParametricUnits
 
 namespace PropertyKindCalculus.PrefixedUnit

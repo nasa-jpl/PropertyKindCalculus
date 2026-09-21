@@ -29,8 +29,8 @@ the axiom audit at the end certifies it sorry-free.
 -/
 import PropertyKindCalculus.Examples.TapeCodegenProof
 
-open Spec
-open Spec.Tensor
+open Spec TorchLean
+open TorchLean TorchLean.Tensor
 open Runtime.Autograd (Tape Node TapeM)
 open PropertyKindCalculus (MathCarrier)
 open PropertyKindCalculus.Paradigm (TapeBuilder)
@@ -85,12 +85,14 @@ theorem evalTape_addNode (env : String → Float) (t : Tape Float) (n : Node Flo
     evalTape env (t.addNode n).1
       = (evalTape env t) >>= fun vals => (stepVal env vals n).map (fun v => vals.push v) := by
   rw [evalTape_eq_foldlM env (t.addNode n).1, evalTape_eq_foldlM env t]
-  simp only [Tape.addNode, Array.foldlM_push, Spec.SomeTensor.materialize_eq]
+  simp only [Tape.addNode, Array.foldlM_push]
 
 /-- `nodeScalar` of a constant scalar leaf is its fill value. -/
 theorem nodeScalar_scalarLeaf (x : Float) :
-    nodeScalar { name := none, value := Spec.SomeTensor.ofTensor (fill x Shape.scalar),
-                 backward := fun _ => .ok #[] } = x := rfl
+    nodeScalar { name := none, value := Spec.SomeTensor.ofTensor (Tensor.full Shape.scalar x),
+                 backward := fun _ => .ok #[] } = x := by
+  simp [nodeScalar, Tensor.full, TorchLean.Tensor.Internal.Rep.const,
+    TorchLean.Tensor.Internal.Rep.ofFlatFn, TorchLean.Storage.toArray_ofFn, Spec.SomeTensor.ofTensor]
 
 theorem getD_push_size (vals : Array Float) (x : Float) :
     (vals.push x).getD vals.size 0.0 = x := by simp
@@ -136,15 +138,20 @@ theorem Faithful_named_leaf (env : String → Float) (nm : String) (v : T) :
 
 /-- A constant scalar leaf: stored `fill x`, re-interpreted as `x`. -/
 theorem Faithful_const (env : String → Float) (x : Float) :
-    Faithful env (TapeBuilder.const x : TB) (fill x S) x := by
+    Faithful env (TapeBuilder.const x : TB) (Tensor.full S x) x := by
   intro t vals hev hsz
-  refine ⟨t.size, (Tape.leaf (t := t) (fill x S) (name := none)).1,
+  refine ⟨t.size, (Tape.leaf (t := t) (Tensor.full S x) (name := none)).1,
     vals.push x, ?run, ?lt, ?store, ?ext, ?ev, ?sz, ?val, ?pre⟩
   case run => unfold TapeBuilder.const TapeM.leaf Tape.leaf Tape.addNode; rfl
-  case store => exact leaf_value t (fill x S) none true
-  case lt => exact requireValue_lt_of_ok _ t.size (leaf_value t (fill x S) none true)
-  case ext => exact extends_of_value (leaf_value t (fill x S) none true) (frameOver_addNode t _)
-  case ev => show evalTape env (t.addNode _).1 = _; rw [evalTape_addNode, hev]; rfl
+  case store => exact leaf_value t (Tensor.full S x) none true
+  case lt => exact requireValue_lt_of_ok _ t.size (leaf_value t (Tensor.full S x) none true)
+  case ext => exact extends_of_value (leaf_value t (Tensor.full S x) none true) (frameOver_addNode t _)
+  case ev =>
+    show evalTape env (t.addNode _).1 = _
+    rw [evalTape_addNode, hev]
+    simp [stepVal, nodeScalar, Tensor.full, TorchLean.Tensor.Internal.Rep.const,
+      TorchLean.Tensor.Internal.Rep.ofFlatFn, TorchLean.Storage.toArray_ofFn]
+    rfl
   case sz => rw [Array.size_push, hsz]; simp [Tape.leaf, Tape.addNode, Tape.size]
   case val => rw [← hsz]; exact getD_push_size vals x
   case pre => intro i hi; exact getD_push_lt vals x i hi
@@ -218,7 +225,7 @@ theorem Faithful_bin (env : String → Float) (top : Nat → Nat → TapeM Float
       unfold stepVal
       simp only [hndName, hndPar, List.isEmpty_toArray, List.isEmpty_cons, List.map_toArray, List.map_cons,
         List.map_nil,
-        Bool.false_eq_true, if_false]
+        Bool.false_eq_true, ite_false]
       rw [hxa, hbVal]; exact hcop xa xb
     rw [evalTape_addNode, hbEv]
     show Except.map (fun v => valsB.push v) (stepVal env valsB nd) = Except.ok (valsB.push (fop xa xb))
@@ -259,7 +266,7 @@ theorem Faithful_un (env : String → Float) (top : Nat → TapeM Float Nat) (nm
       unfold stepVal
       simp only [hndName, hndPar, List.isEmpty_toArray, List.isEmpty_cons, List.map_toArray, List.map_cons,
         List.map_nil,
-        Bool.false_eq_true, if_false]
+        Bool.false_eq_true, ite_false]
       rw [haVal]; exact hcop xx
     rw [evalTape_addNode, haEv]
     show Except.map (fun v => valsA.push v) (stepVal env valsA nd) = Except.ok (valsA.push (fop xx))
@@ -314,12 +321,12 @@ chaining the op lemmas, exactly mirroring `examples.tape_codegen_proof` but with
 `Float` value on the right. `Faithful env (resJac …).i vᵢ xᵢ` says: the generated kernel, evaluated
 by `evalTape env`, assigns to output `i` the source kernel's value `xᵢ` at `env` — for every `env`. -/
 
-theorem eval_zero (env : String → Float) : Faithful env (0 : TB) (fill (0 : Float) S) 0 :=
+theorem eval_zero (env : String → Float) : Faithful env (0 : TB) (Tensor.full S (0 : Float)) 0 :=
   Faithful_const env 0
-theorem eval_one (env : String → Float) : Faithful env (1 : TB) (fill (1 : Float) S) 1 :=
+theorem eval_one (env : String → Float) : Faithful env (1 : TB) (Tensor.full S (1 : Float)) 1 :=
   Faithful_const env 1
 theorem eval_two (env : String → Float) :
-    Faithful env (ofN 2 : TB) (fill ((2 : Nat) : Float) S) ((2 : Nat) : Float) :=
+    Faithful env (ofN 2 : TB) (Tensor.full S ((2 : Nat) : Float)) ((2 : Nat) : Float) :=
   Faithful_const env _
 
 variable {a b c d ndvi r s0 : TB} {va vb vc vd vn vr vs0 : T}
@@ -396,13 +403,13 @@ theorem residual_kernel_faithful (env : String → Float) :
           (env "ndvi") (env "r") (env "s0")).1 := by
   obtain ⟨id, t', vals, hrun, _, _, _, hev, _, hval, _⟩ :=
     residual_faithful env
-      (Faithful_named_leaf env "a" (fill (0.0 : Float) S))
-      (Faithful_named_leaf env "b" (fill (0.0 : Float) S))
-      (Faithful_named_leaf env "c" (fill (0.0 : Float) S))
-      (Faithful_named_leaf env "d" (fill (0.0 : Float) S))
-      (Faithful_named_leaf env "ndvi" (fill (0.0 : Float) S))
-      (Faithful_named_leaf env "r" (fill (0.0 : Float) S))
-      (Faithful_named_leaf env "s0" (fill (0.0 : Float) S))
+      (Faithful_named_leaf env "a" (Tensor.full S (0.0 : Float)))
+      (Faithful_named_leaf env "b" (Tensor.full S (0.0 : Float)))
+      (Faithful_named_leaf env "c" (Tensor.full S (0.0 : Float)))
+      (Faithful_named_leaf env "d" (Tensor.full S (0.0 : Float)))
+      (Faithful_named_leaf env "ndvi" (Tensor.full S (0.0 : Float)))
+      (Faithful_named_leaf env "r" (Tensor.full S (0.0 : Float)))
+      (Faithful_named_leaf env "s0" (Tensor.full S (0.0 : Float)))
       Tape.empty #[] (evalTape_empty env) rfl
   exact ⟨id, t', vals, hrun, hev, hval⟩
 
@@ -512,7 +519,7 @@ def cseStoredPreserved (t : Tape Float) : Bool :=
   let (t', remap) := cseCompact t
   (List.range t.size).all (fun id =>
     match t.getValue? id, t'.getValue? (remap.getD id id) with
-    | some a, some b => (Spec.Tensor.toList a.tensor).map Float.toBits == (Spec.Tensor.toList b.tensor).map Float.toBits
+    | some a, some b => (TorchLean.Storage.toArray a.tensor.buffer).toList.map Float.toBits == (TorchLean.Storage.toArray b.tensor.buffer).toList.map Float.toBits
     | _, _ => false)
 
 /-- `cseCompact` preserves the recorded AVS `resJac` tape's stored values bit-for-bit — the docstring's

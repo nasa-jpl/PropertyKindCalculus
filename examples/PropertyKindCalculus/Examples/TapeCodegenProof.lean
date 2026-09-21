@@ -13,8 +13,8 @@ faithfulness; the remaining rendering table (`cOp`/`cExpr` ↔ the tape ops) is 
 import PropertyKindCalculus.Examples.TapeCodegenDemo
 import PropertyKindCalculus.Torch.Paradigm.TapeParity
 
-open Spec
-open Spec.Tensor
+open Spec TorchLean
+open TorchLean TorchLean.Tensor
 open PropertyKindCalculus (MathCarrier)
 open PropertyKindCalculus.Paradigm (TapeBuilder)
 open PropertyKindCalculus.Paradigm.TapeParity
@@ -34,26 +34,26 @@ abbrev T := Tensor Float S
 
 /-! ### Constants of the kernel evaluate to their filled tensors -/
 
-theorem eval_zero : Evaluates (0 : TB) (fill (0 : Float) S) := Evaluates_const 0
-theorem eval_one  : Evaluates (1 : TB) (fill (1 : Float) S) := Evaluates_const 1
-theorem eval_two  : Evaluates (ofN 2 : TB) (fill ((2 : Nat) : Float) S) := Evaluates_const _
+theorem eval_zero : Evaluates (0 : TB) (Tensor.full S (0 : Float)) := Evaluates_const 0
+theorem eval_one  : Evaluates (1 : TB) (Tensor.full S (1 : Float)) := Evaluates_const 1
+theorem eval_two  : Evaluates (ofN 2 : TB) (Tensor.full S ((2 : Nat) : Float)) := Evaluates_const _
 
 /-! ### Spec-level twins of the kernel (the eager `Spec` value each output must carry) -/
 
 /-- `exp((0−2)·b·ndvi)` at the `Spec` carrier — the value the recorded `attenuation` builder must
 carry. -/
 def attenSpec (vb vndvi : T) : T :=
-  expSpec (mulSpec (mulSpec (subSpec (fill (0 : Float) S) (fill ((2 : Nat) : Float) S)) vb) vndvi)
+  expSpec (mulSpec (mulSpec (subSpec (Tensor.full S (0 : Float)) (Tensor.full S ((2 : Nat) : Float))) vb) vndvi)
 
 /-- The five `Spec`-level outputs (residual + 4 Jacobian columns), mirroring `resJac`'s association. -/
 def resSpec (va vb vc vd vndvi vr vs0 : T) : T :=
   subSpec vs0 (addSpec (addSpec (mulSpec va vndvi)
     (mulSpec (mulSpec (attenSpec vb vndvi) vc) vr)) vd)
-def jaSpec (vndvi : T) : T := subSpec (fill (0 : Float) S) vndvi
+def jaSpec (vndvi : T) : T := subSpec (Tensor.full S (0 : Float)) vndvi
 def jbSpec (vb vc vd_unused vndvi vr : T) : T :=
-  mulSpec (mulSpec (mulSpec (mulSpec (fill ((2 : Nat) : Float) S) vndvi) vc) vr) (attenSpec vb vndvi)
-def jcSpec (vb vndvi vr : T) : T := subSpec (fill (0 : Float) S) (mulSpec (attenSpec vb vndvi) vr)
-def jdSpec : T := subSpec (fill (0 : Float) S) (fill (1 : Float) S)
+  mulSpec (mulSpec (mulSpec (mulSpec (Tensor.full S ((2 : Nat) : Float)) vndvi) vc) vr) (attenSpec vb vndvi)
+def jcSpec (vb vndvi vr : T) : T := subSpec (Tensor.full S (0 : Float)) (mulSpec (attenSpec vb vndvi) vr)
+def jdSpec : T := subSpec (Tensor.full S (0 : Float)) (Tensor.full S (1 : Float))
 
 /-! ### Faithfulness: the recorded builders carry exactly the `Spec` values, for all inputs -/
 

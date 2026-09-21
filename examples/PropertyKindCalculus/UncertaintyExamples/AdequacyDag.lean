@@ -28,6 +28,8 @@ namespace PropertyKindCalculus.UncertaintyExamples.AdequacyDag
 
 open PropertyKindCalculus.Uncertainty.Adequacy
 open TorchLean.Floats
+open FloatLib.Floats.Formats.Flocq
+open FloatLib.Numerics (binaryRadix Radix)
 
 /-! ## Concrete model DAGs -/
 
@@ -148,16 +150,16 @@ theorem unitInputs_val (i : ℕ) : (unitInputs i).val = 1 := round32_fix one_rep
 theorem zeroInputs_val (i : ℕ) : (zeroInputs i).val = 0 := round32_fix zero_representable
 
 /-- `2` is a binary32 number. -/
-theorem two_representable : neuralGenericFormat binaryRadix fexp32 (2 : ℝ) := by
+theorem two_representable : genericFormat binaryRadix fexp32 (2 : ℝ) := by
   have h := bpow_representable (e := 1) (by decide)
-  rwa [show neuralBpow binaryRadix 1 = (2:ℝ) by
-    simp [neuralBpow, NeuralRadix.toReal, binaryRadix]] at h
+  rwa [show bpow binaryRadix 1 = (2:ℝ) by
+    simp [bpow, Radix.toReal, binaryRadix]] at h
 
 /-- And so is `4`. -/
-theorem four_representable : neuralGenericFormat binaryRadix fexp32 (4 : ℝ) := by
+theorem four_representable : genericFormat binaryRadix fexp32 (4 : ℝ) := by
   have h := bpow_representable (e := 2) (by decide)
-  rwa [show neuralBpow binaryRadix 2 = (4:ℝ) by
-    simp [neuralBpow, NeuralRadix.toReal, binaryRadix]; norm_num] at h
+  rwa [show bpow binaryRadix 2 = (4:ℝ) by
+    simp [bpow, Radix.toReal, binaryRadix]; norm_num] at h
 
 /-- **The doubling chain is flag-free at `unitInputs`** — the hypothesis discharged, not assumed.
 Its three nodes take the exact values `2`, `2` and `4`, all binary32 numbers. -/

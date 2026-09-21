@@ -222,7 +222,7 @@ theorem solidSphere_inertiaTensor (m R : ℝ≥0) (hr : R ≠ 0) :
         funext x
         simp
         ring
-      rw [h1, integral_sub hint_sum (hint_sq i), if_pos rfl,
+      rw [h1, integral_sub hint_sum (hint_sq i), ite_eq_left rfl,
         show (fun x : Space 3 => ∑ k, (x k) ^ 2)
           = fun x : Space 3 => ‖x‖ ^ 2 from funext fun x => (norm_sq_eq_sum x).symm,
         setIntegral_sq_coord, setIntegral_normSq_closedBall R.1 hR0]
@@ -232,7 +232,7 @@ theorem solidSphere_inertiaTensor (m R : ℝ≥0) (hr : R ≠ 0) :
           = fun x : Space 3 => -(x i * x j) := by
         funext x
         simp [h]
-      rw [h1, integral_neg, setIntegral_mul_coord_eq_zero h, if_neg h]
+      rw [h1, integral_neg, setIntegral_mul_coord_eq_zero h, ite_eq_right h]
       simp
   ext i j
   have hLHS : (RigidBody.solidSphere 3 m R).inertiaTensor i j

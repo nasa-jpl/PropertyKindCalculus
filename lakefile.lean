@@ -57,7 +57,7 @@ package «PropertyKindCalculus» where
   -- The package version — the single source of truth. `scripts/bump-version.sh`
   -- reads and bumps it here, and the blueprint reads this same line at build time
   -- (its `{version}[]` role) so the published document never drifts from the source.
-  version := v!"0.112.0"
+  version := v!"0.113.0"
   leanOptions := #[
     ⟨`autoImplicit, false⟩,
     ⟨`relaxedAutoImplicit, false⟩]
@@ -80,28 +80,31 @@ package «PropertyKindCalculus» where
 -- unreachable from every remote ref and breaks any *fresh* clone (`fatal: reference is
 -- not a tree`) even while a stale local tracking ref still resolves it. A dependency's
 -- `lean-toolchain` is informational (the ROOT toolchain builds the closure). Upstream
--- `master` carries the same Mathlib `v4.33.0` pin this package's toolchain expects, so
+-- `master` carries the same Mathlib `v4.34.0` pin this package's toolchain expects, so
 -- `lake exe cache get` computes matching hashes off the transitive resolution.
 require «Physlib» from git
   "https://github.com/leanprover-community/physlib.git" @
   "master"
 
--- TorchLean (this work's fork, `combined` branch) backs *only* the `Torch` library
+-- TorchLean (this work's fork, `combined-4.34` branch) backs *only* the `Torch` library
 -- below: the concrete IEEE-754 binary32 carriers (`FP32` rounding spec,
 -- `IEEE32Exec` executable) that instantiate the R10 exec/spec refinement bridge.
--- Its `combined` branch carries upstream's Lean `v4.33.0` / Mathlib `v4.33.0`
--- upgrade; this package pins the same toolchain. Required after PhysLib so its
--- `doc-gen4 v4.33.0` wins. The core spine never imports it, so
--- `import PropertyKindCalculus` stays Mathlib-free.
+-- `combined-4.34` is upstream `lean-dojo/TorchLean` `main` at its Lean `v4.34.0` /
+-- Mathlib `v4.34.0` line plus the fork's carried branches (texture-table lookup
+-- tables, the isoc23 link shim, the `TapeM` run lemmas, device identity); this
+-- package pins the same toolchain. TorchLean brings `FloatLib` transitively, which is
+-- where the executable binary32 word (`ExecFloat.Binary 8 23`) and the Flocq rounding
+-- theory now live. Required after PhysLib so its `doc-gen4 v4.34.0` wins. The core
+-- spine never imports it, so `import PropertyKindCalculus` stays Mathlib-free.
 require «TorchLean» from git
   "https://github.com/NicolasRouquette/TorchLean.git" @
-  "combined"
+  "combined-4.34"
   with torchLeanOpts
 
 -- NOTE (2026-08-24): there is deliberately **no mathlib require here**, for the same
 -- reason there is no doc-gen4 one (below). Mathlib arrives transitively, and the two
--- packages that bring it agree: PhysLib `master` and TorchLean `combined` each require
--- `v4.33.0`, so resolution is unambiguous and a root pin would only restate it. The core
+-- packages that bring it agree: PhysLib `master` and TorchLean `combined-4.34` each require
+-- `v4.34.0`, so resolution is unambiguous and a root pin would only restate it. The core
 -- spine never imports Mathlib, so a plain `import PropertyKindCalculus` stays
 -- Mathlib-free either way.
 --
@@ -112,7 +115,7 @@ require «TorchLean» from git
 -- belongs last.
 
 -- NOTE (2026-08-04): there is deliberately **no doc-gen4 require here**. doc-gen4 is pulled
--- transitively (PhysLib and TorchLean each require it; TorchLean's stock `leanprover/doc-gen4` `v4.33.0`
+-- transitively (PhysLib and TorchLean each require it; TorchLean's stock `leanprover/doc-gen4` `v4.34.0`
 -- pin wins, being required later — see the ordering discipline above), so it stays in the closure
 -- regardless — but this package does not *override* it.
 -- As of the pivot in `RENDERING.md` §6 v2 (after doc-gen4 PR #403 was closed on maintainer feedback),

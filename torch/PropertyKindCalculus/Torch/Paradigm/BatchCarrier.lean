@@ -30,7 +30,7 @@ import PropertyKindCalculus.Torch.Paradigm.Platform
 import PropertyKindCalculus.Bounds
 import PropertyKindCalculus.BoundaryAudit
 
-open Spec
+open Spec TorchLean
 open PropertyKindCalculus.Paradigm (NumCarrier)
 open PropertyKindCalculus.Paradigm.CudaCarrier (CudaT)
 open Runtime.Autograd.Cuda (Buffer)

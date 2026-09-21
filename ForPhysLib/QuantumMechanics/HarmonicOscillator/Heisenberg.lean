@@ -230,7 +230,7 @@ lemma integral_groundDensity (j : Fin d) : ∫ t : ℝ, groundDensity Q j t = 1 
     rw [Polynomial.physHermite_zero_coe, groundDensity]
     ring
   simp_rw [h]
-  rw [MeasureTheory.integral_const_mul, integral_hermite_pair hξ 0 0, if_pos rfl,
+  rw [MeasureTheory.integral_const_mul, integral_hermite_pair hξ 0 0, ite_eq_left rfl,
     eigenCoeff_zero_sq]
   have hπ : √Real.pi ≠ 0 := ne_of_gt (Real.sqrt_pos.mpr Real.pi_pos)
   field_simp
@@ -249,7 +249,7 @@ lemma integral_id_mul_groundDensity (j : Fin d) :
     field_simp
   simp_rw [h]
   rw [MeasureTheory.integral_const_mul, integral_hermite_pair hξ 1 0,
-    if_neg one_ne_zero]
+    ite_eq_right one_ne_zero]
   exact mul_zero _
 
 /-- The second moment is `ξ²/2` — `t²·e^{-t²}` is the `(1,1)` Hermite pair, normed. -/
@@ -265,7 +265,7 @@ lemma integral_sq_mul_groundDensity (j : Fin d) :
     field_simp
     ring
   simp_rw [h]
-  rw [MeasureTheory.integral_const_mul, integral_hermite_pair hξ 1 1, if_pos rfl,
+  rw [MeasureTheory.integral_const_mul, integral_hermite_pair hξ 1 1, ite_eq_left rfl,
     eigenCoeff_zero_sq]
   have hπ : √Real.pi ≠ 0 := ne_of_gt (Real.sqrt_pos.mpr Real.pi_pos)
   have hξ' : Q.ξ j ≠ 0 := ne_of_gt hξ
@@ -429,7 +429,7 @@ lemma deriv_groundState (x : Space d) :
     Function.comp_apply, FunLike.coe_sum, Finset.sum_apply,
     _root_.smul_apply, Space.coordCLM_apply, Space.coord_apply,
     Space.basis_apply, smul_eq_mul, Complex.ofRealCLM_apply, mul_ite, mul_one, mul_zero,
-    Finset.sum_ite_eq, Finset.mem_univ, if_true, nsmul_eq_mul]
+    Finset.sum_ite_eq, Finset.mem_univ, ite_true, nsmul_eq_mul]
   have hξ : ((Q.ξ i : ℝ) : ℂ) ≠ 0 :=
     Complex.ofReal_ne_zero.mpr (ne_of_gt (Q.ξ_pos i))
   push_cast

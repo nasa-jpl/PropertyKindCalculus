@@ -25,9 +25,10 @@ stays Mathlib- and TorchLean-free.
 -/
 import PropertyKindCalculus.Torch.Fp32
 import PropertyKindCalculus.QuantityFunction
+import FloatLib.Floats.Formats.BinaryInterchange.Configured.Transcendentals
 
 open TorchLean.Floats          -- `FP32`
-open TorchLean.Floats.IEEE754  -- `IEEE32Exec`
+open FloatLib.Numerics (MathFunctions)
 
 namespace PropertyKindCalculus
 

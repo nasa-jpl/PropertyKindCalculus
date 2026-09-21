@@ -37,7 +37,7 @@ import PropertyKindCalculus.Uncertainty.Experiments.EagerProvenance
 
 namespace PropertyKindCalculus.UncertaintyExamples.AutogradDirectSim
 
-open Spec Tensor Proofs.Autograd TorchLean
+open Spec TorchLean TorchLean.Tensor Proofs Proofs.Autograd
 
 noncomputable section
 
@@ -123,8 +123,8 @@ theorem eagerBuilds_prod (x : TorchLean.TensorPack ℝ Γ2) (t' : PRSim.RTape) (
       (Algebra.Graph.addLeaves (α := ℝ) (t := Runtime.Autograd.Tape.empty) x) 0 1
       = .ok (t', id)) :
     PRSim.EagerBuilds prodGraph x t' := by
-  show PRSim.EagerBuilds (.snoc .nil (TapeNodes.mul ix0 ix1)) x t'
-  exact PRSim.EagerBuilds.mul (g := .nil) ix0 ix1 (PRSim.EagerBuilds.nil x) hop
+  have h := PRSim.EagerBuilds.mul (g := .nil) ix0 ix1 (PRSim.EagerBuilds.nil x) hop
+  exact h
 
 /-- **The endpoint on the eager tape**: the dense reverse pass on the runtime-constructed tape
     succeeds and its input-prefix realises `(fderiv ℝ eval x)† seed` — no compilation involved;
@@ -170,8 +170,8 @@ theorem eagerBuilds_sub (x : TorchLean.TensorPack ℝ Γ2) (t' : PRSim.RTape) (i
       (Algebra.Graph.addLeaves (α := ℝ) (t := Runtime.Autograd.Tape.empty) x) 0 1
       = .ok (t', id)) :
     PRSim.EagerBuilds subGraph x t' := by
-  show PRSim.EagerBuilds (.snoc .nil (TapeNodes.sub ix0 ix1)) x t'
-  exact PRSim.EagerBuilds.sub (g := .nil) ix0 ix1 (PRSim.EagerBuilds.nil x) hop
+  have h := PRSim.EagerBuilds.sub (g := .nil) ix0 ix1 (PRSim.EagerBuilds.nil x) hop
+  exact h
 
 /-- **The endpoint on the eager `sub` tape**: the dense reverse pass on the runtime-constructed
     difference tape succeeds and its input-prefix realises `(fderiv ℝ eval x)† seed`. -/
@@ -215,8 +215,8 @@ theorem eagerBuilds_scale (x : TorchLean.TensorPack ℝ Γ2) (t' : PRSim.RTape) 
       (Algebra.Graph.addLeaves (α := ℝ) (t := Runtime.Autograd.Tape.empty) x) 0 3
       = .ok (t', id)) :
     PRSim.EagerBuilds scaleGraph x t' := by
-  show PRSim.EagerBuilds (.snoc .nil (TapeNodes.scale ix0 3)) x t'
-  exact PRSim.EagerBuilds.scale (g := .nil) ix0 3 (PRSim.EagerBuilds.nil x) hop
+  have h := PRSim.EagerBuilds.scale (g := .nil) ix0 3 (PRSim.EagerBuilds.nil x) hop
+  exact h
 
 /-- **The endpoint on the eager `scale` tape**: the dense reverse pass on the runtime-constructed
     one-parent tape succeeds and its input-prefix realises `(fderiv ℝ eval x)† seed`. -/
@@ -263,10 +263,10 @@ theorem eagerBuilds_exp (x : TorchLean.TensorPack ℝ Γ2) (t' : PRSim.RTape) (i
       (Algebra.Graph.addLeaves (α := ℝ) (t := Runtime.Autograd.Tape.empty) x) "exp" 0
       expSpec (fun xv d => mulSpec (expSpec xv) d) = .ok (t', id)) :
     PRSim.EagerBuilds expGraph x t' := by
-  show PRSim.EagerBuilds (.snoc .nil (TapeNodes.elemwise ix0 Real.exp Real.exp)) x t'
-  exact PRSim.EagerBuilds.unary (g := .nil) ix0 "exp" Real.exp Real.exp expSpec expSpec
+  have h := PRSim.EagerBuilds.unary (g := .nil) ix0 "exp" Real.exp Real.exp expSpec expSpec
     (fun u i => PRSim.tensorToVec_mapSpec_apply u i) (fun u i => PRSim.tensorToVec_mapSpec_apply u i)
     (PRSim.EagerBuilds.nil x) hop
+  exact h
 
 set_option maxHeartbeats 6400000 in
 /-- **The endpoint on the eager `exp` tape** — the *same* generic `direct_PR_soundness_eager`
@@ -314,8 +314,8 @@ theorem eagerBuilds_div (x : TorchLean.TensorPack ℝ Γ2) (t' : PRSim.RTape) (i
       (Algebra.Graph.addLeaves (α := ℝ) (t := Runtime.Autograd.Tape.empty) x) 0 1
       = .ok (t', id)) :
     PRSim.EagerBuilds divGraph x t' := by
-  show PRSim.EagerBuilds (.snoc .nil (TapeNodes.div ix0 ix1)) x t'
-  exact PRSim.EagerBuilds.div (g := .nil) ix0 ix1 (PRSim.EagerBuilds.nil x) hop
+  have h := PRSim.EagerBuilds.div (g := .nil) ix0 ix1 (PRSim.EagerBuilds.nil x) hop
+  exact h
 
 set_option maxHeartbeats 6400000 in
 /-- **The endpoint on the eager `div` tape**: under the denominator-nonzero hypothesis at the
@@ -451,14 +451,12 @@ theorem eagerBuilds_sigmoid (x : TorchLean.TensorPack ℝ Γ2) (t' : PRSim.RTape
       Activation.sigmoidSpec
       (fun xv d => mulSpec (Activation.sigmoidDerivSpec xv) d) = .ok (t', id)) :
     PRSim.EagerBuilds sigmoidGraph x t' := by
-  show PRSim.EagerBuilds
-    (.snoc .nil
-      (TapeNodes.elemwise ix0 Activation.Math.sigmoidSpec Activation.Math.sigmoidDerivSpec)) x t'
-  exact PRSim.EagerBuilds.unary (g := .nil) ix0 "sigmoid"
+  have h := PRSim.EagerBuilds.unary (g := .nil) ix0 "sigmoid"
     Activation.Math.sigmoidSpec Activation.Math.sigmoidDerivSpec
     Activation.sigmoidSpec Activation.sigmoidDerivSpec
     (fun u i => PRSim.tensorToVec_mapSpec_apply u i) (fun u i => PRSim.tensorToVec_mapSpec_apply u i)
     (PRSim.EagerBuilds.nil x) hop
+  exact h
 
 set_option maxHeartbeats 6400000 in
 /-- **The endpoint on the eager `sigmoid` tape** — the *same* generic `direct_PR_soundness_eager`
@@ -529,14 +527,12 @@ theorem eagerBuilds_tanh (x : TorchLean.TensorPack ℝ Γ2) (t' : PRSim.RTape) (
       (Algebra.Graph.addLeaves (α := ℝ) (t := Runtime.Autograd.Tape.empty) x) "tanh" 0
       Activation.tanhSpec (fun xv d => mulSpec (Activation.tanhDerivSpec xv) d) = .ok (t', id)) :
     PRSim.EagerBuilds tanhGraph x t' := by
-  show PRSim.EagerBuilds
-    (.snoc .nil (TapeNodes.elemwise ix0 Activation.Math.tanhSpec Activation.Math.tanhDerivSpec))
-    x t'
-  exact PRSim.EagerBuilds.unary (g := .nil) ix0 "tanh"
+  have h := PRSim.EagerBuilds.unary (g := .nil) ix0 "tanh"
     Activation.Math.tanhSpec Activation.Math.tanhDerivSpec
     Activation.tanhSpec Activation.tanhDerivSpec
     (fun u i => PRSim.tensorToVec_mapSpec_apply u i) (fun u i => PRSim.tensorToVec_mapSpec_apply u i)
     (PRSim.EagerBuilds.nil x) hop
+  exact h
 
 set_option maxHeartbeats 6400000 in
 /-- **The endpoint on the eager `tanh` tape** — the *same* generic `direct_PR_soundness_eager`
@@ -609,15 +605,12 @@ theorem eagerBuilds_softplus (x : TorchLean.TensorPack ℝ Γ2) (t' : PRSim.RTap
       Activation.softplusSpec
       (fun xv d => mulSpec (Activation.softplusDerivSpec xv) d) = .ok (t', id)) :
     PRSim.EagerBuilds softplusGraph x t' := by
-  show PRSim.EagerBuilds
-    (.snoc .nil
-      (TapeNodes.elemwise ix0 Activation.Math.softplusSpec Activation.Math.softplusDerivSpec))
-    x t'
-  exact PRSim.EagerBuilds.unary (g := .nil) ix0 "softplus"
+  have h := PRSim.EagerBuilds.unary (g := .nil) ix0 "softplus"
     Activation.Math.softplusSpec Activation.Math.softplusDerivSpec
     Activation.softplusSpec Activation.softplusDerivSpec
     (fun u i => PRSim.tensorToVec_mapSpec_apply u i) (fun u i => PRSim.tensorToVec_mapSpec_apply u i)
     (PRSim.EagerBuilds.nil x) hop
+  exact h
 
 set_option maxHeartbeats 6400000 in
 /-- **The endpoint on the eager `softplus` tape** — the *same* generic
@@ -700,13 +693,11 @@ theorem eagerBuilds_relu (x : TorchLean.TensorPack ℝ Γ2) (t' : PRSim.RTape) (
       (Algebra.Graph.addLeaves (α := ℝ) (t := Runtime.Autograd.Tape.empty) x) "relu" 0
       Activation.reluSpec (fun xv d => mulSpec (Activation.reluDerivSpec xv) d) = .ok (t', id)) :
     PRSim.EagerBuilds reluGraph x t' := by
-  show PRSim.EagerBuilds
-    (.snoc .nil (TapeNodes.elemwise ix0 Activation.Math.reluSpec Activation.Math.reluDerivSpec))
-    x t'
-  exact PRSim.EagerBuilds.unary (g := .nil) ix0 "relu" Activation.Math.reluSpec
+  have h := PRSim.EagerBuilds.unary (g := .nil) ix0 "relu" Activation.Math.reluSpec
     Activation.Math.reluDerivSpec Activation.reluSpec Activation.reluDerivSpec
     (fun u i => PRSim.tensorToVec_mapSpec_apply u i) (fun u i => PRSim.tensorToVec_mapSpec_apply u i)
     (PRSim.EagerBuilds.nil x) hop
+  exact h
 
 set_option maxHeartbeats 6400000 in
 /-- **The endpoint on the eager `relu` tape** — the *pointwise* `direct_PR_soundness_eager_at`
@@ -791,10 +782,10 @@ theorem eagerBuilds_log (x : TorchLean.TensorPack ℝ Γ2) (t' : PRSim.RTape) (i
       (Algebra.Graph.addLeaves (α := ℝ) (t := Runtime.Autograd.Tape.empty) x) "log" 0
       logSpec (fun xv d => mulSpec (invSpec xv) d) = .ok (t', id)) :
     PRSim.EagerBuilds logGraph x t' := by
-  show PRSim.EagerBuilds (.snoc .nil (TapeNodes.elemwise ix0 Real.log (fun z => z⁻¹))) x t'
-  exact PRSim.EagerBuilds.unary (g := .nil) ix0 "log" Real.log (fun z => z⁻¹) logSpec invSpec
+  have h := PRSim.EagerBuilds.unary (g := .nil) ix0 "log" Real.log (fun z => z⁻¹) logSpec invSpec
     (fun u i => PRSim.tensorToVec_mapSpec_apply u i) (fun u i => tensorToVec_invSpec_apply u i)
     (PRSim.EagerBuilds.nil x) hop
+  exact h
 
 set_option maxHeartbeats 6400000 in
 /-- **The pointwise endpoint on the eager `log` tape** — the generic
@@ -887,13 +878,11 @@ theorem eagerBuilds_abs (x : TorchLean.TensorPack ℝ Γ2) (t' : PRSim.RTape) (i
       (Algebra.Graph.addLeaves (α := ℝ) (t := Runtime.Autograd.Tape.empty) x) "abs" 0
       absSpec (fun xv d => mulSpec (signSpec xv) d) = .ok (t', id)) :
     PRSim.EagerBuilds absGraph x t' := by
-  show PRSim.EagerBuilds
-    (.snoc .nil (TapeNodes.elemwise ix0 (fun v : ℝ => |v|) (fun v => (SignType.sign v : ℝ))))
-    x t'
-  exact PRSim.EagerBuilds.unary (g := .nil) ix0 "abs" (fun v : ℝ => |v|)
+  have h := PRSim.EagerBuilds.unary (g := .nil) ix0 "abs" (fun v : ℝ => |v|)
     (fun v => (SignType.sign v : ℝ)) absSpec signSpec
     (fun u i => PRSim.tensorToVec_mapSpec_apply u i) (fun u i => tensorToVec_signSpec_apply u i)
     (PRSim.EagerBuilds.nil x) hop
+  exact h
 
 set_option maxHeartbeats 6400000 in
 /-- **The endpoint on the eager `abs` tape**: under the input-nonzero hypothesis at the concrete
@@ -952,14 +941,14 @@ theorem sqrt_bwd_scalar_eq (v : ℝ) :
     (if v > 0 then (1 : ℝ) / (((2 : Nat) : ℝ) * MathFunctions.sqrt v) else (0 : ℝ))
       = 1 / (2 * Real.sqrt v) := by
   by_cases hv : v > 0
-  · rw [if_pos hv]
+  · rw [ite_eq_left hv]
     show (1 : ℝ) / (((2 : Nat) : ℝ) * Real.sqrt v) = 1 / (2 * Real.sqrt v)
     norm_num
-  · rw [if_neg hv, Real.sqrt_eq_zero'.mpr (not_lt.mp hv)]
+  · rw [ite_eq_right hv, Real.sqrt_eq_zero'.mpr (not_lt.mp hv)]
     norm_num
 
 
-open Spec Tensor Proofs.Autograd
+open Spec TorchLean TorchLean.Tensor Proofs.Autograd
 
 
 /-! ## The pointwise unary crank: `sqrt` through the *generic* `EagerBuilds.unary` machine
@@ -1013,13 +1002,12 @@ theorem eagerBuilds_sqrt (x : TorchLean.TensorPack ℝ Γ2) (t' : PRSim.RTape) (
       (Algebra.Graph.addLeaves (α := ℝ) (t := Runtime.Autograd.Tape.empty) x) "sqrt" 0
       sqrtSpec (fun xv d => mulSpec (sqrtBwdSpec xv) d) = .ok (t', id)) :
     PRSim.EagerBuilds sqrtGraph x t' := by
-  show PRSim.EagerBuilds
-    (.snoc .nil (TapeNodes.elemwise ix0 Real.sqrt (fun v => 1 / (2 * Real.sqrt v)))) x t'
-  exact PRSim.EagerBuilds.unary (g := .nil) ix0 "sqrt" Real.sqrt
+  have h := PRSim.EagerBuilds.unary (g := .nil) ix0 "sqrt" Real.sqrt
     (fun v => 1 / (2 * Real.sqrt v)) sqrtSpec sqrtBwdSpec
     (fun u i => (PRSim.tensorToVec_mapSpec_apply u i).trans (sqrt_clamp_scalar_eq (tensorToVec (t := u) i)))
     (fun u i => (PRSim.tensorToVec_mapSpec_apply u i).trans (sqrt_bwd_scalar_eq (tensorToVec (t := u) i)))
     (PRSim.EagerBuilds.nil x) hop
+  exact h
 
 set_option maxHeartbeats 6400000 in
 /-- **The endpoint on the eager `sqrt` tape** — under strict positivity of the node's inputs at

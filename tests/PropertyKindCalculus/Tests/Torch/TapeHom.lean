@@ -27,8 +27,8 @@ namespace PropertyKindCalculus.Tests.TapeHom
 
 set_option linter.unusedVariables false
 
-open Spec
-open Tensor
+open Spec TorchLean
+open TorchLean TorchLean.Tensor
 open Runtime.Autograd
 open PropertyKindCalculus
 open PropertyKindCalculus.Paradigm (NumCarrier TapeBuilder)
@@ -39,17 +39,17 @@ variable {s : Shape}
 
 /-! ## The eager `Tensor Float s` carrier (each branchless op as its elementwise `Spec`) -/
 
-local instance : Zero (Tensor Float s) := ⟨fill 0 s⟩
-local instance : One (Tensor Float s) := ⟨fill 1 s⟩
+local instance : Zero (Tensor Float s) := ⟨Tensor.full s 0⟩
+local instance : One (Tensor Float s) := ⟨Tensor.full s 1⟩
 local instance : Min (Tensor Float s) := ⟨minSpec⟩
 local instance : Max (Tensor Float s) := ⟨maxSpec⟩
-local instance : Coe Nat (Tensor Float s) := ⟨fun n => fill ((n : Float)) s⟩
+local instance : Coe Nat (Tensor Float s) := ⟨fun n => Tensor.full s ((n : Float))⟩
 local instance instEagerMath : MathFunctions (Tensor Float s) where
   exp := expSpec
   log := logSpec
   abs := absSpec
   sqrt := sqrtSpec
-  pi := fill MathFunctions.pi s
+  pi := Tensor.full s MathFunctions.pi
   sin := mapSpec MathFunctions.sin
   cos := mapSpec MathFunctions.cos
   tanh := mapSpec MathFunctions.tanh

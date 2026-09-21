@@ -34,7 +34,7 @@ lerp weight, rounding unspecified) and are excluded from bit-exact claims by con
 -/
 import PropertyKindCalculus.Torch.Paradigm.TapeCodegen
 
-open Spec
+open Spec TorchLean
 open Runtime.Autograd (Tape TapeM)
 open PropertyKindCalculus.Paradigm (TapeBuilder NumCarrier LutTable LutInterp lutNodeName?)
 open PropertyKindCalculus.Paradigm.TapeCSE (cseCompact)
@@ -65,7 +65,7 @@ abbrev TB := TapeBuilder Shape.scalar
 
 /-- A named input leaf carrying a concrete recording value. -/
 def inLeafV (nm : String) (v : Float) : TB :=
-  ⟨TapeM.leaf (fill v Shape.scalar) (name := some nm)⟩
+  ⟨TapeM.leaf (Tensor.full Shape.scalar v) (name := some nm)⟩
 
 def envLayer : Float := 1.0
 def envU     : Float := 2.25

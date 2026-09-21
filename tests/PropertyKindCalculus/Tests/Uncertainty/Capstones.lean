@@ -57,8 +57,8 @@ discriminates. -/
 open TorchLean.Floats Uncertainty.Adequacy in
 example : round32 (1:ℝ) = 1 := (round32_eq_self_iff 1).mpr one_representable
 
-open TorchLean.Floats Uncertainty.Adequacy in
-example : neuralGenericFormat binaryRadix fexp32 (round32 (0.1 : ℝ)) :=
+open TorchLean.Floats Uncertainty.Adequacy FloatLib.Floats.Formats.Flocq FloatLib.Numerics in
+example : genericFormat binaryRadix fexp32 (round32 (0.1 : ℝ)) :=
   (round32_eq_self_iff _).mp (round32_fix (round32_representable 0.1))
 
 /-! ## Which bridge carries which half of A3′ (`UNCERTAINTY.md` §7)

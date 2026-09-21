@@ -35,15 +35,15 @@ one `unary_value` lemma over the shared `Tape.unary` builder.
 -/
 import NN.Runtime.Autograd.Engine.TapeM
 
-open Spec
-open Tensor
+open Spec TorchLean
+open TorchLean TorchLean.Tensor
 open Runtime.Autograd
 
 namespace PropertyKindCalculus.Paradigm.TapeFaithful
 
 open Runtime.Autograd.Tape
 
-variable {α : Type}
+variable {α : Type} [TorchLean.Storage α]
 
 /-! ## Generic building blocks -/
 
@@ -85,7 +85,7 @@ theorem requireValue_addNode_of_lt [DecidableEq Shape] {s : Shape}
   apply requireValue_congr
   simp only [Tape.addNode, Tape.getValue?, Tape.getNode?]
   congr 1
-  rw [Array.getElem?_push, if_neg (Nat.ne_of_lt (by simpa [Tape.size] using hlt))]
+  rw [Array.getElem?_push, ite_eq_right (Nat.ne_of_lt (by simpa [Tape.size] using hlt))]
 
 /-- `t'` extends `t` by appending one node: it reads back the same value as `t` at every
 pre-existing id. This is the *frame* an op carries so a later op can re-read an earlier input. -/
@@ -188,7 +188,7 @@ theorem max_value [Context α] [DecidableRel ((· > ·) : α → α → Prop)] [
   exact ⟨_, rfl, requireValue_addNode_self t _ rfl, frameOver_addNode t _⟩
 
 /-- `Tape.relu` stores `Activation.reluSpec x`. -/
-theorem relu_value [Mul α] [Zero α] [Max α] [One α] [LT α]
+theorem relu_value [Mul α] [Zero α] [Max α] [BEq α] [One α] [LT α]
     [DecidableRel ((· > ·) : α → α → Prop)] [DecidableEq Shape] {s : Shape}
     (t : Tape α) (xId : Nat) {x : Tensor α s}
     (hx : t.requireValue (s := s) xId = .ok x) :

@@ -122,7 +122,7 @@ lemma integral_factor (Q : HarmonicOscillator d) (n n' : Fin d → ℕ) (i : Fin
     integral_hermite_pair hξ (n i) (n' i)]
   rw [eigenCoeff_eq, eigenCoeff_eq]
   rcases eq_or_ne (n i) (n' i) with h | h
-  · rw [if_pos h, ← h]
+  · rw [ite_eq_left h, ← h]
     have hX : (0 : ℝ) < 2 ^ n i * (n i)! * √π * Q.ξ i := by positivity
     rw [div_mul_div_comm, one_mul, Real.mul_self_sqrt hX.le]
     rw [KroneckerDelta.eq_one_of_same]
@@ -133,7 +133,7 @@ lemma integral_factor (Q : HarmonicOscillator d) (n n' : Fin d → ℕ) (i : Fin
     rw [div_eq_one_iff_eq hB]
     push_cast
     ring
-  · rw [if_neg h]
+  · rw [ite_eq_right h]
     simp [KroneckerDelta.eq_zero_of_ne h]
 
 set_option maxHeartbeats 1000000 in

@@ -19,7 +19,7 @@ Plain (not a `module`) file: imports the tape carrier and the `BatchCarrier` cla
 import PropertyKindCalculus.Torch.Paradigm.TapeCarrier
 import PropertyKindCalculus.Torch.Paradigm.BatchCarrier
 
-open Spec
+open Spec TorchLean
 open Runtime.Autograd (Tape TapeM)
 
 namespace PropertyKindCalculus.Paradigm
@@ -43,7 +43,7 @@ instance instBatchCarrier : BatchCarrier TapeBuilder where
     match TapeM.run Tape.empty b.run with
     | .ok (id, t) =>
         match t.nodes[id]? with
-        | some node => (Spec.Tensor.toList node.value.tensor).foldl (fun acc x => acc.push x)
+        | some node => (TorchLean.Storage.toArray node.value.tensor.buffer).foldl (fun acc x => acc.push x)
                           (FloatArray.emptyWithCapacity (Shape.size s))
         | none      => FloatArray.emptyWithCapacity 0
     | .error _  => FloatArray.emptyWithCapacity 0

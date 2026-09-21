@@ -31,34 +31,38 @@ open PropertyKindCalculus.Uncertainty.Adequacy
 open TorchLean.Floats
 open TorchLean.Floats.IEEE754
 open TorchLean.Floats.IEEE754.IEEE32Exec
+open FloatLib.Floats (ExecFloat)
+open FloatLib.Floats.ExecFloat.Binary (isFinite toModel)
+open FloatLib.Floats.Formats.Flocq (bpow)
+open FloatLib.Numerics (binaryRadix)
 
 /-! ## Certified: the executable check equals the specification (symbolic, finite fragment) -/
 
 /-- **Executable ULP = specified ULP.** When the query answers `k`, `2^k` is exactly
 `ulp32 (toReal x)`. -/
-theorem exec_ulp {x : IEEE32Exec} {k : Int} (hk : ulpExp? x = some k) :
-    neuralBpow binaryRadix k = ulp32 (toReal x) :=
+theorem exec_ulp {x : ExecFloat.Binary 8 23} {k : Int} (hk : ulpExp? x = some k) :
+    bpow binaryRadix k = ulp32 (toModel x).toReal :=
   exec_ulp_grounds hk
 
 /-- **Executable verdict certifies the spec.** When the kernel reports `δ` absorbed into `s`, the
 exact real sum rounds back to `toReal s` under the binary32 specification `round32`. -/
-theorem exec_verdict {s δ : IEEE32Exec} {ds dδ : TorchLean.Floats.IEEE754.IEEE32Exec.Dyadic}
-    (hs : toDyadic? s = some ds) (hδ : toDyadic? δ = some dδ)
-    (hfin : isFinite (add s δ) = true) (hverdict : absorbs s δ = true) :
-    round32 (toReal s + toReal δ) = toReal s :=
+theorem exec_verdict {s δ : ExecFloat.Binary 8 23} {ds dδ : FloatLib.Numerics.Dyadic}
+    (hs : (toModel s).toDyadic? = some ds) (hδ : (toModel δ).toDyadic? = some dδ)
+    (hfin : isFinite (ExecFloat.add s δ) = true) (hverdict : absorbs s δ = true) :
+    round32 ((toModel s).toReal + (toModel δ).toReal) = (toModel s).toReal :=
   exec_verdict_sound hs hδ hfin hverdict
 
 /-! ## Executable: the verdict actually computes (concrete bit patterns) -/
 
 -- At `2²⁵`, ULP = 4 = 2², half-ULP = 2.
-#guard ulpExp? (33554432 : IEEE32Exec) = some 2
-#guard absorbs (33554432 : IEEE32Exec) 1 = true    -- 1 < 2  → absorbed
-#guard absorbs (33554432 : IEEE32Exec) 4 = false   -- 4 ≥ 2  → survives
+#guard ulpExp? (33554432 : ExecFloat.Binary 8 23) = some 2
+#guard absorbs (33554432 : ExecFloat.Binary 8 23) 1 = true    -- 1 < 2  → absorbed
+#guard absorbs (33554432 : ExecFloat.Binary 8 23) 4 = false   -- 4 ≥ 2  → survives
 
 -- At `10⁸`, ULP = 8 = 2³, half-ULP = 4 (the `AdequacySwamping` accumulator scale).
-#guard ulpExp? (100000000 : IEEE32Exec) = some 3
-#guard absorbs (100000000 : IEEE32Exec) 1 = true   -- 1 < 4  → absorbed (swamped)
-#guard absorbs (100000000 : IEEE32Exec) 8 = false  -- 8 ≥ 4  → survives
+#guard ulpExp? (100000000 : ExecFloat.Binary 8 23) = some 3
+#guard absorbs (100000000 : ExecFloat.Binary 8 23) 1 = true   -- 1 < 4  → absorbed (swamped)
+#guard absorbs (100000000 : ExecFloat.Binary 8 23) 8 = false  -- 8 ≥ 4  → survives
 
 /-! ## Sorry-free — the axiom profile of the Stage-3.3 bridge theorems -/
 

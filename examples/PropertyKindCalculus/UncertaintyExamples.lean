@@ -56,7 +56,7 @@ Stage-3.2 addition (A2 at the real binary32 format):
   * `AdequacySterbenz32` — A2 (Sterbenz) lifted from the `FLX` model to TorchLean's genuine
     `fexp32 = FLTExp (−149) 24` (gradual underflow): `round32 (u − v) = u − v` and `(a − b).val =
     a.val − b.val` for near-equal representable binary32 values, so the `sub32_within_half_ulp` bound
-    collapses to zero. Grounded in the Stage-3.2 TorchLean PR (`neural_generic_format_FLT_sterbenz`).
+    collapses to zero. Grounded in the Stage-3.2 TorchLean PR (`generic_format_FLT_sterbenz`).
 
 Stage-3.3 addition (the executable↔spec bridge):
   * `AdequacyExecBridge` — the runtime adequacy verdict certified against the specification. The

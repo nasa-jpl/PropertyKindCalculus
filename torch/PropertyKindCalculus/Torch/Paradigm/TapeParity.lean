@@ -28,8 +28,8 @@ Plain (not a `module`) file: imports the tape carrier and the faithfulness lemma
 import PropertyKindCalculus.Torch.Paradigm.TapeCarrier
 import PropertyKindCalculus.Torch.Paradigm.TapeFaithful
 
-open Spec
-open Tensor
+open Spec TorchLean
+open TorchLean TorchLean.Tensor
 open Runtime.Autograd
 open PropertyKindCalculus.Paradigm.TapeFaithful
 
@@ -217,8 +217,8 @@ theorem Evaluates_leaf (v : Tensor Float s) (name : Option String := none) (rg :
   · exact requireValue_lt_of_ok _ t.size hval
 
 /-- A constant leaf evaluates to the filled tensor — the `fill`-valued instance of a leaf. -/
-theorem Evaluates_const (x : Float) : Evaluates (TapeBuilder.const (s := s) x) (fill x s) :=
-  Evaluates_leaf (fill x s)
+theorem Evaluates_const (x : Float) : Evaluates (TapeBuilder.const (s := s) x) (Tensor.full s x) :=
+  Evaluates_leaf (Tensor.full s x)
 
 /-- Per-op faithfulness in the `Evaluates_bin` shape: the `TapeM` op's `.run` delivers its
 `Spec` value at the new id, framing the tape. Folds tape_faithful's `add_value` with the

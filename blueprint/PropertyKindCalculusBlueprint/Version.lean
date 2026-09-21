@@ -31,7 +31,7 @@ namespace PropertyKindCalculusBlueprint.Version
 Both sites are written by `scripts/bump-version.sh` and their agreement is gated by
 `scripts/check-doc-pins.py`; the line shape is what those two match on, so keep the
 literal on one line, starting at column 0. -/
-def versionStr : String := "0.112.0"
+def versionStr : String := "0.113.0"
 
 /-- Inline role: `{version}[]` expands to the declared package version. -/
 @[role]

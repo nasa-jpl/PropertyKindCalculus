@@ -28,7 +28,7 @@ the downstream science model, exactly as for the naked form.
 import PropertyKindCalculus.Torch.Paradigm.BatchCarrier
 import PropertyKindCalculus.QuantityFunction
 
-open Spec
+open Spec TorchLean
 open PropertyKindCalculus.Paradigm (FusedExp)
 
 namespace PropertyKindCalculus

@@ -4,7 +4,7 @@
 Stage 3 proved A2 — near-equal subtraction is exact — over a self-contained `FLX` (fixed-precision,
 unbounded-exponent) model (`Sterbenz32.flx_sterbenz`). Stage 3.2 carries it to the format binary32
 *actually uses*: TorchLean's `fexp32 = FLTExp (−149) 24` (an `FLT` format with gradual underflow),
-via the TorchLean PR's `neural_generic_format_FLT_sterbenz`. This example applies the grounded
+via FloatLib's `generic_format_FLT_sterbenz`. This example applies the grounded
 theorems (`Fp32Grounding.round32_sterbenz_exact` / `sub32_exact_of_sterbenz`) and confirms the
 sorry-free axiom profile.
 
@@ -29,13 +29,15 @@ namespace PropertyKindCalculus.UncertaintyExamples.AdequacySterbenz32
 
 open PropertyKindCalculus.Uncertainty.Adequacy
 open TorchLean.Floats
+open FloatLib.Floats.Formats.Flocq
+open FloatLib.Numerics (binaryRadix Radix)
 
 /-! ## A2 at the real binary32 format (`fexp32`, gradual underflow) -/
 
 /-- **Sterbenz over `round32`.** For representable binary32 `u`, `v` within a factor of two, the exact
 difference is already on the binary32 grid — so `round32` is the identity on it. -/
 theorem round32_sterbenz {u v : ℝ}
-    (hu : neuralGenericFormat binaryRadix fexp32 u) (hv : neuralGenericFormat binaryRadix fexp32 v)
+    (hu : genericFormat binaryRadix fexp32 u) (hv : genericFormat binaryRadix fexp32 v)
     (hupos : 0 < u) (hvpos : 0 < v) (huv : u ≤ 2 * v) (hvu : v ≤ 2 * u) :
     round32 (u - v) = u - v :=
   round32_sterbenz_exact hu hv hupos hvpos huv hvu

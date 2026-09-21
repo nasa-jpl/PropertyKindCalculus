@@ -12,12 +12,12 @@ halves matter for adequacy, and both are theorems here:
   * **A2 — `flx_sterbenz`.** The *reason* near-equal operands share a grid: for two positive numbers
     representable at precision `p` (Flocq's `FLX p`) with `y ≤ x ≤ 2y`, the difference `x − y` is
     itself representable at precision `p`. This is the self-contained real-number analogue of
-    TorchLean's `neural_generic_format_FLX_sterbenz` (`Analysis/Sterbenz.lean`), stated over the
+    FloatLib's `generic_format_FLX_sterbenz` (`Flocq/Theory/Format`), stated over the
     explicit mantissa/exponent model. Binary32 is `FLX 24` with a bounded exponent; **Stage 3.2 now
     carries this to TorchLean's `fexp32`/`FP32` (the FLT format with gradual underflow)** —
     `Fp32Grounding.round32_sterbenz_exact` / `sub32_exact_of_sterbenz` state near-equal binary32
     subtraction as a theorem about `round32`, grounded in the TorchLean PR's
-    `neural_generic_format_FLT_sterbenz`.
+    `generic_format_FLT_sterbenz`.
 
   * **`relUnc_amplifies`.** The uncertainty-side hazard: when the difference shrinks to at or below
     the absolute uncertainty the operands carry, the *relative* uncertainty of the difference is at
@@ -87,7 +87,7 @@ private theorem mantissa_pos {a e : ℤ} (h : 0 < (a : ℝ) * (2 : ℝ) ^ e) : 0
 `p`, when they lie within a factor of two of each other (`y ≤ x ≤ 2y`), is itself representable at
 precision `p` — so the subtraction is *exact*. This is why near-equal floating-point subtraction
 introduces no rounding error. The real-number analogue of TorchLean's
-`neural_generic_format_FLX_sterbenz`. -/
+`generic_format_FLX_sterbenz`. -/
 theorem flx_sterbenz {p : ℕ} {x y : ℝ} (hy : 0 < y) (hyx : y ≤ x) (hx2y : x ≤ 2 * y)
     (hxr : FLX p x) (hyr : FLX p y) : FLX p (x - y) := by
   obtain ⟨mx, ex, hxe, hmx⟩ := hxr

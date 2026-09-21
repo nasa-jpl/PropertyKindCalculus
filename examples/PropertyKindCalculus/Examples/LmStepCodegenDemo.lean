@@ -30,7 +30,7 @@ import PropertyKindCalculus.Torch.Paradigm.TapeCodegen
 import PropertyKindCalculus.Torch.Paradigm.TapeBatchCarrier
 import PropertyKindCalculus.Examples.AvsForward
 
-open Spec
+open Spec TorchLean
 open Runtime.Autograd (Tape TapeM)
 open PropertyKindCalculus (MathCarrier)
 open PropertyKindCalculus.Paradigm (TapeBuilder NumCarrier BatchCarrier)
@@ -199,7 +199,7 @@ def lmStepLavs (lam : α) (lb ub : Theta α) (obs : List (Obs α)) (θ : Theta �
 abbrev TB := TapeBuilder Shape.scalar
 
 /-- A named input leaf (a kernel input pointer; placeholder value `0`). -/
-def inLeaf (nm : String) : TB := ⟨TapeM.leaf (fill (0.0 : Float) Shape.scalar) (name := some nm)⟩
+def inLeaf (nm : String) : TB := ⟨TapeM.leaf (Tensor.full Shape.scalar (0.0 : Float)) (name := some nm)⟩
 
 /-- A baked host constant on the tape, via the `BatchCarrier (TapeBuilder)` `const` instance (an
 unnamed `fill`-leaf). This is the arbitrary-`Float` constant-injection `NumCarrier` cannot express —

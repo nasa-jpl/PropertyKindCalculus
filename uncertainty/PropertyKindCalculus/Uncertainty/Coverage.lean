@@ -90,10 +90,7 @@ theorem uniform_coverage_exact {P : Measure Ω} {X : Ω → ℝ} {m δ : ℝ} (h
     rw [hs, Real.volume_Icc]; congr 1; ring
   have hvolA : volume A = ENNReal.ofReal (2 * h) := by
     rw [hA, Real.volume_Icc]; congr 1; ring
-  have hns : volume s ≠ 0 := by
-    rw [hvols]; simp only [ne_eq, ENNReal.ofReal_eq_zero, not_le]; linarith
-  have hnt : volume s ≠ ∞ := by rw [hvols]; exact ENNReal.ofReal_ne_top
-  rw [hu.measure_preimage hns hnt measurableSet_Icc,
+  rw [hu.measure_preimage measurableSet_Icc,
     Set.inter_eq_self_of_subset_right hsub, hvolA, hvols,
     ← ENNReal.ofReal_div_of_pos (show (0:ℝ) < 2 * δ by linarith)]
   congr 1
@@ -103,7 +100,6 @@ theorem uniform_coverage_exact {P : Measure Ω} {X : Ω → ℝ} {m δ : ℝ} (h
 on `s`. Shows the R18 uniform hypothesis is inhabited (non-vacuous). -/
 theorem isUniform_id_cond (s : Set ℝ) :
     pdf.IsUniform (id : ℝ → ℝ) s (ProbabilityTheory.cond volume s) volume := by
-  unfold MeasureTheory.pdf.IsUniform
-  exact Measure.map_id
+  exact ⟨aemeasurable_id, Measure.map_id⟩
 
 end PropertyKindCalculus.Uncertainty.Coverage

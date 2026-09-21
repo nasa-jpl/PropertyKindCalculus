@@ -19,7 +19,7 @@ binary32 grid *is* uniform. Nothing here is `noncomputable`-dependent; it is pur
 
 All sorry-free.
 -/
-import Mathlib.Data.Real.Basic
+import Mathlib.Basic.Real.Basic
 import Mathlib.Algebra.Order.Archimedean.Real.Basic
 import Mathlib.Algebra.Order.Round
 import Mathlib.Tactic.Ring

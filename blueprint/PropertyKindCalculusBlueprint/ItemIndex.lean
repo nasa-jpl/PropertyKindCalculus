@@ -184,14 +184,14 @@ partial def runInline : Run → DocElabM Term
     `(Verso.Doc.Inline.bold #[$inls,*])
 
 /-- A cell becomes a one-paragraph block; `ref` cells become the `Inline.informal`
-node that `bpref` produces (`block := none`; the href and hover are resolved from
-the traversal state at render time, exactly as for a hand-written `bpref`). -/
+node that `bpref` produces (the href and hover are resolved from the traversal
+state at render time, exactly as for a hand-written `bpref`). -/
 def cellBlock : Cell → DocElabM Term
   | .text s => `(Verso.Doc.Block.para #[Verso.Doc.Inline.text $(quote s)])
   | .code s => `(Verso.Doc.Block.para #[Verso.Doc.Inline.code $(quote s)])
   | .ref tag txt => do
     let data : Informal.InlineData :=
-      { label := Informal.LabelNameParsing.parse tag, block := none }
+      { label := Informal.LabelNameParsing.parse tag }
     `(Verso.Doc.Block.para
         #[Verso.Doc.Inline.other (Informal.Inline.informal $(quote data))
             #[Verso.Doc.Inline.text $(quote txt)]])
@@ -211,7 +211,7 @@ def cellBlock : Cell → DocElabM Term
         `(Verso.Doc.Inline.code $(quote txt))
       else do
         let data : Informal.InlineData :=
-          { label := Informal.LabelNameParsing.parse tag, block := none }
+          { label := Informal.LabelNameParsing.parse tag }
         `(Verso.Doc.Inline.other (Informal.Inline.informal $(quote data))
             #[Verso.Doc.Inline.text $(quote txt)])
     let sep ← `(Verso.Doc.Inline.text ", ")
@@ -231,7 +231,7 @@ def cellBlock : Cell → DocElabM Term
             `(Verso.Doc.Inline.code $(quote txt))
           else do
             let data : Informal.InlineData :=
-              { label := Informal.LabelNameParsing.parse tag, block := none }
+              { label := Informal.LabelNameParsing.parse tag }
             `(Verso.Doc.Inline.other (Informal.Inline.informal $(quote data))
                 #[Verso.Doc.Inline.code $(quote txt)])
         `(Verso.Doc.ListItem.mk #[Verso.Doc.Block.para #[$inl]])

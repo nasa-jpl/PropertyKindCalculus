@@ -16,8 +16,8 @@ at *half a ulp*:
 Together they say half a ulp is the *exact* absorption boundary — below it a contribution is lost,
 at or above it it survives. That threshold is the datum the `Adequacy` carrier flags a contribution
 `cᵢ·uᵢ` against, and the fact that makes the flag sound (`Adequacy.Soundness`, A3). The binary32
-realization is TorchLean's `neuralRound_nearestEven_point` (the rounded value is the globally nearest
-representable) and `neuralUlp` (see `Adequacy.Fp32Grounding`); the grid statement here is that fact
+realization is FloatLib's `round_nearestEven_point` (the rounded value is the globally nearest
+representable) and `ulp` (see `Adequacy.Fp32Grounding`); the grid statement here is that fact
 localized to one magnitude. Proved over `ℝ`, sorry-free.
 -/
 import PropertyKindCalculus.Uncertainty.Adequacy.Grid

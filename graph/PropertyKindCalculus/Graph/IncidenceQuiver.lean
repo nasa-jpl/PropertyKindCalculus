@@ -1,6 +1,6 @@
 import PropertyKindCalculus.Graph.Flow
 import ForMathlib.Combinatorics.Quiver.Acyclic
-import Mathlib.Data.Finite.Sum
+import Mathlib.Basic.Finite.Sum
 
 /-!
 # The incidence quiver — occurrence multiplicity as arrows, and finite budgets

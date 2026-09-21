@@ -1,48 +1,48 @@
 name = "propertykindcalculus-blueprint"
 defaultTargets = ["PropertyKindCalculusBlueprint", "blueprint-gen"]
 
-# Verso + the Blueprint genre, on the v4.33.0 toolchain — the verso-stack pins move in
-# LOCKSTEP (the verso tag, the VersoBlueprint SHA, and the subverso rev verso's own
+# Verso + the Blueprint genre, on the v4.34.0 toolchain — the verso-stack pins move in
+# LOCKSTEP (the verso rev, the VersoBlueprint SHA, and the subverso rev verso's own
 # manifest names): a mixed stack fails at `VersoLiterate.Basic` against this toolchain's
-# core. `verso`'s `v4.33.0` is a `refs/tags` ref and therefore immutable, so naming it is
-# already a SHA pin.
+# core. The partner that decides the pair is `verso-blueprint`: its `v4.34.0` line pins
+# verso `52c8c955` (`v4.34.0-rc2-3-g52c8c955`, toolchain v4.34.0-rc2) and subverso
+# `fda188f7` in its own manifest, and TorchLean upstream renders its docs on that exact
+# trio under toolchain v4.34.0. verso's own `v4.34.0` tag (`cad4b633`) is a different
+# commit that verso-blueprint does not pin, so it is not the verso pin here.
 #
-# `verso-blueprint`'s `v4.33.0` is NOT. It is a `refs/heads` BRANCH — a release line that
-# keeps moving — so it must be pinned to an exact commit SHA, and naming the ref instead
-# is how this breaks. `lake update` re-resolves a branch to its current tip, which has
-# three costs, all seen here: (1) `ci-pages.sh` runs `lake update`, so the manifest is
-# rewritten and dirty on every build; (2) the branch once drifted to a
-# `manualMainWithPreviewData` that regressed and killed `blueprint-gen` with exit 137;
-# and (3) the tip moved onto toolchain **v4.33.1** while verso, TorchLean, Physlib and
-# mathlib are all v4.33.0 — which bumps `blueprint/lean-toolchain` out from under mathlib
-# and its cache stops resolving (`Dependency Mathlib uses a different lean-toolchain`).
+# `verso-blueprint`'s `v4.34.0` is a `refs/heads` BRANCH — a release line that keeps
+# moving — so it must be pinned to an exact commit SHA, and naming the ref instead is
+# how this breaks. `lake update` re-resolves a branch to its current tip, which has
+# three costs: (1) `ci-pages.sh` runs `lake update`, so the manifest is rewritten and
+# dirty on every build; (2) a tip can regress `blueprint-gen` (one did, exit 137); and
+# (3) a tip can carry a `lean-toolchain` newer than mathlib's, and `lake update` then
+# bumps `blueprint/lean-toolchain` out from under mathlib and its cache stops resolving
+# (`Dependency Mathlib uses a different lean-toolchain`).
 #
-# `9dd25554` is the last `v4.33.0`-branch commit that still pins toolchain v4.33.0, which
-# is what makes it the pin: the constraint is one Lean version across verso, TorchLean and
-# Physlib, and this is the newest verso-blueprint that satisfies it. Bump it deliberately
-# — check the candidate's own `lean-toolchain` first, then re-test `lake exe blueprint-gen`
-# — rather than tracking the branch.
+# `a48eea9e` is the `v4.34.0`-branch commit TorchLean upstream builds with; the branch tip
+# (`19451b00`, PR #460's render-resource refactor) is untested here. Bump it deliberately
+# — check the candidate's own `lean-toolchain` and its verso/subverso pins first, then
+# re-test `lake exe blueprint-gen` — rather than tracking the branch.
 #
-# The siblings agree: `soil-moisture-model/technical-reference` and
-# `soil-moisture-workflows/blueprint` pin this identical verso + VersoBlueprint pair, and
-# `L4YAML/doc` pins the same verso tag (no VersoBlueprint there — it is a plain manual).
-# One Verso stack renders all four; a bump here is a bump everywhere, deliberately.
+# `soil-moisture-model/technical-reference` pins this identical verso + VersoBlueprint
+# pair; `soil-moisture-workflows/blueprint` and `L4YAML/doc` pin the stack that matches
+# their own toolchain. One toolchain, one Verso stack: a bump here travels with the
+# toolchain bump, deliberately.
 #
-# verso `main` carries the fix for the margin-note numbering bug — under `v4.33.0` every
-# margin note and its in-text mark renders as "1" (PR #977, commit `a20c785b`) — but that
-# commit's own `lean-toolchain` is v4.34.0-rc2, two bumps past this stack, so it fails the
-# precheck above and cannot be the pin. The fix is one CSS rule; it is backported as
-# `extraCss` in `PropertyKindCalculusBlueprintMain.lean`. Drop that override when this pin
-# advances past #977.
+# The margin-note numbering fix (verso PR #977, commit `a20c785b`, in verso's `v4.34.0`
+# tag but not in `52c8c955`) is not in this stack — under it every margin note and its
+# in-text mark renders as "1". The fix is one CSS rule; it is backported as `extraCss` in
+# `PropertyKindCalculusBlueprintMain.lean`. Drop that override when verso-blueprint's
+# verso pin advances past #977.
 [[require]]
 name = "verso"
 git = "https://github.com/leanprover/verso"
-rev = "v4.33.0"
+rev = "52c8c9557bcb5cc8c0edc0ee37e74311a3d53ee9"
 
 [[require]]
 name = "VersoBlueprint"
 git = "https://github.com/leanprover/verso-blueprint"
-rev = "9dd255542ad41ba66492051395c0fd6cacd9f7a9"
+rev = "a48eea9ecb17d1551fef67d7de90571608663a11"
 
 # The library being documented. Linking `(lean := "PropertyKindCalculus.…")` nodes to
 # real declarations (and reading their proved/`sorry` status) requires the

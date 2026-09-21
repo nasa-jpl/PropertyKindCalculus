@@ -29,6 +29,10 @@ Plain (not a `module`) file: imports the plain core `NumCarrier` and TorchLean's
 -/
 import PropertyKindCalculus.Paradigm.NumCarrier
 import NN.Spec.Core.Context
+-- `Context ℝ` lives in its own module upstream (it needs `MathFunctions ℝ`); it is imported here
+-- so every consumer of this bridge sees `NumCarrier ℝ`, which the real-number floors of the
+-- correctness proofs downstream instantiate.
+import NN.Spec.Core.Context.Real
 
 namespace PropertyKindCalculus.Paradigm
 
@@ -66,6 +70,6 @@ instance instNumCarrierOfContext {α : Type} [Context α] : NumCarrier α where
   toMin := inferInstance
   toMax := inferInstance
   toMathCarrier := inferInstance
-  toCoe := inferInstance
+  toCoe := ⟨fun n => (n : α)⟩
 
 end PropertyKindCalculus.Paradigm

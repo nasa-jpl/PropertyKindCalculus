@@ -43,7 +43,7 @@ Plain (not a `module`) file: imports the plain tape carrier.
 import PropertyKindCalculus.Torch.Paradigm.TapeCarrier
 import Std.Data.HashMap
 
-open Spec
+open Spec TorchLean
 open Runtime.Autograd
 open PropertyKindCalculus.Paradigm (TapeBuilder)
 
@@ -56,7 +56,7 @@ scalar-baking op). Two nodes share a key iff they are the same op on the same ca
 def nodeKey (remap : Array Nat) (node : Node Float) : Option String × Array Nat × List UInt64 :=
   ( node.name
   , node.parents.map (fun p => remap.getD p p)
-  , (Spec.Tensor.toList node.value.tensor).map Float.toBits )
+  , (TorchLean.Storage.toArray node.value.tensor.buffer).toList.map Float.toBits )
 
 /-- **Hash-cons a recorded tape.** Walks the nodes in id order (parents precede children, so the
 remap of every parent is already known), collapsing structurally-identical nodes onto one. Returns

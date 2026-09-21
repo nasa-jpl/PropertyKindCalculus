@@ -51,22 +51,22 @@ variable {d : ℕ}
 The right law **for a displacement**. -/
 noncomputable def geometricTransport (F G : ReferenceFrame d) (t : Time) :
     F.Vector → G.Vector :=
-  fun v => (ReferenceFrame.Vector.dispEquiv (frame := G) t).symm
-    (ReferenceFrame.Vector.dispEquiv (frame := F) t v)
+  fun v => (ReferenceFrame.Vector.dispEquiv (frame := G) (G.timeEquiv.symm t)).symm
+    (ReferenceFrame.Vector.dispEquiv (frame := F) (F.timeEquiv.symm t) v)
 
 /-- Transport with the boost subtracted: the right law **for a velocity** measured in
 `F`, when `G`'s origin moves at `u` relative to `F`. -/
 noncomputable def boostTransport (F G : ReferenceFrame d) (t : Time)
     (u : EuclideanSpace ℝ (Fin d)) : F.Vector → G.Vector :=
-  fun v => (ReferenceFrame.Vector.dispEquiv (frame := G) t).symm
-    (ReferenceFrame.Vector.dispEquiv (frame := F) t v - u)
+  fun v => (ReferenceFrame.Vector.dispEquiv (frame := G) (G.timeEquiv.symm t)).symm
+    (ReferenceFrame.Vector.dispEquiv (frame := F) (F.timeEquiv.symm t) v - u)
 
 /-- Transport with the origin shift added: the right law **for a relative position**
 read from `F`'s origin. -/
 noncomputable def originShiftTransport (F G : ReferenceFrame d) (t : Time) :
     F.Vector → G.Vector :=
-  fun v => (ReferenceFrame.Vector.dispEquiv (frame := G) t).symm
-    (ReferenceFrame.Vector.dispEquiv (frame := F) t v + (F.origin t -ᵥ G.origin t))
+  fun v => (ReferenceFrame.Vector.dispEquiv (frame := G) (G.timeEquiv.symm t)).symm
+    (ReferenceFrame.Vector.dispEquiv (frame := F) (F.timeEquiv.symm t) v + (F.origin t -ᵥ G.origin t))
 
 /-- **The finding.** All three laws accept the *same* vector — requirement 16's "the
 induced transformation law" is three laws, and `F.Vector` cannot say which one `v`
@@ -88,7 +88,7 @@ def velocityK : KindOfProperty := (Iso80000.Part3.velocity).kind
 own 4-9.1. -/
 def forceK : KindOfProperty := (Iso80000.Part4.force).kind
 
-/-- Duration — what `(t₂ - t₁).val` silently erases; the catalogue's own 3-9. -/
+/-- Duration — what `t₂ -ᵥ t₁` silently erases; the catalogue's own 3-9. -/
 def durationK : KindOfProperty := (Iso80000.Part3.duration).kind
 
 /-- `frame.Vector`, with the physical role stated: one carrier *per kind* instead of one
@@ -108,7 +108,7 @@ instance (F : ReferenceFrame d) (k : KindOfProperty) : AddCommGroup (KVector F k
 
 /-- The scalar action survives, per kind — likewise. -/
 instance (F : ReferenceFrame d) (k : KindOfProperty) : Module ℝ (KVector F k) :=
-  (kComponentEquiv F k).module ℝ
+  (kComponentEquiv F k).addEquiv.module ℝ
 
 /-- Same kind, same frame: the componentwise calculations requirement 8 wants are
 untouched. -/
@@ -124,15 +124,15 @@ accepts today does not elaborate. -/
 this is requirement 16 made satisfiable. -/
 noncomputable def kGeometricTransport (F G : ReferenceFrame d) (t : Time) :
     KVector F displacement → KVector G displacement :=
-  fun v => ⟨⟨((ReferenceFrame.Vector.dispEquiv (frame := G) t).symm
-    ((ReferenceFrame.Vector.dispEquiv (frame := F) t) ⟨v.q.magnitude⟩)).components⟩⟩
+  fun v => ⟨⟨((ReferenceFrame.Vector.dispEquiv (frame := G) (G.timeEquiv.symm t)).symm
+    ((ReferenceFrame.Vector.dispEquiv (frame := F) (F.timeEquiv.symm t)) ⟨v.q.magnitude⟩)).components⟩⟩
 
 /-- The boost law, only for velocities — the boost itself arrives kinded. -/
 noncomputable def kBoostTransport (F G : ReferenceFrame d) (t : Time)
     (u : Quantity velocityK (EuclideanSpace ℝ (Fin d))) :
     KVector F velocityK → KVector G velocityK :=
-  fun v => ⟨⟨((ReferenceFrame.Vector.dispEquiv (frame := G) t).symm
-    ((ReferenceFrame.Vector.dispEquiv (frame := F) t) ⟨v.q.magnitude⟩
+  fun v => ⟨⟨((ReferenceFrame.Vector.dispEquiv (frame := G) (G.timeEquiv.symm t)).symm
+    ((ReferenceFrame.Vector.dispEquiv (frame := F) (F.timeEquiv.symm t)) ⟨v.q.magnitude⟩
       - u.magnitude)).components⟩⟩
 
 /- **Finding 1, closed.** The boost law applied to a displacement — the pairing nothing
@@ -156,7 +156,7 @@ noncomputable def frameVelocityQ {F : ReferenceFrame d} (h : F.IsInertial) :
   .attest "IsInertial.velocity — the chosen witness of origin_moves_uniformly" h.velocity
 
 /-- The elapsed time, kinded — this is where `.val` stops being silent. -/
-def elapsedQ (t₁ t₂ : Time) : Quantity durationK ℝ := ⟨(t₂ - t₁).val⟩
+def elapsedQ (t₁ t₂ : Time) : Quantity durationK ℝ := ⟨t₂ -ᵥ t₁⟩
 
 /-- **Requirement 17, discharged kinded.** The defining property of the origin velocity —
 the API map lists it as not done — with the same proof term PhysLib would use

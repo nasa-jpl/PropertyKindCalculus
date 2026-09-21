@@ -27,7 +27,7 @@ import NN.Runtime.Autograd.Engine.TapeM
 
 namespace PropertyKindCalculus.UncertaintyExamples.TapeMBridge
 
-open Spec Tensor Proofs.Autograd TorchLean
+open Spec TorchLean TorchLean.Tensor Proofs Proofs.Autograd
 open PropertyKindCalculus.UncertaintyExamples.AutogradDirectSim
 open Runtime.Autograd (Tape TapeM Result)
 
@@ -267,10 +267,10 @@ theorem progMulScale_exec_eagerBuilds (c : ℝ) (x0T x1T : Tensor ℝ Shape.scal
   have hm2 : m = 2 := by rw [tape_mul_id hmul]; rfl
   subst hm2
   -- assemble the two constructors
-  exact PRSim.EagerBuilds.scale (g := .snoc .nil (TapeNodes.mul ix0 ix1)) ixm c
-    (PRSim.EagerBuilds.mul (g := .nil) ix0 ix1
-      (PRSim.EagerBuilds.nil (TensorPack.cons x0T (TensorPack.cons x1T TensorPack.nil))) hmul)
-    hscale
+  have hmulB := PRSim.EagerBuilds.mul (g := .nil) ix0 ix1
+    (PRSim.EagerBuilds.nil (TensorPack.cons x0T (TensorPack.cons x1T TensorPack.nil))) hmul
+  have hb := PRSim.EagerBuilds.scale ixm c hmulB hscale
+  exact hb
 
 /-- Differentiability witness for the chained graph, from the upstream per-node facts. -/
 def mulScaleCorrect (c : ℝ) : GraphFDerivCorrect (mulScaleGraph c) :=

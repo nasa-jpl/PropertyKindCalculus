@@ -40,8 +40,7 @@ audit at the end certifies it sorry-free.
 import PropertyKindCalculus.Examples.TapeCseStructural
 import PropertyKindCalculus.Examples.TapeCodegenEndToEnd
 
-open Spec
-open Spec.Tensor
+open Spec TorchLean TorchLean.Tensor
 open Runtime.Autograd (Tape Node)
 open PropertyKindCalculus.Paradigm.TapeCodegen (evalTape nodeScalar cOp)
 open PropertyKindCalculus.Paradigm.TapeCSE (cseCompact)
@@ -62,8 +61,8 @@ theorem stepVal_push_stable (env : String → Float) (acc : Array Float) (v : Fl
     stepVal env (acc.push v) nd = stepVal env acc nd := by
   unfold stepVal
   by_cases he : nd.parents.isEmpty = true
-  · simp only [he, if_true]
-  · simp only [if_neg he]
+  · simp only [he, ite_true]
+  · simp only [ite_eq_right he]
     cases hn : nd.name with
     | none => rfl
     | some nm =>
@@ -198,7 +197,7 @@ theorem cseCompact_denotation (t : Tape Float) (hwf : WF t) (env : String → Fl
         -- const leaf: the only place the interpreter reads stored bits — supplied by `hleaf`
         have hval_eq : vals.getD id 0.0 = nodeScalar nOld := by
           have hred : stepVal env vals nOld = .ok (nodeScalar nOld) := by
-            unfold stepVal; rw [if_pos he, hn]; rfl
+            unfold stepVal; rw [ite_eq_left he, hn]; rfl
           rw [hred] at hstepOld; exact (Except.ok.injEq _ _ ▸ hstepOld).symm
         rw [hval_eq]; exact hleaf id nOld hOld he hn
       | some nm =>
@@ -211,11 +210,11 @@ theorem cseCompact_denotation (t : Tape Float) (hwf : WF t) (env : String → Fl
         have hNewName : nNew.name = some nm := by rw [hname, hn]
         have e1 : vals.getD id 0.0 = env nm := by
           have hred : stepVal env vals nOld = .ok (env nm) := by
-            unfold stepVal; rw [if_pos he, hn]; rfl
+            unfold stepVal; rw [ite_eq_left he, hn]; rfl
           rw [hred] at hstepOld; exact (Except.ok.injEq _ _ ▸ hstepOld).symm
         have e2 : valsC.getD ((cseCompact t).2.getD id id) 0.0 = env nm := by
           have hred : stepVal env valsC nNew = .ok (env nm) := by
-            unfold stepVal; rw [if_pos hNewEmpty, hNewName]; rfl
+            unfold stepVal; rw [ite_eq_left hNewEmpty, hNewName]; rfl
           rw [hred] at hstepNew; exact (Except.ok.injEq _ _ ▸ hstepNew).symm
         rw [e1, e2]
     · -- op node: settled from op name + remapped parents (no stored-bit read, no `toBits`)
@@ -231,15 +230,15 @@ theorem cseCompact_denotation (t : Tape Float) (hwf : WF t) (env : String → Fl
         -- a nameless op node cannot occur in a successfully-evaluated tape
         exfalso
         have hred : stepVal env vals nOld = .error "tape_codegen: op node with no op name" := by
-          unfold stepVal; rw [if_neg (show ¬ nOld.parents.isEmpty = true by simp [heF]), hn]
+          unfold stepVal; rw [ite_eq_right (show ¬ nOld.parents.isEmpty = true by simp [heF]), hn]
         rw [hred] at hstepOld
         simp at hstepOld
       | some nm =>
         have hNewName : nNew.name = some nm := by rw [hname, hn]
         have hkey : stepVal env valsC nNew = stepVal env vals nOld := by
           unfold stepVal
-          simp only [if_neg (show ¬ nNew.parents.isEmpty = true by simp [hNewEmpty]),
-            if_neg (show ¬ nOld.parents.isEmpty = true by simp [heF]), hn, hNewName]
+          simp only [ite_eq_right (show ¬ nNew.parents.isEmpty = true by simp [hNewEmpty]),
+            ite_eq_right (show ¬ nOld.parents.isEmpty = true by simp [heF]), hn, hNewName]
           congr 1
           rw [hpar, Array.map_map]
           apply congrArg Array.toList
