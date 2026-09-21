@@ -958,28 +958,42 @@ example {E S : Type} [Carrier E] [Carrier S] [CarrierRefinement E S]
           (Quantity.add h (Quantity.toSpec x) (Quantity.toSpec y)) :=
   Quantity.add_refines h x y
 
-/-! ### The scope of that ✅, stated — because the oscillator is outside it
+/-! ### The scope of that ✅, stated — because this file's carrier is outside it
 
 Rule 5 of the benchmark applies here more sharply than anywhere else in this file.
 `CarrierRefinement` carries exactly two laws, `toSpec_zero` and `toSpec_add`, so the descent
-above is available for **aggregation** and for nothing else. There is no `mul_refines`.
+above is available for **aggregation** and for nothing else. The multiplicative surface is held
+apart in `MulRefinement` and `DivRefinement` — `Carrier` supplies only zero and addition, so a
+carrier can refine additively without having a `*` at all — and `Quantity.mul_refines` /
+`Quantity.div_refines` descend those along a `ProductKind` / `QuotientKind` witness, the kinds
+moving under the same law on both sides of the bridge. The `Torch` lib instantiates all three
+classes at `FP32 ↔ ℝ`.
 
-Every formula this oscillator computes is multiplicative. `stiffness` is `m · ω · ω`;
-`ξ² = ℏ/(mω)` is a quotient; the potential energy is a four-fold product; `Z²` is a complex
-product; and Tier 6's scalar product is a sum *of products*. So `stiffnessFloat ⟨5⟩ ⟨2⟩ == 20.0`
+What is missing here is therefore a carrier, not a law. Every formula this oscillator computes
+is multiplicative — `stiffness` is `m · ω · ω`; `ξ² = ℏ/(mω)` is a quotient; the potential
+energy is a four-fold product; `Z²` is a complex product; and Tier 6's scalar product is a sum
+*of products* — and `stiffness` is already written through `Quantity.mul` at a `ProductKind`
+witness, which is exactly the shape `mul_refines` covers. It is instantiated at `Float`, and
+`Float` has no `CarrierRefinement` instance, deliberately: it is not a `LawfulCarrier`, and the
+binary32 carriers that do refine are `FP32` and `IEEE32Exec`. So `stiffnessFloat ⟨5⟩ ⟨2⟩ == 20.0`
 above is a `#guard` — a computation that happened — with **nothing relating it to
-`stiffnessReal`**, and MR15's ✅ rests on a theorem that does not reach the arithmetic the model
-actually performs.
+`stiffnessReal`**. Instantiating the same definition at `FP32` is what would relate them, and
+this file does not do it.
 
-The honest reading is that the *obligation is named and the mechanism exists*, which is what
-separates attempt 4 from attempts 1–3 (they have no exec/spec distinction at all, so there is
-no gap for them to have a scope for). What it is not is a closed case. The multiplicative
-forward-error story does exist in this library — `Uncertainty.Adequacy.DagBound`'s
-`dag_fp32_error_bound` accumulates per-node half-ulp budgets across an `add`/`sub`/`mul`/`div`
-DAG, with a product's operands correctly weighted by each other's magnitude, grounded in
-TorchLean's `FP32.{mul,div}_abs_error` — but it is stated over an untyped expression tree
-rather than over `Quantity k R`, so it does not connect to the kind index here. Routing it
-through `CarrierRefinement` is the open decision recorded in `UNCERTAINTY.md` §7. -/
+The honest reading is that the *obligation is named, the mechanism exists, and it reaches
+products*, which is what separates attempt 4 from attempts 1–3 (they have no exec/spec
+distinction at all, so there is no gap for them to have a scope for). What it is not is a
+closed case at this file's carrier. The forward-error story is a different question with a
+different answer: `Uncertainty.Adequacy.DagBound`'s `dag_fp32_error_bound` accumulates per-node
+half-ulp budgets across an `add`/`sub`/`mul`/`div` DAG, with a product's operands weighted by
+each other's magnitude, grounded in TorchLean's `FP32.{mul,div}_abs_error`, and it is stated
+over an untyped expression tree rather than over `Quantity k R`. `UNCERTAINTY.md` §7 records the
+division of labor: an equation is not a bound, so forward-error accumulation and box
+faithfulness stay on `*_abs_error`, while the exactness regime is algebraic and is a
+`CarrierRefinement` statement. `Adequacy/RefinementBridge.lean` is where the two meet:
+`refinement_round_eq_round32` identifies `CarrierRefinement.round (E := FP32)` with `round32`
+definitionally, and `refinementFixes_iff_exactRepresentable` reads `DagBound.ExactRepresentable`
+as the refinement rounding nothing along the evaluation. -/
 
 end Tier5
 
