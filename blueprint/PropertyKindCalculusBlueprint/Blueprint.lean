@@ -365,6 +365,100 @@ Between them these bullets name all twenty-seven requirements, each of which is 
 precisely below; the status table at the end of that section maps every requirement to
 the checked declarations that address it.
 
+## What an author writes, and what the machine checks
+%%%
+tag := "author-obligations"
+%%%
+
+The _Using the library_ chapter explains each annotation in turn. This section is the
+summary to have before reading it: what a model written in the calculus asks of its
+author, and what the author gets back. An analogy with taint analysis in software
+security fixes the idea.
+
+- A raw number is _metrologically tainted_: it could be a value of any kind, so nothing
+  downstream may rely on it.
+- A kinded quantity, `Quantity k R`, is _metrologically clean_: its kind is stated in its
+  type, so everything downstream may rely on it.
+
+Taint analysis tracks untrusted data through source code; metrological provenance tracks
+kinded quantities through the kind algebra. The analogy breaks in the calculus's favor. A
+taint analyzer has to approximate how data flows through a program, whereas here the kind
+rides in the type and the elaborator propagates it exactly, with nothing to approximate.
+That leaves an author two things to state, and the machine checks both.
+
+*First, the equations are written over kinded variables.* Where a physics text writes
+$`T = \tfrac{1}{2} m v^2` over bare reals, the model writes it over a `Quantity massK ℝ`
+and a `Quantity velocityK ℝ`, and every operation between them has to be licensed:
+
+- Addition and comparison are gated by the kind index itself. Two quantities of the same
+  kind add; a velocity added to an angular velocity is a type error (R4).
+- Products and quotients go through the _operator table_. A `KindMul k₁ k₂ k` or
+  `KindDiv k₁ k₂ k` entry is registered per sanctioned pair of kinds, each wrapping the
+  `ProductKind` or `QuotientKind` law the ISO 80000 defining relations are stated as: the
+  entry `KindMul massK velocityK momentumK` encodes ISO 80000-4 item 4-8, $`p = m\,v`. A
+  file opts in with `open scoped PropertyKindCalculus.OperatorTable`, after which `m * v`
+  elaborates at the momentum kind. Where no entry exists, the product does not elaborate
+  at all (R5, the {ref "interaction-algebra"}[interaction algebra]).
+- Functions go through the _function table_ (the _Function Calculus_ chapter), which
+  sorts them into six families by kind signature: kind-preserving (`abs`, `min`, `max`),
+  powers and roots, the dimensionless transcendentals, the trigonometric functions,
+  logarithmic levels, and re-expression against another reference. The trigonometric
+  family is the showcase: a plane angle is dimension one but a distinct kind, so `sin` of
+  an angle is fine while `sin` of a reflectivity is a category error a dimension-only
+  system cannot forbid.
+
+What the switch buys is the two things a bare equation cannot say. A kinded expression
+combines only where the algebra licenses it. And the kind separates what the dimension
+cannot: the ForPhysLib classical-mechanics benchmark alone has six distinct kinds at the
+joule (kinetic, potential, mechanical, the Lagrangian, and König's translational and
+rotational pair), two at $`\mathrm{T^{-1}}` (angular frequency and angular velocity, the
+same letter $`\omega` in two subtrees), and two at $`\mathrm{T}` (duration and period),
+and the distinctions are decidable (`angularFrequency_ne_angularVelocity` is closed
+`by decide`). The kinds are paid for at compile time, not at run time (R21): the kinetic
+energy authored through the table, $`\tfrac{1}{2}\langle p, v\rangle` built from the
+edges $`m \cdot v \to p` and $`p \cdot v \to 2T`, erases to PhysLib's
+$`\tfrac{1}{2} m \langle \dot{x}, \dot{x}\rangle` by the theorem
+`kineticFromTableQ_erases`.
+
+*Second, the boundary is declared.* Because propagation is typed, the only places left
+to state are where a value enters the calculus, where it leaves, and where a kind is
+asserted rather than derived. Each is an annotation from the
+{ref "boundary-family"}[boundary family]:
+
+- Raw data enters through `@[kindIngest]`, a {ref "annotation-kindIngest"}[checked ingest mint]:
+  the declaration admits the value by whatever check it performs — a `KindAdmissible`
+  instance, a range test, a fallible parse. An adjudicated constant enters through
+  `@[kindConst]`, a {ref "annotation-kindConst"}[constant mint].
+- A kinded value leaves the calculus as a bare number through `@[kindEmission]`, an
+  {ref "annotation-kindEmission"}[emission boundary]: a deploy driver, a serializer, the
+  parity apparatus the erasure theorems are stated over.
+- A value that already carries one kind and is re-typed as another, with no algebraic law
+  to derive it, is a `@[kindCrossing]`, an {ref "annotation-kindCrossing"}[authored crossing].
+  Representation plumbing that drops to the carrier without changing the kind is
+  `@[carrierVocab]`, a {ref "annotation-carrierVocab"}[carrier-vocabulary exception].
+
+Inside such a declaration, where no check applies, the mint itself is written as an
+_attestation_:
+
+```
+@[inline] def attest (_why : String) (m : R) : Quantity k R := ⟨m⟩
+```
+
+It is definitionally the raw value: the physics context is in the type, `Quantity
+velocityK ℝ` say, not in the string. What the string does is put the judgment on the
+record. The boundary audit harvests it and prints it beside the site, so each authored
+mint is a one-line review artifact rather than an anonymous `⟨m⟩`. The discipline is that
+`attest` is the last resort, for a classification with no machine-checkable evidence,
+and the reason should say why no check applies; where a `KindAdmissible` check exists,
+`Quantity.certify` runs it and keeps the receipt in the type.
+
+One command enumerates all of it. `#kind_boundary_audit ForPhysLib.ClassicalMechanics`
+prints one line per boundary site in that namespace — its tier and, for an attestation,
+its harvested reason — and ends `42 boundary site(s), all tagged — clean`. The report is
+pinned with `#guard_msgs`, so an entry point nobody declared fails the build. That is not
+a type error, to be clear: a raw `⟨x⟩` typechecks. The audit is what refuses it (R23,
+R24).
+
 # Requirements
 
 What follows is the fixed set of requirements PropertyKindCalculus is *specified*
@@ -1433,18 +1527,21 @@ and _subtyping_ (that a radius _is a_ length, versus that this pencil's length
 _is an instance of_ the length kind — conflated by punning in OWL). In Lean both
 map cleanly, and the mapping _is_ the design:
 
-1. *Kinds and units are type-level parameters.* `Quantity (k : QuantityKind) (u :
-   Unit) : Type` — a kind and a unit index a _type_, not a value of one universal
-   `Quantity` class. This is the move OWL cannot make.
+1. *Kinds are type-level parameters.* `Quantity (k : KindOfProperty) (R : Type)` — a
+   kind indexes a _type_, not a value of one universal `Quantity` class, and a unit
+   `RealUnit k` is a distinguished quantity of that same kind (the _Units_ chapter), so
+   "a metre" and "a unit of gravimetric water content" inhabit different types. This is
+   the move OWL cannot make.
 
-2. *Specialization (⊑) induces coercions between types.* It lives on those
-   parameters: `Quantity Radius metre → Quantity Length metre` is sound — a
+2. *Specialization (⊑) induces coercions between types.* It lives on that
+   parameter: `Quantity Radius R → Quantity Length R` is sound — a
    radius _is a_ length — and the reverse is not. Up-casting to a parent kind is
    an explicit, visible loss of information.
 
 3. *Instantiation is term-of-type, not subtyping.* The length of a pencil is a
-   _term_ `pencil : Quantity Length metre := ⟨5.2⟩` — a value of that type,
-   related to its kind by typing/instantiation, never by subtyping. The
+   _term_ `pencil : Quantity Length ℝ := .attest "read off the ruler" 5.2` — a value
+   of that type, related to its kind by typing/instantiation, never by subtyping (and,
+   being a mint, one of the boundary sites the audit enumerates). The
    general/individual distinction _is_ the type/term distinction.
 
 4. *The kind algebra is a partial typed algebra, not a group.* PhysLib's
