@@ -70,7 +70,6 @@ module
 public import PropertyKindCalculus.Kind
 
 public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -113,8 +112,7 @@ class Carrier (R : Type) where
 matrix, a function space) to the quantity layer. A definition, not an instance: which types
 join the curated carrier vocabulary stays a per-application decision (the R10 line), so an
 application registers `instance : Carrier X := Carrier.ofZeroAdd X` for the `X` it means. -/
-@[instance_reducible]
-def Carrier.ofZeroAdd (R : Type) [Zero R] [Add R] : Carrier R :=
+@[instance_reducible, expose] def Carrier.ofZeroAdd (R : Type) [Zero R] [Add R] : Carrier R :=
   ⟨0, (· + ·)⟩
 
 /-- **A lawful numeric carrier (the R10 line).** A `Carrier` whose addition additionally obeys
@@ -172,7 +170,7 @@ magnitude. -/
   cases x; cases y; cases h; rfl
 
 /-- The zero quantity of a kind (needs only a `Carrier`). -/
-def zero [Carrier R] : Quantity k R := ⟨Carrier.zero⟩
+@[expose] def zero [Carrier R] : Quantity k R := ⟨Carrier.zero⟩
 
 /-- **Kind- and scale-gated addition (R4, the named/lawful form).** Adds two quantities of the
 *same* kind `k`, over the additive `Carrier`. Two gates, both in the type: the kind index `k`
@@ -180,7 +178,7 @@ def zero [Carrier R] : Quantity k R := ⟨Carrier.zero⟩
 witness (so the kind's scale must license `+`). This is the *disciplined* counterpart of the
 ergonomic operator `+` — uniform with `Quantity.mul`/`Quantity.div`, which likewise carry their
 kind-law witness — and the operation the R10 additivity laws below are stated about. -/
-def add [Carrier R] (_h : DifferenceKind k) (x y : Quantity k R) : Quantity k R :=
+@[expose] def add [Carrier R] (_h : DifferenceKind k) (x y : Quantity k R) : Quantity k R :=
   ⟨Carrier.add x.magnitude y.magnitude⟩
 
 /-- Addition is commutative over any lawful carrier — proved once, for every `R`. -/
@@ -249,7 +247,7 @@ in the function-calculus module, alongside `abs`/`min`/`max`). -/
 `-` operator: a same-kind difference over Lean's `Sub`, gated by `DifferenceKind k`. (Defined
 over `Sub` rather than `Carrier` because subtraction is not part of the additive-aggregation
 carrier; it is the interval-scale difference.) -/
-def sub [Sub R] (_h : DifferenceKind k) (x y : Quantity k R) : Quantity k R :=
+@[expose] def sub [Sub R] (_h : DifferenceKind k) (x y : Quantity k R) : Quantity k R :=
   ⟨x.magnitude - y.magnitude⟩
 
 /-- Same-kind `+` over any `Add` carrier (kind-gated, ergonomic; the computational-world
@@ -300,7 +298,7 @@ magnitude, keeping the kind fixed: rounding (`Float.ceil` then truncation), wide
 carry is the same kind throughout, so this is deliberately **not** a kind conversion
 (there is no way to change `k` with it). The disciplined alternative to erasing with
 `.magnitude` and re-minting `⟨…⟩` around every numeric cast. -/
-def castCarrier {S : Type} (f : R → S) (q : Quantity k R) : Quantity k S := ⟨f q.magnitude⟩
+@[expose] def castCarrier {S : Type} (f : R → S) (q : Quantity k R) : Quantity k S := ⟨f q.magnitude⟩
 
 @[simp] theorem castCarrier_magnitude {S : Type} (f : R → S) (q : Quantity k R) :
     (q.castCarrier f).magnitude = f q.magnitude := rfl
@@ -317,7 +315,7 @@ exists, take the licensed route instead: a `CertifiedIngest`/`KindAdmissible` ch
 `ProductKind`/`QuotientKind` witness edge (`Quantity.mul`/`div`), `castCarrier` for a
 representation change, `Quantity.get!` for component access, the empty-array `default` for a
 missing table. -/
-@[inline] def attest (_why : String) (m : R) : Quantity k R := ⟨m⟩
+@[inline, expose] def attest (_why : String) (m : R) : Quantity k R := ⟨m⟩
 
 @[simp] theorem attest_magnitude (why : String) (m : R) :
     (attest (k := k) why m).magnitude = m := rfl
@@ -507,5 +505,4 @@ instance instScalarCarrierFloat : ScalarCarrier Float := ⟨⟩
 
 end PropertyKindCalculus
 
-end -- pkc-blanket-expose
 end -- pkc-blanket

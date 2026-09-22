@@ -62,7 +62,6 @@ public meta import PropertyKindCalculus.OperatorTable
 set_option compiler.relaxedMetaCheck true
 
 public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.KindEdges
 
@@ -413,5 +412,4 @@ elab "#kind_edges " id:ident : command => liftTermElabM do
 
 end PropertyKindCalculus.KindEdges
 
-end -- pkc-blanket-expose
 end -- pkc-blanket

@@ -49,9 +49,7 @@ public import PropertyKindCalculus.Provenance
 public import PropertyKindCalculus.Influence
 
 public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
 
 
 
-end -- pkc-blanket-expose
 end -- pkc-blanket

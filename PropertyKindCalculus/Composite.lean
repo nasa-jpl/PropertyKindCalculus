@@ -52,7 +52,6 @@ public import PropertyKindCalculus.Extensivity
 public import PropertyKindCalculus.IndividualQuantity
 
 public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -154,7 +153,7 @@ Newton's third.
 Its value is that the law becomes a type. A "reverse" that negates a magnitude and forgets to
 exchange the endpoints has the untransposed type, so it does not elaborate where a reversed
 force is expected. -/
-def IndividualQuantity.transpose {O₁ : Type u} {O₂ : Type v} {a : O₁} {b : O₂}
+@[expose] def IndividualQuantity.transpose {O₁ : Type u} {O₂ : Type v} {a : O₁} {b : O₂}
     {k : KindOfProperty} {R : Type} (q : IndividualQuantity (a, b) k R) :
     IndividualQuantity (b, a) k R :=
   ⟨q.magnitude⟩
@@ -187,7 +186,7 @@ be smuggled in under another part's name.
 
 The traversal is `Decomposition.fold`, the same one `leafSum` uses, so the arithmetic here
 and the §13.5 law are one recursion read at two carriers rather than two that agree. -/
-def assemble [Carrier R] (σ : SortOfSystem) [Assembles σ k] (whole : O) (part : P → O)
+@[expose] def assemble [Carrier R] (σ : SortOfSystem) [Assembles σ k] (whole : O) (part : P → O)
     (d : Decomposition P) (f : (p : P) → IndividualQuantity (part p) k R) :
     IndividualQuantity whole k R :=
   ⟨d.fold (fun p => (f p).magnitude) Carrier.add⟩
@@ -238,5 +237,4 @@ theorem assemble_ne_measured (σ : SortOfSystem) [Assembles σ k] (whole : O)
 
 end PropertyKindCalculus
 
-end -- pkc-blanket-expose
 end -- pkc-blanket

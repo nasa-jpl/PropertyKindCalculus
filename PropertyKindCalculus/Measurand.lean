@@ -43,7 +43,6 @@ module
 public import PropertyKindCalculus.QuantityFunction
 
 public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -69,7 +68,7 @@ variable {k k₂ : KindOfProperty} {S R : Type}
 /-- **The standard uncertainty σ — one attested root back to the measurand's kind**,
 derived once for every model (radicand-first: the variance is the registered object,
 the root is the crossing). R14's uncertainty ladder attaches here. -/
-def sigma [MathCarrier R] (M : Measurand k k₂ S R) (s : S) : Quantity k R :=
+@[expose] def sigma [MathCarrier R] (M : Measurand k k₂ S R) (s : S) : Quantity k R :=
   Quantity.attest "the root of the variance — roots are not a kind operation"
     (MathCarrier.sqrt (M.variance s).magnitude)
 
@@ -92,5 +91,4 @@ end Measurand
 
 end PropertyKindCalculus
 
-end -- pkc-blanket-expose
 end -- pkc-blanket

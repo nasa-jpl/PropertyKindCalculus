@@ -113,7 +113,6 @@ public meta import PropertyKindCalculus.AuditReceipt
 set_option compiler.relaxedMetaCheck true
 
 public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.BoundaryAudit
 
@@ -879,5 +878,4 @@ elab "#kind_crossings" nss:ident* : command => liftTermElabM do
 
 end PropertyKindCalculus.BoundaryAudit
 
-end -- pkc-blanket-expose
 end -- pkc-blanket

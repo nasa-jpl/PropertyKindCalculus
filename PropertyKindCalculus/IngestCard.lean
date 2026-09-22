@@ -39,7 +39,6 @@ public import PropertyKindCalculus.CertifiedIngest
 set_option compiler.relaxedMetaCheck true
 
 public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.IngestCard
 
@@ -200,5 +199,4 @@ def stageCard (s : StageSpec) : Except String String := do
 
 end PropertyKindCalculus.IngestCard
 
-end -- pkc-blanket-expose
 end -- pkc-blanket

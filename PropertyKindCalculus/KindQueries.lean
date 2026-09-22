@@ -35,7 +35,6 @@ public import PropertyKindCalculus.Influence
 set_option compiler.relaxedMetaCheck true
 
 public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.KindQueries
 
@@ -100,5 +99,4 @@ elab "#kind_output_ledger " c:ident : command => liftTermElabM do
 
 end PropertyKindCalculus.KindQueries
 
-end -- pkc-blanket-expose
 end -- pkc-blanket

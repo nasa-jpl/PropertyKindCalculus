@@ -75,7 +75,6 @@ module
 public import PropertyKindCalculus.QuantityClassification
 
 public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -138,7 +137,7 @@ def toSpec [Carrier E] [Carrier S] [CarrierRefinement E S]
   ⟨CarrierRefinement.toSpec x.magnitude⟩
 
 /-- Lift a magnitude-level rounding to a kind-`k` quantity. -/
-def roundBy [Carrier S] (r : S → S) (x : Quantity k S) : Quantity k S :=
+@[expose] def roundBy [Carrier S] (r : S → S) (x : Quantity k S) : Quantity k S :=
   ⟨r x.magnitude⟩
 
 /-- The zero quantity refines exactly: no rounding is needed at zero. -/
@@ -195,5 +194,4 @@ end Quantity
 
 end PropertyKindCalculus
 
-end -- pkc-blanket-expose
 end -- pkc-blanket

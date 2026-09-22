@@ -26,7 +26,6 @@ module
 public import PropertyKindCalculus.PropertyValue
 
 public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -55,11 +54,11 @@ namespace ValueScale
 
 /-- The scale type the value scale is governed by — the datum Table 17.4 uses to
 gate which manipulations a scale admits. -/
-def scaleType (s : ValueScale) : ScaleType := s.kind.scale
+@[expose] def scaleType (s : ValueScale) : ScaleType := s.kind.scale
 
 /-- **§10.14** — a value scale *admits* a value iff the value is of the scale's
 kind. (Membership is the value-layer side of "of a given kind-of-property".) -/
-def Admits (s : ValueScale) (v : PropertyValue) : Prop := v.kind = s.kind
+@[expose] def Admits (s : ValueScale) (v : PropertyValue) : Prop := v.kind = s.kind
 
 /-- **§10.14 — a value scale holds only mutually comparable values.** Any two
 values a scale admits are of the scale's kind, and so are comparable. This is the
@@ -96,7 +95,7 @@ end ValueScale
 /-- **§9.15 ↔ §10.14** — every kind induces its canonical *true* value scale, the
 set of its possible values. This is the link §9.15 names: a property value is a
 member of the value scale formed by its kind. -/
-def KindOfProperty.valueScale (k : KindOfProperty) : ValueScale := { kind := k }
+@[expose] def KindOfProperty.valueScale (k : KindOfProperty) : ValueScale := { kind := k }
 
 /-- A value is on its kind's value scale exactly when it is of that kind. -/
 theorem KindOfProperty.mem_valueScale {k : KindOfProperty} {v : PropertyValue} :
@@ -105,5 +104,4 @@ theorem KindOfProperty.mem_valueScale {k : KindOfProperty} {v : PropertyValue} :
 
 end PropertyKindCalculus
 
-end -- pkc-blanket-expose
 end -- pkc-blanket

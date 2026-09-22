@@ -29,7 +29,6 @@ module
 public import Lean
 
 public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -83,5 +82,4 @@ def auditReceiptsFor (env : Environment) (audit : String) (ns : Option Name) :
 
 end PropertyKindCalculus
 
-end -- pkc-blanket-expose
 end -- pkc-blanket

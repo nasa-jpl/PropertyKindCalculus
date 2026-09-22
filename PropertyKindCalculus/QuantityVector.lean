@@ -42,7 +42,6 @@ public import PropertyKindCalculus.Quantity
 public import PropertyKindCalculus.QuantityClassification
 
 public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -113,7 +112,7 @@ metrological object. The index stays bare `Nat` — index space is the documente
 boundary, not a quantity — and the panic fallback inhabits the *element carrier*
 (`default : Elem`), not the quantity, so the header's doctrine stands: scalar quantities stay
 uninhabited. -/
-def Quantity.get! {k : KindOfProperty} {R Elem : Type} {valid : R → Nat → Prop}
+@[expose] def Quantity.get! {k : KindOfProperty} {R Elem : Type} {valid : R → Nat → Prop}
     [GetElem? R Nat Elem valid] [Inhabited Elem]
     (v : Quantity k R) (i : Nat) : Quantity k Elem :=
   ⟨v.magnitude[i]!⟩
@@ -130,7 +129,7 @@ quantity by pushing kinded components — replacing the pattern of collecting ba
 an `Array Float` and re-minting the finished table with `⟨…⟩`. The §18 reading again: pushing
 a component changes the *extent* of the numerical array, not the kind (or unit) of the vector
 quantity. -/
-def Quantity.push {k : KindOfProperty} {R : Type}
+@[expose] def Quantity.push {k : KindOfProperty} {R : Type}
     (v : Quantity k (Array R)) (x : Quantity k R) : Quantity k (Array R) :=
   ⟨v.magnitude.push x.magnitude⟩
 
@@ -142,7 +141,7 @@ def Quantity.push {k : KindOfProperty} {R : Type}
 representation (how much the array *can* hold, never what it does hold), so this asserts
 exactly what `Inhabited`'s default does: nothing, at any kind. The natural seed for a
 `Quantity.push` accumulation loop of known extent. -/
-def Quantity.emptyWithCapacity {k : KindOfProperty} {R : Type} (n : Nat) :
+@[expose] def Quantity.emptyWithCapacity {k : KindOfProperty} {R : Type} (n : Nat) :
     Quantity k (Array R) := ⟨Array.emptyWithCapacity n⟩
 
 @[simp] theorem Quantity.emptyWithCapacity_magnitude {k : KindOfProperty} {R : Type}
@@ -153,7 +152,7 @@ def Quantity.emptyWithCapacity {k : KindOfProperty} {R : Type} (n : Nat) :
 /-- **Extent.** The component count of a vector quantity's numerical array — bare `Nat` by
 design: an extent is structural (how many components the representation holds), not a magnitude
 at `k`, so it leaves the calculus the way an index enters it. -/
-def Quantity.size {k : KindOfProperty} {R : Type} (v : Quantity k (Array R)) : Nat :=
+@[expose] def Quantity.size {k : KindOfProperty} {R : Type} (v : Quantity k (Array R)) : Nat :=
   v.magnitude.size
 
 @[simp] theorem Quantity.size_eq {k : KindOfProperty} {R : Type}
@@ -179,7 +178,7 @@ at the Mathlib-interface tier, which is where the kind stops being checked. -/
 `k₂`-quantity at any carrier `V`, licensed by the same `ProductKind` law `mul` takes, landing
 at `k`. The `SMul R V` is Mathlib's (or the carrier's own); the kind arithmetic is this
 library's. -/
-def Quantity.smulK {R V : Type} [SMul R V] [ScalarCarrier R] {k₁ k₂ k : KindOfProperty}
+@[expose] def Quantity.smulK {R V : Type} [SMul R V] [ScalarCarrier R] {k₁ k₂ k : KindOfProperty}
     (_h : ProductKind k₁ k₂ k) (a : Quantity k₁ R) (b : Quantity k₂ V) : Quantity k V :=
   ⟨a.magnitude • b.magnitude⟩
 
@@ -190,7 +189,7 @@ def Quantity.smulK {R V : Type} [SMul R V] [ScalarCarrier R] {k₁ k₂ k : Kind
 /-- **The scalar-action certificate** (R12): `q` at kind `k` is the scalar `a` acting on the
 vector `b`. A proof *certifies* the classification rather than asserting it, exactly as
 `IsProduct` does for the homogeneous product. -/
-def Quantity.IsSMul {R V : Type} [SMul R V] [ScalarCarrier R] {k₁ k₂ k : KindOfProperty}
+@[expose] def Quantity.IsSMul {R V : Type} [SMul R V] [ScalarCarrier R] {k₁ k₂ k : KindOfProperty}
     (_h : ProductKind k₁ k₂ k) (q : Quantity k V) (a : Quantity k₁ R) (b : Quantity k₂ V) :
     Prop :=
   q.magnitude = a.magnitude • b.magnitude
@@ -202,5 +201,4 @@ theorem Quantity.smulK_isSMul {R V : Type} [SMul R V] [ScalarCarrier R]
 
 end PropertyKindCalculus
 
-end -- pkc-blanket-expose
 end -- pkc-blanket

@@ -73,7 +73,6 @@ module
 public import PropertyKindCalculus.Bounds
 
 public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -103,7 +102,7 @@ variable {k : KindOfProperty} {R : Type}
 for this role, and what makes the carrier-parametric reading of an axis usable: a fetch row
 narrowed from a continuous coordinate, or a discrete index read back at `Float` for the
 arithmetic that spaces it, is the same position on the same axis. -/
-def castCarrier {S : Type} (f : R → S) (i : Position k R) : Position k S :=
+@[expose] def castCarrier {S : Type} (f : R → S) (i : Position k R) : Position k S :=
   ⟨i.q.castCarrier f⟩
 
 @[simp] theorem castCarrier_magnitude {S : Type} (f : R → S) (i : Position k R) :
@@ -138,7 +137,7 @@ variable {k : KindOfProperty}
 bridge the module's own argument for roles-over-kinds rests on: one axis kind carries the
 extent as a `Nat` count and the same axis continuously, and a per-role *kind* would have
 had to duplicate itself along the carrier as well. -/
-def castCarrier {R S : Type} (f : R → S) (n : Extent k R) : Extent k S :=
+@[expose] def castCarrier {R S : Type} (f : R → S) (n : Extent k R) : Extent k S :=
   ⟨n.q.castCarrier f⟩
 
 @[simp] theorem castCarrier_magnitude {R S : Type} (f : R → S) (n : Extent k R) :
@@ -187,7 +186,7 @@ two that agree.
 An extent is the right home for a budget for the reason the module exists: a naked `Nat`
 trip count is exactly the argument one loop's budget can be handed to another loop, and
 `Extent k Nat` at the loop's own kind makes that a type error. -/
-@[inline] def iterate {β : Type _} (n : Extent k Nat) (f : β → β) (init : β) : β :=
+@[inline, expose] def iterate {β : Type _} (n : Extent k Nat) (f : β → β) (init : β) : β :=
   (List.range n.q.magnitude).foldl (fun acc _ => f acc) init
 
 @[simp] theorem iterate_eq {β : Type _} (n : Extent k Nat) (f : β → β) (init : β) :
@@ -288,5 +287,4 @@ end Extent
 
 end PropertyKindCalculus
 
-end -- pkc-blanket-expose
 end -- pkc-blanket

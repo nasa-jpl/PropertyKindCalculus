@@ -67,7 +67,6 @@ module
 public import PropertyKindCalculus.QuantityClassification
 
 public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -195,7 +194,7 @@ exactly as `Quantity.add`. -/
 namespace Quantity
 
 /-- Negation (kind-preserving). -/
-def neg {k : KindOfProperty} {R : Type} [Neg R] (a : Quantity k R) : Quantity k R :=
+@[expose] def neg {k : KindOfProperty} {R : Type} [Neg R] (a : Quantity k R) : Quantity k R :=
   ⟨-a.magnitude⟩
 
 /-- Unary `-` on quantities (kind-preserving), the operator-instance counterpart of
@@ -204,33 +203,33 @@ module. -/
 instance instNeg {k : KindOfProperty} {R : Type} [Neg R] : Neg (Quantity k R) := ⟨Quantity.neg⟩
 
 /-- Absolute value (kind-preserving): `|length|` is a length. -/
-def abs {k : KindOfProperty} {R : Type} [MathCarrier R] (a : Quantity k R) : Quantity k R :=
+@[expose] def abs {k : KindOfProperty} {R : Type} [MathCarrier R] (a : Quantity k R) : Quantity k R :=
   ⟨MathCarrier.abs a.magnitude⟩
 
 /-- Same-kind minimum. -/
-def min {k : KindOfProperty} {R : Type} [Min R] (a b : Quantity k R) : Quantity k R :=
+@[expose] def min {k : KindOfProperty} {R : Type} [Min R] (a b : Quantity k R) : Quantity k R :=
   ⟨Min.min a.magnitude b.magnitude⟩
 
 /-- Same-kind maximum. -/
-def max {k : KindOfProperty} {R : Type} [Max R] (a b : Quantity k R) : Quantity k R :=
+@[expose] def max {k : KindOfProperty} {R : Type} [Max R] (a b : Quantity k R) : Quantity k R :=
   ⟨Max.max a.magnitude b.magnitude⟩
 
 /-- Clamp `a` into `[lo, hi]` (all of one kind): `max lo (min hi a)`. The kind index
 forbids clamping a reflectivity against a permittivity bound. -/
-def clamp {k : KindOfProperty} {R : Type} [Min R] [Max R]
+@[expose] def clamp {k : KindOfProperty} {R : Type} [Min R] [Max R]
     (lo hi a : Quantity k R) : Quantity k R :=
   ⟨Max.max lo.magnitude (Min.min hi.magnitude a.magnitude)⟩
 
 /-- Floor (kind-preserving). -/
-def floor {k : KindOfProperty} {R : Type} [MathCarrierExt R] (a : Quantity k R) : Quantity k R :=
+@[expose] def floor {k : KindOfProperty} {R : Type} [MathCarrierExt R] (a : Quantity k R) : Quantity k R :=
   ⟨MathCarrierExt.floor a.magnitude⟩
 
 /-- Ceiling (kind-preserving). -/
-def ceil {k : KindOfProperty} {R : Type} [MathCarrierExt R] (a : Quantity k R) : Quantity k R :=
+@[expose] def ceil {k : KindOfProperty} {R : Type} [MathCarrierExt R] (a : Quantity k R) : Quantity k R :=
   ⟨MathCarrierExt.ceil a.magnitude⟩
 
 /-- Round to nearest (kind-preserving). -/
-def round {k : KindOfProperty} {R : Type} [MathCarrierExt R] (a : Quantity k R) : Quantity k R :=
+@[expose] def round {k : KindOfProperty} {R : Type} [MathCarrierExt R] (a : Quantity k R) : Quantity k R :=
   ⟨MathCarrierExt.round a.magnitude⟩
 
 @[simp] theorem neg_magnitude {k : KindOfProperty} {R : Type} [Neg R] (a : Quantity k R) :
@@ -272,18 +271,18 @@ theorem PowerKind.ofRatio (p : Rat) (k₁ k : KindOfProperty)
 namespace Quantity
 
 /-- **Verified construction** of a rational power, licensed by the power law. -/
-def rpow {p : Rat} {k₁ k : KindOfProperty} {R : Type} [MathCarrierExt R]
+@[expose] def rpow {p : Rat} {k₁ k : KindOfProperty} {R : Type} [MathCarrierExt R]
     (_h : PowerKind p k₁ k) (a : Quantity k₁ R) : Quantity k R :=
   ⟨MathCarrierExt.rpow a.magnitude p⟩
 
 /-- **Square root** — the half-power, available from the base `MathCarrier` (so it runs
 even on the binary32 exec carrier). `sqrt` of an area is a length. -/
-def sqrt {k₁ k : KindOfProperty} {R : Type} [MathCarrier R]
+@[expose] def sqrt {k₁ k : KindOfProperty} {R : Type} [MathCarrier R]
     (_h : PowerKind (1 / 2) k₁ k) (a : Quantity k₁ R) : Quantity k R :=
   ⟨MathCarrier.sqrt a.magnitude⟩
 
 /-- **Cube root** — the third-power root. -/
-def cbrt {k₁ k : KindOfProperty} {R : Type} [MathCarrierExt R]
+@[expose] def cbrt {k₁ k : KindOfProperty} {R : Type} [MathCarrierExt R]
     (_h : PowerKind (1 / 3) k₁ k) (a : Quantity k₁ R) : Quantity k R :=
   ⟨MathCarrierExt.cbrt a.magnitude⟩
 
@@ -317,64 +316,64 @@ structure TranscendentalKind (k₁ k : KindOfProperty) : Prop where
 namespace Quantity
 
 /-- Exponential of a (dimensionless) quantity. -/
-def exp {k₁ k : KindOfProperty} {R : Type} [MathCarrier R]
+@[expose] def exp {k₁ k : KindOfProperty} {R : Type} [MathCarrier R]
     (_h : TranscendentalKind k₁ k) (a : Quantity k₁ R) : Quantity k R :=
   ⟨MathCarrier.exp a.magnitude⟩
 
 /-- Natural logarithm of a (dimensionless) quantity. -/
-def log {k₁ k : KindOfProperty} {R : Type} [MathCarrier R]
+@[expose] def log {k₁ k : KindOfProperty} {R : Type} [MathCarrier R]
     (_h : TranscendentalKind k₁ k) (a : Quantity k₁ R) : Quantity k R :=
   ⟨MathCarrier.log a.magnitude⟩
 
 /-- Sine of a plane angle. -/
-def sin {k₁ k : KindOfProperty} {R : Type} [MathCarrier R]
+@[expose] def sin {k₁ k : KindOfProperty} {R : Type} [MathCarrier R]
     (_h : TranscendentalKind k₁ k) (a : Quantity k₁ R) : Quantity k R :=
   ⟨MathCarrier.sin a.magnitude⟩
 
 /-- Cosine of a plane angle. -/
-def cos {k₁ k : KindOfProperty} {R : Type} [MathCarrier R]
+@[expose] def cos {k₁ k : KindOfProperty} {R : Type} [MathCarrier R]
     (_h : TranscendentalKind k₁ k) (a : Quantity k₁ R) : Quantity k R :=
   ⟨MathCarrier.cos a.magnitude⟩
 
 /-- Hyperbolic sine. -/
-def sinh {k₁ k : KindOfProperty} {R : Type} [MathCarrier R]
+@[expose] def sinh {k₁ k : KindOfProperty} {R : Type} [MathCarrier R]
     (_h : TranscendentalKind k₁ k) (a : Quantity k₁ R) : Quantity k R :=
   ⟨MathCarrier.sinh a.magnitude⟩
 
 /-- Hyperbolic cosine. -/
-def cosh {k₁ k : KindOfProperty} {R : Type} [MathCarrier R]
+@[expose] def cosh {k₁ k : KindOfProperty} {R : Type} [MathCarrier R]
     (_h : TranscendentalKind k₁ k) (a : Quantity k₁ R) : Quantity k R :=
   ⟨MathCarrier.cosh a.magnitude⟩
 
 /-- Hyperbolic tangent. -/
-def tanh {k₁ k : KindOfProperty} {R : Type} [MathCarrier R]
+@[expose] def tanh {k₁ k : KindOfProperty} {R : Type} [MathCarrier R]
     (_h : TranscendentalKind k₁ k) (a : Quantity k₁ R) : Quantity k R :=
   ⟨MathCarrier.tanh a.magnitude⟩
 
 /-- Tangent of a plane angle. -/
-def tan {k₁ k : KindOfProperty} {R : Type} [MathCarrierExt R]
+@[expose] def tan {k₁ k : KindOfProperty} {R : Type} [MathCarrierExt R]
     (_h : TranscendentalKind k₁ k) (a : Quantity k₁ R) : Quantity k R :=
   ⟨MathCarrierExt.tan a.magnitude⟩
 
 /-- Inverse sine — a number to a plane angle. -/
-def asin {k₁ k : KindOfProperty} {R : Type} [MathCarrierExt R]
+@[expose] def asin {k₁ k : KindOfProperty} {R : Type} [MathCarrierExt R]
     (_h : TranscendentalKind k₁ k) (a : Quantity k₁ R) : Quantity k R :=
   ⟨MathCarrierExt.asin a.magnitude⟩
 
 /-- Inverse cosine — a number to a plane angle. -/
-def acos {k₁ k : KindOfProperty} {R : Type} [MathCarrierExt R]
+@[expose] def acos {k₁ k : KindOfProperty} {R : Type} [MathCarrierExt R]
     (_h : TranscendentalKind k₁ k) (a : Quantity k₁ R) : Quantity k R :=
   ⟨MathCarrierExt.acos a.magnitude⟩
 
 /-- Inverse tangent — a number to a plane angle. -/
-def atan {k₁ k : KindOfProperty} {R : Type} [MathCarrierExt R]
+@[expose] def atan {k₁ k : KindOfProperty} {R : Type} [MathCarrierExt R]
     (_h : TranscendentalKind k₁ k) (a : Quantity k₁ R) : Quantity k R :=
   ⟨MathCarrierExt.atan a.magnitude⟩
 
 /-- Two-argument inverse tangent — the angle of two *same-kind* quantities `(x, y)`
 (their ratio is dimensionless, so the result is a plane angle). The shared kind index
 `k₁` enforces that `y` and `x` are of one kind. -/
-def atan2 {k₁ k : KindOfProperty} {R : Type} [MathCarrierExt R]
+@[expose] def atan2 {k₁ k : KindOfProperty} {R : Type} [MathCarrierExt R]
     (_h : TranscendentalKind k₁ k) (y x : Quantity k₁ R) : Quantity k R :=
   ⟨MathCarrierExt.atan2 y.magnitude x.magnitude⟩
 
@@ -452,7 +451,7 @@ half turn, twice.
 The association is `(a · ref) / ref₁`, not `a · (ref / ref₁)`: the two differ in floating
 point (they agree at 40° and disagree at 89°), and a conversion that quietly re-associates
 would move every number downstream of it. -/
-def reexpress {k₁ k : KindOfProperty} {R : Type} [Mul R] [Div R]
+@[expose] def reexpress {k₁ k : KindOfProperty} {R : Type} [Mul R] [Div R]
     (_h : ReferenceKind k₁ k) (a : Quantity k₁ R) (ref : Quantity k R)
     (ref₁ : Quantity k₁ R) : Quantity k R :=
   ⟨a.magnitude * ref.magnitude / ref₁.magnitude⟩
@@ -502,5 +501,4 @@ instance instMathCarrierExtFloat : MathCarrierExt Float where
 
 end PropertyKindCalculus
 
-end -- pkc-blanket-expose
 end -- pkc-blanket

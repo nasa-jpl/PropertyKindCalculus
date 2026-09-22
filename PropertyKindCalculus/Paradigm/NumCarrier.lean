@@ -31,7 +31,6 @@ module
 public import PropertyKindCalculus.QuantityFunction
 
 public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Paradigm
 
@@ -59,5 +58,4 @@ def NumCarrier.relu {α : Type} [NumCarrier α] (x : α) : α := Max.max x 0
 
 end PropertyKindCalculus.Paradigm
 
-end -- pkc-blanket-expose
 end -- pkc-blanket

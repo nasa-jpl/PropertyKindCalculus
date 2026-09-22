@@ -39,7 +39,6 @@ public import Lean
 public import PropertyKindCalculus.OperatorTable
 
 public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.KindAlgebra
 
@@ -73,5 +72,4 @@ elab_rules : command
 
 end PropertyKindCalculus.KindAlgebra
 
-end -- pkc-blanket-expose
 end -- pkc-blanket

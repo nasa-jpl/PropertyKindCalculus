@@ -25,10 +25,14 @@ public import PropertyKindCalculus.Scale
 public import PropertyKindCalculus.Foundations
 
 public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
+-- `@[expose] section` rather than an attribute: `deriving DecidableEq` generates
+-- `instDecidableEqKindOfProperty.decEq`, and a generated declaration carries no attribute of
+-- its own. Kind identity is decided by the kernel all over this library and downstream, so
+-- this body is part of the contract rather than an implementation detail.
+@[expose] section
 /-- **§6.19 kind-of-property** — common defining aspect of mutually comparable
 properties. In four-category terms (Lowe, Fig. 7.1) this is the *Attributes* corner —
 the non-substantial universal, instantiated by individual quantities (its modes) and
@@ -41,23 +45,24 @@ structure KindOfProperty where
   /-- **§7.5 examination principle** used as a defining aspect, when present. -/
   examPrinciple : Option String := none
 deriving DecidableEq, Repr
+end
 
 namespace KindOfProperty
 
 /-- **§13.3.1** — a kind-of-property is a *kind-of-quantity* iff its instances
 have a magnitude. -/
-def IsQuantity (k : KindOfProperty) : Prop := k.scale.HasMagnitude
+@[expose] def IsQuantity (k : KindOfProperty) : Prop := k.scale.HasMagnitude
 
 /-! ## The scale-based generic division of ⟨kind-of-property⟩ (§13.2) -/
 
 /-- §13.2.1 nominal kind-of-property (no magnitude, comparable for equality). -/
-def IsNominal (k : KindOfProperty) : Prop := k.scale = .nominal
+@[expose] def IsNominal (k : KindOfProperty) : Prop := k.scale = .nominal
 /-- §13.2.2 ordinal kind-of-property (rankable, not subtractive). -/
-def IsOrdinal (k : KindOfProperty) : Prop := k.scale = .ordinal
+@[expose] def IsOrdinal (k : KindOfProperty) : Prop := k.scale = .ordinal
 /-- §13.2.3 differential kind-of-property (subtractive, not divisible). -/
-def IsDifferential (k : KindOfProperty) : Prop := k.scale = .interval
+@[expose] def IsDifferential (k : KindOfProperty) : Prop := k.scale = .interval
 /-- §13.2.4 rational kind-of-property (divisible). -/
-def IsRational (k : KindOfProperty) : Prop := k.scale = .ratio
+@[expose] def IsRational (k : KindOfProperty) : Prop := k.scale = .ratio
 
 /-- A nominal kind is, by construction, not a kind-of-quantity (§13.3.1). -/
 theorem nominal_not_quantity {k : KindOfProperty} (h : k.IsNominal) : ¬ k.IsQuantity := by
@@ -71,6 +76,9 @@ theorem rational_isQuantity {k : KindOfProperty} (h : k.IsRational) : k.IsQuanti
 
 end KindOfProperty
 
+-- `@[expose] section`, not an attribute: a structure cannot carry `@[expose]`. An
+-- individual property is compared for identity by the kernel in the object-type examples.
+@[expose] section
 /-- The **instance** layer (OML `IndividualUnitaryQuantity`). An individual
 property *instantiates* a kind and *characterizes* an object.
 
@@ -82,8 +90,8 @@ structure IndividualProperty where
   kind : KindOfProperty
   /-- OML `Characterizes`: the object whose feature this is. -/
   carrier : Object
+end
 
 end PropertyKindCalculus
 
-end -- pkc-blanket-expose
 end -- pkc-blanket

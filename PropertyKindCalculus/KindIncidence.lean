@@ -190,7 +190,6 @@ public meta import PropertyKindCalculus.AuditReceipt
 set_option compiler.relaxedMetaCheck true
 
 public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.KindIncidence
 
@@ -3251,5 +3250,4 @@ def citeEdges (a : Assembly) : Array (String × String) := Id.run do
 
 end PropertyKindCalculus.KindIncidence
 
-end -- pkc-blanket-expose
 end -- pkc-blanket

@@ -30,7 +30,6 @@ module
 public import PropertyKindCalculus.Kind
 
 public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -60,7 +59,7 @@ structure ExaminationProcedure where
 deriving DecidableEq, Repr
 
 /-- The principle a procedure ultimately rests on, via its method. -/
-def ExaminationProcedure.principle (q : ExaminationProcedure) : ExaminationPrinciple :=
+@[expose] def ExaminationProcedure.principle (q : ExaminationProcedure) : ExaminationPrinciple :=
   q.method.principle
 
 /-- The three layers of the examination refinement chain, gathered into one
@@ -78,7 +77,7 @@ namespace ExaminationItem
 
 /-- The principle at the base of an item's based-on chain — the forgetful
 projection of any examination down to its principle layer. -/
-def basePrinciple : ExaminationItem → ExaminationPrinciple
+@[expose] def basePrinciple : ExaminationItem → ExaminationPrinciple
   | principle p => p
   | method m    => m.principle
   | procedure q => q.principle
@@ -143,7 +142,7 @@ end Refines
 /-- A kind is **examined by** a principle when its terminological
 examination-principle link (§7.5) names that principle. The link is by `id`,
 mirroring how OML relates a kind to its defining aspects. -/
-def KindOfProperty.examinedBy (k : KindOfProperty) (p : ExaminationPrinciple) : Prop :=
+@[expose] def KindOfProperty.examinedBy (k : KindOfProperty) (p : ExaminationPrinciple) : Prop :=
   k.examPrinciple = some p.id
 
 /-- **§7.5 — the examination principle is a defining aspect.** Two kinds examined
@@ -157,5 +156,4 @@ theorem KindOfProperty.distinct_of_examPrinciple {k₁ k₂ : KindOfProperty}
 
 end PropertyKindCalculus
 
-end -- pkc-blanket-expose
 end -- pkc-blanket

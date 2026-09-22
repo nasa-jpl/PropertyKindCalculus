@@ -37,7 +37,6 @@ public import PropertyKindCalculus.KindGraphD2
 set_option compiler.relaxedMetaCheck true
 
 public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.ModuleCard
 
@@ -340,5 +339,4 @@ def relationRows (root : Name) (decl : Name) : MetaM (List RelationRow) := do
 
 end PropertyKindCalculus.ModuleCard
 
-end -- pkc-blanket-expose
 end -- pkc-blanket

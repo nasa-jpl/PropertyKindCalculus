@@ -68,7 +68,6 @@ module
 public import PropertyKindCalculus.Quantity
 
 public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -101,7 +100,7 @@ theorem ProductKind.ofRatio (k₁ k₂ k : KindOfProperty)
 
 /-- **Verified construction.** Build a `k`-quantity from a `k₁`- and a `k₂`-quantity,
 licensed by the product law: the result is classified `k` *by construction*. -/
-def Quantity.mul [Mul R] [ScalarCarrier R] {k₁ k₂ k : KindOfProperty}
+@[expose] def Quantity.mul [Mul R] [ScalarCarrier R] {k₁ k₂ k : KindOfProperty}
     (_h : ProductKind k₁ k₂ k) (a : Quantity k₁ R) (b : Quantity k₂ R) : Quantity k R :=
   ⟨a.magnitude * b.magnitude⟩
 
@@ -113,7 +112,7 @@ def Quantity.mul [Mul R] [ScalarCarrier R] {k₁ k₂ k : KindOfProperty}
 `k₂`): its magnitude is the product of theirs. A proof of this *certifies* `q`'s
 classification as `k`, rather than merely asserting it. Kept a separate `Prop` so
 `Quantity` stays a clean tag and certificates are carried only when needed. -/
-def Quantity.IsProduct [Mul R] [ScalarCarrier R] {k₁ k₂ k : KindOfProperty}
+@[expose] def Quantity.IsProduct [Mul R] [ScalarCarrier R] {k₁ k₂ k : KindOfProperty}
     (_h : ProductKind k₁ k₂ k) (q : Quantity k R)
     (a : Quantity k₁ R) (b : Quantity k₂ R) : Prop :=
   q.magnitude = a.magnitude * b.magnitude
@@ -166,7 +165,7 @@ theorem QuotientKind.ofRatio (k₁ k₂ k : KindOfProperty)
 /-- **Verified construction.** Build a `k`-quantity as the quotient of a `k₁`- by a
 `k₂`-quantity, licensed by the quotient law: the result is classified `k` *by
 construction*. -/
-def Quantity.div [Div R] [ScalarCarrier R] {k₁ k₂ k : KindOfProperty}
+@[expose] def Quantity.div [Div R] [ScalarCarrier R] {k₁ k₂ k : KindOfProperty}
     (_h : QuotientKind k₁ k₂ k) (a : Quantity k₁ R) (b : Quantity k₂ R) : Quantity k R :=
   ⟨a.magnitude / b.magnitude⟩
 
@@ -177,7 +176,7 @@ def Quantity.div [Div R] [ScalarCarrier R] {k₁ k₂ k : KindOfProperty}
 /-- **The certificate.** `q` (of kind `k`) is the quotient of `a` (of `k₁`) by `b` (of
 `k₂`): its magnitude is the quotient of theirs. A proof *certifies* `q`'s classification
 as `k`. -/
-def Quantity.IsQuotient [Div R] [ScalarCarrier R] {k₁ k₂ k : KindOfProperty}
+@[expose] def Quantity.IsQuotient [Div R] [ScalarCarrier R] {k₁ k₂ k : KindOfProperty}
     (_h : QuotientKind k₁ k₂ k) (q : Quantity k R)
     (a : Quantity k₁ R) (b : Quantity k₂ R) : Prop :=
   q.magnitude = a.magnitude / b.magnitude
@@ -232,13 +231,13 @@ structure ReciprocalKind (k₁ k : KindOfProperty) : Prop where
 
 /-- **Verified construction.** Build a `k`-quantity as the reciprocal of a
 `k₁`-quantity, licensed by the reciprocal law: classified `k` *by construction*. -/
-def Quantity.recip [Inv R] {k₁ k : KindOfProperty}
+@[expose] def Quantity.recip [Inv R] {k₁ k : KindOfProperty}
     (_h : ReciprocalKind k₁ k) (a : Quantity k₁ R) : Quantity k R :=
   ⟨a.magnitude⁻¹⟩
 
 /-- **The certificate.** `q` (of kind `k`) is the reciprocal of `a` (of `k₁`): its
 magnitude is the inverse of `a`'s. A proof *certifies* `q`'s classification as `k`. -/
-def Quantity.IsReciprocal [Inv R] {k₁ k : KindOfProperty}
+@[expose] def Quantity.IsReciprocal [Inv R] {k₁ k : KindOfProperty}
     (_h : ReciprocalKind k₁ k) (q : Quantity k R) (a : Quantity k₁ R) : Prop :=
   q.magnitude = a.magnitude⁻¹
 
@@ -264,5 +263,4 @@ theorem Quantity.eq_recip_of_isReciprocal [Inv R] {k₁ k} (h : ReciprocalKind k
 
 end PropertyKindCalculus
 
-end -- pkc-blanket-expose
 end -- pkc-blanket

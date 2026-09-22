@@ -44,7 +44,6 @@ public import PropertyKindCalculus.QuantityClassification
 public import PropertyKindCalculus.NominalValue
 
 public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Paradigm.Platform
 
@@ -57,36 +56,36 @@ the annex attaches the witness). ONE kind for every byte-valued individual of th
 problem — budgets, fixed overheads, reserved holdings, headrooms, per-worker footprints —
 because the solvers subtract and compare these against each other, the defining mark of
 quantities of the same kind. -/
-def storageCapacity : KindOfProperty :=
+@[expose] def storageCapacity : KindOfProperty :=
   { id := "storage capacity", scale := .ratio }
 
 /-- The affine slope of an algorithm's memory model: marginal storage per batch element
 (bytes/element). NOT a storage capacity — it never enters a budget comparison and is
 consumed only through the product/quotient laws below. -/
-def storagePerElement : KindOfProperty :=
+@[expose] def storagePerElement : KindOfProperty :=
   { id := "storage per batch element", scale := .ratio }
 
 /-- Count of batch elements (the pixels of a tile, the rows of a block — whatever the
 `BatchCarrier` batches over). Downstream applications refine this by `Specializes`
 edges (a tile-pixel count *is an* element count); they do not re-use it raw. -/
-def elementCount : KindOfProperty :=
+@[expose] def elementCount : KindOfProperty :=
   { id := "batch element count", scale := .ratio }
 
 /-- Count of CPU cores the scheduler will actually grant (affinity ∧ quota). -/
-def coreCount : KindOfProperty :=
+@[expose] def coreCount : KindOfProperty :=
   { id := "schedulable core count", scale := .ratio }
 
 /-- Count of concurrently resident *workers*, each holding its OWN block of
 `bytesFor(elemsPerWorker)` bytes (the `chunk_fit` driver shape): total residency scales
 with this count. -/
-def workerCount : KindOfProperty :=
+@[expose] def workerCount : KindOfProperty :=
   { id := "concurrent worker count", scale := .ratio }
 
 /-- Count of *shards* partitioning ONE resident total (`runSharded`): the variable term
 is invariant in this count and only the per-shard fixed overhead scales with it.
 Deliberately distinct from `workerCount` — confusing the two silently authorizes
 ~count× the safe residency. -/
-def shardCount : KindOfProperty :=
+@[expose] def shardCount : KindOfProperty :=
   { id := "resident-split shard count", scale := .ratio }
 
 /-- The elements ONE shard of a split holds: `elementCount / shardCount`.
@@ -99,7 +98,7 @@ again, rather than retaining it in an arena, has a **different marginal cost per
 which regime a run lands in is decided by the size of ONE SHARD's block — not the tile's, and
 not the shard count's. That threshold is a property of this quotient and of nothing else, which
 is what makes it a kind rather than an arithmetic convenience. -/
-def sliceElementCount : KindOfProperty :=
+@[expose] def sliceElementCount : KindOfProperty :=
   { id := "per-shard slice element count", scale := .ratio }
 
 /-! ### The time kinds — the term `decideShards` had no way to state
@@ -121,7 +120,7 @@ so they are the kinds, and the composite is what the solver computes. -/
 /-- Elapsed wall-clock time, in **seconds** — the quantity a time model predicts and a stopwatch
 reads. Ratio-scale: durations have a true zero and their ratios mean something ("twice as long"),
 which is what licenses the whole model. -/
-def elapsedTime : KindOfProperty :=
+@[expose] def elapsedTime : KindOfProperty :=
   { id := "elapsed wall-clock time", scale := .ratio }
 
 /-- A reading of the process's monotonic clock — a point on the clock's axis, whose same-kind
@@ -129,14 +128,14 @@ differences are the `elapsedTime` spans a stopwatch reports. **Interval scale**:
 the clock's own arbitrary zero, so subtraction is meaningful and a ratio of two timestamps is
 not — which is exactly the operation gate a fence marker needs (two fences subtract into a
 span; nothing multiplies them). -/
-def monotonicTimestamp : KindOfProperty :=
+@[expose] def monotonicTimestamp : KindOfProperty :=
   { id := "monotonic-clock timestamp", scale := .interval }
 
 theorem monotonicTimestamp_ne_elapsedTime : monotonicTimestamp ≠ elapsedTime := by decide
 
 /-- The marginal wall-clock cost per batch element (`w`, seconds/element) — the *work* rate. The
 term that divides by the shard count, because it is work the shards share out. -/
-def timePerElement : KindOfProperty :=
+@[expose] def timePerElement : KindOfProperty :=
   { id := "time per batch element", scale := .ratio }
 
 /-- The fixed wall-clock cost of one shard (`a`, seconds/shard) — spawn, schedule, join, and
@@ -146,7 +145,7 @@ shard count, which is the whole reason an optimum exists.
 Deliberately not the same kind as `timePerElement`, though both are seconds over a dimension-one
 count: one is divided by `N` and the other multiplied by it, so a swap does not merely mis-scale
 the answer — it inverts which way the optimum moves. -/
-def timePerShard : KindOfProperty :=
+@[expose] def timePerShard : KindOfProperty :=
   { id := "time per shard", scale := .ratio }
 
 /-! ### The nominal text kinds — the parsers' input/output vocabulary
@@ -162,33 +161,33 @@ direction — designations the solvers *produce*, one per slot of the decision l
 emit. -/
 
 /-- A kernel CPU-list (`"0-3,8,10-11"`) — the `Cpus_allowed_list` payload format. -/
-def cpuListText : KindOfProperty := { id := "kernel CPU-list text", scale := .nominal }
+@[expose] def cpuListText : KindOfProperty := { id := "kernel CPU-list text", scale := .nominal }
 /-- `/proc/self/status` content. -/
-def procStatusText : KindOfProperty := { id := "/proc/self/status text", scale := .nominal }
+@[expose] def procStatusText : KindOfProperty := { id := "/proc/self/status text", scale := .nominal }
 /-- A cgroup memory-limit file's content (`memory.max` / `memory.limit_in_bytes`). -/
-def memLimitText : KindOfProperty := { id := "cgroup memory-limit text", scale := .nominal }
+@[expose] def memLimitText : KindOfProperty := { id := "cgroup memory-limit text", scale := .nominal }
 /-- cgroup v2 `cpu.max` content (`"<quota> <period>"`). -/
-def cpuMaxText : KindOfProperty := { id := "cgroup cpu.max text", scale := .nominal }
+@[expose] def cpuMaxText : KindOfProperty := { id := "cgroup cpu.max text", scale := .nominal }
 /-- `/proc/meminfo` content. -/
-def meminfoText : KindOfProperty := { id := "/proc/meminfo text", scale := .nominal }
+@[expose] def meminfoText : KindOfProperty := { id := "/proc/meminfo text", scale := .nominal }
 /-- A `/proc/meminfo` field key (`"MemAvailable"`) — NOT the dump it indexes into. -/
-def meminfoFieldKey : KindOfProperty := { id := "/proc/meminfo field key", scale := .nominal }
+@[expose] def meminfoFieldKey : KindOfProperty := { id := "/proc/meminfo field key", scale := .nominal }
 /-- `/proc/self/cgroup` content. -/
-def procCgroupText : KindOfProperty := { id := "/proc/self/cgroup text", scale := .nominal }
+@[expose] def procCgroupText : KindOfProperty := { id := "/proc/self/cgroup text", scale := .nominal }
 /-- A cgroup-v2 relative path (`"/kubepods/…"`) — the *extracted* half of
 `parseCgroupV2Path`, a different kind of text than the dump it came from. -/
-def cgroupPathText : KindOfProperty := { id := "cgroup-v2 relative path", scale := .nominal }
+@[expose] def cgroupPathText : KindOfProperty := { id := "cgroup-v2 relative path", scale := .nominal }
 /-- A cgroup memory-*usage* file's content (`memory.current`, `memory.peak`,
 `memory.max_usage_in_bytes`) — a bare byte count. A different kind from `memLimitText`
 even though both are byte-valued text, because they do not admit the same values: a limit
 may read `"max"` and a usage never does, so the limit parser's unlimited-sentinel handling
 is wrong for a usage and would silently turn a real reading into `none`. -/
-def memUsageText : KindOfProperty := { id := "cgroup memory-usage text", scale := .nominal }
+@[expose] def memUsageText : KindOfProperty := { id := "cgroup memory-usage text", scale := .nominal }
 /-- cgroup v2 `memory.events` content — `"low N\nhigh N\nmax N\noom N\noom_kill N"`. -/
-def memEventsText : KindOfProperty := { id := "cgroup memory.events text", scale := .nominal }
+@[expose] def memEventsText : KindOfProperty := { id := "cgroup memory.events text", scale := .nominal }
 /-- A `memory.events` field key (`"oom"`, `"oom_kill"`) — NOT the dump it indexes into,
 the same distinction `meminfoFieldKey` draws against `meminfoText`. -/
-def memEventsFieldKey : KindOfProperty :=
+@[expose] def memEventsFieldKey : KindOfProperty :=
   { id := "cgroup memory.events field key", scale := .nominal }
 
 /-- Count of memory-pressure events a cgroup level has recorded (`oom`, `oom_kill`). A
@@ -197,12 +196,12 @@ by it and no solver adds it to a core, worker, shard or element. It is evidence 
 level rather than a term of the sizing arithmetic, which is exactly why it wants its own
 kind — a level that has been killing things is a fact a reader must not be able to
 arithmetic into a capacity. -/
-def oomEventCount : KindOfProperty :=
+@[expose] def oomEventCount : KindOfProperty :=
   { id := "cgroup OOM event count", scale := .ratio }
 
 /-- A capacity-source provenance label (`"cgroup-v2:<dir>"`, `"meminfo:MemAvailable"`,
 `"cudaMemGetInfo:free"`) — what a `MemBudget` answers "believed from where" with. -/
-def capacityProvenance : KindOfProperty :=
+@[expose] def capacityProvenance : KindOfProperty :=
   { id := "capacity-source provenance label", scale := .nominal }
 
 /-- The component a sizing decision is attributed to — the `[…]` prefix of the decision
@@ -214,7 +213,7 @@ deployment that carries all three) and crosses into this kind through an authore
 crossing at the call site, exactly as the count kinds do. Kinding it is what stops a log
 line from being the one place in the decision where an unattributed `String` decides what
 the reader believes about which program spoke. -/
-def decisionEmitter : KindOfProperty :=
+@[expose] def decisionEmitter : KindOfProperty :=
   { id := "sizing-decision emitter label", scale := .nominal }
 
 /-- The swap that motivated the text kinds: the dump and the key that indexes it are
@@ -429,5 +428,4 @@ theorem storageCapacity_ne_storagePerElement : storageCapacity ≠ storagePerEle
 
 end PropertyKindCalculus.Paradigm.Platform
 
-end -- pkc-blanket-expose
 end -- pkc-blanket

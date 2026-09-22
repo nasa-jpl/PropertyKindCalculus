@@ -8,12 +8,13 @@ Dybkær, *An Ontology on Property for Physical, Chemical, and Biological Systems
 module
 
 public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
 universe u v
 
+-- `@[expose] section`, not an attribute: the `deriving DecidableEq` body is generated.
+@[expose] section
 /-- **§3.3 system** — "part or phenomenon of the perceivable or conceivable
 world consisting of a demarcated arrangement of a set of elements and a set of
 relationships or processes between these elements."
@@ -24,6 +25,7 @@ structure System where
   /-- Terminological identity of the system/object (mirrors the OML `id`). -/
   id : String
 deriving DecidableEq, Repr
+end
 
 /-- **§3.3 Note 6** — 'object' is given as a synonym of 'system'. We keep the
 synonym so that the *instance* layer can read as "characterizes an object". -/
@@ -51,6 +53,9 @@ and the parameterization splits its obligations in two:
 The nominal type supplies both; a structural one supplies only the first, and honestly
 saying so is the point of separating them. -/
 
+-- `@[expose] section`, not an attribute: a class cannot carry `@[expose]`, and the
+-- designation projection is reduced by the kernel wherever an object type is named.
+@[expose] section
 /-- **An object type with terminological identity.** A map from the object type into the
 nominal `Object`, so an individual property can name the object it characterizes (§3.3)
 whatever the object type is.
@@ -67,6 +72,7 @@ class Designated (O : Type u) where
   /-- **Distinct objects are distinctly named.** A designation that collapses two objects
   is not a designation; this is what makes the instance a claim rather than a formality. -/
   designation_inj : ∀ {x y : O}, designation x = designation y → x = y
+end
 
 /-- **The nominal object type designates itself** — the existing API is the instance, and
 `Object` is one inhabitant of the parameterization rather than the only object type there
@@ -75,6 +81,8 @@ instance : Designated Object where
   designation o := o
   designation_inj h := h
 
+-- `@[expose] section`, not an attribute: the `deriving DecidableEq` body is generated.
+@[expose] section
 /-- **§20 sort of system** — the *sort* an object belongs to, as distinct from the object
 itself: *plasma* as against this plasma sample, *rover* as against rover 1, *point-particle
 system* as against this system of five particles. Dybkær's dedicated kind-of-property is
@@ -105,6 +113,7 @@ structure SortOfSystem where
   /-- Terminological identity of the sort. -/
   id : String
 deriving DecidableEq, Repr
+end
 
 /-- **An object type whose objects know their sort** — the instantiation arrow from the
 particular to its universal, Lowe's left edge (*Kinds* instantiated by *Substances*,
@@ -136,8 +145,7 @@ key, a sub-selection of a named set — and it is the only one most cases need.
 
 The injectivity hypothesis is the *author's* claim about `f`, and for a concrete finite object
 type it is discharged by `decide`. -/
-@[instance_reducible]
-def Designated.ofInjective {O : Type u} {P : Type v} [Designated P] (f : O → P)
+@[instance_reducible, expose] def Designated.ofInjective {O : Type u} {P : Type v} [Designated P] (f : O → P)
     (hf : ∀ {x y : O}, f x = f y → x = y) : Designated O where
   designation o := Designated.designation (f o)
   designation_inj h := hf (Designated.designation_inj h)
@@ -152,8 +160,7 @@ injective, because the separator can occur inside a name, and the resulting desi
 reports two different couplings as one system. A `join` over a *concrete* finite object type
 discharges `hjoin` by `decide`; over arbitrary names it needs an escaping convention, which is
 the author's to pick and to prove. -/
-@[instance_reducible]
-def Designated.prod {O₁ : Type u} {O₂ : Type v} [Designated O₁] [Designated O₂]
+@[instance_reducible, expose] def Designated.prod {O₁ : Type u} {O₂ : Type v} [Designated O₁] [Designated O₂]
     (join : Object → Object → Object)
     (hjoin : ∀ {a b c d : Object}, join a b = join c d → a = c ∧ b = d) :
     Designated (O₁ × O₂) where
@@ -166,5 +173,4 @@ def Designated.prod {O₁ : Type u} {O₂ : Type v} [Designated O₁] [Designate
 
 end PropertyKindCalculus
 
-end -- pkc-blanket-expose
 end -- pkc-blanket

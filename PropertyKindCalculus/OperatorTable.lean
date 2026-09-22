@@ -60,7 +60,6 @@ public import PropertyKindCalculus.QuantityClassification
 public import PropertyKindCalculus.IndividualQuantity
 
 public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -199,14 +198,14 @@ end OperatorTable
 table entry: `Quantity.mulK area w h` reads as the kind equation it stands for, with the
 ratio-scale gate discharged by autoParam for concrete kinds (exactly
 `ProductKind.ofRatio`'s own defaults). -/
-def Quantity.mulK {R : Type} [Mul R] [ScalarCarrier R] {k₁ k₂ : KindOfProperty} (k : KindOfProperty)
+@[expose] def Quantity.mulK {R : Type} [Mul R] [ScalarCarrier R] {k₁ k₂ : KindOfProperty} (k : KindOfProperty)
     (a : Quantity k₁ R) (b : Quantity k₂ R)
     (h : ProductKind k₁ k₂ k := by exact ProductKind.ofRatio _ _ _) : Quantity k R :=
   Quantity.mul h a b
 
 /-- **One-off quotient, result kind named at the call site** — the division dual of
 `Quantity.mulK`. -/
-def Quantity.divK {R : Type} [Div R] [ScalarCarrier R] {k₁ k₂ : KindOfProperty} (k : KindOfProperty)
+@[expose] def Quantity.divK {R : Type} [Div R] [ScalarCarrier R] {k₁ k₂ : KindOfProperty} (k : KindOfProperty)
     (a : Quantity k₁ R) (b : Quantity k₂ R)
     (h : QuotientKind k₁ k₂ k := by exact QuotientKind.ofRatio _ _ _) : Quantity k R :=
   Quantity.div h a b
@@ -221,5 +220,4 @@ def Quantity.divK {R : Type} [Div R] [ScalarCarrier R] {k₁ k₂ : KindOfProper
 
 end PropertyKindCalculus
 
-end -- pkc-blanket-expose
 end -- pkc-blanket

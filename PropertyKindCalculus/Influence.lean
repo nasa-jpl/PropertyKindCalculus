@@ -48,7 +48,6 @@ module
 public import PropertyKindCalculus.Provenance
 
 public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -69,7 +68,7 @@ def nodeList (g : Provenance ν κ) : List ν :=
 
 /-- One monotone sweep of the influence closure: each occurrence with **some** operand
 known adds its result, in occurrence order. The disjunctive counterpart of `sweep`. -/
-def influenceSweep (occs : List (Occurrence ν κ)) (ks : List ν) : List ν :=
+@[expose] def influenceSweep (occs : List (Occurrence ν κ)) (ks : List ν) : List ν :=
   occs.foldl (init := ks) fun ks o =>
     if o.operands.any (fun oc => ks.contains oc.1) && !ks.contains o.result then
       ks ++ [o.result]
@@ -79,7 +78,7 @@ def influenceSweep (occs : List (Occurrence ν κ)) (ks : List ν) : List ν :=
 counterpart of `sweeps`, with the same saturation argument: a sweep only appends, so a
 sweep that adds nothing has finished, and each productive sweep adds at least one
 occurrence result. -/
-def influenceSweeps (occs : List (Occurrence ν κ)) : Nat → List ν → List ν
+@[expose] def influenceSweeps (occs : List (Occurrence ν κ)) : Nat → List ν → List ν
   | 0, ks => ks
   | fuel + 1, ks =>
     let ks' := influenceSweep occs ks
@@ -90,14 +89,14 @@ SOME operand known makes its result known", including the start set itself. This
 descendant set — the forward cone a change at `start` can touch. Fuel is one sweep per
 occurrence *plus one*: at most one occurrence result is appendable per sweep that
 produces anything, so the extra sweep is the one that observes saturation. -/
-def influencedFrom (g : Provenance ν κ) (start : List ν) : List ν :=
+@[expose] def influencedFrom (g : Provenance ν κ) (start : List ν) : List ν :=
   influenceSweeps g.occurrences (g.occurrences.length + 1) start
 
 /-- Does `a` influence `b`: is `b` in the forward cone of `a`? Reflexive by convention —
 a node trivially carries its own value. Presence is a conservative candidate (an
 occurrence states that a value flows, not that a derivative is nonzero); absence is the
 sound direction, licensing a perturbation study to exclude `a` for `b`. -/
-def mayInfluence (g : Provenance ν κ) (a b : ν) : Bool :=
+@[expose] def mayInfluence (g : Provenance ν κ) (a b : ν) : Bool :=
   (g.influencedFrom [a]).contains b
 
 /-- Are two nodes confounded for an output: both reach it, so a perturbation study
@@ -111,7 +110,7 @@ def confounded (g : Provenance ν κ) (out a b : ν) : Bool :=
 operand position, wired from the result back to that operand. The backward closure is
 then the forward closure over this list — one engine, both directions — and occurrence
 multiplicity survives, since a repeated operand yields a reversed edge per position. -/
-def reverseOccurrences (g : Provenance ν κ) : List (Occurrence ν κ) :=
+@[expose] def reverseOccurrences (g : Provenance ν κ) : List (Occurrence ν κ) :=
   g.occurrences.flatMap fun o =>
     o.operands.map fun oc =>
       { family := .copy, operands := [(o.result, o.resultKind)], result := oc.1,
@@ -120,7 +119,7 @@ def reverseOccurrences (g : Provenance ν κ) : List (Occurrence ν κ) :=
 /-- The pedigree of a node set: everything it is derived from, including the set itself —
 the ancestor set the backward closure reaches through the occurrences, computed as the
 forward closure of the reversed incidence. -/
-def ancestorsOf (g : Provenance ν κ) (of : List ν) : List ν :=
+@[expose] def ancestorsOf (g : Provenance ν κ) (of : List ν) : List ν :=
   influenceSweeps g.reverseOccurrences (g.reverseOccurrences.length + 1) of
 
 /-- The sources among an output's ancestors: the budget's term list — where standard
@@ -224,18 +223,18 @@ def Contract.propagation (c : Contract ν κ) (g : Provenance ν κ) : List (ν 
 /-! ## Acyclicity -/
 
 /-- The immediate successors of a node: the results of the occurrences it feeds. -/
-def successors (g : Provenance ν κ) (n : ν) : List ν :=
+@[expose] def successors (g : Provenance ν κ) (n : ν) : List ν :=
   (g.occurrences.filter (fun o => o.operands.any (·.1 == n))).map (·.result)
 
 /-- No value feeds its own derivation: no occurrence result re-reaches itself through
 the incidence. Under this hypothesis the paths through the graph are finitely many, so a
 sum over paths — a budget — is well formed. Only occurrence results can lie on a cycle,
 so only they are checked. -/
-def acyclic (g : Provenance ν κ) : Bool :=
+@[expose] def acyclic (g : Provenance ν κ) : Bool :=
   g.occurrences.all fun o => !(g.influencedFrom (g.successors o.result)).contains o.result
 
 /-- `Prop`-level acyclicity, for statements and `decide`. -/
-def Acyclic (g : Provenance ν κ) : Prop := g.acyclic = true
+@[expose] def Acyclic (g : Provenance ν κ) : Prop := g.acyclic = true
 
 instance (g : Provenance ν κ) : Decidable g.Acyclic :=
   inferInstanceAs (Decidable (g.acyclic = true))
@@ -244,5 +243,4 @@ end Provenance
 
 end PropertyKindCalculus
 
-end -- pkc-blanket-expose
 end -- pkc-blanket

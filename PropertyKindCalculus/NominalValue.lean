@@ -34,7 +34,6 @@ module
 public import PropertyKindCalculus.Kind
 
 public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -76,5 +75,4 @@ end NominalValue
 
 end PropertyKindCalculus
 
-end -- pkc-blanket-expose
 end -- pkc-blanket

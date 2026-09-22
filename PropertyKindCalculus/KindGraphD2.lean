@@ -69,7 +69,6 @@ module
 public import PropertyKindCalculus.KindIncidence
 
 public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.KindGraphD2
 
@@ -492,5 +491,4 @@ def emitOverview (a : Assembly) (title : String := "kind assembly") : String := 
 
 end PropertyKindCalculus.KindGraphD2
 
-end -- pkc-blanket-expose
 end -- pkc-blanket

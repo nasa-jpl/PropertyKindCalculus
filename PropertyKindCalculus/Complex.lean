@@ -84,7 +84,6 @@ module
 public import PropertyKindCalculus.QuantityFunction
 
 public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -105,7 +104,7 @@ variable {R : Type}
 
 /-- Embed a real magnitude as a complex one (zero imaginary part) — the carrier-level
 inclusion `R ↪ Complex R`. -/
-def ofReal [Zero R] (a : R) : Complex R := ⟨a, 0⟩
+@[expose] def ofReal [Zero R] (a : R) : Complex R := ⟨a, 0⟩
 
 /-! ## The toolchain arithmetic of `Complex R`
 
@@ -125,7 +124,7 @@ instance [Zero R] : Zero (Complex R) := ⟨⟨0, 0⟩⟩
 instance [Zero R] [One R] : One (Complex R) := ⟨⟨1, 0⟩⟩
 
 /-- The squared modulus `|z|² = re² + im²` — a *real* magnitude. -/
-def abs2 [Mul R] [Add R] (z : Complex R) : R := z.re * z.re + z.im * z.im
+@[expose] def abs2 [Mul R] [Add R] (z : Complex R) : R := z.re * z.re + z.im * z.im
 
 /-- Complex division `z / w = z · conj w / |w|²`. -/
 instance [Mul R] [Add R] [Sub R] [Div R] : Div (Complex R) :=
@@ -134,7 +133,7 @@ instance [Mul R] [Add R] [Sub R] [Div R] : Div (Complex R) :=
     ⟨(z.re * w.re + z.im * w.im) / d, (z.im * w.re - z.re * w.im) / d⟩⟩
 
 /-- The modulus `|z| = √(re² + im²)` — a *real* magnitude (needs the carrier's `sqrt`). -/
-def abs [Mul R] [Add R] [MathCarrier R] (z : Complex R) : R := MathCarrier.sqrt z.abs2
+@[expose] def abs [Mul R] [Add R] [MathCarrier R] (z : Complex R) : R := MathCarrier.sqrt z.abs2
 
 /-- `Complex R` is a `Carrier` (zero magnitude + addition) whenever `R` is, so the
 kind-gated `Quantity.add`/`Quantity.zero` are available over complex quantities. -/
@@ -188,7 +187,7 @@ instance : NegTest Float := ⟨fun x => x < 0⟩
 two real square roots; the imaginary *sign* is the one branch decision, taken by
 `NegTest`. The divisor `2` is `1 + 1` (toolchain), which at every real carrier is the
 literal `2`. -/
-def sqrt [One R] [Add R] [Sub R] [Mul R] [Div R] [Neg R] [MathCarrier R] [NegTest R]
+@[expose] def sqrt [One R] [Add R] [Sub R] [Mul R] [Div R] [Neg R] [MathCarrier R] [NegTest R]
     (z : Complex R) : Complex R :=
   let m := z.abs
   let two : R := 1 + 1
@@ -248,7 +247,7 @@ checked half-power crossing of kinds, the dimensional content discharged in the
 `k₁`-quantity to a `k`-quantity, now over a complex carrier. Named `csqrt` because the
 complex square root is a genuinely distinct operation — it has a branch cut — even though
 its kind discipline is identical to the real half-power's. -/
-def Quantity.csqrt {k₁ k : KindOfProperty} {R : Type}
+@[expose] def Quantity.csqrt {k₁ k : KindOfProperty} {R : Type}
     [One R] [Add R] [Sub R] [Mul R] [Div R] [Neg R] [MathCarrier R] [Complex.NegTest R]
     (_h : PowerKind (1 / 2) k₁ k) (a : Quantity k₁ (Complex R)) : Quantity k (Complex R) :=
   ⟨Complex.sqrt a.magnitude⟩
@@ -270,11 +269,11 @@ boundary audit reads as a mint — a quantity conjured from a bare number — st
 named carrier operation belongs. -/
 
 /-- **The real part of a complex-carried quantity**, at the same kind. -/
-def Quantity.re {k : KindOfProperty} {R : Type} (a : Quantity k (Complex R)) : Quantity k R :=
+@[expose] def Quantity.re {k : KindOfProperty} {R : Type} (a : Quantity k (Complex R)) : Quantity k R :=
   ⟨a.magnitude.re⟩
 
 /-- **The imaginary part of a complex-carried quantity**, at the same kind. -/
-def Quantity.im {k : KindOfProperty} {R : Type} (a : Quantity k (Complex R)) : Quantity k R :=
+@[expose] def Quantity.im {k : KindOfProperty} {R : Type} (a : Quantity k (Complex R)) : Quantity k R :=
   ⟨a.magnitude.im⟩
 
 @[simp] theorem Quantity.re_magnitude {k : KindOfProperty} {R : Type}
@@ -285,5 +284,4 @@ def Quantity.im {k : KindOfProperty} {R : Type} (a : Quantity k (Complex R)) : Q
 
 end PropertyKindCalculus
 
-end -- pkc-blanket-expose
 end -- pkc-blanket

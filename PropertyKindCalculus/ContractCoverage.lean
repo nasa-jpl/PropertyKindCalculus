@@ -71,7 +71,6 @@ public import PropertyKindCalculus.KindIncidence
 set_option compiler.relaxedMetaCheck true
 
 public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.ContractCoverage
 
@@ -689,5 +688,4 @@ elab "#kind_diagnostic_clean" nss:ident+ : command => liftTermElabM do
 
 end PropertyKindCalculus.ContractCoverage
 
-end -- pkc-blanket-expose
 end -- pkc-blanket

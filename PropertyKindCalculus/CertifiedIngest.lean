@@ -45,7 +45,6 @@ public import PropertyKindCalculus.Bounds
 public import Lean
 
 public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
 
 open Lean (ToJson FromJson Json toJson)
 
@@ -95,7 +94,7 @@ structure CertifiedQuantity (k : KindOfProperty) (R : Type) [inst : KindAdmissib
 value; on success return the value bundled with its evidence, on failure a legible
 `CertError`. This is the sanctioned boundary constructor for the checked tier — the
 per-call `⟨x⟩` an audit flags is replaced by exactly one `certify` at the gate. -/
-def Quantity.certify (k : KindOfProperty) (R : Type) [inst : KindAdmissible k R] (r : R) :
+@[expose] def Quantity.certify (k : KindOfProperty) (R : Type) [inst : KindAdmissible k R] (r : R) :
     Except CertError (CertifiedQuantity k R) :=
   if h : inst.check r = true then
     .ok ⟨⟨r⟩, (inst.check_iff r).mp h⟩
@@ -164,7 +163,7 @@ structure MaskedCertificate (k : KindOfProperty) (R : Type) where
 /-- **The batched mint.** Certify a batch by pairing it with the `{0,1}` validity mask its
 kind's `BatchAdmissible` produces — the mask-mediated analogue of `Quantity.certify`, total
 (no failure branch: invalid pixels are masked, not rejected). -/
-def Quantity.certifyBatch (k : KindOfProperty) (R : Type) [BatchAdmissible k R] (r : R) :
+@[expose] def Quantity.certifyBatch (k : KindOfProperty) (R : Type) [BatchAdmissible k R] (r : R) :
     MaskedCertificate k R :=
   ⟨⟨r⟩, BatchAdmissible.mask (k := k) r⟩
 
@@ -203,7 +202,7 @@ namespace IngestContract
 
 /-- **Build a slot from a kind**, so the `kindId` cannot drift from a real
 `KindOfProperty` — a rename of the kind is a source edit here, not silent staleness. -/
-def slot (k : KindOfProperty) (name admissibility : String) (unitNote : String := "") :
+@[expose] def slot (k : KindOfProperty) (name admissibility : String) (unitNote : String := "") :
     IngestSlot :=
   { name := name, kindId := k.id, admissibility := admissibility, unitNote := unitNote }
 
@@ -239,5 +238,4 @@ end IngestContract
 
 end PropertyKindCalculus
 
-end -- pkc-blanket-expose
 end -- pkc-blanket

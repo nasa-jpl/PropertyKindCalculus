@@ -55,7 +55,6 @@ public meta import PropertyKindCalculus.KindIncidence
 set_option compiler.relaxedMetaCheck true
 
 public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.KindLedger
 
@@ -237,5 +236,4 @@ elab "#kind_unkinded_clean " c:ident : command => liftTermElabM do
 
 end PropertyKindCalculus.KindLedger
 
-end -- pkc-blanket-expose
 end -- pkc-blanket

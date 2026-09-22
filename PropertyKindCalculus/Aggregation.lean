@@ -66,7 +66,6 @@ public import PropertyKindCalculus.Extensivity
 public import PropertyKindCalculus.QuantityRefinement
 
 public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -76,12 +75,12 @@ universe u
 
 /-- **The total weight of a carving** — the fold of the weights under the carrier's addition.
 This is the mean's denominator, and the reason a mean needs a side condition at all. -/
-def totalWeight {R : Type} {P : Type u} [Carrier R] (w : P → R) (d : Decomposition P) : R :=
+@[expose] def totalWeight {R : Type} {P : Type u} [Carrier R] (w : P → R) (d : Decomposition P) : R :=
   d.fold w Carrier.add
 
 /-- **The weighted sum of a per-part value** — the mean's numerator. Needs the carrier's `*`
 beside its `+`, which is why it is not among the modes `Extensivity` can state. -/
-def weightedSum {R : Type} {P : Type u} [Carrier R] [Mul R]
+@[expose] def weightedSum {R : Type} {P : Type u} [Carrier R] [Mul R]
     (w v : P → R) (d : Decomposition P) : R :=
   d.fold (fun p => w p * v p) Carrier.add
 
@@ -116,7 +115,7 @@ theorem WeightedCarving.total_ne_zero' {R : Type} {P : Type u} [Carrier R]
 aggregation, with the denominator's license already discharged by the carving. Asks the carrier
 for `*` and `/` beside the `+` every mode needs; a carrier that has only `+` carries the
 extensive mode and not this one. -/
-def WeightedCarving.mean {R : Type} {P : Type u} [Carrier R] [Mul R] [Div R]
+@[expose] def WeightedCarving.mean {R : Type} {P : Type u} [Carrier R] [Mul R] [Div R]
     (c : WeightedCarving R P) (v : P → R) : R :=
   weightedSum c.weight v c.parts / totalWeight c.weight c.parts
 
@@ -359,5 +358,4 @@ theorem WeightedCarvingQ.mean_div_refines {E S : Type} {P : Type u}
 
 end PropertyKindCalculus
 
-end -- pkc-blanket-expose
 end -- pkc-blanket

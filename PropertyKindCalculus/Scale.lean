@@ -20,7 +20,6 @@ Here it is a first-class datum that later gates the algebra on a `Quantity`.
 module
 
 public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -39,7 +38,7 @@ deriving DecidableEq, Repr
 namespace ScaleType
 
 /-- Operator-richness rank: `nominal ⊏ ordinal ⊏ interval ⊏ ratio`. -/
-def rank : ScaleType → Nat
+@[expose] def rank : ScaleType → Nat
   | nominal  => 0
   | ordinal  => 1
   | interval => 2
@@ -61,24 +60,24 @@ protected theorem le_antisymm {a b : ScaleType} (h₁ : a ≤ b) (h₂ : b ≤ a
 /-! ## Which operations are *defined* at each scale (cumulative) -/
 
 /-- `<, >` available from ordinal upward (§12.16). -/
-def AllowsOrder : ScaleType → Prop
+@[expose] def AllowsOrder : ScaleType → Prop
   | nominal => False
   | _       => True
 
 /-- `+, −` available from interval upward (§12.19). -/
-def AllowsDifference : ScaleType → Prop
+@[expose] def AllowsDifference : ScaleType → Prop
   | interval => True
   | ratio    => True
   | _        => False
 
 /-- `×, ÷` available only at ratio scale (§12.20). -/
-def AllowsRatio : ScaleType → Prop
+@[expose] def AllowsRatio : ScaleType → Prop
   | ratio => True
   | _     => False
 
 /-- **§13.3.1** — a kind has *magnitude* (is a kind-of-quantity, not merely
 nominal) iff its scale is at least ordinal. -/
-def HasMagnitude (s : ScaleType) : Prop := s ≠ nominal
+@[expose] def HasMagnitude (s : ScaleType) : Prop := s ≠ nominal
 
 /-- Meta-theorem OWL2's reasoner cannot even phrase: a richer scale licenses
 every operation a poorer one does. (Monotonicity of operator availability.) -/
@@ -93,5 +92,4 @@ end ScaleType
 
 end PropertyKindCalculus
 
-end -- pkc-blanket-expose
 end -- pkc-blanket

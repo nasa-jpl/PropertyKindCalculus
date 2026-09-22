@@ -26,7 +26,6 @@ module
 public import PropertyKindCalculus.Kind
 
 public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -56,11 +55,11 @@ def scale (v : PropertyValue) : ScaleType := v.kind.scale
 /-- **§16.10** — a property value is a *quantity value* iff its kind has magnitude
 (is a kind-of-quantity, §13.3.1): only then does the number-times-reference form
 carry a metric meaning. -/
-def IsQuantityValue (v : PropertyValue) : Prop := v.kind.IsQuantity
+@[expose] def IsQuantityValue (v : PropertyValue) : Prop := v.kind.IsQuantity
 
 /-- **§9.15** — two property values are *comparable* iff they are of the same
 kind-of-property. Comparison across kinds is not defined. -/
-def Comparable (v w : PropertyValue) : Prop := v.kind = w.kind
+@[expose] def Comparable (v w : PropertyValue) : Prop := v.kind = w.kind
 
 namespace Comparable
 
@@ -94,5 +93,4 @@ end PropertyValue
 
 end PropertyKindCalculus
 
-end -- pkc-blanket-expose
 end -- pkc-blanket

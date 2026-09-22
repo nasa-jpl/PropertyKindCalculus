@@ -45,7 +45,6 @@ public import PropertyKindCalculus.Bounds
 public import PropertyKindCalculus.QuantityClassification
 
 public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -62,7 +61,7 @@ factor multiplies a standard *uncertainty* and is a statement about a distributi
 tolerance multiplies an *estimate* and is a statement about how much disagreement a comparison
 will accept. They are both dimension one, they both appear in the neighbourhood of a measurement
 record, and nothing but their kinds keeps them apart. -/
-def relativeTolerance : KindOfProperty :=
+@[expose] def relativeTolerance : KindOfProperty :=
   { id := "relative agreement tolerance", scale := .ratio }
 
 /-- **The law that scales a reference into an allowance**: a relative tolerance times a quantity
@@ -87,7 +86,7 @@ point: it can be reported when a comparison fails, which is the difference betwe
 
 The `floor` is an absolute allowance at the measurand's own kind, for the near-zero case a purely
 relative tolerance cannot express. It defaults to zero — a caller who needs one states it. -/
-def agreementInterval {k : KindOfProperty} (reference : Quantity k Float)
+@[expose] def agreementInterval {k : KindOfProperty} (reference : Quantity k Float)
     (rel : Quantity relativeTolerance Float) (floor : Quantity k Float := ⟨0.0⟩)
     (hk : k.IsRational := by rfl) : IccQ k Float :=
   let scaled := Quantity.mul (toleranceLaw k hk) rel ⟨reference.magnitude.abs⟩
@@ -105,17 +104,16 @@ Every non-`NaN` value agrees with itself, and a `NaN` agrees with nothing — in
 against a value that is not a number should fail, not pass by reflexivity. It is also why there is
 no `closeTo_self` theorem here; the statement is false as written, and stating it with the
 hypothesis that excludes `NaN` needs an order algebra a Mathlib-free core does not have. -/
-def Quantity.closeTo {k : KindOfProperty} (x reference : Quantity k Float)
+@[expose] def Quantity.closeTo {k : KindOfProperty} (x reference : Quantity k Float)
     (rel : Quantity relativeTolerance Float) (floor : Quantity k Float := ⟨0.0⟩)
     (hk : k.IsRational := by rfl) : Bool :=
   (agreementInterval reference rel floor hk).memb x
 
 /-- The width of an agreement interval, at the measurand's kind — what to print when a comparison
 fails, beside the value that missed it. -/
-def IccQ.width {k : KindOfProperty} (I : IccQ k Float) : Quantity k Float :=
+@[expose] def IccQ.width {k : KindOfProperty} (I : IccQ k Float) : Quantity k Float :=
   ⟨I.hi.q.magnitude - I.lo.q.magnitude⟩
 
 end PropertyKindCalculus
 
-end -- pkc-blanket-expose
 end -- pkc-blanket
