@@ -77,11 +77,14 @@ ROOT = Path(__file__).resolve().parent.parent
 # --- 2. Curated prose sites: (file, sentence with {VER}, required occurrences) ----
 SITES: list[tuple[str, str, int]] = [
     ("README.md", "`leanprover/lean4:v{VER}`", 1),
-    ("UNCERTAINTY.md", "PKC is pinned `v{VER}` (Mathlib v{VER}, TorchLean `combined`)", 1),
+    ("UNCERTAINTY.md", "PKC is pinned `v{VER}` (Mathlib v{VER}, TorchLean `combined-4.34`)", 1),
     ("lakefile.lean", "Mathlib `v{VER}` pin", 1),
     ("lakefile.lean", "doc-gen4 v{VER}", 1),
     ("blueprint/lakefile.toml", "on the v{VER} toolchain", 1),
-    ("blueprint/lakefile.toml", "`v{VER}`-branch commit that still pins toolchain v{VER}", 1),
+    # Only the branch NAME tracks the pin here: the commit it names declares
+    # `v4.34.0-rc2` in its own `lean-toolchain`, so a claim that it "still pins
+    # toolchain {VER}" would be false of the very commit this file pins.
+    ("blueprint/lakefile.toml", "is the `v{VER}`-branch commit", 1),
     ("RENDERING.md", "transitively (`v{VER}`, `", 1),
 ]
 

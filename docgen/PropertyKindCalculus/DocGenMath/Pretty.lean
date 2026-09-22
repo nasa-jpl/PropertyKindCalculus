@@ -137,8 +137,8 @@ four-component Jacobian tuple comes out around 240 characters of LaTeX on one li
 whole doc-gen4 page scroll horizontally.
 
 MathJax cannot be asked to fix this. Automatic display-math line breaking is a MathJax **4** feature
-(`displayOverflow: 'linebreak'`), and doc-gen4 loads MathJax 3 — upstream `main` still does, as of
-the v4.33.0-rc2 toolchain bump. So the break has to be authored into the LaTeX, and this is the right
+(`displayOverflow: 'linebreak'`), and doc-gen4 loads MathJax 3 — the `v4.34.0` tag this package
+resolves still does (`DocGen4/Output/Template.lean` names `mathjax@3`). So the break has to be authored into the LaTeX, and this is the right
 stage to author it: `Pretty` already owns every space and parenthesis, and `MathTerm` is *n-ary*, so
 the seams a reader would break at (`add`'s summands, `tuple`'s components) are explicit nodes rather
 than something to recover from a string.

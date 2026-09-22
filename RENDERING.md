@@ -12,7 +12,7 @@ never a docstring, and VS Code's *native* editor hover has no math renderer), wh
 never could. Rendering default = **F (faithful),
 CONFIRMED**. Remaining = follow-on (apply `@[pkc_math]` to real SMM/EM models). No library module imports
 doc-gen4; the `../doc-gen4` **dev override was removed** — doc-gen4 is resolved at the stock tag that
-PhysLib and TorchLean already pin transitively (`v4.33.0`, `aceca4ee`; it cannot be dropped *entirely* —
+PhysLib and TorchLean already pin transitively (`v4.34.0`, `a6521b2d`; it cannot be dropped *entirely* —
 both require it, this Mathlib pin does not), and is only ever resolved, never built here.
 **This file is the durable, multi-session tracker.** Update the checkboxes and the "Session log"
 at the bottom every time you make progress. A fresh session should read this header, §2 (repo map) and §4

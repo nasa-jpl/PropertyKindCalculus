@@ -90,7 +90,7 @@ interaction algebra (`PropertyKindCalculus.Interaction`), and the `ℝ` quantity
 carrier (`PropertyKindCalculus.QuantityReal`), with its worked examples in the
 `DimensionExamples` library — the layer where PhysLib + Mathlib enter, so a plain
 `import PropertyKindCalculus` stays Mathlib-free. PhysLib tracks the same toolchain
-this package pins (`leanprover/lean4:v4.33.0`).
+this package pins (`leanprover/lean4:v4.34.0`).
 
 Part of that substrate is **this project's own contribution to PhysLib**, made because
 the layer the calculus needs did not exist: `Dimension` was hardwired to one
