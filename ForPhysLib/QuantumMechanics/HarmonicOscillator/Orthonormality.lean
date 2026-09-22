@@ -27,8 +27,13 @@ Axiom profile: `propext, Classical.choice, Quot.sound` — checked at authoring;
 `sorryAx`.
 -/
 
-import Physlib.QuantumMechanics.HarmonicOscillator.Eigenstates
-import Mathlib.MeasureTheory.Integral.Bochner.ContinuousLinearMap
+module
+
+public import Physlib.QuantumMechanics.HarmonicOscillator.Eigenstates
+public import Mathlib.MeasureTheory.Integral.Bochner.ContinuousLinearMap
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 open MeasureTheory QuantumMechanics HarmonicOscillator Polynomial Real Complex
 open SpaceDHilbertSpace SchwartzSubmodule InnerProductSpace
@@ -80,7 +85,7 @@ lemma integral_hermite_pair {ξ : ℝ} (hξ : 0 < ξ) (a b : ℕ) :
   · exact physHermite_orthogonal_cons h ξ⁻¹
 
 /-- One coordinate's slice of `conj (eigenfunction n) * eigenfunction n'`. -/
-private noncomputable def pairIntegrand (Q : HarmonicOscillator d) (n n' : Fin d → ℕ)
+noncomputable def pairIntegrand (Q : HarmonicOscillator d) (n n' : Fin d → ℕ)
     (i : Fin d) (t : ℝ) : ℂ :=
   (starRingEnd ℂ) (↑(Q.eigenCoeff n i) *
       ↑(physHermite (n i) (t / Q.ξ i)) * cexp (-2⁻¹ * (↑t / ↑(Q.ξ i)) ^ 2)) *
@@ -163,3 +168,6 @@ theorem eigenstates_orthonormal' (Q : HarmonicOscillator d) (n n' : Fin d → �
 end
 
 end ForPhysLib.QuantumMechanics.HarmonicOscillator.Orthonormality
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

@@ -1,6 +1,8 @@
-import ForMathlib.Combinatorics.Digraph.Reach
-import Mathlib.Order.Extension.Linear
-import Mathlib.Data.Fintype.Sort
+module
+
+public import ForMathlib.Combinatorics.Digraph.Reach
+public import Mathlib.Order.Extension.Linear
+public import Mathlib.Data.Fintype.Sort
 
 /-!
 # Acyclic digraphs
@@ -15,6 +17,9 @@ listing every edge's source before its target (`Digraph.IsAcyclic.exists_topolog
 
 Upstream target: `Mathlib/Combinatorics/Digraph/Acyclic.lean`.
 -/
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace Digraph
 
@@ -125,3 +130,6 @@ theorem IsAcyclic.exists_topologicalSort [Fintype V] (h : G.IsAcyclic) :
       show ∀ x, f (e.symm x) = x from fun x => e.apply_symm_apply x, Fin.mk_lt_mk] at this
 
 end Digraph
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

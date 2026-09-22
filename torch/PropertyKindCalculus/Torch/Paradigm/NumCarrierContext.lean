@@ -27,12 +27,18 @@ is perturbed. (The carriers defined in this library — `TapeBuilder`, `CudaT` �
 
 Plain (not a `module`) file: imports the plain core `NumCarrier` and TorchLean's `Context`.
 -/
-import PropertyKindCalculus.Paradigm.NumCarrier
-import NN.Spec.Core.Context
+
+module
+
+public import PropertyKindCalculus.Paradigm.NumCarrier
+public import NN.Spec.Core.Context
 -- `Context ℝ` lives in its own module upstream (it needs `MathFunctions ℝ`); it is imported here
 -- so every consumer of this bridge sees `NumCarrier ℝ`, which the real-number floors of the
 -- correctness proofs downstream instantiate.
-import NN.Spec.Core.Context.Real
+public import NN.Spec.Core.Context.Real
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Paradigm
 
@@ -73,3 +79,6 @@ instance instNumCarrierOfContext {α : Type} [Context α] : NumCarrier α where
   toCoe := ⟨fun n => (n : α)⟩
 
 end PropertyKindCalculus.Paradigm
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

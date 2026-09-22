@@ -19,11 +19,17 @@ The AVS fit's transcendental surface is just `exp` (Mironov forward) and `sqrt` 
 fields are therefore provided as loud `panic!` stubs — present to satisfy the class, never reached by the
 fit. (Add the real device kernels if a future kernel needs them.)
 -/
-import PropertyKindCalculus.Paradigm.NumCarrier
-import PropertyKindCalculus.Torch.Paradigm.NumCarrierContext
-import NN.Tensor
-import NN.Runtime.Autograd.Engine.Cuda.Buffer
-import NN.Runtime.Autograd.Engine.Cuda.Kernels
+
+module
+
+public import PropertyKindCalculus.Paradigm.NumCarrier
+public import PropertyKindCalculus.Torch.Paradigm.NumCarrierContext
+public import NN.Tensor
+public import NN.Runtime.Autograd.Engine.Cuda.Buffer
+public import NN.Runtime.Autograd.Engine.Cuda.Kernels
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 open Spec TorchLean
 open PropertyKindCalculus.Paradigm (NumCarrier)
@@ -114,3 +120,6 @@ exact twin of a composed `exp((c·x)·y)` (e.g. `avs_batch.attenuation`), not me
 
 end CudaT
 end PropertyKindCalculus.Paradigm.CudaCarrier
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

@@ -36,8 +36,13 @@ No normative text from the licensed standard is reproduced; the annex is restate
 work's own formalism.
 -/
 
-import PropertyKindCalculus.Iso80000.References
-import PropertyKindCalculus.Uncertainty.Adequacy.Grid
+module
+
+public import PropertyKindCalculus.Iso80000.References
+public import PropertyKindCalculus.Uncertainty.Adequacy.Grid
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Iso80000.Part1.AnnexB
 
@@ -97,3 +102,6 @@ theorem gridRound_follows_neither_rule :
   · rw [gridRound_tie_neg]; norm_num
 
 end PropertyKindCalculus.Iso80000.Part1.AnnexB
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

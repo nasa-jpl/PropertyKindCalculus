@@ -27,10 +27,16 @@ to the executable `Float` `invCDF` sampler (that is the R15 exec↔spec pattern,
 Axiom profile: `[propext, Classical.choice, Quot.sound]` — the standard classical trio, matching
 R14/R15 (Mathlib measure theory is classical).
 -/
-import Mathlib.Probability.Moments.Variance
-import Mathlib.Probability.Distributions.Uniform
-import Mathlib.MeasureTheory.Measure.Lebesgue.Basic
-import Mathlib.MeasureTheory.Order.Group.Lattice
+
+module
+
+public import Mathlib.Probability.Moments.Variance
+public import Mathlib.Probability.Distributions.Uniform
+public import Mathlib.MeasureTheory.Measure.Lebesgue.Basic
+public import Mathlib.MeasureTheory.Order.Group.Lattice
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 open MeasureTheory ProbabilityTheory
 open scoped MeasureTheory ProbabilityTheory ENNReal
@@ -103,3 +109,6 @@ theorem isUniform_id_cond (s : Set ℝ) :
   exact ⟨aemeasurable_id, Measure.map_id⟩
 
 end PropertyKindCalculus.Uncertainty.Coverage
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

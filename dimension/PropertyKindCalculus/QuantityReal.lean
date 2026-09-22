@@ -15,8 +15,13 @@ once and reused at the proof carrier exactly as it is at `Int`. (Worked examples
 that exercise this transfer live in the `DimensionExamples` library.)
 -/
 
-import PropertyKindCalculus.Quantity
-import Mathlib.Basic.Real.Basic
+module
+
+public import PropertyKindCalculus.Quantity
+public import Mathlib.Basic.Real.Basic
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -42,3 +47,6 @@ of two vector quantities from being signed as a product of kinds. -/
 instance : ScalarCarrier ℝ := ⟨⟩
 
 end PropertyKindCalculus
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

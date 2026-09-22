@@ -37,9 +37,15 @@ artificial spacing) and states the capstone:
 Proved sorry-free; the executable side is exercised (`#eval`/`#guard`) in the `AdequacyExecBridge`
 example. Mathlib- and TorchLean-backed.
 -/
-import PropertyKindCalculus.Uncertainty.Adequacy.Soundness
-import PropertyKindCalculus.Uncertainty.Adequacy.Fp32Grounding
-import NN.Proofs.RuntimeApprox.IEEE32.Contracts
+
+module
+
+public import PropertyKindCalculus.Uncertainty.Adequacy.Soundness
+public import PropertyKindCalculus.Uncertainty.Adequacy.Fp32Grounding
+public import NN.Proofs.RuntimeApprox.IEEE32.Contracts
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Uncertainty.Adequacy
 
@@ -90,3 +96,6 @@ theorem exec_verdict_sound_of_isFinite {s δ : ExecFloat.Binary 8 23}
   round32_add_eq_left_of_absorbs_of_isFinite hs hδ hfin hverdict
 
 end PropertyKindCalculus.Uncertainty.Adequacy
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

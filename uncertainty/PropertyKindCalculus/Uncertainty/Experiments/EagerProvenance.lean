@@ -56,8 +56,13 @@ bookkeeping over that wrapper); and structural nodes (matmul/conv/softmax) whose
 different machine, out of this file's frame.
 -/
 
-import PropertyKindCalculus.Uncertainty.Experiments.PRSimulation
-import NN.Proofs.Autograd.Tape.Nodes.Elementwise
+module
+
+public import PropertyKindCalculus.Uncertainty.Experiments.PRSimulation
+public import NN.Proofs.Autograd.Tape.Nodes.Elementwise
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 open Spec TorchLean TorchLean.Tensor Proofs Proofs.Autograd
 
@@ -2933,3 +2938,7 @@ theorem direct_PR_soundness_eager_at {Γ ss : List Shape}
   exact ⟨out, (backwardDenseFrom_eager_eq_compiled ht seed).trans h1, h2⟩
 
 end PRSim
+
+end  -- pkc-blanket-scope
+end -- pkc-blanket-expose
+end -- pkc-blanket

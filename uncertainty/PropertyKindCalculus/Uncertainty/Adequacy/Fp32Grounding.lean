@@ -29,11 +29,17 @@ Lean's `Float`. Bridging the two (executable rounding that provably matches this
 which still calls for a TorchLean PR (`UNCERTAINTY.md` §6). Stage 3.2 (this file's Sterbenz grounding)
 is now realized at the FLT/`fexp32` format binary32 actually uses.
 -/
-import PropertyKindCalculus.Uncertainty.Adequacy.Grid
-import NN.Floats.FP32.Notation
-import NN.Floats.FP32.Error
-import NN.Floats.FP32.Sterbenz
-import FloatLib.Floats.Interval.Quantized
+
+module
+
+public import PropertyKindCalculus.Uncertainty.Adequacy.Grid
+public import NN.Floats.FP32.Notation
+public import NN.Floats.FP32.Error
+public import NN.Floats.FP32.Sterbenz
+public import FloatLib.Floats.Interval.Quantized
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Uncertainty.Adequacy
 
@@ -152,3 +158,6 @@ theorem sub32_exact_of_sterbenz {a b : FP32}
   TorchLean.Floats.FP32.sub_exact_of_sterbenz ha hb hapos hbpos hab hba
 
 end PropertyKindCalculus.Uncertainty.Adequacy
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

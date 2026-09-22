@@ -63,7 +63,12 @@ kind declaration; certify the specifically-forbidden ones with `#check_failure` 
 further at use sites that adopt it: at most one signed edge per operand pair.)
 -/
 
-import PropertyKindCalculus.Quantity
+module
+
+public import PropertyKindCalculus.Quantity
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -258,3 +263,6 @@ theorem Quantity.eq_recip_of_isReciprocal [Inv R] {k₁ k} (h : ReciprocalKind k
   Quantity.isReciprocal_unique h hq (Quantity.recip_isReciprocal h a)
 
 end PropertyKindCalculus
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

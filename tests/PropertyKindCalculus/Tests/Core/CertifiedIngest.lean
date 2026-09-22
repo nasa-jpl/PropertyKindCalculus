@@ -7,7 +7,14 @@
 (`BatchAdmissible` → `Quantity.certifyBatch`), and the adjudicated tier (`IngestContract` +
 JSON emission), and pins the axiom profile of the soundness theorem.
 -/
-import PropertyKindCalculus.CertifiedIngest
+
+module
+
+public import PropertyKindCalculus.CertifiedIngest
+meta import PropertyKindCalculus.CertifiedIngest
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Tests.CertifiedIngest
 
@@ -81,3 +88,6 @@ def probeContract : IngestContract where
 #print axioms Quantity.certify_isOk_iff
 
 end PropertyKindCalculus.Tests.CertifiedIngest
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

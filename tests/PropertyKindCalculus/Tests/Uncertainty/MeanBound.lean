@@ -39,7 +39,13 @@ denominator at all makes them the same statement (`Aggregation.licenses_agree_of
 in the core tier.
 -/
 
-import PropertyKindCalculus.Uncertainty.Adequacy.MeanBound
+module
+
+public import PropertyKindCalculus.Uncertainty.Adequacy.MeanBound
+meta import PropertyKindCalculus.Uncertainty.Adequacy.MeanBound
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Tests.MeanBound
 
@@ -285,3 +291,6 @@ theorem r9_licenses_agree_nonneg :
 #guard_msgs (whitespace := lax) in #print axioms fp32Round_add_ge
 
 end PropertyKindCalculus.Tests.MeanBound
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

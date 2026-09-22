@@ -35,8 +35,13 @@ Summing forces on one particle is not an assembly at all, and refusing it would 
 are below, and the difference between them is the object index.
 -/
 
-import PropertyKindCalculus.Composite
-import Mathlib.Algebra.BigOperators.Finprod
+module
+
+public import PropertyKindCalculus.Composite
+public import Mathlib.Algebra.BigOperators.Finprod
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -115,3 +120,6 @@ def assembleAll [Fintype P] [AddCommMonoid R] (σ : SortOfSystem) [Assembles σ 
     (assembleAll σ whole part f).magnitude = ∑ p : P, (f p).magnitude := rfl
 
 end PropertyKindCalculus
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

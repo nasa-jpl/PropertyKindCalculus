@@ -15,6 +15,12 @@ Everything here is concrete `Float`: sampling produces concrete numbers regardle
 proof carrier `R`. The carrier-parametric *moment* data lives in `InputDist` and is what the
 linearized methods and the `ℝ`-level proofs consume. Mathlib-free.
 -/
+
+module
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
+
 namespace PropertyKindCalculus.Uncertainty.Sampling
 
 /-! ## PRNG — splitmix64 -/
@@ -216,3 +222,6 @@ where
     return 0.5 * (lo + hi)
 
 end PropertyKindCalculus.Uncertainty.Sampling
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

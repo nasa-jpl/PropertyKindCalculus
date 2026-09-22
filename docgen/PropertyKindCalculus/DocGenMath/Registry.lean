@@ -3,8 +3,11 @@ Copyright (c) 2026 California Institute of Technology. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Nicolas Rouquette
 -/
-import Lean
-import PropertyKindCalculus.DocGenMath.Term
+
+module
+
+public import Lean
+public import PropertyKindCalculus.DocGenMath.Term
 
 /-!
 # Symbol registry + atom heuristics for PKC math rendering
@@ -37,6 +40,9 @@ Stage 3 (the pretty printer) turns each token into a `MathNotation`. Two sources
 `resolveToken env` composes them: the `@[pkc_math_symbol]` registry first (by declaration name), then
 the configuration qualification, then the heuristic.
 -/
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.DocGenMath
 
@@ -119,7 +125,7 @@ entries such a binder falls through to the single-letter branch and reaches the 
 `ω`, which is not LaTeX: it renders only if the document happens to load a Unicode-math engine, and
 it is typeset as text rather than as a math variable even then. The character and its spelling
 resolve to the same control sequence, so `ω` and `omega` are interchangeable in a model's source. -/
-private def greek : List (String × String) :=
+def greek : List (String × String) :=
   [ ("alpha", "\\alpha"), ("beta", "\\beta"), ("gamma", "\\gamma"), ("delta", "\\delta"),
     ("epsilon", "\\epsilon"), ("varepsilon", "\\varepsilon"), ("zeta", "\\zeta"),
     ("eta", "\\eta"), ("theta", "\\theta"), ("iota", "\\iota"), ("kappa", "\\kappa"),
@@ -140,12 +146,12 @@ private def greek : List (String × String) :=
     ("Φ", "\\Phi"), ("Ψ", "\\Psi"), ("Ω", "\\Omega") ]
 
 /-- A small dictionary of domain identifiers with a conventional typeset form. -/
-private def dictionary : List (String × String) :=
+def dictionary : List (String × String) :=
   [ ("ndvi", "\\mathrm{NDVI}"), ("NDVI", "\\mathrm{NDVI}"),
     ("sigma0", "\\sigma^{0}"), ("sigma_0", "\\sigma^{0}") ]
 
 /-- Split a trailing run of digits off an identifier: `"s0" ↦ ("s", "0")`, `"abc" ↦ ("abc", "")`. -/
-private def splitTrailingDigits (s : String) : String × String :=
+def splitTrailingDigits (s : String) : String × String :=
   let cs := s.toList
   let digits := cs.reverse.takeWhile Char.isDigit |>.reverse
   let letters := cs.take (cs.length - digits.length)
@@ -205,3 +211,6 @@ def resolveToken (env : Environment) (token : String) : MathNotation :=
     | none           => .ofLatex (builtinSymbol (baseName token))
 
 end PropertyKindCalculus.DocGenMath
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

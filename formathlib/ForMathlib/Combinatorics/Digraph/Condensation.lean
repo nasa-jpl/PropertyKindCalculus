@@ -1,4 +1,6 @@
-import ForMathlib.Combinatorics.Digraph.Acyclic
+module
+
+public import ForMathlib.Combinatorics.Digraph.Acyclic
 
 /-!
 # Strongly connected components and the condensation of a digraph
@@ -19,6 +21,9 @@ digraphs close by `decide`.
 
 Upstream target: `Mathlib/Combinatorics/Digraph/Condensation.lean`.
 -/
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace Digraph
 
@@ -117,3 +122,6 @@ instance : DecidableRel G.condensation.Adj := fun _ _ =>
 end Decidable
 
 end Digraph
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

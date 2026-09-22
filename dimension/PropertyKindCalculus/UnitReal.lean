@@ -19,11 +19,16 @@ a gravimetric water content, and that is a fact of the types rather than a runti
 Lives in the `Dimension` library because `ℝ` needs Mathlib.
 -/
 
-import PropertyKindCalculus.Unit
-import PropertyKindCalculus.QuantityReal
-import Mathlib.Algebra.Order.Field.Basic
-import Mathlib.Tactic.FieldSimp
-import Mathlib.Tactic.Ring
+module
+
+public import PropertyKindCalculus.Unit
+public import PropertyKindCalculus.QuantityReal
+public import Mathlib.Algebra.Order.Field.Basic
+public import Mathlib.Tactic.FieldSimp
+public import Mathlib.Tactic.Ring
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -130,3 +135,6 @@ theorem measure_ofNumber_eq_symbolic (u : RealUnit k) (symbol : String) (n : Int
 end RealUnit
 
 end PropertyKindCalculus
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

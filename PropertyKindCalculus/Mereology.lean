@@ -18,6 +18,11 @@ for some purpose" (§3.3 Note 5). What a carving cannot supply is the *whole*; t
 with a sort of system and the license to aggregate at it (`Composite.lean`).
 -/
 
+module
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
+
 namespace PropertyKindCalculus
 
 universe u
@@ -93,3 +98,6 @@ theorem count_true_eq_joins_succ {O : Type u} (d : Decomposition O) :
       omega
 
 end PropertyKindCalculus
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

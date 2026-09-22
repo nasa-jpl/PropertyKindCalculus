@@ -34,10 +34,15 @@ Lives in the `Dimension` library because these need Mathlib — `ℝ` for the me
 the transports — the one dependency kept out of the core spine.
 -/
 
-import PropertyKindCalculus.Aggregation
-import PropertyKindCalculus.QuantityReal
-import Mathlib.Basic.Real.Basic
-import Mathlib.Tactic.Ring
+module
+
+public import PropertyKindCalculus.Aggregation
+public import PropertyKindCalculus.QuantityReal
+public import Mathlib.Basic.Real.Basic
+public import Mathlib.Tactic.Ring
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -192,3 +197,6 @@ theorem angularMomentumMeasurement_transports {O : Type u} (w x y vx vy : O → 
   ⟨fun a b d => angularMomentumTransport w x y vx vy a b d⟩
 
 end PropertyKindCalculus
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

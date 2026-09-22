@@ -33,8 +33,13 @@ Like `KindEdges`, this module imports `Lean` and is built by the package glob bu
 of the prelude-only `import PropertyKindCalculus` spine.
 -/
 
-import Lean
-import PropertyKindCalculus.OperatorTable
+module
+
+public import Lean
+public import PropertyKindCalculus.OperatorTable
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.KindAlgebra
 
@@ -67,3 +72,6 @@ elab_rules : command
       | _ => throwErrorAt e "unrecognized kind_algebra entry"
 
 end PropertyKindCalculus.KindAlgebra
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

@@ -32,7 +32,13 @@ deviation distributions — so SSPRC captures the very `E(Y) − R` gap the line
 miss. The model is any `List Float → Float` (a WO1 `[NumCarrier α]` kernel at `Float`). Mathlib- and
 TorchLean-free.
 -/
-import PropertyKindCalculus.Uncertainty.InputDist
+
+module
+
+public import PropertyKindCalculus.Uncertainty.InputDist
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Uncertainty.Ssprc
 
@@ -130,3 +136,6 @@ figure, additive rather than the Monte Carlo combinatorial cost. -/
 def evalCount (ns : List Nat) : Nat := (ns.foldl (· + ·) 0) + 1
 
 end PropertyKindCalculus.Uncertainty.Ssprc
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

@@ -48,8 +48,13 @@ was cut is not a total, which is why the ∀-quantified form of `extensive_addit
 is the deliverable.
 -/
 
-import PropertyKindCalculus.Mereology
-import PropertyKindCalculus.PropertyValue
+module
+
+public import PropertyKindCalculus.Mereology
+public import PropertyKindCalculus.PropertyValue
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -560,3 +565,6 @@ theorem angularMomentumMeasurement_extensiveAbout {O : Type u} (w x y vx vy : O 
   ⟨fun _ _ => rfl, fun _ _ _ => rfl⟩
 
 end PropertyKindCalculus
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

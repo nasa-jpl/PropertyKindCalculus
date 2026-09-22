@@ -30,7 +30,12 @@ term — never any normative text from either source (both are copyrighted; the 
 `Iso80000.References`, which records only the citable identity of each ISO part.
 -/
 
-import Lean
+module
+
+public import Lean
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 open Lean
 
@@ -112,3 +117,6 @@ initialize registerBuiltinAttribute {
 def vim4Refs (env : Environment) : Array OntologyRef := vim4Ext.getState env
 
 end PropertyKindCalculus.CrossRefs
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

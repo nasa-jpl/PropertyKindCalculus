@@ -27,8 +27,13 @@ content is the license discipline, not the chassis drawing. Lives with the
 `DimensionExamples` because the transport laws use `ring`.
 -/
 
-import PropertyKindCalculus.InterfaceLedger
-import PropertyKindCalculus.AggregationLaws
+module
+
+public import PropertyKindCalculus.InterfaceLedger
+public import PropertyKindCalculus.AggregationLaws
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.DimensionExamples.RoverExtensivity
 
@@ -308,3 +313,6 @@ theorem coarse_cannot_tell :
     | assembly j => cases i <;> cases j <;> decide
 
 end PropertyKindCalculus.DimensionExamples.RoverExtensivity
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

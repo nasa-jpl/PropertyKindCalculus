@@ -20,7 +20,13 @@ realization is FloatLib's `round_nearestEven_point` (the rounded value is the gl
 representable) and `ulp` (see `Adequacy.Fp32Grounding`); the grid statement here is that fact
 localized to one magnitude. Proved over `ℝ`, sorry-free.
 -/
-import PropertyKindCalculus.Uncertainty.Adequacy.Grid
+
+module
+
+public import PropertyKindCalculus.Uncertainty.Adequacy.Grid
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Uncertainty.Adequacy
 
@@ -77,3 +83,6 @@ theorem resolve {u x y : ℝ} (hu : 0 < u) (hx : OnGrid u x)
   ring
 
 end PropertyKindCalculus.Uncertainty.Adequacy
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

@@ -65,7 +65,12 @@ half-ulp budgets over an `add`/`sub`/`mul`/`div` DAG, grounded in TorchLean's ow
 boundary rather than claiming the whole of it.
 -/
 
-import PropertyKindCalculus.Kind
+module
+
+public import PropertyKindCalculus.Kind
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -501,3 +506,6 @@ instance instScalarCarrierInt : ScalarCarrier Int := ⟨⟩
 instance instScalarCarrierFloat : ScalarCarrier Float := ⟨⟩
 
 end PropertyKindCalculus
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

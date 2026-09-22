@@ -12,6 +12,11 @@ Mirrors the discipline of `PropertyKindCalculus.CrossRefs.Sources` and
 requirement; the *design* text lives in the blueprint chapters.
 -/
 
+module
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
+
 namespace PropertyKindCalculus.Requirements
 
 /-- The groups the requirements fall into, matching the blueprint's
@@ -198,3 +203,6 @@ def requirementById? (id : String) : Option Requirement :=
   catalogue.find? (·.id == id)
 
 end PropertyKindCalculus.Requirements
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

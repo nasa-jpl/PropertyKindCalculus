@@ -60,8 +60,13 @@ fails in both directions.
 two aggregation laws whose arithmetic the Mathlib-free core cannot do.
 -/
 
-import PropertyKindCalculus.Extensivity
-import PropertyKindCalculus.QuantityRefinement
+module
+
+public import PropertyKindCalculus.Extensivity
+public import PropertyKindCalculus.QuantityRefinement
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -353,3 +358,6 @@ theorem WeightedCarvingQ.mean_div_refines {E S : Type} {P : Type u}
   Quantity.div_refines hq _ _
 
 end PropertyKindCalculus
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

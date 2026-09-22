@@ -23,10 +23,15 @@ The proof is the textbook computation, carried by three facts:
   mass distribution takes; only its positivity is used.
 -/
 
-import Physlib.ClassicalMechanics.RigidBody.SolidSphere
-import Physlib.SpaceAndTime.Space.Integrals.Basic
-import Mathlib.MeasureTheory.Constructions.HaarToSphere
-import Mathlib.Analysis.SpecialFunctions.Integrals.Basic
+module
+
+public import Physlib.ClassicalMechanics.RigidBody.SolidSphere
+public import Physlib.SpaceAndTime.Space.Integrals.Basic
+public import Mathlib.MeasureTheory.Constructions.HaarToSphere
+public import Mathlib.Analysis.SpecialFunctions.Integrals.Basic
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace ForPhysLib.ClassicalMechanics.SolidSphereInertia
 
@@ -249,3 +254,6 @@ theorem solidSphere_inertiaTensor (m R : ℝ≥0) (hr : R ≠ 0) :
   · simp [h]
 
 end ForPhysLib.ClassicalMechanics.SolidSphereInertia
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

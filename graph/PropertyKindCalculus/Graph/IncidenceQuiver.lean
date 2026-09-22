@@ -1,6 +1,8 @@
-import PropertyKindCalculus.Graph.Flow
-import ForMathlib.Combinatorics.Quiver.Acyclic
-import Mathlib.Basic.Finite.Sum
+module
+
+public import PropertyKindCalculus.Graph.Flow
+public import ForMathlib.Combinatorics.Quiver.Acyclic
+public import Mathlib.Basic.Finite.Sum
 
 /-!
 # The incidence quiver — occurrence multiplicity as arrows, and finite budgets
@@ -20,6 +22,9 @@ two vertices form a **finite type** (`Provenance.Acyclic.finite_incidencePath`) 
 well-formedness of a budget as a finite sum over paths, discharged by the same
 executable `acyclic` check a probe evaluates.
 -/
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -171,3 +176,6 @@ theorem Acyclic.finite_incidencePath [BEq ν] [LawfulBEq ν] {g : Provenance ν 
 end Provenance
 
 end PropertyKindCalculus
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

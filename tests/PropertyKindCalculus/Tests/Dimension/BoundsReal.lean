@@ -17,9 +17,17 @@ the ℝ carrier enters only the probe witnesses (`norm_num`), not the bridge its
 confirms no `sorryAx`.
 -/
 
-import PropertyKindCalculus.BoundsReal
-import Mathlib.Basic.Real.Basic
-import Mathlib.Tactic.NormNum
+module
+
+public import PropertyKindCalculus.BoundsReal
+meta import PropertyKindCalculus.BoundsReal
+public import Mathlib.Basic.Real.Basic
+meta import Mathlib.Basic.Real.Basic
+public import Mathlib.Tactic.NormNum
+meta import Mathlib.Tactic.NormNum
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Tests.BoundsReal
 
@@ -52,3 +60,6 @@ example : ((5 : ℝ) ∈ box.toIcc) = box.Mem ⟨5⟩ := rfl
 #guard_msgs (whitespace := lax) in #print axioms IccQ.mem_toIcc
 
 end PropertyKindCalculus.Tests.BoundsReal
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

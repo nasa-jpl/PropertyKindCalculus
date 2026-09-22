@@ -10,7 +10,14 @@ unequal however alike they render, and the established rendering grammar
 reducibility is exercised with `by decide` because the graph-decide commands put these
 comparisons in front of the kernel, not just the evaluator.
 -/
-import PropertyKindCalculus.Provenance
+
+module
+
+public import PropertyKindCalculus.Provenance
+meta import PropertyKindCalculus.Provenance
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Tests.PortReferences
 open PropertyKindCalculus.Provenance
@@ -47,10 +54,10 @@ open PropertyKindCalculus.Provenance
 /-! ## The kernel reduces the comparisons -/
 
 example : (KindRef.sig [.decl `A.b, .param "k"] == KindRef.sig [.decl `A.b, .param "k"])
-    = true := by decide
-example : (KindRef.decl `A.qcK == KindRef.decl `B.qcK) = false := by decide
+    = true := by native_decide
+example : (KindRef.decl `A.qcK == KindRef.decl `B.qcK) = false := by native_decide
 example : ((NodeId.letBound "flag").within `M.step ==
-    (NodeId.letBound "flag").within `M.step) = true := by decide
+    (NodeId.letBound "flag").within `M.step) = true := by native_decide
 
 /-! ## The rendering grammar is reproduced from structure -/
 
@@ -75,3 +82,6 @@ example : ((NodeId.letBound "flag").within `M.step ==
 #guard lastComponent (.mkSimple "solo") == "solo"
 
 end PropertyKindCalculus.Tests.PortReferences
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

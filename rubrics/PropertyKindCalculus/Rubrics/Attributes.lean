@@ -37,9 +37,14 @@ harvested from the audit probes in the import closure, so it cannot be supplied 
 annotating something else.
 -/
 
-import Lean
-import PropertyKindCalculus.AuditReceipt
-import PropertyKindCalculus.Rubrics.Catalogue
+module
+
+public import Lean
+public import PropertyKindCalculus.AuditReceipt
+public import PropertyKindCalculus.Rubrics.Catalogue
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 open Lean
 
@@ -205,3 +210,6 @@ def Conformance.tally (c : Conformance) (env : Environment) : Tally :=
     | _             => { t with addressed := t.addressed + 1 }
 
 end PropertyKindCalculus.Rubrics
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

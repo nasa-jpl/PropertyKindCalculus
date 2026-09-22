@@ -25,7 +25,12 @@ coordinate system while its components are not — is R20, in
 `PropertyKindCalculus.DimensionExamples.Frames`.
 -/
 
-import PropertyKindCalculus.QuantityVector
+module
+
+public import PropertyKindCalculus.QuantityVector
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Examples.MiniVectorQuantity
 
@@ -110,3 +115,6 @@ instance : Mul (Fin 3 → Int) := ⟨fun v w i => v i * w i⟩
 #check_failure Quantity.mul hSquare east east
 
 end PropertyKindCalculus.Examples.MiniVectorQuantity
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

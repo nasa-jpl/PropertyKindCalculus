@@ -16,7 +16,13 @@ TorchLean autograd (`func.grad`), leaving these combine functions unchanged.
 These are the coarse rungs of the GUM ⊂ Willink ⊂ SSPRC ladder; `gumStdUnc` is exactly the
 `κ₂`-projection of `willinkCombine` (theorem T2, proved over `ℝ` in Stage 1). Mathlib-free.
 -/
-import PropertyKindCalculus.Uncertainty.InputDist
+
+module
+
+public import PropertyKindCalculus.Uncertainty.InputDist
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Uncertainty
 
@@ -108,3 +114,6 @@ def willinkExcess (terms : List (Float × MomentData Float)) : Float :=
   (willinkCombine terms).2
 
 end PropertyKindCalculus.Uncertainty
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

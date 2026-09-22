@@ -23,9 +23,15 @@ Two absences are deliberate and are the metrological content of this file:
 This is the only PropertyKindCalculus library that depends on TorchLean; the core spine
 stays Mathlib- and TorchLean-free.
 -/
-import PropertyKindCalculus.Torch.Fp32
-import PropertyKindCalculus.QuantityFunction
-import FloatLib.Floats.Formats.BinaryInterchange.Configured.Transcendentals
+
+module
+
+public import PropertyKindCalculus.Torch.Fp32
+public import PropertyKindCalculus.QuantityFunction
+public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Transcendentals
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 open TorchLean.Floats          -- `FP32`
 open FloatLib.Numerics (MathFunctions)
@@ -64,3 +70,6 @@ instance instMathCarrierIEEE32 : MathCarrier IEEE32Exec where
   pi := MathFunctions.pi
 
 end PropertyKindCalculus
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

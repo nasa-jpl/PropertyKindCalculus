@@ -21,7 +21,13 @@ theorems, computed here over Lean's `Float`. (TorchLean's `FP32`/Flocq layer is 
 the executable carrier necessarily runs over `Float`; the binary32 ulp is modelled directly. Bridging
 the two is Stage 3.3 — see `Adequacy.Fp32Grounding`.) Mathlib- and TorchLean-free.
 -/
-import PropertyKindCalculus.Uncertainty.Carriers
+
+module
+
+public import PropertyKindCalculus.Uncertainty.Carriers
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Uncertainty
 
@@ -75,7 +81,7 @@ def isAdequate (a : Adequacy) : Bool :=
 
 /-- Apply a `Float` function to the value, carrying the uncertainty and report unchanged
 (0th-order — the carrier targets `+`/`−` adequacy; transcendental sensitivity is Stage 3.x). -/
-private def mapVal (f : Float → Float) (a : Adequacy) : Adequacy := { a with value := f a.value }
+def mapVal (f : Float → Float) (a : Adequacy) : Adequacy := { a with value := f a.value }
 
 /-! ## The `NumCarrier` instance — swamping and cancellation checks on `+` and `−` -/
 
@@ -149,3 +155,6 @@ instance : NumCarrier Adequacy := {}
 end Adequacy
 
 end PropertyKindCalculus.Uncertainty
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

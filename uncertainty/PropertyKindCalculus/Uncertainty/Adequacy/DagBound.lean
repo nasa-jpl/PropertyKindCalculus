@@ -57,7 +57,13 @@ too — from `dag_fp32_box_exact_of_*`'s equality to a resolution statement, lif
 way `dag_fp32_error_bound` lifts the half-ulp bound. Proved over `ℝ`/`FP32`, sorry-free
 (`[propext, Classical.choice, Quot.sound]`).
 -/
-import PropertyKindCalculus.Uncertainty.Adequacy.Fp32Grounding
+
+module
+
+public import PropertyKindCalculus.Uncertainty.Adequacy.Fp32Grounding
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Uncertainty.Adequacy
 
@@ -483,3 +489,6 @@ theorem dag_fp32_box_exact_of_exactRepresentable (e : Expr) (ρ σ : ℕ → FP3
     ((flagFree_iff_exactRepresentable σ e).mpr hσ)
 
 end PropertyKindCalculus.Uncertainty.Adequacy
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

@@ -62,7 +62,12 @@ refines `ProductKind` — they live in `PropertyKindCalculus.Function` in the `D
 layer. Here the relations carry the ratio-scale gate, which *is* core-expressible.
 -/
 
-import PropertyKindCalculus.QuantityClassification
+module
+
+public import PropertyKindCalculus.QuantityClassification
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -496,3 +501,6 @@ instance instMathCarrierExtFloat : MathCarrierExt Float where
   rpow := fun x q => Float.pow x (Float.ofInt q.num / Float.ofNat q.den)
 
 end PropertyKindCalculus
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

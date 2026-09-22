@@ -11,5 +11,15 @@ IEEE-754 binary32 carriers realizing `CarrierRefinement` over `ℝ`.
 This is the only PropertyKindCalculus library that depends on TorchLean.
 -/
 
-import PropertyKindCalculus.Torch.Fp32
-import PropertyKindCalculus.Torch.Fp32Math
+module
+
+public import PropertyKindCalculus.Torch.Fp32
+public import PropertyKindCalculus.Torch.Fp32Math
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
+
+
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

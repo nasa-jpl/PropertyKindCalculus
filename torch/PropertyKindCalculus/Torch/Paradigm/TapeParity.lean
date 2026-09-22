@@ -25,8 +25,14 @@ the same clamped `sqrtSpec`, the same `min`/`max`), so it holds for symbolic inp
 
 Plain (not a `module`) file: imports the tape carrier and the faithfulness lemmas.
 -/
-import PropertyKindCalculus.Torch.Paradigm.TapeCarrier
-import PropertyKindCalculus.Torch.Paradigm.TapeFaithful
+
+module
+
+public import PropertyKindCalculus.Torch.Paradigm.TapeCarrier
+public import PropertyKindCalculus.Torch.Paradigm.TapeFaithful
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 open Spec TorchLean
 open TorchLean TorchLean.Tensor
@@ -316,3 +322,6 @@ theorem Evaluates_exp {x : TapeBuilder s} {vx : Tensor Float s}
   Evaluates_un (TapeM.exp (s := s)) expSpec faith_exp hx
 
 end PropertyKindCalculus.Paradigm.TapeParity
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

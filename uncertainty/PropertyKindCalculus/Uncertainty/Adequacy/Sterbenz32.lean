@@ -25,9 +25,15 @@ halves matter for adequacy, and both are theorems here:
 
 Proved over `ℝ`, sorry-free.
 -/
-import PropertyKindCalculus.Uncertainty.Adequacy.Grid
-import Mathlib.Algebra.Order.Field.Basic
-import Mathlib.Tactic.Positivity
+
+module
+
+public import PropertyKindCalculus.Uncertainty.Adequacy.Grid
+public import Mathlib.Algebra.Order.Field.Basic
+public import Mathlib.Tactic.Positivity
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Uncertainty.Adequacy
 
@@ -121,3 +127,6 @@ theorem flx_sterbenz {p : ℕ} {x y : ℝ} (hy : 0 < y) (hyx : y ≤ x) (hx2y : 
       linarith
 
 end PropertyKindCalculus.Uncertainty.Adequacy
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

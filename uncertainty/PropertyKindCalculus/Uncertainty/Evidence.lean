@@ -64,10 +64,16 @@ the same reason.
 `Float`-carried and Mathlib-free, like `Combine.lean`: the `t` quantile needs a concrete
 approximation, and a coverage factor read off one is a concrete number.
 -/
-import PropertyKindCalculus.Uncertainty.EvidenceKinds
-import PropertyKindCalculus.Uncertainty.Roles
-import PropertyKindCalculus.Uncertainty.Budget
-import PropertyKindCalculus.Uncertainty.Carriers
+
+module
+
+public import PropertyKindCalculus.Uncertainty.EvidenceKinds
+public import PropertyKindCalculus.Uncertainty.Roles
+public import PropertyKindCalculus.Uncertainty.Budget
+public import PropertyKindCalculus.Uncertainty.Carriers
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Uncertainty
 
@@ -333,7 +339,7 @@ of infinitely many.
 The weights are reciprocals of the measurand's squared kind and the weighted mean divides them
 back out, so the whole expression passes through transient kinds and returns at `k` — computed on
 the carrier and re-stamped, `Budget.combinedQ`'s discipline again. -/
-private def poolTwo (a b : Evidence k) : Evidence k :=
+def poolTwo (a b : Evidence k) : Evidence k :=
   let ua := a.stdUnc.magnitude
   let ub := b.stdUnc.magnitude
   let wa := 1.0 / (ua * ua)
@@ -381,3 +387,6 @@ and pooling would replace the record rather than add to it"
     else .pooled (poolTwo current new)
 
 end PropertyKindCalculus.Uncertainty
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

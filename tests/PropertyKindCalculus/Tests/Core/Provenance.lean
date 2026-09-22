@@ -23,7 +23,14 @@ one refinement a declaration may make — `param`, a source the tier below binds
 signature harvest can read — against `config`, which is harvested and therefore not a
 claim the contract may make.
 -/
-import PropertyKindCalculus.Provenance
+
+module
+
+public import PropertyKindCalculus.Provenance
+meta import PropertyKindCalculus.Provenance
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Tests.Provenance
 
@@ -395,3 +402,6 @@ def assembled : Provenance String String :=
     : Provenance String String).wellFormed
 
 end PropertyKindCalculus.Tests.Provenance
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

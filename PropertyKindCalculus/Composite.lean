@@ -46,8 +46,13 @@ how parts make a whole is settled by what the whole is — which is exactly the 
 parts cannot make on their own behalf.
 -/
 
-import PropertyKindCalculus.Extensivity
-import PropertyKindCalculus.IndividualQuantity
+module
+
+public import PropertyKindCalculus.Extensivity
+public import PropertyKindCalculus.IndividualQuantity
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -232,3 +237,6 @@ theorem assemble_ne_measured (σ : SortOfSystem) [Assembles σ k] (whole : O)
   exact (hfold.symm.trans he).symm
 
 end PropertyKindCalculus
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

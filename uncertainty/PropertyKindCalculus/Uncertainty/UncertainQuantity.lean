@@ -7,8 +7,14 @@ used for vector quantities): the carrier tower is untouched. The same descriptor
 UQ methods (Area 1) and the numerical-adequacy check (Area 2) — the architectural hinge of
 `UNCERTAINTY.md`.
 -/
-import PropertyKindCalculus.Quantity
-import PropertyKindCalculus.Uncertainty.InputDist
+
+module
+
+public import PropertyKindCalculus.Quantity
+public import PropertyKindCalculus.Uncertainty.InputDist
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Uncertainty
 
@@ -29,3 +35,6 @@ def UncertainQuantity.atMean {k : KindOfProperty} (d : InputDist Float) :
   { value := ⟨d.moments.mean⟩, dist := d }
 
 end PropertyKindCalculus.Uncertainty
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

@@ -37,7 +37,12 @@ point requires the pair's torques to cancel — the strong (central-force) form 
 law — which is a modeling obligation the `antisymm` field states rather than discharges.
 -/
 
-import PropertyKindCalculus.Extensivity
+module
+
+public import PropertyKindCalculus.Extensivity
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -206,3 +211,6 @@ theorem netMeasurement_extensive (L : InterfaceLedger O) (k : KindOfProperty) (r
 end InterfaceLedger
 
 end PropertyKindCalculus
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

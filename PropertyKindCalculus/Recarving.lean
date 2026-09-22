@@ -27,7 +27,12 @@ physical structure is" (*Whole, but not One*, 2018, §3) — the aggregate is an
 whole, the count is answerable only to a sortal.
 -/
 
-import PropertyKindCalculus.Extensivity
+module
+
+public import PropertyKindCalculus.Extensivity
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -146,3 +151,6 @@ theorem count_sortal_ne :
       ≠ Decomposition.count (fun n => n == 2) twoParts := by decide
 
 end PropertyKindCalculus
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

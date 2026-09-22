@@ -40,11 +40,16 @@ No normative text from the licensed standard is reproduced; the items are restat
 work's own formalism.
 -/
 
-import PropertyKindCalculus.Bounds
-import PropertyKindCalculus.Complex
-import PropertyKindCalculus.QuantityVector
-import PropertyKindCalculus.Iso80000.References
-import PropertyKindCalculus.QuantityReal
+module
+
+public import PropertyKindCalculus.Bounds
+public import PropertyKindCalculus.Complex
+public import PropertyKindCalculus.QuantityVector
+public import PropertyKindCalculus.Iso80000.References
+public import PropertyKindCalculus.QuantityReal
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Iso80000.Part2
 
@@ -146,3 +151,6 @@ example {V : Type} [SMul R V] [ScalarCarrier R] {k₁ k₂ k : KindOfProperty}
 end Section18
 
 end PropertyKindCalculus.Iso80000.Part2
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

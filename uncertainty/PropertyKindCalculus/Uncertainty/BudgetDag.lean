@@ -32,8 +32,14 @@ carrier-generic and definitional: the equation-lemma simp set, the per-node GUM-
 and `propagateQ_value_eq_valueQ` (the value component of the propagated estimate is the plain
 kinded evaluation). Mathlib- and TorchLean-free.
 -/
-import PropertyKindCalculus.Uncertainty.Budget
-import PropertyKindCalculus.Uncertainty.UncertainQuantity
+
+module
+
+public import PropertyKindCalculus.Uncertainty.Budget
+public import PropertyKindCalculus.Uncertainty.UncertainQuantity
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Uncertainty
 
@@ -248,3 +254,6 @@ theorem BudgetExpr.propagateQ_value_eq_valueQ {R} [NumCarrier R] {k : KindOfProp
       simp only [BudgetExpr.propagateQ, BudgetExpr.valueQ, iha, ihb]
 
 end PropertyKindCalculus.Uncertainty
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

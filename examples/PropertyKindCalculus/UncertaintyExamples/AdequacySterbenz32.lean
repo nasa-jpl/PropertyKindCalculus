@@ -22,8 +22,14 @@ sorry-free axiom profile.
 Everything is a **checked fact** (the module builds under CI); the axiom prints confirm no `sorryAx`.
 Mathlib- and TorchLean-backed.
 -/
-import PropertyKindCalculus.Uncertainty.Adequacy.Fp32Grounding
-import PropertyKindCalculus.Uncertainty.Adequacy.Sterbenz32
+
+module
+
+public import PropertyKindCalculus.Uncertainty.Adequacy.Fp32Grounding
+public import PropertyKindCalculus.Uncertainty.Adequacy.Sterbenz32
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.UncertaintyExamples.AdequacySterbenz32
 
@@ -75,3 +81,6 @@ theorem flx_model_sterbenz : FLX 24 (3 - 2) :=
 #guard_msgs (whitespace := lax) in #print axioms sub32_error_vanishes
 
 end PropertyKindCalculus.UncertaintyExamples.AdequacySterbenz32
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

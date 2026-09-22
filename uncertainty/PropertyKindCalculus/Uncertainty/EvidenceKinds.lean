@@ -27,10 +27,16 @@ and return bare `Float`s on purpose: they are the numerics layer, the analogue o
 approximation coefficient. The kinds start one level up, at the first function whose arguments
 mean something.
 -/
-import PropertyKindCalculus.Kind
-import PropertyKindCalculus.Quantity
-import PropertyKindCalculus.QuantityClassification
-import PropertyKindCalculus.Bounds
+
+module
+
+public import PropertyKindCalculus.Kind
+public import PropertyKindCalculus.Quantity
+public import PropertyKindCalculus.QuantityClassification
+public import PropertyKindCalculus.Bounds
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Uncertainty
 
@@ -173,3 +179,6 @@ out of a case analysis that could disagree with it. -/
 def dofUnbounded : Quantity degreesOfFreedom Float := ⟨1.0 / 0.0⟩
 
 end PropertyKindCalculus.Uncertainty
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

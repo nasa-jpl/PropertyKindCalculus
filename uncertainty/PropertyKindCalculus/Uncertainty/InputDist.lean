@@ -18,7 +18,13 @@ constructors; the cumulant constants are Willink (2005) Table 1. Applications ad
 Stage 0 provides the `Float` constructors; the `[NumCarrier R]`-generic forms arrive with the
 proof layer in Stage 1.
 -/
-import PropertyKindCalculus.Uncertainty.Sampling
+
+module
+
+public import PropertyKindCalculus.Uncertainty.Sampling
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Uncertainty
 
@@ -78,3 +84,6 @@ def InputDist.arcsine (μ δ : Float) : InputDist Float where
   invCDF := fun p => μ - δ * Float.cos (3.141592653589793 * p)  -- arcsine inverse CDF
 
 end PropertyKindCalculus.Uncertainty
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

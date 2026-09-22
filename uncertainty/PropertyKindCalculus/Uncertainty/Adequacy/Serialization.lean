@@ -52,8 +52,14 @@ and the printer are opaque at a host carrier (`UNCERTAINTY.md` §4.6 F, which sa
 the `Adequacy` carrier's `Float`) — so this is a checked property of each crossing, and the
 API offers no way to obtain a verdict without running the check.
 -/
-import PropertyKindCalculus.Decimal
-import PropertyKindCalculus.Uncertainty.Carriers
+
+module
+
+public import PropertyKindCalculus.Decimal
+public import PropertyKindCalculus.Uncertainty.Carriers
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Uncertainty.Adequacy
 
@@ -150,3 +156,6 @@ theorem displacement_eq_zero_of_exact {k' : KindOfProperty} {R' : Type} [Decimal
   rfl
 
 end PropertyKindCalculus.Uncertainty.Adequacy
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

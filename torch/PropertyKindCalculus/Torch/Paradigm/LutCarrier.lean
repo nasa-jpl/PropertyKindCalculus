@@ -38,9 +38,15 @@ INSTANCES.
 
 Plain (not a `module`) file: imports the tape carrier and the CUDA carrier.
 -/
-import PropertyKindCalculus.Torch.Paradigm.TapeCarrier
-import PropertyKindCalculus.Torch.Paradigm.CudaCarrier
-import NN.Runtime.Autograd.Engine.Cuda.TexTable
+
+module
+
+public import PropertyKindCalculus.Torch.Paradigm.TapeCarrier
+public import PropertyKindCalculus.Torch.Paradigm.CudaCarrier
+public import NN.Runtime.Autograd.Engine.Cuda.TexTable
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 open Spec TorchLean
 open TorchLean TorchLean.Tensor
@@ -143,3 +149,6 @@ instance {s : Shape} : LutInterp (CudaCarrier.CudaT s) where
     ⟨Runtime.Autograd.Cuda.TexTable.fetch tex u.buf layer.buf⟩
 
 end PropertyKindCalculus.Paradigm
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

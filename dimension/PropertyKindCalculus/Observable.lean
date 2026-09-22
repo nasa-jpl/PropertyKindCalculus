@@ -31,8 +31,13 @@ a measurand below cannot be applied to a non-observable by accident.
 restates them.
 -/
 
-import PropertyKindCalculus.Measurand
-import Mathlib.Analysis.InnerProductSpace.LinearPMap
+module
+
+public import PropertyKindCalculus.Measurand
+public import Mathlib.Analysis.InnerProductSpace.LinearPMap
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -83,3 +88,6 @@ def toMeasurand (A : Observable 𝕜 k H) (hkk : ProductKind k k k₂)
 end Observable
 
 end PropertyKindCalculus
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

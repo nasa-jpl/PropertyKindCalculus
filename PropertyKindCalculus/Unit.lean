@@ -28,7 +28,12 @@ unit yields a numeral, and re-applying the unit to that numeral recovers the val
 unitary kind bears a unit and only then is the result a quantity value.
 -/
 
-import PropertyKindCalculus.ValueScale
+module
+
+public import PropertyKindCalculus.ValueScale
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -207,3 +212,6 @@ theorem KindOfProperty.unit_commensurable (k : KindOfProperty) (s₁ s₂ : Stri
     (k.unit s₁).Commensurable (k.unit s₂) := rfl
 
 end PropertyKindCalculus
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

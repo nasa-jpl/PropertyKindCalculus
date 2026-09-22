@@ -45,8 +45,14 @@ here almost nothing is rejected, so a failure is witnessed by an `example` showi
 
 Each one is a bug a reviewer would have to catch by reading.
 -/
-import Mathlib.Analysis.SpecialFunctions.Sqrt
-import Mathlib.Analysis.Real.Pi.Bounds
+
+module
+
+public import Mathlib.Analysis.SpecialFunctions.Sqrt
+public import Mathlib.Analysis.Real.Pi.Bounds
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Examples.HarmonicOscillator.Attempt1
 
@@ -505,3 +511,6 @@ example (T : ℝ) : ℝ := expectsPotential T
 end MR32
 
 end PropertyKindCalculus.Examples.HarmonicOscillator.Attempt1
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

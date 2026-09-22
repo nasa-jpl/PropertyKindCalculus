@@ -29,8 +29,13 @@ Any consumer — the blueprint's traceability matrix, or a future query tool —
 ask, for a given requirement, *where it is formalized, proved, and implemented*.
 -/
 
-import Lean
-import PropertyKindCalculus.Requirements.Catalogue
+module
+
+public import Lean
+public import PropertyKindCalculus.Requirements.Catalogue
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 open Lean
 
@@ -197,3 +202,6 @@ def requirementTally (env : Environment) : RequirementTally :=
                  + (if requirementDischarged env r.id then 1 else 0) }
 
 end PropertyKindCalculus.Requirements
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

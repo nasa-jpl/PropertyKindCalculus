@@ -25,8 +25,16 @@ Two of the traps are the reason the layer is shaped the way it is:
     covering the document's — a run over some other namespace is not coverage, and one
     of two gates is not both.
 -/
-import PropertyKindCalculus.Rubrics
-import PropertyKindCalculus.BoundaryAudit
+
+module
+
+public import PropertyKindCalculus.Rubrics
+meta import PropertyKindCalculus.Rubrics
+public import PropertyKindCalculus.BoundaryAudit
+meta import PropertyKindCalculus.BoundaryAudit
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Tests.Rubrics
 
@@ -163,3 +171,6 @@ error: unknown rubric 'M99'; it is not in `PropertyKindCalculus.Rubrics.catalogu
 attribute [rubric "M99"] probeEdge
 
 end PropertyKindCalculus.Tests.Rubrics
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

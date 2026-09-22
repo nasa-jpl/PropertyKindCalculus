@@ -177,6 +177,11 @@ checked *on the assembled object* — no preservation theorem is owed, because t
 doctrine is to decide the object, never to trust the construction.
 -/
 
+module
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
+
 namespace PropertyKindCalculus
 
 /-- The role a port plays in a step's interface, and with it the time the port's value is
@@ -1129,3 +1134,6 @@ def union (g h : Provenance ν κ) : Provenance ν κ where
 end Provenance
 
 end PropertyKindCalculus
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

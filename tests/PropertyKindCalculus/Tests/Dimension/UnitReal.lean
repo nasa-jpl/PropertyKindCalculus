@@ -10,7 +10,13 @@ The boundary is the license: `RealUnit` admits no reference of magnitude zero, a
 well-formedness is the symbolic layer's — a nominal kind bears no unit here either.
 -/
 
-import PropertyKindCalculus.UnitReal
+module
+
+public import PropertyKindCalculus.UnitReal
+meta import PropertyKindCalculus.UnitReal
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Tests.UnitReal
 
@@ -75,3 +81,6 @@ theorem r17_nominal_not_wellFormed (u : RealUnit colourK) : ¬ u.WellFormed :=
 #guard_msgs (whitespace := lax) in #print axioms RealUnit.measure_ofNumber_eq_symbolic
 
 end PropertyKindCalculus.Tests.UnitReal
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

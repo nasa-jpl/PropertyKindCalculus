@@ -10,7 +10,14 @@ named operations for a reason a type cannot state: written inline, a part is an 
 `⟨z.magnitude.re⟩`, which a boundary audit reads as a mint — a quantity conjured from a
 bare number — standing where a carrier operation belongs.
 -/
-import PropertyKindCalculus.Complex
+
+module
+
+public import PropertyKindCalculus.Complex
+meta import PropertyKindCalculus.Complex
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Tests.Complex
 
@@ -35,3 +42,6 @@ example : probeEps.re.magnitude = probeEps.magnitude.re := rfl
 example : probeEps.im.magnitude = probeEps.magnitude.im := rfl
 
 end PropertyKindCalculus.Tests.Complex
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

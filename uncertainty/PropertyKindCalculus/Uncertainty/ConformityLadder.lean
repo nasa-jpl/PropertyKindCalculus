@@ -43,11 +43,17 @@ Mathlib's `ℝ`, like `Ladder.lean` and for the same reason: monotonicity is not
 can carry, and the executable counterparts in `Conformity.lean` are the same arithmetic on the
 rounding carrier.
 -/
-import Mathlib.Basic.Real.Basic
-import Mathlib.Order.Monotone.Basic
-import Mathlib.Tactic.Linarith
-import Mathlib.Tactic.FieldSimp
-import Mathlib.Tactic.Ring
+
+module
+
+public import Mathlib.Basic.Real.Basic
+public import Mathlib.Order.Monotone.Basic
+public import Mathlib.Tactic.Linarith
+public import Mathlib.Tactic.FieldSimp
+public import Mathlib.Tactic.Ring
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Uncertainty.ConformityLadder
 
@@ -196,3 +202,6 @@ theorem acceptanceLimit_le_of_floor (L : ℝ) {k uFloor u : ℝ} (hk : 0 ≤ k) 
   acceptanceLimit_antitone L hk h
 
 end PropertyKindCalculus.Uncertainty.ConformityLadder
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

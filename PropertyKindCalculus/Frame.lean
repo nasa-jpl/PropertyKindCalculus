@@ -88,8 +88,13 @@ the invariance theorems live in `PropertyKindCalculus.FrameReal` (the `Dimension
 exactly as `Quantity`'s laws relate to `QuantityReal`'s carrier.
 -/
 
-import PropertyKindCalculus.QuantityVector
-import PropertyKindCalculus.QuantityClassification
+module
+
+public import PropertyKindCalculus.QuantityVector
+public import PropertyKindCalculus.QuantityClassification
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -328,3 +333,6 @@ def component [Zero R] (x : InFrame f .vector k (Fin n → R)) (i : Fin n) :
 end InFrame
 
 end PropertyKindCalculus
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

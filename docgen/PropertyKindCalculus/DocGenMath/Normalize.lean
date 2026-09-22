@@ -3,7 +3,10 @@ Copyright (c) 2026 California Institute of Technology. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Nicolas Rouquette
 -/
-import PropertyKindCalculus.DocGenMath.Term
+
+module
+
+public import PropertyKindCalculus.DocGenMath.Term
 
 /-!
 # Stage 2 — Normalize the presentation IR (faithful)
@@ -27,10 +30,13 @@ commutative *product* is reordered, and only to hoist the scalar. Editorial regr
 (the **E**/**P** tiers) is deliberately *not* done here.
 -/
 
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
+
 namespace PropertyKindCalculus.DocGenMath
 
 /-- Read a term as an integer coefficient, seeing through a leading negation. -/
-private def asInt? : MathTerm → Option Int
+def asInt? : MathTerm → Option Int
   | .num n       => some n
   | .neg t       => (asInt? t).map (- ·)
   | _            => none
@@ -38,7 +44,7 @@ private def asInt? : MathTerm → Option Int
 /-- Combine runs of *adjacent, structurally-equal* factors into powers: `x·x·x → x³`.
 (Non-adjacent equal factors are left alone — the lift keeps authored order, and this is enough for
 the common `x*x` case without a full commutative regrouping, which would be an E-tier move.) -/
-private def groupPowers (fs : Array MathTerm) : Array MathTerm := Id.run do
+def groupPowers (fs : Array MathTerm) : Array MathTerm := Id.run do
   let mut out : Array MathTerm := #[]
   let mut i := 0
   while h : i < fs.size do
@@ -113,3 +119,6 @@ partial def normalize : MathTerm → MathTerm
     return (if neg then .neg core else core)
 
 end PropertyKindCalculus.DocGenMath
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

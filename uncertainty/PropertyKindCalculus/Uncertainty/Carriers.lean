@@ -15,7 +15,13 @@ This lets a **write-once** kernel over `[NumCarrier α]` (the WO1 discipline) in
 `Float` for Monte Carlo evaluation, exactly as it will later instantiate at `ℝ` (proofs),
 `FP32` (rounding), and `CudaT`/`TapeBuilder` (GPU/autograd). See `UNCERTAINTY.md`.
 -/
-import PropertyKindCalculus.Paradigm.NumCarrier
+
+module
+
+public import PropertyKindCalculus.Paradigm.NumCarrier
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Uncertainty
 
@@ -30,3 +36,6 @@ with no new fields. This is the executable leaf a WO1 `[NumCarrier α]` kernel r
 instance instNumCarrierFloat : NumCarrier Float := {}
 
 end PropertyKindCalculus.Uncertainty
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

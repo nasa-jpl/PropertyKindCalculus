@@ -57,9 +57,15 @@ them incomparable would have to unwrap at every step and would be worse than non
 separation is at the **role** layer, which is where `Bounds` puts the identical distinction for
 endpoints, and for the identical reason.
 -/
-import PropertyKindCalculus.Bounds
-import PropertyKindCalculus.Uncertainty.EvidenceKinds
-import PropertyKindCalculus.Uncertainty.Carriers
+
+module
+
+public import PropertyKindCalculus.Bounds
+public import PropertyKindCalculus.Uncertainty.EvidenceKinds
+public import PropertyKindCalculus.Uncertainty.Carriers
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Uncertainty
 
@@ -229,3 +235,6 @@ definitional form for that reason. -/
     (e.deviation e).magnitude = e.magnitude - e.magnitude := rfl
 
 end PropertyKindCalculus.Uncertainty
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

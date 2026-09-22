@@ -21,10 +21,15 @@ single-generator instance. Lives in the `Dimension` library because `ℝ` needs 
 the one dependency kept out of the core.
 -/
 
-import PropertyKindCalculus.UnitPrefix
-import Mathlib.Algebra.Order.Field.Basic
-import Mathlib.Basic.Real.Basic
-import Physlib.Units.ParametricUnits
+module
+
+public import PropertyKindCalculus.UnitPrefix
+public import Mathlib.Algebra.Order.Field.Basic
+public import Mathlib.Basic.Real.Basic
+public import Physlib.Units.ParametricUnits
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.PrefixedUnit
 
@@ -115,3 +120,6 @@ theorem dimScale_toUnitScale_single {B : Type} [DimensionBasis B] [Fintype B] [D
   rfl
 
 end PropertyKindCalculus.PrefixedUnit
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

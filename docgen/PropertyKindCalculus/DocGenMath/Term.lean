@@ -3,7 +3,10 @@ Copyright (c) 2026 California Institute of Technology. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Nicolas Rouquette
 -/
-import Lean
+
+module
+
+public import Lean
 
 /-!
 # `MathTerm` — the presentation IR for PKC math rendering
@@ -21,6 +24,9 @@ The middle representation of the three-stage rendering pipeline (see `RENDERING.
 to see, one step before LaTeX. It is carrier-agnostic and PKC-agnostic (it only imports `Lean`), so
 the pipeline can be unit-tested without building PKC or doc-gen4.
 -/
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.DocGenMath
 
@@ -189,3 +195,6 @@ This is the identity resolver the pure-stage tests use. -/
 def MathNotation.ofLatex (latex : String) : MathNotation := { latex }
 
 end PropertyKindCalculus.DocGenMath
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

@@ -13,7 +13,13 @@ The lawful `ℝ` instance of the same bridge is exercised in the Mathlib-backed
 Mathlib-free `Examples` library.
 -/
 
-import PropertyKindCalculus.QuantityRefinement
+module
+
+public import PropertyKindCalculus.QuantityRefinement
+meta import PropertyKindCalculus.QuantityRefinement
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Examples.MiniRefinement
 
@@ -77,3 +83,6 @@ example :
   Quantity.zero_refines
 
 end PropertyKindCalculus.Examples.MiniRefinement
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

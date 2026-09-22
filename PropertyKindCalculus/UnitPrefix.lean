@@ -33,7 +33,12 @@ exact and Mathlib-free; turning the exponent into a numeric magnitude (1 cm = 10
 as a number) belongs to the real-carrier `Quantity` layer, not here.
 -/
 
-import PropertyKindCalculus.Unit
+module
+
+public import PropertyKindCalculus.Unit
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -280,3 +285,6 @@ def MetrologicalUnit.withBinaryPrefix (u : MetrologicalUnit) (p : BinaryPrefix) 
     (u.withBinaryPrefix p).radix = 2 := rfl
 
 end PropertyKindCalculus
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

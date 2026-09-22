@@ -45,9 +45,15 @@ validity indicators. It is the *second*-best fix; the best is not to round the d
 
 Proved over `ℝ`/`FP32`, sorry-free.
 -/
-import PropertyKindCalculus.Uncertainty.Adequacy.DagBound
-import PropertyKindCalculus.Aggregation
-import PropertyKindCalculus.Torch.Fp32
+
+module
+
+public import PropertyKindCalculus.Uncertainty.Adequacy.DagBound
+public import PropertyKindCalculus.Aggregation
+public import PropertyKindCalculus.Torch.Fp32
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Uncertainty.Adequacy
 
@@ -365,3 +371,6 @@ theorem mean_fp32_within_errBound_of_nonneg (w v : P → FP32) (d : Decompositio
   mean_fp32_within_errBound (carvingOfNonneg w d hnn hg hpos) v ρ hpos.ne'
 
 end PropertyKindCalculus.Uncertainty.Adequacy
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

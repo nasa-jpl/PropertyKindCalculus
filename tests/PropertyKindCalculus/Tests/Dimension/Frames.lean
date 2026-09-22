@@ -21,7 +21,13 @@ the ill-formed term fail to elaborate, so a regression that added such an instan
 show up here rather than as a wrong answer somewhere else.
 -/
 
-import PropertyKindCalculus.FrameReal
+module
+
+public import PropertyKindCalculus.FrameReal
+meta import PropertyKindCalculus.FrameReal
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Tests.Frames
 
@@ -133,3 +139,6 @@ reveals it. -/
 #guard_msgs in #print axioms sumFin_eq_sum
 
 end PropertyKindCalculus.Tests.Frames
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

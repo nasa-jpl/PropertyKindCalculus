@@ -34,9 +34,15 @@ tape stretch, an optimisation orthogonal to parity.
 Plain (not a `module`) file: imports the plain `num_carrier` capability and TorchLean's
 `TapeM` builder.
 -/
-import PropertyKindCalculus.Paradigm.NumCarrier
-import PropertyKindCalculus.Torch.Paradigm.NumCarrierContext
-import NN.Runtime.Autograd.Engine.TapeM
+
+module
+
+public import PropertyKindCalculus.Paradigm.NumCarrier
+public import PropertyKindCalculus.Torch.Paradigm.NumCarrierContext
+public import NN.Runtime.Autograd.Engine.TapeM
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 open Spec TorchLean
 open TorchLean TorchLean.Tensor
@@ -62,7 +68,7 @@ def const (x : Float) : TapeBuilder s := ⟨TapeM.leaf (Tensor.full s x) (name :
 
 /-- A `MathFunctions` field with no tape realisation on either backend (`sin/cos/tanh/…`):
 an honest error if ever run. The collapsible-Mironov ε kernel never names these. -/
-private def unsupported (op : String) : TapeBuilder s :=
+def unsupported (op : String) : TapeBuilder s :=
   ⟨throw s!"TapeBuilder: `{op}` has no elementwise tape op (absent on CPU & CUDA backends); \
     the collapsible Mironov ε kernel does not use it"⟩
 
@@ -110,3 +116,6 @@ instance instNumCarrier : NumCarrier (TapeBuilder s) where
 end TapeBuilder
 
 end PropertyKindCalculus.Paradigm
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

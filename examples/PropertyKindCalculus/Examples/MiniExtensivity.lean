@@ -20,7 +20,12 @@ Like the other minis, this module is part of the separate `Examples` library and
 imports only the Mathlib-free core.
 -/
 
-import PropertyKindCalculus.Extensivity
+module
+
+public import PropertyKindCalculus.Extensivity
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Examples.MiniExtensivity
 
@@ -124,3 +129,6 @@ example : ¬ Extensive oscillatorFrequency normalModeFreq := normalMode_wholePro
 example : ¬ Intensive oscillatorFrequency normalModeFreq := normalMode_wholeProper.not_intensive
 
 end PropertyKindCalculus.Examples.MiniExtensivity
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

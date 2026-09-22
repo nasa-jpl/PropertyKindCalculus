@@ -23,9 +23,15 @@ build). This module therefore only *typechecks* under `lake build` (it lives in 
 parity with the scalar `Ssprc.run` (the portable CPU stub on the default build, the device on a
 `-K cuda=true` container build).
 -/
-import PropertyKindCalculus.Uncertainty.Ssprc
-import PropertyKindCalculus.Uncertainty.Carriers
-import PropertyKindCalculus.Torch.Paradigm.CudaCarrier
+
+module
+
+public import PropertyKindCalculus.Uncertainty.Ssprc
+public import PropertyKindCalculus.Uncertainty.Carriers
+public import PropertyKindCalculus.Torch.Paradigm.CudaCarrier
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Uncertainty.SsprcBatched
 
@@ -81,3 +87,6 @@ def run (model : BatchModel) (inputs : List (InputDist Float)) (ns : List Nat) :
     return (eY, Float.sqrt varY)
 
 end PropertyKindCalculus.Uncertainty.SsprcBatched
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

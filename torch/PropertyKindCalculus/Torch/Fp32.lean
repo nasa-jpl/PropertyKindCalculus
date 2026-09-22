@@ -25,9 +25,14 @@ module-system TorchLean modules, while the PropertyKindCalculus core stays
 Mathlib- and module-free.
 -/
 
-import PropertyKindCalculus.QuantityRefinement
-import PropertyKindCalculus.QuantityReal
-import NN.Proofs.RuntimeApprox.IEEE32.Arithmetic
+module
+
+public import PropertyKindCalculus.QuantityRefinement
+public import PropertyKindCalculus.QuantityReal
+public import NN.Proofs.RuntimeApprox.IEEE32.Arithmetic
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 open TorchLean.Floats          -- `FP32`, `round32`
 open TorchLean.Floats.IEEE754  -- the `IEEE32Exec` theorem namespace (`fp32Round`, `toReal_*`)
@@ -207,3 +212,6 @@ theorem Quantity.div_refines_exec {k₁ k₂ k : KindOfProperty} (h : QuotientKi
   rw [IEEE32Exec.toReal, IEEE32Exec.toReal_div_eq_fp32Round hx hy hy0 hfin]
 
 end PropertyKindCalculus
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

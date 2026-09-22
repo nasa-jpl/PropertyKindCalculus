@@ -14,7 +14,13 @@ an axis one unit away. The correction is `M d² = 2`, and both moments are compu
 the centre, 4 about the end — so the law relates two numbers the file itself produces.
 -/
 
-import PropertyKindCalculus.AggregationLaws
+module
+
+public import PropertyKindCalculus.AggregationLaws
+meta import PropertyKindCalculus.AggregationLaws
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Tests.AggregationLaws
 
@@ -84,3 +90,6 @@ theorem r9_rod_corrected :
 #guard_msgs (whitespace := lax) in #print axioms rod_mixed_axes_corrected
 
 end PropertyKindCalculus.Tests.AggregationLaws
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

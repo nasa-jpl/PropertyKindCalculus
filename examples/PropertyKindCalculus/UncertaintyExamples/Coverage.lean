@@ -14,7 +14,13 @@ verified sorry-free by `#print axioms`.
 Everything is a **checked fact** (the module builds under CI); the axiom prints confirm no
 `sorryAx`. Mathlib-backed.
 -/
-import PropertyKindCalculus.Uncertainty.Coverage
+
+module
+
+public import PropertyKindCalculus.Uncertainty.Coverage
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.UncertaintyExamples.Coverage
 
@@ -36,3 +42,6 @@ theorem full_support_coverage :
     (isUniform_id_cond _) (by norm_num) (le_refl 2)
 
 end PropertyKindCalculus.UncertaintyExamples.Coverage
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

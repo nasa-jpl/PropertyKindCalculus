@@ -170,11 +170,27 @@ meta-heavy bodies into `producerModules`' walk set — a cost every `#kind_edges
 would pay. Per-declaration reading walks one signature and one value, so it is cheap
 here; files that pin both readings keep them in separate modules.
 -/
-import PropertyKindCalculus.KindEdges
-import PropertyKindCalculus.IndividualQuantity
-import PropertyKindCalculus.BoundaryAudit
-import PropertyKindCalculus.Provenance
-import PropertyKindCalculus.AuditReceipt
+
+module
+
+public import PropertyKindCalculus.KindEdges
+public meta import PropertyKindCalculus.KindEdges
+public import PropertyKindCalculus.IndividualQuantity
+public meta import PropertyKindCalculus.IndividualQuantity
+public import PropertyKindCalculus.BoundaryAudit
+public meta import PropertyKindCalculus.BoundaryAudit
+public import PropertyKindCalculus.Provenance
+public meta import PropertyKindCalculus.Provenance
+public import PropertyKindCalculus.AuditReceipt
+public meta import PropertyKindCalculus.AuditReceipt
+
+-- Same-module helpers serve both the command elaborators below and runtime callers, so the
+-- phase check is relaxed for this file (the module system's mixed-use escape; imports are
+-- still checked and take `public meta import`).
+set_option compiler.relaxedMetaCheck true
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.KindIncidence
 
@@ -2240,12 +2256,12 @@ state `WellFormed` on the constructed object and have the kernel reduce the chec
 "the kernel checks the wiring", literally, on harvested graphs and not only hand-authored
 ones. -/
 
-private def nodeIdE : Expr := mkConst ``Provenance.NodeId
-private def kindRefE : Expr := mkConst ``Provenance.KindRef
+def nodeIdE : Expr := mkConst ``Provenance.NodeId
+def kindRefE : Expr := mkConst ``Provenance.KindRef
 
 /-- `KindRef` as a term. Hand-recursive because the nested `List` defeats a derived
 instance the same way it defeats derived `BEq`. -/
-private partial def kindRefToExpr : KindRef → Expr
+partial def kindRefToExpr : KindRef → Expr
   | .decl n => mkApp (mkConst ``Provenance.KindRef.decl) (toExpr n)
   | .param b => mkApp (mkConst ``Provenance.KindRef.param) (toExpr b)
   | .sig cs => mkApp (mkConst ``Provenance.KindRef.sig) (listE cs)
@@ -2354,7 +2370,7 @@ private unsafe def evalContractUnsafe (e : Expr) :
 the evaluator; the safe body stands only where no evaluator is available, and no
 proposition rests on it. -/
 @[implemented_by evalContractUnsafe]
-private def evalContract (_e : Expr) : MetaM (Provenance.Contract NodeId KindRef) :=
+def evalContract (_e : Expr) : MetaM (Provenance.Contract NodeId KindRef) :=
   throwError "contract values cannot be read in this environment"
 
 /-- The declared contract's value, with the type check that gives a legible error before
@@ -2855,7 +2871,7 @@ private unsafe def evalRelationUnsafe (e : Expr) : MetaM Provenance.Relation :=
 /-- The declared relation's value. Replaced at run time by the evaluator; the safe body
 stands only where no evaluator is available. -/
 @[implemented_by evalRelationUnsafe]
-private def evalRelation (_e : Expr) : MetaM Provenance.Relation :=
+def evalRelation (_e : Expr) : MetaM Provenance.Relation :=
   throwError "relation values cannot be read in this environment"
 
 /-- The declared relation's value, with the type check that gives a legible error before
@@ -3229,3 +3245,6 @@ def citeEdges (a : Assembly) : Array (String × String) := Id.run do
   return out
 
 end PropertyKindCalculus.KindIncidence
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

@@ -25,7 +25,13 @@ free parent projection `NumCarrier.toMathCarrier`, with no bridge instance. Beca
 (`PropertyKindCalculus.Torch.Paradigm.NumCarrierContext`), so this core class is Mathlib- and
 TorchLean-free.
 -/
-import PropertyKindCalculus.QuantityFunction
+
+module
+
+public import PropertyKindCalculus.QuantityFunction
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Paradigm
 
@@ -52,3 +58,6 @@ free-water increment `max(mv − m_vt, 0)`. -/
 def NumCarrier.relu {α : Type} [NumCarrier α] (x : α) : α := Max.max x 0
 
 end PropertyKindCalculus.Paradigm
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

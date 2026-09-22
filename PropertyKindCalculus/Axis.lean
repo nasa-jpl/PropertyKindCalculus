@@ -68,7 +68,12 @@ discipline from kind tracking. A range fact that must be a theorem belongs in th
 layer, over a lawful carrier, where it is already at home.
 -/
 
-import PropertyKindCalculus.Bounds
+module
+
+public import PropertyKindCalculus.Bounds
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -282,3 +287,6 @@ instance {m : Type u → Type v} [Monad m] {k : KindOfProperty} :
 end Extent
 
 end PropertyKindCalculus
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

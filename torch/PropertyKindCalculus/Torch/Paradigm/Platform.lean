@@ -45,8 +45,13 @@ subprocess, and nothing queried here decides anything by itself. On a system wit
 files (non-Linux), the queries answer `none`/1 and the solvers degrade to serial.
 -/
 
-import PropertyKindCalculus.Paradigm.PlatformKinds
-import PropertyKindCalculus.QuantityFunction
+module
+
+public import PropertyKindCalculus.Paradigm.PlatformKinds
+public import PropertyKindCalculus.QuantityFunction
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Paradigm.Platform
 
@@ -707,3 +712,6 @@ def decideShards (shape : MemShape) (totalElems : Quantity elementCount Nat)
   decideShardsOf (.simple shape) totalElems reservedBytes override hardCap time
 
 end PropertyKindCalculus.Paradigm.Platform
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

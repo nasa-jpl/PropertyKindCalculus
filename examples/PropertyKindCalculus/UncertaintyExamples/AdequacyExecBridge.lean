@@ -23,7 +23,14 @@ result. This example shows both sides of that bridge:
 
 Mathlib- and TorchLean-backed.
 -/
-import PropertyKindCalculus.Uncertainty.Adequacy.ExecBridge
+
+module
+
+public import PropertyKindCalculus.Uncertainty.Adequacy.ExecBridge
+meta import PropertyKindCalculus.Uncertainty.Adequacy.ExecBridge
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.UncertaintyExamples.AdequacyExecBridge
 
@@ -72,3 +79,6 @@ theorem exec_verdict {s δ : ExecFloat.Binary 8 23} {ds dδ : FloatLib.Numerics.
 #guard_msgs (whitespace := lax) in #print axioms exec_verdict
 
 end PropertyKindCalculus.UncertaintyExamples.AdequacyExecBridge
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

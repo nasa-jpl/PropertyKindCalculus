@@ -9,6 +9,11 @@ either source is reproduced anywhere in this work; only locators travel with the
 annotations.
 -/
 
+module
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
+
 namespace PropertyKindCalculus.CrossRefs
 
 /-- The bibliographic identity of one external source: a short tag for prose, the
@@ -51,3 +56,6 @@ def vim4Source : OntologySource :=
     date      := "2023-07-31" }
 
 end PropertyKindCalculus.CrossRefs
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

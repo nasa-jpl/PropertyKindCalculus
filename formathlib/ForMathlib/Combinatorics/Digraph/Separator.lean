@@ -1,6 +1,8 @@
-import ForMathlib.Combinatorics.Digraph.Reach
-import Mathlib.Data.Set.Card
-import Mathlib.SetTheory.Cardinal.Finite
+module
+
+public import ForMathlib.Combinatorics.Digraph.Reach
+public import Mathlib.Data.Set.Card
+public import Mathlib.SetTheory.Cardinal.Finite
 
 /-!
 # Separators and the weak Menger inequality
@@ -14,6 +16,9 @@ minimum separator exists) is a genuinely harder theorem and is deliberately not 
 
 Upstream target: `Mathlib/Combinatorics/Digraph/Separator.lean`.
 -/
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace Digraph
 
@@ -67,3 +72,6 @@ theorem IsSeparator.card_le_of_disjoint {ι : Type*} (hS : G.IsSeparator A B S)
     _ = S.ncard := Nat.card_coe_set_eq S
 
 end Digraph
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

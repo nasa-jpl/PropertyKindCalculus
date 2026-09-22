@@ -15,7 +15,12 @@ symmetric, are stated and **proved** here. Stating — let alone proving — suc
 algebraic laws is outside what an OWL2 reasoner can do.
 -/
 
-import PropertyKindCalculus.Kind
+module
+
+public import PropertyKindCalculus.Kind
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -71,3 +76,6 @@ theorem of_specializes {a b : KindOfProperty}
 end MutuallyComparable
 
 end PropertyKindCalculus
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

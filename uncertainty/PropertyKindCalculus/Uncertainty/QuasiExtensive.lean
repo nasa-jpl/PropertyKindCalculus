@@ -32,8 +32,14 @@ for coverage intervals says how often `|D| < k·u` holds. The tolerance a quasie
 carries is therefore a *coverage* statement, with a probability attached, and not a number
 chosen to make the claim come out true.
 -/
-import PropertyKindCalculus.Recarving
-import PropertyKindCalculus.Uncertainty.Coverage
+
+module
+
+public import PropertyKindCalculus.Recarving
+public import PropertyKindCalculus.Uncertainty.Coverage
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 open MeasureTheory ProbabilityTheory
 open scoped MeasureTheory ProbabilityTheory ENNReal
@@ -234,3 +240,6 @@ theorem join_within_tolerance {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω
   simpa [hmean] using h
 
 end PropertyKindCalculus.Uncertainty
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

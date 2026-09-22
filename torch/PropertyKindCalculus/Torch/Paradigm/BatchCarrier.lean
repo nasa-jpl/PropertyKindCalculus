@@ -25,10 +25,17 @@ and `Buffer.size`/`.release` in `fitAvsTR` with `BatchCarrier.liveSize`/`.releas
 `[∀ s, NumCarrier (C s)] [BatchCarrier C]` to `run`/`fitAvsTR`, then
 `lake build tile_gpu tile_retrieve` to verify before relying on it.
 -/
-import PropertyKindCalculus.Torch.Paradigm.CudaCarrier
-import PropertyKindCalculus.Torch.Paradigm.Platform
-import PropertyKindCalculus.Bounds
-import PropertyKindCalculus.BoundaryAudit
+
+module
+
+public import PropertyKindCalculus.Torch.Paradigm.CudaCarrier
+public import PropertyKindCalculus.Torch.Paradigm.Platform
+public import PropertyKindCalculus.Bounds
+public import PropertyKindCalculus.BoundaryAudit
+meta import PropertyKindCalculus.BoundaryAudit   -- its `@[carrierVocab]` attribute is registered at import
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 open Spec TorchLean
 open PropertyKindCalculus.Paradigm (NumCarrier)
@@ -239,3 +246,6 @@ def runShardedAuto (shape : Platform.MemShape) (total : Quantity Platform.elemen
   return (outs, d)
 
 end PropertyKindCalculus.Paradigm
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

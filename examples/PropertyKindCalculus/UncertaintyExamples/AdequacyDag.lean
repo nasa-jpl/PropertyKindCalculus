@@ -22,7 +22,14 @@ format is `noncomputable`, so — like `AdequacyLadder` — they are checked fac
 module building under CI is what makes A3′ a theorem *over nontrivial model DAGs*, and the axiom
 prints confirm no `sorryAx`. Mathlib- and TorchLean-backed.
 -/
-import PropertyKindCalculus.Uncertainty.Adequacy.DagBound
+
+module
+
+public import PropertyKindCalculus.Uncertainty.Adequacy.DagBound
+meta import PropertyKindCalculus.Uncertainty.Adequacy.DagBound
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.UncertaintyExamples.AdequacyDag
 
@@ -215,3 +222,6 @@ theorem acc_budget_nonneg (ρ : ℕ → FP32) : 0 ≤ errBound acc ρ :=
 #guard_msgs (whitespace := lax) in #print axioms doubling_variation_eq_four
 
 end PropertyKindCalculus.UncertaintyExamples.AdequacyDag
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

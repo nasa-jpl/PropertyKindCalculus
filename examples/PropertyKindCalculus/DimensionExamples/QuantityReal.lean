@@ -8,8 +8,13 @@ Mathlib-free `PropertyKindCalculus.Examples.MiniQuantity`; `ℝ` lands here beca
 needs Mathlib (the `Carrier ℝ` instance lives in the `Dimension` library).
 -/
 
-import PropertyKindCalculus.QuantityReal
-import Mathlib.Tactic.NormNum
+module
+
+public import PropertyKindCalculus.QuantityReal
+public import Mathlib.Tactic.NormNum
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Examples.QuantityReal
 
@@ -38,3 +43,6 @@ example :
   norm_num
 
 end PropertyKindCalculus.Examples.QuantityReal
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

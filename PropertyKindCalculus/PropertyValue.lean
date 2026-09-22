@@ -21,7 +21,12 @@ description logic can record an instance of, but can neither state nor prove as
 laws.
 -/
 
-import PropertyKindCalculus.Kind
+module
+
+public import PropertyKindCalculus.Kind
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -88,3 +93,6 @@ theorem not_quantityValue_of_nominal {v : PropertyValue} (h : v.kind.IsNominal) 
 end PropertyValue
 
 end PropertyKindCalculus
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

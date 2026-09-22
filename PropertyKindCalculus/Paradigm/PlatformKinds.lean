@@ -36,10 +36,15 @@ kind-calculus answer to "identical quotient signatures, deliberately distinct ki
 usable as the template wherever two same-signature ratios must not interchange.
 -/
 
-import PropertyKindCalculus.Kind
-import PropertyKindCalculus.Quantity
-import PropertyKindCalculus.QuantityClassification
-import PropertyKindCalculus.NominalValue
+module
+
+public import PropertyKindCalculus.Kind
+public import PropertyKindCalculus.Quantity
+public import PropertyKindCalculus.QuantityClassification
+public import PropertyKindCalculus.NominalValue
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Paradigm.Platform
 
@@ -423,3 +428,6 @@ theorem storageCapacity_ne_storagePerElement : storageCapacity ≠ storagePerEle
   decide
 
 end PropertyKindCalculus.Paradigm.Platform
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

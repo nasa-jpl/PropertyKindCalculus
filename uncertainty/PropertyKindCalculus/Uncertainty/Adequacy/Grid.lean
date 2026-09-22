@@ -19,12 +19,18 @@ binary32 grid *is* uniform. Nothing here is `noncomputable`-dependent; it is pur
 
 All sorry-free.
 -/
-import Mathlib.Basic.Real.Basic
-import Mathlib.Algebra.Order.Archimedean.Real.Basic
-import Mathlib.Algebra.Order.Round
-import Mathlib.Tactic.Ring
-import Mathlib.Tactic.Linarith
-import Mathlib.Tactic.FieldSimp
+
+module
+
+public import Mathlib.Basic.Real.Basic
+public import Mathlib.Algebra.Order.Archimedean.Real.Basic
+public import Mathlib.Algebra.Order.Round
+public import Mathlib.Tactic.Ring
+public import Mathlib.Tactic.Linarith
+public import Mathlib.Tactic.FieldSimp
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Uncertainty.Adequacy
 
@@ -78,3 +84,6 @@ theorem abs_sub_gridRound_le {u : ℝ} (x : ℝ) (hu : 0 < u) : |gridRound u x -
     _ = u / 2 := by ring
 
 end PropertyKindCalculus.Uncertainty.Adequacy
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

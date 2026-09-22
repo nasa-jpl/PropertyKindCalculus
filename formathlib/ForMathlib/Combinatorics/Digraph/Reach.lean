@@ -1,5 +1,7 @@
-import ForMathlib.Combinatorics.Digraph.Walk
-import ForMathlib.Logic.Relation.Decidable
+module
+
+public import ForMathlib.Combinatorics.Digraph.Walk
+public import ForMathlib.Logic.Relation.Decidable
 
 /-!
 # Reachability in a digraph
@@ -12,6 +14,9 @@ decidable adjacency: reachability questions on concrete digraphs close by `decid
 
 Upstream target: `Mathlib/Combinatorics/Digraph/Connectivity.lean`.
 -/
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace Digraph
 
@@ -64,3 +69,6 @@ instance [Fintype V] [DecidableEq V] [DecidableRel G.Adj] : DecidableRel G.Reach
   fun _ _ => decidable_of_iff _ reachable_iff_reflTransGen.symm
 
 end Digraph
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

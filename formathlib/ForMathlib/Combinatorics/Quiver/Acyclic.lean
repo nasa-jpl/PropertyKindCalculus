@@ -1,7 +1,9 @@
-import Mathlib.Combinatorics.Quiver.Path
-import Mathlib.Data.Set.Finite.List
-import Mathlib.Basic.Finite.Sigma
-import Mathlib.Data.Fintype.Card
+module
+
+public import Mathlib.Combinatorics.Quiver.Path
+public import Mathlib.Data.Set.Finite.List
+public import Mathlib.Basic.Finite.Sigma
+public import Mathlib.Data.Fintype.Card
 
 /-!
 # Acyclic quivers and finiteness of paths
@@ -20,6 +22,9 @@ determines the path for any quiver.
 
 Upstream target: `Mathlib/Combinatorics/Quiver/Path.lean` (or an `Acyclic` satellite).
 -/
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace Quiver
 
@@ -136,3 +141,6 @@ theorem finite_path (h : IsAcyclic V) [Finite V] [∀ x y : V, Finite (x ⟶ y)]
 end IsAcyclic
 
 end Quiver
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

@@ -24,7 +24,14 @@ renders with an explicit `(×2)` count, a parametric-kind site (the stable token
 reason alongside), and a DOWNSTREAM attestor registered through `@[kindAttest]` — whose own
 body holds the sanctioned raw mint the walk must *skip*, exactly as it skips a carrier's own
 `.mk`: were the skip wrong, `taggedAttest` would appear `⚠ UNTAGGED` and break the pin. -/
-import PropertyKindCalculus.BoundaryAudit
+
+module
+
+public import PropertyKindCalculus.BoundaryAudit
+meta import PropertyKindCalculus.BoundaryAudit
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Tests.BoundaryAudit
 
@@ -267,3 +274,6 @@ end Ratcheted
 #kind_mint_ratchet PropertyKindCalculus.Tests.BoundaryAudit.Ratcheted
 
 end PropertyKindCalculus.Tests.BoundaryAudit
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

@@ -19,8 +19,13 @@ Design choices (see the project README for rationale):
     can individuate otherwise-comparable kinds (e.g. width vs. height).
 -/
 
-import PropertyKindCalculus.Scale
-import PropertyKindCalculus.Foundations
+module
+
+public import PropertyKindCalculus.Scale
+public import PropertyKindCalculus.Foundations
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -79,3 +84,6 @@ structure IndividualProperty where
   carrier : Object
 
 end PropertyKindCalculus
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

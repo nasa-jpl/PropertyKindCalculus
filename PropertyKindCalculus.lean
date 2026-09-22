@@ -10,38 +10,48 @@ layer are built separately by the lake glob. (The soil-moisture retrieval model 
 downstream application kept in a separate repository.)
 -/
 
-import PropertyKindCalculus.Foundations
-import PropertyKindCalculus.Mereology
-import PropertyKindCalculus.Scale
-import PropertyKindCalculus.Kind
-import PropertyKindCalculus.DedicatedKind
-import PropertyKindCalculus.Specialization
-import PropertyKindCalculus.Examination
-import PropertyKindCalculus.PropertyValue
-import PropertyKindCalculus.NominalValue
-import PropertyKindCalculus.ValueScale
-import PropertyKindCalculus.Unit
-import PropertyKindCalculus.UnitPrefix
-import PropertyKindCalculus.Extensivity
-import PropertyKindCalculus.Recarving
-import PropertyKindCalculus.InterfaceLedger
-import PropertyKindCalculus.Quantity
-import PropertyKindCalculus.Aggregation
-import PropertyKindCalculus.QuantityClassification
-import PropertyKindCalculus.OperatorTable
-import PropertyKindCalculus.SpecializationLift
-import PropertyKindCalculus.Bounds
-import PropertyKindCalculus.Level
-import PropertyKindCalculus.Axis
-import PropertyKindCalculus.PartWhole
-import PropertyKindCalculus.Decimal
-import PropertyKindCalculus.IndividualQuantity
-import PropertyKindCalculus.Composite
-import PropertyKindCalculus.QuantityFunction
-import PropertyKindCalculus.Measurand
-import PropertyKindCalculus.Complex
-import PropertyKindCalculus.QuantityRefinement
-import PropertyKindCalculus.QuantityVector
-import PropertyKindCalculus.Frame
-import PropertyKindCalculus.Provenance
-import PropertyKindCalculus.Influence
+module
+
+public import PropertyKindCalculus.Foundations
+public import PropertyKindCalculus.Mereology
+public import PropertyKindCalculus.Scale
+public import PropertyKindCalculus.Kind
+public import PropertyKindCalculus.DedicatedKind
+public import PropertyKindCalculus.Specialization
+public import PropertyKindCalculus.Examination
+public import PropertyKindCalculus.PropertyValue
+public import PropertyKindCalculus.NominalValue
+public import PropertyKindCalculus.ValueScale
+public import PropertyKindCalculus.Unit
+public import PropertyKindCalculus.UnitPrefix
+public import PropertyKindCalculus.Extensivity
+public import PropertyKindCalculus.Recarving
+public import PropertyKindCalculus.InterfaceLedger
+public import PropertyKindCalculus.Quantity
+public import PropertyKindCalculus.Aggregation
+public import PropertyKindCalculus.QuantityClassification
+public import PropertyKindCalculus.OperatorTable
+public import PropertyKindCalculus.SpecializationLift
+public import PropertyKindCalculus.Bounds
+public import PropertyKindCalculus.Level
+public import PropertyKindCalculus.Axis
+public import PropertyKindCalculus.PartWhole
+public import PropertyKindCalculus.Decimal
+public import PropertyKindCalculus.IndividualQuantity
+public import PropertyKindCalculus.Composite
+public import PropertyKindCalculus.QuantityFunction
+public import PropertyKindCalculus.Measurand
+public import PropertyKindCalculus.Complex
+public import PropertyKindCalculus.QuantityRefinement
+public import PropertyKindCalculus.QuantityVector
+public import PropertyKindCalculus.Frame
+public import PropertyKindCalculus.Provenance
+public import PropertyKindCalculus.Influence
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
+
+
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

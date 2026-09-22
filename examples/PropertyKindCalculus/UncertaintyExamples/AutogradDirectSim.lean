@@ -32,8 +32,14 @@ meaning what it says — under CI.
 These are `ℝ`-level proof terms (like `AdequacyDag`); the axiom prints confirm the classical
 trio only — no `sorryAx`, which is the point: the spike is closed, not silently deferred.
 -/
-import PropertyKindCalculus.Uncertainty.Experiments.PRSimulation
-import PropertyKindCalculus.Uncertainty.Experiments.EagerProvenance
+
+module
+
+public import PropertyKindCalculus.Uncertainty.Experiments.PRSimulation
+public import PropertyKindCalculus.Uncertainty.Experiments.EagerProvenance
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.UncertaintyExamples.AutogradDirectSim
 
@@ -1041,3 +1047,6 @@ info: 'PropertyKindCalculus.UncertaintyExamples.AutogradDirectSim.eagerBuilds_sq
 end
 
 end PropertyKindCalculus.UncertaintyExamples.AutogradDirectSim
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

@@ -46,8 +46,13 @@ kinds-of-property, so the kinds differ because the *kinds-of-property* differ, n
 because of any hand-chosen identity string.
 -/
 
-import PropertyKindCalculus.Foundations
-import PropertyKindCalculus.Kind
+module
+
+public import PropertyKindCalculus.Foundations
+public import PropertyKindCalculus.Kind
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -139,3 +144,6 @@ theorem distinct_of_sort {d₁ d₂ : DedicatedKind}
 end DedicatedKind
 
 end PropertyKindCalculus
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

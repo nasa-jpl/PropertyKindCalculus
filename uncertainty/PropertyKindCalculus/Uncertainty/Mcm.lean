@@ -10,7 +10,13 @@ against. It is deliberately the simplest thing that works; efficiency is not its
 The model is any `List Float → Float` — in practice a WO1 `[NumCarrier α]` kernel instantiated
 at `Float`. Mathlib-free.
 -/
-import PropertyKindCalculus.Uncertainty.InputDist
+
+module
+
+public import PropertyKindCalculus.Uncertainty.InputDist
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Uncertainty.Mcm
 
@@ -43,3 +49,6 @@ def run (model : List Float → Float) (inputs : List (InputDist Float))
   return (mean, Float.sqrt variance)
 
 end PropertyKindCalculus.Uncertainty.Mcm
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

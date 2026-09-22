@@ -40,8 +40,14 @@ box faithfulness are metric and stay on `*_abs_error`; the exactness regime is a
 `CarrierRefinement` statement, as the theorems below make machine-checked rather than asserted.
 Proved over `ℝ`/`FP32`, sorry-free.
 -/
-import PropertyKindCalculus.Uncertainty.Adequacy.DagBound
-import PropertyKindCalculus.Torch.Fp32
+
+module
+
+public import PropertyKindCalculus.Uncertainty.Adequacy.DagBound
+public import PropertyKindCalculus.Torch.Fp32
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Uncertainty.Adequacy
 
@@ -130,3 +136,6 @@ theorem toSpec_box_exact (e : Expr) (ρ σ : ℕ → FP32)
   rw [toSpec_evalFP32_eq_evalExact e σ hσ, toSpec_evalFP32_eq_evalExact e ρ hρ]
 
 end PropertyKindCalculus.Uncertainty.Adequacy
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

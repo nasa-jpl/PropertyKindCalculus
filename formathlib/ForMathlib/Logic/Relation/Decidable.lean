@@ -1,5 +1,7 @@
-import Mathlib.Logic.Relation
-import Mathlib.Data.Fintype.Card
+module
+
+public import Mathlib.Logic.Relation
+public import Mathlib.Data.Fintype.Card
 
 /-!
 # Decidability of `Relation.ReflTransGen` and `Relation.TransGen` on a `Fintype`
@@ -17,6 +19,9 @@ computable by `#eval`.
 Upstream target: `Mathlib/Logic/Relation.lean` (or a `Decidable` satellite of it) — Mathlib
 has no decidability instance for either closure.
 -/
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace Relation
 
@@ -106,3 +111,6 @@ instance : DecidableRel (TransGen r) := fun a c =>
   decidable_of_iff (∃ b, r a b ∧ ReflTransGen r b c) TransGen.head'_iff.symm
 
 end Relation
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

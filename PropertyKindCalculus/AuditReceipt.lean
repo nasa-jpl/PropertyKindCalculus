@@ -23,7 +23,13 @@ is its own signal. The extension is persistent and imported, so a document sees 
 receipts of every module in its import closure: the audit probes downstream repositories
 keep beside their pinned reports are exactly where the receipts are minted.
 -/
-import Lean
+
+module
+
+public import Lean
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -76,3 +82,6 @@ def auditReceiptsFor (env : Environment) (audit : String) (ns : Option Name) :
   (auditReceipts env).filter fun r => r.audit == audit && r.covers ns
 
 end PropertyKindCalculus
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

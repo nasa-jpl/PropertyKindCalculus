@@ -17,6 +17,11 @@ is about which *operations* are *defined* for a kind, and DL has no operations.
 Here it is a first-class datum that later gates the algebra on a `Quantity`.
 -/
 
+module
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
+
 namespace PropertyKindCalculus
 
 /-- The four operator-based scale types of Dybkær Fig. 12.21. -/
@@ -87,3 +92,6 @@ theorem allows_mono {a b : ScaleType} (h : a ≤ b) :
 end ScaleType
 
 end PropertyKindCalculus
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

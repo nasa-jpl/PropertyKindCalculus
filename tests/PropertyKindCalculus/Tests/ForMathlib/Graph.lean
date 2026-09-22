@@ -13,7 +13,13 @@ Three dangers this probe file closes for the staging area:
     `#guard_msgs`, so a proof relocated behind `sorry` is caught.
 -/
 
-import ForMathlib
+module
+
+public import ForMathlib
+meta import ForMathlib
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Tests.ForMathlib
 
@@ -146,3 +152,6 @@ Quot.sound] -/
 #guard_msgs in #print axioms Quiver.IsAcyclic.finite_path
 
 end PropertyKindCalculus.Tests.ForMathlib
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

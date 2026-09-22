@@ -24,12 +24,18 @@ carrier, and the `WillinkGaugeBlock` example reproduces Willink's Table 4 half-w
 Only the second/fourth cumulants (`κ₂`, `κ₄`) enter T1/T2; the third (asymmetry, Willink §5) is
 carried by `MomentData` but not exercised until the asymmetric-input extension.
 -/
-import Mathlib.Analysis.SpecialFunctions.Sqrt
-import Mathlib.Algebra.BigOperators.Group.List.Basic
-import Mathlib.Data.List.Basic
-import Mathlib.Tactic.Ring
-import Mathlib.Tactic.NormNum
-import PropertyKindCalculus.Uncertainty.InputDist
+
+module
+
+public import Mathlib.Analysis.SpecialFunctions.Sqrt
+public import Mathlib.Algebra.BigOperators.Group.List.Basic
+public import Mathlib.Data.List.Basic
+public import Mathlib.Tactic.Ring
+public import Mathlib.Tactic.NormNum
+public import PropertyKindCalculus.Uncertainty.InputDist
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Uncertainty
 
@@ -194,3 +200,6 @@ theorem gum_eq_willink_of_normal (terms : List (ℝ × MomentData ℝ))
     excess_of_kappa4_zero (willinkCumulants_kappa4_zero terms h), k95_zero]
 
 end PropertyKindCalculus.Uncertainty
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

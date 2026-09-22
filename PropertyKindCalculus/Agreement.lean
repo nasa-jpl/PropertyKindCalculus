@@ -38,8 +38,14 @@ needs a floor states it, and a caller who does not is not silently given one.
 Mathlib-free core, `Float`-carried: this is host-side per-scalar logic, the tier `Bounds.lean`'s
 executable deciders are for, and batched carriers deliberately cannot reach it.
 -/
-import PropertyKindCalculus.Bounds
-import PropertyKindCalculus.QuantityClassification
+
+module
+
+public import PropertyKindCalculus.Bounds
+public import PropertyKindCalculus.QuantityClassification
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -110,3 +116,6 @@ def IccQ.width {k : KindOfProperty} (I : IccQ k Float) : Quantity k Float :=
   ⟨I.hi.q.magnitude - I.lo.q.magnitude⟩
 
 end PropertyKindCalculus
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

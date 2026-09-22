@@ -26,6 +26,11 @@ requirements does; what lives here is the part a chapter must not restate, becau
 sentence transcribed into prose is a sentence that drifts.
 -/
 
+module
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
+
 namespace PropertyKindCalculus.Rubrics
 
 /-- Which template a rubric belongs to. -/
@@ -625,3 +630,6 @@ def rubricById? (id : String) : Option Rubric :=
   catalogue.find? (·.id == id)
 
 end PropertyKindCalculus.Rubrics
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

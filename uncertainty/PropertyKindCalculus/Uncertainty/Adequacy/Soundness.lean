@@ -20,7 +20,13 @@ equals the `ℝ` one up to a proven bound over an arbitrary model* — composes 
 interval-carrier soundness across a whole evaluation, and is the subject of the follow-up sub-stages
 (§6, Stage 3.x). Proved over `ℝ`, sorry-free.
 -/
-import PropertyKindCalculus.Uncertainty.Adequacy.Absorption
+
+module
+
+public import PropertyKindCalculus.Uncertainty.Adequacy.Absorption
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Uncertainty.Adequacy
 
@@ -61,3 +67,6 @@ theorem swamped {u s unc : ℝ} (hu : 0 < u) (hs : OnGrid u s) (h0 : 0 ≤ unc)
   absorb hu hs (by rw [abs_of_nonneg h0]; exact hflag)
 
 end PropertyKindCalculus.Uncertainty.Adequacy
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

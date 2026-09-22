@@ -33,7 +33,13 @@ Covered ops: the binary arithmetic (`add`/`sub`/`mul`/`div`), the scalar `scale`
 selectors (`min`/`max`/`relu`), and the unary family (`abs`/`sqrt`/`clamp`/`exp`/`log`/`inv`) via
 one `unary_value` lemma over the shared `Tape.unary` builder.
 -/
-import NN.Runtime.Autograd.Engine.TapeM
+
+module
+
+public import NN.Runtime.Autograd.Engine.TapeM
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 open Spec TorchLean
 open TorchLean TorchLean.Tensor
@@ -244,9 +250,9 @@ namespace Demo
 variable [Context α] [DecidableEq Shape] {s : Shape}
 
 /-- Leaf tape holding only `a` (node id `0`). -/
-private def ta (a : Tensor α s) : Tape α := (Tape.leaf (t := (Tape.empty : Tape α)) a).1
+def ta (a : Tensor α s) : Tape α := (Tape.leaf (t := (Tape.empty : Tape α)) a).1
 /-- Leaf tape holding `a` (id `0`) then `b` (id `1`). -/
-private def tab (a b : Tensor α s) : Tape α := (Tape.leaf (t := ta a) b).1
+def tab (a b : Tensor α s) : Tape α := (Tape.leaf (t := ta a) b).1
 
 /-- The kernel `g(a,b) = (a / b) + b`: leaf `a` (id 0), leaf `b` (id 1), `div 0 1` (id 2 = a/b),
 `add 2 1` (id 3 = a/b + b, *re-reading* leaf `b` across the `div`). Returns the final node's value. -/
@@ -302,3 +308,6 @@ theorem kernel_eq_spec (a b : Tensor α s) :
 end Demo
 
 end PropertyKindCalculus.Paradigm.TapeFaithful
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

@@ -43,7 +43,12 @@ feeds its own derivation, the hypothesis under which paths through the incidence
 finitely many and a budget's sum over them is well formed.
 -/
 
-import PropertyKindCalculus.Provenance
+module
+
+public import PropertyKindCalculus.Provenance
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -238,3 +243,6 @@ instance (g : Provenance ν κ) : Decidable g.Acyclic :=
 end Provenance
 
 end PropertyKindCalculus
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

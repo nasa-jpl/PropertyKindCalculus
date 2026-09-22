@@ -70,7 +70,12 @@ hypothesis on the executable carrier's own theorem — which is where
 instance at all.
 -/
 
-import PropertyKindCalculus.QuantityClassification
+module
+
+public import PropertyKindCalculus.QuantityClassification
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -189,3 +194,6 @@ theorem div_refines [Carrier E] [Carrier S] [Div E] [Div S] [ScalarCarrier E] [S
 end Quantity
 
 end PropertyKindCalculus
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

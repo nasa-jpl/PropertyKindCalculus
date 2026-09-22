@@ -95,11 +95,25 @@ Like `KindEdges`, this module imports `Lean` and is built by the package glob bu
 the prelude-only `import PropertyKindCalculus` spine.
 -/
 
-import Lean
-import PropertyKindCalculus.Quantity
-import PropertyKindCalculus.NominalValue
-import PropertyKindCalculus.CertifiedIngest
-import PropertyKindCalculus.AuditReceipt
+module
+
+public import Lean
+public import PropertyKindCalculus.Quantity
+public meta import PropertyKindCalculus.Quantity
+public import PropertyKindCalculus.NominalValue
+public meta import PropertyKindCalculus.NominalValue
+public import PropertyKindCalculus.CertifiedIngest
+public meta import PropertyKindCalculus.CertifiedIngest
+public import PropertyKindCalculus.AuditReceipt
+public meta import PropertyKindCalculus.AuditReceipt
+
+-- Same-module helpers serve both the command elaborators below and runtime callers, so the
+-- phase check is relaxed for this file (the module system's mixed-use escape; imports are
+-- still checked and take `public meta import`).
+set_option compiler.relaxedMetaCheck true
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.BoundaryAudit
 
@@ -852,3 +866,6 @@ elab "#kind_crossings" nss:ident* : command => liftTermElabM do
   logInfo m!"tagged boundary crossings:\n{String.intercalate "\n" sorted.toList}"
 
 end PropertyKindCalculus.BoundaryAudit
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

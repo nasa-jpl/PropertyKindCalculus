@@ -39,8 +39,13 @@ it is built by the package glob but kept out of the Mathlib-free, prelude-only
 explicitly.
 -/
 
-import PropertyKindCalculus.Bounds
-import Lean
+module
+
+public import PropertyKindCalculus.Bounds
+public import Lean
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 open Lean (ToJson FromJson Json toJson)
 
@@ -233,3 +238,6 @@ def emitJson (c : IngestContract) : String := (toJson c).pretty
 end IngestContract
 
 end PropertyKindCalculus
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

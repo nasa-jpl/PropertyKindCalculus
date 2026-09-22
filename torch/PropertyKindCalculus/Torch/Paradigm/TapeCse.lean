@@ -40,8 +40,14 @@ names; `paradigm.tape_codegen`'s `gen` enforces it (`resolveTables` rejects dupl
 
 Plain (not a `module`) file: imports the plain tape carrier.
 -/
-import PropertyKindCalculus.Torch.Paradigm.TapeCarrier
-import Std.Data.HashMap
+
+module
+
+public import PropertyKindCalculus.Torch.Paradigm.TapeCarrier
+public import Std.Data.HashMap
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 open Spec TorchLean
 open Runtime.Autograd
@@ -91,3 +97,6 @@ def runBuilderCSE {s : Shape} (b : TapeBuilder s) :
   pure (v, Tape.size t, Tape.size t')
 
 end PropertyKindCalculus.Paradigm.TapeCSE
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

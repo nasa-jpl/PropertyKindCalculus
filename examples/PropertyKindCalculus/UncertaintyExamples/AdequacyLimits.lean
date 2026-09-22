@@ -30,7 +30,14 @@ them. Whether the frequency and magnitude seen on one retrieval are representati
 question that more models would settle — and the limits are worth pinning either way, because
 each is a statement about the carrier's own arithmetic rather than about any model.
 -/
-import PropertyKindCalculus.Uncertainty.Adequacy
+
+module
+
+public import PropertyKindCalculus.Uncertainty.Adequacy
+meta import PropertyKindCalculus.Uncertainty.Adequacy
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 open PropertyKindCalculus
 open PropertyKindCalculus.Uncertainty
@@ -152,3 +159,6 @@ first-order figure of `1.3 × 10⁻²`. The swamping flag is unaffected, because
 operand's *own* uncertainty against half a ulp before the accumulation reaches it. -/
 
 end PropertyKindCalculus.UncertaintyExamples.AdequacyLimits
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

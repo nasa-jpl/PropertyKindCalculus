@@ -47,9 +47,22 @@ both sides share: the edge specs and their formatters, and the binder-type
 instantiation the per-declaration reading keys on (`instantiatedBinderTypes`, the
 twin of `instantiatedConclusion`).
 -/
-import Lean
-import PropertyKindCalculus.QuantityFunction
-import PropertyKindCalculus.OperatorTable
+
+module
+
+public import Lean
+public import PropertyKindCalculus.QuantityFunction
+public meta import PropertyKindCalculus.QuantityFunction
+public import PropertyKindCalculus.OperatorTable
+public meta import PropertyKindCalculus.OperatorTable
+
+-- Same-module helpers serve both the command elaborators below and runtime callers, so the
+-- phase check is relaxed for this file (the module system's mixed-use escape; imports are
+-- still checked and take `public meta import`).
+set_option compiler.relaxedMetaCheck true
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.KindEdges
 
@@ -399,3 +412,6 @@ elab "#kind_edges " id:ident : command => liftTermElabM do
     logInfo m!"authored kind edges mentioning '{target}':\n{String.intercalate "\n" sorted.toList}"
 
 end PropertyKindCalculus.KindEdges
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

@@ -34,9 +34,15 @@ and re-stamps the output kind, leaving the transient squared kind `kₒ²` an er
 autograd source that feeds `sensitivityQ` is inherently `Float` (that specialization is `analyzeQ`'s,
 not the budget's). Mathlib- and TorchLean-free.
 -/
-import PropertyKindCalculus.OperatorTable
-import PropertyKindCalculus.Paradigm.NumCarrier
-import PropertyKindCalculus.Uncertainty.InputDist
+
+module
+
+public import PropertyKindCalculus.OperatorTable
+public import PropertyKindCalculus.Paradigm.NumCarrier
+public import PropertyKindCalculus.Uncertainty.InputDist
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Uncertainty
 
@@ -93,3 +99,6 @@ def combinedQ {kO : KindOfProperty} (contribs : List (Quantity kO R)) : Quantity
       = MathCarrier.sqrt (contribs.foldl (fun acc x => acc + x.magnitude * x.magnitude) 0) := rfl
 
 end PropertyKindCalculus.Uncertainty
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

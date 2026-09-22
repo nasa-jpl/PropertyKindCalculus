@@ -54,8 +54,13 @@ name the result kind explicitly and discharge the ratio-scale gate by autoParam 
 midway between the full witness spelling and a table registration.
 -/
 
-import PropertyKindCalculus.QuantityClassification
-import PropertyKindCalculus.IndividualQuantity
+module
+
+public import PropertyKindCalculus.QuantityClassification
+public import PropertyKindCalculus.IndividualQuantity
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -215,3 +220,6 @@ def Quantity.divK {R : Type} [Div R] [ScalarCarrier R] {k₁ k₂ : KindOfProper
     (Quantity.divK k a b h).magnitude = a.magnitude / b.magnitude := rfl
 
 end PropertyKindCalculus
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

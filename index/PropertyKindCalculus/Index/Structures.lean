@@ -3,8 +3,11 @@ Copyright (c) 2026 California Institute of Technology. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Nicolas Rouquette
 -/
-import PropertyKindCalculus.Index.Basic
-import PropertyKindCalculus.DocGenMath.Registry
+
+module
+
+public import PropertyKindCalculus.Index.Basic
+public import PropertyKindCalculus.DocGenMath.Registry
 
 /-!
 # Indexing what is *built* on the kinds — kinded records and kinded operations
@@ -44,6 +47,9 @@ literature writes them, and those live nowhere else. For an operation it is the 
 which kinds go in, which comes out — together with the authored crossings the body routes through,
 because that is the operation's actual contract with the calculus.
 -/
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Index
 
@@ -240,3 +246,6 @@ def operationsTable (scope : Scope) : MetaM IndexTable := do
   return { id := "operations", title := "Kinded operations", headers, rows }
 
 end PropertyKindCalculus.Index
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

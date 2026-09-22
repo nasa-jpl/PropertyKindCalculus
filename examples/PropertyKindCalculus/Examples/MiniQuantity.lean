@@ -8,7 +8,13 @@ addition. The third (proof) carrier `ℝ` lives with the `Dimension` library
 (`PropertyKindCalculus.QuantityReal`), since it needs Mathlib.
 -/
 
-import PropertyKindCalculus.Quantity
+module
+
+public import PropertyKindCalculus.Quantity
+meta import PropertyKindCalculus.Quantity
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Examples.MiniQuantity
 
@@ -90,3 +96,6 @@ The same source, kept honest by the kind index. -/
 example : massA.magnitude = 2 := by decide
 
 end PropertyKindCalculus.Examples.MiniQuantity
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

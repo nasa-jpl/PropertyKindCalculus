@@ -51,7 +51,12 @@ scale allowing `<`/`>` (ordinal or richer — Dybkær §12.16). `OrderKind k` re
 gate, uniform with `DifferenceKind` for `+`/`−` and `ProductKind` for `×`.
 -/
 
-import PropertyKindCalculus.Quantity
+module
+
+public import PropertyKindCalculus.Quantity
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -332,3 +337,6 @@ where raising `L` admits values that should have failed). Same side, opposite sa
 `Decimal` carries both pairs for that reason, and the second is named `…AsRequirement`. -/
 
 end PropertyKindCalculus
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

@@ -3,7 +3,10 @@ Copyright (c) 2026 California Institute of Technology. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Nicolas Rouquette
 -/
-import PropertyKindCalculus.DocGenMath.Term
+
+module
+
+public import PropertyKindCalculus.DocGenMath.Term
 
 /-!
 # Stage 3 — Pretty-print `MathTerm → LaTeX`
@@ -19,16 +22,19 @@ unit-testable with `MathNotation.ofLatex`. The `MathNotation.operator` flag — 
 selects the juxtaposed prefix layout `\nabla x`; layout is never inferred from the LaTeX itself.
 -/
 
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
+
 namespace PropertyKindCalculus.DocGenMath
 
 /-- Wrap in `{…}` (a LaTeX group). -/
-private def br (s : String) : String := "{" ++ s ++ "}"
+def br (s : String) : String := "{" ++ s ++ "}"
 
 /-- Wrap in sizing parentheses. -/
-private def paren (s : String) : String := "\\left(" ++ s ++ "\\right)"
+def paren (s : String) : String := "\\left(" ++ s ++ "\\right)"
 
 /-- The self-precedence of a term (see the module header). -/
-private def precOf : MathTerm → Nat
+def precOf : MathTerm → Nat
   | .add _    => 10
   | .neg _    => 15
   | .mul _    => 20
@@ -43,7 +49,7 @@ private def precOf : MathTerm → Nat
   | .raw _    => 40
 
 /-- LaTeX macro for a recognized elementary function head (`exp` is handled separately). -/
-private def funcMacro : String → Option String
+def funcMacro : String → Option String
   | "log"  => some "\\log"  | "sin"  => some "\\sin"   | "cos"  => some "\\cos"
   | "tan"  => some "\\tan"  | "sinh" => some "\\sinh"  | "cosh" => some "\\cosh"
   | "tanh" => some "\\tanh" | "asin" => some "\\arcsin"| "acos" => some "\\arccos"
@@ -52,7 +58,7 @@ private def funcMacro : String → Option String
 
 /-- Split a signed sum term into its sign and its magnitude, for rendering `a − b` instead of
 `a + (−b)`. -/
-private def signOf : MathTerm → Bool × MathTerm
+def signOf : MathTerm → Bool × MathTerm
   | .neg t            => (true, t)
   | .num n            => if n < 0 then (true, .num (-n)) else (false, .num n)
   | t                 => (false, t)
@@ -200,7 +206,7 @@ def wideThreshold : Nat := 90
 
 /-- An aligned block of `lhs = rhs` rows, the AMSmath layout MathJax bundles. One row renders as a
 plain equation: a single-line `\begin{aligned}` buys nothing and reads worse. -/
-private def alignedRows (rows : Array (String × String)) : String :=
+def alignedRows (rows : Array (String × String)) : String :=
   if h : rows.size = 1 then
     let (l, r) := rows[0]'(by omega)
     l ++ " = " ++ r
@@ -212,7 +218,7 @@ private def alignedRows (rows : Array (String × String)) : String :=
 
 The conventional textbook layout for a long sum, and the break points are the `add` node's own
 elements — no string has to be re-parsed to find them. -/
-private def brokenSum (resolve : String → MathNotation) (lhs : String) (ts : Array MathTerm) :
+def brokenSum (resolve : String → MathNotation) (lhs : String) (ts : Array MathTerm) :
     String := Id.run do
   let mut rows : Array String := #[]
   for h : i in [0:ts.size] do
@@ -227,7 +233,7 @@ private def brokenSum (resolve : String → MathNotation) (lhs : String) (ts : A
 `pmatrix` rather than a broken `\left(…\right)`: a wide tuple in this library is a Jacobian's columns
 or a model's several outputs, which *is* a column vector, and `pmatrix` is AMSmath, which MathJax
 bundles — so it needs no configuration on either the doc-gen4 page or the InfoView. -/
-private def brokenTuple (resolve : String → MathNotation) (lhs : String) (ts : Array MathTerm) :
+def brokenTuple (resolve : String → MathNotation) (lhs : String) (ts : Array MathTerm) :
     String :=
   lhs ++ " = \\begin{pmatrix} "
     ++ String.intercalate " \\\\ " (ts.toList.map (pretty resolve ·))
@@ -261,3 +267,6 @@ def prettyAux (resolve : String → MathNotation) (aux : Array (MathTerm × Math
   else some (alignedRows (aux.map fun (l, r) => (pretty resolve l, pretty resolve r)))
 
 end PropertyKindCalculus.DocGenMath
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

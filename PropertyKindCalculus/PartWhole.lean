@@ -36,7 +36,12 @@ kernels this serves do not make it (a valid-pixel count and a block's total are 
 against one whole, with the complement unnamed).
 -/
 
-import PropertyKindCalculus.QuantityClassification
+module
+
+public import PropertyKindCalculus.QuantityClassification
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -121,3 +126,6 @@ def castCarrier {S : Type} (f : R → S) (w : Whole k R) : Whole k S := ⟨w.q.c
 end Whole
 
 end PropertyKindCalculus
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

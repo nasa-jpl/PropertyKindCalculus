@@ -26,7 +26,12 @@ Over `ℝ`, because the invariance laws need ring reasoning; the frame and varia
 themselves are Mathlib-free (`Frame`) and run at `Float`.
 -/
 
-import PropertyKindCalculus.FrameReal
+module
+
+public import PropertyKindCalculus.FrameReal
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.DimensionExamples.Frames
 
@@ -96,3 +101,6 @@ example (m : InFrame lab .scalar velocity ℝ) :
   toFrameScalar_components' m
 
 end PropertyKindCalculus.DimensionExamples.Frames
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

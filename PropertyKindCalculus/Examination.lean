@@ -25,7 +25,12 @@ transitive, and principle-preserving — none of which a description logic can
 state, let alone prove.
 -/
 
-import PropertyKindCalculus.Kind
+module
+
+public import PropertyKindCalculus.Kind
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -151,3 +156,6 @@ theorem KindOfProperty.distinct_of_examPrinciple {k₁ k₂ : KindOfProperty}
   intro hk; subst hk; exact h rfl
 
 end PropertyKindCalculus
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

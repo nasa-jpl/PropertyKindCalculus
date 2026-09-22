@@ -22,7 +22,13 @@ samples. The result is a pure `List Nat` that drops straight into `Ssprc.run` / 
 `ns` argument. Deterministic, Mathlib- and TorchLean-free — so unlike the batched propagator it is
 checked at build time by `#guard` (see `examples/…/DegenhardtAllocation.lean`).
 -/
-import PropertyKindCalculus.Uncertainty.InputDist
+
+module
+
+public import PropertyKindCalculus.Uncertainty.InputDist
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Uncertainty.Allocation
 
@@ -117,3 +123,6 @@ def allocateFromTerms (total : Nat) (terms : List (Float × MomentData Float))
   allocate total (contributions terms) dropRatio
 
 end PropertyKindCalculus.Uncertainty.Allocation
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

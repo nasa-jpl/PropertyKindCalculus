@@ -13,6 +13,11 @@ the copies this work was developed against; parts 2 and 12 additionally carry a
 corrected version (2021-11), whose base edition/date are recorded here.
 -/
 
+module
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
+
 namespace PropertyKindCalculus.Iso80000
 
 /-- The standards body under which a part of the 80000 series is published. The
@@ -140,3 +145,6 @@ def catalogue : List StandardRef :=
    iec80000_13]
 
 end PropertyKindCalculus.Iso80000
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

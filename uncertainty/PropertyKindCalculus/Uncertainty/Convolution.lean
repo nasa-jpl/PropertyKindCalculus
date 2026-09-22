@@ -34,7 +34,13 @@ All proved over `ℝ`, sorry-free. The executable `Float` SSPRC pipeline (`Ssprc
 *same* convolution on concrete samples; this module is its specification. Mathlib-backed (imports
 `Ladder`, hence `ℝ` and the `Cumulants` monoid).
 -/
-import PropertyKindCalculus.Uncertainty.Ladder
+
+module
+
+public import PropertyKindCalculus.Uncertainty.Ladder
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Uncertainty
 
@@ -417,3 +423,6 @@ theorem cumulantsOf_combinedDeviation (xs : List SensitizedInput)
     rw [show termsOf (t :: xs) = (t.1, t.2.2) :: termsOf xs from rfl, willinkCumulants_cons]
 
 end PropertyKindCalculus.Uncertainty
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

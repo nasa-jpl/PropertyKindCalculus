@@ -3,10 +3,13 @@ Copyright (c) 2026 California Institute of Technology. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Nicolas Rouquette
 -/
-import PropertyKindCalculus.Index.Basic
-import PropertyKindCalculus.KindEdges
-import PropertyKindCalculus.Examination
-import PropertyKindCalculus.DedicatedKind
+
+module
+
+public import PropertyKindCalculus.Index.Basic
+public import PropertyKindCalculus.KindEdges
+public import PropertyKindCalculus.Examination
+public import PropertyKindCalculus.DedicatedKind
 
 /-!
 # Indexing the ontology — kinds, systems, components, dedicated kinds, examinations
@@ -27,6 +30,9 @@ its algebra, in the way `#print axioms` is a closed statement of what a proof re
 that set next to the kind is the point of the index; `#kind_edges` already computes it, and
 `KindEdges.edgesByKind` gets it for every kind in one environment walk.
 -/
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Index
 
@@ -284,3 +290,6 @@ def examinationsTable (scope : Scope) : MetaM IndexTable := do
   return { id := "examinations", title := "Examinations", headers, rows }
 
 end PropertyKindCalculus.Index
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

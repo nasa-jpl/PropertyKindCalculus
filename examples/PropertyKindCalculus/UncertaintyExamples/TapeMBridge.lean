@@ -22,8 +22,16 @@ style:
 
 Axiom pins confirm the classical trio only.
 -/
-import PropertyKindCalculus.UncertaintyExamples.AutogradDirectSim
-import NN.Runtime.Autograd.Engine.TapeM
+
+module
+
+public import PropertyKindCalculus.UncertaintyExamples.AutogradDirectSim
+meta import PropertyKindCalculus.UncertaintyExamples.AutogradDirectSim
+public import NN.Runtime.Autograd.Engine.TapeM
+meta import NN.Runtime.Autograd.Engine.TapeM
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.UncertaintyExamples.TapeMBridge
 
@@ -312,3 +320,6 @@ info: 'PropertyKindCalculus.UncertaintyExamples.TapeMBridge.run_div_ok' depends 
 end
 
 end PropertyKindCalculus.UncertaintyExamples.TapeMBridge
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

@@ -17,5 +17,15 @@ answer to them live in their own repositories.
     attribute, the section-site map, and the derived conformance status.
 -/
 
-import PropertyKindCalculus.Rubrics.Catalogue
-import PropertyKindCalculus.Rubrics.Attributes
+module
+
+public import PropertyKindCalculus.Rubrics.Catalogue
+public import PropertyKindCalculus.Rubrics.Attributes
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
+
+
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

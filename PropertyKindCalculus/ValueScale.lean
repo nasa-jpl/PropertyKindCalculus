@@ -21,7 +21,12 @@ description logic can express; here it is proved, as is the inheritance of
 operator-availability monotonicity from the scale layer.
 -/
 
-import PropertyKindCalculus.PropertyValue
+module
+
+public import PropertyKindCalculus.PropertyValue
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -99,3 +104,6 @@ theorem KindOfProperty.mem_valueScale {k : KindOfProperty} {v : PropertyValue} :
   Iff.rfl
 
 end PropertyKindCalculus
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

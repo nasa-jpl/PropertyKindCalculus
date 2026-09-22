@@ -31,13 +31,18 @@ product. Making orthonormality a hypothesis is what lets the type say the first 
 theorem say the second.
 -/
 
-import PropertyKindCalculus.Frame
-import PropertyKindCalculus.QuantityReal
-import Mathlib.Algebra.BigOperators.Fin
-import Mathlib.Algebra.BigOperators.Ring.Finset
-import Mathlib.Tactic.Ring
-import Mathlib.Tactic.FinCases
-import Mathlib.Tactic.NormNum
+module
+
+public import PropertyKindCalculus.Frame
+public import PropertyKindCalculus.QuantityReal
+public import Mathlib.Algebra.BigOperators.Fin
+public import Mathlib.Algebra.BigOperators.Ring.Finset
+public import Mathlib.Tactic.Ring
+public import Mathlib.Tactic.FinCases
+public import Mathlib.Tactic.NormNum
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -209,3 +214,6 @@ theorem component_not_invariant (f g : Frame) (k : KindOfProperty) :
   simp [InFrame.components]
 
 end PropertyKindCalculus
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

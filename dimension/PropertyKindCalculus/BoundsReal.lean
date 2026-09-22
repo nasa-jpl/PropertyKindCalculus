@@ -19,8 +19,13 @@ so a downstream corollary keyed to a kinded box delegates to a Mathlib lemma wit
 rewriting across the seam.
 -/
 
-import PropertyKindCalculus.Bounds
-import Mathlib.Order.Interval.Set.Basic
+module
+
+public import PropertyKindCalculus.Bounds
+public import Mathlib.Order.Interval.Set.Basic
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.IccQ
 
@@ -42,3 +47,6 @@ theorem mem_toIcc [Preorder R] (I : IccQ k R) (x : Quantity k R) :
     x.magnitude ∈ I.toIcc ↔ I.Mem x := Iff.rfl
 
 end PropertyKindCalculus.IccQ
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

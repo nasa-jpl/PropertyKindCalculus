@@ -50,10 +50,15 @@ What this file does *not* do, by design: re-derive any `addGradAll` value commut
 P. The adjoint mathematics enters exactly once, through the Stage-3.5 bridge.
 -/
 
-import NN.Proofs.Autograd.Tape.Nodes.Arithmetic
-import NN.Proofs.Autograd.Runtime.Link.FDeriv
-import NN.Proofs.Autograd.FDeriv.PrimitiveCoordinates
-import NN.Runtime.Autograd.Engine.Core
+module
+
+public import NN.Proofs.Autograd.Tape.Nodes.Arithmetic
+public import NN.Proofs.Autograd.Runtime.Link.FDeriv
+public import NN.Proofs.Autograd.FDeriv.PrimitiveCoordinates
+public import NN.Runtime.Autograd.Engine.Core
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 open Spec TorchLean TorchLean.Tensor Proofs Proofs.Autograd
 
@@ -765,3 +770,7 @@ theorem direct_PR_soundness_compiled_at {Γ ss : List Shape}
   exact arrCorr_flattenCtx _
 
 end PRSim
+
+end  -- pkc-blanket-scope
+end -- pkc-blanket-expose
+end -- pkc-blanket

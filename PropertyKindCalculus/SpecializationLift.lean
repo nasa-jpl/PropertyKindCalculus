@@ -36,9 +36,14 @@ whole's value may be the sum of its parts' only where the kind licenses it; here
 of *different* kinds may meet in a sum only where their kinds provably meet.
 -/
 
-import PropertyKindCalculus.Specialization
-import PropertyKindCalculus.Bounds
-import PropertyKindCalculus.OperatorTable
+module
+
+public import PropertyKindCalculus.Specialization
+public import PropertyKindCalculus.Bounds
+public import PropertyKindCalculus.OperatorTable
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -224,3 +229,6 @@ theorem toQuantity_hadd_join [Carrier R] [j : KindJoin E k₁ k₂ p]
 end OperatorTable
 
 end PropertyKindCalculus
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

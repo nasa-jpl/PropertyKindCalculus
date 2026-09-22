@@ -3,8 +3,11 @@ Copyright (c) 2026 California Institute of Technology. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Nicolas Rouquette
 -/
-import Lean
-import PropertyKindCalculus.BoundaryAudit
+
+module
+
+public import Lean
+public import PropertyKindCalculus.BoundaryAudit
 
 /-!
 # `PropertyKindCalculus.Index` — harvesting the library's own structure
@@ -35,6 +38,9 @@ for what counts as a carrier, `boundaryExt` for what counts as a sanctioned cros
 an annotation *is* the criterion (`@[pkc_math_config]`, `@[requirement]`, …) is an annotation that
 already exists for another reason.
 -/
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Index
 
@@ -140,17 +146,17 @@ deriving Inhabited, Repr
 
 /-- Split `cs` at the first occurrence of the delimiter `close`, returning what precedes it and what
 follows it, or `none` when it does not occur. -/
-private def splitAtDelim (close : List Char) : List Char → Option (List Char × List Char)
+def splitAtDelim (close : List Char) : List Char → Option (List Char × List Char)
   | [] => none
   | c :: rest =>
     if close.isPrefixOf (c :: rest) then some ([], (c :: rest).drop close.length)
     else (splitAtDelim close rest).map fun (pre, post) => (c :: pre, post)
 
 /-- Emit the pending literal text, if any. -/
-private def flushText (buf : String) (acc : Array ProseRun) : Array ProseRun :=
+def flushText (buf : String) (acc : Array ProseRun) : Array ProseRun :=
   if buf.isEmpty then acc else acc.push (.text buf)
 
-private partial def parseProseAux : List Char → String → Array ProseRun → Array ProseRun
+partial def parseProseAux : List Char → String → Array ProseRun → Array ProseRun
   | [], buf, acc => flushText buf acc
   | '*' :: '*' :: rest, buf, acc =>
     match splitAtDelim ['*', '*'] rest with
@@ -212,7 +218,7 @@ partial def runsWidth (rs : Array ProseRun) : Nat :=
 def runWidth (r : ProseRun) : Nat := runsWidth #[r]
 
 /-- The longest prefix of `s` that ends on a word boundary and fits in `budget` characters. -/
-private def takeWords (budget : Nat) (s : String) : String := Id.run do
+def takeWords (budget : Nat) (s : String) : String := Id.run do
   let mut out := ""
   let mut started := false
   for w in s.splitOn " " do
@@ -232,7 +238,7 @@ is not a shorter identifier, it is a different and non-existent one, so a span t
 dropped rather than trimmed. An `emph` or `strong` span is truncated *inside*, keeping its
 delimiters — which is what stops a docstring whose entire first paragraph is bold from degrading to
 nothing at all. -/
-private partial def takeRuns (budget : Nat) : List ProseRun → Array ProseRun × Nat × Bool
+partial def takeRuns (budget : Nat) : List ProseRun → Array ProseRun × Nat × Bool
   | [] => (#[], budget, false)
   | r :: rest =>
     let w := runWidth r
@@ -259,7 +265,7 @@ span closing on one is not a span: `*b *` is a literal asterisk to markdown, not
 closing delimiter may not be preceded by whitespace. Left alone it is the same defect the run-based
 cut exists to prevent, arrived at from the other side. Whitespace *inside* a code span is content and
 is left alone. -/
-private partial def trimRunsEnd (rs : Array ProseRun) : Array ProseRun :=
+partial def trimRunsEnd (rs : Array ProseRun) : Array ProseRun :=
   match rs.back? with
   | none => rs
   | some r =>
@@ -524,3 +530,6 @@ def paramAttrEntries {α : Type} [Inhabited α] (attr : ParametricAttribute α) 
   return out.qsort (fun a b => nameLt a.1 b.1)
 
 end PropertyKindCalculus.Index
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

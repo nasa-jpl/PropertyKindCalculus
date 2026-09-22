@@ -29,7 +29,12 @@ becomes kinded (license it where the provenance is — e.g. adjacent to the file
 was read), and `.value` is the erasure back into lexical processing.
 -/
 
-import PropertyKindCalculus.Kind
+module
+
+public import PropertyKindCalculus.Kind
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -70,3 +75,6 @@ instance instRepr [Repr R] : Repr (NominalValue k R) := ⟨fun v p => reprPrec v
 end NominalValue
 
 end PropertyKindCalculus
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

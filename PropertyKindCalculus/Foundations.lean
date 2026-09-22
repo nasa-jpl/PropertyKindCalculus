@@ -5,6 +5,11 @@ Dybkær, *An Ontology on Property for Physical, Chemical, and Biological Systems
 (2009), Chapter 3.
 -/
 
+module
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
+
 namespace PropertyKindCalculus
 
 universe u v
@@ -160,3 +165,6 @@ def Designated.prod {O₁ : Type u} {O₂ : Type v} [Designated O₁] [Designate
     exact ⟨Designated.designation_inj h₁, Designated.designation_inj h₂⟩
 
 end PropertyKindCalculus
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

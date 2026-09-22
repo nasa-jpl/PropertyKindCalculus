@@ -16,7 +16,14 @@ The *occurrence* reading of these same definitions is probed in `Core.KindIncide
 a separate file because its command's module imports the boundary audit, which would
 put meta-heavy bodies into the environment walk the pins here pay for.
 -/
-import PropertyKindCalculus.KindEdges
+
+module
+
+public import PropertyKindCalculus.KindEdges
+meta import PropertyKindCalculus.KindEdges
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Tests.KindEdges
 
@@ -110,3 +117,6 @@ under a binder to exercise the recursion. -/
     Lean.logInfo (spec.fmt pps)
 
 end PropertyKindCalculus.Tests.KindEdges
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

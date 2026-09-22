@@ -34,10 +34,15 @@ Scalar quantities stay uninhabited on purpose: a default scalar would be a fabri
 magnitude.
 -/
 
-import PropertyKindCalculus.Quantity
+module
+
+public import PropertyKindCalculus.Quantity
 -- The scalar action at the end of this module is licensed by the same `ProductKind` law
 -- `Quantity.mul` takes, which lives with the classification layer.
-import PropertyKindCalculus.QuantityClassification
+public import PropertyKindCalculus.QuantityClassification
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -196,3 +201,6 @@ theorem Quantity.smulK_isSMul {R V : Type} [SMul R V] [ScalarCarrier R]
     (b : Quantity k₂ V) : (Quantity.smulK h a b).IsSMul h a b := rfl
 
 end PropertyKindCalculus
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

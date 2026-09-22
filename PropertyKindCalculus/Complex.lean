@@ -78,7 +78,13 @@ available at the executable `Float` representation with no analysis import; the 
 `NegTest` instance (the proof carrier) lives in the PhysLib-backed `Dimension` layer
 beside the other `ℝ` carrier instances.
 -/
-import PropertyKindCalculus.QuantityFunction
+
+module
+
+public import PropertyKindCalculus.QuantityFunction
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -278,3 +284,6 @@ def Quantity.im {k : KindOfProperty} {R : Type} (a : Quantity k (Complex R)) : Q
     (a : Quantity k (Complex R)) : (Quantity.im a).magnitude = a.magnitude.im := rfl
 
 end PropertyKindCalculus
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

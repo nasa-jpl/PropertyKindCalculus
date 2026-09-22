@@ -1,4 +1,6 @@
-import Mathlib.Combinatorics.Digraph.Basic
+module
+
+public import Mathlib.Combinatorics.Digraph.Basic
 
 /-!
 # Walks in a digraph
@@ -13,6 +15,9 @@ their `SimpleGraph` counterparts (in particular there is no `reverse`).
 Upstream target: `Mathlib/Combinatorics/Digraph/Walk.lean`, seeding the walk layer of the
 `Digraph` stub from the mature `SimpleGraph` development.
 -/
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace Digraph
 
@@ -233,3 +238,6 @@ end WalkDecomp
 end Walk
 
 end Digraph
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

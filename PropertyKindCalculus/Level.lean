@@ -55,7 +55,12 @@ an application-registered `Specializes`/`KindJoin` family over a general gain ki
 lattice machinery, not new level machinery).
 -/
 
-import PropertyKindCalculus.Quantity
+module
+
+public import PropertyKindCalculus.Quantity
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -243,3 +248,6 @@ def combineEnergetic [LogCarrier R] [Mul R] [Div R] (lk : LevelKind)
 end LevelKind
 
 end PropertyKindCalculus
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

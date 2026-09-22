@@ -38,7 +38,12 @@ evaluated measurand is what `UncertainQuantity` then carries as value plus descr
 R14's ladder attaches exactly at `sigma`.
 -/
 
-import PropertyKindCalculus.QuantityFunction
+module
+
+public import PropertyKindCalculus.QuantityFunction
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -86,3 +91,6 @@ def lower [Sub R] [MathCarrier R] (h : DifferenceKind k)
 end Measurand
 
 end PropertyKindCalculus
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

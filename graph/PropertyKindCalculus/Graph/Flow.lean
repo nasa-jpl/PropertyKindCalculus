@@ -1,6 +1,8 @@
-import PropertyKindCalculus.Influence
-import ForMathlib.Combinatorics.Digraph.Acyclic
-import ForMathlib.Combinatorics.Digraph.Condensation
+module
+
+public import PropertyKindCalculus.Influence
+public import ForMathlib.Combinatorics.Digraph.Acyclic
+public import ForMathlib.Combinatorics.Digraph.Condensation
 
 /-!
 # The value-flow digraph — the executable closures against their path semantics
@@ -26,6 +28,9 @@ The saturation argument mirrors `Relation.reachSet`'s, on lists: one sweep only 
 appended nodes are pairwise-distinct occurrence results, so with one sweep per occurrence
 plus one the closure either observed a fixpoint or would have outgrown its own bound.
 -/
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -349,3 +354,6 @@ theorem Acyclic.isPartialOrder {g : Provenance ν κ} (h : g.Acyclic) :
 end Provenance
 
 end PropertyKindCalculus
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

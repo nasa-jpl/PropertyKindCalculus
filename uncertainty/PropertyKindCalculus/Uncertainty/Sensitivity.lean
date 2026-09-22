@@ -23,10 +23,16 @@ fictive model `(a + b·b)·c` — pure `+`/`·` — is squarely inside it.
 This is the one Stage-1 module that depends on TorchLean (it lives in the `UncertaintyRigor`
 library alongside the Mathlib-backed `Ladder`, keeping Stage 0 toolchain-only).
 -/
-import PropertyKindCalculus.Torch.Paradigm.TapeCarrier
-import PropertyKindCalculus.Uncertainty.InputDist
-import NN.Tensor
-import Std.Data.HashMap
+
+module
+
+public import PropertyKindCalculus.Torch.Paradigm.TapeCarrier
+public import PropertyKindCalculus.Uncertainty.InputDist
+public import NN.Tensor
+public import Std.Data.HashMap
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 open Spec TorchLean
 open TorchLean TorchLean.Tensor
@@ -90,3 +96,6 @@ def coefficients (model : ScalarModel) (inputs : List (InputDist Float)) :
   pure (cs.zip (inputs.map fun d => d.moments))
 
 end PropertyKindCalculus.Uncertainty.Sensitivity
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

@@ -18,9 +18,18 @@ verified sorry-free by `#print axioms`. This is the proof-carrier companion of t
 Everything is a **checked fact** (the module builds under CI); the axiom prints confirm no `sorryAx`.
 Mathlib-backed.
 -/
-import PropertyKindCalculus.Uncertainty.Adequacy.Absorption
-import PropertyKindCalculus.Uncertainty.Adequacy.Soundness
-import PropertyKindCalculus.Uncertainty.Adequacy.Sterbenz32
+
+module
+
+public import PropertyKindCalculus.Uncertainty.Adequacy.Absorption
+meta import PropertyKindCalculus.Uncertainty.Adequacy.Absorption
+public import PropertyKindCalculus.Uncertainty.Adequacy.Soundness
+meta import PropertyKindCalculus.Uncertainty.Adequacy.Soundness
+public import PropertyKindCalculus.Uncertainty.Adequacy.Sterbenz32
+meta import PropertyKindCalculus.Uncertainty.Adequacy.Sterbenz32
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.UncertaintyExamples.AdequacyLadder
 
@@ -74,3 +83,6 @@ theorem a2_relunc : (1 : ℝ) ≤ 100 / 1 :=
 #guard_msgs (whitespace := lax) in #print axioms a2_sterbenz
 
 end PropertyKindCalculus.UncertaintyExamples.AdequacyLadder
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

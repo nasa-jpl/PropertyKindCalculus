@@ -62,7 +62,13 @@ is worth keeping in view — what is being relied on is that the check ran, whic
 offers no way to obtain the text without it.
 -/
 
-import PropertyKindCalculus.Bounds
+module
+
+public import PropertyKindCalculus.Bounds
+meta import PropertyKindCalculus.Bounds
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -400,3 +406,6 @@ theorem LowerBound.roundedUpAsRequirement_safe (b : LowerBound k R) (places : Na
   · exact Or.inl rfl
 
 end PropertyKindCalculus
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

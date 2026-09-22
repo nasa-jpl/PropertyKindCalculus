@@ -52,10 +52,16 @@ missing instance is how the layer says so instead of inventing a name that is no
 `Object` remains an instance of the parameterization — the nominal object type, where the
 name is the identity — so nothing written against the old signature changes.
 -/
-import PropertyKindCalculus.Foundations
-import PropertyKindCalculus.Quantity
-import PropertyKindCalculus.QuantityClassification
-import PropertyKindCalculus.QuantityVector
+
+module
+
+public import PropertyKindCalculus.Foundations
+public import PropertyKindCalculus.Quantity
+public import PropertyKindCalculus.QuantityClassification
+public import PropertyKindCalculus.QuantityVector
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -262,3 +268,6 @@ theorem recip_isReciprocal [Inv R] {k₁ k : KindOfProperty} (h : ReciprocalKind
 end IndividualQuantity
 
 end PropertyKindCalculus
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

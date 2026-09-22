@@ -8,7 +8,12 @@ by `10⁵` then `10⁻⁵` and returns exactly — the numeric analogue, landing
 because `ℝ` needs Mathlib (the `convertReal` layer lives in the `Dimension` library).
 -/
 
-import PropertyKindCalculus.UnitConversion
+module
+
+public import PropertyKindCalculus.UnitConversion
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Examples.UnitConversion
 
@@ -50,3 +55,6 @@ theorem kib_mib_real_roundtrip (x : ℝ) :
   PrefixedUnit.convertReal_roundtrip kibibyte mebibyte rfl (by decide) x
 
 end PropertyKindCalculus.Examples.UnitConversion
+
+end -- pkc-blanket-expose
+end -- pkc-blanket
