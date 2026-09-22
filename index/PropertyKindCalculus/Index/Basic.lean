@@ -484,7 +484,12 @@ def theoremsMentioning (env : Environment) (targets : Array Name) :
   let mut acc : Std.HashMap Name (Array Name) := {}
   for t in targets do acc := acc.insert t #[]
   for (n, info) in env.constants.toList do
-    unless info matches .thmInfo _ do continue
+    -- `.axiomInfo` passes this filter beside `.thmInfo` because in a `module` file an imported
+    -- `theorem` reads back as `.axiomInfo` — the same constructor `Classical.choice` returns.
+    -- The constructor is only the cheap gate over the whole environment; `wasOriginallyTheorem`
+    -- then decides, from the kind `addDecl` recorded, which of the two this is.
+    unless (info matches .thmInfo _) || (info matches .axiomInfo _) do continue
+    unless Lean.wasOriginallyTheorem env n do continue
     unless isAuthored env n do continue
     if isGeneratedTheorem n then continue
     for c in info.type.getUsedConstants do

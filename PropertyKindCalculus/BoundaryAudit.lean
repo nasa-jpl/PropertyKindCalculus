@@ -652,11 +652,23 @@ def boundarySites (scope : Array Name) : MetaM (Array BoundarySite) := do
   for (name, info) in env.constants.toList do
     let parent := parentOf name
     unless inScope parent do continue
-    if info matches .thmInfo _ then continue
+    -- By the authored kind, not the `ConstantInfo` constructor: in a `module` file an imported
+    -- `theorem` reads back from `Environment.find?` as `.axiomInfo`, so the constructor no longer
+    -- names it. `wasOriginallyTheorem` reads the kind `addDecl` recorded, which is exported.
+    if Lean.wasOriginallyTheorem env name then continue
     if isGeneratedMachinery env specs parent then continue
     -- A registered attestor's own body is the sanctioned mint *mechanism*, reviewed at
     -- registration — not a site (the same reason a carrier's own `.mk` is skipped).
     if attNames.any (fun a => a == name || a == parent) then continue
+    -- A definition whose body this module cannot read is a *hole in the audit*, not a
+    -- non-site: the sweep would report zero mints for it and say nothing. `.axiomInfo` at a
+    -- declaration whose authored kind is `defn` is exactly that case — a body sealed behind a
+    -- module boundary — and it is the one shape that must be loud rather than skipped.
+    if info matches .axiomInfo _ && Lean.wasOriginallyDefn env name then
+      throwError "the audit cannot read the body of '{name}', a definition exported as an \
+        axiom — its mints and erasures would be reported as none. Add `import all \
+        {(env.getModuleIdxFor? name).map (env.allImportedModuleNames[·]!) |>.getD name}` to \
+        this module, or expose the definition"
     let some body := info.value? | continue
     if ← Meta.isProp info.type then continue
     -- A Prop-former (`def P … : Prop`) is a specification, not compute: like a theorem, it is

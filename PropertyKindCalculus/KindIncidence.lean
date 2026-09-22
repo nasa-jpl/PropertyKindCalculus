@@ -2918,7 +2918,12 @@ def checkRelation (rname : Name) : MetaM CheckedRelation := do
   let wname := rel.witness
   let some info := env.find? wname
     | throwError "the witness '{rel.witness}' is not a declaration"
-  unless info matches .thmInfo _ do
+  -- Classified by the kind the declaration was *authored* with, not by the `ConstantInfo`
+  -- constructor: in a `module` file an imported `theorem` reads back from `Environment.find?`
+  -- as `.axiomInfo`, the same constructor `Classical.choice` returns. `wasOriginallyTheorem`
+  -- reads the authored kind from the extension `addDecl` records it in, which is exported, so
+  -- it separates a sealed theorem from a real axiom with no `import all`.
+  unless Lean.wasOriginallyTheorem env wname do
     throwError "the witness '{wname}' is not a theorem — a relation between two \
       boundaries is carried by a proof, and a definition asserts nothing"
   let axs ← Lean.collectAxioms wname
@@ -3012,10 +3017,10 @@ def checkRelation (rname : Name) : MetaM CheckedRelation := do
         no restatement — name the repair theorem that carries it across, or the witness \
         that restates it at that rung"
     let en := ev
-    let some einfo := env.find? en
+    let some _einfo := env.find? en
       | throwError "the license at rung '{l.rung}' names '{ev}', which is not a \
           declaration"
-    unless einfo matches .thmInfo _ do
+    unless Lean.wasOriginallyTheorem env en do
       throwError "the license at rung '{l.rung}' names '{en}', which is not a theorem \
         — a transfer is carried by a proof"
     let eaxs ← Lean.collectAxioms en
@@ -3039,7 +3044,7 @@ def checkRelation (rname : Name) : MetaM CheckedRelation := do
     let wpn := rel.wellPosed
     let some wpinfo := env.find? wpn
       | throwError "the well-posedness witness '{rel.wellPosed}' is not a declaration"
-    unless wpinfo matches .thmInfo _ do
+    unless Lean.wasOriginallyTheorem env wpn do
       throwError "the well-posedness witness '{wpn}' is not a theorem — existence and \
         uniqueness are carried by a proof"
     let wpaxs ← Lean.collectAxioms wpn
@@ -3076,7 +3081,7 @@ def checkRelation (rname : Name) : MetaM CheckedRelation := do
     let an := rel.ambiguity
     let some ainfo := env.find? an
       | throwError "the ambiguity witness '{rel.ambiguity}' is not a declaration"
-    unless ainfo matches .thmInfo _ do
+    unless Lean.wasOriginallyTheorem env an do
       throwError "the ambiguity witness '{an}' is not a theorem — a surfaced ambiguity \
         is carried by a proof"
     let aaxs ← Lean.collectAxioms an

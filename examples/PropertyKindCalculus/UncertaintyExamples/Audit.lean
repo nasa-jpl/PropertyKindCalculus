@@ -53,10 +53,6 @@ public import PropertyKindCalculus.Index
 -- Private scope only, and no paired `public import`: core seals `Lean.Name.beq`, so a kernel
 -- `decide` over a provenance graph whose kinds are `Name`s gets stuck without this.
 import all Init.Prelude
--- Private scope only: an imported `theorem` reads back from `Environment.find?` as `.axiomInfo`,
--- and `#kind_relations` classifies its witnesses by that constructor. `import all` restores
--- `.thmInfo` for this module.
-import all PropertyKindCalculus.UncertaintyExamples.WaterCloudModel
 
 public section -- pkc-blanket
 @[expose] section -- pkc-blanket-expose
