@@ -26,11 +26,16 @@ canonical momentum in both directions (`m·v` and `p/m`); Newton's `m·a`; the L
 and `ω·L`; the decomposition's `ω × r`; and conservation's `∂ₜE`.
 -/
 
-import ForPhysLib.ClassicalMechanics.Kinds
-import PropertyKindCalculus.Dimension
-import PropertyKindCalculus.DimensionalCoverage
-import PropertyKindCalculus.Iso80000.Part3
-import PropertyKindCalculus.Iso80000.Part4
+module
+
+public import ForPhysLib.ClassicalMechanics.Kinds
+public import PropertyKindCalculus.Dimension
+public import PropertyKindCalculus.DimensionalCoverage
+public import PropertyKindCalculus.Iso80000.Part3
+public import PropertyKindCalculus.Iso80000.Part4
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace ForPhysLib.ClassicalMechanics.Metrology
 
@@ -265,3 +270,6 @@ info: dimensional coverage:
 #kind_dimensional_coverage ForPhysLib.ClassicalMechanics.Metrology
 
 end ForPhysLib.ClassicalMechanics.Metrology
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

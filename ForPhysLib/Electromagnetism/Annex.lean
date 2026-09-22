@@ -6,8 +6,19 @@ PhysLib has no AC or RF physics; the annex is that capability in ladder form
 Stage 0, its defining relations consumed at Stage 1, phasor circuits through the
 operator table, the dB link budget on `LevelKind`, and the audits over all of it.
 -/
-import ForPhysLib.Electromagnetism.Annex.Kinds
-import ForPhysLib.Electromagnetism.Annex.Metrology
-import ForPhysLib.Electromagnetism.Annex.Circuits
-import ForPhysLib.Electromagnetism.Annex.Levels
-import ForPhysLib.Electromagnetism.Annex.Audits
+
+module
+
+public import ForPhysLib.Electromagnetism.Annex.Kinds
+public import ForPhysLib.Electromagnetism.Annex.Metrology
+public import ForPhysLib.Electromagnetism.Annex.Circuits
+public import ForPhysLib.Electromagnetism.Annex.Levels
+public import ForPhysLib.Electromagnetism.Annex.Audits
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
+
+
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

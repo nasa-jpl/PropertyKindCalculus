@@ -31,9 +31,17 @@ naked form recovered definitionally or by upstream's own lemma.
   coordinates) is carrier structure the kind layer rides unchanged.
 -/
 
-import ForPhysLib.ClassicalMechanics.Feasibility
-import ForPhysLib.ClassicalMechanics.Metrology
-import Physlib.ClassicalMechanics.HarmonicOscillator.Geometric.KineticEnergy
+module
+
+public import ForPhysLib.ClassicalMechanics.Feasibility
+meta import ForPhysLib.ClassicalMechanics.Feasibility
+public import ForPhysLib.ClassicalMechanics.Metrology
+meta import ForPhysLib.ClassicalMechanics.Metrology
+public import Physlib.ClassicalMechanics.HarmonicOscillator.Geometric.KineticEnergy
+meta import Physlib.ClassicalMechanics.HarmonicOscillator.Geometric.KineticEnergy
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace ForPhysLib.ClassicalMechanics.Kinded
 
@@ -309,3 +317,6 @@ def rawTrajectoryValue (S : HO)
 end
 
 end ForPhysLib.ClassicalMechanics.Kinded
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

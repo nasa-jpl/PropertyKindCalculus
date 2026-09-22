@@ -22,8 +22,13 @@ the collisions the order cannot see:
   is physics, unlike the cross-kind collisions the registry refuses.
 -/
 
-import ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinded
-import Mathlib.Algebra.Order.Antidiag.FinsuppEquiv
+module
+
+public import ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinded
+public import Mathlib.Algebra.Order.Antidiag.FinsuppEquiv
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 open QuantumMechanics HarmonicOscillator Constants
 open PropertyKindCalculus
@@ -174,3 +179,6 @@ end Kinded
 end
 
 end ForPhysLib.QuantumMechanics.HarmonicOscillator.Degeneracy
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

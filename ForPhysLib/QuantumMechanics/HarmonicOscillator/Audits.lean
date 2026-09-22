@@ -35,14 +35,25 @@ The API-map half of the stage is the `checked_by:` field. This directory has no
 ForPhysLib module whose build now checks the claim or holds its statement ready.
 -/
 
-import ForPhysLib.QuantumMechanics.HarmonicOscillator.Operators
-import ForPhysLib.QuantumMechanics.HarmonicOscillator.Heisenberg
-import ForPhysLib.QuantumMechanics.HarmonicOscillator.AngularMomentum
-import ForPhysLib.QuantumMechanics.HarmonicOscillator.Degeneracy
-import ForPhysLib.QuantumMechanics.HarmonicOscillator.LadderOperators
-import PropertyKindCalculus.BoundaryAudit
-import PropertyKindCalculus.KindLedger
-import PropertyKindCalculus.DimensionalCoverage
+module
+
+public import ForPhysLib.QuantumMechanics.HarmonicOscillator.Operators
+public import ForPhysLib.QuantumMechanics.HarmonicOscillator.Heisenberg
+public import ForPhysLib.QuantumMechanics.HarmonicOscillator.AngularMomentum
+public import ForPhysLib.QuantumMechanics.HarmonicOscillator.Degeneracy
+public import ForPhysLib.QuantumMechanics.HarmonicOscillator.LadderOperators
+public import PropertyKindCalculus.BoundaryAudit
+public import PropertyKindCalculus.KindLedger
+public import PropertyKindCalculus.DimensionalCoverage
+-- Private scope only: `findDocString?` returns `none` for an imported declaration, and the audit prints each tagged declaration's docstring. `import all` restores them.
+import all ForPhysLib.QuantumMechanics.HarmonicOscillator.AngularMomentum
+import all ForPhysLib.QuantumMechanics.HarmonicOscillator.Feasibility
+import all ForPhysLib.QuantumMechanics.HarmonicOscillator.Heisenberg
+import all ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinded
+import all ForPhysLib.QuantumMechanics.HarmonicOscillator.LadderOperators
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace ForPhysLib.QuantumMechanics.HarmonicOscillator.Audits
 
@@ -180,3 +191,6 @@ unkinded flow: momentumSigmaQ/ψ ⇒ momentumSigmaQ/_1
 #guard_msgs (whitespace := lax) in #kind_unkinded ingestBoundary
 
 end ForPhysLib.QuantumMechanics.HarmonicOscillator.Audits
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

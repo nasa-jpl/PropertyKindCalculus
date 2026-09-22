@@ -27,9 +27,17 @@ pilot's kind, not this directory's); `F·v` is refused (power delivery is upstre
 not own).
 -/
 
-import ForPhysLib.ClassicalMechanics.Kinded.HarmonicOscillator
-import ForPhysLib.ClassicalMechanics.Kinded.RigidBody
-import PropertyKindCalculus.DimensionalCoverage
+module
+
+public import ForPhysLib.ClassicalMechanics.Kinded.HarmonicOscillator
+meta import ForPhysLib.ClassicalMechanics.Kinded.HarmonicOscillator
+public import ForPhysLib.ClassicalMechanics.Kinded.RigidBody
+meta import ForPhysLib.ClassicalMechanics.Kinded.RigidBody
+public import PropertyKindCalculus.DimensionalCoverage
+meta import PropertyKindCalculus.DimensionalCoverage
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace ForPhysLib.ClassicalMechanics.Operators
 
@@ -177,3 +185,6 @@ info: dimensional coverage:
 end
 
 end ForPhysLib.ClassicalMechanics.Operators
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

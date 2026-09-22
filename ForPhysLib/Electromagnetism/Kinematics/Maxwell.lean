@@ -34,8 +34,15 @@ therefore *re-proved* here with upstream's own one-liners against the exported A
 patch candidate is a single line.
 -/
 
-import ForPhysLib.Electromagnetism.Kinematics.Kinded
-import Physlib.Electromagnetism.ThreeDimension.MaxwellEquations
+module
+
+public import ForPhysLib.Electromagnetism.Kinematics.Kinded
+meta import ForPhysLib.Electromagnetism.Kinematics.Kinded
+public import Physlib.Electromagnetism.ThreeDimension.MaxwellEquations
+meta import Physlib.Electromagnetism.ThreeDimension.MaxwellEquations
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 open PropertyKindCalculus
 open Electromagnetism
@@ -233,3 +240,6 @@ example : Iso80000.Part6.EDim.permeability * Iso80000.Part6.EDim.permittivity
 end
 
 end ForPhysLib.Electromagnetism.Kinematics.Maxwell
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

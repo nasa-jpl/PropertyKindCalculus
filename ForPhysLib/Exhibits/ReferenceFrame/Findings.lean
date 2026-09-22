@@ -33,11 +33,16 @@ definitional equivalence, and `AddCommGroup`/`Module` still arrive by the same o
 transfer — now per kind. The current `Vector` is the erasure of this one.
 -/
 
-import Physlib.SpaceAndTime.ReferenceFrame
-import ForPhysLib.Kinded.Space
-import PropertyKindCalculus.KindLedger
-import PropertyKindCalculus.Iso80000.Part3
-import PropertyKindCalculus.Iso80000.Part4
+module
+
+public import Physlib.SpaceAndTime.ReferenceFrame
+public import ForPhysLib.Kinded.Space
+public import PropertyKindCalculus.KindLedger
+public import PropertyKindCalculus.Iso80000.Part3
+public import PropertyKindCalculus.Iso80000.Part4
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace ForPhysLib.Exhibits.ReferenceFrame
 
@@ -195,3 +200,6 @@ unkinded flow: elapsedQ/t₂ ⇒ elapsedQ/result
 #kind_unkinded inertialBoundary
 
 end ForPhysLib.Exhibits.ReferenceFrame
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

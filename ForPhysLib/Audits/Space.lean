@@ -21,9 +21,16 @@ directory's `API-map.yaml` sits beside this file as `Space.checked_by.yaml`, poi
 map's existing prose requirements at the modules whose builds now check them.
 -/
 
-import ForPhysLib.Operators.Space
-import PropertyKindCalculus.BoundaryAudit
-import PropertyKindCalculus.KindLedger
+module
+
+public import ForPhysLib.Operators.Space
+public import PropertyKindCalculus.BoundaryAudit
+public import PropertyKindCalculus.KindLedger
+-- Private scope only: `findDocString?` returns `none` for an imported declaration, and the audit prints each tagged declaration's docstring. `import all` restores them.
+import all ForPhysLib.Kinded.Space
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace ForPhysLib.Audits.Space
 
@@ -114,3 +121,6 @@ unkinded flow: rawDistance/q ⇒ rawDistance/dq
 #guard_msgs (whitespace := lax) in #kind_unkinded ingestBoundary
 
 end ForPhysLib.Audits.Space
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

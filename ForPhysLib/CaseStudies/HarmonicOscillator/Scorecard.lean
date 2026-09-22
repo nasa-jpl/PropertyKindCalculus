@@ -31,10 +31,20 @@ one formula, which is the one comparison that is *inherently* cross-attempt.
 6. **Tier 6 needs a third axis, and it is not a finer basis.** Variance is independent of
    dimension in both directions, so no refinement of the dimension group reaches it.
 -/
-import ForPhysLib.CaseStudies.HarmonicOscillator.Attempt1Reals
-import ForPhysLib.CaseStudies.HarmonicOscillator.Attempt2Dimension
-import ForPhysLib.CaseStudies.HarmonicOscillator.Attempt3Tagged
-import ForPhysLib.CaseStudies.HarmonicOscillator.Attempt4Pkc
+
+module
+
+public import ForPhysLib.CaseStudies.HarmonicOscillator.Attempt1Reals
+meta import ForPhysLib.CaseStudies.HarmonicOscillator.Attempt1Reals
+public import ForPhysLib.CaseStudies.HarmonicOscillator.Attempt2Dimension
+meta import ForPhysLib.CaseStudies.HarmonicOscillator.Attempt2Dimension
+public import ForPhysLib.CaseStudies.HarmonicOscillator.Attempt3Tagged
+meta import ForPhysLib.CaseStudies.HarmonicOscillator.Attempt3Tagged
+public import ForPhysLib.CaseStudies.HarmonicOscillator.Attempt4Pkc
+meta import ForPhysLib.CaseStudies.HarmonicOscillator.Attempt4Pkc
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Examples.HarmonicOscillator.Scorecard
 
@@ -372,3 +382,6 @@ theorem mr32_attempt4_swept :
   Attempt4.mr32_capstone
 
 end PropertyKindCalculus.Examples.HarmonicOscillator.Scorecard
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

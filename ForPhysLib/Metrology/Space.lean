@@ -14,11 +14,16 @@ own projections; this module records the identification kind by kind (`rfl` — 
 is no second spelling to drift) and checks each pairing's dimension against the
 catalogue's. -/
 
-import ForPhysLib.Kinds.Space
-import ForPhysLib.Examination.Space
-import PropertyKindCalculus.Dimension
-import PropertyKindCalculus.DimensionalCoverage
-import PropertyKindCalculus.Iso80000.Part3
+module
+
+public import ForPhysLib.Kinds.Space
+public import ForPhysLib.Examination.Space
+public import PropertyKindCalculus.Dimension
+public import PropertyKindCalculus.DimensionalCoverage
+public import PropertyKindCalculus.Iso80000.Part3
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace ForPhysLib.Metrology.Space
 
@@ -84,3 +89,6 @@ info: dimensional coverage:
 #kind_dimensional_coverage ForPhysLib.Metrology.Space
 
 end ForPhysLib.Metrology.Space
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

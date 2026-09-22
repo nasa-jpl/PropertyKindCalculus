@@ -30,12 +30,23 @@ definition, at `ℝ` and at `Float32`, with the magnitude law one carrier-quanti
 (MR27; the exec/spec scope honesty stays as the case study states it).
 -/
 
-import Physlib.ClassicalMechanics.HarmonicOscillator.Basic
-import Physlib.ClassicalMechanics.Pendulum.SimplePendulum.Basic
-import PropertyKindCalculus.KindAlgebra
-import PropertyKindCalculus.Iso80000.Part3
-import PropertyKindCalculus.Iso80000.Part4
-import PropertyKindCalculus.QuantityReal
+module
+
+public import Physlib.ClassicalMechanics.HarmonicOscillator.Basic
+meta import Physlib.ClassicalMechanics.HarmonicOscillator.Basic
+public import Physlib.ClassicalMechanics.Pendulum.SimplePendulum.Basic
+meta import Physlib.ClassicalMechanics.Pendulum.SimplePendulum.Basic
+public import PropertyKindCalculus.KindAlgebra
+meta import PropertyKindCalculus.KindAlgebra
+public import PropertyKindCalculus.Iso80000.Part3
+meta import PropertyKindCalculus.Iso80000.Part3
+public import PropertyKindCalculus.Iso80000.Part4
+meta import PropertyKindCalculus.Iso80000.Part4
+public import PropertyKindCalculus.QuantityReal
+meta import PropertyKindCalculus.QuantityReal
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace ForPhysLib.Exhibits.HarmonicOscillator
 
@@ -238,3 +249,6 @@ theorem kineticE_magnitude {R : Type} [Mul R] [ScalarCarrier R] (half : R)
 #guard (kineticF32 ⟨2⟩ ⟨3⟩).magnitude == 9.0
 
 end ForPhysLib.Exhibits.HarmonicOscillator
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

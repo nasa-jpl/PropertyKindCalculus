@@ -19,9 +19,14 @@ The same two edges Stage 1 authored as laws back the instances, so the Stage-1
 the table cannot drift from the dimensional audit.
 -/
 
-import ForPhysLib.Metrology.Space
-import ForPhysLib.Kinded.Space
-import PropertyKindCalculus.DimensionalCoverage
+module
+
+public import ForPhysLib.Metrology.Space
+public import ForPhysLib.Kinded.Space
+public import PropertyKindCalculus.DimensionalCoverage
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace ForPhysLib.Operators.Space
 
@@ -78,3 +83,6 @@ info: dimensional coverage:
 #kind_dimensional_coverage ForPhysLib.Operators.Space
 
 end ForPhysLib.Operators.Space
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

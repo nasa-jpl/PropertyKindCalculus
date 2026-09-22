@@ -7,10 +7,21 @@ something which should be rejected type-checks — against the real PhysLib sour
 first six probe the *kind* and *object* layers; the seventh, Composition, probes the
 mereology: which quantities of a whole come from its parts.
 -/
-import ForPhysLib.Exhibits.RigidBody
-import ForPhysLib.Exhibits.ReferenceFrame
-import ForPhysLib.Exhibits.HarmonicOscillator
-import ForPhysLib.Exhibits.TwoRovers
-import ForPhysLib.Exhibits.Electromagnetism
-import ForPhysLib.Exhibits.PointParticle
-import ForPhysLib.Exhibits.Composition
+
+module
+
+public import ForPhysLib.Exhibits.RigidBody
+public import ForPhysLib.Exhibits.ReferenceFrame
+public import ForPhysLib.Exhibits.HarmonicOscillator
+public import ForPhysLib.Exhibits.TwoRovers
+public import ForPhysLib.Exhibits.Electromagnetism
+public import ForPhysLib.Exhibits.PointParticle
+public import ForPhysLib.Exhibits.Composition
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
+
+
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

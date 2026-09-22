@@ -5,12 +5,23 @@ The three-directory campaign's second directory (see `PLAN.md`): the eight-file 
 rooted at `EMPotential.lean` — potentials → fields → boosts → gauge. `Feasibility.lean`
 answers the capability questions first; the ladder stages follow it here.
 -/
-import ForPhysLib.Electromagnetism.Kinematics.Feasibility
-import ForPhysLib.Electromagnetism.Kinematics.Kinds
-import ForPhysLib.Electromagnetism.Kinematics.Metrology
-import ForPhysLib.Electromagnetism.Kinematics.Kinded
-import ForPhysLib.Electromagnetism.Kinematics.Operators
-import ForPhysLib.Electromagnetism.Kinematics.Audits
-import ForPhysLib.Electromagnetism.Kinematics.DistributionalTwin
-import ForPhysLib.Electromagnetism.Kinematics.Maxwell
-import ForPhysLib.Electromagnetism.Kinematics.Dynamics
+
+module
+
+public import ForPhysLib.Electromagnetism.Kinematics.Feasibility
+public import ForPhysLib.Electromagnetism.Kinematics.Kinds
+public import ForPhysLib.Electromagnetism.Kinematics.Metrology
+public import ForPhysLib.Electromagnetism.Kinematics.Kinded
+public import ForPhysLib.Electromagnetism.Kinematics.Operators
+public import ForPhysLib.Electromagnetism.Kinematics.Audits
+public import ForPhysLib.Electromagnetism.Kinematics.DistributionalTwin
+public import ForPhysLib.Electromagnetism.Kinematics.Maxwell
+public import ForPhysLib.Electromagnetism.Kinematics.Dynamics
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
+
+
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

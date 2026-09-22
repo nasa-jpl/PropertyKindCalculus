@@ -32,9 +32,17 @@ kind layer closes the loop:
   position moments already computed.
 -/
 
-import ForPhysLib.QuantumMechanics.HarmonicOscillator.Operators
-import Physlib.QuantumMechanics.Operators.Uncertainty
-import Physlib.QuantumMechanics.Operators.Commutation
+module
+
+public import ForPhysLib.QuantumMechanics.HarmonicOscillator.Operators
+meta import ForPhysLib.QuantumMechanics.HarmonicOscillator.Operators
+public import Physlib.QuantumMechanics.Operators.Uncertainty
+meta import Physlib.QuantumMechanics.Operators.Uncertainty
+public import Physlib.QuantumMechanics.Operators.Commutation
+meta import Physlib.QuantumMechanics.Operators.Commutation
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 open MeasureTheory QuantumMechanics HarmonicOscillator SpaceDHilbertSpace SchwartzSubmodule
 open InnerProductSpace Complex Constants LinearPMap SchwartzMap
@@ -613,3 +621,6 @@ theorem heisenberg_saturation_groundState :
 end
 
 end ForPhysLib.QuantumMechanics.HarmonicOscillator.Heisenberg
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

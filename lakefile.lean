@@ -142,6 +142,12 @@ lean_lib «PropertyKindCalculus» where
   -- The library root `PropertyKindCalculus.lean` plus every submodule under
   -- `PropertyKindCalculus/`. Examples live elsewhere, so they are not swept in here.
   globs := #[.andSubmodules `PropertyKindCalculus]
+  -- The ratchet. Every module of this library carries a `module` header, and so does every
+  -- module in the package that imports it, so a file added without one is reported here
+  -- rather than discovered by the first consumer that cannot import it (a `module` file
+  -- cannot import a non-`module` one). The option warns a library's IMPORTERS, not its own
+  -- files, which is why it waited until the rest of the package had migrated.
+  requiresModuleSystem := true
 
 /-- Worked examples — a separate library so the core can be imported alone. -/
 lean_lib «Examples» where

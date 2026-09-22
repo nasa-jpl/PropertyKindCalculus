@@ -31,7 +31,12 @@ work–energy theorem are aggregation laws, and a kind-only layer has no vocabul
 difference between a sum that crosses objects and one that does not.
 -/
 
-import ForPhysLib.CaseStudies.PointParticle.Common
+module
+
+public import ForPhysLib.CaseStudies.PointParticle.Common
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace ForPhysLib.CaseStudies.PointParticle.Attempt2
 
@@ -168,3 +173,6 @@ def sumOfPositionsQ (t : Time) : Quantity displacementK s.Vector :=
 end
 
 end ForPhysLib.CaseStudies.PointParticle.Attempt2
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

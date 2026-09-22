@@ -30,12 +30,17 @@ catalogue's own 6-8 — plus the variational six: the `π` and `π·F` products,
 the Legendre product, and the two spellings of `δS/δA`.
 -/
 
-import ForPhysLib.Electromagnetism.Kinematics.Kinds
-import PropertyKindCalculus.Dimension
-import PropertyKindCalculus.DimensionalCoverage
-import PropertyKindCalculus.Iso80000.Part3
-import PropertyKindCalculus.Iso80000.Part6
-import PropertyKindCalculus.Iso80000.Part7
+module
+
+public import ForPhysLib.Electromagnetism.Kinematics.Kinds
+public import PropertyKindCalculus.Dimension
+public import PropertyKindCalculus.DimensionalCoverage
+public import PropertyKindCalculus.Iso80000.Part3
+public import PropertyKindCalculus.Iso80000.Part6
+public import PropertyKindCalculus.Iso80000.Part7
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace ForPhysLib.Electromagnetism.Kinematics.Metrology
 
@@ -389,3 +394,6 @@ info: dimensional coverage:
 #kind_dimensional_coverage ForPhysLib.Electromagnetism.Kinematics.Metrology
 
 end ForPhysLib.Electromagnetism.Kinematics.Metrology
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

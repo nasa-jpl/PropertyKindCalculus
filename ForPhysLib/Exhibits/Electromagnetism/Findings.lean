@@ -38,17 +38,22 @@ it: the kind layer records what survives a boost (MR18); it does not re-derive
 electrodynamics.
 -/
 
-import Physlib.Electromagnetism.Basic
-import Physlib.Electromagnetism.Kinematics.ElectricField
-import Physlib.Units.Dimension
-import PropertyKindCalculus.KindAlgebra
-import PropertyKindCalculus.Iso80000.Part4
-import PropertyKindCalculus.Iso80000.Part5
-import PropertyKindCalculus.Iso80000.Part6
-import PropertyKindCalculus.SpecializationLift
-import PropertyKindCalculus.Level
-import PropertyKindCalculus.Complex
-import PropertyKindCalculus.QuantityReal
+module
+
+public import Physlib.Electromagnetism.Basic
+public import Physlib.Electromagnetism.Kinematics.ElectricField
+public import Physlib.Units.Dimension
+public import PropertyKindCalculus.KindAlgebra
+public import PropertyKindCalculus.Iso80000.Part4
+public import PropertyKindCalculus.Iso80000.Part5
+public import PropertyKindCalculus.Iso80000.Part6
+public import PropertyKindCalculus.SpecializationLift
+public import PropertyKindCalculus.Level
+public import PropertyKindCalculus.Complex
+public import PropertyKindCalculus.QuantityReal
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace ForPhysLib.Exhibits.Electromagnetism
 
@@ -304,3 +309,6 @@ noncomputable example (T : Quantity kineticK ℝ) (V : Quantity potentialEnergyK
     Quantity energyK ℝ := T + V
 
 end ForPhysLib.Exhibits.Electromagnetism
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

@@ -30,13 +30,25 @@ on those TODO texts, pointing each at the ForPhysLib module whose build now chec
 claim or holds its statement ready.
 -/
 
-import ForPhysLib.Electromagnetism.Kinematics.Operators
-import ForPhysLib.Electromagnetism.Kinematics.DistributionalTwin
-import ForPhysLib.Electromagnetism.Kinematics.Maxwell
-import ForPhysLib.Electromagnetism.Kinematics.Dynamics
-import PropertyKindCalculus.BoundaryAudit
-import PropertyKindCalculus.KindLedger
-import PropertyKindCalculus.DimensionalCoverage
+module
+
+public import ForPhysLib.Electromagnetism.Kinematics.Operators
+public import ForPhysLib.Electromagnetism.Kinematics.DistributionalTwin
+public import ForPhysLib.Electromagnetism.Kinematics.Maxwell
+public import ForPhysLib.Electromagnetism.Kinematics.Dynamics
+public import PropertyKindCalculus.BoundaryAudit
+public import PropertyKindCalculus.KindLedger
+public import PropertyKindCalculus.DimensionalCoverage
+-- Private scope only: `findDocString?` returns `none` for an imported declaration, and the audit prints each tagged declaration's docstring. `import all` restores them.
+import all ForPhysLib.Electromagnetism.Kinematics.DistributionalTwin
+import all ForPhysLib.Electromagnetism.Kinematics.Dynamics
+import all ForPhysLib.Electromagnetism.Kinematics.Feasibility
+import all ForPhysLib.Electromagnetism.Kinematics.Kinded
+import all ForPhysLib.Electromagnetism.Kinematics.Maxwell
+import all ForPhysLib.Electromagnetism.Kinematics.Operators
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace ForPhysLib.Electromagnetism.Kinematics.Audits
 
@@ -251,3 +263,6 @@ unkinded output rawElectricField/result : EuclideanSpace ℝ (Fin d)
 #guard_msgs (whitespace := lax) in #kind_unkinded ingestBoundary
 
 end ForPhysLib.Electromagnetism.Kinematics.Audits
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

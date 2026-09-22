@@ -32,7 +32,12 @@ momentum conservation and the work–energy theorem are both aggregation laws, a
 distinguishes an aggregation that is licensed from one that is not.
 -/
 
-import ForPhysLib.CaseStudies.PointParticle.Common
+module
+
+public import ForPhysLib.CaseStudies.PointParticle.Common
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace ForPhysLib.CaseStudies.PointParticle.Attempt1
 
@@ -146,3 +151,6 @@ example (fs : Multiset (Force s)) (p : s.Particle) (t : Time) : s.Vector × s.Ve
 end
 
 end ForPhysLib.CaseStudies.PointParticle.Attempt1
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

@@ -7,4 +7,15 @@ derives distinctness from them. See [PLAN.md](ForPhysLib/PLAN.md#stage-0-the-kin
 
   * `Space` — the principles of `Physlib/SpaceAndTime/Space`'s vocabulary.
 -/
-import ForPhysLib.Examination.Space
+
+module
+
+public import ForPhysLib.Examination.Space
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
+
+
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

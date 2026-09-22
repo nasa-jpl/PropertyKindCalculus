@@ -48,7 +48,12 @@ no licensed form for that: `mul` wants one carrier, `smulK` wants the scalar on 
 neither is a norm. §6 pins the gap as a refusal rather than leaving it as a remark.
 -/
 
-import ForPhysLib.CaseStudies.PointParticle.Common
+module
+
+public import ForPhysLib.CaseStudies.PointParticle.Common
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace ForPhysLib.CaseStudies.PointParticle.Attempt4
 
@@ -265,3 +270,6 @@ same shape and the same gap. -/
 end
 
 end ForPhysLib.CaseStudies.PointParticle.Attempt4
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

@@ -46,12 +46,17 @@ Five statements, chosen because each one fails differently under a different typ
    object changes.
 -/
 
-import Mathlib.Data.Multiset.Fintype
-import Physlib.SpaceAndTime.ReferenceFrame
-import PropertyKindCalculus.CompositeReal
-import PropertyKindCalculus.QuantityReal
-import PropertyKindCalculus.Iso80000.Part3
-import PropertyKindCalculus.Iso80000.Part4
+module
+
+public import Mathlib.Data.Multiset.Fintype
+public import Physlib.SpaceAndTime.ReferenceFrame
+public import PropertyKindCalculus.CompositeReal
+public import PropertyKindCalculus.QuantityReal
+public import PropertyKindCalculus.Iso80000.Part3
+public import PropertyKindCalculus.Iso80000.Part4
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace ForPhysLib.CaseStudies.PointParticle
 
@@ -182,3 +187,6 @@ instance : Assembles pointSystemS forceK := ⟨DifferenceKind.ofScale⟩
 end
 
 end ForPhysLib.CaseStudies.PointParticle
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

@@ -32,10 +32,15 @@ ones.
    #1612's field, and it refuses every substitution above.
 -/
 
-import ForPhysLib.CaseStudies.PointParticle.Attempt1Fields
-import ForPhysLib.CaseStudies.PointParticle.Attempt2Kinds
-import ForPhysLib.CaseStudies.PointParticle.Attempt3Indexed
-import ForPhysLib.CaseStudies.PointParticle.Attempt4Dependent
+module
+
+public import ForPhysLib.CaseStudies.PointParticle.Attempt1Fields
+public import ForPhysLib.CaseStudies.PointParticle.Attempt2Kinds
+public import ForPhysLib.CaseStudies.PointParticle.Attempt3Indexed
+public import ForPhysLib.CaseStudies.PointParticle.Attempt4Dependent
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace ForPhysLib.CaseStudies.PointParticle.Scorecard
 
@@ -169,3 +174,6 @@ example (fs : Multiset (Attempt4.Force s))
 end
 
 end ForPhysLib.CaseStudies.PointParticle.Scorecard
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

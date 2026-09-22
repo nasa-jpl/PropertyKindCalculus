@@ -23,11 +23,21 @@ instance PhysLib relies on (the torsor, the metric, the `Zero`) stays exactly wh
 it was.
 -/
 
-import ForPhysLib.Kinds.Space
-import PropertyKindCalculus.QuantityReal
-import PropertyKindCalculus.BoundaryAudit
-import Physlib.SpaceAndTime.Space.Basic
-import Physlib.SpaceAndTime.Space.Origin
+module
+
+public import ForPhysLib.Kinds.Space
+meta import ForPhysLib.Kinds.Space
+public import PropertyKindCalculus.QuantityReal
+meta import PropertyKindCalculus.QuantityReal
+public import PropertyKindCalculus.BoundaryAudit
+meta import PropertyKindCalculus.BoundaryAudit
+public import Physlib.SpaceAndTime.Space.Basic
+meta import Physlib.SpaceAndTime.Space.Basic
+public import Physlib.SpaceAndTime.Space.Origin
+meta import Physlib.SpaceAndTime.Space.Origin
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace ForPhysLib.Kinded.Space
 
@@ -131,3 +141,6 @@ example {d : ℕ} (v w : Quantity displacement (EuclideanSpace ℝ (Fin d))) :
 end
 
 end ForPhysLib.Kinded.Space
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

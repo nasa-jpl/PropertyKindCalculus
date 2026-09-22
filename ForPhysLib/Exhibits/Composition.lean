@@ -7,4 +7,15 @@ library says so. `Findings.lean` holds the build artifacts — four inhabitants 
 `InformalLemma`, a massless body with a centre of mass, three sums the types cannot tell
 apart, and the kinded counter-form that splits them three ways.
 -/
-import ForPhysLib.Exhibits.Composition.Findings
+
+module
+
+public import ForPhysLib.Exhibits.Composition.Findings
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
+
+
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

@@ -49,10 +49,16 @@ nowhere else — so the algebra a physical model is written in is `ℝ`-only, as
 carrier and not *combined* there, which closes MR13, MR14 and MR15 at a stroke and leaves
 MR17's vector arithmetic in the same position.
 -/
-import PropertyKindCalculus.Dimension
-import PropertyKindCalculus.QuantityReal
-import Physlib.Units.WithDim.Basic
-import Mathlib.Basic.Complex.Basic
+
+module
+
+public import PropertyKindCalculus.Dimension
+public import PropertyKindCalculus.QuantityReal
+public import Physlib.Units.WithDim.Basic
+public import Mathlib.Basic.Complex.Basic
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Examples.HarmonicOscillator.Attempt2
 
@@ -574,3 +580,6 @@ example (T : WithDim Dim.energy ℝ) : WithDim Dim.energy ℝ := expectsPotentia
 end MR32
 
 end PropertyKindCalculus.Examples.HarmonicOscillator.Attempt2
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

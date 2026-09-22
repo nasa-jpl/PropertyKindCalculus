@@ -32,8 +32,13 @@ sides). The same table saying yes and no on the same page is the proof that the 
 table is curation, not a loophole.
 -/
 
-import PropertyKindCalculus
-import PropertyKindCalculus.Iso80000.Part6
+module
+
+public import PropertyKindCalculus
+public import PropertyKindCalculus.Iso80000.Part6
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace ForPhysLib.Electromagnetism.Annex.Kinds
 
@@ -177,3 +182,6 @@ theorem apparentPower_comparable_activePower :
   ⟨power, .of_edge .apparent, .of_edge .active⟩
 
 end ForPhysLib.Electromagnetism.Annex.Kinds
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

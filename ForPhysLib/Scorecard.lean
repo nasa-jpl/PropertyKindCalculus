@@ -27,11 +27,16 @@ a term this module could import. What is collected here is the propositions.
    exhibits are cited by the headers, witnessed by their own files building.
 -/
 
-import ForPhysLib.Kinds
-import ForPhysLib.Metrology
-import ForPhysLib.Kinded
-import ForPhysLib.Operators
-import ForPhysLib.Exhibits
+module
+
+public import ForPhysLib.Kinds
+public import ForPhysLib.Metrology
+public import ForPhysLib.Kinded
+public import ForPhysLib.Operators
+public import ForPhysLib.Exhibits
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace ForPhysLib.Scorecard
 
@@ -218,3 +223,6 @@ theorem exhibitE_comparable_yet_refused :
 end ExhibitE
 
 end ForPhysLib.Scorecard
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

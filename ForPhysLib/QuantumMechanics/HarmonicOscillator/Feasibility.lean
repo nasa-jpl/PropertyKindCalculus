@@ -35,15 +35,29 @@ eigenfunctions, and the `LadderOperators` stub (green-field co-authoring; `a`, `
 are dimensionless).
 -/
 
-import Physlib.QuantumMechanics.HarmonicOscillator.Basic
-import Physlib.QuantumMechanics.HarmonicOscillator.Eigenstates
-import Physlib.QuantumMechanics.HarmonicOscillator.OneDimension.Basic
-import PropertyKindCalculus.BoundaryAudit
-import PropertyKindCalculus.KindAlgebra
-import PropertyKindCalculus.SpecializationLift
-import PropertyKindCalculus.QuantityReal
-import PropertyKindCalculus.Iso80000.Part3
-import PropertyKindCalculus.Iso80000.Part4
+module
+
+public import Physlib.QuantumMechanics.HarmonicOscillator.Basic
+meta import Physlib.QuantumMechanics.HarmonicOscillator.Basic
+public import Physlib.QuantumMechanics.HarmonicOscillator.Eigenstates
+meta import Physlib.QuantumMechanics.HarmonicOscillator.Eigenstates
+public import Physlib.QuantumMechanics.HarmonicOscillator.OneDimension.Basic
+meta import Physlib.QuantumMechanics.HarmonicOscillator.OneDimension.Basic
+public import PropertyKindCalculus.BoundaryAudit
+meta import PropertyKindCalculus.BoundaryAudit
+public import PropertyKindCalculus.KindAlgebra
+meta import PropertyKindCalculus.KindAlgebra
+public import PropertyKindCalculus.SpecializationLift
+meta import PropertyKindCalculus.SpecializationLift
+public import PropertyKindCalculus.QuantityReal
+meta import PropertyKindCalculus.QuantityReal
+public import PropertyKindCalculus.Iso80000.Part3
+meta import PropertyKindCalculus.Iso80000.Part3
+public import PropertyKindCalculus.Iso80000.Part4
+meta import PropertyKindCalculus.Iso80000.Part4
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace ForPhysLib.QuantumMechanics.HarmonicOscillator
 
@@ -276,3 +290,6 @@ noncomputable example (Q₁ : PhysHO1) : ℝ := Q₁.ξ + Q₁.m
 #check_failure fun (Q₁ : PhysHO1) => xiQ Q₁ + mQ Q₁
 
 end ForPhysLib.QuantumMechanics.HarmonicOscillator
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

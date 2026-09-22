@@ -43,11 +43,16 @@ has no way to *state* which quantities aggregate, so the three cases of finding 
 case to the type system.
 -/
 
-import Physlib.ClassicalMechanics.RigidBody.KineticEnergy
-import PropertyKindCalculus
-import PropertyKindCalculus.AggregationLaws
-import PropertyKindCalculus.Iso80000.Part3
-import PropertyKindCalculus.Iso80000.Part4
+module
+
+public import Physlib.ClassicalMechanics.RigidBody.KineticEnergy
+public import PropertyKindCalculus
+public import PropertyKindCalculus.AggregationLaws
+public import PropertyKindCalculus.Iso80000.Part3
+public import PropertyKindCalculus.Iso80000.Part4
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace ForPhysLib.Exhibits.Composition
 
@@ -328,3 +333,6 @@ theorem halvesByMass_total_ne_zero : halvesByMass.total ≠ Carrier.zero :=
   halvesByMass.total_ne_zero'
 
 end ForPhysLib.Exhibits.Composition
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

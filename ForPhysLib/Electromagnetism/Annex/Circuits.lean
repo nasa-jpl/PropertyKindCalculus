@@ -11,11 +11,21 @@ Stage-1 edge law. The refusals are pinned beside the acceptances — the same ta
 answers yes (`Û / Î`, `λ·S`) and no (`Û · Û`, `P + Q`) on one page.
 -/
 
-import ForPhysLib.Electromagnetism.Annex.Metrology
-import PropertyKindCalculus.OperatorTable
-import PropertyKindCalculus.Complex
-import PropertyKindCalculus.QuantityReal
-import Mathlib.Analysis.Real.Sqrt
+module
+
+public import ForPhysLib.Electromagnetism.Annex.Metrology
+meta import ForPhysLib.Electromagnetism.Annex.Metrology
+public import PropertyKindCalculus.OperatorTable
+meta import PropertyKindCalculus.OperatorTable
+public import PropertyKindCalculus.Complex
+meta import PropertyKindCalculus.Complex
+public import PropertyKindCalculus.QuantityReal
+meta import PropertyKindCalculus.QuantityReal
+public import Mathlib.Analysis.Real.Sqrt
+meta import Mathlib.Analysis.Real.Sqrt
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace ForPhysLib.Electromagnetism.Annex.Circuits
 
@@ -124,3 +134,6 @@ theorem activeFromFactor_powerFactorOf (P : Quantity activePower ℝ)
       = P.magnitude / S.magnitude * S.magnitude := rfl
 
 end ForPhysLib.Electromagnetism.Annex.Circuits
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

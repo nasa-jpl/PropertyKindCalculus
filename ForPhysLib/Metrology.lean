@@ -9,4 +9,15 @@ zero cost to existing code. See [PLAN.md](ForPhysLib/PLAN.md#stage-1-the-metrolo
   * `Space` — the annex for `Physlib/SpaceAndTime/Space`, with the Stage-0 lookup proved
     against `Iso80000.Part3` by `decide`.
 -/
-import ForPhysLib.Metrology.Space
+
+module
+
+public import ForPhysLib.Metrology.Space
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
+
+
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

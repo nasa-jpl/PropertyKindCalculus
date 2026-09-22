@@ -29,11 +29,21 @@ speculative — the same requirements are discharged at scale in the author's
 soil-moisture model; this file shows a PhysLib reader what they buy, small.
 -/
 
-import PropertyKindCalculus
-import PropertyKindCalculus.QuantityReal
-import PropertyKindCalculus.Iso80000.Part3
-import PropertyKindCalculus.Iso80000.Part4
-import Mathlib.Tactic.NormNum
+module
+
+public import PropertyKindCalculus
+meta import PropertyKindCalculus
+public import PropertyKindCalculus.QuantityReal
+meta import PropertyKindCalculus.QuantityReal
+public import PropertyKindCalculus.Iso80000.Part3
+meta import PropertyKindCalculus.Iso80000.Part3
+public import PropertyKindCalculus.Iso80000.Part4
+meta import PropertyKindCalculus.Iso80000.Part4
+public import Mathlib.Tactic.NormNum
+meta import Mathlib.Tactic.NormNum
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace ForPhysLib.Exhibits.TwoRovers
 
@@ -249,3 +259,6 @@ whole. -/
 #guard (assemble (R := Float32) rover1 (fun p => (⟨1.0⟩ : IndividualQuantity (partOf rover1 p) massK Float32))).magnitude == 10.0
 
 end ForPhysLib.Exhibits.TwoRovers
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

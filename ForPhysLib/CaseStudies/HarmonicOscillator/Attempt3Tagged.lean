@@ -63,9 +63,15 @@ and the `ℝ`-only algebra is inherited from attempt 2 unchanged.
 Tier 6 adds one finding specific to *this* idea: the tag is the wrong shape for a frame twice over,
 since it neither varies with the choice of axes nor survives one.
 -/
-import PropertyKindCalculus.Dimension
-import Physlib.Units.WithDim.Basic
-import Mathlib.Basic.Complex.Basic
+
+module
+
+public import PropertyKindCalculus.Dimension
+public import Physlib.Units.WithDim.Basic
+public import Mathlib.Basic.Complex.Basic
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Examples.HarmonicOscillator.Attempt3
 
@@ -623,3 +629,6 @@ theorem mr32_over_rejection :
   ⟨kinetic_ne_potential, kinetic_forget_eq_potential_forget⟩
 
 end PropertyKindCalculus.Examples.HarmonicOscillator.Attempt3
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

@@ -13,11 +13,19 @@ Pulls in PhysLib + Mathlib transitively — as `DimensionAnnotations` already do
 this adds no dependency the library did not have.
 -/
 
-import ForPhysLib.CaseStudies.HarmonicOscillator.Scorecard
-import ForPhysLib.ClassicalMechanics.Audits
-import PropertyKindCalculus.Requirements.Attributes
+module
+
+public import ForPhysLib.CaseStudies.HarmonicOscillator.Scorecard
+meta import ForPhysLib.CaseStudies.HarmonicOscillator.Scorecard
+public import ForPhysLib.ClassicalMechanics.Audits
+meta import ForPhysLib.ClassicalMechanics.Audits
+public import PropertyKindCalculus.Requirements.Attributes
+meta import PropertyKindCalculus.Requirements.Attributes
 
 /-! ## Ergonomics and erasure (R21) -/
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 attribute [requirement "R21" exemplifies "the most verbose authoring (PKC longhand) computes exactly the least verbose one (bare reals), at the potential-energy model"]
   PropertyKindCalculus.Examples.HarmonicOscillator.Scorecard.mr11_pkc_same_value
@@ -40,3 +48,6 @@ attribute [requirement "R24" exemplifies "the kinded interior of a whole PhysLib
   ForPhysLib.ClassicalMechanics.Audits.interiorScope
 attribute [requirement "R24" exemplifies "the same directory's ingest boundary, measured rather than gated — 72 unkinded positions enumerated so growth is visible — while the silent mint ratchet lets the blessed scope grow only by attestation"]
   ForPhysLib.ClassicalMechanics.Audits.ingestBoundary
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

@@ -30,8 +30,13 @@ product — and the probe below shows it refused. Dimensional admissibility is n
 the registration is the design decision.
 -/
 
-import ForPhysLib.QuantumMechanics.HarmonicOscillator.Measurand
-import PropertyKindCalculus.DimensionalCoverage
+module
+
+public import ForPhysLib.QuantumMechanics.HarmonicOscillator.Measurand
+public import PropertyKindCalculus.DimensionalCoverage
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace ForPhysLib.QuantumMechanics.HarmonicOscillator.Operators
 
@@ -154,3 +159,6 @@ info: dimensional coverage:
 #kind_dimensional_coverage ForPhysLib.QuantumMechanics.HarmonicOscillator.Operators
 
 end ForPhysLib.QuantumMechanics.HarmonicOscillator.Operators
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

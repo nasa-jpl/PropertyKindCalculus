@@ -33,7 +33,12 @@ That last point is the useful one. It says the problem is not "field versus inde
 neither a target field nor a target index says so.
 -/
 
-import ForPhysLib.CaseStudies.PointParticle.Common
+module
+
+public import ForPhysLib.CaseStudies.PointParticle.Common
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace ForPhysLib.CaseStudies.PointParticle.Attempt3
 
@@ -158,3 +163,6 @@ def badReverse (p : s.Particle) (f : InternalForce s p) :
 end
 
 end ForPhysLib.CaseStudies.PointParticle.Attempt3
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

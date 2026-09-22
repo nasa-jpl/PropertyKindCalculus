@@ -6,4 +6,15 @@ with the naked form `rfl`-equal to `.magnitude` of the kinded one, so existing t
 statements survive by definitional erasure. See
 `PLAN.md`, [Stage 2](PLAN.md#stage-2-kinded-re-authoring-with-definitional-erasure).
 -/
-import ForPhysLib.Kinded.Space
+
+module
+
+public import ForPhysLib.Kinded.Space
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
+
+
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

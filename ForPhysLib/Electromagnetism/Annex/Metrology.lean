@@ -20,11 +20,16 @@ quantity's dimension — every one visible as a repeated `dim` below, and every 
 separated by a Stage-0 `decide` over the catalogue's own kinds.
 -/
 
-import ForPhysLib.Electromagnetism.Annex.Kinds
-import PropertyKindCalculus.Dimension
-import PropertyKindCalculus.DimensionalCoverage
-import PropertyKindCalculus.Iso80000.Part6
-import PropertyKindCalculus.Iso80000.Part6.DefiningRelations
+module
+
+public import ForPhysLib.Electromagnetism.Annex.Kinds
+public import PropertyKindCalculus.Dimension
+public import PropertyKindCalculus.DimensionalCoverage
+public import PropertyKindCalculus.Iso80000.Part6
+public import PropertyKindCalculus.Iso80000.Part6.DefiningRelations
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace ForPhysLib.Electromagnetism.Annex.Metrology
 
@@ -198,3 +203,6 @@ info: dimensional coverage:
 #kind_dimensional_coverage ForPhysLib.Electromagnetism.Annex.Metrology
 
 end ForPhysLib.Electromagnetism.Annex.Metrology
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

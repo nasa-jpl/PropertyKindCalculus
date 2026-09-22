@@ -24,8 +24,15 @@ the right-hand side. This file makes both halves explicit for the oscillator:
   the loop: the circular state's eigenvalue *is* the `m = 1` indication's magnitude.
 -/
 
-import ForPhysLib.QuantumMechanics.HarmonicOscillator.Heisenberg
-import Physlib.QuantumMechanics.Operators.AngularMomentum
+module
+
+public import ForPhysLib.QuantumMechanics.HarmonicOscillator.Heisenberg
+meta import ForPhysLib.QuantumMechanics.HarmonicOscillator.Heisenberg
+public import Physlib.QuantumMechanics.Operators.AngularMomentum
+meta import Physlib.QuantumMechanics.Operators.AngularMomentum
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 open MeasureTheory QuantumMechanics HarmonicOscillator SpaceDHilbertSpace SchwartzSubmodule
 open InnerProductSpace Complex Constants LinearPMap SchwartzMap
@@ -214,3 +221,6 @@ theorem circularStateNeg_realizes_indication (hω : Q.ω i = Q.ω j) (hij : i �
 end
 
 end ForPhysLib.QuantumMechanics.HarmonicOscillator.AngularMomentum
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

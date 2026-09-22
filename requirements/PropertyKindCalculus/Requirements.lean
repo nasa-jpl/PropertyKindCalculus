@@ -27,11 +27,21 @@ Mirrors the design of `PropertyKindCalculus.CrossRefs`:
     (the checked successors of the blueprint's old "Concrete test" column).
 -/
 
-import PropertyKindCalculus.Requirements.Attributes
-import PropertyKindCalculus.Requirements.Catalogue
-import PropertyKindCalculus.Requirements.Annotations
-import PropertyKindCalculus.Requirements.DimensionAnnotations
-import PropertyKindCalculus.Requirements.UncertaintyAnnotations
-import PropertyKindCalculus.Requirements.ExampleAnnotations
-import PropertyKindCalculus.Requirements.RenderingAnnotations
-import PropertyKindCalculus.Requirements.ForPhysLibAnnotations
+module
+
+public import PropertyKindCalculus.Requirements.Attributes
+public import PropertyKindCalculus.Requirements.Catalogue
+public import PropertyKindCalculus.Requirements.Annotations
+public import PropertyKindCalculus.Requirements.DimensionAnnotations
+public import PropertyKindCalculus.Requirements.UncertaintyAnnotations
+public import PropertyKindCalculus.Requirements.ExampleAnnotations
+public import PropertyKindCalculus.Requirements.RenderingAnnotations
+public import PropertyKindCalculus.Requirements.ForPhysLibAnnotations
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
+
+
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

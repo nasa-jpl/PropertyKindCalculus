@@ -19,5 +19,16 @@ every verdict a build artifact rather than prose.
 A case study is a *directory*, prose beside the sources that back each claim: its `README.md`
 links to the requirement headings it exercises and never restates them.
 -/
-import ForPhysLib.CaseStudies.HarmonicOscillator
-import ForPhysLib.CaseStudies.PointParticle
+
+module
+
+public import ForPhysLib.CaseStudies.HarmonicOscillator
+public import ForPhysLib.CaseStudies.PointParticle
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
+
+
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

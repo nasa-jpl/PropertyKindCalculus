@@ -15,11 +15,18 @@ The annex has no upstream module, so there is no `checked_by` delta: nothing her
 checks a PhysLib TODO — the directory *is* the proposed capability.
 -/
 
-import ForPhysLib.Electromagnetism.Annex.Circuits
-import ForPhysLib.Electromagnetism.Annex.Levels
-import PropertyKindCalculus.BoundaryAudit
-import PropertyKindCalculus.KindLedger
-import PropertyKindCalculus.DimensionalCoverage
+module
+
+public import ForPhysLib.Electromagnetism.Annex.Circuits
+public import ForPhysLib.Electromagnetism.Annex.Levels
+public import PropertyKindCalculus.BoundaryAudit
+public import PropertyKindCalculus.KindLedger
+public import PropertyKindCalculus.DimensionalCoverage
+-- Private scope only: `findDocString?` returns `none` for an imported declaration, and the audit prints each tagged declaration's docstring. `import all` restores them.
+import all ForPhysLib.Electromagnetism.Annex.Circuits
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace ForPhysLib.Electromagnetism.Annex.Audits
 
@@ -53,3 +60,6 @@ info: tagged boundary crossings:
 #guard_msgs in #kind_dimensional_clean ForPhysLib.Electromagnetism.Annex
 
 end ForPhysLib.Electromagnetism.Annex.Audits
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

@@ -11,7 +11,12 @@ individuated **not by fiat but by how they are examined**.
 The principles are, like the kinds, the catalogue's own — each `def` *is* the entry
 from `Iso80000.Part3`'s `LengthPrinciple` namespace, so nothing can drift. -/
 
-import ForPhysLib.Kinds.Space
+module
+
+public import ForPhysLib.Kinds.Space
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace ForPhysLib.Examination.Space
 
@@ -43,3 +48,6 @@ theorem positionVector_ne_displacement_by_examination : positionVector ≠ displ
   KindOfProperty.distinct_of_examPrinciple (by decide)
 
 end ForPhysLib.Examination.Space
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

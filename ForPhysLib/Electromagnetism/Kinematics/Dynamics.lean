@@ -45,9 +45,17 @@ the tensor contraction, and `∂_` — which no table sees. The directory's Stag
 registration count is unchanged.
 -/
 
-import ForPhysLib.Electromagnetism.Kinematics.Maxwell
-import Physlib.Electromagnetism.Dynamics.Hamiltonian
-import Physlib.Electromagnetism.Dynamics.IsExtrema
+module
+
+public import ForPhysLib.Electromagnetism.Kinematics.Maxwell
+meta import ForPhysLib.Electromagnetism.Kinematics.Maxwell
+public import Physlib.Electromagnetism.Dynamics.Hamiltonian
+meta import Physlib.Electromagnetism.Dynamics.Hamiltonian
+public import Physlib.Electromagnetism.Dynamics.IsExtrema
+meta import Physlib.Electromagnetism.Dynamics.IsExtrema
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 open PropertyKindCalculus
 open Electromagnetism
@@ -307,3 +315,6 @@ def expectsEnergyDensity
 end
 
 end ForPhysLib.Electromagnetism.Kinematics.Dynamics
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

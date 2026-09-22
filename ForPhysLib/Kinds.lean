@@ -7,4 +7,15 @@ recorded definitionally in Stage 1) rather than designed. See [PLAN.md](ForPhysL
 
   * `Space` — the vocabulary of `Physlib/SpaceAndTime/Space`, the plan's first directory.
 -/
-import ForPhysLib.Kinds.Space
+
+module
+
+public import ForPhysLib.Kinds.Space
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
+
+
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

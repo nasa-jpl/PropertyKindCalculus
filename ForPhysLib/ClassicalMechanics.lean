@@ -6,10 +6,21 @@ The three-directory campaign's third directory (see `PLAN.md`): the
 `RigidBody` subtree, one shared vocabulary. `Feasibility.lean` answers the capability
 questions first; the ladder stages follow it here.
 -/
-import ForPhysLib.ClassicalMechanics.Feasibility
-import ForPhysLib.ClassicalMechanics.Kinds
-import ForPhysLib.ClassicalMechanics.Metrology
-import ForPhysLib.ClassicalMechanics.Kinded
-import ForPhysLib.ClassicalMechanics.Operators
-import ForPhysLib.ClassicalMechanics.Audits
-import ForPhysLib.ClassicalMechanics.SolidSphereInertia
+
+module
+
+public import ForPhysLib.ClassicalMechanics.Feasibility
+public import ForPhysLib.ClassicalMechanics.Kinds
+public import ForPhysLib.ClassicalMechanics.Metrology
+public import ForPhysLib.ClassicalMechanics.Kinded
+public import ForPhysLib.ClassicalMechanics.Operators
+public import ForPhysLib.ClassicalMechanics.Audits
+public import ForPhysLib.ClassicalMechanics.SolidSphereInertia
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
+
+
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

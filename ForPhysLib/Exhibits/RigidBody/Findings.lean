@@ -34,12 +34,17 @@ read in *different* frames, combined only through `toFrameScalar` — the transp
 free exactly because energy is scalar-variance (MR18: what survives a change of frame).
 -/
 
-import Physlib.ClassicalMechanics.RigidBody.KineticEnergy
-import PropertyKindCalculus.Frame
-import PropertyKindCalculus.Iso80000.Part3
-import PropertyKindCalculus.Iso80000.Part4
-import PropertyKindCalculus.QuantityReal
-import ForPhysLib.Kinds.Space
+module
+
+public import Physlib.ClassicalMechanics.RigidBody.KineticEnergy
+public import PropertyKindCalculus.Frame
+public import PropertyKindCalculus.Iso80000.Part3
+public import PropertyKindCalculus.Iso80000.Part4
+public import PropertyKindCalculus.QuantityReal
+public import ForPhysLib.Kinds.Space
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace ForPhysLib.Exhibits.RigidBody
 
@@ -278,3 +283,6 @@ noncomputable example (M : RigidBodyMotion 3) (t : Time) :
     (bodyInertia M) (bodyOmega M t)
 
 end ForPhysLib.Exhibits.RigidBody
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

@@ -27,12 +27,17 @@ quadratic form, and a position variance's radicand), and `x·p` landing at actio
 uncertainty product, comparable with `ℏ/2` because both are actions).
 -/
 
-import ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinds
-import PropertyKindCalculus.Dimension
-import PropertyKindCalculus.DimensionalCoverage
-import PropertyKindCalculus.Iso80000.Part3
-import PropertyKindCalculus.Iso80000.Part4
-import PropertyKindCalculus.Iso80000.Part10
+module
+
+public import ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinds
+public import PropertyKindCalculus.Dimension
+public import PropertyKindCalculus.DimensionalCoverage
+public import PropertyKindCalculus.Iso80000.Part3
+public import PropertyKindCalculus.Iso80000.Part4
+public import PropertyKindCalculus.Iso80000.Part10
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace ForPhysLib.QuantumMechanics.HarmonicOscillator.Metrology
 
@@ -204,3 +209,6 @@ info: dimensional coverage:
 #kind_dimensional_coverage ForPhysLib.QuantumMechanics.HarmonicOscillator.Metrology
 
 end ForPhysLib.QuantumMechanics.HarmonicOscillator.Metrology
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

@@ -26,8 +26,13 @@ distinct kinds — proved below from their examination principles — yet mutual
 as lengths, which is exactly the torsor the code already has, said at the kind level.
 -/
 
-import PropertyKindCalculus
-import PropertyKindCalculus.Iso80000.Part3
+module
+
+public import PropertyKindCalculus
+public import PropertyKindCalculus.Iso80000.Part3
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace ForPhysLib.Kinds.Space
 
@@ -101,3 +106,6 @@ theorem positionVector_comparable_displacement :
   ⟨length, .of_edge .positionVector_length, .of_edge .displacement_length⟩
 
 end ForPhysLib.Kinds.Space
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

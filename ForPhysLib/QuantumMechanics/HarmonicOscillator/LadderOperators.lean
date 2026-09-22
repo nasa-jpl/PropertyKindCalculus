@@ -29,7 +29,13 @@ quantum-number kind (ISO 80000-10 item 10-13.1), and its first two eigenvalues a
 `Kinded.occupationQ`'s magnitudes, label by label.
 -/
 
-import ForPhysLib.QuantumMechanics.HarmonicOscillator.AngularMomentum
+module
+
+public import ForPhysLib.QuantumMechanics.HarmonicOscillator.AngularMomentum
+meta import ForPhysLib.QuantumMechanics.HarmonicOscillator.AngularMomentum
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 open MeasureTheory QuantumMechanics HarmonicOscillator SpaceDHilbertSpace SchwartzSubmodule
 open InnerProductSpace Complex Constants LinearPMap SchwartzMap
@@ -480,3 +486,6 @@ theorem numberOpQ_single :
 end
 
 end ForPhysLib.QuantumMechanics.HarmonicOscillator.Ladder
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

@@ -40,9 +40,14 @@ time-sliced readings; `FieldStrength` the tensor and its matrix;
 already make.
 -/
 
-import PropertyKindCalculus
-import PropertyKindCalculus.Iso80000.Part3
-import PropertyKindCalculus.Iso80000.Part6
+module
+
+public import PropertyKindCalculus
+public import PropertyKindCalculus.Iso80000.Part3
+public import PropertyKindCalculus.Iso80000.Part6
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace ForPhysLib.Electromagnetism.Kinematics.Kinds
 
@@ -251,3 +256,6 @@ theorem speedOfLight_specializes : Specializes Edge speedOfLight speed :=
   .of_edge .speedOfLight_speed
 
 end ForPhysLib.Electromagnetism.Kinematics.Kinds
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

@@ -27,9 +27,17 @@ same slot; both derive `F` from `∂A`. This file pins the duplication finding:
   natural deduplication contract.
 -/
 
-import ForPhysLib.Electromagnetism.Kinematics.Kinded
-import Physlib.Electromagnetism.Distributional.ElectricField
-import Physlib.Electromagnetism.Distributional.FieldStrength
+module
+
+public import ForPhysLib.Electromagnetism.Kinematics.Kinded
+meta import ForPhysLib.Electromagnetism.Kinematics.Kinded
+public import Physlib.Electromagnetism.Distributional.ElectricField
+meta import Physlib.Electromagnetism.Distributional.ElectricField
+public import Physlib.Electromagnetism.Distributional.FieldStrength
+meta import Physlib.Electromagnetism.Distributional.FieldStrength
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 open PropertyKindCalculus
 open Electromagnetism
@@ -98,3 +106,6 @@ theorem distElectricFieldQ_magnitude (cS : SpeedOfLight)
 end
 
 end ForPhysLib.Electromagnetism.Kinematics.DistributionalTwin
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

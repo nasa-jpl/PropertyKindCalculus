@@ -36,8 +36,19 @@ The conclusion the benchmark supports is narrow: PhysLib's `Dimension` is the ri
 layer — PKC consumes it as `DimensionedKind.toDimension` — and the harmonic oscillator
 demonstrates that something has to sit above it.
 -/
-import ForPhysLib.CaseStudies.HarmonicOscillator.Attempt1Reals
-import ForPhysLib.CaseStudies.HarmonicOscillator.Attempt2Dimension
-import ForPhysLib.CaseStudies.HarmonicOscillator.Attempt3Tagged
-import ForPhysLib.CaseStudies.HarmonicOscillator.Attempt4Pkc
-import ForPhysLib.CaseStudies.HarmonicOscillator.Scorecard
+
+module
+
+public import ForPhysLib.CaseStudies.HarmonicOscillator.Attempt1Reals
+public import ForPhysLib.CaseStudies.HarmonicOscillator.Attempt2Dimension
+public import ForPhysLib.CaseStudies.HarmonicOscillator.Attempt3Tagged
+public import ForPhysLib.CaseStudies.HarmonicOscillator.Attempt4Pkc
+public import ForPhysLib.CaseStudies.HarmonicOscillator.Scorecard
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
+
+
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

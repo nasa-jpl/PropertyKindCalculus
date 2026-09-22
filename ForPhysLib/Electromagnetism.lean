@@ -3,5 +3,16 @@
 
 Campaign modules mirror their PhysLib paths (`PLAN.md`, "The three-directory campaign").
 -/
-import ForPhysLib.Electromagnetism.Kinematics
-import ForPhysLib.Electromagnetism.Annex
+
+module
+
+public import ForPhysLib.Electromagnetism.Kinematics
+public import ForPhysLib.Electromagnetism.Annex
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
+
+
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

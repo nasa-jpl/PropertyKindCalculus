@@ -42,7 +42,12 @@ the sums the PR would also accept but should not — the particles' velocities, 
 positions — have no license and do not elaborate.
 -/
 
-import ForPhysLib.CaseStudies.PointParticle.Common
+module
+
+public import ForPhysLib.CaseStudies.PointParticle.Common
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace ForPhysLib.Exhibits.PointParticle
 
@@ -198,3 +203,6 @@ end AssemblyRefusals
 end
 
 end ForPhysLib.Exhibits.PointParticle
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

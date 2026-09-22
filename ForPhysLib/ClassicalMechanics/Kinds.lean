@@ -36,9 +36,14 @@ Kinetic and potential energy join at mechanical energy (`E = T + V`,
 transitively.
 -/
 
-import PropertyKindCalculus
-import PropertyKindCalculus.Iso80000.Part3
-import PropertyKindCalculus.Iso80000.Part4
+module
+
+public import PropertyKindCalculus
+public import PropertyKindCalculus.Iso80000.Part3
+public import PropertyKindCalculus.Iso80000.Part4
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace ForPhysLib.ClassicalMechanics.Kinds
 
@@ -246,3 +251,6 @@ theorem lagrangian_no_edge (k : KindOfProperty) : ¬ Edge lagrangian k := by
   rcases hsrc _ _ h with h1 | h1 | h1 | h1 <;> exact absurd h1 (by decide)
 
 end ForPhysLib.ClassicalMechanics.Kinds
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

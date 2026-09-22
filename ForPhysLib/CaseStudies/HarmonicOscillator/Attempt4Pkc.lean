@@ -61,16 +61,32 @@ burden.
 The file runs the requirements in order, tier by tier, so it can be read end to end as one
 account of a single idea rather than as a row of a table.
 -/
-import PropertyKindCalculus.Dimension
-import PropertyKindCalculus.Iso80000.Part3
-import PropertyKindCalculus.Iso80000.Part4
-import PropertyKindCalculus.QuantityReal
-import PropertyKindCalculus.Complex
-import PropertyKindCalculus.FrameReal
-import PropertyKindCalculus.SpecializationLift
-import PropertyKindCalculus.KindAlgebra
-import PropertyKindCalculus.DocGenMath
-import Physlib.Units.WithDim.Basic
+
+module
+
+public import PropertyKindCalculus.Dimension
+meta import PropertyKindCalculus.Dimension
+public import PropertyKindCalculus.Iso80000.Part3
+meta import PropertyKindCalculus.Iso80000.Part3
+public import PropertyKindCalculus.Iso80000.Part4
+meta import PropertyKindCalculus.Iso80000.Part4
+public import PropertyKindCalculus.QuantityReal
+meta import PropertyKindCalculus.QuantityReal
+public import PropertyKindCalculus.Complex
+meta import PropertyKindCalculus.Complex
+public import PropertyKindCalculus.FrameReal
+meta import PropertyKindCalculus.FrameReal
+public import PropertyKindCalculus.SpecializationLift
+meta import PropertyKindCalculus.SpecializationLift
+public import PropertyKindCalculus.KindAlgebra
+meta import PropertyKindCalculus.KindAlgebra
+public import PropertyKindCalculus.DocGenMath
+meta import PropertyKindCalculus.DocGenMath
+public import Physlib.Units.WithDim.Basic
+meta import Physlib.Units.WithDim.Basic
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Examples.HarmonicOscillator.Attempt4
 
@@ -1353,3 +1369,6 @@ theorem mr32_capstone :
 end MR32
 
 end PropertyKindCalculus.Examples.HarmonicOscillator.Attempt4
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

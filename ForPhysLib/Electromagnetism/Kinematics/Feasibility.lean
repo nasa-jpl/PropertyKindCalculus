@@ -43,13 +43,25 @@ field-strength tensor's *entry* kind, the frame-covariant carrier the standard d
 list because the standard catalogues frame-bound readings.
 -/
 
-import Physlib.Electromagnetism.Kinematics.Boosts
-import Physlib.Electromagnetism.Kinematics.GaugeTransformation
-import Physlib.Electromagnetism.Basic
-import PropertyKindCalculus.BoundaryAudit
-import PropertyKindCalculus.KindAlgebra
-import PropertyKindCalculus.QuantityReal
-import PropertyKindCalculus.Iso80000.Part6
+module
+
+public import Physlib.Electromagnetism.Kinematics.Boosts
+meta import Physlib.Electromagnetism.Kinematics.Boosts
+public import Physlib.Electromagnetism.Kinematics.GaugeTransformation
+meta import Physlib.Electromagnetism.Kinematics.GaugeTransformation
+public import Physlib.Electromagnetism.Basic
+meta import Physlib.Electromagnetism.Basic
+public import PropertyKindCalculus.BoundaryAudit
+meta import PropertyKindCalculus.BoundaryAudit
+public import PropertyKindCalculus.KindAlgebra
+meta import PropertyKindCalculus.KindAlgebra
+public import PropertyKindCalculus.QuantityReal
+meta import PropertyKindCalculus.QuantityReal
+public import PropertyKindCalculus.Iso80000.Part6
+meta import PropertyKindCalculus.Iso80000.Part6
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace ForPhysLib.Electromagnetism.Kinematics
 
@@ -403,3 +415,6 @@ nothing. -/
   electricFieldAtQ cS A t x 0 + scalarPotentialQ (speedQ cS) (potentialQ A)
 
 end ForPhysLib.Electromagnetism.Kinematics
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

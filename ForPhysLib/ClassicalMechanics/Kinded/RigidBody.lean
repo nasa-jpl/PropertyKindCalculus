@@ -36,9 +36,17 @@ naked form recovered definitionally or by upstream's own theorem.
   centre-of-mass reading is zero — each an upstream theorem consumed at an ingest.
 -/
 
-import ForPhysLib.ClassicalMechanics.Feasibility
-import ForPhysLib.ClassicalMechanics.Metrology
-import Physlib.ClassicalMechanics.RigidBody.SolidSphere
+module
+
+public import ForPhysLib.ClassicalMechanics.Feasibility
+meta import ForPhysLib.ClassicalMechanics.Feasibility
+public import ForPhysLib.ClassicalMechanics.Metrology
+meta import ForPhysLib.ClassicalMechanics.Metrology
+public import Physlib.ClassicalMechanics.RigidBody.SolidSphere
+meta import Physlib.ClassicalMechanics.RigidBody.SolidSphere
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace ForPhysLib.ClassicalMechanics.Kinded
 
@@ -234,3 +242,6 @@ theorem comQ_solidSphere (m R : NNReal) (i : Fin d) :
 end
 
 end ForPhysLib.ClassicalMechanics.Kinded
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

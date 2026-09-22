@@ -6,4 +6,15 @@ One module per adopted PhysLib directory: the directory's kind algebra registere
 unregistered pair fails to elaborate. See
 `PLAN.md`, [Stage 3](PLAN.md#stage-3-the-operator-table).
 -/
-import ForPhysLib.Operators.Space
+
+module
+
+public import ForPhysLib.Operators.Space
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
+
+
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

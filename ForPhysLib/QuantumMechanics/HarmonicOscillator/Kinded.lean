@@ -50,10 +50,19 @@ The *proof* is the upstream analysis TODO; the kinded *statement* needs only thi
 vocabulary.
 -/
 
-import ForPhysLib.QuantumMechanics.HarmonicOscillator.Metrology
-import ForPhysLib.QuantumMechanics.HarmonicOscillator.Feasibility
-import ForPhysLib.QuantumMechanics.HarmonicOscillator.Orthonormality
-import PropertyKindCalculus.BoundaryAudit
+module
+
+public import ForPhysLib.QuantumMechanics.HarmonicOscillator.Metrology
+meta import ForPhysLib.QuantumMechanics.HarmonicOscillator.Metrology
+public import ForPhysLib.QuantumMechanics.HarmonicOscillator.Feasibility
+meta import ForPhysLib.QuantumMechanics.HarmonicOscillator.Feasibility
+public import ForPhysLib.QuantumMechanics.HarmonicOscillator.Orthonormality
+meta import ForPhysLib.QuantumMechanics.HarmonicOscillator.Orthonormality
+public import PropertyKindCalculus.BoundaryAudit
+meta import PropertyKindCalculus.BoundaryAudit
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 open PropertyKindCalculus MeasureTheory Complex Real
 open QuantumMechanics HarmonicOscillator SpaceDHilbertSpace SchwartzSubmodule
@@ -295,3 +304,6 @@ def SatisfiesTISE (Q : PhysHO d) (n : Fin d → ℕ) : Prop :=
 end
 
 end ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinded
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

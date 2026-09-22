@@ -29,9 +29,14 @@ quantum-specific remains in either; what this file supplies is the oscillator:
   (`sigma_hamiltonian`).
 -/
 
-import ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinded
-import PropertyKindCalculus.Observable
-import PropertyKindCalculus.Function
+module
+
+public import ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinded
+public import PropertyKindCalculus.Observable
+public import PropertyKindCalculus.Function
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 open PropertyKindCalculus MeasureTheory Complex Real
 open QuantumMechanics HarmonicOscillator SpaceDHilbertSpace SchwartzSubmodule
@@ -121,3 +126,6 @@ theorem sigma_hamiltonian (Q : PhysHO d) (hsa : IsSelfAdjoint Q.hamiltonian)
 end
 
 end ForPhysLib.QuantumMechanics.HarmonicOscillator
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

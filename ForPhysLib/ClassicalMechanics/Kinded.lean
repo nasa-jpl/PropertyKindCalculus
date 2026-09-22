@@ -4,5 +4,16 @@
 One namespace (`ForPhysLib.ClassicalMechanics.Kinded`), two files mirroring the two
 source subtrees the directory names.
 -/
-import ForPhysLib.ClassicalMechanics.Kinded.HarmonicOscillator
-import ForPhysLib.ClassicalMechanics.Kinded.RigidBody
+
+module
+
+public import ForPhysLib.ClassicalMechanics.Kinded.HarmonicOscillator
+public import ForPhysLib.ClassicalMechanics.Kinded.RigidBody
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
+
+
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

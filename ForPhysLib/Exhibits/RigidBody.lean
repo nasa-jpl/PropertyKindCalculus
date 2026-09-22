@@ -5,4 +5,15 @@ The first exhibit of [PLAN.md](../PLAN.md#exhibit-a-rigidbody): the directory wi
 highest defect density, and the one place a real correctness constraint is enforced by
 authoring convention rather than by a type. `Findings.lean` holds the build artifacts.
 -/
-import ForPhysLib.Exhibits.RigidBody.Findings
+
+module
+
+public import ForPhysLib.Exhibits.RigidBody.Findings
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
+
+
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

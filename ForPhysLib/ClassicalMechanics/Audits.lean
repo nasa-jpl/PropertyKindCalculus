@@ -32,10 +32,20 @@ The API-map half of the stage is the `checked_by:` field. Neither subtree has an
 (`ClassicalMechanics.checked_by.yaml`) keys on those texts.
 -/
 
-import ForPhysLib.ClassicalMechanics.Operators
-import PropertyKindCalculus.BoundaryAudit
-import PropertyKindCalculus.KindLedger
-import PropertyKindCalculus.DimensionalCoverage
+module
+
+public import ForPhysLib.ClassicalMechanics.Operators
+public import PropertyKindCalculus.BoundaryAudit
+public import PropertyKindCalculus.KindLedger
+public import PropertyKindCalculus.DimensionalCoverage
+-- Private scope only: `findDocString?` returns `none` for an imported declaration, and the audit prints each tagged declaration's docstring. `import all` restores them.
+import all ForPhysLib.ClassicalMechanics.Feasibility
+import all ForPhysLib.ClassicalMechanics.Kinded.HarmonicOscillator
+import all ForPhysLib.ClassicalMechanics.Kinded.RigidBody
+import all ForPhysLib.ClassicalMechanics.Operators
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace ForPhysLib.ClassicalMechanics.Audits
 
@@ -329,3 +339,6 @@ unkinded output rawTrajectoryValue/result : ℝ
 #guard_msgs (whitespace := lax) in #kind_unkinded ingestBoundary
 
 end ForPhysLib.ClassicalMechanics.Audits
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

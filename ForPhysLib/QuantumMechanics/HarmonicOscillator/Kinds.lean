@@ -34,10 +34,15 @@ make — three of them at the *same* dimension `M·L²·T⁻²`, which is the co
 vocabulary exists to prevent.
 -/
 
-import PropertyKindCalculus
-import PropertyKindCalculus.Iso80000.Part3
-import PropertyKindCalculus.Iso80000.Part4
-import PropertyKindCalculus.Iso80000.Part10
+module
+
+public import PropertyKindCalculus
+public import PropertyKindCalculus.Iso80000.Part3
+public import PropertyKindCalculus.Iso80000.Part4
+public import PropertyKindCalculus.Iso80000.Part10
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinds
 
@@ -198,3 +203,6 @@ theorem characteristicLength_specializes : Specializes Edge characteristicLength
   .of_edge .characteristicLength_length
 
 end ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinds
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

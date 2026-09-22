@@ -16,8 +16,13 @@ What the construction enforces, each pinned below:
   voltage gain stay two kinds (the 10/20 factor is kind, not convention).
 -/
 
-import ForPhysLib.Electromagnetism.Annex.Kinds
-import PropertyKindCalculus.Level
+module
+
+public import ForPhysLib.Electromagnetism.Annex.Kinds
+public import PropertyKindCalculus.Level
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace ForPhysLib.Electromagnetism.Annex.Levels
 
@@ -61,3 +66,6 @@ example :
       = ⟨-65⟩ := rfl
 
 end ForPhysLib.Electromagnetism.Annex.Levels
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

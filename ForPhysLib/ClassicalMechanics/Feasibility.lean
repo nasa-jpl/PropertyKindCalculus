@@ -52,14 +52,27 @@ One patch-candidate slot is known before any ladder stage: `solidSphere_inertiaT
 the plan, the discharge is attempted as a standalone file after the ladder.
 -/
 
-import Physlib.ClassicalMechanics.HarmonicOscillator.Solution
-import Physlib.ClassicalMechanics.RigidBody.KineticEnergy
-import PropertyKindCalculus.BoundaryAudit
-import PropertyKindCalculus.KindAlgebra
-import PropertyKindCalculus.QuantityReal
-import PropertyKindCalculus.SpecializationLift
-import PropertyKindCalculus.Iso80000.Part3
-import PropertyKindCalculus.Iso80000.Part4
+module
+
+public import Physlib.ClassicalMechanics.HarmonicOscillator.Solution
+meta import Physlib.ClassicalMechanics.HarmonicOscillator.Solution
+public import Physlib.ClassicalMechanics.RigidBody.KineticEnergy
+meta import Physlib.ClassicalMechanics.RigidBody.KineticEnergy
+public import PropertyKindCalculus.BoundaryAudit
+meta import PropertyKindCalculus.BoundaryAudit
+public import PropertyKindCalculus.KindAlgebra
+meta import PropertyKindCalculus.KindAlgebra
+public import PropertyKindCalculus.QuantityReal
+meta import PropertyKindCalculus.QuantityReal
+public import PropertyKindCalculus.SpecializationLift
+meta import PropertyKindCalculus.SpecializationLift
+public import PropertyKindCalculus.Iso80000.Part3
+meta import PropertyKindCalculus.Iso80000.Part3
+public import PropertyKindCalculus.Iso80000.Part4
+meta import PropertyKindCalculus.Iso80000.Part4
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace ForPhysLib.ClassicalMechanics
 
@@ -621,3 +634,6 @@ noncomputable example (M : RigidBodyMotion 3) (t : Time) (i : Fin 3) :
   omegaCompQ (M.angularVelocity t) i + omegaCompQ (M.bodyAngularVelocity t) i
 
 end ForPhysLib.ClassicalMechanics
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

@@ -44,8 +44,15 @@ source's spelling is the one that needs respelling).
   the offer upstream is a human's to make (AI-POLICY §3.1).
 -/
 
-import ForPhysLib.Electromagnetism.Kinematics.Metrology
-import ForPhysLib.Electromagnetism.Kinematics.Feasibility
+module
+
+public import ForPhysLib.Electromagnetism.Kinematics.Metrology
+meta import ForPhysLib.Electromagnetism.Kinematics.Metrology
+public import ForPhysLib.Electromagnetism.Kinematics.Feasibility
+meta import ForPhysLib.Electromagnetism.Kinematics.Feasibility
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 open PropertyKindCalculus
 open Space Time SpaceTime TensorProduct
@@ -384,3 +391,6 @@ def rawElectricField (cS : SpeedOfLight) (A : EMPot d) :
 end
 
 end ForPhysLib.Electromagnetism.Kinematics.Kinded
+
+end -- pkc-blanket-expose
+end -- pkc-blanket
