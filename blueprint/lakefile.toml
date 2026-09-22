@@ -1,5 +1,13 @@
 name = "propertykindcalculus-blueprint"
 defaultTargets = ["PropertyKindCalculusBlueprint", "blueprint-gen"]
+# Every chapter that cites a definition imports both `VersoBlueprint` and a library module of
+# the package it documents, and that package requires the module system. A chapter cannot
+# answer by carrying a `module` header of its own: `VersoBlueprint` is a plain file, and a
+# `module` file cannot import a non-`module` one. So the mix is declared once here rather
+# than left standing as a warning on each chapter, which is what this option is for. It is a
+# package-level key, so it belongs above the first `[[…]]` header: below one, TOML reads it
+# as a field of THAT table and Lake accepts it in silence.
+allowNonModules = true
 
 # Verso + the Blueprint genre, on the v4.34.0 toolchain — the verso-stack pins move in
 # LOCKSTEP (the verso rev, the VersoBlueprint SHA, and the subverso rev verso's own

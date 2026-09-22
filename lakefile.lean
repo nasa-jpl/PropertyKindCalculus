@@ -61,6 +61,15 @@ package «PropertyKindCalculus» where
   leanOptions := #[
     ⟨`autoImplicit, false⟩,
     ⟨`relaxedAutoImplicit, false⟩]
+  -- **The ratchet**, over every library this package declares. A file added without a
+  -- `module` header is reported here rather than discovered by the first consumer that
+  -- cannot import it (a `module` file cannot import a non-`module` one). The option warns a
+  -- library's IMPORTERS, not its own files, so what it enforces is the boundary, not the
+  -- authorship: a plain file *inside* an enforcing library is named the moment anything
+  -- imports it. The two libraries that still hold a plain file opt out below, each naming the
+  -- measured obstacle; a consumer that knowingly mixes (the blueprint, which cannot follow
+  -- while VersoBlueprint is a plain file) says so in its own lakefile.
+  requiresModuleSystem := true
 
 -- PhysLib (and, transitively, Mathlib) backs *only* the `Dimension` library
 -- below — the dimension/coherence layer that maps each kind to its physical
@@ -142,16 +151,17 @@ lean_lib «PropertyKindCalculus» where
   -- The library root `PropertyKindCalculus.lean` plus every submodule under
   -- `PropertyKindCalculus/`. Examples live elsewhere, so they are not swept in here.
   globs := #[.andSubmodules `PropertyKindCalculus]
-  -- The ratchet. Every module of this library carries a `module` header, and so does every
-  -- module in the package that imports it, so a file added without one is reported here
-  -- rather than discovered by the first consumer that cannot import it (a `module` file
-  -- cannot import a non-`module` one). The option warns a library's IMPORTERS, not its own
-  -- files, which is why it waited until the rest of the package had migrated.
-  requiresModuleSystem := true
 
 /-- Worked examples — a separate library so the core can be imported alone. -/
 lean_lib «Examples» where
   srcDir := "examples"
+  -- `PropertyKindCalculus.Examples.TapeCodegenLutEndToEnd` is a plain file, and the obstacle is
+  -- in core rather than here: its `rfl` over
+  -- `(("lutfetch:" ++ "demolut").drop "lutfetch:".length).copy` sticks inside
+  -- `Array.foldlM.loop` under a `module` header while the same goal reduces in a plain one,
+  -- and `import all` of each of the nine core modules that could hold the missing body leaves
+  -- it stuck. Everything else in this library is a module.
+  allowNonModules := true
   -- `roots` is explicit because the doc build renders `lib.rootModules` (see the NOTE above).
   roots := #[`PropertyKindCalculus.Examples]
   globs := #[.andSubmodules `PropertyKindCalculus.Examples]
@@ -176,6 +186,12 @@ Dimension/Uncertainty layers it reaches into) so all sixteen verifiable requirem
 CI-enforced, not just the nine in the core spine. -/
 lean_lib «Tests» where
   srcDir := "tests"
+  -- `PropertyKindCalculus.Tests.Torch.Refinement` is a plain file, and the two index modules
+  -- that reach it (`…Tests.Torch` and the `…Tests` root) follow it. Its probes read FloatLib's
+  -- `ExecFloat` through a facade whose olean this package does not build, so there is nothing
+  -- for `import all` to unseal; making them modules means naming and building the leaves of
+  -- that call tree first. Everything else in this library is a module.
+  allowNonModules := true
   globs := #[.andSubmodules `PropertyKindCalculus.Tests]
 
 /-- The PhysLib-backed coherence layer, in a **separate** source tree
