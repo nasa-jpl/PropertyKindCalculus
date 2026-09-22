@@ -15,7 +15,14 @@ on the overview, or a tally chip going missing, is exactly the drift these guard
 The two render ports through one `portGroup`, so a port cannot read differently on the
 sheet and the overview — the collision and decider guards hold on both.
 -/
-import PropertyKindCalculus.ModuleCard
+
+module
+
+public import PropertyKindCalculus.ModuleCard
+meta import PropertyKindCalculus.ModuleCard
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Tests.ModuleCard
 
@@ -105,3 +112,6 @@ def overview : String :=
 #guard hasSub sheet "tooltip: \"Probe.table.lo\""
 
 end PropertyKindCalculus.Tests.ModuleCard
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

@@ -19,9 +19,17 @@ Part-9 examples, mirroring the `Iso80000` library's own `Iso80000/Part9` layout:
 These live in the Mathlib-backed `DimensionExamples` library.
 -/
 
-import PropertyKindCalculus.Iso80000.Part9
-import PropertyKindCalculus.Iso80000.Part9.DefiningRelations
-import PropertyKindCalculus.QuantityReal
+module
+
+public import PropertyKindCalculus.Iso80000.Part9
+meta import PropertyKindCalculus.Iso80000.Part9
+public import PropertyKindCalculus.Iso80000.Part9.DefiningRelations
+meta import PropertyKindCalculus.Iso80000.Part9.DefiningRelations
+public import PropertyKindCalculus.QuantityReal
+meta import PropertyKindCalculus.QuantityReal
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Examples.Iso80000.Part9
 
@@ -127,3 +135,6 @@ def molarMassInt : Quantity molarMass.kind Int :=
 #guard amountOfSubstanceCK.coherentUnit == "mol"
 
 end PropertyKindCalculus.Examples.Iso80000.Part9
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

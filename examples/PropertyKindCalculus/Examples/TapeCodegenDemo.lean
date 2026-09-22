@@ -11,8 +11,16 @@ The AVS residual/Jacobian **physics is authored once, kinded**, in `examples.avs
 PKC, not the reverse); this demo records its `.magnitude` emission boundary (`resJac`), so the tape is
 byte-identical to the bare kernel while the model stays in the rigorous quantity discipline.
 -/
-import PropertyKindCalculus.Torch.Paradigm.TapeCodegen
-import PropertyKindCalculus.Examples.AvsForward
+
+module
+
+public import PropertyKindCalculus.Torch.Paradigm.TapeCodegen
+meta import PropertyKindCalculus.Torch.Paradigm.TapeCodegen
+public import PropertyKindCalculus.Examples.AvsForward
+meta import PropertyKindCalculus.Examples.AvsForward
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 open Spec TorchLean
 open Runtime.Autograd (Tape TapeM)
@@ -102,3 +110,6 @@ def report : IO Unit := do
 #eval report
 
 end PropertyKindCalculus.Paradigm.TapeCodegen.Demo
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

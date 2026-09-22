@@ -37,8 +37,16 @@ hypothesis `hleaf`, isolating exactly the gap. Two consequences discharge it in 
 Plain leaf module (nothing imports it). Builds under the `Examples` glob, so CI checks it, and the axiom
 audit at the end certifies it sorry-free.
 -/
-import PropertyKindCalculus.Examples.TapeCseStructural
-import PropertyKindCalculus.Examples.TapeCodegenEndToEnd
+
+module
+
+public import PropertyKindCalculus.Examples.TapeCseStructural
+meta import PropertyKindCalculus.Examples.TapeCseStructural
+public import PropertyKindCalculus.Examples.TapeCodegenEndToEnd
+meta import PropertyKindCalculus.Examples.TapeCodegenEndToEnd
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 open Spec TorchLean TorchLean.Tensor
 open Runtime.Autograd (Tape Node)
@@ -329,3 +337,6 @@ def demoEnv : String → Float := fun s => if s = "a" then 2.0 else if s = "b" t
 #guard_msgs (whitespace := lax) in #print axioms evalTape_node_value
 
 end PropertyKindCalculus.Examples.TapeCseDenotation
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

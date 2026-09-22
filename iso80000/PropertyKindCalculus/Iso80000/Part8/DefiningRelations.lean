@@ -32,10 +32,15 @@ No normative text from the licensed standard is reproduced; the relations are re
 this work's own formalism.
 -/
 
-import PropertyKindCalculus.Iso80000.Part3
-import PropertyKindCalculus.Iso80000.Part8
-import PropertyKindCalculus.QuantityClassification
-import PropertyKindCalculus.QuantityReal
+module
+
+public import PropertyKindCalculus.Iso80000.Part3
+public import PropertyKindCalculus.Iso80000.Part8
+public import PropertyKindCalculus.QuantityClassification
+public import PropertyKindCalculus.QuantityReal
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Iso80000.Part8.DefiningRelations
 
@@ -151,3 +156,6 @@ theorem characteristicImpedance_certificate_canonical
   Quantity.eq_div_of_isQuotient characteristicImpedance_quot_pressure_velocity h
 
 end PropertyKindCalculus.Iso80000.Part8.DefiningRelations
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

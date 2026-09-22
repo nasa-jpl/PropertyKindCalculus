@@ -14,8 +14,16 @@ then the docstring the attribute actually writes.
 
 See `RENDERING.md` for the design.
 -/
-import PropertyKindCalculus
-import PropertyKindCalculus.DocGenMath
+
+module
+
+public import PropertyKindCalculus
+meta import PropertyKindCalculus
+public import PropertyKindCalculus.DocGenMath
+meta import PropertyKindCalculus.DocGenMath
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Examples.DocGenMathDemo
 
@@ -469,3 +477,6 @@ run_cmd do
   Lean.logInfo (r.equation ++ " | where " ++ (r.whereEqs.getD "‹none›"))
 
 end PropertyKindCalculus.Examples.DocGenMathDemo
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

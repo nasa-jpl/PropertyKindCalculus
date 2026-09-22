@@ -15,20 +15,30 @@ doc-gen4 generate HTML for all of Mathlib. They are still built by `lake build E
 works off the library's globs rather than its root.
 -/
 
-import PropertyKindCalculus.Examples.MiniLengthWidth
-import PropertyKindCalculus.Examples.MiniDedicatedKind
-import PropertyKindCalculus.Examples.MiniExamination
-import PropertyKindCalculus.Examples.MiniValueScale
-import PropertyKindCalculus.Examples.MiniUnit
-import PropertyKindCalculus.Examples.MiniExtensivity
-import PropertyKindCalculus.Examples.MiniObjectTypes
-import PropertyKindCalculus.Examples.MiniQuantity
-import PropertyKindCalculus.Examples.MiniVectorQuantity
-import PropertyKindCalculus.Examples.MiniRefinement
-import PropertyKindCalculus.Examples.MiniClassification
-import PropertyKindCalculus.Examples.MiniWriteOnce
+module
+
+public import PropertyKindCalculus.Examples.MiniLengthWidth
+public import PropertyKindCalculus.Examples.MiniDedicatedKind
+public import PropertyKindCalculus.Examples.MiniExamination
+public import PropertyKindCalculus.Examples.MiniValueScale
+public import PropertyKindCalculus.Examples.MiniUnit
+public import PropertyKindCalculus.Examples.MiniExtensivity
+public import PropertyKindCalculus.Examples.MiniObjectTypes
+public import PropertyKindCalculus.Examples.MiniQuantity
+public import PropertyKindCalculus.Examples.MiniVectorQuantity
+public import PropertyKindCalculus.Examples.MiniRefinement
+public import PropertyKindCalculus.Examples.MiniClassification
+public import PropertyKindCalculus.Examples.MiniWriteOnce
 
 -- The kinded AVS forward model and the `@[pkc_math]` rendering demo. Both are Mathlib-free, and
 -- both carry `@[pkc_math]`-rendered docstrings, so they are what the API site exists to show.
-import PropertyKindCalculus.Examples.AvsForward
-import PropertyKindCalculus.Examples.DocGenMathDemo
+public import PropertyKindCalculus.Examples.AvsForward
+public import PropertyKindCalculus.Examples.DocGenMathDemo
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
+
+
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

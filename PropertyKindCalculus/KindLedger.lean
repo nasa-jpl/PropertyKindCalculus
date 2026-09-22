@@ -44,7 +44,18 @@ three instances of a helper really do present three interfaces. The tallies are
 disagree about the size of what they show.
 -/
 
-import PropertyKindCalculus.KindIncidence
+module
+
+public import PropertyKindCalculus.KindIncidence
+public meta import PropertyKindCalculus.KindIncidence
+
+-- Same-module helpers serve both the command elaborators below and runtime callers, so the
+-- phase check is relaxed for this file (the module system's mixed-use escape; imports are
+-- still checked and take `public meta import`).
+set_option compiler.relaxedMetaCheck true
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.KindLedger
 
@@ -134,7 +145,7 @@ def renderLines (rows : Array Row) : List String :=
 
 /-- JSON-escape a string for the emitter below (no dependency on a JSON library: the
 values here are declaration names, node names and pretty-printed types). -/
-private def esc (s : String) : String :=
+def esc (s : String) : String :=
   s.foldl (init := "") fun acc c =>
     acc ++ (match c with
       | '"' => "\\\""
@@ -144,7 +155,7 @@ private def esc (s : String) : String :=
       | c => if c.toNat < 0x20 then "" else c.toString)
 
 /-- One row as a JSON object. -/
-private def rowJson (r : Row) : String :=
+def rowJson (r : Row) : String :=
   match r.silence with
   | .position d t =>
     "{\"member\": \"" ++ esc r.member ++ "\", \"node\": \"" ++ esc r.node ++
@@ -173,7 +184,7 @@ def membersOf (a : Assembly) : Array MemberRow :=
     ⟨l.name, memberOf l, if l.walked then "walked" else "interface", tallyOf l⟩
 
 /-- One member's interface as a JSON object. -/
-private def memberJson (m : MemberRow) : String :=
+def memberJson (m : MemberRow) : String :=
   "{\"level\": \"" ++ esc m.level ++ "\", \"member\": \"" ++ esc m.member ++
     "\", \"mode\": \"" ++ esc m.mode ++
     "\", \"in\": " ++ toString m.tally.ins ++
@@ -225,3 +236,6 @@ elab "#kind_unkinded_clean " c:ident : command => liftTermElabM do
   logInfo m!"unkinded-clean: every position of '{ctr.name}' carries a kind"
 
 end PropertyKindCalculus.KindLedger
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

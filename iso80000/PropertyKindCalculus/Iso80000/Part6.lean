@@ -67,9 +67,14 @@ sharpens the two axes the calculus already pressed:
   all discharged in PhysLib's dimension group over the charge generator `C`.
 -/
 
-import PropertyKindCalculus.Dimension
-import PropertyKindCalculus.Iso80000.References
-import PropertyKindCalculus.Iso80000.Catalogue
+module
+
+public import PropertyKindCalculus.Dimension
+public import PropertyKindCalculus.Iso80000.References
+public import PropertyKindCalculus.Iso80000.Catalogue
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Iso80000.Part6
 
@@ -953,3 +958,6 @@ theorem iec80000_6_scale_collision :
     electricPotential_ne_electricPotentialDifference, rfl, by decide⟩
 
 end PropertyKindCalculus.Iso80000.Part6
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

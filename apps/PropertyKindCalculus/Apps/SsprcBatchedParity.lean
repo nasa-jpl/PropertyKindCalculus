@@ -14,10 +14,16 @@ CPU **stub** (float32), so this checks parity without a GPU; a `-K cuda=true` bu
 `torchlean-development-slim:gpu` container) runs the *same* harness on the device. It exits `0` on
 parity, `1` on mismatch (so CI can gate on it as a `lake exe` step).
 -/
-import PropertyKindCalculus.Uncertainty.SsprcBatched
-import PropertyKindCalculus.Uncertainty.Ssprc
-import PropertyKindCalculus.Uncertainty.InputDist
-import PropertyKindCalculus.Uncertainty.Carriers
+
+module
+
+public import PropertyKindCalculus.Uncertainty.SsprcBatched
+public import PropertyKindCalculus.Uncertainty.Ssprc
+public import PropertyKindCalculus.Uncertainty.InputDist
+public import PropertyKindCalculus.Uncertainty.Carriers
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Apps.SsprcBatchedParity
 
@@ -62,3 +68,6 @@ end PropertyKindCalculus.Apps.SsprcBatchedParity
 
 /-- The executable entry point. -/
 def main : IO UInt32 := PropertyKindCalculus.Apps.SsprcBatchedParity.main
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

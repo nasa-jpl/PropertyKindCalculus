@@ -52,9 +52,14 @@ not the standard's normative definitions; the dimensional fact (every kind is di
 one) is a checked computation.
 -/
 
-import PropertyKindCalculus.Dimension
-import PropertyKindCalculus.Iso80000.References
-import PropertyKindCalculus.Iso80000.Catalogue
+module
+
+public import PropertyKindCalculus.Dimension
+public import PropertyKindCalculus.Iso80000.References
+public import PropertyKindCalculus.Iso80000.Catalogue
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Iso80000.Part11
 
@@ -553,3 +558,6 @@ theorem iso80000_11_dim_one_collision :
   ⟨reynolds, euler, reynolds_ne_euler, rfl, rfl⟩
 
 end PropertyKindCalculus.Iso80000.Part11
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

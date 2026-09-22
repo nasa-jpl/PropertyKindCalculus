@@ -6,12 +6,22 @@ Validation probes for the verifiable requirements whose theorems live in the Phy
 this tier is what brings those theorems — previously never compiled by CI — under regression.
 -/
 
-import PropertyKindCalculus.Tests.Dimension.DimensionBridges
-import PropertyKindCalculus.Tests.Dimension.AngleReform
-import PropertyKindCalculus.Tests.Dimension.IsqBase
-import PropertyKindCalculus.Tests.Dimension.BoundsReal
-import PropertyKindCalculus.Tests.Dimension.DimensionalCoverage
-import PropertyKindCalculus.Tests.Dimension.ExaminationCoverage
-import PropertyKindCalculus.Tests.Dimension.Frames
-import PropertyKindCalculus.Tests.Dimension.AggregationLaws
-import PropertyKindCalculus.Tests.Dimension.UnitReal
+module
+
+public import PropertyKindCalculus.Tests.Dimension.DimensionBridges
+public import PropertyKindCalculus.Tests.Dimension.AngleReform
+public import PropertyKindCalculus.Tests.Dimension.IsqBase
+public import PropertyKindCalculus.Tests.Dimension.BoundsReal
+public import PropertyKindCalculus.Tests.Dimension.DimensionalCoverage
+public import PropertyKindCalculus.Tests.Dimension.ExaminationCoverage
+public import PropertyKindCalculus.Tests.Dimension.Frames
+public import PropertyKindCalculus.Tests.Dimension.AggregationLaws
+public import PropertyKindCalculus.Tests.Dimension.UnitReal
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
+
+
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

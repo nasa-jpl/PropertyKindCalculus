@@ -20,9 +20,17 @@ Part-10 examples, mirroring the `Iso80000` library's own `Iso80000/Part10` layou
 These live in the Mathlib-backed `DimensionExamples` library.
 -/
 
-import PropertyKindCalculus.Iso80000.Part10
-import PropertyKindCalculus.Iso80000.Part10.DefiningRelations
-import PropertyKindCalculus.QuantityReal
+module
+
+public import PropertyKindCalculus.Iso80000.Part10
+meta import PropertyKindCalculus.Iso80000.Part10
+public import PropertyKindCalculus.Iso80000.Part10.DefiningRelations
+meta import PropertyKindCalculus.Iso80000.Part10.DefiningRelations
+public import PropertyKindCalculus.QuantityReal
+meta import PropertyKindCalculus.QuantityReal
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Examples.Iso80000.Part10
 
@@ -125,3 +133,6 @@ def doseEquivalentInt : Quantity doseEquivalent.kind Int :=
 #guard activityCK.coherentUnit == "Bq"
 
 end PropertyKindCalculus.Examples.Iso80000.Part10
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

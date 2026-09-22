@@ -47,7 +47,12 @@ No normative content is reproduced; only the paper's classification and the publ
 coefficient values (citation locators) are recorded.
 -/
 
-import PropertyKindCalculus.Dimension
+module
+
+public import PropertyKindCalculus.Dimension
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -234,3 +239,6 @@ theorem scaleSpanning_not_determined_by_dimension :
 end ScaleSpanning
 
 end PropertyKindCalculus
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

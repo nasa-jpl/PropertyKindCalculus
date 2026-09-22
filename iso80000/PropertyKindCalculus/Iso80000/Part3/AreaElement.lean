@@ -38,13 +38,18 @@ Euclidean area, `areaElement_eq_abs_det`). Formalization forces this convention 
 the open — exactly the kind of implicit reading a prose remark leaves unstated.
 -/
 
-import Mathlib.Analysis.InnerProductSpace.GramMatrix
-import Mathlib.Analysis.InnerProductSpace.PiL2
-import Mathlib.Analysis.Matrix.PosDef
-import Mathlib.MeasureTheory.Integral.Bochner.Set
-import Mathlib.MeasureTheory.Measure.Prod
-import Mathlib.MeasureTheory.Measure.Lebesgue.Basic
-import PropertyKindCalculus.Iso80000.Part3
+module
+
+public import Mathlib.Analysis.InnerProductSpace.GramMatrix
+public import Mathlib.Analysis.InnerProductSpace.PiL2
+public import Mathlib.Analysis.Matrix.PosDef
+public import Mathlib.MeasureTheory.Integral.Bochner.Set
+public import Mathlib.MeasureTheory.Measure.Prod
+public import Mathlib.MeasureTheory.Measure.Lebesgue.Basic
+public import PropertyKindCalculus.Iso80000.Part3
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Iso80000.Part3.AreaElement
 
@@ -149,3 +154,6 @@ remark's mathematics and the catalogued kind. -/
 abbrev kind : DimensionedKind := Part3.area
 
 end PropertyKindCalculus.Iso80000.Part3.AreaElement
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

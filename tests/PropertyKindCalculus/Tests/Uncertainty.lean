@@ -6,11 +6,21 @@ theorems live in the Mathlib/Torch-backed `Uncertainty` / `UncertaintyRigor` lib
 this tier brings those theorems and their worked witnesses under CI regression.
 -/
 
-import PropertyKindCalculus.Tests.Uncertainty.UncertaintyLadder
-import PropertyKindCalculus.Tests.Uncertainty.Capstones
-import PropertyKindCalculus.Tests.Uncertainty.QuasiExtensive
-import PropertyKindCalculus.Tests.Uncertainty.Evidence
-import PropertyKindCalculus.Tests.Uncertainty.Roles
-import PropertyKindCalculus.Tests.Uncertainty.Serialization
-import PropertyKindCalculus.Tests.Uncertainty.MeanBound
-import PropertyKindCalculus.Tests.Uncertainty.BoundaryBudget
+module
+
+public import PropertyKindCalculus.Tests.Uncertainty.UncertaintyLadder
+public import PropertyKindCalculus.Tests.Uncertainty.Capstones
+public import PropertyKindCalculus.Tests.Uncertainty.QuasiExtensive
+public import PropertyKindCalculus.Tests.Uncertainty.Evidence
+public import PropertyKindCalculus.Tests.Uncertainty.Roles
+public import PropertyKindCalculus.Tests.Uncertainty.Serialization
+public import PropertyKindCalculus.Tests.Uncertainty.MeanBound
+public import PropertyKindCalculus.Tests.Uncertainty.BoundaryBudget
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
+
+
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

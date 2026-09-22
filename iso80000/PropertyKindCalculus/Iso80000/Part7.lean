@@ -60,10 +60,15 @@ not by a new generator:
   group over mass, length, and time.
 -/
 
-import PropertyKindCalculus.Dimension
-import PropertyKindCalculus.ScaleSpanning
-import PropertyKindCalculus.Iso80000.References
-import PropertyKindCalculus.Iso80000.Catalogue
+module
+
+public import PropertyKindCalculus.Dimension
+public import PropertyKindCalculus.ScaleSpanning
+public import PropertyKindCalculus.Iso80000.References
+public import PropertyKindCalculus.Iso80000.Catalogue
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Iso80000.Part7
 
@@ -740,3 +745,6 @@ theorem iso80000_7_dim_one_collision :
   ⟨refractiveIndex, emissivity, refractiveIndex_ne_emissivity, rfl, rfl⟩
 
 end PropertyKindCalculus.Iso80000.Part7
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

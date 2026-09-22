@@ -15,7 +15,12 @@ typechecking construction itself (a kind is a type, an individual value a term; 
 in the type) together with R19's proved distinctness lemma.
 -/
 
-import PropertyKindCalculus
+module
+
+public import PropertyKindCalculus
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Tests.KindStructure
 
@@ -122,3 +127,6 @@ theorem r19_one_catalogue_entry :
 #guard_msgs in #print axioms r19_one_catalogue_entry
 
 end PropertyKindCalculus.Tests.KindStructure
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

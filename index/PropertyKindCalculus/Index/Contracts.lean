@@ -3,10 +3,13 @@ Copyright (c) 2026 California Institute of Technology. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Nicolas Rouquette
 -/
-import PropertyKindCalculus.Index.Basic
-import PropertyKindCalculus.KindIncidence
-import PropertyKindCalculus.ContractCoverage
-import PropertyKindCalculus.Uncertainty.BoundaryBudget
+
+module
+
+public import PropertyKindCalculus.Index.Basic
+public import PropertyKindCalculus.KindIncidence
+public import PropertyKindCalculus.ContractCoverage
+public import PropertyKindCalculus.Uncertainty.BoundaryBudget
 
 /-!
 # The boundary index — declared `Provenance.Contract`s as a table, absences beside them
@@ -34,6 +37,9 @@ tagged contract renders in the `contracts` table with a `counterexample` clause 
 coverage subject, and a tagged relation is not a witness — a deliberate misdeclaration must
 not satisfy a real boundary's edge obligation.
 -/
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Index
 
@@ -121,3 +127,6 @@ def provenanceCoverageTable (scope : Scope) : MetaM IndexTable := do
            headers, rows }
 
 end PropertyKindCalculus.Index
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

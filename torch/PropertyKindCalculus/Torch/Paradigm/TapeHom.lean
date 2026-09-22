@@ -41,11 +41,17 @@ in it yields a failed proof, never an unsound one.)
 
 Plain (not a `module`) file: imports the parity alphabet and the core magnitude-erasure lemmas.
 -/
-import PropertyKindCalculus.Torch.Paradigm.TapeParity
-import PropertyKindCalculus.Quantity
-import PropertyKindCalculus.QuantityClassification
-import PropertyKindCalculus.QuantityFunction
-import PropertyKindCalculus.OperatorTable
+
+module
+
+public import PropertyKindCalculus.Torch.Paradigm.TapeParity
+public import PropertyKindCalculus.Quantity
+public import PropertyKindCalculus.QuantityClassification
+public import PropertyKindCalculus.QuantityFunction
+public import PropertyKindCalculus.OperatorTable
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 open Spec TorchLean
 open TorchLean TorchLean.Tensor
@@ -145,3 +151,6 @@ macro "tape_hom" " [" names:Lean.Parser.Tactic.simpLemma,* "]" : tactic =>
        | apply Evaluates_sqrt | apply Evaluates_exp
        | apply Evaluates_leaf | apply Evaluates_const
        | assumption))
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

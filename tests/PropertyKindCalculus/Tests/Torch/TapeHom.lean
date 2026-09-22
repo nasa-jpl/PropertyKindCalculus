@@ -21,7 +21,12 @@ The eager `Tensor Float s` `NumCarrier` instance is set up locally (as
 fold fails on a head mismatch rather than by executing the tape monad.
 -/
 
-import PropertyKindCalculus.Torch.Paradigm.TapeHom
+module
+
+public import PropertyKindCalculus.Torch.Paradigm.TapeHom
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Tests.TapeHom
 
@@ -119,3 +124,6 @@ example (x y : Tensor Float s) (hx : Evaluates (leafT x "x") x) (hy : Evaluates 
 #guard_msgs in #print axioms Evaluates.isNumCarrierHom
 
 end PropertyKindCalculus.Tests.TapeHom
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

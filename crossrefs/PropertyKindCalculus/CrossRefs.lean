@@ -31,8 +31,18 @@ prelude-only. Only locators are carried; no normative text is reproduced.
     even though the core spine it annotates is.
 -/
 
-import PropertyKindCalculus.CrossRefs.Attributes
-import PropertyKindCalculus.CrossRefs.Sources
-import PropertyKindCalculus.CrossRefs.Annotations
-import PropertyKindCalculus.CrossRefs.DimensionAnnotations
-import PropertyKindCalculus.CrossRefs.Iso80000Annotations
+module
+
+public import PropertyKindCalculus.CrossRefs.Attributes
+public import PropertyKindCalculus.CrossRefs.Sources
+public import PropertyKindCalculus.CrossRefs.Annotations
+public import PropertyKindCalculus.CrossRefs.DimensionAnnotations
+public import PropertyKindCalculus.CrossRefs.Iso80000Annotations
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
+
+
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

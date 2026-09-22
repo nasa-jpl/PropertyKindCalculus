@@ -32,9 +32,14 @@ No normative text from the licensed standard is reproduced; the relations are
 restated in this work's own formalism.
 -/
 
-import PropertyKindCalculus.Iso80000.Part3
-import PropertyKindCalculus.QuantityClassification
-import PropertyKindCalculus.QuantityReal
+module
+
+public import PropertyKindCalculus.Iso80000.Part3
+public import PropertyKindCalculus.QuantityClassification
+public import PropertyKindCalculus.QuantityReal
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Iso80000.Part3.DefiningRelations
 
@@ -146,3 +151,6 @@ theorem planeAngleOf_isQuotient
     (planeAngleOf s r).IsQuotient planeAngle_quot_pathLength_radius s r := rfl
 
 end PropertyKindCalculus.Iso80000.Part3.DefiningRelations
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

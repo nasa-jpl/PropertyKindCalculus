@@ -20,8 +20,15 @@ Inhabitation, boundary, and axiom-profile probes for `Extent`/`Position`
     a port.
 -/
 
-import PropertyKindCalculus
-import PropertyKindCalculus.KindIncidence
+module
+
+public import PropertyKindCalculus
+meta import PropertyKindCalculus
+public import PropertyKindCalculus.KindIncidence
+meta import PropertyKindCalculus.KindIncidence
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Tests.Axis
 
@@ -223,3 +230,6 @@ output result : rowAxisK
 #guard_msgs in #kind_ports nodeOfDeployed
 
 end PropertyKindCalculus.Tests.Axis
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

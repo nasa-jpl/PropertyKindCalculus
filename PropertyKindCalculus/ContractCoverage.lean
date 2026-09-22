@@ -59,8 +59,19 @@ population by type but cannot be read: M12 still decides it (the join is by decl
 and the other two report it `UNREADABLE` rather than silently walking past it. Import-closure
 sensitive like every environment walk.
 -/
-import Lean
-import PropertyKindCalculus.KindIncidence
+
+module
+
+public import Lean
+public import PropertyKindCalculus.KindIncidence
+
+-- Same-module helpers serve both the command elaborators below and runtime callers, so the
+-- phase check is relaxed for this file (the module system's mixed-use escape; imports are
+-- still checked and take `public meta import`).
+set_option compiler.relaxedMetaCheck true
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.ContractCoverage
 
@@ -289,7 +300,7 @@ def violations (rows : Array Row) : Array Row := rows.filter (·.verdict == .vio
 def indented (rows : Array Row) : String :=
   body (rows.map fun r => { r with line := s!"  {r.line}" })
 
-private def names (ns : Array Name) : String :=
+def names (ns : Array Name) : String :=
   String.intercalate ", " (ns.map toString).toList
 
 /-! ## M12 — relation coverage -/
@@ -430,7 +441,7 @@ elab "#kind_mereology_clean" nss:ident+ : command => liftTermElabM do
 /-! ## M21 — inversion coverage (the domain half) -/
 
 /-- The conditional ports of a contract, each with its decider where one is named. -/
-private def guards (c : Provenance.Contract Provenance.NodeId Provenance.KindRef) :
+def guards (c : Provenance.Contract Provenance.NodeId Provenance.KindRef) :
     List String :=
   c.ports.filterMap fun p =>
     if p.dir matches .conditional then
@@ -677,3 +688,6 @@ elab "#kind_diagnostic_clean" nss:ident+ : command => liftTermElabM do
   recordAuditReceipt "kind_diagnostic_clean" scope
 
 end PropertyKindCalculus.ContractCoverage
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

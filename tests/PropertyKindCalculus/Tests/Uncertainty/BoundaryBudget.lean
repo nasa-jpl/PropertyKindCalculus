@@ -12,8 +12,15 @@ source; the empty budget pins the `unbudgeted source(s)` line — the report nam
 a model is not propagating rather than omitting it; and each hygiene check has a
 refusal probe.
 -/
-import PropertyKindCalculus.Uncertainty.BoundaryBudget
-import PropertyKindCalculus.Tests.Core.KindIncidence
+
+module
+
+public import PropertyKindCalculus.Uncertainty.BoundaryBudget
+public import PropertyKindCalculus.Tests.Core.KindIncidence
+public meta import PropertyKindCalculus.Tests.Core.KindIncidence
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Tests.BoundaryBudget
 
@@ -92,3 +99,6 @@ error: the budget 'PropertyKindCalculus.Tests.BoundaryBudget.budgetOnNoPort' nam
 #guard_msgs in #kind_budget budgetOnNoPort halvedInDomainBoundary
 
 end PropertyKindCalculus.Tests.BoundaryBudget
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

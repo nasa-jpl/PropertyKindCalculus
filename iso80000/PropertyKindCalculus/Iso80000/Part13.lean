@@ -36,10 +36,15 @@ characteristic quantities are all **dimension one** — yet they carry special, 
   group over mass, length, and time.
 -/
 
-import PropertyKindCalculus.Dimension
-import PropertyKindCalculus.ScaleSpanning
-import PropertyKindCalculus.Iso80000.References
-import PropertyKindCalculus.Iso80000.Catalogue
+module
+
+public import PropertyKindCalculus.Dimension
+public import PropertyKindCalculus.ScaleSpanning
+public import PropertyKindCalculus.Iso80000.References
+public import PropertyKindCalculus.Iso80000.Catalogue
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Iso80000.Part13
 
@@ -325,3 +330,6 @@ theorem iec80000_13_dim_collision :
     binaryDigitRate_dim_eq_callIntensity_dim⟩
 
 end PropertyKindCalculus.Iso80000.Part13
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

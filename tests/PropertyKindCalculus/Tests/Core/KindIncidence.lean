@@ -32,8 +32,19 @@ as the loose tuple of the same components, because the container's own construct
 packaging the walk sees through — and `#kind_graph_decide` has the kernel re-derive a
 harvested verdict as a `decide` theorem.
 -/
-import PropertyKindCalculus.KindIncidence
-import PropertyKindCalculus.Tests.Core.KindEdges
+
+module
+
+public import PropertyKindCalculus.KindIncidence
+meta import PropertyKindCalculus.KindIncidence
+public import PropertyKindCalculus.Tests.Core.KindEdges
+meta import PropertyKindCalculus.Tests.Core.KindEdges
+-- Private scope only, and no paired `public import`: core seals `Lean.Name.beq`, so a kernel
+-- `decide` over a provenance graph whose kinds are `Name`s gets stuck without this.
+import all Init.Prelude
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Tests.KindIncidence
 
@@ -1991,3 +2002,6 @@ well-formed: true
 #guard_msgs in #kind_assembly [deployedUsesGeom, usesGeom, deployedGeom]
 
 end PropertyKindCalculus.Tests.KindIncidence
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

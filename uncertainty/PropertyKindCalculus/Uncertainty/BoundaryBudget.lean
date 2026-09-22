@@ -36,10 +36,23 @@ lives in the declarations that computed the magnitudes (`Budget.contributionQ`,
 `Sensitivity.gradient`), and the attachment records their result at the boundary where a
 reader looks for it.
 -/
-import PropertyKindCalculus.Influence
-import PropertyKindCalculus.KindIncidence
-import PropertyKindCalculus.Uncertainty.Budget
-import PropertyKindCalculus.Uncertainty.Carriers
+
+module
+
+public import PropertyKindCalculus.Influence
+public meta import PropertyKindCalculus.Influence
+public import PropertyKindCalculus.KindIncidence
+public meta import PropertyKindCalculus.KindIncidence
+public import PropertyKindCalculus.Uncertainty.Budget
+public import PropertyKindCalculus.Uncertainty.Carriers
+
+-- Same-module helpers serve both the command elaborators below and runtime callers, so the
+-- phase check is relaxed for this file (the module system's mixed-use escape; imports are
+-- still checked and take `public meta import`).
+set_option compiler.relaxedMetaCheck true
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Uncertainty
 
@@ -82,7 +95,7 @@ private unsafe def evalPortBudgetUnsafe (e : Expr) : MetaM PortBudget :=
 the evaluator; the safe body stands only where no evaluator is available, and no
 proposition rests on it. -/
 @[implemented_by evalPortBudgetUnsafe]
-private def evalPortBudget (_e : Expr) : MetaM PortBudget :=
+def evalPortBudget (_e : Expr) : MetaM PortBudget :=
   throwError "port-budget values cannot be read in this environment"
 
 /-- The declared budget's value, with the type check that gives a legible error before
@@ -141,3 +154,6 @@ elab "#kind_budget " b:ident c:ident : command => liftTermElabM do
   logInfo m!"{String.intercalate "\n" lines.toList}"
 
 end PropertyKindCalculus.Uncertainty
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

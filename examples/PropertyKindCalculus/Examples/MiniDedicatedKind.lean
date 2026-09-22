@@ -18,7 +18,13 @@ This module is part of the separate `Examples` library; it imports the core
 `PropertyKindCalculus` library like any downstream consumer would.
 -/
 
-import PropertyKindCalculus
+module
+
+public import PropertyKindCalculus
+meta import PropertyKindCalculus
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Examples.Dedicated
 
@@ -108,3 +114,6 @@ def wc2 : IndividualQuantity sample2 volumeFraction Int := ⟨45⟩
 --   #guard (IndividualQuantity.add hVF wc1 wc2).magnitude == 75
 
 end PropertyKindCalculus.Examples.Dedicated
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

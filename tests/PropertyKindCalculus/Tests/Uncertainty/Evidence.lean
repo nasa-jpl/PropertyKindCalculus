@@ -20,9 +20,17 @@ Floats are compared to a relative tolerance, never with `==`: a probe that pins 
 pattern tests the platform's libm as much as it tests the module.
 -/
 
-import PropertyKindCalculus.Agreement
-import PropertyKindCalculus.Uncertainty.Conformity
-import PropertyKindCalculus.Paradigm.PlatformKinds
+module
+
+public import PropertyKindCalculus.Agreement
+meta import PropertyKindCalculus.Agreement
+public import PropertyKindCalculus.Uncertainty.Conformity
+meta import PropertyKindCalculus.Uncertainty.Conformity
+public import PropertyKindCalculus.Paradigm.PlatformKinds
+meta import PropertyKindCalculus.Paradigm.PlatformKinds
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Tests.Evidence
 
@@ -389,3 +397,6 @@ private def riskAtLimitFor (uv : Float) : Option (Quantity probability Float) :=
   r.closeTo ⟨0.01⟩ exactTol
 
 end PropertyKindCalculus.Tests.Evidence
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

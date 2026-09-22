@@ -23,9 +23,15 @@ and the cluster partition see what the elaborating document imports): a document
 `sheetTables` must import the same closure as the generator that renders the cards, or
 its edge and cluster tables under-report silently.
 -/
-import PropertyKindCalculus.Graph.Footprint
-import PropertyKindCalculus.Index.Basic
-import PropertyKindCalculus.KindEdges
+
+module
+
+public import PropertyKindCalculus.Graph.Footprint
+public import PropertyKindCalculus.Index.Basic
+public import PropertyKindCalculus.KindEdges
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.ModuleSheet
 
@@ -213,3 +219,6 @@ def sheetTables (decl : Name) (root : Name) : MetaM (Array IndexTable) := do
   return tables
 
 end PropertyKindCalculus.ModuleSheet
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

@@ -24,9 +24,18 @@ Inhabitation (`demo_landing_wf`, `resjac_landing_wf`, and the `#guard`s) dischar
 concrete `demoTape` and on the actually-recorded AVS Stage-2 `resJac` tape — the kernel that lands on
 the GPU — so the hypotheses are non-vacuous on a real tape with op nodes and 7 named inputs.
 -/
-import PropertyKindCalculus.Torch.Paradigm.TapeCodegen
-import PropertyKindCalculus.Examples.TapeCodegenEndToEnd
-import PropertyKindCalculus.Examples.TapeCseStructural
+
+module
+
+public import PropertyKindCalculus.Torch.Paradigm.TapeCodegen
+meta import PropertyKindCalculus.Torch.Paradigm.TapeCodegen
+public import PropertyKindCalculus.Examples.TapeCodegenEndToEnd
+meta import PropertyKindCalculus.Examples.TapeCodegenEndToEnd
+public import PropertyKindCalculus.Examples.TapeCseStructural
+meta import PropertyKindCalculus.Examples.TapeCseStructural
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 open Runtime.Autograd (Tape Node)
 open PropertyKindCalculus.Paradigm (LutTable lutNodeName?)
@@ -227,3 +236,6 @@ def demoLandingHolds : Bool :=
 #guard_msgs (whitespace := lax) in #print axioms resjac_landing_wf
 
 end PropertyKindCalculus.Examples.TapeCodegenLanding
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

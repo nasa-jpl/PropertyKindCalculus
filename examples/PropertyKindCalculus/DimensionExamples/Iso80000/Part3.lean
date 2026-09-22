@@ -28,16 +28,31 @@ Series-wide catalogue examples are in the sibling
 `PropertyKindCalculus.DimensionExamples.Iso80000.References`.
 -/
 
-import PropertyKindCalculus.Iso80000
-import PropertyKindCalculus.DedicatedKind
-import PropertyKindCalculus.IndividualQuantity
-import PropertyKindCalculus.Iso80000.Part3.AreaElement
-import PropertyKindCalculus.Iso80000.Part3.AreaClassification
-import PropertyKindCalculus.Iso80000.Part3.VolumeElement
-import PropertyKindCalculus.Iso80000.Part3.DefiningRelations
-import PropertyKindCalculus.QuantityReal
-import Mathlib.Data.Fin.VecNotation
-import Mathlib.Tactic.NormNum
+module
+
+public import PropertyKindCalculus.Iso80000
+meta import PropertyKindCalculus.Iso80000
+public import PropertyKindCalculus.DedicatedKind
+meta import PropertyKindCalculus.DedicatedKind
+public import PropertyKindCalculus.IndividualQuantity
+meta import PropertyKindCalculus.IndividualQuantity
+public import PropertyKindCalculus.Iso80000.Part3.AreaElement
+meta import PropertyKindCalculus.Iso80000.Part3.AreaElement
+public import PropertyKindCalculus.Iso80000.Part3.AreaClassification
+meta import PropertyKindCalculus.Iso80000.Part3.AreaClassification
+public import PropertyKindCalculus.Iso80000.Part3.VolumeElement
+meta import PropertyKindCalculus.Iso80000.Part3.VolumeElement
+public import PropertyKindCalculus.Iso80000.Part3.DefiningRelations
+meta import PropertyKindCalculus.Iso80000.Part3.DefiningRelations
+public import PropertyKindCalculus.QuantityReal
+meta import PropertyKindCalculus.QuantityReal
+public import Mathlib.Data.Fin.VecNotation
+meta import Mathlib.Data.Fin.VecNotation
+public import Mathlib.Tactic.NormNum
+meta import Mathlib.Tactic.NormNum
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Examples.Iso80000.Part3
 
@@ -349,3 +364,6 @@ example : (IndividualQuantity.mul area_is_length_times_length lengthR1 lengthR1)
     ≠ areaR1.magnitude := by show (3 : ℝ) * 3 ≠ 3 * 4; norm_num
 
 end PropertyKindCalculus.Examples.Iso80000.Part3
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

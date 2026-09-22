@@ -14,12 +14,17 @@ Classical.choice, Quot.sound]` is the expected profile — Mathlib measure theor
 analysis are classical — and what the gate rules out is `sorryAx`.
 -/
 
-import PropertyKindCalculus.Uncertainty.Convolution
-import PropertyKindCalculus.Uncertainty.BudgetDagLaws
-import PropertyKindCalculus.Uncertainty.Adequacy.Fp32Grounding
-import PropertyKindCalculus.Uncertainty.Adequacy.DagBound
-import PropertyKindCalculus.Uncertainty.Adequacy.ExecBridge
-import PropertyKindCalculus.Uncertainty.Adequacy.RefinementBridge
+module
+
+public import PropertyKindCalculus.Uncertainty.Convolution
+public import PropertyKindCalculus.Uncertainty.BudgetDagLaws
+public import PropertyKindCalculus.Uncertainty.Adequacy.Fp32Grounding
+public import PropertyKindCalculus.Uncertainty.Adequacy.DagBound
+public import PropertyKindCalculus.Uncertainty.Adequacy.ExecBridge
+public import PropertyKindCalculus.Uncertainty.Adequacy.RefinementBridge
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Tests.UncertaintyCapstones
 
@@ -82,3 +87,6 @@ open TorchLean.Floats Uncertainty.Adequacy in
 example (x : ℝ) : CarrierRefinement.round (E := FP32) x = round32 x := rfl
 
 end PropertyKindCalculus.Tests.UncertaintyCapstones
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

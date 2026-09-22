@@ -37,8 +37,14 @@ Library module (theorems only), mirroring `AngleReform`: it does *not* import th
 catalogue (a downstream library), so the lift is demonstrated on a local witness kind.
 Built by `lake build Dimension`.
 -/
-import PropertyKindCalculus.Dimension
-import Physlib.Units.ISQBridge
+
+module
+
+public import PropertyKindCalculus.Dimension
+public import Physlib.Units.ISQBridge
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 open Dimension
 
@@ -164,3 +170,6 @@ theorem electricCurrentKind_lift_dim :
 
 end IsqBase
 end PropertyKindCalculus
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

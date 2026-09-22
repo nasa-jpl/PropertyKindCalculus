@@ -10,7 +10,13 @@ These live in the `DimensionExamples` library (not the Mathlib-free `Examples`
 library), because the coherence side-condition is stated over PhysLib's
 `Dimension`.
 -/
-import PropertyKindCalculus.Interaction
+
+module
+
+public import PropertyKindCalculus.Interaction
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Examples.Interaction
 
@@ -89,3 +95,6 @@ example :
   torque_angle_work
 
 end PropertyKindCalculus.Examples.Interaction
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

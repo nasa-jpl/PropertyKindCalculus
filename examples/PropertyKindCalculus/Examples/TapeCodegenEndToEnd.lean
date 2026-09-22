@@ -27,7 +27,14 @@ Plain module (imported by `examples.tape_codegen_lut_end_to_end`, which lifts th
 table-extended interpreter `evalTapeT`). Builds under the `Examples` glob, so CI checks it, and
 the axiom audit at the end certifies it sorry-free.
 -/
-import PropertyKindCalculus.Examples.TapeCodegenProof
+
+module
+
+public import PropertyKindCalculus.Examples.TapeCodegenProof
+meta import PropertyKindCalculus.Examples.TapeCodegenProof
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 open Spec TorchLean
 open TorchLean TorchLean.Tensor
@@ -546,3 +553,6 @@ def cse_preserves_resJac : Bool :=
 #guard_msgs (whitespace := lax) in #print axioms cseKey_denotation_sound
 
 end PropertyKindCalculus.Examples.TapeCodegenEndToEnd
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

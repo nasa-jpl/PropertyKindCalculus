@@ -25,9 +25,18 @@ Three things are checked here:
 Everything here is a **checked fact** (the module builds under CI). Depends on TorchLean (the tape
 carrier) and Mathlib (the `ℝ` A3 verdict).
 -/
-import PropertyKindCalculus.Uncertainty.Adequacy.Significance
-import PropertyKindCalculus.Uncertainty.Adequacy.Soundness
-import PropertyKindCalculus.UncertaintyExamples.DegenhardtFictive
+
+module
+
+public import PropertyKindCalculus.Uncertainty.Adequacy.Significance
+meta import PropertyKindCalculus.Uncertainty.Adequacy.Significance
+public import PropertyKindCalculus.Uncertainty.Adequacy.Soundness
+meta import PropertyKindCalculus.Uncertainty.Adequacy.Soundness
+public import PropertyKindCalculus.UncertaintyExamples.DegenhardtFictive
+meta import PropertyKindCalculus.UncertaintyExamples.DegenhardtFictive
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.UncertaintyExamples.AdequacyCoupling
 
@@ -184,3 +193,6 @@ theorem contribution_absorbed_at_scale :
 #print axioms contribution_absorbed_at_scale
 
 end PropertyKindCalculus.UncertaintyExamples.AdequacyCoupling
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

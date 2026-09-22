@@ -27,8 +27,15 @@ Series-wide catalogue examples are in the sibling
 classification (R13) is exercised in `PropertyKindCalculus.DimensionExamples.ScaleSpanning`.
 -/
 
-import PropertyKindCalculus.Iso80000
-import PropertyKindCalculus.QuantityReal
+module
+
+public import PropertyKindCalculus.Iso80000
+meta import PropertyKindCalculus.Iso80000
+public import PropertyKindCalculus.QuantityReal
+meta import PropertyKindCalculus.QuantityReal
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Examples.Iso80000.Part7
 
@@ -182,3 +189,6 @@ def irradianceInt : Quantity irradiance.kind Int :=
 #guard photonFluxCK.coherentUnit == "s⁻¹"
 
 end PropertyKindCalculus.Examples.Iso80000.Part7
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

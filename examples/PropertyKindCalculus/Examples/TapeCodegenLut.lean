@@ -32,7 +32,14 @@ values, and `evalTapeT` — is the **point-mode** semantics (`LutTable.refFetch`
 deployments carry a documented per-fetch tolerance `≤ 2⁻⁸·|Δsample|` (CUDA's 9-bit fixed-point
 lerp weight, rounding unspecified) and are excluded from bit-exact claims by construction.
 -/
-import PropertyKindCalculus.Torch.Paradigm.TapeCodegen
+
+module
+
+public import PropertyKindCalculus.Torch.Paradigm.TapeCodegen
+meta import PropertyKindCalculus.Torch.Paradigm.TapeCodegen
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 open Spec TorchLean
 open Runtime.Autograd (Tape TapeM)
@@ -199,3 +206,6 @@ def lutMissingTableRejected : Bool :=
 #guard_msgs (whitespace := lax) in #print axioms PropertyKindCalculus.Paradigm.TapeCodegen.evalTapeT_none
 
 end PropertyKindCalculus.Examples.TapeCodegenLut
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

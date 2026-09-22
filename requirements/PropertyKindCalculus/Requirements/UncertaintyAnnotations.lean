@@ -9,21 +9,41 @@ the Water Cloud Model capstone. Applied from afar. These modules pull in Mathlib
 module is not Mathlib-free.
 -/
 
-import PropertyKindCalculus.Uncertainty.Combine
-import PropertyKindCalculus.Uncertainty.Ladder
-import PropertyKindCalculus.Uncertainty.Coverage
-import PropertyKindCalculus.Uncertainty.QuasiExtensive
-import PropertyKindCalculus.Uncertainty.Adequacy
-import PropertyKindCalculus.Uncertainty.Adequacy.Soundness
-import PropertyKindCalculus.Uncertainty.Adequacy.Sterbenz32
-import PropertyKindCalculus.Uncertainty.Adequacy.MeanBound
-import PropertyKindCalculus.Uncertainty.Adequacy.RefinementBridge
-import PropertyKindCalculus.UncertaintyExamples.LadderNesting
-import PropertyKindCalculus.UncertaintyExamples.WaterCloudModel
-import PropertyKindCalculus.UncertaintyExamples.AdequacyLadder
-import PropertyKindCalculus.UncertaintyExamples.AdequacyDag
-import PropertyKindCalculus.UncertaintyExamples.Coverage
-import PropertyKindCalculus.Requirements.Attributes
+module
+
+public import PropertyKindCalculus.Uncertainty.Combine
+meta import PropertyKindCalculus.Uncertainty.Combine
+public import PropertyKindCalculus.Uncertainty.Ladder
+meta import PropertyKindCalculus.Uncertainty.Ladder
+public import PropertyKindCalculus.Uncertainty.Coverage
+meta import PropertyKindCalculus.Uncertainty.Coverage
+public import PropertyKindCalculus.Uncertainty.QuasiExtensive
+meta import PropertyKindCalculus.Uncertainty.QuasiExtensive
+public import PropertyKindCalculus.Uncertainty.Adequacy
+meta import PropertyKindCalculus.Uncertainty.Adequacy
+public import PropertyKindCalculus.Uncertainty.Adequacy.Soundness
+meta import PropertyKindCalculus.Uncertainty.Adequacy.Soundness
+public import PropertyKindCalculus.Uncertainty.Adequacy.Sterbenz32
+meta import PropertyKindCalculus.Uncertainty.Adequacy.Sterbenz32
+public import PropertyKindCalculus.Uncertainty.Adequacy.MeanBound
+meta import PropertyKindCalculus.Uncertainty.Adequacy.MeanBound
+public import PropertyKindCalculus.Uncertainty.Adequacy.RefinementBridge
+meta import PropertyKindCalculus.Uncertainty.Adequacy.RefinementBridge
+public import PropertyKindCalculus.UncertaintyExamples.LadderNesting
+meta import PropertyKindCalculus.UncertaintyExamples.LadderNesting
+public import PropertyKindCalculus.UncertaintyExamples.WaterCloudModel
+meta import PropertyKindCalculus.UncertaintyExamples.WaterCloudModel
+public import PropertyKindCalculus.UncertaintyExamples.AdequacyLadder
+meta import PropertyKindCalculus.UncertaintyExamples.AdequacyLadder
+public import PropertyKindCalculus.UncertaintyExamples.AdequacyDag
+meta import PropertyKindCalculus.UncertaintyExamples.AdequacyDag
+public import PropertyKindCalculus.UncertaintyExamples.Coverage
+meta import PropertyKindCalculus.UncertaintyExamples.Coverage
+public import PropertyKindCalculus.Requirements.Attributes
+meta import PropertyKindCalculus.Requirements.Attributes
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Uncertainty
 
@@ -128,3 +148,6 @@ attribute [requirement "R26" exemplifies "the WCM theorem edge: the closed-form 
   PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.retrievalInvertsForward
 
 end PropertyKindCalculus.Uncertainty
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

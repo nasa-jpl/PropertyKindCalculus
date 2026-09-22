@@ -13,7 +13,13 @@ Inhabitation, boundary, and axiom-profile probes for `LowerBound`/`UpperBound`/`
     `Quantity.clamp`'s `max lo (min hi x)` would fail here.
 -/
 
-import PropertyKindCalculus
+module
+
+public import PropertyKindCalculus
+meta import PropertyKindCalculus
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Tests.Bounds
 
@@ -153,3 +159,6 @@ example : IccQ lengthK Float := box.castCarrier Float.ofInt
 #check_failure (box.castCarrier Float.ofInt : IccQ colourK Float)
 
 end PropertyKindCalculus.Tests.Bounds
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

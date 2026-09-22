@@ -14,8 +14,14 @@ sensitivities `c₁ = 3`, `c₂ = 4`. Willink's combine then predicts
 `κ₂(Y) = 3²·1 + 4²·2 = 41` and `κ₄(Y) = 3⁴·(−2) + 4⁴·(−4) = −1186`, and T3 says the convolved SSPRC
 deviation reproduces exactly that. Mathlib-backed (the `ℝ` rung); TorchLean-free.
 -/
-import PropertyKindCalculus.Uncertainty.Convolution
-import PropertyKindCalculus.Uncertainty
+
+module
+
+public import PropertyKindCalculus.Uncertainty.Convolution
+public import PropertyKindCalculus.Uncertainty
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.UncertaintyExamples.SsprcNesting
 
@@ -110,3 +116,6 @@ example : (willinkCumulants (termsOf xs)).kappa2 = 41 ∧ (willinkCumulants (ter
 #guard_msgs (whitespace := lax) in #print axioms kappa4_conv
 
 end PropertyKindCalculus.UncertaintyExamples.SsprcNesting
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

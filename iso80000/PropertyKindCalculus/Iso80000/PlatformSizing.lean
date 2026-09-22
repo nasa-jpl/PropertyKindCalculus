@@ -36,10 +36,15 @@ that is *all* it separates — within the time family the functor conflates agai
 swap that inverts the optimum (`w` for `a`) is invisible to it.
 -/
 
-import PropertyKindCalculus.Iso80000.Part3
-import PropertyKindCalculus.Iso80000.Part9
-import PropertyKindCalculus.Iso80000.Part13
-import PropertyKindCalculus.Paradigm.PlatformKinds
+module
+
+public import PropertyKindCalculus.Iso80000.Part3
+public import PropertyKindCalculus.Iso80000.Part9
+public import PropertyKindCalculus.Iso80000.Part13
+public import PropertyKindCalculus.Paradigm.PlatformKinds
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Iso80000.PlatformSizing
 
@@ -206,3 +211,6 @@ theorem elapsed_slope_dimension_conflated :
   ⟨rfl, Platform.elapsedTime_ne_timePerElement⟩
 
 end PropertyKindCalculus.Iso80000.PlatformSizing
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

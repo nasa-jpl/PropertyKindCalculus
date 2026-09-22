@@ -3,8 +3,11 @@ Copyright (c) 2026 California Institute of Technology. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Nicolas Rouquette
 -/
-import PropertyKindCalculus.Index.Basic
-import PropertyKindCalculus.Uncertainty.BoundaryBudget
+
+module
+
+public import PropertyKindCalculus.Index.Basic
+public import PropertyKindCalculus.Uncertainty.BoundaryBudget
 
 /-!
 # The port-budget index — declared `PortBudget`s as a table
@@ -20,6 +23,9 @@ The table renders; it does not judge. The checks — the port produced and at th
 kind, the assembly acyclic, every term an influencing source — are `#kind_budget`'s,
 and its pinned reports are their gate.
 -/
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Index
 
@@ -48,3 +54,6 @@ def portBudgetsTable (scope : Scope) : MetaM IndexTable := do
            headers, rows }
 
 end PropertyKindCalculus.Index
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

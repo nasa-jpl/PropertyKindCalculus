@@ -36,9 +36,14 @@ several others. Five families dominate the catalogue, and each is one big collis
   group over mass, length, time, temperature, and charge.
 -/
 
-import PropertyKindCalculus.Dimension
-import PropertyKindCalculus.Iso80000.References
-import PropertyKindCalculus.Iso80000.Catalogue
+module
+
+public import PropertyKindCalculus.Dimension
+public import PropertyKindCalculus.Iso80000.References
+public import PropertyKindCalculus.Iso80000.Catalogue
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Iso80000.Part12
 
@@ -391,3 +396,6 @@ theorem iso80000_12_dim_one_collision :
   ⟨braggAngle, structureFactor, braggAngle_ne_structureFactor, rfl, rfl⟩
 
 end PropertyKindCalculus.Iso80000.Part12
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

@@ -126,32 +126,42 @@ This library is PhysLib-backed (its quantity-kinds carry PhysLib `Dimension`s); 
 references catalogue alone is Mathlib-free.
 -/
 
-import PropertyKindCalculus.Iso80000.References
-import PropertyKindCalculus.Iso80000.Catalogue
-import PropertyKindCalculus.Iso80000.Part1
-import PropertyKindCalculus.Iso80000.Part2
-import PropertyKindCalculus.Iso80000.Part3
-import PropertyKindCalculus.Iso80000.Part3.AreaElement
-import PropertyKindCalculus.Iso80000.Part3.AreaClassification
-import PropertyKindCalculus.Iso80000.Part3.VolumeElement
-import PropertyKindCalculus.Iso80000.Part3.DefiningRelations
-import PropertyKindCalculus.Iso80000.Part4
-import PropertyKindCalculus.Iso80000.Part4.DefiningRelations
-import PropertyKindCalculus.Iso80000.Part5
-import PropertyKindCalculus.Iso80000.Part5.DefiningRelations
-import PropertyKindCalculus.Iso80000.Part6
-import PropertyKindCalculus.Iso80000.Part6.DefiningRelations
-import PropertyKindCalculus.Iso80000.Part7
-import PropertyKindCalculus.Iso80000.Part7.DefiningRelations
-import PropertyKindCalculus.Iso80000.Part8
-import PropertyKindCalculus.Iso80000.Part8.DefiningRelations
-import PropertyKindCalculus.Iso80000.Part9
-import PropertyKindCalculus.Iso80000.Part9.DefiningRelations
-import PropertyKindCalculus.Iso80000.Part10
-import PropertyKindCalculus.Iso80000.Part10.DefiningRelations
-import PropertyKindCalculus.Iso80000.Part11
-import PropertyKindCalculus.Iso80000.Part12
-import PropertyKindCalculus.Iso80000.Part12.DefiningRelations
-import PropertyKindCalculus.Iso80000.Part13
-import PropertyKindCalculus.Iso80000.Part13.DefiningRelations
-import PropertyKindCalculus.Iso80000.IsqLift
+module
+
+public import PropertyKindCalculus.Iso80000.References
+public import PropertyKindCalculus.Iso80000.Catalogue
+public import PropertyKindCalculus.Iso80000.Part1
+public import PropertyKindCalculus.Iso80000.Part2
+public import PropertyKindCalculus.Iso80000.Part3
+public import PropertyKindCalculus.Iso80000.Part3.AreaElement
+public import PropertyKindCalculus.Iso80000.Part3.AreaClassification
+public import PropertyKindCalculus.Iso80000.Part3.VolumeElement
+public import PropertyKindCalculus.Iso80000.Part3.DefiningRelations
+public import PropertyKindCalculus.Iso80000.Part4
+public import PropertyKindCalculus.Iso80000.Part4.DefiningRelations
+public import PropertyKindCalculus.Iso80000.Part5
+public import PropertyKindCalculus.Iso80000.Part5.DefiningRelations
+public import PropertyKindCalculus.Iso80000.Part6
+public import PropertyKindCalculus.Iso80000.Part6.DefiningRelations
+public import PropertyKindCalculus.Iso80000.Part7
+public import PropertyKindCalculus.Iso80000.Part7.DefiningRelations
+public import PropertyKindCalculus.Iso80000.Part8
+public import PropertyKindCalculus.Iso80000.Part8.DefiningRelations
+public import PropertyKindCalculus.Iso80000.Part9
+public import PropertyKindCalculus.Iso80000.Part9.DefiningRelations
+public import PropertyKindCalculus.Iso80000.Part10
+public import PropertyKindCalculus.Iso80000.Part10.DefiningRelations
+public import PropertyKindCalculus.Iso80000.Part11
+public import PropertyKindCalculus.Iso80000.Part12
+public import PropertyKindCalculus.Iso80000.Part12.DefiningRelations
+public import PropertyKindCalculus.Iso80000.Part13
+public import PropertyKindCalculus.Iso80000.Part13.DefiningRelations
+public import PropertyKindCalculus.Iso80000.IsqLift
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
+
+
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

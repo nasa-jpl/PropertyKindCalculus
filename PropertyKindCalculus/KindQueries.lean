@@ -23,8 +23,19 @@ compute reachability in the value-flow digraph, so a port pair absent from the
 propagation table is a theorem-backed non-influence, not a rendering choice.
 -/
 
-import PropertyKindCalculus.KindIncidence
-import PropertyKindCalculus.Influence
+module
+
+public import PropertyKindCalculus.KindIncidence
+public meta import PropertyKindCalculus.KindIncidence
+public import PropertyKindCalculus.Influence
+
+-- Same-module helpers serve both the command elaborators below and runtime callers, so the
+-- phase check is relaxed for this file (the module system's mixed-use escape; imports are
+-- still checked and take `public meta import`).
+set_option compiler.relaxedMetaCheck true
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.KindQueries
 
@@ -88,3 +99,6 @@ elab "#kind_output_ledger " c:ident : command => liftTermElabM do
       {String.intercalate "\n" lines}"
 
 end PropertyKindCalculus.KindQueries
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

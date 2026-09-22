@@ -33,7 +33,14 @@ patterns.
 Plain leaf module (nothing imports it). Builds under the `Examples` glob, so CI checks it, and the
 axiom audit at the end certifies it sorry-free.
 -/
-import PropertyKindCalculus.Torch.Paradigm.TapeCse
+
+module
+
+public import PropertyKindCalculus.Torch.Paradigm.TapeCse
+meta import PropertyKindCalculus.Torch.Paradigm.TapeCse
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 open Spec TorchLean
 open TorchLean TorchLean.Tensor
@@ -349,3 +356,6 @@ def demoStructuralCheck : Bool :=
 #guard_msgs (whitespace := lax) in #print axioms cseCompact_wellFormed
 
 end PropertyKindCalculus.Examples.TapeCseStructural
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

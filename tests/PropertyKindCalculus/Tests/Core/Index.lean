@@ -22,8 +22,16 @@ Two of the traps this guards are invisible from the source:
     operations table must exclude projections or every record field is listed twice. The
     `operations` pin fixes the expected membership.
 -/
-import PropertyKindCalculus.Index
-import PropertyKindCalculus.DocGenMath
+
+module
+
+public import PropertyKindCalculus.Index
+meta import PropertyKindCalculus.Index
+public import PropertyKindCalculus.DocGenMath
+meta import PropertyKindCalculus.DocGenMath
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Tests.Index
 
@@ -358,3 +366,6 @@ column's. -/
 #eval summarize "Summary.\n\nBody paragraph."
 
 end PropertyKindCalculus.Tests.Index
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

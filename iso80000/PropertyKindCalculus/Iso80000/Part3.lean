@@ -37,9 +37,14 @@ Three things this catalogue makes structural rather than prose:
   PhysLib's dimension group.
 -/
 
-import PropertyKindCalculus.Dimension
-import PropertyKindCalculus.Iso80000.References
-import PropertyKindCalculus.Iso80000.Catalogue
+module
+
+public import PropertyKindCalculus.Dimension
+public import PropertyKindCalculus.Iso80000.References
+public import PropertyKindCalculus.Iso80000.Catalogue
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Iso80000.Part3
 
@@ -544,3 +549,6 @@ theorem iso80000_3_dim_collision :
     frequency_dim_eq_angularFrequency_dim⟩
 
 end PropertyKindCalculus.Iso80000.Part3
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

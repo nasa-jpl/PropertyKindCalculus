@@ -38,10 +38,15 @@ No normative text from the licensed standard is reproduced; the relations are re
 in this work's own formalism.
 -/
 
-import PropertyKindCalculus.Iso80000.Part3
-import PropertyKindCalculus.Iso80000.Part6
-import PropertyKindCalculus.QuantityClassification
-import PropertyKindCalculus.QuantityReal
+module
+
+public import PropertyKindCalculus.Iso80000.Part3
+public import PropertyKindCalculus.Iso80000.Part6
+public import PropertyKindCalculus.QuantityClassification
+public import PropertyKindCalculus.QuantityReal
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Iso80000.Part6.DefiningRelations
 
@@ -176,3 +181,6 @@ theorem conductanceOf_isReciprocal (r : Quantity resistance.kind ℝ) :
     (conductanceOf r).IsReciprocal conductance_recip_resistance r := rfl
 
 end PropertyKindCalculus.Iso80000.Part6.DefiningRelations
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

@@ -15,7 +15,14 @@ unkinded count; and the header repeats
 the evaluated verdict — the figure is generated from the checked object, never drawn
 beside it.
 -/
-import PropertyKindCalculus.KindGraphD2
+
+module
+
+public import PropertyKindCalculus.KindGraphD2
+meta import PropertyKindCalculus.KindGraphD2
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Tests.KindGraphD2
 
@@ -204,3 +211,6 @@ def ov : String := emitOverview probe (title := "probe assembly")
 #guard hasSub ov "dashed arrow — a citation: referenced, never wired"
 
 end PropertyKindCalculus.Tests.KindGraphD2
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

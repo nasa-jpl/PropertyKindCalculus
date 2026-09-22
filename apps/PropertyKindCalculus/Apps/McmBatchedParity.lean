@@ -21,10 +21,16 @@ Run it with `lake exe mcm_batched_parity`. On the default build the `CudaT` ops 
 `torchlean-development-slim:gpu` container) runs the *same* harness on the device. It exits `0` on
 parity, `1` on mismatch (so CI can gate on it as a `lake exe` step).
 -/
-import PropertyKindCalculus.Uncertainty.McmBatched
-import PropertyKindCalculus.Uncertainty.Mcm
-import PropertyKindCalculus.Uncertainty.InputDist
-import PropertyKindCalculus.Uncertainty.Carriers
+
+module
+
+public import PropertyKindCalculus.Uncertainty.McmBatched
+public import PropertyKindCalculus.Uncertainty.Mcm
+public import PropertyKindCalculus.Uncertainty.InputDist
+public import PropertyKindCalculus.Uncertainty.Carriers
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Apps.McmBatchedParity
 
@@ -76,3 +82,6 @@ end PropertyKindCalculus.Apps.McmBatchedParity
 
 /-- The executable entry point. -/
 def main : IO UInt32 := PropertyKindCalculus.Apps.McmBatchedParity.main
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

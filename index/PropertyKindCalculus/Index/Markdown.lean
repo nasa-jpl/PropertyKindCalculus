@@ -3,7 +3,11 @@ Copyright (c) 2026 California Institute of Technology. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Nicolas Rouquette
 -/
-import PropertyKindCalculus.Index.Commands
+
+module
+
+public import PropertyKindCalculus.Index.Commands
+public meta import PropertyKindCalculus.Index.Commands
 
 /-!
 # Rendering an index as markdown, for doc-gen4
@@ -27,6 +31,14 @@ the time the facts are known, the kind is imported. So the per-declaration block
 the generated HTML afterwards, by `scripts/inject-index-docs.py`, from the JSON this module's
 `indexJson` produces. The index *page* has no such constraint and stays pure Lean.
 -/
+
+-- Same-module helpers serve both the command elaborators below and runtime callers, so the
+-- phase check is relaxed for this file (the module system's mixed-use escape; imports are
+-- still checked and take `public meta import`).
+set_option compiler.relaxedMetaCheck true
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Index
 
@@ -121,7 +133,7 @@ def htmlEscape (s : String) : String :=
   ((s.replace "&" "&amp;").replace "<" "&lt;").replace ">" "&gt;"
 
 /-- An HTML list of code items under an italic caption. -/
-private def htmlSection (caption : String) (items : List String) : String :=
+def htmlSection (caption : String) (items : List String) : String :=
   s!"<p><em>{caption}</em></p><ul>"
     ++ String.intercalate "" (items.map fun i => s!"<li><code>{htmlEscape i}</code></li>")
     ++ "</ul>"
@@ -166,3 +178,6 @@ def indexJson (scope : Scope) : MetaM Json := do
   return Json.mkObj (blocks.toList.map fun (n, h) => (toString n, Json.str h))
 
 end PropertyKindCalculus.Index
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

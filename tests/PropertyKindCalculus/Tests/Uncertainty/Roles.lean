@@ -11,9 +11,17 @@ second is the one that matters.
     every numeric probe here and prevent nothing.
 -/
 
-import PropertyKindCalculus
-import PropertyKindCalculus.Uncertainty.Roles
-import PropertyKindCalculus.Uncertainty.Conformity
+module
+
+public import PropertyKindCalculus
+meta import PropertyKindCalculus
+public import PropertyKindCalculus.Uncertainty.Roles
+meta import PropertyKindCalculus.Uncertainty.Roles
+public import PropertyKindCalculus.Uncertainty.Conformity
+meta import PropertyKindCalculus.Uncertainty.Conformity
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Tests.Roles
 
@@ -146,3 +154,6 @@ def tol : Conformity.Tolerance K Float := Conformity.Tolerance.atMost ‚ü®600.0‚ü
 #guard_msgs in #print axioms Dispersion.combine_singleton
 
 end PropertyKindCalculus.Tests.Roles
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

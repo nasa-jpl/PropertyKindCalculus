@@ -22,7 +22,13 @@ Mathlib-free; part of the separate `Examples` library — it imports the core
 `PropertyKindCalculus` library exactly as a downstream consumer would.
 -/
 
-import PropertyKindCalculus
+module
+
+public import PropertyKindCalculus
+meta import PropertyKindCalculus
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Examples.MiniWriteOnce
 
@@ -209,3 +215,6 @@ theorem cholRowQ_magnitudes (a b c : Quantity reflectivity Float) :
 -- the named slots; the record keeps both axes separable.
 
 end PropertyKindCalculus.Examples.MiniWriteOnce
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

@@ -17,12 +17,24 @@ Self-contained: PKC cannot import `soil-moisture-model` (that package already re
 dependency cycle), so the AVS kinds and kernel are reproduced fresh here. The op-structure matches
 `kernel.avs_batch.lavsResidual`/`lavsJacResidual` op-for-op.
 -/
-import PropertyKindCalculus.Quantity
-import PropertyKindCalculus.QuantityClassification
-import PropertyKindCalculus.QuantityFunction
-import PropertyKindCalculus.Paradigm.NumCarrier
-import PropertyKindCalculus.DocGenMath
-import PropertyKindCalculus.QuantityReal
+
+module
+
+public import PropertyKindCalculus.Quantity
+meta import PropertyKindCalculus.Quantity
+public import PropertyKindCalculus.QuantityClassification
+meta import PropertyKindCalculus.QuantityClassification
+public import PropertyKindCalculus.QuantityFunction
+meta import PropertyKindCalculus.QuantityFunction
+public import PropertyKindCalculus.Paradigm.NumCarrier
+meta import PropertyKindCalculus.Paradigm.NumCarrier
+public import PropertyKindCalculus.DocGenMath
+meta import PropertyKindCalculus.DocGenMath
+public import PropertyKindCalculus.QuantityReal
+meta import PropertyKindCalculus.QuantityReal
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Examples.AvsForward
 
@@ -188,3 +200,6 @@ def resJac {α : Type} [NumCarrier α] (a b c d ndvi r s0 : α) : α × α × α
   (res, J.1.magnitude, J.2.1.magnitude, J.2.2.1.magnitude, J.2.2.2.magnitude)
 
 end PropertyKindCalculus.Examples.AvsForward
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

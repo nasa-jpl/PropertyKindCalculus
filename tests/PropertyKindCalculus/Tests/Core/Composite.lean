@@ -20,7 +20,13 @@ The probes check the properties the module exists for:
     otherwise reach for is not writable.
 -/
 
-import PropertyKindCalculus
+module
+
+public import PropertyKindCalculus
+meta import PropertyKindCalculus
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Tests.Composite
 
@@ -222,3 +228,6 @@ theorem pair_frequency_assembles_wrongly :
 #guard_msgs in #print axioms pair_frequency_assembles_wrongly
 
 end PropertyKindCalculus.Tests.Composite
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

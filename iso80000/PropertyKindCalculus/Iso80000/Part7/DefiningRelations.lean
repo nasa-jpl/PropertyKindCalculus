@@ -36,10 +36,15 @@ No normative text from the licensed standard is reproduced; the relations are re
 in this work's own formalism.
 -/
 
-import PropertyKindCalculus.Iso80000.Part3
-import PropertyKindCalculus.Iso80000.Part7
-import PropertyKindCalculus.QuantityClassification
-import PropertyKindCalculus.QuantityReal
+module
+
+public import PropertyKindCalculus.Iso80000.Part3
+public import PropertyKindCalculus.Iso80000.Part7
+public import PropertyKindCalculus.QuantityClassification
+public import PropertyKindCalculus.QuantityReal
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Iso80000.Part7.DefiningRelations
 
@@ -150,3 +155,6 @@ theorem luminousEfficacyOf_isQuotient (φv : Quantity luminousFlux.kind ℝ)
     (luminousEfficacyOf φv φe).IsQuotient luminousEfficacy_quot_fluxes φv φe := rfl
 
 end PropertyKindCalculus.Iso80000.Part7.DefiningRelations
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

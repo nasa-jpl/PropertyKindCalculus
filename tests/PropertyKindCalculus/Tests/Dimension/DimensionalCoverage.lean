@@ -13,7 +13,13 @@ One probe world, every verdict class exercised, the full report pinned:
   * `⚠ CONFLICTING` — a kind two `DimensionedKind` declarations dimension differently;
   * `⚠ INCOHERENT` — the refuted edge: `L · L → L` cannot balance.
 -/
-import PropertyKindCalculus.DimensionalCoverage
+
+module
+
+public import PropertyKindCalculus.DimensionalCoverage
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Tests.Dimension.Coverage
 
@@ -124,3 +130,6 @@ end Clean
 #kind_dimensional_clean PropertyKindCalculus.Tests.Dimension.Coverage.Clean
 
 end PropertyKindCalculus.Tests.Dimension.Coverage
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

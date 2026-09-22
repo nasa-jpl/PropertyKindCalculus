@@ -26,17 +26,23 @@ dimensional homomorphism:
 
 It builds on PhysLib (`lake build Dimension`); the core spine stays Mathlib-free.
 -/
-import PropertyKindCalculus.Dimension
-import PropertyKindCalculus.Interaction
-import PropertyKindCalculus.QuantityFunction
-import PropertyKindCalculus.Complex
-import Mathlib.Analysis.SpecialFunctions.Trigonometric.Basic
-import Mathlib.Analysis.SpecialFunctions.Trigonometric.Inverse
-import Mathlib.Analysis.SpecialFunctions.Trigonometric.Arctan
-import Mathlib.Analysis.SpecialFunctions.Log.Basic
-import Mathlib.Analysis.SpecialFunctions.Pow.Real
-import Mathlib.Analysis.SpecialFunctions.Sqrt
-import Mathlib.Algebra.Order.Round
+
+module
+
+public import PropertyKindCalculus.Dimension
+public import PropertyKindCalculus.Interaction
+public import PropertyKindCalculus.QuantityFunction
+public import PropertyKindCalculus.Complex
+public import Mathlib.Analysis.SpecialFunctions.Trigonometric.Basic
+public import Mathlib.Analysis.SpecialFunctions.Trigonometric.Inverse
+public import Mathlib.Analysis.SpecialFunctions.Trigonometric.Arctan
+public import Mathlib.Analysis.SpecialFunctions.Log.Basic
+public import Mathlib.Analysis.SpecialFunctions.Pow.Real
+public import Mathlib.Analysis.SpecialFunctions.Sqrt
+public import Mathlib.Algebra.Order.Round
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 open Dimension
 
@@ -314,3 +320,6 @@ theorem reynolds_ne_mach_but_both_dimensionless :
   ⟨by decide, rfl, rfl⟩
 
 end PropertyKindCalculus
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

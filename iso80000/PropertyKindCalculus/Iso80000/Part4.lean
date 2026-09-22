@@ -47,9 +47,14 @@ own quantities force the issues:
   in PhysLib's dimension group.
 -/
 
-import PropertyKindCalculus.Dimension
-import PropertyKindCalculus.Iso80000.References
-import PropertyKindCalculus.Iso80000.Catalogue
+module
+
+public import PropertyKindCalculus.Dimension
+public import PropertyKindCalculus.Iso80000.References
+public import PropertyKindCalculus.Iso80000.Catalogue
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Iso80000.Part4
 
@@ -564,3 +569,6 @@ theorem iso80000_4_dim_one_collision :
   ⟨efficiency, relativeMassDensity, efficiency_ne_relativeMassDensity, rfl, rfl⟩
 
 end PropertyKindCalculus.Iso80000.Part4
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

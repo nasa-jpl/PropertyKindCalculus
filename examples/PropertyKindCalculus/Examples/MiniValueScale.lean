@@ -19,7 +19,12 @@ Like the other minis, this module is part of the separate `Examples` library and
 imports the core `PropertyKindCalculus` library as any downstream consumer would.
 -/
 
-import PropertyKindCalculus
+module
+
+public import PropertyKindCalculus
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Examples.Value
 
@@ -100,3 +105,6 @@ example :
   ValueScale.scaleType_provenance_irrelevant length .true_ .examined
 
 end PropertyKindCalculus.Examples.Value
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

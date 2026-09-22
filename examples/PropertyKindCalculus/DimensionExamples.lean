@@ -11,10 +11,20 @@ the same for the Mathlib-backed `Dimension` library. All `example`/`#eval`/`#gua
 checks live under `examples/`.
 -/
 
-import PropertyKindCalculus.DimensionExamples.Dimension
-import PropertyKindCalculus.DimensionExamples.Interaction
-import PropertyKindCalculus.DimensionExamples.QuantityReal
-import PropertyKindCalculus.DimensionExamples.Frames
-import PropertyKindCalculus.DimensionExamples.UnitConversion
-import PropertyKindCalculus.DimensionExamples.RoverExtensivity
-import PropertyKindCalculus.DimensionExamples.Iso80000
+module
+
+public import PropertyKindCalculus.DimensionExamples.Dimension
+public import PropertyKindCalculus.DimensionExamples.Interaction
+public import PropertyKindCalculus.DimensionExamples.QuantityReal
+public import PropertyKindCalculus.DimensionExamples.Frames
+public import PropertyKindCalculus.DimensionExamples.UnitConversion
+public import PropertyKindCalculus.DimensionExamples.RoverExtensivity
+public import PropertyKindCalculus.DimensionExamples.Iso80000
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
+
+
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

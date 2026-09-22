@@ -3,12 +3,15 @@ Copyright (c) 2026 California Institute of Technology. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Nicolas Rouquette
 -/
-import Lean
-import PropertyKindCalculus.DocGenMath.Term
-import PropertyKindCalculus.DocGenMath.Registry
-import PropertyKindCalculus.DocGenMath.Lift
-import PropertyKindCalculus.DocGenMath.Normalize
-import PropertyKindCalculus.DocGenMath.Pretty
+
+module
+
+public import Lean
+public import PropertyKindCalculus.DocGenMath.Term
+public import PropertyKindCalculus.DocGenMath.Registry
+public import PropertyKindCalculus.DocGenMath.Lift
+public import PropertyKindCalculus.DocGenMath.Normalize
+public import PropertyKindCalculus.DocGenMath.Pretty
 
 /-!
 # The `@[pkc_math]` attribute — orchestration + docstring hand-off
@@ -47,6 +50,9 @@ exactly what the definition computes — the **F** tier of `RENDERING.md` §5. I
 assert algebra: a literal override and a derivation are mutually exclusive, and are rejected
 together.
 -/
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.DocGenMath
 
@@ -281,3 +287,6 @@ initialize registerBuiltinAttribute {
 }
 
 end PropertyKindCalculus.DocGenMath
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

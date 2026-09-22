@@ -14,7 +14,12 @@ proofs legitimately use `[propext, Classical.choice, Quot.sound]`; the gate conf
 **no `sorryAx`** creeps in.
 -/
 
-import PropertyKindCalculus.IsqBase
+module
+
+public import PropertyKindCalculus.IsqBase
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Tests.IsqBase
 
@@ -76,3 +81,6 @@ theorem isq_lift_kind_invariant :
 #guard_msgs (whitespace := lax) in #print axioms DimensionedKind.mapDim_kind
 
 end PropertyKindCalculus.Tests.IsqBase
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

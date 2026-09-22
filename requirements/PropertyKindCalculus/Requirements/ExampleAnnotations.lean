@@ -17,10 +17,17 @@ and adequacy examples for R14/R15) are tagged in `DimensionAnnotations` and
 `UncertaintyAnnotations`, next to that layer's other annotations.
 -/
 
-import PropertyKindCalculus.Examples
-import PropertyKindCalculus.Requirements.Attributes
+module
+
+public import PropertyKindCalculus.Examples
+meta import PropertyKindCalculus.Examples
+public import PropertyKindCalculus.Requirements.Attributes
+meta import PropertyKindCalculus.Requirements.Attributes
 
 /-! ## Kind structure (R1, R2, R3) -/
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 attribute [requirement "R1" exemplifies "volumetric vs gravimetric water content: two dimension-one kinds, provably distinct"]
   PropertyKindCalculus.Examples.Dedicated.vwc
@@ -96,3 +103,6 @@ attribute [requirement "R12" exemplifies "a length built through the kind-law, c
 
 attribute [requirement "R25" exemplifies "the AVS backscatter model rendered to `σ⁰ = a·ndvi + …` by @[pkc_math], with the rendering pinned by #guard_msgs"]
   PropertyKindCalculus.Examples.DocGenMathDemo.avsForward
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

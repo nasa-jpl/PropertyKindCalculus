@@ -10,4 +10,15 @@ decision, not a blessing of it (`METHODOLOGY_TEMPLATES.md` §5). The probe is ge
 `scripts/gen-iso80000-coverage.py` runs the censuses and writes it from their output, and
 `--check` shows how a catalogue change moved the records before anyone re-pins them.
 -/
-import PropertyKindCalculus.Tests.Iso80000.Coverage
+
+module
+
+public import PropertyKindCalculus.Tests.Iso80000.Coverage
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
+
+
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

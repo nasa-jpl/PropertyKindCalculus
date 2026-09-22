@@ -9,7 +9,13 @@ with an exact expected value, so a closure that over- or under-approximates fail
 not in a downstream repository.
 -/
 
-import PropertyKindCalculus
+module
+
+public import PropertyKindCalculus
+meta import PropertyKindCalculus
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Tests.Influence
 
@@ -98,3 +104,6 @@ def Gcyc : Provenance String String where
 #guard !Gcyc.acyclic
 
 end PropertyKindCalculus.Tests.Influence
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

@@ -16,8 +16,15 @@ Inhabitation, boundary, and axiom-profile probes for `Part`/`Whole`
     and the crossing renders as the edge it is.
 -/
 
-import PropertyKindCalculus
-import PropertyKindCalculus.KindIncidence
+module
+
+public import PropertyKindCalculus
+meta import PropertyKindCalculus
+public import PropertyKindCalculus.KindIncidence
+meta import PropertyKindCalculus.KindIncidence
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Tests.PartWhole
 
@@ -120,3 +127,6 @@ well-formed: true
 #guard_msgs in #kind_graph normalize
 
 end PropertyKindCalculus.Tests.PartWhole
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

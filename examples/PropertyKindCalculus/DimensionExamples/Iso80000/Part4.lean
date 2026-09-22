@@ -23,11 +23,21 @@ Series-wide catalogue examples are in the sibling
 `PropertyKindCalculus.DimensionExamples.Iso80000.References`.
 -/
 
-import PropertyKindCalculus.Iso80000
-import PropertyKindCalculus.QuantityReal
-import PropertyKindCalculus.QuantityVector
-import Mathlib.Data.Fin.VecNotation
-import Mathlib.Tactic.NormNum
+module
+
+public import PropertyKindCalculus.Iso80000
+meta import PropertyKindCalculus.Iso80000
+public import PropertyKindCalculus.QuantityReal
+meta import PropertyKindCalculus.QuantityReal
+public import PropertyKindCalculus.QuantityVector
+meta import PropertyKindCalculus.QuantityVector
+public import Mathlib.Data.Fin.VecNotation
+meta import Mathlib.Data.Fin.VecNotation
+public import Mathlib.Tactic.NormNum
+meta import Mathlib.Tactic.NormNum
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Examples.Iso80000.Part4
 
@@ -185,3 +195,6 @@ def momentumInt : Quantity momentum.kind Int :=
 #guard mechanicalEnergyCK.coherentUnit == "J"
 
 end PropertyKindCalculus.Examples.Iso80000.Part4
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

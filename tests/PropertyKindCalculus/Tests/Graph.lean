@@ -7,4 +7,14 @@ component computation on a hand-built graph, and the `#kind_scc` report and
 `#kind_scc_clean` gate driven at a crafted laundering loop. See `Tests.Graph.Bridge`.
 -/
 
-import PropertyKindCalculus.Tests.Graph.Bridge
+module
+
+public import PropertyKindCalculus.Tests.Graph.Bridge
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
+
+
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

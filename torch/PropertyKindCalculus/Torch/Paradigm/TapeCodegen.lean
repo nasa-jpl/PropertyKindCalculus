@@ -25,9 +25,15 @@ DRAM), never the arithmetic. Compile the generated kernel with `nvcc --fmad=fals
 
 Plain (not a `module`) file: imports the tape carrier and the CSE pass.
 -/
-import PropertyKindCalculus.Torch.Paradigm.TapeCarrier
-import PropertyKindCalculus.Torch.Paradigm.TapeCse
-import PropertyKindCalculus.Torch.Paradigm.LutCarrier
+
+module
+
+public import PropertyKindCalculus.Torch.Paradigm.TapeCarrier
+public import PropertyKindCalculus.Torch.Paradigm.TapeCse
+public import PropertyKindCalculus.Torch.Paradigm.LutCarrier
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 open Spec TorchLean
 open Runtime.Autograd (Tape Node TapeM)
@@ -826,3 +832,6 @@ def AiReport.eagerHostBytesPerElem (rep : AiReport) : Nat :=
   8 * (rep.nInputs + rep.nOut) + 4 * rep.maxLive
 
 end PropertyKindCalculus.Paradigm.TapeCodegen
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

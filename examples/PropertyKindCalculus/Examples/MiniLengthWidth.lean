@@ -15,7 +15,12 @@ This module is part of the separate `Examples` library; it imports the core
 `PropertyKindCalculus` library like any downstream consumer would.
 -/
 
-import PropertyKindCalculus
+module
+
+public import PropertyKindCalculus
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Examples
 
@@ -61,3 +66,6 @@ example : pencilWidth.kind = width := rfl
 example : pencilWidth.carrier = pencil := rfl
 
 end PropertyKindCalculus.Examples
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

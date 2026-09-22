@@ -16,8 +16,15 @@ Only locators are carried — the external clause/section designation and term �
 never any normative text from either copyrighted source.
 -/
 
-import PropertyKindCalculus
-import PropertyKindCalculus.CrossRefs.Attributes
+module
+
+public import PropertyKindCalculus
+meta import PropertyKindCalculus
+public import PropertyKindCalculus.CrossRefs.Attributes
+meta import PropertyKindCalculus.CrossRefs.Attributes
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -69,3 +76,6 @@ attribute [vim4 "2.13" "measurement function"
   "\"f may symbolize an algorithm\" — the four ways an implementing function may relate to its model: equals, inverts, refines, bounded by"] Provenance.RelationKind
 
 end PropertyKindCalculus
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

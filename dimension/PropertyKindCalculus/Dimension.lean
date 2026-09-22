@@ -45,8 +45,14 @@ The division of labour is deliberate and worth stating: what belongs upstream is
 reduction, the SI plane-angle convention, the charge-vs-current citation choice). PhysLib
 now offers the coordinates; PKC chooses among them and says why.
 -/
-import Physlib.Units.LTMCTDimensionBase
-import PropertyKindCalculus
+
+module
+
+public import Physlib.Units.LTMCTDimensionBase
+public import PropertyKindCalculus
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 open Dimension
 
@@ -403,3 +409,6 @@ theorem dim_not_injective :
   ⟨vwc, gwc, vwc_ne_gwc, rfl, rfl⟩
 
 end PropertyKindCalculus
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

@@ -60,9 +60,14 @@ sharpens the two the calculus already pressed:
   discharged in PhysLib's dimension group over the temperature generator `Θ`.
 -/
 
-import PropertyKindCalculus.Dimension
-import PropertyKindCalculus.Iso80000.References
-import PropertyKindCalculus.Iso80000.Catalogue
+module
+
+public import PropertyKindCalculus.Dimension
+public import PropertyKindCalculus.Iso80000.References
+public import PropertyKindCalculus.Iso80000.Catalogue
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Iso80000.Part5
 
@@ -744,3 +749,6 @@ theorem iso80000_5_scale_collision :
     thermodynamicTemperature_ne_celsiusTemperature, rfl, by decide⟩
 
 end PropertyKindCalculus.Iso80000.Part5
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

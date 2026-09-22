@@ -16,8 +16,15 @@ The last probe is the one that keeps the tolerance honest: it is a coverage fact
 `join_within_tolerance` is R18's Chebyshev bound supplying the probability.
 -/
 
-import PropertyKindCalculus
-import PropertyKindCalculus.Uncertainty.QuasiExtensive
+module
+
+public import PropertyKindCalculus
+meta import PropertyKindCalculus
+public import PropertyKindCalculus.Uncertainty.QuasiExtensive
+meta import PropertyKindCalculus.Uncertainty.QuasiExtensive
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Tests.QuasiExtensive
 
@@ -75,3 +82,6 @@ theorem r9_quasi_zero_is_extensive : Extensive partMassKind partMass :=
 #guard_msgs (whitespace := lax) in #print axioms Uncertainty.join_within_tolerance
 
 end PropertyKindCalculus.Tests.QuasiExtensive
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

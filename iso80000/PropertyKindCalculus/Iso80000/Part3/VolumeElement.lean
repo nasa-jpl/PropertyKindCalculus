@@ -33,13 +33,18 @@ change-of-variables machinery.
     (volume of the parameter region)`.
 -/
 
-import Mathlib.Analysis.InnerProductSpace.GramMatrix
-import Mathlib.Analysis.InnerProductSpace.PiL2
-import Mathlib.Analysis.Matrix.PosDef
-import Mathlib.MeasureTheory.Integral.Bochner.Set
-import Mathlib.MeasureTheory.Measure.Prod
-import Mathlib.MeasureTheory.Measure.Lebesgue.Basic
-import PropertyKindCalculus.Iso80000.Part3
+module
+
+public import Mathlib.Analysis.InnerProductSpace.GramMatrix
+public import Mathlib.Analysis.InnerProductSpace.PiL2
+public import Mathlib.Analysis.Matrix.PosDef
+public import Mathlib.MeasureTheory.Integral.Bochner.Set
+public import Mathlib.MeasureTheory.Measure.Prod
+public import Mathlib.MeasureTheory.Measure.Lebesgue.Basic
+public import PropertyKindCalculus.Iso80000.Part3
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Iso80000.Part3.VolumeElement
 
@@ -137,3 +142,6 @@ analytic element above is the *defining relation* behind that kind. -/
 abbrev kind : DimensionedKind := Part3.volume
 
 end PropertyKindCalculus.Iso80000.Part3.VolumeElement
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

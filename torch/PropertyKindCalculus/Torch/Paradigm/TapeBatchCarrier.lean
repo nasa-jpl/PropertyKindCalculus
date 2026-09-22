@@ -16,8 +16,14 @@ shape size (a pure/GC carrier's non-zero liveness sentinel) and `release` is a n
 
 Plain (not a `module`) file: imports the tape carrier and the `BatchCarrier` class.
 -/
-import PropertyKindCalculus.Torch.Paradigm.TapeCarrier
-import PropertyKindCalculus.Torch.Paradigm.BatchCarrier
+
+module
+
+public import PropertyKindCalculus.Torch.Paradigm.TapeCarrier
+public import PropertyKindCalculus.Torch.Paradigm.BatchCarrier
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 open Spec TorchLean
 open Runtime.Autograd (Tape TapeM)
@@ -55,3 +61,6 @@ arbitrary-`Float` constant-injection a recorded fit's loop constants need. -/
 example : BatchCarrier.const (C := TapeBuilder) (s := Shape.scalar) 0.03 = TapeBuilder.const 0.03 := rfl
 
 end PropertyKindCalculus.Paradigm
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

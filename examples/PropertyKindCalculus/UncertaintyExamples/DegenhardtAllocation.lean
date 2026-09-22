@@ -20,8 +20,16 @@ entirely **checked facts** (`#guard`): the allocation arithmetic exactly, and â€
 running SSPRC on the allocated `ns` reproduces the ground-truth `E(Y)`/`u(Y)`, even at a budget cut
 that a flat split could not afford. Mathlib- and TorchLean-free.
 -/
-import PropertyKindCalculus.Uncertainty
-import PropertyKindCalculus.UncertaintyExamples.DegenhardtFictive
+
+module
+
+public import PropertyKindCalculus.Uncertainty
+meta import PropertyKindCalculus.Uncertainty
+public import PropertyKindCalculus.UncertaintyExamples.DegenhardtFictive
+meta import PropertyKindCalculus.UncertaintyExamples.DegenhardtFictive
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.UncertaintyExamples.DegenhardtAllocation
 
@@ -121,3 +129,6 @@ def ssprc120 : Float Ã— Float := Ssprc.run modelF [x1, x2, x3] (allocateFromTerm
 #guard Ssprc.evalCount (allocateFromTerms 120 terms) == 121
 
 end PropertyKindCalculus.UncertaintyExamples.DegenhardtAllocation
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

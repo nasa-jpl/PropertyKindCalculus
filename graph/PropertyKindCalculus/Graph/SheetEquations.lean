@@ -24,8 +24,14 @@ never an invented sign.
 Lines are emitted in dependency order (a node is defined before it is used), which the
 walk's occurrence order does not guarantee.
 -/
-import PropertyKindCalculus.Graph.Footprint
-import PropertyKindCalculus.KindLedger
+
+module
+
+public import PropertyKindCalculus.Graph.Footprint
+public import PropertyKindCalculus.KindLedger
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.SheetEquations
 
@@ -210,3 +216,6 @@ def sheetEquations (decl : Name) : MetaM (Array EquationBlock) := do
   return equationBlocks a
 
 end PropertyKindCalculus.SheetEquations
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

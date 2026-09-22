@@ -3,10 +3,13 @@ Copyright (c) 2026 California Institute of Technology. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Nicolas Rouquette
 -/
-import Lean
-import PropertyKindCalculus
-import PropertyKindCalculus.DocGenMath.Term
-import PropertyKindCalculus.DocGenMath.Registry
+
+module
+
+public import Lean
+public import PropertyKindCalculus
+public import PropertyKindCalculus.DocGenMath.Term
+public import PropertyKindCalculus.DocGenMath.Registry
 
 /-!
 # Stage 1 — Lift `Lean.Expr → MathTerm`
@@ -60,6 +63,14 @@ box. It never fails, and it never emits malformed LaTeX, so rendering degrades g
 unfamiliar model rather than crashing the attribute or publishing broken math.
 -/
 
+-- Same-module helpers serve both the command elaborators below and runtime callers, so the
+-- phase check is relaxed for this file (the module system's mixed-use escape; imports are
+-- still checked and take `public meta import`).
+set_option compiler.relaxedMetaCheck true
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
+
 namespace PropertyKindCalculus.DocGenMath
 
 open Lean Meta
@@ -84,7 +95,7 @@ def KeepPolicy.keeps : KeepPolicy → Name → Bool
   | .keepOnly ns,  n => ns.contains n
 
 /-- Every `let` binder name occurring in `e`, including inside `match` alternatives. -/
-private partial def collectLetNames : Expr → Array Name → Array Name
+partial def collectLetNames : Expr → Array Name → Array Name
   | .letE n _ v b _,   acc => collectLetNames b (collectLetNames v (acc.push n))
   | .app f a,          acc => collectLetNames a (collectLetNames f acc)
   | .lam _ t b _,      acc => collectLetNames b (collectLetNames t acc)
@@ -105,12 +116,12 @@ def letBinderNames (declName : Name) : CoreM (Array Name) := do
 abbrev LiftM := StateRefT (Array (MathTerm × MathTerm)) MetaM
 
 /-- Splice a term into an n-ary sum's argument array (flatten nested `add`). -/
-private def addArgs : MathTerm → Array MathTerm
+def addArgs : MathTerm → Array MathTerm
   | .add ts => ts
   | t       => #[t]
 
 /-- Splice a term into an n-ary product's argument array (flatten nested `mul`). -/
-private def mulArgs : MathTerm → Array MathTerm
+def mulArgs : MathTerm → Array MathTerm
   | .mul ts => ts
   | t       => #[t]
 
@@ -118,16 +129,16 @@ private def mulArgs : MathTerm → Array MathTerm
 spliced, because `Prod` nests to the right: `(a, b, c)` is `⟨a, ⟨b, c⟩⟩` and renders as one
 three-component tuple, exactly as Lean's anonymous-constructor notation displays it, while a
 genuinely nested left component `⟨⟨a, b⟩, c⟩` keeps its inner parentheses. -/
-private def tupleArgs : MathTerm → Array MathTerm
+def tupleArgs : MathTerm → Array MathTerm
   | .tuple ts => ts
   | t         => #[t]
 
 /-- The last argument of an application (the innermost operand of a unary combinator). -/
-private def lastArg (args : Array Expr) : Expr := args[args.size - 1]!
+def lastArg (args : Array Expr) : Expr := args[args.size - 1]!
 
 /-- The last two arguments (the operands of a binary combinator, regardless of how many
 implicit/instance arguments precede them). -/
-private def lastTwo (args : Array Expr) : Expr × Expr :=
+def lastTwo (args : Array Expr) : Expr × Expr :=
   (args[args.size - 2]!, args[args.size - 1]!)
 
 /-- **The object subscript of a leaf.** For a leaf whose type is `IndividualQuantity o k R` with
@@ -177,7 +188,7 @@ def objectLabel? (ty : Expr) : MetaM (Option String) := do
   | _                => return none
 
 /-- The names of the transcendental/trig unary functions, rendered as `fn <base> #[arg]`. -/
-private def unaryFns : List Name :=
+def unaryFns : List Name :=
   [``PropertyKindCalculus.Quantity.exp, ``PropertyKindCalculus.Quantity.log,
    ``PropertyKindCalculus.Quantity.sin, ``PropertyKindCalculus.Quantity.cos,
    ``PropertyKindCalculus.Quantity.tan, ``PropertyKindCalculus.Quantity.sinh,
@@ -187,7 +198,7 @@ private def unaryFns : List Name :=
 
 /-- Keep only the explicitly-bound arguments of `fn` applied to `args` (drop implicits, instances,
 and strict-implicits), for the generic `fn` fallback on an unrecognized head. -/
-private def explicitArgs (fn : Expr) (args : Array Expr) : MetaM (Array Expr) := do
+def explicitArgs (fn : Expr) (args : Array Expr) : MetaM (Array Expr) := do
   let finfo ← getFunInfo fn
   let mut out := #[]
   for h : i in [0:args.size] do
@@ -201,7 +212,7 @@ private def explicitArgs (fn : Expr) (args : Array Expr) : MetaM (Array Expr) :=
 /-- The structure fields of `name`'s constructor, when `name` *is* a structure constructor whose
 field list matches its arity — the shape a structure literal elaborates to. `none` for every other
 constant, so ordinary applications keep the ordinary path. -/
-private def structureLiteralFields? (env : Environment) (name : Name) (numArgs : Nat) :
+def structureLiteralFields? (env : Environment) (name : Name) (numArgs : Nat) :
     Option (Nat × Array Name) :=
   match env.find? name with
   -- `isStructure` must be checked *before* `getStructureFields`, which panics on anything else
@@ -437,3 +448,6 @@ def isSubstitutable (env : Environment) (declName : Name) : Bool :=
   | _                   => false
 
 end PropertyKindCalculus.DocGenMath
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

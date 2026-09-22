@@ -12,8 +12,15 @@ magnitude plays** — so a verdict cannot be reduced to an inequality on the dis
   * a magnitude the carrier cannot render is refused, not approximated.
 -/
 
-import PropertyKindCalculus
-import PropertyKindCalculus.Uncertainty.Adequacy.Serialization
+module
+
+public import PropertyKindCalculus
+meta import PropertyKindCalculus
+public import PropertyKindCalculus.Uncertainty.Adequacy.Serialization
+meta import PropertyKindCalculus.Uncertainty.Adequacy.Serialization
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Tests.Serialization
 
@@ -102,3 +109,6 @@ crossing was exact — which is the whole of "an exact crossing leaves the budge
 #guard_msgs in #print axioms displacement_eq_zero_of_exact
 
 end PropertyKindCalculus.Tests.Serialization
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

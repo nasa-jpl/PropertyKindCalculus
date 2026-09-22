@@ -16,8 +16,16 @@ Everything here is a **checked fact** (the module builds under CI). It exercises
 `Sensitivity` bridge end to end. Depends on TorchLean (the tape carrier); it is the first
 uncertainty example that does.
 -/
-import PropertyKindCalculus.Uncertainty.Sensitivity
-import PropertyKindCalculus.UncertaintyExamples.DegenhardtFictive
+
+module
+
+public import PropertyKindCalculus.Uncertainty.Sensitivity
+meta import PropertyKindCalculus.Uncertainty.Sensitivity
+public import PropertyKindCalculus.UncertaintyExamples.DegenhardtFictive
+meta import PropertyKindCalculus.UncertaintyExamples.DegenhardtFictive
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.UncertaintyExamples.DegenhardtSensitivity
 
@@ -59,3 +67,6 @@ def gumAuto : Float :=
 #guard Float.abs (gumAuto - 1.662) < 0.01
 
 end PropertyKindCalculus.UncertaintyExamples.DegenhardtSensitivity
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

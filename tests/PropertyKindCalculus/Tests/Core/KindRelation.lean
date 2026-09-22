@@ -17,7 +17,13 @@ being decoration — a witness that names no member of one boundary or the other
 survey `#kind_relations` closes the file: every edge above in one pinned report, the
 violations rendered as `✗` rows.
 -/
-import PropertyKindCalculus.KindIncidence
+
+module
+
+public import PropertyKindCalculus.KindIncidence
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Tests.KindRelation
 
@@ -361,3 +367,6 @@ info: kind relations — 15 theorem edge(s), 10 violated
 #kind_relations PropertyKindCalculus.Tests.KindRelation
 
 end PropertyKindCalculus.Tests.KindRelation
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

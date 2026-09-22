@@ -63,7 +63,13 @@ would collide with another row's leaves both at their full addresses. The D2 key
 the full address, and a shortened row carries its full address as its tooltip, so
 nothing the figure claims lives only in the label.
 -/
-import PropertyKindCalculus.KindIncidence
+
+module
+
+public import PropertyKindCalculus.KindIncidence
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.KindGraphD2
 
@@ -485,3 +491,6 @@ def emitOverview (a : Assembly) (title : String := "kind assembly") : String := 
   return out
 
 end PropertyKindCalculus.KindGraphD2
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

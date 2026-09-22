@@ -7,7 +7,14 @@ run carrier, via `#guard`) and `ℝ` (the proof carrier, where the function laws
 One example per family A–E, plus the two disambiguation showpieces and a characteristic
 number. Kept in the `DimensionExamples` library so no *library* module carries `#guard`.
 -/
-import PropertyKindCalculus.Function
+
+module
+
+public import PropertyKindCalculus.Function
+meta import PropertyKindCalculus.Function
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.DimensionExamples
 
@@ -103,3 +110,6 @@ example :
   reynolds_ne_mach_but_both_dimensionless
 
 end PropertyKindCalculus.DimensionExamples
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

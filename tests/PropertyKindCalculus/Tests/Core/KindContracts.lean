@@ -14,7 +14,17 @@ empty scope pinning `0` rather than passing invisibly, the kernel-receipt tier a
 idempotence across repeated sweeps, its refusal on a violated scope, the misuse refusal
 of the attribute, and `#kind_relations` honoring the same exemption.
 -/
-import PropertyKindCalculus.KindIncidence
+
+module
+
+public import PropertyKindCalculus.KindIncidence
+meta import PropertyKindCalculus.KindIncidence
+-- Private scope only, and no paired `public import`: core seals `Lean.Name.beq`, so a kernel
+-- `decide` over a provenance graph whose kinds are `Name`s gets stuck without this.
+import all Init.Prelude
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Tests.KindContracts
 
@@ -164,3 +174,6 @@ error: `@[kindCounterexample]` expects a 'Provenance.Contract' or a 'Provenance.
 #guard_msgs in @[kindCounterexample] def stray : Nat := 0
 
 end PropertyKindCalculus.Tests.KindContracts
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

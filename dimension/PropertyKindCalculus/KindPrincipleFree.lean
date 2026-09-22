@@ -28,8 +28,14 @@ Same shape as `@[kindCounterexample]` (`BoundaryAudit.lean`): opting *out* is wh
 an explicit mark, so forgetting to exempt fails loudly at the sweep, and forgetting to
 enroll is impossible.
 -/
-import Lean
-import PropertyKindCalculus.Dimension
+
+module
+
+public import Lean
+public import PropertyKindCalculus.Dimension
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -84,3 +90,6 @@ def kindPrincipleFreeMarks (env : Environment) : Array PrincipleFreeMark :=
   kindPrincipleFreeExt.getState env
 
 end PropertyKindCalculus
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

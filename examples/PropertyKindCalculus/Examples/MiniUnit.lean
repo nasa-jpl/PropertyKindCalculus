@@ -21,7 +21,12 @@ Like the other minis, this module is part of the separate `Examples` library and
 imports the core `PropertyKindCalculus` library as any downstream consumer would.
 -/
 
-import PropertyKindCalculus
+module
+
+public import PropertyKindCalculus
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Examples.Unit
 
@@ -156,3 +161,6 @@ theorem kib_mib_roundtrip (x : Int) :
   PrefixedUnit.convertExp_roundtrip kibibyte mebibyte x
 
 end PropertyKindCalculus.Examples.Unit
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

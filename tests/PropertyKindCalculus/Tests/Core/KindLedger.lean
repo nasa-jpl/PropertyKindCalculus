@@ -22,7 +22,14 @@ it still reports.
 
 The JSON emitter is a pure function of the same rows, so it is decidable by evaluation.
 -/
-import PropertyKindCalculus.KindLedger
+
+module
+
+public import PropertyKindCalculus.KindLedger
+meta import PropertyKindCalculus.KindLedger
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Tests.KindLedger
 
@@ -228,3 +235,6 @@ example :
 example : hasSub (toJson "s" #[] #[]) "\"members\": []" := by native_decide
 
 end PropertyKindCalculus.Tests.KindLedger
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

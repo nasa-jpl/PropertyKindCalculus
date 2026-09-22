@@ -68,11 +68,22 @@ pinnable text report, and `coverageTable` renders the same rows as a generated `
 so a document can carry the report beside the other indexes — the Mathlib-gated sibling of
 `Index.tableById`'s `dimensioned-kinds` route.
 -/
-import Lean
-import PropertyKindCalculus.KindEdges
-import PropertyKindCalculus.Dimension
-import PropertyKindCalculus.Index.Basic
-import PropertyKindCalculus.AuditReceipt
+
+module
+
+public import Lean
+public import PropertyKindCalculus.KindEdges
+public import PropertyKindCalculus.Dimension
+public import PropertyKindCalculus.Index.Basic
+public import PropertyKindCalculus.AuditReceipt
+
+-- Same-module helpers serve both the command elaborators below and runtime callers, so the
+-- phase check is relaxed for this file (the module system's mixed-use escape; imports are
+-- still checked and take `public meta import`).
+set_option compiler.relaxedMetaCheck true
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.DimensionalCoverage
 
@@ -435,3 +446,6 @@ def coverageTable (scope : Index.Scope := #[]) : MetaM IndexTable := withHarvest
            headers := #["Edge", "Verdict", "Kinds at issue"], rows := cells }
 
 end PropertyKindCalculus.DimensionalCoverage
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

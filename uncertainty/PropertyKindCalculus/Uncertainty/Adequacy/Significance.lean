@@ -35,9 +35,15 @@ fields cannot be swapped or mixed (unlike two naked `List Float`). The model its
 metrological overlay on the *budget*, gated by `ProductKind kₛ kᵢ kₒ` (the GUM units cancellation).
 Depends on TorchLean (the tape carrier, via `Sensitivity`); lives in `UncertaintyRigor` alongside it.
 -/
-import PropertyKindCalculus.Uncertainty.Adequacy
-import PropertyKindCalculus.Uncertainty.Sensitivity
-import PropertyKindCalculus.Uncertainty.Budget
+
+module
+
+public import PropertyKindCalculus.Uncertainty.Adequacy
+public import PropertyKindCalculus.Uncertainty.Sensitivity
+public import PropertyKindCalculus.Uncertainty.Budget
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 open Spec TorchLean TorchLean.Tensor
 open PropertyKindCalculus (Quantity ProductKind KindOfProperty)
@@ -128,3 +134,6 @@ runs). -/
     (ofInputDist d).report = {} := rfl
 
 end PropertyKindCalculus.Uncertainty.Adequacy
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

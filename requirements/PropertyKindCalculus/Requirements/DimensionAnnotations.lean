@@ -15,16 +15,31 @@ These pull in PhysLib (and, transitively, Mathlib), so — like
 core-spine annotations in `Annotations` are.
 -/
 
-import PropertyKindCalculus.Dimension
-import PropertyKindCalculus.Interaction
-import PropertyKindCalculus.ScaleSpanning
-import PropertyKindCalculus.UnitConversion
-import PropertyKindCalculus.UnitReal
-import PropertyKindCalculus.AggregationLaws
-import PropertyKindCalculus.FrameReal
-import PropertyKindCalculus.DimensionExamples.UnitConversion
-import PropertyKindCalculus.DimensionExamples.Frames
-import PropertyKindCalculus.Requirements.Attributes
+module
+
+public import PropertyKindCalculus.Dimension
+meta import PropertyKindCalculus.Dimension
+public import PropertyKindCalculus.Interaction
+meta import PropertyKindCalculus.Interaction
+public import PropertyKindCalculus.ScaleSpanning
+meta import PropertyKindCalculus.ScaleSpanning
+public import PropertyKindCalculus.UnitConversion
+meta import PropertyKindCalculus.UnitConversion
+public import PropertyKindCalculus.UnitReal
+meta import PropertyKindCalculus.UnitReal
+public import PropertyKindCalculus.AggregationLaws
+meta import PropertyKindCalculus.AggregationLaws
+public import PropertyKindCalculus.FrameReal
+meta import PropertyKindCalculus.FrameReal
+public import PropertyKindCalculus.DimensionExamples.UnitConversion
+meta import PropertyKindCalculus.DimensionExamples.UnitConversion
+public import PropertyKindCalculus.DimensionExamples.Frames
+meta import PropertyKindCalculus.DimensionExamples.Frames
+public import PropertyKindCalculus.Requirements.Attributes
+meta import PropertyKindCalculus.Requirements.Attributes
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -145,3 +160,6 @@ attribute [requirement "R17" proves "the two conversion factors between two unit
   RealUnit.ratio_mul_ratio_symm
 
 end PropertyKindCalculus
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

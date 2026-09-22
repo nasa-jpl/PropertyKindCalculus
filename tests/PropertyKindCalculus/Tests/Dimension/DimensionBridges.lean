@@ -10,10 +10,15 @@ necessary but not sufficient). The Mathlib-backed proofs legitimately use
 so `whitespace := lax` keeps the pinned axiom list robust to line-wrapping.
 -/
 
-import PropertyKindCalculus.Dimension
-import PropertyKindCalculus.Interaction
-import PropertyKindCalculus.ScaleSpanning
-import PropertyKindCalculus.UnitConversion
+module
+
+public import PropertyKindCalculus.Dimension
+public import PropertyKindCalculus.Interaction
+public import PropertyKindCalculus.ScaleSpanning
+public import PropertyKindCalculus.UnitConversion
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Tests.DimensionBridges
 
@@ -121,3 +126,6 @@ theorem r17_dimScale_is_prefix_factor :
 #guard_msgs (whitespace := lax) in #print axioms PrefixedUnit.dimScale_toUnitScale_single
 
 end PropertyKindCalculus.Tests.DimensionBridges
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

@@ -18,9 +18,17 @@ Part-12 examples, mirroring the `Iso80000` library's own `Iso80000/Part12` layou
 These live in the Mathlib-backed `DimensionExamples` library.
 -/
 
-import PropertyKindCalculus.Iso80000.Part12
-import PropertyKindCalculus.Iso80000.Part12.DefiningRelations
-import PropertyKindCalculus.QuantityReal
+module
+
+public import PropertyKindCalculus.Iso80000.Part12
+meta import PropertyKindCalculus.Iso80000.Part12
+public import PropertyKindCalculus.Iso80000.Part12.DefiningRelations
+meta import PropertyKindCalculus.Iso80000.Part12.DefiningRelations
+public import PropertyKindCalculus.QuantityReal
+meta import PropertyKindCalculus.QuantityReal
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Examples.Iso80000.Part12
 
@@ -107,3 +115,6 @@ def seebeckInt : Quantity seebeckCoefficient.kind Int :=
 #guard curieTemperatureCK.coherentUnit == "K"
 
 end PropertyKindCalculus.Examples.Iso80000.Part12
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

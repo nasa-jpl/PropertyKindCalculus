@@ -25,8 +25,14 @@ constant like a Beer–Lambert two-way `−2` keeps its kind while staying a pla
 underneath. Domain readings of the coefficient (which `−2`, for what path) belong to
 the downstream science model, exactly as for the naked form.
 -/
-import PropertyKindCalculus.Torch.Paradigm.BatchCarrier
-import PropertyKindCalculus.QuantityFunction
+
+module
+
+public import PropertyKindCalculus.Torch.Paradigm.BatchCarrier
+public import PropertyKindCalculus.QuantityFunction
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 open Spec TorchLean
 open PropertyKindCalculus.Paradigm (FusedExp)
@@ -61,3 +67,6 @@ naked call derived) with zero bit- or op-order change. -/
       = FusedExp.scaledProdExp c.magnitude x.magnitude y.magnitude := rfl
 
 end PropertyKindCalculus
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

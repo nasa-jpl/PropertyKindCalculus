@@ -13,7 +13,13 @@ Bunge's four types do not name — is shown to be occupied, by a witness that re
 of the other laws.
 -/
 
-import PropertyKindCalculus
+module
+
+public import PropertyKindCalculus
+meta import PropertyKindCalculus
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Tests.Aggregation
 
@@ -352,3 +358,6 @@ theorem r9_count_total_exact (w : Bool → Nat) :
 #guard_msgs in #print axioms WeightedCarving.total_ne_zero'
 
 end PropertyKindCalculus.Tests.Aggregation
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

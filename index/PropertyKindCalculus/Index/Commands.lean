@@ -3,12 +3,16 @@ Copyright (c) 2026 California Institute of Technology. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Nicolas Rouquette
 -/
-import PropertyKindCalculus.Index.Ontology
-import PropertyKindCalculus.Index.Structures
-import PropertyKindCalculus.Index.Annotations
-import PropertyKindCalculus.Index.Contracts
-import PropertyKindCalculus.Index.Relations
-import PropertyKindCalculus.Index.Budgets
+
+module
+
+public import PropertyKindCalculus.Index.Ontology
+public import PropertyKindCalculus.Index.Structures
+public import PropertyKindCalculus.Index.Annotations
+public meta import PropertyKindCalculus.Index.Annotations
+public import PropertyKindCalculus.Index.Contracts
+public import PropertyKindCalculus.Index.Relations
+public import PropertyKindCalculus.Index.Budgets
 
 /-!
 # `#pkc_index` — the index from the InfoView, and the table dispatcher documents call
@@ -26,6 +30,14 @@ The plain-text rendering below is *not* the documents' rendering: a blueprint or
 `IndexCell` onto real links. It exists so the InfoView surface and the pinned probes have something
 stable and diffable to show.
 -/
+
+-- Same-module helpers serve both the command elaborators below and runtime callers, so the
+-- phase check is relaxed for this file (the module system's mixed-use escape; imports are
+-- still checked and take `public meta import`).
+set_option compiler.relaxedMetaCheck true
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Index
 
@@ -155,3 +167,6 @@ elab "#pkc_summary_overflow" nss:ident* : command => liftTermElabM do
       {maxLen} characters):\n{String.intercalate "\n" lines}"
 
 end PropertyKindCalculus.Index
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

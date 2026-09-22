@@ -28,24 +28,38 @@ Four tiers, each pinned:
     the retrieval's soil-moisture output carries no declared uncertainty budget, while
     the forward's σ⁰ output does (rung 6 of the capstone).
 -/
-import PropertyKindCalculus.UncertaintyExamples.DegenhardtFictive
-import PropertyKindCalculus.UncertaintyExamples.WillinkGaugeBlock
-import PropertyKindCalculus.UncertaintyExamples.DegenhardtSensitivity
-import PropertyKindCalculus.UncertaintyExamples.LadderNesting
-import PropertyKindCalculus.UncertaintyExamples.DegenhardtSsprc
-import PropertyKindCalculus.UncertaintyExamples.SsprcNesting
-import PropertyKindCalculus.UncertaintyExamples.DegenhardtAllocation
-import PropertyKindCalculus.UncertaintyExamples.WaterCloudModel
-import PropertyKindCalculus.UncertaintyExamples.AdequacySwamping
-import PropertyKindCalculus.UncertaintyExamples.AdequacyLadder
-import PropertyKindCalculus.UncertaintyExamples.AdequacyDag
-import PropertyKindCalculus.UncertaintyExamples.AdequacySterbenz32
-import PropertyKindCalculus.UncertaintyExamples.AdequacyExecBridge
-import PropertyKindCalculus.UncertaintyExamples.AdequacyCoupling
-import PropertyKindCalculus.UncertaintyExamples.AutogradDirectSim
-import PropertyKindCalculus.UncertaintyExamples.BudgetDagDensity
-import PropertyKindCalculus.UncertaintyExamples.Coverage
-import PropertyKindCalculus.Index
+
+module
+
+public import PropertyKindCalculus.UncertaintyExamples.DegenhardtFictive
+public import PropertyKindCalculus.UncertaintyExamples.WillinkGaugeBlock
+public import PropertyKindCalculus.UncertaintyExamples.DegenhardtSensitivity
+public import PropertyKindCalculus.UncertaintyExamples.LadderNesting
+public import PropertyKindCalculus.UncertaintyExamples.DegenhardtSsprc
+public import PropertyKindCalculus.UncertaintyExamples.SsprcNesting
+public import PropertyKindCalculus.UncertaintyExamples.DegenhardtAllocation
+public import PropertyKindCalculus.UncertaintyExamples.WaterCloudModel
+public meta import PropertyKindCalculus.UncertaintyExamples.WaterCloudModel
+public import PropertyKindCalculus.UncertaintyExamples.AdequacySwamping
+public import PropertyKindCalculus.UncertaintyExamples.AdequacyLadder
+public import PropertyKindCalculus.UncertaintyExamples.AdequacyDag
+public import PropertyKindCalculus.UncertaintyExamples.AdequacySterbenz32
+public import PropertyKindCalculus.UncertaintyExamples.AdequacyExecBridge
+public import PropertyKindCalculus.UncertaintyExamples.AdequacyCoupling
+public import PropertyKindCalculus.UncertaintyExamples.AutogradDirectSim
+public import PropertyKindCalculus.UncertaintyExamples.BudgetDagDensity
+public import PropertyKindCalculus.UncertaintyExamples.Coverage
+public import PropertyKindCalculus.Index
+-- Private scope only, and no paired `public import`: core seals `Lean.Name.beq`, so a kernel
+-- `decide` over a provenance graph whose kinds are `Name`s gets stuck without this.
+import all Init.Prelude
+-- Private scope only: an imported `theorem` reads back from `Environment.find?` as `.axiomInfo`,
+-- and `#kind_relations` classifies its witnesses by that constructor. `import all` restores
+-- `.thmInfo` for this module.
+import all PropertyKindCalculus.UncertaintyExamples.WaterCloudModel
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 /--
 info: kind contracts — 4 contract(s), 2 exempted
@@ -54,6 +68,7 @@ info: kind contracts — 4 contract(s), 2 exempted
   ⊘ PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.Falsification.forgottenParameter: counterexample, exempted
   ⊘ PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.Falsification.misdeclaredKind: counterexample, exempted
 -/
+
 #guard_msgs in #kind_contracts PropertyKindCalculus.UncertaintyExamples
 
 /--
@@ -113,3 +128,6 @@ no uncertainty budget | wcmRetrievalBoundary | wcmRetrieveQ/result : soilMoistur
 -/
 #guard_msgs (whitespace := lax) in
 #pkc_index "provenance-coverage" PropertyKindCalculus.UncertaintyExamples
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

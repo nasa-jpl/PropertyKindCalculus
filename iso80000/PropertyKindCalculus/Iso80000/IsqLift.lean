@@ -20,9 +20,14 @@ With this, the design note's claim (`Dimension`, "The canonical basis
 in the standard's own base with the printed exponents.
 -/
 
-import PropertyKindCalculus.IsqBase
-import PropertyKindCalculus.Iso80000.Part4
-import PropertyKindCalculus.Iso80000.Part6
+module
+
+public import PropertyKindCalculus.IsqBase
+public import PropertyKindCalculus.Iso80000.Part4
+public import PropertyKindCalculus.Iso80000.Part6
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 open Dimension
 
@@ -138,3 +143,6 @@ theorem electricCharge_lift_dim :
   rfl
 
 end PropertyKindCalculus.Iso80000.IsqLift
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

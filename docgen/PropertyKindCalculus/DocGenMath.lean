@@ -3,12 +3,15 @@ Copyright (c) 2026 California Institute of Technology. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Nicolas Rouquette
 -/
-import PropertyKindCalculus.DocGenMath.Term
-import PropertyKindCalculus.DocGenMath.Registry
-import PropertyKindCalculus.DocGenMath.Lift
-import PropertyKindCalculus.DocGenMath.Normalize
-import PropertyKindCalculus.DocGenMath.Pretty
-import PropertyKindCalculus.DocGenMath.Attr
+
+module
+
+public import PropertyKindCalculus.DocGenMath.Term
+public import PropertyKindCalculus.DocGenMath.Registry
+public import PropertyKindCalculus.DocGenMath.Lift
+public import PropertyKindCalculus.DocGenMath.Normalize
+public import PropertyKindCalculus.DocGenMath.Pretty
+public import PropertyKindCalculus.DocGenMath.Attr
 
 /-!
 # `DocGenMath` — typeset math on doc-gen4 pages for PKC `Quantity` definitions
@@ -35,3 +38,11 @@ The worked example and the `#guard_msgs` regression pins for all three stages li
 library, in `PropertyKindCalculus.Examples.DocGenMathDemo` (`examples/` source tree), so no module
 here carries `#eval`/`#guard`.
 -/
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
+
+
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

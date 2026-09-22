@@ -3,9 +3,12 @@ Copyright (c) 2026 California Institute of Technology. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Nicolas Rouquette
 -/
-import PropertyKindCalculus.Index.Markdown
-import PropertyKindCalculus.Examples
-import PropertyKindCalculus.DocGenMath
+
+module
+
+public import PropertyKindCalculus.Index.Markdown
+public import PropertyKindCalculus.Examples
+public import PropertyKindCalculus.DocGenMath
 
 /-!
 This module's page is *generated*. Everything below it is written by `#pkc_index_page` at
@@ -22,6 +25,9 @@ for that reason and not because the harvest cannot see them — the blueprint, w
 renders their tables.
 -/
 
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
+
 #pkc_index_page
   "The library's index of itself, generated from the environment when this module was compiled.
 
@@ -37,3 +43,6 @@ them — so an empty cell there means the kind supports no arithmetic at all."
    "dedicated-kinds", "examinations", "records", "operations", "pkc-math", "pkc-math-symbol",
    "pkc-math-config", "pkc-math-transparent"]
   PropertyKindCalculus
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

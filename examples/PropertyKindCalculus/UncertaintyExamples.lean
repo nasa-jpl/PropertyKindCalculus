@@ -101,22 +101,33 @@ The library-wide gate:
 Further paper examples (the AFM indenter model; Willink's asymmetric and Type-A cases) arrive with
 later sub-stages.
 -/
-import PropertyKindCalculus.UncertaintyExamples.DegenhardtFictive
-import PropertyKindCalculus.UncertaintyExamples.WillinkGaugeBlock
-import PropertyKindCalculus.UncertaintyExamples.DegenhardtSensitivity
-import PropertyKindCalculus.UncertaintyExamples.LadderNesting
-import PropertyKindCalculus.UncertaintyExamples.DegenhardtSsprc
-import PropertyKindCalculus.UncertaintyExamples.SsprcNesting
-import PropertyKindCalculus.UncertaintyExamples.DegenhardtAllocation
-import PropertyKindCalculus.UncertaintyExamples.WaterCloudModel
-import PropertyKindCalculus.UncertaintyExamples.AdequacySwamping
-import PropertyKindCalculus.UncertaintyExamples.AdequacyLadder
-import PropertyKindCalculus.UncertaintyExamples.AdequacyDag
-import PropertyKindCalculus.UncertaintyExamples.AdequacySterbenz32
-import PropertyKindCalculus.UncertaintyExamples.AdequacyExecBridge
-import PropertyKindCalculus.UncertaintyExamples.AdequacyCoupling
-import PropertyKindCalculus.UncertaintyExamples.AdequacyLimits
-import PropertyKindCalculus.UncertaintyExamples.AutogradDirectSim
-import PropertyKindCalculus.UncertaintyExamples.BudgetDagDensity
-import PropertyKindCalculus.UncertaintyExamples.Coverage
-import PropertyKindCalculus.UncertaintyExamples.Audit
+
+module
+
+public import PropertyKindCalculus.UncertaintyExamples.DegenhardtFictive
+public import PropertyKindCalculus.UncertaintyExamples.WillinkGaugeBlock
+public import PropertyKindCalculus.UncertaintyExamples.DegenhardtSensitivity
+public import PropertyKindCalculus.UncertaintyExamples.LadderNesting
+public import PropertyKindCalculus.UncertaintyExamples.DegenhardtSsprc
+public import PropertyKindCalculus.UncertaintyExamples.SsprcNesting
+public import PropertyKindCalculus.UncertaintyExamples.DegenhardtAllocation
+public import PropertyKindCalculus.UncertaintyExamples.WaterCloudModel
+public import PropertyKindCalculus.UncertaintyExamples.AdequacySwamping
+public import PropertyKindCalculus.UncertaintyExamples.AdequacyLadder
+public import PropertyKindCalculus.UncertaintyExamples.AdequacyDag
+public import PropertyKindCalculus.UncertaintyExamples.AdequacySterbenz32
+public import PropertyKindCalculus.UncertaintyExamples.AdequacyExecBridge
+public import PropertyKindCalculus.UncertaintyExamples.AdequacyCoupling
+public import PropertyKindCalculus.UncertaintyExamples.AdequacyLimits
+public import PropertyKindCalculus.UncertaintyExamples.AutogradDirectSim
+public import PropertyKindCalculus.UncertaintyExamples.BudgetDagDensity
+public import PropertyKindCalculus.UncertaintyExamples.Coverage
+public import PropertyKindCalculus.UncertaintyExamples.Audit
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
+
+
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

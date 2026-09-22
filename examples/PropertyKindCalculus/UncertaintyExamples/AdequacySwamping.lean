@@ -16,7 +16,14 @@ an adequate configuration:
 
 Everything here is a **checked fact** (the module builds under CI). Mathlib- and TorchLean-free.
 -/
-import PropertyKindCalculus.Uncertainty
+
+module
+
+public import PropertyKindCalculus.Uncertainty
+meta import PropertyKindCalculus.Uncertainty
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.UncertaintyExamples.AdequacySwamping
 
@@ -80,3 +87,6 @@ def separated : Adequacy := diffModel (Adequacy.input 3.0 0.001) (Adequacy.input
 #guard Adequacy.isAdequate separated == true
 
 end PropertyKindCalculus.UncertaintyExamples.AdequacySwamping
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

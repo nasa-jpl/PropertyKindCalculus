@@ -18,10 +18,19 @@ A declaration may discharge more than one requirement (e.g. `KindOfProperty` bot
 declaration; the attribute simply records each (decl, requirement, role) triple.
 -/
 
-import PropertyKindCalculus
-import PropertyKindCalculus.BoundaryAudit
-import PropertyKindCalculus.KindLedger
-import PropertyKindCalculus.Requirements.Attributes
+module
+
+public import PropertyKindCalculus
+meta import PropertyKindCalculus
+public import PropertyKindCalculus.BoundaryAudit
+meta import PropertyKindCalculus.BoundaryAudit
+public import PropertyKindCalculus.KindLedger
+meta import PropertyKindCalculus.KindLedger
+public import PropertyKindCalculus.Requirements.Attributes
+meta import PropertyKindCalculus.Requirements.Attributes
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -304,3 +313,6 @@ attribute [requirement "R13" specifies "the licensed energetic combination: inco
   LevelKind.combineEnergetic
 
 end PropertyKindCalculus
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

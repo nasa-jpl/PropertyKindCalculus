@@ -15,7 +15,13 @@ Demonstrates, as *checked* facts, the difference between a quantity-kind used as
 Mathlib-free; part of the `Examples` library.
 -/
 
-import PropertyKindCalculus
+module
+
+public import PropertyKindCalculus
+meta import PropertyKindCalculus
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Examples.Classification
 
@@ -72,3 +78,6 @@ example (q q' : Quantity length Int)
   Quantity.isProduct_unique length_is_speed_times_time hq hq'
 
 end PropertyKindCalculus.Examples.Classification
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

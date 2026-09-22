@@ -15,7 +15,13 @@ exercised on the candela, mole, kelvin, and — for contrast — the ampere:
 These exercise `PropertyKindCalculus.ScaleSpanning` (the `Dimension`-library module).
 -/
 
-import PropertyKindCalculus.ScaleSpanning
+module
+
+public import PropertyKindCalculus.ScaleSpanning
+meta import PropertyKindCalculus.ScaleSpanning
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Examples.ScaleSpanning
 
@@ -74,3 +80,6 @@ example : ∃ a b : ScaleSpanningUnit,
 #guard kelvin.category == UnitCategory.scaleSpanning
 
 end PropertyKindCalculus.Examples.ScaleSpanning
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

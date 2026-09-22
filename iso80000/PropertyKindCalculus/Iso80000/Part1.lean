@@ -51,14 +51,19 @@ No normative text from the licensed standard is reproduced; the clauses are rest
 this work's own formalism.
 -/
 
-import PropertyKindCalculus.Iso80000.Part3.DefiningRelations
-import PropertyKindCalculus.Iso80000.Part4.DefiningRelations
-import PropertyKindCalculus.Iso80000.Part5.DefiningRelations
-import PropertyKindCalculus.Iso80000.Part6.DefiningRelations
-import PropertyKindCalculus.Iso80000.Part7
-import PropertyKindCalculus.Iso80000.Part9.DefiningRelations
-import PropertyKindCalculus.QuantityClassification
-import PropertyKindCalculus.UnitReal
+module
+
+public import PropertyKindCalculus.Iso80000.Part3.DefiningRelations
+public import PropertyKindCalculus.Iso80000.Part4.DefiningRelations
+public import PropertyKindCalculus.Iso80000.Part5.DefiningRelations
+public import PropertyKindCalculus.Iso80000.Part6.DefiningRelations
+public import PropertyKindCalculus.Iso80000.Part7
+public import PropertyKindCalculus.Iso80000.Part9.DefiningRelations
+public import PropertyKindCalculus.QuantityClassification
+public import PropertyKindCalculus.UnitReal
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Iso80000.Part1
 
@@ -347,3 +352,6 @@ theorem powerFactor_is_factor_not_ratio :
 end AnnexA
 
 end PropertyKindCalculus.Iso80000.Part1
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

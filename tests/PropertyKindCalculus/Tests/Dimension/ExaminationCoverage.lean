@@ -21,7 +21,14 @@ a sub-namespace holding only individuated and exempted kinds — an exemption is
 violation and must not fire it. Finally the attribute's own refusals: a mark on something
 that is not a `DimensionedKind`, and a mark with an empty reason.
 -/
-import PropertyKindCalculus.ExaminationCoverage
+
+module
+
+public import PropertyKindCalculus.ExaminationCoverage
+meta import PropertyKindCalculus.ExaminationCoverage
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Tests.Dimension.Examination
 
@@ -130,3 +137,6 @@ error: `@[kindPrincipleFree]` on 'PropertyKindCalculus.Tests.Dimension.Examinati
 attribute [kindPrincipleFree "  "] probeBare
 
 end PropertyKindCalculus.Tests.Dimension.Examination
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

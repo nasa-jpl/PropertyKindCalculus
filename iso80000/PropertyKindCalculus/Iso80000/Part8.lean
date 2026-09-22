@@ -38,9 +38,14 @@ Acoustics brings two themes the calculus is built for:
   group over mass, length, and time.
 -/
 
-import PropertyKindCalculus.Dimension
-import PropertyKindCalculus.Iso80000.References
-import PropertyKindCalculus.Iso80000.Catalogue
+module
+
+public import PropertyKindCalculus.Dimension
+public import PropertyKindCalculus.Iso80000.References
+public import PropertyKindCalculus.Iso80000.Catalogue
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Iso80000.Part8
 
@@ -330,3 +335,6 @@ theorem iso80000_8_dim_one_collision :
   ⟨soundPressureLevel, soundPowerLevel, soundPressureLevel_ne_soundPowerLevel, rfl, rfl⟩
 
 end PropertyKindCalculus.Iso80000.Part8
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

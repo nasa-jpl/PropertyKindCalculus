@@ -9,7 +9,13 @@ coherence laws.
 These live in the `DimensionExamples` library (not the Mathlib-free `Examples`
 library), because they depend on PhysLib + Mathlib.
 -/
-import PropertyKindCalculus.Dimension
+
+module
+
+public import PropertyKindCalculus.Dimension
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Examples.Dimension
 
@@ -68,3 +74,6 @@ example : (DimensionedKind.unitless (B := LTMCTDimensionBase)).toDimension = 1 :
   DimensionedKind.toDimension_unitless
 
 end PropertyKindCalculus.Examples.Dimension
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

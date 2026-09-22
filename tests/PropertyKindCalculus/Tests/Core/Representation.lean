@@ -19,7 +19,13 @@ table (it asserts no magnitude), while a scalar `default` is **rejected** at com
 default scalar quantity would be a fabricated magnitude, so no instance provides one.
 -/
 
-import PropertyKindCalculus
+module
+
+public import PropertyKindCalculus
+meta import PropertyKindCalculus
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Tests.Representation
 
@@ -187,3 +193,6 @@ example : Quantity lengthK Float := packedLen.get! 1
 #guard (default : Quantity lengthK FloatArray).magnitude.size == 0
 
 end PropertyKindCalculus.Tests.Representation
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

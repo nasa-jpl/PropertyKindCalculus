@@ -10,15 +10,25 @@ These live in the Mathlib-backed `DimensionExamples` library (the quantity-kinds
 PhysLib `Dimension`s, and the §18 / area examples use `ℝ`-valued carriers).
 -/
 
-import PropertyKindCalculus.DimensionExamples.Iso80000.References
-import PropertyKindCalculus.DimensionExamples.Iso80000.Part3
-import PropertyKindCalculus.DimensionExamples.Iso80000.Part4
-import PropertyKindCalculus.DimensionExamples.Iso80000.Part5
-import PropertyKindCalculus.DimensionExamples.Iso80000.Part6
-import PropertyKindCalculus.DimensionExamples.Iso80000.Part7
-import PropertyKindCalculus.DimensionExamples.Iso80000.Part8
-import PropertyKindCalculus.DimensionExamples.Iso80000.Part9
-import PropertyKindCalculus.DimensionExamples.Iso80000.Part10
-import PropertyKindCalculus.DimensionExamples.Iso80000.Part11
-import PropertyKindCalculus.DimensionExamples.Iso80000.Part12
-import PropertyKindCalculus.DimensionExamples.Iso80000.Part13
+module
+
+public import PropertyKindCalculus.DimensionExamples.Iso80000.References
+public import PropertyKindCalculus.DimensionExamples.Iso80000.Part3
+public import PropertyKindCalculus.DimensionExamples.Iso80000.Part4
+public import PropertyKindCalculus.DimensionExamples.Iso80000.Part5
+public import PropertyKindCalculus.DimensionExamples.Iso80000.Part6
+public import PropertyKindCalculus.DimensionExamples.Iso80000.Part7
+public import PropertyKindCalculus.DimensionExamples.Iso80000.Part8
+public import PropertyKindCalculus.DimensionExamples.Iso80000.Part9
+public import PropertyKindCalculus.DimensionExamples.Iso80000.Part10
+public import PropertyKindCalculus.DimensionExamples.Iso80000.Part11
+public import PropertyKindCalculus.DimensionExamples.Iso80000.Part12
+public import PropertyKindCalculus.DimensionExamples.Iso80000.Part13
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
+
+
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

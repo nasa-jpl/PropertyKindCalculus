@@ -11,8 +11,16 @@ fraction of the model evaluations.
 
 Everything here is a **checked fact** (the module builds under CI). Mathlib- and TorchLean-free.
 -/
-import PropertyKindCalculus.Uncertainty
-import PropertyKindCalculus.UncertaintyExamples.DegenhardtFictive
+
+module
+
+public import PropertyKindCalculus.Uncertainty
+meta import PropertyKindCalculus.Uncertainty
+public import PropertyKindCalculus.UncertaintyExamples.DegenhardtFictive
+meta import PropertyKindCalculus.UncertaintyExamples.DegenhardtFictive
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.UncertaintyExamples.DegenhardtSsprc
 
@@ -79,3 +87,6 @@ def ssprcConv : Float × Float := Ssprc.runConv modelF [x1, x2, x3] nsSmall
 #guard Float.abs (ssprcConv.2 - ssprcSmall.2) < 1e-6
 
 end PropertyKindCalculus.UncertaintyExamples.DegenhardtSsprc
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

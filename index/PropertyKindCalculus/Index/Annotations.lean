@@ -3,8 +3,11 @@ Copyright (c) 2026 California Institute of Technology. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Nicolas Rouquette
 -/
-import PropertyKindCalculus.Index.Basic
-import PropertyKindCalculus.DocGenMath.Attr
+
+module
+
+public import PropertyKindCalculus.Index.Basic
+public import PropertyKindCalculus.DocGenMath.Attr
 
 /-!
 # The annotation catalogue and where each annotation is used
@@ -27,6 +30,9 @@ The catalogue is the single place a new annotation must be added for the "Using 
 to describe it. That is a deliberate cost: one edit, in one file, next to the others, rather than a
 chapter that silently omits an annotation nobody remembered to document.
 -/
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Index
 
@@ -707,3 +713,6 @@ def summaryOverflows (env : Environment) (scope : Scope) (maxLen : Nat := 160) :
     if a.width == b.width then nameLt a.decl b.decl else a.width > b.width
 
 end PropertyKindCalculus.Index
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

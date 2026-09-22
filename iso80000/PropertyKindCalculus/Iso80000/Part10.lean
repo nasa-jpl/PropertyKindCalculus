@@ -42,10 +42,15 @@ unit must keep apart by name* — the gray and the sievert — and a second, the
   group over mass, length, time, and charge.
 -/
 
-import PropertyKindCalculus.Dimension
-import PropertyKindCalculus.ScaleSpanning
-import PropertyKindCalculus.Iso80000.References
-import PropertyKindCalculus.Iso80000.Catalogue
+module
+
+public import PropertyKindCalculus.Dimension
+public import PropertyKindCalculus.ScaleSpanning
+public import PropertyKindCalculus.Iso80000.References
+public import PropertyKindCalculus.Iso80000.Catalogue
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Iso80000.Part10
 
@@ -682,3 +687,6 @@ theorem iso80000_10_dim_one_collision :
   ⟨atomicNumber, neutronNumber, atomicNumber_ne_neutronNumber, rfl, rfl⟩
 
 end PropertyKindCalculus.Iso80000.Part10
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

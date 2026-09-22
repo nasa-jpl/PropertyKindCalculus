@@ -12,13 +12,18 @@ Mathlib-backed proofs use `[propext, Classical.choice, Quot.sound]` — the gate
 `sorryAx`, with `whitespace := lax` for robustness to line-wrapping.
 -/
 
-import PropertyKindCalculus.Uncertainty.Ladder
-import PropertyKindCalculus.Uncertainty.Coverage
-import PropertyKindCalculus.Uncertainty.Adequacy.Soundness
-import PropertyKindCalculus.Uncertainty.Adequacy.Sterbenz32
-import PropertyKindCalculus.UncertaintyExamples.LadderNesting
-import PropertyKindCalculus.UncertaintyExamples.AdequacyLadder
-import PropertyKindCalculus.UncertaintyExamples.Coverage
+module
+
+public import PropertyKindCalculus.Uncertainty.Ladder
+public import PropertyKindCalculus.Uncertainty.Coverage
+public import PropertyKindCalculus.Uncertainty.Adequacy.Soundness
+public import PropertyKindCalculus.Uncertainty.Adequacy.Sterbenz32
+public import PropertyKindCalculus.UncertaintyExamples.LadderNesting
+public import PropertyKindCalculus.UncertaintyExamples.AdequacyLadder
+public import PropertyKindCalculus.UncertaintyExamples.Coverage
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Tests.UncertaintyLadder
 
@@ -65,3 +70,6 @@ example := UncertaintyExamples.Coverage.central_half_coverage
 #guard_msgs (whitespace := lax) in #print axioms Uncertainty.Coverage.uniform_coverage_exact
 
 end PropertyKindCalculus.Tests.UncertaintyLadder
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

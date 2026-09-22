@@ -30,7 +30,13 @@ needed even with angle promoted.
 Library module (theorems only); worked `#eval`/`example` demonstrations live in
 `DimensionExamples`. Built by `lake build Dimension`.
 -/
-import PropertyKindCalculus.Dimension
+
+module
+
+public import PropertyKindCalculus.Dimension
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 open Dimension
 
@@ -192,3 +198,6 @@ theorem waterContent_still_conflated :
 
 end AngleReform
 end PropertyKindCalculus
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

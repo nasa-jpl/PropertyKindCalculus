@@ -16,8 +16,15 @@ module stays Mathlib-free. The worked example's `exemplifies` annotation lives i
 `ExampleAnnotations`, which already imports the `Examples` library that carries it.
 -/
 
-import PropertyKindCalculus.DocGenMath
-import PropertyKindCalculus.Requirements.Attributes
+module
+
+public import PropertyKindCalculus.DocGenMath
+meta import PropertyKindCalculus.DocGenMath
+public import PropertyKindCalculus.Requirements.Attributes
+meta import PropertyKindCalculus.Requirements.Attributes
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.DocGenMath
 
@@ -31,3 +38,6 @@ attribute [requirement "R25" implements "the harvest of every @[pkc_math]-render
   pkcMathUses
 
 end PropertyKindCalculus.DocGenMath
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

@@ -8,7 +8,13 @@ as the Rule-2 boundary, that a bare-tagged quantity of the *same kind* fails the
 certificate. A certificate everything satisfied would classify nothing.
 -/
 
-import PropertyKindCalculus
+module
+
+public import PropertyKindCalculus
+meta import PropertyKindCalculus
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Tests.Classification
 
@@ -48,3 +54,6 @@ theorem r12_fake_uncertified : ¬ dFake.IsProduct lengthLaw v τ := by
 #guard_msgs in #print axioms Quantity.mul_isProduct
 
 end PropertyKindCalculus.Tests.Classification
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

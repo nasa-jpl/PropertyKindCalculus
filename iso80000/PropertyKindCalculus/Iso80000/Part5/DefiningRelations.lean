@@ -40,11 +40,16 @@ No normative text from the licensed standard is reproduced; the relations are
 restated in this work's own formalism.
 -/
 
-import PropertyKindCalculus.Iso80000.Part3
-import PropertyKindCalculus.Iso80000.Part4
-import PropertyKindCalculus.Iso80000.Part5
-import PropertyKindCalculus.QuantityClassification
-import PropertyKindCalculus.QuantityReal
+module
+
+public import PropertyKindCalculus.Iso80000.Part3
+public import PropertyKindCalculus.Iso80000.Part4
+public import PropertyKindCalculus.Iso80000.Part5
+public import PropertyKindCalculus.QuantityClassification
+public import PropertyKindCalculus.QuantityReal
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Iso80000.Part5.DefiningRelations
 
@@ -189,3 +194,6 @@ theorem thermalConductanceOf_isReciprocal (r : Quantity thermalResistance.kind â
       thermalConductance_recip_thermalResistance r := rfl
 
 end PropertyKindCalculus.Iso80000.Part5.DefiningRelations
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

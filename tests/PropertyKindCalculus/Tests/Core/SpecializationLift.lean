@@ -13,7 +13,12 @@ The probes check the properties the module's discipline rests on:
     unregistered kind pair does not add, and there is no narrowing back down the lattice.
 -/
 
-import PropertyKindCalculus
+module
+
+public import PropertyKindCalculus
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Tests.SpecializationLift
 
@@ -73,3 +78,6 @@ example : Quantity.leAt (E := LenEdge) (.of_edge .width) (.of_edge .height) (.of
 #check_failure (fun (w : Quantity widthK Int) (c : Quantity colourK Int) => w + c)
 
 end PropertyKindCalculus.Tests.SpecializationLift
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

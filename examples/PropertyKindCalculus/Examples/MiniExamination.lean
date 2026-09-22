@@ -18,7 +18,12 @@ Like `MiniLengthWidth`, this module is part of the separate `Examples` library
 and imports the core `PropertyKindCalculus` library as any downstream consumer would.
 -/
 
-import PropertyKindCalculus
+module
+
+public import PropertyKindCalculus
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Examples.Examination
 
@@ -89,3 +94,6 @@ example : width ≠ height :=
 example : width.examinedBy (ExaminationItem.procedure widthProcedure).basePrinciple := rfl
 
 end PropertyKindCalculus.Examples.Examination
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

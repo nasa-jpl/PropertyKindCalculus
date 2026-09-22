@@ -26,7 +26,18 @@ graph: rows stack, role groups sit side by side, and nothing is routed. Labels a
 plain text for the same reason as in `KindGraphD2`: a markdown label becomes a
 foreignObject HTML island that librsvg and LaTeX pipelines silently drop.
 -/
-import PropertyKindCalculus.KindGraphD2
+
+module
+
+public import PropertyKindCalculus.KindGraphD2
+
+-- Same-module helpers serve both the command elaborators below and runtime callers, so the
+-- phase check is relaxed for this file (the module system's mixed-use escape; imports are
+-- still checked and take `public meta import`).
+set_option compiler.relaxedMetaCheck true
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.ModuleCard
 
@@ -73,28 +84,28 @@ deriving Repr, Inhabited
 
 /-- The role groups of the interface panel, in reading order: what the module takes per
 datum, what a deployment must bind, what this tier already bound, what it produces. -/
-private def roleGroups : List (String × List PortDir) :=
+def roleGroups : List (String × List PortDir) :=
   [("inputs", [.input]),
    ("parameters", [.param]),
    ("configuration", [.config]),
    ("outputs", [.output, .conditional])]
 
 /-- One clause row: label, fill, stroke, optional tooltip. -/
-private structure ClauseRow where
+structure ClauseRow where
   label : String
   fill : String
   stroke : String
   tooltip : Option String := none
 
-private def clauseFill : String := "#f3f4f6"
-private def clauseStroke : String := "#6b7280"
-private def edgeFill : String := "#e5e7eb"
-private def edgeStroke : String := "#111827"
-private def clusterFill : String := "#fce7f3"
-private def clusterStroke : String := "#be185d"
+def clauseFill : String := "#f3f4f6"
+def clauseStroke : String := "#6b7280"
+def edgeFill : String := "#e5e7eb"
+def edgeStroke : String := "#111827"
+def clusterFill : String := "#fce7f3"
+def clusterStroke : String := "#be185d"
 
 /-- Emit one panel of stacked rows. -/
-private def panel (key label : String) (rows : List ClauseRow) : String := Id.run do
+def panel (key label : String) (rows : List ClauseRow) : String := Id.run do
   if rows.isEmpty then return ""
   let mut out := s!"  {q key}: \{\n"
   out := out ++ s!"    label: {q label}\n"
@@ -328,3 +339,6 @@ def relationRows (root : Name) (decl : Name) : MetaM (List RelationRow) := do
   return rows
 
 end PropertyKindCalculus.ModuleCard
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

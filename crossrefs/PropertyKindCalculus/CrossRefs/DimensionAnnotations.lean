@@ -10,9 +10,17 @@ layer — a documentation/metadata layer — is not Mathlib-free even though the
 spine it annotates is.
 -/
 
-import PropertyKindCalculus.Dimension
-import PropertyKindCalculus.Interaction
-import PropertyKindCalculus.CrossRefs.Attributes
+module
+
+public import PropertyKindCalculus.Dimension
+meta import PropertyKindCalculus.Dimension
+public import PropertyKindCalculus.Interaction
+meta import PropertyKindCalculus.Interaction
+public import PropertyKindCalculus.CrossRefs.Attributes
+meta import PropertyKindCalculus.CrossRefs.Attributes
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -24,3 +32,6 @@ attribute [vim4 "1.29" "quantity calculus" "kind interaction (KMul / KDiv)"]
   InteractionAlgebra.KMul
 
 end PropertyKindCalculus
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

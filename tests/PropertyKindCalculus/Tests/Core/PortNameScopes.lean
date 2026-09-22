@@ -37,7 +37,14 @@ node), identical for same-depth shadowing, and matcher-generated — hence unwri
 through match arms. `nestedValue` pins the coexistence that makes the flat reading
 sufficient; the refusals pin what uniqueness costs to violate, which is a rename.
 -/
-import PropertyKindCalculus.ContractCoverage
+
+module
+
+public import PropertyKindCalculus.ContractCoverage
+meta import PropertyKindCalculus.ContractCoverage
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Tests.PortNameScopes
 open PropertyKindCalculus
@@ -259,3 +266,6 @@ info: diagnostic coverage:
 #guard_msgs in #kind_diagnostic_coverage PropertyKindCalculus.Tests.PortNameScopes
 
 end PropertyKindCalculus.Tests.PortNameScopes
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

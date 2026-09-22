@@ -8,7 +8,13 @@ the degenerate case (a nominal kind bears no additivity; a poorer scale does not
 richer one), so the premise is a real gate, not a formality.
 -/
 
-import PropertyKindCalculus
+module
+
+public import PropertyKindCalculus
+meta import PropertyKindCalculus
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Tests.OperationGating
 
@@ -105,3 +111,6 @@ theorem r6_ratio_not_le_nominal : ¬ (ScaleType.ratio ≤ ScaleType.nominal) :=
 #guard_msgs in #print axioms ScaleType.allows_mono
 
 end PropertyKindCalculus.Tests.OperationGating
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

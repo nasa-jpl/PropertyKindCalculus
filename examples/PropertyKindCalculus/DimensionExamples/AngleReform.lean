@@ -11,8 +11,14 @@ layer repairs survive the reform.
 
 These live in the `DimensionExamples` library because they depend on PhysLib + Mathlib.
 -/
-import PropertyKindCalculus.Interaction
-import PropertyKindCalculus.AngleReform
+
+module
+
+public import PropertyKindCalculus.Interaction
+public import PropertyKindCalculus.AngleReform
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Examples.AngleReform
 
@@ -81,3 +87,6 @@ example : (vwc.extend emb).kind ≠ (gwc.extend emb).kind :=
   waterContent_still_conflated.2
 
 end PropertyKindCalculus.Examples.AngleReform
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

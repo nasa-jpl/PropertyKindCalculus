@@ -24,10 +24,15 @@ No normative text from the licensed standard is reproduced; the relations are re
 this work's own formalism.
 -/
 
-import PropertyKindCalculus.Iso80000.Part5
-import PropertyKindCalculus.Iso80000.Part12
-import PropertyKindCalculus.QuantityClassification
-import PropertyKindCalculus.QuantityReal
+module
+
+public import PropertyKindCalculus.Iso80000.Part5
+public import PropertyKindCalculus.Iso80000.Part12
+public import PropertyKindCalculus.QuantityClassification
+public import PropertyKindCalculus.QuantityReal
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Iso80000.Part12.DefiningRelations
 
@@ -102,3 +107,6 @@ theorem peltierOf_isProduct (s : Quantity seebeckCoefficient.kind ℝ)
     (peltierOf s t).IsProduct peltier_prod_seebeck_temperature s t := rfl
 
 end PropertyKindCalculus.Iso80000.Part12.DefiningRelations
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

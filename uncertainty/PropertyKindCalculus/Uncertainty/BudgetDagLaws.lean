@@ -45,11 +45,17 @@ a caveat on the specification, not a hypothesis of this law. Everything here is 
 `Float`/FP32 adequacy of the same quadrature is the Stage-3 `Adequacy` machinery's concern, not
 this module's.
 -/
-import PropertyKindCalculus.Uncertainty.BudgetDag
-import PropertyKindCalculus.Function
-import Mathlib.Analysis.SpecialFunctions.Sqrt
-import Mathlib.Tactic.Ring
-import Mathlib.Tactic.FieldSimp
+
+module
+
+public import PropertyKindCalculus.Uncertainty.BudgetDag
+public import PropertyKindCalculus.Function
+public import Mathlib.Analysis.SpecialFunctions.Sqrt
+public import Mathlib.Tactic.Ring
+public import Mathlib.Tactic.FieldSimp
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Uncertainty
 
@@ -285,3 +291,6 @@ theorem BudgetExpr.div_leaf_relative_quadrature {k1 k2 k : KindOfProperty}
   field_simp
 
 end PropertyKindCalculus.Uncertainty
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

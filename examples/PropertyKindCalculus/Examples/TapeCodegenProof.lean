@@ -10,8 +10,14 @@ hope." Because the codegen emits the same DAG the tape stores, and `evalTape` in
 with the matching scalar op (`cOp`), this `Evaluates` result is the semantic core of codegen
 faithfulness; the remaining rendering table (`cOp`/`cExpr` ↔ the tape ops) is a per-op correspondence.
 -/
-import PropertyKindCalculus.Examples.TapeCodegenDemo
-import PropertyKindCalculus.Torch.Paradigm.TapeParity
+
+module
+
+public import PropertyKindCalculus.Examples.TapeCodegenDemo
+public import PropertyKindCalculus.Torch.Paradigm.TapeParity
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 open Spec TorchLean
 open TorchLean TorchLean.Tensor
@@ -111,3 +117,6 @@ theorem jd_faithful :
 #guard_msgs (whitespace := lax) in #print axioms attenuation_faithful
 
 end PropertyKindCalculus.Examples.TapeCodegenProof
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

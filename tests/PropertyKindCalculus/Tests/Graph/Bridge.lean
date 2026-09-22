@@ -14,8 +14,15 @@ Three dangers closed for the `Graph` library:
   * **silent axioms** — the bridge theorems' profiles are pinned.
 -/
 
-import PropertyKindCalculus.Graph
-import PropertyKindCalculus.Tests.Core.Influence
+module
+
+public import PropertyKindCalculus.Graph
+meta import PropertyKindCalculus.Graph
+public import PropertyKindCalculus.Tests.Core.Influence
+meta import PropertyKindCalculus.Tests.Core.Influence
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Tests.Graph
 
@@ -253,3 +260,6 @@ Classical.choice, Quot.sound] -/
 #guard_msgs in #print axioms Provenance.Acyclic.finite_incidencePath
 
 end PropertyKindCalculus.Tests.Graph
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

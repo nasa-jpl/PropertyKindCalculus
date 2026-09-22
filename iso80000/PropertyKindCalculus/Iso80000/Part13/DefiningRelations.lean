@@ -23,9 +23,14 @@ No normative text from the licensed standard is reproduced; the relations are re
 this work's own formalism.
 -/
 
-import PropertyKindCalculus.Iso80000.Part13
-import PropertyKindCalculus.QuantityClassification
-import PropertyKindCalculus.QuantityReal
+module
+
+public import PropertyKindCalculus.Iso80000.Part13
+public import PropertyKindCalculus.QuantityClassification
+public import PropertyKindCalculus.QuantityReal
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Iso80000.Part13.DefiningRelations
 
@@ -91,3 +96,6 @@ theorem signalEnergyOf_isProduct (p : Quantity carrierPower.kind ℝ)
     (signalEnergyOf p t).IsProduct signalEnergy_prod_power_period p t := rfl
 
 end PropertyKindCalculus.Iso80000.Part13.DefiningRelations
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

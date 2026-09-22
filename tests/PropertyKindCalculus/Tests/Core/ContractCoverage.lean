@@ -33,7 +33,14 @@ everything is declared or exempted — an exemption is not a violation and must 
 Finally the attributes' own refusals: a mark on something that is not a `Provenance.Contract`,
 and a mark with a blank reason.
 -/
-import PropertyKindCalculus.ContractCoverage
+
+module
+
+public import PropertyKindCalculus.ContractCoverage
+meta import PropertyKindCalculus.ContractCoverage
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Tests.ContractCoverage
 
@@ -469,3 +476,6 @@ error: `@[kindDiagnostic]` on 'PropertyKindCalculus.Tests.ContractCoverage.aK' n
 attribute [kindDiagnostic "  "] aK
 
 end PropertyKindCalculus.Tests.ContractCoverage
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

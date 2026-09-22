@@ -30,8 +30,14 @@ small `UncertaintyBatch` library); its numbers are checked by a compiled executa
 parity with the scalar `Mcm.run` (the portable CPU stub on the default build, the device on a
 `-K cuda=true` container build).
 -/
-import PropertyKindCalculus.Uncertainty.Mcm
-import PropertyKindCalculus.Uncertainty.SsprcBatched
+
+module
+
+public import PropertyKindCalculus.Uncertainty.Mcm
+public import PropertyKindCalculus.Uncertainty.SsprcBatched
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Uncertainty.McmBatched
 
@@ -76,3 +82,6 @@ def run (model : BatchModel) (inputs : List (InputDist Float)) (n : Nat) (seed :
   (mf, Float.sqrt (msq - mf * mf))
 
 end PropertyKindCalculus.Uncertainty.McmBatched
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

@@ -7,36 +7,46 @@ in the whole core tier; the `Tests` library's `.andSubmodules` glob also builds 
 so a probe cannot silently go unbuilt.
 -/
 
-import PropertyKindCalculus.Tests.Core.Level
-import PropertyKindCalculus.Tests.Core.KindStructure
-import PropertyKindCalculus.Tests.Core.OperationGating
-import PropertyKindCalculus.Tests.Core.SoundnessBridges
-import PropertyKindCalculus.Tests.Core.Aggregation
-import PropertyKindCalculus.Tests.Core.Recarving
-import PropertyKindCalculus.Tests.Core.Representation
-import PropertyKindCalculus.Tests.Core.Classification
-import PropertyKindCalculus.Tests.Core.Complex
-import PropertyKindCalculus.Tests.Core.OperatorTable
-import PropertyKindCalculus.Tests.Core.SpecializationLift
-import PropertyKindCalculus.Tests.Core.Bounds
-import PropertyKindCalculus.Tests.Core.Axis
-import PropertyKindCalculus.Tests.Core.PartWhole
-import PropertyKindCalculus.Tests.Core.Composite
-import PropertyKindCalculus.Tests.Core.Decimal
-import PropertyKindCalculus.Tests.Core.KindEdges
-import PropertyKindCalculus.Tests.Core.KindIncidence
-import PropertyKindCalculus.Tests.Core.KindGraphD2
-import PropertyKindCalculus.Tests.Core.ModuleCard
-import PropertyKindCalculus.Tests.Core.IngestCard
-import PropertyKindCalculus.Tests.Core.KindLedger
-import PropertyKindCalculus.Tests.Core.KindRelation
-import PropertyKindCalculus.Tests.Core.KindContracts
-import PropertyKindCalculus.Tests.Core.ContractCoverage
-import PropertyKindCalculus.Tests.Core.PortNameScopes
-import PropertyKindCalculus.Tests.Core.PortReferences
-import PropertyKindCalculus.Tests.Core.CertifiedIngest
-import PropertyKindCalculus.Tests.Core.BoundaryAudit
-import PropertyKindCalculus.Tests.Core.Provenance
-import PropertyKindCalculus.Tests.Core.Influence
-import PropertyKindCalculus.Tests.Core.Index
-import PropertyKindCalculus.Tests.Core.Rubrics
+module
+
+public import PropertyKindCalculus.Tests.Core.Level
+public import PropertyKindCalculus.Tests.Core.KindStructure
+public import PropertyKindCalculus.Tests.Core.OperationGating
+public import PropertyKindCalculus.Tests.Core.SoundnessBridges
+public import PropertyKindCalculus.Tests.Core.Aggregation
+public import PropertyKindCalculus.Tests.Core.Recarving
+public import PropertyKindCalculus.Tests.Core.Representation
+public import PropertyKindCalculus.Tests.Core.Classification
+public import PropertyKindCalculus.Tests.Core.Complex
+public import PropertyKindCalculus.Tests.Core.OperatorTable
+public import PropertyKindCalculus.Tests.Core.SpecializationLift
+public import PropertyKindCalculus.Tests.Core.Bounds
+public import PropertyKindCalculus.Tests.Core.Axis
+public import PropertyKindCalculus.Tests.Core.PartWhole
+public import PropertyKindCalculus.Tests.Core.Composite
+public import PropertyKindCalculus.Tests.Core.Decimal
+public import PropertyKindCalculus.Tests.Core.KindEdges
+public import PropertyKindCalculus.Tests.Core.KindIncidence
+public import PropertyKindCalculus.Tests.Core.KindGraphD2
+public import PropertyKindCalculus.Tests.Core.ModuleCard
+public import PropertyKindCalculus.Tests.Core.IngestCard
+public import PropertyKindCalculus.Tests.Core.KindLedger
+public import PropertyKindCalculus.Tests.Core.KindRelation
+public import PropertyKindCalculus.Tests.Core.KindContracts
+public import PropertyKindCalculus.Tests.Core.ContractCoverage
+public import PropertyKindCalculus.Tests.Core.PortNameScopes
+public import PropertyKindCalculus.Tests.Core.PortReferences
+public import PropertyKindCalculus.Tests.Core.CertifiedIngest
+public import PropertyKindCalculus.Tests.Core.BoundaryAudit
+public import PropertyKindCalculus.Tests.Core.Provenance
+public import PropertyKindCalculus.Tests.Core.Influence
+public import PropertyKindCalculus.Tests.Core.Index
+public import PropertyKindCalculus.Tests.Core.Rubrics
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
+
+
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

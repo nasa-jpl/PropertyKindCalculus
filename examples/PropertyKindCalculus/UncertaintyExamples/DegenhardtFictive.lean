@@ -21,8 +21,16 @@ value `R = f(E(X)) = 11.25`; the gap `E(Y) − R = 0.3375` is the non-linearity 
 `X₂²` term (theorem T4 of `UNCERTAINTY.md`) — exactly what the linearized methods cannot see and
 what SSPRC (Stage 2) will recover. Mathlib- and TorchLean-free.
 -/
-import PropertyKindCalculus.Uncertainty
-import PropertyKindCalculus.DocGenMath
+
+module
+
+public import PropertyKindCalculus.Uncertainty
+meta import PropertyKindCalculus.Uncertainty
+public import PropertyKindCalculus.DocGenMath
+meta import PropertyKindCalculus.DocGenMath
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.UncertaintyExamples.DegenhardtFictive
 
@@ -115,3 +123,6 @@ def gum : Float := gumStdUnc [(5.0, x1.moments), (5.0, x2.moments), (2.25, x3.mo
 #guard Float.abs (gum - 1.662) < 0.01
 
 end PropertyKindCalculus.UncertaintyExamples.DegenhardtFictive
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

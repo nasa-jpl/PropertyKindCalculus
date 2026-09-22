@@ -22,7 +22,13 @@ EM is deliberately on the page: dBm, dBW, and a field level are the exemplars, b
 level machinery is what a kinded treatment of PhysLib's electromagnetism needs first.
 -/
 
-import PropertyKindCalculus
+module
+
+public import PropertyKindCalculus
+meta import PropertyKindCalculus
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Tests.Level
 
@@ -130,3 +136,6 @@ example : eFieldLevel.toKind ≠ dBm.toKind := by decide
     - 43.0102999566398).abs < 1e-9
 
 end PropertyKindCalculus.Tests.Level
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

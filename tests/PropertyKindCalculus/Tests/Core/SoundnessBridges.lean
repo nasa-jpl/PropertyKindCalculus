@@ -9,7 +9,13 @@ units (different kinds) and an ill-formed unit of a nominal kind. R17 is checked
 families (SI decimal and IEC binary), the two radices being its characteristic edges.
 -/
 
-import PropertyKindCalculus
+module
+
+public import PropertyKindCalculus
+meta import PropertyKindCalculus
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Tests.SoundnessBridges
 
@@ -103,3 +109,6 @@ theorem r17_kib_mib_roundtrip (e : Int) : miB.convertExp kiB (kiB.convertExp miB
 #guard_msgs in #print axioms PrefixedUnit.convertExp_roundtrip
 
 end PropertyKindCalculus.Tests.SoundnessBridges
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

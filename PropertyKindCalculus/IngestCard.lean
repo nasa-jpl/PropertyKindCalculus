@@ -27,8 +27,19 @@ The output is D2 text (https://d2lang.com), grid-laid like the module cards, in 
 palette, so a plane reads the same on the system card and on the sheet of the boundary
 that computes it.
 -/
-import PropertyKindCalculus.KindGraphD2
-import PropertyKindCalculus.CertifiedIngest
+
+module
+
+public import PropertyKindCalculus.KindGraphD2
+public import PropertyKindCalculus.CertifiedIngest
+
+-- Same-module helpers serve both the command elaborators below and runtime callers, so the
+-- phase check is relaxed for this file (the module system's mixed-use escape; imports are
+-- still checked and take `public meta import`).
+set_option compiler.relaxedMetaCheck true
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.IngestCard
 
@@ -66,11 +77,11 @@ structure Coupling where
   /-- The flowing planes, by slot name. -/
   planes : List String
 
-private def conditionFill : String := "#fef9c3"
-private def conditionStroke : String := "#ca8a04"
+def conditionFill : String := "#fef9c3"
+def conditionStroke : String := "#ca8a04"
 
 /-- Validate a stage's condition names against its egress slots. -/
-private def checkConditions (s : StageSpec) : Except String Unit := do
+def checkConditions (s : StageSpec) : Except String Unit := do
   for c in s.conditions do
     unless s.output.slots.any (·.name == c) do
       throw s!"stage '{s.id}' lists condition plane '{c}', which names no slot of its \
@@ -78,7 +89,7 @@ private def checkConditions (s : StageSpec) : Except String Unit := do
 
 /-- One plane row: the slot name (`stageCard` adds the kind), the role palette, the
 condition tint where the caller declared one, and the slot's own evidence as tooltip. -/
-private def slotRow (dir : PortDir) (conditions : List String) (withKind : Bool)
+def slotRow (dir : PortDir) (conditions : List String) (withKind : Bool)
     (idx : Nat) (s : IngestSlot) : String :=
   let isCond := conditions.contains s.name
   let label := if withKind then s!"{s.name} : {s.kindId}" else s.name
@@ -97,7 +108,7 @@ private def slotRow (dir : PortDir) (conditions : List String) (withKind : Bool)
 /-- One plane group — a short caption (`takes` / `yields`), the packed interface string
 as its own sized text row (a long caption would overflow the container; a row widens
 it), then one row per slot in declared (channel) order. -/
-private def planeGroup (key : String) (dir : PortDir) (conditions : List String)
+def planeGroup (key : String) (dir : PortDir) (conditions : List String)
     (withKind : Bool) (c : IngestContract) : String := Id.run do
   let mut out := s!"    {q key}: \{\n      label: {q key}\n"
   out := out ++ "      grid-columns: 1\n      grid-gap: 4\n"
@@ -119,7 +130,7 @@ stage page whose title node already carries it), the caller's note lines, and th
 takes / yields plane groups side by side. `withKind` selects the system reading (names
 only, kinds in tooltips) or the stage reading (kinds on the rows, evidence in
 tooltips). -/
-private def stageBox (s : StageSpec) (withKind : Bool) (boxLabel : String) :
+def stageBox (s : StageSpec) (withKind : Bool) (boxLabel : String) :
     String := Id.run do
   let mut out := s!"{q s.id}: \{\n  label: {q boxLabel}\n"
   out := out ++ "  grid-columns: 1\n  grid-gap: 8\n"
@@ -188,3 +199,6 @@ def stageCard (s : StageSpec) : Except String String := do
   return out
 
 end PropertyKindCalculus.IngestCard
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

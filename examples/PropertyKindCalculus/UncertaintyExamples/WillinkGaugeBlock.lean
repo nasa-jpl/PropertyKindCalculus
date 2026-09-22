@@ -26,7 +26,14 @@ This exercises the `MomentData` + `Combine` layer (the coarse rungs of the ladde
 sampling and no autograd — pure cumulant arithmetic reproducing a real paper number. It is the
 Willink counterpart to `DegenhardtFictive`. Mathlib- and TorchLean-free.
 -/
-import PropertyKindCalculus.Uncertainty
+
+module
+
+public import PropertyKindCalculus.Uncertainty
+meta import PropertyKindCalculus.Uncertainty
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.UncertaintyExamples.WillinkGaugeBlock
 
@@ -75,3 +82,6 @@ fourth cumulants pull the shape of `E_Y` toward normal. This narrowing is the in
 payoff of carrying `κ₄` — the difference between the GUM rung and the Willink rung. -/
 
 end PropertyKindCalculus.UncertaintyExamples.WillinkGaugeBlock
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

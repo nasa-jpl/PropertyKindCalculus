@@ -44,15 +44,26 @@ Stage 0 delivers the reference layer:
 Worked, paper-grounded examples live in the `UncertaintyExamples` library.
 Mathlib- and TorchLean-free.
 -/
-import PropertyKindCalculus.Uncertainty.Carriers
-import PropertyKindCalculus.Uncertainty.Sampling
-import PropertyKindCalculus.Uncertainty.InputDist
-import PropertyKindCalculus.Uncertainty.UncertainQuantity
-import PropertyKindCalculus.Uncertainty.Mcm
-import PropertyKindCalculus.Uncertainty.Combine
-import PropertyKindCalculus.Uncertainty.BoundaryBudget
-import PropertyKindCalculus.Uncertainty.Evidence
-import PropertyKindCalculus.Uncertainty.Conformity
-import PropertyKindCalculus.Uncertainty.Ssprc
-import PropertyKindCalculus.Uncertainty.Allocation
-import PropertyKindCalculus.Uncertainty.Adequacy
+
+module
+
+public import PropertyKindCalculus.Uncertainty.Carriers
+public import PropertyKindCalculus.Uncertainty.Sampling
+public import PropertyKindCalculus.Uncertainty.InputDist
+public import PropertyKindCalculus.Uncertainty.UncertainQuantity
+public import PropertyKindCalculus.Uncertainty.Mcm
+public import PropertyKindCalculus.Uncertainty.Combine
+public import PropertyKindCalculus.Uncertainty.BoundaryBudget
+public import PropertyKindCalculus.Uncertainty.Evidence
+public import PropertyKindCalculus.Uncertainty.Conformity
+public import PropertyKindCalculus.Uncertainty.Ssprc
+public import PropertyKindCalculus.Uncertainty.Allocation
+public import PropertyKindCalculus.Uncertainty.Adequacy
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
+
+
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

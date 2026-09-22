@@ -55,10 +55,21 @@ Like every environment walk, the command is import-closure sensitive: it sees th
 the probe file imports, and an exemption mark declared in a module the probe does not reach is
 not seen — the false alarm is loud (`UNINDIVIDUATED`), the omission is not.
 -/
-import Lean
-import PropertyKindCalculus.DimensionalCoverage
-import PropertyKindCalculus.KindPrincipleFree
-import PropertyKindCalculus.AuditReceipt
+
+module
+
+public import Lean
+public import PropertyKindCalculus.DimensionalCoverage
+public import PropertyKindCalculus.KindPrincipleFree
+public import PropertyKindCalculus.AuditReceipt
+
+-- Same-module helpers serve both the command elaborators below and runtime callers, so the
+-- phase check is relaxed for this file (the module system's mixed-use escape; imports are
+-- still checked and take `public meta import`).
+set_option compiler.relaxedMetaCheck true
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.ExaminationCoverage
 
@@ -99,7 +110,7 @@ private unsafe def evalStringUnsafe (e : Expr) : MetaM String :=
 /-- A closed `String` expression's value. Replaced at run time by the evaluator; the safe
 body stands only where no evaluator is available (the `evalRelation` idiom). -/
 @[implemented_by evalStringUnsafe]
-private def evalString (_e : Expr) : MetaM String :=
+def evalString (_e : Expr) : MetaM String :=
   throwError "string values cannot be read in this environment"
 
 /-- A closed `String`-valued expression, read back: by reduction when it is a literal, and by
@@ -252,3 +263,6 @@ def examinationTable (scope : Index.Scope := #[]) : MetaM IndexTable := withHarv
   return { id := "examination-coverage", title := "Examination coverage", headers, rows := cells }
 
 end PropertyKindCalculus.ExaminationCoverage
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

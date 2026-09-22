@@ -17,9 +17,17 @@ Part-13 examples, mirroring the `Iso80000` library's own `Iso80000/Part13` layou
 These live in the Mathlib-backed `DimensionExamples` library.
 -/
 
-import PropertyKindCalculus.Iso80000.Part13
-import PropertyKindCalculus.Iso80000.Part13.DefiningRelations
-import PropertyKindCalculus.QuantityReal
+module
+
+public import PropertyKindCalculus.Iso80000.Part13
+meta import PropertyKindCalculus.Iso80000.Part13
+public import PropertyKindCalculus.Iso80000.Part13.DefiningRelations
+meta import PropertyKindCalculus.Iso80000.Part13.DefiningRelations
+public import PropertyKindCalculus.QuantityReal
+meta import PropertyKindCalculus.QuantityReal
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Examples.Iso80000.Part13
 
@@ -113,3 +121,6 @@ def signalEnergyInt : Quantity signalEnergyPerBinaryDigit.kind Int :=
 #guard storageCapacityCK.coherentUnit == "bit"
 
 end PropertyKindCalculus.Examples.Iso80000.Part13
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

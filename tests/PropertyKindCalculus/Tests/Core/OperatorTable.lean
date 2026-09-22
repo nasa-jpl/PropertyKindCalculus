@@ -14,7 +14,12 @@ three properties the module's discipline rests on:
     the certificates of the named calculus transport to operator-built terms.
 -/
 
-import PropertyKindCalculus
+module
+
+public import PropertyKindCalculus
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Tests.OperatorTable
 
@@ -77,3 +82,6 @@ example : (Quantity.divK lengthK (⟨12⟩ : Quantity areaK Int)
 #guard_msgs in #print axioms OperatorTable.hdiv_magnitude
 
 end PropertyKindCalculus.Tests.OperatorTable
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

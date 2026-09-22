@@ -10,8 +10,16 @@ It also shows the **executable shadow** over `Float`: for all-Gaussian inputs th
 Willink 95% half-width equals `1.96 · u_c` exactly — the same collapse T2 proves over `ℝ`, now as
 a `#guard` in the rounding carrier. Mathlib-backed (the `ℝ` rung); TorchLean-free.
 -/
-import PropertyKindCalculus.Uncertainty.Ladder
-import PropertyKindCalculus.Uncertainty
+
+module
+
+public import PropertyKindCalculus.Uncertainty.Ladder
+meta import PropertyKindCalculus.Uncertainty.Ladder
+public import PropertyKindCalculus.Uncertainty
+meta import PropertyKindCalculus.Uncertainty
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.UncertaintyExamples.LadderNesting
 
@@ -63,3 +71,6 @@ def normalTermsF : List (Float × MomentData Float) :=
 #guard Float.abs (willinkHalfWidth95 normalTermsF - 1.96 * gumStdUnc normalTermsF) < 1e-9
 
 end PropertyKindCalculus.UncertaintyExamples.LadderNesting
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

@@ -1,9 +1,11 @@
-import PropertyKindCalculus.Graph.Flow
-import PropertyKindCalculus.Graph.IncidenceQuiver
-import PropertyKindCalculus.Graph.KindGraph
-import PropertyKindCalculus.Graph.Footprint
-import PropertyKindCalculus.Graph.ModuleSheet
-import PropertyKindCalculus.Graph.SheetEquations
+module
+
+public import PropertyKindCalculus.Graph.Flow
+public import PropertyKindCalculus.Graph.IncidenceQuiver
+public import PropertyKindCalculus.Graph.KindGraph
+public import PropertyKindCalculus.Graph.Footprint
+public import PropertyKindCalculus.Graph.ModuleSheet
+public import PropertyKindCalculus.Graph.SheetEquations
 
 /-!
 # Graph — the incidence-quiver bridge
@@ -12,3 +14,11 @@ The Mathlib-facing face of the provenance layer: what the core's executable clos
 compute, as theorems on `ForMathlib`'s directed-graph theory. See the library docstring in
 `lakefile.lean`.
 -/
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
+
+
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

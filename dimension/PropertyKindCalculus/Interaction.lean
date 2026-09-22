@@ -20,7 +20,13 @@ It builds on the `Dimension` library (the forgetful functor
 tree (`dimension/`) and is built by `lake build Dimension`; the core spine stays
 Mathlib-free.
 -/
-import PropertyKindCalculus.Dimension
+
+module
+
+public import PropertyKindCalculus.Dimension
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 open Dimension
 
@@ -169,3 +175,6 @@ theorem torque_angle_work :
   ⟨SIMech.KMul.torque_angle_energy, by decide, rfl⟩
 
 end PropertyKindCalculus
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

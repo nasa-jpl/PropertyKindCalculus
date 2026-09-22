@@ -12,7 +12,13 @@ The third probe is the sortal: one carving, two predicates, two counts. A count 
 depend on its predicate would make `countMeasurement`'s argument decoration.
 -/
 
-import PropertyKindCalculus
+module
+
+public import PropertyKindCalculus
+meta import PropertyKindCalculus
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Tests.Recarving
 
@@ -116,3 +122,6 @@ theorem r27_distribution_license :
 #guard_msgs in #print axioms count_sortal_ne
 
 end PropertyKindCalculus.Tests.Recarving
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

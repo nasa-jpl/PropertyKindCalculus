@@ -37,9 +37,18 @@ metrological claims, made grep-enumerable, not derived facts. And the `Float` `#
 rounding-tolerant checks of the executable shadow, not proofs — the exact identity lives only in
 the ℝ theorem. Mathlib-backed (the ℝ rung, via the rigor import); TorchLean-free.
 -/
-import PropertyKindCalculus.Uncertainty.BudgetDagLaws
-import PropertyKindCalculus.Uncertainty
-import Mathlib.Tactic.NormNum
+
+module
+
+public import PropertyKindCalculus.Uncertainty.BudgetDagLaws
+meta import PropertyKindCalculus.Uncertainty.BudgetDagLaws
+public import PropertyKindCalculus.Uncertainty
+meta import PropertyKindCalculus.Uncertainty
+public import Mathlib.Tactic.NormNum
+meta import Mathlib.Tactic.NormNum
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.UncertaintyExamples.BudgetDagDensity
 
@@ -212,3 +221,6 @@ example : (densityExprR.propagateQ).unc = combinedQ densityExprR.contribsQ :=
 #print axioms PropertyKindCalculus.Uncertainty.BudgetExpr.propagateQ_unc_eq_combinedQ
 
 end PropertyKindCalculus.UncertaintyExamples.BudgetDagDensity
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

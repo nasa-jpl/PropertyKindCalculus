@@ -14,7 +14,14 @@ are decidable by evaluation on a hand-built two-stage system. What the pins fix:
   input of its destination each refuse with the offending name, never a silently wrong
   figure.
 -/
-import PropertyKindCalculus.IngestCard
+
+module
+
+public import PropertyKindCalculus.IngestCard
+meta import PropertyKindCalculus.IngestCard
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Tests.IngestCard
 
@@ -120,3 +127,6 @@ def stagePage : String := okOrError (stageCard prep)
   "carries 'est', which names no slot of 'probe.main.output (1,H,W)'"
 
 end PropertyKindCalculus.Tests.IngestCard
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

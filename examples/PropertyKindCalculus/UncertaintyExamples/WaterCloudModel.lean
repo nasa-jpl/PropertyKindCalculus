@@ -47,11 +47,22 @@ Self-contained by necessity: PKC cannot import the downstream `soil-moisture-mod
 already *requires* PKC — a dependency cycle), so the WCM kinds and kernel are written fresh here.
 Depends on TorchLean (the autograd column of rung 2).
 -/
-import PropertyKindCalculus.Uncertainty
-import PropertyKindCalculus.Uncertainty.Sensitivity
-import PropertyKindCalculus.Uncertainty.BudgetDagLaws
-import PropertyKindCalculus.Index.Commands
-import PropertyKindCalculus.DocGenMath
+
+module
+
+public import PropertyKindCalculus.Uncertainty
+meta import PropertyKindCalculus.Uncertainty
+public import PropertyKindCalculus.Uncertainty.Sensitivity
+meta import PropertyKindCalculus.Uncertainty.Sensitivity
+public import PropertyKindCalculus.Uncertainty.BudgetDagLaws
+meta import PropertyKindCalculus.Uncertainty.BudgetDagLaws
+public import PropertyKindCalculus.Index.Commands
+meta import PropertyKindCalculus.Index.Commands
+public import PropertyKindCalculus.DocGenMath
+meta import PropertyKindCalculus.DocGenMath
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.UncertaintyExamples.WaterCloudModel
 
@@ -792,3 +803,6 @@ error: the edge names a well-posedness witness but claims 'equals' — existence
 end Falsification
 
 end PropertyKindCalculus.UncertaintyExamples.WaterCloudModel
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

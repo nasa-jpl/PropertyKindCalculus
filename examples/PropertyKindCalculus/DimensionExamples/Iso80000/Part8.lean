@@ -21,9 +21,17 @@ Part-8 examples, mirroring the `Iso80000` library's own `Iso80000/Part8` layout:
 These live in the Mathlib-backed `DimensionExamples` library.
 -/
 
-import PropertyKindCalculus.Iso80000.Part8
-import PropertyKindCalculus.Iso80000.Part8.DefiningRelations
-import PropertyKindCalculus.QuantityReal
+module
+
+public import PropertyKindCalculus.Iso80000.Part8
+meta import PropertyKindCalculus.Iso80000.Part8
+public import PropertyKindCalculus.Iso80000.Part8.DefiningRelations
+meta import PropertyKindCalculus.Iso80000.Part8.DefiningRelations
+public import PropertyKindCalculus.QuantityReal
+meta import PropertyKindCalculus.QuantityReal
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Examples.Iso80000.Part8
 
@@ -143,3 +151,6 @@ def soundIntensityInt : Quantity soundIntensity.kind Int :=
 #guard soundPressureLevelCK.coherentUnit == "dB"
 
 end PropertyKindCalculus.Examples.Iso80000.Part8
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

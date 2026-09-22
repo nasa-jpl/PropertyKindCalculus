@@ -13,7 +13,13 @@ so the probes *compute*:
     the compile-time guarantee the naked fused op cannot give.
 -/
 
-import PropertyKindCalculus.Torch.Paradigm.FusedKinds
+module
+
+public import PropertyKindCalculus.Torch.Paradigm.FusedKinds
+meta import PropertyKindCalculus.Torch.Paradigm.FusedKinds
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Tests.FusedKinds
 
@@ -67,3 +73,6 @@ example : (Quantity.scaledProdExp hcx hcxy hexp negTwo kappa ell).magnitude
 #guard_msgs in #print axioms Quantity.scaledProdExp_magnitude
 
 end PropertyKindCalculus.Tests.FusedKinds
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

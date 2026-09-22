@@ -86,8 +86,14 @@ Mathlib-free, like `Combine` and `Evidence`. Carrier-generic wherever the struct
 risk arithmetic is `Float`-carried, because a probability read off a normal tail is a concrete
 number.
 -/
-import PropertyKindCalculus.Bounds
-import PropertyKindCalculus.Uncertainty.Evidence
+
+module
+
+public import PropertyKindCalculus.Bounds
+public import PropertyKindCalculus.Uncertainty.Evidence
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Uncertainty.Conformity
 
@@ -505,3 +511,6 @@ def assess (t : Tolerance k Float) (e : Evidence k) (targetRisk : Quantity proba
       risk := consumerRisk t e.estimate e.stdUnc }
 
 end PropertyKindCalculus.Uncertainty.Conformity
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

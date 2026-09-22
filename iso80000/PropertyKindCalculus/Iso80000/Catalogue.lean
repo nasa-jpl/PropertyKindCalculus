@@ -13,8 +13,18 @@ This module is PhysLib-backed (a `CataloguedKind` carries a PhysLib `Dimension`
 through its `qk` field); the citation catalogue (`References`) alone is Mathlib-free.
 -/
 
-import PropertyKindCalculus.Dimension
-import PropertyKindCalculus.Iso80000.References
+module
+
+public import PropertyKindCalculus.Dimension
+public import PropertyKindCalculus.Iso80000.References
+
+-- Same-module helpers serve both the command elaborators below and runtime callers, so the
+-- phase check is relaxed for this file (the module system's mixed-use escape; imports are
+-- still checked and take `public meta import`).
+set_option compiler.relaxedMetaCheck true
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Iso80000
 
@@ -71,20 +81,20 @@ a charge-free quantity (`I`-exponent 0) this is exactly the mechanical `M·L·T�
 Dimension one renders as `1`. -/
 
 /-- A natural number as Unicode superscript digits, e.g. `12 ↦ "¹²"`. -/
-private def supDigits (n : Nat) : String :=
+def supDigits (n : Nat) : String :=
   (toString n).map fun c =>
     match c with
     | '0' => '⁰' | '1' => '¹' | '2' => '²' | '3' => '³' | '4' => '⁴'
     | '5' => '⁵' | '6' => '⁶' | '7' => '⁷' | '8' => '⁸' | '9' => '⁹' | c => c
 
 /-- An integer exponent as a Unicode superscript, e.g. `-2 ↦ "⁻²"`. -/
-private def supInt (z : Int) : String :=
+def supInt (z : Int) : String :=
   if z < 0 then "⁻" ++ supDigits z.natAbs else supDigits z.natAbs
 
 /-- One base-dimension factor `symbol^exp`: `none` when the exponent is zero, the
 bare symbol when it is one, `symbol⁻¹`/`symbol²`/… otherwise. A non-integer
 exponent (none occur in the 80000 catalogue) falls back to `symbol^(p/q)`. -/
-private def dimFactor (symbol : String) (q : ℚ) : Option String :=
+def dimFactor (symbol : String) (q : ℚ) : Option String :=
   if q == 0 then none
   else if q.den == 1 then
     if q.num == 1 then some symbol else some (symbol ++ supInt q.num)
@@ -105,3 +115,7 @@ def renderDimension (d : Dimension LTMCTDimensionBase) : String :=
 /-- The printed dimension expression of a catalogued kind (see `renderDimension`). -/
 def CataloguedKind.dimString (c : CataloguedKind) : String :=
   renderDimension c.qk.dim
+
+end PropertyKindCalculus.Iso80000 -- pkc-blanket-scope
+end -- pkc-blanket-expose
+end -- pkc-blanket

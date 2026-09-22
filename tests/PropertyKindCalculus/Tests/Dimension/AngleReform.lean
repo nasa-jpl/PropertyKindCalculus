@@ -10,7 +10,12 @@ kinds are still one dimension). The Mathlib-backed proofs legitimately use
 `[propext, Classical.choice, Quot.sound]`; the gate confirms **no `sorryAx`** creeps in.
 -/
 
-import PropertyKindCalculus.AngleReform
+module
+
+public import PropertyKindCalculus.AngleReform
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Tests.AngleReform
 
@@ -63,3 +68,6 @@ theorem reform_conflation_survives :
 #guard_msgs (whitespace := lax) in #print axioms DimensionedKind.extend_kind
 
 end PropertyKindCalculus.Tests.AngleReform
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

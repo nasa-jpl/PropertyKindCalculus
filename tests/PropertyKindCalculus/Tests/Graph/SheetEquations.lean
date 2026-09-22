@@ -12,7 +12,14 @@ hand-built occurrences — one per rendering rule worth fixing:
   * lines come out in dependency order even when the walk emitted a definition after
     its use.
 -/
-import PropertyKindCalculus.Graph.SheetEquations
+
+module
+
+public import PropertyKindCalculus.Graph.SheetEquations
+meta import PropertyKindCalculus.Graph.SheetEquations
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Tests.SheetEquations
 
@@ -121,3 +128,6 @@ def asm : Assembly :=
 #guard ((equationBlocks asm)[0]!).lines[0]!.op == `P.f
 
 end PropertyKindCalculus.Tests.SheetEquations
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

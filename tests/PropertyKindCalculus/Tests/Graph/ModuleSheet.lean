@@ -12,8 +12,16 @@ names a declaration carries its `Lean.Name` for the rendering document to link â
 kind as a `declText`, the configuration port linked to the constant that binds it, the
 witness and hypotheses as declaration references.
 -/
-import PropertyKindCalculus.Graph.ModuleSheet
-import PropertyKindCalculus.Tests.Core.ModuleCard
+
+module
+
+public import PropertyKindCalculus.Graph.ModuleSheet
+meta import PropertyKindCalculus.Graph.ModuleSheet
+public import PropertyKindCalculus.Tests.Core.ModuleCard
+meta import PropertyKindCalculus.Tests.Core.ModuleCard
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Tests.ModuleSheet
 
@@ -99,3 +107,6 @@ def tbl (id : String) : IndexTable :=
   #[#[.code "kz", .links #[(`kx, "kx"), (`kz, "kz")]]]
 
 end PropertyKindCalculus.Tests.ModuleSheet
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

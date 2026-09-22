@@ -26,9 +26,18 @@ enter the tape as baked constant leaves via `BatchCarrier.const (C := TapeBuilde
 carrier, which delegates to `TapeBuilder.const` (an unnamed `fill`-leaf). Recording the step is thus
 the same app code a `[BatchCarrier C]` deployment runs, only at `C := TapeBuilder`.
 -/
-import PropertyKindCalculus.Torch.Paradigm.TapeCodegen
-import PropertyKindCalculus.Torch.Paradigm.TapeBatchCarrier
-import PropertyKindCalculus.Examples.AvsForward
+
+module
+
+public import PropertyKindCalculus.Torch.Paradigm.TapeCodegen
+meta import PropertyKindCalculus.Torch.Paradigm.TapeCodegen
+public import PropertyKindCalculus.Torch.Paradigm.TapeBatchCarrier
+meta import PropertyKindCalculus.Torch.Paradigm.TapeBatchCarrier
+public import PropertyKindCalculus.Examples.AvsForward
+meta import PropertyKindCalculus.Examples.AvsForward
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 open Spec TorchLean
 open Runtime.Autograd (Tape TapeM)
@@ -298,3 +307,6 @@ def report : IO Unit := do
 #eval report
 
 end PropertyKindCalculus.Examples.LmStepCodegenDemo
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

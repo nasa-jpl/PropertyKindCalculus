@@ -56,17 +56,25 @@ Summary of the records below, derived from them by the generator:
 Both commands record `AuditReceipt`s (`PropertyKindCalculus.AuditReceipt`) over each part.
 -/
 
-import PropertyKindCalculus.Iso80000
-import PropertyKindCalculus.ExaminationCoverage
+module
+
+public import PropertyKindCalculus.Iso80000
+meta import PropertyKindCalculus.Iso80000
+public import PropertyKindCalculus.ExaminationCoverage
+meta import PropertyKindCalculus.ExaminationCoverage
 
 -- No namespace: the dimensional rows pretty-print kinds relative to the current namespace,
 -- and the driver that produced these pins ran with none. Nothing here is declared.
 
 /-! ## `#kind_examination_coverage` — M6, part by part -/
 
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
+
 /--
 info: examination coverage — no dimension-one kinds in the given namespaces
 -/
+
 #guard_msgs (whitespace := lax) in
 #kind_examination_coverage PropertyKindCalculus.Iso80000.Part1
 
@@ -643,3 +651,6 @@ info: dimensional coverage:
 -- Part13 is clean: the coverage invariant, with no message to re-bless
 #guard_msgs in
 #kind_dimensional_clean PropertyKindCalculus.Iso80000.Part13
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

@@ -23,7 +23,18 @@ type is **primitive** or **derived** from another by a construction the calculus
 Part of the separate `Examples` library; imports only the Mathlib-free core.
 -/
 
-import PropertyKindCalculus
+module
+
+public import PropertyKindCalculus
+-- Private scope only: core seals `Nat.repr` and `String.toByteArray`, so a kernel `decide`
+-- over a `String` built by `toString` gets stuck without these.
+import all Init.Prelude
+import all Init.Data.Repr
+import all Init.Data.ToString.Basic
+import all Init.Data.String.Basic
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Examples.MiniObjectTypes
 
@@ -286,3 +297,6 @@ combinators (`Composite`, `Designated.ofInjective`, `Designated.prod`) and refus
 naming conventions, which is why every one of them takes a proof. -/
 
 end PropertyKindCalculus.Examples.MiniObjectTypes
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

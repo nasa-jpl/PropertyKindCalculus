@@ -19,10 +19,15 @@ Two certificate forms, both for the one area kind:
     (`Part3.area_dim_length`); the integral certificate is the more general one.
 -/
 
-import PropertyKindCalculus.Quantity
-import PropertyKindCalculus.QuantityClassification
-import PropertyKindCalculus.Iso80000.Part3.AreaElement
-import PropertyKindCalculus.QuantityReal
+module
+
+public import PropertyKindCalculus.Quantity
+public import PropertyKindCalculus.QuantityClassification
+public import PropertyKindCalculus.Iso80000.Part3.AreaElement
+public import PropertyKindCalculus.QuantityReal
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Iso80000.Part3.AreaClassification
 
@@ -75,3 +80,6 @@ theorem rectangleArea_isProduct (w h : Quantity length.kind ℝ) :
     (rectangleArea w h).IsProduct area_is_length_times_length w h := rfl
 
 end PropertyKindCalculus.Iso80000.Part3.AreaClassification
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

@@ -1,6 +1,10 @@
-import PropertyKindCalculus.Graph.KindGraph
-import PropertyKindCalculus.KindIncidence
-import PropertyKindCalculus.ModuleCard
+module
+
+public import PropertyKindCalculus.Graph.KindGraph
+public meta import PropertyKindCalculus.Graph.KindGraph
+public import PropertyKindCalculus.KindIncidence
+public meta import PropertyKindCalculus.KindIncidence
+public import PropertyKindCalculus.ModuleCard
 
 /-!
 # The SCC footprint of a declared boundary — where a module's guarantee comes from
@@ -36,6 +40,14 @@ actually come from?* — and is `#guard_msgs`-pinnable, so a footprint that sile
 collapses into a single component fails a pin instead of passing as prose.
 -/
 
+-- Same-module helpers serve both the command elaborators below and runtime callers, so the
+-- phase check is relaxed for this file (the module system's mixed-use escape; imports are
+-- still checked and take `public meta import`).
+set_option compiler.relaxedMetaCheck true
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
+
 namespace PropertyKindCalculus.KindGraph
 
 open Lean Meta Elab
@@ -43,7 +55,7 @@ open PropertyKindCalculus.KindIncidence (contractValueOf assembleContract)
 
 /-- The display form of a kind vertex — its last name component, as the cluster
 renderings spell it. -/
-private def kindShortName (n : Name) : String :=
+def kindShortName (n : Name) : String :=
   match n with
   | .str _ s => s
   | _ => toString n
@@ -214,3 +226,6 @@ def clusterRows (kg : KindGraph)
   return rows
 
 end PropertyKindCalculus.KindGraph
+
+end -- pkc-blanket-expose
+end -- pkc-blanket

@@ -3,8 +3,11 @@ Copyright (c) 2026 California Institute of Technology. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Nicolas Rouquette
 -/
-import PropertyKindCalculus.Index.Basic
-import PropertyKindCalculus.KindIncidence
+
+module
+
+public import PropertyKindCalculus.Index.Basic
+public import PropertyKindCalculus.KindIncidence
 
 /-!
 # The theorem-edge index — declared `Provenance.Relation`s as a table
@@ -22,6 +25,9 @@ every hypothesis mentioned, every license rung answered for — are `#kind_relat
 and the pinned `#kind_relations` survey is their gate at scale. A row here reads what
 the declaration says, exactly as the crossings table reads what the registry says.
 -/
+
+public section -- pkc-blanket
+@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus.Index
 
@@ -69,3 +75,6 @@ def relationsTable (scope : Scope) : MetaM IndexTable := do
   return { id := "relations", title := "Theorem edges between boundaries", headers, rows }
 
 end PropertyKindCalculus.Index
+
+end -- pkc-blanket-expose
+end -- pkc-blanket
