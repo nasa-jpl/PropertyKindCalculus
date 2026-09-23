@@ -19,10 +19,9 @@ genuine **IEEE-754 binary32**, using TorchLean's float stack:
     silent failure the unconditional abstract bridge cannot see, surfaced here as a
     hypothesis (`Quantity.add_refines_exec`).
 
-This is the only PropertyKindCalculus library that depends on TorchLean. It is a
-plain (non-`module`) file: Lean permits a non-module file to import the
-module-system TorchLean modules, while the PropertyKindCalculus core stays
-Mathlib- and module-free.
+This is the only PropertyKindCalculus library that depends on TorchLean. A `module`
+file, like the TorchLean modules it imports and the Mathlib-free
+PropertyKindCalculus core spine it builds on.
 -/
 
 module

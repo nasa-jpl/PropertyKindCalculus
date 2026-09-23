@@ -23,7 +23,7 @@ The `Spec` tensor expression on the right is exactly what the *same* source term
 eager `Tensor Float s` carrier; the agreement needs **no** numerical side conditions (both use
 the same clamped `sqrtSpec`, the same `min`/`max`), so it holds for symbolic inputs.
 
-Plain (not a `module`) file: imports the tape carrier and the faithfulness lemmas.
+A `module` file: imports the tape carrier and the faithfulness lemmas.
 -/
 
 module

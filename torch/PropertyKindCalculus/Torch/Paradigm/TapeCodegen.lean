@@ -23,7 +23,7 @@ inputs equals the source kernel — the codegen changes only *where intermediate
 DRAM), never the arithmetic. Compile the generated kernel with `nvcc --fmad=false -prec-div=true
 -prec-sqrt=true` (no FMA-contraction, no reassociation) to keep it bit-identical to the eager path.
 
-Plain (not a `module`) file: imports the tape carrier and the CSE pass.
+A `module` file: imports the tape carrier and the CSE pass.
 -/
 
 module

@@ -14,7 +14,7 @@ through the reference `Float` interpreter — but a megakernel *compiles* a reco
 marshaling data through it, so only `const` is exercised by the codegen demos. `liveSize` reports the
 shape size (a pure/GC carrier's non-zero liveness sentinel) and `release` is a no-op.
 
-Plain (not a `module`) file: imports the tape carrier and the `BatchCarrier` class.
+A `module` file: imports the tape carrier and the `BatchCarrier` class.
 -/
 
 module

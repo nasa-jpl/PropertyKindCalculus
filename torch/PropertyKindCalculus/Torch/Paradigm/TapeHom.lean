@@ -39,7 +39,7 @@ when the caller has made the tape ops `local irreducible`, as `paradigm.tape_par
 already do; the tactic assembles only `rfl` erasures and `Evaluates_*` applications, so a bug
 in it yields a failed proof, never an unsound one.)
 
-Plain (not a `module`) file: imports the parity alphabet and the core magnitude-erasure lemmas.
+A `module` file: imports the parity alphabet and the core magnitude-erasure lemmas.
 -/
 
 module

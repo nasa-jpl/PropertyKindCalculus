@@ -31,8 +31,7 @@ No sharing/CSE here: a sub-expression named twice (`n·n`) emits its node twice.
 *value*-correct (both copies compute the same tensor); de-duplication is the WO3 memoizing-
 tape stretch, an optimisation orthogonal to parity.
 
-Plain (not a `module`) file: imports the plain `num_carrier` capability and TorchLean's
-`TapeM` builder.
+A `module` file: imports the `num_carrier` capability and TorchLean's `TapeM` builder.
 -/
 
 module

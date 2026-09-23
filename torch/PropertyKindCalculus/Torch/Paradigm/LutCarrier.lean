@@ -36,7 +36,7 @@ INSTANCES.
   TorchLean API directly or land the megakernel (`paradigm.tape_codegen`), where the generated
   launcher caches the texture create-once.
 
-Plain (not a `module`) file: imports the tape carrier and the CUDA carrier.
+A `module` file: imports the tape carrier and the CUDA carrier.
 -/
 
 module

@@ -38,7 +38,7 @@ the hazard above, resolved by construction (witnessed by `examples.tape_codegen_
 `lutCseIdentity`). The obligation this shifts onto callers is that distinct tables carry distinct
 names; `paradigm.tape_codegen`'s `gen` enforces it (`resolveTables` rejects duplicates).
 
-Plain (not a `module`) file: imports the plain tape carrier.
+A `module` file: imports the tape carrier.
 -/
 
 module

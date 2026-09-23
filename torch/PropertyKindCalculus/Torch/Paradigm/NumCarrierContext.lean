@@ -25,7 +25,7 @@ resolution. A module writing a `[NumCarrier α]`-generic kernel — or instantia
 is perturbed. (The carriers defined in this library — `TapeBuilder`, `CudaT` — are *not*
 `Context`s, so their own `NumCarrier` instances do not collide with `instNumCarrierOfContext`.)
 
-Plain (not a `module`) file: imports the plain core `NumCarrier` and TorchLean's `Context`.
+A `module` file: imports the core `NumCarrier` and TorchLean's `Context`.
 -/
 
 module
