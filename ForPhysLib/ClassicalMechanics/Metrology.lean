@@ -34,8 +34,7 @@ public import PropertyKindCalculus.DimensionalCoverage
 public import PropertyKindCalculus.Iso80000.Part3
 public import PropertyKindCalculus.Iso80000.Part4
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 namespace ForPhysLib.ClassicalMechanics.Metrology
 
@@ -271,5 +270,3 @@ info: dimensional coverage:
 
 end ForPhysLib.ClassicalMechanics.Metrology
 
-end -- pkc-blanket-expose
-end -- pkc-blanket

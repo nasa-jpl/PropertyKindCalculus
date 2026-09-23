@@ -54,8 +54,7 @@ meta import Physlib.Electromagnetism.Dynamics.Hamiltonian
 public import Physlib.Electromagnetism.Dynamics.IsExtrema
 meta import Physlib.Electromagnetism.Dynamics.IsExtrema
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 open PropertyKindCalculus
 open Electromagnetism
@@ -316,5 +315,3 @@ end
 
 end ForPhysLib.Electromagnetism.Kinematics.Dynamics
 
-end -- pkc-blanket-expose
-end -- pkc-blanket

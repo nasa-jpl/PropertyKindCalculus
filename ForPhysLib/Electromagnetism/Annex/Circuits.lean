@@ -24,8 +24,7 @@ meta import PropertyKindCalculus.QuantityReal
 public import Mathlib.Analysis.Real.Sqrt
 meta import Mathlib.Analysis.Real.Sqrt
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 namespace ForPhysLib.Electromagnetism.Annex.Circuits
 
@@ -135,5 +134,3 @@ theorem activeFromFactor_powerFactorOf (P : Quantity activePower ℝ)
 
 end ForPhysLib.Electromagnetism.Annex.Circuits
 
-end -- pkc-blanket-expose
-end -- pkc-blanket

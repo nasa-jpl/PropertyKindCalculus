@@ -39,8 +39,7 @@ public import ForPhysLib.CaseStudies.PointParticle.Attempt2Kinds
 public import ForPhysLib.CaseStudies.PointParticle.Attempt3Indexed
 public import ForPhysLib.CaseStudies.PointParticle.Attempt4Dependent
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 namespace ForPhysLib.CaseStudies.PointParticle.Scorecard
 
@@ -175,5 +174,3 @@ end
 
 end ForPhysLib.CaseStudies.PointParticle.Scorecard
 
-end -- pkc-blanket-expose
-end -- pkc-blanket

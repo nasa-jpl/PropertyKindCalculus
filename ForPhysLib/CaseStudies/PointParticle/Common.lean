@@ -55,8 +55,7 @@ public import PropertyKindCalculus.QuantityReal
 public import PropertyKindCalculus.Iso80000.Part3
 public import PropertyKindCalculus.Iso80000.Part4
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 namespace ForPhysLib.CaseStudies.PointParticle
 
@@ -188,5 +187,3 @@ end
 
 end ForPhysLib.CaseStudies.PointParticle
 
-end -- pkc-blanket-expose
-end -- pkc-blanket

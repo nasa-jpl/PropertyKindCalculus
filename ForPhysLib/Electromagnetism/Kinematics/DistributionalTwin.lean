@@ -36,8 +36,7 @@ meta import Physlib.Electromagnetism.Distributional.ElectricField
 public import Physlib.Electromagnetism.Distributional.FieldStrength
 meta import Physlib.Electromagnetism.Distributional.FieldStrength
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 open PropertyKindCalculus
 open Electromagnetism
@@ -107,5 +106,3 @@ end
 
 end ForPhysLib.Electromagnetism.Kinematics.DistributionalTwin
 
-end -- pkc-blanket-expose
-end -- pkc-blanket

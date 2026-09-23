@@ -22,8 +22,7 @@ public import PropertyKindCalculus.Dimension
 public import PropertyKindCalculus.DimensionalCoverage
 public import PropertyKindCalculus.Iso80000.Part3
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 namespace ForPhysLib.Metrology.Space
 
@@ -90,5 +89,3 @@ info: dimensional coverage:
 
 end ForPhysLib.Metrology.Space
 
-end -- pkc-blanket-expose
-end -- pkc-blanket

@@ -9,10 +9,7 @@ module
 public import ForPhysLib.Electromagnetism.Kinematics
 public import ForPhysLib.Electromagnetism.Annex
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 
 
-end -- pkc-blanket-expose
-end -- pkc-blanket

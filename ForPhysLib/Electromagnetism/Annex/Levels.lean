@@ -24,8 +24,7 @@ public import PropertyKindCalculus.Level
 -- library; `import all` gives this file the reduction without exposing them.
 import all PropertyKindCalculus.Level
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 namespace ForPhysLib.Electromagnetism.Annex.Levels
 
@@ -70,5 +69,3 @@ example :
 
 end ForPhysLib.Electromagnetism.Annex.Levels
 
-end -- pkc-blanket-expose
-end -- pkc-blanket

@@ -15,10 +15,7 @@ public import ForPhysLib.Electromagnetism.Annex.Circuits
 public import ForPhysLib.Electromagnetism.Annex.Levels
 public import ForPhysLib.Electromagnetism.Annex.Audits
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 
 
-end -- pkc-blanket-expose
-end -- pkc-blanket

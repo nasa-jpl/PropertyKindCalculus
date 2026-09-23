@@ -44,8 +44,7 @@ import all ForPhysLib.ClassicalMechanics.Kinded.HarmonicOscillator
 import all ForPhysLib.ClassicalMechanics.Kinded.RigidBody
 import all ForPhysLib.ClassicalMechanics.Operators
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 namespace ForPhysLib.ClassicalMechanics.Audits
 
@@ -340,5 +339,3 @@ unkinded output rawTrajectoryValue/result : ℝ
 
 end ForPhysLib.ClassicalMechanics.Audits
 
-end -- pkc-blanket-expose
-end -- pkc-blanket

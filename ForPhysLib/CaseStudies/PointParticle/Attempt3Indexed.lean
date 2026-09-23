@@ -40,8 +40,7 @@ public import ForPhysLib.CaseStudies.PointParticle.Common
 -- library; `import all` gives this file the reduction without exposing them.
 import all PropertyKindCalculus.IndividualQuantity
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 namespace ForPhysLib.CaseStudies.PointParticle.Attempt3
 
@@ -167,5 +166,3 @@ end
 
 end ForPhysLib.CaseStudies.PointParticle.Attempt3
 
-end -- pkc-blanket-expose
-end -- pkc-blanket

@@ -18,10 +18,7 @@ public import ForPhysLib.Exhibits.Electromagnetism
 public import ForPhysLib.Exhibits.PointParticle
 public import ForPhysLib.Exhibits.Composition
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 
 
-end -- pkc-blanket-expose
-end -- pkc-blanket

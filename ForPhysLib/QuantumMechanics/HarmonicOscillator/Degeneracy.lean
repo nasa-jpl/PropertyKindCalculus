@@ -27,8 +27,7 @@ module
 public import ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinded
 public import Mathlib.Algebra.Order.Antidiag.FinsuppEquiv
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 open QuantumMechanics HarmonicOscillator Constants
 open PropertyKindCalculus
@@ -180,5 +179,3 @@ end
 
 end ForPhysLib.QuantumMechanics.HarmonicOscillator.Degeneracy
 
-end -- pkc-blanket-expose
-end -- pkc-blanket

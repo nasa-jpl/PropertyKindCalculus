@@ -75,8 +75,7 @@ meta import PropertyKindCalculus.Iso80000.Part4
 import all PropertyKindCalculus.Frame
 import all PropertyKindCalculus.SpecializationLift
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 namespace ForPhysLib.ClassicalMechanics
 
@@ -639,5 +638,3 @@ noncomputable example (M : RigidBodyMotion 3) (t : Time) (i : Fin 3) :
 
 end ForPhysLib.ClassicalMechanics
 
-end -- pkc-blanket-expose
-end -- pkc-blanket

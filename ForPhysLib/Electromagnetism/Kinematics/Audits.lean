@@ -47,8 +47,7 @@ import all ForPhysLib.Electromagnetism.Kinematics.Kinded
 import all ForPhysLib.Electromagnetism.Kinematics.Maxwell
 import all ForPhysLib.Electromagnetism.Kinematics.Operators
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 namespace ForPhysLib.Electromagnetism.Kinematics.Audits
 
@@ -264,5 +263,3 @@ unkinded output rawElectricField/result : EuclideanSpace ℝ (Fin d)
 
 end ForPhysLib.Electromagnetism.Kinematics.Audits
 
-end -- pkc-blanket-expose
-end -- pkc-blanket

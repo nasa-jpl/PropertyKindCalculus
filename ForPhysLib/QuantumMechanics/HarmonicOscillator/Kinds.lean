@@ -41,8 +41,7 @@ public import PropertyKindCalculus.Iso80000.Part3
 public import PropertyKindCalculus.Iso80000.Part4
 public import PropertyKindCalculus.Iso80000.Part10
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 namespace ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinds
 
@@ -204,5 +203,3 @@ theorem characteristicLength_specializes : Specializes Edge characteristicLength
 
 end ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinds
 
-end -- pkc-blanket-expose
-end -- pkc-blanket

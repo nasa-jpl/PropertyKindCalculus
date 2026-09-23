@@ -61,8 +61,7 @@ meta import ForPhysLib.QuantumMechanics.HarmonicOscillator.Orthonormality
 public import PropertyKindCalculus.BoundaryAudit
 meta import PropertyKindCalculus.BoundaryAudit
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 open PropertyKindCalculus MeasureTheory Complex Real
 open QuantumMechanics HarmonicOscillator SpaceDHilbertSpace SchwartzSubmodule
@@ -305,5 +304,3 @@ end
 
 end ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinded
 
-end -- pkc-blanket-expose
-end -- pkc-blanket

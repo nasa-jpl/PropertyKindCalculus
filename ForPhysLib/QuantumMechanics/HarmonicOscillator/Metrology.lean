@@ -36,8 +36,7 @@ public import PropertyKindCalculus.Iso80000.Part3
 public import PropertyKindCalculus.Iso80000.Part4
 public import PropertyKindCalculus.Iso80000.Part10
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 namespace ForPhysLib.QuantumMechanics.HarmonicOscillator.Metrology
 
@@ -210,5 +209,3 @@ info: dimensional coverage:
 
 end ForPhysLib.QuantumMechanics.HarmonicOscillator.Metrology
 
-end -- pkc-blanket-expose
-end -- pkc-blanket

@@ -51,8 +51,7 @@ meta import ForPhysLib.Electromagnetism.Kinematics.Metrology
 public import ForPhysLib.Electromagnetism.Kinematics.Feasibility
 meta import ForPhysLib.Electromagnetism.Kinematics.Feasibility
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 open PropertyKindCalculus
 open Space Time SpaceTime TensorProduct
@@ -392,5 +391,3 @@ end
 
 end ForPhysLib.Electromagnetism.Kinematics.Kinded
 
-end -- pkc-blanket-expose
-end -- pkc-blanket

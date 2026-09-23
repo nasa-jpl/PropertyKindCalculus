@@ -10,10 +10,7 @@ module
 public import ForPhysLib.ClassicalMechanics.Kinded.HarmonicOscillator
 public import ForPhysLib.ClassicalMechanics.Kinded.RigidBody
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 
 
-end -- pkc-blanket-expose
-end -- pkc-blanket

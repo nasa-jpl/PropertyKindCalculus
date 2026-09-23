@@ -55,8 +55,7 @@ public import PropertyKindCalculus.QuantityReal
 -- library; `import all` gives this file the reduction without exposing them.
 import all PropertyKindCalculus.Level
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 namespace ForPhysLib.Exhibits.Electromagnetism
 
@@ -313,5 +312,3 @@ noncomputable example (T : Quantity kineticK ℝ) (V : Quantity potentialEnergyK
 
 end ForPhysLib.Exhibits.Electromagnetism
 
-end -- pkc-blanket-expose
-end -- pkc-blanket

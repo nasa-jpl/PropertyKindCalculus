@@ -22,10 +22,7 @@ public import ForPhysLib.QuantumMechanics.HarmonicOscillator.LadderOperators
 public import ForPhysLib.QuantumMechanics.HarmonicOscillator.Audits
 public import ForPhysLib.QuantumMechanics.HarmonicOscillator.Orthonormality
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 
 
-end -- pkc-blanket-expose
-end -- pkc-blanket

@@ -60,8 +60,7 @@ meta import PropertyKindCalculus.Iso80000.Part4
 import all PropertyKindCalculus.Frame
 import all PropertyKindCalculus.SpecializationLift
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 namespace ForPhysLib.QuantumMechanics.HarmonicOscillator
 
@@ -295,5 +294,3 @@ noncomputable example (Q₁ : PhysHO1) : ℝ := Q₁.ξ + Q₁.m
 
 end ForPhysLib.QuantumMechanics.HarmonicOscillator
 
-end -- pkc-blanket-expose
-end -- pkc-blanket

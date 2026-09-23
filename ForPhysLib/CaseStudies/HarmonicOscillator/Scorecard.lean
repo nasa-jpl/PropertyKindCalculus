@@ -43,8 +43,7 @@ meta import ForPhysLib.CaseStudies.HarmonicOscillator.Attempt3Tagged
 public import ForPhysLib.CaseStudies.HarmonicOscillator.Attempt4Pkc
 meta import ForPhysLib.CaseStudies.HarmonicOscillator.Attempt4Pkc
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 namespace PropertyKindCalculus.Examples.HarmonicOscillator.Scorecard
 
@@ -383,5 +382,3 @@ theorem mr32_attempt4_swept :
 
 end PropertyKindCalculus.Examples.HarmonicOscillator.Scorecard
 
-end -- pkc-blanket-expose
-end -- pkc-blanket

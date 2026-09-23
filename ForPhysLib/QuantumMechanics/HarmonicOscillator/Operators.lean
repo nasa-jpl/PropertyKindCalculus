@@ -35,8 +35,7 @@ module
 public import ForPhysLib.QuantumMechanics.HarmonicOscillator.Measurand
 public import PropertyKindCalculus.DimensionalCoverage
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 namespace ForPhysLib.QuantumMechanics.HarmonicOscillator.Operators
 
@@ -160,5 +159,3 @@ info: dimensional coverage:
 
 end ForPhysLib.QuantumMechanics.HarmonicOscillator.Operators
 
-end -- pkc-blanket-expose
-end -- pkc-blanket

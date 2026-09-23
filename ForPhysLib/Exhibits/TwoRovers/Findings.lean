@@ -42,8 +42,7 @@ meta import PropertyKindCalculus.Iso80000.Part4
 public import Mathlib.Tactic.NormNum
 meta import Mathlib.Tactic.NormNum
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 namespace ForPhysLib.Exhibits.TwoRovers
 
@@ -260,5 +259,3 @@ whole. -/
 
 end ForPhysLib.Exhibits.TwoRovers
 
-end -- pkc-blanket-expose
-end -- pkc-blanket

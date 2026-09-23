@@ -25,10 +25,7 @@ module
 public import ForPhysLib.CaseStudies.HarmonicOscillator
 public import ForPhysLib.CaseStudies.PointParticle
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 
 
-end -- pkc-blanket-expose
-end -- pkc-blanket

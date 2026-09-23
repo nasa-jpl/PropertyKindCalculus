@@ -41,8 +41,7 @@ meta import ForPhysLib.Electromagnetism.Kinematics.Kinded
 public import Physlib.Electromagnetism.ThreeDimension.MaxwellEquations
 meta import Physlib.Electromagnetism.ThreeDimension.MaxwellEquations
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 open PropertyKindCalculus
 open Electromagnetism
@@ -241,5 +240,3 @@ end
 
 end ForPhysLib.Electromagnetism.Kinematics.Maxwell
 
-end -- pkc-blanket-expose
-end -- pkc-blanket

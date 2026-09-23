@@ -35,8 +35,7 @@ meta import ForPhysLib.Electromagnetism.Kinematics.Kinded
 public import PropertyKindCalculus.DimensionalCoverage
 meta import PropertyKindCalculus.DimensionalCoverage
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 namespace ForPhysLib.Electromagnetism.Kinematics.Operators
 
@@ -159,5 +158,3 @@ info: dimensional coverage:
 
 end ForPhysLib.Electromagnetism.Kinematics.Operators
 
-end -- pkc-blanket-expose
-end -- pkc-blanket

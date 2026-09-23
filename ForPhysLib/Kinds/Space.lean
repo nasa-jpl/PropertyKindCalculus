@@ -31,8 +31,7 @@ module
 public import PropertyKindCalculus
 public import PropertyKindCalculus.Iso80000.Part3
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 namespace ForPhysLib.Kinds.Space
 
@@ -107,5 +106,3 @@ theorem positionVector_comparable_displacement :
 
 end ForPhysLib.Kinds.Space
 
-end -- pkc-blanket-expose
-end -- pkc-blanket

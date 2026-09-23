@@ -28,8 +28,7 @@ public import PropertyKindCalculus.DimensionalCoverage
 public import PropertyKindCalculus.Iso80000.Part6
 public import PropertyKindCalculus.Iso80000.Part6.DefiningRelations
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 namespace ForPhysLib.Electromagnetism.Annex.Metrology
 
@@ -204,5 +203,3 @@ info: dimensional coverage:
 
 end ForPhysLib.Electromagnetism.Annex.Metrology
 
-end -- pkc-blanket-expose
-end -- pkc-blanket

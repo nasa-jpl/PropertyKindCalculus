@@ -18,10 +18,7 @@ public import ForPhysLib.Electromagnetism.Kinematics.DistributionalTwin
 public import ForPhysLib.Electromagnetism.Kinematics.Maxwell
 public import ForPhysLib.Electromagnetism.Kinematics.Dynamics
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 
 
-end -- pkc-blanket-expose
-end -- pkc-blanket

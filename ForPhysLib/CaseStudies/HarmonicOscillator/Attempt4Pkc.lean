@@ -90,8 +90,7 @@ import all PropertyKindCalculus.SpecializationLift
 import all PropertyKindCalculus.IndividualQuantity
 import all PropertyKindCalculus.Frame
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 namespace PropertyKindCalculus.Examples.HarmonicOscillator.Attempt4
 
@@ -1375,5 +1374,3 @@ end MR32
 
 end PropertyKindCalculus.Examples.HarmonicOscillator.Attempt4
 
-end -- pkc-blanket-expose
-end -- pkc-blanket

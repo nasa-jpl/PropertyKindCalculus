@@ -35,8 +35,7 @@ public import ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinded
 public import PropertyKindCalculus.Observable
 public import PropertyKindCalculus.Function
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 open PropertyKindCalculus MeasureTheory Complex Real
 open QuantumMechanics HarmonicOscillator SpaceDHilbertSpace SchwartzSubmodule
@@ -127,5 +126,3 @@ end
 
 end ForPhysLib.QuantumMechanics.HarmonicOscillator
 
-end -- pkc-blanket-expose
-end -- pkc-blanket

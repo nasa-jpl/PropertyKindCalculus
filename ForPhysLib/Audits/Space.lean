@@ -29,8 +29,7 @@ public import PropertyKindCalculus.KindLedger
 -- Private scope only: `findDocString?` returns `none` for an imported declaration, and the audit prints each tagged declaration's docstring. `import all` restores them.
 import all ForPhysLib.Kinded.Space
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 namespace ForPhysLib.Audits.Space
 
@@ -122,5 +121,3 @@ unkinded flow: rawDistance/q ⇒ rawDistance/dq
 
 end ForPhysLib.Audits.Space
 
-end -- pkc-blanket-expose
-end -- pkc-blanket

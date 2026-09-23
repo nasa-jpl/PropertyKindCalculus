@@ -51,8 +51,7 @@ module
 public import Mathlib.Analysis.SpecialFunctions.Sqrt
 public import Mathlib.Analysis.Real.Pi.Bounds
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 namespace PropertyKindCalculus.Examples.HarmonicOscillator.Attempt1
 
@@ -512,5 +511,3 @@ end MR32
 
 end PropertyKindCalculus.Examples.HarmonicOscillator.Attempt1
 
-end -- pkc-blanket-expose
-end -- pkc-blanket

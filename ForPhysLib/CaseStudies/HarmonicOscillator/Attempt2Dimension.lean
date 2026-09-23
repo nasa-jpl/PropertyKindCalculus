@@ -57,8 +57,7 @@ public import PropertyKindCalculus.QuantityReal
 public import Physlib.Units.WithDim.Basic
 public import Mathlib.Basic.Complex.Basic
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 namespace PropertyKindCalculus.Examples.HarmonicOscillator.Attempt2
 
@@ -581,5 +580,3 @@ end MR32
 
 end PropertyKindCalculus.Examples.HarmonicOscillator.Attempt2
 
-end -- pkc-blanket-expose
-end -- pkc-blanket

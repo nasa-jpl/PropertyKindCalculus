@@ -30,8 +30,7 @@ public import Physlib.SpaceAndTime.Space.Integrals.Basic
 public import Mathlib.MeasureTheory.Constructions.HaarToSphere
 public import Mathlib.Analysis.SpecialFunctions.Integrals.Basic
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 namespace ForPhysLib.ClassicalMechanics.SolidSphereInertia
 
@@ -255,5 +254,3 @@ theorem solidSphere_inertiaTensor (m R : ℝ≥0) (hr : R ≠ 0) :
 
 end ForPhysLib.ClassicalMechanics.SolidSphereInertia
 
-end -- pkc-blanket-expose
-end -- pkc-blanket

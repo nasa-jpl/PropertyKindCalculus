@@ -32,8 +32,7 @@ module
 public import Physlib.QuantumMechanics.HarmonicOscillator.Eigenstates
 public import Mathlib.MeasureTheory.Integral.Bochner.ContinuousLinearMap
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 open MeasureTheory QuantumMechanics HarmonicOscillator Polynomial Real Complex
 open SpaceDHilbertSpace SchwartzSubmodule InnerProductSpace
@@ -169,5 +168,3 @@ end
 
 end ForPhysLib.QuantumMechanics.HarmonicOscillator.Orthonormality
 
-end -- pkc-blanket-expose
-end -- pkc-blanket

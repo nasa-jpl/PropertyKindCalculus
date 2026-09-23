@@ -14,10 +14,7 @@ module
 
 public import ForPhysLib.Metrology.Space
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 
 
-end -- pkc-blanket-expose
-end -- pkc-blanket

@@ -46,8 +46,7 @@ public import PropertyKindCalculus
 public import PropertyKindCalculus.Iso80000.Part3
 public import PropertyKindCalculus.Iso80000.Part6
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 namespace ForPhysLib.Electromagnetism.Kinematics.Kinds
 
@@ -257,5 +256,3 @@ theorem speedOfLight_specializes : Specializes Edge speedOfLight speed :=
 
 end ForPhysLib.Electromagnetism.Kinematics.Kinds
 
-end -- pkc-blanket-expose
-end -- pkc-blanket

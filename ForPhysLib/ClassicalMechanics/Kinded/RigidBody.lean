@@ -45,8 +45,7 @@ meta import ForPhysLib.ClassicalMechanics.Metrology
 public import Physlib.ClassicalMechanics.RigidBody.SolidSphere
 meta import Physlib.ClassicalMechanics.RigidBody.SolidSphere
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 namespace ForPhysLib.ClassicalMechanics.Kinded
 
@@ -243,5 +242,3 @@ end
 
 end ForPhysLib.ClassicalMechanics.Kinded
 
-end -- pkc-blanket-expose
-end -- pkc-blanket

@@ -46,8 +46,7 @@ public import ForPhysLib.Kinds.Space
 -- library; `import all` gives this file the reduction without exposing them.
 import all PropertyKindCalculus.Frame
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 namespace ForPhysLib.Exhibits.RigidBody
 
@@ -287,5 +286,3 @@ noncomputable example (M : RigidBodyMotion 3) (t : Time) :
 
 end ForPhysLib.Exhibits.RigidBody
 
-end -- pkc-blanket-expose
-end -- pkc-blanket

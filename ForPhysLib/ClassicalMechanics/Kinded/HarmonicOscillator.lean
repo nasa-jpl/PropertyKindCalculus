@@ -40,8 +40,7 @@ meta import ForPhysLib.ClassicalMechanics.Metrology
 public import Physlib.ClassicalMechanics.HarmonicOscillator.Geometric.KineticEnergy
 meta import Physlib.ClassicalMechanics.HarmonicOscillator.Geometric.KineticEnergy
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 namespace ForPhysLib.ClassicalMechanics.Kinded
 
@@ -318,5 +317,3 @@ end
 
 end ForPhysLib.ClassicalMechanics.Kinded
 
-end -- pkc-blanket-expose
-end -- pkc-blanket

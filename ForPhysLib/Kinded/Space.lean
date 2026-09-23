@@ -36,8 +36,7 @@ meta import Physlib.SpaceAndTime.Space.Basic
 public import Physlib.SpaceAndTime.Space.Origin
 meta import Physlib.SpaceAndTime.Space.Origin
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 namespace ForPhysLib.Kinded.Space
 
@@ -142,5 +141,3 @@ end
 
 end ForPhysLib.Kinded.Space
 
-end -- pkc-blanket-expose
-end -- pkc-blanket

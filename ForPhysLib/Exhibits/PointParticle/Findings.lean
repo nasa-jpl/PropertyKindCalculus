@@ -46,8 +46,7 @@ module
 
 public import ForPhysLib.CaseStudies.PointParticle.Common
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 namespace ForPhysLib.Exhibits.PointParticle
 
@@ -204,5 +203,3 @@ end
 
 end ForPhysLib.Exhibits.PointParticle
 
-end -- pkc-blanket-expose
-end -- pkc-blanket

@@ -15,10 +15,7 @@ public import ForPhysLib.CaseStudies.PointParticle.Attempt3Indexed
 public import ForPhysLib.CaseStudies.PointParticle.Attempt4Dependent
 public import ForPhysLib.CaseStudies.PointParticle.Scorecard
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 
 
-end -- pkc-blanket-expose
-end -- pkc-blanket

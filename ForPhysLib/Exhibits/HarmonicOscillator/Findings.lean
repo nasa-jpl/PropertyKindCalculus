@@ -45,8 +45,7 @@ meta import PropertyKindCalculus.Iso80000.Part4
 public import PropertyKindCalculus.QuantityReal
 meta import PropertyKindCalculus.QuantityReal
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 namespace ForPhysLib.Exhibits.HarmonicOscillator
 
@@ -250,5 +249,3 @@ theorem kineticE_magnitude {R : Type} [Mul R] [ScalarCarrier R] (half : R)
 
 end ForPhysLib.Exhibits.HarmonicOscillator
 
-end -- pkc-blanket-expose
-end -- pkc-blanket

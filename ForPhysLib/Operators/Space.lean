@@ -25,8 +25,7 @@ public import ForPhysLib.Metrology.Space
 public import ForPhysLib.Kinded.Space
 public import PropertyKindCalculus.DimensionalCoverage
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 namespace ForPhysLib.Operators.Space
 
@@ -84,5 +83,3 @@ info: dimensional coverage:
 
 end ForPhysLib.Operators.Space
 
-end -- pkc-blanket-expose
-end -- pkc-blanket

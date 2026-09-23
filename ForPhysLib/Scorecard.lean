@@ -35,8 +35,7 @@ public import ForPhysLib.Kinded
 public import ForPhysLib.Operators
 public import ForPhysLib.Exhibits
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 namespace ForPhysLib.Scorecard
 
@@ -224,5 +223,3 @@ end ExhibitE
 
 end ForPhysLib.Scorecard
 
-end -- pkc-blanket-expose
-end -- pkc-blanket

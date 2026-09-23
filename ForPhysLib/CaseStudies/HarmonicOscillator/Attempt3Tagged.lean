@@ -70,8 +70,7 @@ public import PropertyKindCalculus.Dimension
 public import Physlib.Units.WithDim.Basic
 public import Mathlib.Basic.Complex.Basic
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 namespace PropertyKindCalculus.Examples.HarmonicOscillator.Attempt3
 
@@ -630,5 +629,3 @@ theorem mr32_over_rejection :
 
 end PropertyKindCalculus.Examples.HarmonicOscillator.Attempt3
 
-end -- pkc-blanket-expose
-end -- pkc-blanket

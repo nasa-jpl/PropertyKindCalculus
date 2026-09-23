@@ -37,8 +37,7 @@ module
 public import PropertyKindCalculus
 public import PropertyKindCalculus.Iso80000.Part6
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 namespace ForPhysLib.Electromagnetism.Annex.Kinds
 
@@ -183,5 +182,3 @@ theorem apparentPower_comparable_activePower :
 
 end ForPhysLib.Electromagnetism.Annex.Kinds
 
-end -- pkc-blanket-expose
-end -- pkc-blanket

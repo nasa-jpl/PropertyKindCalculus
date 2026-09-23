@@ -45,10 +45,7 @@ public import ForPhysLib.CaseStudies.HarmonicOscillator.Attempt3Tagged
 public import ForPhysLib.CaseStudies.HarmonicOscillator.Attempt4Pkc
 public import ForPhysLib.CaseStudies.HarmonicOscillator.Scorecard
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 
 
-end -- pkc-blanket-expose
-end -- pkc-blanket

@@ -51,8 +51,7 @@ public import PropertyKindCalculus.AggregationLaws
 public import PropertyKindCalculus.Iso80000.Part3
 public import PropertyKindCalculus.Iso80000.Part4
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 namespace ForPhysLib.Exhibits.Composition
 
@@ -334,5 +333,3 @@ theorem halvesByMass_total_ne_zero : halvesByMass.total ≠ Carrier.zero :=
 
 end ForPhysLib.Exhibits.Composition
 
-end -- pkc-blanket-expose
-end -- pkc-blanket

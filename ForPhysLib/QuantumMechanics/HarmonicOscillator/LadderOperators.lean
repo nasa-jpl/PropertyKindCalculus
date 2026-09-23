@@ -34,8 +34,7 @@ module
 public import ForPhysLib.QuantumMechanics.HarmonicOscillator.AngularMomentum
 meta import ForPhysLib.QuantumMechanics.HarmonicOscillator.AngularMomentum
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 open MeasureTheory QuantumMechanics HarmonicOscillator SpaceDHilbertSpace SchwartzSubmodule
 open InnerProductSpace Complex Constants LinearPMap SchwartzMap
@@ -487,5 +486,3 @@ end
 
 end ForPhysLib.QuantumMechanics.HarmonicOscillator.Ladder
 
-end -- pkc-blanket-expose
-end -- pkc-blanket

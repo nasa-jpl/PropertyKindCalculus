@@ -52,8 +52,7 @@ import all ForPhysLib.QuantumMechanics.HarmonicOscillator.Heisenberg
 import all ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinded
 import all ForPhysLib.QuantumMechanics.HarmonicOscillator.LadderOperators
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 namespace ForPhysLib.QuantumMechanics.HarmonicOscillator.Audits
 
@@ -192,5 +191,3 @@ unkinded flow: momentumSigmaQ/ψ ⇒ momentumSigmaQ/_1
 
 end ForPhysLib.QuantumMechanics.HarmonicOscillator.Audits
 
-end -- pkc-blanket-expose
-end -- pkc-blanket

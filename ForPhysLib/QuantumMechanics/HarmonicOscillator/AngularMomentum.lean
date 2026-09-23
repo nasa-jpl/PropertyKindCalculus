@@ -31,8 +31,7 @@ meta import ForPhysLib.QuantumMechanics.HarmonicOscillator.Heisenberg
 public import Physlib.QuantumMechanics.Operators.AngularMomentum
 meta import Physlib.QuantumMechanics.Operators.AngularMomentum
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 open MeasureTheory QuantumMechanics HarmonicOscillator SpaceDHilbertSpace SchwartzSubmodule
 open InnerProductSpace Complex Constants LinearPMap SchwartzMap
@@ -222,5 +221,3 @@ end
 
 end ForPhysLib.QuantumMechanics.HarmonicOscillator.AngularMomentum
 
-end -- pkc-blanket-expose
-end -- pkc-blanket

@@ -15,8 +15,7 @@ module
 
 public import ForPhysLib.Kinds.Space
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 namespace ForPhysLib.Examination.Space
 
@@ -49,5 +48,3 @@ theorem positionVector_ne_displacement_by_examination : positionVector ≠ displ
 
 end ForPhysLib.Examination.Space
 
-end -- pkc-blanket-expose
-end -- pkc-blanket

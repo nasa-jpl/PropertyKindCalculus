@@ -25,8 +25,7 @@ public import PropertyKindCalculus.DimensionalCoverage
 -- Private scope only: `findDocString?` returns `none` for an imported declaration, and the audit prints each tagged declaration's docstring. `import all` restores them.
 import all ForPhysLib.Electromagnetism.Annex.Circuits
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 namespace ForPhysLib.Electromagnetism.Annex.Audits
 
@@ -61,5 +60,3 @@ info: tagged boundary crossings:
 
 end ForPhysLib.Electromagnetism.Annex.Audits
 
-end -- pkc-blanket-expose
-end -- pkc-blanket

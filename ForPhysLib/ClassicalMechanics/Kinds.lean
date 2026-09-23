@@ -42,8 +42,7 @@ public import PropertyKindCalculus
 public import PropertyKindCalculus.Iso80000.Part3
 public import PropertyKindCalculus.Iso80000.Part4
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 namespace ForPhysLib.ClassicalMechanics.Kinds
 
@@ -252,5 +251,3 @@ theorem lagrangian_no_edge (k : KindOfProperty) : ¬ Edge lagrangian k := by
 
 end ForPhysLib.ClassicalMechanics.Kinds
 
-end -- pkc-blanket-expose
-end -- pkc-blanket

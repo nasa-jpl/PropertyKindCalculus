@@ -36,8 +36,7 @@ meta import ForPhysLib.ClassicalMechanics.Kinded.RigidBody
 public import PropertyKindCalculus.DimensionalCoverage
 meta import PropertyKindCalculus.DimensionalCoverage
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 namespace ForPhysLib.ClassicalMechanics.Operators
 
@@ -186,5 +185,3 @@ end
 
 end ForPhysLib.ClassicalMechanics.Operators
 
-end -- pkc-blanket-expose
-end -- pkc-blanket

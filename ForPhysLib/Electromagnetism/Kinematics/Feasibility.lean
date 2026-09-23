@@ -60,8 +60,7 @@ meta import PropertyKindCalculus.QuantityReal
 public import PropertyKindCalculus.Iso80000.Part6
 meta import PropertyKindCalculus.Iso80000.Part6
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section
 
 namespace ForPhysLib.Electromagnetism.Kinematics
 
@@ -416,5 +415,3 @@ nothing. -/
 
 end ForPhysLib.Electromagnetism.Kinematics
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
