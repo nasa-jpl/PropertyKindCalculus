@@ -91,8 +91,10 @@ def sysmlComparisonTable : DocTable := mdTable true
 
 #doc (Manual) "A Property Kind Calculus for Metrology: proving quantity and unit laws in Lean, from ISO/IEC 80000 to measurement uncertainty" =>
 %%%
-shortTitle := "A Property Kind Calculus for Metrology"
-tag := "kindcalculus-blueprint"
+shortTitle := "A Property Kind Calculus for Measurement Metrology"
+authors := ["Nicolas F. Rouquette", "Xiaolan Xu"]
+authorshipNote := "Jet Propulsion Laboratory, California Institute of Technology"
+tag := "property-kind-calculus"
 %%%
 
 Measurement begins with a judgment that two properties are _mutually comparable_ — that
