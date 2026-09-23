@@ -91,7 +91,7 @@ namespace LowerBound
 /-- **The directional Prop former**: the lower bound is at or below `x`. This is the
 *only* order relation statable through a `LowerBound` — there is deliberately no former
 with `x` on the left — so the endpoint can never be used as if it bounded from above. -/
-def le {k : KindOfProperty} {R : Type} [LE R] (b : LowerBound k R) (x : Quantity k R) :
+@[expose] def le {k : KindOfProperty} {R : Type} [LE R] (b : LowerBound k R) (x : Quantity k R) :
     Prop :=
   b.q.magnitude ≤ x.magnitude
 
@@ -114,7 +114,7 @@ namespace UpperBound
 
 /-- **The directional Prop former**: the upper bound is at or above `x` — the only order
 relation statable through an `UpperBound`. -/
-def ge {k : KindOfProperty} {R : Type} [LE R] (b : UpperBound k R) (x : Quantity k R) :
+@[expose] def ge {k : KindOfProperty} {R : Type} [LE R] (b : UpperBound k R) (x : Quantity k R) :
     Prop :=
   x.magnitude ≤ b.q.magnitude
 
@@ -156,7 +156,7 @@ def of (lo hi : Quantity k R) (_ord : OrderKind k := by exact OrderKind.ofScale)
 /-- **The interval is genuinely ordered**: its lower endpoint is at or below its upper
 endpoint — stated through the endpoints' own directional formers, so it is the *only*
 orientation the API can even express. -/
-def Ordered [LE R] (I : IccQ k R) : Prop := I.lo.le I.hi.q
+@[expose] def Ordered [LE R] (I : IccQ k R) : Prop := I.lo.le I.hi.q
 
 /-- **Proof-carrying smart constructor**: certifies `lo ≤ hi` at construction, so a
 swapped pair of literals is rejected by an unprovable side goal (at a proof carrier),
@@ -191,7 +191,7 @@ def about [Add R] [Sub R] (centre halfWidth : Quantity k R)
 
 /-- **Membership** `x ∈ [lo, hi]`, as the conjunction of the two directional facts —
 each endpoint contributes only the orientation its role can state. -/
-def Mem [LE R] (I : IccQ k R) (x : Quantity k R) : Prop := I.lo.le x ∧ I.hi.ge x
+@[expose] def Mem [LE R] (I : IccQ k R) (x : Quantity k R) : Prop := I.lo.le x ∧ I.hi.ge x
 
 /-- **The executable eliminator**: clamp `x` into the interval, as
 `min (max x lo) hi` — clamp-from-below first, then from above. This association (and
