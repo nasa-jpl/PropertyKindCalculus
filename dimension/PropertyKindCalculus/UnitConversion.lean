@@ -27,6 +27,9 @@ public import PropertyKindCalculus.UnitPrefix
 public import Mathlib.Algebra.Order.Field.Basic
 public import Mathlib.Basic.Real.Basic
 public import Physlib.Units.ParametricUnits
+-- Private scope only: the checks below reduce through bodies sealed in the core
+-- library; `import all` gives this file the reduction without exposing them.
+import all PropertyKindCalculus.UnitPrefix
 
 public section -- pkc-blanket
 @[expose] section -- pkc-blanket-expose

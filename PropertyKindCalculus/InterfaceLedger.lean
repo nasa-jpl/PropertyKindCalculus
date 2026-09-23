@@ -40,9 +40,11 @@ law — which is a modeling obligation the `antisymm` field states rather than d
 module
 
 public import PropertyKindCalculus.Extensivity
+-- Private scope only: the proofs below reduce through bodies sealed in `PropertyKindCalculus.Mereology`; `import all`
+-- gives this module the reduction without exposing them to every consumer.
+import all PropertyKindCalculus.Extensivity
 
 public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -212,5 +214,4 @@ end InterfaceLedger
 
 end PropertyKindCalculus
 
-end -- pkc-blanket-expose
 end -- pkc-blanket

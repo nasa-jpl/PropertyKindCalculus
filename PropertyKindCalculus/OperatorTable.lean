@@ -58,6 +58,9 @@ module
 
 public import PropertyKindCalculus.QuantityClassification
 public import PropertyKindCalculus.IndividualQuantity
+-- Private scope only: the proofs below reduce through bodies sealed in `PropertyKindCalculus.IndividualQuantity`; `import all`
+-- gives this module the reduction without exposing them to every consumer.
+import all PropertyKindCalculus.IndividualQuantity
 
 public section -- pkc-blanket
 
@@ -168,29 +171,37 @@ theorem hdiv_eq_div_individual [Div R] [ScalarCarrier R] [KindDiv k₁ k₂ k]
 
 @[simp] theorem hmul_magnitude_individual [Mul R] [ScalarCarrier R] [KindMul k₁ k₂ k]
     (x : IndividualQuantity o k₁ R) (y : IndividualQuantity o k₂ R) :
-    (x * y).magnitude = x.magnitude * y.magnitude := rfl
+    (x * y).magnitude = x.magnitude * y.magnitude := by
+  rw [hmul_eq_mul_individual, IndividualQuantity.mul]
 
 @[simp] theorem hdiv_magnitude_individual [Div R] [ScalarCarrier R] [KindDiv k₁ k₂ k]
     (x : IndividualQuantity o k₁ R) (y : IndividualQuantity o k₂ R) :
-    (x / y).magnitude = x.magnitude / y.magnitude := rfl
+    (x / y).magnitude = x.magnitude / y.magnitude := by
+  rw [hdiv_eq_div_individual, IndividualQuantity.div]
 
 /-- An operator-built product of object-indexed quantities satisfies the product certificate of
 the table's witness — classification by construction survives the sugar at this layer too. -/
 theorem hmul_isProduct_individual [Mul R] [ScalarCarrier R] [KindMul k₁ k₂ k]
     (x : IndividualQuantity o k₁ R) (y : IndividualQuantity o k₂ R) :
-    (x * y).IsProduct KindMul.law x y := rfl
+    (x * y).IsProduct KindMul.law x y := by
+  rw [hmul_eq_mul_individual]
+  exact IndividualQuantity.mul_isProduct KindMul.law x y
 
 /-- The quotient certificate, likewise. -/
 theorem hdiv_isQuotient_individual [Div R] [ScalarCarrier R] [KindDiv k₁ k₂ k]
     (x : IndividualQuantity o k₁ R) (y : IndividualQuantity o k₂ R) :
-    (x / y).IsQuotient KindDiv.law x y := rfl
+    (x / y).IsQuotient KindDiv.law x y := by
+  rw [hdiv_eq_div_individual]
+  exact IndividualQuantity.div_isQuotient KindDiv.law x y
 
 /-- **The operator sugar does not cross objects.** Forgetting an operator-built product to the
 plain `Quantity` layer is the plain layer's operator-built product of the forgotten operands, so
 the object index is carried and dropped coherently rather than being quietly discarded. -/
 theorem toQuantity_hmul_individual [Mul R] [ScalarCarrier R] [KindMul k₁ k₂ k]
     (x : IndividualQuantity o k₁ R) (y : IndividualQuantity o k₂ R) :
-    (x * y).toQuantity = Quantity.mul KindMul.law x.toQuantity y.toQuantity := rfl
+    (x * y).toQuantity = Quantity.mul KindMul.law x.toQuantity y.toQuantity := by
+  rw [hmul_eq_mul_individual]
+  exact IndividualQuantity.toQuantity_mul KindMul.law x y
 
 end OperatorTable
 

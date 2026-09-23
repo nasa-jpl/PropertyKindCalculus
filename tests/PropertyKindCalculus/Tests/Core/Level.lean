@@ -26,6 +26,8 @@ module
 
 public import PropertyKindCalculus
 meta import PropertyKindCalculus
+import all PropertyKindCalculus.Level
+import all PropertyKindCalculus.Quantity
 
 public section -- pkc-blanket
 @[expose] section -- pkc-blanket-expose

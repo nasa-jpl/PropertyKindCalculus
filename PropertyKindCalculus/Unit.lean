@@ -33,7 +33,6 @@ module
 public import PropertyKindCalculus.ValueScale
 
 public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -41,7 +40,7 @@ namespace PropertyKindCalculus
 iff its scale is at least differential: its magnitudes are "a reference quantity
 multiplied by a number" (§13.3.4 differential, §13.3.5 rational). Ordinal and
 nominal kinds do **not** bear a unit (Dybkær §9.13.4). -/
-def KindOfProperty.BearsUnit (k : KindOfProperty) : Prop := k.scale.AllowsDifference
+@[expose] def KindOfProperty.BearsUnit (k : KindOfProperty) : Prop := k.scale.AllowsDifference
 
 /-- **§9.13.4** — a nominal kind bears no metrological unit: it has no magnitude. -/
 theorem KindOfProperty.nominal_bears_no_unit {k : KindOfProperty} (h : k.IsNominal) :
@@ -98,7 +97,7 @@ namespace MetrologicalUnit
 
 /-- **§18.12** — a metrological unit is *well-formed* iff its kind actually bears a
 unit (§13.3.3): there is no metrological unit of a nominal or ordinal kind. -/
-def WellFormed (u : MetrologicalUnit) : Prop := u.kind.BearsUnit
+@[expose] def WellFormed (u : MetrologicalUnit) : Prop := u.kind.BearsUnit
 
 /-- A metrological unit of a nominal kind is ill-formed (§9.13.4). -/
 theorem not_wellFormed_of_nominal {u : MetrologicalUnit} (h : u.kind.IsNominal) :
@@ -114,12 +113,12 @@ theorem not_wellFormed_of_ordinal {u : MetrologicalUnit} (h : u.kind.IsOrdinal) 
 reference the same kind. This is the only relation along which a value converts:
 a metre and a centimetre are commensurable (both length); a metre and a kilogram
 are not — and that is a fact of the types, not a runtime guard. -/
-def Commensurable (u₁ u₂ : MetrologicalUnit) : Prop := u₁.kind = u₂.kind
+@[expose] def Commensurable (u₁ u₂ : MetrologicalUnit) : Prop := u₁.kind = u₂.kind
 
 namespace Commensurable
 
 /-- Commensurability is reflexive. -/
-theorem refl (u : MetrologicalUnit) : u.Commensurable u := rfl
+theorem refl (u : MetrologicalUnit) : u.Commensurable u := by rw [Commensurable]
 
 /-- Commensurability is symmetric. -/
 theorem symm {u₁ u₂ : MetrologicalUnit} (h : u₁.Commensurable u₂) :
@@ -142,15 +141,15 @@ def measure (u : MetrologicalUnit) (n : Int) : PropertyValue :=
   { kind := u.kind, numeral := n, reference := u.symbol }
 
 @[simp] theorem measure_kind (u : MetrologicalUnit) (n : Int) :
-    (u.measure n).kind = u.kind := rfl
+    (u.measure n).kind = u.kind := by rw [measure]
 
 /-- **`quantity / unit = number`** — the numeral read back off a measured value is
 the number it was measured with. -/
 @[simp] theorem measure_numeral (u : MetrologicalUnit) (n : Int) :
-    (u.measure n).numeral = n := rfl
+    (u.measure n).numeral = n := by rw [measure]
 
 @[simp] theorem measure_reference (u : MetrologicalUnit) (n : Int) :
-    (u.measure n).reference = u.symbol := rfl
+    (u.measure n).reference = u.symbol := by rw [measure]
 
 /-- **§16.10** — measuring in a *well-formed* unit yields a *quantity* value: the
 result has a magnitude because the unit's kind is a kind-of-quantity (§13.3.3). -/
@@ -191,7 +190,8 @@ theorem comparable_of_measures {u₁ u₂ : MetrologicalUnit} {v w : PropertyVal
 /-- A value measured in a unit lives on that unit's kind's value scale (§10.14):
 the scale of the kind the unit references. -/
 theorem measure_on_valueScale (u : MetrologicalUnit) (n : Int) :
-    (u.kind.valueScale).Admits (u.measure n) := rfl
+    (u.kind.valueScale).Admits (u.measure n) := by
+  rw [measure, ValueScale.Admits, KindOfProperty.valueScale]
 
 /-- **§9.13.4 / §10.14** — commensurable units reference the *same* value scale:
 "of the same kind" is exactly "ordered by the same value scale". -/
@@ -203,15 +203,15 @@ end MetrologicalUnit
 
 /-- **§13.3.3** — the metrological units a kind admits are exactly references to
 that kind; this canonical constructor builds one from a kind and a symbol. -/
-def KindOfProperty.unit (k : KindOfProperty) (symbol : String) : MetrologicalUnit :=
+@[expose] def KindOfProperty.unit (k : KindOfProperty) (symbol : String) : MetrologicalUnit :=
   { kind := k, symbol := symbol }
 
 /-- A canonical unit of a kind references that kind: it is commensurable with every
 other unit of the kind. -/
 theorem KindOfProperty.unit_commensurable (k : KindOfProperty) (s₁ s₂ : String) :
-    (k.unit s₁).Commensurable (k.unit s₂) := rfl
+    (k.unit s₁).Commensurable (k.unit s₂) := by
+  rw [KindOfProperty.unit, MetrologicalUnit.Commensurable]; rfl
 
 end PropertyKindCalculus
 
-end -- pkc-blanket-expose
 end -- pkc-blanket

@@ -94,7 +94,6 @@ public import PropertyKindCalculus.QuantityVector
 public import PropertyKindCalculus.QuantityClassification
 
 public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -154,10 +153,11 @@ namespace InFrame
 variable {f g : Frame} {var : Variance} {k : KindOfProperty} {R : Type}
 
 /-- The components, as the carrier holds them. -/
-def components (x : InFrame f var k R) : R := x.q.magnitude
+@[expose] def components (x : InFrame f var k R) : R := x.q.magnitude
 
 @[simp] theorem components_mk (q : Quantity k R) :
-    (InFrame.mk (f := f) (var := var) q).components = q.magnitude := rfl
+    (InFrame.mk (f := f) (var := var) q).components = q.magnitude := by
+  rw [InFrame.components]
 
 /-- **Same frame, same variance, same kind** — the only shape addition takes. Two readings
 in different frames have different types, so their sum is not a wrong answer to write; it
@@ -166,7 +166,8 @@ def add (h : DifferenceKind k) (x y : InFrame f var k R) [Carrier R] : InFrame f
   ⟨Quantity.add h x.q y.q⟩
 
 @[simp] theorem add_components [Carrier R] (h : DifferenceKind k) (x y : InFrame f var k R) :
-    (x.add h y).components = Carrier.add x.components y.components := rfl
+    (x.add h y).components = Carrier.add x.components y.components := by
+  rw [InFrame.add, InFrame.components, Quantity.add]; rfl
 
 end InFrame
 
@@ -190,10 +191,10 @@ def sumFin {R : Type} [Zero R] [Add R] : {n : Nat} → (Fin n → R) → R
   | _ + 1, v => v 0 + sumFin (fun i => v i.succ)
 
 @[simp] theorem sumFin_zero {R : Type} [Zero R] [Add R] (v : Fin 0 → R) :
-    sumFin v = 0 := rfl
+    sumFin v = 0 := by rw [sumFin]
 
 @[simp] theorem sumFin_succ {R : Type} [Zero R] [Add R] {n : Nat} (v : Fin (n + 1) → R) :
-    sumFin v = v 0 + sumFin (fun i => v i.succ) := rfl
+    sumFin v = v 0 + sumFin (fun i => v i.succ) := by rw [sumFin]
 
 namespace FrameChange
 
@@ -249,7 +250,8 @@ the number happens to agree, but that no matrix was consulted to obtain it. -/
 def toFrameScalar (x : InFrame f .scalar k R) : InFrame g .scalar k R := ⟨x.q⟩
 
 @[simp] theorem toFrameScalar_components (x : InFrame f .scalar k R) :
-    (toFrameScalar (g := g) x).components = x.components := rfl
+    (toFrameScalar (g := g) x).components = x.components := by
+  rw [toFrameScalar, InFrame.components]; rfl
 
 /-- **A vector's components turn with the frame**: `v ↦ C v`. -/
 def toFrameVector [Zero R] [Add R] [Mul R] (c : FrameChange n R f g)
@@ -258,7 +260,8 @@ def toFrameVector [Zero R] [Add R] [Mul R] (c : FrameChange n R f g)
 
 @[simp] theorem toFrameVector_components [Zero R] [Add R] [Mul R] (c : FrameChange n R f g)
     (x : InFrame f .vector k (Fin n → R)) :
-    (toFrameVector c x).components = c.mulVec x.components := rfl
+    (toFrameVector c x).components = c.mulVec x.components := by
+  rw [toFrameVector, InFrame.components]
 
 /-- **A rank-2 array turns on both indices**: `M ↦ C M Cᵀ`. This is the law that makes a
 diagonal matrix stop being diagonal, which is the whole reason a per-axis list of numbers
@@ -270,7 +273,8 @@ def toFrameRank2 [Zero R] [Add R] [Mul R] (c : FrameChange n R f g)
 
 @[simp] theorem toFrameRank2_components [Zero R] [Add R] [Mul R] (c : FrameChange n R f g)
     (x : InFrame f .rank2 k (Fin n → Fin n → R)) :
-    (toFrameRank2 c x).components = c.conj x.components := rfl
+    (toFrameRank2 c x).components = c.conj x.components := by
+  rw [toFrameRank2, InFrame.components]
 
 /-! ## The scalar product — the licensed way back to a scalar carrier
 
@@ -299,7 +303,8 @@ def dot [Zero R] [Add R] [Mul R] [ScalarCarrier R] {k : KindOfProperty}
 @[simp] theorem dot_components [Zero R] [Add R] [Mul R] [ScalarCarrier R]
     {k : KindOfProperty} (h : ProductKind k₁ k₂ k)
     (x : InFrame f .vector k₁ (Fin n → R)) (y : InFrame f .vector k₂ (Fin n → R)) :
-    (dot h x y).components = sumFin (fun i => x.components i * y.components i) := rfl
+    (dot h x y).components = sumFin (fun i => x.components i * y.components i) := by
+  rw [InFrame.dot, InFrame.components]
 
 /-- **The squared magnitude** `|x|² = x · x` — the scalar product's diagonal, named because
 it is what kinetic energy, potential energy and every modulus are built from. -/
@@ -311,7 +316,8 @@ def normSq [Zero R] [Add R] [Mul R] [ScalarCarrier R] {k : KindOfProperty}
 @[simp] theorem normSq_components [Zero R] [Add R] [Mul R] [ScalarCarrier R]
     {k : KindOfProperty} (h : ProductKind k₁ k₁ k)
     (x : InFrame f .vector k₁ (Fin n → R)) :
-    (normSq h x).components = sumFin (fun i => x.components i * x.components i) := rfl
+    (normSq h x).components = sumFin (fun i => x.components i * x.components i) := by
+  rw [InFrame.normSq, InFrame.dot, InFrame.components]
 
 /-- **Reading a coefficient.** A component of a vector quantity is a quantity of the *same*
 kind (§18: the unit belongs to the whole vector), and it is **frame-relative** — which is the
@@ -328,11 +334,11 @@ def component [Zero R] (x : InFrame f .vector k (Fin n → R)) (i : Fin n) :
   ⟨⟨x.components i⟩⟩
 
 @[simp] theorem component_components [Zero R] (x : InFrame f .vector k (Fin n → R))
-    (i : Fin n) : (x.component i).components = x.components i := rfl
+    (i : Fin n) : (x.component i).components = x.components i := by
+  rw [InFrame.component, InFrame.components]
 
 end InFrame
 
 end PropertyKindCalculus
 
-end -- pkc-blanket-expose
 end -- pkc-blanket

@@ -50,6 +50,9 @@ public import Mathlib.Data.Fin.VecNotation
 meta import Mathlib.Data.Fin.VecNotation
 public import Mathlib.Tactic.NormNum
 meta import Mathlib.Tactic.NormNum
+-- Private scope only: the checks below reduce through bodies sealed in the core
+-- library; `import all` gives this file the reduction without exposing them.
+import all PropertyKindCalculus.IndividualQuantity
 
 public section -- pkc-blanket
 @[expose] section -- pkc-blanket-expose

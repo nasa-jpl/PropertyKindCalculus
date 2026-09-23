@@ -51,6 +51,9 @@ neither is a norm. §6 pins the gap as a refusal rather than leaving it as a rem
 module
 
 public import ForPhysLib.CaseStudies.PointParticle.Common
+-- Private scope only: the checks below reduce through bodies sealed in the core
+-- library; `import all` gives this file the reduction without exposing them.
+import all PropertyKindCalculus.IndividualQuantity
 
 public section -- pkc-blanket
 @[expose] section -- pkc-blanket-expose

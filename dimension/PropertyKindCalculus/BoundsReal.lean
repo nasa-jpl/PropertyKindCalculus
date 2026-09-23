@@ -23,6 +23,9 @@ module
 
 public import PropertyKindCalculus.Bounds
 public import Mathlib.Order.Interval.Set.Basic
+-- Private scope only: the checks below reduce through bodies sealed in the core
+-- library; `import all` gives this file the reduction without exposing them.
+import all PropertyKindCalculus.Bounds
 
 public section -- pkc-blanket
 @[expose] section -- pkc-blanket-expose

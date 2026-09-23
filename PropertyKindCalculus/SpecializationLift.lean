@@ -41,9 +41,12 @@ module
 public import PropertyKindCalculus.Specialization
 public import PropertyKindCalculus.Bounds
 public import PropertyKindCalculus.OperatorTable
+-- Private scope only: the proofs below reduce through bodies sealed in
+-- `PropertyKindCalculus.IndividualQuantity`; `import all` gives this module the reduction
+-- without exposing them to every consumer.
+import all PropertyKindCalculus.IndividualQuantity
 
 public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -57,23 +60,23 @@ variable {k k₁ k₂ p p' : KindOfProperty}
 /-- **Verified re-classification.** View a `k`-quantity at a super-kind `p`, licensed by a
 `Specializes E k p` proof: a kinetic energy *is* an energy. The magnitude is untouched —
 only the classification index moves, and only upward along a proved specialization. -/
-def Quantity.widen (_h : Specializes E k p) (x : Quantity k R) : Quantity p R :=
+@[expose] def Quantity.widen (_h : Specializes E k p) (x : Quantity k R) : Quantity p R :=
   ⟨x.magnitude⟩
 
 @[simp] theorem Quantity.widen_magnitude (h : Specializes E k p) (x : Quantity k R) :
-    (x.widen h).magnitude = x.magnitude := rfl
+    (x.widen h).magnitude = x.magnitude := by rw [Quantity.widen]
 
 /-- Widening along reflexivity is the identity — viewing a quantity at its own kind is not
 an operation. -/
 theorem Quantity.widen_refl (x : Quantity k R) :
-    x.widen (Specializes.refl (E := E) k) = x := rfl
+    x.widen (Specializes.refl (E := E) k) = x := by rw [Quantity.widen]
 
 /-- Widening composes along transitivity: two steps up the lattice are one step along the
 composite proof. Together with `widen_refl`, the lift is functorial on the specialization
 preorder. -/
 theorem Quantity.widen_widen (h₁ : Specializes E k p) (h₂ : Specializes E p p')
     (x : Quantity k R) :
-    (x.widen h₁).widen h₂ = x.widen (h₁.trans h₂) := rfl
+    (x.widen h₁).widen h₂ = x.widen (h₁.trans h₂) := by rw [Quantity.widen]; rfl
 
 /-- **The certificate.** `y` (of the super-kind `p`) *is the widening* of `x` (of `k`):
 same magnitude, re-classified along a proved specialization. A separate `Prop`, carried
@@ -84,7 +87,7 @@ def Quantity.IsWidening (_h : Specializes E k p) (y : Quantity p R) (x : Quantit
 
 /-- The smart-constructed widening satisfies the certificate **by construction**. -/
 theorem Quantity.widen_isWidening (h : Specializes E k p) (x : Quantity k R) :
-    (x.widen h).IsWidening h x := rfl
+    (x.widen h).IsWidening h x := by rw [Quantity.widen, Quantity.IsWidening]
 
 /-! ## Widening at the instance layer
 
@@ -95,18 +98,19 @@ variable {O : Type u} {o : O}
 
 /-- Widening on an object-indexed quantity: the kind index moves up the lattice, the
 object index is carried unchanged. -/
-def IndividualQuantity.widen (_h : Specializes E k p) (x : IndividualQuantity o k R) :
+@[expose] def IndividualQuantity.widen (_h : Specializes E k p) (x : IndividualQuantity o k R) :
     IndividualQuantity o p R :=
   ⟨x.magnitude⟩
 
 @[simp] theorem IndividualQuantity.widen_magnitude (h : Specializes E k p)
     (x : IndividualQuantity o k R) :
-    (x.widen h).magnitude = x.magnitude := rfl
+    (x.widen h).magnitude = x.magnitude := by rw [IndividualQuantity.widen]
 
 /-- Widening commutes with forgetting the object — the two lifts are coherent. -/
 theorem IndividualQuantity.toQuantity_widen (h : Specializes E k p)
     (x : IndividualQuantity o k R) :
-    (x.widen h).toQuantity = x.toQuantity.widen h := rfl
+    (x.widen h).toQuantity = x.toQuantity.widen h := by
+  rw [IndividualQuantity.widen, Quantity.widen, IndividualQuantity.toQuantity]; rfl
 
 /-! ## The sum and the comparison at the join — named-witness forms -/
 
@@ -115,14 +119,15 @@ widened along their `Specializes` proofs and added *at the join* `p`, under the 
 `DifferenceKind` scale gate every sum carries — discharged at the join, where the sum
 lives. The result is classified `p` by construction; it is *not* available at either
 sub-kind. -/
-def Quantity.addAt [Carrier R] (h₁ : Specializes E k₁ p) (h₂ : Specializes E k₂ p)
+@[expose] def Quantity.addAt [Carrier R] (h₁ : Specializes E k₁ p) (h₂ : Specializes E k₂ p)
     (hd : DifferenceKind p) (x : Quantity k₁ R) (y : Quantity k₂ R) : Quantity p R :=
   Quantity.add hd (x.widen h₁) (y.widen h₂)
 
 @[simp] theorem Quantity.addAt_magnitude [Carrier R]
     (h₁ : Specializes E k₁ p) (h₂ : Specializes E k₂ p) (hd : DifferenceKind p)
     (x : Quantity k₁ R) (y : Quantity k₂ R) :
-    (Quantity.addAt h₁ h₂ hd x y).magnitude = Carrier.add x.magnitude y.magnitude := rfl
+    (Quantity.addAt h₁ h₂ hd x y).magnitude = Carrier.add x.magnitude y.magnitude := by
+  rw [Quantity.addAt, Quantity.widen, Quantity.add]; rfl
 
 /-- The sum at the join is commutative over any lawful carrier — `T + V = V + T`, with the
 witnesses swapped along with the operands. -/
@@ -137,7 +142,8 @@ join, after the lift. -/
 theorem Quantity.addAt_eq_add_widen [Carrier R]
     (h₁ : Specializes E k₁ p) (h₂ : Specializes E k₂ p) (hd : DifferenceKind p)
     (x : Quantity k₁ R) (y : Quantity k₂ R) :
-    Quantity.addAt h₁ h₂ hd x y = Quantity.add hd (x.widen h₁) (y.widen h₂) := rfl
+    Quantity.addAt h₁ h₂ hd x y = Quantity.add hd (x.widen h₁) (y.widen h₂) := by
+  rw [Quantity.addAt]
 
 /-- **The comparison at the join.** Quantities of comparable kinds are compared where
 their kinds meet — gated by `OrderKind` at the join (ordinal or richer, Dybkær §12.16):
@@ -196,7 +202,8 @@ theorem hadd_eq_addAt [Carrier R] [j : KindJoin E k₁ k₂ p]
 
 @[simp] theorem hadd_magnitude_join [Carrier R] [KindJoin E k₁ k₂ p]
     (x : Quantity k₁ R) (y : Quantity k₂ R) :
-    (x + y : Quantity p R).magnitude = Carrier.add x.magnitude y.magnitude := rfl
+    (x + y : Quantity p R).magnitude = Carrier.add x.magnitude y.magnitude := by
+  rw [hadd_eq_addAt, Quantity.addAt, Quantity.widen, Quantity.widen, Quantity.add]
 
 /-- `x + y` across comparable kinds at the instance layer: the same join table, on the
 shared object `o`. The object gate is enforced by instance resolution failing to unify
@@ -216,7 +223,9 @@ theorem hadd_eq_add_widen_individual [Carrier R] [j : KindJoin E k₁ k₂ p]
 @[simp] theorem hadd_magnitude_join_individual [Carrier R] [KindJoin E k₁ k₂ p]
     (x : IndividualQuantity o k₁ R) (y : IndividualQuantity o k₂ R) :
     (x + y : IndividualQuantity o p R).magnitude
-      = Carrier.add x.magnitude y.magnitude := rfl
+      = Carrier.add x.magnitude y.magnitude := by
+  rw [hadd_eq_add_widen_individual, IndividualQuantity.add, IndividualQuantity.widen,
+    IndividualQuantity.widen]
 
 /-- **The join sum does not cross objects silently.** Forgetting an operator-built join
 sum to the plain `Quantity` layer is the plain layer's join sum of the forgotten
@@ -224,11 +233,14 @@ operands. -/
 theorem toQuantity_hadd_join [Carrier R] [j : KindJoin E k₁ k₂ p]
     (x : IndividualQuantity o k₁ R) (y : IndividualQuantity o k₂ R) :
     (x + y : IndividualQuantity o p R).toQuantity
-      = x.toQuantity + y.toQuantity := rfl
+      = x.toQuantity + y.toQuantity := by
+  rw [hadd_eq_add_widen_individual, IndividualQuantity.add, IndividualQuantity.widen,
+    IndividualQuantity.widen, IndividualQuantity.toQuantity, IndividualQuantity.toQuantity,
+    IndividualQuantity.toQuantity, hadd_eq_addAt, Quantity.addAt, Quantity.widen,
+    Quantity.widen, Quantity.add]
 
 end OperatorTable
 
 end PropertyKindCalculus
 
-end -- pkc-blanket-expose
 end -- pkc-blanket

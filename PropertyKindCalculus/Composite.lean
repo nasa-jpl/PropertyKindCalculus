@@ -49,6 +49,10 @@ parts cannot make on their own behalf.
 module
 
 public import PropertyKindCalculus.Extensivity
+-- Private scope only: the proofs below reduce through bodies sealed in
+-- `PropertyKindCalculus.Extensivity`; `import all` gives this module the reduction without
+-- exposing them to every consumer.
+import all PropertyKindCalculus.Extensivity
 public import PropertyKindCalculus.IndividualQuantity
 
 public section -- pkc-blanket

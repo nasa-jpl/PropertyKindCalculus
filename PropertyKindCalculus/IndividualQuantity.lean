@@ -61,7 +61,6 @@ public import PropertyKindCalculus.QuantityClassification
 public import PropertyKindCalculus.QuantityVector
 
 public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -90,15 +89,15 @@ object `o`), tying this layer back to Dybkær's instance layer (`Kind.lean`).
 **The one declaration in this module that reads its object**, and therefore the one that
 needs `Designated O`: an individual property names its object, and a name is what a
 structural object type does not have. Everything else here gates on `o` without reading it. -/
-def toIndividualProperty [Designated O] (_a : IndividualQuantity o k R) : IndividualProperty :=
+@[expose] def toIndividualProperty [Designated O] (_a : IndividualQuantity o k R) : IndividualProperty :=
   ⟨k, Designated.designation o⟩
 
 /-- Forget the object: the plain kind-indexed `Quantity k R`, so every `Quantity` law can be
 reused on an individual quantity by projection. -/
-def toQuantity (a : IndividualQuantity o k R) : Quantity k R := ⟨a.magnitude⟩
+@[expose] def toQuantity (a : IndividualQuantity o k R) : Quantity k R := ⟨a.magnitude⟩
 
 @[simp] theorem toQuantity_magnitude (a : IndividualQuantity o k R) :
-    a.toQuantity.magnitude = a.magnitude := rfl
+    a.toQuantity.magnitude = a.magnitude := by rw [toQuantity]
 
 /-! ## Object- and kind-gated addition (R4, with object identity) -/
 
@@ -106,18 +105,19 @@ def toQuantity (a : IndividualQuantity o k R) : Quantity k R := ⟨a.magnitude�
 object `o` and share the kind `k`, over the additive `Carrier`. Three gates, all in the type:
 the object `o`, the kind `k`, and the `DifferenceKind k` scale witness. Adding a length of one
 object to a length of another does not type-check. -/
-def add [Carrier R] (_h : DifferenceKind k) (x y : IndividualQuantity o k R) :
+@[expose] def add [Carrier R] (_h : DifferenceKind k) (x y : IndividualQuantity o k R) :
     IndividualQuantity o k R :=
   ⟨Carrier.add x.magnitude y.magnitude⟩
 
 @[simp] theorem add_magnitude [Carrier R] (h : DifferenceKind k)
     (x y : IndividualQuantity o k R) :
-    (add h x y).magnitude = Carrier.add x.magnitude y.magnitude := rfl
+    (add h x y).magnitude = Carrier.add x.magnitude y.magnitude := by rw [add]
 
 /-- Addition commutes with the forgetful map to `Quantity`, so `Quantity`'s additivity laws
 transfer verbatim. -/
 theorem toQuantity_add [Carrier R] (h : DifferenceKind k) (x y : IndividualQuantity o k R) :
-    (add h x y).toQuantity = Quantity.add h x.toQuantity y.toQuantity := rfl
+    (add h x y).toQuantity = Quantity.add h x.toQuantity y.toQuantity := by
+  rw [add, toQuantity, Quantity.add]; rfl
 
 /-! ## Object-gated, kind-licensed product (R5/R12, with object identity) -/
 
@@ -125,18 +125,19 @@ theorem toQuantity_add [Carrier R] (h : DifferenceKind k) (x y : IndividualQuant
 characterize the *same* object `o`, licensed by the product kind-law `ProductKind k₁ k₂ k`,
 yielding a `k`-quantity of that object. The shared `o` is the gate a dimensionless numeric
 model cannot express: the two factors must be *of the same object*. -/
-def mul [Mul R] [ScalarCarrier R] {k₁ k₂ k : KindOfProperty} (_h : ProductKind k₁ k₂ k)
+@[expose] def mul [Mul R] [ScalarCarrier R] {k₁ k₂ k : KindOfProperty} (_h : ProductKind k₁ k₂ k)
     (a : IndividualQuantity o k₁ R) (b : IndividualQuantity o k₂ R) : IndividualQuantity o k R :=
   ⟨a.magnitude * b.magnitude⟩
 
 @[simp] theorem mul_magnitude [Mul R] [ScalarCarrier R] {k₁ k₂ k : KindOfProperty} (h : ProductKind k₁ k₂ k)
     (a : IndividualQuantity o k₁ R) (b : IndividualQuantity o k₂ R) :
-    (mul h a b).magnitude = a.magnitude * b.magnitude := rfl
+    (mul h a b).magnitude = a.magnitude * b.magnitude := by rw [mul]
 
 /-- The product commutes with the forgetful map to `Quantity`. -/
 theorem toQuantity_mul [Mul R] [ScalarCarrier R] {k₁ k₂ k : KindOfProperty} (h : ProductKind k₁ k₂ k)
     (a : IndividualQuantity o k₁ R) (b : IndividualQuantity o k₂ R) :
-    (mul h a b).toQuantity = Quantity.mul h a.toQuantity b.toQuantity := rfl
+    (mul h a b).toQuantity = Quantity.mul h a.toQuantity b.toQuantity := by
+  rw [mul, toQuantity, Quantity.mul]; rfl
 
 /-- **The product certificate.** `q` (kind `k`, object `o`) is the product of `a` and `b`: its
 magnitude is the product of theirs. A proof *certifies* `q`'s classification, rather than
@@ -149,25 +150,26 @@ def IsProduct [Mul R] [ScalarCarrier R] {k₁ k₂ k : KindOfProperty} (_h : Pro
 /-- The smart-constructed product satisfies the certificate **by construction**. -/
 theorem mul_isProduct [Mul R] [ScalarCarrier R] {k₁ k₂ k : KindOfProperty} (h : ProductKind k₁ k₂ k)
     (a : IndividualQuantity o k₁ R) (b : IndividualQuantity o k₂ R) :
-    (mul h a b).IsProduct h a b := rfl
+    (mul h a b).IsProduct h a b := by rw [mul, IsProduct]
 
 /-! ## Object-gated, kind-licensed quotient (`k = k₁ / k₂`) -/
 
 /-- **Same-object, kind-licensed quotient.** Divides a `k₁`- by a `k₂`-quantity that
 characterize the *same* object `o`, licensed by the quotient kind-law. Dividing across objects
 does not type-check. -/
-def div [Div R] [ScalarCarrier R] {k₁ k₂ k : KindOfProperty} (_h : QuotientKind k₁ k₂ k)
+@[expose] def div [Div R] [ScalarCarrier R] {k₁ k₂ k : KindOfProperty} (_h : QuotientKind k₁ k₂ k)
     (a : IndividualQuantity o k₁ R) (b : IndividualQuantity o k₂ R) : IndividualQuantity o k R :=
   ⟨a.magnitude / b.magnitude⟩
 
 @[simp] theorem div_magnitude [Div R] [ScalarCarrier R] {k₁ k₂ k : KindOfProperty} (h : QuotientKind k₁ k₂ k)
     (a : IndividualQuantity o k₁ R) (b : IndividualQuantity o k₂ R) :
-    (div h a b).magnitude = a.magnitude / b.magnitude := rfl
+    (div h a b).magnitude = a.magnitude / b.magnitude := by rw [div]
 
 /-- The quotient commutes with the forgetful map to `Quantity`. -/
 theorem toQuantity_div [Div R] [ScalarCarrier R] {k₁ k₂ k : KindOfProperty} (h : QuotientKind k₁ k₂ k)
     (a : IndividualQuantity o k₁ R) (b : IndividualQuantity o k₂ R) :
-    (div h a b).toQuantity = Quantity.div h a.toQuantity b.toQuantity := rfl
+    (div h a b).toQuantity = Quantity.div h a.toQuantity b.toQuantity := by
+  rw [div, toQuantity, Quantity.div]; rfl
 
 /-- **The quotient certificate** (R12): `q` (kind `k`, object `o`) is the quotient of `a` by `b`. -/
 def IsQuotient [Div R] [ScalarCarrier R] {k₁ k₂ k : KindOfProperty} (_h : QuotientKind k₁ k₂ k)
@@ -178,7 +180,7 @@ def IsQuotient [Div R] [ScalarCarrier R] {k₁ k₂ k : KindOfProperty} (_h : Qu
 /-- The smart-constructed quotient satisfies the certificate **by construction**. -/
 theorem div_isQuotient [Div R] [ScalarCarrier R] {k₁ k₂ k : KindOfProperty} (h : QuotientKind k₁ k₂ k)
     (a : IndividualQuantity o k₁ R) (b : IndividualQuantity o k₂ R) :
-    (div h a b).IsQuotient h a b := rfl
+    (div h a b).IsQuotient h a b := by rw [div, IsQuotient]
 
 /-! ## Negation — the computational world, object-carried
 
@@ -195,13 +197,15 @@ where the `DifferenceKind` witness has somewhere to live. -/
 
 /-- Same-object, same-kind negation over the carrier's own `Neg` — the equal-and-opposite
 reading, keeping both indices. -/
-def neg [Neg R] (a : IndividualQuantity o k R) : IndividualQuantity o k R := ⟨-a.magnitude⟩
+@[expose] def neg [Neg R] (a : IndividualQuantity o k R) : IndividualQuantity o k R := ⟨-a.magnitude⟩
 
 /-- `-q` on an object-indexed quantity. -/
 instance instNeg [Neg R] : Neg (IndividualQuantity o k R) := ⟨IndividualQuantity.neg⟩
 
 @[simp] theorem neg_magnitude [Neg R] (a : IndividualQuantity o k R) :
-    (-a).magnitude = -a.magnitude := rfl
+    (-a).magnitude = -a.magnitude := by
+  show (IndividualQuantity.neg a).magnitude = -a.magnitude
+  rw [IndividualQuantity.neg]
 
 /-! ## Object-gated scalar action (`k = k₁ · k₂`, scalar on vector) -/
 
@@ -213,7 +217,7 @@ the homogeneous `mul` cannot express because its two operands share one carrier.
 The object gate is the point here as much as the kind law — the mass of one particle scaling
 another particle's acceleration is exactly the substitution an object-blind model cannot
 refuse. -/
-def smulK {V : Type} [SMul R V] [ScalarCarrier R] {k₁ k₂ k : KindOfProperty}
+@[expose] def smulK {V : Type} [SMul R V] [ScalarCarrier R] {k₁ k₂ k : KindOfProperty}
     (_h : ProductKind k₁ k₂ k) (a : IndividualQuantity o k₁ R) (b : IndividualQuantity o k₂ V) :
     IndividualQuantity o k V :=
   ⟨a.magnitude • b.magnitude⟩
@@ -221,13 +225,14 @@ def smulK {V : Type} [SMul R V] [ScalarCarrier R] {k₁ k₂ k : KindOfProperty}
 @[simp] theorem smulK_magnitude {V : Type} [SMul R V] [ScalarCarrier R]
     {k₁ k₂ k : KindOfProperty} (h : ProductKind k₁ k₂ k) (a : IndividualQuantity o k₁ R)
     (b : IndividualQuantity o k₂ V) :
-    (smulK h a b).magnitude = a.magnitude • b.magnitude := rfl
+    (smulK h a b).magnitude = a.magnitude • b.magnitude := by rw [smulK]
 
 /-- The scalar action commutes with the forgetful map to `Quantity`, so the plain layer's
 laws transfer verbatim. -/
 theorem toQuantity_smulK {V : Type} [SMul R V] [ScalarCarrier R] {k₁ k₂ k : KindOfProperty}
     (h : ProductKind k₁ k₂ k) (a : IndividualQuantity o k₁ R) (b : IndividualQuantity o k₂ V) :
-    (smulK h a b).toQuantity = Quantity.smulK h a.toQuantity b.toQuantity := rfl
+    (smulK h a b).toQuantity = Quantity.smulK h a.toQuantity b.toQuantity := by
+  rw [smulK, toQuantity, Quantity.smulK]; rfl
 
 /-- **The scalar-action certificate** (R12), object-carried. -/
 def IsSMul {V : Type} [SMul R V] [ScalarCarrier R] {k₁ k₂ k : KindOfProperty}
@@ -238,23 +243,25 @@ def IsSMul {V : Type} [SMul R V] [ScalarCarrier R] {k₁ k₂ k : KindOfProperty
 /-- The smart-constructed scalar action satisfies its certificate **by construction**. -/
 theorem smulK_isSMul {V : Type} [SMul R V] [ScalarCarrier R] {k₁ k₂ k : KindOfProperty}
     (h : ProductKind k₁ k₂ k) (a : IndividualQuantity o k₁ R) (b : IndividualQuantity o k₂ V) :
-    (smulK h a b).IsSMul h a b := rfl
+    (smulK h a b).IsSMul h a b := by rw [smulK, IsSMul]
 
 /-! ## Object-carried reciprocal (`k = 1 / k₁`) -/
 
 /-- **Reciprocal, on one object.** The reciprocal of a `k₁`-quantity characterizing object `o`,
 licensed by the reciprocal kind-law; it characterizes the *same* object `o`. -/
-def recip [Inv R] {k₁ k : KindOfProperty} (_h : ReciprocalKind k₁ k)
+@[expose] def recip [Inv R] {k₁ k : KindOfProperty} (_h : ReciprocalKind k₁ k)
     (a : IndividualQuantity o k₁ R) : IndividualQuantity o k R :=
   ⟨a.magnitude⁻¹⟩
 
 @[simp] theorem recip_magnitude [Inv R] {k₁ k : KindOfProperty} (h : ReciprocalKind k₁ k)
-    (a : IndividualQuantity o k₁ R) : (recip h a).magnitude = a.magnitude⁻¹ := rfl
+    (a : IndividualQuantity o k₁ R) : (recip h a).magnitude = a.magnitude⁻¹ := by
+  rw [recip]
 
 /-- The reciprocal commutes with the forgetful map to `Quantity`. -/
 theorem toQuantity_recip [Inv R] {k₁ k : KindOfProperty} (h : ReciprocalKind k₁ k)
     (a : IndividualQuantity o k₁ R) :
-    (recip h a).toQuantity = Quantity.recip h a.toQuantity := rfl
+    (recip h a).toQuantity = Quantity.recip h a.toQuantity := by
+  rw [recip, toQuantity, Quantity.recip]; rfl
 
 /-- **The reciprocal certificate** (R12): `q` (kind `k`, object `o`) is the reciprocal of `a`. -/
 def IsReciprocal [Inv R] {k₁ k : KindOfProperty} (_h : ReciprocalKind k₁ k)
@@ -263,11 +270,11 @@ def IsReciprocal [Inv R] {k₁ k : KindOfProperty} (_h : ReciprocalKind k₁ k)
 
 /-- The smart-constructed reciprocal satisfies the certificate **by construction**. -/
 theorem recip_isReciprocal [Inv R] {k₁ k : KindOfProperty} (h : ReciprocalKind k₁ k)
-    (a : IndividualQuantity o k₁ R) : (recip h a).IsReciprocal h a := rfl
+    (a : IndividualQuantity o k₁ R) : (recip h a).IsReciprocal h a := by
+  rw [recip, IsReciprocal]
 
 end IndividualQuantity
 
 end PropertyKindCalculus
 
-end -- pkc-blanket-expose
 end -- pkc-blanket

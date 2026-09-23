@@ -56,7 +56,6 @@ module
 public import PropertyKindCalculus.Quantity
 
 public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -106,7 +105,8 @@ def castCarrier {k : KindOfProperty} {R S : Type} (f : R → S) (b : LowerBound 
   ⟨b.q.castCarrier f⟩
 
 @[simp] theorem castCarrier_magnitude {k : KindOfProperty} {R S : Type} (f : R → S)
-    (b : LowerBound k R) : (b.castCarrier f).q.magnitude = f b.q.magnitude := rfl
+    (b : LowerBound k R) : (b.castCarrier f).q.magnitude = f b.q.magnitude := by
+  rw [LowerBound.castCarrier]; rfl
 
 end LowerBound
 
@@ -126,7 +126,8 @@ def castCarrier {k : KindOfProperty} {R S : Type} (f : R → S) (b : UpperBound 
   ⟨b.q.castCarrier f⟩
 
 @[simp] theorem castCarrier_magnitude {k : KindOfProperty} {R S : Type} (f : R → S)
-    (b : UpperBound k R) : (b.castCarrier f).q.magnitude = f b.q.magnitude := rfl
+    (b : UpperBound k R) : (b.castCarrier f).q.magnitude = f b.q.magnitude := by
+  rw [UpperBound.castCarrier]; rfl
 
 end UpperBound
 
@@ -181,12 +182,12 @@ def about [Add R] [Sub R] (centre halfWidth : Quantity k R)
   ⟨⟨⟨centre.magnitude - halfWidth.magnitude⟩⟩, ⟨⟨centre.magnitude + halfWidth.magnitude⟩⟩⟩
 
 @[simp] theorem about_lo [Add R] [Sub R] (centre halfWidth : Quantity k R) (ord : OrderKind k) :
-    (IccQ.about centre halfWidth ord).lo.q.magnitude = centre.magnitude - halfWidth.magnitude :=
-  rfl
+    (IccQ.about centre halfWidth ord).lo.q.magnitude = centre.magnitude - halfWidth.magnitude := by
+  rw [IccQ.about]
 
 @[simp] theorem about_hi [Add R] [Sub R] (centre halfWidth : Quantity k R) (ord : OrderKind k) :
-    (IccQ.about centre halfWidth ord).hi.q.magnitude = centre.magnitude + halfWidth.magnitude :=
-  rfl
+    (IccQ.about centre halfWidth ord).hi.q.magnitude = centre.magnitude + halfWidth.magnitude := by
+  rw [IccQ.about]
 
 /-- **Membership** `x ∈ [lo, hi]`, as the conjunction of the two directional facts —
 each endpoint contributes only the orientation its role can state. -/
@@ -201,7 +202,7 @@ def clamp [Min R] [Max R] (I : IccQ k R) (x : Quantity k R) : Quantity k R :=
 
 @[simp] theorem clamp_magnitude [Min R] [Max R] (I : IccQ k R) (x : Quantity k R) :
     (I.clamp x).magnitude
-      = Min.min (Max.max x.magnitude I.lo.q.magnitude) I.hi.q.magnitude := rfl
+      = Min.min (Max.max x.magnitude I.lo.q.magnitude) I.hi.q.magnitude := by rw [IccQ.clamp]
 
 /-- **The interval survives a representation cast** — both endpoints moved by the same
 carrier map, through their own roles. This is the whole of what a carrier lift of a
@@ -218,16 +219,16 @@ def castCarrier {S : Type} (f : R → S) (I : IccQ k R) : IccQ k S :=
   ⟨I.lo.castCarrier f, I.hi.castCarrier f⟩
 
 @[simp] theorem castCarrier_lo {S : Type} (f : R → S) (I : IccQ k R) :
-    (I.castCarrier f).lo.q.magnitude = f I.lo.q.magnitude := rfl
+    (I.castCarrier f).lo.q.magnitude = f I.lo.q.magnitude := by rw [IccQ.castCarrier]; rfl
 
 @[simp] theorem castCarrier_hi {S : Type} (f : R → S) (I : IccQ k R) :
-    (I.castCarrier f).hi.q.magnitude = f I.hi.q.magnitude := rfl
+    (I.castCarrier f).hi.q.magnitude = f I.hi.q.magnitude := by rw [IccQ.castCarrier]; rfl
 
 @[simp] theorem of_lo (lo hi : Quantity k R) (ord : OrderKind k) :
-    (IccQ.of lo hi ord).lo.q = lo := rfl
+    (IccQ.of lo hi ord).lo.q = lo := by rw [IccQ.of]
 
 @[simp] theorem of_hi (lo hi : Quantity k R) (ord : OrderKind k) :
-    (IccQ.of lo hi ord).hi.q = hi := rfl
+    (IccQ.of lo hi ord).hi.q = hi := by rw [IccQ.of]
 
 end IccQ
 
@@ -338,5 +339,4 @@ where raising `L` admits values that should have failed). Same side, opposite sa
 
 end PropertyKindCalculus
 
-end -- pkc-blanket-expose
 end -- pkc-blanket

@@ -28,6 +28,9 @@ module
 
 public import PropertyKindCalculus.Provenance
 meta import PropertyKindCalculus.Provenance
+-- Private scope only: the checks below reduce through bodies sealed in the core
+-- library; `import all` gives this file the reduction without exposing them.
+import all PropertyKindCalculus.Provenance
 
 public section -- pkc-blanket
 @[expose] section -- pkc-blanket-expose

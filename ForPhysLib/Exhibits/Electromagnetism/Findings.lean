@@ -51,6 +51,9 @@ public import PropertyKindCalculus.SpecializationLift
 public import PropertyKindCalculus.Level
 public import PropertyKindCalculus.Complex
 public import PropertyKindCalculus.QuantityReal
+-- Private scope only: the checks below reduce through bodies sealed in the core
+-- library; `import all` gives this file the reduction without exposing them.
+import all PropertyKindCalculus.Level
 
 public section -- pkc-blanket
 @[expose] section -- pkc-blanket-expose

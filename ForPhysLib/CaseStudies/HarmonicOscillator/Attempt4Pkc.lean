@@ -84,6 +84,11 @@ public import PropertyKindCalculus.DocGenMath
 meta import PropertyKindCalculus.DocGenMath
 public import Physlib.Units.WithDim.Basic
 meta import Physlib.Units.WithDim.Basic
+-- Private scope only: the checks below reduce through bodies sealed in the core
+-- library; `import all` gives this file the reduction without exposing them.
+import all PropertyKindCalculus.SpecializationLift
+import all PropertyKindCalculus.IndividualQuantity
+import all PropertyKindCalculus.Frame
 
 public section -- pkc-blanket
 @[expose] section -- pkc-blanket-expose

@@ -70,6 +70,10 @@ public import PropertyKindCalculus.Iso80000.Part3
 meta import PropertyKindCalculus.Iso80000.Part3
 public import PropertyKindCalculus.Iso80000.Part4
 meta import PropertyKindCalculus.Iso80000.Part4
+-- Private scope only: the checks below reduce through bodies sealed in the core
+-- library; `import all` gives this file the reduction without exposing them.
+import all PropertyKindCalculus.Frame
+import all PropertyKindCalculus.SpecializationLift
 
 public section -- pkc-blanket
 @[expose] section -- pkc-blanket-expose

@@ -21,7 +21,6 @@ with a sort of system and the license to aggregate at it (`Composite.lean`).
 module
 
 public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -50,7 +49,7 @@ deriving Repr
 recursion this module has over the mereology, so `leafSum` (`Extensivity.lean`) and the
 quantity-level `assemble` (`Composite.lean`) are the *same* traversal at two carriers
 rather than two traversals that happen to agree. -/
-def Decomposition.fold {O : Type u} {R : Type} (leaf : O → R) (op : R → R → R) :
+@[expose] def Decomposition.fold {O : Type u} {R : Type} (leaf : O → R) (op : R → R → R) :
     Decomposition O → R
   | .atom s => leaf s
   | .union a b => op (Decomposition.fold leaf op a) (Decomposition.fold leaf op b)
@@ -74,7 +73,7 @@ def Decomposition.joins {O : Type u} : Decomposition O → Nat
 /-- **A property of every atomic part of a carving.** The leaf-wise quantifier the intensive
 law needs: `Extensive` reaches its leaves through arithmetic (`leafSum`), and intensivity
 has no arithmetic to reach them with. -/
-def Decomposition.Forall {O : Type u} (p : O → Prop) : Decomposition O → Prop
+@[expose] def Decomposition.Forall {O : Type u} (p : O → Prop) : Decomposition O → Prop
   | .atom s => p s
   | .union a b => Decomposition.Forall p a ∧ Decomposition.Forall p b
 
@@ -99,5 +98,4 @@ theorem count_true_eq_joins_succ {O : Type u} (d : Decomposition O) :
 
 end PropertyKindCalculus
 
-end -- pkc-blanket-expose
 end -- pkc-blanket

@@ -25,6 +25,10 @@ public import Mathlib.Basic.Real.Basic
 meta import Mathlib.Basic.Real.Basic
 public import Mathlib.Tactic.NormNum
 meta import Mathlib.Tactic.NormNum
+-- Private scope only: the checks below reduce through bodies sealed in the core
+-- library; `import all` gives this file the reduction without exposing them.
+import all PropertyKindCalculus.Mereology
+import all PropertyKindCalculus.Bounds
 
 public section -- pkc-blanket
 @[expose] section -- pkc-blanket-expose

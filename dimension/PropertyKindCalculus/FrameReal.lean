@@ -40,6 +40,10 @@ public import Mathlib.Algebra.BigOperators.Ring.Finset
 public import Mathlib.Tactic.Ring
 public import Mathlib.Tactic.FinCases
 public import Mathlib.Tactic.NormNum
+-- Private scope only: the checks below reduce through bodies sealed in the core
+-- library; `import all` gives this file the reduction without exposing them.
+import all PropertyKindCalculus.Frame
+import all PropertyKindCalculus.Bounds
 
 public section -- pkc-blanket
 @[expose] section -- pkc-blanket-expose
@@ -179,7 +183,8 @@ nothing to prove and nothing to assume — in particular no orthonormality. That
 the content: the scalar product's invariance is a *theorem with a hypothesis*, and a
 scalar's is not a theorem at all. -/
 theorem toFrameScalar_components' (x : InFrame f .scalar k ℝ) :
-    (InFrame.toFrameScalar (g := g) x).components = x.components := rfl
+    (InFrame.toFrameScalar (g := g) x).components = x.components := by
+  rw [InFrame.toFrameScalar, InFrame.components, InFrame.components]
 
 /-! ## And what is *not* invariant
 

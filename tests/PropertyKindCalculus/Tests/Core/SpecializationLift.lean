@@ -16,6 +16,10 @@ The probes check the properties the module's discipline rests on:
 module
 
 public import PropertyKindCalculus
+-- Private scope only: the checks below reduce through bodies sealed in the core
+-- library; `import all` gives this file the reduction without exposing them.
+import all PropertyKindCalculus.Mereology
+import all PropertyKindCalculus.SpecializationLift
 
 public section -- pkc-blanket
 @[expose] section -- pkc-blanket-expose

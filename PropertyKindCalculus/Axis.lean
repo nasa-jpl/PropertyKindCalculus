@@ -71,6 +71,9 @@ layer, over a lawful carrier, where it is already at home.
 module
 
 public import PropertyKindCalculus.Bounds
+-- Private scope only: the proofs below reduce through bodies sealed in `PropertyKindCalculus.Bounds`; `import all`
+-- gives this module the reduction without exposing them to every consumer.
+import all PropertyKindCalculus.Bounds
 
 public section -- pkc-blanket
 

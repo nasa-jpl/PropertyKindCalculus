@@ -41,7 +41,6 @@ module
 public import PropertyKindCalculus.QuantityClassification
 
 public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -73,7 +72,7 @@ as counts reaches it through this. -/
 def castCarrier {S : Type} (f : R → S) (p : Part k R) : Part k S := ⟨p.q.castCarrier f⟩
 
 @[simp] theorem castCarrier_magnitude {S : Type} (f : R → S) (p : Part k R) :
-    (p.castCarrier f).q.magnitude = f p.q.magnitude := rfl
+    (p.castCarrier f).q.magnitude = f p.q.magnitude := by rw [castCarrier]; rfl
 
 /-- **The directional Prop former**: the portion does not exceed the total it is taken
 from. The only relation statable between the two roles — with the part on the left, where
@@ -107,7 +106,7 @@ def fractionOf [Div R] [ScalarCarrier R] (kFrac : KindOfProperty) (p : Part k R)
 
 @[simp] theorem fractionOf_magnitude [Div R] [ScalarCarrier R] (kFrac : KindOfProperty)
     (p : Part k R) (w : Whole k R) (h : QuotientKind k k kFrac) :
-    (p.fractionOf kFrac w h).magnitude = p.q.magnitude / w.q.magnitude := rfl
+    (p.fractionOf kFrac w h).magnitude = p.q.magnitude / w.q.magnitude := by rw [fractionOf]; rfl
 
 end Part
 
@@ -121,11 +120,10 @@ counts crosses to `Float` in the same step on both sides, in its own role on eac
 def castCarrier {S : Type} (f : R → S) (w : Whole k R) : Whole k S := ⟨w.q.castCarrier f⟩
 
 @[simp] theorem castCarrier_magnitude {S : Type} (f : R → S) (w : Whole k R) :
-    (w.castCarrier f).q.magnitude = f w.q.magnitude := rfl
+    (w.castCarrier f).q.magnitude = f w.q.magnitude := by rw [castCarrier]; rfl
 
 end Whole
 
 end PropertyKindCalculus
 
-end -- pkc-blanket-expose
 end -- pkc-blanket

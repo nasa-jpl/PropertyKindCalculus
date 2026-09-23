@@ -42,6 +42,9 @@ module
 public import PropertyKindCalculus.Dimension
 public import PropertyKindCalculus.Iso80000.References
 public import PropertyKindCalculus.Iso80000.Catalogue
+-- Private scope only: the checks below reduce through bodies sealed in the core
+-- library; `import all` gives this file the reduction without exposing them.
+import all PropertyKindCalculus.UnitPrefix
 
 public section -- pkc-blanket
 @[expose] section -- pkc-blanket-expose

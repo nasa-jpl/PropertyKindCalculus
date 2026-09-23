@@ -36,9 +36,12 @@ as a number) belongs to the real-carrier `Quantity` layer, not here.
 module
 
 public import PropertyKindCalculus.Unit
+-- Private scope only: the commensurability and well-formedness proofs below reduce through
+-- `MetrologicalUnit.Commensurable`/`WellFormed`, whose bodies are sealed; `import all` gives
+-- this module the reduction without exposing them to every consumer.
+import all PropertyKindCalculus.Unit
 
 public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -61,6 +64,9 @@ namespace SIPrefix
 The decimal prefixes, as data. These are general SI facts (factor, name, symbol),
 not normative content of any ISO 80000 part. -/
 
+-- `@[expose] section`, not attributes: the prefix table is data a consumer reads fields off
+-- and decides equalities on, so every entry is exposed together.
+@[expose] section
 /-- quetta — `10³⁰`. -/
 def quetta : SIPrefix := { name := "quetta", symbol := "Q",  exponent := 30 }
 /-- ronna — `10²⁷`. -/
@@ -109,6 +115,7 @@ def yocto  : SIPrefix := { name := "yocto",  symbol := "y",  exponent := -24 }
 def ronto  : SIPrefix := { name := "ronto",  symbol := "r",  exponent := -27 }
 /-- quecto — `10⁻³⁰`. -/
 def quecto : SIPrefix := { name := "quecto", symbol := "q",  exponent := -30 }
+end
 
 /-- The SI prefixes in descending order of factor (VIM4 §1.19 NOTE 5). -/
 def all : List SIPrefix :=
@@ -136,6 +143,9 @@ deriving DecidableEq, Repr
 
 namespace BinaryPrefix
 
+-- `@[expose] section`, not attributes: the prefix table is data a consumer reads fields off
+-- and decides equalities on, so every entry is exposed together.
+@[expose] section
 /-- The eight IEC 80000-13 binary prefixes, as data (name, symbol, power of two). -/
 def kibi : BinaryPrefix := { name := "kibi", symbol := "Ki", exponent := 10 }
 def mebi : BinaryPrefix := { name := "mebi", symbol := "Mi", exponent := 20 }
@@ -145,6 +155,7 @@ def pebi : BinaryPrefix := { name := "pebi", symbol := "Pi", exponent := 50 }
 def exbi : BinaryPrefix := { name := "exbi", symbol := "Ei", exponent := 60 }
 def zebi : BinaryPrefix := { name := "zebi", symbol := "Zi", exponent := 70 }
 def yobi : BinaryPrefix := { name := "yobi", symbol := "Yi", exponent := 80 }
+end
 
 /-- The binary prefixes in ascending order of factor (IEC 80000-13). -/
 def all : List BinaryPrefix := [kibi, mebi, gibi, tebi, pebi, exbi, zebi, yobi]
@@ -177,18 +188,19 @@ namespace PrefixedUnit
 base, with the prefix symbol prepended (e.g. `"c" ++ "m" = "cm"`). Projecting here
 means every fact about units (commensurability, well-formedness, the §13.3.3
 round-trip) applies to a prefixed unit unchanged. -/
-def toUnit (p : PrefixedUnit) : MetrologicalUnit :=
+@[expose] def toUnit (p : PrefixedUnit) : MetrologicalUnit :=
   { kind := p.base.kind, symbol := p.symbol ++ p.base.symbol }
 
-@[simp] theorem toUnit_kind (p : PrefixedUnit) : p.toUnit.kind = p.base.kind := rfl
+@[simp] theorem toUnit_kind (p : PrefixedUnit) : p.toUnit.kind = p.base.kind := by
+  rw [toUnit]
 
 @[simp] theorem toUnit_symbol (p : PrefixedUnit) :
-    p.toUnit.symbol = p.symbol ++ p.base.symbol := rfl
+    p.toUnit.symbol = p.symbol ++ p.base.symbol := by rw [toUnit]
 
 /-- **§1.22 — the conversion factor as an exponent.** `1` of the prefixed unit equals
 `radix ^ conversionExponent` of the base unit (e.g. centimetre → metre gives `-2` at
 radix `10`; kibibyte → byte gives `10` at radix `2`). -/
-def conversionExponent (p : PrefixedUnit) : Int := p.exponent
+@[expose] def conversionExponent (p : PrefixedUnit) : Int := p.exponent
 
 /-- **§1.20 — a multiple of a unit**: the prefix factor exceeds one. -/
 def IsMultiple (p : PrefixedUnit) : Prop := p.exponent > 0
@@ -200,11 +212,12 @@ def IsSubmultiple (p : PrefixedUnit) : Prop := p.exponent < 0
 decimal, or both binary). Conversion by an exact integer exponent is defined only
 within a radix: no power of ten is a power of two, so a decimal and a binary prefix
 share no exact power-of-radix factor. -/
-def SameRadix (p q : PrefixedUnit) : Prop := p.radix = q.radix
+@[expose] def SameRadix (p q : PrefixedUnit) : Prop := p.radix = q.radix
 
 /-- A prefixed unit is **commensurable** with its base — they reference the same kind
 (§1.22 "quantities of the same kind"; §9.13.4). -/
-theorem commensurable_base (p : PrefixedUnit) : p.toUnit.Commensurable p.base := rfl
+theorem commensurable_base (p : PrefixedUnit) : p.toUnit.Commensurable p.base := by
+  rw [toUnit, MetrologicalUnit.Commensurable]
 
 /-- Two prefixings of the **same** base are commensurable with each other: a
 centimetre and a kilometre are both lengths. -/
@@ -216,7 +229,9 @@ theorem commensurable_of_eq_base {p q : PrefixedUnit} (h : p.base = q.base) :
 /-- **Well-formedness transfers from the base.** A prefixed unit of a unitary kind is
 itself well-formed — the kind is unchanged by the prefix (§13.3.3). -/
 theorem toUnit_wellFormed {p : PrefixedUnit} (h : p.base.WellFormed) :
-    p.toUnit.WellFormed := h
+    p.toUnit.WellFormed := by
+  rw [MetrologicalUnit.WellFormed, toUnit]
+  exact h
 
 /-! ## §1.22 — unit conversion is a faithful round-trip -/
 
@@ -263,28 +278,27 @@ end PrefixedUnit
 /-- **§1.20 / §1.21 — apply an SI (decimal) prefix to a unit.** The ergonomic
 constructor: `metre.withPrefix SIPrefix.centi` is the centimetre (as a
 `PrefixedUnit`, radix `10`); take `.toUnit` for the plain unit. -/
-def MetrologicalUnit.withPrefix (u : MetrologicalUnit) (p : SIPrefix) : PrefixedUnit :=
+@[expose] def MetrologicalUnit.withPrefix (u : MetrologicalUnit) (p : SIPrefix) : PrefixedUnit :=
   { radix := 10, exponent := p.exponent, symbol := p.symbol, base := u }
 
 /-- **IEC 80000-13 — apply a binary prefix to a unit.** `byte.withBinaryPrefix
 BinaryPrefix.kibi` is the kibibyte (a `PrefixedUnit`, radix `2`). Same prefixed-unit
 type as `withPrefix`, so all the conversion machinery applies uniformly. -/
-def MetrologicalUnit.withBinaryPrefix (u : MetrologicalUnit) (p : BinaryPrefix) : PrefixedUnit :=
+@[expose] def MetrologicalUnit.withBinaryPrefix (u : MetrologicalUnit) (p : BinaryPrefix) : PrefixedUnit :=
   { radix := 2, exponent := p.exponent, symbol := p.symbol, base := u }
 
 @[simp] theorem MetrologicalUnit.withPrefix_base (u : MetrologicalUnit) (p : SIPrefix) :
-    (u.withPrefix p).base = u := rfl
+    (u.withPrefix p).base = u := by rw [MetrologicalUnit.withPrefix]
 
 @[simp] theorem MetrologicalUnit.withPrefix_radix (u : MetrologicalUnit) (p : SIPrefix) :
-    (u.withPrefix p).radix = 10 := rfl
+    (u.withPrefix p).radix = 10 := by rw [MetrologicalUnit.withPrefix]
 
 @[simp] theorem MetrologicalUnit.withBinaryPrefix_base (u : MetrologicalUnit) (p : BinaryPrefix) :
-    (u.withBinaryPrefix p).base = u := rfl
+    (u.withBinaryPrefix p).base = u := by rw [MetrologicalUnit.withBinaryPrefix]
 
 @[simp] theorem MetrologicalUnit.withBinaryPrefix_radix (u : MetrologicalUnit) (p : BinaryPrefix) :
-    (u.withBinaryPrefix p).radix = 2 := rfl
+    (u.withBinaryPrefix p).radix = 2 := by rw [MetrologicalUnit.withBinaryPrefix]
 
 end PropertyKindCalculus
 
-end -- pkc-blanket-expose
 end -- pkc-blanket

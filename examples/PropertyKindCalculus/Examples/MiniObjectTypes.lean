@@ -32,6 +32,10 @@ import all Init.Prelude
 import all Init.Data.Repr
 import all Init.Data.ToString.Basic
 import all Init.Data.String.Basic
+import all PropertyKindCalculus.Bounds
+import all PropertyKindCalculus.Unit
+import all PropertyKindCalculus.IndividualQuantity
+import all PropertyKindCalculus.Extensivity
 
 public section -- pkc-blanket
 @[expose] section -- pkc-blanket-expose

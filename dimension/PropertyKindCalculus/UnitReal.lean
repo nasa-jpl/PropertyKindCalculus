@@ -26,6 +26,9 @@ public import PropertyKindCalculus.QuantityReal
 public import Mathlib.Algebra.Order.Field.Basic
 public import Mathlib.Tactic.FieldSimp
 public import Mathlib.Tactic.Ring
+-- Private scope only: the checks below reduce through bodies sealed in the core
+-- library; `import all` gives this file the reduction without exposing them.
+import all PropertyKindCalculus.Unit
 
 public section -- pkc-blanket
 @[expose] section -- pkc-blanket-expose

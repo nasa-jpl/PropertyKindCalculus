@@ -60,7 +60,6 @@ module
 public import PropertyKindCalculus.Quantity
 
 public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -111,7 +110,7 @@ deliberately unprovable here and the certified `Quantity.add`/`mulK` are unavail
 `L₁ + L₂` and `L₁ × L₂` are the domain errors this construction exists to reject. The
 defining chart is recorded as the examination principle: kinds are individuated by *how
 they are examined*, and a level is examined by taking the chart. -/
-def toKind (lk : LevelKind) : KindOfProperty :=
+@[expose] def toKind (lk : LevelKind) : KindOfProperty :=
   { id := "level[" ++ lk.role.tag ++ "] of " ++ lk.root.id ++ " re " ++ lk.ref
     scale := .ordinal
     examPrinciple := some (lk.role.tag ++ "(" ++ lk.root.id ++ " / " ++ lk.ref ++ ")") }
@@ -121,7 +120,7 @@ and what an amplifier contributes. Ratio-scale: 0 dB is the canonical identity, 
 compose by the ordinary certified addition, and attenuation is negation at a signed
 carrier. Note what is absent: `ref`. The reference cancels in every difference, and
 `gainKind_ref_irrelevant` below makes that a theorem rather than a remark. -/
-def gainKind (lk : LevelKind) : KindOfProperty :=
+@[expose] def gainKind (lk : LevelKind) : KindOfProperty :=
   { id := "gain[" ++ lk.role.tag ++ "] of " ++ lk.root.id
     scale := .ratio
     examPrinciple := some ("difference of level[" ++ lk.role.tag ++ "] of " ++ lk.root.id) }
@@ -141,13 +140,15 @@ theorem toKind_not_isRational (lk : LevelKind) : ¬ lk.toKind.IsRational :=
   fun h => nomatch h
 
 /-- The gain kind is ratio-scale: gains compose by the certified addition. -/
-theorem gainKind_isRational (lk : LevelKind) : lk.gainKind.IsRational := rfl
+theorem gainKind_isRational (lk : LevelKind) : lk.gainKind.IsRational := by
+  rw [gainKind, KindOfProperty.IsRational]
 
 /-- **The reference cancels in differences** — the gain kind does not depend on `ref`, by
 construction: two level kinds differing only in reference share their gain kind. -/
 theorem gainKind_ref_irrelevant (root : KindOfProperty) (role : PowerRole)
     (ref₁ ref₂ : String) :
-    (LevelKind.mk root role ref₁).gainKind = (LevelKind.mk root role ref₂).gainKind := rfl
+    (LevelKind.mk root role ref₁).gainKind = (LevelKind.mk root role ref₂).gainKind := by
+  rw [gainKind]; rfl
 
 /-! ## The torsor — the licensed heterogeneous operations
 
@@ -165,16 +166,16 @@ def sub [Sub R] (lk : LevelKind) (x y : Quantity lk.toKind R) : Quantity lk.gain
 
 /-- **Shifting a level by a gain is a level** — what an amplifier does. The torsor
 action, and the only addition a level participates in. -/
-def shift [Carrier R] (lk : LevelKind) (x : Quantity lk.toKind R)
+@[expose] def shift [Carrier R] (lk : LevelKind) (x : Quantity lk.toKind R)
     (g : Quantity lk.gainKind R) : Quantity lk.toKind R :=
   ⟨Carrier.add x.magnitude g.magnitude⟩
 
 @[simp] theorem sub_magnitude [Sub R] (x y : Quantity lk.toKind R) :
-    (lk.sub x y).magnitude = x.magnitude - y.magnitude := rfl
+    (lk.sub x y).magnitude = x.magnitude - y.magnitude := by rw [sub]
 
 @[simp] theorem shift_magnitude [Carrier R] (x : Quantity lk.toKind R)
     (g : Quantity lk.gainKind R) :
-    (lk.shift x g).magnitude = Carrier.add x.magnitude g.magnitude := rfl
+    (lk.shift x g).magnitude = Carrier.add x.magnitude g.magnitude := by rw [shift]
 
 /-- **The certificate.** `g` is the gain from `y` up to `x`: its magnitude is the
 difference of theirs. Separate `Prop`, carried when needed — uniform with
@@ -185,7 +186,7 @@ def IsGainOf [Sub R] (lk : LevelKind) (g : Quantity lk.gainKind R)
 
 /-- The torsor difference satisfies the certificate by construction. -/
 theorem sub_isGainOf [Sub R] (x y : Quantity lk.toKind R) :
-    lk.IsGainOf (lk.sub x y) x y := rfl
+    lk.IsGainOf (lk.sub x y) x y := by rw [IsGainOf, sub]
 
 end LevelKind
 
@@ -249,5 +250,4 @@ end LevelKind
 
 end PropertyKindCalculus
 
-end -- pkc-blanket-expose
 end -- pkc-blanket

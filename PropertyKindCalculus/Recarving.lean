@@ -30,9 +30,11 @@ whole, the count is answerable only to a sortal.
 module
 
 public import PropertyKindCalculus.Extensivity
+-- Private scope only: the proofs below reduce through bodies sealed in `PropertyKindCalculus.Mereology`; `import all`
+-- gives this module the reduction without exposing them to every consumer.
+import all PropertyKindCalculus.Mereology
 
 public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -110,7 +112,7 @@ in it. Its `preserves` field is `rfl`, because the total of a one-leaf carving o
 the total. -/
 
 /-- Mass, a ratio kind. -/
-def partMassKind : KindOfProperty := { id := "mass", scale := .ratio }
+@[expose] def partMassKind : KindOfProperty := { id := "mass", scale := .ratio }
 
 /-- A part is its own mass, in whole kilograms; a carving reads the total of its parts. -/
 def partMass : Measurement Int := fun d =>
@@ -152,5 +154,4 @@ theorem count_sortal_ne :
 
 end PropertyKindCalculus
 
-end -- pkc-blanket-expose
 end -- pkc-blanket

@@ -42,6 +42,7 @@ meta import PropertyKindCalculus.Tests.Core.KindEdges
 -- Private scope only, and no paired `public import`: core seals `Lean.Name.beq`, so a kernel
 -- `decide` over a provenance graph whose kinds are `Name`s gets stuck without this.
 import all Init.Prelude
+import all PropertyKindCalculus.Provenance
 
 public section -- pkc-blanket
 @[expose] section -- pkc-blanket-expose

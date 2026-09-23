@@ -22,6 +22,10 @@ public import PropertyKindCalculus
 meta import PropertyKindCalculus
 public import PropertyKindCalculus.KindIncidence
 meta import PropertyKindCalculus.KindIncidence
+-- Private scope only: the checks below reduce through bodies sealed in the core
+-- library; `import all` gives this file the reduction without exposing them.
+import all PropertyKindCalculus.Bounds
+import all PropertyKindCalculus.IndividualQuantity
 
 public section -- pkc-blanket
 @[expose] section -- pkc-blanket-expose

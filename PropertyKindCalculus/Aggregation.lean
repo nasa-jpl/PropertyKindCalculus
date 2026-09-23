@@ -63,6 +63,10 @@ two aggregation laws whose arithmetic the Mathlib-free core cannot do.
 module
 
 public import PropertyKindCalculus.Extensivity
+-- Private scope only: the proofs below reduce through bodies sealed in
+-- `PropertyKindCalculus.Extensivity`; `import all` gives this module the reduction without
+-- exposing them to every consumer.
+import all PropertyKindCalculus.Extensivity
 public import PropertyKindCalculus.QuantityRefinement
 
 public section -- pkc-blanket

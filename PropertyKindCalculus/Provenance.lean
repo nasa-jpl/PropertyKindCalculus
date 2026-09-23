@@ -180,7 +180,6 @@ doctrine is to decide the object, never to trust the construction.
 module
 
 public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -1135,5 +1134,4 @@ end Provenance
 
 end PropertyKindCalculus
 
-end -- pkc-blanket-expose
 end -- pkc-blanket

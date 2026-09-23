@@ -51,10 +51,12 @@ is the deliverable.
 module
 
 public import PropertyKindCalculus.Mereology
+-- Private scope only: the kernel-decided witnesses below reduce through `Decomposition.fold`,
+-- whose body is sealed; `import all` gives this module the reduction without exposing it.
+import all PropertyKindCalculus.Mereology
 public import PropertyKindCalculus.PropertyValue
 
 public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
@@ -219,7 +221,7 @@ occupy ≈ 96 mL, not 100 mL. A measurement that returns 50 for each atomic part
 for volume, and stating the negation keeps the extensive predicate honest. -/
 
 /-- Volume, a ratio kind. -/
-def volume : KindOfProperty := { id := "volume", scale := .ratio }
+@[expose] def volume : KindOfProperty := { id := "volume", scale := .ratio }
 
 /-- 50 mL of water, as an atomic part. -/
 def waterPart : Decomposition System := .atom { id := "50 mL water" }
@@ -252,7 +254,7 @@ the exclusion: a kind that is constant under composition cannot also be additive
 of `1000 = 2000`. -/
 
 /-- Mass density, a ratio kind. -/
-def fluidDensity : KindOfProperty := { id := "mass density", scale := .ratio }
+@[expose] def fluidDensity : KindOfProperty := { id := "mass density", scale := .ratio }
 
 /-- A density measurement over parcels of one homogeneous fluid: every part, and every
 composition of parts, reads 1000 kg/m³. -/
@@ -287,7 +289,7 @@ so the third branch of §13.5 is occupied by a checked witness rather than by an
 distinguishes the pair's reading is its dedication (*"coupled oscillator pair — normal mode +
 ; angular frequency"*), not the kind-of-property, which is why the failure below is a fact
 about aggregation and not about commensurability. -/
-def oscillatorFrequency : KindOfProperty := { id := "angular frequency", scale := .ratio }
+@[expose] def oscillatorFrequency : KindOfProperty := { id := "angular frequency", scale := .ratio }
 
 /-- One oscillator of the pair. -/
 def oscillatorA : Decomposition System := .atom { id := "oscillator A" }
@@ -396,7 +398,7 @@ The correction that repairs it is the parallel-axis theorem (`AggregationLaws`).
 
 /-- The moment of inertia of a system of point masses, a ratio kind. Named for its role
 rather than generically, so it does not shadow a host library's own `momentOfInertia`. -/
-def pointMassInertia : KindOfProperty := { id := "moment of inertia", scale := .ratio }
+@[expose] def pointMassInertia : KindOfProperty := { id := "moment of inertia", scale := .ratio }
 
 /-- **The total of a per-part integer over a carving** — the mass of a part, when `w` is the
 mass of a point. Extensive by construction, and one of the two summaries the parallel-axis
@@ -472,7 +474,7 @@ momentum (`angularMomentumTransport`), the moment of inertia's in mass and first
 
 /-- Linear momentum of a system of point masses, a ratio kind. Role-named as
 `pointMassInertia` is, so it does not shadow a host library's own momentum. -/
-def pointMassMomentum : KindOfProperty := { id := "linear momentum", scale := .ratio }
+@[expose] def pointMassMomentum : KindOfProperty := { id := "linear momentum", scale := .ratio }
 
 /-- **Momentum read in the frame moving at `u`**: `∑ wᵢ (vᵢ − u)`, as a fold. -/
 def momentumIn {O : Type u} (w v : O → Int) (u : Int) : Decomposition O → Int :=
@@ -541,7 +543,7 @@ which is why a parked flywheel's spin reads the same about every point and a tra
 one's does not. -/
 
 /-- Angular momentum of a system of point masses (the axial component), a ratio kind. -/
-def pointMassAngularMomentum : KindOfProperty :=
+@[expose] def pointMassAngularMomentum : KindOfProperty :=
   { id := "angular momentum", scale := .ratio }
 
 /-- **Angular momentum about the point `c`**: `∑ wᵢ ((xᵢ − c₁)·vyᵢ − (yᵢ − c₂)·vxᵢ)` — the
@@ -566,5 +568,4 @@ theorem angularMomentumMeasurement_extensiveAbout {O : Type u} (w x y vx vy : O 
 
 end PropertyKindCalculus
 
-end -- pkc-blanket-expose
 end -- pkc-blanket

@@ -52,12 +52,15 @@ public import PropertyKindCalculus.Foundations
 public import PropertyKindCalculus.Kind
 
 public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
 
 namespace PropertyKindCalculus
 
 universe u
 
+-- `@[expose] section`, not an attribute: `deriving DecidableEq` generates
+-- `instDecidableEqComponent.decEq`, which carries no attribute of its own, and kind
+-- distinctness is decided in the kernel by every consumer.
+@[expose] section
 /-- **§20 component** — a pertinent component of the sort of system that a dedicated
 kind-of-property is about (e.g. *water* in a *soil* sample, *glucose* in
 *plasma*). Specified abstractly by identity, mirroring `SortOfSystem`. -/
@@ -81,9 +84,11 @@ structure DedicatedKind where
   kind : KindOfProperty
 deriving DecidableEq, Repr
 
+end
+
 /-- Dedicate a generic kind-of-property to a sort of system and a pertinent
 component. -/
-def KindOfProperty.dedicatedTo (k : KindOfProperty) (sort : SortOfSystem)
+@[expose] def KindOfProperty.dedicatedTo (k : KindOfProperty) (sort : SortOfSystem)
     (component : Component) : DedicatedKind :=
   { sort := sort, component := component, kind := k }
 
@@ -92,7 +97,7 @@ This is the instantiation square closing — the individual layer carries the
 particular, the dedicated kind its sort — and `Sorted` is the model's claim about
 which sort that is. In square terms, Lowe's dispositional route to exemplification:
 up the *instantiated by* edge, then across the top. -/
-def KindOfProperty.dedicatedFor {O : Type u} [Sorted O] (k : KindOfProperty)
+@[expose] def KindOfProperty.dedicatedFor {O : Type u} [Sorted O] (k : KindOfProperty)
     (o : O) (component : Component) : DedicatedKind :=
   k.dedicatedTo (Sorted.sortOf o) component
 
@@ -109,12 +114,12 @@ namespace DedicatedKind
 
 /-- The systematic term `System — Component ; kind-of-property` (Ch. 20, in the
 ENV 12264 / IUPAC-IFCC syntax), the `System` slot naming the sort. -/
-def systematicTerm (d : DedicatedKind) : String :=
+@[expose] def systematicTerm (d : DedicatedKind) : String :=
   s!"{d.sort.id} — {d.component.id} ; {d.kind.id}"
 
 /-- **§13.3.1 via §20** — a dedicated kind is a *dedicated kind-of-quantity* iff
 its underlying kind has magnitude. -/
-def IsQuantity (d : DedicatedKind) : Prop := d.kind.IsQuantity
+@[expose] def IsQuantity (d : DedicatedKind) : Prop := d.kind.IsQuantity
 
 /-- Two dedicated kinds that **agree on sort and component** but differ in the
 underlying kind-of-property are distinct.
@@ -145,5 +150,4 @@ end DedicatedKind
 
 end PropertyKindCalculus
 
-end -- pkc-blanket-expose
 end -- pkc-blanket

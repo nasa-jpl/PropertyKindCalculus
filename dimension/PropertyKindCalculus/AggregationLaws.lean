@@ -40,6 +40,9 @@ public import PropertyKindCalculus.Aggregation
 public import PropertyKindCalculus.QuantityReal
 public import Mathlib.Basic.Real.Basic
 public import Mathlib.Tactic.Ring
+-- Private scope only: the checks below reduce through bodies sealed in the core
+-- library; `import all` gives this file the reduction without exposing them.
+import all PropertyKindCalculus.Extensivity
 
 public section -- pkc-blanket
 @[expose] section -- pkc-blanket-expose

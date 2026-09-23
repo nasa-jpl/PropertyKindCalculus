@@ -36,6 +36,9 @@ neither a target field nor a target index says so.
 module
 
 public import ForPhysLib.CaseStudies.PointParticle.Common
+-- Private scope only: the checks below reduce through bodies sealed in the core
+-- library; `import all` gives this file the reduction without exposing them.
+import all PropertyKindCalculus.IndividualQuantity
 
 public section -- pkc-blanket
 @[expose] section -- pkc-blanket-expose
