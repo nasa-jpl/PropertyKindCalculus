@@ -1,0 +1,5698 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script>
+      (function(){
+  const {protocol:proto, host:hostName, pathname:path, search:srch, hash:hsh} = window.location;
+  if (!(path.endsWith("/") || path.endsWith(".html"))) {
+    window.location.replace(`${proto}//${hostName}${path}/${srch}${hsh}`);
+  }
+})()</script>
+    <script>
+      // Enable TypeScript checking.
+// @ts-check
+
+// Applies a saved table-of-contents width before the first paint.
+//
+// This is a tiny inline counterpart to toc-resize.js: it runs in the page head so that
+// returning desktop readers do not see the default width flash to their saved width.
+// It only records the width in the --verso-toc-user-width custom property; the
+// stylesheet clamps it and ignores it on mobile, and toc-resize.js then takes over the
+// interactive resizing. Keep the storage key in sync with toc-resize.js.
+
+(function () {
+    try {
+        const saved = localStorage.getItem("verso-toc-width");
+        // Parse to a number (as toc-resize.js does) and write that back, so a stored
+        // value with stray whitespace becomes a valid length rather than `" 420 px"`.
+        const width = saved === null ? NaN : Number(saved);
+        if (Number.isFinite(width)) {
+            document.documentElement.style.setProperty("--verso-toc-user-width", `${width}px`);
+        }
+    } catch (_) {
+        // Leave the default width in place when local storage is unavailable.
+    }
+})();
+</script>
+    <base href="./../../"><meta charset="utf-8">
+    <meta name="viewport" content="height=device-height, width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1">
+    <title>How a document declares conformance</title><link rel="stylesheet" href="book.css">
+    <link rel="stylesheet" href="verso-vars.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js" integrity="sha384-zbcZAIxlvJtNE3Dp5nxLXdXtXyxwOdnILY1TDPVmKFhl4r4nSUG1r8bcFXGVa4Te" crossorigin="anonymous"></script>
+    <script defer="defer" src="-verso-search/elasticlunr.min.js"></script>
+    <script defer="defer" src="-verso-search/fuzzysort.min.js"></script>
+    <script defer="defer" src="-verso-search/searchIndex.js"></script>
+    <script defer="defer" src="-verso-search/search-config.js"></script>
+    <script type="module" src="-verso-search/search-init.js"></script>
+    <link rel="stylesheet" href="-verso-search/search-box.css">
+    <link rel="stylesheet" href="-verso-search/search-page.css">
+    <link rel="stylesheet" href="-verso-search/search-highlight.css">
+    <link rel="stylesheet" href="-verso-search/domain-display.css">
+    <script src="-verso-search/search-highlight.js" defer="defer"></script>
+    <script src="toc-resize.js" defer="defer"></script>
+    <script src="-verso-data/katex/katex.js"></script>
+    <script src="-verso-data/katex/math.js"></script>
+    <script src="-verso-data/popper.min.js"></script>
+    <script src="-verso-data/tippy-bundle.umd.min.js"></script>
+    <link rel="stylesheet" href="-verso-data/tippy-border.css">
+    <link rel="stylesheet" href="-verso-data/katex/katex.css">
+    <style>
+:root {
+  --bp-color-surface: #ffffff;
+  --bp-color-surface-muted: #f8fafc;
+  --bp-color-surface-subtle: #f9fafb;
+  --bp-color-surface-modern: #f8fbff;
+  --bp-color-surface-warn: #fff7ed;
+  --bp-color-surface-warn-soft: #ffedd5;
+  --bp-color-surface-note: #fffbeb;
+  --bp-color-border: #cbd5e1;
+  --bp-color-border-soft: #e2e8f0;
+  --bp-color-border-muted: #d1d5db;
+  --bp-color-border-panel: #dbe4ee;
+  --bp-color-border-strong: #94a3b8;
+  --bp-color-text-strong: #0f172a;
+  --bp-color-text: #111827;
+  --bp-color-text-muted: #334155;
+  --bp-color-text-subtle: #475569;
+  --bp-color-text-faint: #64748b;
+  --bp-color-accent-success: #16a34a;
+  --bp-color-accent-warning: #ca8a04;
+  --bp-color-accent-danger: #dc2626;
+  --bp-color-accent-info: #7c3aed;
+  --bp-color-status-success-text: #166534;
+  --bp-color-status-warning-text: #a16207;
+  --bp-color-status-warning-strong: #9a3412;
+  --bp-color-status-warning-border: #fdba74;
+  --bp-color-status-warning-border-soft: #fed7aa;
+  --bp-color-status-error-text: #b91c1c;
+  --bp-color-status-error-strong: #991b1b;
+  --bp-color-status-error-border-soft: #fecaca;
+  --bp-color-status-note-border: #fcd34d;
+  --bp-color-status-note-text: #92400e;
+  --bp-color-focus-border: #93c5fd;
+  --bp-color-focus-surface: #eff6ff;
+  --bp-color-focus-ring: rgba(59, 130, 246, 0.12);
+  --bp-color-selection: rgba(59, 130, 246, 0.18);
+  --bp-color-selection-ring: rgba(59, 130, 246, 0.22);
+  --bp-color-selection-surface-strong: rgba(59, 130, 246, 0.28);
+  --bp-color-selection-surface-soft: rgba(59, 130, 246, 0.14);
+  --bp-color-selection-surface-faint: rgba(59, 130, 246, 0.1);
+  --bp-color-selection-shadow-strong: rgba(59, 130, 246, 0.3);
+  --bp-color-selection-shadow-soft: rgba(59, 130, 246, 0.24);
+  --bp-color-selection-shadow-faint: rgba(59, 130, 246, 0.16);
+  --bp-color-target-ring: rgba(37, 99, 235, 0.22);
+  --bp-color-target-surface: rgba(37, 99, 235, 0.14);
+  --bp-color-target-ring-strong: rgba(37, 99, 235, 0.28);
+  --bp-color-modern-border: #d6deea;
+  --bp-color-modern-surface-alt: #f5f9ff;
+  --bp-color-modern-caption: #e0ecff;
+  --bp-color-bold-surface-glow-1: rgba(251, 191, 36, 0.2);
+  --bp-color-bold-surface-glow-2: rgba(16, 185, 129, 0.2);
+  --bp-color-bold-link: #7c2d12;
+  --bp-color-bold-label: #f59e0b;
+  --bp-color-biblio-border: #d6ccff;
+  --bp-color-biblio-surface: #faf7ff;
+  --bp-color-biblio-border-soft: #e9ddff;
+  --bp-color-biblio-surface-soft: #fdfbff;
+  --bp-color-biblio-link: #4c1d95;
+  --bp-radius-sm: 0.35rem;
+  --bp-radius-md: 0.45rem;
+  --bp-radius-lg: 0.5rem;
+  --bp-radius-xl: 0.55rem;
+  --bp-radius-2xl: 0.7rem;
+  --bp-radius-3xl: 0.85rem;
+  --bp-radius-pill: 999px;
+  --bp-shadow-sm: 0 4px 14px rgba(15, 23, 42, 0.1);
+  --bp-shadow-md: 0 10px 24px rgba(15, 23, 42, 0.16);
+  --bp-shadow-lg: 0 12px 28px rgba(15, 23, 42, 0.18);
+  --bp-shadow-modern: 0 6px 18px rgba(15, 23, 42, 0.08);
+  --bp-shadow-bold: 0 7px 0 var(--bp-color-text-strong);
+  --bp-shadow-bold-lg: 0 9px 0 var(--bp-color-text-strong);
+}
+</style><style>
+.bp_build_metadata {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.3rem 0.75rem;
+  margin: 0.45rem 0 1.1rem;
+  color: var(--bp-color-text-muted, #475569);
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.bp_build_metadata_item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.28rem;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.bp_build_metadata_label {
+  color: var(--bp-color-text-subtle, #475569);
+  font-weight: 600;
+}
+
+.bp_build_metadata_link {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 0.12em;
+}
+
+.bp_build_metadata_link:hover {
+  text-decoration-style: solid;
+}
+
+.bp_build_metadata_commit {
+  padding: 0.02rem 0.22rem;
+  border: 1px solid var(--bp-color-border-soft, #e2e8f0);
+  border-radius: 0.25rem;
+  background: var(--bp-color-surface-muted, #f8fafc);
+  color: var(--bp-color-text-strong, #0f172a);
+  font-size: 0.86em;
+}
+
+.bp_build_metadata_commit_link {
+  text-decoration: none;
+}
+
+.bp_build_metadata_commit_link:hover .bp_build_metadata_commit {
+  border-color: var(--bp-color-link, #2563eb);
+}
+
+.bp_build_metadata_subject {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 640px) {
+  .bp_build_metadata {
+    justify-content: flex-start;
+  }
+}
+</style><style>
+#bp-style-switcher {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem 0.6rem;
+  flex-wrap: wrap;
+  background: var(--bp-color-surface);
+  border: 1px solid var(--bp-color-border);
+  border-radius: var(--bp-radius-md);
+  box-shadow: var(--bp-shadow-sm);
+  padding: 0.4rem 0.55rem;
+  font-size: 0.82rem;
+}
+
+#bp-style-switcher .bp-style-switcher-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+#bp-style-switcher label {
+  font-weight: 600;
+}
+
+#bp-style-switcher select {
+  border: 1px solid var(--bp-color-border);
+  border-radius: 0.3rem;
+  background: var(--bp-color-surface);
+  font-size: 0.82rem;
+  padding: 0.1rem 0.25rem;
+}
+
+html[data-bp-style="blueprint"] .bp_wrapper {
+  border: 1px solid var(--bp-color-border);
+  border-radius: var(--bp-radius-sm);
+  padding: 0.45rem 0.6rem 0.55rem;
+  background: var(--bp-color-surface);
+}
+
+html[data-bp-style="blueprint"] .bp_heading {
+  border-bottom: 1px solid var(--bp-color-border-soft);
+  padding-bottom: 0.35rem;
+}
+
+html[data-bp-style="blueprint"] .bp_content {
+  margin-top: 0.35rem;
+  padding-left: 0.45rem;
+}
+
+html[data-bp-style="blueprint"] .bp_kind_theorem_content,
+html[data-bp-style="blueprint"] .bp_kind_proposition_content,
+html[data-bp-style="blueprint"] .bp_kind_lemma_content,
+html[data-bp-style="blueprint"] .bp_kind_corollary_content,
+html[data-bp-style="blueprint"] .bp_kind_proof_content,
+html[data-bp-style="blueprint"] div.theorem_thmcontent,
+html[data-bp-style="blueprint"] div.proposition_thmcontent,
+html[data-bp-style="blueprint"] div.lemma_thmcontent,
+html[data-bp-style="blueprint"] div.corollary_thmcontent,
+html[data-bp-style="blueprint"] div.proof_content {
+  border-left-color: var(--bp-color-text-muted);
+}
+
+html[data-bp-style="modern"] .bp_wrapper {
+  border: 1px solid var(--bp-color-modern-border);
+  border-radius: var(--bp-radius-2xl);
+  padding: 0.6rem 0.7rem 0.68rem;
+  background: linear-gradient(180deg, var(--bp-color-surface), var(--bp-color-surface-modern));
+  box-shadow: var(--bp-shadow-modern);
+}
+
+html[data-bp-style="modern"] .bp_heading {
+  border-bottom: 1px solid var(--bp-color-border-soft);
+  padding-bottom: 0.4rem;
+}
+
+html[data-bp-style="modern"] .bp_caption {
+  background: var(--bp-color-modern-caption);
+  border-radius: var(--bp-radius-pill);
+  padding: 0.08rem 0.5rem;
+}
+
+html[data-bp-style="modern"] .bp_content {
+  margin-top: 0.45rem;
+  padding-left: 0.5rem;
+}
+
+html[data-bp-style="modern"] .bp_kind_theorem_content,
+html[data-bp-style="modern"] .bp_kind_proposition_content,
+html[data-bp-style="modern"] .bp_kind_lemma_content,
+html[data-bp-style="modern"] .bp_kind_corollary_content,
+html[data-bp-style="modern"] .bp_kind_proof_content,
+html[data-bp-style="modern"] .bp_wrapper div.theorem_thmcontent,
+html[data-bp-style="modern"] .bp_wrapper div.proposition_thmcontent,
+html[data-bp-style="modern"] .bp_wrapper div.lemma_thmcontent,
+html[data-bp-style="modern"] .bp_wrapper div.corollary_thmcontent,
+html[data-bp-style="modern"] .bp_wrapper div.proof_content {
+  border-left-color: var(--bp-color-text-faint);
+}
+
+html[data-bp-style="bold"] .bp_wrapper {
+  border: 2px solid var(--bp-color-text-strong);
+  border-radius: var(--bp-radius-3xl);
+  padding: 0.6rem 0.75rem 0.75rem;
+  background:
+    radial-gradient(circle at 100% 0%, var(--bp-color-bold-surface-glow-1), transparent 36%),
+    radial-gradient(circle at 0% 100%, var(--bp-color-bold-surface-glow-2), transparent 32%),
+    var(--bp-color-surface);
+  box-shadow: var(--bp-shadow-bold-lg);
+}
+
+html[data-bp-style="bold"] .bp_heading {
+  border-bottom: 2px solid var(--bp-color-text-strong);
+  padding-bottom: 0.45rem;
+  letter-spacing: 0.01em;
+}
+
+html[data-bp-style="bold"] .bp_caption {
+  background: var(--bp-color-text-strong);
+  color: var(--bp-color-surface-muted);
+  border-radius: 0.25rem;
+  padding: 0.08rem 0.45rem;
+  text-transform: uppercase;
+}
+
+html[data-bp-style="bold"] .bp_label {
+  background: var(--bp-color-bold-label);
+  color: var(--bp-color-text);
+  border-radius: var(--bp-radius-pill);
+  padding: 0.06rem 0.42rem;
+}
+
+html[data-bp-style="bold"] .bp_code_link {
+  color: var(--bp-color-bold-link);
+  font-weight: 700;
+}
+
+html[data-bp-style="bold"] .bp_code_hover {
+  border: 2px solid var(--bp-color-text-strong);
+  border-radius: var(--bp-radius-xl);
+  box-shadow: var(--bp-shadow-bold);
+}
+
+html[data-bp-style="bold"] .bp_content {
+  margin-top: 0.5rem;
+  padding-left: 0.6rem;
+}
+
+html[data-bp-style="bold"] .bp_kind_theorem_content,
+html[data-bp-style="bold"] .bp_kind_proposition_content,
+html[data-bp-style="bold"] .bp_kind_lemma_content,
+html[data-bp-style="bold"] .bp_kind_corollary_content,
+html[data-bp-style="bold"] .bp_kind_proof_content,
+html[data-bp-style="bold"] .bp_wrapper div.theorem_thmcontent,
+html[data-bp-style="bold"] .bp_wrapper div.proposition_thmcontent,
+html[data-bp-style="bold"] .bp_wrapper div.lemma_thmcontent,
+html[data-bp-style="bold"] .bp_wrapper div.corollary_thmcontent,
+html[data-bp-style="bold"] .bp_wrapper div.proof_content {
+  border-left: 0.2rem solid var(--bp-color-text-strong);
+}
+</style><style>
+.bp_preview_header_heading {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.42rem;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.bp_preview_header_heading > *:first-child {
+  min-width: 0;
+}
+
+.bp_preview_header_label {
+  margin-left: auto;
+  max-width: 100%;
+  color: var(--bp-color-text-muted);
+  font-family: var(--bp-font-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace);
+  font-size: 0.72rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+  text-align: right;
+  text-decoration: none;
+}
+
+.bp_preview_header_label[href]:hover {
+  color: var(--bp-color-link);
+  text-decoration: underline;
+}
+
+.bp_preview_header_label[hidden] {
+  display: none;
+}
+</style><style>
+.bp_external_markup_node .bp_external_markup_notice {
+  margin: 0 0 0.65rem;
+  padding: 0.42rem 0.55rem;
+  border: 1px solid var(--bp-color-status-warning-border, #f59e0b);
+  border-radius: var(--bp-radius-md, 0.375rem);
+  background: var(--bp-color-status-warning-surface, #fffbeb);
+  color: var(--bp-color-status-warning-text, #92400e);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.bp_external_markup_source {
+  overflow: auto;
+  white-space: pre-wrap;
+  border: 1px solid var(--bp-color-border-soft, #e2e8f0);
+  border-radius: var(--bp-radius-md, 0.375rem);
+  background: var(--bp-color-surface-muted, #f8fafc);
+  padding: 0.65rem 0.75rem;
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.bp_external_markup_source code {
+  white-space: inherit;
+}
+
+.bp_external_markdown_body {
+  display: flow-root;
+}
+
+.bp_external_markdown_body > :first-child,
+.bp_external_markdown_body > :first-child > :first-child {
+  margin-top: 0;
+}
+
+.bp_external_markdown_body > :last-child,
+.bp_external_markdown_body > :last-child > :last-child {
+  margin-bottom: 0;
+}
+
+.bp_external_markdown_body pre {
+  overflow: auto;
+}
+</style><style>
+.content-wrapper {
+  counter-reset: margin-note-counter;
+}
+</style><style>
+.bp_preview_panel {
+  border: 1px solid var(--bp-color-border);
+  border-radius: var(--bp-radius-lg);
+  background: var(--bp-color-surface);
+  box-shadow: var(--bp-shadow-md);
+  padding: 0.65rem 0.75rem;
+}
+
+.bp_preview_panel[hidden] {
+  display: none !important;
+}
+
+.bp_preview_panel[data-bp-preview-placement="anchored"]::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -0.85rem;
+  height: 0.85rem;
+}
+
+.bp_preview_panel[data-bp-preview-placement="anchored"]::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -0.85rem;
+  height: 0.85rem;
+}
+
+.bp_preview_panel_header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+}
+
+.bp_preview_panel_title {
+  font-weight: 700;
+  color: var(--bp-color-text);
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bp_preview_panel_close {
+  border: 1px solid var(--bp-color-border);
+  border-radius: var(--bp-radius-sm);
+  background: var(--bp-color-surface);
+  color: var(--bp-color-text-strong);
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1;
+  padding: 0.25rem 0.45rem;
+  cursor: pointer;
+}
+
+.bp_preview_panel[data-bp-preview-mode="hover"] .bp_preview_panel_close {
+  display: none;
+}
+
+.bp_preview_panel_body {
+  border-left: 2px solid var(--bp-color-border-soft);
+  overflow: auto;
+}
+</style><style>
+.namedocs {
+  position: relative;
+  border: solid 1px #98B2C0;
+  border-radius: .5rem;
+  padding-top: var(--verso--box-padding);
+  margin-top: var(--verso--box-vertical-margin);
+  margin-bottom: var(--verso--box-vertical-margin);
+}
+
+.namedocs .text {
+  /* Causes margins on child elements to collapse inside the element, such
+     that the margins don't extend into parent with the background color.
+     The effect is that weird borders in the definition box don't happen anymore. */
+  display: flow-root;
+  /* Add a padding. this is the same as the margin applied to the first and last child.
+     The effect is that the padding looks the same size on all sides. */
+  padding: 0 var(--verso--box-padding);
+  border-top: 1px solid #98B2C0;
+}
+
+.namedocs .text > pre {
+  overflow-x: auto;
+}
+
+.namedocs .signature {
+  font-family: var(--verso-code-font-family);
+  margin-top: 0 !important;
+  margin-left: var(--verso--box-padding) !important;
+  margin-bottom: .75rem !important;
+}
+
+.namedocs .label {
+  display: block;
+  font-size: small;
+  font-family: var(--verso-structure-font-family);
+  position: absolute;
+  top: -0.65rem;
+  left: 1rem;
+  background: #fff;
+  padding: 0 .5rem .125rem;
+  border: 1px solid #98B2C0;
+  border-radius: 1rem;
+  color: #555;
+}
+
+.namedocs .docstring-section {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+.namedocs .docstring-section-label {
+  font-size: inherit;
+  font-weight: bold;
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+.namedocs > .text .constructor {
+  padding-top: 0;
+  padding-right: 0;
+  padding-bottom: 0;
+  margin-top: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.namedocs > .text .constructor::before {
+  content: '| ';
+  display: block;
+  font-family: var(--verso-code-font-family);
+  font-weight: bold;
+  float: left;
+  width: 0.5rem;
+  white-space: pre;
+}
+
+.namedocs > .text .constructor .name-and-type {
+  padding-left: 0.5rem;
+  float: left;
+  margin-top: 0;
+  max-width: calc(100% - 1rem);
+}
+.namedocs > .text .constructor .docs {
+  clear: both;
+  padding-left: 1rem;
+}
+
+/* These margins work together with the padding on .text */
+.namedocs .text > :first-child {
+  margin-top: var(--verso--box-padding);
+}
+.namedocs .text > :last-child {
+  margin-bottom: var(--verso--box-padding);
+}
+
+.namedocs .methods td, .namedocs .fields td {
+  vertical-align: top;
+}
+.namedocs .inheritance {
+  vertical-align: top;
+  font-size: smaller;
+  font-family: var(--verso-structure-font-family);
+}
+.namedocs .inheritance ol {
+  display: inline-block;
+  margin: 0;
+  padding: 0;
+}
+.namedocs .inheritance ol li {
+  list-style-type: none;
+  display: inline-block;
+}
+.namedocs .inheritance ol li::after {
+  content: " > "
+}
+.namedocs .inheritance ol li:last-child::after {
+  content: "";
+}
+
+.namedocs .extends {
+  display: inline;
+  margin: 0;
+  padding: 0;
+}
+
+.namedocs .extends li {
+  list-style-type: none;
+  display: inline-block;
+}
+
+.namedocs .extends li label {
+  padding-right: 1rem;
+}
+
+.namedocs .subdocs .name-and-type {
+  font-size: 1rem;
+  margin-left: 0;
+  margin-top: 0;
+  margin-right: 0;
+  margin-bottom: 0.5rem;
+}
+
+.namedocs .subdocs .docs {
+  margin-left: 1.5rem;
+  margin-top: 0;
+  margin-right: 0;
+  margin-bottom: 0.5rem;
+}
+
+.namedocs:has(input[data-parent-idx]) [data-inherited-from] {
+  transition-property: opacity, display;
+  transition-duration: 0.4s;
+  transition-behavior: allow-discrete;
+  @starting-style { opacity: 0 !important; }
+}
+
+#this-page-items .tactic-name { font-weight: bold; }
+.namedocs:has(input[data-parent-idx="0"]) [data-inherited-from="0"] {
+  display: none;
+  opacity: 0;
+}
+.namedocs:has(input[data-parent-idx="0"]:checked) [data-inherited-from="0"] {
+  display: block;
+  transform: none;
+  opacity: 1;
+}
+.namedocs:has(input[data-parent-idx="0"]:checked):has(.inheritance[data-inherited-from="0"]:hover) [data-inherited-from]:not([data-inherited-from="0"]) {
+  opacity: 0.5;
+}
+.namedocs:has(input[data-parent-idx="1"]) [data-inherited-from="1"] {
+  display: none;
+  opacity: 0;
+}
+.namedocs:has(input[data-parent-idx="1"]:checked) [data-inherited-from="1"] {
+  display: block;
+  transform: none;
+  opacity: 1;
+}
+.namedocs:has(input[data-parent-idx="1"]:checked):has(.inheritance[data-inherited-from="1"]:hover) [data-inherited-from]:not([data-inherited-from="1"]) {
+  opacity: 0.5;
+}
+.namedocs:has(input[data-parent-idx="2"]) [data-inherited-from="2"] {
+  display: none;
+  opacity: 0;
+}
+.namedocs:has(input[data-parent-idx="2"]:checked) [data-inherited-from="2"] {
+  display: block;
+  transform: none;
+  opacity: 1;
+}
+.namedocs:has(input[data-parent-idx="2"]:checked):has(.inheritance[data-inherited-from="2"]:hover) [data-inherited-from]:not([data-inherited-from="2"]) {
+  opacity: 0.5;
+}
+.namedocs:has(input[data-parent-idx="3"]) [data-inherited-from="3"] {
+  display: none;
+  opacity: 0;
+}
+.namedocs:has(input[data-parent-idx="3"]:checked) [data-inherited-from="3"] {
+  display: block;
+  transform: none;
+  opacity: 1;
+}
+.namedocs:has(input[data-parent-idx="3"]:checked):has(.inheritance[data-inherited-from="3"]:hover) [data-inherited-from]:not([data-inherited-from="3"]) {
+  opacity: 0.5;
+}
+.namedocs:has(input[data-parent-idx="4"]) [data-inherited-from="4"] {
+  display: none;
+  opacity: 0;
+}
+.namedocs:has(input[data-parent-idx="4"]:checked) [data-inherited-from="4"] {
+  display: block;
+  transform: none;
+  opacity: 1;
+}
+.namedocs:has(input[data-parent-idx="4"]:checked):has(.inheritance[data-inherited-from="4"]:hover) [data-inherited-from]:not([data-inherited-from="4"]) {
+  opacity: 0.5;
+}
+.namedocs:has(input[data-parent-idx="5"]) [data-inherited-from="5"] {
+  display: none;
+  opacity: 0;
+}
+.namedocs:has(input[data-parent-idx="5"]:checked) [data-inherited-from="5"] {
+  display: block;
+  transform: none;
+  opacity: 1;
+}
+.namedocs:has(input[data-parent-idx="5"]:checked):has(.inheritance[data-inherited-from="5"]:hover) [data-inherited-from]:not([data-inherited-from="5"]) {
+  opacity: 0.5;
+}
+.namedocs:has(input[data-parent-idx="6"]) [data-inherited-from="6"] {
+  display: none;
+  opacity: 0;
+}
+.namedocs:has(input[data-parent-idx="6"]:checked) [data-inherited-from="6"] {
+  display: block;
+  transform: none;
+  opacity: 1;
+}
+.namedocs:has(input[data-parent-idx="6"]:checked):has(.inheritance[data-inherited-from="6"]:hover) [data-inherited-from]:not([data-inherited-from="6"]) {
+  opacity: 0.5;
+}
+.namedocs:has(input[data-parent-idx="7"]) [data-inherited-from="7"] {
+  display: none;
+  opacity: 0;
+}
+.namedocs:has(input[data-parent-idx="7"]:checked) [data-inherited-from="7"] {
+  display: block;
+  transform: none;
+  opacity: 1;
+}
+.namedocs:has(input[data-parent-idx="7"]:checked):has(.inheritance[data-inherited-from="7"]:hover) [data-inherited-from]:not([data-inherited-from="7"]) {
+  opacity: 0.5;
+}
+.namedocs:has(input[data-parent-idx="8"]) [data-inherited-from="8"] {
+  display: none;
+  opacity: 0;
+}
+.namedocs:has(input[data-parent-idx="8"]:checked) [data-inherited-from="8"] {
+  display: block;
+  transform: none;
+  opacity: 1;
+}
+.namedocs:has(input[data-parent-idx="8"]:checked):has(.inheritance[data-inherited-from="8"]:hover) [data-inherited-from]:not([data-inherited-from="8"]) {
+  opacity: 0.5;
+}
+.namedocs:has(input[data-parent-idx="9"]) [data-inherited-from="9"] {
+  display: none;
+  opacity: 0;
+}
+.namedocs:has(input[data-parent-idx="9"]:checked) [data-inherited-from="9"] {
+  display: block;
+  transform: none;
+  opacity: 1;
+}
+.namedocs:has(input[data-parent-idx="9"]:checked):has(.inheritance[data-inherited-from="9"]:hover) [data-inherited-from]:not([data-inherited-from="9"]) {
+  opacity: 0.5;
+}
+.namedocs:has(input[data-parent-idx="10"]) [data-inherited-from="10"] {
+  display: none;
+  opacity: 0;
+}
+.namedocs:has(input[data-parent-idx="10"]:checked) [data-inherited-from="10"] {
+  display: block;
+  transform: none;
+  opacity: 1;
+}
+.namedocs:has(input[data-parent-idx="10"]:checked):has(.inheritance[data-inherited-from="10"]:hover) [data-inherited-from]:not([data-inherited-from="10"]) {
+  opacity: 0.5;
+}
+.namedocs:has(input[data-parent-idx="11"]) [data-inherited-from="11"] {
+  display: none;
+  opacity: 0;
+}
+.namedocs:has(input[data-parent-idx="11"]:checked) [data-inherited-from="11"] {
+  display: block;
+  transform: none;
+  opacity: 1;
+}
+.namedocs:has(input[data-parent-idx="11"]:checked):has(.inheritance[data-inherited-from="11"]:hover) [data-inherited-from]:not([data-inherited-from="11"]) {
+  opacity: 0.5;
+}
+.namedocs:has(input[data-parent-idx="12"]) [data-inherited-from="12"] {
+  display: none;
+  opacity: 0;
+}
+.namedocs:has(input[data-parent-idx="12"]:checked) [data-inherited-from="12"] {
+  display: block;
+  transform: none;
+  opacity: 1;
+}
+.namedocs:has(input[data-parent-idx="12"]:checked):has(.inheritance[data-inherited-from="12"]:hover) [data-inherited-from]:not([data-inherited-from="12"]) {
+  opacity: 0.5;
+}
+.namedocs:has(input[data-parent-idx="13"]) [data-inherited-from="13"] {
+  display: none;
+  opacity: 0;
+}
+.namedocs:has(input[data-parent-idx="13"]:checked) [data-inherited-from="13"] {
+  display: block;
+  transform: none;
+  opacity: 1;
+}
+.namedocs:has(input[data-parent-idx="13"]:checked):has(.inheritance[data-inherited-from="13"]:hover) [data-inherited-from]:not([data-inherited-from="13"]) {
+  opacity: 0.5;
+}
+.namedocs:has(input[data-parent-idx="14"]) [data-inherited-from="14"] {
+  display: none;
+  opacity: 0;
+}
+.namedocs:has(input[data-parent-idx="14"]:checked) [data-inherited-from="14"] {
+  display: block;
+  transform: none;
+  opacity: 1;
+}
+.namedocs:has(input[data-parent-idx="14"]:checked):has(.inheritance[data-inherited-from="14"]:hover) [data-inherited-from]:not([data-inherited-from="14"]) {
+  opacity: 0.5;
+}
+.namedocs:has(input[data-parent-idx="15"]) [data-inherited-from="15"] {
+  display: none;
+  opacity: 0;
+}
+.namedocs:has(input[data-parent-idx="15"]:checked) [data-inherited-from="15"] {
+  display: block;
+  transform: none;
+  opacity: 1;
+}
+.namedocs:has(input[data-parent-idx="15"]:checked):has(.inheritance[data-inherited-from="15"]:hover) [data-inherited-from]:not([data-inherited-from="15"]) {
+  opacity: 0.5;
+}
+.namedocs:has(input[data-parent-idx="16"]) [data-inherited-from="16"] {
+  display: none;
+  opacity: 0;
+}
+.namedocs:has(input[data-parent-idx="16"]:checked) [data-inherited-from="16"] {
+  display: block;
+  transform: none;
+  opacity: 1;
+}
+.namedocs:has(input[data-parent-idx="16"]:checked):has(.inheritance[data-inherited-from="16"]:hover) [data-inherited-from]:not([data-inherited-from="16"]) {
+  opacity: 0.5;
+}
+.namedocs:has(input[data-parent-idx="17"]) [data-inherited-from="17"] {
+  display: none;
+  opacity: 0;
+}
+.namedocs:has(input[data-parent-idx="17"]:checked) [data-inherited-from="17"] {
+  display: block;
+  transform: none;
+  opacity: 1;
+}
+.namedocs:has(input[data-parent-idx="17"]:checked):has(.inheritance[data-inherited-from="17"]:hover) [data-inherited-from]:not([data-inherited-from="17"]) {
+  opacity: 0.5;
+}
+.namedocs:has(input[data-parent-idx="18"]) [data-inherited-from="18"] {
+  display: none;
+  opacity: 0;
+}
+.namedocs:has(input[data-parent-idx="18"]:checked) [data-inherited-from="18"] {
+  display: block;
+  transform: none;
+  opacity: 1;
+}
+.namedocs:has(input[data-parent-idx="18"]:checked):has(.inheritance[data-inherited-from="18"]:hover) [data-inherited-from]:not([data-inherited-from="18"]) {
+  opacity: 0.5;
+}
+.namedocs:has(input[data-parent-idx="19"]) [data-inherited-from="19"] {
+  display: none;
+  opacity: 0;
+}
+.namedocs:has(input[data-parent-idx="19"]:checked) [data-inherited-from="19"] {
+  display: block;
+  transform: none;
+  opacity: 1;
+}
+.namedocs:has(input[data-parent-idx="19"]:checked):has(.inheritance[data-inherited-from="19"]:hover) [data-inherited-from]:not([data-inherited-from="19"]) {
+  opacity: 0.5;
+}
+.namedocs:has(input[data-parent-idx="20"]) [data-inherited-from="20"] {
+  display: none;
+  opacity: 0;
+}
+.namedocs:has(input[data-parent-idx="20"]:checked) [data-inherited-from="20"] {
+  display: block;
+  transform: none;
+  opacity: 1;
+}
+.namedocs:has(input[data-parent-idx="20"]:checked):has(.inheritance[data-inherited-from="20"]:hover) [data-inherited-from]:not([data-inherited-from="20"]) {
+  opacity: 0.5;
+}
+.namedocs:has(input[data-parent-idx="21"]) [data-inherited-from="21"] {
+  display: none;
+  opacity: 0;
+}
+.namedocs:has(input[data-parent-idx="21"]:checked) [data-inherited-from="21"] {
+  display: block;
+  transform: none;
+  opacity: 1;
+}
+.namedocs:has(input[data-parent-idx="21"]:checked):has(.inheritance[data-inherited-from="21"]:hover) [data-inherited-from]:not([data-inherited-from="21"]) {
+  opacity: 0.5;
+}
+.namedocs:has(input[data-parent-idx="22"]) [data-inherited-from="22"] {
+  display: none;
+  opacity: 0;
+}
+.namedocs:has(input[data-parent-idx="22"]:checked) [data-inherited-from="22"] {
+  display: block;
+  transform: none;
+  opacity: 1;
+}
+.namedocs:has(input[data-parent-idx="22"]:checked):has(.inheritance[data-inherited-from="22"]:hover) [data-inherited-from]:not([data-inherited-from="22"]) {
+  opacity: 0.5;
+}
+.namedocs:has(input[data-parent-idx="23"]) [data-inherited-from="23"] {
+  display: none;
+  opacity: 0;
+}
+.namedocs:has(input[data-parent-idx="23"]:checked) [data-inherited-from="23"] {
+  display: block;
+  transform: none;
+  opacity: 1;
+}
+.namedocs:has(input[data-parent-idx="23"]:checked):has(.inheritance[data-inherited-from="23"]:hover) [data-inherited-from]:not([data-inherited-from="23"]) {
+  opacity: 0.5;
+}
+.namedocs:has(input[data-parent-idx="24"]) [data-inherited-from="24"] {
+  display: none;
+  opacity: 0;
+}
+.namedocs:has(input[data-parent-idx="24"]:checked) [data-inherited-from="24"] {
+  display: block;
+  transform: none;
+  opacity: 1;
+}
+.namedocs:has(input[data-parent-idx="24"]:checked):has(.inheritance[data-inherited-from="24"]:hover) [data-inherited-from]:not([data-inherited-from="24"]) {
+  opacity: 0.5;
+}
+.namedocs:has(input[data-parent-idx="25"]) [data-inherited-from="25"] {
+  display: none;
+  opacity: 0;
+}
+.namedocs:has(input[data-parent-idx="25"]:checked) [data-inherited-from="25"] {
+  display: block;
+  transform: none;
+  opacity: 1;
+}
+.namedocs:has(input[data-parent-idx="25"]:checked):has(.inheritance[data-inherited-from="25"]:hover) [data-inherited-from]:not([data-inherited-from="25"]) {
+  opacity: 0.5;
+}
+.namedocs:has(input[data-parent-idx="26"]) [data-inherited-from="26"] {
+  display: none;
+  opacity: 0;
+}
+.namedocs:has(input[data-parent-idx="26"]:checked) [data-inherited-from="26"] {
+  display: block;
+  transform: none;
+  opacity: 1;
+}
+.namedocs:has(input[data-parent-idx="26"]:checked):has(.inheritance[data-inherited-from="26"]:hover) [data-inherited-from]:not([data-inherited-from="26"]) {
+  opacity: 0.5;
+}
+.namedocs:has(input[data-parent-idx="27"]) [data-inherited-from="27"] {
+  display: none;
+  opacity: 0;
+}
+.namedocs:has(input[data-parent-idx="27"]:checked) [data-inherited-from="27"] {
+  display: block;
+  transform: none;
+  opacity: 1;
+}
+.namedocs:has(input[data-parent-idx="27"]:checked):has(.inheritance[data-inherited-from="27"]:hover) [data-inherited-from]:not([data-inherited-from="27"]) {
+  opacity: 0.5;
+}
+.namedocs:has(input[data-parent-idx="28"]) [data-inherited-from="28"] {
+  display: none;
+  opacity: 0;
+}
+.namedocs:has(input[data-parent-idx="28"]:checked) [data-inherited-from="28"] {
+  display: block;
+  transform: none;
+  opacity: 1;
+}
+.namedocs:has(input[data-parent-idx="28"]:checked):has(.inheritance[data-inherited-from="28"]:hover) [data-inherited-from]:not([data-inherited-from="28"]) {
+  opacity: 0.5;
+}
+.namedocs:has(input[data-parent-idx="29"]) [data-inherited-from="29"] {
+  display: none;
+  opacity: 0;
+}
+.namedocs:has(input[data-parent-idx="29"]:checked) [data-inherited-from="29"] {
+  display: block;
+  transform: none;
+  opacity: 1;
+}
+.namedocs:has(input[data-parent-idx="29"]:checked):has(.inheritance[data-inherited-from="29"]:hover) [data-inherited-from]:not([data-inherited-from="29"]) {
+  opacity: 0.5;
+}
+.namedocs:has(input[data-parent-idx="30"]) [data-inherited-from="30"] {
+  display: none;
+  opacity: 0;
+}
+.namedocs:has(input[data-parent-idx="30"]:checked) [data-inherited-from="30"] {
+  display: block;
+  transform: none;
+  opacity: 1;
+}
+.namedocs:has(input[data-parent-idx="30"]:checked):has(.inheritance[data-inherited-from="30"]:hover) [data-inherited-from]:not([data-inherited-from="30"]) {
+  opacity: 0.5;
+}
+.namedocs:has(input[data-parent-idx="31"]) [data-inherited-from="31"] {
+  display: none;
+  opacity: 0;
+}
+.namedocs:has(input[data-parent-idx="31"]:checked) [data-inherited-from="31"] {
+  display: block;
+  transform: none;
+  opacity: 1;
+}
+.namedocs:has(input[data-parent-idx="31"]:checked):has(.inheritance[data-inherited-from="31"]:hover) [data-inherited-from]:not([data-inherited-from="31"]) {
+  opacity: 0.5;
+}
+.namedocs:has(input[data-parent-idx="32"]) [data-inherited-from="32"] {
+  display: none;
+  opacity: 0;
+}
+.namedocs:has(input[data-parent-idx="32"]:checked) [data-inherited-from="32"] {
+  display: block;
+  transform: none;
+  opacity: 1;
+}
+.namedocs:has(input[data-parent-idx="32"]:checked):has(.inheritance[data-inherited-from="32"]:hover) [data-inherited-from]:not([data-inherited-from="32"]) {
+  opacity: 0.5;
+}
+.namedocs:has(input[data-parent-idx="33"]) [data-inherited-from="33"] {
+  display: none;
+  opacity: 0;
+}
+.namedocs:has(input[data-parent-idx="33"]:checked) [data-inherited-from="33"] {
+  display: block;
+  transform: none;
+  opacity: 1;
+}
+.namedocs:has(input[data-parent-idx="33"]:checked):has(.inheritance[data-inherited-from="33"]:hover) [data-inherited-from]:not([data-inherited-from="33"]) {
+  opacity: 0.5;
+}
+.namedocs:has(input[data-parent-idx="34"]) [data-inherited-from="34"] {
+  display: none;
+  opacity: 0;
+}
+.namedocs:has(input[data-parent-idx="34"]:checked) [data-inherited-from="34"] {
+  display: block;
+  transform: none;
+  opacity: 1;
+}
+.namedocs:has(input[data-parent-idx="34"]:checked):has(.inheritance[data-inherited-from="34"]:hover) [data-inherited-from]:not([data-inherited-from="34"]) {
+  opacity: 0.5;
+}
+.namedocs:has(input[data-parent-idx="35"]) [data-inherited-from="35"] {
+  display: none;
+  opacity: 0;
+}
+.namedocs:has(input[data-parent-idx="35"]:checked) [data-inherited-from="35"] {
+  display: block;
+  transform: none;
+  opacity: 1;
+}
+.namedocs:has(input[data-parent-idx="35"]:checked):has(.inheritance[data-inherited-from="35"]:hover) [data-inherited-from]:not([data-inherited-from="35"]) {
+  opacity: 0.5;
+}
+.namedocs:has(input[data-parent-idx="36"]) [data-inherited-from="36"] {
+  display: none;
+  opacity: 0;
+}
+.namedocs:has(input[data-parent-idx="36"]:checked) [data-inherited-from="36"] {
+  display: block;
+  transform: none;
+  opacity: 1;
+}
+.namedocs:has(input[data-parent-idx="36"]:checked):has(.inheritance[data-inherited-from="36"]:hover) [data-inherited-from]:not([data-inherited-from="36"]) {
+  opacity: 0.5;
+}
+.namedocs:has(input[data-parent-idx="37"]) [data-inherited-from="37"] {
+  display: none;
+  opacity: 0;
+}
+.namedocs:has(input[data-parent-idx="37"]:checked) [data-inherited-from="37"] {
+  display: block;
+  transform: none;
+  opacity: 1;
+}
+.namedocs:has(input[data-parent-idx="37"]:checked):has(.inheritance[data-inherited-from="37"]:hover) [data-inherited-from]:not([data-inherited-from="37"]) {
+  opacity: 0.5;
+}
+.namedocs:has(input[data-parent-idx="38"]) [data-inherited-from="38"] {
+  display: none;
+  opacity: 0;
+}
+.namedocs:has(input[data-parent-idx="38"]:checked) [data-inherited-from="38"] {
+  display: block;
+  transform: none;
+  opacity: 1;
+}
+.namedocs:has(input[data-parent-idx="38"]:checked):has(.inheritance[data-inherited-from="38"]:hover) [data-inherited-from]:not([data-inherited-from="38"]) {
+  opacity: 0.5;
+}
+.namedocs:has(input[data-parent-idx="39"]) [data-inherited-from="39"] {
+  display: none;
+  opacity: 0;
+}
+.namedocs:has(input[data-parent-idx="39"]:checked) [data-inherited-from="39"] {
+  display: block;
+  transform: none;
+  opacity: 1;
+}
+.namedocs:has(input[data-parent-idx="39"]:checked):has(.inheritance[data-inherited-from="39"]:hover) [data-inherited-from]:not([data-inherited-from="39"]) {
+  opacity: 0.5;
+}
+.namedocs:has(input[data-parent-idx="40"]) [data-inherited-from="40"] {
+  display: none;
+  opacity: 0;
+}
+.namedocs:has(input[data-parent-idx="40"]:checked) [data-inherited-from="40"] {
+  display: block;
+  transform: none;
+  opacity: 1;
+}
+.namedocs:has(input[data-parent-idx="40"]:checked):has(.inheritance[data-inherited-from="40"]:hover) [data-inherited-from]:not([data-inherited-from="40"]) {
+  opacity: 0.5;
+}
+.namedocs:has(input[data-parent-idx="41"]) [data-inherited-from="41"] {
+  display: none;
+  opacity: 0;
+}
+.namedocs:has(input[data-parent-idx="41"]:checked) [data-inherited-from="41"] {
+  display: block;
+  transform: none;
+  opacity: 1;
+}
+.namedocs:has(input[data-parent-idx="41"]:checked):has(.inheritance[data-inherited-from="41"]:hover) [data-inherited-from]:not([data-inherited-from="41"]) {
+  opacity: 0.5;
+}
+.namedocs:has(input[data-parent-idx="42"]) [data-inherited-from="42"] {
+  display: none;
+  opacity: 0;
+}
+.namedocs:has(input[data-parent-idx="42"]:checked) [data-inherited-from="42"] {
+  display: block;
+  transform: none;
+  opacity: 1;
+}
+.namedocs:has(input[data-parent-idx="42"]:checked):has(.inheritance[data-inherited-from="42"]:hover) [data-inherited-from]:not([data-inherited-from="42"]) {
+  opacity: 0.5;
+}
+.namedocs:has(input[data-parent-idx="43"]) [data-inherited-from="43"] {
+  display: none;
+  opacity: 0;
+}
+.namedocs:has(input[data-parent-idx="43"]:checked) [data-inherited-from="43"] {
+  display: block;
+  transform: none;
+  opacity: 1;
+}
+.namedocs:has(input[data-parent-idx="43"]:checked):has(.inheritance[data-inherited-from="43"]:hover) [data-inherited-from]:not([data-inherited-from="43"]) {
+  opacity: 0.5;
+}
+.namedocs:has(input[data-parent-idx="44"]) [data-inherited-from="44"] {
+  display: none;
+  opacity: 0;
+}
+.namedocs:has(input[data-parent-idx="44"]:checked) [data-inherited-from="44"] {
+  display: block;
+  transform: none;
+  opacity: 1;
+}
+.namedocs:has(input[data-parent-idx="44"]:checked):has(.inheritance[data-inherited-from="44"]:hover) [data-inherited-from]:not([data-inherited-from="44"]) {
+  opacity: 0.5;
+}
+.namedocs:has(input[data-parent-idx="45"]) [data-inherited-from="45"] {
+  display: none;
+  opacity: 0;
+}
+.namedocs:has(input[data-parent-idx="45"]:checked) [data-inherited-from="45"] {
+  display: block;
+  transform: none;
+  opacity: 1;
+}
+.namedocs:has(input[data-parent-idx="45"]:checked):has(.inheritance[data-inherited-from="45"]:hover) [data-inherited-from]:not([data-inherited-from="45"]) {
+  opacity: 0.5;
+}
+.namedocs:has(input[data-parent-idx="46"]) [data-inherited-from="46"] {
+  display: none;
+  opacity: 0;
+}
+.namedocs:has(input[data-parent-idx="46"]:checked) [data-inherited-from="46"] {
+  display: block;
+  transform: none;
+  opacity: 1;
+}
+.namedocs:has(input[data-parent-idx="46"]:checked):has(.inheritance[data-inherited-from="46"]:hover) [data-inherited-from]:not([data-inherited-from="46"]) {
+  opacity: 0.5;
+}
+.namedocs:has(input[data-parent-idx="47"]) [data-inherited-from="47"] {
+  display: none;
+  opacity: 0;
+}
+.namedocs:has(input[data-parent-idx="47"]:checked) [data-inherited-from="47"] {
+  display: block;
+  transform: none;
+  opacity: 1;
+}
+.namedocs:has(input[data-parent-idx="47"]:checked):has(.inheritance[data-inherited-from="47"]:hover) [data-inherited-from]:not([data-inherited-from="47"]) {
+  opacity: 0.5;
+}
+.namedocs:has(input[data-parent-idx="48"]) [data-inherited-from="48"] {
+  display: none;
+  opacity: 0;
+}
+.namedocs:has(input[data-parent-idx="48"]:checked) [data-inherited-from="48"] {
+  display: block;
+  transform: none;
+  opacity: 1;
+}
+.namedocs:has(input[data-parent-idx="48"]:checked):has(.inheritance[data-inherited-from="48"]:hover) [data-inherited-from]:not([data-inherited-from="48"]) {
+  opacity: 0.5;
+}
+.namedocs:has(input[data-parent-idx="49"]) [data-inherited-from="49"] {
+  display: none;
+  opacity: 0;
+}
+.namedocs:has(input[data-parent-idx="49"]:checked) [data-inherited-from="49"] {
+  display: block;
+  transform: none;
+  opacity: 1;
+}
+.namedocs:has(input[data-parent-idx="49"]:checked):has(.inheritance[data-inherited-from="49"]:hover) [data-inherited-from]:not([data-inherited-from="49"]) {
+  opacity: 0.5;
+}
+</style><style>
+.diagram svg text[font-family="text"] {
+  font-family: var(--verso-text-font-family);
+}
+.diagram svg text[font-family="monospace"] {
+  font-family: var(--verso-code-font-family);
+}
+</style><style>
+table.tabular {
+  margin: auto;
+  border-spacing: 1rem;
+}
+table.tabular.left-align {
+  margin-right: auto;
+  margin-left: 0;
+}
+table.tabular.center-align {
+  margin: auto;
+}
+table.tabular.right-align {
+  margin-left auto;
+  margin-right: 0;
+}
+table.tabular td, table.tabular th {
+  text-align: left;
+  vertical-align: top;
+}
+table.tabular td > p:first-child, table.tabular th > p:first-child {
+  margin-top: 0;
+}
+table.tabular td > p:last-child, table.tabular th > p:first-child {
+  margin-bottom: 0;
+}
+</style><style>
+.bp_wrapper {
+  scroll-margin-top: 1rem;
+  margin: 0.85rem 0;
+}
+
+/* Leave scroll room for relation panels opened near the end of a page. */
+.content-wrapper > section:has(.bp_relation_panel) {
+  padding-bottom: min(18rem, 42vh);
+}
+
+.bp_heading {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+  font-style: normal;
+  font-weight: bold;
+}
+
+.bp_heading_title_row {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.bp_kind_proof_heading {
+  align-items: baseline;
+}
+
+.bp_heading_title_row_statement {
+  display: inline-grid;
+  grid-template-columns: 11ch 3ch;
+  align-items: baseline;
+  column-gap: 0.45rem;
+}
+
+.bp_caption {
+  display: inline;
+}
+
+.bp_label {
+  margin-left: 0.5rem;
+}
+
+.bp_heading_title_row_statement .bp_label {
+  margin-left: 0;
+  min-width: 0;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.bp_label::after,
+span[class$="_thmlabel"]::after {
+  content: ".";
+}
+
+.bp_extras {
+  --bp-extra-source-col: minmax(5.2rem, max-content);
+  --bp-extra-group-col: minmax(5rem, max-content);
+  --bp-extra-uses-col: minmax(5.2rem, max-content);
+  --bp-extra-used-by-col: minmax(7.2rem, max-content);
+  --bp-extra-markup-col: max-content;
+  --bp-extra-code-col: max-content;
+  --bp-extra-code-placeholder-col: minmax(3.35rem, max-content);
+  display: inline-grid;
+  align-items: baseline;
+  justify-content: end;
+  column-gap: 0.55rem;
+  grid-template-columns: var(--bp-extra-used-by-col) var(--bp-extra-code-col);
+  grid-template-areas: "used code";
+  margin-left: auto;
+}
+
+.bp_extras_with_uses {
+  grid-template-columns:
+    var(--bp-extra-uses-col)
+    var(--bp-extra-used-by-col)
+    var(--bp-extra-code-col);
+  grid-template-areas: "uses used code";
+}
+
+.bp_extras_with_uses:not(.bp_extras_with_group):not(.bp_extras_with_used_by):not(.bp_extras_with_code) {
+  /* Keep proof-only uses aligned with the statement uses column. */
+  grid-template-columns:
+    var(--bp-extra-uses-col)
+    var(--bp-extra-used-by-col)
+    var(--bp-extra-code-placeholder-col);
+  grid-template-areas: "uses . .";
+}
+
+.bp_extras_with_group {
+  grid-template-columns:
+    var(--bp-extra-group-col)
+    var(--bp-extra-used-by-col)
+    var(--bp-extra-code-col);
+  grid-template-areas: "group used code";
+}
+
+.bp_extras_with_group.bp_extras_with_uses {
+  grid-template-columns:
+    var(--bp-extra-group-col)
+    var(--bp-extra-uses-col)
+    var(--bp-extra-used-by-col)
+    var(--bp-extra-code-col);
+  grid-template-areas: "group uses used code";
+}
+
+.bp_extras_with_markup {
+  grid-template-columns:
+    var(--bp-extra-used-by-col)
+    var(--bp-extra-markup-col)
+    var(--bp-extra-code-col);
+  grid-template-areas: "used markup code";
+}
+
+.bp_extras_with_markup.bp_extras_with_uses {
+  grid-template-columns:
+    var(--bp-extra-uses-col)
+    var(--bp-extra-used-by-col)
+    var(--bp-extra-markup-col)
+    var(--bp-extra-code-col);
+  grid-template-areas: "uses used markup code";
+}
+
+.bp_extras_with_markup.bp_extras_with_group {
+  grid-template-columns:
+    var(--bp-extra-group-col)
+    var(--bp-extra-used-by-col)
+    var(--bp-extra-markup-col)
+    var(--bp-extra-code-col);
+  grid-template-areas: "group used markup code";
+}
+
+.bp_extras_with_markup.bp_extras_with_group.bp_extras_with_uses {
+  grid-template-columns:
+    var(--bp-extra-group-col)
+    var(--bp-extra-uses-col)
+    var(--bp-extra-used-by-col)
+    var(--bp-extra-markup-col)
+    var(--bp-extra-code-col);
+  grid-template-areas: "group uses used markup code";
+}
+
+.bp_extras_with_source {
+  grid-template-columns:
+    var(--bp-extra-source-col)
+    var(--bp-extra-used-by-col)
+    var(--bp-extra-code-col);
+  grid-template-areas: "source used code";
+}
+
+.bp_extras_with_source.bp_extras_with_uses {
+  grid-template-columns:
+    var(--bp-extra-source-col)
+    var(--bp-extra-uses-col)
+    var(--bp-extra-used-by-col)
+    var(--bp-extra-code-col);
+  grid-template-areas: "source uses used code";
+}
+
+.bp_extras_with_source.bp_extras_with_group {
+  grid-template-columns:
+    var(--bp-extra-source-col)
+    var(--bp-extra-group-col)
+    var(--bp-extra-used-by-col)
+    var(--bp-extra-code-col);
+  grid-template-areas: "source group used code";
+}
+
+.bp_extras_with_source.bp_extras_with_group.bp_extras_with_uses {
+  grid-template-columns:
+    var(--bp-extra-source-col)
+    var(--bp-extra-group-col)
+    var(--bp-extra-uses-col)
+    var(--bp-extra-used-by-col)
+    var(--bp-extra-code-col);
+  grid-template-areas: "source group uses used code";
+}
+
+.bp_extras_with_source.bp_extras_with_markup {
+  grid-template-columns:
+    var(--bp-extra-source-col)
+    var(--bp-extra-used-by-col)
+    var(--bp-extra-markup-col)
+    var(--bp-extra-code-col);
+  grid-template-areas: "source used markup code";
+}
+
+.bp_extras_with_source.bp_extras_with_markup.bp_extras_with_uses {
+  grid-template-columns:
+    var(--bp-extra-source-col)
+    var(--bp-extra-uses-col)
+    var(--bp-extra-used-by-col)
+    var(--bp-extra-markup-col)
+    var(--bp-extra-code-col);
+  grid-template-areas: "source uses used markup code";
+}
+
+.bp_extras_with_source.bp_extras_with_markup.bp_extras_with_group {
+  grid-template-columns:
+    var(--bp-extra-source-col)
+    var(--bp-extra-group-col)
+    var(--bp-extra-used-by-col)
+    var(--bp-extra-markup-col)
+    var(--bp-extra-code-col);
+  grid-template-areas: "source group used markup code";
+}
+
+.bp_extras_with_source.bp_extras_with_markup.bp_extras_with_group.bp_extras_with_uses {
+  grid-template-columns:
+    var(--bp-extra-source-col)
+    var(--bp-extra-group-col)
+    var(--bp-extra-uses-col)
+    var(--bp-extra-used-by-col)
+    var(--bp-extra-markup-col)
+    var(--bp-extra-code-col);
+  grid-template-areas: "source group uses used markup code";
+}
+
+.bp_extra_slot {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.1rem;
+  min-width: 0;
+}
+
+.bp_extra_slot_code {
+  grid-area: code;
+  justify-content: flex-end;
+}
+
+.bp_extra_slot_source {
+  grid-area: source;
+  justify-content: flex-start;
+}
+
+.bp_extra_slot_group {
+  grid-area: group;
+  justify-content: flex-start;
+}
+
+.bp_extra_slot_uses {
+  grid-area: uses;
+  justify-content: flex-start;
+}
+
+.bp_extra_slot_used_by {
+  grid-area: used;
+  justify-content: flex-start;
+}
+
+.bp_extra_slot_markup {
+  grid-area: markup;
+  justify-content: flex-start;
+}
+
+@media (max-width: 700px) {
+  .bp_extras {
+    display: flex;
+    flex: 1 1 100%;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    width: 100%;
+    margin-left: 0;
+    gap: 0.2rem 0.5rem;
+  }
+
+  .bp_extra_slot {
+    max-width: 100%;
+  }
+
+  .bp_extra_slot_code {
+    margin-left: auto;
+  }
+}
+
+.bp_external_markup_badges {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.22rem;
+  min-width: 0;
+}
+
+.bp_external_markup_badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.18rem;
+  min-height: 1.08rem;
+  border: 1px solid var(--bp-color-border-panel);
+  border-radius: var(--bp-radius-md);
+  background: var(--bp-color-surface-muted);
+  color: var(--bp-color-text-muted);
+  padding: 0.06rem 0.36rem;
+  font-size: 0.68rem;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.bp_external_markup_badge_prefix {
+  color: var(--bp-color-text-faint);
+  font-size: 0.56rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0;
+}
+
+.bp_external_markup_badge_language {
+  color: var(--bp-color-text-strong);
+  font-size: 0.68rem;
+  font-weight: 850;
+}
+
+.bp_external_markup_badge_markdown {
+  border-color: color-mix(in srgb, #0f766e 35%, var(--bp-color-border-panel));
+  background: color-mix(in srgb, #0f766e 8%, var(--bp-color-surface-muted));
+}
+
+.bp_external_markup_badge_tex {
+  border-color: color-mix(in srgb, #7c2d12 34%, var(--bp-color-border-panel));
+  background: color-mix(in srgb, #7c2d12 7%, var(--bp-color-surface-muted));
+}
+
+.bp_metadata_panel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.5rem;
+  align-items: center;
+  margin: 0.45rem 0 0.7rem;
+  padding: 0.45rem 0.55rem;
+  border: 1px solid var(--bp-color-border-panel);
+  border-radius: var(--bp-radius-xl);
+  background: var(--bp-color-surface-muted);
+  font-size: 0.78rem;
+  font-style: normal;
+  font-weight: 400;
+}
+
+.bp_metadata_item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.bp_metadata_owner {
+  gap: 0.4rem;
+}
+
+.bp_metadata_key {
+  font-weight: 700;
+  color: var(--bp-color-text-subtle);
+}
+
+.bp_metadata_value {
+  color: var(--bp-color-text-strong);
+}
+
+.bp_metadata_tags {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.24rem;
+}
+
+.bp_metadata_tag {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--bp-color-border);
+  border-radius: var(--bp-radius-pill);
+  background: var(--bp-color-surface);
+  color: var(--bp-color-text-muted);
+  padding: 0.06rem 0.38rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.bp_metadata_link {
+  color: inherit;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.bp_metadata_link:hover {
+  text-decoration: underline;
+}
+
+.bp_metadata_avatar {
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 999px;
+  object-fit: cover;
+  border: 1px solid var(--bp-color-border);
+  background: var(--bp-color-surface);
+}
+
+.bp_code_link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  font-size: 0.8rem;
+  color: inherit;
+  text-decoration: none;
+}
+
+.bp_code_link_label {
+  display: inline-flex;
+  align-items: center;
+}
+
+.bp_code_status_symbol {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0.9rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.bp_code_link_status_proved .bp_code_status_symbol {
+  color: inherit;
+}
+
+.bp_code_link_status_warning .bp_code_status_symbol {
+  color: var(--bp-color-accent-warning);
+}
+
+.bp_code_link_status_missing .bp_code_status_symbol,
+.bp_code_link_status_axiom .bp_code_status_symbol {
+  color: var(--bp-color-accent-danger);
+}
+
+.bp_code_link_status_absent .bp_code_status_symbol {
+  color: inherit;
+}
+
+.bp_render_warning_badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1rem;
+  height: 1rem;
+  border-radius: 999px;
+  padding: 0 0.22rem;
+  background: rgba(185, 28, 28, 0.08);
+  color: var(--bp-color-status-error-text);
+  font-size: 0.68rem;
+  font-weight: 800;
+  line-height: 1;
+  border: 1px solid rgba(185, 28, 28, 0.18);
+}
+
+.bp_code_render_warning_badge {
+  margin-right: 0.32rem;
+}
+
+.bp_code_summary_preview_root {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.bp_code_summary_preview_wrap {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.bp_code_summary_preview_wrap_active {
+  border-radius: var(--bp-radius-sm);
+  cursor: help;
+}
+
+.bp_code_summary_preview_wrap_active[tabindex="0"] {
+  outline: none;
+}
+
+.bp_code_summary_preview_wrap_active:focus-visible {
+  background: var(--bp-color-focus-surface);
+  box-shadow: 0 0 0 0.16rem var(--bp-color-focus-ring);
+}
+
+.bp_code_summary_preview_panel {
+  position: fixed;
+  z-index: 36;
+  width: min(32rem, calc(100vw - 1.25rem));
+  max-height: min(24rem, 78vh);
+  overflow: hidden;
+}
+
+.bp_code_summary_preview_header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.42rem 0.55rem;
+  border-bottom: 1px solid var(--bp-color-border-soft);
+  background: linear-gradient(180deg, var(--bp-color-surface-muted), var(--bp-color-surface));
+}
+
+.bp_code_summary_preview_title {
+  min-width: 0;
+  color: var(--bp-color-text-strong);
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.35;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.bp_code_summary_preview_body {
+  padding: 0.55rem 0.6rem 0.6rem;
+  max-height: min(20rem, 68vh);
+  overflow: auto;
+}
+
+.bp_code_summary_preview_content {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.bp_code_summary_preview_panel .bp_code_hover_section {
+  margin-top: 0;
+}
+
+.bp_code_summary_preview_panel .bp_code_hover_section + .bp_code_hover_section {
+  margin-top: 0;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--bp-color-border-soft);
+}
+
+.bp_code_summary_preview_panel .bp_code_hover_label {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--bp-color-text-faint);
+}
+
+.bp_code_summary_preview_panel .bp_code_hover_list {
+  list-style: none;
+}
+
+.bp_code_decl_item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 0.35rem 0.6rem;
+}
+
+.bp_code_decl_item + .bp_code_decl_item {
+  margin-top: 0.3rem;
+  padding-top: 0.3rem;
+  border-top: 1px solid var(--bp-color-border-soft);
+}
+
+.bp_code_decl_name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.bp_code_decl_name code {
+  font-size: 0.76rem;
+}
+
+.bp_code_decl_status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  padding: 0.08rem 0.42rem;
+  border: 1px solid var(--bp-color-border);
+  border-radius: var(--bp-radius-pill);
+  background: var(--bp-color-surface-muted);
+  color: var(--bp-color-text-muted);
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.bp_code_decl_status_ok {
+  border-color: rgba(22, 101, 52, 0.18);
+  background: rgba(22, 101, 52, 0.08);
+  color: var(--bp-color-status-success-text);
+}
+
+.bp_code_decl_status_warning,
+.bp_code_decl_status_axiom {
+  border-color: rgba(161, 98, 7, 0.2);
+  background: rgba(161, 98, 7, 0.09);
+  color: var(--bp-color-status-warning-text);
+}
+
+.bp_code_decl_status_missing {
+  border-color: rgba(185, 28, 28, 0.18);
+  background: rgba(185, 28, 28, 0.08);
+  color: var(--bp-color-status-error-text);
+}
+
+.bp_code_hover {
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  transform: translateX(-50%);
+  min-width: 20rem;
+  max-width: min(34rem, 75vw);
+  z-index: 20;
+  border: 1px solid var(--bp-color-border);
+  border-radius: var(--bp-radius-md);
+  padding: 0.45rem 0.55rem;
+  background: var(--bp-color-surface);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.15);
+  display: none;
+  font-size: 0.78rem;
+  font-style: normal;
+  font-weight: 400;
+}
+
+.bp_code_hover_wrap:is(:hover, :focus-within) > .bp_code_hover,
+.bp_code_link_wrap:is(:hover, :focus-within) > .bp_code_hover {
+  display: block;
+}
+
+.bp_code_hover_title {
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+
+.bp_code_block summary {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.bp_code_summary_text {
+  white-space: nowrap;
+}
+
+.bp_code_summary_indicator {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+}
+
+.bp_code_progress {
+  display: inline-flex;
+  min-width: 9rem;
+  max-width: 24rem;
+  width: min(24rem, 40vw);
+  height: 0.64rem;
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid var(--bp-color-border-strong);
+  background: linear-gradient(180deg, var(--bp-color-surface-muted), var(--bp-color-border-soft));
+  box-shadow: inset 0 1px 1px rgba(15, 23, 42, 0.08);
+}
+
+.bp_code_progress_segment {
+  min-width: 0.22rem;
+}
+
+.bp_code_progress_segment + .bp_code_progress_segment {
+  border-left: 1px solid rgba(15, 23, 42, 0.35);
+}
+
+.bp_code_progress_segment_ok {
+  background: var(--bp-color-accent-success);
+}
+
+.bp_code_progress_segment_sorry {
+  background: var(--bp-color-accent-warning);
+}
+
+.bp_code_progress_segment_missing {
+  background: var(--bp-color-accent-danger);
+}
+
+.bp_external_status_icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.08rem;
+  height: 1.08rem;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  line-height: 1;
+  color: var(--bp-color-surface);
+  border: 1px solid rgba(15, 23, 42, 0.14);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.18);
+}
+
+.bp_external_status_ok {
+  background: var(--bp-color-accent-success);
+}
+
+.bp_external_status_sorry {
+  background: var(--bp-color-accent-warning);
+}
+
+.bp_external_status_missing {
+  background: var(--bp-color-accent-danger);
+}
+
+.bp_external_status_error {
+  background: var(--bp-color-accent-info);
+}
+
+.bp_code_panel {
+  margin: 0;
+}
+
+.bp_code_panel_wrapper {
+  margin-top: 0.6rem;
+}
+
+.bp_code_panel_wrapper .bp_code_block > summary {
+  cursor: pointer;
+  color: var(--bp-color-text-strong);
+}
+
+.bp_code_panel_wrapper .bp_code_block > summary::marker {
+  content: "";
+}
+
+.bp_code_panel_wrapper .bp_code_block > summary::-webkit-details-marker {
+  display: none;
+}
+
+.bp_code_panel_wrapper .bp_code_block > summary::before {
+  content: "";
+  flex: 0 0 0.52rem;
+  width: 0.52rem;
+  height: 0.52rem;
+  margin-top: 0.18rem;
+  border-right: 0.12rem solid var(--bp-color-text-faint);
+  border-bottom: 0.12rem solid var(--bp-color-text-faint);
+  transform: rotate(-45deg);
+  transition: transform 120ms ease;
+}
+
+.bp_code_panel_wrapper .bp_code_block[open] > summary::before {
+  transform: rotate(45deg);
+}
+
+.bp_code_panel .bp_heading_title_row {
+  min-width: 0;
+}
+
+.bp_code_panel .bp_code_summary_text {
+  color: var(--bp-color-text-strong);
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.bp_code_panel .bp_code_summary_label {
+  flex: 0 0 auto;
+}
+
+.bp_code_panel .bp_code_summary_indicator {
+  max-width: 100%;
+}
+
+.bp_code_panel .bp_external_decl_rendered .declaration {
+  --bp-box-border-color: var(--bp-color-border-panel);
+  --bp-box-background: var(--bp-color-surface);
+  --bp-box-header-background: linear-gradient(180deg, var(--bp-color-surface-muted), var(--bp-color-surface));
+  --bp-box-radius: var(--bp-radius-lg);
+  --bp-box-shadow: var(--bp-shadow-sm);
+  --bp-box-min-width: 0;
+}
+
+.bp_code_panel .bp_external_decl_kicker {
+  padding: 0.38rem 0.5rem;
+}
+
+.bp_code_panel .bp_external_decl_rendered .bp_external_decl_signature {
+  padding: 0.52rem 0.55rem;
+}
+
+.bp_code_panel .bp_external_decl_rendered .bp_external_decl_body:not(:empty) {
+  padding: 0.5rem 0.55rem;
+}
+
+.bp_code_panel .bp_external_decl_head {
+  min-width: 0;
+}
+
+.bp_code_panel .bp_external_decl_head .bp_inline_preview_ref,
+.bp_code_panel .bp_external_decl_head a,
+.bp_code_panel .bp_external_decl_head code {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.bp_decl_target {
+  background: var(--bp-color-selection);
+  border-radius: 0.18rem;
+  box-shadow: 0 0 0 0.12rem var(--bp-color-selection-ring);
+  animation: bp-decl-target-pulse 1.8s ease-out;
+}
+
+.bp_decl_target_block {
+  border-radius: 0.3rem;
+  box-shadow: 0 0 0 0.18rem var(--bp-color-selection-ring);
+  background: linear-gradient(180deg, var(--bp-color-selection-surface-soft), rgba(59, 130, 246, 0.04));
+  animation: bp-decl-block-pulse 2.2s ease-out;
+}
+
+@keyframes bp-decl-target-pulse {
+  0% {
+    background: var(--bp-color-selection-surface-strong);
+    box-shadow: 0 0 0 0.2rem var(--bp-color-selection-shadow-strong);
+  }
+  100% {
+    background: var(--bp-color-selection-surface-faint);
+    box-shadow: 0 0 0 0.08rem var(--bp-color-selection-shadow-faint);
+  }
+}
+
+@keyframes bp-decl-block-pulse {
+  0% {
+    background: var(--bp-color-selection-surface-soft);
+    box-shadow: 0 0 0 0.28rem var(--bp-color-selection-shadow-soft);
+  }
+  100% {
+    background: rgba(59, 130, 246, 0.04);
+    box-shadow: 0 0 0 0.14rem var(--bp-color-selection-shadow-faint);
+  }
+}
+
+.bp_code_link:hover {
+  text-decoration: underline;
+}
+
+.bp_code_link_empty:hover {
+  text-decoration: none;
+}
+
+.bp_relation_wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  padding-bottom: 0.45rem;
+  margin-bottom: -0.45rem;
+}
+
+.bp_relation_wrap::after {
+  content: "";
+  position: absolute;
+  left: -0.25rem;
+  right: -0.25rem;
+  top: 100%;
+  height: 0.45rem;
+}
+
+.bp_relation_chip {
+  display: inline-flex;
+  align-items: center;
+  appearance: none;
+  border: 0;
+  background: none;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  line-height: inherit;
+  text-align: left;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--bp-color-text-muted);
+  white-space: nowrap;
+  cursor: default;
+}
+
+.bp_relation_chip_empty {
+  color: var(--bp-color-text-faint);
+  font-weight: 500;
+}
+
+.bp_relation_chip_warn {
+  color: var(--bp-color-status-warning-text);
+}
+
+.bp_relation_panel {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  min-width: 26rem;
+  width: min(50rem, 92vw);
+  z-index: 26;
+  border: 1px solid var(--bp-color-border);
+  border-radius: var(--bp-radius-xl);
+  background: var(--bp-color-surface);
+  box-shadow: var(--bp-shadow-lg);
+  display: none;
+  font-style: normal;
+  font-weight: 400;
+}
+
+.bp_relation_wrap:is(:hover, :focus-within) > .bp_relation_panel {
+  display: block;
+}
+
+.bp_relation_wrap.bp_relation_wrap_open > .bp_relation_panel {
+  display: block;
+}
+
+.bp_source_ref_panel {
+  min-width: 20rem;
+  width: min(32rem, 92vw);
+}
+
+.bp_source_ref_panel_body {
+  display: block;
+  padding: 0.7rem;
+}
+
+.bp_source_ref_preview_surface {
+  min-height: 0;
+}
+
+.bp_source_ref_preview_body {
+  max-height: min(18rem, 58vh);
+}
+
+.bp_source_ref_panel_list {
+  list-style: none;
+  display: grid;
+  gap: 0.55rem;
+  margin: 0;
+  padding: 0;
+}
+
+.bp_source_ref_panel_item {
+  display: grid;
+  gap: 0.32rem;
+  padding: 0.56rem 0.62rem;
+  border: 1px solid var(--bp-color-border-panel);
+  border-radius: var(--bp-radius-md);
+  background: var(--bp-color-surface-muted);
+  color: var(--bp-color-text-muted);
+  font-size: 0.76rem;
+  line-height: 1.35;
+}
+
+.bp_source_ref_panel_document {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  color: var(--bp-color-text-strong);
+}
+
+.bp_source_ref_panel_key {
+  color: var(--bp-color-text-faint);
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.bp_source_ref_panel_summary {
+  color: var(--bp-color-text-strong);
+  font-weight: 700;
+}
+
+.bp_source_ref_panel_spans {
+  display: grid;
+  gap: 0.22rem;
+  margin: 0;
+  padding-left: 1rem;
+}
+
+.bp_source_ref_panel_span {
+  overflow-wrap: anywhere;
+}
+
+.bp_source_ref_panel_span_empty {
+  color: var(--bp-color-text-faint);
+}
+
+.bp_relation_panel_header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.55rem;
+  padding: 0.55rem 0.7rem 0.45rem;
+  border-bottom: 1px solid var(--bp-color-border-soft);
+  background: linear-gradient(180deg, var(--bp-color-surface-muted), var(--bp-color-surface));
+}
+
+.bp_relation_panel_title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--bp-color-text-strong);
+}
+
+.bp_relation_panel_meta {
+  font-size: 0.72rem;
+  color: var(--bp-color-text-faint);
+}
+
+.bp_relation_panel_body {
+  display: grid;
+  grid-template-columns: minmax(14rem, 18rem) minmax(18rem, 1fr);
+  gap: 0.75rem;
+  align-items: start;
+  padding: 0.7rem;
+}
+
+.bp_relation_list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  max-height: min(20rem, 62vh);
+  overflow: auto;
+}
+
+.bp_relation_item {
+  border: 1px solid var(--bp-color-border-panel);
+  border-radius: var(--bp-radius-md);
+  background: var(--bp-color-surface-muted);
+  transition: border-color 120ms ease, box-shadow 120ms ease, background 120ms ease;
+}
+
+.bp_relation_item:hover,
+.bp_relation_item:focus-within,
+.bp_relation_item.bp_relation_item_active {
+  border-color: var(--bp-color-focus-border);
+  background: var(--bp-color-focus-surface);
+  box-shadow: inset 0 0 0 1px var(--bp-color-focus-ring);
+}
+
+.bp_relation_target {
+  display: block;
+  padding: 0.5rem 0.58rem;
+  color: inherit;
+  text-decoration: none;
+}
+
+.bp_relation_target:hover {
+  text-decoration: none;
+}
+
+.bp_relation_target_title {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--bp-color-text-strong);
+}
+
+.bp_relation_target_meta {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  margin-top: 0.26rem;
+  color: var(--bp-color-text-subtle);
+  font-size: 0.72rem;
+}
+
+.bp_relation_target_meta code {
+  font-size: 0.72rem;
+}
+
+.bp_relation_axis_badge {
+  --bp-relation-badge-bg: var(--bp-color-surface);
+  --bp-relation-badge-border: var(--bp-color-border);
+  --bp-relation-badge-text: var(--bp-color-text-muted);
+  --bp-relation-badge-prefix: var(--bp-color-text-faint);
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--bp-relation-badge-border);
+  border-radius: var(--bp-radius-pill);
+  background: var(--bp-relation-badge-bg);
+  color: var(--bp-relation-badge-text);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.2;
+  text-transform: none;
+  padding: 0.1rem 0.36rem;
+  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.35);
+}
+
+.bp_relation_badge_axis {
+  font-weight: 700;
+}
+
+.bp_relation_badge_statement {
+  --bp-relation-badge-bg: rgba(37, 99, 235, 0.1);
+  --bp-relation-badge-border: rgba(37, 99, 235, 0.28);
+  --bp-relation-badge-text: #1d4ed8;
+}
+
+.bp_relation_badge_proof {
+  --bp-relation-badge-bg: rgba(5, 150, 105, 0.12);
+  --bp-relation-badge-border: rgba(5, 150, 105, 0.28);
+  --bp-relation-badge-text: #047857;
+}
+
+.bp_relation_badge_origin::before,
+.bp_relation_badge_intent::before {
+  color: var(--bp-relation-badge-prefix);
+  font-weight: 600;
+  margin-right: 0.22rem;
+}
+
+.bp_relation_badge_origin::before {
+  content: "origin";
+}
+
+.bp_relation_badge_intent::before {
+  content: "intent";
+}
+
+.bp_relation_badge_origin_automatic {
+  --bp-relation-badge-bg: rgba(124, 58, 237, 0.1);
+  --bp-relation-badge-border: rgba(124, 58, 237, 0.26);
+  --bp-relation-badge-text: #6d28d9;
+  --bp-relation-badge-prefix: #7c3aed;
+}
+
+.bp_relation_badge_intent_auxiliary {
+  --bp-relation-badge-bg: rgba(245, 158, 11, 0.14);
+  --bp-relation-badge-border: rgba(245, 158, 11, 0.32);
+  --bp-relation-badge-text: #92400e;
+  --bp-relation-badge-prefix: #b45309;
+}
+
+.bp_relation_badge_intent_technical {
+  --bp-relation-badge-bg: rgba(79, 70, 229, 0.1);
+  --bp-relation-badge-border: rgba(79, 70, 229, 0.26);
+  --bp-relation-badge-text: #4338ca;
+  --bp-relation-badge-prefix: #4f46e5;
+}
+
+.bp_relation_preview_surface {
+  min-height: 14rem;
+  border: 1px solid var(--bp-color-border-soft);
+  border-radius: var(--bp-radius-lg);
+  background: var(--bp-color-surface-muted);
+  overflow: hidden;
+}
+
+.bp_relation_preview_header {
+  padding: 0.5rem 0.62rem 0.44rem;
+  border-bottom: 1px solid var(--bp-color-border-soft);
+  background: linear-gradient(180deg, var(--bp-color-surface-muted), var(--bp-color-surface));
+}
+
+.bp_relation_preview_label {
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--bp-color-text-faint);
+}
+
+.bp_relation_preview_title {
+  margin-top: 0.16rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--bp-color-text-strong);
+}
+
+.bp_relation_preview_body {
+  max-height: min(20rem, 62vh);
+  overflow: auto;
+  padding: 0.62rem 0.68rem 0.72rem;
+  background: var(--bp-color-surface);
+}
+
+.bp_relation_preview_message {
+  display: grid;
+  gap: 0.18rem;
+  padding: 0.56rem 0.62rem;
+  border: 1px solid var(--bp-color-border-soft);
+  border-radius: 0.45rem;
+  background: var(--bp-color-surface-muted);
+  color: var(--bp-color-text-muted);
+  font-size: 0.76rem;
+  line-height: 1.38;
+}
+
+.bp_relation_preview_message[data-bp-preview-message="loading"] {
+  color: var(--bp-color-text-faint);
+}
+
+.bp_relation_preview_message[data-bp-preview-message="error"] {
+  border-color: var(--bp-color-status-error-border-soft);
+  background: var(--bp-color-surface-warn);
+  color: var(--bp-color-status-error-text);
+}
+
+.bp_relation_preview_message_title {
+  font-weight: 700;
+  color: inherit;
+}
+
+.bp_relation_preview_message_detail {
+  color: inherit;
+}
+
+@media (max-width: 900px) {
+  .bp_relation_panel {
+    right: auto;
+    left: 0;
+    width: min(34rem, calc(100vw - 1.4rem));
+  }
+
+  .bp_relation_panel_body {
+    grid-template-columns: 1fr;
+  }
+
+  .bp_relation_list,
+  .bp_relation_preview_body {
+    max-height: min(12rem, 36vh);
+  }
+}
+
+.bp_status_mark {
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.bp_external_badge {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--bp-color-text-muted);
+  border: 1px solid var(--bp-color-border-panel);
+  border-radius: var(--bp-radius-pill);
+  padding: 0.12rem 0.45rem;
+  background: linear-gradient(180deg, var(--bp-color-surface), var(--bp-color-surface-muted));
+}
+
+.bp_external_badge_kind {
+  text-transform: capitalize;
+}
+
+.bp_external_status_badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  padding: 0.14rem 0.48rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.bp_external_status_badge_summary {
+  padding-right: 0.58rem;
+}
+
+.bp_external_status_badge_text {
+  display: inline-block;
+}
+
+.bp_external_decl_ok {
+  color: var(--bp-color-status-success-text);
+}
+
+.bp_external_decl_sorry {
+  color: var(--bp-color-status-warning-text);
+}
+
+.bp_external_decl_missing {
+  color: var(--bp-color-status-error-text);
+}
+
+.bp_external_decl_error {
+  color: #7c3aed;
+}
+
+.bp_external_status_badge.bp_external_decl_ok,
+.bp_external_status_badge.bp_external_status_ok {
+  background: rgba(22, 101, 52, 0.08);
+  border-color: rgba(22, 101, 52, 0.18);
+}
+
+.bp_external_status_badge.bp_external_decl_sorry,
+.bp_external_status_badge.bp_external_status_sorry {
+  background: rgba(161, 98, 7, 0.09);
+  border-color: rgba(161, 98, 7, 0.2);
+}
+
+.bp_external_status_badge.bp_external_decl_missing,
+.bp_external_status_badge.bp_external_status_missing {
+  background: rgba(185, 28, 28, 0.08);
+  border-color: rgba(185, 28, 28, 0.18);
+}
+
+.bp_external_status_badge.bp_external_decl_error,
+.bp_external_status_badge.bp_external_status_error {
+  background: rgba(124, 58, 237, 0.08);
+  border-color: rgba(124, 58, 237, 0.18);
+}
+
+.bp_external_decl_meta {
+  margin-top: 0.18rem;
+  color: #475569;
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+.bp_external_decl_rendered_meta {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem 0.7rem;
+  flex-wrap: wrap;
+}
+
+.bp_external_decl_footer_status {
+  padding: 0.1rem 0.42rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.bp_external_decl_list {
+  list-style: none;
+  margin: 0.45rem 0 0;
+  padding-left: 0;
+}
+
+.bp_external_decl_item {
+  margin: 0;
+  padding: 0;
+}
+
+.bp_external_decl_item_rendered {
+  padding: 0 0 0.1rem;
+}
+
+.bp_external_decl_list > .bp_external_decl_item + .bp_external_decl_item {
+  margin-top: 0.8rem;
+}
+
+.bp_external_decl_head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.3rem 0.7rem;
+  flex-wrap: wrap;
+  line-height: 1.5;
+}
+
+.bp_external_decl_head_meta {
+  color: #64748b;
+  font-size: 0.76rem;
+}
+
+.bp_external_decl_rendered_source {
+  margin-left: auto;
+}
+
+.bp_external_decl_details {
+  margin-top: 0.12rem;
+}
+
+.bp_external_decl_details summary {
+  cursor: pointer;
+  font-size: 0.72rem;
+  color: var(--bp-color-text-muted);
+}
+
+.bp_external_decl_preview {
+  margin-top: 0.2rem;
+  border-left: 2px solid var(--bp-color-border-soft);
+  padding-left: 0.45rem;
+}
+
+.bp_external_decl_preview summary {
+  cursor: pointer;
+  font-size: 0.72rem;
+  color: var(--bp-color-text-strong);
+}
+
+.bp_external_decl_preview pre {
+  margin: 0.2rem 0 0;
+  max-height: 8.5rem;
+  overflow: auto;
+  white-space: pre-wrap;
+  font-size: 0.7rem;
+  line-height: 1.35;
+}
+
+.bp_external_decl_stmt {
+  margin: 0.32rem 0 0;
+  padding: 0.1rem 0 0.1rem 0.7rem;
+  border: 0;
+  border-left: 0.18rem solid var(--bp-color-border-strong);
+  border-radius: 0;
+  background: transparent;
+  white-space: pre-wrap;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--bp-color-text-strong);
+}
+
+.bp_external_decl_rendered {
+  margin: 0.35rem 0 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+  overflow-x: visible;
+}
+
+.bp_external_decl_rendered .declaration {
+  --bp-box-width: 100%;
+  --bp-box-border-left-width: 0.15rem;
+  --bp-box-border-left-color: var(--bp-color-border-strong);
+  --bp-box-radius: 6px;
+  --bp-box-background: color-mix(in srgb, var(--bp-color-surface-muted) 54%, transparent);
+  box-sizing: border-box;
+  margin: var(--bp-box-margin, 0);
+  padding: var(--bp-box-padding, 0);
+  border: var(--bp-box-border-width, 1px) solid
+    var(--bp-box-border-color, var(--bp-color-border-soft));
+  border-left: var(--bp-box-border-left-width, var(--bp-box-border-width, 1px)) solid
+    var(--bp-box-border-left-color, var(--bp-box-border-color, var(--bp-color-border-soft)));
+  border-radius: var(--bp-box-radius, var(--bp-radius-md));
+  background: var(--bp-box-background, var(--bp-color-surface));
+  box-shadow: var(--bp-box-shadow, none);
+  width: var(--bp-box-width, auto);
+  min-width: var(--bp-box-min-width, 0);
+  overflow: var(--bp-box-overflow, hidden);
+}
+
+.bp_external_decl_kicker {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.65rem;
+  margin: 0;
+  padding: 0.32rem 0.35rem;
+  border-bottom: var(--bp-box-header-border-bottom-width, 1px) solid
+    var(--bp-box-divider-color, var(--bp-color-border-soft));
+  background: var(--bp-box-header-background, var(--bp-color-surface-muted));
+  color: var(--bp-color-text-muted);
+  font-size: 0.74rem;
+  line-height: 1.35;
+}
+
+.bp_external_decl_kicker_main {
+  display: flex;
+  align-items: baseline;
+  flex: 1 1 18rem;
+  flex-wrap: wrap;
+  gap: 0.12rem 0.32rem;
+  min-width: 0;
+}
+
+.bp_external_decl_kicker_status {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+.bp_external_decl_header_status {
+  padding: 0.05rem 0.42rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.bp_external_decl_kind {
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+  color: var(--bp-color-text-strong);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.bp_external_decl_header_meta {
+  color: var(--bp-color-text-muted);
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.bp_external_decl_source {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.22rem;
+  min-width: 0;
+  color: var(--bp-color-text-muted);
+  font-size: 0.67rem;
+  line-height: 1.25;
+}
+
+.bp_external_decl_source::before {
+  content: "·";
+  color: var(--bp-color-text-faint);
+}
+
+.bp_external_decl_source_path {
+  min-width: 0;
+  max-width: min(34rem, 72vw);
+  overflow: hidden;
+  color: var(--bp-color-text-strong);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 0.66rem;
+  overflow-wrap: anywhere;
+  text-decoration: none;
+}
+
+a.bp_external_decl_source_path:hover {
+  text-decoration: underline;
+  text-underline-offset: 0.12rem;
+}
+
+.bp_external_decl_rendered .bp_external_decl_signature {
+  margin: 0;
+  padding: 0.4rem 0.35rem;
+  max-width: 100%;
+  overflow-x: auto;
+  background: transparent;
+  border: 0;
+  font-size: 0.86rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.bp_external_decl_rendered .bp_external_decl_signature.hl.lean,
+.bp_external_decl_rendered .name-and-type.hl.lean {
+  white-space: pre-wrap;
+}
+
+.bp_external_decl_rendered .bp_external_decl_signature .token,
+.bp_external_decl_rendered .name-and-type .token {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.bp_external_decl_rendered .bp_external_decl_body:empty {
+  display: none;
+}
+
+.bp_external_decl_rendered .bp_external_decl_body:not(:empty) {
+  margin-top: 0;
+  padding: 0.4rem 0.35rem;
+  border-top: 1px solid var(--bp-color-border-soft);
+  background: var(--bp-color-surface);
+}
+
+.bp_external_decl_rendered .bp_external_decl_body > :first-child {
+  margin-top: 0;
+}
+
+.bp_external_decl_rendered .bp_external_decl_body > :last-child {
+  margin-bottom: 0;
+}
+
+.bp_external_decl_rendered .bp_external_decl_section + .bp_external_decl_section {
+  margin-top: 0.75rem;
+}
+
+.bp_external_decl_rendered .bp_external_decl_section_label {
+  margin: 0 0 0.4rem;
+  padding-bottom: 0.18rem;
+  border-bottom: 1px solid var(--bp-color-border-soft);
+  color: var(--bp-color-text-muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.bp_external_decl_rendered pre {
+  overflow-x: auto;
+}
+
+.bp_external_decl_rendered .constructor + .constructor,
+.bp_external_decl_rendered .subdocs + .subdocs {
+  margin-top: 0.45rem;
+}
+
+.bp_external_decl_rendered .constructor,
+.bp_external_decl_rendered .subdocs {
+  padding: 0.35rem 0 0.35rem 0.35rem;
+  border-left: 0.1rem solid var(--bp-color-border-soft);
+}
+
+.bp_external_decl_rendered .name-and-type {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.bp_external_decl_rendered .docs {
+  margin: 0.28rem 0 0 0.35rem;
+  color: var(--bp-color-text-muted);
+}
+
+.bp_external_decl_rendered .inheritance {
+  margin-top: 0.25rem;
+  color: #64748b;
+  font-size: 0.82rem;
+}
+
+.bp_external_decl_rendered .inheritance ol {
+  display: inline;
+  margin: 0;
+  padding: 0;
+}
+
+.bp_external_decl_rendered .inheritance li {
+  display: inline;
+  list-style: none;
+}
+
+.bp_external_decl_rendered .inheritance li + li::before {
+  content: " > ";
+}
+
+.bp_external_decl_rendered .docstring {
+  margin-top: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-family: var(--verso-text-font-family, inherit);
+  font-size: 0.98em;
+  line-height: 1.6;
+  overflow: visible;
+  max-height: none;
+  max-width: none;
+  width: auto;
+}
+
+.bp_external_decl_rendered pre.docstring {
+  white-space: pre-wrap;
+}
+
+.bp_external_decl_rendered div.docstring {
+  white-space: normal;
+}
+
+.bp_external_decl_rendered div.docstring > :first-child {
+  margin-top: 0;
+}
+
+.bp_external_decl_rendered div.docstring > :last-child {
+  margin-bottom: 0;
+}
+
+.bp_external_decl_rendered details {
+  margin-top: 0.55rem;
+}
+
+.bp_external_decl_rendered details > summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.bp_external_decl_rendered details > ul {
+  margin: 0.4rem 0 0;
+  padding-left: 1rem;
+}
+
+.bp_external_decl_rendered details > ul > li {
+  margin: 0.18rem 0;
+  overflow-wrap: anywhere;
+}
+
+.bp_external_decl_rendered_source .bp_code_link {
+  font-size: 0.76rem;
+  white-space: nowrap;
+}
+
+@media (max-width: 700px) {
+  .bp_code_block summary {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .bp_code_summary_text {
+    white-space: normal;
+  }
+
+  .bp_code_summary_indicator {
+    margin-left: 0;
+  }
+
+  .bp_external_decl_head_meta,
+  .bp_external_decl_rendered_source {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .bp_external_decl_rendered .declaration {
+    border-left-width: 0.12rem;
+  }
+
+  .bp_external_decl_list > .bp_external_decl_item + .bp_external_decl_item {
+    margin-top: 0.7rem;
+  }
+}
+
+.bp_content {
+  padding-left: 0.65rem;
+}
+
+.bp_content > :first-child {
+  margin-top: 0;
+}
+
+.bp_content > :last-child {
+  margin-bottom: 0;
+}
+
+.bp-proof-tail-hidden {
+  display: none;
+}
+
+.bp-proof-gap-hidden {
+  display: none;
+}
+
+.bp-proof-by-toggle {
+  cursor: pointer;
+  text-decoration: underline dotted;
+  text-decoration-thickness: 1px;
+}
+
+.bp-proof-by-toggle::after {
+  content: " ...";
+  color: var(--bp-color-text-faint);
+}
+
+.bp-proof-by-toggle.bp-proof-open::after {
+  content: "";
+}
+
+details.bp_kind_proof_wrapper > summary.bp_heading {
+  cursor: pointer;
+}
+
+details.bp_kind_proof_wrapper > summary.bp_heading::marker {
+  color: var(--bp-color-text-faint);
+}
+
+.bp_wrapper.bp_style_plain .bp_heading,
+div.theorem-style-plain div[class$="_thmheading"] {
+  font-style: normal;
+  font-weight: bold;
+}
+
+.bp_wrapper.bp_style_plain .bp_content,
+div.theorem-style-plain div[class$="_thmcontent"] {
+  font-style: italic;
+  font-weight: normal;
+}
+
+.bp_wrapper.bp_style_definition .bp_heading,
+div.theorem-style-definition div[class$="_thmheading"] {
+  font-style: normal;
+  font-weight: bold;
+}
+
+.bp_kind_theorem_content,
+div.theorem_thmcontent {
+  border-left: 0.15rem solid black;
+}
+
+.bp_kind_proposition_content,
+div.proposition_thmcontent {
+  border-left: 0.15rem solid black;
+}
+
+.bp_kind_lemma_content,
+div.lemma_thmcontent {
+  border-left: 0.1rem solid black;
+}
+
+.bp_kind_corollary_content,
+div.corollary_thmcontent {
+  border-left: 0.1rem solid black;
+}
+
+.bp_kind_proof_content,
+div.proof_content {
+  border-left: 0.08rem solid grey;
+}
+
+.bp_wrapper:target {
+  animation: bp-target-pulse 1.6s ease-out;
+  box-shadow: 0 0 0 0.18rem var(--bp-color-target-ring);
+  border-radius: 0.35rem;
+}
+
+@keyframes bp-target-pulse {
+  0% {
+    background-color: var(--bp-color-target-surface);
+    box-shadow: 0 0 0 0.28rem var(--bp-color-target-ring-strong);
+  }
+  100% {
+    background-color: transparent;
+    box-shadow: 0 0 0 0.18rem var(--bp-color-target-ring);
+  }
+}
+</style><style>
+.marginalia .note {
+  position: relative;
+  padding: 0.5rem;
+}
+
+/*
+The margin-note layout responds to the width of <main>, not the viewport, because the
+ToC is resizable: a wider ToC leaves less room beside the text for notes. <main> is a
+query container (see Html/Style.lean), so the container queries below track the actual
+content width.
+
+There are two "in the margin" regimes, split at the same width where the content stops
+being left-aligned and becomes centered (1112px and 1212px of content width; at the
+default ToC width these are the old 1400px and 1500px viewport breakpoints):
+
+  * While the content is left-aligned there is a large area to its right, so a fixed
+    13rem note with a fixed 16rem overhang fits comfortably.
+  * Once the content is centered the note must fit the symmetric right gap, whose width
+    is (content - text column) / 2. A fixed overhang would overflow the page for content
+    widths just above the centering threshold, so the note and its overhang are sized in
+    container units, which always fit that gap.
+*/
+
+/* Narrow viewport (e.g. phone): the ToC is hidden and the note spans the text column. */
+@media screen and (width <= 700px) {
+  .marginalia .note {
+    float: left;
+    clear: left;
+    width: 90%;
+    margin: 1rem 5%;
+  }
+}
+
+/* Wider than a phone: by default float the note at the right of the text column,
+   overlapping the content. The container queries below lift it into the true margin
+   once there is room. */
+@media screen and (min-width: 701px) {
+  .marginalia .note {
+    float: right;
+    clear: right;
+    width: 40%;
+    margin: 1rem 0;
+    margin-left: 10%;
+  }
+}
+
+/* Left-aligned content: a fixed-size note in the wide area to its right. */
+@container main (width >= 1112px) {
+  .marginalia .note {
+    float: right;
+    clear: right;
+    width: 13rem;
+    margin: 1rem -16rem 0 0;
+  }
+}
+
+/* Centered content: size the note in container units so it always fits the symmetric
+   right gap. The threshold matches the content-centering threshold in Html/Style.lean,
+   so the fixed-overhang note above is only ever used while the content is left-aligned.
+   The overhang (18cqi) stays below the gap, (100cqi - text column) / 2, for every
+   content width at which the content is centered. */
+@container main (width >= 1212px) {
+  .marginalia .note {
+    width: 15cqi;
+    margin-right: -18cqi;
+  }
+}
+
+.marginalia:hover, .marginalia:hover .note, .marginalia:has(.note:hover) {
+  background-color: var(--lean-accent-light-blue);
+}
+
+body {
+  counter-reset: margin-note-counter;
+}
+.marginalia .note {
+  counter-increment: margin-note-counter;
+}
+.marginalia .note::before {
+  content: counter(margin-note-counter) ".";
+  position: absolute;
+  vertical-align: baseline;
+  font-size: 0.9em;
+  font-weight: bold;
+  left: -3rem;
+  width: 3rem;
+  text-align: right;
+}
+.marginalia::after {
+  content: counter(margin-note-counter);
+  vertical-align: super;
+  font-size: 0.7em;
+  font-weight: bold;
+  margin-right: 0.5em;
+}
+</style><style>.bp_graph_fullwidth {
+  position: relative;
+  box-sizing: border-box;
+  margin-top: 0.35rem;
+  width: 100%;
+  max-width: none;
+}
+
+@supports (width: 100cqw) {
+  main > .content-wrapper:has(.bp_graph_fullwidth) {
+    container-type: inline-size;
+    max-width: none;
+  }
+
+  main > .content-wrapper:has(.bp_graph_fullwidth) > section {
+    max-width: none;
+  }
+
+  .bp_graph_fullwidth {
+    width: 100cqw;
+  }
+}
+
+.bp_graph_canvas {
+  width: 100%;
+  min-height: 24rem;
+  resize: vertical;
+  overflow: hidden;
+}
+
+.bp_graph_fullwidth[data-bp-graph-layout="fill"] {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.bp_graph_fullwidth[data-bp-graph-layout="fill"] .bp_graph_canvas,
+.bp_graph_canvas[data-bp-graph-layout="fill"] {
+  flex: 1 1 auto;
+  min-height: 0;
+  resize: none;
+}
+
+.bp_graph_preview {
+  position: absolute;
+  top: calc(var(--bp-graph-canvas-top, 0px) + 0.9rem);
+  right: 0.9rem;
+  z-index: 25;
+  width: min(34rem, calc(100% - 1.8rem));
+  max-height: min(65vh, 36rem);
+  border-color: var(--bp-color-border-muted);
+  box-shadow: var(--bp-shadow-md);
+  overflow: visible;
+}
+
+.bp_graph_preview[data-bp-preview-placement="anchored"] {
+  position: fixed;
+  right: auto;
+}
+
+.bp_graph_preview[data-bp-preview-placement="docked"] {
+  position: absolute;
+  top: calc(var(--bp-graph-canvas-top, 0px) + 0.9rem);
+  right: 0.9rem;
+  left: auto;
+}
+
+.bp_graph_preview_title {
+  font-size: 0.85rem;
+}
+
+.bp_graph_preview_title a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.bp_graph_preview_title a:hover {
+  color: var(--bp-color-link);
+  text-decoration: underline;
+}
+
+.bp_graph_preview_body {
+  padding-left: 0.55rem;
+  max-height: min(56vh, 30rem);
+}
+
+.bp_group_hover_preview {
+  position: absolute;
+  left: 0.9rem;
+  top: calc(var(--bp-graph-canvas-top, 0px) + 0.9rem);
+  z-index: 24;
+  width: min(32rem, calc(100% - 1.8rem));
+  height: min(42vh, 24rem);
+  border: 1px solid var(--bp-color-border);
+  border-radius: var(--bp-radius-xl);
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: var(--bp-shadow-lg);
+  padding: 0.55rem 0.65rem;
+  pointer-events: auto;
+  backdrop-filter: blur(1px);
+}
+
+.bp_group_hover_preview[data-bp-preview-placement="anchored"]::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -0.85rem;
+  width: 0.85rem;
+}
+
+.bp_group_hover_preview[data-bp-preview-placement="anchored"]::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: -0.85rem;
+  width: 0.85rem;
+}
+
+.bp_group_hover_preview[data-bp-preview-placement="docked"] {
+  right: 0.9rem;
+  left: auto;
+  top: calc(var(--bp-graph-canvas-top, 0px) + 0.9rem);
+}
+
+.bp_group_hover_preview_header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+}
+
+.bp_group_hover_preview_title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--bp-color-text-strong);
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bp_group_hover_preview_close {
+  border: 1px solid var(--bp-color-border);
+  border-radius: var(--bp-radius-sm);
+  background: var(--bp-color-surface);
+  color: var(--bp-color-text-strong);
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1;
+  padding: 0.25rem 0.45rem;
+  cursor: pointer;
+}
+
+.bp_group_hover_preview[data-bp-preview-mode="hover"] .bp_group_hover_preview_close {
+  display: none;
+}
+
+.bp_group_hover_preview_graph {
+  width: 100%;
+  height: calc(100% - 1.6rem);
+  overflow: hidden;
+  border: 1px solid var(--bp-color-border-soft);
+  border-radius: 0.4rem;
+  background: var(--bp-color-surface);
+}
+
+.bp_graph_legend {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11.5rem, 1fr));
+  gap: 0.55rem 0.65rem;
+  font-size: 0.84rem;
+}
+
+.bp_graph_legend[hidden] {
+  display: none;
+}
+
+.bp_graph_legend_note {
+  margin: 0;
+  font-size: 0.76rem;
+  line-height: 1.35;
+  color: var(--bp-color-text-subtle);
+  grid-column: 1 / -1;
+}
+
+.bp_graph_controls {
+  margin-top: 0.75rem;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.65rem 1rem;
+}
+
+.bp_graph_controls_primary,
+.bp_graph_controls_actions {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.bp_graph_controls_primary {
+  flex: 1 1 auto;
+  min-width: min(100%, 20rem);
+}
+
+.bp_graph_controls_label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--bp-color-text-muted);
+  white-space: nowrap;
+}
+
+.bp_graph_controls_select {
+  min-width: 0;
+  max-width: 100%;
+  border: 1px solid var(--bp-color-border);
+  border-radius: var(--bp-radius-md);
+  background: var(--bp-color-surface);
+  color: var(--bp-color-text-strong);
+  padding: 0.35rem 0.55rem;
+  font-size: 0.87rem;
+  line-height: 1.2;
+}
+
+.bp_graph_view_select {
+  flex: 1 1 clamp(15rem, 30vw, 22rem);
+  width: clamp(15rem, 30vw, 22rem);
+  min-width: min(100%, 15rem);
+}
+
+.bp_graph_direction_select,
+.bp_graph_preview_mode_select,
+.bp_graph_preview_placement_select {
+  display: inline-block;
+  width: max-content;
+  min-width: 0;
+  max-width: 100%;
+  justify-self: start;
+}
+
+.bp_graph_option_toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.42rem;
+  color: var(--bp-color-text-strong);
+  font-size: 0.84rem;
+  font-weight: 600;
+  line-height: 1.25;
+  cursor: pointer;
+}
+
+.bp_graph_pack_input {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--bp-color-accent, #0f766e);
+}
+
+.bp_graph_pack_input:focus-visible {
+  outline: 2px solid var(--bp-color-accent, #0f766e);
+  outline-offset: 2px;
+}
+
+.bp_graph_controls_select:focus-visible {
+  outline: 2px solid var(--bp-color-accent, #0f766e);
+  outline-offset: 2px;
+}
+
+.bp_graph_controls_button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--bp-color-border);
+  border-radius: var(--bp-radius-md);
+  background: var(--bp-color-surface);
+  color: var(--bp-color-text-strong);
+  padding: 0.38rem 0.7rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.2;
+  cursor: pointer;
+  box-shadow: var(--bp-shadow-sm);
+}
+
+.bp_graph_controls_button:hover {
+  background: var(--bp-color-surface-subtle);
+}
+
+.bp_graph_controls_button:focus-visible {
+  outline: 2px solid var(--bp-color-accent, #0f766e);
+  outline-offset: 2px;
+}
+
+.bp_graph_legend_button[aria-expanded="true"] {
+  background: var(--bp-color-surface-subtle);
+}
+
+.bp_graph_options_button[aria-expanded="true"] {
+  background: var(--bp-color-surface-subtle);
+}
+
+.bp_graph_legend_popover {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 26;
+  width: min(24rem, calc(100% - 1.8rem));
+  max-height: min(70vh, 34rem);
+  border: 1px solid var(--bp-color-border-soft);
+  border-radius: var(--bp-radius-xl);
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: var(--bp-shadow-lg);
+  overflow: auto;
+  backdrop-filter: blur(3px);
+}
+
+.bp_graph_options_popover {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 26;
+  width: min(18rem, calc(100% - 1.8rem));
+  max-width: min(18rem, calc(100% - 1.8rem));
+  border: 1px solid var(--bp-color-border-soft);
+  border-radius: var(--bp-radius-xl);
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: var(--bp-shadow-lg);
+  overflow: auto;
+  backdrop-filter: blur(3px);
+}
+
+.bp_graph_legend_popover[hidden] {
+  display: none;
+}
+
+.bp_graph_options_popover[hidden] {
+  display: none;
+}
+
+.bp_graph_legend_popover_header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.65rem 0.7rem 0.5rem;
+  border-bottom: 1px solid var(--bp-color-border-soft);
+  background: inherit;
+}
+
+.bp_graph_options_popover_header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.65rem 0.7rem 0.5rem;
+  border-bottom: 1px solid var(--bp-color-border-soft);
+  background: inherit;
+}
+
+.bp_graph_legend_popover_title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--bp-color-text-strong);
+}
+
+.bp_graph_options_popover_title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--bp-color-text-strong);
+}
+
+.bp_graph_legend_popover_close {
+  border: 1px solid var(--bp-color-border);
+  border-radius: var(--bp-radius-sm);
+  background: var(--bp-color-surface);
+  color: var(--bp-color-text-strong);
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1;
+  padding: 0.25rem 0.45rem;
+  cursor: pointer;
+}
+
+.bp_graph_options_popover_close {
+  border: 1px solid var(--bp-color-border);
+  border-radius: var(--bp-radius-sm);
+  background: var(--bp-color-surface);
+  color: var(--bp-color-text-strong);
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1;
+  padding: 0.25rem 0.45rem;
+  cursor: pointer;
+}
+
+.bp_graph_legend_popover_body {
+  padding: 0.55rem 0.7rem 0.7rem;
+}
+
+.bp_graph_options_popover_body {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.55rem 0.7rem 0.7rem;
+  justify-items: stretch;
+  width: auto;
+  min-width: 0;
+}
+
+.bp_graph_options_popover_body .bp_graph_controls_select {
+  width: 100%;
+  max-width: 100%;
+}
+
+.bp_graph_legend_group {
+  display: grid;
+  gap: 0.38rem;
+  align-content: start;
+  border: 1px solid var(--bp-color-border-soft);
+  border-radius: var(--bp-radius-md);
+  padding: 0.48rem 0.58rem;
+  background: var(--bp-color-surface-subtle);
+}
+
+.bp_graph_legend_group_header {
+  display: grid;
+  gap: 0.1rem;
+}
+
+.bp_graph_legend_group_title {
+  font-size: 0.69rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--bp-color-text-muted);
+}
+
+.bp_graph_legend_group_summary {
+  display: none;
+}
+
+.bp_graph_legend_items {
+  display: grid;
+  gap: 0.28rem;
+}
+
+.bp_graph_legend_item {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 0.34rem;
+  line-height: 1.3;
+  min-width: 0;
+}
+
+.bp_graph_legend_swatch {
+  display: inline-block;
+  width: 0.78rem;
+  height: 0.78rem;
+  margin-top: 0.1rem;
+  border-radius: 0.2rem;
+  border: 1px solid var(--bp-color-text-faint);
+  background: var(--bp-color-surface);
+}
+
+html[data-bp-style="blueprint"] .bp_graph_legend_item {
+  color: #111827;
+}
+
+html[data-bp-style="modern"] .bp_graph_controls_button {
+  background: var(--bp-color-surface-modern);
+  border-color: var(--bp-color-modern-border);
+}
+
+html[data-bp-style="modern"] .bp_graph_legend_popover,
+html[data-bp-style="modern"] .bp_graph_options_popover {
+  background: var(--bp-color-surface-modern);
+  border: 1px solid var(--bp-color-modern-border);
+  border-radius: var(--bp-radius-2xl);
+}
+
+html[data-bp-style="modern"] .bp_graph_legend_popover_header,
+html[data-bp-style="modern"] .bp_graph_options_popover_header {
+  border-bottom-color: var(--bp-color-modern-border);
+}
+
+html[data-bp-style="modern"] .bp_graph_legend_group {
+  border-color: var(--bp-color-modern-border);
+  background: var(--bp-color-modern-surface-alt);
+}
+
+html[data-bp-style="bold"] .bp_graph_controls_button {
+  border-width: 2px;
+  box-shadow: 0 3px 0 rgba(15, 23, 42, 0.14);
+}
+
+html[data-bp-style="bold"] .bp_graph_legend_popover,
+html[data-bp-style="bold"] .bp_graph_options_popover {
+  background:
+    radial-gradient(circle at 100% 0%, var(--bp-color-bold-surface-glow-1), transparent 36%),
+    radial-gradient(circle at 0% 100%, var(--bp-color-bold-surface-glow-2), transparent 32%),
+    var(--bp-color-surface);
+  border: 2px solid var(--bp-color-text-strong);
+  border-radius: var(--bp-radius-3xl);
+  box-shadow: var(--bp-shadow-bold);
+}
+
+html[data-bp-style="bold"] .bp_graph_legend_popover_header,
+html[data-bp-style="bold"] .bp_graph_options_popover_header {
+  border-bottom-color: rgba(15, 23, 42, 0.2);
+}
+
+html[data-bp-style="bold"] .bp_graph_legend_group {
+  border: 2px solid var(--bp-color-text-strong);
+  border-radius: var(--bp-radius-xl);
+  box-shadow: 0 3px 0 rgba(15, 23, 42, 0.14);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+html[data-bp-style="bold"] .bp_graph_legend_item {
+  font-weight: 700;
+}
+
+html[data-bp-style="bold"] .bp_graph_legend_swatch {
+  border-width: 2px;
+}
+
+@media (max-width: 720px) {
+  .bp_graph_legend_popover {
+    left: 0;
+    right: 0;
+    width: auto;
+  }
+
+  .bp_graph_options_popover {
+    left: 0;
+    right: 0;
+    width: auto;
+  }
+}
+</style><style>
+.bp_inline_preview_ref {
+  cursor: help;
+}
+
+.bp_inline_preview_panel {
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  z-index: 70;
+  min-width: 18rem;
+  max-width: min(34rem, 86vw);
+  max-height: min(26rem, 80vh);
+  overflow: hidden;
+  border: 1px solid var(--bp-color-border);
+  border-radius: var(--bp-radius-md);
+  background: var(--bp-color-surface);
+  box-shadow: var(--bp-shadow-lg);
+}
+
+.bp_inline_preview_panel[hidden] {
+  display: none !important;
+}
+
+.bp_inline_preview_panel_child {
+  z-index: 71;
+}
+
+.bp_inline_preview_panel[hidden] {
+  display: none;
+}
+
+.bp_inline_preview_panel[data-bp-preview-placement="anchored"]::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -0.85rem;
+  height: 0.85rem;
+}
+
+.bp_inline_preview_panel[data-bp-preview-placement="docked"] {
+  top: 0.9rem;
+  right: 0.9rem;
+  left: auto;
+}
+
+.bp_inline_preview_panel_header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.4rem 0.55rem;
+  border-bottom: 1px solid var(--bp-color-border-soft);
+  background: var(--bp-color-surface-muted);
+}
+
+.bp_inline_preview_panel_title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--bp-color-text-strong);
+}
+
+.bp_inline_preview_panel_close {
+  border: 1px solid var(--bp-color-border);
+  border-radius: 0.3rem;
+  background: var(--bp-color-surface);
+  color: var(--bp-color-text-muted);
+  font-size: 0.72rem;
+  line-height: 1;
+  padding: 0.2rem 0.35rem;
+  cursor: pointer;
+}
+
+.bp_inline_preview_panel_body {
+  padding: 0.5rem 0.6rem 0.55rem;
+  min-height: 0;
+  max-height: min(22rem, 70vh);
+  overflow: auto;
+  font-size: 0.8rem;
+}
+
+.bp_inline_preview_panel_footer {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  padding: 0.38rem 0.55rem 0.42rem;
+  border-top: 1px solid var(--bp-color-border-soft);
+  background: var(--bp-color-surface-muted);
+  color: var(--bp-color-text-subtle);
+  font-size: 0.72rem;
+}
+
+.bp_inline_preview_panel_footer[hidden] {
+  display: none;
+}
+
+.bp_inline_preview_panel_footer code {
+  font-size: 0.72rem;
+}
+
+.bp_bibliography_hover_entry {
+  border: 1px solid var(--bp-color-border-soft);
+  border-radius: 0.4rem;
+  padding: 0.35rem 0.45rem;
+  background: var(--bp-color-surface-muted);
+}
+
+.bp_bibliography_hover_entry .citation {
+  display: block;
+  line-height: 1.35;
+}
+
+.bp_bibliography_hover_meta {
+  margin-top: 0.42rem;
+  display: flex;
+  align-items: baseline;
+  gap: 0.42rem;
+  flex-wrap: wrap;
+}
+
+.bp_bibliography_hover_meta_label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--bp-color-text-faint);
+}
+
+.bp_bibliography_hover_meta_value {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--bp-color-text-strong);
+}
+
+.bp_code_hover_section {
+  margin-top: 0.28rem;
+}
+
+.bp_code_hover_label {
+  font-weight: 600;
+  color: var(--bp-color-text-muted);
+}
+
+.bp_code_hover_list code {
+  font-size: 0.76rem;
+}
+
+.bp_code_hover_none {
+  color: var(--bp-color-text-faint);
+  font-style: italic;
+}
+
+.bp_inline_preview_panel[data-bp-preview-mode="hover"] .bp_inline_preview_panel_close {
+  display: none;
+}
+</style><style>.bp_summary {
+  margin-top: 1rem;
+}
+
+.bp_summary_section {
+  border: 1px solid var(--bp-color-border-muted);
+  border-radius: 0.6rem;
+  padding: 0.2rem 0.8rem 0.75rem;
+  margin-bottom: 0.8rem;
+  background: var(--bp-color-surface);
+}
+
+.bp_summary_section > summary {
+  cursor: pointer;
+  font-weight: 700;
+  padding: 0.6rem 0;
+}
+
+.bp_summary_subsection {
+  margin-top: 0.45rem;
+  border: 1px solid var(--bp-color-border-soft);
+  border-radius: var(--bp-radius-md);
+  padding: 0.25rem 0.55rem 0.45rem;
+  background: var(--bp-color-surface-subtle);
+}
+
+.bp_summary_subsection > summary {
+  cursor: pointer;
+  font-weight: 600;
+  padding: 0.35rem 0;
+}
+
+.bp_summary_grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+}
+
+.bp_summary_card {
+  border: 1px solid var(--bp-color-border-muted);
+  border-radius: var(--bp-radius-md);
+  background: var(--bp-color-surface-subtle);
+  padding: 0.65rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.bp_summary_card_warn {
+  background: var(--bp-color-surface-warn);
+  color: var(--bp-color-status-warning-strong);
+  border-color: var(--bp-color-status-warning-border);
+}
+
+.bp_summary_subsection_warn {
+  background: var(--bp-color-surface-warn);
+  border-color: var(--bp-color-status-warning-border);
+}
+
+.bp_summary_label {
+  font-size: 0.82rem;
+  color: var(--bp-color-text-subtle);
+}
+
+.bp_summary_value {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--bp-color-text);
+}
+
+.bp_summary_status {
+  font-size: 0.76rem;
+  line-height: 1.3;
+  color: var(--bp-color-text-subtle);
+}
+
+.bp_summary_list {
+  margin: 0.25rem 0 0.15rem;
+  padding-left: 0;
+  list-style: none;
+}
+
+.bp_summary_item {
+  margin: 0.4rem 0;
+  padding: 0.45rem 0.55rem;
+  border: 1px solid var(--bp-color-border-soft);
+  border-radius: var(--bp-radius-md);
+  background: var(--bp-color-surface);
+}
+
+.bp_summary_empty {
+  color: var(--bp-color-text-faint);
+  font-style: italic;
+}
+
+.bp_summary_item_top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.45rem;
+}
+
+.bp_summary_item_head {
+  min-width: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.bp_summary_item_head a,
+.bp_summary_item_head code,
+.bp_summary_item_head .bp_summary_preview_wrap {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.bp_summary_item_meta {
+  color: var(--bp-color-text-subtle);
+  border: 1px solid var(--bp-color-border-panel);
+  border-radius: var(--bp-radius-pill);
+  padding: 0.03rem 0.45rem;
+  font-size: 0.78rem;
+}
+
+.bp_summary_preview_wrap {
+  display: inline-flex;
+  align-items: center;
+}
+
+.bp_summary_preview_wrap_active {
+  cursor: pointer;
+}
+
+.bp_summary_preview_panel {
+  position: fixed;
+  z-index: 35;
+  width: min(36rem, calc(100vw - 1.4rem));
+  max-height: min(68vh, 36rem);
+}
+
+.bp_summary_preview_panel[data-bp-preview-placement="docked"] {
+  top: 0.9rem;
+  right: 0.9rem;
+  left: auto;
+}
+
+.bp_summary_preview_panel_title {
+  font-size: 0.84rem;
+}
+
+.bp_summary_preview_panel_body {
+  padding-left: 0.5rem;
+  max-height: min(56vh, 30rem);
+}
+
+.bp_summary_item_body {
+  margin-top: 0.22rem;
+  color: var(--bp-color-text-strong);
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+
+.bp_summary_item_body a,
+.bp_summary_item_body code,
+.bp_summary_item_body .bp_inline_preview_ref {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.bp_summary_item_actions {
+  margin-top: 0.2rem;
+  color: var(--bp-color-text-muted);
+  font-size: 0.85rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.bp_summary_item_actions a,
+.bp_summary_item_actions code,
+.bp_summary_item_actions .bp_summary_preview_wrap,
+.bp_summary_item_actions .bp_inline_preview_ref {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.bp_summary_sep {
+  color: var(--bp-color-text-faint);
+}
+
+.bp_summary_decl_list {
+  margin: 0.2rem 0 0;
+  padding-left: 1.2rem;
+  overflow-wrap: anywhere;
+}
+
+.bp_summary_decl_list > li {
+  min-width: 0;
+}
+
+.bp_summary_decl_list a,
+.bp_summary_decl_list code,
+.bp_summary_decl_list .bp_inline_preview_ref {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.bp_summary_decls {
+  margin-top: 0.22rem;
+}
+
+.bp_summary_decls > summary {
+  cursor: pointer;
+  font-size: 0.88rem;
+  color: var(--bp-color-text-muted);
+}
+
+.bp_summary_badge {
+  display: inline-block;
+  border: 1px solid var(--bp-color-border);
+  border-radius: var(--bp-radius-pill);
+  padding: 0.05rem 0.35rem;
+  background: var(--bp-color-surface-muted);
+  color: var(--bp-color-text-muted);
+  font-size: 0.78rem;
+}
+
+.bp_summary_badge_warn {
+  border-color: var(--bp-color-status-warning-border-soft);
+  background: var(--bp-color-surface-warn-soft);
+  color: var(--bp-color-status-warning-strong);
+}
+
+.bp_summary_badge_error {
+  border-color: var(--bp-color-status-error-border-soft);
+  background: rgba(220, 38, 38, 0.08);
+  color: var(--bp-color-status-error-strong);
+}
+
+.bp_summary_badge_row {
+  margin-top: 0.28rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.bp_summary_item_nested {
+  background: var(--bp-color-surface-muted);
+}
+
+.bp_summary_nested > summary {
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--bp-color-text-muted);
+}
+
+.bp_summary_nested .bp_summary_list {
+  margin-top: 0.45rem;
+}
+
+@media (max-width: 700px) {
+  .bp_summary_section {
+    padding-left: 0.6rem;
+    padding-right: 0.6rem;
+  }
+}
+
+html[data-bp-style="modern"] .bp_summary_card {
+  border: 1px solid var(--bp-color-modern-border);
+  border-radius: var(--bp-radius-2xl);
+  background: linear-gradient(180deg, var(--bp-color-surface), var(--bp-color-surface-modern));
+  box-shadow: var(--bp-shadow-modern);
+}
+
+html[data-bp-style="modern"] .bp_summary_section {
+  border-color: var(--bp-color-modern-border);
+  background: linear-gradient(180deg, var(--bp-color-surface), var(--bp-color-surface-modern));
+}
+
+html[data-bp-style="modern"] .bp_summary_subsection {
+  background: var(--bp-color-modern-surface-alt);
+  border-color: var(--bp-color-modern-caption);
+}
+
+html[data-bp-style="bold"] .bp_summary_card {
+  border: 2px solid var(--bp-color-text-strong);
+  border-radius: var(--bp-radius-3xl);
+  background: var(--bp-color-surface);
+  box-shadow: var(--bp-shadow-bold);
+}
+
+html[data-bp-style="bold"] .bp_summary_section {
+  border: 2px solid var(--bp-color-text-strong);
+  border-radius: 0.9rem;
+  box-shadow: var(--bp-shadow-bold);
+}
+
+html[data-bp-style="bold"] .bp_summary_subsection {
+  border: 2px solid var(--bp-color-text-strong);
+  border-radius: 0.7rem;
+  background: var(--bp-color-surface);
+}
+</style><style>
+
+.hl.lean {
+  white-space: pre;
+  font-weight: normal;
+  font-style: normal;
+  font-size: inherit;
+}
+
+.hl.lean .keyword {
+  color: var(--verso-code-keyword-color,);
+  font-weight: var(--verso-code-keyword-weight, bold);
+  font-style: var(--verso-code-keyword-style, normal);
+  font-family: var(--verso-code-keyword-font-family,);
+}
+
+.hl.lean .const {
+  color: var(--verso-code-const-color,);
+  font-weight: var(--verso-code-const-weight, normal);
+  font-style: var(--verso-code-const-style, normal);
+  font-family: var(--verso-code-const-font-family,);
+}
+
+.hl.lean .var {
+  color: var(--verso-code-var-color,);
+  font-weight: var(--verso-code-var-weight, normal);
+  font-style: var(--verso-code-var-style, italic);
+  font-family: var(--verso-code-var-font-family,);
+
+  position: relative;
+}
+
+.hl.lean .literal, .hl.lean .unknown {
+  color: var(--verso-code-color,);
+  font-weight: normal;
+  font-style: normal;
+  font-family: var(--verso-code-font-family,);
+}
+
+/* These lexically-classified token kinds default to the `.unknown` appearance. The rule follows
+   `.const` so it wins for the `anon-ctor` tokens, which also carry the `const` class. */
+.hl.lean .anon-ctor,
+.hl.lean .number,
+.hl.lean .char,
+.hl.lean .comment,
+.hl.lean .punctuation,
+.hl.lean .delim,
+.hl.lean .wildcard {
+  color: var(--verso-code-color,);
+  font-weight: normal;
+  font-style: normal;
+  font-family: var(--verso-code-font-family,);
+}
+
+.hover-container {
+  width: 0;
+  height: 0;
+  position: relative;
+  display: inline;
+}
+
+.hl.lean a {
+  color: inherit;
+  text-decoration: currentcolor underline dotted;
+}
+
+.hl.lean a:hover {
+  text-decoration: currentcolor underline solid;
+}
+
+/* Links inside tooltips show their underline only when hovered. */
+.tippy-box .hl.lean a {
+  text-decoration: none;
+}
+
+.hl.lean .hover-info {
+  white-space: normal;
+}
+
+.hl.lean .token .hover-info {
+  display: none;
+  position: absolute;
+  color: var(--verso-tooltip-color, black);
+  background-color: var(--verso-tooltip-bg-color, #e5e5e5);
+  border: 1px solid var(--verso-tooltip-border-color, black);
+  padding: 0.5rem;
+  z-index: 300;
+}
+
+.hl.lean .hover-info.messages {
+  max-height: 10rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-gutter: stable;
+  padding: 0 0.5rem 0 0;
+  display: block;
+}
+
+.hl.lean .hover-info code {
+  white-space: pre-wrap;
+  background: none;
+}
+
+.hl.lean .hover-info code:not(.verso-message) {
+  color: var(--verso-tooltip-color, black);
+}
+
+.hl.lean .hover-info.messages > code {
+  padding: 0.5rem;
+  display: block;
+  width: fit-content;
+}
+
+.hl.lean .hover-info.messages > code:only-child {
+  margin: 0;
+}
+
+.hl.lean .hover-info.messages > code {
+  margin: 0.1rem;
+}
+
+.hl.lean .hover-info.messages > code:not(:first-child) {
+  margin-top: 0rem;
+}
+
+.hl.lean {
+}
+
+.hl.lean.block {
+  display: block;
+}
+
+.hl.lean.inline {
+  display: inline;
+  white-space: pre-wrap;
+}
+
+.hl.lean * {
+}
+
+.hl.lean .token {
+  transition: all 0.25s; /* Slight fade for highlights */
+}
+
+@media (hover: hover) {
+  /* Hovered content nested in a collapsed tactic region keeps its plain background: the
+     region's proof state is the tooltip that appears there, and its label is what
+     highlights. `:where` keeps the exclusion out of the specificity computation. */
+  .hl.lean .token.binding-hl,
+  .hl.lean :is(.literal, .token.typed, .token[data-verso-hover]):hover:not(:where(.tactic:has(> .tactic-toggle:not(:checked)) > label *)) {
+    background-color: var(--verso-code-hover-bg-color, #eeeeee);
+    border-radius: 2px;
+    transition: none;
+  }
+
+  /* Within a hovered message span, token hover backgrounds are removed so the span's own
+     hover background shows across the whole span. The exception is a hovered documented
+     token, which keeps its background because its tooltip is the one shown. */
+  .hl.lean .has-info:hover .token.binding-hl:not(:hover),
+  .hl.lean .has-info:hover .token.binding-hl:not([data-verso-hover]),
+  .hl.lean .has-info:hover .literal:hover:not([data-verso-hover]),
+  .hl.lean .has-info:hover .token.typed:hover:not([data-verso-hover]) {
+    background-color: transparent;
+  }
+}
+
+
+.hl.lean .has-info .token:not(.tactic-state):not(.tactic-state *), .hl.lean .has-info .inter-text:not(.tactic-state):not(.tactic-state *) {
+  text-decoration-style: wavy;
+  text-decoration-line: underline;
+  text-decoration-thickness: from-font;
+  text-decoration-skip-ink: none;
+}
+
+/*
+The underline color comes from the nearest enclosing message span: each severity's span rule
+sets `--verso--region-indicator-color`, which inherits, so a region nested inside one of
+another severity keeps its own indicator color.
+*/
+.hl.lean .has-info :not(.tactic-state):not(.tactic-state *) {
+  text-decoration-color: var(--verso--region-indicator-color);
+}
+
+.hl.lean .has-info .hover-info {
+  display: none;
+  position: absolute;
+  transform: translate(0.25rem, 0.3rem);
+  color: var(--verso-tooltip-color, black);
+  border: 1px solid var(--verso-tooltip-border-color, black);
+  padding: 0.5rem;
+  z-index: 400;
+  text-align: left;
+}
+
+.hl.lean .has-info.error {
+  --verso--region-indicator-color: var(--verso-error-indicator-color, #ff0000);
+  --verso--region-hover-color: var(--verso-code-error-hover-color, currentcolor);
+  --verso--region-hover-bg-color: var(--verso-code-error-hover-bg-color, #ffb3b3);
+  color: var(--verso-code-error-color, currentcolor);
+  background-color: var(--verso-code-error-bg-color, transparent);
+}
+
+/*
+The hover highlight follows the tooltip: a message span highlights only when its own tooltip
+is the one that appears. When a hovered nested message span, a hovered documented token, or
+a hovered collapsed tactic label shows its own tooltip instead, the message span does not
+highlight. A span nested in a collapsed tactic region likewise stays plain, because hovering
+it shows the region's proof state; `:where` keeps that exclusion out of the specificity
+computation.
+
+The hover colors come from `--verso--region-hover-color` and `--verso--region-hover-bg-color`,
+which each severity's span rule sets. This keeps the hover conditions in this one rule, and
+because the properties inherit, a region nested inside one of another severity keeps its own
+hover colors.
+*/
+@media (hover: hover) {
+  .hl.lean .has-info:hover:not(:has(.has-info:hover)):not(:has([data-verso-hover]:hover)):not(:has(.tactic > label:hover + .tactic-toggle:not(:checked))):not(:where(.tactic:has(> .tactic-toggle:not(:checked)) > label *)) {
+    color: var(--verso--region-hover-color, currentcolor);
+    background-color: var(--verso--region-hover-bg-color, transparent);
+  }
+}
+
+.hl.lean .hover-info.messages > code.error {
+  background-color: var(--verso-tooltip-error-bg-color, #e5e5e5);
+  border-left: 0.2rem solid var(--verso-tooltip-error-border-color, #ffb3b3);
+}
+
+/*
+A tooltip that shows only messages of the box's own severity leaves severity styling to the
+box itself. When messages of several severities share the tooltip, or a `mixed` tooltip
+combines messages with other content (such as documentation), each message keeps its
+severity accent to distinguish them.
+*/
+.tippy-box .hl.lean.mixed > .hover-info.messages {
+  margin-bottom: 0.5rem;
+}
+
+.tippy-box[data-theme~='error'] .hl.lean:not(.mixed) .hover-info.messages:not(:has(> code.warning)):not(:has(> code.information)) > code.error {
+  background: none;
+  border: none;
+}
+
+.error .verso-message, .error .verso-message .token, .error .verso-message label {
+  color: var(--verso-message-error-color, #cc0000);
+}
+
+.error .verso-message .case-label:has(input[type="checkbox"])::before {
+  background-color: var(--verso-message-error-color, #cc0000) !important;
+}
+
+.hl.lean .has-info.warning {
+  --verso--region-indicator-color: var(--verso-warning-indicator-color, #e7a71d);
+  --verso--region-hover-color: var(--verso-code-warning-hover-color, currentcolor);
+  --verso--region-hover-bg-color: var(--verso-code-warning-hover-bg-color, #ffd580);
+  color: var(--verso-code-warning-color, currentcolor);
+  background-color: var(--verso-code-warning-bg-color, transparent);
+}
+
+.hl.lean .hover-info.messages > code.warning {
+  background-color: var(--verso-tooltip-warning-bg-color, #e5e5e5);
+  border-left: 0.2rem solid var(--verso-tooltip-warning-border-color, #ffd580);
+}
+
+.lean-output {
+  border-left: 0.2em solid transparent;
+  padding: 0 0 0 0.5em;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.lean-output.error {
+  border-color: var(--verso-output-error-color, var(--verso-error-indicator-color, #ff0000));
+}
+
+.lean-output.information {
+  border-color: var(--verso-output-info-color, var(--verso-info-indicator-color, #4777ff));
+}
+
+.lean-output.warning {
+  border-color: var(--verso-output-warning-color, var(--verso-warning-indicator-color, #e7a71d));
+}
+
+.tippy-box[data-theme~='warning'] .hl.lean:not(.mixed) .hover-info.messages:not(:has(> code.error)):not(:has(> code.information)) > code.warning {
+  background: none;
+  border: none;
+}
+
+.warning .verso-message, .warning .verso-message .token, .warning .verso-message label {
+  color: var(--verso-message-warning-color, black);
+}
+
+.warning .verso-message .case-label:has(input[type="checkbox"])::before {
+  background-color: var(--verso-message-warning-color, black) !important;
+}
+
+
+.hl.lean .has-info.information {
+  --verso--region-indicator-color: var(--verso-info-indicator-color, #4777ff);
+  --verso--region-hover-color: var(--verso-code-info-hover-color, currentcolor);
+  --verso--region-hover-bg-color: var(--verso-code-info-hover-bg-color, #4777ff);
+  color: var(--verso-code-info-color, currentcolor);
+  background-color: var(--verso-code-info-bg-color, transparent);
+}
+
+
+.hl.lean .hover-info.messages > code.information {
+  background-color: var(--verso-tooltip-info-bg-color, #e5e5e5);
+  border-left: 0.2rem solid var(--verso-tooltip-info-border-color, #4777ff);
+}
+
+.tippy-box[data-theme~='info'] .hl.lean:not(.mixed) .hover-info.messages:not(:has(> code.error)):not(:has(> code.warning)) > code.information {
+  background: none;
+  border: none;
+}
+
+.information .verso-message, .information .verso-message .token, .information .verso-message label {
+  color: var(--verso-message-info-color, black);
+}
+
+.information .verso-message .case-label:has(input[type="checkbox"])::before {
+  background-color: var(--verso-message-info-color, black) !important;
+}
+
+.hl.lean div.docstring {
+  font-family: var(--verso-text-font-family, sans-serif);
+  white-space: normal;
+  max-width: calc(min(40rem, 90vw));
+  width: max-content;
+}
+
+.hl.lean div.docstring > :last-child {
+  margin-bottom: 0;
+}
+
+.hl.lean div.docstring > :first-child {
+  margin-top: 0;
+}
+
+.hl.lean .hover-info .sep {
+  display: block;
+  width: auto;
+  margin-left: 1rem;
+  margin-right: 1rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  padding: 0;
+  height: 1px;
+  border-top: 1px solid var(--verso-tooltip-separator-color, #ccc);
+}
+
+.hl.lean code {
+  font-family: var(--verso-code-font-family);
+}
+
+.hl.lean .tactic-state {
+  display: none;
+  position: relative;
+  width: fit-content;
+  border: 1px solid var(--verso-tactic-state-border-color, #888888);
+  border-radius: 0.1rem;
+  padding: 0.5rem;
+  font-family: sans-serif;
+  color: var(--verso-tactic-state-color, black);
+  background-color: var(--verso-tactic-state-bg-color, white);
+}
+
+.hl.lean.popup .tactic-state {
+  position: static;
+  display: block;
+  width: auto;
+  border: none;
+  padding: 0.5rem;
+  font-family: sans-serif;
+  background-color: var(--verso-tactic-state-bg-color, white);
+}
+
+
+.hl.lean .tactic {
+  position: relative;
+  display: inline;
+  vertical-align: top;
+  /* Without these, mobile Safari will start making font sizes inconsistent when its text size adjustment feature is triggered.*/
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+.hl.lean .tactic:has(> .tactic-toggle:checked) {
+  display: inline-grid;
+  grid-template-columns: 1fr;
+}
+
+.hl.lean .tactic-toggle:checked ~ .tactic-state {
+  display: inline-block;
+  vertical-align: top;
+  grid-row: 2;
+  justify-self: start;
+}
+
+.hl.lean .tactic > label {
+  position: relative;
+  grid-row: 1;
+  display: inline;
+}
+
+@media (hover: hover) {
+  /* Highlight a region on hover only when its own toggle is unchecked, and only the innermost
+     hovered region: `label:hover` bubbles to ancestor labels, so suppress the highlight on a region
+     whose label contains a more deeply nested hovered tactic label. The region's proof state is the
+     tooltip for everything else in its label, so the label keeps its highlight while any of that
+     content is hovered. */
+  .hl.lean .tactic:has(> .tactic-toggle:not(:checked)) > label:hover:not(:has(.tactic > label:hover)) {
+    background-color: var(--verso-code-hover-bg-color, #eeeeee);
+  }
+}
+
+.hl.lean .tactic-toggle {
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 0;
+  height: 0;
+  width: 0;
+  z-index: -10;
+}
+
+.hl.lean .tactic > label::after {
+  content: "";
+  border: 1px solid var(--verso-tactic-toggle-color, #bbbbbb);
+  /* These need to be em, not rem, to scale with the font */
+  border-radius: 1em;
+  height: 0.25em;
+  vertical-align: middle;
+  width: 0.6em;
+  margin-left: 0.1em;
+  margin-right: 0.1em;
+  display: inline-block;
+  transition: all 0.5s;
+}
+
+/*
+@media (hover: hover) {
+  .hl.lean .tactic > label:hover::after {
+    border: 1px solid #aaaaaa;
+    background-color: #aaaaaa;
+    transition: all 0.5s;
+  }
+}
+*/
+
+.hl.lean .tactic > label:has(+ .tactic-toggle:checked)::after {
+  border: 1px solid var(--verso-tactic-toggle-checked-color, #999999);
+  background-color: var(--verso-tactic-toggle-checked-color, #999999);
+  transition: all 0.5s;
+}
+
+.hl.lean .tactic-state .goal + .goal {
+  margin-top: 1.5em;
+}
+
+/*
+Some CSS frameworks customize details/summary in ways not compatible with Verso's output.
+*/
+
+.hl.lean details {
+  display: block !important;
+  margin: 0;
+}
+
+.hl.lean details summary {
+  display: list-item !important;
+  margin: 0;
+}
+
+.hl.lean details summary:focus {
+  outline: none;
+  outline-offset: none;
+  color: inherit;
+}
+
+.hl.lean ul > li {
+  margin-bottom: 0;
+}
+
+.hl.lean details summary::marker {
+  display: inline !important;
+}
+
+.hl.lean details > summary:first-of-type {
+  list-style-type: disclosure-closed;
+  list-style-position: inside;
+}
+
+.hl.lean details[open] > summary:first-of-type {
+  list-style-type: disclosure-open;
+}
+
+.hl.lean details summary::before, .hl.lean details summary::after {
+  content: "" !important;
+  background: none;
+  display: none;
+}
+
+.hl.lean .tactic-state summary {
+  /* These need to be em, not rem, to scale with the font */
+  margin-left: -0.5em;
+}
+
+.hl.lean .tactic-state details {
+  /* These need to be em, not rem, to scale with the font */
+  padding-left: 0.5em;
+}
+
+.hl.lean .case-label {
+  display: block;
+  position: relative;
+}
+
+.hl.lean .case-label input[type="checkbox"] {
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 0;
+  height: 0;
+  width: 0;
+  z-index: -10;
+}
+
+.hl.lean .case-label:has(input[type="checkbox"])::before {
+  display: inline-block;
+  background-color: currentcolor;
+  content: ' ';
+  transition: ease 0.2s;
+  margin-right: 0.7em;
+  clip-path: polygon(100% 0, 0 0, 50% 100%);
+  width: 0.6em;
+  height: 0.6em;
+  vertical-align: middle;
+}
+
+.hl.lean .case-label:has(input[type="checkbox"]:not(:checked))::before {
+  transform: rotate(-90deg);
+}
+
+.hl.lean .case-label:has(input[type="checkbox"]) {
+
+}
+
+.hl.lean .case-label:has(input[type="checkbox"]:checked) {
+
+}
+
+
+.hl.lean .labeled-case > :not(:first-child) {
+  max-height: 0px;
+  display: block;
+  overflow: hidden;
+  transition: max-height 0.1s ease-in;
+  /* These need to be em, not rem, to scale with the font */
+  margin-left: 0.5em;
+  margin-top: 0.1em;
+}
+
+.hl.lean .labeled-case:has(.case-label input[type="checkbox"]:checked) > :not(:first-child) {
+  max-height: 100%;
+}
+
+
+.hl.lean .goal-name::before {
+  font-style: normal;
+  content: "case ";
+}
+
+.hl.lean .goal-name {
+  font-style: italic;
+  font-family: var(--verso-code-font-family);
+  color: inherit;
+}
+
+.hl.lean .hypotheses {
+  display: table;
+}
+
+.hl.lean .hypothesis {
+  display: table-row;
+}
+
+.hl.lean .hypothesis > * {
+  display: table-cell;
+}
+
+
+.hl.lean .hypotheses .colon {
+  text-align: center;
+  /* This needs to be em, not rem, to scale with the font */
+  min-width: 1em;
+}
+
+.hl.lean .hypotheses .name {
+  text-align: right;
+}
+
+.hl.lean .hypotheses .name,
+.hl.lean .hypotheses .type,
+.hl.lean .conclusion .type {
+  font-family: var(--verso-code-font-family);
+}
+
+.tippy-box {
+  /* Without these, mobile Safari will start making font sizes inconsistent when its text size adjustment feature is triggered.*/
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/*
+Tippy's stylesheet paints each arrow's fill triangle with the arrow element's `color` (its
+placement-specific `::before` rules use `border-color: initial`, which is `currentcolor`),
+and its border extension paints the outline triangle with the box's border color. Setting
+`color` on the arrow therefore matches it to the tooltip background for every placement.
+*/
+.tippy-box[data-theme~='lean'] {
+  background-color: var(--verso-tooltip-bg-color, #e5e5e5);
+  color: var(--verso-tooltip-color, black);
+  border: 1px solid var(--verso-tooltip-border-color, black);
+}
+.tippy-box[data-theme~='lean'] > .tippy-arrow {
+  color: var(--verso-tooltip-bg-color, #e5e5e5);
+}
+
+.tippy-box[data-theme~='message'][data-placement^='top'] > .tippy-arrow::before {
+  border-width: 11px 11px 0;
+}
+.tippy-box[data-theme~='message'][data-placement^='top'] > .tippy-arrow::after {
+  bottom: -11px;
+  border-width: 11px 11px 0;
+}
+.tippy-box[data-theme~='message'][data-placement^='bottom'] > .tippy-arrow::before {
+  border-width: 0 11px 11px;
+}
+.tippy-box[data-theme~='message'][data-placement^='bottom'] > .tippy-arrow::after {
+  top: -11px;
+  border-width: 0 11px 11px;
+}
+.tippy-box[data-theme~='message'][data-placement^='left'] > .tippy-arrow::before {
+  border-width: 11px 0 11px 11px;
+}
+.tippy-box[data-theme~='message'][data-placement^='left'] > .tippy-arrow::after {
+  right: -11px;
+  border-width: 11px 0 11px 11px;
+}
+
+.tippy-box[data-theme~='message'][data-placement^='right'] > .tippy-arrow::before {
+  border-width: 11px 11px 11px 0;
+}
+.tippy-box[data-theme~='message'][data-placement^='right'] > .tippy-arrow::after {
+  left: -11px;
+  border-width: 11px 11px 11px 0;
+}
+
+
+
+.tippy-box[data-theme~='warning'] {
+  background-color: var(--verso-tooltip-warning-bg-color, #e5e5e5);
+  color: var(--verso-tooltip-warning-color, black);
+  border: 3px solid var(--verso-tooltip-warning-border-color, #ffd580);
+}
+.tippy-box[data-theme~='warning'] > .tippy-arrow {
+  color: var(--verso-tooltip-warning-bg-color, #e5e5e5);
+}
+
+.tippy-box[data-theme~='error'] {
+  background-color: var(--verso-tooltip-error-bg-color, #e5e5e5);
+  color: var(--verso-tooltip-error-color, black);
+  border: 3px solid var(--verso-tooltip-error-border-color, #ffb3b3);
+}
+.tippy-box[data-theme~='error'] > .tippy-arrow {
+  color: var(--verso-tooltip-error-bg-color, #e5e5e5);
+}
+
+.tippy-box[data-theme~='info'] {
+  background-color: var(--verso-tooltip-info-bg-color, #e5e5e5);
+  color: var(--verso-tooltip-info-color, black);
+  border: 3px solid var(--verso-tooltip-info-border-color, #4777ff);
+}
+.tippy-box[data-theme~='info'] > .tippy-arrow {
+  color: var(--verso-tooltip-info-bg-color, #e5e5e5);
+}
+
+.tippy-box[data-theme~='tactic'] {
+  background-color: var(--verso-tactic-state-bg-color, white);
+  color: var(--verso-tactic-state-color, black);
+  border: 1px solid var(--verso-tactic-state-border-color, #888888);
+}
+.tippy-box[data-theme~='tactic'] > .tippy-arrow {
+  color: var(--verso-tactic-state-bg-color, white);
+}
+
+.extra-doc-links {
+  list-style-type: none;
+  margin-left: 0;
+  padding: 0;
+}
+
+.extra-doc-links > li {
+  display: inline-block;
+}
+
+.extra-doc-links > li:not(:last-child)::after {
+  content: '|';
+  display: inline-block;
+  margin: 0 0.25em;
+}
+
+.verso-message .trace {
+  display: block;
+}
+
+.verso-message .trace > summary::marker {
+  color: var(--verso-text-color, black);
+}
+
+.verso-message .trace-children {
+  margin: 0;
+  padding: 0;
+}
+
+.verso-message .trace-children > li {
+  list-style-type: none;
+  margin-left: 1.5em;
+}
+
+.verso-message .trace-children > li:not(:has(.trace)) {
+  margin-left: 0;
+}
+
+.verso-message .trace-class {
+  color: color-mix(in srgb, currentColor 70%, transparent);
+  font-weight: bold;
+  margin: 0;
+  padding: 0;
+}
+
+.verso-message .text {
+  white-space: pre-wrap;
+}
+
+</style><script>
+      
+window.onload = async () => {
+
+    // Don't show hovers inside of closed tactic states
+    function blockedByTactic(elem) {
+      let parent = elem.parentNode;
+      while (parent && "classList" in parent) {
+        if (parent.classList.contains("tactic")) {
+          const toggle = parent.querySelector(":scope > input.tactic-toggle");
+          if (toggle) {
+            return !toggle.checked;
+          }
+        }
+        parent = parent.parentNode;
+      }
+      return false;
+    }
+
+    // The innermost element under the pointer, used to show only the most specific hover
+    let hoverTarget = null;
+    document.addEventListener('mouseover', (e) => { hoverTarget = e.target; }, true);
+
+    // Visible tippy references; a tooltip is blocked while an unrelated one is visible
+    const visibleTippies = new Set();
+    function blockedByTippy(elem) {
+      for (const ref of visibleTippies) {
+        if (!ref.contains(elem) && !elem.contains(ref)) return true;
+      }
+      return false;
+    }
+
+    // Whether the element's tooltip would have content to show. Content nested in a
+    // collapsed tactic region is covered by the region's proof-state tooltip, whether or
+    // not a tippy instance is currently attached to it.
+    function showsContent(el) {
+      if (!el._tippy) return false;
+      if (el.classList.contains('tactic')) {
+        const toggle = el.querySelector(':scope > input.tactic-toggle');
+        return !!toggle && !toggle.checked;
+      }
+      return (!!el.querySelector('.hover-info') || 'versoHover' in el.dataset) &&
+        !blockedByTactic(el);
+    }
+
+    // The nearest enclosing element whose tooltip has content
+    function innermostShowable(el) {
+      while (el && el.nodeType === Node.ELEMENT_NODE) {
+        if (showsContent(el)) return el;
+        el = el.parentElement;
+      }
+      return null;
+    }
+
+    // Binding highlights via event delegation with cached lookups
+    const bindingCache = new Map(); // context+binding -> [token elements]
+    let highlightedTokens = [];
+    function getBindingTokens(context, binding) {
+      const key = context + "\0" + binding;
+      let tokens = bindingCache.get(key);
+      if (!tokens) {
+        tokens = [];
+        for (const example of document.querySelectorAll(".hl.lean")) {
+          if (example.dataset.leanContext == context) {
+            for (const tok of example.querySelectorAll(".token[data-binding=\"" + CSS.escape(binding) + "\"]")) {
+              tokens.push(tok);
+            }
+          }
+        }
+        bindingCache.set(key, tokens);
+      }
+      return tokens;
+    }
+    for (const container of document.querySelectorAll(".hl.lean")) {
+      container.addEventListener("mouseover", (event) => {
+        const c = event.target.closest(".token");
+        if (!c || !c.dataset.binding || c.dataset.binding === "" || !container.contains(c)) return;
+        if (blockedByTactic(c)) return;
+        const tokens = getBindingTokens(container.dataset.leanContext, c.dataset.binding);
+        for (const tok of tokens) {
+          tok.classList.add("binding-hl");
+        }
+        highlightedTokens = tokens;
+      });
+      container.addEventListener("mouseout", (event) => {
+        const c = event.target.closest(".token");
+        if (!c || !container.contains(c)) return;
+        for (const tok of highlightedTokens) {
+          tok.classList.remove("binding-hl");
+        }
+        highlightedTokens = [];
+      });
+    }
+    /* Render docstrings */
+    if ('undefined' !== typeof marked) {
+        for (const d of document.querySelectorAll("code.docstring, pre.docstring")) {
+            const str = d.textContent || "";
+            const html = marked.parse(str);
+            const rendered = document.createElement("div");
+            rendered.classList.add("docstring");
+            rendered.innerHTML = html;
+            d.parentNode.replaceChild(rendered, d);
+        }
+    }
+    // Add hovers
+    const versoDocData = await (fetch("-verso-docs.json").then((resp) => resp.json()));
+
+    function hideParentTooltips(element) {
+      let parent = element.parentElement;
+      while (parent) {
+        const tippyInstance = parent._tippy;
+        if (tippyInstance) {
+          tippyInstance.hide();
+        }
+        parent = parent.parentElement;
+      }
+    }
+
+    function hideDescendantTooltips(element) {
+      for (const ref of visibleTippies) {
+        if (ref !== element && element.contains(ref)) {
+          ref._tippy.hide();
+        }
+      }
+    }
+
+    // Renders the documentation for a hover ID from the doc table
+    function docHoverContent(hoverId) {
+      const info = document.createElement('span');
+      info.className = 'hover-info';
+      info.style.display = 'block';
+      const data = versoDocData[hoverId];
+      if (data) {
+        info.innerHTML = data;
+        /* Render docstrings - TODO server-side */
+        if ('undefined' !== typeof marked) {
+          for (const d of info.querySelectorAll('code.docstring, pre.docstring')) {
+            const str = d.textContent || "";
+            const html = marked.parse(str);
+            const rendered = document.createElement('div');
+            rendered.classList.add('docstring');
+            rendered.innerHTML = html;
+            d.parentNode.replaceChild(rendered, d);
+          }
+        }
+      } else {
+        info.innerHTML = 'Failed to load doc ID: ' + hoverId;
+      }
+      return info;
+    }
+
+
+
+
+    const defaultTippyProps = {
+      /* DEBUG -- remove the space: * /
+      onHide(any) { return false; },
+      trigger: "click",
+      // */
+      /* theme: "lean", */
+      maxWidth: "none",
+      appendTo: () => document.body,
+      interactive: true,
+      delay: [100, null],
+      /* ignoreAttributes: true, */
+      followCursor: 'initial',
+      onShow(inst) {
+        const ref = inst.reference;
+        if (ref.className == 'tactic') {
+          const toggle = ref.querySelector(":scope > input.tactic-toggle");
+          if (toggle && toggle.checked) {
+            return false;
+          }
+        } else if (ref.querySelector(".hover-info") || "versoHover" in ref.dataset) {
+          if (blockedByTactic(ref)) { return false };
+        } else { // Nothing to show here!
+          return false;
+        }
+        // Show only the most specific hover under the pointer
+        if (hoverTarget && ref.contains(hoverTarget) && innermostShowable(hoverTarget) !== ref) {
+          return false;
+        }
+        hideParentTooltips(ref);
+        hideDescendantTooltips(ref);
+        if (blockedByTippy(ref)) { return false; }
+      },
+      onShown(inst) { visibleTippies.add(inst.reference); },
+      onHidden(inst) { visibleTippies.delete(inst.reference); },
+      content (tgt) {
+        const content = document.createElement("span");
+        if (tgt.className == 'tactic') {
+          const stateSource = tgt.querySelector(":scope > .tactic-state");
+          if (!stateSource) {
+            return content;
+          }
+          const state = stateSource.cloneNode(true);
+          state.style.display = "block";
+          content.appendChild(state);
+          content.style.display = "block";
+          content.className = "hl lean popup";
+        } else {
+          content.className = "hl lean";
+          content.style.display = "block";
+          content.style.maxHeight = "300px";
+          content.style.overflowY = "auto";
+          content.style.overflowX = "hidden";
+          // Messages come from the inline hover-info; documentation comes from the doc
+          // table. An element with both (a message span sharing a documented token's
+          // extent) shows both in one tooltip.
+          const hoverId = tgt.dataset.versoHover;
+          const hoverInfo = tgt.querySelector(".hover-info");
+          if (hoverInfo) {
+            content.appendChild(hoverInfo.cloneNode(true));
+          }
+          if (hoverId) {
+            // TODO stop doing an implicit conversion from string to number here
+            content.appendChild(docHoverContent(hoverId));
+          }
+          if (hoverInfo && hoverId) {
+            content.classList.add('mixed');
+          }
+          const extraLinks = tgt.dataset['versoLinks'] || tgt.parentElement.dataset['versoLinks'];
+          if (extraLinks) {
+            try {
+              const extras = JSON.parse(extraLinks);
+              const links = document.createElement('ul');
+              links.className = 'extra-doc-links';
+              extras.forEach((l) => {
+                const li = document.createElement('li');
+                li.innerHTML = "<a href=\"" + l['href'] + "\" title=\"" + l.long + "\">" + l.short + "</a>";
+                links.appendChild(li);
+              });
+              content.appendChild(links);
+            } catch (error) {
+              console.error(error);
+            }
+          }
+        }
+        return content;
+      }
+    };
+
+
+    document.querySelectorAll('.hl.lean .const.token, .hl.lean .keyword.token, .hl.lean .literal.token, .hl.lean .option.token, .hl.lean .var.token, .hl.lean .typed.token, .hl.lean .level-var, .hl.lean .level-const, .hl.lean .level-op, .hl.lean .sort').forEach(element => {
+      element.setAttribute('data-tippy-theme', 'lean');
+    });
+    document.querySelectorAll('.hl.lean .has-info.warning').forEach(element => {
+      element.setAttribute('data-tippy-theme', 'warning message');
+    });
+    document.querySelectorAll('.hl.lean .has-info.information').forEach(element => {
+      element.setAttribute('data-tippy-theme', 'info message');
+    });
+    document.querySelectorAll('.hl.lean .has-info.error').forEach(element => {
+      element.setAttribute('data-tippy-theme', 'error message');
+    });
+    document.querySelectorAll('.hl.lean .tactic').forEach(element => {
+      element.setAttribute('data-tippy-theme', 'tactic');
+    });
+    // Skip tokens inside closed tactics — they interfere with tactic tippys
+    const closedTactics = new Set();
+    document.querySelectorAll('.hl.lean .tactic').forEach(tactic => {
+      const toggle = tactic.querySelector(':scope > input.tactic-toggle');
+      if (toggle && !toggle.checked) closedTactics.add(tactic);
+    });
+    function isInsideClosedTactic(el) {
+      const tactic = el.closest('.tactic');
+      return tactic && tactic !== el && closedTactics.has(tactic);
+    }
+
+    const tokenSelector = '.hl.lean .const.token, .hl.lean .keyword.token, .hl.lean .literal.token, .hl.lean .option.token, .hl.lean .var.token, .hl.lean .typed.token, .hl.lean .has-info, .hl.lean .tactic, .hl.lean .level-var, .hl.lean .level-const, .hl.lean .level-op, .hl.lean .sort';
+    tippy(Array.from(document.querySelectorAll(tokenSelector)).filter(el => !isInsideClosedTactic(el)), defaultTippyProps);
+
+    // Create/destroy token tippys when tactic checkbox toggles
+    const tacticTippySelector = '.const.token, .keyword.token, .literal.token, .option.token, .var.token, .typed.token, .has-info, .level-var, .level-const, .level-op, .sort';
+    document.querySelectorAll('.hl.lean .tactic').forEach(tactic => {
+      const toggle = tactic.querySelector(':scope > input.tactic-toggle');
+      if (toggle) toggle.addEventListener('change', () => {
+        if (toggle.checked) {
+          closedTactics.delete(tactic);
+          tactic.querySelectorAll(tacticTippySelector).forEach(el => {
+            if (!el._tippy) {
+              tippy(el, defaultTippyProps);
+            }
+          });
+        } else {
+          closedTactics.add(tactic);
+          tactic.querySelectorAll(tacticTippySelector).forEach(el => {
+            if (el._tippy) el._tippy.destroy();
+          });
+        }
+        // The toggle changes which element's tooltip belongs to the pointer's position,
+        // but the pointer stays put, so no hover event announces the change. Show the
+        // right tooltip once the click that flipped the toggle has hidden the old one.
+        setTimeout(() => {
+          if (hoverTarget && hoverTarget.isConnected) {
+            const showable = innermostShowable(hoverTarget);
+            if (showable && showable._tippy) showable._tippy.show();
+          }
+        }, 0);
+      });
+  });
+}
+</script>
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+    const resolvePrelude = (node) => {
+        const table =
+            window.bpTexPreludeTable && typeof window.bpTexPreludeTable === "object"
+                ? window.bpTexPreludeTable
+                : {};
+        const preludeId = (node.getAttribute("data-bp-tex-prelude-id") || "").trim();
+        if (preludeId && typeof table[preludeId] === "string") {
+            return table[preludeId].trim();
+        }
+        const fallback = (node.getAttribute("data-bp-tex-prelude") || "").trim();
+        return fallback;
+    };
+    const renderMath = (node, displayMode) => {
+        const tex = node.textContent || "";
+        const prelude = resolvePrelude(node);
+        const renderInput = prelude ? `${prelude}\n${tex}` : tex;
+        katex.render(renderInput, node, { throwOnError: false, displayMode });
+        node.setAttribute("data-bp-math-rendered", "1");
+    };
+    for (const m of document.querySelectorAll(".bp_math.inline")) {
+        if (m.getAttribute("data-bp-math-rendered") === "1") continue;
+        renderMath(m, false);
+    }
+    for (const m of document.querySelectorAll(".bp_math.display")) {
+        if (m.getAttribute("data-bp-math-rendered") === "1") continue;
+        renderMath(m, true);
+    }
+});
+</script>
+    <script>
+      window.bpTexPreludeTable = Object.assign({}, window.bpTexPreludeTable || {}, {"default":""});</script>
+    <script>
+      (function () {
+  const styleStorageKey = "verso-blueprint-style";
+  const switcherId = "bp-style-switcher";
+  const root = document.documentElement;
+  const targetClass = "bp_decl_target";
+  const targetBlockClass = "bp_decl_target_block";
+  const enableProofHider = true;
+  const enableHashReveal = true;
+
+  function normalizeStyle(style) {
+    if (style === "blueprint" || style === "modern" || style === "bold") return style;
+    return "blueprint";
+  }
+
+  function applyStyle(style) {
+    root.setAttribute("data-bp-style", normalizeStyle(style));
+  }
+
+  function getSavedStyle() {
+    try {
+      return normalizeStyle(localStorage.getItem(styleStorageKey));
+    } catch (_err) {
+      return "blueprint";
+    }
+  }
+
+  function saveStyle(style) {
+    try {
+      localStorage.setItem(styleStorageKey, normalizeStyle(style));
+    } catch (_err) {}
+  }
+
+  function installSwitcher() {
+    if (document.getElementById(switcherId)) return;
+    if (!document.body) return;
+
+    const host = document.createElement("div");
+    host.id = switcherId;
+
+    function appendControl(labelText, selectId, options) {
+      const control = document.createElement("div");
+      control.className = "bp-style-switcher-control";
+
+      const label = document.createElement("label");
+      label.setAttribute("for", selectId);
+      label.textContent = labelText;
+
+      const select = document.createElement("select");
+      select.id = selectId;
+      options.forEach(function (value) {
+        const option = document.createElement("option");
+        option.value = value;
+        option.textContent = value;
+        select.appendChild(option);
+      });
+
+      control.appendChild(label);
+      control.appendChild(select);
+      host.appendChild(control);
+      return select;
+    }
+
+    const styleSelect = appendControl("Style", "bp-style-select", [
+      "blueprint",
+      "modern",
+      "bold"
+    ]);
+
+    const currentStyle = getSavedStyle();
+    styleSelect.value = currentStyle;
+    applyStyle(currentStyle);
+
+    styleSelect.addEventListener("change", function () {
+      const value = normalizeStyle(styleSelect.value);
+      applyStyle(value);
+      saveStyle(value);
+    });
+
+    document.body.appendChild(host);
+  }
+
+  function installProofHider() {
+    const blocks = document.querySelectorAll("details.bp_code_block code.hl.lean.block");
+    const declKeywords = new Set(["theorem", "lemma", "corollary", "example"]);
+    const commandStartKeywords = new Set([
+      "theorem", "lemma", "corollary", "example", "def", "abbrev", "instance",
+      "axiom", "constant", "opaque", "inductive", "structure", "class", "namespace",
+      "section", "end", "open", "local", "attribute", "set_option", "variable",
+      "variables", "notation", "infix", "infixl", "infixr", "prefix", "postfix",
+      "macro", "syntax", "elab", "initialize", "mutual"
+    ]);
+
+    function locateTextPosition(rootNode, absIndex) {
+      const walker = document.createTreeWalker(rootNode, NodeFilter.SHOW_TEXT);
+      let seen = 0;
+      while (true) {
+        const node = walker.nextNode();
+        if (!node) break;
+        const len = node.nodeValue ? node.nodeValue.length : 0;
+        if (absIndex <= seen + len) {
+          return { node, offset: absIndex - seen };
+        }
+        seen += len;
+      }
+      return null;
+    }
+
+    function toggleProof(toggleNode, proofTail, gapNode) {
+      const hidden = proofTail.classList.toggle("bp-proof-tail-hidden");
+      toggleNode.classList.toggle("bp-proof-open", !hidden);
+      toggleNode.setAttribute("aria-expanded", hidden ? "false" : "true");
+      if (gapNode) {
+        gapNode.classList.toggle("bp-proof-gap-hidden", !hidden);
+      }
+    }
+
+    function absIndexBeforeElement(rootNode, el) {
+      const r = document.createRange();
+      r.setStart(rootNode, 0);
+      r.setEndBefore(el);
+      return r.toString().length;
+    }
+
+    function lineIndent(text, idx) {
+      const lastNl = text.lastIndexOf("\n", Math.max(0, idx - 1));
+      const lineStart = lastNl + 1;
+      let i = lineStart;
+      while (i < idx && text[i] === " ") i++;
+      return i - lineStart;
+    }
+
+    function isFirstTokenOnLine(text, idx) {
+      const lastNl = text.lastIndexOf("\n", Math.max(0, idx - 1));
+      const lineStart = lastNl + 1;
+      return /^[ \t]*$/.test(text.slice(lineStart, idx));
+    }
+
+    function isCommandStartText(tokText) {
+      if (!tokText) return false;
+      if (tokText[0] === "#") return true;
+      return commandStartKeywords.has(tokText);
+    }
+
+    blocks.forEach((block) => {
+      if (!(block instanceof HTMLElement)) return;
+      const details = block.closest("details.bp_code_block");
+      if (details instanceof HTMLElement && details.dataset.bpProofFold === "off") return;
+      if (block.dataset.bpProofHider === "1") return;
+      block.dataset.bpProofHider = "1";
+
+      const text = block.textContent || "";
+      if (!text) return;
+
+      const tokenNodes = Array.from(block.querySelectorAll(".token"));
+      const keywordNodes = Array.from(block.querySelectorAll(".keyword.token"));
+
+      const allTokens = tokenNodes.map((el) => {
+        const tokText = (el.textContent || "").trim();
+        const start = absIndexBeforeElement(block, el);
+        const end = start + (el.textContent || "").length;
+        const firstOnLine = isFirstTokenOnLine(text, start);
+        const indent = lineIndent(text, start);
+        return { el, tokText, start, end, firstOnLine, indent };
+      });
+
+      const commandStarts = allTokens.filter((t) =>
+        t.firstOnLine && isCommandStartText(t.tokText)
+      );
+
+      const keywordTokens = keywordNodes.map((el) => {
+        const tokText = (el.textContent || "").trim();
+        const start = absIndexBeforeElement(block, el);
+        const end = start + (el.textContent || "").length;
+        const indent = lineIndent(text, start);
+        return { el, tokText, start, end, indent };
+      });
+
+      const declStarts = keywordTokens.filter((t) => declKeywords.has(t.tokText));
+      if (declStarts.length === 0) return;
+
+      const segments = [];
+      for (const decl of declStarts) {
+        const boundary = commandStarts.find((c) =>
+          c.start > decl.start && c.indent <= decl.indent
+        );
+        const segmentEnd = boundary ? boundary.start : text.length;
+        if (segmentEnd <= decl.start) continue;
+        const byTok = keywordTokens.find((t) =>
+          t.tokText === "by" && t.start > decl.start && t.end <= segmentEnd
+        );
+        if (!byTok) continue;
+        let hideStart = byTok.end;
+        if (hideStart >= segmentEnd) continue;
+        const gapText = text.slice(hideStart, segmentEnd).includes("\n") ? "\n" : "";
+        segments.push({
+          byEl: byTok.el,
+          byStart: byTok.start,
+          byEnd: byTok.end,
+          hideStart,
+          hideEnd: segmentEnd,
+          gapText
+        });
+      }
+      if (segments.length === 0) return;
+
+      for (let i = segments.length - 1; i >= 0; i--) {
+        const seg = segments[i];
+        const hideStartPos = locateTextPosition(block, seg.hideStart);
+        const hideEndPos = locateTextPosition(block, seg.hideEnd);
+        if (!hideStartPos || !hideEndPos) continue;
+        const hideRange = document.createRange();
+        hideRange.setStart(hideStartPos.node, hideStartPos.offset);
+        hideRange.setEnd(hideEndPos.node, hideEndPos.offset);
+        const fragment = hideRange.extractContents();
+        if (!fragment.textContent || fragment.textContent.length === 0) continue;
+
+        const proofTail = document.createElement("span");
+        proofTail.className = "bp-proof-tail bp-proof-tail-hidden";
+        proofTail.appendChild(fragment);
+        hideRange.insertNode(proofTail);
+        let gapNode = null;
+        if (seg.gapText) {
+          gapNode = document.createElement("span");
+          gapNode.textContent = seg.gapText;
+          proofTail.parentNode.insertBefore(gapNode, proofTail);
+        }
+
+        const toggle = seg.byEl;
+        if (!(toggle instanceof HTMLElement)) continue;
+        toggle.classList.add("bp-proof-by-toggle");
+        toggle.tabIndex = 0;
+        toggle.setAttribute("role", "button");
+        toggle.setAttribute("aria-expanded", "false");
+        toggle.setAttribute("aria-label", "Toggle proof");
+        toggle.addEventListener("click", function () {
+          toggleProof(toggle, proofTail, gapNode);
+        });
+        toggle.addEventListener("keydown", function (ev) {
+          if (!(ev instanceof KeyboardEvent)) return;
+          if (ev.key !== "Enter" && ev.key !== " ") return;
+          ev.preventDefault();
+          toggleProof(toggle, proofTail, gapNode);
+        });
+      }
+    });
+  }
+
+  function openDetailsAncestors(elem) {
+    let cur = elem;
+    while (cur) {
+      if (cur.tagName === "DETAILS") {
+        cur.setAttribute("open", "open");
+      }
+      cur = cur.parentElement;
+    }
+  }
+
+  function revealDeclFromHash() {
+    const hash = window.location.hash;
+    if (!hash || hash.length < 2) return;
+    const id = decodeURIComponent(hash.slice(1));
+    const target = document.getElementById(id);
+    if (!target) return;
+    openDetailsAncestors(target);
+    document.querySelectorAll("." + targetClass).forEach((el) => el.classList.remove(targetClass));
+    document.querySelectorAll("." + targetBlockClass).forEach((el) => el.classList.remove(targetBlockClass));
+    target.classList.remove(targetClass);
+    void target.offsetWidth;
+    target.classList.add(targetClass);
+    const block = target.closest("code.hl.lean.block, pre.hl.lean, .example-file");
+    if (block) {
+      block.classList.remove(targetBlockClass);
+      void block.offsetWidth;
+      block.classList.add(targetBlockClass);
+    }
+    target.scrollIntoView({ block: "center", inline: "nearest", behavior: "smooth" });
+  }
+
+  applyStyle(getSavedStyle());
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", function () {
+      installSwitcher();
+      if (enableProofHider) installProofHider();
+      if (enableHashReveal) revealDeclFromHash();
+    });
+  } else {
+    installSwitcher();
+    if (enableProofHider) installProofHider();
+    if (enableHashReveal) revealDeclFromHash();
+  }
+
+  if (enableHashReveal) {
+    window.addEventListener("hashchange", revealDeclFromHash);
+    document.addEventListener("click", function (ev) {
+      const target = ev.target;
+      if (!(target instanceof Element)) return;
+      const a = target.closest("a[href]");
+      if (!a) return;
+      const url = new URL(a.getAttribute("href"), window.location.href);
+      if (url.pathname !== window.location.pathname || !url.hash) return;
+      if (decodeURIComponent(url.hash) !== window.location.hash) return;
+      setTimeout(revealDeclFromHash, 0);
+    });
+  }
+})();</script>
+    <script type="module" src="-verso-data/blueprint-page-runtime.mjs"></script>
+    </head>
+  <body>
+    <header>
+      <div class="header-logo-wrapper"></div>
+      <div class="header-title-wrapper">
+        <a href="" class="header-title"><h1>
+            A Property Kind Calculus for Measurement Metrology</h1>
+          </a></div>
+      </header>
+    <label for="toggle-toc" id="toggle-toc-click"><span class="line line1"></span><span class="line line2"></span><span class="line line3"></span></label><div class="with-toc">
+      <div class="toc-backdrop" onclick="document.getElementById('toggle-toc-click')?.click()"></div>
+      <nav id="toc">
+        <input type="checkbox" id="toggle-toc"><div class="first">
+          <a href="" class="toc-title"><h1>
+              A Property Kind Calculus for Measurement Metrology</h1>
+            </a><div class="split-tocs">
+            <div class="split-toc book">
+              <div class="title">
+                <label for="--verso-manual-toc-----bookRoot" class="toggle-split-toc"><input type="checkbox" class="toggle-split-toc" id="--verso-manual-toc-----bookRoot"></label><span class="">Table of Contents</span></div>
+              <table><tr class="numbered"><td class="num">1.</td><td><a href="What-PropertyKindCalculus-provides/index.html#A-Property-Kind-Calculus-for-Metrology___-proving-quantity-and-unit-laws-in-Lean___-from-ISO___IEC-80000-to-measurement-uncertainty--What-PropertyKindCalculus-provides">What PropertyKindCalculus provides</a></td></tr><tr class="numbered"><td class="num">2.</td><td><a href="Requirements/index.html#A-Property-Kind-Calculus-for-Metrology___-proving-quantity-and-unit-laws-in-Lean___-from-ISO___IEC-80000-to-measurement-uncertainty--Requirements">Requirements</a></td></tr><tr class="numbered"><td class="num">3.</td><td><a href="Why-a-calculus___-not-a-taxonomy/index.html#A-Property-Kind-Calculus-for-Metrology___-proving-quantity-and-unit-laws-in-Lean___-from-ISO___IEC-80000-to-measurement-uncertainty--Why-a-calculus___-not-a-taxonomy">Why a calculus, not a taxonomy</a></td></tr><tr class="numbered"><td class="num">4.</td><td><a href="How-to-read-the-status/index.html#A-Property-Kind-Calculus-for-Metrology___-proving-quantity-and-unit-laws-in-Lean___-from-ISO___IEC-80000-to-measurement-uncertainty--How-to-read-the-status">How to read the status</a></td></tr><tr class="numbered"><td class="num">5.</td><td><a href="The-Proved-Spine/index.html#proved-spine">The Proved Spine</a></td></tr><tr class="numbered"><td class="num">6.</td><td><a href="Foundations___-system___-part___-and-the-ontological-square/index.html#foundations">Foundations: system, part, and the ontological square</a></td></tr><tr class="numbered"><td class="num">7.</td><td><a href="Dedicated-kinds-of-property/index.html#dedicated-kind">Dedicated kinds-of-property</a></td></tr><tr class="numbered"><td class="num">8.</td><td><a href="Units-and-the-Dimension-1-Problem/index.html#units">Units and the Dimension-1 Problem</a></td></tr><tr class="numbered"><td class="num">9.</td><td><a href="Dimension-as-a-Forgetful-Functor/index.html#dimension">Dimension as a Forgetful Functor</a></td></tr><tr class="numbered"><td class="num">10.</td><td><a href="Scale-spanning-units-___-a-third-unit-category-_LPAR_R13_RPAR_/index.html#scale-spanning">Scale-spanning units — a third unit category (R13)</a></td></tr><tr class="numbered"><td class="num">11.</td><td><a href="The-Interaction-Algebra-_LPAR_Flater-Appendix-C_RPAR_/index.html#interaction">The Interaction Algebra (Flater Appendix C)</a></td></tr><tr class="numbered"><td class="num">12.</td><td><a href="The-Function-Calculus-and-Complex-Valued-Carriers-_LPAR_R12_RPAR_/index.html#function-calculus">The Function Calculus and Complex-Valued Carriers (R12)</a></td></tr><tr class="numbered"><td class="num">13.</td><td><a href="Extensivity/index.html#extensivity">Extensivity</a></td></tr><tr class="numbered"><td class="num">14.</td><td><a href="The-object-type/index.html#object-types">The object type</a></td></tr><tr class="numbered"><td class="num">15.</td><td><a href="Write-Once___-Correctly/index.html#write-once">Write Once, Correctly</a></td></tr><tr class="numbered"><td class="num">16.</td><td><a href="Metrological-modularity/index.html#metrological-modularity">Metrological modularity</a></td></tr><tr class="numbered"><td class="num">17.</td><td><a href="Uncertainty-quantification-and-numerical-adequacy/index.html#uncertainty">Uncertainty quantification and numerical adequacy</a></td></tr><tr class="numbered"><td class="num">18.</td><td><a href="ISO___IEC-80000-___-The-Standards-Catalogue/index.html#iso80000">ISO/IEC 80000 — The Standards Catalogue</a></td></tr><tr class="numbered"><td class="num">19.</td><td><a href="ISO-80000-3-___-Space-and-Time/index.html#iso80000-part3">ISO 80000-3 — Space and Time</a></td></tr><tr class="numbered"><td class="num">20.</td><td><a href="ISO-80000-4-___-Mechanics/index.html#iso80000-part4">ISO 80000-4 — Mechanics</a></td></tr><tr class="numbered"><td class="num">21.</td><td><a href="ISO-80000-5-___-Thermodynamics/index.html#iso80000-part5">ISO 80000-5 — Thermodynamics</a></td></tr><tr class="numbered"><td class="num">22.</td><td><a href="IEC-80000-6-___-Electromagnetism/index.html#iso80000-part6">IEC 80000-6 — Electromagnetism</a></td></tr><tr class="numbered"><td class="num">23.</td><td><a href="ISO-80000-7-___-Light-and-radiation/index.html#iso80000-part7">ISO 80000-7 — Light and radiation</a></td></tr><tr class="numbered"><td class="num">24.</td><td><a href="ISO-80000-8-___-Acoustics/index.html#iso80000-part8">ISO 80000-8 — Acoustics</a></td></tr><tr class="numbered"><td class="num">25.</td><td><a href="ISO-80000-9-___-Physical-chemistry-and-molecular-physics/index.html#iso80000-part9">ISO 80000-9 — Physical chemistry and molecular physics</a></td></tr><tr class="numbered"><td class="num">26.</td><td><a href="ISO-80000-10-___-Atomic-and-nuclear-physics/index.html#iso80000-part10">ISO 80000-10 — Atomic and nuclear physics</a></td></tr><tr class="numbered"><td class="num">27.</td><td><a href="ISO-80000-11-___-Characteristic-numbers/index.html#iso80000-part11">ISO 80000-11 — Characteristic numbers</a></td></tr><tr class="numbered"><td class="num">28.</td><td><a href="ISO-80000-12-___-Condensed-matter-physics/index.html#iso80000-part12">ISO 80000-12 — Condensed matter physics</a></td></tr><tr class="numbered"><td class="num">29.</td><td><a href="IEC-80000-13-___-Information-science-and-technology/index.html#iso80000-part13">IEC 80000-13 — Information science and technology</a></td></tr><tr class="numbered"><td class="num">30.</td><td><a href="External-Cross-References/index.html#cross-references">External Cross-References</a></td></tr><tr class="numbered"><td class="num">31.</td><td><a href="Using-the-library___-annotations-and-generated-indexes/index.html#using-the-library">Using the library: annotations and generated indexes</a></td></tr><tr class="current numbered"><td class="num">32.</td><td><a href="Applying-the-calculus-to-a-domain___-the-model-template/index.html#model-template">Applying the calculus to a domain: the model template</a></td></tr><tr class="numbered"><td class="num">33.</td><td><a href="Deploying-a-domain-model___-the-deployment-template/index.html#deployment-template">Deploying a domain model: the deployment template</a></td></tr><tr class="unnumbered"><td class="num"><td><a href="Dependency-Graph/index.html#A-Property-Kind-Calculus-for-Metrology___-proving-quantity-and-unit-laws-in-Lean___-from-ISO___IEC-80000-to-measurement-uncertainty--Dependency-Graph">Dependency Graph</a></td></tr><tr class="unnumbered"><td class="num"><td><a href="Blueprint-Summary/index.html#A-Property-Kind-Calculus-for-Metrology___-proving-quantity-and-unit-laws-in-Lean___-from-ISO___IEC-80000-to-measurement-uncertainty--Blueprint-Summary">Blueprint Summary</a></td></tr><tr class="numbered"><td class="num">34.</td><td><a href="License/index.html#A-Property-Kind-Calculus-for-Metrology___-proving-quantity-and-unit-laws-in-Lean___-from-ISO___IEC-80000-to-measurement-uncertainty--License">License</a></td></tr></table></div>
+            <div class="split-toc">
+              <div class="title">
+                <label for="--verso-manual-toc-model-template" class="toggle-split-toc"><input type="checkbox" class="toggle-split-toc" id="--verso-manual-toc-model-template" checked="checked"></label><span class="number">32.</span> <span class=""><a href="Applying-the-calculus-to-a-domain___-the-model-template/index.html#model-template">Applying the calculus to a domain: the model template</a></span></div>
+              <table><tr class="numbered"><td class="num">32.1.</td><td><a href="Applying-the-calculus-to-a-domain___-the-model-template/What-a-template-is___-and-what-it-is-not/index.html#A-Property-Kind-Calculus-for-Metrology___-proving-quantity-and-unit-laws-in-Lean___-from-ISO___IEC-80000-to-measurement-uncertainty--Applying-the-calculus-to-a-domain___-the-model-template--What-a-template-is___-and-what-it-is-not">What a template is, and what it is not</a></td></tr><tr class="numbered"><td class="num">32.2.</td><td><a href="Applying-the-calculus-to-a-domain___-the-model-template/The-template/index.html#A-Property-Kind-Calculus-for-Metrology___-proving-quantity-and-unit-laws-in-Lean___-from-ISO___IEC-80000-to-measurement-uncertainty--Applying-the-calculus-to-a-domain___-the-model-template--The-template">The template</a></td></tr><tr class="numbered"><td class="num">32.3.</td><td><a href="Applying-the-calculus-to-a-domain___-the-model-template/The-premise-___-what-the-model-is-a-model-of/index.html#A-Property-Kind-Calculus-for-Metrology___-proving-quantity-and-unit-laws-in-Lean___-from-ISO___IEC-80000-to-measurement-uncertainty--Applying-the-calculus-to-a-domain___-the-model-template--The-premise-___-what-the-model-is-a-model-of">The premise — what the model is a model of</a></td></tr><tr class="numbered"><td class="num">32.4.</td><td><a href="Applying-the-calculus-to-a-domain___-the-model-template/The-kind-vocabulary-___-and-the-audits-that-close-it/index.html#A-Property-Kind-Calculus-for-Metrology___-proving-quantity-and-unit-laws-in-Lean___-from-ISO___IEC-80000-to-measurement-uncertainty--Applying-the-calculus-to-a-domain___-the-model-template--The-kind-vocabulary-___-and-the-audits-that-close-it">The kind vocabulary — and the audits that close it</a></td></tr><tr class="numbered"><td class="num">32.5.</td><td><a href="Applying-the-calculus-to-a-domain___-the-model-template/The-model-as-modules/index.html#A-Property-Kind-Calculus-for-Metrology___-proving-quantity-and-unit-laws-in-Lean___-from-ISO___IEC-80000-to-measurement-uncertainty--Applying-the-calculus-to-a-domain___-the-model-template--The-model-as-modules">The model as modules</a></td></tr><tr class="numbered"><td class="num">32.6.</td><td><a href="Applying-the-calculus-to-a-domain___-the-model-template/Carriers___-adequacy-and-uncertainty/index.html#A-Property-Kind-Calculus-for-Metrology___-proving-quantity-and-unit-laws-in-Lean___-from-ISO___IEC-80000-to-measurement-uncertainty--Applying-the-calculus-to-a-domain___-the-model-template--Carriers___-adequacy-and-uncertainty">Carriers, adequacy and uncertainty</a></td></tr><tr class="numbered"><td class="num">32.7.</td><td><a href="Applying-the-calculus-to-a-domain___-the-model-template/Well-posedness-and-honest-failure/index.html#A-Property-Kind-Calculus-for-Metrology___-proving-quantity-and-unit-laws-in-Lean___-from-ISO___IEC-80000-to-measurement-uncertainty--Applying-the-calculus-to-a-domain___-the-model-template--Well-posedness-and-honest-failure">Well-posedness and honest failure</a></td></tr><tr class="numbered"><td class="num">32.8.</td><td><a href="Applying-the-calculus-to-a-domain___-the-model-template/Assurance-___-and-what-a-green-status-does-not-mean/index.html#A-Property-Kind-Calculus-for-Metrology___-proving-quantity-and-unit-laws-in-Lean___-from-ISO___IEC-80000-to-measurement-uncertainty--Applying-the-calculus-to-a-domain___-the-model-template--Assurance-___-and-what-a-green-status-does-not-mean">Assurance — and what a green status does not mean</a></td></tr><tr class="numbered"><td class="num">32.9.</td><td><a href="Applying-the-calculus-to-a-domain___-the-model-template/What-the-machine-can-hold___-and-what-it-cannot/index.html#A-Property-Kind-Calculus-for-Metrology___-proving-quantity-and-unit-laws-in-Lean___-from-ISO___IEC-80000-to-measurement-uncertainty--Applying-the-calculus-to-a-domain___-the-model-template--What-the-machine-can-hold___-and-what-it-cannot">What the machine can hold, and what it cannot</a></td></tr><tr class="current numbered"><td class="num">32.10.</td><td><a href="Applying-the-calculus-to-a-domain___-the-model-template/How-a-document-declares-conformance/index.html#A-Property-Kind-Calculus-for-Metrology___-proving-quantity-and-unit-laws-in-Lean___-from-ISO___IEC-80000-to-measurement-uncertainty--Applying-the-calculus-to-a-domain___-the-model-template--How-a-document-declares-conformance">How a document declares conformance</a></td></tr></table></div>
+            <div class="split-toc">
+              <div class="title">
+                <span class="no-toggle"></span><span class="number">32.10.</span> <span class="current"><a href="Applying-the-calculus-to-a-domain___-the-model-template/How-a-document-declares-conformance/index.html#A-Property-Kind-Calculus-for-Metrology___-proving-quantity-and-unit-laws-in-Lean___-from-ISO___IEC-80000-to-measurement-uncertainty--Applying-the-calculus-to-a-domain___-the-model-template--How-a-document-declares-conformance">How a document declares conformance</a></span></div>
+              </div>
+            </div>
+          </div>
+        <div class="last"></div>
+        </nav>
+      <div class="toc-resize-handle"></div>
+      <main><div class="content-wrapper">
+          <nav class="prev-next-buttons">
+            <a class="local-button active" href="Applying-the-calculus-to-a-domain___-the-model-template/What-the-machine-can-hold___-and-what-it-cannot/index.html#A-Property-Kind-Calculus-for-Metrology___-proving-quantity-and-unit-laws-in-Lean___-from-ISO___IEC-80000-to-measurement-uncertainty--Applying-the-calculus-to-a-domain___-the-model-template--What-the-machine-can-hold___-and-what-it-cannot" rel="prev" title="32.9. What the machine can hold, and what it cannot"><span class="arrow">←</span><span class="where">32.9. What the machine can hold, and what it cannot</span></a><a class="local-button active" href="Deploying-a-domain-model___-the-deployment-template/index.html#deployment-template" rel="next" title="33. Deploying a domain model: the deployment template"><span class="where">33. Deploying a domain model: the deployment template</span><span class="arrow">→</span></a></nav>
+          <section id="A-Property-Kind-Calculus-for-Metrology___-proving-quantity-and-unit-laws-in-Lean___-from-ISO___IEC-80000-to-measurement-uncertainty--Applying-the-calculus-to-a-domain___-the-model-template--How-a-document-declares-conformance">
+            <h1>
+              32.10. How a document declares conformance<span class="permalink-widget inline"><a href="find/index.html?domain=Verso.Genre.Manual.section&amp;name=A-Property-Kind-Calculus-for-Metrology___-proving-quantity-and-unit-laws-in-Lean___-from-ISO___IEC-80000-to-measurement-uncertainty--Applying-the-calculus-to-a-domain___-the-model-template--How-a-document-declares-conformance" title="Permalink">🔗</a></span></h1>
+            <p>
+              A document answers to the template by declaring <strong>where</strong> it addresses each rubric, through
+two channels with different guarantees. A <strong>declaration site</strong> is the <code>@[rubric "M12"]</code>
+attribute on a real declaration, applied from a separate module the way the requirement
+annotations are; because it attaches to a declaration, a site cannot name one that does
+not exist, and a rename is a compile error. A <strong>section site</strong> names the tag of the
+section that states the rubric; the conformance matrix renders it as a cross-reference, so
+a dangling tag is a render error.</p>
+            <p>
+              <strong>Every</strong> rubric requires a section site, whatever its evidence kind. The template is a
+claim about a document, so a rubric discharged only by a declaration is one the document
+never mentions, and reporting that as addressed would be the false green the whole
+arrangement exists to prevent. What the evidence kind adds is whether a declaration is
+required <strong>as well</strong>: for everything but exposition, it is.</p>
+            <p>
+              A rubric with sites in some but not every required channel therefore reads <code>partial</code>
+rather than passing, and it does so in both directions. A generated view cited by section
+with no generator named is a hand-maintained table claiming to be a live one; a theorem
+annotated with no section citing it is a green declaration the document is silent about.
+Both are the case a single "done" would hide.</p>
+            <p>
+              The status of each rubric is therefore computed from the sites and the rubric's own
+evidence kind. There is no switch to forget to flip, and the worked instance of the whole
+arrangement is soil-moisture-model's technical reference, whose conformance matrix is
+generated this way against this template.</p>
+            <p>
+              One limit of that computation is worth stating where an author will meet it. The status
+asks whether a site <strong>exists</strong>, never what the site covers. A rubric whose closure is a
+census can therefore be discharged by a declaration that is not that census — two theorems
+standing in for a sweep — and no cell of the matrix distinguishes the two. Until a rubric
+names the audit that closes it and the status requires that audit among its sites, a green
+cell on a <strong>census possible</strong> row means the author remembered; the closure table above is
+where a reader finds out which cells those are.
+</p>
+            </section>
+          <nav class="prev-next-buttons">
+            <a class="local-button active" href="Applying-the-calculus-to-a-domain___-the-model-template/What-the-machine-can-hold___-and-what-it-cannot/index.html#A-Property-Kind-Calculus-for-Metrology___-proving-quantity-and-unit-laws-in-Lean___-from-ISO___IEC-80000-to-measurement-uncertainty--Applying-the-calculus-to-a-domain___-the-model-template--What-the-machine-can-hold___-and-what-it-cannot" rel="prev" title="32.9. What the machine can hold, and what it cannot"><span class="arrow">←</span><span class="where">32.9. What the machine can hold, and what it cannot</span></a><a class="local-button active" href="Deploying-a-domain-model___-the-deployment-template/index.html#deployment-template" rel="next" title="33. Deploying a domain model: the deployment template"><span class="where">33. Deploying a domain model: the deployment template</span><span class="arrow">→</span></a></nav>
+          </div>
+        </main></div>
+    </body>
+  </html>
+
