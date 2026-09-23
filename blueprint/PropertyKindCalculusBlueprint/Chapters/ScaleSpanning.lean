@@ -13,6 +13,9 @@ open Verso.Genre.Manual
 open Informal
 
 #doc (Manual) "Scale-spanning units — a third unit category (R13)" =>
+%%%
+tag := "scale-spanning"
+%%%
 
 The SI sorts its units into two categories — _base_ (the kilogram, metre, second,
 ampere, kelvin, candela, mole) and _derived_ (everything built from them). Finkelstein

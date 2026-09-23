@@ -253,7 +253,7 @@ The whole blueprint is also available as a single paginated document:
 [download the PDF](PropertyKindCalculus-Blueprint.pdf).
 
 The generated API reference for the checked sources is published alongside it:
-[browse the API documentation](api/index.html). Declarations carrying `@[pkc_math]` render
+[browse the API documentation](api/index.html). Declarations carrying {ref "annotation-pkc-math"}[`@[pkc_math]`] render
 their defining equation as typeset mathematics there, next to the Lean source it was
 derived from.
 
@@ -274,6 +274,131 @@ counts and total stay in step with the Lean source:
 
 :::iso_doc_table isoTally
 :::
+
+## The paradigm: metrological provenance as taint tracking
+%%%
+tag := "paradigm"
+%%%
+
+The calculus is easiest to see through an analogy with _taint analysis_ in software
+security. A taint analyzer marks what a program reads from outside as _tainted_, follows it
+through the code, and reports where tainted data reaches a sink that must only ever see
+trusted data. Read metrologically:
+
+- A raw number is _tainted_. It could be a value of any kind — a velocity, an acceleration,
+  a reflectivity — so nothing downstream may rely on what it means.
+- A kinded quantity, `Quantity k R`, is _clean_. Its kind `k` is in its type, so everything
+  downstream may rely on it, and the kind is what every operation on it is checked against.
+
+Taint analysis tracks untrusted data through source code; the calculus tracks kinded
+quantities through the _kind algebra_. Here the analogy breaks in the calculus's favor. A
+taint analyzer has to approximate how data flows through a program, whereas here the kind
+rides in the type and the elaborator propagates it exactly, with nothing to approximate.
+What a taint analyzer must still be told — where data enters, where it leaves, and where
+trust is granted by hand — is exactly what an author still declares, and each declaration
+is an annotation the machine checks:
+
+- *Sources.* Raw data enters through {ref "annotation-kindIngest"}[`@[kindIngest]`], a
+  checked ingest mint; an adjudicated constant — a cited coefficient, a threshold — enters
+  through {ref "annotation-kindConst"}[`@[kindConst]`].
+- *Sinks.* A kinded value leaves the calculus as a bare number through
+  {ref "annotation-kindEmission"}[`@[kindEmission]`]: a deploy driver, a serializer, the
+  parity apparatus the erasure theorems are stated over.
+- *Trust granted by hand.* A value that already carries one kind and is re-typed as
+  another, with no law of the algebra to derive it, is a
+  {ref "annotation-kindCrossing"}[`@[kindCrossing]`]; representation plumbing that drops to
+  the carrier without changing the kind is a {ref "annotation-carrierVocab"}[`@[carrierVocab]`].
+
+Between the sources and the sinks nothing is declared, because nothing needs to be: a kind
+reached through a law of the algebra is _derived_, at a site the elaborator checked. That
+leaves three ways a value comes to carry a kind, and the provenance layer names them
+(`Provenance.IntroTier`):
+
+- `derived` — through a law, such as `ProductKind massK velocityK momentumK`. No judgment
+  is made at the use site; it was made once, when the edge was registered, and the
+  {ref "edge-audits"}[edge audits] enumerate the edges.
+- `gated` — through a check. A `KindAdmissible` instance gives a predicate on the raw value,
+  `Quantity.certify` runs it, and the check is the declaration's evidence. It is necessary,
+  not sufficient: no predicate on bits can establish that a number is a velocity rather than
+  an acceleration.
+- `attested` — through no check at all. `Quantity.attest "why" m` is definitionally the raw
+  value `⟨m⟩`; the author states the classification claim, and the reason string, harvested
+  into the audit, is the only content.
+
+An attestation is to a kind claim what an `axiom` is to a proof, and the
+{ref "boundary-family"}[boundary audit] is to a model what
+[`#print axioms`](https://lean-lang.org/doc/reference/latest/Interacting-with-Lean/#hash-print)
+is to a theorem: `#kind_boundary_audit ns …` lists every boundary site in a namespace — each
+entry, exit and crossing, with its tier and, for an attestation, its harvested reason. Pinned
+under [`#guard_msgs`](https://lean-lang.org/doc/reference/latest/Interacting-with-Lean/#hash-guard_msgs),
+an entry point nobody declared fails the build — not as a type error, since a raw `⟨x⟩`
+typechecks, but because the audit refuses it. The discipline that goes with it is the analog
+of a no-axiom rule: attest only where no check could establish the kind and no edge could
+derive it. And the honest limit is the one an axiom has: a wrong attestation typechecks,
+appears as one line in the pinned report, and is exactly as good as the review of that line.
+
+## The calculus at a glance
+%%%
+tag := "calculus-at-a-glance"
+%%%
+
+The chapters that follow develop each piece in full, every node linked to the declaration
+that discharges it. This is the map, in the order the pieces rest on one another.
+
+- *A kind is a type-level index.* `Quantity k R` is a magnitude in the carrier `R` at the
+  kind `k`. Two quantities are comparable, addable, or given a common unit exactly when
+  their kinds agree, and a kind of dimension one is as distinct from its neighbors as a
+  length is from a mass. Which operators a kind admits at all — order, difference, ratio —
+  is fixed by its _scale_; specialization (a radius _is a_ length) is a lattice on kinds,
+  and instantiation (this pencil's length) is term-of-type, never subtyping
+  ({ref "proved-spine"}[The proved spine]).
+- *A kind is a kind of something.* The sort of system a kind is dedicated to and the object
+  an individual quantity characterizes are the two sides of Lowe's square
+  ({ref "foundations"}[Foundations], {ref "dedicated-kind"}[Dedicated kinds-of-property]),
+  and a value can carry the object it characterizes in its type, so one soil column's water
+  content cannot stand in for another's ({ref "object-types"}[The object type]).
+- *Two kinds meet only under a law.* `ProductKind k₁ k₂ k` and `QuotientKind k₁ k₂ k` are
+  the authored edges of the {ref "interaction-algebra"}[interaction algebra] — the ISO 80000
+  defining relations are stated as them — and the _operator table_ registers `KindMul` and
+  `KindDiv` notation over those laws, so `m * v` elaborates at the momentum kind and a pair
+  with no entry has no product. Functions go through the
+  {ref "function-calculus"}[function calculus], six families sorted by kind signature. What
+  is checked is explicitness and propagation, not truth: an edge is an authored claim,
+  enumerable like an axiom ({ref "trust-model"}[the trust model]).
+- *Dimension certifies; it does not decide.* $`\dim : \mathrm{Kind} \to \mathrm{Dimension}`
+  is a {ref "dimension"}[forgetful functor]: every edge the algebra admits is proved
+  dimensionally coherent, and agreeing dimensions are necessary, never sufficient. A unit is
+  a distinguished quantity of one kind, converted by proved round trips and never across
+  kinds ({ref "units"}[Units and the dimension-1 problem]); the units the base/derived split
+  does not fit get a category of their own ({ref "scale-spanning"}[Scale-spanning units]).
+- *Aggregation is a claim about the kind.* Which kinds sum over a carving of a system into
+  parts, and under what law or tolerance, is declared and proved rather than assumed
+  ({ref "extensivity"}[Extensivity]).
+- *One model, several carriers.* A model is written once over a carrier typeclass and
+  instantiated at `ℝ` to prove, at binary32 to bound rounding, at `Float` or a GPU tape to
+  run; the kinded term erases to the bare-number kernel, so the checking is paid at compile
+  time ({ref "write-once"}[Write once, correctly]). The same parametricity carries
+  measurement uncertainty through the model and flags where floating point loses
+  information at the scale of the input uncertainties
+  ({ref "uncertainty"}[Uncertainty quantification and numerical adequacy]).
+- *A module declares its boundary and what it computes.* A `Provenance.Contract` states a
+  module's kind-typed ports and exits, a `Provenance.Relation` its measurement model as a
+  theorem edge, and the aggregation classes on its outputs are what license sharding it
+  ({ref "metrological-modularity"}[Metrological modularity]).
+- *The standard is the test.* Eleven parts of ISO/IEC 80000, item by item, with checked
+  dimensions and proved defining relations ({ref "iso80000"}[The standards catalogue]);
+  Dybkær's and the VIM's clauses are cross-referenced to the declarations that formalize
+  them ({ref "cross-references"}[External cross-references]).
+- *Annotations declare; commands ask.* The {ref "annotations-at-a-glance"}[annotations] an
+  author writes and the {ref "commands-at-a-glance"}[commands] that audit them are
+  catalogued in {ref "using-the-library"}[Using the library], and the
+  {ref "model-template"}[model] and {ref "deployment-template"}[deployment] templates fix
+  what a domain document conforming to the calculus states.
+
+## In plain terms — the requirements
+%%%
+tag := "plain-terms"
+%%%
 
 In plain terms, _rigorous metrology_ here means:
 
@@ -372,21 +497,10 @@ the checked declarations that address it.
 tag := "author-obligations"
 %%%
 
-The _Using the library_ chapter explains each annotation in turn. This section is the
-summary to have before reading it: what a model written in the calculus asks of its
-author, and what the author gets back. An analogy with taint analysis in software
-security fixes the idea.
-
-- A raw number is _metrologically tainted_: it could be a value of any kind, so nothing
-  downstream may rely on it.
-- A kinded quantity, `Quantity k R`, is _metrologically clean_: its kind is stated in its
-  type, so everything downstream may rely on it.
-
-Taint analysis tracks untrusted data through source code; metrological provenance tracks
-kinded quantities through the kind algebra. The analogy breaks in the calculus's favor. A
-taint analyzer has to approximate how data flows through a program, whereas here the kind
-rides in the type and the elaborator propagates it exactly, with nothing to approximate.
-That leaves an author two things to state, and the machine checks both.
+The {ref "using-the-library"}[Using the library] chapter explains each annotation in turn.
+This section is the summary to have before reading it: what a model written in the calculus
+asks of its author, and what the author gets back. Since the kind propagates in the type
+({ref "paradigm"}[the paradigm]), an author states two things, and the machine checks both.
 
 *First, the equations are written over kinded variables.* Where a physics text writes
 $`T = \tfrac{1}{2} m v^2` over bare reals, the model writes it over a `Quantity massK ℝ`
@@ -401,13 +515,13 @@ and a `Quantity velocityK ℝ`, and every operation between them has to be licen
   file opts in with `open scoped PropertyKindCalculus.OperatorTable`, after which `m * v`
   elaborates at the momentum kind. Where no entry exists, the product does not elaborate
   at all (R5, the {ref "interaction-algebra"}[interaction algebra]).
-- Functions go through the _function table_ (the _Function Calculus_ chapter), which
-  sorts them into six families by kind signature: kind-preserving (`abs`, `min`, `max`),
-  powers and roots, the dimensionless transcendentals, the trigonometric functions,
-  logarithmic levels, and re-expression against another reference. The trigonometric
-  family is the showcase: a plane angle is dimension one but a distinct kind, so `sin` of
-  an angle is fine while `sin` of a reflectivity is a category error a dimension-only
-  system cannot forbid.
+- Functions go through the _function table_ (the {ref "function-calculus"}[function
+  calculus]), which sorts them into six families by kind signature: kind-preserving
+  (`abs`, `min`, `max`), powers and roots, the dimensionless transcendentals, the
+  trigonometric functions, logarithmic levels, and re-expression against another reference.
+  The trigonometric family is the showcase: a plane angle is dimension one but a distinct
+  kind, so `sin` of an angle is fine while `sin` of a reflectivity is a category error a
+  dimension-only system cannot forbid.
 
 What the switch buys is the two things a bare equation cannot say. A kinded expression
 combines only where the algebra licenses it. And the kind separates what the dimension
@@ -422,28 +536,13 @@ edges $`m \cdot v \to p` and $`p \cdot v \to 2T`, erases to PhysLib's
 $`\tfrac{1}{2} m \langle \dot{x}, \dot{x}\rangle` by the theorem
 `kineticFromTableQ_erases`.
 
-*Second, the boundary is declared.* Because propagation is typed, the only places left
-to state are where a value enters the calculus, where it leaves, and where a kind is
-asserted rather than derived. Each is an annotation from the
-{ref "boundary-family"}[boundary family]:
-
-- Raw data enters through `@[kindIngest]`, a {ref "annotation-kindIngest"}[checked ingest mint]:
-  the declaration admits the value by whatever check it performs — a `KindAdmissible`
-  instance, a range test, a fallible parse. An adjudicated constant enters through
-  `@[kindConst]`, a {ref "annotation-kindConst"}[constant mint].
-- A kinded value leaves the calculus as a bare number through `@[kindEmission]`, an
-  {ref "annotation-kindEmission"}[emission boundary]: a deploy driver, a serializer, the
-  parity apparatus the erasure theorems are stated over.
-- A value that already carries one kind and is re-typed as another, with no algebraic law
-  to derive it, is a `@[kindCrossing]`, an {ref "annotation-kindCrossing"}[authored crossing].
-  Representation plumbing that drops to the carrier without changing the kind is
-  `@[carrierVocab]`, a {ref "annotation-carrierVocab"}[carrier-vocabulary exception].
-
-Inside such a declaration, where no check applies, the mint itself is written as an
-_attestation_:
+*Second, the boundary is declared.* Each source, sink and hand-granted crossing of the
+{ref "paradigm"}[paradigm] carries its annotation from the
+{ref "boundary-family"}[boundary family]. Inside such a declaration, where no check applies,
+the mint itself is written as an _attestation_:
 
 ```
-@[inline] def attest (_why : String) (m : R) : Quantity k R := ⟨m⟩
+@[inline, expose] def attest (_why : String) (m : R) : Quantity k R := ⟨m⟩
 ```
 
 It is definitionally the raw value: the physics context is in the type, `Quantity
@@ -454,12 +553,13 @@ mint is a one-line review artifact rather than an anonymous `⟨m⟩`. The disci
 and the reason should say why no check applies; where a `KindAdmissible` check exists,
 `Quantity.certify` runs it and keeps the receipt in the type.
 
-One command enumerates all of it. `#kind_boundary_audit ForPhysLib.ClassicalMechanics`
-prints one line per boundary site in that namespace — its tier and, for an attestation,
-its harvested reason — and ends `42 boundary site(s), all tagged — clean`. The report is
-pinned with `#guard_msgs`, so an entry point nobody declared fails the build. That is not
-a type error, to be clear: a raw `⟨x⟩` typechecks. The audit is what refuses it (R23,
-R24).
+One command enumerates all of it: `#kind_boundary_audit ForPhysLib.ClassicalMechanics`, the
+{ref "boundary-family"}[boundary audit], prints one line per boundary site in that
+namespace — its tier and, for an attestation, its harvested reason — and ends
+`42 boundary site(s), all tagged — clean`. The report is pinned with
+[`#guard_msgs`](https://lean-lang.org/doc/reference/latest/Interacting-with-Lean/#hash-guard_msgs),
+so an entry point nobody declared fails the build. That is not a type error, to be clear: a
+raw `⟨x⟩` typechecks. The audit is what refuses it (R23, R24).
 
 # Requirements
 
@@ -503,11 +603,11 @@ emissivity are all dimension-one, yet `Quantity vwc` and `Quantity gwc` must be
 a scale-gated leaf — not as the root.) This reaches its limit on ISO 80000-11
 _Characteristic numbers_, where *all 115* kinds — every one a dimensionless ratio — share
 dimension one, so the dimension functor collapses the entire part to a single point and
-only the kind layer holds its members apart (see the _ISO 80000-11_ chapter). The
+only the kind layer holds its members apart (see the {ref "iso80000-part11"}[ISO 80000-11 chapter]). The
 *principled* form of this within-dimension discrimination — naming a kind by the
 system and component it is _dedicated to_, so volumetric and gravimetric water
 content differ by their kind-of-property rather than by an identity string — is
-Dybkær's dedicated kind-of-property (see the _Dedicated kinds-of-property_ chapter).
+Dybkær's dedicated kind-of-property (see the {ref "dedicated-kind"}[Dedicated kinds-of-property chapter]).
 
 *R2 — Specialization is a lattice, with comparability but not identity.* Width,
 Height, and Diameter each specialize Length, and a kind may specialize several
@@ -522,17 +622,17 @@ requirement is now realized on the real standard: the ISO 80000-3 length family
 (width, height, distance, radius, … of items 3-1.2 … 3-1.12, all of dimension `L`)
 is specified as a specialization lattice over the general length kind, each species
 individuated *not by fiat but by an explicit measurement principle* (see the
-_ISO 80000-3_ chapter), and the same pattern recurs on Part 4's force family, Part 5's
+{ref "iso80000-part3"}[ISO 80000-3 chapter]), and the same pattern recurs on Part 4's force family, Part 5's
 thermodynamic potentials, and IEC 80000-6's AC power family — active, reactive, and
 apparent power as species of one power kind, carrying three different unit strings
-(`W`, `var`, `VA`) over one dimension (see the _IEC 80000-6_ chapter) — and on ISO 80000-7's
+(`W`, `var`, `VA`) over one dimension (see the {ref "iso80000-part6"}[IEC 80000-6 chapter]) — and on ISO 80000-7's
 radiation trios, where radiant, luminous, and photon flux are one measurand in three
 modes, the radiant and luminous members even sharing a dimension (see the
-_ISO 80000-7_ chapter). ISO 80000-11 pushes this furthest: the same name recurs as a
+{ref "iso80000-part7"}[ISO 80000-7 chapter]). ISO 80000-11 pushes this furthest: the same name recurs as a
 _different kind_ across its transport-phenomena clauses — the two Froude numbers, the five
 Stokes numbers, the four Bejan numbers — each sub-suffixed sibling sharing *both* name and
 dimension (one) with the others, so the measurement principle alone tells them apart (see
-the _ISO 80000-11_ chapter).
+the {ref "iso80000-part11"}[ISO 80000-11 chapter]).
 
 *R3 — General versus individual is type versus term.* A kind is the general
 notion (a *type*); a particular measured value is an individual (a *term* of that
@@ -550,7 +650,7 @@ exactly what dissolves the tagging dilemma (a dimension tag can make masses
 distinguishable *or* addable, never both — the object index makes them both). The object
 is drawn from an *arbitrary type*, not from the nominal system carrier alone, so a host
 library's own objects — the particles of a mechanical system, the cells of a mesh — are
-admissible indices without that library changing; see the _The object type_ chapter for
+admissible indices without that library changing; see the {ref "object-types"}[object type chapter] for
 what that costs and what it does not buy.
 
 *R22 — A quantity is dedicated to a named component of a named sort of system;
@@ -593,10 +693,10 @@ now realized on the real standard: ISO 80000-5 lists thermodynamic temperature
 (ratio-scale) and Celsius temperature (interval-scale) at the *same* dimension `Θ`,
 so a ratio of Celsius temperatures is undefined where a ratio of thermodynamic
 temperatures is not — the scale type, not the dimension, separates them (see the
-_ISO 80000-5_ chapter). IEC 80000-6 repeats the pattern on electromagnetism: electric
+{ref "iso80000-part5"}[ISO 80000-5 chapter]). IEC 80000-6 repeats the pattern on electromagnetism: electric
 potential is gauge-dependent (fixed only up to an additive reference), hence
 interval-scale, while electric potential difference, of the same dimension `V`, is
-ratio-scale (see the _IEC 80000-6_ chapter).
+ratio-scale (see the {ref "iso80000-part6"}[IEC 80000-6 chapter]).
 
 ## Soundness bridges (R7, R8, R16, R17)
 
@@ -870,7 +970,7 @@ shapes — *product* (area = length · length, energy = force · length), *quoti
 1 / period, curvature = 1 / radius) — each a kind-law family in the core; analysis-shaped
 relations such as area as a surface integral `∬ √g du dv` follow the same discipline in
 the layer where their mathematics lives. These are exercised directly on ISO 80000-3's
-own *Remarks* (see the _ISO 80000-3_ chapter), where, for instance, the plane angle is
+own *Remarks* (see the {ref "iso80000-part3"}[ISO 80000-3 chapter]), where, for instance, the plane angle is
 *computed* to be dimension one because it is a ratio of two lengths. R12 unifies the two
 halves of the standards work: the formalized remark *is* the defining relation, and
 classification is the witnessed instantiation of it.
@@ -933,7 +1033,7 @@ output uncertainty at ~67× fewer model evaluations than Monte Carlo), and all f
 cumulant additivity (T1), $`\mathrm{gum} = \mathrm{willink}|_{\kappa_4 = 0}` (T2), convolution adds
 cumulants (T5), Willink as the $`(\kappa_2,\kappa_4)`-projection of the linearized SSPRC (T3), and
 the affine reference equalling the mean (T4) — are proved over `ℝ`. The development is the
-*Uncertainty quantification and numerical adequacy* chapter, and the full design is recorded in the
+{ref "uncertainty"}[Uncertainty quantification and numerical adequacy chapter], and the full design is recorded in the
 project's `UNCERTAINTY.md`.
 
 *R15 — A floating-point representation is numerically adequate iff it loses no information at the
@@ -985,8 +1085,8 @@ Chebyshev's inequality, honest but conservative ($`k = 2` gives $`\ge 75\%`, not
 $`95\%`, which is a shape assumption); and, for a bounded family, *exact* — the centered interval of
 half-width $`h` of a uniform on $`[m - \delta, m + \delta]` has coverage exactly $`h/\delta`.
 Neither tier needs a *true value* — the sense in which coverage is provable while *accuracy*,
-closeness to nature, is not. The development is the *Coverage intervals* section of the
-uncertainty chapter.
+closeness to nature, is not. The development is the {ref "coverage-intervals"}[Coverage intervals section] of the
+{ref "uncertainty"}[uncertainty chapter].
 
 ## Ergonomics and erasure (R21, R25)
 
@@ -1004,12 +1104,12 @@ obligation: correctness lives in the types and is paid at compile time, and the 
 that runs is the one a hand-written kernel would compute.
 
 *R25 — A kinded definition renders back as typeset mathematics.* The reading-side twin
-of R21's writing-side claim. A definition annotated `@[pkc_math]` is lifted from its
+of R21's writing-side claim. A definition annotated {ref "annotation-pkc-math"}[`@[pkc_math]`] is lifted from its
 own elaborated term into a presentation language (`MathTerm`), normalized faithfully,
 and pretty-printed to a LaTeX equation in the declaration's docstring — with the kind
 bookkeeping suppressed and the notation (an object index as a subscript, a
 conventional symbol like $`\sigma^0`) recovered rather than lost. The rendering is
-pinned with `#guard_msgs`, so it is a regression artifact, not a comment.
+pinned with [`#guard_msgs`](https://lean-lang.org/doc/reference/latest/Interacting-with-Lean/#hash-guard_msgs), so it is a regression artifact, not a comment.
 
 ## Provenance and audit (R23, R24)
 
@@ -1028,25 +1128,25 @@ that keeps every other requirement's evidence honest at adoption time. The unkin
 surface of a scope is *enumerable* (`boundarySites`), reported against a tier
 vocabulary that includes the interface tier — the boundary where erasing to a bare
 carrier is the sanctioned design, so an audit does not score a Mathlib `fderiv` call
-as a defect — and a blessed scope only grows: the ratchet (`#kind_mint_ratchet`)
+as a defect — and a blessed scope only grows: the ratchet ({ref "boundary-family"}[`#kind_mint_ratchet`])
 compares the current ledger against the pinned one and *throws* on regression, so a
 clean audit cannot silently shrink to stay clean.
 
 ## The measurement model and licensed distribution (R26, R27)
 
-*R26 — A module's behavior is a checked measurement model.* The metrological-modularity
-chapter's behavior clause, stated as an expressiveness requirement: a declared boundary
+*R26 — A module's behavior is a checked measurement model.* The {ref "metrological-modularity"}[metrological-modularity chapter]'s
+behavior clause, stated as an expressiveness requirement: a declared boundary
 carries relation edges (`Provenance.Relation`) whose witnesses are kernel-checked
 theorems; every relation kind has a conclusion-shape check; a `boundedBy` edge names a
 kinded tolerance; named side conditions are checked against the witness statement; and
 every carrier rung beyond the witness's own is answered for by a named repair or
 restatement (`RelationLicense`) — a rung claimed with neither is refused. The checks are
-the elaborator's (`#kind_relation`, surveyed by `#kind_relations`), pinned by acceptance
+the elaborator's ({ref "provenance-sweeps"}[`#kind_relation`], surveyed by `#kind_relations`), pinned by acceptance
 and refusal probes for all four relation kinds.
 
 *R27 — A module's distribution is licensed by declared extensivity.* The mereology
 clause as a verifiable requirement: produced ports carry aggregation classes
-(`Provenance.AggregationClass` — the §13.5 vocabulary of the extensivity chapter,
+(`Provenance.AggregationClass` — the §13.5 vocabulary of the {ref "extensivity"}[extensivity chapter],
 extended by the count-keyed, parameter-conditioned, and interface-licensed classes,
 each naming the tolerance, sortal, transport, or law that is the content of its
 claim), and recarving or sharding a module's batch axis is licensed by theorem from
@@ -1054,7 +1154,7 @@ those declarations: `Recarving.distribution_license` — one map, every
 declared-extensive output's total preserved — with the quasi-extensive price at most
 both carvings' joins times the per-join tolerance, tied to the rounding budget where
 the carrier demands it. The clause's hygiene is the elaborator's
-(`checkAggregations`, rendered in every `#kind_contract` report), pinned by
+(`checkAggregations`, rendered in every {ref "provenance-sweeps"}[`#kind_contract`] report), pinned by
 acceptance and refusal probes.
 
 ## Requirement validation — the ForPhysLib benchmark
@@ -1222,7 +1322,7 @@ verifiable requirements — not only those whose theorems live in the Mathlib-fr
 core — are under regression on every change.
 
 First, each verifiable requirement's theorem has its _axiom profile_ pinned with
-`#guard_msgs` over `#print axioms`, so _proved_ means *sorry-free as certified by the
+[`#guard_msgs`](https://lean-lang.org/doc/reference/latest/Interacting-with-Lean/#hash-guard_msgs) over [`#print axioms`](https://lean-lang.org/doc/reference/latest/Interacting-with-Lean/#hash-print), so _proved_ means *sorry-free as certified by the
 axiom set*, not merely that no `sorry` keyword appears: a proof relocated behind a
 `sorry` raises no warning at its call sites, and only the axiom profile exposes it.
 (The exportable core is largely axiom-free — most of its capstones depend on
@@ -1531,7 +1631,7 @@ map cleanly, and the mapping _is_ the design:
 
 1. *Kinds are type-level parameters.* `Quantity (k : KindOfProperty) (R : Type)` — a
    kind indexes a _type_, not a value of one universal `Quantity` class, and a unit
-   `RealUnit k` is a distinguished quantity of that same kind (the _Units_ chapter), so
+   `RealUnit k` is a distinguished quantity of that same kind (the {ref "units"}[Units chapter]), so
    "a metre" and "a unit of gravimetric water content" inhabit different types. This is
    the move OWL cannot make.
 
@@ -1543,7 +1643,7 @@ map cleanly, and the mapping _is_ the design:
 3. *Instantiation is term-of-type, not subtyping.* The length of a pencil is a
    _term_ `pencil : Quantity Length ℝ := .attest "read off the ruler" 5.2` — a value
    of that type, related to its kind by typing/instantiation, never by subtyping (and,
-   being a mint, one of the boundary sites the audit enumerates). The
+   being a mint, one of the boundary sites the {ref "paradigm"}[audit] enumerates). The
    general/individual distinction _is_ the type/term distinction.
 
 4. *The kind algebra is a partial typed algebra, not a group.* PhysLib's
@@ -1599,8 +1699,8 @@ quantities equal, so it cannot distinguish volumetric ($`\mathrm{L^3/L^3}`) from
 gravimetric ($`\mathrm{M/M}`) soil moisture, nor either from permittivity,
 reflectivity, or emissivity. Every dangerous soil-moisture confusion is
 dimension one. Indexing quantities and units by *kind* is what restores the
-distinction — this is the dimension-1 disambiguation capstone in the Units
-chapter.
+distinction — this is the dimension-1 disambiguation capstone in the
+{ref "units"}[Units chapter].
 
 # How to read the status
 

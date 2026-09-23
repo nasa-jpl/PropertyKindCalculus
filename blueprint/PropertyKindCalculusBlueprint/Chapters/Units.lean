@@ -12,6 +12,9 @@ open Verso.Genre.Manual
 open Informal
 
 #doc (Manual) "Units and the Dimension-1 Problem" =>
+%%%
+tag := "units"
+%%%
 
 This chapter states the layer that originally motivated PropertyKindCalculus. Every
 node in it is _proved_ and carries a `(lean := …)` declaration: the motivating

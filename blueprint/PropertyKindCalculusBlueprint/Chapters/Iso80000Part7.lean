@@ -67,6 +67,9 @@ def part7IndexTable : DocTable :=
   standardIndex PropertyKindCalculus.Iso80000.Part7.catalogue part7Default part7Refs
 
 #doc (Manual) "ISO 80000-7 — Light and radiation" =>
+%%%
+tag := "iso80000-part7"
+%%%
 
 The fifth part specified in full is ISO 80000-7, _Light and radiation_. Every item — all
 of 7-1.1 … 7-37, including every sub-suffixed item — is catalogued: the speed of light

@@ -76,6 +76,9 @@ def part10IndexTable : DocTable :=
   standardIndex PropertyKindCalculus.Iso80000.Part10.catalogue part10Default part10Refs
 
 #doc (Manual) "ISO 80000-10 — Atomic and nuclear physics" =>
+%%%
+tag := "iso80000-part10"
+%%%
 
 The eighth part specified in full is ISO 80000-10, _Atomic and nuclear physics_. Every
 item — all of 10-1.1 … 10-89, one hundred and twenty-five including every sub-suffixed

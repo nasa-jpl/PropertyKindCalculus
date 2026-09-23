@@ -14,6 +14,9 @@ open Verso.Genre.Manual
 open Informal
 
 #doc (Manual) "The Interaction Algebra (Flater Appendix C)" =>
+%%%
+tag := "interaction"
+%%%
 
 This is the contribution beyond the VIM4 2CD and OML, and the reason Flater's note is titled
 _full tracking of kinds of quantities_. Dimensional analysis says torque and
@@ -97,6 +100,9 @@ computation, while `energy.kind ≠ torque.kind` is `by decide`.
 :::
 
 # The trust model: what is checked, what is authored
+%%%
+tag := "trust-model"
+%%%
 
 :::group "trustmodel"
 The interaction algebra is _curated_, and it pays to be precise about what the

@@ -10,6 +10,9 @@ open Verso.Genre.Manual
 open Informal
 
 #doc (Manual) "Dedicated kinds-of-property" =>
+%%%
+tag := "dedicated-kind"
+%%%
 
 A bare kind-of-property — _length_, _volume fraction_, _substance concentration_ —
 is generic: it names _what is measured_ without saying _of what_. Dybkær's

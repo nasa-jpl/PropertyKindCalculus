@@ -19,19 +19,28 @@ open PropertyKindCalculusBlueprint
 open PropertyKindCalculusBlueprint.IndexTables
 
 #doc (Manual) "Using the library: annotations and generated indexes" =>
+%%%
+tag := "using-the-library"
+%%%
 
 The preceding chapters develop the calculus. This one is about *working in it*: the annotations an
 author writes, what each one changes, and the indexes the library generates from them.
 
-Three things cannot be inferred from a definition and so must be stated by its author. Each is a
+Four things cannot be inferred from a definition and so must be stated by its author. Each is a
 family of annotations, and each has its own section below.
 - *Where the calculus is left* — each site at which a value already carrying one kind is re-typed
 as another, the plumbing that must drop to the carrier, the point at which a kinded value becomes
 a naked one. The
 {ref "boundary-family"}[boundary family]: `@[kindCrossing]`, `@[kindIngest]`, `@[kindConst]`,
 `@[carrierVocab]` and `@[kindEmission]` each name the tier that sanctions a boundary site;
-`@[kindCarrier]` is what brings a downstream carrier under the audit at all, and
+`@[kindCarrier]` is what brings a downstream carrier under the audit at all, `@[kindAttest]`
+registers a wrapper through which authored mints go on the record, and
 `@[kindCounterexample]` exempts a deliberate falsification probe from the provenance sweeps.
+- *What a vocabulary answers for* — whether every dimension-one kind is individuated, every
+boundary carries a measurement model, every inversion says where it fails. The
+{ref "coverage-censuses"}[census marks]: `@[kindPrincipleFree]`, `@[kindRelationFree]` and
+`@[kindInversionTotal]` record an honest negative with its reason, and `@[kindDiagnostic]`
+enrolls a conditioning output.
 - *How a definition should read* — the notation, the constants, the intermediate bindings a rendered
 equation should keep. The {ref "rendering-family"}[rendering family]: `@[pkc_math]`, steered by
 `@[pkc_math_symbol]`, `@[pkc_math_config]` and `@[pkc_math_transparent]`.
@@ -39,11 +48,12 @@ equation should keep. The {ref "rendering-family"}[rendering family]: `@[pkc_mat
 Dybkær or VIM a definition formalizes. The {ref "annotations-metadata-family"}[metadata family]:
 `@[requirement]`, `@[dybkaer]` and `@[vim4]`.
 
-The distinction that matters most is between the first family and the other two, and it is a
+The distinction that matters most is between the first two families and the other two, and it is a
 distinction about what happens when an annotation is *absent*. A boundary site that carries no tier
 is reported as a violation by `#kind_boundary_audit`, and that report is pinned, so omitting
-`@[kindCrossing]` fails the build: the annotation *discharges an obligation* about the code, in the
-way a proof discharges one about a proposition. Omitting a rendering or metadata annotation fails
+`@[kindCrossing]` fails the build, and a dimension-one kind with neither a principle nor a
+`@[kindPrincipleFree]` mark fails `#kind_examination_clean` the same way: the annotation *discharges
+an obligation* about the code, in the way a proof discharges one about a proposition. Omitting a rendering or metadata annotation fails
 nothing — `@[pkc_math_symbol]` changes only how something reads. Read the *Enforcement* column below
 with that asymmetry in mind: it says `checked` for `@[pkc_math]` and `@[pkc_math_config]` too, but
 what those checks reject is a *misuse* of the annotation — an argument naming a binding the
@@ -55,6 +65,9 @@ chapter is built, scoped to this package's own worked examples. No row is mainta
 renamed declaration is a build error rather than a stale table.
 
 # The annotations at a glance
+%%%
+tag := "annotations-at-a-glance"
+%%%
 
 Each row links to the section that explains it.
 
@@ -62,6 +75,9 @@ Each row links to the section that explains it.
 :::
 
 # The commands at a glance
+%%%
+tag := "commands-at-a-glance"
+%%%
 
 What the annotations *declare*, the commands *ask*. There are three forms of asking, and a
 command's *suffix* names which form it is — so the table below reads in pairs and triples, each
@@ -273,6 +289,36 @@ so crossings live downstream. The populated table — twenty-three sites, with t
 crosses — is in soil-moisture-model's technical reference. This chapter's boundary examples come
 from the validation probe that pins the audit's behaviour.
 
+## `@[kindAttest]` — a registered attestor
+%%%
+tag := "annotation-kindAttest"
+%%%
+
+An _attested_ mint is an authored `⟨…⟩` written through a registered attestor that names
+its reason at the call site; `Quantity.attest` is the built-in one. The audit cannot see
+through a named wrapper — a helper's body is walked once, under the helper's own name, so a
+declaration that mints through an unregistered wrapper shows nothing at its own site.
+Registration turns that hiding into accountability: the audit recognizes a registered
+attestor's applications, reports each site with the reason string harvested from the
+argument, and skips the attestor's own body, whose one raw mint is the sanctioned mechanism,
+reviewed at registration — the same reason a carrier's own constructor is not a site. The
+attribute derives the attestor's footprint from its signature, and refuses a declaration
+that does not carry both arguments it needs:
+
+```
+`@[kindAttest]` expects a declaration taking a `KindOfProperty` argument (the attested kind) and
+a `String` argument (the reason) — '…' has neither or only one. Without both, attested sites
+could not be harvested, and the wrapper would HIDE its mint from the walk instead of putting it
+on the record.
+```
+
+The discipline the registry serves: raw mints are the *suspect* column — a declaration-level
+tier covers however many its body holds, multiplicity unseen — and attested mints the
+*reviewed* one, each surviving site carrying its own one-line justification into the pinned
+report. An attestation is a claim with no machine-checkable evidence; where evidence exists,
+the licensed route — a `KindAdmissible` check at ingest, a `ProductKind` or `QuotientKind`
+witness edge — is what to write instead, and the reason should say why no check applies.
+
 # What the kind algebra rests on — the edge audits
 %%%
 tag := "edge-audits"
@@ -460,6 +506,172 @@ The attribute checks what it is attached to, and says why:
 neither. The mark exempts a declaration from the by-type provenance sweeps, and only those two
 types are swept.
 ```
+
+# What a vocabulary answers for — the coverage censuses
+%%%
+tag := "coverage-censuses"
+%%%
+
+The audits so far ask about one declaration, one namespace's boundary, or one boundary's
+agreement with itself. The censuses ask the question the {ref "model-template"}[model
+template]'s rubrics put to a whole vocabulary: over a *population* the environment can
+enumerate — every dimension-one kind, every declared boundary, every produced port, every
+inversion edge — does each member declare what the rubric obliges it to? Six censuses share
+one shape, set by `#kind_examination_coverage`: a record command whose sorted `info` message
+is pinned, a `_clean` gate that throws and pins nothing, a declared exception where the
+population has honest negatives, and an audit receipt at each success point — which is what
+lets a document's conformance table read a rubric as green only in a build where its census
+ran over the document's scope.
+
+- `#kind_examination_coverage ns …` (M6) walks every dimension-one `DimensionedKind` in
+  scope and reports it `[individuated]` by its examination principle, `⊘ exempted` by a
+  {ref "annotation-kindPrincipleFree"}[`@[kindPrincipleFree]`] mark, or `⚠ UNINDIVIDUATED`.
+  Inside the dimension-one fiber the principle is the only defining aspect that separates
+  two kinds, so a kind declared without one is named, not individuated. A `KindOfProperty`
+  that no `DimensionedKind` wraps is reported `⚠ UNDIMENSIONED` rather than decided:
+  "dimension one" is a fact about a dimension the vocabulary never declared, and a gate that
+  passed over such kinds would pass over nothing.
+- `#kind_relation_coverage ns …` (M12) walks every `Provenance.Contract` in scope and
+  reports it `[witnessed]` by the theorem edges naming it, `⊘ exempted` by a
+  {ref "annotation-kindRelationFree"}[`@[kindRelationFree]`] mark, or `⚠ UNWITNESSED`.
+  Relations are walked unscoped, since a theorem edge may live beside a deployment rather
+  than beside the boundary it is about, and a `@[kindCounterexample]` relation is not a
+  witness. Whether a named edge is *valid* is `#kind_relations`' question; this census asks
+  only whether one exists.
+- `#kind_mereology_coverage ns …` (M15) walks every produced port — `output` or
+  `conditional` — of every contract in scope and reports it `[classed]` by its aggregation
+  class or `⚠ UNDECLARED`. There is no exception mark: the `AggregationClass` vocabulary is
+  total over the honest negatives — a port that must never be summed declares `.intensive`,
+  one its parts do not determine declares `.wholeProper` — so declaring nothing is exactly
+  the finding.
+- `#kind_inversion_coverage ns …` (M21, the domain half) walks every contract that an
+  `inverts` edge names as its left side — the boundary that recovers what another consumed
+  — and reports it `[guarded]` by a `conditional` port, with its decider where one is named,
+  `⊘ exempted` by a {ref "annotation-kindInversionTotal"}[`@[kindInversionTotal]`] mark, or
+  `⚠ UNGUARDED`.
+- `#kind_wellposedness_coverage ns …` (M20, and M21's ambiguity half) walks every
+  `inverts` edge in scope and reports it `[well-posed]` by a `wellPosed` witness on its
+  declared `domain`, `[surfaced]` by an `ambiguity` witness, or `⚠ UNDECIDED`. No exception
+  mark: an inversion either has exactly one answer on a declared domain or it does not, and
+  either answer is a declaration.
+- `#kind_diagnostic_coverage ns …` (M22) walks every
+  {ref "annotation-kindDiagnostic"}[`@[kindDiagnostic]`]-marked kind in scope and reports it
+  `[exported]` by a produced port carrying it or `⚠ SIDECHANNELED`. Enrollment is the mark,
+  so a scope with no marks records that visibly rather than passing in silence.
+
+Each has its `_clean` sibling — `#kind_examination_clean`, `#kind_relation_clean`,
+`#kind_mereology_clean`, `#kind_inversion_clean`, `#kind_wellposedness_clean`,
+`#kind_diagnostic_clean` — which throws while any member of its population is a `⚠` row,
+and records the audit receipt exactly when it does not fire. A `@[kindCounterexample]`
+contract is a subject of none of them and is listed as exempted, so a census says what it
+skipped; a mark on a member that satisfies the predicate anyway is inert, so a stale
+exemption cannot hide a declaration made later; and a contract declared at node or kind
+types the census cannot read is reported `⚠ UNREADABLE` rather than walked past. Every
+census is import-closure sensitive in the direction the other environment walks are: an
+exemption declared in a module the probe does not reach is a loud false alarm, never a
+silent pass.
+
+The pinned form of the first, from the validation suite — the namespace prefix and two
+further `[individuated]` rows elided:
+
+```
+examination coverage:
+[individuated] …probeIndividuated (probe individuated) — principle: probe-principle
+⊘ exempted …probeGeometry (probe geometry) — the wave calculus's own geometry, the product of no phenomenon
+⚠ UNDIMENSIONED …probeBareKind (probe bare kind) — no DimensionedKind wraps it
+⚠ UNINDIVIDUATED …probeBare (probe bare)
+5 dimension-one kind(s): 3 individuated, 1 exempted, 1 UNINDIVIDUATED; 1 kind(s) UNDIMENSIONED — examination-coverage violation
+```
+
+## `@[kindPrincipleFree "…"]` — a dimension-one kind that is correctly principle-free
+%%%
+tag := "annotation-kindPrincipleFree"
+%%%
+
+The declared exception to M6. A geometry vocabulary — an illumination cosine, a normalized
+wavenumber — is the product of no measurement phenomenon; a nominal designation has no
+principle to carry; a bookkeeping fraction is examined by nothing. Each is dimension one and
+each is correctly without an examination principle, and the mark is that decision as data
+the census can read, with its reason:
+
+```
+/-- Dimension one, no principle, exempted with a reason. -/
+@[kindPrincipleFree "the wave calculus's own geometry, the product of no phenomenon"]
+def probeGeometry : DimensionedKind :=
+  { kind := { id := "probe geometry", scale := .ratio }, dim := 1 }
+```
+
+It attaches to the `DimensionedKind`, not to the `KindOfProperty`, because the population
+it exempts a kind from is "dimension one", a fact about the `DimensionedKind`. On a kind
+that does carry a principle the mark is inert — the census reports the principle and
+ignores the mark — so a stale exemption cannot hide an individuation supplied later. The
+attribute checks its target, and requires a non-empty reason:
+
+```
+`@[kindPrincipleFree]` expects a 'DimensionedKind' — '…notAKind' is not one. The mark exempts a
+dimension-one kind from the examination-coverage sweep, and dimension is a fact about the
+DimensionedKind, so that is where the mark goes.
+```
+
+## `@[kindRelationFree "…"]` — a boundary with no measurement model
+%%%
+tag := "annotation-kindRelationFree"
+%%%
+
+The declared exception to M12, on a `Provenance.Contract`: a boundary whose behavior is not
+a measurement model — pure data movement, or the reference the theorem edges are *about* —
+said in the author's words where the census reads them.
+
+```
+/-- No edge, on purpose. Its port is classed. -/
+@[kindRelationFree "a data-movement boundary: its behavior is the identity on kinds, and \
+  there is no measurement model to carry"]
+def dataMove : Provenance.Contract NodeId KindRef where …
+```
+
+Inert on a boundary some edge names. Rejected at elaboration unless the declaration is a
+`Provenance.Contract` and the reason is non-empty: the mark exempts a declared boundary from
+a census over declared boundaries, so that is where it goes.
+
+## `@[kindInversionTotal "…"]` — an inversion with no outside
+%%%
+tag := "annotation-kindInversionTotal"
+%%%
+
+The declared exception to M21's domain half, on the `Provenance.Contract` an `inverts` edge
+names as its left side: the inversion is total on its input type, so there is no failure
+outside the domain to detect and no `conditional` port to guard it.
+
+```
+/-- Inverted, no conditional port, exempted as total. -/
+@[kindInversionTotal "total on its input type: every integer is the forward's image of one, \
+  so there is no outside to detect"]
+def totalInverse : Provenance.Contract NodeId KindRef where …
+```
+
+Inert on a boundary that declares a conditional port, and checked exactly as
+`@[kindRelationFree]` is.
+
+## `@[kindDiagnostic "…"]` — a conditioning output, enrolled
+%%%
+tag := "annotation-kindDiagnostic"
+%%%
+
+Not an exception but an *enrollment*, on a `KindOfProperty`: the kind is a quality or
+conditioning output a consumer must read, and the string says what it diagnoses.
+
+```
+/-- A quality kind the retrieval exports: marked diagnostic, and carried by a produced
+port of `Good.invBoundary` below. -/
+@[kindDiagnostic "whether the retrieval's answer was decided inside its domain"]
+def qcK : KindOfProperty := { id := "contract coverage probe quality", scale := .ordinal }
+```
+
+`#kind_diagnostic_coverage` then asks the declared boundaries in scope for a produced port
+carrying it; a marked kind no boundary exports is a side channel. An unmarked kind is not
+walked, so removing the mark is the exemption, and a scope with no marks records that
+visibly. Rejected at elaboration unless the declaration is a `KindOfProperty` and the
+description is non-empty.
 
 # How a definition reads — the rendering family
 %%%

@@ -10,6 +10,9 @@ open Verso.Genre.Manual
 open Informal
 
 #doc (Manual) "Metrological modularity" =>
+%%%
+tag := "metrological-modularity"
+%%%
 
 The chapters so far give the calculus's vocabulary (kinds, quantities, units, dimensions)
 and its evidence discipline (provenance, audit, uncertainty). This chapter states the

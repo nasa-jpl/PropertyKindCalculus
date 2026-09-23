@@ -62,6 +62,9 @@ def part4IndexTable : DocTable :=
   standardIndex PropertyKindCalculus.Iso80000.Part4.catalogue part4Default part4Refs
 
 #doc (Manual) "ISO 80000-4 — Mechanics" =>
+%%%
+tag := "iso80000-part4"
+%%%
 
 The second part specified in full is ISO 80000-4, _Mechanics_. Every item — all of
 4-1 … 4-32 — is catalogued: mass and the densities, momentum, the force family,

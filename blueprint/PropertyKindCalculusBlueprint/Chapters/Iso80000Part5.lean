@@ -66,6 +66,9 @@ def part5IndexTable : DocTable :=
   standardIndex PropertyKindCalculus.Iso80000.Part5.catalogue part5Default part5Refs
 
 #doc (Manual) "ISO 80000-5 — Thermodynamics" =>
+%%%
+tag := "iso80000-part5"
+%%%
 
 The third part specified in full is ISO 80000-5, _Thermodynamics_. Every item — all
 of 5-1 … 5-36, including every sub-suffixed item (5-3.1 … 5-3.3, 5-5.1/5-5.2,

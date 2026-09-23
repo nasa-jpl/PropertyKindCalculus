@@ -31,6 +31,9 @@ open Verso.Genre.Manual
 open Informal
 
 #doc (Manual) "Uncertainty quantification and numerical adequacy" =>
+%%%
+tag := "uncertainty"
+%%%
 
 The representation-parametric quantity of R10 carries a model's numbers at whatever carrier a
 task needs:
@@ -756,6 +759,9 @@ hypotheses relative uncertainty divides by.
 :::
 
 # Coverage intervals (R18)
+%%%
+tag := "coverage-intervals"
+%%%
 
 Once an output's uncertainty is a distribution, VIM 2.36–2.38 ask for a _coverage interval_ — a
 probability attached to an interval about the mean. R18 discharges this in two tiers, graded by how

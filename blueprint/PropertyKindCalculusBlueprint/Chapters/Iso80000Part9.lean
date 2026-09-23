@@ -61,6 +61,9 @@ def part9IndexTable : DocTable :=
   standardIndex PropertyKindCalculus.Iso80000.Part9.catalogue part9Default part9Refs
 
 #doc (Manual) "ISO 80000-9 — Physical chemistry and molecular physics" =>
+%%%
+tag := "iso80000-part9"
+%%%
 
 The seventh part specified in full is ISO 80000-9, _Physical chemistry and molecular
 physics_. Every item — all of 9-1 … 9-49, sixty-two including every sub-suffixed item — is

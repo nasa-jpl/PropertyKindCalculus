@@ -67,6 +67,9 @@ def part3IndexTable : DocTable :=
   standardIndex PropertyKindCalculus.Iso80000.Part3.catalogue part3Default part3Refs
 
 #doc (Manual) "ISO 80000-3 — Space and Time" =>
+%%%
+tag := "iso80000-part3"
+%%%
 
 The first part whose quantity-kinds and units are specified in full is ISO 80000-3,
 _Space and time_. Every item — all of 3-1.1 … 3-26.3 — is catalogued: length, the

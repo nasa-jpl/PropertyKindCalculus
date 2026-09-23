@@ -13,6 +13,9 @@ open Verso.Genre.Manual
 open Informal
 
 #doc (Manual) "The Function Calculus and Complex-Valued Carriers (R12)" =>
+%%%
+tag := "function-calculus"
+%%%
 
 The product / quotient / reciprocal calculus covers the _algebraic_ defining relations of
 the ISQ (area is length times length, speed is length over duration). Scientific models do

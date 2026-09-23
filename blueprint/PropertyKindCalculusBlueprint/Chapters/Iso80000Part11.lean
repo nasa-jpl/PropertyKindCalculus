@@ -69,6 +69,9 @@ def constantVsKindTable : DocTable :=
         "each a distinct kind — Reynolds ≠ Mach, though both dimension one"] ]
 
 #doc (Manual) "ISO 80000-11 — Characteristic numbers" =>
+%%%
+tag := "iso80000-part11"
+%%%
 
 The sixth part specified is ISO 80000-11, _Characteristic numbers_ — and it is where the
 _dimension does not classify the kind_ thesis (_R1_) becomes _total_. Every item is

@@ -10,6 +10,9 @@ open Verso.Genre.Manual
 open Informal
 
 #doc (Manual) "ISO/IEC 80000 — The Standards Catalogue" =>
+%%%
+tag := "iso80000"
+%%%
 
 The quantity-kinds and units specified here are grounded against the international
 standard series ISO/IEC 80000, _Quantities and units_. That series is *licensed

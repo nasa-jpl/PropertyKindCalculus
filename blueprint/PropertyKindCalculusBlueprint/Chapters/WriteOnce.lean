@@ -13,6 +13,9 @@ open Verso.Genre.Manual
 open Informal
 
 #doc (Manual) "Write Once, Correctly" =>
+%%%
+tag := "write-once"
+%%%
 
 The chapters so far catalogue what PropertyKindCalculus _provides_. This one is about _method_:
 the order in which an application author reaches for those pieces when specifying a real model,

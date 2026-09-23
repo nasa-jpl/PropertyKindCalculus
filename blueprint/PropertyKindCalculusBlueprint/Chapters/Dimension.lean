@@ -14,6 +14,9 @@ open Verso.Genre.Manual
 open Informal
 
 #doc (Manual) "Dimension as a Forgetful Functor" =>
+%%%
+tag := "dimension"
+%%%
 
 PropertyKindCalculus does not discard PhysLib's `Dimension`; it keeps it as a forgetful
 functor. Dimension answers the coarse question — "are these even commensurable in

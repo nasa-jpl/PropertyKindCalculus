@@ -48,6 +48,9 @@ def part13IndexTable : DocTable :=
   standardIndex PropertyKindCalculus.Iso80000.Part13.catalogue part13Default part13Refs
 
 #doc (Manual) "IEC 80000-13 — Information science and technology" =>
+%%%
+tag := "iso80000-part13"
+%%%
 
 The tenth and last part specified is IEC 80000-13, _Information science and technology_ —
 the second IEC-published part, after electromagnetism. Every item — all of 13-1 … 13-42,

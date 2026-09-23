@@ -22,6 +22,9 @@ open Verso.Genre.Manual
 open Informal
 
 #doc (Manual) "Extensivity" =>
+%%%
+tag := "extensivity"
+%%%
 
 Dybkær §13.5 divides kinds-of-quantity "according to physical (and arithmetic)
 additivity", presenting Bunge's four types: _unconditionally extensive_ (§13.5.1, the

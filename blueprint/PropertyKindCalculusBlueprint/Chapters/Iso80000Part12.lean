@@ -56,6 +56,9 @@ def part12IndexTable : DocTable :=
   standardIndex PropertyKindCalculus.Iso80000.Part12.catalogue part12Default part12Refs
 
 #doc (Manual) "ISO 80000-12 — Condensed matter physics" =>
+%%%
+tag := "iso80000-part12"
+%%%
 
 The ninth part specified in full is ISO 80000-12, _Condensed matter physics_. Every item —
 all of 12-1.1 … 12-38.2, sixty including every sub-suffixed item — is catalogued: the

@@ -12,6 +12,9 @@ open Verso.Genre.Manual
 open Informal
 
 #doc (Manual) "The object type" =>
+%%%
+tag := "object-types"
+%%%
 
 A measured quantity is always the property of some object — the length of _this_
 pencil, the glucose concentration of _this_ plasma sample — and R19 puts that object

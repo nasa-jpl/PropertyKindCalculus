@@ -14,6 +14,9 @@ open Verso.Genre.Manual
 open Informal
 
 #doc (Manual) "Foundations: system, part, and the ontological square" =>
+%%%
+tag := "foundations"
+%%%
 
 PKC's foundation is a combination of two sources. Dybkær's ontology on property
 {Manual.citep dybkaer_ontology_on_property}[] supplies the metrological content — system,

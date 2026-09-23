@@ -24,6 +24,9 @@ open Informal
 open PropertyKindCalculusBlueprint
 
 #doc (Manual) "External Cross-References" =>
+%%%
+tag := "cross-references"
+%%%
 
 This work formalizes Dybkær's *Ontology on Property* and aligns its concepts with
 the *International Vocabulary of Metrology* (VIM). The correspondence is recorded

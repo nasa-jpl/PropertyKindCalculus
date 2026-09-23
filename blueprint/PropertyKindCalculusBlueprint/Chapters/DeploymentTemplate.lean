@@ -9,6 +9,9 @@ open Informal
 open PropertyKindCalculusBlueprint.RubricTemplate
 
 #doc (Manual) "Deploying a domain model: the deployment template" =>
+%%%
+tag := "deployment-template"
+%%%
 
 A model document says what a boundary *is*. A deployment document says what deploying one
 *adds*, and the two are different enough that a single document doing both does neither

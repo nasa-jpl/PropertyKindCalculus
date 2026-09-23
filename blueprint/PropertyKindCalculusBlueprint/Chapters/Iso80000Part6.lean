@@ -71,6 +71,9 @@ def part6IndexTable : DocTable :=
   standardIndex PropertyKindCalculus.Iso80000.Part6.catalogue part6Default part6Refs
 
 #doc (Manual) "IEC 80000-6 — Electromagnetism" =>
+%%%
+tag := "iso80000-part6"
+%%%
 
 The fourth part specified in full is IEC 80000-6, _Electromagnetism_ — the one
 _IEC_-published part of the series. Every item — all of 6-1 … 6-62, including every

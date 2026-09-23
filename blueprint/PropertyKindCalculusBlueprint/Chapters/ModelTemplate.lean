@@ -9,6 +9,9 @@ open Informal
 open PropertyKindCalculusBlueprint.RubricTemplate
 
 #doc (Manual) "Applying the calculus to a domain: the model template" =>
+%%%
+tag := "model-template"
+%%%
 
 The preceding chapters say what the calculus is and what it proves. This one is guidance
 for the domain expert who builds on them: what a *domain model* owes to its reader, and

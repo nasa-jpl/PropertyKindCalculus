@@ -10,6 +10,9 @@ open Verso.Genre.Manual
 open Informal
 
 #doc (Manual) "The Proved Spine" =>
+%%%
+tag := "proved-spine"
+%%%
 
 This chapter records what PropertyKindCalculus already establishes, sorry-free, in its
 Mathlib-free core. Every node here links to a real declaration with

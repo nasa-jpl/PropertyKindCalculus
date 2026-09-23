@@ -40,6 +40,9 @@ def part8IndexTable : DocTable :=
   standardIndex PropertyKindCalculus.Iso80000.Part8.catalogue part8Default part8Refs
 
 #doc (Manual) "ISO 80000-8 — Acoustics" =>
+%%%
+tag := "iso80000-part8"
+%%%
 
 The sixth part specified in full is ISO 80000-8, _Acoustics_. Every item — all of
 8-1 … 8-17, including the sub-suffixed pressure pair (8-2.1, 8-2.2) — is catalogued: the
