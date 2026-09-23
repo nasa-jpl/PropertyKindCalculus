@@ -15,8 +15,7 @@ module
 
 public import PropertyKindCalculus.Interaction
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Examples.Interaction
 
@@ -96,5 +95,4 @@ example :
 
 end PropertyKindCalculus.Examples.Interaction
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

@@ -64,8 +64,7 @@ public import PropertyKindCalculus.Bounds
 public import PropertyKindCalculus.Uncertainty.EvidenceKinds
 public import PropertyKindCalculus.Uncertainty.Carriers
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Uncertainty
 
@@ -236,5 +235,4 @@ definitional form for that reason. -/
 
 end PropertyKindCalculus.Uncertainty
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

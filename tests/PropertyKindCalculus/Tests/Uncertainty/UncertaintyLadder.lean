@@ -22,8 +22,7 @@ public import PropertyKindCalculus.UncertaintyExamples.LadderNesting
 public import PropertyKindCalculus.UncertaintyExamples.AdequacyLadder
 public import PropertyKindCalculus.UncertaintyExamples.Coverage
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Tests.UncertaintyLadder
 
@@ -71,5 +70,4 @@ example := UncertaintyExamples.Coverage.central_half_coverage
 
 end PropertyKindCalculus.Tests.UncertaintyLadder
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

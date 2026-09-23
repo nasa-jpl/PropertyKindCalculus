@@ -18,8 +18,7 @@ linearized methods and the `ℝ`-level proofs consume. Mathlib-free.
 
 module
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Uncertainty.Sampling
 
@@ -223,5 +222,4 @@ where
 
 end PropertyKindCalculus.Uncertainty.Sampling
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

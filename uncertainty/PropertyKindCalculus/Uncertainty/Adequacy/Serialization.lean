@@ -58,8 +58,7 @@ module
 public import PropertyKindCalculus.Decimal
 public import PropertyKindCalculus.Uncertainty.Carriers
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Uncertainty.Adequacy
 
@@ -157,5 +156,4 @@ theorem displacement_eq_zero_of_exact {k' : KindOfProperty} {R' : Type} [Decimal
 
 end PropertyKindCalculus.Uncertainty.Adequacy
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

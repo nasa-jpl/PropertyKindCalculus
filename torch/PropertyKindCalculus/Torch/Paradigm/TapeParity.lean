@@ -31,8 +31,7 @@ module
 public import PropertyKindCalculus.Torch.Paradigm.TapeCarrier
 public import PropertyKindCalculus.Torch.Paradigm.TapeFaithful
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 open Spec TorchLean
 open TorchLean TorchLean.Tensor
@@ -323,5 +322,4 @@ theorem Evaluates_exp {x : TapeBuilder s} {vx : Tensor Float s}
 
 end PropertyKindCalculus.Paradigm.TapeParity
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

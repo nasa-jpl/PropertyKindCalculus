@@ -34,8 +34,7 @@ module
 public import Lean
 public import PropertyKindCalculus.Requirements.Catalogue
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 open Lean
 
@@ -203,5 +202,4 @@ def requirementTally (env : Environment) : RequirementTally :=
 
 end PropertyKindCalculus.Requirements
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

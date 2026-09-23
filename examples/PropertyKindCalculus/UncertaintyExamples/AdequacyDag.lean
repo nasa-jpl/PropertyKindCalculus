@@ -28,8 +28,7 @@ module
 public import PropertyKindCalculus.Uncertainty.Adequacy.DagBound
 meta import PropertyKindCalculus.Uncertainty.Adequacy.DagBound
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.UncertaintyExamples.AdequacyDag
 
@@ -223,5 +222,4 @@ theorem acc_budget_nonneg (ρ : ℕ → FP32) : 0 ≤ errBound acc ρ :=
 
 end PropertyKindCalculus.UncertaintyExamples.AdequacyDag
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

@@ -15,8 +15,7 @@ module
 public import PropertyKindCalculus.UnitReal
 meta import PropertyKindCalculus.UnitReal
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Tests.UnitReal
 
@@ -82,5 +81,4 @@ theorem r17_nominal_not_wellFormed (u : RealUnit colourK) : ¬ u.WellFormed :=
 
 end PropertyKindCalculus.Tests.UnitReal
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

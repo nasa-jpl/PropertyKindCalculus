@@ -22,8 +22,7 @@ module
 public import PropertyKindCalculus
 meta import PropertyKindCalculus
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Tests.Decimal
 
@@ -165,5 +164,4 @@ for choice or for the order axioms a host float carrier could not supply. -/
 
 end PropertyKindCalculus.Tests.Decimal
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

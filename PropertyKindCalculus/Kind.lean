@@ -24,7 +24,7 @@ module
 public import PropertyKindCalculus.Scale
 public import PropertyKindCalculus.Foundations
 
-public section -- pkc-blanket
+public section Interface
 
 namespace PropertyKindCalculus
 
@@ -94,4 +94,4 @@ end
 
 end PropertyKindCalculus
 
-end -- pkc-blanket
+end Interface

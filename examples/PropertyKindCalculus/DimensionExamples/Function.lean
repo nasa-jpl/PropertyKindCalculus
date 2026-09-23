@@ -13,8 +13,7 @@ module
 public import PropertyKindCalculus.Function
 meta import PropertyKindCalculus.Function
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.DimensionExamples
 
@@ -111,5 +110,4 @@ example :
 
 end PropertyKindCalculus.DimensionExamples
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

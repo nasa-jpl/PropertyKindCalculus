@@ -36,8 +36,7 @@ module
 public import PropertyKindCalculus.Uncertainty.Mcm
 public import PropertyKindCalculus.Uncertainty.SsprcBatched
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Uncertainty.McmBatched
 
@@ -83,5 +82,4 @@ def run (model : BatchModel) (inputs : List (InputDist Float)) (n : Nat) (seed :
 
 end PropertyKindCalculus.Uncertainty.McmBatched
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

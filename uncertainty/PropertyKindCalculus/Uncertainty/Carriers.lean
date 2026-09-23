@@ -20,8 +20,7 @@ module
 
 public import PropertyKindCalculus.Paradigm.NumCarrier
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Uncertainty
 
@@ -37,5 +36,4 @@ instance instNumCarrierFloat : NumCarrier Float := {}
 
 end PropertyKindCalculus.Uncertainty
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

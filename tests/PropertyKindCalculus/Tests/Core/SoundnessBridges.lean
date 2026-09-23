@@ -17,8 +17,7 @@ meta import PropertyKindCalculus
 -- library; `import all` gives this file the reduction without exposing them.
 import all PropertyKindCalculus.Unit
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Tests.SoundnessBridges
 
@@ -113,5 +112,4 @@ theorem r17_kib_mib_roundtrip (e : Int) : miB.convertExp kiB (kiB.convertExp miB
 
 end PropertyKindCalculus.Tests.SoundnessBridges
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

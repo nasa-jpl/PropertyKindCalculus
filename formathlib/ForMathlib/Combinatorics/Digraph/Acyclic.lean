@@ -18,8 +18,7 @@ listing every edge's source before its target (`Digraph.IsAcyclic.exists_topolog
 Upstream target: `Mathlib/Combinatorics/Digraph/Acyclic.lean`.
 -/
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace Digraph
 
@@ -131,5 +130,4 @@ theorem IsAcyclic.exists_topologicalSort [Fintype V] (h : G.IsAcyclic) :
 
 end Digraph
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

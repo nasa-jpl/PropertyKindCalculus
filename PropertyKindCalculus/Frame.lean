@@ -93,7 +93,7 @@ module
 public import PropertyKindCalculus.QuantityVector
 public import PropertyKindCalculus.QuantityClassification
 
-public section -- pkc-blanket
+public section Interface
 
 namespace PropertyKindCalculus
 
@@ -341,4 +341,4 @@ end InFrame
 
 end PropertyKindCalculus
 
-end -- pkc-blanket
+end Interface

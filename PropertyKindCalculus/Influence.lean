@@ -47,7 +47,7 @@ module
 
 public import PropertyKindCalculus.Provenance
 
-public section -- pkc-blanket
+public section Interface
 
 namespace PropertyKindCalculus
 
@@ -243,4 +243,4 @@ end Provenance
 
 end PropertyKindCalculus
 
-end -- pkc-blanket
+end Interface

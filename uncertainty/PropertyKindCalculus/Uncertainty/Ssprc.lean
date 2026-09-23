@@ -37,8 +37,7 @@ module
 
 public import PropertyKindCalculus.Uncertainty.InputDist
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Uncertainty.Ssprc
 
@@ -137,5 +136,4 @@ def evalCount (ns : List Nat) : Nat := (ns.foldl (· + ·) 0) + 1
 
 end PropertyKindCalculus.Uncertainty.Ssprc
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

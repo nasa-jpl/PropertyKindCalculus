@@ -22,8 +22,7 @@ module
 public import PropertyKindCalculus.KindEdges
 meta import PropertyKindCalculus.KindEdges
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Tests.KindEdges
 
@@ -118,5 +117,4 @@ under a binder to exercise the recursion. -/
 
 end PropertyKindCalculus.Tests.KindEdges
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

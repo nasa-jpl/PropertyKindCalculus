@@ -21,8 +21,7 @@ module
 public import PropertyKindCalculus.KindGraphD2
 meta import PropertyKindCalculus.KindGraphD2
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Tests.KindGraphD2
 
@@ -212,5 +211,4 @@ def ov : String := emitOverview probe (title := "probe assembly")
 
 end PropertyKindCalculus.Tests.KindGraphD2
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

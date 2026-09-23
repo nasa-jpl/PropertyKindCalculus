@@ -17,8 +17,7 @@ module
 public import PropertyKindCalculus.Interaction
 public import PropertyKindCalculus.AngleReform
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Examples.AngleReform
 
@@ -88,5 +87,4 @@ example : (vwc.extend emb).kind ≠ (gwc.extend emb).kind :=
 
 end PropertyKindCalculus.Examples.AngleReform
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

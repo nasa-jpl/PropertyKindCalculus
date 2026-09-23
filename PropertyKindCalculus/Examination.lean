@@ -29,7 +29,7 @@ module
 
 public import PropertyKindCalculus.Kind
 
-public section -- pkc-blanket
+public section Interface
 
 namespace PropertyKindCalculus
 
@@ -156,4 +156,4 @@ theorem KindOfProperty.distinct_of_examPrinciple {k₁ k₂ : KindOfProperty}
 
 end PropertyKindCalculus
 
-end -- pkc-blanket
+end Interface

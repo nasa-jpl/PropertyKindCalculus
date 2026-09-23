@@ -45,8 +45,7 @@ public import PropertyKindCalculus.Torch.Paradigm.TapeCarrier
 public import PropertyKindCalculus.Torch.Paradigm.CudaCarrier
 public import NN.Runtime.Autograd.Engine.Cuda.TexTable
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 open Spec TorchLean
 open TorchLean TorchLean.Tensor
@@ -150,5 +149,4 @@ instance {s : Shape} : LutInterp (CudaCarrier.CudaT s) where
 
 end PropertyKindCalculus.Paradigm
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

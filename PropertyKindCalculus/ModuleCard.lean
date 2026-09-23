@@ -36,7 +36,7 @@ public import PropertyKindCalculus.KindGraphD2
 -- still checked and take `public meta import`).
 set_option compiler.relaxedMetaCheck true
 
-public section -- pkc-blanket
+public section Interface
 
 namespace PropertyKindCalculus.ModuleCard
 
@@ -339,4 +339,4 @@ def relationRows (root : Name) (decl : Name) : MetaM (List RelationRow) := do
 
 end PropertyKindCalculus.ModuleCard
 
-end -- pkc-blanket
+end Interface

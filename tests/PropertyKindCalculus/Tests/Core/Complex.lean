@@ -16,8 +16,7 @@ module
 public import PropertyKindCalculus.Complex
 meta import PropertyKindCalculus.Complex
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Tests.Complex
 
@@ -43,5 +42,4 @@ example : probeEps.im.magnitude = probeEps.magnitude.im := rfl
 
 end PropertyKindCalculus.Tests.Complex
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

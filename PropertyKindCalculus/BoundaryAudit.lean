@@ -112,7 +112,7 @@ public meta import PropertyKindCalculus.AuditReceipt
 -- still checked and take `public meta import`).
 set_option compiler.relaxedMetaCheck true
 
-public section -- pkc-blanket
+public section Interface
 
 namespace PropertyKindCalculus.BoundaryAudit
 
@@ -878,4 +878,4 @@ elab "#kind_crossings" nss:ident* : command => liftTermElabM do
 
 end PropertyKindCalculus.BoundaryAudit
 
-end -- pkc-blanket
+end Interface

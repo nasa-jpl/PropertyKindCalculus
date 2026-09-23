@@ -20,8 +20,7 @@ module
 public import PropertyKindCalculus.Quantity
 public import Mathlib.Basic.Real.Basic
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus
 
@@ -48,5 +47,4 @@ instance : ScalarCarrier ℝ := ⟨⟩
 
 end PropertyKindCalculus
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

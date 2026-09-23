@@ -37,8 +37,7 @@ the generated HTML afterwards, by `scripts/inject-index-docs.py`, from the JSON 
 -- still checked and take `public meta import`).
 set_option compiler.relaxedMetaCheck true
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Index
 
@@ -179,5 +178,4 @@ def indexJson (scope : Scope) : MetaM Json := do
 
 end PropertyKindCalculus.Index
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

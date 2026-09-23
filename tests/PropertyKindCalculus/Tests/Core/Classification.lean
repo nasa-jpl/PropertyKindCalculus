@@ -13,8 +13,7 @@ module
 public import PropertyKindCalculus
 meta import PropertyKindCalculus
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Tests.Classification
 
@@ -55,5 +54,4 @@ theorem r12_fake_uncertified : ¬ dFake.IsProduct lengthLaw v τ := by
 
 end PropertyKindCalculus.Tests.Classification
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

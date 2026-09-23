@@ -42,8 +42,7 @@ public import PropertyKindCalculus.Uncertainty.Adequacy
 public import PropertyKindCalculus.Uncertainty.Sensitivity
 public import PropertyKindCalculus.Uncertainty.Budget
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 open Spec TorchLean TorchLean.Tensor
 open PropertyKindCalculus (Quantity ProductKind KindOfProperty)
@@ -135,5 +134,4 @@ runs). -/
 
 end PropertyKindCalculus.Uncertainty.Adequacy
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

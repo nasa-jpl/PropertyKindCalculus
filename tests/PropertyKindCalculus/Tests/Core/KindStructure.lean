@@ -19,8 +19,7 @@ module
 
 public import PropertyKindCalculus
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Tests.KindStructure
 
@@ -128,5 +127,4 @@ theorem r19_one_catalogue_entry :
 
 end PropertyKindCalculus.Tests.KindStructure
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

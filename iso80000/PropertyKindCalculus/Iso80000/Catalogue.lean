@@ -23,8 +23,7 @@ public import PropertyKindCalculus.Iso80000.References
 -- still checked and take `public meta import`).
 set_option compiler.relaxedMetaCheck true
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Iso80000
 
@@ -116,6 +115,5 @@ def renderDimension (d : Dimension LTMCTDimensionBase) : String :=
 def CataloguedKind.dimString (c : CataloguedKind) : String :=
   renderDimension c.qk.dim
 
-end PropertyKindCalculus.Iso80000 -- pkc-blanket-scope
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end PropertyKindCalculus.Iso80000
+end Blanket

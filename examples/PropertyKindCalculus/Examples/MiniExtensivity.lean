@@ -27,8 +27,7 @@ public import PropertyKindCalculus.Extensivity
 -- library; `import all` gives this file the reduction without exposing them.
 import all PropertyKindCalculus.Extensivity
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Examples.MiniExtensivity
 
@@ -133,5 +132,4 @@ example : ¬ Intensive oscillatorFrequency normalModeFreq := normalMode_wholePro
 
 end PropertyKindCalculus.Examples.MiniExtensivity
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

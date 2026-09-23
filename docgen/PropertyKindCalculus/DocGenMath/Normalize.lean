@@ -30,8 +30,7 @@ commutative *product* is reordered, and only to hoist the scalar. Editorial regr
 (the **E**/**P** tiers) is deliberately *not* done here.
 -/
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.DocGenMath
 
@@ -120,5 +119,4 @@ partial def normalize : MathTerm → MathTerm
 
 end PropertyKindCalculus.DocGenMath
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

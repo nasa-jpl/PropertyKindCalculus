@@ -19,8 +19,7 @@ module
 public import PropertyKindCalculus.AggregationLaws
 meta import PropertyKindCalculus.AggregationLaws
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Tests.AggregationLaws
 
@@ -91,5 +90,4 @@ theorem r9_rod_corrected :
 
 end PropertyKindCalculus.Tests.AggregationLaws
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

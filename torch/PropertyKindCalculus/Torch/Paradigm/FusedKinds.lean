@@ -31,8 +31,7 @@ module
 public import PropertyKindCalculus.Torch.Paradigm.BatchCarrier
 public import PropertyKindCalculus.QuantityFunction
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 open Spec TorchLean
 open PropertyKindCalculus.Paradigm (FusedExp)
@@ -68,5 +67,4 @@ naked call derived) with zero bit- or op-order change. -/
 
 end PropertyKindCalculus
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

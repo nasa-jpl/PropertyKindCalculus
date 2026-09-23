@@ -26,8 +26,7 @@ public import PropertyKindCalculus.IsqBase
 public import PropertyKindCalculus.Iso80000.Part4
 public import PropertyKindCalculus.Iso80000.Part6
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 open Dimension
 
@@ -144,5 +143,4 @@ theorem electricCharge_lift_dim :
 
 end PropertyKindCalculus.Iso80000.IsqLift
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

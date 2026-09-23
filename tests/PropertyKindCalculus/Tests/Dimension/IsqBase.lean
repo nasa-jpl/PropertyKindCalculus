@@ -18,8 +18,7 @@ module
 
 public import PropertyKindCalculus.IsqBase
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Tests.IsqBase
 
@@ -82,5 +81,4 @@ theorem isq_lift_kind_invariant :
 
 end PropertyKindCalculus.Tests.IsqBase
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

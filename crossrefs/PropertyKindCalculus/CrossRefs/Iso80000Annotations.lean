@@ -14,8 +14,7 @@ meta import PropertyKindCalculus.Iso80000
 public import PropertyKindCalculus.CrossRefs.Attributes
 meta import PropertyKindCalculus.CrossRefs.Attributes
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Iso80000
 
@@ -26,5 +25,4 @@ attribute [vim4 "1.15" "coherent derived unit" "the coherentUnit of each kind"]
 
 end PropertyKindCalculus.Iso80000
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

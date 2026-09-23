@@ -40,8 +40,7 @@ public import PropertyKindCalculus.Paradigm.NumCarrier
 public import PropertyKindCalculus.Torch.Paradigm.NumCarrierContext
 public import NN.Runtime.Autograd.Engine.TapeM
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 open Spec TorchLean
 open TorchLean TorchLean.Tensor
@@ -116,5 +115,4 @@ end TapeBuilder
 
 end PropertyKindCalculus.Paradigm
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

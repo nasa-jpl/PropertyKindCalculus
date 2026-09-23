@@ -23,8 +23,7 @@ well-formedness of a budget as a finite sum over paths, discharged by the same
 executable `acyclic` check a probe evaluates.
 -/
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus
 
@@ -177,5 +176,4 @@ end Provenance
 
 end PropertyKindCalculus
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

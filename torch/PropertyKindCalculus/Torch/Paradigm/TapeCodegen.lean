@@ -32,8 +32,7 @@ public import PropertyKindCalculus.Torch.Paradigm.TapeCarrier
 public import PropertyKindCalculus.Torch.Paradigm.TapeCse
 public import PropertyKindCalculus.Torch.Paradigm.LutCarrier
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 open Spec TorchLean
 open Runtime.Autograd (Tape Node TapeM)
@@ -833,5 +832,4 @@ def AiReport.eagerHostBytesPerElem (rep : AiReport) : Nat :=
 
 end PropertyKindCalculus.Paradigm.TapeCodegen
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

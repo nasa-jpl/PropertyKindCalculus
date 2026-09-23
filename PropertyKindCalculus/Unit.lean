@@ -32,7 +32,7 @@ module
 
 public import PropertyKindCalculus.ValueScale
 
-public section -- pkc-blanket
+public section Interface
 
 namespace PropertyKindCalculus
 
@@ -214,4 +214,4 @@ theorem KindOfProperty.unit_commensurable (k : KindOfProperty) (s₁ s₂ : Stri
 
 end PropertyKindCalculus
 
-end -- pkc-blanket
+end Interface

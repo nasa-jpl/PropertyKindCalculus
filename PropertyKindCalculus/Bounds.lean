@@ -55,7 +55,7 @@ module
 
 public import PropertyKindCalculus.Quantity
 
-public section -- pkc-blanket
+public section Interface
 
 namespace PropertyKindCalculus
 
@@ -339,4 +339,4 @@ where raising `L` admits values that should have failed). Same side, opposite sa
 
 end PropertyKindCalculus
 
-end -- pkc-blanket
+end Interface

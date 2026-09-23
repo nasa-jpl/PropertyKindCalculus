@@ -22,8 +22,7 @@ unit-testable with `MathNotation.ofLatex`. The `MathNotation.operator` flag — 
 selects the juxtaposed prefix layout `\nabla x`; layout is never inferred from the LaTeX itself.
 -/
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.DocGenMath
 
@@ -268,5 +267,4 @@ def prettyAux (resolve : String → MathNotation) (aux : Array (MathTerm × Math
 
 end PropertyKindCalculus.DocGenMath
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

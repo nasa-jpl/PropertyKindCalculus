@@ -43,7 +43,7 @@ public import PropertyKindCalculus.Quantity
 public import PropertyKindCalculus.QuantityClassification
 public import PropertyKindCalculus.NominalValue
 
-public section -- pkc-blanket
+public section Interface
 
 namespace PropertyKindCalculus.Paradigm.Platform
 
@@ -428,4 +428,4 @@ theorem storageCapacity_ne_storagePerElement : storageCapacity ≠ storagePerEle
 
 end PropertyKindCalculus.Paradigm.Platform
 
-end -- pkc-blanket
+end Interface

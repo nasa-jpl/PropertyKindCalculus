@@ -30,8 +30,7 @@ meta import PropertyKindCalculus.UncertaintyExamples.AutogradDirectSim
 public import NN.Runtime.Autograd.Engine.TapeM
 meta import NN.Runtime.Autograd.Engine.TapeM
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.UncertaintyExamples.TapeMBridge
 
@@ -321,5 +320,4 @@ end
 
 end PropertyKindCalculus.UncertaintyExamples.TapeMBridge
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

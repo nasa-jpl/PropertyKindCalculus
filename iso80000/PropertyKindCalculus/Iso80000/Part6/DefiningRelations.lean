@@ -45,8 +45,7 @@ public import PropertyKindCalculus.Iso80000.Part6
 public import PropertyKindCalculus.QuantityClassification
 public import PropertyKindCalculus.QuantityReal
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Iso80000.Part6.DefiningRelations
 
@@ -182,5 +181,4 @@ theorem conductanceOf_isReciprocal (r : Quantity resistance.kind ℝ) :
 
 end PropertyKindCalculus.Iso80000.Part6.DefiningRelations
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

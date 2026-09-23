@@ -20,8 +20,7 @@ module
 public import PropertyKindCalculus.ScaleSpanning
 meta import PropertyKindCalculus.ScaleSpanning
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Examples.ScaleSpanning
 
@@ -81,5 +80,4 @@ example : ∃ a b : ScaleSpanningUnit,
 
 end PropertyKindCalculus.Examples.ScaleSpanning
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

@@ -48,8 +48,7 @@ which kinds go in, which comes out — together with the authored crossings the 
 because that is the operation's actual contract with the calculus.
 -/
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Index
 
@@ -247,5 +246,4 @@ def operationsTable (scope : Scope) : MetaM IndexTable := do
 
 end PropertyKindCalculus.Index
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

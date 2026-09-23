@@ -34,8 +34,7 @@ meta import PropertyKindCalculus.Examples.TapeCodegenEndToEnd
 public import PropertyKindCalculus.Examples.TapeCseStructural
 meta import PropertyKindCalculus.Examples.TapeCseStructural
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 open Runtime.Autograd (Tape Node)
 open PropertyKindCalculus.Paradigm (LutTable lutNodeName?)
@@ -237,5 +236,4 @@ def demoLandingHolds : Bool :=
 
 end PropertyKindCalculus.Examples.TapeCodegenLanding
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

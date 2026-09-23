@@ -11,8 +11,7 @@ annotations.
 
 module
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.CrossRefs
 
@@ -57,5 +56,4 @@ def vim4Source : OntologySource :=
 
 end PropertyKindCalculus.CrossRefs
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

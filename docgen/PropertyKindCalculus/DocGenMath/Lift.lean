@@ -68,8 +68,7 @@ unfamiliar model rather than crashing the attribute or publishing broken math.
 -- still checked and take `public meta import`).
 set_option compiler.relaxedMetaCheck true
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.DocGenMath
 
@@ -449,5 +448,4 @@ def isSubstitutable (env : Environment) (declName : Name) : Bool :=
 
 end PropertyKindCalculus.DocGenMath
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

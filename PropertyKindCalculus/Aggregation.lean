@@ -69,7 +69,7 @@ public import PropertyKindCalculus.Extensivity
 import all PropertyKindCalculus.Extensivity
 public import PropertyKindCalculus.QuantityRefinement
 
-public section -- pkc-blanket
+public section Interface
 
 namespace PropertyKindCalculus
 
@@ -362,4 +362,4 @@ theorem WeightedCarvingQ.mean_div_refines {E S : Type} {P : Type u}
 
 end PropertyKindCalculus
 
-end -- pkc-blanket
+end Interface

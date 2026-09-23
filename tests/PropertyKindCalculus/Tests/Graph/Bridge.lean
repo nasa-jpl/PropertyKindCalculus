@@ -21,8 +21,7 @@ meta import PropertyKindCalculus.Graph
 public import PropertyKindCalculus.Tests.Core.Influence
 meta import PropertyKindCalculus.Tests.Core.Influence
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Tests.Graph
 
@@ -261,5 +260,4 @@ Classical.choice, Quot.sound] -/
 
 end PropertyKindCalculus.Tests.Graph
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

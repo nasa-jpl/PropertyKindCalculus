@@ -19,8 +19,7 @@ meta import PropertyKindCalculus.Uncertainty
 public import PropertyKindCalculus.UncertaintyExamples.DegenhardtFictive
 meta import PropertyKindCalculus.UncertaintyExamples.DegenhardtFictive
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.UncertaintyExamples.DegenhardtSsprc
 
@@ -88,5 +87,4 @@ def ssprcConv : Float × Float := Ssprc.runConv modelF [x1, x2, x3] nsSmall
 
 end PropertyKindCalculus.UncertaintyExamples.DegenhardtSsprc
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

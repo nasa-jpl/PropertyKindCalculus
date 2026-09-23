@@ -18,8 +18,7 @@ module
 public import PropertyKindCalculus.Graph.SheetEquations
 meta import PropertyKindCalculus.Graph.SheetEquations
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Tests.SheetEquations
 
@@ -129,5 +128,4 @@ def asm : Assembly :=
 
 end PropertyKindCalculus.Tests.SheetEquations
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

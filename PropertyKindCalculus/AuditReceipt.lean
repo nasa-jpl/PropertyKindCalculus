@@ -28,7 +28,7 @@ module
 
 public import Lean
 
-public section -- pkc-blanket
+public section Interface
 
 namespace PropertyKindCalculus
 
@@ -82,4 +82,4 @@ def auditReceiptsFor (env : Environment) (audit : String) (ns : Option Name) :
 
 end PropertyKindCalculus
 
-end -- pkc-blanket
+end Interface

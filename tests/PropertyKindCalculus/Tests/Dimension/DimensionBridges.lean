@@ -17,8 +17,7 @@ public import PropertyKindCalculus.Interaction
 public import PropertyKindCalculus.ScaleSpanning
 public import PropertyKindCalculus.UnitConversion
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Tests.DimensionBridges
 
@@ -127,5 +126,4 @@ theorem r17_dimScale_is_prefix_factor :
 
 end PropertyKindCalculus.Tests.DimensionBridges
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

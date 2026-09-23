@@ -33,8 +33,7 @@ meta import PropertyKindCalculus.Iso80000
 public import PropertyKindCalculus.QuantityReal
 meta import PropertyKindCalculus.QuantityReal
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Examples.Iso80000.Part5
 
@@ -204,5 +203,4 @@ def specificHeatCapacityInt : Quantity specificHeatCapacity.kind Int :=
 
 end PropertyKindCalculus.Examples.Iso80000.Part5
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

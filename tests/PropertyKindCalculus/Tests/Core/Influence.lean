@@ -14,8 +14,7 @@ module
 public import PropertyKindCalculus
 meta import PropertyKindCalculus
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Tests.Influence
 
@@ -105,5 +104,4 @@ def Gcyc : Provenance String String where
 
 end PropertyKindCalculus.Tests.Influence
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

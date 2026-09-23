@@ -44,8 +44,7 @@ module
 public import PropertyKindCalculus.Uncertainty.Adequacy.MeanBound
 meta import PropertyKindCalculus.Uncertainty.Adequacy.MeanBound
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Tests.MeanBound
 
@@ -292,5 +291,4 @@ theorem r9_licenses_agree_nonneg :
 
 end PropertyKindCalculus.Tests.MeanBound
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

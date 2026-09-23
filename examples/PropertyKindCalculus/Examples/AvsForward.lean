@@ -33,8 +33,7 @@ meta import PropertyKindCalculus.DocGenMath
 public import PropertyKindCalculus.QuantityReal
 meta import PropertyKindCalculus.QuantityReal
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Examples.AvsForward
 
@@ -201,5 +200,4 @@ def resJac {α : Type} [NumCarrier α] (a b c d ndvi r s0 : α) : α × α × α
 
 end PropertyKindCalculus.Examples.AvsForward
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

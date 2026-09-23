@@ -53,8 +53,7 @@ public import PropertyKindCalculus.Dimension
 public import PropertyKindCalculus.Iso80000.References
 public import PropertyKindCalculus.Iso80000.Catalogue
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Iso80000.Part4
 
@@ -570,5 +569,4 @@ theorem iso80000_4_dim_one_collision :
 
 end PropertyKindCalculus.Iso80000.Part4
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

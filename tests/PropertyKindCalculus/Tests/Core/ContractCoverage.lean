@@ -39,8 +39,7 @@ module
 public import PropertyKindCalculus.ContractCoverage
 meta import PropertyKindCalculus.ContractCoverage
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Tests.ContractCoverage
 
@@ -477,5 +476,4 @@ attribute [kindDiagnostic "  "] aK
 
 end PropertyKindCalculus.Tests.ContractCoverage
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

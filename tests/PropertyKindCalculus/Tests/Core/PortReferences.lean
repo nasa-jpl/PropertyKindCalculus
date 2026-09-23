@@ -16,8 +16,7 @@ module
 public import PropertyKindCalculus.Provenance
 meta import PropertyKindCalculus.Provenance
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Tests.PortReferences
 open PropertyKindCalculus.Provenance
@@ -83,5 +82,4 @@ example : ((NodeId.letBound "flag").within `M.step ==
 
 end PropertyKindCalculus.Tests.PortReferences
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

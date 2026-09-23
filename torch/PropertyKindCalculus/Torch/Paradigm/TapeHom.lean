@@ -50,8 +50,7 @@ public import PropertyKindCalculus.QuantityClassification
 public import PropertyKindCalculus.QuantityFunction
 public import PropertyKindCalculus.OperatorTable
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 open Spec TorchLean
 open TorchLean TorchLean.Tensor
@@ -152,5 +151,4 @@ macro "tape_hom" " [" names:Lean.Parser.Tactic.simpLemma,* "]" : tactic =>
        | apply Evaluates_leaf | apply Evaluates_const
        | assumption))
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

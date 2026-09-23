@@ -32,8 +32,7 @@ meta import PropertyKindCalculus.Provenance
 -- library; `import all` gives this file the reduction without exposing them.
 import all PropertyKindCalculus.Provenance
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Tests.Provenance
 
@@ -406,5 +405,4 @@ def assembled : Provenance String String :=
 
 end PropertyKindCalculus.Tests.Provenance
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

@@ -44,7 +44,7 @@ module
 public import PropertyKindCalculus.Bounds
 public import Lean
 
-public section -- pkc-blanket
+public section Interface
 
 open Lean (ToJson FromJson Json toJson)
 
@@ -238,4 +238,4 @@ end IngestContract
 
 end PropertyKindCalculus
 
-end -- pkc-blanket
+end Interface

@@ -43,8 +43,7 @@ module
 public import PropertyKindCalculus.ContractCoverage
 meta import PropertyKindCalculus.ContractCoverage
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Tests.PortNameScopes
 open PropertyKindCalculus
@@ -267,5 +266,4 @@ info: diagnostic coverage:
 
 end PropertyKindCalculus.Tests.PortNameScopes
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

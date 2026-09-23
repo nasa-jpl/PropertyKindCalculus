@@ -22,8 +22,7 @@ digraphs close by `decide`.
 Upstream target: `Mathlib/Combinatorics/Digraph/Condensation.lean`.
 -/
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace Digraph
 
@@ -123,5 +122,4 @@ end Decidable
 
 end Digraph
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

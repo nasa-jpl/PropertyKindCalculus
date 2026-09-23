@@ -26,8 +26,7 @@ module
 
 public import PropertyKindCalculus.Uncertainty.Carriers
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Uncertainty
 
@@ -156,5 +155,4 @@ end Adequacy
 
 end PropertyKindCalculus.Uncertainty
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

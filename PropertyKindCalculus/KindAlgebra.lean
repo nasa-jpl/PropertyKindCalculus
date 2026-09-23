@@ -38,7 +38,7 @@ module
 public import Lean
 public import PropertyKindCalculus.OperatorTable
 
-public section -- pkc-blanket
+public section Interface
 
 namespace PropertyKindCalculus.KindAlgebra
 
@@ -72,4 +72,4 @@ elab_rules : command
 
 end PropertyKindCalculus.KindAlgebra
 
-end -- pkc-blanket
+end Interface

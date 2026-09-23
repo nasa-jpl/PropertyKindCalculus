@@ -15,10 +15,8 @@ module
 
 public import PropertyKindCalculus.Tests.Iso80000.Coverage
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

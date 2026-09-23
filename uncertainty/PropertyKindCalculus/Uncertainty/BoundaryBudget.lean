@@ -51,8 +51,7 @@ public import PropertyKindCalculus.Uncertainty.Carriers
 -- still checked and take `public meta import`).
 set_option compiler.relaxedMetaCheck true
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Uncertainty
 
@@ -155,5 +154,4 @@ elab "#kind_budget " b:ident c:ident : command => liftTermElabM do
 
 end PropertyKindCalculus.Uncertainty
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

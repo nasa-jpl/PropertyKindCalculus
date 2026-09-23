@@ -27,8 +27,7 @@ meta import PropertyKindCalculus
 public import PropertyKindCalculus.KindIncidence
 meta import PropertyKindCalculus.KindIncidence
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Tests.Axis
 
@@ -231,5 +230,4 @@ output result : rowAxisK
 
 end PropertyKindCalculus.Tests.Axis
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

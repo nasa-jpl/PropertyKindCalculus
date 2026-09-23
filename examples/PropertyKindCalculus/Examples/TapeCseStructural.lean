@@ -39,8 +39,7 @@ module
 public import PropertyKindCalculus.Torch.Paradigm.TapeCse
 meta import PropertyKindCalculus.Torch.Paradigm.TapeCse
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 open Spec TorchLean
 open TorchLean TorchLean.Tensor
@@ -357,5 +356,4 @@ def demoStructuralCheck : Bool :=
 
 end PropertyKindCalculus.Examples.TapeCseStructural
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

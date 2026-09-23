@@ -34,8 +34,7 @@ public import Mathlib.Tactic.Ring
 public import Mathlib.Tactic.NormNum
 public import PropertyKindCalculus.Uncertainty.InputDist
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Uncertainty
 
@@ -201,5 +200,4 @@ theorem gum_eq_willink_of_normal (terms : List (ℝ × MomentData ℝ))
 
 end PropertyKindCalculus.Uncertainty
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

@@ -36,8 +36,7 @@ stable and diffable to show.
 -- still checked and take `public meta import`).
 set_option compiler.relaxedMetaCheck true
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Index
 
@@ -168,5 +167,4 @@ elab "#pkc_summary_overflow" nss:ident* : command => liftTermElabM do
 
 end PropertyKindCalculus.Index
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

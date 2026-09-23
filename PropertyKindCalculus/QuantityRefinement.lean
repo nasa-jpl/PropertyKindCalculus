@@ -74,7 +74,7 @@ module
 
 public import PropertyKindCalculus.QuantityClassification
 
-public section -- pkc-blanket
+public section Interface
 
 namespace PropertyKindCalculus
 
@@ -194,4 +194,4 @@ end Quantity
 
 end PropertyKindCalculus
 
-end -- pkc-blanket
+end Interface

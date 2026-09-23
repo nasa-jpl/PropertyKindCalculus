@@ -45,8 +45,7 @@ collapses into a single component fails a pin instead of passing as prose.
 -- still checked and take `public meta import`).
 set_option compiler.relaxedMetaCheck true
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.KindGraph
 
@@ -227,5 +226,4 @@ def clusterRows (kg : KindGraph)
 
 end PropertyKindCalculus.KindGraph
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

@@ -67,7 +67,7 @@ module
 public import PropertyKindCalculus.Bounds
 meta import PropertyKindCalculus.Bounds
 
-public section -- pkc-blanket
+public section Interface
 
 namespace PropertyKindCalculus
 
@@ -406,4 +406,4 @@ theorem LowerBound.roundedUpAsRequirement_safe (b : LowerBound k R) (places : Na
 
 end PropertyKindCalculus
 
-end -- pkc-blanket
+end Interface

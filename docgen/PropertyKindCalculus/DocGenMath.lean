@@ -39,10 +39,8 @@ library, in `PropertyKindCalculus.Examples.DocGenMathDemo` (`examples/` source t
 here carries `#eval`/`#guard`.
 -/
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

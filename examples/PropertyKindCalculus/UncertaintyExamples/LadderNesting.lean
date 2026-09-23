@@ -18,8 +18,7 @@ meta import PropertyKindCalculus.Uncertainty.Ladder
 public import PropertyKindCalculus.Uncertainty
 meta import PropertyKindCalculus.Uncertainty
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.UncertaintyExamples.LadderNesting
 
@@ -72,5 +71,4 @@ def normalTermsF : List (Float × MomentData Float) :=
 
 end PropertyKindCalculus.UncertaintyExamples.LadderNesting
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

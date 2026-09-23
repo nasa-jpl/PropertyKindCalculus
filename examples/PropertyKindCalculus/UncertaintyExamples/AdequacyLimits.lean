@@ -36,8 +36,7 @@ module
 public import PropertyKindCalculus.Uncertainty.Adequacy
 meta import PropertyKindCalculus.Uncertainty.Adequacy
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 open PropertyKindCalculus
 open PropertyKindCalculus.Uncertainty
@@ -160,5 +159,4 @@ operand's *own* uncertainty against half a ulp before the accumulation reaches i
 
 end PropertyKindCalculus.UncertaintyExamples.AdequacyLimits
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

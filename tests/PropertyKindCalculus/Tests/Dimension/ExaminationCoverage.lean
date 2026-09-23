@@ -27,8 +27,7 @@ module
 public import PropertyKindCalculus.ExaminationCoverage
 meta import PropertyKindCalculus.ExaminationCoverage
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Tests.Dimension.Examination
 
@@ -138,5 +137,4 @@ attribute [kindPrincipleFree "  "] probeBare
 
 end PropertyKindCalculus.Tests.Dimension.Examination
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

@@ -92,8 +92,7 @@ module
 public import PropertyKindCalculus.Bounds
 public import PropertyKindCalculus.Uncertainty.Evidence
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Uncertainty.Conformity
 
@@ -512,5 +511,4 @@ def assess (t : Tolerance k Float) (e : Evidence k) (targetRisk : Quantity proba
 
 end PropertyKindCalculus.Uncertainty.Conformity
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

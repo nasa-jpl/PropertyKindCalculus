@@ -19,8 +19,7 @@ meta import PropertyKindCalculus
 public import PropertyKindCalculus.Uncertainty.Adequacy.Serialization
 meta import PropertyKindCalculus.Uncertainty.Adequacy.Serialization
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Tests.Serialization
 
@@ -110,5 +109,4 @@ crossing was exact — which is the whole of "an exact crossing leaves the budge
 
 end PropertyKindCalculus.Tests.Serialization
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

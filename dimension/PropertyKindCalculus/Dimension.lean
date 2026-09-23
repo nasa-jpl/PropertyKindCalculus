@@ -51,8 +51,7 @@ module
 public import Physlib.Units.LTMCTDimensionBase
 public import PropertyKindCalculus
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 open Dimension
 
@@ -410,5 +409,4 @@ theorem dim_not_injective :
 
 end PropertyKindCalculus
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

@@ -19,7 +19,7 @@ Here it is a first-class datum that later gates the algebra on a `Quantity`.
 
 module
 
-public section -- pkc-blanket
+public section Interface
 
 namespace PropertyKindCalculus
 
@@ -92,4 +92,4 @@ end ScaleType
 
 end PropertyKindCalculus
 
-end -- pkc-blanket
+end Interface

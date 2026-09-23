@@ -55,7 +55,7 @@ public import PropertyKindCalculus.Extensivity
 import all PropertyKindCalculus.Extensivity
 public import PropertyKindCalculus.IndividualQuantity
 
-public section -- pkc-blanket
+public section Interface
 
 namespace PropertyKindCalculus
 
@@ -241,4 +241,4 @@ theorem assemble_ne_measured (σ : SortOfSystem) [Assembles σ k] (whole : O)
 
 end PropertyKindCalculus
 
-end -- pkc-blanket
+end Interface

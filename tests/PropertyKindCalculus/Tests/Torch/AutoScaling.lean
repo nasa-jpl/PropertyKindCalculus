@@ -25,8 +25,7 @@ meta import PropertyKindCalculus.Torch.Paradigm.TapeCodegen
 public import PropertyKindCalculus.Torch.Paradigm.Platform
 meta import PropertyKindCalculus.Torch.Paradigm.Platform
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Tests.AutoScaling
 
@@ -396,5 +395,4 @@ def beatenBy (shape : TimeShape) (total : Quantity elementCount Nat)
 
 end PropertyKindCalculus.Tests.AutoScaling
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

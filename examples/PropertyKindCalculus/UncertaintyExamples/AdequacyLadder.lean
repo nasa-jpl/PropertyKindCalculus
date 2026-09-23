@@ -28,8 +28,7 @@ meta import PropertyKindCalculus.Uncertainty.Adequacy.Soundness
 public import PropertyKindCalculus.Uncertainty.Adequacy.Sterbenz32
 meta import PropertyKindCalculus.Uncertainty.Adequacy.Sterbenz32
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.UncertaintyExamples.AdequacyLadder
 
@@ -84,5 +83,4 @@ theorem a2_relunc : (1 : ℝ) ≤ 100 / 1 :=
 
 end PropertyKindCalculus.UncertaintyExamples.AdequacyLadder
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

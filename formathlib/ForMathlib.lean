@@ -16,10 +16,8 @@ namespaces and style. See the library docstring in `lakefile.lean` for the stand
 that governs what lands here.
 -/
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

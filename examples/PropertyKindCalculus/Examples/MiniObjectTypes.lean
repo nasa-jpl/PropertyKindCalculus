@@ -37,8 +37,7 @@ import all PropertyKindCalculus.Unit
 import all PropertyKindCalculus.IndividualQuantity
 import all PropertyKindCalculus.Extensivity
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Examples.MiniObjectTypes
 
@@ -302,5 +301,4 @@ naming conventions, which is why every one of them takes a proof. -/
 
 end PropertyKindCalculus.Examples.MiniObjectTypes
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

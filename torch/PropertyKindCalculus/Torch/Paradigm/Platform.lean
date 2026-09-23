@@ -50,8 +50,7 @@ module
 public import PropertyKindCalculus.Paradigm.PlatformKinds
 public import PropertyKindCalculus.QuantityFunction
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Paradigm.Platform
 
@@ -713,5 +712,4 @@ def decideShards (shape : MemShape) (totalElems : Quantity elementCount Nat)
 
 end PropertyKindCalculus.Paradigm.Platform
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

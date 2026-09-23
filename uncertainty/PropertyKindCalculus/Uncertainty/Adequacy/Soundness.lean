@@ -25,8 +25,7 @@ module
 
 public import PropertyKindCalculus.Uncertainty.Adequacy.Absorption
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Uncertainty.Adequacy
 
@@ -68,5 +67,4 @@ theorem swamped {u s unc : ℝ} (hu : 0 < u) (hs : OnGrid u s) (h0 : 0 ≤ unc)
 
 end PropertyKindCalculus.Uncertainty.Adequacy
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

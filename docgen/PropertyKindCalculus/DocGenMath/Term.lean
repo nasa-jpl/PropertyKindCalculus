@@ -25,8 +25,7 @@ to see, one step before LaTeX. It is carrier-agnostic and PKC-agnostic (it only 
 the pipeline can be unit-tested without building PKC or doc-gen4.
 -/
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.DocGenMath
 
@@ -196,5 +195,4 @@ def MathNotation.ofLatex (latex : String) : MathNotation := { latex }
 
 end PropertyKindCalculus.DocGenMath
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

@@ -23,8 +23,7 @@ determines the path for any quiver.
 Upstream target: `Mathlib/Combinatorics/Quiver/Path.lean` (or an `Acyclic` satellite).
 -/
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace Quiver
 
@@ -142,5 +141,4 @@ end IsAcyclic
 
 end Quiver
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

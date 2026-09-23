@@ -13,8 +13,7 @@ module
 public import PropertyKindCalculus
 meta import PropertyKindCalculus
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Tests.OperationGating
 
@@ -112,5 +111,4 @@ theorem r6_ratio_not_le_nominal : ¬ (ScaleType.ratio ≤ ScaleType.nominal) :=
 
 end PropertyKindCalculus.Tests.OperationGating
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

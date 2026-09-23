@@ -68,8 +68,7 @@ meta import PropertyKindCalculus.ExaminationCoverage
 
 /-! ## `#kind_examination_coverage` — M6, part by part -/
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 /--
 info: examination coverage — no dimension-one kinds in the given namespaces
@@ -652,5 +651,4 @@ info: dimensional coverage:
 #guard_msgs in
 #kind_dimensional_clean PropertyKindCalculus.Iso80000.Part13
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

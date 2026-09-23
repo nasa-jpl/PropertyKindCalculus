@@ -54,8 +54,7 @@ meta import Mathlib.Tactic.NormNum
 -- library; `import all` gives this file the reduction without exposing them.
 import all PropertyKindCalculus.IndividualQuantity
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Examples.Iso80000.Part3
 
@@ -368,5 +367,4 @@ example : (IndividualQuantity.mul area_is_length_times_length lengthR1 lengthR1)
 
 end PropertyKindCalculus.Examples.Iso80000.Part3
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

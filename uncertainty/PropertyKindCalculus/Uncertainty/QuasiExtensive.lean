@@ -41,8 +41,7 @@ public import PropertyKindCalculus.Uncertainty.Coverage
 -- library; `import all` gives this file the reduction without exposing them.
 import all PropertyKindCalculus.Extensivity
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 open MeasureTheory ProbabilityTheory
 open scoped MeasureTheory ProbabilityTheory ENNReal
@@ -244,5 +243,4 @@ theorem join_within_tolerance {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω
 
 end PropertyKindCalculus.Uncertainty
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

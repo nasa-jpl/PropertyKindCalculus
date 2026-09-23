@@ -24,8 +24,7 @@ meta import PropertyKindCalculus.KindIncidence
 import all Init.Prelude
 import all PropertyKindCalculus.Provenance
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Tests.KindContracts
 
@@ -176,5 +175,4 @@ error: `@[kindCounterexample]` expects a 'Provenance.Contract' or a 'Provenance.
 
 end PropertyKindCalculus.Tests.KindContracts
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

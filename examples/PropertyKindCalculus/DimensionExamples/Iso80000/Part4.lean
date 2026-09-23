@@ -36,8 +36,7 @@ meta import Mathlib.Data.Fin.VecNotation
 public import Mathlib.Tactic.NormNum
 meta import Mathlib.Tactic.NormNum
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Examples.Iso80000.Part4
 
@@ -196,5 +195,4 @@ def momentumInt : Quantity momentum.kind Int :=
 
 end PropertyKindCalculus.Examples.Iso80000.Part4
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

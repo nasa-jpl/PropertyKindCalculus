@@ -54,8 +54,7 @@ public import Mathlib.Analysis.SpecialFunctions.Sqrt
 public import Mathlib.Tactic.Ring
 public import Mathlib.Tactic.FieldSimp
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Uncertainty
 
@@ -292,5 +291,4 @@ theorem BudgetExpr.div_leaf_relative_quadrature {k1 k2 k : KindOfProperty}
 
 end PropertyKindCalculus.Uncertainty
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

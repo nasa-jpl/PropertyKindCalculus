@@ -48,8 +48,7 @@ public import PropertyKindCalculus.QuantityVector
 public import PropertyKindCalculus.Iso80000.References
 public import PropertyKindCalculus.QuantityReal
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Iso80000.Part2
 
@@ -152,5 +151,4 @@ end Section18
 
 end PropertyKindCalculus.Iso80000.Part2
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

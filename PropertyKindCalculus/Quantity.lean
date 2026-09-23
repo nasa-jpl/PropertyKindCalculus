@@ -69,7 +69,7 @@ module
 
 public import PropertyKindCalculus.Kind
 
-public section -- pkc-blanket
+public section Interface
 
 namespace PropertyKindCalculus
 
@@ -505,4 +505,4 @@ instance instScalarCarrierFloat : ScalarCarrier Float := ⟨⟩
 
 end PropertyKindCalculus
 
-end -- pkc-blanket
+end Interface

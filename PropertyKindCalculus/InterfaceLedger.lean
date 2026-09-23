@@ -44,7 +44,7 @@ public import PropertyKindCalculus.Extensivity
 -- gives this module the reduction without exposing them to every consumer.
 import all PropertyKindCalculus.Extensivity
 
-public section -- pkc-blanket
+public section Interface
 
 namespace PropertyKindCalculus
 
@@ -214,4 +214,4 @@ end InterfaceLedger
 
 end PropertyKindCalculus
 
-end -- pkc-blanket
+end Interface

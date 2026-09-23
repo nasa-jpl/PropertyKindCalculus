@@ -16,10 +16,8 @@ module
 public import PropertyKindCalculus.Torch.Fp32
 public import PropertyKindCalculus.Torch.Fp32Math
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

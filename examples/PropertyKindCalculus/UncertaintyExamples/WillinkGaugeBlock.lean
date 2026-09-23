@@ -32,8 +32,7 @@ module
 public import PropertyKindCalculus.Uncertainty
 meta import PropertyKindCalculus.Uncertainty
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.UncertaintyExamples.WillinkGaugeBlock
 
@@ -83,5 +82,4 @@ payoff of carrying `κ₄` — the difference between the GUM rung and the Willi
 
 end PropertyKindCalculus.UncertaintyExamples.WillinkGaugeBlock
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

@@ -29,8 +29,7 @@ public import PropertyKindCalculus.Uncertainty.Mcm
 public import PropertyKindCalculus.Uncertainty.InputDist
 public import PropertyKindCalculus.Uncertainty.Carriers
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Apps.McmBatchedParity
 
@@ -83,5 +82,4 @@ end PropertyKindCalculus.Apps.McmBatchedParity
 /-- The executable entry point. -/
 def main : IO UInt32 := PropertyKindCalculus.Apps.McmBatchedParity.main
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

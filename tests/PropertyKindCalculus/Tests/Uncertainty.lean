@@ -17,10 +17,8 @@ public import PropertyKindCalculus.Tests.Uncertainty.Serialization
 public import PropertyKindCalculus.Tests.Uncertainty.MeanBound
 public import PropertyKindCalculus.Tests.Uncertainty.BoundaryBudget
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

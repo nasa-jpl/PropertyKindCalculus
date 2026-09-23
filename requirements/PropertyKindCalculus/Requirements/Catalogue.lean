@@ -14,8 +14,7 @@ requirement; the *design* text lives in the blueprint chapters.
 
 module
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Requirements
 
@@ -204,5 +203,4 @@ def requirementById? (id : String) : Option Requirement :=
 
 end PropertyKindCalculus.Requirements
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

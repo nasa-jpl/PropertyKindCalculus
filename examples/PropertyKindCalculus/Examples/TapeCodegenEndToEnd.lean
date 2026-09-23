@@ -33,8 +33,7 @@ module
 public import PropertyKindCalculus.Examples.TapeCodegenProof
 meta import PropertyKindCalculus.Examples.TapeCodegenProof
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 open Spec TorchLean
 open TorchLean TorchLean.Tensor
@@ -554,5 +553,4 @@ def cse_preserves_resJac : Bool :=
 
 end PropertyKindCalculus.Examples.TapeCodegenEndToEnd
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

@@ -21,8 +21,7 @@ module
 public import PropertyKindCalculus.ModuleCard
 meta import PropertyKindCalculus.ModuleCard
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Tests.ModuleCard
 
@@ -113,5 +112,4 @@ def overview : String :=
 
 end PropertyKindCalculus.Tests.ModuleCard
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

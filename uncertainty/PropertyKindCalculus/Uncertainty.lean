@@ -60,10 +60,8 @@ public import PropertyKindCalculus.Uncertainty.Ssprc
 public import PropertyKindCalculus.Uncertainty.Allocation
 public import PropertyKindCalculus.Uncertainty.Adequacy
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

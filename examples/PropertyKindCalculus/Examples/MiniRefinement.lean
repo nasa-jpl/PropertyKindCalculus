@@ -18,8 +18,7 @@ module
 public import PropertyKindCalculus.QuantityRefinement
 meta import PropertyKindCalculus.QuantityRefinement
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Examples.MiniRefinement
 
@@ -84,5 +83,4 @@ example :
 
 end PropertyKindCalculus.Examples.MiniRefinement
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

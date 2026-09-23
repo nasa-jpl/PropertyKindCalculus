@@ -15,8 +15,7 @@ decidable adjacency: reachability questions on concrete digraphs close by `decid
 Upstream target: `Mathlib/Combinatorics/Digraph/Connectivity.lean`.
 -/
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace Digraph
 
@@ -70,5 +69,4 @@ instance [Fintype V] [DecidableEq V] [DecidableRel G.Adj] : DecidableRel G.Reach
 
 end Digraph
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

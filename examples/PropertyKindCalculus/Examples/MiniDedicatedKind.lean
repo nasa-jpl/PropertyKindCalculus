@@ -26,8 +26,7 @@ meta import PropertyKindCalculus
 -- library; `import all` gives this file the reduction without exposing them.
 import all PropertyKindCalculus.Mereology
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Examples.Dedicated
 
@@ -118,5 +117,4 @@ def wc2 : IndividualQuantity sample2 volumeFraction Int := ⟨45⟩
 
 end PropertyKindCalculus.Examples.Dedicated
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

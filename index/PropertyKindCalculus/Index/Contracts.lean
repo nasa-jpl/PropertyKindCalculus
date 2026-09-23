@@ -38,8 +38,7 @@ coverage subject, and a tagged relation is not a witness — a deliberate misdec
 not satisfy a real boundary's edge obligation.
 -/
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Index
 
@@ -128,5 +127,4 @@ def provenanceCoverageTable (scope : Scope) : MetaM IndexTable := do
 
 end PropertyKindCalculus.Index
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

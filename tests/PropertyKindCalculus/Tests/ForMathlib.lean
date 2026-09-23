@@ -9,10 +9,8 @@ module
 
 public import PropertyKindCalculus.Tests.ForMathlib.Graph
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

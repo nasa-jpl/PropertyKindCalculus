@@ -33,8 +33,7 @@ meta import PropertyKindCalculus.Rubrics
 public import PropertyKindCalculus.BoundaryAudit
 meta import PropertyKindCalculus.BoundaryAudit
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Tests.Rubrics
 
@@ -172,5 +171,4 @@ attribute [rubric "M99"] probeEdge
 
 end PropertyKindCalculus.Tests.Rubrics
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

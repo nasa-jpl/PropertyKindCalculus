@@ -23,8 +23,7 @@ meta import PropertyKindCalculus
 public import PropertyKindCalculus.Uncertainty.QuasiExtensive
 meta import PropertyKindCalculus.Uncertainty.QuasiExtensive
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Tests.QuasiExtensive
 
@@ -83,5 +82,4 @@ theorem r9_quasi_zero_is_extensive : Extensive partMassKind partMass :=
 
 end PropertyKindCalculus.Tests.QuasiExtensive
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

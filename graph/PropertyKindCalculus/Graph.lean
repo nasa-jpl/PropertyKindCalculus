@@ -15,10 +15,8 @@ compute, as theorems on `ForMathlib`'s directed-graph theory. See the library do
 `lakefile.lean`.
 -/
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

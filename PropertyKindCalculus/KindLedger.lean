@@ -54,7 +54,7 @@ public meta import PropertyKindCalculus.KindIncidence
 -- still checked and take `public meta import`).
 set_option compiler.relaxedMetaCheck true
 
-public section -- pkc-blanket
+public section Interface
 
 namespace PropertyKindCalculus.KindLedger
 
@@ -236,4 +236,4 @@ elab "#kind_unkinded_clean " c:ident : command => liftTermElabM do
 
 end PropertyKindCalculus.KindLedger
 
-end -- pkc-blanket
+end Interface

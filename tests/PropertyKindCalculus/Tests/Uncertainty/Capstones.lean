@@ -23,8 +23,7 @@ public import PropertyKindCalculus.Uncertainty.Adequacy.DagBound
 public import PropertyKindCalculus.Uncertainty.Adequacy.ExecBridge
 public import PropertyKindCalculus.Uncertainty.Adequacy.RefinementBridge
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Tests.UncertaintyCapstones
 
@@ -88,5 +87,4 @@ example (x : ℝ) : CarrierRefinement.round (E := FP32) x = round32 x := rfl
 
 end PropertyKindCalculus.Tests.UncertaintyCapstones
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

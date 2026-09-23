@@ -46,8 +46,7 @@ module
 public import PropertyKindCalculus.Torch.Paradigm.TapeCarrier
 public import Std.Data.HashMap
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 open Spec TorchLean
 open Runtime.Autograd
@@ -98,5 +97,4 @@ def runBuilderCSE {s : Shape} (b : TapeBuilder s) :
 
 end PropertyKindCalculus.Paradigm.TapeCSE
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

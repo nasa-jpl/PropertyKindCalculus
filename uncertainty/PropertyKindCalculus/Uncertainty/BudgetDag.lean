@@ -38,8 +38,7 @@ module
 public import PropertyKindCalculus.Uncertainty.Budget
 public import PropertyKindCalculus.Uncertainty.UncertainQuantity
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Uncertainty
 
@@ -255,5 +254,4 @@ theorem BudgetExpr.propagateQ_value_eq_valueQ {R} [NumCarrier R] {k : KindOfProp
 
 end PropertyKindCalculus.Uncertainty
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

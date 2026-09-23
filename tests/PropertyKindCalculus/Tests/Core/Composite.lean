@@ -28,8 +28,7 @@ meta import PropertyKindCalculus
 -- library; `import all` gives this file the reduction without exposing them.
 import all PropertyKindCalculus.Bounds
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Tests.Composite
 
@@ -232,5 +231,4 @@ theorem pair_frequency_assembles_wrongly :
 
 end PropertyKindCalculus.Tests.Composite
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

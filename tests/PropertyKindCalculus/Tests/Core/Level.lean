@@ -29,8 +29,7 @@ meta import PropertyKindCalculus
 import all PropertyKindCalculus.Level
 import all PropertyKindCalculus.Quantity
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Tests.Level
 
@@ -139,5 +138,4 @@ example : eFieldLevel.toKind ≠ dBm.toKind := by decide
 
 end PropertyKindCalculus.Tests.Level
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

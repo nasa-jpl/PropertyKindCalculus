@@ -22,8 +22,7 @@ module
 
 public import PropertyKindCalculus.KindIncidence
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Tests.KindRelation
 
@@ -368,5 +367,4 @@ info: kind relations — 15 theorem edge(s), 10 violated
 
 end PropertyKindCalculus.Tests.KindRelation
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

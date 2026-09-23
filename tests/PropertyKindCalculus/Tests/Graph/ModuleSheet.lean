@@ -20,8 +20,7 @@ meta import PropertyKindCalculus.Graph.ModuleSheet
 public import PropertyKindCalculus.Tests.Core.ModuleCard
 meta import PropertyKindCalculus.Tests.Core.ModuleCard
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Tests.ModuleSheet
 
@@ -108,5 +107,4 @@ def tbl (id : String) : IndexTable :=
 
 end PropertyKindCalculus.Tests.ModuleSheet
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

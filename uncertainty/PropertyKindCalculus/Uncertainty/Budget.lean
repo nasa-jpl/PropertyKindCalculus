@@ -41,8 +41,7 @@ public import PropertyKindCalculus.OperatorTable
 public import PropertyKindCalculus.Paradigm.NumCarrier
 public import PropertyKindCalculus.Uncertainty.InputDist
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Uncertainty
 
@@ -100,5 +99,4 @@ def combinedQ {kO : KindOfProperty} (contribs : List (Quantity kO R)) : Quantity
 
 end PropertyKindCalculus.Uncertainty
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

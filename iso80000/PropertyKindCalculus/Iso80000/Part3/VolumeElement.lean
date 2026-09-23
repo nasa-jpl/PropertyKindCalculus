@@ -43,8 +43,7 @@ public import Mathlib.MeasureTheory.Measure.Prod
 public import Mathlib.MeasureTheory.Measure.Lebesgue.Basic
 public import PropertyKindCalculus.Iso80000.Part3
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Iso80000.Part3.VolumeElement
 
@@ -143,5 +142,4 @@ abbrev kind : DimensionedKind := Part3.volume
 
 end PropertyKindCalculus.Iso80000.Part3.VolumeElement
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

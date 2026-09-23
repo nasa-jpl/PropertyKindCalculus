@@ -46,7 +46,7 @@ public import PropertyKindCalculus.OperatorTable
 -- without exposing them to every consumer.
 import all PropertyKindCalculus.IndividualQuantity
 
-public section -- pkc-blanket
+public section Interface
 
 namespace PropertyKindCalculus
 
@@ -243,4 +243,4 @@ end OperatorTable
 
 end PropertyKindCalculus
 
-end -- pkc-blanket
+end Interface

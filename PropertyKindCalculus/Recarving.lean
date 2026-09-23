@@ -34,7 +34,7 @@ public import PropertyKindCalculus.Extensivity
 -- gives this module the reduction without exposing them to every consumer.
 import all PropertyKindCalculus.Mereology
 
-public section -- pkc-blanket
+public section Interface
 
 namespace PropertyKindCalculus
 
@@ -154,4 +154,4 @@ theorem count_sortal_ne :
 
 end PropertyKindCalculus
 
-end -- pkc-blanket
+end Interface

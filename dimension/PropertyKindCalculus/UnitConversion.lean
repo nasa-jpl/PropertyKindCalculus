@@ -31,8 +31,7 @@ public import Physlib.Units.ParametricUnits
 -- library; `import all` gives this file the reduction without exposing them.
 import all PropertyKindCalculus.UnitPrefix
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.PrefixedUnit
 
@@ -124,5 +123,4 @@ theorem dimScale_toUnitScale_single {B : Type} [DimensionBasis B] [Fintype B] [D
 
 end PropertyKindCalculus.PrefixedUnit
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

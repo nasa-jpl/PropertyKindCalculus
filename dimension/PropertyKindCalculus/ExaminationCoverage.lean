@@ -68,8 +68,7 @@ public import PropertyKindCalculus.AuditReceipt
 -- still checked and take `public meta import`).
 set_option compiler.relaxedMetaCheck true
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.ExaminationCoverage
 
@@ -264,5 +263,4 @@ def examinationTable (scope : Index.Scope := #[]) : MetaM IndexTable := withHarv
 
 end PropertyKindCalculus.ExaminationCoverage
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

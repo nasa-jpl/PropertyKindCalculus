@@ -26,8 +26,7 @@ and the pinned `#kind_relations` survey is their gate at scale. A row here reads
 the declaration says, exactly as the crossings table reads what the registry says.
 -/
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Index
 
@@ -76,5 +75,4 @@ def relationsTable (scope : Scope) : MetaM IndexTable := do
 
 end PropertyKindCalculus.Index
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

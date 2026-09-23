@@ -30,8 +30,7 @@ module
 
 public import PropertyKindCalculus.FrameReal
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.DimensionExamples.Frames
 
@@ -102,5 +101,4 @@ example (m : InFrame lab .scalar velocity ℝ) :
 
 end PropertyKindCalculus.DimensionExamples.Frames
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

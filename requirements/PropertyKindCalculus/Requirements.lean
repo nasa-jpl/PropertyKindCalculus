@@ -38,10 +38,8 @@ public import PropertyKindCalculus.Requirements.ExampleAnnotations
 public import PropertyKindCalculus.Requirements.RenderingAnnotations
 public import PropertyKindCalculus.Requirements.ForPhysLibAnnotations
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

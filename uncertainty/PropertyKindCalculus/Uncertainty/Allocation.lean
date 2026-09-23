@@ -27,8 +27,7 @@ module
 
 public import PropertyKindCalculus.Uncertainty.InputDist
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Uncertainty.Allocation
 
@@ -124,5 +123,4 @@ def allocateFromTerms (total : Nat) (terms : List (Float × MomentData Float))
 
 end PropertyKindCalculus.Uncertainty.Allocation
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

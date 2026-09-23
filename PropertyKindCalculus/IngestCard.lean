@@ -38,7 +38,7 @@ public import PropertyKindCalculus.CertifiedIngest
 -- still checked and take `public meta import`).
 set_option compiler.relaxedMetaCheck true
 
-public section -- pkc-blanket
+public section Interface
 
 namespace PropertyKindCalculus.IngestCard
 
@@ -199,4 +199,4 @@ def stageCard (s : StageSpec) : Except String String := do
 
 end PropertyKindCalculus.IngestCard
 
-end -- pkc-blanket
+end Interface

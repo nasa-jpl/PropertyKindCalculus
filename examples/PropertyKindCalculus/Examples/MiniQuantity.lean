@@ -13,8 +13,7 @@ module
 public import PropertyKindCalculus.Quantity
 meta import PropertyKindCalculus.Quantity
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Examples.MiniQuantity
 
@@ -97,5 +96,4 @@ example : massA.magnitude = 2 := by decide
 
 end PropertyKindCalculus.Examples.MiniQuantity
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

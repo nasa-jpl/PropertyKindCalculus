@@ -28,8 +28,7 @@ module
 public import PropertyKindCalculus.Uncertainty.Adequacy.Fp32Grounding
 public import PropertyKindCalculus.Uncertainty.Adequacy.Sterbenz32
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.UncertaintyExamples.AdequacySterbenz32
 
@@ -82,5 +81,4 @@ theorem flx_model_sterbenz : FLX 24 (3 - 2) :=
 
 end PropertyKindCalculus.UncertaintyExamples.AdequacySterbenz32
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

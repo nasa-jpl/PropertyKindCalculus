@@ -57,12 +57,9 @@ public import NN.Proofs.Autograd.Runtime.Link.FDeriv
 public import NN.Proofs.Autograd.FDeriv.PrimitiveCoordinates
 public import NN.Runtime.Autograd.Engine.Core
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public noncomputable section Blanket
 
 open Spec TorchLean TorchLean.Tensor Proofs Proofs.Autograd
-
-noncomputable section
 
 namespace PRSim
 
@@ -771,6 +768,4 @@ theorem direct_PR_soundness_compiled_at {Γ ss : List Shape}
 
 end PRSim
 
-end  -- pkc-blanket-scope
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

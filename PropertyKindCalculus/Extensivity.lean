@@ -56,7 +56,7 @@ public import PropertyKindCalculus.Mereology
 import all PropertyKindCalculus.Mereology
 public import PropertyKindCalculus.PropertyValue
 
-public section -- pkc-blanket
+public section Interface
 
 namespace PropertyKindCalculus
 
@@ -568,4 +568,4 @@ theorem angularMomentumMeasurement_extensiveAbout {O : Type u} (w x y vx vy : O 
 
 end PropertyKindCalculus
 
-end -- pkc-blanket
+end Interface

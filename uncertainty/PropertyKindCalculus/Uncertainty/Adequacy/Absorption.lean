@@ -25,8 +25,7 @@ module
 
 public import PropertyKindCalculus.Uncertainty.Adequacy.Grid
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Uncertainty.Adequacy
 
@@ -84,5 +83,4 @@ theorem resolve {u x y : ℝ} (hu : 0 < u) (hx : OnGrid u x)
 
 end PropertyKindCalculus.Uncertainty.Adequacy
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

@@ -38,8 +38,7 @@ module
 public import PropertyKindCalculus.Uncertainty.Experiments.PRSimulation
 public import PropertyKindCalculus.Uncertainty.Experiments.EagerProvenance
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.UncertaintyExamples.AutogradDirectSim
 
@@ -1048,5 +1047,4 @@ end
 
 end PropertyKindCalculus.UncertaintyExamples.AutogradDirectSim
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

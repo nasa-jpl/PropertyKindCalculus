@@ -25,8 +25,7 @@ module
 
 public import PropertyKindCalculus.Torch.Paradigm.TapeHom
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Tests.TapeHom
 
@@ -125,5 +124,4 @@ example (x y : Tensor Float s) (hx : Evaluates (leafT x "x") x) (hy : Evaluates 
 
 end PropertyKindCalculus.Tests.TapeHom
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

@@ -55,8 +55,7 @@ public import PropertyKindCalculus.Index
 import all Init.Prelude
 import all PropertyKindCalculus.Provenance
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 /--
 info: kind contracts — 4 contract(s), 2 exempted
@@ -126,5 +125,4 @@ no uncertainty budget | wcmRetrievalBoundary | wcmRetrieveQ/result : soilMoistur
 #guard_msgs (whitespace := lax) in
 #pkc_index "provenance-coverage" PropertyKindCalculus.UncertaintyExamples
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

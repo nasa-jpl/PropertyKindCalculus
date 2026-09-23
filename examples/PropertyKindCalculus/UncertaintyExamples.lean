@@ -124,10 +124,8 @@ public import PropertyKindCalculus.UncertaintyExamples.BudgetDagDensity
 public import PropertyKindCalculus.UncertaintyExamples.Coverage
 public import PropertyKindCalculus.UncertaintyExamples.Audit
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

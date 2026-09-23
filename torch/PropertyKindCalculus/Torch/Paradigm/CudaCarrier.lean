@@ -28,8 +28,7 @@ public import NN.Tensor
 public import NN.Runtime.Autograd.Engine.Cuda.Buffer
 public import NN.Runtime.Autograd.Engine.Cuda.Kernels
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 open Spec TorchLean
 open PropertyKindCalculus.Paradigm (NumCarrier)
@@ -121,5 +120,4 @@ exact twin of a composed `exp((c·x)·y)` (e.g. `avs_batch.attenuation`), not me
 end CudaT
 end PropertyKindCalculus.Paradigm.CudaCarrier
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

@@ -39,8 +39,7 @@ module
 
 public import PropertyKindCalculus.Uncertainty.Ladder
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Uncertainty
 
@@ -424,5 +423,4 @@ theorem cumulantsOf_combinedDeviation (xs : List SensitizedInput)
 
 end PropertyKindCalculus.Uncertainty
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

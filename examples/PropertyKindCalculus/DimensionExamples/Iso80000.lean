@@ -25,10 +25,8 @@ public import PropertyKindCalculus.DimensionExamples.Iso80000.Part11
 public import PropertyKindCalculus.DimensionExamples.Iso80000.Part12
 public import PropertyKindCalculus.DimensionExamples.Iso80000.Part13
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

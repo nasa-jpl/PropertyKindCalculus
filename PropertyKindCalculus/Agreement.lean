@@ -44,7 +44,7 @@ module
 public import PropertyKindCalculus.Bounds
 public import PropertyKindCalculus.QuantityClassification
 
-public section -- pkc-blanket
+public section Interface
 
 namespace PropertyKindCalculus
 
@@ -116,4 +116,4 @@ fails, beside the value that missed it. -/
 
 end PropertyKindCalculus
 
-end -- pkc-blanket
+end Interface

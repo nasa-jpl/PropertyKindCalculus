@@ -41,8 +41,7 @@ public import Mathlib.Analysis.SpecialFunctions.Pow.Real
 public import Mathlib.Analysis.SpecialFunctions.Sqrt
 public import Mathlib.Algebra.Order.Round
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 open Dimension
 
@@ -321,5 +320,4 @@ theorem reynolds_ne_mach_but_both_dimensionless :
 
 end PropertyKindCalculus
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

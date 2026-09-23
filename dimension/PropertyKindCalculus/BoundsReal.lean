@@ -27,8 +27,7 @@ public import Mathlib.Order.Interval.Set.Basic
 -- library; `import all` gives this file the reduction without exposing them.
 import all PropertyKindCalculus.Bounds
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.IccQ
 
@@ -51,5 +50,4 @@ theorem mem_toIcc [Preorder R] (I : IccQ k R) (x : Quantity k R) :
 
 end PropertyKindCalculus.IccQ
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

@@ -35,8 +35,7 @@ meta import PropertyKindCalculus.Uncertainty.Adequacy.Soundness
 public import PropertyKindCalculus.UncertaintyExamples.DegenhardtFictive
 meta import PropertyKindCalculus.UncertaintyExamples.DegenhardtFictive
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.UncertaintyExamples.AdequacyCoupling
 
@@ -194,5 +193,4 @@ theorem contribution_absorbed_at_scale :
 
 end PropertyKindCalculus.UncertaintyExamples.AdequacyCoupling
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

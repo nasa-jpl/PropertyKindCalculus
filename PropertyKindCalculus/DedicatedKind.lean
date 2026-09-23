@@ -51,7 +51,7 @@ module
 public import PropertyKindCalculus.Foundations
 public import PropertyKindCalculus.Kind
 
-public section -- pkc-blanket
+public section Interface
 
 namespace PropertyKindCalculus
 
@@ -150,4 +150,4 @@ end DedicatedKind
 
 end PropertyKindCalculus
 
-end -- pkc-blanket
+end Interface

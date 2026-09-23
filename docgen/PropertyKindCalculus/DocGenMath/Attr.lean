@@ -51,8 +51,7 @@ assert algebra: a literal override and a derivation are mutually exclusive, and 
 together.
 -/
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.DocGenMath
 
@@ -288,5 +287,4 @@ initialize registerBuiltinAttribute {
 
 end PropertyKindCalculus.DocGenMath
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

@@ -38,8 +38,7 @@ public import NN.Floats.FP32.Error
 public import NN.Floats.FP32.Sterbenz
 public import FloatLib.Floats.Interval.Quantized
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Uncertainty.Adequacy
 
@@ -159,5 +158,4 @@ theorem sub32_exact_of_sterbenz {a b : FP32}
 
 end PropertyKindCalculus.Uncertainty.Adequacy
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

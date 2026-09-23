@@ -21,10 +21,8 @@ The root of the self-index library. See `PropertyKindCalculus.Index.Basic` for w
 and why it is separate from the documents that render it.
 -/
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

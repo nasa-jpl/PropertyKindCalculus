@@ -66,7 +66,7 @@ module
 
 public import PropertyKindCalculus.QuantityClassification
 
-public section -- pkc-blanket
+public section Interface
 
 namespace PropertyKindCalculus
 
@@ -501,4 +501,4 @@ instance instMathCarrierExtFloat : MathCarrierExt Float where
 
 end PropertyKindCalculus
 
-end -- pkc-blanket
+end Interface

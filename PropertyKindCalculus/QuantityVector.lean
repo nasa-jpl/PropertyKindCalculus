@@ -41,7 +41,7 @@ public import PropertyKindCalculus.Quantity
 -- `Quantity.mul` takes, which lives with the classification layer.
 public import PropertyKindCalculus.QuantityClassification
 
-public section -- pkc-blanket
+public section Interface
 
 namespace PropertyKindCalculus
 
@@ -201,4 +201,4 @@ theorem Quantity.smulK_isSMul {R V : Type} [SMul R V] [ScalarCarrier R]
 
 end PropertyKindCalculus
 
-end -- pkc-blanket
+end Interface

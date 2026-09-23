@@ -44,8 +44,7 @@ computation runs through the same `Digraph.Reachable` instances a probe would `d
 the report and any kernel statement about the same value cannot disagree.
 -/
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus
 
@@ -483,5 +482,4 @@ elab "#kind_scc_d2" dir:str nss:ident* : command => liftTermElabM do
 
 end PropertyKindCalculus
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

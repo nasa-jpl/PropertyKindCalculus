@@ -34,8 +34,7 @@ public import PropertyKindCalculus.Bounds
 public import PropertyKindCalculus.BoundaryAudit
 meta import PropertyKindCalculus.BoundaryAudit   -- its `@[carrierVocab]` attribute is registered at import
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 open Spec TorchLean
 open PropertyKindCalculus.Paradigm (NumCarrier)
@@ -247,5 +246,4 @@ def runShardedAuto (shape : Platform.MemShape) (total : Quantity Platform.elemen
 
 end PropertyKindCalculus.Paradigm
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

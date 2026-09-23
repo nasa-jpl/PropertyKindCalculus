@@ -29,8 +29,7 @@ meta import PropertyKindCalculus.KindLedger
 public import PropertyKindCalculus.Requirements.Attributes
 meta import PropertyKindCalculus.Requirements.Attributes
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus
 
@@ -314,5 +313,4 @@ attribute [requirement "R13" specifies "the licensed energetic combination: inco
 
 end PropertyKindCalculus
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

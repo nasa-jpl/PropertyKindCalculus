@@ -20,8 +20,7 @@ module
 public import PropertyKindCalculus.IngestCard
 meta import PropertyKindCalculus.IngestCard
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Tests.IngestCard
 
@@ -128,5 +127,4 @@ def stagePage : String := okOrError (stageCard prep)
 
 end PropertyKindCalculus.Tests.IngestCard
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

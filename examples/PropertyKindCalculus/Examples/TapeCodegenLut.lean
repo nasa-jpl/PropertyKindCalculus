@@ -38,8 +38,7 @@ module
 public import PropertyKindCalculus.Torch.Paradigm.TapeCodegen
 meta import PropertyKindCalculus.Torch.Paradigm.TapeCodegen
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 open Spec TorchLean
 open Runtime.Autograd (Tape TapeM)
@@ -207,5 +206,4 @@ def lutMissingTableRejected : Bool :=
 
 end PropertyKindCalculus.Examples.TapeCodegenLut
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

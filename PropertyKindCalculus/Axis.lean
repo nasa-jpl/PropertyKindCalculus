@@ -75,7 +75,7 @@ public import PropertyKindCalculus.Bounds
 -- gives this module the reduction without exposing them to every consumer.
 import all PropertyKindCalculus.Bounds
 
-public section -- pkc-blanket
+public section Interface
 
 namespace PropertyKindCalculus
 
@@ -290,4 +290,4 @@ end Extent
 
 end PropertyKindCalculus
 
-end -- pkc-blanket
+end Interface

@@ -16,8 +16,7 @@ public import PropertyKindCalculus.UnitConversion
 import all PropertyKindCalculus.UnitPrefix
 import all PropertyKindCalculus.Unit
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Examples.UnitConversion
 
@@ -60,5 +59,4 @@ theorem kib_mib_real_roundtrip (x : ℝ) :
 
 end PropertyKindCalculus.Examples.UnitConversion
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

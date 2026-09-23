@@ -20,8 +20,7 @@ Upstream target: `Mathlib/Logic/Relation.lean` (or a `Decidable` satellite of it
 has no decidability instance for either closure.
 -/
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace Relation
 
@@ -112,5 +111,4 @@ instance : DecidableRel (TransGen r) := fun a c =>
 
 end Relation
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

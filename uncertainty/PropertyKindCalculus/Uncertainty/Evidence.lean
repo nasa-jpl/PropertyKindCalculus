@@ -72,8 +72,7 @@ public import PropertyKindCalculus.Uncertainty.Roles
 public import PropertyKindCalculus.Uncertainty.Budget
 public import PropertyKindCalculus.Uncertainty.Carriers
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Uncertainty
 
@@ -388,5 +387,4 @@ and pooling would replace the record rather than add to it"
 
 end PropertyKindCalculus.Uncertainty
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

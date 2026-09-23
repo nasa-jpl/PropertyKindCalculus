@@ -30,8 +30,7 @@ public import PropertyKindCalculus.Uncertainty.Ssprc
 public import PropertyKindCalculus.Uncertainty.Carriers
 public import PropertyKindCalculus.Torch.Paradigm.CudaCarrier
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Uncertainty.SsprcBatched
 
@@ -88,5 +87,4 @@ def run (model : BatchModel) (inputs : List (InputDist Float)) (ns : List Nat) :
 
 end PropertyKindCalculus.Uncertainty.SsprcBatched
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

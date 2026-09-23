@@ -20,8 +20,7 @@ module
 public import PropertyKindCalculus.Uncertainty.Convolution
 public import PropertyKindCalculus.Uncertainty
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.UncertaintyExamples.SsprcNesting
 
@@ -117,5 +116,4 @@ example : (willinkCumulants (termsOf xs)).kappa2 = 41 ∧ (willinkCumulants (ter
 
 end PropertyKindCalculus.UncertaintyExamples.SsprcNesting
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

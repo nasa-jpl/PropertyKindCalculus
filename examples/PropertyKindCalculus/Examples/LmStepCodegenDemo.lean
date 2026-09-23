@@ -36,8 +36,7 @@ meta import PropertyKindCalculus.Torch.Paradigm.TapeBatchCarrier
 public import PropertyKindCalculus.Examples.AvsForward
 meta import PropertyKindCalculus.Examples.AvsForward
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 open Spec TorchLean
 open Runtime.Autograd (Tape TapeM)
@@ -308,5 +307,4 @@ def report : IO Unit := do
 
 end PropertyKindCalculus.Examples.LmStepCodegenDemo
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

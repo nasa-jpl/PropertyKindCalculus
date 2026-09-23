@@ -62,8 +62,7 @@ module
 
 public import PropertyKindCalculus.Uncertainty.Adequacy.Fp32Grounding
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Uncertainty.Adequacy
 
@@ -490,5 +489,4 @@ theorem dag_fp32_box_exact_of_exactRepresentable (e : Expr) (ρ σ : ℕ → FP3
 
 end PropertyKindCalculus.Uncertainty.Adequacy
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

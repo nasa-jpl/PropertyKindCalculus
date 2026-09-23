@@ -35,8 +35,7 @@ public import PropertyKindCalculus.AggregationLaws
 -- library; `import all` gives this file the reduction without exposing them.
 import all PropertyKindCalculus.InterfaceLedger
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.DimensionExamples.RoverExtensivity
 
@@ -317,5 +316,4 @@ theorem coarse_cannot_tell :
 
 end PropertyKindCalculus.DimensionExamples.RoverExtensivity
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

@@ -158,10 +158,8 @@ public import PropertyKindCalculus.Iso80000.Part13
 public import PropertyKindCalculus.Iso80000.Part13.DefiningRelations
 public import PropertyKindCalculus.Iso80000.IsqLift
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

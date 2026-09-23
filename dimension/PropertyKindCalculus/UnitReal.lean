@@ -30,8 +30,7 @@ public import Mathlib.Tactic.Ring
 -- library; `import all` gives this file the reduction without exposing them.
 import all PropertyKindCalculus.Unit
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus
 
@@ -139,5 +138,4 @@ end RealUnit
 
 end PropertyKindCalculus
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

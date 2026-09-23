@@ -29,8 +29,7 @@ module
 public import PropertyKindCalculus.Uncertainty.Adequacy.ExecBridge
 meta import PropertyKindCalculus.Uncertainty.Adequacy.ExecBridge
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.UncertaintyExamples.AdequacyExecBridge
 
@@ -80,5 +79,4 @@ theorem exec_verdict {s δ : ExecFloat.Binary 8 23} {ds dδ : FloatLib.Numerics.
 
 end PropertyKindCalculus.UncertaintyExamples.AdequacyExecBridge
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

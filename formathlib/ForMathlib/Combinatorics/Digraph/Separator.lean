@@ -17,8 +17,7 @@ minimum separator exists) is a genuinely harder theorem and is deliberately not 
 Upstream target: `Mathlib/Combinatorics/Digraph/Separator.lean`.
 -/
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace Digraph
 
@@ -73,5 +72,4 @@ theorem IsSeparator.card_le_of_disjoint {ι : Type*} (hS : G.IsSeparator A B S)
 
 end Digraph
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

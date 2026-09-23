@@ -35,8 +35,7 @@ public import PropertyKindCalculus.Quantity
 public import PropertyKindCalculus.QuantityClassification
 public import PropertyKindCalculus.Bounds
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Uncertainty
 
@@ -180,5 +179,4 @@ def dofUnbounded : Quantity degreesOfFreedom Float := ⟨1.0 / 0.0⟩
 
 end PropertyKindCalculus.Uncertainty
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

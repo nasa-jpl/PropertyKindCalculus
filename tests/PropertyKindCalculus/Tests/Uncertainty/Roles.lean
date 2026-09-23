@@ -20,8 +20,7 @@ meta import PropertyKindCalculus.Uncertainty.Roles
 public import PropertyKindCalculus.Uncertainty.Conformity
 meta import PropertyKindCalculus.Uncertainty.Conformity
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Tests.Roles
 
@@ -155,5 +154,4 @@ def tol : Conformity.Tolerance K Float := Conformity.Tolerance.atMost ‚ü®600.0‚ü
 
 end PropertyKindCalculus.Tests.Roles
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

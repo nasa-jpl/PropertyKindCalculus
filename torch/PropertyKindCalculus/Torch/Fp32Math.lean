@@ -30,8 +30,7 @@ public import PropertyKindCalculus.Torch.Fp32
 public import PropertyKindCalculus.QuantityFunction
 public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Transcendentals
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 open TorchLean.Floats          -- `FP32`
 open FloatLib.Numerics (MathFunctions)
@@ -71,5 +70,4 @@ instance instMathCarrierIEEE32 : MathCarrier IEEE32Exec where
 
 end PropertyKindCalculus
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

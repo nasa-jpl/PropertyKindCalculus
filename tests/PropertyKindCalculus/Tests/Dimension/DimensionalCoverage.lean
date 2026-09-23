@@ -18,8 +18,7 @@ module
 
 public import PropertyKindCalculus.DimensionalCoverage
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Tests.Dimension.Coverage
 
@@ -131,5 +130,4 @@ end Clean
 
 end PropertyKindCalculus.Tests.Dimension.Coverage
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

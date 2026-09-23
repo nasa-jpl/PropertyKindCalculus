@@ -67,7 +67,7 @@ module
 
 public import PropertyKindCalculus.Quantity
 
-public section -- pkc-blanket
+public section Interface
 
 namespace PropertyKindCalculus
 
@@ -263,4 +263,4 @@ theorem Quantity.eq_recip_of_isReciprocal [Inv R] {k₁ k} (h : ReciprocalKind k
 
 end PropertyKindCalculus
 
-end -- pkc-blanket
+end Interface

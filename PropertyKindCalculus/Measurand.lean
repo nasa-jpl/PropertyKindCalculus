@@ -42,7 +42,7 @@ module
 
 public import PropertyKindCalculus.QuantityFunction
 
-public section -- pkc-blanket
+public section Interface
 
 namespace PropertyKindCalculus
 
@@ -91,4 +91,4 @@ end Measurand
 
 end PropertyKindCalculus
 
-end -- pkc-blanket
+end Interface

@@ -19,8 +19,7 @@ public import PropertyKindCalculus.Uncertainty.BoundaryBudget
 public import PropertyKindCalculus.Tests.Core.KindIncidence
 public meta import PropertyKindCalculus.Tests.Core.KindIncidence
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Tests.BoundaryBudget
 
@@ -100,5 +99,4 @@ error: the budget 'PropertyKindCalculus.Tests.BoundaryBudget.budgetOnNoPort' nam
 
 end PropertyKindCalculus.Tests.BoundaryBudget
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

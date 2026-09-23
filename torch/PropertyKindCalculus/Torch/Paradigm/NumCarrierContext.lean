@@ -37,8 +37,7 @@ public import NN.Spec.Core.Context
 -- correctness proofs downstream instantiate.
 public import NN.Spec.Core.Context.Real
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Paradigm
 
@@ -80,5 +79,4 @@ instance instNumCarrierOfContext {α : Type} [Context α] : NumCarrier α where
 
 end PropertyKindCalculus.Paradigm
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

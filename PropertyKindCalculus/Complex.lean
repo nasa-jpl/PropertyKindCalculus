@@ -83,7 +83,7 @@ module
 
 public import PropertyKindCalculus.QuantityFunction
 
-public section -- pkc-blanket
+public section Interface
 
 namespace PropertyKindCalculus
 
@@ -284,4 +284,4 @@ named carrier operation belongs. -/
 
 end PropertyKindCalculus
 
-end -- pkc-blanket
+end Interface

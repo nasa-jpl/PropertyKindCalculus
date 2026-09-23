@@ -29,8 +29,7 @@ module
 
 public import PropertyKindCalculus.QuantityVector
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Examples.MiniVectorQuantity
 
@@ -116,5 +115,4 @@ instance : Mul (Fin 3 → Int) := ⟨fun v w i => v i * w i⟩
 
 end PropertyKindCalculus.Examples.MiniVectorQuantity
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

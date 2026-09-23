@@ -45,8 +45,7 @@ meta import PropertyKindCalculus.Examples.TapeCseStructural
 public import PropertyKindCalculus.Examples.TapeCodegenEndToEnd
 meta import PropertyKindCalculus.Examples.TapeCodegenEndToEnd
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 open Spec TorchLean TorchLean.Tensor
 open Runtime.Autograd (Tape Node)
@@ -338,5 +337,4 @@ def demoEnv : String → Float := fun s => if s = "a" then 2.0 else if s = "b" t
 
 end PropertyKindCalculus.Examples.TapeCseDenotation
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

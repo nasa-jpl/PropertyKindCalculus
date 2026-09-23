@@ -19,8 +19,7 @@ module
 
 public import PropertyKindCalculus.Uncertainty.Coverage
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.UncertaintyExamples.Coverage
 
@@ -43,5 +42,4 @@ theorem full_support_coverage :
 
 end PropertyKindCalculus.UncertaintyExamples.Coverage
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

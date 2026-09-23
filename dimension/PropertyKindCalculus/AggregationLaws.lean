@@ -44,8 +44,7 @@ public import Mathlib.Tactic.Ring
 -- library; `import all` gives this file the reduction without exposing them.
 import all PropertyKindCalculus.Extensivity
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus
 
@@ -201,5 +200,4 @@ theorem angularMomentumMeasurement_transports {O : Type u} (w x y vx vy : O → 
 
 end PropertyKindCalculus
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

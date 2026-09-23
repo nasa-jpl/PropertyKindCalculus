@@ -21,8 +21,7 @@ public import PropertyKindCalculus
 import all PropertyKindCalculus.Mereology
 import all PropertyKindCalculus.SpecializationLift
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Tests.SpecializationLift
 
@@ -83,5 +82,4 @@ example : Quantity.leAt (E := LenEdge) (.of_edge .width) (.of_edge .height) (.of
 
 end PropertyKindCalculus.Tests.SpecializationLift
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

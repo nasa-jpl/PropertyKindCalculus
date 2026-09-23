@@ -39,8 +39,7 @@ public import PropertyKindCalculus.Iso80000.Part10
 public import PropertyKindCalculus.QuantityClassification
 public import PropertyKindCalculus.QuantityReal
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Iso80000.Part10.DefiningRelations
 
@@ -142,5 +141,4 @@ theorem specificActivity_certificate_canonical
 
 end PropertyKindCalculus.Iso80000.Part10.DefiningRelations
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

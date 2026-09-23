@@ -29,8 +29,7 @@ appended nodes are pairwise-distinct occurrence results, so with one sweep per o
 plus one the closure either observed a fixpoint or would have outgrown its own bound.
 -/
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus
 
@@ -355,5 +354,4 @@ end Provenance
 
 end PropertyKindCalculus
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

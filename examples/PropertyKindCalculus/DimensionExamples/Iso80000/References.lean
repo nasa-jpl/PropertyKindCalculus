@@ -14,8 +14,7 @@ module
 public import PropertyKindCalculus.Iso80000
 meta import PropertyKindCalculus.Iso80000
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Examples.Iso80000.References
 
@@ -35,5 +34,4 @@ example : iec80000_13.body = StandardBody.IEC := rfl
 
 end PropertyKindCalculus.Examples.Iso80000.References
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

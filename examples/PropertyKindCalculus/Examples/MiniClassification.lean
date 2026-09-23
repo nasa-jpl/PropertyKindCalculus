@@ -20,8 +20,7 @@ module
 public import PropertyKindCalculus
 meta import PropertyKindCalculus
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Examples.Classification
 
@@ -79,5 +78,4 @@ example (q q' : Quantity length Int)
 
 end PropertyKindCalculus.Examples.Classification
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

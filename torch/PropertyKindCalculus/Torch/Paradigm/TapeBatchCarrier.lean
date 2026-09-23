@@ -22,8 +22,7 @@ module
 public import PropertyKindCalculus.Torch.Paradigm.TapeCarrier
 public import PropertyKindCalculus.Torch.Paradigm.BatchCarrier
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 open Spec TorchLean
 open Runtime.Autograd (Tape TapeM)
@@ -62,5 +61,4 @@ example : BatchCarrier.const (C := TapeBuilder) (s := Shape.scalar) 0.03 = TapeB
 
 end PropertyKindCalculus.Paradigm
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

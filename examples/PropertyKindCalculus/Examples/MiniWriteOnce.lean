@@ -31,8 +31,7 @@ meta import PropertyKindCalculus
 import all PropertyKindCalculus.Frame
 import all PropertyKindCalculus.Bounds
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Examples.MiniWriteOnce
 
@@ -220,5 +219,4 @@ theorem cholRowQ_magnitudes (a b c : Quantity reflectivity Float) :
 
 end PropertyKindCalculus.Examples.MiniWriteOnce
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

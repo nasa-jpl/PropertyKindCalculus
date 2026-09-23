@@ -35,8 +35,7 @@ public import Mathlib.Probability.Distributions.Uniform
 public import Mathlib.MeasureTheory.Measure.Lebesgue.Basic
 public import Mathlib.MeasureTheory.Order.Group.Lattice
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 open MeasureTheory ProbabilityTheory
 open scoped MeasureTheory ProbabilityTheory ENNReal
@@ -110,5 +109,4 @@ theorem isUniform_id_cond (s : Set ℝ) :
 
 end PropertyKindCalculus.Uncertainty.Coverage
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

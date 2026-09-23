@@ -61,7 +61,7 @@ public meta import PropertyKindCalculus.OperatorTable
 -- still checked and take `public meta import`).
 set_option compiler.relaxedMetaCheck true
 
-public section -- pkc-blanket
+public section Interface
 
 namespace PropertyKindCalculus.KindEdges
 
@@ -412,4 +412,4 @@ elab "#kind_edges " id:ident : command => liftTermElabM do
 
 end PropertyKindCalculus.KindEdges
 
-end -- pkc-blanket
+end Interface

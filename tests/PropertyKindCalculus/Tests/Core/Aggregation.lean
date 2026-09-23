@@ -22,8 +22,7 @@ meta import PropertyKindCalculus
 import all PropertyKindCalculus.Mereology
 import all PropertyKindCalculus.Extensivity
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Tests.Aggregation
 
@@ -363,5 +362,4 @@ theorem r9_count_total_exact (w : Bool → Nat) :
 
 end PropertyKindCalculus.Tests.Aggregation
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

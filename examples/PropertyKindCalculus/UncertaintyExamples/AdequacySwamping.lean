@@ -22,8 +22,7 @@ module
 public import PropertyKindCalculus.Uncertainty
 meta import PropertyKindCalculus.Uncertainty
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.UncertaintyExamples.AdequacySwamping
 
@@ -88,5 +87,4 @@ def separated : Adequacy := diffModel (Adequacy.input 3.0 0.001) (Adequacy.input
 
 end PropertyKindCalculus.UncertaintyExamples.AdequacySwamping
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

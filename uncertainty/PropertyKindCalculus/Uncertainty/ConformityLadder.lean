@@ -52,8 +52,7 @@ public import Mathlib.Tactic.Linarith
 public import Mathlib.Tactic.FieldSimp
 public import Mathlib.Tactic.Ring
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Uncertainty.ConformityLadder
 
@@ -203,5 +202,4 @@ theorem acceptanceLimit_le_of_floor (L : ℝ) {k uFloor u : ℝ} (hk : 0 ≤ k) 
 
 end PropertyKindCalculus.Uncertainty.ConformityLadder
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

@@ -24,8 +24,7 @@ meta import PropertyKindCalculus.Uncertainty.Sensitivity
 public import PropertyKindCalculus.UncertaintyExamples.DegenhardtFictive
 meta import PropertyKindCalculus.UncertaintyExamples.DegenhardtFictive
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.UncertaintyExamples.DegenhardtSensitivity
 
@@ -68,5 +67,4 @@ def gumAuto : Float :=
 
 end PropertyKindCalculus.UncertaintyExamples.DegenhardtSensitivity
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

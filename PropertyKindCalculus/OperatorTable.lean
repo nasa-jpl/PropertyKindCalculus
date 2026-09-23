@@ -62,7 +62,7 @@ public import PropertyKindCalculus.IndividualQuantity
 -- gives this module the reduction without exposing them to every consumer.
 import all PropertyKindCalculus.IndividualQuantity
 
-public section -- pkc-blanket
+public section Interface
 
 namespace PropertyKindCalculus
 
@@ -231,4 +231,4 @@ ratio-scale gate discharged by autoParam for concrete kinds (exactly
 
 end PropertyKindCalculus
 
-end -- pkc-blanket
+end Interface

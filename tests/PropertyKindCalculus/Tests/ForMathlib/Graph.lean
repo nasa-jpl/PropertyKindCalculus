@@ -18,8 +18,7 @@ module
 public import ForMathlib
 meta import ForMathlib
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Tests.ForMathlib
 
@@ -153,5 +152,4 @@ Quot.sound] -/
 
 end PropertyKindCalculus.Tests.ForMathlib
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

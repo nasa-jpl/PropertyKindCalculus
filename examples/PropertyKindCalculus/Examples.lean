@@ -35,10 +35,8 @@ public import PropertyKindCalculus.Examples.MiniWriteOnce
 public import PropertyKindCalculus.Examples.AvsForward
 public import PropertyKindCalculus.Examples.DocGenMathDemo
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

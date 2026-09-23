@@ -25,8 +25,7 @@ for that reason and not because the harvest cannot see them — the blueprint, w
 renders their tables.
 -/
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 #pkc_index_page
   "The library's index of itself, generated from the environment when this module was compiled.
@@ -44,5 +43,4 @@ them — so an empty cell there means the kind supports no arithmetic at all."
    "pkc-math-config", "pkc-math-transparent"]
   PropertyKindCalculus
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

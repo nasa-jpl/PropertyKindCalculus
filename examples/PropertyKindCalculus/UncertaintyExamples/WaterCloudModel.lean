@@ -61,8 +61,7 @@ meta import PropertyKindCalculus.Index.Commands
 public import PropertyKindCalculus.DocGenMath
 meta import PropertyKindCalculus.DocGenMath
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.UncertaintyExamples.WaterCloudModel
 
@@ -804,5 +803,4 @@ end Falsification
 
 end PropertyKindCalculus.UncertaintyExamples.WaterCloudModel
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

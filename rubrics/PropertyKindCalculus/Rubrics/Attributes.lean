@@ -43,8 +43,7 @@ public import Lean
 public import PropertyKindCalculus.AuditReceipt
 public import PropertyKindCalculus.Rubrics.Catalogue
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 open Lean
 
@@ -211,5 +210,4 @@ def Conformance.tally (c : Conformance) (env : Environment) : Tally :=
 
 end PropertyKindCalculus.Rubrics
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

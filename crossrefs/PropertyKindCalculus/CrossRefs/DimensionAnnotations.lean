@@ -19,8 +19,7 @@ meta import PropertyKindCalculus.Interaction
 public import PropertyKindCalculus.CrossRefs.Attributes
 meta import PropertyKindCalculus.CrossRefs.Attributes
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus
 
@@ -33,5 +32,4 @@ attribute [vim4 "1.29" "quantity calculus" "kind interaction (KMul / KDiv)"]
 
 end PropertyKindCalculus
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

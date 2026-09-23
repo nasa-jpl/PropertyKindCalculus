@@ -26,8 +26,7 @@ public import PropertyKindCalculus.QuantityClassification
 public import PropertyKindCalculus.Iso80000.Part3.AreaElement
 public import PropertyKindCalculus.QuantityReal
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Iso80000.Part3.AreaClassification
 
@@ -81,5 +80,4 @@ theorem rectangleArea_isProduct (w h : Quantity length.kind ℝ) :
 
 end PropertyKindCalculus.Iso80000.Part3.AreaClassification
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

@@ -45,8 +45,7 @@ public import Mathlib.Tactic.NormNum
 import all PropertyKindCalculus.Frame
 import all PropertyKindCalculus.Bounds
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus
 
@@ -220,5 +219,4 @@ theorem component_not_invariant (f g : Frame) (k : KindOfProperty) :
 
 end PropertyKindCalculus
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

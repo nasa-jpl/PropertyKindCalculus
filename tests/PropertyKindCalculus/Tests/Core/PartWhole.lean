@@ -27,8 +27,7 @@ meta import PropertyKindCalculus.KindIncidence
 import all PropertyKindCalculus.Bounds
 import all PropertyKindCalculus.IndividualQuantity
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Tests.PartWhole
 
@@ -132,5 +131,4 @@ well-formed: true
 
 end PropertyKindCalculus.Tests.PartWhole
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

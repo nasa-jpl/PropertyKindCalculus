@@ -22,8 +22,7 @@ public import PropertyKindCalculus.Uncertainty.Ssprc
 public import PropertyKindCalculus.Uncertainty.InputDist
 public import PropertyKindCalculus.Uncertainty.Carriers
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Apps.SsprcBatchedParity
 
@@ -69,5 +68,4 @@ end PropertyKindCalculus.Apps.SsprcBatchedParity
 /-- The executable entry point. -/
 def main : IO UInt32 := PropertyKindCalculus.Apps.SsprcBatchedParity.main
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

@@ -29,8 +29,7 @@ public import Mathlib.Tactic.Ring
 public import Mathlib.Tactic.Linarith
 public import Mathlib.Tactic.FieldSimp
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Uncertainty.Adequacy
 
@@ -85,5 +84,4 @@ theorem abs_sub_gridRound_le {u : ℝ} (x : ℝ) (hu : 0 < u) : |gridRound u x -
 
 end PropertyKindCalculus.Uncertainty.Adequacy
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

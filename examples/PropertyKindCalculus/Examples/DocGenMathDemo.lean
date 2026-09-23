@@ -22,8 +22,7 @@ meta import PropertyKindCalculus
 public import PropertyKindCalculus.DocGenMath
 meta import PropertyKindCalculus.DocGenMath
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Examples.DocGenMathDemo
 
@@ -478,5 +477,4 @@ run_cmd do
 
 end PropertyKindCalculus.Examples.DocGenMathDemo
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

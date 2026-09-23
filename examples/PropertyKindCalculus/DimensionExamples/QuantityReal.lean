@@ -13,8 +13,7 @@ module
 public import PropertyKindCalculus.QuantityReal
 public import Mathlib.Tactic.NormNum
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Examples.QuantityReal
 
@@ -44,5 +43,4 @@ example :
 
 end PropertyKindCalculus.Examples.QuantityReal
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

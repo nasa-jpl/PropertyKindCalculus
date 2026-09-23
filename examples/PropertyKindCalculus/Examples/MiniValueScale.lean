@@ -23,8 +23,7 @@ module
 
 public import PropertyKindCalculus
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Examples.Value
 
@@ -106,5 +105,4 @@ example :
 
 end PropertyKindCalculus.Examples.Value
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

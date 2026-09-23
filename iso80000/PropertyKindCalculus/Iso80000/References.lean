@@ -15,8 +15,7 @@ corrected version (2021-11), whose base edition/date are recorded here.
 
 module
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Iso80000
 
@@ -146,5 +145,4 @@ def catalogue : List StandardRef :=
 
 end PropertyKindCalculus.Iso80000
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

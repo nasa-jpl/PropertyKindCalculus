@@ -35,8 +35,7 @@ module
 
 public import PropertyKindCalculus.Dimension
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 open Dimension
 
@@ -199,5 +198,4 @@ theorem waterContent_still_conflated :
 end AngleReform
 end PropertyKindCalculus
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

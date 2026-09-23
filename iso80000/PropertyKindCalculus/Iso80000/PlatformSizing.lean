@@ -43,8 +43,7 @@ public import PropertyKindCalculus.Iso80000.Part9
 public import PropertyKindCalculus.Iso80000.Part13
 public import PropertyKindCalculus.Paradigm.PlatformKinds
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Iso80000.PlatformSizing
 
@@ -212,5 +211,4 @@ theorem elapsed_slope_dimension_conflated :
 
 end PropertyKindCalculus.Iso80000.PlatformSizing
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

@@ -20,7 +20,7 @@ with a sort of system and the license to aggregate at it (`Composite.lean`).
 
 module
 
-public section -- pkc-blanket
+public section Interface
 
 namespace PropertyKindCalculus
 
@@ -98,4 +98,4 @@ theorem count_true_eq_joins_succ {O : Type u} (d : Decomposition O) :
 
 end PropertyKindCalculus
 
-end -- pkc-blanket
+end Interface

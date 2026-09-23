@@ -25,7 +25,7 @@ module
 
 public import PropertyKindCalculus.Kind
 
-public section -- pkc-blanket
+public section Interface
 
 namespace PropertyKindCalculus
 
@@ -93,4 +93,4 @@ end PropertyValue
 
 end PropertyKindCalculus
 
-end -- pkc-blanket
+end Interface

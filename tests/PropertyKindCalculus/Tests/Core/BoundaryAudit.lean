@@ -30,8 +30,7 @@ module
 public import PropertyKindCalculus.BoundaryAudit
 meta import PropertyKindCalculus.BoundaryAudit
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Tests.BoundaryAudit
 
@@ -275,5 +274,4 @@ end Ratcheted
 
 end PropertyKindCalculus.Tests.BoundaryAudit
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

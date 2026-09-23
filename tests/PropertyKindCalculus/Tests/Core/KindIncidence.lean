@@ -44,8 +44,7 @@ meta import PropertyKindCalculus.Tests.Core.KindEdges
 import all Init.Prelude
 import all PropertyKindCalculus.Provenance
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Tests.KindIncidence
 
@@ -2004,5 +2003,4 @@ well-formed: true
 
 end PropertyKindCalculus.Tests.KindIncidence
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

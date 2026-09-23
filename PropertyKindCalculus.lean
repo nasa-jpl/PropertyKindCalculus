@@ -48,8 +48,8 @@ public import PropertyKindCalculus.Frame
 public import PropertyKindCalculus.Provenance
 public import PropertyKindCalculus.Influence
 
-public section -- pkc-blanket
+public section Interface
 
 
 
-end -- pkc-blanket
+end Interface

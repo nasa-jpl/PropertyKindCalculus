@@ -25,8 +25,7 @@ module
 
 public import PropertyKindCalculus.Dimension
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 open Dimension
 
@@ -176,5 +175,4 @@ theorem torque_angle_work :
 
 end PropertyKindCalculus
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

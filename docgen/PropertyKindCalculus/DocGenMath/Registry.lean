@@ -41,8 +41,7 @@ Stage 3 (the pretty printer) turns each token into a `MathNotation`. Two sources
 the configuration qualification, then the heuristic.
 -/
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.DocGenMath
 
@@ -212,5 +211,4 @@ def resolveToken (env : Environment) (token : String) : MathNotation :=
 
 end PropertyKindCalculus.DocGenMath
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

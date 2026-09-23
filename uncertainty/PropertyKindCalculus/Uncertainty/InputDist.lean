@@ -23,8 +23,7 @@ module
 
 public import PropertyKindCalculus.Uncertainty.Sampling
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Uncertainty
 
@@ -85,5 +84,4 @@ def InputDist.arcsine (μ δ : Float) : InputDist Float where
 
 end PropertyKindCalculus.Uncertainty
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

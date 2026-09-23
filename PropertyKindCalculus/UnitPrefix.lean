@@ -41,7 +41,7 @@ public import PropertyKindCalculus.Unit
 -- this module the reduction without exposing them to every consumer.
 import all PropertyKindCalculus.Unit
 
-public section -- pkc-blanket
+public section Interface
 
 namespace PropertyKindCalculus
 
@@ -301,4 +301,4 @@ type as `withPrefix`, so all the conversion machinery applies uniformly. -/
 
 end PropertyKindCalculus
 
-end -- pkc-blanket
+end Interface

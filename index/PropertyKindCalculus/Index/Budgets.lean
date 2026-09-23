@@ -24,8 +24,7 @@ kind, the assembly acyclic, every term an influencing source — are `#kind_budg
 and its pinned reports are their gate.
 -/
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Index
 
@@ -55,5 +54,4 @@ def portBudgetsTable (scope : Scope) : MetaM IndexTable := do
 
 end PropertyKindCalculus.Index
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

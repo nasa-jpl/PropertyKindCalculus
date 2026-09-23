@@ -47,8 +47,7 @@ meta import PropertyKindCalculus.Uncertainty
 public import Mathlib.Tactic.NormNum
 meta import Mathlib.Tactic.NormNum
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.UncertaintyExamples.BudgetDagDensity
 
@@ -222,5 +221,4 @@ example : (densityExprR.propagateQ).unc = combinedQ densityExprR.contribsQ :=
 
 end PropertyKindCalculus.UncertaintyExamples.BudgetDagDensity
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

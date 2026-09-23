@@ -31,8 +31,7 @@ to describe it. That is a deliberate cost: one edit, in one file, next to the ot
 chapter that silently omits an annotation nobody remembered to document.
 -/
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Index
 
@@ -714,5 +713,4 @@ def summaryOverflows (env : Environment) (scope : Scope) (maxLen : Nat := 160) :
 
 end PropertyKindCalculus.Index
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

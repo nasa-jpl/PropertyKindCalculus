@@ -16,8 +16,7 @@ module
 public import PropertyKindCalculus.Examples.TapeCodegenDemo
 public import PropertyKindCalculus.Torch.Paradigm.TapeParity
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 open Spec TorchLean
 open TorchLean TorchLean.Tensor
@@ -118,5 +117,4 @@ theorem jd_faithful :
 
 end PropertyKindCalculus.Examples.TapeCodegenProof
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

@@ -42,8 +42,7 @@ meta import PropertyKindCalculus.UncertaintyExamples.Coverage
 public import PropertyKindCalculus.Requirements.Attributes
 meta import PropertyKindCalculus.Requirements.Attributes
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Uncertainty
 
@@ -149,5 +148,4 @@ attribute [requirement "R26" exemplifies "the WCM theorem edge: the closed-form 
 
 end PropertyKindCalculus.Uncertainty
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

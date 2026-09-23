@@ -21,10 +21,8 @@ public import PropertyKindCalculus.DimensionExamples.UnitConversion
 public import PropertyKindCalculus.DimensionExamples.RoverExtensivity
 public import PropertyKindCalculus.DimensionExamples.Iso80000
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

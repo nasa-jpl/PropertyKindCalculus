@@ -29,8 +29,7 @@ meta import PropertyKindCalculus.FrameReal
 -- library; `import all` gives this file the reduction without exposing them.
 import all PropertyKindCalculus.Frame
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Tests.Frames
 
@@ -143,5 +142,4 @@ reveals it. -/
 
 end PropertyKindCalculus.Tests.Frames
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

@@ -28,8 +28,7 @@ sentence transcribed into prose is a sentence that drifts.
 
 module
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Rubrics
 
@@ -631,5 +630,4 @@ def rubricById? (id : String) : Option Rubric :=
 
 end PropertyKindCalculus.Rubrics
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

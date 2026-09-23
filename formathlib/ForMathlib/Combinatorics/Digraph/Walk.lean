@@ -16,8 +16,7 @@ Upstream target: `Mathlib/Combinatorics/Digraph/Walk.lean`, seeding the walk lay
 `Digraph` stub from the mature `SimpleGraph` development.
 -/
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace Digraph
 
@@ -239,5 +238,4 @@ end Walk
 
 end Digraph
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

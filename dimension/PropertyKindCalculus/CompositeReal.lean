@@ -40,8 +40,7 @@ module
 public import PropertyKindCalculus.Composite
 public import Mathlib.Algebra.BigOperators.Finprod
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus
 
@@ -121,5 +120,4 @@ def assembleAll [Fintype P] [AddCommMonoid R] (σ : SortOfSystem) [Assembles σ 
 
 end PropertyKindCalculus
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

@@ -46,8 +46,7 @@ module
 public import PropertyKindCalculus.Uncertainty.Adequacy.DagBound
 public import PropertyKindCalculus.Torch.Fp32
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Uncertainty.Adequacy
 
@@ -137,5 +136,4 @@ theorem toSpec_box_exact (e : Expr) (ρ σ : ℕ → FP32)
 
 end PropertyKindCalculus.Uncertainty.Adequacy
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

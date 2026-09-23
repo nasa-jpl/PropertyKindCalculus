@@ -30,8 +30,7 @@ public import PropertyKindCalculus.Graph.Footprint
 public import PropertyKindCalculus.Index.Basic
 public import PropertyKindCalculus.KindEdges
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.ModuleSheet
 
@@ -220,5 +219,4 @@ def sheetTables (decl : Name) (root : Name) : MetaM (Array IndexTable) := do
 
 end PropertyKindCalculus.ModuleSheet
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

@@ -21,8 +21,7 @@ module
 
 public import PropertyKindCalculus.Uncertainty.InputDist
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Uncertainty
 
@@ -115,5 +114,4 @@ def willinkExcess (terms : List (Float × MomentData Float)) : Float :=
 
 end PropertyKindCalculus.Uncertainty
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

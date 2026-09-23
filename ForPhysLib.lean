@@ -30,10 +30,8 @@ public import ForPhysLib.Electromagnetism
 public import ForPhysLib.ClassicalMechanics
 public import ForPhysLib.Scorecard
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

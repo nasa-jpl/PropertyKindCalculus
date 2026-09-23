@@ -62,8 +62,7 @@ public import PropertyKindCalculus.Iso80000.Part9.DefiningRelations
 public import PropertyKindCalculus.QuantityClassification
 public import PropertyKindCalculus.UnitReal
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Iso80000.Part1
 
@@ -353,5 +352,4 @@ end AnnexA
 
 end PropertyKindCalculus.Iso80000.Part1
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

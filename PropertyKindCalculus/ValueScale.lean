@@ -25,7 +25,7 @@ module
 
 public import PropertyKindCalculus.PropertyValue
 
-public section -- pkc-blanket
+public section Interface
 
 namespace PropertyKindCalculus
 
@@ -104,4 +104,4 @@ theorem KindOfProperty.mem_valueScale {k : KindOfProperty} {v : PropertyValue} :
 
 end PropertyKindCalculus
 
-end -- pkc-blanket
+end Interface

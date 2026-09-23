@@ -60,7 +60,7 @@ public import PropertyKindCalculus.Quantity
 public import PropertyKindCalculus.QuantityClassification
 public import PropertyKindCalculus.QuantityVector
 
-public section -- pkc-blanket
+public section Interface
 
 namespace PropertyKindCalculus
 
@@ -277,4 +277,4 @@ end IndividualQuantity
 
 end PropertyKindCalculus
 
-end -- pkc-blanket
+end Interface

@@ -39,8 +39,7 @@ an annotation *is* the criterion (`@[pkc_math_config]`, `@[requirement]`, …) i
 already exists for another reason.
 -/
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Index
 
@@ -536,5 +535,4 @@ def paramAttrEntries {α : Type} [Inhabited α] (attr : ParametricAttribute α) 
 
 end PropertyKindCalculus.Index
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

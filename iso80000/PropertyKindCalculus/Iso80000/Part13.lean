@@ -43,8 +43,7 @@ public import PropertyKindCalculus.ScaleSpanning
 public import PropertyKindCalculus.Iso80000.References
 public import PropertyKindCalculus.Iso80000.Catalogue
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Iso80000.Part13
 
@@ -331,5 +330,4 @@ theorem iec80000_13_dim_collision :
 
 end PropertyKindCalculus.Iso80000.Part13
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

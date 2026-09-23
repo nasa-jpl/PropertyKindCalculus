@@ -13,8 +13,7 @@ module
 public import PropertyKindCalculus.CertifiedIngest
 meta import PropertyKindCalculus.CertifiedIngest
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Tests.CertifiedIngest
 
@@ -89,5 +88,4 @@ def probeContract : IngestContract where
 
 end PropertyKindCalculus.Tests.CertifiedIngest
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

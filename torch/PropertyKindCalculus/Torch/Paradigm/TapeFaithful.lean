@@ -38,8 +38,7 @@ module
 
 public import NN.Runtime.Autograd.Engine.TapeM
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 open Spec TorchLean
 open TorchLean TorchLean.Tensor
@@ -309,5 +308,4 @@ end Demo
 
 end PropertyKindCalculus.Paradigm.TapeFaithful
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

@@ -15,8 +15,7 @@ module
 
 public import PropertyKindCalculus.Uncertainty.InputDist
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Uncertainty.Mcm
 
@@ -50,5 +49,4 @@ def run (model : List Float → Float) (inputs : List (InputDist Float))
 
 end PropertyKindCalculus.Uncertainty.Mcm
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

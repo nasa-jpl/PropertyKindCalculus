@@ -43,8 +43,7 @@ module
 public import PropertyKindCalculus.Dimension
 public import Physlib.Units.ISQBridge
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 open Dimension
 
@@ -171,5 +170,4 @@ theorem electricCurrentKind_lift_dim :
 end IsqBase
 end PropertyKindCalculus
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

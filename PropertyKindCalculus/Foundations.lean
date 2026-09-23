@@ -7,7 +7,7 @@ Dybkær, *An Ontology on Property for Physical, Chemical, and Biological Systems
 
 module
 
-public section -- pkc-blanket
+public section Interface
 
 namespace PropertyKindCalculus
 
@@ -173,4 +173,4 @@ the author's to pick and to prove. -/
 
 end PropertyKindCalculus
 
-end -- pkc-blanket
+end Interface

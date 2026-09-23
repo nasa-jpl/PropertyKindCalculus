@@ -43,10 +43,8 @@ public import PropertyKindCalculus.Tests.Core.Influence
 public import PropertyKindCalculus.Tests.Core.Index
 public import PropertyKindCalculus.Tests.Core.Rubrics
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

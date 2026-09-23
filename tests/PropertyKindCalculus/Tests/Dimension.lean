@@ -18,10 +18,8 @@ public import PropertyKindCalculus.Tests.Dimension.Frames
 public import PropertyKindCalculus.Tests.Dimension.AggregationLaws
 public import PropertyKindCalculus.Tests.Dimension.UnitReal
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

@@ -29,8 +29,7 @@ meta import PropertyKindCalculus.Uncertainty.Conformity
 public import PropertyKindCalculus.Paradigm.PlatformKinds
 meta import PropertyKindCalculus.Paradigm.PlatformKinds
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Tests.Evidence
 
@@ -398,5 +397,4 @@ private def riskAtLimitFor (uv : Float) : Option (Quantity probability Float) :=
 
 end PropertyKindCalculus.Tests.Evidence
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

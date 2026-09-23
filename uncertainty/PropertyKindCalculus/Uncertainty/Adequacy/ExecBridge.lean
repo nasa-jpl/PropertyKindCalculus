@@ -44,8 +44,7 @@ public import PropertyKindCalculus.Uncertainty.Adequacy.Soundness
 public import PropertyKindCalculus.Uncertainty.Adequacy.Fp32Grounding
 public import NN.Proofs.RuntimeApprox.IEEE32.Contracts
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Uncertainty.Adequacy
 
@@ -97,5 +96,4 @@ theorem exec_verdict_sound_of_isFinite {s δ : ExecFloat.Binary 8 23}
 
 end PropertyKindCalculus.Uncertainty.Adequacy
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

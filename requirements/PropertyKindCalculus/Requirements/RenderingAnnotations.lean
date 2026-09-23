@@ -23,8 +23,7 @@ meta import PropertyKindCalculus.DocGenMath
 public import PropertyKindCalculus.Requirements.Attributes
 meta import PropertyKindCalculus.Requirements.Attributes
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.DocGenMath
 
@@ -39,5 +38,4 @@ attribute [requirement "R25" implements "the harvest of every @[pkc_math]-render
 
 end PropertyKindCalculus.DocGenMath
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

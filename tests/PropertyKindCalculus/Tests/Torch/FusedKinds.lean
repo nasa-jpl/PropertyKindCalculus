@@ -18,8 +18,7 @@ module
 public import PropertyKindCalculus.Torch.Paradigm.FusedKinds
 meta import PropertyKindCalculus.Torch.Paradigm.FusedKinds
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Tests.FusedKinds
 
@@ -74,5 +73,4 @@ example : (Quantity.scaledProdExp hcx hcxy hexp negTwo kappa ell).magnitude
 
 end PropertyKindCalculus.Tests.FusedKinds
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

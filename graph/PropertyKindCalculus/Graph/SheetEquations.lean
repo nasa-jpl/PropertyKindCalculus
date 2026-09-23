@@ -30,8 +30,7 @@ module
 public import PropertyKindCalculus.Graph.Footprint
 public import PropertyKindCalculus.KindLedger
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.SheetEquations
 
@@ -217,5 +216,4 @@ def sheetEquations (decl : Name) : MetaM (Array EquationBlock) := do
 
 end PropertyKindCalculus.SheetEquations
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

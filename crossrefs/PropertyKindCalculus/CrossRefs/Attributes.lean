@@ -34,8 +34,7 @@ module
 
 public import Lean
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 open Lean
 
@@ -118,5 +117,4 @@ def vim4Refs (env : Environment) : Array OntologyRef := vim4Ext.getState env
 
 end PropertyKindCalculus.CrossRefs
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

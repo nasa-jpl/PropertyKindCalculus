@@ -21,8 +21,7 @@ meta import PropertyKindCalculus
 -- library; `import all` gives this file the reduction without exposing them.
 import all PropertyKindCalculus.Bounds
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Tests.Bounds
 
@@ -163,5 +162,4 @@ example : IccQ lengthK Float := box.castCarrier Float.ofInt
 
 end PropertyKindCalculus.Tests.Bounds
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

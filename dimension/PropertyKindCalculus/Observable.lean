@@ -36,8 +36,7 @@ module
 public import PropertyKindCalculus.Measurand
 public import Mathlib.Analysis.InnerProductSpace.LinearPMap
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus
 
@@ -89,5 +88,4 @@ end Observable
 
 end PropertyKindCalculus
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

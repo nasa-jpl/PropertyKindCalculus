@@ -22,8 +22,7 @@ module
 
 public import PropertyKindCalculus
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Examples.Examination
 
@@ -95,5 +94,4 @@ example : width.examinedBy (ExaminationItem.procedure widthProcedure).basePrinci
 
 end PropertyKindCalculus.Examples.Examination
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

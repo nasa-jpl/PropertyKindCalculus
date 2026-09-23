@@ -46,8 +46,7 @@ public import PropertyKindCalculus.Iso80000.Catalogue
 -- library; `import all` gives this file the reduction without exposing them.
 import all PropertyKindCalculus.UnitPrefix
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Iso80000.Part3
 
@@ -553,5 +552,4 @@ theorem iso80000_3_dim_collision :
 
 end PropertyKindCalculus.Iso80000.Part3
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

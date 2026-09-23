@@ -34,8 +34,7 @@ meta import PropertyKindCalculus.Iso80000
 public import PropertyKindCalculus.QuantityReal
 meta import PropertyKindCalculus.QuantityReal
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Examples.Iso80000.Part6
 
@@ -215,5 +214,4 @@ def resistanceInt : Quantity resistance.kind Int :=
 
 end PropertyKindCalculus.Examples.Iso80000.Part6
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

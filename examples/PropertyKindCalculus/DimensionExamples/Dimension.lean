@@ -14,8 +14,7 @@ module
 
 public import PropertyKindCalculus.Dimension
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Examples.Dimension
 
@@ -75,5 +74,4 @@ example : (DimensionedKind.unitless (B := LTMCTDimensionBase)).toDimension = 1 :
 
 end PropertyKindCalculus.Examples.Dimension
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

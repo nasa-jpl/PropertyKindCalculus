@@ -30,8 +30,7 @@ meta import PropertyKindCalculus.Index
 public import PropertyKindCalculus.DocGenMath
 meta import PropertyKindCalculus.DocGenMath
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Tests.Index
 
@@ -367,5 +366,4 @@ column's. -/
 
 end PropertyKindCalculus.Tests.Index
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

@@ -33,7 +33,7 @@ module
 
 public import PropertyKindCalculus.Kind
 
-public section -- pkc-blanket
+public section Interface
 
 namespace PropertyKindCalculus
 
@@ -75,4 +75,4 @@ end NominalValue
 
 end PropertyKindCalculus
 
-end -- pkc-blanket
+end Interface

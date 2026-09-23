@@ -30,8 +30,7 @@ meta import Mathlib.Tactic.NormNum
 import all PropertyKindCalculus.Mereology
 import all PropertyKindCalculus.Bounds
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Tests.BoundsReal
 
@@ -65,5 +64,4 @@ example : ((5 : ℝ) ∈ box.toIcc) = box.Mem ⟨5⟩ := rfl
 
 end PropertyKindCalculus.Tests.BoundsReal
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

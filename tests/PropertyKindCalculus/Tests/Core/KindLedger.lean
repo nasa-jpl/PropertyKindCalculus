@@ -28,8 +28,7 @@ module
 public import PropertyKindCalculus.KindLedger
 meta import PropertyKindCalculus.KindLedger
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Tests.KindLedger
 
@@ -236,5 +235,4 @@ example : hasSub (toJson "s" #[] #[]) "\"members\": []" := by native_decide
 
 end PropertyKindCalculus.Tests.KindLedger
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

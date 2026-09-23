@@ -23,8 +23,7 @@ meta import PropertyKindCalculus
 public import PropertyKindCalculus.CrossRefs.Attributes
 meta import PropertyKindCalculus.CrossRefs.Attributes
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus
 
@@ -77,5 +76,4 @@ attribute [vim4 "2.13" "measurement function"
 
 end PropertyKindCalculus
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket

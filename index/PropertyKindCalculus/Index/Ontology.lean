@@ -31,8 +31,7 @@ that set next to the kind is the point of the index; `#kind_edges` already compu
 `KindEdges.edgesByKind` gets it for every kind in one environment walk.
 -/
 
-public section -- pkc-blanket
-@[expose] section -- pkc-blanket-expose
+@[expose] public section Blanket
 
 namespace PropertyKindCalculus.Index
 
@@ -291,5 +290,4 @@ def examinationsTable (scope : Scope) : MetaM IndexTable := do
 
 end PropertyKindCalculus.Index
 
-end -- pkc-blanket-expose
-end -- pkc-blanket
+end Blanket
