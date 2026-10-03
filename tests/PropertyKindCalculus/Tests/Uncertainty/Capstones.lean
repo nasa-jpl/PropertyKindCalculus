@@ -58,10 +58,10 @@ node's exact value stops that node from rounding. The two probes below check the
 fires in each direction on a value it can decide, so the pin above is a pin on something that
 discriminates. -/
 
-open TorchLean.Floats Uncertainty.Adequacy in
+open TorchLean.Floats PropertyKindCalculus.Fp32 Uncertainty.Adequacy in
 example : round32 (1:ℝ) = 1 := (round32_eq_self_iff 1).mpr one_representable
 
-open TorchLean.Floats Uncertainty.Adequacy FloatLib.Floats.Formats.Flocq FloatLib.Numerics in
+open TorchLean.Floats PropertyKindCalculus.Fp32 Uncertainty.Adequacy FloatLib.Floats.Formats.Flocq FloatLib.Numerics in
 example : genericFormat binaryRadix fexp32 (round32 (0.1 : ℝ)) :=
   (round32_eq_self_iff _).mp (round32_fix (round32_representable 0.1))
 
@@ -82,7 +82,7 @@ the forward-error accumulation stays metric. The pins below are on the identific
 
 -- The identification the whole argument rests on: the R10 bridge's rounding is `round32`, by
 -- definition and not by transport.
-open TorchLean.Floats Uncertainty.Adequacy in
+open TorchLean.Floats PropertyKindCalculus.Fp32 Uncertainty.Adequacy in
 example (x : ℝ) : CarrierRefinement.round (E := FP32) x = round32 x := rfl
 
 end PropertyKindCalculus.Tests.UncertaintyCapstones

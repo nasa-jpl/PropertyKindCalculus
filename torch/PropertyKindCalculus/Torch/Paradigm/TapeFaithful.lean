@@ -114,93 +114,21 @@ theorem leaf_value [DecidableEq Shape] {s : Shape}
 /-! ## Per-op forward-value faithfulness
 
 Each lemma reads: given the input values, the op's output node reads back as the corresponding
-`Spec` operation of those values. The successor tape is `(op …).1` at the new id `t.size`. -/
+`Spec` operation of those values. The successor tape is `(op …).1` at the new id `t.size`. Every
+elementwise op is a `Tape.binary` or `Tape.unary` node with a fixed `forward`, so each per-op lemma
+is the generic one at that `forward`. -/
 
-/-- `Tape.add` stores `addSpec a b`. -/
-theorem add_value [Add α] [DecidableEq Shape] {s : Shape}
-    (t : Tape α) (aId bId : Nat) {a b : Tensor α s}
-    (ha : t.requireValue (s := s) aId = .ok a)
-    (hb : t.requireValue (s := s) bId = .ok b) :
-    ∃ t', t.add (s := s) aId bId = .ok (t', t.size) ∧
-          t'.requireValue (s := s) t.size = .ok (addSpec a b) ∧ FrameOver t' t := by
-  unfold Tape.add
+/-- Generic binary forward-value: a `Tape.binary` node stores `forward a b`. -/
+theorem binary_value [DecidableEq Shape] {σ₁ σ₂ τ : Shape}
+    (t : Tape α) (opName : String) (aId bId : Nat)
+    (forward : Tensor α σ₁ → Tensor α σ₂ → Tensor α τ)
+    (backward : Tensor α σ₁ → Tensor α σ₂ → Tensor α τ → Tensor α σ₁ × Tensor α σ₂)
+    {a : Tensor α σ₁} {b : Tensor α σ₂}
+    (ha : t.requireValue (s := σ₁) aId = .ok a) (hb : t.requireValue (s := σ₂) bId = .ok b) :
+    ∃ t', t.binary opName aId bId forward backward = .ok (t', t.size) ∧
+          t'.requireValue (s := τ) t.size = .ok (forward a b) ∧ FrameOver t' t := by
+  unfold Tape.binary
   rw [ha, hb]
-  exact ⟨_, rfl, requireValue_addNode_self t _ rfl, frameOver_addNode t _⟩
-
-/-- `Tape.sub` stores `subSpec a b`. -/
-theorem sub_value [Sub α] [Zero α] [DecidableEq Shape] {s : Shape}
-    (t : Tape α) (aId bId : Nat) {a b : Tensor α s}
-    (ha : t.requireValue (s := s) aId = .ok a)
-    (hb : t.requireValue (s := s) bId = .ok b) :
-    ∃ t', t.sub (s := s) aId bId = .ok (t', t.size) ∧
-          t'.requireValue (s := s) t.size = .ok (subSpec a b) ∧ FrameOver t' t := by
-  unfold Tape.sub
-  rw [ha, hb]
-  exact ⟨_, rfl, requireValue_addNode_self t _ rfl, frameOver_addNode t _⟩
-
-/-- `Tape.mul` stores `mulSpec a b`. -/
-theorem mul_value [Mul α] [DecidableEq Shape] {s : Shape}
-    (t : Tape α) (aId bId : Nat) {a b : Tensor α s}
-    (ha : t.requireValue (s := s) aId = .ok a)
-    (hb : t.requireValue (s := s) bId = .ok b) :
-    ∃ t', t.mul (s := s) aId bId = .ok (t', t.size) ∧
-          t'.requireValue (s := s) t.size = .ok (mulSpec a b) ∧ FrameOver t' t := by
-  unfold Tape.mul
-  rw [ha, hb]
-  exact ⟨_, rfl, requireValue_addNode_self t _ rfl, frameOver_addNode t _⟩
-
-/-- `Tape.div` stores `divSpec a b`. -/
-theorem div_value [Context α] [DecidableEq Shape] {s : Shape}
-    (t : Tape α) (aId bId : Nat) {a b : Tensor α s}
-    (ha : t.requireValue (s := s) aId = .ok a)
-    (hb : t.requireValue (s := s) bId = .ok b) :
-    ∃ t', t.div (s := s) aId bId = .ok (t', t.size) ∧
-          t'.requireValue (s := s) t.size = .ok (divSpec a b) ∧ FrameOver t' t := by
-  unfold Tape.div
-  rw [ha, hb]
-  exact ⟨_, rfl, requireValue_addNode_self t _ rfl, frameOver_addNode t _⟩
-
-/-- `Tape.scale` stores `scaleSpec x c`. -/
-theorem scale_value [Mul α] [DecidableEq Shape] {s : Shape}
-    (t : Tape α) (xId : Nat) (c : α) {x : Tensor α s}
-    (hx : t.requireValue (s := s) xId = .ok x) :
-    ∃ t', t.scale (s := s) xId c = .ok (t', t.size) ∧
-          t'.requireValue (s := s) t.size = .ok (scaleSpec x c) ∧ FrameOver t' t := by
-  unfold Tape.scale
-  rw [hx]
-  exact ⟨_, rfl, requireValue_addNode_self t _ rfl, frameOver_addNode t _⟩
-
-/-- `Tape.min` stores `minSpec a b`. -/
-theorem min_value [Context α] [DecidableRel ((· > ·) : α → α → Prop)] [DecidableEq Shape] {s : Shape}
-    (t : Tape α) (aId bId : Nat) {a b : Tensor α s}
-    (ha : t.requireValue (s := s) aId = .ok a)
-    (hb : t.requireValue (s := s) bId = .ok b) :
-    ∃ t', t.min (s := s) aId bId = .ok (t', t.size) ∧
-          t'.requireValue (s := s) t.size = .ok (minSpec a b) ∧ FrameOver t' t := by
-  unfold Tape.min
-  rw [ha, hb]
-  exact ⟨_, rfl, requireValue_addNode_self t _ rfl, frameOver_addNode t _⟩
-
-/-- `Tape.max` stores `maxSpec a b`. -/
-theorem max_value [Context α] [DecidableRel ((· > ·) : α → α → Prop)] [DecidableEq Shape] {s : Shape}
-    (t : Tape α) (aId bId : Nat) {a b : Tensor α s}
-    (ha : t.requireValue (s := s) aId = .ok a)
-    (hb : t.requireValue (s := s) bId = .ok b) :
-    ∃ t', t.max (s := s) aId bId = .ok (t', t.size) ∧
-          t'.requireValue (s := s) t.size = .ok (maxSpec a b) ∧ FrameOver t' t := by
-  unfold Tape.max
-  rw [ha, hb]
-  exact ⟨_, rfl, requireValue_addNode_self t _ rfl, frameOver_addNode t _⟩
-
-/-- `Tape.relu` stores `Activation.reluSpec x`. -/
-theorem relu_value [Mul α] [Zero α] [Max α] [BEq α] [One α] [LT α]
-    [DecidableRel ((· > ·) : α → α → Prop)] [DecidableEq Shape] {s : Shape}
-    (t : Tape α) (xId : Nat) {x : Tensor α s}
-    (hx : t.requireValue (s := s) xId = .ok x) :
-    ∃ t', t.relu (s := s) xId = .ok (t', t.size) ∧
-          t'.requireValue (s := s) t.size = .ok (Activation.reluSpec x) ∧ FrameOver t' t := by
-  unfold Tape.relu
-  rw [hx]
   exact ⟨_, rfl, requireValue_addNode_self t _ rfl, frameOver_addNode t _⟩
 
 /-- Generic unary forward-value: a `Tape.unary` node stores `forward x`. Covers
@@ -216,6 +144,85 @@ theorem unary_value [DecidableEq Shape] {σ τ : Shape}
   rw [hx]
   exact ⟨_, rfl, requireValue_addNode_self t _ rfl, frameOver_addNode t _⟩
 
+/-- `Tape.add` stores `addSpec a b`. -/
+theorem add_value [Add α] [DecidableEq Shape] {s : Shape}
+    (t : Tape α) (aId bId : Nat) {a b : Tensor α s}
+    (ha : t.requireValue (s := s) aId = .ok a)
+    (hb : t.requireValue (s := s) bId = .ok b) :
+    ∃ t', t.add (s := s) aId bId = .ok (t', t.size) ∧
+          t'.requireValue (s := s) t.size = .ok (addSpec a b) ∧ FrameOver t' t := by
+  unfold Tape.add
+  exact binary_value t _ aId bId _ _ ha hb
+
+/-- `Tape.sub` stores `subSpec a b`. -/
+theorem sub_value [Sub α] [Zero α] [DecidableEq Shape] {s : Shape}
+    (t : Tape α) (aId bId : Nat) {a b : Tensor α s}
+    (ha : t.requireValue (s := s) aId = .ok a)
+    (hb : t.requireValue (s := s) bId = .ok b) :
+    ∃ t', t.sub (s := s) aId bId = .ok (t', t.size) ∧
+          t'.requireValue (s := s) t.size = .ok (subSpec a b) ∧ FrameOver t' t := by
+  unfold Tape.sub
+  exact binary_value t _ aId bId _ _ ha hb
+
+/-- `Tape.mul` stores `mulSpec a b`. -/
+theorem mul_value [Mul α] [DecidableEq Shape] {s : Shape}
+    (t : Tape α) (aId bId : Nat) {a b : Tensor α s}
+    (ha : t.requireValue (s := s) aId = .ok a)
+    (hb : t.requireValue (s := s) bId = .ok b) :
+    ∃ t', t.mul (s := s) aId bId = .ok (t', t.size) ∧
+          t'.requireValue (s := s) t.size = .ok (mulSpec a b) ∧ FrameOver t' t := by
+  unfold Tape.mul
+  exact binary_value t _ aId bId _ _ ha hb
+
+/-- `Tape.div` stores `divSpec a b`. -/
+theorem div_value [Context α] [DecidableEq Shape] {s : Shape}
+    (t : Tape α) (aId bId : Nat) {a b : Tensor α s}
+    (ha : t.requireValue (s := s) aId = .ok a)
+    (hb : t.requireValue (s := s) bId = .ok b) :
+    ∃ t', t.div (s := s) aId bId = .ok (t', t.size) ∧
+          t'.requireValue (s := s) t.size = .ok (divSpec a b) ∧ FrameOver t' t := by
+  unfold Tape.div
+  exact binary_value t _ aId bId _ _ ha hb
+
+/-- `Tape.scale` stores `scaleSpec x c`. -/
+theorem scale_value [Mul α] [DecidableEq Shape] {s : Shape}
+    (t : Tape α) (xId : Nat) (c : α) {x : Tensor α s}
+    (hx : t.requireValue (s := s) xId = .ok x) :
+    ∃ t', t.scale (s := s) xId c = .ok (t', t.size) ∧
+          t'.requireValue (s := s) t.size = .ok (scaleSpec x c) ∧ FrameOver t' t := by
+  unfold Tape.scale
+  exact unary_value t _ xId _ _ hx
+
+/-- `Tape.min` stores `minSpec a b`. -/
+theorem min_value [Context α] [DecidableRel ((· > ·) : α → α → Prop)] [DecidableEq Shape] {s : Shape}
+    (t : Tape α) (aId bId : Nat) {a b : Tensor α s}
+    (ha : t.requireValue (s := s) aId = .ok a)
+    (hb : t.requireValue (s := s) bId = .ok b) :
+    ∃ t', t.min (s := s) aId bId = .ok (t', t.size) ∧
+          t'.requireValue (s := s) t.size = .ok (minSpec a b) ∧ FrameOver t' t := by
+  unfold Tape.min
+  exact binary_value t _ aId bId _ _ ha hb
+
+/-- `Tape.max` stores `maxSpec a b`. -/
+theorem max_value [Context α] [DecidableRel ((· > ·) : α → α → Prop)] [DecidableEq Shape] {s : Shape}
+    (t : Tape α) (aId bId : Nat) {a b : Tensor α s}
+    (ha : t.requireValue (s := s) aId = .ok a)
+    (hb : t.requireValue (s := s) bId = .ok b) :
+    ∃ t', t.max (s := s) aId bId = .ok (t', t.size) ∧
+          t'.requireValue (s := s) t.size = .ok (maxSpec a b) ∧ FrameOver t' t := by
+  unfold Tape.max
+  exact binary_value t _ aId bId _ _ ha hb
+
+/-- `Tape.relu` stores `Activation.reluSpec x`. -/
+theorem relu_value [Mul α] [Zero α] [Max α] [BEq α] [One α] [LT α]
+    [DecidableRel ((· > ·) : α → α → Prop)] [DecidableEq Shape] {s : Shape}
+    (t : Tape α) (xId : Nat) {x : Tensor α s}
+    (hx : t.requireValue (s := s) xId = .ok x) :
+    ∃ t', t.relu (s := s) xId = .ok (t', t.size) ∧
+          t'.requireValue (s := s) t.size = .ok (Activation.reluSpec x) ∧ FrameOver t' t := by
+  unfold Tape.relu
+  exact unary_value t _ xId _ _ hx
+
 /-- `Tape.sqrt` stores `sqrtSpec x` (unary specialization). -/
 theorem sqrt_value [Context α] [DecidableRel ((· > ·) : α → α → Prop)] [DecidableEq Shape] {s : Shape}
     (t : Tape α) (xId : Nat) {x : Tensor α s}
@@ -226,16 +233,14 @@ theorem sqrt_value [Context α] [DecidableRel ((· > ·) : α → α → Prop)] 
   exact unary_value t _ xId _ _ hx
 
 /-- `Tape.exp` stores `expSpec x` — the one extra transcendental the AVS forward model names
-(`exp(−2·b·ndvi)`). `Tape.exp` is a direct `addNode` (not a `Tape.unary`), so this mirrors the
-`unary_value` skeleton by hand: read the input value, then read back the appended node. -/
+(`exp(−2·b·ndvi)`), a `Tape.unary` like the others. -/
 theorem exp_value [Context α] [DecidableEq Shape] {s : Shape}
     (t : Tape α) (xId : Nat) {x : Tensor α s}
     (hx : t.requireValue (s := s) xId = .ok x) :
     ∃ t', t.exp (s := s) xId = .ok (t', t.size) ∧
           t'.requireValue (s := s) t.size = .ok (expSpec (α := α) (s := s) x) ∧ FrameOver t' t := by
   unfold Tape.exp
-  rw [hx]
-  exact ⟨_, rfl, requireValue_addNode_self t _ rfl, frameOver_addNode t _⟩
+  exact unary_value t _ xId _ _ hx
 
 /-! ## Faithfulness-by-construction demonstrator
 

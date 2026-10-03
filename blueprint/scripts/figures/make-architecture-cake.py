@@ -6,8 +6,8 @@ libraries a model written in the calculus requires, top to bottom, and saying at
 band what kind of vouching that band costs a reviewer. It is a picture of a dependency
 graph and carries no measured claim of its own. What it *does* assert — who requires
 whom — is checkable, and was checked against `lakefile.lean` and `lake-manifest.json`
-of PropertyKindCalculus, the vendored TorchLean (rev 937af925), cslib (rev 990e65a6)
-and physlib on 2026-09-29:
+of PropertyKindCalculus, the vendored TorchLean (rev 458f2a7a), cslib (rev 990e65a6)
+and physlib on 2026-10-03:
 
     PropertyKindCalculus -> Physlib   -> mathlib
     PropertyKindCalculus -> cslib     -> mathlib
@@ -18,7 +18,7 @@ PhysLib is drawn beside cslib for that reason. TorchLean is likewise on Mathlib
 directly; it is drawn as its own band because FloatLib rides under it —
 `lakefile.lean` records why: "TorchLean brings `FloatLib` transitively, which is where
 the executable binary32 word (`ExecFloat.Binary 8 23`) and the Flocq rounding theory
-now live." cslib and Mathlib are at one revision: cslib's own manifest pins Mathlib
+live." cslib and Mathlib are at one revision: cslib's own manifest pins Mathlib
 `v4.34.0` at the commit PKC resolves to.
 
 Two audiences read the figure, and the bands above the calculus differ between them:

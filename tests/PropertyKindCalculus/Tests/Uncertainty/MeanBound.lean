@@ -51,6 +51,7 @@ namespace PropertyKindCalculus.Tests.MeanBound
 open PropertyKindCalculus
 open PropertyKindCalculus.Uncertainty.Adequacy
 open TorchLean.Floats
+open PropertyKindCalculus.Fp32
 open TorchLean.Floats.IEEE754
 open FloatLib.Floats (ExecFloat)
 open FloatLib.Floats.ExecFloat.Binary (isFinite toModel)

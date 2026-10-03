@@ -375,8 +375,21 @@ theorem addGradAll_ok (t : RTape) (acc : Array Any) (hacc : AccShapeAligned t ac
         ⟨pnode.value.shape, Tensor.castShape (acc[pid]'hpid_acc).tensor hex⟩
         ⟨pnode.value.shape, Tensor.castShape g.tensor hs⟩ rfl
     refine ⟨acc.set pid summed hpid_acc, ?_, ?_, ?_⟩
-    · simp [Runtime.Autograd.Tape.addGradAll, hp, hreq', hs, hex, hpid_acc,
-        Spec.SomeTensor.cast, hsummed, bind, Except.bind, pure, Except.pure]
+    · -- `addGradAll` matches on `acc[pid]?` with a dependent equation, so after the
+      -- surrounding plumbing is simplified away the lookup is split by cases rather than
+      -- rewritten under the match.
+      simp [Runtime.Autograd.Tape.addGradAll, hp, hreq', hs, Spec.SomeTensor.cast, bind,
+        Except.bind, pure, Except.pure]
+      split
+      · next hnone =>
+        rw [Array.getElem?_eq_getElem hpid_acc] at hnone
+        cases hnone
+      · next existing hsome =>
+        have hx : existing = acc[pid]'hpid_acc := by
+          rw [Array.getElem?_eq_getElem hpid_acc] at hsome
+          exact (Option.some.inj hsome).symm
+        subst hx
+        simp [hex, hsummed]
     · simpa using hsize
     · intro i node gi hnode hgi
       by_cases hi : pid = i
@@ -614,14 +627,15 @@ theorem backwardShapeWF_add {s : Shape} (t : RTape) (hwf : BackwardShapeWF t)
     (h : Runtime.Autograd.Tape.add (α := ℝ) (s := s) t aId bId = .ok (t', id)) :
     BackwardShapeWF t' := by
   cases hA : Runtime.Autograd.Tape.requireValue (α := ℝ) (t := t) (s := s) aId with
-  | error e => simp [Runtime.Autograd.Tape.add, hA, bind, Except.bind] at h
+  | error e => simp [Runtime.Autograd.Tape.add, Runtime.Autograd.Tape.binary, hA, bind, Except.bind] at h
   | ok a =>
   cases hB : Runtime.Autograd.Tape.requireValue (α := ℝ) (t := t) (s := s) bId with
-  | error e => simp [Runtime.Autograd.Tape.add, hA, hB, bind, Except.bind] at h
+  | error e => simp [Runtime.Autograd.Tape.add, Runtime.Autograd.Tape.binary, hA, hB, bind, Except.bind] at h
   | ok b =>
   obtain ⟨pa, hpa, hpa_s⟩ := requireValue_shape t aId a hA
   obtain ⟨pb, hpb, hpb_s⟩ := requireValue_shape t bId b hB
-  simp only [Runtime.Autograd.Tape.add, hA, hB, bind, Except.bind, pure, Except.pure] at h
+  simp only [Runtime.Autograd.Tape.add, Runtime.Autograd.Tape.binary, hA, hB, bind, Except.bind, pure,
+    Except.pure] at h
   have hpair := Except.ok.inj h
   have ht' : t' = (t.addNode _).1 := (congrArg Prod.fst hpair).symm
   rw [ht']
@@ -642,14 +656,15 @@ theorem backwardShapeWF_mul {s : Shape} (t : RTape) (hwf : BackwardShapeWF t)
     (h : Runtime.Autograd.Tape.mul (α := ℝ) (s := s) t aId bId = .ok (t', id)) :
     BackwardShapeWF t' := by
   cases hA : Runtime.Autograd.Tape.requireValue (α := ℝ) (t := t) (s := s) aId with
-  | error e => simp [Runtime.Autograd.Tape.mul, hA, bind, Except.bind] at h
+  | error e => simp [Runtime.Autograd.Tape.mul, Runtime.Autograd.Tape.binary, hA, bind, Except.bind] at h
   | ok a =>
   cases hB : Runtime.Autograd.Tape.requireValue (α := ℝ) (t := t) (s := s) bId with
-  | error e => simp [Runtime.Autograd.Tape.mul, hA, hB, bind, Except.bind] at h
+  | error e => simp [Runtime.Autograd.Tape.mul, Runtime.Autograd.Tape.binary, hA, hB, bind, Except.bind] at h
   | ok b =>
   obtain ⟨pa, hpa, hpa_s⟩ := requireValue_shape t aId a hA
   obtain ⟨pb, hpb, hpb_s⟩ := requireValue_shape t bId b hB
-  simp only [Runtime.Autograd.Tape.mul, hA, hB, bind, Except.bind, pure, Except.pure] at h
+  simp only [Runtime.Autograd.Tape.mul, Runtime.Autograd.Tape.binary, hA, hB, bind, Except.bind, pure,
+    Except.pure] at h
   have hpair := Except.ok.inj h
   have ht' : t' = (t.addNode _).1 := (congrArg Prod.fst hpair).symm
   rw [ht']
@@ -695,12 +710,16 @@ theorem toAnyArray_extract_takeLeft {Γ ss : List Shape} (w : TorchLean.TensorPa
         = (TorchLean.TensorPack.toShapeErasedArray (α := ℝ) (ss := Γ' ++ ss) w').toList.take Γ'.length := by
     intro Γ'
     induction Γ' with
-    | nil => intro w'; simp [Algebra.TensorPack.takeLeft, TorchLean.TensorPack.toShapeErasedArray]
+    | nil =>
+      intro w'
+      simp [Algebra.TensorPack.takeLeft, TorchLean.TensorPack.split,
+        TorchLean.TensorPack.toShapeErasedArray]
     | cons s Γ' ih =>
       intro w'
       cases w' with
       | cons x xs =>
-        simp [Algebra.TensorPack.takeLeft, TorchLean.TensorPack.toShapeErasedArray, List.take_succ_cons, ih xs]
+        simp [Algebra.TensorPack.takeLeft, TorchLean.TensorPack.split,
+          TorchLean.TensorPack.toShapeErasedArray, List.take_succ_cons, ih xs]
   apply Array.ext'
   simp [hlist Γ w]
 

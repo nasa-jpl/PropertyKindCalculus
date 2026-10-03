@@ -35,6 +35,7 @@ namespace PropertyKindCalculus.UncertaintyExamples.AdequacyExecBridge
 
 open PropertyKindCalculus.Uncertainty.Adequacy
 open TorchLean.Floats
+open PropertyKindCalculus.Fp32
 open TorchLean.Floats.IEEE754
 open TorchLean.Floats.IEEE754.IEEE32Exec
 open FloatLib.Floats (ExecFloat)
@@ -52,11 +53,10 @@ theorem exec_ulp {x : ExecFloat.Binary 8 23} {k : Int} (hk : ulpExp? x = some k)
 
 /-- **Executable verdict certifies the spec.** When the kernel reports `δ` absorbed into `s`, the
 exact real sum rounds back to `toReal s` under the binary32 specification `round32`. -/
-theorem exec_verdict {s δ : ExecFloat.Binary 8 23} {ds dδ : FloatLib.Numerics.Dyadic}
-    (hs : (toModel s).toDyadic? = some ds) (hδ : (toModel δ).toDyadic? = some dδ)
+theorem exec_verdict {s δ : ExecFloat.Binary 8 23}
     (hfin : isFinite (ExecFloat.add s δ) = true) (hverdict : absorbs s δ = true) :
     round32 ((toModel s).toReal + (toModel δ).toReal) = (toModel s).toReal :=
-  exec_verdict_sound hs hδ hfin hverdict
+  exec_verdict_sound hfin hverdict
 
 /-! ## Executable: the verdict actually computes (concrete bit patterns) -/
 

@@ -15,7 +15,7 @@ genuine **IEEE-754 binary32**, using TorchLean's float stack:
     and infinities). Here the bridge holds only on the **finite path**: if both
     operands decode to finite values and the result does not overflow, the
     executable sum forgotten to ℝ equals the FP32-rounding of the real sum
-    (`toReal_add_eq_fp32Round`). Overflow is an *explicit side condition* — the
+    (`toReal_add_eq_round_of_isFinite`). Overflow is an *explicit side condition* — the
     silent failure the unconditional abstract bridge cannot see, surfaced here as a
     hypothesis (`Quantity.add_refines_exec`).
 
@@ -28,15 +28,16 @@ module
 
 public import PropertyKindCalculus.QuantityRefinement
 public import PropertyKindCalculus.QuantityReal
+public import PropertyKindCalculus.Torch.Fp32Spec
 public import NN.Proofs.RuntimeApprox.IEEE32.Arithmetic
 
 @[expose] public section Blanket
 
-open TorchLean.Floats          -- `FP32`, `round32`
-open TorchLean.Floats.IEEE754  -- the `IEEE32Exec` theorem namespace (`fp32Round`, `toReal_*`)
+open TorchLean.Floats          -- `FP32`
+open TorchLean.Floats.IEEE754  -- the `IEEE32Exec` theorem namespace (`toReal_*_eq_round_*`)
+open PropertyKindCalculus.Fp32 (round32 round32_zero)
 open FloatLib.Floats (ExecFloat)
 open FloatLib.Floats.ExecFloat.Binary (isFinite toModel)
-open FloatLib.Floats.Formats.Flocq (round_preserves_generic generic_format_zero)
 
 namespace PropertyKindCalculus
 
@@ -50,9 +51,13 @@ abbrev IEEE32Exec : Type := ExecFloat.Binary 8 23
 value (`0` for a non-finite word). -/
 noncomputable abbrev IEEE32Exec.toReal (x : IEEE32Exec) : ℝ := (toModel x).toReal
 
+/-- The spec-side rounding the executable word refines: real-level binary32 rounding
+(`Fp32.round32`, FloatLib's `Model.roundAt FloatFormat.binary32`), the operator TorchLean's finite
+refinement theorems are stated against. -/
+noncomputable abbrev IEEE32Exec.fp32Round : ℝ → ℝ := round32
+
 /-- Binary32 rounding fixes `0`: it is on the grid. -/
-theorem fp32Round_zero : IEEE32Exec.fp32Round 0 = 0 :=
-  round_preserves_generic rnd32 0 generic_format_zero
+theorem fp32Round_zero : IEEE32Exec.fp32Round 0 = 0 := round32_zero
 
 /-! ## The FP32 rounding-spec carrier and its (unconditional) refinement of ℝ -/
 
@@ -107,7 +112,7 @@ an infinity, no overflow), then forgetting the executable sum to `ℝ` equals th
 FP32-rounding of the real sum. The finiteness hypothesis is the explicit side
 condition: where it fails (overflow to ∞, a NaN operand), the refinement does not
 hold — exactly the silent failure the unconditional spec-side bridge abstracts away,
-made visible here. Lifts TorchLean's `toReal_add_eq_fp32Round_of_isFinite` along the
+made visible here. Lifts TorchLean's `toReal_add_eq_round_of_isFinite` along the
 kind index. -/
 theorem Quantity.add_refines_exec {k : KindOfProperty} (h : DifferenceKind k)
     (x y : Quantity k IEEE32Exec)
@@ -119,7 +124,7 @@ theorem Quantity.add_refines_exec {k : KindOfProperty} (h : DifferenceKind k)
       = Quantity.mk
           (IEEE32Exec.fp32Round
             (IEEE32Exec.toReal x.magnitude + IEEE32Exec.toReal y.magnitude))
-  rw [IEEE32Exec.toReal, IEEE32Exec.toReal_add_eq_fp32Round_of_isFinite hfin]
+  rw [IEEE32Exec.toReal, IEEE32Exec.toReal_add_eq_round_of_isFinite hfin]
 
 /-! ## The multiplicative surface at binary32
 
@@ -171,7 +176,7 @@ theorem Quantity.div_refines_fp32 {k₁ k₂ k : KindOfProperty} (h : QuotientKi
 
 /-- **Executable multiplicative refinement, conditional (R10).** If the executable product
 is finite, forgetting it to `ℝ` equals the FP32-rounding of the real product. Lifts
-TorchLean's `toReal_mul_eq_fp32Round_of_isFinite` along the kind product. -/
+TorchLean's `toReal_mul_eq_round_of_isFinite` along the kind product. -/
 theorem Quantity.mul_refines_exec {k₁ k₂ k : KindOfProperty} (h : ProductKind k₁ k₂ k)
     (x : Quantity k₁ IEEE32Exec) (y : Quantity k₂ IEEE32Exec)
     (hfin : isFinite (ExecFloat.mul x.magnitude y.magnitude) = true) :
@@ -183,21 +188,21 @@ theorem Quantity.mul_refines_exec {k₁ k₂ k : KindOfProperty} (h : ProductKin
       = Quantity.mk
           (IEEE32Exec.fp32Round
             (IEEE32Exec.toReal x.magnitude * IEEE32Exec.toReal y.magnitude))
-  rw [IEEE32Exec.toReal, IEEE32Exec.toReal_mul_eq_fp32Round_of_isFinite hfin]
+  rw [IEEE32Exec.toReal, IEEE32Exec.toReal_mul_eq_round_of_isFinite hfin]
 
 /-- **Executable division refinement, conditional (R10) — and this is the one that carries
-the zero denominator.** Beside the finiteness hypotheses the product needs, division needs
-`hy0 : dy.significand ≠ 0`: the divisor's decoded significand is not zero. Where the spec-side
+the zero denominator.** The one hypothesis is that the executable quotient is finite, and that
+is where the divisor is checked: a finite dividend over a zero divisor is an infinity or a NaN,
+never finite, while a finite dividend over an infinity is a signed zero, which the totalized
+real quotient also reads as `0`. Where the spec-side
 `DivRefinement FP32 ℝ` is unconditional because `ℝ` totalizes `x / 0` to `0`, the executable
 format does not — it produces an infinity or a NaN, and no rounding of a real quotient
 equals either. So the metrological license a mean's denominator needs (`WeightedCarving`'s
 `total_ne_zero`) reappears here as an arithmetic hypothesis on the same computation, at the
-rung where it can actually fail. Lifts `toReal_div_eq_fp32Round` along the kind quotient. -/
+rung where it can actually fail. Lifts `toReal_div_eq_round_of_isFinite` along the kind
+quotient. -/
 theorem Quantity.div_refines_exec {k₁ k₂ k : KindOfProperty} (h : QuotientKind k₁ k₂ k)
-    (x : Quantity k₁ IEEE32Exec) (y : Quantity k₂ IEEE32Exec) {dx dy : FloatLib.Numerics.Dyadic}
-    (hx : (toModel x.magnitude).toDyadic? = some dx)
-    (hy : (toModel y.magnitude).toDyadic? = some dy)
-    (hy0 : dy.significand ≠ 0)
+    (x : Quantity k₁ IEEE32Exec) (y : Quantity k₂ IEEE32Exec)
     (hfin : isFinite (ExecFloat.div x.magnitude y.magnitude) = true) :
     (Quantity.div h x y).toRealExec
       = Quantity.roundBy IEEE32Exec.fp32Round
@@ -207,7 +212,7 @@ theorem Quantity.div_refines_exec {k₁ k₂ k : KindOfProperty} (h : QuotientKi
       = Quantity.mk
           (IEEE32Exec.fp32Round
             (IEEE32Exec.toReal x.magnitude / IEEE32Exec.toReal y.magnitude))
-  rw [IEEE32Exec.toReal, IEEE32Exec.toReal_div_eq_fp32Round hx hy hy0 hfin]
+  rw [IEEE32Exec.toReal, IEEE32Exec.toReal_div_eq_round_of_isFinite x.magnitude y.magnitude hfin]
 
 end PropertyKindCalculus
 

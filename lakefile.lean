@@ -39,18 +39,18 @@ application, kept in a separate repository so this package stays focused on
 metrology and the ISO/IEC 80000 parts.
 -/
 
-/-- Forward this package's `-K cuda` / `-K cuda_home` / `-K isoc23_shim` options to the
+/-- Forward this package's `-K cuda` / `-K cuda_home` / `-K libtorch_home` options to the
 TorchLean dependency (Lake applies command-line `-K` to the root package only). This
-package produces only libraries — its `Torch` library uses TorchLean's CPU executable
-carrier (`IEEE32Exec`), never the CUDA backend — so it never links the isoc23 shim
-directly; the clause is here so the option threads uniformly through the store build and a
-`-K cuda=true` at this root would still reach TorchLean. Empty when no option is set, so
-the default build is byte-for-byte the same `require` as before (no resolution change). -/
+package produces only libraries — its `Torch` library elaborates against TorchLean's
+device buffer externs, never linking them — so the options matter only to a downstream
+executable built with `-K cuda=true`, where TorchLean then builds its LibTorch bridge from
+the SDK at `libtorch_home` (or `TORCHLEAN_LIBTORCH_HOME`) and the toolkit at `cuda_home`.
+Empty when no option is set, so the default build is unchanged. -/
 private def torchLeanOpts : Lean.NameMap String := Id.run do
   let mut m : Lean.NameMap String := Lean.mkNameMap String
   if let some v := get_config? cuda then m := m.insert `cuda v
   if let some v := get_config? cuda_home then m := m.insert `cuda_home v
-  if let some v := get_config? isoc23_shim then m := m.insert `isoc23_shim v
+  if let some v := get_config? libtorch_home then m := m.insert `libtorch_home v
   return m
 
 package «PropertyKindCalculus» where
@@ -95,19 +95,20 @@ require «Physlib» from git
   "https://github.com/leanprover-community/physlib.git" @
   "master"
 
--- TorchLean (this work's fork, `combined-4.34` branch) backs *only* the `Torch` library
+-- TorchLean (this work's fork, `combined` branch) backs *only* the `Torch` library
 -- below: the concrete IEEE-754 binary32 carriers (`FP32` rounding spec,
 -- `IEEE32Exec` executable) that instantiate the R10 exec/spec refinement bridge.
--- `combined-4.34` is upstream `lean-dojo/TorchLean` `main` at its Lean `v4.34.0` /
--- Mathlib `v4.34.0` line plus the fork's carried branches (texture-table lookup
--- tables, the isoc23 link shim, the `TapeM` run lemmas, device identity); this
+-- `combined` is upstream `lean-dojo/TorchLean` `main` on its LibTorch backend (Lean
+-- `v4.34.0` / Mathlib `v4.34.0`; the GPU path is LibTorch's ATen, there are no custom
+-- kernels) plus the fork's open upstream PRs (unboxed per-block NPY decoding, the
+-- `TapeM` run lemmas, piecewise-linear table lookup, per-index device identity); this
 -- package pins the same toolchain. TorchLean brings `FloatLib` transitively, which is
 -- where the executable binary32 word (`ExecFloat.Binary 8 23`) and the Flocq rounding
--- theory now live. Required after PhysLib so its `doc-gen4 v4.34.0` wins. The core
+-- theory live. Required after PhysLib so its `doc-gen4 v4.34.0` wins. The core
 -- spine never imports it, so `import PropertyKindCalculus` stays Mathlib-free.
 require «TorchLean» from git
   "https://github.com/NicolasRouquette/TorchLean.git" @
-  "combined-4.34"
+  "combined"
   with torchLeanOpts
 
 -- cslib (the Lean community's computer-science library) backs *only* the `Graph` library's
@@ -125,7 +126,7 @@ require «cslib» from git
 
 -- NOTE (2026-08-24): there is deliberately **no mathlib require here**, for the same
 -- reason there is no doc-gen4 one (below). Mathlib arrives transitively, and the two
--- packages that bring it agree: PhysLib `master` and TorchLean `combined-4.34` each require
+-- packages that bring it agree: PhysLib `master` and TorchLean `combined` each require
 -- `v4.34.0`, so resolution is unambiguous and a root pin would only restate it. The core
 -- spine never imports Mathlib, so a plain `import PropertyKindCalculus` stays
 -- Mathlib-free either way.
@@ -314,8 +315,9 @@ lean_lib «Terminology» where
 
 /-- The **TorchLean-backed instance** of the R10 exec/spec refinement bridge: the
 concrete IEEE-754 binary32 carriers (TorchLean's `FP32` rounding spec and
-`IEEE32Exec` executable) realizing `CarrierRefinement` over `ℝ`. This is the one
-library that depends on TorchLean. Build with `lake build Torch`. -/
+`IEEE32Exec` executable) realizing `CarrierRefinement` over `ℝ`, and the tape, batch and
+device carriers under `Torch/Paradigm`. Every other target that reaches TorchLean builds on
+this one. Build with `lake build Torch`. -/
 lean_lib «Torch» where
   srcDir := "torch"
   globs := #[.andSubmodules `PropertyKindCalculus.Torch]
@@ -394,8 +396,8 @@ lean_lib «UncertaintyRigor» where
 
 /-- **Stage 4 of the uncertainty workstream** (see `UNCERTAINTY.md` §6, "Scale"): the batched
 SSPRC/MCM propagators that run the write-once `[NumCarrier α]` kernel at the `CudaT` batch carrier —
-all `Nᵢ` samples of an input in one launch (a GPU kernel under `-K cuda`, the portable CPU stub
-otherwise). Its own library because it depends on the TorchLean `CudaT` carrier, which the
+all `Nᵢ` samples of an input in one launch, each `NumCarrier` op one LibTorch operation. Its own
+library because it depends on the TorchLean `CudaT` carrier, which the
 Mathlib/TorchLean-free Stage-0 `Uncertainty` library cannot carry. Note `lake build` only
 *typechecks* these modules: `CudaT`'s device ops are `@[extern]` FFI with no interpreter fallback,
 and `precompileModules` cannot load the TorchLean graph into the elaborator (it shared-links whole
@@ -412,9 +414,10 @@ lean_lib «UncertaintyBatch» where
 `precompileModules`-loaded into the elaborator (upstream `ProofWidgets`/`QuantumInfo` `:shared`
 facets do not build), so the batched propagator's numbers cannot be `#guard`ed at build. A compiled
 executable links the native `CudaT` code directly, so this harness *runs* `SsprcBatched.run` and
-asserts it agrees with the scalar `Ssprc.run`. Run with `lake exe ssprc_batched_parity` — the default
-build uses the portable CPU stub (float32, no GPU), a `-K cuda=true` container build runs it on the
-device. Exits `0` on parity, `1` on mismatch. -/
+asserts it agrees with the scalar `Ssprc.run`. Run with `lake exe ssprc_batched_parity` from a
+`-K cuda=true` build with a LibTorch SDK and a CUDA device: the default build links TorchLean's
+"unavailable" backend, on which the first device op fails with an explanation, so the default
+build only links this harness. Exits `0` on parity, `1` on mismatch. -/
 lean_exe «ssprc_batched_parity» where
   srcDir := "apps"
   root := `PropertyKindCalculus.Apps.SsprcBatchedParity

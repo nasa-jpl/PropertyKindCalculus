@@ -51,6 +51,7 @@ public import PropertyKindCalculus.Torch.Fp32
 namespace PropertyKindCalculus.Uncertainty.Adequacy
 
 open TorchLean.Floats
+open PropertyKindCalculus.Fp32
 open TorchLean.Floats.IEEE754
 open FloatLib.Floats.Formats.Flocq (genericFormat)
 open FloatLib.Numerics (binaryRadix)

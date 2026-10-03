@@ -182,8 +182,8 @@ rewriting the model*:
   any science model, including ones whose I/O–compute interleaving defeats parallelism.
 - **CPU, multi-threaded** — coarse-grained Lean-`Task` sharding over the pixel axis (`runSharded`);
   needs a model with good arithmetic intensity *and* independent work-items.
-- **GPU, eager** (`α := CudaT`) — one pre-compiled CUDA kernel per operation, dispatched by FFI. This
-  is *not* an IR interpreted on the GPU and involves no IR; it is eager, operation-at-a-time launch,
+- **GPU, eager** (`α := CudaT`) — one LibTorch (ATen) operation per `NumCarrier` op, dispatched by
+  FFI. This is *not* an IR interpreted on the GPU and involves no IR; it is eager, operation-at-a-time launch,
   so every intermediate round-trips through DRAM → *memory-bound* (arithmetic intensity ≈ 0.17 vs an
   ideal ≈ 13.75 for the AVS fit). The current production GPU path.
 - **GPU, megakernel-compiled** — record the branchless model at the tape carrier → CSE its distinct-op
@@ -386,10 +386,11 @@ Status: ✅ done · 🚧 in progress · ⬜ planned
   Boltzmann-type weights) motivates it while naming no domain — bit-identical to the composed four-op
   form and verified compiling (nvcc kernel + C stub + `@[extern]` binding). Bit-identity is now pinned
   by a TorchLean suite test (`Tests.Cuda.ScaledProdExp`) that compares the fused kernel to the composed
-  `exp(((full c)·x)·y)` by `Float.toBits` — green on the A4500. PKC's `CudaT.scaledProdExp` is now the
-  one-liner `⟨Buffer.scaledProdExp x.buf y.buf c⟩` (the `combined` pin carries the op; the extern's C
-  stub keeps a plain `lake build` green without a GPU), the same coupling discipline the downstream
-  SMM/app rewires follow.
+  `exp(((full c)·x)·y)` by `Float.toBits` — green on the A4500. PKC's `CudaT.scaledProdExp` is the
+  one-liner `⟨Buffer.scaledProdExp x.buf y.buf c⟩` (the `combined` pin carries the op as one ATen
+  expression behind the same extern symbol; the `Torch` library elaborates against the extern, so a
+  plain `lake build` needs no SDK), the same coupling discipline the downstream SMM/app rewires
+  follow.
 - ✅ **The look-up table enters the verified story — as an explicit vocabulary extension backed by
   CUDA texture objects.** A gather stays inexpressible in `NumCarrier` (the thesis is untouched);
   what changed is that the dependence can now be *declared*: the new `LutInterp` class
@@ -398,9 +399,10 @@ Status: ✅ done · 🚧 in progress · ⬜ planned
   type. `LutTable.refFetch` (clamp/floor/lerp on a uniform layered abscissa — the `np.interp`
   analogue) is the reference semantics; instances: `Float` (the fp64 oracle), `TapeBuilder`
   (records one `lutfetch:<table>` node storing the elementwise `refFetch` — recorder-faithful by
-  construction), and `CudaT` (TorchLean's new **`TexTable`** texture-object fetch, branch
-  `cuda-texture-table`, layered `cudaArray` + hardware texture cache; upstream-shippable and
-  domain-neutral). The codegen lowers fetch nodes to `tex1DLayered` through one backend-neutral
+  construction), and `CudaT` (TorchLean's piecewise-linear **table lookup** on the LibTorch
+  backend, `Buffer.tableSegments` + `Buffer.tableLookupForward` under `Tape.layeredTableLookup`,
+  bit-exact against `KernelSpec.tableLookupSpec`; upstream PR
+  [lean-dojo/TorchLean#34](https://github.com/lean-dojo/TorchLean/pull/34)). The codegen lowers fetch nodes to `tex1DLayered` through one backend-neutral
   helper, with the **exactness split fixed at generation**: point mode (two point fetches + a
   contraction-blocked fp32 lerp) is *bit-reproducible* — the A4500 kernel, the C stub, and the
   Lean `Float32` reference agree bit-for-bit, machine-checked — while hardware-filtered mode
@@ -779,7 +781,8 @@ chemistry*, ISO 80000-12 *Condensed matter physics*), that dependency is recorde
 explicitly as `workToGoParts` rather than left silent.
 
 `lake build Torch` checks the TorchLean-backed instance of the refinement bridge —
-the only library that depends on TorchLean. `FP32` (TorchLean's binary32 rounding
+the library every other TorchLean-reaching target (`UncertaintyRigor`, `UncertaintyBatch`,
+`Requirements`, the examples and tests over them) builds on. `FP32` (TorchLean's binary32 rounding
 spec) is an *unconditional* `CarrierRefinement` of `ℝ`, so `Quantity.add_refines`
 holds at genuine binary32; the *executable* `IEEE32Exec` refines `ℝ` only on the
 finite, no-overflow path, with overflow carried as an explicit hypothesis rather

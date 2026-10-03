@@ -662,10 +662,10 @@ axiom — the irreducible hardware trust boundary.
 :::
 
 :::proof "thm_uq_exec_bridge"
-Realized over `ℝ`/`IEEE32Exec` (Stage 3.3, `Adequacy.ExecBridge`), grounded in the TorchLean PR's
-`IEEE32Exec.ulpExp?` + `neuralBpow_eq_ulp32_of_ulpExp?_eq_some` (an executable ULP answer equals
-`ulp₃₂`; the query answers on exactly the finite fragment) and `round32_add_eq_left_of_absorbs` (a 3-line corollary of the existing
-`toReal_add_eq_fp32Round` op-level refinement, since `fp32Round` *is* `round₃₂`). `exec_verdict_sound`
+Realized over `ℝ`/`IEEE32Exec` (Stage 3.3, `Adequacy.ExecBridge`), grounded in TorchLean's
+`IEEE32Exec.ulpExp?` + `bpow_eq_ulp_of_ulpExp?_eq_some` (an executable ULP answer equals
+`ulp₃₂`; the query answers on exactly the finite fragment) and `round_add_eq_left_of_absorbs` (a 3-line corollary of the
+`toReal_add_eq_round_of_isFinite` op-level refinement, since FloatLib's `Model.roundAt binary32` *is* `round₃₂`). `exec_verdict_sound`
 composes them: when `absorbs s δ` fires, `round₃₂(\mathrm{toReal}\,s + \mathrm{toReal}\,δ) =
 \mathrm{toReal}\,s`. Sorry-free (`[propext, Classical.choice, Quot.sound]`); the executable side is
 *run* (`#guard`) at $`2^{25}` and $`10^8` in the `AdequacyExecBridge` example, which also confirms the

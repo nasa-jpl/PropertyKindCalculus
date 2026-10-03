@@ -181,9 +181,9 @@ one rung down, as an explicit hypothesis on the executable carrier's own theorem
 :::proof "def_div_refinement"
 Realized as the `DivRefinement` class (core, axiom-free), with the unconditional
 `DivRefinement FP32 ℝ` instance in the `Torch` library. The executable rung's
-`Quantity.div_refines_exec` carries the divisor's nonzero decoded mantissa as a
-hypothesis beside the finiteness ones, and the Torch-tier probes discharge all four
-on concrete binary32 values and then refute two of them at a zero denominator.
+`Quantity.div_refines_exec` asks that the executable quotient be finite, and the
+Torch-tier probes discharge that on concrete binary32 values and then refute it at a
+zero denominator, where the divisor's decoded mantissa is shown to be zero.
 :::
 
 :::theorem "thm_refinement_product" (parent := "units") (lean := "PropertyKindCalculus.Quantity.mul_refines") (tags := "proved") (effort := "medium")

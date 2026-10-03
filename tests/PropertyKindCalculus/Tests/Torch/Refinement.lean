@@ -6,18 +6,18 @@ where the rounding is visible and both capstones are shown non-vacuous. This fil
 same two laws down to the carriers they exist for: TorchLean's binary32 *rounding spec* `FP32`,
 where the bridge is unconditional, and its *executable* `IEEE32Exec`, where it is not.
 
-The executable rung is the point of the file. `Quantity.div_refines_exec` needs four facts about
-the actual bits — both operands decode to dyadics, the divisor's mantissa is nonzero, the quotient
-is finite — and the probes below discharge all four on concrete binary32 values and then **refute
-two of them at a zero denominator**. So the claim that the hazard lives one rung below the
-specification is checked here rather than asserted in a docstring: at `FP32` a zero divisor is
-harmless because `ℝ` totalizes `x / 0`, and at `IEEE32Exec` the same division is not finite and its
-divisor's mantissa is zero.
+The executable rung is the point of the file. `Quantity.div_refines_exec` needs one fact about
+the actual bits — the executable quotient is finite — and the probes below discharge it on
+concrete binary32 values and then **refute it at a zero denominator**, where the divisor's decoded
+mantissa is shown to be zero. So the claim that the hazard lives one rung below the specification
+is checked here rather than asserted in a docstring: at `FP32` a zero divisor is harmless because
+`ℝ` totalizes `x / 0`, and at `IEEE32Exec` the same division is not finite.
 -/
 
 import PropertyKindCalculus.Torch.Fp32
 
 open TorchLean.Floats
+open PropertyKindCalculus.Fp32
 open TorchLean.Floats.IEEE754
 open FloatLib.Floats (ExecFloat)
 open FloatLib.Floats.ExecFloat.Binary (isFinite toModel)
@@ -101,13 +101,12 @@ theorem exec_div_refines :
     (Quantity.div quotArea qSix qTwo).toRealExec
       = Quantity.roundBy IEEE32Exec.fp32Round
           (Quantity.div quotArea qSix.toRealExec qTwo.toRealExec) :=
-  Quantity.div_refines_exec quotArea qSix qTwo (dx := dSix) (dy := dTwo)
-    (by decide) (by decide) (by decide) (by decide)
+  Quantity.div_refines_exec quotArea qSix qTwo (by decide)
 
 /-! ## And the same division at a zero denominator, refuted
 
-Two of `div_refines_exec`'s four hypotheses fail outright when the divisor is zero: the divisor's
-decoded mantissa *is* zero, and the executable quotient is not finite. This is the hazard the
+`div_refines_exec`'s hypothesis fails outright when the divisor is zero: the executable quotient
+is not finite, and the divisor's decoded mantissa *is* zero. This is the hazard the
 unconditional spec-side `DivRefinement FP32 ℝ` cannot express — a mean whose total weight is zero
 does not produce a wrong number at this rung, it produces one the bridge refuses to relate to any
 real quotient at all. -/

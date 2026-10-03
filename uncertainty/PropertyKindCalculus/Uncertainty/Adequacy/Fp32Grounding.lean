@@ -33,9 +33,7 @@ is now realized at the FLT/`fexp32` format binary32 actually uses.
 module
 
 public import PropertyKindCalculus.Uncertainty.Adequacy.Grid
-public import NN.Floats.FP32.Notation
-public import NN.Floats.FP32.Error
-public import NN.Floats.FP32.Sterbenz
+public import PropertyKindCalculus.Torch.Fp32Spec
 public import FloatLib.Floats.Interval.Quantized
 
 @[expose] public section Blanket
@@ -43,6 +41,7 @@ public import FloatLib.Floats.Interval.Quantized
 namespace PropertyKindCalculus.Uncertainty.Adequacy
 
 open TorchLean.Floats
+open PropertyKindCalculus.Fp32
 open FloatLib.Floats
 open FloatLib.Floats.Formats.Flocq
 open FloatLib.Numerics (binaryRadix Radix)
@@ -144,7 +143,7 @@ theorem round32_sterbenz_exact {u v : ℝ}
     (hu : genericFormat binaryRadix fexp32 u) (hv : genericFormat binaryRadix fexp32 v)
     (hupos : 0 < u) (hvpos : 0 < v) (huv : u ≤ 2 * v) (hvu : v ≤ 2 * u) :
     round32 (u - v) = u - v :=
-  TorchLean.Floats.round32_sub_exact_of_sterbenz hu hv hupos hvpos huv hvu
+  PropertyKindCalculus.Fp32.round32_sub_exact_of_sterbenz hu hv hupos hvpos huv hvu
 
 /-- **Sterbenz on the `FP32` scalar type.** The operational form: subtracting two representable,
 near-equal binary32 values introduces *no* rounding error — `(a − b).val = a.val − b.val`. The dual
@@ -154,7 +153,7 @@ theorem sub32_exact_of_sterbenz {a b : FP32}
     (hapos : 0 < a.val) (hbpos : 0 < b.val)
     (hab : a.val ≤ 2 * b.val) (hba : b.val ≤ 2 * a.val) :
     (a - b).val = a.val - b.val :=
-  TorchLean.Floats.FP32.sub_exact_of_sterbenz ha hb hapos hbpos hab hba
+  PropertyKindCalculus.Fp32.FP32.sub_exact_of_sterbenz ha hb hapos hbpos hab hba
 
 end PropertyKindCalculus.Uncertainty.Adequacy
 

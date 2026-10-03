@@ -37,7 +37,7 @@ namespace PropertyKindCalculus.Uncertainty.SsprcBatched
 open Spec TorchLean
 open PropertyKindCalculus.Paradigm (NumCarrier)
 open PropertyKindCalculus.Paradigm.CudaCarrier (CudaT)
-open Runtime.Autograd.Cuda (Buffer)
+open Runtime.Autograd.LibTorch (Buffer)
 open PropertyKindCalculus.Uncertainty (InputDist)
 
 /-- A write-once carrier-polymorphic scalar kernel as the propagators consume it: `List α → α` for

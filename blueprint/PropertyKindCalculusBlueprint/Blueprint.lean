@@ -916,8 +916,8 @@ independent and compose, so a rounding step cannot launder a product the kind ca
 refuses. This is what lets a weighted mean, a ratio, or a sensitivity coefficient cross at
 all — none of them is an addition. The division law is unconditional at the *specification*
 rung only because $`\mathbb{R}` totalizes $`x/0`; the executable rung's
-`Quantity.div_refines_exec` carries the divisor's nonzero decoded mantissa beside its
-finiteness hypotheses, which is where a zero denominator is actually caught.
+`Quantity.div_refines_exec` asks that the executable quotient be finite, which is where a
+zero denominator is actually caught: a finite dividend over zero is an infinity or a NaN.
 
 The real representations above and their complexifications, ordered from proof to
 execution, are the {deftech}[carrier ladder]{index}[carrier ladder]: each representation

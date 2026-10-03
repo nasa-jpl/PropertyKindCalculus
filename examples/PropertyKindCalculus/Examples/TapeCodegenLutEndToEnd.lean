@@ -33,6 +33,7 @@ open Spec TorchLean TorchLean.Tensor
 open Runtime.Autograd (Tape Node TapeM)
 open PropertyKindCalculus.Paradigm (TapeBuilder NumCarrier LutTable LutInterp lutNodeName?)
 open PropertyKindCalculus.Paradigm.TapeParity
+open Proofs.Autograd.Builder (run_add_ok run_sub_ok run_mul_ok run_exp_ok)
 open PropertyKindCalculus.Paradigm.TapeFaithful
 open PropertyKindCalculus.Paradigm.TapeCodegen
 open PropertyKindCalculus.Paradigm.TapeCodegen (getD_push_size getD_push_lt)
@@ -215,7 +216,7 @@ theorem FaithfulT_add (tables : String → Option LutTable) (env : String → Fl
     (fun a b => (cOpT_base tables rfl [a, b]).trans rfl) ha hb
   intro tt idA idB va vb hA hB
   obtain ⟨nd, heq, hn, hp, hv⟩ := tapeAdd_addNode tt idA idB hA hB
-  exact ⟨nd, add_run_ok tt (tt.addNode nd).1 idA idB tt.size heq, hn, hp, hv⟩
+  exact ⟨nd, run_add_ok idA idB heq, hn, hp, hv⟩
 
 theorem FaithfulT_sub (tables : String → Option LutTable) (env : String → Float)
     {a b : TB} {va vb : T} {xa xb : Float}
@@ -226,7 +227,7 @@ theorem FaithfulT_sub (tables : String → Option LutTable) (env : String → Fl
     (fun a b => (cOpT_base tables rfl [a, b]).trans rfl) ha hb
   intro tt idA idB va vb hA hB
   obtain ⟨nd, heq, hn, hp, hv⟩ := tapeSub_addNode tt idA idB hA hB
-  exact ⟨nd, sub_run_ok tt (tt.addNode nd).1 idA idB tt.size heq, hn, hp, hv⟩
+  exact ⟨nd, run_sub_ok idA idB heq, hn, hp, hv⟩
 
 theorem FaithfulT_mul (tables : String → Option LutTable) (env : String → Float)
     {a b : TB} {va vb : T} {xa xb : Float}
@@ -237,7 +238,7 @@ theorem FaithfulT_mul (tables : String → Option LutTable) (env : String → Fl
     (fun a b => (cOpT_base tables rfl [a, b]).trans rfl) ha hb
   intro tt idA idB va vb hA hB
   obtain ⟨nd, heq, hn, hp, hv⟩ := tapeMul_addNode tt idA idB hA hB
-  exact ⟨nd, mul_run_ok tt (tt.addNode nd).1 idA idB tt.size heq, hn, hp, hv⟩
+  exact ⟨nd, run_mul_ok idA idB heq, hn, hp, hv⟩
 
 /-! ## The genuinely new step: the fetch preserves the bridge -/
 

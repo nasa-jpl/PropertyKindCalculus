@@ -34,6 +34,7 @@ namespace PropertyKindCalculus.UncertaintyExamples.AdequacyDag
 
 open PropertyKindCalculus.Uncertainty.Adequacy
 open TorchLean.Floats
+open PropertyKindCalculus.Fp32
 open FloatLib.Floats.Formats.Flocq
 open FloatLib.Numerics (binaryRadix Radix)
 

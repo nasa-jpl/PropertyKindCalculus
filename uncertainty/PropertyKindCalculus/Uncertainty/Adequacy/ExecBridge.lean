@@ -49,6 +49,7 @@ public import NN.Proofs.RuntimeApprox.IEEE32.Contracts
 namespace PropertyKindCalculus.Uncertainty.Adequacy
 
 open TorchLean.Floats
+open PropertyKindCalculus.Fp32
 open TorchLean.Floats.IEEE754
 open TorchLean.Floats.IEEE754.IEEE32Exec
 open FloatLib.Floats (ExecFloat)
@@ -64,7 +65,7 @@ The first half of the "`Float.ulp` matching `ulp32`" the Stage-3.3 plan asks for
 certifiable `IEEE32Exec` model rather than opaque host `Float`. -/
 theorem exec_ulp_grounds {x : ExecFloat.Binary 8 23} {k : Int} (hk : ulpExp? x = some k) :
     bpow binaryRadix k = ulp32 (toModel x).toReal :=
-  bpow_eq_ulp32_of_ulpExp?_eq_some hk
+  bpow_eq_ulp_of_ulpExp?_eq_some hk
 
 /-- **The executable half-ULP is the specified half-ULP.** `eps32` is the threshold `AbsorptionFlag`
 compares an operand's uncertainty against; here it is recovered from the executable `ulpExp?`
@@ -78,21 +79,13 @@ operand absorbed (`absorbs s δ = true`, i.e. the float32 sum equals `s` unchang
 *agrees*: the exact real sum rounds back to `toReal s` under `round32`. This is the executable image
 of `Soundness.verdict_sound`'s flag ⟹ contribution-lost direction — the abstract grid `gridRound u`
 replaced by the genuine binary32 rounding `round32` — so the *computed* adequacy verdict is provably
-the *specified* one, on the finite fragment (`toDyadic? s/δ = some _`, `isFinite (ExecFloat.add s δ)`). -/
-theorem exec_verdict_sound {s δ : ExecFloat.Binary 8 23} {ds dδ : FloatLib.Numerics.Dyadic}
-    (hs : (toModel s).toDyadic? = some ds) (hδ : (toModel δ).toDyadic? = some dδ)
+the *specified* one, on the finite fragment. The one finiteness hypothesis is the executable
+check `isFinite (ExecFloat.add s δ)`: a finite executable sum already forces finite operands, so
+a kernel driver discharges the whole theorem by running `isFinite` and `absorbs`. -/
+theorem exec_verdict_sound {s δ : ExecFloat.Binary 8 23}
     (hfin : isFinite (ExecFloat.add s δ) = true) (hverdict : absorbs s δ = true) :
     round32 ((toModel s).toReal + (toModel δ).toReal) = (toModel s).toReal :=
-  round32_add_eq_left_of_absorbs hs hδ hfin hverdict
-
-/-- `exec_verdict_sound` from the three *executable* finiteness checks alone: the dyadic decoding
-witnesses are recovered from `isFinite`, not assumed — the form a kernel driver can discharge
-entirely by running `isFinite`/`absorbs`. -/
-theorem exec_verdict_sound_of_isFinite {s δ : ExecFloat.Binary 8 23}
-    (hs : isFinite s = true) (hδ : isFinite δ = true)
-    (hfin : isFinite (ExecFloat.add s δ) = true) (hverdict : absorbs s δ = true) :
-    round32 ((toModel s).toReal + (toModel δ).toReal) = (toModel s).toReal :=
-  round32_add_eq_left_of_absorbs_of_isFinite hs hδ hfin hverdict
+  round_add_eq_left_of_absorbs hfin hverdict
 
 end PropertyKindCalculus.Uncertainty.Adequacy
 

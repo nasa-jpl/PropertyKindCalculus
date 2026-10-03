@@ -440,6 +440,11 @@ inputs — which is the deep reason to build these together rather than as two f
 
 ### 4.6 The verified TorchLean FP32 / RInterval / carrier API surface (2026-07-15)
 
+*(On the `combined` pin, which sits on upstream's LibTorch tree, the names in B and D are
+PKC's own `Torch.Fp32Spec` abbreviations over FloatLib's `Model.roundAt FloatFormat.binary32`,
+`Model.ulpAt` and `Model.epsilonAt`; TorchLean's `NN/Floats/FP32/` lemma modules are folded into
+FloatLib's `Formats.BinaryInterchange.Analysis`. The statement shapes below are unchanged.)*
+
 Before implementing Stage 3 we swept the two dependency trees (PKC core spine; the TorchLean
 `combined` package under `.lake/packages/TorchLean`) for the exact signatures the adequacy layer
 builds on. The findings below are what the Stage-3 design and sub-stages 3.1–3.3 rest on — recorded
@@ -897,10 +902,10 @@ and FFT kernels under `NN/Runtime/Autograd/Engine/Cuda/Ops/*` for SSPRC's convol
   (`#guard`s at `2²⁵`/`10⁸` + `exec_verdict` proof term). *(2026-07-27 API modernization: upstream
   evolved the PR's total `ulpExp : IEEE32Exec → Int` into the partial `ulpExp? : … → Option Int` —
   `none` on NaN/∞ rather than an artificial spacing — with the direct soundness form
-  `neuralBpow_eq_ulp32_of_ulpExp?_eq_some` and the finiteness-only
-  `round32_add_eq_left_of_absorbs_of_isFinite`. `ExecBridge`/`AdequacyExecBridge` re-grounded on that
-  API: `exec_ulp_grounds`/`exec_half_ulp_grounds` now take `ulpExp? x = some k`, and the new
-  `exec_verdict_sound_of_isFinite` re-export needs only the three executable finiteness checks.)*
+  `bpow_eq_ulp_of_ulpExp?_eq_some` and the finiteness-only
+  `round_add_eq_left_of_absorbs`. `ExecBridge`/`AdequacyExecBridge` re-grounded on that
+  API: `exec_ulp_grounds`/`exec_half_ulp_grounds` take `ulpExp? x = some k`, and
+  `exec_verdict_sound` needs only the executable finiteness check of the sum.)*
 
 * **Stage 3.4 — Wire the Axis-U significance yardstick. ✅ DONE (built & CI-checked).** Until here the
   two areas ran from *separate* inputs (Stage 1 fed autograd `cᵢ` to GUM/Willink; `AdequacySwamping`
@@ -1331,7 +1336,7 @@ The four residuals — all "one more crank of the same machine," none a new work
   VJP. Models using trig can be *evaluated* (Float/CudaT have the transcendentals as values) but not
   *differentiated* on the tape until `_fwd/_bwd` nodes are added. Decision: accept the exp/log/sqrt
   model class for Stages 1–2, or fund the trig VJP nodes early.
-* **Toolchain / build coupling.** PKC is pinned `v4.34.0` (Mathlib v4.34.0, TorchLean `combined-4.34`).
+* **Toolchain / build coupling.** PKC is pinned `v4.34.0` (Mathlib v4.34.0, TorchLean `combined`).
   Stage 0 avoids the issue entirely (Mathlib/TorchLean-free). Stage 1+ pull in much more of
   TorchLean (autograd + interval + FFT), enlarging build surface and tightening the PKC↔TorchLean
   coupling (cf. the FGM↔DVB single-toolchain constraint). TorchLean's autograd functional API is

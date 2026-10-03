@@ -39,7 +39,7 @@ meta import PropertyKindCalculus.BoundaryAudit   -- its `@[carrierVocab]` attrib
 open Spec TorchLean
 open PropertyKindCalculus.Paradigm (NumCarrier)
 open PropertyKindCalculus.Paradigm.CudaCarrier (CudaT)
-open Runtime.Autograd.Cuda (Buffer)
+open Runtime.Autograd.LibTorch (Buffer)
 
 namespace PropertyKindCalculus.Paradigm
 

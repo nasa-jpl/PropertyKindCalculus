@@ -18,7 +18,7 @@ uniform abscissa in grid coordinates `[0, width−1]`. `lutFetch tbl layer u` cl
 `[0, width−1]`, selects the (integral-valued, clamped) `layer`, and linearly interpolates between
 the two neighbouring samples — the uniform-grid analogue of `np.interp`, and exactly what one
 `tex1DLayered`-backed fetch computes on a GPU (point mode: bit-reproducibly in fp32; hardware
-filter mode: up to the 9-bit-weight tolerance).
+filter mode: up to the 9-bit-weight tolerance) and what the LibTorch lookup computes.
 
 INSTANCES.
 * `Float` — `LutTable.refFetch`, the fp64 reference/oracle (the `evalTapeT` denotation).
@@ -28,28 +28,30 @@ INSTANCES.
   `paradigm.tape_cse`'s `nodeKey` (which keys on the name) distinguishes fetches into different
   tables with no CSE change — the "scalar-baking op" hazard its docstring warns about is resolved
   by construction, PROVIDED distinct tables carry distinct names (the codegen rejects duplicates).
-* `CudaT` — TorchLean's `TexTable` texture-object fetch (`NN.Runtime.Autograd.Engine.Cuda.TexTable`,
-  a layered `cudaArray` + `cudaTextureObject_t` under `-K cuda`, a host parity stub otherwise), in
-  **point mode** — two point fetches + a contraction-blocked fp32 lerp, the mode whose CUDA and
-  CPU-stub results are bit-identical (`refFetch`'s float32 twin). The instance creates the texture
-  per call (fine for parity checks); throughput deployments bind the table once through the
-  TorchLean API directly or land the megakernel (`paradigm.tape_codegen`), where the generated
-  launcher caches the texture create-once.
+* `CudaT` — TorchLean's piecewise-linear table lookup on the LibTorch backend
+  (`NN.Runtime.Autograd.Engine.LibTorch.Ops.TableLookup`): `Buffer.tableSegments` locates each
+  coordinate's two neighbouring samples and `Buffer.tableLookupForward` gathers them and lerps,
+  one float32 rounding per primitive, so the result is `KernelSpec.tableLookupSpec` bit for bit
+  (`refFetch`'s float32 twin). The instance uploads the table per call (fine for parity checks);
+  throughput deployments upload the table once and record `Tape.layeredTableLookup`, or land the
+  megakernel (`paradigm.tape_codegen`), where the generated launcher caches the texture
+  create-once.
 
-A `module` file: imports the tape carrier and the CUDA carrier.
+A `module` file: imports the tape carrier, the CUDA carrier, and TorchLean's table lookup.
 -/
 
 module
 
 public import PropertyKindCalculus.Torch.Paradigm.TapeCarrier
 public import PropertyKindCalculus.Torch.Paradigm.CudaCarrier
-public import NN.Runtime.Autograd.Engine.Cuda.TexTable
+public import NN.Runtime.Autograd.Engine.LibTorch.Ops.TableLookup
 
 @[expose] public section Blanket
 
 open Spec TorchLean
 open TorchLean TorchLean.Tensor
 open Runtime.Autograd
+open Runtime.Autograd.LibTorch (Buffer)
 
 namespace PropertyKindCalculus.Paradigm
 
@@ -136,16 +138,21 @@ construction), forward-only. -/
 instance {s : Shape} : LutInterp (TapeBuilder s) where
   lutFetch := TapeBuilder.lutFetchM
 
-/-- The executing GPU/CPU-stub instance: one `TexTable` fetch in point mode (the bit-reproducible
-float32 twin of `refFetch`). Table creation is per call — parity-check economics; deployments that
-care bind once via TorchLean or land the megakernel. -/
+/-- The executing device instance: one layered table lookup through TorchLean's LibTorch
+primitives (the bit-reproducible float32 twin of `refFetch`). The table upload is per call —
+parity-check economics; deployments that care upload once via TorchLean or land the megakernel.
+An empty table (no samples or no layers) reads as `0`, as `refFetch` does. -/
 instance {s : Shape} : LutInterp (CudaCarrier.CudaT s) where
   lutFetch tbl layer u :=
-    let fa := tbl.values.foldl (init := FloatArray.emptyWithCapacity tbl.values.size)
-      FloatArray.push
-    let tex := Runtime.Autograd.Cuda.TexTable.ofFloatArray fa tbl.width tbl.layers
-      (hwFilter := false)
-    ⟨Runtime.Autograd.Cuda.TexTable.fetch tex u.buf layer.buf⟩
+    if tbl.width == 0 || tbl.layers == 0 then CudaCarrier.CudaT.const 0.0
+    else
+      let fa := tbl.values.foldl (init := FloatArray.emptyWithCapacity tbl.values.size)
+        FloatArray.push
+      let table := Buffer.ofFloatArray fa
+      let count := CudaCarrier.CudaT.szU s
+      let seg := Buffer.tableSegments tbl.layers.toUInt32 tbl.width.toUInt32 u.buf (some layer.buf)
+        count
+      ⟨Buffer.tableLookupForward table (tbl.layers * tbl.width).toUInt32 seg count⟩
 
 end PropertyKindCalculus.Paradigm
 

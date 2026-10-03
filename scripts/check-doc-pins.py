@@ -77,7 +77,7 @@ ROOT = Path(__file__).resolve().parent.parent
 # --- 2. Curated prose sites: (file, sentence with {VER}, required occurrences) ----
 SITES: list[tuple[str, str, int]] = [
     ("README.md", "`leanprover/lean4:v{VER}`", 1),
-    ("UNCERTAINTY.md", "PKC is pinned `v{VER}` (Mathlib v{VER}, TorchLean `combined-4.34`)", 1),
+    ("UNCERTAINTY.md", "PKC is pinned `v{VER}` (Mathlib v{VER}, TorchLean `combined`)", 1),
     ("lakefile.lean", "Mathlib `v{VER}` pin", 1),
     ("lakefile.lean", "doc-gen4 v{VER}", 1),
     ("blueprint/lakefile.toml", "on the v{VER} toolchain", 1),

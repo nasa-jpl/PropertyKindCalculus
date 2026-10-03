@@ -41,6 +41,7 @@ open Runtime.Autograd (Tape Node TapeM)
 open PropertyKindCalculus (MathCarrier)
 open PropertyKindCalculus.Paradigm (TapeBuilder)
 open PropertyKindCalculus.Paradigm.TapeParity
+open Proofs.Autograd.Builder (run_add_ok run_sub_ok run_mul_ok run_exp_ok)
 open PropertyKindCalculus.Paradigm.TapeFaithful
 open PropertyKindCalculus.Paradigm.TapeCodegen
 open PropertyKindCalculus.Paradigm.TapeCodegen.Demo (inLeaf)
@@ -132,28 +133,28 @@ theorem tapeAdd_addNode (tt : Tape Float) (idA idB : Nat) {va vb : T}
     ∃ nd : Node Float, Tape.add (t := tt) (s := S) idA idB = .ok (tt.addNode nd) ∧
       nd.name = some "add" ∧ nd.parents = #[idA, idB] ∧
       nd.value = Spec.SomeTensor.ofTensor (addSpec va vb) := by
-  unfold Tape.add; rw [hA, hB]; exact ⟨_, rfl, rfl, rfl, rfl⟩
+  unfold Tape.add Tape.binary; rw [hA, hB]; exact ⟨_, rfl, rfl, rfl, rfl⟩
 
 theorem tapeSub_addNode (tt : Tape Float) (idA idB : Nat) {va vb : T}
     (hA : tt.requireValue (s := S) idA = .ok va) (hB : tt.requireValue (s := S) idB = .ok vb) :
     ∃ nd : Node Float, Tape.sub (t := tt) (s := S) idA idB = .ok (tt.addNode nd) ∧
       nd.name = some "sub" ∧ nd.parents = #[idA, idB] ∧
       nd.value = Spec.SomeTensor.ofTensor (subSpec va vb) := by
-  unfold Tape.sub; rw [hA, hB]; exact ⟨_, rfl, rfl, rfl, rfl⟩
+  unfold Tape.sub Tape.binary; rw [hA, hB]; exact ⟨_, rfl, rfl, rfl, rfl⟩
 
 theorem tapeMul_addNode (tt : Tape Float) (idA idB : Nat) {va vb : T}
     (hA : tt.requireValue (s := S) idA = .ok va) (hB : tt.requireValue (s := S) idB = .ok vb) :
     ∃ nd : Node Float, Tape.mul (t := tt) (s := S) idA idB = .ok (tt.addNode nd) ∧
       nd.name = some "mul" ∧ nd.parents = #[idA, idB] ∧
       nd.value = Spec.SomeTensor.ofTensor (mulSpec va vb) := by
-  unfold Tape.mul; rw [hA, hB]; exact ⟨_, rfl, rfl, rfl, rfl⟩
+  unfold Tape.mul Tape.binary; rw [hA, hB]; exact ⟨_, rfl, rfl, rfl, rfl⟩
 
 theorem tapeExp_addNode (tt : Tape Float) (xId : Nat) {vx : T}
     (hx : tt.requireValue (s := S) xId = .ok vx) :
     ∃ nd : Node Float, Tape.exp (t := tt) (s := S) xId = .ok (tt.addNode nd) ∧
       nd.name = some "exp" ∧ nd.parents = #[xId] ∧
       nd.value = Spec.SomeTensor.ofTensor (expSpec vx) := by
-  unfold Tape.exp; rw [hx]; exact ⟨_, rfl, rfl, rfl, rfl⟩
+  unfold Tape.exp Tape.unary; rw [hx]; exact ⟨_, rfl, rfl, rfl, rfl⟩
 
 /-! ### Generic op-preservation for the bridge, then the arithmetic instances. -/
 
@@ -254,7 +255,7 @@ theorem Faithful_add (env : String → Float) {a b : TB} {va vb : T} {xa xb : Fl
   refine Faithful_bin env (TapeM.add (s := S)) "add" addSpec (· + ·) ?hrun (fun a b => rfl) ha hb
   intro tt idA idB va vb hA hB
   obtain ⟨nd, heq, hn, hp, hv⟩ := tapeAdd_addNode tt idA idB hA hB
-  exact ⟨nd, add_run_ok tt (tt.addNode nd).1 idA idB tt.size heq, hn, hp, hv⟩
+  exact ⟨nd, run_add_ok idA idB heq, hn, hp, hv⟩
 
 theorem Faithful_sub (env : String → Float) {a b : TB} {va vb : T} {xa xb : Float}
     (ha : Faithful env a va xa) (hb : Faithful env b vb xb) :
@@ -263,7 +264,7 @@ theorem Faithful_sub (env : String → Float) {a b : TB} {va vb : T} {xa xb : Fl
   refine Faithful_bin env (TapeM.sub (s := S)) "sub" subSpec (· - ·) ?hrun (fun a b => rfl) ha hb
   intro tt idA idB va vb hA hB
   obtain ⟨nd, heq, hn, hp, hv⟩ := tapeSub_addNode tt idA idB hA hB
-  exact ⟨nd, sub_run_ok tt (tt.addNode nd).1 idA idB tt.size heq, hn, hp, hv⟩
+  exact ⟨nd, run_sub_ok idA idB heq, hn, hp, hv⟩
 
 theorem Faithful_mul (env : String → Float) {a b : TB} {va vb : T} {xa xb : Float}
     (ha : Faithful env a va xa) (hb : Faithful env b vb xb) :
@@ -272,7 +273,7 @@ theorem Faithful_mul (env : String → Float) {a b : TB} {va vb : T} {xa xb : Fl
   refine Faithful_bin env (TapeM.mul (s := S)) "mul" mulSpec (· * ·) ?hrun (fun a b => rfl) ha hb
   intro tt idA idB va vb hA hB
   obtain ⟨nd, heq, hn, hp, hv⟩ := tapeMul_addNode tt idA idB hA hB
-  exact ⟨nd, mul_run_ok tt (tt.addNode nd).1 idA idB tt.size heq, hn, hp, hv⟩
+  exact ⟨nd, run_mul_ok idA idB heq, hn, hp, hv⟩
 
 theorem Faithful_exp (env : String → Float) {a : TB} {vx : T} {xx : Float}
     (ha : Faithful env a vx xx) :
@@ -281,7 +282,7 @@ theorem Faithful_exp (env : String → Float) {a : TB} {vx : T} {xx : Float}
   refine Faithful_un env (TapeM.exp (s := S)) "exp" expSpec Float.exp ?hrun (fun a => rfl) ha
   intro tt xId vx hx
   obtain ⟨nd, heq, hn, hp, hv⟩ := tapeExp_addNode tt xId hx
-  exact ⟨nd, exp_run_ok tt (tt.addNode nd).1 xId tt.size heq, hn, hp, hv⟩
+  exact ⟨nd, run_exp_ok xId heq, hn, hp, hv⟩
 
 /-! ## Rendering faithfulness of the AVS Stage-2 kernel, for all inputs
 

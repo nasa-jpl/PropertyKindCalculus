@@ -30,6 +30,7 @@ module
 
 public import PropertyKindCalculus.Torch.Paradigm.TapeCarrier
 public import PropertyKindCalculus.Torch.Paradigm.TapeFaithful
+public import NN.Proofs.Autograd.Tape.Builder
 
 @[expose] public section Blanket
 
@@ -42,6 +43,8 @@ namespace PropertyKindCalculus.Paradigm.TapeParity
 
 open PropertyKindCalculus.Paradigm
 open PropertyKindCalculus.Paradigm.TapeBuilder
+open Proofs.Autograd.Builder (run_add_ok run_sub_ok run_mul_ok run_div_ok run_min_ok run_max_ok
+  run_sqrt_ok run_exp_ok)
 
 set_option linter.unusedSimpArgs false
 
@@ -49,62 +52,11 @@ variable {s : Shape}
 
 /-! ## The `TapeM`→`Tape` run bridge
 
-`TapeM.X` is the `StateT` wrapper of the pure `Tape.X`. When the pure op succeeds, the wrapped
-op's `.run` yields the same node id and tape. Every `TapeM` op shares one `StateT`-over-`Result`
-threading pattern `patt`; `patt_run_ok` reduces it with a single `simp` set, and each op is that
-pattern by definitional unfolding. -/
-
-/-- The `StateT`-over-`Result` threading shared by every `TapeM` builder op. -/
-def patt (g : Tape Float → Result (Tape Float × Nat)) : TapeM Float Nat := do
-  let tt ← get; let (t', id) ← liftM (g tt); set t'; pure id
-
-/-- When the wrapped pure op succeeds, `patt`'s `.run` yields the same id and tape. The one
-`simp` set that unfolds the whole `StateT`/`Except` plumbing (no error branch, so it closes). -/
-theorem patt_run_ok (g : Tape Float → Result (Tape Float × Nat)) (t t' : Tape Float) (id : Nat)
-    (h : g t = .ok (t', id)) : (patt g).run t = .ok (id, t') := by
-  unfold patt
-  simp only [TapeM.run, StateT.run, StateT.bind, StateT.pure, StateT.lift, StateT.map,
-    bind, Bind.bind, pure, Pure.pure, Functor.map, MonadState.get, MonadStateOf.get, getThe,
-    StateT.get, MonadStateOf.set, set, StateT.set, monadLift, MonadLift.monadLift, liftM,
-    Except.bind, Except.pure, h]
-
-theorem add_run_ok (t t' : Tape Float) (aId bId id : Nat)
-    (h : Tape.add (t := t) (s := s) aId bId = .ok (t', id)) :
-    (TapeM.add (α := Float) (s := s) aId bId).run t = .ok (id, t') :=
-  patt_run_ok (fun tt => Tape.add (t := tt) (s := s) aId bId) t t' id h
-theorem sub_run_ok (t t' : Tape Float) (aId bId id : Nat)
-    (h : Tape.sub (t := t) (s := s) aId bId = .ok (t', id)) :
-    (TapeM.sub (α := Float) (s := s) aId bId).run t = .ok (id, t') :=
-  patt_run_ok (fun tt => Tape.sub (t := tt) (s := s) aId bId) t t' id h
-theorem mul_run_ok (t t' : Tape Float) (aId bId id : Nat)
-    (h : Tape.mul (t := t) (s := s) aId bId = .ok (t', id)) :
-    (TapeM.mul (α := Float) (s := s) aId bId).run t = .ok (id, t') :=
-  patt_run_ok (fun tt => Tape.mul (t := tt) (s := s) aId bId) t t' id h
-theorem div_run_ok (t t' : Tape Float) (aId bId id : Nat)
-    (h : Tape.div (t := t) (s := s) aId bId = .ok (t', id)) :
-    (TapeM.div (α := Float) (s := s) aId bId).run t = .ok (id, t') :=
-  patt_run_ok (fun tt => Tape.div (t := tt) (s := s) aId bId) t t' id h
-theorem min_run_ok (t t' : Tape Float) (aId bId id : Nat)
-    (h : Tape.min (t := t) (s := s) aId bId = .ok (t', id)) :
-    (TapeM.min (α := Float) (s := s) aId bId).run t = .ok (id, t') :=
-  patt_run_ok (fun tt => Tape.min (t := tt) (s := s) aId bId) t t' id h
-theorem max_run_ok (t t' : Tape Float) (aId bId id : Nat)
-    (h : Tape.max (t := t) (s := s) aId bId = .ok (t', id)) :
-    (TapeM.max (α := Float) (s := s) aId bId).run t = .ok (id, t') :=
-  patt_run_ok (fun tt => Tape.max (t := tt) (s := s) aId bId) t t' id h
-/-- Unary run bridge: `TapeM.sqrt` is the same `patt` threading over the single-input
-`Tape.sqrt` (so `patt_run_ok` applies verbatim). -/
-theorem sqrt_run_ok (t t' : Tape Float) (aId id : Nat)
-    (h : Tape.sqrt (t := t) (s := s) aId = .ok (t', id)) :
-    (TapeM.sqrt (α := Float) (s := s) aId).run t = .ok (id, t') :=
-  patt_run_ok (fun tt => Tape.sqrt (t := tt) (s := s) aId) t t' id h
-
-/-- `TapeM.exp` is the same `patt` threading over `Tape.exp` — the transcendental the AVS
-forward model `exp(−2·b·ndvi)` names. -/
-theorem exp_run_ok (t t' : Tape Float) (aId id : Nat)
-    (h : Tape.exp (t := t) (s := s) aId = .ok (t', id)) :
-    (TapeM.exp (α := Float) (s := s) aId).run t = .ok (id, t') :=
-  patt_run_ok (fun tt => Tape.exp (t := tt) (s := s) aId) t t' id h
+`TapeM.X` is `TapeM.Internal.record` applied to the pure `Tape.X`, and TorchLean reduces that
+threading once: `Proofs.Autograd.Builder.record_run_ok` turns a pure op's success into the
+wrapped op's `.run` success (the pair swaps: a pure op returns tape-then-id, `run` returns
+id-then-tape), and the `Builder.run_<op>_ok` family is that lemma at each op. The per-op
+`Evaluates` lemmas below use the family directly. -/
 
 /-! ## `Evaluates` and its compositional skeleton -/
 
@@ -233,56 +185,56 @@ theorem faith_add (tt : Tape Float) (aId bId : Nat) {va vb : Tensor Float s}
     ∃ t', (TapeM.add (s := s) aId bId).run tt = .ok (tt.size, t') ∧
           t'.requireValue tt.size = .ok (addSpec va vb) ∧ FrameOver t' tt := by
   obtain ⟨t', he, hv, hf⟩ := add_value tt aId bId ha hb
-  exact ⟨t', add_run_ok tt t' aId bId tt.size he, hv, hf⟩
+  exact ⟨t', run_add_ok aId bId he, hv, hf⟩
 
 theorem faith_sub (tt : Tape Float) (aId bId : Nat) {va vb : Tensor Float s}
     (ha : tt.requireValue aId = .ok va) (hb : tt.requireValue bId = .ok vb) :
     ∃ t', (TapeM.sub (s := s) aId bId).run tt = .ok (tt.size, t') ∧
           t'.requireValue tt.size = .ok (subSpec va vb) ∧ FrameOver t' tt := by
   obtain ⟨t', he, hv, hf⟩ := sub_value tt aId bId ha hb
-  exact ⟨t', sub_run_ok tt t' aId bId tt.size he, hv, hf⟩
+  exact ⟨t', run_sub_ok aId bId he, hv, hf⟩
 
 theorem faith_mul (tt : Tape Float) (aId bId : Nat) {va vb : Tensor Float s}
     (ha : tt.requireValue aId = .ok va) (hb : tt.requireValue bId = .ok vb) :
     ∃ t', (TapeM.mul (s := s) aId bId).run tt = .ok (tt.size, t') ∧
           t'.requireValue tt.size = .ok (mulSpec va vb) ∧ FrameOver t' tt := by
   obtain ⟨t', he, hv, hf⟩ := mul_value tt aId bId ha hb
-  exact ⟨t', mul_run_ok tt t' aId bId tt.size he, hv, hf⟩
+  exact ⟨t', run_mul_ok aId bId he, hv, hf⟩
 
 theorem faith_div (tt : Tape Float) (aId bId : Nat) {va vb : Tensor Float s}
     (ha : tt.requireValue aId = .ok va) (hb : tt.requireValue bId = .ok vb) :
     ∃ t', (TapeM.div (s := s) aId bId).run tt = .ok (tt.size, t') ∧
           t'.requireValue tt.size = .ok (divSpec va vb) ∧ FrameOver t' tt := by
   obtain ⟨t', he, hv, hf⟩ := div_value tt aId bId ha hb
-  exact ⟨t', div_run_ok tt t' aId bId tt.size he, hv, hf⟩
+  exact ⟨t', run_div_ok aId bId he, hv, hf⟩
 
 theorem faith_min (tt : Tape Float) (aId bId : Nat) {va vb : Tensor Float s}
     (ha : tt.requireValue aId = .ok va) (hb : tt.requireValue bId = .ok vb) :
     ∃ t', (TapeM.min (s := s) aId bId).run tt = .ok (tt.size, t') ∧
           t'.requireValue tt.size = .ok (minSpec va vb) ∧ FrameOver t' tt := by
   obtain ⟨t', he, hv, hf⟩ := min_value tt aId bId ha hb
-  exact ⟨t', min_run_ok tt t' aId bId tt.size he, hv, hf⟩
+  exact ⟨t', run_min_ok aId bId he, hv, hf⟩
 
 theorem faith_max (tt : Tape Float) (aId bId : Nat) {va vb : Tensor Float s}
     (ha : tt.requireValue aId = .ok va) (hb : tt.requireValue bId = .ok vb) :
     ∃ t', (TapeM.max (s := s) aId bId).run tt = .ok (tt.size, t') ∧
           t'.requireValue tt.size = .ok (maxSpec va vb) ∧ FrameOver t' tt := by
   obtain ⟨t', he, hv, hf⟩ := max_value tt aId bId ha hb
-  exact ⟨t', max_run_ok tt t' aId bId tt.size he, hv, hf⟩
+  exact ⟨t', run_max_ok aId bId he, hv, hf⟩
 
 theorem faith_sqrt (tt : Tape Float) (xId : Nat) {vx : Tensor Float s}
     (hx : tt.requireValue xId = .ok vx) :
     ∃ t', (TapeM.sqrt (s := s) xId).run tt = .ok (tt.size, t') ∧
           t'.requireValue tt.size = .ok (sqrtSpec vx) ∧ FrameOver t' tt := by
   obtain ⟨t', he, hv, hf⟩ := sqrt_value tt xId hx
-  exact ⟨t', sqrt_run_ok tt t' xId tt.size he, hv, hf⟩
+  exact ⟨t', run_sqrt_ok xId he, hv, hf⟩
 
 theorem faith_exp (tt : Tape Float) (xId : Nat) {vx : Tensor Float s}
     (hx : tt.requireValue xId = .ok vx) :
     ∃ t', (TapeM.exp (s := s) xId).run tt = .ok (tt.size, t') ∧
           t'.requireValue tt.size = .ok (expSpec vx) ∧ FrameOver t' tt := by
   obtain ⟨t', he, hv, hf⟩ := exp_value tt xId hx
-  exact ⟨t', exp_run_ok tt t' xId tt.size he, hv, hf⟩
+  exact ⟨t', run_exp_ok xId he, hv, hf⟩
 
 theorem Evaluates_add {x y : TapeBuilder s} {vx vy : Tensor Float s}
     (hx : Evaluates x vx) (hy : Evaluates y vy) : Evaluates (x + y) (addSpec vx vy) :=
