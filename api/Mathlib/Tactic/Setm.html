@@ -1,0 +1,38 @@
+<html lang="en"><head><meta charset="UTF-8"></meta><meta name="viewport" content="width=device-width, initial-scale=1"></meta><link rel="stylesheet" href="../.././style.css"></link><link rel="icon" href="../.././favicon.svg"></link><link rel="mask-icon" href="../.././favicon.svg" color="#000000"></link><link rel="prefetch" href="../.././/declarations/declaration-data.bmp" as="image"></link><title>Mathlib.Tactic.Setm</title><script defer="true" src="../.././mathjax-config.js"></script><script defer="true" src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script><script defer="true" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script><script>const SITE_ROOT="../.././";</script><script>const MODULE_NAME="Mathlib.Tactic.Setm";</script><script type="module" src="../.././jump-src.js"></script><script type="module" src="../.././search.js"></script><script type="module" src="../.././expand-nav.js"></script><script type="module" src="../.././how-about.js"></script><script type="module" src="../.././instances.js"></script><script type="module" src="../.././importedBy.js"></script></head><body><input id="nav_toggle" type="checkbox"></input><header><h1><label for="nav_toggle"></label><span>Documentation</span></h1><h2 class="header_filename break_within"><span class="name">Mathlib</span>.<span class="name">Tactic</span>.<span class="name">Setm</span></h2><form id="search_form"><input type="text" name="q" autocomplete="off"></input>&#32;<button id="search_button" onclick="javascript: form.action='../.././search.html';">Search</button></form></header><nav class="internal_nav"><p><a href="#top">return to top</a></p><p class="gh_nav_link"><a href="https://github.com/leanprover-community/mathlib4/blob/5ed2965256430c3649e86755f9576b54eca72435/Mathlib/Tactic/Setm.lean">source</a></p><div class="imports"><details><summary>Imports</summary><ul><li><a href="../.././Init.html">Init</a></li><li><a href="../.././Mathlib/Init.html">Mathlib.Init</a></li><li><a href="../.././Mathlib/Lean/Elab/Tactic/Basic.html">Mathlib.Lean.Elab.Tactic.Basic</a></li></ul></details><details><summary>Imported by</summary><ul id="imported-by-Mathlib.Tactic.Setm" class="imported-by-list"></ul></details></div><div class="nav_link"><a class="break_within" href="#Mathlib.Tactic.SetM.setM"><span class="name">Mathlib</span>.<span class="name">Tactic</span>.<span class="name">SetM</span>.<span class="name">setM</span></a></div></nav><main>
+<div class="mod_doc"><h1 id="The-setm-tactic" class="markdown-heading">The <code>setm</code> tactic <a class="hover-link" href="#The-setm-tactic">#</a></h1><p>This module defines the <code>setm</code> tactic.</p><p>The <code>setm</code> tactic matches a pattern containing named holes to the type of a target, and creates
+local declarations for the hole names whose values are the assigned expressions. By default, the
+pattern is matched against the goal, but a local declaration can be matched instead via the <code>using</code>
+syntax.
+Optionally, with the syntax <code>at loc</code>, it also rewrites at locations <code>loc</code> to replace the occurrences
+of the matched expressions with the newly-introduced local declarations.</p><h2 id="TODO" class="markdown-heading">TODO <a class="hover-link" href="#TODO">#</a></h2><p>It would be nice if the tactic was be made to work for non-constants under binders (by adding forall
+binders to the local declarations).</p></div><div class="decl" id="Mathlib.Tactic.SetM.setM"><div class="def"><div class="gh_link"><a href="https://github.com/leanprover-community/mathlib4/blob/5ed2965256430c3649e86755f9576b54eca72435/Mathlib/Tactic/Setm.lean#L95-L140">source</a></div><div class="decl_header"><span class="decl_kind">def</span>
+<span class="decl_name"><a class="break_within" href="../.././Mathlib/Tactic/Setm.html#Mathlib.Tactic.SetM.setM"><span class="name">Mathlib</span>.<span class="name">Tactic</span>.<span class="name">SetM</span>.<span class="name">setM</span></a></span><span class="decl_args"> :</span><div class="decl_type"><a href="../.././Init/Prelude.html#Lean.ParserDescr">Lean.ParserDescr</a></div></div><p><code>setm patt</code> matches <code>patt</code>, a term containing named holes (like <code>?a</code>) to the goal, and creates
+named local declarations for the matched holes with their assigned expressions as values. Moreover,
+it will replace the matches with their new names. This tactic can be used to give a name to a
+complicated subexpression appearing in the goal or a hypothesis.</p><ul><li><code>setm patt using h</code> matches <code>patt</code> with the local hypothesis named <code>h</code> instead of the main goal.</li><li><code>setm patt at loc</code> also rewrites by the newly-introduced local declarations at the location(s)
+<code>loc</code>.</li></ul><p>Examples:</p><pre><code class="language-lean">example : ∃ n, n = 2 ^ 10 - 1 := by
+  setm ∃ _, _ = ?a
+  /-
+  a := 2 ^ 10 - 1
+  ⊢ ∃ n, n = a
+  -/
+  exact .intro a <a href="../.././Init/Prelude.html#rfl">rfl</a>
+</code></pre><p><code>using h</code> matches against <code>h</code> instead of the goal:</p><pre><code class="language-lean">example (h : 1 + 2 = 3) : ∃ n, n = 2 := by
+  setm _ + ?a = _ using h
+  /-
+  a := 2
+  h : 1 + a = 3
+  ⊢ ∃ n, n = 2
+  -/
+  exact .intro a <a href="../.././Init/Prelude.html#rfl">rfl</a>
+</code></pre><p><code>at h₂</code> rewrites <code>h₂</code> so that it uses <code>a</code>:</p><pre><code class="language-lean">example (h₁ : 1 + 2 = 3) (h₂ : 2 + 2 = 4) : ∃ n, n = 2 := by
+  setm _ + ?a = _ using h₁ at h₂
+  /-
+  a : <a href="../.././Init/Prelude.html#Nat">Nat</a> := 2
+  h₁ : 1 + a = 3
+  h₂ : a + a = 4
+  ⊢ ∃ n, n = 2
+  -/
+  exact .intro a <a href="../.././Init/Prelude.html#rfl">rfl</a>
+</code></pre><details><summary>Equations</summary><ul class="equations"><li class="equation">One or more equations did not get rendered due to their size.</li></ul></details><details id="instances-for-list-Mathlib.Tactic.SetM.setM" class="instances-for-list"><summary>Instances For</summary><ul class="instances-for-enum"></ul></details></div></div></main>
+<nav class="nav"><iframe src="../.././navbar.html" class="navframe" frameBorder="0"></iframe></nav></body></html>
