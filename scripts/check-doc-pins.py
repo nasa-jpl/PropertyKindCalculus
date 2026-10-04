@@ -523,7 +523,7 @@ def check_terminology(quiet: bool) -> list[str]:
         return [f"{TERM_DICTIONARY}: parsed no dictionary entries — the `def dictionary` "
                 "layout no longer matches what this gate reads"]
 
-    bp_files = sorted((ROOT / BP_CHAPTERS).glob("*.lean")) + [ROOT / BP_SOURCE / "Blueprint.lean"]
+    bp_files = sorted((ROOT / BP_CHAPTERS).rglob("*.lean")) + [ROOT / BP_SOURCE / "Blueprint.lean"]
     deftechs: dict[str, list[tuple[str, int, str | None]]] = {}
     tags_all: set[str] = set()
     for path in bp_files:

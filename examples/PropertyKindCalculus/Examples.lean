@@ -30,11 +30,6 @@ public import PropertyKindCalculus.Examples.MiniRefinement
 public import PropertyKindCalculus.Examples.MiniClassification
 public import PropertyKindCalculus.Examples.MiniWriteOnce
 
--- The tutorial's running example: the harmonic oscillator's ontological square, Mathlib-free.
--- Its requirements (`Tutorial.HarmonicOscillatorRequirements`) import the ForPhysLib case
--- study and so Mathlib, and are left out of the doc closure for the same reason as the demos.
-public import PropertyKindCalculus.Examples.Tutorial.HarmonicOscillatorSquare
-
 -- The kinded AVS forward model and the `@[pkc_math]` rendering demo. Both are Mathlib-free, and
 -- both carry `@[pkc_math]`-rendered docstrings, so they are what the API site exists to show.
 public import PropertyKindCalculus.Examples.AvsForward

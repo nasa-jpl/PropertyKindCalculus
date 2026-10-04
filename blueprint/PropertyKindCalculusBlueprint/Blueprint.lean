@@ -3,6 +3,7 @@ import VersoManual
 import VersoBlueprint
 import VersoBlueprint.Commands.Graph
 import VersoBlueprint.Commands.Summary
+import PropertyKindCalculusBlueprint.Chapters.Tutorial
 import PropertyKindCalculusBlueprint.Chapters.Spine
 import PropertyKindCalculusBlueprint.Chapters.Capstones
 import PropertyKindCalculusBlueprint.Chapters.Foundations
@@ -1852,6 +1853,8 @@ and not one of the graphs the calculus itself defines; those are named and kept 
 {ref "capstones"}[the capstone chapter], and every term of the calculus is fixed by
 {ref "terminology"}[the dictionary].
 
+{include 0 PropertyKindCalculusBlueprint.Chapters.Tutorial}
+
 {include 0 PropertyKindCalculusBlueprint.Chapters.Spine}
 
 {include 0 PropertyKindCalculusBlueprint.Chapters.Capstones}
@@ -1874,9 +1877,9 @@ and not one of the graphs the calculus itself defines; those are named and kept 
 
 {include 0 PropertyKindCalculusBlueprint.Chapters.ObjectTypes}
 
-{include 0 PropertyKindCalculusBlueprint.Chapters.WriteOnce}
-
 {include 0 PropertyKindCalculusBlueprint.Chapters.MetrologicalModularity}
+
+{include 0 PropertyKindCalculusBlueprint.Chapters.WriteOnce}
 
 {include 0 PropertyKindCalculusBlueprint.Chapters.Uncertainty}
 

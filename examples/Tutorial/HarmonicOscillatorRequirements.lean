@@ -23,13 +23,13 @@ carries:
 
 Every boundary below is kernel-accepted (`#kind_contract_decide`); every requirement is
 checked by `#kind_requirement`, surveyed, censused, and gated. Imports the case study, and
-so PhysLib and Mathlib; outside the `Examples` root for that reason.
+so PhysLib and Mathlib; the `Tutorial` root module does not import it for that reason.
 -/
 
 module
 
-public import PropertyKindCalculus.Examples.Tutorial.HarmonicOscillatorSquare
-meta import PropertyKindCalculus.Examples.Tutorial.HarmonicOscillatorSquare
+public import Tutorial.HarmonicOscillatorSquare
+meta import Tutorial.HarmonicOscillatorSquare
 public import ForPhysLib.CaseStudies.HarmonicOscillator.Attempt4Pkc
 meta import ForPhysLib.CaseStudies.HarmonicOscillator.Attempt4Pkc
 public import PropertyKindCalculus.KindRequirement
@@ -41,7 +41,7 @@ import all PropertyKindCalculus.Provenance
 
 @[expose] public section Blanket
 
-namespace PropertyKindCalculus.Examples.Tutorial.HarmonicOscillator
+namespace Tutorial.HarmonicOscillator
 
 open PropertyKindCalculus
 open PropertyKindCalculus.Provenance (NodeId KindRef)
@@ -144,10 +144,10 @@ def hp1 : Provenance.Requirement where
 info: kind requirement 'HP1' (provable) on 'static compliance of body A'
 statement: the static displacement of A per unit force never exceeds the compliance of its wall spring: c_A ≤ 1/k_A
 governs: 'static compliance of body A' at complianceA/result
-scope: objects PropertyKindCalculus.Examples.Tutorial.HarmonicOscillator.Body.A
-edge: PropertyKindCalculus.Examples.Tutorial.HarmonicOscillator.complianceBoundedByWallSpring — 'static compliance of body A' bounded by 'specification — compliance of the wall spring'
-witness: PropertyKindCalculus.Examples.Tutorial.HarmonicOscillator.compliance_bounded
-spot check: PropertyKindCalculus.Examples.Tutorial.HarmonicOscillator.hp1_spot = true
+scope: objects Tutorial.HarmonicOscillator.Body.A
+edge: Tutorial.HarmonicOscillator.complianceBoundedByWallSpring — 'static compliance of body A' bounded by 'specification — compliance of the wall spring'
+witness: Tutorial.HarmonicOscillator.compliance_bounded
+spot check: Tutorial.HarmonicOscillator.hp1_spot = true
 -/
 #guard_msgs in #kind_requirement hp1
 
@@ -234,9 +234,9 @@ info: kind requirement 'HP2' (provable) on 'driven oscillator — squared impeda
 statement: the velocity response per unit driving force never exceeds 1/c: |Z|² ≥ c²
 governs: 'driven oscillator — squared impedance' at impedanceAbs2/result
 scope: sort PropertyKindCalculus.Examples.HarmonicOscillator.Attempt4.Tier5.drivenS
-edge: PropertyKindCalculus.Examples.Tutorial.HarmonicOscillator.impedanceBoundedByResistance — 'driven oscillator — squared impedance' bounded by 'specification — resistance squared'
-witness: PropertyKindCalculus.Examples.Tutorial.HarmonicOscillator.admittance_bounded
-spot check: PropertyKindCalculus.Examples.Tutorial.HarmonicOscillator.hp2_spot = true
+edge: Tutorial.HarmonicOscillator.impedanceBoundedByResistance — 'driven oscillator — squared impedance' bounded by 'specification — resistance squared'
+witness: Tutorial.HarmonicOscillator.admittance_bounded
+spot check: Tutorial.HarmonicOscillator.hp2_spot = true
 -/
 #guard_msgs in #kind_requirement hp2
 
@@ -285,10 +285,10 @@ def hp5 : Provenance.Requirement where
 info: kind requirement 'HP5' (provable) on 'coupled pair — mass'
 statement: the mass of the pair is the sum of its bodies' masses, as the license for the pair's sort states
 governs: 'coupled pair — mass' at pairMassOf/result
-scope: sort PropertyKindCalculus.Examples.Tutorial.HarmonicOscillator.pairS
-witness: PropertyKindCalculus.Examples.Tutorial.HarmonicOscillator.pairMassOf_is_assembled
+scope: sort Tutorial.HarmonicOscillator.pairS
+witness: Tutorial.HarmonicOscillator.pairMassOf_is_assembled
 axioms: propext
-spot check: PropertyKindCalculus.Examples.Tutorial.HarmonicOscillator.hp5_spot = true
+spot check: Tutorial.HarmonicOscillator.hp5_spot = true
 -/
 #guard_msgs in #kind_requirement hp5
 
@@ -309,8 +309,8 @@ def hp6 : Provenance.Requirement where
 info: kind requirement 'HP6' (provable) on 'coupled pair — mass'
 statement: angular frequency is never summed over the pair: the normal mode is a property of the pair's sort, and no license assembles it from the bodies'
 governs: every produced port of 'coupled pair — mass'
-scope: sort PropertyKindCalculus.Examples.Tutorial.HarmonicOscillator.pairS
-absent: no instance of PropertyKindCalculus.Examples.Tutorial.HarmonicOscillator.pairAngFreqLicense
+scope: sort Tutorial.HarmonicOscillator.pairS
+absent: no instance of Tutorial.HarmonicOscillator.pairAngFreqLicense
 -/
 #guard_msgs in #kind_requirement hp6
 
@@ -356,7 +356,7 @@ def he5 : Provenance.Requirement where
 info: kind requirement 'HE5' (empirical) on 'static compliance of body A'
 statement: every linear spring's stiffness lies within [k_min, k_max] from its datasheet batch
 governs: every produced port of 'static compliance of body A'
-scope: sort PropertyKindCalculus.Examples.Tutorial.HarmonicOscillator.springS
+scope: sort Tutorial.HarmonicOscillator.springS
 attested: the band is the datasheet's to supply; gated at ingest per spring once declared as referents
 -/
 #guard_msgs in #kind_requirement he5
@@ -365,30 +365,30 @@ attested: the band is the datasheet's to supply; gated at ingest per spring once
 
 /--
 info: kind requirements — 7 requirement(s): 4 provable, 3 empirical, 3 attested
-  PropertyKindCalculus.Examples.Tutorial.HarmonicOscillator.he1: 'HE1' (empirical) on 'static compliance of body A' — attested: x_max is the spring datasheet's to supply; gated at ingest once declared as a referent
-  PropertyKindCalculus.Examples.Tutorial.HarmonicOscillator.he2: 'HE2' (empirical) on 'coupled pair — mass' — attested: massless-spring idealization; discharged when the springs are weighed
-  PropertyKindCalculus.Examples.Tutorial.HarmonicOscillator.he5: 'HE5' (empirical) on 'static compliance of body A' — attested: the band is the datasheet's to supply; gated at ingest per spring once declared as referents
-  PropertyKindCalculus.Examples.Tutorial.HarmonicOscillator.hp1: 'HP1' (provable) on 'static compliance of body A' — by PropertyKindCalculus.Examples.Tutorial.HarmonicOscillator.complianceBoundedByWallSpring
-  PropertyKindCalculus.Examples.Tutorial.HarmonicOscillator.hp2: 'HP2' (provable) on 'driven oscillator — squared impedance' — by PropertyKindCalculus.Examples.Tutorial.HarmonicOscillator.impedanceBoundedByResistance
-  PropertyKindCalculus.Examples.Tutorial.HarmonicOscillator.hp5: 'HP5' (provable) on 'coupled pair — mass' — by PropertyKindCalculus.Examples.Tutorial.HarmonicOscillator.pairMassOf_is_assembled
-  PropertyKindCalculus.Examples.Tutorial.HarmonicOscillator.hp6: 'HP6' (provable) on 'coupled pair — mass' — absent PropertyKindCalculus.Examples.Tutorial.HarmonicOscillator.pairAngFreqLicense
+  Tutorial.HarmonicOscillator.he1: 'HE1' (empirical) on 'static compliance of body A' — attested: x_max is the spring datasheet's to supply; gated at ingest once declared as a referent
+  Tutorial.HarmonicOscillator.he2: 'HE2' (empirical) on 'coupled pair — mass' — attested: massless-spring idealization; discharged when the springs are weighed
+  Tutorial.HarmonicOscillator.he5: 'HE5' (empirical) on 'static compliance of body A' — attested: the band is the datasheet's to supply; gated at ingest per spring once declared as referents
+  Tutorial.HarmonicOscillator.hp1: 'HP1' (provable) on 'static compliance of body A' — by Tutorial.HarmonicOscillator.complianceBoundedByWallSpring
+  Tutorial.HarmonicOscillator.hp2: 'HP2' (provable) on 'driven oscillator — squared impedance' — by Tutorial.HarmonicOscillator.impedanceBoundedByResistance
+  Tutorial.HarmonicOscillator.hp5: 'HP5' (provable) on 'coupled pair — mass' — by Tutorial.HarmonicOscillator.pairMassOf_is_assembled
+  Tutorial.HarmonicOscillator.hp6: 'HP6' (provable) on 'coupled pair — mass' — absent Tutorial.HarmonicOscillator.pairAngFreqLicense
 -/
-#guard_msgs in #kind_requirements PropertyKindCalculus.Examples.Tutorial.HarmonicOscillator
+#guard_msgs in #kind_requirements Tutorial.HarmonicOscillator
 
 /--
 info: requirement coverage:
-[governed] PropertyKindCalculus.Examples.Tutorial.HarmonicOscillator.complianceBoundary ('static compliance of body A') complianceA/result — by 'HE1', 'HE5', 'HP1'
-[governed] PropertyKindCalculus.Examples.Tutorial.HarmonicOscillator.impedanceBoundary ('driven oscillator — squared impedance') impedanceAbs2/result — by 'HP2'
-[governed] PropertyKindCalculus.Examples.Tutorial.HarmonicOscillator.pairBoundary ('coupled pair — mass') pairMassOf/result — by 'HE2', 'HP5', 'HP6'
-⊘ specification PropertyKindCalculus.Examples.Tutorial.HarmonicOscillator.admittanceSpec ('specification — resistance squared') — the subject of no requirement
-⊘ specification PropertyKindCalculus.Examples.Tutorial.HarmonicOscillator.complianceSpec ('specification — compliance of the wall spring') — the subject of no requirement
+[governed] Tutorial.HarmonicOscillator.complianceBoundary ('static compliance of body A') complianceA/result — by 'HE1', 'HE5', 'HP1'
+[governed] Tutorial.HarmonicOscillator.impedanceBoundary ('driven oscillator — squared impedance') impedanceAbs2/result — by 'HP2'
+[governed] Tutorial.HarmonicOscillator.pairBoundary ('coupled pair — mass') pairMassOf/result — by 'HE2', 'HP5', 'HP6'
+⊘ specification Tutorial.HarmonicOscillator.admittanceSpec ('specification — resistance squared') — the subject of no requirement
+⊘ specification Tutorial.HarmonicOscillator.complianceSpec ('specification — compliance of the wall spring') — the subject of no requirement
 5 row(s) over 3 model boundary(ies): 3 governed, 2 exempted — clean
 requirements: 4 provable, 3 empirical, 3 attested
 -/
-#guard_msgs in #kind_requirement_coverage PropertyKindCalculus.Examples.Tutorial.HarmonicOscillator
+#guard_msgs in #kind_requirement_coverage Tutorial.HarmonicOscillator
 
-#kind_requirement_clean PropertyKindCalculus.Examples.Tutorial.HarmonicOscillator
+#kind_requirement_clean Tutorial.HarmonicOscillator
 
-end PropertyKindCalculus.Examples.Tutorial.HarmonicOscillator
+end Tutorial.HarmonicOscillator
 
 end Blanket

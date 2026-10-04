@@ -137,6 +137,18 @@ require «cslib» from git
   "https://github.com/leanprover/cslib.git" @
   "990e65a685bed413f43b139db900a36ad5322a10"
 
+-- SubVerso backs *only* the blueprint's tutorial chapters: they quote regions of the
+-- `Examples` library's tutorial exhibits (`-- ANCHOR: name` … `-- ANCHOR_END: name`) live
+-- from source, build-verified against it, so the starter file a practitioner copies and the
+-- chapter that explains it cannot drift. Requiring it here registers the
+-- `+<module>:highlighted` Lake facet those anchors invoke; no module here imports it.
+-- Pinned to the exact rev the blueprint's verso stack resolves (its `lake-manifest.json`:
+-- verso `52c8c955`, VersoBlueprint `a48eea9e`) so both sides agree on the highlighting JSON;
+-- the two pins move together, as `soil-moisture-model` and `CHDTorch` do for the same facet.
+require subverso from git
+  "https://github.com/leanprover/subverso" @
+  "fda188f7329fa18ce4b2e8cc96c9b0a8f0c78c46"
+
 -- NOTE (2026-08-24): there is deliberately **no mathlib require here**, for the same
 -- reason there is no doc-gen4 one (below). Mathlib arrives transitively, and the two
 -- packages that bring it agree: PhysLib `master` and TorchLean `combined` each require
@@ -192,6 +204,23 @@ lean_lib «Examples» where
   -- `roots` is explicit because the doc build renders `lib.rootModules` (see the NOTE above).
   roots := #[`PropertyKindCalculus.Examples]
   globs := #[.andSubmodules `PropertyKindCalculus.Examples]
+
+/-- **The practitioner tutorial's starter files** (source tree `examples/Tutorial/`, root
+namespace `Tutorial`). The blueprint's tutorial part quotes these modules region by region
+through SubVerso anchors (`-- ANCHOR: name` … `-- ANCHOR_END: name`), build-verified against
+the source, so a chapter cannot drift from the file a reader copies. The root namespace is
+deliberately *not* `PropertyKindCalculus`: Lean resolves a module's source through the first
+search-path directory that holds the root-namespace folder, and the core library's own
+directory comes first, so a module under `examples/PropertyKindCalculus/…` is invisible to
+the `+<module>:highlighted` facet (and to source navigation) — a root the core does not use
+is the only resolution that works for every library here. `Tutorial.HarmonicOscillatorSquare`
+is Mathlib-free; `Tutorial.HarmonicOscillatorRequirements` imports the ForPhysLib case study
+and so Mathlib, which keeps this library out of the API docs' Mathlib-free tier. Build with
+`lake build Tutorial`. -/
+lean_lib «Tutorial» where
+  srcDir := "examples"
+  roots := #[`Tutorial]
+  globs := #[.andSubmodules `Tutorial]
 
 /-- **The validation-test suite** (source tree `tests/`, namespace
 `PropertyKindCalculus.Tests`). Distinct from the pedagogical `Examples` library: these are

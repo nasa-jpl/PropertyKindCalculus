@@ -6,7 +6,7 @@ import VersoBlueprint
 import PropertyKindCalculus
 -- The tutorial's oscillator carries the requirement clause in both categories; the witness
 -- node at the end of the chapter links its theorem.
-import PropertyKindCalculus.Examples.Tutorial.HarmonicOscillatorRequirements
+import Tutorial.HarmonicOscillatorRequirements
 
 open Verso.Genre
 open Verso.Genre.Manual
@@ -17,8 +17,10 @@ open Informal
 tag := "metrological-modularity"
 %%%
 
-The chapters so far give the calculus's vocabulary (kinds, quantities, units, dimensions)
-and its evidence discipline (provenance, audit, uncertainty). This chapter states the
+The chapters so far give the calculus's vocabulary (kinds, quantities, units, dimensions,
+objects and their parts) and its evidence discipline (the {tech}[boundary audit] and the
+{tech}[metrological provenance hypergraph]); the authoring recipe and the uncertainty
+calculus follow. This chapter states the
 organizing principle they add up to: software organized as *metrology modules*. Nothing
 in the principle is specific to science software — it applies wherever a computed value
 is presented as a measurement result in the VIM sense, whatever the domain; science
@@ -461,7 +463,7 @@ of the source.
 
 The tutorial's harmonic oscillator carries the clause in both categories over the
 ForPhysLib case study, and its reports are pinned in
-`PropertyKindCalculus.Examples.Tutorial.HarmonicOscillatorRequirements`:
+`Tutorial.HarmonicOscillatorRequirements`:
 
 :::table +header
 *
@@ -511,7 +513,7 @@ The census over the module reads `3 governed, 2 exempted — clean` and
 subject of no requirement, and the three attestations are the ratchet's opening count. The
 node below is the clause's witness in this document, in the form the capstones set.
 
-:::theorem "req_oscillator_witness" (parent := "metrological_modularity_requirement") (lean := "PropertyKindCalculus.Examples.Tutorial.HarmonicOscillator.compliance_bounded") (tags := "proved") (effort := "small")
+:::theorem "req_oscillator_witness" (parent := "metrological_modularity_requirement") (lean := "Tutorial.HarmonicOscillator.compliance_bounded") (tags := "proved") (effort := "small")
 *The clause's witness.* HP1 in full: a model boundary whose one member computes body A's
 static compliance from the three stiffnesses; a {uses "def_boundary_role"}[specification
 boundary] whose one member computes the wall spring's own compliance; both kernel-accepted

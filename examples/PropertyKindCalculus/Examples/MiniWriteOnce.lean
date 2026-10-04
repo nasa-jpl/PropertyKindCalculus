@@ -1,8 +1,8 @@
 /-
-# Worked example: write once, correctly — the four-step authoring recipe
+# Worked example: write once, correctly — the first four steps of the authoring recipe
 
 A *self-contained, public* miniature of a soil-moisture retrieval, written purely
-against the core `PropertyKindCalculus` library, to illustrate the four steps a
+against the core `PropertyKindCalculus` library, to illustrate the first four of the five steps a
 model author follows (the *Write Once, Correctly* methodology chapter):
 
   1. **Declare the kinds** by the examination principle that measures each.

@@ -25,8 +25,9 @@ the project's own `Examples` library — read here only to _infer the recipe_. I
 simplified subset, keeping just the salient structure each step needs (a few kinds, a typed
 constant table, a dedicated kind, one row of a Cholesky factor) and omitting the full retrieval.
 Every line of it is a _checked fact_, built in the `Examples` library under CI, so the
-illustrations below are machine-verified; PropertyKindCalculus supplies the four primitives named
-below and the example composes them in this order.
+illustrations below are machine-verified; PropertyKindCalculus supplies the five primitives named
+below; the example composes the first four in this order, and the fifth, the boundary, is shown
+on the tutorial's oscillator exhibit.
 
 The discipline has a slogan: _write once correctly, go fast
 automatically_. A quantity is authored once, carrying its kind, over an abstract numeric carrier;
@@ -47,11 +48,12 @@ yielding an _uncertain_ quantity, and onto the measured object as a further type
 object-indexed _individual_ quantity. What TorchLean provides for one carrier of one tensor,
 PropertyKindCalculus provides for the whole tower of quantity notions.
 
-# The four steps
+# The five steps
 
 :::group "write-once"
-These four steps are the order in which a PropertyKindCalculus model is authored. Each rests on
-the layer beneath it; each is shown with where the `MiniWriteOnce` worked example realizes it.
+These five steps are the order in which a PropertyKindCalculus model is authored. Each rests on
+the layer beneath it; the first four are shown with where the `MiniWriteOnce` worked example
+realizes them, the fifth with the tutorial's oscillator exhibit.
 :::
 
 ## Step 1 — Start from the measurement principle: declare the kinds
@@ -140,27 +142,57 @@ array would push that positional bookkeeping onto the type and discard the named
 keeps both axes separable — kind by the elaborator, position by parity-to-reference.
 :::
 
+## Step 5 — Declare the boundary: what enters, what leaves, and what it must satisfy
+
+:::definition "wo-boundary" (parent := "write-once")
+Last, say where the model's numbers come from, where they go, and what the model claims
+about them. The first four steps fix what each quantity _is_; this one fixes what the
+_module_ is. Its interface is a {uses "def_contract"}[declared boundary] of kind-typed
+ports — the inputs it ingests, the outputs it emits, its parameters, and the conditional
+outputs with their deciders — and its claim is a {uses "def_relation"}[relation] to its
+{tech}[measurement model]: that the output equals, inverts, refines, or is bounded by the
+measurement the module stands for, carried as a named witness theorem with its hypotheses
+and a license per carrier. The boundary is also what makes Step 4's erasure _deployable_:
+the {uses "thm_distribution_license"}[distribution license] says that only an extensive
+output commutes with a re-carving of its input, so sharding and batching — the deployment
+spectrum below — rest on the boundary's {tech}[license clause]. With the boundary in place
+the module states each {tech}[requirement] it makes against it: what its quantities must
+satisfy, and by what evidence, a theorem or an observation
+({ref "requirements-as-evidence"}[the requirement clause]).
+
+`MiniWriteOnce` stops at Step 4; the step is shown by the tutorial's oscillator exhibit
+`Tutorial.HarmonicOscillatorRequirements`. There
+`complianceBoundary` takes three stiffnesses in and puts one compliance out,
+`complianceSpec` is the {tech}[specification boundary] that bounds it — one member, the
+wall spring's own compliance — and the requirement `hp1` names the `boundedBy` edge between
+the two, with its theorem as witness and a `Bool` spot check evaluated at `Float`.
+`#kind_contract_decide` checks each boundary in the kernel and leaves the theorem behind;
+`#kind_boundary_audit` lists every site where a number enters or leaves with its
+{tech}[evidence tier], and a site with none is a printed violation, not a review comment.
+:::
+
 # The payoff
 
 Authored in this order, the model is _one source_. The kinds make every operation in the forward
 physics and the normal-equations solve a checked equation; the dimension layer certifies
 commensurability without conflating dimension-one quantities; the interaction algebra gates the
-arithmetic; and dedication plus named fields carry the distinctions the kind axis cannot. Then
+arithmetic; dedication plus named fields carry the distinctions the kind axis cannot; and the
+boundary says what enters, what leaves, and what the module claims about it. Then
 `.magnitude` erases the whole overlay and the compiled kernel is the bare `Float` program — proved,
 by a definitional `rfl` for every input, to be the same numbers. _Write once correctly, go fast
 automatically._
 
 The worked example is `PropertyKindCalculus.Examples.MiniWriteOnce`, build-gated by the project's
 own CI, so every illustration above is a checked fact rather than a claim. The recipe scales to a
-full retrieval: the same four steps, composed in the same order, carry a complete SMAP–NISAR
+full retrieval: the same five steps, composed in the same order, carry a complete SMAP–NISAR
 soil-moisture model — and because each step's facts are real declarations, a downstream
 _verifiable ATBD_ can cite them by name with their proved-or-`sorry` status, keeping the document
-and the code in lockstep. PropertyKindCalculus supplies the four primitives this chapter names; a
+and the code in lockstep. PropertyKindCalculus supplies the five primitives this chapter names; a
 model composes them in this order.
 
 # Go fast, automatically — the deployment spectrum
 
-The four steps above are the _write once, correctly_ half of the slogan; this section is the _go
+The five steps above are the _write once, correctly_ half of the slogan; this section is the _go
 fast, automatically_ half. Once a model is authored once over an abstract carrier `[NumCarrier α]`,
 the kind overlay erases to a bare arithmetic kernel that is the _same_ for every carrier — and the
 _carrier the model is instantiated at_ then selects, on its own, an execution strategy. There is a
