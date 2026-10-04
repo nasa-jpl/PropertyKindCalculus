@@ -466,16 +466,17 @@ def boundaryTags (env : Environment) : Array BoundaryTag := boundaryExt.getState
 
 /-! ## The counterexample registry — `@[kindCounterexample]`
 
-The provenance sweeps (`#kind_contracts`, `#kind_contracts_decide`, `#kind_relations`) enroll
-by **type**: every `Provenance.Contract` and `Provenance.Relation` in scope is a subject, so
-declaring a value is enrolling it and a boundary cannot be declared and left unverified. A
+The provenance sweeps (`#kind_contracts`, `#kind_contracts_decide`, `#kind_relations`,
+`#kind_requirements`) enroll by **type**: every `Provenance.Contract`, `Provenance.Relation`
+and `Provenance.Requirement` in scope is a subject, so declaring a value is enrolling it and a
+boundary cannot be declared and left unverified. A
 deliberate counterexample — a probe kept precisely because its checker refuses it, the way the
 falsification sections pin refusals beside the passing pins — would fail such a gate, so opting
 *out* is what takes an explicit mark. The asymmetry is the point: forgetting to enroll is
 impossible, and forgetting to exempt fails loudly at the sweep, so both forgetting mistakes land
 on the side a build catches.
 
-The registration check names the two types literally rather than by `` ``-resolution: this
+The registration check names the three types literally rather than by `` ``-resolution: this
 module does not import `Provenance` (the same layering reason the three built-in carriers above
 are named rather than resolved). -/
 
@@ -499,10 +500,12 @@ initialize registerBuiltinAttribute {
     let head := info.type.getAppFn
     let ok := head.isConstOf `PropertyKindCalculus.Provenance.Contract
       || head.isConstOf `PropertyKindCalculus.Provenance.Relation
+      || head.isConstOf `PropertyKindCalculus.Provenance.Requirement
     unless ok do
-      throwError "`@[kindCounterexample]` expects a 'Provenance.Contract' or a \
-        'Provenance.Relation' — '{decl}' is neither. The mark exempts a declaration from \
-        the by-type provenance sweeps, and only those two types are swept."
+      throwError "`@[kindCounterexample]` expects a 'Provenance.Contract', a \
+        'Provenance.Relation' or a 'Provenance.Requirement' — '{decl}' is none of these. \
+        The mark exempts a declaration from the by-type provenance sweeps, and only those \
+        three types are swept."
     modifyEnv fun env => kindCounterexampleExt.addEntry env decl
 }
 

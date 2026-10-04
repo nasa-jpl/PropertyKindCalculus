@@ -2414,6 +2414,7 @@ def renderContractLines (c : Provenance.Contract NodeId KindRef)
     (g : Provenance NodeId KindRef) : List String :=
   let params := c.params
   [s!"contract '{c.name}': {c.ports.length} ports, {c.exits.length} exits"]
+    ++ (if c.role == .model then [] else [s!"role: {c.role.label}"])
     ++ (if params.isEmpty then [] else
         [s!"params: {String.intercalate ", " (params.map renderNode)}"])
     ++ c.deciders.map (fun (n, d) => s!"decides {renderNode n}: {d}")

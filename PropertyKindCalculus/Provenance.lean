@@ -691,6 +691,26 @@ def Provenance.AggregationClass.label : Provenance.AggregationClass → String
   | .extensiveAbout tr => s!"extensive about {tr}"
   | .interfaceLicensed l => s!"interface-licensed by {l}"
 
+/-- **Which side of a requirement a declared boundary stands on.** A boundary declares what
+its members compute. A requirement on that computation (`Requirement`) is a theorem edge
+between it and a second boundary whose one member computes the bound the requirement
+states — the *specification*. The two are the same structure under the same checks, and
+only the role tells them apart: a model boundary is what a requirement governs and what
+the requirement-coverage census asks for; a specification boundary is what a requirement is
+checked against, and is itself the subject of no requirement. A boundary that says nothing
+about its role is a model's. -/
+inductive Provenance.BoundaryRole where
+  /-- The boundary of a model: what a requirement governs. -/
+  | model
+  /-- The boundary of a specification: the bound a requirement is checked against. -/
+  | specification
+deriving DecidableEq, Repr, Inhabited, BEq
+
+/-- How a boundary role prints in a rendered report. -/
+def Provenance.BoundaryRole.label : Provenance.BoundaryRole → String
+  | .model => "model"
+  | .specification => "specification"
+
 /-- **A declared boundary** (header, "The declared boundary"): the interface an author
 claims for a scope — a rendered name, the members claimed for, the ports with the role
 and binding time each carries, and the exits where values leave the calculus. It is the
@@ -736,6 +756,13 @@ structure Provenance.Contract (ν κ : Type) where
   implicit in a call site. A signature port with no entry remains a parameter: which
   module answers it is then the tier below's to declare. -/
   suppliers : List (ν × Lean.Name) := []
+  /-- The role: a model boundary — the default, what a requirement governs — or a
+  specification boundary, what a requirement is checked against: a contract whose one
+  member computes the bound. Read by `#kind_requirement`, which refuses a requirement that
+  governs a specification or is checked against a model, and by the requirement-coverage
+  census, which asks every produced port of a model boundary for a requirement and asks
+  nothing of a specification. -/
+  role : Provenance.BoundaryRole := .model
 deriving Repr, Inhabited, BEq
 
 namespace Provenance

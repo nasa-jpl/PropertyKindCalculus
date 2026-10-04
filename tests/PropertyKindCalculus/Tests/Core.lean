@@ -34,6 +34,7 @@ public import PropertyKindCalculus.Tests.Core.KindLedger
 public import PropertyKindCalculus.Tests.Core.KindRelation
 public import PropertyKindCalculus.Tests.Core.KindContracts
 public import PropertyKindCalculus.Tests.Core.ContractCoverage
+public import PropertyKindCalculus.Tests.Core.KindRequirement
 public import PropertyKindCalculus.Tests.Core.PortNameScopes
 public import PropertyKindCalculus.Tests.Core.PortReferences
 public import PropertyKindCalculus.Tests.Core.CertifiedIngest

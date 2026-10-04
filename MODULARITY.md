@@ -46,7 +46,13 @@ need not be a file or a namespace — whose
 5. **mereology** is declared — each output port carries its aggregation class
    (extensive / quasi-extensive / conditionally extensive / intensive / whole-proper /
    count-keyed-by-sortal), and the license to distribute the module's computation over a
-   carving (tiles, blocks, shards) is *derived* from that declaration, not assumed.
+   carving (tiles, blocks, shards) is *derived* from that declaration, not assumed;
+6. **requirements** are stated — what the module's quantities must satisfy, each a
+   `Provenance.Requirement` beside the boundary it governs with the evidence by which it
+   is met: a *provable* requirement by a theorem edge to a specification boundary (or a
+   theorem) with spot checks where the model runs, an *empirical* requirement by a gate
+   against a `@[kindReferent]`-marked referent the model does not define, either deferred
+   by an attestation the coverage census counts.
 
 The name deliberately pairs the discipline (metrology — the interface vocabulary is
 Dybkær/VIM kinds and quantities, the spec vocabulary is the VIM measurement model) with the
@@ -378,6 +384,12 @@ rather than believed.
   extensivity.* Output ports carry aggregation classes; recarving/sharding a module's batch
   axis is licensed by theorem from those declarations, with the quasi-extensive tolerance
   tied to the FP32 rounding budget where the carrier demands it.
+- **R28 (evidence, expressiveness)** — *A module's requirements are stated with their
+  evidence.* Every produced port of a model boundary is governed by a requirement or
+  exempted with a reason; a provable requirement's witness is a sorry-free theorem or
+  theorem edge naming no referent, with spot checks evaluated where the model runs; an
+  empirical requirement names marked referents and a gate mentioning one; an attestation
+  never stands beside a discharge.
 
 The nominal-port (M2) and module-valued-port (M2b) capabilities amend the existing R23/R24
 port vocabulary rather than adding rows: a port may carry a nominal-scale kind or a kind

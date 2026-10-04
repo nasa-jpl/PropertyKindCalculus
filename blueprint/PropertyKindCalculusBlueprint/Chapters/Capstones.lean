@@ -684,9 +684,13 @@ command does by elaboration and the theorem takes as a hypothesis.
 # What the capstones do not claim
 
 - The truth of an attestation. It is a hypothesis of the model; the seal says only that the
-  build's list of them is complete.
+  build's list of them is complete. Where the attestation defers a requirement, the
+  {ref "requirements-as-evidence"}[requirement clause] counts it, with its reason, as one
+  the apparatus still owes.
 - The harvest's kind readings. The bisimulation transports them and does not re-derive them.
 - Anything below the tape — the code generator, the toolchain, the foreign interface — which
   the deployment template lists as what remains trusted.
 - Accuracy against nature, which needs a true value the kernel never has; that boundary is
-  the uncertainty chapter's.
+  the uncertainty chapter's, and the {ref "requirements-as-evidence"}[requirement clause]
+  is where a demand of that kind is stated as an empirical requirement against a named
+  referent, gated or attested, rather than left unsaid.

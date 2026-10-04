@@ -21,6 +21,8 @@ module
 
 public import PropertyKindCalculus.Examples
 meta import PropertyKindCalculus.Examples
+public import PropertyKindCalculus.Examples.Tutorial.HarmonicOscillatorRequirements
+meta import PropertyKindCalculus.Examples.Tutorial.HarmonicOscillatorRequirements
 public import PropertyKindCalculus.Requirements.Attributes
 meta import PropertyKindCalculus.Requirements.Attributes
 
@@ -102,5 +104,14 @@ attribute [requirement "R12" exemplifies "a length built through the kind-law, c
 
 attribute [requirement "R25" exemplifies "the AVS backscatter model rendered to `σ⁰ = a·ndvi + …` by @[pkc_math], with the rendering pinned by #guard_msgs"]
   PropertyKindCalculus.Examples.DocGenMathDemo.avsForward
+
+/-! ## The requirement clause (R28) -/
+
+attribute [requirement "R28" exemplifies "HP1 — a provable requirement on the oscillator's static compliance, discharged by a `boundedBy` edge to a specification boundary and spot-checked at `Float`"]
+  PropertyKindCalculus.Examples.Tutorial.HarmonicOscillator.hp1
+attribute [requirement "R28" exemplifies "HP6 — a negative provable requirement, discharged by the absence of the license that would assemble angular frequency over the pair"]
+  PropertyKindCalculus.Examples.Tutorial.HarmonicOscillator.hp6
+attribute [requirement "R28" exemplifies "HE5 — an empirical requirement over every spring of a sort, attested until the datasheet band is declared as referents"]
+  PropertyKindCalculus.Examples.Tutorial.HarmonicOscillator.he5
 
 end Blanket

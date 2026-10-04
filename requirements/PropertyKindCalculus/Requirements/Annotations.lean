@@ -26,6 +26,8 @@ public import PropertyKindCalculus.BoundaryAudit
 meta import PropertyKindCalculus.BoundaryAudit
 public import PropertyKindCalculus.KindLedger
 meta import PropertyKindCalculus.KindLedger
+public import PropertyKindCalculus.KindRequirement
+meta import PropertyKindCalculus.KindRequirement
 public import PropertyKindCalculus.Requirements.Attributes
 meta import PropertyKindCalculus.Requirements.Attributes
 
@@ -288,6 +290,21 @@ attribute [requirement "R27" proves "the distribution license: one re-carving of
   Recarving.distribution_license
 attribute [requirement "R27" implements "the aggregation clause's hygiene: a class governs a produced port; a named tolerance is a Quantity at that port's kind; a named condition, sortal, transport, or cancellation law exists"]
   KindIncidence.checkAggregations
+
+/-! ## The requirement clause — what a module's quantities must satisfy (R28) -/
+
+attribute [requirement "R28" specifies "a requirement on a declared boundary: the statement in the author's words, the governed model boundary and port, the scope, and the evidence — witness and spot checks, a claimed absence, referents and gate — or the attestation that defers it"]
+  Provenance.Requirement
+attribute [requirement "R28" specifies "the two categories, told apart by the statement's constants: a provable requirement's witness names no referent, an empirical requirement's gate names one"]
+  Provenance.RequirementKind
+attribute [requirement "R28" specifies "the objects a requirement quantifies over — every object the boundary is evaluated for, a sort, named sorted objects, or a decider's selection"]
+  Provenance.RequirementScope
+attribute [requirement "R28" specifies "which side of a requirement a declared boundary stands on: a model boundary is governed; a specification boundary is checked against and is the subject of no requirement"]
+  Provenance.BoundaryRole
+attribute [requirement "R28" implements "the full check of one requirement: the governed boundary a model's, the port one it declares, the scope a sort, sorted objects or a decider, the witness sorry-free and naming no referent, a claimed absence absent, the referents marked and the gate naming one, every spot check true, an attestation never beside a discharge"]
+  KindRequirement.checkRequirement
+attribute [requirement "R28" implements "the coverage census: every produced port of every model boundary in scope governed, exempted with a reason, or UNGOVERNED, with the category tallies and the attested count"]
+  KindRequirement.coverageRows
 
 
 /-! ## Scale-spanning units, the logarithmic extreme: level quantities (R13)

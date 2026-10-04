@@ -166,10 +166,10 @@ boundary agrees: false
 -/
 #guard_msgs in #kind_contracts_decide PropertyKindCalculus.Tests.KindContracts.Bad
 
-/-! ## The attribute's own gate — only the two swept types may be exempted -/
+/-! ## The attribute's own gate — only the swept types may be exempted -/
 
 /--
-error: `@[kindCounterexample]` expects a 'Provenance.Contract' or a 'Provenance.Relation' — 'PropertyKindCalculus.Tests.KindContracts.stray' is neither. The mark exempts a declaration from the by-type provenance sweeps, and only those two types are swept.
+error: `@[kindCounterexample]` expects a 'Provenance.Contract', a 'Provenance.Relation' or a 'Provenance.Requirement' — 'PropertyKindCalculus.Tests.KindContracts.stray' is none of these. The mark exempts a declaration from the by-type provenance sweeps, and only those three types are swept.
 -/
 #guard_msgs in @[kindCounterexample] def stray : Nat := 0
 

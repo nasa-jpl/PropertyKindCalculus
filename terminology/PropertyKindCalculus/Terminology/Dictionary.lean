@@ -202,6 +202,66 @@ def dictionary : List Term :=
                 `PropertyKindCalculus.Provenance.TransferStatus],
       definedIn := "metrological-modularity",
       seeAlso := ["carrier ladder", "measurement model", "metrology module"] }
+  , { key := "requirement",
+      gloss := "What a metrology module's quantities must satisfy, stated as data beside the \
+                declared boundary it governs: the statement in the author's words, the \
+                governed boundary and port, the objects it quantifies over, and the evidence \
+                by which it is met — provable or empirical, or attested with a reason.",
+      decls := [`PropertyKindCalculus.Provenance.Requirement],
+      definedIn := "metrological-modularity",
+      seeAlso := ["provable requirement", "empirical requirement", "requirement scope",
+                  "declared boundary"] }
+  , { key := "provable requirement",
+      gloss := "A requirement whose statement closes over the model's own declarations and \
+                kinded quantities, so a theorem about the model discharges it: a theorem edge \
+                from the governed boundary to a specification boundary, or a theorem, with \
+                spot checks where the model runs; a negative one, by the absence of a \
+                license.",
+      decls := [`PropertyKindCalculus.Provenance.RequirementKind],
+      definedIn := "metrological-modularity",
+      seeAlso := ["empirical requirement", "specification boundary", "spot check",
+                  "measurement model"] }
+  , { key := "empirical requirement",
+      gloss := "A requirement whose statement names a referent the model does not define, so \
+                no theorem about the model alone can discharge it — the falsifiable kind, \
+                discharged by a gate against the referent or deferred by an attestation.",
+      decls := [`PropertyKindCalculus.Provenance.RequirementKind],
+      definedIn := "metrological-modularity",
+      avoid := ["falsifiable requirement", "validation requirement",
+                "observational requirement", "testable requirement"],
+      seeAlso := ["referent", "provable requirement", "attestation"] }
+  , { key := "referent",
+      gloss := "A kinded quantity the model does not define — a datasheet value, a prior, a \
+                reference measurement — marked `@[kindReferent]` with where it comes from: \
+                what an empirical requirement is decided against, and what a provable \
+                requirement's statement may not name.",
+      decls := [`PropertyKindCalculus.Provenance.Requirement.referents],
+      definedIn := "metrological-modularity",
+      seeAlso := ["empirical requirement", "attestation"] }
+  , { key := "requirement scope",
+      gloss := "The objects a requirement quantifies over: every object the boundary is \
+                evaluated for, every object of a named sort (reached through `Sorted`), \
+                named objects, or the objects a named decider selects.",
+      decls := [`PropertyKindCalculus.Provenance.RequirementScope],
+      definedIn := "metrological-modularity",
+      seeAlso := ["requirement"] }
+  , { key := "spot check",
+      gloss := "A named `Bool` declaration a provable requirement cites and the requirement \
+                command evaluates, requiring `true`: the runtime evidence that the proof \
+                reaches the carrier the model runs on and the operational inputs — a check \
+                of the proof's reach, not a discharge.",
+      decls := [`PropertyKindCalculus.Provenance.Requirement.spotChecks],
+      definedIn := "metrological-modularity",
+      seeAlso := ["provable requirement", "carrier ladder"] }
+  , { key := "specification boundary",
+      gloss := "A declared boundary whose one member computes the bound a requirement is \
+                checked against, told from a model boundary by its role: the right side of a \
+                provable requirement's theorem edge, and itself the subject of no \
+                requirement.",
+      decls := [`PropertyKindCalculus.Provenance.BoundaryRole,
+                `PropertyKindCalculus.Provenance.Contract.role],
+      definedIn := "metrological-modularity",
+      seeAlso := ["declared boundary", "provable requirement"] }
   , { key := "kind-of-property",
       short := some "kind",
       gloss := "The common defining aspect of mutually comparable properties, carried as a \

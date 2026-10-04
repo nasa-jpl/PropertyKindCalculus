@@ -232,11 +232,11 @@ Lowe's square — and of several recent developments in this field
 Willink {Manual.citep willink_evaluation_of_measurement_uncertainty_based_on_moments}[], and
 Degenhardt {Manual.citep degenhardt_efficient_alternative_to_monte_carlo}[]). PKC makes a
 kind a first-class type, kind-incompatible arithmetic a compile-time error, and
-classification a proof obligation. Of twenty-seven metrology requirements, twenty say
+classification a proof obligation. Of twenty-eight metrology requirements, twenty say
 something that is either true or false of the calculus — that two kinds of the same
 dimension stay distinct, that converting a value to another unit and back returns it
 unchanged — and every one of those is proved as a theorem the Lean kernel checks. The
-other seven ask a different question: not whether something is true, but whether the
+other eight ask a different question: not whether something is true, but whether the
 language can express it at all — that a general kind and an individual quantity are
 different sorts of thing, that a unit is one chosen value of one kind. Each of those is
 met by a definition that compiles, and a type error is what its failure would look like.
@@ -313,7 +313,7 @@ and names the section it stands in.
 
 # What PropertyKindCalculus provides
 
-This project addresses *twenty-seven requirements* about formalizing _metrology_ — the
+This project addresses *twenty-eight requirements* about formalizing _metrology_ — the
 science of measurement — and discharges most of them as machine-checked theorems
 rather than prose. A substantial part of the library is grounded directly on the
 published *ISO and IEC 80000* metrology standards — _eleven_ of the thirteen parts (every
@@ -461,10 +461,15 @@ that discharges it. This is the map, in the order the pieces rest on one another
   measurement uncertainty through the model and flags where floating point loses
   information at the scale of the input uncertainties
   ({ref "uncertainty"}[Uncertainty quantification and numerical adequacy]).
-- *A module declares its boundary and what it computes.* A `Provenance.Contract` states a
-  module's kind-typed ports and exits, a `Provenance.Relation` its measurement model as a
-  theorem edge, and the aggregation classes on its outputs are what license sharding it
-  ({ref "metrological-modularity"}[Metrological modularity]).
+- *A module declares its boundary, what it computes, and what its quantities must
+  satisfy.* A `Provenance.Contract` states a module's kind-typed ports and exits, a
+  `Provenance.Relation` its measurement model as a theorem edge, and the aggregation
+  classes on its outputs are what license sharding it
+  ({ref "metrological-modularity"}[Metrological modularity]). A `Provenance.Requirement`
+  per produced port states what that port's quantity must satisfy and by what evidence —
+  provable by a theorem, or empirical by a gate against a referent the model does not
+  define — surveyed and censused, with the deferred ones counted
+  ({ref "requirements-as-evidence"}[every claim a model makes, with its evidence]).
 - *The standard is the test.* Eleven parts of ISO/IEC 80000, item by item, with checked
   dimensions and proved defining relations ({ref "iso80000"}[The standards catalogue]);
   Dybkær's and the VIM's clauses are cross-referenced to the declarations that formalize
@@ -567,8 +572,15 @@ In plain terms, _rigorous metrology_ here means:
   declaration says which outputs aggregate over a carving of the data, and that is what
   licenses running the computation in tiles or shards: a theorem says the total is
   preserved, rather than the schedule being trusted to preserve it (R26, R27).
+- *What a module's quantities must satisfy, and by what evidence.* A requirement is stated
+  beside the boundary it governs, in the author's words, with its evidence: a theorem,
+  where the statement closes over the model, spot-checked where the model runs; or a gate
+  against a named referent the model does not define — a datasheet value, a prior, a
+  reference measurement — where it does not. Which of the two it is, the machine reads off
+  the statement rather than taking the author's word, and every output either carries a
+  requirement or says why it needs none (R28).
 
-Between them these bullets name all twenty-seven requirements, each of which is stated
+Between them these bullets name all twenty-eight requirements, each of which is stated
 precisely below; the status table at the end of that section maps every requirement to
 the checked declarations that address it.
 
@@ -580,7 +592,8 @@ tag := "author-obligations"
 The {ref "using-the-library"}[Using the library] chapter explains each annotation in turn.
 This section is the summary to have before reading it: what a model written in the calculus
 asks of its author, and what the author gets back. Since the kind propagates in the type
-({ref "paradigm"}[the paradigm]), an author states two things, and the machine checks both.
+({ref "paradigm"}[the paradigm]), an author states three things, and the machine checks
+all three.
 
 *First, the equations are written over kinded variables.* Where a physics text writes
 $`T = \tfrac{1}{2} m v^2` over bare reals, the model writes it over a `Quantity massK ℝ`
@@ -641,6 +654,20 @@ namespace — its tier and, for an attestation, its harvested reason — and end
 so an entry point nobody declared fails the build. That is not a type error, to be clear: a
 raw `⟨x⟩` typechecks. The audit is what refuses it (R23, R24).
 
+*Third, the requirements are stated.* What a module's quantities must satisfy — a bound,
+a band, a tolerance — is a `Provenance.Requirement` beside the boundary that produces
+them, and it says by what evidence it is met. A provable requirement's statement closes
+over the model, so a theorem discharges it, with `Bool` spot checks the command evaluates
+where the model runs; an empirical requirement names a referent the model does not define
+— a datasheet value, a prior, a reference measurement, marked
+`@[kindReferent "where it comes from"]` — so a gate against that referent discharges it,
+or an attestation with its reason defers it. The category is read off the statement's
+constants, not chosen: a witness that names a referent is refused as provable, and a gate
+that names none is refused as empirical. `#kind_requirements` surveys a namespace's
+requirements as one pinned report, and `#kind_requirement_coverage` asks of every produced
+port whether a requirement governs it, counting the attested ones as the number meant to
+fall ({ref "requirements-as-evidence"}[every claim a model makes, with its evidence]).
+
 # Requirements
 
 What follows is the fixed set of requirements PropertyKindCalculus is *specified*
@@ -650,7 +677,7 @@ prove each requirement; this section states them up front, as the axes the desig
 is judged against, with a status table at the end mapping each axis to the
 declaration that discharges it.
 
-The twenty-seven requirements, R1–R27, fall into nine groups — the section
+The twenty-eight requirements, R1–R28, fall into nine groups — the section
 headings of the generated traceability matrix at the end of this section:
 - how kinds are *structured*, and how quantities characterize objects and named
   parts of named systems (R1–R3, R19, R22);
@@ -665,7 +692,8 @@ headings of the generated traceability matrix at the end of this section:
   intervals (R14, R15, R18);
 - what the discipline *costs the author* — erasure and rendering (R21, R25); and
 - what *evidence* a value and a module carry — provenance, audit, the checked
-  measurement model, and licensed distribution (R23–R27).
+  measurement model, licensed distribution, and the requirements stated on its
+  quantities (R23–R28).
 
 Below, a group whose axes are best read separately takes one heading per axis.
 R21–R25 entered the catalogue from the ForPhysLib benchmark's design-neutral MR
@@ -1218,7 +1246,7 @@ as a defect — and a blessed scope only grows: the ratchet ({ref "boundary-fami
 compares the current ledger against the pinned one and *throws* on regression, so a
 clean audit cannot silently shrink to stay clean.
 
-## The measurement model and licensed distribution (R26, R27)
+## The measurement model, licensed distribution, and stated requirements (R26–R28)
 
 *R26 — A module's behavior is a checked measurement model.* The {ref "metrological-modularity"}[metrological-modularity chapter]'s
 behavior clause, stated as an expressiveness requirement: a declared boundary
@@ -1242,6 +1270,20 @@ both carvings' joins times the per-join tolerance, tied to the rounding budget w
 the carrier demands it. The clause's hygiene is the elaborator's
 (`checkAggregations`, rendered in every {ref "provenance-sweeps"}[`#kind_contract`] report), pinned by
 acceptance and refusal probes.
+
+*R28 — A module's requirements are stated with their evidence.* The requirement clause
+of the {ref "metrological-modularity"}[metrological-modularity chapter], stated as an
+expressiveness requirement: every produced port of a model boundary is governed by a
+`Provenance.Requirement` or exempted with a reason (`@[kindRequirementFree]`); a provable
+requirement's witness is a sorry-free theorem, or a theorem edge to a specification
+boundary, whose statement names no `@[kindReferent]`-marked declaration, with `Bool` spot
+checks the command evaluates where the model runs; an empirical requirement names marked
+referents and a gate mentioning one, and no witness; a claimed absence is a license the
+environment holds no instance of; and an attestation never stands beside a discharge. The
+checks are the elaborator's (`#kind_requirement`, surveyed by `#kind_requirements`,
+censused by `#kind_requirement_coverage` and gated by `#kind_requirement_clean`), pinned
+by acceptance and refusal probes; what the clause buys is argued in
+{ref "requirements-as-evidence"}[every claim a model makes, with its evidence].
 
 ## Requirement validation — the ForPhysLib benchmark
 

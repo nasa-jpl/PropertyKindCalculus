@@ -268,6 +268,13 @@ are the raw material for [Exhibit C](../../PLAN.md#exhibit-c-harmonicoscillator)
 Each row is currently prose. Per [rule 2](../../PLAN.md#rules-of-engagement) each must become
 a probe before it is cited upstream.
 
+The same oscillator is the running example of the PKC tutorial, which adds what the
+benchmark does not do: the walk of the four-category square for two bodies and three
+springs (`examples/PropertyKindCalculus/Examples/Tutorial/HarmonicOscillatorSquare.lean`,
+Mathlib-free) and the oscillator's requirements in both categories, provable and empirical,
+stated against declared boundaries (`…/Tutorial/HarmonicOscillatorRequirements.lean`, which
+imports this case study).
+
 ---
 
 ## The conclusion

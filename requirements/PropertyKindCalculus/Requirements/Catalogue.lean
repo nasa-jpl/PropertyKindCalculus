@@ -1,7 +1,7 @@
 /-
-# The requirement catalogue — the 27 axes the calculus is specified against
+# The requirement catalogue — the 28 axes the calculus is specified against
 
-The canonical identity of each blueprint requirement: its identifier (R1 … R27),
+The canonical identity of each blueprint requirement: its identifier (R1 … R28),
 a one-line title, the group it belongs to, and its headline status. This is the
 *spine* of the traceability matrix — the rows the harvested `@[requirement …]`
 annotations are grouped under — so the matrix always shows every requirement, even
@@ -39,8 +39,9 @@ inductive RequirementGroup where
   /-- R21, R25: what the kind layer costs the author — erasure to the bare carrier,
   and rendering back to mathematics. -/
   | ergonomics
-  /-- R23–R27: provenance of values, the audit discipline over a scope, the checked
-  measurement model on a boundary, and the licensed distribution of its computation. -/
+  /-- R23–R28: provenance of values, the audit discipline over a scope, the checked
+  measurement model on a boundary, the licensed distribution of its computation, and the
+  requirements stated on its quantities with their evidence. -/
   | evidence
   deriving Repr, Inhabited, DecidableEq, BEq
 
@@ -100,7 +101,7 @@ fact *derived* from the `@[requirement …]` annotations — see
 annotations already witness (or fail to), so recording it twice would only
 reintroduce the drift this layer exists to eliminate. -/
 structure Requirement where
-  /-- The identifier, as printed — `"R1"` … `"R27"`. -/
+  /-- The identifier, as printed — `"R1"` … `"R28"`. -/
   id : String
   /-- A one-line title. -/
   title : String
@@ -195,7 +196,14 @@ def catalogue : List Requirement :=
       title := "A module's distribution is licensed by declared extensivity: output ports \
                 carry aggregation classes, and recarving or sharding a batch axis is \
                 licensed by theorem from those declarations, with the quasi-extensive \
-                tolerance tied to the rounding budget where the carrier demands it" } ]
+                tolerance tied to the rounding budget where the carrier demands it" }
+  , { id := "R28", group := .evidence, kind := .expressiveness,
+      title := "A module's requirements are stated with their evidence: every produced port \
+                of a model boundary is governed by a requirement or exempted with a reason; a \
+                provable requirement's witness is a sorry-free theorem or theorem edge naming \
+                no referent, with spot checks evaluated where the model runs; an empirical \
+                requirement names marked referents and a gate mentioning one; and an \
+                attestation never stands beside a discharge" } ]
 
 /-- Look up a requirement by id. -/
 def requirementById? (id : String) : Option Requirement :=
