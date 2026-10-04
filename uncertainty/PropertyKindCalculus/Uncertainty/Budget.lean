@@ -16,9 +16,8 @@ carries the metrological intent and forbids the conflations:
 
 The combined standard uncertainty `u_c(y) = √(Σ uᵢ(y)²)` (`combinedQ`) is then the quadrature of the
 contributions, which are *homogeneous* at `kₒ` — so it, too, is a `Quantity kₒ Float`. A
-`CouplingResult`'s former two swappable `List Float` fields become a `List (Quantity kₒ Float)` and a
-`Quantity kₒ Float`: swapping them, or mixing a contribution with an input uncertainty, is now a type
-error.
+`CouplingResultQ` carries them as a `List (Quantity kₒ Float)` and a `Quantity kₒ Float`: swapping
+them, or mixing a contribution with an input uncertainty, is a type error.
 
 Honest scope. `ProductKind.ofRatio` is deliberately *liberal* — it signs any ratio-scale triple
 (`QuantityClassification.lean`), so the `ProductKind kₛ kᵢ kₒ` gate enforces the *shape* of the GUM

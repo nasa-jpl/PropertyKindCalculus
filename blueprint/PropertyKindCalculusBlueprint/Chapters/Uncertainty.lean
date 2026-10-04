@@ -657,8 +657,9 @@ type no theorem can constrain, so the certified executable check runs on TorchLe
 the spec `ulp₃₂` whenever it answers — `none` on NaNs and infinities), and the kernel's absorption test `absorbs s δ` — the float32 sum is unchanged —
 *certifies* the specification: the exact real sum rounds back under $`\mathrm{round}_{32}`. So the
 computed adequacy verdict is provably the specified {uses "thm_uq_adequacy_verdict"}[A3] one, on the
-finite fragment. The residual `Float32 ↔ IEEE32Exec` step is an upstream *assumption typeclass*, not an
-axiom — the irreducible hardware trust boundary.
+finite fragment. The residual `Float32 ↔ IEEE32Exec` step is a FloatLib theorem over Lean's logical
+model of `Float32`, for finite operands; what stays trusted is that the compiled runtime primitives
+agree with that logical model — the irreducible hardware trust boundary.
 :::
 
 :::proof "thm_uq_exec_bridge"

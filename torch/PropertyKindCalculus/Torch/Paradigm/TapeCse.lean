@@ -15,8 +15,8 @@ DAG of *distinct* sub-expressions, not its exponential unfolding.
 `(op-name, remapped-parent-ids, forward-value-bits)`: two nodes with the same op applied to the
 same (already-canonicalised) inputs — equivalently, two builds of the same sub-expression — collapse
 to one. It is **value-preserving** by construction: the canonical node keeps the stored forward
-value the original node had, so the result read back is *bit-identical* to `runBuilder` (no
-recomputation, no tolerance). Node COUNT shrinks; the result never moves. Because it touches only
+value the original node had, so the result read back is *bit-identical* to the uncompacted run
+(no recomputation, no tolerance). Node COUNT shrinks; the result never moves. Because it touches only
 the count, every `paradigm.tape_parity` theorem (`rPlrzTape_parity`, the `Evaluates` alphabet) holds
 over the un-compacted carrier *unchanged* — CSE is orthogonal to parity, exactly as the carrier's
 docstring promised.
@@ -86,8 +86,9 @@ def cseCompact (t : Tape Float) : Tape Float × Array Nat := Id.run do
 
 /-- Build a tape sub-program, CSE-compact it, and read back the result — returning the result
 tensor, the **raw** node count (the carrier's unfolded emission), and the **compacted** node count
-(the distinct sub-expressions). The tensor is bit-identical to `runBuilder b` (CSE preserves every
-stored forward value); only the count shrinks. -/
+(the distinct sub-expressions). The tensor is bit-identical to the uncompacted run of `b` —
+`TapeM.run Tape.empty b.run`, then `Tape.requireValue` at its result node — since CSE preserves
+every stored forward value; only the count shrinks. -/
 def runBuilderCSE {s : Shape} (b : TapeBuilder s) :
     Except String (Tensor Float s × Nat × Nat) := do
   let (id, t) ← TapeM.run Tape.empty b.run

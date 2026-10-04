@@ -13,8 +13,11 @@ Lean's `Float` is an opaque FFI type carrying no proof obligations, so the host 
 *fundamentally* uncertifiable — no theorem can relate `Float.log2`/`Float.exp2` to `ulp32`. Stage 3.3
 therefore certifies the check on TorchLean's **computable** `IEEE32Exec` model instead, where every
 operation is "decode → exact dyadic → round once" and is provably `round32` of the exact real result.
-The residual `Float32 ↔ IEEE32Exec` step is an *assumption typeclass* upstream
-(`RuntimeFloat32MatchesIEEE32Exec`), not an axiom — the honest, irreducible hardware trust boundary.
+The residual `Float32 ↔ IEEE32Exec` step is a FloatLib theorem over Lean's logical model of
+`Float32`, for finite operands (`ExecFloat.Binary.toModel_ofFloat32_add_of_isFinite` and its
+siblings, axiom profile `[propext, Classical.choice, Quot.sound]`); what stays trusted is that the
+compiled runtime primitives agree with that logical model — the honest, irreducible hardware trust
+boundary.
 
 This module re-exposes, under adequacy-layer names, the executable primitives of the Stage-3.3
 TorchLean bridge (`NN/Floats/IEEEExec/Bridge/FP32/Ulp.lean`, upstream form: the ULP query is the
@@ -30,9 +33,10 @@ artificial spacing) and states the capstone:
     float32 sum is unchanged) *certifies* the specification's absorption: the exact real sum rounds
     back to `s` under `round32`. This is the executable image of `Soundness.verdict_sound`'s flag⟹lost
     direction, realized at the genuine binary32 rounding rather than the abstract uniform grid — the
-    computed verdict is provably the specified one, on the finite fragment. The
-    `exec_verdict_sound_of_isFinite` form takes only the three executable finiteness checks (the
-    dyadic decoding witnesses are recovered, not assumed).
+    computed verdict is provably the specified one, on the finite fragment. Its one finiteness
+    hypothesis is the executable check `isFinite (ExecFloat.add s δ)`: a finite executable sum
+    forces finite operands, so a kernel driver discharges the theorem by running `isFinite` and
+    `absorbs` (the dyadic decoding witnesses are recovered, not assumed).
 
 Proved sorry-free; the executable side is exercised (`#eval`/`#guard`) in the `AdequacyExecBridge`
 example. Mathlib- and TorchLean-backed.

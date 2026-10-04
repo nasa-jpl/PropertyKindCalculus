@@ -88,9 +88,9 @@ abbrev ListModel := {α : Type} → [NumCarrier α] → List α → α
 
 /-- The **kind-typed** result of coupling the two areas from one descriptor list, at output kind `kₒ`:
 the GUM uncertainty budget — per-input `contributions` `uᵢ(y)` and the `combined` standard uncertainty
-`u_c(y)`, *both* `Quantity kₒ Float` — and the numerical-adequacy `verdict`. The former two swappable
-`List Float` fields are now a `List (Quantity kₒ Float)` and a `Quantity kₒ Float`; swapping them, or
-mixing a contribution with an input uncertainty (`Quantity kᵢ`), is a type error. -/
+`u_c(y)`, *both* `Quantity kₒ Float` — and the numerical-adequacy `verdict`. `contributions` is a
+`List (Quantity kₒ Float)` and `combined` a `Quantity kₒ Float`; swapping them, or mixing a
+contribution with an input uncertainty (`Quantity kᵢ`), is a type error. -/
 structure CouplingResultQ (kO : KindOfProperty) where
   /-- Per-input GUM contributions `uᵢ(y) = |cᵢ|·u(xᵢ)`, in output units (`Quantity kₒ`). -/
   contributions : List (Quantity kO Float)

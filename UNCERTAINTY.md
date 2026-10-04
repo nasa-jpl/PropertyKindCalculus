@@ -496,8 +496,10 @@ FLX model *grounded* in (not built on) the TorchLean lemmas, whose statement sha
   certified executable check runs on `IEEE32Exec` instead — a second TorchLean PR adds `IEEE32Exec.ulpExp?`
   (bit-level ULP query, its answers proved `= ulp₃₂`; it answers on exactly the finite fragment) and `absorbs` (float32 sum unchanged),
   proved sound against `round₃₂` (`round32_add_eq_left_of_absorbs`), re-exposed in PKC as
-  `ExecBridge.exec_verdict_sound`. The residual `Float32 ↔ IEEE32Exec` step is an upstream *assumption
-  typeclass* (`RuntimeFloat32MatchesIEEE32Exec`), not an axiom — the irreducible hardware trust boundary.
+  `ExecBridge.exec_verdict_sound`. The residual `Float32 ↔ IEEE32Exec` step is a FloatLib theorem over
+  Lean's logical model of `Float32`, for finite operands (`ExecFloat.Binary.toModel_ofFloat32_add_of_isFinite`
+  and its siblings); what stays trusted is that the compiled runtime primitives agree with that
+  logical model — the irreducible hardware trust boundary.
 
 > **Note — Sterbenz, and the `FLX`/`FLT`/`FP32` formats (terminology used throughout Stage 3).**
 >
@@ -895,8 +897,10 @@ and FFT kernels under `NN/Runtime/Autograd/Engine/Cuda/Ops/*` for SSPRC's convol
   since `fp32Round` *is* `round₃₂`). PKC re-exposes these as `Adequacy.ExecBridge.{exec_ulp_grounds,
   exec_half_ulp_grounds,exec_verdict_sound}`: the kernel's absorption verdict *certifies* the spec
   absorption `round₃₂ (toReal s + toReal δ) = toReal s`. All sorry-free (`[propext, Classical.choice,
-  Quot.sound]`). The residual `Float32 ↔ IEEE32Exec` step is an upstream *assumption typeclass*
-  (`RuntimeFloat32MatchesIEEE32Exec`), not an axiom — the irreducible hardware trust boundary. *Exit met:*
+  Quot.sound]`). The residual `Float32 ↔ IEEE32Exec` step is a FloatLib theorem over Lean's logical
+  model of `Float32`, for finite operands (`ExecFloat.Binary.toModel_ofFloat32_add_of_isFinite` and
+  its siblings); what stays trusted is that the compiled runtime primitives agree with that logical
+  model — the irreducible hardware trust boundary. *Exit met:*
   the executable check (`ulpExp?`/`absorbs`, which actually `#eval`s, unlike the noncomputable `FP32`) is
   certified equal to the A1/A3 spec on the finite fragment — exercised by the `AdequacyExecBridge` example
   (`#guard`s at `2²⁵`/`10⁸` + `exec_verdict` proof term). *(2026-07-27 API modernization: upstream
