@@ -6,8 +6,8 @@ libraries a model written in the calculus requires, top to bottom, and saying at
 band what kind of vouching that band costs a reviewer. It is a picture of a dependency
 graph and carries no measured claim of its own. What it *does* assert — who requires
 whom — is checkable, and was checked against `lakefile.lean` and `lake-manifest.json`
-of PropertyKindCalculus, the vendored TorchLean (rev 458f2a7a), cslib (rev 990e65a6)
-and physlib on 2026-10-03:
+of PropertyKindCalculus, the vendored TorchLean (rev f12547fa), cslib (rev 990e65a6)
+and physlib on 2026-10-04:
 
     PropertyKindCalculus -> Physlib   -> mathlib
     PropertyKindCalculus -> cslib     -> mathlib
