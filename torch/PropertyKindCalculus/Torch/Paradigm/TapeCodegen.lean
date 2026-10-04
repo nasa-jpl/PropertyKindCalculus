@@ -780,7 +780,7 @@ def AiReport.fusedBytesPerElem (rep : AiReport) : Nat :=
 def AiReport.fusedPeakBytes (rep : AiReport) (pixels : Nat) : Nat :=
   rep.fusedBytesPerElem * pixels + rep.tableBytes
 
-/-- Peak **device (or CPU-stub) buffer** bytes of a `P`-pixel batch on the EAGER elementwise
+/-- Peak **device (or host) buffer** bytes of a `P`-pixel batch on the EAGER elementwise
 carrier — the ideal-promptness lower bound `maxLive · P · 4` (see `maxLiveNodes`), plus the
 bound tables. -/
 def AiReport.eagerPeakBytes (rep : AiReport) (pixels : Nat) : Nat :=

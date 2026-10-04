@@ -687,8 +687,8 @@ uncertainty/PropertyKindCalculus/Uncertainty/
                            `apps/` exe `mcm_batched_parity`, which CI runs
   SsprcBatched.lean        ✅ batched SSPRC propagator (Stage 4, TorchLean `CudaT`): runs the WO1 kernel at
                            `CudaT (Shape.dim Nᵢ .scalar)` — input i's Nᵢ systematic samples as one batch
-                           tensor, one launch per input (a GPU kernel per op under `-K cuda`, the portable CPU
-                           float32 stub otherwise), `E(Aᵢ)`/`Var(Aᵢ)` via `Buffer.reduceMean`; `E(Y)`/`u(Y)`
+                           tensor, one launch per input (a GPU kernel per op under `-K cuda`, ATen's float32
+                           CPU kernel on the host under `-K libtorch`), `E(Aᵢ)`/`Var(Aᵢ)` via `Buffer.reduceMean`; `E(Y)`/`u(Y)`
                            combine as in `Ssprc.run`. In the small lib `UncertaintyBatch`; CudaT can't be
                            `#guard`ed at build (§6), so it is verified by the `apps/` exe `ssprc_batched_parity`
 ```
@@ -1144,7 +1144,7 @@ and FFT kernels under `NN/Runtime/Autograd/Engine/Cuda/Ops/*` for SSPRC's convol
     runs the *same* write-once `[NumCarrier α]` kernel at `α := CudaT (Shape.dim Nᵢ .scalar)`: input
     `i`'s `Nᵢ` systematic samples become **one batch tensor**, the other inputs broadcast constants,
     and each input's deviation distribution is **one batched launch** (a GPU kernel per elementwise op
-    under `-K cuda`, the portable CPU float32 stub otherwise), its moments read with
+    under `-K cuda`, ATen's float32 CPU kernel on the host under `-K libtorch`), its moments read with
     `Buffer.reduceMean`; `E(Y)`/`u(Y)` combine exactly as the scalar `Ssprc.run`. **Verification is by
     executable, not `#guard`.** `CudaT`'s device ops are `@[extern]` FFI with no interpreter fallback,
     and the TorchLean dependency graph **cannot** be `precompileModules`-loaded into the elaborator —
@@ -1152,10 +1152,11 @@ and FFT kernels under `NN/Runtime/Autograd/Engine/Cuda/Ops/*` for SSPRC's convol
     `:shared` facets do not build — so a build-time `#eval`/`#guard` of a `CudaT` value is impossible
     here (a narrow, Mathlib-free precompiled lib does not help; the granularity is the library, not the
     import closure). Instead the `apps/ssprc_batched_parity` executable links the native `CudaT` code
-    directly and asserts parity with `Ssprc.run`: on the fictive `Y=(X₁+X₂²)X₃` the float32 stub
-    reproduces `E(Y)=11.5875` / `u(Y)=1.6876` within `|ΔE|≈2·10⁻⁶`, `|Δu|≈5·10⁻⁵` of the float64
-    reference (`lake exe ssprc_batched_parity`, exits `0` on parity, `1` on mismatch; run on the CPU
-    stub here, on the device in the `-K cuda` container). The engine sits in its own
+    directly and asserts parity with `Ssprc.run`: on the fictive `Y=(X₁+X₂²)X₃` the float32 host run
+    reproduces `E(Y)=11.5875` / `u(Y)=1.6876` within `|ΔE|≈1·10⁻⁶`, `|Δu|≈1·10⁻⁶` of the float64
+    reference (`lake exe ssprc_batched_parity`, exits `0` on parity, `1` on mismatch, `2` when the
+    build links no device; run on the host from the CPU-only LibTorch SDK in CI, on the device in
+    the `-K cuda` container). The engine sits in its own
     `precompileModules`-free lib `UncertaintyBatch`; the harness is the one executable the package
     produces. *Exit met:* the batched device propagator agrees with the Stage-2 scalar SSPRC to float32.
   * **Sensitivity-driven `Nᵢ` allocation — ✅ DONE (built & `#guard`-checked).**

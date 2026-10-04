@@ -27,8 +27,8 @@ ops are `@[extern]` FFI with no interpreter fallback, so a `#guard`/`#eval` of a
 run at *build* time. This module therefore only *typechecks* under `lake build` (it lives in the
 small `UncertaintyBatch` library); its numbers are checked by a compiled executable —
 `lake exe mcm_batched_parity` (`apps/`) — which links the native `CudaT` code directly and asserts
-parity with the scalar `Mcm.run` (the portable CPU stub on the default build, the device on a
-`-K cuda=true` container build).
+parity with the scalar `Mcm.run` (on the host from a CPU-only LibTorch SDK under `-K libtorch=true`,
+the device on a `-K cuda=true` container build; the default build links no device at all).
 -/
 
 module

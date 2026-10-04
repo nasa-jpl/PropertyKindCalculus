@@ -26,9 +26,10 @@
 #     execute. CI runs them; locally, run them separately:
 #       lake exe ssprc_batched_parity   # batched SSPRC vs the scalar Ssprc.run
 #       lake exe mcm_batched_parity     # batched MCM   vs the scalar Mcm.run
-#   * The default build uses the portable CPU stub for the batch carrier. A `-K cuda=true`
-#     container build is a different artifact with its own verification story (see the memory
-#     notes on stub linking); nothing here checks the device path.
+#   * The default build links TorchLean's "unavailable" backend for the batch carrier, so the
+#     two harnesses it links cannot RUN here: they need the LibTorch bridge — `-K libtorch=true`
+#     with a CPU-only SDK (scripts/libtorch-cpu-sdk.sh; what CI does) or `-K cuda=true` with a
+#     CUDA SDK and a device. Nothing here checks either path.
 #   * The doc-gen4 `:docs` facets are NOT built here — that is scripts/build-api-docs.sh,
 #     which also owns the marker-clearing and staging those facets need.
 set -euo pipefail

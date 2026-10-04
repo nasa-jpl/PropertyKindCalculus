@@ -245,7 +245,7 @@ Status: ✅ done · 🚧 in progress · ⬜ planned
   soil-moisture domain. It is now the domain-neutral **`FusedExp`** class of _fused forms_ — bit-exact
   single-op refinements of hot composed sub-expressions — with a first primitive
   `scaledProdExp c x y = exp(c·x·y)`, realized by a portable `CudaT.scaledProdExp` (composed from the
-  dual-backend `Buffer` kernels), **one instance for both** the CPU-stub and GPU (`-K cuda`) builds, with
+  dual-backend `Buffer` kernels), **one instance for both** the host-bridge (`-K libtorch`) and GPU (`-K cuda`) builds, with
   a clean seam for a `-K cuda` single-fused-kernel override. The class is extensible — further forms
   (`exp(a+c·x)`, `exp(−γ·x²)`, `logSumExp`, …) drop in as hot paths warrant — and the megakernel codegen
   is its general counterpart (it fuses the *whole* model, not one named shape). The soil-moisture
@@ -466,7 +466,7 @@ Status: ✅ done · 🚧 in progress · ⬜ planned
        SM∈[0,0.6], monotone in R_eff, NaN range-guard faithful to `no_solution_above/below`). Fills the
        CPU wall-time cell. (`r_lut_example` remains the demo-scale monotonicity/QC witness.)
      - ✅ `tile_retrieve_lut_eager` (GPU): an **eager-tensor port** on the `Cuda.Tape` engine (A4500
-       under `-K cuda`, C stubs otherwise) — the clay slice + `invΔ` table uploaded as leaves, an
+       under `-K cuda`, the host under `-K libtorch`) — the clay slice + `invΔ` table uploaded as leaves, an
        on-device `gatherRowsNat` at the nearest-clay node, then the SM inversion. Design finding worth
        keeping: the eager tensor vocabulary (`const/add/sub/mul/max/min/clamp/relu/reduceSum/gather*`)
        has **no compare / select / round / div**, so the intended 7-step bisection + NaN range-guard is

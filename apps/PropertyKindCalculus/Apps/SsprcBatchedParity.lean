@@ -9,10 +9,13 @@ build-time `#guard` the way the pure-`Float`/`ℝ` examples are. A **compiled ex
 links the native `CudaT` code directly — so this harness *runs* the batched propagator and asserts it
 agrees with the Stage-2 scalar `Ssprc.run`.
 
-Run it with `lake exe ssprc_batched_parity`. On the default build the `CudaT` ops are the portable
-CPU **stub** (float32), so this checks parity without a GPU; a `-K cuda=true` build (in the
-`torchlean-development-slim:gpu` container) runs the *same* harness on the device. It exits `0` on
-parity, `1` on mismatch (so CI can gate on it as a `lake exe` step).
+Run it with `lake exe ssprc_batched_parity` from a build that links TorchLean's LibTorch bridge.
+`-K libtorch=true` with a CPU-only LibTorch SDK runs the `CudaT` ops on the host through ATen's CPU
+kernels (float32, no GPU, no toolkit) — what CI does; `-K cuda=true` with a CUDA SDK (in the
+`torchlean-development-slim:gpu` container) runs the *same* harness on the device. The default build
+links TorchLean's "unavailable" backend, on which the first device op fails with an explanation. The
+harness prints the device the bridge selected before its numbers. It exits `0` on parity, `1` on
+mismatch (so CI can gate on it as a `lake exe` step).
 -/
 
 module
@@ -21,6 +24,7 @@ public import PropertyKindCalculus.Uncertainty.SsprcBatched
 public import PropertyKindCalculus.Uncertainty.Ssprc
 public import PropertyKindCalculus.Uncertainty.InputDist
 public import PropertyKindCalculus.Uncertainty.Carriers
+public import NN.Runtime.Autograd.Engine.LibTorch.Controls
 
 @[expose] public section Blanket
 
@@ -43,12 +47,30 @@ def inputs : List (InputDist Float) :=
 def ns : List Nat := [200, 200, 200]
 
 /-- Parity tolerance between the float32 batched run and the float64 scalar reference. Observed
-stub diff is `|ΔE|≈2e-6`, `|Δu|≈5e-5`; `1e-3` keeps ~20× margin for float32 rounding and a GPU's
+on the host (ATen's CPU kernels): `|ΔE|≈1e-6`, `|Δu|≈1e-6`; `1e-3` keeps three orders of magnitude for float32 rounding and a GPU's
 different reduction/summation order, while still catching any structural (sampling/reduction) bug,
 whose divergence is of order `0.1+`. -/
 def tol : Float := 1e-3
 
 def main : IO UInt32 := do
+  -- Which device the bridge selected, said before any number: the same harness runs on the host
+  -- (a CPU-only SDK, or `TORCHLEAN_LIBTORCH_DEVICE=cpu`) and on a CUDA device, and a parity line
+  -- that does not say which it measured is a line nobody can compare. A build with no bridge, or
+  -- a CUDA SDK with no visible device, is refused here with exit `2` — distinct from `1`, a
+  -- parity failure — rather than left to the first device op's panic.
+  match Runtime.Autograd.LibTorch.Buffer.runtimeStatus with
+  | .notLinked =>
+    IO.eprintln "CANNOT RUN — this build links no LibTorch bridge (TorchLean's default backend). \
+Build with `-K libtorch=true -K libtorch_home=<CPU-only SDK>` (scripts/libtorch-cpu-sdk.sh) \
+or `-K cuda=true` with a CUDA SDK."
+    return 2
+  | .nativeUnavailable =>
+    IO.eprintln "CANNOT RUN — the LibTorch bridge is linked but selected no device (a CUDA SDK \
+with no visible CUDA device; TORCHLEAN_LIBTORCH_DEVICE=cpu selects the host instead)."
+    return 2
+  | .nativeAvailable =>
+    IO.println s!"LibTorch device : {match ← Runtime.Autograd.LibTorch.deviceKind with
+      | .host => "host" | .cuda => "cuda"}"
   let (ebB, ubB) := SsprcBatched.run modelL inputs ns          -- batched, over CudaT
   let (ebR, ubR) := Ssprc.run (modelL (α := Float)) inputs ns   -- scalar reference, over Float
   IO.println s!"batched (CudaT) : E(Y) = {ebB}   u(Y) = {ubB}"

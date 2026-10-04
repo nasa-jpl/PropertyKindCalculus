@@ -7,8 +7,9 @@ over its `Nᵢ` systematic samples — `Nᵢ` scalar model calls per input ([`Ss
 This module runs the *same* write-once `[NumCarrier α]` kernel at `α := CudaT (Shape.dim Nᵢ .scalar)`
 instead: input `i`'s `Nᵢ` systematic samples become **one length-`Nᵢ` batch tensor**, the other
 inputs broadcast constants at their means, and the whole model op-chain is **one batched launch** —
-on a `-K cuda` build one GPU kernel per elementwise op, on the default build the portable CPU-stub
-buffers (so this is exercised, and parity-checked, *without a GPU*). The per-input moments `E(Aᵢ)`,
+on a `-K cuda` build one GPU kernel per elementwise op, on a `-K libtorch` build (TorchLean's bridge
+from a CPU-only SDK) ATen's CPU kernel on the host (so this is exercised, and parity-checked,
+*without a GPU*). The per-input moments `E(Aᵢ)`,
 `Var(Aᵢ)` are read with `Buffer.reduceMean` (the one reduction `NumCarrier`'s branchless-elementwise
 interface deliberately does not carry), and `E(Y)` / `u(Y)` combine exactly as in `Ssprc.run` (means
 and variances add under convolution: `E(Y) = R + Σ E(Aᵢ)`, `Var(Y) = Σ Var(Aᵢ)`).
@@ -20,8 +21,8 @@ the elaborator has no native `CudaT` symbols, and the TorchLean dependency graph
 build). This module therefore only *typechecks* under `lake build` (it lives in the small
 `UncertaintyBatch` library); its numbers are checked by a compiled executable —
 `lake exe ssprc_batched_parity` (`apps/`) — which links the native `CudaT` code directly and asserts
-parity with the scalar `Ssprc.run` (the portable CPU stub on the default build, the device on a
-`-K cuda=true` container build).
+parity with the scalar `Ssprc.run` (on the host from a CPU-only LibTorch SDK under `-K libtorch=true`,
+the device on a `-K cuda=true` container build; the default build links no device at all).
 -/
 
 module

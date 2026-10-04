@@ -2,8 +2,9 @@
 `paradigm.tape_batch_carrier` — the **`BatchCarrier` instance for the tape carrier**, so a whole-tile
 deployment written against `[BatchCarrier C]` can be instantiated at `C := TapeBuilder` to *record*
 (rather than run) its constant-lifting and host marshaling. Together with `paradigm.batch_carrier`'s
-`CudaT` instance this gives `BatchCarrier` instances for **both** the executing carrier (CudaT — GPU
-device / CPU stub by `-K cuda`) and the recording carrier (TapeBuilder).
+`CudaT` instance this gives `BatchCarrier` instances for **both** the executing carrier (CudaT — a
+CUDA device or the host, decided by the LibTorch SDK the bridge was built from) and the recording
+carrier (TapeBuilder).
 
 The load-bearing field is `const`: it lets a fit's arbitrary-`Float` loop constants — the
 Levenberg–Marquardt `λ` schedule and the box bounds `lb`/`ub` — enter a recording as baked constant

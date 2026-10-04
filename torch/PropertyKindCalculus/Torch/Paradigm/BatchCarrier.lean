@@ -15,9 +15,9 @@ run the SAME whole-tile kernel on each slice on its own dedicated Lean `Task`. O
 chunk (not per op), so the whole op-chain runs per chunk — compute-per-fork is maximal and
 per-op fork/join overhead is nil (the "maximize compute vs IO" granularity). Pixels are
 independent, so this is exact. The GPU path is just `nChunks = 1` (one batch; the device
-parallelizes internally). The `CudaT` CPU-stub ops are thread-safe — each allocates its own
-output and shares no scratch (the CUDA scratch mutex is compiled only into the `.cu` build) —
-so N chunks scale.
+parallelizes internally). The `CudaT` ops on the host (TorchLean's LibTorch bridge from a
+CPU-only SDK) are thread-safe — each allocates its own output and shares no scratch — so N
+chunks scale.
 
 BUILD STATUS: additive module, NOT yet imported by any target. Wire it into the two apps
 (replace `CudaT.const`/`.ofFloatArray`/`.toFloatArray` with the `BatchCarrier` projections,
@@ -45,8 +45,9 @@ namespace PropertyKindCalculus.Paradigm
 
 /-- A **batched numeric backend** `C : Shape → Type`: the host↔carrier marshaling and eager
 memory-discipline hooks a whole-tile deployment needs, on top of the `[NumCarrier (C s)]`
-arithmetic the kernels run through. GPU (`CudaT` under `-K cuda`) and CPU (`CudaT` stubs)
-differ ONLY in this class; the fit/dielectric/retrieval kernels never name it.
+arithmetic the kernels run through. GPU (`CudaT` under `-K cuda`) and host (`CudaT` on the
+bridge from a CPU-only SDK, `-K libtorch`) differ ONLY in this class; the fit/dielectric/
+retrieval kernels never name it.
 
 Carriers must ALSO provide `[∀ s, NumCarrier (C s)]` (kept as a separate constraint rather
 than bundled, so instance search stays simple). `CudaT` has both. -/
@@ -78,8 +79,8 @@ class BatchCarrier (C : Shape → Type) where
   which is what a first consumer should settle; `liveSize` above has one and this does not. -/
   release      : ∀ {s : Shape}, C s → UInt32 := fun _ => 0
 
-/-- The GPU/CPU-stub carrier as a `BatchCarrier`. One instance for both builds — `-K cuda`
-selects device vs host stub beneath the FFI. -/
+/-- The device carrier as a `BatchCarrier`. One instance for both builds — the LibTorch SDK
+TorchLean's bridge was built from selects the device beneath the FFI (CUDA, or the host). -/
 instance : BatchCarrier CudaT where
   const        := fun v => CudaT.const v
   ofFloatArray := fun a => CudaT.ofFloatArray a
@@ -129,8 +130,8 @@ class FusedExp (C : Shape → Type) where
   scaledProdExp : ∀ {s : Shape}, Float → C s → C s → C s
 
 /-- `CudaT`'s scaled product exponential, via the portable `CudaT.scaledProdExp` (`exp(c·x·y)` composed
-from the dual-backend device kernels): **one instance for both** the CPU-stub (`lake build`) and GPU
-(`-K cuda`) builds, naming no CUDA-only symbol so the `Torch` library builds green without a GPU. A
+from the dual-backend device kernels): **one instance for both** the host-bridge (`-K libtorch`) and
+GPU (`-K cuda`) builds, naming no CUDA-only symbol so the `Torch` library builds green without a GPU. A
 `-K cuda` / deploy build may override `CudaT.scaledProdExp` with a single fused device kernel, a
 bit-exact drop-in. -/
 instance : FusedExp CudaT where
@@ -138,7 +139,7 @@ instance : FusedExp CudaT where
 
 namespace BatchCarrier
 
-/-- Force the CPU-stub's one-time lazy init (external-class registration + the
+/-- Force the bridge's one-time lazy init (device selection, external-class registration, the
 deterministic-reductions flag) on the CURRENT thread, before any `Task` touches the backend,
 so the benign first-use init races cannot fire during fan-out. A no-op cost on the GPU build.
 The `IO.println` observing `a.size` keeps the pure warm-up call from being eliminated. -/
@@ -148,7 +149,7 @@ def warmup (C : Shape → Type) [BatchCarrier C] : IO Unit := do
 
 /-- The DEVICE capacity twin of `Platform.hostMemLimit` (`cudaMemGetInfo`, via the
 allocator stats): what a batch-sizing decision may still claim on the current device.
-`none` on the CPU stub, where there is no device and both counters read 0. Query AFTER
+`none` on the host, where there is no device and both counters read 0. Query AFTER
 `warmup`: the CUDA context / library fixed tax is then already netted out of
 `deviceFreeBytes`, so the answer needs no fixed-overhead model — solve the batch size
 against it with the algorithm's per-pixel shape (`TapeCodegen.AiReport.fusedPeakBytes` /

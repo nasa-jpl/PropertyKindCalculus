@@ -39,18 +39,31 @@ application, kept in a separate repository so this package stays focused on
 metrology and the ISO/IEC 80000 parts.
 -/
 
-/-- Forward this package's `-K cuda` / `-K cuda_home` / `-K libtorch_home` options to the
-TorchLean dependency (Lake applies command-line `-K` to the root package only). This
-package produces only libraries — its `Torch` library elaborates against TorchLean's
-device buffer externs, never linking them — so the options matter only to a downstream
-executable built with `-K cuda=true`, where TorchLean then builds its LibTorch bridge from
+/-- Forward this package's `-K cuda` / `-K libtorch` / `-K cuda_home` / `-K libtorch_home` /
+`-K torchlean_build_dir` options to the TorchLean dependency (Lake applies command-line `-K`
+to the root package only). This package produces libraries and the two parity harnesses — its
+`Torch` library elaborates against TorchLean's device buffer externs, never linking them — so
+the options matter only where an executable links: a downstream one, or the harnesses, built
+with `-K cuda=true` or `-K libtorch=true`, where TorchLean then builds its LibTorch bridge from
 the SDK at `libtorch_home` (or `TORCHLEAN_LIBTORCH_HOME`) and the toolkit at `cuda_home`.
-Empty when no option is set, so the default build is unchanged. -/
+
+The two switches are the vocabulary the downstream packages share. `-K cuda=true` is a CUDA
+SDK (and, downstream, that package's own CUDA kernels); `-K libtorch=true` is the bridge
+alone, from a CPU-only SDK, on which TorchLean runs the device ops on the host — the way the
+harnesses run on a hosted CI runner (`scripts/libtorch-cpu-sdk.sh`). Both reach TorchLean as
+its one switch, `cuda=true`; the SDK decides the device. `torchlean_build_dir` names
+TorchLean's build tree (its `torchleanBuildDir`): the bridge is one shared library a binary
+names by absolute path, so a build that may coexist with another flavour's keeps its own
+tree, while a single-flavour build such as CI's passes `.lake/build` and reuses the tree the
+libraries were built in. Empty when no option is set, so the default build is unchanged. -/
 private def torchLeanOpts : Lean.NameMap String := Id.run do
   let mut m : Lean.NameMap String := Lean.mkNameMap String
   if let some v := get_config? cuda then m := m.insert `cuda v
+  if let some v := get_config? libtorch then
+    if v == "true" || v == "1" then m := m.insert `cuda "true"
   if let some v := get_config? cuda_home then m := m.insert `cuda_home v
   if let some v := get_config? libtorch_home then m := m.insert `libtorch_home v
+  if let some v := get_config? torchlean_build_dir then m := m.insert `torchleanBuildDir v
   return m
 
 package «PropertyKindCalculus» where
@@ -415,9 +428,11 @@ lean_lib «UncertaintyBatch» where
 facets do not build), so the batched propagator's numbers cannot be `#guard`ed at build. A compiled
 executable links the native `CudaT` code directly, so this harness *runs* `SsprcBatched.run` and
 asserts it agrees with the scalar `Ssprc.run`. Run with `lake exe ssprc_batched_parity` from a
-`-K cuda=true` build with a LibTorch SDK and a CUDA device: the default build links TorchLean's
-"unavailable" backend, on which the first device op fails with an explanation, so the default
-build only links this harness. Exits `0` on parity, `1` on mismatch. -/
+build that links TorchLean's LibTorch bridge: `-K libtorch=true` with a CPU-only SDK runs it on
+the host (what CI does, through `scripts/libtorch-cpu-sdk.sh`), `-K cuda=true` with a CUDA SDK
+and a device runs it on the GPU. The default build links TorchLean's "unavailable" backend, on
+which the first device op fails with an explanation, so the default build only links this
+harness. Exits `0` on parity, `1` on mismatch. -/
 lean_exe «ssprc_batched_parity» where
   srcDir := "apps"
   root := `PropertyKindCalculus.Apps.SsprcBatchedParity
