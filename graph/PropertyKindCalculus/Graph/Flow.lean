@@ -15,6 +15,10 @@ per (operand position, result) pair of an occurrence — so
 
   * `Provenance.mem_influencedFrom_iff` / `Provenance.mem_ancestorsOf_iff`: membership in
     the executable closure is reachability (forward, respectively backward);
+  * `Provenance.eq_or_operand_of_mem_ancestorsOf` / `Provenance.operand_mem_ancestorsOf`:
+    the pedigree hop by hop — a member is a root or an operand of some occurrence, and the
+    pedigree is closed under one backward hop — the two facts the seal of a module
+    (`Graph.Seal`) is argued through, so its proof stays in the vocabulary of its statement;
   * `Provenance.mayInfluence_iff` and its contrapositive
     `Provenance.not_reachable_of_mayInfluence_eq_false`: the sound direction of
     sensitivity scoping — a `false` from the probe is a *theorem* that no path exists,
@@ -293,6 +297,33 @@ theorem mem_ancestorsOf_iff {g : Provenance ν κ} {of : List ν} {a : ν} :
     exact ⟨b, hb, Relation.reflTransGen_swap.mp hreach⟩
   · rintro ⟨b, hb, hreach⟩
     exact ⟨b, hb, Relation.reflTransGen_swap.mpr hreach⟩
+
+/-! ### The pedigree, hop by hop
+
+Two readings of the saturated closure that never leave the lists: a pedigree member is a
+root or an operand of some occurrence, and a pedigree is closed under one backward hop. -/
+
+/-- A node in a pedigree is one of the roots, or an operand of some occurrence — the first
+hop of its path to a root. -/
+theorem eq_or_operand_of_mem_ancestorsOf {g : Provenance ν κ} {of : List ν} {a : ν}
+    (ha : a ∈ g.ancestorsOf of) :
+    a ∈ of ∨ ∃ o ∈ g.occurrences, ∃ oc ∈ o.operands, oc.1 = a := by
+  rw [ancestorsOf, mem_influenceSweeps_iff] at ha
+  obtain ⟨b, hb, hreach⟩ := ha
+  rcases Relation.reflTransGen_iff_eq_or_transGen.mp hreach with rfl | htrans
+  · exact Or.inl hb
+  · obtain ⟨c, -, hca⟩ := Relation.TransGen.tail'_iff.mp htrans
+    obtain ⟨o, ho, -, oc, hoc, rfl⟩ := stepRel_reverseOccurrences.mp hca
+    exact Or.inr ⟨o, ho, oc, hoc, rfl⟩
+
+/-- A pedigree is closed under one backward hop: with the result of an occurrence, every
+operand of that occurrence. -/
+theorem operand_mem_ancestorsOf {g : Provenance ν κ} {of : List ν} {o : Occurrence ν κ}
+    (ho : o ∈ g.occurrences) (hres : o.result ∈ g.ancestorsOf of) {oc : ν × κ}
+    (hoc : oc ∈ o.operands) : oc.1 ∈ g.ancestorsOf of := by
+  rw [ancestorsOf, mem_influenceSweeps_iff] at hres ⊢
+  obtain ⟨b, hb, hreach⟩ := hres
+  exact ⟨b, hb, hreach.tail (stepRel_reverseOccurrences.mpr ⟨o, ho, rfl, oc, hoc, rfl⟩)⟩
 
 /-! ### The query readings, licensed -/
 

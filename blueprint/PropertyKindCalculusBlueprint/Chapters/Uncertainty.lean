@@ -794,8 +794,8 @@ not the Gaussian $`95\%` — the famous figure is a shape assumption, out of sco
 :::proof "thm_uq_coverage_chebyshev"
 Realized over `ℝ`: `coverageBound_stdUnc`, from Mathlib's `meas_ge_le_variance_div_sq` by taking the
 complement of the tail event (`prob_compl_eq_one_sub`) and substituting $`c = k u`. Sorry-free
-(`[propext, Classical.choice, Quot.sound]`). The half-width form `coverageBound` ($`\ge 1 -
-\mathrm{variance}/c^2`) is the underlying lemma.
+(`[propext, Classical.choice, Quot.sound]`). The half-width form `coverageBound` ($`\ge 1 - (u/c)^2`
+for half-width $`c`) is the underlying lemma.
 :::
 
 :::theorem "thm_uq_coverage_uniform" (parent := "uncertainty") (lean := "PropertyKindCalculus.Uncertainty.Coverage.uniform_coverage_exact")

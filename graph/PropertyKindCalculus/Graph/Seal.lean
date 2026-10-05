@@ -15,8 +15,9 @@ are themselves in that pedigree. Equivalently, the pedigree of an output has no 
 the sources, and the assumption ledger the build prints for the output is the complete
 list of what it rests on.
 
-  * `Provenance.pedigree_seal` — the theorem, argued over paths through
-    `Provenance.mem_ancestorsOf_iff` while its hypothesis is decided over lists;
+  * `Provenance.pedigree_seal` — the theorem, argued hop by hop through
+    `Provenance.eq_or_operand_of_mem_ancestorsOf` and `Provenance.operand_mem_ancestorsOf`
+    while its hypothesis is decided over lists;
   * `Provenance.sealed_of_wellFormed` — its executable form: `Provenance.sealed`, the
     check an instance pins with `decide`, follows from well-formedness;
   * `Provenance.seal_of_agrees` — the boundary reading: under agreement of the declared
@@ -98,24 +99,18 @@ theorem pedigree_seal {g : Provenance ν κ} (hwf : g.WellFormed) {y : ν} (hy :
     {a : ν} (ha : a ∈ g.ancestorsOf [y]) :
     a ∈ g.sources ∨
       ∃ o ∈ g.occurrences, o.result = a ∧ ∀ oc ∈ o.operands, oc.1 ∈ g.ancestorsOf [y] := by
-  obtain ⟨b, hb, hreach⟩ := mem_ancestorsOf_iff.mp ha
-  obtain rfl := List.mem_singleton.mp hb
-  have hrtg := Digraph.reachable_iff_reflTransGen.mp hreach
   have hcase : a ∈ g.sources ∨ ∃ o ∈ g.occurrences, o.result = a := by
-    rcases Relation.reflTransGen_iff_eq_or_transGen.mp hrtg with rfl | htrans
-    · exact mem_known (output_mem_known hwf hy)
-    · obtain ⟨c, hac, -⟩ := Relation.TransGen.head'_iff.mp htrans
-      obtain ⟨o, ho, -, oc, hoc, rfl⟩ := hac
-      obtain ⟨k, hk⟩ := operand_kindOf?_isSome hwf ho hoc
+    rcases eq_or_operand_of_mem_ancestorsOf ha with hay | ⟨o, ho, oc, hoc, rfl⟩
+    · obtain rfl := List.mem_singleton.mp hay
+      exact mem_known (output_mem_known hwf hy)
+    · obtain ⟨k, hk⟩ := operand_kindOf?_isSome hwf ho hoc
       rcases source_or_known_of_declared hwf (declared_of_kindOf?_eq_some hk) with hs | hkn
       · exact Or.inl hs
       · exact mem_known hkn
   rcases hcase with hsrc | ⟨o, ho, hres⟩
   · exact Or.inl hsrc
-  · refine Or.inr ⟨o, ho, hres, fun oc hoc => ?_⟩
-    refine mem_ancestorsOf_iff.mpr ⟨b, List.mem_singleton_self _, ?_⟩
-    refine Digraph.reachable_iff_reflTransGen.mpr (Relation.ReflTransGen.head ?_ hrtg)
-    exact ⟨o, ho, hres, oc, hoc, rfl⟩
+  · exact Or.inr ⟨o, ho, hres, fun oc hoc =>
+      operand_mem_ancestorsOf ho (by rw [hres]; exact ha) hoc⟩
 
 /-- **The seal, executable.** Well-formedness implies the decidable check: no output has an
 undeclared leaf. -/

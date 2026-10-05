@@ -139,10 +139,6 @@ noncomputable def errBound : Expr → (ℕ → FP32) → ℝ
         + |evalExact a ρ| * errBound b ρ / (|(evalFP32 b ρ).val| * |evalExact b ρ|)
         + eps32 ((evalFP32 a ρ).val / (evalFP32 b ρ).val)
 
-/-- `|x − y| ≤ |x| + |y|`, the triangle bound used to split a difference of errors. -/
-private theorem abs_sub_bound (x y : ℝ) : |x - y| ≤ |x| + |y| := by
-  rw [sub_eq_add_neg, ← abs_neg y]; exact abs_add_le x (-y)
-
 /-- Half a ulp is nonnegative — immediate from the rounding bound `round32_within_half_ulp`. -/
 private theorem eps_nonneg (x : ℝ) : 0 ≤ eps32 x :=
   le_trans (abs_nonneg _) (round32_within_half_ulp x)
@@ -227,7 +223,7 @@ theorem dag_fp32_error_bound (ρ : ℕ → FP32) :
         ≤ |(evalFP32 a ρ).val - evalExact a ρ| + |(evalFP32 b ρ).val - evalExact b ρ| := by
       have hrw : ((evalFP32 a ρ).val - (evalFP32 b ρ).val) - (evalExact a ρ - evalExact b ρ)
           = ((evalFP32 a ρ).val - evalExact a ρ) - ((evalFP32 b ρ).val - evalExact b ρ) := by ring
-      rw [hrw]; exact abs_sub_bound _ _
+      rw [hrw]; exact abs_sub _ _
     linarith [hop, htri, hsplit, iha', ihb']
   | mul a b iha ihb =>
     intro hreg
@@ -282,7 +278,7 @@ theorem dag_fp32_error_bound (ρ : ℕ → FP32) :
                 / ((evalFP32 b ρ).val * evalExact b ρ)|
           ≤ |((evalFP32 a ρ).val - evalExact a ρ) / (evalFP32 b ρ).val|
             + |evalExact a ρ * ((evalFP32 b ρ).val - evalExact b ρ)
-                / ((evalFP32 b ρ).val * evalExact b ρ)| := abs_sub_bound _ _
+                / ((evalFP32 b ρ).val * evalExact b ρ)| := abs_sub _ _
         _ = |(evalFP32 a ρ).val - evalExact a ρ| / |(evalFP32 b ρ).val|
             + |evalExact a ρ| * |(evalFP32 b ρ).val - evalExact b ρ|
               / (|(evalFP32 b ρ).val| * |evalExact b ρ|) := by
@@ -311,7 +307,7 @@ theorem dag_fp32_box_faithful (e : Expr) (ρ σ : ℕ → FP32)
   have hrw : ((evalFP32 e σ).val - (evalFP32 e ρ).val) - (evalExact e σ - evalExact e ρ)
       = ((evalFP32 e σ).val - evalExact e σ) - ((evalFP32 e ρ).val - evalExact e ρ) := by ring
   rw [hrw]
-  have h := abs_sub_bound ((evalFP32 e σ).val - evalExact e σ) ((evalFP32 e ρ).val - evalExact e ρ)
+  have h := abs_sub ((evalFP32 e σ).val - evalExact e σ) ((evalFP32 e ρ).val - evalExact e ρ)
   linarith [h, hσ', hρ']
 
 /-! ## The flag-free regime — no rounding, hence exact box faithfulness -/

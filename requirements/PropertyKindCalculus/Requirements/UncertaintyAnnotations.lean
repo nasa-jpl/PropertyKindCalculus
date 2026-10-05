@@ -114,7 +114,7 @@ attribute [requirement "R15" proves "the adequacy capstone's exact case in the b
 
 attribute [requirement "R18" specifies "the standard uncertainty u = √variance the coverage interval is measured in"]
   Coverage.stdUnc
-attribute [requirement "R18" proves "Tier 1 (half-width): coverage of the interval of half-width c is ≥ 1 − variance/c² (Chebyshev)"]
+attribute [requirement "R18" proves "Tier 1 (half-width): coverage of the interval of half-width c is ≥ 1 − (u/c)² (Chebyshev)"]
   Coverage.coverageBound
 attribute [requirement "R18" proves "Tier 1 (coverage factor): the k-standard-uncertainty interval has coverage ≥ 1 − 1/k², distribution-free"]
   Coverage.coverageBound_stdUnc

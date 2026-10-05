@@ -12,7 +12,8 @@ two tiers, matching how much the modeller is willing to assume about the distrib
     has coverage probability `≥ 1 − 1/k²`. This uses only the `variance` the descriptor already
     carries (`MomentData.variance = κ₂ = u²`) — no shape assumption. It is honest but
     conservative: `k = 2` gives `≥ 75%`, *not* the Gaussian 95%. `coverageBound` (half-width
-    form) and `coverageBound_stdUnc` (coverage-factor form) are the theorems.
+    form, `≥ 1 − (u/c)²` for half-width `c`) and `coverageBound_stdUnc` (coverage-factor form,
+    `c = k·u`) are the theorems.
 
   * **Tier 2 — exact for a bounded family (uniform).** For a uniform distribution on
     `[m − δ, m + δ]`, the coverage of the centred interval `[m − h, m + h]` is *exactly* `h/δ`
@@ -46,21 +47,22 @@ variable {Ω : Type*} [MeasurableSpace Ω]
 
 /-! ## Tier 1 — the distribution-free Chebyshev coverage bound -/
 
+/-- The **standard uncertainty** `u = √variance` (VIM 2.30): the scale a coverage interval is
+measured in. -/
+noncomputable def stdUnc (X : Ω → ℝ) (μ : Measure Ω) : ℝ := Real.sqrt (variance X μ)
+
 /-- **R18, Tier 1 (half-width form).** For a probability measure, the coverage of the interval of
-half-width `c` about the mean is at least `1 − variance/c²`. This is the complement of Chebyshev's
-inequality. -/
+half-width `c` about the mean is at least `1 − (u/c)²`, with `u` the standard uncertainty. This is
+the complement of Chebyshev's inequality. -/
 theorem coverageBound {μ : Measure Ω} [IsProbabilityMeasure μ] {X : Ω → ℝ}
     (hXm : Measurable X) (hX : MemLp X 2 μ) {c : ℝ} (hc : 0 < c) :
-    1 - ENNReal.ofReal (variance X μ / c ^ 2) ≤ μ {ω | |X ω - μ[X]| < c} := by
+    1 - ENNReal.ofReal ((stdUnc X μ / c) ^ 2) ≤ μ {ω | |X ω - μ[X]| < c} := by
   have hA : MeasurableSet {ω | c ≤ |X ω - μ[X]|} :=
     measurableSet_le measurable_const (Measurable.abs (hXm.sub_const _))
   have hcompl : {ω : Ω | |X ω - μ[X]| < c} = {ω | c ≤ |X ω - μ[X]|}ᶜ := by
     ext ω; simp [not_le]
-  rw [hcompl, prob_compl_eq_one_sub hA]
+  rw [div_pow, stdUnc, Real.sq_sqrt (variance_nonneg X μ), hcompl, prob_compl_eq_one_sub hA]
   exact tsub_le_tsub_left (meas_ge_le_variance_div_sq hX hc) 1
-
-/-- The **standard uncertainty** `u = √variance` (VIM 2.30). -/
-noncomputable def stdUnc (X : Ω → ℝ) (μ : Measure Ω) : ℝ := Real.sqrt (variance X μ)
 
 /-- **R18, Tier 1 (coverage-factor form).** The metrological headline: the interval of `k`
 standard uncertainties about the mean has coverage probability `≥ 1 − 1/k²` (Chebyshev). Honest
@@ -71,12 +73,10 @@ theorem coverageBound_stdUnc {μ : Measure Ω} [IsProbabilityMeasure μ] {X : Ω
     1 - ENNReal.ofReal (1 / k ^ 2) ≤ μ {ω | |X ω - μ[X]| < k * stdUnc X μ} := by
   have hu : 0 < stdUnc X μ := Real.sqrt_pos.mpr hv
   have hc : 0 < k * stdUnc X μ := mul_pos hk hu
-  have hsq : (k * stdUnc X μ) ^ 2 = k ^ 2 * variance X μ := by
-    rw [stdUnc, mul_pow, Real.sq_sqrt hv.le]
-  have hfrac : variance X μ / (k * stdUnc X μ) ^ 2 = 1 / k ^ 2 := by
-    rw [hsq, mul_comm (k ^ 2) (variance X μ), ← div_div, div_self hv.ne']
+  have hfrac : (stdUnc X μ / (k * stdUnc X μ)) ^ 2 = 1 / k ^ 2 := by
+    rw [div_mul_cancel_right₀ hu.ne', inv_pow, one_div]
   calc 1 - ENNReal.ofReal (1 / k ^ 2)
-      = 1 - ENNReal.ofReal (variance X μ / (k * stdUnc X μ) ^ 2) := by rw [hfrac]
+      = 1 - ENNReal.ofReal ((stdUnc X μ / (k * stdUnc X μ)) ^ 2) := by rw [hfrac]
     _ ≤ μ {ω | |X ω - μ[X]| < k * stdUnc X μ} := coverageBound hXm hX hc
 
 /-! ## Tier 2 — exact coverage for the uniform family -/

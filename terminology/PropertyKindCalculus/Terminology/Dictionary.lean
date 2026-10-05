@@ -91,7 +91,9 @@ def dictionary : List Term :=
   , { key := "pedigree",
       gloss := "Everything a node set is derived from, the set included: the backward \
                 closure through the occurrences.",
-      decls := [`PropertyKindCalculus.Provenance.ancestorsOf],
+      decls := [`PropertyKindCalculus.Provenance.ancestorsOf,
+                `PropertyKindCalculus.Provenance.eq_or_operand_of_mem_ancestorsOf,
+                `PropertyKindCalculus.Provenance.operand_mem_ancestorsOf],
       definedIn := "capstones",
       seeAlso := ["influencers", "assumption ledger", "value-flow digraph"] }
   , { key := "influencers",

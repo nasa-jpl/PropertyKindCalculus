@@ -23,7 +23,7 @@ Contents:
     global `Context`-based `NumCarrier` forwarding instance that must not be raced), with two
     `rfl` bridge lemmas `MathCarrier.sqrt = Real.sqrt` / `MathCarrier.abs = |·|` so proofs never
     mention the instance internals;
-  * the `sumSq` sum-of-squares toolkit, in the exact left-fold shape `combinedQ` computes
+  * the sum-of-squares toolkit about `Budget.sumSq`, the radicand `combinedQ` computes
     (fold-from-`init` form, nonnegativity, `++`, and the three scaled-family laws
     `sumSq_map_mul_left`/`sumSq_map_mul_right`/`sumSq_map_div`);
   * `combinedQ_magnitude_real` — `Budget.combinedQ`'s magnitude re-spoken in
@@ -84,13 +84,9 @@ speak Mathlib vocabulary and never the instance internals. -/
 
 /-! ## The sum-of-squares toolkit
 
-`combinedQ` computes its radicand as a left fold `foldl (fun acc x => acc + x·x) 0`; naming that
-shape `sumSq` and proving its algebra once is what lets every case of the capstone reduce to a
-`ring`-closable radicand identity. -/
-
-/-- **Sum of squares** of a list of reals, in the exact left-fold shape `combinedQ`'s quadrature
-computes — so the bridge `combinedQ_magnitude_real` below is one `List.foldl_map` away. -/
-def sumSq (l : List ℝ) : ℝ := l.foldl (fun a x => a + x * x) 0
+`combinedQ` computes its radicand as `Budget.sumSq`, the left fold
+`foldl (fun acc x => acc + x·x) 0` at the carrier; proving that fold's algebra once, at `ℝ`, is
+what lets every case of the capstone reduce to a `ring`-closable radicand identity. -/
 
 /-- The fold engine with the accumulator generalized: folding squares onto any `init` is `init`
 plus folding onto `0`. The single induction every other `sumSq` lemma reuses. -/
@@ -161,15 +157,12 @@ theorem sumSq_map_div {α : Type*} (f : α → ℝ) (c : ℝ) (l : List α) :
 /-! ## The `combinedQ` bridge -/
 
 /-- **The `combinedQ` bridge**: at `ℝ`, the combined-uncertainty magnitude is `Real.sqrt` of
-`sumSq` of the contribution magnitudes — `Budget.combinedQ_magnitude` re-spoken in Mathlib
-vocabulary through the instance bridges. The single point where the carrier fold meets the proof
-toolkit; deliberately *not* `@[simp]`, so the existing `combinedQ_magnitude` normal form is left
-undisturbed (proofs here cite it explicitly). -/
+`sumSq` of the contribution magnitudes — `Budget.combinedQ_magnitude` with the carrier square root
+read as `Real.sqrt` (`mathCarrier_sqrt_real`). Deliberately *not* `@[simp]`, so the existing
+`combinedQ_magnitude` normal form is left undisturbed (proofs here cite it explicitly). -/
 theorem combinedQ_magnitude_real {k : KindOfProperty} (l : List (Quantity k ℝ)) :
     (combinedQ l).magnitude = Real.sqrt (sumSq (l.map Quantity.magnitude)) := by
   rw [combinedQ_magnitude, mathCarrier_sqrt_real]
-  congr 1
-  simp only [sumSq, List.foldl_map]
 
 /-! ## Nonnegative leaf uncertainties -/
 

@@ -85,16 +85,22 @@ def contributionQ {kO kI kS : KindOfProperty} (h : ProductKind kS kI kO)
     (c : Quantity kS R) (u : Quantity kI R) :
     (contributionQ h c u).magnitude = MathCarrier.abs c.magnitude * u.magnitude := rfl
 
+/-- **Sum of squares** `Σ xᵢ²` of a list, as the left fold `foldl (fun acc x => acc + x·x) 0`, at
+any numeric carrier `R`. The single source of the quadrature radicand: `combinedQ` reads it, and
+the `ℝ` algebra of `BudgetDagLaws` (`sumSq_cons`, `sumSq_append`, the scaled families) is proved
+about it, so a theorem about a combined uncertainty reaches the radicand through this one name. -/
+def sumSq (l : List R) : R := l.foldl (fun acc x => acc + x * x) 0
+
 /-- **Combined standard uncertainty** `u_c(y) = √(Σ uᵢ(y)²)` — the quadrature of the (output-kind,
 homogeneous) contributions, so itself a `Quantity kₒ R`. Summing in quadrature *is* the independence
-assumption of GUM (§4.4). Computes on the carrier `R` and re-stamps `kₒ`; run at `R := Adequacy` it
-adequacy-checks its own sum of squares. -/
+assumption of GUM (§4.4). Computes on the carrier `R`, through `sumSq`, and re-stamps `kₒ`; run at
+`R := Adequacy` it adequacy-checks its own sum of squares. -/
 def combinedQ {kO : KindOfProperty} (contribs : List (Quantity kO R)) : Quantity kO R :=
-  ⟨MathCarrier.sqrt (contribs.foldl (fun acc x => acc + x.magnitude * x.magnitude) 0)⟩
+  ⟨MathCarrier.sqrt (sumSq (contribs.map Quantity.magnitude))⟩
 
 @[simp] theorem combinedQ_magnitude {kO : KindOfProperty} (contribs : List (Quantity kO R)) :
-    (combinedQ contribs).magnitude
-      = MathCarrier.sqrt (contribs.foldl (fun acc x => acc + x.magnitude * x.magnitude) 0) := rfl
+    (combinedQ contribs).magnitude = MathCarrier.sqrt (sumSq (contribs.map Quantity.magnitude)) :=
+  rfl
 
 end PropertyKindCalculus.Uncertainty
 

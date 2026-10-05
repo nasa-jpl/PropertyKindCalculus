@@ -222,8 +222,9 @@ Membership in the executable pedigree is reachability in the
 {deftech}[value-flow digraph]{index}[value-flow digraph] — the binary shadow of the
 provenance hypergraph, one vertex per node and one edge per operand-to-result pair of an
 occurrence: `a` is among the ancestors of `b` exactly when a path of such edges leads from
-`a` to `b`. This is the lemma that lets the capstone below be argued over paths while its
-hypotheses are decided over lists.
+`a` to `b`. The same saturation argument yields the pedigree hop by hop — a member is a
+root or an operand of some occurrence, and the pedigree is closed under one backward hop —
+which is how the capstone below is argued while its hypotheses are decided over lists.
 :::
 
 :::proof "cap_lem_pedigree_reachable"
@@ -248,13 +249,14 @@ no other raw datum reaches its outputs.
 :::
 
 :::proof "cap_thm_seal"
-By {uses "cap_lem_pedigree_reachable"}[the reachability reading], a node `a` in the
-pedigree of `y` lies on a path to `y`, so `a` is an operand of some occurrence, and
-`occurrencesTyped` makes it a declared node — a port or an introduction. If `a` is a
-non-produced port or a gated or attested introduction, it is a source. Otherwise `a` is a
-`derived` introduction or a produced port, and `sourcesReach` places it in the conjunctive
-closure `known`, so some occurrence produces `a` with every operand in `known`; each such
-operand is an ancestor of `a`, hence of `y` by transitivity of reachability. The hypothesis
+Read hop by hop (the two closure facts beside {uses "cap_lem_pedigree_reachable"}[the
+reachability reading]), a node `a` in the pedigree of `y` is `y` itself or an operand of
+some occurrence, and `occurrencesTyped` makes it a declared node — a port or an
+introduction. If `a` is a non-produced port or a gated or attested introduction, it is a
+source. Otherwise `a` is a `derived` introduction or a produced port, and `sourcesReach`
+places it in the conjunctive closure `known`, so some occurrence produces `a` with every
+operand in `known`; each such operand is in the pedigree of `y`, which is closed under a
+backward hop. The hypothesis
 on `c` enters only to identify the non-produced ports of `g` with the boundary's declared
 inputs, configuration and parameters, so that the conclusion speaks of the declared
 interface rather than of whatever the harvest happened to port. The case `a = y` and the
