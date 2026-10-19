@@ -9,16 +9,18 @@ defaultTargets = ["PropertyKindCalculusBlueprint", "blueprint-gen"]
 # as a field of THAT table and Lake accepts it in silence.
 allowNonModules = true
 
-# Verso + the Blueprint genre, on the v4.34.0 toolchain — the verso-stack pins move in
-# LOCKSTEP (the verso rev, the VersoBlueprint SHA, and the subverso rev verso's own
-# manifest names): a mixed stack fails at `VersoLiterate.Basic` against this toolchain's
-# core. The partner that decides the pair is `verso-blueprint`: its `v4.34.0` line pins
-# verso `52c8c955` (`v4.34.0-rc2-3-g52c8c955`, toolchain v4.34.0-rc2) and subverso
-# `fda188f7` in its own manifest, and TorchLean upstream renders its docs on that exact
-# trio under toolchain v4.34.0. verso's own `v4.34.0` tag (`cad4b633`) is a different
-# commit that verso-blueprint does not pin, so it is not the verso pin here.
+# Verso + the Blueprint genre, on the v4.35.0 toolchain — the verso-stack pins move in
+# LOCKSTEP (the verso rev, the VersoBlueprint SHA, the verso-slides rev, and the subverso rev
+# verso's own manifest names): a mixed stack fails at `VersoLiterate.Basic` against this
+# toolchain's core. The stack is the one TorchLean upstream renders its own blueprint with
+# under toolchain v4.35.0: `verso-blueprint`'s `v4.35.0` maintenance branch pinned by SHA,
+# verso and verso-slides lifted to their own stable `v4.35.0` tags here at the root, and
+# subverso `892d6dc5` (`verso-v4.35.0`), the revision verso's manifest names. The root pins
+# are what make the stack consistent: `verso-blueprint`'s own manifest still names the
+# `v4.35.0-rc4` revisions of verso (`01a09f32`) and verso-slides (`4118a25c`), and its own
+# `lean-toolchain` is `v4.35.0-rc4`.
 #
-# `verso-blueprint`'s `v4.34.0` is a `refs/heads` BRANCH — a release line that keeps
+# `verso-blueprint`'s `v4.35.0` is a `refs/heads` BRANCH — a release line that keeps
 # moving — so it must be pinned to an exact commit SHA, and naming the ref instead is
 # how this breaks. `lake update` re-resolves a branch to its current tip, which has
 # three costs: (1) `ci-pages.sh` runs `lake update`, so the manifest is rewritten and
@@ -27,30 +29,27 @@ allowNonModules = true
 # bumps `blueprint/lean-toolchain` out from under mathlib and its cache stops resolving
 # (`Dependency Mathlib uses a different lean-toolchain`).
 #
-# `a48eea9e` is the `v4.34.0`-branch commit TorchLean upstream builds with; the branch tip
-# (`19451b00`, PR #460's render-resource refactor) is untested here. Bump it deliberately
-# — check the candidate's own `lean-toolchain` and its verso/subverso pins first, then
-# re-test `lake exe blueprint-gen` — rather than tracking the branch.
+# `5a5bfc7e` is the `v4.35.0`-branch commit TorchLean upstream builds with. Bump it
+# deliberately — check the candidate's own `lean-toolchain` and its verso/subverso pins
+# first, then re-test `lake exe blueprint-gen` — rather than tracking the branch.
 #
-# `soil-moisture-model/technical-reference` pins this identical verso + VersoBlueprint
-# pair; `soil-moisture-workflows/blueprint` and `L4YAML/doc` pin the stack that matches
-# their own toolchain. One toolchain, one Verso stack: a bump here travels with the
-# toolchain bump, deliberately.
-#
-# The margin-note numbering fix (verso PR #977, commit `a20c785b`, in verso's `v4.34.0`
-# tag but not in `52c8c955`) is not in this stack — under it every margin note and its
-# in-text mark renders as "1". The fix is one CSS rule; it is backported as `extraCss` in
-# `PropertyKindCalculusBlueprintMain.lean`. Drop that override when verso-blueprint's
-# verso pin advances past #977.
+# One toolchain, one Verso stack: a bump here travels with the toolchain bump,
+# deliberately. `soil-moisture-model/technical-reference`, `soil-moisture-workflows/blueprint`
+# and `L4YAML/doc` pin the stack that matches their own toolchain.
 [[require]]
 name = "verso"
 git = "https://github.com/leanprover/verso"
-rev = "52c8c9557bcb5cc8c0edc0ee37e74311a3d53ee9"
+rev = "304b8561790c50222551c937ce02928df0d5b445"
 
 [[require]]
 name = "VersoBlueprint"
 git = "https://github.com/leanprover/verso-blueprint"
-rev = "a48eea9ecb17d1551fef67d7de90571608663a11"
+rev = "5a5bfc7e17ddba0cbce176d0fe3bfe6a257b16ec"
+
+[[require]]
+name = "verso-slides"
+git = "https://github.com/leanprover/verso-slides"
+rev = "b43d452d8023773b0731899b51bc6d373c17b111"
 
 # The library being documented. Linking `(lean := "PropertyKindCalculus.…")` nodes to
 # real declarations (and reading their proved/`sorry` status) requires the

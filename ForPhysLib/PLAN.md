@@ -999,8 +999,9 @@ through the operator table at the complex carrier, the refused `P + Q` beside th
 licensed quadrature, and the dB link budget rooted at the catalogue's 6-45. Maxwell's equations themselves are delivered:
 `Maxwell.lean` kindes the four laws (four new lookups, three derivative mints, seven
 edges; still no join — `ε₀∂ₜE` lands at the catalogue's own 6-8) and found that
-upstream's four laws are *module-private* (the one file in the subtree missing
-`@[expose] public section`) — a one-line patch candidate. The `Distributional/` twin's duplication finding is delivered:
+upstream's four laws were *module-private* (the one file in the subtree missing
+`@[expose] public section`) — a one-line patch candidate, since landed upstream (physlib
+`c230f81a`, #1706): `Maxwell.lean` consumes the exported laws directly. The `Distributional/` twin's duplication finding is delivered:
 `DistributionalTwin.lean` pins the re-authored law by `rfl`, prices the twin's kind cost
 at zero, and pins the missing smooth → distributional embedding as the statement a
 deduplication theorem still needs.

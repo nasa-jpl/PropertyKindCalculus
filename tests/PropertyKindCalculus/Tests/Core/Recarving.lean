@@ -120,7 +120,10 @@ theorem r27_distribution_license :
 /-- info: 'PropertyKindCalculus.coalesce_count_ne' does not depend on any axioms -/
 #guard_msgs in #print axioms coalesce_count_ne
 
-/-- info: 'PropertyKindCalculus.count_sortal_ne' does not depend on any axioms -/
+-- `decide` evaluates `==` on `Int`, and since Lean v4.35.0 core's `BEq Int` is
+-- `Std.PreorderPackage.toBEq` through `Int.instLinearOrderPackage`, which rests on these three
+-- axioms; `decide` on `Int` equality itself (`Int.decEq`) still rests on none.
+/-- info: 'PropertyKindCalculus.count_sortal_ne' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in #print axioms count_sortal_ne
 
 end PropertyKindCalculus.Tests.Recarving

@@ -70,7 +70,7 @@ package «PropertyKindCalculus» where
   -- The package version — the single source of truth. `scripts/bump-version.sh`
   -- reads and bumps it here, and the blueprint reads this same line at build time
   -- (its `{version}[]` role) so the published document never drifts from the source.
-  version := v!"0.113.0"
+  version := v!"0.114.0"
   leanOptions := #[
     ⟨`autoImplicit, false⟩,
     ⟨`relaxedAutoImplicit, false⟩]
@@ -102,7 +102,7 @@ package «PropertyKindCalculus» where
 -- unreachable from every remote ref and breaks any *fresh* clone (`fatal: reference is
 -- not a tree`) even while a stale local tracking ref still resolves it. A dependency's
 -- `lean-toolchain` is informational (the ROOT toolchain builds the closure). Upstream
--- `master` carries the same Mathlib `v4.34.0` pin this package's toolchain expects, so
+-- `master` carries the same Mathlib `v4.35.0` pin this package's toolchain expects, so
 -- `lake exe cache get` computes matching hashes off the transitive resolution.
 require «Physlib» from git
   "https://github.com/leanprover-community/physlib.git" @
@@ -111,13 +111,14 @@ require «Physlib» from git
 -- TorchLean (this work's fork, `combined` branch) backs *only* the `Torch` library
 -- below: the concrete IEEE-754 binary32 carriers (`FP32` rounding spec,
 -- `IEEE32Exec` executable) that instantiate the R10 exec/spec refinement bridge.
--- `combined` is upstream `lean-dojo/TorchLean` `main` on its LibTorch backend (Lean
--- `v4.34.0` / Mathlib `v4.34.0`; the GPU path is LibTorch's ATen, there are no custom
--- kernels) plus the fork's open upstream PRs (unboxed per-block NPY decoding, the
--- `TapeM` run lemmas, piecewise-linear table lookup, per-index device identity); this
--- package pins the same toolchain. TorchLean brings `FloatLib` transitively, which is
--- where the executable binary32 word (`ExecFloat.Binary 8 23`) and the Flocq rounding
--- theory live. Required after PhysLib so its `doc-gen4 v4.34.0` wins. The core
+-- `combined` is upstream `lean-dojo/TorchLean` `main` (Lean `v4.35.0` / Mathlib `v4.35.0`;
+-- the GPU path is LibTorch's ATen, and NVRTC compiles the generated custom operations at run
+-- time) with the fork's open upstream PRs merged on top: unboxed per-block NPY decoding,
+-- piecewise-linear table lookup, the bridge on the host for a CPU-only LibTorch SDK, and
+-- per-index device identity; this package pins the same toolchain. TorchLean brings
+-- `FloatLib` transitively, which is where the executable binary32 word
+-- (`ExecFloat.Binary 8 23`) and the Flocq rounding theory live. Required after PhysLib so
+-- its `doc-gen4 v4.35.0` wins. The core
 -- spine never imports it, so `import PropertyKindCalculus` stays Mathlib-free.
 require «TorchLean» from git
   "https://github.com/NicolasRouquette/TorchLean.git" @
@@ -129,13 +130,13 @@ require «TorchLean» from git
 -- `IsWeakBisimulation` and `saturate` the capstone chapter's kind-transporting weak
 -- bisimulation is stated with, so the relation between the provenance hypergraph and the
 -- computational tape graph is a bisimulation in the textbook sense (Sangiorgi 2011), not
--- a local re-definition. Pinned to the commit whose manifest requires Mathlib `v4.34.0`
--- (the same revision PhysLib and TorchLean resolve to) under the `v4.34.0` toolchain;
--- the next commit moves to the `v4.35.0` release candidates. The core spine never
+-- a local re-definition. Pinned to cslib's `v4.35.0` tag (`5b56df99`), whose manifest
+-- requires Mathlib `v4.35.0` (the same revision PhysLib and TorchLean resolve to); cslib's
+-- `main` has already moved to the `v4.36.0` release candidates. The core spine never
 -- imports it.
 require «cslib» from git
   "https://github.com/leanprover/cslib.git" @
-  "990e65a685bed413f43b139db900a36ad5322a10"
+  "5b56df99362532c46e1175381fbbdd755bd56030"
 
 -- SubVerso backs *only* the blueprint's tutorial chapters: they quote regions of the
 -- `Examples` library's tutorial exhibits (`-- ANCHOR: name` … `-- ANCHOR_END: name`) live
@@ -143,16 +144,16 @@ require «cslib» from git
 -- chapter that explains it cannot drift. Requiring it here registers the
 -- `+<module>:highlighted` Lake facet those anchors invoke; no module here imports it.
 -- Pinned to the exact rev the blueprint's verso stack resolves (its `lake-manifest.json`:
--- verso `52c8c955`, VersoBlueprint `a48eea9e`) so both sides agree on the highlighting JSON;
+-- verso `304b8561`, VersoBlueprint `5a5bfc7e`) so both sides agree on the highlighting JSON;
 -- the two pins move together, as `soil-moisture-model` and `CHDTorch` do for the same facet.
 require subverso from git
   "https://github.com/leanprover/subverso" @
-  "fda188f7329fa18ce4b2e8cc96c9b0a8f0c78c46"
+  "892d6dc520270b5fb8c1291dd1b131e8c16255ed"
 
 -- NOTE (2026-08-24): there is deliberately **no mathlib require here**, for the same
 -- reason there is no doc-gen4 one (below). Mathlib arrives transitively, and the two
 -- packages that bring it agree: PhysLib `master` and TorchLean `combined` each require
--- `v4.34.0`, so resolution is unambiguous and a root pin would only restate it. The core
+-- `v4.35.0`, so resolution is unambiguous and a root pin would only restate it. The core
 -- spine never imports Mathlib, so a plain `import PropertyKindCalculus` stays
 -- Mathlib-free either way.
 --
@@ -163,7 +164,7 @@ require subverso from git
 -- belongs last.
 
 -- NOTE (2026-08-04): there is deliberately **no doc-gen4 require here**. doc-gen4 is pulled
--- transitively (PhysLib and TorchLean each require it; TorchLean's stock `leanprover/doc-gen4` `v4.34.0`
+-- transitively (PhysLib and TorchLean each require it; TorchLean's stock `leanprover/doc-gen4` `v4.35.0`
 -- pin wins, being required later — see the ordering discipline above), so it stays in the closure
 -- regardless — but this package does not *override* it.
 -- As of the pivot in `RENDERING.md` §6 v2 (after doc-gen4 PR #403 was closed on maintainer feedback),

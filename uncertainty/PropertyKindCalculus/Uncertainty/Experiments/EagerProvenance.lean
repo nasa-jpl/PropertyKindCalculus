@@ -397,14 +397,14 @@ theorem div_vjp_add_eq {Γ' : List Shape} {s : Shape} (a b : Idx Γ' s) (w : Tor
    that `tensorToVec` intertwines `scaleSpec` with the scalar action `c • ·`.
    ------------------------------------------------------------------------------------------- -/
 
-/-- Pointwise: `mapSpec f` acts coordinatewise under vectorization (unary analog of
+/-- Pointwise: `Tensor.map f` acts coordinatewise under vectorization (unary analog of
     `tensorToVec_map2Spec_apply`; TorchLean's `PrimitiveSpecs.tensorToVec_mapSpec_apply`). -/
 theorem tensorToVec_mapSpec_apply {f : ℝ → ℝ} {s : Shape} (t : Tensor ℝ s)
     (i : Fin (Spec.Shape.size s)) :
-    tensorToVec (t := mapSpec f t) i = f (tensorToVec (t := t) i) :=
+    tensorToVec (t := Tensor.map f t) i = f (tensorToVec (t := t) i) :=
   Proofs.Autograd.PrimitiveSpecs.tensorToVec_mapSpec_apply f t i
 
-/-- Vectorization intertwines `scaleSpec` (a `mapSpec (· * c)`) with the scalar action `c • ·`. -/
+/-- Vectorization intertwines `scaleSpec` (a `Tensor.map (· * c)`) with the scalar action `c • ·`. -/
 theorem tensorToVec_scaleSpec {s : Shape} (t : Tensor ℝ s) (c : ℝ) :
     tensorToVec (t := scaleSpec t c) = c • tensorToVec (t := t) := by
   ext i

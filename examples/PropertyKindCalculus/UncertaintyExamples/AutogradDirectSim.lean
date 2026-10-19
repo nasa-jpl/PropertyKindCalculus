@@ -241,7 +241,7 @@ example (x : TorchLean.TensorPack ℝ Γ2) (t' : PRSim.RTape) (id : Nat)
 
 `exp` is a genuine activation instance of the abstracted unary crank: the P-node is
 `TapeNodes.elemwise Real.exp Real.exp`, the runtime is `Tape.exp` (defeq to the shared
-`Tape.unary` shape with `fwdSpec = bwdSpec = expSpec = mapSpec Real.exp`), and the two per-op
+`Tape.unary` shape with `fwdSpec = bwdSpec = expSpec = Tensor.map Real.exp`), and the two per-op
 bridges are the *single* pointwise fact `tensorToVec_mapSpec_apply`. No new §E/§F reasoning: the whole
 `{exp, log, tanh, sigmoid, sinh, cosh, softplus, …}` family reuses `EagerBuilds.unary`. -/
 
@@ -420,7 +420,7 @@ attribute [local irreducible] Activation.Math.sigmoidSpec Activation.Math.sigmoi
 A second activation instance of the abstracted unary crank, with *nothing* new: the P-node is
 `TapeNodes.elemwise Activation.Math.sigmoidSpec Activation.Math.sigmoidDerivSpec`, the runtime is
 `Tape.sigmoid` (defeq to the shared `Tape.unary` shape with `fwdSpec = Activation.sigmoidSpec` and
-`bwdSpec = Activation.sigmoidDerivSpec`, each `mapSpec` of the *same* scalar spec), and the two
+`bwdSpec = Activation.sigmoidDerivSpec`, each `Tensor.map` of the *same* scalar spec), and the two
 per-op bridges are again the single pointwise fact `tensorToVec_mapSpec_apply`. No new §E/§F
 reasoning: this is the promised `{exp, log, tanh, sigmoid, …}` reuse of `EagerBuilds.unary`,
 cranked once more. -/
@@ -444,7 +444,7 @@ set_option maxHeartbeats 6400000 in
 /-- `EagerBuilds` witnesses the runtime `sigmoid` tape via the generic `unary` constructor —
     `sigmoid = elemwise Activation.Math.sigmoidSpec Activation.Math.sigmoidDerivSpec`,
     `fwdSpec = Activation.sigmoidSpec`, `bwdSpec = Activation.sigmoidDerivSpec` (each is
-    `mapSpec` of the corresponding scalar spec), both bridges from `tensorToVec_mapSpec_apply`.
+    `Tensor.map` of the corresponding scalar spec), both bridges from `tensorToVec_mapSpec_apply`.
 
     The runtime op is written here in the shared `Tape.unary "sigmoid" … Activation.sigmoidSpec …`
     shape it reduces to; `Runtime.Autograd.Tape.sigmoid t 0` is *definitionally* this call (its
@@ -499,8 +499,8 @@ attribute [local irreducible] Activation.Math.tanhSpec Activation.Math.tanhDeriv
 `tanh` is the second activation instance of the abstracted unary crank, with zero new op
 reasoning: the P-node is `TapeNodes.elemwise Activation.Math.tanhSpec Activation.Math.tanhDerivSpec`
 (exactly what `TapeNodes.tanh` unfolds to), the runtime `Tape.tanh` is defeq to the shared
-`Tape.unary "tanh" … Activation.tanhSpec …` shape (forward `tanhSpec = mapSpec Math.tanhSpec`,
-backward `mulSpec (tanhDerivSpec x) dLdy` with `tanhDerivSpec = mapSpec Math.tanhDerivSpec`), and
+`Tape.unary "tanh" … Activation.tanhSpec …` shape (forward `tanhSpec = Tensor.map Math.tanhSpec`,
+backward `mulSpec (tanhDerivSpec x) dLdy` with `tanhDerivSpec = Tensor.map Math.tanhDerivSpec`), and
 both per-op bridges are again the *single* pointwise fact `tensorToVec_mapSpec_apply` — this time with
 no instance unfolding at all, since the node's scalar functions *are* the `Math` specs. -/
 
@@ -520,7 +520,7 @@ def tanhCorrect : GraphFDerivCorrect tanhGraph :=
 set_option maxHeartbeats 6400000 in
 /-- `EagerBuilds` witnesses the runtime `tanh` tape via the generic `unary` constructor —
     `tanh = elemwise Math.tanhSpec Math.tanhDerivSpec`, `fwdSpec = Activation.tanhSpec =
-    mapSpec Math.tanhSpec`, `bwdSpec = Activation.tanhDerivSpec = mapSpec Math.tanhDerivSpec`,
+    Tensor.map Math.tanhSpec`, `bwdSpec = Activation.tanhDerivSpec = Tensor.map Math.tanhDerivSpec`,
     both bridges from `tensorToVec_mapSpec_apply` (on `ℝ`, `MathFunctions.tanh = Real.tanh`).
 
     The runtime op is written here in the shared `Tape.unary "tanh" … Activation.tanhSpec …`
@@ -573,7 +573,7 @@ The P-node is `TapeNodes.elemwise ix0 Activation.Math.softplusSpec
 Activation.Math.softplusDerivSpec` (scalar softplus and its derivative, sigmoid); the runtime is
 `Tape.softplus` — definitionally the shared `Tape.unary "softplus" …` shape with
 `fwdSpec = Activation.softplusSpec` and backward contribution
-`mulSpec (Activation.softplusDerivSpec x) dLdy`.  Both runtime specs are literally `mapSpec` of
+`mulSpec (Activation.softplusDerivSpec x) dLdy`.  Both runtime specs are literally `Tensor.map` of
 the *same* scalar maps the P-node carries, so — with `exp` as the baseline — the two bridges need
 no instance-rfl step at all: both are `tensorToVec_mapSpec_apply` verbatim.  The upstream derivative
 witness `Proofs.softplus_deriv_correct` is *global* (`∀ x, HasDerivAt`), so the *universal*
@@ -597,7 +597,7 @@ def softplusCorrect : GraphFDerivCorrect softplusGraph :=
 set_option maxHeartbeats 6400000 in
 /-- `EagerBuilds` witnesses the runtime `softplus` tape via the generic `unary` constructor —
     `softplus = elemwise Activation.Math.softplusSpec Activation.Math.softplusDerivSpec`,
-    `fwdSpec = Activation.softplusSpec`, `bwdSpec = Activation.softplusDerivSpec` (each `mapSpec`
+    `fwdSpec = Activation.softplusSpec`, `bwdSpec = Activation.softplusDerivSpec` (each `Tensor.map`
     of the corresponding scalar map), both bridges from `tensorToVec_mapSpec_apply`.
 
     The runtime op is written here in the shared
@@ -660,8 +660,8 @@ attribute [local irreducible] Activation.Math.reluSpec Activation.Math.reluDeriv
 Same `EagerBuilds.unary` crank as `exp`, but the scalar derivative only exists away from the kink:
 the P-witness is the *pointwise* `TapeNodes.reluFderivAt` (inputs `≠ 0`), so the endpoint is the
 pointwise `direct_PR_soundness_eager_at` (`GraphFDerivCorrectAt` at the actual input) with the
-domain hypothesis threaded through the example binders. Both tensor specs are `mapSpec` of the
-*same* scalar specs the P-node carries (`Activation.reluSpec = mapSpec Activation.Math.reluSpec`,
+domain hypothesis threaded through the example binders. Both tensor specs are `Tensor.map` of the
+*same* scalar specs the P-node carries (`Activation.reluSpec = Tensor.map Activation.Math.reluSpec`,
 likewise the derivative), so both bridges are again `tensorToVec_mapSpec_apply` — no per-op scalar
 bridging at all. -/
 
@@ -686,7 +686,7 @@ def reluCorrectAt (x : TorchLean.TensorPack ℝ Γ2)
 set_option maxHeartbeats 6400000 in
 /-- `EagerBuilds` witnesses the runtime `relu` tape via the generic `unary` constructor —
     `relu = elemwise Activation.Math.reluSpec Activation.Math.reluDerivSpec`,
-    `fwdSpec = Activation.reluSpec`, `bwdSpec = Activation.reluDerivSpec` (each the `mapSpec` of
+    `fwdSpec = Activation.reluSpec`, `bwdSpec = Activation.reluDerivSpec` (each the `Tensor.map` of
     the matching scalar spec), both bridges from `tensorToVec_mapSpec_apply`.
 
     The runtime op is written here in the shared `Tape.unary "relu" … Activation.reluSpec …` shape
@@ -734,7 +734,7 @@ info: 'PropertyKindCalculus.UncertaintyExamples.AutogradDirectSim.eagerBuilds_re
 end
 
 /-- Pointwise: `invSpec` acts coordinatewise as `(·)⁻¹` under vectorization.  `invSpec` is
-    `mapSpec (fun x => 1 / x)` (`Spec/Core/TensorOps.lean:216`), *not* literally `mapSpec (·⁻¹)`,
+    `Tensor.map (fun x => 1 / x)` (`Spec/Core/TensorOps.lean:388`), *not* literally `Tensor.map (·⁻¹)`,
     so the `log` backward bridge is `tensorToVec_mapSpec_apply` composed with `one_div`. -/
 theorem tensorToVec_invSpec_apply {s : Shape} (u : Tensor ℝ s) (i : Fin (Spec.Shape.size s)) :
     tensorToVec (t := invSpec u) i = (tensorToVec (t := u) i)⁻¹ :=
@@ -747,8 +747,8 @@ theorem tensorToVec_invSpec_apply {s : Shape} (u : Tensor ℝ s) (i : Fin (Spec.
 inputs, so the witness is `GraphFDerivCorrectAt` (assembled from `elemwiseFderivAt` +
 `Real.hasDerivAt_log`, exactly the assembly inside `TapeNodes.logFderivAt`) and the endpoint is
 the pointwise `direct_PR_soundness_eager_at`, with the nonzero-input hypothesis threaded through
-the binders.  Bridges: `logSpec = mapSpec MathFunctions.log` with `MathFunctions.log = Real.log`
-on `ℝ` (instance-`rfl`, like `exp`), while `invSpec = mapSpec (1 / ·)`, so its bridge is
+the binders.  Bridges: `logSpec = Tensor.map MathFunctions.log` with `MathFunctions.log = Real.log`
+on `ℝ` (instance-`rfl`, like `exp`), while `invSpec = Tensor.map (1 / ·)`, so its bridge is
 `tensorToVec_invSpec_apply` (= `tensorToVec_mapSpec_apply` composed with `one_div`). -/
 
 /-- The one-node logarithm graph `log(x₀)`.  `TapeNodes.log ix0` unfolds to exactly
@@ -773,7 +773,7 @@ set_option maxHeartbeats 6400000 in
 /-- `EagerBuilds` witnesses the runtime `log` tape via the generic `unary` constructor —
     `log = elemwise Real.log (fun z => z⁻¹)`, `fwdSpec = logSpec`, `bwdSpec = invSpec`, forward
     bridge from `tensorToVec_mapSpec_apply` (since `MathFunctions.log = Real.log` on `ℝ`), backward
-    bridge from `tensorToVec_invSpec_apply` (`invSpec = mapSpec (1 / ·)` and `1 / z = z⁻¹`).
+    bridge from `tensorToVec_invSpec_apply` (`invSpec = Tensor.map (1 / ·)` and `1 / z = z⁻¹`).
 
     Unlike `exp` (where `Tape.exp t 0` is *definitionally* the `Tape.unary` call), the runtime
     `Runtime.Autograd.Tape.log` first guards: it throws unless every input is `> 0`
@@ -846,7 +846,7 @@ theorem tensorToVec_signSpec_apply {s : Shape} (u : Tensor ℝ s) (i : Fin (Spec
 derivative only away from `0` — so the correctness witness is the *pointwise*
 `GraphFDerivCorrectAt` (upstream `TapeNodes.absFderivAt` under the input-nonzero hypothesis at
 the concrete input) and the endpoint transfers through `direct_PR_soundness_eager_at`. The
-forward bridge is the same `tensorToVec_mapSpec_apply` (`absSpec = mapSpec MathFunctions.abs` and
+forward bridge is the same `tensorToVec_mapSpec_apply` (`absSpec = Tensor.map MathFunctions.abs` and
 `MathFunctions.abs = |·|` on `ℝ`); the backward bridge is the one genuine per-op fact
 `tensorToVec_signSpec_apply`, because the runtime `signSpec` (a `>`/`<` `ite`) and the P-side
 `SignType.sign` coercion differ syntactically — they agree by trichotomy at `0`. -/
@@ -925,7 +925,7 @@ scalar pair `(Real.sqrt, fun v => 1 / (2 * Real.sqrt v))`:
 * the runtime *forward* `sqrtSpec` is the **clamped** `MathFunctions.sqrt (max v 0)`
   (`NN/Spec/Core/TensorOps.lean`) — invisible over `ℝ`, where `Real.sqrt` already totalizes
   negatives to `0`, so `√(max v 0) = √v` at every real;
-* the runtime *backward* is the `mapSpec`-with-`if` lambda of `Tape.sqrt`
+* the runtime *backward* is the `Tensor.map`-with-`if` lambda of `Tape.sqrt`
   (`NN/Runtime/Autograd/Engine/Core/Elementwise.lean`), which agrees with the totalized
   `1 / (2 * Real.sqrt v)` at *every* real: on `v > 0` directly (`((2 : Nat) : ℝ) = 2`), and on
   `v ≤ 0` both sides are `0` (`√v = 0` there, and `1 / 0 = 0` in `ℝ`). -/
@@ -940,7 +940,7 @@ theorem sqrt_clamp_scalar_eq (v : ℝ) :
   · rw [max_eq_right hv, Real.sqrt_zero, Real.sqrt_eq_zero'.mpr hv]
 
 /-- The runtime `sqrt` backward's totalized scalar (the `if v > 0` branch of `Tape.sqrt`'s
-    `mapSpec`) is the totalized `1 / (2 * Real.sqrt v)` at *every* real: `v > 0` directly, and
+    `Tensor.map`) is the totalized `1 / (2 * Real.sqrt v)` at *every* real: `v > 0` directly, and
     `v ≤ 0` gives `Real.sqrt v = 0`, so `1 / (2 * 0) = 1 / 0 = 0` matches the else-branch. -/
 theorem sqrt_bwd_scalar_eq (v : ℝ) :
     (if v > 0 then (1 : ℝ) / (((2 : Nat) : ℝ) * MathFunctions.sqrt v) else (0 : ℝ))
@@ -965,15 +965,15 @@ so the graph witness is `GraphFDerivCorrectAt` (upstream per-node `sqrtFderivAt`
 strict-positivity hypothesis on the node's inputs, weakened to the `≠ 0` the witness wants)
 and the endpoint transfers through `direct_PR_soundness_eager_at`.  The eager witness itself
 needs no differentiability: `EagerBuilds.unary` covers the runtime op with forward `sqrtSpec`
-(the *clamped* `√(max v 0)`, invisible over `ℝ`) and backward the literal `mapSpec`-with-`if`
+(the *clamped* `√(max v 0)`, invisible over `ℝ`) and backward the literal `Tensor.map`-with-`if`
 lambda (the totalized `1 / (2·√v)`), both bridged pointwise by `tensorToVec_mapSpec_apply`
 composed with the scalar facts `sqrt_clamp_scalar_eq` / `sqrt_bwd_scalar_eq`. -/
 
-/-- The runtime `sqrt` backward tensor spec — the literal `mapSpec`-with-`if` lambda that
+/-- The runtime `sqrt` backward tensor spec — the literal `Tensor.map`-with-`if` lambda that
     `Runtime.Autograd.Tape.sqrt` pushes (`Engine/Core/Elementwise.lean`): `1 / (2·√v)` on
     `v > 0`, totalized to `0` elsewhere. -/
 def sqrtBwdSpec {s : Shape} : Tensor ℝ s → Tensor ℝ s :=
-  mapSpec (fun v =>
+  Tensor.map (fun v =>
     if v > 0 then (1 : ℝ) / (((2 : Nat) : ℝ) * MathFunctions.sqrt v) else (0 : ℝ))
 
 /-- The one-node square-root graph `√x₀`.  `TapeNodes.sqrt ix0` unfolds to exactly
@@ -995,7 +995,7 @@ def sqrtCorrectAt (x : TorchLean.TensorPack ℝ Γ2)
 set_option maxHeartbeats 6400000 in
 /-- `EagerBuilds` witnesses the runtime `sqrt` tape via the generic `unary` constructor —
     `sqrt = elemwise Real.sqrt (fun v => 1 / (2 * Real.sqrt v))`, `fwdSpec = sqrtSpec`,
-    `bwdSpec = sqrtBwdSpec` (the literal `mapSpec`-with-`if` backward of `Tape.sqrt`), both
+    `bwdSpec = sqrtBwdSpec` (the literal `Tensor.map`-with-`if` backward of `Tape.sqrt`), both
     bridges from `tensorToVec_mapSpec_apply` composed with the scalar facts above.
 
     The runtime op is written here in the shared `Tape.unary "sqrt" … sqrtSpec …` shape it

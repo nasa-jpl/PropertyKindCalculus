@@ -72,7 +72,7 @@ lemma angularMomentum_groundState :
     𝐋 i j (Q.eigenfunction 0)
       = ((I * (ℏ : ℝ)) / ((Q.ξ j : ℝ) : ℂ) ^ 2
           - (I * (ℏ : ℝ)) / ((Q.ξ i : ℝ) : ℂ) ^ 2) • 𝐱 i (𝐱 j (Q.eigenfunction 0)) := by
-  rw [angularMomentumOperator_apply_fun, momentumCLM_groundState,
+  rw [angularMomentumCLM_apply_fun, momentumCLM_groundState,
     momentumCLM_groundState, _root_.map_smul, _root_.map_smul,
     positionCLM_comm j i, sub_smul]
 
@@ -92,7 +92,7 @@ def circularState : 𝓢(Space d, ℂ) :=
 /-- **`L_z ψ₊ = (+1)·ℏ ψ₊`** for an isotropic pair `i ≠ j`. -/
 theorem angularMomentum_circularState (hξ : Q.ξ i = Q.ξ j) (hij : i ≠ j) :
     𝐋 i j (circularState Q i j) = ((ℏ : ℝ) : ℂ) • circularState Q i j := by
-  rw [angularMomentumOperator_apply_fun]
+  rw [angularMomentumCLM_apply_fun]
   simp only [circularState, _root_.map_add, _root_.map_smul]
   rw [momentumCLM_position_groundState Q i j, momentumCLM_position_groundState Q j j,
     momentumCLM_position_groundState Q i i, momentumCLM_position_groundState Q j i, hξ]
@@ -110,7 +110,7 @@ def circularStateNeg : 𝓢(Space d, ℂ) :=
 /-- **`L_z ψ₋ = (-1)·ℏ ψ₋`** for an isotropic pair `i ≠ j`. -/
 theorem angularMomentum_circularStateNeg (hξ : Q.ξ i = Q.ξ j) (hij : i ≠ j) :
     𝐋 i j (circularStateNeg Q i j) = (-(ℏ : ℝ) : ℂ) • circularStateNeg Q i j := by
-  rw [angularMomentumOperator_apply_fun]
+  rw [angularMomentumCLM_apply_fun]
   simp only [circularStateNeg, _root_.map_sub, _root_.map_smul]
   rw [momentumCLM_position_groundState Q i j, momentumCLM_position_groundState Q j j,
     momentumCLM_position_groundState Q i i, momentumCLM_position_groundState Q j i, hξ]

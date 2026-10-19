@@ -37,7 +37,7 @@ attached.
 ## Prerequisites
 
 * **Lean** — via [elan](https://github.com/leanprover/elan); the pinned toolchain
-  (`lean-toolchain`, currently `v4.33.0`) is fetched automatically by Lake.
+  (`lean-toolchain`, currently `v4.35.0`) is fetched automatically by Lake.
 * **[pixi](https://pixi.prefix.dev/latest/#installation)** — required to run the
   blueprint's **Python** steps: the WeasyPrint **PDF render** and the small
   `file-links.py` post-pass. The scripts and CI invoke Python through `pixi run`,

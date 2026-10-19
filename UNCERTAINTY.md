@@ -1255,7 +1255,7 @@ The four residuals — all "one more crank of the same machine," none a new work
        axiom-pinned to the classical trio. Genuine per-op facts were only the pointwise scalar
        bridges the drafts predicted: `signSpec` vs the `SignType.sign` coercion (trichotomy),
        `sqrtSpec`'s clamp (`√(max v 0) = √v` over `ℝ`) and its `if`-guarded backward vs the
-       totalized `1/(2·√v)`, and `invSpec = mapSpec (1/·)` vs `(·)⁻¹` (`one_div`). Elaboration
+       totalized `1/(2·√v)`, and `invSpec = Tensor.map (1/·)` vs `(·)⁻¹` (`one_div`). Elaboration
        gotcha worth keeping: the `sigmoid`/`tanh` instance unifications **diverge** (>25M
        heartbeats) unless the scalar specs are made `attribute [local irreducible]` for the block —
        the unifier otherwise substitutes their bodies through the elemwise node machinery; the
@@ -1341,7 +1341,7 @@ The four residuals — all "one more crank of the same machine," none a new work
   VJP. Models using trig can be *evaluated* (Float/CudaT have the transcendentals as values) but not
   *differentiated* on the tape until `_fwd/_bwd` nodes are added. Decision: accept the exp/log/sqrt
   model class for Stages 1–2, or fund the trig VJP nodes early.
-* **Toolchain / build coupling.** PKC is pinned `v4.34.0` (Mathlib v4.34.0, TorchLean `combined`).
+* **Toolchain / build coupling.** PKC is pinned `v4.35.0` (Mathlib v4.35.0, TorchLean `combined`).
   Stage 0 avoids the issue entirely (Mathlib/TorchLean-free). Stage 1+ pull in much more of
   TorchLean (autograd + interval + FFT), enlarging build surface and tightening the PKC↔TorchLean
   coupling (cf. the FGM↔DVB single-toolchain constraint). TorchLean's autograd functional API is

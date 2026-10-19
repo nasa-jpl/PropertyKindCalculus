@@ -24,14 +24,11 @@ magnetic constant 6-26.1), three derivative-reading mints, and seven law-only ed
   in the catalogue's own dimension group — upstream's *definition* of `FreeSpace.c`
   is the only dimensionally coherent choice.
 
-And one finding the reading did not go looking for: **Maxwell's four laws are
-module-private upstream.** `ThreeDimension/MaxwellEquations.lean` is the one file in
-its subtree with no `@[expose] public section`, so `gaussLawElectric`, `ampereLaw`,
-`faradayLaw` and `gaussLawMagnetic` cannot be named by any downstream consumer — the
-`#check_failure` below is that absence as a build artifact. The kinded laws are
-therefore *re-proved* here with upstream's own one-liners against the exported API
-(`isExtrema_iff_gauss_ampere_magneticFieldMatrix`, `magneticField_eq_3D`, …); the
-patch candidate is a single line.
+And the laws themselves are consumed, not re-proved: `ThreeDimension/MaxwellEquations.lean`
+exports `gaussLawElectric`, `gaussLawMagnetic`, `ampereLaw` and `faradayLaw` under its
+`@[expose] public section`, so each kinded law below is the upstream theorem read at the
+kinded fields — the only proof work is the `.magnitude` erasure of `Kinded`'s built `E`
+and `B`, after which `exact` closes the goal with upstream's statement.
 -/
 
 module
@@ -172,13 +169,10 @@ def magneticFieldQ :
     Quantity magneticFluxDensityK (Time → Space → EuclideanSpace ℝ (Fin 3)) :=
   Kinded.magneticFieldFromPotentialQ (speedQ 𝓕.c) (potentialQ V)
 
-/-! ## The four laws — re-proved, since upstream's are module-private -/
+/-! ## The four laws — upstream's, read at the kinded fields -/
 
--- The upstream theorems exist but are not exported — the missing `public section`.
-#check_failure Electromagnetism.ThreeDimension.gaussLawElectric
-
-/-- **Gauss, electric, kinded**: both sides at the electric-field derivative. The
-proof is upstream's own, re-run because `gaussLawElectric` is module-private. -/
+/-- **Gauss, electric, kinded**: both sides at the electric-field derivative; upstream's
+`gaussLawElectric` at the erased `E`. -/
 theorem gaussElectric_kinded (h : IsExtrema 𝓕 V J₄) (hV : ContDiff ℝ ∞ V)
     (hJ : ContDiff ℝ ∞ J₄) (t : Time) (x : Space) :
     (divergenceEQ (electricFieldQ 𝓕 V)).magnitude t x
@@ -187,16 +181,18 @@ theorem gaussElectric_kinded (h : IsExtrema 𝓕 V J₄) (hV : ContDiff ℝ ∞ 
   show (∇ ⬝ ((electricFieldQ 𝓕 V).magnitude t)) x
       = J₄.chargeDensity 𝓕.c t x / 𝓕.ε₀
   rw [electricFieldQ, Kinded.electricFieldFromPotentialsQ_magnitude]
-  exact ((isExtrema_iff_gauss_ampere_magneticFieldMatrix hV J₄ hJ (𝓕 := 𝓕)).mp h t x).1
+  exact _root_.Electromagnetism.ThreeDimension.gaussLawElectric V J₄ t x h hV hJ
 
-/-- **Gauss, magnetic, kinded**: the magnetic per-length reading vanishes. -/
+/-- **Gauss, magnetic, kinded**: the magnetic per-length reading vanishes; upstream's
+`gaussLawMagnetic` at the erased `B`. -/
 theorem gaussMagnetic_kinded (hV : ContDiff ℝ ∞ V) (t : Time) (x : Space) :
     (divergenceBQ (magneticFieldQ 𝓕 V)).magnitude t x = 0 := by
   show (∇ ⬝ ((magneticFieldQ 𝓕 V).magnitude t)) x = 0
-  rw [magneticFieldQ, Kinded.magneticFieldFromPotentialQ_magnitude,
-    _root_.Electromagnetism.ThreeDimension.magneticField_eq_3D, div_of_curl_eq_zero _ (by fun_prop), Pi.zero_apply]
+  rw [magneticFieldQ, Kinded.magneticFieldFromPotentialQ_magnitude]
+  exact _root_.Electromagnetism.ThreeDimension.gaussLawMagnetic V t x hV
 
-/-- **Ampère, kinded**: both sides at the magnetic-field derivative. -/
+/-- **Ampère, kinded**: both sides at the magnetic-field derivative; upstream's `ampereLaw`
+at the erased `B` and `E`. -/
 theorem ampere_kinded (h : IsExtrema 𝓕 V J₄) (hV : ContDiff ℝ ∞ V)
     (hJ : ContDiff ℝ ∞ J₄) (t : Time) (x : Space) :
     (curlBQ (magneticFieldQ 𝓕 V)).magnitude t x
@@ -208,26 +204,18 @@ theorem ampere_kinded (h : IsExtrema 𝓕 V J₄) (hV : ContDiff ℝ ∞ V)
         + 𝓕.μ₀ • 𝓕.ε₀ • ∂ₜ (fun t => (electricFieldQ 𝓕 V).magnitude t x) t
   rw [electricFieldQ, magneticFieldQ, Kinded.electricFieldFromPotentialsQ_magnitude,
     Kinded.magneticFieldFromPotentialQ_magnitude]
-  ext i
-  have hdE := ((isExtrema_iff_gauss_ampere_magneticFieldMatrix hV J₄ hJ
-    (𝓕 := 𝓕)).mp h t x).2 i
-  rw [← magneticField_curl_eq_magneticFieldMatrix _ (hV.of_le ENat.LEInfty.out)] at hdE
-  simp only [PiLp.add_apply, PiLp.smul_apply, smul_eq_mul, ← mul_assoc, hdE,
-    add_sub_cancel]
+  exact _root_.Electromagnetism.ThreeDimension.ampereLaw V J₄ t x h hV hJ
 
-/-- **Faraday, kinded**: both sides at the electric-field derivative. -/
+/-- **Faraday, kinded**: both sides at the electric-field derivative; upstream's `faradayLaw`
+at the erased `E` and `B`. -/
 theorem faraday_kinded (hV : ContDiff ℝ ∞ V) (t : Time) (x : Space) :
     (curlEQ (electricFieldQ 𝓕 V)).magnitude t x
       = (negTimeDerivBQ (magneticFieldQ 𝓕 V)).magnitude t x := by
   show (∇ ⨯ ((electricFieldQ 𝓕 V).magnitude t)) x
       = - ∂ₜ (fun t => (magneticFieldQ 𝓕 V).magnitude t x) t
   rw [electricFieldQ, magneticFieldQ, Kinded.electricFieldFromPotentialsQ_magnitude,
-    Kinded.magneticFieldFromPotentialQ_magnitude,
-    _root_.Electromagnetism.ThreeDimension.electricField_eq_3D,
-    _root_.Electromagnetism.ThreeDimension.magneticField_eq_3D, fun_curl_sub, fun_curl_neg,
-    curl_of_grad_eq_zero, time_deriv_curl_commute]
-  simp only [neg_zero, Pi.zero_apply, zero_sub]
-  all_goals fun_prop
+    Kinded.magneticFieldFromPotentialQ_magnitude]
+  exact _root_.Electromagnetism.ThreeDimension.faradayLaw V t x hV
 
 /-! ## The dimensional closure of `c` -/
 

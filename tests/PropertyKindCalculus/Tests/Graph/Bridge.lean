@@ -237,20 +237,16 @@ verdict: type-strength: the kinds span 2 components; 1 same-kind group(s) swap i
 
 /-! ### Axiom profiles -/
 
-/-- info: 'PropertyKindCalculus.Provenance.mem_influencedFrom_iff' depends on axioms: [propext,
-Classical.choice, Quot.sound] -/
+/-- info: 'PropertyKindCalculus.Provenance.mem_influencedFrom_iff' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in #print axioms Provenance.mem_influencedFrom_iff
 
-/-- info: 'PropertyKindCalculus.Provenance.mem_ancestorsOf_iff' depends on axioms: [propext,
-Classical.choice, Quot.sound] -/
+/-- info: 'PropertyKindCalculus.Provenance.mem_ancestorsOf_iff' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in #print axioms Provenance.mem_ancestorsOf_iff
 
-/-- info: 'PropertyKindCalculus.Provenance.mayInfluence_iff' depends on axioms: [propext,
-Classical.choice, Quot.sound] -/
+/-- info: 'PropertyKindCalculus.Provenance.mayInfluence_iff' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in #print axioms Provenance.mayInfluence_iff
 
-/-- info: 'PropertyKindCalculus.Provenance.acyclic_iff_isAcyclic' depends on axioms: [propext,
-Classical.choice, Quot.sound] -/
+/-- info: 'PropertyKindCalculus.Provenance.acyclic_iff_isAcyclic' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in #print axioms Provenance.acyclic_iff_isAcyclic
 
 /-- info: 'PropertyKindCalculus.Provenance.Acyclic.finite_incidencePath' depends on axioms: [propext,

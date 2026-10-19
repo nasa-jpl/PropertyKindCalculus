@@ -54,6 +54,7 @@ one) is a checked computation.
 
 module
 
+public import Mathlib.Tactic.FinCases
 public import PropertyKindCalculus.Dimension
 public import PropertyKindCalculus.Iso80000.References
 public import PropertyKindCalculus.Iso80000.Catalogue

@@ -155,7 +155,7 @@ allocator stats): what a batch-sizing decision may still claim on the current de
 against it with the algorithm's per-pixel shape (`TapeCodegen.AiReport.fusedPeakBytes` /
 `eagerPeakBytes`) and a safety factor for allocator fragmentation. -/
 def deviceMemBudget : IO (Option Platform.MemBudget) := do
-  let st ← Buffer.allocatorStats
+  let st ← Buffer.memory
   if st.deviceTotalBytes == 0 then return none
   -- Ingest boundary: `cudaMemGetInfo`'s free-bytes indication IS a storage capacity —
   -- the mint is licensed by the driver API contract (adjudicated tier).

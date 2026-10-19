@@ -40,6 +40,7 @@ in this work's own formalism.
 
 module
 
+public import Mathlib.Tactic.Ring
 public import PropertyKindCalculus.Iso80000.Part3
 public import PropertyKindCalculus.Iso80000.Part6
 public import PropertyKindCalculus.QuantityClassification

@@ -40,6 +40,7 @@ Acoustics brings two themes the calculus is built for:
 
 module
 
+public import Mathlib.Tactic.Ring
 public import PropertyKindCalculus.Dimension
 public import PropertyKindCalculus.Iso80000.References
 public import PropertyKindCalculus.Iso80000.Catalogue

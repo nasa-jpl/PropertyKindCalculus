@@ -70,7 +70,7 @@ lemma seal_witnesses :
 
 /-! ## Axiom profiles -/
 
-/-- info: 'PropertyKindCalculus.Provenance.pedigree_seal' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+/-- info: 'PropertyKindCalculus.Provenance.pedigree_seal' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs (whitespace := lax) in #print axioms pedigree_seal
 
 /-- info: 'PropertyKindCalculus.Provenance.sealed_of_wellFormed' depends on axioms: [propext, Classical.choice, Quot.sound] -/

@@ -198,7 +198,7 @@ def fieldStrengthMatrixQ (Aq : Quantity vectorPotentialK (EMPot d)) :
     Quantity fieldStrength
       (SpaceTime d → (Fin 1 ⊕ Fin d) × (Fin 1 ⊕ Fin d) → ℝ) :=
   .attest "the extent in the standard basis"
-    (fun x μν => toField {Aq.magnitude.toFieldStrength x | [μν.1] [μν.2]}ᵀ)
+    (fun x μν => toScalar {Aq.magnitude.toFieldStrength x | [μν.1] [μν.2]}ᵀ)
 
 /-- **A pure translation has zero extent** — the torsor fact at the tensor: shifting
 the zero potential by any gauge function produces a potential whose field strength
@@ -218,7 +218,7 @@ theorem pureGauge_extent_zero (χ : SpaceTime d → ℝ) (hχ : ContDiff ℝ 2 �
 def fieldStrengthAtQ (A : EMPot d) (x : SpaceTime d)
     (μν : (Fin 1 ⊕ Fin d) × (Fin 1 ⊕ Fin d)) : Quantity fieldStrength ℝ :=
   .attest "pointwise reading of the chain's field-strength components"
-    (toField {A.toFieldStrength x | [μν.1] [μν.2]}ᵀ)
+    (toScalar {A.toFieldStrength x | [μν.1] [μν.2]}ᵀ)
 
 /-- **The electric reading** — `E_i = −c·F⁰ⁱ`: the velocity edge one level up, taken
 through Stage 1's registered law at the call site; the sign is a numeral. -/
@@ -236,7 +236,7 @@ theorem electricReadingQ_erases (cS : SpeedOfLight) (A : EMPot d)
   rw [_root_.Electromagnetism.ElectromagneticPotential.electricField_eq_toFieldStrength_eval
     A t x i hA]
   show (-1 : ℝ) * (cS.val *
-    toField {A.toFieldStrength ((toTimeAndSpace cS).symm (t, x)) | [Sum.inl 0] [Sum.inr i]}ᵀ) = _
+    toScalar {A.toFieldStrength ((toTimeAndSpace cS).symm (t, x)) | [Sum.inl 0] [Sum.inr i]}ᵀ) = _
   ring
 
 /-- **The magnetic reading** — the spatial block *is* the magnetic field matrix: a

@@ -54,11 +54,11 @@ local instance instEagerMath : MathFunctions (Tensor Float s) where
   abs := absSpec
   sqrt := sqrtSpec
   pi := Tensor.full s MathFunctions.pi
-  sin := mapSpec MathFunctions.sin
-  cos := mapSpec MathFunctions.cos
-  tanh := mapSpec MathFunctions.tanh
-  cosh := mapSpec MathFunctions.cosh
-  sinh := mapSpec MathFunctions.sinh
+  sin := Tensor.map MathFunctions.sin
+  cos := Tensor.map MathFunctions.cos
+  tanh := Tensor.map MathFunctions.tanh
+  cosh := Tensor.map MathFunctions.cosh
+  sinh := Tensor.map MathFunctions.sinh
 local instance instEagerNumCarrier : NumCarrier (Tensor Float s) where
 
 -- A wrong fold would otherwise reduce both carriers to `TapeBuilder.bin …` and execute the

@@ -19,7 +19,7 @@ directly; it is drawn as its own band because FloatLib rides under it —
 `lakefile.lean` records why: "TorchLean brings `FloatLib` transitively, which is where
 the executable binary32 word (`ExecFloat.Binary 8 23`) and the Flocq rounding theory
 live." cslib and Mathlib are at one revision: cslib's own manifest pins Mathlib
-`v4.34.0` at the commit PKC resolves to.
+`v4.35.0` at the commit PKC resolves to.
 
 Two audiences read the figure, and the bands above the calculus differ between them:
 

@@ -82,7 +82,7 @@ SITES: list[tuple[str, str, int]] = [
     ("lakefile.lean", "doc-gen4 v{VER}", 1),
     ("blueprint/lakefile.toml", "on the v{VER} toolchain", 1),
     # Only the branch NAME tracks the pin here: the commit it names declares
-    # `v4.34.0-rc2` in its own `lean-toolchain`, so a claim that it "still pins
+    # `v4.35.0-rc4` in its own `lean-toolchain`, so a claim that it "still pins
     # toolchain {VER}" would be false of the very commit this file pins.
     ("blueprint/lakefile.toml", "is the `v{VER}`-branch commit", 1),
     ("RENDERING.md", "transitively (`v{VER}`, `", 1),
@@ -112,11 +112,6 @@ EXEMPT: dict[str, str] = {
         "a staged plan whose status ledger records the version each stage landed at — "
         "dated records of what was true when a stage shipped, not claims about the "
         "current version"
-    ),
-    "blueprint/PropertyKindCalculusBlueprintMain.lean": (
-        "names the toolchain an upstream verso commit's own lean-toolchain declares — "
-        "the version this package deliberately does not take, recorded to explain why "
-        "the fix is a backport rather than a pin bump"
     ),
 }
 

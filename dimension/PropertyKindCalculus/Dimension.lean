@@ -48,6 +48,7 @@ now offers the coordinates; PKC chooses among them and says why.
 
 module
 
+public import Mathlib.Tactic.NormNum
 public import Physlib.Units.LTMCTDimensionBase
 public import PropertyKindCalculus
 

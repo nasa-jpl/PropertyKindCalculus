@@ -120,6 +120,9 @@ noncomputable def xiSq (hbar : WithDim action ℝ) (m : WithDim Dim.mass ℝ)
 /-! **MR2 holds, and it catches a wrong formula.** Attempt 1's `ξWrong` — the frequency
 dropped from the denominator — is *not* an area, so the same `cast` is rejected. This is the
 requirement doing its job. -/
+-- `decide` is the refusal; the unused-tactic linter reports the refused block as idle, so it is
+-- silenced for this one command.
+set_option linter.unusedTactic false in
 #check_failure (fun (hbar : WithDim action ℝ) (m : WithDim Dim.mass ℝ) =>
   (WithDim.cast (hbar / m) (by decide) : WithDim Dim.area ℝ))
 

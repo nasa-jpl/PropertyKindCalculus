@@ -25,6 +25,7 @@ this work's own formalism.
 
 module
 
+public import Mathlib.Tactic.Ring
 public import PropertyKindCalculus.Iso80000.Part13
 public import PropertyKindCalculus.QuantityClassification
 public import PropertyKindCalculus.QuantityReal
