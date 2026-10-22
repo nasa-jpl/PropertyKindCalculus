@@ -50,10 +50,12 @@ jobs:
           # is sufficient for both Lake packages. scripts/check-doc-pins.py gates
           # that equality, and every version claim written in prose, against
           # lean-toolchain — so no literal version is spelled here.
+          # No `|| true`: a failed install must fail here, not later inside `lake build`.
+          # An already-installed toolchain is not a failure — elan exits 0 for it.
           if [ -f lean-toolchain ]; then
             TOOLCHAIN="$(cat lean-toolchain)"
             echo "Lean toolchain: $TOOLCHAIN"
-            elan toolchain install "$TOOLCHAIN" || true
+            elan toolchain install "$TOOLCHAIN"
           fi
           elan show
 
