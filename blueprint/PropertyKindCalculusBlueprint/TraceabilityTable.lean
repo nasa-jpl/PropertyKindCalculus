@@ -77,10 +77,10 @@ def buildTable : DocElabM DocTable := do
         dischargeLinks := dischargeLinks ++ [(label, lastComponent r.decl)]
       let statusOf (first : Bool) : Cell :=
         if !first then .text ""
-        else if status == "proved" || status == "demonstrated" then .links dischargeLinks
-        else .text status
+        else if status.isDischarged then .links dischargeLinks
+        else .text status.label
       if these.isEmpty then
-        rows := rows ++ [[ .md s!"*{req.id}* — {req.title}", .text status,
+        rows := rows ++ [[ .md s!"*{req.id}* — {req.title}", .text status.label,
                            .text "—", .text "—", .text "" ]]
       else
         let mut first := true
