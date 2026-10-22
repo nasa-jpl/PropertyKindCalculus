@@ -457,9 +457,10 @@ def coverageRows (scope : Array Name) : Elab.TermElabM (Array Row × Tally) := d
     if s.counterexample then
       out := out.push ⟨.exempted, s!"⊘ exempted {s.decl} — counterexample"⟩
       continue
-    let some c := s.value?
-      | out := out.push ⟨.violation,
-          s!"⚠ UNREADABLE {s.decl} — not a `Contract NodeId KindRef`"⟩
+    let c ← match s.value with
+      | .ok c => pure c
+      | .error cause =>
+        out := out.push (s.unreadableRow cause)
         continue
     if c.role == .specification then
       out := out.push ⟨.exempted,
