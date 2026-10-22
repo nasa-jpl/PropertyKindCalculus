@@ -435,16 +435,17 @@ suitable for `#guard_msgs` pinning. Namespaces elided, this is the validation pr
 output:
 
 ```
-kind contracts — 4 contract(s), 1 violated, 1 exempted
+kind contracts — 3 contract(s), 1 violated, 1 exempted
   ✗ …Bad.forgottenInput: 'sweep probe forward, x forgotten' — undeclared input fwd/x : aK
   …Good.fwdBoundary: 'sweep probe forward' — 2 ports, 0 exits, 1 member step(s)
   …Good.invBoundary: 'sweep probe retrieval' — 2 ports, 0 exits, 1 member step(s)
   ⊘ …Exempt.keptCounterexample: counterexample, exempted
 ```
 
-Three things in that header rather than one. Because it counts the *subjects* as well as the
-violations, a pin fails on a boundary that vanished as readily as on one that broke; because it
-counts the exemptions, exemption creep is a failed pin too. And a scope with no contracts pins
+Three things in that header rather than one. Because it counts the *checked subjects* as well as
+the violations, a pin fails on a boundary that vanished as readily as on one that broke; because it
+counts the exemptions beside them, exemption creep is a failed pin too (`#kind_relations` and
+`#kind_requirements` head their surveys the same way). And a scope with no contracts pins
 `0 contract(s)` rather than passing invisibly — the distinction between *checked and clean* and
 *nothing was checked*, which an empty report cannot make.
 

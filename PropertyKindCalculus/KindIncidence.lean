@@ -2706,6 +2706,41 @@ def checkSuppliers (c : Provenance.Contract NodeId KindRef) : MetaM Unit := do
         '{ssig.render}', which is not the port's '{p.kind.render}' — binding a module \
         of a different signature re-types the argument"
 
+/-- The full check of one contract — the decider, aggregation and supplier clauses, then
+the assembly of its members — returned with the contract, so the caller judges the boundary
+(`ctr.agrees a.graph`) its own way: `#kind_contract` reports the difference, the decide
+forms throw on it, the sweep renders it as a `✗` row. Every per-name and sweep command runs
+this one sequence, so a new clause is added once and none of them can miss it. -/
+def checkContract (cname : Name) :
+    MetaM (Provenance.Contract NodeId KindRef × Assembly) := do
+  let ctr ← contractValueOf cname
+  checkDeciders ctr
+  checkAggregations ctr
+  checkSuppliers ctr
+  return (ctr, ← assembleContract ctr)
+
+/-- `checkContract` with the boundary disagreement an error — the decide forms' gate. -/
+def checkContractAgrees (cname : Name) :
+    MetaM (Provenance.Contract NodeId KindRef × Assembly) := do
+  let (ctr, a) ← checkContract cname
+  unless ctr.agrees a.graph do
+    throwError "the boundary declared by '{cname}' is not the one its members compute:\n\
+      {String.intercalate "\n" (renderContractLines ctr a.graph)}"
+  return (ctr, a)
+
+/-- The name of a contract's kernel receipt. -/
+def contractReceiptName (cname : Name) : Name := cname ++ `kindContractOk
+
+/-- Add the kernel receipt `c.kindContractOk : c.Agrees graph`, proved by `decide` — kernel
+reduction of the boundary comparison against the author's own contract definition, which
+the proposition names rather than copies. Returns the theorem's name. -/
+def addContractReceipt (cname : Name) (a : Assembly) : MetaM Name := do
+  let prop ← Meta.mkAppM ``Provenance.Contract.Agrees #[mkConst cname, toExpr a.graph]
+  let proof ← Meta.mkDecideProof prop
+  let name := contractReceiptName cname
+  addDecl (.thmDecl { name, levelParams := [], type := prop, value := proof })
+  return name
+
 open Elab Command in
 /-- `#kind_contract c` assembles the members the contract `c` declares and compares that
 assembly's boundary with the boundary `c` declares — its parameters and decided
@@ -2714,45 +2749,38 @@ the verdict — as a single `info` message suitable for `#guard_msgs` pinning. T
 scope reading: `#kind_assembly` says whether the wiring holds together, and this says
 whether the members are the ones the declared interface belongs to. -/
 elab "#kind_contract " c:ident : command => liftTermElabM do
-  let cname ← realizeGlobalConstNoOverload c
-  let ctr ← contractValueOf cname
-  checkDeciders ctr
-  checkAggregations ctr
-  checkSuppliers ctr
-  let a ← assembleContract ctr
+  let (ctr, a) ← checkContract (← realizeGlobalConstNoOverload c)
   logInfo m!"kind contract over {ctr.members.length} steps:\n\
     {String.intercalate "\n" (renderContractLines ctr a.graph)}"
 
 open Elab Command in
 /-- `#kind_contract_decide c` assembles the members the contract `c` declares, reflects
 the union graph into a term, and adds the theorem `c.kindContractOk : c.Agrees (graph)`,
-proved by `decide` — kernel reduction of the boundary comparison against the author's own
-contract definition, which the proposition names rather than copies. Errors out (before
-troubling the kernel) when the boundaries disagree, printing the difference lists. -/
+proved by `decide` (`addContractReceipt`). Errors out (before troubling the kernel) when
+the boundaries disagree, printing the difference lists. -/
 elab "#kind_contract_decide " c:ident : command => liftTermElabM do
   let cname ← realizeGlobalConstNoOverload c
-  let ctr ← contractValueOf cname
-  checkDeciders ctr
-  checkAggregations ctr
-  checkSuppliers ctr
-  let a ← assembleContract ctr
-  unless ctr.agrees a.graph do
-    throwError "the boundary declared by '{cname}' is not the one its members compute:\n\
-      {String.intercalate "\n" (renderContractLines ctr a.graph)}"
-  let prop ← Meta.mkAppM ``Provenance.Contract.Agrees #[mkConst cname, toExpr a.graph]
-  let proof ← Meta.mkDecideProof prop
-  let name := cname ++ `kindContractOk
-  addDecl (.thmDecl { name, levelParams := [], type := prop, value := proof })
+  let (ctr, a) ← checkContractAgrees cname
+  let name ← addContractReceipt cname a
   logInfo m!"kernel-accepted: '{cname}' is the boundary of its {ctr.members.length}-step \
     assembly (theorem '{name}')"
 
-/-- The subjects of a contract sweep: every constant under the given namespace prefixes
-whose type is headed by `Provenance.Contract` (headed by, not equal to — the type takes
-its two parameters), split into the checked and the `@[kindCounterexample]`-exempted,
-each sorted by name. Enrollment is by type, so declaring a boundary is enrolling it —
-the sweeps cannot be evaded by forgetting a command, and only the exemption is an
-authored mark, which is the side of the asymmetry a build catches when forgotten. -/
-def contractSweepSubjects (scopes : Array Name) : Elab.TermElabM (Array Name × Array Name) := do
+/-! ## The namespace sweep
+
+`#kind_contracts`, `#kind_relations` and `#kind_requirements` are one survey asked of three
+types: enroll every constant of the type under the namespaces, split off the
+`@[kindCounterexample]` exemptions, re-check each subject as its per-name command does, and
+print one row per subject under a header. The enrollment, the rows and the header live here
+once, so the three headers mean one thing — the count is the *checked* subjects, with the
+exemptions counted beside it — and a fourth survey has one place to plug in. -/
+
+/-- The subjects of a sweep: every non-internal constant under the given namespace prefixes
+whose type `isSubject` accepts, split into the checked and the `@[kindCounterexample]`-exempted,
+each sorted by name. Enrollment is by type, so declaring a subject is enrolling it — a sweep
+cannot be evaded by forgetting a command, and only the exemption is an authored mark, which
+is the side of the asymmetry a build catches when forgotten. -/
+def sweepSubjects (scopes : Array Name) (isSubject : Expr → Bool) :
+    MetaM (Array Name × Array Name) := do
   let env ← getEnv
   let exempt : NameSet :=
     (BoundaryAudit.kindCounterexamples env).foldl (init := {}) (·.insert ·)
@@ -2761,11 +2789,67 @@ def contractSweepSubjects (scopes : Array Name) : Elab.TermElabM (Array Name × 
   for (n, info) in env.constants.toList do
     if n.isInternal then continue
     unless scopes.any (·.isPrefixOf n) do continue
-    if info.type.getAppFn.isConstOf ``Provenance.Contract then
-      if exempt.contains n then exempted := exempted.push n
-      else names := names.push n
+    unless isSubject info.type do continue
+    if exempt.contains n then exempted := exempted.push n else names := names.push n
   return (names.qsort (fun a b => a.toString < b.toString),
           exempted.qsort (fun a b => a.toString < b.toString))
+
+/-- A survey's rows and tallies: `passed` holds each checked subject's result in row order,
+for the headers that also count by category. -/
+structure Survey (β : Type) where
+  passed : Array β
+  lines : Array String
+  checked : Nat
+  violated : Nat
+  exempted : Nat
+
+/-- The `⊘` rows — the exempted subjects, after the checked ones. -/
+def exemptedRows (exempted : Array Name) : Array String :=
+  exempted.map fun n => s!"  ⊘ {n}: counterexample, exempted"
+
+/-- Run `check` over the checked subjects and render each as a row — `render` of the result
+when it passes, `✗` carrying the refusal when it throws — followed by the `⊘` rows. -/
+def runSurvey {β : Type} (names exempted : Array Name) (check : Name → MetaM β)
+    (render : β → String) : MetaM (Survey β) := do
+  let mut passed : Array β := #[]
+  let mut lines : Array String := #[]
+  let mut violated := 0
+  for n in names do
+    try
+      let b ← check n
+      passed := passed.push b
+      lines := lines.push s!"  {n}: {render b}"
+    catch e =>
+      violated := violated + 1
+      lines := lines.push s!"  ✗ {n}: {← e.toMessageData.toString}"
+  return { passed, lines := lines ++ exemptedRows exempted,
+           checked := names.size, violated, exempted := exempted.size }
+
+/-- The one header convention: `<title> — <checked> <unit>[, <violated> violated][,
+<exempted> exempted]<suffix>`. The count is the checked subjects — the exempted are not
+among them and are counted beside — so a pin fails on a subject that vanished, on one that
+broke, and on exemption creep alike, and a scope with none pins `0`. -/
+def surveyHeader (title unit : String) (checked violated exempted : Nat)
+    (suffix : String := "") : String :=
+  let violations := if violated == 0 then "" else s!", {violated} violated"
+  let exemptions := if exempted == 0 then "" else s!", {exempted} exempted"
+  s!"{title} — {checked} {unit}{violations}{exemptions}{suffix}"
+
+/-- The header, then the rows when there are any, as one `info` message. -/
+def logSurvey (header : String) (lines : Array String) : MetaM Unit :=
+  if lines.isEmpty then logInfo m!"{header}"
+  else logInfo m!"{header}\n{String.intercalate "\n" lines.toList}"
+
+/-- The survey as one `info` message under its header. -/
+def Survey.log {β : Type} (s : Survey β) (title unit : String) (suffix : String := "") :
+    MetaM Unit :=
+  logSurvey (surveyHeader title unit s.checked s.violated s.exempted suffix) s.lines
+
+/-- The subjects of a contract sweep: every constant under the namespaces whose type is
+headed by `Provenance.Contract` (headed by, not equal to — the type takes its two
+parameters), split as `sweepSubjects` splits them. -/
+def contractSweepSubjects (scopes : Array Name) : MetaM (Array Name × Array Name) :=
+  sweepSubjects scopes (·.getAppFn.isConstOf ``Provenance.Contract)
 
 open Elab Command in
 /-- `#kind_contracts ns…` — the boundary survey: every `Provenance.Contract` declared
@@ -2776,7 +2860,7 @@ single `info` message suitable for `#guard_msgs` pinning. Membership is by type,
 boundary cannot be declared and left out of the sweep. A contract that fails renders as
 a `✗` row carrying the refusal, so the pin is the gate; a `@[kindCounterexample]`-tagged
 declaration renders as a `⊘` row and is not checked, so a falsification probe can stand
-beside the gate it exercises. The header counts the contracts, the violations, and the
+beside the gate it exercises. The header counts the checked contracts, the violations, and the
 exemptions, so a scope with none pins `0` rather than passing invisibly. The check is
 context-free: a boundary's references resolve in the environment, so the sweep needs no
 namespace replay and no `open`s from anywhere. -/
@@ -2784,43 +2868,23 @@ elab "#kind_contracts " nss:ident* : command => liftTermElabM do
   if nss.isEmpty then
     throwError "#kind_contracts expects at least one namespace"
   let (names, exempted) ← contractSweepSubjects (nss.map (·.getId))
-  let mut lines : Array String := #[]
-  let mut violated := 0
-  for n in names do
-    let res : Except String String ←
-      try
-          let ctr ← contractValueOf n
-          checkDeciders ctr
-          checkAggregations ctr
-          checkSuppliers ctr
-          let a ← assembleContract ctr
-          if ctr.agrees a.graph then
-            pure (.ok s!"'{ctr.name}' — {ctr.ports.length} ports, \
-              {ctr.exits.length} exits, {ctr.members.length} member step(s)")
-          else
-            let diffs :=
-              (ctr.undeclared a.graph).map (fun p => s!"undeclared {renderPort p}")
-                ++ (ctr.unrealized a.graph).map (fun p => s!"unrealized {renderPort p}")
-                ++ (ctr.undeclaredExits a.graph).map
-                    (fun x => s!"undeclared exit {renderNode x}")
-                ++ (ctr.unrealizedExits a.graph).map
-                    (fun x => s!"unrealized exit {renderNode x}")
-                ++ (if ctr.declaresUniquely then [] else ["declared twice"])
-            pure (.error s!"'{ctr.name}' — {String.intercalate "; " diffs}")
-      catch e => pure (.error (← e.toMessageData.toString))
-    match res with
-    | .ok row => lines := lines.push s!"  {n}: {row}"
-    | .error row =>
-      violated := violated + 1
-      lines := lines.push s!"  ✗ {n}: {row}"
-  for n in exempted do
-    lines := lines.push s!"  ⊘ {n}: counterexample, exempted"
-  let violations := if violated == 0 then "" else s!", {violated} violated"
-  let exemptions := if exempted.isEmpty then "" else s!", {exempted.size} exempted"
-  let summary := s!"kind contracts — {names.size + exempted.size} \
-    contract(s){violations}{exemptions}"
-  if lines.isEmpty then logInfo m!"{summary}"
-  else logInfo m!"{summary}\n{String.intercalate "\n" lines.toList}"
+  let survey ← runSurvey names exempted
+    (fun n => do
+      let (ctr, a) ← checkContract n
+      unless ctr.agrees a.graph do
+        let diffs :=
+          (ctr.undeclared a.graph).map (fun p => s!"undeclared {renderPort p}")
+            ++ (ctr.unrealized a.graph).map (fun p => s!"unrealized {renderPort p}")
+            ++ (ctr.undeclaredExits a.graph).map
+                (fun x => s!"undeclared exit {renderNode x}")
+            ++ (ctr.unrealizedExits a.graph).map
+                (fun x => s!"unrealized exit {renderNode x}")
+            ++ (if ctr.declaresUniquely then [] else ["declared twice"])
+        throwError "'{ctr.name}' — {String.intercalate "; " diffs}"
+      pure ctr)
+    (fun ctr => s!"'{ctr.name}' — {ctr.ports.length} ports, \
+      {ctr.exits.length} exits, {ctr.members.length} member step(s)")
+  survey.log "kind contracts" "contract(s)"
   recordAuditReceipt "kind_contracts" (nss.map (·.getId))
 
 open Elab Command in
@@ -2837,30 +2901,15 @@ elab "#kind_contracts_decide " nss:ident* : command => liftTermElabM do
   let (names, exempted) ← contractSweepSubjects (nss.map (·.getId))
   let mut lines : Array String := #[]
   for n in names do
-    let a ← do
-        let ctr ← contractValueOf n
-        checkDeciders ctr
-        checkAggregations ctr
-        checkSuppliers ctr
-        let a ← assembleContract ctr
-        unless ctr.agrees a.graph do
-          throwError "the boundary declared by '{n}' is not the one its members compute:\n\
-            {String.intercalate "\n" (renderContractLines ctr a.graph)}"
-        pure a
-    let thmName := n ++ `kindContractOk
+    let (_, a) ← checkContractAgrees n
+    let thmName := contractReceiptName n
     if (← getEnv).contains thmName then
       lines := lines.push s!"  {n}: theorem '{thmName}' already stands"
     else
-      let prop ← Meta.mkAppM ``Provenance.Contract.Agrees #[mkConst n, toExpr a.graph]
-      let proof ← Meta.mkDecideProof prop
-      addDecl (.thmDecl { name := thmName, levelParams := [], type := prop, value := proof })
+      let thmName ← addContractReceipt n a
       lines := lines.push s!"  {n}: kernel-accepted (theorem '{thmName}')"
-  for n in exempted do
-    lines := lines.push s!"  ⊘ {n}: counterexample, exempted"
-  let exemptions := if exempted.isEmpty then "" else s!", {exempted.size} exempted"
-  let summary := s!"kind contracts — {names.size} contract(s) kernel-accepted{exemptions}"
-  if lines.isEmpty then logInfo m!"{summary}"
-  else logInfo m!"{summary}\n{String.intercalate "\n" lines.toList}"
+  logSurvey (surveyHeader "kind contracts" "contract(s) kernel-accepted" names.size 0 exempted.size)
+    (lines ++ exemptedRows exempted)
   -- The decide sweep is the report sweep with kernel receipts, so it discharges both: a
   -- document that runs only the stronger form must not read `partial` for the weaker.
   recordAuditReceipt "kind_contracts_decide" (nss.map (·.getId))
@@ -3168,55 +3217,27 @@ for `#guard_msgs` pinning. An edge that fails its check renders as a `✗` row c
 refusal — like `#kind_scc`'s `⚠` rows, the violation is *in* the report, so the pin is
 the gate: a passing scope pins clean rows and a newly violated edge fails the pin. A
 `@[kindCounterexample]`-tagged edge renders as a `⊘` row and is not checked, so a
-falsification probe can stand beside the gate it exercises. The header counts the edges,
-the violations, and the exemptions, so a scope with none pins `0` rather than passing
+falsification probe can stand beside the gate it exercises. The header counts the checked
+edges, the violations, and the exemptions, so a scope with none pins `0` rather than passing
 invisibly. -/
 elab "#kind_relations " nss:ident* : command => liftTermElabM do
   if nss.isEmpty then
     throwError "#kind_relations expects at least one namespace"
   let scopes := nss.map (·.getId)
-  let env ← getEnv
-  let exempt : NameSet :=
-    (BoundaryAudit.kindCounterexamples env).foldl (init := {}) (·.insert ·)
-  let mut names : Array Name := #[]
-  for (n, info) in env.constants.toList do
-    if n.isInternal then continue
-    unless scopes.any (·.isPrefixOf n) do continue
-    if info.type.isConstOf ``Provenance.Relation then names := names.push n
-  let sorted := names.qsort fun a b => a.toString < b.toString
-  let mut lines : Array String := #[]
-  let mut exemptLines : Array String := #[]
-  let mut violated := 0
-  let mut exempted := 0
-  for n in sorted do
-    if exempt.contains n then
-      exempted := exempted + 1
-      exemptLines := exemptLines.push s!"  ⊘ {n}: counterexample, exempted"
-      continue
-    try
-      let c ← checkRelation n
-      let extras := String.join <|
-        (if c.rel.tolerance.isAnonymous then []
-         else [s!" [tolerance: {c.rel.tolerance}]"])
-          ++ (if c.rel.licenses.isEmpty then []
-              else [s!" [rungs: {String.intercalate ", " (c.rel.licenses.map (·.rung))}]"])
-          ++ (if c.rel.wellPosed.isAnonymous then []
-              else [s!" [well-posed: {c.rel.wellPosed} on {c.rel.domain}]"])
-          ++ (if c.rel.ambiguity.isAnonymous then []
-              else [s!" [ambiguity: {c.rel.ambiguity}]"])
-      lines := lines.push
-        s!"  {n}: '{c.leftName}' {c.rel.kind.label} '{c.rightName}' — \
-          {c.rel.witness}{extras}"
-    catch e =>
-      violated := violated + 1
-      lines := lines.push s!"  ✗ {n}: {← e.toMessageData.toString}"
-  lines := lines ++ exemptLines
-  let violations := if violated == 0 then "" else s!", {violated} violated"
-  let exemptions := if exempted == 0 then "" else s!", {exempted} exempted"
-  let summary := s!"kind relations — {names.size} theorem edge(s){violations}{exemptions}"
-  if lines.isEmpty then logInfo m!"{summary}"
-  else logInfo m!"{summary}\n{String.intercalate "\n" lines.toList}"
-  recordAuditReceipt "kind_relations" (nss.map (·.getId))
+  let (names, exempted) ← sweepSubjects scopes (·.isConstOf ``Provenance.Relation)
+  let survey ← runSurvey names exempted checkRelation fun c =>
+    let extras := String.join <|
+      (if c.rel.tolerance.isAnonymous then []
+       else [s!" [tolerance: {c.rel.tolerance}]"])
+        ++ (if c.rel.licenses.isEmpty then []
+            else [s!" [rungs: {String.intercalate ", " (c.rel.licenses.map (·.rung))}]"])
+        ++ (if c.rel.wellPosed.isAnonymous then []
+            else [s!" [well-posed: {c.rel.wellPosed} on {c.rel.domain}]"])
+        ++ (if c.rel.ambiguity.isAnonymous then []
+            else [s!" [ambiguity: {c.rel.ambiguity}]"])
+    s!"'{c.leftName}' {c.rel.kind.label} '{c.rightName}' — {c.rel.witness}{extras}"
+  survey.log "kind relations" "theorem edge(s)"
+  recordAuditReceipt "kind_relations" scopes
 
 /-! ## The assembly at the scale of its steps
 

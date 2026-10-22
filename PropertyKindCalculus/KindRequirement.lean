@@ -59,7 +59,7 @@ namespace PropertyKindCalculus.KindRequirement
 
 open Lean Meta
 open PropertyKindCalculus.Provenance (NodeId KindRef)
-open PropertyKindCalculus.KindIncidence (contractValueOf checkRelation)
+open PropertyKindCalculus.KindIncidence (contractValueOf checkRelation sweepSubjects runSurvey)
 open PropertyKindCalculus.ContractCoverage (ContractMark Subject subjects Row Verdict count body
   violations indented names)
 
@@ -379,22 +379,6 @@ elab "#kind_requirement " r:ident : command => liftTermElabM do
   logInfo m!"kind requirement '{c.req.name}' ({c.req.kind.label}) on '{c.boundaryName}'\n\
     {String.intercalate "\n" c.lines}"
 
-/-- The requirements under the namespaces, split into the checked and the
-`@[kindCounterexample]`-exempted, each sorted by name. -/
-def requirementSweepSubjects (scopes : Array Name) : MetaM (Array Name × Array Name) := do
-  let env ← getEnv
-  let exempt : NameSet :=
-    (BoundaryAudit.kindCounterexamples env).foldl (init := {}) (·.insert ·)
-  let mut names : Array Name := #[]
-  let mut exempted : Array Name := #[]
-  for (n, info) in env.constants.toList do
-    if n.isInternal then continue
-    unless scopes.any (·.isPrefixOf n) do continue
-    unless info.type.isConstOf ``Provenance.Requirement do continue
-    if exempt.contains n then exempted := exempted.push n else names := names.push n
-  return (names.qsort (fun a b => a.toString < b.toString),
-          exempted.qsort (fun a b => a.toString < b.toString))
-
 /-- How a requirement is discharged, in one phrase for a survey row. -/
 def dischargeLabel (req : Provenance.Requirement) : String :=
   if !(req.attested.all Char.isWhitespace) then s!"attested: {req.attested}"
@@ -411,39 +395,20 @@ declared under the given namespaces, re-checked exactly as `#kind_requirement` c
 rendered one line per requirement in declaration-name order as a single `info` message
 suitable for `#guard_msgs` pinning. A requirement that fails its check renders as a `✗` row
 carrying the refusal, so the pin is the gate; a `@[kindCounterexample]`-tagged requirement
-renders as a `⊘` row and is not checked. The header counts the requirements, the violations,
-the exemptions, and the categories — the attested count is the ratchet. -/
+renders as a `⊘` row and is not checked. The header counts the checked requirements, the
+violations, the exemptions, and the categories — the attested count is the ratchet. -/
 elab "#kind_requirements " nss:ident* : command => liftTermElabM do
   if nss.isEmpty then
     throwError "#kind_requirements expects at least one namespace"
   let scopes := nss.map (·.getId)
-  let (sorted, exempt) ← requirementSweepSubjects scopes
-  let mut lines : Array String := #[]
-  let mut violated := 0
-  let mut provable := 0
-  let mut empirical := 0
-  let mut attested := 0
-  for n in sorted do
-    try
-      let c ← checkRequirement n
-      match c.req.kind with
-      | .provable => provable := provable + 1
-      | .empirical => empirical := empirical + 1
-      if !(c.req.attested.all Char.isWhitespace) then attested := attested + 1
-      lines := lines.push
-        s!"  {n}: '{c.req.name}' ({c.req.kind.label}) on '{c.boundaryName}' — \
-          {dischargeLabel c.req}"
-    catch e =>
-      violated := violated + 1
-      lines := lines.push s!"  ✗ {n}: {← e.toMessageData.toString}"
-  for n in exempt do
-    lines := lines.push s!"  ⊘ {n}: counterexample, exempted"
-  let violations := if violated == 0 then "" else s!", {violated} violated"
-  let exemptions := if exempt.isEmpty then "" else s!", {exempt.size} exempted"
-  let summary := s!"kind requirements — {sorted.size} requirement(s){violations}\
-    {exemptions}: {provable} provable, {empirical} empirical, {attested} attested"
-  if lines.isEmpty then logInfo m!"{summary}"
-  else logInfo m!"{summary}\n{String.intercalate "\n" lines.toList}"
+  let (names, exempted) ← sweepSubjects scopes (·.isConstOf ``Provenance.Requirement)
+  let survey ← runSurvey names exempted checkRequirement fun c =>
+    s!"'{c.req.name}' ({c.req.kind.label}) on '{c.boundaryName}' — {dischargeLabel c.req}"
+  let provable := survey.passed.countP (·.req.kind matches .provable)
+  let empirical := survey.passed.countP (·.req.kind matches .empirical)
+  let attested := survey.passed.countP fun c => !(c.req.attested.all Char.isWhitespace)
+  survey.log "kind requirements" "requirement(s)"
+    s!": {provable} provable, {empirical} empirical, {attested} attested"
   recordAuditReceipt "kind_requirements" scopes
 
 /-! ## The census — requirement coverage -/
