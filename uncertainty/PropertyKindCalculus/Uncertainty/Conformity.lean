@@ -383,10 +383,10 @@ inductive BandReading where
   did is how a fleet walks into a correlated failure. -/
   | systematic (factor : Quantity coverageFactor Float)
   /-- The band cannot be read at all — no `u` to divide by, a quotient that is not a number
-  (an unbounded band over an unbounded `u`), or a `u` that nothing qualifies (a `ν` below one,
-  which supports no statement about a tail). Not the same as a band of zero: it is a band whose
-  meaning is unavailable, and the three causes are one statement from the consumer's side,
-  because a factor nobody can price is not a reading. -/
+  (an unbounded band over an unbounded `u`), a threshold that is not a number, or a `u` that
+  nothing qualifies (a `ν` below one, which supports no statement about a tail). Not the same as
+  a band of zero: it is a band whose meaning is unavailable, and the causes are one statement
+  from the consumer's side, because a factor nobody can price is not a reading. -/
   | unstated
   deriving Repr
 
@@ -414,8 +414,8 @@ inductive BandReadingLabel where
   /-- A systematic the model does not carry. It does not shrink, and tightening it as though it
   did is how a fleet walks into a correlated failure. -/
   | systematic
-  /-- Not readable: no `u` to divide by, a quotient that is not a number, or a `u` nothing
-  qualifies. -/
+  /-- Not readable: no `u` to divide by, a quotient or a threshold that is not a number, or a
+  `u` nothing qualifies. -/
   | unstated
 deriving DecidableEq, Repr, Inhabited
 
@@ -440,11 +440,14 @@ That last case is `unstated`, and it is stated explicitly because it cannot be l
 comparison: `∞/∞` is `NaN`, and `NaN ≤ t` and `NaN > t` are *both* false, so a rule written
 "`≤ t` ⇒ coverage, else systematic" and the same rule written "`> t` ⇒ systematic, else coverage"
 read the same band in opposite directions. Neither reading is right — a factor nobody can price is
-not a reading — and having the guard here means no caller can re-derive the wrong one. -/
+not a reading — and having the guard here means no caller can re-derive the wrong one. The same
+holds of a threshold that is not a number: `systematicAt` is the judgement the whole reading turns
+on, and a judgement nobody made classifies nothing, so it too is `unstated` rather than whichever
+side of a comparison with `NaN` happens to fall through. -/
 def classifyBand (g : Quantity k Float) (u : Dispersion k Float) (hk : k.IsRational)
     (systematicAt : Quantity coverageFactor Float)
     (price : Quantity coverageFactor Float → Option (Quantity probability Float)) : BandReading :=
-  if !(u.magnitude > 0.0) then .unstated
+  if !(u.magnitude > 0.0) || systematicAt.magnitude.isNaN then .unstated
   else
     let factor := Quantity.div (bandReadingLaw k hk) g u.q
     if factor.magnitude.isNaN then .unstated
