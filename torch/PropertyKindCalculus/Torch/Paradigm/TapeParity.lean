@@ -46,8 +46,6 @@ open PropertyKindCalculus.Paradigm.TapeBuilder
 open Proofs.Autograd.Builder (run_add_ok run_sub_ok run_mul_ok run_div_ok run_min_ok run_max_ok
   run_sqrt_ok run_exp_ok)
 
-set_option linter.unusedSimpArgs false
-
 variable {s : Shape}
 
 /-! ## The `TapeM`→`Tape` run bridge
@@ -107,8 +105,7 @@ theorem bin_run (f : Nat → Nat → TapeM Float Nat) (x y : TapeBuilder s)
     (hf : (f idA idB).run tB = .ok (id, t')) :
     (TapeBuilder.bin f x y).run t = .ok (id, t') := by
   unfold TapeBuilder.bin
-  simp only [TapeM.run, StateT.run, StateT.bind, StateT.pure, StateT.lift, StateT.map,
-    bind, Bind.bind, pure, Pure.pure, Functor.map, Except.bind, Except.pure, hx, hy]
+  simp only [StateT.bind, bind, Bind.bind, Except.bind, hx, hy]
   exact hf
 
 /-- Reduce `(un f x).run` given the operand sub-run (the carrier's unary-op threading). -/
@@ -117,8 +114,7 @@ theorem un_run (f : Nat → TapeM Float Nat) (x : TapeBuilder s)
     (hx : x.run t = .ok (idA, tA)) (hf : (f idA).run tA = .ok (id, t')) :
     (TapeBuilder.un f x).run t = .ok (id, t') := by
   unfold TapeBuilder.un
-  simp only [TapeM.run, StateT.run, StateT.bind, StateT.pure, StateT.lift, StateT.map,
-    bind, Bind.bind, pure, Pure.pure, Functor.map, Except.bind, Except.pure, hx]
+  simp only [StateT.bind, bind, Bind.bind, Except.bind, hx]
   exact hf
 
 /-- **Generic op-preservation.** If a tape op is forward-faithful to a `Spec` op (delivers
