@@ -212,29 +212,32 @@ def kindDiagnosticMarks (env : Environment) : Array ContractMark :=
 structure Subject where
   /-- The `Provenance.Contract` declaration. -/
   decl : Name
-  /-- Its value, or `none` when the constant is a `Provenance.Contract` at node or kind
-  types other than `NodeId`/`KindRef` and cannot be read as one. -/
-  value? : Option (Provenance.Contract Provenance.NodeId Provenance.KindRef)
+  /-- Its value, or the message `contractValueOf` threw when it could not be read: the
+  constant is a `Provenance.Contract` at node or kind types other than `NodeId`/`KindRef`,
+  the evaluator is unavailable, or evaluation failed. A counterexample is not read. -/
+  value : Except String (Provenance.Contract Provenance.NodeId Provenance.KindRef)
   /-- `@[kindCounterexample]`-marked: not a subject, listed as exempted. -/
   counterexample : Bool
 
 /-- Every `Provenance.Contract` under the scope — `#kind_contracts`' own population
-(`contractSweepSubjects`), the counterexamples included and flagged. -/
+(`contractSweepSubjects`), the counterexamples included and flagged. A boundary whose value
+cannot be read keeps the cause, so the `UNREADABLE` row reports it rather than a guess. -/
 def subjects (scope : Array Name) : Elab.TermElabM (Array Subject) := do
   let (names, exempted) ← contractSweepSubjects scope
   let mut out : Array Subject := #[]
   for n in names do
-    let value? ← try some <$> contractValueOf n catch _ => pure none
-    out := out.push { decl := n, value?, counterexample := false }
+    let value ← try .ok <$> contractValueOf n
+      catch e => pure (.error (← e.toMessageData.toString))
+    out := out.push { decl := n, value, counterexample := false }
   for n in exempted do
-    out := out.push { decl := n, value? := none, counterexample := true }
+    out := out.push { decl := n, value := .error "counterexample", counterexample := true }
   return out
 
 /-- The boundary's declared name, quoted, or `(?)` when the value cannot be read. -/
 def Subject.tag (s : Subject) : String :=
-  match s.value? with
-  | some c => s!"('{c.name}')"
-  | none   => "(?)"
+  match s.value with
+  | .ok c    => s!"('{c.name}')"
+  | .error _ => "(?)"
 
 /-- Every theorem edge in the environment that is not a counterexample, with its value, sorted
 by declaration. **Unscoped**: a theorem edge may live beside a deployment rather than beside
@@ -283,6 +286,11 @@ structure Row where
   /-- The report line. -/
   line : String
   deriving Repr, Inhabited
+
+/-- The `⚠ UNREADABLE` row for a boundary whose value could not be read, carrying the
+cause `subjects` captured; `tail` is what the census appends after it. -/
+def Subject.unreadableRow (s : Subject) (cause : String) (tail : String := "") : Row :=
+  ⟨.violation, s!"⚠ UNREADABLE {s.decl} — {cause}{tail}"⟩
 
 /-- Count the rows with a verdict. -/
 def count (rows : Array Row) (v : Verdict) : Nat :=
@@ -373,17 +381,16 @@ def mereologyRows (scope : Array Name) : Elab.TermElabM (Array Row) := do
     if s.counterexample then
       out := out.push ⟨.exempted, s!"⊘ exempted {s.decl} — counterexample"⟩
       continue
-    let some c := s.value?
-      | out := out.push ⟨.violation,
-          s!"⚠ UNREADABLE {s.decl} — not a `Contract NodeId KindRef`"⟩
-        continue
-    for p in c.ports do
-      unless p.dir.produced do continue
-      match c.aggregations.find? (·.1 == p.node) with
-      | some (_, a) =>
-        out := out.push ⟨.ok, s!"[classed] {s.decl} :: {p.node.render} : {p.kind.render} — {a.label}"⟩
-      | none =>
-        out := out.push ⟨.violation, s!"⚠ UNDECLARED {s.decl} :: {p.node.render} : {p.kind.render}"⟩
+    match s.value with
+    | .error cause => out := out.push (s.unreadableRow cause)
+    | .ok c =>
+      for p in c.ports do
+        unless p.dir.produced do continue
+        match c.aggregations.find? (·.1 == p.node) with
+        | some (_, a) =>
+          out := out.push ⟨.ok, s!"[classed] {s.decl} :: {p.node.render} : {p.kind.render} — {a.label}"⟩
+        | none =>
+          out := out.push ⟨.violation, s!"⚠ UNDECLARED {s.decl} :: {p.node.render} : {p.kind.render}"⟩
   return out
 
 /-- The summary line: ports counted, exempted boundaries beside them, `clean` exactly when no
@@ -462,18 +469,17 @@ def inversionRows (scope : Array Name) : Elab.TermElabM (Array Row) := do
     if s.counterexample then
       out := out.push ⟨.exempted, s!"⊘ exempted {s.decl} — counterexample; {via}"⟩
       continue
-    let some c := s.value?
-      | out := out.push ⟨.violation,
-          s!"⚠ UNREADABLE {s.decl} — not a `Contract NodeId KindRef`; {via}"⟩
-        continue
-    let gs := guards c
-    if !gs.isEmpty then
-      out := out.push ⟨.ok,
-        s!"[guarded] {s.decl} {s.tag} — conditional {String.intercalate ", " gs}; {via}"⟩
-    else match marks.find? (·.decl == s.decl) with
-      | some m =>
-        out := out.push ⟨.exempted, s!"⊘ exempted {s.decl} {s.tag} — {m.reason}; {via}"⟩
-      | none => out := out.push ⟨.violation, s!"⚠ UNGUARDED {s.decl} {s.tag} — {via}"⟩
+    match s.value with
+    | .error cause => out := out.push (s.unreadableRow cause s!"; {via}")
+    | .ok c =>
+      let gs := guards c
+      if !gs.isEmpty then
+        out := out.push ⟨.ok,
+          s!"[guarded] {s.decl} {s.tag} — conditional {String.intercalate ", " gs}; {via}"⟩
+      else match marks.find? (·.decl == s.decl) with
+        | some m =>
+          out := out.push ⟨.exempted, s!"⊘ exempted {s.decl} {s.tag} — {m.reason}; {via}"⟩
+        | none => out := out.push ⟨.violation, s!"⚠ UNGUARDED {s.decl} {s.tag} — {via}"⟩
   return out
 
 /-- The summary line. -/
@@ -613,9 +619,8 @@ def diagnosticRows (scope : Array Name) : Elab.TermElabM (Array Row) := do
   let mut out : Array Row := #[]
   for s in subs do
     if s.counterexample then continue
-    if s.value?.isNone then
-      out := out.push ⟨.violation,
-        s!"⚠ UNREADABLE {s.decl} — not a `Contract NodeId KindRef`"⟩
+    if let .error cause := s.value then
+      out := out.push (s.unreadableRow cause)
   for m in marks.qsort (fun a b => a.decl.toString < b.decl.toString) do
     -- exact: a port states its kind by the name the environment resolves, which is the
     -- same name the mark carries — two marks whose names merely share a suffix cannot
@@ -623,7 +628,7 @@ def diagnosticRows (scope : Array Name) : Elab.TermElabM (Array Row) := do
     let mut hits : Array String := #[]
     for s in subs do
       if s.counterexample then continue
-      let some c := s.value? | continue
+      let .ok c := s.value | continue
       for p in c.ports do
         unless p.dir.produced do continue
         if p.kind == .decl m.decl then

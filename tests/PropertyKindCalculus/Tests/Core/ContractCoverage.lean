@@ -30,8 +30,10 @@ One probe world, every verdict class of every census exercised, the full reports
 
 Then each gate: it throws on the probe world, and passes silently on a sub-namespace where
 everything is declared or exempted — an exemption is not a violation and must not fire it.
-Finally the attributes' own refusals: a mark on something that is not a `Provenance.Contract`,
-and a mark with a blank reason.
+Then, in a namespace of its own, a boundary of the right type with no executable code: its
+`UNREADABLE` row carries the evaluator's message, not the type diagnosis — a census names
+the cause it met, never a cause it assumed. Finally the attributes' own refusals: a mark on
+something that is not a `Provenance.Contract`, and a mark with a blank reason.
 -/
 
 module
@@ -292,7 +294,7 @@ info: mereology coverage:
 ⊘ exempted PropertyKindCalculus.Tests.ContractCoverage.Exempt.keptCounterexample — counterexample
 ⚠ UNDECLARED PropertyKindCalculus.Tests.ContractCoverage.Bare.orphan :: fwd/result : bK
 ⚠ UNDECLARED PropertyKindCalculus.Tests.ContractCoverage.Bare.unguardedInverse :: inv/result : aK
-⚠ UNREADABLE PropertyKindCalculus.Tests.ContractCoverage.Weird.unreadable — not a `Contract NodeId KindRef`
+⚠ UNREADABLE PropertyKindCalculus.Tests.ContractCoverage.Weird.unreadable — 'PropertyKindCalculus.Tests.ContractCoverage.Weird.unreadable' is not a 'Provenance.Contract NodeId KindRef'
 9 produced port(s): 7 classed, 2 UNDECLARED; 1 boundary(ies) exempted; 1 UNREADABLE — mereology-coverage violation
 -/
 #guard_msgs (whitespace := lax) in
@@ -328,7 +330,7 @@ info: well-posedness coverage:
 info: diagnostic coverage:
 [exported] PropertyKindCalculus.Tests.ContractCoverage.qcK — PropertyKindCalculus.Tests.ContractCoverage.Good.invBoundary :: inv/quality
 ⚠ SIDECHANNELED PropertyKindCalculus.Tests.ContractCoverage.hiddenK (the fit's conditioning pivot) — no produced port in scope carries it
-⚠ UNREADABLE PropertyKindCalculus.Tests.ContractCoverage.Weird.unreadable — not a `Contract NodeId KindRef`
+⚠ UNREADABLE PropertyKindCalculus.Tests.ContractCoverage.Weird.unreadable — 'PropertyKindCalculus.Tests.ContractCoverage.Weird.unreadable' is not a 'Provenance.Contract NodeId KindRef'
 2 diagnostic kind(s): 1 exported, 1 SIDECHANNELED; 1 UNREADABLE — diagnostic-coverage violation
 -/
 #guard_msgs (whitespace := lax) in
@@ -351,7 +353,7 @@ A module's behavior is a measurement model carried as a theorem edge, not prose 
 error: mereology coverage: 3 produced port(s) with no mereology declaration — mereology-coverage violation
   ⚠ UNDECLARED PropertyKindCalculus.Tests.ContractCoverage.Bare.orphan :: fwd/result : bK
   ⚠ UNDECLARED PropertyKindCalculus.Tests.ContractCoverage.Bare.unguardedInverse :: inv/result : aK
-  ⚠ UNREADABLE PropertyKindCalculus.Tests.ContractCoverage.Weird.unreadable — not a `Contract NodeId KindRef`
+  ⚠ UNREADABLE PropertyKindCalculus.Tests.ContractCoverage.Weird.unreadable — 'PropertyKindCalculus.Tests.ContractCoverage.Weird.unreadable' is not a 'Provenance.Contract NodeId KindRef'
 A license to shard or recarve is derived from the port's declared aggregation class, not from the fact that a sharded run worked. Add an `aggregations` entry for each port at issue — `.intensive` for a value that must never be summed over a carving, `.wholeProper` for one its parts do not determine, `.extensive` (or a qualified class) where it composes. There is no exemption mark: the vocabulary already names every honest negative. Do NOT re-pin a `#kind_mereology_coverage` report whose summary says `violation` — that turns the build green and the census off.
 -/
 #guard_msgs (whitespace := lax) in
@@ -381,7 +383,7 @@ An inversion either has exactly one answer on a declared domain or it does not, 
 
 error: diagnostic coverage: 2 diagnostic kind(s) no declared boundary exports — diagnostic-coverage violation
   ⚠ SIDECHANNELED PropertyKindCalculus.Tests.ContractCoverage.hiddenK (the fit's conditioning pivot) — no produced port in scope carries it
-  ⚠ UNREADABLE PropertyKindCalculus.Tests.ContractCoverage.Weird.unreadable — not a `Contract NodeId KindRef`
+  ⚠ UNREADABLE PropertyKindCalculus.Tests.ContractCoverage.Weird.unreadable — 'PropertyKindCalculus.Tests.ContractCoverage.Weird.unreadable' is not a 'Provenance.Contract NodeId KindRef'
 A quality or conditioning output a consumer must read is part of the declared contract, not a side channel a downstream stage may or may not read. Give some boundary in scope a produced port at each kind at issue — `conditional` where the value exists only in some cases, with its decider named — or, where the kind is not in fact a diagnostic a consumer needs, remove its `@[kindDiagnostic]` mark: enrollment is the mark, so the mark is also the exemption. Do NOT re-pin a `#kind_diagnostic_coverage` report whose summary says `violation` — that turns the build green and the census off.
 -/
 #guard_msgs (whitespace := lax) in
@@ -447,6 +449,27 @@ end Clean
 -- no message: the one diagnostic kind under `Clean` is exported as a port
 #guard_msgs in
 #kind_diagnostic_clean PropertyKindCalculus.Tests.ContractCoverage.Clean
+
+/-! ## An unreadable boundary names its cause
+
+Scoped to its own namespace so the pins above stay as they are. -/
+namespace Opaque
+
+/-- A `Contract NodeId KindRef` by type that the evaluator cannot read: `contractValueOf`
+passes its type check and the evaluator throws. -/
+noncomputable def unevaluable : Provenance.Contract NodeId KindRef :=
+  Classical.choice ⟨Good.fwdBoundary⟩
+
+end Opaque
+
+-- the row's cause is what the evaluator said, not "not a `Contract NodeId KindRef`"
+/--
+info: mereology coverage:
+⚠ UNREADABLE PropertyKindCalculus.Tests.ContractCoverage.Opaque.unevaluable — failed to compile definition, consider marking it as 'noncomputable' because it depends on 'PropertyKindCalculus.Tests.ContractCoverage.Opaque.unevaluable', which is 'noncomputable'
+0 produced port(s): 0 classed, 0 UNDECLARED; 1 UNREADABLE — mereology-coverage violation
+-/
+#guard_msgs (whitespace := lax) in
+#kind_mereology_coverage PropertyKindCalculus.Tests.ContractCoverage.Opaque
 
 /-! ## The attributes' own refusals -/
 
