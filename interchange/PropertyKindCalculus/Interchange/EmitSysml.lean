@@ -276,7 +276,7 @@ def requirement (p : Printer) (r : Requirement) : Printer :=
     let p := p.line s!":>> name = {str r.title}; :>> statement = {str r.statement};"
     let p := p.line s!":>> kind = {requirementLit r.kind}; :>> governs = {str r.governs};"
     let p := optBind p "'port'" false r.port
-    let p := optBind p "scope" false r.scope
+    let p := optBind p "scope" false r.scope.render
     let p := optBind p "witness" false r.witness
     let p := listBind p "spotChecks" false r.spotChecks
     let p := optBind p "absent" false r.absent

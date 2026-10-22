@@ -164,6 +164,36 @@ inductive RequirementKind where
   | provable | empirical
 deriving Repr, BEq, DecidableEq, Inhabited, ToJson, FromJson
 
+/-- The objects a requirement quantifies over — `Provenance.RequirementScope` with its names
+rendered. In the DSL it is the optional `scope` string binding: `ReqScope.render` prints it and
+`ReqScope.parse` reads it back, the one place the binding's syntax lives. -/
+inductive ReqScope where
+  | all
+  | sort (sort : String)
+  | objects (objects : List String)
+  | decided (decider : String)
+deriving Repr, BEq, DecidableEq, Inhabited, ToJson, FromJson
+
+/-- The `scope` binding: `sort S`, `objects A, B` or `decided D`; absent for `.all`. -/
+def ReqScope.render : ReqScope → Option String
+  | .all => none
+  | .sort s => some s!"sort {s}"
+  | .objects os => some ("objects " ++ String.intercalate ", " os)
+  | .decided d => some s!"decided {d}"
+
+/-- The scope a `scope` binding denotes: absent is `.all`; a string in none of the three forms
+`render` prints is an error, never silently the widest scope. -/
+def ReqScope.parse : Option String → Except String ReqScope
+  | none => pure .all
+  | some s =>
+    let after (prefix_ : String) : Option String :=
+      if s.startsWith prefix_ then some (s.drop prefix_.length).toString else none
+    if let some n := after "sort " then pure (.sort n)
+    else if let some d := after "decided " then pure (.decided d)
+    else if let some os := after "objects " then
+      pure (.objects (if os.isEmpty then [] else os.splitOn ", "))
+    else throw s!"unknown scope '{s}' (expected `sort S`, `objects A, B` or `decided D`)"
+
 /-- A kind-typed port: the node, the kind the signature states, and its role. -/
 structure Port where
   name : String
@@ -262,7 +292,7 @@ structure Requirement where
   kind : RequirementKind
   governs : String
   port : Option String := none
-  scope : Option String := none
+  scope : ReqScope := .all
   witness : Option String := none
   spotChecks : List String := []
   absent : Option String := none

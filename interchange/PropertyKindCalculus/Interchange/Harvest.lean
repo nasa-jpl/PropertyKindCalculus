@@ -421,11 +421,11 @@ def License.ofProvenance (l : Provenance.RelationLicense) : License :=
 def RequirementKind.ofProvenance : Provenance.RequirementKind → RequirementKind
   | .provable => .provable | .empirical => .empirical
 
-def scopeString : Provenance.RequirementScope → Option String
-  | .all => none
-  | .sort s => some s!"sort {s}"
-  | .objects os => some ("objects " ++ String.intercalate ", " (os.map toString))
-  | .decided d => some s!"decided {d}"
+def ReqScope.ofProvenance : Provenance.RequirementScope → ReqScope
+  | .all => .all
+  | .sort s => .sort (toString s)
+  | .objects os => .objects (os.map toString)
+  | .decided d => .decided (toString d)
 
 def optName (n : Name) : Option String := if n.isAnonymous then none else some (toString n)
 
@@ -528,7 +528,7 @@ def harvestRequirements (consts : Array Name) : HarvestM Unit := do
     let req : Requirement :=
       { name := c.lastComponentAsString, title := r.name, statement := r.statement,
         kind := RequirementKind.ofProvenance r.kind, governs := ← moduleNameOf r.governs,
-        port := r.port.map (·.render), scope := scopeString r.scope, witness := optName r.witness,
+        port := r.port.map (·.render), scope := ReqScope.ofProvenance r.scope, witness := optName r.witness,
         spotChecks := r.spotChecks.map toString, absent := optName r.absent,
         referents := r.referents.map toString, source := some (toString c) }
     modifyModel fun m => { m with requirements := m.requirements ++ [req] }
