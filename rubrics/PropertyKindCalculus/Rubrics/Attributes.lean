@@ -162,29 +162,56 @@ def Conformance.missingAudits (c : Conformance) (env : Environment) (r : Rubric)
 /-- The **evidence-derived status** of a rubric for a document — a computed fact
 about the sites it declared and the audits that ran, never a hand-typed assertion:
 
-  * the rubric's own `dischargedWord` (`stated` / `generated` / `proved` /
-    `measured`) once every channel its evidence kind requires has a site **and**
-    every audit its closure names has left a receipt covering `declScope`;
-  * `"partial"` when it has sites but not in every required channel — the case a
+  * `discharged e` once every channel the rubric's evidence kind `e` requires has a
+    site **and** every audit its closure names has left a receipt covering
+    `declScope`; it prints as the kind's own `dischargedWord` (`stated` /
+    `generated` / `proved` / `measured`);
+  * `incomplete` (printed `partial`) when it has sites but not in every required channel — the case a
     single "done" would hide, in either direction: a generated view cited by section
     with no generator named, or a theorem annotated with no section citing it — or
     when a named audit has not run (`missingAudits` says which);
-  * `"unaddressed"` when the document offers no site at all.
--/
-def Conformance.status (c : Conformance) (env : Environment) (r : Rubric) : String :=
+  * `unaddressed` when the document offers no site at all.
+
+Consumers match on the constructors, so an outcome cannot be miscounted by a
+misspelt word: adding or renaming one is an exhaustiveness error at every match. -/
+inductive ConformanceStatus where
+  /-- No site at all. -/
+  | unaddressed
+  /-- Sites in some but not every required channel, or a named audit not yet run. -/
+  | incomplete
+  /-- Every required channel has a site and every named audit has a receipt. -/
+  | discharged (e : Evidence)
+  deriving Repr, Inhabited, DecidableEq, BEq
+
+/-- The status as printed: the evidence kind's `dischargedWord` for a discharged
+rubric, `partial` or `unaddressed` otherwise. -/
+def ConformanceStatus.label : ConformanceStatus → String
+  | .unaddressed  => "unaddressed"
+  | .incomplete   => "partial"
+  | .discharged e => e.dischargedWord
+
+instance : ToString ConformanceStatus := ⟨ConformanceStatus.label⟩
+
+/-- Whether the status is `discharged`. -/
+def ConformanceStatus.isDischarged : ConformanceStatus → Bool
+  | .discharged _ => true
+  | .unaddressed | .incomplete => false
+
+/-- The status of rubric `r` for document `c`; see `ConformanceStatus`. -/
+def Conformance.status (c : Conformance) (env : Environment) (r : Rubric) :
+    ConformanceStatus :=
   let decls := c.declSites env r.id
   let secs := c.sectionSites r.id
-  if decls.isEmpty && secs.isEmpty then "unaddressed"
+  if decls.isEmpty && secs.isEmpty then .unaddressed
   else
     let declOk := !r.evidence.needsDecl || !decls.isEmpty
     let secOk := !r.evidence.needsSection || !secs.isEmpty
     let auditsOk := (c.missingAudits env r).isEmpty
-    if declOk && secOk && auditsOk then r.evidence.dischargedWord else "partial"
+    if declOk && secOk && auditsOk then .discharged r.evidence else .incomplete
 
 /-- Whether a rubric is fully addressed by `c`. -/
 def Conformance.addressed (c : Conformance) (env : Environment) (r : Rubric) : Bool :=
-  let s := c.status env r
-  s != "unaddressed" && s != "partial"
+  (c.status env r).isDischarged
 
 /-- How a document stands against its template: the raw material for the matrix's
 headline claim. -/
@@ -204,9 +231,9 @@ def Conformance.tally (c : Conformance) (env : Environment) : Tally :=
   c.template.rubrics.foldl (init := ⟨0, 0, 0, 0⟩) fun t r =>
     let t := { t with total := t.total + 1 }
     match c.status env r with
-    | "unaddressed" => { t with unaddressed := t.unaddressed + 1 }
-    | "partial"     => { t with incomplete := t.incomplete + 1 }
-    | _             => { t with addressed := t.addressed + 1 }
+    | .unaddressed  => { t with unaddressed := t.unaddressed + 1 }
+    | .incomplete   => { t with incomplete := t.incomplete + 1 }
+    | .discharged _ => { t with addressed := t.addressed + 1 }
 
 end PropertyKindCalculus.Rubrics
 

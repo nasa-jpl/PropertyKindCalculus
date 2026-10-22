@@ -156,23 +156,46 @@ def requirementDischarged (env : Environment) (id : String) : Bool :=
 annotations, never a hand-typed assertion — reported in the vocabulary of the
 requirement's *kind*:
 
-  * a **verifiable** requirement is `"proved"` once some declaration is annotated
-    `proves`; an **expressiveness** requirement is `"demonstrated"` once some
-    declaration is annotated `exemplifies` (a construction that typechecks);
-  * `"specified"`   when it is addressed but not yet discharged in its kind's role;
-  * `"unaddressed"` when no declaration references it at all.
+  * `discharged k` once some declaration is annotated in the kind's discharging
+    role: it prints as `proved` for a **verifiable** requirement (a `proves`
+    theorem) and `demonstrated` for an **expressiveness** one (an `exemplifies`
+    construction that typechecks);
+  * `specified`   when it is addressed but not yet discharged in its kind's role;
+  * `unaddressed` when no declaration references it at all.
 
 Because this is a function of the harvested metadata and the requirement's kind,
 the status can never disagree with the source: adding the discharging annotation is
-what flips a requirement to `"proved"`/`"demonstrated"`, and there is no other
-switch to forget to flip. -/
-def requirementStatus (env : Environment) (id : String) : String :=
-  if (refsForRequirement env id).isEmpty then "unaddressed"
-  else if requirementDischarged env id then
-    match requirementKind id with
-    | .verifiable     => "proved"
-    | .expressiveness => "demonstrated"
-  else "specified"
+what flips a requirement to `discharged`, and there is no other switch to forget to
+flip. Consumers match on the constructors rather than on the printed words. -/
+inductive RequirementStatus where
+  /-- No declaration references the requirement. -/
+  | unaddressed
+  /-- Referenced, but not yet in its kind's discharging role. -/
+  | specified
+  /-- Discharged in the role its kind `k` requires. -/
+  | discharged (k : RequirementKind)
+  deriving Repr, Inhabited, DecidableEq, BEq
+
+/-- The status as printed: `proved` / `demonstrated` by kind for a discharged
+requirement, `specified` or `unaddressed` otherwise. -/
+def RequirementStatus.label : RequirementStatus → String
+  | .unaddressed  => "unaddressed"
+  | .specified    => "specified"
+  | .discharged .verifiable     => "proved"
+  | .discharged .expressiveness => "demonstrated"
+
+instance : ToString RequirementStatus := ⟨RequirementStatus.label⟩
+
+/-- Whether the status is `discharged`. -/
+def RequirementStatus.isDischarged : RequirementStatus → Bool
+  | .discharged _ => true
+  | .unaddressed | .specified => false
+
+/-- The status of requirement `id`; see `RequirementStatus`. -/
+def requirementStatus (env : Environment) (id : String) : RequirementStatus :=
+  if (refsForRequirement env id).isEmpty then .unaddressed
+  else if requirementDischarged env id then .discharged (requirementKind id)
+  else .specified
 
 /-- A count of how the catalogue's requirements stand, split by kind — the raw
 material for the matrix's headline claim. -/
