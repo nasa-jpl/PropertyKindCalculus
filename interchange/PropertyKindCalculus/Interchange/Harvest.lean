@@ -202,10 +202,16 @@ partial def kindConstOf? (e : Expr) : Option Name :=
 def kindName? (n : Name) : HarvestM (Option String) := do
   return (← get).kindOf[n]?
 
-def kindNameOfExpr? (e : Expr) : HarvestM (Option String) := do
-  match kindConstOf? e with
-  | some c => kindName? c
-  | none => return none
+/-- The element name of the kind an expression denotes, for the edge `what` of the declaration
+`c`. `none` — with a warning — when it names a kind in scope (`consts`) the harvester skipped;
+`none` silently for a kind outside the scope or no constant kind at all (a bound kind, a
+literal), which leaves the edge to the reader. -/
+def kindNameOfExpr? (consts : Array Name) (c : Name) (what : String) (e : Expr) :
+    HarvestM (Option String) := do
+  let some k := kindConstOf? e | return none
+  if let some name ← kindName? k then return some name
+  if consts.contains k then warn s!"{c}: {what} skipped: its kind {k} was not harvested"
+  return none
 
 def kindNameById? (id : String) : HarvestM (Option String) := do
   return (← get).kindById[id]?
@@ -325,8 +331,8 @@ def harvestSpecialization (consts : Array Name) : HarvestM Unit := do
       let concl := ci.type.getForallBody
       unless concl.isAppOfArity rel 2 do continue
       let args := concl.getAppArgs
-      let some a ← kindNameOfExpr? args[0]! | continue
-      let some b ← kindNameOfExpr? args[1]! | continue
+      let some a ← kindNameOfExpr? consts ctor "specialization" args[0]! | continue
+      let some b ← kindNameOfExpr? consts ctor "specialization" args[1]! | continue
       modifyModel fun m => { m with kinds := m.kinds.map fun k =>
         if k.name != a then k else
           { k with specializes := if k.specializes.contains b then k.specializes else k.specializes ++ [b],
@@ -343,9 +349,11 @@ read off the constant's registry entry in `KindEdges.specs`. -/
 def edgeFamilyOf (c : Name) : Option (EdgeKind × Bool) :=
   (KindEdges.specOf? c).map fun spec => (edgeKindOfLaw spec.law, spec.isTable)
 
-/-- A rational literal of the declaration `c`, as an expression `OfScientific`/`OfNat` builds
-it, read by evaluation. -/
-def evalRat (c : Name) (e : Expr) : HarvestM (Option Rat) := eval? Rat c (mkConst ``Rat) e
+/-- The power exponent of the witness `c`, a rational literal as an expression
+`OfScientific`/`OfNat` builds it, read by evaluation; `none` — with a warning naming the
+exponent, since the edge is still harvested without it — when it cannot be read. -/
+def evalRat (c : Name) (e : Expr) : HarvestM (Option Rat) :=
+  attempt c "power exponent" (eval Rat (mkConst ``Rat) e)
 
 /-- Harvest the kind algebra: declarations whose type is a witness `Prop` over constant
 kinds — instances of `KindMul`/`KindDiv` and authored `ProductKind …` facts. -/
@@ -364,9 +372,10 @@ def harvestAlgebra (consts : Array Name) : HarvestM Unit := do
     let mut names : List String := []
     let mut ok := true
     for a in kindArgs do
-      match ← kindNameOfExpr? a with
-      | some n => names := names ++ [n]
-      | none => ok := false
+      if ok then
+        match ← kindNameOfExpr? consts c "edge" a with
+        | some n => names := names ++ [n]
+        | none => ok := false
     unless ok do continue
     let (operands, result) := match fam with
       | .difference => (names, none)

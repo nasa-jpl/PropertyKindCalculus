@@ -8,8 +8,8 @@ citations all name declarations of the environment, and the element-form reader 
 the DSL's conventions — keywords, redefinition chains, defaults, nested records, connection
 ends, negative literals — from a hand-built element list (`Tests.Interchange.ApiJson`).
 Both harvests are complete — no declaration in scope is skipped — and a scope with a kind
-that cannot be evaluated and a unit whose kind is out of scope (`Partial`) harvests without
-them and reports both. The full round trip through OpenSysML,
+that cannot be evaluated, a specialization citing it and a unit whose kind is out of scope
+(`Partial`) harvests without them and reports all three. The full round trip through OpenSysML,
 `read (api-json (emit (harvest))) = harvest`, needs the `sysml` converter and runs as
 `scripts/roundtrip-sysml.sh`.
 -/
@@ -75,12 +75,14 @@ run_meta do
     throwError "generated module should define 2 relations"
 
 -- A declaration the harvester cannot read is skipped and reported, never dropped silently:
--- a kind that cannot be evaluated and a unit whose kind is out of scope each leave a
--- warning naming them, and the model carries neither.
+-- a kind that cannot be evaluated, a specialization citing that kind, and a unit whose kind
+-- is out of scope each leave a warning naming them, and the model carries none of them.
 namespace Partial
 noncomputable def unreadableKind : KindOfProperty :=
   { id := Classical.choice ⟨"unreadable"⟩, scale := .ratio }
 def readableKind : KindOfProperty := { id := "readable", scale := .ratio }
+inductive Edge : KindOfProperty → KindOfProperty → Prop
+  | readable_unreadable : Edge readableKind unreadableKind
 def strayUnit : PropertyKindCalculus.MetrologicalUnit :=
   { kind := Tutorial.HarmonicOscillator.complianceK, symbol := "m/N" }
 end Partial
@@ -90,9 +92,15 @@ run_meta do
   unless m.kinds.map (·.name) == ["readableKind"] do
     throwError "only the readable kind should be harvested, got {m.kinds.map (·.name)}"
   unless m.units.isEmpty do throwError "a unit of an out-of-scope kind should be skipped"
-  unless skipped.size == 2 do throwError "expected 2 skipped declarations, got {skipped}"
+  unless (m.kinds.map (·.specializes)).all (·.isEmpty) do
+    throwError "a specialization of an unharvested kind should be skipped"
+  unless skipped.size == 3 do throwError "expected 3 skipped declarations, got {skipped}"
   unless skipped.any (fun w => w.startsWith "PropertyKindCalculus.Tests.Interchange.Partial.unreadableKind: value not read:") do
     throwError "the unreadable kind should be reported: {skipped}"
+  unless skipped.any (· == "PropertyKindCalculus.Tests.Interchange.Partial.Edge.readable_unreadable: \
+      specialization skipped: its kind PropertyKindCalculus.Tests.Interchange.Partial.unreadableKind \
+      was not harvested") do
+    throwError "the specialization of the unreadable kind should be reported: {skipped}"
   unless skipped.any (· == "PropertyKindCalculus.Tests.Interchange.Partial.strayUnit: unit skipped: \
       its kind 'compliance' is not a harvested kind") do
     throwError "the stray unit should be reported: {skipped}"
