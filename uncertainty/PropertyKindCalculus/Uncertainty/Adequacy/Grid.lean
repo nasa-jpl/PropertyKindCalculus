@@ -3,13 +3,14 @@
 (Stage 3, `UNCERTAINTY.md` §4). The specification carrier for numerical adequacy.
 
 A binary floating-point format is, *near any fixed magnitude*, a uniform grid of representable reals
-spaced one unit in the last place (`ulp`) apart. TorchLean's `FP32` layer realizes exactly this grid
-over `ℝ`: `TorchLean.Floats.ulp32` is the spacing and
-`FP32.round_abs_error : |round32 x − x| ≤ ulp32 x / 2` its half-ulp bound (both `noncomputable` ℝ
-specs — see `Adequacy.Fp32Grounding`). This module abstracts that grid to a *uniform spacing*
-`u = ulp > 0`, which is all the absorption/soundness arguments (`Absorption`, `Soundness`) and the
-cancellation argument (`Sterbenz32`) need: they are local statements at one magnitude, where the
-binary32 grid *is* uniform. Nothing here is `noncomputable`-dependent; it is pure Mathlib `ℝ`.
+spaced one unit in the last place (`ulp`) apart. `PropertyKindCalculus.Torch.Fp32Spec` realizes
+exactly this grid over `ℝ` for binary32: `ulp32` is the spacing, `eps32` its half, and
+`FP32.round_abs_error : |round32 x − x| ≤ eps32 x` the half-ulp bound (all `noncomputable` ℝ specs
+over TorchLean's `FP32` — see `Adequacy.Fp32Grounding`). This module abstracts that grid to a
+*uniform spacing* `u = ulp > 0`, which is all the absorption/soundness arguments (`Absorption`,
+`Soundness`) and the cancellation argument (`Sterbenz32`) need: they are local statements at one
+magnitude, where the binary32 grid *is* uniform. This module depends only on Mathlib's `ℝ` — not on
+TorchLean or `Fp32Spec`; `gridRound` is `noncomputable` only because Mathlib's `round` on `ℝ` is.
 
   * `gridRound u x` — round `x` to the nearest point of the grid `u·ℤ` (round-to-nearest, ties up),
     the local model of a floating-point round.
@@ -68,8 +69,9 @@ theorem gridRound_onGrid {u x : ℝ} (hu : u ≠ 0) (h : OnGrid u x) : gridRound
   rw [mul_div_assoc, div_self hu, mul_one, round_intCast]
   ring
 
-/-- **The half-ulp bound** `|gridRound u x − x| ≤ u/2` — the local mirror of TorchLean's
-`FP32.round_abs_error : |round32 x − x| ≤ ulp32 x / 2`. -/
+/-- **The half-ulp bound** `|gridRound u x − x| ≤ u/2` — the local mirror of `Fp32Spec`'s
+`FP32.round_abs_error : |round32 x − x| ≤ eps32 x`, with the uniform `u / 2` in place of the
+half-ulp `eps32 x`. -/
 theorem abs_sub_gridRound_le {u : ℝ} (x : ℝ) (hu : 0 < u) : |gridRound u x - x| ≤ u / 2 := by
   have hune : u ≠ 0 := ne_of_gt hu
   have h : gridRound u x - x = u * ((round (x / u) : ℝ) - x / u) := by
