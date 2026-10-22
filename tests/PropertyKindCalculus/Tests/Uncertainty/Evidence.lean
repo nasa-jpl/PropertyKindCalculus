@@ -255,6 +255,19 @@ private abbrev Kc := Paradigm.Platform.storageCapacity
   | _ => false
 -- No uncertainty to divide by ⇒ the band's meaning is unavailable, which is not a band of zero.
 #guard match readBand (q 4.50) ⟨q 0.0⟩ with | .unstated => true | _ => false
+-- An unbounded band over an unbounded `u` is `∞/∞`: a factor that is not a number, and so not a
+-- reading — neither a systematic (never tighten) nor a coverage statement (may shrink).
+#guard match readBand (q (1.0 / 0.0)) ⟨q (1.0 / 0.0)⟩ with | .unstated => true | _ => false
+-- An unbounded band over a finite `u` is a factor of `∞`, past every threshold: a systematic.
+#guard match readBand (q (1.0 / 0.0)) ⟨q 1.0⟩ with | .systematic _ => true | _ => false
+-- The threshold itself is still a coverage statement — `6 u` is where the Gaussian consumer's
+-- risk reaches `1e-9`, not where it stops being a risk.
+#guard match readBand (q 6.0) ⟨q 1.0⟩ systematicThreshold with
+  | .coverage f _ => f.closeTo systematicThreshold exactTol
+  | _ => false
+-- A threshold that is not a number is a judgement nobody made: it classifies nothing, so a band
+-- of tens is neither a systematic nor — worse — a coverage statement under it.
+#guard match readBand (q 41.0) ⟨q 1.0⟩ ⟨0.0 / 0.0⟩ with | .unstated => true | _ => false
 
 -- The deployed `1700` sits `1.45 u` above its own rectangular estimate, and that band was never
 -- named: it buys a 7.4 % consumer's risk.
@@ -299,6 +312,13 @@ the direction in which a Gaussian reading is optimistic by orders of magnitude. 
 -- A `u` nothing qualifies reads no band, for the same reason no `u` does: the meaning is
 -- unavailable either way.
 #guard match (atDof 0.5).readBand (q 4.50) with | .unstated => true | _ => false
+-- `∞/∞` is `unstated` here too — the two readings share one rule, and this is the case where
+-- a second copy of it would have disagreed.
+#guard match { atDof 4.0 with stdUnc := ⟨q (1.0 / 0.0)⟩ }.readBand (q (1.0 / 0.0)) with
+  | .unstated => true | _ => false
+-- And the threshold is a coverage statement at every `ν`, as it is at the Gaussian limit.
+#guard match (atDof 4.0).readBand (q 6.0) with | .coverage _ _ => true | _ => false
+#guard match (atDof 4.0).readBand (q 41.0) ⟨0.0 / 0.0⟩ with | .unstated => true | _ => false
 
 /-! ### GUM 4.3.7's posterior is bounded, and the Gaussian prices a tail it does not have -/
 

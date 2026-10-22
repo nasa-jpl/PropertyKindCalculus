@@ -372,7 +372,7 @@ same line, reused, so the two audits cannot disagree about what counts as a decl
 def isAuthored (env : Environment) (n : Name) : Bool :=
   !n.isInternal
   && !(BoundaryAudit.isGeneratedMachinery env #[] n)
-  && BoundaryAudit.parentOf n == n
+  && KindEdges.parentOf n == n
 
 /-! ## Bounded reduction
 

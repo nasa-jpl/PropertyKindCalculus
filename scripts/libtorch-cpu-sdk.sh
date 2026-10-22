@@ -32,7 +32,8 @@ if [ ! -f "$VENV/.installed" ]; then
   "$VENV/bin/pip" install --quiet --index-url https://download.pytorch.org/whl/cpu "torch==$TORCH_VERSION" >&2
   touch "$VENV/.installed"
 fi
-home="$("$VENV/bin/python" -c 'import os, torch; print(os.path.dirname(torch.__file__))' 2>/dev/null)"
+home="$("$VENV/bin/python" -c 'import os, torch; print(os.path.dirname(torch.__file__))')" \
+  || { echo "!! torch does not import from $VENV; delete it to reinstall" >&2; exit 1; }
 [ -f "$home/share/cmake/Torch/TorchConfig.cmake" ] || { echo "!! $home is not a LibTorch SDK" >&2; exit 1; }
 [ -e "$home/lib/libtorch_cuda.so" ] && { echo "!! $home is a CUDA SDK, not the CPU-only wheel" >&2; exit 1; }
 

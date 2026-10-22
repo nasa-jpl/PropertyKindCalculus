@@ -333,6 +333,42 @@ theorem WeightedCarvingQ.mk?_eq_none_iff {R : Type} {P : Type u} [Carrier R] [De
   unfold WeightedCarvingQ.mk?
   by_cases h : (totalWeightQ hd weight parts).magnitude = Carrier.zero <;> simp [h]
 
+/-- **And accepts exactly the licensed ones**, returning the kinded carving it was asked for. -/
+theorem WeightedCarvingQ.mk?_eq_some {R : Type} {P : Type u} [Carrier R] [DecidableEq R]
+    {kw : KindOfProperty} {hd : DifferenceKind kw} {parts : Decomposition P}
+    {weight : P → Quantity kw R}
+    (h : (totalWeightQ hd weight parts).magnitude ≠ Carrier.zero) :
+    WeightedCarvingQ.mk? hd parts weight = some ⟨parts, weight, hd, h⟩ :=
+  dite_eq_right h
+
+/-- **Nothing is lost by going through the kinded `mk?` either**: an accepted carving is the one
+whose parts and weights were offered, so a kinded mean computed after the check is the mean of
+the data. -/
+theorem WeightedCarvingQ.mk?_isSome_iff {R : Type} {P : Type u} [Carrier R] [DecidableEq R]
+    {kw : KindOfProperty} (hd : DifferenceKind kw) (parts : Decomposition P)
+    (weight : P → Quantity kw R) :
+    (WeightedCarvingQ.mk? hd parts weight).isSome = true
+      ↔ (totalWeightQ hd weight parts).magnitude ≠ Carrier.zero := by
+  unfold WeightedCarvingQ.mk?
+  by_cases h : (totalWeightQ hd weight parts).magnitude = Carrier.zero <;> simp [h]
+
+/-- **The kinded constructor erases to the carrier one.** Forgetting the kinds of what `mk?` built
+is what `WeightedCarving.mk?` builds from the forgotten weights — the same decision on the same
+total, by `totalWeightQ_magnitude` — so the two run-time gates accept and refuse together. -/
+theorem WeightedCarvingQ.mk?_map_toCarving {R : Type} {P : Type u} [Carrier R] [DecidableEq R]
+    {kw : KindOfProperty} (hd : DifferenceKind kw) (parts : Decomposition P)
+    (weight : P → Quantity kw R) :
+    (WeightedCarvingQ.mk? hd parts weight).map WeightedCarvingQ.toCarving
+      = WeightedCarving.mk? parts (fun p => (weight p).magnitude) := by
+  unfold WeightedCarvingQ.mk? WeightedCarving.mk?
+  have hm := totalWeightQ_magnitude hd weight parts
+  by_cases h : (totalWeightQ hd weight parts).magnitude = Carrier.zero
+  · have h' : totalWeight (fun p => (weight p).magnitude) parts = Carrier.zero := hm ▸ h
+    simp [h, h']
+  · have h' : totalWeight (fun p => (weight p).magnitude) parts ≠ Carrier.zero := hm ▸ h
+    rw [dite_eq_right h, dite_eq_right h']
+    rfl
+
 /-! ### The mean's division as an R10 site
 
 `Quantity.div_refines` is the exec/spec bridge across a kind quotient. Until now nothing in the

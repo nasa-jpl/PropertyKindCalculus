@@ -13,8 +13,9 @@ file can pin the complete registry with `#guard_msgs`). Three authoring styles a
 found by two complementary scans:
 
   * **named witness theorems** (`theorem jacobian_column_kinds : ProductKind … ∧ …`) —
-    the edges sit in the theorem's type, conjunctions included; the *type* scan
-    (`collectEdges`) sees them;
+    the edges sit in the theorem's conclusion, conjunctions included; the *type* scan
+    (`collectEdges` over the conclusion alone — a witness taken as a *hypothesis* is
+    assumed, not authored) sees them;
   * **call-site witnesses** (`Quantity.mul (ProductKind.ofRatio k₁ k₂ k) x y` inside a
     definition body) — found on every spelling the elaborator produces. It may lift the
     inline proof into an auxiliary theorem (`<def>._proof_N`) whose *type is the edge*
@@ -44,9 +45,10 @@ on it: those readings are identified against the boundary audit's registries, an
 importing the audit would put its meta-heavy bodies into this module's environment walk
 in every consumer (`producerModules` below is the cost model). What stays here is what
 both sides share: the edge specs — each family's law, argument roles and formatter, the
-one registry every audit layer derives its tables from — and the binder-type
+one registry every audit layer derives its tables from — the binder-type
 instantiation the per-declaration reading keys on (`instantiatedBinderTypes`, the
-twin of `instantiatedConclusion`).
+twin of `instantiatedConclusion`), and the author attribution of the elaborator's
+auxiliaries (`parentOf`) every walk credits its rows by.
 -/
 
 module
@@ -257,11 +259,15 @@ def bodyScannable (reachable : Std.HashSet Nat) (env : Environment)
   if name.isInternalDetail || isAuxRecursor env name then return false
   return !(← Meta.isInstance name)
 
-/-- Strip internal name components (`._proof_N`, numeric suffixes) so a lifted call-site
-witness is attributed to the definition that authored it. -/
+/-- Strip internal name components (`._proof_N`, `.match_N`, `.eq_N`, numeric suffixes) so a
+lifted call-site witness or mint is attributed to the definition that authored it. Shared by
+every audit walk (`edgesInto`, the boundary audit's `boundarySites`, the index's
+`isAuthored`) so they all credit the elaborator's auxiliaries to the same author. -/
 def parentOf (n : Name) : Name :=
   match n with
-  | .str p s => if s.startsWith "_" then parentOf p else n
+  | .str p s =>
+      if s.startsWith "_" || s.startsWith "match_" || s.startsWith "proof_"
+          || s.startsWith "eq_" || s.startsWith "unsafe_" then parentOf p else n
   | .num p _ => parentOf p
   | _ => n
 
@@ -285,11 +291,58 @@ def instantiatedBinderTypes (declTy : Expr) (args : Array Expr) : Option (Array 
 
 /-! ## The harvest
 
-`#kind_edges` below is a *renderer* over `edgesMentioning`. The split exists for the same reason
+Every edge enumeration is a *renderer* over **one** environment walk, `harvest`: `#kind_edges`
+below (through `edgesMentioning`), the kind index's Algebra column (`edgesByKind`), and the
+dimensional gate (`DimensionalCoverage.coverageRows`). The split exists for the same reason
 `BoundaryAudit.boundarySites` exists: the enumeration is wanted both as the `info` message an author
 reads and as table rows a document renders. Because a kind's authored edges *are* the statement of
 what may be done with it algebraically, this is the column that makes a rendered kind index worth
-reading — see `PropertyKindCalculus.Index`. -/
+reading — see `PropertyKindCalculus.Index`. Sharing the walk is what makes the three reports agree
+on what an authored edge *is*. -/
+
+/-- Does a declaration's type mention a scanned family at all, table classes included? The
+cheap pre-check that keeps the type scan from opening a telescope on every constant. -/
+def typeMentionsSpec (t : Expr) : Bool :=
+  (t.find? fun s => specs.any (fun spec => s.isConstOf spec.const)).isSome
+
+/-- **The one edge-harvest walk.** For every constant of a family-reaching module
+(`producerModules`) whose authoring declaration (`parentOf`) passes `keep`, both channels are
+scanned and each `(family, arguments)` pair found is handed to `render`, which runs *inside the
+telescope that binds the pair's variables* (so a parametric kind prints as its binder name) and
+returns `none` to drop the pair:
+
+  * the **type scan** reads the declaration's **conclusion** only (`forallTelescopeReducing`,
+    then `collectEdges`): a named witness theorem, a lifted `._proof_N` auxiliary, an
+    operator-table instance. A witness taken as a *hypothesis* (`(h : ProductKind …) → …`) is
+    assumed, not authored, and is deliberately not an edge — the same line the body scan
+    draws for a free-variable-headed witness;
+  * the **body scan** reads the value of every `bodyScannable` definition under its own
+    telescope (`collectInlineEdges`): the call-site witnesses the elaborator left inline or
+    shared.
+
+The result is in walk order, the type channel before the body channel of each constant,
+undeduplicated: each renderer owns its own dedup key (per author, per equation, per kind). -/
+def harvest {α : Type} (keep : Name → Bool)
+    (render : EdgeSpec → Array Expr → MetaM (Option α)) : MetaM (Array (Name × α)) := do
+  let env ← getEnv
+  let reachable := producerModules env
+  let mut out : Array (Name × α) := #[]
+  for (name, info) in env.constants.toList do
+    -- Neither scan can find anything outside the family-reaching modules (`producerModules`).
+    if let some idx := env.getModuleIdxFor? name then
+      unless reachable.contains idx.toNat do continue
+    let author := parentOf name
+    unless keep author do continue
+    let mut found : Array α := #[]
+    if typeMentionsSpec info.type then
+      found ← Meta.forallTelescopeReducing info.type fun _ concl =>
+        (collectEdges concl #[]).filterMapM fun (spec, args) => render spec args
+    if ← bodyScannable reachable env name info then
+      found := found ++ (← Meta.lambdaTelescope info.value! fun _ body =>
+        (collectInlineEdges env body #[]).filterMapM fun (spec, args) => render spec args)
+    for r in found do
+      out := out.push (author, r)
+  return out
 
 /-- One authored kind-algebra edge: the declaration that authored it (a named witness theorem, the
 definition a call-site witness was lifted out of, or an operator-table instance) and the edge itself,
@@ -304,39 +357,18 @@ deriving Repr, Inhabited, BEq, Hashable
 /-- Every authored edge in the environment mentioning the kind constant `target`, deduplicated and
 sorted by `"author: edge"` — the order the pinned report prints. -/
 def edgesMentioning (target : Name) : MetaM (Array KindEdge) := do
-  let env ← getEnv
-  let reachable := producerModules env
+  let found ← harvest (fun _ => true) fun spec args => do
+    unless args.any (·.isConstOf target) do return none
+    let pps ← args.mapM fun a => return toString (← Meta.ppExpr a)
+    return some (spec.fmt pps)
   let mut seen : Std.HashSet String := {}
   let mut out : Array KindEdge := #[]
-  for (name, info) in env.constants.toList do
-    -- Neither scan can find anything outside the family-reaching modules (`producerModules`).
-    if let some idx := env.getModuleIdxFor? name then
-      unless reachable.contains idx.toNat do continue
-    -- The type scan: named theorems, lifted call-site auxiliaries, instances …
-    let mut rendered : Array String := #[]
-    for (spec, args) in collectEdges info.type #[] do
-      if args.any (·.isConstOf target) then
-        let pps ← args.mapM fun a => return toString (← Meta.ppExpr a)
-        rendered := rendered.push (spec.fmt pps)
-    -- … and the body scan: inline witnesses the elaborator left unlifted. Rendered
-    -- inside the value's own telescope so parametric kinds print with their binder
-    -- names — the same spelling the type scan gives a lifted auxiliary's telescope,
-    -- which is what lets the dedup collapse the two channels.
-    if ← bodyScannable reachable env name info then
-      let fromBody ← Meta.lambdaTelescope info.value! fun _ body =>
-        (collectInlineEdges env body #[]).filterMapM fun (spec, args) => do
-          if args.any (·.isConstOf target) then
-            let pps ← args.mapM fun a => return toString (← Meta.ppExpr a)
-            return some (spec.fmt pps)
-          else
-            return none
-      rendered := rendered ++ fromBody
-    for edge in rendered do
-      let e : KindEdge := { author := parentOf name, edge }
-      let key := s!"{e.author}: {e.edge}"
-      unless seen.contains key do
-        seen := seen.insert key
-        out := out.push e
+  for (author, edge) in found do
+    let e : KindEdge := { author, edge }
+    let key := s!"{e.author}: {e.edge}"
+    unless seen.contains key do
+      seen := seen.insert key
+      out := out.push e
   return out.qsort (fun a b => s!"{a.author}: {a.edge}" < s!"{b.author}: {b.edge}")
 
 /-! ### Grouping a kind's edges for a rendered cell
@@ -390,50 +422,25 @@ open, where the qualified name disambiguates, while a table cell holding four ed
 names is a paragraph of repeated prefixes with the content buried in it. The table is scoped to a
 namespace already, so the short name is unambiguous there. -/
 def edgesByKind (targets : Array Name) : MetaM (Std.HashMap Name (Array KindEdge)) := do
-  let env ← getEnv
-  let reachable := producerModules env
   let wanted : Std.HashSet Name := targets.foldl (·.insert ·) {}
+  -- Which of the targets does an edge mention? Rendered only if at least one, by short name.
+  let found ← harvest (fun _ => true) fun spec args => do
+    let mentioned := args.filterMap fun a =>
+      match a with
+      | .const c _ => if wanted.contains c then some c else none
+      | _          => none
+    if mentioned.isEmpty then return none
+    let pps ← args.mapM fun a =>
+      match a with
+      | .const (.str _ s) _ => return s
+      | _                   => return toString (← Meta.ppExpr a)
+    return some (mentioned, spec.fmt pps)
   let mut acc : Std.HashMap Name (Array KindEdge) := {}
   for t in targets do acc := acc.insert t #[]
-  for (name, info) in env.constants.toList do
-    -- Neither scan can find anything outside the family-reaching modules (`producerModules`).
-    if let some idx := env.getModuleIdxFor? name then
-      unless reachable.contains idx.toNat do continue
-    -- Both channels of `edgesMentioning`: the type scan, then the body scan for inline
-    -- witnesses the elaborator left unlifted (rendered inside the value's telescope).
-    let typeEdges := collectEdges info.type #[]
-    let bodyEdges ← do
-      if ← bodyScannable reachable env name info then
-        Meta.lambdaTelescope info.value! fun _ body => do
-          let found := collectInlineEdges env body #[]
-          found.mapM fun (spec, args) => do
-            let mentioned := args.filterMap fun a =>
-              match a with
-              | .const c _ => if wanted.contains c then some c else none
-              | _          => none
-            let pps ← if mentioned.isEmpty then pure #[] else args.mapM fun a =>
-              match a with
-              | .const (.str _ s) _ => return s
-              | _                   => return toString (← Meta.ppExpr a)
-            return (spec, mentioned, pps)
-      else
-        pure #[]
-    let typeRendered ← typeEdges.mapM fun (spec, args) => do
-      -- Which of the targets does this edge mention? Compute the rendering only if at least one.
-      let mentioned := args.filterMap fun a =>
-        match a with
-        | .const c _ => if wanted.contains c then some c else none
-        | _          => none
-      let pps ← if mentioned.isEmpty then pure #[] else args.mapM fun a =>
-        match a with
-        | .const (.str _ s) _ => return s
-        | _                   => return toString (← Meta.ppExpr a)
-      return (spec, mentioned, pps)
-    for (spec, mentioned, pps) in typeRendered ++ bodyEdges do
-      if mentioned.isEmpty then continue
-      let e : KindEdge := { author := parentOf name, edge := spec.fmt pps }
-      for c in mentioned.toList.eraseDups do
-        acc := acc.insert c ((acc.getD c #[]).push e)
+  for (author, (mentioned, edge)) in found do
+    let e : KindEdge := { author, edge }
+    for c in mentioned.toList.eraseDups do
+      acc := acc.insert c ((acc.getD c #[]).push e)
   return acc.fold (init := {}) fun m k v =>
     m.insert k ((v.toList.eraseDups).toArray.qsort
       (fun a b => s!"{a.author}: {a.edge}" < s!"{b.author}: {b.edge}"))

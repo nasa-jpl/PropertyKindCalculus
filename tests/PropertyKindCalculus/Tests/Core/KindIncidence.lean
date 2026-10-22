@@ -289,9 +289,9 @@ structure Deep1 where
   d2 : Deep2
 
 /-- A step over a record nested past the depth bound: the leaf quantity is **not** ported
-(the pinned interface has no `w.…` input, and `w` reads as unkinded), and the walk says
-so instead of staying silent — once per reading of the binder, which the harvest reads
-twice. -/
+(the pinned interface has no `w.…` input — `kindBearing` sees the leaf, so `w` is a
+kind-bearing position that ports nothing, not naked data), and the walk says so instead
+of staying silent — once per reading of the binder, which the harvest reads twice. -/
 def tooDeep (w : Deep1) (x : Quantity alphaK Nat) : Quantity alphaK Nat := x
 
 /--
@@ -302,7 +302,6 @@ warning: the carrier field paths of 'Deep4' stop at nesting depth 3: the kinds b
 info: kind ports of 'PropertyKindCalculus.Tests.KindIncidence.tooDeep':
 input x : alphaK
 output result : alphaK
-unkinded input w : Deep1
 -/
 #guard_msgs in #kind_ports tooDeep
 
