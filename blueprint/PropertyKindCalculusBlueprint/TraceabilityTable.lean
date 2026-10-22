@@ -9,8 +9,8 @@ declaration's blueprint node.
 
 Like the `iso_doc_table` and `crossrefs` directives, the annotations are
 decl-indexed environment metadata read at elaboration time; each declaration is
-resolved to its blueprint node label via `Informal.Environment.labelsForLeanDecl`,
-and the node's href is resolved at render time. The matrix is assembled as an
+resolved to its blueprint node label via `ItemIndex.labelFor`, and the node's href
+is resolved at render time. The matrix is assembled as an
 `ItemIndex.DocTable` and rendered by the shared `ItemIndex.docTableTerm`, so all of
 the existing table/link machinery is reused — a renamed declaration is a build
 error, so the matrix can never drift from the Lean source.
@@ -29,14 +29,9 @@ open Verso.Genre Manual
 open Verso.ArgParse
 open PropertyKindCalculus.Requirements
 open PropertyKindCalculusBlueprint.ItemIndex
+open PropertyKindCalculus.Index (lastComponent)
 
 namespace PropertyKindCalculusBlueprint.Traceability
-
-/-- The last name component of a declaration, for display. -/
-private def lastComponent (n : Name) : String :=
-  match n with
-  | .str _ s => s
-  | _ => n.toString
 
 /-- The `traceability` directive takes no arguments. -/
 structure Config where
@@ -72,9 +67,7 @@ def buildTable : DocElabM DocTable := do
       -- for an expressiveness one — rather than printing the bare word.
       let mut dischargeLinks : List (String × String) := []
       for r in these.filter (·.role == req.kind.dischargeRole) do
-        let labels ← Informal.Environment.labelsForLeanDecl r.decl
-        let label := (labels[0]?.map (·.toString)).getD ""
-        dischargeLinks := dischargeLinks ++ [(label, lastComponent r.decl)]
+        dischargeLinks := dischargeLinks ++ [(← labelFor r.decl, lastComponent r.decl)]
       let statusOf (first : Bool) : Cell :=
         if !first then .text ""
         else if status == "proved" || status == "demonstrated" then .links dischargeLinks
@@ -85,11 +78,7 @@ def buildTable : DocElabM DocTable := do
       else
         let mut first := true
         for r in these do
-          let labels ← Informal.Environment.labelsForLeanDecl r.decl
-          let label := (labels[0]?.map (·.toString)).getD ""
-          let declCell : Cell :=
-            if label.isEmpty then .code (lastComponent r.decl)
-            else .ref label (lastComponent r.decl)
+          let declCell ← ItemIndex.declCell r.decl (lastComponent r.decl)
           let reqCell : Cell := if first then .md s!"*{req.id}* — {req.title}" else .text ""
           -- The note is author-written prose and names Lean constants in it, so it is markdown for
           -- the same reason a docstring is. As `text` its backticks reach the page.

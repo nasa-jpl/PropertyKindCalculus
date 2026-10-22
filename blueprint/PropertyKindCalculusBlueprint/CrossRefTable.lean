@@ -8,7 +8,7 @@ external term and to this work's declaration, linked to its blueprint node.
 
 The annotations are decl-indexed environment metadata, so the directive reads them
 from the environment at elaboration time and resolves each declaration to its
-blueprint node label via `Informal.Environment.labelsForLeanDecl`; the node's href
+blueprint node label via `ItemIndex.labelFor`; the node's href
 is resolved at render time via `Informal.TraversalIndex.Nodes.href?`. This mirrors
 the `Block.bibliography` pattern (collect at elaboration, link at render).
 -/
@@ -18,12 +18,14 @@ import VersoBlueprint
 import VersoBlueprint.Environment
 import VersoBlueprint.TraversalIndex
 import PropertyKindCalculus.CrossRefs
+import PropertyKindCalculusBlueprint.ItemIndex
 
 open Lean Elab
 open Verso Doc Elab
 open Verso.Genre Manual
 open Verso.ArgParse
 open PropertyKindCalculus.CrossRefs
+open PropertyKindCalculus.Index (lastComponent)
 
 namespace PropertyKindCalculusBlueprint
 
@@ -110,12 +112,6 @@ instance : FromArgs CrossRefConfig m where
 
 end
 
-/-- The last name component of a declaration, for display. -/
-private def lastComponent (n : Name) : String :=
-  match n with
-  | .str _ s => s
-  | _ => n.toString
-
 /-- The dot-separated numeric components of a locus, for natural sorting:
 `"§13.3.5"` ↦ `[13, 3, 5]`, `"1.12"` ↦ `[1, 12]`, `"§7"` ↦ `[7]`. Non-digit
 characters (the `§` marker, dots, spaces) are separators. -/
@@ -161,11 +157,9 @@ private def crossrefsImpl : DirectiveExpanderOf CrossRefConfig
         m!"unknown cross-reference source '{cfg.source}'; expected 'dybkaer' or 'vim4'"
     let mut rows : Array CrossRefRow := #[]
     for r in refs do
-      let labels ← Informal.Environment.labelsForLeanDecl r.decl
-      let label := (labels[0]?.map (·.toString)).getD ""
       rows := rows.push
         { locus := r.locus, term := r.term, shortName := lastComponent r.decl,
-          label := label, note := r.note }
+          label := ← ItemIndex.labelFor r.decl, note := r.note }
     let sortedRows := rows.qsort (fun a b => locusLt a.locus b.locus)
     let tableData : CrossRefTableData := { sourceCite := cite, rows := sortedRows }
     ``(Lean.Doc.Block.other (PropertyKindCalculusBlueprint.Block.crossRefTable $(quote tableData)) #[])

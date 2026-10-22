@@ -22,9 +22,9 @@ What is duplicated downstream is rendering glue, not indexing.
 ## Resolving a declaration to a link
 
 An `IndexCell.decl` names a declaration and leaves the rendering open, because each document
-resolves it differently. Here it becomes a blueprint cross-reference via
-`Informal.Environment.labelsForLeanDecl` — the same resolution `traceability` uses — falling back to
-inline code where a declaration has no blueprint node, which most of the indexed declarations do not.
+resolves it differently. Here it becomes a blueprint cross-reference via `ItemIndex.declCell` — the
+one resolution `traceability` and `crossrefs` use too — falling back to inline code where a
+declaration has no blueprint node, which most of the indexed declarations do not.
 -/
 
 import VersoManual
@@ -71,14 +71,9 @@ def indexTable (id : String) (scope : Array Name) : MetaM IndexTable :=
 
 /-! ## `IndexCell` → `ItemIndex.Cell` -/
 
-/-- The blueprint node label for a declaration, or `""` when it has none. -/
-def labelFor (n : Name) : DocElabM String := do
-  let labels ← Informal.Environment.labelsForLeanDecl n
-  return (labels[0]?.map (·.toString)).getD ""
-
-/-- Map a harvested cell onto the blueprint's own cell type. A declaration with a blueprint node
-becomes a hoverable cross-reference; one without becomes inline code — which is the common case, and
-is why `ref` is not used unconditionally (an unresolvable tag would render as a dead link).
+/-- Map a harvested cell onto the blueprint's own cell type. A declaration resolves through
+`ItemIndex.declCell` / `ItemIndex.labelFor`: a cross-reference where it has a blueprint node, inline
+code where it has none.
 
 A `prose` cell is a quoted docstring, so it becomes an `md` cell: the two are the same thing under
 two names, and `ItemIndex.parseRuns` is `PropertyKindCalculus.Index.parseProse`. Sending it to `text`
@@ -87,9 +82,7 @@ def toCell : IndexCell → DocElabM Cell
   | .text s => return .text s
   | .prose s => return .md s
   | .code s => return .code s
-  | .decl n display => do
-    let label ← labelFor n
-    return if label.isEmpty then .code display else .ref label display
+  | .decl n display => declCell n display
   | .tag t display => return .secref t display
   | .links items => do
     let resolved ← items.toList.mapM fun (n, display) => do
