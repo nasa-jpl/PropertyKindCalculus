@@ -40,8 +40,19 @@ jobs:
         run: python3 scripts/check-doc-pins.py
 
       - name: Install Elan (Lean toolchain manager)
+        env:
+          # Pinned release of the elan installer. `elan-init.sh` on `master` would fetch
+          # whatever release is current that day, so instead the release tarball itself is
+          # downloaded and its `elan-init` run — the same thing the script does, minus the
+          # moving target. Bump deliberately, like lean-toolchain and the lake manifests.
+          ELAN_VERSION: v4.2.4
         run: |
-          curl https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -sSf | sh -s -- -y --default-toolchain none
+          ELAN_URL="https://github.com/leanprover/elan/releases/download/${ELAN_VERSION}/elan-$(uname -m)-unknown-linux-gnu.tar.gz"
+          ELAN_TMP="$(mktemp -d)"
+          echo "Elan installer: $ELAN_URL"
+          curl -sSfL "$ELAN_URL" | tar xz -C "$ELAN_TMP"
+          "$ELAN_TMP/elan-init" -y --default-toolchain none
+          rm -rf "$ELAN_TMP"
           echo "$HOME/.elan/bin" >> $GITHUB_PATH
 
       - name: Install Lean toolchain
@@ -58,6 +69,11 @@ jobs:
           elan show
 
       - name: Set up Python tooling via pixi
+        env:
+          # Pinned pixi release: both the installer script and the binary it fetches come
+          # from this tag (`pixi.sh/install.sh` is the latest release's script, and without
+          # PIXI_VERSION it installs the latest binary). Bump deliberately.
+          PIXI_VERSION: v0.83.0
         run: |
           # The blueprint's Python steps (file-links post-pass + the WeasyPrint PDF
           # render) run on a pinned Python + WeasyPrint managed by pixi
@@ -65,7 +81,7 @@ jobs:
           # irrelevant. Install pixi if the runner lacks it, put it on PATH for the
           # later steps, and materialize the locked environment up front.
           if ! command -v pixi >/dev/null 2>&1 && [ ! -x "$HOME/.pixi/bin/pixi" ]; then
-            curl -fsSL https://pixi.sh/install.sh | bash
+            curl -fsSL "https://github.com/prefix-dev/pixi/releases/download/${PIXI_VERSION}/install.sh" | bash
           fi
           echo "$HOME/.pixi/bin" >> "$GITHUB_PATH"
           export PATH="$HOME/.pixi/bin:$PATH"
