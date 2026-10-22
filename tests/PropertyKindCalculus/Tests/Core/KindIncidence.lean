@@ -18,7 +18,8 @@ occurrences; a kind-generic signature renders its kind variables by binder name;
 port while the occurrence keeps both incidence positions, and the two readings name the
 node identically; outputs are the result type's product components with positions kept,
 so an un-kinded component leaves a visible gap; a signature with no carrier-typed
-positions pins the empty report.
+positions pins the empty report; and a record nested past `carrierPathsDepth` loses its
+leaf quantity *with a warning*, not silently.
 
 The graph reading closes the file — both renderings above are projections of the one
 constructed object, and these pins are the spot check. `#kind_graph` pins the wiring:
@@ -266,6 +267,44 @@ output result.lo.q : alphaK
 output result.hi.q : alphaK
 -/
 #guard_msgs in #kind_ports degenerate
+
+/-- A record nested one level past `carrierPathsDepth`: the quantity at its leaf. -/
+structure Deep4 where
+  /-- The leaf. -/
+  q : Quantity alphaK Nat
+
+/-- Depth three. -/
+structure Deep3 where
+  /-- The next level down. -/
+  d4 : Deep4
+
+/-- Depth two. -/
+structure Deep2 where
+  /-- The next level down. -/
+  d3 : Deep3
+
+/-- The top of the nest — the binder type the walk starts from. -/
+structure Deep1 where
+  /-- The next level down. -/
+  d2 : Deep2
+
+/-- A step over a record nested past the depth bound: the leaf quantity is **not** ported
+(the pinned interface has no `w.…` input, and `w` reads as unkinded), and the walk says
+so instead of staying silent — once per reading of the binder, which the harvest reads
+twice. -/
+def tooDeep (w : Deep1) (x : Quantity alphaK Nat) : Quantity alphaK Nat := x
+
+/--
+warning: the carrier field paths of 'Deep4' stop at nesting depth 3: the kinds beneath 'PropertyKindCalculus.Tests.KindIncidence.Deep4' are not ported — flatten the record, or raise `carrierPathsDepth`
+---
+warning: the carrier field paths of 'Deep4' stop at nesting depth 3: the kinds beneath 'PropertyKindCalculus.Tests.KindIncidence.Deep4' are not ported — flatten the record, or raise `carrierPathsDepth`
+---
+info: kind ports of 'PropertyKindCalculus.Tests.KindIncidence.tooDeep':
+input x : alphaK
+output result : alphaK
+unkinded input w : Deep1
+-/
+#guard_msgs in #kind_ports tooDeep
 
 /-- A **named result bundle** — the record twin of a two-component tuple, its fields
 carrying different kinds so the wiring per field is visible and a swap is a type

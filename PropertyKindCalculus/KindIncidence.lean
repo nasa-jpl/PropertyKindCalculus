@@ -425,6 +425,55 @@ partial def supplierSignature? (env : Environment) (carriers : Array Name)
       supplierSignature? env carriers (body.instantiate1 (← Meta.mkFreshExprMVar dom))
   | _ => return none
 
+/-- Does a type carry kind information at all — a registered carrier or the kind
+vocabulary itself, mentioned anywhere in the expression, or (fuel-bounded) in the
+fields of the single-constructor inductive at its head, or in one of its own type
+arguments? The negative answer classifies a signature position as *unkinded* (module
+header, "Unkinded positions"): naked data, red in every report. The positive answer
+without a carrier field path (`carrierPaths`) or a kind signature (`signatureKind?` —
+a function over quantities ports at its arrow of kinds, the module-valued port) is a
+kind-bearing position that ports nothing — a sum over quantities, a dependent or
+partially-kinded function: not naked data, and not an interface node either.
+
+Three ways a type says it, because an abbreviation and a plural are not naked data:
+
+  * the test reduces at **reducible** transparency first, so a signature that names an
+    abbreviation says what the abbreviation says — `AttenQ α`, spelled
+    `Quantity paramB α → Quantity vegetationIndex α → Quantity vegetationAttenuation α`,
+    is a function over quantities however the binder spells it;
+  * a single-constructor head states its kinds through its fields, one level at a time;
+  * **a container of kinded values is kinded** — a type argument is searched like the
+    type itself, so `List (ObsWQ α)` carries what an `ObsWQ α` carries. It ports
+    nothing (a list has no fixed arity, so there is no field path to name), which is
+    exactly the "carries kinds, is not an interface node" verdict — the plural of a
+    kinded thing is not naked data, and calling it naked over-reports the debt. -/
+partial def kindBearing (carriers : Array Name) (ty : Expr) (fuel : Nat := 3) :
+    MetaM Bool := do
+  let ty ← Meta.whnfR ty.consumeTypeAnnotations
+  let mentions := (ty.find? fun sub =>
+    match sub with
+    | .const c _ => carriers.contains c || c == ``KindOfProperty
+    | _ => false).isSome
+  if mentions then return true
+  match fuel with
+  | 0 => return false
+  | fuel + 1 =>
+    if let .const c _ := ty.getAppFn then
+      if (BoundaryAudit.nominalKindOf? (← getEnv) c).isSome then return true
+      if let some (.inductInfo ii) := (← getEnv).find? c then
+        if ii.ctors.length == 1 then
+          if let some ctor := ii.ctors.head?.bind (← getEnv).find? then
+            if ← kindBearing carriers ctor.type fuel then return true
+    for a in ty.getAppArgs do
+      unless a.hasLooseBVars do
+        if (← Meta.isType a) then
+          if ← kindBearing carriers a fuel then return true
+    return false
+
+/-- How many nested single-constructor structures `carrierPaths` follows before treating
+the head as opaque: three, enough for every record shape the harvest has met. -/
+def carrierPathsDepth : Nat := 3
+
 /-- **The carrier field paths of a container type** — the ports a record-carried
 quantity contributes. A type that is not itself carrier-headed but is a
 single-constructor structure states its kinds through its fields: an `IccQ k R` states
@@ -437,29 +486,46 @@ same node.
 
 A sum type has no field path — its payload is not there in every case — and gets
 `conditionalPaths` instead; a carrier is a leaf, never a container: its own field is the
-erasure boundary. -/
+erasure boundary.
+
+The walk is bounded by `carrierPathsDepth`. Running out of depth on a structure-headed
+type, or failing to project a field, would drop that record's quantity ports from the
+harvest, and the loss would surface downstream as an `unrealized` diff or a position
+with no interface node — so each such exit logs a warning naming the type (the depth
+exit only when the truncated type is `kindBearing`: a `String`'s byte array is three
+records down and carries nothing); the paths returned are unchanged. -/
 partial def carrierPaths (env : Environment) (carriers : Array Name) (ctx : BinderCtx)
-    (ty : Expr) (fuel : Nat := 3) : MetaM (Array (List String × KindRef)) := do
+    (ty : Expr) (fuel : Nat := carrierPathsDepth) : MetaM (Array (List String × KindRef)) := do
   let ty := ty.consumeTypeAnnotations
   if ty.hasLooseBVars then return #[]
   if (← carrierKind? env carriers ctx ty).isSome then return #[]
-  match fuel, ty.getAppFn with
-  | fuel + 1, .const c _ =>
-    unless isStructure env c do return #[]
-    let some (.inductInfo ii) := env.find? c | return #[]
-    unless ii.ctors.length == 1 do return #[]
+  let .const c _ := ty.getAppFn | return #[]
+  unless isStructure env c do return #[]
+  let some (.inductInfo ii) := env.find? c | return #[]
+  unless ii.ctors.length == 1 do return #[]
+  match fuel with
+  | 0 =>
+    if ← kindBearing carriers ty then
+      logWarning m!"the carrier field paths of '{ty}' stop at nesting depth \
+        {carrierPathsDepth}: the kinds beneath '{c}' are not ported — flatten the record, \
+        or raise `carrierPathsDepth`"
+    return #[]
+  | fuel + 1 =>
     let x ← Meta.mkFreshExprMVar ty
     let mut out : Array (List String × KindRef) := #[]
     for f in getStructureFields env c do
-      let some fty ← (try pure (some (← Meta.inferType (← Meta.mkProjection x f)))
-                      catch _ => pure none) | continue
+      let fty? ← try pure (some (← Meta.inferType (← Meta.mkProjection x f)))
+        catch e =>
+          logWarning m!"the field '{f}' of '{c}' could not be projected, so it is not \
+            ported: {e.toMessageData}"
+          pure none
+      let some fty := fty? | continue
       match ← carrierKind? env carriers ctx fty with
       | some k => out := out.push ([toString f], k)
       | none =>
         for (p, k) in ← carrierPaths env carriers ctx fty fuel do
           out := out.push (toString f :: p, k)
     return out
-  | _, _ => return #[]
 
 /-- **The conditional paths of a sum type** — the ports a result produced only in some
 cases contributes. A multi-constructor inductive states its kinds through the payloads of
@@ -505,51 +571,6 @@ def conditionalPaths (env : Environment) (carriers : Array Name) (ctx : BinderCt
     | #[(_, k)] => out := out.push ([case], k)
     | ps => for (p, k) in ps do out := out.push (case :: p, k)
   return out
-
-/-- Does a type carry kind information at all — a registered carrier or the kind
-vocabulary itself, mentioned anywhere in the expression, or (fuel-bounded) in the
-fields of the single-constructor inductive at its head, or in one of its own type
-arguments? The negative answer classifies a signature position as *unkinded* (module
-header, "Unkinded positions"): naked data, red in every report. The positive answer
-without a carrier field path (`carrierPaths`) or a kind signature (`signatureKind?` —
-a function over quantities ports at its arrow of kinds, the module-valued port) is a
-kind-bearing position that ports nothing — a sum over quantities, a dependent or
-partially-kinded function: not naked data, and not an interface node either.
-
-Three ways a type says it, because an abbreviation and a plural are not naked data:
-
-  * the test reduces at **reducible** transparency first, so a signature that names an
-    abbreviation says what the abbreviation says — `AttenQ α`, spelled
-    `Quantity paramB α → Quantity vegetationIndex α → Quantity vegetationAttenuation α`,
-    is a function over quantities however the binder spells it;
-  * a single-constructor head states its kinds through its fields, one level at a time;
-  * **a container of kinded values is kinded** — a type argument is searched like the
-    type itself, so `List (ObsWQ α)` carries what an `ObsWQ α` carries. It ports
-    nothing (a list has no fixed arity, so there is no field path to name), which is
-    exactly the "carries kinds, is not an interface node" verdict — the plural of a
-    kinded thing is not naked data, and calling it naked over-reports the debt. -/
-partial def kindBearing (carriers : Array Name) (ty : Expr) (fuel : Nat := 3) :
-    MetaM Bool := do
-  let ty ← Meta.whnfR ty.consumeTypeAnnotations
-  let mentions := (ty.find? fun sub =>
-    match sub with
-    | .const c _ => carriers.contains c || c == ``KindOfProperty
-    | _ => false).isSome
-  if mentions then return true
-  match fuel with
-  | 0 => return false
-  | fuel + 1 =>
-    if let .const c _ := ty.getAppFn then
-      if (BoundaryAudit.nominalKindOf? (← getEnv) c).isSome then return true
-      if let some (.inductInfo ii) := (← getEnv).find? c then
-        if ii.ctors.length == 1 then
-          if let some ctor := ii.ctors.head?.bind (← getEnv).find? then
-            if ← kindBearing carriers ctor.type fuel then return true
-    for a in ty.getAppArgs do
-      unless a.hasLooseBVars do
-        if (← Meta.isType a) then
-          if ← kindBearing carriers a fuel then return true
-    return false
 
 /-- The result type's right-spine product components — `A × B × C` is three output
 positions. A parenthesized left factor stays one component: positions follow what the
