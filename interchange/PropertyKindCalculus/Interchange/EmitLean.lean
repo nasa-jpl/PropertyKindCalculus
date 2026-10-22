@@ -74,16 +74,9 @@ def transferCtor (l : License) : String :=
 def requirementCtor : RequirementKind → String
   | .provable => ".provable" | .empirical => ".empirical"
 
-/-- The `RequirementScope` a pivot scope string denotes (the harvester's rendering:
-`sort N`, `objects A, B`, `decided D`); absent or unrecognized is `.all`. -/
-def scopeCtor : Option String → String
-  | some s =>
-    if s.startsWith "sort " then ".sort " ++ nameLit (some (s.drop 5).toString)
-    else if s.startsWith "decided " then ".decided " ++ nameLit (some (s.drop 8).toString)
-    else if s.startsWith "objects " then
-      ".objects " ++ nameList ((s.drop 8).toString.splitOn ", ")
-    else ".all"
-  | none => ".all"
+def scopeCtor : ReqScope → String
+  | .all => ".all" | .sort s => ".sort " ++ nameLit (some s)
+  | .objects os => ".objects " ++ nameList os | .decided d => ".decided " ++ nameLit (some d)
 
 /-- Text destined for a comment: one line, with neither a comment terminator nor a nested
 comment opener in it — a model is input, not code, and must not be able to end its comment

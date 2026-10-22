@@ -9,7 +9,10 @@ the DSL's conventions — keywords, redefinition chains, defaults, nested record
 ends, negative literals — from a hand-built element list (`Tests.Interchange.ApiJson`).
 Both harvests are complete — no declaration in scope is skipped — and a scope with a kind
 that cannot be evaluated, a specialization citing it and a unit whose kind is out of scope
-(`Partial`) harvests without them and reports all three. The full round trip through OpenSysML,
+(`Partial`) harvests without them and reports all three. The requirement scope travels
+structured (`ReqScope`): its `scope` binding is printed and read by one pair, `render`/`parse`,
+which round-trips every constructor, and a binding in none of the printed forms is an error
+rather than the widest scope. The full round trip through OpenSysML,
 `read (api-json (emit (harvest))) = harvest`, needs the `sysml` converter and runs as
 `scripts/roundtrip-sysml.sh`.
 -/
@@ -73,6 +76,13 @@ run_meta do
     throwError "generated module should define 5 contracts"
   unless (lean.splitOn "Provenance.Relation where").length == 3 do
     throwError "generated module should define 2 relations"
+  -- the tutorial's scopes reach the generated requirements structured, never widened to `.all`
+  unless (lean.splitOn "scope := .sort `").length == 7 do
+    throwError "generated module should carry the 6 sort-scoped requirements"
+  unless (lean.splitOn "scope := .objects [`").length == 2 do
+    throwError "generated module should carry the object-scoped requirement"
+  unless (lean.splitOn "scope := .all").length == 1 do
+    throwError "no tutorial requirement is scoped to all objects"
 
 -- A declaration the harvester cannot read is skipped and reported, never dropped silently:
 -- a kind that cannot be evaluated, a specialization citing that kind, and a unit whose kind
@@ -123,6 +133,24 @@ run_meta do
     throwError "a data-valued instance is not evidence"
   unless (← Harvest.notEvidence env `No.Such.Decl).isSome do
     throwError "a missing declaration is not evidence"
+
+-- The `scope` binding: `render` and `parse` invert each other on every constructor, and a
+-- binding in another form (the report label `all`, a capitalized keyword) is refused, not read
+-- as `.all`.
+#guard [ReqScope.all, .sort "S", .objects ["A", "B"], .objects [], .decided "D"].all fun sc =>
+  ReqScope.parse sc.render == .ok sc
+#guard ReqScope.render (.objects ["A", "B"]) == some "objects A, B"
+-- a name containing the separator arrives `«…»`-escaped from `Name.toString` and stays one object
+#guard Harvest.ReqScope.ofProvenance (.objects [Name.mkSimple "Sensor, west", `B])
+  == ReqScope.objects ["«Sensor, west»", "B"]
+#guard ReqScope.parse (ReqScope.render (.objects ["«Sensor, west»", "B"]))
+  == .ok (.objects ["«Sensor, west»", "B"])
+#guard ReqScope.splitObjects "A, «x, y».z, B" == ["A", "«x, y».z", "B"]
+#guard match ReqScope.parse (some "all") with | .error _ => true | .ok _ => false
+#guard match ReqScope.parse (some "Sort S") with | .error _ => true | .ok _ => false
+#guard EmitLean.scopeCtor (.objects ["A", "B"]) == ".objects [`A, `B]"
+#guard EmitLean.scopeCtor (.sort "S") == ".sort `S"
+#guard match ReqScope.parse (some "sort S") with | .ok sc => sc == .sort "S" | .error _ => false
 
 -- Model text cannot end, or nest, the generated comment it lands in.
 #guard EmitLean.commentText "a -/ b /- c\nd" == "a - / b / - c d"

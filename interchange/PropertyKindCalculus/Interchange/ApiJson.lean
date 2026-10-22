@@ -320,6 +320,12 @@ def enumField {α : Type} (b : List (String × Val)) (k : String) (parse : Strin
   | some v => pure v
   | none => throw s!"{ctx}: unknown '{k}' literal '{s}'"
 
+/-- The optional `scope` binding, read by `ReqScope.parse`. -/
+def scopeField (b : List (String × Val)) (ctx : String) : ReadM ReqScope :=
+  match ReqScope.parse (strField b "scope") with
+  | .ok sc => pure sc
+  | .error e => throw s!"{ctx}: {e}"
+
 /-- The keyword and connection-definition name of each kind-algebra family. -/
 def edgeKindOf : String → Option EdgeKind
   | "product" => some .product | "quotient" => some .quotient | "reciprocal" => some .reciprocal
@@ -466,7 +472,7 @@ def readRequirement (d : Doc) (e : Element) : ReadM Requirement := do
   let (source, _) := d.citations e
   return { name, title := (strField b "name").getD name, statement := ← need b "statement" ctx,
            kind := ← enumField b "kind" requirementOf ctx, governs := ← need b "governs" ctx,
-           port := strField b "port", scope := strField b "scope", witness := strField b "witness",
+           port := strField b "port", scope := ← scopeField b ctx, witness := strField b "witness",
            spotChecks := strsField b "spotChecks", absent := strField b "absent",
            referents := strsField b "referents", source }
 
