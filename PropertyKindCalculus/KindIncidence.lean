@@ -506,9 +506,9 @@ def conditionalPaths (env : Environment) (carriers : Array Name) (ctx : BinderCt
     | ps => for (p, k) in ps do out := out.push (case :: p, k)
   return out
 
-/-- Does a type carry kind information at all — a registered carrier or the kind
-vocabulary itself, mentioned anywhere in the expression, or (fuel-bounded) in the
-fields of the single-constructor inductive at its head, or in one of its own type
+/-- Does a type carry kind information at all — a registered carrier, a nominal
+designation type, or the kind vocabulary itself, mentioned anywhere in the expression,
+in the fields of the single-constructor inductive at its head, or in one of its own type
 arguments? The negative answer classifies a signature position as *unkinded* (module
 header, "Unkinded positions"): naked data, red in every report. The positive answer
 without a carrier field path (`carrierPaths`) or a kind signature (`signatureKind?` —
@@ -516,40 +516,18 @@ a function over quantities ports at its arrow of kinds, the module-valued port) 
 kind-bearing position that ports nothing — a sum over quantities, a dependent or
 partially-kinded function: not naked data, and not an interface node either.
 
-Three ways a type says it, because an abbreviation and a plural are not naked data:
-
-  * the test reduces at **reducible** transparency first, so a signature that names an
-    abbreviation says what the abbreviation says — `AttenQ α`, spelled
-    `Quantity paramB α → Quantity vegetationIndex α → Quantity vegetationAttenuation α`,
-    is a function over quantities however the binder spells it;
-  * a single-constructor head states its kinds through its fields, one level at a time;
-  * **a container of kinded values is kinded** — a type argument is searched like the
-    type itself, so `List (ObsWQ α)` carries what an `ObsWQ α` carries. It ports
-    nothing (a list has no fixed arity, so there is no field path to name), which is
-    exactly the "carries kinds, is not an interface node" verdict — the plural of a
-    kinded thing is not naked data, and calling it naked over-reports the debt. -/
-partial def kindBearing (carriers : Array Name) (ty : Expr) (fuel : Nat := 3) :
-    MetaM Bool := do
-  let ty ← Meta.whnfR ty.consumeTypeAnnotations
-  let mentions := (ty.find? fun sub =>
-    match sub with
-    | .const c _ => carriers.contains c || c == ``KindOfProperty
-    | _ => false).isSome
-  if mentions then return true
-  match fuel with
-  | 0 => return false
-  | fuel + 1 =>
-    if let .const c _ := ty.getAppFn then
-      if (BoundaryAudit.nominalKindOf? (← getEnv) c).isSome then return true
-      if let some (.inductInfo ii) := (← getEnv).find? c then
-        if ii.ctors.length == 1 then
-          if let some ctor := ii.ctors.head?.bind (← getEnv).find? then
-            if ← kindBearing carriers ctor.type fuel then return true
-    for a in ty.getAppArgs do
-      unless a.hasLooseBVars do
-        if (← Meta.isType a) then
-          if ← kindBearing carriers a fuel then return true
-    return false
+The structural rule (reduce at reducible transparency, walk a single-constructor head's
+fields, search every type argument) is `BoundaryAudit.kindBearing` — the same test the
+`@[kindCrossing]` gate applies to a crossing's arguments, so the gate and this report
+agree on what is kinded. Two things differ by design: the vocabulary (this reading
+counts `KindOfProperty` and the designation types as well as the carriers) and arrows
+(a function over quantities is a kind-bearing position here, while the gate wants an
+already-kinded *value*). -/
+def kindBearing (carriers : Array Name) (ty : Expr) : MetaM Bool := do
+  let env ← getEnv
+  BoundaryAudit.kindBearing
+    (carriers.push ``KindOfProperty ++ BoundaryAudit.kindNominalNames env)
+    (throughArrows := true) ty
 
 /-- The result type's right-spine product components — `A × B × C` is three output
 positions. A parenthesized left factor stays one component: positions follow what the

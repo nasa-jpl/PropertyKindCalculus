@@ -23,7 +23,15 @@ The attest probes pin the *attested-mint* column: a literal-reason site whose du
 renders with an explicit `(×2)` count, a parametric-kind site (the stable token, with the
 reason alongside), and a DOWNSTREAM attestor registered through `@[kindAttest]` — whose own
 body holds the sanctioned raw mint the walk must *skip*, exactly as it skips a carrier's own
-`.mk`: were the skip wrong, `taggedAttest` would appear `⚠ UNTAGGED` and break the pin. -/
+`.mk`: were the skip wrong, `taggedAttest` would appear `⚠ UNTAGGED` and break the pin.
+
+The `Widened` probes pin the gate's kinded-argument test, `BoundaryAudit.kindBearing` — the
+same predicate the incidence report's unkinded reading delegates to: a crossing FROM an
+abbreviation of a quantity, FROM a record over a record of quantities, and FROM a list of
+such records are all accepted, while a naked `Float` argument is still refused with the
+MINT-not-crossing message — and so is a declaration whose only carrier mention is in the
+RESULT of a function argument (`Float → Quantity probeKind Float`): a quantity-producing
+function is not an already-kinded value, so that shape stays a raw mint. -/
 
 module
 
@@ -271,6 +279,53 @@ end Ratcheted
 -- const/ingest/emission raw mints are at tiers the ratchet leaves at def granularity
 #guard_msgs in
 #kind_mint_ratchet PropertyKindCalculus.Tests.BoundaryAudit.Ratcheted
+
+namespace Widened
+
+/-- An abbreviation of a quantity — kinded through reducible unfolding, not by name. -/
+abbrev ProbeQ := Quantity probeKind2 Float
+
+/-- A record over a quantity — kinded through its single constructor's fields. -/
+structure Inner where
+  q : Quantity probeKind2 Float
+
+/-- A record over a record over a quantity — kinded two field levels down. -/
+structure Outer where
+  inner : Inner
+  tag : String
+
+/-- A crossing FROM an abbreviation: the gate reads what `ProbeQ` abbreviates. -/
+@[kindCrossing]
+def abbrevCrossing (x : ProbeQ) : Quantity probeKind Float :=
+  .attest "probe: the abbreviation spells a probeKind2 quantity" x.magnitude
+
+/-- A crossing FROM a nested record: the gate walks the fields of the fields. -/
+@[kindCrossing]
+def nestedCrossing (o : Outer) : Quantity probeKind Float :=
+  .attest "probe: the record's record carries a probeKind2 quantity" o.inner.q.magnitude
+
+/-- A crossing FROM a plural of nested records: a container of kinded values is kinded. -/
+@[kindCrossing]
+def listCrossing (os : List Outer) : Quantity probeKind Float :=
+  .attest "probe: the list's elements carry probeKind2 quantities" os.length.toFloat
+
+/--
+error: `@[kindCrossing]` requires at least one argument whose type is (or contains) a registered carrier (`Quantity`, `NominalValue`, or a `@[kindCarrier]`-registered structure) — 'PropertyKindCalculus.Tests.BoundaryAudit.Widened.nakedCrossing' takes none. A crossing is where an ALREADY-KINDED value meets its target kind; a declaration with no kinded argument is a boundary MINT, not a crossing. Tag a checked ingest (raw/host data admitted through some check) `@[kindIngest]`, or a fixed literal/adjudicated constant `@[kindConst]`, instead.
+-/
+#guard_msgs in
+@[kindCrossing]
+def nakedCrossing (x : Float) : Quantity probeKind Float :=
+  .attest "probe: a naked argument is a mint, not a crossing" x
+
+/--
+error: `@[kindCrossing]` requires at least one argument whose type is (or contains) a registered carrier (`Quantity`, `NominalValue`, or a `@[kindCarrier]`-registered structure) — 'PropertyKindCalculus.Tests.BoundaryAudit.Widened.fromRaw' takes none. A crossing is where an ALREADY-KINDED value meets its target kind; a declaration with no kinded argument is a boundary MINT, not a crossing. Tag a checked ingest (raw/host data admitted through some check) `@[kindIngest]`, or a fixed literal/adjudicated constant `@[kindConst]`, instead.
+-/
+#guard_msgs in
+@[kindCrossing]
+def fromRaw (f : Float → Quantity probeKind Float) (x : Float) : Quantity probeKind Float :=
+  .attest "probe: a quantity-producing function is not an already-kinded value" (f x).magnitude
+
+end Widened
 
 end PropertyKindCalculus.Tests.BoundaryAudit
 
