@@ -334,7 +334,13 @@ def readPrinciple (d : Doc) (e : Element) : ReadM Principle := do
   let (source, _) := d.citations e
   return { name, id := ← need b "id" s!"#principle {name}", source }
 
-def readKind (d : Doc) (e : Element) : ReadM Kind := do
+/-- A kind as read, and whether its `scale` was written. A species that subsets a genus may
+omit the scale; `inheritFromGenus` then fills in the placeholder from the genus. -/
+structure ReadKind where
+  kind : Kind
+  scaleWritten : Bool
+
+def readKind (d : Doc) (e : Element) : ReadM ReadKind := do
   let name := e.name.getD e.id
   let b := d.bindings e
   let (source, checked) := d.citations e
@@ -345,15 +351,17 @@ def readKind (d : Doc) (e : Element) : ReadM Kind := do
     let num := (intField fb "num").getD 0
     let den := (natField fb "den").getD 1
     return some ({ base, num, den } : DimExponent)
-  let scale ← match strField b "scale" with
-    | some sc => scaleOf sc
+  let (scale, scaleWritten) ← match strField b "scale" with
+    | some sc => do pure (← scaleOf sc, true)
     | none =>
       if (d.subsetsModel e).isEmpty then throw s!"#kind {name}: missing 'scale'"
-      else do warn s!"scale-inherited:{name}"; pure .ratio
-  return { name, id := ← need b "id" s!"#kind {name}", scale,
-           principle := strField b "principle", specializes := d.subsetsModel e, dimension,
-           standardRef := strField b "standardRef", catalogueItem := strField b "catalogueItem",
-           symbol := strField b "symbol", coherentUnit := strField b "coherentUnit", source, checked }
+      else pure (.ratio, false)
+  let kind : Kind :=
+    { name, id := ← need b "id" s!"#kind {name}", scale,
+      principle := strField b "principle", specializes := d.subsetsModel e, dimension,
+      standardRef := strField b "standardRef", catalogueItem := strField b "catalogueItem",
+      symbol := strField b "symbol", coherentUnit := strField b "coherentUnit", source, checked }
+  return { kind, scaleWritten }
 
 def readEdge (d : Doc) (e : Element) (kind : EdgeKind) : ReadM Edge := do
   let name := e.name.getD e.id
@@ -532,10 +540,14 @@ def readModel (d : Doc) (packageName : Option String := none) : ReadM PkcModel :
     && (packageName.isNone || e.name == packageName)
   let some pkg := pkgs.head? | throw "no model package found in the element list"
   let mut m : PkcModel := { packageName := pkg.name.getD pkg.id }
+  let mut unscaled : List String := []
   for e in d.kids pkg.id do
     match d.keyword? e with
     | some "principle" => m := { m with principles := m.principles ++ [← readPrinciple d e] }
-    | some "kind" => m := { m with kinds := m.kinds ++ [← readKind d e] }
+    | some "kind" =>
+      let r ← readKind d e
+      m := { m with kinds := m.kinds ++ [r.kind] }
+      unless r.scaleWritten do unscaled := unscaled ++ [r.kind.name]
     | some "dedicated" => m := { m with dedicated := m.dedicated ++ [← readDedicated d e] }
     | some "unit" => m := { m with units := m.units ++ [← readUnit d e] }
     | some "module" => m := { m with modules := m.modules ++ [← readModule d e] }
@@ -550,10 +562,6 @@ def readModel (d : Doc) (packageName : Option String := none) : ReadM PkcModel :
     | none =>
       unless e.isStructural do
         warn s!"unkeyworded element {e.name.getD e.id} ({e.type}) ignored"
-  let warnings ← get
-  let unscaled := warnings.toList.filterMap fun w =>
-    if w.startsWith "scale-inherited:" then some (w.drop "scale-inherited:".length).toString else none
-  set (warnings.filter fun w => !w.startsWith "scale-inherited:")
   match inheritFromGenus m unscaled with
   | .ok m' => return m'
   | .error e => throw e
