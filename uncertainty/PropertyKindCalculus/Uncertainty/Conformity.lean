@@ -382,10 +382,11 @@ inductive BandReading where
   measurement that is imprecise. It does not shrink with evidence, and tightening it as though it
   did is how a fleet walks into a correlated failure. -/
   | systematic (factor : Quantity coverageFactor Float)
-  /-- The band cannot be read at all — no `u` to divide by, or a `u` that nothing qualifies (a
-  `ν` below one, which supports no statement about a tail). Not the same as a band of zero: it is
-  a band whose meaning is unavailable, and the two causes are one statement from the consumer's
-  side, because a factor nobody can price is not a reading. -/
+  /-- The band cannot be read at all — no `u` to divide by, a quotient that is not a number
+  (an unbounded band over an unbounded `u`), or a `u` that nothing qualifies (a `ν` below one,
+  which supports no statement about a tail). Not the same as a band of zero: it is a band whose
+  meaning is unavailable, and the three causes are one statement from the consumer's side,
+  because a factor nobody can price is not a reading. -/
   | unstated
   deriving Repr
 
@@ -413,7 +414,8 @@ inductive BandReadingLabel where
   /-- A systematic the model does not carry. It does not shrink, and tightening it as though it
   did is how a fleet walks into a correlated failure. -/
   | systematic
-  /-- Not readable: no `u` to divide by, or a `u` nothing qualifies. -/
+  /-- Not readable: no `u` to divide by, a quotient that is not a number, or a `u` nothing
+  qualifies. -/
   | unstated
 deriving DecidableEq, Repr, Inhabited
 
@@ -428,6 +430,29 @@ def BandReading.label : BandReading → BandReadingLabel
   | .systematic _ => .systematic
   | .unstated => .unstated
 
+/-- **The one band-classification rule**, shared by `readBand` and `Evidence.readBand`, which
+differ only in how a coverage statement is *priced* — `price` is the Gaussian `riskForFactor` for
+the first and `riskForFactorAt` at the record's own `ν` for the second. Everything else is decided
+here, once: the guard (`u` must be a positive number), the division `g/u` through
+`bandReadingLaw`, the systematic threshold, and what a factor that is not a number means.
+
+That last case is `unstated`, and it is stated explicitly because it cannot be left to the
+comparison: `∞/∞` is `NaN`, and `NaN ≤ t` and `NaN > t` are *both* false, so a rule written
+"`≤ t` ⇒ coverage, else systematic" and the same rule written "`> t` ⇒ systematic, else coverage"
+read the same band in opposite directions. Neither reading is right — a factor nobody can price is
+not a reading — and having the guard here means no caller can re-derive the wrong one. -/
+def classifyBand (g : Quantity k Float) (u : Dispersion k Float) (hk : k.IsRational)
+    (systematicAt : Quantity coverageFactor Float)
+    (price : Quantity coverageFactor Float → Option (Quantity probability Float)) : BandReading :=
+  if !(u.magnitude > 0.0) then .unstated
+  else
+    let factor := Quantity.div (bandReadingLaw k hk) g u.q
+    if factor.magnitude.isNaN then .unstated
+    else if factor.magnitude > systematicAt.magnitude then .systematic factor
+    else match price factor with
+      | some risk => .coverage factor risk
+      | none => .unstated
+
 /-- Read a deployed guard band `g` against the standard uncertainty `u` of the quantity it
 qualifies — both at the measurand's kind, so their quotient is the coverage factor
 `bandReadingLaw` says it is, and a band accidentally compared against the uncertainty of something
@@ -441,11 +466,7 @@ downstream will happily shrink. Same kind, same arity, opposite conclusion, no e
 def readBand (g : Quantity k Float) (u : Dispersion k Float)
     (systematicAt : Quantity coverageFactor Float := systematicThreshold)
     (hk : k.IsRational := by rfl) : BandReading :=
-  if !(u.magnitude > 0.0) || u.magnitude.isNaN || g.magnitude.isNaN then .unstated
-  else
-    let factor := Quantity.div (bandReadingLaw k hk) g u.q
-    if factor.magnitude ≤ systematicAt.magnitude then .coverage factor (riskForFactor factor)
-    else .systematic factor
+  classifyBand g u hk systematicAt (some ∘ riskForFactor)
 
 /-- **Read a deployed band against the evidence that qualifies the quantity it guards** — the same
 division as `readBand`, priced at the evidence's own `ν` instead of at the Gaussian limit.
@@ -467,13 +488,7 @@ evidence — `e.readBand g` at the call site is what keeps the `ν` from being d
 one. -/
 def _root_.PropertyKindCalculus.Uncertainty.Evidence.readBand (e : Evidence k) (g : Quantity k Float)
     (systematicAt : Quantity coverageFactor Float := systematicThreshold) : BandReading :=
-  if !(e.stdUnc.magnitude > 0.0) || e.stdUnc.magnitude.isNaN || g.magnitude.isNaN then .unstated
-  else
-    let factor := Quantity.div (bandReadingLaw k e.rational) g e.stdUnc.q
-    if factor.magnitude > systematicAt.magnitude then .systematic factor
-    else match riskForFactorAt factor e.dof with
-      | some risk => .coverage factor risk
-      | none => .unstated
+  classifyBand g e.stdUnc e.rational systematicAt (riskForFactorAt · e.dof)
 
 /-! ## The evidence-driven entry point -/
 
