@@ -78,15 +78,16 @@ def deviationDist (model : List Float → Float) (means : List Float) (i : Nat)
   (systematicSamples d n).map (fun x => (model (means.set i x) - R, 1.0 / n.toFloat))
 
 /-- Every input's deviation distribution. `ns` gives the per-input sample count `Nᵢ` (SSPRC's freedom
-to spend samples where they matter — `UNCERTAINTY.md` §3.2 item 3). -/
+to spend samples where they matter — `UNCERTAINTY.md` §3.2 item 3), one per input: the length
+precondition `h` is what makes every input reach the sum (a missing `Nᵢ` would otherwise drop its
+input and understate `u(Y)`). Literal budgets discharge it by `decide`; for a computed one use
+`run?` / `runConv?`. -/
 def deviationDists (model : List Float → Float) (inputs : List (InputDist Float))
-    (ns : List Nat) : List FloatDist :=
+    (ns : List Nat) (h : ns.length = inputs.length := by decide) : List FloatDist :=
   let means := inputs.map (fun d => d.moments.mean)
   let R := model means
-  (List.range inputs.length).map (fun i =>
-    match inputs[i]?, ns[i]? with
-    | some d, some n => deviationDist model means i d n R
-    | _, _ => [])
+  (List.finRange inputs.length).map (fun i =>
+    deviationDist model means i.val inputs[i.val] (ns[i.val]'(by omega)) R)
 
 /-! ## Step 4 — convolution -/
 
@@ -107,11 +108,11 @@ def combinedDeviation (dists : List FloatDist) : FloatDist :=
 distributions. `E(Y) = R + Σ E(Aᵢ)` and `Var(Y) = Σ Var(Aᵢ)` — means and variances add under
 convolution, so the (combinatorially large) convolution is not needed for the moments. The `Σ E(Aᵢ)`
 term is the non-linearity correction the linearized rungs cannot produce. -/
-def run (model : List Float → Float) (inputs : List (InputDist Float)) (ns : List Nat) :
-    Float × Float :=
+def run (model : List Float → Float) (inputs : List (InputDist Float)) (ns : List Nat)
+    (h : ns.length = inputs.length := by decide) : Float × Float :=
   let means := inputs.map (fun d => d.moments.mean)
   let R := model means
-  let dists := deviationDists model inputs ns
+  let dists := deviationDists model inputs ns h
   let eY := R + (dists.map dmean).foldl (· + ·) 0.0
   let varY := (dists.map dvar).foldl (· + ·) 0.0
   (eY, Float.sqrt varY)
@@ -119,12 +120,32 @@ def run (model : List Float → Float) (inputs : List (InputDist Float)) (ns : L
 /-- **SSPRC via the actual convolution**: build the combined deviation distribution and read its
 moments (shifted by `R`). Agrees with `run` — a cross-check of the convolution engine — at the cost
 of materializing the convolution (`∏ Nᵢ` points), so use it at modest `Nᵢ`. -/
-def runConv (model : List Float → Float) (inputs : List (InputDist Float)) (ns : List Nat) :
-    Float × Float :=
+def runConv (model : List Float → Float) (inputs : List (InputDist Float)) (ns : List Nat)
+    (h : ns.length = inputs.length := by decide) : Float × Float :=
   let means := inputs.map (fun d => d.moments.mean)
   let R := model means
-  let combined := combinedDeviation (deviationDists model inputs ns)
+  let combined := combinedDeviation (deviationDists model inputs ns h)
   (R + dmean combined, Float.sqrt (dvar combined))
+
+/-! ## Runtime budgets -/
+
+/-- The budget's length precondition as a run-time check, for an `ns` only known at run time (an
+`Allocation.allocate` result): hands the proof to `k`, or reports the mismatch — never a silently
+truncated budget. -/
+def checkBudget {α : Type} (inputs : List (InputDist Float)) (ns : List Nat)
+    (k : ns.length = inputs.length → α) : Except String α :=
+  if h : ns.length = inputs.length then .ok (k h)
+  else .error s!"SSPRC: {ns.length} sample counts Nᵢ for {inputs.length} inputs"
+
+/-- `run` on a run-time budget; `.error` when `ns` does not give every input its `Nᵢ`. -/
+def run? (model : List Float → Float) (inputs : List (InputDist Float)) (ns : List Nat) :
+    Except String (Float × Float) :=
+  checkBudget inputs ns (run model inputs ns ·)
+
+/-- `runConv` on a run-time budget; `.error` when `ns` does not give every input its `Nᵢ`. -/
+def runConv? (model : List Float → Float) (inputs : List (InputDist Float)) (ns : List Nat) :
+    Except String (Float × Float) :=
+  checkBudget inputs ns (runConv model inputs ns ·)
 
 /-- The **reference value** `R = f(E(X))` (Degenhardt eq. 4). -/
 def reference (model : List Float → Float) (inputs : List (InputDist Float)) : Float :=

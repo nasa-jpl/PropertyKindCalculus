@@ -18,8 +18,8 @@ slice consumes only quantities the pipeline already produces — no new model ma
 contributes nothing to `E(Y)`/`Var(Y)` and costs no evaluations), and (2) splits the whole remaining
 budget across the survivors **in proportion to `wᵢ`**, apportioned by the largest-remainder
 (Hamilton) method so `Σ Nᵢ = total` *exactly* and a larger contribution never receives fewer
-samples. The result is a pure `List Nat` that drops straight into `Ssprc.run` / `SsprcBatched.run`'s
-`ns` argument. Deterministic, Mathlib- and TorchLean-free — so unlike the batched propagator it is
+samples. The result is a pure `List Nat` that drops straight into `Ssprc.run?` / `SsprcBatched.run?`'s
+`ns` argument (a run-time budget, so those check it gives every input its `Nᵢ`). Deterministic, Mathlib- and TorchLean-free — so unlike the batched propagator it is
 checked at build time by `#guard` (see `examples/…/DegenhardtAllocation.lean`).
 -/
 
@@ -66,7 +66,7 @@ def equalSplit (total n : Nat) : List Nat :=
   * **Proportion** the whole budget across the survivors by `wᵢ`, apportioned by largest remainder
     so `Σ Nᵢ = total` exactly and a larger contribution never gets fewer samples than a smaller one.
 
-Pure `List Nat`; feeds `Ssprc.run` / `SsprcBatched.run`'s `ns` unchanged. When no input survives the
+Pure `List Nat`; feeds `Ssprc.run?` / `SsprcBatched.run?`'s `ns` unchanged. When no input survives the
 drop (all contributions zero), the budget is split equally (`equalSplit`). -/
 def allocate (total : Nat) (ws : List Float) (dropRatio : Float := 0.0) : List Nat := Id.run do
   let n := ws.length

@@ -61,6 +61,9 @@ where the Stage-0 Monte Carlo reference used 20 000 (a factor of `20000/300 ≈ 
 #guard Float.abs (ssprc.2 - 1.691) < Float.abs (gum - 1.691)
 -- Additive evaluation budget: N_s = 300 (+1 reference), vs the reference Monte Carlo's 20 000.
 #guard Ssprc.evalCount ns == 301
+-- A budget that leaves an input without its Nᵢ is refused, not silently run on fewer inputs.
+#guard (Ssprc.run? modelF [x1, x2, x3] [100, 100]).toBool == false
+#guard (Ssprc.run? modelF [x1, x2, x3] ns).toBool == true
 
 /-! ## The convolution engine agrees with the moment-addition read-off
 

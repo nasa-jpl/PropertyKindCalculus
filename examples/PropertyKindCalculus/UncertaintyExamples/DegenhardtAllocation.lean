@@ -108,10 +108,17 @@ Ground truth (high-`N` Monte Carlo): `E(Y) = 11.5875`, `u(Y) ≈ 1.691`. Running
 flat `[100,100,100]` did. The point of the allocation is the *next* line: a 120-sample budget (a 60 %
 cut) still lands the mean, because the samples it keeps are on the inputs that matter. -/
 
+/-- An allocated budget is run-time data, so `run?` checks it covers every input; a mismatch is an
+error here, not a smaller `u(Y)`. -/
+def runAllocated (ns : List Nat) : Float × Float :=
+  match Ssprc.run? modelF [x1, x2, x3] ns with
+  | .ok r => r
+  | .error e => panic! e
+
 /-- SSPRC at the 300-sample sensitivity allocation. -/
-def ssprc300 : Float × Float := Ssprc.run modelF [x1, x2, x3] ns300
+def ssprc300 : Float × Float := runAllocated ns300
 /-- SSPRC at a 120-sample sensitivity allocation (`[47, 60, 13]`). -/
-def ssprc120 : Float × Float := Ssprc.run modelF [x1, x2, x3] (allocateFromTerms 120 terms)
+def ssprc120 : Float × Float := runAllocated (allocateFromTerms 120 terms)
 
 #eval s!"SSPRC @300 alloc  E(Y)={ssprc300.1}  u(Y)={ssprc300.2}   (evals {Ssprc.evalCount ns300})"
 #eval s!"SSPRC @120 alloc  E(Y)={ssprc120.1}  u(Y)={ssprc120.2}   (evals {Ssprc.evalCount (allocateFromTerms 120 terms)})"

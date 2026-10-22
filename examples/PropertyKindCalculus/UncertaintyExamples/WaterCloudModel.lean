@@ -345,8 +345,11 @@ def ws : List Float := contributions terms
 def ns300 : List Nat := allocateFromTerms 300 terms
 /-- A halved budget of 150 samples, allocated. -/
 def ns150 : List Nat := allocateFromTerms 150 terms
-/-- SSPRC on the halved, allocated budget. -/
-def ssprc150 : Float × Float := Ssprc.run modelF inputs ns150
+/-- SSPRC on the halved, allocated budget — run-time data, so `run?` checks it covers every input. -/
+def ssprc150 : Float × Float :=
+  match Ssprc.run? modelF inputs ns150 with
+  | .ok r => r
+  | .error e => panic! e
 
 #eval s!"contribs  w = {ws}"
 #eval s!"allocate 300 = {ns300}  (Σ={ns300.foldl (·+·) 0})   drop 0.1 = {allocate 300 ws 0.1}"
