@@ -140,6 +140,12 @@ run_meta do
 #guard [ReqScope.all, .sort "S", .objects ["A", "B"], .objects [], .decided "D"].all fun sc =>
   ReqScope.parse sc.render == .ok sc
 #guard ReqScope.render (.objects ["A", "B"]) == some "objects A, B"
+-- a name containing the separator arrives `«…»`-escaped from `Name.toString` and stays one object
+#guard Harvest.ReqScope.ofProvenance (.objects [Name.mkSimple "Sensor, west", `B])
+  == ReqScope.objects ["«Sensor, west»", "B"]
+#guard ReqScope.parse (ReqScope.render (.objects ["«Sensor, west»", "B"]))
+  == .ok (.objects ["«Sensor, west»", "B"])
+#guard ReqScope.splitObjects "A, «x, y».z, B" == ["A", "«x, y».z", "B"]
 #guard match ReqScope.parse (some "all") with | .error _ => true | .ok _ => false
 #guard match ReqScope.parse (some "Sort S") with | .error _ => true | .ok _ => false
 #guard EmitLean.scopeCtor (.objects ["A", "B"]) == ".objects [`A, `B]"
