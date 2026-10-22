@@ -7,8 +7,11 @@ read back from their own JSON unchanged (`PkcModel.ofJsonString ∘ toJsonString
 citations all name declarations of the environment, and the element-form reader recovers
 the DSL's conventions — keywords, redefinition chains, defaults, nested records, connection
 ends, negative literals — from a hand-built element list (`Tests.Interchange.ApiJson`).
-The full round trip through OpenSysML, `read (api-json (emit (harvest))) = harvest`, needs
-the `sysml` converter and runs as `scripts/roundtrip-sysml.sh`.
+Both harvests are complete — no declaration in scope is skipped — and a scope with a kind
+that cannot be evaluated and a unit whose kind is out of scope (`Partial`) harvests without
+them and reports both. The full round trip through OpenSysML,
+`read (api-json (emit (harvest))) = harvest`, needs the `sysml` converter and runs as
+`scripts/roundtrip-sysml.sh`.
 -/
 
 module
@@ -30,7 +33,8 @@ open Lean PropertyKindCalculus.Interchange
 -- The harvested catalogue: read back from its JSON unchanged, every citation honoured, the
 -- catalogue's kinds and principles all present.
 run_meta do
-  let m ← Harvest.harvest #[`PropertyKindCalculus.Iso80000.Part3] "PKC_ISO80000_3"
+  let (m, skipped) ← Harvest.harvest #[`PropertyKindCalculus.Iso80000.Part3] "PKC_ISO80000_3"
+  unless skipped.isEmpty do throwError "the catalogue harvest skipped declarations: {skipped}"
   unless m.kinds.length == 42 do throwError "expected 42 kinds, harvested {m.kinds.length}"
   unless m.principles.length ≥ 8 do throwError "expected the length principles"
   let some width := m.kind? "width" | throwError "no `width`"
@@ -48,7 +52,8 @@ run_meta do
 
 -- The tutorial's modules, relations and requirements.
 run_meta do
-  let m ← Harvest.harvest #[`Tutorial.HarmonicOscillator] "HarmonicOscillatorRequirements"
+  let (m, skipped) ← Harvest.harvest #[`Tutorial.HarmonicOscillator] "HarmonicOscillatorRequirements"
+  unless skipped.isEmpty do throwError "the tutorial harvest skipped declarations: {skipped}"
   unless m.modules.length == 5 do throwError "expected 5 boundaries, harvested {m.modules.length}"
   unless m.relations.length == 2 do throwError "expected 2 relations, harvested {m.relations.length}"
   unless m.requirements.length == 7 do throwError "expected 7 requirements"
@@ -68,6 +73,29 @@ run_meta do
     throwError "generated module should define 5 contracts"
   unless (lean.splitOn "Provenance.Relation where").length == 3 do
     throwError "generated module should define 2 relations"
+
+-- A declaration the harvester cannot read is skipped and reported, never dropped silently:
+-- a kind that cannot be evaluated and a unit whose kind is out of scope each leave a
+-- warning naming them, and the model carries neither.
+namespace Partial
+noncomputable def unreadableKind : KindOfProperty :=
+  { id := Classical.choice ⟨"unreadable"⟩, scale := .ratio }
+def readableKind : KindOfProperty := { id := "readable", scale := .ratio }
+def strayUnit : PropertyKindCalculus.MetrologicalUnit :=
+  { kind := Tutorial.HarmonicOscillator.complianceK, symbol := "m/N" }
+end Partial
+
+run_meta do
+  let (m, skipped) ← Harvest.harvest #[`PropertyKindCalculus.Tests.Interchange.Partial] "Partial"
+  unless m.kinds.map (·.name) == ["readableKind"] do
+    throwError "only the readable kind should be harvested, got {m.kinds.map (·.name)}"
+  unless m.units.isEmpty do throwError "a unit of an out-of-scope kind should be skipped"
+  unless skipped.size == 2 do throwError "expected 2 skipped declarations, got {skipped}"
+  unless skipped.any (fun w => w.startsWith "PropertyKindCalculus.Tests.Interchange.Partial.unreadableKind: value not read:") do
+    throwError "the unreadable kind should be reported: {skipped}"
+  unless skipped.any (· == "PropertyKindCalculus.Tests.Interchange.Partial.strayUnit: unit skipped: \
+      its kind 'compliance' is not a harvested kind") do
+    throwError "the stray unit should be reported: {skipped}"
 
 -- What counts as checked evidence: a constructor of a Prop does; an axiom, data, and a missing
 -- name do not. A theorem's proof is not visible from a `module`, so here it is reported as

@@ -9,7 +9,8 @@ open Lean PropertyKindCalculus.Interchange
 `.lake/build/sysml/<Package>.api.json` back and compares, failing on the first difference. -/
 
 def check (scope : Array Name) (pkg : String) : MetaM Unit := do
-  let h ← Harvest.harvest scope pkg
+  let (h, skipped) ← Harvest.harvest scope pkg
+  for w in skipped do IO.eprintln s!"{pkg}: harvest: {w}"
   let text ← IO.FS.readFile s!".lake/build/sysml/{pkg}.api.json"
   match ApiJson.read text (some pkg) with
   | .error e => throwError "{pkg}: {e}"

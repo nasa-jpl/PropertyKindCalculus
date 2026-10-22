@@ -9,7 +9,8 @@ harmonic-oscillator requirements tutorial (modules, relations, requirements) —
 `lake env lean scripts/emit-sysml.lean` after `lake build Interchange Iso80000 Tutorial`. -/
 
 def emitScope (scope : Array Name) (pkg : String) : MetaM Unit := do
-  let m ← Harvest.harvest scope pkg
+  let (m, warnings) ← Harvest.harvest scope pkg
+  for w in warnings do IO.eprintln s!"{pkg}: {w}"
   IO.FS.createDirAll ".lake/build/sysml"
   let sysml := s!".lake/build/sysml/{pkg}.sysml"
   let json := s!".lake/build/sysml/{pkg}.pkc.json"
@@ -17,7 +18,8 @@ def emitScope (scope : Array Name) (pkg : String) : MetaM Unit := do
   IO.FS.writeFile json m.toJsonString
   IO.println s!"wrote {sysml}: {m.kinds.length} kind(s), {m.edges.length} edge(s), \
     {m.modules.length} module(s), {m.relations.length} relation(s), \
-    {m.requirements.length} requirement(s), {m.tapes.length} tape(s)"
+    {m.requirements.length} requirement(s), {m.tapes.length} tape(s); \
+    {warnings.size} skipped declaration(s)"
 
 run_meta do
   emitScope #[`PropertyKindCalculus.Iso80000.Part3] "PKC_ISO80000_3"
