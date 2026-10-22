@@ -162,8 +162,8 @@ initialize boundaryExt :
 /-! ## The carrier registry
 
 Moved ahead of the tier attributes below: `@[kindCrossing]`'s own `add` callback needs
-`kindCarrierNames`/`mkCarrierSpec` to check an argument for a carrier, so the registry they
-belong to must already be in scope. -/
+`kindCarrierNames` to check an argument for a carrier, so the registry it belongs to must
+already be in scope. -/
 
 /-- The environment extension collecting every `@[kindCarrier]`-registered structure. -/
 initialize kindCarrierExt :
@@ -231,6 +231,10 @@ initialize kindNominalExt :
 def nominalKindOf? (env : Environment) (typeName : Name) : Option Name :=
   (kindNominalExt.getState env).findSome? fun (t, k) => if t == typeName then some k else none
 
+/-- Every registered designation type — the nominal half of the kind vocabulary. -/
+def kindNominalNames (env : Environment) : Array Name :=
+  (kindNominalExt.getState env).map (·.1)
+
 syntax (name := kindNominalAttr) "kindNominal" ident : attr
 
 initialize registerBuiltinAttribute {
@@ -293,7 +297,7 @@ def mkCarrierSpec (env : Environment) (cn : Name) : Option CarrierSpec := do
 /-! ## The `@[kindCrossing]` argument check
 
 A crossing's whole claim is that two kinds meet — so its signature must actually SHOW a kind on
-the way in, not just on the way out. `mentionsCarrier` decides that, structurally, at the point
+the way in, not just on the way out. `kindBearing` decides that, structurally, at the point
 `@[kindCrossing]` is applied (so a miscategorized ingest fails the build where it is written,
 not three imports later at `#kind_boundary_audit`). -/
 
@@ -305,45 +309,55 @@ def piArgTypes : Expr → List Expr
   | .forallE _ d b _ => d :: piArgTypes b
   | _ => []
 
-/-- Bounded structural search: does `ty` mention a registered carrier's structure name, either
-directly, through one of the container formers a real signature here actually uses (`List`/
-`Array`/`Option`/`Prod`/`Except`/`Sum`), or through the field types of a single-constructor,
-non-carrier structure — so a plain data record built OVER kinded fields (`Marker`, `SizingLine`,
-or a PARAMETRIC one like `CholQ α`, four `Quantity _ α` fields at four different kinds) reads as
-kinded even though the record itself is not a registered carrier, while a plain data record
-over bare `Float`s (an affine transform's six coefficients) correctly does not? The constructor's
-own (unapplied, generic) type is walked directly — a structure's leading parameter binders
-(`α : Type`) are included in that walk along with its fields, but they simply never match a
-carrier, so there is nothing to gain by singling monomorphic structures out and something to
-lose (`CholQ`'s own crossing, rejected until this was widened). `fuel` bounds the unwrap depth:
-every shape the check actually needs to see through is shallow (a record of quantities, a
-product, a list of records), so a small fixed fuel is enough, and a type that would need more
-is, correctly, treated as opaque rather than risking a loop on a self-referential type. -/
-partial def mentionsCarrier (env : Environment) (specs : Array CarrierSpec) (fuel : Nat)
-    (ty : Expr) : Bool :=
+/-- The unwrap depth `kindBearing` sees through before treating a type as opaque. Every
+shape the test needs to see through is shallow (a record of quantities, a product, a list of
+records), so a small fixed depth is enough, and a type that would need more is treated as
+opaque rather than risking a loop on a self-referential type. -/
+def kindBearingFuel : Nat := 6
+
+/-- The one structural answer to "does this type carry kind information", shared by the
+`@[kindCrossing]` argument gate (`vocabulary` = the registered carriers) and the incidence
+report's unkinded reading (`vocabulary` = the carriers plus the kind vocabulary itself). The
+positive answer is a mention of a `vocabulary` name anywhere in the type, found in one of
+three ways, because an abbreviation, a record over quantities, and a plural are not naked
+data:
+
+  * the type reduces at **reducible** transparency first, so a signature naming an
+    abbreviation (`AttenQ α`) says what the abbreviation says;
+  * a **single-constructor head** states its kinds through its constructor's binders, one
+    level at a time — a plain data record built OVER kinded fields (`Marker`, or a PARAMETRIC
+    `CholQ α` with `Quantity _ α` fields at four kinds) reads as kinded even though the record
+    itself is not a registered carrier, while a record over bare `Float`s does not; the
+    leading parameter binders (`α : Type`) are walked too and simply never match;
+  * **a container of kinded values is kinded** — every type argument is searched like the
+    type itself (`List (ObsWQ α)`, `Vector`, `HashMap`, a user wrapper), so no list of
+    container formers has to be kept.
+
+`fuel` (default `kindBearingFuel`) bounds the unwrap depth of the last two. -/
+partial def kindBearing (vocabulary : Array Name) (ty : Expr)
+    (fuel : Nat := kindBearingFuel) : MetaM Bool := do
+  let ty ← Meta.whnfR ty.consumeTypeAnnotations
+  let mentions := (ty.find? fun sub =>
+    match sub with
+    | .const c _ => vocabulary.contains c
+    | _ => false).isSome
+  if mentions then return true
   match fuel with
-  | 0 => false
+  | 0 => return false
   | fuel + 1 =>
-    match ty.getAppFn with
-    | .const n _ =>
-        if specs.any (·.structName == n) then true
-        else
-          let args := ty.getAppArgs
-          if (n == ``List || n == ``Array || n == ``Option) && args.size == 1 then
-            mentionsCarrier env specs fuel args[0]!
-          else if (n == ``Prod || n == ``Except || n == ``Sum) && args.size == 2 then
-            mentionsCarrier env specs fuel args[0]! || mentionsCarrier env specs fuel args[1]!
-          else match env.find? n with
-            | some (.inductInfo iv) =>
-                (match iv.ctors with
-                 | [ctorName] =>
-                     match env.find? ctorName with
-                     | some (.ctorInfo cv) =>
-                         (piArgTypes cv.type).any (mentionsCarrier env specs fuel)
-                     | _ => false
-                 | _ => false)
-            | _ => false
-    | _ => false
+    let env ← getEnv
+    if let .const c _ := ty.getAppFn then
+      if let some (.inductInfo iv) := env.find? c then
+        if let [ctorName] := iv.ctors then
+          if let some cv := env.find? ctorName then
+            let viaFields ← Meta.forallTelescope cv.type fun binders _ =>
+              binders.anyM fun b => do kindBearing vocabulary (← Meta.inferType b) fuel
+            if viaFields then return true
+    for a in ty.getAppArgs do
+      unless a.hasLooseBVars do
+        if (← Meta.isType a) then
+          if ← kindBearing vocabulary a fuel then return true
+    return false
 
 /-! ## The attestor registry — `@[kindAttest]`
 
@@ -422,8 +436,10 @@ initialize registerBuiltinAttribute {
     let env ← getEnv
     let some info := env.find? decl
       | throwError "`@[kindCrossing]` could not find '{decl}' in the environment"
-    let specs := (kindCarrierNames env).filterMap (mkCarrierSpec env)
-    unless (piArgTypes info.type).any (mentionsCarrier env specs 6) do
+    let carriers := kindCarrierNames env
+    let kinded ← Meta.MetaM.run' <| Meta.forallTelescope info.type fun binders _ =>
+      binders.anyM fun b => do kindBearing carriers (← Meta.inferType b)
+    unless kinded do
       throwError "`@[kindCrossing]` requires at least one argument whose type is (or contains) \
         a registered carrier (`Quantity`, `NominalValue`, or a `@[kindCarrier]`-registered \
         structure) — '{decl}' takes none. A crossing is where an ALREADY-KINDED value meets its \
