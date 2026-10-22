@@ -106,6 +106,8 @@ public import PropertyKindCalculus.CertifiedIngest
 public meta import PropertyKindCalculus.CertifiedIngest
 public import PropertyKindCalculus.AuditReceipt
 public meta import PropertyKindCalculus.AuditReceipt
+public import PropertyKindCalculus.KindEdges
+public meta import PropertyKindCalculus.KindEdges
 
 -- Same-module helpers serve both the command elaborators below and runtime callers, so the
 -- phase check is relaxed for this file (the module system's mixed-use escape; imports are
@@ -580,17 +582,6 @@ partial def collectAttests (specs : Array AttestSpec) (e : Expr)
   | .proj _ _ b => collectAttests specs b acc
   | _ => acc
 
-/-- Strip internal name components (`._proof_N`, `.match_N`, numeric suffixes) so a lifted
-call-site mint is attributed to the definition that authored it — the `KindEdges.parentOf`
-precedent, widened to the matcher/equation auxiliaries a compute body generates. -/
-def parentOf (n : Name) : Name :=
-  match n with
-  | .str p s =>
-      if s.startsWith "_" || s.startsWith "match_" || s.startsWith "proof_"
-          || s.startsWith "eq_" || s.startsWith "unsafe_" then parentOf p else n
-  | .num p _ => parentOf p
-  | _ => n
-
 /-- The final-component names of the machinery a structure/inductive declaration generates —
 constructors, recursors, projections' companions, `noConfusion`, `injEq`, `sizeOf`. These are
 never *authored* compute, so the audit skips them (a carrier's own `.mk`/`.magnitude` is the
@@ -652,7 +643,7 @@ def boundarySites (scope : Array Name) : MetaM (Array BoundarySite) := do
   let mut eraseSet : Std.HashSet Name := {}
   let mut parents : Std.HashSet Name := {}
   for (name, info) in env.constants.toList do
-    let parent := parentOf name
+    let parent := KindEdges.parentOf name
     unless inScope parent do continue
     -- By the authored kind, not the `ConstantInfo` constructor: in a `module` file an imported
     -- `theorem` reads back from `Environment.find?` as `.axiomInfo`, so the constructor no longer

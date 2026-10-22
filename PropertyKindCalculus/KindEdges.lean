@@ -44,9 +44,10 @@ on it: those readings are identified against the boundary audit's registries, an
 importing the audit would put its meta-heavy bodies into this module's environment walk
 in every consumer (`producerModules` below is the cost model). What stays here is what
 both sides share: the edge specs — each family's law, argument roles and formatter, the
-one registry every audit layer derives its tables from — and the binder-type
+one registry every audit layer derives its tables from — the binder-type
 instantiation the per-declaration reading keys on (`instantiatedBinderTypes`, the
-twin of `instantiatedConclusion`).
+twin of `instantiatedConclusion`), and the author attribution of the elaborator's
+auxiliaries (`parentOf`) every walk credits its rows by.
 -/
 
 module
@@ -257,11 +258,15 @@ def bodyScannable (reachable : Std.HashSet Nat) (env : Environment)
   if name.isInternalDetail || isAuxRecursor env name then return false
   return !(← Meta.isInstance name)
 
-/-- Strip internal name components (`._proof_N`, numeric suffixes) so a lifted call-site
-witness is attributed to the definition that authored it. -/
+/-- Strip internal name components (`._proof_N`, `.match_N`, `.eq_N`, numeric suffixes) so a
+lifted call-site witness or mint is attributed to the definition that authored it. Shared by
+every audit walk (`edgesInto`, the boundary audit's `boundarySites`, the index's
+`isAuthored`) so they all credit the elaborator's auxiliaries to the same author. -/
 def parentOf (n : Name) : Name :=
   match n with
-  | .str p s => if s.startsWith "_" then parentOf p else n
+  | .str p s =>
+      if s.startsWith "_" || s.startsWith "match_" || s.startsWith "proof_"
+          || s.startsWith "eq_" || s.startsWith "unsafe_" then parentOf p else n
   | .num p _ => parentOf p
   | _ => n
 
