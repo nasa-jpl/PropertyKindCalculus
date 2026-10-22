@@ -207,11 +207,16 @@ def runSharded (nChunks total nOut : Nat) (inCols : Array FloatArray)
     let t ← IO.asTask (k len slices) Task.Priority.dedicated
     tasks := tasks.push t
     lo := hi
-  -- gather in chunk order; propagate the first task error
+  -- gather in chunk order; propagate the first task error, and refuse a kernel that broke
+  -- its column contract here rather than letting `cols[j]!` below stitch an empty column
   let mut chunkOuts : Array (Array FloatArray) := #[]
-  for t in tasks do
-    match t.get with
-    | .ok cols => chunkOuts := chunkOuts.push cols
+  for h : c in [0:tasks.size] do
+    match tasks[c].get with
+    | .ok cols =>
+      if cols.size != nOut then
+        throw (IO.userError
+          s!"runSharded: chunk {c} of {nChunks} returned {cols.size} output columns, expected {nOut}")
+      chunkOuts := chunkOuts.push cols
     | .error e => throw e
   -- stitch: output column j = its per-chunk slices concatenated in order
   let mut result : Array FloatArray := #[]
