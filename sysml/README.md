@@ -94,7 +94,10 @@ Lean environment ──Harvest──▶ PkcModel ──EmitSysml──▶ Model.
   kernel check it. A citation the environment cannot honour (a missing declaration, or data
   cited as `@Checked`) fails the ingest.
 * **Round trip.** `scripts/roundtrip-sysml.sh` checks, by content,
-  `ApiJson.read (api-json (emit (harvest s))) = harvest s` for both scopes.
+  `ApiJson.read (api-json (emit (harvest s))) = harvest s` for both scopes. A declaration
+  the harvester skipped (a value it could not evaluate, a contract or hypergraph the assembly
+  refused, a unit of an out-of-scope kind) is reported on stderr by both scripts, so a
+  partial harvest that round-trips is still visible as partial.
   `lake build Tests` pins the JSON round trip, the citations and the reader's conventions
   (`tests/PropertyKindCalculus/Tests/Interchange.lean`).
 

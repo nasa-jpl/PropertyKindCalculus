@@ -71,6 +71,10 @@ PropertyKindCalculus.Tests.KindEdges.tableEntry: [table] alphaK · betaK → gam
 -/
 #guard_msgs in #kind_edges gammaK
 
+/-- A witness taken as a *hypothesis* is assumed, not authored: the type scan reads the
+conclusion only, so this declaration contributes no edge mentioning `orphanK`. -/
+theorem assumed_not_authored (_h : ProductKind alphaK betaK orphanK) : True := trivial
+
 /-- info: no authored kind edges mention 'PropertyKindCalculus.Tests.KindEdges.orphanK' -/
 #guard_msgs in #kind_edges orphanK
 

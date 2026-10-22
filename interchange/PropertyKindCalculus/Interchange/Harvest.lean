@@ -26,6 +26,12 @@ it back, and a round trip can compare models by content.
 Evaluation is of *values*, never of proofs: a theorem is cited by name, not run. What the
 harvester cannot resolve to a declared kind (a kind bound by a binder, a tuple signature) is
 rendered as text and left to the reader.
+
+A declaration the harvester cannot *read* — a value that fails to evaluate, a contract or a
+member's hypergraph the assembly refuses, a dedicated kind or unit whose kind is not in scope
+— is skipped rather than failing the harvest, and the skip is reported as a warning next to
+the model (as `ApiJson.read` reports the elements it cannot place), so a partial harvest is
+never mistaken for a complete one.
 -/
 
 module
@@ -105,6 +111,30 @@ deriving Repr, Inhabited
 def UnitData.of (u : PropertyKindCalculus.MetrologicalUnit) : UnitData :=
   { kindId := u.kind.id, symbol := u.symbol }
 
+/-! ## The harvester's state -/
+
+/-- The harvester's working state: the model under construction, the table from kind
+declarations to element names, and the warnings — one per declaration in scope the
+harvester skipped, naming it and the reason. -/
+structure State where
+  model : PkcModel
+  kindOf : Std.HashMap Name String := {}
+  kindById : Std.HashMap String String := {}
+  warnings : Array String := #[]
+
+abbrev HarvestM := StateRefT State MetaM
+
+/-- Record a warning — a declaration the harvester skipped — without failing. -/
+def warn (msg : String) : HarvestM Unit :=
+  modify fun s => { s with warnings := s.warnings.push msg }
+
+/-- Run a reader for the declaration `c`, or `none` — with a warning naming `c`, `what` was
+not read and why — when it throws: the harvester skips what it cannot read rather than
+failing the harvest. -/
+def attempt {α : Type} (c : Name) (what : String) (act : MetaM α) : HarvestM (Option α) :=
+  try some <$> act
+  catch ex => do warn s!"{c}: {what} not read: {← ex.toMessageData.toString}"; return none
+
 unsafe def evalUnsafe (α : Type) (ty e : Expr) : MetaM α := Meta.evalExpr α ty e
 
 /-- Evaluate a closed term at a type. Replaced at run time by the evaluator. -/
@@ -112,15 +142,16 @@ unsafe def evalUnsafe (α : Type) (ty e : Expr) : MetaM α := Meta.evalExpr α t
 def eval (α : Type) (_ty _e : Expr) : MetaM α :=
   throwError "values cannot be read in this environment"
 
-/-- Evaluate, or `none` when the term cannot be read (a noncomputable value, a failed
-compilation): the harvester skips what it cannot read rather than failing the harvest. -/
-def eval? (α : Type) (ty e : Expr) : MetaM (Option α) :=
-  try some <$> eval α ty e catch _ => pure none
+/-- Evaluate a term of the declaration `c`, or `none` — with a warning — when it cannot be
+read (a noncomputable value, a failed compilation). -/
+def eval? (α : Type) (c : Name) (ty e : Expr) : HarvestM (Option α) :=
+  attempt c "value" (eval α ty e)
 
-def evalKindData (view : Name) (c : Name) : MetaM (Option KindData) :=
-  eval? KindData (mkConst ``KindData) (mkApp (mkConst view) (mkConst c))
+def evalKindData (view : Name) (c : Name) : HarvestM (Option KindData) :=
+  eval? KindData c (mkConst ``KindData) (mkApp (mkConst view) (mkConst c))
 
-def evalString (e : Expr) : MetaM (Option String) := eval? String (mkConst ``String) e
+def evalString (c : Name) (e : Expr) : HarvestM (Option String) :=
+  eval? String c (mkConst ``String) e
 
 /-! ## Scope and naming -/
 
@@ -168,22 +199,19 @@ partial def kindConstOf? (e : Expr) : Option Name :=
 
 /-! ## The harvest -/
 
-/-- The harvester's working state: the model under construction and the table from kind
-declarations to element names. -/
-structure State where
-  model : PkcModel
-  kindOf : Std.HashMap Name String := {}
-  kindById : Std.HashMap String String := {}
-
-abbrev HarvestM := StateRefT State MetaM
-
 def kindName? (n : Name) : HarvestM (Option String) := do
   return (← get).kindOf[n]?
 
-def kindNameOfExpr? (e : Expr) : HarvestM (Option String) := do
-  match kindConstOf? e with
-  | some c => kindName? c
-  | none => return none
+/-- The element name of the kind an expression denotes, for the edge `what` of the declaration
+`c`. `none` — with a warning — when it names a kind in scope (`consts`) the harvester skipped;
+`none` silently for a kind outside the scope or no constant kind at all (a bound kind, a
+literal), which leaves the edge to the reader. -/
+def kindNameOfExpr? (consts : Array Name) (c : Name) (what : String) (e : Expr) :
+    HarvestM (Option String) := do
+  let some k := kindConstOf? e | return none
+  if let some name ← kindName? k then return some name
+  if consts.contains k then warn s!"{c}: {what} skipped: its kind {k} was not harvested"
+  return none
 
 def kindNameById? (id : String) : HarvestM (Option String) := do
   return (← get).kindById[id]?
@@ -241,7 +269,7 @@ def harvestPrinciples (consts : Array Name) : HarvestM Unit := do
     m.alter c.lastComponentAsString fun | some k => some (k + 1) | none => some 1
   let mut byId : Std.HashMap String String := {}
   for c in ps do
-    let some id ← evalString (mkApp (mkConst ``ExaminationPrinciple.id) (mkConst c)) | continue
+    let some id ← evalString c (mkApp (mkConst ``ExaminationPrinciple.id) (mkConst c)) | continue
     let name := elementName taken c
     byId := byId.insertIfNew id name
     modifyModel fun m => { m with principles := m.principles ++
@@ -267,16 +295,18 @@ def harvestDedicatedAndUnits (consts : Array Name) : HarvestM Unit := do
   let env ← getEnv
   for c in consts do
     if hasTypeHead env c ``DedicatedKind then
-      let some d ← eval? DedicatedData (mkConst ``DedicatedData)
+      let some d ← eval? DedicatedData c (mkConst ``DedicatedData)
           (mkApp (mkConst ``DedicatedData.of) (mkConst c)) | continue
-      let some kind ← kindNameById? d.kindId | continue
+      let some kind ← kindNameById? d.kindId
+        | warn s!"{c}: dedicated kind skipped: its kind '{d.kindId}' is not a harvested kind"; continue
       modifyModel fun m => { m with dedicated := m.dedicated ++
         [{ name := c.lastComponentAsString, sort := d.sort, component := d.component, kind,
            source := some (toString c) }] }
     else if hasTypeHead env c ``PropertyKindCalculus.MetrologicalUnit then
-      let some u ← eval? UnitData (mkConst ``UnitData)
+      let some u ← eval? UnitData c (mkConst ``UnitData)
           (mkApp (mkConst ``UnitData.of) (mkConst c)) | continue
-      let some kind ← kindNameById? u.kindId | continue
+      let some kind ← kindNameById? u.kindId
+        | warn s!"{c}: unit skipped: its kind '{u.kindId}' is not a harvested kind"; continue
       modifyModel fun m => { m with units := m.units ++
         [{ name := c.lastComponentAsString, kind, symbol := u.symbol,
            source := some (toString c) }] }
@@ -301,8 +331,8 @@ def harvestSpecialization (consts : Array Name) : HarvestM Unit := do
       let concl := ci.type.getForallBody
       unless concl.isAppOfArity rel 2 do continue
       let args := concl.getAppArgs
-      let some a ← kindNameOfExpr? args[0]! | continue
-      let some b ← kindNameOfExpr? args[1]! | continue
+      let some a ← kindNameOfExpr? consts ctor "specialization" args[0]! | continue
+      let some b ← kindNameOfExpr? consts ctor "specialization" args[1]! | continue
       modifyModel fun m => { m with kinds := m.kinds.map fun k =>
         if k.name != a then k else
           { k with specializes := if k.specializes.contains b then k.specializes else k.specializes ++ [b],
@@ -319,8 +349,11 @@ read off the constant's registry entry in `KindEdges.specs`. -/
 def edgeFamilyOf (c : Name) : Option (EdgeKind × Bool) :=
   (KindEdges.specOf? c).map fun spec => (edgeKindOfLaw spec.law, spec.isTable)
 
-/-- A rational literal, as an expression `OfScientific`/`OfNat` builds it, read by evaluation. -/
-def evalRat (e : Expr) : MetaM (Option Rat) := eval? Rat (mkConst ``Rat) e
+/-- The power exponent of the witness `c`, a rational literal as an expression
+`OfScientific`/`OfNat` builds it, read by evaluation; `none` — with a warning naming the
+exponent, since the edge is still harvested without it — when it cannot be read. -/
+def evalRat (c : Name) (e : Expr) : HarvestM (Option Rat) :=
+  attempt c "power exponent" (eval Rat (mkConst ``Rat) e)
 
 /-- Harvest the kind algebra: declarations whose type is a witness `Prop` over constant
 kinds — instances of `KindMul`/`KindDiv` and authored `ProductKind …` facts. -/
@@ -334,14 +367,15 @@ def harvestAlgebra (consts : Array Name) : HarvestM Unit := do
     let table := spec.isTable
     let args := concl.getAppArgs
     let (kindArgs, exp?) ← match spec.exponent with
-      | some i => pure ((args.eraseIdx! i).toList, ← evalRat args[i]!)
+      | some i => pure ((args.eraseIdx! i).toList, ← evalRat c args[i]!)
       | none => pure (args.toList, none)
     let mut names : List String := []
     let mut ok := true
     for a in kindArgs do
-      match ← kindNameOfExpr? a with
-      | some n => names := names ++ [n]
-      | none => ok := false
+      if ok then
+        match ← kindNameOfExpr? consts c "edge" a with
+        | some n => names := names ++ [n]
+        | none => ok := false
     unless ok do continue
     let (operands, result) := match fam with
       | .difference => (names, none)
@@ -439,12 +473,13 @@ def occurrenceOf (o : Provenance.Occurrence Provenance.NodeId Provenance.KindRef
            powerNum := ff.powerNum, powerDen := ff.powerDen }
 
 /-- The provenance hypergraph of a contract's members, as the assembly computes it; a
-member the assembly cannot read contributes nothing (the boundary is still harvested). -/
+member the assembly cannot read contributes nothing (the boundary is still harvested) and
+is warned about. -/
 def provenanceOf (members : List Name) : HarvestM (List Intro × List Occurrence) := do
   let mut intros : List Intro := []
   let mut occs : List Occurrence := []
   for m in members do
-    let some g ← (try some <$> KindIncidence.stepGraphOf m catch _ => pure none) | continue
+    let some g ← attempt m "hypergraph" (KindIncidence.stepGraphOf m) | continue
     let p := g.provenance
     for i in p.intros do
       let (tier, reason) := IntroTier.ofProvenance i.tier
@@ -461,7 +496,7 @@ def harvestModules (consts : Array Name) : HarvestM Unit := do
     let some ci := env.find? c | continue
     unless ci.type.appFn!.appArg!.isConstOf ``Provenance.NodeId
         && ci.type.appArg!.isConstOf ``Provenance.KindRef do continue
-    let some k ← (try some <$> KindIncidence.contractValueOf c catch _ => pure none) | continue
+    let some k ← attempt c "contract" (KindIncidence.contractValueOf c) | continue
     let ports ← k.ports.mapM fun p => do
       let node := p.node.render
       return ({ name := node, node, kind := ← kindOfRef p.kind, dir := PortDir.ofProvenance p.dir } : Port)
@@ -487,7 +522,7 @@ def harvestRelations (consts : Array Name) : HarvestM Unit := do
   let env ← getEnv
   for c in consts do
     unless hasTypeHead env c ``Provenance.Relation do continue
-    let some r ← eval? Provenance.Relation (mkConst ``Provenance.Relation) (mkConst c) | continue
+    let some r ← eval? Provenance.Relation c (mkConst ``Provenance.Relation) (mkConst c) | continue
     let rel : Relation :=
       { name := c.lastComponentAsString, left := ← moduleNameOf r.left, right := ← moduleNameOf r.right,
         kind := RelationKind.ofProvenance r.kind, witness := toString r.witness,
@@ -501,7 +536,7 @@ def harvestRequirements (consts : Array Name) : HarvestM Unit := do
   let env ← getEnv
   for c in consts do
     unless hasTypeHead env c ``Provenance.Requirement do continue
-    let some r ← eval? Provenance.Requirement (mkConst ``Provenance.Requirement) (mkConst c) | continue
+    let some r ← eval? Provenance.Requirement c (mkConst ``Provenance.Requirement) (mkConst c) | continue
     let req : Requirement :=
       { name := c.lastComponentAsString, title := r.name, statement := r.statement,
         kind := RequirementKind.ofProvenance r.kind, governs := ← moduleNameOf r.governs,
@@ -516,7 +551,7 @@ def harvestTapes (consts : Array Name) : HarvestM Unit := do
   let env ← getEnv
   for c in consts do
     unless hasTypeHead env c ``Paradigm.TapeGraph do continue
-    let some t ← eval? Paradigm.TapeGraph (mkConst ``Paradigm.TapeGraph) (mkConst c) | continue
+    let some t ← eval? Paradigm.TapeGraph c (mkConst ``Paradigm.TapeGraph) (mkConst c) | continue
     let tape : Tape :=
       { name := c.lastComponentAsString,
         vertices := t.vertices.map fun v => { name := v.name, parents := v.parents },
@@ -596,8 +631,9 @@ def unverifiedCitations (m : PkcModel) : MetaM (List String) := do
 
 /-! ## Entry point -/
 
-/-- Harvest the PKC model of a scope. `packageName` names the SysML package it becomes. -/
-def harvest (scope : Array Name) (packageName : String) : MetaM PkcModel := do
+/-- Harvest the PKC model of a scope, with the warnings — the declarations in scope the
+harvester skipped, and why. `packageName` names the SysML package it becomes. -/
+def harvest (scope : Array Name) (packageName : String) : MetaM (PkcModel × Array String) := do
   let consts := scopedConstants (← getEnv) scope
   let act : HarvestM Unit := do
     harvestKinds consts
@@ -610,7 +646,7 @@ def harvest (scope : Array Name) (packageName : String) : MetaM PkcModel := do
     harvestRequirements consts
     harvestTapes consts
   let (_, s) ← act.run { model := { packageName } }
-  return s.model
+  return (s.model, s.warnings)
 
 end PropertyKindCalculus.Interchange.Harvest
 
