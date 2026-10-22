@@ -271,6 +271,13 @@ def qCarving : Option (WeightedCarvingQ Float massK Bool) :=
 
 #guard qCarving.isSome
 
+-- and the kinded `mk?` carries the carrier constructor's guarantees: it erases to that constructor
+-- on the forgotten weights, so the two run-time gates accept and refuse together.
+theorem r9_kinded_mk?_erases :
+    qCarving.map WeightedCarvingQ.toCarving
+      = WeightedCarving.mk? pairParts (fun p => (qWeight p).magnitude) :=
+  WeightedCarvingQ.mk?_map_toCarving massK_diff pairParts qWeight
+
 -- Inhabitation: the mass-weighted mean temperature is `(1·300 + 3·400)/4 = 375`, and the weights
 -- are load-bearing — the unweighted average of the same two readings is `350`.
 #guard (qCarving.map fun c =>
@@ -359,6 +366,20 @@ theorem r9_count_total_exact (w : Bool → Nat) :
 
 /-- info: 'PropertyKindCalculus.WeightedCarving.total_ne_zero'' does not depend on any axioms -/
 #guard_msgs in #print axioms WeightedCarving.total_ne_zero'
+
+/-- info: 'PropertyKindCalculus.WeightedCarvingQ.mk?_eq_none_iff' depends on axioms: [propext] -/
+#guard_msgs in #print axioms WeightedCarvingQ.mk?_eq_none_iff
+
+/-- info: 'PropertyKindCalculus.WeightedCarvingQ.mk?_isSome_iff' depends on axioms: [propext] -/
+#guard_msgs in #print axioms WeightedCarvingQ.mk?_isSome_iff
+
+-- Unlike its carrier twin, the kinded `mk?_eq_some` inherits `propext` from its *statement*
+-- (`DifferenceKind` and `totalWeightQ` use it), not from its proof, which is the same `dite_eq_right`.
+/-- info: 'PropertyKindCalculus.WeightedCarvingQ.mk?_eq_some' depends on axioms: [propext] -/
+#guard_msgs in #print axioms WeightedCarvingQ.mk?_eq_some
+
+/-- info: 'PropertyKindCalculus.WeightedCarvingQ.mk?_map_toCarving' depends on axioms: [propext] -/
+#guard_msgs in #print axioms WeightedCarvingQ.mk?_map_toCarving
 
 end PropertyKindCalculus.Tests.Aggregation
 
