@@ -20,6 +20,8 @@ module
 
 public import PropertyKindCalculus.ModuleCard
 meta import PropertyKindCalculus.ModuleCard
+public import PropertyKindCalculus.Tests.Util
+meta import PropertyKindCalculus.Tests.Util
 
 @[expose] public section Blanket
 
@@ -28,9 +30,6 @@ namespace PropertyKindCalculus.Tests.ModuleCard
 open PropertyKindCalculus
 open PropertyKindCalculus.Provenance (Contract Port PortDir NodeId KindRef)
 open PropertyKindCalculus.ModuleCard
-
-/-- Does `sub` occur in `s`? Evaluation-only probe helper. -/
-def hasSub (s sub : String) : Bool := (s.splitOn sub).length > 1
 
 /-- The probe module: one member, one parameter, three configuration reads — two of which
 collide at the short form (`Probe.One.dup.q` and `Probe.Two.dup.q` both shorten to

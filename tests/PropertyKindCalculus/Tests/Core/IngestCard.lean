@@ -19,6 +19,8 @@ module
 
 public import PropertyKindCalculus.IngestCard
 meta import PropertyKindCalculus.IngestCard
+public import PropertyKindCalculus.Tests.Util
+meta import PropertyKindCalculus.Tests.Util
 
 @[expose] public section Blanket
 
@@ -26,9 +28,6 @@ namespace PropertyKindCalculus.Tests.IngestCard
 
 open PropertyKindCalculus
 open PropertyKindCalculus.IngestCard
-
-/-- Does `sub` occur in `s`? Evaluation-only probe helper. -/
-def hasSub (s sub : String) : Bool := (s.splitOn sub).length > 1
 
 /-- An `Except` rendering for the pins: the diagram, or the refusal. -/
 def okOrError : Except String String → String
