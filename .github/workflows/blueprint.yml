@@ -40,8 +40,30 @@ jobs:
         run: python3 scripts/check-doc-pins.py
 
       - name: Install Elan (Lean toolchain manager)
+        env:
+          # Pinned release of the elan installer. `elan-init.sh` on `master` would fetch
+          # whatever release is current that day, so instead the release tarball itself is
+          # downloaded and its `elan-init` run — the same thing the script does, minus the
+          # moving target. Bump deliberately, like lean-toolchain and the lake manifests.
+          ELAN_VERSION: v4.2.4
         run: |
-          curl https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -sSf | sh -s -- -y --default-toolchain none
+          # The tag pins a URL, not bytes: the tarball's sha256 (per Linux arch) is pinned too,
+          # so a replaced release asset fails here instead of being executed. elan publishes
+          # no checksum files, so these were computed from the release assets at pin time.
+          ARCH="$(uname -m)"
+          case "$ARCH" in
+            x86_64)  ELAN_SHA256=42b94d4244e8353142c456ec0e4ca6528fd898a6c604d4059f494e706e431f63 ;;
+            aarch64) ELAN_SHA256=05febd124d84ebf994b2e7479922a5650b1e950c17ae3bd1ddd776b65bb72bf9 ;;
+            *) echo "no pinned elan checksum for arch $ARCH" >&2; exit 1 ;;
+          esac
+          ELAN_URL="https://github.com/leanprover/elan/releases/download/${ELAN_VERSION}/elan-${ARCH}-unknown-linux-gnu.tar.gz"
+          ELAN_TMP="$(mktemp -d)"
+          echo "Elan installer: $ELAN_URL"
+          curl -sSfL "$ELAN_URL" -o "$ELAN_TMP/elan.tar.gz"
+          echo "$ELAN_SHA256  $ELAN_TMP/elan.tar.gz" | sha256sum -c -
+          tar xzf "$ELAN_TMP/elan.tar.gz" -C "$ELAN_TMP"
+          "$ELAN_TMP/elan-init" -y --default-toolchain none
+          rm -rf "$ELAN_TMP"
           echo "$HOME/.elan/bin" >> $GITHUB_PATH
 
       - name: Install Lean toolchain
@@ -60,6 +82,11 @@ jobs:
           elan show
 
       - name: Set up Python tooling via pixi
+        env:
+          # Pinned pixi release (`pixi.sh/install.sh` would install the latest binary). The
+          # release tarball is fetched directly and checked against the sha256 that release
+          # publishes in its `sha256.sum`, then unpacked where the installer would put it.
+          PIXI_VERSION: v0.83.0
         run: |
           # The blueprint's Python steps (file-links post-pass + the WeasyPrint PDF
           # render) run on a pinned Python + WeasyPrint managed by pixi
@@ -67,7 +94,20 @@ jobs:
           # irrelevant. Install pixi if the runner lacks it, put it on PATH for the
           # later steps, and materialize the locked environment up front.
           if ! command -v pixi >/dev/null 2>&1 && [ ! -x "$HOME/.pixi/bin/pixi" ]; then
-            curl -fsSL https://pixi.sh/install.sh | bash
+            ARCH="$(uname -m)"
+            case "$ARCH" in
+              x86_64)  PIXI_SHA256=064f371e692aaa3400ac581c89da2843c91437f20c2d9155395a5d0037f33551 ;;
+              aarch64) PIXI_SHA256=d08403d8f048626ec93ba7b7c56e3b747a5f3a95c4e6e0c815ceb264f5f0b9ce ;;
+              *) echo "no pinned pixi checksum for arch $ARCH" >&2; exit 1 ;;
+            esac
+            PIXI_URL="https://github.com/prefix-dev/pixi/releases/download/${PIXI_VERSION}/pixi-${ARCH}-unknown-linux-musl.tar.gz"
+            PIXI_TMP="$(mktemp -d)"
+            echo "pixi: $PIXI_URL"
+            curl -sSfL "$PIXI_URL" -o "$PIXI_TMP/pixi.tar.gz"
+            echo "$PIXI_SHA256  $PIXI_TMP/pixi.tar.gz" | sha256sum -c -
+            mkdir -p "$HOME/.pixi/bin"
+            tar xzf "$PIXI_TMP/pixi.tar.gz" -C "$HOME/.pixi/bin"
+            rm -rf "$PIXI_TMP"
           fi
           echo "$HOME/.pixi/bin" >> "$GITHUB_PATH"
           export PATH="$HOME/.pixi/bin:$PATH"
