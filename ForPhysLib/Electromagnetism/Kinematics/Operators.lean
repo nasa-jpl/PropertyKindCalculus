@@ -43,7 +43,7 @@ open PropertyKindCalculus
 open ForPhysLib.Electromagnetism.Kinematics
 open ForPhysLib.Electromagnetism.Kinematics.Kinds
 open ForPhysLib.Electromagnetism.Kinematics.Kinded
-open scoped PropertyKindCalculus.OperatorTable
+open scoped PropertyKindCalculus.OperatorTable ForPhysLib.Operators.Numeral
 
 local notation "EMPot " d:max => _root_.Electromagnetism.ElectromagneticPotential d
 

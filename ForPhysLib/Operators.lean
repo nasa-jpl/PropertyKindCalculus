@@ -9,6 +9,7 @@ unregistered pair fails to elaborate. See
 
 module
 
+public import ForPhysLib.Operators.Numeral
 public import ForPhysLib.Operators.Space
 
 @[expose] public section

@@ -53,6 +53,7 @@ public import Physlib.Electromagnetism.Basic
 meta import Physlib.Electromagnetism.Basic
 public import PropertyKindCalculus.BoundaryAudit
 meta import PropertyKindCalculus.BoundaryAudit
+public import ForPhysLib.Operators.Numeral
 public import PropertyKindCalculus.KindAlgebra
 meta import PropertyKindCalculus.KindAlgebra
 public import PropertyKindCalculus.QuantityReal
@@ -151,18 +152,7 @@ velocity edge *cannot* land on the potential itself; only its ratio-scale siblin
 (6-11.2) accepts it. Upstream, both are the same `ℝ`. -/
 #check_failure (ProductKind.ofRatio speedOfLightK vectorPotentialK electricPotentialK)
 
-open scoped PropertyKindCalculus.OperatorTable
-
-/-- A dimensionless numeral scales a quantity without changing its kind — `β` and `γ`
-below. Same honesty as the pilot's copy of this instance: the action is the
-Mathlib-interface tier (MR30) — a dimensioned magnitude smuggled in as a bare numeral
-is what the audit measures, not what the type prevents. The mint is attested, not raw,
-so the tier survives the mint ratchet. -/
-@[carrierVocab]
-scoped instance numeralSMul {k : KindOfProperty} {R : Type} [Mul R] :
-    SMul R (Quantity k R) :=
-  ⟨fun c q => .attest "a dimensionless numeral scales; the kind is unchanged"
-    (c * q.magnitude)⟩
+open scoped PropertyKindCalculus.OperatorTable ForPhysLib.Operators.Numeral
 
 /-! ## F1 — the classical-field carrier -/
 

@@ -44,6 +44,7 @@ public import PropertyKindCalculus.Iso80000.Part4
 meta import PropertyKindCalculus.Iso80000.Part4
 public import PropertyKindCalculus.QuantityReal
 meta import PropertyKindCalculus.QuantityReal
+public import ForPhysLib.Operators.Numeral
 
 @[expose] public section
 
@@ -128,15 +129,8 @@ instance : KindMul stiffnessK kx2 energyK := ⟨ProductKind.ofRatio _ _ _⟩
 /-- `p² / m` is an energy — the Hamiltonian's kinetic term. -/
 instance : KindDiv kp2 massK energyK := ⟨QuotientKind.ofRatio _ _ _⟩
 
-open scoped PropertyKindCalculus.OperatorTable
-
-/-- A dimensionless numeral scales a quantity without changing its kind — the `½` the
-benchmark dropped, restored as a scoped action. Scoped like the operator table's
-instances, and with the same honesty: the action is the Mathlib-interface tier (MR30) —
-a dimensioned magnitude smuggled in as a bare numeral is what the audit measures, not
-what the type prevents. -/
-scoped instance {k : KindOfProperty} {R : Type} [Mul R] : SMul R (Quantity k R) :=
-  ⟨fun c q => ⟨c * q.magnitude⟩⟩
+-- The `½` the benchmark dropped, restored as the shared scoped numeral action (`Operators/Numeral.lean`).
+open scoped PropertyKindCalculus.OperatorTable ForPhysLib.Operators.Numeral
 
 /-- The kinded oscillator: PhysLib's `{ m k : ℝ, m_pos, k_pos }`, with the two
 parameters carrying their kinds. Reading weight: two ascriptions. -/

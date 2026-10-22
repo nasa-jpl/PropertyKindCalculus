@@ -8,10 +8,11 @@ files included. Five gates, each in the discipline its command enforces:
   * `#kind_boundary_audit` **pinned** over the full directory namespace — every mint,
     attestation and erasure from `Feasibility.lean`'s readings to `Operators.lean`'s
     full turn, each with its tier; all four tiers present (ingest, crossing, constant,
-    emission) plus the carrier vocabulary. A new untagged site breaks the pin.
+    emission). A new untagged site breaks the pin.
   * `#kind_boundary_clean` and `#kind_mint_ratchet` **silent**: they throw on
     violation and print nothing on a clean scope, so neither can be re-blessed by
-    re-pinning. The ratchet is why `numeralSMul`'s mint is *attested*, not raw.
+    re-pinning. The shared numeral action the directory opens
+    (`Operators/Numeral.lean`) is pinned and ratcheted once, in `Audits/Numeral.lean`.
   * `#kind_unkinded` over two declared contracts. The interior — the composites and
     crossings that are kinded end to end — is **gated empty**. The ingest boundary is
     *measured, not gated*: this directory's boundary is **wide** — the two subtrees'
@@ -54,7 +55,6 @@ open PropertyKindCalculus
 
 /--
 info: boundary audit:
-[carrierVocab] ForPhysLib.ClassicalMechanics.numeralSMul — attests: (kind-parametric) ‹a dimensionless numeral scales; the kind is unchanged›
 [kindConst] ForPhysLib.ClassicalMechanics.Operators.fullTurnQ — attests: phaseAngleK ‹2π — one full turn of phase›
 [kindCrossing] ForPhysLib.ClassicalMechanics.Kinded.pointMassInertiaQ — attests: momentOfInertiaK ‹m·(|c−p|²δ − (c−p)⊗(c−p)) — the point-particle inertia›
 [kindCrossing] ForPhysLib.ClassicalMechanics.amplitudeQ — attests: displacementK ‹‖z‖ — the polar radius of two like-kind components›
@@ -96,14 +96,13 @@ info: boundary audit:
 [kindIngest] ForPhysLib.ClassicalMechanics.springQ — attests: springConstantK ‹the input datum k — Hooke's constant, a mint›
 [kindIngest] ForPhysLib.ClassicalMechanics.translationalKEQ — attests: translationalKineticEnergyK ‹½M⟪V,V⟫ — the centre of mass's kinetic energy›
 [kindIngest] ForPhysLib.ClassicalMechanics.velocity0Q — attests: velocityK ‹v₀ — the initial velocity›
-42 boundary site(s), all tagged — clean
+41 boundary site(s), all tagged — clean
 -/
 #guard_msgs (whitespace := lax) in
 #kind_boundary_audit ForPhysLib.ClassicalMechanics
 
 /--
 info: tagged boundary crossings:
-[carrierVocab] ForPhysLib.ClassicalMechanics.numeralSMul — A dimensionless numeral scales a quantity without changing its kind — the `½` of
 [kindConst] ForPhysLib.ClassicalMechanics.Operators.fullTurnQ — One full turn of phase — the `2π` of the period, as a declared constant at 3-7
 [kindCrossing] ForPhysLib.ClassicalMechanics.Kinded.pointMassInertiaQ — The point-particle inertia term of the parallel-axis theorem — the whole mass at
 [kindCrossing] ForPhysLib.ClassicalMechanics.amplitudeQ — **The complex number that packs two lengths**: the amplitude–phase inverse embeds

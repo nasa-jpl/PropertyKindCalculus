@@ -45,6 +45,7 @@ public import Physlib.QuantumMechanics.HarmonicOscillator.OneDimension.Basic
 meta import Physlib.QuantumMechanics.HarmonicOscillator.OneDimension.Basic
 public import PropertyKindCalculus.BoundaryAudit
 meta import PropertyKindCalculus.BoundaryAudit
+public import ForPhysLib.Operators.Numeral
 public import PropertyKindCalculus.KindAlgebra
 meta import PropertyKindCalculus.KindAlgebra
 public import PropertyKindCalculus.SpecializationLift
@@ -127,18 +128,7 @@ instance : KindJoin EnergyEdge kineticEnergyK potentialEnergyK energyK :=
 /-- `ℏ · ω` is an energy — the eigenvalue factorization. -/
 instance : KindMul actionK angularFrequencyK energyK := ⟨ProductKind.ofRatio _ _ _⟩
 
-open scoped PropertyKindCalculus.OperatorTable
-
-/-- A dimensionless numeral scales a quantity without changing its kind — the `nᵢ + ½`
-below. Same honesty as Exhibit C's copy of this instance: the action is the
-Mathlib-interface tier (MR30) — a dimensioned magnitude smuggled in as a bare numeral is
-what the audit measures, not what the type prevents. The mint is attested, not raw,
-so the tier survives the mint ratchet: the reason column carries the adjudication. -/
-@[carrierVocab]
-scoped instance numeralSMul {k : KindOfProperty} {R : Type} [Mul R] :
-    SMul R (Quantity k R) :=
-  ⟨fun c q => .attest "a dimensionless numeral scales; the kind is unchanged"
-    (c * q.magnitude)⟩
+open scoped PropertyKindCalculus.OperatorTable ForPhysLib.Operators.Numeral
 
 /-! ## F1 — the operator carrier -/
 
