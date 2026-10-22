@@ -193,8 +193,15 @@ parallelizes internally). Rows (pixels) must be independent — which the AVS fi
 Newton retrieval are. Call `BatchCarrier.warmup` once before this on the CPU build. -/
 def runSharded (nChunks total nOut : Nat) (inCols : Array FloatArray)
     (k : Nat → Array FloatArray → IO (Array FloatArray)) : IO (Array FloatArray) := do
+  -- a kernel that broke its column contract is refused here, with the chunk and both counts,
+  -- rather than stitched by `cols[j]!` below into an empty column
+  let checked (c : Nat) (cols : Array FloatArray) : IO (Array FloatArray) := do
+    if cols.size != nOut then
+      throw (IO.userError
+        s!"runSharded: chunk {c} of {max nChunks 1} returned {cols.size} output columns, expected {nOut}")
+    return cols
   if nChunks ≤ 1 then
-    return (← k total inCols)
+    return (← checked 0 (← k total inCols))
   let base := total / nChunks
   let rem  := total % nChunks
   -- spawn one dedicated task per contiguous chunk (dedicated ⇒ its own thread for CPU-bound work)
@@ -209,9 +216,9 @@ def runSharded (nChunks total nOut : Nat) (inCols : Array FloatArray)
     lo := hi
   -- gather in chunk order; propagate the first task error
   let mut chunkOuts : Array (Array FloatArray) := #[]
-  for t in tasks do
-    match t.get with
-    | .ok cols => chunkOuts := chunkOuts.push cols
+  for h : c in [0:tasks.size] do
+    match tasks[c].get with
+    | .ok cols => chunkOuts := chunkOuts.push (← checked c cols)
     | .error e => throw e
   -- stitch: output column j = its per-chunk slices concatenated in order
   let mut result : Array FloatArray := #[]
