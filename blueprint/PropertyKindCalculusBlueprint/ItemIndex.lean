@@ -22,6 +22,7 @@ table/linking machinery is reused.
 import Verso
 import VersoManual
 import VersoBlueprint
+import VersoBlueprint.Environment
 import PropertyKindCalculus.Iso80000.Catalogue
 import PropertyKindCalculus.Index.Basic
 
@@ -251,6 +252,25 @@ def docTableTerm (tbl : DocTable) : DocElabM Term := do
     else `(some Verso.Genre.Manual.TableConfig.Alignment.left)
   `(Verso.Doc.Block.other (Verso.Genre.Manual.Block.table $(quote cols) true none $alignStx)
       #[Verso.Doc.Block.ul #[$[Verso.Doc.ListItem.mk #[$cellTerms]],*]])
+
+/-! ## Resolving a declaration to a link
+
+Every generated table that names a declaration (`pkc_index`, `traceability`, `crossrefs`) links it
+the same way: through its blueprint node label, read with `Informal.Environment.labelsForLeanDecl`.
+The rule lives here so that changing it — which label wins when there are several, what the fallback
+is — happens once. -/
+
+/-- The blueprint node label for a declaration, or `""` when it has none. -/
+def labelFor (n : Name) : DocElabM String := do
+  let labels ← Informal.Environment.labelsForLeanDecl n
+  return (labels[0]?.map (·.toString)).getD ""
+
+/-- A declaration as a cell: a hoverable cross-reference when it has a blueprint node, inline code
+otherwise — the common case, and why `ref` is not used unconditionally (an unresolvable tag would
+render as a dead link). -/
+def declCell (n : Name) (display : String) : DocElabM Cell := do
+  let label ← labelFor n
+  return if label.isEmpty then .code display else .ref label display
 
 /-! ## The directive -/
 
