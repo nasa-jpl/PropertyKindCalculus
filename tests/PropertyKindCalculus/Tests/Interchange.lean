@@ -91,6 +91,14 @@ run_meta do
 -- Model text cannot end, or nest, the generated comment it lands in.
 #guard EmitLean.commentText "a -/ b /- c\nd" == "a - / b / - c d"
 
+-- A SysML v2 reserved word is written quoted, including the two that name no declaration
+-- kind (`about`, `new`); a KerML-only word is a name in a `.sysml` file and stays bare.
+#guard EmitSysml.ident "about" == "'about'"
+#guard EmitSysml.ident "new" == "'new'"
+#guard EmitSysml.ident "part" == "'part'"
+#guard EmitSysml.ident "type" == "type"
+#guard EmitSysml.ident "length" == "length"
+
 end PropertyKindCalculus.Tests.Interchange
 
 end Blanket
