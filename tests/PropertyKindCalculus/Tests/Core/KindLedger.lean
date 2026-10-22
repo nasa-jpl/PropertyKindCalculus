@@ -27,6 +27,8 @@ module
 
 public import PropertyKindCalculus.KindLedger
 meta import PropertyKindCalculus.KindLedger
+public import PropertyKindCalculus.Tests.Util
+meta import PropertyKindCalculus.Tests.Util
 
 @[expose] public section Blanket
 
@@ -35,9 +37,6 @@ namespace PropertyKindCalculus.Tests.KindLedger
 open PropertyKindCalculus
 open PropertyKindCalculus.Provenance (NodeId KindRef)
 open PropertyKindCalculus.KindLedger
-
-/-- Does `sub` occur in `s`? Evaluation-only probe helper. -/
-def hasSub (s sub : String) : Bool := (s.splitOn sub).length > 1
 
 /-- A probe kind — the scaled operand. -/
 def aK : KindOfProperty := { id := "kind-ledger probe a", scale := .ratio }

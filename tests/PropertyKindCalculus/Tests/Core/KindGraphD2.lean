@@ -20,6 +20,8 @@ module
 
 public import PropertyKindCalculus.KindGraphD2
 meta import PropertyKindCalculus.KindGraphD2
+public import PropertyKindCalculus.Tests.Util
+meta import PropertyKindCalculus.Tests.Util
 
 @[expose] public section Blanket
 
@@ -29,9 +31,6 @@ open PropertyKindCalculus
 open PropertyKindCalculus.Provenance (NodeId KindRef)
 open PropertyKindCalculus.KindIncidence (Assembly AssemblyLevel citeEdges)
 open PropertyKindCalculus.KindGraphD2
-
-/-- Does `sub` occur in `s`? Evaluation-only probe helper. -/
-def hasSub (s sub : String) : Bool := (s.splitOn sub).length > 1
 
 /-- The hand-built two-box assembly of the core probes: caller `A` wired into callee
 `B` by a two-operand procedure edge interior to `A`, a cross-level product occurrence
