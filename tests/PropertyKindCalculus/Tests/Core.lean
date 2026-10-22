@@ -44,6 +44,7 @@ public import PropertyKindCalculus.Tests.Core.Influence
 public import PropertyKindCalculus.Tests.Core.Seal
 public import PropertyKindCalculus.Tests.Core.Index
 public import PropertyKindCalculus.Tests.Core.Rubrics
+public import PropertyKindCalculus.Tests.Core.Requirements
 
 @[expose] public section Blanket
 

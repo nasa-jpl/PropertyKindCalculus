@@ -1,10 +1,11 @@
 /-
 # Requirement-traceability attributes — `@[requirement …]`
 
-The blueprint fixes a set of *requirements* (R1 … R27) the calculus is specified
-to meet. Each requirement is discharged by real declarations — the type that
-*states* it, the theorem that *proves* it, the definition that *implements* it, or
-the worked example that *exercises* it. Those correspondences were, until now,
+The blueprint fixes a set of *requirements* — the rows of
+`PropertyKindCalculus.Requirements.catalogue` — the calculus is specified to meet.
+Each requirement is discharged by real declarations — the type that *states* it,
+the theorem that *proves* it, the definition that *implements* it, or the worked
+example that *exercises* it. Those correspondences were, until now,
 recorded only as free text in the blueprint's `requirementsTable` ("Specified as"
 column), where they drift silently when a declaration is renamed.
 
@@ -19,7 +20,9 @@ attribute,
 backed by an environment extension that collects every tagged declaration.
 Because an attribute attaches to a *real* declaration, a requirement can never
 name a declaration that does not exist — a rename is a compile error, not silent
-drift. The attribute is applied **from a separate module** (`Annotations`) via the
+drift. The requirement id is checked against the catalogue the same way, so a
+mistyped id is refused where it is written rather than dropped from the matrix.
+The attribute is applied **from a separate module** (`Annotations`) via the
 standalone `attribute [..] decl` command, so the Mathlib-free core spine never
 imports this machinery and stays prelude-only. This mirrors the discipline of the
 `@[dybkaer …]` / `@[vim4 …]` cross-reference attributes in
@@ -85,7 +88,7 @@ plays, and an optional note in this work's own words. -/
 structure RequirementRef where
   /-- The annotated Lean declaration (resolved, so it cannot dangle). -/
   decl : Name
-  /-- The requirement identifier, as printed — `"R1"` … `"R27"`. -/
+  /-- The requirement identifier, as printed — an id from `catalogue` (e.g. `"R4"`). -/
   req : String
   /-- The role the declaration plays for the requirement. -/
   role : RequirementRole
@@ -102,23 +105,28 @@ initialize requirementExt :
   }
 
 /-- `@[requirement "<id>" <role> ("<note>")?]` — record that a declaration
-discharges part of a blueprint requirement, in the given role. `<role>` is one of
-`specifies`, `proves`, `implements`, `exemplifies`. -/
+discharges part of a blueprint requirement, in the given role. `<id>` must be an id
+from `catalogue`; `<role>` is one of `specifies`, `proves`, `implements`,
+`exemplifies`. -/
 syntax (name := requirementAttr) "requirement " str ident (str)? : attr
 
 initialize registerBuiltinAttribute {
   name  := `requirementAttr
-  descr := "Traceability link from a declaration to a blueprint requirement (R1–R27)."
+  descr := "Traceability link from a declaration to a blueprint requirement \
+    (an id from `PropertyKindCalculus.Requirements.catalogue`)."
   add   := fun decl stx _kind => do
     match stx with
     | `(attr| requirement $req:str $role:ident $[$note:str]?) =>
+        let req := req.getString
+        if (requirementById? req).isNone then
+          throwError "unknown requirement '{req}'; it is not in \
+            `PropertyKindCalculus.Requirements.catalogue`"
         let some role := RequirementRole.ofString? role.getId.toString
           | throwError "invalid requirement role '{role.getId}'; expected one of \
               specifies, proves, implements, exemplifies"
         let note := (note.map (·.getString)).getD ""
         modifyEnv fun env =>
-          requirementExt.addEntry env
-            { decl := decl, req := req.getString, role := role, note := note }
+          requirementExt.addEntry env { decl := decl, req := req, role := role, note := note }
     | _ => throwError "invalid `requirement` attribute; expected \
         `requirement \"<id>\" <role> [\"<note>\"]`"
 }
@@ -142,8 +150,9 @@ def RequirementKind.dischargeRole : RequirementKind → RequirementRole
   | .verifiable     => .proves
   | .expressiveness => .exemplifies
 
-/-- The kind of a requirement `id` from the catalogue (defaulting to `verifiable`
-for any id not in the catalogue). -/
+/-- The kind of a requirement `id` from the catalogue. The attribute refuses ids
+outside the catalogue, so the `verifiable` default is reached only by a direct
+caller asking about an id no annotation can carry. -/
 def requirementKind (id : String) : RequirementKind :=
   ((requirementById? id).map (·.kind)).getD .verifiable
 
