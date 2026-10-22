@@ -58,7 +58,7 @@ import all PropertyKindCalculus.Provenance
 @[expose] public section Blanket
 
 /--
-info: kind contracts — 4 contract(s), 2 exempted
+info: kind contracts — 2 contract(s), 2 exempted
   PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.wcmBoundary: 'WCM forward (σ⁰)' — 8 ports, 0 exits, 1 member step(s)
   PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.wcmRetrievalBoundary: 'WCM retrieval (mv)' — 8 ports, 0 exits, 1 member step(s)
   ⊘ PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.Falsification.forgottenParameter: counterexample, exempted
@@ -68,7 +68,7 @@ info: kind contracts — 4 contract(s), 2 exempted
 #guard_msgs in #kind_contracts PropertyKindCalculus.UncertaintyExamples
 
 /--
-info: kind relations — 9 theorem edge(s), 8 exempted
+info: kind relations — 1 theorem edge(s), 8 exempted
   PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.retrievalInvertsForward: 'WCM retrieval (mv)' inverts 'WCM forward (σ⁰)' — PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.wcmRetrieveQ_wcmForwardQ [well-posed: PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.wcmForwardQ_well_posed on PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.soilGainNonzero] [ambiguity: PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.wcmForwardQ_ambiguous_of_degenerate]
   ⊘ PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.Falsification.misclaimedShape: counterexample, exempted
   ⊘ PropertyKindCalculus.UncertaintyExamples.WaterCloudModel.Falsification.misplacedWellPosed: counterexample, exempted

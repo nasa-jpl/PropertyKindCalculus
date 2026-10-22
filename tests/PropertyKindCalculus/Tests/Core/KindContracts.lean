@@ -120,7 +120,7 @@ info: boundary of this scope, as declarable syntax:
 /-! ## The report sweep — checked rows, the `✗` violation, the `⊘` exemption, all counted -/
 
 /--
-info: kind contracts — 4 contract(s), 1 violated, 1 exempted
+info: kind contracts — 3 contract(s), 1 violated, 1 exempted
   ✗ PropertyKindCalculus.Tests.KindContracts.Bad.forgottenInput: 'sweep probe forward, x forgotten' — undeclared input fwd/x : aK
   PropertyKindCalculus.Tests.KindContracts.Good.fwdBoundary: 'sweep probe forward' — 2 ports, 0 exits, 1 member step(s)
   PropertyKindCalculus.Tests.KindContracts.Good.invBoundary: 'sweep probe retrieval' — 2 ports, 0 exits, 1 member step(s)
@@ -130,7 +130,7 @@ info: kind contracts — 4 contract(s), 1 violated, 1 exempted
 
 -- The edge sweep honors the same exemption.
 /--
-info: kind relations — 2 theorem edge(s), 1 exempted
+info: kind relations — 1 theorem edge(s), 1 exempted
   PropertyKindCalculus.Tests.KindContracts.Good.retrievalInvertsForward: 'sweep probe retrieval' inverts 'sweep probe forward' — PropertyKindCalculus.Tests.KindContracts.Good.inv_fwd
   ⊘ PropertyKindCalculus.Tests.KindContracts.Exempt.keptBrokenEdge: counterexample, exempted
 -/
