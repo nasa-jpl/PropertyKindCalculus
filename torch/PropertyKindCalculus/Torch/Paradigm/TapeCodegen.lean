@@ -742,24 +742,31 @@ structure Intensity where
   fusedBytes : Nat
   eagerBytes : Nat
 
-def intensity (rep : AiReport) (iters : Nat) : Intensity :=
-  let fusedBytes := (rep.nInputs + rep.nOut) * 4
+/-- Per-pixel **device** bytes of the FUSED megakernel: the fp32 input and output planes only —
+every intermediate is a register. The one fused-traffic term shared by `intensity`
+(its `fusedBytes`) and `fusedPeakBytes` (its marginal term), exposed on its own so a
+descriptor emitter can bake the constant without restating the formula. -/
+def AiReport.fusedBytesPerElem (rep : AiReport) : Nat :=
+  (rep.nInputs + rep.nOut) * 4
+
+/-- The `Intensity` of `rep` once its per-pixel fused DRAM traffic `fusedBytes` is fixed; the
+two public variants differ only in that term. -/
+def intensityOf (rep : AiReport) (iters fusedBytes : Nat) : Intensity :=
   let aiStep  := Float.ofNat rep.flops / Float.ofNat fusedBytes
   let aiFit   := Float.ofNat (rep.flops * iters) / Float.ofNat fusedBytes
   let aiEager := Float.ofNat rep.flops / Float.ofNat rep.eagerBytes
   { aiStep, aiFit, aiEager, fusedBytes, eagerBytes := rep.eagerBytes }
 
+def intensity (rep : AiReport) (iters : Nat) : Intensity :=
+  intensityOf rep iters rep.fusedBytesPerElem
+
 /-- `intensity` for a kernel that binds lookup tables: the fused model's "DRAM only for
 inputs/outputs" assumption gains one compulsory term — the table upload — charged **once per
 launch and amortized over the `pixels` in flight** (`fusedBytes += tableBytes / pixels`, per-pixel
 like the other terms). Per-fetch traffic is texture-cache-resident and documented, not charged
-(`AiReport.tableBytes`). With no tables this definitionally reduces to `intensity`. -/
+(`AiReport.tableBytes`). With no tables this is `intensity`, by construction. -/
 def intensityWithTables (rep : AiReport) (iters pixels : Nat) : Intensity :=
-  let fusedBytes := (rep.nInputs + rep.nOut) * 4 + rep.tableBytes / (max pixels 1)
-  let aiStep  := Float.ofNat rep.flops / Float.ofNat fusedBytes
-  let aiFit   := Float.ofNat (rep.flops * iters) / Float.ofNat fusedBytes
-  let aiEager := Float.ofNat rep.flops / Float.ofNat rep.eagerBytes
-  { aiStep, aiFit, aiEager, fusedBytes, eagerBytes := rep.eagerBytes }
+  intensityOf rep iters (rep.fusedBytesPerElem + rep.tableBytes / (max pixels 1))
 
 /-! ### Peak-memory shapes — the auto-scaling prior
 
@@ -768,12 +775,6 @@ The AI section above accounts *traffic*; deployment sizing needs *residency*: `b
 (`paradigm.platform`). Three static shapes fall out of the same `aiReport`, one per execution
 style. They are priors — a measured probe (allocator `peakBytes` on device, child peak RSS on
 the host) is the authority, because fixed overheads and free-promptness are runtime facts. -/
-
-/-- Per-pixel **device** bytes of the FUSED megakernel: the fp32 input and output planes only —
-every intermediate is a register. The marginal term of `fusedPeakBytes`, exposed on its own so a
-descriptor emitter can bake the constant without restating the formula. -/
-def AiReport.fusedBytesPerElem (rep : AiReport) : Nat :=
-  (rep.nInputs + rep.nOut) * 4
 
 /-- Peak **device** bytes of a `P`-pixel launch of the FUSED megakernel: inputs + outputs only
 (every intermediate is a register), plus the bound tables once per launch. -/
