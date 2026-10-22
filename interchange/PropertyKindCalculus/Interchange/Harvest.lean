@@ -402,29 +402,41 @@ def kindOfRef (r : Provenance.KindRef) : HarvestM String := do
   | .decl n => return (← kindName? n).getD (toString n)
   | r => return r.render
 
-def familyOf (f : Provenance.EdgeFamily) :
-    EdgeFamily × Option String × Option Nat × Option Nat × Option Int × Option Nat :=
+/-- The `Occurrence` fields an edge family determines: its tag and the family-specific
+arguments (`step` names its member, instance and arity; `select` its arity; `power` its
+exponent), absent for the families that carry none. -/
+structure FamilyFields where
+  family : EdgeFamily
+  member : Option String := none
+  inst : Option Nat := none
+  arity : Option Nat := none
+  powerNum : Option Int := none
+  powerDen : Option Nat := none
+
+def familyOf (f : Provenance.EdgeFamily) : FamilyFields :=
   match f with
-  | .product => (.product, none, none, none, none, none)
-  | .quotient => (.quotient, none, none, none, none, none)
-  | .reciprocal => (.reciprocal, none, none, none, none, none)
-  | .transcendental => (.transcendental, none, none, none, none, none)
-  | .power e => (.power, none, none, none, some e.num, some e.den)
-  | .reference => (.reference, none, none, none, none, none)
-  | .additive => (.additive, none, none, none, none, none)
-  | .tableMul => (.tableMul, none, none, none, none, none)
-  | .tableDiv => (.tableDiv, none, none, none, none, none)
-  | .copy => (.copy, none, none, none, none, none)
-  | .step m i a => (.step, some (toString m), i, some a, none, none)
-  | .select n => (.select, none, none, some n, none, none)
+  | .product => { family := .product }
+  | .quotient => { family := .quotient }
+  | .reciprocal => { family := .reciprocal }
+  | .transcendental => { family := .transcendental }
+  | .power e => { family := .power, powerNum := some e.num, powerDen := some e.den }
+  | .reference => { family := .reference }
+  | .additive => { family := .additive }
+  | .tableMul => { family := .tableMul }
+  | .tableDiv => { family := .tableDiv }
+  | .copy => { family := .copy }
+  | .step m i a => { family := .step, member := some (toString m), inst := i, arity := some a }
+  | .select n => { family := .select, arity := some n }
 
 def occurrenceOf (o : Provenance.Occurrence Provenance.NodeId Provenance.KindRef) :
     HarvestM Occurrence := do
-  let (family, member, inst, arity, powerNum, powerDen) := familyOf o.family
+  let ff := familyOf o.family
   let operands ← o.operands.mapM fun (n, k) => do
     return ({ node := n.render, kind := ← kindOfRef k } : Operand)
-  return { family, operands, result := o.result.render, resultKind := ← kindOfRef o.resultKind,
-           site := o.site, op := optName o.op, member, inst, arity, powerNum, powerDen }
+  return { family := ff.family, operands, result := o.result.render,
+           resultKind := ← kindOfRef o.resultKind, site := o.site, op := optName o.op,
+           member := ff.member, inst := ff.inst, arity := ff.arity,
+           powerNum := ff.powerNum, powerDen := ff.powerDen }
 
 /-- The provenance hypergraph of a contract's members, as the assembly computes it; a
 member the assembly cannot read contributes nothing (the boundary is still harvested). -/
