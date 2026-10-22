@@ -64,27 +64,34 @@ the raw material every propagator combines into `(E, Var)`. -/
 
 /-- **Batched SSPRC** — `Ssprc.run` with every per-input deviation distribution evaluated in one
 batched `CudaT` launch instead of `Nᵢ` scalar model calls. Reads `(E(Y), u(Y))` from the per-input
-batched moments exactly as `Ssprc.run` does. -/
-def run (model : BatchModel) (inputs : List (InputDist Float)) (ns : List Nat) : Float × Float :=
+batched moments exactly as `Ssprc.run` does, under the same one-`Nᵢ`-per-input precondition `h`
+(a literal budget discharges it by `decide`; a computed one goes through `run?`). -/
+def run (model : BatchModel) (inputs : List (InputDist Float)) (ns : List Nat)
+    (h : ns.length = inputs.length := by decide) : Float × Float :=
   let means := inputs.map (fun d => d.moments.mean)
   let R := model (α := Float) means
   Id.run do
     let mut eY := R
     let mut varY : Float := 0.0
-    for i in [0:inputs.length] do
-      match inputs[i]?, ns[i]? with
-      | some d, some n =>
-        let s : Shape := Shape.dim n Shape.scalar
-        -- input i = its N systematic samples (one batch column); the others = constants at their means
-        let samples : CudaT s := CudaT.ofFloatArray (colOf (Ssprc.systematicSamples d n))
-        let cols : List (CudaT s) := (List.range inputs.length).map (fun j =>
-          if j == i then samples else CudaT.const (means[j]!))
-        -- one batched op-chain over all N samples of input i
-        let (mf, msq) := batchMoments (model cols)
-        eY := eY + (mf - R)               -- E(Aᵢ) = E[f over input i] − R
-        varY := varY + (msq - mf * mf)    -- Var(Aᵢ) = E[f²] − E[f]²
-      | _, _ => pure ()
+    for i in List.finRange inputs.length do
+      let d := inputs[i.val]
+      let n := ns[i.val]'(by omega)
+      let s : Shape := Shape.dim n Shape.scalar
+      -- input i = its N systematic samples (one batch column); the others = constants at their means
+      let samples : CudaT s := CudaT.ofFloatArray (colOf (Ssprc.systematicSamples d n))
+      let cols : List (CudaT s) := (List.range inputs.length).map (fun j =>
+        if j == i.val then samples else CudaT.const (means[j]!))
+      -- one batched op-chain over all N samples of input i
+      let (mf, msq) := batchMoments (model cols)
+      eY := eY + (mf - R)               -- E(Aᵢ) = E[f over input i] − R
+      varY := varY + (msq - mf * mf)    -- Var(Aᵢ) = E[f²] − E[f]²
     return (eY, Float.sqrt varY)
+
+/-- `run` on a run-time budget; `.error` when `ns` does not give every input its `Nᵢ` — the same
+check as `Ssprc.run?`, so both carriers refuse the same budgets. -/
+def run? (model : BatchModel) (inputs : List (InputDist Float)) (ns : List Nat) :
+    Except String (Float × Float) :=
+  Ssprc.checkBudget inputs ns (run model inputs ns ·)
 
 end PropertyKindCalculus.Uncertainty.SsprcBatched
 

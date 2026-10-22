@@ -1170,7 +1170,8 @@ and FFT kernels under `NN/Runtime/Autograd/Engine/Cuda/Ops/*` for SSPRC's convol
     with `wᵢ ≤ dropRatio·maxⱼ wⱼ` (`Nᵢ = 0`; its deviation distribution is a point mass) and
     **largest-remainder-splits** the whole budget across the survivors in proportion to `wᵢ`, so
     `Σ Nᵢ = total` exactly and a larger contribution never gets fewer samples. A pure `List Nat` that
-    drops into `Ssprc.run`/`SsprcBatched.run`'s `ns` — Mathlib/Torch-free, so (unlike the `CudaT`
+    drops into `Ssprc.run?`/`SsprcBatched.run?`'s `ns` (checked there to cover every input, since a
+    short `ns` must be an error, not a smaller `u(Y)`) — Mathlib/Torch-free, so (unlike the `CudaT`
     propagator) it is checked at build time. `examples/…/DegenhardtAllocation.lean` verifies, all
     `#guard`: on the fictive model `w=[1.00,1.30,0.28]` ⇒ `allocate 300 = [117,151,32]` (X₂ dominant,
     X₃ ~4.7× fewer, `Σ=300`), the drop mechanic, the degenerate-fallback equal split, and — the payoff
