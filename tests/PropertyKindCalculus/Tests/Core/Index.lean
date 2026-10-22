@@ -21,6 +21,9 @@ Two of the traps this guards are invisible from the source:
   * a structure field projection satisfies the kinded-operation criterion literally, so the
     operations table must exclude projections or every record field is listed twice. The
     `operations` pin fixes the expected membership.
+  * a field the index cannot read — a projection that does not type-check against the declaration,
+    a reduction that exhausts its budget — must not come back as a string that passes for a value.
+    The `fieldString?` pins fix that such a read is `none`, not the declaration's own name.
 -/
 
 module
@@ -200,6 +203,28 @@ gain | g | function head
 -/
 #guard_msgs in
 #pkc_index "pkc-math-symbol" PropertyKindCalculus.Tests.Index
+
+/-! ## A field that cannot be read
+
+Every identity cell above comes from `fieldStringChain?`, which reduces a projection of the
+declaration under a private budget and gives up on anything that throws. What it gives up *with*
+matters: a fallback to the declaration's name (`gainKind`) is a plausible identity, and a table of
+them looks like data. So the read is an `Option`, and a projection that does not belong to the
+declaration's structure — `System.id` of a `KindOfProperty`, the shape a mis-specified layer would
+take — is `none`, which the tables render as `unreadCell` rather than as the name. -/
+
+/-- info: some "probe gain" -/
+#guard_msgs in
+#eval PropertyKindCalculus.Index.fieldString? ``gainKind ``PropertyKindCalculus.KindOfProperty.id
+
+/-- info: none -/
+#guard_msgs in
+#eval PropertyKindCalculus.Index.fieldString? ``gainKind ``PropertyKindCalculus.System.id
+
+/-- info: none -/
+#guard_msgs in
+#eval PropertyKindCalculus.Index.fieldStringChain? ``probeDedicated
+  #[``PropertyKindCalculus.DedicatedKind.kind, ``PropertyKindCalculus.System.id]
 
 /-! ## The theorem edge — membership by type, like the ontology tables -/
 
