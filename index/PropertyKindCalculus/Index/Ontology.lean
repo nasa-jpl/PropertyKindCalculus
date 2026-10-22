@@ -43,22 +43,30 @@ An index needs the *values*: `soilWater`'s identity is `"soil water"`, not the e
 `⟨"soil water"⟩`. Since these definitions are closed structure literals, `whnf` on a projection
 reduces to the literal — delta-unfold the constant, iota-reduce the projection. Anything that does
 not reduce that far (an opaque or parameterized definition) falls back to pretty-printing, so an
-unexpected shape degrades to something honest rather than throwing. -/
+unexpected shape degrades to something honest rather than throwing. A read that does not finish at
+all — the projection does not type-check against the declaration, or reduction exhausts its budget —
+is `none`, and the tables render it as `unreadCell`: a cell that failed must not look like a value,
+least of all like the declaration's own name. -/
+
+/-- What a table shows for a field it could not read: a marker, distinct from every value a read can
+produce (an identity string, a constructor name, the empty string of an absent `Option`). -/
+def unreadCell : IndexCell := .code "⟨unread⟩"
 
 /-- The value reached from `declName` by applying `chain`'s projections in order, as a string: a
 `String` literal read back verbatim, a constructor read back by its final name component, anything
-else pretty-printed.
+else pretty-printed. `none` when the read fails — an ill-typed projection, an exhausted budget — so
+that a caller can mark the cell rather than print something that passes for a value.
 
 A *chain* rather than a single projection because the layers nest: a `DimensionedKind`'s identity is
 `dk.kind.id`, two projections down, and the dimensioned layer is indexed by the same code as the core
 one. An empty chain is the declaration's own value. -/
-def fieldStringChain (declName : Name) (chain : Array Name) : MetaM String := do
+def fieldStringChain? (declName : Name) (chain : Array Name) : MetaM (Option String) := do
   -- Application *and* reduction share one budget. `mkAppM`, not `mkApp`, because a projection of a
   -- parameterized structure (`DimensionedKind.kind`, whose structure carries a base-dimension
   -- parameter) takes implicit arguments before its subject, so a hand-built application would be
   -- ill-typed rather than merely wrong — but `mkAppM` unifies to find them, and unification is
   -- exactly the work that must not be allowed to run away across a table's worth of cells.
-  let r ← bounded do
+  bounded do
     let mut e ← mkConstWithLevelParams declName
     for p in chain do
       e ← mkAppM p #[e]
@@ -76,11 +84,14 @@ def fieldStringChain (declName : Name) (chain : Array Name) : MetaM String := do
         else if c == ``Option.none then return ""
         else return lastComponent c
       | _ => return toString (← ppExpr v)
-  return r.getD (lastComponent declName)
 
-/-- The value of `declName`'s single `field` projection — `fieldStringChain` at length one. -/
-def fieldString (declName field : Name) : MetaM String :=
-  fieldStringChain declName #[field]
+/-- The value of `declName`'s single `field` projection — `fieldStringChain?` at length one. -/
+def fieldString? (declName field : Name) : MetaM (Option String) :=
+  fieldStringChain? declName #[field]
+
+/-- The cell for a field read: `mk` applied to the value, or `unreadCell` when the read failed. -/
+def readCell (mk : String → IndexCell) (read : Option String) : IndexCell :=
+  read.elim unreadCell mk
 
 /-- The head constant of the value reached from `declName` by `chain` — the declaration the cell
 links to when its rendered value is a constructor (a scale, an enum field). `none` when the value
@@ -178,14 +189,14 @@ def kindsTable (layer : KindLayer) (scope : Scope) : MetaM IndexTable := do
     -- the constructor its value reduces to — so every cell of the row can jump to a definition.
     let extraCell : Array IndexCell ← match layer.extra with
       | some (_, chain) => do
-        let txt ← fieldStringChain k chain
-        match ← fieldConstChain? k chain with
-        | some c => pure #[IndexCell.declText c txt]
-        | none   => pure #[.code txt]
+        match ← fieldStringChain? k chain, ← fieldConstChain? k chain with
+        | some txt, some c => pure #[IndexCell.declText c txt]
+        | some txt, none   => pure #[.code txt]
+        | none, _          => pure #[unreadCell]
       | none            => pure #[]
     rows := rows.push (#[
       IndexCell.decl k (lastComponent k),
-      .declText k (← fieldStringChain k layer.identity)] ++ extraCell ++ #[
+      readCell (.declText k) (← fieldStringChain? k layer.identity)] ++ extraCell ++ #[
       .codeGroups (KindEdges.groupEdges (lastComponent k) (edges.getD k #[])),
       .links ((thms.getD k #[]).map fun t => (t, lastComponent t))])
   return { id := layer.id, title := layer.title, headers, rows }
@@ -219,7 +230,7 @@ def identityTable (id title heading : String) (ty : Name) (dedicatedField? : Opt
       | none   => #[]
     rows := rows.push (#[
       IndexCell.decl v (lastComponent v),
-      .text (← fieldString v (ty ++ `id))] ++ backCell ++ #[
+      readCell .text (← fieldString? v (ty ++ `id))] ++ backCell ++ #[
       .links ((thms.getD v #[]).map fun t => (t, lastComponent t))])
   return { id, title, headers, rows }
 
@@ -244,7 +255,7 @@ def dedicatedKindsTable (scope : Scope) : MetaM IndexTable := do
     let cellFor (proj idProj : Name) : MetaM IndexCell := do
       match ← fieldDecl? d proj with
       | some c => return .decl c (lastComponent c)
-      | none   => return .text (← fieldStringChain d #[proj, idProj])
+      | none   => return readCell .text (← fieldStringChain? d #[proj, idProj])
     rows := rows.push #[
       .decl d (lastComponent d),
       ← cellFor ``PropertyKindCalculus.DedicatedKind.sort ``PropertyKindCalculus.SortOfSystem.id,
@@ -271,21 +282,21 @@ def examinationsTable (scope : Scope) : MetaM IndexTable := do
   let mut rows : Array (Array IndexCell) := #[]
   for p in principles do
     rows := rows.push #[.decl p (lastComponent p), .text "principle", .text "—",
-      .text (← fieldString p ``PropertyKindCalculus.ExaminationPrinciple.id)]
+      readCell .text (← fieldString? p ``PropertyKindCalculus.ExaminationPrinciple.id)]
   let basedOnCell (d proj idProj : Name) : MetaM IndexCell := do
     match ← fieldDecl? d proj with
     | some c => return .decl c (lastComponent c)
-    | none   => return .text (← fieldStringChain d #[proj, idProj])
+    | none   => return readCell .text (← fieldStringChain? d #[proj, idProj])
   for m in methods do
     rows := rows.push #[.decl m (lastComponent m), .text "method",
       ← basedOnCell m ``PropertyKindCalculus.ExaminationMethod.principle
         ``PropertyKindCalculus.ExaminationPrinciple.id,
-      .text (← fieldString m ``PropertyKindCalculus.ExaminationMethod.id)]
+      readCell .text (← fieldString? m ``PropertyKindCalculus.ExaminationMethod.id)]
   for q in procedures do
     rows := rows.push #[.decl q (lastComponent q), .text "procedure",
       ← basedOnCell q ``PropertyKindCalculus.ExaminationProcedure.method
         ``PropertyKindCalculus.ExaminationMethod.id,
-      .text (← fieldString q ``PropertyKindCalculus.ExaminationProcedure.id)]
+      readCell .text (← fieldString? q ``PropertyKindCalculus.ExaminationProcedure.id)]
   return { id := "examinations", title := "Examinations", headers, rows }
 
 end PropertyKindCalculus.Index
