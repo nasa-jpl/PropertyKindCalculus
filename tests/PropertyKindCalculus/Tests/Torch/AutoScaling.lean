@@ -6,7 +6,8 @@ Inhabitation and value probes for the auto-scaling substrate:
   * `paradigm.tape_codegen.maxLiveNodes` — the eager carrier's peak live-buffer count,
     pinned on tapes with hand-computed live-set structure (chain, diamond, fan-in, a
     const leaf) recorded at the tape carrier and CSE'd, exactly as the deployments record
-    them; plus the `AiReport.maxLive` threading and the peak-bytes shapes.
+    them; plus the `AiReport.maxLive` threading, the peak-bytes shapes, and the one
+    fused-traffic term (`fusedBytesPerElem`) the `intensity` numbers and the fused prior share.
   * `paradigm.platform` — the pure parsers pinned on captured `/proc` / cgroup content
     (including the v2 `"max"` and v1 no-limit sentinel cases, which MUST parse as "no
     limit", not as a colossal budget), and the two solver shapes pinned on hand-solved
@@ -109,6 +110,12 @@ def diamondRep : AiReport :=
 #guard diamondRep.fusedPeakBytes 10 == (1 + 1) * 10 * 4
 #guard diamondRep.eagerPeakBytes 10 == 3 * 10 * 4
 #guard diamondRep.eagerHostBytesPerElem == 8 * (1 + 1) + 4 * 3
+
+-- `intensity` charges exactly `fusedBytesPerElem` of fused traffic, and with no tables bound
+-- `intensityWithTables` is `intensity` whatever the pixel count.
+#guard (intensity diamondRep 60).fusedBytes == diamondRep.fusedBytesPerElem
+#guard (intensityWithTables diamondRep 60 10).fusedBytes == (intensity diamondRep 60).fusedBytes
+#guard (intensityWithTables diamondRep 60 10).aiFit == (intensity diamondRep 60).aiFit
 
 /-! ## Platform parsers on captured content -/
 
