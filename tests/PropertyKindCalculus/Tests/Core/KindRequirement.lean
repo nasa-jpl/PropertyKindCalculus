@@ -18,10 +18,10 @@ object with no `Sorted` instance, a scope sort that is not one, an empty object 
 provable requirement that lists referents, names a gate, names nothing, or is attested
 beside its discharge; a witness that is a definition; an edge from the wrong boundary; an
 edge to a model boundary; a witness statement naming a referent; an absence that is
-present, and one that is not a license; an empirical requirement naming a witness, no
-referent, no gate, an unmarked referent, or a gate that mentions no referent; a spot check
-that is false, and one that is not a `Bool`. The survey, the census and the gate close the
-file, with the two marks' own refusals.
+present, one that is not a license, and one whose instance search does not finish; an
+empirical requirement naming a witness, no referent, no gate, an unmarked referent, or a
+gate that mentions no referent; a spot check that is false, and one that is not a `Bool`.
+The survey, the census and the gate close the file, with the two marks' own refusals.
 -/
 
 module
@@ -158,6 +158,14 @@ def noLicenseB : Prop := ProbeLicense bK
 
 /-- The license that must be absent — and is not. -/
 def licenseA : Prop := ProbeLicense aK
+
+/-- A license whose instance search never settles: each instance asks for the next. -/
+class UnsettledLicense (n : Nat) : Prop where
+
+instance {n : Nat} [UnsettledLicense (n + 1)] : UnsettledLicense n := ⟨⟩
+
+/-- The license whose absence cannot be decided. -/
+def unsettledLicense : Prop := UnsettledLicense 0
 
 /-- The spot check: the bound holds on an operational input. -/
 def spot : Bool := (model ⟨4⟩).magnitude ≤ (bound ⟨4⟩).magnitude
@@ -524,6 +532,28 @@ def absenceNotALicense : Provenance.Requirement where
 error: the absence 'PropertyKindCalculus.Tests.KindRequirement.NonNeg' does not unfold to a class application — a license is an instance, and what must be absent is the instance
 -/
 #guard_msgs in #kind_requirement absenceNotALicense
+
+/-- An instance search that does not finish is an error, not an absence. -/
+@[kindCounterexample]
+def absenceUndecided : Provenance.Requirement where
+  name := "B24"
+  statement := "the argument's kind carries no unsettled license"
+  kind := .provable
+  governs := ``modelBoundary
+  absent := ``unsettledLicense
+
+/--
+error: could not decide whether 'PropertyKindCalculus.Tests.KindRequirement.UnsettledLicense' has an instance at 'PropertyKindCalculus.Tests.KindRequirement.unsettledLicense' — the instance search did not finish: failed to synthesize
+  UnsettledLicense 0
+(deterministic) timeout at `typeclass`, maximum number of heartbeats (1) has been reached
+
+Note: Use `set_option synthInstance.maxHeartbeats <num>` to set the limit.
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+
+Hint: Additional diagnostic information may be available using the `set_option diagnostics true` command.
+-/
+#guard_msgs in set_option synthInstance.maxHeartbeats 1 in #kind_requirement absenceUndecided
 
 /-- A theorem cannot discharge a statement about what the model does not define. -/
 @[kindCounterexample]

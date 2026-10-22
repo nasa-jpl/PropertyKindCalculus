@@ -314,7 +314,9 @@ def checkRequirement (rname : Name) : MetaM CheckedRequirement := do
       let some cls ← Meta.isClass? license
         | throwError "the absence '{aname}' does not unfold to a class application — a \
           license is an instance, and what must be absent is the instance"
-      let found ← try Meta.synthInstance? license catch _ => pure none
+      let found ← try Meta.synthInstance? license
+        catch e => throwError "could not decide whether '{cls}' has an instance at \
+          '{aname}' — the instance search did not finish: {e.toMessageData}"
       if found.isSome then
         throwError "an instance of '{cls}' at '{aname}' is in the environment — the \
           license '{req.name}' requires absent is present"
