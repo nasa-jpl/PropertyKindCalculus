@@ -202,10 +202,10 @@ def kindGraphOf (scope : Index.Scope) : MetaM KindGraph := do
 
 /-! ## Rendering -/
 
+/-- The display form of a kind or witness name — its last component, as the index
+tables spell it (`Index.lastComponent`). -/
 def shortName (n : Name) : String :=
-  match n with
-  | .str _ s => s
-  | _ => toString n
+  Index.lastComponent n
 
 /-- One cluster's members, sorted, with the licensed edges wiring them. -/
 def renderCluster (kg : KindGraph) (cl : Array Nat) : String := Id.run do

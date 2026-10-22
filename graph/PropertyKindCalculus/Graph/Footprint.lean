@@ -52,13 +52,6 @@ namespace PropertyKindCalculus.KindGraph
 open Lean Meta Elab
 open PropertyKindCalculus.KindIncidence (contractValueOf assembleContract)
 
-/-- The display form of a kind vertex — its last name component, as the cluster
-renderings spell it. -/
-def kindShortName (n : Name) : String :=
-  match n with
-  | .str _ s => s
-  | _ => toString n
-
 /-- Resolve a kind reference against the graph's vertices: a `decl` by its environment
 name, exactly. `none` for everything else — a kind param, a signature or tuple, an
 out-of-scope declaration — because those denote no single vertex of this graph. -/
@@ -84,6 +77,9 @@ elab "#kind_footprint " c:ident nss:ident* : command => liftTermElabM do
   let a ← assembleContract ctr
   let kg ← kindGraphOf (nss.map (·.getId))
   let clusters := kg.clusters
+  -- vertex display names and cluster representatives come from the same helpers the
+  -- D2 renderers use, so a cluster is named here as its diagram file is
+  let names := kg.d2Names
   let clusterOf : Nat → Nat := fun v =>
     (clusters.findIdx? (·.contains v)).getD 0
   -- the footprint's kinds: every declared port kind, and the interior kinds the
@@ -106,8 +102,7 @@ elab "#kind_footprint " c:ident nss:ident* : command => liftTermElabM do
     match touched.findIdx? (·.1 == ci) with
     | some i => touched := touched.set! i (ci, touched[i]!.2.push v)
     | none => touched := touched.push (ci, #[v])
-  let rep : Nat → String := fun ci =>
-    ((clusters[ci]!.map fun v => kindShortName kg.kinds[v]!).qsort (· < ·)).getD 0 "?"
+  let rep : Nat → String := fun ci => repOf names clusters[ci]!
   let sortedTouched := touched.qsort fun x y => rep x.1 < rep y.1
   let nontrivial := sortedTouched.filter fun (ci, _) => clusters[ci]!.size ≥ 2
   let singletons := sortedTouched.size - nontrivial.size
@@ -118,10 +113,10 @@ elab "#kind_footprint " c:ident nss:ident* : command => liftTermElabM do
       {singletons} singleton kind(s)"
       ++ (if unresolved.isEmpty then "" else s!", {unresolved.size} unresolved")
   for (ci, vs) in nontrivial do
-    let names := (vs.map fun v => kindShortName kg.kinds[v]!).qsort (· < ·)
+    let members := (vs.map fun v => names[v]!).qsort (· < ·)
     lines := lines.push
       s!"  cluster {rep ci} ({clusters[ci]!.size} kinds): \
-        {String.intercalate ", " names.toList}"
+        {String.intercalate ", " members.toList}"
   if nontrivial.size == 1 && singletons == 0 && !verts.isEmpty then
     lines := lines.push
       s!"  ⚠ single-cluster footprint: every resolved kind lies in cluster {rep nontrivial[0]!.1}"
@@ -135,7 +130,7 @@ elab "#kind_footprint " c:ident nss:ident* : command => liftTermElabM do
   -- and by the authored string where it does not (kind variables group by name)
   let canonical := fun (k : PropertyKindCalculus.Provenance.KindRef) =>
     match resolveKind kg k with
-    | some v => kindShortName kg.kinds[v]!
+    | some v => names[v]!
     | none => k.render
   let mut groups : Array (String × Array String) := #[]
   for p in ctr.ports do
@@ -205,13 +200,14 @@ elab "#kind_footprint " c:ident nss:ident* : command => liftTermElabM do
 (`ModuleCard.ClusterRow`): for each inter-derivability cluster of two or more kinds,
 the boundary's own port kinds that resolve into it (`resolveKind` — an ambiguous or
 out-of-scope rendering resolves to nothing, exactly as in the footprint), with the
-cluster named by its alphabetical representative, compared case-insensitively — the
-same representative that names the cluster's diagram. A boundary touching no cluster
+cluster named by `repOf` over `d2Names` — the same representative that names the
+cluster's diagram file and the footprint's cluster line. A boundary touching no cluster
 contributes no rows. -/
 def clusterRows (kg : KindGraph)
     (c : Provenance.Contract Provenance.NodeId Provenance.KindRef) :
     List ModuleCard.ClusterRow := Id.run do
   let portKinds := (c.ports.map (·.kind)).eraseDups
+  let names := kg.d2Names
   let mut rows : List ModuleCard.ClusterRow := []
   for cl in kg.clusters.filter (·.size ≥ 2) do
     let hit := portKinds.filter fun k =>
@@ -219,8 +215,7 @@ def clusterRows (kg : KindGraph)
       | some i => cl.contains i
       | none => false
     if hit.isEmpty then continue
-    let rep := ((cl.map fun i => kindShortName kg.kinds[i]!).qsort
-      fun a b => a.toLower < b.toLower)[0]!
+    let rep := repOf names cl
     rows := rows ++ [{ representative := rep, kinds := hit.map (·.render), refs := hit }]
   return rows
 

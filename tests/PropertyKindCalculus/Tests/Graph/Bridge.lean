@@ -235,6 +235,31 @@ verdict: type-strength: the kinds span 2 components; 1 same-kind group(s) swap i
 #guard_msgs (whitespace := lax) in
 #kind_footprint clusterBoundary PropertyKindCalculus.Tests.Graph
 
+/-! ### The module card's cluster rows name a cluster as its diagram does
+
+`clusterRows` takes its representative from `KindGraph.repOf` over `d2Names`, so the row
+and the `cluster_<rep>.d2` file agree where the naive readings would not: colliders are
+qualified rather than merged, and the alphabetical comparison is case-insensitive, so a
+capitalized member does not outrank the lowercase first kind. -/
+
+/-- A boundary with one input port at the given kind, for driving `clusterRows`. -/
+def portAt (k : Lean.Name) : Provenance.Contract Provenance.NodeId Provenance.KindRef where
+  name := "cluster-row probe"
+  members := []
+  ports := [⟨(Provenance.NodeId.binder "x").within ``clusterStep, .decl k, .input⟩]
+  exits := []
+
+#guard (KindGraph.clusterRows kgDup (portAt `Gen.kD)).map (·.representative) == ["Alg.kD"]
+
+/-- A cluster whose capitalized member sorts first case-sensitively but not
+case-insensitively. -/
+def kgCase : KindGraph :=
+  { kinds := #[`Zeta, `alpha]
+    edges := #[⟨0, 1, `auth, `viaK⟩, ⟨1, 0, `auth, `viaK⟩] }
+
+#guard (KindGraph.clusterRows kgCase (portAt `Zeta)).map (·.representative) == ["alpha"]
+#guard KindGraph.repOf kgCase.d2Names #[0, 1] == "alpha"
+
 /-! ### Axiom profiles -/
 
 /-- info: 'PropertyKindCalculus.Provenance.mem_influencedFrom_iff' depends on axioms: [propext, Quot.sound] -/
