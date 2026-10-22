@@ -104,16 +104,22 @@ def parseLimitBytes (s : NominalValue memLimitText String) :
     | some n => if n ≥ (1 <<< 60) then none else some ⟨n⟩
     | none => none
 
-/-- cgroup v2 `cpu.max` content (`"<quota> <period>"`, µs) → whole cores `⌈quota/period⌉`;
-`"max <period>"` = no quota. (The µs/µs quotient is dimension-erasing by the kernel's own
-contract; the parser mints the resulting core count at the boundary.) -/
+/-- A CFS `(quota, period)` pair in µs → whole cores `⌈quota/period⌉`; `none` when either is
+zero (no quota, or a degenerate period). The ONE rounding rule: v2's `cpu.max` and v1's
+`cfs_quota_us`/`cfs_period_us` both go through it, so the two cannot drift apart. (The µs/µs
+quotient is dimension-erasing by the kernel's own contract; the core count is minted here.) -/
+def ceilCores (quota period : Nat) : Option (Quantity coreCount Nat) :=
+  if period == 0 || quota == 0 then none else some ⟨(quota + period - 1) / period⟩
+
+/-- cgroup v2 `cpu.max` content (`"<quota> <period>"`, µs) → whole cores via `ceilCores`;
+`"max <period>"` = no quota. -/
 def parseCpuMaxCores (s : NominalValue cpuMaxText String) :
     Option (Quantity coreCount Nat) :=
   match (((s.value.split Char.isWhitespace).map toString).filter (!·.isEmpty)).toList with
   | [q, p] =>
     if q == "max" then none
     else match q.toNat?, p.toNat? with
-      | some qn, some pn => if pn == 0 || qn == 0 then none else some ⟨(qn + pn - 1) / pn⟩
+      | some qn, some pn => ceilCores qn pn
       | _, _ => none
   | _ => none
 
@@ -196,19 +202,37 @@ def cgroupV2Dirs (rel : NominalValue cgroupPathText String) : List System.FilePa
       | none => return dirs
     return dirs
 
-/-- The effective cgroup-v2 memory limit: own cgroup and ancestors, minimum wins, the
-binding directory named in the provenance. `none` when there is no v2 cgroup or no level
-sets a limit. (Each file read mints its per-format text kind — the path IS the license.) -/
-def cgroupV2MemLimit : IO (Option MemBudget) := do
+/-- The level whose reading binds, over levels listed own-cgroup-first: the strict minimum of
+`read`, levels without a reading skipped, an earlier (inner) level keeping a tie. The ONE
+definition of "binding" — the solver's walk (`minOverCgroupV2`) and the census's
+`Census.bindingLevel` both go through it, so the audit cannot disagree with the decision it
+explains. -/
+def bindingMin {α β : Type} [LT α] [DecidableLT α] (levels : List β) (read : β → Option α) :
+    Option β :=
+  levels.foldl (init := none) fun best l =>
+    match read l with
+    | none => best
+    | some v => if best.all (fun m => (read m).all (v < ·)) then some l else best
+
+/-- One per-level file's binding reading over the cgroups that cage this process — own cgroup,
+then ancestors (`cgroupV2Dirs`) — with the directory it came from: `file` is read at every
+level, `parse` turns its content into a comparable reading, and `bindingMin` picks. `none`
+when there is no v2 cgroup or no level sets a limit. (Each read mints its per-format text kind
+at the call site — the file name IS the license.) -/
+def minOverCgroupV2 {α : Type} [LT α] [DecidableLT α] (file : String)
+    (parse : String → Option α) : IO (Option (α × System.FilePath)) := do
   let some cg ← readFile? "/proc/self/cgroup" | return none
   let some rel := parseCgroupV2Path ⟨cg⟩ | return none
-  let mut best : Option MemBudget := none
-  for dir in cgroupV2Dirs rel do
-    if let some txt ← readFile? (dir / "memory.max") then
-      if let some b := parseLimitBytes ⟨txt⟩ then
-        if best.all (fun m => b < m.bytes) then
-          best := some { bytes := b, source := ⟨s!"cgroup-v2:{dir}"⟩ }
-  return best
+  let readings ← (cgroupV2Dirs rel).filterMapM fun dir => do
+    return ((← readFile? (dir / file)).bind parse).map (·, dir)
+  return bindingMin readings (some ·.1)
+
+/-- The effective cgroup-v2 memory limit: own cgroup and ancestors, minimum wins, the
+binding directory named in the provenance. `none` when there is no v2 cgroup or no level
+sets a limit. -/
+def cgroupV2MemLimit : IO (Option MemBudget) := do
+  let best ← minOverCgroupV2 "memory.max" fun txt => parseLimitBytes ⟨txt⟩
+  return best.map fun (b, dir) => { bytes := b, source := ⟨s!"cgroup-v2:{dir}"⟩ }
 
 /-- **The host memory budget**, in the order the limits actually bind: cgroup v2, cgroup
 v1, then the host's own `MemAvailable`. `none` = nothing readable (treat as
@@ -237,21 +261,16 @@ deriving Repr
 
 /-- The effective cgroup-v2 CPU quota (own cgroup and ancestors, minimum wins). -/
 def cgroupV2CpuQuota : IO (Option (Quantity coreCount Nat)) := do
-  let some cg ← readFile? "/proc/self/cgroup" | return none
-  let some rel := parseCgroupV2Path ⟨cg⟩ | return none
-  let mut best : Option (Quantity coreCount Nat) := none
-  for dir in cgroupV2Dirs rel do
-    if let some txt ← readFile? (dir / "cpu.max") then
-      if let some q := parseCpuMaxCores ⟨txt⟩ then
-        if best.all (fun b => q < b) then best := some q
-  return best
+  let best ← minOverCgroupV2 "cpu.max" fun txt => parseCpuMaxCores ⟨txt⟩
+  return best.map (·.1)
 
-/-- The cgroup-v1 CPU quota (`cfs_quota_us` = `-1` when unset, which `toNat?` rejects). -/
+/-- The cgroup-v1 CPU quota (`cfs_quota_us` = `-1` when unset, which `toNat?` rejects),
+rounded by the same `ceilCores` as the v2 parser. -/
 def cgroupV1CpuQuota : IO (Option (Quantity coreCount Nat)) := do
   let some qs ← readFile? "/sys/fs/cgroup/cpu/cpu.cfs_quota_us" | return none
   let some ps ← readFile? "/sys/fs/cgroup/cpu/cpu.cfs_period_us" | return none
   match (qs.trimAscii.toString).toNat?, (ps.trimAscii.toString).toNat? with
-  | some q, some p => if q == 0 || p == 0 then return none else return some ⟨(q + p - 1) / p⟩
+  | some q, some p => return ceilCores q p
   | _, _ => return none
 
 /-- **The cores this process can actually use**: affinity mask ∧ cgroup quota, floor 1 —
@@ -364,12 +383,10 @@ def containerCensus : IO Census := do
     hostCores }
 
 /-- Which level's `memory.max` actually binds, and what it is — the question `hostMemLimit`
-answers with a bare minimum. `none` = no level states a limit. -/
+answers with a bare minimum, decided by the same `bindingMin` its walk uses. `none` = no level
+states a limit. -/
 def Census.bindingLevel (c : Census) : Option CgroupLevel :=
-  c.levels.foldl (init := none) fun best l =>
-    match l.memMax with
-    | none => best
-    | some b => if best.all (fun (m : CgroupLevel) => m.memMax.all (b < ·)) then some l else best
+  bindingMin c.levels (·.memMax)
 
 /-- **What the siblings hold**: the parent's whole-subtree usage less this job's own. The
 number an "excessive neighbour" claim needs, and the reason the census keeps the chain

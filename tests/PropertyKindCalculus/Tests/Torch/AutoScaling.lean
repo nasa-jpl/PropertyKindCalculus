@@ -10,9 +10,10 @@ Inhabitation and value probes for the auto-scaling substrate:
     fused-traffic term (`fusedBytesPerElem`) the `intensity` numbers and the fused prior share.
   * `paradigm.platform` — the pure parsers pinned on captured `/proc` / cgroup content
     (including the v2 `"max"` and v1 no-limit sentinel cases, which MUST parse as "no
-    limit", not as a colossal budget), and the two solver shapes pinned on hand-solved
-    budgets — including the `some 0` overflow answers, whose meaning ("shrink the block /
-    tile, not the count") a driver acts on.
+    limit", not as a colossal budget), the `ceilCores` rounding rule and the `bindingMin`
+    strict-minimum comparator shared by the cgroup walk and `Census.bindingLevel`, and the
+    two solver shapes pinned on hand-solved budgets — including the `some 0` overflow
+    answers, whose meaning ("shrink the block / tile, not the count") a driver acts on.
 
 Everything here is pure (`#guard`-evaluable): the tapes carry host `Tensor Float` scalars,
 and the platform layer's IO is never entered — its parsers take file *content* as strings,
@@ -140,6 +141,12 @@ def diamondRep : AiReport :=
 #guard parseCpuMaxCores ⟨"100000 100000\n"⟩ == some ⟨1⟩
 #guard parseCpuMaxCores ⟨"max 100000\n"⟩ == none
 
+-- The one rounding rule behind the v2 `cpu.max` parser and the v1 `cfs_*_us` pair.
+#guard ceilCores 150000 100000 == some ⟨2⟩
+#guard ceilCores 100000 100000 == some ⟨1⟩
+#guard ceilCores 0 100000 == none
+#guard ceilCores 100000 0 == none
+
 -- The dump and the key are different NOMINAL kinds — `parseMemInfoBytes key dump`
 -- (the classic swap) no longer type-checks.
 #guard parseMemInfoBytes
@@ -152,6 +159,21 @@ def diamondRep : AiReport :=
 #guard parseCgroupV2Path ⟨"0::/kubepods/burstable/pod12\n"⟩ == some ⟨"/kubepods/burstable/pod12"⟩
 #guard parseCgroupV2Path ⟨"12:memory:/docker/abc\n0::/\n"⟩ == some ⟨"/"⟩
 #guard parseCgroupV2Path ⟨"12:memory:/docker/abc\n"⟩ == none
+
+/-! ## The binding level — one strict-min comparator for the solver's walk and the census -/
+
+-- Own cgroup first, then ancestors: a level without a limit is skipped, the strict minimum
+-- binds, and an outer level equal to the current minimum does not displace the inner one.
+def censusLevels : List CgroupLevel :=
+  [{ dir := "/sys/fs/cgroup/a/b" },
+   { dir := "/sys/fs/cgroup/a", memMax := some ⟨2 <<< 30⟩ },
+   { dir := "/sys/fs/cgroup", memMax := some ⟨2 <<< 30⟩ },
+   { dir := "/", memMax := some ⟨8 <<< 30⟩ }]
+#guard (Census.bindingLevel { levels := censusLevels }).map (·.dir) == some "/sys/fs/cgroup/a"
+#guard (Census.bindingLevel { levels := [censusLevels[0]!] }).map (·.dir) == none
+#guard (bindingMin [(3, "c"), (1, "a"), (1, "b")] (fun p : Nat × String => some p.1)).map (·.2)
+    == some "a"
+#guard bindingMin ([] : List (Option Nat)) id == none
 
 /-! ## The two solver shapes on hand-solved budgets -/
 
