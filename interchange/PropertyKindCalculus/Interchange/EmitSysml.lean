@@ -32,16 +32,18 @@ def isPlainIdent (s : String) : Bool :=
   | [] => false
   | c :: cs => (c.isAlpha || c == '_') && cs.all (fun d => d.isAlphanum || d == '_')
 
-/-- Reserved words of the notation that a model element may plausibly be named after. -/
+/-- Reserved words of the SysML v2 notation: every word OpenSysML's `.sysml` parser refuses as a
+bare name (`reserved-keyword-name`). KerML-only words (`type`, `feature`, `class`, …) are names
+in a `.sysml` file and stay bare. -/
 def reservedWords : List String :=
-  ["abstract", "accept", "action", "actor", "after", "alias", "all", "allocate", "allocation",
+  ["about", "abstract", "accept", "action", "actor", "after", "alias", "all", "allocate", "allocation",
    "analysis", "and", "as", "assert", "assign", "assume", "at", "attribute", "bind", "binding",
    "by", "calc", "case", "comment", "concern", "connect", "connection", "constant", "constraint",
    "crosses", "decide", "def", "default", "defined", "dependency", "derived", "do", "doc", "else",
    "end", "entry", "enum", "event", "exhibit", "exit", "expose", "false", "filter", "first",
    "flow", "for", "fork", "frame", "from", "hastype", "if", "implies", "import", "in", "include",
    "individual", "inout", "interface", "istype", "item", "join", "language", "library", "locale",
-   "loop", "merge", "message", "meta", "metadata", "nonunique", "not", "null", "objective",
+   "loop", "merge", "message", "meta", "metadata", "new", "nonunique", "not", "null", "objective",
    "occurrence", "of", "or", "ordered", "out", "package", "parallel", "part", "perform", "port",
    "private", "protected", "public", "redefines", "ref", "references", "render", "rendering",
    "rep", "require", "requirement", "return", "satisfy", "send", "snapshot", "specializes",
