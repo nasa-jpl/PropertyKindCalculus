@@ -622,6 +622,24 @@ partial def ratOfExpr? (e : Expr) : Option Rat :=
     pure (a / b)
   else none
 
+/-- The edge a witness-family application states, read off the family's registry entry
+(`KindEdges.specs`): its `EdgeFamily` label — the law, with the table classes kept apart
+as `tableMul`/`tableDiv` and a `power` carrying its exponent `p` — then the operand-kind
+expressions and the result-kind expression at the entry's positions. -/
+def edgeOfSpec (spec : KindEdges.EdgeSpec) (a : Array Expr) (p : Option Rat) :
+    EdgeFamily × Array Expr × Expr :=
+  let fam : EdgeFamily := match spec.isTable, spec.law with
+    | true, .product => .tableMul
+    | true, .quotient => .tableDiv
+    | _, .product => .product
+    | _, .quotient => .quotient
+    | _, .reciprocal => .reciprocal
+    | _, .transcendental => .transcendental
+    | _, .power => .power (p.getD 0)
+    | _, .reference => .reference
+    | _, .additive => .additive
+  (fam, spec.operands.map (a[·]!), a[spec.result]!)
+
 /-- The edge a binder type states — its `EdgeFamily` label, operand-kind expressions,
 and result-kind expression — or `none` for a non-edge binder. A `PowerKind` whose
 exponent is not a rational literal throws: the edge vocabulary carries a `Rat` exponent,
@@ -629,48 +647,30 @@ and a kind-generic power step monomorphizes at its discharging call sites. -/
 def edgeOfBinderType? (ty : Expr) :
     MetaM (Option (EdgeFamily × Array Expr × Expr)) := do
   let ty := ty.cleanupAnnotations
+  let some spec := KindEdges.specOfApp? ty | return none
   let a := ty.getAppArgs
-  if ty.isAppOfArity ``ProductKind 3 then return some (.product, #[a[0]!, a[1]!], a[2]!)
-  if ty.isAppOfArity ``QuotientKind 3 then return some (.quotient, #[a[0]!, a[1]!], a[2]!)
-  if ty.isAppOfArity ``ReciprocalKind 2 then return some (.reciprocal, #[a[0]!], a[1]!)
-  if ty.isAppOfArity ``TranscendentalKind 2 then
-    return some (.transcendental, #[a[0]!], a[1]!)
-  -- a re-expression relates the value converted; the two reference quantities are the
-  -- edge's configuration, and a signature that states them is stating its conversion,
-  -- not taking two more inputs
-  if ty.isAppOfArity ``ReferenceKind 2 then return some (.reference, #[a[0]!], a[1]!)
-  -- a same-kind sum or difference: the witness names one kind, and that one kind is both
-  -- operands and the result — the shared index is the whole of the claim
-  if ty.isAppOfArity ``DifferenceKind 1 then
-    return some (.additive, #[a[0]!, a[0]!], a[0]!)
-  if ty.isAppOfArity ``PowerKind 3 then
-    let some p := ratOfExpr? a[0]!
-      | throwError "a power exponent here is not a rational literal — the graph's edge \
-          vocabulary carries a `Rat` exponent, so a kind-generic power step is read at \
-          the call sites that discharge it"
-    return some (.power p, #[a[1]!], a[2]!)
-  if ty.isAppOfArity ``KindMul 3 then return some (.tableMul, #[a[0]!, a[1]!], a[2]!)
-  if ty.isAppOfArity ``KindDiv 3 then return some (.tableDiv, #[a[0]!, a[1]!], a[2]!)
-  return none
+  let p? ← match spec.exponent with
+    | none => pure none
+    | some i =>
+      let some p := ratOfExpr? a[i]!
+        | throwError "a power exponent here is not a rational literal — the graph's edge \
+            vocabulary carries a `Rat` exponent, so a kind-generic power step is read at \
+            the call sites that discharge it"
+      pure (some p)
+  return some (edgeOfSpec spec a p?)
 
 /-- The table subset of `edgeOfBinderType?` — what one level of instance unfolding is
 allowed to find inside an instance argument's own telescope. -/
-def tableEdgeOfType? (ty : Expr) : Option (EdgeFamily × Array Expr × Expr) :=
+def tableEdgeOfType? (ty : Expr) : Option (EdgeFamily × Array Expr × Expr) := do
   let ty := ty.cleanupAnnotations
-  let a := ty.getAppArgs
-  if ty.isAppOfArity ``KindMul 3 then some (.tableMul, #[a[0]!, a[1]!], a[2]!)
-  else if ty.isAppOfArity ``KindDiv 3 then some (.tableDiv, #[a[0]!, a[1]!], a[2]!)
-  else none
+  let spec ← KindEdges.specOfApp? ty
+  guard spec.isTable
+  return edgeOfSpec spec ty.getAppArgs none
 
 /-- Does a binder type state any edge — witness family or table class? The pure
 pre-check behind producer classification. -/
 def statesEdgeType (ty : Expr) : Bool :=
-  let ty := ty.cleanupAnnotations
-  ty.isAppOfArity ``ProductKind 3 || ty.isAppOfArity ``QuotientKind 3
-    || ty.isAppOfArity ``ReciprocalKind 2 || ty.isAppOfArity ``TranscendentalKind 2
-    || ty.isAppOfArity ``PowerKind 3 || ty.isAppOfArity ``ReferenceKind 2
-    || ty.isAppOfArity ``DifferenceKind 1
-    || ty.isAppOfArity ``KindMul 3 || ty.isAppOfArity ``KindDiv 3
+  (KindEdges.specOfApp? ty.cleanupAnnotations).isSome
 
 /-! ## The walk — occurrences, introductions, exits, wiring -/
 

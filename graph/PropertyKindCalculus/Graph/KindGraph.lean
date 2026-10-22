@@ -152,19 +152,11 @@ def hierarchyEdges (kg : KindGraph) : Array Edge := Id.run do
 
 open Lean
 
-/-- The operand and result argument positions of a witness family's application, per the
-family's own equation shape (`PowerKind`'s first argument is the exponent, not a kind;
-`DifferenceKind` relates a kind to itself and contributes no cross-kind edge). -/
+/-- The operand and result argument positions of a witness family's application, read off
+its registry entry (`PowerKind`'s exponent is not an operand there); `none` for an
+`additive` family, which relates a kind to itself and contributes no cross-kind edge. -/
 def rolesOf (spec : KindEdges.EdgeSpec) : Option (List Nat × Nat) :=
-  if spec.const == ``PropertyKindCalculus.ProductKind then some ([0, 1], 2)
-  else if spec.const == ``PropertyKindCalculus.QuotientKind then some ([0, 1], 2)
-  else if spec.const == ``PropertyKindCalculus.ReciprocalKind then some ([0], 1)
-  else if spec.const == ``PropertyKindCalculus.TranscendentalKind then some ([0], 1)
-  else if spec.const == ``PropertyKindCalculus.PowerKind then some ([1], 2)
-  else if spec.const == ``PropertyKindCalculus.ReferenceKind then some ([0], 1)
-  else if spec.const == ``PropertyKindCalculus.KindMul then some ([0, 1], 2)
-  else if spec.const == ``PropertyKindCalculus.KindDiv then some ([0, 1], 2)
-  else none
+  if spec.law == .additive then none else some (spec.operands.toList, spec.result)
 
 def constArg? (args : Array Lean.Expr) (i : Nat) : Option Lean.Name :=
   match args[i]? with

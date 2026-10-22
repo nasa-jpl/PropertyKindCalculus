@@ -115,6 +115,22 @@ under a binder to exercise the recursion. -/
     let pps ← args.mapM fun e => return toString (← Lean.Meta.ppExpr e)
     Lean.logInfo (spec.fmt pps)
 
+/-! ## The registry — one entry per family, every other table derived from it
+
+`propFamilies`, the incidence readers, the dimensional rule, the graph roles and the
+interchange family all read `KindEdges.specs`; these pins keep each entry well-formed
+(every role within the family's arity, an exponent on the `power` family alone) and the
+derived `propFamilies` at the seven witness `Prop`s. -/
+
+#guard PropertyKindCalculus.KindEdges.specs.all fun s =>
+  s.operands.all (· < s.arity) && s.result < s.arity
+    && (s.exponent.map fun i => decide (i < s.arity)).getD true
+    && (s.exponent.isSome == (s.law == .power))
+
+#guard PropertyKindCalculus.KindEdges.propFamilies ==
+  #[``ProductKind, ``QuotientKind, ``ReciprocalKind, ``TranscendentalKind, ``PowerKind,
+    ``ReferenceKind, ``DifferenceKind]
+
 end PropertyKindCalculus.Tests.KindEdges
 
 end Blanket

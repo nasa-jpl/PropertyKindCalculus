@@ -43,7 +43,8 @@ declaration — lives in `KindIncidence`, together with the port and graph harve
 on it: those readings are identified against the boundary audit's registries, and
 importing the audit would put its meta-heavy bodies into this module's environment walk
 in every consumer (`producerModules` below is the cost model). What stays here is what
-both sides share: the edge specs and their formatters, and the binder-type
+both sides share: the edge specs — each family's law, argument roles and formatter, the
+one registry every audit layer derives its tables from — and the binder-type
 instantiation the per-declaration reading keys on (`instantiatedBinderTypes`, the
 twin of `instantiatedConclusion`).
 -/
@@ -67,26 +68,72 @@ namespace PropertyKindCalculus.KindEdges
 
 open Lean
 
-/-- One scanned edge family: the witness `Prop`'s constant, its full application arity,
-and how to render an application's pretty-printed arguments as a kind equation. -/
+/-- The law a witness family states — the shape of its kind equation. Every reader of
+`specs` keys on it (the dimensional rule, the graph roles, the interchange family), so
+each is a total match that a family added to the registry cannot silently fall out of. -/
+inductive EdgeLaw where
+  /-- `k₁ · k₂ → k`. -/
+  | product
+  /-- `k₁ / k₂ → k`. -/
+  | quotient
+  /-- `1 / k₁ → k₂`. -/
+  | reciprocal
+  /-- `transcendental : k₁ → k₂`. -/
+  | transcendental
+  /-- `k₁ ^ p → k₂`, the exponent `p` a rational, not a kind. -/
+  | power
+  /-- `reference : k₁ → k₂`: a re-expression relates the value converted; the two
+  reference quantities are the edge's configuration, not further operands. -/
+  | reference
+  /-- `k ± k → k`: the witness names one kind, which is both operands and the result. -/
+  | additive
+deriving DecidableEq, Repr, Inhabited
+
+/-- One scanned edge family — the registry entry every audit layer reads: the witness
+`Prop`'s constant, its full application arity, the law it states, the argument positions
+of its operand kinds and result kind, the exponent's position (a `power` family only),
+whether it is an operator-table class rather than a witness `Prop`, and how to render an
+application's pretty-printed arguments as a kind equation. -/
 structure EdgeSpec where
   const : Name
   arity : Nat
+  law : EdgeLaw
+  operands : Array Nat
+  result : Nat
+  exponent : Option Nat := none
+  isTable : Bool := false
   fmt : Array String → String
 
 /-- The witness families of the core calculus. `PowerKind`'s first argument is the
-rational exponent (not a kind); the formatters place each family's arguments as the
-equation reads. -/
+rational exponent (not a kind); `DifferenceKind`'s one argument fills every role; the
+formatters place each family's arguments as the equation reads. -/
 def specs : Array EdgeSpec := #[
-  ⟨``PropertyKindCalculus.ProductKind, 3, fun a => s!"{a[0]!} · {a[1]!} → {a[2]!}"⟩,
-  ⟨``PropertyKindCalculus.QuotientKind, 3, fun a => s!"{a[0]!} / {a[1]!} → {a[2]!}"⟩,
-  ⟨``PropertyKindCalculus.ReciprocalKind, 2, fun a => s!"1 / {a[0]!} → {a[1]!}"⟩,
-  ⟨``PropertyKindCalculus.TranscendentalKind, 2, fun a => s!"transcendental : {a[0]!} → {a[1]!}"⟩,
-  ⟨``PropertyKindCalculus.PowerKind, 3, fun a => s!"{a[1]!} ^ {a[0]!} → {a[2]!}"⟩,
-  ⟨``PropertyKindCalculus.ReferenceKind, 2, fun a => s!"reference : {a[0]!} → {a[1]!}"⟩,
-  ⟨``PropertyKindCalculus.DifferenceKind, 1, fun a => s!"{a[0]!} ± {a[0]!} → {a[0]!}"⟩,
-  ⟨``PropertyKindCalculus.KindMul, 3, fun a => s!"[table] {a[0]!} · {a[1]!} → {a[2]!}"⟩,
-  ⟨``PropertyKindCalculus.KindDiv, 3, fun a => s!"[table] {a[0]!} / {a[1]!} → {a[2]!}"⟩]
+  { const := ``PropertyKindCalculus.ProductKind, arity := 3, law := .product,
+    operands := #[0, 1], result := 2, fmt := fun a => s!"{a[0]!} · {a[1]!} → {a[2]!}" },
+  { const := ``PropertyKindCalculus.QuotientKind, arity := 3, law := .quotient,
+    operands := #[0, 1], result := 2, fmt := fun a => s!"{a[0]!} / {a[1]!} → {a[2]!}" },
+  { const := ``PropertyKindCalculus.ReciprocalKind, arity := 2, law := .reciprocal,
+    operands := #[0], result := 1, fmt := fun a => s!"1 / {a[0]!} → {a[1]!}" },
+  { const := ``PropertyKindCalculus.TranscendentalKind, arity := 2, law := .transcendental,
+    operands := #[0], result := 1, fmt := fun a => s!"transcendental : {a[0]!} → {a[1]!}" },
+  { const := ``PropertyKindCalculus.PowerKind, arity := 3, law := .power,
+    operands := #[1], result := 2, exponent := some 0,
+    fmt := fun a => s!"{a[1]!} ^ {a[0]!} → {a[2]!}" },
+  { const := ``PropertyKindCalculus.ReferenceKind, arity := 2, law := .reference,
+    operands := #[0], result := 1, fmt := fun a => s!"reference : {a[0]!} → {a[1]!}" },
+  { const := ``PropertyKindCalculus.DifferenceKind, arity := 1, law := .additive,
+    operands := #[0, 0], result := 0, fmt := fun a => s!"{a[0]!} ± {a[0]!} → {a[0]!}" },
+  { const := ``PropertyKindCalculus.KindMul, arity := 3, law := .product, isTable := true,
+    operands := #[0, 1], result := 2, fmt := fun a => s!"[table] {a[0]!} · {a[1]!} → {a[2]!}" },
+  { const := ``PropertyKindCalculus.KindDiv, arity := 3, law := .quotient, isTable := true,
+    operands := #[0, 1], result := 2, fmt := fun a => s!"[table] {a[0]!} / {a[1]!} → {a[2]!}" }]
+
+/-- The registry entry of a witness constant, if it heads a scanned family. -/
+def specOf? (c : Name) : Option EdgeSpec := specs.find? (·.const == c)
+
+/-- The registry entry a fully-applied witness application states, if any. -/
+def specOfApp? (e : Expr) : Option EdgeSpec :=
+  specs.find? fun spec => e.isAppOfArity spec.const spec.arity
 
 /-- Collect every fully-applied witness `Prop` occurring anywhere in an expression
 (binder types, conjuncts, and nested applications included). -/
@@ -106,18 +153,11 @@ partial def collectEdges (e : Expr) (acc : Array (EdgeSpec × Array Expr)) :
   | .proj _ _ b => collectEdges b acc
   | _ => acc
 
-/-- The seven witness `Prop` families — the conclusions the inline scan recognizes. The
-table classes are deliberately absent: a `KindMul`/`KindDiv` registration is an instance,
-owned by the type scan, and an instance *reference* in a value is resolution, not
-authorship. -/
-def propFamilies : Array Name := #[
-  ``PropertyKindCalculus.ProductKind,
-  ``PropertyKindCalculus.QuotientKind,
-  ``PropertyKindCalculus.ReciprocalKind,
-  ``PropertyKindCalculus.TranscendentalKind,
-  ``PropertyKindCalculus.PowerKind,
-  ``PropertyKindCalculus.ReferenceKind,
-  ``PropertyKindCalculus.DifferenceKind]
+/-- The witness `Prop` families — the conclusions the inline scan recognizes: every
+`specs` entry that is not a table class. The table classes are deliberately absent: a
+`KindMul`/`KindDiv` registration is an instance, owned by the type scan, and an instance
+*reference* in a value is resolution, not authorship. -/
+def propFamilies : Array Name := (specs.filter (!·.isTable)).map (·.const)
 
 /-- Does a declaration's type mention a witness family at all? The cheap pre-check that
 keeps the inline scan from instantiating every application head's type. -/
