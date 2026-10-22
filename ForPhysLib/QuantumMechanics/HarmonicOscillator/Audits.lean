@@ -6,14 +6,14 @@ the pilot directory: the whole directory's kinded surface put under CI — probe
 included, because the probe's quantities *are* directory mints and each now carries the
 tier that sanctions it. Five gates, each in the discipline its command enforces:
 
-  * `#kind_boundary_audit` **pinned** over the full directory namespace: twenty
+  * `#kind_boundary_audit` **pinned** over the full directory namespace: twenty-one
     boundary sites — every mint, attestation and erasure from `Feasibility.lean`'s
     catalogue readings to `Kinded.lean`'s crossings — each with its tier. A new
     untagged site breaks the pin.
   * `#kind_boundary_clean` and `#kind_mint_ratchet` **silent**: they throw on violation
     and print nothing on a clean scope, so neither can be re-blessed by re-pinning. The
-    ratchet is why `numeralSMul`'s mint is *attested*, not raw: `[carrierVocab]` keeps
-    an empty raw column.
+    shared numeral action the directory opens (`Operators/Numeral.lean`) is pinned and
+    ratcheted once, in `Audits/Numeral.lean`.
   * `#kind_unkinded` over two declared contracts: the *interior* gated empty, and the
     *ingest boundary* measured — fifteen naked positions, all of them the oscillator
     structure, its occupation labels, a coordinate index, its Hilbert space, its
@@ -62,7 +62,6 @@ open PropertyKindCalculus
 
 /--
 info: boundary audit:
-[carrierVocab] ForPhysLib.QuantumMechanics.HarmonicOscillator.numeralSMul — attests: (kind-parametric) ‹a dimensionless numeral scales; the kind is unchanged›
 [kindConst] ForPhysLib.QuantumMechanics.HarmonicOscillator.hbarQ — attests: actionK ‹Constants.ℏ — SI numeral; the J·s commitment lives in docstring prose›
 [kindCrossing] ForPhysLib.QuantumMechanics.HarmonicOscillator.AngularMomentum.angularMomentumReading — attests: Kinds.angularMomentum ‹m·ℏ read at 4-11 — the J·s collision crossed on purpose›
 [kindCrossing] ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinded.energySMul — erases (emission-only)
@@ -84,14 +83,13 @@ info: boundary audit:
 [kindIngest] ForPhysLib.QuantumMechanics.HarmonicOscillator.xiQ — attests: lengthK ‹the square root of the registered ξ² chain — roots are not a kind operation›
 [kindIngest] ForPhysLib.QuantumMechanics.HarmonicOscillator.ωQ — attests: angularFrequencyK ‹PhysLib's bare ℝ family ω i›
 [kindIngest] ForPhysLib.QuantumMechanics.HarmonicOscillator.ωQ1 — attests: angularFrequencyK ‹PhysLib's bare ℝ field ω›
-22 boundary site(s), all tagged — clean
+21 boundary site(s), all tagged — clean
 -/
 #guard_msgs (whitespace := lax) in
 #kind_boundary_audit ForPhysLib.QuantumMechanics.HarmonicOscillator
 
 /--
 info: tagged boundary crossings:
-[carrierVocab] ForPhysLib.QuantumMechanics.HarmonicOscillator.numeralSMul — A dimensionless numeral scales a quantity without changing its kind — the `nᵢ + ½`
 [kindConst] ForPhysLib.QuantumMechanics.HarmonicOscillator.hbarQ — ℏ as an action quantity — one attestation naming what the source's type does not
 [kindCrossing] ForPhysLib.QuantumMechanics.HarmonicOscillator.AngularMomentum.angularMomentumReading — **The `m·ℏ` crossing**: a dimensionless integer scales the action constant and the
 [kindCrossing] ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinded.energySMul — **F1d's crossing, on the right-hand side of the subject's defining equation**: an

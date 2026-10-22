@@ -44,7 +44,7 @@ open PropertyKindCalculus
 open ForPhysLib.ClassicalMechanics
 open ForPhysLib.ClassicalMechanics.Kinded
 open Time ContDiff InnerProductSpace
-open scoped PropertyKindCalculus.OperatorTable
+open scoped PropertyKindCalculus.OperatorTable ForPhysLib.Operators.Numeral
 
 local notation "HO" => _root_.ClassicalMechanics.HarmonicOscillator
 local notation "E1" => EuclideanSpace ℝ (Fin 1)

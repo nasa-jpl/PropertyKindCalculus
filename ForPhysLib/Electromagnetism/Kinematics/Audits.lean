@@ -5,13 +5,14 @@ The top rung of [the adoption ladder](../../PLAN.md#stage-4-audits-and-the-api-m
 the campaign's second directory: the whole directory's kinded surface put under CI —
 probe files included. Five gates, each in the discipline its command enforces:
 
-  * `#kind_boundary_audit` **pinned** over the full directory namespace: forty-eight
+  * `#kind_boundary_audit` **pinned** over the full directory namespace: forty-seven
     boundary sites — every mint, attestation and erasure from `Feasibility.lean`'s
     readings through `Maxwell.lean`'s sources to `Dynamics.lean`'s variational
     crossings — each with its tier. A new untagged site breaks the pin.
   * `#kind_boundary_clean` and `#kind_mint_ratchet` **silent**: they throw on
     violation and print nothing on a clean scope, so neither can be re-blessed by
-    re-pinning. The ratchet is why `numeralSMul`'s mint is *attested*, not raw.
+    re-pinning. The shared numeral action the directory opens
+    (`Operators/Numeral.lean`) is pinned and ratcheted once, in `Audits/Numeral.lean`.
   * `#kind_unkinded` over two declared contracts — and here the ratio inverts the
     pilot's: **twelve** crossings are kinded end to end (the interior, gated empty)
     against eleven boundary readings. The chain's core derivations — both slices, the
@@ -57,7 +58,6 @@ open PropertyKindCalculus
 
 /--
 info: boundary audit:
-[carrierVocab] ForPhysLib.Electromagnetism.Kinematics.numeralSMul — attests: (kind-parametric) ‹a dimensionless numeral scales; the kind is unchanged›
 [kindConst] ForPhysLib.Electromagnetism.Kinematics.Maxwell.epsilonQ — attests: Kinds.electricConstant ‹FreeSpace.ε₀ — the electric constant, a bare ℝ field upstream›
 [kindConst] ForPhysLib.Electromagnetism.Kinematics.Maxwell.muQ — attests: Kinds.magneticConstant ‹FreeSpace.μ₀ — the magnetic constant, a bare ℝ field upstream›
 [kindCrossing] ForPhysLib.Electromagnetism.Kinematics.DistributionalTwin.distElectricFieldQ — attests: electricFieldK ‹the twin's -∇φ - ∂ₜ𝐀 — distributional derivatives ride the same crossing›
@@ -105,14 +105,13 @@ info: boundary audit:
 [kindIngest] ForPhysLib.Electromagnetism.Kinematics.potentialQ — attests: vectorPotentialK ‹the four-potential — homogeneous at 6-32 because A⁰ = φ/c›
 [kindIngest] ForPhysLib.Electromagnetism.Kinematics.speedQ — attests: speedOfLightK ‹the unit-system choice, declared once instead of defaulted per call site›
 [kindIngest] ForPhysLib.Electromagnetism.Kinematics.speedRQ — attests: speedOfLightK ‹the declared speed, at the table's carrier›
-48 boundary site(s), all tagged — clean
+47 boundary site(s), all tagged — clean
 -/
 #guard_msgs (whitespace := lax) in
 #kind_boundary_audit ForPhysLib.Electromagnetism.Kinematics
 
 /--
 info: tagged boundary crossings:
-[carrierVocab] ForPhysLib.Electromagnetism.Kinematics.numeralSMul — A dimensionless numeral scales a quantity without changing its kind — `β` and `γ`
 [kindConst] ForPhysLib.Electromagnetism.Kinematics.Maxwell.epsilonQ — `FreeSpace.ε₀`, read at 6-14.1 — a bare `ℝ` field upstream; the F/m commitment
 [kindConst] ForPhysLib.Electromagnetism.Kinematics.Maxwell.muQ — `FreeSpace.μ₀`, read at 6-26.1.
 [kindCrossing] ForPhysLib.Electromagnetism.Kinematics.DistributionalTwin.distElectricFieldQ — The twin's electric field at the chain's 6-10: the same `-∇φ - ∂ₜ𝐀`, with the

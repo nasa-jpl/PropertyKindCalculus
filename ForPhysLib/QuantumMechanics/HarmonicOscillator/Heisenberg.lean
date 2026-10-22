@@ -52,7 +52,7 @@ open ForPhysLib.QuantumMechanics.HarmonicOscillator.Orthonormality
 
 namespace ForPhysLib.QuantumMechanics.HarmonicOscillator.Heisenberg
 
-open scoped PropertyKindCalculus.OperatorTable
+open scoped PropertyKindCalculus.OperatorTable ForPhysLib.Operators.Numeral
 
 local notation "PhysHO" => _root_.QuantumMechanics.HarmonicOscillator
 

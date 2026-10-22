@@ -60,6 +60,7 @@ public import Physlib.ClassicalMechanics.RigidBody.KineticEnergy
 meta import Physlib.ClassicalMechanics.RigidBody.KineticEnergy
 public import PropertyKindCalculus.BoundaryAudit
 meta import PropertyKindCalculus.BoundaryAudit
+public import ForPhysLib.Operators.Numeral
 public import PropertyKindCalculus.KindAlgebra
 meta import PropertyKindCalculus.KindAlgebra
 public import PropertyKindCalculus.QuantityReal
@@ -269,17 +270,7 @@ instance : KindJoin KineticEdge translationalKineticEnergyK rotationalKineticEne
     kineticEnergyK :=
   ⟨.of_edge .translational, .of_edge .rotational, .ofScale⟩
 
-open scoped PropertyKindCalculus.OperatorTable
-
-/-- A dimensionless numeral scales a quantity without changing its kind — the `½` of
-every energy below, the `2π` of the period. Same honesty as the pilot's copy of this
-instance: the action is the Mathlib-interface tier (MR30), and the mint is attested,
-not raw, so the tier survives the mint ratchet. -/
-@[carrierVocab]
-scoped instance numeralSMul {k : KindOfProperty} {R : Type} [Mul R] :
-    SMul R (Quantity k R) :=
-  ⟨fun c q => .attest "a dimensionless numeral scales; the kind is unchanged"
-    (c * q.magnitude)⟩
+open scoped PropertyKindCalculus.OperatorTable ForPhysLib.Operators.Numeral
 
 /-! ## F1 — the bare-real input data -/
 

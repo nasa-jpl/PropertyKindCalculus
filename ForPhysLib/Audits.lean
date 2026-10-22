@@ -9,6 +9,7 @@ the adoption, beside the `checked_by:` delta proposed for the directory's
 
 module
 
+public import ForPhysLib.Audits.Numeral
 public import ForPhysLib.Audits.Space
 
 @[expose] public section

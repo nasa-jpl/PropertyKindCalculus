@@ -52,7 +52,7 @@ namespace ForPhysLib.ClassicalMechanics.Kinded
 open PropertyKindCalculus
 open ForPhysLib.ClassicalMechanics
 open Time Matrix InnerProductSpace
-open scoped PropertyKindCalculus.OperatorTable
+open scoped PropertyKindCalculus.OperatorTable ForPhysLib.Operators.Numeral
 
 variable {d : ℕ}
 
