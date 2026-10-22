@@ -7,7 +7,8 @@ driven by host kernels on `FloatArray` columns so they evaluate without a device
   * a well-formed kernel's per-chunk outputs are stitched back in pixel order, across an
     uneven split (`total % nChunks ≠ 0`) and for the inline `nChunks ≤ 1` path alike;
   * a kernel that returns the wrong number of output columns is REFUSED at the driver, with
-    the chunk and both counts in the error — never stitched into an empty column.
+    the chunk and both counts in the error — never stitched into an empty column — on the
+    sharded and the inline path alike.
 -/
 
 module
@@ -54,6 +55,13 @@ def shortK (_len : Nat) (cols : Array FloatArray) : IO (Array FloatArray) :=
 #guard_msgs in
 #eval do
   let outs ← runSharded 3 5 2 #[iota 5] shortK
+  return outs.map FloatArray.data
+
+-- The inline path refuses the same kernel: it is chunk 0 of 1.
+/-- error: runSharded: chunk 0 of 1 returned 1 output columns, expected 2 -/
+#guard_msgs in
+#eval do
+  let outs ← runSharded 1 5 2 #[iota 5] shortK
   return outs.map FloatArray.data
 
 end PropertyKindCalculus.Tests.BatchCarrier
