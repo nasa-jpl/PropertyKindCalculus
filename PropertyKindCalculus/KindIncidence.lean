@@ -519,12 +519,15 @@ partially-kinded function: not naked data, and not an interface node either.
 The structural rule (reduce at reducible transparency, walk a single-constructor head's
 fields, search every type argument) is `BoundaryAudit.kindBearing` — the same test the
 `@[kindCrossing]` gate applies to a crossing's arguments, so the gate and this report
-agree on what is kinded; only the vocabulary differs, this reading counting
-`KindOfProperty` and the designation types as well as the carriers. -/
+agree on what is kinded. Two things differ by design: the vocabulary (this reading
+counts `KindOfProperty` and the designation types as well as the carriers) and arrows
+(a function over quantities is a kind-bearing position here, while the gate wants an
+already-kinded *value*). -/
 def kindBearing (carriers : Array Name) (ty : Expr) : MetaM Bool := do
   let env ← getEnv
   BoundaryAudit.kindBearing
-    (carriers.push ``KindOfProperty ++ BoundaryAudit.kindNominalNames env) ty
+    (carriers.push ``KindOfProperty ++ BoundaryAudit.kindNominalNames env)
+    (throughArrows := true) ty
 
 /-- The result type's right-spine product components — `A × B × C` is three output
 positions. A parenthesized left factor stays one component: positions follow what the

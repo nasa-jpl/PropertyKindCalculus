@@ -333,14 +333,19 @@ data:
     type itself (`List (ObsWQ α)`, `Vector`, `HashMap`, a user wrapper), so no list of
     container formers has to be kept.
 
-`fuel` (default `kindBearingFuel`) bounds the unwrap depth of the last two. -/
-partial def kindBearing (vocabulary : Array Name) (ty : Expr)
+`throughArrows` says whether a mention under a Pi type counts: the incidence report says
+yes (a function over quantities is a kind-bearing position, not naked data), the crossing
+gate says no (a function that *produces* a quantity is not an already-kinded value — a
+`Float → Quantity k Float` argument must not let a raw mint pass as a crossing). `fuel`
+(default `kindBearingFuel`) bounds the unwrap depth of the last two ways. -/
+partial def kindBearing (vocabulary : Array Name) (throughArrows : Bool) (ty : Expr)
     (fuel : Nat := kindBearingFuel) : MetaM Bool := do
   let ty ← Meta.whnfR ty.consumeTypeAnnotations
-  let mentions := (ty.find? fun sub =>
+  let mentions := (ty.findExt? fun sub =>
     match sub with
-    | .const c _ => vocabulary.contains c
-    | _ => false).isSome
+    | .const c _ => if vocabulary.contains c then .found else .done
+    | .forallE .. => if throughArrows then .visit else .done
+    | _ => .visit).isSome
   if mentions then return true
   match fuel with
   | 0 => return false
@@ -351,12 +356,13 @@ partial def kindBearing (vocabulary : Array Name) (ty : Expr)
         if let [ctorName] := iv.ctors then
           if let some cv := env.find? ctorName then
             let viaFields ← Meta.forallTelescope cv.type fun binders _ =>
-              binders.anyM fun b => do kindBearing vocabulary (← Meta.inferType b) fuel
+              binders.anyM fun b => do
+                kindBearing vocabulary throughArrows (← Meta.inferType b) fuel
             if viaFields then return true
     for a in ty.getAppArgs do
       unless a.hasLooseBVars do
         if (← Meta.isType a) then
-          if ← kindBearing vocabulary a fuel then return true
+          if ← kindBearing vocabulary throughArrows a fuel then return true
     return false
 
 /-! ## The attestor registry — `@[kindAttest]`
@@ -438,7 +444,7 @@ initialize registerBuiltinAttribute {
       | throwError "`@[kindCrossing]` could not find '{decl}' in the environment"
     let carriers := kindCarrierNames env
     let kinded ← Meta.MetaM.run' <| Meta.forallTelescope info.type fun binders _ =>
-      binders.anyM fun b => do kindBearing carriers (← Meta.inferType b)
+      binders.anyM fun b => do kindBearing carriers (throughArrows := false) (← Meta.inferType b)
     unless kinded do
       throwError "`@[kindCrossing]` requires at least one argument whose type is (or contains) \
         a registered carrier (`Quantity`, `NominalValue`, or a `@[kindCarrier]`-registered \

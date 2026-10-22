@@ -29,7 +29,9 @@ The `Widened` probes pin the gate's kinded-argument test, `BoundaryAudit.kindBea
 same predicate the incidence report's unkinded reading delegates to: a crossing FROM an
 abbreviation of a quantity, FROM a record over a record of quantities, and FROM a list of
 such records are all accepted, while a naked `Float` argument is still refused with the
-MINT-not-crossing message. -/
+MINT-not-crossing message — and so is a declaration whose only carrier mention is in the
+RESULT of a function argument (`Float → Quantity probeKind Float`): a quantity-producing
+function is not an already-kinded value, so that shape stays a raw mint. -/
 
 module
 
@@ -314,6 +316,14 @@ error: `@[kindCrossing]` requires at least one argument whose type is (or contai
 @[kindCrossing]
 def nakedCrossing (x : Float) : Quantity probeKind Float :=
   .attest "probe: a naked argument is a mint, not a crossing" x
+
+/--
+error: `@[kindCrossing]` requires at least one argument whose type is (or contains) a registered carrier (`Quantity`, `NominalValue`, or a `@[kindCarrier]`-registered structure) — 'PropertyKindCalculus.Tests.BoundaryAudit.Widened.fromRaw' takes none. A crossing is where an ALREADY-KINDED value meets its target kind; a declaration with no kinded argument is a boundary MINT, not a crossing. Tag a checked ingest (raw/host data admitted through some check) `@[kindIngest]`, or a fixed literal/adjudicated constant `@[kindConst]`, instead.
+-/
+#guard_msgs in
+@[kindCrossing]
+def fromRaw (f : Float → Quantity probeKind Float) (x : Float) : Quantity probeKind Float :=
+  .attest "probe: a quantity-producing function is not an already-kinded value" (f x).magnitude
 
 end Widened
 
