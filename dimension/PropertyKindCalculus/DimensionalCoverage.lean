@@ -112,20 +112,18 @@ inductive EdgeRule where
   | additive
 deriving DecidableEq, Repr, Inhabited
 
-/-- The rule for each of `KindEdges.specs`' witness families. The operator-table classes carry
-the same laws as the witness `Prop`s they bundle (`KindMul.law : ProductKind`,
-`KindDiv.law : QuotientKind`). -/
-def ruleOf : Name → Option EdgeRule
-  | ``PropertyKindCalculus.ProductKind        => some .product
-  | ``PropertyKindCalculus.KindMul            => some .product
-  | ``PropertyKindCalculus.QuotientKind       => some .quotient
-  | ``PropertyKindCalculus.KindDiv            => some .quotient
-  | ``PropertyKindCalculus.ReciprocalKind     => some .reciprocal
-  | ``PropertyKindCalculus.TranscendentalKind => some .transcendental
-  | ``PropertyKindCalculus.PowerKind          => some .power
-  | ``PropertyKindCalculus.ReferenceKind      => some .reference
-  | ``PropertyKindCalculus.DifferenceKind     => some .additive
-  | _ => none
+/-- The rule for each law `KindEdges.specs`' witness families state — total, so a family
+added to the registry cannot fall out of the coverage walk unchecked. The operator-table
+classes carry the same laws as the witness `Prop`s they bundle (`KindMul.law : ProductKind`,
+`KindDiv.law : QuotientKind`), so they share the rule of their law. -/
+def ruleOf : KindEdges.EdgeLaw → EdgeRule
+  | .product        => .product
+  | .quotient       => .quotient
+  | .reciprocal     => .reciprocal
+  | .transcendental => .transcendental
+  | .power          => .power
+  | .reference      => .reference
+  | .additive       => .additive
 
 /-- Every constant of type `DimensionedKind LTMCTDimensionBase` in the environment — the
 counterpart registry the coverage check resolves kinds against. -/
@@ -283,15 +281,15 @@ def coverageRows (scope : Array Name) : MetaM (Array CoverageRow) := do
     fun harvested => do
       let mut res : Array CoverageRow := #[]
       for (spec, args) in harvested do
-        let some rule := ruleOf spec.const | continue
+        let rule := ruleOf spec.law
         let pps ← args.mapM fun a => return toString (← ppExpr a)
         let edge := spec.fmt pps
         if (← seen.get).contains edge then continue
         seen.modify (·.insert edge)
         let (kindArgs, kindPps, p?) :=
-          match rule with
-          | .power => (args[1:].toArray, pps[1:].toArray, some args[0]!)
-          | _      => (args, pps, none)
+          match spec.exponent with
+          | some i => (args.eraseIdx! i, pps.eraseIdx! i, some args[i]!)
+          | none   => (args, pps, none)
         if kindArgs.any (fun a => a.hasFVar || a.hasLooseBVars)
             || (p?.map (·.hasFVar)).getD false then
           res := res.push ⟨.parametric, edge, ""⟩

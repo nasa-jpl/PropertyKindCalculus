@@ -308,18 +308,16 @@ def harvestSpecialization (consts : Array Name) : HarvestM Unit := do
           { k with specializes := if k.specializes.contains b then k.specializes else k.specializes ++ [b],
                    checked := k.checked ++ [{ decl := toString ctor }] } }
 
-/-- The DSL family of each witness constant, with whether it is a table registration. -/
-def edgeFamilyOf : Name → Option (EdgeKind × Bool)
-  | ``ProductKind => some (.product, false)
-  | ``QuotientKind => some (.quotient, false)
-  | ``ReciprocalKind => some (.reciprocal, false)
-  | ``TranscendentalKind => some (.transcendental, false)
-  | ``PowerKind => some (.power, false)
-  | ``ReferenceKind => some (.reference, false)
-  | ``DifferenceKind => some (.difference, false)
-  | ``KindMul => some (.product, true)
-  | ``KindDiv => some (.quotient, true)
-  | _ => none
+/-- The DSL family of each witness law. -/
+def edgeKindOfLaw : KindEdges.EdgeLaw → EdgeKind
+  | .product => .product | .quotient => .quotient | .reciprocal => .reciprocal
+  | .transcendental => .transcendental | .power => .power | .reference => .reference
+  | .additive => .difference
+
+/-- The DSL family of each witness constant, with whether it is a table registration —
+read off the constant's registry entry in `KindEdges.specs`. -/
+def edgeFamilyOf (c : Name) : Option (EdgeKind × Bool) :=
+  (KindEdges.specOf? c).map fun spec => (edgeKindOfLaw spec.law, spec.isTable)
 
 /-- A rational literal, as an expression `OfScientific`/`OfNat` builds it, read by evaluation. -/
 def evalRat (e : Expr) : MetaM (Option Rat) := eval? Rat (mkConst ``Rat) e
@@ -331,11 +329,13 @@ def harvestAlgebra (consts : Array Name) : HarvestM Unit := do
   for c in consts do
     let some ci := env.find? c | continue
     let concl := ci.type.getForallBody
-    let some (fam, table) := (concl.getAppFn.constName?.bind edgeFamilyOf) | continue
+    let some spec := concl.getAppFn.constName?.bind KindEdges.specOf? | continue
+    let fam := edgeKindOfLaw spec.law
+    let table := spec.isTable
     let args := concl.getAppArgs
-    let (kindArgs, exp?) ← match fam, args.toList with
-      | .power, e :: rest => pure (rest, ← evalRat e)
-      | _, as => pure (as, none)
+    let (kindArgs, exp?) ← match spec.exponent with
+      | some i => pure ((args.eraseIdx! i).toList, ← evalRat args[i]!)
+      | none => pure (args.toList, none)
     let mut names : List String := []
     let mut ok := true
     for a in kindArgs do
