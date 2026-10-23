@@ -1201,7 +1201,10 @@ $`95\%`, which is a shape assumption); and, for a bounded family, *exact* — th
 half-width $`h` of a uniform on $`[m - \delta, m + \delta]` has coverage exactly $`h/\delta`.
 Neither tier needs a *true value* — the sense in which coverage is provable while *accuracy*,
 closeness to nature, is not. The development is the {ref "coverage-intervals"}[Coverage intervals section] of the
-{ref "uncertainty"}[uncertainty chapter].
+{ref "uncertainty"}[uncertainty chapter]; what a coverage factor is then *for* at a limit — the
+guard band of ISO/IEC Guide 98-4, derived from a stated risk rather than chosen, and a deployed
+band read as coverage or as a systematic — is the chapter's
+{ref "conformity-assessment"}[Conformity assessment section], which no catalogue requirement claims.
 
 ## Ergonomics and erasure (R21, R25)
 
