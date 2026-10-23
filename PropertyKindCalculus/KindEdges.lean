@@ -292,13 +292,14 @@ def instantiatedBinderTypes (declTy : Expr) (args : Array Expr) : Option (Array 
 /-! ## The harvest
 
 Every edge enumeration is a *renderer* over **one** environment walk, `harvest`: `#kind_edges`
-below (through `edgesMentioning`), the kind index's Algebra column (`edgesByKind`), and the
-dimensional gate (`DimensionalCoverage.coverageRows`). The split exists for the same reason
+below (through `edgesMentioning`), the kind index's Algebra column (`edgesByKind`), the
+dimensional gate (`DimensionalCoverage.coverageRows`), and the kind digraph `#kind_scc` and
+`#kind_footprint` read (`Graph.KindGraph.kindGraphOf`). The split exists for the same reason
 `BoundaryAudit.boundarySites` exists: the enumeration is wanted both as the `info` message an author
 reads and as table rows a document renders. Because a kind's authored edges *are* the statement of
 what may be done with it algebraically, this is the column that makes a rendered kind index worth
-reading — see `PropertyKindCalculus.Index`. Sharing the walk is what makes the three reports agree
-on what an authored edge *is*. -/
+reading — see `PropertyKindCalculus.Index`. Sharing the walk is what makes the reports agree on
+what an authored edge *is*: `collectEdges` and `collectInlineEdges` are called from here alone. -/
 
 /-- Does a declaration's type mention a scanned family at all, table classes included? The
 cheap pre-check that keeps the type scan from opening a telescope on every constant. -/

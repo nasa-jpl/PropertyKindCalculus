@@ -56,8 +56,8 @@ reduction of the ℚ exponent arithmetic. Kinds dimensioned only over another ba
 reform's `Base`) are outside this walk's registry — a base-parametric walk would generalize the
 enumeration, not the notion.
 
-Edges are harvested by `KindEdges.harvest` — the one walk `#kind_edges` and the kind index
-share, so the three reports agree on what an authored edge is — on both channels: from constant
+Edges are harvested by `KindEdges.harvest` — the one walk `#kind_edges`, the kind index and
+the kind graph share, so every report agrees on what an authored edge is — on both channels: from constant
 *types* (a call-site witness the elaborator lifts into a `_proof_N` auxiliary has the edge as its
 type) — but only from the **conclusion**, since an edge taken as a *hypothesis*
 (`(h : ProductKind …) → …`) is assumed, not authored — and from definition *bodies*, reading

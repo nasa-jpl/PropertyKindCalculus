@@ -8,8 +8,9 @@ Three dangers closed for the `Graph` library:
     non-reachability fact, the acyclicity bridge an actual partial order;
   * **dead executability** — the kind-level component computation is driven at a
     hand-built graph with a known cluster, and at a crafted laundering loop harvested
-    from this very file (two `ReciprocalKind` hypotheses closing a cycle between two
-    role-distinct kinds), where the `#kind_scc` report finds the cluster and the
+    from this very file (two authored `ReciprocalKind` witnesses closing a cycle between
+    two role-distinct kinds, and an assumed one the graph must not read), where the
+    `#kind_scc` report finds the cluster and the
     `#kind_scc_clean` gate throws unless the cluster is declared as an allow group;
   * **silent axioms** — the bridge theorems' profiles are pinned.
 -/
@@ -160,10 +161,14 @@ direction: down
 
 /-! ### The SCC report and gate on a crafted laundering loop
 
-Two role-distinct kinds wired into a cycle by two `ReciprocalKind` hypotheses — every
-step licensed, no attest anywhere — plus a third kind derivable from the cluster. The
-scan reads hypothesis binders, so no witness needs to be provable for the loop to be
-visible, which is the point: the *rules* close the cycle before any value walks it. -/
+Two role-distinct kinds wired into a cycle by two authored `ReciprocalKind` witnesses —
+every step licensed, no attest anywhere — plus a third kind derivable from the cluster.
+The graph reads `KindEdges.harvest`'s edges, the notion `#kind_edges` reports, so the
+witnesses are *authored*: the theorems' conclusions, which the liberal constructors sign
+for any two ratio kinds — the *rules* close the cycle before any value walks it. A witness
+merely *assumed* is no edge: `zToX` below takes the reciprocal that would pull `kZ` into
+the cluster as a hypothesis, and the report keeps the cluster at `{kX, kY}`, exactly as
+`#kind_edges` keeps `assumed_not_authored` out of its registry. -/
 
 /-- A probe kind. -/
 def kX : KindOfProperty := { id := "kX", scale := .ratio }
@@ -172,9 +177,11 @@ def kY : KindOfProperty := { id := "kY", scale := .ratio }
 /-- A probe kind downstream of the cluster. -/
 def kZ : KindOfProperty := { id := "kZ", scale := .ratio }
 
-theorem xToY (_h : ReciprocalKind kX kY) : True := trivial
-theorem yToX (_h : ReciprocalKind kY kX) : True := trivial
-theorem yToZ (_h : ReciprocalKind kY kZ) : True := trivial
+theorem xToY : ReciprocalKind kX kY := ⟨rfl, rfl⟩
+theorem yToX : ReciprocalKind kY kX := ⟨rfl, rfl⟩
+theorem yToZ : ReciprocalKind kY kZ := ⟨rfl, rfl⟩
+/-- Assumed, not authored: were this hypothesis an edge, the cluster would be `{kX, kY, kZ}`. -/
+theorem zToX (_h : ReciprocalKind kZ kX) : True := trivial
 
 /--
 info: kind graph — 3 kind(s), 3 licensed derivation edge(s), 1 inter-derivable cluster(s) of size ≥ 2, 0 within-kind edge(s)

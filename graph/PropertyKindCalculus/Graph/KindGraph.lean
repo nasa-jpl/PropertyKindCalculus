@@ -20,8 +20,11 @@ The authored kind-algebra edges are *rules*, and rules compose: every registered
 (`ProductKind`, `QuotientKind`, …, the table classes) lets a value of its operand kinds
 become a value of its result kind by licensed steps alone, with no attest and no review.
 This module assembles those rules into a digraph on the authored kinds — one vertex per
-`KindOfProperty` constant in scope, one edge per (operand, result) pair of a scanned
-witness — and reads its strongly connected components:
+`KindOfProperty` constant in scope, one edge per (operand, result) pair of an authored
+witness — and reads its strongly connected components. The edges are `KindEdges.harvest`'s:
+the graph is one more *renderer* over the walk `#kind_edges`, the kind index and the
+dimensional gate share, so it holds the same notion of an authored edge they report — a
+witness taken as a hypothesis is assumed, not authored, and no derivation edge here:
 
   * **a nontrivial component is an inter-derivability cluster**: each member kind can be
     manufactured from any other by licensed derivations alone. That is the intended shape
@@ -165,10 +168,12 @@ def constArg? (args : Array Lean.Expr) (i : Nat) : Option Lean.Name :=
 
 open Meta in
 /-- Assemble the kind graph of a scope: vertices are the authored `KindOfProperty`
-constants the scope covers; edges come from both of `#kind_edges`' channels — the type
-scan and the inline body scan — dissected into (operand, result) pairs instead of
-rendered. Only edges with both endpoints in scope are kept: the graph answers for the
-vocabulary it was asked about. -/
+constants the scope covers; edges are rendered from `KindEdges.harvest` — the one walk
+`#kind_edges`, the kind index and the dimensional gate read, so the graph holds exactly the
+edges those reports call authored (a witness taken as a *hypothesis* is assumed, not
+authored, and wires nothing here either) — dissected into (operand, result) pairs instead
+of printed, each credited to the harvest's author. Only edges with both endpoints in scope
+are kept: the graph answers for the vocabulary it was asked about. -/
 def kindGraphOf (scope : Index.Scope) : MetaM KindGraph := do
   let env ← getEnv
   let kinds := Index.constantsOfType env ``PropertyKindCalculus.KindOfProperty scope
@@ -177,27 +182,16 @@ def kindGraphOf (scope : Index.Scope) : MetaM KindGraph := do
   for k in kinds do
     idxOf := idxOf.insert k ctr
     ctr := ctr + 1
-  let reachable := KindEdges.producerModules env
+  let found ← KindEdges.harvest (fun _ => true) fun spec args => do
+    let some (ops, res) := rolesOf spec | return none
+    let some resName := constArg? args res | return none
+    let some ri := idxOf.get? resName | return none
+    let srcs := ops.filterMap fun oi => (constArg? args oi).bind idxOf.get?
+    return some (srcs, ri, spec.const)
   let mut edges : Array Edge := #[]
-  for (name, info) in env.constants.toList do
-    if let some idx := env.getModuleIdxFor? name then
-      unless reachable.contains idx.toNat do continue
-    let typeEdges := KindEdges.collectEdges info.type #[]
-    let bodyEdges ← do
-      if ← KindEdges.bodyScannable reachable env name info then
-        lambdaTelescope info.value! fun _ body =>
-          pure (KindEdges.collectInlineEdges env body #[])
-      else
-        pure #[]
-    for (spec, args) in typeEdges ++ bodyEdges do
-      let some (ops, res) := rolesOf spec | continue
-      let some resName := constArg? args res | continue
-      let some ri := idxOf.get? resName | continue
-      for oi in ops do
-        let some opName := constArg? args oi | continue
-        let some si := idxOf.get? opName | continue
-        edges := edges.push
-          { src := si, dst := ri, author := KindEdges.parentOf name, via := spec.const }
+  for (author, (srcs, ri, via)) in found do
+    for si in srcs do
+      edges := edges.push { src := si, dst := ri, author, via }
   return { kinds, edges := edges.toList.eraseDups.toArray }
 
 /-! ## Rendering -/
