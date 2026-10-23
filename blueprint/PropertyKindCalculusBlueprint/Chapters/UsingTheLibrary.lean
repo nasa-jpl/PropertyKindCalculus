@@ -397,8 +397,10 @@ of declarations, assembled into one multi-step graph — which is what a boundar
 definitions needs.
 
 *What the kind vocabulary looks like as a graph.* `#kind_scc [ns…]` reports the kinds in scope,
-their licensed-derivation edges, and — the finding it exists for — every *inter-derivability
-cluster*: a set of two or more kinds each manufacturable from the others by licensed steps. Inside
+their licensed-derivation edges — the edges `#kind_edges` reports, read from the same harvest, so
+a witness a theorem merely assumes wires nothing here either — and, the finding it exists for, every
+*inter-derivability cluster*: a set of two or more kinds each manufacturable from the others by
+licensed steps. Inside
 such a cluster the kind algebra alone cannot refuse a substitution, so a cluster is a real weakening
 of the discipline and one worth knowing about. `#kind_scc_clean` is its gate, and it is declarative
 rather than absolute: every cluster must be declared as a parenthesized group at its exact size, so
