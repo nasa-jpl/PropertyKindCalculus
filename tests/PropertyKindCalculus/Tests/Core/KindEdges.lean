@@ -135,6 +135,24 @@ derived `propFamilies` at the seven witness `Prop`s. -/
   #[``ProductKind, ``QuotientKind, ``ReciprocalKind, ``TranscendentalKind, ``PowerKind,
     ``ReferenceKind, ``DifferenceKind]
 
+/-! ## Authorship — the elaborator's auxiliaries credited to their declaration, nothing else
+
+`parentOf` is the one authorship rule every audit walk credits its rows by. These pins hold
+it to Lean's own auxiliary shapes: `_`-prefixed, `match_`/`eq_`/`proof_` plus digits, the
+unfolding lemmas, numeric suffixes — and keep a user theorem that merely shares a prefix
+(`eq_mul_of_isProduct`) credited to itself. -/
+
+#guard PropertyKindCalculus.KindEdges.parentOf `Foo.combine._proof_1 == `Foo.combine
+#guard PropertyKindCalculus.KindEdges.parentOf `Foo.combine.match_1 == `Foo.combine
+#guard PropertyKindCalculus.KindEdges.parentOf `Foo.combine.proof_1_2 == `Foo.combine
+#guard PropertyKindCalculus.KindEdges.parentOf `Foo.combine.eq_1 == `Foo.combine
+#guard PropertyKindCalculus.KindEdges.parentOf `Foo.combine.eq_def == `Foo.combine
+#guard PropertyKindCalculus.KindEdges.parentOf `Foo.combine._unsafe_rec == `Foo.combine
+#guard PropertyKindCalculus.KindEdges.parentOf (.num `Foo.combine._proof_1 3) == `Foo.combine
+#guard PropertyKindCalculus.KindEdges.parentOf `Foo.eq_mul_of_isProduct == `Foo.eq_mul_of_isProduct
+#guard PropertyKindCalculus.KindEdges.parentOf `Foo.match_on_scale == `Foo.match_on_scale
+#guard PropertyKindCalculus.KindEdges.parentOf `Foo.proof_irrelevant == `Foo.proof_irrelevant
+
 end PropertyKindCalculus.Tests.KindEdges
 
 end Blanket
