@@ -5,7 +5,9 @@ The occurrence reading of the `Core.KindEdges` probe definitions, plus a chain o
 fresh kinds (fresh so that file's pinned edge enumerations are untouched). The claims
 pinned here: `combine` and `combineInline` — two witness spellings — print the *same*
 occurrence line, because the edge is read off the consumer's instantiated binder type;
-a `let`-bound intermediate renders by its binder name; a hypothesis witness contributes
+a `let`-bound intermediate renders by its binder name; a power step whose exponent is a
+binder rather than a literal is refused, not recorded as a power edge with an invented
+exponent; a hypothesis witness contributes
 no enumerated occurrence while its caller's discharging site does, with the helper
 itself as the consuming application; a repeated operand is two incidence positions; and
 the `let`-bound-witness resolution path is pinned on a hand-built expression,
@@ -128,6 +130,18 @@ info: inline kind occurrences in 'PropertyKindCalculus.Tests.KindIncidence.rootO
 alphaK ^ 1 / 2 → betaK ⟨a⟩
 -/
 #guard_msgs in #kind_occurrences rootOf
+
+/-- A kind-generic power step: its exponent is a binder, not a literal, so there is no
+`Rat` for the edge to carry — the harvest refuses it rather than recording a power edge
+with a made-up exponent (the step is read at the call sites that discharge it). -/
+def rootOfGeneric {R : Type} [MathCarrierExt R] (p : Rat) (a : Quantity alphaK R) :
+    Quantity betaK R :=
+  Quantity.rpow (PowerKind.ofRatio p alphaK betaK) a
+
+/--
+error: a power exponent here is not a rational literal — the graph's edge vocabulary carries a `Rat` exponent, so a kind-generic power step is read at the call sites that discharge it
+-/
+#guard_msgs in #kind_occurrences rootOfGeneric
 
 /- The occurrence walk in isolation, on a hand-built `let`-bound-witness expression —
 the binder-resolution path (`witnessAuthored` through the `let`, operand `.bvar`s named

@@ -623,48 +623,52 @@ partial def ratOfExpr? (e : Expr) : Option Rat :=
 
 /-- The edge a witness-family application states, read off the family's registry entry
 (`KindEdges.specs`): its `EdgeFamily` label — the law, with the table classes kept apart
-as `tableMul`/`tableDiv` and a `power` carrying its exponent `p` — then the operand-kind
-expressions and the result-kind expression at the entry's positions. -/
-def edgeOfSpec (spec : KindEdges.EdgeSpec) (a : Array Expr) (p : Option Rat) :
-    EdgeFamily × Array Expr × Expr :=
-  let fam : EdgeFamily := match spec.isTable, spec.law with
-    | true, .product => .tableMul
-    | true, .quotient => .tableDiv
-    | _, .product => .product
-    | _, .quotient => .quotient
-    | _, .reciprocal => .reciprocal
-    | _, .transcendental => .transcendental
-    | _, .power => .power (p.getD 0)
-    | _, .reference => .reference
-    | _, .additive => .additive
-  (fam, spec.operands.map (a[·]!), a[spec.result]!)
+as `tableMul`/`tableDiv` and a `power` carrying its exponent — then the operand-kind
+expressions and the result-kind expression at the entry's positions. A `power` entry reads
+its exponent at `spec.exponent`; that argument not a rational literal is the one error
+(the edge vocabulary carries a `Rat` exponent, and a kind-generic power step monomorphizes
+at its discharging call sites), so no power edge is ever built without one. -/
+def edgeOfSpec (spec : KindEdges.EdgeSpec) (a : Array Expr) :
+    Except String (EdgeFamily × Array Expr × Expr) := do
+  let fam : EdgeFamily ← match spec.isTable, spec.law with
+    | true, .product => pure .tableMul
+    | true, .quotient => pure .tableDiv
+    | _, .product => pure .product
+    | _, .quotient => pure .quotient
+    | _, .reciprocal => pure .reciprocal
+    | _, .transcendental => pure .transcendental
+    | _, .power =>
+      let some i := spec.exponent
+        | throw s!"the registry entry for `{spec.const}` states a power law but no exponent \
+            position"
+      let some p := ratOfExpr? a[i]!
+        | throw "a power exponent here is not a rational literal — the graph's edge \
+            vocabulary carries a `Rat` exponent, so a kind-generic power step is read at \
+            the call sites that discharge it"
+      pure (.power p)
+    | _, .reference => pure .reference
+    | _, .additive => pure .additive
+  return (fam, spec.operands.map (a[·]!), a[spec.result]!)
 
 /-- The edge a binder type states — its `EdgeFamily` label, operand-kind expressions,
 and result-kind expression — or `none` for a non-edge binder. A `PowerKind` whose
-exponent is not a rational literal throws: the edge vocabulary carries a `Rat` exponent,
-and a kind-generic power step monomorphizes at its discharging call sites. -/
+exponent is not a rational literal throws (`edgeOfSpec`'s error, raised here). -/
 def edgeOfBinderType? (ty : Expr) :
     MetaM (Option (EdgeFamily × Array Expr × Expr)) := do
   let ty := ty.cleanupAnnotations
   let some spec := KindEdges.specOfApp? ty | return none
-  let a := ty.getAppArgs
-  let p? ← match spec.exponent with
-    | none => pure none
-    | some i =>
-      let some p := ratOfExpr? a[i]!
-        | throwError "a power exponent here is not a rational literal — the graph's edge \
-            vocabulary carries a `Rat` exponent, so a kind-generic power step is read at \
-            the call sites that discharge it"
-      pure (some p)
-  return some (edgeOfSpec spec a p?)
+  match edgeOfSpec spec ty.getAppArgs with
+  | .ok e => return some e
+  | .error msg => throwError msg
 
 /-- The table subset of `edgeOfBinderType?` — what one level of instance unfolding is
-allowed to find inside an instance argument's own telescope. -/
+allowed to find inside an instance argument's own telescope. A table class is a product
+or quotient, never a power, so `edgeOfSpec` has no error to report here. -/
 def tableEdgeOfType? (ty : Expr) : Option (EdgeFamily × Array Expr × Expr) := do
   let ty := ty.cleanupAnnotations
   let spec ← KindEdges.specOfApp? ty
   guard spec.isTable
-  return edgeOfSpec spec ty.getAppArgs none
+  (edgeOfSpec spec ty.getAppArgs).toOption
 
 /-- Does a binder type state any edge — witness family or table class? The pure
 pre-check behind producer classification. -/
