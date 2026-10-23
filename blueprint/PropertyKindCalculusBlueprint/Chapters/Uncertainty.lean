@@ -6,12 +6,15 @@ import VersoBlueprint
 -- library, the Stage-1 `Ladder` (T1/T2 over `ℝ`) and `Sensitivity` autograd bridge, and the Stage-2
 -- `Ssprc` executable pipeline (`Float`) and `Convolution` (T3/T4/T5 over `ℝ`). The `Sensitivity`
 -- import pulls TorchLean into the blueprint build, deliberately, so the sensitivity coefficients are
--- a formal lean-linked node rather than prose. Only the numerical-adequacy capstone remains informal
+-- a formal lean-linked node rather than prose. The conformity-assessment section links the
+-- executable `Conformity` module (reached through the `Uncertainty` umbrella) and the
+-- `ConformityLadder` ratchet theorems over `ℝ`. Only the numerical-adequacy capstone remains informal
 -- (unbuilt). The chapter cites the two source papers, so it also imports the blueprint's `References`.
 import PropertyKindCalculus.Uncertainty
 import PropertyKindCalculus.Uncertainty.Ladder
 import PropertyKindCalculus.Uncertainty.Convolution
 import PropertyKindCalculus.Uncertainty.Coverage
+import PropertyKindCalculus.Uncertainty.ConformityLadder
 import PropertyKindCalculus.Uncertainty.Sensitivity
 import PropertyKindCalculus.Uncertainty.Adequacy.Absorption
 import PropertyKindCalculus.Uncertainty.Adequacy.Sterbenz32
@@ -81,7 +84,13 @@ on TorchLean's computable `IEEE32Exec` model
 adequacy carrier checks against (Stage 3.4); and
   - its heterogeneous generalization, the {bpref "def_uq_budget_dag"}[kinded `×`/`÷` budget DAG], whose
 `ProductKind`/`QuotientKind` edges are threaded through a multi-node graph and whose threaded
-propagation {bpref "thm_uq_budget_dag_collapse"}[collapses] to the flat quadrature (residual 2).
+propagation {bpref "thm_uq_budget_dag_collapse"}[collapses] to the flat quadrature (residual 2); and
+- the conformity-assessment layer (ISO/IEC Guide 98-4): {bpref "def_uq_tolerance"}[tolerance and
+  acceptance limits] as bound roles, the {bpref "def_uq_guardBand"}[guard band] derived from a
+  {bpref "def_uq_factorForRisk"}[stated risk] or {bpref "def_uq_riskFromCosts"}[from the costs of being
+  wrong], a deployed band {bpref "def_uq_bandReading"}[read] as coverage or systematic under
+  {bpref "def_uq_classifyBand"}[one classification rule] (with its NaN rule), and the
+  {bpref "thm_uq_acceptance_ratchet"}[ratchet theorem] that lets an acceptance limit tighten itself.
 
 Since Stage 3.5 the sensitivity coefficients are also *proved* correct — the reverse pass is the
 adjoint of the Fréchet derivative — and Stage 3.6 carries that endpoint from the compiled tape
@@ -811,6 +820,210 @@ coverage exactly $`1/2`.
 Realized over `ℝ`: `uniform_coverage_exact`, from Mathlib's `pdf.IsUniform.measure_preimage` and
 `Real.volume_Icc` (the intersection with the support is the sub-interval, and the ratio of Lebesgue
 lengths is $`2h/2δ = h/δ`). Sorry-free (`[propext, Classical.choice, Quot.sound]`).
+:::
+
+# Conformity assessment (ISO/IEC Guide 98-4, JCGM 106:2012)
+%%%
+tag := "conformity-assessment"
+%%%
+
+A coverage interval says how far the measurand may lie from its estimate. It does not say what to
+*do* with that at a limit, and that gap is where guard bands come from. The decision rule "accept
+iff the estimate is below the limit" ignores the uncertainty entirely and runs a consumer's risk of
+essentially 50 % at the limit; every practitioner therefore applies a margin, and the margin is
+almost always a *chosen* factor rather than a derived one. A chosen factor cannot be checked,
+cannot be shown to be too tight or too loose, and cannot shrink as evidence accumulates, so it
+charges the first measurement's ignorance forever. ISO/IEC Guide 98-4 (JCGM 106:2012) is the
+standard that closes the gap, and `Conformity.lean` is its executable face — Mathlib-free and
+`Float`-carried like the `Evidence` module it builds on — with `ConformityLadder.lean` supplying,
+over `ℝ`, the argument that a margin derived this way may safely tighten itself. No requirement of
+the R1–R28 catalogue claims this layer; it sits beside R18 as what a coverage factor is *for* once
+a limit is in view.
+
+JCGM 106's vocabulary, as the module carries it. The *tolerance limit* $`T` (§3.3.4) is the
+specified bound on permissible values of the measurand — given, not computed. The *acceptance
+limit* $`A` (§3.3.8) is the bound the decision actually compares against. The *guard band*
+$`g = |T - A|` (§3.3.10), applied inward, is guarded acceptance: the acceptance interval sits inside
+the tolerance interval and the consumer's risk falls; applied outward it is guarded rejection. The
+*specific consumer's risk* $`R_C(y)` (§9.5.2) is, for a measured value $`y` with standard
+uncertainty $`u`, the probability that the measurand is past $`T` anyway; its counterpart, the
+specific producer's risk, is the probability that a value rejected at $`A` would in fact have
+conformed. Nothing here is a naked number: the limits are `Quantity k` values of the measurand, a
+probability and a coverage factor ride distinct dimension-one kinds, so reading `1.96` as `0.95`
+or comparing an estimate against a limit of another kind is a type error rather than a review
+finding.
+
+:::definition "def_uq_tolerance" (parent := "uncertainty") (lean := "PropertyKindCalculus.Uncertainty.Conformity.Tolerance")
+*Tolerance limits as roles.* A `Tolerance k R` is an optional `LowerBound k R` and an optional
+`UpperBound k R` — the directional roles of `Bounds.lean`, not bare endpoints — so each limit can
+only ever be used from its own side, and an absent bound is `none` rather than an infinity.
+`Tolerance.admits` asks whether a *value* conforms (the question a measurement cannot answer, which
+is why the rest of the module exists), and `Tolerance.guardedBy` derives the acceptance limits: it
+subtracts a band from an upper limit and adds it to a lower one. That direction is forced by the
+role, not chosen by convention, so "applied the guard band the wrong way and turned guarded
+acceptance into guarded rejection" is not a mistake a caller can make while still typechecking.
+:::
+
+:::proof "def_uq_tolerance"
+Realized: `Conformity.Tolerance` with `atMost`/`atLeast`/`ofIcc` constructors (scale-gated by
+`OrderKind`, since a limit presupposes an order to be on one side of), `Tolerance.admits` through
+each endpoint's own directional decider, and `Tolerance.guardedBy` gated by `DifferenceKind`, the
+metrological licence to form the difference at all.
+:::
+
+:::definition "def_uq_guardBand" (parent := "uncertainty") (lean := "PropertyKindCalculus.Uncertainty.Conformity.guardBand")
+*The guard band* $`g = k\,u`, a quantity of the measurand's own kind. It is built through
+`Quantity.mul` on `expansionLaw`, so the kind of the product is derived from a stated law — a
+coverage factor is dimension one *in the role of expanding an uncertainty* — rather than asserted.
+The input is a `Dispersion` and the output is not: a guard band *is* an expanded uncertainty, but
+what it is used as is a displacement of a limit, and the change of role happens once, here.
+`accepts` is then the decision — accept iff the estimate lies within the
+{uses "def_uq_tolerance"}[guarded acceptance limits] — with the estimate and its uncertainty at
+their roles, so the two cannot be exchanged into an inverted rule that guards enormously on a
+small uncertainty and not at all on a large one. `assess` packages the whole thing: an evidence
+record, a tolerance and a target risk in; the factor, the band, the acceptance limits, the
+decision and the risk actually run out — the shape that makes the guard band an *output*.
+:::
+
+:::proof "def_uq_guardBand"
+Realized: `Conformity.guardBand` as `Dispersion.expanded` unwrapped to a `Quantity`,
+`Conformity.accepts` over `Tolerance.guardedBy`, `consumerRisk`/`producerRisk`/`riskAtLimit` as the
+risks actually run, and `Conformity.assess` returning `none` — a refusal, not a factor nothing
+justifies — when the evidence cannot support a coverage factor at the target risk.
+:::
+
+:::definition "def_uq_factorForRisk" (parent := "uncertainty") (lean := "PropertyKindCalculus.Uncertainty.Conformity.factorForRisk")
+*The band from a stated risk.* `factorForRisk` inverts §9.5.2: to hold the specific consumer's
+risk at a one-sided acceptance limit to $`p`, the factor is $`k = \Phi^{-1}(1 - p)` — `none` unless
+$`0 < p < 1`, since a risk of zero demands an infinite band and a risk of one is not a decision
+rule. The factor stops being an input and becomes a consequence of a risk the operator names.
+`riskForFactor` is its exact inverse, $`1 - \Phi(k)`, and prices a band somebody else chose.
+Both are Gaussian, which is exact only when $`u` is *known*; `factorForEvidence` and
+`riskForFactorAt` are the same pair at the evidence's own $`\nu` (a Student $`t` that *is* the
+Gaussian at $`\nu = \infty`, so the correction appears and disappears by itself), and
+`factorForRiskRectangular`/`riskForFactorRectangular` are the closed-form pair for GUM 4.3.7's
+bounded posterior, which saturates at $`\sqrt{3}\,u` where the risk is exactly zero.
+:::
+
+:::proof "def_uq_factorForRisk"
+Realized: `Conformity.factorForRisk` and `riskForFactor` through `Sampling.normalQuantile` and
+`normalCDF`; `riskForFactorAt` through `Sampling.studentTCDF`, returning `none` when $`\nu` is
+`NaN` or below one (fewer than two indications support no statement about a tail — the same
+refusal `Evidence.coverageFactorOneSided` makes, not a Gaussian fallback); and the rectangular pair
+around `rectangularFactorLimit`$` = \sqrt{3}`. The direction in which a small $`\nu` is dangerous is
+the pricing one: at $`\nu = 4` a band of $`4.5\,u` buys $`5.4 \times 10^{-3}`, not the
+$`3.4 \times 10^{-6}` a Gaussian reads off it.
+:::
+
+:::definition "def_uq_riskFromCosts" (parent := "uncertainty") (lean := "PropertyKindCalculus.Uncertainty.Conformity.riskFromCosts")
+*The risk from the costs, when nobody knows what risk to ask for.* Accepting a non-conforming value
+costs $`C_a`; rejecting a conforming one costs $`C_r`; at a measured value the expected costs are
+$`R_C\,C_a` and $`(1 - R_C)\,C_r`, so accepting is the cheaper action exactly while
+$`R_C \le C_r/(C_a + C_r)`, and that break-even risk is the target to hand to
+{uses "def_uq_factorForRisk"}[`factorForRisk`]. The two costs must be quantities of one kind, and the
+step from their ratio to a probability is an authored crossing — nothing about a ratio of two
+durations makes it a probability except the decision-theoretic argument. Strongly asymmetric costs
+then *produce* the conclusion that is usually asserted: a wrong acceptance a hundred times as costly
+as a wrong rejection gives $`p^* \approx 1\,\%` and a one-sided $`2.33\,u`, a derivation auditable in
+a way "we used 0.9" is not.
+:::
+
+:::proof "def_uq_riskFromCosts"
+Realized: `Conformity.riskFromCosts`, dividing through `costRatioIsRisk kc hc`, `none` unless both
+costs are positive numbers.
+:::
+
+:::definition "def_uq_bandReading" (parent := "uncertainty") (lean := "PropertyKindCalculus.Uncertainty.Conformity.BandReading")
+*Reading a band that already exists.* `readBand g u` divides a deployed margin by the measurand's
+own standard uncertainty — a quotient of two `k`-quantities, which `bandReadingLaw` declares to be
+a coverage factor — and says what kind of thing the band is. A `BandReading` is one of three
+constructors. `coverage factor risk`: a band at a few $`u` is a coverage statement, dispersion that
+shrinks as evidence accumulates, and the risk it buys is attached. `systematic factor`: a band at
+tens of $`u` is not — no risk target produces it under any posterior, so the margin is standing in
+for a *systematic the model does not carry*, which does not shrink with evidence, and tightening it
+as though it did is how a fleet walks into a correlated failure. `unstated`: the band cannot be read
+at all. The two readable cases have opposite repairs, which is why the distinction is a constructor
+and not a comment; `systematicThreshold` ($`6`, where the Gaussian risk reaches $`10^{-9}`) is the
+judgement they turn on, taken as an argument so that it applies uniformly. `Evidence.readBand e g`
+is the same reading taken against a record's own evidence, priced at its $`\nu` through
+{uses "def_uq_factorForRisk"}[`riskForFactorAt`] instead of at the Gaussian limit, and declared in
+`Evidence`'s namespace so the $`\nu` cannot be dropped at the call site. `BandReading.label`
+forgets the evidence to a `BandReadingLabel` — the three-valued classification a report line or a
+record field states.
+:::
+
+:::proof "def_uq_bandReading"
+Realized: `Conformity.BandReading`, `BandReadingLabel`, `BandReading.label`, `systematicThreshold`,
+`readBand` (pricing with `riskForFactor`) and `Evidence.readBand` (pricing with `riskForFactorAt`
+at `e.dof`), both one-line calls into {uses "def_uq_classifyBand"}[`classifyBand`]. The band is a
+plain `Quantity` and the `u` a `Dispersion`, which is what stops $`g/u` from being transposed into
+$`u/g` — both well-kinded coverage factors, and the transposition turns a $`42\,u` systematic into
+$`1/42` of a $`u` that every downstream rule would happily shrink.
+:::
+
+:::definition "def_uq_classifyBand" (parent := "uncertainty") (lean := "PropertyKindCalculus.Uncertainty.Conformity.classifyBand")
+*The one band-classification rule, and the NaN rule inside it.*
+`classifyBand g u hk systematicAt price` is the single place a band is classified: the guard
+($`u` must be a positive number), the quotient $`g/u` through `bandReadingLaw`, the comparison
+against the systematic threshold, and the pricing of a coverage statement through the `price`
+function the caller supplies — `readBand` passes the Gaussian `riskForFactor`, `Evidence.readBand`
+passes `riskForFactorAt` at the record's own $`\nu`. Nothing else differs between the two entry
+points of {uses "def_uq_bandReading"}[the band reading].
+
+*The NaN rule.* A coverage factor that is not a number — $`\infty/\infty`, an unbounded band over
+an unbounded $`u` — reads as `unstated`, and so does any band read against a systematic threshold
+that is not a number. The rule cannot be left to the comparison: `NaN ≤ t` and `NaN > t` are *both*
+false, so a rule written "$`\le t` ⇒ coverage, else systematic" and the same rule written
+"$`> t` ⇒ systematic, else coverage" classify the same band in opposite directions — one as a
+systematic that must never be tightened, the other as a coverage statement every downstream rule
+may shrink. Neither is right. `unstated` is chosen over the conservative `systematic` because a
+systematic is a positive claim — a term the model does not carry — that a factor nobody can price
+does not support; and over the permissive `coverage` because that is the reading whose repair,
+tightening, is the dangerous one. A factor nobody can price is not a reading, and a threshold nobody
+stated classifies nothing. Because the guard lives in `classifyBand` and both entry points are
+one-line calls to it, no caller can re-derive the wrong direction; and for every factor and
+threshold that *are* numbers the rule is unchanged — the guard falls through to exactly the
+comparison it always made, so $`\infty/1` is still a systematic and the threshold itself is still
+a coverage statement.
+:::
+
+:::proof "def_uq_classifyBand"
+Realized: `Conformity.classifyBand`, with the `isNaN` guards on the threshold and on the quotient
+ahead of the `>` comparison, and `none` from `price` (a $`\nu` nothing qualifies) also read as
+`unstated`. The checked facts are the probes of `PropertyKindCalculus.Tests.Uncertainty.Evidence`,
+each a `#guard` that fails the build if a reading moves: $`\infty/\infty` reads `unstated` through
+`readBand` *and* through `Evidence.readBand` at $`\nu = 4` — the case where a second copy of the
+rule had disagreed; $`41\,u` under a `NaN` threshold reads `unstated` through both; $`\infty/1`
+reads `systematic`; $`4.5\,u` and $`4.39\,u` read `coverage` (at $`3.4 \times 10^{-6}` under the
+Gaussian, $`5.4 \times 10^{-3}` at $`\nu = 4`) and $`41\,u` reads `systematic` through both; the
+threshold $`6\,u` itself reads `coverage` at the Gaussian limit and at $`\nu = 4`; and a $`u` of
+zero, or a $`u` qualified by $`\nu = 0.5`, reads `unstated`.
+:::
+
+:::theorem "thm_uq_acceptance_ratchet" (parent := "uncertainty") (lean := "PropertyKindCalculus.Uncertainty.ConformityLadder.riskAt_acceptanceLimit") (tags := "proved")
+*Why an acceptance limit may be allowed to tighten itself.* Deriving the band from a stated risk and
+pooling evidence so that $`u` falls gives a deployment that gets *less* conservative the longer it
+runs — exactly the automatic loosening that should not be allowed near anything that can be killed
+for using too much memory. Over `ℝ`, with the guarded upper acceptance limit $`A(u) = L - k\,u`:
+the limit rises as $`u` falls and never past $`L`, so the mechanism is a ratchet with a ceiling;
+and — the whole content — the specific consumer's risk *at* the acceptance limit is $`Q(k)` for
+every $`u \neq 0`, independent of $`u`, because band and uncertainty shrink together and the
+standardized deviate they are read at is exactly $`k`. A rule built for a target risk therefore
+runs that target at every stage of evidence, the cold start included: with one Type B prior the
+loop is safe and merely inefficient. What is not claimed: that the risk is unchanged by evidence is
+a statement about the rule, not about the world — if the pooled $`u` is wrong, a
+{uses "def_uq_classifyBand"}[`systematic` reading] is the one thing the loop must never tighten,
+and a floor on $`u` is the operational guard the theorem leaves to the deployment.
+:::
+
+:::proof "thm_uq_acceptance_ratchet"
+Realized over `ℝ` in `ConformityLadder`: `acceptanceLimit_antitone` and `acceptanceLimit_le` (the
+ratchet and its ceiling), `riskAt_acceptanceLimit` (the invariance, by the algebra
+$`(L - A(u))/u = k`, with the tail $`Q` an arbitrary function), `riskAt_acceptanceLimit_le` (the
+target survives every update of $`u`), `riskAt_le_of_accepted` and
+`riskAt_acceptanceLimit_antitone_in_factor` (needing only `Antitone Q`, which the Gaussian, $`t`
+and rectangular tails all satisfy), and `acceptanceLimit_le_of_floor` (a floor on $`u` is a floor
+on the limit).
 :::
 
 # Worked examples (checked facts)
