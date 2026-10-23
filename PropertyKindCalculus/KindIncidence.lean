@@ -2409,10 +2409,23 @@ def assembleContract (c : Provenance.Contract NodeId KindRef) : MetaM Assembly :
     pure n
   assemble decls
 
+/-- What differs between the boundary a contract declares and the one its members compute,
+one clause per difference: a repeated node, then the ports and exits the graph has and the
+contract does not (`undeclared`) and the reverse (`unrealized`). Empty exactly when the
+boundary agrees. The one list every contract report renders — `#kind_contract` line by
+line, the decide forms in their error, the sweep as a `✗` row — so a new kind of difference
+is added here once and no report can leave it out. -/
+def contractDiffs (c : Provenance.Contract NodeId KindRef)
+    (g : Provenance NodeId KindRef) : List String :=
+  (if c.declaresUniquely then [] else ["declared twice: the contract repeats a node"])
+    ++ (c.undeclared g).map (fun p => s!"undeclared {renderPort p}")
+    ++ (c.unrealized g).map (fun p => s!"unrealized {renderPort p}")
+    ++ (c.undeclaredExits g).map (fun n => s!"undeclared exit {renderNode n}")
+    ++ (c.unrealizedExits g).map (fun n => s!"unrealized exit {renderNode n}")
+
 /-- The boundary comparison as lines: the contract's name, its parameters — the
-obligations it hands to the tier below — and then either agreement or the two difference
-lists, an undeclared port being a boundary the graph has and the contract does not, an
-unrealized one the reverse. -/
+obligations it hands to the tier below — and then either agreement or the difference
+clauses of `contractDiffs`. -/
 def renderContractLines (c : Provenance.Contract NodeId KindRef)
     (g : Provenance NodeId KindRef) : List String :=
   let params := c.params
@@ -2423,11 +2436,7 @@ def renderContractLines (c : Provenance.Contract NodeId KindRef)
     ++ c.deciders.map (fun (n, d) => s!"decides {renderNode n}: {d}")
     ++ c.aggregations.map (fun (n, a) => s!"aggregates {renderNode n}: {a.label}")
     ++ c.suppliers.map (fun (n, s) => s!"supplies {renderNode n}: {s}")
-    ++ (if c.declaresUniquely then [] else ["declared twice: the contract repeats a node"])
-    ++ (c.undeclared g).map (fun p => s!"undeclared {renderPort p}")
-    ++ (c.unrealized g).map (fun p => s!"unrealized {renderPort p}")
-    ++ (c.undeclaredExits g).map (fun n => s!"undeclared exit {renderNode n}")
-    ++ (c.unrealizedExits g).map (fun n => s!"unrealized exit {renderNode n}")
+    ++ contractDiffs c g
     ++ [s!"boundary agrees: {c.agrees g}"]
 
 /-- The tier comparison as lines: what the deploying contract did with each parameter it
@@ -2875,15 +2884,7 @@ elab "#kind_contracts " nss:ident* : command => liftTermElabM do
     (fun n => do
       let (ctr, a) ← checkContract n
       unless ctr.agrees a.graph do
-        let diffs :=
-          (ctr.undeclared a.graph).map (fun p => s!"undeclared {renderPort p}")
-            ++ (ctr.unrealized a.graph).map (fun p => s!"unrealized {renderPort p}")
-            ++ (ctr.undeclaredExits a.graph).map
-                (fun x => s!"undeclared exit {renderNode x}")
-            ++ (ctr.unrealizedExits a.graph).map
-                (fun x => s!"unrealized exit {renderNode x}")
-            ++ (if ctr.declaresUniquely then [] else ["declared twice"])
-        throwError "'{ctr.name}' — {String.intercalate "; " diffs}"
+        throwError "'{ctr.name}' — {String.intercalate "; " (contractDiffs ctr a.graph)}"
       pure ctr)
     (fun ctr => s!"'{ctr.name}' — {ctr.ports.length} ports, \
       {ctr.exits.length} exits, {ctr.members.length} member step(s)")

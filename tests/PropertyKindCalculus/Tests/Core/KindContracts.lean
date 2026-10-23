@@ -9,8 +9,8 @@ indistinguishable from a checked one) is closed. Opting *out* is the explicit ac
 `@[kindCounterexample]` marks a deliberate falsification probe, the sweeps list it as an
 exempted `⊘` row, and the attribute itself refuses any declaration that is not a
 `Provenance.Contract` or `Provenance.Relation`. The probes below pin all of it: the mixed
-report (a clean pair, a `✗` violation, a `⊘` exemption, every count in the header), the
-empty scope pinning `0` rather than passing invisibly, the kernel-receipt tier and its
+report (a clean pair, a `✗` violation per difference clause — a forgotten port, a node
+declared twice — a `⊘` exemption, every count in the header), the empty scope pinning `0` rather than passing invisibly, the kernel-receipt tier and its
 idempotence across repeated sweeps, its refusal on a violated scope, the misuse refusal
 of the attribute, and `#kind_relations` honoring the same exemption.
 -/
@@ -85,6 +85,17 @@ def forgottenInput : Provenance.Contract NodeId KindRef where
   ports := [⟨NodeId.result.within ``Good.fwd, .decl ``bK, .output⟩]
   exits := []
 
+/-- The boundary that declares the forward's output twice. The sweep's `✗` row and the
+per-name report render this clause from the one `contractDiffs`, so the two pins below
+cannot drift apart. -/
+def repeatedNode : Provenance.Contract NodeId KindRef where
+  name := "sweep probe forward, result twice"
+  members := [``Good.fwd]
+  ports := [⟨(NodeId.binder "x").within ``Good.fwd, .decl ``aK, .input⟩,
+            ⟨NodeId.result.within ``Good.fwd, .decl ``bK, .output⟩,
+            ⟨NodeId.result.within ``Good.fwd, .decl ``bK, .output⟩]
+  exits := []
+
 end Bad
 
 namespace Exempt
@@ -120,13 +131,23 @@ info: boundary of this scope, as declarable syntax:
 /-! ## The report sweep — checked rows, the `✗` violation, the `⊘` exemption, all counted -/
 
 /--
-info: kind contracts — 3 contract(s), 1 violated, 1 exempted
+info: kind contracts — 4 contract(s), 2 violated, 1 exempted
   ✗ PropertyKindCalculus.Tests.KindContracts.Bad.forgottenInput: 'sweep probe forward, x forgotten' — undeclared input fwd/x : aK
+  ✗ PropertyKindCalculus.Tests.KindContracts.Bad.repeatedNode: 'sweep probe forward, result twice' — declared twice: the contract repeats a node
   PropertyKindCalculus.Tests.KindContracts.Good.fwdBoundary: 'sweep probe forward' — 2 ports, 0 exits, 1 member step(s)
   PropertyKindCalculus.Tests.KindContracts.Good.invBoundary: 'sweep probe retrieval' — 2 ports, 0 exits, 1 member step(s)
   ⊘ PropertyKindCalculus.Tests.KindContracts.Exempt.keptCounterexample: counterexample, exempted
 -/
 #guard_msgs in #kind_contracts PropertyKindCalculus.Tests.KindContracts
+
+-- The per-name report renders the same clause, line by line.
+/--
+info: kind contract over 1 steps:
+contract 'sweep probe forward, result twice': 3 ports, 0 exits
+declared twice: the contract repeats a node
+boundary agrees: false
+-/
+#guard_msgs in #kind_contract Bad.repeatedNode
 
 -- The edge sweep honors the same exemption.
 /--
