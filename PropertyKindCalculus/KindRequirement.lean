@@ -454,12 +454,12 @@ def coverageRows (scope : Array Name) : Elab.TermElabM (Array Row × Tally) := d
   let mut out : Array Row := #[]
   let mut tally : Tally := {}
   for s in subs do
-    if s.counterexample then
-      out := out.push ⟨.exempted, s!"⊘ exempted {s.decl} — counterexample"⟩
-      continue
     let c ← match s.value with
-      | .ok c => pure c
-      | .error cause =>
+      | .read c => pure c
+      | .counterexample =>
+        out := out.push ⟨.exempted, s!"⊘ exempted {s.decl} — counterexample"⟩
+        continue
+      | .unreadable cause =>
         out := out.push (s.unreadableRow cause)
         continue
     if c.role == .specification then
