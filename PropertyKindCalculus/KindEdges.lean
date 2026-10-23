@@ -259,15 +259,25 @@ def bodyScannable (reachable : Std.HashSet Nat) (env : Environment)
   if name.isInternalDetail || isAuxRecursor env name then return false
   return !(← Meta.isInstance name)
 
-/-- Strip internal name components (`._proof_N`, `.match_N`, `.eq_N`, numeric suffixes) so a
+/-- Is `s` a name component the elaborator appends to a declaration it works on, rather than
+one a person wrote? The shapes are Lean's own: a `_`-prefixed component (`_proof_1`,
+`_unsafe_rec`, `_cstage1`, …), a `match_` / `eq_` / `proof_` prefix followed by nothing but
+digits and underscores (`match_1`, `eq_2`, `proof_1_3` — the `Name.isInternalDetail` test),
+and the `eq_def` / `eq_unfold` unfolding lemmas. A user theorem that merely shares the prefix
+(`eq_mul_of_isProduct`, `match_on_scale`) is not one. -/
+def isAuxComponent (s : String) : Bool :=
+  s.startsWith "_"
+    || ["match_", "eq_", "proof_"].any fun pre =>
+         (s.dropPrefix? pre).any (·.all fun c => c.isDigit || c == '_')
+    || s == "eq_def" || s == "eq_unfold"
+
+/-- Strip the elaborator's name components (`isAuxComponent`, plus numeric suffixes) so a
 lifted call-site witness or mint is attributed to the definition that authored it. Shared by
-every audit walk (`edgesInto`, the boundary audit's `boundarySites`, the index's
-`isAuthored`) so they all credit the elaborator's auxiliaries to the same author. -/
+every audit walk (`harvest` and its renderers, the boundary audit's `boundarySites`, the
+index's `isAuthored`) so they all credit the elaborator's auxiliaries to the same author. -/
 def parentOf (n : Name) : Name :=
   match n with
-  | .str p s =>
-      if s.startsWith "_" || s.startsWith "match_" || s.startsWith "proof_"
-          || s.startsWith "eq_" || s.startsWith "unsafe_" then parentOf p else n
+  | .str p s => if isAuxComponent s then parentOf p else n
   | .num p _ => parentOf p
   | _ => n
 
