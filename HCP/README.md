@@ -34,17 +34,17 @@ Each HCP step asks a question, changes context, changes attributes, shows the ri
 |---|---|---|---|---|---|---|
 | 0 | **The black box.** One homogeneous, rigid, point-like body on one ideal spring to a wall, along a line. | One system; body and spring inside, wall outside; the wall is fixed and infinitely massive. | Mass, stiffness, displacement, ω vs f, period. | A kind is not a dimension: `ω + f` and mistaken `√(m/k)` pass the bare-real model. | Stages 0–1; upstream HarmonicOscillator Basic and WithDim; ForPhysLib Kinds and Metrology; Exhibit C. | Included here |
 | 1 | **Two bodies.** One body inside each black-box oscillator. | Two particulars of the harmonic-oscillator sort; the oscillator is the bearer and gets an injective designation. | No new kinds: mass and stiffness share the oscillator index, so its `k/m` is accepted. | R1 contamination (body B's mass as body A's); R5 false identity; cross-oscillator `IndividualQuantity.div` is refused. | Stage 2: the kinded form carries its bearer; CaseStudies/HarmonicOscillator Attempt 4; blueprint L1. | Included here |
-| 2 | **The pair is a system too.** | Opens each oscillator into body and spring(s); the pair's own sort, whole, and parts; springs in parallel vs in series. | Normal-mode frequency ω₊ (a whole-only property), total mass, effective stiffness. | R2/R3/R4: mass assembles (3 + 5 = 8), ω does not (ω₊ = 5 ≠ 2 + 4); stiffness assembles in parallel, not in series. | Stage 3: operator table (`ω² = k/m`); case study, `pairMass`/`stiffnessParallel`; Composition finding 4. | Planned |
+| 2 | **The pair is a system too.** | Opens each oscillator into body and spring(s); the pair's own sort, whole, and parts; springs in parallel vs in series. | Normal-mode frequency ω₊ (a whole-only property), total mass, effective stiffness. | R2/R3/R4: mass assembles; ω does not; stiffness assembles in parallel, not in series. | Stage 3: operator table (`ω² = k/m`); HCP `pairMass`/`parallelStiffness`; Composition finding 4. | Included here |
 | 3 | **The body opens up.** The mass is not homogeneous; its centre of mass is off-axis, so it wobbles. | The body becomes a composite with a carving; a body-fixed frame enters. | Mass distribution, centre of mass, inertia tensor, lab vs body angular velocity. | R6 degenerate whole (`RigidBody ⟨0⟩`); R3 (the centre of mass is a weighted mean, not a sum); lab-ω fed where body-ω is required (Exhibit A finding 2). L0's assumption returns as the solid-sphere special case `(2/5) m R²`. | Stages 2–3 on RigidBody; Exhibits RigidBody and Composition; `Kinded/RigidBody` (parallel-axis theorem = the offset); upstream `CM-RB-sphereI` informal lemma is proved in `SolidSphereInertia.lean`. | Planned |
 | 4 | **Out of the line.** Motion in 3-D space, seen by a moving observer. | Origin, points vs vectors, the observer's frame. | Position vector, displacement, distance. | The bearer `distanceQ` erases is a pair of points; R8's one carrier has three Galilean laws. | Stages 0–3 on Space (compact recap of the finished ladder); Exhibit ReferenceFrame. | Planned |
 | 5 | *(Optional)* **Losing energy.** Add a damper. | New component and particular. | Damping coefficient; `γ² − 4mk` regimes. | A regime test can type-check with wrong kinds. | Stage 1; upstream DampedHarmonicOscillator. | Planned |
 | 6 | **What must hold.** | Requirement scope over the refined context. | Requirement, referent, gate. | R7 scope over nominal objects. | Stage 4; `Tutorial.HarmonicOscillatorRequirements`, Audits, `checked_by`. | Planned |
 
-L1 is included here; it introduces two uncoupled black-box oscillators, each containing
-one body and its wall spring, with the oscillator as bearer of mass and stiffness. L2
-opens each box into body and spring(s), revisits which component bears each property, and
-introduces the pair as a whole. The `examples/Tutorial/` files and `Tutorial` library
-remain the model-writer's separate track.
+L1 and L2 are included here. L1 makes each uncoupled black-box oscillator the bearer of
+mass and stiffness; L2 opens the boxes into bodies and springs, adds the coupling spring,
+and gives the pair its own sort and whole. L3 revisits the assumption that each body is
+rigid, homogeneous, point-like, and balanced on the spring axis. The `examples/Tutorial/`
+files and `Tutorial` library remain the model-writer's separate track.
 
 ## Running checks
 
