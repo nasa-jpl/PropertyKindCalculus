@@ -111,7 +111,36 @@ example (p : OpenBody .P .A) (q : OpenBody .Q .A) :=
 -- ANCHOR: center_of_mass_mean
 example := ForPhysLib.Exhibits.Composition.union_centerOfMass
 
-example := ForPhysLib.Exhibits.Composition.halvesByMass_mean_const
+noncomputable def centerOfMassCarving {π : PairId} {b : Body}
+    (state : OpenBody π b)
+    (h : state.mass .left + state.mass .right ≠ 0) :
+    WeightedCarving ℝ Half where
+  parts := bodyHalves
+  weight := state.mass
+  total_ne_zero := by
+    change state.mass .left + state.mass .right ≠ 0
+    exact h
+
+theorem centerOfMass_eq {π : PairId} {b : Body} (state : OpenBody π b)
+    (h : state.mass .left + state.mass .right ≠ 0) :
+    (centerOfMassCarving state h).mean state.position =
+      (state.mass .left * state.position .left + state.mass .right * state.position .right) /
+        (state.mass .left + state.mass .right) := by
+  rfl
+
+def unequalMassExample : OpenBody .P .A where
+  mass
+    | .left => 3
+    | .right => 5
+  position
+    | .left => 0
+    | .right => 10
+
+theorem unequalMassExample_centerOfMass :
+    (centerOfMassCarving unequalMassExample (by norm_num [unequalMassExample])).mean
+      unequalMassExample.position = (25 : ℝ) / 4 := by
+  norm_num [centerOfMassCarving, unequalMassExample, WeightedCarving.mean, weightedSum,
+    totalWeight, bodyHalves, Decomposition.fold, Carrier.add]
 
 def positionOf {π : PairId} {b : Body} (state : OpenBody π b) (h : HalfOf π b) :
     IndividualQuantity
