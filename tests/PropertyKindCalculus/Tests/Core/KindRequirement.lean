@@ -22,8 +22,9 @@ present, one that is not a license, and one whose instance search does not finis
 empirical requirement naming a witness, no referent, no gate, an unmarked referent, or a
 gate that mentions no referent; a spot check that is false, and one that is not a `Bool`.
 The survey, the census and the gate close the file, with the two marks' own refusals.
-The sibling scope probes pin inferred domains for generic and fixed indices, a
-non-enumerable index, and a result whose type carries no object index.
+The sibling scope probes pin inferred domains for generic and fixed indices, an aliased
+result, a kind-index constant, object aliases, a non-enumerable index, and a result whose
+type carries no object index.
 -/
 
 module
@@ -827,6 +828,65 @@ def thingTwoRequirement : Provenance.Requirement where
   scope := .objects [``Thing.one]
   attested := "coverage-domain probe"
 
+def FixedResult := IndividualQuantity Thing.two bK Int
+
+def aliasedThingTwoModel (x : IndividualQuantity Thing.two aK Int) : FixedResult :=
+  ⟨2 * x.magnitude⟩
+
+def aliasedThingTwoBoundary : Provenance.Contract NodeId KindRef where
+  name := "aliased Thing.two result"
+  members := [``aliasedThingTwoModel]
+  ports := [
+    ⟨(NodeId.binder "x").within ``aliasedThingTwoModel, .decl ``aK, .input⟩,
+    ⟨NodeId.result.within ``aliasedThingTwoModel, .decl ``bK, .output⟩
+  ]
+  exits := []
+
+def aliasedThingTwoRequirement : Provenance.Requirement where
+  name := "Thing one on aliased Thing.two"
+  statement := "the aliased fixed result is governed only for Thing.one"
+  kind := .provable
+  governs := ``aliasedThingTwoBoundary
+  port := some (NodeId.result.within ``aliasedThingTwoModel)
+  scope := .objects [``Thing.one]
+  attested := "coverage-domain probe"
+
+def kindFor : Thing → KindOfProperty
+  | .one => aK
+  | .two => bK
+
+def kindIndexedModel : IndividualQuantity Thing.one (kindFor Thing.two) Int :=
+  ⟨0⟩
+
+def kindIndexedBoundary : Provenance.Contract NodeId KindRef where
+  name := "Thing.one result with a kind index"
+  members := [``kindIndexedModel]
+  ports := [⟨NodeId.result.within ``kindIndexedModel, .decl ``bK, .output⟩]
+  exits := []
+
+def kindIndexedRequirement : Provenance.Requirement where
+  name := "Thing one on kind-indexed result"
+  statement := "the kind-indexed result is governed for Thing.one"
+  kind := .provable
+  governs := ``kindIndexedBoundary
+  port := some (NodeId.result.within ``kindIndexedModel)
+  scope := .objects [``Thing.one]
+  attested := "coverage-domain probe"
+
+def first : Thing := .one
+
+def thingAliasBoundary : Provenance.Contract NodeId KindRef :=
+  thingBoundary "Thing-indexed model, aliased object scope"
+
+def thingAliasRequirement : Provenance.Requirement where
+  name := "Thing first and two"
+  statement := "the generic result is governed for first and Thing.two"
+  kind := .provable
+  governs := ``thingAliasBoundary
+  port := some (NodeId.result.within ``thingModel)
+  scope := .objects [``first, ``Thing.two]
+  attested := "coverage-domain probe"
+
 structure Tag where
   id : String
 
@@ -860,14 +920,17 @@ def tagRequirement : Provenance.Requirement where
 /--
 info: requirement coverage:
 [governed] PropertyKindCalculus.Tests.KindRequirementScope.bareResultBoundary ('unindexed result') bareResultModel/result — by 'bare-result object scope' (object scope unchecked: the result carries no 'Thing' index)
+[governed] PropertyKindCalculus.Tests.KindRequirementScope.kindIndexedBoundary ('Thing.one result with a kind index') kindIndexedModel/result — by 'Thing one on kind-indexed result'
 [governed] PropertyKindCalculus.Tests.KindRequirementScope.tagBoundary ('Tag-indexed model') tagModel/result for PropertyKindCalculus.Tests.KindRequirementScope.tagA — by 'Tag A'
+[governed] PropertyKindCalculus.Tests.KindRequirementScope.thingAliasBoundary ('Thing-indexed model, aliased object scope') thingModel/result — by 'Thing first and two'
 [governed] PropertyKindCalculus.Tests.KindRequirementScope.thingBothBoundary ('Thing-indexed model, both scoped objects') thingModel/result — by 'Thing one and two'
 [governed] PropertyKindCalculus.Tests.KindRequirementScope.thingOneBoundary ('Thing-indexed model, one scoped object') thingModel/result for PropertyKindCalculus.Tests.KindRequirement.Thing.one — by 'Thing one'
+⚠ UNGOVERNED PropertyKindCalculus.Tests.KindRequirementScope.aliasedThingTwoBoundary ('aliased Thing.two result') aliasedThingTwoModel/result for PropertyKindCalculus.Tests.KindRequirement.Thing.two — 'Thing one on aliased Thing.two' scoped to PropertyKindCalculus.Tests.KindRequirement.Thing.one
 ⚠ UNGOVERNED PropertyKindCalculus.Tests.KindRequirementScope.tagBoundary ('Tag-indexed model') tagModel/result for every other 'Tag' — 'Tag A' scoped to PropertyKindCalculus.Tests.KindRequirementScope.tagA
 ⚠ UNGOVERNED PropertyKindCalculus.Tests.KindRequirementScope.thingOneBoundary ('Thing-indexed model, one scoped object') thingModel/result for PropertyKindCalculus.Tests.KindRequirement.Thing.two — 'Thing one' scoped to PropertyKindCalculus.Tests.KindRequirement.Thing.one
 ⚠ UNGOVERNED PropertyKindCalculus.Tests.KindRequirementScope.thingTwoBoundary ('Thing.two-indexed model') thingTwoModel/result for PropertyKindCalculus.Tests.KindRequirement.Thing.two — 'Thing one on Thing two' scoped to PropertyKindCalculus.Tests.KindRequirement.Thing.one
-7 row(s) over 5 model boundary(ies): 4 governed, 3 UNGOVERNED — requirement-coverage violation
-requirements: 5 provable, 0 empirical, 5 attested
+10 row(s) over 8 model boundary(ies): 6 governed, 4 UNGOVERNED — requirement-coverage violation
+requirements: 8 provable, 0 empirical, 8 attested
 -/
 #guard_msgs (whitespace := lax) in
   #kind_requirement_coverage PropertyKindCalculus.Tests.KindRequirementScope
