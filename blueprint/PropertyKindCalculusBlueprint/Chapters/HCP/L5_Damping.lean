@@ -59,7 +59,7 @@ def springPart (o : Osc) : PartOf o := ⟨.Spring⟩
 def damperPart (o : Osc) : PartOf o := ⟨.Damper⟩
 
 def massOf {o : Osc} (r : DampedRig o) :
-    IndividualQuantity (bodyPart o) massK ℝ :=
+    IndividualQuantity o massK ℝ :=
   ⟨r.osc.m⟩
 
 def springConstantOf {o : Osc} (r : DampedRig o) :
@@ -88,8 +88,9 @@ lemma energy_not_conserved_on_state {o : Osc} (r : DampedRig o)
 ```
 
 _2. One name, two kinds._ `γ` is the viscous damping constant read on the damper
-(kg/s). ISO 3-24's damping coefficient `δ` (s⁻¹) is instead PhysLib's `decayRate`,
-attached to the whole. The local quotient law makes the typed `γ/(2m)` formula possible:
+(kg/s), and `m` is measured on the body. Both quantities retain the whole oscillator's
+bearer `o`. ISO 3-24's damping coefficient `δ` (s⁻¹) is instead PhysLib's `decayRate`,
+attached to the whole. The local quotient law makes the typed `γ/(m + m)` formula possible:
 
 ```anchor kinds_and_decay_rate
 def viscousDampingConstantK : KindOfProperty :=
@@ -99,35 +100,30 @@ def dampingCoefficientK : KindOfProperty :=
   Iso80000.Part3.dampingCoefficient.kind
 
 def dampingConstantOf {o : Osc} (r : DampedRig o) :
-    IndividualQuantity (damperPart o) viscousDampingConstantK ℝ :=
+    IndividualQuantity o viscousDampingConstantK ℝ :=
   ⟨r.osc.γ⟩
 
 instance : KindDiv viscousDampingConstantK massK dampingCoefficientK :=
   ⟨QuotientKind.ofRatio _ _ _⟩
 
-def decayRateFormula {o : Osc} (r : DampedRig o) :
-    Quantity dampingCoefficientK ℝ :=
-  Quantity.div
-    (KindDiv.law (k₁ := viscousDampingConstantK) (k₂ := massK)
-      (k := dampingCoefficientK))
-    (dampingConstantOf r).toQuantity
-    (⟨2 * (massOf r).magnitude⟩ : Quantity massK ℝ)
-
 def decayRateOf {o : Osc} (r : DampedRig o) :
     IndividualQuantity o dampingCoefficientK ℝ :=
-  ⟨(decayRateFormula r).magnitude⟩
-
-lemma decayRateFormula_magnitude {o : Osc} (r : DampedRig o) :
-    (decayRateFormula r).magnitude = r.osc.decayRate := by
-  change r.osc.γ / (2 * r.osc.m) = r.osc.decayRate
-  rw [r.osc.gamma_eq_two_mul_m_mul_decayRate]
-  have hm : (2 * r.osc.m) ≠ 0 :=
-    mul_ne_zero (by norm_num) r.osc.m_ne_zero
-  field_simp [hm]
+  -- Write 2m as m + m to keep the mass on the oscillator bearer.
+  IndividualQuantity.div
+    (KindDiv.law (k₁ := viscousDampingConstantK) (k₂ := massK)
+      (k := dampingCoefficientK))
+    (dampingConstantOf r)
+    (IndividualQuantity.add DifferenceKind.ofScale (massOf r) (massOf r))
 
 lemma decayRateOf_magnitude {o : Osc} (r : DampedRig o) :
     (decayRateOf r).magnitude = r.osc.decayRate := by
-  exact decayRateFormula_magnitude r
+  simp only [decayRateOf, IndividualQuantity.div_magnitude,
+    IndividualQuantity.add_magnitude, dampingConstantOf, massOf]
+  change r.osc.γ / (r.osc.m + r.osc.m) = r.osc.decayRate
+  rw [← two_mul, r.osc.gamma_eq_two_mul_m_mul_decayRate]
+  have hm : (2 * r.osc.m) ≠ 0 :=
+    mul_ne_zero (by norm_num) r.osc.m_ne_zero
+  field_simp [hm]
 
 def angularFrequencyOf {o : Osc} (r : DampedRig o) :
     IndividualQuantity o angularFrequencyK ℝ :=
@@ -145,12 +141,30 @@ example (r : DampedRig .A) :
 example (r : DampedRig .A) :
     r.osc.γ = 2 * r.osc.m * r.osc.decayRate :=
   r.osc.gamma_eq_two_mul_m_mul_decayRate
+
+/--
+error: Application type mismatch: The argument
+  b
+has type
+  DampedRig Osc.B
+but is expected to have type
+  DampedRig Osc.A
+in the application
+  massOf b
+-/
+#guard_msgs in
+example (a : DampedRig .A) (b : DampedRig .B) :=
+  IndividualQuantity.div
+    (KindDiv.law (k₁ := viscousDampingConstantK) (k₂ := massK)
+      (k := dampingCoefficientK))
+    (dampingConstantOf a) (massOf b)
 ```
 
 The real-valued `γ < ω` above is accepted, but wrong: `γ` is kg/s, not the whole
-system's decay rate. The component readings are converted to bearerless quantities only
-for the derived quotient; `decayRateOf` carries the result on the oscillator's nominal
-bearer.
+system's decay rate. `massOf` and `dampingConstantOf` both retain the oscillator's
+nominal bearer: mass is measured on the designated body and `γ` on the designated damper.
+Writing `2m` as `m + m` keeps the quotient bearer-safe; the pinned refusal below prevents
+dividing A's damper reading by B's mass.
 
 _3. Same dimension, different kind._ Both `δ` and natural angular frequency `ω₀` have
 dimension `T⁻¹`; the bare-real sum is accepted, while the kinded sum is refused:

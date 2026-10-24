@@ -59,7 +59,7 @@ def springPart (o : Osc) : PartOf o := ⟨.Spring⟩
 def damperPart (o : Osc) : PartOf o := ⟨.Damper⟩
 
 def massOf {o : Osc} (r : DampedRig o) :
-    IndividualQuantity (bodyPart o) massK ℝ :=
+    IndividualQuantity o massK ℝ :=
   ⟨r.osc.m⟩
 
 def springConstantOf {o : Osc} (r : DampedRig o) :
@@ -92,35 +92,30 @@ def dampingCoefficientK : KindOfProperty :=
   Iso80000.Part3.dampingCoefficient.kind
 
 def dampingConstantOf {o : Osc} (r : DampedRig o) :
-    IndividualQuantity (damperPart o) viscousDampingConstantK ℝ :=
+    IndividualQuantity o viscousDampingConstantK ℝ :=
   ⟨r.osc.γ⟩
 
 instance : KindDiv viscousDampingConstantK massK dampingCoefficientK :=
   ⟨QuotientKind.ofRatio _ _ _⟩
 
-def decayRateFormula {o : Osc} (r : DampedRig o) :
-    Quantity dampingCoefficientK ℝ :=
-  Quantity.div
-    (KindDiv.law (k₁ := viscousDampingConstantK) (k₂ := massK)
-      (k := dampingCoefficientK))
-    (dampingConstantOf r).toQuantity
-    (⟨2 * (massOf r).magnitude⟩ : Quantity massK ℝ)
-
 def decayRateOf {o : Osc} (r : DampedRig o) :
     IndividualQuantity o dampingCoefficientK ℝ :=
-  ⟨(decayRateFormula r).magnitude⟩
-
-lemma decayRateFormula_magnitude {o : Osc} (r : DampedRig o) :
-    (decayRateFormula r).magnitude = r.osc.decayRate := by
-  change r.osc.γ / (2 * r.osc.m) = r.osc.decayRate
-  rw [r.osc.gamma_eq_two_mul_m_mul_decayRate]
-  have hm : (2 * r.osc.m) ≠ 0 :=
-    mul_ne_zero (by norm_num) r.osc.m_ne_zero
-  field_simp [hm]
+  -- Write 2m as m + m to keep the mass on the oscillator bearer.
+  IndividualQuantity.div
+    (KindDiv.law (k₁ := viscousDampingConstantK) (k₂ := massK)
+      (k := dampingCoefficientK))
+    (dampingConstantOf r)
+    (IndividualQuantity.add DifferenceKind.ofScale (massOf r) (massOf r))
 
 lemma decayRateOf_magnitude {o : Osc} (r : DampedRig o) :
     (decayRateOf r).magnitude = r.osc.decayRate := by
-  exact decayRateFormula_magnitude r
+  simp only [decayRateOf, IndividualQuantity.div_magnitude,
+    IndividualQuantity.add_magnitude, dampingConstantOf, massOf]
+  change r.osc.γ / (r.osc.m + r.osc.m) = r.osc.decayRate
+  rw [← two_mul, r.osc.gamma_eq_two_mul_m_mul_decayRate]
+  have hm : (2 * r.osc.m) ≠ 0 :=
+    mul_ne_zero (by norm_num) r.osc.m_ne_zero
+  field_simp [hm]
 
 def angularFrequencyOf {o : Osc} (r : DampedRig o) :
     IndividualQuantity o angularFrequencyK ℝ :=
@@ -138,6 +133,23 @@ example (r : DampedRig .A) :
 example (r : DampedRig .A) :
     r.osc.γ = 2 * r.osc.m * r.osc.decayRate :=
   r.osc.gamma_eq_two_mul_m_mul_decayRate
+
+/--
+error: Application type mismatch: The argument
+  b
+has type
+  DampedRig Osc.B
+but is expected to have type
+  DampedRig Osc.A
+in the application
+  massOf b
+-/
+#guard_msgs in
+example (a : DampedRig .A) (b : DampedRig .B) :=
+  IndividualQuantity.div
+    (KindDiv.law (k₁ := viscousDampingConstantK) (k₂ := massK)
+      (k := dampingCoefficientK))
+    (dampingConstantOf a) (massOf b)
 -- ANCHOR_END: kinds_and_decay_rate
 
 -- ANCHOR: same_dimension_different_kinds
