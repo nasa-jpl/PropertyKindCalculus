@@ -223,6 +223,12 @@ lean_lib «Tutorial» where
   roots := #[`Tutorial]
   globs := #[.andSubmodules `Tutorial]
 
+/-- **The onboarding HCPs' lesson modules.** The blueprint's HCP part quotes them region by
+region through SubVerso anchors, build-verified against the source. Build with `lake build HCP`. -/
+lean_lib «HCP» where
+  roots := #[`HCP]
+  globs := #[.andSubmodules `HCP]
+
 /-- **The validation-test suite** (source tree `tests/`, namespace
 `PropertyKindCalculus.Tests`). Distinct from the pedagogical `Examples` library: these are
 build-time *regression probes* for the two properties a "machine-checked" claim rests on but
