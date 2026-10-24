@@ -667,8 +667,9 @@ constants, not chosen: a witness that names a referent is refused as provable, a
 that names none is refused as empirical. `#kind_requirements` surveys a namespace's
 requirements as one pinned report, and `#kind_requirement_coverage` asks of every produced
 port whether a boundary/port-matching requirement governs it. For object scopes, the result
-member's type supplies the inferred object domain; `.unreached` results remain governed
-but are marked unchecked, while `.all`, `.sort`, and `.decided` retain the static join
+member's type supplies the inferred object domain; a missing index or unresolved bearer is
+an unchecked violation unless the boundary is exempted. `.sort` and `.decided` retain the
+static join without object-subset checking; `.all` remains broad
 ({ref "requirements-as-evidence"}[every claim a model makes, with its evidence]).
 
 # Requirements
@@ -1282,8 +1283,8 @@ of the {ref "metrological-modularity"}[metrological-modularity chapter], stated 
 expressiveness requirement: every produced port of a model boundary is governed by a
 `Provenance.Requirement` or exempted with a reason (`@[kindRequirementFree]`); object
 scopes are compared with the result domain inferred from the member's return type, while
-`.unreached` ports are governed but explicitly marked unchecked and `.decided` remains
-statically unchecked; a provable
+missing indices or unresolved object domains are unchecked violations unless exempted;
+`.sort` and `.decided` retain the static boundary/port join without subset checking; a provable
 requirement's witness is a sorry-free theorem, or a theorem edge to a specification
 boundary, whose statement names no `@[kindReferent]`-marked declaration, with `Bool` spot
 checks the command evaluates where the model runs; an empirical requirement names marked

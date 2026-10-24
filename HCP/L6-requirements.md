@@ -112,5 +112,7 @@ The full worked requirements example is `examples/Tutorial/HarmonicOscillatorReq
 L6 mirrors its Provenance boundaries, witnesses, referents, gates, surveys, and coverage
 commands without importing the Tutorial file. The census infers a result port's object
 domain from its member's type: R3 covers a P-only result, but leaves Q ungoverned on a
-generic pair boundary. The optional `.decided` form is omitted because the current checker
-does not validate the decider's shape or prove that it carves a subset.
+generic pair boundary. A missing index or unresolved bearer is an unchecked violation
+unless exempted; `.sort` and `.decided` remain unchecked against the result index. The
+optional `.decided` form is omitted because the current checker does not validate the
+decider's shape or prove that it carves a subset.

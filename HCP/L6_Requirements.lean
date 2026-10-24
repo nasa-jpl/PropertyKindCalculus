@@ -300,7 +300,9 @@ error: the scope 'HCP.L6_Requirements.notASort' is not a 'SortOfSystem' — a sc
 
 /-
 The census infers a result port's object domain from its member's type: R3 covers a
-P-only result, but leaves Q ungoverned on a generic pair boundary.
+P-only result, but leaves Q ungoverned on a generic pair boundary. A missing index or
+unresolved bearer is an unchecked violation unless exempted; `.sort` and `.decided`
+remain unchecked against the result index.
 -/
 -- ANCHOR: requirement_census
 /--

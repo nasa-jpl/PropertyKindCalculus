@@ -310,9 +310,10 @@ in scope governed by a boundary/port-matching requirement whose object scope cov
 inferred result domain, or marked `@[kindRequirementFree "reason"]`, with category tallies
 and the attested count — and `#kind_requirement_clean` its gate. The result member's type
 infers that domain: an index binder means all objects, constants of that type mean only
-those objects, and `.unreached` means no index was found, so the row is governed but marked
-unchecked. `.all`, `.sort`, and `.decided` requirements retain the static boundary/port
-join; `.decided` does not claim a checked subset.
+those objects; `.noIndex` means the result carries no object index, while `.unresolved`
+means its object cannot be determined statically. Both produce unchecked violations unless
+the boundary is exempted. `.sort` and `.decided` retain the static boundary/port join
+without object-subset checking.
 :::
 
 :::proof "def_requirement"
@@ -451,10 +452,11 @@ requirement clause is where those become data: each an empirical requirement wit
 referent and gate, or deferred by an attestation whose reason the survey prints. The
 coverage census then asks of every produced port of every model boundary whether a
 boundary/port-matching requirement governs it. For object scopes it compares the requested
-objects with the domain inferred from the result member's type; `.unreached` results remain
-governed but carry an unchecked suffix. A `@[kindRequirementFree "reason"]` mark says why
-no requirement is demanded, and the census counts the attested ones. That count is a
-ratchet: it moves only by a conscious edit, and it is meant to fall as the apparatus
+objects with the domain inferred from the result member's type; a missing index or unresolved
+bearer yields an unchecked violation unless the boundary is exempted. `.sort` and `.decided`
+are not checked against the result object index. A `@[kindRequirementFree "reason"]` mark
+says why no requirement is demanded, and the census counts the attested ones. That count is
+a ratchet: it moves only by a conscious edit, and it is meant to fall as the apparatus
 supplies its numbers. A model's remaining dependence on the world is then a number in a
 pinned report, with a reason per entry, rather than a sentence in a limitations section.
 
