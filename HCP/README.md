@@ -26,7 +26,7 @@ Dimension-only metrology lives in the right column. System context is the left c
 | R7 | Unstatable scope | "Every spring" and "body A" cannot be stated over nominal objects, so a requirement has no scope. | `MetrologicalModularity` requirement-scope clause; retained `Tutorial.HarmonicOscillatorRequirements` |
 | R8 | Observer left implicit | One carrier, three Galilean transformation laws. | `Exhibits/ReferenceFrame` (MOTIVATION M7) |
 
-## v3 ladder
+## The ladder
 
 Each HCP step asks a question, changes context, changes attributes, shows the risk as a build artifact, and exercises a PhysLib stage.
 
