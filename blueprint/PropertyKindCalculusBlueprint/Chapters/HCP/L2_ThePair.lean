@@ -32,6 +32,16 @@ their parameters match. Each spring carries signed extension (negative when comp
 positive when stretched); two configurations of pair P can compare the kC extensions with
 a typed displacement difference.
 
+# Risks at this step
+
+- *Aggregation.* In coupled pair P, the pair mass assembles from bodies A and B, but their normal-mode frequencies do not add; the mass assembly and frequency refusal are pinned at `HCP.L2_ThePair#pair_mass` and `HCP.L2_ThePair#refused_frequency_assembly`.
+- *Sort versus particular.* The license to add body masses belongs to the coupled-pair sort, and parallel stiffness adds where series stiffness does not; the accepted parallel case and refused series case are pinned at `HCP.L2_ThePair#parallel_stiffness` and `HCP.L2_ThePair#refused_series_stiffness`.
+
+*Further reading*
+- `Exhibits/PointParticle`.
+- `CaseStudies/PointParticle`.
+- `Composite.Assembles` with `Exhibits/TwoRovers`.
+
 _1. Open the box and represent configurations._ Each body's upstream harmonic oscillator
 supplies its wall-spring parameters; the coupling spring supplies stiffness, and each spring
 has a signed extension. Two `CoupledPair .P` configurations admit a typed difference of

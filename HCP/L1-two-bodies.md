@@ -45,11 +45,20 @@ one system: records under that name are its states at different times, its confi
 or rival estimates of it; comparing them is the point. Different names, R₁ and R₂, denote
 distinct systems even with identical oscillator parameters.
 
+## Risks at this step
+
+- **Cross-system contamination.** Oscillators A and B have the same kinds, so B's mass can be used in A's frequency if the bearer is omitted. The pinned cross-oscillator refusal is `HCP.L1_TwoBodies#refused_cross_oscillator`.
+- **False identity.** Giving A and B one name makes two oscillators look like one system; the injective designation and its constant-name counterexample are pinned at `HCP.L1_TwoBodies#designation`.
+
+**Further reading**
+- `Exhibits/TwoRovers` (rovers A and B).
+- `Exhibits/PointParticle`, finding 2.
+
 ## 3. Small rigorous improvement
 
 | Question | Context change | Attribute change | Risk shown | PhysLib stage |
 |---|---|---|---|---|
-| There are two bodies now — whose mass is this? | Two particulars, Oscillator A and B, of one sort (harmonic oscillator); each black box contains one point-like body and its own wall spring. The oscillators do not interact. One name is one system; its records are states, configurations, or rival estimates to compare. R₁ and R₂ are distinct names even when parameters match. L2 opens each box into body and spring(s), and introduces their whole/part relations. | No new kinds: mass and stiffness share a rig-indexed oscillator bearer, allowing its `k/m` quotient. | R1 cross-system contamination (B's mass in A's formula or same-named A masses across rigs); R5 false identity (a constant designation). | Stage 2: the kinded form carries its bearer. |
+| There are two bodies now — whose mass is this? | Two particulars, Oscillator A and B, of one sort (harmonic oscillator); each black box contains one point-like body and its own wall spring. The oscillators do not interact. One name is one system; its records are states, configurations, or rival estimates to compare. R₁ and R₂ are distinct names even when parameters match. L2 opens each box into body and spring(s), and introduces their whole/part relations. | No new kinds: mass and stiffness share a rig-indexed oscillator bearer, allowing its `k/m` quotient. | B's mass can enter A's formula when only the kind is checked; one constant designation would collapse A and B into one system. | Stage 2: the kinded form carries its bearer. |
 
 Under L0's assumptions, each oscillator is a homogeneous, rigid, point-like body on one
 ideal, massless spring attached to a fixed, infinitely massive wall, along a line. The

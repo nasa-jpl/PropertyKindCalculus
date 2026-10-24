@@ -51,11 +51,19 @@ configurations, or rival estimates of it—comparing them is the point; distinct
 distinct systems. Pair P's separation therefore has one bearer across its states, while
 pair Q has a different bearer. The lab frame F and cart frame G are explicit observers.
 
+## Risks at this step
+
+- **Bearer erased.** `distanceQ` cannot distinguish the A–B separation of pair P from that of pair Q; the typed cross-pair refusal is pinned at `HCP.L4_OutOfTheLine#whose_distance`.
+- **Observer left implicit.** Bare vectors accept geometric, boost, and origin-shift transport even though only one law is right for each vector kind; `HCP.L4_OutOfTheLine#bare_frames` shows the wrong accepted forms and `HCP.L4_OutOfTheLine#kinded_frames` pins the role-specific refusals.
+
+**Further reading**
+- `Exhibits/ReferenceFrame`, MOTIVATION M7.
+
 ## 3. Small rigorous improvement
 
 | Question | Context change | Attribute change | Risk shown | PhysLib stage |
 |---|---|---|---|---|
-| The wobble throws body A's centre of mass off the line, and a second observer on a moving cart sees the pair differently. What must the model now say about where things are, and for whom? | The pair's centres become points in `Space 3`; lab F and cart G are named frames. | Position vector, displacement, pair distance, and velocity per frame. | `distanceQ` forgets which pair its endpoints belong to; bare frame vectors accept mutually incompatible transport laws and add displacement to velocity. | Space Stages 0–4; Exhibit ReferenceFrame. |
+| The wobble throws body A's centre of mass off the line, and a second observer on a moving cart sees the pair differently. What must the model now say about where things are, and for whom? | The pair's centres become points in `Space 3`; lab F and cart G are named frames. | Position vector, displacement, pair distance, and velocity per frame. | Pair P's distance can be confused with pair Q's, and bare frame vectors accept transport laws that are wrong for the vector's role. | Space Stages 0–4. |
 
 The remaining one-dimensional, one-observer assumption is gone. The no-dissipation
 assumption remains for L5.
