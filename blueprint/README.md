@@ -20,7 +20,7 @@ than quietly going unlisted.
 
 | Group | Chapters |
 |---|---|
-| Onboarding | Onboarding: Human Context Protocols — L0 quotes the `HCP` lesson live; T1 remains interim until L1 |
+| Onboarding | Onboarding: Human Context Protocols — L0 and L1 quote their `HCP` lessons live |
 | The foundation | Foundations: system, part, and the ontological square |
 | The spine | The Proved Spine · Capstone theorems — what the calculus can do · Metrological modularity · Write Once, Correctly · Using the library: annotations and generated indexes · External Cross-References · Terminology — the dictionary and the index |
 | Applying it | Applying the calculus to a domain: the model template · Deploying a domain model: the deployment template |

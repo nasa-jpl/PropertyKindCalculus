@@ -3,7 +3,7 @@ import VersoManual
 import VersoBlueprint
 import PropertyKindCalculusBlueprint.References
 import PropertyKindCalculusBlueprint.Chapters.HCP.L0_BlackBox
-import PropertyKindCalculusBlueprint.Chapters.Tutorial.T1_Objects
+import PropertyKindCalculusBlueprint.Chapters.HCP.L1_TwoBodies
 
 open Verso.Genre
 open Verso.Genre.Manual
@@ -102,11 +102,11 @@ finally states what must hold:
 *
   * 1
   * Two bodies
-  * Two particulars of one sort; object index and designation
-  * Same kinds, per body
+  * Two particulars of one sort, each on its own wall spring; the bodies remain uncoupled
+  * Same kinds, now per body and spring; object index and designation enter
   * R1 contamination; R5 false identity
-  * Stage 2; CaseStudies/HarmonicOscillator Attempt 4; interim blueprint T1
-  * Planned
+  * Stage 2; CaseStudies/HarmonicOscillator Attempt 4; HCP L1
+  * Included here
 *
   * 2
   * Pair as a system
@@ -152,9 +152,9 @@ finally states what must hold:
 Every lesson line is quoted live from the `HCP` library through SubVerso anchors; the
 blueprint build refuses drift. This HCP sequence replaces the earlier Tutorial chapters.
 The `Tutorial.HarmonicOscillatorRequirements` example remains cited by
-MetrologicalModularity, and the existing T1 object chapter remains interim, to be replaced
-by L1.
+MetrologicalModularity. L1 introduces two uncoupled bodies and their separate wall
+springs; the coupling spring and pair-as-system refinement are reserved for L2.
 
 {include 1 PropertyKindCalculusBlueprint.Chapters.HCP.L0_BlackBox}
 
-{include 1 PropertyKindCalculusBlueprint.Chapters.Tutorial.T1_Objects}
+{include 1 PropertyKindCalculusBlueprint.Chapters.HCP.L1_TwoBodies}
