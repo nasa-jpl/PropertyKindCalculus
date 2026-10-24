@@ -1,13 +1,13 @@
 /-
-# The solid sphere's inertia tensor — the subtree's one `sorry`, discharged
+# The solid sphere's inertia tensor
 
-`Physlib/ClassicalMechanics/RigidBody/SolidSphere.lean` states, `@[sorryful]`:
+PhysLib now records `solidSphere_inertiaTensor` as an `informal_lemma` tagged
+`CM-RB-sphereI`, with its formal statement in the docstring. This file proves that
+statement. The proposed upstream change is to replace the informal lemma with this
+proof.
 
 > The moment of inertia tensor of a solid sphere through its center of mass is
 > `2/5 m R^2 * I`.
-
-This file proves it, sorry-free — the directory's patch candidate, in the pilot's
-orthonormality pattern (the offer upstream is a human's to make, AI-POLICY §3.1).
 
 The proof is the textbook computation, carried by three facts:
 
@@ -197,8 +197,8 @@ lemma setIntegral_sq_coord (R : ℝ) (i : Fin 3) :
 
 /-! ## The discharge -/
 
-/-- **The solid sphere's inertia tensor is `(2/5) m R² · 1`** — the statement of
-upstream's `@[sorryful]` `solidSphere_inertiaTensor`, proved. -/
+/-- **The solid sphere's inertia tensor is `(2/5) m R² · 1`** — the formal statement
+of upstream's `solidSphere_inertiaTensor` (`CM-RB-sphereI`), proved here. -/
 theorem solidSphere_inertiaTensor (m R : ℝ≥0) (hr : R ≠ 0) :
     (RigidBody.solidSphere 3 m R).inertiaTensor =
       (2/5 * m.1 * R.1 ^ 2) • (1 : Matrix (Fin 3) (Fin 3) ℝ) := by
@@ -253,4 +253,3 @@ theorem solidSphere_inertiaTensor (m R : ℝ≥0) (hr : R ≠ 0) :
   · simp [h]
 
 end ForPhysLib.ClassicalMechanics.SolidSphereInertia
-

@@ -1,12 +1,13 @@
 /-
 # Exhibit B — ReferenceFrame: the findings
 
-**Source.** `Physlib/SpaceAndTime/ReferenceFrame.lean` and its `API-map.yaml`, probed
+**Source.** `Physlib/SpaceAndTime/ReferenceFrame.lean` and its `API-map.md`, probed
 directly below.
 
-**Finding 1 — requirement 16 asks for one law where there are three (M7).** The API map's
-undone requirement reads: *"…the boost, rotation and translation carrying one to the
-other, together with **the** induced transformation law for frame vectors."* But
+**Finding 1 — one map sentence asks for one law where there are three (M7).** The API map's
+`[TODO]` sentence reads: *"The relative motion of two inertial frames is the boost, rotation
+and translation carrying one to the other, and it induces a transformation law on measured
+components. [TODO]"* But
 `frame.Vector` deliberately records the frame and not the physical role — the module doc
 says the transformation law *"must be supplied by the surrounding definitions"* — so the
 induced law is not a function of the type. Three candidate laws are written below, all of
@@ -14,7 +15,7 @@ type `F.Vector → G.Vector`: geometric transport (right for a displacement), tr
 with the boost subtracted (right for a velocity), transport with the origin shift added
 (right for a relative position). One `example` applies all three to the *same* vector;
 nothing selects, and nothing can. The layer arrives as the design input that makes
-requirement 16 satisfiable: with a kind index the three laws get three types, and the
+map sentence satisfiable: with a kind index the three laws get three types, and the
 wrong pairing stops elaborating.
 
 **Finding 2 — quieter, and not a defect (MR30).** `IsInertial.velocity` has the *same
@@ -23,8 +24,9 @@ type* as the displacement it is defined from, and its defining equation
 because `.val` erased `Time` first. That is the Mathlib-interface tier: the erasure is
 how the scalar action becomes available at all. The kinded restatement
 `origin_displacement_eq` keeps the same proof term (`Classical.choose_spec`) while making
-every erasure a visible `.magnitude` — and it discharges, kinded, the API map's undone
-requirement 17 ("the defining property of an inertial frame's origin velocity").
+every erasure a visible `.magnitude` — and formalizes the API map's `[TODO]` sentence
+stating that over elapsed time the origin is displaced by elapsed time multiplied by its
+constant velocity.
 `#kind_unkinded` measures the surface rather than scoring it.
 
 **The shape of the change is small.** `KVector` below is `frame.Vector` with a kind
@@ -72,9 +74,9 @@ noncomputable def originShiftTransport (F G : ReferenceFrame d) (t : Time) :
   fun v => (ReferenceFrame.Vector.dispEquiv (frame := G) (G.timeEquiv.symm t)).symm
     (ReferenceFrame.Vector.dispEquiv (frame := F) (F.timeEquiv.symm t) v + (F.origin t -ᵥ G.origin t))
 
-/-- **The finding.** All three laws accept the *same* vector — requirement 16's "the
-induced transformation law" is three laws, and `F.Vector` cannot say which one `v`
-deserves. -/
+/-- **The finding.** All three laws accept the *same* vector — the API map's relative-motion
+TODO asks for "a transformation law" where there are three, and `F.Vector` cannot say
+which one `v` deserves. -/
 noncomputable example (F G : ReferenceFrame 3) (t : Time) (u : EuclideanSpace ℝ (Fin 3))
     (v : F.Vector) : G.Vector × G.Vector × G.Vector :=
   (geometricTransport F G t v, boostTransport F G t u v, originShiftTransport F G t v)
@@ -85,7 +87,7 @@ The kind rides along; the components and every structure transfer exactly as bef
 `kComponentEquiv` is the analogue of `componentEquiv`: still the place the kind is
 dropped, still definitional, and it stays exactly where it is. -/
 
-/-- Velocity — what requirement 16's boost acts on; the catalogue's own 3-10.1. -/
+/-- Velocity — what the map's relative-motion TODO's boost acts on; the catalogue's own 3-10.1. -/
 def velocityK : KindOfProperty := (Iso80000.Part3.velocity).kind
 
 /-- Force — sharing `frame.Vector` today with velocity and position; the catalogue's
@@ -125,7 +127,7 @@ accepts today does not elaborate. -/
     (f : KVector F forceK) => v + f
 
 /-- The three laws, three types. Each transport now *names* the kind it is the law for —
-this is requirement 16 made satisfiable. -/
+this makes the API map's relative-motion TODO precise. -/
 noncomputable def kGeometricTransport (F G : ReferenceFrame d) (t : Time) :
     KVector F displacement → KVector G displacement :=
   fun v => ⟨⟨((ReferenceFrame.Vector.dispEquiv (frame := G) (G.timeEquiv.symm t)).symm
@@ -199,4 +201,3 @@ unkinded flow: elapsedQ/t₂ ⇒ elapsedQ/result
 #kind_unkinded inertialBoundary
 
 end ForPhysLib.Exhibits.ReferenceFrame
-

@@ -16,9 +16,9 @@ enforces —
     ([MR30](../REQUIREMENTS.md#mr30-the-unkinded-surface-is-measured)) — unkinded by
     design, counted rather than hidden.
 
-The API-map half of the stage is the `checked_by:` field: the proposed delta to the
-directory's `API-map.yaml` sits beside this file as `Space.checked_by.yaml`, pointing the
-map's existing prose requirements at the modules whose builds now check them.
+The API-map half of the stage is the `checked_by` delta: `Space.checked_by.yaml` sits
+beside this file and anchors its entries to the numbered Lean References and prose
+sentences in the directory's `API-map.md`.
 -/
 
 module
@@ -120,4 +120,3 @@ unkinded flow: rawDistance/q ⇒ rawDistance/dq
 #guard_msgs (whitespace := lax) in #kind_unkinded ingestBoundary
 
 end ForPhysLib.Audits.Space
-

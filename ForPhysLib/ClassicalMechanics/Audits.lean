@@ -27,10 +27,11 @@ files included. Five gates, each in the discipline its command enforces:
     coherent in PhysLib's dimension group from one command no file-local pin can
     drift from.
 
-The API-map half of the stage is the `checked_by:` field. Neither subtree has an
-`API-map.yaml` upstream — the requirement ledger is the `TODO` commands and one
-`@[sorryful]` lemma — so the proposed delta beside this file
-(`ClassicalMechanics.checked_by.yaml`) keys on those texts.
+The API-map half of the stage is the `checked_by` delta. The RigidBody subtree has an
+`API-map.md`; its matching entries are anchored to Lean References, while the
+HarmonicOscillator tracking items have no map counterpart. The solid-sphere entry
+points to the map's `[TODO]` sentence and proposes replacing `CM-RB-sphereI` with the
+formal proof in `SolidSphereInertia.lean`.
 -/
 
 module
@@ -337,4 +338,3 @@ unkinded output rawTrajectoryValue/result : ℝ
 #guard_msgs (whitespace := lax) in #kind_unkinded ingestBoundary
 
 end ForPhysLib.ClassicalMechanics.Audits
-

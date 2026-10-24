@@ -28,11 +28,10 @@ tier that sanctions it. Five gates, each in the discipline its command enforces:
     aggregation license `energyDiff` (a `±` edge) — dimensionally coherent in
     PhysLib's dimension group, from one command no file-local pin can drift from.
 
-The API-map half of the stage is the `checked_by:` field. This directory has no
-`API-map.yaml` upstream — its requirement ledger is the `TODO` command list opening
-`Eigenstates.lean` — so the proposed delta beside this file
-(`HarmonicOscillator.checked_by.yaml`) keys on those TODO texts, pointing each at the
-ForPhysLib module whose build now checks the claim or holds its statement ready.
+The API-map half of the stage is the `checked_by` delta. No
+`Physlib/QuantumMechanics/HarmonicOscillator/API-map.md` exists upstream, so the entries
+in `HarmonicOscillator.checked_by.yaml` preserve source TODO tracking and are annotated
+as having no map counterpart rather than inventing Lean References.
 -/
 
 module
@@ -188,4 +187,3 @@ unkinded flow: momentumSigmaQ/ψ ⇒ momentumSigmaQ/_1
 #guard_msgs (whitespace := lax) in #kind_unkinded ingestBoundary
 
 end ForPhysLib.QuantumMechanics.HarmonicOscillator.Audits
-

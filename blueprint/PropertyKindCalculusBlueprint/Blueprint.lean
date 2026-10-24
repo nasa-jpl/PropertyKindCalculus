@@ -1296,8 +1296,8 @@ engineering sense: not "did we build the calculus right" (verification — the
 traceability matrix below) but "did we specify the right calculus". The instrument is
 the ForPhysLib benchmark (`ForPhysLib/REQUIREMENTS.md`, MR1–MR32): thirty-two
 requirements stated design-neutrally against concrete physics — the same harmonic
-oscillator typed four honest ways, and a survey of PhysLib's twelve
-`API-map.yaml` files — where each MR is scored not only for PKC but for three rival
+oscillator typed four honest ways, and a survey of PhysLib's twelve Markdown
+`API-map.md` files, whose prose cites numbered Lean References — where each MR is scored not only for PKC but for three rival
 designs and for a shipping library none of them authored. Where an MR restates an R,
 that is the R *validated adversarially*: R1 asserts PKC discriminates within a
 dimension; MR4 hands the same claim a physics problem that plain reals, `WithDim`, and

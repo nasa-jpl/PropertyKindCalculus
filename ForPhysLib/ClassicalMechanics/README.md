@@ -14,8 +14,9 @@ crowded onto few dimensions — six kinds at the joule, two ω's at `T⁻¹`, tw
 `T` — and everything upstream types at `ℝ` or `EuclideanSpace ℝ (Fin 1)`, so every one
 of those coincidences is invisible there. The stress test the campaign named for it —
 `equationOfMotion_tfae` surviving verbatim — passed at the strongest possible grade.
-The verdict: **no core change forced, no upstream API needed — and the subtree's one
-`sorry` is discharged.**
+The verdict: **no core change forced, no upstream API needed — and
+`SolidSphereInertia.lean` formalizes the statement of upstream's `CM-RB-sphereI`
+informal lemma.**
 
 ## The files
 
@@ -28,8 +29,8 @@ The verdict: **no core change forced, no upstream API needed — and the subtree
 | `Kinded/RigidBody.lean` | Stage 2 | the functional's moments with the parallel-axis theorem consumed, the two ω-tensors, `v = V + ω × r` fully table-expressed, the rotational contraction, the motion-preservation theorems |
 | `Operators.lean` | Stage 3 | seven registrations on their Stage-1 laws, each demonstrated at a source equation; the `@[kindConst]` full turn; the shared-letter refusal at the table |
 | `Audits.lean` | Stage 4 | the directory namespace under CI: the 42-site boundary audit pinned, silent clean/ratchet/dimensional gates, a nine-member interior gated empty, the 30-reading ingest boundary measured |
-| `ClassicalMechanics.checked_by.yaml` | Stage 4 | the API-map delta, keyed by the upstream `TODO` texts and the one `@[sorryful]` lemma |
-| `SolidSphereInertia.lean` | after the ladder | **the patch candidate**: upstream's `sorry` — the solid sphere's inertia tensor is `(2/5) m R² · 1` — discharged |
+| `ClassicalMechanics.checked_by.yaml` | Stage 4 | the API-map delta, anchored to the RigidBody map's Lean References and with unmatched items noted |
+| `SolidSphereInertia.lean` | after the ladder | proves the formal statement of upstream's `CM-RB-sphereI` informal lemma; proposed replacement proof |
 
 ## The cost line
 
@@ -44,7 +45,7 @@ What the layer costs, measured — every number quoting a build artifact at this
 | boundary sites | 42 — 29 ingests, 8 crossings, 1 constant, 3 emissions, 1 carrier-vocabulary; **0 raw mints**, every attestation's reason in the pin | the pinned `#kind_boundary_audit` in `Audits.lean` |
 | unkinded surface | interior: 0 positions across a **9-member** end-to-end-kinded scope (gated); ingest boundary: 72 naked positions, 68 flows over 30 readings — the system structures, the data structures, the coordinates | the `#kind_unkinded` ledgers in `Audits.lean` |
 | lines | 2,509 total, of which 1,104 are code (the rest is documentation, including the pinned audit reports); the mirrored source is 3,814 total / 1,718 code, none of which changed | `wc -l`; comment-stripped count |
-| proof debt | 0 `sorry` here — and **1 upstream `sorry` discharged** (`solidSphere_inertiaTensor`, the two subtrees' only one); eighteen key theorems, pentad and discharge included, at `propext, Classical.choice, Quot.sound` | `#print axioms` |
+| proof debt | 0 local `sorry`; `SolidSphereInertia.lean` proves the `CM-RB-sphereI` statement, and eighteen key theorems are at `propext, Classical.choice, Quot.sound` | `#print axioms` |
 
 One cost note the table cannot carry: the boundary is *wide* here by the physics'
 nature — upstream's objects are structures of bare reals, so every reading is a
@@ -122,8 +123,8 @@ checked, with the layer on.
     parallel-axis theorem is then a *same-kind sum* at 4-7, consumed with upstream's
     proof verbatim, and `v = V + ω × r` is fully table-expressed — two edge products
     and a same-kind subtraction per cross-product component.
-12. **The subtree's one `sorry` is discharged — the patch candidate.**
-    `solidSphere_inertiaTensor` (`(2/5) m R² · 1`, `@[sorryful]` upstream) is proved in
+12. **The informal solid-sphere result has a formal proof.**
+    `solidSphere_inertiaTensor` (`(2/5) m R² · 1`, upstream tag `CM-RB-sphereI`) is proved in
     `SolidSphereInertia.lean`: the off-diagonal moments vanish under a
     coordinate-reflection isometry, the diagonal moments agree under a coordinate swap,
     and the radial integral reduces by Mathlib's Haar-to-sphere machinery — with

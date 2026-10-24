@@ -19,7 +19,7 @@ a term this module could import. What is collected here is the propositions.
    Stage 1's laws are the two authored edges, Stage 2's crown theorem closes a kinded
    goal with the library's own metric-is-norm law, Stage 3's operator products erase.
 2. **Each exhibit's headline verdict is a theorem.** A's contraction bridges to
-   PhysLib's rotational energy; B discharges the API map's requirement 17 with
+   PhysLib's rotational energy; B formalizes the API map's origin-velocity TODO with
    PhysLib's own proof term; C proves `ω² = k/m` kinded and the one-definition/two-
    carrier law; D proves the total and refutes the under-count; E proves the Gaussian
    dimension coincidence against decided kind distinctness — the confirmation pair.
@@ -105,9 +105,9 @@ end ExhibitA
 section ExhibitB
 open Exhibits.ReferenceFrame ClassicalMechanics
 
-/-- **B's discharge of requirement 17.** The defining property of an inertial frame's
-origin velocity — listed `done: false` in the API map — proved with PhysLib's own proof
-term, every erasure a visible `.magnitude`. -/
+/-- **B's formalization of the map's TODO statement.** Over elapsed time the origin is
+displaced by elapsed time multiplied by its constant velocity, proved with PhysLib's own
+proof term, every erasure a visible `.magnitude`. -/
 theorem exhibitB_requirement17 {d : ℕ} (F : ReferenceFrame d) (h : F.IsInertial)
     (t₁ t₂ : Time) :
     (Kinded.Space.displacementQ (F.origin t₂) (F.origin t₁)).magnitude
@@ -115,8 +115,8 @@ theorem exhibitB_requirement17 {d : ℕ} (F : ReferenceFrame d) (h : F.IsInertia
   origin_displacement_eq F h t₁ t₂
 
 /-- **B's finding, typed.** The three candidate transformation laws inhabit one type —
-the fact that makes requirement 16 unsatisfiable as written. Stated here as the triple
-PhysLib's `Vector` cannot refuse. -/
+the fact that makes the map's relative-motion TODO under-specified as written. Stated
+here as the triple PhysLib's `Vector` cannot refuse. -/
 noncomputable def exhibitB_three_laws_one_type (F G : ReferenceFrame 3) (t : Time)
     (u : EuclideanSpace ℝ (Fin 3)) :
     (F.Vector → G.Vector) × (F.Vector → G.Vector) × (F.Vector → G.Vector) :=
@@ -222,4 +222,3 @@ theorem exhibitE_comparable_yet_refused :
 end ExhibitE
 
 end ForPhysLib.Scorecard
-

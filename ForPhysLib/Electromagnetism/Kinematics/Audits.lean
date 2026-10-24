@@ -24,11 +24,9 @@ probe files included. Five gates, each in the discipline its command enforces:
     Feasibility's probe-era entries, and Stage 3's registrations, coherent in
     PhysLib's dimension group from one command no file-local pin can drift from.
 
-The API-map half of the stage is the `checked_by:` field. This directory has no
-`API-map.yaml` upstream — its requirement ledger is the `TODO` commands spread through
-the chain — so the proposed delta beside this file (`Kinematics.checked_by.yaml`) keys
-on those TODO texts, pointing each at the ForPhysLib module whose build now checks the
-claim or holds its statement ready.
+The API-map half of the stage is the `checked_by` delta. `Kinematics.checked_by.yaml`
+anchors the matched electric-field claim to the numbered Lean Reference in the
+directory's `API-map.md`; the other campaign TODOs have no counterpart in that map.
 -/
 
 module
@@ -261,4 +259,3 @@ unkinded output rawElectricField/result : EuclideanSpace ℝ (Fin d)
 #guard_msgs (whitespace := lax) in #kind_unkinded ingestBoundary
 
 end ForPhysLib.Electromagnetism.Kinematics.Audits
-

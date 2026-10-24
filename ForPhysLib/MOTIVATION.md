@@ -27,8 +27,9 @@ Three separate modules, by three separate authors, write down the thing this lay
    different physical roles, units, and transformation laws must be supplied by the
    surrounding definitions.**"*
 
-3. `ReferenceFrame/API-map.yaml` — *"…so they share one carrier here; the physical dimension,
-   units and transformation law belong to whatever definition supplies the quantity."*
+3. `ReferenceFrame/API-map.md` — *"They add and scale componentwise, inheriting the additive
+   and scalar structure of their entries, regardless of which quantity they stand for; the
+   physical dimension, units and transformation law belong to whatever supplies the quantity. [9]"*
 
 The second and third defer three things: **physical role**, **units**, **transformation
 law**. Those are `KindOfProperty`, `Dimension` and `Variance` — which together are
@@ -82,8 +83,9 @@ number attached.
 
 Each is a well-built type — `LengthUnit` and `TimeUnit` carry scaling, ratios and concrete
 units with their relations. None is reachable from the quantity it measures. The `Space`
-API map records requirement 12 as `done: true` for `LengthUnit`, and it *is* done, exactly as
-written. See [MR29](REQUIREMENTS.md#mr29-every-satisfied-requirement-has-a-machine-checkable-witness).
+API map says, "A choice of length unit rescales lengths, and concrete units such as the metre
+are available. [16]" `LengthUnit` exists and is present as stated, but is still not imported
+by `Space`. See [MR29](REQUIREMENTS.md#mr29-every-satisfied-requirement-has-a-machine-checkable-witness).
 
 ### M5. A correctness constraint enforced by not using an abbreviation
 
@@ -150,11 +152,10 @@ have the same type with the second and third arguments playing opposite roles, a
 
 ### M7. A stated API requirement that cannot be satisfied as written
 
-`ReferenceFrame`'s API map lists five requirements as `done: false`. One of them:
+`ReferenceFrame/API-map.md` has five `[TODO]` sentences. One of them:
 
-> *"The API shall contain the relative motion of two inertial frames, expressed as the boost,
-> rotation and translation carrying one to the other, **together with the induced
-> transformation law for frame vectors**."*
+> The relative motion of two inertial frames is the boost, rotation and translation carrying one to
+> the other, and it induces a transformation law on measured components. [TODO]
 
 **There is no single such law.** Under a Galilean boost `u` with rotation `R`, among the five
 quantities the Overview names as sharing the carrier:
@@ -178,9 +179,11 @@ requirement writable.
 
 ### M8. The API maps are a ready-made adoption vehicle
 
-Twelve `API-map.yaml` files in the two directories surveyed, with a stable schema and evident
-maintenance. Adding one `checked_by:` field converts human attestation into CI, and upgrades
-an artifact the project already invested in rather than asking it to adopt a new one.
+PhysLib's API maps are Markdown documents whose prose cites numbered Lean References; content
+not yet formalized is marked `[TODO]`. A separate `checked_by` delta can anchor to a numbered
+reference, copy its file and declarations, quote the citing sentence, and record the modules
+whose builds check it. This upgrades an artifact the project already invested in rather than
+asking it to adopt a new one.
 
 Nothing else on offer has that leverage-to-intrusiveness ratio. See
 [MR29](REQUIREMENTS.md#mr29-every-satisfied-requirement-has-a-machine-checkable-witness).
