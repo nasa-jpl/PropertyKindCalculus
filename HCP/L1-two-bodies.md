@@ -4,7 +4,7 @@ id: l1-two-bodies
 persona: 'PhysLib contributor'
 layer: PKC
 pull: 'Two bodies are now in view, one inside each oscillator: whose mass is this?'
-improvement: 'Make the black-box oscillator the bearer so its mass and stiffness share one checked index.'
+improvement: 'Give each rig a nominal identity so identical oscillator parameters still describe distinct systems.'
 concepts:
   - informal: 'two black-box harmonic oscillators, each with one body and wall spring'
     formal: 'Oscillator.A and Oscillator.B share oscillatorS'
@@ -13,7 +13,7 @@ concepts:
     formal: 'Quantity springConstantK ℝ / Quantity massK ℝ'
     where: 'HCP.L1_TwoBodies#kinded_bearer_free_cross_oscillators'
   - informal: 'a quantity about one particular oscillator'
-    formal: 'IndividualQuantity o massK ℝ and IndividualQuantity o springConstantK ℝ share o'
+    formal: 'IndividualQuantity o massK ℝ and IndividualQuantity o springConstantK ℝ share a rig-indexed OscillatorOf r bearer'
     where: 'HCP.L1_TwoBodies#oscillator_indexed_quantities'
   - informal: 'a catalogue entry shared by a sort'
     formal: 'dedicatedFor uses Sorted.sortOf rather than the object index'
@@ -21,7 +21,7 @@ concepts:
 artifacts: ['Lean lesson HCP.L1_TwoBodies', 'L1 black-box oscillator card']
 tools: ['lake build HCP', 'python3 HCP/check-hcp.py']
 exercises: 7
-disclosure: ['cross-oscillator bare-real substitution', 'bearer-free kinded quotient', 'oscillator sort and designation', 'same-oscillator k/m quotient', 'shared dedicated kind', 'cross-oscillator bearer refusals', 'nominal object has no sort']
+disclosure: ['cross-oscillator bare-real substitution', 'bearer-free kinded quotient', 'oscillator sort and designation', 'same-oscillator k/m quotient', 'shared dedicated kind', 'cross-oscillator and cross-rig bearer refusals', 'nominal object has no sort']
 owner: 'PKC methodology lead'
 state:
   completed: []
@@ -39,14 +39,16 @@ can and cannot distinguish.
 
 There are two bodies now, one inside each black-box oscillator — whose mass is this? Bare
 reals and bearer-free kinded values let one oscillator's mass enter another's formula.
-L1 indexes both mass and stiffness by the oscillator, so the oscillator's own `k/m` is
-accepted and a cross-oscillator quotient is refused.
+L1 indexes both mass and stiffness by a model-scoped oscillator, so the oscillator's own
+`k/m` is accepted and cross-oscillator operations are refused. A second `TwoOscillators`
+model is another system even when it uses the same oscillator names and parameter values;
+rig identity is nominal, not derived from the physical parameters.
 
 ## 3. Small rigorous improvement
 
 | Question | Context change | Attribute change | Risk shown | PhysLib stage |
 |---|---|---|---|---|
-| There are two bodies now — whose mass is this? | Two particulars, Oscillator A and B, of one sort (harmonic oscillator); each black box contains one point-like body and its own wall spring. The oscillators do not interact. L2 opens each box into body and spring(s), and introduces their whole/part relations. | No new kinds: mass and stiffness now share the oscillator bearer, allowing its `k/m` quotient. | R1 cross-system contamination (B's mass in A's formula); R5 false identity (a constant designation). | Stage 2: the kinded form carries its bearer. |
+| There are two bodies now — whose mass is this? | Two particulars, Oscillator A and B, of one sort (harmonic oscillator); each black box contains one point-like body and its own wall spring. The oscillators do not interact. Rig identity is nominal: identical oscillator parameters under R₁ and R₂ still make two systems. L2 opens each box into body and spring(s), and introduces their whole/part relations. | No new kinds: mass and stiffness share a rig-indexed oscillator bearer, allowing its `k/m` quotient. | R1 cross-system contamination (B's mass in A's formula or same-named A masses across rigs); R5 false identity (a constant designation). | Stage 2: the kinded form carries its bearer. |
 
 Under L0's assumptions, each oscillator is a homogeneous, rigid, point-like body on one
 ideal, massless spring attached to a fixed, infinitely massive wall, along a line. The
@@ -63,8 +65,8 @@ box into body and spring(s) and considers the pair as a whole.
 | 2 | Form the same spring-constant/mass quotient from kinded, bearer-free values. | `HCP.L1_TwoBodies#kinded_bearer_free_cross_oscillators` | The registered `k/m` edge accepts values from different oscillators. |
 | 3 | Declare oscillators A and B, give both the harmonic-oscillator sort, and compare their sorts. | `HCP.L1_TwoBodies#oscillator_context_and_sort` | Two particulars instantiate one sort. |
 | 4 | Give the oscillators distinct designations and prove a constant designation is not injective. | `HCP.L1_TwoBodies#designation` | A valid `Designated` instance cannot collapse distinct oscillators. |
-| 5 | Index mass and stiffness by one oscillator, form its `k/m`, and compare the mass catalogue entries. | `HCP.L1_TwoBodies#oscillator_indexed_quantities` | The accepted quotient reads the oscillator's fields; the dedicated mass kind is shared. |
-| 6 | Try B's mass in A's slot, divide A's stiffness by B's mass, and add the two masses. | `HCP.L1_TwoBodies#refused_cross_oscillator` | All three cross-oscillator operations are refused by the object index. Total mass is meaningful, but whose total requires a whole; that is L2. |
+| 5 | Index mass and stiffness by one rig-scoped oscillator, form its `k/m`, and compare the mass catalogue entries. | `HCP.L1_TwoBodies#oscillator_indexed_quantities` | The accepted quotient reads the oscillator's fields; the dedicated mass kind is shared. |
+| 6 | Try B's mass in A's slot, divide A's stiffness by B's mass, add the two masses, and add same-named A masses from R₁ and R₂ with identical parameters. | `HCP.L1_TwoBodies#refused_cross_oscillator` | The oscillator index rejects the first three; the nominal rig index rejects the cross-system addition. Total mass is meaningful, but whose total requires a whole; that is L2. |
 | 7 | Ask for the mass kind dedicated to a nominal object with no sort. | `HCP.L1_TwoBodies#refused_unsorted_object` | A nominal `Object` cannot supply the `Sorted` instance required by `dedicatedFor`. |
 
 ## 5. AI assistance contract
@@ -72,6 +74,7 @@ box into body and spring(s) and considers the pair as a whole.
 - Keep the contributor's vocabulary: oscillator, body, mass, spring, and bearer.
 - Quote each Lean check from its anchored L1 region; do not redefine PhysLib or PKC declarations.
 - Distinguish a bearer-free `Quantity` from an `IndividualQuantity` indexed by an oscillator.
+- Distinguish the oscillator label from its `OscillatorOf r` bearer, which is scoped to a nominal rig identity.
 - Treat each oscillator as the whole at L1; body and spring become separate bearers when L2 opens the box.
 - Treat the guarded elaboration messages as evidence only for the refusals they actually show.
 
@@ -85,6 +88,7 @@ box into body and spring(s) and considers the pair as a whole.
 | Can both oscillators be given one constant designation? | `designation` | The function is not injective, so it cannot witness `Designated Oscillator`. |
 | Does the shared oscillator index admit its own `k/m` and refuse cross-oscillator `k/m`? | `oscillator_indexed_quantities`, `refused_cross_oscillator` | Yes; same-oscillator division is accepted, while A's stiffness over B's mass is refused. |
 | Does the object index keep their masses apart? | `refused_cross_oscillator` | Yes; assignment and addition across A and B are refused. |
+| Can same-named oscillator A masses from R₁ and R₂ be added when their parameters are identical? | `refused_cross_oscillator` | No; `OscillatorOf .R₁` and `OscillatorOf .R₂` are distinct bearers by nominal identity. |
 | Can a nominal name reach a dedicated kind? | `refused_unsorted_object` | Not without a sort; the nominal `Object` has no `Sorted` instance. |
 
 ## 7. System-context card
@@ -98,6 +102,8 @@ box into body and spring(s) and considers the pair as a whole.
 | Outside | Walls | Fixed, infinitely massive walls | Each ideal spring has its own fixed-wall boundary. |
 | Outside | Lines | One-dimensional lines of motion | Each oscillator's body remains constrained to its line. |
 
-The Lean model takes each complete oscillator as its bearer: `massOf`, `stiffnessOf`,
-and `omegaSqOf` share the oscillator index. The box opens into body and spring(s) at L2,
-where the question of which component bears mass or stiffness becomes explicit.
+The Lean model takes each complete oscillator as its bearer, scoped to a nominal `Rig`:
+`massOf`, `stiffnessOf`, and `omegaSqOf` share an `OscillatorOf r` index. Two models with
+identical oscillator parameters remain distinct when their rig identities differ. The
+box opens into body and spring(s) at L2, where the question of which component bears mass
+or stiffness becomes explicit.

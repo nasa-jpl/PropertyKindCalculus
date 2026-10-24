@@ -18,9 +18,10 @@ tag := "hcp-l1"
 
 Two bodies are now in view, one inside each black-box oscillator: whose mass is this? Bare
 reals and bearer-free kinded values let one oscillator's mass enter another's formula.
-L1 indexes mass and stiffness by the oscillator, so its own `k/m` is accepted and a
-cross-oscillator quotient is refused. Each oscillator is the whole characterized by
-`ω₀`; this is why `k` and `m` share its index. L2 opens each box into body and spring(s),
+L1 indexes mass and stiffness by a rig-scoped oscillator, so its own `k/m` is accepted and
+cross-oscillator operations are refused. Rig identity is nominal: identical parameter
+values under R₁ and R₂ still denote two systems. Each oscillator is the whole characterized
+by `ω₀`; this is why `k` and `m` share its index. L2 opens each box into body and spring(s),
 revisits which component bears mass and stiffness, and considers the pair as a whole.
 
 _1. Bare reals._ Put oscillator B's mass in oscillator A's frequency radicand. The
@@ -74,24 +75,32 @@ theorem constant_designation_not_injective :
 ```
 
 _5. Carry the bearer._ The oscillator is the whole characterized by `ω₀`; mass and
-stiffness therefore share its index. Under L0's massless-spring, fixed-wall assumptions,
-these magnitudes read the body's mass and spring's stiffness. The existing kind table
-supplies the quotient law; the magnitude theorem reads the real fields. The catalogue
-entry is shared because both oscillators have the same sort:
+stiffness therefore share its index. `OscillatorOf r` scopes each bearer to a nominal rig
+identity independent of parameter values, so identical oscillators under R₁ and R₂ remain
+distinct systems. Under L0's massless-spring, fixed-wall assumptions, these magnitudes
+read the body's mass and spring's stiffness. The existing kind table supplies the quotient
+law; the magnitude theorem reads the real fields. The catalogue entry remains shared
+because both oscillators have the same sort:
 
 ```anchor oscillator_indexed_quantities
-structure TwoOscillators where
+inductive Rig | R₁ | R₂
+deriving DecidableEq, Repr
+
+structure TwoOscillators (r : Rig) where
   osc : Oscillator → ClassicalMechanics.HarmonicOscillator
 
-def massOf (sys : TwoOscillators) (o : Oscillator) :
+structure OscillatorOf (r : Rig) where
+  osc : Oscillator
+
+def massOf {r : Rig} (sys : TwoOscillators r) (o : OscillatorOf r) :
     IndividualQuantity o ForPhysLib.ClassicalMechanics.massK ℝ :=
-  ⟨(sys.osc o).m⟩
+  ⟨(sys.osc o.osc).m⟩
 
-def stiffnessOf (sys : TwoOscillators) (o : Oscillator) :
+def stiffnessOf {r : Rig} (sys : TwoOscillators r) (o : OscillatorOf r) :
     IndividualQuantity o ForPhysLib.ClassicalMechanics.springConstantK ℝ :=
-  ⟨(sys.osc o).k⟩
+  ⟨(sys.osc o.osc).k⟩
 
-def omegaSqOf (sys : TwoOscillators) (o : Oscillator) :
+def omegaSqOf {r : Rig} (sys : TwoOscillators r) (o : OscillatorOf r) :
     IndividualQuantity o ForPhysLib.ClassicalMechanics.omegaSquaredK ℝ :=
   IndividualQuantity.div
     (KindDiv.law
@@ -101,8 +110,8 @@ def omegaSqOf (sys : TwoOscillators) (o : Oscillator) :
     (stiffnessOf sys o)
     (massOf sys o)
 
-theorem omegaSqOf_magnitude (sys : TwoOscillators) (o : Oscillator) :
-    (omegaSqOf sys o).magnitude = (sys.osc o).k / (sys.osc o).m := by
+theorem omegaSqOf_magnitude {r : Rig} (sys : TwoOscillators r) (o : OscillatorOf r) :
+    (omegaSqOf sys o).magnitude = (sys.osc o.osc).k / (sys.osc o.osc).m := by
   rw [omegaSqOf, IndividualQuantity.div_magnitude, stiffnessOf, massOf]
 
 def whole : Component := ⟨"whole"⟩
@@ -113,58 +122,79 @@ theorem mass_kind_shared_by_oscillators :
   KindOfProperty.dedicatedFor_congr rfl whole
 ```
 
+The sort-level catalogue comparison uses `Sorted Oscillator`; the rig-scoped wrapper
+needs no additional `Sorted` or `Designated` instance.
+
 _6. Refuse cross-oscillator substitution._ B's mass cannot fill A's slot, A's stiffness
 cannot be divided by B's mass, and the two individual quantities cannot be added at this
-layer. Total mass is physically meaningful, but whose total requires a whole; that is
-L2's question:
+layer. Nor can same-named oscillator A masses with identical parameters be added across
+R₁ and R₂: rig identity is nominal, so these are two systems. Total mass is physically
+meaningful, but whose total requires a whole; that is L2's question:
 
 ```anchor refused_cross_oscillator
 /--
 error: Type mismatch
-  massOf sys Oscillator.B
+  massOf sys { osc := Oscillator.B }
 has type
-  IndividualQuantity Oscillator.B ForPhysLib.ClassicalMechanics.massK ℝ
+  IndividualQuantity { osc := Oscillator.B } ForPhysLib.ClassicalMechanics.massK ℝ
 but is expected to have type
-  IndividualQuantity Oscillator.A ForPhysLib.ClassicalMechanics.massK ℝ
+  IndividualQuantity { osc := Oscillator.A } ForPhysLib.ClassicalMechanics.massK ℝ
 -/
 #guard_msgs in
-example (sys : TwoOscillators) :
-    IndividualQuantity Oscillator.A ForPhysLib.ClassicalMechanics.massK ℝ :=
-  massOf sys Oscillator.B
+example {r : Rig} (sys : TwoOscillators r) :
+    IndividualQuantity (⟨.A⟩ : OscillatorOf r)
+      ForPhysLib.ClassicalMechanics.massK ℝ :=
+  massOf sys ⟨.B⟩
 
 /--
 error: Application type mismatch: The argument
-  massOf sys Oscillator.B
+  massOf sys { osc := Oscillator.B }
 has type
-  IndividualQuantity Oscillator.B ForPhysLib.ClassicalMechanics.massK ℝ
+  IndividualQuantity { osc := Oscillator.B } ForPhysLib.ClassicalMechanics.massK ℝ
 but is expected to have type
-  IndividualQuantity Oscillator.A ForPhysLib.ClassicalMechanics.massK ℝ
+  IndividualQuantity { osc := Oscillator.A } ForPhysLib.ClassicalMechanics.massK ℝ
 in the application
-  IndividualQuantity.add ⋯ (massOf sys Oscillator.A) (massOf sys Oscillator.B)
+  IndividualQuantity.add ⋯ (massOf sys { osc := Oscillator.A }) (massOf sys { osc := Oscillator.B })
 -/
 #guard_msgs in
-example (sys : TwoOscillators) :=
+example {r : Rig} (sys : TwoOscillators r) :=
   IndividualQuantity.add DifferenceKind.ofScale
-    (massOf sys Oscillator.A) (massOf sys Oscillator.B)
+    (massOf sys ⟨.A⟩) (massOf sys ⟨.B⟩)
 
 /--
 error: Application type mismatch: The argument
-  massOf sys Oscillator.B
+  massOf sys { osc := Oscillator.B }
 has type
-  IndividualQuantity Oscillator.B ForPhysLib.ClassicalMechanics.massK ℝ
+  IndividualQuantity { osc := Oscillator.B } ForPhysLib.ClassicalMechanics.massK ℝ
 but is expected to have type
-  IndividualQuantity Oscillator.A ForPhysLib.ClassicalMechanics.massK ℝ
+  IndividualQuantity { osc := Oscillator.A } ForPhysLib.ClassicalMechanics.massK ℝ
 in the application
-  IndividualQuantity.div h (stiffnessOf sys Oscillator.A) (massOf sys Oscillator.B)
+  IndividualQuantity.div h (stiffnessOf sys { osc := Oscillator.A }) (massOf sys { osc := Oscillator.B })
 -/
 #guard_msgs in
-example (sys : TwoOscillators) :=
+example {r : Rig} (sys : TwoOscillators r) :=
   let h :=
     KindDiv.law
       (k₁ := ForPhysLib.ClassicalMechanics.springConstantK)
       (k₂ := ForPhysLib.ClassicalMechanics.massK)
       (k := ForPhysLib.ClassicalMechanics.omegaSquaredK)
-  IndividualQuantity.div h (stiffnessOf sys .A) (massOf sys .B)
+  IndividualQuantity.div h (stiffnessOf sys ⟨.A⟩) (massOf sys ⟨.B⟩)
+
+/--
+error: Application type mismatch: The argument
+  massOf { osc := o } { osc := Oscillator.A }
+has type
+  IndividualQuantity (@OscillatorOf.mk Rig.R₂ Oscillator.A) ForPhysLib.ClassicalMechanics.massK ℝ
+but is expected to have type
+  IndividualQuantity (@OscillatorOf.mk Rig.R₁ Oscillator.A) ForPhysLib.ClassicalMechanics.massK ℝ
+in the application
+  IndividualQuantity.add ⋯ (massOf { osc := o } { osc := Oscillator.A }) (massOf { osc := o } { osc := Oscillator.A })
+-/
+#guard_msgs in
+example (o : Oscillator → ClassicalMechanics.HarmonicOscillator) :=
+  IndividualQuantity.add DifferenceKind.ofScale
+    (massOf (⟨o⟩ : TwoOscillators .R₁) ⟨.A⟩)
+    (massOf (⟨o⟩ : TwoOscillators .R₂) ⟨.A⟩)
 ```
 
 _7. A name is not a sort._ A nominal `Object` does not supply `Sorted System`, so the
