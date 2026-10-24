@@ -26,6 +26,10 @@ deriving DecidableEq, Repr
 inductive Spring | kA | kC | kB
 deriving DecidableEq, Repr
 
+/--
+One pair name is one system; its records are states, configurations, or rival estimates to
+compare. Different names denote distinct systems.
+-/
 inductive PairId | P | Q
 deriving DecidableEq, Repr
 
@@ -56,6 +60,7 @@ instance : Designated Spring where
 structure CoupledPair (π : PairId) where
   osc : Body → ClassicalMechanics.HarmonicOscillator
   kC : ℝ
+  extension : Spring → ℝ
 
 structure PartOf (π : PairId) where
   part : Body ⊕ Spring
@@ -81,6 +86,38 @@ def stiffnessOf {π : PairId} (p : CoupledPair π) (s : Spring) :
       (Composite.part (σ := pairS) (springPart π s))
       ForPhysLib.ClassicalMechanics.springConstantK ℝ :=
   ⟨springMagnitude p s⟩
+
+def extensionOf {π : PairId} (p : CoupledPair π) (s : Spring) :
+    IndividualQuantity
+      (Composite.part (σ := pairS) (springPart π s))
+      ForPhysLib.ClassicalMechanics.displacementK ℝ :=
+  ⟨p.extension s⟩
+
+def couplingSpringExtensionDifference
+    (compressed stretched : CoupledPair .P) :
+    IndividualQuantity
+      (Composite.part (σ := pairS) (springPart .P .kC))
+      ForPhysLib.ClassicalMechanics.displacementK ℝ :=
+  IndividualQuantity.add DifferenceKind.ofScale
+    (extensionOf stretched .kC)
+    (-(extensionOf compressed .kC))
+
+#guard_msgs in
+example (compressed stretched : CoupledPair .P) :
+    IndividualQuantity
+      (Composite.part (σ := pairS) (springPart .P .kC))
+      ForPhysLib.ClassicalMechanics.displacementK ℝ :=
+  couplingSpringExtensionDifference compressed stretched
+
+theorem couplingSpringExtensionDifference_magnitude
+    (compressed stretched : CoupledPair .P) :
+    (couplingSpringExtensionDifference compressed stretched).magnitude =
+      stretched.extension .kC - compressed.extension .kC := by
+  simp [couplingSpringExtensionDifference, IndividualQuantity.add_magnitude,
+    IndividualQuantity.neg_magnitude, extensionOf]
+  change stretched.extension .kC + (-(compressed.extension .kC)) =
+    stretched.extension .kC - compressed.extension .kC
+  ring
 -- ANCHOR_END: opened_pair
 
 -- ANCHOR: pair_mass
@@ -132,8 +169,8 @@ in the application
 -/
 #guard_msgs in
 example (o : Body → ClassicalMechanics.HarmonicOscillator) :=
-  let p : CoupledPair .P := ⟨o, 2⟩
-  let q : CoupledPair .Q := ⟨o, 2⟩
+  let p : CoupledPair .P := ⟨o, 2, fun _ => 0⟩
+  let q : CoupledPair .Q := ⟨o, 2, fun _ => 0⟩
   IndividualQuantity.add (k := ForPhysLib.ClassicalMechanics.massK)
     DifferenceKind.ofScale (pairMass p) (pairMass (π := .Q) q)
 -- ANCHOR_END: refused_whole_part
