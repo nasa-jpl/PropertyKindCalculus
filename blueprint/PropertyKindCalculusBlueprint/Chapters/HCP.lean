@@ -6,6 +6,7 @@ import PropertyKindCalculusBlueprint.Chapters.HCP.L0_BlackBox
 import PropertyKindCalculusBlueprint.Chapters.HCP.L1_TwoBodies
 import PropertyKindCalculusBlueprint.Chapters.HCP.L2_ThePair
 import PropertyKindCalculusBlueprint.Chapters.HCP.L3_TheBodyOpens
+import PropertyKindCalculusBlueprint.Chapters.HCP.L4_OutOfTheLine
 
 open Verso.Genre
 open Verso.Genre.Manual
@@ -129,11 +130,11 @@ optionally add damping, and finally state what must hold:
 *
   * 4
   * Out of the line
-  * Motion in 3-D, seen by a moving observer
-  * Position vector, displacement, distance
-  * The bearer erased by `distanceQ` is a pair of points; R8's one carrier has three Galilean laws
-  * Stages 0–3 on Space; Exhibit ReferenceFrame
-  * Planned
+  * Motion in 3-D, seen from the lab and a moving cart
+  * Position vector, displacement, distance, velocity per frame
+  * `distanceQ` erases the pair bearer; bare vectors accept three transport laws, while kinded vectors enforce role and frame
+  * Stages 0–4 on Space; Exhibit ReferenceFrame
+  * Included here
 *
   * 5
   * Losing energy (optional)
@@ -161,7 +162,9 @@ each box, adds the coupling spring, and makes the coupled pair a system of its o
 Mass is borne by the bodies, stiffness by the springs, and the normal-mode angular
 frequency by the pair. L3 opens body A into nominally indexed halves, explains wobble by
 the off-axis centre of mass, and separates body- from lab-frame angular velocity. L4
-revisits motion along one line seen by one observer.
+puts the pair's centres in 3-D space, makes its separation a pair-indexed quantity, and
+states which observer's frame supplies a vector's context. L5 will revisit the remaining
+no-dissipation assumption.
 
 {include 1 PropertyKindCalculusBlueprint.Chapters.HCP.L0_BlackBox}
 
@@ -170,3 +173,5 @@ revisits motion along one line seen by one observer.
 {include 1 PropertyKindCalculusBlueprint.Chapters.HCP.L2_ThePair}
 
 {include 1 PropertyKindCalculusBlueprint.Chapters.HCP.L3_TheBodyOpens}
+
+{include 1 PropertyKindCalculusBlueprint.Chapters.HCP.L4_OutOfTheLine}
