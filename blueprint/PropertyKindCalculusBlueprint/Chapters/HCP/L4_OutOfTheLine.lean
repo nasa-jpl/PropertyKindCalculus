@@ -204,15 +204,18 @@ example (s : PairState3 .P) (cart : ReferenceFrame 3) (hCart : cart.IsInertial) 
   (s.com .A -ᵥ s.com .B) + hCart.velocity
 ```
 
-_5. Kinded frames._ With `KVector`, the displacement goes through geometric transport,
-and an average velocity computed from two same-pair centre states goes through the boost
-law. The wrong boost on a displacement and a velocity-plus-force sum are pinned refusals.
+_5. Kinded frames._ Frame components must enter through the frame's own `dispEquiv`.
+With `KVector`, the displacement goes through geometric transport, and an average
+velocity computed from two same-pair centre states goes through the boost law. The
+observer-independence theorem shows that geometric transport preserves the displacement.
+The wrong boost on a displacement and a velocity-plus-force sum are pinned refusals.
 
 ```anchor kinded_frames
-def pairDisplacementInFrame {π : PairId} (F : ReferenceFrame 3) (s : PairState3 π) :
+/- Frame components must enter through the frame's own `dispEquiv`. -/
+def pairDisplacementInFrame {π : PairId} (F : ReferenceFrame 3) (t : Time)
+    (s : PairState3 π) :
     KVector F ForPhysLib.Kinds.Space.displacement :=
-  ⟨⟨fun i =>
-    (ForPhysLib.Kinded.Space.displacementQ (s.com .A) (s.com .B)).magnitude i⟩⟩
+  ⟨⟨(barePairDisplacement s F t).components⟩⟩
 
 def averageVelocityOfA {π : PairId} (earlier later : PairState3 π)
     (elapsed : Quantity durationK ℝ) (h : elapsed.magnitude ≠ 0) :
@@ -220,35 +223,46 @@ def averageVelocityOfA {π : PairId} (earlier later : PairState3 π)
   ⟨(if hzero : elapsed.magnitude = 0 then False.elim (h hzero)
     else elapsed.magnitude⁻¹) • (later.com .A -ᵥ earlier.com .A)⟩
 
-def averageVelocityInFrame {π : PairId} (F : ReferenceFrame 3)
+def averageVelocityInFrame {π : PairId} (F : ReferenceFrame 3) (t : Time)
     (earlier later : PairState3 π) (elapsed : Quantity durationK ℝ)
     (h : elapsed.magnitude ≠ 0) : KVector F velocityK :=
-  ⟨⟨fun i => (averageVelocityOfA earlier later elapsed h).magnitude i⟩⟩
+  ⟨⟨((ReferenceFrame.Vector.dispEquiv (frame := F) (F.timeEquiv.symm t)).symm
+    (averageVelocityOfA earlier later elapsed h).magnitude).components⟩⟩
 
 example (s : PairState3 .P) (F G : ReferenceFrame 3) (t : Time) :
     KVector G ForPhysLib.Kinds.Space.displacement :=
-  kGeometricTransport F G t (pairDisplacementInFrame F s)
+  kGeometricTransport F G t (pairDisplacementInFrame F t s)
+
+theorem pairDisplacement_observer_independent {π : PairId}
+    (F G : ReferenceFrame 3) (t : Time) (s : PairState3 π) :
+    kGeometricTransport F G t (pairDisplacementInFrame F t s) =
+      pairDisplacementInFrame G t s := by
+  have hη : (⟨(barePairDisplacement s F t).components⟩ : F.Vector) =
+      barePairDisplacement s F t := rfl
+  simp only [kGeometricTransport, pairDisplacementInFrame]
+  rw [hη]
+  simp [barePairDisplacement]
 
 example (earlier later : PairState3 .P) (elapsed : Quantity durationK ℝ)
     (h : elapsed.magnitude ≠ 0) (F G : ReferenceFrame 3) (t : Time)
     (u : Quantity velocityK (EuclideanSpace ℝ (Fin 3))) :
     KVector G velocityK :=
-  kBoostTransport F G t u (averageVelocityInFrame F earlier later elapsed h)
+  kBoostTransport F G t u (averageVelocityInFrame F t earlier later elapsed h)
 
 /--
 error: Application type mismatch: The argument
-  pairDisplacementInFrame F s
+  pairDisplacementInFrame F t s
 has type
   KVector F displacement
 but is expected to have type
   KVector F velocityK
 in the application
-  kBoostTransport F G t u (pairDisplacementInFrame F s)
+  kBoostTransport F G t u (pairDisplacementInFrame F t s)
 -/
 #guard_msgs (whitespace := lax) in
 example (F G : ReferenceFrame 3) (t : Time)
     (u : Quantity velocityK (EuclideanSpace ℝ (Fin 3))) (s : PairState3 .P) :=
-  kBoostTransport F G t u (pairDisplacementInFrame F s)
+  kBoostTransport F G t u (pairDisplacementInFrame F t s)
 
 /--
 error: failed to synthesize instance of type class
