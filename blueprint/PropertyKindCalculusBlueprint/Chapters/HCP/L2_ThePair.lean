@@ -25,8 +25,8 @@ the L1 black boxes into bodies A and B and springs kA, kC, and kB. The coupling 
 makes the oscillators interact, so L1's no-interaction assumption falls. Mass is borne by
 the bodies and stiffness by the springs; the L1 oscillator-indexed `ω² = k/m` does not
 survive coupling. The normal-mode angular frequency belongs to the pair whole.
-`PartOf p` makes each part's owner explicit, so identically named parts of a second pair
-are different bearers.
+`PartOf π` uses nominal `PairId` identity independent of parameter values, so identically
+parameterized pairs with IDs P and Q still have different bearers.
 
 _1. Open the box._ Each body's upstream harmonic oscillator still supplies its wall-spring
 parameters; the coupling spring is the new field:
@@ -36,6 +36,9 @@ inductive Body | A | B
 deriving DecidableEq, Repr
 
 inductive Spring | kA | kC | kB
+deriving DecidableEq, Repr
+
+inductive PairId | P | Q
 deriving DecidableEq, Repr
 
 def bodyS : SortOfSystem := ⟨"point mass"⟩
@@ -62,32 +65,32 @@ instance : Designated Spring where
   designation_inj {x y} h := by
     cases x <;> cases y <;> first | rfl | exact absurd (System.mk.inj h) (by decide)
 
-structure CoupledPair where
+structure CoupledPair (π : PairId) where
   osc : Body → ClassicalMechanics.HarmonicOscillator
   kC : ℝ
 
-structure PartOf (p : CoupledPair) where
+structure PartOf (π : PairId) where
   part : Body ⊕ Spring
 deriving DecidableEq, Repr
 
-def bodyPart (p : CoupledPair) (b : Body) : PartOf p := ⟨Sum.inl b⟩
+def bodyPart (π : PairId) (b : Body) : PartOf π := ⟨Sum.inl b⟩
 
-def springPart (p : CoupledPair) (s : Spring) : PartOf p := ⟨Sum.inr s⟩
+def springPart (π : PairId) (s : Spring) : PartOf π := ⟨Sum.inr s⟩
 
-def springMagnitude (p : CoupledPair) : Spring → ℝ
+def springMagnitude {π : PairId} (p : CoupledPair π) : Spring → ℝ
   | .kA => (p.osc .A).k
   | .kC => p.kC
   | .kB => (p.osc .B).k
 
-def massOf (p : CoupledPair) (b : Body) :
+def massOf {π : PairId} (p : CoupledPair π) (b : Body) :
     IndividualQuantity
-      (Composite.part (σ := pairS) (bodyPart p b))
+      (Composite.part (σ := pairS) (bodyPart π b))
       ForPhysLib.ClassicalMechanics.massK ℝ :=
   ⟨(p.osc b).m⟩
 
-def stiffnessOf (p : CoupledPair) (s : Spring) :
+def stiffnessOf {π : PairId} (p : CoupledPair π) (s : Spring) :
     IndividualQuantity
-      (Composite.part (σ := pairS) (springPart p s))
+      (Composite.part (σ := pairS) (springPart π s))
       ForPhysLib.ClassicalMechanics.springConstantK ℝ :=
   ⟨springMagnitude p s⟩
 ```
@@ -105,37 +108,38 @@ instance : Assembles pairS ForPhysLib.ClassicalMechanics.massK :=
 
 def bodies : Decomposition Body := .union (.atom .A) (.atom .B)
 
-def pairMass (p : CoupledPair) :
+def pairMass {π : PairId} (p : CoupledPair π) :
     IndividualQuantity
-      (Composite.whole : Composite pairS (PartOf p))
+      (Composite.whole : Composite pairS (PartOf π))
       ForPhysLib.ClassicalMechanics.massK ℝ :=
   assemble (k := ForPhysLib.ClassicalMechanics.massK) pairS
-    (Composite.whole : Composite pairS (PartOf p))
-    (fun b : Body => Composite.part (σ := pairS) (bodyPart p b))
+    (Composite.whole : Composite pairS (PartOf π))
+    (fun b : Body => Composite.part (σ := pairS) (bodyPart π b))
     bodies
     (fun b => massOf p b)
 
-theorem pairMass_magnitude (p : CoupledPair) :
+theorem pairMass_magnitude {π : PairId} (p : CoupledPair π) :
     (pairMass p).magnitude = (p.osc .A).m + (p.osc .B).m := by
   rfl
 ```
 
 _3. Refuse whole plus part, and one pair plus another._ Total mass is meaningful, but its
-whole is not body A. A second pair is another system even when its parts have the same names:
+whole is not body A. A second pair is another system even when all parameters and part
+names match, because PairId is nominal:
 
 ```anchor refused_whole_part
 /--
 error: Application type mismatch: The argument
   massOf p Body.A
 has type
-  IndividualQuantity (Composite.part (bodyPart p Body.A)) ForPhysLib.ClassicalMechanics.massK ℝ
+  IndividualQuantity (Composite.part (bodyPart π Body.A)) ForPhysLib.ClassicalMechanics.massK ℝ
 but is expected to have type
   IndividualQuantity Composite.whole ForPhysLib.ClassicalMechanics.massK ℝ
 in the application
   IndividualQuantity.add ⋯ (pairMass p) (massOf p Body.A)
 -/
 #guard_msgs in
-example (p : CoupledPair) :=
+example {π : PairId} (p : CoupledPair π) :=
   IndividualQuantity.add (k := ForPhysLib.ClassicalMechanics.massK)
     DifferenceKind.ofScale (pairMass p) (massOf p .A)
 
@@ -143,16 +147,18 @@ example (p : CoupledPair) :=
 error: Application type mismatch: The argument
   pairMass q
 has type
-  IndividualQuantity (@Composite.whole pairS (PartOf q)) ForPhysLib.ClassicalMechanics.massK ℝ
+  IndividualQuantity (@Composite.whole pairS (PartOf PairId.Q)) ForPhysLib.ClassicalMechanics.massK ℝ
 but is expected to have type
-  IndividualQuantity (@Composite.whole pairS (PartOf p)) ForPhysLib.ClassicalMechanics.massK ℝ
+  IndividualQuantity (@Composite.whole pairS (PartOf PairId.P)) ForPhysLib.ClassicalMechanics.massK ℝ
 in the application
   IndividualQuantity.add ⋯ (pairMass p) (pairMass q)
 -/
 #guard_msgs in
-example (p q : CoupledPair) :=
+example (o : Body → ClassicalMechanics.HarmonicOscillator) :=
+  let p : CoupledPair .P := ⟨o, 2⟩
+  let q : CoupledPair .Q := ⟨o, 2⟩
   IndividualQuantity.add (k := ForPhysLib.ClassicalMechanics.massK)
-    DifferenceKind.ofScale (pairMass p) (pairMass q)
+    DifferenceKind.ofScale (pairMass p) (pairMass (π := .Q) q)
 ```
 
 _4. Refuse to assemble angular frequency._ The pair's license table has no entry for it:
@@ -166,14 +172,14 @@ Hint: Type class instance resolution failures can be inspected with the `set_opt
 -/
 #guard_msgs in
 example :=
-  fun (p : CoupledPair) =>
+  fun {π : PairId} (p : CoupledPair π) =>
     fun (f : (b : Body) →
       IndividualQuantity
-        (Composite.part (σ := pairS) (bodyPart p b))
+        (Composite.part (σ := pairS) (bodyPart π b))
         ForPhysLib.ClassicalMechanics.Kinds.angularFrequency ℝ) =>
       assemble (k := ForPhysLib.ClassicalMechanics.Kinds.angularFrequency) pairS
-        (Composite.whole : Composite pairS (PartOf p))
-        (fun b : Body => Composite.part (σ := pairS) (bodyPart p b))
+        (Composite.whole : Composite pairS (PartOf π))
+        (fun b : Body => Composite.part (σ := pairS) (bodyPart π b))
         bodies f
 ```
 
@@ -206,22 +212,22 @@ instance : Assembles parallelS ForPhysLib.ClassicalMechanics.springConstantK :=
 
 def parallelSprings : Decomposition Spring := .union (.atom .kA) (.atom .kC)
 
-def stiffnessInSort (p : CoupledPair) (σ : SortOfSystem) (s : Spring) :
-    IndividualQuantity (Composite.part (σ := σ) (springPart p s))
+def stiffnessInSort {π : PairId} (p : CoupledPair π) (σ : SortOfSystem) (s : Spring) :
+    IndividualQuantity (Composite.part (σ := σ) (springPart π s))
       ForPhysLib.ClassicalMechanics.springConstantK ℝ :=
   ⟨springMagnitude p s⟩
 
-def parallelStiffness (p : CoupledPair) :
+def parallelStiffness {π : PairId} (p : CoupledPair π) :
     IndividualQuantity
-      (Composite.whole : Composite parallelS (PartOf p))
+      (Composite.whole : Composite parallelS (PartOf π))
       ForPhysLib.ClassicalMechanics.springConstantK ℝ :=
   assemble (k := ForPhysLib.ClassicalMechanics.springConstantK) parallelS
-    (Composite.whole : Composite parallelS (PartOf p))
-    (fun s : Spring => Composite.part (σ := parallelS) (springPart p s))
+    (Composite.whole : Composite parallelS (PartOf π))
+    (fun s : Spring => Composite.part (σ := parallelS) (springPart π s))
     parallelSprings
     (fun s => stiffnessInSort p parallelS s)
 
-theorem parallelStiffness_magnitude (p : CoupledPair) :
+theorem parallelStiffness_magnitude {π : PairId} (p : CoupledPair π) :
     (parallelStiffness p).magnitude = (p.osc .A).k + p.kC := by
   rfl
 ```
@@ -239,10 +245,10 @@ error: failed to synthesize instance of type class
 Hint: Type class instance resolution failures can be inspected with the `set_option trace.Meta.synthInstance true` command.
 -/
 #guard_msgs in
-example (p : CoupledPair) :=
+example {π : PairId} (p : CoupledPair π) :=
   assemble (k := ForPhysLib.ClassicalMechanics.springConstantK) seriesS
-    (Composite.whole : Composite seriesS (PartOf p))
-    (fun s : Spring => Composite.part (σ := seriesS) (springPart p s))
+    (Composite.whole : Composite seriesS (PartOf π))
+    (fun s : Spring => Composite.part (σ := seriesS) (springPart π s))
     seriesSprings
     (fun s => stiffnessInSort p seriesS s)
 ```
@@ -296,26 +302,27 @@ theorem series_not_extensive :
 ```
 
 ```anchor licenseCashed
-theorem parallel_assembled_is_measured (p : CoupledPair) :
+theorem parallel_assembled_is_measured {π : PairId} (_p : CoupledPair π) :
     (assemble (k := ForPhysLib.ClassicalMechanics.springConstantK) parallelS
-        (Composite.whole : Composite parallelS (PartOf p))
-        (fun s => Composite.part (σ := parallelS) (springPart p s)) parallelSprings
+        (Composite.whole : Composite parallelS (PartOf π))
+        (fun s => Composite.part (σ := parallelS) (springPart π s)) parallelSprings
         (fun s => ⟨(parallelMeasurement (.atom s)).numeral⟩)).magnitude
       = (parallelMeasurement parallelSprings).numeral :=
   assemble_eq_measured parallelS Composite.whole
-    (fun s => Composite.part (σ := parallelS) (springPart p s))
+    (fun s => Composite.part (σ := parallelS) (springPart π s))
     parallel_extensive parallelSprings
 
 theorem series_registered_would_lie
-    (p : CoupledPair) [Assembles seriesS ForPhysLib.ClassicalMechanics.springConstantK] :
+    {π : PairId} (_p : CoupledPair π)
+    [Assembles seriesS ForPhysLib.ClassicalMechanics.springConstantK] :
     ∃ d : Decomposition Spring,
       (assemble (k := ForPhysLib.ClassicalMechanics.springConstantK) (R := Int) seriesS
-          (Composite.whole : Composite seriesS (PartOf p))
-          (fun s => Composite.part (σ := seriesS) (springPart p s)) d
+          (Composite.whole : Composite seriesS (PartOf π))
+          (fun s => Composite.part (σ := seriesS) (springPart π s)) d
           (fun s => ⟨(seriesMeasurement (.atom s)).numeral⟩)).magnitude
         ≠ (seriesMeasurement d).numeral :=
   assemble_ne_measured seriesS Composite.whole
-    (fun s => Composite.part (σ := seriesS) (springPart p s)) series_whole_proper
+    (fun s => Composite.part (σ := seriesS) (springPart π s)) series_whole_proper
 ```
 
 The measurements verify the curation: parallel stiffness is extensive, while series
@@ -324,7 +331,7 @@ kA–kB series value is exact (6 ∥ 3 = 2); these integer numerals do not model
 Registering the series sum would produce a magnitude that disagrees with its measurement.
 
 The system-context card in `HCP/L2-the-pair.md` lists the bodies, all three springs,
-the fixed walls, and the line of motion. The Lean model's `PartOf p` index keeps parts of
-different pairs distinct while body mass, spring stiffness, and the pair's normal-mode
-frequency stay on their respective bearers. The on-axis, rigid, homogeneous, point-like
-body assumption returns at L3.
+the fixed walls, and the line of motion. The Lean model's nominal `PartOf π` index keeps
+parts of differently identified pairs distinct even when their parameters match, while
+body mass, spring stiffness, and the pair's normal-mode frequency stay on their respective
+bearers. The on-axis, rigid, homogeneous, point-like body assumption returns at L3.
