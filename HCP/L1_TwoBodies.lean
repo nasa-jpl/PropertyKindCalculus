@@ -1,7 +1,7 @@
 /-
 # L1 — Two bodies
 
-Seven build-checked probes of object identity, designation, and per-body quantities.
+Seven build-checked probes of oscillator identity, designation, and per-oscillator quantities.
 -/
 
 module
@@ -19,110 +19,126 @@ open scoped PropertyKindCalculus.OperatorTable
 
 noncomputable section
 
--- ANCHOR: bare_real_cross_body
+-- ANCHOR: bare_real_cross_oscillators
 example (S₁ S₂ : ClassicalMechanics.HarmonicOscillator) : ℝ :=
   √(S₁.k / S₂.m)
--- ANCHOR_END: bare_real_cross_body
+-- ANCHOR_END: bare_real_cross_oscillators
 
--- ANCHOR: kinded_bearer_free_cross_body
+-- ANCHOR: kinded_bearer_free_cross_oscillators
 example (S₁ S₂ : ClassicalMechanics.HarmonicOscillator) :
     Quantity ForPhysLib.ClassicalMechanics.omegaSquaredK ℝ :=
   ForPhysLib.ClassicalMechanics.springQ S₁ /
     ForPhysLib.ClassicalMechanics.massQ S₂
--- ANCHOR_END: kinded_bearer_free_cross_body
+-- ANCHOR_END: kinded_bearer_free_cross_oscillators
 
--- ANCHOR: context_and_sort
-inductive Body | A | B
+-- ANCHOR: oscillator_context_and_sort
+inductive Oscillator | A | B
 deriving DecidableEq, Repr
 
-inductive Spring | kA | kB
-deriving DecidableEq, Repr
+def oscillatorS : SortOfSystem := ⟨"harmonic oscillator"⟩
 
-def bodyS : SortOfSystem := ⟨"point mass"⟩
-def springS : SortOfSystem := ⟨"linear spring"⟩
+instance : Sorted Oscillator := ⟨fun _ => oscillatorS⟩
 
-instance : Sorted Body := ⟨fun _ => bodyS⟩
-instance : Sorted Spring := ⟨fun _ => springS⟩
-
-example : Sorted.sortOf Body.A = Sorted.sortOf Body.B := rfl
--- ANCHOR_END: context_and_sort
+example : Sorted.sortOf Oscillator.A = Sorted.sortOf Oscillator.B := rfl
+-- ANCHOR_END: oscillator_context_and_sort
 
 -- ANCHOR: designation
-instance : Designated Body where
+instance : Designated Oscillator where
   designation
-    | .A => ⟨"body A"⟩
-    | .B => ⟨"body B"⟩
+    | .A => ⟨"oscillator A"⟩
+    | .B => ⟨"oscillator B"⟩
   designation_inj {x y} h := by
     cases x <;> cases y <;> first | rfl | exact absurd (System.mk.inj h) (by decide)
 
 theorem constant_designation_not_injective :
-    ¬ Function.Injective (fun _ : Body => (⟨"body"⟩ : Object)) := by
+    ¬ Function.Injective (fun _ : Oscillator => (⟨"oscillator"⟩ : Object)) := by
   intro h
-  have hAB : Body.A = Body.B := h rfl
+  have hAB : Oscillator.A = Oscillator.B := h rfl
   cases hAB
 -- ANCHOR_END: designation
 
--- ANCHOR: bearer_indexed_quantities
+-- ANCHOR: oscillator_indexed_quantities
 structure TwoOscillators where
-  osc : Body → ClassicalMechanics.HarmonicOscillator
+  osc : Oscillator → ClassicalMechanics.HarmonicOscillator
 
-def massOf (sys : TwoOscillators) (b : Body) :
-    IndividualQuantity b ForPhysLib.ClassicalMechanics.massK ℝ :=
-  ⟨(sys.osc b).m⟩
+def massOf (sys : TwoOscillators) (o : Oscillator) :
+    IndividualQuantity o ForPhysLib.ClassicalMechanics.massK ℝ :=
+  ⟨(sys.osc o).m⟩
 
-def wallSpring : Body → Spring
-  | .A => .kA
-  | .B => .kB
+def stiffnessOf (sys : TwoOscillators) (o : Oscillator) :
+    IndividualQuantity o ForPhysLib.ClassicalMechanics.springConstantK ℝ :=
+  ⟨(sys.osc o).k⟩
 
-def bodyOfWallSpring : Spring → Body
-  | .kA => .A
-  | .kB => .B
+def omegaSqOf (sys : TwoOscillators) (o : Oscillator) :
+    IndividualQuantity o ForPhysLib.ClassicalMechanics.omegaSquaredK ℝ :=
+  IndividualQuantity.div
+    (KindDiv.law
+      (k₁ := ForPhysLib.ClassicalMechanics.springConstantK)
+      (k₂ := ForPhysLib.ClassicalMechanics.massK)
+      (k := ForPhysLib.ClassicalMechanics.omegaSquaredK))
+    (stiffnessOf sys o)
+    (massOf sys o)
 
-theorem bodyOfWallSpring_wallSpring (b : Body) :
-    bodyOfWallSpring (wallSpring b) = b := by
-  cases b <;> rfl
-
-def stiffnessOf (sys : TwoOscillators) (s : Spring) :
-    IndividualQuantity s ForPhysLib.ClassicalMechanics.springConstantK ℝ :=
-  ⟨(sys.osc (bodyOfWallSpring s)).k⟩
+theorem omegaSqOf_magnitude (sys : TwoOscillators) (o : Oscillator) :
+    (omegaSqOf sys o).magnitude = (sys.osc o).k / (sys.osc o).m := by
+  rw [omegaSqOf, IndividualQuantity.div_magnitude, stiffnessOf, massOf]
 
 def whole : Component := ⟨"whole"⟩
 
-theorem mass_kind_shared_by_bodies :
-    ForPhysLib.ClassicalMechanics.massK.dedicatedFor Body.A whole =
-      ForPhysLib.ClassicalMechanics.massK.dedicatedFor Body.B whole :=
+theorem mass_kind_shared_by_oscillators :
+    ForPhysLib.ClassicalMechanics.massK.dedicatedFor Oscillator.A whole =
+      ForPhysLib.ClassicalMechanics.massK.dedicatedFor Oscillator.B whole :=
   KindOfProperty.dedicatedFor_congr rfl whole
--- ANCHOR_END: bearer_indexed_quantities
+-- ANCHOR_END: oscillator_indexed_quantities
 
--- ANCHOR: refused_cross_body_mass
+-- ANCHOR: refused_cross_oscillator
 /--
 error: Type mismatch
-  massOf sys Body.B
+  massOf sys Oscillator.B
 has type
-  IndividualQuantity Body.B ForPhysLib.ClassicalMechanics.massK ℝ
+  IndividualQuantity Oscillator.B ForPhysLib.ClassicalMechanics.massK ℝ
 but is expected to have type
-  IndividualQuantity Body.A ForPhysLib.ClassicalMechanics.massK ℝ
+  IndividualQuantity Oscillator.A ForPhysLib.ClassicalMechanics.massK ℝ
 -/
 #guard_msgs in
 example (sys : TwoOscillators) :
-    IndividualQuantity Body.A ForPhysLib.ClassicalMechanics.massK ℝ :=
-  massOf sys Body.B
+    IndividualQuantity Oscillator.A ForPhysLib.ClassicalMechanics.massK ℝ :=
+  massOf sys Oscillator.B
 
 /--
 error: Application type mismatch: The argument
-  massOf sys Body.B
+  massOf sys Oscillator.B
 has type
-  IndividualQuantity Body.B ForPhysLib.ClassicalMechanics.massK ℝ
+  IndividualQuantity Oscillator.B ForPhysLib.ClassicalMechanics.massK ℝ
 but is expected to have type
-  IndividualQuantity Body.A ForPhysLib.ClassicalMechanics.massK ℝ
+  IndividualQuantity Oscillator.A ForPhysLib.ClassicalMechanics.massK ℝ
 in the application
-  IndividualQuantity.add ⋯ (massOf sys Body.A) (massOf sys Body.B)
+  IndividualQuantity.add ⋯ (massOf sys Oscillator.A) (massOf sys Oscillator.B)
 -/
 #guard_msgs in
 example (sys : TwoOscillators) :=
   IndividualQuantity.add DifferenceKind.ofScale
-    (massOf sys Body.A) (massOf sys Body.B)
--- ANCHOR_END: refused_cross_body_mass
+    (massOf sys Oscillator.A) (massOf sys Oscillator.B)
+
+/--
+error: Application type mismatch: The argument
+  massOf sys Oscillator.B
+has type
+  IndividualQuantity Oscillator.B ForPhysLib.ClassicalMechanics.massK ℝ
+but is expected to have type
+  IndividualQuantity Oscillator.A ForPhysLib.ClassicalMechanics.massK ℝ
+in the application
+  IndividualQuantity.div h (stiffnessOf sys Oscillator.A) (massOf sys Oscillator.B)
+-/
+#guard_msgs in
+example (sys : TwoOscillators) :=
+  let h :=
+    KindDiv.law
+      (k₁ := ForPhysLib.ClassicalMechanics.springConstantK)
+      (k₂ := ForPhysLib.ClassicalMechanics.massK)
+      (k := ForPhysLib.ClassicalMechanics.omegaSquaredK)
+  IndividualQuantity.div h (stiffnessOf sys .A) (massOf sys .B)
+-- ANCHOR_END: refused_cross_oscillator
 
 -- ANCHOR: refused_unsorted_object
 /--
