@@ -22,6 +22,8 @@ present, one that is not a license, and one whose instance search does not finis
 empirical requirement naming a witness, no referent, no gate, an unmarked referent, or a
 gate that mentions no referent; a spot check that is false, and one that is not a `Bool`.
 The survey, the census and the gate close the file, with the two marks' own refusals.
+The sibling scope probes pin inferred domains for generic and fixed indices, a
+non-enumerable index, and a result whose type carries no object index.
 -/
 
 module
@@ -739,5 +741,137 @@ error: `@[kindRequirementFree]` on 'PropertyKindCalculus.Tests.KindRequirement.u
   { name := "unreasoned", members := [``model], ports := [], exits := [] }
 
 end PropertyKindCalculus.Tests.KindRequirement
+
+namespace PropertyKindCalculus.Tests.KindRequirementScope
+
+open PropertyKindCalculus.Tests.KindRequirement
+open PropertyKindCalculus.Provenance (NodeId KindRef)
+
+def bareResultModel (x : Quantity aK Int) : Quantity bK Int :=
+  ⟨2 * x.magnitude⟩
+
+def bareResultBoundary : Provenance.Contract NodeId KindRef where
+  name := "unindexed result"
+  members := [``bareResultModel]
+  ports := [
+    ⟨(NodeId.binder "x").within ``bareResultModel, .decl ``aK, .input⟩,
+    ⟨NodeId.result.within ``bareResultModel, .decl ``bK, .output⟩
+  ]
+  exits := []
+
+def bareResultRequirement : Provenance.Requirement where
+  name := "bare-result object scope"
+  statement := "the result is governed for Thing.one"
+  kind := .provable
+  governs := ``bareResultBoundary
+  port := some (NodeId.result.within ``bareResultModel)
+  scope := .objects [``Thing.one]
+  attested := "coverage-domain probe"
+
+def thingModel {t : Thing} (x : IndividualQuantity t aK Int) :
+    IndividualQuantity t bK Int :=
+  ⟨2 * x.magnitude⟩
+
+def thingBoundary (name : String) : Provenance.Contract NodeId KindRef where
+  name := name
+  members := [``thingModel]
+  ports := [
+    ⟨(NodeId.binder "x").within ``thingModel, .decl ``aK, .input⟩,
+    ⟨NodeId.result.within ``thingModel, .decl ``bK, .output⟩
+  ]
+  exits := []
+
+def thingOneBoundary : Provenance.Contract NodeId KindRef :=
+  thingBoundary "Thing-indexed model, one scoped object"
+
+def thingOneRequirement : Provenance.Requirement where
+  name := "Thing one"
+  statement := "the generic result is governed for Thing.one"
+  kind := .provable
+  governs := ``thingOneBoundary
+  port := some (NodeId.result.within ``thingModel)
+  scope := .objects [``Thing.one]
+  attested := "coverage-domain probe"
+
+def thingBothBoundary : Provenance.Contract NodeId KindRef :=
+  thingBoundary "Thing-indexed model, both scoped objects"
+
+def thingBothRequirement : Provenance.Requirement where
+  name := "Thing one and two"
+  statement := "the generic result is governed for Thing.one and Thing.two"
+  kind := .provable
+  governs := ``thingBothBoundary
+  port := some (NodeId.result.within ``thingModel)
+  scope := .objects [``Thing.one, ``Thing.two]
+  attested := "coverage-domain probe"
+
+def thingTwoModel (x : IndividualQuantity Thing.two aK Int) :
+    IndividualQuantity Thing.two bK Int :=
+  ⟨2 * x.magnitude⟩
+
+def thingTwoBoundary : Provenance.Contract NodeId KindRef where
+  name := "Thing.two-indexed model"
+  members := [``thingTwoModel]
+  ports := [
+    ⟨(NodeId.binder "x").within ``thingTwoModel, .decl ``aK, .input⟩,
+    ⟨NodeId.result.within ``thingTwoModel, .decl ``bK, .output⟩
+  ]
+  exits := []
+
+def thingTwoRequirement : Provenance.Requirement where
+  name := "Thing one on Thing two"
+  statement := "the fixed Thing.two result is governed only for Thing.one"
+  kind := .provable
+  governs := ``thingTwoBoundary
+  port := some (NodeId.result.within ``thingTwoModel)
+  scope := .objects [``Thing.one]
+  attested := "coverage-domain probe"
+
+structure Tag where
+  id : String
+
+def tagS : SortOfSystem := ⟨"coverage probe tag"⟩
+instance : Sorted Tag := ⟨fun _ => tagS⟩
+
+def tagA : Tag := ⟨"A"⟩
+
+def tagModel {t : Tag} (x : IndividualQuantity t aK Int) :
+    IndividualQuantity t bK Int :=
+  ⟨2 * x.magnitude⟩
+
+def tagBoundary : Provenance.Contract NodeId KindRef where
+  name := "Tag-indexed model"
+  members := [``tagModel]
+  ports := [
+    ⟨(NodeId.binder "x").within ``tagModel, .decl ``aK, .input⟩,
+    ⟨NodeId.result.within ``tagModel, .decl ``bK, .output⟩
+  ]
+  exits := []
+
+def tagRequirement : Provenance.Requirement where
+  name := "Tag A"
+  statement := "the generic result is governed for tag A"
+  kind := .provable
+  governs := ``tagBoundary
+  port := some (NodeId.result.within ``tagModel)
+  scope := .objects [``tagA]
+  attested := "coverage-domain probe"
+
+/--
+info: requirement coverage:
+[governed] PropertyKindCalculus.Tests.KindRequirementScope.bareResultBoundary ('unindexed result') bareResultModel/result — by 'bare-result object scope' (object scope unchecked: the result carries no 'Thing' index)
+[governed] PropertyKindCalculus.Tests.KindRequirementScope.tagBoundary ('Tag-indexed model') tagModel/result for PropertyKindCalculus.Tests.KindRequirementScope.tagA — by 'Tag A'
+[governed] PropertyKindCalculus.Tests.KindRequirementScope.thingBothBoundary ('Thing-indexed model, both scoped objects') thingModel/result — by 'Thing one and two'
+[governed] PropertyKindCalculus.Tests.KindRequirementScope.thingOneBoundary ('Thing-indexed model, one scoped object') thingModel/result for PropertyKindCalculus.Tests.KindRequirement.Thing.one — by 'Thing one'
+⚠ UNGOVERNED PropertyKindCalculus.Tests.KindRequirementScope.tagBoundary ('Tag-indexed model') tagModel/result for every other 'Tag' — 'Tag A' scoped to PropertyKindCalculus.Tests.KindRequirementScope.tagA
+⚠ UNGOVERNED PropertyKindCalculus.Tests.KindRequirementScope.thingOneBoundary ('Thing-indexed model, one scoped object') thingModel/result for PropertyKindCalculus.Tests.KindRequirement.Thing.two — 'Thing one' scoped to PropertyKindCalculus.Tests.KindRequirement.Thing.one
+⚠ UNGOVERNED PropertyKindCalculus.Tests.KindRequirementScope.thingTwoBoundary ('Thing.two-indexed model') thingTwoModel/result for PropertyKindCalculus.Tests.KindRequirement.Thing.two — 'Thing one on Thing two' scoped to PropertyKindCalculus.Tests.KindRequirement.Thing.one
+7 row(s) over 5 model boundary(ies): 4 governed, 3 UNGOVERNED — requirement-coverage violation
+requirements: 5 provable, 0 empirical, 5 attested
+-/
+#guard_msgs (whitespace := lax) in
+  #kind_requirement_coverage PropertyKindCalculus.Tests.KindRequirementScope
+
+end PropertyKindCalculus.Tests.KindRequirementScope
 
 end Blanket

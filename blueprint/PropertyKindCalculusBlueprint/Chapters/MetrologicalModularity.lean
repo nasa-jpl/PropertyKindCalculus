@@ -306,8 +306,13 @@ names no referent, an empirical gate names one, every spot check evaluates to `t
 claimed absence is absent, and an attestation never stands beside a discharge.
 `#kind_requirements` surveys a namespace's requirements as one pinnable report;
 `#kind_requirement_coverage` is the census — every produced port of every model boundary
-in scope governed by a requirement or marked `@[kindRequirementFree "reason"]`, with the
-category tallies and the attested count — and `#kind_requirement_clean` its gate.
+in scope governed by a boundary/port-matching requirement whose object scope covers the
+inferred result domain, or marked `@[kindRequirementFree "reason"]`, with category tallies
+and the attested count — and `#kind_requirement_clean` its gate. The result member's type
+infers that domain: an index binder means all objects, constants of that type mean only
+those objects, and `.unreached` means no index was found, so the row is governed but marked
+unchecked. `.all`, `.sort`, and `.decided` requirements retain the static boundary/port
+join; `.decided` does not claim a checked subset.
 :::
 
 :::proof "def_requirement"
@@ -444,13 +449,14 @@ chapter closes with what no theorem there asserts — the truth of an {tech}[att
 accuracy against nature — and leaves them to the uncertainty chapter and the reader. The
 requirement clause is where those become data: each an empirical requirement with its
 referent and gate, or deferred by an attestation whose reason the survey prints. The
-coverage census then asks of every produced port of every model boundary whether some
-requirement governs it or a `@[kindRequirementFree "reason"]` mark says why none does, in
-the shape of the other {ref "coverage-censuses"}[coverage censuses], and counts the
-attested ones. That count is a ratchet: it moves only by a conscious edit, and it is meant
-to fall as the apparatus supplies its numbers. A model's remaining dependence on the world
-is then a number in a pinned report, with a reason per entry, rather than a sentence in a
-limitations section.
+coverage census then asks of every produced port of every model boundary whether a
+boundary/port-matching requirement governs it. For object scopes it compares the requested
+objects with the domain inferred from the result member's type; `.unreached` results remain
+governed but carry an unchecked suffix. A `@[kindRequirementFree "reason"]` mark says why
+no requirement is demanded, and the census counts the attested ones. That count is a
+ratchet: it moves only by a conscious edit, and it is meant to fall as the apparatus
+supplies its numbers. A model's remaining dependence on the world is then a number in a
+pinned report, with a reason per entry, rather than a sentence in a limitations section.
 
 *What a reader gets.* For each output of each module, the survey and the census answer in
 one pinned report: what must hold of it, in the author's words; over which objects;

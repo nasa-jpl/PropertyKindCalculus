@@ -28,11 +28,16 @@ honest negatives, an `AuditReceipt` at each success point).
     *model* boundary in scope is `[governed]` by a requirement naming it (a requirement
     with no port governs everything its boundary produces), `⊘ exempted` by a
     `@[kindRequirementFree]` mark, or `⚠ UNGOVERNED`; a specification boundary is listed as
-    the subject of no requirement. The summary counts the requirements by category and the
-    attested ones — the ratchet. Whether a named requirement is *valid* is
+    the subject of no requirement. For object scopes, a result port's domain is inferred
+    from its member's return type: a matching index binder means all objects, constants of
+    the object type mean only those objects, and no such index is `.unreached` (governed but
+    reported as unchecked). Non-object scopes, including `.decided`, retain the boundary
+    and port join without static subset checking. The summary counts the requirements by
+    category and the attested ones — the ratchet. Whether a named requirement is *valid* is
     `#kind_requirements`' question; this census asks only whether one exists.
   * **`#kind_requirement_clean ns …`** is the gate: throws while any produced port of a
-    model boundary in scope is `⚠ UNGOVERNED`.
+    model boundary in scope is `⚠ UNGOVERNED`; an `.unreached` object domain remains
+    governed but unchecked, and `.decided` scopes remain statically unchecked.
 
 Requirements are walked *unscoped* by the census, as theorem edges are: a requirement may
 live beside a deployment rather than beside the boundary it governs. A
@@ -444,9 +449,78 @@ structure Tally where
   attested : Nat := 0
   deriving Repr, Inhabited
 
-/-- One row per produced port of every model boundary in scope: `[governed]` by the
-requirements naming it (by port, or by the boundary as a whole), `⊘ exempted` by a mark,
-or `⚠ UNGOVERNED`; one row per specification, counterexample or unreadable boundary. -/
+inductive PortDomain where
+  | all
+  | only (objs : List Name)
+  | unreached
+deriving Repr, Inhabited
+
+/-- Infer which objects of type `T` a member's result carries. -/
+def portDomain (member : Name) (T : Expr) : MetaM PortDomain := do
+  let env ← getEnv
+  let some info := env.find? member | return .unreached
+  Meta.forallTelescope info.type fun binders result => do
+    let carriesAll ← binders.anyM fun binder => do
+      let binderType ← Meta.inferType binder
+      return (← Meta.isDefEq binderType T) && result.containsFVar binder.fvarId!
+    if carriesAll then return .all
+    let mut objects : Array Name := #[]
+    for n in result.getUsedConstants do
+      let some objectInfo := env.find? n | continue
+      let object := mkConst n (objectInfo.levelParams.map Level.param)
+      if (← Meta.isDefEq (← Meta.inferType object) T) && !objects.contains n then
+        objects := objects.push n
+    return if objects.isEmpty then .unreached else .only objects.toList
+
+/-- The declaration whose result a result port belongs to, when it is a whole result. -/
+def resultMember? (node : NodeId) : Option Name :=
+  if node.root != .result none || !node.path.isEmpty then none else
+    match node.level with
+    | some (.inst member _) | some (.member member) => some member
+    | none => none
+
+/-- The finite object universe, when `T` is an unparameterized, unindexed inductive with
+only nullary constructors. -/
+def enumerableObjects (T : Expr) : MetaM (Option (Array Name)) := do
+  let T ← Meta.whnf T
+  let .const typeName _ := T | return none
+  let env ← getEnv
+  let some (.inductInfo info) := env.find? typeName | return none
+  if info.numParams != 0 || info.numIndices != 0 then return none
+  for ctor in info.ctors do
+    let some (.ctorInfo ctorInfo) := env.find? ctor | return none
+    if ctorInfo.numFields != 0 then return none
+  return some info.ctors.toArray
+
+/-- Group named objects by the declaration type of each object. -/
+def objectsByType (objects : Array Name) : MetaM (Array (Expr × Array Name)) := do
+  let env ← getEnv
+  let mut groups : Array (Expr × Array Name) := #[]
+  for object in objects do
+    let some info := env.find? object | continue
+    let mut groupIndex : Option Nat := none
+    for i in [:groups.size] do
+      if ← Meta.isDefEq groups[i]!.1 info.type then
+        groupIndex := some i
+        break
+    if let some i := groupIndex then
+      let (type, names) := groups[i]!
+      if !names.contains object then groups := groups.set! i (type, names.push object)
+    else
+      groups := groups.push (info.type, #[object])
+  return groups
+
+/-- A result port's object domain, or `.unreached` for every other produced port. -/
+def portDomainFor (node : NodeId) (T : Expr) : MetaM PortDomain := do
+  match resultMember? node with
+  | some member => portDomain member T
+  | none => return .unreached
+
+/-- One row per produced port of every model boundary in scope. Object-scoped requirements
+are checked against the result's inferred object domain; a missing object is a violation,
+while `.unreached` is governed with an unchecked suffix. Other scopes, including `.decided`,
+retain the boundary/port join without subset checking. Exemptions and non-model rows retain
+their existing treatment. -/
 def coverageRows (scope : Array Name) : Elab.TermElabM (Array Row × Tally) := do
   let subs ← subjects scope
   let byBoundary ← requirementsByBoundary
@@ -481,8 +555,87 @@ def coverageRows (scope : Array Name) : Elab.TermElabM (Array Row × Tally) := d
         | none => true
         | some q => q == p.node
       if !governing.isEmpty then
-        out := out.push ⟨.ok, s!"[governed] {s.decl} {s.tag} {p.node.render} — by \
-          {String.intercalate ", " (governing.map (fun (_, r) => s!"'{r.name}'")).toList}"⟩
+        let requirementNames := String.intercalate ", "
+          (governing.map (fun (_, r) => s!"'{r.name}'")).toList
+        if governing.any fun (_, req) =>
+            match req.scope with
+            | .objects _ => false
+            | .all | .sort _ | .decided _ => true then
+          out := out.push ⟨.ok, s!"[governed] {s.decl} {s.tag} {p.node.render} — by \
+            {requirementNames}"⟩
+          continue
+        let mut scopedObjects : Array Name := #[]
+        for (_, req) in governing do
+          if let .objects objects := req.scope then
+            for object in objects do
+              if !scopedObjects.contains object then
+                scopedObjects := scopedObjects.push object
+        let groups ← objectsByType scopedObjects
+        if groups.isEmpty then
+          out := out.push ⟨.ok, s!"[governed] {s.decl} {s.tag} {p.node.render} — by \
+            {requirementNames}"⟩
+          continue
+        for (type, objects) in groups do
+          let scopedNames := names objects
+          let domain ← portDomainFor p.node type
+          match domain with
+          | .unreached =>
+            let typeName := toString (← Meta.ppExpr type)
+            out := out.push ⟨.ok,
+              s!"[governed] {s.decl} {s.tag} {p.node.render} — by {requirementNames} \
+                (object scope unchecked: the result carries no '{typeName}' index)"⟩
+          | .only carried =>
+            let covered := objects.filter carried.contains
+            let missing := carried.filter (!objects.contains ·)
+            if missing.isEmpty then
+              out := out.push ⟨.ok,
+                s!"[governed] {s.decl} {s.tag} {p.node.render} — by {requirementNames}"⟩
+            else
+              if !covered.isEmpty then
+                out := out.push ⟨.ok,
+                  s!"[governed] {s.decl} {s.tag} {p.node.render} for {names covered} — by \
+                    {requirementNames}"⟩
+              for object in missing do
+                let line := s!"⚠ UNGOVERNED {s.decl} {s.tag} {p.node.render} for {object} — \
+                  {requirementNames} scoped to {scopedNames}"
+                match marks.find? (·.decl == s.decl) with
+                | some mark => out := out.push ⟨.exempted,
+                    s!"⊘ exempted {s.decl} {s.tag} {p.node.render} for {object} — {mark.reason}"⟩
+                | none => out := out.push ⟨.violation, line⟩
+          | .all =>
+            match ← enumerableObjects type with
+            | some ctors =>
+              let covered := ctors.filter objects.contains
+              let missing := ctors.filter (!objects.contains ·)
+              if missing.isEmpty then
+                out := out.push ⟨.ok,
+                  s!"[governed] {s.decl} {s.tag} {p.node.render} — by {requirementNames}"⟩
+              else
+                if !covered.isEmpty then
+                  out := out.push ⟨.ok,
+                    s!"[governed] {s.decl} {s.tag} {p.node.render} for {names covered} — by \
+                      {requirementNames}"⟩
+                for object in missing do
+                  let line := s!"⚠ UNGOVERNED {s.decl} {s.tag} {p.node.render} for {object} — \
+                    {requirementNames} scoped to {scopedNames}"
+                  match marks.find? (·.decl == s.decl) with
+                  | some mark =>
+                    out := out.push ⟨.exempted,
+                      s!"⊘ exempted {s.decl} {s.tag} {p.node.render} for {object} — {mark.reason}"⟩
+                  | none => out := out.push ⟨.violation, line⟩
+            | none =>
+              let typeName := toString (← Meta.ppExpr type)
+              out := out.push ⟨.ok,
+                s!"[governed] {s.decl} {s.tag} {p.node.render} for {scopedNames} — by \
+                  {requirementNames}"⟩
+              let line := s!"⚠ UNGOVERNED {s.decl} {s.tag} {p.node.render} for every other \
+                '{typeName}' — {requirementNames} scoped to {scopedNames}"
+              match marks.find? (·.decl == s.decl) with
+              | some mark =>
+                out := out.push ⟨.exempted,
+                  s!"⊘ exempted {s.decl} {s.tag} {p.node.render} for every other \
+                    '{typeName}' — {mark.reason}"⟩
+              | none => out := out.push ⟨.violation, line⟩
       else match marks.find? (·.decl == s.decl) with
         | some m => out := out.push ⟨.exempted,
             s!"⊘ exempted {s.decl} {s.tag} {p.node.render} — {m.reason}"⟩
@@ -506,9 +659,13 @@ open Elab Command in
 /-- `#kind_requirement_coverage ns …` — the census: every produced port of every model
 boundary under the namespaces, each `[governed]` by the requirements naming it,
 `⊘ exempted` by a `@[kindRequirementFree]` mark (or as a counterexample), or
-`⚠ UNGOVERNED`; specification boundaries listed as the subject of no requirement. One
-sorted `info` message to pin, with the category tallies and the attested ratchet. Records an
-`AuditReceipt` for `kind_requirement_coverage`. -/
+`⚠ UNGOVERNED`; specification boundaries listed as the subject of no requirement. For
+object scopes, the domain is inferred from the result member's type: an index binder of
+that type means all objects, constants of that type mean only those objects, and `.unreached`
+means no index was found and is governed with an unchecked suffix. `.all`, `.sort`, and
+`.decided` scopes retain the boundary/port join without subset checking; `.decided` remains
+statically unchecked. One sorted `info` message to pin, with category tallies and the
+attested ratchet. Records an `AuditReceipt` for `kind_requirement_coverage`. -/
 elab "#kind_requirement_coverage" nss:ident+ : command => liftTermElabM do
   let scope := nss.map (·.getId)
   let (rows, tally) ← coverageRows scope
@@ -520,8 +677,10 @@ elab "#kind_requirement_coverage" nss:ident+ : command => liftTermElabM do
 
 open Elab Command in
 /-- `#kind_requirement_clean ns …` — **the invariant, stated apart from the record.** No
-message; throws while any produced port of a model boundary in scope is `⚠ UNGOVERNED`.
-Records an `AuditReceipt` for `kind_requirement_clean` exactly when it does not fire. -/
+message; throws while any produced port of a model boundary in scope is `⚠ UNGOVERNED`,
+including object-domain gaps. `.unreached` object domains remain governed but unchecked;
+`.decided` scopes also remain statically unchecked. Records an `AuditReceipt` for
+`kind_requirement_clean` exactly when it does not fire. -/
 elab "#kind_requirement_clean" nss:ident+ : command => liftTermElabM do
   let scope := nss.map (·.getId)
   let bad := violations (← coverageRows scope).1
