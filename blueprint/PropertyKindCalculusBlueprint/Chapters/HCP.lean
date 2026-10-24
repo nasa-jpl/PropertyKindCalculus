@@ -4,6 +4,7 @@ import VersoBlueprint
 import PropertyKindCalculusBlueprint.References
 import PropertyKindCalculusBlueprint.Chapters.HCP.L0_BlackBox
 import PropertyKindCalculusBlueprint.Chapters.HCP.L1_TwoBodies
+import PropertyKindCalculusBlueprint.Chapters.HCP.L2_ThePair
 
 open Verso.Genre
 open Verso.Genre.Manual
@@ -113,9 +114,9 @@ optionally add damping, and finally state what must hold:
   * Pair as a system
   * Opens each oscillator into body and spring(s); pair's own sort, whole and parts; coupling, parallel and series springs
   * Normal-mode frequency ω₊, total mass, effective stiffness
-  * R2/R3/R4: mass assembles (3 + 5 = 8), ω does not (ω₊ = 5 ≠ 2 + 4), stiffness assembles in parallel but not in series
-  * Stage 3; case study, `pairMass`/`stiffnessParallel`, Composition finding 4
-  * Planned
+  * R2/R3/R4: mass assembles, ω does not, stiffness assembles in parallel but not in series
+  * Stage 3; HCP `pairMass`/`parallelStiffness`, Composition finding 4
+  * Included here
 *
   * 3
   * Body opens up: inhomogeneous mass with an off-axis centre of mass, so it wobbles
@@ -155,9 +156,13 @@ blueprint build refuses drift. This HCP sequence replaces the earlier Tutorial c
 The `Tutorial.HarmonicOscillatorRequirements` example remains cited by
 MetrologicalModularity. L1 introduces two uncoupled black-box oscillators, each containing
 one body and its wall spring; the oscillator is the bearer of mass and stiffness. L2 opens
-each box, revisits which component bears each property and whether the oscillators
-interact, and introduces the pair as a whole.
+each box, adds the coupling spring, and makes the coupled pair a system of its own sort.
+Mass is borne by the bodies, stiffness by the springs, and the normal-mode angular
+frequency by the pair. L3 revisits the assumption that each body is rigid, homogeneous,
+point-like, and balanced on the spring axis.
 
 {include 1 PropertyKindCalculusBlueprint.Chapters.HCP.L0_BlackBox}
 
 {include 1 PropertyKindCalculusBlueprint.Chapters.HCP.L1_TwoBodies}
+
+{include 1 PropertyKindCalculusBlueprint.Chapters.HCP.L2_ThePair}
