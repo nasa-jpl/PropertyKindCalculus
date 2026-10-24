@@ -166,7 +166,7 @@ example := massK.dedicatedFor (⟨"oscillator A"⟩ : Object) whole
 
 A dimension-and-units library has no object axis at all: `mA + mB` is a sum of two masses
 and nothing more can be said. Tagging the object into the type by hand recovers the refusal
-and loses the sum (T0's third row); declaring the object as an index of the quantity keeps
+and loses the sum; aggregation is outside L0. Declaring the object as an index of the quantity keeps
 both, as T3 shows.
 
 Reference: {ref "object-types"}[The object type] for `Sorted`, `Designated`, and the
