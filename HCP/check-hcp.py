@@ -22,7 +22,7 @@ class FrontMatterError(ValueError):
 
 
 def parse_key_value(text, line):
-    match = re.fullmatch(r"([A-Za-z_][A-Za-z0-9_-]*):(?:[ \t]*(.*))?", text)
+    match = re.fullmatch(r"([A-Za-z_][A-Za-z0-9_-]*):(?:[ \t]+(.*))?", text)
     if not match:
         raise FrontMatterError(line, "unrecognised key-value entry")
     return match.group(1), match.group(2) or ""
@@ -41,18 +41,16 @@ def parse_scalar(value, line):
             if quote == "'" and value[index:index + 2] == "''":
                 index += 2
             elif quote == '"' and value[index] == "\\":
-                if index + 1 >= len(value) - 1:
-                    raise FrontMatterError(line, "unterminated escape in quoted scalar")
-                index += 2
+                raise FrontMatterError(line, "escape sequences are unsupported")
             elif value[index] == quote:
                 raise FrontMatterError(line, "unexpected text after quoted scalar")
             else:
                 index += 1
         inner = value[1:-1]
-        return inner.replace("''", "'") if quote == "'" else inner
+        return (inner.replace("''", "'") if quote == "'" else inner), True
     if value[0] in "[{|>&*!%@`":
         raise FrontMatterError(line, "unsupported scalar syntax")
-    return value
+    return value, False
 
 
 def parse_inline_list(value, line):
@@ -73,8 +71,7 @@ def parse_inline_list(value, line):
                 index += 2
                 continue
             if quote == '"' and char == "\\":
-                index += 2
-                continue
+                raise FrontMatterError(line, "escape sequences are unsupported")
             if char == quote:
                 quote = None
         elif char in "'\"":
@@ -91,13 +88,13 @@ def parse_inline_list(value, line):
     items.append(inner[start:].strip())
     if any(not item for item in items):
         raise FrontMatterError(line, "empty inline-list item")
-    return [parse_scalar(item, line) for item in items]
+    return [parse_scalar(item, line)[0] for item in items]
 
 
 def parse_value(value, line):
     value = value.strip()
     if value.startswith("["):
-        return parse_inline_list(value, line)
+        return parse_inline_list(value, line), False
     if value.startswith("]"):
         raise FrontMatterError(line, "unexpected closing bracket")
     return parse_scalar(value, line)
@@ -143,10 +140,12 @@ def parse_block(lines, start, key_line):
                     items.append(current)
                 current = {}
                 item_key, item_value = parse_key_value(line[4:], number)
-                add_mapping_value(current, item_key, parse_value(item_value, number), number)
+                value, _ = parse_value(item_value, number)
+                add_mapping_value(current, item_key, value, number)
             elif spaces == 4 and current is not None:
                 item_key, item_value = parse_key_value(line[4:], number)
-                add_mapping_value(current, item_key, parse_value(item_value, number), number)
+                value, _ = parse_value(item_value, number)
+                add_mapping_value(current, item_key, value, number)
             else:
                 raise FrontMatterError(number, "unexpected indentation or block-list item")
             index += 1
@@ -166,7 +165,8 @@ def parse_block(lines, start, key_line):
         if spaces != 2 or line[2:].startswith("- "):
             raise FrontMatterError(number, "unexpected indentation in mapping")
         child_key, child_value = parse_key_value(line[2:], number)
-        add_mapping_value(mapping, child_key, parse_value(child_value, number), number)
+        value, _ = parse_value(child_value, number)
+        add_mapping_value(mapping, child_key, value, number)
         index += 1
     if not mapping:
         raise FrontMatterError(key_line, "expected an indented mapping")
@@ -199,8 +199,8 @@ def parse_front_matter(text) -> dict:
         if not raw_value.strip():
             data[key], index = parse_block(content, index, number)
         else:
-            value = parse_value(raw_value, number)
-            if key in {"hcp", "exercises"} and isinstance(value, str) and value.isdigit():
+            value, quoted = parse_value(raw_value, number)
+            if key in {"hcp", "exercises"} and not quoted and isinstance(value, str) and value.isdigit():
                 value = int(value)
             data[key] = value
     return data
