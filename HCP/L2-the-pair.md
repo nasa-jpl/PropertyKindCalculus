@@ -7,10 +7,10 @@ pull: "Once A and B are coupled, what bears the total mass and the oscillation f
 improvement: "Open the oscillator boxes into parts and model the pair as a whole with sort-specific aggregation licenses."
 concepts:
   - informal: "two bodies and three springs form a coupled pair"
-    formal: "Body, Spring, Part, and CoupledPair with pairS"
+    formal: "Body, Spring, PartOf, and CoupledPair with pairS"
     where: "§7 System-context card; HCP.L2_ThePair#opened_pair"
   - informal: "the pair bears the total mass"
-    formal: "pairMass has the Composite.whole index and assembles body masses"
+    formal: "pairMass has the pair-indexed Composite.whole and assembles body masses"
     where: "HCP.L2_ThePair#pair_mass"
   - informal: "normal-mode frequency belongs to the coupled pair"
     formal: "angularFrequency dedicated to pairS, not bodyS or springS"
@@ -39,9 +39,10 @@ context and the bearer-indexed quantities.
 
 Once A and B are coupled, what bears the total mass and the oscillation frequency? L1's
 black boxes open: body A and body B carry mass, springs kA, kC, and kB carry stiffness,
-and the coupled pair is a system of its own sort. The wall-spring oscillators remain the
-parts' models; kC is the new coupling spring. The L1 assumption that the oscillators do
-not interact has fallen. Mass is borne by each body and stiffness by each spring; L1's
+and the coupled pair is a system of its own sort. Each wall-spring oscillator supplies its
+body's mass and wall-spring stiffness; kC is the new coupling spring. The L1 assumption that
+the oscillators do not interact has fallen. A pair-indexed `PartOf p` keeps same-named parts
+of different pairs distinct. Mass is borne by each body and stiffness by each spring; L1's
 oscillator-indexed `ω² = k/m` does not survive coupling. The normal-mode frequency belongs
 to the pair.
 
@@ -49,7 +50,7 @@ to the pair.
 
 | Question | Context change | Attribute change | Risk shown | PhysLib stage |
 |---|---|---|---|---|
-| Once A and B are coupled, what bears the total mass and the oscillation frequency? | Open the L1 black boxes into bodies A and B and springs kA, kC, kB; kC joins A and B, so they interact. The coupled pair has its own sort. | Per-part mass and stiffness; total mass of the pair; normal-mode angular frequency of the pair; effective stiffness. | Whole/part confusion; aggregating a kind that does not aggregate (normal-mode frequency or series stiffness). | Stage 3: sort-specific assembly licenses; ForPhysLib Composition and the harmonic-oscillator square. |
+| Once A and B are coupled, what bears the total mass and the oscillation frequency? | Open the L1 black boxes into bodies A and B and springs kA, kC, kB; kC joins A and B, so they interact. The coupled pair has its own sort and pair-indexed parts. | Per-part mass and stiffness; total mass of the pair; normal-mode angular frequency of the pair; effective stiffness. | Whole/part confusion; R1 cross-system contamination one level up (a second pair's mass); aggregating a kind that does not aggregate (normal-mode frequency or series stiffness). | Stage 3: sort-specific assembly licenses; ForPhysLib Composition and the harmonic-oscillator square. |
 
 With B clamped, A is held by its wall spring kA and the coupling spring kC in parallel.
 The total mass belongs to the pair whole; angular frequency does not add across the bodies,
@@ -62,18 +63,18 @@ axis; an imbalance would make it wobble.
 
 | # | Do | Checked by `HCP.L2_ThePair` anchor | Concept disclosed |
 |---|---|---|---|
-| 1 | Open the boxes into bodies A/B and springs kA/kC/kB, and give the pair a sort of its own. | `HCP.L2_ThePair#opened_pair` | Mass belongs to a body and stiffness to a spring; the coupling spring is the new field. |
-| 2 | Assemble both body masses into the pair whole. | `HCP.L2_ThePair#pair_mass` | The pair mass is the sum of its parts' masses, read from the real fields. |
-| 3 | Try to add the pair mass to body A's mass. | `HCP.L2_ThePair#refused_whole_part` | Whole and part are distinct bearers and cannot be added. |
+| 1 | Open the boxes into bodies A/B and springs kA/kC/kB, and give each part a pair-indexed bearer. | `HCP.L2_ThePair#opened_pair` | Mass belongs to a body and stiffness to a spring; `PartOf p` distinguishes the same part name in another pair. |
+| 2 | Assemble both body masses into the pair whole. | `HCP.L2_ThePair#pair_mass` | The pair-specific whole mass is the sum of its parts' masses, read from the real fields. |
+| 3 | Try to add the pair mass to body A's mass and to another pair's mass. | `HCP.L2_ThePair#refused_whole_part` | Whole and part are distinct bearers; a second pair is another system even when its parts have the same names. |
 | 4 | Try to assemble the bodies' angular frequencies into the pair. | `HCP.L2_ThePair#refused_frequency_assembly` | Angular frequency has no `Assembles` license for the pair sort. |
 | 5 | Give the normal mode its dedicated kind at the pair sort. | `HCP.L2_ThePair#normal_mode` | The normal mode is neither a body nor a spring property. |
 | 6 | With B clamped, assemble kA and kC as springs in parallel. | `HCP.L2_ThePair#parallel_stiffness` | The parallel whole has the sum of the two stiffness magnitudes. |
-| 7 | Try to assemble the two end-to-end springs as series stiffness. | `HCP.L2_ThePair#refused_series_stiffness` | No series-sort assembly license is registered. |
-| 8 | Check the aggregation licenses against numerical measurements. | `HCP.L2_ThePair#parallelLaw`; `HCP.L2_ThePair#seriesLaw`; `HCP.L2_ThePair#licenseCashed` | Parallel stiffness is extensive; series stiffness is whole-proper, and registering its sum would lie. |
+| 7 | Try to assemble kA and kB as two springs chained end to end. | `HCP.L2_ThePair#refused_series_stiffness` | No series-sort assembly license is registered. |
+| 8 | Check the aggregation licenses on the exhibited pairs: parallel kA–kC and series kA–kB. | `HCP.L2_ThePair#parallelLaw`; `HCP.L2_ThePair#seriesLaw`; `HCP.L2_ThePair#licenseCashed` | Parallel stiffness adds; series kA–kB gives 6 ∥ 3 = 2. Integer measurements are exact only for the exhibited pairs and do not model longer chains. |
 
 ## 5. AI assistance contract
 
-- Use the HCP-owned `Body`, `Spring`, `Part`, and `CoupledPair` types; do not import or reuse the Tutorial model.
+- Use the HCP-owned `Body`, `Spring`, `PartOf`, and `CoupledPair` types; do not import or reuse the Tutorial model.
 - Keep body mass, spring stiffness, and pair normal-mode frequency on their respective bearers.
 - Treat the pair as a whole distinct from every body and spring part.
 - State that the L1 no-interaction assumption falls here and that L3 revisits the on-axis, rigid-body assumption.
@@ -86,10 +87,11 @@ axis; an imbalance would make it wobble.
 |---|---|---|
 | Where does total mass live? | `pair_mass` | On `Composite.whole`; the two body masses assemble there. |
 | Can a whole mass be added to one of its parts? | `refused_whole_part` | No; their composite object indices differ. |
+| Can two pairs' whole masses be added? | `refused_whole_part` | No; `PartOf p` and `PartOf q` keep even identically named parts on distinct pair bearers. |
 | Does angular frequency assemble across the pair's bodies? | `refused_frequency_assembly` | No; the pair sort has no angular-frequency license. |
 | What sort bears the normal mode? | `normal_mode` | The dedicated kind is attached to `pairS`, not `bodyS` or `springS`. |
 | What happens to stiffness when kA and kC act in parallel? | `parallel_stiffness`, `parallelLaw` | The effective magnitude is their sum, and the measurement is extensive. |
-| May the same summation rule be used for springs in series? | `refused_series_stiffness`, `seriesLaw`, `licenseCashed` | No; series stiffness is whole-proper, and a hypothetical license admits a wrong sum. |
+| May the same summation rule be used for springs in series? | `refused_series_stiffness`, `seriesLaw`, `licenseCashed` | No; kA–kB reads 6 ∥ 3 = 2, and a hypothetical sum license reports 9. The `Int` examples are exact only for the exhibited pairs, not longer chains. |
 
 ## 7. System-context card
 
@@ -104,6 +106,8 @@ axis; an imbalance would make it wobble.
 | Outside | Walls and line | Fixed, infinitely massive walls; one-dimensional motion | The wall springs remain attached to fixed boundaries and both bodies move along the line. |
 
 The Lean model keeps each body's oscillator as the source of its mass and wall-spring
-stiffness; `kC` is the pair's new coupling field. L3 revisits the assumption that each
-body is rigid, homogeneous, and point-like with its mass on the spring axis: if the mass
-is off-axis, the body wobbles.
+stiffness; `kC` is the pair's new coupling field. `PartOf p` makes parts belong to their
+owning pair. The `Measurement` numeral is an `Int`: the series example is exact for kA–kB
+(6 ∥ 3 = 2), but these integer numerals do not model longer chains. L3 revisits the
+assumption that each body is rigid, homogeneous, and point-like with its mass on the spring
+axis: if the mass is off-axis, the body wobbles.
