@@ -7,6 +7,7 @@ import PropertyKindCalculusBlueprint.Chapters.HCP.L1_TwoBodies
 import PropertyKindCalculusBlueprint.Chapters.HCP.L2_ThePair
 import PropertyKindCalculusBlueprint.Chapters.HCP.L3_TheBodyOpens
 import PropertyKindCalculusBlueprint.Chapters.HCP.L4_OutOfTheLine
+import PropertyKindCalculusBlueprint.Chapters.HCP.L5_Damping
 
 open Verso.Genre
 open Verso.Genre.Manual
@@ -138,11 +139,11 @@ optionally add damping, and finally state what must hold:
 *
   * 5
   * Losing energy (optional)
-  * Add a damper
-  * Damping coefficient; `γ² − 4mk` regimes
-  * Regime test can type-check with wrong kinds
-  * Stage 1; upstream `DampedHarmonicOscillator`
-  * Planned
+  * Add a damper to the nominally named oscillator
+  * Damper `γ`, whole-system decay rate `δ`, and damping regime
+  * Bare comparisons conflate viscous damping, decay rate, and angular frequency; kinded forms distinguish them
+  * Stage 1; upstream `DampedHarmonicOscillator`; ISO 80000-3 items 3-18 and 3-24
+  * Included here (optional)
 *
   * 6
   * What must hold
@@ -163,8 +164,9 @@ Mass is borne by the bodies, stiffness by the springs, and the normal-mode angul
 frequency by the pair. L3 opens body A into nominally indexed halves, explains wobble by
 the off-axis centre of mass, and separates body- from lab-frame angular velocity. L4
 puts the pair's centres in 3-D space, makes its separation a pair-indexed quantity, and
-states which observer's frame supplies a vector's context. L5 will revisit the remaining
-no-dissipation assumption.
+states which observer's frame supplies a vector's context. Optional L5 adds the damper,
+keeps its measured viscous constant `γ` distinct from the whole-system decay rate `δ`,
+and ends the remaining no-dissipation assumption.
 
 {include 1 PropertyKindCalculusBlueprint.Chapters.HCP.L0_BlackBox}
 
@@ -175,3 +177,5 @@ no-dissipation assumption.
 {include 1 PropertyKindCalculusBlueprint.Chapters.HCP.L3_TheBodyOpens}
 
 {include 1 PropertyKindCalculusBlueprint.Chapters.HCP.L4_OutOfTheLine}
+
+{include 1 PropertyKindCalculusBlueprint.Chapters.HCP.L5_Damping}
