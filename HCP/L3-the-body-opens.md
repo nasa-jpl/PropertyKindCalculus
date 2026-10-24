@@ -10,7 +10,7 @@ concepts:
     formal: "HalfOf .P .A, OpenBody .P .A, massOf, and bodyMass"
     where: "§7 System-context card; HCP.L3_TheBodyOpens#opened_body"
   - informal: "centre of mass is a weighted mean"
-    formal: "union_centerOfMass and halvesByMass_mean_const, with no displacement assembly license"
+    formal: "centerOfMassCarving weights each half by OpenBody.mass; centerOfMass_eq and the 3/5-at-0/10 example"
     where: "HCP.L3_TheBodyOpens#center_of_mass_mean"
   - informal: "angular velocity is intensive and frame-specific"
     formal: "omegaOfHalf_intensive; bodyOmega versus labOmega in rotationalContraction"
@@ -62,8 +62,8 @@ motion along one line seen by one observer.
 | # | Do | Checked by `HCP.L3_TheBodyOpens` anchor | Concept disclosed |
 |---|---|---|---|
 | 1 | Open body A into left and right halves, index them by pair and body identity, and assemble their masses. | `opened_body` | `HalfOf .P .A` names the bearers; mass assembles to the rigid-body whole, while P and Q remain distinct systems. |
-| 2 | Read centre of mass as a positive weighted mean, then try to assemble positions by addition. | `center_of_mass_mean` | `union_centerOfMass` and `halvesByMass_mean_const` express a mean; `rigidBodyS` has no displacement assembly license. |
-| 3 | Inspect the massless whole and the nonzero-total condition on a weighted carving. | `massless_center_of_mass` | PhysLib reports the origin for zero mass, while PKC refuses to form a weighted mean without nonzero total mass. |
+| 2 | Weight the half positions by this state's half masses, then try to assemble positions by addition. | `center_of_mass_mean` | `centerOfMass_eq` uses the `OpenBody.mass` and `.position` fields; masses 3 and 5 at positions 0 and 10 give 25/4, not the unit-weight midpoint 5. `rigidBodyS` has no displacement assembly license. |
+| 3 | Inspect the massless whole and the nonzero-total condition on a weighted carving. | `massless_center_of_mass` | PhysLib reports the origin for zero mass; the license is hypothesis `h`, which a massless state cannot satisfy to build the carving. |
 | 4 | Check angular velocity over halves and try to assemble it. | `angular_velocity_intensive` | The halves share ω; adding their angular velocities would double it, so no license exists. |
 | 5 | Pass lab-frame angular velocity to upstream rotational kinetic energy. | `bare_frame_mismatch` | The bare expression type-checks even though the inertia tensor is body-fixed, so the accepted term is physically wrong. |
 | 6 | Apply PKC's frame-indexed contraction to lab and body angular velocities. | `framed_rotational_energy` | The lab-frame term is refused, the body-frame term is accepted, and the accepted contraction agrees with PhysLib energy. |
@@ -77,6 +77,7 @@ motion along one line seen by one observer.
   claim; restate only the HCP-specific half bearers and the refused assembly probes.
 - Preserve nominal identity: same-name records share bearers, while P and Q do not.
 - Treat `Assembles` as an explicit physical license, not a generic arithmetic operation.
+- Make the weighted-mean license the state's nonzero total mass; do not substitute unit weights.
 - Keep the body- and lab-frame indices visible in rotational expressions.
 - Label the accepted upstream lab-ω expression physically wrong even though Lean accepts it.
 - Leave the one-dimensional, one-observer assumption for L4.
@@ -88,8 +89,8 @@ motion along one line seen by one observer.
 | What bears the mass of body A's left half? | `opened_body` | `Composite.part (HalfOf .P .A)` bears it; the body whole bears the assembled total. |
 | Can another record of body A in pair P use the same bearer? | `opened_body` | Yes; it is another state, configuration, or estimate of the named system. |
 | Can pair Q's left-half mass be mixed with pair P's? | `opened_body` | No; nominal pair identities produce distinct bearer types. |
-| Does centre of mass add across halves? | `center_of_mass_mean` | No; it is mass-weighted, and no displacement assembly license exists. |
-| What happens when total mass is zero? | `massless_center_of_mass` | PhysLib returns the origin by convention, but the weighted mean has no nonzero-total license. |
+| How does this state's centre of mass depend on its halves? | `center_of_mass_mean` | `centerOfMassCarving` uses the actual half masses; 3 at 0 and 5 at 10 yield 25/4 rather than 5. Position addition is unlicensed. |
+| What happens when total mass is zero? | `massless_center_of_mass` | PhysLib returns the origin by convention, but hypothesis `h` fails, so the state cannot construct a weighted carving. |
 | Does angular velocity add over a carving? | `angular_velocity_intensive` | No; it is intensive, and the attempted assembly is refused. |
 | Can the body inertia tensor contract with lab-frame ω? | `bare_frame_mismatch`, `framed_rotational_energy` | The bare PhysLib API accepts it, but the PKC frame index refuses it. |
 | Where does the homogeneous-body assumption survive? | `solid_sphere` | As the solid-sphere theorem `(2/5) m R² · 1`, ready to contribute upstream. |
@@ -102,12 +103,12 @@ motion along one line seen by one observer.
 | Part | Body A | Rigid body in pair P | No longer point-like or homogeneous; carved into left and right halves with per-half mass and position. |
 | Part | Left half of A | `HalfOf .P .A` | Mass-bearing rigid-body part, designated “left half.” |
 | Part | Right half of A | `HalfOf .P .A` | Mass-bearing rigid-body part, designated “right half.” |
-| Attribute | Centre of mass | Weighted mean | Defined only with nonzero total mass; an off-axis value makes the spring force produce torque. |
+| Attribute | Centre of mass | Weighted mean | Uses each state's half masses and positions; defined only under nonzero-total hypothesis `h`. Masses 3 and 5 at positions 0 and 10 give 25/4. An off-axis value makes the spring force produce torque. |
 | Attribute | Inertia tensor | Body-fixed tensor | The union theorem adds part tensors about a common origin; the solid sphere is the homogeneous special case. |
 | Attribute | Angular velocity | Lab or body frame | Intensive over rigid halves; rotational contraction requires the body-frame value. |
 | Outside / deferred | Observer and full 3-D motion | L4 | L3 introduces two frames but still defers the one-observer, one-line assumption to L4. |
 
 The HCP bearer is narrower than the upstream `RigidBody` theorems: `HalfOf π b` adds
-nominal pair-and-body identity. The mass total and refused assembly probes are therefore
-restated over HCP bearers. The physical union, weighted-mean, massless, intensive-ω,
-frame-bridge, and solid-sphere results are reused directly from ForPhysLib.
+nominal pair-and-body identity. The mass total, state-dependent weighted mean, and refused
+assembly probes are therefore stated over HCP bearers. The physical union, massless,
+intensive-ω, frame-bridge, and solid-sphere results are reused directly from ForPhysLib.

@@ -122,13 +122,45 @@ The HCP total is the narrow restatement: upstream `union_mass` and
 `HalfOf .P .A` bearer.
 
 _2. Centre of mass is a weighted mean._ Upstream supplies both the rigid-body union law
-and the general positive weighted-mean law. HCP's position quantities use the same
-nominal half bearers as mass, but an attempted sum has no `Assembles` license:
+and the general weighted-mean machinery. HCP's `centerOfMassCarving` uses this state's
+`OpenBody.mass` for its weights, and `centerOfMass_eq` gives the resulting formula. For
+example, masses 3 and 5 at positions 0 and 10 give 25/4 (6.25), not the unit-weight
+midpoint 5. HCP's position quantities use the same nominal half bearers as mass, but an
+attempted sum has no `Assembles` license:
 
 ```anchor center_of_mass_mean
 example := ForPhysLib.Exhibits.Composition.union_centerOfMass
 
-example := ForPhysLib.Exhibits.Composition.halvesByMass_mean_const
+noncomputable def centerOfMassCarving {π : PairId} {b : Body}
+    (state : OpenBody π b)
+    (h : state.mass .left + state.mass .right ≠ 0) :
+    WeightedCarving ℝ Half where
+  parts := bodyHalves
+  weight := state.mass
+  total_ne_zero := by
+    change state.mass .left + state.mass .right ≠ 0
+    exact h
+
+theorem centerOfMass_eq {π : PairId} {b : Body} (state : OpenBody π b)
+    (h : state.mass .left + state.mass .right ≠ 0) :
+    (centerOfMassCarving state h).mean state.position =
+      (state.mass .left * state.position .left + state.mass .right * state.position .right) /
+        (state.mass .left + state.mass .right) := by
+  rfl
+
+def unequalMassExample : OpenBody .P .A where
+  mass
+    | .left => 3
+    | .right => 5
+  position
+    | .left => 0
+    | .right => 10
+
+theorem unequalMassExample_centerOfMass :
+    (centerOfMassCarving unequalMassExample (by norm_num [unequalMassExample])).mean
+      unequalMassExample.position = (25 : ℝ) / 4 := by
+  norm_num [centerOfMassCarving, unequalMassExample, WeightedCarving.mean, weightedSum,
+    totalWeight, bodyHalves, Decomposition.fold]
 
 def positionOf {π : PairId} {b : Body} (state : OpenBody π b) (h : HalfOf π b) :
     IndividualQuantity
@@ -155,8 +187,9 @@ The physical content is
 `(mA + mB) com = mA comA + mB comB`, not `com = comA + comB`.
 
 _3. The degenerate whole._ PhysLib defines the massless body's centre of mass to be the
-origin by convention. A `WeightedCarving`, by contrast, carries a proof that its total
-weight is nonzero, so the meaningless zero-mass mean is not a term:
+origin by convention. The license to build `centerOfMassCarving` is hypothesis `h`, that
+the state's total mass is nonzero; a massless state cannot satisfy it, so it cannot build
+the carving:
 
 ```anchor massless_center_of_mass
 example := ForPhysLib.Exhibits.Composition.massless_centerOfMass
