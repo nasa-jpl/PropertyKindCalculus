@@ -24,13 +24,16 @@ gate that mentions no referent; a spot check that is false, and one that is not 
 The survey, the census and the gate close the file, with the two marks' own refusals.
 The sibling scope probes pin inferred domains for generic and fixed indices, reducible and
 opaque conditionals, an aliased result, a kind-index constant, object aliases, a
-non-enumerable index, and a result whose type carries no object index.
+non-enumerable index, and a result whose type carries no object index, named structure objects,
+and projected and aliased composite bearers.
 -/
 
 module
 
 public import PropertyKindCalculus.KindRequirement
 meta import PropertyKindCalculus.KindRequirement
+public import PropertyKindCalculus.Composite
+meta import PropertyKindCalculus.Composite
 
 @[expose] public section Blanket
 
@@ -964,6 +967,73 @@ def tagRequirement : Provenance.Requirement where
   scope := .objects [``tagA]
   attested := "coverage-domain probe"
 
+def tagB : Tag := ⟨"B"⟩
+
+def namedTagBModel : IndividualQuantity tagB bK Int := ⟨0⟩
+
+def namedTagBoundary : Provenance.Contract NodeId KindRef where
+  name := "named Tag B result"
+  members := [``namedTagBModel]
+  ports := [⟨NodeId.result.within ``namedTagBModel, .decl ``bK, .output⟩]
+  exits := []
+
+def namedTagRequirement : Provenance.Requirement where
+  name := "Tag A on named Tag B"
+  statement := "a named Tag B result is not governed by Tag A"
+  kind := .provable
+  governs := ``namedTagBoundary
+  port := some (NodeId.result.within ``namedTagBModel)
+  scope := .objects [``tagA]
+  attested := "coverage-domain probe"
+
+structure ThingBox where
+  object : Thing
+
+structure Holder where
+  box : ThingBox
+
+def heldTwo : Holder := ⟨⟨Thing.two⟩⟩
+
+def projectedCompositeModel :
+    IndividualQuantity
+      (Composite.part (σ := probeS) ((⟨⟨Thing.two⟩⟩ : Holder).box.object))
+      bK Int :=
+  ⟨0⟩
+
+def projectedCompositeBoundary : Provenance.Contract NodeId KindRef where
+  name := "projected composite Thing.two result"
+  members := [``projectedCompositeModel]
+  ports := [⟨NodeId.result.within ``projectedCompositeModel, .decl ``bK, .output⟩]
+  exits := []
+
+def projectedCompositeRequirement : Provenance.Requirement where
+  name := "Thing one on projected composite"
+  statement := "a projected composite bearer containing Thing.two is not governed by Thing.one"
+  kind := .provable
+  governs := ``projectedCompositeBoundary
+  port := some (NodeId.result.within ``projectedCompositeModel)
+  scope := .objects [``Thing.one]
+  attested := "coverage-domain probe"
+
+def wrappedCompositeModel :
+    IndividualQuantity (Composite.part (σ := probeS) heldTwo) bK Int :=
+  ⟨0⟩
+
+def wrappedCompositeBoundary : Provenance.Contract NodeId KindRef where
+  name := "wrapped composite Thing.two result"
+  members := [``wrappedCompositeModel]
+  ports := [⟨NodeId.result.within ``wrappedCompositeModel, .decl ``bK, .output⟩]
+  exits := []
+
+def wrappedCompositeRequirement : Provenance.Requirement where
+  name := "Thing one on wrapped composite"
+  statement := "a wrapped composite bearer containing Thing.two is not governed by Thing.one"
+  kind := .provable
+  governs := ``wrappedCompositeBoundary
+  port := some (NodeId.result.within ``wrappedCompositeModel)
+  scope := .objects [``Thing.one]
+  attested := "coverage-domain probe"
+
 /--
 info: requirement coverage:
 [governed] PropertyKindCalculus.Tests.KindRequirementScope.bareResultBoundary ('unindexed result') bareResultModel/result — by 'bare-result object scope' (object scope unchecked: the result carries no 'Thing' index)
@@ -975,11 +1045,14 @@ info: requirement coverage:
 [governed] PropertyKindCalculus.Tests.KindRequirementScope.thingBothBoundary ('Thing-indexed model, both scoped objects') thingModel/result — by 'Thing one and two'
 [governed] PropertyKindCalculus.Tests.KindRequirementScope.thingOneBoundary ('Thing-indexed model, one scoped object') thingModel/result for PropertyKindCalculus.Tests.KindRequirement.Thing.one — by 'Thing one'
 ⚠ UNGOVERNED PropertyKindCalculus.Tests.KindRequirementScope.aliasedThingTwoBoundary ('aliased Thing.two result') aliasedThingTwoModel/result for PropertyKindCalculus.Tests.KindRequirement.Thing.two — 'Thing one on aliased Thing.two' scoped to PropertyKindCalculus.Tests.KindRequirement.Thing.one
+⚠ UNGOVERNED PropertyKindCalculus.Tests.KindRequirementScope.namedTagBoundary ('named Tag B result') namedTagBModel/result for PropertyKindCalculus.Tests.KindRequirementScope.tagB — 'Tag A on named Tag B' scoped to PropertyKindCalculus.Tests.KindRequirementScope.tagA
+⚠ UNGOVERNED PropertyKindCalculus.Tests.KindRequirementScope.projectedCompositeBoundary ('projected composite Thing.two result') projectedCompositeModel/result for PropertyKindCalculus.Tests.KindRequirement.Thing.two — 'Thing one on projected composite' scoped to PropertyKindCalculus.Tests.KindRequirement.Thing.one
 ⚠ UNGOVERNED PropertyKindCalculus.Tests.KindRequirementScope.tagBoundary ('Tag-indexed model') tagModel/result for every other 'Tag' — 'Tag A' scoped to PropertyKindCalculus.Tests.KindRequirementScope.tagA
 ⚠ UNGOVERNED PropertyKindCalculus.Tests.KindRequirementScope.thingOneBoundary ('Thing-indexed model, one scoped object') thingModel/result for PropertyKindCalculus.Tests.KindRequirement.Thing.two — 'Thing one' scoped to PropertyKindCalculus.Tests.KindRequirement.Thing.one
 ⚠ UNGOVERNED PropertyKindCalculus.Tests.KindRequirementScope.thingTwoBoundary ('Thing.two-indexed model') thingTwoModel/result for PropertyKindCalculus.Tests.KindRequirement.Thing.two — 'Thing one on Thing two' scoped to PropertyKindCalculus.Tests.KindRequirement.Thing.one
-12 row(s) over 10 model boundary(ies): 8 governed, 4 UNGOVERNED — requirement-coverage violation
-requirements: 10 provable, 0 empirical, 10 attested
+⚠ UNGOVERNED PropertyKindCalculus.Tests.KindRequirementScope.wrappedCompositeBoundary ('wrapped composite Thing.two result') wrappedCompositeModel/result for PropertyKindCalculus.Tests.KindRequirement.Thing.two — 'Thing one on wrapped composite' scoped to PropertyKindCalculus.Tests.KindRequirement.Thing.one
+15 row(s) over 13 model boundary(ies): 8 governed, 7 UNGOVERNED — requirement-coverage violation
+requirements: 13 provable, 0 empirical, 13 attested
 -/
 #guard_msgs (whitespace := lax) in
   #kind_requirement_coverage PropertyKindCalculus.Tests.KindRequirementScope
