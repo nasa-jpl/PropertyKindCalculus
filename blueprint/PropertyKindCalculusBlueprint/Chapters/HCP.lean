@@ -78,9 +78,10 @@ The left column is system context; dimension-only metrology attends to the right
   * `Exhibits/ReferenceFrame`; MOTIVATION M7
 :::
 
-The ladder refines one black-box oscillator, then adds bodies and pair-as-system, opens
-the body to its mass distribution, moves out of the line, optionally adds damping, and
-finally states what must hold:
+The ladder starts with one black-box oscillator and adds a second oscillator as another
+particular of the same sort. L2 opens each box into body and spring(s), then treats the
+pair as a whole. Later steps open the body to its mass distribution, move out of the line,
+optionally add damping, and finally state what must hold:
 
 :::table +header
 *
@@ -102,15 +103,15 @@ finally states what must hold:
 *
   * 1
   * Two bodies
-  * Two particulars of one sort, each on its own wall spring; the bodies remain uncoupled
-  * Same kinds, now per body and spring; object index and designation enter
-  * R1 contamination; R5 false identity
+  * Two particulars of sort harmonic oscillator; each black box contains one body and its wall spring; the oscillators remain uncoupled
+  * Same kinds, now indexed by the oscillator whole; its mass and stiffness share an index
+  * R1 contamination across oscillators; R5 false identity; cross-oscillator division is refused
   * Stage 2; CaseStudies/HarmonicOscillator Attempt 4; HCP L1
   * Included here
 *
   * 2
   * Pair as a system
-  * Pair's own sort; whole and parts; parallel and series springs
+  * Opens each oscillator into body and spring(s); pair's own sort, whole and parts; coupling, parallel and series springs
   * Normal-mode frequency ω₊, total mass, effective stiffness
   * R2/R3/R4: mass assembles (3 + 5 = 8), ω does not (ω₊ = 5 ≠ 2 + 4), stiffness assembles in parallel but not in series
   * Stage 3; case study, `pairMass`/`stiffnessParallel`, Composition finding 4
@@ -152,8 +153,10 @@ finally states what must hold:
 Every lesson line is quoted live from the `HCP` library through SubVerso anchors; the
 blueprint build refuses drift. This HCP sequence replaces the earlier Tutorial chapters.
 The `Tutorial.HarmonicOscillatorRequirements` example remains cited by
-MetrologicalModularity. L1 introduces two uncoupled bodies and their separate wall
-springs; the coupling spring and pair-as-system refinement are reserved for L2.
+MetrologicalModularity. L1 introduces two uncoupled black-box oscillators, each containing
+one body and its wall spring; the oscillator is the bearer of mass and stiffness. L2 opens
+each box, revisits which component bears each property and whether the oscillators
+interact, and introduces the pair as a whole.
 
 {include 1 PropertyKindCalculusBlueprint.Chapters.HCP.L0_BlackBox}
 
