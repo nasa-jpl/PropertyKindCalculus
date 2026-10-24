@@ -666,8 +666,10 @@ or an attestation with its reason defers it. The category is read off the statem
 constants, not chosen: a witness that names a referent is refused as provable, and a gate
 that names none is refused as empirical. `#kind_requirements` surveys a namespace's
 requirements as one pinned report, and `#kind_requirement_coverage` asks of every produced
-port whether a requirement governs it, counting the attested ones as the number meant to
-fall ({ref "requirements-as-evidence"}[every claim a model makes, with its evidence]).
+port whether a boundary/port-matching requirement governs it. For object scopes, the result
+member's type supplies the inferred object domain; `.unreached` results remain governed
+but are marked unchecked, while `.all`, `.sort`, and `.decided` retain the static join
+({ref "requirements-as-evidence"}[every claim a model makes, with its evidence]).
 
 # Requirements
 
@@ -1278,7 +1280,10 @@ acceptance and refusal probes.
 *R28 — A module's requirements are stated with their evidence.* The requirement clause
 of the {ref "metrological-modularity"}[metrological-modularity chapter], stated as an
 expressiveness requirement: every produced port of a model boundary is governed by a
-`Provenance.Requirement` or exempted with a reason (`@[kindRequirementFree]`); a provable
+`Provenance.Requirement` or exempted with a reason (`@[kindRequirementFree]`); object
+scopes are compared with the result domain inferred from the member's return type, while
+`.unreached` ports are governed but explicitly marked unchecked and `.decided` remains
+statically unchecked; a provable
 requirement's witness is a sorry-free theorem, or a theorem edge to a specification
 boundary, whose statement names no `@[kindReferent]`-marked declaration, with `Bool` spot
 checks the command evaluates where the model runs; an empirical requirement names marked

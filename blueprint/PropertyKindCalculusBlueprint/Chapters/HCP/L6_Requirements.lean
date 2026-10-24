@@ -313,11 +313,11 @@ error: the scope 'HCP.L6_Requirements.notASort' is not a 'SortOfSystem' — a sc
 ```
 
 _4. Census._ The valid requirements are surveyed, every produced model port has a
-governing requirement, and the clean command enforces that result. The census matches
-requirements to ports by boundary and port, not by scope, so a boundary must be cut to the
-particulars its requirement quantifies over. The optional `.decided`
-scope is omitted because the checker only verifies that its named decider exists; it does
-not validate that the declaration is a predicate selecting a subset of pair objects:
+governing requirement, and the clean command enforces that result. The census infers a
+result port's object domain from its member's type: R3 covers a P-only result, but leaves Q
+ungoverned on a generic pair boundary. The optional `.decided` scope is omitted because the
+checker only verifies that its named decider exists; it does not validate that the
+declaration is a predicate selecting a subset of pair objects:
 
 ```anchor requirement_census
 /--
@@ -346,3 +346,55 @@ requirements: 2 provable, 1 empirical, 0 attested
 All three requirements are discharged: R1 has a theorem and a spot check, R2 has an
 absent aggregation license, and R3 has a referent-backed gate. The invalid scopes remain
 visible as counterexamples rather than silently entering the requirement census.
+
+The sibling-namespace probe shows the scope gap directly: a P-scoped requirement governs
+P's result while the generic pair boundary leaves Q ungoverned.
+
+```anchor scope_gap
+/-- A generic pair-state result retains its pair index. -/
+def couplingExtensionOfAny {π : PairId} (state : PairState π) :
+    IndividualQuantity (Composite.part (σ := pairS) (springPart π .kC)) displacementK Int :=
+  state.couplingExtension
+
+def couplingExtensionAnyBoundary : Provenance.Contract NodeId KindRef where
+  name := "coupling-spring extension, generic pair"
+  members := [``couplingExtensionOfAny]
+  ports := [
+    ⟨((NodeId.binder "state").field "massA").within ``couplingExtensionOfAny,
+      .decl ``massK, .input⟩,
+    ⟨((NodeId.binder "state").field "massB").within ``couplingExtensionOfAny,
+      .decl ``massK, .input⟩,
+    ⟨((NodeId.binder "state").field "couplingExtension").within ``couplingExtensionOfAny,
+      .decl ``displacementK, .input⟩,
+    ⟨NodeId.result.within ``couplingExtensionOfAny, .decl ``displacementK, .output⟩
+  ]
+  exits := []
+
+#kind_contract_decide couplingExtensionAnyBoundary
+
+def r3POnlyOnAny : Provenance.Requirement :=
+  { HCP.L6_Requirements.r3CouplingSpringRange with
+    governs := ``couplingExtensionAnyBoundary
+    port := some (NodeId.result.within ``couplingExtensionOfAny) }
+
+/--
+info: kind requirement 'R3' (empirical) on 'coupling-spring extension, generic pair'
+statement: P's coupling-spring extension stays within its rated range in every state or record
+governs: 'coupling-spring extension, generic pair' at couplingExtensionOfAny/result
+scope: objects HCP.L6_Requirements.PairId.P
+referent: HCP.L6_Requirements.couplingSpringRatedExtension — coupling-spring manufacturer datasheet
+gate: HCP.L6_Requirements.withinRatedRange
+spot check: HCP.L6_Requirements.pairP_earlierWithinRatedRange = true
+spot check: HCP.L6_Requirements.pairP_laterWithinRatedRange = true
+-/
+#guard_msgs (whitespace := lax) in #kind_requirement r3POnlyOnAny
+
+/--
+info: requirement coverage:
+[governed] HCP.L6_ScopeGap.couplingExtensionAnyBoundary ('coupling-spring extension, generic pair') couplingExtensionOfAny/result for HCP.L6_Requirements.PairId.P — by 'R3'
+⚠ UNGOVERNED HCP.L6_ScopeGap.couplingExtensionAnyBoundary ('coupling-spring extension, generic pair') couplingExtensionOfAny/result for HCP.L6_Requirements.PairId.Q — 'R3' scoped to HCP.L6_Requirements.PairId.P
+2 row(s) over 1 model boundary(ies): 1 governed, 1 UNGOVERNED — requirement-coverage violation
+requirements: 0 provable, 1 empirical, 0 attested
+-/
+#guard_msgs (whitespace := lax) in #kind_requirement_coverage HCP.L6_ScopeGap
+```
