@@ -349,6 +349,12 @@ def checkRequirement (rname : Name) : MetaM CheckedRequirement := do
       throwError "the scope decider '{d}' is not a declaration"
   match req.scope with
   | .objects objects =>
+    if let some node := req.port then
+      if let some port := ctr.ports.find? (·.node == node) then
+        unless port.dir.produced do
+          throwError "'{req.name}' is scoped to objects, but '{node.render}' of \
+            '{ctr.name}' is an input — an object scope quantifies over the objects an \
+            output belongs to; govern a produced port"
     let groups ← objectsByType objects.toArray
     let ports := ctr.ports.filter fun p =>
       p.dir.produced &&

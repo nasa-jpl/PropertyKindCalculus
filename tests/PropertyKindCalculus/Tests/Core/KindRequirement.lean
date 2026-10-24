@@ -802,6 +802,20 @@ def thingOneRequirement : Provenance.Requirement where
   scope := .objects [``Thing.one]
   attested := "coverage-domain probe"
 
+def thingInputRequirement : Provenance.Requirement where
+  name := "Thing scope on input port"
+  statement := "the input port is covered by an object-scoped requirement"
+  kind := .provable
+  governs := ``thingOneBoundary
+  port := some ((NodeId.binder "x").within ``thingModel)
+  scope := .objects [``Thing.one]
+  attested := "coverage-domain probe"
+
+/--
+error: 'Thing scope on input port' is scoped to objects, but 'thingModel/x' of 'Thing-indexed model, one scoped object' is an input — an object scope quantifies over the objects an output belongs to; govern a produced port
+-/
+#guard_msgs (whitespace := lax) in #kind_requirement thingInputRequirement
+
 def thingBothBoundary : Provenance.Contract NodeId KindRef :=
   thingBoundary "Thing-indexed model, both scoped objects"
 
@@ -1126,7 +1140,7 @@ info: requirement coverage:
 ⚠ UNGOVERNED PropertyKindCalculus.Tests.KindRequirementScope.thingTwoBoundary ('Thing.two-indexed model') thingTwoModel/result for PropertyKindCalculus.Tests.KindRequirement.Thing.two — 'Thing one on Thing two' scoped to PropertyKindCalculus.Tests.KindRequirement.Thing.one
 ⚠ UNGOVERNED PropertyKindCalculus.Tests.KindRequirementScope.wrappedCompositeBoundary ('wrapped composite Thing.two result') wrappedCompositeModel/result for PropertyKindCalculus.Tests.KindRequirement.Thing.two — 'Thing one on wrapped composite' scoped to PropertyKindCalculus.Tests.KindRequirement.Thing.one
 17 row(s) over 15 model boundary(ies): 6 governed, 1 exempted, 7 UNGOVERNED, 3 UNCHECKED — requirement-coverage violation
-requirements: 15 provable, 0 empirical, 15 attested
+requirements: 16 provable, 0 empirical, 16 attested
 -/
 #guard_msgs (whitespace := lax) in
   #kind_requirement_coverage PropertyKindCalculus.Tests.KindRequirementScope
