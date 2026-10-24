@@ -212,29 +212,29 @@ absent: no instance of HCP.L6_Requirements.pairNormalModeLicense
 ```
 
 _3. Empirical range._ R3 is scoped to the nominal object P. Under the one-name-one-system
-rule, it governs every state or record of P; the gate below checks two of them against the
-spring's datasheet limit. The Bool gate mentions the referent and is actually run as a spot
-check, so the requirement is discharged rather than attested:
+rule, it governs every state or record of P; the predicate is defined for every P record,
+and two Bool spot checks run it against the spring's datasheet limit. The gate mentions the
+referent, so the requirement is discharged rather than attested:
 
 ```anchor r3_empirical
-/-- A state accessor that keeps coupling extension on the pair's spring bearer. -/
-def couplingExtensionOf {π : PairId} (state : PairState π) :
-    IndividualQuantity (Composite.part (σ := pairS) (springPart π .kC))
+/-- P's state accessor keeps coupling extension on that pair's spring bearer. -/
+def couplingExtensionOfP (state : PairState .P) :
+    IndividualQuantity (Composite.part (σ := pairS) (springPart .P .kC))
       displacementK Int :=
   state.couplingExtension
 
-/-- The coupling-extension boundary carries the three quantities in a pair record. -/
+/-- The coupling-extension boundary is limited to the particular pair P. -/
 def couplingExtensionBoundary : Provenance.Contract NodeId KindRef where
   name := "coupling-spring extension"
-  members := [``couplingExtensionOf]
+  members := [``couplingExtensionOfP]
   ports := [
-    ⟨((NodeId.binder "state").field "massA").within ``couplingExtensionOf,
+    ⟨((NodeId.binder "state").field "massA").within ``couplingExtensionOfP,
       .decl ``massK, .input⟩,
-    ⟨((NodeId.binder "state").field "massB").within ``couplingExtensionOf,
+    ⟨((NodeId.binder "state").field "massB").within ``couplingExtensionOfP,
       .decl ``massK, .input⟩,
-    ⟨((NodeId.binder "state").field "couplingExtension").within ``couplingExtensionOf,
+    ⟨((NodeId.binder "state").field "couplingExtension").within ``couplingExtensionOfP,
       .decl ``displacementK, .input⟩,
-    ⟨NodeId.result.within ``couplingExtensionOf, .decl ``displacementK, .output⟩
+    ⟨NodeId.result.within ``couplingExtensionOfP, .decl ``displacementK, .output⟩
   ]
   exits := []
 
@@ -244,12 +244,13 @@ def couplingExtensionBoundary : Provenance.Contract NodeId KindRef where
 @[kindReferent "coupling-spring manufacturer datasheet"]
 def couplingSpringRatedExtension : Quantity displacementK Int := ⟨6⟩
 
-/-- R3's gate checks both records of the same named pair against the referent. -/
-def pCouplingSpringWithinRatedRange : Bool :=
-  decide (Int.natAbs (couplingExtensionOf pairP_earlier).magnitude ≤
-    Int.natAbs couplingSpringRatedExtension.magnitude) &&
-  decide (Int.natAbs (couplingExtensionOf pairP_later).magnitude ≤
+/-- The rated-range predicate applies to every state or record of P. -/
+def withinRatedRange (s : PairState .P) : Bool :=
+  decide (Int.natAbs (couplingExtensionOfP s).magnitude ≤
     Int.natAbs couplingSpringRatedExtension.magnitude)
+
+def pairP_earlierWithinRatedRange : Bool := withinRatedRange pairP_earlier
+def pairP_laterWithinRatedRange : Bool := withinRatedRange pairP_later
 
 /-- R3: every state or record of P must keep the spring within its rated range. -/
 def r3CouplingSpringRange : Provenance.Requirement where
@@ -257,20 +258,21 @@ def r3CouplingSpringRange : Provenance.Requirement where
   statement := "P's coupling-spring extension stays within its rated range in every state or record"
   kind := .empirical
   governs := ``couplingExtensionBoundary
-  port := some (NodeId.result.within ``couplingExtensionOf)
+  port := some (NodeId.result.within ``couplingExtensionOfP)
   scope := .objects [``PairId.P]
   referents := [``couplingSpringRatedExtension]
-  gate := ``pCouplingSpringWithinRatedRange
-  spotChecks := [``pCouplingSpringWithinRatedRange]
+  gate := ``withinRatedRange
+  spotChecks := [``pairP_earlierWithinRatedRange, ``pairP_laterWithinRatedRange]
 
 /--
 info: kind requirement 'R3' (empirical) on 'coupling-spring extension'
 statement: P's coupling-spring extension stays within its rated range in every state or record
-governs: 'coupling-spring extension' at couplingExtensionOf/result
+governs: 'coupling-spring extension' at couplingExtensionOfP/result
 scope: objects HCP.L6_Requirements.PairId.P
 referent: HCP.L6_Requirements.couplingSpringRatedExtension — coupling-spring manufacturer datasheet
-gate: HCP.L6_Requirements.pCouplingSpringWithinRatedRange
-spot check: HCP.L6_Requirements.pCouplingSpringWithinRatedRange = true
+gate: HCP.L6_Requirements.withinRatedRange
+spot check: HCP.L6_Requirements.pairP_earlierWithinRatedRange = true
+spot check: HCP.L6_Requirements.pairP_laterWithinRatedRange = true
 -/
 #guard_msgs (whitespace := lax) in #kind_requirement r3CouplingSpringRange
 ```
@@ -307,7 +309,9 @@ error: the scope 'HCP.L6_Requirements.notASort' is not a 'SortOfSystem' — a sc
 ```
 
 _4. Census._ The valid requirements are surveyed, every produced model port has a
-governing requirement, and the clean command enforces that result. The optional `.decided`
+governing requirement, and the clean command enforces that result. The census matches
+requirements to ports by boundary and port, not by scope, so a boundary must be cut to the
+particulars its requirement quantifies over. The optional `.decided`
 scope is omitted because the checker only verifies that its named decider exists; it does
 not validate that the declaration is a predicate selecting a subset of pair objects:
 
@@ -316,7 +320,7 @@ not validate that the declaration is a predicate selecting a subset of pair obje
 info: kind requirements — 3 requirement(s), 2 exempted: 2 provable, 1 empirical, 0 attested
   HCP.L6_Requirements.r1PairMass: 'R1' (provable) on 'pair mass from body masses' — by HCP.L6_Requirements.pairMass_assembled
   HCP.L6_Requirements.r2NormalMode: 'R2' (provable) on 'pair normal-mode frequency' — absent HCP.L6_Requirements.pairNormalModeLicense
-  HCP.L6_Requirements.r3CouplingSpringRange: 'R3' (empirical) on 'coupling-spring extension' — gated by HCP.L6_Requirements.pCouplingSpringWithinRatedRange
+  HCP.L6_Requirements.r3CouplingSpringRange: 'R3' (empirical) on 'coupling-spring extension' — gated by HCP.L6_Requirements.withinRatedRange
   ⊘ HCP.L6_Requirements.r3BareRealScope: counterexample, exempted
   ⊘ HCP.L6_Requirements.r3NotASortScope: counterexample, exempted
 -/
@@ -324,7 +328,7 @@ info: kind requirements — 3 requirement(s), 2 exempted: 2 provable, 1 empirica
 
 /--
 info: requirement coverage:
-[governed] HCP.L6_Requirements.couplingExtensionBoundary ('coupling-spring extension') couplingExtensionOf/result — by 'R3'
+[governed] HCP.L6_Requirements.couplingExtensionBoundary ('coupling-spring extension') couplingExtensionOfP/result — by 'R3'
 [governed] HCP.L6_Requirements.pairMassBoundary ('pair mass from body masses') pairMassOf/result — by 'R1'
 [governed] HCP.L6_Requirements.pairNormalModeBoundary ('pair normal-mode frequency') pairNormalModeOf/result — by 'R2'
 3 row(s) over 3 model boundary(ies): 3 governed — clean
