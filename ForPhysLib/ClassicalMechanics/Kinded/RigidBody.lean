@@ -232,8 +232,8 @@ theorem comQ_tracks_the_trajectory (M : RigidBodyMotion d) (t : Time)
   congrArg (fun v : Space d => v i) (M.massDistribution_centerOfMass t h)
 
 /-- The solid sphere's centre-of-mass reading is zero — `SolidSphere.lean`'s computed
-moment, at the kinded reading. (Its inertia tensor is the subtree's one `sorry` —
-the directory's patch-candidate slot.) -/
+moment, at the kinded reading. Its inertia tensor's formal statement is proved in
+`SolidSphereInertia.lean`, replacing upstream's `CM-RB-sphereI` informal lemma. -/
 theorem comQ_solidSphere (m R : NNReal) (i : Fin d) :
     (comQ (RigidBody.solidSphere d m R) i).magnitude = 0 :=
   congrArg (fun v : Space d => v i) (RigidBody.solidSphere_centerOfMass m R)
@@ -241,4 +241,3 @@ theorem comQ_solidSphere (m R : NNReal) (i : Fin d) :
 end
 
 end ForPhysLib.ClassicalMechanics.Kinded
-

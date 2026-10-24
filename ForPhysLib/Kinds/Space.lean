@@ -15,10 +15,10 @@ drift: Stage 1 (`ForPhysLib.Metrology.Space`) records the identification definit
 [MR11](../REQUIREMENTS.md#mr11-authoring-ergonomics) priced: PhysLib's kinds exist already;
 Stage 0 writes them down.
 
-**The vocabulary is what the directory's own API speaks.** From `Space/API-map.yaml`:
-`Space d` is flat Euclidean space *"with an arbitrary but fixed choice of length unit and
-origin"*; the API carries a metric (`Dist`), a norm, a `LengthUnit`, and — decisively — an
-`AddTorsor (EuclideanSpace ℝ (Fin d)) (Space d)`: PhysLib itself keeps *points* and
+**The vocabulary is what the directory's own API speaks.** The `Space/API-map.md` abstract
+describes points as coordinates read against *"an arbitrary but fixed choice of length unit
+and origin"*. Its content cites the metric [4], norm [3], `LengthUnit` [16], and normed torsor
+[9]: PhysLib itself keeps *points* and
 *translations* as different types. The kind layer names the two length-readings that
 distinction carries: a **position vector** (item 3-1.10, examined *from the chosen
 origin*) and a **displacement** (item 3-1.11, examined *between two points*). They are
@@ -105,4 +105,3 @@ theorem positionVector_comparable_displacement :
   ⟨length, .of_edge .positionVector_length, .of_edge .displacement_length⟩
 
 end ForPhysLib.Kinds.Space
-

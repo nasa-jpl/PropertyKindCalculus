@@ -25,12 +25,12 @@ as generic API; nothing quantum-specific remained in either.
 | `Measurand.lean` | Stage 2 | M-T4 realized: the Hamiltonian as PKC's `Observable` at `𝕜 = ℂ`, identified as a `Measurand` with the eigenvalue set as indications |
 | `Operators.lean` | Stage 3 | the kind algebra as `KindMul`/`KindDiv` table entries: `*` and `/` elaborate through the table, unregistered pairs refuse |
 | `Audits.lean` | Stage 4 | the directory namespace under CI: the 22-site boundary audit pinned, silent clean/ratchet/dimensional gates, the interior gated empty, the ingest boundary measured |
-| `Orthonormality.lean` | the first patch | upstream's `@[sorryful]` `eigenstates_orthonormal`, discharged — statement verbatim, sorry-free |
+| `Orthonormality.lean` | independent proof | upstream proved `eigenstates_orthonormal` in #1805; this module, written against the earlier `@[sorryful]` statement, remains an independent proof, and the patch offer is withdrawn |
 | `Heisenberg.lean` | the second patch | `ℏ/2 ≤ σ_x σ_p` proved for every normalized Schwartz state from upstream's own Robertson bound and CCR; the ground state's `σ_x = ξᵢ/√2` by the Gaussian second moment and `σ_p = ℏ/(√2 ξᵢ)` by differentiating the Gaussian, so saturation `σ_x σ_p = ℏ/2` is exact; the bound kinded through the `length · momentum → action` entry |
 | `AngularMomentum.lean` | the J·s crossing | `L_z = m·ℏ` made explicit: the circular first-excited combinations are `m = ±1` eigenstates of `𝐋ᵢⱼ` and the isotropic ground state is `m = 0` — all by CLM algebra off the Gaussian eigen-relation; the 4-11/4-32 same-dimension re-kind is one `@[kindCrossing]` attest the eigenvalue theorems realize |
 | `Degeneracy.lean` | the count | label-level ground non-degeneracy for every oscillator (the label half of the upstream TODO); under isotropy the eigenvalue determines only the total occupation, and stars-and-bars counts the collision: `(d + N - 1).choose N` labels per level, off Mathlib's `piAntidiag` with no new combinatorics |
 | `LadderOperators.lean` | the green field | upstream's eleven-TODO stub delivered at the Schwartz-CLM layer: `a`/`a†` with the formal-adjoint pairing and full CCR, `N = a†a` symmetric with all number commutators, `H_N = ∑ℏωᵢ(Nᵢ+½)` equal to `T + V` (the scalar content is `ξ² = ℏ/(mω)`), `[H_N, a^{(†)}] = ∓ℏω a^{(†)}`, and the first two rungs realized against the labeled eigenfunctions; essential self-adjointness and the domain-level comparison stay named upstream |
-| `HarmonicOscillator.checked_by.yaml` | Stage 4 | the API-map delta, keyed by the upstream `TODO` texts |
+| `HarmonicOscillator.checked_by.yaml` | Stage 4 | preserves source TODO tracking; upstream has no `API-map.md` counterpart |
 
 ## The cost line
 
@@ -45,7 +45,7 @@ What the layer costs, measured — every number quoting a build artifact at this
 | boundary sites | 22 — 17 attested, 3 raw ingest mints, 2 erasure-only; by tier: 13 ingest, 6 crossings, 1 constant, 1 carrier-vocabulary, 1 emission | the pinned `#kind_boundary_audit` in `Audits.lean` |
 | unkinded surface | interior: 0 positions (gated); ingest boundary: 15 naked positions, all the oscillator structure, its occupation labels, coordinate indices, its Hilbert space, its operator domains, or the one emitted `ℝ` | the `#kind_unkinded` ledgers in `Audits.lean` |
 | lines | 3,101 total, of which 1,698 are code (the rest is documentation, including the pinned audit reports); the mirrored source is 1,727 total / 1,085 code, none of which changed | `wc -l`; comment-stripped count |
-| proof debt | 0 `sorry`; every theorem here at `propext, Classical.choice, Quot.sound`; 1 upstream `@[sorryful]` discharged and 1 theorem upstream never stated (`heisenberg_uncertainty`) proved | `#print axioms` |
+| proof debt | 0 `sorry`; every theorem here at `propext, Classical.choice, Quot.sound`; `eigenstates_orthonormal` is proved upstream in #1805 and independently here, and `heisenberg_uncertainty` is proved here although upstream does not state it | `#print axioms` |
 
 Two cost notes the table cannot carry. First, the ceremony per declaration is small
 and front-loaded: a kinded quantity is one `def` with one attestation or mint, its
@@ -108,10 +108,10 @@ checked, with the layer on.
 `Eigenstates.lean` opens with six analysis TODOs; each casts a metrological shadow the
 analysis statement cannot express, because the vocabulary to state it does not exist
 without the kind layer. The four shadows are delivered here as M-T1–M-T4 (`Kinded.lean`
-and `Measurand.lean`), and the mirror also *pays*: `Orthonormality.lean` discharges the
-first upstream TODO outright, statement verbatim; `Heisenberg.lean` proves a theorem
+and `Measurand.lean`), and the mirror also *pays*: `Orthonormality.lean` retains an
+independent proof of the result upstream proved in #1805; `Heisenberg.lean` proves a theorem
 the upstream TODO list could not even request (`ℏ/2 ≤ σ_x σ_p`, from parts the library
 already owned); and the kinded TISE and the indication predicate hold the statements
 of two more, waiting on the upstream analysis.
-The offer upstream is a human's to make
+Any offer upstream for `Heisenberg.lean` is a human's to make
 ([AI-POLICY §3.1](https://github.com/leanprover-community/physlib/blob/master/AI-POLICY.md)).

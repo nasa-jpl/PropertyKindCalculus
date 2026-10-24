@@ -1,29 +1,27 @@
-# The Stage-4 API-map delta proposed for `Physlib/QuantumMechanics/HarmonicOscillator`
-# (MR29: every satisfied requirement has a machine-checkable witness).
-#
-# This directory has no `API-map.yaml` upstream; its requirement ledger is the `TODO`
-# command list opening `Eigenstates.lean`. So the proposed delta has two parts: the
-# `API-map.yaml` the directory would gain if the maintainer wants one (whose
-# `Requirements:` would begin as the TODO list, verbatim), and — the part this file
-# actually carries — a `checked_by:` field per TODO, keyed by its current text,
-# naming the ForPhysLib module whose build now checks the claim or holds its
-# statement ready. Nothing upstream changes; a TODO with no entry here is untouched.
+# Delta intended for `Physlib/QuantumMechanics/HarmonicOscillator/API-map.md` (MR29).
+# If such a map is added, entries will be keyed by its numbered Lean References. No
+# API-map.md exists in pinned upstream, so each item below has no map counterpart and
+# remains source TODO tracking rather than inventing a map sentence or reference.
 
 deltas:
 
+  # No counterpart: pinned upstream has no HarmonicOscillator/API-map.md.
   - description: "Prove that the QHO eigenstates in the Cartesian basis (Hermite polynomials) are orthonormal."
     checked_by:
       - "ForPhysLib.QuantumMechanics.HarmonicOscillator.Orthonormality"  # discharged: eigenstates_orthonormal, statement verbatim, sorry-free (axioms: propext, Classical.choice, Quot.sound)
       - "ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinded"          # its diagonal consumed: the Born density's ∫ρ = 1 is a theorem off the discharge
 
+  # No counterpart: pinned upstream has no HarmonicOscillator/API-map.md.
   - description: "Prove that the QHO eigenstates in the Cartesian basis (Hermite polynomials) satisfy the TISE."
     checked_by:
       - "ForPhysLib.QuantumMechanics.HarmonicOscillator.Kinded"          # statement held ready: SatisfiesTISE — the kinded TISE with the E• crossing attested; the proof stays this TODO
 
+  # No counterpart: pinned upstream has no HarmonicOscillator/API-map.md.
   - description: "Prove that the (point) spectrum of the self-adjoint Hamiltonian is `Set.range Q.eigenEnergy`."
     checked_by:
       - "ForPhysLib.QuantumMechanics.HarmonicOscillator.Measurand"       # the eigenvalue set held as the Hamiltonian measurand's indication predicate; this TODO is the statement that the predicate IS the spectrum
 
+  # No counterpart: pinned upstream has no HarmonicOscillator/API-map.md.
   - description: "Prove that the ground-state of the QHO is non-degenerate."
     checked_by:
       - "ForPhysLib.QuantumMechanics.HarmonicOscillator.Degeneracy"      # the label half discharged: eigenEnergy_eq_ground_iff (no label but 0 reaches the ground energy, any Q) + levelSet_zero; the Hilbert-space half (no other eigenvector) stays this TODO
@@ -31,44 +29,54 @@ deltas:
   # `LadderOperators.lean` upstream is a stub of TODOs; the ForPhysLib module of the
   # same name delivers their content at the Schwartz-CLM layer. Per TODO:
 
+  # No counterpart: pinned upstream has no HarmonicOscillator/API-map.md.
   - description: "Define the raising/lowering operators for the quantum harmonic oscillator."
     checked_by:
       - "ForPhysLib.QuantumMechanics.HarmonicOscillator.LadderOperators"  # lowerCLM/raiseCLM on 𝓢(Space d, ℂ), from upstream's 𝐱 and 𝐩
 
+  # No counterpart: pinned upstream has no HarmonicOscillator/API-map.md.
   - description: "Prove that the raising/lowering operators are adjoints of one another (tag as simp?)."
     checked_by:
       - "ForPhysLib.QuantumMechanics.HarmonicOscillator.LadderOperators"  # inner_lower_raise/inner_raise_lower — the formal-adjoint pairing on Schwartz classes; adjointness of the closures stays upstream analysis
 
+  # No counterpart: pinned upstream has no HarmonicOscillator/API-map.md.
   - description: "Prove the commutation relations for the ladder operators, `[a, a†] = δ`."
     checked_by:
       - "ForPhysLib.QuantumMechanics.HarmonicOscillator.LadderOperators"  # lower_commutation_raise + the vanishing pair commutators
 
+  # No counterpart: pinned upstream has no HarmonicOscillator/API-map.md.
   - description: "Define the number operators for the quantum harmonic oscillator
   in terms of the ladder operators."
     checked_by:
       - "ForPhysLib.QuantumMechanics.HarmonicOscillator.LadderOperators"  # numberCLM = a† ∘L a; expanded form numberCLM_eq
 
+  # No counterpart: pinned upstream has no HarmonicOscillator/API-map.md.
   - description: "Prove that the number operators are symmetric/self-adjoint."
     checked_by:
       - "ForPhysLib.QuantumMechanics.HarmonicOscillator.LadderOperators"  # inner_number_symm (symmetric); essential self-adjointness stays this TODO's analysis half
 
+  # No counterpart: pinned upstream has no HarmonicOscillator/API-map.md.
   - description: "Prove the commutation relations for the number operators, `[N i, N j] = 0`."
     checked_by:
       - "ForPhysLib.QuantumMechanics.HarmonicOscillator.LadderOperators"  # number_commutation_number
 
+  # No counterpart: pinned upstream has no HarmonicOscillator/API-map.md.
   - description: "Prove the commutation relations between number and ladder operators,
   `[N, a] = -δ a` and `[N, a†] = δ a†`."
     checked_by:
       - "ForPhysLib.QuantumMechanics.HarmonicOscillator.LadderOperators"  # number_commutation_lower / number_commutation_raise
 
+  # No counterpart: pinned upstream has no HarmonicOscillator/API-map.md.
   - description: "Define a Hamiltonian in terms of the number operators."
     checked_by:
       - "ForPhysLib.QuantumMechanics.HarmonicOscillator.LadderOperators"  # numberHamiltonianCLM = ∑ ℏωᵢ(Nᵢ + ½)
 
+  # No counterpart: pinned upstream has no HarmonicOscillator/API-map.md.
   - description: "Prove the commutation relations between the Hamiltonian and ladder/number operators."
     checked_by:
       - "ForPhysLib.QuantumMechanics.HarmonicOscillator.LadderOperators"  # numberHamiltonian_commutation_lower/_raise; [H_N, Nᵢ] is number_commutation_number summed
 
+  # No counterpart: pinned upstream has no HarmonicOscillator/API-map.md.
   - description: "Relate the 'number operator' Hamiltonian to the 'K + T' Hamiltonian
   (=/≤/≥ depending on their domains)."
     checked_by:

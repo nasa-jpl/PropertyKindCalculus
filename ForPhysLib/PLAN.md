@@ -17,11 +17,11 @@ has to be reconstructed from the Status lines scattered below.
 |---|---|
 | Exhibits A–G | `Exhibits/`; per-exhibit **Status: built** lines below |
 | The full ladder (Stages 0–4) for `SpaceAndTime/Space` | Sequencing item 3; per-stage Status lines below |
-| Campaign directory 1 — `QuantumMechanics/HarmonicOscillator`, whole | `QuantumMechanics/HarmonicOscillator/` + README cost line; includes the two patch candidates (`Orthonormality`, `Heisenberg`) |
+| Campaign directory 1 — `QuantumMechanics/HarmonicOscillator`, whole | `QuantumMechanics/HarmonicOscillator/` + README cost line; includes the independent `Orthonormality` proof and the `Heisenberg` patch candidate |
 | Campaign directory 2 — `Electromagnetism/Kinematics` | `Electromagnetism/Kinematics/` + README cost line |
-| Campaign directory 3 — `ClassicalMechanics` HO + RigidBody subtrees | `ClassicalMechanics/` + README cost line; the subtree's one `sorry` discharged |
+| Campaign directory 3 — `ClassicalMechanics` HO + RigidBody subtrees | `ClassicalMechanics/` + README cost line; the `CM-RB-sphereI` informal lemma's statement proved |
 | Decision-ladder step (i): the unit-side parametrization | **merged upstream** — physlib PR #1481, 2026-08-05 |
-| The ClassicalMechanics patch offer, materialized | physlib fork branch `solid-sphere-inertia` (2 commits, all upstream gates green); PR draft at `scratchpad/physlib-pr-solid-sphere-inertia.md` |
+| The ClassicalMechanics replacement-proof offer, materialized | physlib fork branch `solid-sphere-inertia` (2 commits, all upstream gates green); PR draft at `scratchpad/physlib-pr-solid-sphere-inertia.md` |
 | Decision-ladder step (ii), drafted | the Stage-1 ask at `scratchpad/physlib-ask-stage1.md` |
 | The object-type parameterization: `IndividualQuantity` over an arbitrary object type, `Designated`, `Composite`/`Assembles`/`assemble` | PKC core + `CompositeReal`; blueprint chapter *The object type*; `MiniObjectTypes`, `Tests/Core/Composite`, Exhibit F |
 | Case study 2 — `PointParticle` (physlib#1612): four typings of one physics, ergonomics a scored axis; the win-win is the *dependent target field* | `CaseStudies/PointParticle/` — Common + Attempts 1–4 + Scorecard + README |
@@ -43,7 +43,7 @@ has to be reconstructed from the Status lines scattered below.
 | Push fork branch `solid-sphere-inertia`; post its PR(s) from the draft | Nicolas (AI-POLICY §3.1) |
 | Review + post the Stage-1 ask | Nicolas (AI-POLICY §3.1) |
 | Decision-ladder step (iii): the Stage-0+1 PR for `SpaceAndTime/Space` | Claude drafts it if question 2 of the ask gets a yes |
-| Materialize the QM patch offer (Orthonormality + Heisenberg) and the EM gauge pair as fork branches | Claude, on request — same recipe as `solid-sphere-inertia` |
+| Materialize the QM patch offer (Heisenberg) and the EM gauge pair as fork branches | Claude, on request — same recipe as `solid-sphere-inertia` |
 | Held physics — ALL SIX DELIVERED: σ_p moment (saturation unconditional); L_z = m·ℏ; degeneracy; `LadderOperators.lean` (the eleven-TODO stub); `DistributionalTwin.lean` (the duplication finding); `Maxwell.lean` (the four laws kinded + the module-private finding) | done 2026-09-01 |
 | The last two held items — the `Dynamics/` variational subtree (`Kinematics/Dynamics.lean`: 2 lookups + 3 mints + 6 edges, the whole variational calculus same-kind, `H` at 6-33 by upstream's theorem, the stale-`μ₀`-TODO finding) and the RF/AC annex promoted to ladder form (`Electromagnetism/Annex/`: 17 kinds all lookups zero mints, 5 edges consumed from the catalogue's `DefiningRelations`, the refused `P + Q`, the dB budget on 6-45). Nothing remains held | done 2026-09-02 |
 | Decide whether anything from Exhibit F is offered to physlib#1612, and in what form | Nicolas (AI-POLICY §3.1) |
@@ -155,7 +155,8 @@ re-pinned clean over the registrations, rendered `[table]`.
 
 `#kind_boundary_audit`, `#kind_unkinded` with the Mathlib-interface tier
 ([MR30](REQUIREMENTS.md#mr30-the-unkinded-surface-is-measured)), `#kind_mint_ratchet` scoped
-to the module root, and the `checked_by:` field in the directory's `API-map.yaml`
+to the module root, and the `checked_by` delta anchored to the directory's `API-map.md`
+Lean References
 ([MR29](REQUIREMENTS.md#mr29-every-satisfied-requirement-has-a-machine-checkable-witness)).
 
 **Cost: CI.**
@@ -166,7 +167,7 @@ and its crossings enumeration pinned (five sites, all tagged), `#kind_boundary_c
 unkinded ledger read over two declared contracts — the *interior* gated empty
 (`#kind_unkinded_clean`), the *ingest boundary* measured at eight naked positions, every
 one a `Space d` point or the emitted `ℝ`: MR30's Mathlib-interface tier, counted rather
-than hidden. The `checked_by:` delta proposed for the directory's `API-map.yaml` sits
+than hidden. The `checked_by` delta proposed for the directory's `API-map.md` sits
 beside the module as `Audits/Space.checked_by.yaml`. **The ladder now stands complete,
 Stage 0 through Stage 4, for its first directory.**
 
@@ -227,7 +228,7 @@ joined only through `toFrameScalar`.
 
 ### Exhibit B. ReferenceFrame
 
-**Source.** `SpaceAndTime/ReferenceFrame.lean` + `ReferenceFrame/API-map.yaml`
+**Source.** `SpaceAndTime/ReferenceFrame.lean` + `ReferenceFrame/API-map.md`
 
 **Requirements.** [MR17](REQUIREMENTS.md#mr17-a-vector-quantity-is-one-quantity),
 [MR18](REQUIREMENTS.md#mr18-frame-covariance-and-what-survives-it),
@@ -236,7 +237,7 @@ joined only through `toFrameScalar`.
 [MR30](REQUIREMENTS.md#mr30-the-unkinded-surface-is-measured)
 
 **What it shows.** [M7](MOTIVATION.md#m7-a-stated-api-requirement-that-cannot-be-satisfied-as-written)
-— the unwritten requirement 16 asks for a single induced transformation law where there are
+— the map's relative-motion TODO asks for a single induced transformation law where there are
 three, so the layer arrives as a design input rather than a retrofit.
 
 
@@ -265,12 +266,12 @@ erasure.
 **Status: built** — `ForPhysLib/Exhibits/ReferenceFrame/Findings.lean`. The three candidate
 laws (`geometricTransport`, `boostTransport`, `originShiftTransport`) all inhabit
 `F.Vector → G.Vector`, and one `example` applies all three to the same vector — the finding
-that requirement 16's "the induced transformation law" is three laws the type cannot tell
+that the map's "transformation law" is three laws the type cannot tell
 apart. The design input follows in the same file: `KVector` is `Vector` with a kind index,
 `kComponentEquiv` still the definitional place the kind is dropped, `AddCommGroup`/`Module`
 transferred per kind by the same one-liners, and `kBoostTransport` rejecting a displacement
 by `#check_failure`. Finding 2 lands at the MR30 tier as promised: `origin_displacement_eq`
-discharges the API map's undone requirement 17 with PhysLib's own proof term and every
+formalizes the API map's origin-velocity TODO with PhysLib's own proof term and every
 erasure a visible `.magnitude`, and `#kind_unkinded` pins the exhibit's own boundary at
 2 positions / 2 flows (both `Time`). `ReferenceFrame.checked_by.yaml` carries the proposed
 map delta for both entries.
@@ -803,11 +804,11 @@ radicand, `ℏ·ω` an energy, `p̂·p̂`, and `p̂²/m` a kinetic energy (the l
 `SMul` spelling cannot consume) — with `#kind_dimensional_coverage` pinned clean over
 all six.
 
-**And the pilot discharges the first item of the upstream TODO list.**
-`Orthonormality.lean` proves `eigenstates_orthonormal` — the `@[sorryful]` lemma opening
-`Eigenstates.lean`'s TODO list — statement verbatim, sorry-free (axioms: `propext`,
-`Classical.choice`, `Quot.sound`). The missing piece was exactly the sorry's own hint:
-the `Space d` product-splitting lemma (`integral_prod_coord`, ~25 lines from
+**And the pilot keeps an independent orthonormality proof.**
+PhysLib proved `eigenstates_orthonormal` in #1805. `Orthonormality.lean` was written
+against the earlier `@[sorryful]` statement and retains an independent proof of it,
+with axioms `propext`, `Classical.choice`, `Quot.sound`. The proof uses the
+`Space d` product-splitting lemma (`integral_prod_coord`, ~25 lines from
 `Space.basis`'s measure-preserving repr plus Mathlib's unconditional n-variable Fubini);
 the 1D content is PhysLib's own `physHermite_orthogonal_cons`/`physHermite_norm_cons`
 with `eigenCoeff`'s normalization cancelling exactly. This is rule 1's "patch, not a
@@ -891,7 +892,8 @@ namespace under CI — probe files tier-tagged too — with the 20-site boundary
 crossings registry pinned, boundary-clean + mint-ratchet + dimensional-clean silent,
 the end-to-end-kinded interior gated empty (the gate refused `ξEquiv`'s crossing during
 authoring — correctly), the 15-position ingest boundary measured, and the
-`checked_by.yaml` delta keyed on the upstream TODO texts. The README carries the
+`checked_by.yaml` delta preserves source TODO tracking because upstream has no
+HarmonicOscillator `API-map.md` counterpart. The README carries the
 findings and the measured cost line. Axiom profile of every theorem in the directory:
 `propext, Classical.choice, Quot.sound`.
 
@@ -1087,10 +1089,11 @@ the pin), boundary-clean + mint-ratchet + dimensional-clean silent, and the unki
 ledger *inverting the pilot's ratio*: **twelve** crossings are kinded end to end (the
 interior, gated empty — once the potential is read in, the chain's whole derivation
 tree runs inside the kind layer) against eleven measured boundary readings where
-PhysLib's carriers enter. The `Kinematics.checked_by.yaml` delta keys on the upstream
-TODO texts — the constructor-properties TODO now points at the two gauge-invariance
-lemmas upstream does not state, and the `FieldStrength` refactor TODOs are noted as a
-dependency of the mirror, not claims about it.
+PhysLib's carriers enter. The `Kinematics.checked_by.yaml` delta anchors the matched
+electric-field claim to its map Lean Reference; unmatched TODOs are annotated, including
+the constructor-properties claim supported by two gauge-invariance lemmas upstream does
+not state and the `FieldStrength` refactor TODOs as mirror dependencies rather than claims
+about it.
 
 **Status: directory 2 complete — ladder, patch candidate, README.** The README carries
 nine findings and the measured cost line (12 kinds — 10 lookups; 12 laws, 5 tabled, 7
@@ -1173,11 +1176,10 @@ them down as a ladder. The feasibility questions:
   frames, and the exhibit's `toFrameScalar` machinery is where the frame discrimination
   lives.
 
-And the directory has a patch-candidate slot before any file is written:
-`solidSphere_inertiaTensor` — `(2/5) m R² • 1` — is `@[sorryful]` upstream, the only
-`sorry` in either subtree. The pilot's `Orthonormality.lean` pattern applies: attempt the
-discharge as a standalone file after the ladder; if the ball integrals resist, record the
-attempt honestly and hold.
+And the directory has a proof opportunity before any ladder stage: upstream's
+`solidSphere_inertiaTensor` (`(2/5) m R² • 1`) is an `informal_lemma` tagged
+`CM-RB-sphereI`, with its formal statement in the docstring. `SolidSphereInertia.lean`
+proves that statement as a standalone file after the ladder.
 
 The layout: one directory, one vocabulary — the four-energies point *is* directory-level,
 so Stage 0/1 are shared and only Stage 2 splits by subtree, mirroring the source inside
@@ -1291,17 +1293,16 @@ layer to enter `Real.cos`. The ledger's shape is the directory's own: point mech
 has a *thin interior and a broad boundary* (every reading of upstream's bare-real
 structures is a boundary site; the algebra between readings is short) — directed
 opposite to directory 2's deep interior. The `ClassicalMechanics.checked_by.yaml`
-delta keys on the upstream TODO texts (the geometric-model TODO at the consumed
-coordinate erasure; the configuration-space-API TODO at the consumer datapoint; the
-continuous-linear-maps TODO as a mirror dependency) and names the `@[sorryful]`
-`solidSphere_inertiaTensor` as the patch-candidate slot. Axiom profile of fifteen key
+delta notes the geometric-model and configuration-space items as having no map
+counterpart, maps the continuous-linear-maps TODO as a mirror dependency, and names the `CM-RB-sphereI`
+informal lemma, whose formal statement is proved by the standalone file. Axiom profile of fifteen key
 theorems, pentad included: `propext, Classical.choice, Quot.sound`.
 
-**Status: the patch candidate is discharged** —
-`ForPhysLib/ClassicalMechanics/SolidSphereInertia.lean` proves upstream's
-`@[sorryful]` `solidSphere_inertiaTensor` (`(2/5) m R² • 1`), sorry-free at
-`propext, Classical.choice, Quot.sound` — the two subtrees' only `sorry`, in the
-pilot's orthonormality pattern. The proof is the textbook computation carried by
+**Status: the informal lemma has an independent formal proof** —
+`ForPhysLib/ClassicalMechanics/SolidSphereInertia.lean` proves the docstring statement
+of upstream's `informal_lemma solidSphere_inertiaTensor` (tag `CM-RB-sphereI`,
+`(2/5) m R² • 1`), at `propext, Classical.choice, Quot.sound`. The proposed upstream
+change is to replace that informal lemma with this proof. The proof is the textbook computation carried by
 three facts, each mechanized once: the off-diagonal moments vanish under the
 coordinate-reflection isometry (conjugated through `Space.basis.repr`,
 measure-preserving by Mathlib's `LinearIsometryEquiv.measurePreserving`,
@@ -1318,8 +1319,8 @@ three-directory campaign.** The README carries twelve findings and the measured 
 line (22 kinds — 17 lookups, 5 mints; 22 pairings with ten colliding rows; 14 laws,
 13 tabled, 1 law-only; 2 joins on a composing lattice; 42 boundary sites, 0 raw
 mints; a 9-member gated interior against a 30-reading measured boundary; 2,509 lines
-/ 1,104 code against an unchanged 3,814-line source; 0 sorry here and 1 upstream
-sorry discharged). The directory's patch candidate is `SolidSphereInertia.lean`; the
+/ 1,104 code against an unchanged 3,814-line source; no local proof hole). The directory's
+`SolidSphereInertia.lean` provides a replacement proof for upstream's informal lemma; the
 stress-test verdict is the pentad closed by the upstream proof term. All three
 campaign directories now stand — the operator-valued frontier (QM/HO), the
 frame-covariant chain (EM/Kinematics), and same-dimension discrimination at theorem
@@ -1374,9 +1375,9 @@ ForPhysLib/
       Measurand.lean                  ✓   M-T4: PKC's measurand + observable vocabulary, instantiated on Ĥ
       Operators.lean                  ✓   Stage 3: the table; PhysLib's ξ_sq closes the table-built erasure
       Audits.lean                     ✓   Stage 4: 20-site audit pinned; silent gates; interior gated, boundary measured
-      HarmonicOscillator.checked_by.yaml ✓ the API-map delta, keyed on the upstream TODO texts
+      HarmonicOscillator.checked_by.yaml ✓ retains TODO tracking; upstream has no API-map counterpart
       README.md                       ✓   the findings and the measured cost line
-      Orthonormality.lean             ✓   the upstream sorryful `eigenstates_orthonormal`, discharged
+      Orthonormality.lean             ✓   independent proof of the result upstream proved in #1805; patch offer withdrawn
       Heisenberg.lean                 ✓   the second patch: ℏ/2 ≤ σ_x·σ_p proved; ground-state σ_x = ξᵢ/√2; kinded bound
   Electromagnetism.lean  Electromagnetism/ ✓ the campaign's second directory (see “Directory 2”)
     Kinematics.lean  Kinematics/     ✓ the chain: potentials → fields → boosts → gauge
@@ -1385,7 +1386,7 @@ ForPhysLib/
       Kinded.lean                    ✓   Stage 2: the chain re-authored; E rebuilt by rfl; gauge reaches the fields
       Operators.lean                 ✓   Stage 3: three entries + the torsor demo; law-only majority named; refusals = subtree boundaries
       Audits.lean                    ✓   Stage 4: 24-site audit pinned; silent gates; 12-crossing interior gated empty
-      Kinematics.checked_by.yaml     ✓   the API-map delta, keyed on the upstream TODO texts
+      Kinematics.checked_by.yaml     ✓   map-linked entries use Lean References; unmatched TODOs noted
       README.md                      ✓   the findings and the measured cost line
   ClassicalMechanics.lean  ClassicalMechanics/ ✓ the campaign's third directory (see “Directory 3”)
     Feasibility.lean                 ✓   F1–F6 as build artifacts, both subtrees probed
@@ -1394,9 +1395,9 @@ ForPhysLib/
     Kinded/RigidBody.lean            ✓   Stage 2: the functional's moments; parallel axis consumed; ω×r table-expressed
     Operators.lean                   ✓   Stage 3: seven entries; the shared-letter ω refused at the table; one law stays law-only
     Audits.lean                      ✓   Stage 4: 42-site audit pinned; silent gates; interior gated, boundary measured
-    ClassicalMechanics.checked_by.yaml ✓ the API-map delta, keyed on the upstream TODO texts + the sorryful lemma
+    ClassicalMechanics.checked_by.yaml ✓ the API-map delta, anchored to Lean References; informal lemma replacement noted
     README.md                        ✓   the findings and the measured cost line
-    SolidSphereInertia.lean          ✓   the upstream sorryful `solidSphere_inertiaTensor`, discharged
+    SolidSphereInertia.lean          ✓   replacement proof for the `CM-RB-sphereI` informal lemma
   Scorecard.lean                     ✓ verdicts re-derived so the tables cannot drift from the files
 ```
 

@@ -1,27 +1,20 @@
 /-
-# The upstream `sorryful` lemma, discharged — `eigenstates_orthonormal`
+# An independent proof of oscillator orthonormality
 
-`Physlib/QuantumMechanics/HarmonicOscillator/Eigenstates.lean` states the orthonormality
-of the oscillator's eigenstates with `@[sorryful]`, and its TODO list opens with it. This
-module proves it, against the mirrored directory's own imports — no new hypotheses, the
-statement verbatim.
+PhysLib proved `eigenstates_orthonormal` in #1805. This module was written against
+the earlier `@[sorryful]` statement and remains an independent proof of the same
+result.
 
-**The shape of the proof is the sorry's own hint.** The upstream comment asks for a
-product-splitting of the `Space d` integral; `integral_prod_coord` below is that lemma —
-`Space.basis` is an orthonormal basis, its `repr` is measure-preserving
-(`OrthonormalBasis.measurePreserving_repr`), `EuclideanSpace`'s volume matches the pi
-volume, and Mathlib's n-variable Fubini (`integral_fin_nat_prod_volume_eq_prod`,
-unconditional at `ℂ`) finishes. The 1D content is PhysLib's own:
-`physHermite_orthogonal_cons` and `physHermite_norm_cons` at scale `ξᵢ⁻¹`, with
-`eigenCoeff`'s normalization cancelling the `ξᵢ · nᵢ! · 2^nᵢ · √π` exactly.
+Both proofs use measure-preserving product coordinates and split the integral into
+one-dimensional Hermite factors. Here `Space.basis.repr` makes the change of
+coordinates explicit, and `integral_prod_coord` supplies the product splitting.
+PhysLib's `physHermite_orthogonal_cons` and `physHermite_norm_cons` provide the
+one-dimensional content, with `eigenCoeff`'s normalization cancelling the
+`ξᵢ · nᵢ! · 2^nᵢ · √π` exactly.
 
-**Why it sits in the campaign directory.** This is not kind-layer content — it is pure
-analysis at magnitudes, PhysLib-facing. It is here because the campaign's rules ask for a
-patch rather than a finding: the mirror directory that re-authors the oscillator kinded
-also discharges the first item of its upstream TODO list. Offered upstream as a PR, the
-transfer is: drop the `ForPhysLib` namespace, inline `integral_prod_coord` where the
-sorry's hint asks for it (`Space` API), and replace the `sorryful` proof. Per
-`AI-POLICY.md` §3.1 the offer itself is a human's to make.
+This is pure analysis at magnitudes, PhysLib-facing, rather than kind-layer content.
+The module is retained as an independent proof, and its upstream patch offer is
+withdrawn now that the result is proved upstream.
 
 Axiom profile: `propext, Classical.choice, Quot.sound` — checked at authoring; no
 `sorryAx`.
@@ -50,7 +43,7 @@ lemma repr_coord (p : Space d) (i : Fin d) : Space.basis.repr p i = p i := by
   rw [OrthonormalBasis.repr_apply_apply]
   simp
 
-/-- The splitting lemma the upstream sorry's hint asks for. -/
+/-- The coordinate product-splitting lemma used by this proof. -/
 theorem integral_prod_coord (f : Fin d → ℝ → ℂ) :
     ∫ x : Space d, ∏ i, f i (x i) = ∏ i, ∫ t : ℝ, f i t := by
   rw [← (Space.basis.measurePreserving_measurableEquiv.symm
@@ -141,7 +134,7 @@ lemma integral_factor (Q : HarmonicOscillator d) (n n' : Fin d → ℕ) (i : Fin
     simp [KroneckerDelta.eq_zero_of_ne h]
 
 set_option maxHeartbeats 1000000 in
-/-- The upstream sorry, discharged. -/
+/-- An independent proof of the upstream orthonormality result. -/
 theorem eigenstates_orthonormal' (Q : HarmonicOscillator d) (n n' : Fin d → ℕ) :
     ⟪(Q.eigenstate n : Q.HS), Q.eigenstate n'⟫_ℂ = δ[n,n'] := by
   rw [eigenstate_eq, eigenstate_eq, ← Submodule.coe_inner, schwartzEquiv_inner]
@@ -167,4 +160,3 @@ theorem eigenstates_orthonormal' (Q : HarmonicOscillator d) (n n' : Fin d → �
 end
 
 end ForPhysLib.QuantumMechanics.HarmonicOscillator.Orthonormality
-

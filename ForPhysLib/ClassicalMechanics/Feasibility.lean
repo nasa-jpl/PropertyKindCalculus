@@ -47,9 +47,9 @@ those coincidences is invisible there.
   energy as species of 4-28.2, summing at their parent, closed by upstream's own
   body-frame König theorem.
 
-One patch-candidate slot is known before any ladder stage: `solidSphere_inertiaTensor`
-(`(2/5) m R² • 1`) is `@[sorryful]` upstream — the only `sorry` in either subtree. Per
-the plan, the discharge is attempted as a standalone file after the ladder.
+One proof opportunity is known before any ladder stage: upstream's `solidSphere_inertiaTensor`
+is an `informal_lemma` tagged `CM-RB-sphereI`, with its formal statement in the docstring.
+`SolidSphereInertia.lean` proves that statement as a standalone file after the ladder.
 -/
 
 module
@@ -628,4 +628,3 @@ noncomputable example (M : RigidBodyMotion 3) (t : Time) (i : Fin 3) :
   omegaCompQ (M.angularVelocity t) i + omegaCompQ (M.bodyAngularVelocity t) i
 
 end ForPhysLib.ClassicalMechanics
-

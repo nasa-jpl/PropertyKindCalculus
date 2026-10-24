@@ -29,7 +29,7 @@ harmonic oscillator as a place to start, and the thread raised **ergonomics**. T
 study is that suggestion carried out — and it exposes both what dimensional analysis
 structurally cannot do and what it costs to fix.
 
-**What was surveyed.** The twelve `API-map.yaml` files under `PhysLib/SpaceAndTime` (Space,
+**What was surveyed.** The twelve `API-map.md` files under `PhysLib/SpaceAndTime` (Space,
 Time, SpaceTime, TimeAndSpace, GalileanGroup, ReferenceFrame) and `PhysLib/ClassicalMechanics`
 (RigidBody, Lagrangian, Pendulum, SimplePendulum, HarmonicOscillator/Geometric,
 DampedHarmonicOscillator), together with the sources they point at. Everything asserted about

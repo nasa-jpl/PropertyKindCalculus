@@ -1,26 +1,24 @@
-# The Stage-4 API-map delta proposed for `Physlib/Electromagnetism/Kinematics`
-# (MR29: every satisfied requirement has a machine-checkable witness).
-#
-# This directory has no `API-map.yaml` upstream; its requirement ledger is the `TODO`
-# commands spread through the chain (`EMPotential.lean`, `FieldStrength.lean`). So the
-# proposed delta has two parts: the `API-map.yaml` the directory would gain if the
-# maintainer wants one (whose `Requirements:` would begin as the TODO list, verbatim),
-# and — the part this file actually carries — a `checked_by:` field per TODO, keyed by
-# its current text, naming the ForPhysLib module whose build now checks the claim or
-# holds its statement ready. Nothing upstream changes; a TODO with no entry here is
-# untouched.
+# Delta for `Physlib/Electromagnetism/Kinematics/API-map.md` (MR29).
+# Mapped entries are keyed by the map's Lean Reference entries, the linter-checked
+# anchor. `file` and `declarations` reproduce the entry; `sentence` quotes its prose.
+# Items without a corresponding map sentence are noted in comments.
 
 deltas:
 
-  - description: "Write lemmas for the various properties (e.g. the electric field) of the electromagnetic potential from the various constructors."
+  - reference: 4
+    file: Physlib/Electromagnetism/Kinematics/ElectricField.lean
+    declarations: "`electricField`"
+    sentence: "The electric field is determined by the potential, both for functions [4] and for distributions. [5]"
     checked_by:
       - "ForPhysLib.Electromagnetism.Kinematics"          # Feasibility: scalarPotentialQ_roundtrip consumes the constructor round trip; the bare-call-site default is pinned beside it
       - "ForPhysLib.Electromagnetism.Kinematics.Kinded"   # two property lemmas the TODO asks for that exist nowhere upstream: electricField_gaugeTransform and magneticFieldMatrix_gaugeTransform (the derived fields are gauge-invariant) — a candidate patch, sorry-free (axioms: propext, Classical.choice, Quot.sound)
 
+  # No counterpart in Kinematics/API-map.md; retained as a source TODO tracking item.
   - description: "Add results related to the differentiability of the derivative of the Electromagnetic potential."
     checked_by:
       - "ForPhysLib.Electromagnetism.Kinematics.Kinded"   # gaugeTransform_differentiable: the gauge shift of a differentiable potential is differentiable — one such result, consumed by the gauge-invariance lemmas above
 
+  # No counterpart in Kinematics/API-map.md; retained as a source TODO tracking item.
   - description: "In this implementation we have set `μ₀ = 1`. It is a TODO to introduce this constant."
     checked_by:
       - "ForPhysLib.Electromagnetism.Kinematics.Dynamics"  # the TODO is stale: the constant IS introduced — every definition in the subtree takes `𝓕 : FreeSpace` and the kinetic term reads `−1/(4·𝓕.μ₀)`; the kinded layer reads ε₀/μ₀ at 6-14.1/6-26.1 and `FreeSpace.c` as a crossing. Proposed delta: delete the TODO sentence from the `KineticTerm.lean` and `Lagrangian.lean` overviews (a two-line docstring patch)

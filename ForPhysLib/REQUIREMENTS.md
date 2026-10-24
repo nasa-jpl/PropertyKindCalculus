@@ -8,7 +8,7 @@ blueprint's R1–R20, nor `M`, which [MOTIVATION.md](MOTIVATION.md) uses for its
 
 MR1–MR19 were written first, against the harmonic oscillator, and the
 [case-study Lean files](CaseStudies/HarmonicOscillator/README.md) cite them by number.
-MR20–MR31 were added after surveying the twelve `API-map.yaml` files under
+MR20–MR31 were added after surveying the twelve `API-map.md` files under
 `PhysLib/SpaceAndTime` and `PhysLib/ClassicalMechanics`. MR32 was appended after the
 first scoring pass, when tracing this list against PKC's own catalogue showed R2's subject
 matter (`H = T + V`) on the page with no MR asking anything of it. **That history is not a
@@ -362,14 +362,19 @@ demonstration must use the `OperatorTable` idiom and never the longhand witness 
 
 ### MR29. Every satisfied requirement has a machine-checkable witness
 
-PhysLib maintains `API-map.yaml` files with `done: true|false` and a `location:`. Today that
-is a claim a human checked once. The proposal is one additional field:
+PhysLib's API maps are Markdown documents: prose sentences cite numbered Lean References, and
+content not yet formalized is marked `[TODO]`. The `checked_by` delta is a separate YAML file
+anchored to those map entries. It copies the reference number, file and declarations, quotes the
+citing sentence, and lists the modules whose builds check it:
 
 ```yaml
-  - description: "…"
-    done: true
-    location: "Physlib/SpaceAndTime/Space/Module.lean (…)"
-    checked_by: "Physlib/SpaceAndTime/Space/Metrology.lean (#kind_dimensional_coverage)"
+deltas:
+  - reference: 16
+    file: Physlib/SpaceAndTime/Space/LengthUnit.lean
+    declarations: "`LengthUnit`, `scale`, `meters`"
+    sentence: "A choice of length unit rescales lengths, and concrete units such as the metre are available. [16]"
+    checked_by:
+      - "ForPhysLib.Metrology.Space"
 ```
 
 *The failure mode this guards against:* `Space` requirement 12 reads "*The API contains the
