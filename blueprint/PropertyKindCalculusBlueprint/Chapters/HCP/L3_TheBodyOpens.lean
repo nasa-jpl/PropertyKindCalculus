@@ -160,7 +160,7 @@ theorem unequalMassExample_centerOfMass :
     (centerOfMassCarving unequalMassExample (by norm_num [unequalMassExample])).mean
       unequalMassExample.position = (25 : ℝ) / 4 := by
   norm_num [centerOfMassCarving, unequalMassExample, WeightedCarving.mean, weightedSum,
-    totalWeight, bodyHalves, Decomposition.fold]
+    totalWeight, bodyHalves, Decomposition.fold, Carrier.add]
 
 def positionOf {π : PairId} {b : Body} (state : OpenBody π b) (h : HalfOf π b) :
     IndividualQuantity
