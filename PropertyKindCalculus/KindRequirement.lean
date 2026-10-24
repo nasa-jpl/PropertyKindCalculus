@@ -30,9 +30,10 @@ honest negatives, an `AuditReceipt` at each success point).
     `@[kindRequirementFree]` mark, or `⚠ UNGOVERNED`; a specification boundary is listed as
     the subject of no requirement. For object scopes, aliases in the member's result type
     are unfolded and only the `IndividualQuantity` bearer argument determines its domain:
-    a matching index binder means all objects, while constants of the object type mean only
-    those objects. Objects match up to definitional equality. Any other result is
-    `.unreached` (governed but reported as unchecked). Non-object scopes, including
+    a matching index binder means all objects; fixed objects are the bearer's T-typed
+    subterms reduced to constants, and anything irreducible is `.unreached`. Objects match
+    up to definitional equality. Any other result is governed but reported as unchecked.
+    Non-object scopes, including
     `.decided`, retain the boundary and port join without static subset checking. The
     summary counts the requirements by category and the attested ones — the ratchet.
     Whether a named requirement is *valid* is `#kind_requirements`' question; this census
@@ -457,7 +458,23 @@ inductive PortDomain where
   | unreached
 deriving Repr, Inhabited
 
-/-- Infer which objects of type `T` the reduced `IndividualQuantity` bearer carries. -/
+/-- Find maximal closed bearer subterms of type `T`, reducing them to object constants. -/
+partial def fixedBearerObjects (bearer T : Expr) : MetaM (Array Name × Bool) := do
+  if !bearer.hasLooseBVars && (← Meta.isDefEq (← Meta.inferType bearer) T) then
+    let reduced ← withTransparency .default do Meta.whnf bearer
+    match reduced with
+    | .const n _ => return (#[n], false)
+    | _ => return (#[], true)
+  else
+    match bearer with
+    | .app fn arg =>
+      let (fnObjects, fnUnresolved) ← fixedBearerObjects fn T
+      let (argObjects, argUnresolved) ← fixedBearerObjects arg T
+      return (fnObjects ++ argObjects, fnUnresolved || argUnresolved)
+    | .mdata _ inner => fixedBearerObjects inner T
+    | _ => return (#[], false)
+
+/-- Infer the object domain of the reduced `IndividualQuantity` bearer. -/
 def portDomain (member : Name) (T : Expr) : MetaM PortDomain := do
   let env ← getEnv
   let some info := env.find? member | return .unreached
@@ -471,12 +488,11 @@ def portDomain (member : Name) (T : Expr) : MetaM PortDomain := do
       let binderType ← Meta.inferType binder
       return (← Meta.isDefEq binderType T) && bearer.containsFVar binder.fvarId!
     if carriesAll then return .all
-    let mut objects : Array Name := #[]
-    for n in bearer.getUsedConstants do
-      if (env.find? n).isNone then continue
-      let object ← mkConstWithLevelParams n
-      if (← Meta.isDefEq (← Meta.inferType object) T) && !objects.contains n then
-        objects := objects.push n
+    let (foundObjects, unresolved) ← fixedBearerObjects bearer T
+    if unresolved then return .unreached
+    let mut objects := #[]
+    for n in foundObjects do
+      if !objects.contains n then objects := objects.push n
     return if objects.isEmpty then .unreached else .only objects.toList
 
 /-- Compare an object with named objects after unfolding definitionally equal aliases. -/
@@ -547,9 +563,10 @@ def portDomainFor (node : NodeId) (T : Expr) : MetaM PortDomain := do
   | none => return .unreached
 
 /-- One row per produced port of every model boundary in scope. Object scopes compare against
-the reduced result `IndividualQuantity` bearer, unfolding aliases and matching objects by
-definitional equality; `.unreached` remains governed with an unchecked suffix. Other scopes,
-including `.decided`, retain the boundary/port join without subset checking. -/
+the reduced result `IndividualQuantity` bearer: fixed objects are maximal T-typed subterms
+reduced to constants, and any irreducible subterm makes the domain `.unreached`. Aliases are
+unfolded and objects match by definitional equality. Other scopes, including `.decided`,
+retain the boundary/port join without subset checking. -/
 def coverageRows (scope : Array Name) : Elab.TermElabM (Array Row × Tally) := do
   let subs ← subjects scope
   let byBoundary ← requirementsByBoundary
@@ -680,7 +697,8 @@ boundary under the namespaces, each `[governed]` by the requirements naming it,
 `⊘ exempted` by a `@[kindRequirementFree]` mark (or as a counterexample), or
 `⚠ UNGOVERNED`; specification boundaries listed as the subject of no requirement. Object
 scopes inspect only the reduced result `IndividualQuantity` bearer, unfolding aliases and
-matching objects up to definitional equality; `.unreached` is governed with an unchecked
+matching objects up to definitional equality; fixed objects are the bearer's T-typed
+subterms reduced to constants, and anything irreducible is `.unreached` with an unchecked
 suffix. `.all`, `.sort`, and `.decided` retain the boundary/port join without static subset
 checking; `.decided` remains statically unchecked. One sorted `info` message to pin, with
 category tallies and the attested ratchet. Records an `AuditReceipt` for
