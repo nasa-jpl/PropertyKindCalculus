@@ -24,12 +24,18 @@ Once A and B are coupled, what bears the total mass and the oscillation frequenc
 the L1 black boxes into bodies A and B and springs kA, kC, and kB. The coupling spring
 makes the oscillators interact, so L1's no-interaction assumption falls. Mass is borne by
 the bodies and stiffness by the springs; the L1 oscillator-indexed `ω² = k/m` does not
-survive coupling. The normal-mode angular frequency belongs to the pair whole.
-`PartOf π` uses nominal `PairId` identity independent of parameter values, so identically
-parameterized pairs with IDs P and Q still have different bearers.
+survive coupling. The normal-mode angular frequency belongs to the pair whole. Following
+L1, one `PairId` name is one system. Records under it are its states at different times,
+configurations, or rival estimates of it; comparing their shared-bearer quantities is the
+point, and different names denote distinct systems, so P and Q remain different even if
+their parameters match. Each spring carries signed extension (negative when compressed,
+positive when stretched); two configurations of pair P can compare the kC extensions with
+a typed displacement difference.
 
-_1. Open the box._ Each body's upstream harmonic oscillator still supplies its wall-spring
-parameters; the coupling spring is the new field:
+_1. Open the box and represent configurations._ Each body's upstream harmonic oscillator
+supplies its wall-spring parameters; the coupling spring supplies stiffness, and each spring
+has a signed extension. Two `CoupledPair .P` configurations admit a typed difference of
+their kC extensions:
 
 ```anchor opened_pair
 inductive Body | A | B
@@ -38,6 +44,10 @@ deriving DecidableEq, Repr
 inductive Spring | kA | kC | kB
 deriving DecidableEq, Repr
 
+/--
+One pair name is one system; its records are states, configurations, or rival estimates to
+compare. Different names denote distinct systems.
+-/
 inductive PairId | P | Q
 deriving DecidableEq, Repr
 
@@ -68,6 +78,7 @@ instance : Designated Spring where
 structure CoupledPair (π : PairId) where
   osc : Body → ClassicalMechanics.HarmonicOscillator
   kC : ℝ
+  extension : Spring → ℝ
 
 structure PartOf (π : PairId) where
   part : Body ⊕ Spring
@@ -93,6 +104,38 @@ def stiffnessOf {π : PairId} (p : CoupledPair π) (s : Spring) :
       (Composite.part (σ := pairS) (springPart π s))
       ForPhysLib.ClassicalMechanics.springConstantK ℝ :=
   ⟨springMagnitude p s⟩
+
+def extensionOf {π : PairId} (p : CoupledPair π) (s : Spring) :
+    IndividualQuantity
+      (Composite.part (σ := pairS) (springPart π s))
+      ForPhysLib.ClassicalMechanics.displacementK ℝ :=
+  ⟨p.extension s⟩
+
+def couplingSpringExtensionDifference
+    (compressed stretched : CoupledPair .P) :
+    IndividualQuantity
+      (Composite.part (σ := pairS) (springPart .P .kC))
+      ForPhysLib.ClassicalMechanics.displacementK ℝ :=
+  IndividualQuantity.add DifferenceKind.ofScale
+    (extensionOf stretched .kC)
+    (-(extensionOf compressed .kC))
+
+#guard_msgs in
+example (compressed stretched : CoupledPair .P) :
+    IndividualQuantity
+      (Composite.part (σ := pairS) (springPart .P .kC))
+      ForPhysLib.ClassicalMechanics.displacementK ℝ :=
+  couplingSpringExtensionDifference compressed stretched
+
+theorem couplingSpringExtensionDifference_magnitude
+    (compressed stretched : CoupledPair .P) :
+    (couplingSpringExtensionDifference compressed stretched).magnitude =
+      stretched.extension .kC - compressed.extension .kC := by
+  simp [couplingSpringExtensionDifference, IndividualQuantity.add_magnitude,
+    IndividualQuantity.neg_magnitude, extensionOf]
+  change stretched.extension .kC + (-(compressed.extension .kC)) =
+    stretched.extension .kC - compressed.extension .kC
+  ring
 ```
 
 Mass is now indexed by a body part and stiffness by a spring part. The oscillator-indexed
@@ -155,8 +198,8 @@ in the application
 -/
 #guard_msgs in
 example (o : Body → ClassicalMechanics.HarmonicOscillator) :=
-  let p : CoupledPair .P := ⟨o, 2⟩
-  let q : CoupledPair .Q := ⟨o, 2⟩
+  let p : CoupledPair .P := ⟨o, 2, fun _ => 0⟩
+  let q : CoupledPair .Q := ⟨o, 2, fun _ => 0⟩
   IndividualQuantity.add (k := ForPhysLib.ClassicalMechanics.massK)
     DifferenceKind.ofScale (pairMass p) (pairMass (π := .Q) q)
 ```

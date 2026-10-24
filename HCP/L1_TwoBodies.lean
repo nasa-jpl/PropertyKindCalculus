@@ -58,6 +58,10 @@ theorem constant_designation_not_injective :
 -- ANCHOR_END: designation
 
 -- ANCHOR: oscillator_indexed_quantities
+/--
+One rig name is one system; its records are states, configurations, or rival estimates to
+compare. Different names denote distinct systems.
+-/
 inductive Rig | R₁ | R₂
 deriving DecidableEq, Repr
 
@@ -162,6 +166,30 @@ example (o : Oscillator → ClassicalMechanics.HarmonicOscillator) :=
     (massOf (⟨o⟩ : TwoOscillators .R₁) ⟨.A⟩)
     (massOf (⟨o⟩ : TwoOscillators .R₂) ⟨.A⟩)
 -- ANCHOR_END: refused_cross_oscillator
+
+-- ANCHOR: same_rig_estimate_difference
+def oscillatorAMassDifference (earlier later : TwoOscillators .R₁) :
+    IndividualQuantity (⟨.A⟩ : OscillatorOf .R₁)
+      ForPhysLib.ClassicalMechanics.massK ℝ :=
+  IndividualQuantity.add DifferenceKind.ofScale
+    (massOf later ⟨.A⟩)
+    (-(massOf earlier ⟨.A⟩))
+
+#guard_msgs in
+example (earlier later : TwoOscillators .R₁) :
+    IndividualQuantity (⟨.A⟩ : OscillatorOf .R₁)
+      ForPhysLib.ClassicalMechanics.massK ℝ :=
+  oscillatorAMassDifference earlier later
+
+theorem oscillatorAMassDifference_magnitude (earlier later : TwoOscillators .R₁) :
+    (oscillatorAMassDifference earlier later).magnitude =
+      (later.osc .A).m - (earlier.osc .A).m := by
+  simp [oscillatorAMassDifference, IndividualQuantity.add_magnitude,
+    IndividualQuantity.neg_magnitude, massOf]
+  change (later.osc .A).m + (-(earlier.osc .A).m) =
+    (later.osc .A).m - (earlier.osc .A).m
+  ring
+-- ANCHOR_END: same_rig_estimate_difference
 
 -- ANCHOR: refused_unsorted_object
 /--

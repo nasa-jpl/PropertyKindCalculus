@@ -19,10 +19,12 @@ tag := "hcp-l1"
 Two bodies are now in view, one inside each black-box oscillator: whose mass is this? Bare
 reals and bearer-free kinded values let one oscillator's mass enter another's formula.
 L1 indexes mass and stiffness by a rig-scoped oscillator, so its own `k/m` is accepted and
-cross-oscillator operations are refused. Rig identity is nominal: identical parameter
-values under R₁ and R₂ still denote two systems. Each oscillator is the whole characterized
-by `ω₀`; this is why `k` and `m` share its index. L2 opens each box into body and spring(s),
-revisits which component bears mass and stiffness, and considers the pair as a whole.
+cross-oscillator operations are refused. One name is one system: records under that name
+are its states at different times, its configurations, or rival estimates of it; comparing
+them is the point. Different names are distinct systems, so R₁ and R₂ remain distinct even
+when their parameter values match. Each oscillator is the whole characterized by `ω₀`;
+this is why `k` and `m` share its index. L2 opens each box into body and spring(s), revisits
+which component bears mass and stiffness, and considers the pair as a whole.
 
 _1. Bare reals._ Put oscillator B's mass in oscillator A's frequency radicand. The
 upstream oscillator accepts the cross-oscillator expression as a real:
@@ -75,14 +77,21 @@ theorem constant_designation_not_injective :
 ```
 
 _5. Carry the bearer._ The oscillator is the whole characterized by `ω₀`; mass and
-stiffness therefore share its index. `OscillatorOf r` scopes each bearer to a nominal rig
-identity independent of parameter values, so identical oscillators under R₁ and R₂ remain
-distinct systems. Under L0's massless-spring, fixed-wall assumptions, these magnitudes
-read the body's mass and spring's stiffness. The existing kind table supplies the quotient
-law; the magnitude theorem reads the real fields. The catalogue entry remains shared
-because both oscillators have the same sort:
+stiffness therefore share its index. One `Rig` name is one system: two `TwoOscillators r`
+records are its states at different times, configurations, or rival estimates, and
+comparing their quantities is the point. `OscillatorOf r` keeps those records' oscillator
+bearers shared; different rig names are distinct systems regardless of matching parameters.
+Under L0's
+massless-spring, fixed-wall assumptions, these magnitudes read the body's mass and
+spring's stiffness. The existing kind table supplies the quotient law; the magnitude
+theorem reads the real fields. The catalogue entry remains shared because both oscillators
+have the same sort:
 
 ```anchor oscillator_indexed_quantities
+/--
+One rig name is one system; its records are states, configurations, or rival estimates to
+compare. Different names denote distinct systems.
+-/
 inductive Rig | R₁ | R₂
 deriving DecidableEq, Repr
 
@@ -125,11 +134,13 @@ theorem mass_kind_shared_by_oscillators :
 The sort-level catalogue comparison uses `Sorted Oscillator`; the rig-scoped wrapper
 needs no additional `Sorted` or `Designated` instance.
 
-_6. Refuse cross-oscillator substitution._ B's mass cannot fill A's slot, A's stiffness
-cannot be divided by B's mass, and the two individual quantities cannot be added at this
-layer. Nor can same-named oscillator A masses with identical parameters be added across
-R₁ and R₂: rig identity is nominal, so these are two systems. Total mass is physically
-meaningful, but whose total requires a whole; that is L2's question:
+_6. Compare states; refuse cross-system substitution._ Two weighings of oscillator A at
+different times on rig R₁ have a typed mass difference whose magnitude reads the later
+and earlier real fields. B's mass cannot fill A's slot, A's stiffness cannot be divided by
+B's mass, and the two different oscillators' quantities cannot be added at this layer. Nor
+can same-named oscillator A masses be added across R₁ and R₂: those names identify
+distinct systems. Total mass is physically meaningful, but whose total requires a whole;
+that is L2's question:
 
 ```anchor refused_cross_oscillator
 /--
@@ -195,6 +206,30 @@ example (o : Oscillator → ClassicalMechanics.HarmonicOscillator) :=
   IndividualQuantity.add DifferenceKind.ofScale
     (massOf (⟨o⟩ : TwoOscillators .R₁) ⟨.A⟩)
     (massOf (⟨o⟩ : TwoOscillators .R₂) ⟨.A⟩)
+```
+
+```anchor same_rig_estimate_difference
+def oscillatorAMassDifference (earlier later : TwoOscillators .R₁) :
+    IndividualQuantity (⟨.A⟩ : OscillatorOf .R₁)
+      ForPhysLib.ClassicalMechanics.massK ℝ :=
+  IndividualQuantity.add DifferenceKind.ofScale
+    (massOf later ⟨.A⟩)
+    (-(massOf earlier ⟨.A⟩))
+
+#guard_msgs in
+example (earlier later : TwoOscillators .R₁) :
+    IndividualQuantity (⟨.A⟩ : OscillatorOf .R₁)
+      ForPhysLib.ClassicalMechanics.massK ℝ :=
+  oscillatorAMassDifference earlier later
+
+theorem oscillatorAMassDifference_magnitude (earlier later : TwoOscillators .R₁) :
+    (oscillatorAMassDifference earlier later).magnitude =
+      (later.osc .A).m - (earlier.osc .A).m := by
+  simp [oscillatorAMassDifference, IndividualQuantity.add_magnitude,
+    IndividualQuantity.neg_magnitude, massOf]
+  change (later.osc .A).m + (-(earlier.osc .A).m) =
+    (later.osc .A).m - (earlier.osc .A).m
+  ring
 ```
 
 _7. A name is not a sort._ A nominal `Object` does not supply `Sorted System`, so the
