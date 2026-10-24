@@ -5,6 +5,7 @@ import PropertyKindCalculusBlueprint.References
 import PropertyKindCalculusBlueprint.Chapters.HCP.L0_BlackBox
 import PropertyKindCalculusBlueprint.Chapters.HCP.L1_TwoBodies
 import PropertyKindCalculusBlueprint.Chapters.HCP.L2_ThePair
+import PropertyKindCalculusBlueprint.Chapters.HCP.L3_TheBodyOpens
 
 open Verso.Genre
 open Verso.Genre.Manual
@@ -119,12 +120,12 @@ optionally add damping, and finally state what must hold:
   * Included here
 *
   * 3
-  * Body opens up: inhomogeneous mass with an off-axis centre of mass, so it wobbles
-  * Composite body, carving, body-fixed frame
-  * Mass distribution, centre of mass, inertia tensor, frame-specific angular velocity
-  * R6 degenerate whole; R3 weighted mean; wrong angular-velocity frame. L0's assumption returns as the solid-sphere special case `(2/5) m R²`.
-  * Stages 2–3 on RigidBody; Exhibits RigidBody and Composition; `Kinded/RigidBody`; upstream `CM-RB-sphereI` informal lemma proved in `SolidSphereInertia.lean`
-  * Planned
+  * Body opens up: body A's off-axis centre of mass makes the spring force produce torque and wobble
+  * Body A of pair P becomes a nominally indexed rigid composite with left/right halves; a body-fixed frame enters beside the lab frame
+  * Per-half mass and position, centre of mass, inertia tensor, frame-specific angular velocity
+  * R6 degenerate whole; R3 weighted mean and intensive ω; wrong angular-velocity frame. L0's assumption returns as `(2/5) m R²`.
+  * Stages 2–3 on RigidBody; Exhibits RigidBody and Composition; upstream `CM-RB-sphereI` informal lemma proved in `SolidSphereInertia.lean`
+  * Included here
 *
   * 4
   * Out of the line
@@ -158,11 +159,14 @@ MetrologicalModularity. L1 introduces two uncoupled black-box oscillators, each 
 one body and its wall spring; the oscillator is the bearer of mass and stiffness. L2 opens
 each box, adds the coupling spring, and makes the coupled pair a system of its own sort.
 Mass is borne by the bodies, stiffness by the springs, and the normal-mode angular
-frequency by the pair. L3 revisits the assumption that each body is rigid, homogeneous,
-point-like, and balanced on the spring axis.
+frequency by the pair. L3 opens body A into nominally indexed halves, explains wobble by
+the off-axis centre of mass, and separates body- from lab-frame angular velocity. L4
+revisits motion along one line seen by one observer.
 
 {include 1 PropertyKindCalculusBlueprint.Chapters.HCP.L0_BlackBox}
 
 {include 1 PropertyKindCalculusBlueprint.Chapters.HCP.L1_TwoBodies}
 
 {include 1 PropertyKindCalculusBlueprint.Chapters.HCP.L2_ThePair}
+
+{include 1 PropertyKindCalculusBlueprint.Chapters.HCP.L3_TheBodyOpens}
