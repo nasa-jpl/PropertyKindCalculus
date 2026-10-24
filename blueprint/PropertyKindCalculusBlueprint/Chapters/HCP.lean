@@ -8,6 +8,7 @@ import PropertyKindCalculusBlueprint.Chapters.HCP.L2_ThePair
 import PropertyKindCalculusBlueprint.Chapters.HCP.L3_TheBodyOpens
 import PropertyKindCalculusBlueprint.Chapters.HCP.L4_OutOfTheLine
 import PropertyKindCalculusBlueprint.Chapters.HCP.L5_Damping
+import PropertyKindCalculusBlueprint.Chapters.HCP.L6_Requirements
 
 open Verso.Genre
 open Verso.Genre.Manual
@@ -151,7 +152,7 @@ optionally add damping, and finally state what must hold:
   * Requirement, referent, gate
   * R7 scope over nominal objects
   * Stage 4; `Tutorial.HarmonicOscillatorRequirements`, Audits, `checked_by`
-  * Planned
+  * Included here
 :::
 
 Every lesson line is quoted live from the `HCP` library through SubVerso anchors; the
@@ -166,7 +167,10 @@ the off-axis centre of mass, and separates body- from lab-frame angular velocity
 puts the pair's centres in 3-D space, makes its separation a pair-indexed quantity, and
 states which observer's frame supplies a vector's context. Optional L5 adds the damper,
 keeps its measured viscous constant `γ` distinct from the whole-system decay rate `δ`,
-and ends the remaining no-dissipation assumption.
+and ends the remaining no-dissipation assumption. L6 states requirements over the pair
+sort and nominal object P; those scopes are writable because earlier levels named sorts
+and particulars. Its full worked example is
+`examples/Tutorial/HarmonicOscillatorRequirements.lean`, which L6 mirrors without importing.
 
 {include 1 PropertyKindCalculusBlueprint.Chapters.HCP.L0_BlackBox}
 
@@ -179,3 +183,5 @@ and ends the remaining no-dissipation assumption.
 {include 1 PropertyKindCalculusBlueprint.Chapters.HCP.L4_OutOfTheLine}
 
 {include 1 PropertyKindCalculusBlueprint.Chapters.HCP.L5_Damping}
+
+{include 1 PropertyKindCalculusBlueprint.Chapters.HCP.L6_Requirements}

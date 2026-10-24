@@ -38,17 +38,20 @@ Each HCP step asks a question, changes context, changes attributes, shows the ri
 | 3 | **The body opens up.** Body A's centre of mass is off the spring axis, so the line of action misses it and the body wobbles. | Body A of pair P becomes a nominally indexed rigid composite with a left/right carving; a body-fixed frame enters beside the lab frame. | Per-half mass and position, centre of mass, inertia tensor, lab vs body angular velocity. | R6 degenerate whole (`RigidBody ⟨0⟩`); R3 (centre of mass is a weighted mean and ω is intensive, not summed); lab-ω fed where body-ω is required. L0's assumption returns as the solid-sphere special case `(2/5) m R²`. | Stages 2–3 on RigidBody; Exhibits RigidBody and Composition; upstream `CM-RB-sphereI` informal lemma is proved in `SolidSphereInertia.lean`. | Included here |
 | 4 | **Out of the line.** Motion in 3-D space, seen by a moving observer. | Pair centres become points in `Space 3`; lab and cart frames are explicit contexts. | Position vector, displacement, distance, velocity per frame. | `distanceQ` erases the pair bearer; bare vectors accept three transport laws; kinded vectors enforce the role and frame. | Stages 0–4 on Space; Exhibit ReferenceFrame. | Included here |
 | 5 | *(Optional)* **Losing energy.** Add a damper. | New component and particular. | Damper `γ`, whole-system decay rate `δ`, and damping regime. | Bare comparisons conflate viscous damping, decay rate, and angular frequency; kinded forms distinguish them. | Stage 1; upstream DampedHarmonicOscillator. | Included here (optional) |
-| 6 | **What must hold.** | Requirement scope over the refined context. | Requirement, referent, gate. | R7 scope over nominal objects. | Stage 4; `Tutorial.HarmonicOscillatorRequirements`, Audits, `checked_by`. | Planned |
+| 6 | **What must hold.** | Requirement scope over the refined context. | Requirement, referent, gate. | R7 scope over nominal objects. | Stage 4; `Tutorial.HarmonicOscillatorRequirements`, Audits, `checked_by`. | Included here |
 
-L1–L5 are included here; L5 is optional. L1 makes each uncoupled black-box oscillator the bearer of
+L1–L6 are included here; L5 is optional. L1 makes each uncoupled black-box oscillator the bearer of
 mass and stiffness; L2 opens the boxes into bodies and springs, adds the coupling spring,
 and gives the pair its own sort and whole. L3 opens body A into nominally indexed halves,
 shows that an off-axis centre of mass creates torque, and distinguishes body- from
 lab-frame angular velocity. L4 replaces the one-dimensional, one-observer view with
 state-indexed points and pair separation in 3-D, then makes the lab and cart observers
 explicit. L5 adds a damper, distinguishes its viscous constant from the whole oscillator's
-decay rate, and ends the no-dissipation assumption. The `examples/Tutorial/` files and
-`Tutorial` library remain the model-writer's separate track.
+decay rate, and ends the no-dissipation assumption. L6 gives requirements scopes over
+`pairS` and nominal object P: the scope can be written because earlier levels named sorts
+and particulars. The full worked requirements example is
+`examples/Tutorial/HarmonicOscillatorRequirements.lean`; L6 does not import it. The
+`Tutorial` library remains the model-writer's separate track.
 
 ## Running checks
 
