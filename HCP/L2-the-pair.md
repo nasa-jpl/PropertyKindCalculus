@@ -50,11 +50,21 @@ coupling. The normal-mode frequency belongs to the pair. Each spring also has a 
 extension: negative means compressed and positive means stretched. Two configurations of
 pair P can compare their coupling-spring extensions with a typed displacement difference.
 
+## Risks at this step
+
+- **Aggregation.** In one coupled pair P, the pair mass is assembled from bodies A and B, but their normal-mode frequencies do not add; the mass assembly and frequency refusal are pinned at `HCP.L2_ThePair#pair_mass` and `HCP.L2_ThePair#refused_frequency_assembly`.
+- **Sort versus particular.** The license to add body masses belongs to the coupled-pair sort, and parallel stiffness adds where series stiffness does not; the lesson pins the accepted parallel case and refused series case at `HCP.L2_ThePair#parallel_stiffness` and `HCP.L2_ThePair#refused_series_stiffness`.
+
+**Further reading**
+- `Exhibits/PointParticle`.
+- `CaseStudies/PointParticle`.
+- `Composite.Assembles` with `Exhibits/TwoRovers`.
+
 ## 3. Small rigorous improvement
 
 | Question | Context change | Attribute change | Risk shown | PhysLib stage |
 |---|---|---|---|---|
-| Once A and B are coupled, what bears the total mass and the oscillation frequency? | Open the L1 black boxes into bodies A and B and springs kA, kC, kB; kC joins A and B, so they interact. The coupled pair has its own sort and a nominal PairId independent of its parameters; spring configurations also carry signed extensions. | Per-part mass, stiffness, and displacement; total mass of the pair; normal-mode angular frequency of the pair; effective stiffness. | Whole/part confusion; R1 cross-system contamination one level up (a second pair's mass even with identical parameters); aggregating a kind that does not aggregate (normal-mode frequency or series stiffness). | Stage 3: sort-specific assembly licenses; ForPhysLib Composition and the harmonic-oscillator square. |
+| Once A and B are coupled, what bears the total mass and the oscillation frequency? | Open the L1 black boxes into bodies A and B and springs kA, kC, kB; kC joins A and B, so they interact. The coupled pair has its own sort and a nominal PairId independent of its parameters; spring configurations also carry signed extensions. | Per-part mass, stiffness, and displacement; total mass of the pair; normal-mode angular frequency of the pair; effective stiffness. | The pair's mass adds from its bodies, but normal-mode frequency and series stiffness do not; parallel stiffness adds under its own sort-specific license. | Stage 3: sort-specific assembly licenses. |
 
 With B clamped, A is held by its wall spring kA and the coupling spring kC in parallel.
 The total mass belongs to the pair whole; angular frequency does not add across the bodies,

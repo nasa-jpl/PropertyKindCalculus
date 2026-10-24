@@ -48,11 +48,20 @@ configurations, or rival estimates of it—comparing them is the point. Distinct
 distinct systems. Thus `HalfOf .P .A` keeps body A's halves shared across descriptions of
 pair P, while a half of pair Q has another bearer type.
 
+## Risks at this step
+
+- **Wrong carving.** For body A of pair P, counting a half twice or leaving one out changes the whole mass; the pinned decomposition gives one slot to each half and proves the total at `HCP.L3_TheBodyOpens#opened_body`.
+- **Weighted mean, not sum.** The centre of mass uses each half's mass and position, while both halves share the same angular velocity; the pinned checks are `HCP.L3_TheBodyOpens#center_of_mass_mean` and `HCP.L3_TheBodyOpens#angular_velocity_intensive`.
+- **Degenerate whole and frame.** A massless body has no physical centre of mass, and lab-frame angular velocity is not the body-frame input to rotational energy; the checks are `HCP.L3_TheBodyOpens#massless_center_of_mass`, `HCP.L3_TheBodyOpens#bare_frame_mismatch`, and `HCP.L3_TheBodyOpens#framed_rotational_energy`.
+
+**Further reading**
+- `Exhibits/Composition`, findings 2 and 5.
+
 ## 3. Small rigorous improvement
 
 | Question | Context change | Attribute change | Risk shown | PhysLib stage |
 |---|---|---|---|---|
-| Body A wobbles instead of sliding along the line. Why, and what must the model now say about the body? | Body A of pair P becomes a rigid composite carved into left and right halves; a body-fixed frame appears beside the lab frame. | Per-half mass and position, centre of mass, inertia tensor, and body- versus lab-frame angular velocity. | R3: centre of mass is a weighted mean and angular velocity is intensive, not summed; R6: a massless whole reports the origin by convention; a lab-frame ω can be fed silently to a body-fixed tensor upstream. | Stages 2–3 on rigid bodies; ForPhysLib Composition and RigidBody findings, plus the proved solid-sphere inertia theorem. |
+| Body A wobbles instead of sliding along the line. Why, and what must the model now say about the body? | Body A of pair P becomes a rigid composite carved into left and right halves; a body-fixed frame appears beside the lab frame. | Per-half mass and position, centre of mass, inertia tensor, and body- versus lab-frame angular velocity. | Counting the wrong halves changes total mass; angular velocity is intensive; a massless body has no physical centre of mass; lab-frame angular velocity does not match the body-frame energy input. | Stages 2–3 on rigid bodies; proved solid-sphere inertia theorem. |
 
 The L2 on-axis point-mass assumption has fallen. L4 revisits the remaining assumption of
 motion along one line seen by one observer.

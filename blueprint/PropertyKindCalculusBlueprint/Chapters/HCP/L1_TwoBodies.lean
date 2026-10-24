@@ -26,6 +26,15 @@ when their parameter values match. Each oscillator is the whole characterized by
 this is why `k` and `m` share its index. L2 opens each box into body and spring(s), revisits
 which component bears mass and stiffness, and considers the pair as a whole.
 
+# Risks at this step
+
+- *Cross-system contamination.* Oscillators A and B have the same kinds, so B's mass can enter A's frequency if the bearer is omitted; the cross-oscillator refusal is pinned at `HCP.L1_TwoBodies#refused_cross_oscillator`.
+- *False identity.* Giving A and B one name makes two oscillators look like one system; the injective designation and its constant-name counterexample are pinned at `HCP.L1_TwoBodies#designation`.
+
+*Further reading*
+- `Exhibits/TwoRovers` (rovers A and B).
+- `Exhibits/PointParticle`, finding 2.
+
 _1. Bare reals._ Put oscillator B's mass in oscillator A's frequency radicand. The
 upstream oscillator accepts the cross-oscillator expression as a real:
 
@@ -59,7 +68,7 @@ example : Sorted.sortOf Oscillator.A = Sorted.sortOf Oscillator.B := rfl
 ```
 
 _4. Designate without collapsing._ `Designated` requires an injective designation. A
-constant name would report two oscillators as one, the R5 false-identity risk:
+constant name would report two oscillators as one, the false-identity risk:
 
 ```anchor designation
 instance : Designated Oscillator where

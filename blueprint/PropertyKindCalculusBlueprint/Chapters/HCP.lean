@@ -44,45 +44,6 @@ universals from particulars:
 
 The left column is system context; dimension-only metrology attends to the right.
 
-:::table +header
-*
-  * Risk
-  * What goes wrong
-  * Existing artifact
-*
-  * R1 — Cross-system contamination
-  * Rover B's chassis mass enters rover A's total and still type-checks under `Dimension`.
-  * `Exhibits/TwoRovers`
-*
-  * R2 — Wrong carving
-  * Parts are under- or over-counted; alternative carvings deliver alternative numbers.
-  * `Exhibits/TwoRovers`; `Exhibits/Composition`
-*
-  * R3 — Aggregating what does not aggregate
-  * `∑ p, p.velocity` has the same shape as `System.mass`.
-  * `Exhibits/PointParticle`; `CaseStudies/PointParticle`
-*
-  * R4 — Sort and particular confused
-  * Rover 1 and the rover fleet become interchangeable; a kind-only license cannot distinguish rigid assembly from mixture.
-  * `Composite.Assembles` keyed by sort; `Exhibits/TwoRovers` (mass licensed, angular velocity not)
-*
-  * R5 — False identity
-  * A constant designation silently reports two particles as one system.
-  * `Exhibits/PointParticle`, finding 2
-*
-  * R6 — Degenerate whole
-  * `RigidBody ⟨0⟩` has zero mass and its centre of mass "is" the origin.
-  * `Exhibits/Composition`, findings 2 and 5
-*
-  * R7 — Unstatable scope
-  * "Every spring" and "body A" cannot be stated over nominal objects, so a requirement has no scope.
-  * `MetrologicalModularity` scope clause; retained `Tutorial.HarmonicOscillatorRequirements`
-*
-  * R8 — Observer left implicit
-  * One carrier, three Galilean transformation laws.
-  * `Exhibits/ReferenceFrame`; MOTIVATION M7
-:::
-
 The ladder starts with one black-box oscillator and adds a second oscillator as another
 particular of the same sort. L2 opens each box into body and spring(s), then treats the
 pair as a whole. Later steps open the body to its mass distribution, move out of the line,
@@ -90,87 +51,74 @@ optionally add damping, and finally state what must hold:
 
 :::table +header
 *
-  * L
+  * Ladder step
   * Refinement
   * Context change
   * New attributes
-  * Risk shown
+  * What goes wrong
   * PhysLib stage/source
   * Status
 *
-  * 0
-  * The black box: one homogeneous, rigid, point-like body on one ideal spring to a wall, along a line
+  * {ref "hcp-l0"}[L0 — The black box]
+  * One homogeneous, rigid, point-like body on one ideal spring to a wall, along a line
   * One system; body and spring inside, wall outside; the wall is fixed and infinitely massive
   * Mass, stiffness, displacement, ω vs f, period
-  * A kind is not a dimension: `ω + f` and mistaken `√(m/k)` pass the bare-real model
+  * One oscillator. Bare reals accept the inverted period formula `√(m/k)`; `WithDim` refuses that but accepts angular frequency ω plus frequency f, which share dimension T⁻¹. Only distinct kinds refuse both.
   * Stages 0–1; upstream oscillator Basic and WithDim; ForPhysLib Kinds and Metrology; Exhibit C
   * Included here
 *
-  * 1
-  * Two bodies
+  * {ref "hcp-l1"}[L1 — Two bodies]
+  * One body inside each black-box oscillator
   * Two particulars of sort harmonic oscillator; each black box contains one body and its wall spring; the oscillators remain uncoupled
   * Same kinds, now indexed by the oscillator whole; its mass and stiffness share an index
-  * R1 contamination across oscillators; R5 false identity; cross-oscillator division is refused
+  * Two separate oscillators, A and B. Cross-system contamination: with kinds but no bearer, B's mass can be used in A's frequency, because the kind is right. False identity: giving both oscillators one name makes them one system. Indexing each quantity by its oscillator refuses the first; an injective designation the second.
   * Stage 2; CaseStudies/HarmonicOscillator Attempt 4; HCP L1
   * Included here
 *
-  * 2
-  * Pair as a system
+  * {ref "hcp-l2"}[L2 — The pair is a system too]
+  * The pair becomes a system in its own right
   * Opens each oscillator into body and spring(s); pair's own sort, whole and parts; coupling, parallel and series springs
   * Normal-mode frequency ω₊, total mass, effective stiffness
-  * R2/R3/R4: mass assembles, ω does not, stiffness assembles in parallel but not in series
+  * One coupled pair, opened into bodies A and B and springs kA, kC, kB. Aggregating what does not aggregate: the pair's mass is m_A + m_B, but its normal-mode frequency ω₊ is not ω_A + ω_B. Sort vs particular: the licence to add masses belongs to the sort 'coupled pair', not to the kind 'mass'; stiffnesses add in parallel but not in series.
   * Stage 3; HCP `pairMass`/`parallelStiffness`, Composition finding 4
   * Included here
 *
-  * 3
-  * Body opens up: body A's off-axis centre of mass makes the spring force produce torque and wobble
+  * {ref "hcp-l3"}[L3 — The body opens up]
+  * Body A's centre of mass is off-axis, producing torque and wobble
   * Body A of pair P becomes a nominally indexed rigid composite with left/right halves; a body-fixed frame enters beside the lab frame
   * Per-half mass and position, centre of mass, inertia tensor, frame-specific angular velocity
-  * R6 degenerate whole; R3 weighted mean and intensive ω; wrong angular-velocity frame. L0's assumption returns as `(2/5) m R²`.
+  * Body A opened into two halves. Wrong carving: counting a half twice or leaving one out gives another mass. Weighted mean vs sum: the centre of mass is the mass-weighted mean of the halves' positions, and ω is the same for every half. Degenerate whole: a massless body has no centre of mass. Frames: the lab-frame ω put into the body-frame energy type-checks in PhysLib.
   * Stages 2–3 on RigidBody; Exhibits RigidBody and Composition; upstream `CM-RB-sphereI` informal lemma proved in `SolidSphereInertia.lean`
   * Included here
 *
-  * 4
-  * Out of the line
+  * {ref "hcp-l4"}[L4 — Out of the line]
+  * Motion in three dimensions, seen by a moving observer
   * Motion in 3-D, seen from the lab and a moving cart
   * Position vector, displacement, distance, velocity per frame
-  * `distanceQ` erases the pair bearer; bare vectors accept three transport laws, while kinded vectors enforce role and frame
+  * Pair P in 3-D, seen from the lab and a moving cart. Bearer erased: `distanceQ` cannot tell P's separation from Q's. Observer left implicit: one bare vector type accepts all three frame-conversion laws (displacement, velocity, relative position), though only one is right for each kind of vector.
   * Stages 0–4 on Space; Exhibit ReferenceFrame
   * Included here
 *
-  * 5
-  * Losing energy (optional)
+  * {ref "hcp-l5"}[L5 — The oscillation dies out]
+  * Add a damper (optional)
   * Add a damper to the nominally named oscillator
   * Damper `γ`, whole-system decay rate `δ`, and damping regime
-  * Bare comparisons conflate viscous damping, decay rate, and angular frequency; kinded forms distinguish them
+  * Oscillator A with a damper. PhysLib's `γ` (kg/s), ISO's damping coefficient δ = γ/(2m) (s⁻¹), and ω₀ (rad/s) share symbols or dimensions; bare reals accept `γ < ω₀` and dimensions accept `δ + ω₀`.
   * Stage 1; upstream `DampedHarmonicOscillator`; ISO 80000-3 items 3-18 and 3-24
   * Included here (optional)
 *
-  * 6
+  * {ref "hcp-l6"}[L6 — What must hold]
   * What must hold
   * Requirement scope over refined context
   * Requirement, referent, gate
-  * R7 scope over nominal objects
+  * Requirements over pair P and the sort 'coupled pair'. Unstatable scope: without named sorts and particulars, 'every pair' and 'pair P' have nothing to quantify over; a scope naming a bare number is rejected.
   * Stage 4; `Tutorial.HarmonicOscillatorRequirements`, Audits, `checked_by`
   * Included here
 :::
 
 Every lesson line is quoted live from the `HCP` library through SubVerso anchors; the
-blueprint build refuses drift. This HCP sequence replaces the earlier Tutorial chapters.
-The `Tutorial.HarmonicOscillatorRequirements` example remains cited by
-MetrologicalModularity. L1 introduces two uncoupled black-box oscillators, each containing
-one body and its wall spring; the oscillator is the bearer of mass and stiffness. L2 opens
-each box, adds the coupling spring, and makes the coupled pair a system of its own sort.
-Mass is borne by the bodies, stiffness by the springs, and the normal-mode angular
-frequency by the pair. L3 opens body A into nominally indexed halves, explains wobble by
-the off-axis centre of mass, and separates body- from lab-frame angular velocity. L4
-puts the pair's centres in 3-D space, makes its separation a pair-indexed quantity, and
-states which observer's frame supplies a vector's context. Optional L5 adds the damper,
-keeps its measured viscous constant `γ` distinct from the whole-system decay rate `δ`,
-and ends the remaining no-dissipation assumption. L6 states requirements over the pair
-sort and nominal object P; those scopes are writable because earlier levels named sorts
-and particulars. Its full worked example is
-`examples/Tutorial/HarmonicOscillatorRequirements.lean`, which L6 mirrors without importing.
+blueprint build refuses drift. L1–L6 are included here, with L5 optional; the `Tutorial`
+library remains the model-writer's separate track.
 
 {include 1 PropertyKindCalculusBlueprint.Chapters.HCP.L0_BlackBox}
 

@@ -48,6 +48,10 @@ One name is one system: records named P are states, configurations, or rival est
 that same pair and can be compared; Q is a distinct pair. An object-scoped requirement on P
 governs every state or record of P, not just the two records used for a spot check.
 
+## Risks at this step
+
+- **Unstatable scope.** A requirement about every coupled pair needs the pair sort, and one about every state of P needs the nominal pair P; without those named systems, it has nowhere to range. `HCP.L6_Requirements#invalid_scopes` pins the rejection of a bare real and a name that is not a sort.
+
 ## 3. Small rigorous improvement
 
 | Question | Context change | Attribute change | Risk shown | PhysLib stage |

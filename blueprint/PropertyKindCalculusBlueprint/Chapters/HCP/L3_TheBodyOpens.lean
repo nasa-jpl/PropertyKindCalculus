@@ -23,6 +23,15 @@ body-fixed frame beside the lab frame, and keeps the identity rule from L1–L2:
 one system; records under that name are its states, configurations, or rival estimates,
 while distinct names denote distinct systems.
 
+# Risks at this step
+
+- *Wrong carving.* For body A of pair P, counting a half twice or leaving one out changes the whole mass; the pinned decomposition gives one slot to each half and proves the total at `HCP.L3_TheBodyOpens#opened_body`.
+- *Weighted mean, not sum.* The centre of mass uses each half's mass and position, while both halves share the same angular velocity; the pinned checks are `HCP.L3_TheBodyOpens#center_of_mass_mean` and `HCP.L3_TheBodyOpens#angular_velocity_intensive`.
+- *Degenerate whole and frame.* A massless body has no physical centre of mass, and lab-frame angular velocity is not the body-frame input to rotational energy; the checks are `HCP.L3_TheBodyOpens#massless_center_of_mass`, `HCP.L3_TheBodyOpens#bare_frame_mismatch`, and `HCP.L3_TheBodyOpens#framed_rotational_energy`.
+
+*Further reading*
+- `Exhibits/Composition`, findings 2 and 5.
+
 _1. Open body A._ `HalfOf π b` adds nominal pair-and-body identity to the upstream
 left/right `Half`. `OpenBody π b` records per-half mass and one position coordinate. The
 existing `Assembles rigidBodyS massK` license produces the whole-body total and its

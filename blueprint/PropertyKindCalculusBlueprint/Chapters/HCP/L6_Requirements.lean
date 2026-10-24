@@ -26,6 +26,10 @@ governs every state or record of P, not only the records used for a spot check. 
 worked requirements example is `examples/Tutorial/HarmonicOscillatorRequirements.lean`;
 this lesson mirrors its machinery without importing that file.
 
+# Risks at this step
+
+- *Unstatable scope.* A requirement about every coupled pair needs the pair sort, and one about every state of P needs the nominal pair P; without those named systems, it has nowhere to range. The pinned `invalid_scopes` exercise rejects a bare real and a name that is not a sort.
+
 _1. Pair mass._ R1 quantifies over every object of `pairS`. Its pair mass is assembled from
 the body masses indexed to the named pair, and a witness theorem plus an executable check
 shows 3 + 5 = 8:

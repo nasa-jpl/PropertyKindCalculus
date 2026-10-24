@@ -23,6 +23,14 @@ supplies a vector's context. One name remains one system: records under it can b
 at different times, configurations, or rival estimates; comparing them is the point.
 Distinct names are distinct systems. The lab F and cart G are explicit reference frames.
 
+# Risks at this step
+
+- *Bearer erased.* `distanceQ` cannot distinguish the A–B separation of pair P from that of pair Q; the typed cross-pair refusal is pinned at `HCP.L4_OutOfTheLine#whose_distance`.
+- *Observer left implicit.* Bare vectors accept geometric, boost, and origin-shift transport even though only one law is right for each vector kind; `HCP.L4_OutOfTheLine#bare_frames` shows the wrong accepted forms and `HCP.L4_OutOfTheLine#kinded_frames` pins the role-specific refusals.
+
+*Further reading*
+- `Exhibits/ReferenceFrame`, MOTIVATION M7.
+
 _1. Points, vectors, and distances._ `PairState3 π` stores this state's centre-of-mass
 points. `BodyOf π` keeps a body's nominal pair identity, while `SeparationOf π` names
 the pair's A–B separation. The upstream `positionQ`, `displacementQ`, and `distanceQ`
