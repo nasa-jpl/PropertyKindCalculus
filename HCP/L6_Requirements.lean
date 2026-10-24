@@ -7,9 +7,13 @@ Three scoped requirements, each with evidence at the boundary it governs.
 module
 
 public import ForPhysLib.ClassicalMechanics.Feasibility
+meta import ForPhysLib.ClassicalMechanics.Feasibility
 public import ForPhysLib.ClassicalMechanics.Kinds
+meta import ForPhysLib.ClassicalMechanics.Kinds
 public import PropertyKindCalculus
+meta import PropertyKindCalculus
 public import PropertyKindCalculus.KindRequirement
+meta import PropertyKindCalculus.KindRequirement
 
 import all Init.Prelude
 import all PropertyKindCalculus.Provenance
@@ -157,7 +161,7 @@ statement: the pair's mass is assembled from the masses of its two bodies
 governs: 'pair mass from body masses' at pairMassOf/result
 scope: sort HCP.L6_Requirements.pairS
 witness: HCP.L6_Requirements.pairMass_assembled
-axioms: propext, Quot.sound
+axioms: propext, Classical.choice, Quot.sound
 spot check: HCP.L6_Requirements.r1Spot = true
 -/
 #guard_msgs (whitespace := lax) in #kind_requirement r1PairMass
@@ -294,20 +298,20 @@ error: the scope 'HCP.L6_Requirements.notASort' is not a 'SortOfSystem' — a sc
 
 -- ANCHOR: requirement_census
 /--
-info: kind requirements — 5 requirement(s): 3 passed, 0 violations, 2 exempted
-✓ 'R1' (provable) on 'pair mass from body masses' — by HCP.L6_Requirements.pairMass_assembled
-✓ 'R2' (provable) on 'pair normal-mode frequency' — absent HCP.L6_Requirements.pairNormalModeLicense
-✓ 'R3' (empirical) on 'coupling-spring extension' — gated by HCP.L6_Requirements.pCouplingSpringWithinRatedRange
-⊘ 'HCP.L6_Requirements.r3BareRealScope' — kind counterexample
-⊘ 'HCP.L6_Requirements.r3NotASortScope' — kind counterexample
+info: kind requirements — 3 requirement(s), 2 exempted: 2 provable, 1 empirical, 0 attested
+  HCP.L6_Requirements.r1PairMass: 'R1' (provable) on 'pair mass from body masses' — by HCP.L6_Requirements.pairMass_assembled
+  HCP.L6_Requirements.r2NormalMode: 'R2' (provable) on 'pair normal-mode frequency' — absent HCP.L6_Requirements.pairNormalModeLicense
+  HCP.L6_Requirements.r3CouplingSpringRange: 'R3' (empirical) on 'coupling-spring extension' — gated by HCP.L6_Requirements.pCouplingSpringWithinRatedRange
+  ⊘ HCP.L6_Requirements.r3BareRealScope: counterexample, exempted
+  ⊘ HCP.L6_Requirements.r3NotASortScope: counterexample, exempted
 -/
 #guard_msgs (whitespace := lax) in #kind_requirements HCP.L6_Requirements
 
 /--
 info: requirement coverage:
-[governed] HCP.L6_Requirements.couplingExtensionBoundary output couplingExtensionOf/result — by 'R3'
-[governed] HCP.L6_Requirements.pairMassBoundary output pairMassOf/result — by 'R1'
-[governed] HCP.L6_Requirements.pairNormalModeBoundary output pairNormalModeOf/result — by 'R2'
+[governed] HCP.L6_Requirements.couplingExtensionBoundary ('coupling-spring extension') couplingExtensionOf/result — by 'R3'
+[governed] HCP.L6_Requirements.pairMassBoundary ('pair mass from body masses') pairMassOf/result — by 'R1'
+[governed] HCP.L6_Requirements.pairNormalModeBoundary ('pair normal-mode frequency') pairNormalModeOf/result — by 'R2'
 3 row(s) over 3 model boundary(ies): 3 governed — clean
 requirements: 2 provable, 1 empirical, 0 attested
 -/

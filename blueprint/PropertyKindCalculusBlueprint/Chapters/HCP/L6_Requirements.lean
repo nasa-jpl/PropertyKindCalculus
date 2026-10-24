@@ -69,6 +69,23 @@ instance : Assembles pairS massK := ⟨DifferenceKind.ofScale⟩
 
 def bodyParts : Decomposition Body := .union (.atom .A) (.atom .B)
 
+/-- A pair record keeps its measured quantities on their own body or spring. -/
+structure PairState (π : PairId) where
+  massA : IndividualQuantity (Composite.part (σ := pairS) (bodyPart π .A)) massK Int
+  massB : IndividualQuantity (Composite.part (σ := pairS) (bodyPart π .B)) massK Int
+  couplingExtension :
+    IndividualQuantity (Composite.part (σ := pairS) (springPart π .kC)) displacementK Int
+
+/-- Body A's mass in a particular pair record. -/
+def bodyMassA {π : PairId} (state : PairState π) :
+    IndividualQuantity (Composite.part (σ := pairS) (bodyPart π .A)) massK Int :=
+  state.massA
+
+/-- Body B's mass in a particular pair record. -/
+def bodyMassB {π : PairId} (state : PairState π) :
+    IndividualQuantity (Composite.part (σ := pairS) (bodyPart π .B)) massK Int :=
+  state.massB
+
 /-- The pair mass, assembled from the two nominal body bearers. -/
 def pairMassOf {π : PairId}
     (mA : IndividualQuantity
@@ -141,7 +158,7 @@ statement: the pair's mass is assembled from the masses of its two bodies
 governs: 'pair mass from body masses' at pairMassOf/result
 scope: sort HCP.L6_Requirements.pairS
 witness: HCP.L6_Requirements.pairMass_assembled
-axioms: propext, Quot.sound
+axioms: propext, Classical.choice, Quot.sound
 spot check: HCP.L6_Requirements.r1Spot = true
 -/
 #guard_msgs (whitespace := lax) in #kind_requirement r1PairMass
@@ -296,20 +313,20 @@ not validate that the declaration is a predicate selecting a subset of pair obje
 
 ```anchor requirement_census
 /--
-info: kind requirements — 5 requirement(s): 3 passed, 0 violations, 2 exempted
-✓ 'R1' (provable) on 'pair mass from body masses' — by HCP.L6_Requirements.pairMass_assembled
-✓ 'R2' (provable) on 'pair normal-mode frequency' — absent HCP.L6_Requirements.pairNormalModeLicense
-✓ 'R3' (empirical) on 'coupling-spring extension' — gated by HCP.L6_Requirements.pCouplingSpringWithinRatedRange
-⊘ 'HCP.L6_Requirements.r3BareRealScope' — kind counterexample
-⊘ 'HCP.L6_Requirements.r3NotASortScope' — kind counterexample
+info: kind requirements — 3 requirement(s), 2 exempted: 2 provable, 1 empirical, 0 attested
+  HCP.L6_Requirements.r1PairMass: 'R1' (provable) on 'pair mass from body masses' — by HCP.L6_Requirements.pairMass_assembled
+  HCP.L6_Requirements.r2NormalMode: 'R2' (provable) on 'pair normal-mode frequency' — absent HCP.L6_Requirements.pairNormalModeLicense
+  HCP.L6_Requirements.r3CouplingSpringRange: 'R3' (empirical) on 'coupling-spring extension' — gated by HCP.L6_Requirements.pCouplingSpringWithinRatedRange
+  ⊘ HCP.L6_Requirements.r3BareRealScope: counterexample, exempted
+  ⊘ HCP.L6_Requirements.r3NotASortScope: counterexample, exempted
 -/
 #guard_msgs (whitespace := lax) in #kind_requirements HCP.L6_Requirements
 
 /--
 info: requirement coverage:
-[governed] HCP.L6_Requirements.couplingExtensionBoundary output couplingExtensionOf/result — by 'R3'
-[governed] HCP.L6_Requirements.pairMassBoundary output pairMassOf/result — by 'R1'
-[governed] HCP.L6_Requirements.pairNormalModeBoundary output pairNormalModeOf/result — by 'R2'
+[governed] HCP.L6_Requirements.couplingExtensionBoundary ('coupling-spring extension') couplingExtensionOf/result — by 'R3'
+[governed] HCP.L6_Requirements.pairMassBoundary ('pair mass from body masses') pairMassOf/result — by 'R1'
+[governed] HCP.L6_Requirements.pairNormalModeBoundary ('pair normal-mode frequency') pairNormalModeOf/result — by 'R2'
 3 row(s) over 3 model boundary(ies): 3 governed — clean
 requirements: 2 provable, 1 empirical, 0 attested
 -/
