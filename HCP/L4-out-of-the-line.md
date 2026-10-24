@@ -68,7 +68,7 @@ assumption remains for L5.
 | 2 | Attach the distance to the named pair, compare two states, and mix P with Q. | `whose_distance` | `distance` admits `DifferenceKind.ofScale`; same-name states have a typed change whose magnitude reads their own centres, while Q's separation cannot be added to P's. |
 | 3 | Relate distance to displacement length and apply the triangle inequality to state points. | `distance_is_length` | `distanceQ_eq_lengthOf_displacementQ` and `distanceQ_triangle` operate directly on the pair state's centres. |
 | 4 | Feed one state-derived bare frame vector to all three upstream transports and add the cart's origin velocity. | `bare_frames` | Both terms compile, but are physically wrong when the vector's role is displacement: bare `F.Vector` cannot select a transport law or distinguish displacement from velocity. |
-| 5 | Use `KVector` for displacement and velocity; try the wrong boost and velocity-plus-force. | `kinded_frames` | Geometric transport accepts displacement and boost accepts velocity; boost-on-displacement and velocity-plus-force are pinned refusals. Average velocity is computed from two same-pair states and an elapsed duration. |
+| 5 | Use `KVector` for displacement and velocity; try the wrong boost and velocity-plus-force. | `kinded_frames` | Frame components enter through each frame's own `dispEquiv`; the observer-independence theorem verifies geometric transport. Boost-on-displacement and velocity-plus-force are pinned refusals. Average velocity is computed from two same-pair states and an elapsed duration. |
 | 6 | State the cart-origin displacement law and try adding its frame velocity to the pair displacement. | `observer_motion` | `origin_displacement_eq` makes observer motion an attribute of the cart frame; the kinded displacement-plus-velocity sum is refused. |
 | 7 | Map Space Stages 0–4 and exercise Stage 3's operator table. | `adoption_ladder` | `spanArea` and its magnitude law are accepted on a displacement from the state and a probe point; area × area is refused. Stage 4's boundary and API-map audits are the final rung. |
 
@@ -95,7 +95,7 @@ assumption remains for L5.
 | Whose separation is this? | `whose_distance` | `SeparationOf π` retains the pair name erased by the upstream `distanceQ`. |
 | Can the separation change between P states? | `whose_distance` | Yes; distance is ratio-scale and the difference magnitude is the later distance minus the earlier one, computed from each state's centres. |
 | Can Q's distance be mixed with P's? | `whose_distance` | No; distinct pair identities yield distinct separation bearers. |
-| Which frame law applies to a displacement? | `bare_frames`, `kinded_frames` | Bare `F.Vector` accepts all three; `KVector` allows geometric transport and refuses the boost law. |
+| Which frame law applies to a displacement? | `bare_frames`, `kinded_frames` | Bare `F.Vector` accepts all three; `KVector` allows geometric transport, proves observer independence, and refuses the boost law. |
 | Where does the observer's velocity live? | `observer_motion` | On the cart frame context, and not as a summand of the pair displacement. |
 | What does the adoption ladder contribute? | `adoption_ladder` | Stage 3 curates operators; Stage 4 audits the Space boundary and API map. |
 
