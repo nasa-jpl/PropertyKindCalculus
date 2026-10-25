@@ -59,7 +59,8 @@ def complianceK : KindOfProperty := { id := "compliance", scale := .ratio }
 
 /-- **The model member.** Static equilibrium of the three-spring chain with a force on A
 and B free: `x_A = c_A · F`, `c_A = (k_B + k_C) / (k_A k_B + k_A k_C + k_B k_C)`. -/
-noncomputable def complianceA (kA kC kB : Quantity stiffnessDK ℝ) : Quantity complianceK ℝ :=
+noncomputable def complianceA (kA kC kB : Quantity stiffnessDK ℝ) :
+    IndividualQuantity Body.A complianceK ℝ :=
   ⟨(kB.magnitude + kC.magnitude)
     / (kA.magnitude * kB.magnitude + kA.magnitude * kC.magnitude
         + kB.magnitude * kC.magnitude)⟩
@@ -117,7 +118,7 @@ def complianceBoundedByWallSpring : Provenance.Relation where
   hypotheses := [``complianceDomain]
 
 /-- The same model at the executable carrier, for the spot check. -/
-def complianceAFloat (kA kC kB : Float) : Quantity complianceK Float :=
+def complianceAFloat (kA kC kB : Float) : IndividualQuantity Body.A complianceK Float :=
   ⟨(kB + kC) / (kA * kB + kA * kC + kB * kC)⟩
 
 /-- The same bound at the executable carrier. -/

@@ -25,7 +25,7 @@ The survey, the census and the gate close the file, with the two marks' own refu
 The sibling scope probes pin inferred domains for generic and fixed indices, reducible and
 opaque conditionals, an aliased result, a kind-index constant, object aliases, a
 non-enumerable index, and a result whose type carries no object index, named structure objects,
-and projected and aliased composite bearers.
+projected and aliased composite bearers, and fail-closed missing and unresolved object indices.
 -/
 
 module
@@ -206,7 +206,7 @@ def p1 : Provenance.Requirement where
   kind := .provable
   governs := ``modelBoundary
   port := some (NodeId.result.within ``model)
-  scope := .objects [``Thing.one, ``Thing.two]
+  scope := .all
   witness := ``modelBounded
   spotChecks := [``spot]
 
@@ -214,7 +214,7 @@ def p1 : Provenance.Requirement where
 info: kind requirement 'P1' (provable) on 'requirement probe model'
 statement: the model's answer never exceeds the specification's bound
 governs: 'requirement probe model' at model/result
-scope: objects PropertyKindCalculus.Tests.KindRequirement.Thing.one, PropertyKindCalculus.Tests.KindRequirement.Thing.two
+scope: all
 edge: PropertyKindCalculus.Tests.KindRequirement.modelBounded — 'requirement probe model' bounded by 'requirement probe specification'
 witness: PropertyKindCalculus.Tests.KindRequirement.model_le_bound
 spot check: PropertyKindCalculus.Tests.KindRequirement.spot = true
@@ -713,11 +713,11 @@ requirements: 4 provable, 3 empirical, 2 attested
 #guard_msgs in #kind_requirement_coverage PropertyKindCalculus.Tests.KindRequirement
 
 /--
-error: requirement coverage: 2 produced port(s) no requirement governs — requirement-coverage violation
+error: requirement coverage: 2 produced port(s) no requirement governs or whose object scope cannot be checked — requirement-coverage violation
   ⚠ UNGOVERNED PropertyKindCalculus.Tests.KindRequirement.boundAsModel ('requirement probe bound, as a model') bound/result
   ⚠ UNGOVERNED PropertyKindCalculus.Tests.KindRequirement.orphan ('requirement probe orphan') model/result
 
-What a model's quantities must satisfy is stated as a `Provenance.Requirement` governing the boundary that produces them, not as prose beside the module. Give each port at issue a requirement — provable with its theorem edge or theorem, empirical with its referents and gate, or attested with a reason — or, where nothing is demanded of what the boundary produces, mark its declaration `@[kindRequirementFree "reason"]` so the exemption is data the sweep can read. Do NOT re-pin a `#kind_requirement_coverage` report whose summary says `violation` — that turns the build green and the census off.
+What a model's quantities must satisfy is stated as a `Provenance.Requirement` governing the boundary that produces them, not as prose beside the module. Give each port at issue a requirement — provable with its theorem edge or theorem, empirical with its referents and gate, or attested with a reason — or, where nothing is demanded of what the boundary produces, mark its declaration `@[kindRequirementFree "reason"]` so the exemption is data the sweep can read. An object scope must be checkable against the result's object index. Do NOT re-pin a `#kind_requirement_coverage` report whose summary says `violation` — that turns the build green and the census off.
 -/
 #guard_msgs in #kind_requirement_clean PropertyKindCalculus.Tests.KindRequirement
 
@@ -772,6 +772,11 @@ def bareResultRequirement : Provenance.Requirement where
   scope := .objects [``Thing.one]
   attested := "coverage-domain probe"
 
+/--
+error: 'bare-result object scope' is scoped to objects of type 'Thing', but 'bareResultModel/result' of 'unindexed result' carries no 'Thing' index — an object scope quantifies over the objects an output belongs to; scope it over a sort or `.all`, or index the result by its object
+-/
+#guard_msgs (whitespace := lax) in #kind_requirement bareResultRequirement
+
 def thingModel {t : Thing} (x : IndividualQuantity t aK Int) :
     IndividualQuantity t bK Int :=
   ⟨2 * x.magnitude⟩
@@ -797,6 +802,20 @@ def thingOneRequirement : Provenance.Requirement where
   scope := .objects [``Thing.one]
   attested := "coverage-domain probe"
 
+def thingInputRequirement : Provenance.Requirement where
+  name := "Thing scope on input port"
+  statement := "the input port is covered by an object-scoped requirement"
+  kind := .provable
+  governs := ``thingOneBoundary
+  port := some ((NodeId.binder "x").within ``thingModel)
+  scope := .objects [``Thing.one]
+  attested := "coverage-domain probe"
+
+/--
+error: 'Thing scope on input port' is scoped to objects, but 'thingModel/x' of 'Thing-indexed model, one scoped object' is an input — an object scope quantifies over the objects an output belongs to; govern a produced port
+-/
+#guard_msgs (whitespace := lax) in #kind_requirement thingInputRequirement
+
 def thingBothBoundary : Provenance.Contract NodeId KindRef :=
   thingBoundary "Thing-indexed model, both scoped objects"
 
@@ -808,6 +827,15 @@ def thingBothRequirement : Provenance.Requirement where
   port := some (NodeId.result.within ``thingModel)
   scope := .objects [``Thing.one, ``Thing.two]
   attested := "coverage-domain probe"
+
+/--
+info: kind requirement 'Thing one and two' (provable) on 'Thing-indexed model, both scoped objects'
+statement: the generic result is governed for Thing.one and Thing.two
+governs: 'Thing-indexed model, both scoped objects' at thingModel/result
+scope: objects PropertyKindCalculus.Tests.KindRequirement.Thing.one, PropertyKindCalculus.Tests.KindRequirement.Thing.two
+attested: coverage-domain probe
+-/
+#guard_msgs in #kind_requirement thingBothRequirement
 
 def thingTwoModel (x : IndividualQuantity Thing.two aK Int) :
     IndividualQuantity Thing.two bK Int :=
@@ -923,6 +951,64 @@ def opaqueResultRequirement : Provenance.Requirement where
   scope := .objects [``Thing.one]
   attested := "coverage-domain probe"
 
+def opaqueExemptResultModel (x : IndividualQuantity Thing.one aK Int) :
+    IndividualQuantity (if flag then Thing.one else Thing.two) bK Int :=
+  ⟨2 * x.magnitude⟩
+
+@[kindRequirementFree "the opaque output's Thing object cannot be determined statically"]
+def opaqueExemptBoundary : Provenance.Contract NodeId KindRef where
+  name := "exempt opaque conditional result"
+  members := [``opaqueExemptResultModel]
+  ports := [
+    ⟨(NodeId.binder "x").within ``opaqueExemptResultModel, .decl ``aK, .input⟩,
+    ⟨NodeId.result.within ``opaqueExemptResultModel, .decl ``bK, .output⟩
+  ]
+  exits := []
+
+def opaqueExemptRequirement : Provenance.Requirement where
+  name := "Thing one on exempt opaque conditional result"
+  statement := "the marked opaque conditional output is covered by an explicit exemption"
+  kind := .provable
+  governs := ``opaqueExemptBoundary
+  port := some (NodeId.result.within ``opaqueExemptResultModel)
+  scope := .objects [``Thing.one]
+  attested := "coverage-domain probe"
+
+namespace UnresolvedOnly
+
+def unresolvedModel (x : IndividualQuantity Thing.one aK Int) :
+    IndividualQuantity (if flag then Thing.one else Thing.two) bK Int :=
+  ⟨2 * x.magnitude⟩
+
+def unresolvedBoundary : Provenance.Contract NodeId KindRef where
+  name := "isolated opaque result"
+  members := [``unresolvedModel]
+  ports := [
+    ⟨(NodeId.binder "x").within ``unresolvedModel, .decl ``aK, .input⟩,
+    ⟨NodeId.result.within ``unresolvedModel, .decl ``bK, .output⟩
+  ]
+  exits := []
+
+def unresolvedRequirement : Provenance.Requirement where
+  name := "Thing one on isolated opaque result"
+  statement := "the isolated opaque output is scoped to Thing.one"
+  kind := .provable
+  governs := ``unresolvedBoundary
+  port := some (NodeId.result.within ``unresolvedModel)
+  scope := .objects [``Thing.one]
+  attested := "coverage-domain probe"
+
+/--
+error: requirement coverage: 1 produced port(s) no requirement governs or whose object scope cannot be checked — requirement-coverage violation
+  ⚠ UNCHECKED PropertyKindCalculus.Tests.KindRequirementScope.UnresolvedOnly.unresolvedBoundary ('isolated opaque result') unresolvedModel/result — 'Thing one on isolated opaque result' scoped to PropertyKindCalculus.Tests.KindRequirement.Thing.one: the result's 'Thing' object cannot be determined statically
+
+What a model's quantities must satisfy is stated as a `Provenance.Requirement` governing the boundary that produces them, not as prose beside the module. Give each port at issue a requirement — provable with its theorem edge or theorem, empirical with its referents and gate, or attested with a reason — or, where nothing is demanded of what the boundary produces, mark its declaration `@[kindRequirementFree "reason"]` so the exemption is data the sweep can read. An object scope must be checkable against the result's object index. Do NOT re-pin a `#kind_requirement_coverage` report whose summary says `violation` — that turns the build green and the census off.
+-/
+#guard_msgs (whitespace := lax) in
+  #kind_requirement_clean PropertyKindCalculus.Tests.KindRequirementScope.UnresolvedOnly
+
+end UnresolvedOnly
+
 def first : Thing := .one
 
 def thingAliasBoundary : Provenance.Contract NodeId KindRef :=
@@ -1036,14 +1122,16 @@ def wrappedCompositeRequirement : Provenance.Requirement where
 
 /--
 info: requirement coverage:
-[governed] PropertyKindCalculus.Tests.KindRequirementScope.bareResultBoundary ('unindexed result') bareResultModel/result — by 'bare-result object scope' (object scope unchecked: the result carries no 'Thing' index)
 [governed] PropertyKindCalculus.Tests.KindRequirementScope.conditionalResultBoundary ('conditional result') conditionalResultModel/result — by 'Thing one on conditional result'
 [governed] PropertyKindCalculus.Tests.KindRequirementScope.kindIndexedBoundary ('Thing.one result with a kind index') kindIndexedModel/result — by 'Thing one on kind-indexed result'
-[governed] PropertyKindCalculus.Tests.KindRequirementScope.opaqueResultBoundary ('opaque conditional result') opaqueResultModel/result — by 'Thing one on opaque conditional result' (object scope unchecked: the result carries no 'Thing' index)
 [governed] PropertyKindCalculus.Tests.KindRequirementScope.tagBoundary ('Tag-indexed model') tagModel/result for PropertyKindCalculus.Tests.KindRequirementScope.tagA — by 'Tag A'
 [governed] PropertyKindCalculus.Tests.KindRequirementScope.thingAliasBoundary ('Thing-indexed model, aliased object scope') thingModel/result — by 'Thing first and two'
 [governed] PropertyKindCalculus.Tests.KindRequirementScope.thingBothBoundary ('Thing-indexed model, both scoped objects') thingModel/result — by 'Thing one and two'
 [governed] PropertyKindCalculus.Tests.KindRequirementScope.thingOneBoundary ('Thing-indexed model, one scoped object') thingModel/result for PropertyKindCalculus.Tests.KindRequirement.Thing.one — by 'Thing one'
+⊘ exempted PropertyKindCalculus.Tests.KindRequirementScope.opaqueExemptBoundary ('exempt opaque conditional result') opaqueExemptResultModel/result — the opaque output's Thing object cannot be determined statically
+⚠ UNCHECKED PropertyKindCalculus.Tests.KindRequirementScope.UnresolvedOnly.unresolvedBoundary ('isolated opaque result') unresolvedModel/result — 'Thing one on isolated opaque result' scoped to PropertyKindCalculus.Tests.KindRequirement.Thing.one: the result's 'Thing' object cannot be determined statically
+⚠ UNCHECKED PropertyKindCalculus.Tests.KindRequirementScope.bareResultBoundary ('unindexed result') bareResultModel/result — 'bare-result object scope' scoped to PropertyKindCalculus.Tests.KindRequirement.Thing.one: the result carries no 'Thing' index
+⚠ UNCHECKED PropertyKindCalculus.Tests.KindRequirementScope.opaqueResultBoundary ('opaque conditional result') opaqueResultModel/result — 'Thing one on opaque conditional result' scoped to PropertyKindCalculus.Tests.KindRequirement.Thing.one: the result's 'Thing' object cannot be determined statically
 ⚠ UNGOVERNED PropertyKindCalculus.Tests.KindRequirementScope.aliasedThingTwoBoundary ('aliased Thing.two result') aliasedThingTwoModel/result for PropertyKindCalculus.Tests.KindRequirement.Thing.two — 'Thing one on aliased Thing.two' scoped to PropertyKindCalculus.Tests.KindRequirement.Thing.one
 ⚠ UNGOVERNED PropertyKindCalculus.Tests.KindRequirementScope.namedTagBoundary ('named Tag B result') namedTagBModel/result for PropertyKindCalculus.Tests.KindRequirementScope.tagB — 'Tag A on named Tag B' scoped to PropertyKindCalculus.Tests.KindRequirementScope.tagA
 ⚠ UNGOVERNED PropertyKindCalculus.Tests.KindRequirementScope.projectedCompositeBoundary ('projected composite Thing.two result') projectedCompositeModel/result for PropertyKindCalculus.Tests.KindRequirement.Thing.two — 'Thing one on projected composite' scoped to PropertyKindCalculus.Tests.KindRequirement.Thing.one
@@ -1051,8 +1139,8 @@ info: requirement coverage:
 ⚠ UNGOVERNED PropertyKindCalculus.Tests.KindRequirementScope.thingOneBoundary ('Thing-indexed model, one scoped object') thingModel/result for PropertyKindCalculus.Tests.KindRequirement.Thing.two — 'Thing one' scoped to PropertyKindCalculus.Tests.KindRequirement.Thing.one
 ⚠ UNGOVERNED PropertyKindCalculus.Tests.KindRequirementScope.thingTwoBoundary ('Thing.two-indexed model') thingTwoModel/result for PropertyKindCalculus.Tests.KindRequirement.Thing.two — 'Thing one on Thing two' scoped to PropertyKindCalculus.Tests.KindRequirement.Thing.one
 ⚠ UNGOVERNED PropertyKindCalculus.Tests.KindRequirementScope.wrappedCompositeBoundary ('wrapped composite Thing.two result') wrappedCompositeModel/result for PropertyKindCalculus.Tests.KindRequirement.Thing.two — 'Thing one on wrapped composite' scoped to PropertyKindCalculus.Tests.KindRequirement.Thing.one
-15 row(s) over 13 model boundary(ies): 8 governed, 7 UNGOVERNED — requirement-coverage violation
-requirements: 13 provable, 0 empirical, 13 attested
+17 row(s) over 15 model boundary(ies): 6 governed, 1 exempted, 7 UNGOVERNED, 3 UNCHECKED — requirement-coverage violation
+requirements: 16 provable, 0 empirical, 16 attested
 -/
 #guard_msgs (whitespace := lax) in
   #kind_requirement_coverage PropertyKindCalculus.Tests.KindRequirementScope
