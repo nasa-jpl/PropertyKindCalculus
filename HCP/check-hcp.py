@@ -614,7 +614,9 @@ def commented_probe_commands(block):
     return probes
 
 
-EXAMPLE_DECLARATION = re.compile(r"^(?:noncomputable )?example\b")
+EXAMPLE_DECLARATION = re.compile(
+    r"^\s*(?:#guard_msgs\b.*?\bin\s+)?(?:noncomputable\s+)?example\b"
+)
 EXAMPLE_MARKERS = (
     "-- ANCHOR:", "-- ANCHOR_END:", "-- EXERCISE:", "-- EXERCISE_END:",
     "-- TODO:", "-- GIVEN:",
@@ -629,8 +631,9 @@ def example_comment_errors(path, text):
             continue
 
         preceding = index - 1
-        while preceding >= 0 and lines[preceding].lstrip().startswith("#guard_msgs"):
-            preceding -= 1
+        if not line.lstrip().startswith("#guard_msgs"):
+            while preceding >= 0 and lines[preceding].lstrip().startswith("#guard_msgs"):
+                preceding -= 1
 
         if preceding >= 0 and lines[preceding].rstrip().endswith("-/"):
             while preceding >= 0 and "/--" not in lines[preceding]:
@@ -638,10 +641,10 @@ def example_comment_errors(path, text):
             if preceding >= 0:
                 preceding -= 1
 
+        preceding_line = lines[preceding].lstrip() if preceding >= 0 else ""
         has_comment = (
-            preceding >= 0
-            and lines[preceding].startswith("-- ")
-            and not lines[preceding].startswith(EXAMPLE_MARKERS)
+            preceding_line.startswith("-- ")
+            and not preceding_line.startswith(EXAMPLE_MARKERS)
         )
         if not has_comment:
             errors.append(
