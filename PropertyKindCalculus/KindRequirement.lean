@@ -321,11 +321,23 @@ def portDomainFor (node : NodeId) (T : Expr) : MetaM PortDomain := do
   | some member => portDomain member T
   | none => return .noIndex
 
+/-- Check a theorem's declaration kind and reject any dependency on `sorryAx`. -/
+def checkTheoremEvidence (env : Environment) (name : Name) (subject rejection : String) :
+    MetaM (Array Name) := do
+  unless Lean.wasOriginallyTheorem env name do
+    throwError "{subject} '{name}' {rejection}"
+  let axioms ← Lean.collectAxioms name
+  if axioms.contains ``sorryAx then
+    throwError "{subject} '{name}' depends on 'sorryAx' — it proves nothing yet"
+  return axioms
+
 /-- Check that a decider theorem proves the predicate on every result of one member. -/
 def checkDeciderProof (decider proof member : Name) : MetaM Unit := do
   let env ← getEnv
   let some proofInfo := env.find? proof
     | throwError "the decider proof '{proof}' is not a declaration"
+  let _ ← checkTheoremEvidence env proof "the decider proof"
+    "is not a theorem — a decider proof must be a theorem, not an axiom or definition"
   let some memberInfo := env.find? member
     | throwError "the result member '{member}' is not a declaration"
   let expected ← Meta.forallTelescopeReducing memberInfo.type fun xs _ => do
@@ -521,13 +533,9 @@ def checkRequirement (rname : Name) : MetaM CheckedRequirement := do
             | throwError "the witness '{c.rel.witness}' is not a declaration"
           pure tinfo.type
         else do
-          unless Lean.wasOriginallyTheorem env wname do
-            throwError "the witness '{wname}' is neither a theorem nor a theorem edge — a \
-              provable requirement is discharged by a proof, and a definition asserts \
-              nothing"
-          let axs ← Lean.collectAxioms wname
-          if axs.contains ``sorryAx then
-            throwError "the witness '{wname}' depends on 'sorryAx' — it proves nothing yet"
+          let axs ← checkTheoremEvidence env wname "the witness"
+            "is neither a theorem nor a theorem edge — a provable requirement is discharged \
+              by a proof, and a definition asserts nothing"
           lines := lines ++ [s!"witness: {wname}",
             s!"axioms: {String.intercalate ", " (axs.toList.map toString)}"]
           pure winfo.type

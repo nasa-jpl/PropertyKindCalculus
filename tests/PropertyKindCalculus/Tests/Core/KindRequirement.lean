@@ -1300,6 +1300,14 @@ theorem isZero_zeroModel : ∀ x, isZero (zeroModel x) = true := by
   intro x
   simp [isZero, zeroModel]
 
+axiom falseProof : ∀ x, isZero (oneModel x) = true
+
+/--
+warning: declaration uses `sorry`
+-/
+#guard_msgs in theorem sorryProof : ∀ x, isZero (oneModel x) = true := by
+  sorry
+
 def decidedProofBoundary : Provenance.Contract NodeId KindRef :=
   { modelBoundary with name := "decider proof result" }
 
@@ -1431,6 +1439,36 @@ open PropertyKindCalculus
 open PropertyKindCalculus.Tests.KindRequirement
 open PropertyKindCalculus.Tests.KindRequirementScope
 open PropertyKindCalculus.Provenance (NodeId KindRef)
+
+def decidedAxiomProofRequirement : Provenance.Requirement where
+  name := "axiom decider proof"
+  statement := "an axiom is not evidence for a decider scope"
+  kind := .provable
+  governs := ``decidedWrongProofBoundary
+  port := some (NodeId.result.within ``oneModel)
+  scope := .decided ``isZero
+  deciderProof := some ``falseProof
+  attested := "decided-scope proof probe"
+
+/--
+error: the decider proof 'PropertyKindCalculus.Tests.KindRequirementScope.falseProof' is not a theorem — a decider proof must be a theorem, not an axiom or definition
+-/
+#guard_msgs in #kind_requirement decidedAxiomProofRequirement
+
+def decidedSorryProofRequirement : Provenance.Requirement where
+  name := "sorry decider proof"
+  statement := "a theorem using sorry is not evidence for a decider scope"
+  kind := .provable
+  governs := ``decidedWrongProofBoundary
+  port := some (NodeId.result.within ``oneModel)
+  scope := .decided ``isZero
+  deciderProof := some ``sorryProof
+  attested := "decided-scope proof probe"
+
+/--
+error: the decider proof 'PropertyKindCalculus.Tests.KindRequirementScope.sorryProof' depends on 'sorryAx' — it proves nothing yet
+-/
+#guard_msgs in #kind_requirement decidedSorryProofRequirement
 
 def decidedInputProofRequirement : Provenance.Requirement where
   name := "decider proof on an input"
