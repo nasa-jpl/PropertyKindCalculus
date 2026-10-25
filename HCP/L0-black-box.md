@@ -30,7 +30,7 @@ state:
 
 ### Purpose
 
-Show a PhysLib contributor, on one oscillator, what each layer of typing can and cannot check: bare reals check nothing, `WithDim` checks dimensions, and PKC kinds also separate quantities that share a dimension. The rest of the ladder builds on this distinction.
+Show a PhysLib contributor, on one oscillator (a rigid point body of mass m on an ideal spring of stiffness k fixed to a wall, moving in one dimension), what each level of typing checks. With bare `ℝ`, Lean accepts every expression built from m and k, so `√(m/k)` type-checks where `√(k/m)` was meant. With PhysLib's `WithDim`, each expression has a dimension in its type, so an expression of the wrong dimension fails to type-check, but two quantities of equal dimension are interchangeable. With PKC kinds, each quantity also has a kind in its type, so quantities of equal dimension but different kind, such as angular frequency (rad/s) and frequency (Hz), cannot be added. The rest of the ladder builds on this distinction.
 
 ### PKC vocabulary in scope
 
@@ -42,16 +42,16 @@ New at this step:
 
 ### Verifiable properties
 
-- PhysLib's `WithDim` oscillator computes potential energy at dimension M L² T⁻² (type-checked) `HCP.L0_BlackBox#potential_energy_dimension`.
-- `m/k` and `k/m` have different dimensions (type-checked) `HCP.L0_BlackBox#quotient_dimensions`.
-- Angular frequency and frequency are distinct kinds with equal dimensions (theorem) `HCP.L0_BlackBox#distinct_kinds_same_dimension`.
-- Adding an angular frequency to a frequency is refused (refused) `HCP.L0_BlackBox#refused_kind_addition`.
-- Forming mass over spring constant, the inverted radicand of `√(m/k)`, is refused (refused) `HCP.L0_BlackBox#refused_reciprocal_radicand`.
+- The potential energy ½ k x² of PhysLib's `WithDim` oscillator has dimension M L² T⁻² (type-checked) `HCP.L0_BlackBox#potential_energy_dimension`.
+- Under `WithDim`, `m/k` has dimension T² and `k/m` has dimension T⁻² (type-checked) `HCP.L0_BlackBox#quotient_dimensions`.
+- The kinds angular frequency and frequency are unequal, and both have dimension T⁻¹ (theorem) `HCP.L0_BlackBox#distinct_kinds_same_dimension`.
+- `ω + f`, for ω a `Quantity` of kind angular frequency and f a `Quantity` of kind frequency, fails to type-check: there is no `HAdd` instance for the two kinds (refused) `HCP.L0_BlackBox#refused_kind_addition`.
+- `massQ S / springQ S`, the radicand of the inverted formula `√(m/k)`, fails to type-check: there is no `HDiv` instance dividing a mass by a spring constant (refused) `HCP.L0_BlackBox#refused_reciprocal_radicand`.
 
 ### Errors prevented
 
-- Inverted formula: `√(m/k)` written where `√(k/m)` was meant; bare reals accept it, kinds refuse it (`HCP.L0_BlackBox#bare_reals`, `HCP.L0_BlackBox#refused_reciprocal_radicand`).
-- Same dimension, different kind: angular frequency ω (rad/s) added to frequency f (Hz); `WithDim` accepts it because both are T⁻¹, kinds refuse it (`HCP.L0_BlackBox#frequency_alias`, `HCP.L0_BlackBox#distinct_kinds_same_dimension`, `HCP.L0_BlackBox#refused_kind_addition`).
+- Inverted formula: `√(m/k)` written where `√(k/m)` was meant. Bare reals accept it; with kinds, the quotient m/k fails to type-check (`HCP.L0_BlackBox#bare_reals`, `HCP.L0_BlackBox#refused_reciprocal_radicand`).
+- Same dimension, different kind: an angular frequency ω (rad/s) added to a frequency f (Hz). `WithDim` accepts the sum because both have dimension T⁻¹; with kinds, it fails to type-check (`HCP.L0_BlackBox#frequency_alias`, `HCP.L0_BlackBox#distinct_kinds_same_dimension`, `HCP.L0_BlackBox#refused_kind_addition`).
 
 ## 1. Persona
 

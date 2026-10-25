@@ -20,7 +20,7 @@ tag := "hcp-l4"
 
 ## Purpose
 
-Move pair P into 3-D space as seen by two observers, the lab and a moving cart. Points, displacements and distances become different kinds; the A–B separation gets a bearer, the pair; and each frame conversion applies only to the kind of vector it is correct for.
+Move pair P into three-dimensional space, seen from two reference frames: the lab, and a cart moving at constant velocity relative to it. Positions, displacements and distances get distinct ISO 80000-3 kinds, so adding a position to a displacement fails to type-check. The A–B separation is an `IndividualQuantity` about the pair it belongs to, so pair P's separation cannot be used where pair Q's is expected. Each frame conversion accepts one kind of vector: `kGeometricTransport` converts displacements and `kBoostTransport` converts velocities, so passing a displacement to `kBoostTransport` fails to type-check.
 
 ## PKC vocabulary in scope
 
@@ -36,18 +36,18 @@ Carried from earlier steps: `Quantity`, `IndividualQuantity`, `DifferenceKind.of
 
 ## Verifiable properties
 
-- Adding a position to a displacement is refused (refused) `HCP.L4_OutOfTheLine#points_vectors_and_distances`.
-- P's A–B separation is a distance about pair P; mixing P's with Q's is refused (refused) `HCP.L4_OutOfTheLine#whose_distance`.
-- A distance equals the length of the corresponding displacement (theorem) `HCP.L4_OutOfTheLine#distance_is_length`.
-- The velocity conversion applies only to velocities, and velocity plus force is refused (refused) `HCP.L4_OutOfTheLine#kinded_frames`.
-- Converting P's displacement between observers gives exactly what the second observer measures (theorem) `HCP.L4_OutOfTheLine#kinded_frames`.
-- The cart's displacement over a time interval is its velocity times the elapsed time (theorem) `HCP.L4_OutOfTheLine#observer_motion`.
+- Adding a position to a displacement fails to type-check, and so does adding a distance to the length of a displacement: there is no `HAdd` instance for either pair of kinds (refused) `HCP.L4_OutOfTheLine#points_vectors_and_distances`.
+- Pair P's A–B separation is an `IndividualQuantity` of kind distance about P, and pair Q's separation supplied where P's is expected fails with a type mismatch (refused) `HCP.L4_OutOfTheLine#whose_distance`.
+- The distance between two points equals the length of the displacement between them (theorem) `HCP.L4_OutOfTheLine#distance_is_length`.
+- `kBoostTransport` rejects a displacement with a type mismatch, and adding a velocity to a force fails to type-check (refused) `HCP.L4_OutOfTheLine#kinded_frames`.
+- Converting P's displacement from frame F to frame G with `kGeometricTransport` gives the displacement that G computes from its own coordinates (theorem) `HCP.L4_OutOfTheLine#kinded_frames`.
+- The displacement of the cart's origin between times t₁ and t₂ equals the elapsed time times the cart's velocity (theorem) `HCP.L4_OutOfTheLine#observer_motion`.
 
 ## Errors prevented
 
-- Bearer erased: P's separation mistaken for Q's (`HCP.L4_OutOfTheLine#whose_distance`).
-- Observer left implicit: one bare vector type accepts all three frame-conversion laws, `HCP.L4_OutOfTheLine#bare_frames`; kinded vectors accept only the right one, `HCP.L4_OutOfTheLine#kinded_frames`.
-- Point/vector confusion: adding a position to a displacement, or a distance to a displacement's length (`HCP.L4_OutOfTheLine#points_vectors_and_distances`).
+- Bearer erased: pair P's A–B separation used where pair Q's is meant (`HCP.L4_OutOfTheLine#whose_distance`).
+- Observer left implicit: with PhysLib's single vector type, the geometric, boost and origin-shift conversions all accept the same vector; with kinded vectors, each conversion accepts only the kind it is correct for (`HCP.L4_OutOfTheLine#bare_frames`, `HCP.L4_OutOfTheLine#kinded_frames`).
+- Point/vector confusion: a position added to a displacement, or a distance added to the length of a displacement (`HCP.L4_OutOfTheLine#points_vectors_and_distances`).
 
 # Lesson
 

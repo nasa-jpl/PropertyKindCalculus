@@ -33,7 +33,7 @@ state:
 
 ### Purpose
 
-Open each oscillator into bodies and springs, and treat the coupled pair as a system of its own. The licence to add a quantity over parts belongs to the sort of the whole, not to the kind: a pair's mass is the sum of its bodies' masses, its normal-mode frequency is not, and stiffnesses add in parallel but not in series.
+Open each oscillator into its body and wall spring, add a coupling spring between bodies A and B, and treat the coupled pair as a system of its own sort, `pairS`. `assemble` sums a quantity of kind k over the parts of a whole of sort σ only if an `Assembles σ k` instance exists; the kind alone does not license the sum. The lesson provides `Assembles` instances for mass over a pair's bodies and for stiffness over springs in parallel. It provides none for angular frequency over a pair or for stiffness over springs in series, so those sums fail to type-check.
 
 ### PKC vocabulary in scope
 
@@ -51,18 +51,18 @@ Carried from earlier steps: `IndividualQuantity`, `IndividualQuantity.add`, `Dif
 
 ### Verifiable properties
 
-- The pair's mass assembles from body A's and body B's masses (type-checked) `HCP.L2_ThePair#pair_mass`.
-- Adding the whole pair's quantity to one body's is refused (refused) `HCP.L2_ThePair#refused_whole_part`.
-- Assembling angular frequency over the pair is refused: no licence (refused) `HCP.L2_ThePair#refused_frequency_assembly`.
-- The normal-mode frequency is dedicated to the pair as a whole (type-checked) `HCP.L2_ThePair#normal_mode`.
-- Parallel stiffness assembles; series stiffness is refused (refused) `HCP.L2_ThePair#parallel_stiffness`, `HCP.L2_ThePair#refused_series_stiffness`.
-- Parallel assembly agrees with the measured stiffness; the series law gives 2 for springs of 6 and 3 (theorem) `HCP.L2_ThePair#parallelLaw`, `HCP.L2_ThePair#licenseCashed`, `HCP.L2_ThePair#seriesLaw`.
+- `assemble` of the two bodies' masses gives the pair's mass as an `IndividualQuantity` about the pair as a whole (type-checked) `HCP.L2_ThePair#pair_mass`.
+- Adding the pair's mass to body A's mass fails with a type mismatch, because one is about the whole and the other about a part; adding pair P's mass to pair Q's mass fails the same way (refused) `HCP.L2_ThePair#refused_whole_part`.
+- `assemble` of angular frequency over the pair's bodies fails to type-check: there is no `Assembles pairS` instance for angular frequency (refused) `HCP.L2_ThePair#refused_frequency_assembly`.
+- The normal-mode frequency ω₊ is an angular-frequency kind dedicated to the sort `pairS`, and it is provably different from any angular-frequency kind dedicated to a body or a spring (type-checked) `HCP.L2_ThePair#normal_mode`.
+- `assemble` of stiffness over springs in parallel type-checks; over springs in series it fails: there is no `Assembles seriesS springConstantK` instance (refused) `HCP.L2_ThePair#parallel_stiffness`, `HCP.L2_ThePair#refused_series_stiffness`.
+- The parallel assembly equals the measured stiffness of the parallel combination, and the series law 1/k = 1/k₁ + 1/k₂ gives k = 2 for springs of stiffness 6 and 3 (theorem) `HCP.L2_ThePair#parallelLaw`, `HCP.L2_ThePair#licenseCashed`, `HCP.L2_ThePair#seriesLaw`.
 
 ### Errors prevented
 
-- Aggregating what does not aggregate: taking ω₊ as ω_A + ω_B (`HCP.L2_ThePair#refused_frequency_assembly`).
-- Sort vs particular: adding stiffnesses of springs in series as if they were in parallel (`HCP.L2_ThePair#refused_series_stiffness`).
-- Whole/part confusion: adding pair P's mass to body A's mass (`HCP.L2_ThePair#refused_whole_part`).
+- Summing what does not sum: the normal-mode frequency taken as the sum of the bodies' angular frequencies. `assemble` fails because no `Assembles` instance exists (`HCP.L2_ThePair#refused_frequency_assembly`).
+- Wrong composition law: the stiffnesses of springs in series added as if the springs were in parallel (`HCP.L2_ThePair#refused_series_stiffness`).
+- Whole/part confusion: pair P's mass added to body A's mass, a quantity about the whole combined with a quantity about one of its parts (`HCP.L2_ThePair#refused_whole_part`).
 
 ## 1. Persona
 

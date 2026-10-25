@@ -20,7 +20,7 @@ tag := "hcp-l6"
 
 ## Purpose
 
-State what must hold of the refined context as checked requirements: R1 and R2 over the sort "coupled pair", and R3 over every state of pair P. Each requirement names its boundary, port and scope; the census reports every output that no requirement governs.
+State what must hold of the refined context as requirements that the build checks. Each `Provenance.Requirement` names the boundary it governs (a `Provenance.Contract`), the output port it is about, and its scope, the objects it quantifies over. R1 and R2 are scoped to the sort `pairS`: R1 is proved by a theorem, and R2 holds because no `Assembles` instance exists. R3 is scoped to pair P and is decided by a gate function over every state of P. The coverage census lists every output port of every boundary with the requirements that govern it, and `#kind_requirement_clean` fails if any port is ungoverned or unchecked.
 
 ## PKC vocabulary in scope
 
@@ -37,18 +37,18 @@ Carried from earlier steps: `Composite`, `Decomposition`, `Assembles`, `assemble
 
 ## Verifiable properties
 
-- R1: every pair's mass is the assembly of its bodies' masses (theorem) `HCP.L6_Requirements#r1_pair_mass`.
-- R2: no licence assembles a pair's normal-mode frequency from its bodies (theorem) `HCP.L6_Requirements#r2_no_aggregation`.
-- R3: the coupling spring's extension is bounded in every state of pair P, decided by a gate (gate) `HCP.L6_Requirements#r3_empirical`.
-- Scopes naming a bare number or a non-sort are rejected (refused) `HCP.L6_Requirements#invalid_scopes`.
-- The requirement census is pinned and clean (census) `HCP.L6_Requirements#requirement_census`.
-- A P-only requirement on a generic accessor reports Q as ungoverned (census) `HCP.L6_Requirements#scope_gap`.
+- R1: for every pair, the pair's mass equals the assembly of its two bodies' masses, proved by a theorem (theorem) `HCP.L6_Requirements#r1_pair_mass`.
+- R2: there is no `Assembles pairS normalModeK` instance, so a pair's normal-mode frequency cannot be assembled from its bodies (theorem) `HCP.L6_Requirements#r2_no_aggregation`.
+- R3: in every state of pair P, the coupling spring's extension lies within its rated range, decided by the gate `withinRatedRange` (gate) `HCP.L6_Requirements#r3_empirical`.
+- `#kind_requirement` rejects with an error a requirement scoped to a bare real number, or to a declaration that is not a `SortOfSystem` (refused) `HCP.L6_Requirements#invalid_scopes`.
+- The pinned census lists three governed output ports and none ungoverned or unchecked, and `#kind_requirement_clean` passes (census) `HCP.L6_Requirements#requirement_census`.
+- A requirement scoped to pair P, on an accessor that returns a value for every pair, leaves the row for pair Q marked ⚠ UNGOVERNED (census) `HCP.L6_Requirements#scope_gap`.
 
 ## Errors prevented
 
-- Unstatable scope: "every pair" or "pair P" with no named sort or particular to quantify over (`HCP.L6_Requirements#invalid_scopes`).
-- Over-claimed coverage: a requirement about P counted as governing Q's output (`HCP.L6_Requirements#scope_gap`).
-- Ungoverned output: a model output that no requirement covers passes unnoticed (`HCP.L6_Requirements#requirement_census`).
+- Unstatable scope: "every pair" or "pair P" written without a declared sort or a nominal object to quantify over (`HCP.L6_Requirements#invalid_scopes`).
+- Over-claimed coverage: a requirement about pair P counted as governing pair Q's output (`HCP.L6_Requirements#scope_gap`).
+- Ungoverned output: a model output that no requirement governs goes unreported (`HCP.L6_Requirements#requirement_census`).
 
 # Lesson
 
