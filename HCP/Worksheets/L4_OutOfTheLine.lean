@@ -89,7 +89,7 @@ example (s : PairState3 .P) :
     Quantity ForPhysLib.Kinds.Space.displacement (EuclideanSpace ℝ (Fin 3)) := by
   sorry
 
--- Point vs vector: Constructs pair P's scalar separation as a bearer-free `Quantity distance`, distinct from displacement and length or from pair Q's distance.
+-- Point vs vector: Constructs pair P's scalar separation as a bearer-free `Quantity distance`; its type separates distance from displacement and length, not P from Q.
 example (s : PairState3 .P) : Quantity ForPhysLib.Kinds.Space.distance ℝ := by
   sorry
 

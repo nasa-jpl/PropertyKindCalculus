@@ -215,7 +215,7 @@ example := ForPhysLib.Exhibits.RigidBody.rotationalContraction_eq_physlib
 -- EXERCISE: solid_sphere
 -- TODO: inspect the proved solid-sphere inertia result.
 -- GIVEN:
--- Composition law: Proves that the 3D solid sphere's inertia tensor is (2/5) m R² times the identity matrix.
+-- Inertia tensor: Proves that the 3D solid sphere's inertia tensor is (2/5) m R² times the identity matrix.
 example := ForPhysLib.ClassicalMechanics.SolidSphereInertia.solidSphere_inertiaTensor
 -- EXERCISE_END: solid_sphere
 

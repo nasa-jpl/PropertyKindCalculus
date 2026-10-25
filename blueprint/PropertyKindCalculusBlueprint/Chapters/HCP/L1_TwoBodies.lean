@@ -182,7 +182,7 @@ theorem omegaSqOf_magnitude {r : Rig} (sys : TwoOscillators r) (o : OscillatorOf
 
 def whole : Component := ⟨"whole"⟩
 
-/-- Same-name records: Proves that the mass kind dedicated to oscillator A's whole equals the kind dedicated to oscillator B's whole; only the bearer index distinguishes their masses. -/
+/-- Kind vs bearer: Proves that the mass kind dedicated to oscillator A's whole equals the kind dedicated to oscillator B's whole; only the bearer index distinguishes their masses. -/
 theorem mass_kind_shared_by_oscillators :
     ForPhysLib.ClassicalMechanics.massK.dedicatedFor Oscillator.A whole =
       ForPhysLib.ClassicalMechanics.massK.dedicatedFor Oscillator.B whole :=
