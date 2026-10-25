@@ -40,14 +40,16 @@ honest negatives, an `AuditReceipt` at each success point).
     instance for its object type. The census first reduces the actual result bearer's sort
     inside the member telescope: a definite match governs the port, while a definite
     mismatch falls back to object scopes or is ungoverned; a stuck sort uses the object-domain
-    path and may be unchecked. `.decided` scopes retain the boundary/port join without static
-    subset checking. The summary counts the requirements by category and the attested ones —
+    path and may be unchecked. A `.decided` scope governs only when its `deciderProof` proves
+    that the decider holds for every result of the member; otherwise it is unchecked. The
+    summary counts the requirements by category and the attested ones —
     the ratchet. Whether a named requirement is *valid*
     is `#kind_requirements`' question; this census asks only whether one exists.
   * **`#kind_requirement_clean ns …`** is the gate: throws while any produced port of a
     model boundary in scope is `⚠ UNGOVERNED` or `⚠ UNCHECKED`. An object scope must be
     checkable against the result's object index. A `.sort` scope requires that index and a
-    `Sorted` instance, and checks the result object's sort; `.decided` remains unchecked.
+    `Sorted` instance, and checks the result object's sort. A `.decided` scope needs a
+    `deciderProof` theorem for every produced result port or remains unchecked.
 
 Requirements are walked *unscoped* by the census, as theorem edges are: a requirement may
 live beside a deployment rather than beside the boundary it governs. A
@@ -319,6 +321,40 @@ def portDomainFor (node : NodeId) (T : Expr) : MetaM PortDomain := do
   | some member => portDomain member T
   | none => return .noIndex
 
+/-- Check that a decider theorem proves the predicate on every result of one member. -/
+def checkDeciderProof (decider proof member : Name) : MetaM Unit := do
+  let env ← getEnv
+  let some proofInfo := env.find? proof
+    | throwError "the decider proof '{proof}' is not a declaration"
+  let some memberInfo := env.find? member
+    | throwError "the result member '{member}' is not a declaration"
+  let expected ← Meta.forallTelescopeReducing memberInfo.type fun xs _ => do
+    let memberFn ← mkConstWithLevelParams member
+    let memberValue := mkAppN memberFn xs
+    let predicate ←
+      try do
+        let deciderValue ← Meta.mkAppM decider #[memberValue]
+        Meta.mkEq deciderValue (toExpr true)
+      catch _ =>
+        throwError "'{decider}' does not apply to what '{member}' produces"
+    Meta.mkForallFVars xs predicate
+  let isMatch ← withTransparency .default do
+    Meta.isDefEq proofInfo.type expected
+  unless isMatch do
+    throwError "'{proof}' does not prove that '{decider}' holds on everything \
+      '{member}' produces — expected: {expected}"
+
+/-- Whether a decided requirement carries a checked proof for this whole result port. -/
+def deciderProofCoversPort (req : Provenance.Requirement) (port : NodeId) :
+    MetaM Bool := do
+  match req.scope, req.deciderProof, resultMember? port with
+  | .decided decider, some proof, some member =>
+    try
+      checkDeciderProof decider proof member
+      return true
+    catch _ => return false
+  | _, _, _ => return false
+
 /-- The full check of one requirement — `#kind_requirement`'s body, named so the survey
 command re-runs it per requirement. Throws on the first violation. -/
 def checkRequirement (rname : Name) : MetaM CheckedRequirement := do
@@ -330,6 +366,11 @@ def checkRequirement (rname : Name) : MetaM CheckedRequirement := do
   if req.statement.all Char.isWhitespace then
     throwError "the requirement '{req.name}' states nothing — the statement in the \
       author's words is what the discharge is evidence for"
+  if let some proof := req.deciderProof then
+    unless req.scope matches .decided _ do
+      throwError "'{req.name}' has a decider proof, but its scope is not `.decided`"
+    unless (env.find? proof).isSome do
+      throwError "the decider proof '{proof}' is not a declaration"
   -- the governed boundary: a model's
   let ctr ← contractValueOf req.governs
   unless ctr.role == .model do
@@ -400,6 +441,16 @@ def checkRequirement (rname : Name) : MetaM CheckedRequirement := do
   | .decided d =>
     unless (env.find? d).isSome do
       throwError "the scope decider '{d}' is not a declaration"
+    if let some proof := req.deciderProof then
+      let ports := ctr.ports.filter fun port =>
+        match req.port with
+        | some node => port.node == node
+        | none => port.dir.produced
+      for port in ports do
+        let some member := resultMember? port.node
+          | throwError "'{req.name}''s decider proof covers result ports only, but \
+            '{port.node.render}' of '{ctr.name}' is not one"
+        checkDeciderProof d proof member
   match req.scope with
   | .objects objects =>
     if let some node := req.port then
@@ -429,6 +480,8 @@ def checkRequirement (rname : Name) : MetaM CheckedRequirement := do
   let referents := kindReferents env
   let mut lines : List String :=
     [s!"statement: {req.statement}", governsLine, s!"scope: {req.scope.label}"]
+  if let some proof := req.deciderProof then
+    lines := lines ++ [s!"decider proof: {proof}"]
   match req.kind with
   | .provable =>
     unless req.referents.isEmpty do
@@ -554,8 +607,9 @@ def checkRequirement (rname : Name) : MetaM CheckedRequirement := do
 
 open Elab Command in
 /-- `#kind_requirement r` checks the requirement `r` (`checkRequirement`) and prints it.
-Every failure throws, so the command is the report and the gate at once — there is no
-reading of it that states a violation. -/
+For a `.decided` scope, a supplied `deciderProof` must prove the decider holds for every
+result of each governed member. Every failure throws, so the command is the report and the
+gate at once — there is no reading of it that states a violation. -/
 elab "#kind_requirement " r:ident : command => liftTermElabM do
   let c ← checkRequirement (← realizeGlobalConstNoOverload r)
   logInfo m!"kind requirement '{c.req.name}' ({c.req.kind.label}) on '{c.boundaryName}'\n\
@@ -976,7 +1030,8 @@ projections, lets, and lambdas are followed; missing indices and unresolved bear
 `⚠ UNCHECKED` violations unless the boundary is exempt. Sort scopes first reduce the actual
 bearer's sort inside the member telescope. A definite match governs the port; a definite
 mismatch falls back to object scopes or is ungoverned; a stuck sort uses the object-domain
-path and may be unchecked. `.decided` scopes retain the boundary/port join unchecked. -/
+path and may be unchecked. A `.decided` scope governs only when its `deciderProof` proves
+that its decider holds for every result of the member; otherwise the port is unchecked. -/
 def coverageRows (scope : Array Name) : Elab.TermElabM (Array Row × Tally) := do
   let subs ← subjects scope
   let byBoundary ← requirementsByBoundary
@@ -1011,21 +1066,45 @@ def coverageRows (scope : Array Name) : Elab.TermElabM (Array Row × Tally) := d
         | none => true
         | some q => q == p.node
       if !governing.isEmpty then
-        let requirementNames := String.intercalate ", "
-          (governing.map (fun (_, r) => s!"'{r.name}'")).toList
-        if governing.any fun (_, req) =>
+        let mut applicable := #[]
+        let mut uncheckedDecided := #[]
+        for (declaration, req) in governing do
+          let item := (declaration, req)
+          match req.scope with
+          | .decided _ =>
+            if ← deciderProofCoversPort req p.node then
+              applicable := applicable.push item
+            else
+              uncheckedDecided := uncheckedDecided.push item
+          | .all | .objects _ | .sort _ => applicable := applicable.push item
+        if !applicable.isEmpty then
+          let requirementNames := String.intercalate ", "
+            (applicable.map (fun (_, r) => s!"'{r.name}'")).toList
+          if applicable.any fun (_, req) =>
             match req.scope with
             | .all | .decided _ => true
             | .objects _ | .sort _ => false then
-          out := out.push ⟨.ok, s!"[governed] {s.decl} {s.tag} {p.node.render} — by \
-            {requirementNames}"⟩
-          continue
-        if governing.any fun (_, req) => req.scope matches .sort _ then
-          out := out ++ (← sortCoverageRows marks s.decl s.tag p.node governing
+            out := out.push ⟨.ok, s!"[governed] {s.decl} {s.tag} {p.node.render} — by \
+              {requirementNames}"⟩
+            continue
+          if applicable.any fun (_, req) => req.scope matches .sort _ then
+            out := out ++ (← sortCoverageRows marks s.decl s.tag p.node applicable
+              requirementNames)
+            continue
+          out := out ++ (← objectScopeCoverageRows marks s.decl s.tag p.node applicable
             requirementNames)
-          continue
-        out := out ++ (← objectScopeCoverageRows marks s.decl s.tag p.node governing
-          requirementNames)
+        else if !uncheckedDecided.isEmpty then
+          let requirementNames := String.intercalate ", "
+            (uncheckedDecided.map (fun (_, req) => s!"'{req.name}'")).toList
+          let deciderNames := String.intercalate ", "
+            (uncheckedDecided.map fun (_, req) =>
+              match req.scope with
+              | .decided decider => s!"'{decider}'"
+              | .all | .objects _ | .sort _ => "").toList
+          let subject := s!"{s.decl} {s.tag} {p.node.render}"
+          let line := s!"⚠ UNCHECKED {subject} — {requirementNames}: decided by \
+            {deciderNames} with no decider proof"
+          out := out.push <| markedCoverageRow marks s.decl line subject
       else match marks.find? (·.decl == s.decl) with
         | some m => out := out.push ⟨.exempted,
             s!"⊘ exempted {s.decl} {s.tag} {p.node.render} — {m.reason}"⟩
@@ -1064,8 +1143,9 @@ an exemption mark. Objects match up to definitional equality. `.sort` requires a
 result and a `Sorted` instance; the census first reduces the actual result bearer's sort
 inside the member telescope, then falls back to object-domain checking if it is stuck. A
 definite mismatch is covered only by object scopes, and is otherwise ungoverned.
-`.decided` retains the boundary/port join without static subset checking. One sorted `info`
-message to pin, with category tallies and the attested ratchet. Records an `AuditReceipt` for
+`.decided` governs only when its `deciderProof` proves that the decider holds for every
+result of the member; otherwise it is unchecked. One sorted `info` message to pin, with
+category tallies and the attested ratchet. Records an `AuditReceipt` for
 `kind_requirement_coverage`. -/
 elab "#kind_requirement_coverage" nss:ident+ : command => liftTermElabM do
   let scope := nss.map (·.getId)
@@ -1084,7 +1164,8 @@ definitional equality; named T-typed constants are retained, other T-typed terms
 constants, and reducible wrappers are followed. An object scope must be checkable against
 the result's object index. A `.sort` scope requires an index and `Sorted` instance, first
 reduces the actual result bearer's sort, and falls back to object-domain checking if it is
-stuck; `.decided` scopes remain unchecked. Records an
+stuck. A `.decided` scope needs a valid `deciderProof` theorem for every produced result
+port or remains unchecked. Records an
 `AuditReceipt` for `kind_requirement_clean` exactly when it does not fire. -/
 elab "#kind_requirement_clean" nss:ident+ : command => liftTermElabM do
   let scope := nss.map (·.getId)

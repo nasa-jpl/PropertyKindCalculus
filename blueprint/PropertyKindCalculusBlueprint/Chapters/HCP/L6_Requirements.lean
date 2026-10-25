@@ -319,8 +319,9 @@ ungoverned on a generic pair boundary. An unresolved bearer is an unchecked viol
 exempted. A `.sort` scope needs an indexed result whose object type has a `Sorted` instance:
 R1 and R2's results are borne by the pair whole, and the instance above maps the whole to
 `pairS` and each part to its own sort, so the census checks their scope. An object of another
-sort is reported ungoverned. A `.decided` scope is still not checked; the checker only
-confirms that its decider exists.
+sort is reported ungoverned. A `.decided` scope is checked against a `deciderProof` theorem
+proving its decider returns `true` for every result of the governed member; without that
+proof the census reports the port unchecked.
 
 ```anchor requirement_census
 /--

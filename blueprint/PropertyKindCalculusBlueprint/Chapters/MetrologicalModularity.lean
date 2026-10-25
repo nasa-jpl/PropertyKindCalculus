@@ -315,8 +315,9 @@ means its object cannot be determined statically. Both produce unchecked violati
 the boundary is exempted. A `.sort` scope requires an object index and a `Sorted` instance;
 the census first reduces the actual result bearer's sort inside the member telescope. A
 definite match governs, a definite mismatch falls back to object scopes or is ungoverned,
-and a stuck sort follows the object-domain path and may be unchecked. `.decided` retains the
-static boundary/port join without subset checking.
+and a stuck sort follows the object-domain path and may be unchecked. A `.decided` scope is
+governed only when its `deciderProof` theorem proves the decider holds for every result of the
+governed member; otherwise the census reports it unchecked.
 :::
 
 :::proof "def_requirement"
@@ -460,7 +461,8 @@ bearer yields an unchecked violation unless the boundary is exempted. A `.sort` 
 an object index and a `Sorted` instance; the census first reduces the actual result bearer's
 sort inside the member telescope. A definite match governs, a definite mismatch falls back
 to object scopes or is ungoverned, and a stuck sort follows the object-domain path and may be
-unchecked. `.decided` remains unchecked against the result index. A
+unchecked. A `.decided` scope needs a `deciderProof` theorem proving the decider holds for
+every result of the governed member; without it, the census reports the port unchecked. A
 `@[kindRequirementFree "reason"]` mark
 says why no requirement is demanded, and the census counts the attested ones. That count is
 a ratchet: it moves only by a conscious edit, and it is meant to fall as the apparatus

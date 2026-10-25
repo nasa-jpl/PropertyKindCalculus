@@ -672,7 +672,8 @@ an unchecked violation unless the boundary is exempted. A `.sort` scope requires
 result and a `Sorted` instance; the census first reduces the actual result bearer's sort
 inside the member telescope. A definite match governs, a definite mismatch falls back to
 object scopes or is ungoverned, and a stuck sort follows the object-domain path and may be
-unchecked. `.decided` retains the static join without subset checking; `.all` remains broad
+unchecked. `.decided` governs only when its `deciderProof` proves the decider holds for
+every result of the member; otherwise the census marks it unchecked. `.all` remains broad
 ({ref "requirements-as-evidence"}[every claim a model makes, with its evidence]).
 
 # Requirements
@@ -1290,7 +1291,8 @@ missing indices or unresolved object domains are unchecked violations unless exe
 `.sort` requires an indexed result and a `Sorted` instance; the census first reduces the
 actual result bearer's sort inside the member telescope, then falls back to object scopes
 or is ungoverned on a definite mismatch, while a stuck sort follows the object-domain path
-and may be unchecked. `.decided` retains the static boundary/port join without subset checking; a provable
+and may be unchecked. A `.decided` scope requires a `deciderProof` theorem proving that its
+decider holds for every result of the governed member; otherwise the port is unchecked. A provable
 requirement's witness is a sorry-free theorem, or a theorem edge to a specification
 boundary, whose statement names no `@[kindReferent]`-marked declaration, with `Bool` spot
 checks the command evaluates where the model runs; an empirical requirement names marked

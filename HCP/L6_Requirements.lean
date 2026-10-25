@@ -311,7 +311,9 @@ An unresolved bearer is an unchecked violation unless exempted. A `.sort` scope 
 indexed result whose object type has a `Sorted` instance: R1 and R2's results are borne by
 the pair whole, and the instance above maps the whole to `pairS` and each part to its own
 sort, so the census checks their scope. An object of another sort is reported ungoverned.
-A `.decided` scope is still not checked; the checker only confirms that its decider exists.
+A `.decided` scope is checked against a `deciderProof` theorem that proves its decider returns
+`true` for every result of the governed member; without that proof the census reports it
+unchecked.
 -/
 -- ANCHOR: requirement_census
 /--
