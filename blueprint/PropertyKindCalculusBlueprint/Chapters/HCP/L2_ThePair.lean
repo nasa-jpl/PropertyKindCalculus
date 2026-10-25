@@ -168,6 +168,7 @@ def couplingSpringExtensionDifference
     (extensionOf stretched .kC)
     (-(extensionOf compressed .kC))
 
+-- Lean type-checks the coupling-spring extension difference between two states of pair P.
 #guard_msgs in
 example (compressed stretched : CoupledPair .P) :
     IndividualQuantity
@@ -175,6 +176,7 @@ example (compressed stretched : CoupledPair .P) :
       ForPhysLib.ClassicalMechanics.displacementK ℝ :=
   couplingSpringExtensionDifference compressed stretched
 
+/-- The coupling-spring extension difference has magnitude stretched extension minus compressed extension. -/
 theorem couplingSpringExtensionDifference_magnitude
     (compressed stretched : CoupledPair .P) :
     (couplingSpringExtensionDifference compressed stretched).magnitude =
@@ -209,6 +211,7 @@ def pairMass {π : PairId} (p : CoupledPair π) :
     bodies
     (fun b => massOf p b)
 
+/-- The assembled mass of a pair equals the sum of body A's and body B's masses. -/
 theorem pairMass_magnitude {π : PairId} (p : CoupledPair π) :
     (pairMass p).magnitude = (p.osc .A).m + (p.osc .B).m := by
   rfl
@@ -219,6 +222,7 @@ whole is not body A. A second pair is another system even when all parameters an
 names match, because PairId is nominal:
 
 ```anchor refused_whole_part
+-- Refused: Lean reports a type mismatch between the pair's whole-mass bearer and body A's part-mass bearer.
 /--
 error: Application type mismatch: The argument
   massOf p Body.A
@@ -234,6 +238,7 @@ example {π : PairId} (p : CoupledPair π) :=
   IndividualQuantity.add (k := ForPhysLib.ClassicalMechanics.massK)
     DifferenceKind.ofScale (pairMass p) (massOf p .A)
 
+-- Refused: Lean reports a type mismatch between pair P's and pair Q's whole-mass bearers.
 /--
 error: Application type mismatch: The argument
   pairMass q
@@ -255,6 +260,7 @@ example (o : Body → ClassicalMechanics.HarmonicOscillator) :=
 _4. Refuse to assemble angular frequency._ The pair's license table has no entry for it:
 
 ```anchor refused_frequency_assembly
+-- Refused: Lean fails to type-check angular-frequency assembly for pairS because no `Assembles pairS angularFrequency` instance exists.
 /--
 error: failed to synthesize instance of type class
   Assembles pairS ForPhysLib.ClassicalMechanics.Kinds.angularFrequency
@@ -284,11 +290,13 @@ def dkOmegaPlus : DedicatedKind :=
   ForPhysLib.ClassicalMechanics.Kinds.angularFrequency.dedicatedTo
     pairS ⟨"normal mode +"⟩
 
+/-- The pair's normal-mode kind is distinct from angular frequency dedicated to body A's whole. -/
 theorem normal_mode_not_of_a_body :
     dkOmegaPlus ≠
       ForPhysLib.ClassicalMechanics.Kinds.angularFrequency.dedicatedFor Body.A whole :=
   DedicatedKind.distinct_of_sort (by decide)
 
+/-- The pair's normal-mode kind is distinct from angular frequency dedicated to the coupling spring's whole. -/
 theorem normal_mode_not_of_a_spring :
     dkOmegaPlus ≠
       ForPhysLib.ClassicalMechanics.Kinds.angularFrequency.dedicatedFor Spring.kC whole :=
@@ -318,6 +326,7 @@ def parallelStiffness {π : PairId} (p : CoupledPair π) :
     parallelSprings
     (fun s => stiffnessInSort p parallelS s)
 
+/-- The assembled parallel stiffness has magnitude equal to body A's stiffness plus the coupling stiffness. -/
 theorem parallelStiffness_magnitude {π : PairId} (p : CoupledPair π) :
     (parallelStiffness p).magnitude = (p.osc .A).k + p.kC := by
   rfl
@@ -329,6 +338,7 @@ is registered:
 ```anchor refused_series_stiffness
 def seriesSprings : Decomposition Spring := .union (.atom .kA) (.atom .kB)
 
+-- Refused: Lean fails to type-check series stiffness assembly because no `Assembles seriesS springConstantK` instance exists.
 /--
 error: failed to synthesize instance of type class
   Assembles seriesS ForPhysLib.ClassicalMechanics.springConstantK
@@ -363,6 +373,7 @@ def parallelMeasurement : Measurement Spring := fun d =>
     numeral := parallelNumeral d
     reference := "N/m" }
 
+/-- The parallel-spring measurement is extensive for the spring-constant kind. -/
 theorem parallel_extensive :
     Extensive ForPhysLib.ClassicalMechanics.springConstantK parallelMeasurement :=
   ⟨fun _ => rfl, fun _ _ => rfl⟩
@@ -379,20 +390,24 @@ def seriesMeasurement : Measurement Spring := fun d =>
     numeral := seriesNumeral d
     reference := "N/m" }
 
+/-- The series measurement of springs kA and kB evaluates to 2. -/
 theorem series_kA_kB_exact : (seriesMeasurement seriesSprings).numeral = 2 := by decide
 
+/-- The series-spring measurement is proper: it is not additive or uniform. -/
 theorem series_whole_proper :
     WholeProper ForPhysLib.ClassicalMechanics.springConstantK seriesMeasurement where
   ofKind := fun _ => rfl
   notAdditive := ⟨.kA, .kB, by decide⟩
   notUniform := ⟨.kA, .kA, ⟨rfl, by decide⟩⟩
 
+/-- The series-spring measurement is not extensive for the spring-constant kind. -/
 theorem series_not_extensive :
     ¬ Extensive ForPhysLib.ClassicalMechanics.springConstantK seriesMeasurement :=
   series_whole_proper.not_extensive
 ```
 
 ```anchor licenseCashed
+/-- Assembly from parallel-spring readings has the measured magnitude. -/
 theorem parallel_assembled_is_measured {π : PairId} (_p : CoupledPair π) :
     (assemble (k := ForPhysLib.ClassicalMechanics.springConstantK) parallelS
         (Composite.whole : Composite parallelS (PartOf π))
@@ -403,6 +418,7 @@ theorem parallel_assembled_is_measured {π : PairId} (_p : CoupledPair π) :
     (fun s => Composite.part (σ := parallelS) (springPart π s))
     parallel_extensive parallelSprings
 
+/-- Registering assembly for series springs would produce a result unequal to their measurement. -/
 theorem series_registered_would_lie
     {π : PairId} (_p : CoupledPair π)
     [Assembles seriesS ForPhysLib.ClassicalMechanics.springConstantK] :

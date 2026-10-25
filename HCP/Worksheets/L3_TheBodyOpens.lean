@@ -79,10 +79,13 @@ theorem bodyMass_magnitude {π : PairId} {b : Body} (state : OpenBody π b) :
   sorry
 
 -- GIVEN:
+-- Lean type-checks the composition rule for combining body A's two halves into a mass.
 example := ForPhysLib.Exhibits.Composition.union_mass
+-- Lean type-checks the composition rule for combining body A's halves into an inertia tensor.
 example := ForPhysLib.Exhibits.Composition.union_inertiaTensor
 
 -- TODO: type a mass difference for one half of the same body across two records.
+-- Lean type-checks a mass difference between two records of body A on pair P, for its left half.
 example (earlier later : OpenBody .P .A) :
     IndividualQuantity
       (Composite.part (σ := rigidBodyS) (halfPart .P .A .left))
@@ -90,6 +93,7 @@ example (earlier later : OpenBody .P .A) :
   sorry
 
 -- TODO: uncomment the cross-pair expression and explain the bearer mismatch.
+-- Refused: Lean reports a type mismatch between body A's left-half mass bearers in pair P and pair Q.
 -- example (p : OpenBody .P .A) (q : OpenBody .Q .A) :=
 --   IndividualQuantity.add DifferenceKind.ofScale
 --     (massOf p (halfPart .P .A .left))
@@ -98,6 +102,7 @@ example (earlier later : OpenBody .P .A) :
 
 -- EXERCISE: center_of_mass_mean
 -- GIVEN:
+-- Lean type-checks the composition rule for the center of mass of body A from its two halves.
 example := ForPhysLib.Exhibits.Composition.union_centerOfMass
 
 -- TODO: construct the weighted carving and prove its mean is the mass-weighted position.
@@ -139,6 +144,7 @@ def positionOf {π : PairId} {b : Body} (state : OpenBody π b) (h : HalfOf π b
   sorry
 
 -- TODO: uncomment the attempted displacement assembly and explain why the license is absent.
+-- Refused: Lean fails to type-check whole-body displacement assembly because no `Assembles rigidBodyS displacementK` instance exists.
 -- example {π : PairId} {b : Body} (state : OpenBody π b) :=
 --   assemble (k := ForPhysLib.ClassicalMechanics.displacementK) rigidBodyS
 --     (Composite.whole : Composite rigidBodyS (HalfOf π b))
@@ -150,17 +156,22 @@ def positionOf {π : PairId} {b : Body} (state : OpenBody π b) (h : HalfOf π b
 -- EXERCISE: massless_center_of_mass
 -- TODO: inspect why the massless-body result has no center of mass.
 -- GIVEN:
+-- Lean type-checks the massless-body result, for which a center of mass requires nonzero total mass.
 example := ForPhysLib.Exhibits.Composition.massless_centerOfMass
+-- Lean type-checks the result that mass-weighted halves have a nonzero total weight.
 example := ForPhysLib.Exhibits.Composition.halvesByMass_total_ne_zero
 -- EXERCISE_END: massless_center_of_mass
 
 -- EXERCISE: angular_velocity_intensive
 -- TODO: compare the intensive angular-velocity result with the rejected assembly.
 -- GIVEN:
+-- Lean type-checks angular velocity as an intensive property of each half of body A.
 example := ForPhysLib.Exhibits.Composition.omegaOfHalf_intensive
+-- Lean type-checks the result that angular velocity is not extensive across body A's halves.
 example := ForPhysLib.Exhibits.Composition.omegaOfHalf_not_extensive
 
 -- TODO: uncomment the generic angular-velocity assembly attempt and read the error.
+-- Refused: Lean fails to type-check angular-velocity assembly over body A's halves because no `Assembles rigidBodyS angularVelocityK` instance exists.
 -- example :=
 --   fun {π : PairId} {b : Body}
 --       (ω : (h : Half) →
@@ -175,12 +186,14 @@ example := ForPhysLib.Exhibits.Composition.omegaOfHalf_not_extensive
 
 -- EXERCISE: bare_frame_mismatch
 -- TODO: explain why the bare vector accepts a frame-mismatched energy argument.
+-- Lean type-checks bare-vector rotational energy without recording whether angular velocity is in the lab or body frame.
 noncomputable example (M : RigidBodyMotion 3) (t : Time) : ℝ :=
   M.toRigidBody.rotationalKineticEnergy (M.angularVelocity t)
 -- EXERCISE_END: bare_frame_mismatch
 
 -- EXERCISE: framed_rotational_energy
 -- TODO: uncomment the lab-frame argument to see the frame mismatch, then use bodyOmega.
+-- Refused: Lean reports a type mismatch between the lab-frame angular velocity and the body-frame angular velocity required by rotational contraction.
 -- noncomputable example (M : RigidBodyMotion 3) (t : Time) :=
 --   ForPhysLib.Exhibits.RigidBody.rotationalContraction
 --     ForPhysLib.Exhibits.RigidBody.inertia_mul_angularVelocity
@@ -188,18 +201,21 @@ noncomputable example (M : RigidBodyMotion 3) (t : Time) : ℝ :=
 --     (ForPhysLib.Exhibits.RigidBody.bodyInertia M)
 --     (ForPhysLib.Exhibits.RigidBody.labOmega M t)
 
+-- Lean type-checks rotational contraction with body-frame inertia and angular velocity, yielding body-frame kinetic energy.
 example (M : RigidBodyMotion 3) (t : Time) :
     InFrame ForPhysLib.Exhibits.RigidBody.body .scalar
       ForPhysLib.Exhibits.RigidBody.kineticEnergyK ℝ := by
   sorry
 
 -- GIVEN:
+-- Lean type-checks the equality identifying body-frame rotational contraction with PhysLib's rotational kinetic energy.
 example := ForPhysLib.Exhibits.RigidBody.rotationalContraction_eq_physlib
 -- EXERCISE_END: framed_rotational_energy
 
 -- EXERCISE: solid_sphere
 -- TODO: inspect the proved solid-sphere inertia result.
 -- GIVEN:
+-- Lean type-checks PhysLib's solid-sphere inertia-tensor result.
 example := ForPhysLib.ClassicalMechanics.SolidSphereInertia.solidSphere_inertiaTensor
 -- EXERCISE_END: solid_sphere
 

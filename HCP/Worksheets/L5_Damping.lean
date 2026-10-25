@@ -120,17 +120,21 @@ lemma angularFrequencyOf_magnitude {o : Osc} (r : DampedRig o) :
     (angularFrequencyOf r).magnitude = r.osc.ω := by
   sorry
 
+-- Lean type-checks the proposition that oscillator A's damping constant is below its angular frequency.
 example (r : DampedRig .A) : Prop := r.osc.γ < r.osc.ω
 
+-- Lean type-checks the magnitude equation for oscillator A's damping coefficient.
 example (r : DampedRig .A) :
     (decayRateOf r).magnitude = r.osc.decayRate := by
   sorry
 
+-- Lean type-checks the damped oscillator law relating oscillator A's γ, mass, and decay rate.
 example (r : DampedRig .A) :
     r.osc.γ = 2 * r.osc.m * r.osc.decayRate := by
   sorry
 
 -- TODO: uncomment the cross-rig division and explain the bearer mismatch.
+-- Refused: Lean reports a type mismatch between oscillator B's mass bearer and oscillator A's damping-quotient bearer.
 -- example (a : DampedRig .A) (b : DampedRig .B) :=
 --   IndividualQuantity.div
 --     (KindDiv.law (k₁ := viscousDampingConstantK) (k₂ := massK)
@@ -140,19 +144,23 @@ example (r : DampedRig .A) :
 
 -- EXERCISE: same_dimension_different_kinds
 -- TODO: prove equal dimensions but distinct kinds; explain the raw-real comparison.
+-- Lean type-checks that damping coefficient and angular frequency have equal physical dimensions.
 example :
     Iso80000.Part3.dampingCoefficient.dim =
       Iso80000.Part3.angularFrequency.dim := by
   sorry
 
+-- Lean proves the damping-coefficient and angular-frequency kinds are distinct despite their equal dimensions.
 example : dampingCoefficientK ≠ angularFrequencyK := by
   sorry
 
 -- TODO: explain why this dimensionally invalid comparison still type-checks as reals.
+-- Lean type-checks γ + ω as a real for oscillator A; the bare values carry no distinct kinds.
 example (r : DampedRig .A) : ℝ :=
   r.osc.decayRate + r.osc.ω
 
 -- TODO: uncomment the kinded sum and read why the two kinds cannot be added.
+-- Refused: Lean reports a type mismatch between angularFrequencyK and dampingCoefficientK in their kinded sum.
 -- example (r : DampedRig .A) :=
 --   Quantity.add DifferenceKind.ofScale
 --     (decayRateOf r).toQuantity (angularFrequencyOf r).toQuantity
@@ -160,11 +168,13 @@ example (r : DampedRig .A) : ℝ :=
 
 -- EXERCISE: underdamped_regime
 -- TODO: relate underdamping to the decay-rate inequality using the kinded magnitudes.
+-- Lean type-checks the equivalence between oscillator A being underdamped and decay rate being below angular frequency.
 example (r : DampedRig .A) :
     r.osc.IsUnderdamped ↔ r.osc.decayRate < r.osc.ω := by
   sorry
 
 -- TODO: uncomment the direct kinded comparison and inspect the type error.
+-- Refused: Lean reports a type mismatch between angularFrequencyK and dampingCoefficientK in the kinded comparison.
 -- example (r : DampedRig .A) :=
 --   (decayRateOf r).toQuantity < (angularFrequencyOf r).toQuantity
 
@@ -186,6 +196,7 @@ lemma decayRateChange_magnitude (earlier later : DampedRig .A) :
   sorry
 
 -- TODO: uncomment the cross-oscillator addition and explain the bearer mismatch.
+-- Refused: Lean reports a type mismatch between oscillator A's and oscillator B's damping-coefficient bearers.
 -- example (a : DampedRig .A) (b : DampedRig .B) :=
 --   IndividualQuantity.add DifferenceKind.ofScale
 --     (decayRateOf a) (-(decayRateOf b))

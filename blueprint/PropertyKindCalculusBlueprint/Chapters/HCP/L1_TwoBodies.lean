@@ -76,6 +76,7 @@ _1. Bare reals._ Put oscillator B's mass in oscillator A's frequency radicand. T
 upstream oscillator accepts the cross-oscillator expression as a real:
 
 ```anchor bare_real_cross_oscillators
+-- Lean type-checks √(S₁.k / S₂.m) as a real; bare reals do not identify the oscillators supplying the values.
 example (S₁ S₂ : ClassicalMechanics.HarmonicOscillator) : ℝ :=
   √(S₁.k / S₂.m)
 ```
@@ -84,6 +85,7 @@ _2. Kinded, but bearer-free._ The spring-constant/mass quotient also accepts val
 different oscillators. It is still a `Quantity`, with no oscillator index:
 
 ```anchor kinded_bearer_free_cross_oscillators
+-- Lean type-checks the kinded k/m quotient even though S₁ supplies stiffness and S₂ supplies mass.
 example (S₁ S₂ : ClassicalMechanics.HarmonicOscillator) :
     Quantity ForPhysLib.ClassicalMechanics.omegaSquaredK ℝ :=
   ForPhysLib.ClassicalMechanics.springQ S₁ /
@@ -101,11 +103,18 @@ def oscillatorS : SortOfSystem := ⟨"harmonic oscillator"⟩
 
 instance : Sorted Oscillator := ⟨fun _ => oscillatorS⟩
 
+-- A and B have the same sort: `sortOf` returns `oscillatorS` for both.
 example : Sorted.sortOf Oscillator.A = Sorted.sortOf Oscillator.B := rfl
 ```
 
-_4. Designate without collapsing._ `Designated` requires an injective designation. A
-constant name would report two oscillators as one, the false-identity risk:
+_4. Designate without collapsing._ A designation gives each oscillator a nominal name.
+`Designated` requires a proof, `designation_inj`, that the designation is injective: two
+different oscillators never get the same name. Without that proof, anything keyed by name,
+such as a report or a SysML export, could merge A and B into one system. This is the
+false-identity risk. The instance below names A "oscillator A" and B "oscillator B" and
+proves injectivity by cases. The theorem `constant_designation_not_injective` shows why a
+lazy designation fails: the function that names every oscillator "oscillator" sends A and
+B to the same name, so it is not injective, and no `Designated` instance can use it:
 
 ```anchor designation
 instance : Designated Oscillator where
@@ -115,6 +124,7 @@ instance : Designated Oscillator where
   designation_inj {x y} h := by
     cases x <;> cases y <;> first | rfl | exact absurd (System.mk.inj h) (by decide)
 
+/-- Naming every oscillator "oscillator" gives A and B the same name, so that designation is not injective and cannot back a `Designated` instance. -/
 theorem constant_designation_not_injective :
     ¬ Function.Injective (fun _ : Oscillator => (⟨"oscillator"⟩ : Object)) := by
   intro h
@@ -165,12 +175,14 @@ def omegaSqOf {r : Rig} (sys : TwoOscillators r) (o : OscillatorOf r) :
     (stiffnessOf sys o)
     (massOf sys o)
 
+/-- The indexed k/m quotient has the magnitude given by the selected oscillator's stiffness divided by mass. -/
 theorem omegaSqOf_magnitude {r : Rig} (sys : TwoOscillators r) (o : OscillatorOf r) :
     (omegaSqOf sys o).magnitude = (sys.osc o.osc).k / (sys.osc o.osc).m := by
   rw [omegaSqOf, IndividualQuantity.div_magnitude, stiffnessOf, massOf]
 
 def whole : Component := ⟨"whole"⟩
 
+/-- The mass kind dedicated to the whole is shared by oscillator A and oscillator B. -/
 theorem mass_kind_shared_by_oscillators :
     ForPhysLib.ClassicalMechanics.massK.dedicatedFor Oscillator.A whole =
       ForPhysLib.ClassicalMechanics.massK.dedicatedFor Oscillator.B whole :=
@@ -189,6 +201,7 @@ distinct systems. Total mass is physically meaningful, but whose total requires 
 that is L2's question:
 
 ```anchor refused_cross_oscillator
+-- Refused: Lean reports a type mismatch between B's mass bearer and the expected A mass bearer.
 /--
 error: Type mismatch
   massOf sys { osc := Oscillator.B }
@@ -203,6 +216,7 @@ example {r : Rig} (sys : TwoOscillators r) :
       ForPhysLib.ClassicalMechanics.massK ℝ :=
   massOf sys ⟨.B⟩
 
+-- Refused: Lean reports a type mismatch between A's and B's mass bearers when adding the two rig-indexed quantities.
 /--
 error: Application type mismatch: The argument
   massOf sys { osc := Oscillator.B }
@@ -218,6 +232,7 @@ example {r : Rig} (sys : TwoOscillators r) :=
   IndividualQuantity.add DifferenceKind.ofScale
     (massOf sys ⟨.A⟩) (massOf sys ⟨.B⟩)
 
+-- Refused: Lean reports a type mismatch between A's stiffness and B's mass bearers in the k/m quotient.
 /--
 error: Application type mismatch: The argument
   massOf sys { osc := Oscillator.B }
@@ -237,6 +252,7 @@ example {r : Rig} (sys : TwoOscillators r) :=
       (k := ForPhysLib.ClassicalMechanics.omegaSquaredK)
   IndividualQuantity.div h (stiffnessOf sys ⟨.A⟩) (massOf sys ⟨.B⟩)
 
+-- Refused: Lean reports a type mismatch between oscillator A's R₁ and R₂ mass bearers, even when the parameter values match.
 /--
 error: Application type mismatch: The argument
   massOf { osc := o } { osc := Oscillator.A }
@@ -262,12 +278,14 @@ def oscillatorAMassDifference (earlier later : TwoOscillators .R₁) :
     (massOf later ⟨.A⟩)
     (-(massOf earlier ⟨.A⟩))
 
+-- Lean type-checks a difference between two estimates of oscillator A's mass on the same rig R₁.
 #guard_msgs in
 example (earlier later : TwoOscillators .R₁) :
     IndividualQuantity (⟨.A⟩ : OscillatorOf .R₁)
       ForPhysLib.ClassicalMechanics.massK ℝ :=
   oscillatorAMassDifference earlier later
 
+/-- The mass difference between two R₁ records has magnitude later A mass minus earlier A mass. -/
 theorem oscillatorAMassDifference_magnitude (earlier later : TwoOscillators .R₁) :
     (oscillatorAMassDifference earlier later).magnitude =
       (later.osc .A).m - (earlier.osc .A).m := by
@@ -282,6 +300,7 @@ _7. A name is not a sort._ A nominal `Object` does not supply `Sorted System`, s
 catalogue cannot be dedicated through that name:
 
 ```anchor refused_unsorted_object
+-- Refused: Lean fails to type-check this nominal object as a bearer because no `Sorted System` instance exists.
 /--
 error: failed to synthesize instance of type class
   Sorted System

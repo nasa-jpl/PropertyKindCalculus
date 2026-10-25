@@ -26,12 +26,14 @@ namespace HCP.Worksheets.L1_TwoBodies
 
 -- EXERCISE: bare_real_cross_oscillators
 -- TODO: explain what the cross-oscillator expression hides and why it type-checks.
+-- Lean type-checks √(S₁.k / S₂.m) as a real; bare reals do not identify the oscillators supplying the values.
 example (S₁ S₂ : ClassicalMechanics.HarmonicOscillator) : ℝ :=
   √(S₁.k / S₂.m)
 -- EXERCISE_END: bare_real_cross_oscillators
 
 -- EXERCISE: kinded_bearer_free_cross_oscillators
 -- TODO: explain why matching kinds alone allow this cross-oscillator quotient.
+-- Lean type-checks the kinded k/m quotient even though S₁ supplies stiffness and S₂ supplies mass.
 example (S₁ S₂ : ClassicalMechanics.HarmonicOscillator) :
     Quantity ForPhysLib.ClassicalMechanics.omegaSquaredK ℝ :=
   ForPhysLib.ClassicalMechanics.springQ S₁ /
@@ -48,6 +50,7 @@ def oscillatorS : SortOfSystem := ⟨"harmonic oscillator"⟩
 instance : Sorted Oscillator := ⟨fun _ => oscillatorS⟩
 
 -- TODO: show both particulars have the declared sort.
+-- A and B have the same sort: `sortOf` returns `oscillatorS` for both.
 example : Sorted.sortOf Oscillator.A = Sorted.sortOf Oscillator.B := by
   sorry
 -- EXERCISE_END: oscillator_context_and_sort
@@ -106,13 +109,16 @@ theorem mass_kind_shared_by_oscillators :
 
 -- EXERCISE: refused_cross_oscillator
 -- TODO: uncomment each expression, read the errors, and write one sentence on what PKC refused and why.
+-- Refused: Lean reports a type mismatch between B's mass bearer and the expected A mass bearer.
 -- example {r : Rig} (sys : TwoOscillators r) :
 --     IndividualQuantity (⟨.A⟩ : OscillatorOf r)
 --       ForPhysLib.ClassicalMechanics.massK ℝ :=
 --   massOf sys ⟨.B⟩
+-- Refused: Lean reports a type mismatch between A's and B's mass bearers when adding the two rig-indexed quantities.
 -- example {r : Rig} (sys : TwoOscillators r) :=
 --   IndividualQuantity.add DifferenceKind.ofScale
 --     (massOf sys ⟨.A⟩) (massOf sys ⟨.B⟩)
+-- Refused: Lean reports a type mismatch between A's stiffness and B's mass bearers in the k/m quotient.
 -- example {r : Rig} (sys : TwoOscillators r) :=
 --   let h :=
 --     KindDiv.law
@@ -120,6 +126,7 @@ theorem mass_kind_shared_by_oscillators :
 --       (k₂ := ForPhysLib.ClassicalMechanics.massK)
 --       (k := ForPhysLib.ClassicalMechanics.omegaSquaredK)
 --   IndividualQuantity.div h (stiffnessOf sys ⟨.A⟩) (massOf sys ⟨.B⟩)
+-- Refused: Lean reports a type mismatch between oscillator A's R₁ and R₂ mass bearers, even when the parameter values match.
 -- example (o : Oscillator → ClassicalMechanics.HarmonicOscillator) :=
 --   IndividualQuantity.add DifferenceKind.ofScale
 --     (massOf (⟨o⟩ : TwoOscillators .R₁) ⟨.A⟩)
@@ -133,6 +140,7 @@ def oscillatorAMassDifference (earlier later : TwoOscillators .R₁) :
       ForPhysLib.ClassicalMechanics.massK ℝ := by
   sorry
 
+-- Lean type-checks a difference between two estimates of oscillator A's mass on the same rig R₁.
 example (earlier later : TwoOscillators .R₁) :
     IndividualQuantity (⟨.A⟩ : OscillatorOf .R₁)
       ForPhysLib.ClassicalMechanics.massK ℝ := by
@@ -146,6 +154,7 @@ theorem oscillatorAMassDifference_magnitude (earlier later : TwoOscillators .R�
 
 -- EXERCISE: refused_unsorted_object
 -- TODO: uncomment, read the error, and write one sentence on why this object has no usable sort.
+-- Refused: Lean fails to type-check this nominal object as a bearer because no `Sorted System` instance exists.
 -- example :=
 --   ForPhysLib.ClassicalMechanics.massK.dedicatedFor
 --     (⟨"oscillator A"⟩ : Object) whole
