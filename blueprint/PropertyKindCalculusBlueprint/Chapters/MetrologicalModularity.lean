@@ -312,8 +312,11 @@ and the attested count — and `#kind_requirement_clean` its gate. The result me
 infers that domain: an index binder means all objects, constants of that type mean only
 those objects; `.noIndex` means the result carries no object index, while `.unresolved`
 means its object cannot be determined statically. Both produce unchecked violations unless
-the boundary is exempted. `.sort` and `.decided` retain the static boundary/port join
-without object-subset checking.
+the boundary is exempted. A `.sort` scope requires an object index and a `Sorted` instance;
+the census first reduces the actual result bearer's sort inside the member telescope. A
+definite match governs, a definite mismatch falls back to object scopes or is ungoverned,
+and a stuck sort follows the object-domain path and may be unchecked. `.decided` retains the
+static boundary/port join without subset checking.
 :::
 
 :::proof "def_requirement"
@@ -453,8 +456,12 @@ referent and gate, or deferred by an attestation whose reason the survey prints.
 coverage census then asks of every produced port of every model boundary whether a
 boundary/port-matching requirement governs it. For object scopes it compares the requested
 objects with the domain inferred from the result member's type; a missing index or unresolved
-bearer yields an unchecked violation unless the boundary is exempted. `.sort` and `.decided`
-are not checked against the result object index. A `@[kindRequirementFree "reason"]` mark
+bearer yields an unchecked violation unless the boundary is exempted. A `.sort` scope requires
+an object index and a `Sorted` instance; the census first reduces the actual result bearer's
+sort inside the member telescope. A definite match governs, a definite mismatch falls back
+to object scopes or is ungoverned, and a stuck sort follows the object-domain path and may be
+unchecked. `.decided` remains unchecked against the result index. A
+`@[kindRequirementFree "reason"]` mark
 says why no requirement is demanded, and the census counts the attested ones. That count is
 a ratchet: it moves only by a conscious edit, and it is meant to fall as the apparatus
 supplies its numbers. A model's remaining dependence on the world is then a number in a

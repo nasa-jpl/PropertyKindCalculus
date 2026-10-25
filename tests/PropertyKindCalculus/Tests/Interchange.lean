@@ -77,10 +77,10 @@ run_meta do
   unless (lean.splitOn "Provenance.Relation where").length == 3 do
     throwError "generated module should define 2 relations"
   -- the tutorial's scopes reach the generated requirements structured, never widened to `.all`
-  unless (lean.splitOn "scope := .sort `").length == 7 do
-    throwError "generated module should carry the 6 sort-scoped requirements"
-  unless (lean.splitOn "scope := .objects [`").length == 2 do
-    throwError "generated module should carry the object-scoped requirement"
+  unless (lean.splitOn "scope := .sort `").length == 4 do
+    throwError "generated module should carry the 3 sort-scoped requirements"
+  unless (lean.splitOn "scope := .objects [`").length == 5 do
+    throwError "generated module should carry the 4 object-scoped requirements"
   unless (lean.splitOn "scope := .all").length == 1 do
     throwError "no tutorial requirement is scoped to all objects"
 

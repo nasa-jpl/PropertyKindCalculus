@@ -316,10 +316,14 @@ _4. Census._ The valid requirements are surveyed, every produced model port has 
 governing requirement, and the clean command enforces that result. The census infers a
 result port's object domain from its member's type: R3 covers a P-only result, but leaves Q
 ungoverned on a generic pair boundary. A missing index or unresolved bearer is an unchecked
-violation unless exempted; `.sort` and `.decided` remain unchecked against the result
-index. The optional `.decided` scope is omitted because the checker only verifies that its
-named decider exists; it does not validate that the declaration is a predicate selecting a
-subset of pair objects:
+violation unless exempted. A `.sort` scope requires an indexed result and a `Sorted` instance,
+then checks each result object's sort; R1 and R2's generic PairId objects reduce to `pairS`.
+The scope check uses the pair composite's `Sorted` instance, which maps the whole to `pairS`
+and each part to its own sort. The census first reduces the actual result bearer's sort; a
+stuck sort falls back to object-domain checking, and a definite mismatch is ungoverned unless
+object scopes cover it. The optional `.decided` scope remains unchecked because the checker
+only verifies that its named decider exists; it does not validate that the declaration is a
+predicate selecting a subset of pair objects:
 
 ```anchor requirement_census
 /--

@@ -27,24 +27,27 @@ honest negatives, an `AuditReceipt` at each success point).
   * **`#kind_requirement_coverage ns …`** is the census: every produced port of every
     *model* boundary in scope is `[governed]` by a requirement naming it (a requirement
     with no port governs everything its boundary produces), `⊘ exempted` by a
-    `@[kindRequirementFree]` mark, or `⚠ UNGOVERNED`; a specification boundary is listed as
-    `⚠ UNGOVERNED`, or `⚠ UNCHECKED`; a specification boundary is listed as the subject
-    of no requirement. For object scopes, aliases in the member's result type are unfolded
+    `@[kindRequirementFree]` mark, `⚠ UNGOVERNED`, or `⚠ UNCHECKED`; a specification
+    boundary is listed as the subject of no requirement. For object scopes, aliases in the
+    member's result type are unfolded
     and only the `IndividualQuantity` bearer argument determines its domain: a matching
     index binder means all objects; closed T-typed subterms provide fixed objects (named
     constants are retained, other terms are reduced to constants). Other-type applications
     are searched through their arguments, and reducible projections, lets, and lambdas are
     followed. A missing object index is `.noIndex`; an irreducible bearer is `.unresolved`.
     Either is an unchecked violation unless the boundary is marked exempt. Objects match up
-    to definitional equality. `.sort` and `.decided` scopes retain the boundary/port join
-    without static object-subset checking. The
-    summary counts the requirements by category and the attested ones — the ratchet.
-    Whether a named requirement is *valid* is `#kind_requirements`' question; this census
-    asks only whether one exists.
+    to definitional equality. A `.sort` scope requires an indexed result and a `Sorted`
+    instance for its object type. The census first reduces the actual result bearer's sort
+    inside the member telescope: a definite match governs the port, while a definite
+    mismatch falls back to object scopes or is ungoverned; a stuck sort uses the object-domain
+    path and may be unchecked. `.decided` scopes retain the boundary/port join without static
+    subset checking. The summary counts the requirements by category and the attested ones —
+    the ratchet. Whether a named requirement is *valid*
+    is `#kind_requirements`' question; this census asks only whether one exists.
   * **`#kind_requirement_clean ns …`** is the gate: throws while any produced port of a
     model boundary in scope is `⚠ UNGOVERNED` or `⚠ UNCHECKED`. An object scope must be
-    checkable against the result's object index; `.sort` and `.decided` scopes remain
-    unchecked against that index.
+    checkable against the result's object index. A `.sort` scope requires that index and a
+    `Sorted` instance, and checks the result object's sort; `.decided` remains unchecked.
 
 Requirements are walked *unscoped* by the census, as theorem edges are: a requirement may
 live beside a deployment rather than beside the boundary it governs. A
@@ -244,25 +247,35 @@ partial def fixedBearerObjects (bearer T : Expr) : MetaM (Array Name × Bool) :=
           | _ => return (#[], false)
 
 /-- Infer the object domain of the reduced `IndividualQuantity` bearer. -/
-def portDomain (member : Name) (T : Expr) : MetaM PortDomain := do
+def bearerDomain (binders : Array Expr) (bearer T : Expr) : MetaM PortDomain := do
+  let carriesAll ← binders.anyM fun binder => do
+    let binderType ← Meta.inferType binder
+    return (← Meta.isDefEq binderType T) && bearer.containsFVar binder.fvarId!
+  if carriesAll then return .all
+  let (foundObjects, unresolved) ← fixedBearerObjects bearer T
+  if unresolved then return .unresolved
+  let mut objects := #[]
+  for n in foundObjects do
+    if !objects.contains n then objects := objects.push n
+  return if objects.isEmpty then .noIndex else .only objects.toList
+
+/-- Open a member's reduced `IndividualQuantity` result in its original telescope. -/
+def withResultIndividualQuantity {α} (member : Name)
+    (k : Array Expr → Array Expr → MetaM α) : MetaM (Option α) := do
   let env ← getEnv
-  let some info := env.find? member | return .noIndex
+  let some info := env.find? member | return none
   Meta.forallTelescopeReducing info.type fun binders result => do
     let result ← withTransparency .default do Meta.whnf result
     let (head, args) := result.getAppFnArgs
     unless head == ``PropertyKindCalculus.IndividualQuantity && args.size == 4 do
-      return .noIndex
-    let bearer := args[1]!
-    let carriesAll ← binders.anyM fun binder => do
-      let binderType ← Meta.inferType binder
-      return (← Meta.isDefEq binderType T) && bearer.containsFVar binder.fvarId!
-    if carriesAll then return .all
-    let (foundObjects, unresolved) ← fixedBearerObjects bearer T
-    if unresolved then return .unresolved
-    let mut objects := #[]
-    for n in foundObjects do
-      if !objects.contains n then objects := objects.push n
-    return if objects.isEmpty then .noIndex else .only objects.toList
+      return none
+    return some (← k binders args)
+
+def portDomain (member : Name) (T : Expr) : MetaM PortDomain := do
+  match ← withResultIndividualQuantity member fun binders args =>
+      bearerDomain binders args[1]! T with
+  | some domain => return domain
+  | none => return .noIndex
 
 /-- The declaration whose result a result port belongs to, when it is a whole result. -/
 def resultMember? (node : NodeId) : Option Name :=
@@ -270,6 +283,17 @@ def resultMember? (node : NodeId) : Option Name :=
     match node.level with
     | some (.inst member _) | some (.member member) => some member
     | none => none
+
+/-- A result port's object type and domain, with the member telescope closed. -/
+def portObjectInfoFor (node : NodeId) : MetaM (Option (Expr × PortDomain)) := do
+  let some member := resultMember? node | return none
+  let some info ← withResultIndividualQuantity member fun binders args => do
+    let objectType := args[0]!
+    let domain ← bearerDomain binders args[1]! objectType
+    let objectType ← Meta.mkForallFVars binders objectType
+    pure (objectType, domain)
+    | return none
+  return some info
 
 /-- Group named objects by the declaration type of each object. -/
 def objectsByType (objects : Array Name) : MetaM (Array (Expr × Array Name)) := do
@@ -328,6 +352,35 @@ def checkRequirement (rname : Name) : MetaM CheckedRequirement := do
     unless sinfo.type.isConstOf ``PropertyKindCalculus.SortOfSystem do
       throwError "the scope '{s}' is not a 'SortOfSystem' — a scope over a sort names \
         the sort, and the objects reach it through their 'Sorted' instance"
+    if let some node := req.port then
+      if let some port := ctr.ports.find? (·.node == node) then
+        unless port.dir.produced do
+          throwError "'{req.name}' is scoped to objects or a sort, but '{node.render}' of \
+            '{ctr.name}' is an input — an object or sort scope quantifies over the objects \
+            an output belongs to; govern a produced port"
+    let ports := ctr.ports.filter fun p =>
+      p.dir.produced &&
+        match req.port with
+        | some node => p.node == node
+        | none => true
+    for port in ports do
+      let noIndexError := s!"'{req.name}' is scoped to sort '{s}', but \
+        '{port.node.render}' of '{ctr.name}' carries no object index — a sort scope \
+        quantifies over the objects an output belongs to; index the result by its object"
+      let some (objectType, domain) ← portObjectInfoFor port.node
+        | throwError noIndexError
+      match domain with
+      | .noIndex => throwError noIndexError
+      | _ =>
+        Meta.forallTelescopeReducing objectType fun _ objectType => do
+          let sortedType ← Meta.mkAppM ``PropertyKindCalculus.Sorted #[objectType]
+          let some _ ← Meta.synthInstance? sortedType
+            | do
+              let objectTypeName := toString (← Meta.ppExpr objectType)
+              throwError "'{req.name}' is scoped to sort '{s}', but the objects of \
+                '{port.node.render}' ('{objectTypeName}') declare no sort — give \
+                '{objectTypeName}' a `Sorted` instance"
+          pure ()
   | .objects os =>
     if os.isEmpty then
       throwError "'{req.name}' quantifies over no object — an empty object list is a \
@@ -352,9 +405,9 @@ def checkRequirement (rname : Name) : MetaM CheckedRequirement := do
     if let some node := req.port then
       if let some port := ctr.ports.find? (·.node == node) then
         unless port.dir.produced do
-          throwError "'{req.name}' is scoped to objects, but '{node.render}' of \
-            '{ctr.name}' is an input — an object scope quantifies over the objects an \
-            output belongs to; govern a produced port"
+          throwError "'{req.name}' is scoped to objects or a sort, but '{node.render}' of \
+            '{ctr.name}' is an input — an object or sort scope quantifies over the objects \
+            an output belongs to; govern a produced port"
     let groups ← objectsByType objects.toArray
     let ports := ctr.ports.filter fun p =>
       p.dir.produced &&
@@ -613,12 +666,296 @@ def enumerableObjects (T : Expr) : MetaM (Option (Array Name)) := do
     if ctorInfo.numFields != 0 then return none
   return some info.ctors.toArray
 
+def sortedInstanceFor (objectType : Expr) : MetaM (Option Expr) := do
+  let sortedType ← Meta.mkAppM ``PropertyKindCalculus.Sorted #[objectType]
+  Meta.synthInstance? sortedType
+
+def sortedSortOf (objectType sorted object : Expr) : MetaM Expr := do
+  let sortOf ← Meta.mkAppOptM ``PropertyKindCalculus.Sorted.sortOf
+    #[some objectType, some sorted, some object]
+  withTransparency .default do Meta.whnf sortOf
+
+def sortMatchesRequirements (governing : Array (Name × Provenance.Requirement))
+    (sortOf : Expr) : MetaM Bool := do
+  for (_, req) in governing do
+    if let .sort s := req.scope then
+      let candidate ← mkConstWithLevelParams s
+      if ← withTransparency .default do Meta.isDefEq sortOf candidate then
+        return true
+  return false
+
+def scopedObjectsForType (governing : Array (Name × Provenance.Requirement))
+    (objectType : Expr) : MetaM (Array Name) := do
+  let env ← getEnv
+  let mut objects := #[]
+  for (_, req) in governing do
+    if let .objects scopeObjects := req.scope then
+      for object in scopeObjects do
+        let some info := env.find? object | continue
+        if ← Meta.isDefEq info.type objectType then
+          if !objects.contains object then objects := objects.push object
+  return objects
+
+def sortScopeDescriptions (governing : Array (Name × Provenance.Requirement)) : String :=
+  String.intercalate ", " <| (governing.map fun (_, req) =>
+    match req.scope with
+    | .sort s => s!"sort '{s}'"
+    | .objects objects => s!"objects {names objects.toArray}"
+    | .all => "all objects"
+    | .decided d => s!"decided by '{d}'").toList
+
+def sortNameForExpr (sortOf : Expr) : MetaM String := do
+  let env ← getEnv
+  for (name, info) in env.constants.toList do
+    if info.type.isConstOf ``PropertyKindCalculus.SortOfSystem then
+      let candidate ← mkConstWithLevelParams name
+      if ← withTransparency .default do Meta.isDefEq sortOf candidate then
+        return toString name
+  return toString (← Meta.ppExpr sortOf)
+
+def sortMismatchRows (marks : Array ContractMark) (decl : Name) (tag : String)
+    (port : NodeId) (requirementNames scopedNames : String)
+    (missing : Array (Name × String)) : Array Row := Id.run do
+  let mut out := #[]
+  for (object, actualSort) in missing do
+    let subject := s!"{decl} {tag} {port.render} for {object}"
+    let line := s!"⚠ UNGOVERNED {subject} — {requirementNames} scoped to {scopedNames}; \
+      '{object}' is of sort '{actualSort}'"
+    out := out.push <| markedCoverageRow marks decl line subject
+  return out
+
+def objectScopeCoverageRows (marks : Array ContractMark) (decl : Name) (tag : String)
+    (port : NodeId) (governing : Array (Name × Provenance.Requirement))
+    (requirementNames : String) : MetaM (Array Row) := do
+  let mut scopedObjects : Array Name := #[]
+  for (_, req) in governing do
+    if let .objects objects := req.scope then
+      for object in objects do
+        if !scopedObjects.contains object then
+          scopedObjects := scopedObjects.push object
+  let groups ← objectsByType scopedObjects
+  if groups.isEmpty then
+    let subject := s!"{decl} {tag} {port.render}"
+    return #[markedCoverageRow marks decl
+      s!"⚠ UNCHECKED {subject} — {requirementNames}: \
+        no scoped object resolves to a declaration" subject]
+  let mut out := #[]
+  for (type, objects) in groups do
+    let scopedNames := names objects
+    let domain ← portDomainFor port type
+    match domain with
+    | .noIndex =>
+      let typeName := toString (← Meta.ppExpr type)
+      let subject := s!"{decl} {tag} {port.render}"
+      out := out.push <| markedCoverageRow marks decl
+        s!"⚠ UNCHECKED {subject} — {requirementNames} scoped to {scopedNames}: \
+          the result carries no '{typeName}' index" subject
+    | .unresolved =>
+      let typeName := toString (← Meta.ppExpr type)
+      let subject := s!"{decl} {tag} {port.render}"
+      out := out.push <| markedCoverageRow marks decl
+        s!"⚠ UNCHECKED {subject} — {requirementNames} scoped to {scopedNames}: \
+          the result's '{typeName}' object cannot be determined statically" subject
+    | .only carried =>
+      let mut covered := #[]
+      for object in objects do
+        if ← objectMem carried.toArray object then covered := covered.push object
+      let mut missing := #[]
+      for object in carried do
+        unless ← objectMem objects object do missing := missing.push object
+      if missing.isEmpty then
+        out := out.push ⟨.ok,
+          s!"[governed] {decl} {tag} {port.render} — by {requirementNames}"⟩
+      else
+        if !covered.isEmpty then
+          out := out.push ⟨.ok,
+            s!"[governed] {decl} {tag} {port.render} for {names covered} — by \
+              {requirementNames}"⟩
+        out := out ++ missingObjectRows marks decl tag port requirementNames scopedNames
+          (missing.map toString)
+    | .all =>
+      match ← enumerableObjects type with
+      | some ctors =>
+        let mut covered := #[]
+        let mut missing := #[]
+        for ctor in ctors do
+          if ← objectMem objects ctor then covered := covered.push ctor
+          else missing := missing.push ctor
+        if missing.isEmpty then
+          out := out.push ⟨.ok,
+            s!"[governed] {decl} {tag} {port.render} — by {requirementNames}"⟩
+        else
+          if !covered.isEmpty then
+            out := out.push ⟨.ok,
+              s!"[governed] {decl} {tag} {port.render} for {names covered} — by \
+                {requirementNames}"⟩
+          out := out ++ missingObjectRows marks decl tag port requirementNames scopedNames
+            (missing.map toString)
+      | none =>
+        let typeName := toString (← Meta.ppExpr type)
+        out := out.push ⟨.ok,
+          s!"[governed] {decl} {tag} {port.render} for {scopedNames} — by \
+            {requirementNames}"⟩
+        out := out ++ missingObjectRows marks decl tag port requirementNames scopedNames
+          #[s!"every other '{typeName}'"]
+  return out
+
+def sortCoverageByDomain (marks : Array ContractMark) (decl : Name) (tag : String)
+    (port : NodeId) (governing : Array (Name × Provenance.Requirement))
+    (requirementNames : String) : MetaM (Array Row) := do
+  let subject := s!"{decl} {tag} {port.render}"
+  let noIndexLine := s!"⚠ UNCHECKED {subject} — {requirementNames}: \
+    the result carries no object index"
+  let some (objectTypeExpr, domain) ← portObjectInfoFor port
+    | return #[markedCoverageRow marks decl noIndexLine subject]
+  match domain with
+  | .noIndex =>
+    return #[markedCoverageRow marks decl noIndexLine subject]
+  | .unresolved =>
+    return ← Meta.forallTelescopeReducing objectTypeExpr fun _ objectType => do
+      let typeName := toString (← Meta.ppExpr objectType)
+      let line := s!"⚠ UNCHECKED {subject} — {requirementNames}: \
+        the result's '{typeName}' object cannot be determined statically"
+      pure #[markedCoverageRow marks decl line subject]
+  | .only _ | .all =>
+    Meta.forallTelescopeReducing objectTypeExpr fun _ objectType => do
+      let typeName := toString (← Meta.ppExpr objectType)
+      let uncheckedNoSort := s!"⚠ UNCHECKED {subject} — {requirementNames}: \
+        the objects of '{typeName}' declare no sort"
+      let some sorted ← sortedInstanceFor objectType
+        | return #[markedCoverageRow marks decl uncheckedNoSort subject]
+      let scopedObjects ← scopedObjectsForType governing objectType
+      let scopedNames := names scopedObjects
+      let scopeDescription := sortScopeDescriptions governing
+      let governedLine := s!"[governed] {decl} {tag} {port.render} — by \
+        {requirementNames}"
+      match domain with
+      | .only carried =>
+        let mut covered := #[]
+        let mut missing := #[]
+        for object in carried do
+          if ← objectMem scopedObjects object then
+            covered := covered.push object
+          else
+            let objectExpr ← mkConstWithLevelParams object
+            let actualSort ← sortedSortOf objectType sorted objectExpr
+            if ← sortMatchesRequirements governing actualSort then
+              covered := covered.push object
+            else
+              missing := missing.push (object, ← sortNameForExpr actualSort)
+        if missing.isEmpty then
+          return #[⟨.ok, governedLine⟩]
+        let mut rows := #[]
+        if !covered.isEmpty then
+          rows := rows.push ⟨.ok,
+            s!"[governed] {decl} {tag} {port.render} for {names covered} — by \
+              {requirementNames}"⟩
+        return rows ++ sortMismatchRows marks decl tag port requirementNames
+          scopeDescription missing
+      | .all =>
+        Meta.withLocalDeclD `x objectType fun x => do
+          let actualSort ← sortedSortOf objectType sorted x
+          if ← sortMatchesRequirements governing actualSort then
+            return #[⟨.ok, governedLine⟩]
+          if actualSort.containsFVar x.fvarId! then
+            let line := s!"⚠ UNCHECKED {subject} — {requirementNames}: \
+              the sort of a generic '{typeName}' object cannot be determined statically"
+            return #[markedCoverageRow marks decl line subject]
+          let some expectedSort := governing.findSome? (fun (_, req) =>
+            match req.scope with
+            | .sort s => some s
+            | _ => none)
+            | throwError "a sort-covered port has no sort scope"
+          let actualSortName ← sortNameForExpr actualSort
+          if scopedObjects.isEmpty then
+            let line := s!"⚠ UNGOVERNED {subject} — {requirementNames} scoped to \
+              sort '{expectedSort}', but '{typeName}' objects are of sort '{actualSortName}'"
+            return #[markedCoverageRow marks decl line subject]
+          match ← enumerableObjects objectType with
+          | some objects =>
+            let mut covered := #[]
+            let mut missing := #[]
+            for object in objects do
+              if ← objectMem scopedObjects object then
+                covered := covered.push object
+              else
+                missing := missing.push (object, actualSortName)
+            if missing.isEmpty then
+              return #[⟨.ok, governedLine⟩]
+            let mut rows := #[]
+            if !covered.isEmpty then
+              rows := rows.push ⟨.ok,
+                s!"[governed] {decl} {tag} {port.render} for {names covered} — by \
+                  {requirementNames}"⟩
+            return rows ++ sortMismatchRows marks decl tag port requirementNames
+              scopeDescription missing
+          | none =>
+            let subjectOther := s!"{decl} {tag} {port.render} for every other '{typeName}'"
+            let line := s!"⚠ UNGOVERNED {subjectOther} — {requirementNames} scoped to \
+              {scopeDescription}; objects are of sort '{actualSortName}'"
+            let rows := #[⟨.ok,
+              s!"[governed] {decl} {tag} {port.render} for {scopedNames} — by \
+                {requirementNames}"⟩]
+            pure <| rows.push (markedCoverageRow marks decl line subjectOther)
+      | .noIndex | .unresolved => pure #[]
+
+def sortCoverageRows (marks : Array ContractMark) (decl : Name) (tag : String)
+    (port : NodeId) (governing : Array (Name × Provenance.Requirement))
+    (requirementNames : String) : MetaM (Array Row) := do
+  let subject := s!"{decl} {tag} {port.render}"
+  let noIndexLine := s!"⚠ UNCHECKED {subject} — {requirementNames}: \
+    the result carries no object index"
+  let some member := resultMember? port
+    | return #[markedCoverageRow marks decl noIndexLine subject]
+  let some rows ← withResultIndividualQuantity member fun binders args => do
+    let objectType := args[0]!
+    let bearer := args[1]!
+    let domain ← bearerDomain binders bearer objectType
+    match domain with
+    | .noIndex => pure #[markedCoverageRow marks decl noIndexLine subject]
+    | .unresolved | .only _ | .all => do
+      let typeName := toString (← Meta.ppExpr objectType)
+      let uncheckedNoSort := s!"⚠ UNCHECKED {subject} — {requirementNames}: \
+        the objects of '{typeName}' declare no sort"
+      let some sorted ← sortedInstanceFor objectType
+        | return #[markedCoverageRow marks decl uncheckedNoSort subject]
+      let bearerSort ← sortedSortOf objectType sorted bearer
+      let governedLine := s!"[governed] {decl} {tag} {port.render} — by \
+        {requirementNames}"
+      if ← sortMatchesRequirements governing bearerSort then
+        return #[⟨.ok, governedLine⟩]
+      let stuck := binders.any fun binder => bearerSort.containsFVar binder.fvarId!
+      if !stuck then
+        let objectRequirements := governing.filter fun (_, req) =>
+          match req.scope with
+          | .objects _ => true
+          | .all | .sort _ | .decided _ => false
+        if objectRequirements.isEmpty then
+          let sortRequirements := governing.filter fun (_, req) =>
+            match req.scope with
+            | .sort _ => true
+            | .all | .objects _ | .decided _ => false
+          let scopes := sortScopeDescriptions sortRequirements
+          let actualSortName ← sortNameForExpr bearerSort
+          let line := s!"⚠ UNGOVERNED {subject} — {requirementNames} scoped to {scopes}, \
+            but '{typeName}' objects are of sort '{actualSortName}'"
+          return #[markedCoverageRow marks decl line subject]
+        let objectRequirementNames := String.intercalate ", "
+          (objectRequirements.map fun (_, req) => s!"'{req.name}'").toList
+        return ← objectScopeCoverageRows marks decl tag port objectRequirements
+          objectRequirementNames
+      return ← sortCoverageByDomain marks decl tag port governing requirementNames
+  | return #[markedCoverageRow marks decl noIndexLine subject]
+  return rows
+
 /-- One row per produced port of every model boundary in scope. Object scopes inspect the
 result `IndividualQuantity` bearer: named T-typed constants are retained, other T-typed terms
 reduce to constants, and non-T applications are searched through their arguments. Reducible
 projections, lets, and lambdas are followed; missing indices and unresolved bearers are
-`⚠ UNCHECKED` violations unless the boundary is exempt. `.sort` and `.decided` scopes retain
-the boundary/port join without object-subset checking. -/
+`⚠ UNCHECKED` violations unless the boundary is exempt. Sort scopes first reduce the actual
+bearer's sort inside the member telescope. A definite match governs the port; a definite
+mismatch falls back to object scopes or is ungoverned; a stuck sort uses the object-domain
+path and may be unchecked. `.decided` scopes retain the boundary/port join unchecked. -/
 def coverageRows (scope : Array Name) : Elab.TermElabM (Array Row × Tally) := do
   let subs ← subjects scope
   let byBoundary ← requirementsByBoundary
@@ -657,82 +994,17 @@ def coverageRows (scope : Array Name) : Elab.TermElabM (Array Row × Tally) := d
           (governing.map (fun (_, r) => s!"'{r.name}'")).toList
         if governing.any fun (_, req) =>
             match req.scope with
-            | .objects _ => false
-            | .all | .sort _ | .decided _ => true then
+            | .all | .decided _ => true
+            | .objects _ | .sort _ => false then
           out := out.push ⟨.ok, s!"[governed] {s.decl} {s.tag} {p.node.render} — by \
             {requirementNames}"⟩
           continue
-        let mut scopedObjects : Array Name := #[]
-        for (_, req) in governing do
-          if let .objects objects := req.scope then
-            for object in objects do
-              if !scopedObjects.contains object then
-                scopedObjects := scopedObjects.push object
-        let groups ← objectsByType scopedObjects
-        if groups.isEmpty then
-          let subject := s!"{s.decl} {s.tag} {p.node.render}"
-          out := out.push <| markedCoverageRow marks s.decl
-            s!"⚠ UNCHECKED {subject} — {requirementNames}: \
-              no scoped object resolves to a declaration" subject
+        if governing.any fun (_, req) => req.scope matches .sort _ then
+          out := out ++ (← sortCoverageRows marks s.decl s.tag p.node governing
+            requirementNames)
           continue
-        for (type, objects) in groups do
-          let scopedNames := names objects
-          let domain ← portDomainFor p.node type
-          match domain with
-          | .noIndex =>
-            let typeName := toString (← Meta.ppExpr type)
-            let subject := s!"{s.decl} {s.tag} {p.node.render}"
-            out := out.push <| markedCoverageRow marks s.decl
-              s!"⚠ UNCHECKED {subject} — {requirementNames} scoped to {scopedNames}: \
-                the result carries no '{typeName}' index" subject
-          | .unresolved =>
-            let typeName := toString (← Meta.ppExpr type)
-            let subject := s!"{s.decl} {s.tag} {p.node.render}"
-            out := out.push <| markedCoverageRow marks s.decl
-              s!"⚠ UNCHECKED {subject} — {requirementNames} scoped to {scopedNames}: \
-                the result's '{typeName}' object cannot be determined statically" subject
-          | .only carried =>
-            let mut covered := #[]
-            for object in objects do
-              if ← objectMem carried.toArray object then covered := covered.push object
-            let mut missing := #[]
-            for object in carried do
-              unless ← objectMem objects object do missing := missing.push object
-            if missing.isEmpty then
-              out := out.push ⟨.ok,
-                s!"[governed] {s.decl} {s.tag} {p.node.render} — by {requirementNames}"⟩
-            else
-              if !covered.isEmpty then
-                out := out.push ⟨.ok,
-                  s!"[governed] {s.decl} {s.tag} {p.node.render} for {names covered} — by \
-                    {requirementNames}"⟩
-              out := out ++ missingObjectRows marks s.decl s.tag p.node requirementNames
-                scopedNames (missing.map toString)
-          | .all =>
-            match ← enumerableObjects type with
-            | some ctors =>
-              let mut covered := #[]
-              let mut missing := #[]
-              for ctor in ctors do
-                if ← objectMem objects ctor then covered := covered.push ctor
-                else missing := missing.push ctor
-              if missing.isEmpty then
-                out := out.push ⟨.ok,
-                  s!"[governed] {s.decl} {s.tag} {p.node.render} — by {requirementNames}"⟩
-              else
-                if !covered.isEmpty then
-                  out := out.push ⟨.ok,
-                    s!"[governed] {s.decl} {s.tag} {p.node.render} for {names covered} — by \
-                      {requirementNames}"⟩
-                out := out ++ missingObjectRows marks s.decl s.tag p.node requirementNames
-                  scopedNames (missing.map toString)
-            | none =>
-              let typeName := toString (← Meta.ppExpr type)
-              out := out.push ⟨.ok,
-                s!"[governed] {s.decl} {s.tag} {p.node.render} for {scopedNames} — by \
-                  {requirementNames}"⟩
-              out := out ++ missingObjectRows marks s.decl s.tag p.node requirementNames
-                scopedNames #[s!"every other '{typeName}'"]
+        out := out ++ (← objectScopeCoverageRows marks s.decl s.tag p.node governing
+          requirementNames)
       else match marks.find? (·.decl == s.decl) with
         | some m => out := out.push ⟨.exempted,
             s!"⊘ exempted {s.decl} {s.tag} {p.node.render} — {m.reason}"⟩
@@ -767,9 +1039,12 @@ requirement. Object scopes inspect the result `IndividualQuantity` bearer: named
 constants are retained, other T-typed terms reduce to constants, and non-T applications are
 searched through their arguments. Reducible projections, lets, and lambdas are followed.
 No object index or an unresolved bearer is an unchecked violation, unless the boundary has
-an exemption mark. Objects match up to definitional equality. `.sort` and `.decided` retain
-the boundary/port join without object-subset checking. One sorted `info` message to pin,
-with category tallies and the attested ratchet. Records an `AuditReceipt` for
+an exemption mark. Objects match up to definitional equality. `.sort` requires an indexed
+result and a `Sorted` instance; the census first reduces the actual result bearer's sort
+inside the member telescope, then falls back to object-domain checking if it is stuck. A
+definite mismatch is covered only by object scopes, and is otherwise ungoverned.
+`.decided` retains the boundary/port join without static subset checking. One sorted `info`
+message to pin, with category tallies and the attested ratchet. Records an `AuditReceipt` for
 `kind_requirement_coverage`. -/
 elab "#kind_requirement_coverage" nss:ident+ : command => liftTermElabM do
   let scope := nss.map (·.getId)
@@ -786,9 +1061,10 @@ message; throws while any produced port of a model boundary in scope is `⚠ UNG
 `⚠ UNCHECKED`. Object scopes inspect the reduced result bearer and match objects up to
 definitional equality; named T-typed constants are retained, other T-typed terms reduce to
 constants, and reducible wrappers are followed. An object scope must be checkable against
-the result's object index. `.sort` and `.decided` scopes remain unchecked against that index.
-Records an `AuditReceipt` for
-`kind_requirement_clean` exactly when it does not fire. -/
+the result's object index. A `.sort` scope requires an index and `Sorted` instance, first
+reduces the actual result bearer's sort, and falls back to object-domain checking if it is
+stuck; `.decided` scopes remain unchecked. Records an
+`AuditReceipt` for `kind_requirement_clean` exactly when it does not fire. -/
 elab "#kind_requirement_clean" nss:ident+ : command => liftTermElabM do
   let scope := nss.map (·.getId)
   let bad := violations (← coverageRows scope).1
