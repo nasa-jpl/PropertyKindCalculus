@@ -154,11 +154,11 @@ def pairP_later : PairState PairId.P where
   massB := ⟨5⟩
   couplingExtension := ⟨6⟩
 
+-- GIVEN:
 /-- R1's executable check: the assembled mass is 3 + 5 = 8. -/
-def r1Spot : Bool := by
-  sorry
+def r1Spot : Bool := decide ((pairMassInState pairP_earlier).magnitude = 8)
 
--- TODO: state R1, attach its theorem witness, and inspect the requirement output.
+-- TODO: change the expected 8 to 9, rebuild, read the requirement failure, then revert.
 /-- R1: pair mass is the sum of the masses of its two bodies. -/
 def r1PairMass : Provenance.Requirement where
   name := "R1"
@@ -168,6 +168,7 @@ def r1PairMass : Provenance.Requirement where
   port := some (NodeId.result.within ``pairMassOf)
   scope := .sort ``pairS
   witness := ``pairMass_assembled
+  spotChecks := [``r1Spot]
 
 #kind_requirement r1PairMass
 -- EXERCISE_END: r1_pair_mass

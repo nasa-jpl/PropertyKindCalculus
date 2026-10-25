@@ -555,6 +555,17 @@ def check(path):
     return errors
 
 
+def error_guard_count(block):
+    guards = list(re.finditer(r"(?m)^[ \t]*#guard_msgs\b", block))
+    count = 0
+    previous_end = 0
+    for guard in guards:
+        if re.search(r"\berror:", block[previous_end:guard.start()]):
+            count += 1
+        previous_end = guard.end()
+    return count
+
+
 def worksheet_errors(path, text, data):
     errors = []
     lesson_number = data.get("hcp")
@@ -576,7 +587,21 @@ def worksheet_errors(path, text, data):
         worksheet_text = worksheet_path.read_text(encoding="utf-8")
 
     solution = solution_path.read_text(encoding="utf-8")
-    anchors = re.findall(r"(?m)^-- ANCHOR: ([A-Za-z0-9_-]+)[ \t]*$", solution)
+    anchor_pattern = re.compile(r"(?m)^-- ANCHOR: ([A-Za-z0-9_-]+)[ \t]*$")
+    anchor_end_pattern = re.compile(r"(?m)^-- ANCHOR_END: ([A-Za-z0-9_-]+)[ \t]*$")
+    anchor_matches = list(anchor_pattern.finditer(solution))
+    anchors = [match.group(1) for match in anchor_matches]
+    anchor_blocks = {}
+    for anchor in anchor_matches:
+        name = anchor.group(1)
+        end = next(
+            (match for match in anchor_end_pattern.finditer(solution, anchor.end())
+             if match.group(1) == name),
+            None,
+        )
+        if end is not None:
+            anchor_blocks[name] = solution[anchor.end():end.start()]
+
     exercises = list(re.finditer(
         r"(?m)^-- EXERCISE: ([A-Za-z0-9_-]+)[ \t]*$", worksheet_text
     ))
@@ -600,6 +625,16 @@ def worksheet_errors(path, text, data):
             block = worksheet_text[exercise.start():matching_end.end()]
         if "TODO:" not in block:
             errors.append(f"{path}: exercise '{exercise.group(1)}' is missing a TODO")
+        error_pins = error_guard_count(anchor_blocks.get(exercise.group(1), ""))
+        commented_probes = sum(
+            bool(re.match(r"^-- (?:example|def|theorem|#)", line))
+            for line in block.splitlines()
+        )
+        if error_pins > commented_probes:
+            errors.append(
+                f"{path}: exercise '{exercise.group(1)}' has {commented_probes} "
+                f"commented probe starts for {error_pins} error #guard_msgs blocks"
+            )
 
     if "#guard_msgs" in worksheet_text:
         errors.append(f"{path}: worksheet must not contain #guard_msgs")

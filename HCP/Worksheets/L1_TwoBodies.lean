@@ -113,6 +113,10 @@ theorem mass_kind_shared_by_oscillators :
 --   IndividualQuantity.add DifferenceKind.ofScale (massOf sys ⟨.A⟩) (massOf sys ⟨.B⟩)
 -- example {r : Rig} (sys : TwoOscillators r) :=
 --   IndividualQuantity.div (by sorry) (stiffnessOf sys ⟨.A⟩) (massOf sys ⟨.B⟩)
+-- example (o : Oscillator → ClassicalMechanics.HarmonicOscillator) :=
+--   IndividualQuantity.add DifferenceKind.ofScale
+--     (massOf (⟨o⟩ : TwoOscillators .R₁) ⟨.A⟩)
+--     (massOf (⟨o⟩ : TwoOscillators .R₂) ⟨.A⟩)
 -- EXERCISE_END: refused_cross_oscillator
 
 -- EXERCISE: same_rig_estimate_difference
