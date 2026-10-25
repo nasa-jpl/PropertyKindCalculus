@@ -20,7 +20,7 @@ tag := "hcp-l5"
 
 ## Purpose
 
-Optional. Add a damper to oscillator A and drop energy conservation. PhysLib's damping constant γ (kg/s), ISO's damping coefficient δ = γ/(2m) (s⁻¹) and angular frequency ω₀ share names or dimensions; kinds keep them apart, and δ is computed from the oscillator's own γ and mass.
+Optional. Add a viscous damper to oscillator A, so that its energy is no longer conserved. Three quantities are easy to confuse here: PhysLib's damping constant γ (kg/s); ISO 80000-3's damping coefficient δ = γ/(2m) (s⁻¹), which PhysLib calls the decay rate; and the angular frequency ω₀ (rad/s), which has the same dimension as δ. The lesson gives each its own kind, so adding δ to ω₀ fails to type-check. `decayRateOf` computes δ from one oscillator's γ and mass with `IndividualQuantity.div`, so oscillator B's mass cannot be used for oscillator A's δ.
 
 ## PKC vocabulary in scope
 
@@ -37,17 +37,17 @@ Carried from earlier steps: DimensionedKind, `IndividualQuantity` and its `add`/
 
 ## Verifiable properties
 
-- The damped oscillator's energy decreases at the rate PhysLib states (theorem) `HCP.L5_Damping#energy_dissipation`.
-- δ is computed from oscillator A's own γ and mass; B's mass is refused (refused) `HCP.L5_Damping#kinds_and_decay_rate`.
-- δ and ω₀ have the same dimension, and adding them is refused (refused) `HCP.L5_Damping#same_dimension_different_kinds`.
-- The underdamped test reduces to δ < ω₀; the kinded comparison is refused and the magnitude form is accepted (theorem) `HCP.L5_Damping#underdamped_regime`.
-- Two states of oscillator A give a typed change in δ (type-checked) `HCP.L5_Damping#same_oscillator_states`.
+- The damped oscillator's energy decreases at the rate stated by PhysLib's energy-dissipation theorem (theorem) `HCP.L5_Damping#energy_dissipation`.
+- `decayRateOf` divides A's γ by A's 2m, and its magnitude equals PhysLib's `decayRate`; using B's mass instead fails with a type mismatch (refused) `HCP.L5_Damping#kinds_and_decay_rate`.
+- δ and ω₀ have the same dimension, T⁻¹, and adding them fails to type-check (refused) `HCP.L5_Damping#same_dimension_different_kinds`.
+- PhysLib's `IsUnderdamped` is equivalent to δ < ω₀. Comparing the two as kinded quantities fails with a type mismatch, because their kinds differ; `IsUnderdamped` implies that the magnitude of δ is less than the magnitude of ω₀ (theorem) `HCP.L5_Damping#underdamped_regime`.
+- Subtracting an earlier record of A's δ from a later one type-checks as an `IndividualQuantity` about A of the damping-coefficient kind, whose magnitude is the difference of the two decay rates; subtracting B's δ from A's fails with a type mismatch (type-checked) `HCP.L5_Damping#same_oscillator_states`.
 
 ## Errors prevented
 
-- One name, two kinds: PhysLib's damping constant γ confused with ISO's damping coefficient δ (`HCP.L5_Damping#kinds_and_decay_rate`).
-- Same dimension, different kind: δ + ω₀ accepted by dimensions (`HCP.L5_Damping#same_dimension_different_kinds`).
-- Cross-system contamination: oscillator B's mass in oscillator A's decay rate (`HCP.L5_Damping#kinds_and_decay_rate`).
+- Similar names, different kinds: PhysLib's damping constant γ (kg/s) used as ISO's damping coefficient δ (s⁻¹) (`HCP.L5_Damping#kinds_and_decay_rate`).
+- Same dimension, different kind: δ + ω₀, which dimensions alone accept (`HCP.L5_Damping#same_dimension_different_kinds`).
+- Cross-system contamination: oscillator B's mass used in oscillator A's δ (`HCP.L5_Damping#kinds_and_decay_rate`).
 
 # Lesson
 

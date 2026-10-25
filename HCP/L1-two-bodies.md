@@ -33,7 +33,7 @@ state:
 
 ### Purpose
 
-Introduce the bearer: every quantity is about some particular system. With two black-box oscillators A and B, a quantity indexed by its oscillator lets A's own `k/m` through and refuses B's mass in A's formula; a nominal designation keeps A and B distinct systems even when their parameters match.
+Introduce the bearer: the particular system a quantity is about. The context has two black-box oscillators, A and B, each a body on a wall spring. An `IndividualQuantity o k ℝ` is a real magnitude of kind k about the object o, so the oscillator a quantity is about is part of its type. Dividing oscillator A's spring constant by oscillator A's mass type-checks and gives an `IndividualQuantity` of kind `omegaSquaredK` about A. Supplying oscillator B's mass where a mass about A is expected fails to type-check with a type mismatch. A `Designated` instance gives A and B distinct nominal names, so they remain two systems even when their parameter values are equal.
 
 ### PKC vocabulary in scope
 
@@ -44,24 +44,24 @@ New at this step:
 - `IndividualQuantity` — a magnitude of kind `k` about one object `o`.
 - `IndividualQuantity.add`, `IndividualQuantity.div` — same-object, kind-licensed arithmetic.
 - `DifferenceKind.ofScale` — the difference law that licenses comparing two records of one quantity.
-- `massK`, `springConstantK`, `omegaSquaredK` — the oscillator's kinds; k/m lands at `omegaSquaredK`.
+- `massK`, `springConstantK`, `omegaSquaredK` — the oscillator's kinds; k/m has kind `omegaSquaredK`.
 
 Carried from earlier steps: `Quantity`, `massQ`, `springQ`.
 
 ### Verifiable properties
 
-- Oscillators A and B have one sort (theorem) `HCP.L1_TwoBodies#oscillator_context_and_sort`.
-- A and B have distinct designations, and a constant designation cannot be injective (theorem) `HCP.L1_TwoBodies#designation`.
-- Oscillator A's own `k/m` type-checks at `omegaSquaredK` about A (type-checked) `HCP.L1_TwoBodies#oscillator_indexed_quantities`.
-- Using B's mass where A's is expected is refused (refused) `HCP.L1_TwoBodies#refused_cross_oscillator`.
-- Two records of oscillator A on rig R₁ give a typed change in A's mass (type-checked) `HCP.L1_TwoBodies#same_rig_estimate_difference`.
-- An object type with no sort cannot bear a sorted quantity (refused) `HCP.L1_TwoBodies#refused_unsorted_object`.
+- Oscillators A and B have the same sort, harmonic oscillator (theorem) `HCP.L1_TwoBodies#oscillator_context_and_sort`.
+- The designations of A and B are different, and a designation that gives every oscillator the same name is not injective, so it cannot be a `Designated` instance (theorem) `HCP.L1_TwoBodies#designation`.
+- For each oscillator o, `omegaSqOf` divides o's spring constant by o's mass with `IndividualQuantity.div` and type-checks as an `IndividualQuantity` of kind `omegaSquaredK` about o, whose magnitude is o's k/m (type-checked) `HCP.L1_TwoBodies#oscillator_indexed_quantities`.
+- Oscillator B's mass, supplied where a mass about A is expected, fails with a type mismatch: as a value, as an argument of `IndividualQuantity.add` or `IndividualQuantity.div`, and when oscillator A of rig R₁ is mixed with oscillator A of rig R₂ (refused) `HCP.L1_TwoBodies#refused_cross_oscillator`.
+- Subtracting an earlier record of A's mass from a later one, both on rig R₁, type-checks as an `IndividualQuantity` of kind `massK` about A, using `DifferenceKind.ofScale`; its magnitude is the later mass minus the earlier mass (type-checked) `HCP.L1_TwoBodies#same_rig_estimate_difference`.
+- Dedicating a kind to an object whose type has no `Sorted` instance fails to type-check (refused) `HCP.L1_TwoBodies#refused_unsorted_object`.
 
 ### Errors prevented
 
-- Cross-system contamination: oscillator B's mass entering oscillator A's frequency; bare reals and bearer-free kinds accept it, bearer-indexed quantities refuse it (`HCP.L1_TwoBodies#refused_cross_oscillator`).
-- False identity: one name for both oscillators, so two systems are reported as one (`HCP.L1_TwoBodies#designation`).
-- Unsorted bearer: a quantity about something that has no stated sort (`HCP.L1_TwoBodies#refused_unsorted_object`).
+- Cross-system contamination: oscillator B's mass used in oscillator A's k/m. Bare reals and `Quantity` values without a bearer accept it; `IndividualQuantity` rejects it with a type mismatch (`HCP.L1_TwoBodies#bare_real_cross_oscillators`, `HCP.L1_TwoBodies#kinded_bearer_free_cross_oscillators`, `HCP.L1_TwoBodies#refused_cross_oscillator`).
+- False identity: one name used for both oscillators, so A and B are reported as one system. The `designation_inj` proof that every `Designated` instance needs rules this out (`HCP.L1_TwoBodies#designation`).
+- Unsorted bearer: a quantity about an object of no stated sort. It fails to type-check because no `Sorted` instance exists for the object's type (`HCP.L1_TwoBodies#refused_unsorted_object`).
 
 ## 1. Persona
 

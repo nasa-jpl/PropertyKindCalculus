@@ -33,7 +33,7 @@ state:
 
 ### Purpose
 
-Open body A of pair P into two rigid halves with a body-fixed frame beside the lab frame. Mass still adds over the halves; the centre of mass is a mass-weighted mean that exists only for a body with mass; angular velocity is the same for every half; and a frame index stops lab-frame ω from entering a body-frame energy.
+Open body A of pair P into two rigid halves, with a body-fixed frame beside the lab frame. Mass assembles over the halves as a sum. The centre of mass is the mass-weighted mean of the halves' positions, which is meaningful only when the total mass is nonzero. Every half of a rigid body has the same angular velocity, so angular velocity is intensive and has no `Assembles` instance. Each frame-dependent quantity has its frame in its type (`InFrame`), so a body-frame rotational energy computed from a lab-frame angular velocity fails to type-check.
 
 ### PKC vocabulary in scope
 
@@ -49,18 +49,18 @@ Carried from earlier steps: `Composite`, `Decomposition`, `Assembles`, `assemble
 
 ### Verifiable properties
 
-- Body A's centre of mass is the mass-weighted mean of its halves; masses 3 and 5 at 0 and 10 give 25/4 (theorem) `HCP.L3_TheBodyOpens#center_of_mass_mean`.
-- A massless body has no centre of mass to form (theorem) `HCP.L3_TheBodyOpens#massless_center_of_mass`.
-- Angular velocity is intensive over the halves, and summing it is refused (refused) `HCP.L3_TheBodyOpens#angular_velocity_intensive`.
-- Lab-frame ω in the body-frame rotational energy is refused (refused) `HCP.L3_TheBodyOpens#framed_rotational_energy`.
-- The kinded body-frame energy equals PhysLib's (theorem) `HCP.L3_TheBodyOpens#framed_rotational_energy`.
-- A homogeneous solid sphere has inertia (2/5) m R² (theorem) `HCP.L3_TheBodyOpens#solid_sphere`.
+- Body A's centre of mass is the mass-weighted mean of its halves' positions: halves of mass 3 and 5 at positions 0 and 10 give 25/4, not the midpoint 5 (theorem) `HCP.L3_TheBodyOpens#center_of_mass_mean`.
+- PhysLib's `centerOfMass` of a body with zero mass is the origin, because 1/0 = 0 in Lean; body A's carving comes with a proof that its total mass is nonzero (theorem) `HCP.L3_TheBodyOpens#massless_center_of_mass`.
+- Angular velocity is equal on both halves and is not a sum over them, and `assemble` of angular velocity over the halves fails: there is no `Assembles rigidBodyS angularVelocityK` instance (refused) `HCP.L3_TheBodyOpens#angular_velocity_intensive`.
+- `rotationalContraction` of the body-frame inertia with the lab-frame ω fails with a type mismatch between `InFrame lab` and `InFrame body` (refused) `HCP.L3_TheBodyOpens#framed_rotational_energy`.
+- With the body-frame ω, the kinded rotational energy equals PhysLib's rotational kinetic energy (theorem) `HCP.L3_TheBodyOpens#framed_rotational_energy`.
+- A homogeneous solid sphere of mass m and radius R has moment of inertia (2/5) m R² (theorem) `HCP.L3_TheBodyOpens#solid_sphere`.
 
 ### Errors prevented
 
-- Weighted mean vs sum: centre of mass computed as a sum or plain midpoint (`HCP.L3_TheBodyOpens#center_of_mass_mean`).
-- Degenerate whole: a centre of mass for a massless body (`HCP.L3_TheBodyOpens#massless_center_of_mass`).
-- Wrong frame: PhysLib accepts lab-frame ω in the body-frame energy, `HCP.L3_TheBodyOpens#bare_frame_mismatch`; the frame index refuses it, `HCP.L3_TheBodyOpens#framed_rotational_energy`.
+- Sum or midpoint instead of weighted mean: body A's centre of mass computed as the sum or the midpoint of its halves' positions (`HCP.L3_TheBodyOpens#center_of_mass_mean`).
+- Degenerate whole: a centre of mass reported for a body with zero total mass, which PhysLib returns as the origin (`HCP.L3_TheBodyOpens#massless_center_of_mass`).
+- Wrong frame: PhysLib accepts the lab-frame ω in the body-frame energy; with `InFrame`, it fails to type-check (`HCP.L3_TheBodyOpens#bare_frame_mismatch`, `HCP.L3_TheBodyOpens#framed_rotational_energy`).
 
 ## 1. Persona
 
