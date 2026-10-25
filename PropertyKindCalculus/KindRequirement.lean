@@ -1103,7 +1103,7 @@ def coverageRows (scope : Array Name) : Elab.TermElabM (Array Row × Tally) := d
               | .all | .objects _ | .sort _ => "").toList
           let subject := s!"{s.decl} {s.tag} {p.node.render}"
           let line := s!"⚠ UNCHECKED {subject} — {requirementNames}: decided by \
-            {deciderNames} with no decider proof"
+            {deciderNames} with no valid decider proof"
           out := out.push <| markedCoverageRow marks s.decl line subject
       else match marks.find? (·.decl == s.decl) with
         | some m => out := out.push ⟨.exempted,
