@@ -22,11 +22,13 @@ open scoped PropertyKindCalculus.OperatorTable
 noncomputable section
 
 -- ANCHOR: bare_real_cross_oscillators
+-- Bare reals: √(S₁.k / S₂.m) accepts oscillator A's stiffness and oscillator B's mass as a real; bare values cannot catch this cross-system radicand.
 example (S₁ S₂ : ClassicalMechanics.HarmonicOscillator) : ℝ :=
   √(S₁.k / S₂.m)
 -- ANCHOR_END: bare_real_cross_oscillators
 
 -- ANCHOR: kinded_bearer_free_cross_oscillators
+-- Bearer safety: A bearer-free Quantity omegaSquaredK accepts oscillator A's stiffness divided by oscillator B's mass; erasing the bearer leaves only the kind.
 example (S₁ S₂ : ClassicalMechanics.HarmonicOscillator) :
     Quantity ForPhysLib.ClassicalMechanics.omegaSquaredK ℝ :=
   ForPhysLib.ClassicalMechanics.springQ S₁ /
@@ -41,6 +43,7 @@ def oscillatorS : SortOfSystem := ⟨"harmonic oscillator"⟩
 
 instance : Sorted Oscillator := ⟨fun _ => oscillatorS⟩
 
+-- Same sort, distinct systems: Proves that sortOf assigns oscillator A and oscillator B the same sort, so sort alone does not identify either system.
 example : Sorted.sortOf Oscillator.A = Sorted.sortOf Oscillator.B := rfl
 -- ANCHOR_END: oscillator_context_and_sort
 
@@ -52,6 +55,7 @@ instance : Designated Oscillator where
   designation_inj {x y} h := by
     cases x <;> cases y <;> first | rfl | exact absurd (System.mk.inj h) (by decide)
 
+/-- Nominal identity: Proves that the constant designation gives oscillator A and oscillator B the same name, so it is not injective and cannot provide the `Designated` proof. -/
 theorem constant_designation_not_injective :
     ¬ Function.Injective (fun _ : Oscillator => (⟨"oscillator"⟩ : Object)) := by
   intro h
@@ -91,12 +95,14 @@ def omegaSqOf {r : Rig} (sys : TwoOscillators r) (o : OscillatorOf r) :
     (stiffnessOf sys o)
     (massOf sys o)
 
+/-- Bearer safety: Proves that oscillator O's indexed omegaSquaredK magnitude equals O.k / O.m; the bearer index keeps stiffness and mass on the same oscillator. -/
 theorem omegaSqOf_magnitude {r : Rig} (sys : TwoOscillators r) (o : OscillatorOf r) :
     (omegaSqOf sys o).magnitude = (sys.osc o.osc).k / (sys.osc o.osc).m := by
   rw [omegaSqOf, IndividualQuantity.div_magnitude, stiffnessOf, massOf]
 
 def whole : Component := ⟨"whole"⟩
 
+/-- Kind vs bearer: Proves that the mass kind dedicated to oscillator A's whole equals the kind dedicated to oscillator B's whole; only the bearer index distinguishes their masses. -/
 theorem mass_kind_shared_by_oscillators :
     ForPhysLib.ClassicalMechanics.massK.dedicatedFor Oscillator.A whole =
       ForPhysLib.ClassicalMechanics.massK.dedicatedFor Oscillator.B whole :=
@@ -104,6 +110,7 @@ theorem mass_kind_shared_by_oscillators :
 -- ANCHOR_END: oscillator_indexed_quantities
 
 -- ANCHOR: refused_cross_oscillator
+-- Bearer safety: Refused: type mismatch between oscillator B's mass bearer and the required oscillator A bearer; this prevents substituting B's mass into an A-specific quantity.
 /--
 error: Type mismatch
   massOf sys { osc := Oscillator.B }
@@ -118,6 +125,7 @@ example {r : Rig} (sys : TwoOscillators r) :
       ForPhysLib.ClassicalMechanics.massK ℝ :=
   massOf sys ⟨.B⟩
 
+-- Bearer safety: Refused: type mismatch between oscillator A's and oscillator B's mass bearers; this prevents adding across systems before introducing an assembly whole.
 /--
 error: Application type mismatch: The argument
   massOf sys { osc := Oscillator.B }
@@ -133,6 +141,7 @@ example {r : Rig} (sys : TwoOscillators r) :=
   IndividualQuantity.add DifferenceKind.ofScale
     (massOf sys ⟨.A⟩) (massOf sys ⟨.B⟩)
 
+-- Bearer safety: Refused: type mismatch between oscillator A's stiffness bearer and oscillator B's mass bearer; this prevents a cross-oscillator k/m quotient.
 /--
 error: Application type mismatch: The argument
   massOf sys { osc := Oscillator.B }
@@ -152,6 +161,7 @@ example {r : Rig} (sys : TwoOscillators r) :=
       (k := ForPhysLib.ClassicalMechanics.omegaSquaredK)
   IndividualQuantity.div h (stiffnessOf sys ⟨.A⟩) (massOf sys ⟨.B⟩)
 
+-- Bearer safety: Refused: type mismatch between oscillator A on R₁ and oscillator A on R₂; this prevents conflating distinct rigs even when values match.
 /--
 error: Application type mismatch: The argument
   massOf { osc := o } { osc := Oscillator.A }
@@ -177,12 +187,14 @@ def oscillatorAMassDifference (earlier later : TwoOscillators .R₁) :
     (massOf later ⟨.A⟩)
     (-(massOf earlier ⟨.A⟩))
 
+-- Same-name records: Constructs a massK IndividualQuantity about oscillator A on R₁, so earlier and later records of that rig can be compared.
 #guard_msgs in
 example (earlier later : TwoOscillators .R₁) :
     IndividualQuantity (⟨.A⟩ : OscillatorOf .R₁)
       ForPhysLib.ClassicalMechanics.massK ℝ :=
   oscillatorAMassDifference earlier later
 
+/-- Same-name records: Proves that oscillator A's R₁ mass-difference magnitude is later mass minus earlier mass. -/
 theorem oscillatorAMassDifference_magnitude (earlier later : TwoOscillators .R₁) :
     (oscillatorAMassDifference earlier later).magnitude =
       (later.osc .A).m - (earlier.osc .A).m := by
@@ -194,6 +206,7 @@ theorem oscillatorAMassDifference_magnitude (earlier later : TwoOscillators .R�
 -- ANCHOR_END: same_rig_estimate_difference
 
 -- ANCHOR: refused_unsorted_object
+-- Bearer safety: Refused: no Sorted System instance lets Lean dedicate a mass kind to this nominal object; a name alone cannot supply a system sort.
 /--
 error: failed to synthesize instance of type class
   Sorted System

@@ -614,6 +614,45 @@ def commented_probe_commands(block):
     return probes
 
 
+EXAMPLE_DECLARATION = re.compile(
+    r"^\s*(?:#guard_msgs\b.*?\bin\s+)?(?:noncomputable\s+)?example\b"
+)
+EXAMPLE_MARKERS = (
+    "-- ANCHOR:", "-- ANCHOR_END:", "-- EXERCISE:", "-- EXERCISE_END:",
+    "-- TODO:", "-- GIVEN:",
+)
+
+
+def example_comment_errors(path, text):
+    errors = []
+    lines = text.splitlines()
+    for index, line in enumerate(lines):
+        if not EXAMPLE_DECLARATION.match(line):
+            continue
+
+        preceding = index - 1
+        if not line.lstrip().startswith("#guard_msgs"):
+            while preceding >= 0 and lines[preceding].lstrip().startswith("#guard_msgs"):
+                preceding -= 1
+
+        if preceding >= 0 and lines[preceding].rstrip().endswith("-/"):
+            while preceding >= 0 and "/--" not in lines[preceding]:
+                preceding -= 1
+            if preceding >= 0:
+                preceding -= 1
+
+        preceding_line = lines[preceding].lstrip() if preceding >= 0 else ""
+        has_comment = (
+            preceding_line.startswith("-- ")
+            and not preceding_line.startswith(EXAMPLE_MARKERS)
+        )
+        if not has_comment:
+            errors.append(
+                f"{path}:{index + 1}: example has no preceding comment saying what it shows"
+            )
+    return errors
+
+
 def worksheet_errors(path, text, data):
     errors = []
     lesson_number = data.get("hcp")
@@ -635,6 +674,8 @@ def worksheet_errors(path, text, data):
         worksheet_text = worksheet_path.read_text(encoding="utf-8")
 
     solution = solution_path.read_text(encoding="utf-8")
+    errors.extend(example_comment_errors(solution_path, solution))
+    errors.extend(example_comment_errors(worksheet_path, worksheet_text))
     anchor_pattern = re.compile(r"(?m)^-- ANCHOR: ([A-Za-z0-9_-]+)[ \t]*$")
     anchor_end_pattern = re.compile(r"(?m)^-- ANCHOR_END: ([A-Za-z0-9_-]+)[ \t]*$")
     anchor_matches = list(anchor_pattern.finditer(solution))

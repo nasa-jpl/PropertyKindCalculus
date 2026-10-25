@@ -79,21 +79,26 @@ def pairDisplacementOf {π : PairId} (s : PairState3 π) :
 
 -- EXERCISE: points_vectors_and_distances
 -- TODO: construct the well-kinded position, displacement, and distance values.
+-- Point vs vector: Constructs body A's location as a bearer-free `Quantity positionVector`; its type records position kind, not pair P versus Q.
 example (s : PairState3 .P) :
     Quantity ForPhysLib.Kinds.Space.positionVector (EuclideanSpace ℝ (Fin 3)) := by
   sorry
 
+-- Point vs vector: Constructs pair P's A-to-B difference as a bearer-free `Quantity displacement`; its type cannot distinguish pair P from Q.
 example (s : PairState3 .P) :
     Quantity ForPhysLib.Kinds.Space.displacement (EuclideanSpace ℝ (Fin 3)) := by
   sorry
 
+-- Point vs vector: Constructs pair P's scalar separation as a bearer-free `Quantity distance`; its type separates distance from displacement and length, not P from Q.
 example (s : PairState3 .P) : Quantity ForPhysLib.Kinds.Space.distance ℝ := by
   sorry
 
 -- TODO: uncomment each expression and explain why the vector kinds cannot be added.
+-- Point vs vector: Refused: no HAdd instance combines positionVector and displacement; ordinary addition would conflate a point with its offset instead of translating it.
 -- example (s : PairState3 .P) :=
 --   ForPhysLib.Kinded.Space.positionQ (s.com .A) +
 --     ForPhysLib.Kinded.Space.displacementQ (s.com .A) (s.com .B)
+-- Kind vs dimension: Refused: no HAdd instance combines distance and length, preventing a sum of distinct scalar kinds despite their shared length dimension.
 -- example (s : PairState3 .P) :=
 --   ForPhysLib.Kinded.Space.distanceQ (s.com .A) (s.com .B) +
 --     ForPhysLib.Kinded.Space.lengthOf
@@ -110,6 +115,7 @@ lemma separationOf_magnitude {π : PairId} (s : PairState3 π) :
     (separationOf s).magnitude = dist (s.com .A) (s.com .B) := by
   sorry
 
+-- Composition law: Constructs a DifferenceKind for distance from its ratio scale, licensing a change between states of pair P.
 example : DifferenceKind ForPhysLib.Kinds.Space.distance := by
   sorry
 
@@ -123,6 +129,7 @@ lemma separationChange_magnitude (earlier later : PairState3 .P) :
   sorry
 
 -- TODO: uncomment the cross-pair addition and explain the bearer mismatch.
+-- Bearer safety: Refused: type mismatch between pair P's and pair Q's SeparationOf bearers; this prevents treating distinct pairs as one distance history.
 -- example (p : PairState3 .P) (q : PairState3 .Q) :=
 --   let qDistance : IndividualQuantity (⟨⟩ : SeparationOf .Q)
 --       ForPhysLib.Kinds.Space.distance ℝ := separationOf q
@@ -131,12 +138,14 @@ lemma separationChange_magnitude (earlier later : PairState3 .P) :
 
 -- EXERCISE: distance_is_length
 -- TODO: apply the distance-as-length theorem and the triangle inequality.
+-- Point vs vector: Proves that pair P's A–B distance equals the length of its displacement; distance is the norm of the connecting vector.
 example (s : PairState3 .P) :
     (ForPhysLib.Kinded.Space.distanceQ (s.com .A) (s.com .B)).magnitude =
       (ForPhysLib.Kinded.Space.lengthOf
         (ForPhysLib.Kinded.Space.displacementQ (s.com .A) (s.com .B))).magnitude := by
   sorry
 
+-- Point vs vector: Proves that pair P's triangle inequality is distance(A,A) ≤ distance(A,B) + distance(B,A), a geometric law on its points.
 example (s : PairState3 .P) :
     (ForPhysLib.Kinded.Space.distanceQ (s.com .A) (s.com .A)).magnitude ≤
       (ForPhysLib.Kinded.Space.distanceQ (s.com .A) (s.com .B)).magnitude +
@@ -150,12 +159,14 @@ def barePairDisplacement {π : PairId} (s : PairState3 π)
     (F : ReferenceFrame 3) (t : Time) : F.Vector := by
   sorry
 
+-- Frame safety: Bare vectors erase physical frame and kind, so all three transports accept pair P's A–B displacement; only geometric is correct, and kinded `kBoostTransport` refuses it.
 example (s : PairState3 .P) (F G : ReferenceFrame 3) (t : Time)
     (u : EuclideanSpace ℝ (Fin 3)) :
     G.Vector × G.Vector × G.Vector := by
   sorry
 
 -- TODO: explain why an unframed vector can combine with the cart velocity.
+-- Frame safety: Bare EuclideanSpace vectors accept adding pair P's displacement to cart velocity; the unindexed result cannot catch this physically invalid sum.
 example (s : PairState3 .P) (cart : ReferenceFrame 3) (hCart : cart.IsInertial) :
     EuclideanSpace ℝ (Fin 3) :=
   (s.com .A -ᵥ s.com .B) + hCart.velocity
@@ -178,6 +189,7 @@ def averageVelocityInFrame {π : PairId} (F : ReferenceFrame 3) (t : Time)
     (h : elapsed.magnitude ≠ 0) : KVector F velocityK := by
   sorry
 
+-- Frame safety: Constructs a bearer-free `KVector G displacement` for pair P via geometric transport; frame and kind remain indexed, but P and Q displacements share a type.
 example (s : PairState3 .P) (F G : ReferenceFrame 3) (t : Time) :
     KVector G ForPhysLib.Kinds.Space.displacement := by
   sorry
@@ -188,6 +200,7 @@ theorem pairDisplacement_observer_independent {π : PairId}
       pairDisplacementInFrame G t s := by
   sorry
 
+-- Frame safety: Constructs a bearer-free `KVector G velocityK` for body A's average velocity via boost transport; the type cannot distinguish pair P from Q.
 example (earlier later : PairState3 .P) (elapsed : Quantity durationK ℝ)
     (h : elapsed.magnitude ≠ 0) (F G : ReferenceFrame 3) (t : Time)
     (u : Quantity velocityK (EuclideanSpace ℝ (Fin 3))) :
@@ -195,21 +208,25 @@ example (earlier later : PairState3 .P) (elapsed : Quantity durationK ℝ)
   sorry
 
 -- TODO: uncomment each expression and describe the kind mismatch.
+-- Frame safety: Refused: type mismatch between pair P's KVector displacement and the KVector velocity required by boost transport; displacement cannot be boosted as velocity.
 -- example (F G : ReferenceFrame 3) (t : Time)
 --     (u : Quantity velocityK (EuclideanSpace ℝ (Fin 3))) (s : PairState3 .P) :=
 --   kBoostTransport F G t u (pairDisplacementInFrame F t s)
+-- Kind vs dimension: Refused: no HAdd instance combines frame-F velocity and force vectors, preventing addition of unlike physical kinds.
 -- example (F : ReferenceFrame 3) (v : KVector F velocityK) (force : KVector F forceK) :=
 --   v + force
 -- EXERCISE_END: kinded_frames
 
 -- EXERCISE: observer_motion
 -- TODO: apply the origin-displacement theorem and inspect the rejected mixed-kind sum.
+-- Frame safety: Proves that the inertial cart's origin-displacement magnitude equals elapsed time times cart-velocity magnitude; the law belongs to the cart frame.
 example (cart : ReferenceFrame 3) (hCart : cart.IsInertial) (t₁ t₂ : Time) :
     (ForPhysLib.Kinded.Space.displacementQ (cart.origin t₂) (cart.origin t₁)).magnitude =
       (elapsedQ t₁ t₂).magnitude • (frameVelocityQ hCart).magnitude := by
   sorry
 
 -- TODO: uncomment the expression that adds displacement and velocity.
+-- Kind vs dimension: Refused: no HAdd instance combines displacement and velocity quantities, preventing addition of unlike vector kinds.
 -- example (s : PairState3 .P) (cart : ReferenceFrame 3) (hCart : cart.IsInertial) :=
 --   ForPhysLib.Kinded.Space.displacementQ (s.com .A) (s.com .B) + frameVelocityQ hCart
 -- EXERCISE_END: observer_motion
@@ -226,10 +243,12 @@ lemma pairSpanArea_magnitude {π : PairId} (s : PairState3 π) (p : Space 3) :
         ‖(ForPhysLib.Kinded.Space.displacementQ (s.com .A) p).magnitude‖ := by
   sorry
 
+-- Point vs vector: Constructs a bearer-free `Quantity area` from pair P's A–B and A–p displacements; its type cannot distinguish areas from other pairs or points.
 example (s : PairState3 .P) (p : Space 3) :
     Quantity ForPhysLib.Kinds.Space.area ℝ := by
   sorry
 
+-- Point vs vector: Proves that pair P's span-area magnitude equals the product of its A–B and A–p displacement norms.
 example (s : PairState3 .P) (p : Space 3) :
     (pairSpanArea s p).magnitude =
       ‖(ForPhysLib.Kinded.Space.displacementQ (s.com .A) (s.com .B)).magnitude‖ *
@@ -237,6 +256,7 @@ example (s : PairState3 .P) (p : Space 3) :
   sorry
 
 -- TODO: uncomment the repeated-area product and read the kind error.
+-- Kind vs dimension: Refused: no HMul instance licenses area times area, preventing an unregistered product of two area quantities.
 -- example (s : PairState3 .P) (p : Space 3) := pairSpanArea s p * pairSpanArea s p
 -- EXERCISE_END: adoption_ladder
 

@@ -104,6 +104,7 @@ def couplingSpringExtensionDifference
     (extensionOf stretched .kC)
     (-(extensionOf compressed .kC))
 
+-- Same-name records: Constructs a displacementK IndividualQuantity about pair P's coupling spring as stretched minus compressed extension, comparing two states of one spring.
 #guard_msgs in
 example (compressed stretched : CoupledPair .P) :
     IndividualQuantity
@@ -111,6 +112,7 @@ example (compressed stretched : CoupledPair .P) :
       ForPhysLib.ClassicalMechanics.displacementK ℝ :=
   couplingSpringExtensionDifference compressed stretched
 
+/-- Same-name records: Proves that pair P's coupling-spring displacement difference has magnitude stretched extension minus compressed extension. -/
 theorem couplingSpringExtensionDifference_magnitude
     (compressed stretched : CoupledPair .P) :
     (couplingSpringExtensionDifference compressed stretched).magnitude =
@@ -138,12 +140,14 @@ def pairMass {π : PairId} (p : CoupledPair π) :
     bodies
     (fun b => massOf p b)
 
+/-- Licensed composition: Proves that for pair π, the assembled whole-mass magnitude is body A's mass plus body B's mass. -/
 theorem pairMass_magnitude {π : PairId} (p : CoupledPair π) :
     (pairMass p).magnitude = (p.osc .A).m + (p.osc .B).m := by
   rfl
 -- ANCHOR_END: pair_mass
 
 -- ANCHOR: refused_whole_part
+-- Bearer safety: Refused: type mismatch between pair P's whole-mass bearer and body A's part-mass bearer; this prevents treating a part mass as the pair's whole mass.
 /--
 error: Application type mismatch: The argument
   massOf p Body.A
@@ -159,6 +163,7 @@ example {π : PairId} (p : CoupledPair π) :=
   IndividualQuantity.add (k := ForPhysLib.ClassicalMechanics.massK)
     DifferenceKind.ofScale (pairMass p) (massOf p .A)
 
+-- Bearer safety: Refused: type mismatch between pair P's and pair Q's whole-mass bearers; this prevents combining masses from distinct pairs as one system.
 /--
 error: Application type mismatch: The argument
   pairMass q
@@ -178,6 +183,7 @@ example (o : Body → ClassicalMechanics.HarmonicOscillator) :=
 -- ANCHOR_END: refused_whole_part
 
 -- ANCHOR: refused_frequency_assembly
+-- Licensed composition: Refused: no Assembles pairS angularFrequency instance licenses deriving the pair's normal-mode frequency from the bodies' frequencies.
 /--
 error: failed to synthesize instance of type class
   Assembles pairS ForPhysLib.ClassicalMechanics.Kinds.angularFrequency
@@ -204,11 +210,13 @@ def dkOmegaPlus : DedicatedKind :=
   ForPhysLib.ClassicalMechanics.Kinds.angularFrequency.dedicatedTo
     pairS ⟨"normal mode +"⟩
 
+/-- Kind vs dimension: Proves that pair P's normal-mode kind differs from angular frequency dedicated to body A's whole; the mode belongs to the pair, not A alone. -/
 theorem normal_mode_not_of_a_body :
     dkOmegaPlus ≠
       ForPhysLib.ClassicalMechanics.Kinds.angularFrequency.dedicatedFor Body.A whole :=
   DedicatedKind.distinct_of_sort (by decide)
 
+/-- Kind vs dimension: Proves that pair P's normal-mode kind differs from angular frequency dedicated to coupling spring kC's whole. -/
 theorem normal_mode_not_of_a_spring :
     dkOmegaPlus ≠
       ForPhysLib.ClassicalMechanics.Kinds.angularFrequency.dedicatedFor Spring.kC whole :=
@@ -236,6 +244,7 @@ def parallelStiffness {π : PairId} (p : CoupledPair π) :
     parallelSprings
     (fun s => stiffnessInSort p parallelS s)
 
+/-- Licensed composition: Proves that pair π's parallelS whole has magnitude A.k + kC, the sum licensed for the parallel springs. -/
 theorem parallelStiffness_magnitude {π : PairId} (p : CoupledPair π) :
     (parallelStiffness p).magnitude = (p.osc .A).k + p.kC := by
   rfl
@@ -244,6 +253,7 @@ theorem parallelStiffness_magnitude {π : PairId} (p : CoupledPair π) :
 -- ANCHOR: refused_series_stiffness
 def seriesSprings : Decomposition Spring := .union (.atom .kA) (.atom .kB)
 
+-- Licensed composition: Refused: no Assembles seriesS springConstantK instance; an additive rule would give kA + kB = 9, but the series measurement is 2.
 /--
 error: failed to synthesize instance of type class
   Assembles seriesS ForPhysLib.ClassicalMechanics.springConstantK
@@ -274,6 +284,7 @@ def parallelMeasurement : Measurement Spring := fun d =>
     numeral := parallelNumeral d
     reference := "N/m" }
 
+/-- Licensed composition: Proves that parallel springConstantK measurements add over parts, which is the law that licenses parallel stiffness assembly. -/
 theorem parallel_extensive :
     Extensive ForPhysLib.ClassicalMechanics.springConstantK parallelMeasurement :=
   ⟨fun _ => rfl, fun _ _ => rfl⟩
@@ -290,20 +301,24 @@ def seriesMeasurement : Measurement Spring := fun d =>
     numeral := seriesNumeral d
     reference := "N/m" }
 
+/-- Composition law: Proves that series springs kA = 6 and kB = 3 measure 2, not their additive sum 9; series stiffness is not parallel addition. -/
 theorem series_kA_kB_exact : (seriesMeasurement seriesSprings).numeral = 2 := by decide
 
+/-- Composition law: Proves that series measurement is WholeProper—neither additive nor uniform; kA = 6 and kB = 3 measure 2, not their sum 9. -/
 theorem series_whole_proper :
     WholeProper ForPhysLib.ClassicalMechanics.springConstantK seriesMeasurement where
   ofKind := fun _ => rfl
   notAdditive := ⟨.kA, .kB, by decide⟩
   notUniform := ⟨.kA, .kA, ⟨rfl, by decide⟩⟩
 
+/-- Composition law: Proves that series springConstantK measurement is not extensive: kA = 6 and kB = 3 measure 2 rather than the additive 9, so no sum license applies. -/
 theorem series_not_extensive :
     ¬ Extensive ForPhysLib.ClassicalMechanics.springConstantK seriesMeasurement :=
   series_whole_proper.not_extensive
 -- ANCHOR_END: seriesLaw
 
 -- ANCHOR: licenseCashed
+/-- Licensed composition: Proves that parallel assembly of kA = 6 and kC = 2 for pair π has measured magnitude 8, as the extensive measurement requires. -/
 theorem parallel_assembled_is_measured {π : PairId} (_p : CoupledPair π) :
     (assemble (k := ForPhysLib.ClassicalMechanics.springConstantK) parallelS
         (Composite.whole : Composite parallelS (PartOf π))
@@ -314,6 +329,7 @@ theorem parallel_assembled_is_measured {π : PairId} (_p : CoupledPair π) :
     (fun s => Composite.part (σ := parallelS) (springPart π s))
     parallel_extensive parallelSprings
 
+/-- Licensed composition: Proves that if seriesS springConstantK assembly is licensed, some decomposition's assembled reading differs from measurement; kA = 6 and kB = 3 give 9 versus 2. -/
 theorem series_registered_would_lie
     {π : PairId} (_p : CoupledPair π)
     [Assembles seriesS ForPhysLib.ClassicalMechanics.springConstantK] :

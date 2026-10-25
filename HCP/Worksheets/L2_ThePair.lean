@@ -131,9 +131,11 @@ theorem pairMass_magnitude {π : PairId} (p : CoupledPair π) :
 
 -- EXERCISE: refused_whole_part
 -- TODO: uncomment each expression, read the errors, and say why the bearers do not match.
+-- Bearer safety: Refused: type mismatch between pair P's whole-mass bearer and body A's part-mass bearer; this prevents treating a part mass as the pair's whole mass.
 -- example {π : PairId} (p : CoupledPair π) :=
 --   IndividualQuantity.add (k := ForPhysLib.ClassicalMechanics.massK)
 --     DifferenceKind.ofScale (pairMass p) (massOf p .A)
+-- Bearer safety: Refused: type mismatch between pair P's and pair Q's whole-mass bearers; this prevents combining masses from distinct pairs as one system.
 -- example (o : Body → ClassicalMechanics.HarmonicOscillator) :=
 --   let p : CoupledPair .P := ⟨o, 2, fun _ => 0⟩
 --   let q : CoupledPair .Q := ⟨o, 2, fun _ => 0⟩
@@ -143,6 +145,7 @@ theorem pairMass_magnitude {π : PairId} (p : CoupledPair π) :
 
 -- EXERCISE: refused_frequency_assembly
 -- TODO: uncomment the assembly attempt and explain why the pair sort has no such license.
+-- Licensed composition: Refused: no Assembles pairS angularFrequency instance licenses deriving the pair's normal-mode frequency from the bodies' frequencies.
 -- example :=
 --   fun {π : PairId} (p : CoupledPair π) =>
 --     fun (f : (b : Body) →
@@ -202,6 +205,7 @@ theorem parallelStiffness_magnitude {π : PairId} (p : CoupledPair π) :
 def seriesSprings : Decomposition Spring := .union (.atom .kA) (.atom .kB)
 
 -- TODO: uncomment the assembly attempt and explain why the series license is absent.
+-- Licensed composition: Refused: no Assembles seriesS springConstantK instance; an additive rule would give kA + kB = 9, but the series measurement is 2.
 -- example {π : PairId} (p : CoupledPair π) :=
 --   assemble (k := ForPhysLib.ClassicalMechanics.springConstantK) seriesS
 --     (Composite.whole : Composite seriesS (PartOf π))
