@@ -29,6 +29,40 @@ state:
 
 # L1 — Two bodies
 
+## Synopsis
+
+### Purpose
+
+Introduce the bearer: every quantity is about some particular system. With two black-box oscillators A and B, a quantity indexed by its oscillator lets A's own `k/m` through and refuses B's mass in A's formula; a nominal designation keeps A and B distinct systems even when their parameters match.
+
+### PKC vocabulary in scope
+
+New at this step:
+- `SortOfSystem` — the universal category of a system, here "harmonic oscillator".
+- `Sorted` (`sortOf`) — an object type whose objects know their sort.
+- `Designated` (`designation`, `designation_inj`) — an object type whose objects have distinct nominal names.
+- `IndividualQuantity` — a magnitude of kind `k` about one object `o`.
+- `IndividualQuantity.add`, `IndividualQuantity.div` — same-object, kind-licensed arithmetic.
+- `DifferenceKind.ofScale` — the difference law that licenses comparing two records of one quantity.
+- `massK`, `springConstantK`, `omegaSquaredK` — the oscillator's kinds; k/m lands at `omegaSquaredK`.
+
+Carried from earlier steps: `Quantity`, `massQ`, `springQ`.
+
+### Verifiable properties
+
+- Oscillators A and B have one sort (theorem) `HCP.L1_TwoBodies#oscillator_context_and_sort`.
+- A and B have distinct designations, and a constant designation cannot be injective (theorem) `HCP.L1_TwoBodies#designation`.
+- Oscillator A's own `k/m` type-checks at `omegaSquaredK` about A (type-checked) `HCP.L1_TwoBodies#oscillator_indexed_quantities`.
+- Using B's mass where A's is expected is refused (refused) `HCP.L1_TwoBodies#refused_cross_oscillator`.
+- Two records of oscillator A on rig R₁ give a typed change in A's mass (type-checked) `HCP.L1_TwoBodies#same_rig_estimate_difference`.
+- An object type with no sort cannot bear a sorted quantity (refused) `HCP.L1_TwoBodies#refused_unsorted_object`.
+
+### Errors prevented
+
+- Cross-system contamination: oscillator B's mass entering oscillator A's frequency; bare reals and bearer-free kinds accept it, bearer-indexed quantities refuse it (`HCP.L1_TwoBodies#refused_cross_oscillator`).
+- False identity: one name for both oscillators, so two systems are reported as one (`HCP.L1_TwoBodies#designation`).
+- Unsorted bearer: a quantity about something that has no stated sort (`HCP.L1_TwoBodies#refused_unsorted_object`).
+
 ## 1. Persona
 
 You are a PhysLib contributor: a physicist who writes Lean in PhysLib. You know Lean and

@@ -49,8 +49,8 @@ with `HCP/L1_TwoBodies.lean` and the corresponding blueprint chapter.
 
 Run `lake build HCP` to compile the solutions and `lake build HCPWorksheets` to compile all
 worksheets (which intentionally contain `sorry` holes). Run `python3 HCP/check-hcp.py` to
-validate front matter, learning-path counts, live anchors, worksheet structure, and required
-sections.
+validate front matter, learning-path counts, live anchors, worksheet structure, each card's
+Synopsis and its synchronization with the matching chapter, and required sections.
 
 ## Jargon
 

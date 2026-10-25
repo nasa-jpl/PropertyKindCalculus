@@ -32,6 +32,39 @@ state:
 
 # L5 — The oscillation dies out
 
+## Synopsis
+
+### Purpose
+
+Optional. Add a damper to oscillator A and drop energy conservation. PhysLib's damping constant γ (kg/s), ISO's damping coefficient δ = γ/(2m) (s⁻¹) and angular frequency ω₀ share names or dimensions; kinds keep them apart, and δ is computed from the oscillator's own γ and mass.
+
+### PKC vocabulary in scope
+
+New at this step:
+- `KindOfProperty` (`id`, `scale`) — define a kind of property; the lesson defines its own kind for γ.
+- `ScaleType.ratio` — the scale type that licenses × and ÷.
+- `dampingCoefficient` — ISO 80000-3 damping coefficient δ, dimension T⁻¹.
+- `KindDiv`, `QuotientKind.ofRatio` — a curated quotient law, here δ = γ/(2m).
+- `Quantity.add` — kind- and scale-gated addition.
+- `IndividualQuantity.toQuantity` — forget the bearer.
+- `angularFrequencyK` — the oscillator's ω.
+
+Carried from earlier steps: DimensionedKind, `IndividualQuantity` and its `add`/`div`, `DifferenceKind.ofScale`, `SortOfSystem`, `Sorted`, `Designated`, `massK`, `springConstantK`.
+
+### Verifiable properties
+
+- The damped oscillator's energy decreases at the rate PhysLib states (theorem) `HCP.L5_Damping#energy_dissipation`.
+- δ is computed from oscillator A's own γ and mass; B's mass is refused (refused) `HCP.L5_Damping#kinds_and_decay_rate`.
+- δ and ω₀ have the same dimension, and adding them is refused (refused) `HCP.L5_Damping#same_dimension_different_kinds`.
+- The underdamped test reduces to δ < ω₀; the kinded comparison is refused and the magnitude form is accepted (theorem) `HCP.L5_Damping#underdamped_regime`.
+- Two states of oscillator A give a typed change in δ (type-checked) `HCP.L5_Damping#same_oscillator_states`.
+
+### Errors prevented
+
+- One name, two kinds: PhysLib's damping constant γ confused with ISO's damping coefficient δ (`HCP.L5_Damping#kinds_and_decay_rate`).
+- Same dimension, different kind: δ + ω₀ accepted by dimensions (`HCP.L5_Damping#same_dimension_different_kinds`).
+- Cross-system contamination: oscillator B's mass in oscillator A's decay rate (`HCP.L5_Damping#kinds_and_decay_rate`).
+
 ## 1. Persona
 
 You are a PhysLib contributor: a physicist who writes Lean in PhysLib. You know Lean,
