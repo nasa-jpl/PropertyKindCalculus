@@ -112,7 +112,12 @@ theorem mass_kind_shared_by_oscillators :
 -- example {r : Rig} (sys : TwoOscillators r) :=
 --   IndividualQuantity.add DifferenceKind.ofScale (massOf sys ⟨.A⟩) (massOf sys ⟨.B⟩)
 -- example {r : Rig} (sys : TwoOscillators r) :=
---   IndividualQuantity.div (by sorry) (stiffnessOf sys ⟨.A⟩) (massOf sys ⟨.B⟩)
+--   let h :=
+--     KindDiv.law
+--       (k₁ := ForPhysLib.ClassicalMechanics.springConstantK)
+--       (k₂ := ForPhysLib.ClassicalMechanics.massK)
+--       (k := ForPhysLib.ClassicalMechanics.omegaSquaredK)
+--   IndividualQuantity.div h (stiffnessOf sys ⟨.A⟩) (massOf sys ⟨.B⟩)
 -- example (o : Oscillator → ClassicalMechanics.HarmonicOscillator) :=
 --   IndividualQuantity.add DifferenceKind.ofScale
 --     (massOf (⟨o⟩ : TwoOscillators .R₁) ⟨.A⟩)
