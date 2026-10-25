@@ -165,10 +165,14 @@ def massDK : KindOfProperty := mass.kind
 /-- The case study's angular frequency, by name. -/
 def angFreqDK : KindOfProperty := angularFrequency.kind
 
+inductive DrivenOscillator | D
+
+instance : Sorted DrivenOscillator := ⟨fun _ => Tier5.drivenS⟩
+
 /-- **The model member.** `|Z|²` from the four parameters. -/
 noncomputable def impedanceAbs2 (c : Quantity impedanceDK ℝ) (m : Quantity massDK ℝ)
     (ω : Quantity angFreqDK ℝ) (k : Quantity stiffnessDK ℝ) :
-    Quantity impedanceSqK ℝ :=
+    IndividualQuantity DrivenOscillator.D impedanceSqK ℝ :=
   ⟨c.magnitude ^ 2 + (m.magnitude * ω.magnitude - k.magnitude / ω.magnitude) ^ 2⟩
 
 /-- **The specification member.** The resistance squared. -/
@@ -246,9 +250,18 @@ spot check: Tutorial.HarmonicOscillator.hp2_spot = true
 MR8's two halves, at the quantity level: the square's `pairMass` is the licensed assembly
 (`Assembles pairS massK`), and there is no `Assembles pairS angFreqK`. -/
 
+/-- The pair object, the bearer of its whole-system quantities. -/
+def pairWhole : Composite pairS Part := .whole
+
+instance : Sorted (Composite pairS Part) := ⟨fun
+  | .whole => pairS
+  | .part (.inl b) => Sorted.sortOf b
+  | .part (.inr s) => Sorted.sortOf s⟩
+
 /-- The arithmetic the license for `pairS` and `massK` licenses: the pair's mass from
 its bodies'. -/
-def pairMassOf (mA mB : Quantity massK Int) : Quantity massK Int :=
+def pairMassOf (mA mB : Quantity massK Int) :
+    IndividualQuantity pairWhole massK Int :=
   ⟨mA.magnitude + mB.magnitude⟩
 
 /-- The pair's boundary. -/
@@ -322,42 +335,60 @@ the numbers are the apparatus's to supply. When they arrive, the referent is dec
 kinded quantity under `@[kindReferent "…"]`, the gate is written against it, and the
 attestation is dropped — one edit per row, and the census's attested count falls. -/
 
-/-- HE1: the linear model is used only within the physical spring's linear range. -/
+/-- HE1: the linear model is used only within the physical spring's linear range for body A. -/
 def he1 : Provenance.Requirement where
   name := "HE1"
   statement := "the linear model is used only where the physical spring obeys Hooke's law: \
     |x| ≤ x_max from the spring's datasheet"
   kind := .empirical
   governs := ``complianceBoundary
-  scope := .sort ``springS
+  scope := .objects [``Body.A]
   attested := "x_max is the spring datasheet's to supply; gated at ingest once declared as \
     a referent"
 
-/-- HE2: the springs are massless, to within a stated fraction of the lighter body. -/
+/-- HE2: the springs are massless, to within a stated fraction of the lighter body in this pair. -/
 def he2 : Provenance.Requirement where
   name := "HE2"
   statement := "each spring's mass is at most 1 % of the lighter body's"
   kind := .empirical
   governs := ``pairBoundary
-  scope := .sort ``springS
+  scope := .objects [``pairWhole]
   attested := "massless-spring idealization; discharged when the springs are weighed"
 
-/-- HE5: every spring's stiffness lies within its datasheet band. -/
+/-- HE5: every spring's stiffness lies within its datasheet band for body A. -/
 def he5 : Provenance.Requirement where
   name := "HE5"
   statement := "every linear spring's stiffness lies within [k_min, k_max] from its \
     datasheet batch"
   kind := .empirical
   governs := ``complianceBoundary
-  scope := .sort ``springS
+  scope := .objects [``Body.A]
   attested := "the band is the datasheet's to supply; gated at ingest per spring once \
     declared as referents"
+
+/--
+info: kind requirement 'HE1' (empirical) on 'static compliance of body A'
+statement: the linear model is used only where the physical spring obeys Hooke's law: |x| ≤ x_max from the spring's datasheet
+governs: every produced port of 'static compliance of body A'
+scope: objects Tutorial.HarmonicOscillator.Body.A
+attested: x_max is the spring datasheet's to supply; gated at ingest once declared as a referent
+-/
+#guard_msgs in #kind_requirement he1
+
+/--
+info: kind requirement 'HE2' (empirical) on 'coupled pair — mass'
+statement: each spring's mass is at most 1 % of the lighter body's
+governs: every produced port of 'coupled pair — mass'
+scope: objects Tutorial.HarmonicOscillator.pairWhole
+attested: massless-spring idealization; discharged when the springs are weighed
+-/
+#guard_msgs in #kind_requirement he2
 
 /--
 info: kind requirement 'HE5' (empirical) on 'static compliance of body A'
 statement: every linear spring's stiffness lies within [k_min, k_max] from its datasheet batch
 governs: every produced port of 'static compliance of body A'
-scope: sort Tutorial.HarmonicOscillator.springS
+scope: objects Tutorial.HarmonicOscillator.Body.A
 attested: the band is the datasheet's to supply; gated at ingest per spring once declared as referents
 -/
 #guard_msgs in #kind_requirement he5

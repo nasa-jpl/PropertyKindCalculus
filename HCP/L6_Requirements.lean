@@ -64,6 +64,12 @@ structure PartOf (π : PairId) where
   part : Body ⊕ Spring
 deriving DecidableEq, Repr
 
+/-- the pair whole's sort, declared once -/
+instance {π : PairId} : Sorted (Composite pairS (PartOf π)) := ⟨fun
+  | .whole => pairS
+  | .part ⟨.inl b⟩ => Sorted.sortOf b
+  | .part ⟨.inr s⟩ => Sorted.sortOf s⟩
+
 def bodyPart (π : PairId) (b : Body) : PartOf π := ⟨Sum.inl b⟩
 def springPart (π : PairId) (s : Spring) : PartOf π := ⟨Sum.inr s⟩
 
@@ -300,9 +306,12 @@ error: the scope 'HCP.L6_Requirements.notASort' is not a 'SortOfSystem' — a sc
 
 /-
 The census infers a result port's object domain from its member's type: R3 covers a
-P-only result, but leaves Q ungoverned on a generic pair boundary. A missing index or
-unresolved bearer is an unchecked violation unless exempted; `.sort` and `.decided`
-remain unchecked against the result index.
+P-only result, but leaves Q ungoverned on a generic pair boundary.
+An unresolved bearer is an unchecked violation unless exempted. A `.sort` scope needs an
+indexed result whose object type has a `Sorted` instance: R1 and R2's results are borne by
+the pair whole, and the instance above maps the whole to `pairS` and each part to its own
+sort, so the census checks their scope. An object of another sort is reported ungoverned.
+A `.decided` scope is still not checked; the checker only confirms that its decider exists.
 -/
 -- ANCHOR: requirement_census
 /--

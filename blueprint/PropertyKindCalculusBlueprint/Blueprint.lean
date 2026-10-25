@@ -668,8 +668,11 @@ that names none is refused as empirical. `#kind_requirements` surveys a namespac
 requirements as one pinned report, and `#kind_requirement_coverage` asks of every produced
 port whether a boundary/port-matching requirement governs it. For object scopes, the result
 member's type supplies the inferred object domain; a missing index or unresolved bearer is
-an unchecked violation unless the boundary is exempted. `.sort` and `.decided` retain the
-static join without object-subset checking; `.all` remains broad
+an unchecked violation unless the boundary is exempted. A `.sort` scope requires an indexed
+result and a `Sorted` instance; the census first reduces the actual result bearer's sort
+inside the member telescope. A definite match governs, a definite mismatch falls back to
+object scopes or is ungoverned, and a stuck sort follows the object-domain path and may be
+unchecked. `.decided` retains the static join without subset checking; `.all` remains broad
 ({ref "requirements-as-evidence"}[every claim a model makes, with its evidence]).
 
 # Requirements
@@ -1284,7 +1287,10 @@ expressiveness requirement: every produced port of a model boundary is governed 
 `Provenance.Requirement` or exempted with a reason (`@[kindRequirementFree]`); object
 scopes are compared with the result domain inferred from the member's return type, while
 missing indices or unresolved object domains are unchecked violations unless exempted;
-`.sort` and `.decided` retain the static boundary/port join without subset checking; a provable
+`.sort` requires an indexed result and a `Sorted` instance; the census first reduces the
+actual result bearer's sort inside the member telescope, then falls back to object scopes
+or is ungoverned on a definite mismatch, while a stuck sort follows the object-domain path
+and may be unchecked. `.decided` retains the static boundary/port join without subset checking; a provable
 requirement's witness is a sorry-free theorem, or a theorem edge to a specification
 boundary, whose statement names no `@[kindReferent]`-marked declaration, with `Bool` spot
 checks the command evaluates where the model runs; an empirical requirement names marked

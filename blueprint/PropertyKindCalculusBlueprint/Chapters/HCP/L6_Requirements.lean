@@ -315,11 +315,12 @@ error: the scope 'HCP.L6_Requirements.notASort' is not a 'SortOfSystem' — a sc
 _4. Census._ The valid requirements are surveyed, every produced model port has a
 governing requirement, and the clean command enforces that result. The census infers a
 result port's object domain from its member's type: R3 covers a P-only result, but leaves Q
-ungoverned on a generic pair boundary. A missing index or unresolved bearer is an unchecked
-violation unless exempted; `.sort` and `.decided` remain unchecked against the result
-index. The optional `.decided` scope is omitted because the checker only verifies that its
-named decider exists; it does not validate that the declaration is a predicate selecting a
-subset of pair objects:
+ungoverned on a generic pair boundary. An unresolved bearer is an unchecked violation unless
+exempted. A `.sort` scope needs an indexed result whose object type has a `Sorted` instance:
+R1 and R2's results are borne by the pair whole, and the instance above maps the whole to
+`pairS` and each part to its own sort, so the census checks their scope. An object of another
+sort is reported ungoverned. A `.decided` scope is still not checked; the checker only
+confirms that its decider exists.
 
 ```anchor requirement_census
 /--

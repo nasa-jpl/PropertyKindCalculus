@@ -221,20 +221,20 @@ spot check: PropertyKindCalculus.Tests.KindRequirement.spot = true
 -/
 #guard_msgs in #kind_requirement p1
 
-/-- Provable by a bare theorem, over every object of the sort. -/
+/-- Provable by a bare theorem, over every evaluation. -/
 def p2 : Provenance.Requirement where
   name := "P2"
   statement := "the model's answer is at most three times its argument"
   kind := .provable
   governs := ``modelBoundary
-  scope := .sort ``probeS
+  scope := .all
   witness := ``model_le_bound
 
 /--
 info: kind requirement 'P2' (provable) on 'requirement probe model'
 statement: the model's answer is at most three times its argument
 governs: every produced port of 'requirement probe model'
-scope: sort PropertyKindCalculus.Tests.KindRequirement.probeS
+scope: all
 witness: PropertyKindCalculus.Tests.KindRequirement.model_le_bound
 axioms: propext, Quot.sound
 -/
@@ -812,7 +812,7 @@ def thingInputRequirement : Provenance.Requirement where
   attested := "coverage-domain probe"
 
 /--
-error: 'Thing scope on input port' is scoped to objects, but 'thingModel/x' of 'Thing-indexed model, one scoped object' is an input — an object scope quantifies over the objects an output belongs to; govern a produced port
+error: 'Thing scope on input port' is scoped to objects or a sort, but 'thingModel/x' of 'Thing-indexed model, one scoped object' is an input — an object or sort scope quantifies over the objects an output belongs to; govern a produced port
 -/
 #guard_msgs (whitespace := lax) in #kind_requirement thingInputRequirement
 
@@ -1120,31 +1120,269 @@ def wrappedCompositeRequirement : Provenance.Requirement where
   scope := .objects [``Thing.one]
   attested := "coverage-domain probe"
 
+def thingSortBoundary : Provenance.Contract NodeId KindRef :=
+  thingBoundary "Thing-indexed model, sort-scoped output"
+
+def thingSortRequirement : Provenance.Requirement where
+  name := "probe sort on Thing"
+  statement := "the generic Thing output is governed by its sort"
+  kind := .provable
+  governs := ``thingSortBoundary
+  port := some (NodeId.result.within ``thingModel)
+  scope := .sort ``probeS
+  attested := "coverage-domain probe"
+
+/--
+info: kind requirement 'probe sort on Thing' (provable) on 'Thing-indexed model, sort-scoped output'
+statement: the generic Thing output is governed by its sort
+governs: 'Thing-indexed model, sort-scoped output' at thingModel/result
+scope: sort PropertyKindCalculus.Tests.KindRequirement.probeS
+attested: coverage-domain probe
+-/
+#guard_msgs in #kind_requirement thingSortRequirement
+
+def thingWrongSortBoundary : Provenance.Contract NodeId KindRef :=
+  thingBoundary "Thing-indexed model, wrong sort scope"
+
+def thingWrongSortRequirement : Provenance.Requirement where
+  name := "Tag sort on Thing"
+  statement := "a Thing output is not governed by the Tag sort"
+  kind := .provable
+  governs := ``thingWrongSortBoundary
+  port := some (NodeId.result.within ``thingModel)
+  scope := .sort ``tagS
+  attested := "coverage-domain probe"
+
+inductive Mixed where
+  | m1
+  | m2
+
+instance : Sorted Mixed := ⟨fun
+  | .m1 => probeS
+  | .m2 => tagS⟩
+
+def mixedGenericModel {m : Mixed} : IndividualQuantity m bK Int := ⟨0⟩
+def mixedOneModel : IndividualQuantity Mixed.m1 bK Int := ⟨0⟩
+def mixedTwoModel : IndividualQuantity Mixed.m2 bK Int := ⟨0⟩
+
+structure Target (s : SortOfSystem) where
+  tag : Nat
+
+instance {s : SortOfSystem} : Sorted (Target s) := ⟨fun _ => s⟩
+
+def targetGenericModel {s : SortOfSystem} {t : Target s} :
+    IndividualQuantity t bK Int := ⟨0⟩
+
+def mixedBoundary (name : String) (member : Lean.Name) :
+    Provenance.Contract NodeId KindRef where
+  name := name
+  members := [member]
+  ports := [⟨NodeId.result.within member, .decl ``bK, .output⟩]
+  exits := []
+
+def mixedGenericBoundary : Provenance.Contract NodeId KindRef :=
+  mixedBoundary "generic Mixed result" ``mixedGenericModel
+
+def mixedGenericCombinedBoundary : Provenance.Contract NodeId KindRef :=
+  mixedBoundary "generic Mixed result with object scope" ``mixedGenericModel
+
+def mixedOneBoundary : Provenance.Contract NodeId KindRef :=
+  mixedBoundary "Mixed.m1 result" ``mixedOneModel
+
+def mixedTwoBoundary : Provenance.Contract NodeId KindRef :=
+  mixedBoundary "Mixed.m2 result" ``mixedTwoModel
+
+@[kindRequirementFree "the fixed m2 object has sort tagS, not probeS"]
+def mixedTwoExemptBoundary : Provenance.Contract NodeId KindRef :=
+  mixedBoundary "exempt Mixed.m2 result" ``mixedTwoModel
+
+def mixedTwoCombinedBoundary : Provenance.Contract NodeId KindRef :=
+  mixedBoundary "Mixed.m2 result with object scope" ``mixedTwoModel
+
+def mixedGenericRequirement : Provenance.Requirement where
+  name := "probe sort on generic Mixed"
+  statement := "the generic Mixed output has sort probeS"
+  kind := .provable
+  governs := ``mixedGenericBoundary
+  port := some (NodeId.result.within ``mixedGenericModel)
+  scope := .sort ``probeS
+  attested := "coverage-domain probe"
+
+def mixedGenericCombinedSortRequirement : Provenance.Requirement where
+  name := "probe sort on generic Mixed with m2 object"
+  statement := "the generic Mixed output is governed by probeS and its m2 object"
+  kind := .provable
+  governs := ``mixedGenericCombinedBoundary
+  port := some (NodeId.result.within ``mixedGenericModel)
+  scope := .sort ``probeS
+  attested := "coverage-domain probe"
+
+def mixedGenericCombinedObjectRequirement : Provenance.Requirement where
+  name := "Mixed.m2 object scope on generic output"
+  statement := "Mixed.m2 is explicitly governed in the generic output"
+  kind := .provable
+  governs := ``mixedGenericCombinedBoundary
+  port := some (NodeId.result.within ``mixedGenericModel)
+  scope := .objects [``Mixed.m2]
+  attested := "coverage-domain probe"
+
+def mixedOneRequirement : Provenance.Requirement where
+  name := "probe sort on Mixed.m1"
+  statement := "Mixed.m1 has sort probeS"
+  kind := .provable
+  governs := ``mixedOneBoundary
+  port := some (NodeId.result.within ``mixedOneModel)
+  scope := .sort ``probeS
+  attested := "coverage-domain probe"
+
+def mixedTwoRequirement : Provenance.Requirement where
+  name := "probe sort on Mixed.m2"
+  statement := "Mixed.m2 is not of sort probeS"
+  kind := .provable
+  governs := ``mixedTwoBoundary
+  port := some (NodeId.result.within ``mixedTwoModel)
+  scope := .sort ``probeS
+  attested := "coverage-domain probe"
+
+def mixedTwoExemptRequirement : Provenance.Requirement where
+  name := "exempt probe sort on Mixed.m2"
+  statement := "the marked Mixed.m2 output is explicitly exempted"
+  kind := .provable
+  governs := ``mixedTwoExemptBoundary
+  port := some (NodeId.result.within ``mixedTwoModel)
+  scope := .sort ``probeS
+  attested := "coverage-domain probe"
+
+def mixedTwoCombinedSortRequirement : Provenance.Requirement where
+  name := "probe sort on Mixed.m2 with object"
+  statement := "Mixed.m2 is covered by its object scope despite the other sort"
+  kind := .provable
+  governs := ``mixedTwoCombinedBoundary
+  port := some (NodeId.result.within ``mixedTwoModel)
+  scope := .sort ``probeS
+  attested := "coverage-domain probe"
+
+def mixedTwoCombinedObjectRequirement : Provenance.Requirement where
+  name := "Mixed.m2 object scope"
+  statement := "Mixed.m2 is explicitly governed as an object"
+  kind := .provable
+  governs := ``mixedTwoCombinedBoundary
+  port := some (NodeId.result.within ``mixedTwoModel)
+  scope := .objects [``Mixed.m2]
+  attested := "coverage-domain probe"
+
+def targetGenericBoundary : Provenance.Contract NodeId KindRef where
+  name := "generic Target result"
+  members := [``targetGenericModel]
+  ports := [⟨NodeId.result.within ``targetGenericModel, .decl ``bK, .output⟩]
+  exits := []
+
+def targetGenericSortRequirement : Provenance.Requirement where
+  name := "probe sort on generic Target"
+  statement := "the generic Target output is governed by probeS"
+  kind := .provable
+  governs := ``targetGenericBoundary
+  port := some (NodeId.result.within ``targetGenericModel)
+  scope := .sort ``probeS
+  attested := "coverage-domain probe"
+
 /--
 info: requirement coverage:
 [governed] PropertyKindCalculus.Tests.KindRequirementScope.conditionalResultBoundary ('conditional result') conditionalResultModel/result — by 'Thing one on conditional result'
 [governed] PropertyKindCalculus.Tests.KindRequirementScope.kindIndexedBoundary ('Thing.one result with a kind index') kindIndexedModel/result — by 'Thing one on kind-indexed result'
+[governed] PropertyKindCalculus.Tests.KindRequirementScope.mixedGenericBoundary ('generic Mixed result') mixedGenericModel/result for PropertyKindCalculus.Tests.KindRequirementScope.Mixed.m1 — by 'probe sort on generic Mixed'
+[governed] PropertyKindCalculus.Tests.KindRequirementScope.mixedGenericCombinedBoundary ('generic Mixed result with object scope') mixedGenericModel/result — by 'Mixed.m2 object scope on generic output', 'probe sort on generic Mixed with m2 object'
+[governed] PropertyKindCalculus.Tests.KindRequirementScope.mixedOneBoundary ('Mixed.m1 result') mixedOneModel/result — by 'probe sort on Mixed.m1'
+[governed] PropertyKindCalculus.Tests.KindRequirementScope.mixedTwoCombinedBoundary ('Mixed.m2 result with object scope') mixedTwoModel/result — by 'Mixed.m2 object scope'
 [governed] PropertyKindCalculus.Tests.KindRequirementScope.tagBoundary ('Tag-indexed model') tagModel/result for PropertyKindCalculus.Tests.KindRequirementScope.tagA — by 'Tag A'
 [governed] PropertyKindCalculus.Tests.KindRequirementScope.thingAliasBoundary ('Thing-indexed model, aliased object scope') thingModel/result — by 'Thing first and two'
 [governed] PropertyKindCalculus.Tests.KindRequirementScope.thingBothBoundary ('Thing-indexed model, both scoped objects') thingModel/result — by 'Thing one and two'
 [governed] PropertyKindCalculus.Tests.KindRequirementScope.thingOneBoundary ('Thing-indexed model, one scoped object') thingModel/result for PropertyKindCalculus.Tests.KindRequirement.Thing.one — by 'Thing one'
+[governed] PropertyKindCalculus.Tests.KindRequirementScope.thingSortBoundary ('Thing-indexed model, sort-scoped output') thingModel/result — by 'probe sort on Thing'
+⊘ exempted PropertyKindCalculus.Tests.KindRequirementScope.mixedTwoExemptBoundary ('exempt Mixed.m2 result') mixedTwoModel/result — the fixed m2 object has sort tagS, not probeS
 ⊘ exempted PropertyKindCalculus.Tests.KindRequirementScope.opaqueExemptBoundary ('exempt opaque conditional result') opaqueExemptResultModel/result — the opaque output's Thing object cannot be determined statically
 ⚠ UNCHECKED PropertyKindCalculus.Tests.KindRequirementScope.UnresolvedOnly.unresolvedBoundary ('isolated opaque result') unresolvedModel/result — 'Thing one on isolated opaque result' scoped to PropertyKindCalculus.Tests.KindRequirement.Thing.one: the result's 'Thing' object cannot be determined statically
 ⚠ UNCHECKED PropertyKindCalculus.Tests.KindRequirementScope.bareResultBoundary ('unindexed result') bareResultModel/result — 'bare-result object scope' scoped to PropertyKindCalculus.Tests.KindRequirement.Thing.one: the result carries no 'Thing' index
 ⚠ UNCHECKED PropertyKindCalculus.Tests.KindRequirementScope.opaqueResultBoundary ('opaque conditional result') opaqueResultModel/result — 'Thing one on opaque conditional result' scoped to PropertyKindCalculus.Tests.KindRequirement.Thing.one: the result's 'Thing' object cannot be determined statically
+⚠ UNCHECKED PropertyKindCalculus.Tests.KindRequirementScope.targetGenericBoundary ('generic Target result') targetGenericModel/result — 'probe sort on generic Target': the sort of a generic 'Target s' object cannot be determined statically
 ⚠ UNGOVERNED PropertyKindCalculus.Tests.KindRequirementScope.aliasedThingTwoBoundary ('aliased Thing.two result') aliasedThingTwoModel/result for PropertyKindCalculus.Tests.KindRequirement.Thing.two — 'Thing one on aliased Thing.two' scoped to PropertyKindCalculus.Tests.KindRequirement.Thing.one
+⚠ UNGOVERNED PropertyKindCalculus.Tests.KindRequirementScope.mixedGenericBoundary ('generic Mixed result') mixedGenericModel/result for PropertyKindCalculus.Tests.KindRequirementScope.Mixed.m2 — 'probe sort on generic Mixed' scoped to sort 'PropertyKindCalculus.Tests.KindRequirement.probeS'; 'PropertyKindCalculus.Tests.KindRequirementScope.Mixed.m2' is of sort 'PropertyKindCalculus.Tests.KindRequirementScope.tagS'
+⚠ UNGOVERNED PropertyKindCalculus.Tests.KindRequirementScope.mixedTwoBoundary ('Mixed.m2 result') mixedTwoModel/result — 'probe sort on Mixed.m2' scoped to sort 'PropertyKindCalculus.Tests.KindRequirement.probeS', but 'Mixed' objects are of sort 'PropertyKindCalculus.Tests.KindRequirementScope.tagS'
 ⚠ UNGOVERNED PropertyKindCalculus.Tests.KindRequirementScope.namedTagBoundary ('named Tag B result') namedTagBModel/result for PropertyKindCalculus.Tests.KindRequirementScope.tagB — 'Tag A on named Tag B' scoped to PropertyKindCalculus.Tests.KindRequirementScope.tagA
 ⚠ UNGOVERNED PropertyKindCalculus.Tests.KindRequirementScope.projectedCompositeBoundary ('projected composite Thing.two result') projectedCompositeModel/result for PropertyKindCalculus.Tests.KindRequirement.Thing.two — 'Thing one on projected composite' scoped to PropertyKindCalculus.Tests.KindRequirement.Thing.one
 ⚠ UNGOVERNED PropertyKindCalculus.Tests.KindRequirementScope.tagBoundary ('Tag-indexed model') tagModel/result for every other 'Tag' — 'Tag A' scoped to PropertyKindCalculus.Tests.KindRequirementScope.tagA
 ⚠ UNGOVERNED PropertyKindCalculus.Tests.KindRequirementScope.thingOneBoundary ('Thing-indexed model, one scoped object') thingModel/result for PropertyKindCalculus.Tests.KindRequirement.Thing.two — 'Thing one' scoped to PropertyKindCalculus.Tests.KindRequirement.Thing.one
 ⚠ UNGOVERNED PropertyKindCalculus.Tests.KindRequirementScope.thingTwoBoundary ('Thing.two-indexed model') thingTwoModel/result for PropertyKindCalculus.Tests.KindRequirement.Thing.two — 'Thing one on Thing two' scoped to PropertyKindCalculus.Tests.KindRequirement.Thing.one
+⚠ UNGOVERNED PropertyKindCalculus.Tests.KindRequirementScope.thingWrongSortBoundary ('Thing-indexed model, wrong sort scope') thingModel/result — 'Tag sort on Thing' scoped to sort 'PropertyKindCalculus.Tests.KindRequirementScope.tagS', but 'Thing' objects are of sort 'PropertyKindCalculus.Tests.KindRequirement.probeS'
 ⚠ UNGOVERNED PropertyKindCalculus.Tests.KindRequirementScope.wrappedCompositeBoundary ('wrapped composite Thing.two result') wrappedCompositeModel/result for PropertyKindCalculus.Tests.KindRequirement.Thing.two — 'Thing one on wrapped composite' scoped to PropertyKindCalculus.Tests.KindRequirement.Thing.one
-17 row(s) over 15 model boundary(ies): 6 governed, 1 exempted, 7 UNGOVERNED, 3 UNCHECKED — requirement-coverage violation
-requirements: 16 provable, 0 empirical, 16 attested
+27 row(s) over 24 model boundary(ies): 11 governed, 2 exempted, 10 UNGOVERNED, 4 UNCHECKED — requirement-coverage violation
+requirements: 27 provable, 0 empirical, 27 attested
 -/
 #guard_msgs (whitespace := lax) in
   #kind_requirement_coverage PropertyKindCalculus.Tests.KindRequirementScope
 
 end PropertyKindCalculus.Tests.KindRequirementScope
+
+namespace PropertyKindCalculus.Tests.KindRequirementSortValidation
+
+open PropertyKindCalculus
+open PropertyKindCalculus.Tests.KindRequirement
+open PropertyKindCalculus.Tests.KindRequirementScope
+open PropertyKindCalculus.Provenance (NodeId KindRef)
+
+def bareResultSortRequirement : Provenance.Requirement where
+  name := "sort scope on unindexed output"
+  statement := "the bare result is governed by probeS"
+  kind := .provable
+  governs := ``bareResultBoundary
+  port := some (NodeId.result.within ``bareResultModel)
+  scope := .sort ``probeS
+  attested := "coverage-domain probe"
+
+/--
+error: 'sort scope on unindexed output' is scoped to sort 'PropertyKindCalculus.Tests.KindRequirement.probeS', but 'bareResultModel/result' of 'unindexed result' carries no object index — a sort scope quantifies over the objects an output belongs to; index the result by its object
+-/
+#guard_msgs (whitespace := lax) in #kind_requirement bareResultSortRequirement
+
+def thingSortInputRequirement : Provenance.Requirement where
+  name := "sort scope on input port"
+  statement := "the input port is covered by a sort-scoped requirement"
+  kind := .provable
+  governs := ``thingOneBoundary
+  port := some ((NodeId.binder "x").within ``thingModel)
+  scope := .sort ``probeS
+  attested := "coverage-domain probe"
+
+/--
+error: 'sort scope on input port' is scoped to objects or a sort, but 'thingModel/x' of 'Thing-indexed model, one scoped object' is an input — an object or sort scope quantifies over the objects an output belongs to; govern a produced port
+-/
+#guard_msgs (whitespace := lax) in #kind_requirement thingSortInputRequirement
+
+inductive Unsorted where
+  | obj
+
+def unsortedModel : IndividualQuantity Unsorted.obj bK Int := ⟨0⟩
+
+def unsortedBoundary : Provenance.Contract NodeId KindRef where
+  name := "unsorted object result"
+  members := [``unsortedModel]
+  ports := [⟨NodeId.result.within ``unsortedModel, .decl ``bK, .output⟩]
+  exits := []
+
+def unsortedSortRequirement : Provenance.Requirement where
+  name := "sort scope without Sorted"
+  statement := "an object without a Sorted instance has no declared sort"
+  kind := .provable
+  governs := ``unsortedBoundary
+  port := some (NodeId.result.within ``unsortedModel)
+  scope := .sort ``probeS
+  attested := "coverage-domain probe"
+
+/--
+error: 'sort scope without Sorted' is scoped to sort 'PropertyKindCalculus.Tests.KindRequirement.probeS', but the objects of 'unsortedModel/result' ('Unsorted') declare no sort — give 'Unsorted' a `Sorted` instance
+-/
+#guard_msgs (whitespace := lax) in #kind_requirement unsortedSortRequirement
+
+end PropertyKindCalculus.Tests.KindRequirementSortValidation
 
 end Blanket

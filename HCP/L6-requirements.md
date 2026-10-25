@@ -112,7 +112,9 @@ The full worked requirements example is `examples/Tutorial/HarmonicOscillatorReq
 L6 mirrors its Provenance boundaries, witnesses, referents, gates, surveys, and coverage
 commands without importing the Tutorial file. The census infers a result port's object
 domain from its member's type: R3 covers a P-only result, but leaves Q ungoverned on a
-generic pair boundary. A missing index or unresolved bearer is an unchecked violation
-unless exempted; `.sort` and `.decided` remain unchecked against the result index. The
-optional `.decided` form is omitted because the current checker does not validate the
-decider's shape or prove that it carves a subset.
+generic pair boundary. An unresolved bearer is an unchecked violation unless exempted. A
+`.sort` scope needs an indexed result whose object type has a `Sorted` instance: R1 and R2's
+results are borne by the pair whole, and the instance above maps the whole to `pairS` and
+each part to its own sort, so the census checks their scope. An object of another sort is
+reported ungoverned. A `.decided` scope is still not checked; the checker only confirms that
+its decider exists.
