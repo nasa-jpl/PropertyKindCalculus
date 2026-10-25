@@ -71,7 +71,7 @@ def springConstantOf {o : Osc} (r : DampedRig o) :
 -- ANCHOR_END: damped_rig_and_parts
 
 -- ANCHOR: energy_dissipation
-/-- Under the damped equation, energy decreases at a rate equal to minus damping times speed squared. -/
+/-- Dissipation: Proves that under oscillator O's damped equation, the energy derivative is −γ times the squared speed. -/
 lemma energy_dissipation_on_state {o : Osc} (r : DampedRig o)
     (xₜ : Time → EuclideanSpace ℝ (Fin 1)) (t : Time)
     (h1 : r.osc.EquationOfMotion xₜ) (hx : ContDiff ℝ ∞ xₜ) :
@@ -79,7 +79,7 @@ lemma energy_dissipation_on_state {o : Osc} (r : DampedRig o)
       - r.osc.γ * inner ℝ (∂ₜ xₜ t) (∂ₜ xₜ t) :=
   r.osc.energy_dissipation_rate xₜ t h1 hx
 
-/-- Positive damping and nonzero velocity make the energy derivative strictly negative. -/
+/-- Dissipation: Proves that positive γ and nonzero velocity make oscillator O's energy derivative strictly negative. -/
 lemma energy_not_conserved_on_state {o : Osc} (r : DampedRig o)
     (xₜ : Time → EuclideanSpace ℝ (Fin 1)) (t : Time)
     (h1 : r.osc.EquationOfMotion xₜ) (hx : ContDiff ℝ ∞ xₜ)
@@ -111,7 +111,7 @@ def decayRateOf {o : Osc} (r : DampedRig o) :
     (dampingConstantOf r)
     (IndividualQuantity.add DifferenceKind.ofScale (massOf r) (massOf r))
 
-/-- The indexed damping-coefficient magnitude equals the oscillator's decay rate. -/
+/-- Kind vs dimension: Proves that oscillator O's indexed damping-coefficient magnitude equals PhysLib's decayRate γ/(2m). -/
 lemma decayRateOf_magnitude {o : Osc} (r : DampedRig o) :
     (decayRateOf r).magnitude = r.osc.decayRate := by
   simp only [decayRateOf, IndividualQuantity.div_magnitude,
@@ -126,24 +126,24 @@ def angularFrequencyOf {o : Osc} (r : DampedRig o) :
     IndividualQuantity o angularFrequencyK ℝ :=
   ⟨r.osc.ω⟩
 
-/-- The indexed angular-frequency magnitude equals the oscillator's angular frequency. -/
+/-- Kind vs dimension: Proves that oscillator O's indexed angular-frequency magnitude equals its angular frequency ω. -/
 lemma angularFrequencyOf_magnitude {o : Osc} (r : DampedRig o) :
     (angularFrequencyOf r).magnitude = r.osc.ω := rfl
 
--- Lean type-checks the proposition that oscillator A's damping constant is below its angular frequency.
+-- Kind vs dimension: Bare reals let Lean compare oscillator A's γ (kg/s) with ω (s⁻¹), despite their different dimensions; this is not the δ < ω regime test.
 example (r : DampedRig .A) : Prop := r.osc.γ < r.osc.ω
 
--- Lean type-checks the magnitude equation for oscillator A's damping coefficient.
+-- Kind vs dimension: Proves that oscillator A's indexed decay-rate magnitude equals PhysLib's decayRate.
 example (r : DampedRig .A) :
     (decayRateOf r).magnitude = r.osc.decayRate :=
   decayRateOf_magnitude r
 
--- Lean type-checks the damped oscillator law relating oscillator A's γ, mass, and decay rate.
+-- Dissipation: Proves that PhysLib's law for oscillator A is γ = 2m·decayRate, relating damper reading, body mass, and decay rate.
 example (r : DampedRig .A) :
     r.osc.γ = 2 * r.osc.m * r.osc.decayRate :=
   r.osc.gamma_eq_two_mul_m_mul_decayRate
 
--- Refused: Lean reports a type mismatch between oscillator B's mass bearer and oscillator A's damping-quotient bearer.
+-- Bearer safety: Refused: type mismatch between oscillator B's mass bearer and oscillator A's quotient bearer; this prevents computing A's decay rate with B's mass.
 /--
 error: Application type mismatch: The argument
   b
@@ -163,21 +163,21 @@ example (a : DampedRig .A) (b : DampedRig .B) :=
 -- ANCHOR_END: kinds_and_decay_rate
 
 -- ANCHOR: same_dimension_different_kinds
--- Lean type-checks that damping coefficient and angular frequency have equal physical dimensions.
+-- Kind vs dimension: Proves that damping coefficient δ and angular frequency ω both have dimension T⁻¹; matching dimensions alone do not license mixing them.
 example :
     Iso80000.Part3.dampingCoefficient.dim =
       Iso80000.Part3.angularFrequency.dim :=
   rfl
 
--- Lean proves the damping-coefficient and angular-frequency kinds are distinct despite their equal dimensions.
+-- Kind vs dimension: Proves that dampingCoefficientK and angularFrequencyK are distinct kinds despite their shared T⁻¹ dimension.
 example : dampingCoefficientK ≠ angularFrequencyK := by
   decide
 
--- Lean type-checks γ + ω as a real for oscillator A; the bare values carry no distinct kinds.
+-- Kind vs dimension: Bare reals accept oscillator A's δ + ω as a real although the decay-rate and angular-frequency kinds differ; no sum kind is recorded.
 example (r : DampedRig .A) : ℝ :=
   r.osc.decayRate + r.osc.ω
 
--- Refused: Lean reports a type mismatch between angularFrequencyK and dampingCoefficientK in their kinded sum.
+-- Kind vs dimension: Refused: type mismatch between dampingCoefficientK and angularFrequencyK quantities; this prevents summing δ and ω despite their shared T⁻¹ dimension.
 /--
 error: Application type mismatch: The argument
   (angularFrequencyOf r).toQuantity
@@ -195,12 +195,12 @@ example (r : DampedRig .A) :=
 -- ANCHOR_END: same_dimension_different_kinds
 
 -- ANCHOR: underdamped_regime
--- Lean type-checks the equivalence between oscillator A being underdamped and decay rate being below angular frequency.
+-- Regime: Proves that oscillator A is underdamped exactly when its numerical decay rate δ is below ω.
 example (r : DampedRig .A) :
     r.osc.IsUnderdamped ↔ r.osc.decayRate < r.osc.ω :=
   r.osc.isUnderdamped_iff_decayRate_lt
 
--- Refused: Lean reports a type mismatch between angularFrequencyK and dampingCoefficientK in the kinded comparison.
+-- Regime: Refused: type mismatch between angularFrequencyK and dampingCoefficientK; direct comparison erases the magnitude conversion and assumes rad = 1.
 /--
 error: Type mismatch
   (angularFrequencyOf r).toQuantity
@@ -213,7 +213,7 @@ but is expected to have type
 example (r : DampedRig .A) :=
   (decayRateOf r).toQuantity < (angularFrequencyOf r).toQuantity
 
-/-- An underdamped oscillator has indexed decay rate below its indexed angular frequency. -/
+/-- Regime: Proves that an underdamped oscillator O has indexed decay-rate magnitude below its indexed angular-frequency magnitude. -/
 lemma underdamped_magnitude_test {o : Osc} (r : DampedRig o)
     (h : r.osc.IsUnderdamped) :
     (decayRateOf r).magnitude < (angularFrequencyOf r).magnitude := by
@@ -227,7 +227,7 @@ def decayRateChange (earlier later : DampedRig .A) :
   IndividualQuantity.add DifferenceKind.ofScale
     (decayRateOf later) (-(decayRateOf earlier))
 
-/-- The decay-rate difference between two R_A states has magnitude later rate minus earlier rate. -/
+/-- Same-name records: Proves that oscillator A's indexed decay-rate difference has magnitude later decay rate minus earlier decay rate. -/
 lemma decayRateChange_magnitude (earlier later : DampedRig .A) :
     (decayRateChange earlier later).magnitude =
       later.osc.decayRate - earlier.osc.decayRate := by
@@ -237,7 +237,7 @@ lemma decayRateChange_magnitude (earlier later : DampedRig .A) :
     later.osc.decayRate - earlier.osc.decayRate
   ring
 
--- Refused: Lean reports a type mismatch between oscillator A's and oscillator B's damping-coefficient bearers.
+-- Bearer safety: Refused: type mismatch between oscillator A's and oscillator B's damping-coefficient bearers; this prevents subtracting one oscillator's decay rate from the other's.
 /--
 error: Type mismatch
   -decayRateOf b

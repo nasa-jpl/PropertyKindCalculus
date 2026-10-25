@@ -23,13 +23,13 @@ open scoped NNReal PropertyKindCalculus.OperatorTable
 noncomputable section
 
 -- ANCHOR: bare_reals
--- Lean type-checks the bare-real radicand for S, so the oscillator identity is not tracked.
+-- Bare reals: √(S.m / S.k) is accepted as a real although oscillator frequency uses √(S.k / S.m); the bare values cannot catch this reciprocal-radicand mistake.
 example (S : ClassicalMechanics.HarmonicOscillator) : ℝ :=
   √(S.m / S.k)
 -- ANCHOR_END: bare_reals
 
 -- ANCHOR: potential_energy_dimension
--- Lean type-checks S's potential energy at x with the mass·length²/time² dimension.
+-- Dimensions: `S.potentialEnergy x` is a `WithDim` value of dimension M·L²·T⁻²; it carries dimension, not an energy kind or oscillator bearer.
 example (S : ClassicalMechanics.HarmonicOscillatorWithDim)
     (x : WithDim L𝓭 (EuclideanSpace ℝ (Fin 1))) :
     WithDim (M𝓭 * L𝓭 * L𝓭 * T𝓭⁻¹ * T𝓭⁻¹) ℝ :=
@@ -37,17 +37,17 @@ example (S : ClassicalMechanics.HarmonicOscillatorWithDim)
 -- ANCHOR_END: potential_energy_dimension
 
 -- ANCHOR: quotient_dimensions
--- Lean type-checks m / k with mass divided by stiffness as its inferred dimension.
+-- Dimensions: The dimension-only, bearer-free `WithDim` quotient m/k has dimension T², reciprocal to the T⁻² angular-frequency-squared dimension.
 example (m : WithDim M𝓭 ℝ)
     (k : WithDim (M𝓭 * T𝓭⁻¹ * T𝓭⁻¹) ℝ) :
     WithDim (M𝓭 * (M𝓭 * T𝓭⁻¹ * T𝓭⁻¹)⁻¹) ℝ := m / k
 
--- Lean type-checks k / m with stiffness divided by mass as its inferred dimension.
+-- Dimensions: The dimension-only, bearer-free `WithDim` quotient k/m has dimension T⁻², matching angular frequency squared but carrying no kind.
 example (m : WithDim M𝓭 ℝ)
     (k : WithDim (M𝓭 * T𝓭⁻¹ * T𝓭⁻¹) ℝ) :
     WithDim ((M𝓭 * T𝓭⁻¹ * T𝓭⁻¹) * M𝓭⁻¹) ℝ := k / m
 
--- Refused: Lean reports a type mismatch between the mass/stiffness and stiffness/mass dimensions for m / k.
+-- Dimensions: Refused: type mismatch between m/k's T² dimension and the required k/m dimension T⁻²; this prevents the reciprocal radicand for angular frequency.
 /--
 error: Type mismatch
   m / k
@@ -63,25 +63,25 @@ example (m : WithDim M𝓭 ℝ)
 -- ANCHOR_END: quotient_dimensions
 
 -- ANCHOR: frequency_alias
--- Lean type-checks the time-inverse value as Frequency; dimensions alone do not distinguish the two frequency kinds.
+-- Kind vs dimension: A WithDim T⁻¹ value is accepted as Frequency; equal dimensions erase the distinction between cyclic and angular frequency.
 example (ω : WithDim T𝓭⁻¹ ℝ≥0) : Frequency :=
   (fun f : Frequency => f) ω
 -- ANCHOR_END: frequency_alias
 
 -- ANCHOR: distinct_kinds_same_dimension
--- Lean proves angularFrequency and frequency.kind are distinct kinds despite their equal dimensions.
+-- Kind vs dimension: Proves that angular-frequency and frequency are distinct kinds even though both have dimension T⁻¹.
 example :
     ForPhysLib.ClassicalMechanics.Kinds.angularFrequency ≠
       PropertyKindCalculus.Iso80000.Part3.frequency.kind := by decide
 
--- Lean proves angularFrequencyDK and frequency have equal dimensions; this does not make their kinds equal.
+-- Kind vs dimension: Proves that angular frequency and frequency have equal dimension; equal dimension does not identify their kinds.
 example :
     ForPhysLib.ClassicalMechanics.Metrology.angularFrequencyDK.dim =
       PropertyKindCalculus.Iso80000.Part3.frequency.dim := rfl
 -- ANCHOR_END: distinct_kinds_same_dimension
 
 -- ANCHOR: refused_kind_addition
--- Refused: Lean fails to type-check the angular-frequency/frequency sum because no HAdd instance exists for those quantity kinds.
+-- Kind vs dimension: Refused: no HAdd instance combines angular-frequency and frequency quantities, preventing their unlicensed sum despite matching dimension T⁻¹.
 /--
 error: failed to synthesize instance of type class
   HAdd (Quantity ForPhysLib.ClassicalMechanics.Kinds.angularFrequency ℝ)
@@ -95,7 +95,7 @@ example := fun (ω : Quantity ForPhysLib.ClassicalMechanics.Kinds.angularFrequen
 -- ANCHOR_END: refused_kind_addition
 
 -- ANCHOR: refused_reciprocal_radicand
--- Refused: Lean fails to type-check massQ / springQ because no HDiv instance exists for those quantity kinds.
+-- Kind vs dimension: Refused: no HDiv instance licenses mass divided by spring-constant quantities, so the kinded reciprocal m/k quotient cannot be formed.
 /--
 error: failed to synthesize instance of type class
   HDiv (Quantity ForPhysLib.ClassicalMechanics.massK ℝ) (Quantity ForPhysLib.ClassicalMechanics.springConstantK ℝ) ?m.6
