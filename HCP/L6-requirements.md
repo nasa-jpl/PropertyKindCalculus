@@ -81,8 +81,9 @@ governs every state or record of P, not just the two records used for a spot che
 - Pin both invalid scopes and run the requirement survey, coverage census, and clean gate.
 - Do not import the Tutorial worked example. The full worked example is
   `examples/Tutorial/HarmonicOscillatorRequirements.lean`.
-- Leave optional `.decided` scope out: the current checker confirms only that the named
-  decider exists, not that its predicate selects a subset of pair objects.
+- Leave optional `.decided` scope out of this lesson. If used, provide a `deciderProof`
+  theorem proving that its decider returns `true` for every result of the governed member;
+  without that proof the census reports the port unchecked.
 
 ## 6. Questions to ask the model so far
 
@@ -116,5 +117,6 @@ generic pair boundary. An unresolved bearer is an unchecked violation unless exe
 `.sort` scope needs an indexed result whose object type has a `Sorted` instance: R1 and R2's
 results are borne by the pair whole, and the instance above maps the whole to `pairS` and
 each part to its own sort, so the census checks their scope. An object of another sort is
-reported ungoverned. A `.decided` scope is still not checked; the checker only confirms that
-its decider exists.
+reported ungoverned. A `.decided` scope is checked against a `deciderProof` theorem proving
+its decider returns `true` for every result of the governed member; without that proof the
+census reports the port unchecked.

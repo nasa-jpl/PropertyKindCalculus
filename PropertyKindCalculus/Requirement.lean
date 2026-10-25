@@ -108,6 +108,8 @@ structure Requirement where
   port : Option NodeId := none
   /-- The objects the requirement quantifies over. -/
   scope : RequirementScope := .all
+  /-- the theorem that the scope's decider holds on everything the governed port produces. -/
+  deciderProof : Option Lean.Name := none
   /-- Provable: the discharge — a `Relation` whose left side is the governed boundary and
   whose right side is a specification boundary, or a sorry-free theorem. Anonymous where
   the requirement is attested. -/

@@ -1286,9 +1286,108 @@ def targetGenericSortRequirement : Provenance.Requirement where
   scope := .sort ``probeS
   attested := "coverage-domain probe"
 
+def anyB (_y : Quantity bK Int) : Bool := true
+
+theorem anyB_model : ∀ x, anyB (model x) = true := fun _ => rfl
+
+def isZero (y : Quantity bK Int) : Bool := y.magnitude == 0
+
+def zeroModel (_ : Quantity aK Int) : Quantity bK Int := ⟨0⟩
+
+def oneModel (_ : Quantity aK Int) : Quantity bK Int := ⟨1⟩
+
+theorem isZero_zeroModel : ∀ x, isZero (zeroModel x) = true := by
+  intro x
+  simp [isZero, zeroModel]
+
+def decidedProofBoundary : Provenance.Contract NodeId KindRef :=
+  { modelBoundary with name := "decider proof result" }
+
+def decidedNoProofBoundary : Provenance.Contract NodeId KindRef :=
+  { modelBoundary with name := "decided result without proof" }
+
+@[kindRequirementFree "the probe isolates a decided scope's missing proof"]
+def decidedExemptBoundary : Provenance.Contract NodeId KindRef :=
+  { modelBoundary with name := "exempt decided result without proof" }
+
+def decidedWrongProofBoundary : Provenance.Contract NodeId KindRef where
+  name := "decided result with proof for another member"
+  members := [``oneModel]
+  ports := [⟨NodeId.result.within ``oneModel, .decl ``bK, .output⟩]
+  exits := []
+
+def decidedProofRequirement : Provenance.Requirement where
+  name := "decider proof on model output"
+  statement := "anyB holds for every model output"
+  kind := .provable
+  governs := ``decidedProofBoundary
+  port := some (NodeId.result.within ``PropertyKindCalculus.Tests.KindRequirement.model)
+  scope := .decided ``anyB
+  deciderProof := some ``anyB_model
+  attested := "decided-scope proof probe"
+
+/--
+info: kind requirement 'decider proof on model output' (provable) on 'decider proof result'
+statement: anyB holds for every model output
+governs: 'decider proof result' at model/result
+scope: decided by PropertyKindCalculus.Tests.KindRequirementScope.anyB
+decider proof: PropertyKindCalculus.Tests.KindRequirementScope.anyB_model
+attested: decided-scope proof probe
+-/
+#guard_msgs in #kind_requirement decidedProofRequirement
+
+def decidedNoProofRequirement : Provenance.Requirement where
+  name := "decided scope without proof"
+  statement := "the decider's output subset is unchecked"
+  kind := .provable
+  governs := ``decidedNoProofBoundary
+  port := some (NodeId.result.within ``PropertyKindCalculus.Tests.KindRequirement.model)
+  scope := .decided ``anyB
+  attested := "decided-scope proof probe"
+
+/--
+info: kind requirement 'decided scope without proof' (provable) on 'decided result without proof'
+statement: the decider's output subset is unchecked
+governs: 'decided result without proof' at model/result
+scope: decided by PropertyKindCalculus.Tests.KindRequirementScope.anyB
+attested: decided-scope proof probe
+-/
+#guard_msgs in #kind_requirement decidedNoProofRequirement
+
+def decidedExemptRequirement : Provenance.Requirement :=
+  { decidedNoProofRequirement with
+    name := "exempted decided scope without proof"
+    governs := ``decidedExemptBoundary }
+
+/--
+info: kind requirement 'exempted decided scope without proof' (provable) on 'exempt decided result without proof'
+statement: the decider's output subset is unchecked
+governs: 'exempt decided result without proof' at model/result
+scope: decided by PropertyKindCalculus.Tests.KindRequirementScope.anyB
+attested: decided-scope proof probe
+-/
+#guard_msgs in #kind_requirement decidedExemptRequirement
+
+def decidedWrongProofRequirement : Provenance.Requirement where
+  name := "decider proof for another member"
+  statement := "the proof must be for the member this boundary governs"
+  kind := .provable
+  governs := ``decidedWrongProofBoundary
+  port := some (NodeId.result.within ``oneModel)
+  scope := .decided ``isZero
+  deciderProof := some ``isZero_zeroModel
+  attested := "decided-scope proof probe"
+
+/--
+error: 'PropertyKindCalculus.Tests.KindRequirementScope.isZero_zeroModel' does not prove that 'PropertyKindCalculus.Tests.KindRequirementScope.isZero' holds on everything 'PropertyKindCalculus.Tests.KindRequirementScope.oneModel' produces — expected: ∀
+  (x : Quantity aK Int), isZero (oneModel x) = true
+-/
+#guard_msgs (whitespace := lax) in #kind_requirement decidedWrongProofRequirement
+
 /--
 info: requirement coverage:
 [governed] PropertyKindCalculus.Tests.KindRequirementScope.conditionalResultBoundary ('conditional result') conditionalResultModel/result — by 'Thing one on conditional result'
+[governed] PropertyKindCalculus.Tests.KindRequirementScope.decidedProofBoundary ('decider proof result') model/result — by 'decider proof on model output'
 [governed] PropertyKindCalculus.Tests.KindRequirementScope.kindIndexedBoundary ('Thing.one result with a kind index') kindIndexedModel/result — by 'Thing one on kind-indexed result'
 [governed] PropertyKindCalculus.Tests.KindRequirementScope.mixedGenericBoundary ('generic Mixed result') mixedGenericModel/result for PropertyKindCalculus.Tests.KindRequirementScope.Mixed.m1 — by 'probe sort on generic Mixed'
 [governed] PropertyKindCalculus.Tests.KindRequirementScope.mixedGenericCombinedBoundary ('generic Mixed result with object scope') mixedGenericModel/result — by 'Mixed.m2 object scope on generic output', 'probe sort on generic Mixed with m2 object'
@@ -1299,10 +1398,13 @@ info: requirement coverage:
 [governed] PropertyKindCalculus.Tests.KindRequirementScope.thingBothBoundary ('Thing-indexed model, both scoped objects') thingModel/result — by 'Thing one and two'
 [governed] PropertyKindCalculus.Tests.KindRequirementScope.thingOneBoundary ('Thing-indexed model, one scoped object') thingModel/result for PropertyKindCalculus.Tests.KindRequirement.Thing.one — by 'Thing one'
 [governed] PropertyKindCalculus.Tests.KindRequirementScope.thingSortBoundary ('Thing-indexed model, sort-scoped output') thingModel/result — by 'probe sort on Thing'
+⊘ exempted PropertyKindCalculus.Tests.KindRequirementScope.decidedExemptBoundary ('exempt decided result without proof') model/result — the probe isolates a decided scope's missing proof
 ⊘ exempted PropertyKindCalculus.Tests.KindRequirementScope.mixedTwoExemptBoundary ('exempt Mixed.m2 result') mixedTwoModel/result — the fixed m2 object has sort tagS, not probeS
 ⊘ exempted PropertyKindCalculus.Tests.KindRequirementScope.opaqueExemptBoundary ('exempt opaque conditional result') opaqueExemptResultModel/result — the opaque output's Thing object cannot be determined statically
 ⚠ UNCHECKED PropertyKindCalculus.Tests.KindRequirementScope.UnresolvedOnly.unresolvedBoundary ('isolated opaque result') unresolvedModel/result — 'Thing one on isolated opaque result' scoped to PropertyKindCalculus.Tests.KindRequirement.Thing.one: the result's 'Thing' object cannot be determined statically
 ⚠ UNCHECKED PropertyKindCalculus.Tests.KindRequirementScope.bareResultBoundary ('unindexed result') bareResultModel/result — 'bare-result object scope' scoped to PropertyKindCalculus.Tests.KindRequirement.Thing.one: the result carries no 'Thing' index
+⚠ UNCHECKED PropertyKindCalculus.Tests.KindRequirementScope.decidedNoProofBoundary ('decided result without proof') model/result — 'decided scope without proof': decided by 'PropertyKindCalculus.Tests.KindRequirementScope.anyB' with no valid decider proof
+⚠ UNCHECKED PropertyKindCalculus.Tests.KindRequirementScope.decidedWrongProofBoundary ('decided result with proof for another member') oneModel/result — 'decider proof for another member': decided by 'PropertyKindCalculus.Tests.KindRequirementScope.isZero' with no valid decider proof
 ⚠ UNCHECKED PropertyKindCalculus.Tests.KindRequirementScope.opaqueResultBoundary ('opaque conditional result') opaqueResultModel/result — 'Thing one on opaque conditional result' scoped to PropertyKindCalculus.Tests.KindRequirement.Thing.one: the result's 'Thing' object cannot be determined statically
 ⚠ UNCHECKED PropertyKindCalculus.Tests.KindRequirementScope.targetGenericBoundary ('generic Target result') targetGenericModel/result — 'probe sort on generic Target': the sort of a generic 'Target s' object cannot be determined statically
 ⚠ UNGOVERNED PropertyKindCalculus.Tests.KindRequirementScope.aliasedThingTwoBoundary ('aliased Thing.two result') aliasedThingTwoModel/result for PropertyKindCalculus.Tests.KindRequirement.Thing.two — 'Thing one on aliased Thing.two' scoped to PropertyKindCalculus.Tests.KindRequirement.Thing.one
@@ -1315,13 +1417,84 @@ info: requirement coverage:
 ⚠ UNGOVERNED PropertyKindCalculus.Tests.KindRequirementScope.thingTwoBoundary ('Thing.two-indexed model') thingTwoModel/result for PropertyKindCalculus.Tests.KindRequirement.Thing.two — 'Thing one on Thing two' scoped to PropertyKindCalculus.Tests.KindRequirement.Thing.one
 ⚠ UNGOVERNED PropertyKindCalculus.Tests.KindRequirementScope.thingWrongSortBoundary ('Thing-indexed model, wrong sort scope') thingModel/result — 'Tag sort on Thing' scoped to sort 'PropertyKindCalculus.Tests.KindRequirementScope.tagS', but 'Thing' objects are of sort 'PropertyKindCalculus.Tests.KindRequirement.probeS'
 ⚠ UNGOVERNED PropertyKindCalculus.Tests.KindRequirementScope.wrappedCompositeBoundary ('wrapped composite Thing.two result') wrappedCompositeModel/result for PropertyKindCalculus.Tests.KindRequirement.Thing.two — 'Thing one on wrapped composite' scoped to PropertyKindCalculus.Tests.KindRequirement.Thing.one
-27 row(s) over 24 model boundary(ies): 11 governed, 2 exempted, 10 UNGOVERNED, 4 UNCHECKED — requirement-coverage violation
-requirements: 27 provable, 0 empirical, 27 attested
+31 row(s) over 28 model boundary(ies): 12 governed, 3 exempted, 10 UNGOVERNED, 6 UNCHECKED — requirement-coverage violation
+requirements: 31 provable, 0 empirical, 31 attested
 -/
 #guard_msgs (whitespace := lax) in
   #kind_requirement_coverage PropertyKindCalculus.Tests.KindRequirementScope
 
 end PropertyKindCalculus.Tests.KindRequirementScope
+
+namespace PropertyKindCalculus.Tests.KindRequirementDecidedValidation
+
+open PropertyKindCalculus
+open PropertyKindCalculus.Tests.KindRequirement
+open PropertyKindCalculus.Tests.KindRequirementScope
+open PropertyKindCalculus.Provenance (NodeId KindRef)
+
+def decidedInputProofRequirement : Provenance.Requirement where
+  name := "decider proof on an input"
+  statement := "a decider proof may cover only a result port"
+  kind := .provable
+  governs := ``modelBoundary
+  port := some ((NodeId.binder "x").within ``PropertyKindCalculus.Tests.KindRequirement.model)
+  scope := .decided ``anyB
+  deciderProof := some ``anyB_model
+  attested := "decided-scope proof probe"
+
+/--
+error: 'decider proof on an input''s decider proof covers result ports only, but 'model/x' of 'requirement probe model' is not one
+-/
+#guard_msgs (whitespace := lax) in #kind_requirement decidedInputProofRequirement
+
+def stringDecider (_ : String) : Bool := true
+
+def decidedDeciderDoesNotApply : Provenance.Requirement where
+  name := "decider does not apply to result"
+  statement := "a decider must accept the governed member's result"
+  kind := .provable
+  governs := ``modelBoundary
+  port := some (NodeId.result.within ``PropertyKindCalculus.Tests.KindRequirement.model)
+  scope := .decided ``stringDecider
+  deciderProof := some ``anyB_model
+  attested := "decided-scope proof probe"
+
+/--
+error: 'PropertyKindCalculus.Tests.KindRequirementDecidedValidation.stringDecider' does not apply to what 'PropertyKindCalculus.Tests.KindRequirement.model' produces
+-/
+#guard_msgs in #kind_requirement decidedDeciderDoesNotApply
+
+def decidedProofWithAllScope : Provenance.Requirement where
+  name := "decider proof on an all scope"
+  statement := "a decider proof requires a decided scope"
+  kind := .provable
+  governs := ``modelBoundary
+  port := some (NodeId.result.within ``PropertyKindCalculus.Tests.KindRequirement.model)
+  scope := .all
+  deciderProof := some ``anyB_model
+  attested := "decided-scope proof probe"
+
+/--
+error: 'decider proof on an all scope' has a decider proof, but its scope is not `.decided`
+-/
+#guard_msgs in #kind_requirement decidedProofWithAllScope
+
+def decidedMissingProof : Provenance.Requirement where
+  name := "missing decider proof declaration"
+  statement := "a named decider proof must exist"
+  kind := .provable
+  governs := ``modelBoundary
+  port := some (NodeId.result.within ``PropertyKindCalculus.Tests.KindRequirement.model)
+  scope := .decided ``anyB
+  deciderProof := some (Lean.Name.mkSimple "missingAnyBModelProof")
+  attested := "decided-scope proof probe"
+
+/--
+error: the decider proof 'missingAnyBModelProof' is not a declaration
+-/
+#guard_msgs in #kind_requirement decidedMissingProof
+
+end PropertyKindCalculus.Tests.KindRequirementDecidedValidation
 
 namespace PropertyKindCalculus.Tests.KindRequirementSortValidation
 
