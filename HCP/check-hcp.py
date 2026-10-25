@@ -555,15 +555,35 @@ def check(path):
     return errors
 
 
-def error_guard_count(block):
-    guards = list(re.finditer(r"(?m)^[ \t]*#guard_msgs\b", block))
-    count = 0
+def normalize_probe_line(line):
+    return " ".join(line.split())
+
+
+def error_guard_commands(block):
+    guards = list(re.finditer(r"(?m)^[ \t]*#guard_msgs\b([^\r\n]*)", block))
+    commands = []
     previous_end = 0
     for guard in guards:
         if re.search(r"\berror:", block[previous_end:guard.start()]):
-            count += 1
+            inline = re.search(r"\bin\b(.*)$", guard.group(1))
+            command = inline.group(1).strip() if inline else ""
+            if not command:
+                command = next(
+                    (line.strip() for line in block[guard.end():].splitlines()
+                     if line.strip()),
+                    "",
+                )
+            commands.append(normalize_probe_line(command))
         previous_end = guard.end()
-    return count
+    return commands
+
+
+def commented_probe_lines(block):
+    return {
+        normalize_probe_line(line[3:])
+        for line in block.splitlines()
+        if line.startswith("-- ")
+    }
 
 
 def worksheet_errors(path, text, data):
@@ -625,16 +645,16 @@ def worksheet_errors(path, text, data):
             block = worksheet_text[exercise.start():matching_end.end()]
         if "TODO:" not in block:
             errors.append(f"{path}: exercise '{exercise.group(1)}' is missing a TODO")
-        error_pins = error_guard_count(anchor_blocks.get(exercise.group(1), ""))
-        commented_probes = sum(
-            bool(re.match(r"^-- (?:example|def|theorem|#)", line))
-            for line in block.splitlines()
+        error_commands = error_guard_commands(
+            anchor_blocks.get(exercise.group(1), "")
         )
-        if error_pins > commented_probes:
-            errors.append(
-                f"{path}: exercise '{exercise.group(1)}' has {commented_probes} "
-                f"commented probe starts for {error_pins} error #guard_msgs blocks"
-            )
+        commented_commands = commented_probe_lines(block)
+        for command in error_commands:
+            if command not in commented_commands:
+                errors.append(
+                    f"{path}: exercise '{exercise.group(1)}' is missing a commented "
+                    f"counterpart for guarded command '{command}'"
+                )
 
     if "#guard_msgs" in worksheet_text:
         errors.append(f"{path}: worksheet must not contain #guard_msgs")

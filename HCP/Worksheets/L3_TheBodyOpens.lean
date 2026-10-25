@@ -181,7 +181,7 @@ noncomputable example (M : RigidBodyMotion 3) (t : Time) : ℝ :=
 
 -- EXERCISE: framed_rotational_energy
 -- TODO: uncomment the lab-frame argument to see the frame mismatch, then use bodyOmega.
--- example (M : RigidBodyMotion 3) (t : Time) :=
+-- noncomputable example (M : RigidBodyMotion 3) (t : Time) :=
 --   ForPhysLib.Exhibits.RigidBody.rotationalContraction
 --     ForPhysLib.Exhibits.RigidBody.inertia_mul_angularVelocity
 --     ForPhysLib.Exhibits.RigidBody.angularVelocity_mul_angularMomentum
