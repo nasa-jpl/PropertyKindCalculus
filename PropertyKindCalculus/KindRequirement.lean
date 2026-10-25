@@ -724,6 +724,41 @@ def sortMismatchRows (marks : Array ContractMark) (decl : Name) (tag : String)
     out := out.push <| markedCoverageRow marks decl line subject
   return out
 
+def sortCoverageForObjects (marks : Array ContractMark) (decl : Name) (tag : String)
+    (port : NodeId) (governing : Array (Name × Provenance.Requirement))
+    (requirementNames scopedNames : String) (objectType sorted : Expr)
+    (scopedObjects objects : Array Name) : MetaM (Array Row) := do
+  let mut covered := #[]
+  let mut missing := #[]
+  let mut unchecked := #[]
+  let typeName := toString (← Meta.ppExpr objectType)
+  for object in objects do
+    if ← objectMem scopedObjects object then
+      covered := covered.push object
+    else
+      let objectExpr ← mkConstWithLevelParams object
+      let actualSort ← sortedSortOf objectType sorted objectExpr
+      if ← sortMatchesRequirements governing actualSort then
+        covered := covered.push object
+      else if actualSort.hasFVar then
+        unchecked := unchecked.push object
+      else
+        missing := missing.push (object, ← sortNameForExpr actualSort)
+  if missing.isEmpty && unchecked.isEmpty then
+    return #[⟨.ok,
+      s!"[governed] {decl} {tag} {port.render} — by {requirementNames}"⟩]
+  let mut rows := #[]
+  if !covered.isEmpty then
+    rows := rows.push ⟨.ok,
+      s!"[governed] {decl} {tag} {port.render} for {names covered} — by \
+        {requirementNames}"⟩
+  for object in unchecked do
+    let subject := s!"{decl} {tag} {port.render} for {object}"
+    let line := s!"⚠ UNCHECKED {subject} — {requirementNames}: \
+      the sort of a generic '{typeName}' object cannot be determined statically"
+    rows := rows.push <| markedCoverageRow marks decl line subject
+  return rows ++ sortMismatchRows marks decl tag port requirementNames scopedNames missing
+
 def objectScopeCoverageRows (marks : Array ContractMark) (decl : Name) (tag : String)
     (port : NodeId) (governing : Array (Name × Provenance.Requirement))
     (requirementNames : String) : MetaM (Array Row) := do
@@ -802,23 +837,21 @@ def objectScopeCoverageRows (marks : Array ContractMark) (decl : Name) (tag : St
 
 def sortCoverageByDomain (marks : Array ContractMark) (decl : Name) (tag : String)
     (port : NodeId) (governing : Array (Name × Provenance.Requirement))
-    (requirementNames : String) : MetaM (Array Row) := do
+    (requirementNames : String) (objectType : Expr) (domain : PortDomain) :
+    MetaM (Array Row) := do
   let subject := s!"{decl} {tag} {port.render}"
   let noIndexLine := s!"⚠ UNCHECKED {subject} — {requirementNames}: \
     the result carries no object index"
-  let some (objectTypeExpr, domain) ← portObjectInfoFor port
-    | return #[markedCoverageRow marks decl noIndexLine subject]
   match domain with
   | .noIndex =>
     return #[markedCoverageRow marks decl noIndexLine subject]
   | .unresolved =>
-    return ← Meta.forallTelescopeReducing objectTypeExpr fun _ objectType => do
-      let typeName := toString (← Meta.ppExpr objectType)
-      let line := s!"⚠ UNCHECKED {subject} — {requirementNames}: \
-        the result's '{typeName}' object cannot be determined statically"
-      pure #[markedCoverageRow marks decl line subject]
+    let typeName := toString (← Meta.ppExpr objectType)
+    let line := s!"⚠ UNCHECKED {subject} — {requirementNames}: \
+      the result's '{typeName}' object cannot be determined statically"
+    return #[markedCoverageRow marks decl line subject]
   | .only _ | .all =>
-    Meta.forallTelescopeReducing objectTypeExpr fun _ objectType => do
+    do
       let typeName := toString (← Meta.ppExpr objectType)
       let uncheckedNoSort := s!"⚠ UNCHECKED {subject} — {requirementNames}: \
         the objects of '{typeName}' declare no sort"
@@ -831,72 +864,59 @@ def sortCoverageByDomain (marks : Array ContractMark) (decl : Name) (tag : Strin
         {requirementNames}"
       match domain with
       | .only carried =>
-        let mut covered := #[]
-        let mut missing := #[]
-        for object in carried do
-          if ← objectMem scopedObjects object then
-            covered := covered.push object
-          else
-            let objectExpr ← mkConstWithLevelParams object
-            let actualSort ← sortedSortOf objectType sorted objectExpr
-            if ← sortMatchesRequirements governing actualSort then
-              covered := covered.push object
-            else
-              missing := missing.push (object, ← sortNameForExpr actualSort)
-        if missing.isEmpty then
-          return #[⟨.ok, governedLine⟩]
-        let mut rows := #[]
-        if !covered.isEmpty then
-          rows := rows.push ⟨.ok,
-            s!"[governed] {decl} {tag} {port.render} for {names covered} — by \
-              {requirementNames}"⟩
-        return rows ++ sortMismatchRows marks decl tag port requirementNames
-          scopeDescription missing
+        return ← sortCoverageForObjects marks decl tag port governing requirementNames
+          scopeDescription objectType sorted scopedObjects carried.toArray
       | .all =>
         Meta.withLocalDeclD `x objectType fun x => do
           let actualSort ← sortedSortOf objectType sorted x
           if ← sortMatchesRequirements governing actualSort then
             return #[⟨.ok, governedLine⟩]
-          if actualSort.containsFVar x.fvarId! then
-            let line := s!"⚠ UNCHECKED {subject} — {requirementNames}: \
-              the sort of a generic '{typeName}' object cannot be determined statically"
-            return #[markedCoverageRow marks decl line subject]
-          let some expectedSort := governing.findSome? (fun (_, req) =>
-            match req.scope with
-            | .sort s => some s
-            | _ => none)
-            | throwError "a sort-covered port has no sort scope"
-          let actualSortName ← sortNameForExpr actualSort
-          if scopedObjects.isEmpty then
-            let line := s!"⚠ UNGOVERNED {subject} — {requirementNames} scoped to \
-              sort '{expectedSort}', but '{typeName}' objects are of sort '{actualSortName}'"
-            return #[markedCoverageRow marks decl line subject]
-          match ← enumerableObjects objectType with
-          | some objects =>
-            let mut covered := #[]
-            let mut missing := #[]
-            for object in objects do
-              if ← objectMem scopedObjects object then
-                covered := covered.push object
-              else
-                missing := missing.push (object, actualSortName)
-            if missing.isEmpty then
-              return #[⟨.ok, governedLine⟩]
-            let mut rows := #[]
-            if !covered.isEmpty then
-              rows := rows.push ⟨.ok,
-                s!"[governed] {decl} {tag} {port.render} for {names covered} — by \
-                  {requirementNames}"⟩
-            return rows ++ sortMismatchRows marks decl tag port requirementNames
-              scopeDescription missing
-          | none =>
-            let subjectOther := s!"{decl} {tag} {port.render} for every other '{typeName}'"
-            let line := s!"⚠ UNGOVERNED {subjectOther} — {requirementNames} scoped to \
-              {scopeDescription}; objects are of sort '{actualSortName}'"
-            let rows := #[⟨.ok,
-              s!"[governed] {decl} {tag} {port.render} for {scopedNames} — by \
-                {requirementNames}"⟩]
-            pure <| rows.push (markedCoverageRow marks decl line subjectOther)
+          if actualSort.hasFVar then
+            match ← enumerableObjects objectType with
+            | some objects =>
+              return ← sortCoverageForObjects marks decl tag port governing
+                requirementNames scopeDescription objectType sorted scopedObjects objects
+            | none =>
+              let line := s!"⚠ UNCHECKED {subject} — {requirementNames}: \
+                the sort of a generic '{typeName}' object cannot be determined statically"
+              return #[markedCoverageRow marks decl line subject]
+          else
+            let some expectedSort := governing.findSome? (fun (_, req) =>
+              match req.scope with
+              | .sort s => some s
+              | _ => none)
+              | throwError "a sort-covered port has no sort scope"
+            let actualSortName ← sortNameForExpr actualSort
+            if scopedObjects.isEmpty then
+              let line := s!"⚠ UNGOVERNED {subject} — {requirementNames} scoped to \
+                sort '{expectedSort}', but '{typeName}' objects are of sort '{actualSortName}'"
+              return #[markedCoverageRow marks decl line subject]
+            match ← enumerableObjects objectType with
+            | some objects =>
+              let mut covered := #[]
+              let mut missing := #[]
+              for object in objects do
+                if ← objectMem scopedObjects object then
+                  covered := covered.push object
+                else
+                  missing := missing.push (object, actualSortName)
+              if missing.isEmpty then
+                return #[⟨.ok, governedLine⟩]
+              let mut rows := #[]
+              if !covered.isEmpty then
+                rows := rows.push ⟨.ok,
+                  s!"[governed] {decl} {tag} {port.render} for {names covered} — by \
+                    {requirementNames}"⟩
+              return rows ++ sortMismatchRows marks decl tag port requirementNames
+                scopeDescription missing
+            | none =>
+              let subjectOther := s!"{decl} {tag} {port.render} for every other '{typeName}'"
+              let line := s!"⚠ UNGOVERNED {subjectOther} — {requirementNames} scoped to \
+                {scopeDescription}; objects are of sort '{actualSortName}'"
+              let rows := #[⟨.ok,
+                s!"[governed] {decl} {tag} {port.render} for {scopedNames} — by \
+                  {requirementNames}"⟩]
+              pure <| rows.push (markedCoverageRow marks decl line subjectOther)
       | .noIndex | .unresolved => pure #[]
 
 def sortCoverageRows (marks : Array ContractMark) (decl : Name) (tag : String)
@@ -924,7 +944,7 @@ def sortCoverageRows (marks : Array ContractMark) (decl : Name) (tag : String)
         {requirementNames}"
       if ← sortMatchesRequirements governing bearerSort then
         return #[⟨.ok, governedLine⟩]
-      let stuck := binders.any fun binder => bearerSort.containsFVar binder.fvarId!
+      let stuck := bearerSort.hasFVar
       if !stuck then
         let objectRequirements := governing.filter fun (_, req) =>
           match req.scope with
@@ -945,6 +965,7 @@ def sortCoverageRows (marks : Array ContractMark) (decl : Name) (tag : String)
         return ← objectScopeCoverageRows marks decl tag port objectRequirements
           objectRequirementNames
       return ← sortCoverageByDomain marks decl tag port governing requirementNames
+        objectType domain
   | return #[markedCoverageRow marks decl noIndexLine subject]
   return rows
 
