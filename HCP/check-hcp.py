@@ -4,6 +4,7 @@
 import glob
 import re
 import sys
+from collections import Counter
 from functools import lru_cache
 from pathlib import Path
 
@@ -22,6 +23,10 @@ SYNOPSIS_SUBSECTIONS = [
     "Errors prevented",
 ]
 VERIFIABLE_TAGS = {"type-checked", "refused", "theorem", "census", "gate"}
+COMMENTED_PROBE_START = re.compile(
+    r"^-- (?:(?:noncomputable|private|protected|unsafe|partial)\s+)*"
+    r"(?:example|def|theorem|lemma|abbrev|structure|class|inductive|instance|#)\b"
+)
 
 
 class FrontMatterError(ValueError):
@@ -563,27 +568,50 @@ def error_guard_commands(block):
     guards = list(re.finditer(r"(?m)^[ \t]*#guard_msgs\b([^\r\n]*)", block))
     commands = []
     previous_end = 0
-    for guard in guards:
+    for index, guard in enumerate(guards):
         if re.search(r"\berror:", block[previous_end:guard.start()]):
             inline = re.search(r"\bin\b(.*)$", guard.group(1))
-            command = inline.group(1).strip() if inline else ""
-            if not command:
-                command = next(
-                    (line.strip() for line in block[guard.end():].splitlines()
-                     if line.strip()),
-                    "",
-                )
-            commands.append(normalize_probe_line(command))
+            command_lines = []
+            inline_command = inline.group(1).strip() if inline else ""
+            if inline_command:
+                command_lines.append(inline_command)
+            next_guard = guards[index + 1].start() if index + 1 < len(guards) else len(block)
+            for line in block[guard.end():next_guard].splitlines():
+                if not line.strip():
+                    if command_lines:
+                        break
+                    continue
+                if re.match(r"^[ \t]*#guard_msgs\b", line):
+                    break
+                command_lines.append(line.strip())
+            commands.append("\n".join(command_lines))
         previous_end = guard.end()
     return commands
 
 
-def commented_probe_lines(block):
-    return {
-        normalize_probe_line(line[3:])
-        for line in block.splitlines()
-        if line.startswith("-- ")
-    }
+def commented_probe_commands(block):
+    probes = []
+    current = []
+
+    def finish_probe():
+        if current:
+            probes.append(normalize_probe_line("\n".join(current)))
+            current.clear()
+
+    for line in block.splitlines():
+        if line.startswith("-- EXERCISE:") or line.startswith("-- EXERCISE_END:"):
+            finish_probe()
+        elif line.startswith("-- @["):
+            finish_probe()
+        elif COMMENTED_PROBE_START.match(line):
+            finish_probe()
+            current.append(line[3:])
+        elif current and line.startswith("-- "):
+            current.append(line[3:])
+        else:
+            finish_probe()
+    finish_probe()
+    return probes
 
 
 def worksheet_errors(path, text, data):
@@ -645,15 +673,29 @@ def worksheet_errors(path, text, data):
             block = worksheet_text[exercise.start():matching_end.end()]
         if "TODO:" not in block:
             errors.append(f"{path}: exercise '{exercise.group(1)}' is missing a TODO")
-        error_commands = error_guard_commands(
-            anchor_blocks.get(exercise.group(1), "")
-        )
-        commented_commands = commented_probe_lines(block)
-        for command in error_commands:
-            if command not in commented_commands:
+        error_commands = error_guard_commands(anchor_blocks.get(exercise.group(1), ""))
+        worksheet_commands = Counter(commented_probe_commands(block))
+        first_lines = [
+            normalize_probe_line(command.splitlines()[0]) if command.splitlines()
+            else "<empty command>"
+            for command in error_commands
+        ]
+        duplicate_first_lines = Counter(first_lines)
+        seen_first_lines = Counter()
+        for command, first_line in zip(error_commands, first_lines):
+            seen_first_lines[first_line] += 1
+            normalized = normalize_probe_line(command)
+            if worksheet_commands[normalized]:
+                worksheet_commands[normalized] -= 1
+            else:
+                occurrence = (
+                    f" (occurrence {seen_first_lines[first_line]})"
+                    if duplicate_first_lines[first_line] > 1
+                    else ""
+                )
                 errors.append(
                     f"{path}: exercise '{exercise.group(1)}' is missing a commented "
-                    f"counterpart for guarded command '{command}'"
+                    f"counterpart for guarded command '{first_line}{occurrence}'"
                 )
 
     if "#guard_msgs" in worksheet_text:
