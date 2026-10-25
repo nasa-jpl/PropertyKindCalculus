@@ -29,9 +29,28 @@ Each HCP step asks a question, changes context, changes attributes, shows the ri
 
 L1–L6 are included here; L5 is optional. The `Tutorial` library remains the model-writer's separate track.
 
+## Worksheets and solutions
+
+Each lesson has an editable worksheet in `HCP/Worksheets/` and a complete solution at
+`HCP/Lk_<Name>.lean`. The worksheet follows the same exercise order and retains the context
+needed later; fill each `TODO:` in place. Build a worksheet with
+`lake build HCP.Worksheets.Lk_<Name>`. The solution modules and their SubVerso anchors remain
+the source for the blueprint chapters.
+
+## Recipes
+
+### Work through a lesson
+
+Open `HCP/Worksheets/L1_TwoBodies.lean`, run
+`lake build HCP.Worksheets.L1_TwoBodies`, and fill its `TODO:`s in place. Compare your work
+with `HCP/L1_TwoBodies.lean` and the corresponding blueprint chapter.
+
 ## Running checks
 
-Run `lake build HCP` to compile the lessons and `python3 HCP/check-hcp.py` to validate front matter, learning-path counts, live anchors, and required sections.
+Run `lake build HCP` to compile the solutions and `lake build HCPWorksheets` to compile all
+worksheets (which intentionally contain `sorry` holes). Run `python3 HCP/check-hcp.py` to
+validate front matter, learning-path counts, live anchors, worksheet structure, and required
+sections.
 
 ## Jargon
 

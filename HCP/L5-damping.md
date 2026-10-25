@@ -66,6 +66,8 @@ This rung is optional; the requirements lesson remains L6.
 | 4 | State the underdamped criterion and make its erasure to real magnitudes visible. | `underdamped_regime` | PhysLib proves the decay-rate inequality; the kinded comparison is refused. The accepted magnitude comparison exposes the rad = 1 convention. |
 | 5 | Compare earlier and later states of oscillator A; try to mix oscillator B. | `same_oscillator_states` | A typed difference measures A's change in decay rate; distinct nominal names cannot be combined. |
 
+Worksheet: `HCP/Worksheets/L5_Damping.lean` · Solution: `HCP/L5_Damping.lean`
+
 ## 5. AI assistance contract
 
 - Keep the lesson independent and use nominal `Osc | A | B` identity.

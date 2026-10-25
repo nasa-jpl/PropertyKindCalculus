@@ -1,6 +1,8 @@
 /-
 # L2 — The pair is a system too
 
+Solution for the worksheet HCP/Worksheets/L2_ThePair.lean.
+
 Eight build-checked probes of parts, wholes, and aggregation licenses.
 -/
 

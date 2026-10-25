@@ -1,6 +1,8 @@
 /-
 # L6 — What must hold
 
+Solution for the worksheet HCP/Worksheets/L6_Requirements.lean.
+
 Three scoped requirements, each with evidence at the boundary it governs.
 -/
 

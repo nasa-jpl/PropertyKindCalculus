@@ -59,6 +59,8 @@ At L0 the bearer stays informal: the card names one body, while the code uses va
 | 6 | Put the reciprocal mass/stiffness quotient under a square root in the kinded model. | `HCP.L0_BlackBox#refused_reciprocal_radicand` | The quotient fails before the square root: no registered edge. |
 | 7 | Write the L0 context card in prose. | This section's §7 card | State the system boundary and assumptions before adding attributes. |
 
+Worksheet: `HCP/Worksheets/L0_BlackBox.lean` · Solution: `HCP/L0_BlackBox.lean`
+
 ## 5. AI assistance contract
 
 - Keep the contributor's terms: body, spring, wall, frequency, dimension.

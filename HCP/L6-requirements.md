@@ -68,6 +68,8 @@ governs every state or record of P, not just the two records used for a spot che
 | 4 | Replace P with a bare real, then replace `pairS` with a declaration that is not a sort. | `invalid_scopes` | Object scope requires a `Sorted` instance; sort scope requires a `SortOfSystem`. |
 | 5 | Survey requirements, census every produced model port, and run the clean gate. | `requirement_census` | Every produced port in these boundaries is governed; the invalid-scope twins are pinned counterexamples. |
 
+Worksheet: `HCP/Worksheets/L6_Requirements.lean` · Solution: `HCP/L6_Requirements.lean`
+
 ## 5. AI assistance contract
 
 - Keep L6 independent, with local nominal `PairId | P | Q`, `Body | A | B`, and the

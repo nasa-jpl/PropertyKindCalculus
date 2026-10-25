@@ -1,6 +1,8 @@
 /-
 # L1 — Two bodies
 
+Solution for the worksheet HCP/Worksheets/L1_TwoBodies.lean.
+
 Seven build-checked probes of oscillator identity, designation, and per-oscillator quantities.
 -/
 

@@ -80,6 +80,8 @@ assumption remains for L5.
 | 6 | State the cart-origin displacement law and try adding its frame velocity to the pair displacement. | `observer_motion` | `origin_displacement_eq` makes observer motion an attribute of the cart frame; the kinded displacement-plus-velocity sum is refused. |
 | 7 | Map Space Stages 0–4 and exercise Stage 3's operator table. | `adoption_ladder` | `spanArea` and its magnitude law are accepted on a displacement from the state and a probe point; area × area is refused. Stage 4's boundary and API-map audits are the final rung. |
 
+Worksheet: `HCP/Worksheets/L4_OutOfTheLine.lean` · Solution: `HCP/L4_OutOfTheLine.lean`
+
 ## 5. AI assistance contract
 
 - Keep L4 independent: define local `PairId | P | Q` and `Body | A | B`.

@@ -78,6 +78,8 @@ motion along one line seen by one observer.
 | 6 | Apply PKC's frame-indexed contraction to lab and body angular velocities. | `framed_rotational_energy` | The lab-frame term is refused, the body-frame term is accepted, and the accepted contraction agrees with PhysLib energy. |
 | 7 | Specialize the old homogeneity assumption to a solid sphere. | `solid_sphere` | The proved inertia tensor is `(2/5) m R² · 1`; upstream records the target as `informal_lemma` `CM-RB-sphereI`. |
 
+Worksheet: `HCP/Worksheets/L3_TheBodyOpens.lean` · Solution: `HCP/L3_TheBodyOpens.lean`
+
 ## 5. AI assistance contract
 
 - Define L3-local `PairId` and `Body`: the preceding lesson modules are independent rather

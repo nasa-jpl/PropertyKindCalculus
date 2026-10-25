@@ -227,7 +227,10 @@ lean_lib «Tutorial» where
 region through SubVerso anchors, build-verified against the source. Build with `lake build HCP`. -/
 lean_lib «HCP» where
   roots := #[`HCP]
-  globs := #[.andSubmodules `HCP]
+
+/-- **The HCP learner worksheets.** Build with `lake build HCPWorksheets`. -/
+lean_lib «HCPWorksheets» where
+  roots := #[`HCPWorksheets]
 
 /-- **The validation-test suite** (source tree `tests/`, namespace
 `PropertyKindCalculus.Tests`). Distinct from the pedagogical `Examples` library: these are

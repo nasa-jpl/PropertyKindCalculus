@@ -1,6 +1,8 @@
 /-
 # L4 — Out of the line
 
+Solution for the worksheet HCP/Worksheets/L4_OutOfTheLine.lean.
+
 Seven build-checked probes of three-dimensional positions, distances, and reference frames.
 -/
 
