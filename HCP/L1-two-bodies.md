@@ -79,6 +79,8 @@ box into body and spring(s) and considers the pair as a whole.
 | 6 | Try cross-oscillator substitutions and addition; compare two weighings of oscillator A at different times on R₁. | `HCP.L1_TwoBodies#refused_cross_oscillator`; `HCP.L1_TwoBodies#same_rig_estimate_difference` | Cross-oscillator operations and cross-rig addition are refused; the same-rig time states admit a typed mass difference whose magnitude reads the real fields. Total mass is meaningful, but whose total requires a whole; that is L2. |
 | 7 | Ask for the mass kind dedicated to a nominal object with no sort. | `HCP.L1_TwoBodies#refused_unsorted_object` | A nominal `Object` cannot supply the `Sorted` instance required by `dedicatedFor`. |
 
+Worksheet: `HCP/Worksheets/L1_TwoBodies.lean` · Solution: `HCP/L1_TwoBodies.lean`
+
 ## 5. AI assistance contract
 
 - Keep the contributor's vocabulary: oscillator, body, mass, spring, and bearer.

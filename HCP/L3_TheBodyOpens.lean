@@ -1,6 +1,8 @@
 /-
 # L3 — The body opens up
 
+Solution for the worksheet HCP/Worksheets/L3_TheBodyOpens.lean.
+
 Seven build-checked probes of composition, weighted means, and frame-specific rotation.
 -/
 

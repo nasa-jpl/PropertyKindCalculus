@@ -247,6 +247,7 @@ def check(path):
     exercises = data.get("exercises")
     if type(exercises) is not int or exercises != len(rows):
         errors.append(f"{path}: front matter says {exercises} exercises, learning path has {len(rows)}")
+    errors.extend(worksheet_errors(path, text, data))
     for module, anchor in ANCHOR_REF.findall(text):
         lesson = ROOT.joinpath(*module.split(".")).with_suffix(".lean")
         if not lesson.is_file():
@@ -254,6 +255,66 @@ def check(path):
         elif not re.search(rf"^\s*--\s*ANCHOR:\s*{re.escape(anchor)}\s*$",
                            lesson.read_text(encoding="utf-8"), re.M):
             errors.append(f"{path}: anchor '{anchor}' not found in {lesson}")
+    return errors
+
+
+def worksheet_errors(path, text, data):
+    errors = []
+    lesson_number = data.get("hcp")
+    if type(lesson_number) is not int or not 1 <= lesson_number <= 7:
+        errors.append(f"{path}: could not map card to its HCP lesson worksheet")
+        return errors
+
+    candidates = sorted(HERE.glob(f"L{lesson_number - 1}_*.lean"))
+    if len(candidates) != 1:
+        errors.append(f"{path}: could not map card to its HCP/Lk_*.lean solution")
+        return errors
+
+    solution_path = candidates[0]
+    worksheet_path = HERE / "Worksheets" / solution_path.name
+    if not worksheet_path.is_file():
+        errors.append(f"{path}: worksheet not found at {worksheet_path}")
+        worksheet_text = ""
+    else:
+        worksheet_text = worksheet_path.read_text(encoding="utf-8")
+
+    solution = solution_path.read_text(encoding="utf-8")
+    anchors = re.findall(r"(?m)^-- ANCHOR: ([A-Za-z0-9_-]+)[ \t]*$", solution)
+    exercises = list(re.finditer(
+        r"(?m)^-- EXERCISE: ([A-Za-z0-9_-]+)[ \t]*$", worksheet_text
+    ))
+    exercise_names = [match.group(1) for match in exercises]
+    if exercise_names != anchors:
+        errors.append(
+            f"{path}: worksheet EXERCISE names do not match solution ANCHOR names in order"
+        )
+
+    end_pattern = re.compile(r"(?m)^-- EXERCISE_END: ([A-Za-z0-9_-]+)[ \t]*$")
+    for index, exercise in enumerate(exercises):
+        next_start = exercises[index + 1].start() if index + 1 < len(exercises) else len(worksheet_text)
+        ends = [match for match in end_pattern.finditer(worksheet_text, exercise.end(), next_start)]
+        matching_end = next((match for match in ends if match.group(1) == exercise.group(1)), None)
+        if matching_end is None:
+            errors.append(
+                f"{path}: exercise '{exercise.group(1)}' is missing its matching EXERCISE_END"
+            )
+            block = worksheet_text[exercise.start():next_start]
+        else:
+            block = worksheet_text[exercise.start():matching_end.end()]
+        if "TODO:" not in block:
+            errors.append(f"{path}: exercise '{exercise.group(1)}' is missing a TODO")
+
+    if "#guard_msgs" in worksheet_text:
+        errors.append(f"{path}: worksheet must not contain #guard_msgs")
+
+    expected_line = (
+        f"Worksheet: `HCP/Worksheets/{solution_path.name}` · "
+        f"Solution: `HCP/{solution_path.name}`"
+    )
+    learning = text.split("\n## 4. Learning path", 1)
+    learning_section = learning[1].split("\n## 5.", 1)[0] if len(learning) == 2 else ""
+    if expected_line not in learning_section:
+        errors.append(f"{path}: Learning path is missing '{expected_line}'")
     return errors
 
 

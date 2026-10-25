@@ -1,6 +1,8 @@
 /-
 # L5 — The oscillation dies out
 
+Solution for the worksheet HCP/Worksheets/L5_Damping.lean.
+
 Five build-checked probes of damping, decay rate, regime, and oscillator states.
 -/
 

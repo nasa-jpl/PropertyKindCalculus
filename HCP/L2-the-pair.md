@@ -86,6 +86,8 @@ axis; an imbalance would make it wobble.
 | 7 | Try to assemble kA and kB as two springs chained end to end. | `HCP.L2_ThePair#refused_series_stiffness` | No series-sort assembly license is registered. |
 | 8 | Check the aggregation licenses on the exhibited pairs: parallel kA–kC and series kA–kB. | `HCP.L2_ThePair#parallelLaw`; `HCP.L2_ThePair#seriesLaw`; `HCP.L2_ThePair#licenseCashed` | Parallel stiffness adds; series kA–kB gives 6 ∥ 3 = 2. Integer measurements are exact only for the exhibited pairs and do not model longer chains. |
 
+Worksheet: `HCP/Worksheets/L2_ThePair.lean` · Solution: `HCP/L2_ThePair.lean`
+
 ## 5. AI assistance contract
 
 - Use the HCP-owned `Body`, `Spring`, `PartOf`, and `CoupledPair` types; do not import or reuse the Tutorial model.

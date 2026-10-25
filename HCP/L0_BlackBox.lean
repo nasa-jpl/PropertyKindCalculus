@@ -1,6 +1,8 @@
 /-
 # L0 — The black box
 
+Solution for the worksheet HCP/Worksheets/L0_BlackBox.lean.
+
 Six build-checked probes for the one-body spring–mass oscillator.
 -/
 
