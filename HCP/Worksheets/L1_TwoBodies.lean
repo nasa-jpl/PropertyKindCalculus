@@ -107,10 +107,12 @@ theorem mass_kind_shared_by_oscillators :
 -- EXERCISE: refused_cross_oscillator
 -- TODO: uncomment each expression, read the errors, and write one sentence on what PKC refused and why.
 -- example {r : Rig} (sys : TwoOscillators r) :
---     IndividualQuantity (⟨.A⟩ : OscillatorOf r) ForPhysLib.ClassicalMechanics.massK ℝ :=
+--     IndividualQuantity (⟨.A⟩ : OscillatorOf r)
+--       ForPhysLib.ClassicalMechanics.massK ℝ :=
 --   massOf sys ⟨.B⟩
 -- example {r : Rig} (sys : TwoOscillators r) :=
---   IndividualQuantity.add DifferenceKind.ofScale (massOf sys ⟨.A⟩) (massOf sys ⟨.B⟩)
+--   IndividualQuantity.add DifferenceKind.ofScale
+--     (massOf sys ⟨.A⟩) (massOf sys ⟨.B⟩)
 -- example {r : Rig} (sys : TwoOscillators r) :=
 --   let h :=
 --     KindDiv.law

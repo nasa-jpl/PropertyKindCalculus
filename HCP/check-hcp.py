@@ -584,7 +584,7 @@ def error_guard_commands(block):
                 if re.match(r"^[ \t]*#guard_msgs\b", line):
                     break
                 command_lines.append(line.strip())
-            commands.append("\n".join(command_lines))
+            commands.append([normalize_probe_line(line) for line in command_lines] or ["<empty command>"])
         previous_end = guard.end()
     return commands
 
@@ -595,7 +595,7 @@ def commented_probe_commands(block):
 
     def finish_probe():
         if current:
-            probes.append(normalize_probe_line("\n".join(current)))
+            probes.append([normalize_probe_line(line) for line in current])
             current.clear()
 
     for line in block.splitlines():
@@ -674,29 +674,44 @@ def worksheet_errors(path, text, data):
         if "TODO:" not in block:
             errors.append(f"{path}: exercise '{exercise.group(1)}' is missing a TODO")
         error_commands = error_guard_commands(anchor_blocks.get(exercise.group(1), ""))
-        worksheet_commands = Counter(commented_probe_commands(block))
         first_lines = [
-            normalize_probe_line(command.splitlines()[0]) if command.splitlines()
-            else "<empty command>"
-            for command in error_commands
+            command[0] if command else "<empty command>" for command in error_commands
         ]
         duplicate_first_lines = Counter(first_lines)
         seen_first_lines = Counter()
-        for command, first_line in zip(error_commands, first_lines):
+        occurrences = []
+        for first_line in first_lines:
             seen_first_lines[first_line] += 1
-            normalized = normalize_probe_line(command)
-            if worksheet_commands[normalized]:
-                worksheet_commands[normalized] -= 1
+            occurrences.append(seen_first_lines[first_line])
+
+        worksheet_commands = commented_probe_commands(block)
+        unconsumed = [True] * len(worksheet_commands)
+        missing = []
+        command_order = sorted(
+            range(len(error_commands)),
+            key=lambda index: (-len(error_commands[index]), index),
+        )
+        for command_index in command_order:
+            command = error_commands[command_index]
+            for probe_index, probe in enumerate(worksheet_commands):
+                if (unconsumed[probe_index] and len(probe) >= len(command)
+                        and probe[:len(command)] == command):
+                    unconsumed[probe_index] = False
+                    break
             else:
-                occurrence = (
-                    f" (occurrence {seen_first_lines[first_line]})"
-                    if duplicate_first_lines[first_line] > 1
-                    else ""
-                )
-                errors.append(
-                    f"{path}: exercise '{exercise.group(1)}' is missing a commented "
-                    f"counterpart for guarded command '{first_line}{occurrence}'"
-                )
+                missing.append(command_index)
+
+        for command_index in sorted(missing):
+            first_line = first_lines[command_index]
+            occurrence = (
+                f" (occurrence {occurrences[command_index]})"
+                if duplicate_first_lines[first_line] > 1
+                else ""
+            )
+            errors.append(
+                f"{path}: exercise '{exercise.group(1)}' is missing a commented "
+                f"counterpart for guarded command '{first_line}{occurrence}'"
+            )
 
     if "#guard_msgs" in worksheet_text:
         errors.append(f"{path}: worksheet must not contain #guard_msgs")
