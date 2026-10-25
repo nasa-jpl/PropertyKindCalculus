@@ -16,6 +16,43 @@ set_option verso.exampleModule "HCP.L6_Requirements"
 tag := "hcp-l6"
 %%%
 
+# Synopsis
+
+## Purpose
+
+State what must hold of the refined context as checked requirements: R1 and R2 over the sort "coupled pair", and R3 over every state of pair P. Each requirement names its boundary, port and scope; the census reports every output that no requirement governs.
+
+## PKC vocabulary in scope
+
+New at this step:
+- `Provenance.Contract` — a declared model boundary with its members and ports.
+- `Provenance.Requirement` (`statement`, `governs`, `port`, `scope`, `witness`, `absent`, `gate`, `referents`, `spotChecks`) — a requirement on a boundary.
+- `RequirementKind.provable`, `RequirementKind.empirical` — discharged by a proof, or decided by a gate.
+- `RequirementScope.sort`, `RequirementScope.objects` — what a requirement quantifies over.
+- `NodeId.result`, `PortDir.output` — which port a requirement governs.
+- `#kind_requirement_clean` — the gate that fails on any ungoverned or unchecked output.
+- `@[kindReferent]`, `@[kindCounterexample]` — mark an empirical referent and a refuting witness.
+
+Carried from earlier steps: `Composite`, `Decomposition`, `Assembles`, `assemble`, `IndividualQuantity`, `Quantity`, `KindOfProperty`, `SortOfSystem`, `Sorted` (`sortOf`), `Designated`, `massK`, `displacementK`, `angularFrequencyK`.
+
+## Verifiable properties
+
+- R1: every pair's mass is the assembly of its bodies' masses (theorem) `HCP.L6_Requirements#r1_pair_mass`.
+- R2: no licence assembles a pair's normal-mode frequency from its bodies (theorem) `HCP.L6_Requirements#r2_no_aggregation`.
+- R3: the coupling spring's extension is bounded in every state of pair P, decided by a gate (gate) `HCP.L6_Requirements#r3_empirical`.
+- Scopes naming a bare number or a non-sort are rejected (refused) `HCP.L6_Requirements#invalid_scopes`.
+- The requirement census is pinned and clean (census) `HCP.L6_Requirements#requirement_census`.
+- A P-only requirement on a generic accessor reports Q as ungoverned (census) `HCP.L6_Requirements#scope_gap`.
+
+## Errors prevented
+
+- Unstatable scope: "every pair" or "pair P" with no named sort or particular to quantify over (`HCP.L6_Requirements#invalid_scopes`).
+- Over-claimed coverage: a requirement about P counted as governing Q's output (`HCP.L6_Requirements#scope_gap`).
+- Ungoverned output: a model output that no requirement covers passes unnoticed (`HCP.L6_Requirements#requirement_census`).
+
+# Lesson
+
+
 The pair now has two bodies, a coupling spring, and multiple records. What must hold,
 for which systems or objects? A requirement states its quantification scope. That scope is
 writable because the earlier levels named the pair sort and its nominal particulars.

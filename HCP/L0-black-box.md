@@ -26,6 +26,33 @@ state:
 
 # L0 — The black box: one body, one spring, one line
 
+## Synopsis
+
+### Purpose
+
+Show a PhysLib contributor, on one oscillator, what each layer of typing can and cannot check: bare reals check nothing, `WithDim` checks dimensions, and PKC kinds also separate quantities that share a dimension. The rest of the ladder builds on this distinction.
+
+### PKC vocabulary in scope
+
+New at this step:
+- `Quantity` — a magnitude of one fixed kind of property, with no bearer yet.
+- `angularFrequencyDK` — a dimensioned angular-frequency kind (`.kind`, `.dim`).
+- `angularFrequency`, `frequency` — two ISO 80000-3 kinds that share dimension T⁻¹.
+- `massQ`, `springQ` — read PhysLib's oscillator mass and spring constant as kinded quantities.
+
+### Verifiable properties
+
+- PhysLib's `WithDim` oscillator computes potential energy at dimension M L² T⁻² (type-checked) `HCP.L0_BlackBox#potential_energy_dimension`.
+- `m/k` and `k/m` have different dimensions (type-checked) `HCP.L0_BlackBox#quotient_dimensions`.
+- Angular frequency and frequency are distinct kinds with equal dimensions (theorem) `HCP.L0_BlackBox#distinct_kinds_same_dimension`.
+- Adding an angular frequency to a frequency is refused (refused) `HCP.L0_BlackBox#refused_kind_addition`.
+- Forming mass over spring constant, the inverted radicand of `√(m/k)`, is refused (refused) `HCP.L0_BlackBox#refused_reciprocal_radicand`.
+
+### Errors prevented
+
+- Inverted formula: `√(m/k)` written where `√(k/m)` was meant; bare reals accept it, kinds refuse it (`HCP.L0_BlackBox#bare_reals`, `HCP.L0_BlackBox#refused_reciprocal_radicand`).
+- Same dimension, different kind: angular frequency ω (rad/s) added to frequency f (Hz); `WithDim` accepts it because both are T⁻¹, kinds refuse it (`HCP.L0_BlackBox#frequency_alias`, `HCP.L0_BlackBox#distinct_kinds_same_dimension`, `HCP.L0_BlackBox#refused_kind_addition`).
+
 ## 1. Persona
 
 You are a PhysLib contributor: a physicist who writes Lean in PhysLib. You know Lean and PhysLib and trust `Dimension` and `WithDim`. This lesson begins in that vocabulary.

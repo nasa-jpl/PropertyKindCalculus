@@ -29,6 +29,39 @@ state:
 
 # L3 — The body opens up
 
+## Synopsis
+
+### Purpose
+
+Open body A of pair P into two rigid halves with a body-fixed frame beside the lab frame. Mass still adds over the halves; the centre of mass is a mass-weighted mean that exists only for a body with mass; angular velocity is the same for every half; and a frame index stops lab-frame ω from entering a body-frame energy.
+
+### PKC vocabulary in scope
+
+New at this step:
+- `WeightedCarving` (`parts`, `weight`, `mean`, `total_ne_zero`) — a carving with per-part weights whose mean requires nonzero total weight.
+- `totalWeight`, `weightedSum` — the pieces of a weighted mean.
+- `Decomposition.fold` — a value per part, combined over a decomposition.
+- `InFrame` — components read in a stated frame.
+- `union_mass`, `union_centerOfMass`, `union_inertiaTensor` — how mass, centre of mass and inertia combine over a union.
+- `labOmega`, `bodyOmega`, `bodyInertia`, `rotationalContraction` — rigid-body quantities indexed by frame.
+
+Carried from earlier steps: `Composite`, `Decomposition`, `Assembles`, `assemble`, `IndividualQuantity`, `DifferenceKind.ofScale`, `SortOfSystem`, `Sorted`, `Designated`, `displacementK`.
+
+### Verifiable properties
+
+- Body A's centre of mass is the mass-weighted mean of its halves; masses 3 and 5 at 0 and 10 give 25/4 (theorem) `HCP.L3_TheBodyOpens#center_of_mass_mean`.
+- A massless body has no centre of mass to form (theorem) `HCP.L3_TheBodyOpens#massless_center_of_mass`.
+- Angular velocity is intensive over the halves, and summing it is refused (refused) `HCP.L3_TheBodyOpens#angular_velocity_intensive`.
+- Lab-frame ω in the body-frame rotational energy is refused (refused) `HCP.L3_TheBodyOpens#framed_rotational_energy`.
+- The kinded body-frame energy equals PhysLib's (theorem) `HCP.L3_TheBodyOpens#framed_rotational_energy`.
+- A homogeneous solid sphere has inertia (2/5) m R² (theorem) `HCP.L3_TheBodyOpens#solid_sphere`.
+
+### Errors prevented
+
+- Weighted mean vs sum: centre of mass computed as a sum or plain midpoint (`HCP.L3_TheBodyOpens#center_of_mass_mean`).
+- Degenerate whole: a centre of mass for a massless body (`HCP.L3_TheBodyOpens#massless_center_of_mass`).
+- Wrong frame: PhysLib accepts lab-frame ω in the body-frame energy, `HCP.L3_TheBodyOpens#bare_frame_mismatch`; the frame index refuses it, `HCP.L3_TheBodyOpens#framed_rotational_energy`.
+
 ## 1. Persona
 
 You are a PhysLib contributor: a physicist who writes Lean in PhysLib. You know Lean and

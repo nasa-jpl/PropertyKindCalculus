@@ -16,6 +16,42 @@ set_option verso.exampleModule "HCP.L4_OutOfTheLine"
 tag := "hcp-l4"
 %%%
 
+# Synopsis
+
+## Purpose
+
+Move pair P into 3-D space as seen by two observers, the lab and a moving cart. Points, displacements and distances become different kinds; the A–B separation gets a bearer, the pair; and each frame conversion applies only to the kind of vector it is correct for.
+
+## PKC vocabulary in scope
+
+New at this step:
+- `positionVector`, `displacement`, `distance`, `area` — ISO 80000-3 space kinds.
+- `positionQ`, `displacementQ`, `distanceQ`, `lengthOf` — read PhysLib's `Space` values at their kinds.
+- `KVector` — a frame vector with its physical kind stated.
+- `kGeometricTransport`, `kBoostTransport` — frame conversions, each typed for one kind of vector.
+- `velocityK`, `forceK`, `durationK` — kinds that share PhysLib's one vector type.
+- `DifferenceKind` — a kind-level difference law.
+
+Carried from earlier steps: `Quantity`, `IndividualQuantity`, `DifferenceKind.ofScale`, `SortOfSystem`, `Sorted`, `Designated`.
+
+## Verifiable properties
+
+- Adding a position to a displacement is refused (refused) `HCP.L4_OutOfTheLine#points_vectors_and_distances`.
+- P's A–B separation is a distance about pair P; mixing P's with Q's is refused (refused) `HCP.L4_OutOfTheLine#whose_distance`.
+- A distance equals the length of the corresponding displacement (theorem) `HCP.L4_OutOfTheLine#distance_is_length`.
+- The velocity conversion applies only to velocities, and velocity plus force is refused (refused) `HCP.L4_OutOfTheLine#kinded_frames`.
+- Converting P's displacement between observers gives exactly what the second observer measures (theorem) `HCP.L4_OutOfTheLine#kinded_frames`.
+- The cart's displacement over a time interval is its velocity times the elapsed time (theorem) `HCP.L4_OutOfTheLine#observer_motion`.
+
+## Errors prevented
+
+- Bearer erased: P's separation mistaken for Q's (`HCP.L4_OutOfTheLine#whose_distance`).
+- Observer left implicit: one bare vector type accepts all three frame-conversion laws, `HCP.L4_OutOfTheLine#bare_frames`; kinded vectors accept only the right one, `HCP.L4_OutOfTheLine#kinded_frames`.
+- Point/vector confusion: adding a position to a displacement, or a distance to a displacement's length (`HCP.L4_OutOfTheLine#points_vectors_and_distances`).
+
+# Lesson
+
+
 The wobble throws body A's centre of mass off the line, and a second observer on a
 moving cart sees the pair differently. L4 moves the two centres of mass into `Space 3`,
 distinguishes points from vectors and distances, and states the observer whose frame

@@ -29,6 +29,41 @@ state:
 
 # L2 — The pair is a system too
 
+## Synopsis
+
+### Purpose
+
+Open each oscillator into bodies and springs, and treat the coupled pair as a system of its own. The licence to add a quantity over parts belongs to the sort of the whole, not to the kind: a pair's mass is the sum of its bodies' masses, its normal-mode frequency is not, and stiffnesses add in parallel but not in series.
+
+### PKC vocabulary in scope
+
+New at this step:
+- `Composite` (`whole`, `part`) — the object type of a whole and its parts.
+- `Decomposition` (`atom`, `union`) — how a whole is carved into parts.
+- `Assembles` — the aggregation licence, keyed by the sort of the whole and the kind.
+- `assemble` — fold a licensed quantity over a decomposition.
+- `Extensive` — a kind whose value over a union is the sum over its parts.
+- `DedicatedKind`, `KindOfProperty.dedicatedTo` — a kind dedicated to one sort, such as the pair's normal-mode frequency.
+- `Component` — a named component of a system's characterization.
+- `displacementK` — spring extension; negative compressed, positive stretched.
+
+Carried from earlier steps: `IndividualQuantity`, `IndividualQuantity.add`, `DifferenceKind.ofScale`, `SortOfSystem`, `Sorted`, `Designated`, `massK`, `springConstantK`.
+
+### Verifiable properties
+
+- The pair's mass assembles from body A's and body B's masses (type-checked) `HCP.L2_ThePair#pair_mass`.
+- Adding the whole pair's quantity to one body's is refused (refused) `HCP.L2_ThePair#refused_whole_part`.
+- Assembling angular frequency over the pair is refused: no licence (refused) `HCP.L2_ThePair#refused_frequency_assembly`.
+- The normal-mode frequency is dedicated to the pair as a whole (type-checked) `HCP.L2_ThePair#normal_mode`.
+- Parallel stiffness assembles; series stiffness is refused (refused) `HCP.L2_ThePair#parallel_stiffness`, `HCP.L2_ThePair#refused_series_stiffness`.
+- Parallel assembly agrees with the measured stiffness; the series law gives 2 for springs of 6 and 3 (theorem) `HCP.L2_ThePair#parallelLaw`, `HCP.L2_ThePair#licenseCashed`, `HCP.L2_ThePair#seriesLaw`.
+
+### Errors prevented
+
+- Aggregating what does not aggregate: taking ω₊ as ω_A + ω_B (`HCP.L2_ThePair#refused_frequency_assembly`).
+- Sort vs particular: adding stiffnesses of springs in series as if they were in parallel (`HCP.L2_ThePair#refused_series_stiffness`).
+- Whole/part confusion: adding pair P's mass to body A's mass (`HCP.L2_ThePair#refused_whole_part`).
+
 ## 1. Persona
 
 You are a PhysLib contributor: a physicist who writes Lean in PhysLib. You know Lean and

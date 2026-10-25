@@ -4,6 +4,7 @@
 import glob
 import re
 import sys
+from functools import lru_cache
 from pathlib import Path
 
 REQUIRED = {
@@ -14,6 +15,13 @@ CONCEPT_KEYS = {"informal", "formal", "where"}
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 ANCHOR_REF = re.compile(r"`([A-Za-z0-9_.]+)#([A-Za-z0-9_-]+)`")
+SYNOPSIS_SUBSECTIONS = [
+    "Purpose",
+    "PKC vocabulary in scope",
+    "Verifiable properties",
+    "Errors prevented",
+]
+VERIFIABLE_TAGS = {"type-checked", "refused", "theorem", "census", "gate"}
 
 
 class FrontMatterError(ValueError):
@@ -206,6 +214,292 @@ def parse_front_matter(text) -> dict:
     return data
 
 
+def heading_section(text, level, title):
+    hashes = "#" * level
+    pattern = re.compile(rf"(?m)^{re.escape(hashes)} {re.escape(title)}[ \t]*$")
+    matches = list(pattern.finditer(text))
+    if len(matches) != 1:
+        return None
+    end_pattern = re.compile(rf"(?m)^{re.escape(hashes)} (?!#).+$")
+    following = end_pattern.search(text, matches[0].end())
+    return text[matches[0].start():following.start() if following else len(text)]
+
+
+def chapter_synopsis_section(text):
+    metadata = re.search(r"(?ms)^%%%[ \t]*\n.*?^%%%[ \t]*$", text)
+    if metadata is None:
+        return None
+
+    body = text[metadata.end():]
+    headings = list(re.finditer(r"(?m)^# (?!#).*$", body))
+    if not headings or not re.fullmatch(r"# Synopsis[ \t]*", headings[0].group()):
+        return None
+    synopsis_headings = [
+        match for match in headings
+        if re.fullmatch(r"# Synopsis[ \t]*", match.group())
+    ]
+    if len(synopsis_headings) != 1:
+        return None
+
+    start = metadata.end() + headings[0].start()
+    end = (
+        metadata.end() + headings[1].start()
+        if len(headings) > 1
+        else len(text)
+    )
+    return text[start:end]
+
+
+def normalized_synopsis(section, shift_headings=False):
+    if section is None:
+        return None
+    if shift_headings:
+        section = re.sub(r"(?m)^## Synopsis[ \t]*$", "# Synopsis", section)
+        section = re.sub(r"(?m)^### ", "## ", section)
+    return re.sub(r"\s+", " ", section).strip()
+
+
+def vocabulary_name(term):
+    if term.startswith("#"):
+        return term, True
+    if term.startswith("@[") and term.endswith("]"):
+        return term[2:-1], False
+    return term, False
+
+
+def contains_identifier(source, name):
+    return re.search(
+        r"(?<!\w)" + re.escape(name) + r"(?!\w)", source
+    ) is not None
+
+
+@lru_cache(maxsize=1)
+def vocabulary_sources():
+    paths = []
+    for directory in ("PropertyKindCalculus", "ForPhysLib"):
+        paths.extend((ROOT / directory).rglob("*.lean"))
+    return tuple(
+        (path, path.read_text(encoding="utf-8"))
+        for path in sorted(paths)
+        if path.is_file()
+    )
+
+
+def declaration_in_namespace(source, namespace, member):
+    namespace_stack = []
+    lines = source.splitlines()
+    for index, line in enumerate(lines):
+        opened = re.match(r"^\s*namespace\s+([A-Za-z_][\w.]*)\s*$", line)
+        if opened:
+            namespace_stack.append(opened.group(1))
+            continue
+        closed = re.match(r"^\s*end(?:\s+([A-Za-z_][\w.]*))?\s*$", line)
+        if closed:
+            if namespace_stack:
+                name = closed.group(1)
+                if name is None:
+                    namespace_stack.pop()
+                else:
+                    while namespace_stack:
+                        current = namespace_stack.pop()
+                        if current == name or current.endswith("." + name):
+                            break
+            continue
+
+        namespace_here = ".".join(namespace_stack)
+        matches_namespace = (
+            namespace_here == namespace
+            or namespace_here.endswith("." + namespace)
+        )
+        declaration = re.match(
+            r"^\s*(?:(?:private|protected|noncomputable)\s+)*"
+            r"(?:def|theorem|lemma|abbrev|structure|class|inductive|instance)"
+            r"\s+([A-Za-z_][\w'.]*)\b",
+            line,
+        )
+        if matches_namespace and declaration and declaration.group(1) == member:
+            return True
+
+        aggregate = re.match(
+            r"^(\s*)(?:(?:private|protected|noncomputable)\s+)*"
+            r"(?:structure|class|inductive)\s+([A-Za-z_][\w'.]*)\b.*\bwhere\s*$",
+            line,
+        )
+        if not aggregate:
+            continue
+        aggregate_name = aggregate.group(2)
+        if namespace_here:
+            aggregate_name = f"{namespace_here}.{aggregate_name}"
+        if (
+            aggregate_name != namespace
+            and not aggregate_name.endswith("." + namespace)
+        ):
+            continue
+        base_indent = len(aggregate.group(1))
+        for field_line in lines[index + 1:]:
+            if not field_line.strip():
+                continue
+            indent = len(field_line) - len(field_line.lstrip(" \t"))
+            if indent <= base_indent:
+                break
+            field = re.match(r"^\s*(?:\|\s*)?([A-Za-z_][\w']*)\s*(?::|\b)", field_line)
+            if field and field.group(1) == member:
+                return True
+    return False
+
+
+def contains_vocabulary_name(source, term):
+    name, command = vocabulary_name(term)
+    if not name:
+        return False
+    if command:
+        return re.search(
+            r"(?<![\w#])" + re.escape(name) + r"(?!\w)", source
+        ) is not None
+    if term.startswith("@[") and term.endswith("]"):
+        return contains_identifier(source, name)
+    if "." not in name:
+        return contains_identifier(source, name)
+    if contains_identifier(source, name):
+        return True
+
+    namespace, member = name.rsplit(".", 1)
+    if not contains_identifier(source, member):
+        return False
+
+    # Dot-notation members may occur unqualified at use sites, so validate their declaration namespace.
+    for _, candidate in vocabulary_sources():
+        if contains_identifier(candidate, name):
+            return True
+        if declaration_in_namespace(candidate, namespace, member):
+            return True
+    return False
+
+
+def synopsis_bullets(path, section, label, errors):
+    bullets = []
+    for line in section.splitlines()[1:]:
+        if not line.strip():
+            continue
+        if line.startswith("- "):
+            bullets.append(line[2:].strip())
+        elif line.startswith(("  ", "\t")) and bullets:
+            bullets[-1] += " " + line.strip()
+        else:
+            errors.append(
+                f"{path}: {label} contains a non-bullet line: {line.strip()!r}"
+            )
+    if not bullets:
+        errors.append(f"{path}: {label} must contain at least one bullet")
+    return bullets
+
+
+def synopsis_errors(path, text, data):
+    errors = []
+    section_titles = re.findall(r"(?m)^## (.+?)\s*$", text)
+    if not section_titles or section_titles[0] != "Synopsis":
+        errors.append(f"{path}: '## Synopsis' must be the first level-2 section")
+    if section_titles.count("Synopsis") != 1:
+        errors.append(f"{path}: expected exactly one '## Synopsis' section")
+
+    synopsis = heading_section(text, 2, "Synopsis")
+    if synopsis is None:
+        errors.append(f"{path}: missing or duplicate '## Synopsis' section")
+    else:
+        subsections = list(re.finditer(r"(?m)^### (.+?)\s*$", synopsis))
+        names = [match.group(1) for match in subsections]
+        if names != SYNOPSIS_SUBSECTIONS:
+            errors.append(
+                f"{path}: Synopsis subsections must be exactly "
+                f"{SYNOPSIS_SUBSECTIONS} in order"
+            )
+        for index, match in enumerate(subsections):
+            end = subsections[index + 1].start() if index + 1 < len(subsections) else len(synopsis)
+            if not synopsis[match.end():end].strip():
+                errors.append(f"{path}: Synopsis subsection '{match.group(1)}' is empty")
+
+        lesson_path = None
+        vocab = heading_section(synopsis, 3, "PKC vocabulary in scope")
+        if vocab is None:
+            errors.append(f"{path}: missing or duplicate 'PKC vocabulary in scope' subsection")
+        else:
+            new_list = re.search(r"(?m)^New at this step:[ \t]*$", vocab)
+            if not new_list:
+                errors.append(f"{path}: vocabulary section is missing 'New at this step:'")
+            elif not re.search(r"(?m)^- .+", vocab[new_list.end():]):
+                errors.append(f"{path}: 'New at this step:' must be followed by a list")
+
+            lesson_number = data.get("hcp")
+            if type(lesson_number) is int and 1 <= lesson_number <= 7:
+                candidates = sorted(HERE.glob(f"L{lesson_number - 1}_*.lean"))
+                if len(candidates) == 1:
+                    lesson_path = candidates[0]
+            if lesson_path is None:
+                errors.append(f"{path}: could not map card to its HCP/Lk_*.lean lesson")
+            else:
+                lesson = lesson_path.read_text(encoding="utf-8")
+                for term in re.findall(r"`([^`]+)`", vocab):
+                    if not contains_vocabulary_name(lesson, term):
+                        errors.append(
+                            f"{path}: vocabulary term '{term}' not found in {lesson_path.name}"
+                        )
+
+        verifiable = heading_section(synopsis, 3, "Verifiable properties")
+        if verifiable is not None:
+            bullets = synopsis_bullets(path, verifiable, "Verifiable properties", errors)
+            for index, bullet in enumerate(bullets, 1):
+                tags = list(re.finditer(r"\(([a-z-]+)\)", bullet))
+                first_ref = ANCHOR_REF.search(bullet)
+                tag_is_before_ref = (
+                    len(tags) == 1
+                    and first_ref is not None
+                    and tags[0].end() <= first_ref.start()
+                    and not bullet[tags[0].end():first_ref.start()].strip()
+                )
+                if (
+                    len(tags) != 1
+                    or tags[0].group(1) not in VERIFIABLE_TAGS
+                    or not tag_is_before_ref
+                ):
+                    errors.append(
+                        f"{path}: Verifiable-properties bullet {index} must have exactly one "
+                        f"parenthesized lowercase tag from {sorted(VERIFIABLE_TAGS)} "
+                        "immediately before its first Module#anchor ref"
+                    )
+                if first_ref is None:
+                    errors.append(
+                        f"{path}: Verifiable-properties bullet {index} is missing a Module#anchor ref"
+                    )
+
+        prevented = heading_section(synopsis, 3, "Errors prevented")
+        if prevented is not None:
+            bullets = synopsis_bullets(path, prevented, "Errors prevented", errors)
+            for index, bullet in enumerate(bullets, 1):
+                if not ANCHOR_REF.search(bullet):
+                    errors.append(
+                        f"{path}: Errors-prevented bullet {index} is missing a Module#anchor ref"
+                    )
+
+        if lesson_path is not None:
+            chapter_path = (
+                ROOT / "blueprint" / "PropertyKindCalculusBlueprint" / "Chapters" /
+                "HCP" / lesson_path.name
+            )
+            if not chapter_path.is_file():
+                errors.append(f"{path}: matching Synopsis chapter not found at {chapter_path}")
+            else:
+                chapter_text = chapter_path.read_text(encoding="utf-8")
+                chapter_section = chapter_synopsis_section(chapter_text)
+                if chapter_section is None:
+                    errors.append(
+                        f"{path}: matching chapter is missing, duplicates, or does not start "
+                        "with '# Synopsis' after %%% metadata"
+                    )
+                elif normalized_synopsis(synopsis, True) != normalized_synopsis(chapter_section):
+                    errors.append(f"{path}: Synopsis differs from the matching chapter")
+    return errors
+
+
 def check(path):
     text = path.read_text(encoding="utf-8")
     errors = []
@@ -232,6 +526,8 @@ def check(path):
     if not isinstance(state, dict) or not isinstance(state.get("completed"), list):
         errors.append(f"{path}: state.completed must be a list")
     titles = set(re.findall(r"^## (.+)$", text, re.M))
+    if "Synopsis" not in titles:
+        errors.append(f"{path}: missing section 'Synopsis'")
     for number, title in enumerate(
         ["Persona", "Pull", "Small rigorous improvement", "Learning path",
          "AI assistance contract", "Questions to ask the model so far",
@@ -239,6 +535,7 @@ def check(path):
     ):
         if f"{number}. {title}" not in titles:
             errors.append(f"{path}: missing section '{number}. {title}'")
+    errors.extend(synopsis_errors(path, text, data))
     learning = text.split("\n## 4. Learning path", 1)
     rows = []
     if len(learning) == 2:

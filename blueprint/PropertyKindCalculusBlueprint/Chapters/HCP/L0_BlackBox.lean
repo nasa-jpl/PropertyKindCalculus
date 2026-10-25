@@ -16,6 +16,36 @@ set_option verso.exampleModule "HCP.L0_BlackBox"
 tag := "hcp-l0"
 %%%
 
+# Synopsis
+
+## Purpose
+
+Show a PhysLib contributor, on one oscillator, what each layer of typing can and cannot check: bare reals check nothing, `WithDim` checks dimensions, and PKC kinds also separate quantities that share a dimension. The rest of the ladder builds on this distinction.
+
+## PKC vocabulary in scope
+
+New at this step:
+- `Quantity` — a magnitude of one fixed kind of property, with no bearer yet.
+- `angularFrequencyDK` — a dimensioned angular-frequency kind (`.kind`, `.dim`).
+- `angularFrequency`, `frequency` — two ISO 80000-3 kinds that share dimension T⁻¹.
+- `massQ`, `springQ` — read PhysLib's oscillator mass and spring constant as kinded quantities.
+
+## Verifiable properties
+
+- PhysLib's `WithDim` oscillator computes potential energy at dimension M L² T⁻² (type-checked) `HCP.L0_BlackBox#potential_energy_dimension`.
+- `m/k` and `k/m` have different dimensions (type-checked) `HCP.L0_BlackBox#quotient_dimensions`.
+- Angular frequency and frequency are distinct kinds with equal dimensions (theorem) `HCP.L0_BlackBox#distinct_kinds_same_dimension`.
+- Adding an angular frequency to a frequency is refused (refused) `HCP.L0_BlackBox#refused_kind_addition`.
+- Forming mass over spring constant, the inverted radicand of `√(m/k)`, is refused (refused) `HCP.L0_BlackBox#refused_reciprocal_radicand`.
+
+## Errors prevented
+
+- Inverted formula: `√(m/k)` written where `√(k/m)` was meant; bare reals accept it, kinds refuse it (`HCP.L0_BlackBox#bare_reals`, `HCP.L0_BlackBox#refused_reciprocal_radicand`).
+- Same dimension, different kind: angular frequency ω (rad/s) added to frequency f (Hz); `WithDim` accepts it because both are T⁻¹, kinds refuse it (`HCP.L0_BlackBox#frequency_alias`, `HCP.L0_BlackBox#distinct_kinds_same_dimension`, `HCP.L0_BlackBox#refused_kind_addition`).
+
+# Lesson
+
+
 At L0, write one body on one ideal, massless spring to a fixed, infinitely massive wall,
 with motion along a line. The body is assumed homogeneous, rigid, and point-like; these
 assumptions are revisited at L3. The system context comes first, then the attributes it
