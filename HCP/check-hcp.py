@@ -4,6 +4,7 @@
 import glob
 import re
 import sys
+from functools import lru_cache
 from pathlib import Path
 
 REQUIRED = {
@@ -225,33 +226,28 @@ def heading_section(text, level, title):
 
 
 def chapter_synopsis_section(text):
-    headings = list(re.finditer(r"(?m)^# Synopsis[ \t]*$", text))
-    if len(headings) != 1:
+    metadata = re.search(r"(?ms)^%%%[ \t]*\n.*?^%%%[ \t]*$", text)
+    if metadata is None:
         return None
-    start = headings[0].start()
-    errors_heading = re.search(
-        r"(?m)^## Errors prevented[ \t]*$", text[headings[0].end():]
+
+    body = text[metadata.end():]
+    headings = list(re.finditer(r"(?m)^# (?!#).*$", body))
+    if not headings or not re.fullmatch(r"# Synopsis[ \t]*", headings[0].group()):
+        return None
+    synopsis_headings = [
+        match for match in headings
+        if re.fullmatch(r"# Synopsis[ \t]*", match.group())
+    ]
+    if len(synopsis_headings) != 1:
+        return None
+
+    start = metadata.end() + headings[0].start()
+    end = (
+        metadata.end() + headings[1].start()
+        if len(headings) > 1
+        else len(text)
     )
-    if not errors_heading:
-        return None
-    cursor = headings[0].end() + errors_heading.end()
-    seen_bullet = False
-    blank_after_bullet = False
-    last_bullet_end = None
-    for line in text[cursor:].splitlines(keepends=True):
-        if line.startswith("- "):
-            seen_bullet = True
-            blank_after_bullet = False
-            last_bullet_end = cursor + len(line)
-        elif not line.strip():
-            if seen_bullet:
-                blank_after_bullet = True
-        elif blank_after_bullet and not line.startswith(("  ", "\t", "- ", "#")):
-            return text[start:last_bullet_end] if last_bullet_end is not None else None
-        else:
-            blank_after_bullet = False
-        cursor += len(line)
-    return text[start:last_bullet_end] if last_bullet_end is not None else None
+    return text[start:end]
 
 
 def normalized_synopsis(section, shift_headings=False):
@@ -268,15 +264,134 @@ def vocabulary_name(term):
         return term, True
     if term.startswith("@[") and term.endswith("]"):
         return term[2:-1], False
-    return term.rsplit(".", 1)[-1], False
+    return term, False
+
+
+def contains_identifier(source, name):
+    return re.search(
+        r"(?<!\w)" + re.escape(name) + r"(?!\w)", source
+    ) is not None
+
+
+@lru_cache(maxsize=1)
+def vocabulary_sources():
+    paths = []
+    for directory in ("PropertyKindCalculus", "ForPhysLib"):
+        paths.extend((ROOT / directory).rglob("*.lean"))
+    return tuple(
+        (path, path.read_text(encoding="utf-8"))
+        for path in sorted(paths)
+        if path.is_file()
+    )
+
+
+def declaration_in_namespace(source, namespace, member):
+    namespace_stack = []
+    lines = source.splitlines()
+    for index, line in enumerate(lines):
+        opened = re.match(r"^\s*namespace\s+([A-Za-z_][\w.]*)\s*$", line)
+        if opened:
+            namespace_stack.append(opened.group(1))
+            continue
+        closed = re.match(r"^\s*end(?:\s+([A-Za-z_][\w.]*))?\s*$", line)
+        if closed:
+            if namespace_stack:
+                name = closed.group(1)
+                if name is None:
+                    namespace_stack.pop()
+                else:
+                    while namespace_stack:
+                        current = namespace_stack.pop()
+                        if current == name or current.endswith("." + name):
+                            break
+            continue
+
+        namespace_here = ".".join(namespace_stack)
+        matches_namespace = (
+            namespace_here == namespace
+            or namespace_here.endswith("." + namespace)
+        )
+        declaration = re.match(
+            r"^\s*(?:(?:private|protected|noncomputable)\s+)*"
+            r"(?:def|theorem|lemma|abbrev|structure|class|inductive|instance)"
+            r"\s+([A-Za-z_][\w'.]*)\b",
+            line,
+        )
+        if matches_namespace and declaration and declaration.group(1) == member:
+            return True
+
+        aggregate = re.match(
+            r"^(\s*)(?:(?:private|protected|noncomputable)\s+)*"
+            r"(?:structure|class|inductive)\s+([A-Za-z_][\w'.]*)\b.*\bwhere\s*$",
+            line,
+        )
+        if not aggregate:
+            continue
+        aggregate_name = aggregate.group(2)
+        if namespace_here:
+            aggregate_name = f"{namespace_here}.{aggregate_name}"
+        if (
+            aggregate_name != namespace
+            and not aggregate_name.endswith("." + namespace)
+        ):
+            continue
+        base_indent = len(aggregate.group(1))
+        for field_line in lines[index + 1:]:
+            if not field_line.strip():
+                continue
+            indent = len(field_line) - len(field_line.lstrip(" \t"))
+            if indent <= base_indent:
+                break
+            field = re.match(r"^\s*(?:\|\s*)?([A-Za-z_][\w']*)\s*(?::|\b)", field_line)
+            if field and field.group(1) == member:
+                return True
+    return False
 
 
 def contains_vocabulary_name(source, term):
     name, command = vocabulary_name(term)
     if not name:
         return False
-    left = r"(?<![\w#])" if command else r"(?<!\w)"
-    return re.search(left + re.escape(name) + r"(?!\w)", source) is not None
+    if command:
+        return re.search(
+            r"(?<![\w#])" + re.escape(name) + r"(?!\w)", source
+        ) is not None
+    if term.startswith("@[") and term.endswith("]"):
+        return contains_identifier(source, name)
+    if "." not in name:
+        return contains_identifier(source, name)
+    if contains_identifier(source, name):
+        return True
+
+    namespace, member = name.rsplit(".", 1)
+    if not contains_identifier(source, member):
+        return False
+
+    # Dot-notation members may occur unqualified at use sites, so validate their declaration namespace.
+    for _, candidate in vocabulary_sources():
+        if contains_identifier(candidate, name):
+            return True
+        if declaration_in_namespace(candidate, namespace, member):
+            return True
+    return False
+
+
+def synopsis_bullets(path, section, label, errors):
+    bullets = []
+    for line in section.splitlines()[1:]:
+        if not line.strip():
+            continue
+        if line.startswith("- "):
+            bullets.append(line[2:].strip())
+        elif line.startswith(("  ", "\t")) and bullets:
+            bullets[-1] += " " + line.strip()
+        else:
+            errors.append(
+                f"{path}: {label} contains a non-bullet line: {line.strip()!r}"
+            )
+    if not bullets:
+        errors.append(f"{path}: {label} must contain at least one bullet")
+    return bullets
 
 
 def synopsis_errors(path, text, data):
@@ -331,25 +446,34 @@ def synopsis_errors(path, text, data):
 
         verifiable = heading_section(synopsis, 3, "Verifiable properties")
         if verifiable is not None:
-            bullets = [line[2:].strip() for line in verifiable.splitlines()
-                       if re.match(r"^- ", line)]
+            bullets = synopsis_bullets(path, verifiable, "Verifiable properties", errors)
             for index, bullet in enumerate(bullets, 1):
-                tag_pattern = "|".join(re.escape(tag) for tag in sorted(VERIFIABLE_TAGS))
-                tags = re.findall(rf"\(({tag_pattern})\)", bullet)
-                if len(tags) != 1 or tags[0] not in VERIFIABLE_TAGS:
+                tags = list(re.finditer(r"\(([a-z-]+)\)", bullet))
+                first_ref = ANCHOR_REF.search(bullet)
+                tag_is_before_ref = (
+                    len(tags) == 1
+                    and first_ref is not None
+                    and tags[0].end() <= first_ref.start()
+                    and not bullet[tags[0].end():first_ref.start()].strip()
+                )
+                if (
+                    len(tags) != 1
+                    or tags[0].group(1) not in VERIFIABLE_TAGS
+                    or not tag_is_before_ref
+                ):
                     errors.append(
                         f"{path}: Verifiable-properties bullet {index} must have exactly one "
-                        f"tag from {sorted(VERIFIABLE_TAGS)}"
+                        f"parenthesized lowercase tag from {sorted(VERIFIABLE_TAGS)} "
+                        "immediately before its first Module#anchor ref"
                     )
-                if not ANCHOR_REF.search(bullet):
+                if first_ref is None:
                     errors.append(
                         f"{path}: Verifiable-properties bullet {index} is missing a Module#anchor ref"
                     )
 
         prevented = heading_section(synopsis, 3, "Errors prevented")
         if prevented is not None:
-            bullets = [line[2:].strip() for line in prevented.splitlines()
-                       if re.match(r"^- ", line)]
+            bullets = synopsis_bullets(path, prevented, "Errors prevented", errors)
             for index, bullet in enumerate(bullets, 1):
                 if not ANCHOR_REF.search(bullet):
                     errors.append(
@@ -367,7 +491,10 @@ def synopsis_errors(path, text, data):
                 chapter_text = chapter_path.read_text(encoding="utf-8")
                 chapter_section = chapter_synopsis_section(chapter_text)
                 if chapter_section is None:
-                    errors.append(f"{path}: matching chapter is missing or duplicates '# Synopsis'")
+                    errors.append(
+                        f"{path}: matching chapter is missing, duplicates, or does not start "
+                        "with '# Synopsis' after %%% metadata"
+                    )
                 elif normalized_synopsis(synopsis, True) != normalized_synopsis(chapter_section):
                     errors.append(f"{path}: Synopsis differs from the matching chapter")
     return errors

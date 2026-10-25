@@ -49,6 +49,8 @@ Carried from earlier steps: `Quantity`, `IndividualQuantity`, `DifferenceKind.of
 - Observer left implicit: one bare vector type accepts all three frame-conversion laws, `HCP.L4_OutOfTheLine#bare_frames`; kinded vectors accept only the right one, `HCP.L4_OutOfTheLine#kinded_frames`.
 - Point/vector confusion: adding a position to a displacement, or a distance to a displacement's length (`HCP.L4_OutOfTheLine#points_vectors_and_distances`).
 
+# Lesson
+
 
 The wobble throws body A's centre of mass off the line, and a second observer on a
 moving cart sees the pair differently. L4 moves the two centres of mass into `Space 3`,

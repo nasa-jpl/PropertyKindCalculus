@@ -49,6 +49,8 @@ Carried from earlier steps: `Composite`, `Decomposition`, `Assembles`, `assemble
 - Degenerate whole: a centre of mass for a massless body (`HCP.L3_TheBodyOpens#massless_center_of_mass`).
 - Wrong frame: PhysLib accepts lab-frame ω in the body-frame energy, `HCP.L3_TheBodyOpens#bare_frame_mismatch`; the frame index refuses it, `HCP.L3_TheBodyOpens#framed_rotational_energy`.
 
+# Lesson
+
 
 Body A of pair P now wobbles instead of sliding along the spring axis. Its centre of mass
 is off that line of action, so the spring force misses the centre of mass, produces a

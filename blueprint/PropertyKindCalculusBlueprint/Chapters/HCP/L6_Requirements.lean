@@ -50,6 +50,8 @@ Carried from earlier steps: `Composite`, `Decomposition`, `Assembles`, `assemble
 - Over-claimed coverage: a requirement about P counted as governing Q's output (`HCP.L6_Requirements#scope_gap`).
 - Ungoverned output: a model output that no requirement covers passes unnoticed (`HCP.L6_Requirements#requirement_census`).
 
+# Lesson
+
 
 The pair now has two bodies, a coupling spring, and multiple records. What must hold,
 for which systems or objects? A requirement states its quantification scope. That scope is

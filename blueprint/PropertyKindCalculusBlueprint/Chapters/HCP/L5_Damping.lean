@@ -49,6 +49,8 @@ Carried from earlier steps: DimensionedKind, `IndividualQuantity` and its `add`/
 - Same dimension, different kind: δ + ω₀ accepted by dimensions (`HCP.L5_Damping#same_dimension_different_kinds`).
 - Cross-system contamination: oscillator B's mass in oscillator A's decay rate (`HCP.L5_Damping#kinds_and_decay_rate`).
 
+# Lesson
+
 
 The oscillator loses energy. This optional rung adds a damper to the nominally named
 whole-system model. One name is one system; records under that name are its states at

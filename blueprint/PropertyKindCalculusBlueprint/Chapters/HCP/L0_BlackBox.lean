@@ -43,6 +43,8 @@ New at this step:
 - Inverted formula: `√(m/k)` written where `√(k/m)` was meant; bare reals accept it, kinds refuse it (`HCP.L0_BlackBox#bare_reals`, `HCP.L0_BlackBox#refused_reciprocal_radicand`).
 - Same dimension, different kind: angular frequency ω (rad/s) added to frequency f (Hz); `WithDim` accepts it because both are T⁻¹, kinds refuse it (`HCP.L0_BlackBox#frequency_alias`, `HCP.L0_BlackBox#distinct_kinds_same_dimension`, `HCP.L0_BlackBox#refused_kind_addition`).
 
+# Lesson
+
 
 At L0, write one body on one ideal, massless spring to a fixed, infinitely massive wall,
 with motion along a line. The body is assumed homogeneous, rigid, and point-like; these

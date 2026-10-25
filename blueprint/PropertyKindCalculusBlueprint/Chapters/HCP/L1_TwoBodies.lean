@@ -50,6 +50,8 @@ Carried from earlier steps: `Quantity`, `massQ`, `springQ`.
 - False identity: one name for both oscillators, so two systems are reported as one (`HCP.L1_TwoBodies#designation`).
 - Unsorted bearer: a quantity about something that has no stated sort (`HCP.L1_TwoBodies#refused_unsorted_object`).
 
+# Lesson
+
 
 Two bodies are now in view, one inside each black-box oscillator: whose mass is this? Bare
 reals and bearer-free kinded values let one oscillator's mass enter another's formula.

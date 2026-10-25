@@ -55,6 +55,8 @@ Carried from earlier steps: `IndividualQuantity`, `IndividualQuantity.add`, `Dif
 - Sort vs particular: adding stiffnesses of springs in series as if they were in parallel (`HCP.L2_ThePair#refused_series_stiffness`).
 - Whole/part confusion: adding pair P's mass to body A's mass (`HCP.L2_ThePair#refused_whole_part`).
 
+# Lesson
+
 
 Once A and B are coupled, what bears the total mass and the oscillation frequency? Open
 the L1 black boxes into bodies A and B and springs kA, kC, and kB. The coupling spring
