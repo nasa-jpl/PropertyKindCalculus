@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Check HCP front matter, learning-path rows, lesson anchors, and sections."""
 
+import argparse
 import glob
 import re
 import sys
@@ -621,6 +622,155 @@ EXAMPLE_MARKERS = (
     "-- ANCHOR:", "-- ANCHOR_END:", "-- EXERCISE:", "-- EXERCISE_END:",
     "-- TODO:", "-- GIVEN:",
 )
+SOURCE_ANCHOR_MARKER = re.compile(
+    r"^[ \t]*--+\s*(ANCHOR|ANCHOR_END):\s*(.*?)\s*$"
+)
+EXAMPLE_MODULE = re.compile(
+    r'(?m)^[ \t]*set_option[ \t]+verso\.exampleModule[ \t]+"([^"]+)"[ \t]*$'
+)
+ANCHOR_FENCE = re.compile(
+    r"^(?P<indent>[ \t]*)(?P<fence>`{3,})anchor(?=[ \t]|$)(?P<rest>.*)$"
+)
+ANCHOR_NAME = re.compile(r"(?P<name>[^ \t]+)(?P<args>.*)")
+
+
+def source_anchors(path, text):
+    anchors = {}
+    open_anchors = {}
+    errors = []
+    for line_number, raw_line in enumerate(text.splitlines(keepends=True), 1):
+        line = raw_line.rstrip("\r\n")
+        marker = SOURCE_ANCHOR_MARKER.match(line)
+        if marker and marker.group(2).strip():
+            kind, name = marker.group(1), marker.group(2).strip()
+            if kind == "ANCHOR":
+                if name in open_anchors or name in anchors:
+                    errors.append(f"{path}:{line_number}: duplicate source anchor '{name}'")
+                else:
+                    open_anchors[name] = []
+            elif name not in open_anchors:
+                errors.append(
+                    f"{path}:{line_number}: source anchor end '{name}' has no matching start"
+                )
+            else:
+                anchors[name] = open_anchors.pop(name)
+            continue
+        for body in open_anchors.values():
+            body.append(raw_line)
+
+    for name in open_anchors:
+        errors.append(f"{path}: source anchor '{name}' is missing its ANCHOR_END marker")
+    return anchors, errors
+
+
+def nonblank_code_lines(lines):
+    return [
+        line.rstrip("\r\n")
+        for line in lines
+        if line.strip(" \t\r\n\f\v")
+    ]
+
+
+def closing_anchor_fence(lines, start, fence):
+    closing = re.compile(rf"^[ \t]*`{{{len(fence)},}}[ \t]*$")
+    for index in range(start, len(lines)):
+        if closing.match(lines[index].rstrip("\r\n")):
+            return index
+    return None
+
+
+def blueprint_excerpt_errors(fix=False):
+    chapter_dir = ROOT / "blueprint/PropertyKindCalculusBlueprint/Chapters/HCP"
+    chapter_paths = sorted(chapter_dir.glob("L*.lean"))
+    if not chapter_paths:
+        return [f"{chapter_dir}: no HCP blueprint chapters found"]
+
+    errors = []
+    for chapter_path in chapter_paths:
+        chapter_lines = chapter_path.read_text(encoding="utf-8").splitlines(keepends=True)
+        modules = EXAMPLE_MODULE.findall("".join(chapter_lines))
+        if len(modules) != 1:
+            errors.append(
+                f"{chapter_path}: expected one set_option verso.exampleModule declaration"
+            )
+            continue
+
+        module = modules[0]
+        if not module.startswith("HCP.") or not re.fullmatch(
+            r"[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*", module
+        ):
+            errors.append(f"{chapter_path}: unsupported example module '{module}'")
+            continue
+        source_path = ROOT.joinpath(*module.split(".")).with_suffix(".lean")
+        if not source_path.is_file():
+            errors.append(f"{chapter_path}: example module '{module}' not found at {source_path}")
+            continue
+
+        anchors, source_errors = source_anchors(
+            source_path, source_path.read_text(encoding="utf-8")
+        )
+        errors.extend(source_errors)
+        replacements = []
+        index = 0
+        while index < len(chapter_lines):
+            header = ANCHOR_FENCE.match(chapter_lines[index].rstrip("\r\n"))
+            if not header:
+                index += 1
+                continue
+
+            rest = header.group("rest").strip()
+            anchor_match = ANCHOR_NAME.match(rest)
+            close = closing_anchor_fence(chapter_lines, index + 1, header.group("fence"))
+            line_number = index + 1
+            if close is None:
+                errors.append(f"{chapter_path}:{line_number}: unterminated anchor code fence")
+                break
+            if anchor_match is None:
+                errors.append(f"{chapter_path}:{line_number}: anchor code fence is missing its name")
+                index = close + 1
+                continue
+
+            name = anchor_match.group("name")
+            args = anchor_match.group("args").strip()
+            if args:
+                errors.append(
+                    f"{chapter_path}:{line_number}: anchor '{name}' has unsupported "
+                    f"arguments '{args}'"
+                )
+            elif name not in anchors:
+                errors.append(
+                    f"{chapter_path}:{line_number}: anchor '{name}' is missing from "
+                    f"{source_path.relative_to(ROOT)}"
+                )
+            else:
+                expected = anchors[name]
+                actual = chapter_lines[index + 1:close]
+                if nonblank_code_lines(actual) != nonblank_code_lines(expected):
+                    if fix and any(line.strip(" \t\r\n\f\v") for line in expected):
+                        replacement = list(expected)
+                        if replacement and not replacement[-1].endswith(("\n", "\r")):
+                            replacement[-1] += "\n"
+                        replacements.append((index + 1, close, replacement))
+                    elif not any(line.strip(" \t\r\n\f\v") for line in expected):
+                        errors.append(
+                            f"{chapter_path}:{line_number}: source anchor '{name}' is empty"
+                        )
+                    else:
+                        errors.append(
+                            f"{chapter_path}:{line_number}: anchor '{name}' excerpt differs from "
+                            f"{source_path.relative_to(ROOT)} "
+                            "(run python3 HCP/check-hcp.py --fix-excerpts)"
+                        )
+            index = close + 1
+
+        for start, end, replacement in reversed(replacements):
+            chapter_lines[start:end] = replacement
+        if replacements:
+            chapter_path.write_text("".join(chapter_lines), encoding="utf-8")
+
+    if fix:
+        return blueprint_excerpt_errors()
+    return errors
 
 
 def example_comment_errors(path, text):
@@ -769,12 +919,20 @@ def worksheet_errors(path, text, data):
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--fix-excerpts",
+        action="store_true",
+        help="rewrite HCP blueprint anchor excerpts from their lesson sources",
+    )
+    args = parser.parse_args()
     paths = sorted(Path(p) for p in glob.glob(str(HERE / "*.md"))
                    if not p.endswith("README.md"))
     if not paths:
         print("no HCPs found", file=sys.stderr)
         return 1
-    errors = [error for path in paths for error in check(path)]
+    errors = blueprint_excerpt_errors(fix=args.fix_excerpts)
+    errors.extend(error for path in paths for error in check(path))
     for error in errors:
         print(error, file=sys.stderr)
     print(f"{len(paths)} HCPs checked, {len(errors)} errors")

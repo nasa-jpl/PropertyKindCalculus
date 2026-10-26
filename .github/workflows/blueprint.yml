@@ -179,6 +179,10 @@ jobs:
       # Phase 2: Build + render the Verso design blueprint
       # (a separate Lake package under blueprint/ that pulls in Verso)
       # -------------------------------------------------------
+      # Prevent cached chapters from hiding drift in copied HCP anchors.
+      - name: Check HCP blueprint excerpts
+        run: python3 HCP/check-hcp.py
+
       - name: Reuse the root package's dependency checkouts in blueprint/
         # blueprint/ is a separate Lake package, so without this Lake materializes the
         # WHOLE transitive git closure a second time under blueprint/.lake/packages —

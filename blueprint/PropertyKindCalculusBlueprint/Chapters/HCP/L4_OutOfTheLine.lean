@@ -125,17 +125,21 @@ def pairDisplacementOf {π : PairId} (s : PairState3 π) :
 ```
 
 ```anchor points_vectors_and_distances
+-- Point vs vector: Constructs body A's location as a bearer-free `Quantity positionVector`; its type records position kind, not pair P versus Q.
 example (s : PairState3 .P) :
     Quantity ForPhysLib.Kinds.Space.positionVector (EuclideanSpace ℝ (Fin 3)) :=
   ForPhysLib.Kinded.Space.positionQ (s.com .A)
 
+-- Point vs vector: Constructs pair P's A-to-B difference as a bearer-free `Quantity displacement`; its type cannot distinguish pair P from Q.
 example (s : PairState3 .P) :
     Quantity ForPhysLib.Kinds.Space.displacement (EuclideanSpace ℝ (Fin 3)) :=
   ForPhysLib.Kinded.Space.displacementQ (s.com .A) (s.com .B)
 
+-- Point vs vector: Constructs pair P's scalar separation as a bearer-free `Quantity distance`; its type separates distance from displacement and length, not P from Q.
 example (s : PairState3 .P) : Quantity ForPhysLib.Kinds.Space.distance ℝ :=
   ForPhysLib.Kinded.Space.distanceQ (s.com .A) (s.com .B)
 
+-- Point vs vector: Refused: no HAdd instance combines positionVector and displacement; ordinary addition would conflate a point with its offset instead of translating it.
 /--
 error: failed to synthesize instance of type class
   HAdd (Quantity positionVector (EuclideanSpace ℝ (Fin 3))) (Quantity displacement (EuclideanSpace ℝ (Fin 3))) ?m.10
@@ -147,6 +151,7 @@ example (s : PairState3 .P) :=
   ForPhysLib.Kinded.Space.positionQ (s.com .A) +
     ForPhysLib.Kinded.Space.displacementQ (s.com .A) (s.com .B)
 
+-- Kind vs dimension: Refused: no HAdd instance combines distance and length, preventing a sum of distinct scalar kinds despite their shared length dimension.
 /--
 error: failed to synthesize instance of type class
   HAdd (Quantity distance ℝ) (Quantity length ℝ) ?m.12
@@ -170,10 +175,12 @@ def separationOf {π : PairId} (s : PairState3 π) :
     IndividualQuantity (⟨⟩ : SeparationOf π) ForPhysLib.Kinds.Space.distance ℝ :=
   ⟨(ForPhysLib.Kinded.Space.distanceQ (s.com .A) (s.com .B)).magnitude⟩
 
+/-- Bearer safety: Proves that pair P's indexed separation magnitude is the distance between body A's and body B's centres of mass. -/
 lemma separationOf_magnitude {π : PairId} (s : PairState3 π) :
     (separationOf s).magnitude = dist (s.com .A) (s.com .B) := rfl
 
 -- Distance is ratio-scale in ISO 80000-3, so its difference is licensed.
+-- Composition law: Constructs a DifferenceKind for distance from its ratio scale, licensing a change between states of pair P.
 example : DifferenceKind ForPhysLib.Kinds.Space.distance := DifferenceKind.ofScale
 
 def separationChange (earlier later : PairState3 .P) :
@@ -181,6 +188,7 @@ def separationChange (earlier later : PairState3 .P) :
   IndividualQuantity.add DifferenceKind.ofScale
     (separationOf later) (-(separationOf earlier))
 
+/-- Same-name records: Proves that pair P's separation-change magnitude is later A–B distance minus earlier A–B distance. -/
 lemma separationChange_magnitude (earlier later : PairState3 .P) :
     (separationChange earlier later).magnitude =
       dist (later.com .A) (later.com .B) - dist (earlier.com .A) (earlier.com .B) := by
@@ -191,6 +199,7 @@ lemma separationChange_magnitude (earlier later : PairState3 .P) :
     dist (later.com .A) (later.com .B) - dist (earlier.com .A) (earlier.com .B)
   ring
 
+-- Bearer safety: Refused: type mismatch between pair P's and pair Q's SeparationOf bearers; this prevents treating distinct pairs as one distance history.
 /--
 error: Application type mismatch: The argument
   qDistance
@@ -213,12 +222,14 @@ centres. The magnitudes agree, but the kinds remain distinct; the triangle law i
 statement over the points carried by one `PairState3`.
 
 ```anchor distance_is_length
+-- Point vs vector: Proves that pair P's A–B distance equals the length of its displacement; distance is the norm of the connecting vector.
 example (s : PairState3 .P) :
     (ForPhysLib.Kinded.Space.distanceQ (s.com .A) (s.com .B)).magnitude =
       (ForPhysLib.Kinded.Space.lengthOf
         (ForPhysLib.Kinded.Space.displacementQ (s.com .A) (s.com .B))).magnitude :=
   ForPhysLib.Kinded.Space.distanceQ_eq_lengthOf_displacementQ (s.com .A) (s.com .B)
 
+-- Point vs vector: Proves that pair P's triangle inequality is distance(A,A) ≤ distance(A,B) + distance(B,A), a geometric law on its points.
 example (s : PairState3 .P) :
     (ForPhysLib.Kinded.Space.distanceQ (s.com .A) (s.com .A)).magnitude ≤
       (ForPhysLib.Kinded.Space.distanceQ (s.com .A) (s.com .B)).magnitude +
@@ -237,12 +248,14 @@ def barePairDisplacement {π : PairId} (s : PairState3 π)
   (ReferenceFrame.Vector.dispEquiv (frame := F) (F.timeEquiv.symm t)).symm
     (s.com .A -ᵥ s.com .B)
 
+-- Frame safety: Bare vectors erase physical frame and kind, so all three transports accept pair P's A–B displacement; only geometric is correct, and kinded `kBoostTransport` refuses it.
 example (s : PairState3 .P) (F G : ReferenceFrame 3) (t : Time)
     (u : EuclideanSpace ℝ (Fin 3)) :
     G.Vector × G.Vector × G.Vector :=
   let v := barePairDisplacement s F t
   (geometricTransport F G t v, boostTransport F G t u v, originShiftTransport F G t v)
 
+-- Frame safety: Bare EuclideanSpace vectors accept adding pair P's displacement to cart velocity; the unindexed result cannot catch this physically invalid sum.
 example (s : PairState3 .P) (cart : ReferenceFrame 3) (hCart : cart.IsInertial) :
     EuclideanSpace ℝ (Fin 3) :=
   (s.com .A -ᵥ s.com .B) + hCart.velocity
@@ -273,10 +286,12 @@ def averageVelocityInFrame {π : PairId} (F : ReferenceFrame 3) (t : Time)
   ⟨⟨((ReferenceFrame.Vector.dispEquiv (frame := F) (F.timeEquiv.symm t)).symm
     (averageVelocityOfA earlier later elapsed h).magnitude).components⟩⟩
 
+-- Frame safety: Constructs a bearer-free `KVector G displacement` for pair P via geometric transport; frame and kind remain indexed, but P and Q displacements share a type.
 example (s : PairState3 .P) (F G : ReferenceFrame 3) (t : Time) :
     KVector G ForPhysLib.Kinds.Space.displacement :=
   kGeometricTransport F G t (pairDisplacementInFrame F t s)
 
+/-- Frame safety: Proves that geometric transport of pair P's displacement from F to G yields its G representation, so displacement is observer-independent. -/
 theorem pairDisplacement_observer_independent {π : PairId}
     (F G : ReferenceFrame 3) (t : Time) (s : PairState3 π) :
     kGeometricTransport F G t (pairDisplacementInFrame F t s) =
@@ -287,12 +302,14 @@ theorem pairDisplacement_observer_independent {π : PairId}
   rw [hη]
   simp [barePairDisplacement]
 
+-- Frame safety: Constructs a bearer-free `KVector G velocityK` for body A's average velocity via boost transport; the type cannot distinguish pair P from Q.
 example (earlier later : PairState3 .P) (elapsed : Quantity durationK ℝ)
     (h : elapsed.magnitude ≠ 0) (F G : ReferenceFrame 3) (t : Time)
     (u : Quantity velocityK (EuclideanSpace ℝ (Fin 3))) :
     KVector G velocityK :=
   kBoostTransport F G t u (averageVelocityInFrame F t earlier later elapsed h)
 
+-- Frame safety: Refused: type mismatch between pair P's KVector displacement and the KVector velocity required by boost transport; displacement cannot be boosted as velocity.
 /--
 error: Application type mismatch: The argument
   pairDisplacementInFrame F t s
@@ -308,6 +325,7 @@ example (F G : ReferenceFrame 3) (t : Time)
     (u : Quantity velocityK (EuclideanSpace ℝ (Fin 3))) (s : PairState3 .P) :=
   kBoostTransport F G t u (pairDisplacementInFrame F t s)
 
+-- Kind vs dimension: Refused: no HAdd instance combines frame-F velocity and force vectors, preventing addition of unlike physical kinds.
 /--
 error: failed to synthesize instance of type class
   HAdd (KVector F velocityK) (KVector F forceK) ?m.9
@@ -324,11 +342,13 @@ motion over elapsed time. The pair's state-derived displacement still cannot be 
 that frame's kinded velocity.
 
 ```anchor observer_motion
+-- Frame safety: Proves that the inertial cart's origin-displacement magnitude equals elapsed time times cart-velocity magnitude; the law belongs to the cart frame.
 example (cart : ReferenceFrame 3) (hCart : cart.IsInertial) (t₁ t₂ : Time) :
     (ForPhysLib.Kinded.Space.displacementQ (cart.origin t₂) (cart.origin t₁)).magnitude =
       (elapsedQ t₁ t₂).magnitude • (frameVelocityQ hCart).magnitude :=
   origin_displacement_eq cart hCart t₁ t₂
 
+-- Kind vs dimension: Refused: no HAdd instance combines displacement and velocity quantities, preventing addition of unlike vector kinds.
 /--
 error: failed to synthesize instance of type class
   HAdd (Quantity displacement (EuclideanSpace ℝ (Fin 3))) (Quantity velocityK (EuclideanSpace ℝ (Fin 3))) ?m.13
@@ -352,21 +372,25 @@ def pairSpanArea {π : PairId} (s : PairState3 π) (p : Space 3) :
     (ForPhysLib.Kinded.Space.displacementQ (s.com .A) (s.com .B))
     (ForPhysLib.Kinded.Space.displacementQ (s.com .A) p)
 
+/-- Point vs vector: Proves that pair P's span-area magnitude from A–B and A–p displacements is the product of their norms. -/
 lemma pairSpanArea_magnitude {π : PairId} (s : PairState3 π) (p : Space 3) :
     (pairSpanArea s p).magnitude =
       ‖(ForPhysLib.Kinded.Space.displacementQ (s.com .A) (s.com .B)).magnitude‖ *
         ‖(ForPhysLib.Kinded.Space.displacementQ (s.com .A) p).magnitude‖ :=
   ForPhysLib.Operators.Space.spanArea_magnitude _ _
 
+-- Point vs vector: Constructs a bearer-free `Quantity area` from pair P's A–B and A–p displacements; its type cannot distinguish areas from other pairs or points.
 example (s : PairState3 .P) (p : Space 3) : Quantity ForPhysLib.Kinds.Space.area ℝ :=
   pairSpanArea s p
 
+-- Point vs vector: Proves that pair P's span-area magnitude equals the product of its A–B and A–p displacement norms.
 example (s : PairState3 .P) (p : Space 3) :
     (pairSpanArea s p).magnitude =
       ‖(ForPhysLib.Kinded.Space.displacementQ (s.com .A) (s.com .B)).magnitude‖ *
         ‖(ForPhysLib.Kinded.Space.displacementQ (s.com .A) p).magnitude‖ :=
   pairSpanArea_magnitude s p
 
+-- Kind vs dimension: Refused: no HMul instance licenses area times area, preventing an unregistered product of two area quantities.
 /--
 error: failed to synthesize instance of type class
   HMul (Quantity area ℝ) (Quantity area ℝ) ?m.9
