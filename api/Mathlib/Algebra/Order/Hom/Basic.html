@@ -1,0 +1,251 @@
+<html lang="en"><head><meta charset="UTF-8"></meta><meta name="viewport" content="width=device-width, initial-scale=1"></meta><link rel="stylesheet" href="../../../.././style.css"></link><link rel="icon" href="../../../.././favicon.svg"></link><link rel="mask-icon" href="../../../.././favicon.svg" color="#000000"></link><link rel="prefetch" href="../../../.././/declarations/declaration-data.bmp" as="image"></link><title>Mathlib.Algebra.Order.Hom.Basic</title><script defer="true" src="../../../.././mathjax-config.js"></script><script defer="true" src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script><script defer="true" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script><script>const SITE_ROOT="../../../.././";</script><script>const MODULE_NAME="Mathlib.Algebra.Order.Hom.Basic";</script><script type="module" src="../../../.././jump-src.js"></script><script type="module" src="../../../.././search.js"></script><script type="module" src="../../../.././expand-nav.js"></script><script type="module" src="../../../.././how-about.js"></script><script type="module" src="../../../.././instances.js"></script><script type="module" src="../../../.././importedBy.js"></script></head><body><input id="nav_toggle" type="checkbox"></input><header><h1><label for="nav_toggle"></label><span>Documentation</span></h1><h2 class="header_filename break_within"><span class="name">Mathlib</span>.<span class="name">Algebra</span>.<span class="name">Order</span>.<span class="name">Hom</span>.<span class="name">Basic</span></h2><form id="search_form"><input type="text" name="q" autocomplete="off"></input>&#32;<button id="search_button" onclick="javascript: form.action='../../../.././search.html';">Search</button></form></header><nav class="internal_nav"><p><a href="#top">return to top</a></p><p class="gh_nav_link"><a href="https://github.com/leanprover-community/mathlib4/blob/56a005855ea17e0b0958f73ec801ae140b0a1679/Mathlib/Algebra/Order/Hom/Basic.lean">source</a></p><div class="imports"><details><summary>Imports</summary><ul><li><a href="../../../.././Init.html">Init</a></li><li><a href="../../../.././Mathlib/Order/Lattice.html">Mathlib.Order.Lattice</a></li><li><a href="../../../.././Mathlib/Algebra/Group/Basic.html">Mathlib.Algebra.Group.Basic</a></li><li><a href="../../../.././Mathlib/Algebra/Group/Hom/Defs.html">Mathlib.Algebra.Group.Hom.Defs</a></li></ul></details><details><summary>Imported by</summary><ul id="imported-by-Mathlib.Algebra.Order.Hom.Basic" class="imported-by-list"></ul></details></div><div class="nav_link"><a class="break_within" href="#LibraryNote.«out-param_inheritance»"><span class="name">LibraryNote</span>.<span class="name">«out-param_inheritance»</span></a></div><div class="nav_link"><a class="break_within" href="#NonnegHomClass"><span class="name">NonnegHomClass</span></a></div><div class="nav_link"><a class="break_within" href="#SubadditiveHomClass"><span class="name">SubadditiveHomClass</span></a></div><div class="nav_link"><a class="break_within" href="#SubmultiplicativeHomClass"><span class="name">SubmultiplicativeHomClass</span></a></div><div class="nav_link"><a class="break_within" href="#MulLEAddHomClass"><span class="name">MulLEAddHomClass</span></a></div><div class="nav_link"><a class="break_within" href="#NonarchimedeanHomClass"><span class="name">NonarchimedeanHomClass</span></a></div><div class="nav_link"><a class="break_within" href="#map_zero_le"><span class="name">map_zero_le</span></a></div><div class="nav_link"><a class="break_within" href="#le_map_mul_map_div"><span class="name">le_map_mul_map_div</span></a></div><div class="nav_link"><a class="break_within" href="#le_map_add_map_sub"><span class="name">le_map_add_map_sub</span></a></div><div class="nav_link"><a class="break_within" href="#le_map_add_map_div"><span class="name">le_map_add_map_div</span></a></div><div class="nav_link"><a class="break_within" href="#le_map_div_mul_map_div"><span class="name">le_map_div_mul_map_div</span></a></div><div class="nav_link"><a class="break_within" href="#le_map_sub_add_map_sub"><span class="name">le_map_sub_add_map_sub</span></a></div><div class="nav_link"><a class="break_within" href="#le_map_div_add_map_div"><span class="name">le_map_div_add_map_div</span></a></div></nav><main>
+<div class="mod_doc"><h1 id="Algebraic-order-homomorphism-classes" class="markdown-heading">Algebraic order homomorphism classes <a class="hover-link" href="#Algebraic-order-homomorphism-classes">#</a></h1><p>This file defines hom classes for common properties at the intersection of order theory and algebra.</p><h2 id="Typeclasses" class="markdown-heading">Typeclasses <a class="hover-link" href="#Typeclasses">#</a></h2><p>Basic typeclasses</p><ul><li><code><a href="../../../.././Mathlib/Algebra/Order/Hom/Basic.html#NonnegHomClass">NonnegHomClass</a></code>: Homs are nonnegative: <code>∀ f a, 0 ≤ f a</code></li><li><code><a href="../../../.././Mathlib/Algebra/Order/Hom/Basic.html#SubadditiveHomClass">SubadditiveHomClass</a></code>: Homs are subadditive: <code>∀ f a b, f (a + b) ≤ f a + f b</code></li><li><code><a href="../../../.././Mathlib/Algebra/Order/Hom/Basic.html#SubmultiplicativeHomClass">SubmultiplicativeHomClass</a></code>: Homs are submultiplicative: <code>∀ f a b, f (a * b) ≤ f a * f b</code></li><li><code><a href="../../../.././Mathlib/Algebra/Order/Hom/Basic.html#MulLEAddHomClass">MulLEAddHomClass</a></code>: <code>∀ f a b, f (a * b) ≤ f a + f b</code></li><li><code><a href="../../../.././Mathlib/Algebra/Order/Hom/Basic.html#NonarchimedeanHomClass">NonarchimedeanHomClass</a></code>: <code>∀ a b, f (a + b) ≤ max (f a) (f b)</code></li></ul><h2 id="Notes" class="markdown-heading">Notes <a class="hover-link" href="#Notes">#</a></h2><p>Typeclasses for seminorms are defined here while types of seminorms are defined in
+<code>Analysis.Normed.Group.Seminorm</code> and <code>Analysis.Normed.Ring.Seminorm</code> because absolute values are
+multiplicative ring norms but outside of this use we only consider real-valued seminorms.</p><h2 id="TODO" class="markdown-heading">TODO <a class="hover-link" href="#TODO">#</a></h2><p>Finitary versions of the current lemmas.</p></div><div class="decl" id="LibraryNote.«out-param_inheritance»"><div class="def"><div class="gh_link"><a href="https://github.com/leanprover-community/mathlib4/blob/56a005855ea17e0b0958f73ec801ae140b0a1679/Mathlib/Algebra/Order/Hom/Basic.lean#L41-L61">source</a></div><div class="decl_header"><span class="decl_kind">def</span>
+<span class="decl_name"><a class="break_within" href="../../../.././Mathlib/Algebra/Order/Hom/Basic.html#LibraryNote.«out-param_inheritance»"><span class="name">LibraryNote</span>.<span class="name">«out-param_inheritance»</span></a></span><span class="decl_args"> :</span><div class="decl_type"><a href="../../../.././Batteries/Util/LibraryNote.html#Batteries.Util.LibraryNote">Batteries.Util.LibraryNote</a></div></div><p>Diamond inheritance cannot depend on <code><a href="../../../.././Init/Prelude.html#outParam">outParam</a></code>s in the following circumstances:</p><ul><li>there are three classes <code><a href="../../../.././Mathlib/Order/Notation.html#Top">Top</a></code>, <code>Middle</code>, <code>Bottom</code></li><li>all of these classes have a parameter <code>(α : <a href="../../../.././Init/Prelude.html#outParam">outParam</a> _)</code></li><li>all of these classes have an instance parameter <code>[Root α]</code> that depends on this <code><a href="../../../.././Init/Prelude.html#outParam">outParam</a></code></li><li>the <code>Root</code> class has two child classes: <code>Left</code> and <code>Right</code>, these are siblings in the hierarchy</li><li>the instance <code>Bottom.toMiddle</code> takes a <code>[Left α]</code> parameter</li><li>the instance <code>Middle.toTop</code> takes a <code>[Right α]</code> parameter</li><li>there is a <code>Leaf</code> class that inherits from both <code>Left</code> and <code>Right</code>.</li></ul><p>In that case, given instances <code>Bottom α</code> and <code>Leaf α</code>, Lean cannot synthesize a <code><a href="../../../.././Mathlib/Order/Notation.html#Top">Top</a> α</code> instance,
+even though the hypotheses of the instances <code>Bottom.toMiddle</code> and <code>Middle.toTop</code> are satisfied.</p><p>There are two workarounds:</p><ul><li>You could replace the bundled inheritance implemented by the instance <code>Middle.toTop</code> with
+unbundled inheritance implemented by adding a <code>[Top α]</code> parameter to the <code>Middle</code> class. This is
+the preferred option since it is also more compatible with Lean 4, at the cost of being more work
+to implement and more verbose to use.</li><li>You could weaken the <code>Bottom.toMiddle</code> instance by making it depend on a subclass of
+<code>Middle.toTop</code>'s parameter, in this example replacing <code>[Left α]</code> with <code>[Leaf α]</code>.</li></ul><details><summary>Equations</summary><ul class="equations"><li class="equation"><a href="../../../.././Mathlib/Algebra/Order/Hom/Basic.html#LibraryNote.«out-param_inheritance»">LibraryNote.«out-param_inheritance»</a> <a href="../../../.././Init/Prelude.html#Eq">=</a> <a href="../../../.././Init/Prelude.html#Inhabited.default">default</a></li></ul></details><details id="instances-for-list-LibraryNote.«out-param_inheritance»" class="instances-for-list"><summary>Instances For</summary><ul class="instances-for-enum"></ul></details></div></div><div class="mod_doc"><h3 id="Basics" class="markdown-heading">Basics <a class="hover-link" href="#Basics">#</a></h3></div><div class="decl" id="NonnegHomClass"><div class="class"><div class="gh_link"><a href="https://github.com/leanprover-community/mathlib4/blob/56a005855ea17e0b0958f73ec801ae140b0a1679/Mathlib/Algebra/Order/Hom/Basic.lean#L67-L70">source</a></div><div class="decl_header"><span class="decl_kind">class</span>
+<span class="decl_name"><a class="break_within" href="../../../.././Mathlib/Algebra/Order/Hom/Basic.html#NonnegHomClass"><span class="name">NonnegHomClass</span></a></span><span class="decl_args">
+<span class="fn">(<span class="fn">F</span> : <a href="../../../.././foundational_types.html">Type</a> u_4)</span></span>
+<span class="decl_args">
+<span class="fn">(<span class="fn">α</span> : <span class="fn"><a href="../../../.././Init/Prelude.html#outParam">outParam</a> <a href="../../../.././foundational_types.html">(Type</a> u_5)</span>)</span></span>
+<span class="decl_args">
+<span class="fn">(<span class="fn">β</span> : <span class="fn"><a href="../../../.././Init/Prelude.html#outParam">outParam</a> <a href="../../../.././foundational_types.html">(Type</a> u_6)</span>)</span></span>
+<span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Init/Prelude.html#Zero">Zero</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Init/Prelude.html#LE">LE</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Basic/FunLike/Basic.html#FunLike">FunLike</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span>]</span></span>
+</span><span class="decl_args"> :</span><div class="decl_type"><a href="../../../.././foundational_types.html">Prop</a></div></div><p><code><a href="../../../.././Mathlib/Algebra/Order/Hom/Basic.html#NonnegHomClass">NonnegHomClass</a> F α β</code> states that <code>F</code> is a type of nonnegative morphisms.</p><ul class="structure_fields" id="NonnegHomClass.mk"><li id="NonnegHomClass.apply_nonneg" class="structure_field"><div class="structure_field_info">apply_nonneg<span class="decl_args">
+<span class="fn">(<span class="fn">f</span> : <span class="fn">F</span>)</span></span>
+<span class="decl_args">
+<span class="fn">(<span class="fn">a</span> : <span class="fn">α</span>)</span></span>
+ : <span class="fn">0</span> <a href="../../../.././Init/Prelude.html#LE.le">≤</a> <span class="fn"><span class="fn">f</span> <span class="fn">a</span></span></div><div class="structure_field_doc"><p>the image of any element is nonnegative.</p></div></li></ul><details class="instances"><summary>Instances</summary><ul id="instances-list-NonnegHomClass" class="instances-list"></ul></details></div></div><div class="decl" id="SubadditiveHomClass"><div class="class"><div class="gh_link"><a href="https://github.com/leanprover-community/mathlib4/blob/56a005855ea17e0b0958f73ec801ae140b0a1679/Mathlib/Algebra/Order/Hom/Basic.lean#L72-L76">source</a></div><div class="decl_header"><span class="decl_kind">class</span>
+<span class="decl_name"><a class="break_within" href="../../../.././Mathlib/Algebra/Order/Hom/Basic.html#SubadditiveHomClass"><span class="name">SubadditiveHomClass</span></a></span><span class="decl_args">
+<span class="fn">(<span class="fn">F</span> : <a href="../../../.././foundational_types.html">Type</a> u_4)</span></span>
+<span class="decl_args">
+<span class="fn">(<span class="fn">α</span> : <span class="fn"><a href="../../../.././Init/Prelude.html#outParam">outParam</a> <a href="../../../.././foundational_types.html">(Type</a> u_5)</span>)</span></span>
+<span class="decl_args">
+<span class="fn">(<span class="fn">β</span> : <span class="fn"><a href="../../../.././Init/Prelude.html#outParam">outParam</a> <a href="../../../.././foundational_types.html">(Type</a> u_6)</span>)</span></span>
+<span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Init/Prelude.html#Add">Add</a> <span class="fn">α</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Init/Prelude.html#Add">Add</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Init/Prelude.html#LE">LE</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Basic/FunLike/Basic.html#FunLike">FunLike</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span>]</span></span>
+</span><span class="decl_args"> :</span><div class="decl_type"><a href="../../../.././foundational_types.html">Prop</a></div></div><p><code><a href="../../../.././Mathlib/Algebra/Order/Hom/Basic.html#SubadditiveHomClass">SubadditiveHomClass</a> F α β</code> states that <code>F</code> is a type of subadditive morphisms.</p><ul class="structure_fields" id="SubadditiveHomClass.mk"><li id="SubadditiveHomClass.map_add_le_add" class="structure_field"><div class="structure_field_info">map_add_le_add<span class="decl_args">
+<span class="fn">(<span class="fn">f</span> : <span class="fn">F</span>)</span></span>
+<span class="decl_args">
+<span class="fn">(<span class="fn">a </span><span class="fn">b</span> : <span class="fn">α</span>)</span></span>
+ : <span class="fn"><span class="fn">f</span> (<span class="fn">a</span> <a href="../../../.././Init/Prelude.html#HAdd.hAdd">+</a> <span class="fn">b</span>)</span> <a href="../../../.././Init/Prelude.html#LE.le">≤</a> <span class="fn"><span class="fn">f</span> <span class="fn">a</span></span> <a href="../../../.././Init/Prelude.html#HAdd.hAdd">+</a> <span class="fn"><span class="fn">f</span> <span class="fn">b</span></span></div><div class="structure_field_doc"><p>the image of a sum is less or equal than the sum of the images.</p></div></li></ul><details class="instances"><summary>Instances</summary><ul id="instances-list-SubadditiveHomClass" class="instances-list"></ul></details></div></div><div class="decl" id="SubmultiplicativeHomClass"><div class="class"><div class="gh_link"><a href="https://github.com/leanprover-community/mathlib4/blob/56a005855ea17e0b0958f73ec801ae140b0a1679/Mathlib/Algebra/Order/Hom/Basic.lean#L78-L83">source</a></div><div class="decl_header"><span class="decl_kind">class</span>
+<span class="decl_name"><a class="break_within" href="../../../.././Mathlib/Algebra/Order/Hom/Basic.html#SubmultiplicativeHomClass"><span class="name">SubmultiplicativeHomClass</span></a></span><span class="decl_args">
+<span class="fn">(<span class="fn">F</span> : <a href="../../../.././foundational_types.html">Type</a> u_4)</span></span>
+<span class="decl_args">
+<span class="fn">(<span class="fn">α</span> : <span class="fn"><a href="../../../.././Init/Prelude.html#outParam">outParam</a> <a href="../../../.././foundational_types.html">(Type</a> u_5)</span>)</span></span>
+<span class="decl_args">
+<span class="fn">(<span class="fn">β</span> : <span class="fn"><a href="../../../.././Init/Prelude.html#outParam">outParam</a> <a href="../../../.././foundational_types.html">(Type</a> u_6)</span>)</span></span>
+<span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Init/Prelude.html#Mul">Mul</a> <span class="fn">α</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Init/Prelude.html#Mul">Mul</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Init/Prelude.html#LE">LE</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Basic/FunLike/Basic.html#FunLike">FunLike</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span>]</span></span>
+</span><span class="decl_args"> :</span><div class="decl_type"><a href="../../../.././foundational_types.html">Prop</a></div></div><p><code><a href="../../../.././Mathlib/Algebra/Order/Hom/Basic.html#SubmultiplicativeHomClass">SubmultiplicativeHomClass</a> F α β</code> states that <code>F</code> is a type of submultiplicative morphisms.</p><ul class="structure_fields" id="SubmultiplicativeHomClass.mk"><li id="SubmultiplicativeHomClass.map_mul_le_mul" class="structure_field"><div class="structure_field_info">map_mul_le_mul<span class="decl_args">
+<span class="fn">(<span class="fn">f</span> : <span class="fn">F</span>)</span></span>
+<span class="decl_args">
+<span class="fn">(<span class="fn">a </span><span class="fn">b</span> : <span class="fn">α</span>)</span></span>
+ : <span class="fn"><span class="fn">f</span> (<span class="fn">a</span> <a href="../../../.././Init/Prelude.html#HMul.hMul">*</a> <span class="fn">b</span>)</span> <a href="../../../.././Init/Prelude.html#LE.le">≤</a> <span class="fn"><span class="fn">f</span> <span class="fn">a</span></span> <a href="../../../.././Init/Prelude.html#HMul.hMul">*</a> <span class="fn"><span class="fn">f</span> <span class="fn">b</span></span></div><div class="structure_field_doc"><p>the image of a product is less or equal than the product of the images.</p></div></li></ul><details class="instances"><summary>Instances</summary><ul id="instances-list-SubmultiplicativeHomClass" class="instances-list"></ul></details></div></div><div class="decl" id="MulLEAddHomClass"><div class="class"><div class="gh_link"><a href="https://github.com/leanprover-community/mathlib4/blob/56a005855ea17e0b0958f73ec801ae140b0a1679/Mathlib/Algebra/Order/Hom/Basic.lean#L85-L90">source</a></div><div class="decl_header"><span class="decl_kind">class</span>
+<span class="decl_name"><a class="break_within" href="../../../.././Mathlib/Algebra/Order/Hom/Basic.html#MulLEAddHomClass"><span class="name">MulLEAddHomClass</span></a></span><span class="decl_args">
+<span class="fn">(<span class="fn">F</span> : <a href="../../../.././foundational_types.html">Type</a> u_4)</span></span>
+<span class="decl_args">
+<span class="fn">(<span class="fn">α</span> : <span class="fn"><a href="../../../.././Init/Prelude.html#outParam">outParam</a> <a href="../../../.././foundational_types.html">(Type</a> u_5)</span>)</span></span>
+<span class="decl_args">
+<span class="fn">(<span class="fn">β</span> : <span class="fn"><a href="../../../.././Init/Prelude.html#outParam">outParam</a> <a href="../../../.././foundational_types.html">(Type</a> u_6)</span>)</span></span>
+<span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Init/Prelude.html#Mul">Mul</a> <span class="fn">α</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Init/Prelude.html#Add">Add</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Init/Prelude.html#LE">LE</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Basic/FunLike/Basic.html#FunLike">FunLike</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span>]</span></span>
+</span><span class="decl_args"> :</span><div class="decl_type"><a href="../../../.././foundational_types.html">Prop</a></div></div><p><code><a href="../../../.././Mathlib/Algebra/Order/Hom/Basic.html#MulLEAddHomClass">MulLEAddHomClass</a> F α β</code> states that <code>F</code> is a type of subadditive morphisms.</p><ul class="structure_fields" id="MulLEAddHomClass.mk"><li id="MulLEAddHomClass.map_mul_le_add" class="structure_field"><div class="structure_field_info">map_mul_le_add<span class="decl_args">
+<span class="fn">(<span class="fn">f</span> : <span class="fn">F</span>)</span></span>
+<span class="decl_args">
+<span class="fn">(<span class="fn">a </span><span class="fn">b</span> : <span class="fn">α</span>)</span></span>
+ : <span class="fn"><span class="fn">f</span> (<span class="fn">a</span> <a href="../../../.././Init/Prelude.html#HMul.hMul">*</a> <span class="fn">b</span>)</span> <a href="../../../.././Init/Prelude.html#LE.le">≤</a> <span class="fn"><span class="fn">f</span> <span class="fn">a</span></span> <a href="../../../.././Init/Prelude.html#HAdd.hAdd">+</a> <span class="fn"><span class="fn">f</span> <span class="fn">b</span></span></div><div class="structure_field_doc"><p>the image of a product is less or equal than the sum of the images.</p></div></li></ul><details class="instances"><summary>Instances</summary><ul id="instances-list-MulLEAddHomClass" class="instances-list"></ul></details></div></div><div class="decl" id="NonarchimedeanHomClass"><div class="class"><div class="gh_link"><a href="https://github.com/leanprover-community/mathlib4/blob/56a005855ea17e0b0958f73ec801ae140b0a1679/Mathlib/Algebra/Order/Hom/Basic.lean#L92-L96">source</a></div><div class="decl_header"><span class="decl_kind">class</span>
+<span class="decl_name"><a class="break_within" href="../../../.././Mathlib/Algebra/Order/Hom/Basic.html#NonarchimedeanHomClass"><span class="name">NonarchimedeanHomClass</span></a></span><span class="decl_args">
+<span class="fn">(<span class="fn">F</span> : <a href="../../../.././foundational_types.html">Type</a> u_4)</span></span>
+<span class="decl_args">
+<span class="fn">(<span class="fn">α</span> : <span class="fn"><a href="../../../.././Init/Prelude.html#outParam">outParam</a> <a href="../../../.././foundational_types.html">(Type</a> u_5)</span>)</span></span>
+<span class="decl_args">
+<span class="fn">(<span class="fn">β</span> : <span class="fn"><a href="../../../.././Init/Prelude.html#outParam">outParam</a> <a href="../../../.././foundational_types.html">(Type</a> u_6)</span>)</span></span>
+<span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Init/Prelude.html#Add">Add</a> <span class="fn">α</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Order/Defs/LinearOrder.html#LinearOrder">LinearOrder</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Basic/FunLike/Basic.html#FunLike">FunLike</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span>]</span></span>
+</span><span class="decl_args"> :</span><div class="decl_type"><a href="../../../.././foundational_types.html">Prop</a></div></div><p><code><a href="../../../.././Mathlib/Algebra/Order/Hom/Basic.html#NonarchimedeanHomClass">NonarchimedeanHomClass</a> F α β</code> states that <code>F</code> is a type of non-archimedean morphisms.</p><ul class="structure_fields" id="NonarchimedeanHomClass.mk"><li id="NonarchimedeanHomClass.map_add_le_max" class="structure_field"><div class="structure_field_info">map_add_le_max<span class="decl_args">
+<span class="fn">(<span class="fn">f</span> : <span class="fn">F</span>)</span></span>
+<span class="decl_args">
+<span class="fn">(<span class="fn">a </span><span class="fn">b</span> : <span class="fn">α</span>)</span></span>
+ : <span class="fn"><span class="fn">f</span> (<span class="fn">a</span> <a href="../../../.././Init/Prelude.html#HAdd.hAdd">+</a> <span class="fn">b</span>)</span> <a href="../../../.././Init/Prelude.html#LE.le">≤</a> <span class="fn"><a href="../../../.././Init/Prelude.html#Max.max">max</a> <span class="fn">(<span class="fn">f</span> <span class="fn">a</span>)</span> <span class="fn">(<span class="fn">f</span> <span class="fn">b</span>)</span></span></div><div class="structure_field_doc"><p>the image of a sum is less or equal than the maximum of the images.</p></div></li></ul><details class="instances"><summary>Instances</summary><ul id="instances-list-NonarchimedeanHomClass" class="instances-list"></ul></details></div></div><div class="decl" id="map_zero_le"><div class="theorem"><div class="gh_link"><a href="https://github.com/leanprover-community/mathlib4/blob/56a005855ea17e0b0958f73ec801ae140b0a1679/Mathlib/Algebra/Order/Hom/Basic.lean#L112-L116">source</a></div><div class="decl_header"><span class="decl_kind">theorem</span>
+<span class="decl_name"><a class="break_within" href="../../../.././Mathlib/Algebra/Order/Hom/Basic.html#map_zero_le"><span class="name">map_zero_le</span></a></span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">F</span> : <a href="../../../.././foundational_types.html">Type</a> u_1}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">α</span> : <a href="../../../.././foundational_types.html">Type</a> u_2}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">β</span> : <a href="../../../.././foundational_types.html">Type</a> u_3}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Basic/FunLike/Basic.html#FunLike">FunLike</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Init/Prelude.html#Zero">Zero</a> <span class="fn">α</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Init/Prelude.html#Zero">Zero</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Init/Prelude.html#LE">LE</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Group/Hom/Defs.html#ZeroHomClass">ZeroHomClass</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Order/Hom/Basic.html#NonnegHomClass">NonnegHomClass</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span>]</span></span>
+</span><span class="decl_args">
+<span class="fn">(<span class="fn">f</span> : <span class="fn">F</span>)</span></span>
+<span class="decl_args">
+<span class="fn">(<span class="fn">a</span> : <span class="fn">α</span>)</span></span>
+<span class="decl_args"> :</span><div class="decl_type"><span class="fn"><span class="fn">f</span> <span class="fn">0</span></span> <a href="../../../.././Init/Prelude.html#LE.le">≤</a> <span class="fn"><span class="fn">f</span> <span class="fn">a</span></span></div></div><p>The value at zero of a zero-preserving nonnegative homomorphism is a minimum.</p></div></div><div class="decl" id="le_map_mul_map_div"><div class="theorem"><div class="gh_link"><a href="https://github.com/leanprover-community/mathlib4/blob/56a005855ea17e0b0958f73ec801ae140b0a1679/Mathlib/Algebra/Order/Hom/Basic.lean#L118-L121">source</a></div><div class="decl_header"><span class="decl_kind">theorem</span>
+<span class="decl_name"><a class="break_within" href="../../../.././Mathlib/Algebra/Order/Hom/Basic.html#le_map_mul_map_div"><span class="name">le_map_mul_map_div</span></a></span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">F</span> : <a href="../../../.././foundational_types.html">Type</a> u_1}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">α</span> : <a href="../../../.././foundational_types.html">Type</a> u_2}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">β</span> : <a href="../../../.././foundational_types.html">Type</a> u_3}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Basic/FunLike/Basic.html#FunLike">FunLike</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Group/Defs.html#Group">Group</a> <span class="fn">α</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Group/Semigroup.html#CommMagma">CommMagma</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Init/Prelude.html#LE">LE</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Order/Hom/Basic.html#SubmultiplicativeHomClass">SubmultiplicativeHomClass</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span>]</span></span>
+</span><span class="decl_args">
+<span class="fn">(<span class="fn">f</span> : <span class="fn">F</span>)</span></span>
+<span class="decl_args">
+<span class="fn">(<span class="fn">a </span><span class="fn">b</span> : <span class="fn">α</span>)</span></span>
+<span class="decl_args"> :</span><div class="decl_type"><span class="fn"><span class="fn">f</span> <span class="fn">a</span></span> <a href="../../../.././Init/Prelude.html#LE.le">≤</a> <span class="fn"><span class="fn">f</span> <span class="fn">b</span></span> <a href="../../../.././Init/Prelude.html#HMul.hMul">*</a> <span class="fn"><span class="fn">f</span> (<span class="fn">a</span> <a href="../../../.././Init/Prelude.html#HDiv.hDiv">/</a> <span class="fn">b</span>)</span></div></div></div></div><div class="decl" id="le_map_add_map_sub"><div class="theorem"><div class="gh_link"><a href="https://github.com/leanprover-community/mathlib4/blob/56a005855ea17e0b0958f73ec801ae140b0a1679/Mathlib/Algebra/Order/Hom/Basic.lean#L118-L118">source</a></div><div class="decl_header"><span class="decl_kind">theorem</span>
+<span class="decl_name"><a class="break_within" href="../../../.././Mathlib/Algebra/Order/Hom/Basic.html#le_map_add_map_sub"><span class="name">le_map_add_map_sub</span></a></span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">F</span> : <a href="../../../.././foundational_types.html">Type</a> u_1}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">α</span> : <a href="../../../.././foundational_types.html">Type</a> u_2}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">β</span> : <a href="../../../.././foundational_types.html">Type</a> u_3}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Basic/FunLike/Basic.html#FunLike">FunLike</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Group/Defs.html#AddGroup">AddGroup</a> <span class="fn">α</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Group/Semigroup.html#AddCommMagma">AddCommMagma</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Init/Prelude.html#LE">LE</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Order/Hom/Basic.html#SubadditiveHomClass">SubadditiveHomClass</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span>]</span></span>
+</span><span class="decl_args">
+<span class="fn">(<span class="fn">f</span> : <span class="fn">F</span>)</span></span>
+<span class="decl_args">
+<span class="fn">(<span class="fn">a </span><span class="fn">b</span> : <span class="fn">α</span>)</span></span>
+<span class="decl_args"> :</span><div class="decl_type"><span class="fn"><span class="fn">f</span> <span class="fn">a</span></span> <a href="../../../.././Init/Prelude.html#LE.le">≤</a> <span class="fn"><span class="fn">f</span> <span class="fn">b</span></span> <a href="../../../.././Init/Prelude.html#HAdd.hAdd">+</a> <span class="fn"><span class="fn">f</span> (<span class="fn">a</span> <a href="../../../.././Init/Prelude.html#HSub.hSub">-</a> <span class="fn">b</span>)</span></div></div></div></div><div class="decl" id="le_map_add_map_div"><div class="theorem"><div class="gh_link"><a href="https://github.com/leanprover-community/mathlib4/blob/56a005855ea17e0b0958f73ec801ae140b0a1679/Mathlib/Algebra/Order/Hom/Basic.lean#L123-L126">source</a></div><div class="decl_header"><span class="decl_kind">theorem</span>
+<span class="decl_name"><a class="break_within" href="../../../.././Mathlib/Algebra/Order/Hom/Basic.html#le_map_add_map_div"><span class="name">le_map_add_map_div</span></a></span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">F</span> : <a href="../../../.././foundational_types.html">Type</a> u_1}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">α</span> : <a href="../../../.././foundational_types.html">Type</a> u_2}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">β</span> : <a href="../../../.././foundational_types.html">Type</a> u_3}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Basic/FunLike/Basic.html#FunLike">FunLike</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Group/Defs.html#Group">Group</a> <span class="fn">α</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Group/Semigroup.html#AddCommMagma">AddCommMagma</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Init/Prelude.html#LE">LE</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Order/Hom/Basic.html#MulLEAddHomClass">MulLEAddHomClass</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span>]</span></span>
+</span><span class="decl_args">
+<span class="fn">(<span class="fn">f</span> : <span class="fn">F</span>)</span></span>
+<span class="decl_args">
+<span class="fn">(<span class="fn">a </span><span class="fn">b</span> : <span class="fn">α</span>)</span></span>
+<span class="decl_args"> :</span><div class="decl_type"><span class="fn"><span class="fn">f</span> <span class="fn">a</span></span> <a href="../../../.././Init/Prelude.html#LE.le">≤</a> <span class="fn"><span class="fn">f</span> <span class="fn">b</span></span> <a href="../../../.././Init/Prelude.html#HAdd.hAdd">+</a> <span class="fn"><span class="fn">f</span> (<span class="fn">a</span> <a href="../../../.././Init/Prelude.html#HDiv.hDiv">/</a> <span class="fn">b</span>)</span></div></div></div></div><div class="decl" id="le_map_div_mul_map_div"><div class="theorem"><div class="gh_link"><a href="https://github.com/leanprover-community/mathlib4/blob/56a005855ea17e0b0958f73ec801ae140b0a1679/Mathlib/Algebra/Order/Hom/Basic.lean#L128-L131">source</a></div><div class="decl_header"><span class="decl_kind">theorem</span>
+<span class="decl_name"><a class="break_within" href="../../../.././Mathlib/Algebra/Order/Hom/Basic.html#le_map_div_mul_map_div"><span class="name">le_map_div_mul_map_div</span></a></span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">F</span> : <a href="../../../.././foundational_types.html">Type</a> u_1}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">α</span> : <a href="../../../.././foundational_types.html">Type</a> u_2}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">β</span> : <a href="../../../.././foundational_types.html">Type</a> u_3}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Basic/FunLike/Basic.html#FunLike">FunLike</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Group/Defs.html#Group">Group</a> <span class="fn">α</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Init/Prelude.html#Mul">Mul</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Init/Prelude.html#LE">LE</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Order/Hom/Basic.html#SubmultiplicativeHomClass">SubmultiplicativeHomClass</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span>]</span></span>
+</span><span class="decl_args">
+<span class="fn">(<span class="fn">f</span> : <span class="fn">F</span>)</span></span>
+<span class="decl_args">
+<span class="fn">(<span class="fn">a </span><span class="fn">b </span><span class="fn">c</span> : <span class="fn">α</span>)</span></span>
+<span class="decl_args"> :</span><div class="decl_type"><span class="fn"><span class="fn">f</span> (<span class="fn">a</span> <a href="../../../.././Init/Prelude.html#HDiv.hDiv">/</a> <span class="fn">c</span>)</span> <a href="../../../.././Init/Prelude.html#LE.le">≤</a> <span class="fn"><span class="fn">f</span> (<span class="fn">a</span> <a href="../../../.././Init/Prelude.html#HDiv.hDiv">/</a> <span class="fn">b</span>)</span> <a href="../../../.././Init/Prelude.html#HMul.hMul">*</a> <span class="fn"><span class="fn">f</span> (<span class="fn">b</span> <a href="../../../.././Init/Prelude.html#HDiv.hDiv">/</a> <span class="fn">c</span>)</span></div></div></div></div><div class="decl" id="le_map_sub_add_map_sub"><div class="theorem"><div class="gh_link"><a href="https://github.com/leanprover-community/mathlib4/blob/56a005855ea17e0b0958f73ec801ae140b0a1679/Mathlib/Algebra/Order/Hom/Basic.lean#L128-L128">source</a></div><div class="decl_header"><span class="decl_kind">theorem</span>
+<span class="decl_name"><a class="break_within" href="../../../.././Mathlib/Algebra/Order/Hom/Basic.html#le_map_sub_add_map_sub"><span class="name">le_map_sub_add_map_sub</span></a></span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">F</span> : <a href="../../../.././foundational_types.html">Type</a> u_1}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">α</span> : <a href="../../../.././foundational_types.html">Type</a> u_2}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">β</span> : <a href="../../../.././foundational_types.html">Type</a> u_3}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Basic/FunLike/Basic.html#FunLike">FunLike</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Group/Defs.html#AddGroup">AddGroup</a> <span class="fn">α</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Init/Prelude.html#Add">Add</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Init/Prelude.html#LE">LE</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Order/Hom/Basic.html#SubadditiveHomClass">SubadditiveHomClass</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span>]</span></span>
+</span><span class="decl_args">
+<span class="fn">(<span class="fn">f</span> : <span class="fn">F</span>)</span></span>
+<span class="decl_args">
+<span class="fn">(<span class="fn">a </span><span class="fn">b </span><span class="fn">c</span> : <span class="fn">α</span>)</span></span>
+<span class="decl_args"> :</span><div class="decl_type"><span class="fn"><span class="fn">f</span> (<span class="fn">a</span> <a href="../../../.././Init/Prelude.html#HSub.hSub">-</a> <span class="fn">c</span>)</span> <a href="../../../.././Init/Prelude.html#LE.le">≤</a> <span class="fn"><span class="fn">f</span> (<span class="fn">a</span> <a href="../../../.././Init/Prelude.html#HSub.hSub">-</a> <span class="fn">b</span>)</span> <a href="../../../.././Init/Prelude.html#HAdd.hAdd">+</a> <span class="fn"><span class="fn">f</span> (<span class="fn">b</span> <a href="../../../.././Init/Prelude.html#HSub.hSub">-</a> <span class="fn">c</span>)</span></div></div></div></div><div class="decl" id="le_map_div_add_map_div"><div class="theorem"><div class="gh_link"><a href="https://github.com/leanprover-community/mathlib4/blob/56a005855ea17e0b0958f73ec801ae140b0a1679/Mathlib/Algebra/Order/Hom/Basic.lean#L133-L136">source</a></div><div class="decl_header"><span class="decl_kind">theorem</span>
+<span class="decl_name"><a class="break_within" href="../../../.././Mathlib/Algebra/Order/Hom/Basic.html#le_map_div_add_map_div"><span class="name">le_map_div_add_map_div</span></a></span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">F</span> : <a href="../../../.././foundational_types.html">Type</a> u_1}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">α</span> : <a href="../../../.././foundational_types.html">Type</a> u_2}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">β</span> : <a href="../../../.././foundational_types.html">Type</a> u_3}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Basic/FunLike/Basic.html#FunLike">FunLike</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Group/Defs.html#Group">Group</a> <span class="fn">α</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Init/Prelude.html#Add">Add</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Init/Prelude.html#LE">LE</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Order/Hom/Basic.html#MulLEAddHomClass">MulLEAddHomClass</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span>]</span></span>
+</span><span class="decl_args">
+<span class="fn">(<span class="fn">f</span> : <span class="fn">F</span>)</span></span>
+<span class="decl_args">
+<span class="fn">(<span class="fn">a </span><span class="fn">b </span><span class="fn">c</span> : <span class="fn">α</span>)</span></span>
+<span class="decl_args"> :</span><div class="decl_type"><span class="fn"><span class="fn">f</span> (<span class="fn">a</span> <a href="../../../.././Init/Prelude.html#HDiv.hDiv">/</a> <span class="fn">c</span>)</span> <a href="../../../.././Init/Prelude.html#LE.le">≤</a> <span class="fn"><span class="fn">f</span> (<span class="fn">a</span> <a href="../../../.././Init/Prelude.html#HDiv.hDiv">/</a> <span class="fn">b</span>)</span> <a href="../../../.././Init/Prelude.html#HAdd.hAdd">+</a> <span class="fn"><span class="fn">f</span> (<span class="fn">b</span> <a href="../../../.././Init/Prelude.html#HDiv.hDiv">/</a> <span class="fn">c</span>)</span></div></div></div></div></main>
+<nav class="nav"><iframe src="../../../.././navbar.html" class="navframe" frameBorder="0"></iframe></nav></body></html>

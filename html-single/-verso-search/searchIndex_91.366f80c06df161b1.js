@@ -1,0 +1,1 @@
+window.docContents[91].resolve({"/#hcp-l5":{"contents":"\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n","context":"A Property Kind Calculus for Metrology: proving quantity and unit laws in Lean, from ISO/IEC 80000 to measurement uncertainty\u0009Onboarding: Human Context Protocols","header":"5.6. L5 — The oscillation dies out","id":"/#hcp-l5"}});
