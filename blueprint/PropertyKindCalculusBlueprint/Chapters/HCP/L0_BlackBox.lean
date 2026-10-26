@@ -11,6 +11,34 @@ open Verso.Code.External
 set_option verso.exampleProject ".."
 set_option verso.exampleModule "HCP.L0_BlackBox"
 
+/-
+---
+hcp: 1
+id: hcp-l0
+persona: 'PhysLib contributor'
+layer: PKC
+pull: 'PhysLib accepts the wrong oscillator frequency when its parameters are bare reals; a dimension tag catches some mistakes but not differences of kind.'
+improvement: 'Build-check one black-box oscillator and separate what bare reals, WithDim, and kinds can each distinguish.'
+concepts:
+  - informal: 'a body, spring, wall, and line of motion'
+    formal: 'one system context with mass, stiffness, displacement, and frequency attributes'
+    where: 'System-context card; Physlib.ClassicalMechanics.HarmonicOscillator'
+  - informal: 'dimension tags on physical values'
+    formal: 'WithDim d α carries dimension d in its type'
+    where: 'Physlib.ClassicalMechanics.HarmonicOscillatorWithDim'
+  - informal: 'frequency versus angular frequency'
+    formal: 'distinct kinds with the same T⁻¹ dimension'
+    where: 'PropertyKindCalculus.Iso80000.Part3; ForPhysLib.ClassicalMechanics.Metrology'
+artifacts: ['Lean lesson HCP.L0_BlackBox', 'Blueprint chapter L0 — The black box']
+tools: ['lake build HCP', 'python3 HCP/check-hcp.py']
+exercises: 7
+disclosure: ['bare-real reciprocal-frequency mistake', 'what WithDim checks', 'dimension/kind distinction', 'build-pinned refusals', 'system-context card']
+owner: 'PKC methodology lead'
+state:
+  completed: []
+---
+-/
+
 #doc (Manual) "L0 — The black box" =>
 %%%
 tag := "hcp-l0"
@@ -43,13 +71,105 @@ New at this step:
 - Inverted formula: `√(m/k)` written where `√(k/m)` was meant. Bare reals accept it; with kinds, the quotient m/k fails to type-check (`HCP.L0_BlackBox#bare_reals`, `HCP.L0_BlackBox#refused_reciprocal_radicand`).
 - Same dimension, different kind: an angular frequency ω (rad/s) added to a frequency f (Hz). `WithDim` accepts the sum because both have dimension T⁻¹; with kinds, it fails to type-check (`HCP.L0_BlackBox#frequency_alias`, `HCP.L0_BlackBox#distinct_kinds_same_dimension`, `HCP.L0_BlackBox#refused_kind_addition`).
 
+# Persona
+
+You are a PhysLib contributor: a physicist who writes Lean in PhysLib. You know Lean and PhysLib and trust `Dimension` and `WithDim`. This lesson begins in that vocabulary.
+
+# Pull
+
+The oscillator is one body on an ideal, massless spring fixed to an infinitely massive wall, moving along a line. The body is homogeneous, rigid, and point-like; those assumptions are revisited at L3. Its bare-real model has no type-level record of what mass and stiffness mean and accepts the reciprocal-frequency expression `√(m/k)` where `√(k/m)` was intended. A dimension tag can catch dimensional mistakes but cannot distinguish kinds that share a dimension. The system context comes before the attributes it needs.
+
+# Risks at this step
+
+- *Bare-real and dimension-only mistakes.* Bare reals accept `√(m/k)` where `√(k/m)` is the angular-frequency formula, and dimension-only types accept angular frequency plus cyclic frequency because both have dimension T⁻¹. The kinded checks pin these risks at `HCP.L0_BlackBox#bare_reals`, `HCP.L0_BlackBox#frequency_alias`, `HCP.L0_BlackBox#refused_kind_addition`, and `HCP.L0_BlackBox#refused_reciprocal_radicand`.
+
+# Small rigorous improvement
+
+At this level, treat the oscillator as one black box with one body, one ideal linear spring, a fixed wall, and a line of motion. The body is assumed homogeneous, rigid, and point-like; those assumptions are revisited at L3.
+
+:::table +header
+*
+  * Question
+  * Context change
+  * Attribute change
+  * Risk shown
+  * PhysLib stage
+*
+  * Which quotient is the oscillator's angular frequency?
+  * One oscillator, one body and spring.
+  * Mass, stiffness, angular frequency.
+  * Bare reals accept both `√(k/m)` and the mistaken `√(m/k)`.
+  * Stages 0–1; HarmonicOscillator Basic and WithDim.
+*
+  * What does a dimension tag check?
+  * Keep the same black box.
+  * Potential energy carries the product dimension.
+  * `WithDim` rejects assigning `m/k` to `k/m`'s dimension, but does not identify kinds.
+  * PhysLib `HarmonicOscillatorWithDim`.
+*
+  * What does it not see?
+  * Same one system.
+  * Frequency and angular frequency share `T⁻¹`.
+  * PhysLib `Frequency` has no kind distinction.
+  * PhysLib `Optics.Frequency`; ISO 80000-3.
+*
+  * Which properties are these?
+  * Record the measurement convention.
+  * Frequency and angular frequency become separate kinds.
+  * Same dimension does not imply same kind.
+  * ForPhysLib Kinds and Metrology.
+:::
+
+At L0 the bearer stays informal: the System-context card section names one body, while the code uses values such as `Quantity k ℝ`. With only one of each part, no two bearers can yet be confused. L1 is where the bearer enters the type.
+
+# Learning path
+
+:::table +header
+*
+  * #
+  * Do
+  * Checked by `HCP.L0_BlackBox` anchor
+  * Concept disclosed
+*
+  * 1
+  * In the bare-real oscillator, write the reciprocal quotient under the square root.
+  * `HCP.L0_BlackBox#bare_reals`
+  * Bare reals do not distinguish the two formulas.
+*
+  * 2
+  * Return the tagged potential energy at its declared dimension; inspect both quotient types and try the cross-assignment.
+  * `HCP.L0_BlackBox#potential_energy_dimension`; `HCP.L0_BlackBox#quotient_dimensions`
+  * `WithDim` accepts each quotient at its own dimension and rejects assigning `m/k` to `k/m`'s type.
+*
+  * 3
+  * Pass an angular-frequency value typed as `WithDim T𝓭⁻¹ ℝ≥0` to a parameter typed as `Frequency`.
+  * `HCP.L0_BlackBox#frequency_alias`
+  * The alias accepts it because the dimensions and carrier types coincide; there is no kind distinction.
+*
+  * 4
+  * Decide kind inequality and compare the paired dimensions.
+  * `HCP.L0_BlackBox#distinct_kinds_same_dimension`
+  * One dimension, two kinds.
+*
+  * 5
+  * Try to add kinded angular frequency and frequency.
+  * `HCP.L0_BlackBox#refused_kind_addition`
+  * The kinded layer refuses cross-kind addition.
+*
+  * 6
+  * Put the reciprocal mass/stiffness quotient under a square root in the kinded model.
+  * `HCP.L0_BlackBox#refused_reciprocal_radicand`
+  * The quotient fails before the square root: no registered edge.
+*
+  * 7
+  * Write the L0 system context in prose.
+  * This chapter's System-context card section
+  * State the system boundary and assumptions before adding attributes.
+:::
+
+Worksheet: `HCP/Worksheets/L0_BlackBox.lean` · Solution: `HCP/L0_BlackBox.lean`
+
 # Lesson
-
-
-At L0, write one body on one ideal, massless spring to a fixed, infinitely massive wall,
-with motion along a line. The body is assumed homogeneous, rigid, and point-like; these
-assumptions are revisited at L3. The system context comes first, then the attributes it
-needs.
 
 _1. Bare reals._ Write the reciprocal quotient in the upstream oscillator. Both
 `√(k/m)` and `√(m/k)` elaborate as reals; the latter is accepted despite being the wrong
@@ -165,7 +285,79 @@ example := fun (S : ClassicalMechanics.HarmonicOscillator) =>
     ForPhysLib.ClassicalMechanics.springQ S).magnitude)
 ```
 
-_7. Record the context._ The prose system-context card is in `HCP/L0-black-box.md`; no
-Lean card data is needed. At L0 the bearer remains informal and the code has quantities
+_7. Record the context._ The System-context card section of this chapter records the boundary and assumptions; no Lean data is needed for the prose context. At L0 the bearer remains informal and the code has quantities
 such as `Quantity k ℝ`. There is one of each part, so no bearers can yet be confused;
 L1 introduces the bearer as a type index.
+
+# AI assistance contract
+
+- Keep the contributor's terms: body, spring, wall, frequency, dimension.
+- Quote each Lean check from its anchored lesson region; do not invent replacement declarations.
+- State only what the build demonstrates. A guarded cross-assignment shows that `WithDim` distinguishes the quotient dimensions.
+- Treat errors as evidence only when the pinned message is the elaborator's actual output.
+
+# Questions to ask the model so far
+
+:::table +header
+*
+  * Question
+  * Check
+  * What the verdict means
+*
+  * Does the bare-real model catch the reciprocal quotient?
+  * `bare_reals`
+  * No: both expressions have type `ℝ`.
+*
+  * Does `WithDim` distinguish `m/k` and `k/m`?
+  * `quotient_dimensions`
+  * Yes: the build accepts each at its own dimension and rejects the cross-assignment.
+*
+  * Can a dimension-only type tell frequency from angular frequency?
+  * `frequency_alias`
+  * No: both have type `Frequency`.
+*
+  * Do the kinds differ despite the shared dimension?
+  * `distinct_kinds_same_dimension`
+  * Yes: the kinds differ while their paired dimensions are equal.
+*
+  * Why does the kinded reciprocal quotient fail?
+  * `refused_reciprocal_radicand`
+  * `mass / springConstant` has no registered `KindDiv`, so no square-root argument is formed.
+:::
+
+# System-context card
+
+:::table +header
+*
+  * Scope
+  * System or component
+  * Sort / status
+  * L0 assumptions and attributes
+*
+  * System
+  * The oscillator
+  * Spring–mass oscillator
+  * One body, one linear spring, a wall, and a line of motion.
+*
+  * Inside
+  * Body
+  * Homogeneous, rigid, point-like body
+  * One mass; assumptions to be revisited at L3.
+*
+  * Inside
+  * Spring
+  * Linear spring
+  * One spring; massless and ideal.
+*
+  * Outside
+  * Wall
+  * Fixed, infinitely massive wall
+  * Boundary condition for the spring.
+*
+  * Outside
+  * Line
+  * One-dimensional line of motion
+  * The motion is constrained to this line.
+:::
+
+This section records the bearer informally. The Lean expressions are dimension- or kind-indexed quantities without an object index; L1 introduces the bearer into the type.

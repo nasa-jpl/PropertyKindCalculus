@@ -79,7 +79,7 @@ optionally add damping, and finally state what must hold:
   * The pair becomes a system in its own right
   * Opens each oscillator into body and spring(s); pair's own sort, whole and parts; coupling, parallel and series springs
   * Normal-mode frequency ω₊, total mass, effective stiffness
-  * One coupled pair, opened into bodies A and B and springs kA, kC, kB. Aggregating what does not aggregate: the pair's mass is m_A + m_B, but its normal-mode frequency ω₊ is not ω_A + ω_B. Sort vs particular: the licence to add masses belongs to the sort 'coupled pair', not to the kind 'mass'; stiffnesses add in parallel but not in series.
+  * One coupled pair, opened into bodies A and B and springs kA, kC, kB. Aggregating what does not aggregate: the pair's mass is m_A + m_B, but its normal-mode frequency ω₊ is not ω_A + ω_B. Wrong composition law: the licence to add masses belongs to the sort 'coupled pair', not to the kind 'mass'; stiffnesses add in parallel but not in series.
   * Stage 3; HCP `pairMass`/`parallelStiffness`, Composition finding 4
   * Included here
 *
@@ -87,7 +87,7 @@ optionally add damping, and finally state what must hold:
   * Body A's centre of mass is off-axis, producing torque and wobble
   * Body A of pair P becomes a nominally indexed rigid composite with left/right halves; a body-fixed frame enters beside the lab frame
   * Per-half mass and position, centre of mass, inertia tensor, frame-specific angular velocity
-  * Body A opened into two halves. Wrong carving: counting a half twice or leaving one out gives another mass. Weighted mean vs sum: the centre of mass is the mass-weighted mean of the halves' positions, and ω is the same for every half. Degenerate whole: a massless body has no centre of mass. Frames: the lab-frame ω put into the body-frame energy type-checks in PhysLib.
+  * Body A opened into two halves. Wrong carving: counting a half twice or leaving one out gives another mass. Weighted mean vs sum: the centre of mass is the mass-weighted mean of the halves' positions, and ω is the same for every half. Degenerate whole: a massless body's centre of mass evaluates to the origin, because Lean defines 1/0 = 0. Frames: the lab-frame ω put into the body-frame energy type-checks in PhysLib.
   * Stages 2–3 on RigidBody; Exhibits RigidBody and Composition; upstream `CM-RB-sphereI` informal lemma proved in `SolidSphereInertia.lean`
   * Included here
 *

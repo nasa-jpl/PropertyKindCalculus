@@ -11,6 +11,40 @@ open Verso.Code.External
 set_option verso.exampleProject ".."
 set_option verso.exampleModule "HCP.L6_Requirements"
 
+/-
+---
+hcp: 7
+id: hcp-l6
+persona: "PhysLib contributor"
+layer: PKC
+pull: "The pair now has bodies, a coupling spring, and multiple records. What must hold, for which systems or objects?"
+improvement: "State requirements over named sorts and particulars, and discharge them with proofs, referents, gates, and audited scope."
+concepts:
+  - informal: "the pair mass requirement quantifies over pairs"
+    formal: "pairS, pairMassOf, pairMass_assembled, and the 3 + 5 = 8 spot check"
+    where: "HCP.L6_Requirements#r1_pair_mass"
+  - informal: "a whole-only frequency has no body-assembly license"
+    formal: "pairNormalModeLicense and the absent-instance requirement"
+    where: "HCP.L6_Requirements#r2_no_aggregation"
+  - informal: "the rated spring extension is an empirical requirement on P"
+    formal: "the datasheet referent, Bool gate, and two P-record spot checks"
+    where: "HCP.L6_Requirements#r3_empirical"
+  - informal: "a scope must name a sort or nominal object"
+    formal: "the rejected bare-real object and non-sort pins"
+    where: "HCP.L6_Requirements#invalid_scopes"
+  - informal: "every produced model port is governed"
+    formal: "the requirement survey, coverage census, and clean gate"
+    where: "HCP.L6_Requirements#requirement_census"
+artifacts: ['Lean lesson HCP.L6_Requirements', 'Blueprint chapter L6 — What must hold']
+tools: ['lake build HCP', 'python3 HCP/check-hcp.py']
+exercises: 5
+disclosure: ['scope a pair-mass theorem over pairS', 'state the absence of pair-frequency aggregation', 'gate an empirical limit over P', 'pin invalid scope declarations', 'census and gate requirement coverage']
+owner: 'PKC methodology lead'
+state:
+  completed: []
+---
+-/
+
 #doc (Manual) "L6 — What must hold" =>
 %%%
 tag := "hcp-l6"
@@ -50,22 +84,75 @@ Carried from earlier steps: `Composite`, `Decomposition`, `Assembles`, `assemble
 - Over-claimed coverage: a requirement about pair P counted as governing pair Q's output (`HCP.L6_Requirements#scope_gap`).
 - Ungoverned output: a model output that no requirement governs goes unreported (`HCP.L6_Requirements#requirement_census`).
 
-# Lesson
+# Persona
 
+You are a PhysLib contributor: a physicist who writes Lean in PhysLib. You know Lean and
+PhysLib and trust `Dimension` and `WithDim`; the earlier HCP levels have named the pair
+sort, its particulars, and its parts.
 
-The pair now has two bodies, a coupling spring, and multiple records. What must hold,
-for which systems or objects? A requirement states its quantification scope. That scope is
-writable because the earlier levels named the pair sort and its nominal particulars.
+# Pull
 
-One name is one system: records named P are states, configurations, or rival estimates of
-that same pair and can be compared; Q is a distinct pair. An object-scoped requirement on P
-governs every state or record of P, not only the records used for a spot check. The full
-worked requirements example is `examples/Tutorial/HarmonicOscillatorRequirements.lean`;
-this lesson mirrors its machinery without importing that file.
+The pair now has two bodies, a coupling spring, and multiple records. What must hold, for which systems or objects? A requirement states its quantification scope, writable because the earlier levels named the pair sort and its nominal particulars. One name is one system: records named P are states, configurations, or rival estimates of that same pair and can be compared; Q is a distinct pair. An object-scoped requirement on P governs every state or record of P, not only records used for a spot check. The full worked requirements example is `examples/Tutorial/HarmonicOscillatorRequirements.lean`; this lesson mirrors its machinery without importing that file.
 
 # Risks at this step
 
-- *Unstatable scope.* A requirement about every coupled pair needs the pair sort, and one about every state of P needs the nominal pair P; without those named systems, it has nowhere to range. The pinned `invalid_scopes` exercise rejects a bare real and a name that is not a sort.
+- *Unstatable scope.* A requirement about every coupled pair needs the pair sort, and one about every state of P needs the nominal pair P; without those named systems, it has nowhere to range. The pinned `invalid_scopes` exercise (`HCP.L6_Requirements#invalid_scopes`) rejects a bare real and a name that is not a sort.
+
+# Small rigorous improvement
+
+:::table +header
+*
+  * Question
+  * Context change
+  * Attribute change
+  * Risk shown
+  * PhysLib stage
+*
+  * The pair now has bodies, a coupling spring, and multiple records. What must hold, for which systems or objects?
+  * Give the nominal pair IDs P and Q a `Sorted` instance into `pairS`, and designate bodies and the coupling spring.
+  * Pair mass, normal-mode frequency, coupling-spring extension, requirement scope, referent, and gate.
+  * An unscoped claim cannot say whether it applies to every pair or to every state of P; a bare real and a non-sort are rejected as scopes.
+  * Stage 4 requirements and audits.
+:::
+
+# Learning path
+
+:::table +header
+*
+  * #
+  * Do
+  * Checked by `HCP.L6_Requirements` anchor
+  * Concept disclosed
+*
+  * 1
+  * Assemble the two body masses into a pair mass and state R1 over `pairS`.
+  * `r1_pair_mass`
+  * The theorem reads the pair's own body quantities; the executable check evaluates 3 + 5 = 8.
+*
+  * 2
+  * State R2 as the absence of the pair-sort assembly license for normal-mode frequency.
+  * `r2_no_aggregation`
+  * A whole-only frequency does not inherit the body-mass aggregation license.
+*
+  * 3
+  * Scope the coupling-spring rating to P and compare two P records against a marked datasheet limit.
+  * `r3_empirical`
+  * The empirical requirement is gated by a Bool that names the referent and is spot-checked on two states of P.
+*
+  * 4
+  * Replace P with a bare real, then replace `pairS` with a declaration that is not a sort.
+  * `invalid_scopes`
+  * Object scope requires a `Sorted` instance; sort scope requires a `SortOfSystem`.
+*
+  * 5
+  * Survey requirements, census every produced model port, and run the clean gate.
+  * `requirement_census`
+  * Every produced port in these boundaries is governed; the invalid-scope twins are pinned counterexamples.
+:::
+
+Worksheet: `HCP/Worksheets/L6_Requirements.lean` · Solution: `HCP/L6_Requirements.lean`
+
+# Lesson
 
 _1. Pair mass._ R1 quantifies over every object of `pairS`. Its pair mass is assembled from
 the body masses indexed to the named pair, and a witness theorem plus an executable check
@@ -439,3 +526,108 @@ requirements: 0 provable, 1 empirical, 0 attested
 -/
 #guard_msgs (whitespace := lax) in #kind_requirement_coverage HCP.L6_ScopeGap
 ```
+
+## Requirement scope
+
+The full worked requirements example is `examples/Tutorial/HarmonicOscillatorRequirements.lean`;
+L6 mirrors its Provenance boundaries, witnesses, referents, gates, surveys, and coverage
+commands without importing the Tutorial file. The census infers a result port's object
+domain from its member's type: R3 covers a P-only result, but leaves Q ungoverned on a
+generic pair boundary. An unresolved bearer is an unchecked violation unless exempted. A
+`.sort` scope needs an indexed result whose object type has a `Sorted` instance: R1 and R2's
+results are borne by the pair whole, and the instance above maps the whole to `pairS` and
+each part to its own sort, so the census checks their scope. An object of another sort is
+reported ungoverned. A `.decided` scope is checked against a `deciderProof` theorem proving
+its decider returns `true` for every result of the governed member; without that proof the
+census reports the port unchecked.
+
+# AI assistance contract
+
+- Keep L6 independent, with local nominal `PairId | P | Q`, `Body | A | B`, and the
+  coupling spring.
+- Preserve nominal identity: one pair name is one system; same-name records are comparable
+  states or configurations; P and Q are distinct.
+- Keep pair mass on the pair whole and body masses on their body-in-pair bearers.
+- Use the `pairS` sort scope for R1 and the singleton object scope containing P for empirical R3.
+- Mark the rated limit as an external referent; make the gate mention it and evaluate it on
+  two states of P.
+- Pin both invalid scopes and run the requirement survey, coverage census, and clean gate.
+- Do not import the Tutorial worked example. The full worked example is
+  `examples/Tutorial/HarmonicOscillatorRequirements.lean`.
+- Leave optional `.decided` scope out of this lesson. If used, provide a `deciderProof`
+  theorem proving that its decider returns `true` for every result of the governed member;
+  without that proof the census reports the port unchecked.
+
+# Questions to ask the model so far
+
+:::table +header
+*
+  * Question
+  * Check
+  * What the verdict means
+*
+  * What does R1 quantify over?
+  * `r1_pair_mass`
+  * Every object of sort `pairS`; its theorem relates the assembled pair mass to the masses of the two bodies.
+*
+  * Does normal-mode frequency sum over the bodies?
+  * `r2_no_aggregation`
+  * No `Assembles pairS normalModeK` instance exists.
+*
+  * What does the spring rating govern?
+  * `r3_empirical`
+  * Every state or record of P; the gate checks two such records against the same datasheet limit.
+*
+  * Can a bare real or a non-sort name state the scope?
+  * `invalid_scopes`
+  * No; the object must have a `Sorted` instance and a sort must be a `SortOfSystem`.
+*
+  * Are all produced ports governed?
+  * `requirement_census`
+  * Yes; the census is clean and the command enforces that invariant.
+:::
+
+# System-context card
+
+:::table +header
+*
+  * Scope
+  * System or component
+  * Sort / status
+  * L6 requirements
+*
+  * System
+  * Coupled pair P or Q
+  * Nominal `PairId`, sorted into `pairS`
+  * One name denotes one pair; same-name records are states or configurations, and Q differs from P.
+*
+  * Part
+  * Body A or B
+  * Designated body
+  * Each body has its own mass bearer within the named pair.
+*
+  * Part
+  * Coupling spring kC
+  * Designated spring
+  * Its extension is state-indexed and checked against an external rated limit.
+*
+  * Requirement
+  * Pair mass R1
+  * `pairS` sort
+  * Provable from the pair's two body masses; spot check gives 8 from 3 and 5.
+*
+  * Requirement
+  * Normal-mode frequency R2
+  * `pairS` sort
+  * Provable negative: no aggregation license for `normalModeK`.
+*
+  * Requirement
+  * Spring range R3
+  * Singleton object scope containing P
+  * Empirical, gated by the datasheet referent; applies to every P state or record.
+*
+  * Audit
+  * Requirement census
+  * Stage 4
+  * The valid requirements govern every produced model port; invalid-scope twins are counterexamples.
+:::
