@@ -710,7 +710,12 @@ def blueprint_excerpt_errors(fix=False):
             source_path, source_path.read_text(encoding="utf-8")
         )
         errors.extend(source_errors)
+        for name, body in anchors.items():
+            if not nonblank_code_lines(body):
+                errors.append(f"{source_path}: source anchor '{name}' is empty")
+
         replacements = []
+        chapter_anchors = {}
         index = 0
         while index < len(chapter_lines):
             header = ANCHOR_FENCE.match(chapter_lines[index].rstrip("\r\n"))
@@ -731,6 +736,11 @@ def blueprint_excerpt_errors(fix=False):
                 continue
 
             name = anchor_match.group("name")
+            chapter_anchors.setdefault(name, []).append(line_number)
+            if len(chapter_anchors[name]) > 1:
+                errors.append(
+                    f"{chapter_path}:{line_number}: anchor '{name}' appears more than once"
+                )
             args = anchor_match.group("args").strip()
             if args:
                 errors.append(
@@ -745,16 +755,18 @@ def blueprint_excerpt_errors(fix=False):
             else:
                 expected = anchors[name]
                 actual = chapter_lines[index + 1:close]
-                if nonblank_code_lines(actual) != nonblank_code_lines(expected):
-                    if fix and any(line.strip(" \t\r\n\f\v") for line in expected):
+                expected_lines = nonblank_code_lines(expected)
+                actual_lines = nonblank_code_lines(actual)
+                if not expected_lines and not actual_lines:
+                    errors.append(
+                        f"{chapter_path}:{line_number}: anchor '{name}' excerpt is empty"
+                    )
+                elif expected_lines != actual_lines:
+                    if fix and expected_lines:
                         replacement = list(expected)
                         if replacement and not replacement[-1].endswith(("\n", "\r")):
                             replacement[-1] += "\n"
                         replacements.append((index + 1, close, replacement))
-                    elif not any(line.strip(" \t\r\n\f\v") for line in expected):
-                        errors.append(
-                            f"{chapter_path}:{line_number}: source anchor '{name}' is empty"
-                        )
                     else:
                         errors.append(
                             f"{chapter_path}:{line_number}: anchor '{name}' excerpt differs from "
@@ -762,6 +774,13 @@ def blueprint_excerpt_errors(fix=False):
                             "(run python3 HCP/check-hcp.py --fix-excerpts)"
                         )
             index = close + 1
+
+        for name in anchors:
+            if name not in chapter_anchors:
+                errors.append(
+                    f"{chapter_path}: source anchor '{name}' from "
+                    f"{source_path.relative_to(ROOT)} has no excerpt in this chapter"
+                )
 
         for start, end, replacement in reversed(replacements):
             chapter_lines[start:end] = replacement
