@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check HCP front matter, learning-path rows, lesson anchors, and sections."""
+"""Check HCP chapter metadata, sections, learning paths, anchors, and worksheets."""
 
 import argparse
 import glob
@@ -23,6 +23,18 @@ SYNOPSIS_SUBSECTIONS = [
     "Verifiable properties",
     "Errors prevented",
 ]
+CHAPTER_SECTIONS = [
+    "Synopsis",
+    "Persona",
+    "Pull",
+    "Risks at this step",
+    "Small rigorous improvement",
+    "Learning path",
+    "Lesson",
+    "AI assistance contract",
+    "Questions to ask the model so far",
+    "System-context card",
+]
 VERIFIABLE_TAGS = {"type-checked", "refused", "theorem", "census", "gate"}
 COMMENTED_PROBE_START = re.compile(
     r"^-- (?:(?:noncomputable|private|protected|unsafe|partial)\s+)*"
@@ -32,6 +44,8 @@ COMMENTED_PROBE_START = re.compile(
 
 class FrontMatterError(ValueError):
     def __init__(self, line, message):
+        self.line = line
+        self.message = message
         super().__init__(f"line {line}: {message}")
 
 
@@ -220,6 +234,21 @@ def parse_front_matter(text) -> dict:
     return data
 
 
+def parse_chapter_front_matter(path, text):
+    opening = re.search(r"(?m)^/-[ \t]*$", text)
+    if opening is None:
+        raise FrontMatterError(1, "missing or unterminated front matter comment")
+    closing = re.search(r"(?m)^-/[ \t]*$", text[opening.end():])
+    if closing is None:
+        raise FrontMatterError(text.count("\n") + 1, "unterminated front matter comment")
+    front_matter = text[opening.end():opening.end() + closing.start()].strip("\n")
+    try:
+        return parse_front_matter(front_matter)
+    except FrontMatterError as exc:
+        line_offset = text[:opening.end()].count("\n")
+        raise FrontMatterError(line_offset + exc.line, exc.message) from exc
+
+
 def heading_section(text, level, title):
     hashes = "#" * level
     pattern = re.compile(rf"(?m)^{re.escape(hashes)} {re.escape(title)}[ \t]*$")
@@ -400,19 +429,13 @@ def synopsis_bullets(path, section, label, errors):
     return bullets
 
 
-def synopsis_errors(path, text, data):
+def synopsis_errors(path, text, lesson_path):
     errors = []
-    section_titles = re.findall(r"(?m)^## (.+?)\s*$", text)
-    if not section_titles or section_titles[0] != "Synopsis":
-        errors.append(f"{path}: '## Synopsis' must be the first level-2 section")
-    if section_titles.count("Synopsis") != 1:
-        errors.append(f"{path}: expected exactly one '## Synopsis' section")
-
-    synopsis = heading_section(text, 2, "Synopsis")
+    synopsis = chapter_synopsis_section(text)
     if synopsis is None:
-        errors.append(f"{path}: missing or duplicate '## Synopsis' section")
+        errors.append(f"{path}: Synopsis must be first after %%% metadata")
     else:
-        subsections = list(re.finditer(r"(?m)^### (.+?)\s*$", synopsis))
+        subsections = list(re.finditer(r"(?m)^## (.+?)\s*$", synopsis))
         names = [match.group(1) for match in subsections]
         if names != SYNOPSIS_SUBSECTIONS:
             errors.append(
@@ -424,8 +447,7 @@ def synopsis_errors(path, text, data):
             if not synopsis[match.end():end].strip():
                 errors.append(f"{path}: Synopsis subsection '{match.group(1)}' is empty")
 
-        lesson_path = None
-        vocab = heading_section(synopsis, 3, "PKC vocabulary in scope")
+        vocab = heading_section(synopsis, 2, "PKC vocabulary in scope")
         if vocab is None:
             errors.append(f"{path}: missing or duplicate 'PKC vocabulary in scope' subsection")
         else:
@@ -435,13 +457,8 @@ def synopsis_errors(path, text, data):
             elif not re.search(r"(?m)^- .+", vocab[new_list.end():]):
                 errors.append(f"{path}: 'New at this step:' must be followed by a list")
 
-            lesson_number = data.get("hcp")
-            if type(lesson_number) is int and 1 <= lesson_number <= 7:
-                candidates = sorted(HERE.glob(f"L{lesson_number - 1}_*.lean"))
-                if len(candidates) == 1:
-                    lesson_path = candidates[0]
             if lesson_path is None:
-                errors.append(f"{path}: could not map card to its HCP/Lk_*.lean lesson")
+                errors.append(f"{path}: could not map chapter to its HCP lesson")
             else:
                 lesson = lesson_path.read_text(encoding="utf-8")
                 for term in re.findall(r"`([^`]+)`", vocab):
@@ -450,7 +467,7 @@ def synopsis_errors(path, text, data):
                             f"{path}: vocabulary term '{term}' not found in {lesson_path.name}"
                         )
 
-        verifiable = heading_section(synopsis, 3, "Verifiable properties")
+        verifiable = heading_section(synopsis, 2, "Verifiable properties")
         if verifiable is not None:
             bullets = synopsis_bullets(path, verifiable, "Verifiable properties", errors)
             for index, bullet in enumerate(bullets, 1):
@@ -477,7 +494,7 @@ def synopsis_errors(path, text, data):
                         f"{path}: Verifiable-properties bullet {index} is missing a Module#anchor ref"
                     )
 
-        prevented = heading_section(synopsis, 3, "Errors prevented")
+        prevented = heading_section(synopsis, 2, "Errors prevented")
         if prevented is not None:
             bullets = synopsis_bullets(path, prevented, "Errors prevented", errors)
             for index, bullet in enumerate(bullets, 1):
@@ -486,41 +503,54 @@ def synopsis_errors(path, text, data):
                         f"{path}: Errors-prevented bullet {index} is missing a Module#anchor ref"
                     )
 
-        if lesson_path is not None:
-            chapter_path = (
-                ROOT / "blueprint" / "PropertyKindCalculusBlueprint" / "Chapters" /
-                "HCP" / lesson_path.name
-            )
-            if not chapter_path.is_file():
-                errors.append(f"{path}: matching Synopsis chapter not found at {chapter_path}")
-            else:
-                chapter_text = chapter_path.read_text(encoding="utf-8")
-                chapter_section = chapter_synopsis_section(chapter_text)
-                if chapter_section is None:
-                    errors.append(
-                        f"{path}: matching chapter is missing, duplicates, or does not start "
-                        "with '# Synopsis' after %%% metadata"
-                    )
-                elif normalized_synopsis(synopsis, True) != normalized_synopsis(chapter_section):
-                    errors.append(f"{path}: Synopsis differs from the matching chapter")
     return errors
 
 
 def check(path):
     text = path.read_text(encoding="utf-8")
     errors = []
-    if not text.startswith("---\n") or "\n---\n" not in text[4:]:
-        return [f"{path}: missing or unterminated YAML front matter"]
     try:
-        data = parse_front_matter(text)
+        data = parse_chapter_front_matter(path, text)
     except FrontMatterError as exc:
         return [f"{path}: {exc}"]
     if not isinstance(data, dict):
         return [f"{path}: front matter is not a mapping"]
     errors.extend(f"{path}: missing field '{key}'" for key in sorted(REQUIRED - data.keys()))
-    expected_id = path.stem.lower()
-    if data.get("id") != expected_id:
-        errors.append(f"{path}: id '{data.get('id')}' does not match file name '{expected_id}'")
+
+    metadata = re.search(r"(?ms)^%%%[ \t]*\n(.*?)^%%%[ \t]*$", text)
+    tag_match = re.search(r'(?m)^tag := "([^"]+)"[ \t]*$', metadata.group(1)) if metadata else None
+    if tag_match is None:
+        errors.append(f"{path}: missing blueprint tag in %%% metadata")
+    elif data.get("id") != tag_match.group(1):
+        errors.append(
+            f"{path}: id '{data.get('id')}' does not match chapter tag '{tag_match.group(1)}'"
+        )
+
+    chapter_match = re.fullmatch(r"L([0-6])_[A-Za-z0-9_]+\.lean", path.name)
+    modules = EXAMPLE_MODULE.findall(text)
+    lesson_path = None
+    lesson_number = None
+    if len(modules) != 1:
+        errors.append(f"{path}: expected one set_option verso.exampleModule declaration")
+    else:
+        module_match = re.fullmatch(r"HCP\.L([0-6])_[A-Za-z0-9_]+", modules[0])
+        if module_match is None:
+            errors.append(f"{path}: unsupported example module '{modules[0]}'")
+        else:
+            lesson_number = int(module_match.group(1))
+            lesson_path = ROOT.joinpath(*modules[0].split(".")).with_suffix(".lean")
+            if not lesson_path.is_file():
+                errors.append(f"{path}: example module '{modules[0]}' not found at {lesson_path}")
+                lesson_path = None
+            if chapter_match is None or int(chapter_match.group(1)) != lesson_number:
+                errors.append(f"{path}: example module '{modules[0]}' does not match the chapter filename")
+    if chapter_match is None:
+        errors.append(f"{path}: chapter filename must be L0–L6 followed by its module name")
+    if type(data.get("hcp")) is not int or lesson_number is None or data.get("hcp") != lesson_number + 1:
+        errors.append(
+            f"{path}: hcp value '{data.get('hcp')}' must equal the example module lesson number plus one"
+        )
+
     concepts = data.get("concepts")
     if not isinstance(concepts, list) or not concepts:
         errors.append(f"{path}: concepts must be a non-empty list")
@@ -531,33 +561,35 @@ def check(path):
     state = data.get("state")
     if not isinstance(state, dict) or not isinstance(state.get("completed"), list):
         errors.append(f"{path}: state.completed must be a list")
-    titles = set(re.findall(r"^## (.+)$", text, re.M))
-    if "Synopsis" not in titles:
-        errors.append(f"{path}: missing section 'Synopsis'")
-    for number, title in enumerate(
-        ["Persona", "Pull", "Small rigorous improvement", "Learning path",
-         "AI assistance contract", "Questions to ask the model so far",
-         "System-context card"], 1
-    ):
-        if f"{number}. {title}" not in titles:
-            errors.append(f"{path}: missing section '{number}. {title}'")
-    errors.extend(synopsis_errors(path, text, data))
-    learning = text.split("\n## 4. Learning path", 1)
-    rows = []
-    if len(learning) == 2:
-        rows = [line for line in learning[1].split("\n## 5.", 1)[0].splitlines()
-                if re.match(r"\|\s*\d+\s*\|", line)]
+
+    headings = re.findall(r"(?m)^# (?!#)(.+?)\s*$", text)
+    if headings != CHAPTER_SECTIONS:
+        errors.append(
+            f"{path}: top-level headings must be exactly {CHAPTER_SECTIONS} in order"
+        )
+    errors.extend(synopsis_errors(path, text, lesson_path))
+
+    learning = heading_section(text, 1, "Learning path")
+    rows = 0
+    if learning is None:
+        errors.append(f"{path}: missing or duplicate '# Learning path' section")
+    else:
+        tables = list(re.finditer(r"(?ms)^:::table \+header[ \t]*\n(.*?)^:::[ \t]*$", learning))
+        if len(tables) != 1:
+            errors.append(f"{path}: Learning path must contain exactly one :::table +header block")
+        else:
+            rows = max(0, len(re.findall(r"(?m)^\*[ \t]*$", tables[0].group(1))) - 1)
     exercises = data.get("exercises")
-    if type(exercises) is not int or exercises != len(rows):
-        errors.append(f"{path}: front matter says {exercises} exercises, learning path has {len(rows)}")
-    errors.extend(worksheet_errors(path, text, data))
+    if type(exercises) is not int or exercises != rows:
+        errors.append(f"{path}: front matter says {exercises} exercises, learning path has {rows}")
+    errors.extend(worksheet_errors(path, text, lesson_path))
     for module, anchor in ANCHOR_REF.findall(text):
         lesson = ROOT.joinpath(*module.split(".")).with_suffix(".lean")
         if not lesson.is_file():
-            errors.append(f"{path}: checked-by module '{module}' not found at {lesson}")
+            errors.append(f"{path}: Module#anchor module '{module}' not found at {lesson}")
         elif not re.search(rf"^\s*--\s*ANCHOR:\s*{re.escape(anchor)}\s*$",
                            lesson.read_text(encoding="utf-8"), re.M):
-            errors.append(f"{path}: anchor '{anchor}' not found in {lesson}")
+            errors.append(f"{path}: anchor '{anchor}' not found in {module}")
     return errors
 
 
@@ -822,19 +854,11 @@ def example_comment_errors(path, text):
     return errors
 
 
-def worksheet_errors(path, text, data):
+def worksheet_errors(path, text, solution_path):
     errors = []
-    lesson_number = data.get("hcp")
-    if type(lesson_number) is not int or not 1 <= lesson_number <= 7:
-        errors.append(f"{path}: could not map card to its HCP lesson worksheet")
+    if solution_path is None or not solution_path.is_file():
         return errors
 
-    candidates = sorted(HERE.glob(f"L{lesson_number - 1}_*.lean"))
-    if len(candidates) != 1:
-        errors.append(f"{path}: could not map card to its HCP/Lk_*.lean solution")
-        return errors
-
-    solution_path = candidates[0]
     worksheet_path = HERE / "Worksheets" / solution_path.name
     if not worksheet_path.is_file():
         errors.append(f"{path}: worksheet not found at {worksheet_path}")
@@ -930,9 +954,8 @@ def worksheet_errors(path, text, data):
         f"Worksheet: `HCP/Worksheets/{solution_path.name}` · "
         f"Solution: `HCP/{solution_path.name}`"
     )
-    learning = text.split("\n## 4. Learning path", 1)
-    learning_section = learning[1].split("\n## 5.", 1)[0] if len(learning) == 2 else ""
-    if expected_line not in learning_section:
+    learning_section = heading_section(text, 1, "Learning path")
+    if learning_section is None or expected_line not in learning_section:
         errors.append(f"{path}: Learning path is missing '{expected_line}'")
     return errors
 
@@ -945,8 +968,11 @@ def main():
         help="rewrite HCP blueprint anchor excerpts from their lesson sources",
     )
     args = parser.parse_args()
-    paths = sorted(Path(p) for p in glob.glob(str(HERE / "*.md"))
-                   if not p.endswith("README.md"))
+    paths = sorted(
+        Path(p) for p in glob.glob(
+            str(ROOT / "blueprint/PropertyKindCalculusBlueprint/Chapters/HCP/L*.lean")
+        )
+    )
     if not paths:
         print("no HCPs found", file=sys.stderr)
         return 1
