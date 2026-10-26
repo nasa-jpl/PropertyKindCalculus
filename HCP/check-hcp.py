@@ -285,15 +285,6 @@ def chapter_synopsis_section(text):
     return text[start:end]
 
 
-def normalized_synopsis(section, shift_headings=False):
-    if section is None:
-        return None
-    if shift_headings:
-        section = re.sub(r"(?m)^## Synopsis[ \t]*$", "# Synopsis", section)
-        section = re.sub(r"(?m)^### ", "## ", section)
-    return re.sub(r"\s+", " ", section).strip()
-
-
 def vocabulary_name(term):
     if term.startswith("#"):
         return term, True

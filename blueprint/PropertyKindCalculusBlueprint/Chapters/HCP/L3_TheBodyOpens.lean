@@ -94,7 +94,7 @@ Body A of pair P wobbles instead of sliding along the line. Its centre of mass i
 
 - *Wrong carving.* For body A of pair P, counting a half twice or leaving one out changes the whole mass; the pinned decomposition gives one slot to each half and proves the total at `HCP.L3_TheBodyOpens#opened_body`.
 - *Weighted mean, not sum.* The centre of mass uses each half's mass and position, while both halves share the same angular velocity; the pinned checks are `HCP.L3_TheBodyOpens#center_of_mass_mean` and `HCP.L3_TheBodyOpens#angular_velocity_intensive`.
-- *Degenerate whole and frame.* A massless body has no physical centre of mass, and lab-frame angular velocity is not the body-frame input to rotational energy; the checks are `HCP.L3_TheBodyOpens#massless_center_of_mass`, `HCP.L3_TheBodyOpens#bare_frame_mismatch`, and `HCP.L3_TheBodyOpens#framed_rotational_energy`.
+- *Degenerate whole and frame.* A massless body's `centerOfMass` evaluates to the origin because Lean defines 1/0 = 0, which is not a physical centre of mass; and lab-frame angular velocity is not the body-frame input to rotational energy; the checks are `HCP.L3_TheBodyOpens#massless_center_of_mass`, `HCP.L3_TheBodyOpens#bare_frame_mismatch`, and `HCP.L3_TheBodyOpens#framed_rotational_energy`.
 
 *Further reading*
 - `Exhibits/Composition`, findings 2 and 5.
@@ -112,7 +112,7 @@ Body A of pair P wobbles instead of sliding along the line. Its centre of mass i
   * Body A wobbles instead of sliding along the line. Why, and what must the model now say about the body?
   * Body A of pair P becomes a rigid composite carved into left and right halves; a body-fixed frame appears beside the lab frame.
   * Per-half mass and position, centre of mass, inertia tensor, and body- versus lab-frame angular velocity.
-  * Counting the wrong halves changes total mass; angular velocity is intensive; a massless body has no physical centre of mass; lab-frame angular velocity does not match the body-frame energy input.
+  * Counting the wrong halves changes total mass; angular velocity is intensive; a massless body's centre of mass evaluates to the origin, which is not physical; lab-frame angular velocity does not match the body-frame energy input.
   * Stages 2–3 on rigid bodies; proved solid-sphere inertia theorem.
 :::
 
