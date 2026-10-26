@@ -57,6 +57,7 @@ formula for angular frequency. A dimension library would reject the reciprocal q
 because its dimension is not time⁻¹.
 
 ```anchor bare_reals
+-- Bare reals: √(S.m / S.k) is accepted as a real although oscillator frequency uses √(S.k / S.m); the bare values cannot catch this reciprocal-radicand mistake.
 example (S : ClassicalMechanics.HarmonicOscillator) : ℝ :=
   √(S.m / S.k)
 ```
@@ -68,6 +69,7 @@ The build accepts each quotient at its own dimension and rejects that cross-assi
 the intended physics.
 
 ```anchor potential_energy_dimension
+-- Dimensions: `S.potentialEnergy x` is a `WithDim` value of dimension M·L²·T⁻²; it carries dimension, not an energy kind or oscillator bearer.
 example (S : ClassicalMechanics.HarmonicOscillatorWithDim)
     (x : WithDim L𝓭 (EuclideanSpace ℝ (Fin 1))) :
     WithDim (M𝓭 * L𝓭 * L𝓭 * T𝓭⁻¹ * T𝓭⁻¹) ℝ :=
@@ -75,14 +77,17 @@ example (S : ClassicalMechanics.HarmonicOscillatorWithDim)
 ```
 
 ```anchor quotient_dimensions
+-- Dimensions: The dimension-only, bearer-free `WithDim` quotient m/k has dimension T², reciprocal to the T⁻² angular-frequency-squared dimension.
 example (m : WithDim M𝓭 ℝ)
     (k : WithDim (M𝓭 * T𝓭⁻¹ * T𝓭⁻¹) ℝ) :
     WithDim (M𝓭 * (M𝓭 * T𝓭⁻¹ * T𝓭⁻¹)⁻¹) ℝ := m / k
 
+-- Dimensions: The dimension-only, bearer-free `WithDim` quotient k/m has dimension T⁻², matching angular frequency squared but carrying no kind.
 example (m : WithDim M𝓭 ℝ)
     (k : WithDim (M𝓭 * T𝓭⁻¹ * T𝓭⁻¹) ℝ) :
     WithDim ((M𝓭 * T𝓭⁻¹ * T𝓭⁻¹) * M𝓭⁻¹) ℝ := k / m
 
+-- Dimensions: Refused: type mismatch between m/k's T² dimension and the required k/m dimension T⁻²; this prevents the reciprocal radicand for angular frequency.
 /--
 error: Type mismatch
   m / k
@@ -102,6 +107,7 @@ frequency type: it is the same `WithDim T𝓭⁻¹ ℝ≥0` type. A dimension li
 interchange here because the types coincide.
 
 ```anchor frequency_alias
+-- Kind vs dimension: A WithDim T⁻¹ value is accepted as Frequency; equal dimensions erase the distinction between cyclic and angular frequency.
 example (ω : WithDim T𝓭⁻¹ ℝ≥0) : Frequency :=
   (fun f : Frequency => f) ω
 ```
@@ -111,10 +117,12 @@ _4. Name the kinds._ The angular-frequency kind and ISO 80000-3 frequency kind d
 library sees one dimension, while the kind layer retains the distinction.
 
 ```anchor distinct_kinds_same_dimension
+-- Kind vs dimension: Proves that angular-frequency and frequency are distinct kinds even though both have dimension T⁻¹.
 example :
     ForPhysLib.ClassicalMechanics.Kinds.angularFrequency ≠
       PropertyKindCalculus.Iso80000.Part3.frequency.kind := by decide
 
+-- Kind vs dimension: Proves that angular frequency and frequency have equal dimension; equal dimension does not identify their kinds.
 example :
     ForPhysLib.ClassicalMechanics.Metrology.angularFrequencyDK.dim =
       PropertyKindCalculus.Iso80000.Part3.frequency.dim := rfl
@@ -125,6 +133,7 @@ build pins the elaborator's refusal; a dimension-only library would permit the s
 both have dimension `T⁻¹`.
 
 ```anchor refused_kind_addition
+-- Kind vs dimension: Refused: no HAdd instance combines angular-frequency and frequency quantities, preventing their unlicensed sum despite matching dimension T⁻¹.
 /--
 error: failed to synthesize instance of type class
   HAdd (Quantity ForPhysLib.ClassicalMechanics.Kinds.angularFrequency ℝ)
@@ -143,6 +152,7 @@ constant` is not a registered edge; the square root is never formed. A dimension
 library would accept the quotient as a value with some dimension.
 
 ```anchor refused_reciprocal_radicand
+-- Kind vs dimension: Refused: no HDiv instance licenses mass divided by spring-constant quantities, so the kinded reciprocal m/k quotient cannot be formed.
 /--
 error: failed to synthesize instance of type class
   HDiv (Quantity ForPhysLib.ClassicalMechanics.massK ℝ) (Quantity ForPhysLib.ClassicalMechanics.springConstantK ℝ) ?m.6

@@ -45,12 +45,18 @@ Open `HCP/Worksheets/L1_TwoBodies.lean`, run
 `lake build HCP.Worksheets.L1_TwoBodies`, and fill its `TODO:`s in place. Compare your work
 with `HCP/L1_TwoBodies.lean` and the corresponding blueprint chapter.
 
+### Update the blueprint excerpts after editing a lesson
+
+Run `python3 HCP/check-hcp.py --fix-excerpts` after changing a lesson source. Verso keeps a copy
+of each anchor and only re-checks it when the chapter rebuilds, so cached chapters can hide drift.
+
 ## Running checks
 
 Run `lake build HCP` to compile the solutions and `lake build HCPWorksheets` to compile all
 worksheets (which intentionally contain `sorry` holes). Run `python3 HCP/check-hcp.py` to
 validate front matter, learning-path counts, live anchors, worksheet structure, each card's
-Synopsis and its synchronization with the matching chapter, and required sections.
+Synopsis and its synchronization with the matching chapter, required sections, and blueprint
+anchor excerpts.
 
 ## Jargon
 

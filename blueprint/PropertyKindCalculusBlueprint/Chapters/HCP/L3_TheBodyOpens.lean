@@ -127,14 +127,18 @@ def bodyMass {π : PairId} {b : Body} (state : OpenBody π b) :
     bodyHalves
     (fun h => massOf state (halfPart π b h))
 
+/-- Composition law: Proves that the assembled whole-mass magnitude of a body equals the sum of its left- and right-half masses. -/
 theorem bodyMass_magnitude {π : PairId} {b : Body} (state : OpenBody π b) :
     (bodyMass state).magnitude = state.mass .left + state.mass .right := by
   rfl
 
+-- Composition law: Proves that PhysLib's union-mass law is mass(A ∪ B) = mass(A) + mass(B), the additive law used for body A's halves.
 example := ForPhysLib.Exhibits.Composition.union_mass
 
+-- Composition law: Proves that PhysLib's union-inertia law is I(A ∪ B) = I(A) + I(B) about a common origin; the theorem's type does not record the axis.
 example := ForPhysLib.Exhibits.Composition.union_inertiaTensor
 
+-- Same-name records: Constructs a massK IndividualQuantity about body A's left half in pair P, allowing earlier and later states of that half to be compared.
 #guard_msgs in
 example (earlier later : OpenBody .P .A) :
     IndividualQuantity
@@ -144,6 +148,7 @@ example (earlier later : OpenBody .P .A) :
     (massOf later (halfPart .P .A .left))
     (-(massOf earlier (halfPart .P .A .left)))
 
+-- Bearer safety: Refused: type mismatch between body A's left-half mass bearers in pairs P and Q; this prevents treating distinct pairs as one state history.
 /--
 error: Application type mismatch: The argument
   massOf q (halfPart PairId.Q Body.A Half.left)
@@ -174,6 +179,7 @@ midpoint 5. HCP's position quantities use the same nominal half bearers as mass,
 attempted sum has no `Assembles` license:
 
 ```anchor center_of_mass_mean
+-- Centre of mass: Proves that with nonzero masses, (mA + mB)·COM(A ∪ B) = mA·COM(A) + mB·COM(B), PhysLib's weighted-mean law.
 example := ForPhysLib.Exhibits.Composition.union_centerOfMass
 
 noncomputable def centerOfMassCarving {π : PairId} {b : Body}
@@ -186,6 +192,7 @@ noncomputable def centerOfMassCarving {π : PairId} {b : Body}
     change state.mass .left + state.mass .right ≠ 0
     exact h
 
+/-- Centre of mass: Proves that a body's two-half carving mean is (mL·xL + mR·xR)/(mL + mR) when total mass is nonzero. -/
 theorem centerOfMass_eq {π : PairId} {b : Body} (state : OpenBody π b)
     (h : state.mass .left + state.mass .right ≠ 0) :
     (centerOfMassCarving state h).mean state.position =
@@ -201,6 +208,7 @@ def unequalMassExample : OpenBody .P .A where
     | .left => 0
     | .right => 10
 
+/-- Centre of mass: Proves that body A in pair P, with half masses 3 and 5 at positions 0 and 10, has weighted-mean centre 25/4, not midpoint 5. -/
 theorem unequalMassExample_centerOfMass :
     (centerOfMassCarving unequalMassExample (by norm_num [unequalMassExample])).mean
       unequalMassExample.position = (25 : ℝ) / 4 := by
@@ -213,6 +221,7 @@ def positionOf {π : PairId} {b : Body} (state : OpenBody π b) (h : HalfOf π b
       ForPhysLib.ClassicalMechanics.displacementK ℝ :=
   ⟨state.position h.half⟩
 
+-- Centre of mass: Refused: no Assembles rigidBodyS displacementK instance; the halves' positions form a mass-weighted mean, not an additive total.
 /--
 error: failed to synthesize instance of type class
   Assembles rigidBodyS ForPhysLib.ClassicalMechanics.displacementK
@@ -237,8 +246,10 @@ the state's total mass is nonzero; a massless state cannot satisfy it, so it can
 the carving:
 
 ```anchor massless_center_of_mass
+-- Centre of mass: proves that a massless body's `centerOfMass` is the origin, because PhysLib computes (1 / mass) • … and Lean's 1 / 0 = 0.
 example := ForPhysLib.Exhibits.Composition.massless_centerOfMass
 
+-- Centre of mass: Proves that the two mass-weighted halves have total weight 2 ≠ 0, supplying the license for their weighted mean.
 example := ForPhysLib.Exhibits.Composition.halvesByMass_total_ne_zero
 ```
 
@@ -247,10 +258,13 @@ adding their measurements would double it. The upstream finding proves the inten
 and refutes extensivity, while the HCP attempted assembly is rejected:
 
 ```anchor angular_velocity_intensive
+-- Composition law: Proves that angular velocity is intensive: each rigid-body half reads 7 rad/s rather than receiving a share of a total.
 example := ForPhysLib.Exhibits.Composition.omegaOfHalf_intensive
 
+-- Composition law: Proves that angular velocity is not extensive across the rigid body's halves: both read 7 rad/s, not a summed 14 rad/s.
 example := ForPhysLib.Exhibits.Composition.omegaOfHalf_not_extensive
 
+-- Licensed composition: Refused: no Assembles rigidBodyS angularVelocityK instance; angular velocity is constant across parts, not an additive total.
 /--
 error: failed to synthesize instance of type class
   Assembles rigidBodyS angularVelocityK
@@ -275,6 +289,7 @@ _5. Upstream frames._ PhysLib's bare rotational-energy API accepts the lab-frame
 but it is physically wrong:
 
 ```anchor bare_frame_mismatch
+-- Frame safety: The bare ℝ example accepts rotational energy from M's body inertia and lab-frame ω; it erases frame and motion bearer, hiding the invalid mix.
 noncomputable example (M : RigidBodyMotion 3) (t : Time) : ℝ :=
   M.toRigidBody.rotationalKineticEnergy (M.angularVelocity t)
 ```
@@ -284,6 +299,7 @@ therefore refused, body-frame ω is accepted, and the bridge theorem equates the
 components with twice PhysLib's own rotational kinetic energy:
 
 ```anchor framed_rotational_energy
+-- Frame safety: Refused: type mismatch between lab-frame ω and the body-frame ω required by contraction; this prevents pairing body inertia with lab angular velocity.
 /--
 error: Application type mismatch: The argument
   ForPhysLib.Exhibits.RigidBody.labOmega M t
@@ -304,6 +320,7 @@ noncomputable example (M : RigidBodyMotion 3) (t : Time) :=
     (ForPhysLib.Exhibits.RigidBody.bodyInertia M)
     (ForPhysLib.Exhibits.RigidBody.labOmega M t)
 
+-- Frame safety: Constructs a bearer-free body-frame kineticEnergyK scalar from M's body-frame inertia and angular velocity; the result retains frame and kind, not M.
 noncomputable example (M : RigidBodyMotion 3) (t : Time) :
     InFrame ForPhysLib.Exhibits.RigidBody.body .scalar
       ForPhysLib.Exhibits.RigidBody.kineticEnergyK ℝ :=
@@ -313,6 +330,7 @@ noncomputable example (M : RigidBodyMotion 3) (t : Time) :
     (ForPhysLib.Exhibits.RigidBody.bodyInertia M)
     (ForPhysLib.Exhibits.RigidBody.bodyOmega M t)
 
+-- Frame safety: Proves that body-frame rotational contraction equals PhysLib's rotational kinetic energy for the motion's body-frame angular velocity.
 example := ForPhysLib.Exhibits.RigidBody.rotationalContraction_eq_physlib
 ```
 
@@ -320,6 +338,7 @@ _7. Homogeneity returns as a special case._ For a nonzero-radius solid sphere, t
 inertia tensor is `(2/5) m R²` times the identity matrix:
 
 ```anchor solid_sphere
+-- Inertia tensor: Proves that the 3D solid sphere's inertia tensor is (2/5) m R² times the identity matrix.
 example := ForPhysLib.ClassicalMechanics.SolidSphereInertia.solidSphere_inertiaTensor
 ```
 
