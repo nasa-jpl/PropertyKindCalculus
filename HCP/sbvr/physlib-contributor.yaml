@@ -37,7 +37,10 @@ concepts:
   - {id: body, kind: general}
   - {id: spring, kind: general}
   - {id: wall, kind: general}
+  - {id: oscillatorMass, kind: general}
+  - {id: oscillatorStiffness, kind: general}
   - {id: hasKind, kind: verb, roles: [quantity, kindOfProperty]}
+  - {id: isReadFrom, kind: verb, roles: [quantity, oscillator]}
   - {id: hasBody, kind: verb, roles: [oscillator, body]}
   - {id: connects, kind: verb, roles: [spring, body]}
   - {id: isAnchoredTo, kind: verb, roles: [spring, wall]}
@@ -129,6 +132,8 @@ concepts:
   - {id: refutes, kind: verb, roles: [counterexample, requirement]}
 generalizes:
   - {category: dimensionedKind, general: kindOfProperty}
+  - {category: oscillatorMass, general: quantity}
+  - {category: oscillatorStiffness, general: quantity}
   - {category: individualQuantity, general: quantity}
   - {category: sameBearerArithmetic, general: individualQuantity}
   - {category: pair, general: composite}
@@ -182,6 +187,10 @@ vocabularies:
       - {signifier: body, concept: body}
       - {signifier: spring, concept: spring}
       - {signifier: wall, concept: wall}
+      - {signifier: oscillator mass, concept: oscillatorMass}
+      - {signifier: massQ, concept: oscillatorMass, preferred: false}
+      - {signifier: oscillator stiffness, concept: oscillatorStiffness}
+      - {signifier: springQ, concept: oscillatorStiffness, preferred: false}
       - {signifier: mass, concept: mass}
       - {signifier: spring constant, concept: spring constant}
       - {signifier: stiffness, concept: spring constant, preferred: false}
@@ -191,6 +200,7 @@ vocabularies:
       - {signifier: frequency, concept: frequency}
     wordings:
       - {verb: hasKind, template: [{role: quantity}, {text: " is of "}, {role: kindOfProperty}]}
+      - {verb: isReadFrom, template: [{role: quantity}, {text: " is read from "}, {role: oscillator}]}
       - {verb: hasBody, template: [{role: oscillator}, {text: " consists of "}, {role: body}]}
       - {verb: hasBody, template: [{role: body}, {text: " is the body of "}, {role: oscillator}]}
       - {verb: connects, template: [{role: spring}, {text: " connects "}, {role: body}]}
@@ -199,6 +209,8 @@ vocabularies:
     definitions:
       - {concept: quantity, text: "it is necessary that each quantity is of exactly one kind of property", source: "HCP L0 — Quantity: a magnitude of one fixed kind of property, with no bearer yet; massQ, springQ read PhysLib's oscillator mass and spring constant as kinded quantities"}
       - {concept: dimensionedKind, text: "it is necessary that each dimensioned kind carries exactly one dimension", source: "HCP L0 — angularFrequencyDK (.kind, .dim)"}
+      - {concept: oscillatorMass, text: "it is necessary that each oscillator mass is read from exactly one oscillator", source: "HCP L0 — massQ reads PhysLib's oscillator mass as a kinded quantity"}
+      - {concept: oscillatorStiffness, text: "it is necessary that each oscillator stiffness is read from exactly one oscillator", source: "HCP L0 — springQ reads PhysLib's oscillator spring constant as a kinded quantity"}
       - {concept: oscillator, text: "it is necessary that each oscillator consists of exactly one body", source: "HCP L0 — The black box: one body on one ideal spring to a wall"}
       - {concept: body, text: "it is necessary that each body is the body of exactly one oscillator", source: "HCP L0 — The black box"}
       - {concept: spring, text: "it is necessary that each spring is anchored to exactly one wall", source: "HCP L0 — The black box"}
@@ -223,6 +235,7 @@ vocabularies:
       - {signifier: omegaSquaredK, concept: squared angular frequency, preferred: false}
       - {signifier: SortOfSystem, concept: sortOfSystem, preferred: false}
       - {signifier: Sorted, concept: object, preferred: false}
+      - {signifier: Designated, concept: object, preferred: false}
       - {signifier: massK, concept: mass, preferred: false}
       - {signifier: springConstantK, concept: spring constant, preferred: false}
     wordings:
@@ -304,7 +317,14 @@ vocabularies:
       - {signifier: frame reading, concept: frameReading}
       - {signifier: InFrame, concept: frameReading, preferred: false}
       - {signifier: union law, concept: unionLaw}
+      - {signifier: union_mass, concept: unionLaw, preferred: false}
+      - {signifier: union_centerOfMass, concept: unionLaw, preferred: false}
+      - {signifier: union_inertiaTensor, concept: unionLaw, preferred: false}
       - {signifier: frame-indexed quantity, concept: frameIndexedQuantity}
+      - {signifier: labOmega, concept: frameIndexedQuantity, preferred: false}
+      - {signifier: bodyOmega, concept: frameIndexedQuantity, preferred: false}
+      - {signifier: bodyInertia, concept: frameIndexedQuantity, preferred: false}
+      - {signifier: rotationalContraction, concept: frameIndexedQuantity, preferred: false}
     wordings:
       - {verb: hasTotalWeight, template: [{role: weightedCarving}, {text: " totals "}, {role: totalWeight}]}
       - {verb: hasTotalWeight, template: [{role: totalWeight}, {text: " is the total weight of "}, {role: weightedCarving}]}
@@ -329,11 +349,18 @@ vocabularies:
     designations:
       - {signifier: space kind, concept: spaceKind}
       - {signifier: space reading, concept: spaceReading}
+      - {signifier: positionQ, concept: spaceReading, preferred: false}
+      - {signifier: displacementQ, concept: spaceReading, preferred: false}
+      - {signifier: distanceQ, concept: spaceReading, preferred: false}
+      - {signifier: lengthOf, concept: spaceReading, preferred: false}
       - {signifier: frame vector, concept: frameVector}
       - {signifier: KVector, concept: frameVector, preferred: false}
       - {signifier: frame conversion, concept: frameConversion}
       - {signifier: transport, concept: frameConversion, preferred: false}
+      - {signifier: kGeometricTransport, concept: frameConversion, preferred: false}
+      - {signifier: kBoostTransport, concept: frameConversion, preferred: false}
       - {signifier: position vector, concept: position vector}
+      - {signifier: positionVector, concept: position vector, preferred: false}
       - {signifier: distance, concept: distance}
       - {signifier: area, concept: area}
       - {signifier: velocity, concept: velocity}

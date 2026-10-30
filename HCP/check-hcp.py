@@ -970,7 +970,9 @@ def sbvr_run(sbvr_check, *args):
 
 
 def sbvr_new_terms(text):
-    """The backticked names under 'New at this step:' of a chapter's vocabulary section."""
+    """The backticked names under 'New at this step:' of a chapter's vocabulary section, as
+    (name, member) pairs: a name inside a parenthesised group that follows a term — `Composite`
+    (`whole`, `part`) — is a member of that term, any other name is a term of its own."""
     synopsis = chapter_synopsis_section(text)
     vocab = heading_section(synopsis, 2, "PKC vocabulary in scope") if synopsis else None
     if vocab is None:
@@ -982,19 +984,83 @@ def sbvr_new_terms(text):
     carried = re.search(r"(?m)^Carried from earlier steps:", body)
     if carried:
         body = body[: carried.start()]
-    return re.findall(r"`([^`]+)`", body)
+    terms = []
+    for bullet in re.findall(r"(?m)^- (.*)$", body):
+        names = bullet.split(" — ", 1)[0]
+        depth = 0
+        for piece in re.split(r"(`[^`]+`|[()])", names):
+            if piece == "(":
+                depth += 1
+            elif piece == ")":
+                depth = max(depth - 1, 0)
+            elif piece.startswith("`") and piece.endswith("`") and len(piece) > 2:
+                terms.append((piece[1:-1], depth > 0))
+    return terms
+
+
+SBVR_TERM_LINE = re.compile(r"^- (?P<head>.*?) — (?P<rest>.*)$")
+SBVR_SOURCE = re.compile(r"\((?P<source>[^()]*(?:\([^()]*\)[^()]*)*)\)$")
+
+
+def sbvr_rendering_terms(rendered):
+    """What a rendering says is new at its step: the designations (preferred term and `also:`
+    synonyms) and the definition sources, read from the structure of `sbvr-check render`'s
+    output — never from the prose of a definition."""
+    designations, sources = set(), []
+    block = rendered.split("New at this step:", 1)[-1].split("Carried from earlier steps:", 1)[0]
+    for line in block.splitlines():
+        match = SBVR_TERM_LINE.match(line.strip())
+        if not match or match.group("rest") == "verb":
+            continue
+        head = match.group("head")
+        also = re.search(r" \(also: (.*)\)$", head)
+        if also:
+            head = head[: also.start()]
+            designations.update(s.strip() for s in also.group(1).split(","))
+        designations.add(head.strip())
+        source = SBVR_SOURCE.search(match.group("rest").strip())
+        if source:
+            sources.append(source.group("source"))
+    return designations, sources
+
+
+def sbvr_reference_only(name):
+    """A name that cannot be a designation and is cited in a source instead: a dotted Lean name
+    (`IndividualQuantity.add`), a command (`#kind_requirement_clean`) or an attribute."""
+    return "." in name or name.startswith("#") or name.startswith("@[")
+
+
+def sbvr_term_errors(path, name, text, rendered):
+    """Every name a chapter lists as new at its step is accounted for in the lesson's SBVR: a term
+    is a designation (preferred or synonym) new at that step; a member of a term, or a
+    reference-only name, is cited in the source of a term new at that step."""
+    rel = SBVR_CHAIN.relative_to(ROOT)
+    designations, sources = sbvr_rendering_terms(rendered)
+    errors = []
+    for term, member in sbvr_new_terms(text):
+        if not member and not sbvr_reference_only(term):
+            if term not in designations:
+                errors.append(
+                    f"{path}: `{term}` is new at this step but is not a designation of {rel} ({name})"
+                )
+        elif not any(contains_identifier(source, term) for source in sources):
+            what = "a member of a term" if member else "a reference"
+            errors.append(
+                f"{path}: `{term}` ({what}) is new at this step but no definition source of "
+                f"{rel} ({name}) cites it"
+            )
+    return errors
 
 
 def sbvr_rendered_errors(paths):
     """The committed renderings (HCP/sbvr/rendered/<name>.md) cover the chapters.
 
     Needs no tool: every chapter must have a committed rendering named after its lesson, and
-    every name a chapter lists as new at its step must be worded in it — as a term, a synonym or
-    in a definition's source — so a term the chapter introduces cannot be missing from the SBVR.
-    Whether the renderings are current is checked with --sbvr.
+    every name it lists as new at its step is a designation there, or a member/reference cited
+    by a definition source there (`sbvr_term_errors`). Whether the renderings are current is
+    checked with --sbvr (CI runs with it).
     """
     errors = []
-    rel = SBVR_CHAIN.relative_to(ROOT)
     for path in paths:
         name = sbvr_lesson_name(path)
         if name is None:
@@ -1006,12 +1072,9 @@ def sbvr_rendered_errors(paths):
                 f"{target.relative_to(ROOT)}: missing; run check-hcp.py --sbvr SBVR_CHECK --fix-sbvr"
             )
             continue
-        rendered = target.read_text(encoding="utf-8")
-        for term in sbvr_new_terms(path.read_text(encoding="utf-8")):
-            if not contains_identifier(rendered, term):
-                errors.append(
-                    f"{path}: `{term}` is new at this step but not worded in {rel} ({name})"
-                )
+        errors.extend(sbvr_term_errors(
+            path, name, path.read_text(encoding="utf-8"), target.read_text(encoding="utf-8")
+        ))
     return errors
 
 

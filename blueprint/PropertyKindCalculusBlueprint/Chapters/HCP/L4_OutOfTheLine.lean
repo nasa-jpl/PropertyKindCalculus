@@ -59,7 +59,7 @@ Move pair P into three-dimensional space, seen from two reference frames: the la
 ## PKC vocabulary in scope
 
 New at this step:
-- `positionVector`, `displacement`, `distance`, `area` — ISO 80000-3 space kinds.
+- `positionVector`, `distance`, `area` — ISO 80000-3 space kinds (with `displacement`, carried from L2: the spring extension is the same kind).
 - `positionQ`, `displacementQ`, `distanceQ`, `lengthOf` — read PhysLib's `Space` values at their kinds.
 - `KVector` — a frame vector with its physical kind stated.
 - `kGeometricTransport`, `kBoostTransport` — frame conversions, each typed for one kind of vector.

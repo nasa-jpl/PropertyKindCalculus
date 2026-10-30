@@ -56,9 +56,14 @@ python3 HCP/check-hcp.py --sbvr ../SBVR.lean/.lake/build/bin/sbvr-check --fix-sb
 
 checks the chain (every lesson refines the one before it, every quantity term is bound to a
 kind, every definition reads as Structured English), rewrites `HCP/sbvr/rendered/*.md`, and
-reports any name a chapter lists as new that the SBVR does not word. Without `--fix-sbvr` a
-stale rendering is an error; without `--sbvr` the committed renderings are still checked
-against the chapters. To ask what a phrase means at a step, or what changed between steps:
+reports any name a chapter lists as new that the SBVR does not account for: a name is a
+**designation** (preferred term or synonym) new at that step; a name in a parenthesised group
+after a term (`Composite` (`whole`, `part`)) is a *member* and a dotted name, `#command` or
+`@[attribute]` a *reference* — both must be cited in the source of a definition new at that step.
+Without `--fix-sbvr` a stale rendering is an error; without `--sbvr` the committed renderings
+are still checked against the chapters. CI runs `--sbvr` with `scripts/sbvr-check.sh`, which
+clones and builds SBVR.lean at a pinned revision (`SBVR_LEAN_REV`); move the pin and regenerate
+the renderings together. To ask what a phrase means at a step, or what changed between steps:
 
 ```sh
 ../SBVR.lean/.lake/build/bin/sbvr-check kinds  HCP/sbvr/physlib-contributor.yaml
@@ -110,8 +115,9 @@ Run `lake build HCP` to compile the solutions and `lake build HCPWorksheets` to 
 worksheets (which intentionally contain `sorry` holes). Run `python3 HCP/check-hcp.py` to
 validate chapter front matter, the ten required sections, Synopsis structure and vocabulary,
 learning-path rows, live anchors, worksheet structure, synchronized blueprint anchor
-excerpts, and that every name a chapter lists as new at its step is worded in the ladder's SBVR
-renderings (`HCP/sbvr/rendered/`); add `--sbvr SBVR_CHECK` to check the chain itself.
+excerpts, and that every name a chapter lists as new at its step is a designation of, or cited
+by, the ladder's SBVR renderings (`HCP/sbvr/rendered/`); add `--sbvr SBVR_CHECK` to check the
+chain itself and the renderings' currency (CI does, via `scripts/sbvr-check.sh`).
 
 ## Jargon
 

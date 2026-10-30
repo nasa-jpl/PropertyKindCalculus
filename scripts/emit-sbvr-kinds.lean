@@ -13,7 +13,8 @@ The kinds are harvested (`Harvest.harvest`, the same reader as `scripts/emit-sys
 scopes the lessons read their kinds from: ISO 80000 parts 3 and 4, ForPhysLib's classical
 mechanics and the lessons' own `KindOfProperty`s (L5's viscous damping constant). Two
 declarations of one kind id (ForPhysLib's `massK` is `Part4.mass.kind`) are one catalogue entry;
-two declarations of one id with different scales are an error. Entries are sorted by id so the
+two declarations of one id with different scales are an error, and so is any declaration in
+scope the harvester had to skip (the catalogue would silently lack a kind). Entries are sorted by id so the
 file is reproducible.
 
 Run with `lake env lean scripts/emit-sbvr-kinds.lean` after
@@ -34,7 +35,10 @@ deriving Inhabited
 
 def catalogueYaml (scopes : Array Name) : MetaM String := do
   let (m, warnings) ← Harvest.harvest scopes "PhysLibKinds"
+  -- a declaration the harvester skipped is a kind the catalogue would silently lack: refuse
   for w in warnings do IO.eprintln s!"PhysLibKinds: {w}"
+  if !warnings.isEmpty then
+    throwError s!"{warnings.size} declaration(s) in scope were skipped; the catalogue would be incomplete"
   let idOf : Std.HashMap String String :=
     m.kinds.foldl (init := {}) fun acc k => acc.insert k.name k.id
   let mut entries : Std.HashMap String Entry := {}
