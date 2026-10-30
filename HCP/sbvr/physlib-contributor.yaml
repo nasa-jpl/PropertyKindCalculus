@@ -1,0 +1,458 @@
+# The PhysLib contributor's ladder (HCP/L0 … L6) as an SBVR chain — SBVR.lean docs/HCP.md, delivery
+# step 2. One vocabulary per lesson; each includes the lesson before it, so a lesson's "PKC
+# vocabulary in scope — carried from earlier steps" is the inclusion closure and is not restated.
+# A term the lesson lists as new but that an earlier lesson (or the repository's foundation
+# vocabulary `PKC`) already defines is recorded as an *adoption* of that definition, so that
+# `sbvr-check` reports drift if the lesson ever words it differently.
+#
+# Three kinds of terms:
+#   * quantity terms — one per `KindOfProperty` the lesson reads, adopted from the catalogue
+#     `PhysLibKinds` (HCP/sbvr/kinds.yaml, generated from the Lean kinds in scope; never edited);
+#   * the lesson's PKC notions (Quantity, IndividualQuantity, Composite, …) — the English term is
+#     preferred, the dot-free Lean name a synonym, dotted names in the definition's `source`;
+#   * the lesson's system context (oscillator, body, spring, wall, pair, damper, frame, …).
+# Every definition is SBVR Structured English read against the vocabulary in scope; the lesson it
+# comes from is its `source`. `sbvr-check render physlib-contributor.yaml Lk` writes lesson k's
+# "Vocabulary in scope" (HCP/sbvr/rendered/Lk.md); check-hcp.py --sbvr keeps those renderings and
+# the catalogue in step with this file.
+#
+# Not here yet: the lessons' Verifiable properties and Errors prevented as rules with evidence
+# (SBVR.lean has no rule schema in the chain file yet), and `PKC ⊂ Foundation` (the root in
+# engineering-foundation-architecture docs/hcp/foundation.yaml) — a chain file cannot include a
+# vocabulary from another file yet. Both are follow-ups named in HCP/README.md.
+concepts:
+  # PKC — the repository's foundation vocabulary (HCP/README.md Jargon, Lowe's square)
+  - {id: systemContext, kind: general}
+  - {id: sortOfSystem, kind: general}
+  - {id: kindOfProperty, kind: general}
+  - {id: dimension, kind: general}
+  - {id: object, kind: general}
+  - {id: namesSort, kind: verb, roles: [systemContext, sortOfSystem]}
+  - {id: hasSort, kind: verb, roles: [object, sortOfSystem]}
+  - {id: hasDimension, kind: verb, roles: [kindOfProperty, dimension]}
+  # L0 — the black box
+  - {id: quantity, kind: general}
+  - {id: dimensionedKind, kind: general}
+  - {id: oscillator, kind: general}
+  - {id: body, kind: general}
+  - {id: spring, kind: general}
+  - {id: wall, kind: general}
+  - {id: hasKind, kind: verb, roles: [quantity, kindOfProperty]}
+  - {id: hasBody, kind: verb, roles: [oscillator, body]}
+  - {id: connects, kind: verb, roles: [spring, body]}
+  - {id: isAnchoredTo, kind: verb, roles: [spring, wall]}
+  # L1 — two bodies
+  - {id: bearer, kind: role}
+  - {id: nominalName, kind: general}
+  - {id: individualQuantity, kind: general}
+  - {id: sameBearerArithmetic, kind: general}
+  - {id: differenceLaw, kind: general}
+  - {id: hasName, kind: verb, roles: [object, nominalName]}
+  - {id: isAbout, kind: verb, roles: [individualQuantity, bearer]}
+  - {id: compares, kind: verb, roles: [differenceLaw, kindOfProperty]}
+  # L2 — the pair is a system too
+  - {id: composite, kind: general}
+  - {id: whole, kind: role}
+  - {id: part, kind: role}
+  - {id: decomposition, kind: general}
+  - {id: aggregationLicence, kind: general}
+  - {id: assembly, kind: general}
+  - {id: extensiveKind, kind: general}
+  - {id: dedicatedKind, kind: general}
+  - {id: component, kind: general}
+  - {id: pair, kind: general}
+  - {id: hasWhole, kind: verb, roles: [composite, whole]}
+  - {id: hasPart, kind: verb, roles: [whole, part]}
+  - {id: carves, kind: verb, roles: [decomposition, whole]}
+  - {id: licenses, kind: verb, roles: [aggregationLicence, kindOfProperty]}
+  - {id: folds, kind: verb, roles: [assembly, decomposition]}
+  - {id: isDedicatedTo, kind: verb, roles: [dedicatedKind, sortOfSystem]}
+  - {id: isComponentOf, kind: verb, roles: [component, whole]}
+  - {id: couples, kind: verb, roles: [pair, body]}
+  # L3 — the body opens up
+  - {id: weightedCarving, kind: general}
+  - {id: totalWeight, kind: general}
+  - {id: weightedSum, kind: general}
+  - {id: weightedMean, kind: general}
+  - {id: fold, kind: general}
+  - {id: frame, kind: general}
+  - {id: frameReading, kind: general}
+  - {id: unionLaw, kind: general}
+  - {id: frameIndexedQuantity, kind: general}
+  - {id: hasTotalWeight, kind: verb, roles: [weightedCarving, totalWeight]}
+  - {id: hasWeightedSum, kind: verb, roles: [weightedCarving, weightedSum]}
+  - {id: hasWeightedMean, kind: verb, roles: [weightedCarving, weightedMean]}
+  - {id: combines, kind: verb, roles: [fold, decomposition]}
+  - {id: isReadIn, kind: verb, roles: [frameReading, frame]}
+  - {id: combinesKind, kind: verb, roles: [unionLaw, kindOfProperty]}
+  # L4 — out of the line
+  - {id: spaceKind, kind: general}
+  - {id: spaceReading, kind: general}
+  - {id: frameVector, kind: general}
+  - {id: frameConversion, kind: general}
+  - {id: hasSpaceKind, kind: verb, roles: [spaceReading, spaceKind]}
+  - {id: states, kind: verb, roles: [frameVector, kindOfProperty]}
+  - {id: isTypedFor, kind: verb, roles: [frameConversion, kindOfProperty]}
+  # L5 — losing energy
+  - {id: scaleType, kind: general}
+  - {id: ratioScale, kind: general}
+  - {id: quotientLaw, kind: general}
+  - {id: gatedSum, kind: general}
+  - {id: bearerErasure, kind: general}
+  - {id: damper, kind: general}
+  - {id: hasScale, kind: verb, roles: [kindOfProperty, scaleType]}
+  - {id: licensesQuotient, kind: verb, roles: [ratioScale, quotientLaw]}
+  - {id: adds, kind: verb, roles: [gatedSum, quantity]}
+  - {id: forgets, kind: verb, roles: [bearerErasure, individualQuantity]}
+  # L6 — what must hold
+  - {id: contract, kind: general}
+  - {id: port, kind: general}
+  - {id: member, kind: general}
+  - {id: outputPort, kind: general}
+  - {id: requirement, kind: general}
+  - {id: provableRequirement, kind: general}
+  - {id: empiricalRequirement, kind: general}
+  - {id: proof, kind: general}
+  - {id: gate, kind: general}
+  - {id: cleanlinessGate, kind: general}
+  - {id: scope, kind: general}
+  - {id: referent, kind: general}
+  - {id: counterexample, kind: general}
+  - {id: declaresPort, kind: verb, roles: [contract, port]}
+  - {id: declaresMember, kind: verb, roles: [contract, member]}
+  - {id: governs, kind: verb, roles: [requirement, port]}
+  - {id: discharges, kind: verb, roles: [proof, provableRequirement]}
+  - {id: decides, kind: verb, roles: [gate, empiricalRequirement]}
+  - {id: examines, kind: verb, roles: [cleanlinessGate, contract]}
+  - {id: quantifiesOver, kind: verb, roles: [requirement, scope]}
+  - {id: hasReferent, kind: verb, roles: [empiricalRequirement, referent]}
+  - {id: refutes, kind: verb, roles: [counterexample, requirement]}
+generalizes:
+  - {category: dimensionedKind, general: kindOfProperty}
+  - {category: individualQuantity, general: quantity}
+  - {category: sameBearerArithmetic, general: individualQuantity}
+  - {category: pair, general: composite}
+  - {category: extensiveKind, general: kindOfProperty}
+  - {category: dedicatedKind, general: kindOfProperty}
+  - {category: weightedCarving, general: decomposition}
+  - {category: frameIndexedQuantity, general: individualQuantity}
+  - {category: frameIndexedQuantity, general: frameReading}
+  - {category: spaceKind, general: kindOfProperty}
+  - {category: spaceReading, general: quantity}
+  - {category: frameVector, general: frameReading}
+  - {category: frameVector, general: quantity}
+  - {category: ratioScale, general: scaleType}
+  - {category: damper, general: component}
+  - {category: outputPort, general: port}
+  - {category: provableRequirement, general: requirement}
+  - {category: empiricalRequirement, general: requirement}
+  - {category: cleanlinessGate, general: gate}
+catalogues:
+  - {name: PhysLibKinds, kinds: kinds.yaml}
+vocabularies:
+  - name: PKC
+    namespace: pkc
+    designations:
+      - {signifier: system context, concept: systemContext}
+      - {signifier: sort of system, concept: sortOfSystem}
+      - {signifier: kind of property, concept: kindOfProperty}
+      - {signifier: dimension, concept: dimension}
+      - {signifier: object, concept: object}
+    wordings:
+      - {verb: namesSort, template: [{role: systemContext}, {text: " spans "}, {role: sortOfSystem}]}
+      - {verb: hasSort, template: [{role: object}, {text: " instantiates "}, {role: sortOfSystem}]}
+      - {verb: hasSort, template: [{role: sortOfSystem}, {text: " is the sort of "}, {role: object}]}
+      - {verb: hasDimension, template: [{role: kindOfProperty}, {text: " carries "}, {role: dimension}]}
+      - {verb: hasDimension, template: [{role: dimension}, {text: " is carried by "}, {role: kindOfProperty}]}
+    definitions:
+      - {concept: systemContext, text: "it is necessary that each system context spans at least 1 sort of system", source: "HCP/README.md — Jargon: system context"}
+      - {concept: sortOfSystem, text: "it is possible that each sort of system is the sort of at least 1 object", source: "HCP/README.md — Jargon: sort of system, the universal category of a system's substantial bearer"}
+      - {concept: kindOfProperty, text: "it is necessary that each kind of property carries at most 1 dimension", source: "HCP/README.md — Jargon: kind of property, distinct from its dimension"}
+      - {concept: dimension, text: "it is possible that each dimension is carried by at least 1 kind of property", source: "HCP/README.md — Jargon: dimension-only metrology"}
+      - {concept: object, text: "it is necessary that each object instantiates exactly one sort of system", source: "HCP/README.md — Lowe's square: a particular of a universal sort"}
+  - name: L0
+    includes: [PKC, PhysLibKinds]
+    designations:
+      - {signifier: quantity, concept: quantity}
+      - {signifier: Quantity, concept: quantity, preferred: false}
+      - {signifier: dimensioned kind, concept: dimensionedKind}
+      - {signifier: DimensionedKind, concept: dimensionedKind, preferred: false}
+      - {signifier: oscillator, concept: oscillator}
+      - {signifier: black box, concept: oscillator, preferred: false}
+      - {signifier: body, concept: body}
+      - {signifier: spring, concept: spring}
+      - {signifier: wall, concept: wall}
+      - {signifier: mass, concept: mass}
+      - {signifier: spring constant, concept: spring constant}
+      - {signifier: stiffness, concept: spring constant, preferred: false}
+      - {signifier: angular frequency, concept: angular frequency}
+      - {signifier: angularFrequency, concept: angular frequency, preferred: false}
+      - {signifier: angularFrequencyDK, concept: angular frequency, preferred: false}
+      - {signifier: frequency, concept: frequency}
+    wordings:
+      - {verb: hasKind, template: [{role: quantity}, {text: " is of "}, {role: kindOfProperty}]}
+      - {verb: hasBody, template: [{role: oscillator}, {text: " consists of "}, {role: body}]}
+      - {verb: hasBody, template: [{role: body}, {text: " is the body of "}, {role: oscillator}]}
+      - {verb: connects, template: [{role: spring}, {text: " connects "}, {role: body}]}
+      - {verb: isAnchoredTo, template: [{role: spring}, {text: " is anchored to "}, {role: wall}]}
+      - {verb: isAnchoredTo, template: [{role: wall}, {text: " anchors "}, {role: spring}]}
+    definitions:
+      - {concept: quantity, text: "it is necessary that each quantity is of exactly one kind of property", source: "HCP L0 — Quantity: a magnitude of one fixed kind of property, with no bearer yet; massQ, springQ read PhysLib's oscillator mass and spring constant as kinded quantities"}
+      - {concept: dimensionedKind, text: "it is necessary that each dimensioned kind carries exactly one dimension", source: "HCP L0 — angularFrequencyDK (.kind, .dim)"}
+      - {concept: oscillator, text: "it is necessary that each oscillator consists of exactly one body", source: "HCP L0 — The black box: one body on one ideal spring to a wall"}
+      - {concept: body, text: "it is necessary that each body is the body of exactly one oscillator", source: "HCP L0 — The black box"}
+      - {concept: spring, text: "it is necessary that each spring is anchored to exactly one wall", source: "HCP L0 — The black box"}
+      - {concept: wall, text: "it is necessary that each wall anchors at least 1 spring", source: "HCP L0 — The black box"}
+    adopted:
+      - {concept: mass, source: PhysLibKinds, reference: mass}
+      - {concept: spring constant, source: PhysLibKinds, reference: spring constant}
+      - {concept: angular frequency, source: PhysLibKinds, reference: angular frequency}
+      - {concept: frequency, source: PhysLibKinds, reference: frequency}
+  - name: L1
+    includes: [L0]
+    designations:
+      - {signifier: bearer, concept: bearer}
+      - {signifier: nominal name, concept: nominalName}
+      - {signifier: designation, concept: nominalName, preferred: false}
+      - {signifier: individual quantity, concept: individualQuantity}
+      - {signifier: IndividualQuantity, concept: individualQuantity, preferred: false}
+      - {signifier: same-bearer arithmetic, concept: sameBearerArithmetic}
+      - {signifier: difference law, concept: differenceLaw}
+      - {signifier: squared angular frequency, concept: squared angular frequency}
+      - {signifier: angular frequency squared, concept: squared angular frequency, preferred: false}
+      - {signifier: omegaSquaredK, concept: squared angular frequency, preferred: false}
+      - {signifier: SortOfSystem, concept: sortOfSystem, preferred: false}
+      - {signifier: Sorted, concept: object, preferred: false}
+      - {signifier: massK, concept: mass, preferred: false}
+      - {signifier: springConstantK, concept: spring constant, preferred: false}
+    wordings:
+      - {verb: hasName, template: [{role: object}, {text: " is named by "}, {role: nominalName}]}
+      - {verb: hasName, template: [{role: nominalName}, {text: " names "}, {role: object}]}
+      - {verb: isAbout, template: [{role: individualQuantity}, {text: " is about "}, {role: bearer}]}
+      - {verb: isAbout, template: [{role: bearer}, {text: " bears "}, {role: individualQuantity}]}
+      - {verb: compares, template: [{role: differenceLaw}, {text: " compares "}, {role: kindOfProperty}]}
+    definitions:
+      - {concept: bearer, text: "it is necessary that each bearer bears at least 1 individual quantity", source: "HCP L1 — Jargon: bearer, the object a property is about; L1 indexes by the whole oscillator. Sorted (sortOf): an object type whose objects know their sort"}
+      - {concept: nominalName, text: "it is necessary that each nominal name names exactly one object", source: "HCP L1 — Designated (designation, designation_inj): distinct nominal names"}
+      - {concept: individualQuantity, text: "it is necessary that each individual quantity is about exactly one bearer", source: "HCP L1 — IndividualQuantity: a magnitude of kind k about one object o"}
+      - {concept: sameBearerArithmetic, text: "it is necessary that each same-bearer arithmetic is about exactly one bearer", source: "HCP L1 — IndividualQuantity.add, IndividualQuantity.div: same-object, kind-licensed arithmetic"}
+      - {concept: differenceLaw, text: "it is necessary that each difference law compares exactly one kind of property", source: "HCP L1 — DifferenceKind.ofScale: licenses comparing two records of one quantity"}
+    adopted:
+      - {concept: sortOfSystem, source: PKC, reference: sortOfSystem}
+      - {concept: object, source: PKC, reference: object}
+      - {concept: squared angular frequency, source: PhysLibKinds, reference: squared angular frequency}
+  - name: L2
+    includes: [L1]
+    designations:
+      - {signifier: composite, concept: composite}
+      - {signifier: Composite, concept: composite, preferred: false}
+      - {signifier: whole, concept: whole}
+      - {signifier: part, concept: part}
+      - {signifier: decomposition, concept: decomposition}
+      - {signifier: Decomposition, concept: decomposition, preferred: false}
+      - {signifier: aggregation licence, concept: aggregationLicence}
+      - {signifier: Assembles, concept: aggregationLicence, preferred: false}
+      - {signifier: assembly, concept: assembly}
+      - {signifier: assemble, concept: assembly, preferred: false}
+      - {signifier: extensive kind, concept: extensiveKind}
+      - {signifier: Extensive, concept: extensiveKind, preferred: false}
+      - {signifier: dedicated kind, concept: dedicatedKind}
+      - {signifier: DedicatedKind, concept: dedicatedKind, preferred: false}
+      - {signifier: component, concept: component}
+      - {signifier: Component, concept: component, preferred: false}
+      - {signifier: pair, concept: pair}
+      - {signifier: coupled pair, concept: pair, preferred: false}
+      - {signifier: displacement, concept: displacement}
+      - {signifier: spring extension, concept: displacement, preferred: false}
+      - {signifier: displacementK, concept: displacement, preferred: false}
+    wordings:
+      - {verb: hasWhole, template: [{role: composite}, {text: " is seen as "}, {role: whole}]}
+      - {verb: hasPart, template: [{role: whole}, {text: " comprises "}, {role: part}]}
+      - {verb: hasPart, template: [{role: part}, {text: " is a part of "}, {role: whole}]}
+      - {verb: carves, template: [{role: decomposition}, {text: " carves "}, {role: whole}]}
+      - {verb: licenses, template: [{role: aggregationLicence}, {text: " licenses "}, {role: kindOfProperty}]}
+      - {verb: licenses, template: [{role: kindOfProperty}, {text: " is licensed by "}, {role: aggregationLicence}]}
+      - {verb: folds, template: [{role: assembly}, {text: " folds "}, {role: decomposition}]}
+      - {verb: isDedicatedTo, template: [{role: dedicatedKind}, {text: " is dedicated to "}, {role: sortOfSystem}]}
+      - {verb: isComponentOf, template: [{role: component}, {text: " is a component of "}, {role: whole}]}
+      - {verb: couples, template: [{role: pair}, {text: " couples "}, {role: body}]}
+    definitions:
+      - {concept: composite, text: "it is necessary that each composite is seen as exactly one whole", source: "HCP L2 — Composite (whole, part): the object type of a whole and its parts"}
+      - {concept: whole, text: "it is necessary that each whole comprises at least 1 part", source: "HCP L2 — Composite"}
+      - {concept: part, text: "it is necessary that each part is a part of exactly one whole", source: "HCP L2 — Composite"}
+      - {concept: decomposition, text: "it is necessary that each decomposition carves exactly one whole", source: "HCP L2 — Decomposition (atom, union): how a whole is carved into parts"}
+      - {concept: aggregationLicence, text: "it is necessary that each aggregation licence licenses exactly one kind of property", source: "HCP L2 — Assembles: the aggregation licence, keyed by the sort of the whole and the kind"}
+      - {concept: assembly, text: "it is necessary that each assembly folds exactly one decomposition", source: "HCP L2 — assemble: fold a licensed quantity over a decomposition"}
+      - {concept: extensiveKind, text: "it is obligatory that each extensive kind is licensed by at least 1 aggregation licence", source: "HCP L2 — Extensive: a kind whose value over a union is the sum over its parts"}
+      - {concept: dedicatedKind, text: "it is necessary that each dedicated kind is dedicated to exactly one sort of system", source: "HCP L2 — DedicatedKind, KindOfProperty.dedicatedTo: the pair's normal-mode frequency"}
+      - {concept: component, text: "it is necessary that each component is a component of exactly one whole", source: "HCP L2 — Component: a named component of a system's characterization"}
+      - {concept: pair, text: "it is necessary that each pair couples at least 1 body", source: "HCP L2 — The pair is a system too"}
+    adopted:
+      - {concept: displacement, source: PhysLibKinds, reference: displacement}
+  - name: L3
+    includes: [L2]
+    designations:
+      - {signifier: weighted carving, concept: weightedCarving}
+      - {signifier: WeightedCarving, concept: weightedCarving, preferred: false}
+      - {signifier: total weight, concept: totalWeight}
+      - {signifier: totalWeight, concept: totalWeight, preferred: false}
+      - {signifier: weighted sum, concept: weightedSum}
+      - {signifier: weightedSum, concept: weightedSum, preferred: false}
+      - {signifier: weighted mean, concept: weightedMean}
+      - {signifier: fold, concept: fold}
+      - {signifier: frame, concept: frame}
+      - {signifier: frame reading, concept: frameReading}
+      - {signifier: InFrame, concept: frameReading, preferred: false}
+      - {signifier: union law, concept: unionLaw}
+      - {signifier: frame-indexed quantity, concept: frameIndexedQuantity}
+    wordings:
+      - {verb: hasTotalWeight, template: [{role: weightedCarving}, {text: " totals "}, {role: totalWeight}]}
+      - {verb: hasTotalWeight, template: [{role: totalWeight}, {text: " is the total weight of "}, {role: weightedCarving}]}
+      - {verb: hasWeightedSum, template: [{role: weightedSum}, {text: " is the weighted sum of "}, {role: weightedCarving}]}
+      - {verb: hasWeightedMean, template: [{role: weightedMean}, {text: " is the weighted mean of "}, {role: weightedCarving}]}
+      - {verb: combines, template: [{role: fold}, {text: " combines "}, {role: decomposition}]}
+      - {verb: isReadIn, template: [{role: frameReading}, {text: " is read in "}, {role: frame}]}
+      - {verb: isReadIn, template: [{role: frame}, {text: " is the frame of "}, {role: frameReading}]}
+      - {verb: combinesKind, template: [{role: unionLaw}, {text: " aggregates "}, {role: kindOfProperty}]}
+    definitions:
+      - {concept: weightedCarving, text: "it is necessary that each weighted carving totals exactly one total weight", source: "HCP L3 — WeightedCarving (parts, weight, mean, total_ne_zero)"}
+      - {concept: totalWeight, text: "it is necessary that each total weight is the total weight of exactly one weighted carving", source: "HCP L3 — totalWeight: a piece of the weighted mean; nonzero"}
+      - {concept: weightedSum, text: "it is necessary that each weighted sum is the weighted sum of exactly one weighted carving", source: "HCP L3 — weightedSum"}
+      - {concept: weightedMean, text: "it is necessary that each weighted mean is the weighted mean of exactly one weighted carving", source: "HCP L3 — WeightedCarving.mean requires nonzero total weight"}
+      - {concept: fold, text: "it is necessary that each fold combines exactly one decomposition", source: "HCP L3 — Decomposition.fold: a value per part, combined over a decomposition"}
+      - {concept: frame, text: "it is possible that each frame is the frame of at least 1 frame reading", source: "HCP L3 — InFrame: components read in a stated frame"}
+      - {concept: frameReading, text: "it is necessary that each frame reading is read in exactly one frame", source: "HCP L3 — InFrame"}
+      - {concept: unionLaw, text: "it is necessary that each union law aggregates exactly one kind of property", source: "HCP L3 — union_mass, union_centerOfMass, union_inertiaTensor"}
+      - {concept: frameIndexedQuantity, text: "it is necessary that each frame-indexed quantity is read in exactly one frame", source: "HCP L3 — labOmega, bodyOmega, bodyInertia, rotationalContraction: rigid-body quantities indexed by frame"}
+  - name: L4
+    includes: [L3]
+    designations:
+      - {signifier: space kind, concept: spaceKind}
+      - {signifier: space reading, concept: spaceReading}
+      - {signifier: frame vector, concept: frameVector}
+      - {signifier: KVector, concept: frameVector, preferred: false}
+      - {signifier: frame conversion, concept: frameConversion}
+      - {signifier: transport, concept: frameConversion, preferred: false}
+      - {signifier: position vector, concept: position vector}
+      - {signifier: distance, concept: distance}
+      - {signifier: area, concept: area}
+      - {signifier: velocity, concept: velocity}
+      - {signifier: velocityK, concept: velocity, preferred: false}
+      - {signifier: force, concept: force}
+      - {signifier: forceK, concept: force, preferred: false}
+      - {signifier: duration, concept: duration}
+      - {signifier: durationK, concept: duration, preferred: false}
+      - {signifier: DifferenceKind, concept: differenceLaw, preferred: false}
+    wordings:
+      - {verb: hasSpaceKind, template: [{role: spaceReading}, {text: " is read at "}, {role: spaceKind}]}
+      - {verb: states, template: [{role: frameVector}, {text: " states "}, {role: kindOfProperty}]}
+      - {verb: isTypedFor, template: [{role: frameConversion}, {text: " is typed for "}, {role: kindOfProperty}]}
+    definitions:
+      - {concept: spaceKind, text: "it is necessary that each space kind carries exactly one dimension", source: "HCP L4 — positionVector, displacement, distance, area: ISO 80000-3 space kinds"}
+      - {concept: spaceReading, text: "it is necessary that each space reading is read at exactly one space kind", source: "HCP L4 — positionQ, displacementQ, distanceQ, lengthOf: PhysLib Space values read at their kinds"}
+      - {concept: frameVector, text: "it is necessary that each frame vector states exactly one kind of property", source: "HCP L4 — KVector: a frame vector with its physical kind stated"}
+      - {concept: frameConversion, text: "it is necessary that each frame conversion is typed for exactly one kind of property", source: "HCP L4 — kGeometricTransport, kBoostTransport: each typed for one kind of vector"}
+    adopted:
+      - {concept: differenceLaw, source: L1, reference: differenceLaw}
+      - {concept: position vector, source: PhysLibKinds, reference: position vector}
+      - {concept: distance, source: PhysLibKinds, reference: distance}
+      - {concept: area, source: PhysLibKinds, reference: area}
+      - {concept: velocity, source: PhysLibKinds, reference: velocity}
+      - {concept: force, source: PhysLibKinds, reference: force}
+      - {concept: duration, source: PhysLibKinds, reference: duration}
+  - name: L5
+    includes: [L4]
+    designations:
+      - {signifier: scale type, concept: scaleType}
+      - {signifier: ScaleType, concept: scaleType, preferred: false}
+      - {signifier: ratio scale, concept: ratioScale}
+      - {signifier: quotient law, concept: quotientLaw}
+      - {signifier: KindDiv, concept: quotientLaw, preferred: false}
+      - {signifier: gated sum, concept: gatedSum}
+      - {signifier: bearer erasure, concept: bearerErasure}
+      - {signifier: damper, concept: damper}
+      - {signifier: damping coefficient, concept: damping coefficient}
+      - {signifier: dampingCoefficient, concept: damping coefficient, preferred: false}
+      - {signifier: viscous damping constant, concept: viscous damping constant}
+      - {signifier: viscousDampingConstantK, concept: viscous damping constant, preferred: false}
+      - {signifier: KindOfProperty, concept: kindOfProperty, preferred: false}
+      - {signifier: angularFrequencyK, concept: angular frequency, preferred: false}
+    wordings:
+      - {verb: hasScale, template: [{role: kindOfProperty}, {text: " is measured on "}, {role: scaleType}]}
+      - {verb: licensesQuotient, template: [{role: ratioScale}, {text: " permits "}, {role: quotientLaw}]}
+      - {verb: licensesQuotient, template: [{role: quotientLaw}, {text: " is permitted by "}, {role: ratioScale}]}
+      - {verb: adds, template: [{role: gatedSum}, {text: " adds "}, {role: quantity}]}
+      - {verb: forgets, template: [{role: bearerErasure}, {text: " forgets "}, {role: individualQuantity}]}
+    definitions:
+      - {concept: scaleType, text: "it is necessary that each kind of property is measured on exactly one scale type", source: "HCP L5 — KindOfProperty (id, scale)"}
+      - {concept: ratioScale, text: "it is necessary that each ratio scale permits at least 1 quotient law", source: "HCP L5 — ScaleType.ratio: the scale type that licenses × and ÷"}
+      - {concept: quotientLaw, text: "it is necessary that each quotient law is permitted by exactly one ratio scale", source: "HCP L5 — KindDiv, QuotientKind.ofRatio: a curated quotient law, δ = γ/(2m)"}
+      - {concept: gatedSum, text: "it is necessary that each gated sum adds at least 1 quantity", source: "HCP L5 — Quantity.add: kind- and scale-gated addition"}
+      - {concept: bearerErasure, text: "it is necessary that each bearer erasure forgets exactly one individual quantity", source: "HCP L5 — IndividualQuantity.toQuantity: forget the bearer"}
+      - {concept: damper, text: "it is necessary that each damper is a component of exactly one whole", source: "HCP L5 — Losing energy: add a damper"}
+    adopted:
+      - {concept: kindOfProperty, source: PKC, reference: kindOfProperty}
+      - {concept: angular frequency, source: L0, reference: angular frequency}
+      - {concept: damping coefficient, source: PhysLibKinds, reference: damping coefficient}
+      - {concept: viscous damping constant, source: PhysLibKinds, reference: viscous damping constant}
+  - name: L6
+    includes: [L5]
+    designations:
+      - {signifier: contract, concept: contract}
+      - {signifier: model boundary, concept: contract, preferred: false}
+      - {signifier: port, concept: port}
+      - {signifier: member, concept: member}
+      - {signifier: output port, concept: outputPort}
+      - {signifier: result port, concept: outputPort, preferred: false}
+      - {signifier: requirement, concept: requirement}
+      - {signifier: provable requirement, concept: provableRequirement}
+      - {signifier: empirical requirement, concept: empiricalRequirement}
+      - {signifier: proof, concept: proof}
+      - {signifier: gate, concept: gate}
+      - {signifier: cleanliness gate, concept: cleanlinessGate}
+      - {signifier: scope, concept: scope}
+      - {signifier: referent, concept: referent}
+      - {signifier: counterexample, concept: counterexample}
+      - {signifier: refuting witness, concept: counterexample, preferred: false}
+    wordings:
+      - {verb: declaresPort, template: [{role: contract}, {text: " declares "}, {role: port}]}
+      - {verb: declaresPort, template: [{role: port}, {text: " is a port of "}, {role: contract}]}
+      - {verb: declaresMember, template: [{role: member}, {text: " is a member of "}, {role: contract}]}
+      - {verb: governs, template: [{role: requirement}, {text: " governs "}, {role: port}]}
+      - {verb: governs, template: [{role: port}, {text: " is governed by "}, {role: requirement}]}
+      - {verb: discharges, template: [{role: proof}, {text: " discharges "}, {role: provableRequirement}]}
+      - {verb: discharges, template: [{role: provableRequirement}, {text: " is discharged by "}, {role: proof}]}
+      - {verb: decides, template: [{role: gate}, {text: " decides "}, {role: empiricalRequirement}]}
+      - {verb: decides, template: [{role: empiricalRequirement}, {text: " is decided by "}, {role: gate}]}
+      - {verb: examines, template: [{role: cleanlinessGate}, {text: " examines "}, {role: contract}]}
+      - {verb: quantifiesOver, template: [{role: requirement}, {text: " quantifies over "}, {role: scope}]}
+      - {verb: quantifiesOver, template: [{role: scope}, {text: " is the scope of "}, {role: requirement}]}
+      - {verb: hasReferent, template: [{role: referent}, {text: " is a referent of "}, {role: empiricalRequirement}]}
+      - {verb: refutes, template: [{role: counterexample}, {text: " refutes "}, {role: requirement}]}
+    definitions:
+      - {concept: contract, text: "it is necessary that each contract declares at least 1 port", source: "HCP L6 — Provenance.Contract: a declared model boundary with its members and ports"}
+      - {concept: port, text: "it is necessary that each port is a port of exactly one contract", source: "HCP L6 — Provenance.Contract"}
+      - {concept: member, text: "it is necessary that each member is a member of exactly one contract", source: "HCP L6 — Provenance.Contract"}
+      - {concept: outputPort, text: "it is obligatory that each output port is governed by at least 1 requirement", source: "HCP L6 — NodeId.result, PortDir.output; #kind_requirement_clean fails on an ungoverned output"}
+      - {concept: requirement, text: "it is necessary that each requirement governs exactly one port", source: "HCP L6 — Provenance.Requirement (statement, governs, port, scope, witness, absent, gate, referents, spotChecks)"}
+      - {concept: provableRequirement, text: "it is necessary that each provable requirement is discharged by exactly one proof", source: "HCP L6 — RequirementKind.provable: discharged by a proof"}
+      - {concept: empiricalRequirement, text: "it is necessary that each empirical requirement is decided by exactly one gate", source: "HCP L6 — RequirementKind.empirical: decided by a gate"}
+      - {concept: proof, text: "it is necessary that each proof discharges at least 1 provable requirement", source: "HCP L6 — RequirementKind.provable"}
+      - {concept: gate, text: "it is necessary that each gate decides at least 1 empirical requirement", source: "HCP L6 — RequirementKind.empirical"}
+      - {concept: cleanlinessGate, text: "it is necessary that each cleanliness gate examines exactly one contract", source: "HCP L6 — #kind_requirement_clean: the gate that fails on any ungoverned or unchecked output"}
+      - {concept: scope, text: "it is necessary that each scope is the scope of at least 1 requirement", source: "HCP L6 — RequirementScope.sort, RequirementScope.objects: what a requirement quantifies over"}
+      - {concept: referent, text: "it is necessary that each referent is a referent of exactly one empirical requirement", source: "HCP L6 — @[kindReferent]: an empirical referent"}
+      - {concept: counterexample, text: "it is necessary that each counterexample refutes exactly one requirement", source: "HCP L6 — @[kindCounterexample]: a refuting witness"}
+    adopted:
+      - {concept: mass, source: L0, reference: mass}
+      - {concept: displacement, source: L2, reference: displacement}
+      - {concept: angular frequency, source: L0, reference: angular frequency}
+check:
+  - {child: L0, parent: PKC}
+  - {child: L0, parent: PhysLibKinds}
+  - {child: L1, parent: L0}
+  - {child: L2, parent: L1}
+  - {child: L3, parent: L2}
+  - {child: L4, parent: L3}
+  - {child: L5, parent: L4}
+  - {child: L6, parent: L5}
