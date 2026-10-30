@@ -972,7 +972,9 @@ def sbvr_run(sbvr_check, *args):
 def sbvr_new_terms(text):
     """The backticked names under 'New at this step:' of a chapter's vocabulary section, as
     (name, member) pairs: a name inside a parenthesised group that follows a term — `Composite`
-    (`whole`, `part`) — is a member of that term, any other name is a term of its own."""
+    (`whole`, `part`) — is a member of that term, any other name is a term of its own. A name
+    the bullet's explanation (after the em dash) introduces is a member: a designation or a
+    citation in a source accounts for it."""
     synopsis = chapter_synopsis_section(text)
     vocab = heading_section(synopsis, 2, "PKC vocabulary in scope") if synopsis else None
     if vocab is None:
@@ -986,7 +988,7 @@ def sbvr_new_terms(text):
         body = body[: carried.start()]
     terms = []
     for bullet in re.findall(r"(?m)^- (.*)$", body):
-        names = bullet.split(" — ", 1)[0]
+        names, _, explanation = bullet.partition(" — ")
         depth = 0
         for piece in re.split(r"(`[^`]+`|[()])", names):
             if piece == "(":
@@ -995,6 +997,10 @@ def sbvr_new_terms(text):
                 depth = max(depth - 1, 0)
             elif piece.startswith("`") and piece.endswith("`") and len(piece) > 2:
                 terms.append((piece[1:-1], depth > 0))
+        # a name the explanation introduces is owed too: as a designation or in a source
+        for name in re.findall(r"`([^`]+)`", explanation):
+            if not any(t == name for t, _ in terms):
+                terms.append((name, True))
     return terms
 
 

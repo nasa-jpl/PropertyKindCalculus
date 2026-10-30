@@ -6,7 +6,7 @@
 # revision (the rendering format is the tool's).
 set -euo pipefail
 cd "$(dirname "$0")/.."
-SBVR_LEAN_REV="${SBVR_LEAN_REV:-a28c4c584f8d45a73fdebb6404f7718453062662}"
+SBVR_LEAN_REV="${SBVR_LEAN_REV:-a6866f4c3d592cf84a95180301b60c814c3c7f51}"
 dir="${SBVR_LEAN_DIR:-.lake/sbvr-lean}"
 if [[ -z "${SBVR_LEAN_DIR:-}" ]]; then
   if [[ ! -d "$dir/.git" ]]; then
