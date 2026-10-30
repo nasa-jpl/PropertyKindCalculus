@@ -4,6 +4,7 @@
 import argparse
 import glob
 import re
+import subprocess
 import sys
 from collections import Counter
 from functools import lru_cache
@@ -951,6 +952,181 @@ def worksheet_errors(path, text, solution_path):
     return errors
 
 
+SBVR_CHAIN = HERE / "sbvr" / "physlib-contributor.yaml"
+SBVR_RENDERED = HERE / "sbvr" / "rendered"
+SBVR_FOUNDATION = "PKC"
+
+
+def sbvr_lesson_name(path):
+    match = re.match(r"(L\d+)_", Path(path).name)
+    return match.group(1) if match else None
+
+
+def sbvr_run(sbvr_check, *args):
+    result = subprocess.run(
+        [sbvr_check, *args], cwd=ROOT, capture_output=True, text=True
+    )
+    return result.returncode, result.stdout, result.stderr
+
+
+def sbvr_new_terms(text):
+    """The backticked names under 'New at this step:' of a chapter's vocabulary section, as
+    (name, member) pairs: a name inside a parenthesised group that follows a term — `Composite`
+    (`whole`, `part`) — is a member of that term, any other name is a term of its own. A name
+    the bullet's explanation (after the em dash) introduces is a member: a designation or a
+    citation in a source accounts for it."""
+    synopsis = chapter_synopsis_section(text)
+    vocab = heading_section(synopsis, 2, "PKC vocabulary in scope") if synopsis else None
+    if vocab is None:
+        return []
+    start = re.search(r"(?m)^New at this step:[ \t]*$", vocab)
+    if not start:
+        return []
+    body = vocab[start.end():]
+    carried = re.search(r"(?m)^Carried from earlier steps:", body)
+    if carried:
+        body = body[: carried.start()]
+    terms = []
+    for bullet in re.findall(r"(?m)^- (.*)$", body):
+        names, _, explanation = bullet.partition(" — ")
+        depth = 0
+        for piece in re.split(r"(`[^`]+`|[()])", names):
+            if piece == "(":
+                depth += 1
+            elif piece == ")":
+                depth = max(depth - 1, 0)
+            elif piece.startswith("`") and piece.endswith("`") and len(piece) > 2:
+                terms.append((piece[1:-1], depth > 0))
+        # a name the explanation introduces is owed too: as a designation or in a source
+        for name in re.findall(r"`([^`]+)`", explanation):
+            if not any(t == name for t, _ in terms):
+                terms.append((name, True))
+    return terms
+
+
+SBVR_TERM_LINE = re.compile(r"^- (?P<head>.*?) — (?P<rest>.*)$")
+SBVR_SOURCE = re.compile(r"\((?P<source>[^()]*(?:\([^()]*\)[^()]*)*)\)$")
+
+
+def sbvr_rendering_terms(rendered):
+    """What a rendering says is new at its step: the designations (preferred term and `also:`
+    synonyms) and the definition sources, read from the structure of `sbvr-check render`'s
+    output — never from the prose of a definition."""
+    designations, sources = set(), []
+    block = rendered.split("New at this step:", 1)[-1].split("Carried from earlier steps:", 1)[0]
+    for line in block.splitlines():
+        match = SBVR_TERM_LINE.match(line.strip())
+        if not match or match.group("rest") == "verb":
+            continue
+        head = match.group("head")
+        also = re.search(r" \(also: (.*)\)$", head)
+        if also:
+            head = head[: also.start()]
+            designations.update(s.strip() for s in also.group(1).split(","))
+        designations.add(head.strip())
+        source = SBVR_SOURCE.search(match.group("rest").strip())
+        if source:
+            sources.append(source.group("source"))
+    return designations, sources
+
+
+def sbvr_reference_only(name):
+    """A name that cannot be a designation and is cited in a source instead: a dotted Lean name
+    (`IndividualQuantity.add`), a command (`#kind_requirement_clean`) or an attribute."""
+    return "." in name or name.startswith("#") or name.startswith("@[")
+
+
+def sbvr_term_errors(path, name, text, rendered):
+    """Every name a chapter lists as new at its step is accounted for in the lesson's SBVR: a term
+    is a designation (preferred or synonym) new at that step; a member of a term, or a
+    reference-only name, is cited in the source of a term new at that step."""
+    rel = SBVR_CHAIN.relative_to(ROOT)
+    designations, sources = sbvr_rendering_terms(rendered)
+    errors = []
+    for term, member in sbvr_new_terms(text):
+        if not member and not sbvr_reference_only(term):
+            if term not in designations:
+                errors.append(
+                    f"{path}: `{term}` is new at this step but is not a designation of {rel} ({name})"
+                )
+        elif not any(contains_identifier(source, term) for source in sources):
+            what = "a member of a term" if member else "a reference"
+            errors.append(
+                f"{path}: `{term}` ({what}) is new at this step but no definition source of "
+                f"{rel} ({name}) cites it"
+            )
+    return errors
+
+
+def sbvr_rendered_errors(paths):
+    """The committed renderings (HCP/sbvr/rendered/<name>.md) cover the chapters.
+
+    Needs no tool: every chapter must have a committed rendering named after its lesson, and
+    every name it lists as new at its step is a designation there, or a member/reference cited
+    by a definition source there (`sbvr_term_errors`). Whether the renderings are current is
+    checked with --sbvr (CI runs with it).
+    """
+    errors = []
+    for path in paths:
+        name = sbvr_lesson_name(path)
+        if name is None:
+            errors.append(f"{path}: cannot name its SBVR vocabulary (expected L<k>_*.lean)")
+            continue
+        target = SBVR_RENDERED / f"{name}.md"
+        if not target.exists():
+            errors.append(
+                f"{target.relative_to(ROOT)}: missing; run check-hcp.py --sbvr SBVR_CHECK --fix-sbvr"
+            )
+            continue
+        errors.extend(sbvr_term_errors(
+            path, name, path.read_text(encoding="utf-8"), target.read_text(encoding="utf-8")
+        ))
+    return errors
+
+
+def sbvr_errors(paths, sbvr_check, fix=False):
+    """The ladder in SBVR (HCP/sbvr/physlib-contributor.yaml) checks clean and is rendered.
+
+    Fails closed: the chain must check clean (refinement, bound quantities, definitions that
+    read as Structured English); the foundation vocabulary and every lesson's must render
+    without a gap; and each rendering must equal the committed HCP/sbvr/rendered/<name>.md, or
+    be rewritten with --fix-sbvr.
+    """
+    errors = []
+    rel = SBVR_CHAIN.relative_to(ROOT)
+    code, out, err = sbvr_run(sbvr_check, str(rel))
+    if code != 0:
+        errors.append(f"{rel}: sbvr-check exited {code}:\n{(out + err).rstrip()}")
+        return errors
+    names = [SBVR_FOUNDATION] + [n for n in map(sbvr_lesson_name, paths) if n is not None]
+    SBVR_RENDERED.mkdir(parents=True, exist_ok=True)
+    for name in names:
+        code, out, err = sbvr_run(sbvr_check, "render", str(rel), name)
+        if code != 0:
+            gaps = [line.strip() for line in out.splitlines() if "no definition at this step" in line]
+            errors.append(
+                f"{rel}: vocabulary {name} does not render clean (exit {code}): "
+                + ("; ".join(gaps) if gaps else (out + err).strip())
+            )
+            continue
+        target = SBVR_RENDERED / f"{name}.md"
+        header = (
+            f"<!-- Rendered from ../physlib-contributor.yaml by `sbvr-check render` "
+            f"({name}); regenerate with `python3 HCP/check-hcp.py --sbvr SBVR_CHECK --fix-sbvr`, "
+            f"do not edit. -->\n\n"
+        )
+        expected = header + out
+        current = target.read_text(encoding="utf-8") if target.exists() else None
+        if current != expected:
+            if fix:
+                target.write_text(expected, encoding="utf-8")
+            else:
+                state = "missing" if current is None else "stale"
+                errors.append(
+                    f"{target.relative_to(ROOT)}: {state}; rerun with --fix-sbvr to regenerate"
+                )
+    return errors
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -958,7 +1134,20 @@ def main():
         action="store_true",
         help="rewrite HCP blueprint anchor excerpts from their lesson sources",
     )
+    parser.add_argument(
+        "--sbvr",
+        metavar="SBVR_CHECK",
+        help="path to SBVR.lean's sbvr-check: also check the ladder's SBVR chain "
+        "(HCP/sbvr/physlib-contributor.yaml) and that HCP/sbvr/rendered/*.md is its rendering",
+    )
+    parser.add_argument(
+        "--fix-sbvr",
+        action="store_true",
+        help="with --sbvr: rewrite HCP/sbvr/rendered/*.md from the chain",
+    )
     args = parser.parse_args()
+    if args.fix_sbvr and not args.sbvr:
+        parser.error("--fix-sbvr requires --sbvr")
     paths = sorted(
         Path(p) for p in glob.glob(
             str(ROOT / "blueprint/PropertyKindCalculusBlueprint/Chapters/HCP/L*.lean")
@@ -969,6 +1158,9 @@ def main():
         return 1
     errors = blueprint_excerpt_errors(fix=args.fix_excerpts)
     errors.extend(error for path in paths for error in check(path))
+    if args.sbvr:
+        errors.extend(sbvr_errors(paths, args.sbvr, fix=args.fix_sbvr))
+    errors.extend(sbvr_rendered_errors(paths))
     for error in errors:
         print(error, file=sys.stderr)
     print(f"{len(paths)} HCPs checked, {len(errors)} errors")

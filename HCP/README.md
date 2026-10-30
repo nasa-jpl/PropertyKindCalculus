@@ -46,18 +46,78 @@ Open `HCP/Worksheets/L1_TwoBodies.lean`, run
 `lake build HCP.Worksheets.L1_TwoBodies`, and fill its `TODO:`s in place. Compare your work
 with `HCP/L1_TwoBodies.lean` and the corresponding blueprint chapter.
 
+### Check a lesson's vocabulary against the SBVR, and regenerate the renderings
+
+With a checkout of SBVR.lean beside this repository (`cd ../SBVR.lean && lake build sbvr-check`):
+
+```sh
+python3 HCP/check-hcp.py --sbvr ../SBVR.lean/.lake/build/bin/sbvr-check --fix-sbvr
+```
+
+checks the chain (every lesson refines the one before it, every quantity term is bound to a
+kind, every definition reads as Structured English), rewrites `HCP/sbvr/rendered/*.md`, and
+reports any name a chapter lists as new that the SBVR does not account for: a name is a
+**designation** (preferred term or synonym) new at that step; a name in a parenthesised group
+after a term (`Composite` (`whole`, `part`)) is a *member* and a dotted name, `#command` or
+`@[attribute]` a *reference* — both must be cited in the source of a definition new at that step.
+Without `--fix-sbvr` a stale rendering is an error; without `--sbvr` the committed renderings
+are still checked against the chapters. CI runs `--sbvr` with `scripts/sbvr-check.sh`, which
+clones and builds SBVR.lean at a pinned revision (`SBVR_LEAN_REV`); move the pin and regenerate
+the renderings together. To ask what a phrase means at a step, or what changed between steps:
+
+```sh
+../SBVR.lean/.lake/build/bin/sbvr-check kinds  HCP/sbvr/physlib-contributor.yaml
+../SBVR.lean/.lake/build/bin/sbvr-check lookup HCP/sbvr/physlib-contributor.yaml L3 "frame"
+../SBVR.lean/.lake/build/bin/sbvr-check drift  HCP/sbvr/physlib-contributor.yaml L1 L6
+```
+
+After adding or renaming a `KindOfProperty` a lesson reads, regenerate the catalogue
+(`lake build Interchange Iso80000 ForPhysLib HCP && lake env lean scripts/emit-sbvr-kinds.lean`);
+CI runs the same script with `SBVR_KINDS_CHECK=1` and fails when the committed catalogue is not
+the harvest.
+
 ### Update the blueprint excerpts after editing a lesson
 
 Run `python3 HCP/check-hcp.py --fix-excerpts` after changing a lesson source. Verso keeps a copy
 of each anchor and only re-checks it when the chapter rebuilds, so cached chapters can hide drift.
+
+## The ladder in SBVR
+
+[`sbvr/physlib-contributor.yaml`](sbvr/physlib-contributor.yaml) is this ladder as an SBVR
+chain, checked by [SBVR.lean](https://github.jpl.nasa.gov/Foundation/SBVR.lean)'s `sbvr-check`
+(its `docs/HCP.md` is the concept): one vocabulary per lesson, `L0 ⊂ L1 ⊂ … ⊂ L6`, each including
+the one before it, plus `PKC`, this repository's foundation vocabulary (system context, sort of
+system, kind of property, dimension, object — the Jargon below). A lesson's *PKC vocabulary in
+scope — new at this step* is the lesson's own terms with one definition each, written in SBVR
+Structured English against the terms in scope; *carried from earlier steps* is the inclusion
+closure and is not restated — a lesson that lists a carried term as new (L4's `DifferenceKind`,
+L5's `KindOfProperty`) records an *adoption* of the earlier definition, so `sbvr-check` reports
+drift if it is ever worded differently. Every `KindOfProperty` a lesson reads is a *quantity
+term*, adopted from the catalogue [`sbvr/kinds.yaml`](sbvr/kinds.yaml), which
+`scripts/emit-sbvr-kinds.lean` harvests from the Lean kinds in scope (ISO 80000-3/4, ForPhysLib's
+classical mechanics, the lessons' own) — so a term such as `spring constant` or
+`viscous damping constant` means exactly the kind the Lean code declares, with its scale.
+The English term is preferred and the Lean name is a synonym (`individual quantity`, also
+`IndividualQuantity`); dotted names appear in the definition's source.
+
+SBVR is the only source of the vocabulary: [`sbvr/rendered/`](sbvr/rendered/) holds
+`sbvr-check render`'s output for `PKC` and each lesson, and `check-hcp.py` requires every name a
+chapter lists as new at its step to be worded there. The conversion's own findings are
+recorded in the chain file's comments and as these follow-ups: the lessons' *Verifiable
+properties* and *Errors prevented* as rules with evidence (no rule schema in a chain file yet),
+and `PKC ⊂ Foundation` — the root vocabulary of
+[engineering-foundation-architecture](https://github.jpl.nasa.gov/Foundation/engineering-foundation-architecture)
+`docs/hcp/foundation.yaml` — once a chain file can include a vocabulary from another file.
 
 ## Running checks
 
 Run `lake build HCP` to compile the solutions and `lake build HCPWorksheets` to compile all
 worksheets (which intentionally contain `sorry` holes). Run `python3 HCP/check-hcp.py` to
 validate chapter front matter, the ten required sections, Synopsis structure and vocabulary,
-learning-path rows, live anchors, worksheet structure, and synchronized blueprint anchor
-excerpts.
+learning-path rows, live anchors, worksheet structure, synchronized blueprint anchor
+excerpts, and that every name a chapter lists as new at its step is a designation of, or cited
+by, the ladder's SBVR renderings (`HCP/sbvr/rendered/`); add `--sbvr SBVR_CHECK` to check the
+chain itself and the renderings' currency (CI does, via `scripts/sbvr-check.sh`).
 
 ## Jargon
 

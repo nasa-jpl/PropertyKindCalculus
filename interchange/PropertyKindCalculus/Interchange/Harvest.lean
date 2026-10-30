@@ -648,6 +648,19 @@ def harvest (scope : Array Name) (packageName : String) : MetaM (PkcModel × Arr
   let (_, s) ← act.run { model := { packageName } }
   return (s.model, s.warnings)
 
+/-- The kinds alone — `harvestKinds` and `harvestSpecialization` over the scope — for a reader
+that wants the kind catalogue and nothing else: the warnings name only a kind declaration or a
+specialization witness the harvester skipped, so a contract, unit, module or requirement it
+cannot read does not stand in the way of the catalogue. -/
+def harvestKindCatalogue (scope : Array Name) (packageName : String)
+    : MetaM (PkcModel × Array String) := do
+  let consts := scopedConstants (← getEnv) scope
+  let act : HarvestM Unit := do
+    harvestKinds consts
+    harvestSpecialization consts
+  let (_, s) ← act.run { model := { packageName } }
+  return (s.model, s.warnings)
+
 end PropertyKindCalculus.Interchange.Harvest
 
 end Interface

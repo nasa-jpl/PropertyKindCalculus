@@ -180,8 +180,18 @@ jobs:
       # (a separate Lake package under blueprint/ that pulls in Verso)
       # -------------------------------------------------------
       # Prevent cached chapters from hiding drift in copied HCP anchors.
-      - name: Check HCP blueprint excerpts
-        run: python3 HCP/check-hcp.py
+      # --sbvr: the ladder's SBVR chain (HCP/sbvr/physlib-contributor.yaml) must check clean and
+      # HCP/sbvr/rendered/*.md must be its rendering at the pinned SBVR.lean (scripts/sbvr-check.sh
+      # clones and builds it); a changed definition with a stale rendering fails here.
+      - name: Check HCP blueprint excerpts and the ladder in SBVR
+        run: |
+          SBVR_CHECK="$(scripts/sbvr-check.sh)"
+          python3 HCP/check-hcp.py --sbvr "$SBVR_CHECK"
+
+      # The chain adopts its quantity terms from a catalogue harvested from the Lean kinds; a hand
+      # edit or a new kind without a regenerated catalogue fails here.
+      - name: Check the SBVR kind catalogue is the harvest
+        run: SBVR_KINDS_CHECK=1 lake env lean scripts/emit-sbvr-kinds.lean
 
       - name: Reuse the root package's dependency checkouts in blueprint/
         # blueprint/ is a separate Lake package, so without this Lake materializes the

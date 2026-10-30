@@ -1,0 +1,249 @@
+# The kind catalogue of the PhysLib contributor's ladder — written by
+# `lake env lean scripts/emit-sbvr-kinds.lean` from the harvested kinds; do not edit.
+kinds:
+  - id: "Lagrangian"
+    scale: ratio
+  - id: "Poisson number"
+    scale: ratio
+  - id: "acceleration"
+    scale: ratio
+  - id: "action"
+    scale: ratio
+  - id: "angular acceleration"
+    scale: ratio
+  - id: "angular frequency"
+    scale: ratio
+  - id: "angular impulse"
+    scale: ratio
+  - id: "angular momentum"
+    scale: ratio
+  - id: "angular repetency"
+    scale: ratio
+  - id: "angular velocity"
+    scale: ratio
+  - id: "area"
+    scale: ratio
+  - id: "attenuation"
+    scale: ratio
+  - id: "compressibility"
+    scale: ratio
+  - id: "curvature"
+    scale: ratio
+  - id: "damping coefficient"
+    scale: ratio
+  - id: "diameter"
+    scale: ratio
+    specializes:
+      - "width"
+  - id: "displacement"
+    scale: ratio
+    specializes:
+      - "length"
+  - id: "distance"
+    scale: ratio
+    specializes:
+      - "path length"
+  - id: "drag coefficient"
+    scale: ratio
+  - id: "drag force"
+    scale: ratio
+    specializes:
+      - "force"
+  - id: "duration"
+    scale: ratio
+  - id: "dynamic viscosity"
+    scale: ratio
+  - id: "efficiency"
+    scale: ratio
+  - id: "force"
+    scale: ratio
+  - id: "frequency"
+    scale: ratio
+  - id: "gauge pressure"
+    scale: ratio
+  - id: "group velocity"
+    scale: ratio
+  - id: "height"
+    scale: ratio
+    specializes:
+      - "length"
+  - id: "impulse"
+    scale: ratio
+  - id: "kinematic viscosity"
+    scale: ratio
+  - id: "kinetic energy"
+    scale: ratio
+    specializes:
+      - "mechanical energy"
+  - id: "kinetic friction factor"
+    scale: ratio
+  - id: "kinetic friction force"
+    scale: ratio
+    specializes:
+      - "force"
+  - id: "length"
+    scale: ratio
+  - id: "linear mass density"
+    scale: ratio
+  - id: "logarithmic decrement"
+    scale: ratio
+  - id: "mass"
+    scale: ratio
+  - id: "mass change rate"
+    scale: ratio
+  - id: "mass density"
+    scale: ratio
+  - id: "mass flow"
+    scale: ratio
+  - id: "mass flow rate"
+    scale: ratio
+  - id: "mechanical energy"
+    scale: ratio
+  - id: "mechanical work"
+    scale: ratio
+  - id: "modulus of compression"
+    scale: ratio
+  - id: "modulus of elasticity"
+    scale: ratio
+  - id: "modulus of rigidity"
+    scale: ratio
+  - id: "moment of force"
+    scale: ratio
+  - id: "moment of inertia"
+    scale: ratio
+  - id: "momentum"
+    scale: ratio
+  - id: "normal stress"
+    scale: ratio
+  - id: "path length"
+    scale: ratio
+    specializes:
+      - "length"
+  - id: "period duration"
+    scale: ratio
+  - id: "phase angle"
+    scale: ratio
+  - id: "phase coefficient"
+    scale: ratio
+  - id: "phase velocity"
+    scale: ratio
+  - id: "plane angle"
+    scale: ratio
+  - id: "position vector"
+    scale: ratio
+    specializes:
+      - "length"
+  - id: "potential energy"
+    scale: ratio
+    specializes:
+      - "mechanical energy"
+  - id: "power"
+    scale: ratio
+  - id: "pressure"
+    scale: ratio
+  - id: "propagation coefficient"
+    scale: ratio
+  - id: "radial distance"
+    scale: ratio
+    specializes:
+      - "distance"
+  - id: "radius"
+    scale: ratio
+    specializes:
+      - "diameter"
+  - id: "radius of curvature"
+    scale: ratio
+    specializes:
+      - "radius"
+  - id: "relative linear strain"
+    scale: ratio
+  - id: "relative mass density"
+    scale: ratio
+  - id: "relative volume strain"
+    scale: ratio
+  - id: "repetency"
+    scale: ratio
+  - id: "rolling resistance"
+    scale: ratio
+    specializes:
+      - "force"
+  - id: "rolling resistance factor"
+    scale: ratio
+  - id: "rotation"
+    scale: ratio
+  - id: "rotational displacement"
+    scale: ratio
+  - id: "rotational frequency"
+    scale: ratio
+  - id: "rotational kinetic energy"
+    scale: ratio
+    specializes:
+      - "kinetic energy"
+  - id: "second axial moment of area"
+    scale: ratio
+  - id: "second polar moment of area"
+    scale: ratio
+  - id: "section modulus"
+    scale: ratio
+  - id: "shear strain"
+    scale: ratio
+  - id: "shear stress"
+    scale: ratio
+  - id: "solid angle"
+    scale: ratio
+  - id: "specific volume"
+    scale: ratio
+  - id: "speed"
+    scale: ratio
+  - id: "spring constant"
+    scale: ratio
+  - id: "squared angular frequency"
+    scale: ratio
+  - id: "static friction factor"
+    scale: ratio
+  - id: "static friction force"
+    scale: ratio
+    specializes:
+      - "force"
+  - id: "strain"
+    scale: ratio
+  - id: "stress"
+    scale: ratio
+  - id: "surface mass density"
+    scale: ratio
+  - id: "surface tension"
+    scale: ratio
+  - id: "thickness"
+    scale: ratio
+    specializes:
+      - "width"
+  - id: "time constant"
+    scale: ratio
+  - id: "torque"
+    scale: ratio
+  - id: "translational kinetic energy"
+    scale: ratio
+    specializes:
+      - "kinetic energy"
+  - id: "velocity"
+    scale: ratio
+  - id: "viscous damping constant"
+    scale: ratio
+  - id: "volume"
+    scale: ratio
+  - id: "volume flow rate"
+    scale: ratio
+  - id: "wave vector"
+    scale: ratio
+  - id: "wavelength"
+    scale: ratio
+    specializes:
+      - "length"
+  - id: "weight"
+    scale: ratio
+    specializes:
+      - "force"
+  - id: "width"
+    scale: ratio
+    specializes:
+      - "length"
