@@ -103,11 +103,14 @@ The English term is preferred and the Lean name is a synonym (`individual quanti
 SBVR is the only source of the vocabulary: [`sbvr/rendered/`](sbvr/rendered/) holds
 `sbvr-check render`'s output for `PKC` and each lesson, and `check-hcp.py` requires every name a
 chapter lists as new at its step to be worded there. The conversion's own findings are
-recorded in the chain file's comments and as these follow-ups: the lessons' *Verifiable
-properties* and *Errors prevented* as rules with evidence (no rule schema in a chain file yet),
-and `PKC ⊂ Foundation` — the root vocabulary of
+recorded in the chain file's comments and as one follow-up: the lessons' *Verifiable
+properties* and *Errors prevented* as rules with evidence (no rule schema in a chain file yet).
+`PKC ⊂ Foundation`: the chain imports the root vocabulary of
 [engineering-foundation-architecture](https://github.jpl.nasa.gov/Foundation/engineering-foundation-architecture)
-`docs/hcp/foundation.yaml` — once a chain file can include a vocabulary from another file.
+(`docs/hcp/foundation.yaml`, vendored at a pinned commit as `HCP/sbvr/foundation.yaml`;
+`scripts/foundation-vocabulary.sh` fails in CI when the copy is not the pinned file and
+`--update` takes a newer one after bumping `EFA_COMMIT`), `PKC` includes and refines it, and the
+lessons' `requirement` is the Foundation's.
 
 ## Running checks
 

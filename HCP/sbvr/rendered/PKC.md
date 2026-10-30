@@ -14,4 +14,5 @@ New at this step:
 - *kind of property* carries *dimension* — verb
 - *dimension* is carried by *kind of property* — verb
 
-Carried from earlier steps: none; this is the first step.
+Carried from earlier steps:
+- Foundation: artifact, system, model, requirement, check, finding, evidence, persona, step
