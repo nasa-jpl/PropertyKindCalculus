@@ -127,7 +127,6 @@ concepts:
   - {id: forgets, kind: verb, roles: [bearerErasure, individualQuantity]}
   # L6 — what must hold
   - {id: contract, kind: general}
-  - {id: port, kind: general}
   - {id: member, kind: general}
   - {id: outputPort, kind: general}
   - {id: contractRequirement, kind: general}   # a Foundation requirement that governs a contract's port
