@@ -9,12 +9,14 @@ open Lean PropertyKindCalculus.Interchange
 `HCP/sbvr/kinds.yaml` that `HCP/sbvr/physlib-contributor.yaml` adopts its quantity terms from
 (SBVR.lean docs/QUANTITIES.md §2–3: `kinds:` with `id`, `scale`, `specializes`).
 
-The kinds are harvested (`Harvest.harvest`, the same reader as `scripts/emit-sysml.lean`) from the
+The kinds are harvested (`Harvest.harvestKindCatalogue`: the kind and specialization readers of
+`Harvest.harvest`, the reader behind `scripts/emit-sysml.lean`, and no other) from the
 scopes the lessons read their kinds from: ISO 80000 parts 3 and 4, ForPhysLib's classical
 mechanics and the lessons' own `KindOfProperty`s (L5's viscous damping constant). Two
 declarations of one kind id (ForPhysLib's `massK` is `Part4.mass.kind`) are one catalogue entry;
-two declarations of one id with different scales are an error, and so is any declaration in
-scope the harvester had to skip (the catalogue would silently lack a kind). Entries are sorted by id so the
+two declarations of one id with different scales are an error, and so is any kind declaration or
+specialization witness in scope the harvester had to skip (the catalogue would silently lack a kind
+or an edge); a contract, unit, module or requirement it cannot read is not this catalogue's concern. Entries are sorted by id so the
 file is reproducible.
 
 Run with `lake env lean scripts/emit-sbvr-kinds.lean` after
@@ -34,11 +36,11 @@ structure Entry where
 deriving Inhabited
 
 def catalogueYaml (scopes : Array Name) : MetaM String := do
-  let (m, warnings) ← Harvest.harvest scopes "PhysLibKinds"
-  -- a declaration the harvester skipped is a kind the catalogue would silently lack: refuse
+  let (m, warnings) ← Harvest.harvestKindCatalogue scopes "PhysLibKinds"
+  -- a kind declaration or specialization the harvester skipped is one the catalogue would silently lack: refuse
   for w in warnings do IO.eprintln s!"PhysLibKinds: {w}"
   if !warnings.isEmpty then
-    throwError s!"{warnings.size} declaration(s) in scope were skipped; the catalogue would be incomplete"
+    throwError s!"{warnings.size} kind declaration(s) or specialization(s) in scope were skipped; the catalogue would be incomplete"
   let idOf : Std.HashMap String String :=
     m.kinds.foldl (init := {}) fun acc k => acc.insert k.name k.id
   let mut entries : Std.HashMap String Entry := {}
