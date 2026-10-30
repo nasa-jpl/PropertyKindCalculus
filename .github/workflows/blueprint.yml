@@ -187,6 +187,10 @@ jobs:
         run: |
           SBVR_CHECK="$(scripts/sbvr-check.sh)"
           python3 HCP/check-hcp.py --sbvr "$SBVR_CHECK"
+      # HCP/sbvr/foundation.yaml must be engineering-foundation-architecture's Foundation vocabulary
+      # at the pinned commit (scripts/foundation-vocabulary.sh --update takes a newer one).
+      - name: Foundation vocabulary is the pinned copy
+        run: scripts/foundation-vocabulary.sh
 
       # The chain adopts its quantity terms from a catalogue harvested from the Lean kinds; a hand
       # edit or a new kind without a regenerated catalogue fails here.

@@ -1,0 +1,90 @@
+# The Foundation vocabulary (the root every repository's foundation vocabulary includes
+# — SBVR.lean docs/HCP.md Q4) and EngineeringFoundation, this repository's own foundation vocabulary,
+# which includes it: what the HCP template adds (ladder, exercise, verifiable property). A chain
+# file checks refinement, so the root is checked through the pair EngineeringFoundation ⊂ Foundation.
+# The root is small on purpose: the nine concepts a Human Context Protocol of any
+# repository speaks of, so that personas of two repositories either share a concept through this
+# root or are visibly distinct. Adding a term is a promotion (`sbvr-check promote`), reviewed here.
+#
+# SBVR is the only source: docs/hcp/foundation.md is rendered from this file by `make check-foundation`
+# (SBVR.lean `sbvr-check render`), never edited by hand.
+concepts:
+  - {id: artifact, kind: general}
+  - {id: system, kind: general}
+  - {id: model, kind: general}
+  - {id: requirement, kind: general}
+  - {id: check, kind: general}
+  - {id: finding, kind: general}
+  - {id: evidence, kind: general}
+  - {id: persona, kind: general}
+  - {id: step, kind: general}
+  - {id: describes, kind: verb, roles: [model, system]}
+  - {id: constrains, kind: verb, roles: [requirement, system]}
+  - {id: examines, kind: verb, roles: [check, artifact]}
+  - {id: produces, kind: verb, roles: [check, finding]}
+  - {id: supports, kind: verb, roles: [evidence, requirement]}
+  - {id: belongsTo, kind: verb, roles: [step, persona]}
+  # EngineeringFoundation: what this repository's own HCPs add to the root
+  - {id: ladder, kind: general}
+  - {id: exercise, kind: general}
+  - {id: property, kind: general}
+  - {id: hasStep, kind: verb, roles: [ladder, step]}
+  - {id: isExerciseOf, kind: verb, roles: [exercise, step]}
+  - {id: isCheckedBy, kind: verb, roles: [property, exercise]}
+generalizes:
+  # a model is one kind of artifact a check examines (a vocabulary chain, an HCP document are others);
+  # a verifiable property is deliberately NOT a requirement: it is a checked claim about an exercise
+  # or a tool verdict, and need not constrain any system
+  - {category: model, general: artifact}
+vocabularies:
+  - name: Foundation
+    namespace: foundation
+    designations:
+      - {signifier: artifact, concept: artifact}
+      - {signifier: system, concept: system}
+      - {signifier: model, concept: model}
+      - {signifier: requirement, concept: requirement}
+      - {signifier: check, concept: check}
+      - {signifier: finding, concept: finding}
+      - {signifier: evidence, concept: evidence}
+      - {signifier: persona, concept: persona}
+      - {signifier: step, concept: step}
+    wordings:
+      - {verb: describes, template: [{role: model}, {text: " describes "}, {role: system}]}
+      - {verb: describes, template: [{role: system}, {text: " is described by "}, {role: model}]}
+      - {verb: constrains, template: [{role: requirement}, {text: " constrains "}, {role: system}]}
+      - {verb: examines, template: [{role: check}, {text: " examines "}, {role: artifact}]}
+      - {verb: examines, template: [{role: artifact}, {text: " is examined by "}, {role: check}]}
+      - {verb: produces, template: [{role: check}, {text: " produces "}, {role: finding}]}
+      - {verb: produces, template: [{role: finding}, {text: " is produced by "}, {role: check}]}
+      - {verb: supports, template: [{role: evidence}, {text: " supports "}, {role: requirement}]}
+      - {verb: belongsTo, template: [{role: step}, {text: " belongs to "}, {role: persona}]}
+      - {verb: belongsTo, template: [{role: persona}, {text: " has "}, {role: step}]}
+    definitions:
+      - {concept: artifact, text: "it is possible that each artifact is examined by at least 1 check", source: "docs/hcp/README.md — Principles: the check, in the persona's artifact"}
+      - {concept: system, text: "it is necessary that each system is described by at least 1 model", source: "docs/architecture/stack.md — a system is known through its models"}
+      - {concept: model, text: "it is necessary that each model describes at least 1 system", source: "docs/architecture/stack.md"}
+      - {concept: requirement, text: "it is necessary that each requirement constrains at least 1 system", source: "docs/architecture/vv-refinement.md"}
+      - {concept: check, text: "it is necessary that each check examines at least 1 artifact", source: "docs/hcp/README.md — Principles: checks fail closed"}
+      - {concept: finding, text: "it is necessary that each finding is produced by exactly one check", source: "docs/hcp/README.md — Status tags"}
+      - {concept: evidence, text: "it is necessary that each evidence supports at least 1 requirement", source: "docs/architecture/dashboard.md — discharge kinds"}
+      - {concept: persona, text: "it is necessary that each persona has at least 1 step", source: "docs/hcp/README.md — a ladder of steps"}
+      - {concept: step, text: "it is necessary that each step belongs to exactly one persona", source: "docs/hcp/README.md — an HCP is in the repository that owns the persona"}
+  - name: EngineeringFoundation
+    namespace: efa
+    includes: [Foundation]
+    designations:
+      - {signifier: ladder, concept: ladder}
+      - {signifier: exercise, concept: exercise}
+      - {signifier: verifiable property, concept: property}
+      - {signifier: property, concept: property, preferred: false}
+    wordings:
+      - {verb: hasStep, template: [{role: ladder}, {text: " has "}, {role: step}]}
+      - {verb: isExerciseOf, template: [{role: exercise}, {text: " is an exercise of "}, {role: step}]}
+      - {verb: isCheckedBy, template: [{role: property}, {text: " is checked by "}, {role: exercise}]}
+    definitions:
+      - {concept: ladder, text: "it is necessary that each ladder has at least 1 step", source: "docs/hcp/README.md — Principles: a ladder of steps"}
+      - {concept: exercise, text: "it is necessary that each exercise is an exercise of exactly one step", source: "docs/hcp/TEMPLATE.md — Learning path"}
+      - {concept: property, text: "it is obligatory that each verifiable property is checked by at least 1 exercise", source: "docs/hcp/TEMPLATE.md — Synopsis: Verifiable properties, one status tag each"}
+check:
+  - {child: EngineeringFoundation, parent: Foundation}

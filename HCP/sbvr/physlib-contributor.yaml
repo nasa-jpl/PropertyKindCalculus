@@ -16,10 +16,15 @@
 # "Vocabulary in scope" (HCP/sbvr/rendered/Lk.md); check-hcp.py --sbvr keeps those renderings and
 # the catalogue in step with this file.
 #
+# `PKC ⊂ Foundation`: the root vocabulary of engineering-foundation-architecture (docs/hcp/foundation.yaml,
+# vendored at a pinned commit as HCP/sbvr/foundation.yaml — scripts/foundation-vocabulary.sh keeps it
+# current) is imported, PKC includes and refines it, and an object — the substantial bearer a sort of
+# system is the universal of — is a system in the Foundation's sense.
+#
 # Not here yet: the lessons' Verifiable properties and Errors prevented as rules with evidence
-# (SBVR.lean has no rule schema in the chain file yet), and `PKC ⊂ Foundation` (the root in
-# engineering-foundation-architecture docs/hcp/foundation.yaml) — a chain file cannot include a
-# vocabulary from another file yet. Both are follow-ups named in HCP/README.md.
+# (SBVR.lean has no rule schema in the chain file yet) — a follow-up named in HCP/README.md.
+imports:
+  - {file: foundation.yaml, vocabularies: [Foundation]}
 concepts:
   # PKC — the repository's foundation vocabulary (HCP/README.md Jargon, Lowe's square)
   - {id: systemContext, kind: general}
@@ -125,7 +130,7 @@ concepts:
   - {id: port, kind: general}
   - {id: member, kind: general}
   - {id: outputPort, kind: general}
-  - {id: requirement, kind: general}
+  - {id: contractRequirement, kind: general}   # a Foundation requirement that governs a contract's port
   - {id: provableRequirement, kind: general}
   - {id: empiricalRequirement, kind: general}
   - {id: proof, kind: general}
@@ -136,14 +141,15 @@ concepts:
   - {id: counterexample, kind: general}
   - {id: declaresPort, kind: verb, roles: [contract, port]}
   - {id: declaresMember, kind: verb, roles: [contract, member]}
-  - {id: governs, kind: verb, roles: [requirement, port]}
+  - {id: governs, kind: verb, roles: [contractRequirement, port]}
   - {id: discharges, kind: verb, roles: [proof, provableRequirement]}
   - {id: decides, kind: verb, roles: [gate, empiricalRequirement]}
-  - {id: examines, kind: verb, roles: [cleanlinessGate, contract]}
-  - {id: quantifiesOver, kind: verb, roles: [requirement, scope]}
+  - {id: quantifiesOver, kind: verb, roles: [contractRequirement, scope]}
   - {id: hasReferent, kind: verb, roles: [empiricalRequirement, referent]}
-  - {id: refutes, kind: verb, roles: [counterexample, requirement]}
+  - {id: refutes, kind: verb, roles: [counterexample, contractRequirement]}
 generalizes:
+  # an object (Lowe's particular, the bearer) is a system in the Foundation's sense
+  - {category: object, general: system}
   - {category: dimensionedKind, general: kindOfProperty}
   - {category: oscillatorMass, general: quantity}
   - {category: oscillatorStiffness, general: quantity}
@@ -175,14 +181,19 @@ generalizes:
   - {category: ratioScale, general: scaleType}
   - {category: damper, general: component}
   - {category: outputPort, general: port}
-  - {category: provableRequirement, general: requirement}
-  - {category: empiricalRequirement, general: requirement}
+  - {category: contractRequirement, general: requirement}
+  - {category: provableRequirement, general: contractRequirement}
+  - {category: empiricalRequirement, general: contractRequirement}
   - {category: cleanlinessGate, general: gate}
+  # a gate is a check and a contract an artifact in the Foundation's sense: `examines` is the Foundation's verb
+  - {category: gate, general: check}
+  - {category: contract, general: artifact}
 catalogues:
   - {name: PhysLibKinds, kinds: kinds.yaml}
 vocabularies:
   - name: PKC
     namespace: pkc
+    includes: [Foundation]
     designations:
       - {signifier: system context, concept: systemContext}
       - {signifier: sort of system, concept: sortOfSystem}
@@ -483,7 +494,7 @@ vocabularies:
       - {signifier: member, concept: member}
       - {signifier: output port, concept: outputPort}
       - {signifier: result port, concept: outputPort, preferred: false}
-      - {signifier: requirement, concept: requirement}
+      - {signifier: contract requirement, concept: contractRequirement}
       - {signifier: provable requirement, concept: provableRequirement}
       - {signifier: empirical requirement, concept: empiricalRequirement}
       - {signifier: proof, concept: proof}
@@ -497,36 +508,36 @@ vocabularies:
       - {verb: declaresPort, template: [{role: contract}, {text: " declares "}, {role: port}]}
       - {verb: declaresPort, template: [{role: port}, {text: " is a port of "}, {role: contract}]}
       - {verb: declaresMember, template: [{role: member}, {text: " is a member of "}, {role: contract}]}
-      - {verb: governs, template: [{role: requirement}, {text: " governs "}, {role: port}]}
-      - {verb: governs, template: [{role: port}, {text: " is governed by "}, {role: requirement}]}
+      - {verb: governs, template: [{role: contractRequirement}, {text: " governs "}, {role: port}]}
+      - {verb: governs, template: [{role: port}, {text: " is governed by "}, {role: contractRequirement}]}
       - {verb: discharges, template: [{role: proof}, {text: " discharges "}, {role: provableRequirement}]}
       - {verb: discharges, template: [{role: provableRequirement}, {text: " is discharged by "}, {role: proof}]}
       - {verb: decides, template: [{role: gate}, {text: " decides "}, {role: empiricalRequirement}]}
       - {verb: decides, template: [{role: empiricalRequirement}, {text: " is decided by "}, {role: gate}]}
-      - {verb: examines, template: [{role: cleanlinessGate}, {text: " examines "}, {role: contract}]}
-      - {verb: quantifiesOver, template: [{role: requirement}, {text: " quantifies over "}, {role: scope}]}
-      - {verb: quantifiesOver, template: [{role: scope}, {text: " is the scope of "}, {role: requirement}]}
+      - {verb: quantifiesOver, template: [{role: contractRequirement}, {text: " quantifies over "}, {role: scope}]}
+      - {verb: quantifiesOver, template: [{role: scope}, {text: " is the scope of "}, {role: contractRequirement}]}
       - {verb: hasReferent, template: [{role: referent}, {text: " is a referent of "}, {role: empiricalRequirement}]}
-      - {verb: refutes, template: [{role: counterexample}, {text: " refutes "}, {role: requirement}]}
+      - {verb: refutes, template: [{role: counterexample}, {text: " refutes "}, {role: contractRequirement}]}
     definitions:
       - {concept: contract, text: "it is necessary that each contract declares at least 1 port", source: "HCP L6 — Provenance.Contract: a declared model boundary with its members and ports"}
       - {concept: port, text: "it is necessary that each port is a port of exactly one contract", source: "HCP L6 — Provenance.Contract"}
       - {concept: member, text: "it is necessary that each member is a member of exactly one contract", source: "HCP L6 — Provenance.Contract"}
-      - {concept: outputPort, text: "it is obligatory that each output port is governed by at least 1 requirement", source: "HCP L6 — NodeId.result, PortDir.output; #kind_requirement_clean fails on an ungoverned output"}
-      - {concept: requirement, text: "it is necessary that each requirement governs exactly one port", source: "HCP L6 — Provenance.Requirement (statement, governs, port, scope, witness, absent, gate, referents, spotChecks)"}
+      - {concept: outputPort, text: "it is obligatory that each output port is governed by at least 1 contract requirement", source: "HCP L6 — NodeId.result, PortDir.output; #kind_requirement_clean fails on an ungoverned output"}
+      - {concept: contractRequirement, text: "it is necessary that each contract requirement governs exactly one port", source: "HCP L6 — Provenance.Requirement (statement, governs, port, scope, witness, absent, gate, referents, spotChecks)"}
       - {concept: provableRequirement, text: "it is necessary that each provable requirement is discharged by exactly one proof", source: "HCP L6 — RequirementKind.provable: discharged by a proof"}
       - {concept: empiricalRequirement, text: "it is necessary that each empirical requirement is decided by exactly one gate", source: "HCP L6 — RequirementKind.empirical: decided by a gate"}
       - {concept: proof, text: "it is necessary that each proof discharges at least 1 provable requirement", source: "HCP L6 — RequirementKind.provable"}
       - {concept: gate, text: "it is necessary that each gate decides at least 1 empirical requirement", source: "HCP L6 — RequirementKind.empirical"}
       - {concept: cleanlinessGate, text: "it is necessary that each cleanliness gate examines exactly one contract", source: "HCP L6 — #kind_requirement_clean: the gate that fails on any ungoverned or unchecked output"}
-      - {concept: scope, text: "it is necessary that each scope is the scope of at least 1 requirement", source: "HCP L6 — RequirementScope.sort, RequirementScope.objects: what a requirement quantifies over"}
+      - {concept: scope, text: "it is necessary that each scope is the scope of at least 1 contract requirement", source: "HCP L6 — RequirementScope.sort, RequirementScope.objects: what a requirement quantifies over"}
       - {concept: referent, text: "it is necessary that each referent is a referent of exactly one empirical requirement", source: "HCP L6 — @[kindReferent]: an empirical referent"}
-      - {concept: counterexample, text: "it is necessary that each counterexample refutes exactly one requirement", source: "HCP L6 — @[kindCounterexample]: a refuting witness"}
+      - {concept: counterexample, text: "it is necessary that each counterexample refutes exactly one contract requirement", source: "HCP L6 — @[kindCounterexample]: a refuting witness"}
     adopted:
       - {concept: mass, source: L0, reference: mass}
       - {concept: displacement, source: L2, reference: displacement}
       - {concept: angular frequency, source: L0, reference: angular frequency}
 check:
+  - {child: PKC, parent: Foundation}
   - {child: L0, parent: PKC}
   - {child: L0, parent: PhysLibKinds}
   - {child: L1, parent: L0}
