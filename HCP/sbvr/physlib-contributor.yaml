@@ -82,6 +82,13 @@ concepts:
   - {id: frameReading, kind: general}
   - {id: unionLaw, kind: general}
   - {id: frameIndexedQuantity, kind: general}
+  - {id: massUnionLaw, kind: general}
+  - {id: centerOfMassUnionLaw, kind: general}
+  - {id: inertiaUnionLaw, kind: general}
+  - {id: labAngularVelocity, kind: general}
+  - {id: bodyAngularVelocity, kind: general}
+  - {id: bodyInertia, kind: general}
+  - {id: rotationalContraction, kind: general}
   - {id: hasTotalWeight, kind: verb, roles: [weightedCarving, totalWeight]}
   - {id: hasWeightedSum, kind: verb, roles: [weightedCarving, weightedSum]}
   - {id: hasWeightedMean, kind: verb, roles: [weightedCarving, weightedMean]}
@@ -93,6 +100,12 @@ concepts:
   - {id: spaceReading, kind: general}
   - {id: frameVector, kind: general}
   - {id: frameConversion, kind: general}
+  - {id: positionReading, kind: general}
+  - {id: displacementReading, kind: general}
+  - {id: distanceReading, kind: general}
+  - {id: lengthReading, kind: general}
+  - {id: geometricTransport, kind: general}
+  - {id: boostTransport, kind: general}
   - {id: hasSpaceKind, kind: verb, roles: [spaceReading, spaceKind]}
   - {id: states, kind: verb, roles: [frameVector, kindOfProperty]}
   - {id: isTypedFor, kind: verb, roles: [frameConversion, kindOfProperty]}
@@ -142,8 +155,21 @@ generalizes:
   - {category: weightedCarving, general: decomposition}
   - {category: frameIndexedQuantity, general: individualQuantity}
   - {category: frameIndexedQuantity, general: frameReading}
+  - {category: massUnionLaw, general: unionLaw}
+  - {category: centerOfMassUnionLaw, general: unionLaw}
+  - {category: inertiaUnionLaw, general: unionLaw}
+  - {category: labAngularVelocity, general: frameIndexedQuantity}
+  - {category: bodyAngularVelocity, general: frameIndexedQuantity}
+  - {category: bodyInertia, general: frameIndexedQuantity}
+  - {category: rotationalContraction, general: frameIndexedQuantity}
   - {category: spaceKind, general: kindOfProperty}
   - {category: spaceReading, general: quantity}
+  - {category: positionReading, general: spaceReading}
+  - {category: displacementReading, general: spaceReading}
+  - {category: distanceReading, general: spaceReading}
+  - {category: lengthReading, general: spaceReading}
+  - {category: geometricTransport, general: frameConversion}
+  - {category: boostTransport, general: frameConversion}
   - {category: frameVector, general: frameReading}
   - {category: frameVector, general: quantity}
   - {category: ratioScale, general: scaleType}
@@ -317,14 +343,21 @@ vocabularies:
       - {signifier: frame reading, concept: frameReading}
       - {signifier: InFrame, concept: frameReading, preferred: false}
       - {signifier: union law, concept: unionLaw}
-      - {signifier: union_mass, concept: unionLaw, preferred: false}
-      - {signifier: union_centerOfMass, concept: unionLaw, preferred: false}
-      - {signifier: union_inertiaTensor, concept: unionLaw, preferred: false}
+      - {signifier: mass union law, concept: massUnionLaw}
+      - {signifier: union_mass, concept: massUnionLaw, preferred: false}
+      - {signifier: centre-of-mass union law, concept: centerOfMassUnionLaw}
+      - {signifier: union_centerOfMass, concept: centerOfMassUnionLaw, preferred: false}
+      - {signifier: inertia union law, concept: inertiaUnionLaw}
+      - {signifier: union_inertiaTensor, concept: inertiaUnionLaw, preferred: false}
       - {signifier: frame-indexed quantity, concept: frameIndexedQuantity}
-      - {signifier: labOmega, concept: frameIndexedQuantity, preferred: false}
-      - {signifier: bodyOmega, concept: frameIndexedQuantity, preferred: false}
-      - {signifier: bodyInertia, concept: frameIndexedQuantity, preferred: false}
-      - {signifier: rotationalContraction, concept: frameIndexedQuantity, preferred: false}
+      - {signifier: lab angular velocity, concept: labAngularVelocity}
+      - {signifier: labOmega, concept: labAngularVelocity, preferred: false}
+      - {signifier: body angular velocity, concept: bodyAngularVelocity}
+      - {signifier: bodyOmega, concept: bodyAngularVelocity, preferred: false}
+      - {signifier: body inertia, concept: bodyInertia}
+      - {signifier: bodyInertia, concept: bodyInertia, preferred: false}
+      - {signifier: rotational contraction, concept: rotationalContraction}
+      - {signifier: rotationalContraction, concept: rotationalContraction, preferred: false}
     wordings:
       - {verb: hasTotalWeight, template: [{role: weightedCarving}, {text: " totals "}, {role: totalWeight}]}
       - {verb: hasTotalWeight, template: [{role: totalWeight}, {text: " is the total weight of "}, {role: weightedCarving}]}
@@ -342,23 +375,36 @@ vocabularies:
       - {concept: fold, text: "it is necessary that each fold combines exactly one decomposition", source: "HCP L3 — Decomposition.fold: a value per part, combined over a decomposition"}
       - {concept: frame, text: "it is possible that each frame is the frame of at least 1 frame reading", source: "HCP L3 — InFrame: components read in a stated frame"}
       - {concept: frameReading, text: "it is necessary that each frame reading is read in exactly one frame", source: "HCP L3 — InFrame"}
-      - {concept: unionLaw, text: "it is necessary that each union law aggregates exactly one kind of property", source: "HCP L3 — union_mass, union_centerOfMass, union_inertiaTensor"}
-      - {concept: frameIndexedQuantity, text: "it is necessary that each frame-indexed quantity is read in exactly one frame", source: "HCP L3 — labOmega, bodyOmega, bodyInertia, rotationalContraction: rigid-body quantities indexed by frame"}
+      - {concept: unionLaw, text: "it is necessary that each union law aggregates exactly one kind of property", source: "HCP L3 — ForPhysLib.Exhibits.Composition.Findings: one law per kind"}
+      - {concept: massUnionLaw, text: "it is necessary that each mass union law aggregates exactly one kind of property", source: "theorem union_mass — the mass of a union is the sum of the masses"}
+      - {concept: centerOfMassUnionLaw, text: "it is necessary that each centre-of-mass union law aggregates exactly one kind of property", source: "theorem union_centerOfMass — the mass-weighted mean of the centres, under nonzero total mass"}
+      - {concept: inertiaUnionLaw, text: "it is necessary that each inertia union law aggregates exactly one kind of property", source: "theorem union_inertiaTensor — the inertia tensor of a union is the sum of the tensors"}
+      - {concept: frameIndexedQuantity, text: "it is necessary that each frame-indexed quantity is read in exactly one frame", source: "HCP L3 — ForPhysLib.Exhibits.RigidBody.Findings: rigid-body quantities indexed by frame"}
+      - {concept: labAngularVelocity, text: "it is necessary that each lab angular velocity is read in exactly one frame", source: "def labOmega — the angular velocity in the lab frame"}
+      - {concept: bodyAngularVelocity, text: "it is necessary that each body angular velocity is read in exactly one frame", source: "def bodyOmega — the angular velocity in the body frame"}
+      - {concept: bodyInertia, text: "it is necessary that each body inertia is read in exactly one frame", source: "def bodyInertia — the inertia tensor in the body frame"}
+      - {concept: rotationalContraction, text: "it is necessary that each rotational contraction is read in exactly one frame", source: "def rotationalContraction — ω · (I ω) in one frame, over any dimension and kinds"}
   - name: L4
     includes: [L3]
     designations:
       - {signifier: space kind, concept: spaceKind}
       - {signifier: space reading, concept: spaceReading}
-      - {signifier: positionQ, concept: spaceReading, preferred: false}
-      - {signifier: displacementQ, concept: spaceReading, preferred: false}
-      - {signifier: distanceQ, concept: spaceReading, preferred: false}
-      - {signifier: lengthOf, concept: spaceReading, preferred: false}
+      - {signifier: position reading, concept: positionReading}
+      - {signifier: positionQ, concept: positionReading, preferred: false}
+      - {signifier: displacement reading, concept: displacementReading}
+      - {signifier: displacementQ, concept: displacementReading, preferred: false}
+      - {signifier: distance reading, concept: distanceReading}
+      - {signifier: distanceQ, concept: distanceReading, preferred: false}
+      - {signifier: length reading, concept: lengthReading}
+      - {signifier: lengthOf, concept: lengthReading, preferred: false}
       - {signifier: frame vector, concept: frameVector}
       - {signifier: KVector, concept: frameVector, preferred: false}
       - {signifier: frame conversion, concept: frameConversion}
       - {signifier: transport, concept: frameConversion, preferred: false}
-      - {signifier: kGeometricTransport, concept: frameConversion, preferred: false}
-      - {signifier: kBoostTransport, concept: frameConversion, preferred: false}
+      - {signifier: geometric transport, concept: geometricTransport}
+      - {signifier: kGeometricTransport, concept: geometricTransport, preferred: false}
+      - {signifier: boost transport, concept: boostTransport}
+      - {signifier: kBoostTransport, concept: boostTransport, preferred: false}
       - {signifier: position vector, concept: position vector}
       - {signifier: positionVector, concept: position vector, preferred: false}
       - {signifier: distance, concept: distance}
@@ -376,9 +422,15 @@ vocabularies:
       - {verb: isTypedFor, template: [{role: frameConversion}, {text: " is typed for "}, {role: kindOfProperty}]}
     definitions:
       - {concept: spaceKind, text: "it is necessary that each space kind carries exactly one dimension", source: "HCP L4 — positionVector, displacement, distance, area: ISO 80000-3 space kinds"}
-      - {concept: spaceReading, text: "it is necessary that each space reading is read at exactly one space kind", source: "HCP L4 — positionQ, displacementQ, distanceQ, lengthOf: PhysLib Space values read at their kinds"}
+      - {concept: spaceReading, text: "it is necessary that each space reading is read at exactly one space kind", source: "HCP L4 — ForPhysLib.Kinded.Space: PhysLib Space values read at their kinds"}
+      - {concept: positionReading, text: "it is necessary that each position reading is read at exactly one space kind", source: "def positionQ — a point read as a position vector"}
+      - {concept: displacementReading, text: "it is necessary that each displacement reading is read at exactly one space kind", source: "def displacementQ — two points read as a displacement"}
+      - {concept: distanceReading, text: "it is necessary that each distance reading is read at exactly one space kind", source: "def distanceQ — two points read as a distance"}
+      - {concept: lengthReading, text: "it is necessary that each length reading is read at exactly one space kind", source: "def lengthOf — the length of a displacement"}
       - {concept: frameVector, text: "it is necessary that each frame vector states exactly one kind of property", source: "HCP L4 — KVector: a frame vector with its physical kind stated"}
-      - {concept: frameConversion, text: "it is necessary that each frame conversion is typed for exactly one kind of property", source: "HCP L4 — kGeometricTransport, kBoostTransport: each typed for one kind of vector"}
+      - {concept: frameConversion, text: "it is necessary that each frame conversion is typed for exactly one kind of property", source: "HCP L4 — each conversion typed for one kind of vector"}
+      - {concept: geometricTransport, text: "it is necessary that each geometric transport is typed for exactly one kind of property", source: "def kGeometricTransport — the geometric transport law, naming the kind of vector it is the law for"}
+      - {concept: boostTransport, text: "it is necessary that each boost transport is typed for exactly one kind of property", source: "def kBoostTransport — the boost law, only for velocities; the boost itself arrives kinded"}
     adopted:
       - {concept: differenceLaw, source: L1, reference: differenceLaw}
       - {concept: position vector, source: PhysLibKinds, reference: position vector}

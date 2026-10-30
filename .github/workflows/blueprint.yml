@@ -184,7 +184,9 @@ jobs:
       # HCP/sbvr/rendered/*.md must be its rendering at the pinned SBVR.lean (scripts/sbvr-check.sh
       # clones and builds it); a changed definition with a stale rendering fails here.
       - name: Check HCP blueprint excerpts and the ladder in SBVR
-        run: python3 HCP/check-hcp.py --sbvr "$(scripts/sbvr-check.sh)"
+        run: |
+          SBVR_CHECK="$(scripts/sbvr-check.sh)"
+          python3 HCP/check-hcp.py --sbvr "$SBVR_CHECK"
 
       # The chain adopts its quantity terms from a catalogue harvested from the Lean kinds; a hand
       # edit or a new kind without a regenerated catalogue fails here.
