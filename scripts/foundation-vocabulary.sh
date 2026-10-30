@@ -12,6 +12,7 @@ dir=.lake/efa
 if [[ ! -d "$dir/.git" ]]; then git clone -q --filter=blob:none --no-checkout "$EFA_REPO" "$dir" >&2; fi
 git -C "$dir" fetch -q origin "$EFA_COMMIT" >&2 2>/dev/null || git -C "$dir" fetch -q origin >&2
 fetched=$(mktemp)
+trap 'rm -f "$fetched"' EXIT
 git -C "$dir" show "$EFA_COMMIT:docs/hcp/foundation.yaml" > "$fetched"
 if [[ "${1:-}" == "--update" ]]; then
   cp "$fetched" "$copy"; echo "wrote $copy from engineering-foundation-architecture@$EFA_COMMIT"; exit 0
