@@ -24,6 +24,24 @@ concepts:
   - {id: produces, kind: verb, roles: [check, finding]}
   - {id: supports, kind: verb, roles: [evidence, requirement]}
   - {id: belongsTo, kind: verb, roles: [step, persona]}
+  # shared by the personas of several repositories (fsw-simulation engineer, anomaly analyst, mars.lean's
+  # four, PKC's L6) and reconciled here: a trace of events (spans and commands among them), the roles
+  # that send and receive (placed by each persona: a system, or the agent that models one), ports, and
+  # the abstraction map between traces
+  - {id: event, kind: general}
+  - {id: trace, kind: general}
+  - {id: span, kind: general}
+  - {id: command, kind: general}
+  - {id: sender, kind: role}
+  - {id: receiver, kind: role}
+  - {id: port, kind: general}
+  - {id: abstractionMap, kind: general}
+  - {id: recordsEvent, kind: verb, roles: [trace, event]}
+  - {id: nestsEvent, kind: verb, roles: [span, event]}
+  - {id: sendsCommand, kind: verb, roles: [sender, command]}
+  - {id: receivesCommand, kind: verb, roles: [receiver, command]}
+  - {id: exposesPort, kind: verb, roles: [system, port]}
+  - {id: abstractsTrace, kind: verb, roles: [abstractionMap, trace]}
   # EngineeringFoundation: what this repository's own HCPs add to the root
   - {id: ladder, kind: general}
   - {id: exercise, kind: general}
@@ -36,6 +54,9 @@ generalizes:
   # a verifiable property is deliberately NOT a requirement: it is a checked claim about an exercise
   # or a tool verdict, and need not constrain any system
   - {category: model, general: artifact}
+  - {category: trace, general: artifact}
+  - {category: span, general: event}
+  - {category: command, general: event}
 vocabularies:
   - name: Foundation
     namespace: foundation
@@ -49,6 +70,14 @@ vocabularies:
       - {signifier: evidence, concept: evidence}
       - {signifier: persona, concept: persona}
       - {signifier: step, concept: step}
+      - {signifier: event, concept: event}
+      - {signifier: trace, concept: trace}
+      - {signifier: span, concept: span}
+      - {signifier: command, concept: command}
+      - {signifier: sender, concept: sender}
+      - {signifier: receiver, concept: receiver}
+      - {signifier: port, concept: port}
+      - {signifier: abstraction map, concept: abstractionMap}
     wordings:
       - {verb: describes, template: [{role: model}, {text: " describes "}, {role: system}]}
       - {verb: describes, template: [{role: system}, {text: " is described by "}, {role: model}]}
@@ -60,6 +89,17 @@ vocabularies:
       - {verb: supports, template: [{role: evidence}, {text: " supports "}, {role: requirement}]}
       - {verb: belongsTo, template: [{role: step}, {text: " belongs to "}, {role: persona}]}
       - {verb: belongsTo, template: [{role: persona}, {text: " has "}, {role: step}]}
+      - {verb: recordsEvent, template: [{role: trace}, {text: " records "}, {role: event}]}
+      - {verb: recordsEvent, template: [{role: event}, {text: " is recorded in "}, {role: trace}]}
+      - {verb: nestsEvent, template: [{role: span}, {text: " nests "}, {role: event}]}
+      - {verb: nestsEvent, template: [{role: event}, {text: " is nested in "}, {role: span}]}
+      - {verb: sendsCommand, template: [{role: sender}, {text: " sends "}, {role: command}]}
+      - {verb: sendsCommand, template: [{role: command}, {text: " is sent by "}, {role: sender}]}
+      - {verb: receivesCommand, template: [{role: receiver}, {text: " receives "}, {role: command}]}
+      - {verb: receivesCommand, template: [{role: command}, {text: " is received by "}, {role: receiver}]}
+      - {verb: exposesPort, template: [{role: system}, {text: " exposes "}, {role: port}]}
+      - {verb: exposesPort, template: [{role: port}, {text: " is exposed by "}, {role: system}]}
+      - {verb: abstractsTrace, template: [{role: abstractionMap}, {text: " abstracts "}, {role: trace}]}
     definitions:
       - {concept: artifact, text: "it is possible that each artifact is examined by at least 1 check", source: "docs/hcp/README.md — Principles: the check, in the persona's artifact"}
       - {concept: system, text: "it is necessary that each system is described by at least 1 model", source: "docs/architecture/stack.md — a system is known through its models"}
@@ -70,6 +110,14 @@ vocabularies:
       - {concept: evidence, text: "it is necessary that each evidence supports at least 1 requirement", source: "docs/architecture/dashboard.md — discharge kinds"}
       - {concept: persona, text: "it is necessary that each persona has at least 1 step", source: "docs/hcp/README.md — a ladder of steps"}
       - {concept: step, text: "it is necessary that each step belongs to exactly one persona", source: "docs/hcp/README.md — an HCP is in the repository that owns the persona"}
+      - {concept: event, text: "it is necessary that each event is recorded in at least 1 trace", source: "docs/hcp/README.md — Shared terms: something that happened in a run of a system; a span and a command are events"}
+      - {concept: trace, text: "it is possible that each trace records at least 1 event", source: "docs/hcp/README.md — Shared terms: the events of one run, in order, the empty run included; an artifact (MARS, OpenTelemetry, F´)"}
+      - {concept: span, text: "it is possible that each span nests at least 1 event", source: "docs/hcp/README.md — Shared terms: an event with a start, an end, and the events it encloses (OpenTelemetry); the hierarchy flat logging lacks"}
+      - {concept: command, text: "it is necessary that each command is sent by exactly one sender", source: "docs/hcp/README.md — Shared terms: an event asking a system to act (MARS, F´)"}
+      - {concept: sender, text: "it is necessary that each sender sends at least 1 command", source: "docs/hcp/README.md — Shared terms: what a command is sent by; a system, or the agent modelling one, as the persona places it"}
+      - {concept: receiver, text: "it is possible that each receiver receives at least 1 command", source: "docs/hcp/README.md — Shared terms: what a command is sent to; a dropped command is received by none"}
+      - {concept: port, text: "it is necessary that each port is exposed by exactly one system", source: "docs/hcp/README.md — Shared terms: where a system sends or receives (F´, PKC contracts)"}
+      - {concept: abstractionMap, text: "it is necessary that each abstraction map abstracts at least 1 trace", source: "docs/hcp/README.md — Shared terms: the map from a finer trace to a coarser one (MARS abstractWord; F´ ports to MARS commands)"}
   - name: EngineeringFoundation
     namespace: efa
     includes: [Foundation]

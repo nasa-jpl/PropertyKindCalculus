@@ -15,4 +15,4 @@ New at this step:
 - *dimension* is carried by *kind of property* — verb
 
 Carried from earlier steps:
-- Foundation: artifact, system, model, requirement, check, finding, evidence, persona, step
+- Foundation: artifact, system, model, requirement, check, finding, evidence, persona, step, event, trace, span, command, sender, receiver, port, abstraction map

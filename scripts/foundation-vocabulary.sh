@@ -5,7 +5,7 @@
 # bump EFA_COMMIT and re-run with --update to take a newer Foundation.
 set -euo pipefail
 cd "$(dirname "$0")/.."
-EFA_COMMIT="${EFA_COMMIT:-2289044e0c1ee1733457b351d4435286b5d69d51}"
+EFA_COMMIT="${EFA_COMMIT:-fd049f38125a8668454bf801d0ef0d10eeb2942d}"
 EFA_REPO=https://github.com/Open-MBEE/engineering-foundation-architecture
 copy=HCP/sbvr/foundation.yaml
 dir=.lake/efa
