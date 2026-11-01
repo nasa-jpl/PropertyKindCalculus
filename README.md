@@ -288,6 +288,11 @@ Status: ✅ done · 🚧 in progress · ⬜ planned
   tape, const leaves included, the emitted program of its CSE'd form runs, at every environment, to the
   original tape's value at every remapped node (`cseCompact_denotation_unconditional` ∘ `genSL_denotes`);
   `#guard`'d from the raw AVS recording through the remap.
+  ✅ **The host `Float` is a specification** (`Examples.TapeHostFloatModel`): on the pinned toolchain
+  `Float` is a structure over core's `Float.Model` (IEEE 754 binary64, round-to-nearest-even), and
+  `BinOp.eval`/`UnOp.eval` unfold by `rfl` to model arithmetic for every op of the alphabet but the two
+  `opaque` externs `exp`/`log` — so what a printer must be trusted for is the host's IEEE conformance
+  (plus libm for `exp`/`log`), not Lean's `Float`.
   ⬜ Run `julia_parity` in a CI lane with Julia installed.
   ⬜ First CliMA-shaped closure recorded over `[NumCarrier α]` to find the alphabet gaps (a bounded
   reduction and a gather are the expected first two).

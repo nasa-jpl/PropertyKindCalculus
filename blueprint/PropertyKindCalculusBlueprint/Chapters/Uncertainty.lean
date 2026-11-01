@@ -660,9 +660,10 @@ division node the two rungs' licenses are independent in both directions.
 
 :::theorem "thm_uq_exec_bridge" (parent := "uncertainty") (lean := "PropertyKindCalculus.Uncertainty.Adequacy.exec_verdict_sound") (tags := "capstone, proved")
 *Executable↔spec bridge (Stage 3.3).* The verdicts above are stated over the `noncomputable` `ℝ`/`FP32`
-specification, but the *runtime* carrier must compute a verdict. Lean's host `Float` is an opaque FFI
-type no theorem can constrain, so the certified executable check runs on TorchLean's *computable*
-`IEEE32Exec` model instead. There the ULP is genuinely computed from a bit pattern (`ulpExp?`, matching
+specification, but the *runtime* carrier must compute a verdict. Lean's host `Float` is binary64 (and,
+on the pinned toolchain, a structure over core's `Float.Model` — `examples.tape_host_float_model`),
+not the float32 this verdict is about, so the certified executable check runs on TorchLean's
+*computable* `IEEE32Exec` model instead. There the ULP is genuinely computed from a bit pattern (`ulpExp?`, matching
 the spec `ulp₃₂` whenever it answers — `none` on NaNs and infinities), and the kernel's absorption test `absorbs s δ` — the float32 sum is unchanged —
 *certifies* the specification: the exact real sum rounds back under $`\mathrm{round}_{32}`. So the
 computed adequacy verdict is provably the specified {uses "thm_uq_adequacy_verdict"}[A3] one, on the
