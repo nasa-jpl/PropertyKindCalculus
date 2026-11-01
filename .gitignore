@@ -13,3 +13,7 @@ blueprint/scripts/__pycache__/
 # The build log written by scripts/build-all-libs-examples.sh when a run is redirected
 # to it. A build artifact, and one that names absolute paths.
 /build.log
+
+# Where `lake exe julia_parity` writes the emitted Julia kernels, their inputs and outputs
+# (an artifact regenerated on every run; `-o DIR` moves it).
+/_out

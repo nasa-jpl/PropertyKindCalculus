@@ -499,6 +499,16 @@ lean_exe «mcm_batched_parity» where
   srcDir := "apps"
   root := `PropertyKindCalculus.Apps.McmBatchedParity
 
+/-- **The emitted Julia kernel against `evalTape`.** `paradigm.tape_codegen_julia` renders a recorded
+tape as a Julia function; the rendering-table theorems cover the alphabet and the demo `#guard`s the
+coverage and the ABI, but a `#guard` cannot run Julia. This executable writes the emitted files, runs
+`julia` at `Float64` over deterministic pixels and compares every output with `evalTape`: bit-identical
+where the cone has no `exp`/`log`, within `--max-ulp` where it does. Exit 2 without a `julia`
+(`--allow-missing-julia` makes that a skip). -/
+lean_exe «julia_parity» where
+  srcDir := "apps"
+  root := `PropertyKindCalculus.Apps.JuliaParity
+
 /-- Worked uncertainty examples grounded in the two source papers (Degenhardt 2025 fictive
 example; Willink 2005 gauge-block), in the `examples/` source tree as a **separate library** so
 no *library* module carries `#eval`/`#guard`. Build with `lake build UncertaintyExamples`. -/
