@@ -314,8 +314,8 @@ def runCase (o : Opts) (julia : String) (c : Case) : IO (Option Verdict) := do
   IO.FS.createDirAll dir
   IO.FS.writeFile (dir / s!"{c.name}.jl") (emitJulia c.name cg)
   IO.FS.writeFile (dir / s!"{c.name}_ka.jl") (emitJuliaKA c.name cg)
-  IO.FS.writeFile (dir / s!"{c.name}_parity.jl") (driver c.name cg.numOutputs c.tables)
-  IO.FS.writeFile (dir / s!"{c.name}_parity_ka.jl") (driver c.name cg.numOutputs c.tables (ka := true))
+  IO.FS.writeFile (dir / s!"{c.name}_parity.jl") (driver c.name cg.numOutputs cg.tables)
+  IO.FS.writeFile (dir / s!"{c.name}_parity_ka.jl") (driver c.name cg.numOutputs cg.tables (ka := true))
   let envs := (List.range o.pixels).map (pixelEnv c.centre cg.inputs)
   let rows := envs.map fun env => String.intercalate " " (cg.inputs.toList.map (fun nm => hexOfBits (env nm).toBits))
   IO.FS.writeFile (dir / s!"{c.name}_inputs.txt")
