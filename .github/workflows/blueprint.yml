@@ -136,7 +136,9 @@ jobs:
         # change to tools/Tools/BlueprintPrint.lean that moves either fails here,
         # with no WeasyPrint involved.
         run: |
-          lake exe blueprint-print tools/fixtures/blueprint-print/site /tmp/print-fixture.html 2>/tmp/print-fixture.stderr
+          # the binary, not `lake exe`: Lake's own stderr must not reach the comparison
+          lake build blueprint-print
+          .lake/build/bin/blueprint-print tools/fixtures/blueprint-print/site /tmp/print-fixture.html 2>/tmp/print-fixture.stderr
           cmp /tmp/print-fixture.html tools/fixtures/blueprint-print/expected.html
           cmp /tmp/print-fixture.stderr tools/fixtures/blueprint-print/expected.stderr
 
