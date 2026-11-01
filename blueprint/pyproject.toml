@@ -1,8 +1,8 @@
 # Python tooling environment for the PropertyKindCalculus design blueprint.
 #
 # Managed by pixi (https://pixi.sh). The only Python the blueprint needs is for
-# rendering the single-page HTML into a paginated PDF (WeasyPrint). The system
-# `python3` on a host can be an old version
+# rendering the single-page HTML into a paginated PDF (WeasyPrint); the `file://`
+# link pass is `lake exe file-links`. The system `python3` on a host can be an old version
 # whose WeasyPrint is too old to render this document, so we pin an exact,
 # reproducible Python + WeasyPrint here (pixi.lock) and invoke Python through
 # `pixi run` everywhere — local (scripts/render-pdf.sh, scripts/ci-pages.sh) and
@@ -41,6 +41,3 @@ brotli-python = "*"
 # Render the blueprint PDF (the single-page HTML must already be built under
 # _out/blueprint/ — e.g. by `lake exe blueprint-gen --with-html-single`).
 render-pdf = "bash scripts/render-pdf.sh"
-file-links = "python scripts/file-links.py"
-# Ad-hoc helpers (paths passed on the command line).
-html-to-pdf = "python scripts/html-to-pdf.py"
