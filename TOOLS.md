@@ -112,9 +112,15 @@ Anything a tool does outside this list is a defect of the tool, not an extension
 ## 5. Order of work
 
 1. **`doc-pins`**: the smallest and the one that runs first in CI; it fixes the shared `Verso`
-   chapter reader and the shared `sites` definition with the bumper.
+   chapter reader and the shared `sites` definition with the bumper. *Shipped*:
+   `tools/Tools/DocPins.lean` (Q3 resolved for it: textual chapter readers, because it runs before
+   the blueprint builds).
 2. **`hcp-check`**: the largest; `require SBVR` lands here and retires `scripts/sbvr-check.sh`'s
    clone-and-build (the pin becomes Lake's, `lake-manifest.json`, as `hcp-gate`'s already is).
+   *Shipped*: `tools/Tools/HcpCheck.lean`, with `--sbvr SBVR_CHECK` still the pinned binary run as
+   a subprocess whose output is data (Q1: a private `require` in this package's lakefile would
+   break every pull-request build, which has no token; the in-process form waits for a tools
+   sub-package with its own lakefile).
 3. **`gen-iso80000-coverage.lean`** and **`inject-index-docs.lean`**: generators that join the Lean
    scripts already in `scripts/`.
 4. **`module-census`**: the two censuses in one executable; `MODULARITY.md`'s numbers regenerated.

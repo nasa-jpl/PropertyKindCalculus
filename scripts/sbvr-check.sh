@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# A pinned `sbvr-check` (SBVR.lean) for `python3 HCP/check-hcp.py --sbvr`: clones SBVR.lean at
+# A pinned `sbvr-check` (SBVR.lean) for `hcp-check --sbvr` (tools/Tools/HcpCheck.lean): clones SBVR.lean at
 # SBVR_LEAN_REV into .lake/sbvr-lean (or reuses SBVR_LEAN_DIR, an existing checkout — then the
 # revision is not pinned), fetches Mathlib's oleans and builds the executable — and prov.lean's
 # `prov-check`, which the HCP assurance gate (scripts/hcp-assurance.sh) validates records with; prints

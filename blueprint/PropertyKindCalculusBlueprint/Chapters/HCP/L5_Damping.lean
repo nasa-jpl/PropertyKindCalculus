@@ -36,7 +36,7 @@ concepts:
     formal: "decayRateChange and decayRateChange_magnitude"
     where: "HCP.L5_Damping#same_oscillator_states"
 artifacts: ['Lean lesson HCP.L5_Damping', 'Blueprint chapter L5 — The oscillation dies out']
-tools: ['lake build HCP', 'python3 HCP/check-hcp.py']
+tools: ['lake build HCP', 'lake exe hcp-check']
 exercises: 5
 disclosure: ['reuse PhysLib dissipation laws on HCP states', 'separate damper γ from whole-system δ', 'distinguish same-dimension kinds', 'make the underdamped comparison explicit', 'compare same-name states and refuse cross-system mixing']
 owner: 'PKC methodology lead'

@@ -30,7 +30,7 @@ concepts:
     formal: 'distinct kinds with the same T⁻¹ dimension'
     where: 'PropertyKindCalculus.Iso80000.Part3; ForPhysLib.ClassicalMechanics.Metrology'
 artifacts: ['Lean lesson HCP.L0_BlackBox', 'Blueprint chapter L0 — The black box']
-tools: ['lake build HCP', 'python3 HCP/check-hcp.py']
+tools: ['lake build HCP', 'lake exe hcp-check']
 exercises: 7
 disclosure: ['bare-real reciprocal-frequency mistake', 'what WithDim checks', 'dimension/kind distinction', 'build-pinned refusals', 'system-context card']
 owner: 'PKC methodology lead'

@@ -37,7 +37,7 @@ concepts:
     formal: "Assembles parallelS springConstantK, with no series license"
     where: "HCP.L2_ThePair#parallel_stiffness; HCP.L2_ThePair#refused_series_stiffness"
 artifacts: ['Lean lesson HCP.L2_ThePair', 'Blueprint chapter L2 — The pair is a system too']
-tools: ['lake build HCP', 'python3 HCP/check-hcp.py']
+tools: ['lake build HCP', 'lake exe hcp-check']
 exercises: 8
 disclosure: ['open the oscillator boxes and compare configurations', 'assemble the pair mass', 'refuse whole plus part', 'refuse angular-frequency assembly', 'dedicate the normal mode to the pair', 'assemble parallel stiffness', 'refuse series stiffness', 'check the aggregation licenses against measurements']
 owner: 'PKC methodology lead'

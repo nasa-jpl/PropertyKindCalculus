@@ -33,7 +33,7 @@ concepts:
     formal: 'dedicatedFor uses Sorted.sortOf rather than the object index'
     where: 'HCP.L1_TwoBodies#oscillator_indexed_quantities'
 artifacts: ['Lean lesson HCP.L1_TwoBodies', 'Blueprint chapter L1 — Two bodies']
-tools: ['lake build HCP', 'python3 HCP/check-hcp.py']
+tools: ['lake build HCP', 'lake exe hcp-check']
 exercises: 7
 disclosure: ['cross-oscillator bare-real substitution', 'bearer-free kinded quotient', 'oscillator sort and designation', 'same-oscillator k/m quotient', 'shared dedicated kind', 'cross-system refusals and same-rig time-state mass difference', 'nominal object has no sort']
 owner: 'PKC methodology lead'

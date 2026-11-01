@@ -36,7 +36,7 @@ concepts:
     formal: "pairSpanArea, pairSpanArea_magnitude, and the area-product refusal"
     where: "HCP.L4_OutOfTheLine#adoption_ladder"
 artifacts: ['Lean lesson HCP.L4_OutOfTheLine', 'Blueprint chapter L4 — Out of the line']
-tools: ['lake build HCP', 'python3 HCP/check-hcp.py']
+tools: ['lake build HCP', 'lake exe hcp-check']
 exercises: 7
 disclosure: ['distinguish points, vectors, and scalar distances', 'index pair separation by nominal identity', 'compare same-pair states', 'expose the role-blind bare frame API', 'kind frame transports by vector role', 'make observer motion part of frame context', 'recap Space stages 0–4']
 owner: 'PKC methodology lead'

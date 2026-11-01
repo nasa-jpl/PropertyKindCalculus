@@ -36,7 +36,7 @@ concepts:
     formal: "the requirement survey, coverage census, and clean gate"
     where: "HCP.L6_Requirements#requirement_census"
 artifacts: ['Lean lesson HCP.L6_Requirements', 'Blueprint chapter L6 — What must hold']
-tools: ['lake build HCP', 'python3 HCP/check-hcp.py']
+tools: ['lake build HCP', 'lake exe hcp-check']
 exercises: 5
 disclosure: ['scope a pair-mass theorem over pairS', 'state the absence of pair-frequency aggregation', 'gate an empirical limit over P', 'pin invalid scope declarations', 'census and gate requirement coverage']
 owner: 'PKC methodology lead'
