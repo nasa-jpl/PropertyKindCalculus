@@ -19,8 +19,9 @@ cannot import a non-`module` one), and `grep '^module'` over-reports adoption (2
 package whose true count was 0) while a per-lib view under-reports the frontier. The header is
 read with comments and string literals stripped (`stripComments`); a file is a module exactly
 when the first token is `module` (`isModule`). Every file under a non-root `srcDir` is attributed
-to a lib or reported as an orphan (`place_total`: the attributed and the orphans together are
-all the files). The closure census imports every sink module (nothing in the package imports it)
+to a lib or reported as an orphan (`place_total` for one file; `attributeFiles_complete` for the
+whole walk: each such file ends up in the modules, in the orphans, or in a duplicate-name report),
+and no module name is attributed twice (`attributeFiles_unique`). The closure census imports every sink module (nothing in the package imports it)
 in process and reads `ModuleData.isModule` from each olean of the resulting environment — the
 dependency modules it reports block every package module above them.
 -/
@@ -204,20 +205,152 @@ theorem place_total (libs : List Lib) (src rel : String) (hs : src ≠ ".") :
   · left; exact ⟨{ name := moduleName src rel, lib := o.name, path := rel },
       o.isExe && rest.all (·.isExe), by simp [hf], rfl⟩
 
-/-- Attribute every file of every `srcDir`: `(modules, orphans, exe-only names, duplicate
-warnings)`; a later file of an already-seen module name replaces it, and is warned about. -/
-def attributeFiles (libs : List Lib) (files : List (String × List String)) :
-    List Mod × List String × List String × List String :=
-  files.foldl (init := ([], [], [], [])) fun acc (src, rels) =>
-    rels.foldl (init := acc) fun (mods, orphans, exeOnly, dups) rel =>
-      match place libs src rel with
-      | .rootDropped => (mods, orphans, exeOnly, dups)
-      | .orphan r => (mods, orphans ++ [r], exeOnly, dups)
-      | .lib m e =>
-        let dups := match mods.find? (·.name == m.name) with
-          | some m' => if m'.path != rel then dups ++ [s!"DUPLICATE module name {m.name}: {m'.path} and {rel}"] else dups
-          | none => dups
-        ((mods.filter (·.name != m.name)) ++ [m], orphans, if e then exeOnly ++ [m.name] else exeOnly, dups)
+/-- The attribution so far: modules, orphans, exe-only module names, and the duplicate module
+names seen — `(name, earlier path, later path)`; the later file is the one kept. -/
+structure Acc where
+  mods : List Mod := []
+  orphans : List String := []
+  exeOnly : List String := []
+  dups : List (String × String × String) := []
+
+/-- One file into the attribution: an orphan is listed; a module replaces any earlier file of
+the same name, each such replacement reported. -/
+def step (libs : List Lib) (src : String) (acc : Acc) (rel : String) : Acc :=
+  match place libs src rel with
+  | .rootDropped => acc
+  | .orphan r => { acc with orphans := acc.orphans ++ [r] }
+  | .lib m e =>
+    let same := acc.mods.filter (·.name == m.name)
+    { mods := acc.mods.filter (·.name != m.name) ++ [m]
+      orphans := acc.orphans
+      exeOnly := if e then acc.exeOnly ++ [m.name] else acc.exeOnly
+      dups := acc.dups ++ same.filterMap fun m' =>
+        if m'.path != rel then some (m.name, m'.path, rel) else none }
+
+theorem place_lib_path {libs : List Lib} {src rel : String} {m : Mod} {e : Bool}
+    (h : place libs src rel = .lib m e) : m.path = rel := by
+  unfold place at h
+  rcases hf : libs.filter (fun l => l.srcDir == src && covered (moduleName src rel) l.pats)
+    with _ | ⟨o, rest⟩
+  · simp only [hf] at h; split at h <;> simp at h
+  · simp only [hf, Placed.lib.injEq] at h; rw [← h.1]
+
+/-- Attribute every file of every `srcDir`. -/
+def attributeFiles (libs : List Lib) (files : List (String × List String)) : Acc :=
+  files.foldl (init := {}) fun acc (src, rels) => rels.foldl (step libs src) acc
+
+/-- A file the attribution accounts for: attributed, an orphan, or the earlier of two files
+with one module name. -/
+def Acc.Seen (acc : Acc) (rel : String) : Prop :=
+  (∃ m ∈ acc.mods, m.path = rel) ∨ rel ∈ acc.orphans ∨ ∃ d ∈ acc.dups, d.2.1 = rel
+
+theorem step_mono (libs : List Lib) (src : String) (acc : Acc) (rel x : String)
+    (h : acc.Seen x) : (step libs src acc rel).Seen x := by
+  unfold step
+  split
+  · exact h
+  · rcases h with ⟨m, hm, hp⟩ | ho | ⟨d, hd, hp⟩
+    · exact Or.inl ⟨m, hm, hp⟩
+    · exact Or.inr (Or.inl (List.mem_append_left _ ho))
+    · exact Or.inr (Or.inr ⟨d, hd, hp⟩)
+  · rename_i m e hpl
+    rcases h with ⟨m0, hm0, hp⟩ | ho | ⟨d, hd, hp⟩
+    · by_cases hn : m0.name = m.name
+      · by_cases hpr : m0.path = rel
+        · left; exact ⟨m, List.mem_append_right _ (List.mem_singleton.2 rfl),
+            by rw [place_lib_path hpl, ← hpr, hp]⟩
+        · right; right
+          refine ⟨(m.name, m0.path, rel), List.mem_append_right _ ?_, hp⟩
+          rw [List.mem_filterMap]
+          refine ⟨m0, List.mem_filter.2 ⟨hm0, by simp [hn]⟩, ?_⟩
+          simp [hpr]
+      · left; exact ⟨m0, List.mem_append_left _ (List.mem_filter.2 ⟨hm0, by simp [hn]⟩), hp⟩
+    · exact Or.inr (Or.inl ho)
+    · exact Or.inr (Or.inr ⟨d, List.mem_append_left _ hd, hp⟩)
+
+theorem step_seen (libs : List Lib) (src : String) (acc : Acc) (rel : String) (hs : src ≠ ".") :
+    (step libs src acc rel).Seen rel := by
+  rcases place_total libs src rel hs with ⟨m, e, hpl, hp⟩ | hpl
+  · unfold step; rw [hpl]
+    exact Or.inl ⟨m, List.mem_append_right _ (List.mem_singleton.2 rfl), hp⟩
+  · unfold step; rw [hpl]
+    exact Or.inr (Or.inl (List.mem_append_right _ (List.mem_singleton.2 rfl)))
+
+theorem foldl_step_mono (libs : List Lib) (src : String) (rels : List String) :
+    ∀ (acc : Acc) (x : String), acc.Seen x → (rels.foldl (step libs src) acc).Seen x := by
+  induction rels with
+  | nil => intro acc x h; exact h
+  | cons r rs ih => intro acc x h; exact ih _ x (step_mono libs src acc r x h)
+
+theorem foldl_step_seen (libs : List Lib) (src : String) (rels : List String) (hs : src ≠ ".") :
+    ∀ (acc : Acc), ∀ rel ∈ rels, (rels.foldl (step libs src) acc).Seen rel := by
+  induction rels with
+  | nil => intro acc rel h; simp at h
+  | cons r rs ih =>
+    intro acc rel h
+    rcases List.mem_cons.1 h with rfl | h
+    · exact foldl_step_mono libs src rs _ rel (step_seen libs src acc rel hs)
+    · exact ih _ rel h
+
+theorem foldl_files_mono (libs : List Lib) (files : List (String × List String)) :
+    ∀ (acc : Acc) (x : String), acc.Seen x →
+      (files.foldl (fun acc (sr : String × List String) => sr.2.foldl (step libs sr.1) acc) acc).Seen x := by
+  induction files with
+  | nil => intro acc x h; exact h
+  | cons f fs ih => intro acc x h; exact ih _ x (foldl_step_mono libs f.1 f.2 acc x h)
+
+/-- **Completeness**: every file the walk found under a non-root `srcDir` is accounted for —
+attributed to a lib, reported as an orphan, or reported as the earlier file of a duplicated
+module name. Nothing is dropped silently. -/
+theorem attributeFiles_complete (libs : List Lib) (files : List (String × List String)) :
+    ∀ sr ∈ files, sr.1 ≠ "." → ∀ rel ∈ sr.2, (attributeFiles libs files).Seen rel := by
+  unfold attributeFiles
+  suffices h : ∀ (acc : Acc), ∀ sr ∈ files, sr.1 ≠ "." → ∀ rel ∈ sr.2,
+      (files.foldl (fun acc (sr : String × List String) => sr.2.foldl (step libs sr.1) acc) acc).Seen rel
+    from h {}
+  induction files with
+  | nil => intro acc sr h; simp at h
+  | cons f fs ih =>
+    intro acc sr h hs rel hr
+    rcases List.mem_cons.1 h with rfl | h
+    · exact foldl_files_mono libs fs _ rel (foldl_step_seen libs sr.1 sr.2 hs acc rel hr)
+    · exact ih _ sr h hs rel hr
+
+/-- No two attributed modules share a name. -/
+def Acc.Unique (acc : Acc) : Prop := acc.mods.Pairwise fun a b => a.name ≠ b.name
+
+theorem step_unique (libs : List Lib) (src : String) (acc : Acc) (rel : String)
+    (h : acc.Unique) : (step libs src acc rel).Unique := by
+  unfold step
+  split
+  · exact h
+  · exact h
+  · rename_i m e _
+    unfold Acc.Unique at h ⊢
+    simp only
+    rw [List.pairwise_append]
+    refine ⟨h.filter _, List.pairwise_singleton _ _, ?_⟩
+    intro a ha b hb
+    rw [List.mem_singleton] at hb; subst hb
+    have := (List.mem_filter.1 ha).2
+    simpa using this
+
+theorem foldl_step_unique (libs : List Lib) (src : String) (rels : List String) :
+    ∀ (acc : Acc), acc.Unique → (rels.foldl (step libs src) acc).Unique := by
+  induction rels with
+  | nil => intro acc h; exact h
+  | cons r rs ih => intro acc h; exact ih _ (step_unique libs src acc r h)
+
+/-- **Unique ownership**: every module name is attributed once, to one lib. -/
+theorem attributeFiles_unique (libs : List Lib) (files : List (String × List String)) :
+    (attributeFiles libs files).Unique := by
+  unfold attributeFiles
+  suffices h : ∀ (acc : Acc), acc.Unique →
+      (files.foldl (fun acc (sr : String × List String) => sr.2.foldl (step libs sr.1) acc) acc).Unique
+    from h {} List.Pairwise.nil
+  induction files with
+  | nil => intro acc h; exact h
+  | cons f fs ih => intro acc h; exact ih _ (foldl_step_unique libs f.1 f.2 acc h)
 
 /-! ## The layers -/
 
@@ -299,9 +432,9 @@ def loadModules (root : System.FilePath) : IO (List Lib × List Mod × List Stri
   let libs := libsOf (← IO.FS.readFile (root / "lakefile.lean"))
   let srcs := (libs.map (·.srcDir)).eraseDups.mergeSort (· ≤ ·)
   let files ← srcs.mapM fun src => do pure (src, ← leanFiles root src)
-  let (mods, orphans, exeOnly, dups) := attributeFiles libs files
-  for d in dups do IO.eprintln d
-  return (libs, mods, orphans, exeOnly)
+  let acc := attributeFiles libs files
+  for (n, p1, p2) in acc.dups do IO.eprintln s!"DUPLICATE module name {n}: {p1} and {p2}"
+  return (libs, acc.mods, acc.orphans, acc.exeOnly)
 
 def layers (tsv : Option String) (maxDepth : Option Nat) : IO UInt32 := do
   let root ← rootDir
