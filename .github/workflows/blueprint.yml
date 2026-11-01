@@ -89,8 +89,8 @@ jobs:
           # publishes in its `sha256.sum`, then unpacked where the installer would put it.
           PIXI_VERSION: v0.83.0
         run: |
-          # The blueprint's Python steps (file-links post-pass + the WeasyPrint PDF
-          # render) run on a pinned Python + WeasyPrint managed by pixi
+          # The blueprint's one Python step (the WeasyPrint PDF render) runs on a
+          # pinned Python + WeasyPrint managed by pixi
           # (blueprint/pyproject.toml + pixi.lock), so the host's system python3 is
           # irrelevant. Install pixi if the runner lacks it, put it on PATH for the
           # later steps, and materialize the locked environment up front.
@@ -314,9 +314,9 @@ jobs:
           # (html-single/) alongside the multi-page site (html-multi/).
           lake exe blueprint-gen --output _out/blueprint --with-html-single
           # Spell out index.html in multi-page directory links so the site is
-          # also navigable over file:// (a no-op when served over HTTP). Python runs
-          # through the pinned pixi env (set up above), not the host python3.
-          pixi run python scripts/file-links.py _out/blueprint/html-multi
+          # also navigable over file:// (a no-op when served over HTTP). A Lean
+          # program on the core toolchain (tools/Tools/FileLinks.lean).
+          lean --run ../tools/Tools/FileLinks.lean _out/blueprint/html-multi
 
       # -------------------------------------------------------
       # Phase 3: Render a paginated PDF of the single-page site

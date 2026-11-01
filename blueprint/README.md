@@ -39,8 +39,8 @@ attached.
 * **Lean** — via [elan](https://github.com/leanprover/elan); the pinned toolchain
   (`lean-toolchain`, currently `v4.35.0`) is fetched automatically by Lake.
 * **[pixi](https://pixi.prefix.dev/latest/#installation)** — required to run the
-  blueprint's **Python** steps: the WeasyPrint **PDF render** and the small
-  `file-links.py` post-pass. The scripts and CI invoke Python through `pixi run`,
+  blueprint's one **Python** step, the WeasyPrint **PDF render**. The scripts and
+  CI invoke Python through `pixi run`,
   which supplies a *pinned* Python + WeasyPrint from `pyproject.toml` + `pixi.lock`
   — so the host's system `python3` is never used and never has to match (an old
   system WeasyPrint will not render this document). Install pixi once, per
@@ -68,7 +68,7 @@ lake exe blueprint-gen --output _out/blueprint --with-html-single   # render sta
 ```
 
 Or run `./scripts/ci-pages.sh`, which does the render **and** the
-`file-links.py` pass that makes `html-multi` navigable over `file://` (see
+`file-links` pass (`tools/Tools/FileLinks.lean`) that makes `html-multi` navigable over `file://` (see
 [Viewing](#viewing-the-rendered-output) below), then prints absolute paths for
 both outputs.
 
@@ -113,7 +113,7 @@ Two outputs are produced; both can be opened directly as files.
   per chapter, search, dependency graph). Verso writes its cross-page links as
   *directory* URLs (`Chapter/`, no `index.html`); a browser opening such a
   `file://` directory shows the folder instead of its page. The build's
-  `scripts/file-links.py` pass (run automatically by `ci-pages.sh`) rewrites those
+  `file-links` pass (`tools/Tools/FileLinks.lean`, run automatically by `ci-pages.sh`) rewrites those
   links to spell out `index.html`, so chapter navigation works over `file://`
   too. Search and the dependency graph fetch data at runtime and still need an
   HTTP server:
@@ -145,15 +145,15 @@ Two outputs are produced; both can be opened directly as files.
 ## Build scripts
 
 Three scripts under `scripts/` automate the render-and-publish pipeline; all are
-idempotent and print absolute paths when they finish. The two that run Python
-(`ci-pages.sh`'s `file-links.py` pass and `render-pdf.sh`) go through `pixi run`,
-so they need [pixi](https://pixi.prefix.dev/latest/#installation) (see
+idempotent and print absolute paths when they finish. The one that runs Python
+(`render-pdf.sh`, also called by `ci-pages.sh`) goes through `pixi run`, so it needs
+[pixi](https://pixi.prefix.dev/latest/#installation) (see
 [Prerequisites](#prerequisites)).
 
 * **`scripts/ci-pages.sh`** — the full local/CI render. It runs `lake update`,
   then `lake exe blueprint-gen --output _out/blueprint --with-html-single` (which
   builds the document and emits both `html-multi/` and a self-contained
-  `html-single/`), then the `file-links.py` pass that makes `html-multi` navigable
+  `html-single/`), then the `file-links` pass (Lean, `lean --run`) that makes `html-multi` navigable
   over `file://`, then `render-pdf.sh` (skipped with a note if pixi is not
   installed), and finally calls `stage-docs.sh`.
 
