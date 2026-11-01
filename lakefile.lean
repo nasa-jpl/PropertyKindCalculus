@@ -569,6 +569,14 @@ lean_exe «module-census» where
   root := `Tools.ModuleCensus
   supportInterpreter := true  -- `--closure` imports the package in process (`importModules`)
 
+/-- **The `file://` link pass** (`TOOLS.md` §5 step 5): spells out `index.html` in the directory
+links of the blueprint's `html-multi` output so it is navigable over `file://`; `fixSegs_idem` is the
+idempotence a rerun relies on, every rewritten target is looked up (`--strict` fails on a missing one).
+`ci-pages.sh` and `blueprint.yml` run it with `lean --run`. -/
+lean_exe «file-links» where
+  srcDir := "tools"
+  root := `Tools.FileLinks
+
 /-- Worked uncertainty examples grounded in the two source papers (Degenhardt 2025 fictive
 example; Willink 2005 gauge-block), in the `examples/` source tree as a **separate library** so
 no *library* module carries `#eval`/`#guard`. Build with `lake build UncertaintyExamples`. -/

@@ -148,6 +148,12 @@ Anything a tool does outside this list is a defect of the tool, not an extension
    (the exact binary value rounded half-to-even, from `Float.toBits`), so no `Svg` inductive was
    needed — the generators are the same arithmetic in the same order. `Cake.layersFor_eq` and
    `baseLayers_audience_free` say where the audience is read (the top layers and the TorchLean chip).
+   *Shipped (link pass)*: `tools/Tools/FileLinks.lean`, core-only, `lean --run` from `ci-pages.sh` and
+   `blueprint.yml` (pixi is now needed for the PDF alone); the path rewrite is `fixSegs` over the
+   `/`-segments, `fixSegs_idem` its idempotence, decided again on every rewritten href at run time;
+   every rewritten target is looked up under the output directory (`--strict` makes a missing one
+   fatal; off in CI until a full render has shown the count is 0). Byte-identical to the Python on a
+   synthetic site covering every rule in its docstring.
 6. **`blueprint-print`**: the print pass of `html-to-pdf.py` (merge of the multi-page fallback,
    `-verso-*` skipping, heading renumbering and nesting check, bookmark cleanup, print CSS) as a
    Lean text pass, its HTML diffed against the Python pipeline's on the committed blueprint before
