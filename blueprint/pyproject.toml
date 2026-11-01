@@ -13,7 +13,7 @@
 # Usage:
 #   pixi install                       # materialize the env from pixi.lock
 #   pixi run render-pdf                # render + place the PDF (calls scripts/render-pdf.sh)
-#   pixi run python scripts/html-to-pdf.py IN.html OUT.pdf   # ad-hoc
+#   pixi run weasyprint PRINT.html OUT.pdf     # ad-hoc: PRINT.html from `lake exe blueprint-print`
 
 [project]
 name = "propertykindcalculus-blueprint-tools"
@@ -41,6 +41,4 @@ brotli-python = "*"
 # Render the blueprint PDF (the single-page HTML must already be built under
 # _out/blueprint/ — e.g. by `lake exe blueprint-gen --with-html-single`).
 render-pdf = "bash scripts/render-pdf.sh"
-# Ad-hoc helpers (paths passed on the command line).
-html-to-pdf = "python scripts/html-to-pdf.py"
 file-links = "python scripts/file-links.py"

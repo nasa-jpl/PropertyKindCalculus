@@ -552,6 +552,13 @@ lean_exe «blueprint-figures» where
   srcDir := "tools"
   root := `Tools.BlueprintFigures
 
+/-- **The print pass of the PDF** (`TOOLS.md` §5 step 6): the merge, pruning, heading renumbering and
+print CSS `html-to-pdf.py` did before WeasyPrint, text to text; `renumberLevels_idem` and
+`checkLevels_renumber` its theorems. `blueprint/scripts/render-pdf.sh` runs it, then WeasyPrint. -/
+lean_exe «blueprint-print» where
+  srcDir := "tools"
+  root := `Tools.BlueprintPrint
+
 /-- Worked uncertainty examples grounded in the two source papers (Degenhardt 2025 fictive
 example; Willink 2005 gauge-block), in the `examples/` source tree as a **separate library** so
 no *library* module carries `#eval`/`#guard`. Build with `lake build UncertaintyExamples`. -/
