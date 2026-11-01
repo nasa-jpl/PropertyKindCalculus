@@ -10,9 +10,10 @@ tape and the same inputs.
 
 The verdict is two-tiered, by the cone of each output (`transCone`):
 
-  * an output whose backward cone contains no `exp`/`log` node must be **bit-identical** —
-    `+ − × ÷ √ |·| min max` are IEEE-exact and `Float64` is Lean's `Float`, so any difference is a
-    rendering bug, not a libm;
+  * an output whose backward cone contains no `exp`/`log` node must be **bit-identical** — the raw
+    bit patterns compared, so a `-0.0`/`+0.0` or a NaN-payload difference fails — because
+    `+ − × ÷ √ |·| min max` and the table fetch are IEEE-exact and `Float64` is Lean's `Float`, so
+    any difference is a rendering bug, not a libm;
   * an output whose cone reaches `exp`/`log` is compared in **ulps** (`--max-ulp`, default 4):
     Julia's `exp`/`log` are pure-Julia `Base.Math`, Lean's are glibc's; the two are correctly
     rounded or nearly so, and the gap is the one the C stub / CUDA pair already carries.
@@ -27,12 +28,15 @@ module
 public import PropertyKindCalculus.Torch.Paradigm.TapeCodegenJulia
 public import PropertyKindCalculus.Examples.TapeCodegenDemo
 public import PropertyKindCalculus.Examples.LmStepCodegenDemo
+public import PropertyKindCalculus.Examples.TapeCodegenLut
 
 @[expose] public section Blanket
 
 open Runtime.Autograd (Tape Node)
 open PropertyKindCalculus.Paradigm.TapeCodegen
 open PropertyKindCalculus.Paradigm.TapeCodegen.Julia
+open PropertyKindCalculus.Paradigm (LutTable)
+open PropertyKindCalculus.Paradigm.TapeCSE (cseCompact)
 
 namespace PropertyKindCalculus.Apps.JuliaParity
 
@@ -66,7 +70,8 @@ def usage : String := String.intercalate "\n"
   , "  -V, --version              print the Lean toolchain this was built with"
   , "  -h, --help                 this text"
   , ""
-  , "Cases: avs_resjac (Examples.TapeCodegenDemo), lm_step (Examples.LmStepCodegenDemo)."
+  , "Cases: avs_resjac (Examples.TapeCodegenDemo), lm_step (Examples.LmStepCodegenDemo),"
+  , "       lut_model (Examples.TapeCodegenLut: a lutfetch + arithmetic tape, against evalTapeT)."
   , "Verdict: bit-identical on outputs with no exp/log in their cone; within --max-ulp otherwise;"
   , "the KernelAbstractions twin (--ka) within --ka-rtol relative error on every output." ]
 
@@ -129,8 +134,10 @@ def hexDigit? (c : Char) : Option Nat :=
 def bitsOfHex? (s : String) : Option UInt64 :=
   s.toList.foldlM (init := (0 : Nat)) (fun acc c => (hexDigit? c).map (acc * 16 + ·)) |>.map UInt64.ofNat
 
-/-- ulp distance between two finite doubles of the same sign; `none` when they are not comparable
-that way (sign differs, or one is NaN/Inf and the other is not). Both NaN counts as distance 0. -/
+/-- ulp distance between two finite doubles of the same sign, for the **tolerant** tiers; `none`
+when they are not comparable that way (sign differs, or one is NaN/Inf and the other is not). Both
+NaN, or `±0.0` against `∓0.0`, count as distance 0 — numerically equivalent, so acceptable under a
+tolerance; the exact tier never consults this, it compares the raw bits. -/
 def ulpDist (x y : Float) : Option Nat :=
   if x.isNaN && y.isNaN then some 0
   else if x.isNaN || y.isNaN then none
@@ -178,16 +185,36 @@ structure Case where
   name : String
   record : Except String (Tape Float × List Nat)
   centre : String → Float
+  /-- The lookup tables the tape's `lutfetch` nodes name (empty for pure-arithmetic tapes). -/
+  tables : Array LutTable := #[]
+
+/-- `Examples.TapeCodegenLut`'s mixed fetch + arithmetic model, compacted — the case that exercises
+`tl_lutfetch` and the table-extended interpreter `evalTapeT`. -/
+def recordLut : Except String (Tape Float × List Nat) := do
+  let (t, id) ← PropertyKindCalculus.Examples.TapeCodegenLut.lutRecord
+  let (t', remap) := cseCompact t
+  pure (t', [remap.getD id id])
 
 def cases : List Case :=
   [ { name := "avs_resjac", record := PropertyKindCalculus.Paradigm.TapeCodegen.Demo.recordResJac
     , centre := PropertyKindCalculus.Paradigm.TapeCodegen.Demo.env0 }
   , { name := "lm_step", record := PropertyKindCalculus.Examples.LmStepCodegenDemo.recordStep
-    , centre := PropertyKindCalculus.Examples.LmStepCodegenDemo.env0 } ]
+    , centre := PropertyKindCalculus.Examples.LmStepCodegenDemo.env0 }
+  , { name := "lut_model", record := recordLut
+    , centre := PropertyKindCalculus.Examples.TapeCodegenLut.recordEnv
+    , tables := #[PropertyKindCalculus.Examples.TapeCodegenLut.demoLut] } ]
+
+/-- The tables of a case, keyed by name — `evalTapeT`'s table resolver. -/
+def tableLookup (c : Case) : String → Option LutTable := fun tn => c.tables.find? (·.name == tn)
 
 /-- The Julia driver: reads the inputs file (names, then one hex row per pixel), runs the kernel at
 `Float64`, prints one hex row per pixel. -/
-def driver (name : String) (nOut : Nat) (ka : Bool := false) : String := String.intercalate "\n"
+def driver (name : String) (nOut : Nat) (tables : Array LutTable) (ka : Bool := false) : String :=
+  let lutDefs := tables.toList.map fun tb =>
+    s!"lut_{tb.name} = Float64[" ++ String.intercalate ", "
+      (tb.values.toList.map (fun v => s!"reinterpret(Float64, 0x{hexOfBits v.toBits})")) ++ "]"
+  let lutArgs := String.join (tables.toList.map (fun tb => s!", lut_{tb.name}"))
+  String.intercalate "\n" <|
   [ (if ka then "using KernelAbstractions\n" else "") ++ s!"include(joinpath(@__DIR__, \"{name}{if ka then "_ka" else ""}.jl\"))"
   , "lines = readlines(ARGS[1])"
   , "names = split(lines[1])"
@@ -199,8 +226,9 @@ def driver (name : String) (nOut : Nat) (ka : Bool := false) : String := String.
   , "    end"
   , "end"
   , s!"out = Matrix\{Float64}(undef, P, {nOut})"
-  , (if ka then s!"{name}_kernel!(CPU())(out, ins...; ndrange = P); KernelAbstractions.synchronize(CPU())"
-     else s!"{name}!(out, ins...)")
+  ] ++ lutDefs ++
+  [ (if ka then s!"{name}_kernel!(CPU())(out, ins...{lutArgs}; ndrange = P); KernelAbstractions.synchronize(CPU())"
+     else s!"{name}!(out, ins...{lutArgs})")
   , "for p in 1:P"
   , s!"    println(join([string(reinterpret(UInt64, out[p, j]); base = 16, pad = 16) for j in 1:{nOut}], \" \"))"
   , "end"
@@ -234,8 +262,8 @@ def compareSurface (o : Opts) (julia : String) (c : Case) (t : Tape Float) (outI
     return none
   let mut v : Verdict := {}
   for (env, line, k) in (envs.zip outLines).zipIdx.map (fun ((e, l), k) => (e, l, k)) do
-    match evalTape env t with
-    | .error e => IO.eprintln s!"[{c.name}] evalTape failed at pixel {k}: {e}"; return none
+    match evalTapeT (tableLookup c) env t with
+    | .error e => IO.eprintln s!"[{c.name}] evalTapeT failed at pixel {k}: {e}"; return none
     | .ok vals =>
       let toks := (line.splitOn " ").filter (· ≠ "")
       for (oid, j) in outIds.zipIdx do
@@ -246,26 +274,29 @@ def compareSurface (o : Opts) (julia : String) (c : Case) (t : Tape Float) (outI
         v := { v with compared := v.compared + 1 }
         let trans := marks.getD oid false || ka
         let tier := if ka then "KernelAbstractions" else if trans then "exp/log cone" else "exact cone"
-        match ulpDist lean jl with
-        | none =>
-          if trans then v := { v with ulpFailures := v.ulpFailures + 1 } else v := { v with exactFailures := v.exactFailures + 1 }
-          v := { v with notes := v.notes.push s!"pixel {k} out {j} ({tier}): lean {hexOfBits lean.toBits} julia {hexOfBits bits} (not comparable)" }
-        | some d =>
-          v := { v with maxUlpSeen := max v.maxUlpSeen d }
-          let detail := s!"lean {hexOfBits lean.toBits} julia {hexOfBits bits}"
-          if ka then
-            let rel := if lean == jl then 0.0 else
-              (Float.abs (lean - jl)) / (max (Float.abs lean) (Float.abs jl))
-            if rel > o.kaRtol then
-              let note := s!"pixel {k} out {j} ({tier}): rel {rel} > {o.kaRtolText} ({d} ulp)  {detail}"
-              v := { v with ulpFailures := v.ulpFailures + 1, notes := v.notes.push note }
-          else if trans then
-            if d > o.maxUlp then
+        let detail := s!"lean {hexOfBits lean.toBits} julia {hexOfBits bits}"
+        if !trans then
+          -- the exact tier: the raw bits, nothing weaker (a `-0.0`/`+0.0` or a NaN-payload
+          -- difference is a rendering difference and fails here)
+          if lean.toBits != bits then
+            let note := s!"pixel {k} out {j} (exact cone): bits differ ({((ulpDist lean jl).map toString).getD "n/a"} ulp)  {detail}"
+            v := { v with exactFailures := v.exactFailures + 1, notes := v.notes.push note }
+        else
+          match ulpDist lean jl with
+          | none =>
+            let note := s!"pixel {k} out {j} ({tier}): not comparable  {detail}"
+            v := { v with ulpFailures := v.ulpFailures + 1, notes := v.notes.push note }
+          | some d =>
+            v := { v with maxUlpSeen := max v.maxUlpSeen d }
+            if ka then
+              let rel := if lean == jl then 0.0 else
+                (Float.abs (lean - jl)) / (max (Float.abs lean) (Float.abs jl))
+              if rel > o.kaRtol then
+                let note := s!"pixel {k} out {j} ({tier}): rel {rel} > {o.kaRtolText} ({d} ulp)  {detail}"
+                v := { v with ulpFailures := v.ulpFailures + 1, notes := v.notes.push note }
+            else if d > o.maxUlp then
               let note := s!"pixel {k} out {j} ({tier}): {d} ulp, limit {o.maxUlp}  {detail}"
               v := { v with ulpFailures := v.ulpFailures + 1, notes := v.notes.push note }
-          else if d != 0 then
-            let note := s!"pixel {k} out {j} (exact cone): {d} ulp, must be 0  {detail}"
-            v := { v with exactFailures := v.exactFailures + 1, notes := v.notes.push note }
   let nTrans := outIds.filter (fun oid => marks.getD oid false) |>.length
   let tolDesc := if ka then s!"relative tolerance {o.kaRtolText}" else s!"bit-exact outside exp/log cones, {o.maxUlp} ulp inside"
   IO.println s!"[{c.name}/{surface}] ({tolDesc}) nodes {t.nodes.size}, inputs {cg.inputs.size}, outputs {outIds.length} ({nTrans} in an exp/log cone), pixels {o.pixels}: compared {v.compared}, exact failures {v.exactFailures}, ulp failures {v.ulpFailures}, max ulp seen {v.maxUlpSeen}"
@@ -276,15 +307,15 @@ def runCase (o : Opts) (julia : String) (c : Case) : IO (Option Verdict) := do
   match c.record with
   | .error e => IO.eprintln s!"[{c.name}] record failed: {e}"; return none
   | .ok (t, outIds) =>
-  match genJulia t outIds with
+  match genJulia t outIds c.tables with
   | .error e => IO.eprintln s!"[{c.name}] codegen failed: {e}"; return none
   | .ok cg =>
   let dir : System.FilePath := o.outDir
   IO.FS.createDirAll dir
   IO.FS.writeFile (dir / s!"{c.name}.jl") (emitJulia c.name cg)
   IO.FS.writeFile (dir / s!"{c.name}_ka.jl") (emitJuliaKA c.name cg)
-  IO.FS.writeFile (dir / s!"{c.name}_parity.jl") (driver c.name cg.numOutputs)
-  IO.FS.writeFile (dir / s!"{c.name}_parity_ka.jl") (driver c.name cg.numOutputs (ka := true))
+  IO.FS.writeFile (dir / s!"{c.name}_parity.jl") (driver c.name cg.numOutputs c.tables)
+  IO.FS.writeFile (dir / s!"{c.name}_parity_ka.jl") (driver c.name cg.numOutputs c.tables (ka := true))
   let envs := (List.range o.pixels).map (pixelEnv c.centre cg.inputs)
   let rows := envs.map fun env => String.intercalate " " (cg.inputs.toList.map (fun nm => hexOfBits (env nm).toBits))
   IO.FS.writeFile (dir / s!"{c.name}_inputs.txt")
