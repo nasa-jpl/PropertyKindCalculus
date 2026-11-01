@@ -284,10 +284,10 @@ Status: ✅ done · 🚧 in progress · ⬜ planned
   (`SL.genSL_slots_lt`, so no printer's text uses a temporary before defining it); `gen`/`genJulia`
   decide that invariant themselves (`checkWF`, `gen_wf`/`genJulia_wf`) and reject an output id outside
   the tape (`checkOutputs`, `gen_outIds_lt`/`genJulia_outIds_lt`).
-  ✅ **The chain, composed** (`Examples.TapeEndToEndChain`): `pipeline_denotes` — for a well-formed
-  named-leaf tape, the emitted program of its CSE'd form runs, at every environment, to the original
-  tape's value at every remapped node (`cseCompact_denotation_of_named` ∘ `genSL_denotes`); `#guard`'d
-  on the recorded AVS tape.
+  ✅ **The chain, composed** (`Examples.TapeEndToEndChain`): `pipeline_denotes` — for every well-formed
+  tape, const leaves included, the emitted program of its CSE'd form runs, at every environment, to the
+  original tape's value at every remapped node (`cseCompact_denotation_unconditional` ∘ `genSL_denotes`);
+  `#guard`'d from the raw AVS recording through the remap.
   ⬜ Run `julia_parity` in a CI lane with Julia installed.
   ⬜ First CliMA-shaped closure recorded over `[NumCarrier α]` to find the alphabet gaps (a bounded
   reduction and a gather are the expected first two).
@@ -434,7 +434,8 @@ Status: ✅ done · 🚧 in progress · ⬜ planned
   value-*bits* give equal denotation only under `toBits` injectivity (absent in core). That one
   const-leaf fact is isolated as an explicit, per-tape-checkable hypothesis `hleaf`; two consequences
   discharge it: `cseCompact_denotation_of_named` (named-leaf tapes need `hleaf` vacuously → the equality
-  holds unconditionally, no `toBits`), and `#guard cseDenotationHolds demoEnv …` checks it computationally
+  holds unconditionally, no `toBits`), `cseCompact_denotation_unconditional` (every well-formed tape:
+  Batteries' `Float.toBits_inj` makes `hleaf` a theorem), and `#guard cseDenotationHolds demoEnv …` checks it computationally
   on the deployed AVS `resJac` tape (whose merged const leaves exercise the `hleaf` case), mirroring
   `#guard cse_preserves_resJac`. Sorry-free; axioms `[propext, Classical.choice, Quot.sound]`.
 - ✅ **GPU landing on the A4500** (`examples.tape_codegen_landing` + the deploy app). The codegen now
