@@ -455,6 +455,7 @@ lean_lib «UncertaintyRigor» where
     .one `PropertyKindCalculus.Uncertainty.Adequacy.MeanBound,
     .one `PropertyKindCalculus.Uncertainty.Adequacy.RefinementBridge,
     .one `PropertyKindCalculus.Uncertainty.Adequacy.ExecBridge,
+    .one `PropertyKindCalculus.Uncertainty.Adequacy32,
     .one `PropertyKindCalculus.Uncertainty.Adequacy.Significance,
     .one `PropertyKindCalculus.Uncertainty.Experiments.PRSimulation,
     .one `PropertyKindCalculus.Uncertainty.Experiments.EagerProvenance]
