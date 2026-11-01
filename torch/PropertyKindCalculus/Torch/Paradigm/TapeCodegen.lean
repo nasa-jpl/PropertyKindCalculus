@@ -286,20 +286,24 @@ def lutHelperCuda (cg : Codegen) : String :=
         , "  return __fadd_rn(a, __fmul_rn(f, __fsub_rn(b, a)));" ]
     | .hardware => "  return tex1DLayered<float>(tex, uc + 0.5f, L);"
   String.intercalate "\n"
-    [ "__device__ __forceinline__ float tl_lutfetch(cudaTextureObject_t tex, int W, float layer, float u) {"
+    [ "__device__ __forceinline__ float tl_lutfetch(cudaTextureObject_t tex, int W, int LAYERS, float layer, float u) {"
     , "  float wmax = (float)(W - 1);"
     , "  float um = (u <= wmax ? u : wmax);"
     , "  float uc = (0.0f <= um ? um : 0.0f);"
-    , "  int L = (int)(layer + 0.5f);"
+    , "  float lmax = (float)(LAYERS - 1);"
+    , "  float ls = layer + 0.5f;"
+    , "  float lm = (ls <= lmax ? ls : lmax);"
+    , "  float lc = (0.0f <= lm ? lm : 0.0f);"
+    , "  int L = (int)lc;"
     , body
     , "}"
-    , "#define TL_LUTFETCH(NAME, W, LAYERS, L, U) tl_lutfetch(tex_##NAME, W, L, U)"
+    , "#define TL_LUTFETCH(NAME, W, LAYERS, L, U) tl_lutfetch(tex_##NAME, W, LAYERS, L, U)"
     , "" ]
 
 /-- The stub-side `lutfetch` helper + macro: `LutTable.refFetch`'s clamp/floor/lerp as a host loop over
 the baked table — the coordinate and the layer clamped with `max 0 (min x hi)` in Lean's `ite` reading
 (a NaN lands on `hi`, as `minOfLe` does; the layer is clamped as a float before it is truncated, so a
-huge finite layer cannot overflow the index). Point mode bit-identical to the device kernel; hardware
+huge finite layer cannot overflow the index; the CUDA helper clamps the layer the same way before its `int` conversion). Point mode bit-identical to the device kernel; hardware
 mode emulates the 9-bit weight, tolerance-only. Empty when the kernel uses no tables. -/
 def lutHelperStub (cg : Codegen) : String :=
   if cg.tables.isEmpty then "" else
