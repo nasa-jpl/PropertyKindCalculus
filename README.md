@@ -203,6 +203,15 @@ rewriting the model*:
   touched only for inputs/outputs). A genuine *ahead-of-time* compilation Lean → recorded IR → `.cu`,
   *not* an interpreter; *compute-bound*, approaching the roofline. Needs a model with good AI
   properties (branchless — guaranteed by `NumCarrier` — and register-fittable).
+- **Julia, emitted** — the same recorded, CSE'd DAG rendered as a Julia function (a plain host loop,
+  the bit-exact twin, and a KernelAbstractions.jl `@kernel`, the portability twin — tolerance-only,
+  since a backend may contract to FMA), for a Julia host such as a CliMA-style model. Not a fifth
+  carrier: the Julia text is the *sealed* algorithm handed to a host that cannot call a Lean theorem —
+  its inputs are the tape's named leaves, its constants the baked leaves the assumption ledger lists,
+  its body the tape's arithmetic op for op; no literal and no call enters the Julia code that did not
+  enter the tape (`semantic_seal`). Precision is a type parameter: at `Float64` the emitted function is
+  bit-identical to `evalTape` on the IEEE-exact alphabet (Lean's `Float` *is* binary64 — unlike the
+  `float` CUDA kernel, no narrowing), at `Float32` it is the device kernel's precision.
 
 The **megakernel codegen backend** lives in the `Torch` library and is verified:
 
@@ -219,6 +228,20 @@ The **megakernel codegen backend** lives in the `Torch` library and is verified:
   box clip) recorded, CSE'd to a **322-node** DAG, codegen'd, and `#guard`'d **bit-identical** to the
   `Float` source — arithmetic intensity **4.48/step (≈ 268.7 for the ×60 fit)**, the honest whole-step
   number.
+- `PropertyKindCalculus.Torch.Paradigm.TapeCodegenJulia` — the Julia emitter (`jlExpr`/`jlLit`/
+  `genJulia`/`emitJulia`/`emitJuliaKA`), with the rendering table proved over the whole alphabet
+  (`rendering_table_binary`/`_unary`: `jlExpr` renders exactly what `cOp` interprets) and the pinned
+  semantics in the emitted header — no `@fastmath`/`muladd`, `min`/`max` as Lean's `minOfLe`/`maxOfLe`
+  (`min_eq_ite`/`max_eq_ite`), NaN-restoring `tl_sqrt`/`tl_log`, bit-pattern constants.
+- `PropertyKindCalculus.Examples.TapeCodegenJuliaDemo` — the AVS tape emitted as Julia, `#guard`'d for
+  alphabet coverage and for the same input ABI as the CUDA kernel.
+- `lake exe julia_parity` — runs the emitted `avs_resjac` and `lm_step` kernels under `julia` at
+  `Float64` over deterministic pixels against `evalTape`: bit-identical where an output's cone has no
+  `exp`/`log`, within `--max-ulp` (default 4) where it does — Julia's `exp`/`log` are pure-Julia
+  `Base.Math`, Lean's are glibc's, a third libm beside the CUDA/C pair; `--ka` adds the
+  KernelAbstractions twin on the CPU backend, compared by relative error (`--ka-rtol`, default 1e-9)
+  because that backend compiles through PoCL with FMA fusion. `--help`, `--version`, `-o DIR`,
+  `-j PATH`, `-n N`, `-a` (skip instead of exit 2 when `julia` is absent).
 
 Compile the emitted kernel with `nvcc --fmad=false -prec-div=true -prec-sqrt=true` (no FMA-contraction,
 no re-association) to stay bit-identical to the eager path — the speedup is pure memory-traffic
@@ -231,6 +254,11 @@ Status: ✅ done · 🚧 in progress · ⬜ planned
 - ✅ Generic `Tape → CUDA` megakernel codegen (+ portable C-stub twin) and AI accounting.
 - ✅ AVS residual/Jacobian recorded → CSE DAG → codegen → CPU bit-exact `#guard` (`TapeCodegenDemo`).
 - ✅ Recorder faithfulness proved for all inputs, axiom-audited (`TapeCodegenProof`).
+- ✅ **Julia emitter** beside the CUDA/C pair (`TapeCodegenJulia`), rendering table proved, `julia_parity`
+  exe. ⬜ Settle one `min`/`max` NaN semantics across `cOp`, `cExpr` (`fminf` returns the non-NaN
+  operand) and `jlExpr` (Lean's `ite`). ⬜ Run `julia_parity` in a CI lane with Julia installed.
+  ⬜ First CliMA-shaped closure recorded over `[NumCarrier α]` to find the alphabet gaps (a bounded
+  reduction and a gather are the expected first two).
 - ✅ **Recorded the *whole* trust-region step, not just the residual/Jacobian fragment**
   (`Examples.LmStepCodegenDemo`, parallel to `TapeCodegenDemo`). One full `lmStep` iteration —
   fold the residual + 4 Jacobian columns over all *K* observation rows into the 4×4 normal equations
