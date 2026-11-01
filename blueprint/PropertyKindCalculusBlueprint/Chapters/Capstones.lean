@@ -728,6 +728,10 @@ command does by elaboration and the theorem takes as a hypothesis.
   (`genSL_slots_lt`, `ofProg_ordered`); the generators decide that invariant (`checkWF`, `gen_wf`,
   `genJulia_wf`) and reject an output id outside the tape (`checkOutputs`, `gen_outIds_lt`,
   `genJulia_outIds_lt`) — the printed kernels are well-scoped, for any tape handed to them.
+- The chain composed: `pipeline_denotes` (`examples.tape_end_to_end_chain`) — for every well-formed
+  tape, const leaves included, tape, compacted tape and emitted program hold the same value at every
+  original node; the program's existence supplies the compacted tape's evaluation, and Batteries'
+  `Float.toBits_inj` (`cseCompact_denotation_unconditional`) the merged-const-leaf case.
 - One `min`/`max` reading on NaN across the interpreter and the three renderings: Lean's `ite`,
   written as the `≤`-ternary in C and CUDA and as `ifelse` in Julia; the table fetch's clamp likewise
   follows `refFetch` in every rendering.

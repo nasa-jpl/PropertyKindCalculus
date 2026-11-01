@@ -44,6 +44,7 @@ public import PropertyKindCalculus.Examples.TapeCseStructural
 meta import PropertyKindCalculus.Examples.TapeCseStructural
 public import PropertyKindCalculus.Examples.TapeCodegenEndToEnd
 meta import PropertyKindCalculus.Examples.TapeCodegenEndToEnd
+public import Batteries.Data.Float.Lemmas
 
 @[expose] public section Blanket
 
@@ -160,6 +161,52 @@ theorem cseCompact_denotation_of_named (t : Tape Float) (hwf : WF t) (env : Stri
   cseCompact_denotation t hwf env vals valsC hv hvC
     (fun id nOld hOld he hnone => absurd hnone (hnamed id nOld hOld he))
 
+/-! ## The const-leaf fact, discharged — `hleaf` is a theorem
+
+`Float.toBits_inj` (Batteries, proved from `Float`'s bit-vector model) is exactly the injectivity the
+structural correspondence was one step short of: bit-identical stored buffers have equal heads, so the
+remapped const leaf stores the same scalar `nodeScalar` reads. -/
+
+private theorem headD_map_toBits (l : List Float) (d : Float) :
+    (l.map Float.toBits).headD d.toBits = (l.headD d).toBits := by
+  cases l <;> rfl
+
+/-- The CSE-remapped node of any node carries the same name, the remapped parents, and the **same
+stored scalar**. -/
+theorem cseCompact_leaf_scalar (t : Tape Float) (hwf : WF t) (id : Nat) (nOld : Node Float)
+    (hOld : t.getNode? id = some nOld) :
+    ∃ nNew, (cseCompact t).1.getNode? ((cseCompact t).2.getD id id) = some nNew ∧
+      nNew.name = nOld.name ∧
+      nNew.parents = nOld.parents.map (fun p => (cseCompact t).2.getD p p) ∧
+      nodeScalar nNew = nodeScalar nOld := by
+  have hid : id < t.size := by
+    rw [Tape.getNode?] at hOld
+    exact (Array.getElem?_eq_some_iff.mp hOld).1
+  obtain ⟨_, nNew, nOld', hNew, hOld', hname, hpar, hbits⟩ := cseCompact_structural t hwf id hid
+  have heq : nOld' = nOld := Option.some.inj (hOld'.symm.trans hOld)
+  subst heq
+  refine ⟨nNew, hNew, hname, hpar, ?_⟩
+  have h2 := congrArg (fun l : List UInt64 => l.headD (0.0 : Float).toBits) hbits
+  simp only [headD_map_toBits] at h2
+  exact Float.toBits_inj.mp h2
+
+/-- **`cseCompact` preserves the `evalTape` denotation node-for-node, for every well-formed tape** —
+const leaves included, no per-tape hypothesis: `hleaf` discharged by `cseCompact_leaf_scalar`. -/
+theorem cseCompact_denotation_unconditional (t : Tape Float) (hwf : WF t) (env : String → Float)
+    (vals valsC : Array Float)
+    (hv : evalTape env t = .ok vals)
+    (hvC : evalTape env (cseCompact t).1 = .ok valsC) :
+    ∀ id, id < t.size → valsC.getD ((cseCompact t).2.getD id id) 0.0 = vals.getD id 0.0 :=
+  cseCompact_denotation t hwf env vals valsC hv hvC (fun id nOld hOld he hnone => by
+    obtain ⟨nNew, hNew, hname, hpar, hsc⟩ := cseCompact_leaf_scalar t hwf id nOld hOld
+    have hstep := (evalTape_node_value env _ (cseCompact_wellFormed t hwf) valsC hvC).2 _ nNew hNew
+    have hempty : nNew.parents.isEmpty = true := by
+      rw [hpar, Array.isEmpty_iff.mp he]; simp
+    have hred : stepVal env valsC nNew = .ok (nodeScalar nNew) := by
+      unfold stepVal; rw [ite_eq_left hempty, hname, hnone]; rfl
+    rw [hred] at hstep
+    exact (Except.ok.inj hstep).symm.trans hsc)
+
 /-! ## Inhabitation — the theorems are non-vacuous
 
 `cseCompact_denotation_of_named` is hypothetical (`WF t`, all leaves named, both `evalTape` runs
@@ -222,6 +269,9 @@ def demoEnv : String → Float := fun s => if s = "a" then 2.0 else if s = "b" t
 
 /-- info: 'PropertyKindCalculus.Examples.TapeCseDenotation.cseCompact_denotation_of_named' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in #print axioms cseCompact_denotation_of_named
+
+/-- info: 'PropertyKindCalculus.Examples.TapeCseDenotation.cseCompact_denotation_unconditional' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in #print axioms cseCompact_denotation_unconditional
 
 /-- info: 'PropertyKindCalculus.Paradigm.TapeCodegen.evalTape_node_value' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in #print axioms evalTape_node_value
