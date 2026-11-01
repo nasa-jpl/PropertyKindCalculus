@@ -61,9 +61,10 @@ reports any name a chapter lists as new that the SBVR does not account for: a na
 after a term (`Composite` (`whole`, `part`)) is a *member* and a dotted name, `#command` or
 `@[attribute]` a *reference* — both must be cited in the source of a definition new at that step.
 Without `--fix-sbvr` a stale rendering is an error; without `--sbvr` the committed renderings
-are still checked against the chapters. CI runs `--sbvr` with `scripts/sbvr-check.sh`, which
-clones and builds SBVR.lean at a pinned revision (`SBVR_LEAN_REV`); move the pin and regenerate
-the renderings together. To ask what a phrase means at a step, or what changed between steps:
+are still checked against the chapters. CI runs `scripts/hcp-check-sbvr.sh`: `hcp-check` built
+with SBVR.lean in process (`tools/sbvr/`, a Lake package pinning SBVR.lean in its lakefile), so no
+`--sbvr` binary is needed — `scripts/hcp-check-sbvr.sh --fix-sbvr` regenerates the renderings; move
+the pin and regenerate them together. To ask what a phrase means at a step, or what changed between steps:
 
 ```sh
 ../SBVR.lean/.lake/build/bin/sbvr-check kinds  HCP/sbvr/physlib-contributor.yaml
@@ -139,13 +140,12 @@ scripts/hcp-assurance.sh --fix      # after a chain, Foundation or catalogue cha
 ## Running checks
 
 Run `lake build HCP` to compile the solutions and `lake build HCPWorksheets` to compile all
-worksheets (which intentionally contain `sorry` holes). Run `lake exe hcp-check` (or
-`lean --run tools/Tools/HcpCheck.lean`, the same program on the bare toolchain) to
-validate chapter front matter, the ten required sections, Synopsis structure and vocabulary,
+worksheets (which intentionally contain `sorry` holes). Run `lake exe hcp-check` (two
+core-only modules, `tools/HcpCheck.lean` and `tools/Tools/HcpCheck.lean`) to validate chapter front matter, the ten required sections, Synopsis structure and vocabulary,
 learning-path rows, live anchors, worksheet structure, synchronized blueprint anchor
 excerpts, and that every name a chapter lists as new at its step is a designation of, or cited
 by, the ladder's SBVR renderings (`HCP/sbvr/rendered/`); add `--sbvr SBVR_CHECK` to check the
-chain itself and the renderings' currency (CI does, via `scripts/sbvr-check.sh`). `scripts/hcp-assurance.sh`
+chain itself and the renderings' currency (CI does, via `scripts/hcp-check-sbvr.sh`, SBVR.lean in process). `scripts/hcp-assurance.sh`
 checks the ladder's assurance case (above).
 
 ## Jargon

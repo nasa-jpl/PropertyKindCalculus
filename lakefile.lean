@@ -525,11 +525,16 @@ every chapter's front matter, sections, synopsis vocabulary, anchor references, 
 (`--fix-excerpts`), worksheet and SBVR rendering, decided over one snapshot of the files —
 `errors s = [] ↔ Ok s` is the theorem the exit code rests on. `--sbvr SBVR_CHECK` also runs the
 pinned `sbvr-check` on the chain and compares each rendering byte for byte (`--fix-sbvr` rewrites
-them); its output is data, the verdict is decided here. Imports only `Lean`, so CI runs it with
-`lean --run tools/Tools/HcpCheck.lean`; `lake exe hcp-check` is the same program. -/
+them); its output is data, the verdict is decided here. Imports only `Lean`, so this build compiles two
+core-only modules. CI runs `scripts/hcp-check-sbvr.sh`: the same checker built in `tools/sbvr/`, a Lake
+package of its own, with SBVR.lean in process (`hcp-check-sbvr`, TOOLS.md §6 Q1). -/
+lean_lib ToolsHcpCheck where
+  srcDir := "tools"
+  roots := #[`Tools.HcpCheck]
+
 lean_exe «hcp-check» where
   srcDir := "tools"
-  root := `Tools.HcpCheck
+  root := `HcpCheck
 
 /-- **The API-site post-pass** (`TOOLS.md` §5 step 3): splices each per-declaration index block
 (`scripts/emit-index-json.lean`) into the doc-gen4 page of the declaration it names, once —
