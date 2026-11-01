@@ -161,6 +161,21 @@ Anything a tool does outside this list is a defect of the tool, not an extension
    to the Python on a synthetic site covering every rule in its docstring; the one divergence is an
    unterminated `href="` at the end of a page, which the Python closed with a stray quote and this
    pass leaves as text.
+6. **`blueprint-print`**: the print pass of `html-to-pdf.py` (merge of the multi-page fallback,
+   `-verso-*` skipping, heading renumbering and nesting check, bookmark cleanup, print CSS) as a
+   Lean text pass, its HTML diffed against the Python pipeline's on the committed blueprint before
+   the Python goes.
+   *Shipped*: `lake exe blueprint-print HTML_INPUT OUT_HTML` (`tools/Tools/BlueprintPrint.lean`),
+   byte-identical to the Python's merged page on the published blueprint (15.6 MB in, 10.5 MB out,
+   0.6 s compiled — hence `lake exe`, not `lean --run`) and on a synthetic multi-page site exercising
+   the table-of-contents ordering, every pruning rule and the character references; the tokenizer
+   reproduces Python's `html.parser` as the pass used it, with CPython's `html5` entity table embedded.
+   `render-pdf.sh` runs it and then WeasyPrint's own command line through pixi — no Python file is
+   left under `blueprint/`. The synthetic site is committed as `tools/fixtures/blueprint-print/` with
+   the page and stderr the Python wrote for it; CI renders it and `cmp`s both, a drift gate that needs
+   no WeasyPrint.
+7. Delete `scripts/*.py`, `HCP/check-hcp.py`, `blueprint/scripts/**/*.py`; `blueprint/pyproject.toml`
+   keeps only WeasyPrint, run as `weasyprint` (its command line), not through a script.
 
 Each step is one PR off `main`, replacing one Python tool and its CI step, byte-identical outputs
 where an artifact is committed (the probe, the figures, the renderings, the excerpts) so the switch
