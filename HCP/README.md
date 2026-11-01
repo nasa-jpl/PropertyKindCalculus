@@ -112,6 +112,29 @@ properties* and *Errors prevented* as rules with evidence (no rule schema in a c
 `--update` takes a newer one after bumping `EFA_COMMIT`), `PKC` includes and refines it, and the
 lessons' `requirement` is the Foundation's.
 
+### The ladder's assurance case
+
+The verdict is evidence: [`assurance/`](assurance/) holds the chain's `sbvr-check` run recorded as W3C
+PROV ([`prov/physlib-contributor.nq`](assurance/prov/physlib-contributor.nq): one `check` activity that
+used the chain at its content hash — the file, the Foundation copy and the kind catalogue — and exited
+0), a FACE assurance case ([`case.face.yaml`](assurance/case.face.yaml): the ladder refines `PKC`, which
+refines the Foundation's, and every quantity term is a kind of the catalogue, carried by that verdict,
+cited from an evidence node's `prov`), and the gate's own run ([`prov/gate.nq`](assurance/prov/gate.nq)).
+[`manifest.yaml`](assurance/manifest.yaml) names the chain, the case, the records and the SBVR.lean and
+face.lean commits the verdicts are at; the gate is engineering-foundation-architecture's
+`tools/hcp_assurance.py` at the pinned `EFA_COMMIT` (`scripts/efa-pin.sh`, the same commit the Foundation
+copy comes from), run by `scripts/hcp-assurance.sh`: it regenerates the record and fails when it differs
+(`--fix` rewrites it), validates it with `prov-check`, valuates the case with `face-eval` and compares its own
+record. A changed definition, Foundation copy or catalogue with a stale record fails CI. Concept and open
+questions: engineering-foundation-architecture `docs/architecture/hcp-assurance.md` (§7 Q4: its dashboard
+aggregates this case with its own and mars.lean's).
+
+```sh
+scripts/hcp-assurance.sh            # clones and builds SBVR.lean and face.lean at the pinned revisions
+scripts/hcp-assurance.sh --fix      # after a chain, Foundation or catalogue change
+SBVR_LEAN=../SBVR.lean FACE_LEAN=../face.lean scripts/hcp-assurance.sh   # with sibling checkouts (at the manifest's commits)
+```
+
 ## Running checks
 
 Run `lake build HCP` to compile the solutions and `lake build HCPWorksheets` to compile all
@@ -120,7 +143,8 @@ validate chapter front matter, the ten required sections, Synopsis structure and
 learning-path rows, live anchors, worksheet structure, synchronized blueprint anchor
 excerpts, and that every name a chapter lists as new at its step is a designation of, or cited
 by, the ladder's SBVR renderings (`HCP/sbvr/rendered/`); add `--sbvr SBVR_CHECK` to check the
-chain itself and the renderings' currency (CI does, via `scripts/sbvr-check.sh`).
+chain itself and the renderings' currency (CI does, via `scripts/sbvr-check.sh`). `scripts/hcp-assurance.sh`
+checks the ladder's assurance case (above).
 
 ## Jargon
 
