@@ -113,7 +113,7 @@ def printC : SL.SLExpr → String
       | .log => s!"logf(v{a})"
       | .sqrt => s!"sqrtf(v{a})"
       | .abs => s!"fabsf(v{a})"
-  | .fetch tbl l u => s!"TL_LUTFETCH({tbl.name}, {tbl.width}, {tbl.layers}, v{l}, v{u})"
+  | .fetch _ tbl l u => s!"TL_LUTFETCH({tbl.name}, {tbl.width}, {tbl.layers}, v{l}, v{u})"
 
 /-- The C expression for op `nm` on already-emitted parent temporaries: the program's op line
 (`SL.mkOp`, which succeeds exactly on the interpreter's alphabet) printed by `printC`. -/

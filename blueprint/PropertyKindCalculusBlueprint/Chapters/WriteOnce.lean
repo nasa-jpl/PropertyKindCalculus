@@ -382,7 +382,9 @@ and not a theorem about Julia: every emitter is a *printer* of one backend-neutr
 program that `genSL` — the only function that reads the tape — produces, one line per node, and
 {ref "capstones"}[the denotation of the rendering] says the program runs as the tape evaluator,
 node for node, with a literal exactly at a baked leaf and an input read exactly at a named leaf
-(`genSL_denotes`, `genSL_lit_iff`, `genSL_input_iff`). The Julia printer (`printJulia`) is a total function
+(`genSL_denotes`, `genSL_lit_iff`, `genSL_input_iff`), and that the program's graph is the tape's
+(`ofProg_eq_ofTape`), so the seal of the computation is a theorem about the program a host receives
+(`semantic_seal_program`). The Julia printer (`printJulia`) is a total function
 from a program line to text that cannot see the tape, so it cannot add an input, a literal or an
 operation the program does not have; what it leaves to trust is that each of its dozen forms means
 in Julia what the line means in Lean's `Float`. In the words a reviewer would use: _no naked number

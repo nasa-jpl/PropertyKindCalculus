@@ -105,7 +105,7 @@ def printJulia : SL.SLExpr → String
       | .log => s!"tl_log(v{a})"
       | .sqrt => s!"tl_sqrt(v{a})"
       | .abs => s!"abs(v{a})"
-  | .fetch tbl l u => s!"tl_lutfetch(lut_{tbl.name}, {tbl.width}, {tbl.layers}, v{l}, v{u})"
+  | .fetch _ tbl l u => s!"tl_lutfetch(lut_{tbl.name}, {tbl.width}, {tbl.layers}, v{l}, v{u})"
 
 /-- The Julia expression for op `nm` on already-emitted parent temporaries — the Julia twin of
 `cExpr`: the same program op line (`SL.mkOp`), printed by `printJulia`. -/

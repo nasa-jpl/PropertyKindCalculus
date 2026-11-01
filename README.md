@@ -245,8 +245,9 @@ The **megakernel codegen backend** lives in the `Torch` library and is verified:
   node for node, and its completeness `SL.genSL_isOk_iff_evalTapeT` (a program exists exactly when the
   interpreter runs the tape) — stated once for every backend; the C/CUDA (`printC`) and Julia (`printJulia`)
   emitters are printers of that program, so the literal and input clauses are theorems about the
-  emitted program, in both directions (`SL.genSL_lit_iff`/`SL.genSL_input_iff`), and the rendering
-  tables are corollaries.
+  emitted program, in both directions (`SL.genSL_lit_iff`/`SL.genSL_input_iff`), the program's graph
+  is the tape's (`SL.ofProg_eq_ofTape`, so `TapeSeal.semantic_seal_program` states the seal of the
+  computation about the emitted program alone), and the rendering tables are corollaries.
 - `PropertyKindCalculus.Examples.TapeCodegenJuliaDemo` — the AVS tape emitted as Julia, `#guard`'d for
   alphabet coverage and for the same input ABI as the CUDA kernel; axiom pins for the denotation
   theorem and its clauses.
@@ -277,6 +278,8 @@ Status: ✅ done · 🚧 in progress · ⬜ planned
   printer of one straight-line program, `genSL_denotes` proves the program runs as `evalTapeT`,
   `genSL_isOk_iff_evalTapeT` that it exists exactly when the interpreter runs the tape, and
   `genSL_lit_iff`/`genSL_input_iff` make the "no naked number" clauses equivalences about the emitted program.
+  ✅ **The seal travels with the program**: `ofProg_eq_ofTape` (the program's graph is the tape's) and
+  `semantic_seal_program` (the second capstone over the emitted program's graph and `SL.run`).
   ⬜ Run `julia_parity` in a CI lane with Julia installed.
   ⬜ First CliMA-shaped closure recorded over `[NumCarrier α]` to find the alphabet gaps (a bounded
   reduction and a gather are the expected first two).

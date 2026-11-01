@@ -580,7 +580,12 @@ a tape the interpreter rejects. With it the
 two clauses the previous reading of this node could only describe are theorems about the program:
 a literal occurs in the emitted body exactly at an unnamed leaf and is that leaf's stored scalar
 (`SL.genSL_lit_iff`), an input read exactly at a named leaf with that leaf's name
-(`SL.genSL_input_iff`) — equivalences, both directions —
+(`SL.genSL_input_iff`) — equivalences, both directions — and the program's own graph is the tape's:
+`SL.ofProg` projects a program onto a computational tape graph as `ofTape` projects a tape, and
+`SL.ofProg_eq_ofTape` says the two are equal when the program is `genSL` of the tape, so
+{uses "cap_thm_semantic_seal"}[the seal of the computation] holds of the emitted program alone
+(`TapeSeal.semantic_seal_program`: the match accepted against the program's graph, the values read
+off `SL.run`, the tape only in the hypothesis that the program came from it) —
 no number enters the emitted code that is not a leaf of the tape, and no argument that is not a
 named leaf. The per-backend rendering tables (`rendering_table_binary`/`_unary`, for C and for
 Julia) and the agreement of the two emitters on where they are defined
@@ -716,6 +721,9 @@ command does by elaboration and the theorem takes as a hypothesis.
   runs as `evalTapeT`, node for node), its completeness (`genSL_isOk_iff_evalTapeT`: a program exists
   exactly when the interpreter runs the tape) and the literal and input clauses
   `genSL_lit_iff`/`genSL_input_iff` as equivalences about the emitted program.
+- The seal of the computation over the emitted program: `ofProg`, the program's graph, equal to
+  the tape's under `genSL` (`ofProg_eq_ofTape`), and `semantic_seal_program`, the second capstone
+  restated with the program's graph and `SL.run` in place of the tape and `evalTape`.
 - One `min`/`max` reading on NaN across the interpreter and the three renderings: Lean's `ite`,
   written as the `≤`-ternary in C and CUDA and as `ifelse` in Julia; the table fetch's clamp likewise
   follows `refFetch` in every rendering.
@@ -754,8 +762,9 @@ command does by elaboration and the theorem takes as a hypothesis.
 # What the capstones do not claim
 
 - The host that receives an emitted kernel. An emitter hands a host the program and nothing else
-  — {bpref "cap_thm_rendering_denotation"}[the denotation of the rendering] says the program is the
-  tape, and the seal travels with it; that the printed text means in the host language what the
+  — {bpref "cap_thm_rendering_denotation"}[the denotation of the rendering] says the program runs
+  as the tape and has the tape's graph, so the seal is a theorem about the program
+  (`semantic_seal_program`); that the printed text means in the host language what the
   program means in Lean's `Float`, the host's compiler, its `exp`/`log`, and every line of the
   host's own model are its trusted base, named in the methodology chapter and measured — not
   proved — by `julia_parity` and the landing stubs.
