@@ -121,18 +121,19 @@ used the chain at its content hash — the file, the Foundation copy and the kin
 refines the Foundation's, and every quantity term is a kind of the catalogue, carried by that verdict,
 cited from an evidence node's `prov`), and the gate's own run ([`prov/gate.nq`](assurance/prov/gate.nq)).
 [`manifest.yaml`](assurance/manifest.yaml) names the chain, the case, the records and the SBVR.lean and
-face.lean commits the verdicts are at; the gate is engineering-foundation-architecture's
-`tools/hcp_assurance.py` at the pinned `EFA_COMMIT` (`scripts/efa-pin.sh`, the same commit the Foundation
-copy comes from), run by `scripts/hcp-assurance.sh`: it regenerates the record and fails when it differs
-(`--fix` rewrites it), validates it with `prov-check`, valuates the case with `face-eval` and compares its own
-record. A changed definition, Foundation copy or catalogue with a stale record fails CI. Concept and open
+face.lean commits the verdicts are at; the gate is engineering-foundation-architecture's `hcp-gate` (Lean,
+`Efa.Hcp.Gate`, its `tools-in-lean.md` §5) at the pinned `EFA_COMMIT` (`scripts/efa-pin.sh`, the same commit
+the Foundation copy comes from), built in `.lake/efa` and run by `scripts/hcp-assurance.sh`: it regenerates
+the record in process with the kernel it was built with and fails when it differs (`--fix` rewrites it),
+validates it as PROV, valuates the case with face.lean's support semantics, requires the cited evidence to
+carry the root claim (a proved decision, `carries_iff`) and compares its own record; the manifest's `tools`
+must be the commits the gate was built with. A changed definition, Foundation copy or catalogue with a stale record fails CI. Concept and open
 questions: engineering-foundation-architecture `docs/architecture/hcp-assurance.md` (§7 Q4: its dashboard
 aggregates this case with its own and mars.lean's).
 
 ```sh
-scripts/hcp-assurance.sh            # clones and builds SBVR.lean and face.lean at the pinned revisions
+scripts/hcp-assurance.sh            # checks out engineering-foundation-architecture at EFA_COMMIT in .lake/efa, builds hcp-gate, runs it
 scripts/hcp-assurance.sh --fix      # after a chain, Foundation or catalogue change
-SBVR_LEAN=../SBVR.lean FACE_LEAN=../face.lean scripts/hcp-assurance.sh   # with sibling checkouts (at the manifest's commits)
 ```
 
 ## Running checks
