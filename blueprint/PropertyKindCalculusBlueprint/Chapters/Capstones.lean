@@ -601,7 +601,12 @@ The denotation theorem is proved once, about the one tape reader, and is inherit
 with no proof per backend; what a backend must still be trusted for shrinks to "each of the
 printer's dozen fixed forms means, in the host language, what `SLExpr.denote` means" — a
 statement about `v3 * v4`, `ifelse(a <= b, a, b)` and `expf(v9)`, never about a kernel. A new
-target is a printer: a few lines and the same theorem. The host compiler, its `exp`/`log`, the
+target is a printer: a few lines and the same theorem. And "what `SLExpr.denote` means in Lean's
+`Float`" is itself a specification, not an oracle: on the pinned toolchain `Float` is a structure
+over `Float.Model`, core's bit-level IEEE 754 binary64 model, and every op of the alphabet but
+`exp`/`log` unfolds by `rfl` to model arithmetic (`examples.tape_host_float_model`), so the
+obligation reads "the host's binary64 `+` rounds to nearest even" — a conformance claim about the
+host. The host compiler, its `exp`/`log` (the two `opaque` externs, the whole of "libm"), the
 absence of FMA contraction, and (CUDA) the `float` narrowing of the double program remain the
 trusted base each printer names and the parity executables measure; the methodology chapter,
 _Julia, emitted_, says so for the Julia host.
@@ -736,6 +741,11 @@ command does by elaboration and the theorem takes as a hypothesis.
   tape, const leaves included, tape, compacted tape and emitted program hold the same value at every
   original node; the program's existence supplies the compacted tape's evaluation, and Batteries'
   `Float.toBits_inj` (`cseCompact_denotation_unconditional`) the merged-const-leaf case.
+- The host `Float` as a specification: `Float` is a structure over core's `Float.Model` (IEEE 754
+  binary64, round-to-nearest-even), and `BinOp.eval`/`UnOp.eval` unfold by `rfl` to model
+  arithmetic for every op of the alphabet but the two `opaque` externs `exp`/`log`
+  (`examples.tape_host_float_model`), so the per-printer obligation is the host's IEEE conformance,
+  not a claim about Lean.
 - One `min`/`max` reading on NaN across the interpreter and the three renderings: Lean's `ite`,
   written as the `≤`-ternary in C and CUDA and as `ifelse` in Julia; the table fetch's clamp likewise
   follows `refFetch` in every rendering.
@@ -777,9 +787,11 @@ command does by elaboration and the theorem takes as a hypothesis.
   — {bpref "cap_thm_rendering_denotation"}[the denotation of the rendering] says the program runs
   as the tape and has the tape's graph, so the seal is a theorem about the program
   (`semantic_seal_program`); that the printed text means in the host language what the
-  program means in Lean's `Float`, the host's compiler, its `exp`/`log`, and every line of the
-  host's own model are its trusted base, named in the methodology chapter and measured — not
-  proved — by `julia_parity` and the landing stubs.
+  program means in Lean's `Float` — which is core's IEEE binary64 model for every op but
+  `exp`/`log` (`examples.tape_host_float_model`), so a conformance claim about the host — the
+  host's compiler, its `exp`/`log`, and every line of the host's own model are its trusted base,
+  named in the methodology chapter and measured — not proved — by `julia_parity` and the landing
+  stubs.
 - The truth of an attestation. It is a hypothesis of the model; the seal says only that the
   build's list of them is complete. Where the attestation defers a requirement, the
   {ref "requirements-as-evidence"}[requirement clause] counts it, with its reason, as one

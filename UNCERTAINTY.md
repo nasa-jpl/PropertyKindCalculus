@@ -492,7 +492,8 @@ FLX model *grounded* in (not built on) the TorchLean lemmas, whose statement sha
 * **F — computability.** *Everything* FP32/Flocq is `noncomputable` (`rnd32`, all `round₃₂/ulp₃₂/eps₃₂`,
   every `NF` arithmetic instance). The executable model is the **separate** `IEEE32Exec` structure,
   connected to `FP32` only by bridge lemmas (`Bridge/FP32*`, `RuntimeApprox`), not defeq. ⟹ the runtime
-  host-`Float` `Adequacy` carrier is inherently uncertifiable (opaque FFI). **✅ Stage 3.3 (done):** the
+  host-`Float` `Adequacy` carrier is not certifiable against `ulp₃₂` (binary64, not float32; its
+  `log2`/`exp2` are `opaque` externs outside core's `Float.Model`). **✅ Stage 3.3 (done):** the
   certified executable check runs on `IEEE32Exec` instead — a second TorchLean PR adds `IEEE32Exec.ulpExp?`
   (bit-level ULP query, its answers proved `= ulp₃₂`; it answers on exactly the finite fragment) and `absorbs` (float32 sum unchanged),
   proved sound against `round₃₂` (`round32_add_eq_left_of_absorbs`), re-exposed in PKC as
@@ -883,8 +884,9 @@ and FFT kernels under `NN/Runtime/Autograd/Engine/Cuda/Ops/*` for SSPRC's convol
 
 * **Stage 3.3 — Executable↔spec bridge for FP32. ✅ DONE (built & CI-checked).** The entire TorchLean
   FP32/Flocq layer is `noncomputable` (§4.6 F): `round₃₂ : ℝ → ℝ` is a spec, not a float. The host-`Float`
-  `Adequacy` carrier is inherently uncertifiable (opaque FFI — no theorem relates `Float.log2`/`exp2` to
-  `ulp₃₂`), so the certified executable check runs instead on TorchLean's **computable** `IEEE32Exec`,
+  `Adequacy` carrier is not certifiable against `ulp₃₂` (binary64, not float32, and `Float.log2`/`exp2`
+  are `opaque` externs outside core's `Float.Model`), so the certified executable check runs instead on
+  TorchLean's **computable** `IEEE32Exec`,
   whose ops are provably `round₃₂` of the exact real result. **Exploration finding:** the op-level
   `IEEE32Exec ↔ round₃₂` refinement (`toReal_{add,sub,…}_eq_fp32Round`) already existed; what was missing
   is an executable ULP (existed only as the `noncomputable` `neuralUlp`/`ulp₃₂`) and a certified

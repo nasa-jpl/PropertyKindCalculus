@@ -292,6 +292,11 @@ Status: ✅ done · 🚧 in progress · ⬜ planned
   now decide that every constant leaf stores exactly one scalar (`checkScalarLeaves`,
   `gen_scalar_leaves`/`genJulia_scalar_leaves`) instead of baking `0.0` or a buffer's first element
   for an ill-shaped leaf; the recorded AVS and LM-step tapes pass (their `gen` `#guard`s decide it).
+  ✅ **The host `Float` is a specification** (`Examples.TapeHostFloatModel`): on the pinned toolchain
+  `Float` is a structure over core's `Float.Model` (IEEE 754 binary64, round-to-nearest-even), and
+  `BinOp.eval`/`UnOp.eval` unfold by `rfl` to model arithmetic for every op of the alphabet but the two
+  `opaque` externs `exp`/`log` — so what a printer must be trusted for is the host's IEEE conformance
+  (plus libm for `exp`/`log`), not Lean's `Float`.
   ✅ `julia_parity --ka` runs in CI (`blueprint.yml`, after the CudaT parity harnesses): Julia 1.10.12 from a
   checksum-pinned release tarball, KernelAbstractions 0.10.4 and its transitive packages locked by the
   committed `apps/julia-parity-env/Manifest.toml` (CI instantiates it and fails if that changed it); a
