@@ -292,7 +292,10 @@ Status: ✅ done · 🚧 in progress · ⬜ planned
   now decide that every constant leaf stores exactly one scalar (`checkScalarLeaves`,
   `gen_scalar_leaves`/`genJulia_scalar_leaves`) instead of baking `0.0` or a buffer's first element
   for an ill-shaped leaf; the recorded AVS and LM-step tapes pass (their `gen` `#guard`s decide it).
-  ⬜ Run `julia_parity` in a CI lane with Julia installed.
+  ✅ `julia_parity --ka` runs in CI (`blueprint.yml`, after the CudaT parity harnesses): Julia 1.10.12 from a
+  checksum-pinned release tarball, KernelAbstractions 0.10.4 and its transitive packages locked by the
+  committed `apps/julia-parity-env/Manifest.toml` (CI instantiates it and fails if that changed it); a
+  missing julia fails the lane rather than skipping it.
   ⬜ First CliMA-shaped closure recorded over `[NumCarrier α]` to find the alphabet gaps (a bounded
   reduction and a gather are the expected first two).
 - ✅ **Recorded the *whole* trust-region step, not just the residual/Jacobian fragment**
