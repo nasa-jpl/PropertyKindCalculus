@@ -2,11 +2,11 @@
 # HCP/sbvr/foundation.yaml is the Foundation root vocabulary of Open-MBEE/engineering-foundation-architecture
 # (docs/hcp/foundation.yaml) at a pinned commit, vendored so that the ladder's `PKC ⊂ Foundation`
 # checks without a network. This script fetches the pinned file and fails when the copy differs;
-# bump EFA_COMMIT and re-run with --update to take a newer Foundation.
+# bump EFA_COMMIT (scripts/efa-pin.sh) and re-run with --update to take a newer Foundation.
 set -euo pipefail
 cd "$(dirname "$0")/.."
-EFA_COMMIT="${EFA_COMMIT:-fd049f38125a8668454bf801d0ef0d10eeb2942d}"
-EFA_REPO=https://github.com/Open-MBEE/engineering-foundation-architecture
+# shellcheck source=scripts/efa-pin.sh
+source scripts/efa-pin.sh
 copy=HCP/sbvr/foundation.yaml
 dir=.lake/efa
 if [[ ! -d "$dir/.git" ]]; then git clone -q --filter=blob:none --no-checkout "$EFA_REPO" "$dir" >&2; fi

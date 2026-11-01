@@ -1,0 +1,17 @@
+# The ladder's assurance in this repository, read by engineering-foundation-architecture's
+# tools/hcp_assurance.py (scripts/hcp-assurance.sh; concept: its docs/architecture/hcp-assurance.md, §7 Q4).
+# Paths are relative to the repository root.
+title: PKC HCP ladder
+namespace: pkc
+agent: urn:pkc:ci
+run: pkc
+chains:
+  - HCP/sbvr/physlib-contributor.yaml
+case: HCP/assurance/case.face.yaml
+records: HCP/assurance/prov
+# the verdicts are at these tool versions (the records, written with --prov-no-git, cannot say); the gate
+# refuses a checkout at another commit. scripts/sbvr-check.sh and scripts/face-eval.sh pin the same; move
+# them together, then scripts/hcp-assurance.sh --fix.
+tools:
+  sbvr_lean: 015db27cee2758bfeeaa74233b3c64b491042d87
+  face_lean: cefb034619704f985fb306ae9bde5df7ee6124be

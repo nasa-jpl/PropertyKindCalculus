@@ -1,0 +1,18 @@
+# The ladder's assurance case (face.lean's tool shape, read by face-eval): the PhysLib contributor ladder
+# L0 ⊂ … ⊂ L6 refines PKC, which refines the Foundation's root vocabulary, and every quantity term is bound
+# to a kind of the catalogue — carried by sbvr-check's verdict on HCP/sbvr/physlib-contributor.yaml. An
+# EVIDENCE node's `prov` is the PROV IRI of the verdict it is: the `check` activity, exit 0, in
+# prov/physlib-contributor.nq; the activity used the chain at its content hash (the file, foundation.yaml
+# and kinds.yaml), so when any of them changes the record changes and scripts/hcp-assurance.sh fails until
+# it is regenerated (--fix). Concept: engineering-foundation-architecture docs/architecture/hcp-assurance.md.
+nodes:
+  - {id: C0, kind: CLAIM, title: "The ladder's vocabularies L0…L6 refine PKC, PKC refines the Foundation's, and every quantity term is a kind of the catalogue"}
+  - {id: S0, kind: STRATEGY, title: "By sbvr-check's verdict on the chain, with its provenance"}
+  - {id: E1, kind: EVIDENCE, title: "sbvr-check HCP/sbvr/physlib-contributor.yaml: PKC refines Foundation, L0 refines PKC and PhysLibKinds, L1…L6 each refines the one before, quantities bound to PhysLibKinds", prov: "urn:sbvr:check/pkc-physlib-contributor", low: 1, high: 1}
+  - {id: D1, kind: DEFEATER, title: "The record cites a chain, a Foundation copy or a catalogue that is not the one committed", low: 1, high: 1}
+  - {id: E2, kind: EVIDENCE, title: "hcp_assurance.py (the gate): the record regenerates byte-identically from the chain on disk at the manifest's tool versions, and prov-check validates it — the gate activity in prov/gate.nq, which used the record and the case at their content hashes", prov: "urn:pkc:gate/hcp-gate", low: 1, high: 1}
+edges:
+  - {source: E1, target: S0, is_attack: false}
+  - {source: S0, target: C0, is_attack: false}
+  - {source: D1, target: S0, is_attack: true}
+  - {source: E2, target: D1, is_attack: true}
