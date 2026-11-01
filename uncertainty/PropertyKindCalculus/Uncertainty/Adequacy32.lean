@@ -92,27 +92,29 @@ instance : Sub Adequacy32 := ⟨Adequacy32.sub⟩
 instance : Mul Adequacy32 := ⟨Adequacy32.mul⟩
 instance : Div Adequacy32 := ⟨Adequacy32.div⟩
 instance : Min Adequacy32 :=
-  ⟨fun a b => if a.value ≤ b.value then { a with report := a.report.merge b.report }
-              else { b with report := a.report.merge b.report }⟩
+  ⟨fun a b => { value := min a.value b.value, unc := max a.unc b.unc,
+                report := a.report.merge b.report }⟩
 instance : Max Adequacy32 :=
-  ⟨fun a b => if a.value ≤ b.value then { b with report := a.report.merge b.report }
-              else { a with report := a.report.merge b.report }⟩
+  ⟨fun a b => { value := max a.value b.value, unc := max a.unc b.unc,
+                report := a.report.merge b.report }⟩
 instance : Coe Nat Adequacy32 := ⟨fun n => exact n.toFloat32⟩
 
-/-- Transcendentals propagate value and uncertainty to first order as `Adequacy` does; the
-derivative is taken at `Float32` (the `opaque` externs `Float32.exp`/`log`/… are the carrier's
-*values*, not part of any verdict). -/
+/-- As in `Adequacy`: the selectors carry the larger uncertainty of both operands (a perturbation may
+switch the winner), and the transcendentals map the value and pass the uncertainty through — the
+carrier's claim is the verdict at `+`/`−`, not a derivative-based propagation (which is singular at,
+e.g., `sqrt 0`). The `opaque` externs `Float32.exp`/`log`/… are the carrier's *values*, not part of
+any verdict. -/
 instance : MathCarrier Adequacy32 where
-  exp a := { a with value := a.value.exp, unc := a.value.exp.abs * a.unc }
-  log a := { a with value := a.value.log, unc := a.unc / a.value.abs }
-  sin a := { a with value := a.value.sin, unc := a.value.cos.abs * a.unc }
-  cos a := { a with value := a.value.cos, unc := a.value.sin.abs * a.unc }
-  sinh a := { a with value := a.value.sinh, unc := a.value.cosh.abs * a.unc }
-  cosh a := { a with value := a.value.cosh, unc := a.value.sinh.abs * a.unc }
-  tanh a := { a with value := a.value.tanh, unc := (1.0 - a.value.tanh * a.value.tanh).abs * a.unc }
-  sqrt a := { a with value := a.value.sqrt, unc := a.unc / (2.0 * a.value.sqrt) }
-  abs a := { a with value := a.value.abs }
-  pi := exact 3.14159265358979323846
+  exp a := mapVal Float32.exp a
+  log a := mapVal Float32.log a
+  sin a := mapVal Float32.sin a
+  cos a := mapVal Float32.cos a
+  sinh a := mapVal Float32.sinh a
+  cosh a := mapVal Float32.cosh a
+  tanh a := mapVal Float32.tanh a
+  sqrt a := mapVal Float32.sqrt a
+  abs a := mapVal Float32.abs a
+  pi := exact 3.1415927
 
 instance : NumCarrier Adequacy32 := {}
 
