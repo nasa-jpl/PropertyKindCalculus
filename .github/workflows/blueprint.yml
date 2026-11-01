@@ -177,6 +177,56 @@ jobs:
           lake exe mcm_batched_parity
 
       # -------------------------------------------------------
+      # Phase 1d: Run the Julia emitter's parity harness
+      # -------------------------------------------------------
+      - name: Install Julia (pinned release, checksum verified)
+        run: |
+          # Same discipline as the elan step: a pinned release tarball whose sha256 is fixed here,
+          # so a replaced asset fails instead of running. Only the x86_64 Linux build is pinned.
+          JULIA_VERSION="1.10.12"
+          JULIA_SHA256="b0c50dfe349d76ffc8580d24e0c0be623988a6d91ed57ad8b73c0137fd27bc0d"
+          ARCH="$(uname -m)"
+          [ "$ARCH" = "x86_64" ] || { echo "no pinned julia checksum for arch $ARCH" >&2; exit 1; }
+          JULIA_DIR="$HOME/.julia-${JULIA_VERSION}"
+          if [ ! -x "$JULIA_DIR/bin/julia" ]; then
+            TMP="$(mktemp -d)"
+            curl -sSfL "https://julialang-s3.julialang.org/bin/linux/x64/${JULIA_VERSION%.*}/julia-${JULIA_VERSION}-linux-x86_64.tar.gz" \
+              -o "$TMP/julia.tar.gz"
+            echo "$JULIA_SHA256  $TMP/julia.tar.gz" | sha256sum -c -
+            mkdir -p "$JULIA_DIR"
+            tar xzf "$TMP/julia.tar.gz" -C "$JULIA_DIR" --strip-components=1
+            rm -rf "$TMP"
+          fi
+          echo "$JULIA_DIR/bin" >> "$GITHUB_PATH"
+          # Named explicitly for the later steps: `julia_parity` prefers `$JULIA` over PATH, so a
+          # runner that sets it must not steer the gate off the pinned install.
+          echo "JULIA_PARITY_BIN=$JULIA_DIR/bin/julia" >> "$GITHUB_ENV"
+          "$JULIA_DIR/bin/julia" --version
+
+      - name: Instantiate the parity twin's Julia project (committed manifest)
+        run: |
+          # `apps/julia-parity-env` commits Project.toml + Manifest.toml (KernelAbstractions 0.10.4 and
+          # every transitive package at a fixed version), so the gate resolves nothing: it instantiates
+          # the manifest and fails if instantiation changed it. `--ka` needs only the CPU backend.
+          export JULIA_PROJECT="$GITHUB_WORKSPACE/apps/julia-parity-env"
+          echo "JULIA_PROJECT=$JULIA_PROJECT" >> "$GITHUB_ENV"
+          "$JULIA_PARITY_BIN" --startup-file=no -e '
+            using Pkg
+            Pkg.instantiate()
+            Pkg.precompile()
+            using KernelAbstractions
+            println("KernelAbstractions ", pkgversion(KernelAbstractions))'
+          git diff --exit-code -- apps/julia-parity-env
+
+      - name: Run the Julia parity harness
+        run: |
+          # `julia_parity` emits the recorded AVS, LM-step and table tapes as Julia, runs them at
+          # Float64 and compares every output with `evalTape`: bit-identical where the cone has no
+          # `exp`/`log`, within `--max-ulp` where it does; `--ka` adds the KernelAbstractions twin
+          # under its relative tolerance. No `--allow-missing-julia`: a missing julia fails here.
+          lake exe julia_parity --ka --julia "$JULIA_PARITY_BIN"
+
+      # -------------------------------------------------------
       # Phase 2: Build + render the Verso design blueprint
       # (a separate Lake package under blueprint/ that pulls in Verso)
       # -------------------------------------------------------

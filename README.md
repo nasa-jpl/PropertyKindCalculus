@@ -298,6 +298,10 @@ Status: ✅ done · 🚧 in progress · ⬜ planned
   `opaque` externs `exp`/`log` — so what a printer must be trusted for is the host's IEEE conformance
   (plus libm for `exp`/`log`), not Lean's `Float`.
   ⬜ Run `julia_parity` in a CI lane with Julia installed.
+  ✅ `julia_parity --ka` runs in CI (`blueprint.yml`, after the CudaT parity harnesses): Julia 1.10.12 from a
+  checksum-pinned release tarball, KernelAbstractions 0.10.4 and its transitive packages locked by the
+  committed `apps/julia-parity-env/Manifest.toml` (CI instantiates it and fails if that changed it); a
+  missing julia fails the lane rather than skipping it.
   ⬜ First CliMA-shaped closure recorded over `[NumCarrier α]` to find the alphabet gaps (a bounded
   reduction and a gather are the expected first two).
 - ✅ **Recorded the *whole* trust-region step, not just the residual/Jacobian fragment**
