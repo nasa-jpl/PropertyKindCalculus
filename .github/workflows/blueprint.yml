@@ -198,6 +198,9 @@ jobs:
             rm -rf "$TMP"
           fi
           echo "$JULIA_DIR/bin" >> "$GITHUB_PATH"
+          # Named explicitly for the later steps: `julia_parity` prefers `$JULIA` over PATH, so a
+          # runner that sets it must not steer the gate off the pinned install.
+          echo "JULIA_PARITY_BIN=$JULIA_DIR/bin/julia" >> "$GITHUB_ENV"
           "$JULIA_DIR/bin/julia" --version
 
       - name: Install KernelAbstractions.jl (pinned) for the portability twin
@@ -206,7 +209,7 @@ jobs:
           # the workflow's and nothing on the runner leaks in. `--ka` needs only the CPU backend.
           export JULIA_PROJECT="$GITHUB_WORKSPACE/.julia-parity-env"
           echo "JULIA_PROJECT=$JULIA_PROJECT" >> "$GITHUB_ENV"
-          julia --startup-file=no -e '
+          "$JULIA_PARITY_BIN" --startup-file=no -e '
             using Pkg
             Pkg.add(Pkg.PackageSpec(name="KernelAbstractions", version="0.10.4"))
             Pkg.precompile()
@@ -219,7 +222,7 @@ jobs:
           # Float64 and compares every output with `evalTape`: bit-identical where the cone has no
           # `exp`/`log`, within `--max-ulp` where it does; `--ka` adds the KernelAbstractions twin
           # under its relative tolerance. No `--allow-missing-julia`: a missing julia fails here.
-          lake exe julia_parity --ka
+          lake exe julia_parity --ka --julia "$JULIA_PARITY_BIN"
 
       # -------------------------------------------------------
       # Phase 2: Build + render the Verso design blueprint
