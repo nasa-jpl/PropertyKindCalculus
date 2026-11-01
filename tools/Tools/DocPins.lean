@@ -102,9 +102,13 @@ def versionTokens (line : String) : List String := Id.run do
 def hasPinWord (line : String) : Bool :=
   (words line).any fun w => ["pin", "pins", "pinned", "pinning", "toolchain"].contains w.toLower
 
+/-- `vX.Y.Z` exactly: three nonempty numeric parts after `v` (a dependency's `v1.2` is not a
+toolchain release tag). -/
 def isReleaseTag (rev : String) : Bool :=
   match rev.toList with
-  | 'v' :: rest => (String.ofList rest).splitOn "." |>.all fun p => p.isNat
+  | 'v' :: rest => match (String.ofList rest).splitOn "." with
+    | [a, b, c] => a.isNat && b.isNat && c.isNat
+    | _ => false
   | _ => false
 
 def digitsPrefix (s : String) : String := (s.takeWhile Char.isDigit).toString
@@ -372,11 +376,13 @@ theorem unclassified_nil_iff (s : Snapshot) (ver : String) :
 
 /-! ## Check 4: blueprint status -/
 
-/-- `#doc (Manual) "<title>" =>`, the first per chapter file. -/
+/-- `#doc (Manual) "<title>" =>`: the first complete declaration in the chapter file (a quoted
+`#doc (Manual) "…"` without the ` =>` in a comment before it is passed over). -/
 def chapterTitle (text : String) : Option String :=
-  match betweenAll text "#doc (Manual) \"" "\"" with
-  | t :: _ => if count text s!"#doc (Manual) \"{t}\" =>" ≥ 1 then some t else none
-  | [] => none
+  (text.splitOn "#doc (Manual) \"").tail.findSome? fun tail =>
+    match tail.splitOn "\"" with
+    | t :: rest :: _ => if rest.startsWith " =>" then some t else none
+    | _ => none
 
 /-- Every `(tags := "<tags>")`. -/
 def nodeTags (text : String) : List String :=

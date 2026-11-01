@@ -889,15 +889,17 @@ lean --run tools/Tools/DocPins.lean     # toolchain only; --quiet prints just th
 lake exe doc-pins                       # the same program, built by Lake
 ```
 
-It hard-fails on four things: `blueprint/lean-toolchain` disagreeing with the root, any
-release-tag `inputRev` in either `lake-manifest.json` naming a different version, each
-curated sentence in `SITES` not occurring the recorded number of times — the count being
-what makes a deleted claim fail as loudly as a stale one — and the package-version sites
-above disagreeing, declaring more or fewer than one version each, or not being the set
-`bump-version.sh` writes. Everything else it finds is
-*reported*: some version claims are deliberately not the current pin (a dated measurement,
-a checkout outside this repository, an upstream PR named by the version it bumped), and
-those files carry their reason in `EXEMPT`.
+It hard-fails on seven of its eight checks: `blueprint/lean-toolchain` disagreeing with the
+root, any release-tag `inputRev` in either `lake-manifest.json` naming a different version, each
+curated sentence in `Tools.DocPins.sites` not occurring the recorded number of times — the count
+being what makes a deleted claim fail as loudly as a stale one — the blueprint's status table
+and chapter counts drifting from the chapter sources, the package-version sites above
+disagreeing or declaring more or fewer than one version each, a plain-terms requirement or an
+application-template rubric cited but not catalogued (or catalogued but not glossed), and a
+dictionary term defined twice or a retired phrasing surviving where the gate reads. The eighth
+check *reports*: some version claims are deliberately not the current pin (a dated measurement,
+a checkout outside this repository, an upstream PR named by the version it bumped), and those
+files carry their reason in `Tools.DocPins.exempt`.
 
 ### Cutting a release
 
@@ -909,8 +911,8 @@ git commit -am "chore: bump version to $(scripts/bump-version.sh)"
 git tag "v$(scripts/bump-version.sh)"
 ```
 
-L4YAML's multi-site `SITES` structure is what carries the blueprint literal. A further
-declaration site — a language binding's manifest, say — is one extra line in that array
-and one in the gate's `PKG_VERSION_SITES`; the bumper then keeps all of them in lockstep
-and refuses to bump a divergent set, and the gate refuses a set the two lists disagree
-about.
+`Tools.DocPins.pkgSites` is the one list of declaration sites, read by the gate and
+written by the bumper. A further site — a language binding's manifest, say — is one extra
+`PkgSite` there (the file, and the text before and after the version on its line); the
+bumper then keeps all of them in lockstep and refuses to bump a divergent set, and the gate
+refuses a set that disagrees or declares a version more or less than once.
