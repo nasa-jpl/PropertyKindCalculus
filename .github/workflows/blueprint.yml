@@ -191,13 +191,16 @@ jobs:
       # at the pinned commit (scripts/foundation-vocabulary.sh --update takes a newer one).
       - name: Foundation vocabulary is the pinned copy
         run: scripts/foundation-vocabulary.sh
-      # The ladder's assurance case (HCP/assurance/): engineering-foundation-architecture's HCP gate at the
-      # same pinned commit regenerates the chain's PROV record and compares it byte for byte, validates it
-      # with prov-check, checks the FACE case cites it, valuates the case with face-eval (face.lean, cloned
-      # and built at a pinned revision by scripts/face-eval.sh) and compares its own record; a changed
-      # chain, Foundation copy or catalogue with a stale record fails here (scripts/hcp-assurance.sh --fix).
+      # The ladder's assurance case (HCP/assurance/): engineering-foundation-architecture's HCP gate (`hcp-gate`,
+      # Lean) at the same pinned commit, built in .lake/efa, regenerates the chain's PROV record in process and
+      # compares it byte for byte, validates it as PROV, checks the FACE case cites it, valuates the case with
+      # face.lean's semantics and compares its own record; a changed chain, Foundation copy or catalogue with a
+      # stale record fails here (scripts/hcp-assurance.sh --fix). Lake fetches the gate's private pins with
+      # OPEN_MBEE_READ_TOKEN (contents: read on SBVR.lean and face.lean) when the secret is set.
       - name: The ladder's assurance case holds, with its provenance
-        run: SBVR_LEAN=.lake/sbvr-lean scripts/hcp-assurance.sh
+        run: scripts/hcp-assurance.sh
+        env:
+          OPEN_MBEE_READ_TOKEN: ${{ secrets.OPEN_MBEE_READ_TOKEN }}
 
       # The chain adopts its quantity terms from a catalogue harvested from the Lean kinds; a hand
       # edit or a new kind without a regenerated catalogue fails here.

@@ -503,9 +503,9 @@ _:b5665804066501062523r1 <http://open-mbee.org/sbvr#role> "argv" <urn:sbvr:bundl
 <urn:sbvr:check/pkc-physlib-contributor> <http://open-mbee.org/sbvr#command> "check" <urn:sbvr:bundle/pkc-physlib-contributor> .
 <urn:sbvr:check/pkc-physlib-contributor> <http://open-mbee.org/sbvr#exit> "0"^^<http://www.w3.org/2001/XMLSchema#integer> <urn:sbvr:bundle/pkc-physlib-contributor> .
 <urn:sbvr:check/pkc-physlib-contributor> <http://www.w3.org/ns/prov#used> <urn:sbvr:chain/46bde4ee55936754b3bb7e699e3e1fc69fc642bd96d0ee003fc8f8469ad78167> <urn:sbvr:bundle/pkc-physlib-contributor> .
-<urn:sbvr:tool/sbvr-check/0.1.0> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/ns/prov#Agent> <urn:sbvr:bundle/pkc-physlib-contributor> .
-<urn:sbvr:tool/sbvr-check/0.1.0> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/ns/prov#SoftwareAgent> <urn:sbvr:bundle/pkc-physlib-contributor> .
-<urn:sbvr:tool/sbvr-check/0.1.0> <http://open-mbee.org/sbvr#version> "0.1.0" <urn:sbvr:bundle/pkc-physlib-contributor> .
+<urn:sbvr:tool/hcp-gate/0.1.0> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/ns/prov#Agent> <urn:sbvr:bundle/pkc-physlib-contributor> .
+<urn:sbvr:tool/hcp-gate/0.1.0> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/ns/prov#SoftwareAgent> <urn:sbvr:bundle/pkc-physlib-contributor> .
+<urn:sbvr:tool/hcp-gate/0.1.0> <http://open-mbee.org/sbvr#version> "0.1.0" <urn:sbvr:bundle/pkc-physlib-contributor> .
 <urn:pkc:ci> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/ns/prov#Agent> <urn:sbvr:bundle/pkc-physlib-contributor> .
-<urn:sbvr:check/pkc-physlib-contributor> <http://www.w3.org/ns/prov#wasAssociatedWith> <urn:sbvr:tool/sbvr-check/0.1.0> <urn:sbvr:bundle/pkc-physlib-contributor> .
+<urn:sbvr:check/pkc-physlib-contributor> <http://www.w3.org/ns/prov#wasAssociatedWith> <urn:sbvr:tool/hcp-gate/0.1.0> <urn:sbvr:bundle/pkc-physlib-contributor> .
 <urn:sbvr:check/pkc-physlib-contributor> <http://www.w3.org/ns/prov#wasAssociatedWith> <urn:pkc:ci> <urn:sbvr:bundle/pkc-physlib-contributor> .

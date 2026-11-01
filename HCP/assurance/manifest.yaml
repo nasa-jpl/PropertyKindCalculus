@@ -1,5 +1,5 @@
 # The ladder's assurance in this repository, read by engineering-foundation-architecture's
-# tools/hcp_assurance.py (scripts/hcp-assurance.sh; concept: its docs/architecture/hcp-assurance.md, §7 Q4).
+# hcp-gate (Lean, Efa.Hcp.Gate; scripts/hcp-assurance.sh; concept: its docs/architecture/hcp-assurance.md, §7 Q4).
 # Paths are relative to the repository root.
 title: PKC HCP ladder
 namespace: pkc
@@ -9,9 +9,10 @@ chains:
   - HCP/sbvr/physlib-contributor.yaml
 case: HCP/assurance/case.face.yaml
 records: HCP/assurance/prov
-# the verdicts are at these tool versions (the records, written with --prov-no-git, cannot say); the gate
-# refuses a checkout at another commit. scripts/sbvr-check.sh and scripts/face-eval.sh pin the same; move
-# them together, then scripts/hcp-assurance.sh --fix.
+# the verdicts are at these tool versions (the records, written with --prov-no-git, cannot say): the
+# SBVR.lean and face.lean commits the gate is built with, its lake-manifest.json at EFA_COMMIT
+# (scripts/efa-pin.sh); the gate refuses any other. Move EFA_COMMIT, copy its pins here, then
+# scripts/hcp-assurance.sh --fix.
 tools:
-  sbvr_lean: 015db27cee2758bfeeaa74233b3c64b491042d87
-  face_lean: cefb034619704f985fb306ae9bde5df7ee6124be
+  sbvr_lean: 2f364d2b635d95120d9f9ebe85579f1522916704
+  face_lean: fd6106f53cc846000a5c4b4ece9d025f07152cfb

@@ -2,15 +2,15 @@
 <urn:pkc:gate/hcp-gate> <http://open-mbee.org/sbvr#command> "gate" <urn:pkc:bundle/hcp-gate> .
 <urn:pkc:ci> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/ns/prov#Agent> <urn:pkc:bundle/hcp-gate> .
 <urn:pkc:gate/hcp-gate> <http://www.w3.org/ns/prov#wasAssociatedWith> <urn:pkc:ci> <urn:pkc:bundle/hcp-gate> .
-<urn:pkc:tool/hcp-assurance/c460174d3a2b> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/ns/prov#SoftwareAgent> <urn:pkc:bundle/hcp-gate> .
-<urn:pkc:tool/hcp-assurance/c460174d3a2b> <http://www.w3.org/ns/prov#atLocation> "engineering-foundation-architecture/tools/hcp_assurance.py" <urn:pkc:bundle/hcp-gate> .
-<urn:pkc:gate/hcp-gate> <http://www.w3.org/ns/prov#wasAssociatedWith> <urn:pkc:tool/hcp-assurance/c460174d3a2b> <urn:pkc:bundle/hcp-gate> .
-<urn:pkc:tool/face-eval> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/ns/prov#SoftwareAgent> <urn:pkc:bundle/hcp-gate> .
-<urn:pkc:gate/hcp-gate> <http://www.w3.org/ns/prov#wasAssociatedWith> <urn:pkc:tool/face-eval> <urn:pkc:bundle/hcp-gate> .
-<urn:pkc:record/04bd861a496acf45877de6b91c20632660d5ad2b68b3ee34dd9de0bc8e492ce8> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/ns/prov#Entity> <urn:pkc:bundle/hcp-gate> .
-<urn:pkc:record/04bd861a496acf45877de6b91c20632660d5ad2b68b3ee34dd9de0bc8e492ce8> <http://www.w3.org/ns/prov#atLocation> "HCP/assurance/prov/physlib-contributor.nq" <urn:pkc:bundle/hcp-gate> .
-<urn:pkc:record/04bd861a496acf45877de6b91c20632660d5ad2b68b3ee34dd9de0bc8e492ce8> <http://open-mbee.org/efa#records> <urn:sbvr:check/pkc-physlib-contributor> <urn:pkc:bundle/hcp-gate> .
-<urn:pkc:gate/hcp-gate> <http://www.w3.org/ns/prov#used> <urn:pkc:record/04bd861a496acf45877de6b91c20632660d5ad2b68b3ee34dd9de0bc8e492ce8> <urn:pkc:bundle/hcp-gate> .
+<urn:pkc:tool/hcp-gate/0.1.0+sha256:70bc654a0583> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/ns/prov#SoftwareAgent> <urn:pkc:bundle/hcp-gate> .
+<urn:pkc:tool/hcp-gate/0.1.0+sha256:70bc654a0583> <http://www.w3.org/ns/prov#atLocation> "engineering-foundation-architecture/Efa/Hcp/Gate.lean" <urn:pkc:bundle/hcp-gate> .
+<urn:pkc:gate/hcp-gate> <http://www.w3.org/ns/prov#wasAssociatedWith> <urn:pkc:tool/hcp-gate/0.1.0+sha256:70bc654a0583> <urn:pkc:bundle/hcp-gate> .
+<urn:pkc:tool/face.lean/fd6106f53cc846000a5c4b4ece9d025f07152cfb> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/ns/prov#SoftwareAgent> <urn:pkc:bundle/hcp-gate> .
+<urn:pkc:gate/hcp-gate> <http://www.w3.org/ns/prov#wasAssociatedWith> <urn:pkc:tool/face.lean/fd6106f53cc846000a5c4b4ece9d025f07152cfb> <urn:pkc:bundle/hcp-gate> .
+<urn:pkc:record/9c3375135598174c877364e9bb6efa3593c21c750269735f9d000c696ed0e353> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/ns/prov#Entity> <urn:pkc:bundle/hcp-gate> .
+<urn:pkc:record/9c3375135598174c877364e9bb6efa3593c21c750269735f9d000c696ed0e353> <http://www.w3.org/ns/prov#atLocation> "HCP/assurance/prov/physlib-contributor.nq" <urn:pkc:bundle/hcp-gate> .
+<urn:pkc:record/9c3375135598174c877364e9bb6efa3593c21c750269735f9d000c696ed0e353> <http://open-mbee.org/efa#records> <urn:sbvr:check/pkc-physlib-contributor> <urn:pkc:bundle/hcp-gate> .
+<urn:pkc:gate/hcp-gate> <http://www.w3.org/ns/prov#used> <urn:pkc:record/9c3375135598174c877364e9bb6efa3593c21c750269735f9d000c696ed0e353> <urn:pkc:bundle/hcp-gate> .
 <urn:sbvr:check/pkc-physlib-contributor> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/ns/prov#Activity> <urn:pkc:bundle/hcp-gate> .
 <urn:pkc:gate/hcp-gate> <http://www.w3.org/ns/prov#wasInformedBy> <urn:sbvr:check/pkc-physlib-contributor> <urn:pkc:bundle/hcp-gate> .
 <urn:pkc:case/b626f18c5651e3ea6cc3fab594458e4112c9203da81799948862199d30f103b2> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/ns/prov#Entity> <urn:pkc:bundle/hcp-gate> .
@@ -19,6 +19,6 @@
 <urn:pkc:verdict/hcp-gate> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/ns/prov#Entity> <urn:pkc:bundle/hcp-gate> .
 <urn:pkc:verdict/hcp-gate> <http://open-mbee.org/sbvr#exit> "0" <urn:pkc:bundle/hcp-gate> .
 <urn:pkc:verdict/hcp-gate> <http://open-mbee.org/efa#holds> "C0" <urn:pkc:bundle/hcp-gate> .
-<urn:pkc:verdict/hcp-gate> <http://open-mbee.org/efa#tools> "SBVR.lean 015db27cee2758bfeeaa74233b3c64b491042d87 face.lean cefb034619704f985fb306ae9bde5df7ee6124be" <urn:pkc:bundle/hcp-gate> .
-<urn:pkc:verdict/hcp-gate> <http://open-mbee.org/efa#checks> "tools at the manifest's commits; records regenerated; PROV-valid; cited once each from evidence on a support path to the root; exit 0; every claim holds" <urn:pkc:bundle/hcp-gate> .
+<urn:pkc:verdict/hcp-gate> <http://open-mbee.org/efa#tools> "SBVR.lean 2f364d2b635d95120d9f9ebe85579f1522916704 face.lean fd6106f53cc846000a5c4b4ece9d025f07152cfb" <urn:pkc:bundle/hcp-gate> .
+<urn:pkc:verdict/hcp-gate> <http://open-mbee.org/efa#checks> "tools the Lake pins; records regenerated in process; PROV-valid; cited once each from evidence on an even-attack path to the root; exit 0; every claim holds" <urn:pkc:bundle/hcp-gate> .
 <urn:pkc:verdict/hcp-gate> <http://www.w3.org/ns/prov#wasGeneratedBy> <urn:pkc:gate/hcp-gate> <urn:pkc:bundle/hcp-gate> .
