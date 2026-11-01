@@ -45,8 +45,8 @@ fi
 rm -rf "$OUT"
 # The hand-authored schematics under figures/ are read into the document at compile time
 # (PropertyKindCalculusBlueprint/Figures.lean), so this refuses a render whose committed
-# SVGs are not what their generators under scripts/figures/ emit; `make-figures.sh` (no
-# flag) rewrites them. Stdlib-only Python; with none found the check says so and passes.
+# SVGs are not what their generator (`lake exe blueprint-figures`, Lean) emits;
+# `make-figures.sh` (no flag) rewrites them.
 "$ROOT/scripts/make-figures.sh" --check
 # `--with-html-single` also emits a one-page `html-single/index.html` (multi-page
 # stays on by default). The single page is self-contained and openable directly

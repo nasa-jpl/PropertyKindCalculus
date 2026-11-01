@@ -82,8 +82,9 @@ library.
 Three figures are hand-authored schematics rather than harvests: Lowe's square with the
 calculus's identifiers and the architecture cake (what a proved status rests on), both in
 the introduction, and the three layers with their two ladders (the capstone chapter). Their
-generators are the stdlib-only Python scripts under `scripts/figures/`, with the logo
-sources under `figures/logos/`; the SVGs they emit are committed under `figures/`, and
+generator is the Lean program `lake exe blueprint-figures` (`tools/Tools/Figures/*.lean`
+at the repository root, one pure `String` per figure), with the logo sources under
+`figures/logos/`; the SVGs it emits are committed under `figures/`, and
 `PropertyKindCalculusBlueprint/Figures.lean` reads each one at compile time for the
 `:::svg_figure "key" Figures.constant` directive to inline, with the directive's body under
 it: the first paragraph is the caption, any further paragraphs the legend. The render
@@ -98,9 +99,9 @@ cd blueprint
 ./scripts/make-figures.sh --check    # what ci-pages.sh runs first: fails if a committed SVG differs
 ```
 
-The JPL Gen-AI deck in `research-presentations` commits its own copies, written with each
-generator's `--out`; the cake's deck variant is `--audience deck` (its docstring says how
-the two audiences differ).
+The JPL Gen-AI deck in `research-presentations` commits its own copy of the cake, written
+with `lake exe blueprint-figures --audience deck --out DIR` (`Tools/Figures/Cake.lean` says how
+the two audiences differ: the top layers and the TorchLean chip, `layersFor_eq`).
 
 ## Viewing the rendered output
 
