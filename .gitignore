@@ -16,3 +16,4 @@
 # Where `lake exe julia_parity` writes the emitted Julia kernels, their inputs and outputs
 # (an artifact regenerated on every run; `-o DIR` moves it).
 /_out
+/tools/sbvr/.lake

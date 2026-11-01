@@ -28,11 +28,15 @@ Replaces `HCP/check-hcp.py`. Every chapter of the ladder
    `sbvr-check render` (`--fix-sbvr` rewrites them). sbvr-check's output is data; the verdict is
    decided here.
 
-Imports only `Lean`, so `lean --run tools/Tools/HcpCheck.lean` runs on a bare toolchain;
-`lake exe hcp-check` is the same program, from any directory inside the checkout. `errors_nil_iff` is
+Imports only `Lean`; `lake exe hcp-check` (root module `tools/HcpCheck.lean`, the two core-only
+modules all its build compiles) runs from any directory inside the checkout, and `hcp-check-sbvr`
+(`tools/sbvr/`, a Lake package of its own) is this module built with SBVR.lean in process, the
+observations answered by the library instead of a `sbvr-check` subprocess (`mainWith`). `errors_nil_iff` is
 the exit code's theorem: `main` exits 0 iff `errors snap run = []`, over the snapshot of the files
 and what `--sbvr` observed (`SbvrRun`); `fixed_errors` says what `--fix-sbvr` leaves to report.
 -/
+
+public section
 
 namespace Tools.HcpCheck
 
@@ -1278,14 +1282,26 @@ def run (root : System.FilePath) (exe : String) (args : List String) : IO (UInt3
   let out ← IO.Process.output { cmd := exe, args := args.toArray, cwd := root }
   return (out.exitCode, out.stdout, out.stderr)
 
-/-- Run the pinned `sbvr-check` on the chain and render the foundation and every lesson's
-vocabulary; what it printed and what is committed, as data. -/
-def observeSbvr (root : System.FilePath) (chapters : List String) (exe : String) : IO SbvrRun := do
-  let (code, out, err) ← run root exe [sbvrChain]
+/-- What `--sbvr` asks of SBVR.lean, each answer an exit code, stdout and stderr: the chain checked,
+a vocabulary rendered. `exe` is the pinned `sbvr-check` run as a subprocess; `hcp-check-sbvr`
+(`tools/sbvr/`) answers with the library's own functions, in process. The verdict (`sbvrErrors`) is
+decided here over the answers either way. -/
+structure SbvrTool where
+  check : IO (UInt32 × String × String)
+  render : String → IO (UInt32 × String × String)
+
+def SbvrTool.exe (root : System.FilePath) (exe : String) : SbvrTool where
+  check := run root exe [sbvrChain]
+  render name := run root exe ["render", sbvrChain, name]
+
+/-- Check the chain and render the foundation and every lesson's vocabulary; what the tool
+answered and what is committed, as data. -/
+def observeSbvr (root : System.FilePath) (chapters : List String) (tool : SbvrTool) : IO SbvrRun := do
+  let (code, out, err) ← tool.check
   if code != 0 then return { chainExit := code, chainOut := out ++ err, renders := [] }
   let names := sbvrFoundation :: chapters.filterMap sbvrLessonName
   let renders ← names.mapM fun name => do
-    let (exit, out, err) ← run root exe ["render", sbvrChain, name]
+    let (exit, out, err) ← tool.render name
     let committed ← readText root s!"{sbvrRenderedDir}/{name}.md"
     pure { name, exit, out, err, committed : Rendering }
   return { chainExit := code, chainOut := out ++ err, renders }
@@ -1307,8 +1323,10 @@ partial def findRoot (start : System.FilePath) : IO (Option System.FilePath) := 
   | some p => findRoot p
   | none => return none
 
-def usage : String :=
-  "usage: hcp-check [--root DIR] [--fix-excerpts] [--sbvr SBVR_CHECK] [--fix-sbvr]"
+def usageOf (prog : String) (inProcess : Bool) : String :=
+  s!"usage: {prog} [--root DIR] [--fix-excerpts]" ++ (if inProcess then "" else " [--sbvr SBVR_CHECK]") ++ " [--fix-sbvr]"
+
+def usage : String := usageOf "hcp-check" false
 
 structure Args where
   root : Option String := none
@@ -1325,21 +1343,31 @@ def parseArgs : List String → Except String Args
   | [a@"--sbvr"] | [a@"--root"] => .error s!"{a} requires a path"
   | a :: _ => .error s!"unknown argument '{a}'"
 
-def main (args : List String) : IO UInt32 := do
+/-- The program. `inProcess` is the SBVR tool `hcp-check-sbvr` is built with (the chain is then
+always checked, and `--sbvr` is not an option); `none` is `hcp-check`, whose `--sbvr SBVR_CHECK`
+names the pinned binary. -/
+def mainWith (prog : String) (inProcess : Option (System.FilePath → SbvrTool)) (args : List String) :
+    IO UInt32 := do
+  let usage := usageOf prog inProcess.isSome
   let a ← match parseArgs args with
     | .ok v => pure v
-    | .error e => do IO.eprintln s!"{usage}\nhcp-check: error: {e}"; return 2
-  if a.fixSbvr && a.sbvr.isNone then
-    IO.eprintln s!"{usage}\nhcp-check: error: --fix-sbvr requires --sbvr"; return 2
+    | .error e => do IO.eprintln s!"{usage}\n{prog}: error: {e}"; return 2
+  if inProcess.isSome && a.sbvr.isSome then
+    IO.eprintln s!"{usage}\n{prog}: error: SBVR.lean is in process; --sbvr names no binary here"; return 2
+  if a.fixSbvr && a.sbvr.isNone && inProcess.isNone then
+    IO.eprintln s!"{usage}\n{prog}: error: --fix-sbvr requires --sbvr"; return 2
   let cwd ← IO.currentDir
   let start : System.FilePath := match a.root with | some d => d | none => cwd
   let some root ← findRoot start
-    | IO.eprintln s!"hcp-check: {start} is not inside the PropertyKindCalculus checkout (no lakefile.lean with {chapterDir} at or above it; pass --root DIR)"; return 2
+    | IO.eprintln s!"{prog}: {start} is not inside the PropertyKindCalculus checkout (no lakefile.lean with {chapterDir} at or above it; pass --root DIR)"; return 2
   -- a relative --sbvr path is relative to the caller's directory, not the root; a bare name
   -- (no directory component) is left to PATH
   let sbvr : Option String := a.sbvr.map fun (exe : String) =>
     if (System.FilePath.mk exe).isAbsolute || !exe.contains System.FilePath.pathSeparator then exe
     else (cwd / exe).toString
+  let tool : Option SbvrTool := match inProcess with
+    | some t => some (t root)
+    | none => sbvr.map (SbvrTool.exe root)
   let mut snap ← snapshot root
   if snap.chapters.isEmpty then IO.eprintln "no HCPs found"; return 1
   if a.fixExcerpts then
@@ -1347,8 +1375,8 @@ def main (args : List String) : IO UInt32 := do
       if let (_, some fixed) := chapterExcerpts snap cp true then IO.FS.writeFile (root / cp) fixed
     snap ← snapshot root
   let mut run : Option SbvrRun := none
-  if let some exe := sbvr then
-    let observed ← observeSbvr root snap.chapters exe
+  if let some t := tool then
+    let observed ← observeSbvr root snap.chapters t
     run := some (← if a.fixSbvr then fixSbvrRenderings root observed else pure observed)
     -- the committed renderings `renderedErrors` reads are the rewritten ones
     if a.fixSbvr then snap ← snapshot root
@@ -1357,6 +1385,8 @@ def main (args : List String) : IO UInt32 := do
   IO.println s!"{snap.chapters.length} HCPs checked, {errs.length} errors"
   return if errs.isEmpty then 0 else 1
 
+def main (args : List String) : IO UInt32 := mainWith "hcp-check" none args
+
 end Tools.HcpCheck
 
-public def main (args : List String) : IO UInt32 := Tools.HcpCheck.main args
+end

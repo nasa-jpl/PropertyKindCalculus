@@ -76,7 +76,7 @@ or speed (the tools that elaborate pay the imports they elaborate against; CI al
 | `blueprint/scripts/file-links.py` (86): the `file://` link pass | every Verso directory link in `html-multi` names `index.html`; nothing else changes | `blueprint/scripts/ci-pages.sh` | `tools/Tools/FileLinks.lean`, core-only, `lean --run` from `ci-pages.sh` and `blueprint.yml` (also `lake exe file-links`), defined over `List Char`: the page tokenised into text and `href="…"` pieces, each non-`<base>` value rewritten by `fixChars` (`fixSegs` on the `/`-segments, `#…`/`?…` suffix kept) | `fixHref_idem` for every href value and `rewriteHtml_idem` for the page (via `tokenize_render`: a rewritten page tokenises into the rewritten pieces); every rewritten target looked up at run time under the site root the `<base>` names (`--strict` makes a missing one fatal) |
 | `blueprint/scripts/figures/*.py` (1334): the three schematics and the shared icon | `blueprint/figures/*.svg` are what the generators emit (`make-figures.sh --check`) | `make-figures.sh`, `Figures.lean` (`include_str`), the deck's copies (`--out`, `--audience deck`) | `lake exe blueprint-figures [--check] [--out DIR] [--audience deck]` (`tools/Tools/Figures/*.lean`): each figure a pure `String`, the Python's arithmetic in the same order with `Fmt.fmtFixed` (Python's `.Nf` from the exact binary value) — no `Svg` inductive was needed; `make-figures.sh` calls it | `--check` compares bytes (`figureMatches`), `mismatches_nil_iff` its soundness: no mismatch exactly when every committed SVG is its generator's output; `Cake.layersFor_eq` and `baseLayers_audience_free` say where the audience is read |
 | `blueprint/scripts/html-to-pdf.py` (478): the PDF | `_out/blueprint/html-single/index.html` merged and paginated into one PDF | `blueprint/scripts/render-pdf.sh` (through `pixi run`) | **stays at the edge**: everything before the render — the merge of the multi-page fallback, the `-verso-*` skipping, heading renumbering and nesting check, bookmark cleanup, the print CSS — moves into a Lean print pass (`blueprint-print`, text → text) that writes the page WeasyPrint is then given by shell; the PDF must not change, so the pass is checked by diffing its HTML against the Python pipeline's on the committed blueprint before the Python goes. The PDF is a rendering, not a claim | the print pass is a pure function of the pages' bytes; its heading renumbering is idempotent (`renumberLevels_idem`) and its output passes the nesting check (`checkLevels_renumber`) — the pass as a whole is not idempotent, by design: it wraps each page in one `<section class="chapter">`, so it is applied once, to Verso's output; WeasyPrint is the trusted base's edge (§4) |
-| `scripts/*.sh` (`sbvr-check.sh`, `hcp-assurance.sh`, `foundation-vocabulary.sh`, `build-api-docs.sh`, `make-figures.sh`, `ci-pages.sh`, `render-pdf.sh`, …) | fetch pinned snapshots, build, run the tools | CI, maintainers | **stay shell**: glue around `git`, `lake` and `pixi` with exit codes checked; no decision is made there (`sbvr-check.sh` goes once the chain is checked in process) | none |
+| `scripts/*.sh` (`hcp-check-sbvr.sh`, `hcp-assurance.sh`, `foundation-vocabulary.sh`, `build-api-docs.sh`, `make-figures.sh`, `ci-pages.sh`, `render-pdf.sh`, …) | fetch pinned snapshots, build, run the tools | CI, maintainers | **stay shell**: glue around `git`, `lake` and `pixi` with exit codes checked; no decision is made there (`sbvr-check.sh` went with `tools/sbvr/`, the chain checked in process) | none |
 
 ## 3. The package
 
@@ -121,10 +121,11 @@ Anything a tool does outside this list is a defect of the tool, not an extension
    the blueprint builds).
 2. **`hcp-check`**: the largest; `require SBVR` lands here and retires `scripts/sbvr-check.sh`'s
    clone-and-build (the pin becomes Lake's, `lake-manifest.json`, as `hcp-gate`'s already is).
-   *Shipped*: `tools/Tools/HcpCheck.lean`, with `--sbvr SBVR_CHECK` still the pinned binary run as
-   a subprocess whose output is data (Q1: a private `require` in this package's lakefile would
-   break every pull-request build, which has no token; the in-process form waits for a tools
-   sub-package with its own lakefile).
+   *Shipped*: `tools/Tools/HcpCheck.lean`; `--sbvr SBVR_CHECK` runs the pinned binary as a
+   subprocess whose output is data, and `tools/sbvr/` — a Lake package of its own with
+   `require SBVR` (Q1) — builds the same module as `hcp-check-sbvr`, the observations answered in
+   process by `SBVR.Record.load`, `ChainFile.run` and `SBVR.Hcp.synopsis` (`renderObs_clean`,
+   `checkObs_clean`); `scripts/hcp-check-sbvr.sh` builds and runs it, `scripts/sbvr-check.sh` is gone.
 3. **`gen-iso80000-coverage.lean`** and **`inject-index-docs.lean`**: generators that join the Lean
    scripts already in `scripts/`.
    *Shipped (first half)*: `scripts/gen-iso80000-coverage.lean`, `lake env lean --run … [--check]`;
@@ -195,9 +196,11 @@ is visible as a no-op diff of the artifacts.
    shared, so the cost is SBVR.lean's own modules) or keep `scripts/sbvr-check.sh`'s clone and call
    the binary. **Default: `require SBVR`**; `HCP/assurance/manifest.yaml`'s `tools.sbvr_lean` stays
    hcp-gate's pin (the record's kernel) and may differ from this package's, as it does today.
-   *Resolved:* the subprocess (#87) — a private `require` in this lakefile would break every
-   pull-request build, which has no token; `--sbvr` runs the pinned `sbvr-check` as data, inside the
-   exit theorem.
+   *Resolved:* both, in two packages — `--sbvr` runs the pinned `sbvr-check` as data (#87), inside
+   the exit theorem, and `tools/sbvr/lakefile.lean` holds the `require SBVR` pin for `hcp-check-sbvr`,
+   the same checker with the library in process. The root lakefile stays without it: a private
+   `require` there would break every pull-request build on a runner without credentials; the
+   sub-package is built only by `scripts/hcp-check-sbvr.sh`, where they are.
 2. **`doc-pins` before the Mathlib cache.** It must run in seconds on a bare checkout. **Default: a
    core-only executable** (`lean_exe doc-pins` whose imports are `Init`, `Lean`, L4YAML), built by
    `lake build doc-pins` before `lake exe cache get`; Elan is installed first, which moves the step
