@@ -530,6 +530,15 @@ lean_exe «hcp-check» where
   srcDir := "tools"
   root := `Tools.HcpCheck
 
+/-- **The API-site post-pass** (`TOOLS.md` §5 step 3): splices each per-declaration index block
+(`scripts/emit-index-json.lean`) into the doc-gen4 page of the declaration it names, once —
+`inject_marked`: a page already carrying the block is left unchanged, so a rerun is safe. A
+declaration outside the published Mathlib-free tier has no page and is reported, not an error.
+Imports only `Lean`; `scripts/build-api-docs.sh` runs it with `lean --run`. -/
+lean_exe «inject-index-docs» where
+  srcDir := "tools"
+  root := `Tools.InjectIndexDocs
+
 /-- Worked uncertainty examples grounded in the two source papers (Degenhardt 2025 fictive
 example; Willink 2005 gauge-block), in the `examples/` source tree as a **separate library** so
 no *library* module carries `#eval`/`#guard`. Build with `lake build UncertaintyExamples`. -/
