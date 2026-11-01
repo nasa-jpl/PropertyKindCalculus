@@ -576,7 +576,8 @@ table-extended interpreter `evalTapeT` succeeds on that tape and returns exactly
 program — slot `i` of the emitted kernel denotes node `i` of the tape, for every node. With it the
 two clauses the previous reading of this node could only describe are theorems about the program:
 a literal occurs in the emitted body exactly at an unnamed leaf and is that leaf's stored scalar
-(`SL.genSL_lit`), an input read exactly at a named leaf with that leaf's name (`SL.genSL_input`) —
+(`SL.genSL_lit_iff`), an input read exactly at a named leaf with that leaf's name
+(`SL.genSL_input_iff`) — equivalences, both directions —
 no number enters the emitted code that is not a leaf of the tape, and no argument that is not a
 named leaf. The per-backend rendering tables (`rendering_table_binary`/`_unary`, for C and for
 Julia) and the agreement of the two emitters on where they are defined
@@ -608,7 +609,9 @@ agreement of the resolved tables with the interpreter's table function and the o
 the list of nodes `mapM` produced lines for, by induction with the slot array generalised; the
 theorem is its instance at the empty array, read back through `Array.foldlM_toList` and
 `Array.toList_mapM`. The literal and input clauses read slot `i` of the program back to node `i`
-(`genSL_getElem?`, a `mapM`-indexing lemma) and case on the generator.
+(`genSL_getElem?`, a `mapM`-indexing lemma) and case on the generator; their converses read node
+`i` forward to slot `i` (`genSL_getElem?_of_node`, the same lemma the other way) and unfold the
+generator on a leaf.
 :::
 
 What the second capstone changes, and what it leaves. It covers bits and, through `R`,
@@ -704,8 +707,8 @@ command does by elaboration and the theorem takes as a hypothesis.
   tape; the `julia_parity` executable that runs the emitted file against the tape evaluator.
 - The denotation of the rendering, for every backend at once: the one straight-line program
   `genSL` reads off the tape, the three emitters as printers of it, `genSL_denotes` (the program
-  runs as `evalTapeT`, node for node) and the literal and input clauses `genSL_lit`/`genSL_input`
-  as theorems about the emitted program.
+  runs as `evalTapeT`, node for node) and the literal and input clauses `genSL_lit_iff`/`genSL_input_iff`
+  as equivalences about the emitted program.
 - One `min`/`max` reading on NaN across the interpreter and the three renderings: Lean's `ite`,
   written as the `≤`-ternary in C and CUDA and as `ifelse` in Julia; the table fetch's clamp likewise
   follows `refFetch` in every rendering.

@@ -25,8 +25,8 @@ WHY IT IS A PROOF-ENGINEERING WIN. The denotation theorem is proved once and inh
 printer, present and future, with no proof per backend; the per-backend rendering tables become
 corollaries (`jlExpr_isOk_eq_cExpr` over the whole alphabet, not case by case); and the argument-list
 and literal clauses of the capstone — a literal appears in the emitted body for exactly the baked
-leaves, an input read for exactly the named leaves — are theorems about the program (`genSL_lit`,
-`genSL_input`) instead of a reading of a generator. A new target (Fortran, MLIR, …) is a printer: a
+leaves, an input read for exactly the named leaves — are theorems about the program, in both
+directions (`genSL_lit_iff`, `genSL_input_iff`) instead of a reading of a generator. A new target (Fortran, MLIR, …) is a printer: a
 few lines, the same theorem.
 
 WHAT IS AND IS NOT CLAIMED. `genSL_denotes` is a theorem about Lean `Float` — binary64 — and the
@@ -533,6 +533,95 @@ theorem genSL_input {t : Tape Float} {tbls : Array LutTable} {prog : SLProg}
         · split at he <;> cases he
         · cases he
     · cases he
+
+/-! The converses: a leaf of the tape *is* a literal or an input read of the program at the same
+slot, so each clause is an equivalence (`genSL_lit_iff`, `genSL_input_iff`). -/
+
+/-- `mapM` over `Except`, read at an index, the other way: every input element produced the element
+at the same index. -/
+theorem mapM_ok_getElem?_of {α β : Type} {f : α → Except String β} :
+    ∀ {l : List α} {l' : List β}, l.mapM f = .ok l' →
+      ∀ (i : Nat) (x : α), l[i]? = some x → ∃ y, l'[i]? = some y ∧ f x = .ok y := by
+  intro l
+  induction l with
+  | nil =>
+    intro l' h i x hx
+    simp at hx
+  | cons hd tl ih =>
+    intro l' h i x hx
+    rw [List.mapM_cons] at h
+    cases hhd : f hd with
+    | error e => rw [hhd] at h; simp [bind, Except.bind] at h
+    | ok b =>
+      rw [hhd] at h
+      cases hrest : tl.mapM f with
+      | error e => rw [hrest] at h; simp [bind, Except.bind] at h
+      | ok bs =>
+        rw [hrest] at h
+        simp only [bind, Except.bind, pure, Except.pure] at h
+        have hl : l' = b :: bs := by injection h with h; exact h.symm
+        subst hl
+        cases i with
+        | zero =>
+          simp only [List.getElem?_cons_zero, Option.some.injEq] at hx
+          subst hx
+          exact ⟨b, rfl, hhd⟩
+        | succ k =>
+          simp only [List.getElem?_cons_succ] at hx
+          obtain ⟨y, hy, hfy⟩ := ih hrest k x hx
+          exact ⟨y, by simpa using hy, hfy⟩
+
+/-- Node `i` of the tape is printed at slot `i` of the program, as `nodeSL` of that node. -/
+theorem genSL_getElem?_of_node {t : Tape Float} {tbls : Array LutTable} {prog : SLProg}
+    (h : genSL t tbls = .ok prog) {i : Nat} {n : Node Float} (hn : t.getNode? i = some n) :
+    ∃ e, prog[i]? = some e ∧ nodeSL tbls i n = .ok e := by
+  unfold genSL at h
+  have h' : (t.nodes.toList.zipIdx 0).mapM (fun p => nodeSL tbls p.2 p.1) = .ok prog.toList := by
+    rw [← Array.toList_zipIdx, ← Array.toList_mapM, h]; rfl
+  have hn' : (t.nodes.toList.zipIdx 0)[i]? = some (n, i) := by
+    rw [List.getElem?_zipIdx, Array.getElem?_toList]
+    rw [Tape.getNode?] at hn
+    simp [hn]
+  obtain ⟨e, he, hne⟩ := mapM_ok_getElem?_of h' i (n, i) hn'
+  exact ⟨e, by rw [← Array.getElem?_toList]; exact he, hne⟩
+
+/-- An unnamed leaf of the tape is a literal of the program at its slot, with its stored scalar. -/
+theorem genSL_lit_of_leaf {t : Tape Float} {tbls : Array LutTable} {prog : SLProg}
+    (h : genSL t tbls = .ok prog) {i : Nat} {n : Node Float} (hn : t.getNode? i = some n)
+    (hp : n.parents.isEmpty = true) (hnm : n.name = none) :
+    prog[i]? = some (.lit (nodeScalar n)) := by
+  obtain ⟨e, he, hne⟩ := genSL_getElem?_of_node h hn
+  unfold nodeSL at hne
+  rw [ite_eq_left hp, hnm] at hne
+  cases hne
+  exact he
+
+/-- A named leaf of the tape is an input read of the program at its slot, with its name. -/
+theorem genSL_input_of_leaf {t : Tape Float} {tbls : Array LutTable} {prog : SLProg}
+    (h : genSL t tbls = .ok prog) {i : Nat} {n : Node Float} (hn : t.getNode? i = some n)
+    (hp : n.parents.isEmpty = true) {nm : String} (hnm : n.name = some nm) :
+    prog[i]? = some (.input nm) := by
+  obtain ⟨e, he, hne⟩ := genSL_getElem?_of_node h hn
+  unfold nodeSL at hne
+  rw [ite_eq_left hp, hnm] at hne
+  cases hne
+  exact he
+
+/-- **The literal clause, as an equivalence.** Slot `i` of the program is the literal `x` iff node
+`i` of the tape is an unnamed leaf storing `x`. -/
+theorem genSL_lit_iff {t : Tape Float} {tbls : Array LutTable} {prog : SLProg}
+    (h : genSL t tbls = .ok prog) (i : Nat) (x : Float) :
+    prog[i]? = some (.lit x) ↔
+      ∃ n, t.getNode? i = some n ∧ n.parents.isEmpty = true ∧ n.name = none ∧ nodeScalar n = x :=
+  ⟨genSL_lit h, fun ⟨_n, hn, hp, hnm, hx⟩ => hx ▸ genSL_lit_of_leaf h hn hp hnm⟩
+
+/-- **The argument-list clause, as an equivalence.** Slot `i` of the program reads the input `nm`
+iff node `i` of the tape is the leaf named `nm`. -/
+theorem genSL_input_iff {t : Tape Float} {tbls : Array LutTable} {prog : SLProg}
+    (h : genSL t tbls = .ok prog) (i : Nat) (nm : String) :
+    prog[i]? = some (.input nm) ↔
+      ∃ n, t.getNode? i = some n ∧ n.parents.isEmpty = true ∧ n.name = some nm :=
+  ⟨genSL_input h, fun ⟨_n, hn, hp, hnm⟩ => genSL_input_of_leaf h hn hp hnm⟩
 
 end SL
 
