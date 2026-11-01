@@ -288,7 +288,9 @@ Status: ✅ done · 🚧 in progress · ⬜ planned
   tape, const leaves included, the emitted program of its CSE'd form runs, at every environment, to the
   original tape's value at every remapped node (`cseCompact_denotation_unconditional` ∘ `genSL_denotes`);
   `#guard`'d from the raw AVS recording through the remap.
-  ⬜ Run `julia_parity` in a CI lane with Julia installed.
+  ✅ `julia_parity --ka` runs in CI (`blueprint.yml`, after the CudaT parity harnesses): Julia 1.10.12 from a
+  checksum-pinned release tarball, KernelAbstractions 0.10.4 pinned in a workspace project; a missing
+  julia fails the lane rather than skipping it.
   ⬜ First CliMA-shaped closure recorded over `[NumCarrier α]` to find the alphabet gaps (a bounded
   reduction and a gather are the expected first two).
 - ✅ **Recorded the *whole* trust-region step, not just the residual/Jacobian fragment**
