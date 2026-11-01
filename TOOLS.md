@@ -1,12 +1,14 @@
 # The tools in Lean: every checker, gate and generator of this package a Lean program, its claims proved
 
-*Concept note. Nothing converted yet; §5 is the order of work, §6 the open questions (answer by
-number; defaults in bold).* The rule and its reasons are
+*Status: done. Every tool is a Lean program — §5's seven steps shipped as #85, #87, #92, #93, #97,
+#98, #100 and #101; no `.py` file is left in the package, and pixi supplies WeasyPrint alone. §2 is
+the record of what each script claimed and what its Lean form proves; §6's questions are closed,
+each with its answer.* The rule and its reasons are
 engineering-foundation-architecture's `docs/architecture/tools-in-lean.md`, whose first tool
 (`hcp-gate`, Lean) this package already runs (`scripts/hcp-assurance.sh`); this note applies the
 rule to the tools that live *here*.
 
-This package's gates and generators outside Lean are Python scripts, about 4,500 lines across
+This package's gates and generators outside Lean were Python scripts, about 4,500 lines across
 twelve files (§2). Each one decides something a reader is then asked to trust: that an HCP
 chapter's synopsis names only vocabulary that exists, that the pinned toolchain is the one the
 prose claims, that a committed probe is the census's output, that a figure is its generator's.
@@ -62,7 +64,7 @@ It does not buy: correctness of a specification (a wrong required-sections list 
 too), properties of the world outside the process (WeasyPrint's PDF is rendered by WeasyPrint),
 or speed (the tools that elaborate pay the imports they elaborate against; CI already pays them).
 
-## 2. The inventory: each Python tool, what it claims, the property its Lean form proves
+## 2. The inventory: each Python tool (all gone), what it claimed, the property its Lean form proves
 
 | tool (lines) | claim today | consumers | Lean form | property to prove |
 |---|---|---|---|---|
@@ -81,20 +83,22 @@ or speed (the tools that elaborate pay the imports they elaborate against; CI al
 The tools live in this package, not a sibling: they import what they check.
 
 ```
-lakefile.lean                 require SBVR (pinned; private, fetched with OPEN_MBEE_READ_TOKEN as hcp-gate's pins are), L4YAML
-tools/Tools/DocPins.lean      §2 row 2 — Mathlib-free, in the core's dependency closure
-tools/Tools/HcpCheck.lean     §2 row 1 — imports HCP, SBVR, the Verso reader
-tools/Tools/ModuleCensus.lean §2 row 4 — core-only; the lakefile's lib blocks read as text
-tools/Tools/Verso.lean        the chapter/tag reader hcp-check and doc-pins share
-tools/Tools/Svg.lean          §2 row 7
-scripts/*.lean                the generators that already are Lean scripts (emit-*, roundtrip-*, gen-iso80000-coverage, inject-index-docs)
-blueprint/…/Links.lean        §2 row 6, in the blueprint's own package
+lakefile.lean                     lean_lib ToolsFigures; lean_exe doc-pins, hcp-check, module-census,
+                                  blueprint-figures, file-links, blueprint-print (srcDir := "tools")
+tools/Tools/HcpCheck.lean         §2 row 1 — imports HCP; `--sbvr` runs the pinned sbvr-check as a subprocess
+tools/Tools/DocPins.lean          §2 row 2 — core-only, runs before the Mathlib cache
+scripts/gen-iso80000-coverage.lean §2 row 3 — a Lean script beside emit-*, roundtrip-*
+tools/Tools/ModuleCensus.lean     §2 row 4 — core-only; the lakefile's lib blocks read as text
+tools/Tools/InjectIndexDocs.lean  §2 row 5 — core-only
+tools/Tools/FileLinks.lean        §2 row 6 — core-only, defined over List Char with its theorems
+tools/Tools/Figures/*.lean        §2 row 7 — the generators; tools/Tools/BlueprintFigures.lean their command line
+tools/Tools/BlueprintPrint.lean   §2 row 8 — the print pass; WeasyPrint the bounded edge
 ```
 
-`lean_exe doc-pins`, `hcp-check`, `module-census`, `blueprint-figures` with `srcDir := "tools"`, as
-the parity harnesses already are under `apps/`. Toolchain the package's (`lean-toolchain`); module
+`lean_exe doc-pins`, `hcp-check`, `module-census`, `blueprint-figures`, `file-links`, `blueprint-print`
+with `srcDir := "tools"`, as the parity harnesses already are under `apps/`. Toolchain the package's (`lean-toolchain`); module
 system on in every new file (`MODULARITY.md`'s bottom-up rule: the tools import the libraries, so
-they come last). CI's steps keep their names; each `python3 …` becomes `lake exe …` or `lake env lean …`.
+they come last). CI's steps kept their names; each `python3 …` became `lake exe …`, `lake env lean …` or `lean --run …`.
 
 ## 4. The trusted base, named once
 
@@ -176,6 +180,10 @@ Anything a tool does outside this list is a defect of the tool, not an extension
    no WeasyPrint.
 7. Delete `scripts/*.py`, `HCP/check-hcp.py`, `blueprint/scripts/**/*.py`; `blueprint/pyproject.toml`
    keeps only WeasyPrint, run as `weasyprint` (its command line), not through a script.
+   *Shipped*: each script went with the PR that replaced it, the last (`html-to-pdf.py`) in #101;
+   `pyproject.toml` keeps WeasyPrint alone, `render-pdf.sh` runs its command line through pixi. The
+   close-out removed the `__pycache__` ignores and the census's skip entry for it, and pointed the
+   blueprint's figure docstrings at the Lean generators.
 
 Each step is one PR off `main`, replacing one Python tool and its CI step, byte-identical outputs
 where an artifact is committed (the probe, the figures, the renderings, the excerpts) so the switch
@@ -187,26 +195,42 @@ is visible as a no-op diff of the artifacts.
    shared, so the cost is SBVR.lean's own modules) or keep `scripts/sbvr-check.sh`'s clone and call
    the binary. **Default: `require SBVR`**; `HCP/assurance/manifest.yaml`'s `tools.sbvr_lean` stays
    hcp-gate's pin (the record's kernel) and may differ from this package's, as it does today.
+   *Resolved:* the subprocess (#87) — a private `require` in this lakefile would break every
+   pull-request build, which has no token; `--sbvr` runs the pinned `sbvr-check` as data, inside the
+   exit theorem.
 2. **`doc-pins` before the Mathlib cache.** It must run in seconds on a bare checkout. **Default: a
    core-only executable** (`lean_exe doc-pins` whose imports are `Init`, `Lean`, L4YAML), built by
    `lake build doc-pins` before `lake exe cache get`; Elan is installed first, which moves the step
    after Phase 0's toolchain install (about a minute).
+   *Resolved:* as the default (#85) — core-only, `lean --run tools/Tools/DocPins.lean` right after
+   the toolchain install.
 3. **Verso as a dependency of the tools.** Reading chapters and tags through Verso's own document
    tree needs the blueprint package's imports (Verso, the manual genre). **Default: the chapter
    reader is a Lean script in the blueprint package** (`lake env lean`, where Verso is already a
    dependency), emitting the chapter list as JSON that `doc-pins` and `hcp-check` read through
    L4YAML — one reader, two consumers, no Verso in the core.
+   *Resolved:* textual readers inside `doc-pins` and `hcp-check` (the chapter sources as text;
+   doc-pins runs before the blueprint builds), so no Verso in the core.
 4. **WeasyPrint.** Stay (a rendering is not a claim) or replace with a Lean PDF writer. **Default:
    stay**, invoked on the one page `blueprint-print` (step 6) writes; the merge and the print
    preprocessing move into that Lean pass, nothing of them is dropped.
+   *Resolved:* stays (#101) — `blueprint-print` writes the one page, `render-pdf.sh` runs
+   WeasyPrint's command line on it.
 5. **Figures: port or freeze.** The three schematics change rarely; porting 1,334 lines of drawing
    code buys determinism the committed SVGs already exhibit. **Default: port**, because
    `make-figures.sh --check` is a gate and the rule has no exception for rarely-run gates;
    alternative: freeze the SVGs as the source of truth and delete the generators.
+   *Resolved:* ported (#100) — all three SVGs and the deck's cake byte-identical, `--check` the gate
+   with `mismatches_nil_iff`.
 6. **What of the properties is `Decidable` and what is `theorem`.** **Default:** every gate
    predicate is a `def` + `instance : Decidable` + `theorem sound`; no gate evaluates a `Bool`
    function that has no definition it is proved to decide (engineering-foundation-architecture's
    rule, Q6 there).
+   *Resolved:* as the default — `failures_nil_iff`, `errors_nil_iff`, `PartBlock.gate_iff_clean`,
+   `mismatches_nil_iff`, `Decl.inject_one`, `attributeFiles_complete`/`_unique`,
+   `fixHref_idem`/`rewriteHtml_idem`, `renumberLevels_idem`/`checkLevels_renumber` are the gates'
+   theorems.
 7. **The order.** `doc-pins` first because it is small and CI runs it first; `hcp-check` second
    because it carries the SBVR pin. *Alternative:* `hcp-check` first, since it is the gate the HCP
    chapters cite in their `tools:` lines. **Default: as §5.**
+   *Resolved:* as §5.
