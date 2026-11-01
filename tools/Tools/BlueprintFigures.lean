@@ -47,7 +47,7 @@ partial def findRoot (d : System.FilePath) : IO (Option System.FilePath) := do
 
 /-- The gate's predicate: a committed figure matches when the bytes on disk are exactly the
 generated ones (`none`: no file). -/
-def figureMatches (disk : Option ByteArray) (svg : String) : Bool := disk == some svg.toUTF8
+def figureMatches (disk : Option ByteArray) (svg : String) : Bool := decide (disk = some svg.toUTF8)
 
 /-- The figures `--check` names: those whose bytes on disk are not the generated ones. -/
 def mismatches (figs : List (String × String)) (disk : String → Option ByteArray) : List String :=
