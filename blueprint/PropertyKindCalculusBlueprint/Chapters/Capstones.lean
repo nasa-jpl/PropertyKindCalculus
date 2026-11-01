@@ -14,6 +14,7 @@ import PropertyKindCalculus.Graph.Bisimulation
 import PropertyKindCalculus.DimensionalHomogeneity
 import PropertyKindCalculus.Torch.Paradigm.TapeParity
 import PropertyKindCalculus.Torch.Paradigm.TapeSeal
+import PropertyKindCalculus.Torch.Paradigm.TapeCodegenJulia
 import PropertyKindCalculus.Tests.Graph.Seal
 import PropertyKindCalculus.Tests.Graph.Bisimulation
 import PropertyKindCalculus.Tests.Dimension.Homogeneity
@@ -564,6 +565,35 @@ declaration, and a runtime check over the recorded tape; (iii) is `#print axioms
 instance is gated, not proved, and the ledger says so.
 :::
 
+:::theorem "cap_thm_julia_rendering" (parent := "capstones_semantic") (lean := "PropertyKindCalculus.Paradigm.TapeCodegen.Julia.rendering_table_binary") (tags := "proved") (effort := "small")
+*The Julia rendering covers the interpreter's alphabet.* For every binary operation of the tape
+alphabet — `add sub mul div min max` — the Float interpreter `cOp` computes the operation and the
+Julia emitter `jlExpr` has an expression for it; `rendering_table_unary` says the same of
+`exp log sqrt abs`, and `jlExpr_isOk_eq_cExpr_binary` that the Julia and C renderings are defined
+on the same operations. `min_eq_ite`/`max_eq_ite` pin what the two `ifelse` renderings mean:
+Lean's `Min Float`/`Max Float` are `if x ≤ y then x else y` and `if x ≤ y then y else x`.
+
+That is what the linked theorem proves: existence and arity, op by op, and the reading of two of
+them — not that Julia evaluates an expression as `cOp` does. The rest of the claim this node is
+read for is _definitional_, and is said so here. `genJulia` takes its argument list from
+`collectInputs` — the named leaves, in first-seen order, the same function `gen` uses — and
+`genBodyJulia` writes one line per node: a read of `in_<leaf>` for a named leaf, `jlLit` of the
+node's stored scalar for a baked constant, `jlExpr` of the node's op on its parents otherwise.
+Read against {uses "cap_thm_semantic_seal"}[the seal of the computation], which is stated over the
+{tech}[computational tape graph] the emitter walks, this is the sense in which what a host receives
+admits no input, constant or operation the tape does not have. What would make it a theorem — a
+Julia denotation and a proof that `genBodyJulia`'s lines evaluate as `evalTape` at every node — is
+not in the library; the ledger lists it, and `julia_parity` measures it on the recorded cases in
+the meantime. (The methodology chapter, _Julia, emitted_, says what the emitter pins and what it
+leaves to the trusted base.)
+:::
+
+:::proof "cap_thm_julia_rendering"
+Each conjunct is `rfl`: the interpreter and the emitter both match on the operation name and the
+arity, and the two tables are written case for case.
+:::
+
+
 What the second capstone changes, and what it leaves. It covers bits and, through `R`,
 kinds: the tape graph's kinds are the hypergraph's, transported, and the matcher checks the
 hypergraph's occurrence structure — each family against the operation that realizes it —
@@ -652,6 +682,9 @@ command does by elaboration and the theorem takes as a hypothesis.
 - The recording carrier, the compaction pass, the code generator, and the denotation bridge
   with whole-kernel parity theorems for the branchless dielectric chain, its reflectivity,
   and the fit's forward, residual and Jacobian kernels.
+- The Julia emitter beside the CUDA/C pair, with its rendering table over the whole alphabet
+  and the `min`/`max` reading as Lean's `ite`; the coverage and ABI `#guard`s on the recorded AVS
+  tape; the `julia_parity` executable that runs the emitted file against the tape evaluator.
 - The dimension functor, the curated homomorphism, and the coverage command with its pinned
   refutation of an incoherent edge.
 - The three capstones and their supporting lemmas, each linked above: the seal of a module
@@ -665,6 +698,15 @@ command does by elaboration and the theorem takes as a hypothesis.
 
 *Open — each item with whose move it is.*
 
+- Capstone 2, the Julia rendering as a theorem rather than a reading: a denotation of the emitted
+  straight-line body (one Julia value per `v<id>`) and the lemma that `genBodyJulia`'s line for a
+  node evaluates as `evalTape` does at that node, over the alphabet; with it the argument-list and
+  literal clauses of `cap_thm_julia_rendering` become statements about the emitted text instead of
+  descriptions of the generator. *Library.*
+- Capstone 2, the three renderings' `min`/`max` on NaN: the interpreter and the Julia rendering
+  return Lean's `ite` reading, the C rendering's `fminf`/`fmaxf` return the non-NaN operand. One
+  semantics across `cOp`, `cExpr` and `jlExpr`, decided and stated, before the C rendering's
+  bit-exactness claim is read as covering NaN inputs. *Library.*
 - Capstone 2, the matcher: acceptance is decided on a match a probe authors. A matcher that
   finds the match from the leaves of a recorded tape — ports by name, constants by recording
   site, each occurrence by a realization table per family and carrier — is the instrument
@@ -686,6 +728,10 @@ command does by elaboration and the theorem takes as a hypothesis.
 
 # What the capstones do not claim
 
+- The host that receives an emitted kernel. The Julia emitter hands a host the tape and nothing
+  else, and the seal travels with the tape; the host's compiler, its `exp`/`log`, and every line of
+  the host's own model are its trusted base, named in the methodology chapter and measured — not
+  proved — by `julia_parity`.
 - The truth of an attestation. It is a hypothesis of the model; the seal says only that the
   build's list of them is complete. Where the attestation defers a requirement, the
   {ref "requirements-as-evidence"}[requirement clause] counts it, with its reason, as one
