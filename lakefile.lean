@@ -559,6 +559,16 @@ lean_exe «blueprint-print» where
   srcDir := "tools"
   root := `Tools.BlueprintPrint
 
+/-- **The module-system censuses** (`TOOLS.md` §5 step 4): `--tree` counts the files whose first
+token outside comments is `module`; `--layers` is the intra-package import graph over every lib at
+once (depth, dependents, the migratable frontier, orphans no lib covers — `place_total`); `--closure`
+imports the package's sinks in process and reads `ModuleData.isModule` from every olean loaded, the
+dependency modules it names blocking every package module above them. `MODULARITY.md`'s numbers. -/
+lean_exe «module-census» where
+  srcDir := "tools"
+  root := `Tools.ModuleCensus
+  supportInterpreter := true  -- `--closure` imports the package in process (`importModules`)
+
 /-- Worked uncertainty examples grounded in the two source papers (Degenhardt 2025 fictive
 example; Willink 2005 gauge-block), in the `examples/` source tree as a **separate library** so
 no *library* module carries `#eval`/`#guard`. Build with `lake build UncertaintyExamples`. -/

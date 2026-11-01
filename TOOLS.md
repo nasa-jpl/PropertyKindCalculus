@@ -126,7 +126,18 @@ Anything a tool does outside this list is a defect of the tool, not an extension
    *Shipped (first half)*: `scripts/gen-iso80000-coverage.lean`, `lake env lean --run … [--check]`;
    the censuses called in process (`examinationRows`, `coverageRows`), the probe byte-identical to
    the Python's but for its header; `PartBlock.gate_iff_clean` is the never-bless-a-violation rule.
+   *Shipped (second half)*: `tools/Tools/InjectIndexDocs.lean`, a core-only `lean --run` tool rather
+   than more of `emit-index-json.lean` (the splice needs no environment, only the JSON and the pages;
+   the emitter keeps the environment); `Decl.inject_one` and `Decl.inject_idem` are the one-block
+   guarantee over the located declaration.
 4. **`module-census`**: the two censuses in one executable; `MODULARITY.md`'s numbers regenerated.
+   *Shipped*: `tools/Tools/ModuleCensus.lean` — `--tree`, `--layers [--tsv] [--max-depth]`, `--closure
+   [--names]`, output identical to the two scripts' on this tree (`import-layers.py --tsv` row for row;
+   the lib names now whole, `doc-pins` not `doc`); `place_total` is the attribution rule. One deviation
+   from the row: the libs are read from `lakefile.lean` by the same block reader the Python used, not
+   from a `Lake.Workspace` loaded in process — `lean --run` has no Lake configuration elaborated, and the
+   `--tree`/`--layers` instruments must run on the bare toolchain before anything is built. `MODULARITY.md`
+   quotes no census number, so nothing there to regenerate.
 5. **`blueprint-figures`** and the **link pass**; `make-figures.sh` and `ci-pages.sh` call them.
    *Shipped (figures)*: `lake exe blueprint-figures [--check] [--out DIR] [--audience deck]`, the
    modules `tools/Tools/Figures/{Fmt,Icon,Lowe,ThreeLayers,Cake}.lean` (`lean_lib ToolsFigures`), each
