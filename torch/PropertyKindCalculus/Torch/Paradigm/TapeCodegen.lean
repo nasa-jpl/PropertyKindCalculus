@@ -249,6 +249,36 @@ theorem checkOutputs_ok {t : Tape Float} {outIds : List Nat} (h : checkOutputs t
     simpa [List.all_eq_true] using hall
   · cases h
 
+/-- Every constant leaf stores exactly one scalar. `nodeScalar` reads the head of a leaf's stored
+buffer (`headD 0.0`), so a leaf recorded with an empty or a multi-element buffer would be emitted as
+the literal `0.0` or as its first element without a word; `gen` and `genJulia` reject such a tape
+instead (`checkScalarLeaves`). A `TapeBuilder.const` leaf stores one element, so recorded tapes pass
+— the AVS and LM-step `#guard`s run `gen` and so decide it. -/
+def ScalarLeaves (t : Tape Float) : Prop :=
+  ∀ id nd, t.getNode? id = some nd → nd.parents.isEmpty = true → nd.name = none →
+    (TorchLean.Storage.toArray nd.value.tensor.buffer).size = 1
+
+def checkScalarLeaves (t : Tape Float) : Except String Unit :=
+  if (List.range t.size).all (fun id =>
+      match t.nodes[id]? with
+      | some nd =>
+          !(nd.parents.isEmpty && nd.name.isNone) ||
+            (TorchLean.Storage.toArray nd.value.tensor.buffer).size == 1
+      | none => true) then .ok ()
+  else .error "tape_codegen: a constant leaf does not store exactly one scalar"
+
+theorem checkScalarLeaves_ok {t : Tape Float} (h : checkScalarLeaves t = .ok ()) : ScalarLeaves t := by
+  unfold checkScalarLeaves at h
+  split at h
+  · rename_i hall
+    intro id nd hnd he hn
+    rw [Tape.getNode?] at hnd
+    obtain ⟨hid, _⟩ := Array.getElem?_eq_some_iff.mp hnd
+    have hf := List.all_eq_true.mp hall id (List.mem_range.mpr hid)
+    simp only [hnd, he, hn, Option.isNone_none, Bool.and_self, Bool.not_true, Bool.false_or] at hf
+    exact Nat.eq_of_beq_eq_true hf
+  · cases h
+
 /-- Lower a CSE'd tape + its output ids to the straight-line body. Node array index = node id
 (tape ids are array indices), so a node's `vID` is `v{arrayIndex}` and its parents reference earlier
 `v`s. The `inputs`/`numOutputs`/`outLines` fields are pure functions of `t`/`outIds`; only `body`
@@ -257,6 +287,7 @@ def gen (t : Tape Float) (outIds : List Nat) (tables : Array LutTable := #[])
     (lutMode : LutFilterMode := .point) : Except String Codegen :=
   (checkWF t).bind fun _ =>
   (checkOutputs t outIds).bind fun _ =>
+  (checkScalarLeaves t).bind fun _ =>
   (resolveTables (collectTableNames t) tables).bind fun resolved =>
     (genBody t tables).map fun body =>
       { inputs := collectInputs t
@@ -274,6 +305,25 @@ theorem gen_wf {t : Tape Float} {outIds : List Nat} {tables : Array LutTable}
   cases hw : checkWF t with
   | error e => rw [hw] at h; simp [Except.bind] at h
   | ok u => exact checkWF_ok hw
+
+/-- `gen` succeeds only when every constant leaf stores exactly one scalar: the literal the program
+bakes at a const leaf (`genSL_lit_iff`) is the leaf's whole stored value, not the head of a buffer. -/
+theorem gen_scalar_leaves {t : Tape Float} {outIds : List Nat} {tables : Array LutTable}
+    {mode : LutFilterMode} {cg : Codegen} (h : gen t outIds tables mode = .ok cg) : ScalarLeaves t := by
+  unfold gen at h
+  cases hw : checkWF t with
+  | error e => rw [hw] at h; simp [Except.bind] at h
+  | ok u =>
+  rw [hw] at h
+  simp only [Except.bind] at h
+  cases ho : checkOutputs t outIds with
+  | error e => rw [ho] at h; simp at h
+  | ok u =>
+  rw [ho] at h
+  simp only at h
+  cases hs : checkScalarLeaves t with
+  | error e => rw [hs] at h; simp at h
+  | ok u => exact checkScalarLeaves_ok hs
 
 /-- `gen` succeeds only with every output id in range: every `out[…] = v<id>` line names a
 temporary the body defines. -/
