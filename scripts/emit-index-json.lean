@@ -1,5 +1,5 @@
 /-
-Emit the per-declaration index blocks as JSON, for `scripts/inject-index-docs.py`.
+Emit the per-declaration index blocks as JSON, for `tools/Tools/InjectIndexDocs.lean`.
 
 Run from the repository root:
 

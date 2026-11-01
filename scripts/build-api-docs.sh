@@ -154,6 +154,6 @@ fi
 BLOCKS="$ROOT/.lake/build/pkc-index.json"
 echo "Emitting per-declaration index blocks…"
 lake env lean "$ROOT/scripts/emit-index-json.lean"
-python3 "$ROOT/scripts/inject-index-docs.py" "$DOCS/api" "$BLOCKS"
+lean --run "$ROOT/tools/Tools/InjectIndexDocs.lean" "$DOCS/api" "$BLOCKS"
 
 echo "Staged $(find "$DOCS/api" -type f | wc -l) files into $DOCS/api/ (entry point: docs/api/index.html)"

@@ -28,7 +28,7 @@ docstring, the way `@[pkc_math]` appends to a definition's. That is not possible
 `Lean.addDocStringCore` refuses a declaration that lives in an imported module, and the crossings and
 theorems that mention a kind are almost always declared in *later* modules than the kind itself — by
 the time the facts are known, the kind is imported. So the per-declaration blocks are spliced into
-the generated HTML afterwards, by `scripts/inject-index-docs.py`, from the JSON this module's
+the generated HTML afterwards, by `tools/Tools/InjectIndexDocs.lean`, from the JSON this module's
 `indexJson` produces. The index *page* has no such constraint and stays pure Lean.
 -/
 
@@ -171,7 +171,7 @@ def declarationBlocks (scope : Scope) : MetaM (Array (Name × String)) := withHa
       out := out.push (k, String.intercalate "" parts.toList)
   return out
 
-/-- The per-declaration blocks as JSON, for `scripts/inject-index-docs.py`. -/
+/-- The per-declaration blocks as JSON, for `tools/Tools/InjectIndexDocs.lean`. -/
 def indexJson (scope : Scope) : MetaM Json := do
   let blocks ← declarationBlocks scope
   return Json.mkObj (blocks.toList.map fun (n, h) => (toString n, Json.str h))
