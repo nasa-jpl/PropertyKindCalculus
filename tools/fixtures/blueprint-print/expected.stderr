@@ -1,0 +1,2 @@
+heading-nesting check: MIS-NESTED — 1 problem(s) in the source outline; the _renumber_headings fallback re-levelled them so the PDF bookmark tree stays well-formed (see verso-blueprint #130):
+  • <h4> #a-deep should be <h3>
