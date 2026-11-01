@@ -570,15 +570,22 @@ instance is gated, not proved, and the ledger says so.
 alphabet — `add sub mul div min max` — the Float interpreter `cOp` computes the operation and the
 Julia emitter `jlExpr` has an expression for it; `rendering_table_unary` says the same of
 `exp log sqrt abs`, and `jlExpr_isOk_eq_cExpr_binary` that the Julia and C renderings are defined
-on the same operations. With `min_eq_ite`/`max_eq_ite` — Lean's `Min Float`/`Max Float` are
-`if x ≤ y then x else y` and `if x ≤ y then y else x`, which is what the emitter writes as `ifelse` —
-the emitted Julia function is the {tech}[computational tape graph] rendered node for node: a Julia
-argument for each named leaf, a bit-pattern literal for each baked constant, one line per operation.
-It is therefore the object {uses "cap_thm_semantic_seal"}[the seal of the computation] is stated
-over, given to a host outside Lean; what the host receives admits no input, constant or operation
-the tape does not have, which is the sense in which no naked number enters the generated code
-beyond the algorithm's declared boundary. (The methodology chapter, _Julia, emitted_, says what the
-emitter pins and what it leaves to the trusted base.)
+on the same operations. `min_eq_ite`/`max_eq_ite` pin what the two `ifelse` renderings mean:
+Lean's `Min Float`/`Max Float` are `if x ≤ y then x else y` and `if x ≤ y then y else x`.
+
+That is what the linked theorem proves: existence and arity, op by op, and the reading of two of
+them — not that Julia evaluates an expression as `cOp` does. The rest of the claim this node is
+read for is _definitional_, and is said so here. `genJulia` takes its argument list from
+`collectInputs` — the named leaves, in first-seen order, the same function `gen` uses — and
+`genBodyJulia` writes one line per node: a read of `in_<leaf>` for a named leaf, `jlLit` of the
+node's stored scalar for a baked constant, `jlExpr` of the node's op on its parents otherwise.
+Read against {uses "cap_thm_semantic_seal"}[the seal of the computation], which is stated over the
+{tech}[computational tape graph] the emitter walks, this is the sense in which what a host receives
+admits no input, constant or operation the tape does not have. What would make it a theorem — a
+Julia denotation and a proof that `genBodyJulia`'s lines evaluate as `evalTape` at every node — is
+not in the library; the ledger lists it, and `julia_parity` measures it on the recorded cases in
+the meantime. (The methodology chapter, _Julia, emitted_, says what the emitter pins and what it
+leaves to the trusted base.)
 :::
 
 :::proof "cap_thm_julia_rendering"
@@ -691,6 +698,11 @@ command does by elaboration and the theorem takes as a hypothesis.
 
 *Open — each item with whose move it is.*
 
+- Capstone 2, the Julia rendering as a theorem rather than a reading: a denotation of the emitted
+  straight-line body (one Julia value per `v<id>`) and the lemma that `genBodyJulia`'s line for a
+  node evaluates as `evalTape` does at that node, over the alphabet; with it the argument-list and
+  literal clauses of `cap_thm_julia_rendering` become statements about the emitted text instead of
+  descriptions of the generator. *Library.*
 - Capstone 2, the three renderings' `min`/`max` on NaN: the interpreter and the Julia rendering
   return Lean's `ite` reading, the C rendering's `fminf`/`fmaxf` return the non-NaN operand. One
   semantics across `cOp`, `cExpr` and `jlExpr`, decided and stated, before the C rendering's

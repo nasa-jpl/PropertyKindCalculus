@@ -365,20 +365,23 @@ error near `1e-13`. It is not a fifth carrier. It is the fourth strategy's inter
 given a third surface syntax, beside the CUDA kernel and the C stub, so that what crosses into the
 host is the tape and nothing else.
 
-That last clause is the strategy, and it is a theorem, not a convention. The seal of the
-computation ({ref "capstones"}[the second capstone]) is stated over the tape the emitter renders:
+That last clause is the strategy. It rests on a theorem and on a reading of the emitter's
+definition, and the two are kept apart. The theorem is the seal of the computation
+({ref "capstones"}[the second capstone]), stated over the tape the emitter renders:
 every leaf in the backward cone of an output is either a named input or a baked constant the
 hypergraph's assumption ledger lists, two environments that agree on the influencers of an output
 give the same value at it, and every edge between observable vertices realizes one hop of one
 occurrence the source states, with the kinds that occurrence names — the kind-transporting weak
 bisimulation between the metrological provenance hypergraph and the computational tape graph. The
-emitter adds no entry point to that picture: a Julia argument exists for exactly the named leaves
-(`genJulia`'s input list is `gen`'s, name for name), a literal appears in the body for exactly the
-baked leaves (rendered from the double's bit pattern, so it _is_ the constant the ledger lists), and
-a line of the body is one node's operation on its parents, over the alphabet the Float interpreter
-`cOp` defines — the rendering table `rendering_table_binary`/`rendering_table_unary` says the Julia
+reading is of `genJulia`: it adds no entry point to that picture — a Julia argument exists for
+exactly the named leaves (its input list is `collectInputs`, the function `gen` uses, name for
+name), a literal appears in the body for exactly the baked leaves (rendered from the double's bit
+pattern, so it _is_ the constant the ledger lists), and a line of the body is one node's operation
+on its parents, over the alphabet the Float interpreter `cOp` defines. Of that reading only the
+alphabet clause is a theorem today — `rendering_table_binary`/`rendering_table_unary` say the Julia
 expression exists exactly where the interpreter has a value, as `examples.tape_codegen_end_to_end`
-says of the C rendering. In the words a reviewer would use: _no naked number enters the Julia code
+says of the C rendering; the capstone chapter's ledger names what would make the rest one. In the
+words a reviewer would use: _no naked number enters the Julia code
 beyond what the algorithm's contract admits_. An input the hypergraph says cannot reach an output
 does not reach it in the Julia function either, because the Julia function is the tape, and the
 statement was proved of the tape.
@@ -403,9 +406,13 @@ What it does not do, said plainly. It does not put the host's own code under the
 model's dynamical core, time stepping and communication are the host's, and the seal says nothing
 about them. It does not certify Julia's compiler or its `exp`/`log`: those are the trusted base the
 target adds, named as such — LLVM compiling a straight-line function, and a third libm (pure-Julia
-`Base.Math`) beside glibc's and CUDA's. The honest check across that base is `apps.julia_parity`: the
-emitted file run under `julia` at `Float64` over deterministic pixels against `evalTape`, bit-identical
-on every output whose cone has no `exp`/`log`, within an ulp bound on the outputs whose cone does.
+`Base.Math`) beside glibc's and CUDA's. The honest check across that base is `apps.julia_parity`, and its
+scope is the three recorded tapes it carries — the AVS residual and Jacobian, the whole projected
+LM step, and the table-fetch model of `examples.tape_codegen_lut` — not every kernel the emitter
+could be given: each emitted file is run under `julia` at `Float64` over deterministic pixels
+against the tape evaluator, bit-identical on every output whose cone has no `exp`/`log`, within an
+ulp bound on the outputs whose cone does. A new closure earns the same check by being added as a
+case.
 And it covers the tape's program class and no more — a branchless, fixed-shape computational tape graph over
 ten operations and a table fetch, with reductions only when unrolled — so a closure with a
 data-dependent loop, a runtime-size reduction or a stencil is outside it today; the first such
