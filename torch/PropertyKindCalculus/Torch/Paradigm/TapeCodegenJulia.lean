@@ -160,6 +160,7 @@ def genJulia (t : Tape Float) (outIds : List Nat) (tables : Array LutTable := #[
     (lutMode : LutFilterMode := .point) : Except String JuliaCodegen :=
   (checkWF t).bind fun _ =>
   (checkOutputs t outIds).bind fun _ =>
+  (checkScalarLeaves t).bind fun _ =>
   (resolveTables (collectTableNames t) tables).bind fun resolved =>
     (genBodyJulia t tables).map fun body =>
       { inputs := collectInputs t
@@ -176,6 +177,26 @@ theorem genJulia_wf {t : Tape Float} {outIds : List Nat} {tables : Array LutTabl
   cases hw : checkWF t with
   | error e => rw [hw] at h; simp [Except.bind] at h
   | ok u => exact checkWF_ok hw
+
+/-- `genJulia` succeeds only when every constant leaf stores exactly one scalar — the same check
+`gen` makes. -/
+theorem genJulia_scalar_leaves {t : Tape Float} {outIds : List Nat} {tables : Array LutTable}
+    {mode : LutFilterMode} {cg : JuliaCodegen} (h : genJulia t outIds tables mode = .ok cg) :
+    ScalarLeaves t := by
+  unfold genJulia at h
+  cases hw : checkWF t with
+  | error e => rw [hw] at h; simp [Except.bind] at h
+  | ok u =>
+  rw [hw] at h
+  simp only [Except.bind] at h
+  cases ho : checkOutputs t outIds with
+  | error e => rw [ho] at h; simp at h
+  | ok u =>
+  rw [ho] at h
+  simp only at h
+  cases hs : checkScalarLeaves t with
+  | error e => rw [hs] at h; simp at h
+  | ok u => exact checkScalarLeaves_ok hs
 
 /-- `genJulia` succeeds only with every output id in range — the same check `gen` makes. -/
 theorem genJulia_outIds_lt {t : Tape Float} {outIds : List Nat} {tables : Array LutTable}

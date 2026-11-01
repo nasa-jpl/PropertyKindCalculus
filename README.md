@@ -288,6 +288,10 @@ Status: ✅ done · 🚧 in progress · ⬜ planned
   tape, const leaves included, the emitted program of its CSE'd form runs, at every environment, to the
   original tape's value at every remapped node (`cseCompact_denotation_unconditional` ∘ `genSL_denotes`);
   `#guard`'d from the raw AVS recording through the remap.
+  ✅ **Scalar-leaf obligation**: `nodeScalar` reads the head of a leaf's stored buffer, so `gen`/`genJulia`
+  now decide that every constant leaf stores exactly one scalar (`checkScalarLeaves`,
+  `gen_scalar_leaves`/`genJulia_scalar_leaves`) instead of baking `0.0` or a buffer's first element
+  for an ill-shaped leaf; the recorded AVS and LM-step tapes pass (their `gen` `#guard`s decide it).
   ✅ **The host `Float` is a specification** (`Examples.TapeHostFloatModel`): on the pinned toolchain
   `Float` is a structure over core's `Float.Model` (IEEE 754 binary64, round-to-nearest-even), and
   `BinOp.eval`/`UnOp.eval` unfold by `rfl` to model arithmetic for every op of the alphabet but the two

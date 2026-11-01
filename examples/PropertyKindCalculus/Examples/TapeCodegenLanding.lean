@@ -85,6 +85,12 @@ theorem gen_inputs_eq {t : Tape Float} {outIds : List Nat} {tables : Array LutTa
     | ok u => rfl
   rw [ho] at h
   simp only at h
+  have hs : checkScalarLeaves t = .ok () := by
+    cases hs : checkScalarLeaves t with
+    | error e => rw [hs] at h; simp at h
+    | ok u => rfl
+  rw [hs] at h
+  simp only at h
   cases hr : resolveTables (collectTableNames t) tables with
   | error e => rw [hr] at h; simp at h
   | ok resolved =>
@@ -108,6 +114,12 @@ theorem gen_numOutputs {t : Tape Float} {outIds : List Nat} {tables : Array LutT
     | error e => rw [ho] at h; simp at h
     | ok u => rfl
   rw [ho] at h
+  simp only at h
+  have hs : checkScalarLeaves t = .ok () := by
+    cases hs : checkScalarLeaves t with
+    | error e => rw [hs] at h; simp at h
+    | ok u => rfl
+  rw [hs] at h
   simp only at h
   cases hr : resolveTables (collectTableNames t) tables with
   | error e => rw [hr] at h; simp at h
@@ -135,6 +147,12 @@ theorem gen_tables_eq {t : Tape Float} {outIds : List Nat} {tables : Array LutTa
     | error e => rw [ho] at h; simp at h
     | ok u => rfl
   rw [ho] at h
+  simp only at h
+  have hs : checkScalarLeaves t = .ok () := by
+    cases hs : checkScalarLeaves t with
+    | error e => rw [hs] at h; simp at h
+    | ok u => rfl
+  rw [hs] at h
   simp only at h
   cases hr : resolveTables (collectTableNames t) tables with
   | error e => rw [hr] at h; simp at h

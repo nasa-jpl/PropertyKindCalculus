@@ -733,6 +733,10 @@ command does by elaboration and the theorem takes as a hypothesis.
   (`genSL_slots_lt`, `ofProg_ordered`); the generators decide that invariant (`checkWF`, `gen_wf`,
   `genJulia_wf`) and reject an output id outside the tape (`checkOutputs`, `gen_outIds_lt`,
   `genJulia_outIds_lt`) — the printed kernels are well-scoped, for any tape handed to them.
+- The scalar-leaf obligation: the generators decide that every constant leaf stores exactly one
+  scalar (`checkScalarLeaves`, `gen_scalar_leaves`, `genJulia_scalar_leaves`), so the literal baked
+  at a const leaf (`genSL_lit_iff`) is the leaf's whole stored value, never the head of a buffer
+  read as `0.0`.
 - The chain composed: `pipeline_denotes` (`examples.tape_end_to_end_chain`) — for every well-formed
   tape, const leaves included, tape, compacted tape and emitted program hold the same value at every
   original node; the program's existence supplies the compacted tape's evaluation, and Batteries'
