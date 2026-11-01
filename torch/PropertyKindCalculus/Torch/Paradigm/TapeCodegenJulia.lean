@@ -23,8 +23,8 @@ the honest check is an ulp bound (`apps.julia_parity`). The semantics choices th
   * no `@fastmath`, no `muladd` — Julia does not contract `a*b + c` to an FMA or re-associate unless
     asked, so the default is the `nvcc --fmad=false` regime; the header says so;
   * `min`/`max` render as `ifelse(a <= b, a, b)` / `ifelse(a <= b, b, a)`, which is *exactly* Lean's
-    `Min Float`/`Max Float` (`minOfLe`/`maxOfLe`, `if x ≤ y then x else y`), NaN cases included. The C
-    rendering's `fminf`/`fmaxf` return the non-NaN operand instead; this emitter sides with `cOp`;
+    `Min Float`/`Max Float` (`minOfLe`/`maxOfLe`, `if x ≤ y then x else y`), NaN cases included — the
+    same `≤`-ternary the C rendering (`cExpr`) writes, so interpreter and all three renderings agree;
   * `sqrt`/`log` of a negative argument throw a `DomainError` in Julia where IEEE (and `Float.sqrt`,
     `Float.log`, `sqrtf`, `logf`) return a quiet NaN; the emitted `tl_sqrt`/`tl_log` helpers restore
     the NaN, and are the identity on the non-negative domain (`-0.0` is not negative, so `sqrt(-0.0)
@@ -183,8 +183,8 @@ def mathHelpers : String := String.intercalate "\n"
 /-- The `lutfetch` helper: `LutTable.refFetch`'s clamp/floor/lerp over the flat row-major table —
 an empty table (`W == 0 || LAYERS == 0`) fetches `zero(T)` as `refFetch` returns `0.0`; the
 coordinate and the layer are clamped with Lean's `max 0 (min x hi)` spelled out as `ifelse`, so a
-NaN coordinate lands on `hi` exactly as `minOfLe` does (the C stub's `u < 0 ? 0 : (u > wmax ? …)`
-keeps a NaN — a pre-existing divergence of the C rendering from `refFetch`, not reproduced here);
+NaN coordinate lands on `hi` exactly as `minOfLe` does — the same clamp the C stub and the CUDA
+helper write;
 the layer is clamped as a float before it is truncated, so a huge finite layer cannot overflow the
 index. Point mode is the stub's arithmetic step for step; hardware mode emulates the 9-bit weight,
 tolerance-only. Empty when the kernel uses no tables. -/

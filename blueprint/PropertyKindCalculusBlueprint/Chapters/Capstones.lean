@@ -685,6 +685,9 @@ command does by elaboration and the theorem takes as a hypothesis.
 - The Julia emitter beside the CUDA/C pair, with its rendering table over the whole alphabet
   and the `min`/`max` reading as Lean's `ite`; the coverage and ABI `#guard`s on the recorded AVS
   tape; the `julia_parity` executable that runs the emitted file against the tape evaluator.
+- One `min`/`max` reading on NaN across the interpreter and the three renderings: Lean's `ite`,
+  written as the `≤`-ternary in C and CUDA and as `ifelse` in Julia; the table fetch's clamp likewise
+  follows `refFetch` in every rendering.
 - The dimension functor, the curated homomorphism, and the coverage command with its pinned
   refutation of an incoherent edge.
 - The three capstones and their supporting lemmas, each linked above: the seal of a module
@@ -703,10 +706,6 @@ command does by elaboration and the theorem takes as a hypothesis.
   node evaluates as `evalTape` does at that node, over the alphabet; with it the argument-list and
   literal clauses of `cap_thm_julia_rendering` become statements about the emitted text instead of
   descriptions of the generator. *Library.*
-- Capstone 2, the three renderings' `min`/`max` on NaN: the interpreter and the Julia rendering
-  return Lean's `ite` reading, the C rendering's `fminf`/`fmaxf` return the non-NaN operand. One
-  semantics across `cOp`, `cExpr` and `jlExpr`, decided and stated, before the C rendering's
-  bit-exactness claim is read as covering NaN inputs. *Library.*
 - Capstone 2, the matcher: acceptance is decided on a match a probe authors. A matcher that
   finds the match from the leaves of a recorded tape — ports by name, constants by recording
   site, each occurrence by a realization table per family and carrier — is the instrument
