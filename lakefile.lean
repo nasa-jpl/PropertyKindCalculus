@@ -519,6 +519,17 @@ lean_exe «doc-pins» where
   srcDir := "tools"
   root := `Tools.DocPins
 
+/-- **The HCP ladder's checker** (`TOOLS.md` §5 step 2; the tool's header lists its seven checks):
+every chapter's front matter, sections, synopsis vocabulary, anchor references, blueprint excerpts
+(`--fix-excerpts`), worksheet and SBVR rendering, decided over one snapshot of the files —
+`errors s = [] ↔ Ok s` is the theorem the exit code rests on. `--sbvr SBVR_CHECK` also runs the
+pinned `sbvr-check` on the chain and compares each rendering byte for byte (`--fix-sbvr` rewrites
+them); its output is data, the verdict is decided here. Imports only `Lean`, so CI runs it with
+`lean --run tools/Tools/HcpCheck.lean`; `lake exe hcp-check` is the same program. -/
+lean_exe «hcp-check» where
+  srcDir := "tools"
+  root := `Tools.HcpCheck
+
 /-- Worked uncertainty examples grounded in the two source papers (Degenhardt 2025 fictive
 example; Willink 2005 gauge-block), in the `examples/` source tree as a **separate library** so
 no *library* module carries `#eval`/`#guard`. Build with `lake build UncertaintyExamples`. -/

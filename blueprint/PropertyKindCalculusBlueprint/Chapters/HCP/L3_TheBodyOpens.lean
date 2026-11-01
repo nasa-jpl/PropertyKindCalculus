@@ -33,7 +33,7 @@ concepts:
     formal: "solidSphere_inertiaTensor"
     where: "HCP.L3_TheBodyOpens#solid_sphere"
 artifacts: ['Lean lesson HCP.L3_TheBodyOpens', 'Blueprint chapter L3 — The body opens up']
-tools: ['lake build HCP', 'python3 HCP/check-hcp.py']
+tools: ['lake build HCP', 'lake exe hcp-check']
 exercises: 7
 disclosure: ['open body A into nominally indexed halves', 'use a weighted mean for centre of mass', 'expose the massless convention', 'treat angular velocity as intensive', 'show the accepted upstream frame mistake', 'enforce frames with PKC', 'recover the homogeneous solid sphere']
 owner: 'PKC methodology lead'

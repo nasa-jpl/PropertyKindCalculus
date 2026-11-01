@@ -51,7 +51,7 @@ with `HCP/L1_TwoBodies.lean` and the corresponding blueprint chapter.
 With a checkout of SBVR.lean beside this repository (`cd ../SBVR.lean && lake build sbvr-check`):
 
 ```sh
-python3 HCP/check-hcp.py --sbvr ../SBVR.lean/.lake/build/bin/sbvr-check --fix-sbvr
+lake exe hcp-check --sbvr ../SBVR.lean/.lake/build/bin/sbvr-check --fix-sbvr
 ```
 
 checks the chain (every lesson refines the one before it, every quantity term is bound to a
@@ -78,7 +78,7 @@ the harvest.
 
 ### Update the blueprint excerpts after editing a lesson
 
-Run `python3 HCP/check-hcp.py --fix-excerpts` after changing a lesson source. Verso keeps a copy
+Run `lake exe hcp-check --fix-excerpts` after changing a lesson source. Verso keeps a copy
 of each anchor and only re-checks it when the chapter rebuilds, so cached chapters can hide drift.
 
 ## The ladder in SBVR
@@ -101,7 +101,7 @@ The English term is preferred and the Lean name is a synonym (`individual quanti
 `IndividualQuantity`); dotted names appear in the definition's source.
 
 SBVR is the only source of the vocabulary: [`sbvr/rendered/`](sbvr/rendered/) holds
-`sbvr-check render`'s output for `PKC` and each lesson, and `check-hcp.py` requires every name a
+`sbvr-check render`'s output for `PKC` and each lesson, and `hcp-check` requires every name a
 chapter lists as new at its step to be worded there. The conversion's own findings are
 recorded in the chain file's comments and as one follow-up: the lessons' *Verifiable
 properties* and *Errors prevented* as rules with evidence (no rule schema in a chain file yet).
@@ -139,7 +139,8 @@ scripts/hcp-assurance.sh --fix      # after a chain, Foundation or catalogue cha
 ## Running checks
 
 Run `lake build HCP` to compile the solutions and `lake build HCPWorksheets` to compile all
-worksheets (which intentionally contain `sorry` holes). Run `python3 HCP/check-hcp.py` to
+worksheets (which intentionally contain `sorry` holes). Run `lake exe hcp-check` (or
+`lean --run tools/Tools/HcpCheck.lean`, the same program on the bare toolchain) to
 validate chapter front matter, the ten required sections, Synopsis structure and vocabulary,
 learning-path rows, live anchors, worksheet structure, synchronized blueprint anchor
 excerpts, and that every name a chapter lists as new at its step is a designation of, or cited

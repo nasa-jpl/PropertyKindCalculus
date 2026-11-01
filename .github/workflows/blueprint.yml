@@ -183,11 +183,12 @@ jobs:
       # Prevent cached chapters from hiding drift in copied HCP anchors.
       # --sbvr: the ladder's SBVR chain (HCP/sbvr/physlib-contributor.yaml) must check clean and
       # HCP/sbvr/rendered/*.md must be its rendering at the pinned SBVR.lean (scripts/sbvr-check.sh
-      # clones and builds it); a changed definition with a stale rendering fails here.
+      # clones and builds it); a changed definition with a stale rendering fails here. The checker is
+      # tools/Tools/HcpCheck.lean (Lean, core-only; `lake exe hcp-check` is the same program).
       - name: Check HCP blueprint excerpts and the ladder in SBVR
         run: |
           SBVR_CHECK="$(scripts/sbvr-check.sh)"
-          python3 HCP/check-hcp.py --sbvr "$SBVR_CHECK"
+          lean --run tools/Tools/HcpCheck.lean --sbvr "$SBVR_CHECK"
       # HCP/sbvr/foundation.yaml must be engineering-foundation-architecture's Foundation vocabulary
       # at the pinned commit (scripts/foundation-vocabulary.sh --update takes a newer one).
       - name: Foundation vocabulary is the pinned copy
