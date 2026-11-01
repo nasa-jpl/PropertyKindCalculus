@@ -104,10 +104,17 @@ partial def htmlFiles (dir : System.FilePath) (rel : String) : IO (List String) 
     else if e.fileName.endsWith ".html" then out := r :: out
   return out
 
-/-- Where a rewritten target lives under the site root (the `<base>` is the root). -/
-def targetFile (new : String) : String :=
+/-- The file a rewritten href names, relative to the site root: resolved against the page's
+directory (against the root for a leading `/`), empty and `.` segments skipped, each `..` popping
+the preceding segment and never climbing above the root — a browser's resolution, clamped. -/
+def targetFile (page new : String) : String :=
   let (path, _) := splitSuffix new
-  String.intercalate "/" ((path.splitOn "/").filter fun s => !s.isEmpty && !isDots s)
+  let base := if path.startsWith "/" then [] else (page.splitOn "/").dropLast
+  let segs := (base ++ path.splitOn "/").foldl (init := ([] : List String)) fun stack seg =>
+    if seg.isEmpty || seg == "." then stack
+    else if seg == ".." then stack.drop 1
+    else seg :: stack
+  String.intercalate "/" segs.reverse
 
 def main (args : List String) : IO UInt32 := do
   let strict := args.contains "--strict"
@@ -125,7 +132,7 @@ def main (args : List String) : IO UInt32 := do
         if fixHref n != n then
           IO.eprintln s!"file-links: rewrite not idempotent on {f}: {old} -> {n} -> {fixHref n}"
           return 1
-        if !(← (dir / targetFile n).pathExists) then missing := (f, n) :: missing
+        if !(← (dir / targetFile f n).pathExists) then missing := (f, n) :: missing
       if new != text then
         IO.FS.writeFile (dir / f) new; changed := changed + 1
     IO.println s!"file-links: rewrote directory links in {changed} html file(s) under {root}"
