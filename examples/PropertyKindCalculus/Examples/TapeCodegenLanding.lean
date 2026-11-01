@@ -73,25 +73,49 @@ theorem gen_inputs_eq {t : Tape Float} {outIds : List Nat} {tables : Array LutTa
     {mode : LutFilterMode} {cg : Codegen}
     (h : gen t outIds tables mode = .ok cg) : cg.inputs = collectInputs t := by
   unfold gen at h
+  have hw : checkWF t = .ok () := by
+    cases hw : checkWF t with
+    | error e => rw [hw] at h; simp [Except.bind] at h
+    | ok u => rfl
+  rw [hw] at h
+  simp only [Except.bind] at h
+  have ho : checkOutputs t outIds = .ok () := by
+    cases ho : checkOutputs t outIds with
+    | error e => rw [ho] at h; simp at h
+    | ok u => rfl
+  rw [ho] at h
+  simp only at h
   cases hr : resolveTables (collectTableNames t) tables with
-  | error e => rw [hr] at h; simp [Except.bind] at h
+  | error e => rw [hr] at h; simp at h
   | ok resolved =>
     rw [hr] at h
     cases hb : genBody t tables with
-    | error e => rw [hb] at h; simp [Except.bind, Except.map] at h
-    | ok body => rw [hb] at h; simp [Except.bind, Except.map] at h; subst h; rfl
+    | error e => rw [hb] at h; simp [Except.map] at h
+    | ok body => rw [hb] at h; simp [Except.map] at h; subst h; rfl
 
 theorem gen_numOutputs {t : Tape Float} {outIds : List Nat} {tables : Array LutTable}
     {mode : LutFilterMode} {cg : Codegen}
     (h : gen t outIds tables mode = .ok cg) : cg.numOutputs = outIds.length := by
   unfold gen at h
+  have hw : checkWF t = .ok () := by
+    cases hw : checkWF t with
+    | error e => rw [hw] at h; simp [Except.bind] at h
+    | ok u => rfl
+  rw [hw] at h
+  simp only [Except.bind] at h
+  have ho : checkOutputs t outIds = .ok () := by
+    cases ho : checkOutputs t outIds with
+    | error e => rw [ho] at h; simp at h
+    | ok u => rfl
+  rw [ho] at h
+  simp only at h
   cases hr : resolveTables (collectTableNames t) tables with
-  | error e => rw [hr] at h; simp [Except.bind] at h
+  | error e => rw [hr] at h; simp at h
   | ok resolved =>
     rw [hr] at h
     cases hb : genBody t tables with
-    | error e => rw [hb] at h; simp [Except.bind, Except.map] at h
-    | ok body => rw [hb] at h; simp [Except.bind, Except.map] at h; subst h; rfl
+    | error e => rw [hb] at h; simp [Except.map] at h
+    | ok body => rw [hb] at h; simp [Except.map] at h; subst h; rfl
 
 /-- The generated table ABI is a pure function of the tape and the supplied tables: `gen` succeeds
 only with `cg.tables` = the resolution of the tape's first-seen referenced table names. -/
@@ -100,13 +124,25 @@ theorem gen_tables_eq {t : Tape Float} {outIds : List Nat} {tables : Array LutTa
     (h : gen t outIds tables mode = .ok cg) :
     resolveTables (collectTableNames t) tables = .ok cg.tables := by
   unfold gen at h
+  have hw : checkWF t = .ok () := by
+    cases hw : checkWF t with
+    | error e => rw [hw] at h; simp [Except.bind] at h
+    | ok u => rfl
+  rw [hw] at h
+  simp only [Except.bind] at h
+  have ho : checkOutputs t outIds = .ok () := by
+    cases ho : checkOutputs t outIds with
+    | error e => rw [ho] at h; simp at h
+    | ok u => rfl
+  rw [ho] at h
+  simp only at h
   cases hr : resolveTables (collectTableNames t) tables with
-  | error e => rw [hr] at h; simp [Except.bind] at h
+  | error e => rw [hr] at h; simp at h
   | ok resolved =>
     rw [hr] at h
     cases hb : genBody t tables with
-    | error e => rw [hb] at h; simp [Except.bind, Except.map] at h
-    | ok body => rw [hb] at h; simp [Except.bind, Except.map] at h; subst h; rfl
+    | error e => rw [hb] at h; simp [Except.map] at h
+    | ok body => rw [hb] at h; simp [Except.map] at h; subst h; rfl
 
 /-! ### The generated input ABI is duplicate-free (universal) -/
 
