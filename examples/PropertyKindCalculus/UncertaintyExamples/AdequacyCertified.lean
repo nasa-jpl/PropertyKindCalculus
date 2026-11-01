@@ -124,13 +124,18 @@ rounding, which is the real situation when a binary64 descriptor meets a binary3
 open PropertyKindCalculus.UncertaintyExamples.AdequacyCoupling (hSensY degenModel)
 open PropertyKindCalculus.UncertaintyExamples.DegenhardtFictive (x1 x2 x3 measurandY)
 
-/-- A binary64 descriptor quantised to binary32 (round-to-nearest on each moment). -/
+/-- A binary64 descriptor quantised to binary32: round-to-nearest on each moment and support bound,
+and the sampler's draws rounded to binary32 as well (`invCDF` is `Float → Float` for every carrier,
+so the quantised sample is returned as the binary64 it exactly is). -/
 def narrow (d : InputDist Float) : InputDist Float32 :=
   { moments := { mean := d.moments.mean.toFloat32, variance := d.moments.variance.toFloat32,
                  fourthCumulant := d.moments.fourthCumulant.toFloat32,
                  thirdCumulant := d.moments.thirdCumulant.toFloat32 },
     support := d.support.map fun (lo, hi) => (lo.toFloat32, hi.toFloat32),
-    invCDF := d.invCDF }
+    invCDF := fun p => ((d.invCDF p).toFloat32).toFloat }
+
+-- The quantised sampler draws binary32 values: a draw round-trips through `Float32` unchanged.
+#guard let s := (narrow x1).invCDF 0.3; s.toFloat32.toFloat == s
 
 /-- The certified coupling on the quantised Degenhardt descriptors. -/
 def couplingY32 : Except String (Adequacy.CouplingResultQ32 measurandY) :=
