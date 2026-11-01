@@ -859,9 +859,9 @@ re-elaborate every module in the package.
 
 Two writers of one value therefore need a gate, and have two:
 [`scripts/bump-version.sh`](scripts/bump-version.sh) writes both sites and refuses to
-bump while they disagree, and [`scripts/check-doc-pins.py`](scripts/check-doc-pins.py)
-reads both back — same version, exactly one declaration each, and the same site list the
-bumper writes — in CI, ahead of the Lean build.
+bump while they disagree, and the `doc-pins` gate ([`tools/Tools/DocPins.lean`](tools/Tools/DocPins.lean))
+reads both back — same version, exactly one declaration each — in CI, ahead of the Lean build.
+Both read one list, `Tools.DocPins.pkgSites`, so a site cannot be bumped and not gated.
 
 [lake-module]: https://github.com/leanprover/lean4/blob/master/src/lake/Lake/Build/Module.lean
 
@@ -887,22 +887,27 @@ grep -n '^def versionStr' blueprint/PropertyKindCalculusBlueprint/Version.lean
 ### Checking the toolchain claims
 
 A bump moves `lean-toolchain`; the prose that names the pin does not follow on its own,
-and a stale sentence still compiles. [`scripts/check-doc-pins.py`](scripts/check-doc-pins.py)
-is the gate — CI runs it as Phase 0, before Elan, so a wrong version fails in seconds:
+and a stale sentence still compiles. The `doc-pins` gate ([`tools/Tools/DocPins.lean`](tools/Tools/DocPins.lean),
+Lean, imports only `Lean`) is the gate — CI runs it right after the toolchain install, before any
+dependency is fetched, so a wrong version fails in seconds; its theorem `failures_nil_iff` says the
+exit code is the decision of the eight checks it states:
 
 ```sh
-python3 scripts/check-doc-pins.py     # stdlib only; --quiet prints just the failures
+lean --run tools/Tools/DocPins.lean     # toolchain only; --quiet prints just the failures
+lake exe doc-pins                       # the same program, built by Lake
 ```
 
-It hard-fails on four things: `blueprint/lean-toolchain` disagreeing with the root, any
-release-tag `inputRev` in either `lake-manifest.json` naming a different version, each
-curated sentence in `SITES` not occurring the recorded number of times — the count being
-what makes a deleted claim fail as loudly as a stale one — and the package-version sites
-above disagreeing, declaring more or fewer than one version each, or not being the set
-`bump-version.sh` writes. Everything else it finds is
-*reported*: some version claims are deliberately not the current pin (a dated measurement,
-a checkout outside this repository, an upstream PR named by the version it bumped), and
-those files carry their reason in `EXEMPT`.
+It hard-fails on seven of its eight checks: `blueprint/lean-toolchain` disagreeing with the
+root, any release-tag `inputRev` in either `lake-manifest.json` naming a different version, each
+curated sentence in `Tools.DocPins.sites` not occurring the recorded number of times — the count
+being what makes a deleted claim fail as loudly as a stale one — the blueprint's status table
+and chapter counts drifting from the chapter sources, the package-version sites above
+disagreeing or declaring more or fewer than one version each, a plain-terms requirement or an
+application-template rubric cited but not catalogued (or catalogued but not glossed), and a
+dictionary term defined twice or a retired phrasing surviving where the gate reads. The eighth
+check *reports*: some version claims are deliberately not the current pin (a dated measurement,
+a checkout outside this repository, an upstream PR named by the version it bumped), and those
+files carry their reason in `Tools.DocPins.exempt`.
 
 ### Cutting a release
 
@@ -914,8 +919,8 @@ git commit -am "chore: bump version to $(scripts/bump-version.sh)"
 git tag "v$(scripts/bump-version.sh)"
 ```
 
-L4YAML's multi-site `SITES` structure is what carries the blueprint literal. A further
-declaration site — a language binding's manifest, say — is one extra line in that array
-and one in the gate's `PKG_VERSION_SITES`; the bumper then keeps all of them in lockstep
-and refuses to bump a divergent set, and the gate refuses a set the two lists disagree
-about.
+`Tools.DocPins.pkgSites` is the one list of declaration sites, read by the gate and
+written by the bumper. A further site — a language binding's manifest, say — is one extra
+`PkgSite` there (the file, and the text before and after the version on its line); the
+bumper then keeps all of them in lockstep and refuses to bump a divergent set, and the gate
+refuses a set that disagrees or declares a version more or less than once.

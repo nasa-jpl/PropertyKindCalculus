@@ -1347,7 +1347,7 @@ The four residuals — all "one more crank of the same machine," none a new work
   TorchLean (autograd + interval + FFT), enlarging build surface and tightening the PKC↔TorchLean
   coupling (cf. the FGM↔DVB single-toolchain constraint). TorchLean's autograd functional API is
   `func`, so the `Sensitivity` bridge targets `func.grad`/`func.hessian`. Budget a bump-in-lockstep
-  workflow; `scripts/check-doc-pins.py` is the gate that keeps the version claims in this file, the
+  workflow; the `doc-pins` gate (`tools/Tools/DocPins.lean`) is the gate that keeps the version claims in this file, the
   README and the blueprint README equal to `lean-toolchain`.
 * **`Adequacy` carrier laws.** It is a `NumCarrier` that *also* accumulates a report; the monoid/branchless
   discipline of `NumCarrier` must not be violated by the check (the check is a side-record, the numeric

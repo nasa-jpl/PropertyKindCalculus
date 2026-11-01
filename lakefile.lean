@@ -371,7 +371,7 @@ lean_lib «Rubrics» where
 canonical phrase, its sanctioned short form, a one-sentence gloss, the declarations that
 carry it, the blueprint section that defines it, and the retired phrasings that must not
 reappear. Read by the blueprint's terminology chapter (the generated dictionary table, which
-also checks that every cited declaration exists) and by `scripts/check-doc-pins.py` (the
+also checks that every cited declaration exists) and by the `doc-pins` gate, `tools/Tools/DocPins.lean` (the
 consistency gate over the blueprint and the root documents, plus a ratchet over the library's
 own docstrings). Prelude-only data. Build with `lake build Terminology`. -/
 lean_lib «Terminology» where
@@ -508,6 +508,16 @@ where the cone has no `exp`/`log`, within `--max-ulp` where it does. Exit 2 with
 lean_exe «julia_parity» where
   srcDir := "apps"
   root := `PropertyKindCalculus.Apps.JuliaParity
+
+/-- **The documentation-pin gate** (`TOOLS.md` §5 step 1; the tool's header lists its eight checks):
+every version, blueprint-status, package-version, requirement-gloss, rubric and terminology claim the
+prose makes, read back from the sources and decided — `failures s = [] ↔ Ok s` is the theorem the exit
+code rests on. Imports only `Lean`, so CI runs it with `lean --run tools/Tools/DocPins.lean` right after
+the toolchain install, before the Mathlib cache; `lake exe doc-pins` is the same program. `--bump` moves
+the package version at the sites the gate reads (`pkgSites`, one definition for the bumper and the gate). -/
+lean_exe «doc-pins» where
+  srcDir := "tools"
+  root := `Tools.DocPins
 
 /-- Worked uncertainty examples grounded in the two source papers (Degenhardt 2025 fictive
 example; Willink 2005 gauge-block), in the `examples/` source tree as a **separate library** so

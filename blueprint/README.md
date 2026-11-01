@@ -14,7 +14,7 @@ status summary generated from the linked Lean code.
 theorems and their supporting lemmas, stated with proof sketches before the declarations
 that discharge them — and its nodes now link those declarations.
 The status summary and the dependency graph are therefore read off the checked source
-rather than asserted here; `scripts/check-doc-pins.py` gates these counts and the chapter
+rather than asserted here; the `doc-pins` gate (`tools/Tools/DocPins.lean`) gates these counts and the chapter
 list below against the chapter sources, so a new or renamed chapter fails the gate rather
 than quietly going unlisted.
 
@@ -138,7 +138,7 @@ Two outputs are produced; both can be opened directly as files.
   at a concept's first mention, its sanctioned short form afterward; exactly one
   `{deftech}[…]` per term, in the section the dictionary names, with `{index}[…]` beside it
   and `{tech}[…]` at the significant mentions elsewhere. The Terminology chapter renders
-  the dictionary and the index; `scripts/check-doc-pins.py` refuses a retired phrasing
+  the dictionary and the index; the `doc-pins` gate refuses a retired phrasing
   in any chapter or root document and a term defined zero or two times.
 
 ## Build scripts

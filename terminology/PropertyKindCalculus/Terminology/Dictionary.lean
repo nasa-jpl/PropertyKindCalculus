@@ -412,7 +412,7 @@ def avoidDisjoint : Bool :=
 def termByKey? (k : String) : Option Term := dictionary.find? (·.key == k)
 
 /-- The retired-phrasing sites that remain in the library's own docstrings and comments, as
-`scripts/check-doc-pins.py` counts them. A ratchet, in the sense of the mint ratchet: the
+the `doc-pins` gate (`tools/Tools/DocPins.lean`) counts them. A ratchet, in the sense of the mint ratchet: the
 gate fails when the count differs from this pin in either direction — a rise is a
 regression, a fall asks for the pin to be lowered in the same change — so the number can
 only move by a conscious edit. -/
