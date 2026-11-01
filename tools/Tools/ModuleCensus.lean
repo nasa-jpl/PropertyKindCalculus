@@ -370,23 +370,47 @@ def closure (names : Bool) : IO UInt32 := do
     for n in own.mergeSort (· ≤ ·) do IO.println s!"OWN NON-MODULE {n}"
   return if dep.isEmpty then 0 else 1
 
+structure Opts where
+  tree := false
+  roots : List String := []
+  layers := false
+  tsv : Option String := none
+  maxDepth : Option Nat := none
+  closure := false
+  names := false
+
+/-- Mode switches and their options, in any order; a bare word is a `--tree` root. -/
+def parseArgs : List String → Opts → Except String Opts
+  | [], o => .ok o
+  | "--tree" :: r, o => parseArgs r { o with tree := true }
+  | "--layers" :: r, o => parseArgs r { o with layers := true }
+  | "--closure" :: r, o => parseArgs r { o with closure := true }
+  | "--names" :: r, o => parseArgs r { o with names := true }
+  | "--tsv" :: p :: r, o => parseArgs r { o with tsv := some p }
+  | "--max-depth" :: n :: r, o => match n.toNat? with
+    | some k => parseArgs r { o with maxDepth := some k }
+    | none => .error s!"--max-depth needs a number, got '{n}'"
+  | a :: r, o =>
+    if a.startsWith "-" then .error s!"unknown argument '{a}'"
+    else parseArgs r { o with roots := o.roots ++ [a] }
+
+/-- The selected instruments run in order (tree, layers, closure); the exit status is the
+first nonzero one, so `--tree --closure` still fails on a dependency without the flag. -/
 def main (args : List String) : IO UInt32 := do
-  match args with
-  | "--tree" :: roots => do tree (if roots.isEmpty then ["."] else roots); return 0
-  | "--layers" :: rest =>
-    let rec parse : List String → Except String (Option String × Option Nat)
-      | [] => .ok (none, none)
-      | "--tsv" :: p :: r => (fun (_, d) => (some p, d)) <$> parse r
-      | "--max-depth" :: n :: r => match n.toNat? with
-        | some k => (fun (t, _) => (t, some k)) <$> parse r
-        | none => .error s!"--max-depth needs a number, got '{n}'"
-      | a :: _ => .error s!"unknown argument '{a}'"
-    match parse rest with
-    | .ok (tsv, md) => layers tsv md
-    | .error e => do IO.eprintln s!"{usage}\n{e}"; return 2
-  | ["--closure"] => closure false
-  | ["--closure", "--names"] => closure true
-  | _ => do IO.eprintln usage; return 2
+  match parseArgs args {} with
+  | .error e => IO.eprintln s!"{usage}\n{e}"; return 2
+  | .ok o =>
+    if !(o.tree || o.layers || o.closure) then IO.eprintln usage; return 2
+    if !o.roots.isEmpty && !o.tree then IO.eprintln s!"{usage}\nroots need --tree"; return 2
+    let mut status : UInt32 := 0
+    if o.tree then tree (if o.roots.isEmpty then ["."] else o.roots)
+    if o.layers then
+      let s ← layers o.tsv o.maxDepth
+      if status == 0 then status := s
+    if o.closure then
+      let s ← closure o.names
+      if status == 0 then status := s
+    return status
 
 end Tools.ModuleCensus
 
