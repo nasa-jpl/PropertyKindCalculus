@@ -13,9 +13,9 @@
 <urn:pkc:gate/hcp-gate> <http://www.w3.org/ns/prov#used> <urn:pkc:record/9c3375135598174c877364e9bb6efa3593c21c750269735f9d000c696ed0e353> <urn:pkc:bundle/hcp-gate> .
 <urn:sbvr:check/pkc-physlib-contributor> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/ns/prov#Activity> <urn:pkc:bundle/hcp-gate> .
 <urn:pkc:gate/hcp-gate> <http://www.w3.org/ns/prov#wasInformedBy> <urn:sbvr:check/pkc-physlib-contributor> <urn:pkc:bundle/hcp-gate> .
-<urn:pkc:case/b626f18c5651e3ea6cc3fab594458e4112c9203da81799948862199d30f103b2> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/ns/prov#Entity> <urn:pkc:bundle/hcp-gate> .
-<urn:pkc:case/b626f18c5651e3ea6cc3fab594458e4112c9203da81799948862199d30f103b2> <http://www.w3.org/ns/prov#atLocation> "HCP/assurance/case.face.yaml" <urn:pkc:bundle/hcp-gate> .
-<urn:pkc:gate/hcp-gate> <http://www.w3.org/ns/prov#used> <urn:pkc:case/b626f18c5651e3ea6cc3fab594458e4112c9203da81799948862199d30f103b2> <urn:pkc:bundle/hcp-gate> .
+<urn:pkc:case/527ca0bbcec976b49f57c04896e502a45e402cede07218cadb5fe3c78495eded> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/ns/prov#Entity> <urn:pkc:bundle/hcp-gate> .
+<urn:pkc:case/527ca0bbcec976b49f57c04896e502a45e402cede07218cadb5fe3c78495eded> <http://www.w3.org/ns/prov#atLocation> "HCP/assurance/case.face.yaml" <urn:pkc:bundle/hcp-gate> .
+<urn:pkc:gate/hcp-gate> <http://www.w3.org/ns/prov#used> <urn:pkc:case/527ca0bbcec976b49f57c04896e502a45e402cede07218cadb5fe3c78495eded> <urn:pkc:bundle/hcp-gate> .
 <urn:pkc:verdict/hcp-gate> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/ns/prov#Entity> <urn:pkc:bundle/hcp-gate> .
 <urn:pkc:verdict/hcp-gate> <http://open-mbee.org/sbvr#exit> "0" <urn:pkc:bundle/hcp-gate> .
 <urn:pkc:verdict/hcp-gate> <http://open-mbee.org/efa#holds> "C0" <urn:pkc:bundle/hcp-gate> .

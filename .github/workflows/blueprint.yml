@@ -195,12 +195,14 @@ jobs:
       # Lean) at the same pinned commit, built in .lake/efa, regenerates the chain's PROV record in process and
       # compares it byte for byte, validates it as PROV, checks the FACE case cites it, valuates the case with
       # face.lean's semantics and compares its own record; a changed chain, Foundation copy or catalogue with a
-      # stale record fails here (scripts/hcp-assurance.sh --fix). Lake fetches the gate's private pins with
-      # OPEN_MBEE_READ_TOKEN (contents: read on SBVR.lean and face.lean) when the secret is set.
+      # stale record fails here (scripts/hcp-assurance.sh --fix). The gate's pins (SBVR.lean, face.lean) are
+      # private: Lake fetches them with OPEN_MBEE_READ_TOKEN (contents: read on both) on pushes only — a pull
+      # request's build runs code its author controls, so it never sees the secret and runs the gate with the
+      # runner's ambient credentials.
       - name: The ladder's assurance case holds, with its provenance
         run: scripts/hcp-assurance.sh
         env:
-          OPEN_MBEE_READ_TOKEN: ${{ secrets.OPEN_MBEE_READ_TOKEN }}
+          OPEN_MBEE_READ_TOKEN: ${{ github.event_name == 'push' && secrets.OPEN_MBEE_READ_TOKEN || '' }}
 
       # The chain adopts its quantity terms from a catalogue harvested from the Lean kinds; a hand
       # edit or a new kind without a regenerated catalogue fails here.
