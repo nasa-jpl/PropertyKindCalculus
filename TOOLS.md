@@ -123,6 +123,9 @@ Anything a tool does outside this list is a defect of the tool, not an extension
    sub-package with its own lakefile).
 3. **`gen-iso80000-coverage.lean`** and **`inject-index-docs.lean`**: generators that join the Lean
    scripts already in `scripts/`.
+   *Shipped (first half)*: `scripts/gen-iso80000-coverage.lean`, `lake env lean --run … [--check]`;
+   the censuses called in process (`examinationRows`, `coverageRows`), the probe byte-identical to
+   the Python's but for its header; `PartBlock.gate_iff_clean` is the never-bless-a-violation rule.
 4. **`module-census`**: the two censuses in one executable; `MODULARITY.md`'s numbers regenerated.
 5. **`blueprint-figures`** and the **link pass**; `make-figures.sh` and `ci-pages.sh` call them.
 6. **`blueprint-print`**: the print pass of `html-to-pdf.py` (merge of the multi-page fallback,

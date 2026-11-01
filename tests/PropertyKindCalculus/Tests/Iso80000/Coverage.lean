@@ -1,14 +1,14 @@
 /-
 `Tests.Iso80000.Coverage` — the two Dimension-library censuses over every part of ISO 80000.
 
-**Generated. Do not edit by hand** — regenerate with `scripts/gen-iso80000-coverage.py`,
+**Generated. Do not edit by hand** — regenerate with `scripts/gen-iso80000-coverage.lean`,
 which runs the censuses and writes this file from their output.
 
-**Records, generated from the compiler.** Every pin below is the command's own output, captured
-by a driver (`lake env lean`) over the catalogue's root import and written here verbatim — not
-typed. A change in what a part individuates, or in how it dimensions a kind, is therefore a
-visible diff in this file; a part's report is re-pinned only when the change it records has
-been read and accepted.
+**Records, generated from the compiler.** Every pin below is the command's own output — the
+string the census functions return over the catalogue's root import, written here verbatim
+by `lake env lean --run scripts/gen-iso80000-coverage.lean` — not typed. A change in what a part
+individuates, or in how it dimensions a kind, is therefore a visible diff in this file; a part's
+report is re-pinned only when the change it records has been read and accepted.
 
 **Gates, only where they pass.** A `_clean` command is pinned over a part exactly when that
 part's report ends `clean` (or is empty). Where the report records a violation, there is no
@@ -64,7 +64,7 @@ public import PropertyKindCalculus.ExaminationCoverage
 meta import PropertyKindCalculus.ExaminationCoverage
 
 -- No namespace: the dimensional rows pretty-print kinds relative to the current namespace,
--- and the driver that produced these pins ran with none. Nothing here is declared.
+-- and the generator that produced these pins ran with none. Nothing here is declared.
 
 /-! ## `#kind_examination_coverage` — M6, part by part -/
 
@@ -73,7 +73,6 @@ meta import PropertyKindCalculus.ExaminationCoverage
 /--
 info: examination coverage — no dimension-one kinds in the given namespaces
 -/
-
 #guard_msgs (whitespace := lax) in
 #kind_examination_coverage PropertyKindCalculus.Iso80000.Part1
 
