@@ -29,7 +29,9 @@ Replaces `HCP/check-hcp.py`. Every chapter of the ladder
    decided here.
 
 Imports only `Lean`, so `lean --run tools/Tools/HcpCheck.lean` runs on a bare toolchain;
-`lake exe hcp-check` is the same program. `errors_nil_iff` is the exit code's theorem.
+`lake exe hcp-check` is the same program, from any directory inside the checkout. `errors_nil_iff` is
+the exit code's theorem: `main` exits 0 iff `errors snap run = []`, over the snapshot of the files
+and what `--sbvr` observed (`SbvrRun`); `fixed_errors` says what `--fix-sbvr` leaves to report.
 -/
 
 namespace Tools.HcpCheck
@@ -1141,18 +1143,90 @@ def renderedErrors (snap : Snapshot) : List String :=
       | none => [s!"{target}: missing; run hcp-check --sbvr SBVR_CHECK --fix-sbvr"]
       | some r => sbvrTermErrors path name (lines ((snap.read? path).getD "")) r
 
+/-! ## What `--sbvr` observes -/
+
+/-- One `sbvr-check render` of the chain, as observed: its exit code and output, and the
+committed rendering it is compared with (`none` when the file is missing). -/
+structure Rendering where
+  name : String
+  exit : UInt32
+  out : String
+  err : String
+  committed : Option String
+  deriving Inhabited
+
+/-- One `--sbvr` run: the chain check's exit and output, and the renderings (empty when the chain
+did not check clean). sbvr-check's output is data; the verdict is decided here. -/
+structure SbvrRun where
+  chainExit : UInt32
+  chainOut : String
+  renders : List Rendering
+  deriving Inhabited
+
+def renderedHeader (name : String) : String :=
+  s!"<!-- Rendered from ../physlib-contributor.yaml by `sbvr-check render` ({name}); regenerate with `hcp-check --sbvr SBVR_CHECK --fix-sbvr`, do not edit. -->\n\n"
+
+/-- The rendering a committed file must equal: the header and `sbvr-check render`'s output. -/
+def Rendering.expected (r : Rendering) : String := renderedHeader r.name ++ r.out
+
+def Rendering.target (r : Rendering) : String := s!"{sbvrRenderedDir}/{r.name}.md"
+
+def Rendering.errors (r : Rendering) : List String :=
+  if r.exit != 0 then
+    let gaps := (lines r.out).filterMap fun l =>
+      if (l.splitOn "no definition at this step").length > 1 then some (trim l) else none
+    [s!"{sbvrChain}: vocabulary {r.name} does not render clean (exit {r.exit}): " ++
+      (if gaps.isEmpty then trim (r.out ++ r.err) else String.intercalate "; " gaps)]
+  else if r.committed != some r.expected then
+    [s!"{r.target}: {if r.committed.isNone then "missing" else "stale"}; rerun with --fix-sbvr to regenerate"]
+  else []
+
+/-- The chain checks clean and each rendering equals the committed file. -/
+def sbvrErrors : Option SbvrRun → List String
+  | none => []
+  | some run =>
+    if run.chainExit != 0 then [s!"{sbvrChain}: sbvr-check exited {run.chainExit}:\n{rstrip run.chainOut}"]
+    else run.renders.flatMap Rendering.errors
+
 /-! ## The verdict -/
 
-/-- Every error of a snapshot, in the order they are printed (the `--sbvr` run's come between
-`chapterErrors` and `renderedErrors`). -/
-def errors (snap : Snapshot) : List String :=
-  excerptErrors snap ++ snap.chapters.flatMap (chapterErrors snap) ++ renderedErrors snap
+/-- Every error of a run, in the order they are printed: the snapshot's excerpt and chapter
+checks, what `--sbvr` observed, the committed renderings against the chapters. -/
+def errors (snap : Snapshot) (run : Option SbvrRun) : List String :=
+  excerptErrors snap ++ snap.chapters.flatMap (chapterErrors snap) ++ sbvrErrors run
+    ++ renderedErrors snap
 
-def Ok (snap : Snapshot) : Prop :=
-  excerptErrors snap = [] ∧ (∀ c ∈ snap.chapters, chapterErrors snap c = []) ∧ renderedErrors snap = []
+def Ok (snap : Snapshot) (run : Option SbvrRun) : Prop :=
+  excerptErrors snap = [] ∧ (∀ c ∈ snap.chapters, chapterErrors snap c = [])
+    ∧ sbvrErrors run = [] ∧ renderedErrors snap = []
 
-theorem errors_nil_iff (snap : Snapshot) : errors snap = [] ↔ Ok snap := by
+/-- The exit code's theorem: `main` exits 0 exactly when `errors snap run = []`, which is `Ok`. -/
+theorem errors_nil_iff (snap : Snapshot) (run : Option SbvrRun) :
+    errors snap run = [] ↔ Ok snap run := by
   simp [errors, Ok, List.append_eq_nil_iff, List.flatMap_eq_nil_iff]
+
+/-- `--fix-sbvr` rewrites every rendering that rendered clean; after it, the run reports no
+stale or missing rendering (what remains is a chain or render failure). -/
+def SbvrRun.fixed (run : SbvrRun) : SbvrRun :=
+  { run with renders := run.renders.map fun r => if r.exit == 0 then { r with committed := some r.expected } else r }
+
+theorem fixed_errors (run : SbvrRun) :
+    sbvrErrors (some run.fixed) = [] ↔ run.chainExit = 0 ∧ ∀ r ∈ run.renders, r.exit = 0 := by
+  unfold sbvrErrors SbvrRun.fixed
+  by_cases hc : run.chainExit = 0
+  · simp only [hc, bne_self_eq_false, Bool.false_eq_true, ↓reduceIte, true_and,
+      List.flatMap_eq_nil_iff, List.mem_map, forall_exists_index, and_imp,
+      forall_apply_eq_imp_iff₂]
+    constructor
+    · intro h r hr
+      have := h r hr
+      by_cases he : r.exit = 0
+      · exact he
+      · simp [Rendering.errors, he] at this
+    · intro h r hr
+      simp [Rendering.errors, Rendering.expected, h r hr]
+  · have : (run.chainExit != 0) = true := by simpa using hc
+    simp [this, hc]
 
 /-! ## IO -/
 
@@ -1204,67 +1278,80 @@ def run (root : System.FilePath) (exe : String) (args : List String) : IO (UInt3
   let out ← IO.Process.output { cmd := exe, args := args.toArray, cwd := root }
   return (out.exitCode, out.stdout, out.stderr)
 
-def renderedHeader (name : String) : String :=
-  s!"<!-- Rendered from ../physlib-contributor.yaml by `sbvr-check render` ({name}); regenerate with `hcp-check --sbvr SBVR_CHECK --fix-sbvr`, do not edit. -->\n\n"
-
-/-- The chain checks clean and each rendering equals the committed file (or is rewritten). -/
-def sbvrErrors (root : System.FilePath) (chapters : List String) (exe : String) (fix : Bool) :
-    IO (List String) := do
+/-- Run the pinned `sbvr-check` on the chain and render the foundation and every lesson's
+vocabulary; what it printed and what is committed, as data. -/
+def observeSbvr (root : System.FilePath) (chapters : List String) (exe : String) : IO SbvrRun := do
   let (code, out, err) ← run root exe [sbvrChain]
-  if code != 0 then
-    return [s!"{sbvrChain}: sbvr-check exited {code}:\n{rstrip (out ++ err)}"]
+  if code != 0 then return { chainExit := code, chainOut := out ++ err, renders := [] }
   let names := sbvrFoundation :: chapters.filterMap sbvrLessonName
-  IO.FS.createDirAll (root / sbvrRenderedDir)
-  let mut errs : List String := []
-  for name in names do
-    let (code, out, err) ← run root exe ["render", sbvrChain, name]
-    if code != 0 then
-      let gaps := (lines out).filterMap fun l =>
-        if (l.splitOn "no definition at this step").length > 1 then some (trim l) else none
-      errs := errs ++ [s!"{sbvrChain}: vocabulary {name} does not render clean (exit {code}): " ++
-        (if gaps.isEmpty then trim (out ++ err) else String.intercalate "; " gaps)]
-      continue
-    let target := s!"{sbvrRenderedDir}/{name}.md"
-    let expected := renderedHeader name ++ out
-    let current ← readText root target
-    if current != some expected then
-      if fix then IO.FS.writeFile (root / target) expected
-      else
-        let state := if current.isNone then "missing" else "stale"
-        errs := errs ++ [s!"{target}: {state}; rerun with --fix-sbvr to regenerate"]
-  return errs
+  let renders ← names.mapM fun name => do
+    let (exit, out, err) ← run root exe ["render", sbvrChain, name]
+    let committed ← readText root s!"{sbvrRenderedDir}/{name}.md"
+    pure { name, exit, out, err, committed : Rendering }
+  return { chainExit := code, chainOut := out ++ err, renders }
+
+/-- `--fix-sbvr`: write every clean rendering that differs from its file; the run as it then is. -/
+def fixSbvrRenderings (root : System.FilePath) (run : SbvrRun) : IO SbvrRun := do
+  if run.chainExit == 0 then
+    IO.FS.createDirAll (root / sbvrRenderedDir)
+    for r in run.renders do
+      if r.exit == 0 && r.committed != some r.expected then
+        IO.FS.writeFile (root / r.target) r.expected
+  return run.fixed
+
+/-- The checkout: the nearest directory at or above `start` holding `lakefile.lean` and the HCP
+chapters, so the checker runs from any working directory inside it. -/
+partial def findRoot (start : System.FilePath) : IO (Option System.FilePath) := do
+  if (← (start / "lakefile.lean").pathExists) && (← (start / chapterDir).isDir) then return some start
+  match start.parent with
+  | some p => findRoot p
+  | none => return none
 
 def usage : String :=
-  "usage: hcp-check [--fix-excerpts] [--sbvr SBVR_CHECK] [--fix-sbvr]"
+  "usage: hcp-check [--root DIR] [--fix-excerpts] [--sbvr SBVR_CHECK] [--fix-sbvr]"
 
-def parseArgs : List String → Except String (Bool × Option String × Bool)
-  | [] => .ok (false, none, false)
-  | "--fix-excerpts" :: rest => (fun (_, s, f) => (true, s, f)) <$> parseArgs rest
-  | "--fix-sbvr" :: rest => (fun (e, s, _) => (e, s, true)) <$> parseArgs rest
-  | "--sbvr" :: exe :: rest => (fun (e, _, f) => (e, some exe, f)) <$> parseArgs rest
-  | ["--sbvr"] => .error "--sbvr requires a path"
+structure Args where
+  root : Option String := none
+  fixExcerpts : Bool := false
+  sbvr : Option String := none
+  fixSbvr : Bool := false
+
+def parseArgs : List String → Except String Args
+  | [] => .ok {}
+  | "--fix-excerpts" :: rest => (fun a => { a with fixExcerpts := true }) <$> parseArgs rest
+  | "--fix-sbvr" :: rest => (fun a => { a with fixSbvr := true }) <$> parseArgs rest
+  | "--sbvr" :: exe :: rest => (fun a => { a with sbvr := some exe }) <$> parseArgs rest
+  | "--root" :: dir :: rest => (fun a => { a with root := some dir }) <$> parseArgs rest
+  | [a@"--sbvr"] | [a@"--root"] => .error s!"{a} requires a path"
   | a :: _ => .error s!"unknown argument '{a}'"
 
 def main (args : List String) : IO UInt32 := do
-  let (fixExcerpts, sbvr, fixSbvr) ← match parseArgs args with
+  let a ← match parseArgs args with
     | .ok v => pure v
     | .error e => do IO.eprintln s!"{usage}\nhcp-check: error: {e}"; return 2
-  if fixSbvr && sbvr.isNone then
+  if a.fixSbvr && a.sbvr.isNone then
     IO.eprintln s!"{usage}\nhcp-check: error: --fix-sbvr requires --sbvr"; return 2
-  let root : System.FilePath := "."
+  let cwd ← IO.currentDir
+  let start : System.FilePath := match a.root with | some d => d | none => cwd
+  let some root ← findRoot start
+    | IO.eprintln s!"hcp-check: {start} is not inside the PropertyKindCalculus checkout (no lakefile.lean with {chapterDir} at or above it; pass --root DIR)"; return 2
+  -- a relative --sbvr path is relative to the caller's directory, not the root
+  let sbvr := a.sbvr.map fun exe =>
+    let p : System.FilePath := exe
+    if p.isAbsolute then exe else (cwd / p).toString
   let mut snap ← snapshot root
   if snap.chapters.isEmpty then IO.eprintln "no HCPs found"; return 1
-  if fixExcerpts then
+  if a.fixExcerpts then
     for cp in snap.chapters do
       if let (_, some fixed) := chapterExcerpts snap cp true then IO.FS.writeFile (root / cp) fixed
     snap ← snapshot root
-  let errs1 := excerptErrors snap ++ snap.chapters.flatMap (chapterErrors snap)
-  let errs2 ← match sbvr with
-    | some exe => sbvrErrors root snap.chapters exe fixSbvr
-    | none => pure []
-  -- renderings read after `--fix-sbvr` may have rewritten them
-  if fixSbvr then snap ← snapshot root
-  let errs := errs1 ++ errs2 ++ renderedErrors snap
+  let mut run : Option SbvrRun := none
+  if let some exe := sbvr then
+    let observed ← observeSbvr root snap.chapters exe
+    run := some (← if a.fixSbvr then fixSbvrRenderings root observed else pure observed)
+    -- the committed renderings `renderedErrors` reads are the rewritten ones
+    if a.fixSbvr then snap ← snapshot root
+  let errs := errors snap run
   for e in errs do IO.eprintln e
   IO.println s!"{snap.chapters.length} HCPs checked, {errs.length} errors"
   return if errs.isEmpty then 0 else 1
