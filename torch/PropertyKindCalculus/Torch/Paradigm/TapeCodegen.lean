@@ -211,12 +211,28 @@ theorem genBody_isOk_eq_genSL (t : Tape Float) (tables : Array LutTable) :
     (genBody t tables).isOk = (SL.genSL t tables).isOk := by
   unfold genBody; cases SL.genSL t tables <;> rfl
 
+/-- Every output id names a node of the tape — otherwise an `out[…] = v<id>` line would reference a
+temporary no body line defines (ill-formed C/Julia that the denotation theorem, reading `getD`,
+would not notice). Checked by `gen` and `genJulia` before anything is emitted (`checkOutputs_ok`). -/
+def checkOutputs (t : Tape Float) (outIds : List Nat) : Except String Unit :=
+  if outIds.all (· < t.size) then .ok ()
+  else .error s!"tape_codegen: an output id is out of range (the tape has {t.size} nodes)"
+
+theorem checkOutputs_ok {t : Tape Float} {outIds : List Nat} (h : checkOutputs t outIds = .ok ()) :
+    ∀ o ∈ outIds, o < t.size := by
+  unfold checkOutputs at h
+  split at h
+  · rename_i hall
+    simpa [List.all_eq_true] using hall
+  · cases h
+
 /-- Lower a CSE'd tape + its output ids to the straight-line body. Node array index = node id
 (tape ids are array indices), so a node's `vID` is `v{arrayIndex}` and its parents reference earlier
 `v`s. The `inputs`/`numOutputs`/`outLines` fields are pure functions of `t`/`outIds`; only `body`
 runs the (fallible) node walk (`genBody`). -/
 def gen (t : Tape Float) (outIds : List Nat) (tables : Array LutTable := #[])
     (lutMode : LutFilterMode := .point) : Except String Codegen :=
+  (checkOutputs t outIds).bind fun _ =>
   (resolveTables (collectTableNames t) tables).bind fun resolved =>
     (genBody t tables).map fun body =>
       { inputs := collectInputs t
@@ -225,6 +241,16 @@ def gen (t : Tape Float) (outIds : List Nat) (tables : Array LutTable := #[])
       , outLines := ((outIds.zipIdx).map (fun (oid, j) => s!"  out[{j} * P + p] = v{oid};")).toArray
       , tables := resolved
       , lutMode }
+
+/-- `gen` succeeds only with every output id in range: every `out[…] = v<id>` line names a
+temporary the body defines. -/
+theorem gen_outIds_lt {t : Tape Float} {outIds : List Nat} {tables : Array LutTable}
+    {mode : LutFilterMode} {cg : Codegen} (h : gen t outIds tables mode = .ok cg) :
+    ∀ o ∈ outIds, o < t.size := by
+  unfold gen at h
+  cases ho : checkOutputs t outIds with
+  | error e => rw [ho] at h; simp [Except.bind] at h
+  | ok u => exact checkOutputs_ok ho
 
 /-- The kernel parameter list: `int P, const float* in_<x>…, <table params…>, float* out`.
 Table parameters differ per backend — `cudaTextureObject_t tex_<n>` on the device kernel,

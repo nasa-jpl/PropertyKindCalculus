@@ -158,6 +158,7 @@ theorem genBodyJulia_isOk_eq_genBody (t : Tape Float) (tables : Array LutTable) 
 argument list is the C kernel's parameter list, name for name. -/
 def genJulia (t : Tape Float) (outIds : List Nat) (tables : Array LutTable := #[])
     (lutMode : LutFilterMode := .point) : Except String JuliaCodegen :=
+  (checkOutputs t outIds).bind fun _ =>
   (resolveTables (collectTableNames t) tables).bind fun resolved =>
     (genBodyJulia t tables).map fun body =>
       { inputs := collectInputs t
@@ -166,6 +167,15 @@ def genJulia (t : Tape Float) (outIds : List Nat) (tables : Array LutTable := #[
       , outLines := ((outIds.zipIdx).map (fun (oid, j) => s!"        out[p, {j + 1}] = v{oid}")).toArray
       , tables := resolved
       , lutMode }
+
+/-- `genJulia` succeeds only with every output id in range — the same check `gen` makes. -/
+theorem genJulia_outIds_lt {t : Tape Float} {outIds : List Nat} {tables : Array LutTable}
+    {mode : LutFilterMode} {cg : JuliaCodegen} (h : genJulia t outIds tables mode = .ok cg) :
+    ∀ o ∈ outIds, o < t.size := by
+  unfold genJulia at h
+  cases ho : checkOutputs t outIds with
+  | error e => rw [ho] at h; simp [Except.bind] at h
+  | ok u => exact checkOutputs_ok ho
 
 /-! ### The emitted header: the pinned semantics, and the helpers -/
 

@@ -933,6 +933,45 @@ theorem genSL_fetch {t : Tape Float} {tbls : Array LutTable} {prog : SLProg}
         · cases he
     · cases he
 
+/-! ### Slot discipline — every operand slot precedes its line
+
+`run` reads a slot with `getD … 0.0`, total by construction; the theorem below is what makes the
+default unreachable on a program `genSL` produces from a well-formed tape: every operand slot of
+line `i` is `< i`, so the printed kernel never uses a temporary before defining it (the C and
+Julia texts are well-scoped), and `run` at line `i` reads only slots already computed. -/
+
+/-- The operand slots a line reads. -/
+def SLExpr.slots : SLExpr → List Nat
+  | .input _ => []
+  | .lit _ => []
+  | .bin _ a b => [a, b]
+  | .un _ a => [a]
+  | .fetch _ _ l u => [l, u]
+
+theorem SLExpr.slots_eq_vertex_parents (e : SLExpr) : e.slots = e.vertex.parents := by
+  cases e <;> rfl
+
+/-- The line `nodeSL` produces for a node reads exactly the node's parents. -/
+theorem nodeSL_slots {tbls : Array LutTable} {i : Nat} {n : Node Float} {e : SLExpr}
+    (h : nodeSL tbls i n = .ok e) : e.slots = n.parents.toList := by
+  rw [SLExpr.slots_eq_vertex_parents, nodeSL_vertex h]
+
+/-- **Slot discipline.** On a well-formed tape, every operand slot of line `i` of the program is
+`< i`: no temporary is used before it is defined, in any printer's text, and `run` never reads an
+uncomputed slot. -/
+theorem genSL_slots_lt {t : Tape Float} (hwf : WF t) {tbls : Array LutTable} {prog : SLProg}
+    (h : genSL t tbls = .ok prog) {i : Nat} {e : SLExpr} (hi : prog[i]? = some e) :
+    ∀ s ∈ e.slots, s < i := by
+  obtain ⟨n, hn, hne⟩ := genSL_getElem? h hi
+  rw [nodeSL_slots hne]
+  intro s hs
+  exact hwf i n hn s (Array.mem_def.mpr hs)
+
+/-- The program's graph is ordered — the tape's build invariant, read on the program. -/
+theorem ofProg_ordered {t : Tape Float} (hwf : WF t) {tbls : Array LutTable} {prog : SLProg}
+    (h : genSL t tbls = .ok prog) : (ofProg prog).ordered = true := by
+  rw [ofProg_eq_ofTape h]; exact ofTape_ordered t hwf
+
 end SL
 
 end PropertyKindCalculus.Paradigm.TapeCodegen
