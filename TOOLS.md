@@ -128,6 +128,13 @@ Anything a tool does outside this list is a defect of the tool, not an extension
    the Python's but for its header; `PartBlock.gate_iff_clean` is the never-bless-a-violation rule.
 4. **`module-census`**: the two censuses in one executable; `MODULARITY.md`'s numbers regenerated.
 5. **`blueprint-figures`** and the **link pass**; `make-figures.sh` and `ci-pages.sh` call them.
+   *Shipped (figures)*: `lake exe blueprint-figures [--check] [--out DIR] [--audience deck]`, the
+   modules `tools/Tools/Figures/{Fmt,Icon,Lowe,ThreeLayers,Cake}.lean` (`lean_lib ToolsFigures`), each
+   figure a pure `String` and `--check` equality on bytes; all three committed SVGs and the deck's cake
+   are byte-identical to the Python's. What made that possible: `Fmt.fmtFixed`, Python's `f"{x:.Nf}"`
+   (the exact binary value rounded half-to-even, from `Float.toBits`), so no `Svg` inductive was
+   needed — the generators are the same arithmetic in the same order. `Cake.layersFor_eq` and
+   `baseLayers_audience_free` say where the audience is read (the top layers and the TorchLean chip).
 6. **`blueprint-print`**: the print pass of `html-to-pdf.py` (merge of the multi-page fallback,
    `-verso-*` skipping, heading renumbering and nesting check, bookmark cleanup, print CSS) as a
    Lean text pass, its HTML diffed against the Python pipeline's on the committed blueprint before

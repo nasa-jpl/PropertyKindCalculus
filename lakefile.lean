@@ -539,6 +539,19 @@ lean_exe «inject-index-docs» where
   srcDir := "tools"
   root := `Tools.InjectIndexDocs
 
+/-- The figure generators' modules (`Tools.Figures.*`), the library behind `blueprint-figures`. -/
+lean_lib ToolsFigures where
+  srcDir := "tools"
+  roots := #[`Tools.Figures]
+  globs := #[.submodules `Tools.Figures]
+
+/-- **The blueprint's figures** (`TOOLS.md` §5 step 5): writes `blueprint/figures/*.svg`, or with
+`--check` compares them byte for byte with what it would write; `--audience deck --out DIR` the deck's
+cake. `blueprint/scripts/make-figures.sh` calls it. -/
+lean_exe «blueprint-figures» where
+  srcDir := "tools"
+  root := `Tools.BlueprintFigures
+
 /-- Worked uncertainty examples grounded in the two source papers (Degenhardt 2025 fictive
 example; Willink 2005 gauge-block), in the `examples/` source tree as a **separate library** so
 no *library* module carries `#eval`/`#guard`. Build with `lake build UncertaintyExamples`. -/
