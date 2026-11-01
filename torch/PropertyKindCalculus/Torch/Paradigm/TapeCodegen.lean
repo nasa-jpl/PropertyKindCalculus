@@ -211,6 +211,29 @@ theorem genBody_isOk_eq_genSL (t : Tape Float) (tables : Array LutTable) :
     (genBody t tables).isOk = (SL.genSL t tables).isOk := by
   unfold genBody; cases SL.genSL t tables <;> rfl
 
+/-- The tape's build invariant, decided: every parent id precedes its node (`WF`). Checked by `gen`
+and `genJulia` before anything is emitted, so a hand-assembled tape with a forward reference is
+rejected rather than printed with a temporary used before its definition; `checkWF_ok` is the
+`WF` every slot-discipline theorem consumes. -/
+def checkWF (t : Tape Float) : Except String Unit :=
+  if (List.range t.size).all (fun id =>
+      match t.nodes[id]? with
+      | some nd => nd.parents.toList.all (· < id)
+      | none => true) then .ok ()
+  else .error "tape_codegen: tape is not well-formed (a node references a parent at or after its own id)"
+
+theorem checkWF_ok {t : Tape Float} (h : checkWF t = .ok ()) : WF t := by
+  unfold checkWF at h
+  split at h
+  · rename_i hall
+    intro id nd hnd p hp
+    rw [Tape.getNode?] at hnd
+    obtain ⟨hid, _⟩ := Array.getElem?_eq_some_iff.mp hnd
+    have hf := List.all_eq_true.mp hall id (List.mem_range.mpr hid)
+    simp only [hnd] at hf
+    exact of_decide_eq_true (List.all_eq_true.mp hf p (Array.mem_def.mp hp))
+  · cases h
+
 /-- Every output id names a node of the tape — otherwise an `out[…] = v<id>` line would reference a
 temporary no body line defines (ill-formed C/Julia that the denotation theorem, reading `getD`,
 would not notice). Checked by `gen` and `genJulia` before anything is emitted (`checkOutputs_ok`). -/
@@ -232,6 +255,7 @@ theorem checkOutputs_ok {t : Tape Float} {outIds : List Nat} (h : checkOutputs t
 runs the (fallible) node walk (`genBody`). -/
 def gen (t : Tape Float) (outIds : List Nat) (tables : Array LutTable := #[])
     (lutMode : LutFilterMode := .point) : Except String Codegen :=
+  (checkWF t).bind fun _ =>
   (checkOutputs t outIds).bind fun _ =>
   (resolveTables (collectTableNames t) tables).bind fun resolved =>
     (genBody t tables).map fun body =>
@@ -242,14 +266,28 @@ def gen (t : Tape Float) (outIds : List Nat) (tables : Array LutTable := #[])
       , tables := resolved
       , lutMode }
 
+/-- `gen` succeeds only on a well-formed tape: every parent precedes its node, so every operand slot
+of every body line is already defined (`SL.genSL_slots_lt`). -/
+theorem gen_wf {t : Tape Float} {outIds : List Nat} {tables : Array LutTable}
+    {mode : LutFilterMode} {cg : Codegen} (h : gen t outIds tables mode = .ok cg) : WF t := by
+  unfold gen at h
+  cases hw : checkWF t with
+  | error e => rw [hw] at h; simp [Except.bind] at h
+  | ok u => exact checkWF_ok hw
+
 /-- `gen` succeeds only with every output id in range: every `out[…] = v<id>` line names a
 temporary the body defines. -/
 theorem gen_outIds_lt {t : Tape Float} {outIds : List Nat} {tables : Array LutTable}
     {mode : LutFilterMode} {cg : Codegen} (h : gen t outIds tables mode = .ok cg) :
     ∀ o ∈ outIds, o < t.size := by
   unfold gen at h
+  cases hw : checkWF t with
+  | error e => rw [hw] at h; simp [Except.bind] at h
+  | ok u =>
+  rw [hw] at h
+  simp only [Except.bind] at h
   cases ho : checkOutputs t outIds with
-  | error e => rw [ho] at h; simp [Except.bind] at h
+  | error e => rw [ho] at h; simp at h
   | ok u => exact checkOutputs_ok ho
 
 /-- The kernel parameter list: `int P, const float* in_<x>…, <table params…>, float* out`.

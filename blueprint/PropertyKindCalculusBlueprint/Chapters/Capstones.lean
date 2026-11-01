@@ -725,8 +725,9 @@ command does by elaboration and the theorem takes as a hypothesis.
   the tape's under `genSL` (`ofProg_eq_ofTape`), and `semantic_seal_program`, the second capstone
   restated with the program's graph and `SL.run` in place of the tape and `evalTape`.
 - Slot discipline on the program: every operand slot of line `i` precedes it on a well-formed tape
-  (`genSL_slots_lt`, `ofProg_ordered`), and the generators reject an output id outside the tape
-  (`checkOutputs`, `gen_outIds_lt`, `genJulia_outIds_lt`) — the printed kernels are well-scoped.
+  (`genSL_slots_lt`, `ofProg_ordered`); the generators decide that invariant (`checkWF`, `gen_wf`,
+  `genJulia_wf`) and reject an output id outside the tape (`checkOutputs`, `gen_outIds_lt`,
+  `genJulia_outIds_lt`) — the printed kernels are well-scoped, for any tape handed to them.
 - One `min`/`max` reading on NaN across the interpreter and the three renderings: Lean's `ite`,
   written as the `≤`-ternary in C and CUDA and as `ifelse` in Julia; the table fetch's clamp likewise
   follows `refFetch` in every rendering.

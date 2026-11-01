@@ -281,8 +281,9 @@ Status: ✅ done · 🚧 in progress · ⬜ planned
   ✅ **The seal travels with the program**: `ofProg_eq_ofTape` (the program's graph is the tape's) and
   `semantic_seal_program` (the second capstone over the emitted program's graph and `SL.run`).
   ✅ **Slot discipline**: on a well-formed tape every operand slot of line `i` is `< i`
-  (`SL.genSL_slots_lt`, so no printer's text uses a temporary before defining it) and `gen`/`genJulia`
-  reject an output id outside the tape (`checkOutputs`, `gen_outIds_lt`/`genJulia_outIds_lt`).
+  (`SL.genSL_slots_lt`, so no printer's text uses a temporary before defining it); `gen`/`genJulia`
+  decide that invariant themselves (`checkWF`, `gen_wf`/`genJulia_wf`) and reject an output id outside
+  the tape (`checkOutputs`, `gen_outIds_lt`/`genJulia_outIds_lt`).
   ⬜ Run `julia_parity` in a CI lane with Julia installed.
   ⬜ First CliMA-shaped closure recorded over `[NumCarrier α]` to find the alphabet gaps (a bounded
   reduction and a gather are the expected first two).

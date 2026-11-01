@@ -958,7 +958,8 @@ theorem nodeSL_slots {tbls : Array LutTable} {i : Nat} {n : Node Float} {e : SLE
 
 /-- **Slot discipline.** On a well-formed tape, every operand slot of line `i` of the program is
 `< i`: no temporary is used before it is defined, in any printer's text, and `run` never reads an
-uncomputed slot. -/
+uncomputed slot. The emitters supply `WF` themselves — `gen`/`genJulia` run `checkWF` before the
+walk (`gen_wf`, `genJulia_wf`), so a hand-assembled tape with a forward reference is rejected. -/
 theorem genSL_slots_lt {t : Tape Float} (hwf : WF t) {tbls : Array LutTable} {prog : SLProg}
     (h : genSL t tbls = .ok prog) {i : Nat} {e : SLExpr} (hi : prog[i]? = some e) :
     ∀ s ∈ e.slots, s < i := by
