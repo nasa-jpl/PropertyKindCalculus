@@ -239,8 +239,16 @@ The **megakernel codegen backend** lives in the `Torch` library and is verified:
   (`rendering_table_binary`/`_unary`: `jlExpr` renders exactly what `cOp` interprets) and the pinned
   semantics in the emitted header — no `@fastmath`/`muladd`, `min`/`max` as Lean's `minOfLe`/`maxOfLe`
   (`min_eq_ite`/`max_eq_ite`), NaN-restoring `tl_sqrt`/`tl_log`, bit-pattern constants.
+- `PropertyKindCalculus.Torch.Paradigm.TapeStraightLine` — **one program, N printers**: the
+  backend-neutral straight-line program `SL.genSL` reads off the tape (the only function that reads
+  it), its denotation `SL.run`, and the theorem `SL.genSL_denotes` that the program runs as `evalTapeT`
+  node for node — stated once for every backend; the C/CUDA (`printC`) and Julia (`printJulia`)
+  emitters are printers of that program, so the literal and input clauses are theorems about the
+  emitted program, in both directions (`SL.genSL_lit_iff`/`SL.genSL_input_iff`), and the rendering
+  tables are corollaries.
 - `PropertyKindCalculus.Examples.TapeCodegenJuliaDemo` — the AVS tape emitted as Julia, `#guard`'d for
-  alphabet coverage and for the same input ABI as the CUDA kernel.
+  alphabet coverage and for the same input ABI as the CUDA kernel; axiom pins for the denotation
+  theorem and its clauses.
 - `lake exe julia_parity` — runs the emitted `avs_resjac` and `lm_step` kernels under `julia` at
   `Float64` over deterministic pixels against `evalTape`: bit-identical where an output's cone has no
   `exp`/`log`, within `--max-ulp` (default 4) where it does — Julia's `exp`/`log` are pure-Julia
@@ -264,6 +272,9 @@ Status: ✅ done · 🚧 in progress · ⬜ planned
   exe. ✅ One `min`/`max` NaN semantics across `cOp`, `cExpr` and `jlExpr` — Lean's `ite`, written as
   the `≤`-ternary in C/CUDA and `ifelse` in Julia (`fminf`/`fmaxf`, which return the non-NaN operand,
   are gone); the C stub's and the CUDA helper's `lutfetch` clamp follow `refFetch` on NaN likewise.
+  ✅ **The denotation of the rendering, for all backends** (`TapeStraightLine`): every emitter is a
+  printer of one straight-line program, `genSL_denotes` proves the program runs as `evalTapeT`, and
+  `genSL_lit_iff`/`genSL_input_iff` make the "no naked number" clauses equivalences about the emitted program.
   ⬜ Run `julia_parity` in a CI lane with Julia installed.
   ⬜ First CliMA-shaped closure recorded over `[NumCarrier α]` to find the alphabet gaps (a bounded
   reduction and a gather are the expected first two).

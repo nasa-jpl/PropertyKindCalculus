@@ -377,12 +377,17 @@ reading is of `genJulia`: it adds no entry point to that picture — a Julia arg
 exactly the named leaves (its input list is `collectInputs`, the function `gen` uses, name for
 name), a literal appears in the body for exactly the baked leaves (rendered from the double's bit
 pattern, so it _is_ the constant the ledger lists), and a line of the body is one node's operation
-on its parents, over the alphabet the Float interpreter `cOp` defines. Of that reading only the
-alphabet clause is a theorem today — `rendering_table_binary`/`rendering_table_unary` say the Julia
-expression exists exactly where the interpreter has a value, as `examples.tape_codegen_end_to_end`
-says of the C rendering; the capstone chapter's ledger names what would make the rest one. In the
-words a reviewer would use: _no naked number enters the Julia code
-beyond what the algorithm's contract admits_. An input the hypergraph says cannot reach an output
+on its parents, over the alphabet the Float interpreter `cOp` defines. That reading is a theorem,
+and not a theorem about Julia: every emitter is a *printer* of one backend-neutral straight-line
+program that `genSL` — the only function that reads the tape — produces, one line per node, and
+{ref "capstones"}[the denotation of the rendering] says the program runs as the tape evaluator,
+node for node, with a literal exactly at a baked leaf and an input read exactly at a named leaf
+(`genSL_denotes`, `genSL_lit_iff`, `genSL_input_iff`). The Julia printer (`printJulia`) is a total function
+from a program line to text that cannot see the tape, so it cannot add an input, a literal or an
+operation the program does not have; what it leaves to trust is that each of its dozen forms means
+in Julia what the line means in Lean's `Float`. In the words a reviewer would use: _no naked number
+enters the Julia code beyond what the algorithm's contract admits_ — and the same sentence holds,
+by the same theorem, of the C stub and the CUDA kernel, which print the same program. An input the hypergraph says cannot reach an output
 does not reach it in the Julia function either, because the Julia function is the tape, and the
 statement was proved of the tape.
 

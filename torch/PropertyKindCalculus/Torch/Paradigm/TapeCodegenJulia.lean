@@ -64,25 +64,14 @@ open PropertyKindCalculus.Paradigm (LutTable lutNodeName?)
 
 namespace PropertyKindCalculus.Paradigm.TapeCodegen.Julia
 
-/-! ### Julia expression for one op node -/
+/-! ### The Julia printer
 
-/-- The Julia expression for op `nm` on already-emitted parent temporaries — the Julia twin of
-`cExpr`, over the same alphabet. `min`/`max` are Lean's `minOfLe`/`maxOfLe` spelled out; `sqrt`/`log`
-go through the NaN-restoring helpers the emitted header defines. -/
-def jlExpr (nm : String) (ps : List Nat) : Except String String :=
-  let v := fun (i : Nat) => s!"v{i}"
-  match nm, ps with
-  | "add",  [a, b] => .ok s!"{v a} + {v b}"
-  | "sub",  [a, b] => .ok s!"{v a} - {v b}"
-  | "mul",  [a, b] => .ok s!"{v a} * {v b}"
-  | "div",  [a, b] => .ok s!"{v a} / {v b}"
-  | "min",  [a, b] => .ok s!"ifelse({v a} <= {v b}, {v a}, {v b})"
-  | "max",  [a, b] => .ok s!"ifelse({v a} <= {v b}, {v b}, {v a})"
-  | "exp",  [a]    => .ok s!"exp({v a})"
-  | "log",  [a]    => .ok s!"tl_log({v a})"
-  | "sqrt", [a]    => .ok s!"tl_sqrt({v a})"
-  | "abs",  [a]    => .ok s!"abs({v a})"
-  | _, _ => .error s!"tape_codegen_julia: unsupported op `{nm}` (arity {ps.length})"
+The emitter is a *printer* of the backend-neutral straight-line program `SL.genSL` reads off the
+tape (`paradigm.tape_straight_line`): `printJulia` renders one program line, `genBodyJulia` is
+`genSL` followed by `printJulia` line by line, `jlExpr` is `SL.mkOp` followed by `printJulia`. The
+denotation theorem `SL.genSL_denotes` is therefore the Julia kernel's too, with nothing proved
+about Julia specifically: what remains to trust is that each of `printJulia`'s dozen forms means,
+in Julia without `@fastmath`/`muladd`, what `SL.SLExpr.denote` means. -/
 
 /-- Render a `Float` as an **exact** Julia literal of the kernel's precision `T`: the double's bit
 pattern through `reinterpret(Float64, 0x…)`, converted to `T`. Zero renders as `zero(T)`; the
@@ -95,6 +84,36 @@ def jlLit (x : Float) : String :=
     let hex := String.ofList <| (List.range 16).map fun i =>
       Nat.digitChar ((bits / 2 ^ (60 - 4 * i)) % 16)
     s!"T(reinterpret(Float64, 0x{hex}))"
+
+/-- The Julia text of one program line — **the Julia printer**, total over `SLExpr`. `min`/`max`
+are Lean's `minOfLe`/`maxOfLe` spelled out as `ifelse`; `sqrt`/`log` go through the NaN-restoring
+helpers the emitted header defines; a fetch is the `tl_lutfetch` helper on the table's flat vector. -/
+def printJulia : SL.SLExpr → String
+  | .input nm => s!"in_{nm}[p]"
+  | .lit x => jlLit x
+  | .bin o a b =>
+      match o with
+      | .add => s!"v{a} + v{b}"
+      | .sub => s!"v{a} - v{b}"
+      | .mul => s!"v{a} * v{b}"
+      | .div => s!"v{a} / v{b}"
+      | .min => s!"ifelse(v{a} <= v{b}, v{a}, v{b})"
+      | .max => s!"ifelse(v{a} <= v{b}, v{b}, v{a})"
+  | .un o a =>
+      match o with
+      | .exp => s!"exp(v{a})"
+      | .log => s!"tl_log(v{a})"
+      | .sqrt => s!"tl_sqrt(v{a})"
+      | .abs => s!"abs(v{a})"
+  | .fetch tbl l u => s!"tl_lutfetch(lut_{tbl.name}, {tbl.width}, {tbl.layers}, v{l}, v{u})"
+
+/-- The Julia expression for op `nm` on already-emitted parent temporaries — the Julia twin of
+`cExpr`: the same program op line (`SL.mkOp`), printed by `printJulia`. -/
+def jlExpr (nm : String) (ps : List Nat) : Except String String :=
+  (SL.mkOp nm ps).map printJulia
+
+/-- One body line of the Julia kernel: slot `i` as a `v<i>` binding. -/
+def printLineJulia (e : SL.SLExpr) (i : Nat) : String := s!"        v{i} = {printJulia e}"
 
 /-- The straight-line Julia kernel body: input reads, the per-node temporaries, the output stores,
 and the tables the body fetches from. The Julia twin of `Codegen`; a separate type so an emitter
@@ -115,35 +134,24 @@ structure JuliaCodegen where
   /-- How `lutfetch` nodes are realised (irrelevant when `tables` is empty). -/
   lutMode : LutFilterMode := .point
 
-/-- The Julia body lines — `genBody`'s walk with the Julia rendering of each node kind. -/
+/-- The Julia body lines — the program `SL.genSL` reads off the tape, printed line by line by
+`printJulia`. Fails exactly where `genBody` does (`genBodyJulia_isOk_eq_genBody`): the two emitters
+print one program. -/
 def genBodyJulia (t : Tape Float) (tables : Array LutTable := #[]) :
-    Except String (Array String) := do
-  let mut body : Array String := #[]
-  let mut i : Nat := 0
-  for n in t.nodes do
-    if n.parents.isEmpty then
-      match n.name with
-      | some nm => body := body.push s!"        v{i} = in_{nm}[p]"
-      | none    => body := body.push s!"        v{i} = {jlLit (nodeScalar n)}"
-    else
-      match n.name with
-      | some nm =>
-          match lutNodeName? nm with
-          | some tn =>
-              match tables.find? (·.name == tn), n.parents with
-              | some tbl, #[l, u] =>
-                  body := body.push
-                    s!"        v{i} = tl_lutfetch(lut_{tbl.name}, {tbl.width}, {tbl.layers}, v{l}, v{u})"
-              | some _, _ =>
-                  .error s!"tape_codegen_julia: lutfetch node {i} expects parents [layer, u] (got {n.parents.size})"
-              | none, _ =>
-                  .error s!"tape_codegen_julia: lutfetch node {i} references unknown table `{tn}`"
-          | none =>
-              let e ← jlExpr nm n.parents.toList
-              body := body.push s!"        v{i} = {e}"
-      | none => .error s!"tape_codegen_julia: op node {i} has no op name"
-    i := i + 1
-  pure body
+    Except String (Array String) :=
+  (SL.genSL t tables).map fun prog => prog.zipIdx.map fun p => printLineJulia p.1 p.2
+
+/-- `genBodyJulia` is the printer of the program: on a tape `genSL` accepts, its lines are
+`printLineJulia` of the program's lines, slot by slot. -/
+theorem genBodyJulia_of_genSL {t : Tape Float} {tables : Array LutTable} {prog : SL.SLProg}
+    (h : SL.genSL t tables = .ok prog) :
+    genBodyJulia t tables = .ok (prog.zipIdx.map fun p => printLineJulia p.1 p.2) := by
+  unfold genBodyJulia; rw [h]; rfl
+
+/-- The Julia body and the C body exist on exactly the same tapes — one program, two printers. -/
+theorem genBodyJulia_isOk_eq_genBody (t : Tape Float) (tables : Array LutTable) :
+    (genBodyJulia t tables).isOk = (genBody t tables).isOk := by
+  unfold genBodyJulia genBody; cases SL.genSL t tables <;> rfl
 
 /-- Lower a CSE'd tape + its output ids to a Julia kernel — `gen`'s twin. The ABI fields
 (`inputs`, `tables`) are the same pure functions of the tape `gen` uses, so the Julia function's
@@ -269,9 +277,14 @@ theorem rendering_table_unary (i : Nat) (x : Float) :
     (cOp "abs" [x] = .ok (Float.abs x) ∧ (jlExpr "abs" [i]).isOk) :=
   ⟨⟨rfl, rfl⟩, ⟨rfl, rfl⟩, ⟨rfl, rfl⟩, ⟨rfl, rfl⟩⟩
 
-/-- The Julia rendering and the C rendering agree on **where** they are defined, op by op over the
-alphabet: an op has a Julia expression exactly when it has a C one (the two emitters are twins over
-the one interpreter, not two alphabets). -/
+/-- The Julia rendering and the C rendering agree on **where** they are defined, for every op name
+and every parent list: both are printers of `SL.mkOp`, so an op has a Julia expression exactly when
+it has a C one (the two emitters are twins over the one program, not two alphabets). -/
+theorem jlExpr_isOk_eq_cExpr (nm : String) (ps : List Nat) :
+    (jlExpr nm ps).isOk = (cExpr nm ps).isOk := by
+  unfold jlExpr cExpr; cases SL.mkOp nm ps <;> rfl
+
+/-- The binary alphabet, as the `#guard`s and the capstone chapter cite it. -/
 theorem jlExpr_isOk_eq_cExpr_binary (i j : Nat) :
     (jlExpr "add" [i, j]).isOk = (cExpr "add" [i, j]).isOk ∧
     (jlExpr "sub" [i, j]).isOk = (cExpr "sub" [i, j]).isOk ∧
@@ -279,7 +292,18 @@ theorem jlExpr_isOk_eq_cExpr_binary (i j : Nat) :
     (jlExpr "div" [i, j]).isOk = (cExpr "div" [i, j]).isOk ∧
     (jlExpr "min" [i, j]).isOk = (cExpr "min" [i, j]).isOk ∧
     (jlExpr "max" [i, j]).isOk = (cExpr "max" [i, j]).isOk :=
-  ⟨rfl, rfl, rfl, rfl, rfl, rfl⟩
+  ⟨jlExpr_isOk_eq_cExpr _ _, jlExpr_isOk_eq_cExpr _ _, jlExpr_isOk_eq_cExpr _ _,
+   jlExpr_isOk_eq_cExpr _ _, jlExpr_isOk_eq_cExpr _ _, jlExpr_isOk_eq_cExpr _ _⟩
+
+/-- **The Julia kernel runs as the tape** — `SL.genSL_denotes` read through the printer: on a tape
+the emitter accepts, the body lines are the program's lines printed, and the program runs as
+`evalTapeT`. The Julia-specific content of this corollary is nil; that is the point. -/
+theorem julia_body_denotes {tbls : Array LutTable} {tables : String → Option LutTable}
+    (hT : SL.TablesAgree tbls tables) (env : String → Float) {t : Tape Float} {prog : SL.SLProg}
+    (h : SL.genSL t tbls = .ok prog) :
+    genBodyJulia t tbls = .ok (prog.zipIdx.map fun p => printLineJulia p.1 p.2) ∧
+    evalTapeT tables env t = .ok (SL.run env prog) :=
+  ⟨genBodyJulia_of_genSL h, SL.genSL_denotes hT env h⟩
 
 /-- `min`/`max` as rendered are Lean's: the `Min Float`/`Max Float` instances are `minOfLe`/`maxOfLe`,
 `if x ≤ y then x else y` and `if x ≤ y then y else x` — the `ifelse(a <= b, a, b)` / `ifelse(a <= b,
