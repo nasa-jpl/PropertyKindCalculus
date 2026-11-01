@@ -47,13 +47,13 @@ namespace PropertyKindCalculusBlueprint
 
 namespace Figures
 
-/-- The architecture cake, blueprint audience: `scripts/figures/make-architecture-cake.py`. -/
+/-- The architecture cake, blueprint audience: `tools/Tools/Figures/Cake.lean` (`lake exe blueprint-figures`). -/
 def architectureCake : String := include_str "../figures/architecture-cake.svg"
 
-/-- Lowe's square with the calculus's identifiers: `scripts/figures/make-lowe-square-pkc.py`. -/
+/-- Lowe's square with the calculus's identifiers: `tools/Tools/Figures/Lowe.lean` (`lake exe blueprint-figures`). -/
 def loweSquare : String := include_str "../figures/lowe-square-pkc.svg"
 
-/-- The three layers and their two ladders: `scripts/figures/make-three-layers-pkc.py`. -/
+/-- The three layers and their two ladders: `tools/Tools/Figures/ThreeLayers.lean` (`lake exe blueprint-figures`). -/
 def threeLayers : String := include_str "../figures/three-layers-pkc.svg"
 
 end Figures

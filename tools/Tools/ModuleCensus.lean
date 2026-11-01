@@ -151,7 +151,7 @@ def libsOf (lakefile : String) : List Lib :=
       else pats
     some { name, srcDir, pats, isExe }
 
-def skipDirs : List String := [".lake", "blueprint", "Scratch", "scripts", "docs", "References", "__pycache__"]
+def skipDirs : List String := [".lake", "blueprint", "Scratch", "scripts", "docs", "References"]
 
 
 /-! ## Files and their libs -/
