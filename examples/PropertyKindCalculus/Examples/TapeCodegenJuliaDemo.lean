@@ -9,7 +9,9 @@ KernelAbstractions.jl twin. Two things are checked at build, with no Julia toolc
     rendering and conversely (`juliaCoversTape`), the runtime instance of the rendering-table
     theorems;
   * **the ABI is the C kernel's** — `genJulia` and `gen` agree on the input list, name for name and
-    in order (`sameAbi`), so a Julia host and a CUDA host are handed the same argument list.
+    in order (`sameAbi`), so a Julia host and a CUDA host are handed the same argument list;
+  * **the denotation of the rendering is axiom-audited** — `SL.genSL_denotes` and the literal and
+    input clauses (`paradigm.tape_straight_line`) depend on the standard three axioms only.
 
 The *numbers* the emitted Julia computes are checked by `apps.julia_parity`, which runs the
 emitted file under `julia` at `Float64` against `evalTape` — bit-exact on the IEEE-exact alphabet,
@@ -63,6 +65,23 @@ def coverage : Bool :=
 
 #guard coverage
 #guard sameAbi
+
+/-! The denotation of the rendering, axiom-audited: the one program every backend prints runs as
+the tape (`SL.genSL_denotes`), its literals are the tape's baked leaves (`SL.genSL_lit`), its input
+reads the tape's named leaves (`SL.genSL_input`); the Julia body is that program printed
+(`julia_body_denotes`). Nothing beyond the standard three. -/
+
+/-- info: 'PropertyKindCalculus.Paradigm.TapeCodegen.SL.genSL_denotes' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in #print axioms SL.genSL_denotes
+
+/-- info: 'PropertyKindCalculus.Paradigm.TapeCodegen.SL.genSL_lit' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in #print axioms SL.genSL_lit
+
+/-- info: 'PropertyKindCalculus.Paradigm.TapeCodegen.SL.genSL_input' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in #print axioms SL.genSL_input
+
+/-- info: 'PropertyKindCalculus.Paradigm.TapeCodegen.Julia.julia_body_denotes' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in #print axioms Julia.julia_body_denotes
 
 /-- The two emitted surfaces, printed. -/
 def report : IO Unit := do

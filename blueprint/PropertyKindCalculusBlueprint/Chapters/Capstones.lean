@@ -117,7 +117,7 @@ dependency graph and the ledger at the end of this chapter carry.
   * Per-site verdicts never compose to outputs: an anonymous mint two hops upstream of an output is visible only to a reader of the report.
 *
   * Provenance layer to computation layer
-  * {bpref "cap_lem_tape_cone"}[the cone lemma]; {bpref "cap_def_bisimulation"}[the bisimulation] with {bpref "cap_thm_bisimulation_sound"}[its soundness] and {bpref "cap_thm_strong_bisimulation"}[its strong form after contraction]; {bpref "cap_def_evaluates"}[the denotation bridge] and the closure tactic `tape_hom`; {bpref "cap_thm_semantic_seal"}[the seal of the computation]
+  * {bpref "cap_lem_tape_cone"}[the cone lemma]; {bpref "cap_def_bisimulation"}[the bisimulation] with {bpref "cap_thm_bisimulation_sound"}[its soundness] and {bpref "cap_thm_strong_bisimulation"}[its strong form after contraction]; {bpref "cap_def_evaluates"}[the denotation bridge] and the closure tactic `tape_hom`; {bpref "cap_thm_semantic_seal"}[the seal of the computation]; {bpref "cap_thm_rendering_denotation"}[the denotation of the rendering] — one program, printed by every backend
   * The seal is about the harvest's transcript. A constant the recorder bakes, a path compaction introduces, an opaque callee the harvest saw as one node: all go unseen, and the harvest's attributions stay trusted instead of cross-checked.
 *
   * Provenance layer to dimension layer
@@ -565,34 +565,51 @@ declaration, and a runtime check over the recorded tape; (iii) is `#print axioms
 instance is gated, not proved, and the ledger says so.
 :::
 
-:::theorem "cap_thm_julia_rendering" (parent := "capstones_semantic") (lean := "PropertyKindCalculus.Paradigm.TapeCodegen.Julia.rendering_table_binary") (tags := "proved") (effort := "small")
-*The Julia rendering covers the interpreter's alphabet.* For every binary operation of the tape
-alphabet — `add sub mul div min max` — the Float interpreter `cOp` computes the operation and the
-Julia emitter `jlExpr` has an expression for it; `rendering_table_unary` says the same of
-`exp log sqrt abs`, and `jlExpr_isOk_eq_cExpr_binary` that the Julia and C renderings are defined
-on the same operations. `min_eq_ite`/`max_eq_ite` pin what the two `ifelse` renderings mean:
-Lean's `Min Float`/`Max Float` are `if x ≤ y then x else y` and `if x ≤ y then y else x`.
+:::theorem "cap_thm_rendering_denotation" (parent := "capstones_semantic") (lean := "PropertyKindCalculus.Paradigm.TapeCodegen.SL.genSL_denotes") (tags := "proved") (effort := "medium")
+*The emitted program denotes as the tape — for every backend at once.* Every emitter — the CUDA
+kernel, the C stub, the Julia function — is factored as a *printer* of one backend-neutral
+straight-line program: `SL.genSL` is the only function that reads the tape, and produces one line
+per node (a read of a named input, an exact literal, an alphabet operation on earlier slots, a
+table fetch); `SL.run` gives the program its meaning in Lean's `Float`, with `cOp`'s own clauses
+(`BinOp.cOp_eval`, `UnOp.cOp_eval`). The theorem: if `genSL` produces a program for a tape, the
+table-extended interpreter `evalTapeT` succeeds on that tape and returns exactly `SL.run` of the
+program — slot `i` of the emitted kernel denotes node `i` of the tape, for every node. With it the
+two clauses the previous reading of this node could only describe are theorems about the program:
+a literal occurs in the emitted body exactly at an unnamed leaf and is that leaf's stored scalar
+(`SL.genSL_lit`), an input read exactly at a named leaf with that leaf's name (`SL.genSL_input`) —
+no number enters the emitted code that is not a leaf of the tape, and no argument that is not a
+named leaf. The per-backend rendering tables (`rendering_table_binary`/`_unary`, for C and for
+Julia) and the agreement of the two emitters on where they are defined
+(`jlExpr_isOk_eq_cExpr`, over the whole alphabet, and `genBodyJulia_isOk_eq_genBody`, over every
+tape) are corollaries of the factoring.
 
-That is what the linked theorem proves: existence and arity, op by op, and the reading of two of
-them — not that Julia evaluates an expression as `cOp` does. The rest of the claim this node is
-read for is _definitional_, and is said so here. `genJulia` takes its argument list from
-`collectInputs` — the named leaves, in first-seen order, the same function `gen` uses — and
-`genBodyJulia` writes one line per node: a read of `in_<leaf>` for a named leaf, `jlLit` of the
-node's stored scalar for a baked constant, `jlExpr` of the node's op on its parents otherwise.
-Read against {uses "cap_thm_semantic_seal"}[the seal of the computation], which is stated over the
-{tech}[computational tape graph] the emitter walks, this is the sense in which what a host receives
-admits no input, constant or operation the tape does not have. What would make it a theorem — a
-Julia denotation and a proof that `genBodyJulia`'s lines evaluate as `evalTape` at every node — is
-not in the library; the ledger lists it, and `julia_parity` measures it on the recorded cases in
-the meantime. (The methodology chapter, _Julia, emitted_, says what the emitter pins and what it
-leaves to the trusted base.)
+The technique, since it is the point. Before the factoring, each backend walked the tape itself
+and wrote text, so "the emitted kernel computes what the tape computes" was a claim per backend
+about strings. Now a backend is a total function `SLExpr → String` (`printC`, `printJulia`) that
+cannot see the tape — it is handed the program and nothing else — so it cannot introduce an input,
+a literal or an operation the program, hence the tape, hence the sealed hypergraph does not have.
+The denotation theorem is proved once, about the one tape reader, and is inherited by every printer
+with no proof per backend; what a backend must still be trusted for shrinks to "each of the
+printer's dozen fixed forms means, in the host language, what `SLExpr.denote` means" — a
+statement about `v3 * v4`, `ifelse(a <= b, a, b)` and `expf(v9)`, never about a kernel. A new
+target is a printer: a few lines and the same theorem. The host compiler, its `exp`/`log`, the
+absence of FMA contraction, and (CUDA) the `float` narrowing of the double program remain the
+trusted base each printer names and the parity executables measure; the methodology chapter,
+_Julia, emitted_, says so for the Julia host.
 :::
 
-:::proof "cap_thm_julia_rendering"
-Each conjunct is `rfl`: the interpreter and the emitter both match on the operation name and the
-arity, and the two tables are written case for case.
+:::proof "cap_thm_rendering_denotation"
+`evalTapeT` is reformulated as a left fold of its step function over the nodes
+(`evalTapeT_eq_foldlM`). The node law `nodeSL_denote`: for a node the generator accepts, the
+interpreter's step equals the denotation of the generated line against the same slots — by cases
+on the node (leaf or not, named or not, a fetch or an alphabet op), the fetch case using the
+agreement of the resolved tables with the interpreter's table function and the op case the
+`cOp_eval` clauses through `mkOp_denote`. The fold law `foldlM_run_aux` lifts the node law along
+the list of nodes `mapM` produced lines for, by induction with the slot array generalised; the
+theorem is its instance at the empty array, read back through `Array.foldlM_toList` and
+`Array.toList_mapM`. The literal and input clauses read slot `i` of the program back to node `i`
+(`genSL_getElem?`, a `mapM`-indexing lemma) and case on the generator.
 :::
-
 
 What the second capstone changes, and what it leaves. It covers bits and, through `R`,
 kinds: the tape graph's kinds are the hypergraph's, transported, and the matcher checks the
@@ -685,6 +702,10 @@ command does by elaboration and the theorem takes as a hypothesis.
 - The Julia emitter beside the CUDA/C pair, with its rendering table over the whole alphabet
   and the `min`/`max` reading as Lean's `ite`; the coverage and ABI `#guard`s on the recorded AVS
   tape; the `julia_parity` executable that runs the emitted file against the tape evaluator.
+- The denotation of the rendering, for every backend at once: the one straight-line program
+  `genSL` reads off the tape, the three emitters as printers of it, `genSL_denotes` (the program
+  runs as `evalTapeT`, node for node) and the literal and input clauses `genSL_lit`/`genSL_input`
+  as theorems about the emitted program.
 - One `min`/`max` reading on NaN across the interpreter and the three renderings: Lean's `ite`,
   written as the `≤`-ternary in C and CUDA and as `ifelse` in Julia; the table fetch's clamp likewise
   follows `refFetch` in every rendering.
@@ -701,11 +722,6 @@ command does by elaboration and the theorem takes as a hypothesis.
 
 *Open — each item with whose move it is.*
 
-- Capstone 2, the Julia rendering as a theorem rather than a reading: a denotation of the emitted
-  straight-line body (one Julia value per `v<id>`) and the lemma that `genBodyJulia`'s line for a
-  node evaluates as `evalTape` does at that node, over the alphabet; with it the argument-list and
-  literal clauses of `cap_thm_julia_rendering` become statements about the emitted text instead of
-  descriptions of the generator. *Library.*
 - Capstone 2, the matcher: acceptance is decided on a match a probe authors. A matcher that
   finds the match from the leaves of a recorded tape — ports by name, constants by recording
   site, each occurrence by a realization table per family and carrier — is the instrument
@@ -727,10 +743,12 @@ command does by elaboration and the theorem takes as a hypothesis.
 
 # What the capstones do not claim
 
-- The host that receives an emitted kernel. The Julia emitter hands a host the tape and nothing
-  else, and the seal travels with the tape; the host's compiler, its `exp`/`log`, and every line of
-  the host's own model are its trusted base, named in the methodology chapter and measured — not
-  proved — by `julia_parity`.
+- The host that receives an emitted kernel. An emitter hands a host the program and nothing else
+  — {bpref "cap_thm_rendering_denotation"}[the denotation of the rendering] says the program is the
+  tape, and the seal travels with it; that the printed text means in the host language what the
+  program means in Lean's `Float`, the host's compiler, its `exp`/`log`, and every line of the
+  host's own model are its trusted base, named in the methodology chapter and measured — not
+  proved — by `julia_parity` and the landing stubs.
 - The truth of an attestation. It is a hypothesis of the model; the seal says only that the
   build's list of them is complete. Where the attestation defers a requirement, the
   {ref "requirements-as-evidence"}[requirement clause] counts it, with its reason, as one

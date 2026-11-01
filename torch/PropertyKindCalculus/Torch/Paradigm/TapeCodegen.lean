@@ -23,6 +23,13 @@ inputs equals the source kernel — the codegen changes only *where intermediate
 DRAM), never the arithmetic. Compile the generated kernel with `nvcc --fmad=false -prec-div=true
 -prec-sqrt=true` (no FMA-contraction, no reassociation) to keep it bit-identical to the eager path.
 
+ONE PROGRAM, N PRINTERS. The node walk itself is not here: `SL.genSL` (`paradigm.tape_straight_line`)
+is the only function that reads the tape, producing a backend-neutral straight-line program, and
+`SL.genSL_denotes` proves — once, for every backend — that the program runs as `evalTapeT`, node for
+node. This module is the C/CUDA *printer* of that program (`printC`, `genBody`); the Julia emitter is
+another printer of the same program. What a printer leaves to trust is that its dozen fixed forms
+mean in the host language what the program means in Lean's `Float`.
+
 A `module` file: imports the tape carrier and the CSE pass.
 -/
 
@@ -32,6 +39,7 @@ public import PropertyKindCalculus.Torch.Paradigm.TapeCarrier
 public import PropertyKindCalculus.Torch.Paradigm.TapeCse
 public import PropertyKindCalculus.Torch.Paradigm.TapeEval
 public import PropertyKindCalculus.Torch.Paradigm.LutCarrier
+public import PropertyKindCalculus.Torch.Paradigm.TapeStraightLine
 
 @[expose] public section Blanket
 
@@ -50,82 +58,16 @@ op-semantics the emitted CUDA/C kernel uses — live in `paradigm.tape_eval`, to
 build invariant `WF`, the `foldlM` reformulation and the node-value characterisation the cone lemma
 rests on. They are re-exported through this module's namespace unchanged. -/
 
-/-! ### The table-extended interpreter
+/-! ### The table-extended interpreter, and the program every backend prints
 
-`paradigm.lut_carrier`'s `lutFetch` records nodes named `lutfetch:<table>` with parents
-`[layerId, uId]`. `cOpT`/`evalTapeT` extend the reference interpreter with that one case —
-the fp64 `LutTable.refFetch` — resolving the table by the name baked into the node. `evalTape`
-itself is untouched, and `evalTapeT` with no tables *is* `evalTape` (`cOpT` falls back to `cOp`,
-including for unknown tables, so the two agree error-for-error) — every existing
-`evalTape`-denotation proof is unaffected. -/
+`cOpT`/`evalTapeT` — the reference interpreter extended with the `lutfetch:<table>` alphabet
+entry — and the backend-neutral straight-line program `SL.genSL` with its denotation theorem
+`SL.genSL_denotes` live in `paradigm.tape_straight_line`. This module is the C/CUDA *printer* of
+that program: `printC` renders one `SLExpr` as C, `genBody` is `genSL` followed by `printC` line
+by line, and `cExpr` is `SL.mkOp` followed by `printC`. Nothing here reads a node the program does
+not have. -/
 
-/-- `cOp` extended with the `lutfetch:<table>` alphabet entry: the fetch node re-interprets as
-`LutTable.refFetch` (fp64 reference). An unresolvable table name falls through to `cOp`'s
-standard unsupported-op error, so `cOpT (fun _ => none) = cOp` pointwise. -/
-def cOpT (tables : String → Option LutTable) (nm : String) (args : List Float) :
-    Except String Float :=
-  match lutNodeName? nm with
-  | some tn =>
-      match tables tn, args with
-      | some tbl, [l, u] => .ok (tbl.refFetch l u)
-      | some _, _ => .error s!"tape_codegen: lutfetch `{tn}` expects [layer, u] (arity {args.length})"
-      | none, _ => cOp nm args
-  | none => cOp nm args
-
-/-- `evalTape` with the table-extended alphabet (`cOpT`). The deployed megakernel's fp64
-denotation when the recorded DAG contains `lutfetch` nodes. -/
-def evalTapeT (tables : String → Option LutTable) (env : String → Float) (t : Tape Float) :
-    Except String (Array Float) := do
-  let mut vals : Array Float := Array.mkEmpty t.nodes.size
-  for n in t.nodes do
-    let v ← (
-      if n.parents.isEmpty then
-        match n.name with
-        | some nm => pure (env nm)
-        | none    => pure (nodeScalar n)
-      else
-        match n.name with
-        | some nm => cOpT tables nm ((n.parents.map (fun p => vals.getD p 0.0)).toList)
-        | none    => .error "tape_codegen: op node with no op name")
-    vals := vals.push v
-  pure vals
-
-/-- With no tables, the extended alphabet degenerates to `cOp` — including on `lutfetch:*`
-names, where the fallback reproduces `cOp`'s error. -/
-theorem cOpT_none (nm : String) (args : List Float) : cOpT (fun _ => none) nm args = cOp nm args := by
-  unfold cOpT
-  cases lutNodeName? nm <;> rfl
-
-/-- With no tables, `evalTapeT` *is* `evalTape` — the extension is conservative, so every
-existing `evalTape`-denotation proof transfers verbatim. -/
-theorem evalTapeT_none (env : String → Float) (t : Tape Float) :
-    evalTapeT (fun _ => none) env t = evalTape env t := by
-  unfold evalTapeT evalTape
-  simp only [cOpT_none]
-  rfl
-
-/-! ### C expression for one op node -/
-
-/-- The C infix/ternary/`expf` expression for op `nm` on already-emitted parent temporaries.
-`min`/`max` are the ternaries `(a <= b ? a : b)` / `(a <= b ? b : a)` — Lean's `Min Float`/`Max Float`
-(`minOfLe`/`maxOfLe`, `if x ≤ y then x else y`), which is what `cOp` computes, NaN cases included
-(`x ≤ y` is false when either is NaN, so `min` yields `b` and `max` yields `a`). `fminf`/`fmaxf` would
-return the non-NaN operand instead, a different function on NaN inputs; one reading across the
-interpreter and the three renderings (C, CUDA, Julia). -/
-def cExpr (nm : String) (ps : List Nat) : Except String String :=
-  let v := fun (i : Nat) => s!"v{i}"
-  match nm, ps with
-  | "add",  [a, b] => .ok s!"{v a} + {v b}"
-  | "sub",  [a, b] => .ok s!"{v a} - {v b}"
-  | "mul",  [a, b] => .ok s!"{v a} * {v b}"
-  | "div",  [a, b] => .ok s!"{v a} / {v b}"
-  | "min",  [a, b] => .ok s!"({v a} <= {v b} ? {v a} : {v b})"
-  | "max",  [a, b] => .ok s!"({v a} <= {v b} ? {v b} : {v a})"
-  | "exp",  [a]    => .ok s!"expf({v a})"
-  | "log",  [a]    => .ok s!"logf({v a})"
-  | "sqrt", [a]    => .ok s!"sqrtf({v a})"
-  | "abs",  [a]    => .ok s!"fabsf({v a})"
-  | _, _ => .error s!"tape_codegen: unsupported op `{nm}` (arity {ps.length})"
+/-! ### The C printer -/
 
 /-- Render a `Float` as an **exact** C literal (C99/C++17 hexadecimal float, e.g.
 `0x1.51eb851eb851fp-7f`). The decimal printer is lossy (6 significant digits), which would
@@ -144,6 +86,42 @@ def floatLit (x : Float) : String :=
       Nat.digitChar ((mant / 2 ^ (48 - 4 * i)) % 16)
     if expBits == 0 then s!"{sign}0x0.{mantHex}p-1022f"          -- subnormal
     else s!"{sign}0x1.{mantHex}p{Int.ofNat expBits - 1023}f"
+
+/-- The C text of one program line — **the C printer**, total over `SLExpr`. `min`/`max` are the
+ternaries `(a <= b ? a : b)` / `(a <= b ? b : a)` — Lean's `Min Float`/`Max Float`
+(`minOfLe`/`maxOfLe`, `if x ≤ y then x else y`), which is what `cOp` computes, NaN cases included
+(`x ≤ y` is false when either is NaN, so `min` yields `b` and `max` yields `a`). `fminf`/`fmaxf` would
+return the non-NaN operand instead, a different function on NaN inputs; one reading across the
+interpreter and the three renderings (C, CUDA, Julia). A fetch is the backend-neutral `TL_LUTFETCH`
+macro call; the CUDA/stub emitters prepend the matching definition (texture fetch vs array lerp).
+What a reader must trust of this printer is that each of these forms means, in C with
+`--fmad=false`, what `SL.SLExpr.denote` means — nothing about any kernel. -/
+def printC : SL.SLExpr → String
+  | .input nm => s!"in_{nm}[p]"
+  | .lit x => floatLit x
+  | .bin o a b =>
+      match o with
+      | .add => s!"v{a} + v{b}"
+      | .sub => s!"v{a} - v{b}"
+      | .mul => s!"v{a} * v{b}"
+      | .div => s!"v{a} / v{b}"
+      | .min => s!"(v{a} <= v{b} ? v{a} : v{b})"
+      | .max => s!"(v{a} <= v{b} ? v{b} : v{a})"
+  | .un o a =>
+      match o with
+      | .exp => s!"expf(v{a})"
+      | .log => s!"logf(v{a})"
+      | .sqrt => s!"sqrtf(v{a})"
+      | .abs => s!"fabsf(v{a})"
+  | .fetch tbl l u => s!"TL_LUTFETCH({tbl.name}, {tbl.width}, {tbl.layers}, v{l}, v{u})"
+
+/-- The C expression for op `nm` on already-emitted parent temporaries: the program's op line
+(`SL.mkOp`, which succeeds exactly on the interpreter's alphabet) printed by `printC`. -/
+def cExpr (nm : String) (ps : List Nat) : Except String String :=
+  (SL.mkOp nm ps).map printC
+
+/-- One body line of the C kernel: slot `i` as a `const float` temporary. -/
+def printLineC (e : SL.SLExpr) (i : Nat) : String := s!"  const float v{i} = {printC e};"
 
 /-- How a generated kernel realises a `lutfetch` node (`paradigm.lut_carrier`).
 
@@ -212,40 +190,26 @@ def resolveTables (names : Array String) (avail : Array LutTable) :
   else
     .error "tape_codegen: supplied tables must have pairwise-distinct names"
 
-/-- The straight-line body lines (`const float vID = …;`) in node-id order — the only part that can
-fail (an op node must carry an op name). Factored out of `gen` so the record fields that do *not*
-depend on the node walk (`inputs`, `numOutputs`, `outLines`) are pure, making the codegen
-well-formedness theorems (`gen_inputs_eq`, `gen_numOutputs`) immediate. -/
+/-- The straight-line body lines (`const float vID = …;`) in node-id order: the program
+`SL.genSL` reads off the tape, printed line by line by `printC` — the only part of `gen` that can
+fail, and it fails exactly where `genSL` does (an op node without a name, an off-alphabet op, an
+unresolved or malformed fetch). `SL.genSL_denotes` is the theorem that the program these lines print
+runs as `evalTapeT`. -/
 def genBody (t : Tape Float) (tables : Array LutTable := #[]) :
-    Except String (Array String) := do
-  let mut body : Array String := #[]
-  let mut i : Nat := 0
-  for n in t.nodes do
-    if n.parents.isEmpty then
-      match n.name with
-      | some nm => body := body.push s!"  const float v{i} = in_{nm}[p];"
-      | none    => body := body.push s!"  const float v{i} = {floatLit (nodeScalar n)};"
-    else
-      match n.name with
-      | some nm =>
-          match lutNodeName? nm with
-          | some tn =>
-              -- a `lutfetch:<table>` node: backend-neutral macro call; the CUDA/stub emitters
-              -- prepend the matching `TL_LUTFETCH` definition (texture fetch vs array lerp).
-              match tables.find? (·.name == tn), n.parents with
-              | some tbl, #[l, u] =>
-                  body := body.push
-                    s!"  const float v{i} = TL_LUTFETCH({tbl.name}, {tbl.width}, {tbl.layers}, v{l}, v{u});"
-              | some _, _ =>
-                  .error s!"tape_codegen: lutfetch node {i} expects parents [layer, u] (got {n.parents.size})"
-              | none, _ =>
-                  .error s!"tape_codegen: lutfetch node {i} references unknown table `{tn}`"
-          | none =>
-              let e ← cExpr nm n.parents.toList
-              body := body.push s!"  const float v{i} = {e};"
-      | none => .error s!"tape_codegen: op node {i} has no op name"
-    i := i + 1
-  pure body
+    Except String (Array String) :=
+  (SL.genSL t tables).map fun prog => prog.zipIdx.map fun p => printLineC p.1 p.2
+
+/-- `genBody` is the printer of the program: on a tape `genSL` accepts, its lines are `printLineC`
+of the program's lines, slot by slot. -/
+theorem genBody_of_genSL {t : Tape Float} {tables : Array LutTable} {prog : SL.SLProg}
+    (h : SL.genSL t tables = .ok prog) :
+    genBody t tables = .ok (prog.zipIdx.map fun p => printLineC p.1 p.2) := by
+  unfold genBody; rw [h]; rfl
+
+/-- The C body exists exactly when the program does. -/
+theorem genBody_isOk_eq_genSL (t : Tape Float) (tables : Array LutTable) :
+    (genBody t tables).isOk = (SL.genSL t tables).isOk := by
+  unfold genBody; cases SL.genSL t tables <;> rfl
 
 /-- Lower a CSE'd tape + its output ids to the straight-line body. Node array index = node id
 (tape ids are array indices), so a node's `vID` is `v{arrayIndex}` and its parents reference earlier
