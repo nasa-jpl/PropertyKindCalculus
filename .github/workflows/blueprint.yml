@@ -203,18 +203,20 @@ jobs:
           echo "JULIA_PARITY_BIN=$JULIA_DIR/bin/julia" >> "$GITHUB_ENV"
           "$JULIA_DIR/bin/julia" --version
 
-      - name: Install KernelAbstractions.jl (pinned) for the portability twin
+      - name: Instantiate the parity twin's Julia project (committed manifest)
         run: |
-          # A project under the workspace, not the runner's default environment, so the pin is
-          # the workflow's and nothing on the runner leaks in. `--ka` needs only the CPU backend.
-          export JULIA_PROJECT="$GITHUB_WORKSPACE/.julia-parity-env"
+          # `apps/julia-parity-env` commits Project.toml + Manifest.toml (KernelAbstractions 0.10.4 and
+          # every transitive package at a fixed version), so the gate resolves nothing: it instantiates
+          # the manifest and fails if instantiation changed it. `--ka` needs only the CPU backend.
+          export JULIA_PROJECT="$GITHUB_WORKSPACE/apps/julia-parity-env"
           echo "JULIA_PROJECT=$JULIA_PROJECT" >> "$GITHUB_ENV"
           "$JULIA_PARITY_BIN" --startup-file=no -e '
             using Pkg
-            Pkg.add(Pkg.PackageSpec(name="KernelAbstractions", version="0.10.4"))
+            Pkg.instantiate()
             Pkg.precompile()
             using KernelAbstractions
             println("KernelAbstractions ", pkgversion(KernelAbstractions))'
+          git diff --exit-code -- apps/julia-parity-env
 
       - name: Run the Julia parity harness
         run: |
