@@ -17,9 +17,12 @@ flags every operation that would silently drop it:
     (`Adequacy.Sterbenz32.relUnc_amplifies`).
 
 This is the *decidable* runtime check of `UNCERTAINTY.md` §4.3 — sound at each site by the `ℝ`
-theorems, computed here over Lean's `Float`. (TorchLean's `FP32`/Flocq layer is `noncomputable`, so
-the executable carrier necessarily runs over `Float`; the binary32 ulp is modelled directly. Bridging
-the two is Stage 3.3 — see `Adequacy.Fp32Grounding`.) Mathlib- and TorchLean-free.
+theorems, computed here over binary64 `Float` with the binary32 ulp *emulated* (`ulp32` below, read
+off the exponent bits). It is the illustrative carrier the worked examples use; its verdict is a
+binary64 picture of a binary32 story and is not certified. The **certified** runtime carrier is
+`Adequacy32`: the same checks over `Float32`, whose flag is proved to be `round₃₂`'s verdict
+(`Adequacy32.add_flag_sound`, through FloatLib's native bridge — Stage 3.3). Mathlib- and
+TorchLean-free.
 -/
 
 module
@@ -60,15 +63,23 @@ structure Adequacy where
 
 namespace Adequacy
 
+/-- `2^k` as a binary64 `Float`, built from its bit pattern (`k ∈ [−1022, 1023]`): exact, no
+transcendental involved. -/
+def pow2 (k : Int) : Float := Float.ofBits ((k + 1023).toNat.toUInt64 <<< 52)
+
 /-- The **unit in the last place** of binary32 (IEEE-754 single) at magnitude `x`:
 `ulp32(x) = 2^(⌊log₂|x|⌋ − 23)`, the spacing of representable binary32 reals near `x` (24-bit
-significand). Computed over `Float`; `0` maps to the smallest subnormal `2⁻¹⁴⁹`. This is the concrete
-image of the abstract grid spacing `u` of `Adequacy.Grid`. -/
+significand), floored at the smallest subnormal `2⁻¹⁴⁹` (so `0` maps there). Computed over
+binary64 `Float` by reading `⌊log₂|x|⌋` off the exponent field of `x.toBits` — exact, and free of
+the `opaque` externs `Float.log2`/`exp2`; an infinity or NaN returns `|x|`. This is the concrete
+image of the abstract grid spacing `u` of `Adequacy.Grid`, *emulated* in binary64: the carrier
+below is illustrative, its verdict is not the certified one — that is `Adequacy32`. -/
 def ulp32 (x : Float) : Float :=
-  if x == 0.0 then Float.exp2 (-149.0)
-  else Float.exp2 (Float.floor (Float.log2 x.abs) - 23.0)
+  let e : Int := ((x.toBits >>> 52) &&& 0x7FF).toNat
+  if e == 0x7FF then x.abs
+  else if e == 0 then pow2 (-149)
+  else pow2 (max (e - 1023 - 23) (-149))
 
-/-- An **uncertain input**: a value with an absolute uncertainty, and an empty report. -/
 def input (v u : Float) : Adequacy := { value := v, unc := u }
 
 /-- An **exact constant**: a value with zero uncertainty. -/

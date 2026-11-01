@@ -8,7 +8,7 @@ status summary generated from the linked Lean code.
 
 ## What it documents
 
-32 chapters carrying **166 nodes, 37 of them capstones — all of them
+32 chapters carrying **167 nodes, 38 of them capstones — all of them
 `proved`**, each node linking a real, sorry-free declaration through its
 `(lean := …)` field. The capstone chapter was written blueprint-first — three capstone
 theorems and their supporting lemmas, stated with proof sketches before the declarations
