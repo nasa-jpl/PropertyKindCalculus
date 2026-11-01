@@ -11,7 +11,8 @@
 > representable operands), and the **executable↔spec bridge** (Stage 3.3: a second TorchLean PR gives
 > the computable `IEEE32Exec` model an executable ULP query `ulpExp?` proved equal to `ulp₃₂` and an absorption
 > test `absorbs` certified against `round₃₂`, grounded in PKC as `ExecBridge.exec_verdict_sound` — the
-> computed adequacy verdict is provably the specified one)), the **kind-typed Axis-U significance
+> computed adequacy verdict is provably the specified one; closed from the runtime side by `Adequacy32`,
+> the `Float32` carrier whose flag is proved to be that verdict, `Adequacy32.add_flag_sound`)), the **kind-typed Axis-U significance
 > wiring** (Stage 3.4: `Adequacy.Significance.analyzeQ` runs one carrier-raw write-once kernel at
 > `TapeBuilder .scalar` and `Adequacy` from *one* `InputDist` list, folding the autograd `cᵢ` and the
 > descriptor's `uᵢ` into the carrier-generic kinded GUM budget of `Uncertainty.Budget` — one
@@ -497,7 +498,20 @@ FLX model *grounded* in (not built on) the TorchLean lemmas, whose statement sha
   certified executable check runs on `IEEE32Exec` instead — a second TorchLean PR adds `IEEE32Exec.ulpExp?`
   (bit-level ULP query, its answers proved `= ulp₃₂`; it answers on exactly the finite fragment) and `absorbs` (float32 sum unchanged),
   proved sound against `round₃₂` (`round32_add_eq_left_of_absorbs`), re-exposed in PKC as
-  `ExecBridge.exec_verdict_sound`. The residual `Float32 ↔ IEEE32Exec` step is a FloatLib theorem over
+  `ExecBridge.exec_verdict_sound`; **the runtime carrier itself is certified** by `Adequacy32`, the
+  `Float32` adequacy carrier whose `absorbs`-shaped flag is proved to be that verdict
+  (`Adequacy32.add_flag_sound`, through FloatLib's `ofFloat32_add_of_isFinite`), while the binary64
+  `Adequacy` stays the illustrative mirror with `ulp32` read off the exponent bits (no `log2`/`exp2`).
+  *Uncertified vs. certified:* the illustrative verdict is a claim about a binary64 *picture* of binary32
+  under the rule of thumb `u < ½ ulp32` — no theorem reaches it; the certified verdict is a claim about
+  the arithmetic in question, with `add_flag_sound` saying what it means. They disagree at a *tie*
+  (`1 + (0 ± 2⁻²⁴)`: not below the threshold, so unflagged by the emulation; rounded to even and absorbed
+  in genuine binary32, so flagged by `Adequacy32`) — the `UncertaintyExamples.AdequacyCertified` example
+  runs both carriers on the same kernel and `#guard`s exactly that. *Scope of the certificate:* the
+  flagged-`+` direction of A3 only — a raised flag means an absorbed uncertainty; a clean report and
+  the cancellation flag at `−` are not certified at runtime (the latter stays the decidable rule
+  backed by the ℝ-level Sterbenz theorems).
+  The residual `Float32 ↔ IEEE32Exec` step is a FloatLib theorem over
   Lean's logical model of `Float32`, for finite operands (`ExecFloat.Binary.toModel_ofFloat32_add_of_isFinite`
   and its siblings); what stays trusted is that the compiled runtime primitives agree with that
   logical model — the irreducible hardware trust boundary.
@@ -632,6 +646,10 @@ uncertainty/PropertyKindCalculus/Uncertainty/
                            an argument. `licenses_agree_of_nonneg` is the repair: both failures need
                            cancellation, so nonnegative grid weights make the two conditions equivalent
                            (`fp32Round_add_ge` is the only fp fact it needs) — sorry-free
+  Adequacy32.lean          ✅ the certified runtime carrier (Stage 3.3, runtime side): `Adequacy` over `Float32`,
+                           `absorbs`-shaped swamping flag, `add_flag_sound` — flag on finite operands ⇒
+                           `round₃₂ (v + δ) = v`, via FloatLib's `ofFloat32_add_of_isFinite` and
+                           `exec_verdict_sound` — sorry-free
   Adequacy/ExecBridge.lean ✅ exec↔spec bridge (Stage 3.3): re-exposes the computable `IEEE32Exec`
                            ULP query `ulpExp?` (answers proved `= ulp₃₂`, `exec_ulp_grounds`) and absorption test `absorbs`
                            certified against `round₃₂` (`exec_verdict_sound`) — the computed verdict is the
@@ -654,7 +672,9 @@ uncertainty/PropertyKindCalculus/Uncertainty/
   Adequacy/Significance.lean ✅ Axis-U coupling (Stage 3.4): seeds the (Float) `Adequacy` carrier from the descriptor
                            (`ofInputDist`); `analyzeQ (h : ProductKind kₛ kᵢ kₒ)` instantiates one carrier-raw WO1 kernel at
                            both `TapeBuilder .scalar` (for `cᵢ`) and `Adequacy` (for the verdict) and folds them into a
-                           kind-typed `CouplingResultQ kₒ` (contributions + combined = `Quantity kₒ`; no naked field swap)
+                           kind-typed `CouplingResultQ kₒ` (contributions + combined = `Quantity kₒ`; no naked field swap);
+                           `analyzeQ32` is the certified route — binary32 descriptors, the same budget on their exact
+                           widening (`analyzeQ32_budget`), the verdict at `Adequacy32`
   Adequacy/Serialization.lean ✅ the fifth sub-property (§4.2): the rounding at the EDGE of an evaluation, where a
                            magnitude crosses to decimal text and back. `SerializationVerdict` has four outcomes because
                            the same text against the same magnitude is adequate or not depending on the ROLE it plays
@@ -885,8 +905,9 @@ and FFT kernels under `NN/Runtime/Autograd/Engine/Cuda/Ops/*` for SSPRC's convol
 * **Stage 3.3 — Executable↔spec bridge for FP32. ✅ DONE (built & CI-checked).** The entire TorchLean
   FP32/Flocq layer is `noncomputable` (§4.6 F): `round₃₂ : ℝ → ℝ` is a spec, not a float. The host-`Float`
   `Adequacy` carrier is not certifiable against `ulp₃₂` (binary64, not float32, and `Float.log2`/`exp2`
-  are `opaque` externs outside core's `Float.Model`), so the certified executable check runs instead on
-  TorchLean's **computable** `IEEE32Exec`,
+  are `opaque` externs outside core's `Float.Model`), so the certified check is stated on
+  TorchLean's **computable** `IEEE32Exec` — and **closed from the runtime side by `Adequacy32`**, the
+  `Float32` carrier whose flag is proved to be that verdict (`Adequacy32.add_flag_sound`) —
   whose ops are provably `round₃₂` of the exact real result. **Exploration finding:** the op-level
   `IEEE32Exec ↔ round₃₂` refinement (`toReal_{add,sub,…}_eq_fp32Round`) already existed; what was missing
   is an executable ULP (existed only as the `noncomputable` `neuralUlp`/`ulp₃₂`) and a certified
@@ -924,7 +945,9 @@ and FFT kernels under `NN/Runtime/Autograd/Engine/Cuda/Ops/*` for SSPRC's convol
   write-once kernel (`ListModel := {α} → [NumCarrier α] → List α → α`) and instantiates it *twice* from
   one source — at `TapeBuilder .scalar` (reverse pass → `cᵢ`, via `Sensitivity`) and at `Adequacy`
   (verdict, seeded from the same descriptors) — returning `⟨coefficients, significance, verdict⟩`. The
-  seeding is definitionally faithful (`ofInputDist_{value,unc,report}` `rfl` lemmas). **Honest scope:**
+  seeding is definitionally faithful (`ofInputDist_{value,unc,report}` `rfl` lemmas). The coupled API has a **certified route**, `analyzeQ32`: binary32 descriptors,
+  the same budget formed on their exact binary64 widening (`analyzeQ32_budget`), and the verdict run at
+  `Adequacy32`, so a raised swamping flag carries `add_flag_sound`. **Honest scope:**
   Stage 3.4 adds *no new rigor* — the flag's soundness is the Stage-3 A3 verdict (`verdict_sound`), here
   merely *fed* the autograd-propagated `cᵢ·uᵢ`; the carrier runs over host `Float` (uncertifiable FFI,
   §4.6 F), and sound magnitude-range propagation over the support box remains the `RInterval` grounding

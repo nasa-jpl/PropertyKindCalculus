@@ -662,8 +662,9 @@ division node the two rungs' licenses are independent in both directions.
 *Executable↔spec bridge (Stage 3.3).* The verdicts above are stated over the `noncomputable` `ℝ`/`FP32`
 specification, but the *runtime* carrier must compute a verdict. Lean's host `Float` is binary64 (and,
 on the pinned toolchain, a structure over core's `Float.Model` — `examples.tape_host_float_model`),
-not the float32 this verdict is about, so the certified executable check runs on TorchLean's
-*computable* `IEEE32Exec` model instead. There the ULP is genuinely computed from a bit pattern (`ulpExp?`, matching
+not the float32 this verdict is about, so the certified check is *stated* on TorchLean's
+*computable* `IEEE32Exec` model (and the runtime `Float32` carrier is then proved to compute exactly
+this verdict — the next node). There the ULP is genuinely computed from a bit pattern (`ulpExp?`, matching
 the spec `ulp₃₂` whenever it answers — `none` on NaNs and infinities), and the kernel's absorption test `absorbs s δ` — the float32 sum is unchanged —
 *certifies* the specification: the exact real sum rounds back under $`\mathrm{round}_{32}`. So the
 computed adequacy verdict is provably the specified {uses "thm_uq_adequacy_verdict"}[A3] one, on the
@@ -680,7 +681,46 @@ Realized over `ℝ`/`IEEE32Exec` (Stage 3.3, `Adequacy.ExecBridge`), grounded in
 composes them: when `absorbs s δ` fires, `round₃₂(\mathrm{toReal}\,s + \mathrm{toReal}\,δ) =
 \mathrm{toReal}\,s`. Sorry-free (`[propext, Classical.choice, Quot.sound]`); the executable side is
 *run* (`#guard`) at $`2^{25}` and $`10^8` in the `AdequacyExecBridge` example, which also confirms the
-axiom profile. The host-`Float` `Adequacy` carrier stays the fast, unverified mirror.
+axiom profile. The binary64 `Adequacy` carrier stays the illustrative mirror (its binary32 ulp is
+*emulated*); the runtime carrier that is certified is `Adequacy32`, below.
+:::
+
+:::theorem "thm_uq_runtime32" (parent := "uncertainty") (lean := "PropertyKindCalculus.Uncertainty.Adequacy32.add_flag_sound") (tags := "capstone, proved")
+*The runtime adequacy carrier is certified (Stage 3.3, closed from the runtime side).* `Adequacy32`
+is the write-once adequacy carrier with `Float32` magnitudes and uncertainties, and its swamping test
+is `absorbs`-shaped: the at-risk uncertainty $`δ`, added to the binary32 sum $`v`, leaves it
+bit-for-bit unchanged (`absorbed v δ`). When that flag fires on finite operands, the exact real sum
+rounds back under $`\mathrm{round}_{32}`: $`\mathrm{round}_{32}(v + δ) = v`. So a verdict a model
+run *emits* — not a verdict on a model of the runtime — is the specified
+{uses "thm_uq_adequacy_verdict"}[A3] one, through {uses "thm_uq_exec_bridge"}[the executable↔spec bridge].
+No `log2`/`exp2` (the `opaque` externs) appears; what stays trusted is exactly what FloatLib names:
+the compiled `lean_float32_*` primitives agree with core's `Float32.Model`. The certificate is exactly
+the flagged-`+` direction of {uses "thm_uq_adequacy_verdict"}[A3]: a raised flag means an absorbed
+uncertainty. It does not certify a *clean* report, and the cancellation flag at `−` remains the
+decidable rule backed by the $`ℝ`-level Sterbenz theorems, not by a runtime theorem.
+
+*Uncertified vs. certified, made visible.* The binary64 `Adequacy` carrier's verdict is a claim about
+a *picture*: a binary64 sum compared with an emulated binary32 spacing under the rule of thumb
+$`u < ½\,\mathrm{ulp}_{32}`; nothing relates that sum to $`\mathrm{round}_{32}`, so the claim is
+illustrative. `Adequacy32`'s verdict is a claim about the arithmetic in question, and the theorem
+above says what it means. The two part ways exactly where a rule of thumb and IEEE rounding differ —
+at a *tie*: an uncertainty of exactly half a ulp is not below the threshold, so the emulation reports
+$`1 + (0 ± 2^{-24})` adequate, while genuine binary32 rounds the tie to even, absorbs it, and the
+certified carrier flags it (and does not on the odd-mantissa neighbour $`1 + 2^{-23}`). The
+`AdequacyCertified` example runs both carriers on the same kernel and `#guard`s the disagreement,
+and instantiates `add_flag_sound` at the tie: $`\mathrm{round}_{32}(1 + 2^{-24}) = 1`.
+:::
+
+:::proof "thm_uq_runtime32"
+Three theorems composed, each from a library the repo already depends on. Core 4.35 makes `Float32` a
+structure over `Float32.Model`, so the runtime bit equality is `Float32` equality (`Float32.toBits_inj`,
+Batteries). FloatLib's native bridge carries a finite `Float32` sum to the `ExecFloat.Binary 8 23`
+sum (`ExecFloat.Binary.ofFloat32_add_of_isFinite`), so `absorbed v δ` *is* TorchLean's
+`absorbs (ofFloat32 v) (ofFloat32 δ)` (`Adequacy32.absorbs_of_absorbed`), and finiteness transfers
+(`isFinite_ofFloat32`, via `Model.isFinite_toModel`). `exec_verdict_sound` then reads the absorbed
+model sum as $`\mathrm{round}_{32}` of the exact real sum. `add_absorptions` ties the flag to the
+report the carrier's `+` emits. Sorry-free, `[propext, Classical.choice, Quot.sound]` guarded; the flag
+is *run* (`#guard`) at $`1 + 2^{-25}` (absorbed) and $`1 + 2^{-23}` (not).
 :::
 
 :::definition "def_uq_significance" (parent := "uncertainty") (lean := "PropertyKindCalculus.Uncertainty.Adequacy.analyzeQ")
@@ -698,7 +738,9 @@ adequacy-checked at the scale its own uncertainty defines, with the roles kept d
 :::
 
 :::proof "def_uq_significance"
-Realized (Stage 3.4, `Adequacy.Significance.analyzeQ` over `Uncertainty.Budget`). The three budget
+Realized (Stage 3.4, `Adequacy.Significance.analyzeQ` over `Uncertainty.Budget`; `analyzeQ32` is the
+certified route — binary32 descriptors, the same budget on their exact widening, `analyzeQ32_budget`,
+and the verdict at `Adequacy32`). The three budget
 roles get kinds (`stdUncQ`, `sensitivityQ`, `contributionQ` gated by `ProductKind kₛ kᵢ kₒ`,
 `combinedQ`); the model stays carrier-raw, so no kinded autograd is needed — the kinds are the
 caller-declared overlay on the budget. On the Degenhardt descriptors the coupling reproduces
