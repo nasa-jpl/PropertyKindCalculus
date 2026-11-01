@@ -124,6 +124,12 @@ kernel re-checks; `scripts/emit-sysml.lean`, `scripts/ingest-sysml.sh` and
 `scripts/roundtrip-sysml.sh` run the two directions and the round trip. See
 [`sysml/README.md`](sysml/README.md).
 
+## Tools
+
+Every checker, gate and generator of this package is to be a Lean program whose claims are
+theorems; the Python scripts still here are listed, with the property each Lean form proves and the
+order they are converted in, in [`TOOLS.md`](TOOLS.md).
+
 ## Design blueprint
 
 A [Verso](https://github.com/leanprover/verso) /
