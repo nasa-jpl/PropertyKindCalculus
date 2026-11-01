@@ -124,6 +124,12 @@ def env₂ : String → Float
 /-- info: 'PropertyKindCalculus.Paradigm.TapeSeal.semantic_seal_of_denotes' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in #print axioms semantic_seal_of_denotes
 
+/-- info: 'PropertyKindCalculus.Paradigm.TapeCodegen.SL.ofProg_eq_ofTape' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in #print axioms PropertyKindCalculus.Paradigm.TapeCodegen.SL.ofProg_eq_ofTape
+
+/-- info: 'PropertyKindCalculus.Paradigm.TapeSeal.semantic_seal_program' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in #print axioms semantic_seal_program
+
 end PropertyKindCalculus.Tests.TapeSeal
 
 end Blanket

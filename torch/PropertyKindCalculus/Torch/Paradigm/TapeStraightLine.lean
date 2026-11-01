@@ -27,7 +27,9 @@ printer, present and future, with no proof per backend; the per-backend renderin
 corollaries (`jlExpr_isOk_eq_cExpr` over the whole alphabet, not case by case); and the argument-list
 and literal clauses of the capstone — a literal appears in the emitted body for exactly the baked
 leaves, an input read for exactly the named leaves — are theorems about the program, in both
-directions (`genSL_lit_iff`, `genSL_input_iff`) instead of a reading of a generator. A new target (Fortran, MLIR, …) is a printer: a
+directions (`genSL_lit_iff`, `genSL_input_iff`) instead of a reading of a generator; and the
+program's own graph `ofProg prog` *equals* the tape's `ofTape t` (`ofProg_eq_ofTape`), so the seal
+of the computation is a statement about the emitted program (`TapeSeal.semantic_seal_program`). A new target (Fortran, MLIR, …) is a printer: a
 few lines, the same theorem.
 
 WHAT IS AND IS NOT CLAIMED. `genSL_denotes` is a theorem about Lean `Float` — binary64 — and the
@@ -50,7 +52,7 @@ public import PropertyKindCalculus.Torch.Paradigm.LutCarrier
 @[expose] public section Blanket
 
 open Runtime.Autograd (Tape Node)
-open PropertyKindCalculus.Paradigm (LutTable lutNodeName?)
+open PropertyKindCalculus.Paradigm (LutTable lutNodeName? TapeGraph TapeVertex)
 
 namespace PropertyKindCalculus.Paradigm.TapeCodegen
 
@@ -192,8 +194,9 @@ inductive SLExpr where
   | bin (o : BinOp) (a b : Nat)
   /-- A unary alphabet op on slot `a`. -/
   | un (o : UnOp) (a : Nat)
-  /-- A lookup-table fetch into `tbl` at layer slot `layer`, coordinate slot `u`. -/
-  | fetch (tbl : LutTable) (layer u : Nat)
+  /-- A lookup-table fetch into `tbl` at layer slot `layer`, coordinate slot `u`; `nm` is the
+  recorded node name (`lutfetch:<table>`), kept so the program's graph is the tape's. -/
+  | fetch (nm : String) (tbl : LutTable) (layer u : Nat)
 
 /-- A straight-line program: slot `i` holds `prog[i]`. -/
 abbrev SLProg := Array SLExpr
@@ -205,7 +208,7 @@ def SLExpr.denote (env : String → Float) (vals : Array Float) : SLExpr → Flo
   | .lit x => x
   | .bin o a b => o.eval (vals.getD a 0.0) (vals.getD b 0.0)
   | .un o a => o.eval (vals.getD a 0.0)
-  | .fetch tbl l u => tbl.refFetch (vals.getD l 0.0) (vals.getD u 0.0)
+  | .fetch _ tbl l u => tbl.refFetch (vals.getD l 0.0) (vals.getD u 0.0)
 
 /-- Run the program: the slot values, in order. Total — a program is straight-line code. -/
 def run (env : String → Float) (prog : SLProg) : Array Float :=
@@ -241,7 +244,7 @@ def nodeSL (tbls : Array LutTable) (i : Nat) (n : Node Float) : Except String SL
         match lutNodeName? nm with
         | some tn =>
             match tbls.find? (·.name == tn), n.parents.toList with
-            | some tbl, [l, u] => .ok (.fetch tbl l u)
+            | some tbl, [l, u] => .ok (.fetch nm tbl l u)
             | some _, _ =>
                 .error s!"tape_codegen: lutfetch node {i} expects parents [layer, u] (got {n.parents.size})"
             | none, _ => .error s!"tape_codegen: lutfetch node {i} references unknown table `{tn}`"
@@ -797,6 +800,138 @@ theorem genSL_input_iff {t : Tape Float} {tbls : Array LutTable} {prog : SLProg}
     prog[i]? = some (.input nm) ↔
       ∃ n, t.getNode? i = some n ∧ n.parents.isEmpty = true ∧ n.name = some nm :=
   ⟨genSL_input h, fun ⟨_n, hn, hp, hnm⟩ => genSL_input_of_leaf h hn hp hnm⟩
+
+/-! ### The graph of the program — the seal travels with the program
+
+`ofTape` (`paradigm.tape_eval`) projects a tape onto the computational tape graph the second
+capstone is stated over. `ofProg` projects a program onto the same kind of graph, and
+`ofProg_eq_ofTape` says the two graphs are *equal* when the program is `genSL` of the tape: the
+seal of the computation, the bisimulation and the cone lemma, all stated over `ofTape t`, are
+statements about the emitted program's graph — the object a host receives — with the tape gone. -/
+
+/-- The vertex of a program line: its name and its operand slots, as `ofTape` reads them off the
+tape node. A fetch carries the recorded `lutfetch:<table>` name. -/
+def SLExpr.vertex : SLExpr → TapeVertex
+  | .input nm => ⟨some nm, []⟩
+  | .lit _ => ⟨none, []⟩
+  | .bin o a b => ⟨some o.name, [a, b]⟩
+  | .un o a => ⟨some o.name, [a]⟩
+  | .fetch nm _ l u => ⟨some nm, [l, u]⟩
+
+/-- **The computational tape graph of a program**: one vertex per line, in slot order. -/
+def ofProg (prog : SLProg) : TapeGraph := ⟨prog.toList.map SLExpr.vertex⟩
+
+/-- The line `nodeSL` produces for a node has that node's vertex. -/
+theorem nodeSL_vertex {tbls : Array LutTable} {i : Nat} {n : Node Float} {e : SLExpr}
+    (h : nodeSL tbls i n = .ok e) : e.vertex = ⟨n.name, n.parents.toList⟩ := by
+  unfold nodeSL at h
+  by_cases hp : n.parents.isEmpty = true
+  · have hnil : n.parents.toList = [] := by
+      rw [Array.toList_eq_nil_iff]; exact Array.isEmpty_iff.mp hp
+    rw [ite_eq_left hp] at h
+    cases hname : n.name with
+    | some nm => simp only [hname] at h; cases h; simp [SLExpr.vertex, hnil]
+    | none => simp only [hname] at h; cases h; simp [SLExpr.vertex, hnil]
+  · rw [ite_eq_right hp] at h
+    cases hname : n.name with
+    | none => simp only [hname] at h; cases h
+    | some nm =>
+      simp only [hname] at h
+      cases htn : lutNodeName? nm with
+      | none =>
+        simp only [htn] at h
+        cases hpar : n.parents.toList with
+        | nil => unfold mkOp at h; simp only [hpar] at h; cases h
+        | cons a rest =>
+          cases rest with
+          | nil =>
+            unfold mkOp at h; simp only [hpar] at h
+            cases ho : UnOp.ofName? nm with
+            | none => simp only [ho] at h; cases h
+            | some o =>
+              simp only [ho] at h; cases h
+              simp [SLExpr.vertex, UnOp.name_ofName? ho]
+          | cons b rest2 =>
+            cases rest2 with
+            | nil =>
+              unfold mkOp at h; simp only [hpar] at h
+              cases ho : BinOp.ofName? nm with
+              | none => simp only [ho] at h; cases h
+              | some o =>
+                simp only [ho] at h; cases h
+                simp [SLExpr.vertex, BinOp.name_ofName? ho]
+            | cons _ _ => unfold mkOp at h; simp only [hpar] at h; cases h
+      | some tn =>
+        simp only [htn] at h
+        cases hfind : tbls.find? (·.name == tn) with
+        | none => simp only [hfind] at h; cases h
+        | some tbl =>
+          simp only [hfind] at h
+          cases hpar : n.parents.toList with
+          | nil => simp only [hpar] at h; cases h
+          | cons l rest =>
+            cases rest with
+            | nil => simp only [hpar] at h; cases h
+            | cons u rest2 =>
+              cases rest2 with
+              | cons _ _ => simp only [hpar] at h; cases h
+              | nil => simp only [hpar] at h; cases h; simp [SLExpr.vertex]
+
+/-- **The program's graph is the tape's.** When `genSL` produces a program for a tape, `ofProg` of
+the program equals `ofTape` of the tape — so every statement the capstone chapter makes over
+`ofTape t` (the seal of the computation, the bisimulation, the cone lemma) is a statement about the
+emitted program's own graph. -/
+theorem ofProg_eq_ofTape {t : Tape Float} {tbls : Array LutTable} {prog : SLProg}
+    (h : genSL t tbls = .ok prog) : ofProg prog = ofTape t := by
+  unfold ofProg ofTape
+  congr 1
+  apply List.ext_getElem?
+  intro i
+  simp only [List.getElem?_map]
+  cases hp : prog.toList[i]? with
+  | some e =>
+    rw [Array.getElem?_toList] at hp
+    obtain ⟨n, hn, hne⟩ := genSL_getElem? h hp
+    rw [Tape.getNode?] at hn
+    rw [Array.getElem?_toList, hn]
+    simp [nodeSL_vertex hne]
+  | none =>
+    cases hn : t.nodes.toList[i]? with
+    | none => rfl
+    | some n =>
+      exfalso
+      rw [Array.getElem?_toList] at hn hp
+      obtain ⟨e, he, _⟩ := genSL_getElem?_of_node h (by rw [Tape.getNode?]; exact hn)
+      rw [hp] at he; cases he
+
+/-- **The fetch clause.** A fetch in the program is a `lutfetch:<table>` node of the tape, with that
+node's name and operand slots, into the table the resolved array carries under that name. -/
+theorem genSL_fetch {t : Tape Float} {tbls : Array LutTable} {prog : SLProg}
+    (h : genSL t tbls = .ok prog) {i : Nat} {nm : String} {tbl : LutTable} {l u : Nat}
+    (hi : prog[i]? = some (.fetch nm tbl l u)) :
+    ∃ n, t.getNode? i = some n ∧ n.name = some nm ∧ n.parents.toList = [l, u] ∧
+      ∃ tn, lutNodeName? nm = some tn ∧ tbls.find? (·.name == tn) = some tbl := by
+  obtain ⟨n, hn, he⟩ := genSL_getElem? h hi
+  refine ⟨n, hn, ?_⟩
+  unfold nodeSL at he
+  split at he
+  · split at he <;> cases he
+  · split at he
+    · rename_i nm' hname
+      split at he
+      · rename_i tn htn
+        split at he
+        · rename_i tbl' l' u' hfind hpar
+          cases he
+          exact ⟨hname, hpar, tn, htn, hfind⟩
+        · cases he
+        · cases he
+      · unfold mkOp at he
+        split at he
+        · split at he <;> cases he
+        · split at he <;> cases he
+        · cases he
+    · cases he
 
 end SL
 

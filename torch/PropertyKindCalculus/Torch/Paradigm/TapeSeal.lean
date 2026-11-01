@@ -33,6 +33,7 @@ A `module` file: imports the tape evaluator and the graph library's bisimulation
 module
 
 public import PropertyKindCalculus.Torch.Paradigm.TapeEval
+public import PropertyKindCalculus.Torch.Paradigm.TapeStraightLine
 public import PropertyKindCalculus.Graph.Bisimulation
 public import PropertyKindCalculus.Graph.Seal
 
@@ -160,6 +161,36 @@ theorem semantic_seal {g : Provenance ν κ} (hwf : g.WellFormed) (t : Tape Floa
   intro u hu n hn hne nm hnm
   obtain ⟨s, hs, hus⟩ := influencer_of_cone_leaf hwf t hacc hr hu (isLeaf_of_node t hn hne)
   exact hagree s hs u hus nm (by rw [ofTape_name? t u n hn]; exact hnm)
+
+/-- **The seal of the computation, stated about the emitted program.** The program `genSL` reads
+off a well-formed tape has the tape's graph (`SL.ofProg_eq_ofTape`) and runs as the tape
+(`SL.genSL_denotes_noTables`), so the seal holds of the program alone: with the match accepted
+against the *program's* graph, at every node `o` realized by a slot `r`, two environments agreeing
+on the input reads realizing `o`'s influencers give the same value at slot `r` of `SL.run`; every
+leaf in `r`'s cone of the program's graph realizes an influencer of `o`; every edge of the program's
+graph between observable slots realizes one hop of one occurrence, with its kinds. The tape appears
+only in the hypothesis that the program came from it — what a host receives is sealed as such. -/
+theorem semantic_seal_program {g : Provenance ν κ} (hwf : g.WellFormed) (t : Tape Float)
+    (hwft : WF t) {prog : SL.SLProg} (hg : SL.genSL t #[] = .ok prog)
+    {m : Match ν} (hacc : m.accepts g (SL.ofProg prog) = true) {o : ν} {r : Nat}
+    (hr : r ∈ m.comps o) :
+    (∀ (env₁ env₂ : String → Float),
+      (∀ s ∈ g.influencers o, ∀ u ∈ m.comps s, ∀ nm, (SL.ofProg prog).name? u = some nm →
+        env₁ nm = env₂ nm) →
+      (SL.run env₁ prog).getD r 0.0 = (SL.run env₂ prog).getD r 0.0) ∧
+    (∀ u, Reaches (SL.ofProg prog) u r → (SL.ofProg prog).isLeaf u = true →
+      ∃ s ∈ g.influencers o, u ∈ m.comps s) ∧
+    (∀ u w, (SL.ofProg prog).edge u w = true → ∀ a b, u ∈ m.comps a → w ∈ m.comps b →
+      ∃ oc ∈ g.occurrences, oc.result = b ∧
+        ∃ (i : Nat) (k : κ), oc.operands[i]? = some (a, k) ∧
+          (g.kindOf? a == some k) = true ∧ (g.kindOf? b == some oc.resultKind) = true) := by
+  have hT := SL.ofProg_eq_ofTape hg
+  rw [hT] at hacc ⊢
+  obtain ⟨h1, h2, h3⟩ := semantic_seal hwf t hwft hacc hr
+  refine ⟨?_, h2, h3⟩
+  intro env₁ env₂ hagree
+  exact h1 env₁ env₂ _ _ hagree (SL.genSL_denotes_noTables env₁ hg)
+    (SL.genSL_denotes_noTables env₂ hg)
 
 /-- **The seal at every carrier.** Any function of the environment that denotes as the tape's
 value at a vertex realizing `o` — what the denotation bridge establishes per carrier — depends on
