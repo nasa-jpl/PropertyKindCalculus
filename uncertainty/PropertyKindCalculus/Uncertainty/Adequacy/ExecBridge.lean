@@ -9,9 +9,11 @@ The adequacy story so far has two mirrored halves that never met in a proof:
   * an **executable** carrier — `Adequacy.lean`'s swamping/cancellation checks, which compute over
     Lean's host `Float`.
 
-Lean's `Float` is an opaque FFI type carrying no proof obligations, so the host `Float` verdict is
-*fundamentally* uncertifiable — no theorem can relate `Float.log2`/`Float.exp2` to `ulp32`. Stage 3.3
-therefore certifies the check on TorchLean's **computable** `IEEE32Exec` model instead, where every
+Lean's host `Float` is binary64 — on the pinned toolchain a structure over core's `Float.Model`, so its
+arithmetic has a specification — but it is not the float32 this verdict is about, and `Float.log2`/
+`Float.exp2` are `opaque` externs with no model clause, so no theorem relates the host `Float` verdict
+to `ulp32`. Stage 3.3 therefore certifies the check on TorchLean's **computable** `IEEE32Exec` model
+instead, where every
 operation is "decode → exact dyadic → round once" and is provably `round32` of the exact real result.
 The residual `Float32 ↔ IEEE32Exec` step is a FloatLib theorem over Lean's logical model of
 `Float32`, for finite operands (`ExecFloat.Binary.toModel_ofFloat32_add_of_isFinite` and its

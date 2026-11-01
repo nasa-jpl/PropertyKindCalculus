@@ -1185,8 +1185,9 @@ the FLT-level Sterbenz: a TorchLean PR (`neural_generic_format_FLT_sterbenz`) li
 self-contained `FLX` model to the gradual-underflow format binary32 actually uses (`fexp32`), so
 $`\mathrm{round}_{32}(u - v) = u - v` for near-equal representable operands is a theorem about the real
 rounding operator (`round32_sterbenz_exact`), and a near-equal binary32 subtraction is lossless.
-Stage 3.3 then closes the executable↔spec gap: since Lean's host `Float` is an opaque FFI type no
-theorem can constrain, a second TorchLean PR gives TorchLean's *computable* `IEEE32Exec` model an
+Stage 3.3 then closes the executable↔spec gap: Lean's host `Float` is binary64 (model-backed on the
+pinned toolchain, but not the float32 this verdict is about, and its `log2`/`exp2` are `opaque` externs),
+so a second TorchLean PR gives TorchLean's *computable* `IEEE32Exec` model an
 executable ULP query (`ulpExp?`, its answers proved equal to `ulp₃₂`, answering on exactly the finite fragment) and an absorption test
 (`absorbs`, the float32 sum unchanged) that is *sound* against the specification — when it fires, the
 exact real sum rounds back under `round₃₂` (`exec_verdict_sound`). So the computed adequacy verdict is
