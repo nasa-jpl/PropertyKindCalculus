@@ -32,9 +32,12 @@ case "$MODE" in
   *) echo "usage: make-figures.sh [--check]" >&2; exit 2 ;;
 esac
 
-before="$(cd "$FIG" && cksum ./*.svg)"
+# A snapshot of the figures' bytes; empty when none is there yet (a fresh or cleaned
+# figures/ is regenerated, not refused).
+snapshot() { (cd "$FIG" && shopt -s nullglob && for f in ./*.svg; do cksum "$f"; done); }
+before="$(snapshot)"
 (cd "$REPO" && lake exe blueprint-figures "${FLAGS[@]}" --out "$FIG")
-after="$(cd "$FIG" && cksum ./*.svg)"
+after="$(snapshot)"
 
 if [ "$MODE" = write ] && [ "$before" != "$after" ]; then
   rm -f "$FIGURES_MODULE".* "$FIGURES_MODULE"/*.* 2>/dev/null || true

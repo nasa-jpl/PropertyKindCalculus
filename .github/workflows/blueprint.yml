@@ -241,6 +241,11 @@ jobs:
           # sets that stage-docs.sh would then copy into the published site. Wiping it
           # first guarantees a single, current shard set.
           rm -rf _out/blueprint
+          # The committed figures must be what their generator writes (the same
+          # `make-figures.sh --check` the local render, ci-pages.sh, runs first);
+          # `lake exe blueprint-figures` builds at the repository root, whose
+          # dependencies the root `lake build` above materialized.
+          scripts/make-figures.sh --check
           # `--with-html-single` also emits a self-contained one-page build
           # (html-single/) alongside the multi-page site (html-multi/).
           lake exe blueprint-gen --output _out/blueprint --with-html-single

@@ -11,7 +11,9 @@ public import Tools.Figures.Cake
 
 Writes `architecture-cake.svg`, `lowe-square-pkc.svg` and `three-layers-pkc.svg` into `DIR`
 (default: `blueprint/figures` of the enclosing checkout), or with `--check` compares what it
-would write with what is there, byte for byte, and exits 1 naming each figure that differs.
+would write with what is there, byte for byte, and exits 1 naming each figure that differs:
+`mismatches` is the gate, `mismatches_nil_iff` its soundness (it passes exactly when every
+figure's bytes on disk are the generated ones).
 `--audience deck` writes the deck's cake alone and needs `--out` (the deck's copy lives in its
 own repository). Each figure is a pure `String`; `--check` is `decEq` on bytes.
 -/
@@ -42,6 +44,20 @@ partial def findRoot (d : System.FilePath) : IO (Option System.FilePath) := do
   match d.parent with
   | some p => if p == d then return none else findRoot p
   | none => return none
+
+/-- The gate's predicate: a committed figure matches when the bytes on disk are exactly the
+generated ones (`none`: no file). -/
+def matches (disk : Option ByteArray) (svg : String) : Bool := disk == some svg.toUTF8
+
+/-- The figures `--check` names: those whose bytes on disk are not the generated ones. -/
+def mismatches (figs : List (String × String)) (disk : String → Option ByteArray) : List String :=
+  (figs.filter fun (n, s) => !matches (disk n) s).map (·.1)
+
+/-- Soundness of the gate: it passes exactly when every figure's bytes on disk are the
+generated ones. -/
+theorem mismatches_nil_iff (figs : List (String × String)) (disk : String → Option ByteArray) :
+    mismatches figs disk = [] ↔ ∀ f ∈ figs, disk f.1 = some f.2.toUTF8 := by
+  simp [mismatches, matches, List.filter_eq_nil_iff]
 
 def figures (audience : String) (logos : Cake.Logos) : List (String × String) :=
   if audience == "deck" then [("architecture-cake.svg", Cake.build "deck" logos)]
@@ -79,25 +95,27 @@ def main (args : List String) : IO UInt32 := do
     IO.eprintln s!"missing logo sources in {logosDir}: {", ".intercalate missing}"; return 1
   let logos : Cake.Logos := fun n => (files.find? (·.1 == n)).map (·.2)
   let figs := figures o.audience logos
-  let mut changed := 0
   IO.FS.createDirAll out
-  for (name, svg) in figs do
+  -- the bytes on disk, read as bytes: a damaged figure is a mismatch, not a decoding error
+  let mut onDisk : List (String × ByteArray) := []
+  for (name, _) in figs do
     let p := out / name
-    let same ← do
-      if ← p.pathExists then pure ((← IO.FS.readFile p) == svg) else pure false
-    if same then IO.println s!"  unchanged  figures/{name}"; continue
-    changed := changed + 1
+    if ← p.pathExists then onDisk := (name, ← IO.FS.readBinFile p) :: onDisk
+  let disk : String → Option ByteArray := fun n => (onDisk.find? (·.1 == n)).map (·.2)
+  let bad := mismatches figs disk
+  for (name, svg) in figs do
+    if !bad.contains name then IO.println s!"  unchanged  figures/{name}"; continue
     if o.check then
       IO.println s!"  DIFFERS    figures/{name}  (run scripts/make-figures.sh and commit the result)"
     else
-      IO.FS.writeFile p svg
+      IO.FS.writeBinFile (out / name) svg.toUTF8
       IO.println s!"  rewritten  figures/{name}  ({svg.utf8ByteSize} bytes)"
   if o.check then
-    if changed > 0 then
-      IO.eprintln s!"error: {changed} figure(s) differ from their generators"; return 1
+    if !bad.isEmpty then
+      IO.eprintln s!"error: {bad.length} figure(s) differ from their generators"; return 1
     IO.println s!"figures: all {figs.length} match their generators"
-  else if changed > 0 then
-    IO.println s!"{changed} figure(s) rewritten"
+  else if !bad.isEmpty then
+    IO.println s!"{bad.length} figure(s) rewritten"
   return 0
 
 end Tools.BlueprintFigures
