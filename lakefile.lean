@@ -570,9 +570,10 @@ lean_exe «module-census» where
   supportInterpreter := true  -- `--closure` imports the package in process (`importModules`)
 
 /-- **The `file://` link pass** (`TOOLS.md` §5 step 5): spells out `index.html` in the directory
-links of the blueprint's `html-multi` output so it is navigable over `file://`; `fixSegs_idem` is the
-idempotence a rerun relies on, every rewritten target is looked up (`--strict` fails on a missing one).
-`ci-pages.sh` and `blueprint.yml` run it with `lean --run`. -/
+links of the blueprint's `html-multi` output so it is navigable over `file://`; `fixHref_idem` and
+`rewriteHtml_idem` are the idempotence a rerun relies on, every rewritten target is looked up under
+the site root (`--strict` fails on a missing one). `ci-pages.sh` and `blueprint.yml` run it with
+`lean --run`. -/
 lean_exe «file-links» where
   srcDir := "tools"
   root := `Tools.FileLinks

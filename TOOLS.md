@@ -149,26 +149,18 @@ Anything a tool does outside this list is a defect of the tool, not an extension
    needed — the generators are the same arithmetic in the same order. `Cake.layersFor_eq` and
    `baseLayers_audience_free` say where the audience is read (the top layers and the TorchLean chip).
    *Shipped (link pass)*: `tools/Tools/FileLinks.lean`, core-only, `lean --run` from `ci-pages.sh` and
-   `blueprint.yml` (pixi is now needed for the PDF alone); the path rewrite is `fixSegs` over the
-   `/`-segments, `fixSegs_idem` its idempotence, decided again on every rewritten href at run time;
-   every rewritten target is looked up under the output directory (`--strict` makes a missing one
-   fatal; off in CI until a full render has shown the count is 0). Byte-identical to the Python on a
-   synthetic site covering every rule in its docstring.
-6. **`blueprint-print`**: the print pass of `html-to-pdf.py` (merge of the multi-page fallback,
-   `-verso-*` skipping, heading renumbering and nesting check, bookmark cleanup, print CSS) as a
-   Lean text pass, its HTML diffed against the Python pipeline's on the committed blueprint before
-   the Python goes.
-   *Shipped*: `lake exe blueprint-print HTML_INPUT OUT_HTML` (`tools/Tools/BlueprintPrint.lean`),
-   byte-identical to the Python's merged page on the published blueprint (15.6 MB in, 10.5 MB out,
-   0.6 s compiled — hence `lake exe`, not `lean --run`) and on a synthetic multi-page site exercising
-   the table-of-contents ordering, every pruning rule and the character references; the tokenizer
-   reproduces Python's `html.parser` as the pass used it, with CPython's `html5` entity table embedded.
-   `render-pdf.sh` runs it and then WeasyPrint's own command line through pixi — no Python file is
-   left under `blueprint/`. The synthetic site is committed as `tools/fixtures/blueprint-print/` with
-   the page and stderr the Python wrote for it; CI renders it and `cmp`s both, a drift gate that needs
-   no WeasyPrint.
-7. Delete `scripts/*.py`, `HCP/check-hcp.py`, `blueprint/scripts/**/*.py`; `blueprint/pyproject.toml`
-   keeps only WeasyPrint, run as `weasyprint` (its command line), not through a script.
+   `blueprint.yml` (pixi is now needed for the PDF alone). The pass is defined over `List Char`: the
+   page is tokenised into text and `href="…"` pieces, each non-`<base>` value rewritten by `fixChars`
+   (`fixSegs` on the path's `/`-segments, `#…`/`?…` suffix kept). Its theorems are the rerun's:
+   `fixHref_idem` for every href value and `rewriteHtml_idem` for the whole page — the latter via
+   `tokenize_render`, a rewritten page tokenises into the rewritten pieces, so a second run has
+   nothing to do. The run also decides `fixHref (fixHref h) == fixHref h` on every rewritten href,
+   and looks every rewritten target up under the output directory against the site root, which each
+   page's `<base href>` names, with `.`/`..` resolved as a browser would (`targetFile`; `--strict`
+   makes a missing one fatal; off in CI until a full render has shown the count is 0). Byte-identical
+   to the Python on a synthetic site covering every rule in its docstring; the one divergence is an
+   unterminated `href="` at the end of a page, which the Python closed with a stray quote and this
+   pass leaves as text.
 
 Each step is one PR off `main`, replacing one Python tool and its CI step, byte-identical outputs
 where an artifact is committed (the probe, the figures, the renderings, the excerpts) so the switch
