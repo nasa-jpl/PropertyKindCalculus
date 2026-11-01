@@ -47,17 +47,17 @@ partial def findRoot (d : System.FilePath) : IO (Option System.FilePath) := do
 
 /-- The gate's predicate: a committed figure matches when the bytes on disk are exactly the
 generated ones (`none`: no file). -/
-def matches (disk : Option ByteArray) (svg : String) : Bool := disk == some svg.toUTF8
+def figureMatches (disk : Option ByteArray) (svg : String) : Bool := disk == some svg.toUTF8
 
 /-- The figures `--check` names: those whose bytes on disk are not the generated ones. -/
 def mismatches (figs : List (String × String)) (disk : String → Option ByteArray) : List String :=
-  (figs.filter fun (n, s) => !matches (disk n) s).map (·.1)
+  (figs.filter fun (n, s) => !figureMatches (disk n) s).map (·.1)
 
 /-- Soundness of the gate: it passes exactly when every figure's bytes on disk are the
 generated ones. -/
 theorem mismatches_nil_iff (figs : List (String × String)) (disk : String → Option ByteArray) :
     mismatches figs disk = [] ↔ ∀ f ∈ figs, disk f.1 = some f.2.toUTF8 := by
-  simp [mismatches, matches, List.filter_eq_nil_iff]
+  simp [mismatches, figureMatches, List.filter_eq_nil_iff]
 
 def figures (audience : String) (logos : Cake.Logos) : List (String × String) :=
   if audience == "deck" then [("architecture-cake.svg", Cake.build "deck" logos)]
