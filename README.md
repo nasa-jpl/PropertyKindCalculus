@@ -284,6 +284,10 @@ Status: ✅ done · 🚧 in progress · ⬜ planned
   (`SL.genSL_slots_lt`, so no printer's text uses a temporary before defining it); `gen`/`genJulia`
   decide that invariant themselves (`checkWF`, `gen_wf`/`genJulia_wf`) and reject an output id outside
   the tape (`checkOutputs`, `gen_outIds_lt`/`genJulia_outIds_lt`).
+  ✅ **The chain, composed** (`Examples.TapeEndToEndChain`): `pipeline_denotes` — for a well-formed
+  named-leaf tape, the emitted program of its CSE'd form runs, at every environment, to the original
+  tape's value at every remapped node (`cseCompact_denotation_of_named` ∘ `genSL_denotes`); `#guard`'d
+  on the recorded AVS tape.
   ⬜ Run `julia_parity` in a CI lane with Julia installed.
   ⬜ First CliMA-shaped closure recorded over `[NumCarrier α]` to find the alphabet gaps (a bounded
   reduction and a gather are the expected first two).
