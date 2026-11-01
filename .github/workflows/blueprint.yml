@@ -28,17 +28,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # -------------------------------------------------------
-      # Phase 0: Cheapest possible signal — the prose agrees with the pin.
-      # -------------------------------------------------------
-      - name: Check version and blueprint-status claims
-        # Runs before Elan so a doc that names the wrong toolchain, or a chapter table
-        # that has drifted from the chapter sources, fails in seconds rather than after
-        # the Mathlib-backed build. Needs nothing but the checkout and the runner's
-        # python3 (stdlib only). See the script's docstring for what is gated hard, what
-        # is reported, and why some claims may differ.
-        run: python3 scripts/check-doc-pins.py
-
       - name: Install Elan (Lean toolchain manager)
         env:
           # Pinned release of the elan installer. `elan-init.sh` on `master` would fetch
@@ -69,7 +58,7 @@ jobs:
       - name: Install Lean toolchain
         run: |
           # Root and blueprint/ pin the same toolchain, so installing the root one
-          # is sufficient for both Lake packages. scripts/check-doc-pins.py gates
+          # is sufficient for both Lake packages. tools/Tools/DocPins.lean gates
           # that equality, and every version claim written in prose, against
           # lean-toolchain — so no literal version is spelled here.
           # No `|| true`: a failed install must fail here, not later inside `lake build`.
@@ -80,6 +69,18 @@ jobs:
             elan toolchain install "$TOOLCHAIN"
           fi
           elan show
+
+      # -------------------------------------------------------
+      # Phase 0: Cheapest signal after the toolchain — the prose agrees with the pin.
+      # -------------------------------------------------------
+      - name: Check version and blueprint-status claims
+        # Runs before Lake fetches a dependency, so a doc that names the wrong toolchain, or a
+        # chapter table that has drifted from the chapter sources, fails in seconds rather than
+        # after the Mathlib-backed build. tools/Tools/DocPins.lean imports only `Lean`, so the
+        # toolchain alone runs it (`lean --run`; `lake exe doc-pins` is the same program) and its
+        # theorems are checked on every run. The header lists the eight checks and what is gated
+        # hard, what is reported, and why some claims may differ.
+        run: lean --run tools/Tools/DocPins.lean
 
       - name: Set up Python tooling via pixi
         env:

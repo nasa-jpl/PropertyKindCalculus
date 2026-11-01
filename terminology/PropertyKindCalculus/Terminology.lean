@@ -12,7 +12,7 @@ the name is defined in exactly one place in the blueprint, and every other docum
 blueprint chapters, the root plan documents, and, by ratchet, the library's own
 docstrings — uses that name or its short form. `PropertyKindCalculus.Terminology.Dictionary`
 is the data; the blueprint's terminology chapter renders it and links each entry to its
-defining section; `scripts/check-doc-pins.py` is the gate.
+defining section; the `doc-pins` gate (`tools/Tools/DocPins.lean`) is the gate.
 -/
 
 module

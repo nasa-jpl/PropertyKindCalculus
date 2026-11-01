@@ -851,9 +851,9 @@ re-elaborate every module in the package.
 
 Two writers of one value therefore need a gate, and have two:
 [`scripts/bump-version.sh`](scripts/bump-version.sh) writes both sites and refuses to
-bump while they disagree, and [`scripts/check-doc-pins.py`](scripts/check-doc-pins.py)
-reads both back — same version, exactly one declaration each, and the same site list the
-bumper writes — in CI, ahead of the Lean build.
+bump while they disagree, and the `doc-pins` gate ([`tools/Tools/DocPins.lean`](tools/Tools/DocPins.lean))
+reads both back — same version, exactly one declaration each — in CI, ahead of the Lean build.
+Both read one list, `Tools.DocPins.pkgSites`, so a site cannot be bumped and not gated.
 
 [lake-module]: https://github.com/leanprover/lean4/blob/master/src/lake/Lake/Build/Module.lean
 
@@ -879,11 +879,14 @@ grep -n '^def versionStr' blueprint/PropertyKindCalculusBlueprint/Version.lean
 ### Checking the toolchain claims
 
 A bump moves `lean-toolchain`; the prose that names the pin does not follow on its own,
-and a stale sentence still compiles. [`scripts/check-doc-pins.py`](scripts/check-doc-pins.py)
-is the gate — CI runs it as Phase 0, before Elan, so a wrong version fails in seconds:
+and a stale sentence still compiles. The `doc-pins` gate ([`tools/Tools/DocPins.lean`](tools/Tools/DocPins.lean),
+Lean, imports only `Lean`) is the gate — CI runs it right after the toolchain install, before any
+dependency is fetched, so a wrong version fails in seconds; its theorem `failures_nil_iff` says the
+exit code is the decision of the eight checks it states:
 
 ```sh
-python3 scripts/check-doc-pins.py     # stdlib only; --quiet prints just the failures
+lean --run tools/Tools/DocPins.lean     # toolchain only; --quiet prints just the failures
+lake exe doc-pins                       # the same program, built by Lake
 ```
 
 It hard-fails on four things: `blueprint/lean-toolchain` disagreeing with the root, any

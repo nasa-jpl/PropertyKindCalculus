@@ -69,7 +69,7 @@ Two facts that shape B:
 ## 2. Repo & toolchain map — READ FIRST every session
 
 *Environment recorded 2026-08-04. The rows below name checkouts outside this repository, so
-`scripts/check-doc-pins.py` reports them rather than gating them; only this package's own pins are
+the `doc-pins` gate (`tools/Tools/DocPins.lean`) reports them rather than gating them; only this package's own pins are
 gated.*
 
 | Repo / clone | Path | Branch | Toolchain | Role |

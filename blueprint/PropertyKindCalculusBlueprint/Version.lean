@@ -4,7 +4,7 @@
 The declared PropertyKindCalculus version, exposed as the inline Verso role
 `{version}[]`. `lakefile.lean`'s `version := v!"X.Y.Z"` is the single source of truth;
 the literal below mirrors it. `scripts/bump-version.sh` writes both sites in one step
-and refuses to bump when they disagree, and `scripts/check-doc-pins.py` gates the
+and refuses to bump when they disagree, and the `doc-pins` gate (`tools/Tools/DocPins.lean`) gates the
 agreement in CI ahead of the Lean build — so the published document's version cannot
 drift from the package's.
 
@@ -29,7 +29,7 @@ namespace PropertyKindCalculusBlueprint.Version
 
 /-- The declared package version, mirroring `lakefile.lean`'s `version := v!"X.Y.Z"`.
 Both sites are written by `scripts/bump-version.sh` and their agreement is gated by
-`scripts/check-doc-pins.py`; the line shape is what those two match on, so keep the
+the `doc-pins` gate (`tools/Tools/DocPins.lean`); the line shape is what those two match on, so keep the
 literal on one line, starting at column 0. -/
 def versionStr : String := "0.114.0"
 
