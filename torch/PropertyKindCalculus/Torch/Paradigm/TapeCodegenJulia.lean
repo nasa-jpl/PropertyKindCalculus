@@ -180,9 +180,14 @@ def mathHelpers : String := String.intercalate "\n"
   , "@inline tl_log(x::T) where {T<:AbstractFloat} = x < zero(T) ? T(NaN) : log(x)"
   , "" ]
 
-/-- The `lutfetch` helper: the C stub's clamp/floor/lerp over the flat row-major table (point mode
-bit-identical to the stub and the device kernel; hardware mode emulates the 9-bit weight,
-tolerance-only). Empty when the kernel uses no tables. -/
+/-- The `lutfetch` helper: `LutTable.refFetch`'s clamp/floor/lerp over the flat row-major table —
+an empty table (`W == 0 || LAYERS == 0`) fetches `zero(T)` as `refFetch` returns `0.0`; the
+coordinate and the layer are clamped with Lean's `max 0 (min x hi)` spelled out as `ifelse`, so a
+NaN coordinate lands on `hi` exactly as `minOfLe` does (the C stub's `u < 0 ? 0 : (u > wmax ? …)`
+keeps a NaN — a pre-existing divergence of the C rendering from `refFetch`, not reproduced here);
+the layer is clamped as a float before it is truncated, so a huge finite layer cannot overflow the
+index. Point mode is the stub's arithmetic step for step; hardware mode emulates the 9-bit weight,
+tolerance-only. Empty when the kernel uses no tables. -/
 def lutHelperJulia (cg : JuliaCodegen) : String :=
   if cg.tables.isEmpty then "" else
   let quant := match cg.lutMode with
@@ -190,10 +195,15 @@ def lutHelperJulia (cg : JuliaCodegen) : String :=
     | .hardware => "    f = floor(f * T(256) + T(0.5)) / T(256)\n"
   String.intercalate "\n"
     [ "@inline function tl_lutfetch(tab::AbstractVector{T}, W::Int, LAYERS::Int, layer::T, u::T) where {T<:AbstractFloat}"
+    , "    (W == 0 || LAYERS == 0) && return zero(T)"
     , "    wmax = T(W - 1)"
-    , "    uc = u < zero(T) ? zero(T) : (u > wmax ? wmax : u)"
-    , "    L = unsafe_trunc(Int, layer + T(0.5))"
-    , "    L = L < 0 ? 0 : (L > LAYERS - 1 ? LAYERS - 1 : L)"
+    , "    um = ifelse(u <= wmax, u, wmax)"
+    , "    uc = ifelse(zero(T) <= um, um, zero(T))"
+    , "    lmax = T(LAYERS - 1)"
+    , "    ls = layer + T(0.5)"
+    , "    lm = ifelse(ls <= lmax, ls, lmax)"
+    , "    lc = ifelse(zero(T) <= lm, lm, zero(T))"
+    , "    L = unsafe_trunc(Int, lc)"
     , "    j = floor(uc)"
     , s!"    f = uc - j\n{quant}    j0 = unsafe_trunc(Int, j)"
     , "    j1 = j0 + 1 < W ? j0 + 1 : W - 1"
