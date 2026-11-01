@@ -14,7 +14,8 @@ wherever `cOp` has a value) were theorems. Now every emitter is factored as `pri
   * `SLExpr.denote`/`run` give the program its meaning in Lean `Float`, with the same scalar ops
     `cOp` uses (`BinOp.eval`/`UnOp.eval` are `cOp`'s clauses, `cOp_eval`);
   * `genSL_denotes` is the theorem: if `genSL` produces a program, `evalTapeT` succeeds and returns
-    exactly `run env prog` — slot for slot, every node;
+    exactly `run env prog` — slot for slot, every node; and `genSL_isOk_iff_evalTapeT` its failing
+    half: `genSL` produces a program exactly when the interpreter runs the tape (completeness);
   * a backend is a *printer*, a total function `SLExpr → String` (`printC`, `printJulia`). A printer
     cannot read the tape, so it cannot introduce an input, a literal or an operation the program —
     hence the tape, hence the sealed hypergraph — does not have. What a backend must still be trusted
@@ -420,6 +421,180 @@ theorem genSL_denotes_noTables (env : String → Float) {t : Tape Float} {prog :
     (h : genSL t #[] = .ok prog) : evalTape env t = .ok (run env prog) := by
   rw [← evalTapeT_none]
   exact genSL_denotes tablesAgree_empty env h
+
+/-! ### Completeness — the emitter accepts exactly the tapes the interpreter runs
+
+`genSL_denotes` is the succeeding half: a program, when produced, runs as the tape. This is the
+failing half: where `genSL` rejects a tape, `evalTapeT` rejects it too, so `(genSL t tbls).isOk =
+(evalTapeT tables env t).isOk` (`genSL_isOk_iff_evalTapeT`). Node by node, `mkOp` fails exactly
+where `cOp` fails (off-alphabet name, wrong arity), a fetch fails exactly where `cOpT` does
+(unresolved table, wrong arity), and an op node without a name fails in both. -/
+
+/-- Off the binary alphabet, `cOp` rejects a two-argument call. -/
+theorem cOp_error_of_binOp_none {nm : String} (h : BinOp.ofName? nm = none) (x y : Float) :
+    ∃ msg, cOp nm [x, y] = .error msg := by
+  unfold cOp
+  split <;> simp_all [BinOp.ofName?]
+
+theorem cOp_error_of_unOp_none {nm : String} (h : UnOp.ofName? nm = none) (x : Float) :
+    ∃ msg, cOp nm [x] = .error msg := by
+  unfold cOp
+  split <;> simp_all [UnOp.ofName?]
+
+theorem cOp_error_of_arity (nm : String) (args : List Float)
+    (h : args.length ≠ 1 ∧ args.length ≠ 2) : ∃ msg, cOp nm args = .error msg := by
+  unfold cOp
+  split <;> simp_all
+
+theorem cOp_error_of_none {nm : String} (hb : BinOp.ofName? nm = none) (hu : UnOp.ofName? nm = none)
+    (args : List Float) : ∃ msg, cOp nm args = .error msg := by
+  match args with
+  | [x] => exact cOp_error_of_unOp_none hu x
+  | [x, y] => exact cOp_error_of_binOp_none hb x y
+  | [] => exact cOp_error_of_arity nm [] (by simp)
+  | _ :: _ :: _ :: _ => exact cOp_error_of_arity nm _ (by simp)
+
+theorem binOp_ofName?_of_lut {nm tn : String} (h : lutNodeName? nm = some tn) :
+    BinOp.ofName? nm = none := by
+  unfold BinOp.ofName?
+  split <;> simp_all [lutNodeName?]
+
+theorem unOp_ofName?_of_lut {nm tn : String} (h : lutNodeName? nm = some tn) :
+    UnOp.ofName? nm = none := by
+  unfold UnOp.ofName?
+  split <;> simp_all [lutNodeName?]
+
+/-- `mkOp` fails only where `cOp` fails on the corresponding values: the op line exists for exactly
+the calls the interpreter accepts. -/
+theorem cOp_error_of_mkOp_error (vals : Array Float) {nm : String} {ps : List Nat} {msg : String}
+    (h : mkOp nm ps = .error msg) :
+    ∃ msg', cOp nm (ps.map (fun p => vals.getD p 0.0)) = .error msg' := by
+  unfold mkOp at h
+  split at h
+  · split at h
+    · cases h
+    · rename_i ho
+      exact cOp_error_of_binOp_none ho _ _
+  · split at h
+    · cases h
+    · rename_i ho
+      exact cOp_error_of_unOp_none ho _
+  · rename_i hps2 hps1
+    apply cOp_error_of_arity
+    simp only [List.length_map]
+    constructor
+    · intro h1
+      obtain ⟨a, rfl⟩ := List.length_eq_one_iff.mp h1
+      exact hps1 a rfl
+    · intro h2
+      match ps, h2 with
+      | [a, b], _ => exact hps2 a b rfl
+
+/-- **Node law, the failing half.** Where the generator rejects a node, the interpreter's step
+rejects it too — against any slots, under any table function agreeing with the resolved tables. -/
+theorem stepValT_error_of_nodeSL_error {tbls : Array LutTable} {tables : String → Option LutTable}
+    (hT : TablesAgree tbls tables) (env : String → Float) (vals : Array Float)
+    {i : Nat} {n : Node Float} {msg : String} (h : nodeSL tbls i n = .error msg) :
+    ∃ msg', stepValT tables env vals n = .error msg' := by
+  unfold nodeSL at h
+  unfold stepValT
+  by_cases hp : n.parents.isEmpty = true
+  · rw [ite_eq_left hp] at h
+    cases hname : n.name with
+    | some nm => simp [hname] at h
+    | none => simp [hname] at h
+  · rw [ite_eq_right hp] at h ⊢
+    cases hname : n.name with
+    | none => exact ⟨_, rfl⟩
+    | some nm =>
+      simp only [hname] at h ⊢
+      cases htn : lutNodeName? nm with
+      | none =>
+        simp only [htn] at h
+        rw [cOpT_of_lutNodeName?_none tables htn, Array.toList_map]
+        exact cOp_error_of_mkOp_error vals h
+      | some tn =>
+        simp only [htn] at h
+        cases hfind : tbls.find? (·.name == tn) with
+        | none =>
+          simp only [cOpT, htn, hT tn, hfind]
+          exact cOp_error_of_none (binOp_ofName?_of_lut htn) (unOp_ofName?_of_lut htn) _
+        | some tbl =>
+          simp only [hfind] at h
+          cases hpar : n.parents.toList with
+          | nil =>
+            simp only [cOpT, htn, hT tn, hfind, Array.toList_map, hpar, List.map_nil]
+            exact ⟨_, rfl⟩
+          | cons l rest =>
+            cases rest with
+            | nil =>
+              simp only [cOpT, htn, hT tn, hfind, Array.toList_map, hpar, List.map_cons, List.map_nil]
+              exact ⟨_, rfl⟩
+            | cons u rest2 =>
+              cases rest2 with
+              | nil => simp [hpar] at h
+              | cons _ _ =>
+                simp only [cOpT, htn, hT tn, hfind, Array.toList_map, hpar, List.map_cons]
+                exact ⟨_, rfl⟩
+
+theorem foldlM_error_of_mapM_error {tbls : Array LutTable} {tables : String → Option LutTable}
+    (hT : TablesAgree tbls tables) (env : String → Float) :
+    ∀ (l : List (Node Float)) (i : Nat) (msg : String) (vals : Array Float),
+      (l.zipIdx i).mapM (fun p => nodeSL tbls p.2 p.1) = .error msg →
+      ∃ msg', l.foldlM (fun vals n => (stepValT tables env vals n).map (fun v => vals.push v)) vals
+        = .error msg' := by
+  intro l
+  induction l with
+  | nil =>
+    intro i msg vals h
+    simp only [List.zipIdx_nil, List.mapM_nil] at h
+    cases h
+  | cons hd tl ih =>
+    intro i msg vals h
+    rw [List.zipIdx_cons, List.mapM_cons] at h
+    cases hhd : nodeSL tbls i hd with
+    | error e =>
+      obtain ⟨m, hm⟩ := stepValT_error_of_nodeSL_error hT env vals hhd
+      rw [List.foldlM_cons, hm]
+      exact ⟨m, rfl⟩
+    | ok e =>
+      rw [hhd] at h
+      cases hrest : (tl.zipIdx (i + 1)).mapM (fun p => nodeSL tbls p.2 p.1) with
+      | ok es => rw [hrest] at h; simp [bind, Except.bind, pure, Except.pure] at h
+      | error e' =>
+        rw [List.foldlM_cons, nodeSL_denote hT env vals hhd]
+        simp only [Except.map, bind, Except.bind]
+        exact ih (i + 1) e' _ hrest
+
+/-- Where `genSL` fails, `evalTapeT` fails — at every environment. -/
+theorem evalTapeT_error_of_genSL_error {tbls : Array LutTable} {tables : String → Option LutTable}
+    (hT : TablesAgree tbls tables) (env : String → Float) {t : Tape Float} {msg : String}
+    (h : genSL t tbls = .error msg) :
+    ∃ msg', evalTapeT tables env t = .error msg' := by
+  unfold genSL at h
+  have h' : (t.nodes.toList.zipIdx 0).mapM (fun p => nodeSL tbls p.2 p.1) = .error msg := by
+    rw [← Array.toList_zipIdx, ← Array.toList_mapM, h]; rfl
+  rw [evalTapeT_eq_foldlM, ← Array.foldlM_toList]
+  exact foldlM_error_of_mapM_error hT env t.nodes.toList 0 msg #[] h'
+
+/-- **Completeness of the emitter.** `genSL` produces a program for a tape exactly when the
+interpreter runs it — the failing half of `genSL_denotes`: no tape the interpreter accepts is left
+un-emittable, and no program is emitted for a tape the interpreter rejects. Environment-independent
+on both sides, so stated at any `env`. -/
+theorem genSL_isOk_iff_evalTapeT {tbls : Array LutTable} {tables : String → Option LutTable}
+    (hT : TablesAgree tbls tables) (env : String → Float) (t : Tape Float) :
+    (genSL t tbls).isOk = (evalTapeT tables env t).isOk := by
+  cases hg : genSL t tbls with
+  | error msg =>
+    obtain ⟨m, hm⟩ := evalTapeT_error_of_genSL_error hT env hg
+    rw [hm]; rfl
+  | ok prog =>
+    rw [genSL_denotes hT env hg]; rfl
+
+/-- The table-free instance, against `evalTape`. -/
+theorem genSL_isOk_iff_evalTape (env : String → Float) (t : Tape Float) :
+    (genSL t #[]).isOk = (evalTape env t).isOk := by
+  rw [← evalTapeT_none]; exact genSL_isOk_iff_evalTapeT tablesAgree_empty env t
 
 /-! ### What the program's lines are — the argument-list and literal clauses as theorems
 

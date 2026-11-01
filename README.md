@@ -241,8 +241,9 @@ The **megakernel codegen backend** lives in the `Torch` library and is verified:
   (`min_eq_ite`/`max_eq_ite`), NaN-restoring `tl_sqrt`/`tl_log`, bit-pattern constants.
 - `PropertyKindCalculus.Torch.Paradigm.TapeStraightLine` — **one program, N printers**: the
   backend-neutral straight-line program `SL.genSL` reads off the tape (the only function that reads
-  it), its denotation `SL.run`, and the theorem `SL.genSL_denotes` that the program runs as `evalTapeT`
-  node for node — stated once for every backend; the C/CUDA (`printC`) and Julia (`printJulia`)
+  it), its denotation `SL.run`, the theorem `SL.genSL_denotes` that the program runs as `evalTapeT`
+  node for node, and its completeness `SL.genSL_isOk_iff_evalTapeT` (a program exists exactly when the
+  interpreter runs the tape) — stated once for every backend; the C/CUDA (`printC`) and Julia (`printJulia`)
   emitters are printers of that program, so the literal and input clauses are theorems about the
   emitted program, in both directions (`SL.genSL_lit_iff`/`SL.genSL_input_iff`), and the rendering
   tables are corollaries.
@@ -273,7 +274,8 @@ Status: ✅ done · 🚧 in progress · ⬜ planned
   the `≤`-ternary in C/CUDA and `ifelse` in Julia (`fminf`/`fmaxf`, which return the non-NaN operand,
   are gone); the C stub's and the CUDA helper's `lutfetch` clamp follow `refFetch` on NaN likewise.
   ✅ **The denotation of the rendering, for all backends** (`TapeStraightLine`): every emitter is a
-  printer of one straight-line program, `genSL_denotes` proves the program runs as `evalTapeT`, and
+  printer of one straight-line program, `genSL_denotes` proves the program runs as `evalTapeT`,
+  `genSL_isOk_iff_evalTapeT` that it exists exactly when the interpreter runs the tape, and
   `genSL_lit_iff`/`genSL_input_iff` make the "no naked number" clauses equivalences about the emitted program.
   ⬜ Run `julia_parity` in a CI lane with Julia installed.
   ⬜ First CliMA-shaped closure recorded over `[NumCarrier α]` to find the alphabet gaps (a bounded
