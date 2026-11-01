@@ -1335,9 +1335,11 @@ def main (args : List String) : IO UInt32 := do
   let start : System.FilePath := match a.root with | some d => d | none => cwd
   let some root ← findRoot start
     | IO.eprintln s!"hcp-check: {start} is not inside the PropertyKindCalculus checkout (no lakefile.lean with {chapterDir} at or above it; pass --root DIR)"; return 2
-  -- a relative --sbvr path is relative to the caller's directory, not the root
+  -- a relative --sbvr path is relative to the caller's directory, not the root; a bare name
+  -- (no directory component) is left to PATH
   let sbvr : Option String := a.sbvr.map fun (exe : String) =>
-    if (System.FilePath.mk exe).isAbsolute then exe else (cwd / exe).toString
+    if (System.FilePath.mk exe).isAbsolute || !exe.contains System.FilePath.pathSeparator then exe
+    else (cwd / exe).toString
   let mut snap ← snapshot root
   if snap.chapters.isEmpty then IO.eprintln "no HCPs found"; return 1
   if a.fixExcerpts then
