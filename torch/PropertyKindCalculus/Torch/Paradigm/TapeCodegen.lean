@@ -16,7 +16,7 @@ not cited — by the AI-accounting section below (`aiReport`/`intensity`), so a 
 eager-vs-fused roofline gap rather than asserting it.
 
 FAITHFULNESS. `evalTape` (`paradigm.tape_eval`) gives the generated kernel's denotation as a Float interpreter with the
-SAME scalar op-semantics the emitted C uses (`+ − × ÷`, `fminf`/`fmaxf`, `expf`/`logf`/`sqrtf`).
+SAME scalar op-semantics the emitted C uses (`+ − × ÷`, the `≤`-ternaries for `min`/`max`, `expf`/`logf`/`sqrtf`).
 By tape forward-value faithfulness (`paradigm.tape_faithful`/`paradigm.tape_parity`) the recorded
 tape's stored values already equal the source kernel at `Float`, so `evalTape` re-evaluated at any
 inputs equals the source kernel — the codegen changes only *where intermediates live* (registers vs
@@ -106,7 +106,12 @@ theorem evalTapeT_none (env : String → Float) (t : Tape Float) :
 
 /-! ### C expression for one op node -/
 
-/-- The C infix/`fminf`/`expf` expression for op `nm` on already-emitted parent temporaries. -/
+/-- The C infix/ternary/`expf` expression for op `nm` on already-emitted parent temporaries.
+`min`/`max` are the ternaries `(a <= b ? a : b)` / `(a <= b ? b : a)` — Lean's `Min Float`/`Max Float`
+(`minOfLe`/`maxOfLe`, `if x ≤ y then x else y`), which is what `cOp` computes, NaN cases included
+(`x ≤ y` is false when either is NaN, so `min` yields `b` and `max` yields `a`). `fminf`/`fmaxf` would
+return the non-NaN operand instead, a different function on NaN inputs; one reading across the
+interpreter and the three renderings (C, CUDA, Julia). -/
 def cExpr (nm : String) (ps : List Nat) : Except String String :=
   let v := fun (i : Nat) => s!"v{i}"
   match nm, ps with
@@ -114,8 +119,8 @@ def cExpr (nm : String) (ps : List Nat) : Except String String :=
   | "sub",  [a, b] => .ok s!"{v a} - {v b}"
   | "mul",  [a, b] => .ok s!"{v a} * {v b}"
   | "div",  [a, b] => .ok s!"{v a} / {v b}"
-  | "min",  [a, b] => .ok s!"fminf({v a}, {v b})"
-  | "max",  [a, b] => .ok s!"fmaxf({v a}, {v b})"
+  | "min",  [a, b] => .ok s!"({v a} <= {v b} ? {v a} : {v b})"
+  | "max",  [a, b] => .ok s!"({v a} <= {v b} ? {v b} : {v a})"
   | "exp",  [a]    => .ok s!"expf({v a})"
   | "log",  [a]    => .ok s!"logf({v a})"
   | "sqrt", [a]    => .ok s!"sqrtf({v a})"
@@ -277,22 +282,29 @@ def lutHelperCuda (cg : Codegen) : String :=
         [ "  float j = floorf(uc);"
         , "  float f = __fsub_rn(uc, j);"
         , "  float a = tex1DLayered<float>(tex, j + 0.5f, L);"
-        , "  float b = tex1DLayered<float>(tex, fminf(j + 1.0f, wmax) + 0.5f, L);"
+        , "  float b = tex1DLayered<float>(tex, (j + 1.0f <= wmax ? j + 1.0f : wmax) + 0.5f, L);"
         , "  return __fadd_rn(a, __fmul_rn(f, __fsub_rn(b, a)));" ]
     | .hardware => "  return tex1DLayered<float>(tex, uc + 0.5f, L);"
   String.intercalate "\n"
-    [ "__device__ __forceinline__ float tl_lutfetch(cudaTextureObject_t tex, int W, float layer, float u) {"
+    [ "__device__ __forceinline__ float tl_lutfetch(cudaTextureObject_t tex, int W, int LAYERS, float layer, float u) {"
     , "  float wmax = (float)(W - 1);"
-    , "  float uc = fminf(fmaxf(u, 0.0f), wmax);"
-    , "  int L = (int)(layer + 0.5f);"
+    , "  float um = (u <= wmax ? u : wmax);"
+    , "  float uc = (0.0f <= um ? um : 0.0f);"
+    , "  float lmax = (float)(LAYERS - 1);"
+    , "  float ls = layer + 0.5f;"
+    , "  float lm = (ls <= lmax ? ls : lmax);"
+    , "  float lc = (0.0f <= lm ? lm : 0.0f);"
+    , "  int L = (int)lc;"
     , body
     , "}"
-    , "#define TL_LUTFETCH(NAME, W, LAYERS, L, U) tl_lutfetch(tex_##NAME, W, L, U)"
+    , "#define TL_LUTFETCH(NAME, W, LAYERS, L, U) tl_lutfetch(tex_##NAME, W, LAYERS, L, U)"
     , "" ]
 
-/-- The stub-side `lutfetch` helper + macro: the same clamp/floor/lerp as a host loop over the
-baked table (point mode bit-identical to the device kernel; hardware mode emulates the 9-bit
-weight, tolerance-only). Empty when the kernel uses no tables. -/
+/-- The stub-side `lutfetch` helper + macro: `LutTable.refFetch`'s clamp/floor/lerp as a host loop over
+the baked table — the coordinate and the layer clamped with `max 0 (min x hi)` in Lean's `ite` reading
+(a NaN lands on `hi`, as `minOfLe` does; the layer is clamped as a float before it is truncated, so a
+huge finite layer cannot overflow the index; the CUDA helper clamps the layer the same way before its `int` conversion). Point mode bit-identical to the device kernel; hardware
+mode emulates the 9-bit weight, tolerance-only. Empty when the kernel uses no tables. -/
 def lutHelperStub (cg : Codegen) : String :=
   if cg.tables.isEmpty then "" else
   let quant := match cg.lutMode with
@@ -301,10 +313,13 @@ def lutHelperStub (cg : Codegen) : String :=
   String.intercalate "\n"
     [ "static float tl_lutfetch(const float* tab, int W, int LAYERS, float layer, float u) {"
     , "  float wmax = (float)(W - 1);"
-    , "  float uc = u < 0.0f ? 0.0f : (u > wmax ? wmax : u);"
-    , "  long L = (long)(layer + 0.5f);"
-    , "  if (L < 0) L = 0;"
-    , "  if (L > (long)LAYERS - 1) L = (long)LAYERS - 1;"
+    , "  float um = (u <= wmax ? u : wmax);"
+    , "  float uc = (0.0f <= um ? um : 0.0f);"
+    , "  float lmax = (float)(LAYERS - 1);"
+    , "  float ls = layer + 0.5f;"
+    , "  float lm = (ls <= lmax ? ls : lmax);"
+    , "  float lc = (0.0f <= lm ? lm : 0.0f);"
+    , "  long L = (long)lc;"
     , "  float j = floorf(uc);"
     , s!"  float f = uc - j;\n{quant}  const float* row = tab + (long)L * (long)W;"
     , "  long j0 = (long)j;"

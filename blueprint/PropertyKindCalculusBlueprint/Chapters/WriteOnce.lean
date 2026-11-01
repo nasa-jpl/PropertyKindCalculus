@@ -349,6 +349,76 @@ _where an intermediate lives_ (a register versus DRAM), never the arithmetic per
 pure memory-traffic elimination, orthogonal to the numerics. (Enabling contraction trades that exact
 identity for additional speed and a more-accurate-but-different result, a separate, quantified step.)
 
+## Julia, emitted — the sealed algorithm handed to a host that cannot call a theorem
+
+The strategies above keep the model inside Lean: every carrier is a Lean type, and the generated
+CUDA is launched from a Lean program. A model's consumer is often elsewhere. An Earth-system model
+written in Julia, a calibration pipeline, an analysis notebook can call a function it is handed; it
+cannot instantiate a `[NumCarrier α]` kernel or cite a theorem. The Julia emitter
+(`PropertyKindCalculus.Torch.Paradigm.TapeCodegenJulia`) is how a sealed algorithm reaches such a
+host: the same recorded, compacted tape the megakernel is lowered from is rendered as a Julia
+function — a plain host loop, the bit-exact twin, and a KernelAbstractions.jl `@kernel` the one `.jl`
+runs on CPU, CUDA, AMDGPU or Metal, the portability twin, which is tolerance-only because a backend may
+fuse `a·b + c` into a multiply-add (the CPU backend does, through PoCL) and a conditioned tail — the LM
+step's normal equations and Cholesky solve — amplifies that ulp a thousandfold while leaving the relative
+error near `1e-13`. It is not a fifth carrier. It is the fourth strategy's intermediate representation
+given a third surface syntax, beside the CUDA kernel and the C stub, so that what crosses into the
+host is the tape and nothing else.
+
+That last clause is the strategy. It rests on a theorem and on a reading of the emitter's
+definition, and the two are kept apart. The theorem is the seal of the computation
+({ref "capstones"}[the second capstone]), stated over the tape the emitter renders:
+every leaf in the backward cone of an output is either a named input or a baked constant the
+hypergraph's assumption ledger lists, two environments that agree on the influencers of an output
+give the same value at it, and every edge between observable vertices realizes one hop of one
+occurrence the source states, with the kinds that occurrence names — the kind-transporting weak
+bisimulation between the metrological provenance hypergraph and the computational tape graph. The
+reading is of `genJulia`: it adds no entry point to that picture — a Julia argument exists for
+exactly the named leaves (its input list is `collectInputs`, the function `gen` uses, name for
+name), a literal appears in the body for exactly the baked leaves (rendered from the double's bit
+pattern, so it _is_ the constant the ledger lists), and a line of the body is one node's operation
+on its parents, over the alphabet the Float interpreter `cOp` defines. Of that reading only the
+alphabet clause is a theorem today — `rendering_table_binary`/`rendering_table_unary` say the Julia
+expression exists exactly where the interpreter has a value, as `examples.tape_codegen_end_to_end`
+says of the C rendering; the capstone chapter's ledger names what would make the rest one. In the
+words a reviewer would use: _no naked number enters the Julia code
+beyond what the algorithm's contract admits_. An input the hypergraph says cannot reach an output
+does not reach it in the Julia function either, because the Julia function is the tape, and the
+statement was proved of the tape.
+
+What the emitter pins, so the generated file is in the regime the theorems describe (the header of
+every emitted file says the same):
+
+- no `@fastmath`, no `muladd` — Julia does not contract `a·b + c` to a fused multiply-add or
+  re-associate unless asked, which is the `nvcc --fmad=false` regime the megakernel is compiled in;
+- `min`/`max` are written out as `ifelse(a <= b, a, b)` / `ifelse(a <= b, b, a)`, which is Lean's
+  `Min Float`/`Max Float` (`minOfLe`/`maxOfLe`) to the letter, NaN cases included — the same
+  `≤`-ternary the C and CUDA renderings write, so the interpreter and all three renderings are one
+  function on NaN inputs (`fminf`/`fmaxf`, which return the non-NaN operand, are not used);
+- `sqrt` and `log` of a negative argument throw in Julia where IEEE returns a quiet NaN; the emitted
+  helpers restore the NaN and are the identity elsewhere;
+- precision is a type parameter `T`: at `Float64` the emitted function is bit-identical to `evalTape`
+  on the IEEE-exact alphabet, because Lean's `Float` _is_ binary64 — the first emitted target with no
+  narrowing at the boundary, where the CUDA kernel is `float` with `double ↔ float32` casts in its
+  launcher; at `Float32` it is the device kernel's precision.
+
+What it does not do, said plainly. It does not put the host's own code under the seal: the Julia
+model's dynamical core, time stepping and communication are the host's, and the seal says nothing
+about them. It does not certify Julia's compiler or its `exp`/`log`: those are the trusted base the
+target adds, named as such — LLVM compiling a straight-line function, and a third libm (pure-Julia
+`Base.Math`) beside glibc's and CUDA's. The honest check across that base is `apps.julia_parity`, and its
+scope is the three recorded tapes it carries — the AVS residual and Jacobian, the whole projected
+LM step, and the table-fetch model of `examples.tape_codegen_lut` — not every kernel the emitter
+could be given: each emitted file is run under `julia` at `Float64` over deterministic pixels
+against the tape evaluator, bit-identical on every output whose cone has no `exp`/`log`, within an
+ulp bound on the outputs whose cone does. A new closure earns the same check by being added as a
+case.
+And it covers the tape's program class and no more — a branchless, fixed-shape computational tape graph over
+ten operations and a table fetch, with reductions only when unrolled — so a closure with a
+data-dependent loop, a runtime-size reduction or a stencil is outside it today; the first such
+closure recorded against `[NumCarrier α]` is what tells which operation to add to the alphabet, each
+with its interpreter case, its two renderings and its rendering-table row.
+
 ## Recording carriers are deferred — share loop-carried state or the graph explodes
 
 The megakernel strategy carries one authoring hazard worth stating on its own, because it is a
@@ -427,7 +497,7 @@ platform records, so the shapes are checked facts under the same CI as the parit
 
 ## The through-line
 
-The four strategies are one source. The single-threaded baseline runs anything and is the oracle; the
+The four strategies are one source, and the Julia emitter is that source handed out: not a strategy of its own but the recorded intermediate representation of the fourth given to a host that runs Julia, with the seal of the computation travelling with it because the host receives the tape and nothing else. The single-threaded baseline runs anything and is the oracle; the
 multi-threaded and both GPU strategies trade a structural demand on the model — independence and good
 arithmetic intensity, and for the megakernel, register-fittability — for progressively more of the
 hardware's peak. What licenses the automatic parallelization and fusion of the latter three is not a

@@ -255,8 +255,10 @@ Status: ✅ done · 🚧 in progress · ⬜ planned
 - ✅ AVS residual/Jacobian recorded → CSE DAG → codegen → CPU bit-exact `#guard` (`TapeCodegenDemo`).
 - ✅ Recorder faithfulness proved for all inputs, axiom-audited (`TapeCodegenProof`).
 - ✅ **Julia emitter** beside the CUDA/C pair (`TapeCodegenJulia`), rendering table proved, `julia_parity`
-  exe. ⬜ Settle one `min`/`max` NaN semantics across `cOp`, `cExpr` (`fminf` returns the non-NaN
-  operand) and `jlExpr` (Lean's `ite`). ⬜ Run `julia_parity` in a CI lane with Julia installed.
+  exe. ✅ One `min`/`max` NaN semantics across `cOp`, `cExpr` and `jlExpr` — Lean's `ite`, written as
+  the `≤`-ternary in C/CUDA and `ifelse` in Julia (`fminf`/`fmaxf`, which return the non-NaN operand,
+  are gone); the C stub's and the CUDA helper's `lutfetch` clamp follow `refFetch` on NaN likewise.
+  ⬜ Run `julia_parity` in a CI lane with Julia installed.
   ⬜ First CliMA-shaped closure recorded over `[NumCarrier α]` to find the alphabet gaps (a bounded
   reduction and a gather are the expected first two).
 - ✅ **Recorded the *whole* trust-region step, not just the residual/Jacobian fragment**

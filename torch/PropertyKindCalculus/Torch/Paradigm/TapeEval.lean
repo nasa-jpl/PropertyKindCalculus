@@ -3,7 +3,7 @@
 graph (`ofTape`), and the value characterisation the cone lemma and the megakernel codegen rest on.
 
 `evalTape env t` re-evaluates a recorded tape at `Float` with the SAME scalar op-semantics the
-emitted CUDA/C kernel uses (`+ − × ÷`, `fminf`/`fmaxf`, `expf`/`logf`/`sqrtf`): named leaves read
+emitted CUDA/C kernel uses (`+ − × ÷`, the `≤`-ternaries for `min`/`max` — Lean's `minOfLe`/`maxOfLe`, NaN included — `expf`/`logf`/`sqrtf`): named leaves read
 from `env`, constant leaves keep their stored value, an op node applies its scalar to its parents'
 values. It is the denotation the codegen (`paradigm.tape_codegen`) must match, the CPU-side
 bit-exact validator, and — by tape forward-value faithfulness (`paradigm.tape_parity`) — equal at
@@ -58,8 +58,8 @@ def cOp (nm : String) (args : List Float) : Except String Float :=
   | "sub",  [a, b] => .ok (a - b)
   | "mul",  [a, b] => .ok (a * b)
   | "div",  [a, b] => .ok (a / b)
-  | "min",  [a, b] => .ok (Min.min a b)   -- fminf
-  | "max",  [a, b] => .ok (Max.max a b)   -- fmaxf
+  | "min",  [a, b] => .ok (Min.min a b)   -- (a <= b ? a : b), Lean's minOfLe
+  | "max",  [a, b] => .ok (Max.max a b)   -- (a <= b ? b : a), Lean's maxOfLe
   | "exp",  [a]    => .ok (Float.exp a)   -- expf
   | "log",  [a]    => .ok (Float.log a)   -- logf
   | "sqrt", [a]    => .ok (Float.sqrt a)  -- sqrtf
