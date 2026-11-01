@@ -573,7 +573,10 @@ per node (a read of a named input, an exact literal, an alphabet operation on ea
 table fetch); `SL.run` gives the program its meaning in Lean's `Float`, with `cOp`'s own clauses
 (`BinOp.cOp_eval`, `UnOp.cOp_eval`). The theorem: if `genSL` produces a program for a tape, the
 table-extended interpreter `evalTapeT` succeeds on that tape and returns exactly `SL.run` of the
-program — slot `i` of the emitted kernel denotes node `i` of the tape, for every node. With it the
+program — slot `i` of the emitted kernel denotes node `i` of the tape, for every node; and
+conversely (`SL.genSL_isOk_iff_evalTapeT`) `genSL` produces a program exactly when the interpreter
+runs the tape, so no tape the seal is stated over is left un-emittable and no program is emitted for
+a tape the interpreter rejects. With it the
 two clauses the previous reading of this node could only describe are theorems about the program:
 a literal occurs in the emitted body exactly at an unnamed leaf and is that leaf's stored scalar
 (`SL.genSL_lit_iff`), an input read exactly at a named leaf with that leaf's name
@@ -608,7 +611,10 @@ agreement of the resolved tables with the interpreter's table function and the o
 `cOp_eval` clauses through `mkOp_denote`. The fold law `foldlM_run_aux` lifts the node law along
 the list of nodes `mapM` produced lines for, by induction with the slot array generalised; the
 theorem is its instance at the empty array, read back through `Array.foldlM_toList` and
-`Array.toList_mapM`. The literal and input clauses read slot `i` of the program back to node `i`
+`Array.toList_mapM`. Completeness is the same induction on the failing side: `mkOp` fails only where
+`cOp` fails (`cOp_error_of_mkOp_error`, by splitting the interpreter's string match), a fetch fails
+only where `cOpT` does, and a failing `mapM` makes the fold fail (`foldlM_error_of_mapM_error`). The
+literal and input clauses read slot `i` of the program back to node `i`
 (`genSL_getElem?`, a `mapM`-indexing lemma) and case on the generator; their converses read node
 `i` forward to slot `i` (`genSL_getElem?_of_node`, the same lemma the other way) and unfold the
 generator on a leaf.
@@ -707,8 +713,9 @@ command does by elaboration and the theorem takes as a hypothesis.
   tape; the `julia_parity` executable that runs the emitted file against the tape evaluator.
 - The denotation of the rendering, for every backend at once: the one straight-line program
   `genSL` reads off the tape, the three emitters as printers of it, `genSL_denotes` (the program
-  runs as `evalTapeT`, node for node) and the literal and input clauses `genSL_lit_iff`/`genSL_input_iff`
-  as equivalences about the emitted program.
+  runs as `evalTapeT`, node for node), its completeness (`genSL_isOk_iff_evalTapeT`: a program exists
+  exactly when the interpreter runs the tape) and the literal and input clauses
+  `genSL_lit_iff`/`genSL_input_iff` as equivalences about the emitted program.
 - One `min`/`max` reading on NaN across the interpreter and the three renderings: Lean's `ite`,
   written as the `≤`-ternary in C and CUDA and as `ifelse` in Julia; the table fetch's clamp likewise
   follows `refFetch` in every rendering.

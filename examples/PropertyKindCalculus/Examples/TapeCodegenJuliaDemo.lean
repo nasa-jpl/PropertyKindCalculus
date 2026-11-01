@@ -67,12 +67,16 @@ def coverage : Bool :=
 #guard sameAbi
 
 /-! The denotation of the rendering, axiom-audited: the one program every backend prints runs as
-the tape (`SL.genSL_denotes`), its literals are exactly the tape's baked leaves (`SL.genSL_lit_iff`),
+the tape (`SL.genSL_denotes`) and exists exactly when the tape runs (`SL.genSL_isOk_iff_evalTapeT`),
+its literals are exactly the tape's baked leaves (`SL.genSL_lit_iff`),
 its input reads exactly the tape's named leaves (`SL.genSL_input_iff`); the Julia body is that program printed
 (`julia_body_denotes`). Nothing beyond the standard three. -/
 
 /-- info: 'PropertyKindCalculus.Paradigm.TapeCodegen.SL.genSL_denotes' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in #print axioms SL.genSL_denotes
+
+/-- info: 'PropertyKindCalculus.Paradigm.TapeCodegen.SL.genSL_isOk_iff_evalTapeT' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in #print axioms SL.genSL_isOk_iff_evalTapeT
 
 /-- info: 'PropertyKindCalculus.Paradigm.TapeCodegen.SL.genSL_lit_iff' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in #print axioms SL.genSL_lit_iff
