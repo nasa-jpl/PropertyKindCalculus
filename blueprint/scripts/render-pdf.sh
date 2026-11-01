@@ -41,7 +41,7 @@ trap 'rm -f "$MERGED"' EXIT
 echo "Generating PDF: $PDF"
 mkdir -p "$(dirname "$PDF")"
 "${WEASY[@]}" "$MERGED" "$PDF"
-echo "PDF generated: $PDF ($(( $(stat -c %s "$PDF") / 1024 )) KB)"
+echo "PDF generated: $PDF ($(( $(wc -c < "$PDF") / 1024 )) KB)"
 
 cp "$PDF" "$OUT/html-single/$PDF_NAME"
 cp "$PDF" "$OUT/html-multi/$PDF_NAME"

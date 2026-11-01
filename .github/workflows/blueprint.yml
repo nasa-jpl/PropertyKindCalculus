@@ -128,6 +128,18 @@ jobs:
       # -------------------------------------------------------
       # Phase 1b: Build every library and executable the package declares.
       # -------------------------------------------------------
+      - name: The print pass renders the fixture site as committed
+        # tools/fixtures/blueprint-print: a small multi-page site exercising the
+        # table-of-contents ordering, every pruning rule, nested drops, valueless
+        # attributes and the character references; expected.html is what the Python
+        # pass wrote for it (byte-identical), expected.stderr its nesting report. A
+        # change to tools/Tools/BlueprintPrint.lean that moves either fails here,
+        # with no WeasyPrint involved.
+        run: |
+          lake exe blueprint-print tools/fixtures/blueprint-print/site /tmp/print-fixture.html 2>/tmp/print-fixture.stderr
+          cmp /tmp/print-fixture.html tools/fixtures/blueprint-print/expected.html
+          cmp /tmp/print-fixture.stderr tools/fixtures/blueprint-print/expected.stderr
+
       - name: Build every declared target
         run: |
           # `scripts/build-all-libs-examples.sh` derives its target list from the

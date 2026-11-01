@@ -145,7 +145,9 @@ Anything a tool does outside this list is a defect of the tool, not an extension
    the table-of-contents ordering, every pruning rule and the character references; the tokenizer
    reproduces Python's `html.parser` as the pass used it, with CPython's `html5` entity table embedded.
    `render-pdf.sh` runs it and then WeasyPrint's own command line through pixi — no Python file is
-   left under `blueprint/`.
+   left under `blueprint/`. The synthetic site is committed as `tools/fixtures/blueprint-print/` with
+   the page and stderr the Python wrote for it; CI renders it and `cmp`s both, a drift gate that needs
+   no WeasyPrint.
 7. Delete `scripts/*.py`, `HCP/check-hcp.py`, `blueprint/scripts/**/*.py`; `blueprint/pyproject.toml`
    keeps only WeasyPrint, run as `weasyprint` (its command line), not through a script.
 
