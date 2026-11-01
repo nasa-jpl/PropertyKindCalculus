@@ -300,7 +300,9 @@ Status: ✅ done · 🚧 in progress · ⬜ planned
   ✅ **The runtime adequacy carrier is certified** (`Uncertainty.Adequacy32`): the adequacy checks over
   `Float32`, whose `absorbs`-shaped swamping flag is proved to be `round₃₂`'s verdict
   (`Adequacy32.add_flag_sound`: core's `Float32.Model` → FloatLib's `ofFloat32_add_of_isFinite` →
-  `ExecBridge.exec_verdict_sound`); the binary64 `Adequacy` stays the illustrative mirror, its `ulp32`
+  `ExecBridge.exec_verdict_sound`) — the flagged-`+` direction only: a raised flag means an absorbed
+  uncertainty; a clean report and the cancellation flag are not certified at runtime; the coupled API
+  gets the certified route `analyzeQ32`; the binary64 `Adequacy` stays the illustrative mirror, its `ulp32`
   read off the exponent bits instead of the `opaque` `log2`/`exp2`.
   ✅ `julia_parity --ka` runs in CI (`blueprint.yml`, after the CudaT parity harnesses): Julia 1.10.12 from a
   checksum-pinned release tarball, KernelAbstractions 0.10.4 and its transitive packages locked by the

@@ -39,6 +39,7 @@ Depends on TorchLean (the tape carrier, via `Sensitivity`); lives in `Uncertaint
 module
 
 public import PropertyKindCalculus.Uncertainty.Adequacy
+public import PropertyKindCalculus.Uncertainty.Adequacy32
 public import PropertyKindCalculus.Uncertainty.Sensitivity
 public import PropertyKindCalculus.Uncertainty.Budget
 
@@ -115,6 +116,66 @@ def analyzeQ {kO kI kS : KindOfProperty} (h : ProductKind kS kI kO)
     contributionQ h (sensitivityQ (kS := kS) c) (stdUncQ (k := kI) d.moments)
   let verdict := model (α := Adequacy) (adequacyInputs inputs)
   pure { contributions := contribs, combined := combinedQ contribs, verdict := verdict }
+
+/-! ## The certified route — descriptors at binary32, verdict at `Adequacy32`
+
+`analyzeQ` runs the verdict at the illustrative binary64 `Adequacy`. When the inputs *are* binary32
+quantities, the same coupling can run its verdict at the certified carrier: the GUM budget is still
+formed at `Float` (binary64 is the right carrier for the budget arithmetic, and every binary32 value
+is exactly a binary64 one — `widen` is `Float32.toFloat`, a value conversion that is not part of any
+verdict), while the adequacy verdict is seeded from the binary32 descriptors directly and carries
+`Adequacy32.add_flag_sound`. -/
+
+/-- A binary32 descriptor read as a binary64 one — exact (`Float32 ⊂ Float`), for the budget side. -/
+def InputDist.widen (d : InputDist Float32) : InputDist Float :=
+  { moments := { mean := d.moments.mean.toFloat, variance := d.moments.variance.toFloat,
+                 fourthCumulant := d.moments.fourthCumulant.toFloat,
+                 thirdCumulant := d.moments.thirdCumulant.toFloat },
+    support := d.support.map fun (lo, hi) => (lo.toFloat, hi.toFloat),
+    invCDF := d.invCDF }
+
+/-- Seed one `Adequacy32` input from a binary32 descriptor: value `E(Xᵢ)`, uncertainty `√variance`
+(`stdUnc` at `Float32`). -/
+def ofInputDist32 (d : InputDist Float32) : Adequacy32 :=
+  Adequacy32.input d.moments.mean (Float32.sqrt d.moments.variance)
+
+/-- Seed the full positional input list at the certified carrier. -/
+def adequacyInputs32 (inputs : List (InputDist Float32)) : List Adequacy32 :=
+  inputs.map ofInputDist32
+
+/-- `CouplingResultQ` with the verdict at the certified carrier. -/
+structure CouplingResultQ32 (kO : KindOfProperty) where
+  /-- Per-input GUM contributions `uᵢ(y) = |cᵢ|·u(xᵢ)`, in output units (`Quantity kₒ`). -/
+  contributions : List (Quantity kO Float)
+  /-- Combined standard uncertainty `u_c(y) = √(Σ uᵢ(y)²)`, in output units. -/
+  combined : Quantity kO Float
+  /-- The verdict of the same model at genuine binary32, seeded from the same descriptors;
+  a raised swamping flag is certified (`Adequacy32.add_flag_sound`). -/
+  verdict : Adequacy32
+
+/-- **The Stage-3.4 driver with the certified verdict.** `analyzeQ`'s budget (sensitivities by one
+reverse pass at `TapeBuilder .scalar` over the widened descriptors, kinded contributions and
+combined uncertainty) with the adequacy verdict run at `Adequacy32` from the binary32 descriptors. -/
+def analyzeQ32 {kO kI kS : KindOfProperty} (h : ProductKind kS kI kO)
+    (model : ListModel) (inputs : List (InputDist Float32)) :
+    Except String (CouplingResultQ32 kO) := do
+  let wide := inputs.map InputDist.widen
+  let cs ← Sensitivity.gradient (model (α := TapeBuilder Shape.scalar))
+    (wide.map fun d => d.moments.mean)
+  let contribs := (cs.zip wide).map fun (c, d) =>
+    contributionQ h (sensitivityQ (kS := kS) c) (stdUncQ (k := kI) d.moments)
+  let verdict := model (α := Adequacy32) (adequacyInputs32 inputs)
+  pure { contributions := contribs, combined := combinedQ contribs, verdict := verdict }
+
+/-- The certified route's budget is `analyzeQ`'s budget on the widened descriptors. -/
+theorem analyzeQ32_budget {kO kI kS : KindOfProperty} (h : ProductKind kS kI kO)
+    (model : ListModel) (inputs : List (InputDist Float32)) :
+    (analyzeQ32 h model inputs).map (fun r => (r.contributions, r.combined)) =
+      (analyzeQ h model (inputs.map InputDist.widen)).map (fun r => (r.contributions, r.combined)) := by
+  unfold analyzeQ32 analyzeQ
+  dsimp only
+  cases hg : Sensitivity.gradient (model (α := TapeBuilder Shape.scalar))
+    ((inputs.map InputDist.widen).map fun d => d.moments.mean) <;> rfl
 
 /-! ## Seeding faithfulness — the carrier reads exactly the descriptor -/
 

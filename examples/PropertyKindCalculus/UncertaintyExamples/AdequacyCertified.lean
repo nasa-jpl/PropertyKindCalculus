@@ -26,8 +26,12 @@ module
 
 public import PropertyKindCalculus.Uncertainty
 public import PropertyKindCalculus.Uncertainty.Adequacy32
+public import PropertyKindCalculus.Uncertainty.Adequacy.Significance
+public import PropertyKindCalculus.UncertaintyExamples.AdequacyCoupling
 meta import PropertyKindCalculus.Uncertainty
 meta import PropertyKindCalculus.Uncertainty.Adequacy32
+meta import PropertyKindCalculus.Uncertainty.Adequacy.Significance
+meta import PropertyKindCalculus.UncertaintyExamples.AdequacyCoupling
 
 @[expose] public section Blanket
 
@@ -108,6 +112,42 @@ theorem tieEven_round32 :
           (FloatLib.Floats.ExecFloat.Binary.toModel (FloatLib.Floats.ExecFloat.Binary.ofFloat32 halfUlpAtOne32)).toReal) =
       (FloatLib.Floats.ExecFloat.Binary.toModel (FloatLib.Floats.ExecFloat.Binary.ofFloat32 (1.0 : Float32))).toReal :=
   Adequacy32.add_flag_sound (by native_decide) (by native_decide) (by native_decide)
+
+/-! ## The coupled API, certified route — `analyzeQ32` on the Degenhardt model
+
+`Adequacy.analyzeQ` (Stage 3.4) runs its verdict at the illustrative carrier. `analyzeQ32` takes
+binary32 descriptors, forms the same kinded GUM budget on their exact binary64 widening
+(`analyzeQ32_budget`), and runs the verdict at `Adequacy32`. The Degenhardt descriptors are binary64
+here, so this run *quantises* them to binary32 first (`narrow`, through `Float.toFloat32` — a
+rounding, which is the real situation when a binary64 descriptor meets a binary32 pipeline). -/
+
+open PropertyKindCalculus.UncertaintyExamples.AdequacyCoupling (hSensY degenModel)
+open PropertyKindCalculus.UncertaintyExamples.DegenhardtFictive (x1 x2 x3 measurandY)
+
+/-- A binary64 descriptor quantised to binary32 (round-to-nearest on each moment). -/
+def narrow (d : InputDist Float) : InputDist Float32 :=
+  { moments := { mean := d.moments.mean.toFloat32, variance := d.moments.variance.toFloat32,
+                 fourthCumulant := d.moments.fourthCumulant.toFloat32,
+                 thirdCumulant := d.moments.thirdCumulant.toFloat32 },
+    support := d.support.map fun (lo, hi) => (lo.toFloat32, hi.toFloat32),
+    invCDF := d.invCDF }
+
+/-- The certified coupling on the quantised Degenhardt descriptors. -/
+def couplingY32 : Except String (Adequacy.CouplingResultQ32 measurandY) :=
+  Adequacy.analyzeQ32 hSensY degenModel ([x1, x2, x3].map narrow)
+
+def contribMagsY32 : List Float :=
+  couplingY32.toOption.map (fun r => r.contributions.map (·.magnitude)) |>.getD []
+def adequateY32 : Bool :=
+  couplingY32.toOption.map (fun r => Adequacy32.isAdequate r.verdict) |>.getD false
+
+#eval s!"Degenhardt at binary32: contributions cᵢ·uᵢ = {contribMagsY32}   adequate? {adequateY32}"
+
+-- The run succeeds, its verdict at genuine binary32 is clean (no absorption, no cancellation),
+-- and the budget matches the binary64 coupling's to the binary32 quantisation of the descriptors.
+#guard couplingY32.isOk
+#guard adequateY32 == true
+#guard (contribMagsY32.zip AdequacyCoupling.contribMagsY).all fun (a, b) => Float.abs (a - b) < 1e-6
 
 end PropertyKindCalculus.UncertaintyExamples.AdequacyCertified
 

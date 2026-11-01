@@ -16,6 +16,13 @@ the sum unchanged* — so `add_flag_sound` is a theorem, not a mapping: when the
 operands, the exact real sum rounds back under `round₃₂`. No `log2`/`exp2` (the `opaque` externs)
 appear. What stays trusted is exactly what FloatLib names: the compiled `lean_float32_*` primitives
 agree with `Float32.Model`.
+
+**What "certified" promises, exactly.** `add_flag_sound` is the flagged-`+` direction of A3: *when the
+swamping flag fires on finite operands, the uncertainty was absorbed* (`round₃₂ (v + δ) = v`). It does
+not certify a *clean* report (no theorem says an unflagged `+` kept the uncertainty), and the
+cancellation flag at `−` is the same decidable rule as `Adequacy.sub`, backed by the `ℝ`-level
+`Sterbenz32.relUnc_amplifies` but not by a runtime theorem. The value arithmetic is genuine binary32
+throughout; the certificate is about the flag.
 -/
 
 module

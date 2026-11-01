@@ -694,7 +694,10 @@ rounds back under $`\mathrm{round}_{32}`: $`\mathrm{round}_{32}(v + δ) = v`. So
 run *emits* — not a verdict on a model of the runtime — is the specified
 {uses "thm_uq_adequacy_verdict"}[A3] one, through {uses "thm_uq_exec_bridge"}[the executable↔spec bridge].
 No `log2`/`exp2` (the `opaque` externs) appears; what stays trusted is exactly what FloatLib names:
-the compiled `lean_float32_*` primitives agree with core's `Float32.Model`.
+the compiled `lean_float32_*` primitives agree with core's `Float32.Model`. The certificate is exactly
+the flagged-`+` direction of {uses "thm_uq_adequacy_verdict"}[A3]: a raised flag means an absorbed
+uncertainty. It does not certify a *clean* report, and the cancellation flag at `−` remains the
+decidable rule backed by the $`ℝ`-level Sterbenz theorems, not by a runtime theorem.
 
 *Uncertified vs. certified, made visible.* The binary64 `Adequacy` carrier's verdict is a claim about
 a *picture*: a binary64 sum compared with an emulated binary32 spacing under the rule of thumb
@@ -735,7 +738,9 @@ adequacy-checked at the scale its own uncertainty defines, with the roles kept d
 :::
 
 :::proof "def_uq_significance"
-Realized (Stage 3.4, `Adequacy.Significance.analyzeQ` over `Uncertainty.Budget`). The three budget
+Realized (Stage 3.4, `Adequacy.Significance.analyzeQ` over `Uncertainty.Budget`; `analyzeQ32` is the
+certified route — binary32 descriptors, the same budget on their exact widening, `analyzeQ32_budget`,
+and the verdict at `Adequacy32`). The three budget
 roles get kinds (`stdUncQ`, `sensitivityQ`, `contributionQ` gated by `ProductKind kₛ kᵢ kₒ`,
 `combinedQ`); the model stays carrier-raw, so no kinded autograd is needed — the kinds are the
 caller-declared overlay on the budget. On the Degenhardt descriptors the coupling reproduces
