@@ -72,14 +72,16 @@ namespace LutTable
 /-- The fp64 reference semantics of one fetch: clamp `u` to `[0, width−1]`, clamp the
 integral-valued `layer` to `[0, layers−1]`, floor, and linearly interpolate — the uniform-grid
 analogue of `np.interp`, and the `evalTapeT` denotation of a recorded `lutfetch` node. The
-deployed fp32 kernels (point mode) compute exactly this in float32. -/
+hi-first minima preserve NaN until the zero floor maps a NaN coordinate to sample 0 and a NaN
+layer to layer 0 for nonempty tables. The deployed fp32 kernels (point mode) compute exactly this
+in float32. -/
 def refFetch (tbl : LutTable) (layer u : Float) : Float :=
   if tbl.width == 0 || tbl.layers == 0 then 0.0
   else Id.run do
     let wmax := Float.ofNat (tbl.width - 1)
-    let uc := max 0.0 (min u wmax)
+    let uc := max 0.0 (min wmax u)
     let lmax := Float.ofNat (tbl.layers - 1)
-    let lc := max 0.0 (min (layer + 0.5) lmax)
+    let lc := max 0.0 (min lmax (layer + 0.5))
     let L := lc.toUInt64.toNat
     let j := uc.floor
     let f := uc - j

@@ -8,9 +8,8 @@ Inhabitation, boundary, and axiom-profile probes for `LowerBound`/`UpperBound`/`
     error), and the scale gate genuinely excludes a nominal kind;
   * the directional Prop formers state only their own orientation, and membership /
     orderedness are inhabited at concrete witnesses over `Int`;
-  * `IccQ.clamp` computes with the deployed association `min (max x lo) hi` — pinned
-    against the *other* association's tell-tale case so a silent switch to
-    `Quantity.clamp`'s `max lo (min hi x)` would fail here.
+  * `IccQ.clamp` agrees with `Quantity.clamp`, and a `Float` NaN is sent to the lower
+    bound.
 -/
 
 module
@@ -40,12 +39,16 @@ example : (box.clamp ⟨-3⟩).magnitude = 0 := rfl
 example : (box.clamp ⟨5⟩).magnitude = 5 := rfl
 example : (box.clamp ⟨12⟩).magnitude = 10 := rfl
 
--- Association pin (load-bearing for bit-exact erasure): on the degenerate box
--- `lo > hi`, `min (max x lo) hi` pins to `hi` where `Quantity.clamp`'s
--- `max lo (min hi x)` would pin to `lo` — so a silent switch of association cannot
--- land. (Degenerate on purpose: the two associations agree on every proper box.)
-example : ((IccQ.of (⟨10⟩ : Quantity lengthK Int) ⟨0⟩).clamp ⟨5⟩).magnitude = 0 := rfl
+-- The interval and quantity APIs use the same association, including on a degenerate box.
+example : ((IccQ.of (⟨10⟩ : Quantity lengthK Int) ⟨0⟩).clamp ⟨5⟩).magnitude = 10 := rfl
 example : (Quantity.clamp (⟨10⟩ : Quantity lengthK Int) ⟨0⟩ ⟨5⟩).magnitude = 10 := rfl
+
+def floatBox : IccQ lengthK Float := IccQ.of ⟨0.0⟩ ⟨10.0⟩
+
+#guard (floatBox.clamp ⟨Float.nan⟩).magnitude == 0.0
+#guard (floatBox.clamp ⟨-3.0⟩).magnitude == 0.0
+#guard (floatBox.clamp ⟨5.0⟩).magnitude == 5.0
+#guard (floatBox.clamp ⟨12.0⟩).magnitude == 10.0
 
 -- Membership and orderedness are inhabited at concrete witnesses, through the
 -- directional formers only (`show` reduces each former to its concrete `Int` fact).

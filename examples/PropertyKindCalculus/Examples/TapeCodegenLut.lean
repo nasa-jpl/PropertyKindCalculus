@@ -37,6 +37,8 @@ module
 
 public import PropertyKindCalculus.Torch.Paradigm.TapeCodegen
 meta import PropertyKindCalculus.Torch.Paradigm.TapeCodegen
+public import PropertyKindCalculus.Torch.Paradigm.TapeCodegenJulia
+meta import PropertyKindCalculus.Torch.Paradigm.TapeCodegenJulia
 
 @[expose] public section Blanket
 
@@ -45,6 +47,7 @@ open Runtime.Autograd (Tape TapeM)
 open PropertyKindCalculus.Paradigm (TapeBuilder NumCarrier LutTable LutInterp lutNodeName?)
 open PropertyKindCalculus.Paradigm.TapeCSE (cseCompact)
 open PropertyKindCalculus.Paradigm.TapeCodegen
+open PropertyKindCalculus.Paradigm.TapeCodegen.Julia
 
 namespace PropertyKindCalculus.Examples.TapeCodegenLut
 
@@ -59,6 +62,13 @@ def demoLut : LutTable :=
 def demoLut2 : LutTable :=
   { name := "demolut2", width := 5, layers := 2
   , values := #[1.0, 1.5, 3.0, 5.5, 9.0,  11.0, 10.0, 8.0, 5.0, 1.0] }
+
+/-- NaN coordinates select sample 0, and NaN layers select layer 0. -/
+def lutNaNClampsToLowerBounds : Bool :=
+  demoLut.refFetch 0.0 Float.nan == demoLut.refFetch 0.0 0.0
+    && demoLut.refFetch Float.nan 2.0 == demoLut.refFetch 0.0 2.0
+
+#guard lutNaNClampsToLowerBounds
 
 /-- Written once over BOTH classes: the fetch plus ordinary arithmetic. The `[LutInterp α]`
 context is the point — the model's dependence on tabulated data is visible in its type. -/
@@ -161,11 +171,13 @@ def lutLandingHolds : Bool :=
   match lutRecord with
   | .error _ => false
   | .ok (t, id) =>
-    match gen t [id] #[demoLut] .point, gen t [id] #[demoLut] .hardware with
-    | .ok cgP, .ok cgH =>
+    match gen t [id] #[demoLut] .point, gen t [id] #[demoLut] .hardware,
+        genJulia t [id] #[demoLut] .point with
+    | .ok cgP, .ok cgH, .ok jl =>
       let cuP := emitCudaLanding "lut_demo" cgP
       let stP := emitStubLanding "lut_demo" cgP
       let cuH := emitCudaLanding "lut_demo" cgH
+      let jlText := emitJulia "lut_demo" jl
       (launchArgList cgP).length == (kernelParamList cgP).length
         && (stubParamList cgP).length == (kernelParamList cgP).length
         && (launchArgList cgP).length == cgP.inputs.size + cgP.tables.size + 2
@@ -174,6 +186,8 @@ def lutLandingHolds : Bool :=
         && hasSub cuP "tl_get_tex_demolut"
         && hasSub cuP "tex1DLayered<float>"
         && hasSub cuP "__fmul_rn"                 -- point mode: explicit lerp
+        && hasSub cuP "float um = (wmax <= u ? wmax : u)"
+        && hasSub cuP "float lm = (lmax <= ls ? lmax : ls)"
         && hasSub cuP "cudaFilterModePoint"
         && hasSub cuH "cudaFilterModeLinear"      -- hardware mode: filtered fetch,
         && !(hasSub cuH "__fmul_rn")              -- no ALU lerp
@@ -181,7 +195,11 @@ def lutLandingHolds : Bool :=
         && hasSub stP "lut_demo_launch"
         && hasSub cuP "lut_demo_launch"
         && hasSub stP "TL_LUTFETCH"
-    | _, _ => false
+        && hasSub stP "float um = (wmax <= u ? wmax : u)"
+        && hasSub stP "float lm = (lmax <= ls ? lmax : ls)"
+        && hasSub jlText "um = ifelse(wmax <= u, wmax, u)"
+        && hasSub jlText "lm = ifelse(lmax <= ls, lmax, ls)"
+    | _, _, _ => false
 
 #guard lutLandingHolds
 
