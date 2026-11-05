@@ -143,7 +143,8 @@ instance {s : Shape} : LutInterp (TapeBuilder s) where
 /-- The executing device instance: one layered table lookup through TorchLean's LibTorch
 primitives (the bit-reproducible float32 twin of `refFetch`). The table upload is per call —
 parity-check economics; deployments that care upload once via TorchLean or land the megakernel.
-An empty table (no samples or no layers) reads as `0`, as `refFetch` does. -/
+An empty table (no samples or no layers) reads as `0`, as `refFetch` does. `tableSegments` clamps
+with the backend's `clamp`, so a NaN coordinate or layer selects sample 0 or layer 0, as in `refFetch`. -/
 instance {s : Shape} : LutInterp (CudaCarrier.CudaT s) where
   lutFetch tbl layer u :=
     if tbl.width == 0 || tbl.layers == 0 then CudaCarrier.CudaT.const 0.0
