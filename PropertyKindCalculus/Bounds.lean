@@ -31,13 +31,10 @@ deciders at the end of this module (`Quantity.leb/ltb/geb/gtb`, `UpperBound.hitB
 survives by instance absence.
 
 **Association of `clamp` (load-bearing).** `IccQ.clamp` computes
-`min (max x lo) hi` — clamp-from-below first, then from above. This is the association
-deployed batched kernels use, and it is *not* the same function as the function
-calculus's `Quantity.clamp` (`max lo (min hi x)`): the two differ on NaN propagation
-and on a degenerate `lo > hi` box, and they emit ops in different order on a tape
-carrier. A kinded kernel authored with `IccQ.clamp` therefore erases *bit-exactly*,
-op-for-op, to a naked `min (max x lo) hi` — which is what makes the kinded form
-eligible to be the authored source of an already-deployed kernel.
+`max lo (min hi x)`, exactly the same function as `Quantity.clamp`. The operand order
+matters for a `Float` NaN: the inner minimum preserves it, and the outer maximum sends
+it to the lower bound. Keeping the interval and function-calculus APIs on this same
+association makes their erased operations agree on finite and NaN inputs alike.
 
 **Roles survive representation change.** All three carry `castCarrier`, the counterpart
 of `Quantity.castCarrier`: a floor is a floor and an interval is an interval at whichever
@@ -54,6 +51,7 @@ gate, uniform with `DifferenceKind` for `+`/`−` and `ProductKind` for `×`.
 module
 
 public import PropertyKindCalculus.Quantity
+public import PropertyKindCalculus.QuantityFunction
 
 public section Interface
 
@@ -193,16 +191,18 @@ def about [Add R] [Sub R] (centre halfWidth : Quantity k R)
 each endpoint contributes only the orientation its role can state. -/
 @[expose] def Mem [LE R] (I : IccQ k R) (x : Quantity k R) : Prop := I.lo.le x ∧ I.hi.ge x
 
-/-- **The executable eliminator**: clamp `x` into the interval, as
-`min (max x lo) hi` — clamp-from-below first, then from above. This association (and
-not `Quantity.clamp`'s `max lo (min hi x)`) is the one deployed batched kernels use;
-keeping it lets a kinded kernel erase bit-exactly, op-for-op, to its naked form. -/
-def clamp [Min R] [Max R] (I : IccQ k R) (x : Quantity k R) : Quantity k R :=
-  ⟨Min.min (Max.max x.magnitude I.lo.q.magnitude) I.hi.q.magnitude⟩
+/-- **The executable eliminator**: clamp `x` into the interval as
+`max lo (min hi x)`, the same association as `Quantity.clamp`. On `Float`, a NaN
+survives the inner minimum and the outer maximum sends it to the lower bound. -/
+@[expose] def clamp [Min R] [Max R] (I : IccQ k R) (x : Quantity k R) : Quantity k R :=
+  ⟨Max.max I.lo.q.magnitude (Min.min I.hi.q.magnitude x.magnitude)⟩
 
 @[simp] theorem clamp_magnitude [Min R] [Max R] (I : IccQ k R) (x : Quantity k R) :
     (I.clamp x).magnitude
-      = Min.min (Max.max x.magnitude I.lo.q.magnitude) I.hi.q.magnitude := by rw [IccQ.clamp]
+      = Max.max I.lo.q.magnitude (Min.min I.hi.q.magnitude x.magnitude) := by rw [IccQ.clamp]
+
+@[simp] theorem clamp_eq_quantity_clamp [Min R] [Max R] (I : IccQ k R)
+    (x : Quantity k R) : I.clamp x = Quantity.clamp I.lo.q I.hi.q x := rfl
 
 /-- **The interval survives a representation cast** — both endpoints moved by the same
 carrier map, through their own roles. This is the whole of what a carrier lift of a

@@ -273,7 +273,8 @@ Status: ✅ done · 🚧 in progress · ⬜ planned
 - ✅ **Julia emitter** beside the CUDA/C pair (`TapeCodegenJulia`), rendering table proved, `julia_parity`
   exe. ✅ One `min`/`max` NaN semantics across `cOp`, `cExpr` and `jlExpr` — Lean's `ite`, written as
   the `≤`-ternary in C/CUDA and `ifelse` in Julia (`fminf`/`fmaxf`, which return the non-NaN operand,
-  are gone); the C stub's and the CUDA helper's `lutfetch` clamp follow `refFetch` on NaN likewise.
+  are gone); the C, CUDA and Julia `lutfetch` helpers use hi-first minima and zero floors, so NaN
+  coordinates select sample 0 and NaN layers select layer 0, matching `refFetch`.
   ✅ **The denotation of the rendering, for all backends** (`TapeStraightLine`): every emitter is a
   printer of one straight-line program, `genSL_denotes` proves the program runs as `evalTapeT`,
   `genSL_isOk_iff_evalTapeT` that it exists exactly when the interpreter runs the tape, and

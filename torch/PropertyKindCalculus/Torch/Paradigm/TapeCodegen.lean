@@ -351,8 +351,9 @@ def paramList (cg : Codegen) (stub : Bool := false) : String :=
 
 /-- The CUDA-side `lutfetch` helper + the `TL_LUTFETCH` macro `genBody`'s neutral body lines call.
 Point mode: two point fetches + a `__f*_rn` contraction-blocked fp32 lerp (bit-identical to the
-stub). Hardware mode: one hardware-filtered fetch (9-bit weight, tolerance-only). Empty when the
-kernel uses no tables. -/
+stub). Its hi-first minima feed the existing zero floors, so NaN coordinates and layers select
+sample 0 and layer 0. Hardware mode: one hardware-filtered fetch (9-bit weight, tolerance-only).
+Empty when the kernel uses no tables. -/
 def lutHelperCuda (cg : Codegen) : String :=
   if cg.tables.isEmpty then "" else
   let body := match cg.lutMode with
@@ -366,11 +367,11 @@ def lutHelperCuda (cg : Codegen) : String :=
   String.intercalate "\n"
     [ "__device__ __forceinline__ float tl_lutfetch(cudaTextureObject_t tex, int W, int LAYERS, float layer, float u) {"
     , "  float wmax = (float)(W - 1);"
-    , "  float um = (u <= wmax ? u : wmax);"
+    , "  float um = (wmax <= u ? wmax : u);"
     , "  float uc = (0.0f <= um ? um : 0.0f);"
     , "  float lmax = (float)(LAYERS - 1);"
     , "  float ls = layer + 0.5f;"
-    , "  float lm = (ls <= lmax ? ls : lmax);"
+    , "  float lm = (lmax <= ls ? lmax : ls);"
     , "  float lc = (0.0f <= lm ? lm : 0.0f);"
     , "  int L = (int)lc;"
     , body
@@ -379,10 +380,11 @@ def lutHelperCuda (cg : Codegen) : String :=
     , "" ]
 
 /-- The stub-side `lutfetch` helper + macro: `LutTable.refFetch`'s clamp/floor/lerp as a host loop over
-the baked table — the coordinate and the layer clamped with `max 0 (min x hi)` in Lean's `ite` reading
-(a NaN lands on `hi`, as `minOfLe` does; the layer is clamped as a float before it is truncated, so a
-huge finite layer cannot overflow the index; the CUDA helper clamps the layer the same way before its `int` conversion). Point mode bit-identical to the device kernel; hardware
-mode emulates the 9-bit weight, tolerance-only. Empty when the kernel uses no tables. -/
+the baked table. The hi-first minima preserve NaN until the existing zero floors map a NaN
+coordinate to sample 0 and a NaN layer to layer 0. The layer is clamped as a float before it is
+truncated, so a huge finite layer cannot overflow the index; the CUDA helper does the same before
+its `int` conversion. Point mode is bit-identical to the device kernel; hardware mode emulates the
+9-bit weight, tolerance-only. Empty when the kernel uses no tables. -/
 def lutHelperStub (cg : Codegen) : String :=
   if cg.tables.isEmpty then "" else
   let quant := match cg.lutMode with
@@ -391,11 +393,11 @@ def lutHelperStub (cg : Codegen) : String :=
   String.intercalate "\n"
     [ "static float tl_lutfetch(const float* tab, int W, int LAYERS, float layer, float u) {"
     , "  float wmax = (float)(W - 1);"
-    , "  float um = (u <= wmax ? u : wmax);"
+    , "  float um = (wmax <= u ? wmax : u);"
     , "  float uc = (0.0f <= um ? um : 0.0f);"
     , "  float lmax = (float)(LAYERS - 1);"
     , "  float ls = layer + 0.5f;"
-    , "  float lm = (ls <= lmax ? ls : lmax);"
+    , "  float lm = (lmax <= ls ? lmax : ls);"
     , "  float lc = (0.0f <= lm ? lm : 0.0f);"
     , "  long L = (long)lc;"
     , "  float j = floorf(uc);"

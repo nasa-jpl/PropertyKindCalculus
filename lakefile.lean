@@ -500,6 +500,15 @@ lean_exe «mcm_batched_parity» where
   srcDir := "apps"
   root := `PropertyKindCalculus.Apps.McmBatchedParity
 
+/-- **The eager `CudaT` table lookup against `LutTable.refFetch`.** Same arrangement as
+`ssprc_batched_parity`: a compiled executable runs `LutInterp (CudaT s)` on NaN, infinite,
+out-of-range and interior probes and asserts each value matches the fp64 reference, so the NaN
+lower-bound convention is checked on the device path too. Run with `lake exe lut_cudat_parity`;
+exits `0` on parity, `1` on mismatch. -/
+lean_exe «lut_cudat_parity» where
+  srcDir := "apps"
+  root := `PropertyKindCalculus.Apps.LutCudaTParity
+
 /-- **The emitted Julia kernel against `evalTape`.** `paradigm.tape_codegen_julia` renders a recorded
 tape as a Julia function; the rendering-table theorems cover the alphabet and the demo `#guard`s the
 coverage and the ABI, but a `#guard` cannot run Julia. This executable writes the emitted files, runs

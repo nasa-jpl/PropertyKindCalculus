@@ -234,13 +234,12 @@ def mathHelpers : String := String.intercalate "\n"
   , "" ]
 
 /-- The `lutfetch` helper: `LutTable.refFetch`'s clamp/floor/lerp over the flat row-major table —
-an empty table (`W == 0 || LAYERS == 0`) fetches `zero(T)` as `refFetch` returns `0.0`; the
-coordinate and the layer are clamped with Lean's `max 0 (min x hi)` spelled out as `ifelse`, so a
-NaN coordinate lands on `hi` exactly as `minOfLe` does — the same clamp the C stub and the CUDA
-helper write;
-the layer is clamped as a float before it is truncated, so a huge finite layer cannot overflow the
-index. Point mode is the stub's arithmetic step for step; hardware mode emulates the 9-bit weight,
-tolerance-only. Empty when the kernel uses no tables. -/
+an empty table (`W == 0 || LAYERS == 0`) fetches `zero(T)` as `refFetch` returns `0.0`. The
+hi-first minima preserve NaN until the zero floors map a NaN coordinate to sample 0 and a NaN
+layer to layer 0, matching the C stub and CUDA helper. The layer is clamped as a float before it is
+truncated, so a huge finite layer cannot overflow the index. Point mode is the stub's arithmetic
+step for step; hardware mode emulates the 9-bit weight, tolerance-only. Empty when the kernel uses
+no tables. -/
 def lutHelperJulia (cg : JuliaCodegen) : String :=
   if cg.tables.isEmpty then "" else
   let quant := match cg.lutMode with
@@ -250,11 +249,11 @@ def lutHelperJulia (cg : JuliaCodegen) : String :=
     [ "@inline function tl_lutfetch(tab::AbstractVector{T}, W::Int, LAYERS::Int, layer::T, u::T) where {T<:AbstractFloat}"
     , "    (W == 0 || LAYERS == 0) && return zero(T)"
     , "    wmax = T(W - 1)"
-    , "    um = ifelse(u <= wmax, u, wmax)"
+    , "    um = ifelse(wmax <= u, wmax, u)"
     , "    uc = ifelse(zero(T) <= um, um, zero(T))"
     , "    lmax = T(LAYERS - 1)"
     , "    ls = layer + T(0.5)"
-    , "    lm = ifelse(ls <= lmax, ls, lmax)"
+    , "    lm = ifelse(lmax <= ls, lmax, ls)"
     , "    lc = ifelse(zero(T) <= lm, lm, zero(T))"
     , "    L = unsafe_trunc(Int, lc)"
     , "    j = floor(uc)"
