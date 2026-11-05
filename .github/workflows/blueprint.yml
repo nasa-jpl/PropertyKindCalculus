@@ -189,6 +189,7 @@ jobs:
           # the device path, which is a different artifact with its own verification story.
           lake exe ssprc_batched_parity
           lake exe mcm_batched_parity
+          lake exe lut_cudat_parity
 
       # -------------------------------------------------------
       # Phase 1d: Run the Julia emitter's parity harness
