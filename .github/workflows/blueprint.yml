@@ -184,12 +184,17 @@ jobs:
           # but never runs them. A harness nobody runs is not a gate, so CI runs them here.
           #
           # Each links the native code and asserts parity with its scalar reference, exiting 1 on
-          # mismatch. The default build uses the portable CPU stub (float32, no GPU), so what is
-          # gated is the batching structure — sample layout, reduction, moment arithmetic — not
-          # the device path, which is a different artifact with its own verification story.
+          # mismatch (2 when no LibTorch bridge is linked). The default build links TorchLean's
+          # "unavailable" backend, so they are linked against the CPU-only LibTorch SDK here: the
+          # `CudaT` ops run on the host through ATen's CPU kernels (float32, no GPU). The final
+          # `-R` restores the default configuration for the steps below.
+          eval "$(scripts/libtorch-cpu-sdk.sh)"
+          lake build -R -K libtorch=true -K libtorch_home="$TORCHLEAN_LIBTORCH_CPU_HOME" \
+            -K torchlean_build_dir=.lake/build ssprc_batched_parity mcm_batched_parity lut_cudat_parity
           lake exe ssprc_batched_parity
           lake exe mcm_batched_parity
           lake exe lut_cudat_parity
+          lake build -R ssprc_batched_parity mcm_batched_parity lut_cudat_parity
 
       # -------------------------------------------------------
       # Phase 1d: Run the Julia emitter's parity harness
