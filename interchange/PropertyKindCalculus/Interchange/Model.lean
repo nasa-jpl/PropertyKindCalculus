@@ -187,8 +187,8 @@ def ReqScope.splitObjects (s : String) : List String :=
   if s.isEmpty then [] else go s.toList 0 [] []
 where
   go : List Char → Nat → List Char → List String → List String
-    | [], _, cur, acc => (String.mk cur.reverse :: acc).reverse
-    | ',' :: ' ' :: cs, 0, cur, acc => go cs 0 [] (String.mk cur.reverse :: acc)
+    | [], _, cur, acc => (String.ofList cur.reverse :: acc).reverse
+    | ',' :: ' ' :: cs, 0, cur, acc => go cs 0 [] (String.ofList cur.reverse :: acc)
     | '«' :: cs, depth, cur, acc => go cs (depth + 1) ('«' :: cur) acc
     | '»' :: cs, depth, cur, acc => go cs (depth - 1) ('»' :: cur) acc
     | c :: cs, depth, cur, acc => go cs depth (c :: cur) acc

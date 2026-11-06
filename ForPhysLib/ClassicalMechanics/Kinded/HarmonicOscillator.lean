@@ -234,7 +234,8 @@ theorem trajectoryFromDataQ_normal_form (S : HO)
         Real.cos ((phaseQ (omegaQ (omegaSqQ S)) (durationQ t)).magnitude -
           (phaseOffsetQ S IC).magnitude) := by
   rw [trajectoryFromDataQ_erases]
-  have h0 := congrArg (fun v : E1 => v 0) (IC.trajectory_eq_cos S t)
+  have h0 := congrArg (fun v : E1 => v 0)
+    (_root_.ClassicalMechanics.HarmonicOscillator.trajectory_eq_cos S IC t)
   simp at h0
   exact h0
 
@@ -274,7 +275,7 @@ theorem energyQ_on_trajectory (S : HO)
     (energyQ (kineticQ S (IC.trajectory S) t)
         (potentialQ S (IC.trajectory S t))).magnitude =
       1 / 2 * (S.m * ‖IC.v₀‖ ^ 2 + S.k * ‖IC.x₀‖ ^ 2) := by
-  have h := congrFun (IC.trajectory_energy S) t
+  have h := congrFun (_root_.ClassicalMechanics.HarmonicOscillator.trajectory_energy S IC) t
   exact h
 
 /-! ## The geometric subtree, at one reading -/

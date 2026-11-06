@@ -82,7 +82,7 @@ example : potentialDifferenceK = electricPotentialDifference := rfl
 example : electricFieldK = electricFieldStrength := rfl
 example : magneticFluxDensityK = magneticFluxDensity := rfl
 example : magneticFluxK = magneticFlux := rfl
-example : speedOfLightK = speedOfLight := rfl
+example : speedOfLightK = Kinds.speedOfLight := rfl
 
 /-! ## The slices -/
 
