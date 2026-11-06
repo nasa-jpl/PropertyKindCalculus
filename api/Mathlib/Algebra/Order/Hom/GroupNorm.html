@@ -1,0 +1,522 @@
+<html lang="en"><head><meta charset="UTF-8"></meta><meta name="viewport" content="width=device-width, initial-scale=1"></meta><link rel="stylesheet" href="../../../.././style.css"></link><link rel="icon" href="../../../.././favicon.svg"></link><link rel="mask-icon" href="../../../.././favicon.svg" color="#000000"></link><link rel="prefetch" href="../../../.././/declarations/declaration-data.bmp" as="image"></link><title>Mathlib.Algebra.Order.Hom.GroupNorm</title><script defer="true" src="../../../.././mathjax-config.js"></script><script defer="true" src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script><script defer="true" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script><script>const SITE_ROOT="../../../.././";</script><script>const MODULE_NAME="Mathlib.Algebra.Order.Hom.GroupNorm";</script><script type="module" src="../../../.././jump-src.js"></script><script type="module" src="../../../.././search.js"></script><script type="module" src="../../../.././expand-nav.js"></script><script type="module" src="../../../.././how-about.js"></script><script type="module" src="../../../.././instances.js"></script><script type="module" src="../../../.././importedBy.js"></script></head><body><input id="nav_toggle" type="checkbox"></input><header><h1><label for="nav_toggle"></label><span>Documentation</span></h1><h2 class="header_filename break_within"><span class="name">Mathlib</span>.<span class="name">Algebra</span>.<span class="name">Order</span>.<span class="name">Hom</span>.<span class="name">GroupNorm</span></h2><form id="search_form"><input type="text" name="q" autocomplete="off"></input>&#32;<button id="search_button" onclick="javascript: form.action='../../../.././search.html';">Search</button></form></header><nav class="internal_nav"><p><a href="#top">return to top</a></p><p class="gh_nav_link"><a href="https://github.com/leanprover-community/mathlib4/blob/56a005855ea17e0b0958f73ec801ae140b0a1679/Mathlib/Algebra/Order/Hom/GroupNorm.lean">source</a></p><div class="imports"><details><summary>Imports</summary><ul><li><a href="../../../.././Init.html">Init</a></li><li><a href="../../../.././Mathlib/Algebra/Order/Group/Abs.html">Mathlib.Algebra.Order.Group.Abs</a></li><li><a href="../../../.././Mathlib/Algebra/Order/Hom/Basic.html">Mathlib.Algebra.Order.Hom.Basic</a></li></ul></details><details><summary>Imported by</summary><ul id="imported-by-Mathlib.Algebra.Order.Hom.GroupNorm" class="imported-by-list"></ul></details></div><div class="nav_link"><a class="break_within" href="#AddGroupSeminormClass"><span class="name">AddGroupSeminormClass</span></a></div><div class="nav_link"><a class="break_within" href="#GroupSeminormClass"><span class="name">GroupSeminormClass</span></a></div><div class="nav_link"><a class="break_within" href="#AddGroupNormClass"><span class="name">AddGroupNormClass</span></a></div><div class="nav_link"><a class="break_within" href="#GroupNormClass"><span class="name">GroupNormClass</span></a></div><div class="nav_link"><a class="break_within" href="#AddGroupSeminormClass.toZeroHomClass"><span class="name">AddGroupSeminormClass</span>.<span class="name">toZeroHomClass</span></a></div><div class="nav_link"><a class="break_within" href="#map_div_le_add"><span class="name">map_div_le_add</span></a></div><div class="nav_link"><a class="break_within" href="#map_sub_le_add"><span class="name">map_sub_le_add</span></a></div><div class="nav_link"><a class="break_within" href="#map_div_rev"><span class="name">map_div_rev</span></a></div><div class="nav_link"><a class="break_within" href="#map_sub_rev"><span class="name">map_sub_rev</span></a></div><div class="nav_link"><a class="break_within" href="#map_inv_mul"><span class="name">map_inv_mul</span></a></div><div class="nav_link"><a class="break_within" href="#map_neg_add"><span class="name">map_neg_add</span></a></div><div class="nav_link"><a class="break_within" href="#le_map_add_map_div'"><span class="name">le_map_add_map_div'</span></a></div><div class="nav_link"><a class="break_within" href="#le_map_add_map_sub'"><span class="name">le_map_add_map_sub'</span></a></div><div class="nav_link"><a class="break_within" href="#abs_sub_map_le_div"><span class="name">abs_sub_map_le_div</span></a></div><div class="nav_link"><a class="break_within" href="#abs_sub_map_le_sub"><span class="name">abs_sub_map_le_sub</span></a></div><div class="nav_link"><a class="break_within" href="#GroupSeminormClass.toNonnegHomClass"><span class="name">GroupSeminormClass</span>.<span class="name">toNonnegHomClass</span></a></div><div class="nav_link"><a class="break_within" href="#AddGroupSeminormClass.toNonnegHomClass"><span class="name">AddGroupSeminormClass</span>.<span class="name">toNonnegHomClass</span></a></div><div class="nav_link"><a class="break_within" href="#map_eq_zero_iff_eq_one"><span class="name">map_eq_zero_iff_eq_one</span></a></div><div class="nav_link"><a class="break_within" href="#map_eq_zero_iff_eq_zero"><span class="name">map_eq_zero_iff_eq_zero</span></a></div><div class="nav_link"><a class="break_within" href="#map_ne_zero_iff_ne_one"><span class="name">map_ne_zero_iff_ne_one</span></a></div><div class="nav_link"><a class="break_within" href="#map_ne_zero_iff_ne_zero"><span class="name">map_ne_zero_iff_ne_zero</span></a></div><div class="nav_link"><a class="break_within" href="#map_pos_of_ne_one"><span class="name">map_pos_of_ne_one</span></a></div><div class="nav_link"><a class="break_within" href="#map_pos_of_ne_zero"><span class="name">map_pos_of_ne_zero</span></a></div></nav><main>
+<div class="mod_doc"><h1 id="Algebraic-order-homomorphism-classes" class="markdown-heading">Algebraic order homomorphism classes <a class="hover-link" href="#Algebraic-order-homomorphism-classes">#</a></h1><p>This file defines hom classes for common properties at the intersection of order theory and algebra.</p><h2 id="Typeclasses" class="markdown-heading">Typeclasses <a class="hover-link" href="#Typeclasses">#</a></h2><p>Group norms</p><ul><li><code><a href="../../../.././Mathlib/Algebra/Order/Hom/GroupNorm.html#AddGroupSeminormClass">AddGroupSeminormClass</a></code>: Homs are nonnegative, subadditive, even and preserve zero.</li><li><code><a href="../../../.././Mathlib/Algebra/Order/Hom/GroupNorm.html#GroupSeminormClass">GroupSeminormClass</a></code>: Homs are nonnegative, respect <code>f (a * b) ≤ f a + f b</code>, <code>f a⁻¹ = f a</code> and
+preserve zero.</li><li><code><a href="../../../.././Mathlib/Algebra/Order/Hom/GroupNorm.html#AddGroupNormClass">AddGroupNormClass</a></code>: Homs are seminorms such that <code>f x = 0 → x = 0</code> for all <code>x</code>.</li><li><code><a href="../../../.././Mathlib/Algebra/Order/Hom/GroupNorm.html#GroupNormClass">GroupNormClass</a></code>: Homs are seminorms such that <code>f x = 0 → x = 1</code> for all <code>x</code>.</li></ul><h2 id="Notes" class="markdown-heading">Notes <a class="hover-link" href="#Notes">#</a></h2><p>Typeclasses for seminorms are defined here while types of seminorms are defined in
+<code>Analysis.Normed.Group.Seminorm</code> and <code>Analysis.Normed.Ring.Seminorm</code> because absolute values are
+multiplicative ring norms but outside of this use we only consider real-valued seminorms.</p><h2 id="TODO" class="markdown-heading">TODO <a class="hover-link" href="#TODO">#</a></h2><p>Finitary versions of the current lemmas.</p></div><div class="mod_doc"><h3 id="Group-semi-norms" class="markdown-heading">Group (semi)norms <a class="hover-link" href="#Group-semi-norms">#</a></h3></div><div class="decl" id="AddGroupSeminormClass"><div class="class"><div class="gh_link"><a href="https://github.com/leanprover-community/mathlib4/blob/56a005855ea17e0b0958f73ec801ae140b0a1679/Mathlib/Algebra/Order/Hom/GroupNorm.lean#L44-L54">source</a></div><div class="decl_header"><span class="decl_kind">class</span>
+<span class="decl_name"><a class="break_within" href="../../../.././Mathlib/Algebra/Order/Hom/GroupNorm.html#AddGroupSeminormClass"><span class="name">AddGroupSeminormClass</span></a></span><span class="decl_args">
+<span class="fn">(<span class="fn">F</span> : <a href="../../../.././foundational_types.html">Type</a> u_4)</span></span>
+<span class="decl_args">
+<span class="fn">(<span class="fn">α</span> : <span class="fn"><a href="../../../.././Init/Prelude.html#outParam">outParam</a> <a href="../../../.././foundational_types.html">(Type</a> u_5)</span>)</span></span>
+<span class="decl_args">
+<span class="fn">(<span class="fn">β</span> : <span class="fn"><a href="../../../.././Init/Prelude.html#outParam">outParam</a> <a href="../../../.././foundational_types.html">(Type</a> u_6)</span>)</span></span>
+<span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Group/Defs.html#AddGroup">AddGroup</a> <span class="fn">α</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Group/Monoid.html#AddCommMonoid">AddCommMonoid</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Order/Defs/PartialOrder.html#PartialOrder">PartialOrder</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Basic/FunLike/Basic.html#FunLike">FunLike</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span>]</span></span>
+</span><span class="decl_extends">extends</span> <span id="AddGroupSeminormClass.toSubadditiveHomClass"><span class="fn"><a href="../../../.././Mathlib/Algebra/Order/Hom/Basic.html#SubadditiveHomClass">SubadditiveHomClass</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span></span><span class="decl_args"> :</span><div class="decl_type"><a href="../../../.././foundational_types.html">Prop</a></div></div><p><code><a href="../../../.././Mathlib/Algebra/Order/Hom/GroupNorm.html#AddGroupSeminormClass">AddGroupSeminormClass</a> F α</code> states that <code>F</code> is a type of <code>β</code>-valued seminorms on the additive
+group <code>α</code>.</p><p>You should extend this class when you extend <code>AddGroupSeminorm</code>.</p><ul class="structure_fields" id="AddGroupSeminormClass.mk"><li class="structure_field inherited_field"><div class="structure_field_info"><a href="../../../.././Mathlib/Algebra/Order/Hom/Basic.html#SubadditiveHomClass.map_add_le_add">map_add_le_add</a><span class="decl_args">
+<span class="fn">(<span class="fn">f</span> : <span class="fn">F</span>)</span></span>
+<span class="decl_args">
+<span class="fn">(<span class="fn">a </span><span class="fn">b</span> : <span class="fn">α</span>)</span></span>
+ : <span class="fn"><span class="fn">f</span> (<span class="fn">a</span> <a href="../../../.././Init/Prelude.html#HAdd.hAdd">+</a> <span class="fn">b</span>)</span> <a href="../../../.././Init/Prelude.html#LE.le">≤</a> <span class="fn"><span class="fn">f</span> <span class="fn">a</span></span> <a href="../../../.././Init/Prelude.html#HAdd.hAdd">+</a> <span class="fn"><span class="fn">f</span> <span class="fn">b</span></span></div></li><li id="AddGroupSeminormClass.map_zero" class="structure_field"><div class="structure_field_info">map_zero<span class="decl_args">
+<span class="fn">(<span class="fn">f</span> : <span class="fn">F</span>)</span></span>
+ : <span class="fn"><span class="fn">f</span> <span class="fn">0</span></span> <a href="../../../.././Init/Prelude.html#Eq">=</a> <span class="fn">0</span></div><div class="structure_field_doc"><p>The image of zero is zero.</p></div></li><li id="AddGroupSeminormClass.map_neg_eq_map" class="structure_field"><div class="structure_field_info">map_neg_eq_map<span class="decl_args">
+<span class="fn">(<span class="fn">f</span> : <span class="fn">F</span>)</span></span>
+<span class="decl_args">
+<span class="fn">(<span class="fn">a</span> : <span class="fn">α</span>)</span></span>
+ : <span class="fn"><span class="fn">f</span> (<a href="../../../.././Init/Prelude.html#Neg.neg">-</a><span class="fn">a</span>)</span> <a href="../../../.././Init/Prelude.html#Eq">=</a> <span class="fn"><span class="fn">f</span> <span class="fn">a</span></span></div><div class="structure_field_doc"><p>The map is invariant under negation of its argument.</p></div></li></ul><details class="instances"><summary>Instances</summary><ul id="instances-list-AddGroupSeminormClass" class="instances-list"></ul></details></div></div><div class="decl" id="GroupSeminormClass"><div class="class"><div class="gh_link"><a href="https://github.com/leanprover-community/mathlib4/blob/56a005855ea17e0b0958f73ec801ae140b0a1679/Mathlib/Algebra/Order/Hom/GroupNorm.lean#L56-L66">source</a></div><div class="decl_header"><span class="decl_kind">class</span>
+<span class="decl_name"><a class="break_within" href="../../../.././Mathlib/Algebra/Order/Hom/GroupNorm.html#GroupSeminormClass"><span class="name">GroupSeminormClass</span></a></span><span class="decl_args">
+<span class="fn">(<span class="fn">F</span> : <a href="../../../.././foundational_types.html">Type</a> u_4)</span></span>
+<span class="decl_args">
+<span class="fn">(<span class="fn">α</span> : <span class="fn"><a href="../../../.././Init/Prelude.html#outParam">outParam</a> <a href="../../../.././foundational_types.html">(Type</a> u_5)</span>)</span></span>
+<span class="decl_args">
+<span class="fn">(<span class="fn">β</span> : <span class="fn"><a href="../../../.././Init/Prelude.html#outParam">outParam</a> <a href="../../../.././foundational_types.html">(Type</a> u_6)</span>)</span></span>
+<span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Group/Defs.html#Group">Group</a> <span class="fn">α</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Group/Monoid.html#AddCommMonoid">AddCommMonoid</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Order/Defs/PartialOrder.html#PartialOrder">PartialOrder</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Basic/FunLike/Basic.html#FunLike">FunLike</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span>]</span></span>
+</span><span class="decl_extends">extends</span> <span id="GroupSeminormClass.toMulLEAddHomClass"><span class="fn"><a href="../../../.././Mathlib/Algebra/Order/Hom/Basic.html#MulLEAddHomClass">MulLEAddHomClass</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span></span><span class="decl_args"> :</span><div class="decl_type"><a href="../../../.././foundational_types.html">Prop</a></div></div><p><code><a href="../../../.././Mathlib/Algebra/Order/Hom/GroupNorm.html#GroupSeminormClass">GroupSeminormClass</a> F α</code> states that <code>F</code> is a type of <code>β</code>-valued seminorms on the group <code>α</code>.</p><p>You should extend this class when you extend <code>GroupSeminorm</code>.</p><ul class="structure_fields" id="GroupSeminormClass.mk"><li class="structure_field inherited_field"><div class="structure_field_info"><a href="../../../.././Mathlib/Algebra/Order/Hom/Basic.html#MulLEAddHomClass.map_mul_le_add">map_mul_le_add</a><span class="decl_args">
+<span class="fn">(<span class="fn">f</span> : <span class="fn">F</span>)</span></span>
+<span class="decl_args">
+<span class="fn">(<span class="fn">a </span><span class="fn">b</span> : <span class="fn">α</span>)</span></span>
+ : <span class="fn"><span class="fn">f</span> (<span class="fn">a</span> <a href="../../../.././Init/Prelude.html#HMul.hMul">*</a> <span class="fn">b</span>)</span> <a href="../../../.././Init/Prelude.html#LE.le">≤</a> <span class="fn"><span class="fn">f</span> <span class="fn">a</span></span> <a href="../../../.././Init/Prelude.html#HAdd.hAdd">+</a> <span class="fn"><span class="fn">f</span> <span class="fn">b</span></span></div></li><li id="GroupSeminormClass.map_one_eq_zero" class="structure_field"><div class="structure_field_info">map_one_eq_zero<span class="decl_args">
+<span class="fn">(<span class="fn">f</span> : <span class="fn">F</span>)</span></span>
+ : <span class="fn"><span class="fn">f</span> <span class="fn">1</span></span> <a href="../../../.././Init/Prelude.html#Eq">=</a> <span class="fn">0</span></div><div class="structure_field_doc"><p>The image of one is zero.</p></div></li><li id="GroupSeminormClass.map_inv_eq_map" class="structure_field"><div class="structure_field_info">map_inv_eq_map<span class="decl_args">
+<span class="fn">(<span class="fn">f</span> : <span class="fn">F</span>)</span></span>
+<span class="decl_args">
+<span class="fn">(<span class="fn">a</span> : <span class="fn">α</span>)</span></span>
+ : <span class="fn"><span class="fn">f</span> <span class="fn">a</span><a href="../../../.././Init/Prelude.html#Inv.inv">⁻¹</a></span> <a href="../../../.././Init/Prelude.html#Eq">=</a> <span class="fn"><span class="fn">f</span> <span class="fn">a</span></span></div><div class="structure_field_doc"><p>The map is invariant under inversion of its argument.</p></div></li></ul><details class="instances"><summary>Instances</summary><ul id="instances-list-GroupSeminormClass" class="instances-list"></ul></details></div></div><div class="decl" id="AddGroupNormClass"><div class="class"><div class="gh_link"><a href="https://github.com/leanprover-community/mathlib4/blob/56a005855ea17e0b0958f73ec801ae140b0a1679/Mathlib/Algebra/Order/Hom/GroupNorm.lean#L68-L76">source</a></div><div class="decl_header"><span class="decl_kind">class</span>
+<span class="decl_name"><a class="break_within" href="../../../.././Mathlib/Algebra/Order/Hom/GroupNorm.html#AddGroupNormClass"><span class="name">AddGroupNormClass</span></a></span><span class="decl_args">
+<span class="fn">(<span class="fn">F</span> : <a href="../../../.././foundational_types.html">Type</a> u_4)</span></span>
+<span class="decl_args">
+<span class="fn">(<span class="fn">α</span> : <span class="fn"><a href="../../../.././Init/Prelude.html#outParam">outParam</a> <a href="../../../.././foundational_types.html">(Type</a> u_5)</span>)</span></span>
+<span class="decl_args">
+<span class="fn">(<span class="fn">β</span> : <span class="fn"><a href="../../../.././Init/Prelude.html#outParam">outParam</a> <a href="../../../.././foundational_types.html">(Type</a> u_6)</span>)</span></span>
+<span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Group/Defs.html#AddGroup">AddGroup</a> <span class="fn">α</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Group/Monoid.html#AddCommMonoid">AddCommMonoid</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Order/Defs/PartialOrder.html#PartialOrder">PartialOrder</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Basic/FunLike/Basic.html#FunLike">FunLike</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span>]</span></span>
+</span><span class="decl_extends">extends</span> <span id="AddGroupNormClass.toAddGroupSeminormClass"><span class="fn"><a href="../../../.././Mathlib/Algebra/Order/Hom/GroupNorm.html#AddGroupSeminormClass">AddGroupSeminormClass</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span></span><span class="decl_args"> :</span><div class="decl_type"><a href="../../../.././foundational_types.html">Prop</a></div></div><p><code><a href="../../../.././Mathlib/Algebra/Order/Hom/GroupNorm.html#AddGroupNormClass">AddGroupNormClass</a> F α</code> states that <code>F</code> is a type of <code>β</code>-valued norms on the additive group
+<code>α</code>.</p><p>You should extend this class when you extend <code>AddGroupNorm</code>.</p><ul class="structure_fields" id="AddGroupNormClass.mk"><li class="structure_field inherited_field"><div class="structure_field_info"><a href="../../../.././Mathlib/Algebra/Order/Hom/Basic.html#SubadditiveHomClass.map_add_le_add">map_add_le_add</a><span class="decl_args">
+<span class="fn">(<span class="fn">f</span> : <span class="fn">F</span>)</span></span>
+<span class="decl_args">
+<span class="fn">(<span class="fn">a </span><span class="fn">b</span> : <span class="fn">α</span>)</span></span>
+ : <span class="fn"><span class="fn">f</span> (<span class="fn">a</span> <a href="../../../.././Init/Prelude.html#HAdd.hAdd">+</a> <span class="fn">b</span>)</span> <a href="../../../.././Init/Prelude.html#LE.le">≤</a> <span class="fn"><span class="fn">f</span> <span class="fn">a</span></span> <a href="../../../.././Init/Prelude.html#HAdd.hAdd">+</a> <span class="fn"><span class="fn">f</span> <span class="fn">b</span></span></div></li><li class="structure_field inherited_field"><div class="structure_field_info"><a href="../../../.././Mathlib/Algebra/Order/Hom/GroupNorm.html#AddGroupSeminormClass.map_zero">map_zero</a><span class="decl_args">
+<span class="fn">(<span class="fn">f</span> : <span class="fn">F</span>)</span></span>
+ : <span class="fn"><span class="fn">f</span> <span class="fn">0</span></span> <a href="../../../.././Init/Prelude.html#Eq">=</a> <span class="fn">0</span></div></li><li class="structure_field inherited_field"><div class="structure_field_info"><a href="../../../.././Mathlib/Algebra/Order/Hom/GroupNorm.html#AddGroupSeminormClass.map_neg_eq_map">map_neg_eq_map</a><span class="decl_args">
+<span class="fn">(<span class="fn">f</span> : <span class="fn">F</span>)</span></span>
+<span class="decl_args">
+<span class="fn">(<span class="fn">a</span> : <span class="fn">α</span>)</span></span>
+ : <span class="fn"><span class="fn">f</span> (<a href="../../../.././Init/Prelude.html#Neg.neg">-</a><span class="fn">a</span>)</span> <a href="../../../.././Init/Prelude.html#Eq">=</a> <span class="fn"><span class="fn">f</span> <span class="fn">a</span></span></div></li><li id="AddGroupNormClass.eq_zero_of_map_eq_zero" class="structure_field"><div class="structure_field_info">eq_zero_of_map_eq_zero<span class="decl_args">
+<span class="fn">(<span class="fn">f</span> : <span class="fn">F</span>)</span></span>
+<span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">a</span> : <span class="fn">α</span>}</span></span>
+</span> : <span class="fn"><span class="fn"><span class="fn">f</span> <span class="fn">a</span></span> <a href="../../../.././Init/Prelude.html#Eq">=</a> <span class="fn">0</span> → <span class="fn">a</span> <a href="../../../.././Init/Prelude.html#Eq">=</a> <span class="fn">0</span></span></div><div class="structure_field_doc"><p>The argument is zero if its image under the map is zero.</p></div></li></ul><details class="instances"><summary>Instances</summary><ul id="instances-list-AddGroupNormClass" class="instances-list"></ul></details></div></div><div class="decl" id="GroupNormClass"><div class="class"><div class="gh_link"><a href="https://github.com/leanprover-community/mathlib4/blob/56a005855ea17e0b0958f73ec801ae140b0a1679/Mathlib/Algebra/Order/Hom/GroupNorm.lean#L78-L86">source</a></div><div class="decl_header"><span class="decl_kind">class</span>
+<span class="decl_name"><a class="break_within" href="../../../.././Mathlib/Algebra/Order/Hom/GroupNorm.html#GroupNormClass"><span class="name">GroupNormClass</span></a></span><span class="decl_args">
+<span class="fn">(<span class="fn">F</span> : <a href="../../../.././foundational_types.html">Type</a> u_4)</span></span>
+<span class="decl_args">
+<span class="fn">(<span class="fn">α</span> : <span class="fn"><a href="../../../.././Init/Prelude.html#outParam">outParam</a> <a href="../../../.././foundational_types.html">(Type</a> u_5)</span>)</span></span>
+<span class="decl_args">
+<span class="fn">(<span class="fn">β</span> : <span class="fn"><a href="../../../.././Init/Prelude.html#outParam">outParam</a> <a href="../../../.././foundational_types.html">(Type</a> u_6)</span>)</span></span>
+<span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Group/Defs.html#Group">Group</a> <span class="fn">α</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Group/Monoid.html#AddCommMonoid">AddCommMonoid</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Order/Defs/PartialOrder.html#PartialOrder">PartialOrder</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Basic/FunLike/Basic.html#FunLike">FunLike</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span>]</span></span>
+</span><span class="decl_extends">extends</span> <span id="GroupNormClass.toGroupSeminormClass"><span class="fn"><a href="../../../.././Mathlib/Algebra/Order/Hom/GroupNorm.html#GroupSeminormClass">GroupSeminormClass</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span></span><span class="decl_args"> :</span><div class="decl_type"><a href="../../../.././foundational_types.html">Prop</a></div></div><p><code><a href="../../../.././Mathlib/Algebra/Order/Hom/GroupNorm.html#GroupNormClass">GroupNormClass</a> F α</code> states that <code>F</code> is a type of <code>β</code>-valued norms on the group <code>α</code>.</p><p>You should extend this class when you extend <code>GroupNorm</code>.</p><ul class="structure_fields" id="GroupNormClass.mk"><li class="structure_field inherited_field"><div class="structure_field_info"><a href="../../../.././Mathlib/Algebra/Order/Hom/Basic.html#MulLEAddHomClass.map_mul_le_add">map_mul_le_add</a><span class="decl_args">
+<span class="fn">(<span class="fn">f</span> : <span class="fn">F</span>)</span></span>
+<span class="decl_args">
+<span class="fn">(<span class="fn">a </span><span class="fn">b</span> : <span class="fn">α</span>)</span></span>
+ : <span class="fn"><span class="fn">f</span> (<span class="fn">a</span> <a href="../../../.././Init/Prelude.html#HMul.hMul">*</a> <span class="fn">b</span>)</span> <a href="../../../.././Init/Prelude.html#LE.le">≤</a> <span class="fn"><span class="fn">f</span> <span class="fn">a</span></span> <a href="../../../.././Init/Prelude.html#HAdd.hAdd">+</a> <span class="fn"><span class="fn">f</span> <span class="fn">b</span></span></div></li><li class="structure_field inherited_field"><div class="structure_field_info"><a href="../../../.././Mathlib/Algebra/Order/Hom/GroupNorm.html#GroupSeminormClass.map_one_eq_zero">map_one_eq_zero</a><span class="decl_args">
+<span class="fn">(<span class="fn">f</span> : <span class="fn">F</span>)</span></span>
+ : <span class="fn"><span class="fn">f</span> <span class="fn">1</span></span> <a href="../../../.././Init/Prelude.html#Eq">=</a> <span class="fn">0</span></div></li><li class="structure_field inherited_field"><div class="structure_field_info"><a href="../../../.././Mathlib/Algebra/Order/Hom/GroupNorm.html#GroupSeminormClass.map_inv_eq_map">map_inv_eq_map</a><span class="decl_args">
+<span class="fn">(<span class="fn">f</span> : <span class="fn">F</span>)</span></span>
+<span class="decl_args">
+<span class="fn">(<span class="fn">a</span> : <span class="fn">α</span>)</span></span>
+ : <span class="fn"><span class="fn">f</span> <span class="fn">a</span><a href="../../../.././Init/Prelude.html#Inv.inv">⁻¹</a></span> <a href="../../../.././Init/Prelude.html#Eq">=</a> <span class="fn"><span class="fn">f</span> <span class="fn">a</span></span></div></li><li id="GroupNormClass.eq_one_of_map_eq_zero" class="structure_field"><div class="structure_field_info">eq_one_of_map_eq_zero<span class="decl_args">
+<span class="fn">(<span class="fn">f</span> : <span class="fn">F</span>)</span></span>
+<span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">a</span> : <span class="fn">α</span>}</span></span>
+</span> : <span class="fn"><span class="fn"><span class="fn">f</span> <span class="fn">a</span></span> <a href="../../../.././Init/Prelude.html#Eq">=</a> <span class="fn">0</span> → <span class="fn">a</span> <a href="../../../.././Init/Prelude.html#Eq">=</a> <span class="fn">1</span></span></div><div class="structure_field_doc"><p>The argument is one if its image under the map is zero.</p></div></li></ul><details class="instances"><summary>Instances</summary><ul id="instances-list-GroupNormClass" class="instances-list"></ul></details></div></div><div class="decl" id="AddGroupSeminormClass.toZeroHomClass"><div class="instance"><div class="gh_link"><a href="https://github.com/leanprover-community/mathlib4/blob/56a005855ea17e0b0958f73ec801ae140b0a1679/Mathlib/Algebra/Order/Hom/GroupNorm.lean#L99-L101">source</a></div><div class="attributes">@[instance 100]</div>
+<div class="decl_header"><span class="decl_kind">instance</span>
+<span class="decl_name"><a class="break_within" href="../../../.././Mathlib/Algebra/Order/Hom/GroupNorm.html#AddGroupSeminormClass.toZeroHomClass"><span class="name">AddGroupSeminormClass</span>.<span class="name">toZeroHomClass</span></a></span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">F</span> : <a href="../../../.././foundational_types.html">Type</a> u_1}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">α</span> : <a href="../../../.././foundational_types.html">Type</a> u_2}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">β</span> : <a href="../../../.././foundational_types.html">Type</a> u_3}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Basic/FunLike/Basic.html#FunLike">FunLike</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Group/Defs.html#AddGroup">AddGroup</a> <span class="fn">α</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Group/Monoid.html#AddCommMonoid">AddCommMonoid</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Order/Defs/PartialOrder.html#PartialOrder">PartialOrder</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Order/Hom/GroupNorm.html#AddGroupSeminormClass">AddGroupSeminormClass</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span>]</span></span>
+</span><span class="decl_args"> :</span><div class="decl_type"><span class="fn"><a href="../../../.././Mathlib/Algebra/Group/Hom/Defs.html#ZeroHomClass">ZeroHomClass</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span></div></div></div></div><div class="decl" id="map_div_le_add"><div class="theorem"><div class="gh_link"><a href="https://github.com/leanprover-community/mathlib4/blob/56a005855ea17e0b0958f73ec801ae140b0a1679/Mathlib/Algebra/Order/Hom/GroupNorm.lean#L107-L110">source</a></div><div class="decl_header"><span class="decl_kind">theorem</span>
+<span class="decl_name"><a class="break_within" href="../../../.././Mathlib/Algebra/Order/Hom/GroupNorm.html#map_div_le_add"><span class="name">map_div_le_add</span></a></span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">F</span> : <a href="../../../.././foundational_types.html">Type</a> u_1}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">α</span> : <a href="../../../.././foundational_types.html">Type</a> u_2}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">β</span> : <a href="../../../.././foundational_types.html">Type</a> u_3}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Basic/FunLike/Basic.html#FunLike">FunLike</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Group/Defs.html#Group">Group</a> <span class="fn">α</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Group/Monoid.html#AddCommMonoid">AddCommMonoid</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Order/Defs/PartialOrder.html#PartialOrder">PartialOrder</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Order/Hom/GroupNorm.html#GroupSeminormClass">GroupSeminormClass</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span>]</span></span>
+</span><span class="decl_args">
+<span class="fn">(<span class="fn">f</span> : <span class="fn">F</span>)</span></span>
+<span class="decl_args">
+<span class="fn">(<span class="fn">x </span><span class="fn">y</span> : <span class="fn">α</span>)</span></span>
+<span class="decl_args"> :</span><div class="decl_type"><span class="fn"><span class="fn">f</span> (<span class="fn">x</span> <a href="../../../.././Init/Prelude.html#HDiv.hDiv">/</a> <span class="fn">y</span>)</span> <a href="../../../.././Init/Prelude.html#LE.le">≤</a> <span class="fn"><span class="fn">f</span> <span class="fn">x</span></span> <a href="../../../.././Init/Prelude.html#HAdd.hAdd">+</a> <span class="fn"><span class="fn">f</span> <span class="fn">y</span></span></div></div></div></div><div class="decl" id="map_sub_le_add"><div class="theorem"><div class="gh_link"><a href="https://github.com/leanprover-community/mathlib4/blob/56a005855ea17e0b0958f73ec801ae140b0a1679/Mathlib/Algebra/Order/Hom/GroupNorm.lean#L107-L107">source</a></div><div class="decl_header"><span class="decl_kind">theorem</span>
+<span class="decl_name"><a class="break_within" href="../../../.././Mathlib/Algebra/Order/Hom/GroupNorm.html#map_sub_le_add"><span class="name">map_sub_le_add</span></a></span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">F</span> : <a href="../../../.././foundational_types.html">Type</a> u_1}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">α</span> : <a href="../../../.././foundational_types.html">Type</a> u_2}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">β</span> : <a href="../../../.././foundational_types.html">Type</a> u_3}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Basic/FunLike/Basic.html#FunLike">FunLike</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Group/Defs.html#AddGroup">AddGroup</a> <span class="fn">α</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Group/Monoid.html#AddCommMonoid">AddCommMonoid</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Order/Defs/PartialOrder.html#PartialOrder">PartialOrder</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Order/Hom/GroupNorm.html#AddGroupSeminormClass">AddGroupSeminormClass</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span>]</span></span>
+</span><span class="decl_args">
+<span class="fn">(<span class="fn">f</span> : <span class="fn">F</span>)</span></span>
+<span class="decl_args">
+<span class="fn">(<span class="fn">x </span><span class="fn">y</span> : <span class="fn">α</span>)</span></span>
+<span class="decl_args"> :</span><div class="decl_type"><span class="fn"><span class="fn">f</span> (<span class="fn">x</span> <a href="../../../.././Init/Prelude.html#HSub.hSub">-</a> <span class="fn">y</span>)</span> <a href="../../../.././Init/Prelude.html#LE.le">≤</a> <span class="fn"><span class="fn">f</span> <span class="fn">x</span></span> <a href="../../../.././Init/Prelude.html#HAdd.hAdd">+</a> <span class="fn"><span class="fn">f</span> <span class="fn">y</span></span></div></div></div></div><div class="decl" id="map_div_rev"><div class="theorem"><div class="gh_link"><a href="https://github.com/leanprover-community/mathlib4/blob/56a005855ea17e0b0958f73ec801ae140b0a1679/Mathlib/Algebra/Order/Hom/GroupNorm.lean#L112-L113">source</a></div><div class="decl_header"><span class="decl_kind">theorem</span>
+<span class="decl_name"><a class="break_within" href="../../../.././Mathlib/Algebra/Order/Hom/GroupNorm.html#map_div_rev"><span class="name">map_div_rev</span></a></span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">F</span> : <a href="../../../.././foundational_types.html">Type</a> u_1}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">α</span> : <a href="../../../.././foundational_types.html">Type</a> u_2}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">β</span> : <a href="../../../.././foundational_types.html">Type</a> u_3}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Basic/FunLike/Basic.html#FunLike">FunLike</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Group/Defs.html#Group">Group</a> <span class="fn">α</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Group/Monoid.html#AddCommMonoid">AddCommMonoid</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Order/Defs/PartialOrder.html#PartialOrder">PartialOrder</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Order/Hom/GroupNorm.html#GroupSeminormClass">GroupSeminormClass</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span>]</span></span>
+</span><span class="decl_args">
+<span class="fn">(<span class="fn">f</span> : <span class="fn">F</span>)</span></span>
+<span class="decl_args">
+<span class="fn">(<span class="fn">x </span><span class="fn">y</span> : <span class="fn">α</span>)</span></span>
+<span class="decl_args"> :</span><div class="decl_type"><span class="fn"><span class="fn">f</span> (<span class="fn">x</span> <a href="../../../.././Init/Prelude.html#HDiv.hDiv">/</a> <span class="fn">y</span>)</span> <a href="../../../.././Init/Prelude.html#Eq">=</a> <span class="fn"><span class="fn">f</span> (<span class="fn">y</span> <a href="../../../.././Init/Prelude.html#HDiv.hDiv">/</a> <span class="fn">x</span>)</span></div></div></div></div><div class="decl" id="map_sub_rev"><div class="theorem"><div class="gh_link"><a href="https://github.com/leanprover-community/mathlib4/blob/56a005855ea17e0b0958f73ec801ae140b0a1679/Mathlib/Algebra/Order/Hom/GroupNorm.lean#L112-L112">source</a></div><div class="decl_header"><span class="decl_kind">theorem</span>
+<span class="decl_name"><a class="break_within" href="../../../.././Mathlib/Algebra/Order/Hom/GroupNorm.html#map_sub_rev"><span class="name">map_sub_rev</span></a></span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">F</span> : <a href="../../../.././foundational_types.html">Type</a> u_1}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">α</span> : <a href="../../../.././foundational_types.html">Type</a> u_2}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">β</span> : <a href="../../../.././foundational_types.html">Type</a> u_3}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Basic/FunLike/Basic.html#FunLike">FunLike</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Group/Defs.html#AddGroup">AddGroup</a> <span class="fn">α</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Group/Monoid.html#AddCommMonoid">AddCommMonoid</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Order/Defs/PartialOrder.html#PartialOrder">PartialOrder</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Order/Hom/GroupNorm.html#AddGroupSeminormClass">AddGroupSeminormClass</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span>]</span></span>
+</span><span class="decl_args">
+<span class="fn">(<span class="fn">f</span> : <span class="fn">F</span>)</span></span>
+<span class="decl_args">
+<span class="fn">(<span class="fn">x </span><span class="fn">y</span> : <span class="fn">α</span>)</span></span>
+<span class="decl_args"> :</span><div class="decl_type"><span class="fn"><span class="fn">f</span> (<span class="fn">x</span> <a href="../../../.././Init/Prelude.html#HSub.hSub">-</a> <span class="fn">y</span>)</span> <a href="../../../.././Init/Prelude.html#Eq">=</a> <span class="fn"><span class="fn">f</span> (<span class="fn">y</span> <a href="../../../.././Init/Prelude.html#HSub.hSub">-</a> <span class="fn">x</span>)</span></div></div></div></div><div class="decl" id="map_inv_mul"><div class="theorem"><div class="gh_link"><a href="https://github.com/leanprover-community/mathlib4/blob/56a005855ea17e0b0958f73ec801ae140b0a1679/Mathlib/Algebra/Order/Hom/GroupNorm.lean#L115-L118">source</a></div><div class="decl_header"><span class="decl_kind">theorem</span>
+<span class="decl_name"><a class="break_within" href="../../../.././Mathlib/Algebra/Order/Hom/GroupNorm.html#map_inv_mul"><span class="name">map_inv_mul</span></a></span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">F</span> : <a href="../../../.././foundational_types.html">Type</a> u_1}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">β</span> : <a href="../../../.././foundational_types.html">Type</a> u_3}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Group/Monoid.html#AddCommMonoid">AddCommMonoid</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Order/Defs/PartialOrder.html#PartialOrder">PartialOrder</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="decl_args">
+<span class="fn">(<span class="fn">f</span> : <span class="fn">F</span>)</span></span>
+<span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">α</span> : <a href="../../../.././foundational_types.html">Type</a> u_4}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Basic/FunLike/Basic.html#FunLike">FunLike</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Group/Defs.html#CommGroup">CommGroup</a> <span class="fn">α</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Order/Hom/GroupNorm.html#GroupSeminormClass">GroupSeminormClass</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span>]</span></span>
+</span><span class="decl_args">
+<span class="fn">(<span class="fn">x </span><span class="fn">y</span> : <span class="fn">α</span>)</span></span>
+<span class="decl_args"> :</span><div class="decl_type"><span class="fn"><span class="fn">f</span> (<span class="fn">x</span><a href="../../../.././Init/Prelude.html#Inv.inv">⁻¹</a> <a href="../../../.././Init/Prelude.html#HMul.hMul">*</a> <span class="fn">y</span>)</span> <a href="../../../.././Init/Prelude.html#Eq">=</a> <span class="fn"><span class="fn">f</span> (<span class="fn">x</span> <a href="../../../.././Init/Prelude.html#HMul.hMul">*</a> <span class="fn">y</span><a href="../../../.././Init/Prelude.html#Inv.inv">⁻¹</a>)</span></div></div></div></div><div class="decl" id="map_neg_add"><div class="theorem"><div class="gh_link"><a href="https://github.com/leanprover-community/mathlib4/blob/56a005855ea17e0b0958f73ec801ae140b0a1679/Mathlib/Algebra/Order/Hom/GroupNorm.lean#L115-L115">source</a></div><div class="decl_header"><span class="decl_kind">theorem</span>
+<span class="decl_name"><a class="break_within" href="../../../.././Mathlib/Algebra/Order/Hom/GroupNorm.html#map_neg_add"><span class="name">map_neg_add</span></a></span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">F</span> : <a href="../../../.././foundational_types.html">Type</a> u_1}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">β</span> : <a href="../../../.././foundational_types.html">Type</a> u_3}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Group/Monoid.html#AddCommMonoid">AddCommMonoid</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Order/Defs/PartialOrder.html#PartialOrder">PartialOrder</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="decl_args">
+<span class="fn">(<span class="fn">f</span> : <span class="fn">F</span>)</span></span>
+<span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">α</span> : <a href="../../../.././foundational_types.html">Type</a> u_4}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Basic/FunLike/Basic.html#FunLike">FunLike</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Group/Defs.html#AddCommGroup">AddCommGroup</a> <span class="fn">α</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Order/Hom/GroupNorm.html#AddGroupSeminormClass">AddGroupSeminormClass</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span>]</span></span>
+</span><span class="decl_args">
+<span class="fn">(<span class="fn">x </span><span class="fn">y</span> : <span class="fn">α</span>)</span></span>
+<span class="decl_args"> :</span><div class="decl_type"><span class="fn"><span class="fn">f</span> (<a href="../../../.././Init/Prelude.html#Neg.neg">-</a><span class="fn">x</span> <a href="../../../.././Init/Prelude.html#HAdd.hAdd">+</a> <span class="fn">y</span>)</span> <a href="../../../.././Init/Prelude.html#Eq">=</a> <span class="fn"><span class="fn">f</span> (<span class="fn">x</span> <a href="../../../.././Init/Prelude.html#HAdd.hAdd">+</a> <a href="../../../.././Init/Prelude.html#Neg.neg">-</a><span class="fn">y</span>)</span></div></div></div></div><div class="decl" id="le_map_add_map_div'"><div class="theorem"><div class="gh_link"><a href="https://github.com/leanprover-community/mathlib4/blob/56a005855ea17e0b0958f73ec801ae140b0a1679/Mathlib/Algebra/Order/Hom/GroupNorm.lean#L120-L122">source</a></div><div class="decl_header"><span class="decl_kind">theorem</span>
+<span class="decl_name"><a class="break_within" href="../../../.././Mathlib/Algebra/Order/Hom/GroupNorm.html#le_map_add_map_div'"><span class="name">le_map_add_map_div'</span></a></span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">F</span> : <a href="../../../.././foundational_types.html">Type</a> u_1}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">α</span> : <a href="../../../.././foundational_types.html">Type</a> u_2}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">β</span> : <a href="../../../.././foundational_types.html">Type</a> u_3}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Basic/FunLike/Basic.html#FunLike">FunLike</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Group/Defs.html#Group">Group</a> <span class="fn">α</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Group/Monoid.html#AddCommMonoid">AddCommMonoid</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Order/Defs/PartialOrder.html#PartialOrder">PartialOrder</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Order/Hom/GroupNorm.html#GroupSeminormClass">GroupSeminormClass</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span>]</span></span>
+</span><span class="decl_args">
+<span class="fn">(<span class="fn">f</span> : <span class="fn">F</span>)</span></span>
+<span class="decl_args">
+<span class="fn">(<span class="fn">x </span><span class="fn">y</span> : <span class="fn">α</span>)</span></span>
+<span class="decl_args"> :</span><div class="decl_type"><span class="fn"><span class="fn">f</span> <span class="fn">x</span></span> <a href="../../../.././Init/Prelude.html#LE.le">≤</a> <span class="fn"><span class="fn">f</span> <span class="fn">y</span></span> <a href="../../../.././Init/Prelude.html#HAdd.hAdd">+</a> <span class="fn"><span class="fn">f</span> (<span class="fn">y</span> <a href="../../../.././Init/Prelude.html#HDiv.hDiv">/</a> <span class="fn">x</span>)</span></div></div></div></div><div class="decl" id="le_map_add_map_sub'"><div class="theorem"><div class="gh_link"><a href="https://github.com/leanprover-community/mathlib4/blob/56a005855ea17e0b0958f73ec801ae140b0a1679/Mathlib/Algebra/Order/Hom/GroupNorm.lean#L120-L120">source</a></div><div class="decl_header"><span class="decl_kind">theorem</span>
+<span class="decl_name"><a class="break_within" href="../../../.././Mathlib/Algebra/Order/Hom/GroupNorm.html#le_map_add_map_sub'"><span class="name">le_map_add_map_sub'</span></a></span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">F</span> : <a href="../../../.././foundational_types.html">Type</a> u_1}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">α</span> : <a href="../../../.././foundational_types.html">Type</a> u_2}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">β</span> : <a href="../../../.././foundational_types.html">Type</a> u_3}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Basic/FunLike/Basic.html#FunLike">FunLike</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Group/Defs.html#AddGroup">AddGroup</a> <span class="fn">α</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Group/Monoid.html#AddCommMonoid">AddCommMonoid</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Order/Defs/PartialOrder.html#PartialOrder">PartialOrder</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Order/Hom/GroupNorm.html#AddGroupSeminormClass">AddGroupSeminormClass</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span>]</span></span>
+</span><span class="decl_args">
+<span class="fn">(<span class="fn">f</span> : <span class="fn">F</span>)</span></span>
+<span class="decl_args">
+<span class="fn">(<span class="fn">x </span><span class="fn">y</span> : <span class="fn">α</span>)</span></span>
+<span class="decl_args"> :</span><div class="decl_type"><span class="fn"><span class="fn">f</span> <span class="fn">x</span></span> <a href="../../../.././Init/Prelude.html#LE.le">≤</a> <span class="fn"><span class="fn">f</span> <span class="fn">y</span></span> <a href="../../../.././Init/Prelude.html#HAdd.hAdd">+</a> <span class="fn"><span class="fn">f</span> (<span class="fn">y</span> <a href="../../../.././Init/Prelude.html#HSub.hSub">-</a> <span class="fn">x</span>)</span></div></div></div></div><div class="decl" id="abs_sub_map_le_div"><div class="theorem"><div class="gh_link"><a href="https://github.com/leanprover-community/mathlib4/blob/56a005855ea17e0b0958f73ec801ae140b0a1679/Mathlib/Algebra/Order/Hom/GroupNorm.lean#L126-L131">source</a></div><div class="decl_header"><span class="decl_kind">theorem</span>
+<span class="decl_name"><a class="break_within" href="../../../.././Mathlib/Algebra/Order/Hom/GroupNorm.html#abs_sub_map_le_div"><span class="name">abs_sub_map_le_div</span></a></span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">F</span> : <a href="../../../.././foundational_types.html">Type</a> u_1}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">α</span> : <a href="../../../.././foundational_types.html">Type</a> u_2}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">β</span> : <a href="../../../.././foundational_types.html">Type</a> u_3}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Basic/FunLike/Basic.html#FunLike">FunLike</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Group/Defs.html#Group">Group</a> <span class="fn">α</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Group/Defs.html#AddCommGroup">AddCommGroup</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Order/Defs/LinearOrder.html#LinearOrder">LinearOrder</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Order/Monoid/Defs.html#IsOrderedAddMonoid">IsOrderedAddMonoid</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Order/Hom/GroupNorm.html#GroupSeminormClass">GroupSeminormClass</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span>]</span></span>
+</span><span class="decl_args">
+<span class="fn">(<span class="fn">f</span> : <span class="fn">F</span>)</span></span>
+<span class="decl_args">
+<span class="fn">(<span class="fn">x </span><span class="fn">y</span> : <span class="fn">α</span>)</span></span>
+<span class="decl_args"> :</span><div class="decl_type"><a href="../../../.././Mathlib/Algebra/Order/Group/Unbundled/Abs.html#abs">|</a><span class="fn"><span class="fn">f</span> <span class="fn">x</span></span> <a href="../../../.././Init/Prelude.html#HSub.hSub">-</a> <span class="fn"><span class="fn">f</span> <span class="fn">y</span></span><a href="../../../.././Mathlib/Algebra/Order/Group/Unbundled/Abs.html#abs">|</a> <a href="../../../.././Init/Prelude.html#LE.le">≤</a> <span class="fn"><span class="fn">f</span> (<span class="fn">x</span> <a href="../../../.././Init/Prelude.html#HDiv.hDiv">/</a> <span class="fn">y</span>)</span></div></div></div></div><div class="decl" id="abs_sub_map_le_sub"><div class="theorem"><div class="gh_link"><a href="https://github.com/leanprover-community/mathlib4/blob/56a005855ea17e0b0958f73ec801ae140b0a1679/Mathlib/Algebra/Order/Hom/GroupNorm.lean#L126-L126">source</a></div><div class="decl_header"><span class="decl_kind">theorem</span>
+<span class="decl_name"><a class="break_within" href="../../../.././Mathlib/Algebra/Order/Hom/GroupNorm.html#abs_sub_map_le_sub"><span class="name">abs_sub_map_le_sub</span></a></span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">F</span> : <a href="../../../.././foundational_types.html">Type</a> u_1}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">α</span> : <a href="../../../.././foundational_types.html">Type</a> u_2}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">β</span> : <a href="../../../.././foundational_types.html">Type</a> u_3}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Basic/FunLike/Basic.html#FunLike">FunLike</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Group/Defs.html#AddGroup">AddGroup</a> <span class="fn">α</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Group/Defs.html#AddCommGroup">AddCommGroup</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Order/Defs/LinearOrder.html#LinearOrder">LinearOrder</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Order/Monoid/Defs.html#IsOrderedAddMonoid">IsOrderedAddMonoid</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Order/Hom/GroupNorm.html#AddGroupSeminormClass">AddGroupSeminormClass</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span>]</span></span>
+</span><span class="decl_args">
+<span class="fn">(<span class="fn">f</span> : <span class="fn">F</span>)</span></span>
+<span class="decl_args">
+<span class="fn">(<span class="fn">x </span><span class="fn">y</span> : <span class="fn">α</span>)</span></span>
+<span class="decl_args"> :</span><div class="decl_type"><a href="../../../.././Mathlib/Algebra/Order/Group/Unbundled/Abs.html#abs">|</a><span class="fn"><span class="fn">f</span> <span class="fn">x</span></span> <a href="../../../.././Init/Prelude.html#HSub.hSub">-</a> <span class="fn"><span class="fn">f</span> <span class="fn">y</span></span><a href="../../../.././Mathlib/Algebra/Order/Group/Unbundled/Abs.html#abs">|</a> <a href="../../../.././Init/Prelude.html#LE.le">≤</a> <span class="fn"><span class="fn">f</span> (<span class="fn">x</span> <a href="../../../.././Init/Prelude.html#HSub.hSub">-</a> <span class="fn">y</span>)</span></div></div></div></div><div class="decl" id="GroupSeminormClass.toNonnegHomClass"><div class="instance"><div class="gh_link"><a href="https://github.com/leanprover-community/mathlib4/blob/56a005855ea17e0b0958f73ec801ae140b0a1679/Mathlib/Algebra/Order/Hom/GroupNorm.lean#L134-L142">source</a></div><div class="attributes">@[instance 100]</div>
+<div class="decl_header"><span class="decl_kind">instance</span>
+<span class="decl_name"><a class="break_within" href="../../../.././Mathlib/Algebra/Order/Hom/GroupNorm.html#GroupSeminormClass.toNonnegHomClass"><span class="name">GroupSeminormClass</span>.<span class="name">toNonnegHomClass</span></a></span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">F</span> : <a href="../../../.././foundational_types.html">Type</a> u_1}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">α</span> : <a href="../../../.././foundational_types.html">Type</a> u_2}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">β</span> : <a href="../../../.././foundational_types.html">Type</a> u_3}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Basic/FunLike/Basic.html#FunLike">FunLike</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Group/Defs.html#Group">Group</a> <span class="fn">α</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Group/Monoid.html#AddCommMonoid">AddCommMonoid</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Order/Defs/LinearOrder.html#LinearOrder">LinearOrder</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Order/Monoid/Defs.html#IsOrderedAddMonoid">IsOrderedAddMonoid</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Order/Hom/GroupNorm.html#GroupSeminormClass">GroupSeminormClass</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span>]</span></span>
+</span><span class="decl_args"> :</span><div class="decl_type"><span class="fn"><a href="../../../.././Mathlib/Algebra/Order/Hom/Basic.html#NonnegHomClass">NonnegHomClass</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span></div></div></div></div><div class="decl" id="AddGroupSeminormClass.toNonnegHomClass"><div class="instance"><div class="gh_link"><a href="https://github.com/leanprover-community/mathlib4/blob/56a005855ea17e0b0958f73ec801ae140b0a1679/Mathlib/Algebra/Order/Hom/GroupNorm.lean#L134-L134">source</a></div><div class="attributes">@[instance 100]</div>
+<div class="decl_header"><span class="decl_kind">instance</span>
+<span class="decl_name"><a class="break_within" href="../../../.././Mathlib/Algebra/Order/Hom/GroupNorm.html#AddGroupSeminormClass.toNonnegHomClass"><span class="name">AddGroupSeminormClass</span>.<span class="name">toNonnegHomClass</span></a></span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">F</span> : <a href="../../../.././foundational_types.html">Type</a> u_1}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">α</span> : <a href="../../../.././foundational_types.html">Type</a> u_2}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">β</span> : <a href="../../../.././foundational_types.html">Type</a> u_3}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Basic/FunLike/Basic.html#FunLike">FunLike</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Group/Defs.html#AddGroup">AddGroup</a> <span class="fn">α</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Group/Monoid.html#AddCommMonoid">AddCommMonoid</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Order/Defs/LinearOrder.html#LinearOrder">LinearOrder</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Order/Monoid/Defs.html#IsOrderedAddMonoid">IsOrderedAddMonoid</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Order/Hom/GroupNorm.html#AddGroupSeminormClass">AddGroupSeminormClass</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span>]</span></span>
+</span><span class="decl_args"> :</span><div class="decl_type"><span class="fn"><a href="../../../.././Mathlib/Algebra/Order/Hom/Basic.html#NonnegHomClass">NonnegHomClass</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span></div></div></div></div><div class="decl" id="map_eq_zero_iff_eq_one"><div class="theorem"><div class="gh_link"><a href="https://github.com/leanprover-community/mathlib4/blob/56a005855ea17e0b0958f73ec801ae140b0a1679/Mathlib/Algebra/Order/Hom/GroupNorm.lean#L148-L152">source</a></div><div class="decl_header"><span class="decl_kind">theorem</span>
+<span class="decl_name"><a class="break_within" href="../../../.././Mathlib/Algebra/Order/Hom/GroupNorm.html#map_eq_zero_iff_eq_one"><span class="name">map_eq_zero_iff_eq_one</span></a></span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">F</span> : <a href="../../../.././foundational_types.html">Type</a> u_1}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">α</span> : <a href="../../../.././foundational_types.html">Type</a> u_2}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">β</span> : <a href="../../../.././foundational_types.html">Type</a> u_3}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Basic/FunLike/Basic.html#FunLike">FunLike</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Group/Defs.html#Group">Group</a> <span class="fn">α</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Group/Monoid.html#AddCommMonoid">AddCommMonoid</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Order/Defs/PartialOrder.html#PartialOrder">PartialOrder</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Order/Hom/GroupNorm.html#GroupNormClass">GroupNormClass</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span>]</span></span>
+</span><span class="decl_args">
+<span class="fn">(<span class="fn">f</span> : <span class="fn">F</span>)</span></span>
+<span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">x</span> : <span class="fn">α</span>}</span></span>
+</span><span class="decl_args"> :</span><div class="decl_type"><span class="fn"><span class="fn">f</span> <span class="fn">x</span></span> <a href="../../../.././Init/Prelude.html#Eq">=</a> <span class="fn">0</span> <a href="../../../.././Init/Core.html#Iff">↔</a> <span class="fn">x</span> <a href="../../../.././Init/Prelude.html#Eq">=</a> <span class="fn">1</span></div></div></div></div><div class="decl" id="map_eq_zero_iff_eq_zero"><div class="theorem"><div class="gh_link"><a href="https://github.com/leanprover-community/mathlib4/blob/56a005855ea17e0b0958f73ec801ae140b0a1679/Mathlib/Algebra/Order/Hom/GroupNorm.lean#L148-L148">source</a></div><div class="decl_header"><span class="decl_kind">theorem</span>
+<span class="decl_name"><a class="break_within" href="../../../.././Mathlib/Algebra/Order/Hom/GroupNorm.html#map_eq_zero_iff_eq_zero"><span class="name">map_eq_zero_iff_eq_zero</span></a></span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">F</span> : <a href="../../../.././foundational_types.html">Type</a> u_1}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">α</span> : <a href="../../../.././foundational_types.html">Type</a> u_2}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">β</span> : <a href="../../../.././foundational_types.html">Type</a> u_3}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Basic/FunLike/Basic.html#FunLike">FunLike</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Group/Defs.html#AddGroup">AddGroup</a> <span class="fn">α</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Group/Monoid.html#AddCommMonoid">AddCommMonoid</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Order/Defs/PartialOrder.html#PartialOrder">PartialOrder</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Order/Hom/GroupNorm.html#AddGroupNormClass">AddGroupNormClass</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span>]</span></span>
+</span><span class="decl_args">
+<span class="fn">(<span class="fn">f</span> : <span class="fn">F</span>)</span></span>
+<span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">x</span> : <span class="fn">α</span>}</span></span>
+</span><span class="decl_args"> :</span><div class="decl_type"><span class="fn"><span class="fn">f</span> <span class="fn">x</span></span> <a href="../../../.././Init/Prelude.html#Eq">=</a> <span class="fn">0</span> <a href="../../../.././Init/Core.html#Iff">↔</a> <span class="fn">x</span> <a href="../../../.././Init/Prelude.html#Eq">=</a> <span class="fn">0</span></div></div></div></div><div class="decl" id="map_ne_zero_iff_ne_one"><div class="theorem"><div class="gh_link"><a href="https://github.com/leanprover-community/mathlib4/blob/56a005855ea17e0b0958f73ec801ae140b0a1679/Mathlib/Algebra/Order/Hom/GroupNorm.lean#L154-L156">source</a></div><div class="decl_header"><span class="decl_kind">theorem</span>
+<span class="decl_name"><a class="break_within" href="../../../.././Mathlib/Algebra/Order/Hom/GroupNorm.html#map_ne_zero_iff_ne_one"><span class="name">map_ne_zero_iff_ne_one</span></a></span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">F</span> : <a href="../../../.././foundational_types.html">Type</a> u_1}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">α</span> : <a href="../../../.././foundational_types.html">Type</a> u_2}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">β</span> : <a href="../../../.././foundational_types.html">Type</a> u_3}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Basic/FunLike/Basic.html#FunLike">FunLike</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Group/Defs.html#Group">Group</a> <span class="fn">α</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Group/Monoid.html#AddCommMonoid">AddCommMonoid</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Order/Defs/PartialOrder.html#PartialOrder">PartialOrder</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Order/Hom/GroupNorm.html#GroupNormClass">GroupNormClass</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span>]</span></span>
+</span><span class="decl_args">
+<span class="fn">(<span class="fn">f</span> : <span class="fn">F</span>)</span></span>
+<span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">x</span> : <span class="fn">α</span>}</span></span>
+</span><span class="decl_args"> :</span><div class="decl_type"><span class="fn"><span class="fn">f</span> <span class="fn">x</span></span> <a href="../../../.././Init/Core.html#Ne">≠</a> <span class="fn">0</span> <a href="../../../.././Init/Core.html#Iff">↔</a> <span class="fn">x</span> <a href="../../../.././Init/Core.html#Ne">≠</a> <span class="fn">1</span></div></div></div></div><div class="decl" id="map_ne_zero_iff_ne_zero"><div class="theorem"><div class="gh_link"><a href="https://github.com/leanprover-community/mathlib4/blob/56a005855ea17e0b0958f73ec801ae140b0a1679/Mathlib/Algebra/Order/Hom/GroupNorm.lean#L154-L154">source</a></div><div class="decl_header"><span class="decl_kind">theorem</span>
+<span class="decl_name"><a class="break_within" href="../../../.././Mathlib/Algebra/Order/Hom/GroupNorm.html#map_ne_zero_iff_ne_zero"><span class="name">map_ne_zero_iff_ne_zero</span></a></span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">F</span> : <a href="../../../.././foundational_types.html">Type</a> u_1}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">α</span> : <a href="../../../.././foundational_types.html">Type</a> u_2}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">β</span> : <a href="../../../.././foundational_types.html">Type</a> u_3}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Basic/FunLike/Basic.html#FunLike">FunLike</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Group/Defs.html#AddGroup">AddGroup</a> <span class="fn">α</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Group/Monoid.html#AddCommMonoid">AddCommMonoid</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Order/Defs/PartialOrder.html#PartialOrder">PartialOrder</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Order/Hom/GroupNorm.html#AddGroupNormClass">AddGroupNormClass</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span>]</span></span>
+</span><span class="decl_args">
+<span class="fn">(<span class="fn">f</span> : <span class="fn">F</span>)</span></span>
+<span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">x</span> : <span class="fn">α</span>}</span></span>
+</span><span class="decl_args"> :</span><div class="decl_type"><span class="fn"><span class="fn">f</span> <span class="fn">x</span></span> <a href="../../../.././Init/Core.html#Ne">≠</a> <span class="fn">0</span> <a href="../../../.././Init/Core.html#Iff">↔</a> <span class="fn">x</span> <a href="../../../.././Init/Core.html#Ne">≠</a> <span class="fn">0</span></div></div></div></div><div class="decl" id="map_pos_of_ne_one"><div class="theorem"><div class="gh_link"><a href="https://github.com/leanprover-community/mathlib4/blob/56a005855ea17e0b0958f73ec801ae140b0a1679/Mathlib/Algebra/Order/Hom/GroupNorm.lean#L160-L164">source</a></div><div class="decl_header"><span class="decl_kind">theorem</span>
+<span class="decl_name"><a class="break_within" href="../../../.././Mathlib/Algebra/Order/Hom/GroupNorm.html#map_pos_of_ne_one"><span class="name">map_pos_of_ne_one</span></a></span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">F</span> : <a href="../../../.././foundational_types.html">Type</a> u_1}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">α</span> : <a href="../../../.././foundational_types.html">Type</a> u_2}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">β</span> : <a href="../../../.././foundational_types.html">Type</a> u_3}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Basic/FunLike/Basic.html#FunLike">FunLike</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Group/Defs.html#Group">Group</a> <span class="fn">α</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Group/Monoid.html#AddCommMonoid">AddCommMonoid</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Order/Defs/LinearOrder.html#LinearOrder">LinearOrder</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Order/Monoid/Defs.html#IsOrderedAddMonoid">IsOrderedAddMonoid</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Order/Hom/GroupNorm.html#GroupNormClass">GroupNormClass</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span>]</span></span>
+</span><span class="decl_args">
+<span class="fn">(<span class="fn">f</span> : <span class="fn">F</span>)</span></span>
+<span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">x</span> : <span class="fn">α</span>}</span></span>
+</span><span class="decl_args">
+<span class="fn">(<span class="fn">hx</span> : <span class="fn">x</span> <a href="../../../.././Init/Core.html#Ne">≠</a> <span class="fn">1</span>)</span></span>
+<span class="decl_args"> :</span><div class="decl_type"><span class="fn">0</span> <a href="../../../.././Init/Prelude.html#LT.lt">&lt;</a> <span class="fn"><span class="fn">f</span> <span class="fn">x</span></span></div></div></div></div><div class="decl" id="map_pos_of_ne_zero"><div class="theorem"><div class="gh_link"><a href="https://github.com/leanprover-community/mathlib4/blob/56a005855ea17e0b0958f73ec801ae140b0a1679/Mathlib/Algebra/Order/Hom/GroupNorm.lean#L160-L160">source</a></div><div class="decl_header"><span class="decl_kind">theorem</span>
+<span class="decl_name"><a class="break_within" href="../../../.././Mathlib/Algebra/Order/Hom/GroupNorm.html#map_pos_of_ne_zero"><span class="name">map_pos_of_ne_zero</span></a></span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">F</span> : <a href="../../../.././foundational_types.html">Type</a> u_1}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">α</span> : <a href="../../../.././foundational_types.html">Type</a> u_2}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">β</span> : <a href="../../../.././foundational_types.html">Type</a> u_3}</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Basic/FunLike/Basic.html#FunLike">FunLike</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Group/Defs.html#AddGroup">AddGroup</a> <span class="fn">α</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Group/Monoid.html#AddCommMonoid">AddCommMonoid</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Order/Defs/LinearOrder.html#LinearOrder">LinearOrder</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Order/Monoid/Defs.html#IsOrderedAddMonoid">IsOrderedAddMonoid</a> <span class="fn">β</span></span>]</span></span>
+</span><span class="impl_arg"><span class="decl_args">
+<span class="fn">[<span class="fn"><a href="../../../.././Mathlib/Algebra/Order/Hom/GroupNorm.html#AddGroupNormClass">AddGroupNormClass</a> <span class="fn">F</span> <span class="fn">α</span> <span class="fn">β</span></span>]</span></span>
+</span><span class="decl_args">
+<span class="fn">(<span class="fn">f</span> : <span class="fn">F</span>)</span></span>
+<span class="impl_arg"><span class="decl_args">
+<span class="fn">{<span class="fn">x</span> : <span class="fn">α</span>}</span></span>
+</span><span class="decl_args">
+<span class="fn">(<span class="fn">hx</span> : <span class="fn">x</span> <a href="../../../.././Init/Core.html#Ne">≠</a> <span class="fn">0</span>)</span></span>
+<span class="decl_args"> :</span><div class="decl_type"><span class="fn">0</span> <a href="../../../.././Init/Prelude.html#LT.lt">&lt;</a> <span class="fn"><span class="fn">f</span> <span class="fn">x</span></span></div></div></div></div></main>
+<nav class="nav"><iframe src="../../../.././navbar.html" class="navframe" frameBorder="0"></iframe></nav></body></html>
