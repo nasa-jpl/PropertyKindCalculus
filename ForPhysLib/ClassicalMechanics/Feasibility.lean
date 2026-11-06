@@ -54,8 +54,17 @@ is an `informal_lemma` tagged `CM-RB-sphereI`, with its formal statement in the 
 
 module
 
-public import Physlib.ClassicalMechanics.HarmonicOscillator.Solution
-meta import Physlib.ClassicalMechanics.HarmonicOscillator.Solution
+-- Upstream split `HarmonicOscillator.Solution` into a directory; these are its leaves.
+public import Physlib.ClassicalMechanics.HarmonicOscillator.Solution.Consistency
+meta import Physlib.ClassicalMechanics.HarmonicOscillator.Solution.Consistency
+public import Physlib.ClassicalMechanics.HarmonicOscillator.Solution.Energy
+meta import Physlib.ClassicalMechanics.HarmonicOscillator.Solution.Energy
+public import Physlib.ClassicalMechanics.HarmonicOscillator.Solution.Periodicity
+meta import Physlib.ClassicalMechanics.HarmonicOscillator.Solution.Periodicity
+public import Physlib.ClassicalMechanics.HarmonicOscillator.Solution.SpecialPoints
+meta import Physlib.ClassicalMechanics.HarmonicOscillator.Solution.SpecialPoints
+public import Physlib.ClassicalMechanics.HarmonicOscillator.Solution.Uniqueness
+meta import Physlib.ClassicalMechanics.HarmonicOscillator.Solution.Uniqueness
 public import Physlib.ClassicalMechanics.RigidBody.KineticEnergy
 meta import Physlib.ClassicalMechanics.RigidBody.KineticEnergy
 public import PropertyKindCalculus.BoundaryAudit
