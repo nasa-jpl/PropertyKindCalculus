@@ -50,6 +50,7 @@ public import PropertyKindCalculus.Requirement
 public import PropertyKindCalculus.Influence
 public import PropertyKindCalculus.Derivation
 public import PropertyKindCalculus.Paradigm.TapeGraph
+public import PropertyKindCalculus.Paradigm.ClockedTime
 
 public section Interface
 
