@@ -77,7 +77,7 @@ def tableById (id : String) (scope : Scope := #[]) : MetaM IndexTable := withHar
   | "records"              => recordsTable scope
   | "operations"           => operationsTable scope
   | "contracts"            => contractsTable scope
-  | "kinds-by-boundary"    => kindsByBoundaryTable scope
+  | "kinds-by-boundary"    => kindsByBoundaryTable .core scope
   | "kinds-in-context"     => kindsInContextTable .core scope
   | "kinds-unbound"        => kindsUnboundTable .core scope
   | "relations"            => relationsTable scope

@@ -17,6 +17,12 @@ tables here answer the second question from the same environment, by **joining t
 the declared `Provenance.Contract`s**: a port states its kind by declaration name (`KindRef.decl`),
 so every kind a boundary carries is a row of this join, with the boundary and the port's role.
 
+The join is **restricted to the census**: a contract in scope may state a kind declared outside
+it (a shared upstream kind, a kind of another layer), and such a port binds nothing here — the
+rows of every table below are census kinds, which is what lets the grouped view and the
+absences partition the census exactly. A document wanting the external kinds reads the
+`contracts` table, where the interface is rendered whole.
+
 Three readings, one join:
 
 * `kinds-by-boundary` — the grouped reading: boundary, then role (in the module card's reading
@@ -72,11 +78,14 @@ structure KindBinding where
   kind : Name
 deriving Repr, Inhabited
 
-/-- Every (boundary, port, kind) binding declared in scope — the join the three tables and the
-partition read. Counterexample contracts are excluded, as in the `contracts` table. A kind a
-signature states more than once (`k → k`) is one binding of that port, not two. -/
-def kindBindings (scope : Scope) : MetaM (Array KindBinding) := do
+/-- Every (boundary, port, kind) binding declared in scope whose kind is in `layer`'s census in
+scope — the join the three tables and the partition read. A port kind outside the census (declared
+elsewhere, or of another layer) binds nothing. Counterexample contracts are excluded, as in the
+`contracts` table. A kind a signature states more than once (`k → k`) is one binding of that port,
+not two. -/
+def kindBindings (layer : KindLayer) (scope : Scope) : MetaM (Array KindBinding) := do
   let env ← getEnv
+  let census : NameSet := (constantsOfType env layer.ty scope).foldl (init := {}) (·.insert ·)
   let exempt : NameSet :=
     (BoundaryAudit.kindCounterexamples env).foldl (init := {}) (·.insert ·)
   let mut out : Array KindBinding := #[]
@@ -85,6 +94,7 @@ def kindBindings (scope : Scope) : MetaM (Array KindBinding) := do
     let c ← contractValueOf n
     for p in c.ports do
       for k in (kindRefDecls p.kind).toList.eraseDups do
+        unless census.contains k do continue
         out := out.push { contract := n, boundary := c.name, dir := p.dir, node := p.node, kind := k }
   return out
 
@@ -102,18 +112,19 @@ empty scope's "everything" reading would swallow every later group. -/
 def groupIndex (groups : Array (String × Scope)) (n : Name) : Nat :=
   (groups.findIdx? fun (_, s) => !s.isEmpty && s.covers n).getD groups.size
 
-/-- The `kinds-by-boundary` table: one row per kind a declared boundary's port carries, ordered
+/-- The `kinds-by-boundary` table: one row per census kind of `layer` a declared boundary's port
+carries, ordered
 by boundary, then role (inputs, parameters, configuration, outputs), then kind, then port. With
 `groups`, a leading *Subsystem* column assigns each boundary to the first group whose scope
 covers its declaration (unassigned ones render `—` and sort last). The *Dedicated to* column
 links the dedicated kinds built on the kind, where the scope declares any. -/
-def kindsByBoundaryTable (scope : Scope) (groups : Array (String × Scope) := #[]) :
-    MetaM IndexTable := do
+def kindsByBoundaryTable (layer : KindLayer) (scope : Scope)
+    (groups : Array (String × Scope) := #[]) : MetaM IndexTable := do
   let env ← getEnv
   let grouped := !groups.isEmpty
   let headers := (if grouped then #["Subsystem"] else #[])
     ++ #["Boundary", "Role", "Kind", "Dedicated to", "Port"]
-  let bs ← kindBindings scope
+  let bs ← kindBindings layer scope
   if bs.isEmpty then
     return IndexTable.empty "kinds-by-boundary" "Kinds by boundary and role" headers
   let dedicated ← dedicatedByKind env scope
@@ -147,7 +158,7 @@ def kindsInContextTable (layer : KindLayer) (scope : Scope) : MetaM IndexTable :
   let base ← kindsTable layer scope
   let headers := base.headers ++ #["Boundaries", "Roles"]
   let kinds := constantsOfType env layer.ty scope
-  let bs ← kindBindings scope
+  let bs ← kindBindings layer scope
   let mut rows : Array (Array IndexCell) := #[]
   for row in base.rows, k in kinds do
     let mine := bs.filter (·.kind == k)
@@ -160,16 +171,16 @@ def kindsInContextTable (layer : KindLayer) (scope : Scope) : MetaM IndexTable :
       if roles.isEmpty then IndexCell.blank else .code (String.intercalate ", " roles.toList)])
   return { id := layer.id ++ "-in-context", title := layer.title ++ " in context", headers, rows }
 
-/-- The kinds some declared boundary in scope carries. -/
-def boundKinds (scope : Scope) : MetaM NameSet := do
-  return (← kindBindings scope).foldl (init := {}) fun s b => s.insert b.kind
+/-- The census kinds of `layer` some declared boundary in scope carries. -/
+def boundKinds (layer : KindLayer) (scope : Scope) : MetaM NameSet := do
+  return (← kindBindings layer scope).foldl (init := {}) fun s b => s.insert b.kind
 
 /-- The `kinds-unbound` table: the census kinds of `layer` no declared boundary carries. A table
 of absences — its row count is the remainder of the partition `#pkc_kinds_partition` states. -/
 def kindsUnboundTable (layer : KindLayer) (scope : Scope) : MetaM IndexTable := do
   let env ← getEnv
   let headers := #["Kind", "Identity"]
-  let bound ← boundKinds scope
+  let bound ← boundKinds layer scope
   let mut rows : Array (Array IndexCell) := #[]
   for k in constantsOfType env layer.ty scope do
     unless bound.contains k do
@@ -194,7 +205,7 @@ deriving Repr, Inhabited
 def kindPartition (layer : KindLayer) (scope : Scope) : MetaM KindPartition := do
   let env ← getEnv
   let kinds := constantsOfType env layer.ty scope
-  let bound ← boundKinds scope
+  let bound ← boundKinds layer scope
   let b := (kinds.filter bound.contains).size
   return { census := kinds.size, bound := b, unbound := kinds.size - b }
 
