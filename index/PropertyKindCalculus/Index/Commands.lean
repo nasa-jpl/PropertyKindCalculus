@@ -10,7 +10,9 @@ public import PropertyKindCalculus.Index.Ontology
 public import PropertyKindCalculus.Index.Structures
 public import PropertyKindCalculus.Index.Annotations
 public meta import PropertyKindCalculus.Index.Annotations
+public meta import PropertyKindCalculus.Index.Grouped
 public import PropertyKindCalculus.Index.Contracts
+public import PropertyKindCalculus.Index.Grouped
 public import PropertyKindCalculus.Index.Relations
 public import PropertyKindCalculus.Index.Budgets
 
@@ -75,6 +77,9 @@ def tableById (id : String) (scope : Scope := #[]) : MetaM IndexTable := withHar
   | "records"              => recordsTable scope
   | "operations"           => operationsTable scope
   | "contracts"            => contractsTable scope
+  | "kinds-by-boundary"    => kindsByBoundaryTable scope
+  | "kinds-in-context"     => kindsInContextTable .core scope
+  | "kinds-unbound"        => kindsUnboundTable .core scope
   | "relations"            => relationsTable scope
   | "port-budgets"         => portBudgetsTable scope
   | "provenance-coverage"  => provenanceCoverageTable scope
@@ -86,6 +91,7 @@ where
       ["annotations", "commands", "crossings", "carriers", "pkc-math", "pkc-math-symbol",
        "pkc-math-config", "pkc-math-transparent", "kinds", "sorts", "systems", "components",
        "dedicated-kinds", "examinations", "records", "operations", "contracts", "relations",
+       "kinds-by-boundary", "kinds-in-context", "kinds-unbound",
        "port-budgets", "provenance-coverage"]
 
 /-! ## Plain-text rendering, for the InfoView and for pinned probes -/
@@ -164,6 +170,18 @@ elab "#pkc_summary_overflow" nss:ident* : command => liftTermElabM do
     let lines := over.toList.map fun o => s!"{o.decl} — {o.width}"
     logInfo m!"summary overflow ({over.size} of {quoted.size} quoted docstring(s) exceed \
       {maxLen} characters):\n{String.intercalate "\n" lines}"
+
+open Command in
+/-- `#pkc_kinds_partition [ns …]` states the partition of the `kinds` census in scope over the
+declared boundaries in scope — how many kinds some boundary carries and how many none does — as
+one `info` line a probe can pin. A new kind that no boundary binds, or a boundary that stops
+carrying one, moves the split and fails the pin.
+
+    #pkc_kinds_partition SoilMoisture.Algorithm -/
+elab "#pkc_kinds_partition" nss:ident* : command => liftTermElabM do
+  let p ← withHarvestBudget (kindPartition .core (nss.map (·.getId)))
+  logInfo m!"kinds partition — {p.census} kind(s) in scope: {p.bound} carried by a declared \
+    boundary, {p.unbound} by none"
 
 end PropertyKindCalculus.Index
 

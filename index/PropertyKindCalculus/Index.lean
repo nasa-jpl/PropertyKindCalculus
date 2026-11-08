@@ -11,6 +11,7 @@ public import PropertyKindCalculus.Index.Ontology
 public import PropertyKindCalculus.Index.Structures
 public import PropertyKindCalculus.Index.Annotations
 public import PropertyKindCalculus.Index.Relations
+public import PropertyKindCalculus.Index.Grouped
 public import PropertyKindCalculus.Index.Budgets
 public import PropertyKindCalculus.Index.Commands
 

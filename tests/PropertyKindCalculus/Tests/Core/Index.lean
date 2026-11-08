@@ -389,6 +389,45 @@ column's. -/
 #guard_msgs in
 #eval summarize "Summary.\n\nBody paragraph."
 
+/-! The grouped view joins the census to the two boundaries above: each port's declared kind is
+a row under its boundary and role, in the module card's reading order, and the dedicated kind
+built on `outputKind` is linked where that kind appears. `gainKind` enters no port, so the
+context columns leave it blank, the absences table names it, and the partition line fixes the
+split — the three pins together are the partition check a downstream census is held to. -/
+
+/--
+info: Kinds by boundary and role (4 row(s))
+Boundary | Role | Kind | Dedicated to | Port
+probe forward | inputs | signalKind |  | probeFwdStep/x
+probe forward | outputs | outputKind | probeDedicated | probeFwdStep/result
+probe retrieval | inputs | outputKind | probeDedicated | probeInvStep/y
+probe retrieval | outputs | signalKind |  | probeInvStep/result
+-/
+#guard_msgs in
+#pkc_index "kinds-by-boundary" PropertyKindCalculus.Tests.Index
+
+/--
+info: Kinds of property in context (3 row(s))
+Kind | Identity | Scale | Algebra | Theorems | Boundaries | Roles
+gainKind | probe gain | ratio | consumed (1): gainKind · signalKind → outputKind | gain_times_signal |  |
+outputKind | probe output | ratio | produced (1): gainKind · signalKind → outputKind | gain_times_signal | probeFwdBoundary, probeInvBoundary | inputs, outputs
+signalKind | probe signal | ratio | consumed (1): gainKind · signalKind → outputKind | gain_times_signal, probeInvStep_probeFwdStep | probeFwdBoundary, probeInvBoundary | inputs, outputs
+-/
+#guard_msgs in
+#pkc_index "kinds-in-context" PropertyKindCalculus.Tests.Index
+
+/--
+info: Kinds of property no declared boundary carries (1 row(s))
+Kind | Identity
+gainKind | probe gain
+-/
+#guard_msgs in
+#pkc_index "kinds-unbound" PropertyKindCalculus.Tests.Index
+
+/-- info: kinds partition — 3 kind(s) in scope: 2 carried by a declared boundary, 1 by none -/
+#guard_msgs in
+#pkc_kinds_partition PropertyKindCalculus.Tests.Index
+
 end PropertyKindCalculus.Tests.Index
 
 end Blanket
