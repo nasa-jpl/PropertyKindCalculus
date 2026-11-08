@@ -181,6 +181,21 @@ def fwdGenBoundary : Provenance.Contract NodeId KindRef where
             ⟨NodeId.result.within ``fwdGen, .decl ``bK, .output⟩]
   exits := []
 
+/-- A reducible kind family that fixes its kind whatever its argument: at a variable
+argument it still reads as `aK`. -/
+@[reducible] def fixedK (_label : String) : KindOfProperty := aK
+
+/-- A forward whose `x` port is typed at the family applied to a binder. -/
+def fwdFixed (label : String) (x : Quantity (fixedK label) Int) : Quantity bK Int := ⟨x.magnitude + 1⟩
+
+/-- Its boundary, declared at the kind the family fixes — the contract agrees. -/
+def fwdFixedBoundary : Provenance.Contract NodeId KindRef where
+  name := "sweep probe forward through a fixed kind family"
+  members := [``fwdFixed]
+  ports := [⟨(NodeId.binder "x").within ``fwdFixed, .decl ``aK, .input⟩,
+            ⟨NodeId.result.within ``fwdFixed, .decl ``bK, .output⟩]
+  exits := []
+
 end Reducible
 
 /--
@@ -189,6 +204,13 @@ contract 'sweep probe forward through a kind record': 2 ports, 0 exits
 boundary agrees: true
 -/
 #guard_msgs in #kind_contract Reducible.fwdKsBoundary
+
+/--
+info: kind contract over 1 steps:
+contract 'sweep probe forward through a fixed kind family': 2 ports, 0 exits
+boundary agrees: true
+-/
+#guard_msgs in #kind_contract Reducible.fwdFixedBoundary
 
 /--
 info: kind contract over 1 steps:

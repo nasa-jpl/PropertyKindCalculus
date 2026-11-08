@@ -340,13 +340,14 @@ def isGenerated (env : Environment) (n : Name) (info : ConstantInfo) : Bool :=
                   && (env.find? p matches some (.ctorInfo _)))
         | _ => false)
 
-/-- A kind expression read through its reducible abbreviations: a closed argument whose reducible
-normal form is a named kind (`lavsSig.kc` for `abbrev lavsSig := { kc := vegetationIndex, … }`)
-reads as that kind. Anything else — a variable's field (`K.kc`), a loose-bvar argument, a
-projection that does not reduce to a name (`voltage.kind LTMCTDimensionBase`) — is kept as
-written, so the renderings every pin records are unchanged. -/
+/-- A kind expression read through its reducible abbreviations: an argument whose reducible
+normal form is a named kind (`lavsSig.kc` for `abbrev lavsSig := { kc := vegetationIndex, … }`,
+or a reducible family that fixes its kind whatever its variable argument) reads as that kind.
+Anything else — a variable's field (`K.kc`), a loose-bvar argument, a projection that does not
+reduce to a name (`voltage.kind LTMCTDimensionBase`) — is kept as written, so the renderings
+every pin records are unchanged. -/
 def reduceKind (e : Expr) : MetaM Expr := do
-  if e.hasLooseBVars || e.hasFVar then return e
+  if e.hasLooseBVars then return e
   let r ← Meta.whnfR e
   return if r.getAppFn.isConst && !r.isProj then r else e
 
