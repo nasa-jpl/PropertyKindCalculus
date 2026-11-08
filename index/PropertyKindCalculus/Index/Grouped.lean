@@ -73,7 +73,8 @@ structure KindBinding where
 deriving Repr, Inhabited
 
 /-- Every (boundary, port, kind) binding declared in scope — the join the three tables and the
-partition read. Counterexample contracts are excluded, as in the `contracts` table. -/
+partition read. Counterexample contracts are excluded, as in the `contracts` table. A kind a
+signature states more than once (`k → k`) is one binding of that port, not two. -/
 def kindBindings (scope : Scope) : MetaM (Array KindBinding) := do
   let env ← getEnv
   let exempt : NameSet :=
@@ -83,7 +84,7 @@ def kindBindings (scope : Scope) : MetaM (Array KindBinding) := do
     if exempt.contains n then continue
     let c ← contractValueOf n
     for p in c.ports do
-      for k in kindRefDecls p.kind do
+      for k in (kindRefDecls p.kind).toList.eraseDups do
         out := out.push { contract := n, boundary := c.name, dir := p.dir, node := p.node, kind := k }
   return out
 
