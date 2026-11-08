@@ -317,7 +317,7 @@ def kindRefOf (ctx : BinderCtx) (e : Expr) : MetaM KindRef := do
   let e := e.consumeMData.consumeTypeAnnotations
   -- An abbreviation of a kind *is* the kind (`lavsSig.ka` reads `paramA`): a closed argument is
   -- taken at reducible normal form, so a record of kinds names the same node its field denotes.
-  let e ← if e.hasLooseBVars then pure e else Meta.whnfR e
+  let e ← KindEdges.reduceKind e
   match e with
   | .const c _ => return .decl c
   | .fvar id => return .param (toString (← id.getDecl).userName)
@@ -327,7 +327,7 @@ def kindRefOf (ctx : BinderCtx) (e : Expr) : MetaM KindRef := do
     | none => return .rendered "_"
   | _ =>
     -- A projection chain rooted at a binder (`K.gramAA` for a signature record `K`) is a
-    -- parameter of the signature too, named by its field path.
+    -- parameter of the signature too, named by its field path (`reduceKind` left it as written).
     if (projectionRoot? (← getEnv) e).any (fun r => r.isFVar || r.isBVar) then
       return .param (← refName ctx e)
     if e.hasLooseBVars then return .rendered (← refName ctx e)

@@ -131,9 +131,22 @@ def viaSig (K : Sig) {R : Type} [Mul R] [ScalarCarrier R] (x : Quantity alphaK R
     (y : Quantity K.kc R) : Quantity deltaK R :=
   Quantity.mul K.w x y
 
+/-- A body reading the witness off the *closed* record: a reference to `sig`'s witness,
+attributed here as a reference to a named witness theorem would be, its kinds reduced
+(`sig.kc` reads `betaK`). -/
+def viaSigClosed {R : Type} [Mul R] [ScalarCarrier R] (x : Quantity alphaK R)
+    (y : Quantity betaK R) : Quantity deltaK R :=
+  Quantity.mul sig.w x y
+
+/-- A user theorem whose last name component Lean also uses for a generated lemma: not
+generated (its prefix is no constructor), so its edge is authored and listed. -/
+theorem deltaEdge.inj : ProductKind alphaK betaK deltaK := ProductKind.ofRatio _ _ _
+
 /--
 info: authored kind edges mentioning 'PropertyKindCalculus.Tests.KindEdges.deltaK':
+PropertyKindCalculus.Tests.KindEdges.deltaEdge.inj: alphaK · betaK → deltaK
 PropertyKindCalculus.Tests.KindEdges.sig: alphaK · betaK → deltaK
+PropertyKindCalculus.Tests.KindEdges.viaSigClosed: alphaK · betaK → deltaK
 -/
 #guard_msgs in #kind_edges deltaK
 

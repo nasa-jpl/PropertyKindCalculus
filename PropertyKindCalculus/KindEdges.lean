@@ -195,9 +195,13 @@ partial def collectInlineEdges (env : Environment) (e : Expr)
     let fn := e.getAppFn
     let .const n _ := fn | return acc
     let some ci := env.find? n | return acc
-    -- A record field read (`K.colSq` for a parameter `K`) is a hypothesis of the body, not an
-    -- authored edge — the same line as a free-variable-headed witness.
-    if env.isProjectionFn n then return acc
+    -- A field read off a record *variable* (`K.colSq` for a parameter `K`) is a hypothesis of
+    -- the body, not an authored edge — the same line as a free-variable-headed witness. A
+    -- field read off a *closed* record (`lavsSig.colSq`) is a reference to that record's
+    -- witness, attributed here like a reference to a named witness theorem.
+    if let some pi := env.getProjectionFnInfo? n then
+      if let some r := e.getAppArgs[pi.numParams]? then
+        if r.hasLooseBVars || r.hasFVar then return acc
     unless typeMentionsFamily ci.type do return acc
     let some concl := instantiatedConclusion ci.type e.getAppArgs | return acc
     for spec in specs do
@@ -328,8 +332,26 @@ def isGenerated (env : Environment) (n : Name) (info : ConstantInfo) : Bool :=
   (info matches .ctorInfo _ | .recInfo _) || env.isProjectionFn n || isAuxRecursor env n
     || isNoConfusion env n
     || (match n with
-        | .str _ s => s == "noConfusionType" || s == "injEq" || s == "inj" || s == "sizeOf_spec"
+        -- `T.noConfusionType` under the inductive `T`; `T.mk.injEq`/`.inj`/`.sizeOf_spec`
+        -- under the constructor — a user theorem that merely shares the last component is kept.
+        | .str p s =>
+          (s == "noConfusionType" && (env.find? p matches some (.inductInfo _)))
+            || ((s == "injEq" || s == "inj" || s == "sizeOf_spec")
+                  && (env.find? p matches some (.ctorInfo _)))
         | _ => false)
+
+/-- A kind expression read through its reducible abbreviations: a closed argument whose reducible
+normal form is a named kind (`lavsSig.kc` for `abbrev lavsSig := { kc := vegetationIndex, … }`)
+reads as that kind. Anything else — a variable's field (`K.kc`), a loose-bvar argument, a
+projection that does not reduce to a name (`voltage.kind LTMCTDimensionBase`) — is kept as
+written, so the renderings every pin records are unchanged. -/
+def reduceKind (e : Expr) : MetaM Expr := do
+  if e.hasLooseBVars || e.hasFVar then return e
+  let r ← Meta.whnfR e
+  return if r.getAppFn.isConst && !r.isProj then r else e
+
+/-- `reduceKind` over a witness application's arguments. -/
+def reduceArgs (args : Array Expr) : MetaM (Array Expr) := args.mapM reduceKind
 
 /-- **The one edge-harvest walk.** For every constant of a family-reaching module
 (`producerModules`) whose authoring declaration (`parentOf`) passes `keep`, both channels are
@@ -365,10 +387,11 @@ def harvest {α : Type} (keep : Name → Bool)
     let mut found : Array α := #[]
     if typeMentionsSpec info.type then
       found ← Meta.forallTelescopeReducing info.type fun _ concl =>
-        (collectEdges concl #[]).filterMapM fun (spec, args) => render spec args
+        (collectEdges concl #[]).filterMapM fun (spec, args) => do render spec (← reduceArgs args)
     if ← bodyScannable reachable env name info then
       found := found ++ (← Meta.lambdaTelescope info.value! fun _ body =>
-        (collectInlineEdges env body #[]).filterMapM fun (spec, args) => render spec args)
+        (collectInlineEdges env body #[]).filterMapM fun (spec, args) => do
+          render spec (← reduceArgs args))
     for r in found do
       out := out.push (author, r)
   return out
