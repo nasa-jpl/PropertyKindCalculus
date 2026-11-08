@@ -700,13 +700,15 @@ def boundarySites (scope : Array Name) : MetaM (Array BoundarySite) := do
     -- *family* applied to the site's variables (`famK s`) keeps its head — the family is real
     -- information, only the argument is unnameable — and renders `famK (parametric)`.
     -- `eraseDups` below then collapses however many same-rendering parametric mints a site
-    -- has into one entry.
+    -- has into one entry. A closed kind renders through its reducible abbreviations
+    -- (`KindEdges.reduceKind`): a reducible projection of a kind record (`sig.ka`) is the kind
+    -- it names, as in `KindIncidence`.
     let mintStrs ← mints.mapM fun a =>
       if a.hasLooseBVars then
         match a.getAppFn with
         | .const n _ => return s!"{n} (parametric)"
         | _ => return "(kind-parametric)"
-      else return toString (← Meta.ppExpr a)
+      else return toString (← Meta.ppExpr (← KindEdges.reduceKind a))
     -- An attested site renders as its kind (the same parametric-token rules as a raw mint)
     -- followed by the harvested reason.
     let attStrs ← atts.mapM fun (kArg, reason) => do
@@ -717,7 +719,7 @@ def boundarySites (scope : Array Name) : MetaM (Array BoundarySite) := do
           match kArg.getAppFn with
           | .const n _ => pure s!"{n} (parametric)"
           | _ => pure "(kind-parametric)"
-        else toString <$> Meta.ppExpr kArg
+        else toString <$> (Meta.ppExpr <| ← KindEdges.reduceKind kArg)
       match reason with
       | some r => pure s!"{kStr} ‹{r}›"
       | none   => pure s!"{kStr} (dynamic reason)"

@@ -149,6 +149,76 @@ boundary agrees: false
 -/
 #guard_msgs in #kind_contract Bad.repeatedNode
 
+namespace Reducible
+
+/-- A record of kinds whose abbreviation reduces to the kinds it names. -/
+structure Ks where
+  /-- The forward's argument kind. -/
+  a : KindOfProperty
+
+/-- The instance: `ks.a` is `aK` at reducible normal form. -/
+abbrev ks : Ks := { a := aK }
+
+/-- A forward typed through the record: its `x` port is of kind `aK`, not of a kind named `ks.a`. -/
+def fwdKs (x : Quantity ks.a Int) : Quantity bK Int := ⟨x.magnitude + 1⟩
+
+/-- Its boundary, declared at the kind the projection names — the contract agrees. -/
+def fwdKsBoundary : Provenance.Contract NodeId KindRef where
+  name := "sweep probe forward through a kind record"
+  members := [``fwdKs]
+  ports := [⟨(NodeId.binder "x").within ``fwdKs, .decl ``aK, .input⟩,
+            ⟨NodeId.result.within ``fwdKs, .decl ``bK, .output⟩]
+  exits := []
+
+/-- A forward generic over the record: its `x` port is the signature parameter `K.a`. -/
+def fwdGen (K : Ks) (x : Quantity K.a Int) : Quantity bK Int := ⟨x.magnitude + 1⟩
+
+/-- Its boundary, declared at the record binder's field path. -/
+def fwdGenBoundary : Provenance.Contract NodeId KindRef where
+  name := "sweep probe forward over a kind record"
+  members := [``fwdGen]
+  ports := [⟨(NodeId.binder "x").within ``fwdGen, .param "K.a", .input⟩,
+            ⟨NodeId.result.within ``fwdGen, .decl ``bK, .output⟩]
+  exits := []
+
+/-- A reducible kind family that fixes its kind whatever its argument: at a variable
+argument it still reads as `aK`. -/
+@[reducible] def fixedK (_label : String) : KindOfProperty := aK
+
+/-- A forward whose `x` port is typed at the family applied to a binder. -/
+def fwdFixed (label : String) (x : Quantity (fixedK label) Int) : Quantity bK Int := ⟨x.magnitude + 1⟩
+
+/-- Its boundary, declared at the kind the family fixes — the contract agrees. -/
+def fwdFixedBoundary : Provenance.Contract NodeId KindRef where
+  name := "sweep probe forward through a fixed kind family"
+  members := [``fwdFixed]
+  ports := [⟨(NodeId.binder "x").within ``fwdFixed, .decl ``aK, .input⟩,
+            ⟨NodeId.result.within ``fwdFixed, .decl ``bK, .output⟩]
+  exits := []
+
+end Reducible
+
+/--
+info: kind contract over 1 steps:
+contract 'sweep probe forward through a kind record': 2 ports, 0 exits
+boundary agrees: true
+-/
+#guard_msgs in #kind_contract Reducible.fwdKsBoundary
+
+/--
+info: kind contract over 1 steps:
+contract 'sweep probe forward through a fixed kind family': 2 ports, 0 exits
+boundary agrees: true
+-/
+#guard_msgs in #kind_contract Reducible.fwdFixedBoundary
+
+/--
+info: kind contract over 1 steps:
+contract 'sweep probe forward over a kind record': 2 ports, 0 exits
+boundary agrees: true
+-/
+#guard_msgs in #kind_contract Reducible.fwdGenBoundary
+
 -- The edge sweep honors the same exemption.
 /--
 info: kind relations — 1 theorem edge(s), 1 exempted

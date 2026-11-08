@@ -287,13 +287,37 @@ where
     if (operandCarriers env).contains c.getPrefix then return none
     return some (pi.numParams, c.getString!)
 
+/-- The base a chain of structure projections (`.proj` nodes, projection-function
+applications, metadata) stands on, or `none` when `e` is not a projection at all. -/
+partial def projectionRoot? (env : Environment) (e : Expr) (isProj : Bool := false) : Option Expr :=
+  match e with
+  | .proj _ _ b => projectionRoot? env b true
+  | .mdata _ b => projectionRoot? env b isProj
+  | .app .. =>
+    match e.getAppFn with
+    | .const c _ =>
+      match env.getProjectionFnInfo? c with
+      | some pi =>
+        match e.getAppArgs[pi.numParams]? with
+        | some b => projectionRoot? env b true
+        | none => if isProj then some e else none
+      | none => if isProj then some e else none
+    | _ => if isProj then some e else none
+  | _ => if isProj then some e else none
+
 /-- The kind reference a kind argument of an instantiated binder type denotes: a kind
 declaration by its environment name, a signature kind binder by its binder name (a
 telescope free variable, or a loose bound variable under an inner binder), and anything
 outside the vocabulary as its rendering — `KindRef.rendered`, compared byte-exact and
-refused in contracts. -/
+refused in contracts. A closed argument is read at reducible normal form first, so a
+reducible projection of a kind record (`sig.ka` for `abbrev sig : Sig := { ka := paramA, … }`)
+is the declaration `paramA`, not a rendering; a projection of a record *binder* (`K.gramAA`) is
+a signature parameter named by its field path. -/
 def kindRefOf (ctx : BinderCtx) (e : Expr) : MetaM KindRef := do
   let e := e.consumeMData.consumeTypeAnnotations
+  -- An abbreviation of a kind *is* the kind (`lavsSig.ka` reads `paramA`): a closed argument is
+  -- taken at reducible normal form, so a record of kinds names the same node its field denotes.
+  let e ← KindEdges.reduceKind e
   match e with
   | .const c _ => return .decl c
   | .fvar id => return .param (toString (← id.getDecl).userName)
@@ -302,6 +326,10 @@ def kindRefOf (ctx : BinderCtx) (e : Expr) : MetaM KindRef := do
     | some (nm, _) => return .param (toString nm)
     | none => return .rendered "_"
   | _ =>
+    -- A projection chain rooted at a binder (`K.gramAA` for a signature record `K`) is a
+    -- parameter of the signature too, named by its field path (`reduceKind` left it as written).
+    if (projectionRoot? (← getEnv) e).any (fun r => r.isFVar || r.isBVar) then
+      return .param (← refName ctx e)
     if e.hasLooseBVars then return .rendered (← refName ctx e)
     else return .rendered (toString (← Meta.ppExpr e))
 
