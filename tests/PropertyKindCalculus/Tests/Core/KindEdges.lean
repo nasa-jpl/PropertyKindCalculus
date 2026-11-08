@@ -104,6 +104,39 @@ PropertyKindCalculus.Tests.KindEdges.toAlphaPrime: reference : alphaK → alphaP
 -/
 #guard_msgs in #kind_edges alphaPrimeK
 
+/-! ## A record of witnesses — the instance authors, the record does not
+
+A signature record carries kind *fields* and the witnesses the generic code needs on them
+(`Sig.w`). The structure's generated declarations (`Sig.mk`, `Sig.w`, `Sig.rec`,
+`Sig.noConfusionType`, …) state the witness as a field type — a hypothesis every instance must
+discharge — and a generic body reads it as `K.w`: neither is authored (`KindEdges.isGenerated`,
+and the projection-head rule of the body scan). The instance `sig` is: its edge, and only its
+edge, is the enumeration. -/
+
+/-- A probe kind — the product the record's instance authors. -/
+def deltaK : KindOfProperty := { id := "kind-edges probe delta", scale := .ratio }
+
+/-- A record of one kind field and one witness on it. -/
+structure Sig where
+  /-- The kind the witness is about. -/
+  kc : KindOfProperty
+  /-- The witness a generic body reads. -/
+  w : ProductKind alphaK kc deltaK
+
+/-- The instance: the one place `alphaK · betaK → deltaK` is written. -/
+abbrev sig : Sig := { kc := betaK, w := ProductKind.ofRatio alphaK betaK deltaK }
+
+/-- A generic body over the record: it *reads* the witness and authors nothing. -/
+def viaSig (K : Sig) {R : Type} [Mul R] [ScalarCarrier R] (x : Quantity alphaK R)
+    (y : Quantity K.kc R) : Quantity deltaK R :=
+  Quantity.mul K.w x y
+
+/--
+info: authored kind edges mentioning 'PropertyKindCalculus.Tests.KindEdges.deltaK':
+PropertyKindCalculus.Tests.KindEdges.sig: alphaK · betaK → deltaK
+-/
+#guard_msgs in #kind_edges deltaK
+
 /- The body-scan collector in isolation, on a hand-built expression — deterministic
 regardless of the elaborator's lifting choice for the probe definitions above. The proof
 arguments are fillers (the collector reads only the kind positions), and the producer sits

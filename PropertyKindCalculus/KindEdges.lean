@@ -195,6 +195,9 @@ partial def collectInlineEdges (env : Environment) (e : Expr)
     let fn := e.getAppFn
     let .const n _ := fn | return acc
     let some ci := env.find? n | return acc
+    -- A record field read (`K.colSq` for a parameter `K`) is a hypothesis of the body, not an
+    -- authored edge — the same line as a free-variable-headed witness.
+    if env.isProjectionFn n then return acc
     unless typeMentionsFamily ci.type do return acc
     let some concl := instantiatedConclusion ci.type e.getAppArgs | return acc
     for spec in specs do
@@ -316,6 +319,18 @@ cheap pre-check that keeps the type scan from opening a telescope on every const
 def typeMentionsSpec (t : Expr) : Bool :=
   (t.find? fun s => specs.any (fun spec => s.isConstOf spec.const)).isSome
 
+/-- A declaration Lean generates for a structure or inductive type — a constructor, a recursor,
+a projection function, a `casesOn`/`recOn`/`noConfusion` auxiliary, an injectivity lemma. A
+witness in the type of one of these is a *field* of a record — a hypothesis every instance
+must discharge, not an edge anybody authored; the instances author theirs where they build
+the record. -/
+def isGenerated (env : Environment) (n : Name) (info : ConstantInfo) : Bool :=
+  (info matches .ctorInfo _ | .recInfo _) || env.isProjectionFn n || isAuxRecursor env n
+    || isNoConfusion env n
+    || (match n with
+        | .str _ s => s == "noConfusionType" || s == "injEq" || s == "inj" || s == "sizeOf_spec"
+        | _ => false)
+
 /-- **The one edge-harvest walk.** For every constant of a family-reaching module
 (`producerModules`) whose authoring declaration (`parentOf`) passes `keep`, both channels are
 scanned and each `(family, arguments)` pair found is handed to `render`, which runs *inside the
@@ -326,7 +341,9 @@ returns `none` to drop the pair:
     then `collectEdges`): a named witness theorem, a lifted `._proof_N` auxiliary, an
     operator-table instance. A witness taken as a *hypothesis* (`(h : ProductKind …) → …`) is
     assumed, not authored, and is deliberately not an edge — the same line the body scan
-    draws for a free-variable-headed witness;
+    draws for a free-variable-headed witness — and neither is a witness *field* of a record
+    (the structure's generated constructor, projections, recursors and `noConfusion` family,
+    `isGenerated`, are skipped; the record's instances author their fields' edges);
   * the **body scan** reads the value of every `bodyScannable` definition under its own
     telescope (`collectInlineEdges`): the call-site witnesses the elaborator left inline or
     shared.
@@ -344,6 +361,7 @@ def harvest {α : Type} (keep : Name → Bool)
       unless reachable.contains idx.toNat do continue
     let author := parentOf name
     unless keep author do continue
+    if isGenerated env name info then continue
     let mut found : Array α := #[]
     if typeMentionsSpec info.type then
       found ← Meta.forallTelescopeReducing info.type fun _ concl =>

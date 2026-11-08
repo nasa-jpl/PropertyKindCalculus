@@ -291,9 +291,14 @@ where
 declaration by its environment name, a signature kind binder by its binder name (a
 telescope free variable, or a loose bound variable under an inner binder), and anything
 outside the vocabulary as its rendering — `KindRef.rendered`, compared byte-exact and
-refused in contracts. -/
+refused in contracts. A closed argument is read at reducible normal form first, so a
+reducible projection of a kind record (`sig.ka` for `abbrev sig : Sig := { ka := paramA, … }`)
+is the declaration `paramA`, not a rendering. -/
 def kindRefOf (ctx : BinderCtx) (e : Expr) : MetaM KindRef := do
   let e := e.consumeMData.consumeTypeAnnotations
+  -- An abbreviation of a kind *is* the kind (`lavsSig.ka` reads `paramA`): a closed argument is
+  -- taken at reducible normal form, so a record of kinds names the same node its field denotes.
+  let e ← if e.hasLooseBVars then pure e else Meta.whnfR e
   match e with
   | .const c _ => return .decl c
   | .fvar id => return .param (toString (← id.getDecl).userName)

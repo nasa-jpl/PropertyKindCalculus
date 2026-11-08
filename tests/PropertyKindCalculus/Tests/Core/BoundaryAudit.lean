@@ -88,6 +88,19 @@ def parametricFamilySite (label : String) (x : Float) : Quantity (probeFamily la
 @[kindConst]
 def constSite : Quantity probeKind Float := ⟨0.5⟩
 
+/-- A record of kinds: `kindsOf.k` is `probeKind` at reducible normal form. -/
+structure KindRecord where
+  /-- The one kind field. -/
+  k : KindOfProperty
+
+/-- The record's instance — an abbreviation, so its projections reduce to the kinds they name. -/
+abbrev kindsOf : KindRecord := { k := probeKind }
+
+/-- A declared constant mint through a reducible projection of a kind record: the audit
+renders the kind the projection names, not the projection. -/
+@[kindConst]
+def recordConstSite : Quantity kindsOf.k Float := ⟨0.25⟩
+
 /-- An emission boundary: a kinded value becomes naked for a consumer. -/
 @[kindEmission]
 def emissionSite (x : Quantity probeKind Float) : Float := x.magnitude
@@ -163,12 +176,13 @@ info: boundary audit:
 [carrierVocab] PropertyKindCalculus.Tests.BoundaryAudit.taggedAttestSite — attests: probeKind ‹a downstream carrier's authored wrap›
 [carrierVocab] PropertyKindCalculus.Tests.BoundaryAudit.vocabSite — mints: probeKind
 [kindConst] PropertyKindCalculus.Tests.BoundaryAudit.constSite — mints: probeKind
+[kindConst] PropertyKindCalculus.Tests.BoundaryAudit.recordConstSite — mints: probeKind
 [kindCrossing] PropertyKindCalculus.Tests.BoundaryAudit.crossingSite — mints: probeKind
 [kindCrossing] PropertyKindCalculus.Tests.BoundaryAudit.taggedSite — mints: probeKind
 [kindEmission] PropertyKindCalculus.Tests.BoundaryAudit.emissionSite — erases (emission-only)
 [kindIngest] PropertyKindCalculus.Tests.BoundaryAudit.ingestSite — mints: probeKind
 ⚠ UNTAGGED PropertyKindCalculus.Tests.BoundaryAudit.violationSite — mints: probeKind
-13 boundary site(s): 12 tagged, 1 UNTAGGED — invariant 6/7 violation
+14 boundary site(s): 13 tagged, 1 UNTAGGED — invariant 6/7 violation
 -/
 #guard_msgs in
 #kind_boundary_audit PropertyKindCalculus.Tests.BoundaryAudit
@@ -183,6 +197,7 @@ info: tagged boundary crossings:
 [carrierVocab] PropertyKindCalculus.Tests.BoundaryAudit.taggedAttestSite — A site minting the downstream carrier through the downstream attestor: the report shows the
 [carrierVocab] PropertyKindCalculus.Tests.BoundaryAudit.vocabSite — A carrier-vocabulary exception: a branchless min dropping to the carrier.
 [kindConst] PropertyKindCalculus.Tests.BoundaryAudit.constSite — A declared constant mint: an adjudicated value enters the calculus as data.
+[kindConst] PropertyKindCalculus.Tests.BoundaryAudit.recordConstSite — A declared constant mint through a reducible projection of a kind record: the audit
 [kindCrossing] PropertyKindCalculus.Tests.BoundaryAudit.crossingSite — A tagged crossing that mints probeKind from an already-kinded probeKind2 value.
 [kindCrossing] PropertyKindCalculus.Tests.BoundaryAudit.taggedSite — A tagged crossing minting the registered downstream carrier from an already-kinded value.
 [kindEmission] PropertyKindCalculus.Tests.BoundaryAudit.emissionSite — An emission boundary: a kinded value becomes naked for a consumer.

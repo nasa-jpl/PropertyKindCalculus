@@ -149,6 +149,36 @@ boundary agrees: false
 -/
 #guard_msgs in #kind_contract Bad.repeatedNode
 
+namespace Reducible
+
+/-- A record of kinds whose abbreviation reduces to the kinds it names. -/
+structure Ks where
+  /-- The forward's argument kind. -/
+  a : KindOfProperty
+
+/-- The instance: `ks.a` is `aK` at reducible normal form. -/
+abbrev ks : Ks := { a := aK }
+
+/-- A forward typed through the record: its `x` port is of kind `aK`, not of a kind named `ks.a`. -/
+def fwdKs (x : Quantity ks.a Int) : Quantity bK Int := ⟨x.magnitude + 1⟩
+
+/-- Its boundary, declared at the kind the projection names — the contract agrees. -/
+def fwdKsBoundary : Provenance.Contract NodeId KindRef where
+  name := "sweep probe forward through a kind record"
+  members := [``fwdKs]
+  ports := [⟨(NodeId.binder "x").within ``fwdKs, .decl ``aK, .input⟩,
+            ⟨NodeId.result.within ``fwdKs, .decl ``bK, .output⟩]
+  exits := []
+
+end Reducible
+
+/--
+info: kind contract over 1 steps:
+contract 'sweep probe forward through a kind record': 2 ports, 0 exits
+boundary agrees: true
+-/
+#guard_msgs in #kind_contract Reducible.fwdKsBoundary
+
 -- The edge sweep honors the same exemption.
 /--
 info: kind relations — 1 theorem edge(s), 1 exempted
