@@ -170,6 +170,17 @@ def fwdKsBoundary : Provenance.Contract NodeId KindRef where
             ⟨NodeId.result.within ``fwdKs, .decl ``bK, .output⟩]
   exits := []
 
+/-- A forward generic over the record: its `x` port is the signature parameter `K.a`. -/
+def fwdGen (K : Ks) (x : Quantity K.a Int) : Quantity bK Int := ⟨x.magnitude + 1⟩
+
+/-- Its boundary, declared at the record binder's field path. -/
+def fwdGenBoundary : Provenance.Contract NodeId KindRef where
+  name := "sweep probe forward over a kind record"
+  members := [``fwdGen]
+  ports := [⟨(NodeId.binder "x").within ``fwdGen, .param "K.a", .input⟩,
+            ⟨NodeId.result.within ``fwdGen, .decl ``bK, .output⟩]
+  exits := []
+
 end Reducible
 
 /--
@@ -178,6 +189,13 @@ contract 'sweep probe forward through a kind record': 2 ports, 0 exits
 boundary agrees: true
 -/
 #guard_msgs in #kind_contract Reducible.fwdKsBoundary
+
+/--
+info: kind contract over 1 steps:
+contract 'sweep probe forward over a kind record': 2 ports, 0 exits
+boundary agrees: true
+-/
+#guard_msgs in #kind_contract Reducible.fwdGenBoundary
 
 -- The edge sweep honors the same exemption.
 /--
