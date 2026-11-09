@@ -12,7 +12,10 @@ order) or a multi-page site directory, whose chapter and section pages are order
 numbered table of contents. Each page is read by a tokenizer with the behaviour of Python's
 `html.parser` as the Python used it — names lowercased, attributes re-serialized as
 `k="v"` with their character references decoded, text with its references decoded,
-comments and the doctype dropped, `<script>`/`<style>` content raw — the web-only chrome
+comments and the doctype dropped, `<script>`/`<style>` content raw — and, unlike the Python,
+every decoded text and attribute value is escaped again on the way out (`escapeText`,
+`escapeAttr`: a decoded `&lt;i&gt;` in a code span would otherwise reach WeasyPrint as a tag
+and vanish from the PDF; `escapeList_no_markup` is the guarantee) — the web-only chrome
 is pruned structurally (`shouldDrop`), each page becomes a `<section class="chapter">`,
 the heading outline is checked (`checkLevels`, reported on stderr) and renumbered to a
 skip-free tree (`renumberLevels`), and the print CSS is added. The page written to
@@ -2558,9 +2561,44 @@ partial def parseAttrs (b : B) (i : Nat) : Option (List Attr × Bool × Nat) := 
       attrs := attrs.push { name, value := none }
   return none
 
+/-! ### Escaping on output
+
+`html.parser` hands text and attribute values on decoded; the page written for WeasyPrint is
+HTML again, so what was `&lt;`, `&gt;`, `&amp;` (and `&quot;` in a value) in Verso's output must
+be so again, or a code span's `<i>` becomes an element. -/
+
+/-- The escape of one byte of text: `&`, `<` and `>` as references, every other byte as it is. -/
+def escapeByte (c : UInt8) : List UInt8 :=
+  if c == AMP then [38, 97, 109, 112, 59]      -- &amp;
+  else if c == LT then [38, 108, 116, 59]       -- &lt;
+  else if c == GT then [38, 103, 116, 59]       -- &gt;
+  else [c]
+
+def escapeList (l : List UInt8) : List UInt8 := l.flatMap escapeByte
+
+/-- Escaped text holds no `<` and no `>`: nothing in it can open or close a tag. -/
+theorem escapeList_no_markup (l : List UInt8) : ∀ c ∈ escapeList l, c ≠ LT ∧ c ≠ GT := by
+  intro c hc
+  simp only [escapeList, List.mem_flatMap] at hc
+  obtain ⟨a, _, ha⟩ := hc
+  unfold escapeByte at ha
+  split at ha
+  · simp at ha; rcases ha with rfl | rfl | rfl | rfl | rfl <;> decide
+  · split at ha
+    · simp at ha; rcases ha with rfl | rfl | rfl | rfl <;> decide
+    · split at ha
+      · simp at ha; rcases ha with rfl | rfl | rfl | rfl <;> decide
+      · simp at ha; subst ha; constructor <;> intro h <;> simp_all
+
+def escapeText (b : B) : B := (escapeList b.toList).toByteArray
+
+/-- An attribute value between double quotes: `escapeText` and `"` as `&quot;`. -/
+def escapeAttr (b : B) : B :=
+  (b.toList.flatMap fun c => if c == 34 then [38, 113, 117, 111, 116, 59] else escapeByte c).toByteArray  -- &quot;
+
 def attrStr (attrs : List Attr) : B :=
   attrs.foldl (init := ByteArray.empty) fun o a =>
-    o ++ str " " ++ a.name ++ str "=\"" ++ (a.value.getD (str "None")) ++ str "\""
+    o ++ str " " ++ a.name ++ str "=\"" ++ (a.value.map escapeAttr).getD (str "None") ++ str "\""
 
 def attrGet (attrs : List Attr) (name : String) : Option B :=
   (attrs.reverse.find? (·.name == str name)).bind (·.value)  -- `dict(attrs)`: the last wins
@@ -2604,7 +2642,7 @@ partial def extract (b : B) : Extracted := Id.run do
     | none =>
       while j < n && b[j]! != LT do j := j + 1
     if j > i then
-      let data := if cdata.isSome then slice b i j else unescape b i j
+      let data := if cdata.isSome then slice b i j else escapeText (unescape b i j)
       if inBody && dropTag.isNone then body := body ++ data
       if inHead then head := head ++ data
       i := j
