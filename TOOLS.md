@@ -173,7 +173,10 @@ Anything a tool does outside this list is a defect of the tool, not an extension
    *Shipped*: `lake exe blueprint-print HTML_INPUT OUT_HTML` (`tools/Tools/BlueprintPrint.lean`),
    byte-identical to the Python's merged page on the published blueprint (15.6 MB in, 10.5 MB out,
    0.6 s compiled — hence `lake exe`, not `lean --run`) and on a synthetic multi-page site exercising
-   the table-of-contents ordering, every pruning rule and the character references; the tokenizer
+   the table-of-contents ordering, every pruning rule and the character references — but for one
+   correction the Python lacked: decoded text and attribute values are escaped again on output
+   (`escapeText`, `escapeAttr`, `escapeList_no_markup`), so a code span's `&lt;i&gt;` stays text in
+   the PDF instead of becoming a tag WeasyPrint swallows; the tokenizer
    reproduces Python's `html.parser` as the pass used it, with CPython's `html5` entity table embedded.
    `render-pdf.sh` runs it and then WeasyPrint's own command line through pixi — no Python file is
    left under `blueprint/`. The synthetic site is committed as `tools/fixtures/blueprint-print/` with
