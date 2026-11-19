@@ -31,6 +31,7 @@ import PropertyKindCalculusBlueprint.Chapters.Iso80000Part11
 import PropertyKindCalculusBlueprint.Chapters.Iso80000Part12
 import PropertyKindCalculusBlueprint.Chapters.Iso80000Part13
 import PropertyKindCalculusBlueprint.Chapters.CrossReferences
+import PropertyKindCalculusBlueprint.Chapters.StandardsReference
 import PropertyKindCalculusBlueprint.Chapters.UsingTheLibrary
 import PropertyKindCalculusBlueprint.Chapters.ModelTemplate
 import PropertyKindCalculusBlueprint.Chapters.DeploymentTemplate
@@ -1926,6 +1927,8 @@ and not one of the graphs the calculus itself defines; those are named and kept 
 {include 0 PropertyKindCalculusBlueprint.Chapters.Iso80000Part13}
 
 {include 0 PropertyKindCalculusBlueprint.Chapters.CrossReferences}
+
+{include 0 PropertyKindCalculusBlueprint.Chapters.StandardsReference}
 
 {include 0 PropertyKindCalculusBlueprint.Chapters.UsingTheLibrary}
 
