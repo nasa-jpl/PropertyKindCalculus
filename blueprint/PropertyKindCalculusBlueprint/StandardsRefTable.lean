@@ -42,7 +42,7 @@ unsafe def evalRowsUnsafe (stx : Syntax) : TermElabM (List StandardsRow) := do
 opaque evalRows (stx : Syntax) : TermElabM (List StandardsRow)
 
 def headers : List String :=
-  ["This work", "Dybkær (2009)", "ISO 80000-1:2009", "VIM 3 (JCGM 200:2012)", "VIM 4 2CD"]
+  ["This work", "Dybkær (2009)", "ISO 80000-1:2022", "VIM 3 (JCGM 200:2012)", "VIM 4 2CD"]
 
 structure Config where
   /-- The name of the `List StandardsRow` constant to render. -/
