@@ -1367,7 +1367,7 @@ The four residuals — all "one more crank of the same machine," none a new work
   VJP. Models using trig can be *evaluated* (Float/CudaT have the transcendentals as values) but not
   *differentiated* on the tape until `_fwd/_bwd` nodes are added. Decision: accept the exp/log/sqrt
   model class for Stages 1–2, or fund the trig VJP nodes early.
-* **Toolchain / build coupling.** PKC is pinned `v4.35.0` (Mathlib v4.35.0, TorchLean `combined`).
+* **Toolchain / build coupling.** PKC is pinned `v4.36.0` (Mathlib v4.36.0, TorchLean `combined`).
   Stage 0 avoids the issue entirely (Mathlib/TorchLean-free). Stage 1+ pull in much more of
   TorchLean (autograd + interval + FFT), enlarging build surface and tightening the PKC↔TorchLean
   coupling (cf. the FGM↔DVB single-toolchain constraint). TorchLean's autograd functional API is

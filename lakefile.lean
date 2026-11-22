@@ -102,7 +102,7 @@ package «PropertyKindCalculus» where
 -- unreachable from every remote ref and breaks any *fresh* clone (`fatal: reference is
 -- not a tree`) even while a stale local tracking ref still resolves it. A dependency's
 -- `lean-toolchain` is informational (the ROOT toolchain builds the closure). Upstream
--- `master` carries the same Mathlib `v4.35.0` pin this package's toolchain expects, so
+-- `master` carries the same Mathlib `v4.36.0` pin this package's toolchain expects, so
 -- `lake exe cache get` computes matching hashes off the transitive resolution.
 require «Physlib» from git
   "https://github.com/leanprover-community/physlib.git" @
@@ -130,13 +130,12 @@ require «TorchLean» from git
 -- `IsWeakBisimulation` and `saturate` the capstone chapter's kind-transporting weak
 -- bisimulation is stated with, so the relation between the provenance hypergraph and the
 -- computational tape graph is a bisimulation in the textbook sense (Sangiorgi 2011), not
--- a local re-definition. Pinned to cslib's `v4.35.0` tag (`5b56df99`), whose manifest
--- requires Mathlib `v4.35.0` (the same revision PhysLib and TorchLean resolve to); cslib's
--- `main` has already moved to the `v4.36.0` release candidates. The core spine never
+-- a local re-definition. Pinned to cslib's `v4.36.0` tag (`22b39634`), whose manifest
+-- requires Mathlib `v4.36.0` (the same revision PhysLib resolves to). The core spine never
 -- imports it.
 require «cslib» from git
   "https://github.com/leanprover/cslib.git" @
-  "5b56df99362532c46e1175381fbbdd755bd56030"
+  "22b39634cb3dc80d829683ad1f65c5680b722309"
 
 -- SubVerso backs *only* the blueprint's tutorial chapters: they quote regions of the
 -- `Examples` library's tutorial exhibits (`-- ANCHOR: name` … `-- ANCHOR_END: name`) live
@@ -148,7 +147,7 @@ require «cslib» from git
 -- the two pins move together, as `soil-moisture-model` and `CHDTorch` do for the same facet.
 require subverso from git
   "https://github.com/leanprover/subverso" @
-  "892d6dc520270b5fb8c1291dd1b131e8c16255ed"
+  "f9c40d40521bc71f0c33bff422d085dd86d359bd"
 
 -- NOTE (2026-08-24): there is deliberately **no mathlib require here**, for the same
 -- reason there is no doc-gen4 one (below). Mathlib arrives transitively, and the two

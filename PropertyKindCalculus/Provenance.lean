@@ -183,6 +183,10 @@ public section Interface
 
 namespace PropertyKindCalculus
 
+/-- `==` on `String` through `DecidableEq`: the derived `BEq` instances below then rest on no
+axiom, where core's default (the linear-order package) brings `Classical.choice`. -/
+local instance (priority := high) : BEq String := ⟨fun a b => decide (a = b)⟩
+
 /-- The role a port plays in a step's interface, and with it the time the port's value is
 bound: an `input` the step consumes, varying per datum; a `config` it reads — a declared
 constant mint this tier binds, a cited coefficient table, a bound, a threshold; a `param`

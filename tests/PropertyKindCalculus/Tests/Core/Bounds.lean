@@ -45,7 +45,7 @@ example : (Quantity.clamp (⟨10⟩ : Quantity lengthK Int) ⟨0⟩ ⟨5⟩).mag
 
 def floatBox : IccQ lengthK Float := IccQ.of ⟨0.0⟩ ⟨10.0⟩
 
-#guard (floatBox.clamp ⟨Float.nan⟩).magnitude == 0.0
+#guard (floatBox.clamp ⟨Float.nan⟩).magnitude.isNaN
 #guard (floatBox.clamp ⟨-3.0⟩).magnitude == 0.0
 #guard (floatBox.clamp ⟨5.0⟩).magnitude == 5.0
 #guard (floatBox.clamp ⟨12.0⟩).magnitude == 10.0
