@@ -360,7 +360,7 @@ def lutHelperCuda (cg : Codegen) : String :=
         , "  float f = __fsub_rn(uc, j);"
         , "  float a = tex1DLayered<float>(tex, j + 0.5f, L);"
         , "  float b = tex1DLayered<float>(tex, (j + 1.0f <= wmax ? j + 1.0f : wmax) + 0.5f, L);"
-        , "  return __fadd_rn(a, __fmul_rn(f, __fsub_rn(b, a)));" ]
+        , "  return __fadd_rn(__fmul_rn(a, __fsub_rn(1.0f, f)), __fmul_rn(b, f));" ]
     | .hardware => "  return tex1DLayered<float>(tex, uc + 0.5f, L);"
   String.intercalate "\n"
     [ "__device__ __forceinline__ float tl_lutfetch(cudaTextureObject_t tex, int W, int LAYERS, float layer, float u) {"
@@ -405,9 +405,10 @@ def lutHelperStub (cg : Codegen) : String :=
     , "  long j1 = j0 + 1 < (long)W ? j0 + 1 : (long)W - 1;"
     , "  float a = row[j0];"
     , "  float b = row[j1];"
-    , "  float d = b - a;"
-    , "  float fd = f * d;"
-    , "  return a + fd;"
+    , "  float g = 1.0f - f;"
+    , "  float ag = a * g;"
+    , "  float bf = b * f;"
+    , "  return ag + bf;"
     , "}"
     , "#define TL_LUTFETCH(NAME, W, LAYERS, L, U) tl_lutfetch(lut_##NAME, W, LAYERS, L, U)"
     , "" ]

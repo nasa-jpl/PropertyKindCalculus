@@ -71,7 +71,8 @@ namespace LutTable
 integral-valued `layer` to `[0, layers−1]`, floor, and linearly interpolate — the uniform-grid
 analogue of `np.interp`, and the `evalTapeT` denotation of a recorded `lutfetch` node. A NaN
 coordinate or layer gives NaN for nonempty tables, as `min`/`max` and `clamp` propagate it. The deployed fp32 kernels (point mode) compute exactly this
-in float32. -/
+in float32. The lerp is `a·(1−f) + b·f`, which forms no sample difference and so does not
+overflow on finite samples of opposite sign. -/
 def refFetch (tbl : LutTable) (layer u : Float) : Float :=
   if tbl.width == 0 || tbl.layers == 0 then 0.0
   else if layer.isNaN || u.isNaN then layer + u
@@ -87,7 +88,7 @@ def refFetch (tbl : LutTable) (layer u : Float) : Float :=
     let j1 := if j0 + 1 < tbl.width then j0 + 1 else tbl.width - 1
     let a := tbl.values[L * tbl.width + j0]!
     let b := tbl.values[L * tbl.width + j1]!
-    return a + f * (b - a)
+    return a * (1 - f) + b * f
 
 /-- The recorded node name carrying the table's identity: `lutfetch:<name>`. -/
 def nodeName (tbl : LutTable) : String := s!"lutfetch:{tbl.name}"
@@ -151,23 +152,21 @@ def LutTable.fetchProgram (width layers : UInt64) : Kernel.Program Float32 :=
         -- `over = 1` exactly when `l ≥ layers`, so `base` is row `min l (layers - 1)`.
         let over := 1 - 1 / (l / layers + 1)
         let base := (l - over * (l - (layers - 1))) * width
-        -- Every branch interpolates, as `refFetch` does, so a NaN or infinite sample reaches the
-        -- result at weight zero too.
+        -- Every branch evaluates `refFetch`'s `a * (1 - f) + b * f`, so a NaN or infinite
+        -- neighbour reaches the result at weight zero too.
         if (width - 1).toFloat32 ≤ u then do
           let a ← read 2 (base + (width - 1))
-          pure (a + 0 * (a - a))
+          pure (a * 1 + a * 0)
         else do
           let k := u.toUInt64
           -- `last = 1` exactly when `k + 1 ≥ width`, so `b` is sample `min (k + 1) (width - 1)`.
           let last := 1 - 1 / ((k + 1) / width + 1)
           let a ← read 2 (base + k)
           let b ← read 2 (base + (k + 1 - last))
-          if u ≤ k.toFloat32 then
-            -- Weight zero: `refFetch`'s `a + 0 * (b - a)` without forming `b - a`, which can
-            -- overflow float32. `z` is `0` for finite samples and NaN otherwise.
-            let z := (b - b) + (a - a)
-            if a ≤ b then pure (a + z) else pure (a - z)
-          else pure (a + (u - k.toFloat32) * (b - a))
+          if u ≤ 0 then pure (a * 1 + b * 0)
+          else
+            let f := u - k.toFloat32
+            pure (a * (1 - f) + b * f)
       else pure (layer + u)
     else pure (layer + u) : Except Kernel.Error Float32))
 

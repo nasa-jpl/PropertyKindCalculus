@@ -39,8 +39,8 @@ def probes : Array (Float × Float) :=
     (0.0, -2.0), (1.0, 7.0), (-1.0, 1.5), (5.0, 1.5),
     (0.0, inf), (0.0, -inf), (inf, 1.5), (-inf, 1.5)]
 
-/-- A table with non-finite samples: `refFetch` interpolates at weight zero too, so a NaN
-neighbour or an infinite sample gives NaN at a grid point. -/
+/-- A table with non-finite samples: `refFetch` multiplies the neighbour by weight zero too, so a
+NaN or infinite neighbour gives NaN at a grid point. -/
 def edgeTable : LutTable :=
   { name := "edge", width := 4, layers := 2,
     values := #[2.0, nan, inf, 1.0, 1.0, 2.0, 3.0, inf] }
@@ -53,17 +53,21 @@ def edgeProbes : Array (Float × Float) :=
 /-- `2¹²⁷`, finite in float32; the difference of `big` and `-big` overflows float32. -/
 def big : Float := Float.scaleB 1.0 127
 
-/-- Finite samples whose neighbour differences overflow float32: `refFetch` returns the stored
-sample at weight zero, so the kernel must too. -/
+/-- The largest finite float32. -/
+def fmax : Float := Float.scaleB (2.0 - Float.scaleB 1.0 (-23)) 127
+
+/-- Finite samples whose neighbour differences overflow float32, then two at the float32 maximum:
+`a·(1−f) + b·f` stays finite where `a + f·(b − a)` would not. -/
 def overflowTable : LutTable :=
-  { name := "overflow", width := 4, layers := 1, values := #[big, -big, -big, big] }
+  { name := "overflow", width := 6, layers := 1, values := #[big, -big, -big, big, fmax, fmax] }
 
-/-- The grid points and clamped endpoints of `overflowTable`. -/
+/-- Grid points, clamped endpoints and dyadic interior points of `overflowTable`. -/
 def overflowProbes : Array (Float × Float) :=
-  #[(0.0, 0.0), (0.0, -2.0), (0.0, -inf), (0.0, 1.0), (0.0, 2.0), (0.0, 3.0), (0.0, 7.0)]
+  #[(0.0, 0.0), (0.0, -2.0), (0.0, -inf), (0.0, 1.0), (0.0, 2.0), (0.0, 3.0), (0.0, 4.0),
+    (0.0, 5.0), (0.0, 7.0), (0.0, 0.25), (0.0, 0.5), (0.0, 1.5), (0.0, 2.75), (0.0, 4.5)]
 
-/-- Float32 rounding of exactly representable samples and dyadic weights is exact; the slack only
-absorbs a backend that lerps as `a·(1−f) + b·f`. -/
+/-- Float32 rounding of exactly representable samples and dyadic weights is exact, so the slack
+absorbs nothing on these probes. -/
 def tol : Float := 1e-5
 
 /-- Count the probes whose `got` value differs from `refFetch`, printing each comparison. -/

@@ -262,9 +262,10 @@ def lutHelperJulia (cg : JuliaCodegen) : String :=
     , "    base = L * W"
     , "    @inbounds a = tab[base + j0 + 1]"
     , "    @inbounds b = tab[base + j1 + 1]"
-    , "    d = b - a"
-    , "    fd = f * d"
-    , "    return a + fd"
+    , "    g = one(T) - f"
+    , "    ag = a * g"
+    , "    bf = b * f"
+    , "    return ag + bf"
     , "end"
     , "" ]
 
