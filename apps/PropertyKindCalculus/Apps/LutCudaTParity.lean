@@ -6,8 +6,9 @@ The kernel is a TorchLean `Kernel.Program Float32`. The harness always evaluates
 CPU (`Program.run`). When a LibTorch bridge with a CUDA device is linked (`-K cuda=true`) it also
 runs the generated CUDA, once through `Program.run` and once on resident `CudaT` buffers
 (`CudaT.lutFetchIO`). The probes cover NaN, ±∞, out-of-range and interior coordinates and layers;
-`refFetch` and the kernel both return NaN on a NaN coordinate or layer. A second table with NaN
-and infinite samples checks the grid points and clamped endpoints. Exits `0` on parity and
+`refFetch` and the kernel both return NaN on a NaN coordinate or layer. Two more tables check the grid
+points and clamped endpoints: one with NaN and infinite samples, one whose finite neighbour
+differences overflow float32. Exits `0` on parity and
 `1` on mismatch.
 -/
 
@@ -48,6 +49,18 @@ def edgeTable : LutTable :=
 def edgeProbes : Array (Float × Float) :=
   #[(0.0, 0.0), (0.0, -2.0), (0.0, -inf), (0.0, 1.0), (0.0, 2.0), (0.0, 2.5), (0.0, 3.0),
     (0.0, 7.0), (1.0, 0.0), (1.0, 1.5), (1.0, 2.0), (1.0, 3.0), (1.0, inf)]
+
+/-- `2¹²⁷`, finite in float32; the difference of `big` and `-big` overflows float32. -/
+def big : Float := Float.scaleB 1.0 127
+
+/-- Finite samples whose neighbour differences overflow float32: `refFetch` returns the stored
+sample at weight zero, so the kernel must too. -/
+def overflowTable : LutTable :=
+  { name := "overflow", width := 4, layers := 1, values := #[big, -big, -big, big] }
+
+/-- The grid points and clamped endpoints of `overflowTable`. -/
+def overflowProbes : Array (Float × Float) :=
+  #[(0.0, 0.0), (0.0, -2.0), (0.0, -inf), (0.0, 1.0), (0.0, 2.0), (0.0, 3.0), (0.0, 7.0)]
 
 /-- Float32 rounding of exactly representable samples and dyadic weights is exact; the slack only
 absorbs a backend that lerps as `a·(1−f) + b·f`. -/
@@ -105,6 +118,7 @@ def main : IO UInt32 := do
   unless cuda do
     IO.println "No CUDA device is linked: the generated CUDA was not run, only the CPU evaluation."
   let bad := (← runTable table probes cuda) + (← runTable edgeTable edgeProbes cuda)
+    + (← runTable overflowTable overflowProbes cuda)
   if bad == 0 then
     IO.println "PARITY OK — the fetch kernel matches refFetch, NaN probes and non-finite samples included."
     return 0

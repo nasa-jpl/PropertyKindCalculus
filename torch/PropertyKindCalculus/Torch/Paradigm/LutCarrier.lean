@@ -162,7 +162,11 @@ def LutTable.fetchProgram (width layers : UInt64) : Kernel.Program Float32 :=
           let last := 1 - 1 / ((k + 1) / width + 1)
           let a ← read 2 (base + k)
           let b ← read 2 (base + (k + 1 - last))
-          if u ≤ 0 then pure (a + 0 * (b - a))
+          if u ≤ k.toFloat32 then
+            -- Weight zero: `refFetch`'s `a + 0 * (b - a)` without forming `b - a`, which can
+            -- overflow float32. `z` is `0` for finite samples and NaN otherwise.
+            let z := (b - b) + (a - a)
+            if a ≤ b then pure (a + z) else pure (a - z)
           else pure (a + (u - k.toFloat32) * (b - a))
       else pure (layer + u)
     else pure (layer + u) : Except Kernel.Error Float32))
