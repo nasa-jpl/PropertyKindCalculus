@@ -48,8 +48,8 @@ public import Batteries.Data.Float.Lemmas
 
 @[expose] public section Blanket
 
-open Spec TorchLean TorchLean.Tensor
-open Runtime.Autograd (Tape Node)
+open TorchLean TorchLean.Tensor
+open PropertyKindCalculus.Paradigm (TapeM CpuTape CpuNode)
 open PropertyKindCalculus.Paradigm.TapeCodegen (evalTape nodeScalar cOp stepVal WF evalTape_node_value)
 open PropertyKindCalculus.Paradigm.TapeCSE (cseCompact)
 open PropertyKindCalculus.Examples.TapeCseStructural
@@ -70,7 +70,7 @@ interpreter never reads an op node's stored bits). **Const leaves** are the sole
 read (`nodeScalar`): the one fact `hleaf` supplies — that the compacted value at a const leaf's remap
 equals its stored scalar — is exactly the `toBits`-injectivity content core lacks, isolated here as an
 explicit, per-tape-checkable hypothesis. -/
-theorem cseCompact_denotation (t : Tape Float) (hwf : WF t) (env : String → Float)
+theorem cseCompact_denotation (t : CpuTape Float) (hwf : WF t) (env : String → Float)
     (vals valsC : Array Float)
     (hv : evalTape env t = .ok vals)
     (hvC : evalTape env (cseCompact t).1 = .ok valsC)
@@ -152,7 +152,7 @@ theorem cseCompact_denotation (t : Tape Float) (hwf : WF t) (env : String → Fl
 named (a graph input, never a bare `TapeBuilder.const`), the const-leaf hypothesis of
 `cseCompact_denotation` is vacuous, so the pointwise `evalTape`-denotation equality holds outright. This
 is the "op nodes and named leaves need no `toBits`" statement in full. -/
-theorem cseCompact_denotation_of_named (t : Tape Float) (hwf : WF t) (env : String → Float)
+theorem cseCompact_denotation_of_named (t : CpuTape Float) (hwf : WF t) (env : String → Float)
     (vals valsC : Array Float)
     (hv : evalTape env t = .ok vals)
     (hvC : evalTape env (cseCompact t).1 = .ok valsC)
@@ -173,7 +173,7 @@ private theorem headD_map_toBits (l : List Float) (d : Float) :
 
 /-- The CSE-remapped node of any node carries the same name, the remapped parents, and the **same
 stored scalar**. -/
-theorem cseCompact_leaf_scalar (t : Tape Float) (hwf : WF t) (id : Nat) (nOld : Node Float)
+theorem cseCompact_leaf_scalar (t : CpuTape Float) (hwf : WF t) (id : Nat) (nOld : CpuNode Float)
     (hOld : t.getNode? id = some nOld) :
     ∃ nNew, (cseCompact t).1.getNode? ((cseCompact t).2.getD id id) = some nNew ∧
       nNew.name = nOld.name ∧
@@ -192,7 +192,7 @@ theorem cseCompact_leaf_scalar (t : Tape Float) (hwf : WF t) (id : Nat) (nOld : 
 
 /-- **`cseCompact` preserves the `evalTape` denotation node-for-node, for every well-formed tape** —
 const leaves included, no per-tape hypothesis: `hleaf` discharged by `cseCompact_leaf_scalar`. -/
-theorem cseCompact_denotation_unconditional (t : Tape Float) (hwf : WF t) (env : String → Float)
+theorem cseCompact_denotation_unconditional (t : CpuTape Float) (hwf : WF t) (env : String → Float)
     (vals valsC : Array Float)
     (hv : evalTape env t = .ok vals)
     (hvC : evalTape env (cseCompact t).1 = .ok valsC) :
@@ -216,7 +216,7 @@ kernel, whose merged const leaves exercise the path `hleaf` covers). -/
 
 /-- Named-leaf-ness of a concrete tape reduces to a decidable bounded check (companion of
 `examples.tape_cse_structural.wf_of_bounded`). -/
-theorem named_of_bounded (t : Tape Float)
+theorem named_of_bounded (t : CpuTape Float)
     (h : ∀ id (hid : id < t.size),
       (t.nodes[id]'hid).parents.isEmpty = true → (t.nodes[id]'hid).name ≠ none) :
     ∀ id nd, t.getNode? id = some nd → nd.parents.isEmpty = true → nd.name ≠ none := by
@@ -242,7 +242,7 @@ example (env : String → Float) (vals valsC : Array Float)
 
 /-- Executable pointwise check: `evalTape` of the compacted tape agrees with `evalTape` of the original
 at every original id (bit-for-bit via `Float.toBits`, so exact even at non-finite values). -/
-def cseDenotationHolds (env : String → Float) (t : Tape Float) : Bool :=
+def cseDenotationHolds (env : String → Float) (t : CpuTape Float) : Bool :=
   match evalTape env t, evalTape env (cseCompact t).1 with
   | .ok vals, .ok valsC =>
       let remap := (cseCompact t).2

@@ -30,7 +30,7 @@ meta import PropertyKindCalculus.Torch.Paradigm.TapeCodegen
 
 @[expose] public section Blanket
 
-open Runtime.Autograd (Tape TapeM)
+open PropertyKindCalculus.Paradigm (TapeM CpuTape CpuNode)
 open PropertyKindCalculus.Paradigm.TapeCSE (cseCompact)
 open PropertyKindCalculus.Paradigm.TapeCodegen
 open PropertyKindCalculus.Paradigm.TapeCodegen.SL (genSL run genSL_denotes_noTables)
@@ -45,7 +45,7 @@ every environment the program's run holds, at the remapped slot of every origina
 covered by `cseCompact_denotation_unconditional`. The source kernel's value at `Float` is `vals.getD id`
 by the per-kernel faithfulness theorems (`examples.tape_codegen_end_to_end`), so this closes
 source → tape → compacted tape → program. -/
-theorem pipeline_denotes (t : Tape Float) (hwf : WF t)
+theorem pipeline_denotes (t : CpuTape Float) (hwf : WF t)
     {prog : SL.SLProg} (hg : genSL (cseCompact t).1 #[] = .ok prog)
     (env : String → Float) (vals : Array Float) (hv : evalTape env t = .ok vals) :
     ∀ id, id < t.size →

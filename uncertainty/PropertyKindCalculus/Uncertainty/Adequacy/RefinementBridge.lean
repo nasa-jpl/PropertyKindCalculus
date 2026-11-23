@@ -50,10 +50,10 @@ public import PropertyKindCalculus.Torch.Fp32
 
 namespace PropertyKindCalculus.Uncertainty.Adequacy
 
-open TorchLean.Floats
+open TorchLean (FP32)
 open PropertyKindCalculus.Fp32
-open TorchLean.Floats.IEEE754
-open FloatLib.Floats.Formats.Flocq (genericFormat)
+open TorchLean.IEEE754
+open FloatLib.Floats.Formats.Flocq (GenericRepresentable)
 open FloatLib.Numerics (binaryRadix)
 open PropertyKindCalculus
 
@@ -68,7 +68,7 @@ theorem refinement_round_eq_round32 (x : ℝ) :
 /-- **Hence the refinement's rounding fixes exactly the representable reals.** This is
 `Fp32Grounding.round32_eq_self_iff` read as a statement about the R10 bridge. -/
 theorem refinement_round_eq_self_iff (x : ℝ) :
-    CarrierRefinement.round (E := FP32) x = x ↔ genericFormat binaryRadix fexp32 x :=
+    CarrierRefinement.round (E := FP32) x = x ↔ GenericRepresentable binaryRadix fexp32 x :=
   round32_eq_self_iff x
 
 /-- **And its forgetful map is the format's `.val`.** -/

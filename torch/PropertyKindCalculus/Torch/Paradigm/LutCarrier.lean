@@ -28,30 +28,28 @@ INSTANCES.
   `paradigm.tape_cse`'s `nodeKey` (which keys on the name) distinguishes fetches into different
   tables with no CSE change — the "scalar-baking op" hazard its docstring warns about is resolved
   by construction, PROVIDED distinct tables carry distinct names (the codegen rejects duplicates).
-* `CudaT` — TorchLean's piecewise-linear table lookup on the LibTorch backend
-  (`NN.Runtime.Autograd.Engine.LibTorch.Ops.TableLookup`): `Buffer.tableSegments` locates each
-  coordinate's two neighbouring samples and `Buffer.tableLookupForward` gathers them and lerps,
-  one float32 rounding per primitive, so the result is `KernelSpec.tableLookupSpec` bit for bit
-  (`refFetch`'s float32 twin). The instance uploads the table per call (fine for parity checks);
-  throughput deployments upload the table once and record `Tape.layeredTableLookup`, or land the
-  megakernel (`paradigm.tape_codegen`), where the generated launcher caches the texture
-  create-once.
+* Device — `LutTable.fetchProgram`, the fetch as a TorchLean `Kernel.Program Float32` over three
+  inputs (layers, coordinates, samples). `Program.run` evaluates it in Lean on the CPU and as
+  generated CUDA on the GPU, and `CudaT.lutFetchIO` runs it on resident device buffers. Running a
+  kernel is an `IO` action, so `CudaT` has no pure `LutInterp` instance. Throughput deployments
+  land the megakernel (`paradigm.tape_codegen`), whose generated launcher caches the texture.
 
-A `module` file: imports the tape carrier, the CUDA carrier, and TorchLean's table lookup.
+A `module` file: imports the tape carrier, the CUDA carrier, and TorchLean's kernel frontend.
 -/
 
 module
 
 public import PropertyKindCalculus.Torch.Paradigm.TapeCarrier
 public import PropertyKindCalculus.Torch.Paradigm.CudaCarrier
-public import NN.Runtime.Autograd.Engine.LibTorch.Ops.TableLookup
+public import TorchLean.NN.Kernel.Tensor
+public import TorchLean.CUDA.Kernel.Launch
+import TorchLean.CUDA.Kernel.Elab
 
 @[expose] public section Blanket
 
-open Spec TorchLean
 open TorchLean TorchLean.Tensor
-open Runtime.Autograd
-open Runtime.Autograd.LibTorch (Buffer)
+open TorchLean.LibTorch (Buffer)
+open scoped Kernel
 
 namespace PropertyKindCalculus.Paradigm
 
@@ -122,12 +120,12 @@ def TapeBuilder.lutFetchM {s : Shape} (tbl : LutTable) (l u : TapeBuilder s) : T
     let lId ← l.run
     let uId ← u.run
     let t ← get
-    let lVal : Tensor Float s ← liftM (Tape.requireValue (t := t) (s := s) lId)
-    let uVal : Tensor Float s ← liftM (Tape.requireValue (t := t) (s := s) uId)
-    let v := map2Spec (fun a b => tbl.refFetch a b) lVal uVal
+    let lVal : Tensor Float s ← liftM (TorchLean.Tape.requireValue (t := t) (s := s) lId)
+    let uVal : Tensor Float s ← liftM (TorchLean.Tape.requireValue (t := t) (s := s) uId)
+    let v := Tensor.zipWith (fun a b => tbl.refFetch a b) lVal uVal
     let (t', id) := Tape.addNode t
       { name := some tbl.nodeName
-      , value := Spec.SomeTensor.ofTensor v
+      , value := SomeTensor.ofTensor v
       , requiresGrad := false
       , parents := #[lId, uId]
       , backward := fun _ => .ok #[] }
@@ -140,22 +138,47 @@ construction), forward-only. -/
 instance {s : Shape} : LutInterp (TapeBuilder s) where
   lutFetch := TapeBuilder.lutFetchM
 
-/-- The executing device instance: one layered table lookup through TorchLean's LibTorch
-primitives (the bit-reproducible float32 twin of `refFetch`). The table upload is per call —
-parity-check economics; deployments that care upload once via TorchLean or land the megakernel.
-An empty table (no samples or no layers) reads as `0`, as `refFetch` does. A NaN coordinate or
-layer is `refFetch`'s NaN only once `tableSegments` clamps with a NaN-propagating `clamp`. -/
-instance {s : Shape} : LutInterp (CudaCarrier.CudaT s) where
-  lutFetch tbl layer u :=
-    if tbl.width == 0 || tbl.layers == 0 then CudaCarrier.CudaT.const 0.0
-    else
-      let fa := tbl.values.foldl (init := FloatArray.emptyWithCapacity tbl.values.size)
-        FloatArray.push
-      let table := Buffer.ofFloatArray fa
-      let count := CudaCarrier.CudaT.szU s
-      let seg := Buffer.tableSegments tbl.layers.toUInt32 tbl.width.toUInt32 u.buf (some layer.buf)
-        count
-      ⟨Buffer.tableLookupForward table (tbl.layers * tbl.width).toUInt32 seg count⟩
+/-- **The fetch as a kernel**: `refFetch`'s float32 twin over inputs `0` (layers), `1`
+(coordinates) and `2` (the `layers·width` samples, layer-major), for a nonempty table. A NaN
+layer or coordinate gives NaN. -/
+def LutTable.fetchProgram (width layers : UInt64) : Kernel.Program Float32 :=
+  Program.of (fun (read : Kernel.Reader Float32) (i : UInt64) => (do
+    let layer ← read 0 i
+    let u ← read 1 i
+    if layer ≤ layer then
+      if u ≤ u then do
+        let l := (layer + 0.5).toUInt64
+        -- `over = 1` exactly when `l ≥ layers`, so `base` is row `min l (layers - 1)`.
+        let over := 1 - 1 / (l / layers + 1)
+        let base := (l - over * (l - (layers - 1))) * width
+        if (width - 1).toFloat32 ≤ u then read 2 (base + (width - 1))
+        else do
+          let k := u.toUInt64
+          let a ← read 2 (base + k)
+          if u ≤ 0 then pure a
+          else do
+            let b ← read 2 (base + (k + 1))
+            pure (a + (u - k.toFloat32) * (b - a))
+      else pure (layer + u)
+    else pure (layer + u) : Except Kernel.Error Float32))
+
+/-- The device program of a table; meaningful when the table is nonempty. -/
+def LutTable.program (tbl : LutTable) : Kernel.Program Float32 :=
+  LutTable.fetchProgram tbl.width.toUInt64 tbl.layers.toUInt64
+
+/-- One layered fetch on resident device buffers, through `LutTable.program` as generated CUDA.
+The table upload is per call. An empty table reads as `0`, as `refFetch` does. -/
+def CudaCarrier.CudaT.lutFetchIO {s : Shape} (tbl : LutTable)
+    (layer u : CudaCarrier.CudaT s) : IO (CudaCarrier.CudaT s) := do
+  if tbl.width == 0 || tbl.layers == 0 then return CudaCarrier.CudaT.const 0.0
+  let fa := tbl.values.foldl (init := FloatArray.emptyWithCapacity tbl.values.size)
+    FloatArray.push
+  let table ← Buffer.ofFloatArrayIO fa
+  let p := tbl.program
+  let out ← Kernel.runBuffers .binary32 (fun x => (p.scalar.toBits x).toNat.toUInt64)
+    p.expression #[layer.buf, u.buf, table] (Shape.size s).toUInt64
+  return ⟨out⟩
+
 
 end PropertyKindCalculus.Paradigm
 

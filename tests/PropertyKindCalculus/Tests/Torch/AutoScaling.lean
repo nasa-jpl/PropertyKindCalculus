@@ -31,8 +31,8 @@ meta import PropertyKindCalculus.Torch.Paradigm.Platform
 
 namespace PropertyKindCalculus.Tests.AutoScaling
 
-open Spec TorchLean
-open Runtime.Autograd (Tape TapeM)
+open TorchLean
+open PropertyKindCalculus.Paradigm (TapeM CpuTape CpuNode)
 open PropertyKindCalculus (MathCarrier)
 open PropertyKindCalculus.Paradigm (TapeBuilder)
 open PropertyKindCalculus.Paradigm.TapeCSE (cseCompact)
@@ -47,12 +47,12 @@ abbrev TB := TapeBuilder Shape.scalar
 def inLeaf (nm : String) : TB := ⟨TapeM.leaf (Tensor.full Shape.scalar (0.0 : Float)) (name := some nm)⟩
 
 /-- Record one output and hash-cons, exactly as the deployment recorders do. -/
-def record1 (b : TB) : Except String (Tape Float) := do
+def record1 (b : TB) : Except String (CpuTape Float) := do
   let (_, t) ← TapeM.run Tape.empty b.run
   pure (cseCompact t).1
 
 /-- `maxLiveNodes` through the `Except`, with a poison value on a failed record. -/
-def mlOf (r : Except String (Tape Float)) : Nat :=
+def mlOf (r : Except String (CpuTape Float)) : Nat :=
   match r with
   | .ok t => maxLiveNodes t
   | .error _ => 1000000
@@ -63,14 +63,14 @@ Walk convention: named inputs live from launch; a node allocates at its id; oper
 last consumer is node `j` free after `j` executes; terminal nodes stay live to the end. -/
 
 /-- Chain `exp (exp (exp x))`: at every step one operand + one result → peak 2. -/
-def chain : Except String (Tape Float) :=
+def chain : Except String (CpuTape Float) :=
   record1 (MathCarrier.exp (MathCarrier.exp (MathCarrier.exp (inLeaf "x"))))
 
 #guard mlOf chain == 2
 
 /-- Diamond `(exp x) * (x + x)`: after CSE `x` feeds both arms, so the peak is
 `{x, exp x, x+x}` while the second arm computes → 3. -/
-def diamond : Except String (Tape Float) :=
+def diamond : Except String (CpuTape Float) :=
   let x := inLeaf "x"
   record1 (MathCarrier.exp x * (x + x))
 
@@ -79,7 +79,7 @@ def diamond : Except String (Tape Float) :=
 /-- Fan-in `(exp x + exp y) + (exp z + exp w)`: 4 inputs live from launch; the peak is
 during the first arm — `{x..w}` + `exp x` (x not yet dead) → 5, and the tail never
 exceeds it (the finished arm's sum keeps earlier buffers' places). -/
-def fanIn : Except String (Tape Float) :=
+def fanIn : Except String (CpuTape Float) :=
   record1 ((MathCarrier.exp (inLeaf "x") + MathCarrier.exp (inLeaf "y"))
          + (MathCarrier.exp (inLeaf "z") + MathCarrier.exp (inLeaf "w")))
 
@@ -87,13 +87,13 @@ def fanIn : Except String (Tape Float) :=
 
 /-- A const leaf allocates like any buffer (`BatchCarrier.const` materializes full-size):
 `x * 2` peaks at `{x, const, mul}` → 3. -/
-def withConst : Except String (Tape Float) :=
+def withConst : Except String (CpuTape Float) :=
   record1 (inLeaf "x" * (TapeBuilder.const 2.0 : TB))
 
 #guard mlOf withConst == 3
 
 -- The empty tape has nothing live.
-#guard maxLiveNodes (Tape.empty (α := Float)) == 0
+#guard maxLiveNodes ((Tape.empty : CpuTape Float)) == 0
 
 /-! ## `AiReport` threading and the peak-bytes shapes -/
 
@@ -103,7 +103,7 @@ shapes are the documented formulas — fused `(nIns+nOut)·P·4`, eager `maxLive
 def diamondRep : AiReport :=
   match diamond with
   | .ok t => aiReport t 1
-  | .error _ => aiReport (Tape.empty (α := Float)) 1
+  | .error _ => aiReport ((Tape.empty : CpuTape Float)) 1
 
 #guard diamondRep.maxLive == 3
 #guard diamondRep.nInputs == 1

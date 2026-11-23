@@ -21,8 +21,8 @@ meta import PropertyKindCalculus.Examples.AvsForward
 
 @[expose] public section Blanket
 
-open Spec TorchLean
-open Runtime.Autograd (Tape TapeM)
+open TorchLean
+open PropertyKindCalculus.Paradigm (TapeM CpuTape CpuNode)
 open PropertyKindCalculus (MathCarrier)
 open PropertyKindCalculus.Paradigm (TapeBuilder NumCarrier)
 open PropertyKindCalculus.Paradigm.TapeCSE (cseCompact)
@@ -42,7 +42,7 @@ abbrev TB := TapeBuilder Shape.scalar
 def inLeaf (nm : String) : TB := ⟨TapeM.leaf (Tensor.full Shape.scalar (0.0 : Float)) (name := some nm)⟩
 
 /-- Record `resJac`'s five outputs on one shared tape and hash-cons to the distinct-op DAG. -/
-def recordResJac : Except String (Tape Float × List Nat) := do
+def recordResJac : Except String (CpuTape Float × List Nat) := do
   let a := inLeaf "a"; let b := inLeaf "b"; let c := inLeaf "c"; let d := inLeaf "d"
   let ndvi := inLeaf "ndvi"; let r := inLeaf "r"; let s0 := inLeaf "s0"
   let (res, ja, jb, jc, jd) := resJac (α := TB) a b c d ndvi r s0

@@ -33,7 +33,7 @@ meta import PropertyKindCalculus.Uncertainty.Adequacy.DagBound
 namespace PropertyKindCalculus.UncertaintyExamples.AdequacyDag
 
 open PropertyKindCalculus.Uncertainty.Adequacy
-open TorchLean.Floats
+open TorchLean (FP32)
 open PropertyKindCalculus.Fp32
 open FloatLib.Floats.Formats.Flocq
 open FloatLib.Numerics (binaryRadix Radix)
@@ -157,13 +157,13 @@ theorem unitInputs_val (i : ℕ) : (unitInputs i).val = 1 := round32_fix one_rep
 theorem zeroInputs_val (i : ℕ) : (zeroInputs i).val = 0 := round32_fix zero_representable
 
 /-- `2` is a binary32 number. -/
-theorem two_representable : genericFormat binaryRadix fexp32 (2 : ℝ) := by
+theorem two_representable : GenericRepresentable binaryRadix fexp32 (2 : ℝ) := by
   have h := bpow_representable (e := 1) (by decide)
   rwa [show bpow binaryRadix 1 = (2:ℝ) by
     simp [bpow, Radix.toReal, binaryRadix]] at h
 
 /-- And so is `4`. -/
-theorem four_representable : genericFormat binaryRadix fexp32 (4 : ℝ) := by
+theorem four_representable : GenericRepresentable binaryRadix fexp32 (4 : ℝ) := by
   have h := bpow_representable (e := 2) (by decide)
   rwa [show bpow binaryRadix 2 = (4:ℝ) by
     simp [bpow, Radix.toReal, binaryRadix]; norm_num] at h

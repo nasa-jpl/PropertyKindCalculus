@@ -52,9 +52,9 @@ public import PropertyKindCalculus.OperatorTable
 
 @[expose] public section Blanket
 
-open Spec TorchLean
+open TorchLean
 open TorchLean TorchLean.Tensor
-open Runtime.Autograd
+open PropertyKindCalculus.Paradigm (TapeM CpuTape CpuNode)
 open PropertyKindCalculus
 open PropertyKindCalculus.Paradigm (TapeBuilder)
 open PropertyKindCalculus.Paradigm.TapeParity
@@ -80,28 +80,28 @@ structure IsNumCarrierHom (R : TapeBuilder s → Tensor Float s → Prop) : Prop
   const : ∀ (x : Float), R (TapeBuilder.const (s := s) x) (Tensor.full s x)
   /-- `+` maps to `addSpec`. -/
   add   : ∀ {x y : TapeBuilder s} {vx vy : Tensor Float s},
-            R x vx → R y vy → R (x + y) (addSpec vx vy)
+            R x vx → R y vy → R (x + y) ((vx + vy))
   /-- `−` maps to `subSpec`. -/
   sub   : ∀ {x y : TapeBuilder s} {vx vy : Tensor Float s},
-            R x vx → R y vy → R (x - y) (subSpec vx vy)
+            R x vx → R y vy → R (x - y) ((vx - vy))
   /-- `×` maps to `mulSpec`. -/
   mul   : ∀ {x y : TapeBuilder s} {vx vy : Tensor Float s},
-            R x vx → R y vy → R (x * y) (mulSpec vx vy)
+            R x vx → R y vy → R (x * y) ((vx * vy))
   /-- `÷` maps to `divSpec`. -/
   div   : ∀ {x y : TapeBuilder s} {vx vy : Tensor Float s},
-            R x vx → R y vy → R (x / y) (divSpec vx vy)
+            R x vx → R y vy → R (x / y) ((vx / vy))
   /-- `min` maps to `minSpec`. -/
   min   : ∀ {x y : TapeBuilder s} {vx vy : Tensor Float s},
-            R x vx → R y vy → R (Min.min x y) (minSpec vx vy)
+            R x vx → R y vy → R (Min.min x y) (Tensor.minimum vx vy)
   /-- `max` maps to `maxSpec`. -/
   max   : ∀ {x y : TapeBuilder s} {vx vy : Tensor Float s},
-            R x vx → R y vy → R (Max.max x y) (maxSpec vx vy)
+            R x vx → R y vy → R (Max.max x y) (Tensor.maximum vx vy)
   /-- `sqrt` maps to the clamped `sqrtSpec`. -/
   sqrt  : ∀ {x : TapeBuilder s} {vx : Tensor Float s},
-            R x vx → R (MathCarrier.sqrt x) (sqrtSpec vx)
+            R x vx → R (MathCarrier.sqrt x) (Tensor.sqrt vx .clampNegative)
   /-- `exp` maps to `expSpec`. -/
   exp   : ∀ {x : TapeBuilder s} {vx : Tensor Float s},
-            R x vx → R (MathCarrier.exp x) (expSpec vx)
+            R x vx → R (MathCarrier.exp x) (Tensor.exp vx)
 
 /-- **`Evaluates` is that homomorphism** — assembled verbatim from the per-op `Evaluates_*`
 lemmas of `paradigm.tape_parity`. The named witness the `tape_hom` machinery and future

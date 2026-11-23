@@ -18,7 +18,7 @@ public import PropertyKindCalculus.Torch.Paradigm.TapeParity
 
 @[expose] public section Blanket
 
-open Spec TorchLean
+open TorchLean
 open TorchLean TorchLean.Tensor
 open PropertyKindCalculus (MathCarrier)
 open PropertyKindCalculus.Paradigm (TapeBuilder)
@@ -48,17 +48,16 @@ theorem eval_two  : Evaluates (ofN 2 : TB) (Tensor.full S ((2 : Nat) : Float)) :
 /-- `exp((0−2)·b·ndvi)` at the `Spec` carrier — the value the recorded `attenuation` builder must
 carry. -/
 def attenSpec (vb vndvi : T) : T :=
-  expSpec (mulSpec (mulSpec (subSpec (Tensor.full S (0 : Float)) (Tensor.full S ((2 : Nat) : Float))) vb) vndvi)
+  Tensor.exp ((((Tensor.full S (0 : Float)) - (Tensor.full S ((2 : Nat) : Float))) * vb) * vndvi)
 
 /-- The five `Spec`-level outputs (residual + 4 Jacobian columns), mirroring `resJac`'s association. -/
 def resSpec (va vb vc vd vndvi vr vs0 : T) : T :=
-  subSpec vs0 (addSpec (addSpec (mulSpec va vndvi)
-    (mulSpec (mulSpec (attenSpec vb vndvi) vc) vr)) vd)
-def jaSpec (vndvi : T) : T := subSpec (Tensor.full S (0 : Float)) vndvi
+  (vs0 - (((va * vndvi) + (((attenSpec vb vndvi) * vc) * vr)) + vd))
+def jaSpec (vndvi : T) : T := ((Tensor.full S (0 : Float)) - vndvi)
 def jbSpec (vb vc vd_unused vndvi vr : T) : T :=
-  mulSpec (mulSpec (mulSpec (mulSpec (Tensor.full S ((2 : Nat) : Float)) vndvi) vc) vr) (attenSpec vb vndvi)
-def jcSpec (vb vndvi vr : T) : T := subSpec (Tensor.full S (0 : Float)) (mulSpec (attenSpec vb vndvi) vr)
-def jdSpec : T := subSpec (Tensor.full S (0 : Float)) (Tensor.full S (1 : Float))
+  (((((Tensor.full S ((2 : Nat) : Float)) * vndvi) * vc) * vr) * (attenSpec vb vndvi))
+def jcSpec (vb vndvi vr : T) : T := ((Tensor.full S (0 : Float)) - ((attenSpec vb vndvi) * vr))
+def jdSpec : T := ((Tensor.full S (0 : Float)) - (Tensor.full S (1 : Float)))
 
 /-! ### Faithfulness: the recorded builders carry exactly the `Spec` values, for all inputs -/
 

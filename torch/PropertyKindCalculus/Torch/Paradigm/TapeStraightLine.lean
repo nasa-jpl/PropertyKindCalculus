@@ -8,7 +8,7 @@ the tape itself and wrote text, so "the emitted kernel computes what `evalTape` 
 claim per backend about strings, and only the rendering tables (`cExpr`/`jlExpr` have an expression
 wherever `cOp` has a value) were theorems. Now every emitter is factored as `print ∘ genSL`:
 
-  * `genSL : Tape Float → Array LutTable → Except String SLProg` is the ONLY function that reads the
+  * `genSL : CpuTape Float → Array LutTable → Except String SLProg` is the ONLY function that reads the
     tape. It produces a straight-line program — one `SLExpr` per node, in node order: a read of a
     named input, an exact literal, an alphabet operation on earlier slots, or a table fetch;
   * `SLExpr.denote`/`run` give the program its meaning in Lean `Float`, with the same scalar ops
@@ -51,7 +51,7 @@ public import PropertyKindCalculus.Torch.Paradigm.LutCarrier
 
 @[expose] public section Blanket
 
-open Runtime.Autograd (Tape Node)
+open PropertyKindCalculus.Paradigm (TapeM CpuTape CpuNode)
 open PropertyKindCalculus.Paradigm (LutTable lutNodeName? TapeGraph TapeVertex)
 
 namespace PropertyKindCalculus.Paradigm.TapeCodegen
@@ -80,7 +80,7 @@ def cOpT (tables : String → Option LutTable) (nm : String) (args : List Float)
 
 /-- `evalTape` with the table-extended alphabet (`cOpT`). The deployed megakernel's fp64
 denotation when the recorded DAG contains `lutfetch` nodes. -/
-def evalTapeT (tables : String → Option LutTable) (env : String → Float) (t : Tape Float) :
+def evalTapeT (tables : String → Option LutTable) (env : String → Float) (t : CpuTape Float) :
     Except String (Array Float) := do
   let mut vals : Array Float := Array.mkEmpty t.nodes.size
   for n in t.nodes do
@@ -104,7 +104,7 @@ theorem cOpT_none (nm : String) (args : List Float) : cOpT (fun _ => none) nm ar
 
 /-- With no tables, `evalTapeT` *is* `evalTape` — the extension is conservative, so every
 existing `evalTape`-denotation proof transfers verbatim. -/
-theorem evalTapeT_none (env : String → Float) (t : Tape Float) :
+theorem evalTapeT_none (env : String → Float) (t : CpuTape Float) :
     evalTapeT (fun _ => none) env t = evalTape env t := by
   unfold evalTapeT evalTape
   simp only [cOpT_none]
@@ -233,7 +233,7 @@ def mkOp (nm : String) (ps : List Nat) : Except String SLExpr :=
 /-- The program line for tape node `n` at id `i`: a named leaf is an input read, an unnamed leaf
 a literal, a `lutfetch:<table>` node a fetch into the resolved table, any other named op node an
 alphabet op. The failure cases are the generators' (`genBody`, `genBodyJulia`), verbatim. -/
-def nodeSL (tbls : Array LutTable) (i : Nat) (n : Node Float) : Except String SLExpr :=
+def nodeSL (tbls : Array LutTable) (i : Nat) (n : CpuNode Float) : Except String SLExpr :=
   if n.parents.isEmpty then
     match n.name with
     | some nm => .ok (.input nm)
@@ -253,14 +253,14 @@ def nodeSL (tbls : Array LutTable) (i : Nat) (n : Node Float) : Except String SL
 
 /-- **The one tape reader.** The straight-line program of a tape: one line per node, in id
 order. Every emitter is a printer of this. -/
-def genSL (t : Tape Float) (tbls : Array LutTable) : Except String SLProg :=
+def genSL (t : CpuTape Float) (tbls : Array LutTable) : Except String SLProg :=
   t.nodes.zipIdx.mapM fun p => nodeSL tbls p.2 p.1
 
 /-! ### `evalTapeT` as a fold -/
 
 /-- The loop body of `evalTapeT`, one node at a time. -/
 def stepValT (tables : String → Option LutTable) (env : String → Float)
-    (vals : Array Float) (n : Node Float) : Except String Float :=
+    (vals : Array Float) (n : CpuNode Float) : Except String Float :=
   if n.parents.isEmpty then
     match n.name with
     | some nm => pure (env nm)
@@ -271,7 +271,7 @@ def stepValT (tables : String → Option LutTable) (env : String → Float)
     | none => .error "tape_codegen: op node with no op name"
 
 theorem evalTapeT_eq_foldlM (tables : String → Option LutTable) (env : String → Float)
-    (t : Tape Float) :
+    (t : CpuTape Float) :
     evalTapeT tables env t
       = t.nodes.foldlM
           (fun vals n => (stepValT tables env vals n).map (fun v => vals.push v)) #[] := by
@@ -321,7 +321,7 @@ theorem mkOp_denote (env : String → Float) (vals : Array Float) {nm : String} 
 interpreter's step computes for that node against the same slots. -/
 theorem nodeSL_denote {tbls : Array LutTable} {tables : String → Option LutTable}
     (hT : TablesAgree tbls tables) (env : String → Float) (vals : Array Float)
-    {i : Nat} {n : Node Float} {e : SLExpr} (h : nodeSL tbls i n = .ok e) :
+    {i : Nat} {n : CpuNode Float} {e : SLExpr} (h : nodeSL tbls i n = .ok e) :
     stepValT tables env vals n = .ok (e.denote env vals) := by
   unfold nodeSL at h
   unfold stepValT
@@ -363,7 +363,7 @@ theorem nodeSL_denote {tbls : Array LutTable} {tables : String → Option LutTab
 /-- The fold over a node sublist, against the program lines `mapM` produced for it. -/
 theorem foldlM_run_aux {tbls : Array LutTable} {tables : String → Option LutTable}
     (hT : TablesAgree tbls tables) (env : String → Float) :
-    ∀ (l : List (Node Float)) (i : Nat) (prog : List SLExpr) (vals : Array Float),
+    ∀ (l : List (CpuNode Float)) (i : Nat) (prog : List SLExpr) (vals : Array Float),
       (l.zipIdx i).mapM (fun p => nodeSL tbls p.2 p.1) = .ok prog →
       l.foldlM (fun vals n => (stepValT tables env vals n).map (fun v => vals.push v)) vals
         = .ok (prog.foldl (fun vals e => vals.push (e.denote env vals)) vals) := by
@@ -403,7 +403,7 @@ slot `i` of the emitted kernel denotes node `i` of the tape, for every node. Sta
 table function that agrees with the resolved tables (`TablesAgree`); `genSL_denotes_tablesOf` and
 `genSL_denotes_noTables` are its two canonical instances. -/
 theorem genSL_denotes {tbls : Array LutTable} {tables : String → Option LutTable}
-    (hT : TablesAgree tbls tables) (env : String → Float) {t : Tape Float} {prog : SLProg}
+    (hT : TablesAgree tbls tables) (env : String → Float) {t : CpuTape Float} {prog : SLProg}
     (h : genSL t tbls = .ok prog) :
     evalTapeT tables env t = .ok (run env prog) := by
   unfold genSL at h
@@ -414,13 +414,13 @@ theorem genSL_denotes {tbls : Array LutTable} {tables : String → Option LutTab
   unfold run
   rw [Array.foldl_toList]
 
-theorem genSL_denotes_tablesOf (tbls : Array LutTable) (env : String → Float) {t : Tape Float}
+theorem genSL_denotes_tablesOf (tbls : Array LutTable) (env : String → Float) {t : CpuTape Float}
     {prog : SLProg} (h : genSL t tbls = .ok prog) :
     evalTapeT (tablesOf tbls) env t = .ok (run env prog) :=
   genSL_denotes (tablesAgree_tablesOf tbls) env h
 
 /-- The table-free instance: the program of a pure-arithmetic tape runs as `evalTape`. -/
-theorem genSL_denotes_noTables (env : String → Float) {t : Tape Float} {prog : SLProg}
+theorem genSL_denotes_noTables (env : String → Float) {t : CpuTape Float} {prog : SLProg}
     (h : genSL t #[] = .ok prog) : evalTape env t = .ok (run env prog) := by
   rw [← evalTapeT_none]
   exact genSL_denotes tablesAgree_empty env h
@@ -497,7 +497,7 @@ theorem cOp_error_of_mkOp_error (vals : Array Float) {nm : String} {ps : List Na
 rejects it too — against any slots, under any table function agreeing with the resolved tables. -/
 theorem stepValT_error_of_nodeSL_error {tbls : Array LutTable} {tables : String → Option LutTable}
     (hT : TablesAgree tbls tables) (env : String → Float) (vals : Array Float)
-    {i : Nat} {n : Node Float} {msg : String} (h : nodeSL tbls i n = .error msg) :
+    {i : Nat} {n : CpuNode Float} {msg : String} (h : nodeSL tbls i n = .error msg) :
     ∃ msg', stepValT tables env vals n = .error msg' := by
   unfold nodeSL at h
   unfold stepValT
@@ -542,7 +542,7 @@ theorem stepValT_error_of_nodeSL_error {tbls : Array LutTable} {tables : String 
 
 theorem foldlM_error_of_mapM_error {tbls : Array LutTable} {tables : String → Option LutTable}
     (hT : TablesAgree tbls tables) (env : String → Float) :
-    ∀ (l : List (Node Float)) (i : Nat) (msg : String) (vals : Array Float),
+    ∀ (l : List (CpuNode Float)) (i : Nat) (msg : String) (vals : Array Float),
       (l.zipIdx i).mapM (fun p => nodeSL tbls p.2 p.1) = .error msg →
       ∃ msg', l.foldlM (fun vals n => (stepValT tables env vals n).map (fun v => vals.push v)) vals
         = .error msg' := by
@@ -571,7 +571,7 @@ theorem foldlM_error_of_mapM_error {tbls : Array LutTable} {tables : String → 
 
 /-- Where `genSL` fails, `evalTapeT` fails — at every environment. -/
 theorem evalTapeT_error_of_genSL_error {tbls : Array LutTable} {tables : String → Option LutTable}
-    (hT : TablesAgree tbls tables) (env : String → Float) {t : Tape Float} {msg : String}
+    (hT : TablesAgree tbls tables) (env : String → Float) {t : CpuTape Float} {msg : String}
     (h : genSL t tbls = .error msg) :
     ∃ msg', evalTapeT tables env t = .error msg' := by
   unfold genSL at h
@@ -585,7 +585,7 @@ interpreter runs it — the failing half of `genSL_denotes`: no tape the interpr
 un-emittable, and no program is emitted for a tape the interpreter rejects. Environment-independent
 on both sides, so stated at any `env`. -/
 theorem genSL_isOk_iff_evalTapeT {tbls : Array LutTable} {tables : String → Option LutTable}
-    (hT : TablesAgree tbls tables) (env : String → Float) (t : Tape Float) :
+    (hT : TablesAgree tbls tables) (env : String → Float) (t : CpuTape Float) :
     (genSL t tbls).isOk = (evalTapeT tables env t).isOk := by
   cases hg : genSL t tbls with
   | error msg =>
@@ -595,7 +595,7 @@ theorem genSL_isOk_iff_evalTapeT {tbls : Array LutTable} {tables : String → Op
     rw [genSL_denotes hT env hg]; rfl
 
 /-- The table-free instance, against `evalTape`. -/
-theorem genSL_isOk_iff_evalTape (env : String → Float) (t : Tape Float) :
+theorem genSL_isOk_iff_evalTape (env : String → Float) (t : CpuTape Float) :
     (genSL t #[]).isOk = (evalTape env t).isOk := by
   rw [← evalTapeT_none]; exact genSL_isOk_iff_evalTapeT tablesAgree_empty env t
 
@@ -644,7 +644,7 @@ theorem mapM_ok_getElem? {α β : Type} {f : α → Except String β} :
           exact ⟨x, by simpa using hx, hfx⟩
 
 /-- Slot `i` of the program is `nodeSL` of node `i` of the tape. -/
-theorem genSL_getElem? {t : Tape Float} {tbls : Array LutTable} {prog : SLProg}
+theorem genSL_getElem? {t : CpuTape Float} {tbls : Array LutTable} {prog : SLProg}
     (h : genSL t tbls = .ok prog) {i : Nat} {e : SLExpr} (hi : prog[i]? = some e) :
     ∃ n, t.getNode? i = some n ∧ nodeSL tbls i n = .ok e := by
   unfold genSL at h
@@ -660,11 +660,11 @@ theorem genSL_getElem? {t : Tape Float} {tbls : Array LutTable} {prog : SLProg}
     simp only [Option.map_some, Option.some.injEq] at hp
     subst hp
     refine ⟨n, ?_, by simpa using hpe⟩
-    rw [Tape.getNode?, ← Array.getElem?_toList]; exact hn
+    rw [TorchLean.Tape.getNode?, ← Array.getElem?_toList]; exact hn
 
 /-- **The literal clause.** A literal in the program is an unnamed leaf of the tape, and is that
 leaf's stored scalar. -/
-theorem genSL_lit {t : Tape Float} {tbls : Array LutTable} {prog : SLProg}
+theorem genSL_lit {t : CpuTape Float} {tbls : Array LutTable} {prog : SLProg}
     (h : genSL t tbls = .ok prog) {i : Nat} {x : Float} (hi : prog[i]? = some (.lit x)) :
     ∃ n, t.getNode? i = some n ∧ n.parents.isEmpty = true ∧ n.name = none ∧ nodeScalar n = x := by
   obtain ⟨n, hn, he⟩ := genSL_getElem? h hi
@@ -689,7 +689,7 @@ theorem genSL_lit {t : Tape Float} {tbls : Array LutTable} {prog : SLProg}
 
 /-- **The argument-list clause.** An input read in the program is a named leaf of the tape, with
 that leaf's name — so the emitted kernel's argument list is the tape's named leaves, nothing else. -/
-theorem genSL_input {t : Tape Float} {tbls : Array LutTable} {prog : SLProg}
+theorem genSL_input {t : CpuTape Float} {tbls : Array LutTable} {prog : SLProg}
     (h : genSL t tbls = .ok prog) {i : Nat} {nm : String} (hi : prog[i]? = some (.input nm)) :
     ∃ n, t.getNode? i = some n ∧ n.parents.isEmpty = true ∧ n.name = some nm := by
   obtain ⟨n, hn, he⟩ := genSL_getElem? h hi
@@ -750,22 +750,22 @@ theorem mapM_ok_getElem?_of {α β : Type} {f : α → Except String β} :
           exact ⟨y, by simpa using hy, hfy⟩
 
 /-- Node `i` of the tape is printed at slot `i` of the program, as `nodeSL` of that node. -/
-theorem genSL_getElem?_of_node {t : Tape Float} {tbls : Array LutTable} {prog : SLProg}
-    (h : genSL t tbls = .ok prog) {i : Nat} {n : Node Float} (hn : t.getNode? i = some n) :
+theorem genSL_getElem?_of_node {t : CpuTape Float} {tbls : Array LutTable} {prog : SLProg}
+    (h : genSL t tbls = .ok prog) {i : Nat} {n : CpuNode Float} (hn : t.getNode? i = some n) :
     ∃ e, prog[i]? = some e ∧ nodeSL tbls i n = .ok e := by
   unfold genSL at h
   have h' : (t.nodes.toList.zipIdx 0).mapM (fun p => nodeSL tbls p.2 p.1) = .ok prog.toList := by
     rw [← Array.toList_zipIdx, ← Array.toList_mapM, h]; rfl
   have hn' : (t.nodes.toList.zipIdx 0)[i]? = some (n, i) := by
     rw [List.getElem?_zipIdx, Array.getElem?_toList]
-    rw [Tape.getNode?] at hn
+    rw [TorchLean.Tape.getNode?] at hn
     simp [hn]
   obtain ⟨e, he, hne⟩ := mapM_ok_getElem?_of h' i (n, i) hn'
   exact ⟨e, by rw [← Array.getElem?_toList]; exact he, hne⟩
 
 /-- An unnamed leaf of the tape is a literal of the program at its slot, with its stored scalar. -/
-theorem genSL_lit_of_leaf {t : Tape Float} {tbls : Array LutTable} {prog : SLProg}
-    (h : genSL t tbls = .ok prog) {i : Nat} {n : Node Float} (hn : t.getNode? i = some n)
+theorem genSL_lit_of_leaf {t : CpuTape Float} {tbls : Array LutTable} {prog : SLProg}
+    (h : genSL t tbls = .ok prog) {i : Nat} {n : CpuNode Float} (hn : t.getNode? i = some n)
     (hp : n.parents.isEmpty = true) (hnm : n.name = none) :
     prog[i]? = some (.lit (nodeScalar n)) := by
   obtain ⟨e, he, hne⟩ := genSL_getElem?_of_node h hn
@@ -775,8 +775,8 @@ theorem genSL_lit_of_leaf {t : Tape Float} {tbls : Array LutTable} {prog : SLPro
   exact he
 
 /-- A named leaf of the tape is an input read of the program at its slot, with its name. -/
-theorem genSL_input_of_leaf {t : Tape Float} {tbls : Array LutTable} {prog : SLProg}
-    (h : genSL t tbls = .ok prog) {i : Nat} {n : Node Float} (hn : t.getNode? i = some n)
+theorem genSL_input_of_leaf {t : CpuTape Float} {tbls : Array LutTable} {prog : SLProg}
+    (h : genSL t tbls = .ok prog) {i : Nat} {n : CpuNode Float} (hn : t.getNode? i = some n)
     (hp : n.parents.isEmpty = true) {nm : String} (hnm : n.name = some nm) :
     prog[i]? = some (.input nm) := by
   obtain ⟨e, he, hne⟩ := genSL_getElem?_of_node h hn
@@ -787,7 +787,7 @@ theorem genSL_input_of_leaf {t : Tape Float} {tbls : Array LutTable} {prog : SLP
 
 /-- **The literal clause, as an equivalence.** Slot `i` of the program is the literal `x` iff node
 `i` of the tape is an unnamed leaf storing `x`. -/
-theorem genSL_lit_iff {t : Tape Float} {tbls : Array LutTable} {prog : SLProg}
+theorem genSL_lit_iff {t : CpuTape Float} {tbls : Array LutTable} {prog : SLProg}
     (h : genSL t tbls = .ok prog) (i : Nat) (x : Float) :
     prog[i]? = some (.lit x) ↔
       ∃ n, t.getNode? i = some n ∧ n.parents.isEmpty = true ∧ n.name = none ∧ nodeScalar n = x :=
@@ -795,7 +795,7 @@ theorem genSL_lit_iff {t : Tape Float} {tbls : Array LutTable} {prog : SLProg}
 
 /-- **The argument-list clause, as an equivalence.** Slot `i` of the program reads the input `nm`
 iff node `i` of the tape is the leaf named `nm`. -/
-theorem genSL_input_iff {t : Tape Float} {tbls : Array LutTable} {prog : SLProg}
+theorem genSL_input_iff {t : CpuTape Float} {tbls : Array LutTable} {prog : SLProg}
     (h : genSL t tbls = .ok prog) (i : Nat) (nm : String) :
     prog[i]? = some (.input nm) ↔
       ∃ n, t.getNode? i = some n ∧ n.parents.isEmpty = true ∧ n.name = some nm :=
@@ -822,7 +822,7 @@ def SLExpr.vertex : SLExpr → TapeVertex
 def ofProg (prog : SLProg) : TapeGraph := ⟨prog.toList.map SLExpr.vertex⟩
 
 /-- The line `nodeSL` produces for a node has that node's vertex. -/
-theorem nodeSL_vertex {tbls : Array LutTable} {i : Nat} {n : Node Float} {e : SLExpr}
+theorem nodeSL_vertex {tbls : Array LutTable} {i : Nat} {n : CpuNode Float} {e : SLExpr}
     (h : nodeSL tbls i n = .ok e) : e.vertex = ⟨n.name, n.parents.toList⟩ := by
   unfold nodeSL at h
   by_cases hp : n.parents.isEmpty = true
@@ -881,7 +881,7 @@ theorem nodeSL_vertex {tbls : Array LutTable} {i : Nat} {n : Node Float} {e : SL
 the program equals `ofTape` of the tape — so every statement the capstone chapter makes over
 `ofTape t` (the seal of the computation, the bisimulation, the cone lemma) is a statement about the
 emitted program's own graph. -/
-theorem ofProg_eq_ofTape {t : Tape Float} {tbls : Array LutTable} {prog : SLProg}
+theorem ofProg_eq_ofTape {t : CpuTape Float} {tbls : Array LutTable} {prog : SLProg}
     (h : genSL t tbls = .ok prog) : ofProg prog = ofTape t := by
   unfold ofProg ofTape
   congr 1
@@ -892,7 +892,7 @@ theorem ofProg_eq_ofTape {t : Tape Float} {tbls : Array LutTable} {prog : SLProg
   | some e =>
     rw [Array.getElem?_toList] at hp
     obtain ⟨n, hn, hne⟩ := genSL_getElem? h hp
-    rw [Tape.getNode?] at hn
+    rw [TorchLean.Tape.getNode?] at hn
     rw [Array.getElem?_toList, hn]
     simp [nodeSL_vertex hne]
   | none =>
@@ -901,12 +901,12 @@ theorem ofProg_eq_ofTape {t : Tape Float} {tbls : Array LutTable} {prog : SLProg
     | some n =>
       exfalso
       rw [Array.getElem?_toList] at hn hp
-      obtain ⟨e, he, _⟩ := genSL_getElem?_of_node h (by rw [Tape.getNode?]; exact hn)
+      obtain ⟨e, he, _⟩ := genSL_getElem?_of_node h (by rw [TorchLean.Tape.getNode?]; exact hn)
       rw [hp] at he; cases he
 
 /-- **The fetch clause.** A fetch in the program is a `lutfetch:<table>` node of the tape, with that
 node's name and operand slots, into the table the resolved array carries under that name. -/
-theorem genSL_fetch {t : Tape Float} {tbls : Array LutTable} {prog : SLProg}
+theorem genSL_fetch {t : CpuTape Float} {tbls : Array LutTable} {prog : SLProg}
     (h : genSL t tbls = .ok prog) {i : Nat} {nm : String} {tbl : LutTable} {l u : Nat}
     (hi : prog[i]? = some (.fetch nm tbl l u)) :
     ∃ n, t.getNode? i = some n ∧ n.name = some nm ∧ n.parents.toList = [l, u] ∧
@@ -952,7 +952,7 @@ theorem SLExpr.slots_eq_vertex_parents (e : SLExpr) : e.slots = e.vertex.parents
   cases e <;> rfl
 
 /-- The line `nodeSL` produces for a node reads exactly the node's parents. -/
-theorem nodeSL_slots {tbls : Array LutTable} {i : Nat} {n : Node Float} {e : SLExpr}
+theorem nodeSL_slots {tbls : Array LutTable} {i : Nat} {n : CpuNode Float} {e : SLExpr}
     (h : nodeSL tbls i n = .ok e) : e.slots = n.parents.toList := by
   rw [SLExpr.slots_eq_vertex_parents, nodeSL_vertex h]
 
@@ -960,7 +960,7 @@ theorem nodeSL_slots {tbls : Array LutTable} {i : Nat} {n : Node Float} {e : SLE
 `< i`: no temporary is used before it is defined, in any printer's text, and `run` never reads an
 uncomputed slot. The emitters supply `WF` themselves — `gen`/`genJulia` run `checkWF` before the
 walk (`gen_wf`, `genJulia_wf`), so a hand-assembled tape with a forward reference is rejected. -/
-theorem genSL_slots_lt {t : Tape Float} (hwf : WF t) {tbls : Array LutTable} {prog : SLProg}
+theorem genSL_slots_lt {t : CpuTape Float} (hwf : WF t) {tbls : Array LutTable} {prog : SLProg}
     (h : genSL t tbls = .ok prog) {i : Nat} {e : SLExpr} (hi : prog[i]? = some e) :
     ∀ s ∈ e.slots, s < i := by
   obtain ⟨n, hn, hne⟩ := genSL_getElem? h hi
@@ -969,7 +969,7 @@ theorem genSL_slots_lt {t : Tape Float} (hwf : WF t) {tbls : Array LutTable} {pr
   exact hwf i n hn s (Array.mem_def.mpr hs)
 
 /-- The program's graph is ordered — the tape's build invariant, read on the program. -/
-theorem ofProg_ordered {t : Tape Float} (hwf : WF t) {tbls : Array LutTable} {prog : SLProg}
+theorem ofProg_ordered {t : CpuTape Float} (hwf : WF t) {tbls : Array LutTable} {prog : SLProg}
     (h : genSL t tbls = .ok prog) : (ofProg prog).ordered = true := by
   rw [ofProg_eq_ofTape h]; exact ofTape_ordered t hwf
 

@@ -50,20 +50,64 @@ module
 
 public import PropertyKindCalculus.Uncertainty.Adequacy.Soundness
 public import PropertyKindCalculus.Uncertainty.Adequacy.Fp32Grounding
-public import NN.Proofs.RuntimeApprox.IEEE32.Contracts
+public import TorchLean.Verify.Floats.IEEE754
 
 @[expose] public section Blanket
 
 namespace PropertyKindCalculus.Uncertainty.Adequacy
 
-open TorchLean.Floats
+open TorchLean (FP32)
 open PropertyKindCalculus.Fp32
-open TorchLean.Floats.IEEE754
-open TorchLean.Floats.IEEE754.IEEE32Exec
+open TorchLean.IEEE754
 open FloatLib.Floats (ExecFloat)
 open FloatLib.Floats.ExecFloat.Binary (isFinite toModel)
 open FloatLib.Floats.Formats.Flocq (bpow)
 open FloatLib.Numerics (binaryRadix)
+open FloatLib.Floats.Formats.Flocq (ulp cexp ulp_zero_flt)
+open FloatLib.Floats.Formats.BinaryInterchange (Model FloatFormat)
+
+/-- ULP exponent of a finite binary32 word, including the subnormal spacing at zero. -/
+def ulpExp? (x : ExecFloat.Binary 8 23) : Option Int :=
+  match (toModel x).toDyadic? with
+  | some d =>
+      some (if d.significand = 0 then -149
+        else fexp32 (Int.ofNat d.significand.log2 + d.exponent + 1))
+  | none => none
+
+/-- ULP queries succeed precisely on finite words. -/
+@[simp] theorem ulpExp?_isSome (x : ExecFloat.Binary 8 23) :
+    (ulpExp? x).isSome = isFinite x := by
+  change (ulpExp? x).isSome = Model.isFinite (toModel x)
+  rw [← Model.toDyadic?_isSome_eq_isFinite]
+  cases hd : (toModel x).toDyadic? <;> simp [ulpExp?, hd]
+
+/-- A successful ULP query gives the exact real spacing at the decoded value. -/
+theorem bpow_eq_ulp_of_ulpExp?_eq_some {x : ExecFloat.Binary 8 23} {k : Int}
+    (hx : ulpExp? x = some k) :
+    bpow binaryRadix k = ulp32 (toModel x).toReal := by
+  cases hd : (toModel x).toDyadic? with
+  | none => simp [ulpExp?, hd] at hx
+  | some d =>
+      have hxreal : (toModel x).toReal = d.toReal := by rw [Model.toReal_eq, hd]
+      simp only [ulpExp?, hd, Option.some.injEq] at hx
+      subst hx
+      rw [hxreal]
+      by_cases hm : d.significand = 0
+      · have hz : d.toReal = 0 := by
+          have h := Model.Dyadic.abs_toReal d
+          rw [hm, Nat.cast_zero, zero_mul] at h
+          exact abs_eq_zero.mp h
+        simp only [hm, ↓reduceIte, hz]
+        exact (ulp32_zero).symm
+      · have hpos : 0 < |d.toReal| := by
+          rw [Model.Dyadic.abs_toReal]
+          exact mul_pos (by exact_mod_cast Nat.pos_of_ne_zero hm) (bpow.pos binaryRadix d.exponent)
+        have hne : d.toReal ≠ 0 := abs_pos.mp hpos
+        simp only [hm, ↓reduceIte]
+        change _ = ulp binaryRadix fexp32 d.toReal
+        rw [ulp.of_ne_zero binaryRadix fexp32 d.toReal hne]
+        simp only [cexp]
+        rw [Model.Dyadic.magnitude_toReal d hm]
 
 /-- **The executable ULP is the specified ULP.** When the bit-level ULP query answers —
 `ulpExp? x = some k`, with `k` computed directly from `x`'s decoded dyadic payload with `Nat.log2`
@@ -92,8 +136,9 @@ check `isFinite (ExecFloat.add s δ)`: a finite executable sum already forces fi
 a kernel driver discharges the whole theorem by running `isFinite` and `absorbs`. -/
 theorem exec_verdict_sound {s δ : ExecFloat.Binary 8 23}
     (hfin : isFinite (ExecFloat.add s δ) = true) (hverdict : absorbs s δ = true) :
-    round32 ((toModel s).toReal + (toModel δ).toReal) = (toModel s).toReal :=
-  round_add_eq_left_of_absorbs hfin hverdict
+    round32 ((toModel s).toReal + (toModel δ).toReal) = (toModel s).toReal := by
+  have h := round_add_eq_left_of_absorbs hfin hverdict
+  exact h
 
 end PropertyKindCalculus.Uncertainty.Adequacy
 

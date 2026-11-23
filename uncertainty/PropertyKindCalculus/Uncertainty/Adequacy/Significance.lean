@@ -45,7 +45,7 @@ public import PropertyKindCalculus.Uncertainty.Budget
 
 @[expose] public section Blanket
 
-open Spec TorchLean TorchLean.Tensor
+open TorchLean TorchLean.Tensor
 open PropertyKindCalculus (Quantity ProductKind KindOfProperty)
 open PropertyKindCalculus.Paradigm (TapeBuilder NumCarrier)
 

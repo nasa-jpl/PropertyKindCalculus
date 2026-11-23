@@ -28,14 +28,12 @@ module
 
 public import PropertyKindCalculus.Torch.Paradigm.TapeCarrier
 public import PropertyKindCalculus.Uncertainty.InputDist
-public import NN.Tensor
 public import Std.Data.HashMap
 
 @[expose] public section Blanket
 
-open Spec TorchLean
-open TorchLean TorchLean.Tensor
-open Runtime.Autograd
+open TorchLean
+open PropertyKindCalculus.Paradigm (TapeM)
 open PropertyKindCalculus.Paradigm (TapeBuilder)
 
 namespace PropertyKindCalculus.Uncertainty.Sensitivity
@@ -65,7 +63,7 @@ previous reachability-pruned `backwardScalar` path (a dead subexpression now con
 §3.2/§6: this tape is built eagerly rather than by `lowerGraphToTape` (provenance), and it runs at
 `Float` while the theorem speaks at `ℝ` (the deviation is this workstream's own Adequacy claim). -/
 def gradient (model : ScalarModel) (point : List Float) : Except String (List Float) := do
-  let ((ids, outId), t) ← TapeM.run Tape.empty do
+  let ((ids, outId), t) ← StateT.run (s := (Tape.empty : Tape (SomeTensor Float))) do
     let ids ← point.mapM fun x => TapeM.leaf (α := Float) (Tensor.full Shape.scalar x)
     let out : TapeBuilder Shape.scalar := model (ids.map fun i => (⟨pure i⟩ : TapeBuilder Shape.scalar))
     let outId ← out.run

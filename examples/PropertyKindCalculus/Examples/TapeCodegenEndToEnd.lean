@@ -35,13 +35,12 @@ meta import PropertyKindCalculus.Examples.TapeCodegenProof
 
 @[expose] public section Blanket
 
-open Spec TorchLean
+open TorchLean
 open TorchLean TorchLean.Tensor
-open Runtime.Autograd (Tape Node TapeM)
+open PropertyKindCalculus.Paradigm (TapeM CpuTape CpuNode)
 open PropertyKindCalculus (MathCarrier)
 open PropertyKindCalculus.Paradigm (TapeBuilder)
 open PropertyKindCalculus.Paradigm.TapeParity
-open Proofs.Autograd.Builder (run_add_ok run_sub_ok run_mul_ok run_exp_ok)
 open PropertyKindCalculus.Paradigm.TapeFaithful
 open PropertyKindCalculus.Paradigm.TapeCodegen
 open PropertyKindCalculus.Paradigm.TapeCodegen.Demo (inLeaf)
@@ -66,10 +65,9 @@ stays here is the one fact about a *constant scalar leaf* the bridge below needs
 
 /-- `nodeScalar` of a constant scalar leaf is its fill value. -/
 theorem nodeScalar_scalarLeaf (x : Float) :
-    nodeScalar { name := none, value := Spec.SomeTensor.ofTensor (Tensor.full Shape.scalar x),
-                 backward := fun _ => .ok #[] } = x := by
-  simp [nodeScalar, Tensor.full, TorchLean.Tensor.Internal.Rep.const,
-    TorchLean.Tensor.Internal.Rep.ofFlatFn, TorchLean.Storage.toArray_ofFn, Spec.SomeTensor.ofTensor]
+    nodeScalar (Tape.Node.leaf (SomeTensor.ofTensor (Tensor.full Shape.scalar x))) = x := by
+  simp [nodeScalar, Tape.Node.leaf, Tensor.full, Tensor.Rep.ofFlatFn,
+    TorchLean.Storage.toArray_ofFn, SomeTensor.ofTensor]
 
 /-! ## The combined codegen-faithfulness bridge -/
 
@@ -79,9 +77,9 @@ generated kernel, re-interpreted by `evalTape` at `env`, assign the float `x` to
 preserving every earlier slot. `x` is the source kernel at `env`; `v` is the value at the placeholder
 recording inputs. -/
 def Faithful (env : String → Float) (b : TB) (v : T) (x : Float) : Prop :=
-  ∀ (t : Tape Float) (vals : Array Float),
+  ∀ (t : CpuTape Float) (vals : Array Float),
     evalTape env t = .ok vals → vals.size = t.size →
-    ∃ (id : Nat) (t' : Tape Float) (vals' : Array Float),
+    ∃ (id : Nat) (t' : CpuTape Float) (vals' : Array Float),
       b.run t = .ok (id, t') ∧
       id < t'.size ∧
       t'.requireValue (s := S) id = .ok v ∧
@@ -95,14 +93,14 @@ def Faithful (env : String → Float) (b : TB) (v : T) (x : Float) : Prop :=
 theorem Faithful_named_leaf (env : String → Float) (nm : String) (v : T) :
     Faithful env (⟨TapeM.leaf v (name := some nm)⟩ : TB) v (env nm) := by
   intro t vals hev hsz
-  refine ⟨t.size, (Tape.leaf (t := t) v (name := some nm)).1,
+  refine ⟨t.size, (CpuTape.leaf t v (name := some nm)).1,
     vals.push (env nm), ?run, ?lt, ?store, ?ext, ?ev, ?sz, ?val, ?pre⟩
-  case run => unfold TapeM.leaf Tape.leaf Tape.addNode; rfl
+  case run => rfl
   case store => exact leaf_value t v (some nm) true
   case lt => exact requireValue_lt_of_ok _ t.size (leaf_value t v (some nm) true)
   case ext => exact extends_of_value (leaf_value t v (some nm) true) (frameOver_addNode t _)
   case ev => show evalTape env (t.addNode _).1 = _; rw [evalTape_addNode, hev]; rfl
-  case sz => rw [Array.size_push, hsz]; simp [Tape.leaf, Tape.addNode, Tape.size]
+  case sz => rw [Array.size_push, hsz]; simp [CpuTape.leaf, Tape.leaf, Tape.addNode, Tape.size]
   case val => rw [← hsz]; exact getD_push_size vals (env nm)
   case pre => intro i hi; exact getD_push_lt vals (env nm) i hi
 
@@ -110,51 +108,61 @@ theorem Faithful_named_leaf (env : String → Float) (nm : String) (v : T) :
 theorem Faithful_const (env : String → Float) (x : Float) :
     Faithful env (TapeBuilder.const x : TB) (Tensor.full S x) x := by
   intro t vals hev hsz
-  refine ⟨t.size, (Tape.leaf (t := t) (Tensor.full S x) (name := none)).1,
+  refine ⟨t.size, (CpuTape.leaf t (Tensor.full S x) (name := none)).1,
     vals.push x, ?run, ?lt, ?store, ?ext, ?ev, ?sz, ?val, ?pre⟩
-  case run => unfold TapeBuilder.const TapeM.leaf Tape.leaf Tape.addNode; rfl
+  case run => rfl
   case store => exact leaf_value t (Tensor.full S x) none true
   case lt => exact requireValue_lt_of_ok _ t.size (leaf_value t (Tensor.full S x) none true)
   case ext => exact extends_of_value (leaf_value t (Tensor.full S x) none true) (frameOver_addNode t _)
   case ev =>
     show evalTape env (t.addNode _).1 = _
     rw [evalTape_addNode, hev]
-    simp [stepVal, nodeScalar, Tensor.full, TorchLean.Tensor.Internal.Rep.const,
-      TorchLean.Tensor.Internal.Rep.ofFlatFn, TorchLean.Storage.toArray_ofFn]
-    rfl
-  case sz => rw [Array.size_push, hsz]; simp [Tape.leaf, Tape.addNode, Tape.size]
+    have hleaf : stepVal env vals (Tape.Node.leaf (SomeTensor.ofTensor (Tensor.full S x))) =
+        .ok x := by
+      simp only [stepVal, Tape.Node.leaf, Array.isEmpty_empty, ite_true, pure, Except.pure]
+      exact congrArg Except.ok (nodeScalar_scalarLeaf x)
+    exact congrArg (Except.map fun v => vals.push v) hleaf
+  case sz => rw [Array.size_push, hsz]; simp [CpuTape.leaf, Tape.leaf, Tape.addNode, Tape.size]
   case val => rw [← hsz]; exact getD_push_size vals x
   case pre => intro i hi; exact getD_push_lt vals x i hi
 
 /-! ### The emitted node of each tape op (name / parents / stored value), read off `Tape.op`. -/
 
-theorem tapeAdd_addNode (tt : Tape Float) (idA idB : Nat) {va vb : T}
+theorem tapeAdd_addNode (tt : CpuTape Float) (idA idB : Nat) {va vb : T}
     (hA : tt.requireValue (s := S) idA = .ok va) (hB : tt.requireValue (s := S) idB = .ok vb) :
-    ∃ nd : Node Float, Tape.add (t := tt) (s := S) idA idB = .ok (tt.addNode nd) ∧
+    ∃ nd : CpuNode Float, CpuTape.add (s := S) tt idA idB = .ok ((tt.addNode nd).1, tt.size) ∧
       nd.name = some "add" ∧ nd.parents = #[idA, idB] ∧
-      nd.value = Spec.SomeTensor.ofTensor (addSpec va vb) := by
-  unfold Tape.add Tape.binary; rw [hA, hB]; exact ⟨_, rfl, rfl, rfl, rfl⟩
+      nd.value = SomeTensor.ofTensor (va + vb) := by
+  obtain ⟨nd, hrun, hn, hp, hv⟩ :=
+    binary_node tt "add" (Op.add (s := S)) idA idB rfl Op.rule?_add rfl hA hB
+  exact ⟨nd, hrun, hn, hp rfl, hv⟩
 
-theorem tapeSub_addNode (tt : Tape Float) (idA idB : Nat) {va vb : T}
+theorem tapeSub_addNode (tt : CpuTape Float) (idA idB : Nat) {va vb : T}
     (hA : tt.requireValue (s := S) idA = .ok va) (hB : tt.requireValue (s := S) idB = .ok vb) :
-    ∃ nd : Node Float, Tape.sub (t := tt) (s := S) idA idB = .ok (tt.addNode nd) ∧
+    ∃ nd : CpuNode Float, CpuTape.sub (s := S) tt idA idB = .ok ((tt.addNode nd).1, tt.size) ∧
       nd.name = some "sub" ∧ nd.parents = #[idA, idB] ∧
-      nd.value = Spec.SomeTensor.ofTensor (subSpec va vb) := by
-  unfold Tape.sub Tape.binary; rw [hA, hB]; exact ⟨_, rfl, rfl, rfl, rfl⟩
+      nd.value = SomeTensor.ofTensor (va - vb) := by
+  obtain ⟨nd, hrun, hn, hp, hv⟩ :=
+    binary_node tt "sub" (Op.sub (s := S)) idA idB rfl Op.rule?_sub rfl hA hB
+  exact ⟨nd, hrun, hn, hp rfl, hv⟩
 
-theorem tapeMul_addNode (tt : Tape Float) (idA idB : Nat) {va vb : T}
+theorem tapeMul_addNode (tt : CpuTape Float) (idA idB : Nat) {va vb : T}
     (hA : tt.requireValue (s := S) idA = .ok va) (hB : tt.requireValue (s := S) idB = .ok vb) :
-    ∃ nd : Node Float, Tape.mul (t := tt) (s := S) idA idB = .ok (tt.addNode nd) ∧
+    ∃ nd : CpuNode Float, CpuTape.mul (s := S) tt idA idB = .ok ((tt.addNode nd).1, tt.size) ∧
       nd.name = some "mul" ∧ nd.parents = #[idA, idB] ∧
-      nd.value = Spec.SomeTensor.ofTensor (mulSpec va vb) := by
-  unfold Tape.mul Tape.binary; rw [hA, hB]; exact ⟨_, rfl, rfl, rfl, rfl⟩
+      nd.value = SomeTensor.ofTensor (va * vb) := by
+  obtain ⟨nd, hrun, hn, hp, hv⟩ :=
+    binary_node tt "mul" (Op.mul (s := S)) idA idB rfl Op.rule?_mul rfl hA hB
+  exact ⟨nd, hrun, hn, hp rfl, hv⟩
 
-theorem tapeExp_addNode (tt : Tape Float) (xId : Nat) {vx : T}
+theorem tapeExp_addNode (tt : CpuTape Float) (xId : Nat) {vx : T}
     (hx : tt.requireValue (s := S) xId = .ok vx) :
-    ∃ nd : Node Float, Tape.exp (t := tt) (s := S) xId = .ok (tt.addNode nd) ∧
+    ∃ nd : CpuNode Float, CpuTape.exp (s := S) tt xId = .ok ((tt.addNode nd).1, tt.size) ∧
       nd.name = some "exp" ∧ nd.parents = #[xId] ∧
-      nd.value = Spec.SomeTensor.ofTensor (expSpec vx) := by
-  unfold Tape.exp Tape.unary; rw [hx]; exact ⟨_, rfl, rfl, rfl, rfl⟩
+      nd.value = SomeTensor.ofTensor (Tensor.exp vx) := by
+  obtain ⟨nd, hrun, hn, hp, hv⟩ :=
+    unary_node tt "exp" (Op.exp (s := S)) xId rfl Op.rule?_exp rfl hx
+  exact ⟨nd, hrun, hn, hp rfl, hv⟩
 
 /-! ### Generic op-preservation for the bridge, then the arithmetic instances. -/
 
@@ -163,11 +171,11 @@ theorem tapeExp_addNode (tt : Tape Float) (xId : Nat) {vx : T}
 `bin top` preserves `Faithful` with `sop` (stored) / `fop` (re-interpreted). -/
 theorem Faithful_bin (env : String → Float) (top : Nat → Nat → TapeM Float Nat) (nm : String)
     (sop : T → T → T) (fop : Float → Float → Float)
-    (hrun : ∀ (tt : Tape Float) (idA idB : Nat) {va vb : T},
+    (hrun : ∀ (tt : CpuTape Float) (idA idB : Nat) {va vb : T},
        tt.requireValue (s := S) idA = .ok va → tt.requireValue (s := S) idB = .ok vb →
-       ∃ nd : Node Float, (top idA idB).run tt = .ok (tt.size, (tt.addNode nd).1) ∧
+       ∃ nd : CpuNode Float, (top idA idB).run tt = .ok (tt.size, (tt.addNode nd).1) ∧
          nd.name = some nm ∧ nd.parents = #[idA, idB] ∧
-         nd.value = Spec.SomeTensor.ofTensor (sop va vb))
+         nd.value = SomeTensor.ofTensor (sop va vb))
     (hcop : ∀ a b : Float, cOp nm [a, b] = .ok (fop a b))
     {a b : TB} {va vb : T} {xa xb : Float}
     (ha : Faithful env a va xa) (hb : Faithful env b vb xb) :
@@ -211,11 +219,11 @@ theorem Faithful_bin (env : String → Float) (top : Nat → Nat → TapeM Float
 /-- **Generic unary-op faithfulness** (analogue of `Faithful_bin`). -/
 theorem Faithful_un (env : String → Float) (top : Nat → TapeM Float Nat) (nm : String)
     (sop : T → T) (fop : Float → Float)
-    (hrun : ∀ (tt : Tape Float) (xId : Nat) {vx : T},
+    (hrun : ∀ (tt : CpuTape Float) (xId : Nat) {vx : T},
        tt.requireValue (s := S) xId = .ok vx →
-       ∃ nd : Node Float, (top xId).run tt = .ok (tt.size, (tt.addNode nd).1) ∧
+       ∃ nd : CpuNode Float, (top xId).run tt = .ok (tt.size, (tt.addNode nd).1) ∧
          nd.name = some nm ∧ nd.parents = #[xId] ∧
-         nd.value = Spec.SomeTensor.ofTensor (sop vx))
+         nd.value = SomeTensor.ofTensor (sop vx))
     (hcop : ∀ a : Float, cOp nm [a] = .ok (fop a))
     {a : TB} {vx : T} {xx : Float} (ha : Faithful env a vx xx) :
     Faithful env (TapeBuilder.un top a) (sop vx) (fop xx) := by
@@ -250,39 +258,39 @@ theorem Faithful_un (env : String → Float) (top : Nat → TapeM Float Nat) (nm
 
 theorem Faithful_add (env : String → Float) {a b : TB} {va vb : T} {xa xb : Float}
     (ha : Faithful env a va xa) (hb : Faithful env b vb xb) :
-    Faithful env (a + b) (addSpec va vb) (xa + xb) := by
+    Faithful env (a + b) (va + vb) (xa + xb) := by
   show Faithful env (TapeBuilder.bin (TapeM.add (s := S)) a b) _ _
-  refine Faithful_bin env (TapeM.add (s := S)) "add" addSpec (· + ·) ?hrun (fun a b => rfl) ha hb
+  refine Faithful_bin env (TapeM.add (s := S)) "add" (· + ·) (· + ·) ?hrun (fun a b => rfl) ha hb
   intro tt idA idB va vb hA hB
   obtain ⟨nd, heq, hn, hp, hv⟩ := tapeAdd_addNode tt idA idB hA hB
-  exact ⟨nd, run_add_ok idA idB heq, hn, hp, hv⟩
+  exact ⟨nd, TapeM.record_run_ok heq, hn, hp, hv⟩
 
 theorem Faithful_sub (env : String → Float) {a b : TB} {va vb : T} {xa xb : Float}
     (ha : Faithful env a va xa) (hb : Faithful env b vb xb) :
-    Faithful env (a - b) (subSpec va vb) (xa - xb) := by
+    Faithful env (a - b) (va - vb) (xa - xb) := by
   show Faithful env (TapeBuilder.bin (TapeM.sub (s := S)) a b) _ _
-  refine Faithful_bin env (TapeM.sub (s := S)) "sub" subSpec (· - ·) ?hrun (fun a b => rfl) ha hb
+  refine Faithful_bin env (TapeM.sub (s := S)) "sub" (· - ·) (· - ·) ?hrun (fun a b => rfl) ha hb
   intro tt idA idB va vb hA hB
   obtain ⟨nd, heq, hn, hp, hv⟩ := tapeSub_addNode tt idA idB hA hB
-  exact ⟨nd, run_sub_ok idA idB heq, hn, hp, hv⟩
+  exact ⟨nd, TapeM.record_run_ok heq, hn, hp, hv⟩
 
 theorem Faithful_mul (env : String → Float) {a b : TB} {va vb : T} {xa xb : Float}
     (ha : Faithful env a va xa) (hb : Faithful env b vb xb) :
-    Faithful env (a * b) (mulSpec va vb) (xa * xb) := by
+    Faithful env (a * b) (va * vb) (xa * xb) := by
   show Faithful env (TapeBuilder.bin (TapeM.mul (s := S)) a b) _ _
-  refine Faithful_bin env (TapeM.mul (s := S)) "mul" mulSpec (· * ·) ?hrun (fun a b => rfl) ha hb
+  refine Faithful_bin env (TapeM.mul (s := S)) "mul" (· * ·) (· * ·) ?hrun (fun a b => rfl) ha hb
   intro tt idA idB va vb hA hB
   obtain ⟨nd, heq, hn, hp, hv⟩ := tapeMul_addNode tt idA idB hA hB
-  exact ⟨nd, run_mul_ok idA idB heq, hn, hp, hv⟩
+  exact ⟨nd, TapeM.record_run_ok heq, hn, hp, hv⟩
 
 theorem Faithful_exp (env : String → Float) {a : TB} {vx : T} {xx : Float}
     (ha : Faithful env a vx xx) :
-    Faithful env (MathCarrier.exp a) (expSpec vx) (Float.exp xx) := by
+    Faithful env (MathCarrier.exp a) (Tensor.exp vx) (Float.exp xx) := by
   show Faithful env (TapeBuilder.un (TapeM.exp (s := S)) a) _ _
-  refine Faithful_un env (TapeM.exp (s := S)) "exp" expSpec Float.exp ?hrun (fun a => rfl) ha
+  refine Faithful_un env (TapeM.exp (s := S)) "exp" Tensor.exp Float.exp ?hrun (fun a => rfl) ha
   intro tt xId vx hx
   obtain ⟨nd, heq, hn, hp, hv⟩ := tapeExp_addNode tt xId hx
-  exact ⟨nd, run_exp_ok xId heq, hn, hp, hv⟩
+  exact ⟨nd, TapeM.record_run_ok heq, hn, hp, hv⟩
 
 /-! ## Rendering faithfulness of the AVS Stage-2 kernel, for all inputs
 
@@ -364,7 +372,7 @@ not merely at one pixel (`examples.tape_codegen_demo`'s `#guard`). The four Jaco
 same statement via `ja/jb/jc/jd_faithful`; on the shared multi-output tape they thread by the
 prefix-preservation every `Faithful` already carries. -/
 theorem residual_kernel_faithful (env : String → Float) :
-    ∃ (id : Nat) (t' : Tape Float) (vals : Array Float),
+    ∃ (id : Nat) (t' : CpuTape Float) (vals : Array Float),
       (resJac (α := TB) (inLeaf "a") (inLeaf "b") (inLeaf "c") (inLeaf "d")
         (inLeaf "ndvi") (inLeaf "r") (inLeaf "s0")).1.run Tape.empty = .ok (id, t') ∧
       evalTape env t' = .ok vals ∧
@@ -441,12 +449,12 @@ Lifting the node-local soundness across the whole hash-cons pass for an *arbitra
 open PropertyKindCalculus.Paradigm.TapeCSE (nodeKey cseCompact)
 
 /-- A node with its parent ids remapped — the shape `cseCompact` stores for a surviving node. -/
-def cseRemapNode (remap : Array Nat) (n : Node Float) : Node Float :=
+def cseRemapNode (remap : Array Nat) (n : CpuNode Float) : CpuNode Float :=
   { n with parents := n.parents.map (fun p => remap.getD p p) }
 
 /-- On an op node (nonempty parents) `stepVal` reads only the op name and the parents — never the
 stored value. -/
-theorem stepVal_of_op (env : String → Float) (vals : Array Float) (m : Node Float)
+theorem stepVal_of_op (env : String → Float) (vals : Array Float) (m : CpuNode Float)
     (h : m.parents.isEmpty = false) :
     stepVal env vals m
       = (match m.name with
@@ -459,7 +467,7 @@ theorem stepVal_of_op (env : String → Float) (vals : Array Float) (m : Node Fl
 `cseCompact` may collapse them onto one), the interpreter assigns them the same value on every value
 array — `evalTape` reads only the op name and the remapped parents, both fixed by the key, never the
 stored bits. -/
-theorem cseKey_denotation_sound (remap : Array Nat) (n₁ n₂ : Node Float)
+theorem cseKey_denotation_sound (remap : Array Nat) (n₁ n₂ : CpuNode Float)
     (env : String → Float) (vals : Array Float)
     (hkey : nodeKey remap n₁ = nodeKey remap n₂) (hop : ¬ n₁.parents.isEmpty) :
     stepVal env vals (cseRemapNode remap n₁) = stepVal env vals (cseRemapNode remap n₂) := by
@@ -476,7 +484,7 @@ theorem cseKey_denotation_sound (remap : Array Nat) (n₁ n₂ : Node Float)
 /-! ### Whole-tape preservation on the deployed AVS kernel (machine-checked). -/
 
 /-- The AVS `resJac` recording *before* CSE (the raw carrier emission, all five outputs on one tape). -/
-def recordRaw : Except String (Tape Float × List Nat) := do
+def recordRaw : Except String (CpuTape Float × List Nat) := do
   let (res, ja, jb, jc, jd) := resJac (α := TB)
     (inLeaf "a") (inLeaf "b") (inLeaf "c") (inLeaf "d") (inLeaf "ndvi") (inLeaf "r") (inLeaf "s0")
   let (ids, t) ← TapeM.run Tape.empty (do
@@ -486,7 +494,7 @@ def recordRaw : Except String (Tape Float × List Nat) := do
 
 /-- Every original node's stored value equals its CSE-remapped node's, bit-for-bit (comparison via
 `Float.toBits`, so it is an exact `UInt64` check, not a tolerance). -/
-def cseStoredPreserved (t : Tape Float) : Bool :=
+def cseStoredPreserved (t : CpuTape Float) : Bool :=
   let (t', remap) := cseCompact t
   (List.range t.size).all (fun id =>
     match t.getValue? id, t'.getValue? (remap.getD id id) with

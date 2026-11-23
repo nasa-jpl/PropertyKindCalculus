@@ -39,8 +39,8 @@ public import PropertyKindCalculus.Graph.Seal
 
 @[expose] public section Blanket
 
-open Spec TorchLean
-open Runtime.Autograd (Tape Node)
+open TorchLean
+open PropertyKindCalculus.Paradigm (TapeM CpuTape CpuNode)
 open PropertyKindCalculus.Paradigm (TapeGraph Match)
 open PropertyKindCalculus.Paradigm.TapeCodegen
 
@@ -53,14 +53,14 @@ abbrev Edge (T : TapeGraph) (x y : Nat) : Prop := T.edge x y = true
 reaches `v` exactly when `u` is in the backward cone of `v`. -/
 abbrev Reaches (T : TapeGraph) : Nat → Nat → Prop := Relation.ReflTransGen (Edge T)
 
-lemma edge_of_mem_parents (t : Tape Float) {v : Nat} {n : Node Float} (h : t.getNode? v = some n)
+lemma edge_of_mem_parents (t : CpuTape Float) {v : Nat} {n : CpuNode Float} (h : t.getNode? v = some n)
     {p : Nat} (hp : p ∈ n.parents) : Edge (ofTape t) p v := by
   show (ofTape t).edge p v = true
   unfold TapeGraph.edge
   rw [ofTape_parents t v n h]
   exact List.contains_iff_mem.mpr (Array.mem_def.mp hp)
 
-lemma isLeaf_of_node (t : Tape Float) {v : Nat} {n : Node Float} (h : t.getNode? v = some n)
+lemma isLeaf_of_node (t : CpuTape Float) {v : Nat} {n : CpuNode Float} (h : t.getNode? v = some n)
     (hne : n.parents.isEmpty = true) : (ofTape t).isLeaf v = true := by
   have hlt : v < t.size := by
     rw [Tape.getNode?] at h
@@ -72,7 +72,7 @@ lemma isLeaf_of_node (t : Tape Float) {v : Nat} {n : Node Float} (h : t.getNode?
 
 /-- **Evaluation reads only the cone.** On a well-formed tape, two environments that agree on every
 named leaf in the backward cone of a vertex give the same value at that vertex. -/
-lemma evalTape_cone (t : Tape Float) (hwf : WF t) {env₁ env₂ : String → Float}
+lemma evalTape_cone (t : CpuTape Float) (hwf : WF t) {env₁ env₂ : String → Float}
     {vals₁ vals₂ : Array Float} (h₁ : evalTape env₁ t = .ok vals₁)
     (h₂ : evalTape env₂ t = .ok vals₂) (v : Nat)
     (hagree : ∀ u, Reaches (ofTape t) u v → ∀ n, t.getNode? u = some n →
@@ -123,7 +123,7 @@ variable {ν κ : Type} [BEq ν] [LawfulBEq ν] [BEq κ]
 /-- Every leaf in the cone of a vertex realizing `o` realizes an influencer of `o`: a source in
 `o`'s pedigree. The constant clause of the seal, and what the cone lemma's agreement hypothesis
 is discharged from. -/
-lemma influencer_of_cone_leaf {g : Provenance ν κ} (hwf : g.WellFormed) (t : Tape Float)
+lemma influencer_of_cone_leaf {g : Provenance ν κ} (hwf : g.WellFormed) (t : CpuTape Float)
     {m : Match ν} (hacc : m.accepts g (ofTape t) = true) {o : ν} {r : Nat} (hr : r ∈ m.comps o)
     {u : Nat} (hu : Reaches (ofTape t) u r) (hleaf : (ofTape t).isLeaf u = true) :
     ∃ s ∈ g.influencers o, u ∈ m.comps s := by
@@ -140,7 +140,7 @@ every tape vertex `r` realizing it: two environments that agree on the leaves re
 influencers of `o` give the same value at `r`; every leaf in the cone of `r` — a named input or a
 baked constant — realizes an influencer of `o`; and every tape edge between observable vertices
 realizes one hop of one occurrence of `g`, with the kinds the occurrence names. -/
-theorem semantic_seal {g : Provenance ν κ} (hwf : g.WellFormed) (t : Tape Float) (hwft : WF t)
+theorem semantic_seal {g : Provenance ν κ} (hwf : g.WellFormed) (t : CpuTape Float) (hwft : WF t)
     {m : Match ν} (hacc : m.accepts g (ofTape t) = true) {o : ν} {r : Nat} (hr : r ∈ m.comps o) :
     (∀ (env₁ env₂ : String → Float) (vals₁ vals₂ : Array Float),
       (∀ s ∈ g.influencers o, ∀ u ∈ m.comps s, ∀ nm, (ofTape t).name? u = some nm →
@@ -170,7 +170,7 @@ on the input reads realizing `o`'s influencers give the same value at slot `r` o
 leaf in `r`'s cone of the program's graph realizes an influencer of `o`; every edge of the program's
 graph between observable slots realizes one hop of one occurrence, with its kinds. The tape appears
 only in the hypothesis that the program came from it — what a host receives is sealed as such. -/
-theorem semantic_seal_program {g : Provenance ν κ} (hwf : g.WellFormed) (t : Tape Float)
+theorem semantic_seal_program {g : Provenance ν κ} (hwf : g.WellFormed) (t : CpuTape Float)
     (hwft : WF t) {prog : SL.SLProg} (hg : SL.genSL t #[] = .ok prog)
     {m : Match ν} (hacc : m.accepts g (SL.ofProg prog) = true) {o : ν} {r : Nat}
     (hr : r ∈ m.comps o) :
@@ -196,7 +196,7 @@ theorem semantic_seal_program {g : Provenance ν κ} (hwf : g.WellFormed) (t : T
 value at a vertex realizing `o` — what the denotation bridge establishes per carrier — depends on
 its inputs only through the influencers of `o`: two environments agreeing on the leaves realizing
 them give the same value. An input the hypergraph says cannot reach `o` provably does not. -/
-lemma semantic_seal_of_denotes {g : Provenance ν κ} (hwf : g.WellFormed) (t : Tape Float)
+lemma semantic_seal_of_denotes {g : Provenance ν κ} (hwf : g.WellFormed) (t : CpuTape Float)
     (hwft : WF t) {m : Match ν} (hacc : m.accepts g (ofTape t) = true) {o : ν} {r : Nat}
     (hr : r ∈ m.comps o) (val : (String → Float) → Float)
     (hden : ∀ env, ∃ vals, evalTape env t = .ok vals ∧ val env = vals.getD r 0.0)

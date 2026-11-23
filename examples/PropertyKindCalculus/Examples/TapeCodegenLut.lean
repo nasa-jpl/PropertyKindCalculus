@@ -42,8 +42,8 @@ meta import PropertyKindCalculus.Torch.Paradigm.TapeCodegenJulia
 
 @[expose] public section Blanket
 
-open Spec TorchLean
-open Runtime.Autograd (Tape TapeM)
+open TorchLean
+open PropertyKindCalculus.Paradigm (TapeM CpuTape CpuNode)
 open PropertyKindCalculus.Paradigm (TapeBuilder NumCarrier LutTable LutInterp lutNodeName?)
 open PropertyKindCalculus.Paradigm.TapeCSE (cseCompact)
 open PropertyKindCalculus.Paradigm.TapeCodegen
@@ -87,7 +87,7 @@ def envU     : Float := 2.25
 def envBias  : Float := 0.5
 
 /-- The recorded tape and its output id. -/
-def lutRecord : Except String (Tape Float × Nat) := do
+def lutRecord : Except String (CpuTape Float × Nat) := do
   let prog : TB := lutModel (inLeafV "layer" envLayer) (inLeafV "u" envU) (inLeafV "bias" envBias)
   let (id, t) ← TapeM.run Tape.empty prog.run
   pure (t, id)
@@ -145,7 +145,7 @@ theorem cOpT_lutfetch {nm tn : String} (hn : lutNodeName? nm = some tn)
 DIFFERENT tables at the same operands do not (their node names differ). Raw shapes: 7 nodes
 (2×2 leaves + 2 fetches + add) → 4 after CSE when the tables coincide, 5 when they differ. -/
 def lutCseIdentity : Bool :=
-  let rec2 (tbl2 : LutTable) : Except String (Tape Float × Nat) := do
+  let rec2 (tbl2 : LutTable) : Except String (CpuTape Float × Nat) := do
     let l := inLeafV "layer" envLayer
     let u := inLeafV "u" envU
     let prog : TB := LutInterp.lutFetch demoLut l u + LutInterp.lutFetch tbl2 l u

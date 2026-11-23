@@ -133,11 +133,14 @@ sum (`ofFloat32_add_of_isFinite`) → TorchLean's `round_add_eq_left_of_absorbs`
 `ExecBridge.exec_verdict_sound`, reads the absorbed sum as `round₃₂` of the exact real sum. -/
 
 open FloatLib.Floats (ExecFloat)
-open FloatLib.Floats.ExecFloat.Binary (ofFloat32 toModel isFinite ofFloat32_add_of_isFinite
+open FloatLib.Floats.ExecFloat.Binary (toModel isFinite ofFloat32_add_of_isFinite
   toModel_ofFloat32)
 open FloatLib.Floats.Formats.BinaryInterchange (Model FloatFormat)
-open TorchLean.Floats.IEEE754.IEEE32Exec (absorbs)
+open TorchLean.IEEE754 (absorbs)
 open PropertyKindCalculus.Fp32 (round32)
+
+/-- A `Float32` read into the binary32 executable model. -/
+abbrev ofFloat32 (v : Float32) : ExecFloat.Binary 8 23 := ExecFloat.Binary.ofFloat32 v
 
 /-- Finiteness is the same question on `Float32` and on its image in the binary32 model. -/
 theorem isFinite_ofFloat32 (v : Float32) : isFinite (ofFloat32 v) = v.isFinite := by

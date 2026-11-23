@@ -1,26 +1,26 @@
 /-
-`lut_cudat_parity` — a self-checking harness for the **eager `CudaT` table lookup**
-(`LutInterp (CudaT s)` in `paradigm.lut_carrier`) against the fp64 reference `LutTable.refFetch`.
+`lut_cudat_parity` — a self-checking harness for the **table-fetch kernel**
+(`LutTable.fetchProgram` in `paradigm.lut_carrier`) against the fp64 reference `LutTable.refFetch`.
 
-`refFetch` returns NaN on a NaN coordinate or layer; the `CudaT` instance reaches the same answer
-through TorchLean's `Buffer.tableSegments` once its clamp propagates NaN. Like `ssprc_batched_parity`, the `CudaT` numbers can only be checked by a compiled
-executable linked against TorchLean's LibTorch bridge (`-K libtorch=true` with the CPU-only SDK
-from `scripts/libtorch-cpu-sdk.sh`, or `-K cuda=true` on a GPU). The probes cover NaN, ±∞,
-out-of-range and interior coordinates and layers. Exits `0` on parity, `1` on mismatch, `2` when
-no bridge is linked.
+The kernel is a TorchLean `Kernel.Program Float32`. The harness always evaluates it in Lean on the
+CPU (`Program.run`). When a LibTorch bridge with a CUDA device is linked (`-K cuda=true`) it also
+runs the generated CUDA, once through `Program.run` and once on resident `CudaT` buffers
+(`CudaT.lutFetchIO`). The probes cover NaN, ±∞, out-of-range and interior coordinates and layers;
+`refFetch` and the kernel both return NaN on a NaN coordinate or layer. Exits `0` on parity and
+`1` on mismatch.
 -/
 
 module
 
 public import PropertyKindCalculus.Torch.Paradigm.LutCarrier
-public import NN.Runtime.Autograd.Engine.LibTorch.Controls
+public import TorchLean.CUDA.LibTorch.Controls
 
 @[expose] public section Blanket
 
 namespace PropertyKindCalculus.Apps.LutCudaTParity
 
 open PropertyKindCalculus.Paradigm
-open Spec
+open TorchLean
 
 /-- Two layers of four samples, all exactly representable in float32, distinct per layer. -/
 def table : LutTable :=
@@ -38,45 +38,60 @@ def probes : Array (Float × Float) :=
     (0.0, inf), (0.0, -inf), (inf, 1.5), (-inf, 1.5)]
 
 /-- The probes' shape: one element per probe. -/
-abbrev s : Shape := .dim probes.size .scalar
+abbrev s : Shape := [probes.size]
+
+/-- The table's samples as a float32 tensor. -/
+def samples : Tensor Float32 [table.values.size] :=
+  Tensor.ofFn fun i => table.values[i.val]!.toFloat32
 
 /-- Float32 rounding of exactly representable samples and dyadic weights is exact; the slack only
 absorbs a backend that lerps as `a·(1−f) + b·f`. -/
 def tol : Float := 1e-5
 
-def main : IO UInt32 := do
-  match Runtime.Autograd.LibTorch.Buffer.runtimeStatus with
-  | .notLinked =>
-    IO.eprintln "CANNOT RUN — this build links no LibTorch bridge (TorchLean's default backend). \
-Build with `-K libtorch=true -K libtorch_home=<CPU-only SDK>` (scripts/libtorch-cpu-sdk.sh) \
-or `-K cuda=true` with a CUDA SDK."
-    return 2
-  | .nativeUnavailable =>
-    IO.eprintln "CANNOT RUN — the LibTorch bridge is linked but selected no device (a CUDA SDK \
-with no visible CUDA device; TORCHLEAN_LIBTORCH_DEVICE=cpu selects the host instead)."
-    return 2
-  | .nativeAvailable =>
-    IO.println s!"LibTorch device : {match ← Runtime.Autograd.LibTorch.deviceKind with
-      | .host => "host" | .cuda => "cuda"}"
-  let layers : CudaCarrier.CudaT s := .ofFloatArray ⟨probes.map (·.1)⟩
-  let coords : CudaCarrier.CudaT s := .ofFloatArray ⟨probes.map (·.2)⟩
-  let got := (LutInterp.lutFetch table layers coords).toFloatArray
+/-- Count the probes whose `got` value differs from `refFetch`, printing each comparison. -/
+def check (label : String) (got : Nat → Float) : IO Nat := do
   let mut bad := 0
   for i in [0:probes.size] do
     let (l, u) := probes[i]!
     let want := table.refFetch l u
-    let out := got.get! i
+    let out := got i
     let ok := if want.isNaN then out.isNaN else !out.isNaN && Float.abs (out - want) ≤ tol
-    IO.println s!"{if ok then "ok  " else "FAIL"} layer={l} u={u}  CudaT={out}  refFetch={want}"
+    IO.println s!"{if ok then "ok  " else "FAIL"} {label} layer={l} u={u}  got={out}  refFetch={want}"
     unless ok do bad := bad + 1
-  if got.size != probes.size then
-    IO.eprintln s!"PARITY FAILED — CudaT returned {got.size} values for {probes.size} probes."
-    return 1
+  return bad
+
+def main : IO UInt32 := do
+  let layers : Tensor Float32 s := Tensor.ofFn fun i => probes[i.val]!.1.toFloat32
+  let coords : Tensor Float32 s := Tensor.ofFn fun i => probes[i.val]!.2.toFloat32
+  let inputs : TensorPack Float32 [s, s, [table.values.size]] :=
+    .cons layers (.cons coords (.cons samples .nil))
+  let read (t : Tensor Float32 s) (i : Nat) : Float :=
+    if h : i < probes.size then t[(⟨i, h⟩ : Fin probes.size)].toFloat else 0.0 / 0.0
+  let cpu ← table.program.run inputs s
+  let mut bad ← check "cpu   " (read cpu)
+  let cuda ← match ← TorchLean.LibTorch.Buffer.RuntimeStatus.query with
+    | .nativeAvailable => do
+      match ← TorchLean.LibTorch.deviceKind with
+      | .cuda => pure true
+      | .host => pure false
+    | _ => pure false
+  if cuda then
+    let gpu ← table.program.run inputs s (device := .cuda)
+    bad := bad + (← check "cuda  " (read gpu))
+    let l : CudaCarrier.CudaT s := .ofFloatArray ⟨probes.map (·.1)⟩
+    let u : CudaCarrier.CudaT s := .ofFloatArray ⟨probes.map (·.2)⟩
+    let got := (← CudaCarrier.CudaT.lutFetchIO table l u).toFloatArray
+    if got.size != probes.size then
+      IO.eprintln s!"PARITY FAILED — CudaT returned {got.size} values for {probes.size} probes."
+      return 1
+    bad := bad + (← check "CudaT " (fun i => got.get! i))
+  else
+    IO.println "No CUDA device is linked: the generated CUDA was not run, only the CPU evaluation."
   if bad == 0 then
-    IO.println "PARITY OK — the CudaT lookup matches refFetch, NaN probes included."
+    IO.println "PARITY OK — the fetch kernel matches refFetch, NaN probes included."
     return 0
   else
-    IO.eprintln s!"PARITY FAILED — {bad} probe(s) differ from refFetch."
+    IO.eprintln s!"PARITY FAILED — {bad} comparison(s) differ from refFetch."
     return 1
 
 end PropertyKindCalculus.Apps.LutCudaTParity

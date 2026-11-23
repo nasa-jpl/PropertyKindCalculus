@@ -43,8 +43,8 @@ public import PropertyKindCalculus.Torch.Paradigm.TapeStraightLine
 
 @[expose] public section Blanket
 
-open Spec TorchLean
-open Runtime.Autograd (Tape Node TapeM)
+open TorchLean
+open PropertyKindCalculus.Paradigm (TapeM CpuTape CpuNode)
 open PropertyKindCalculus (MathCarrier)
 open PropertyKindCalculus.Paradigm (TapeBuilder NumCarrier LutTable lutNodeName?)
 open PropertyKindCalculus.Paradigm.TapeCSE (cseCompact)
@@ -155,7 +155,7 @@ structure Codegen where
 `const float* in_<nm>`). A pure `foldl`, so it is duplicate-free by construction
 (`collectInputs_nodup`) and the generated ABI's input list is a pure function of the tape — `gen`
 builds its `inputs` field with exactly this (`gen_inputs_eq`). -/
-def collectInputs (t : Tape Float) : Array String :=
+def collectInputs (t : CpuTape Float) : Array String :=
   t.nodes.foldl (init := #[]) fun inputs n =>
     if n.parents.isEmpty then
       match n.name with
@@ -167,7 +167,7 @@ def collectInputs (t : Tape Float) : Array String :=
 pure-`foldl` shape as `collectInputs`, so it is duplicate-free by construction
 (`collectTableNames_nodup`) and the generated table ABI is a pure function of the tape
 (`gen_tables_eq`). -/
-def collectTableNames (t : Tape Float) : Array String :=
+def collectTableNames (t : CpuTape Float) : Array String :=
   t.nodes.foldl (init := #[]) fun tabs n =>
     if n.parents.isEmpty then tabs
     else
@@ -194,19 +194,19 @@ def resolveTables (names : Array String) (avail : Array LutTable) :
 fail, and it fails exactly where `genSL` does (an op node without a name, an off-alphabet op, an
 unresolved or malformed fetch). `SL.genSL_denotes` is the theorem that the program these lines print
 runs as `evalTapeT`. -/
-def genBody (t : Tape Float) (tables : Array LutTable := #[]) :
+def genBody (t : CpuTape Float) (tables : Array LutTable := #[]) :
     Except String (Array String) :=
   (SL.genSL t tables).map fun prog => prog.zipIdx.map fun p => printLineC p.1 p.2
 
 /-- `genBody` is the printer of the program: on a tape `genSL` accepts, its lines are `printLineC`
 of the program's lines, slot by slot. -/
-theorem genBody_of_genSL {t : Tape Float} {tables : Array LutTable} {prog : SL.SLProg}
+theorem genBody_of_genSL {t : CpuTape Float} {tables : Array LutTable} {prog : SL.SLProg}
     (h : SL.genSL t tables = .ok prog) :
     genBody t tables = .ok (prog.zipIdx.map fun p => printLineC p.1 p.2) := by
   unfold genBody; rw [h]; rfl
 
 /-- The C body exists exactly when the program does. -/
-theorem genBody_isOk_eq_genSL (t : Tape Float) (tables : Array LutTable) :
+theorem genBody_isOk_eq_genSL (t : CpuTape Float) (tables : Array LutTable) :
     (genBody t tables).isOk = (SL.genSL t tables).isOk := by
   unfold genBody; cases SL.genSL t tables <;> rfl
 
@@ -214,14 +214,14 @@ theorem genBody_isOk_eq_genSL (t : Tape Float) (tables : Array LutTable) :
 and `genJulia` before anything is emitted, so a hand-assembled tape with a forward reference is
 rejected rather than printed with a temporary used before its definition; `checkWF_ok` is the
 `WF` every slot-discipline theorem consumes. -/
-def checkWF (t : Tape Float) : Except String Unit :=
+def checkWF (t : CpuTape Float) : Except String Unit :=
   if (List.range t.size).all (fun id =>
       match t.nodes[id]? with
       | some nd => nd.parents.toList.all (· < id)
       | none => true) then .ok ()
   else .error "tape_codegen: tape is not well-formed (a node references a parent at or after its own id)"
 
-theorem checkWF_ok {t : Tape Float} (h : checkWF t = .ok ()) : WF t := by
+theorem checkWF_ok {t : CpuTape Float} (h : checkWF t = .ok ()) : WF t := by
   unfold checkWF at h
   split at h
   · rename_i hall
@@ -236,11 +236,11 @@ theorem checkWF_ok {t : Tape Float} (h : checkWF t = .ok ()) : WF t := by
 /-- Every output id names a node of the tape — otherwise an `out[…] = v<id>` line would reference a
 temporary no body line defines (ill-formed C/Julia that the denotation theorem, reading `getD`,
 would not notice). Checked by `gen` and `genJulia` before anything is emitted (`checkOutputs_ok`). -/
-def checkOutputs (t : Tape Float) (outIds : List Nat) : Except String Unit :=
+def checkOutputs (t : CpuTape Float) (outIds : List Nat) : Except String Unit :=
   if outIds.all (· < t.size) then .ok ()
   else .error s!"tape_codegen: an output id is out of range (the tape has {t.size} nodes)"
 
-theorem checkOutputs_ok {t : Tape Float} {outIds : List Nat} (h : checkOutputs t outIds = .ok ()) :
+theorem checkOutputs_ok {t : CpuTape Float} {outIds : List Nat} (h : checkOutputs t outIds = .ok ()) :
     ∀ o ∈ outIds, o < t.size := by
   unfold checkOutputs at h
   split at h
@@ -253,11 +253,11 @@ buffer (`headD 0.0`), so a leaf recorded with an empty or a multi-element buffer
 the literal `0.0` or as its first element without a word; `gen` and `genJulia` reject such a tape
 instead (`checkScalarLeaves`). A `TapeBuilder.const` leaf stores one element, so recorded tapes pass
 — the AVS and LM-step `#guard`s run `gen` and so decide it. -/
-def ScalarLeaves (t : Tape Float) : Prop :=
+def ScalarLeaves (t : CpuTape Float) : Prop :=
   ∀ id nd, t.getNode? id = some nd → nd.parents.isEmpty = true → nd.name = none →
     (TorchLean.Storage.toArray nd.value.tensor.buffer).size = 1
 
-def checkScalarLeaves (t : Tape Float) : Except String Unit :=
+def checkScalarLeaves (t : CpuTape Float) : Except String Unit :=
   if (List.range t.size).all (fun id =>
       match t.nodes[id]? with
       | some nd =>
@@ -266,7 +266,7 @@ def checkScalarLeaves (t : Tape Float) : Except String Unit :=
       | none => true) then .ok ()
   else .error "tape_codegen: a constant leaf does not store exactly one scalar"
 
-theorem checkScalarLeaves_ok {t : Tape Float} (h : checkScalarLeaves t = .ok ()) : ScalarLeaves t := by
+theorem checkScalarLeaves_ok {t : CpuTape Float} (h : checkScalarLeaves t = .ok ()) : ScalarLeaves t := by
   unfold checkScalarLeaves at h
   split at h
   · rename_i hall
@@ -282,7 +282,7 @@ theorem checkScalarLeaves_ok {t : Tape Float} (h : checkScalarLeaves t = .ok ())
 (tape ids are array indices), so a node's `vID` is `v{arrayIndex}` and its parents reference earlier
 `v`s. The `inputs`/`numOutputs`/`outLines` fields are pure functions of `t`/`outIds`; only `body`
 runs the (fallible) node walk (`genBody`). -/
-def gen (t : Tape Float) (outIds : List Nat) (tables : Array LutTable := #[])
+def gen (t : CpuTape Float) (outIds : List Nat) (tables : Array LutTable := #[])
     (lutMode : LutFilterMode := .point) : Except String Codegen :=
   (checkWF t).bind fun _ =>
   (checkOutputs t outIds).bind fun _ =>
@@ -298,7 +298,7 @@ def gen (t : Tape Float) (outIds : List Nat) (tables : Array LutTable := #[])
 
 /-- `gen` succeeds only on a well-formed tape: every parent precedes its node, so every operand slot
 of every body line is already defined (`SL.genSL_slots_lt`). -/
-theorem gen_wf {t : Tape Float} {outIds : List Nat} {tables : Array LutTable}
+theorem gen_wf {t : CpuTape Float} {outIds : List Nat} {tables : Array LutTable}
     {mode : LutFilterMode} {cg : Codegen} (h : gen t outIds tables mode = .ok cg) : WF t := by
   unfold gen at h
   cases hw : checkWF t with
@@ -307,7 +307,7 @@ theorem gen_wf {t : Tape Float} {outIds : List Nat} {tables : Array LutTable}
 
 /-- `gen` succeeds only when every constant leaf stores exactly one scalar: the literal the program
 bakes at a const leaf (`genSL_lit_iff`) is the leaf's whole stored value, not the head of a buffer. -/
-theorem gen_scalar_leaves {t : Tape Float} {outIds : List Nat} {tables : Array LutTable}
+theorem gen_scalar_leaves {t : CpuTape Float} {outIds : List Nat} {tables : Array LutTable}
     {mode : LutFilterMode} {cg : Codegen} (h : gen t outIds tables mode = .ok cg) : ScalarLeaves t := by
   unfold gen at h
   cases hw : checkWF t with
@@ -326,7 +326,7 @@ theorem gen_scalar_leaves {t : Tape Float} {outIds : List Nat} {tables : Array L
 
 /-- `gen` succeeds only with every output id in range: every `out[…] = v<id>` line names a
 temporary the body defines. -/
-theorem gen_outIds_lt {t : Tape Float} {outIds : List Nat} {tables : Array LutTable}
+theorem gen_outIds_lt {t : CpuTape Float} {outIds : List Nat} {tables : Array LutTable}
     {mode : LutFilterMode} {cg : Codegen} (h : gen t outIds tables mode = .ok cg) :
     ∀ o ∈ outIds, o < t.size := by
   unfold gen at h
@@ -734,7 +734,7 @@ perElement·P`: peak eager residency of a `P`-pixel batch is `maxLiveNodes t · 
 **lower bound** — GC-finalizer lag delays frees, and a loop-with-carry driver holds carry
 state across recorded steps — so it is the static *prior* a measured probe calibrates,
 never the authority. -/
-def maxLiveNodes (t : Tape Float) : Nat := Id.run do
+def maxLiveNodes (t : CpuTape Float) : Nat := Id.run do
   let n := t.nodes.size
   if n == 0 then return 0
   -- last consumer of each node: ascending walk, so the final write is the max consumer id
@@ -751,7 +751,7 @@ def maxLiveNodes (t : Tape Float) : Nat := Id.run do
       freeAt := freeAt.set! k (freeAt[k]! + 1)
   -- forward walk: named inputs pre-counted, each other node allocates at its id, operands
   -- last used at a node are freed only after it executes (op reads them, then writes)
-  let isInput := fun (nd : Node Float) => nd.parents.isEmpty && nd.name.isSome
+  let isInput := fun (nd : CpuNode Float) => nd.parents.isEmpty && nd.name.isSome
   let mut live := t.nodes.foldl (fun acc nd => if isInput nd then acc + 1 else acc) 0
   let mut peak := live
   j := 0
@@ -789,7 +789,7 @@ structure AiReport where
   `nInputs + nOut` registers-only residency. -/
   maxLive : Nat := 0
 
-def aiReport (t : Tape Float) (nOut : Nat) (tables : Array LutTable := #[]) :
+def aiReport (t : CpuTape Float) (nOut : Nat) (tables : Array LutTable := #[]) :
     AiReport := Id.run do
   let mut nInputs := 0
   let mut nConsts := 0

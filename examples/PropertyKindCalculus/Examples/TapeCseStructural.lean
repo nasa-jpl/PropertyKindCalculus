@@ -43,16 +43,16 @@ meta import PropertyKindCalculus.Torch.Paradigm.TapeEval
 
 @[expose] public section Blanket
 
-open Spec TorchLean
+open TorchLean
 open TorchLean TorchLean.Tensor
-open Runtime.Autograd (Tape Node TapeM)
+open PropertyKindCalculus.Paradigm (TapeM CpuTape CpuNode)
 open PropertyKindCalculus.Paradigm.TapeCSE (nodeKey cseCompact)
 open PropertyKindCalculus.Paradigm.TapeCodegen (WF wf_of_bounded)
 
 namespace PropertyKindCalculus.Examples.TapeCseStructural
 
 abbrev Key := Option String × Array Nat × List UInt64
-abbrev CseState := Tape Float × Array Nat × Std.HashMap Key Nat
+abbrev CseState := CpuTape Float × Array Nat × Std.HashMap Key Nat
 
 /-! ## `cseCompact` as a left fold
 
@@ -61,7 +61,7 @@ We name one iteration (`cseStep`) and reformulate the loop as `Array.foldl cseSt
 be established by `Array.foldl_induction`. -/
 
 /-- One iteration of the `cseCompact` loop, as a pure state step (matching the source verbatim). -/
-def cseStep (st : CseState) (node : Node Float) : CseState :=
+def cseStep (st : CseState) (node : CpuNode Float) : CseState :=
   match st.2.2[nodeKey st.2.1 node]? with
   | some nid => (st.1, st.2.1.push nid, st.2.2)
   | none =>
@@ -71,19 +71,19 @@ def cseStep (st : CseState) (node : Node Float) : CseState :=
          (st.1.addNode { node with parents := node.parents.map (fun p => st.2.1.getD p p) }).2)
 
 /-- The initial loop state. -/
-def cseInit (t : Tape Float) : CseState :=
+def cseInit (t : CpuTape Float) : CseState :=
   (Tape.empty, Array.mkEmpty t.size, (∅ : Std.HashMap Key Nat))
 
 /-- `cseCompact`'s loop as a fold. -/
-def cseFold (t : Tape Float) : CseState :=
+def cseFold (t : CpuTape Float) : CseState :=
   t.nodes.foldl cseStep (cseInit t)
 
 /-- Generic: any `forIn` whose body is pointwise `pure (.yield (cseStep st node))` is a fold. The
 pointwise hypothesis is discharged by `split`, sidestepping the fact that the source `match` and
 `cseStep`'s `match` are distinct matcher constants. -/
-theorem forIn_list_foldl (body : Node Float → CseState → Id (ForInStep CseState))
+theorem forIn_list_foldl (body : CpuNode Float → CseState → Id (ForInStep CseState))
     (hbody : ∀ node st, body node st = pure (ForInStep.yield (cseStep st node)))
-    (l : List (Node Float)) (st : CseState) :
+    (l : List (CpuNode Float)) (st : CseState) :
     (forIn l st body : Id CseState) = pure (l.foldl (fun s n => cseStep s n) st) := by
   induction l generalizing st with
   | nil => simp
@@ -94,7 +94,7 @@ theorem forIn_list_foldl (body : Node Float → CseState → Id (ForInStep CseSt
       rfl
 
 /-- **`cseCompact` is the fold `cseStep` over its nodes.** -/
-theorem cseCompact_eq_foldl (t : Tape Float) :
+theorem cseCompact_eq_foldl (t : CpuTape Float) :
     cseCompact t = ((cseFold t).1, (cseFold t).2.1) := by
   unfold cseCompact cseFold cseInit
   simp only [Id.run, bind_pure_comp]
@@ -104,12 +104,12 @@ theorem cseCompact_eq_foldl (t : Tape Float) :
 
 /-! ## Small tape/array helpers -/
 
-theorem getNode?_addNode_self (t : Tape Float) (n : Node Float) :
+theorem getNode?_addNode_self (t : CpuTape Float) (n : CpuNode Float) :
     (t.addNode n).1.getNode? t.size
       = some n := by
   simp [Tape.getNode?, Tape.addNode, Tape.size]
 
-theorem getNode?_addNode_lt (t : Tape Float) (n : Node Float) (id : Nat) (h : id < t.size) :
+theorem getNode?_addNode_lt (t : CpuTape Float) (n : CpuNode Float) (id : Nat) (h : id < t.size) :
     (t.addNode n).1.getNode? id = t.getNode? id := by
   have h' : id < t.nodes.size := h
   simp only [Tape.getNode?, Tape.addNode]
@@ -133,10 +133,10 @@ theorem map_getD_push {ps : Array Nat} {rm : Array Nat} {x : Nat}
     ps.map (fun p => (rm.push x).getD p p) = ps.map (fun p => rm.getD p p) :=
   Array.map_congr_left (fun p hp => getD_push_lt rm x p p (hps p hp))
 
-theorem key_name (rm : Array Nat) (n : Node Float) : (nodeKey rm n).1 = n.name := rfl
-theorem key_parents (rm : Array Nat) (n : Node Float) :
+theorem key_name (rm : Array Nat) (n : CpuNode Float) : (nodeKey rm n).1 = n.name := rfl
+theorem key_parents (rm : Array Nat) (n : CpuNode Float) :
     (nodeKey rm n).2.1 = n.parents.map (fun p => rm.getD p p) := rfl
-theorem key_bits (rm : Array Nat) (n : Node Float) :
+theorem key_bits (rm : Array Nat) (n : CpuNode Float) :
     (nodeKey rm n).2.2 = (TorchLean.Storage.toArray n.value.tensor.buffer).toList.map Float.toBits := rfl
 
 /-! ## Well-formedness and the loop invariant -/
@@ -151,7 +151,7 @@ memo)`:
 * every processed original id `id < k` has `remap[id]` in range and the node stored there matching the
   original node's **op name**, **parents (remapped by the current `remap`)**, and **value bits**;
 * every `memo` entry is backed by a stored node matching the key's name / parents / value-bits. -/
-def Inv (t : Tape Float) (k : Nat) (st : CseState) : Prop :=
+def Inv (t : CpuTape Float) (k : Nat) (st : CseState) : Prop :=
   st.2.1.size = k ∧
   (∀ id nd, st.1.getNode? id = some nd → ∀ p ∈ nd.parents, p < id) ∧
   (∀ id, id < k → st.2.1.getD id id < st.1.size ∧
@@ -164,13 +164,13 @@ def Inv (t : Tape Float) (k : Nat) (st : CseState) : Prop :=
        nNew.name = key.1 ∧ nNew.parents = key.2.1 ∧
        (TorchLean.Storage.toArray nNew.value.tensor.buffer).toList.map Float.toBits = key.2.2)
 
-theorem inv_base (t : Tape Float) : Inv t 0 (cseInit t) := by
+theorem inv_base (t : CpuTape Float) : Inv t 0 (cseInit t) := by
   refine ⟨by simp [cseInit, Array.mkEmpty], ?_, ?_, ?_⟩
   · intro id nd h; simp [cseInit, Tape.getNode?, Tape.empty] at h
   · intro id h; exact absurd h (Nat.not_lt_zero id)
   · intro key nid h; simp [cseInit] at h
 
-theorem inv_step (t : Tape Float) (hwf : WF t) (i : Fin t.nodes.size) (st : CseState)
+theorem inv_step (t : CpuTape Float) (hwf : WF t) (i : Fin t.nodes.size) (st : CseState)
     (H : Inv t i.1 st) : Inv t (i.1 + 1) (cseStep st t.nodes[i]) := by
   obtain ⟨hsz, hwfNew, hcorr, hmemo⟩ := H
   set node := t.nodes[i] with hnode
@@ -201,7 +201,7 @@ theorem inv_step (t : Tape Float) (hwf : WF t) (i : Fin t.nodes.size) (st : CseS
       · rw [hnbits, key_bits]
   · -- fresh case: a new node is appended, remap and memo grow
     rename_i hmiss
-    set node' : Node Float := { node with parents := node.parents.map (fun p => st.2.1.getD p p) }
+    set node' : CpuNode Float := { node with parents := node.parents.map (fun p => st.2.1.getD p p) }
       with hnode'
     have hself := getNode?_addNode_self st.1 node'
     have hnode'_par : node'.parents = node.parents.map (fun p => st.2.1.getD p p) := by rw [hnode']
@@ -263,7 +263,7 @@ theorem inv_step (t : Tape Float) (hwf : WF t) (i : Fin t.nodes.size) (st : CseS
           by rw [getNode?_addNode_lt _ _ _ hnidlt]; exact hnNew, hnName, hnPar, hnbits⟩
 
 /-- **The invariant holds after the whole pass.** -/
-theorem cseFold_inv (t : Tape Float) (hwf : WF t) : Inv t t.nodes.size (cseFold t) :=
+theorem cseFold_inv (t : CpuTape Float) (hwf : WF t) : Inv t t.nodes.size (cseFold t) :=
   Array.foldl_induction (Inv t) (inv_base t) (inv_step t hwf)
 
 /-! ## Whole-pass corollaries -/
@@ -274,7 +274,7 @@ compacted tape carrying the **same op name**, its **parents remapped by the same
 **bit-identical stored value**. Because `evalTape`/`cOp` reads exactly (op-name, remapped-parents) for
 an op node and the stored value for a const leaf, the compacted DAG computes node-for-node what the
 original does — this is `cseKey_denotation_sound` promoted from one merge to the entire pass. -/
-theorem cseCompact_structural (t : Tape Float) (hwf : WF t) (id : Nat) (h : id < t.size) :
+theorem cseCompact_structural (t : CpuTape Float) (hwf : WF t) (id : Nat) (h : id < t.size) :
     (cseCompact t).2.getD id id < (cseCompact t).1.size ∧
     ∃ nNew nOld, (cseCompact t).1.getNode? ((cseCompact t).2.getD id id) = some nNew ∧
       t.getNode? id = some nOld ∧ nNew.name = nOld.name ∧
@@ -286,7 +286,7 @@ theorem cseCompact_structural (t : Tape Float) (hwf : WF t) (id : Nat) (h : id <
 
 /-- **The compacted tape is well-formed** (parents precede children), so it is itself a legal tape to
 re-interpret with `evalTape`. -/
-theorem cseCompact_wellFormed (t : Tape Float) (hwf : WF t) : WF (cseCompact t).1 := by
+theorem cseCompact_wellFormed (t : CpuTape Float) (hwf : WF t) : WF (cseCompact t).1 := by
   obtain ⟨_, hwfNew, _, _⟩ := cseFold_inv t hwf
   rw [cseCompact_eq_foldl]
   exact hwfNew
@@ -294,7 +294,7 @@ theorem cseCompact_wellFormed (t : Tape Float) (hwf : WF t) : WF (cseCompact t).
 /-- **Stored-value preservation, for an arbitrary well-formed tape** — the general form of the
 machine-checked `cse_preserves_resJac`: every original node's stored forward value is bit-identical to
 the value stored at its CSE-remapped node. The read-back never moves; only the node count shrinks. -/
-theorem cseCompact_preserves_stored (t : Tape Float) (hwf : WF t) (id : Nat) (h : id < t.size) :
+theorem cseCompact_preserves_stored (t : CpuTape Float) (hwf : WF t) (id : Nat) (h : id < t.size) :
     ∃ nNew nOld, (cseCompact t).1.getNode? ((cseCompact t).2.getD id id) = some nNew ∧
       t.getNode? id = some nOld ∧
       (TorchLean.Storage.toArray nNew.value.tensor.buffer).toList.map Float.toBits = (TorchLean.Storage.toArray nOld.value.tensor.buffer).toList.map Float.toBits := by
@@ -308,12 +308,12 @@ jointly satisfiable by a real tape *with an op node*, so nothing above is vacuou
 `[NumCarrier]` kernel records is well-formed by construction — here is a minimal concrete one. -/
 
 /-- A concrete well-formed tape: two named input leaves and one `add` op reading both. -/
-def demoTape : Tape Float :=
-  let t0 := Tape.empty
-  let t1 := (t0.leaf (Tensor.full Shape.scalar (0.0 : Float)) (name := some "a")).1
-  let t2 := (t1.leaf (Tensor.full Shape.scalar (0.0 : Float)) (name := some "b")).1
+def demoTape : CpuTape Float :=
+  let t0 : CpuTape Float := Tape.empty
+  let t1 := (CpuTape.leaf t0 (Tensor.full Shape.scalar (0.0 : Float)) (name := some "a")).1
+  let t2 := (CpuTape.leaf t1 (Tensor.full Shape.scalar (0.0 : Float)) (name := some "b")).1
   (t2.addNode { name := some "add",
-                value := Spec.SomeTensor.ofTensor (Tensor.full Shape.scalar (0.0 : Float)),
+                value := TorchLean.SomeTensor.ofTensor (Tensor.full Shape.scalar (0.0 : Float)),
                 parents := #[0, 1], backward := fun _ => .ok #[] }).1
 
 theorem demoTape_size : demoTape.size = 3 := by decide

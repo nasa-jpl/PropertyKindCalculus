@@ -118,7 +118,7 @@ require «Physlib» from git
 -- per-index device identity; this package pins the same toolchain. TorchLean brings
 -- `FloatLib` transitively, which is where the executable binary32 word
 -- (`ExecFloat.Binary 8 23`) and the Flocq rounding theory live. Required after PhysLib so
--- its `doc-gen4 v4.35.0` wins. The core
+-- its `doc-gen4 v4.36.0` wins. The core
 -- spine never imports it, so `import PropertyKindCalculus` stays Mathlib-free.
 require «TorchLean» from git
   "https://github.com/NicolasRouquette/TorchLean.git" @
@@ -163,7 +163,7 @@ require subverso from git
 -- belongs last.
 
 -- NOTE (2026-08-04): there is deliberately **no doc-gen4 require here**. doc-gen4 is pulled
--- transitively (PhysLib and TorchLean each require it; TorchLean's stock `leanprover/doc-gen4` `v4.35.0`
+-- transitively (PhysLib and TorchLean each require it; TorchLean's stock `leanprover/doc-gen4` `v4.36.0`
 -- pin wins, being required later — see the ordering discipline above), so it stays in the closure
 -- regardless — but this package does not *override* it.
 -- As of the pivot in `RENDERING.md` §6 v2 (after doc-gen4 PR #403 was closed on maintainer feedback),
@@ -499,11 +499,10 @@ lean_exe «mcm_batched_parity» where
   srcDir := "apps"
   root := `PropertyKindCalculus.Apps.McmBatchedParity
 
-/-- **The eager `CudaT` table lookup against `LutTable.refFetch`.** Same arrangement as
-`ssprc_batched_parity`: a compiled executable runs `LutInterp (CudaT s)` on NaN, infinite,
-out-of-range and interior probes and asserts each value matches the fp64 reference, so the NaN
-lower-bound convention is checked on the device path too. Run with `lake exe lut_cudat_parity`;
-exits `0` on parity, `1` on mismatch. -/
+/-- **The table-fetch kernel against `LutTable.refFetch`.** A compiled executable evaluates
+`LutTable.fetchProgram` on NaN, infinite, out-of-range and interior probes and asserts each value
+matches the fp64 reference: in Lean on the CPU always, and as generated CUDA when a CUDA device is
+linked. Run with `lake exe lut_cudat_parity`; exits `0` on parity, `1` on mismatch. -/
 lean_exe «lut_cudat_parity» where
   srcDir := "apps"
   root := `PropertyKindCalculus.Apps.LutCudaTParity

@@ -27,7 +27,7 @@ meta import PropertyKindCalculus.Examples.TapeCodegenDemo
 
 @[expose] public section Blanket
 
-open Runtime.Autograd (Tape)
+open PropertyKindCalculus.Paradigm (TapeM CpuTape CpuNode)
 open PropertyKindCalculus.Paradigm (lutNodeName?)
 open PropertyKindCalculus.Paradigm.TapeCodegen
 open PropertyKindCalculus.Paradigm.TapeCodegen.Julia
@@ -37,7 +37,7 @@ namespace PropertyKindCalculus.Paradigm.TapeCodegen.JuliaDemo
 
 /-- On a concrete tape, the Julia rendering is defined on exactly the op nodes the C rendering is
 defined on (`lutfetch` nodes are rendered by both helpers and excluded here). -/
-def juliaCoversTape (t : Tape Float) : Bool :=
+def juliaCoversTape (t : CpuTape Float) : Bool :=
   t.nodes.all fun n =>
     if n.parents.isEmpty then true else
     match n.name with

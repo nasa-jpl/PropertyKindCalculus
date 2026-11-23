@@ -32,7 +32,7 @@ public import FloatLib.Floats.Formats.BinaryInterchange.Configured.Transcendenta
 
 @[expose] public section Blanket
 
-open TorchLean.Floats          -- `FP32`
+open TorchLean (FP32)
 open PropertyKindCalculus.Fp32
 open FloatLib.Numerics (MathFunctions)
 

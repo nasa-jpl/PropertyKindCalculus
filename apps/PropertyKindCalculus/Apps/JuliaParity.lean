@@ -32,7 +32,7 @@ public import PropertyKindCalculus.Examples.TapeCodegenLut
 
 @[expose] public section Blanket
 
-open Runtime.Autograd (Tape Node TapeM)
+open PropertyKindCalculus.Paradigm (TapeM CpuTape CpuNode)
 open PropertyKindCalculus.Paradigm.TapeCodegen
 open PropertyKindCalculus.Paradigm.TapeCodegen.Julia
 open PropertyKindCalculus.Paradigm (LutTable LutInterp)
@@ -155,7 +155,7 @@ def ulpDist (x y : Float) : Option Nat :=
 
 /-- `transCone t` marks each node whose backward cone contains an `exp` or `log` node (parents
 precede children in a tape, so one forward pass suffices). -/
-def transCone (t : Tape Float) : Array Bool := Id.run do
+def transCone (t : CpuTape Float) : Array Bool := Id.run do
   let mut marks : Array Bool := Array.mkEmpty t.nodes.size
   for n in t.nodes do
     let own := n.name == some "exp" || n.name == some "log"
@@ -184,7 +184,7 @@ def pixelEnv (centre : String → Float) (inputs : Array String) (k : Nat) : Str
 
 structure Case where
   name : String
-  record : Except String (Tape Float × List Nat)
+  record : Except String (CpuTape Float × List Nat)
   centre : String → Float
   /-- The lookup tables the tape's `lutfetch` nodes name (empty for pure-arithmetic tapes). -/
   tables : Array LutTable := #[]
@@ -193,20 +193,20 @@ structure Case where
 
 /-- `Examples.TapeCodegenLut`'s mixed fetch + arithmetic model, compacted — the case that exercises
 `tl_lutfetch` and the table-extended interpreter `evalTapeT`. -/
-def recordLut : Except String (Tape Float × List Nat) := do
+def recordLut : Except String (CpuTape Float × List Nat) := do
   let (t, id) ← PropertyKindCalculus.Examples.TapeCodegenLut.lutRecord
   let (t', remap) := cseCompact t
   pure (t', [remap.getD id id])
 
 /-- `min`, `max`, the clamp `max lo (min hi x)` and a table fetch, as four outputs: the ops whose
 NaN and signed-zero results the renderings must reproduce. -/
-def recordSpecial : Except String (Tape Float × List Nat) := do
+def recordSpecial : Except String (CpuTape Float × List Nat) := do
   let x := TapeCodegenLut.inLeafV "x" 1.0
   let y := TapeCodegenLut.inLeafV "y" 2.0
   let fetch : TapeCodegenLut.TB := LutInterp.lutFetch TapeCodegenLut.demoLut x y
   let outs : List TapeCodegenLut.TB :=
     [Min.min x y, Max.max x y, Max.max (0 : TapeCodegenLut.TB) (Min.min (1 : TapeCodegenLut.TB) x), fetch]
-  let (ids, t) ← TapeM.run Tape.empty (outs.mapM (·.run))
+  let (ids, t) ← TapeM.run (TorchLean.Tape.empty : CpuTape Float) (outs.mapM (·.run))
   pure (t, ids)
 
 /-- Every ordered pair over NaN, `±0`, `±1` and `±∞`, as `(x, y)`. -/
@@ -264,7 +264,7 @@ structure Verdict where
 
 /-- Run one emitted surface (`ka := false` the plain host kernel, bit-exact tier by cone; `ka := true`
 the KernelAbstractions twin, ulp tier on every output) and compare with `evalTape`. -/
-def compareSurface (o : Opts) (julia : String) (c : Case) (t : Tape Float) (outIds : List Nat)
+def compareSurface (o : Opts) (julia : String) (c : Case) (t : CpuTape Float) (outIds : List Nat)
     (cg : JuliaCodegen) (envs : List (String → Float)) (ka : Bool) : IO (Option Verdict) := do
   let dir : System.FilePath := o.outDir
   let surface := if ka then "ka" else "host"

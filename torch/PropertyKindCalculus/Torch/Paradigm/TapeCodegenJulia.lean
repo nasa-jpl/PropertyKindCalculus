@@ -59,7 +59,7 @@ public import PropertyKindCalculus.Torch.Paradigm.TapeCodegen
 
 @[expose] public section Blanket
 
-open Runtime.Autograd (Tape Node)
+open PropertyKindCalculus.Paradigm (TapeM CpuTape CpuNode)
 open PropertyKindCalculus.Paradigm (LutTable lutNodeName?)
 
 namespace PropertyKindCalculus.Paradigm.TapeCodegen.Julia
@@ -137,26 +137,26 @@ structure JuliaCodegen where
 /-- The Julia body lines — the program `SL.genSL` reads off the tape, printed line by line by
 `printJulia`. Fails exactly where `genBody` does (`genBodyJulia_isOk_eq_genBody`): the two emitters
 print one program. -/
-def genBodyJulia (t : Tape Float) (tables : Array LutTable := #[]) :
+def genBodyJulia (t : CpuTape Float) (tables : Array LutTable := #[]) :
     Except String (Array String) :=
   (SL.genSL t tables).map fun prog => prog.zipIdx.map fun p => printLineJulia p.1 p.2
 
 /-- `genBodyJulia` is the printer of the program: on a tape `genSL` accepts, its lines are
 `printLineJulia` of the program's lines, slot by slot. -/
-theorem genBodyJulia_of_genSL {t : Tape Float} {tables : Array LutTable} {prog : SL.SLProg}
+theorem genBodyJulia_of_genSL {t : CpuTape Float} {tables : Array LutTable} {prog : SL.SLProg}
     (h : SL.genSL t tables = .ok prog) :
     genBodyJulia t tables = .ok (prog.zipIdx.map fun p => printLineJulia p.1 p.2) := by
   unfold genBodyJulia; rw [h]; rfl
 
 /-- The Julia body and the C body exist on exactly the same tapes — one program, two printers. -/
-theorem genBodyJulia_isOk_eq_genBody (t : Tape Float) (tables : Array LutTable) :
+theorem genBodyJulia_isOk_eq_genBody (t : CpuTape Float) (tables : Array LutTable) :
     (genBodyJulia t tables).isOk = (genBody t tables).isOk := by
   unfold genBodyJulia genBody; cases SL.genSL t tables <;> rfl
 
 /-- Lower a CSE'd tape + its output ids to a Julia kernel — `gen`'s twin. The ABI fields
 (`inputs`, `tables`) are the same pure functions of the tape `gen` uses, so the Julia function's
 argument list is the C kernel's parameter list, name for name. -/
-def genJulia (t : Tape Float) (outIds : List Nat) (tables : Array LutTable := #[])
+def genJulia (t : CpuTape Float) (outIds : List Nat) (tables : Array LutTable := #[])
     (lutMode : LutFilterMode := .point) : Except String JuliaCodegen :=
   (checkWF t).bind fun _ =>
   (checkOutputs t outIds).bind fun _ =>
@@ -171,7 +171,7 @@ def genJulia (t : Tape Float) (outIds : List Nat) (tables : Array LutTable := #[
       , lutMode }
 
 /-- `genJulia` succeeds only on a well-formed tape — the same check `gen` makes. -/
-theorem genJulia_wf {t : Tape Float} {outIds : List Nat} {tables : Array LutTable}
+theorem genJulia_wf {t : CpuTape Float} {outIds : List Nat} {tables : Array LutTable}
     {mode : LutFilterMode} {cg : JuliaCodegen} (h : genJulia t outIds tables mode = .ok cg) : WF t := by
   unfold genJulia at h
   cases hw : checkWF t with
@@ -180,7 +180,7 @@ theorem genJulia_wf {t : Tape Float} {outIds : List Nat} {tables : Array LutTabl
 
 /-- `genJulia` succeeds only when every constant leaf stores exactly one scalar — the same check
 `gen` makes. -/
-theorem genJulia_scalar_leaves {t : Tape Float} {outIds : List Nat} {tables : Array LutTable}
+theorem genJulia_scalar_leaves {t : CpuTape Float} {outIds : List Nat} {tables : Array LutTable}
     {mode : LutFilterMode} {cg : JuliaCodegen} (h : genJulia t outIds tables mode = .ok cg) :
     ScalarLeaves t := by
   unfold genJulia at h
@@ -199,7 +199,7 @@ theorem genJulia_scalar_leaves {t : Tape Float} {outIds : List Nat} {tables : Ar
   | ok u => exact checkScalarLeaves_ok hs
 
 /-- `genJulia` succeeds only with every output id in range — the same check `gen` makes. -/
-theorem genJulia_outIds_lt {t : Tape Float} {outIds : List Nat} {tables : Array LutTable}
+theorem genJulia_outIds_lt {t : CpuTape Float} {outIds : List Nat} {tables : Array LutTable}
     {mode : LutFilterMode} {cg : JuliaCodegen} (h : genJulia t outIds tables mode = .ok cg) :
     ∀ o ∈ outIds, o < t.size := by
   unfold genJulia at h
@@ -343,7 +343,7 @@ theorem jlExpr_isOk_eq_cExpr_binary (i j : Nat) :
 the emitter accepts, the body lines are the program's lines printed, and the program runs as
 `evalTapeT`. The Julia-specific content of this corollary is nil; that is the point. -/
 theorem julia_body_denotes {tbls : Array LutTable} {tables : String → Option LutTable}
-    (hT : SL.TablesAgree tbls tables) (env : String → Float) {t : Tape Float} {prog : SL.SLProg}
+    (hT : SL.TablesAgree tbls tables) (env : String → Float) {t : CpuTape Float} {prog : SL.SLProg}
     (h : SL.genSL t tbls = .ok prog) :
     genBodyJulia t tbls = .ok (prog.zipIdx.map fun p => printLineJulia p.1 p.2) ∧
     evalTapeT tables env t = .ok (SL.run env prog) :=

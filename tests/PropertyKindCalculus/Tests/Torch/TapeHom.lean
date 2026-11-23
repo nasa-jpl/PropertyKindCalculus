@@ -31,9 +31,10 @@ namespace PropertyKindCalculus.Tests.TapeHom
 
 set_option linter.unusedVariables false
 
-open Spec TorchLean
+open TorchLean
 open TorchLean TorchLean.Tensor
-open Runtime.Autograd
+open PropertyKindCalculus.Paradigm (TapeM CpuTape CpuNode)
+open FloatLib.Numerics (MathFunctions)
 open PropertyKindCalculus
 open PropertyKindCalculus.Paradigm (NumCarrier TapeBuilder)
 open PropertyKindCalculus.Paradigm.TapeParity
@@ -45,14 +46,14 @@ variable {s : Shape}
 
 local instance : Zero (Tensor Float s) := ⟨Tensor.full s 0⟩
 local instance : One (Tensor Float s) := ⟨Tensor.full s 1⟩
-local instance : Min (Tensor Float s) := ⟨minSpec⟩
-local instance : Max (Tensor Float s) := ⟨maxSpec⟩
-local instance : Coe Nat (Tensor Float s) := ⟨fun n => Tensor.full s ((n : Float))⟩
+local instance : Min (Tensor Float s) := ⟨Tensor.minimum⟩
+local instance : Max (Tensor Float s) := ⟨Tensor.maximum⟩
+local instance : Coe Nat (Tensor Float s) := ⟨fun n => Tensor.full s (n : Float)⟩
 local instance instEagerMath : MathFunctions (Tensor Float s) where
-  exp := expSpec
-  log := logSpec
-  abs := absSpec
-  sqrt := sqrtSpec
+  exp := Tensor.exp
+  log := Tensor.log
+  abs := Tensor.abs
+  sqrt := fun x => Tensor.sqrt x .clampNegative
   pi := Tensor.full s MathFunctions.pi
   sin := Tensor.map MathFunctions.sin
   cos := Tensor.map MathFunctions.cos
@@ -100,7 +101,7 @@ theorem g_tape_parity (x y : Tensor Float s) :
 -- `fail_if_success` therefore succeeds, certifying the tactic refuses the false parity.
 example (x y : Tensor Float s) : True := by
   fail_if_success
-    have : Evaluates (g (leafT x "x") (leafT y "y")) (subSpec x (expSpec y)) := by
+    have : Evaluates (g (leafT x "x") (leafT y "y")) (x - (Tensor.exp y)) := by
       tape_hom [g, gQ]; done
   trivial
 
@@ -109,7 +110,7 @@ example (x y : Tensor Float s) : True := by
 -- `Evaluates.isNumCarrierHom` is the named object; its projections re-assemble the tree the
 -- tactic walks (`x + exp y`), by hand.
 example (x y : Tensor Float s) (hx : Evaluates (leafT x "x") x) (hy : Evaluates (leafT y "y") y) :
-    Evaluates (leafT x "x" + MathCarrier.exp (leafT y "y")) (addSpec x (expSpec y)) :=
+    Evaluates (leafT x "x" + MathCarrier.exp (leafT y "y")) (x + (Tensor.exp y)) :=
   Evaluates.isNumCarrierHom.add hx (Evaluates.isNumCarrierHom.exp hy)
 
 /-! ## Axiom profiles -/
