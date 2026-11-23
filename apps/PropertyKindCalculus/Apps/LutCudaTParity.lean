@@ -57,7 +57,7 @@ def big : Float := Float.scaleB 1.0 127
 def fmax : Float := Float.scaleB (2.0 - Float.scaleB 1.0 (-23)) 127
 
 /-- Finite samples whose neighbour differences overflow float32, then two at the float32 maximum:
-`a·(1−f) + b·f` stays finite where `a + f·(b − a)` would not. -/
+the halved lerp `(a + f·h) + f·h` stays finite where `a + f·(b − a)` would not. -/
 def overflowTable : LutTable :=
   { name := "overflow", width := 6, layers := 1, values := #[big, -big, -big, big, fmax, fmax] }
 
@@ -65,6 +65,18 @@ def overflowTable : LutTable :=
 def overflowProbes : Array (Float × Float) :=
   #[(0.0, 0.0), (0.0, -2.0), (0.0, -inf), (0.0, 1.0), (0.0, 2.0), (0.0, 3.0), (0.0, 4.0),
     (0.0, 5.0), (0.0, 7.0), (0.0, 0.25), (0.0, 0.5), (0.0, 1.5), (0.0, 2.75), (0.0, 4.5)]
+
+/-- `199.900009…`, a float32 value that a lerp weighting each sample separately, `a·(1−f) + a·f`,
+exceeds at `f = 55/64`. -/
+def flat : Float := 13100647.0 / 65536.0
+
+/-- A flat segment between two rising ones: the lerp returns the sample across it. -/
+def flatTable : LutTable :=
+  { name := "flat", width := 4, layers := 1, values := #[1.0, flat, flat, 300.0] }
+
+/-- Interior points of the flat segment of `flatTable`, and its two ends. -/
+def flatProbes : Array (Float × Float) :=
+  #[(0.0, 1.0), (0.0, 1.25), (0.0, 1.5), (0.0, 1.859375), (0.0, 2.0)]
 
 /-- Float32 rounding of exactly representable samples and dyadic weights is exact, so the slack
 absorbs nothing on these probes. -/
@@ -122,7 +134,7 @@ def main : IO UInt32 := do
   unless cuda do
     IO.println "No CUDA device is linked: the generated CUDA was not run, only the CPU evaluation."
   let bad := (← runTable table probes cuda) + (← runTable edgeTable edgeProbes cuda)
-    + (← runTable overflowTable overflowProbes cuda)
+    + (← runTable overflowTable overflowProbes cuda) + (← runTable flatTable flatProbes cuda)
   if bad == 0 then
     IO.println "PARITY OK — the fetch kernel matches refFetch, NaN probes and non-finite samples included."
     return 0
