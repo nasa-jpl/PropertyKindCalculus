@@ -151,14 +151,19 @@ def LutTable.fetchProgram (width layers : UInt64) : Kernel.Program Float32 :=
         -- `over = 1` exactly when `l ≥ layers`, so `base` is row `min l (layers - 1)`.
         let over := 1 - 1 / (l / layers + 1)
         let base := (l - over * (l - (layers - 1))) * width
-        if (width - 1).toFloat32 ≤ u then read 2 (base + (width - 1))
+        -- Every branch interpolates, as `refFetch` does, so a NaN or infinite sample reaches the
+        -- result at weight zero too.
+        if (width - 1).toFloat32 ≤ u then do
+          let a ← read 2 (base + (width - 1))
+          pure (a + 0 * (a - a))
         else do
           let k := u.toUInt64
+          -- `last = 1` exactly when `k + 1 ≥ width`, so `b` is sample `min (k + 1) (width - 1)`.
+          let last := 1 - 1 / ((k + 1) / width + 1)
           let a ← read 2 (base + k)
-          if u ≤ 0 then pure a
-          else do
-            let b ← read 2 (base + (k + 1))
-            pure (a + (u - k.toFloat32) * (b - a))
+          let b ← read 2 (base + (k + 1 - last))
+          if u ≤ 0 then pure (a + 0 * (b - a))
+          else pure (a + (u - k.toFloat32) * (b - a))
       else pure (layer + u)
     else pure (layer + u) : Except Kernel.Error Float32))
 
