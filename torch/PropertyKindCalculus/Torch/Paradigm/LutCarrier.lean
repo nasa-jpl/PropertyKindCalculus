@@ -34,6 +34,12 @@ return a value one ulp off the sample (`a = b = 13100647/65536`, `f = 55/64`). A
 NaN sample gives NaN wherever it is one of the two neighbours, weight zero included, as
 `a + f·(b − a)` does.
 
+ACCURACY. The rounding error scales with the larger sample, not with the result: on 8·10⁷ random
+binary32 cases (measured, not proved) the result is within 2 ulp of the larger of `|a|`, `|b|`, the
+same as measured for `a + f·(b − a)`. Where samples of opposite sign nearly cancel, that error is
+large relative to the result: `a = 2²³`, `b = −(2²³ − 1)`, `f = 1/2` gives `0.25`, the exact value
+being `0.5`.
+
 WHY ONE BRANCHLESS FORM. Selecting between the two textbook forms by the signs of `a` and `b`
 would keep the pre-existing rounding on same-sign segments, but `Program.of` does not certify
 that kernel at the pinned TorchLean revision (`NicolasRouquette/TorchLean`, branch `combined`,
