@@ -237,8 +237,8 @@ The **megakernel codegen backend** lives in the `Torch` library and is verified:
 - `PropertyKindCalculus.Torch.Paradigm.TapeCodegenJulia` — the Julia emitter (`jlExpr`/`jlLit`/
   `genJulia`/`emitJulia`/`emitJuliaKA`), with the rendering table proved over the whole alphabet
   (`rendering_table_binary`/`_unary`: `jlExpr` renders exactly what `cOp` interprets) and the pinned
-  semantics in the emitted header — no `@fastmath`/`muladd`, `min`/`max` as Lean's `minOfLe`/`maxOfLe`
-  (`min_eq_ite`/`max_eq_ite`), NaN-restoring `tl_sqrt`/`tl_log`, bit-pattern constants.
+  semantics in the emitted header — no `@fastmath`/`muladd`, `min`/`max` as Lean's IEEE `Float.minimum`/`Float.maximum`
+  (`min_eq_minimum`/`max_eq_maximum`), NaN-restoring `tl_sqrt`/`tl_log`, bit-pattern constants.
 - `PropertyKindCalculus.Torch.Paradigm.TapeStraightLine` — **one program, N printers**: the
   backend-neutral straight-line program `SL.genSL` reads off the tape (the only function that reads
   it), its denotation `SL.run`, the theorem `SL.genSL_denotes` that the program runs as `evalTapeT`
@@ -271,10 +271,10 @@ Status: ✅ done · 🚧 in progress · ⬜ planned
 - ✅ AVS residual/Jacobian recorded → CSE DAG → codegen → CPU bit-exact `#guard` (`TapeCodegenDemo`).
 - ✅ Recorder faithfulness proved for all inputs, axiom-audited (`TapeCodegenProof`).
 - ✅ **Julia emitter** beside the CUDA/C pair (`TapeCodegenJulia`), rendering table proved, `julia_parity`
-  exe. ✅ One `min`/`max` NaN semantics across `cOp`, `cExpr` and `jlExpr` — Lean's `ite`, written as
-  the `≤`-ternary in C/CUDA and `ifelse` in Julia (`fminf`/`fmaxf`, which return the non-NaN operand,
-  are gone); the C, CUDA and Julia `lutfetch` helpers use hi-first minima and zero floors, so NaN
-  coordinates select sample 0 and NaN layers select layer 0, matching `refFetch`.
+  exe. ✅ One `min`/`max` NaN semantics across `cOp`, `cExpr` and `jlExpr` — IEEE 754-2019
+  minimum/maximum (Lean 4.36's `Float`), an explicit conditional in C/CUDA and `min`/`max` in Julia: NaN
+  propagates and `-0.0` orders below `+0.0` (`fminf`/`fmaxf`, which return the non-NaN operand, are
+  gone); the C, CUDA and Julia `lutfetch` helpers return NaN on a NaN coordinate or layer, matching `refFetch`.
   ✅ **The denotation of the rendering, for all backends** (`TapeStraightLine`): every emitter is a
   printer of one straight-line program, `genSL_denotes` proves the program runs as `evalTapeT`,
   `genSL_isOk_iff_evalTapeT` that it exists exactly when the interpreter runs the tape, and

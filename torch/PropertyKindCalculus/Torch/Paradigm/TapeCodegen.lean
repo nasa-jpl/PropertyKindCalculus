@@ -16,7 +16,7 @@ not cited — by the AI-accounting section below (`aiReport`/`intensity`), so a 
 eager-vs-fused roofline gap rather than asserting it.
 
 FAITHFULNESS. `evalTape` (`paradigm.tape_eval`) gives the generated kernel's denotation as a Float interpreter with the
-SAME scalar op-semantics the emitted C uses (`+ − × ÷`, the `≤`-ternaries for `min`/`max`, `expf`/`logf`/`sqrtf`).
+SAME scalar op-semantics the emitted C uses (`+ − × ÷`, IEEE minimum/maximum for `min`/`max`, `expf`/`logf`/`sqrtf`).
 By tape forward-value faithfulness (`paradigm.tape_faithful`/`paradigm.tape_parity`) the recorded
 tape's stored values already equal the source kernel at `Float`, so `evalTape` re-evaluated at any
 inputs equals the source kernel — the codegen changes only *where intermediates live* (registers vs
@@ -87,12 +87,11 @@ def floatLit (x : Float) : String :=
     if expBits == 0 then s!"{sign}0x0.{mantHex}p-1022f"          -- subnormal
     else s!"{sign}0x1.{mantHex}p{Int.ofNat expBits - 1023}f"
 
-/-- The C text of one program line — **the C printer**, total over `SLExpr`. `min`/`max` are the
-ternaries `(a <= b ? a : b)` / `(a <= b ? b : a)` — Lean's `Min Float`/`Max Float`
-(`minOfLe`/`maxOfLe`, `if x ≤ y then x else y`), which is what `cOp` computes, NaN cases included
-(`x ≤ y` is false when either is NaN, so `min` yields `b` and `max` yields `a`). `fminf`/`fmaxf` would
-return the non-NaN operand instead, a different function on NaN inputs; one reading across the
-interpreter and the three renderings (C, CUDA, Julia). A fetch is the backend-neutral `TL_LUTFETCH`
+/-- The C text of one program line — **the C printer**, total over `SLExpr`. `min`/`max` are
+IEEE 754-2019 minimum/maximum, Lean 4.36's `Min Float`/`Max Float` and so what `cOp` computes: a NaN
+operand gives NaN, and `-0.0` orders below `+0.0`. `fminf`/`fmaxf` would return the non-NaN operand
+instead, a different function on NaN inputs; one reading across the interpreter and the three
+renderings (C, CUDA, Julia). A fetch is the backend-neutral `TL_LUTFETCH`
 macro call; the CUDA/stub emitters prepend the matching definition (texture fetch vs array lerp).
 What a reader must trust of this printer is that each of these forms means, in C with
 `--fmad=false`, what `SL.SLExpr.denote` means — nothing about any kernel. -/
@@ -105,8 +104,8 @@ def printC : SL.SLExpr → String
       | .sub => s!"v{a} - v{b}"
       | .mul => s!"v{a} * v{b}"
       | .div => s!"v{a} / v{b}"
-      | .min => s!"(v{a} <= v{b} ? v{a} : v{b})"
-      | .max => s!"(v{a} <= v{b} ? v{b} : v{a})"
+      | .min => s!"(v{a} != v{a} || v{a} < v{b} || (v{a} == v{b} && signbit(v{a})) ? v{a} : v{b})"
+      | .max => s!"(v{a} != v{a} || v{a} > v{b} || (v{a} == v{b} && !signbit(v{a})) ? v{a} : v{b})"
   | .un o a =>
       match o with
       | .exp => s!"expf(v{a})"
@@ -351,8 +350,7 @@ def paramList (cg : Codegen) (stub : Bool := false) : String :=
 
 /-- The CUDA-side `lutfetch` helper + the `TL_LUTFETCH` macro `genBody`'s neutral body lines call.
 Point mode: two point fetches + a `__f*_rn` contraction-blocked fp32 lerp (bit-identical to the
-stub). Its hi-first minima feed the existing zero floors, so NaN coordinates and layers select
-sample 0 and layer 0. Hardware mode: one hardware-filtered fetch (9-bit weight, tolerance-only).
+stub). A NaN coordinate or layer returns NaN before the clamps, as `LutTable.refFetch` does. Hardware mode: one hardware-filtered fetch (9-bit weight, tolerance-only).
 Empty when the kernel uses no tables. -/
 def lutHelperCuda (cg : Codegen) : String :=
   if cg.tables.isEmpty then "" else
@@ -366,6 +364,7 @@ def lutHelperCuda (cg : Codegen) : String :=
     | .hardware => "  return tex1DLayered<float>(tex, uc + 0.5f, L);"
   String.intercalate "\n"
     [ "__device__ __forceinline__ float tl_lutfetch(cudaTextureObject_t tex, int W, int LAYERS, float layer, float u) {"
+    , "  if (layer != layer || u != u) return layer + u;"
     , "  float wmax = (float)(W - 1);"
     , "  float um = (wmax <= u ? wmax : u);"
     , "  float uc = (0.0f <= um ? um : 0.0f);"
@@ -380,8 +379,7 @@ def lutHelperCuda (cg : Codegen) : String :=
     , "" ]
 
 /-- The stub-side `lutfetch` helper + macro: `LutTable.refFetch`'s clamp/floor/lerp as a host loop over
-the baked table. The hi-first minima preserve NaN until the existing zero floors map a NaN
-coordinate to sample 0 and a NaN layer to layer 0. The layer is clamped as a float before it is
+the baked table. A NaN coordinate or layer returns NaN before the clamps. The layer is clamped as a float before it is
 truncated, so a huge finite layer cannot overflow the index; the CUDA helper does the same before
 its `int` conversion. Point mode is bit-identical to the device kernel; hardware mode emulates the
 9-bit weight, tolerance-only. Empty when the kernel uses no tables. -/
@@ -392,6 +390,7 @@ def lutHelperStub (cg : Codegen) : String :=
     | .hardware => "  f = floorf(f * 256.0f + 0.5f) / 256.0f;\n"
   String.intercalate "\n"
     [ "static float tl_lutfetch(const float* tab, int W, int LAYERS, float layer, float u) {"
+    , "  if (layer != layer || u != u) return layer + u;"
     , "  float wmax = (float)(W - 1);"
     , "  float um = (wmax <= u ? wmax : u);"
     , "  float uc = (0.0f <= um ? um : 0.0f);"

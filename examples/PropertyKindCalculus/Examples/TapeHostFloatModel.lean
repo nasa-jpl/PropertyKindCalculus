@@ -44,13 +44,13 @@ theorem BinOp_eval_mul_model (a b : Float) :
 theorem BinOp_eval_div_model (a b : Float) :
     BinOp.eval .div a b = Float.ofModel (a.toModel / b.toModel) := rfl
 
-/-- `min`/`max` are Lean's `≤`-conditionals (`minOfLe`/`maxOfLe`), and `≤` on `Float` is the model's
-`≤` — so the ternary every printer writes is decided by the model's comparison, NaN included. -/
-theorem BinOp_eval_min_ite (a b : Float) :
-    BinOp.eval .min a b = (if a ≤ b then a else b) := rfl
+/-- `min`/`max` are the model's IEEE 754-2019 `minimum`/`maximum` — the function every printer
+writes, NaN propagation and signed-zero order included. -/
+theorem BinOp_eval_min_model (a b : Float) :
+    BinOp.eval .min a b = Float.ofModel (a.toModel.minimum b.toModel) := rfl
 
-theorem BinOp_eval_max_ite (a b : Float) :
-    BinOp.eval .max a b = (if a ≤ b then b else a) := rfl
+theorem BinOp_eval_max_model (a b : Float) :
+    BinOp.eval .max a b = Float.ofModel (a.toModel.maximum b.toModel) := rfl
 
 theorem Float_le_model (a b : Float) : (a ≤ b) = (a.toModel ≤ b.toModel) := rfl
 

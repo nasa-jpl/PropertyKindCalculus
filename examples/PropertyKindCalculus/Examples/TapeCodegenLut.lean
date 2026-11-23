@@ -63,12 +63,11 @@ def demoLut2 : LutTable :=
   { name := "demolut2", width := 5, layers := 2
   , values := #[1.0, 1.5, 3.0, 5.5, 9.0,  11.0, 10.0, 8.0, 5.0, 1.0] }
 
-/-- NaN coordinates select sample 0, and NaN layers select layer 0. -/
-def lutNaNClampsToLowerBounds : Bool :=
-  demoLut.refFetch 0.0 Float.nan == demoLut.refFetch 0.0 0.0
-    && demoLut.refFetch Float.nan 2.0 == demoLut.refFetch 0.0 2.0
+/-- A NaN coordinate or a NaN layer fetches NaN. -/
+def lutNaNPropagates : Bool :=
+  (demoLut.refFetch 0.0 Float.nan).isNaN && (demoLut.refFetch Float.nan 2.0).isNaN
 
-#guard lutNaNClampsToLowerBounds
+#guard lutNaNPropagates
 
 /-- Written once over BOTH classes: the fetch plus ordinary arithmetic. The `[LutInterp α]`
 context is the point — the model's dependence on tabulated data is visible in its type. -/
@@ -186,7 +185,7 @@ def lutLandingHolds : Bool :=
         && hasSub cuP "tl_get_tex_demolut"
         && hasSub cuP "tex1DLayered<float>"
         && hasSub cuP "__fmul_rn"                 -- point mode: explicit lerp
-        && hasSub cuP "float um = (wmax <= u ? wmax : u)"
+        && hasSub cuP "if (layer != layer || u != u) return layer + u;"
         && hasSub cuP "float lm = (lmax <= ls ? lmax : ls)"
         && hasSub cuP "cudaFilterModePoint"
         && hasSub cuH "cudaFilterModeLinear"      -- hardware mode: filtered fetch,
@@ -195,9 +194,9 @@ def lutLandingHolds : Bool :=
         && hasSub stP "lut_demo_launch"
         && hasSub cuP "lut_demo_launch"
         && hasSub stP "TL_LUTFETCH"
-        && hasSub stP "float um = (wmax <= u ? wmax : u)"
+        && hasSub stP "if (layer != layer || u != u) return layer + u;"
         && hasSub stP "float lm = (lmax <= ls ? lmax : ls)"
-        && hasSub jlText "um = ifelse(wmax <= u, wmax, u)"
+        && hasSub jlText "(isnan(layer) || isnan(u)) && return layer + u"
         && hasSub jlText "lm = ifelse(lmax <= ls, lmax, ls)"
     | _, _, _ => false
 

@@ -2,9 +2,8 @@
 `lut_cudat_parity` — a self-checking harness for the **eager `CudaT` table lookup**
 (`LutInterp (CudaT s)` in `paradigm.lut_carrier`) against the fp64 reference `LutTable.refFetch`.
 
-`refFetch` sends a NaN coordinate to sample 0 and a NaN layer to layer 0; the `CudaT` instance
-reaches the same answer through TorchLean's `Buffer.tableSegments`, whose clamp selects the lower
-bound on NaN. Like `ssprc_batched_parity`, the `CudaT` numbers can only be checked by a compiled
+`refFetch` returns NaN on a NaN coordinate or layer; the `CudaT` instance reaches the same answer
+through TorchLean's `Buffer.tableSegments` once its clamp propagates NaN. Like `ssprc_batched_parity`, the `CudaT` numbers can only be checked by a compiled
 executable linked against TorchLean's LibTorch bridge (`-K libtorch=true` with the CPU-only SDK
 from `scripts/libtorch-cpu-sdk.sh`, or `-K cuda=true` on a GPU). The probes cover NaN, ±∞,
 out-of-range and interior coordinates and layers. Exits `0` on parity, `1` on mismatch, `2` when
@@ -67,7 +66,7 @@ with no visible CUDA device; TORCHLEAN_LIBTORCH_DEVICE=cpu selects the host inst
     let (l, u) := probes[i]!
     let want := table.refFetch l u
     let out := got.get! i
-    let ok := !out.isNaN && Float.abs (out - want) ≤ tol
+    let ok := if want.isNaN then out.isNaN else !out.isNaN && Float.abs (out - want) ≤ tol
     IO.println s!"{if ok then "ok  " else "FAIL"} layer={l} u={u}  CudaT={out}  refFetch={want}"
     unless ok do bad := bad + 1
   if got.size != probes.size then

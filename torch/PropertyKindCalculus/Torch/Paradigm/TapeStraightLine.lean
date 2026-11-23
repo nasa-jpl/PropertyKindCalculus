@@ -149,7 +149,7 @@ def UnOp.ofName? : String → Option UnOp
   | _ => none
 
 /-- The scalar semantics of a binary op — `cOp`'s clause. `min`/`max` are Lean's
-`minOfLe`/`maxOfLe` (`if x ≤ y then x else y`), NaN included. -/
+`Float.minimum`/`Float.maximum`: IEEE 754-2019, NaN-propagating, `-0.0` below `+0.0`. -/
 def BinOp.eval : BinOp → Float → Float → Float
   | .add, a, b => a + b
   | .sub, a, b => a - b

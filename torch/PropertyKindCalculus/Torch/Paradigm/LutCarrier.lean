@@ -71,12 +71,12 @@ namespace LutTable
 
 /-- The fp64 reference semantics of one fetch: clamp `u` to `[0, width−1]`, clamp the
 integral-valued `layer` to `[0, layers−1]`, floor, and linearly interpolate — the uniform-grid
-analogue of `np.interp`, and the `evalTapeT` denotation of a recorded `lutfetch` node. The
-hi-first minima preserve NaN until the zero floor maps a NaN coordinate to sample 0 and a NaN
-layer to layer 0 for nonempty tables. The deployed fp32 kernels (point mode) compute exactly this
+analogue of `np.interp`, and the `evalTapeT` denotation of a recorded `lutfetch` node. A NaN
+coordinate or layer gives NaN for nonempty tables, as `min`/`max` and `clamp` propagate it. The deployed fp32 kernels (point mode) compute exactly this
 in float32. -/
 def refFetch (tbl : LutTable) (layer u : Float) : Float :=
   if tbl.width == 0 || tbl.layers == 0 then 0.0
+  else if layer.isNaN || u.isNaN then layer + u
   else Id.run do
     let wmax := Float.ofNat (tbl.width - 1)
     let uc := max 0.0 (min wmax u)
@@ -143,8 +143,8 @@ instance {s : Shape} : LutInterp (TapeBuilder s) where
 /-- The executing device instance: one layered table lookup through TorchLean's LibTorch
 primitives (the bit-reproducible float32 twin of `refFetch`). The table upload is per call —
 parity-check economics; deployments that care upload once via TorchLean or land the megakernel.
-An empty table (no samples or no layers) reads as `0`, as `refFetch` does. `tableSegments` clamps
-with the backend's `clamp`, so a NaN coordinate or layer selects sample 0 or layer 0, as in `refFetch`. -/
+An empty table (no samples or no layers) reads as `0`, as `refFetch` does. A NaN coordinate or
+layer is `refFetch`'s NaN only once `tableSegments` clamps with a NaN-propagating `clamp`. -/
 instance {s : Shape} : LutInterp (CudaCarrier.CudaT s) where
   lutFetch tbl layer u :=
     if tbl.width == 0 || tbl.layers == 0 then CudaCarrier.CudaT.const 0.0

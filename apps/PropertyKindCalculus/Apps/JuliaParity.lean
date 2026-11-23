@@ -32,10 +32,11 @@ public import PropertyKindCalculus.Examples.TapeCodegenLut
 
 @[expose] public section Blanket
 
-open Runtime.Autograd (Tape Node)
+open Runtime.Autograd (Tape Node TapeM)
 open PropertyKindCalculus.Paradigm.TapeCodegen
 open PropertyKindCalculus.Paradigm.TapeCodegen.Julia
-open PropertyKindCalculus.Paradigm (LutTable)
+open PropertyKindCalculus.Paradigm (LutTable LutInterp)
+open PropertyKindCalculus.Examples (TapeCodegenLut.inLeafV TapeCodegenLut.TB TapeCodegenLut.demoLut)
 open PropertyKindCalculus.Paradigm.TapeCSE (cseCompact)
 
 namespace PropertyKindCalculus.Apps.JuliaParity
@@ -187,6 +188,8 @@ structure Case where
   centre : String → Float
   /-- The lookup tables the tape's `lutfetch` nodes name (empty for pure-arithmetic tapes). -/
   tables : Array LutTable := #[]
+  /-- Fixed pixels run instead of the perturbed centre (`--pixels` then does not apply). -/
+  pixels : Option (List (String → Float)) := none
 
 /-- `Examples.TapeCodegenLut`'s mixed fetch + arithmetic model, compacted — the case that exercises
 `tl_lutfetch` and the table-extended interpreter `evalTapeT`. -/
@@ -195,6 +198,22 @@ def recordLut : Except String (Tape Float × List Nat) := do
   let (t', remap) := cseCompact t
   pure (t', [remap.getD id id])
 
+/-- `min`, `max`, the clamp `max lo (min hi x)` and a table fetch, as four outputs: the ops whose
+NaN and signed-zero results the renderings must reproduce. -/
+def recordSpecial : Except String (Tape Float × List Nat) := do
+  let x := TapeCodegenLut.inLeafV "x" 1.0
+  let y := TapeCodegenLut.inLeafV "y" 2.0
+  let fetch : TapeCodegenLut.TB := LutInterp.lutFetch TapeCodegenLut.demoLut x y
+  let outs : List TapeCodegenLut.TB :=
+    [Min.min x y, Max.max x y, Max.max (0 : TapeCodegenLut.TB) (Min.min (1 : TapeCodegenLut.TB) x), fetch]
+  let (ids, t) ← TapeM.run Tape.empty (outs.mapM (·.run))
+  pure (t, ids)
+
+/-- Every ordered pair over NaN, `±0`, `±1` and `±∞`, as `(x, y)`. -/
+def specialPixels : List (String → Float) :=
+  let vs : List Float := [0.0 / 0.0, 0.0, -0.0, 1.0, -1.0, 1.0 / 0.0, -1.0 / 0.0]
+  vs.flatMap fun a => vs.map fun b => fun nm => if nm == "x" then a else b
+
 def cases : List Case :=
   [ { name := "avs_resjac", record := PropertyKindCalculus.Paradigm.TapeCodegen.Demo.recordResJac
     , centre := PropertyKindCalculus.Paradigm.TapeCodegen.Demo.env0 }
@@ -202,7 +221,9 @@ def cases : List Case :=
     , centre := PropertyKindCalculus.Examples.LmStepCodegenDemo.env0 }
   , { name := "lut_model", record := recordLut
     , centre := PropertyKindCalculus.Examples.TapeCodegenLut.recordEnv
-    , tables := #[PropertyKindCalculus.Examples.TapeCodegenLut.demoLut] } ]
+    , tables := #[PropertyKindCalculus.Examples.TapeCodegenLut.demoLut] }
+  , { name := "nan_signed_zero", record := recordSpecial, centre := fun _ => 0.0
+    , tables := #[PropertyKindCalculus.Examples.TapeCodegenLut.demoLut], pixels := some specialPixels } ]
 
 /-- The tables of a case, keyed by name — `evalTapeT`'s table resolver. -/
 def tableLookup (c : Case) : String → Option LutTable := fun tn => c.tables.find? (·.name == tn)
@@ -257,8 +278,8 @@ def compareSurface (o : Opts) (julia : String) (c : Case) (t : Tape Float) (outI
   IO.FS.writeFile (dir / s!"{c.name}_julia_out_{surface}.txt") res.stdout
   let marks := transCone t
   let outLines := (res.stdout.splitOn "\n").filter (· ≠ "")
-  if outLines.length != o.pixels then
-    IO.eprintln s!"[{c.name}] expected {o.pixels} output rows, got {outLines.length}"
+  if outLines.length != envs.length then
+    IO.eprintln s!"[{c.name}] expected {envs.length} output rows, got {outLines.length}"
     return none
   let mut v : Verdict := {}
   for (env, line, k) in (envs.zip outLines).zipIdx.map (fun ((e, l), k) => (e, l, k)) do
@@ -299,7 +320,7 @@ def compareSurface (o : Opts) (julia : String) (c : Case) (t : Tape Float) (outI
               v := { v with ulpFailures := v.ulpFailures + 1, notes := v.notes.push note }
   let nTrans := outIds.filter (fun oid => marks.getD oid false) |>.length
   let tolDesc := if ka then s!"relative tolerance {o.kaRtolText}" else s!"bit-exact outside exp/log cones, {o.maxUlp} ulp inside"
-  IO.println s!"[{c.name}/{surface}] ({tolDesc}) nodes {t.nodes.size}, inputs {cg.inputs.size}, outputs {outIds.length} ({nTrans} in an exp/log cone), pixels {o.pixels}: compared {v.compared}, exact failures {v.exactFailures}, ulp failures {v.ulpFailures}, max ulp seen {v.maxUlpSeen}"
+  IO.println s!"[{c.name}/{surface}] ({tolDesc}) nodes {t.nodes.size}, inputs {cg.inputs.size}, outputs {outIds.length} ({nTrans} in an exp/log cone), pixels {envs.length}: compared {v.compared}, exact failures {v.exactFailures}, ulp failures {v.ulpFailures}, max ulp seen {v.maxUlpSeen}"
   for n in v.notes.toList.take 20 do IO.println s!"    {n}"
   return some v
 
@@ -316,7 +337,7 @@ def runCase (o : Opts) (julia : String) (c : Case) : IO (Option Verdict) := do
   IO.FS.writeFile (dir / s!"{c.name}_ka.jl") (emitJuliaKA c.name cg)
   IO.FS.writeFile (dir / s!"{c.name}_parity.jl") (driver c.name cg.numOutputs cg.tables)
   IO.FS.writeFile (dir / s!"{c.name}_parity_ka.jl") (driver c.name cg.numOutputs cg.tables (ka := true))
-  let envs := (List.range o.pixels).map (pixelEnv c.centre cg.inputs)
+  let envs := c.pixels.getD ((List.range o.pixels).map (pixelEnv c.centre cg.inputs))
   let rows := envs.map fun env => String.intercalate " " (cg.inputs.toList.map (fun nm => hexOfBits (env nm).toBits))
   IO.FS.writeFile (dir / s!"{c.name}_inputs.txt")
     (String.intercalate "\n" (String.intercalate " " cg.inputs.toList :: rows) ++ "\n")
