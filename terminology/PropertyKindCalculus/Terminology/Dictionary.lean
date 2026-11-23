@@ -280,7 +280,7 @@ def dictionary : List Term :=
                 instantiated at the recording carrier; the calculus reads it forward and \
                 never runs the backward pass the name comes from. A straight-line program, \
                 not a graph, with kinds erased.",
-      decls := [`Runtime.Autograd.Tape, `PropertyKindCalculus.Paradigm.TapeBuilder],
+      decls := [`TorchLean.Tape, `PropertyKindCalculus.Paradigm.TapeBuilder],
       definedIn := "capstones",
       seeAlso := ["computational tape graph", "recording carrier", "compacted tape",
                   "denotation bridge"] }
@@ -296,7 +296,7 @@ def dictionary : List Term :=
                 apart from its nodes. The object the second capstone relates to the \
                 provenance hypergraph.",
       decls := [`PropertyKindCalculus.Paradigm.TapeGraph,
-                `PropertyKindCalculus.Paradigm.TapeCodegen.ofTape, `Runtime.Autograd.Node],
+                `PropertyKindCalculus.Paradigm.TapeCodegen.ofTape, `TorchLean.Tape.Node],
       definedIn := "capstones",
       avoid := ["computational graph", "elementwise DAG", "megakernel DAG"],
       seeAlso := ["tape", "metrological provenance hypergraph",
