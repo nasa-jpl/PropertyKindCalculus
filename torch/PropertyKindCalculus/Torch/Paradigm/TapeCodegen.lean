@@ -388,7 +388,9 @@ def lutHelperStub (cg : Codegen) : String :=
   if cg.tables.isEmpty then "" else
   let quant := match cg.lutMode with
     | .point => ""
-    | .hardware => "  f = floorf(f * 256.0f + 0.5f) / 256.0f;\n"
+    -- A weight that rounds to one is the next grid point at weight zero.
+    | .hardware =>
+      "  f = floorf(f * 256.0f + 0.5f) / 256.0f;\n  if (f >= 1.0f) { j = j + 1.0f; f = 0.0f; }\n"
   String.intercalate "\n"
     [ "static float tl_lutfetch(const float* tab, int W, int LAYERS, float layer, float u) {"
     , "  if (layer != layer || u != u) return layer + u;"

@@ -243,7 +243,9 @@ def lutHelperJulia (cg : JuliaCodegen) : String :=
   if cg.tables.isEmpty then "" else
   let quant := match cg.lutMode with
     | .point => ""
-    | .hardware => "    f = floor(f * T(256) + T(0.5)) / T(256)\n"
+    -- A weight that rounds to one is the next grid point at weight zero.
+    | .hardware =>
+      "    f = floor(f * T(256) + T(0.5)) / T(256)\n    if f >= one(T)\n        j = j + one(T)\n        f = zero(T)\n    end\n"
   String.intercalate "\n"
     [ "@inline function tl_lutfetch(tab::AbstractVector{T}, W::Int, LAYERS::Int, layer::T, u::T) where {T<:AbstractFloat}"
     , "    (W == 0 || LAYERS == 0) && return zero(T)"
