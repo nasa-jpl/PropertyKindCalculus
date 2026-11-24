@@ -30,7 +30,7 @@ VENV="$SDK_DIR/venv-$TORCH_VERSION"
 if [ ! -f "$VENV/.installed" ]; then
   # torch wheels need a recent Python, which a host's python3 may not be: prefer the blueprint's
   # pixi-pinned one (blueprint/pixi.lock).
-  manifest="$(cd "$(dirname "$0")/.." && pwd)/blueprint/pyproject.toml"
+  manifest="$(cd "$(dirname "$0")/.." >/dev/null && pwd)/blueprint/pyproject.toml"
   if command -v pixi >/dev/null 2>&1; then
     pixi run --manifest-path "$manifest" python -m venv --clear "$VENV" >&2
   else
