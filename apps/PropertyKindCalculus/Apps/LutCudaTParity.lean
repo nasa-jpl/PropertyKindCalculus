@@ -11,13 +11,16 @@ resident `CudaT` buffers
 clamped endpoints and interior points: NaN and infinite samples, finite neighbour differences that
 overflow float32, a flat segment, cancelling opposite-sign samples and `-0.0` samples. The kernel
 must equal `refFetch` on the float32 inputs, rounded once to float32, bit for bit. `pins` fixes
-`refFetch` itself on the cases where float32 lerp forms differ. Exits `0` on parity and `1` on
-mismatch.
+`refFetch` itself on the cases where float32 lerp forms differ. The same probes run through the
+emitted `tl_lutfetch` helpers: the C stub when `cc` is on the path, and both Julia methods on
+`Float32` data when `julia` is. The CUDA texture helper runs only inside a generated kernel on a
+device, so no probe here executes it. Exits `0` on parity and `1` on mismatch.
 -/
 
 module
 
 public import PropertyKindCalculus.Torch.Paradigm.LutCarrier
+public import PropertyKindCalculus.Torch.Paradigm.TapeCodegenJulia
 public import TorchLean.CUDA.LibTorch.Controls
 
 @[expose] public section Blanket
@@ -186,6 +189,96 @@ def runTable (tbl : LutTable) (ps : Array (Float × Float)) (cuda : Bool) : IO N
     bad := bad + (← check tbl ps "CudaT " (fun i => got.get! i))
   return bad
 
+def hex8 (b : UInt32) : String :=
+  String.ofList <| (List.range 8).map fun i => Nat.digitChar ((b.toNat / 2 ^ (28 - 4 * i)) % 16)
+
+def hexDigit? (c : Char) : Option Nat :=
+  if '0' ≤ c && c ≤ '9' then some (c.toNat - '0'.toNat)
+  else if 'a' ≤ c && c ≤ 'f' then some (c.toNat - 'a'.toNat + 10)
+  else none
+
+/-- A float32 printed as eight hex digits, widened to `Float`. -/
+def ofHex8? (s : String) : Option Float :=
+  if s.length != 8 then none else
+  (s.toList.foldlM (fun n c => (hexDigit? c).map (n * 16 + ·)) 0).map fun n =>
+    (Float32.ofBits n.toUInt32).toFloat
+
+def f32Hex (x : Float) : String := hex8 x.toFloat32.toBits
+
+/-- Whether `cmd` runs. -/
+def hasTool (cmd : String) : IO Bool := do
+  try return (← IO.Process.output { cmd, args := #["--version"] }).exitCode == 0
+  catch _ => return false
+
+/-- Compare one emitted helper's printed results with `refFetch`: `cols` hex words per probe. -/
+def checkEmitted (tbl : LutTable) (ps : Array (Float × Float)) (labels : List String)
+    (res : IO.Process.Output) : IO Nat := do
+  if res.exitCode != 0 then
+    IO.eprintln s!"{labels} {tbl.name}: the emitted helper failed to run:\n{res.stderr}"
+    return 1
+  let rows := (res.stdout.splitOn "\n").filter (· ≠ "") |>.map (·.splitOn " ") |>.toArray
+  if rows.size != ps.size then
+    IO.eprintln s!"{labels} {tbl.name}: {rows.size} result rows for {ps.size} probes."
+    return 1
+  let mut bad := 0
+  for (label, c) in labels.zipIdx do
+    bad := bad + (← check tbl ps label fun i => ((rows[i]!)[c]? >>= ofHex8?).getD 0.0)
+  return bad
+
+/-- Run every probe of one table through the emitted point-mode `tl_lutfetch` helpers on float32
+data: the C stub, and the `Float32` and generic (`Float64`) Julia methods. -/
+def runEmitted (dir : System.FilePath) (tbl : LutTable) (ps : Array (Float × Float))
+    (cc julia : Bool) : IO Nat := do
+  let tab := tbl.values.toList.map f32Hex
+  let ls := ps.toList.map (f32Hex ·.1)
+  let us := ps.toList.map (f32Hex ·.2)
+  let mut bad := 0
+  if cc then
+    let cg : TapeCodegen.Codegen :=
+      { inputs := #[], numOutputs := 0, body := #[], outLines := #[], tables := #[tbl] }
+    let arr (nm : String) (xs : List String) :=
+      s!"static const uint32_t {nm}[] = \{" ++ String.intercalate ", " (xs.map ("0x" ++ ·)) ++ "};"
+    let src := String.intercalate "\n"
+      [ "#include <math.h>", "#include <stdint.h>", "#include <stdio.h>", "#include <string.h>"
+      , TapeCodegen.lutHelperStub cg
+      , arr "tabBits" tab, arr "lBits" ls, arr "uBits" us
+      , "int main(void) {"
+      , s!"  float tab[{tab.length}]; memcpy(tab, tabBits, sizeof tab);"
+      , s!"  for (int i = 0; i < {ps.size}; i++) \{"
+      , "    float l, u; memcpy(&l, &lBits[i], 4); memcpy(&u, &uBits[i], 4);"
+      , s!"    float r = tl_lutfetch(tab, {tbl.width}, {tbl.layers}, l, u);"
+      , "    uint32_t b; memcpy(&b, &r, 4); printf(\"%08x\\n\", b);"
+      , "  }", "  return 0;", "}", "" ]
+    let cFile := dir / s!"{tbl.name}.c"
+    let exe := dir / s!"{tbl.name}.out"
+    IO.FS.writeFile cFile src
+    let build ← IO.Process.output
+      { cmd := "cc", args := #["-O2", "-ffp-contract=off", "-o", exe.toString, cFile.toString, "-lm"] }
+    if build.exitCode != 0 then
+      IO.eprintln s!"C stub {tbl.name}: cc failed:\n{build.stderr}"
+      bad := bad + 1
+    else
+      bad := bad + (← checkEmitted tbl ps ["C stub"] (← IO.Process.output { cmd := exe.toString }))
+  if julia then
+    let cg : TapeCodegen.Julia.JuliaCodegen :=
+      { inputs := #[], numOutputs := 0, body := #[], outLines := #[], tables := #[tbl] }
+    let vec (nm : String) (xs : List String) :=
+      s!"{nm} = reinterpret(Float32, UInt32[" ++ String.intercalate ", " (xs.map ("0x" ++ ·)) ++ "])"
+    let src := String.intercalate "\n"
+      [ TapeCodegen.Julia.lutHelperJulia cg
+      , vec "tab" tab, vec "ls" ls, vec "us" us
+      , "generic(l, u) = invoke(tl_lutfetch, Tuple{AbstractVector{T},Int,Int,T,T} where {T<:AbstractFloat}, "
+          ++ s!"tab, {tbl.width}, {tbl.layers}, l, u)"
+      , "hex(x) = string(reinterpret(UInt32, x); base = 16, pad = 8)"
+      , "for (l, u) in zip(ls, us)"
+      , s!"    println(hex(tl_lutfetch(tab, {tbl.width}, {tbl.layers}, l, u)), \" \", hex(generic(l, u)))"
+      , "end", "" ]
+    let jlFile := dir / s!"{tbl.name}.jl"
+    IO.FS.writeFile jlFile src
+    bad := bad + (← checkEmitted tbl ps ["jl F32", "jl F64"]
+      (← IO.Process.output { cmd := "julia", args := #["--startup-file=no", jlFile.toString] }))
+  return bad
+
 def main : IO UInt32 := do
   let cuda ← cudaLinked
   unless cuda do
@@ -194,6 +287,17 @@ def main : IO UInt32 := do
     + (← runTable overflowTable overflowProbes cuda) + (← runTable flatTable flatProbes cuda)
     + (← runTable cancelTable cancelProbes cuda) + (← runTable zeroTable zeroProbes cuda)
     + (← runTable infTable infProbes cuda) + (← runTable oneTable oneProbes cuda) + (← checkPins)
+  let cc ← hasTool "cc"
+  let julia ← hasTool "julia"
+  unless cc do IO.println "No cc on the path: the emitted C stub helper was not run."
+  unless julia do IO.println "No julia on the path: the emitted Julia helpers were not run."
+  let dir : System.FilePath := "_out/lut-parity"
+  IO.FS.createDirAll dir
+  let mut bad := bad
+  for (tbl, ps) in [(table, probes), (edgeTable, edgeProbes), (overflowTable, overflowProbes),
+      (flatTable, flatProbes), (cancelTable, cancelProbes), (zeroTable, zeroProbes),
+      (infTable, infProbes), (oneTable, oneProbes)] do
+    bad := bad + (← runEmitted dir tbl ps cc julia)
   if bad == 0 then
     IO.println "PARITY OK — the fetch kernel matches refFetch, NaN probes and non-finite samples included."
     return 0

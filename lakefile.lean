@@ -502,7 +502,8 @@ lean_exe «mcm_batched_parity» where
 /-- **The table-fetch kernel against `LutTable.refFetch`.** A compiled executable evaluates
 `LutTable.fetchProgram` on NaN, infinite, out-of-range and interior probes and asserts each value
 matches the fp64 reference: in Lean on the CPU always, and as generated CUDA when a CUDA device is
-linked. Run with `lake exe lut_cudat_parity`; exits `0` on parity, `1` on mismatch. -/
+linked. It also runs the emitted C and Julia `tl_lutfetch` helpers when `cc` and `julia` are on the
+path. Run with `lake exe lut_cudat_parity`; exits `0` on parity, `1` on mismatch. -/
 lean_exe «lut_cudat_parity» where
   srcDir := "apps"
   root := `PropertyKindCalculus.Apps.LutCudaTParity
