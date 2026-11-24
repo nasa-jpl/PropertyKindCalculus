@@ -35,14 +35,14 @@ the honest check is an ulp bound (`apps.julia_parity`). The semantics choices th
   * precision is the type parameter `T<:AbstractFloat`: one emitted function is the `Float64` parity
     twin of `evalTape` and the `Float32` deployment kernel;
   * `lutfetch` is the C stub's clamp/floor/lerp over the same flat `layers × width` row-major vector
-    (`tl_lutfetch`), in `Float64` and rounded once to `T`, point mode bit-identical, hardware mode
+    (`tl_lutfetch`), in binary64 and rounded once to `T`, point mode bit-identical, hardware mode
     emulating the 9-bit weight.
 
 Two surfaces are emitted from one body: a plain `function name!(out, in_…) … end` host loop
 (`emitJulia`, no package dependencies — the **bit-exact twin**, what the parity probe gates), and a
 KernelAbstractions.jl `@kernel` (`emitJuliaKA`) that the same `.jl` runs on CPU, CUDA, AMDGPU or
 Metal — the **portability twin**, the Julia side of "choosing a carrier, not rewriting the model".
-A kernel with a table fetch needs a backend with `Float64`, which Metal lacks.
+A table fetch on `Float32` data uses no `Float64`, so it runs on Metal too.
 The portability twin is tolerance-only, like the `.hardware` table mode: a KernelAbstractions backend
 may contract `a*b + c` to a fused multiply-add — KernelAbstractions 0.10's CPU backend compiles the
 kernel through PoCL (OpenCL) with `fuse_muladd` on whenever the host has hardware FMA
@@ -235,19 +235,121 @@ def mathHelpers : String := String.intercalate "\n"
   , "@inline tl_log(x::T) where {T<:AbstractFloat} = x < zero(T) ? T(NaN) : log(x)"
   , "" ]
 
-/-- The `lutfetch` helper: `LutTable.refFetch`'s clamp/floor/lerp in `Float64` over the flat
+/-- Binary64 `a + f*(b - a)` on finite `Float32` values, rounded once to `Float32`, in integer
+arithmetic only: the table fetch for backends without `Float64` (Metal). -/
+def softFloatJulia : String := String.intercalate "\n"
+    [ "# Finite Float32 as sign, integer significand and exponent: x = (-1)^s * m * 2^e."
+    , "@inline function tl_sf_split(x::Float32)"
+    , "    bits = reinterpret(UInt32, x)"
+    , "    ex = (bits >> 23) & 0x000000ff"
+    , "    fr = (bits & 0x007fffff) % UInt64"
+    , "    s = (bits >> 31) % UInt64"
+    , "    return ex == 0x00000000 ? (s, fr, -149) : (s, fr | 0x0000000000800000, (ex % Int) - 150)"
+    , "end"
+    , "# Round m * 2^e to a 53-bit significand, ties to even; bit 0 of m may be a sticky bit."
+    , "@inline function tl_sf_round(s::UInt64, m::UInt64, e::Int)"
+    , "    m == 0x0000000000000000 && return (s, m, 0)"
+    , "    k = 11 - leading_zeros(m)"
+    , "    k <= 0 && return (s, m << (-k), e + k)"
+    , "    q = m >> k"
+    , "    r = m & ((0x0000000000000001 << k) - 0x0000000000000001)"
+    , "    h = 0x0000000000000001 << (k - 1)"
+    , "    q += ((r > h) | ((r == h) & ((q & 0x0000000000000001) == 0x0000000000000001))) % UInt64"
+    , "    return q == 0x0020000000000000 ? (s, q >> 1, e + k + 1) : (s, q, e + k)"
+    , "end"
+    , "# Binary64 sum of two finite values, each with a significand of at most 53 bits."
+    , "@inline function tl_sf_add(sa::UInt64, ma::UInt64, ea::Int, sb::UInt64, mb::UInt64, eb::Int)"
+    , "    ma == 0x0000000000000000 && mb == 0x0000000000000000 && return (sa & sb, ma, 0)"
+    , "    ma == 0x0000000000000000 && return tl_sf_round(sb, mb, eb)"
+    , "    mb == 0x0000000000000000 && return tl_sf_round(sa, ma, ea)"
+    , "    ka = leading_zeros(ma) - 2"
+    , "    kb = leading_zeros(mb) - 2"
+    , "    xa = ma << ka"
+    , "    xb = mb << kb"
+    , "    fa = ea - ka"
+    , "    fb = eb - kb"
+    , "    swap = (fb > fa) | ((fb == fa) & (xb > xa))"
+    , "    sh = swap ? sb : sa"
+    , "    xh = swap ? xb : xa"
+    , "    fh = swap ? fb : fa"
+    , "    sl = swap ? sa : sb"
+    , "    xl = swap ? xa : xb"
+    , "    fl = swap ? fa : fb"
+    , "    dsh = fh - fl"
+    , "    lo = dsh >= 62 ? 0x0000000000000001 :"
+    , "        (xl >> dsh) | ((xl & ((0x0000000000000001 << dsh) - 0x0000000000000001)) != 0x0000000000000000) % UInt64"
+    , "    sh == sl && return tl_sf_round(sh, xh + lo, fh)"
+    , "    xh == lo && return (0x0000000000000000, 0x0000000000000000, 0)"
+    , "    return tl_sf_round(sh, xh - lo, fh)"
+    , "end"
+    , "# Binary64 product of a significand below 2^24 and one below 2^53, both normalised first."
+    , "@inline function tl_sf_mul(sf::UInt64, m1::UInt64, e1::Int, sd::UInt64, m2::UInt64, e2::Int)"
+    , "    (m1 == 0x0000000000000000 || m2 == 0x0000000000000000) && return (sf ⊻ sd, 0x0000000000000000, 0)"
+    , "    kf = leading_zeros(m1) - 40"
+    , "    kd = leading_zeros(m2) - 11"
+    , "    mf = m1 << kf"
+    , "    md = m2 << kd"
+    , "    ef = e1 - kf"
+    , "    ed = e2 - kd"
+    , "    ph = mf * (md >> 26)"
+    , "    pl = mf * (md & 0x0000000003ffffff)"
+    , "    q = ph + (pl >> 26)"
+    , "    r = pl & 0x0000000003ffffff"
+    , "    x = (q << 11) | (r >> 15) | ((r & 0x0000000000007fff) != 0x0000000000000000) % UInt64"
+    , "    return tl_sf_round(sf ⊻ sd, x, ef + ed + 15)"
+    , "end"
+    , "# Round a binary64 value with a 53-bit significand to Float32, ties to even."
+    , "@inline function tl_sf_narrow(s::UInt64, m::UInt64, e::Int)"
+    , "    sbit = (s % UInt32) << 31"
+    , "    m == 0x0000000000000000 && return reinterpret(Float32, sbit)"
+    , "    top = e + 52"
+    , "    q = top - 23 < -149 ? -149 : top - 23"
+    , "    k = q - e"
+    , "    n = 0x0000000000000000"
+    , "    if k <= 60"
+    , "        n = m >> k"
+    , "        r = m & ((0x0000000000000001 << k) - 0x0000000000000001)"
+    , "        h = 0x0000000000000001 << (k - 1)"
+    , "        n += ((r > h) | ((r == h) & ((n & 0x0000000000000001) == 0x0000000000000001))) % UInt64"
+    , "    end"
+    , "    if n == 0x0000000001000000"
+    , "        n = n >> 1"
+    , "        q += 1"
+    , "    end"
+    , "    n < 0x0000000000800000 && return reinterpret(Float32, sbit | (n % UInt32))"
+    , "    field = q + 150"
+    , "    field >= 255 && return reinterpret(Float32, sbit | 0x7f800000)"
+    , "    return reinterpret(Float32, sbit | ((field % UInt32) << 23) | ((n % UInt32) & 0x007fffff))"
+    , "end"
+    , "# a + f*(b - a) in binary64 arithmetic rounded once to Float32, using integers only."
+    , "@inline function tl_lerp64(a::Float32, b::Float32, f::Float32)"
+    , "    (isfinite(a) && isfinite(b)) || return a + f * (b - a)"
+    , "    (sa, ma, ea) = tl_sf_split(a)"
+    , "    (sb, mb, eb) = tl_sf_split(b)"
+    , "    (sf, mf, ef) = tl_sf_split(f)"
+    , "    (sd, md, ed) = tl_sf_add(sb, mb, eb, sa ⊻ 0x0000000000000001, ma, ea)"
+    , "    (sp, mp, ep) = tl_sf_mul(sf, mf, ef, sd, md, ed)"
+    , "    (sr, mr, er) = tl_sf_add(sa, ma, ea, sp, mp, ep)"
+    , "    return tl_sf_narrow(sr, mr, er)"
+    , "end" ]
+
+/-- The `lutfetch` helper: `LutTable.refFetch`'s clamp/floor/lerp in binary64 over the flat
 row-major table, rounded once to `T` — an empty table (`W == 0 || LAYERS == 0`) fetches `zero(T)`
 as `refFetch` returns `0.0`. A NaN coordinate or layer returns NaN before the clamps, matching the
 C stub and CUDA helper. The layer is clamped before it is truncated, so a huge finite layer cannot
-overflow the index. Point mode is the stub's arithmetic step for step; hardware mode emulates the
-9-bit weight, tolerance-only. Empty when the kernel uses no tables. -/
+overflow the index. Two methods give the same values: the generic one computes in `Float64`, and
+the `Float32` one in `Float32` and integers (`softFloatJulia`), so it runs on a backend without
+`Float64`. Point mode is the stub's arithmetic step for step; hardware mode emulates the 9-bit
+weight, tolerance-only. Empty when the kernel uses no tables. -/
 def lutHelperJulia (cg : JuliaCodegen) : String :=
   if cg.tables.isEmpty then "" else
-  let quant := match cg.lutMode with
-    | .point => ""
-    -- A weight that rounds to one is the next grid point at weight zero.
+  -- A weight that rounds to one is the next grid point at weight zero.
+  let (quant, quant32) := match cg.lutMode with
+    | .point => ("", "")
     | .hardware =>
-      "    f = floor(f * 256.0 + 0.5) / 256.0\n    if f >= 1.0\n        j = j + 1.0\n        f = 0.0\n    end\n"
+      ( "    f = floor(f * 256.0 + 0.5) / 256.0\n    if f >= 1.0\n        j = j + 1.0\n        f = 0.0\n    end\n"
+      , "    g = f * 256.0f0\n    gf = floor(g)\n    f = ifelse(g - gf >= 0.5f0, gf + 1.0f0, gf) / 256.0f0\n"
+          ++ "    if f >= 1.0f0\n        j = j + 1.0f0\n        f = 0.0f0\n    end\n" )
   String.intercalate "\n"
     [ "@inline function tl_lutfetch(tab::AbstractVector{T}, W::Int, LAYERS::Int, layer32::T, u32::T) where {T<:AbstractFloat}"
     , "    (W == 0 || LAYERS == 0) && return zero(T)"
@@ -272,6 +374,28 @@ def lutHelperJulia (cg : JuliaCodegen) : String :=
     , "    fd = f * d"
     , "    return T(a + fd)"
     , "end"
+    , softFloatJulia
+    , "# The Float32 method: the same values with no Float64, for backends that lack it."
+    , "@inline function tl_lutfetch(tab::AbstractVector{Float32}, W::Int, LAYERS::Int, layer::Float32, u::Float32)"
+    , "    (W == 0 || LAYERS == 0) && return 0.0f0"
+    , "    (isnan(layer) || isnan(u)) && return layer + u"
+    , "    wmax = Float32(W - 1)"
+    , "    um = ifelse(wmax <= u, wmax, u)"
+    , "    uc = ifelse(0.0f0 <= um, um, 0.0f0)"
+    , "    lmax = Float32(LAYERS - 1)"
+    , "    lf = floor(layer)"
+    , "    ls = ifelse(layer - lf >= 0.5f0, lf + 1.0f0, lf)"
+    , "    lm = ifelse(lmax <= ls, lmax, ls)"
+    , "    lc = ifelse(0.0f0 <= lm, lm, 0.0f0)"
+    , "    L = unsafe_trunc(Int, lc)"
+    , "    j = floor(uc)"
+    , s!"    f = uc - j\n{quant32}    j0 = unsafe_trunc(Int, j)"
+    , "    j1 = j0 + 1 < W ? j0 + 1 : W - 1"
+    , "    base = L * W"
+    , "    @inbounds a = tab[base + j0 + 1]"
+    , "    @inbounds b = tab[base + j1 + 1]"
+    , "    return tl_lerp64(a, b, f)"
+    , "end"
     , "" ]
 
 /-- The argument list after `out`: `in_<x>::AbstractVector{T}, …, lut_<n>::AbstractVector{T}, …`. -/
@@ -291,8 +415,7 @@ def emitJulia (name : String) (cg : JuliaCodegen) : String :=
 /-- The KernelAbstractions.jl twin: one work-item per pixel, the same body, so the one `.jl` runs
 on CPU, CUDA, AMDGPU or Metal through the backend the caller launches it on
 (`name_kernel!(backend)(out, in_…; ndrange = size(out, 1))`). Tolerance-only: the backend may
-contract to FMA (see the module docstring), so this surface is compared in ulps, never bits. A
-table fetch computes in `Float64`, so a kernel with one needs a backend that has it (not Metal). -/
+contract to FMA (see the module docstring), so this surface is compared in ulps, never bits. -/
 def emitJuliaKA (name : String) (cg : JuliaCodegen) : String :=
   let ins := String.join (cg.inputs.toList.map (fun nm => s!", @Const(in_{nm})"))
     ++ String.join (cg.tables.toList.map (fun tb => s!", @Const(lut_{tb.name})"))

@@ -358,8 +358,7 @@ cannot instantiate a `[NumCarrier α]` kernel or cite a theorem. The Julia emitt
 (`PropertyKindCalculus.Torch.Paradigm.TapeCodegenJulia`) is how a sealed algorithm reaches such a
 host: the same recorded, compacted tape the megakernel is lowered from is rendered as a Julia
 function — a plain host loop, the bit-exact twin, and a KernelAbstractions.jl `@kernel` the one `.jl`
-runs on CPU, CUDA, AMDGPU or Metal (a table fetch computes in `Float64`, which Metal lacks), the
-portability twin, which is tolerance-only because a backend may
+runs on CPU, CUDA, AMDGPU or Metal, the portability twin, which is tolerance-only because a backend may
 fuse `a·b + c` into a multiply-add (the CPU backend does, through PoCL) and a conditioned tail — the LM
 step's normal equations and Cholesky solve — amplifies that ulp a thousandfold while leaving the relative
 error near `1e-13`. It is not a fifth carrier. It is the fourth strategy's intermediate representation

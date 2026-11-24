@@ -228,6 +228,53 @@ def cases : List Case :=
 /-- The tables of a case, keyed by name — `evalTapeT`'s table resolver. -/
 def tableLookup (c : Case) : String → Option LutTable := fun tn => c.tables.find? (·.name == tn)
 
+/-- Julia self-check of a table case: the `Float32` method of `tl_lutfetch` (integers, no `Float64`)
+against the generic `Float64` method on the same `Float32` inputs, bit for bit. -/
+def softFetchCheck : String := String.intercalate "\n"
+  [ "let"
+  , "    ref(tab, W, L, l, u) = invoke(tl_lutfetch, Tuple{AbstractVector{T},Int,Int,T,T} where {T<:AbstractFloat}, tab, W, L, l, u)"
+  , "    same(x, y) = (isnan(x) && isnan(y)) || reinterpret(UInt32, x) == reinterpret(UInt32, y)"
+  , "    sp = Float32[0, -0.0, 0.5, 1, 1.5, 2.375, 3, 4.25, 4.5, 5.859375, 7, 8.5, 9, 11, Inf32, -Inf32, NaN32, 1f-40, -1, 0.99999994f0, 0.49999997f0]"
+  , "    tab = Float32[8388608, -8388607, 4194299, -6990499, 2f0^127, -2f0^127, floatmax(Float32), 199.900009f0, 199.900009f0, Inf32, -1, 1f-45,"
+  , "                  -0.0, -1, -0.0, 1, NaN32, 2, -Inf32, 3f-39, -3.4f38, 3.3f38, 16777215, 0.1f0]"
+  , "    seed = 0x2545f4914f6cdd1d"
+  , "    bad = 0"
+  , "    for t in 1:200000"
+  , "        seed = seed * 0x5851f42d4c957f2d + 0x14057b7ef767814f"
+  , "        r1 = (seed >> 40) % UInt32"
+  , "        seed = seed * 0x5851f42d4c957f2d + 0x14057b7ef767814f"
+  , "        r2 = (seed >> 40) % UInt32"
+  , "        l = r1 % 8 == 0 ? sp[1 + r2 % length(sp)] : Float32(r1) / 2f0^24 * 3 - 1"
+  , "        u = r2 % 8 == 1 ? sp[1 + r1 % length(sp)] : Float32(r2) / 2f0^24 * 14 - 1"
+  , "        same(tl_lutfetch(tab, 12, 2, l, u), ref(tab, 12, 2, l, u)) || (bad += 1)"
+  , "    end"
+  , "    lerp(a, b, f) = Float32(Float64(a) + Float64(f) * (Float64(b) - Float64(a)))"
+  , "    for t in 1:2000000"
+  , "        seed = seed * 0x5851f42d4c957f2d + 0x14057b7ef767814f"
+  , "        r1 = (seed >> 32) % UInt32"
+  , "        seed = seed * 0x5851f42d4c957f2d + 0x14057b7ef767814f"
+  , "        r2 = (seed >> 32) % UInt32"
+  , "        seed = seed * 0x5851f42d4c957f2d + 0x14057b7ef767814f"
+  , "        r3 = (seed >> 32) % UInt32"
+  , "        a = reinterpret(Float32, r1)"
+  , "        m = t % 4"
+  , "        b = m == 0 ? reinterpret(Float32, r2) :"
+  , "            m == 1 ? reinterpret(Float32, r1 ⊻ 0x80000000 ⊻ (r2 & 0x000000ff)) :"
+  , "            m == 2 ? reinterpret(Float32, r1 ⊻ (r2 & 0x0000ffff)) : reinterpret(Float32, r1 ⊻ 0x80000000 ⊻ (r2 & 0x00ffffff))"
+  , "        f = t % 3 == 0 ? reinterpret(Float32, r3 % 0x3f800000) : t % 3 == 1 ? reinterpret(Float32, r3 % 0x01000000) : Float32(r3 >> 8) / 2f0^24"
+  , "        (isfinite(a) && isfinite(b)) || continue"
+  , "        same(tl_lerp64(a, b, f), lerp(a, b, f)) || (bad += 1)"
+  , "    end"
+  , "    ev = Float32[0, -0.0, 1, -1, floatmax(Float32), -floatmax(Float32), floatmin(Float32), -floatmin(Float32), 1f-45, -1f-45,"
+  , "                 2f0^127, -2f0^127, 8388608, -8388607, 4194299, -6990499, 199.900009f0, 1f-30, -1f-30, 1.2345678f-33, 3f-45,"
+  , "                 16777216, 16777215, 16777218, -16777218, 1.0000001f0, 0.1f0, 3.3333334f-39, -7.7777f-36]"
+  , "    ef = Float32[0, 0.5, 0.25, 0.75, 0.375, 0.99999994f0, 1f-45, 0.859375f0, 1f-30, 3f-41, 7.3f-40, 1.1754942f-38, 0.1f0, 5.4321f-39]"
+  , "    for a in ev, b in ev, f in ef"
+  , "        same(tl_lerp64(a, b, f), lerp(a, b, f)) || (bad += 1)"
+  , "    end"
+  , "    bad == 0 || error(\"tl_lutfetch: the Float32 method differs from the Float64 method on $bad probes\")"
+  , "end" ]
+
 /-- The Julia driver: reads the inputs file (names, then one hex row per pixel), runs the kernel at
 `Float64`, prints one hex row per pixel. -/
 def driver (name : String) (nOut : Nat) (tables : Array LutTable) (ka : Bool := false) : String :=
@@ -247,7 +294,7 @@ def driver (name : String) (nOut : Nat) (tables : Array LutTable) (ka : Bool := 
   , "    end"
   , "end"
   , s!"out = Matrix\{Float64}(undef, P, {nOut})"
-  ] ++ lutDefs ++
+  ] ++ lutDefs ++ (if tables.isEmpty || ka then [] else [softFetchCheck]) ++
   [ (if ka then s!"{name}_kernel!(CPU())(out, ins...{lutArgs}; ndrange = P); KernelAbstractions.synchronize(CPU())"
      else s!"{name}!(out, ins...{lutArgs})")
   , "for p in 1:P"
