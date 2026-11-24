@@ -42,6 +42,7 @@ Two surfaces are emitted from one body: a plain `function name!(out, in_…) …
 (`emitJulia`, no package dependencies — the **bit-exact twin**, what the parity probe gates), and a
 KernelAbstractions.jl `@kernel` (`emitJuliaKA`) that the same `.jl` runs on CPU, CUDA, AMDGPU or
 Metal — the **portability twin**, the Julia side of "choosing a carrier, not rewriting the model".
+A kernel with a table fetch needs a backend with `Float64`, which Metal lacks.
 The portability twin is tolerance-only, like the `.hardware` table mode: a KernelAbstractions backend
 may contract `a*b + c` to a fused multiply-add — KernelAbstractions 0.10's CPU backend compiles the
 kernel through PoCL (OpenCL) with `fuse_muladd` on whenever the host has hardware FMA
@@ -290,7 +291,8 @@ def emitJulia (name : String) (cg : JuliaCodegen) : String :=
 /-- The KernelAbstractions.jl twin: one work-item per pixel, the same body, so the one `.jl` runs
 on CPU, CUDA, AMDGPU or Metal through the backend the caller launches it on
 (`name_kernel!(backend)(out, in_…; ndrange = size(out, 1))`). Tolerance-only: the backend may
-contract to FMA (see the module docstring), so this surface is compared in ulps, never bits. -/
+contract to FMA (see the module docstring), so this surface is compared in ulps, never bits. A
+table fetch computes in `Float64`, so a kernel with one needs a backend that has it (not Metal). -/
 def emitJuliaKA (name : String) (cg : JuliaCodegen) : String :=
   let ins := String.join (cg.inputs.toList.map (fun nm => s!", @Const(in_{nm})"))
     ++ String.join (cg.tables.toList.map (fun tb => s!", @Const(lut_{tb.name})"))
