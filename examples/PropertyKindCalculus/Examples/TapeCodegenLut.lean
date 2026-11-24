@@ -5,8 +5,8 @@ codegen'd → landed**, on a small fully-decidable fixture.
 `paradigm.lut_carrier`'s `LutInterp` extends the write-once vocabulary with a table fetch the
 branchless `NumCarrier` alphabet cannot express; `paradigm.tape_codegen` lowers the recorded
 `lutfetch:<table>` nodes to texture-object fetches (point mode: two point fetches + a
-contraction-blocked fp32 lerp, bit-reproducible; hardware mode: one filtered fetch, 9-bit-weight
-tolerance). This module certifies the extension end to end on a mixed arithmetic+fetch model:
+contraction-blocked lerp in binary64 rounded once to fp32, bit-reproducible; hardware mode: one
+filtered fetch, 9-bit-weight tolerance). This module certifies the extension end to end on a mixed arithmetic+fetch model:
 
 * **recorder faithfulness** (computational): the recorded fetch node *stores* exactly the `Float`
   instance's value (`LutTable.refFetch` of the leaf values) — `#guard lutRecorderFaithful`;
@@ -42,8 +42,8 @@ meta import PropertyKindCalculus.Torch.Paradigm.TapeCodegenJulia
 
 @[expose] public section Blanket
 
-open Spec TorchLean
-open Runtime.Autograd (Tape TapeM)
+open TorchLean
+open PropertyKindCalculus.Paradigm (TapeM CpuTape CpuNode)
 open PropertyKindCalculus.Paradigm (TapeBuilder NumCarrier LutTable LutInterp lutNodeName?)
 open PropertyKindCalculus.Paradigm.TapeCSE (cseCompact)
 open PropertyKindCalculus.Paradigm.TapeCodegen
@@ -63,12 +63,11 @@ def demoLut2 : LutTable :=
   { name := "demolut2", width := 5, layers := 2
   , values := #[1.0, 1.5, 3.0, 5.5, 9.0,  11.0, 10.0, 8.0, 5.0, 1.0] }
 
-/-- NaN coordinates select sample 0, and NaN layers select layer 0. -/
-def lutNaNClampsToLowerBounds : Bool :=
-  demoLut.refFetch 0.0 Float.nan == demoLut.refFetch 0.0 0.0
-    && demoLut.refFetch Float.nan 2.0 == demoLut.refFetch 0.0 2.0
+/-- A NaN coordinate or a NaN layer fetches NaN. -/
+def lutNaNPropagates : Bool :=
+  (demoLut.refFetch 0.0 Float.nan).isNaN && (demoLut.refFetch Float.nan 2.0).isNaN
 
-#guard lutNaNClampsToLowerBounds
+#guard lutNaNPropagates
 
 /-- Written once over BOTH classes: the fetch plus ordinary arithmetic. The `[LutInterp α]`
 context is the point — the model's dependence on tabulated data is visible in its type. -/
@@ -88,7 +87,7 @@ def envU     : Float := 2.25
 def envBias  : Float := 0.5
 
 /-- The recorded tape and its output id. -/
-def lutRecord : Except String (Tape Float × Nat) := do
+def lutRecord : Except String (CpuTape Float × Nat) := do
   let prog : TB := lutModel (inLeafV "layer" envLayer) (inLeafV "u" envU) (inLeafV "bias" envBias)
   let (id, t) ← TapeM.run Tape.empty prog.run
   pure (t, id)
@@ -146,7 +145,7 @@ theorem cOpT_lutfetch {nm tn : String} (hn : lutNodeName? nm = some tn)
 DIFFERENT tables at the same operands do not (their node names differ). Raw shapes: 7 nodes
 (2×2 leaves + 2 fetches + add) → 4 after CSE when the tables coincide, 5 when they differ. -/
 def lutCseIdentity : Bool :=
-  let rec2 (tbl2 : LutTable) : Except String (Tape Float × Nat) := do
+  let rec2 (tbl2 : LutTable) : Except String (CpuTape Float × Nat) := do
     let l := inLeafV "layer" envLayer
     let u := inLeafV "u" envU
     let prog : TB := LutInterp.lutFetch demoLut l u + LutInterp.lutFetch tbl2 l u
@@ -185,19 +184,19 @@ def lutLandingHolds : Bool :=
         && hasSub cuP "static const float lut_demolut_data[10]"
         && hasSub cuP "tl_get_tex_demolut"
         && hasSub cuP "tex1DLayered<float>"
-        && hasSub cuP "__fmul_rn"                 -- point mode: explicit lerp
-        && hasSub cuP "float um = (wmax <= u ? wmax : u)"
-        && hasSub cuP "float lm = (lmax <= ls ? lmax : ls)"
+        && hasSub cuP "__dmul_rn"                 -- point mode: explicit lerp
+        && hasSub cuP "if (layer != layer || u != u) return (float)(layer + u);"
+        && hasSub cuP "double lm = (lmax <= ls ? lmax : ls)"
         && hasSub cuP "cudaFilterModePoint"
         && hasSub cuH "cudaFilterModeLinear"      -- hardware mode: filtered fetch,
-        && !(hasSub cuH "__fmul_rn")              -- no ALU lerp
+        && !(hasSub cuH "__dmul_rn")              -- no ALU lerp
         && hasSub stP "static const float lut_demolut_data[10]"
         && hasSub stP "lut_demo_launch"
         && hasSub cuP "lut_demo_launch"
         && hasSub stP "TL_LUTFETCH"
-        && hasSub stP "float um = (wmax <= u ? wmax : u)"
-        && hasSub stP "float lm = (lmax <= ls ? lmax : ls)"
-        && hasSub jlText "um = ifelse(wmax <= u, wmax, u)"
+        && hasSub stP "if (layer != layer || u != u) return (float)(layer + u);"
+        && hasSub stP "double lm = (lmax <= ls ? lmax : ls)"
+        && hasSub jlText "(isnan(layer) || isnan(u)) && return T(layer + u)"
         && hasSub jlText "lm = ifelse(lmax <= ls, lmax, ls)"
     | _, _, _ => false
 

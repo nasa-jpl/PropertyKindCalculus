@@ -29,16 +29,15 @@ EXACTNESS SPLIT (inherited): everything here is the point-mode fp64 semantics
 import PropertyKindCalculus.Examples.TapeCodegenLut
 import PropertyKindCalculus.Examples.TapeCodegenEndToEnd
 
-open Spec TorchLean TorchLean.Tensor
-open Runtime.Autograd (Tape Node TapeM)
+open TorchLean TorchLean.Tensor
+open PropertyKindCalculus.Paradigm (TapeM CpuTape CpuNode)
 open PropertyKindCalculus.Paradigm (TapeBuilder NumCarrier LutTable LutInterp lutNodeName?)
 open PropertyKindCalculus.Paradigm.TapeParity
-open Proofs.Autograd.Builder (run_add_ok run_sub_ok run_mul_ok run_exp_ok)
 open PropertyKindCalculus.Paradigm.TapeFaithful
 open PropertyKindCalculus.Paradigm.TapeCodegen
 open PropertyKindCalculus.Paradigm.TapeCodegen (getD_push_size getD_push_lt)
 open PropertyKindCalculus.Examples.TapeCodegenEndToEnd
-  (tapeAdd_addNode tapeSub_addNode tapeMul_addNode)
+  (tapeAdd_addNode tapeSub_addNode tapeMul_addNode nodeScalar_scalarLeaf)
 open PropertyKindCalculus.Examples.TapeCodegenLut
   (demoLut lutModel inLeafV envLayer envU envBias demoTables cOpT_lutfetch)
 
@@ -56,7 +55,7 @@ abbrev T := Tensor Float S
 
 /-- The loop body of `evalTapeT`, one node at a time. -/
 def stepValT (tables : String → Option LutTable) (env : String → Float)
-    (vals : Array Float) (n : Node Float) : Except String Float :=
+    (vals : Array Float) (n : CpuNode Float) : Except String Float :=
   if n.parents.isEmpty then
     match n.name with
     | some nm => pure (env nm)
@@ -67,7 +66,7 @@ def stepValT (tables : String → Option LutTable) (env : String → Float)
     | none => .error "tape_codegen: op node with no op name"
 
 theorem evalTapeT_eq_foldlM (tables : String → Option LutTable) (env : String → Float)
-    (t : Tape Float) :
+    (t : CpuTape Float) :
     evalTapeT tables env t
       = t.nodes.foldlM
           (fun vals n => (stepValT tables env vals n).map (fun v => vals.push v)) #[] := by
@@ -77,13 +76,13 @@ theorem evalTapeT_eq_foldlM (tables : String → Option LutTable) (env : String 
 
 /-- The empty tape evaluates to the empty value array. -/
 theorem evalTapeT_empty (tables : String → Option LutTable) (env : String → Float) :
-    evalTapeT tables env (Tape.empty : Tape Float) = .ok #[] := by
+    evalTapeT tables env (Tape.empty : CpuTape Float) = .ok #[] := by
   rw [evalTapeT_eq_foldlM]; rfl
 
 /-- **Append law for `evalTapeT`.** Extending a tape by one node extends its value array by
 evaluating that node against the already-computed values. -/
 theorem evalTapeT_addNode (tables : String → Option LutTable) (env : String → Float)
-    (t : Tape Float) (n : Node Float) :
+    (t : CpuTape Float) (n : CpuNode Float) :
     evalTapeT tables env (t.addNode n).1
       = (evalTapeT tables env t) >>= fun vals =>
           (stepValT tables env vals n).map (fun v => vals.push v) := by
@@ -106,9 +105,9 @@ by `evalTapeT` at `env`, assign the float `x` to the result node, preserving eve
 slot. -/
 def FaithfulT (tables : String → Option LutTable) (env : String → Float)
     (b : TB) (v : T) (x : Float) : Prop :=
-  ∀ (t : Tape Float) (vals : Array Float),
+  ∀ (t : CpuTape Float) (vals : Array Float),
     evalTapeT tables env t = .ok vals → vals.size = t.size →
-    ∃ (id : Nat) (t' : Tape Float) (vals' : Array Float),
+    ∃ (id : Nat) (t' : CpuTape Float) (vals' : Array Float),
       b.run t = .ok (id, t') ∧
       id < t'.size ∧
       t'.requireValue (s := S) id = .ok v ∧
@@ -123,14 +122,14 @@ theorem FaithfulT_named_leaf (tables : String → Option LutTable) (env : String
     (nm : String) (v : T) :
     FaithfulT tables env (⟨TapeM.leaf v (name := some nm)⟩ : TB) v (env nm) := by
   intro t vals hev hsz
-  refine ⟨t.size, (Tape.leaf (t := t) v (name := some nm)).1,
+  refine ⟨t.size, (CpuTape.leaf t v (name := some nm)).1,
     vals.push (env nm), ?run, ?lt, ?store, ?ext, ?ev, ?sz, ?val, ?pre⟩
-  case run => unfold TapeM.leaf Tape.leaf Tape.addNode; rfl
+  case run => rfl
   case store => exact leaf_value t v (some nm) true
   case lt => exact requireValue_lt_of_ok _ t.size (leaf_value t v (some nm) true)
   case ext => exact extends_of_value (leaf_value t v (some nm) true) (frameOver_addNode t _)
   case ev => show evalTapeT tables env (t.addNode _).1 = _; rw [evalTapeT_addNode, hev]; rfl
-  case sz => rw [Array.size_push, hsz]; simp [Tape.leaf, Tape.addNode, Tape.size]
+  case sz => rw [Array.size_push, hsz]; simp [CpuTape.leaf, Tape.leaf, Tape.addNode, Tape.size]
   case val => rw [← hsz]; exact getD_push_size vals (env nm)
   case pre => intro i hi; exact getD_push_lt vals (env nm) i hi
 
@@ -138,19 +137,21 @@ theorem FaithfulT_named_leaf (tables : String → Option LutTable) (env : String
 theorem FaithfulT_const (tables : String → Option LutTable) (env : String → Float) (x : Float) :
     FaithfulT tables env (TapeBuilder.const x : TB) (Tensor.full S x) x := by
   intro t vals hev hsz
-  refine ⟨t.size, (Tape.leaf (t := t) (Tensor.full S x) (name := none)).1,
+  refine ⟨t.size, (CpuTape.leaf t (Tensor.full S x) (name := none)).1,
     vals.push x, ?run, ?lt, ?store, ?ext, ?ev, ?sz, ?val, ?pre⟩
-  case run => unfold TapeBuilder.const TapeM.leaf Tape.leaf Tape.addNode; rfl
+  case run => rfl
   case store => exact leaf_value t (Tensor.full S x) none true
   case lt => exact requireValue_lt_of_ok _ t.size (leaf_value t (Tensor.full S x) none true)
   case ext => exact extends_of_value (leaf_value t (Tensor.full S x) none true) (frameOver_addNode t _)
   case ev =>
     show evalTapeT tables env (t.addNode _).1 = _
     rw [evalTapeT_addNode, hev]
-    simp [stepValT, nodeScalar, Tensor.full, TorchLean.Tensor.Internal.Rep.const,
-      TorchLean.Tensor.Internal.Rep.ofFlatFn, TorchLean.Storage.toArray_ofFn]
-    rfl
-  case sz => rw [Array.size_push, hsz]; simp [Tape.leaf, Tape.addNode, Tape.size]
+    have hleaf : stepValT tables env vals (Tape.Node.leaf (SomeTensor.ofTensor (Tensor.full S x))) =
+        .ok x := by
+      simp only [stepValT, Tape.Node.leaf, Array.isEmpty_empty, ite_true, pure, Except.pure]
+      exact congrArg Except.ok (nodeScalar_scalarLeaf x)
+    exact congrArg (Except.map fun v => vals.push v) hleaf
+  case sz => rw [Array.size_push, hsz]; simp [CpuTape.leaf, Tape.leaf, Tape.addNode, Tape.size]
   case val => rw [← hsz]; exact getD_push_size vals x
   case pre => intro i hi; exact getD_push_lt vals x i hi
 
@@ -161,11 +162,11 @@ against the extended alphabet `cOpT tables`. -/
 theorem FaithfulT_bin (tables : String → Option LutTable) (env : String → Float)
     (top : Nat → Nat → TapeM Float Nat) (nm : String)
     (sop : T → T → T) (fop : Float → Float → Float)
-    (hrun : ∀ (tt : Tape Float) (idA idB : Nat) {va vb : T},
+    (hrun : ∀ (tt : CpuTape Float) (idA idB : Nat) {va vb : T},
        tt.requireValue (s := S) idA = .ok va → tt.requireValue (s := S) idB = .ok vb →
-       ∃ nd : Node Float, (top idA idB).run tt = .ok (tt.size, (tt.addNode nd).1) ∧
+       ∃ nd : CpuNode Float, (top idA idB).run tt = .ok (tt.size, (tt.addNode nd).1) ∧
          nd.name = some nm ∧ nd.parents = #[idA, idB] ∧
-         nd.value = Spec.SomeTensor.ofTensor (sop va vb))
+         nd.value = SomeTensor.ofTensor (sop va vb))
     (hcop : ∀ a b : Float, cOpT tables nm [a, b] = .ok (fop a b))
     {a b : TB} {va vb : T} {xa xb : Float}
     (ha : FaithfulT tables env a va xa) (hb : FaithfulT tables env b vb xb) :
@@ -210,43 +211,43 @@ theorem FaithfulT_bin (tables : String → Option LutTable) (env : String → Fl
 theorem FaithfulT_add (tables : String → Option LutTable) (env : String → Float)
     {a b : TB} {va vb : T} {xa xb : Float}
     (ha : FaithfulT tables env a va xa) (hb : FaithfulT tables env b vb xb) :
-    FaithfulT tables env (a + b) (addSpec va vb) (xa + xb) := by
+    FaithfulT tables env (a + b) (va + vb) (xa + xb) := by
   show FaithfulT tables env (TapeBuilder.bin (TapeM.add (s := S)) a b) _ _
-  refine FaithfulT_bin tables env (TapeM.add (s := S)) "add" addSpec (· + ·) ?hrun
+  refine FaithfulT_bin tables env (TapeM.add (s := S)) "add" (· + ·) (· + ·) ?hrun
     (fun a b => (cOpT_base tables rfl [a, b]).trans rfl) ha hb
   intro tt idA idB va vb hA hB
   obtain ⟨nd, heq, hn, hp, hv⟩ := tapeAdd_addNode tt idA idB hA hB
-  exact ⟨nd, run_add_ok idA idB heq, hn, hp, hv⟩
+  exact ⟨nd, TapeM.record_run_ok heq, hn, hp, hv⟩
 
 theorem FaithfulT_sub (tables : String → Option LutTable) (env : String → Float)
     {a b : TB} {va vb : T} {xa xb : Float}
     (ha : FaithfulT tables env a va xa) (hb : FaithfulT tables env b vb xb) :
-    FaithfulT tables env (a - b) (subSpec va vb) (xa - xb) := by
+    FaithfulT tables env (a - b) (va - vb) (xa - xb) := by
   show FaithfulT tables env (TapeBuilder.bin (TapeM.sub (s := S)) a b) _ _
-  refine FaithfulT_bin tables env (TapeM.sub (s := S)) "sub" subSpec (· - ·) ?hrun
+  refine FaithfulT_bin tables env (TapeM.sub (s := S)) "sub" (· - ·) (· - ·) ?hrun
     (fun a b => (cOpT_base tables rfl [a, b]).trans rfl) ha hb
   intro tt idA idB va vb hA hB
   obtain ⟨nd, heq, hn, hp, hv⟩ := tapeSub_addNode tt idA idB hA hB
-  exact ⟨nd, run_sub_ok idA idB heq, hn, hp, hv⟩
+  exact ⟨nd, TapeM.record_run_ok heq, hn, hp, hv⟩
 
 theorem FaithfulT_mul (tables : String → Option LutTable) (env : String → Float)
     {a b : TB} {va vb : T} {xa xb : Float}
     (ha : FaithfulT tables env a va xa) (hb : FaithfulT tables env b vb xb) :
-    FaithfulT tables env (a * b) (mulSpec va vb) (xa * xb) := by
+    FaithfulT tables env (a * b) (va * vb) (xa * xb) := by
   show FaithfulT tables env (TapeBuilder.bin (TapeM.mul (s := S)) a b) _ _
-  refine FaithfulT_bin tables env (TapeM.mul (s := S)) "mul" mulSpec (· * ·) ?hrun
+  refine FaithfulT_bin tables env (TapeM.mul (s := S)) "mul" (· * ·) (· * ·) ?hrun
     (fun a b => (cOpT_base tables rfl [a, b]).trans rfl) ha hb
   intro tt idA idB va vb hA hB
   obtain ⟨nd, heq, hn, hp, hv⟩ := tapeMul_addNode tt idA idB hA hB
-  exact ⟨nd, run_mul_ok idA idB heq, hn, hp, hv⟩
+  exact ⟨nd, TapeM.record_run_ok heq, hn, hp, hv⟩
 
 /-! ## The genuinely new step: the fetch preserves the bridge -/
 
 /-- The node `TapeBuilder.lutFetchM` appends, as a function of the operand ids and stored
 tensors. -/
-def lutNode (tbl : LutTable) (idA idB : Nat) (vl vu : T) : Node Float :=
+def lutNode (tbl : LutTable) (idA idB : Nat) (vl vu : T) : CpuNode Float :=
   { name := some tbl.nodeName
-  , value := Spec.SomeTensor.ofTensor (map2Spec (fun a b => tbl.refFetch a b) vl vu)
+  , value := SomeTensor.ofTensor (Tensor.zipWith (fun a b => tbl.refFetch a b) vl vu)
   , requiresGrad := false
   , parents := #[idA, idB]
   , backward := fun _ => .ok #[] }
@@ -254,7 +255,7 @@ def lutNode (tbl : LutTable) (idA idB : Nat) (vl vu : T) : Node Float :=
 /-- Run bridge for the recording action: given the operand sub-runs and their stored tensors on
 the final operand tape, `lutFetchM`'s run appends exactly `lutNode` (the `requireValue` reads
 inside the action succeed by hypothesis, so the `StateT`/`Except` threading closes). -/
-theorem lutFetchM_run (tbl : LutTable) (l u : TB) (t tA tB : Tape Float)
+theorem lutFetchM_run (tbl : LutTable) (l u : TB) (t tA tB : CpuTape Float)
     (idA idB : Nat) {vl vu : T}
     (hl : l.run t = .ok (idA, tA)) (hu : u.run tA = .ok (idB, tB))
     (hL : tB.requireValue (s := S) idA = .ok vl)
@@ -277,7 +278,7 @@ theorem FaithfulT_lutfetch (tables : String → Option LutTable) (env : String �
     {l u : TB} {vl vu : T} {xl xu : Float}
     (hl : FaithfulT tables env l vl xl) (hu : FaithfulT tables env u vu xu) :
     FaithfulT tables env (LutInterp.lutFetch tbl l u)
-      (map2Spec (fun a b => tbl.refFetch a b) vl vu) (tbl.refFetch xl xu) := by
+      (Tensor.zipWith (fun a b => tbl.refFetch a b) vl vu) (tbl.refFetch xl xu) := by
   intro t vals hev hsz
   obtain ⟨idA, tA, valsA, harun, haLt, haStore, haExt, haEv, haSz, haVal, haPre⟩ := hl t vals hev hsz
   obtain ⟨idB, tB, valsB, hbrun, hbLt, hbStore, hbExt, hbEv, hbSz, hbVal, hbPre⟩ :=
@@ -287,7 +288,7 @@ theorem FaithfulT_lutfetch (tables : String → Option LutTable) (env : String �
   have hidA_valsA : idA < valsA.size := by rw [haSz]; exact haLt
   have hxa : valsB.getD idA 0.0 = xl := (hbPre idA hidA_valsA).trans haVal
   have hstoreNew : (tB.addNode (lutNode tbl idA idB vl vu)).1.requireValue (s := S) tB.size
-      = .ok (map2Spec (fun a b => tbl.refFetch a b) vl vu) :=
+      = .ok (Tensor.zipWith (fun a b => tbl.refFetch a b) vl vu) :=
     requireValue_addNode_self tB _ rfl
   have hle1 : vals.size ≤ valsA.size := by rw [hsz, haSz]; exact haExt.1
   have hle2 : valsA.size ≤ valsB.size := by rw [haSz, hbSz]; exact hbExt.1
@@ -330,7 +331,7 @@ theorem lutModel_faithful (env : String → Float)
     (hu : FaithfulT demoTables env u vu xu)
     (hb : FaithfulT demoTables env bias vb xb) :
     FaithfulT demoTables env (lutModel layer u bias)
-      (addSpec (map2Spec (fun a b => demoLut.refFetch a b) vlay vu) (mulSpec vb vb))
+      ((Tensor.zipWith (fun a b => demoLut.refFetch a b) vlay vu) + (vb * vb))
       (demoLut.refFetch xlay xu + xb * xb) := by
   unfold lutModel
   exact FaithfulT_add demoTables env
@@ -343,7 +344,7 @@ theorem lutModel_faithful (env : String → Float)
 computes the `[NumCarrier]+[LutInterp]` source model at that environment — the
 `#guard lutEvalFaithful` single-pixel check, promoted to a theorem over all inputs. -/
 theorem lut_kernel_faithful (env : String → Float) :
-    ∃ (id : Nat) (t' : Tape Float) (vals : Array Float),
+    ∃ (id : Nat) (t' : CpuTape Float) (vals : Array Float),
       (lutModel (α := TB) (inLeafV "layer" envLayer) (inLeafV "u" envU)
         (inLeafV "bias" envBias)).run Tape.empty = .ok (id, t') ∧
       evalTapeT demoTables env t' = .ok vals ∧

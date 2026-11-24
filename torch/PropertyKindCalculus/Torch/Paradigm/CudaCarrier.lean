@@ -8,7 +8,7 @@ file adds the missing **GPU** carrier so `fit_tile.lmStep` / `avs_batch` / `spd_
 
 It is an *eager* carrier: `CudaT s` wraps a TorchLean `LibTorch.Buffer` (a contiguous float32 device buffer
 of `Shape.size s` elements), and each `NumCarrier` operation is the corresponding pure device primitive
-(`Buffer.{add,sub,mul,div,exp,sqrt,abs,log,min,max}` from `NN.Runtime.Autograd.Engine.LibTorch.Buffer`),
+(`Buffer.{add,sub,mul,div,exp,sqrt,abs,log,min,max}` from `TorchLean.CUDA.LibTorch.Buffer`),
 each one ATen operation. Those ops are pure `opaque Buffer → Buffer`, so they satisfy `NumCarrier`'s total
 interface directly, and `Buffer` carries a GC finalizer that releases the device tensor, so eager
 intermediates free automatically — no manual release, bounded peak memory. The device primitives exist only
@@ -26,15 +26,15 @@ module
 
 public import PropertyKindCalculus.Paradigm.NumCarrier
 public import PropertyKindCalculus.Torch.Paradigm.NumCarrierContext
-public import NN.Tensor
-public import NN.Runtime.Autograd.Engine.LibTorch.Buffer
-public import NN.Runtime.Autograd.Engine.LibTorch.Kernels
+public import TorchLean.CUDA.LibTorch.Buffer
+public import TorchLean.CUDA.LibTorch.Kernels
 
 @[expose] public section Blanket
 
-open Spec TorchLean
+open TorchLean
+open FloatLib.Numerics (MathFunctions)
 open PropertyKindCalculus.Paradigm (NumCarrier)
-open Runtime.Autograd.LibTorch (Buffer)
+open TorchLean.LibTorch (Buffer)
 
 namespace PropertyKindCalculus.Paradigm.CudaCarrier
 
@@ -61,7 +61,7 @@ instance : Inhabited (CudaT s) := ⟨⟨Buffer.zeros (szU s)⟩⟩
 
 instance : MathFunctions (CudaT s) where
   exp  := fun a => ⟨Buffer.exp a.buf⟩
-  sqrt := fun a => ⟨Buffer.sqrt a.buf⟩
+  sqrt := fun a => ⟨Buffer.sqrtClampNegative a.buf⟩
   abs  := fun a => ⟨Buffer.abs a.buf⟩
   log  := fun a => ⟨Buffer.log a.buf⟩
   pi   := ⟨Buffer.full (szU s) 3.141592653589793⟩
@@ -77,13 +77,13 @@ instance : NumCarrier (CudaT s) where
 /-! ### Indexing (the one non-elementwise op this carrier exposes) -/
 
 /-- **Gather** `Shape.size t` scalars from a length-`Shape.size s` device buffer at HOST indices
-— `NN.Runtime.Autograd.Engine.LibTorch.Kernels.Buffer.gatherRows`
+— `TorchLean.CUDA.LibTorch.Kernels.Buffer.gatherRows`
 (`torchlean_cuda_buffer_gather_rows`) applied to the buffer viewed as a `Shape.size s × 1`
 matrix, so each gathered row is one scalar; no new native code lands here, only a new Lean name
 for an FFI TorchLean already ships. Indices are HOST data (a plain `Array Nat`), not a second
 `CudaT` operand: the index computation itself is non-differentiable, data-dependent control
 flow that stays off-device, the same division of labor
-`NN.Runtime.Autograd.Engine.LibTorch.Ops.Indexing`'s own tape wrappers already draw ("Indices
+`TorchLean.CUDA.LibTorch.Ops.Indexing`'s own tape wrappers already draw ("Indices
 are non-differentiable and remain on the host"). `indices.size = Shape.size t` is UNCHECKED by
 this wrapper — the same "caller's own responsibility" convention `ofFloatArray` already carries
 for its own length match — and the underlying kernel "totalizes representable out-of-bounds

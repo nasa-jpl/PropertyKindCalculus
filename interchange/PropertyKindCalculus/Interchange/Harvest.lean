@@ -54,6 +54,12 @@ open Lean Meta
 open PropertyKindCalculus
 open PropertyKindCalculus.Interchange
 
+/-- The last component of a name, as text (a numeric component by its numeral). -/
+def _root_.Lean.Name.lastComponentText : Name → String
+  | .str _ s => s
+  | .num _ n => toString n
+  | .anonymous => ""
+
 /-! ## Evaluable views of the spine's records
 
 `Meta.evalExpr` runs a closed term of a given type; these plain records are what it is asked
@@ -170,7 +176,7 @@ def scopedConstants (env : Environment) (scope : Array Name) : Array Name :=
 /-- The element name of a declaration: its last component, or — when another declaration
 in scope shares that last component — its last two, joined by `_`. -/
 def elementName (taken : Std.HashMap String Nat) (n : Name) : String :=
-  let last := n.lastComponentAsString
+  let last := n.lastComponentText
   if taken.getD last 0 ≤ 1 then last
   else match n with
     | .str (.str _ p) _ => s!"{p}_{last}"
@@ -233,7 +239,7 @@ def harvestKinds (consts : Array Name) : HarvestM Unit := do
       if hasTypeHead env c ty then kindConsts := kindConsts.push (c, view)
   let taken : Std.HashMap String Nat := kindConsts.foldl (init := {}) fun m (c, view) =>
     if view == ``KindData.ofCatalogued then m
-    else m.alter c.lastComponentAsString fun | some k => some (k + 1) | none => some 1
+    else m.alter c.lastComponentText fun | some k => some (k + 1) | none => some 1
   for (c, view) in kindConsts do
     let some data ← evalKindData view c | continue
     if view == ``KindData.ofCatalogued then
@@ -266,7 +272,7 @@ def harvestPrinciples (consts : Array Name) : HarvestM Unit := do
   let env ← getEnv
   let ps := consts.filter (hasTypeHead env · ``ExaminationPrinciple)
   let taken : Std.HashMap String Nat := ps.foldl (init := {}) fun m c =>
-    m.alter c.lastComponentAsString fun | some k => some (k + 1) | none => some 1
+    m.alter c.lastComponentText fun | some k => some (k + 1) | none => some 1
   let mut byId : Std.HashMap String String := {}
   for c in ps do
     let some id ← evalString c (mkApp (mkConst ``ExaminationPrinciple.id) (mkConst c)) | continue
@@ -300,7 +306,7 @@ def harvestDedicatedAndUnits (consts : Array Name) : HarvestM Unit := do
       let some kind ← kindNameById? d.kindId
         | warn s!"{c}: dedicated kind skipped: its kind '{d.kindId}' is not a harvested kind"; continue
       modifyModel fun m => { m with dedicated := m.dedicated ++
-        [{ name := c.lastComponentAsString, sort := d.sort, component := d.component, kind,
+        [{ name := c.lastComponentText, sort := d.sort, component := d.component, kind,
            source := some (toString c) }] }
     else if hasTypeHead env c ``PropertyKindCalculus.MetrologicalUnit then
       let some u ← eval? UnitData c (mkConst ``UnitData)
@@ -308,7 +314,7 @@ def harvestDedicatedAndUnits (consts : Array Name) : HarvestM Unit := do
       let some kind ← kindNameById? u.kindId
         | warn s!"{c}: unit skipped: its kind '{u.kindId}' is not a harvested kind"; continue
       modifyModel fun m => { m with units := m.units ++
-        [{ name := c.lastComponentAsString, kind, symbol := u.symbol,
+        [{ name := c.lastComponentText, kind, symbol := u.symbol,
            source := some (toString c) }] }
 
 /-- Is `n` an authored edge relation — an inductive of type
@@ -381,7 +387,7 @@ def harvestAlgebra (consts : Array Name) : HarvestM Unit := do
       | .difference => (names, none)
       | _ => (names.dropLast, names.getLast?)
     let edge : Edge :=
-      { name := c.lastComponentAsString, kind := fam, operands, result, table,
+      { name := c.lastComponentText, kind := fam, operands, result, table,
         powerNum := exp?.map (·.num), powerDen := exp?.map (·.den),
         source := some (toString c) }
     modifyModel fun m => { m with edges := m.edges ++ [edge] }
@@ -502,7 +508,7 @@ def harvestModules (consts : Array Name) : HarvestM Unit := do
       return ({ name := node, node, kind := ← kindOfRef p.kind, dir := PortDir.ofProvenance p.dir } : Port)
     let (intros, occurrences) ← provenanceOf k.members
     let m : MetrologyModule :=
-      { name := c.lastComponentAsString, title := k.name, members := k.members.map toString, ports,
+      { name := c.lastComponentText, title := k.name, members := k.members.map toString, ports,
         exits := k.exits.map (·.render),
         deciders := k.deciders.map fun (n, d) => (n.render, toString d),
         aggregations := k.aggregations.map fun (n, a) => Aggregation.ofClass n.render a,
@@ -524,7 +530,7 @@ def harvestRelations (consts : Array Name) : HarvestM Unit := do
     unless hasTypeHead env c ``Provenance.Relation do continue
     let some r ← eval? Provenance.Relation c (mkConst ``Provenance.Relation) (mkConst c) | continue
     let rel : Relation :=
-      { name := c.lastComponentAsString, left := ← moduleNameOf r.left, right := ← moduleNameOf r.right,
+      { name := c.lastComponentText, left := ← moduleNameOf r.left, right := ← moduleNameOf r.right,
         kind := RelationKind.ofProvenance r.kind, witness := toString r.witness,
         claim := if r.claim.isEmpty then none else some r.claim, tolerance := optName r.tolerance,
         hypotheses := r.hypotheses.map toString, licenses := r.licenses.map License.ofProvenance,
@@ -538,7 +544,7 @@ def harvestRequirements (consts : Array Name) : HarvestM Unit := do
     unless hasTypeHead env c ``Provenance.Requirement do continue
     let some r ← eval? Provenance.Requirement c (mkConst ``Provenance.Requirement) (mkConst c) | continue
     let req : Requirement :=
-      { name := c.lastComponentAsString, title := r.name, statement := r.statement,
+      { name := c.lastComponentText, title := r.name, statement := r.statement,
         kind := RequirementKind.ofProvenance r.kind, governs := ← moduleNameOf r.governs,
         port := r.port.map (·.render), scope := ReqScope.ofProvenance r.scope, witness := optName r.witness,
         spotChecks := r.spotChecks.map toString, absent := optName r.absent,
@@ -553,7 +559,7 @@ def harvestTapes (consts : Array Name) : HarvestM Unit := do
     unless hasTypeHead env c ``Paradigm.TapeGraph do continue
     let some t ← eval? Paradigm.TapeGraph c (mkConst ``Paradigm.TapeGraph) (mkConst c) | continue
     let tape : Tape :=
-      { name := c.lastComponentAsString,
+      { name := c.lastComponentText,
         vertices := t.vertices.map fun v => { name := v.name, parents := v.parents },
         source := some (toString c) }
     modifyModel fun m => { m with tapes := m.tapes ++ [tape] }

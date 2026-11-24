@@ -398,9 +398,9 @@ every emitted file says the same):
 
 - no `@fastmath`, no `muladd` — Julia does not contract `a·b + c` to a fused multiply-add or
   re-associate unless asked, which is the `nvcc --fmad=false` regime the megakernel is compiled in;
-- `min`/`max` are written out as `ifelse(a <= b, a, b)` / `ifelse(a <= b, b, a)`, which is Lean's
-  `Min Float`/`Max Float` (`minOfLe`/`maxOfLe`) to the letter, NaN cases included — the same
-  `≤`-ternary the C and CUDA renderings write, so the interpreter and all three renderings are one
+- `min`/`max` are Julia's own, the IEEE 754-2019 minimum/maximum that Lean's
+  `Min Float`/`Max Float` compute (NaN propagates, `-0.0` orders below `+0.0`) and that the C and
+  CUDA renderings spell as one conditional, so the interpreter and all three renderings are one
   function on NaN inputs (`fminf`/`fmaxf`, which return the non-NaN operand, are not used);
 - `sqrt` and `log` of a negative argument throw in Julia where IEEE returns a quiet NaN; the emitted
   helpers restore the NaN and are the identity elsewhere;

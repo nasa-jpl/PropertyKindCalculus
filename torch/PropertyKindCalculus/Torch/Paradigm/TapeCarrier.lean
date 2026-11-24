@@ -38,13 +38,12 @@ module
 
 public import PropertyKindCalculus.Paradigm.NumCarrier
 public import PropertyKindCalculus.Torch.Paradigm.NumCarrierContext
-public import NN.Runtime.Autograd.Engine.TapeM
+public import PropertyKindCalculus.Torch.Paradigm.TapeM
 
 @[expose] public section Blanket
 
-open Spec TorchLean
-open TorchLean TorchLean.Tensor
-open Runtime.Autograd
+open TorchLean
+open FloatLib.Numerics (MathFunctions)
 
 namespace PropertyKindCalculus.Paradigm
 
@@ -62,7 +61,7 @@ variable {s : Shape}
 
 /-- A constant tensor leaf filled with the host scalar `x` (shape `s`). Constants of the
 kernel (coefficients, `0`/`1`, `Nat` literals, `pi`) enter the tape this way. -/
-def const (x : Float) : TapeBuilder s := ⟨TapeM.leaf (Tensor.full s x) (name := none)⟩
+def const (x : Float) : TapeBuilder s := ⟨TapeM.leaf (Tensor.full s x)⟩
 
 /-- A `MathFunctions` field with no tape realisation on either backend (`sin/cos/tanh/…`):
 an honest error if ever run. The collapsible-Mironov ε kernel never names these. -/

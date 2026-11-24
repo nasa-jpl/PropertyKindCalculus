@@ -31,9 +31,9 @@ deciders at the end of this module (`Quantity.leb/ltb/geb/gtb`, `UpperBound.hitB
 survives by instance absence.
 
 **Association of `clamp` (load-bearing).** `IccQ.clamp` computes
-`max lo (min hi x)`, exactly the same function as `Quantity.clamp`. The operand order
-matters for a `Float` NaN: the inner minimum preserves it, and the outer maximum sends
-it to the lower bound. Keeping the interval and function-calculus APIs on this same
+`max lo (min hi x)`, exactly the same function as `Quantity.clamp`. A `Float` NaN
+propagates: `Float`'s `min` and `max` are the IEEE 754 `minimum` and `maximum`, which
+return NaN when either operand is one, so a NaN input clamps to NaN. Keeping the interval and function-calculus APIs on this same
 association makes their erased operations agree on finite and NaN inputs alike.
 
 **Roles survive representation change.** All three carry `castCarrier`, the counterpart
@@ -193,7 +193,7 @@ each endpoint contributes only the orientation its role can state. -/
 
 /-- **The executable eliminator**: clamp `x` into the interval as
 `max lo (min hi x)`, the same association as `Quantity.clamp`. On `Float`, a NaN
-survives the inner minimum and the outer maximum sends it to the lower bound. -/
+input clamps to NaN: both the minimum and the maximum propagate it. -/
 @[expose] def clamp [Min R] [Max R] (I : IccQ k R) (x : Quantity k R) : Quantity k R :=
   ⟨Max.max I.lo.q.magnitude (Min.min I.hi.q.magnitude x.magnitude)⟩
 

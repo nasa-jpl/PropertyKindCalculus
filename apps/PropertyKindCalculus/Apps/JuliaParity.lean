@@ -32,10 +32,11 @@ public import PropertyKindCalculus.Examples.TapeCodegenLut
 
 @[expose] public section Blanket
 
-open Runtime.Autograd (Tape Node)
+open PropertyKindCalculus.Paradigm (TapeM CpuTape CpuNode)
 open PropertyKindCalculus.Paradigm.TapeCodegen
 open PropertyKindCalculus.Paradigm.TapeCodegen.Julia
-open PropertyKindCalculus.Paradigm (LutTable)
+open PropertyKindCalculus.Paradigm (LutTable LutInterp)
+open PropertyKindCalculus.Examples (TapeCodegenLut.inLeafV TapeCodegenLut.TB TapeCodegenLut.demoLut)
 open PropertyKindCalculus.Paradigm.TapeCSE (cseCompact)
 
 namespace PropertyKindCalculus.Apps.JuliaParity
@@ -154,7 +155,7 @@ def ulpDist (x y : Float) : Option Nat :=
 
 /-- `transCone t` marks each node whose backward cone contains an `exp` or `log` node (parents
 precede children in a tape, so one forward pass suffices). -/
-def transCone (t : Tape Float) : Array Bool := Id.run do
+def transCone (t : CpuTape Float) : Array Bool := Id.run do
   let mut marks : Array Bool := Array.mkEmpty t.nodes.size
   for n in t.nodes do
     let own := n.name == some "exp" || n.name == some "log"
@@ -183,17 +184,35 @@ def pixelEnv (centre : String → Float) (inputs : Array String) (k : Nat) : Str
 
 structure Case where
   name : String
-  record : Except String (Tape Float × List Nat)
+  record : Except String (CpuTape Float × List Nat)
   centre : String → Float
   /-- The lookup tables the tape's `lutfetch` nodes name (empty for pure-arithmetic tapes). -/
   tables : Array LutTable := #[]
+  /-- Fixed pixels run instead of the perturbed centre (`--pixels` then does not apply). -/
+  pixels : Option (List (String → Float)) := none
 
 /-- `Examples.TapeCodegenLut`'s mixed fetch + arithmetic model, compacted — the case that exercises
 `tl_lutfetch` and the table-extended interpreter `evalTapeT`. -/
-def recordLut : Except String (Tape Float × List Nat) := do
+def recordLut : Except String (CpuTape Float × List Nat) := do
   let (t, id) ← PropertyKindCalculus.Examples.TapeCodegenLut.lutRecord
   let (t', remap) := cseCompact t
   pure (t', [remap.getD id id])
+
+/-- `min`, `max`, the clamp `max lo (min hi x)` and a table fetch, as four outputs: the ops whose
+NaN and signed-zero results the renderings must reproduce. -/
+def recordSpecial : Except String (CpuTape Float × List Nat) := do
+  let x := TapeCodegenLut.inLeafV "x" 1.0
+  let y := TapeCodegenLut.inLeafV "y" 2.0
+  let fetch : TapeCodegenLut.TB := LutInterp.lutFetch TapeCodegenLut.demoLut x y
+  let outs : List TapeCodegenLut.TB :=
+    [Min.min x y, Max.max x y, Max.max (0 : TapeCodegenLut.TB) (Min.min (1 : TapeCodegenLut.TB) x), fetch]
+  let (ids, t) ← TapeM.run (TorchLean.Tape.empty : CpuTape Float) (outs.mapM (·.run))
+  pure (t, ids)
+
+/-- Every ordered pair over NaN, `±0`, `±1` and `±∞`, as `(x, y)`. -/
+def specialPixels : List (String → Float) :=
+  let vs : List Float := [0.0 / 0.0, 0.0, -0.0, 1.0, -1.0, 1.0 / 0.0, -1.0 / 0.0]
+  vs.flatMap fun a => vs.map fun b => fun nm => if nm == "x" then a else b
 
 def cases : List Case :=
   [ { name := "avs_resjac", record := PropertyKindCalculus.Paradigm.TapeCodegen.Demo.recordResJac
@@ -202,10 +221,65 @@ def cases : List Case :=
     , centre := PropertyKindCalculus.Examples.LmStepCodegenDemo.env0 }
   , { name := "lut_model", record := recordLut
     , centre := PropertyKindCalculus.Examples.TapeCodegenLut.recordEnv
-    , tables := #[PropertyKindCalculus.Examples.TapeCodegenLut.demoLut] } ]
+    , tables := #[PropertyKindCalculus.Examples.TapeCodegenLut.demoLut] }
+  , { name := "nan_signed_zero", record := recordSpecial, centre := fun _ => 0.0
+    , tables := #[PropertyKindCalculus.Examples.TapeCodegenLut.demoLut], pixels := some specialPixels } ]
 
 /-- The tables of a case, keyed by name — `evalTapeT`'s table resolver. -/
 def tableLookup (c : Case) : String → Option LutTable := fun tn => c.tables.find? (·.name == tn)
+
+/-- Julia self-check of a table case: the `Float32` method of `tl_lutfetch` (integers, no `Float64`)
+against the generic `Float64` method on the same `Float32` inputs, bit for bit. -/
+def softFetchCheck : String := String.intercalate "\n"
+  [ "let"
+  , "    ref(tab, W, L, l, u) = invoke(tl_lutfetch, Tuple{AbstractVector{T},Int,Int,T,T} where {T<:AbstractFloat}, tab, W, L, l, u)"
+  , "    same(x, y) = (isnan(x) && isnan(y)) || reinterpret(UInt32, x) == reinterpret(UInt32, y)"
+  , "    sp = Float32[0, -0.0, 0.5, 1, 1.5, 2.375, 3, 4.25, 4.5, 5.859375, 7, 8.5, 9, 11, Inf32, -Inf32, NaN32, 1f-40, -1, 0.99999994f0, 0.49999997f0]"
+  , "    tab = Float32[8388608, -8388607, 4194299, -6990499, 2f0^127, -2f0^127, floatmax(Float32), 199.900009f0, 199.900009f0, Inf32, -1, 1f-45,"
+  , "                  -0.0, -1, -0.0, 1, NaN32, 2, -Inf32, 3f-39, -3.4f38, 3.3f38, 16777215, 0.1f0]"
+  , "    seed = 0x2545f4914f6cdd1d"
+  , "    bad = 0"
+  , "    for t in 1:200000"
+  , "        seed = seed * 0x5851f42d4c957f2d + 0x14057b7ef767814f"
+  , "        r1 = (seed >> 40) % UInt32"
+  , "        seed = seed * 0x5851f42d4c957f2d + 0x14057b7ef767814f"
+  , "        r2 = (seed >> 40) % UInt32"
+  , "        l = r1 % 8 == 0 ? sp[1 + r2 % length(sp)] : Float32(r1) / 2f0^24 * 3 - 1"
+  , "        u = r2 % 8 == 1 ? sp[1 + r1 % length(sp)] : Float32(r2) / 2f0^24 * 14 - 1"
+  , "        same(tl_lutfetch(tab, 12, 2, l, u), ref(tab, 12, 2, l, u)) || (bad += 1)"
+  , "    end"
+  , "    lerp(a, b, f) = Float32(Float64(a) + Float64(f) * (Float64(b) - Float64(a)))"
+  , "    for t in 1:2000000"
+  , "        seed = seed * 0x5851f42d4c957f2d + 0x14057b7ef767814f"
+  , "        r1 = (seed >> 32) % UInt32"
+  , "        seed = seed * 0x5851f42d4c957f2d + 0x14057b7ef767814f"
+  , "        r2 = (seed >> 32) % UInt32"
+  , "        seed = seed * 0x5851f42d4c957f2d + 0x14057b7ef767814f"
+  , "        r3 = (seed >> 32) % UInt32"
+  , "        a = reinterpret(Float32, r1)"
+  , "        m = t % 4"
+  , "        b = m == 0 ? reinterpret(Float32, r2) :"
+  , "            m == 1 ? reinterpret(Float32, r1 ⊻ 0x80000000 ⊻ (r2 & 0x000000ff)) :"
+  , "            m == 2 ? reinterpret(Float32, r1 ⊻ (r2 & 0x0000ffff)) : reinterpret(Float32, r1 ⊻ 0x80000000 ⊻ (r2 & 0x00ffffff))"
+  , "        f = t % 3 == 0 ? reinterpret(Float32, r3 % 0x3f800000) : t % 3 == 1 ? reinterpret(Float32, r3 % 0x01000000) : Float32(r3 >> 8) / 2f0^24"
+  , "        (isfinite(a) && isfinite(b)) || continue"
+  , "        same(tl_lerp64(a, b, f), lerp(a, b, f)) || (bad += 1)"
+  , "    end"
+  , "    ev = Float32[0, -0.0, 1, -1, floatmax(Float32), -floatmax(Float32), floatmin(Float32), -floatmin(Float32), 1f-45, -1f-45,"
+  , "                 2f0^127, -2f0^127, 8388608, -8388607, 4194299, -6990499, 199.900009f0, 1f-30, -1f-30, 1.2345678f-33, 3f-45,"
+  , "                 16777216, 16777215, 16777218, -16777218, 1.0000001f0, 0.1f0, 3.3333334f-39, -7.7777f-36]"
+  , "    ef = Float32[0, 0.5, 0.25, 0.75, 0.375, 0.99999994f0, 1f-45, 0.859375f0, 1f-30, 3f-41, 7.3f-40, 1.1754942f-38, 0.1f0, 5.4321f-39]"
+  , "    for a in ev, b in ev, f in ef"
+  , "        same(tl_lerp64(a, b, f), lerp(a, b, f)) || (bad += 1)"
+  , "    end"
+  , "    for (w, n) in ((16777218, 1), (16777220, 1), (16777219, 2), (3, 16777218))"
+  , "        big = Float32[Float32(i % 251) - 100.25f0 for i in 1:w * n]"
+  , "        for l in Float32[-1, 0, 0.5, 1, 1.6777216f7, 1.6777218f7, 1.677722f7, 1f30, Inf32], u in Float32[-1, 0, 1.5, 2, 3, 1.6777215f7, 1.6777216f7, 1.6777218f7, 1.677722f7, 1.6777222f7, 1f30, Inf32]"
+  , "            same(tl_lutfetch(big, w, n, l, u), ref(big, w, n, l, u)) || (bad += 1)"
+  , "        end"
+  , "    end"
+  , "    bad == 0 || error(\"tl_lutfetch: the Float32 method differs from the Float64 method on $bad probes\")"
+  , "end" ]
 
 /-- The Julia driver: reads the inputs file (names, then one hex row per pixel), runs the kernel at
 `Float64`, prints one hex row per pixel. -/
@@ -226,7 +300,7 @@ def driver (name : String) (nOut : Nat) (tables : Array LutTable) (ka : Bool := 
   , "    end"
   , "end"
   , s!"out = Matrix\{Float64}(undef, P, {nOut})"
-  ] ++ lutDefs ++
+  ] ++ lutDefs ++ (if tables.isEmpty || ka then [] else [softFetchCheck]) ++
   [ (if ka then s!"{name}_kernel!(CPU())(out, ins...{lutArgs}; ndrange = P); KernelAbstractions.synchronize(CPU())"
      else s!"{name}!(out, ins...{lutArgs})")
   , "for p in 1:P"
@@ -243,7 +317,7 @@ structure Verdict where
 
 /-- Run one emitted surface (`ka := false` the plain host kernel, bit-exact tier by cone; `ka := true`
 the KernelAbstractions twin, ulp tier on every output) and compare with `evalTape`. -/
-def compareSurface (o : Opts) (julia : String) (c : Case) (t : Tape Float) (outIds : List Nat)
+def compareSurface (o : Opts) (julia : String) (c : Case) (t : CpuTape Float) (outIds : List Nat)
     (cg : JuliaCodegen) (envs : List (String → Float)) (ka : Bool) : IO (Option Verdict) := do
   let dir : System.FilePath := o.outDir
   let surface := if ka then "ka" else "host"
@@ -257,8 +331,8 @@ def compareSurface (o : Opts) (julia : String) (c : Case) (t : Tape Float) (outI
   IO.FS.writeFile (dir / s!"{c.name}_julia_out_{surface}.txt") res.stdout
   let marks := transCone t
   let outLines := (res.stdout.splitOn "\n").filter (· ≠ "")
-  if outLines.length != o.pixels then
-    IO.eprintln s!"[{c.name}] expected {o.pixels} output rows, got {outLines.length}"
+  if outLines.length != envs.length then
+    IO.eprintln s!"[{c.name}] expected {envs.length} output rows, got {outLines.length}"
     return none
   let mut v : Verdict := {}
   for (env, line, k) in (envs.zip outLines).zipIdx.map (fun ((e, l), k) => (e, l, k)) do
@@ -299,7 +373,7 @@ def compareSurface (o : Opts) (julia : String) (c : Case) (t : Tape Float) (outI
               v := { v with ulpFailures := v.ulpFailures + 1, notes := v.notes.push note }
   let nTrans := outIds.filter (fun oid => marks.getD oid false) |>.length
   let tolDesc := if ka then s!"relative tolerance {o.kaRtolText}" else s!"bit-exact outside exp/log cones, {o.maxUlp} ulp inside"
-  IO.println s!"[{c.name}/{surface}] ({tolDesc}) nodes {t.nodes.size}, inputs {cg.inputs.size}, outputs {outIds.length} ({nTrans} in an exp/log cone), pixels {o.pixels}: compared {v.compared}, exact failures {v.exactFailures}, ulp failures {v.ulpFailures}, max ulp seen {v.maxUlpSeen}"
+  IO.println s!"[{c.name}/{surface}] ({tolDesc}) nodes {t.nodes.size}, inputs {cg.inputs.size}, outputs {outIds.length} ({nTrans} in an exp/log cone), pixels {envs.length}: compared {v.compared}, exact failures {v.exactFailures}, ulp failures {v.ulpFailures}, max ulp seen {v.maxUlpSeen}"
   for n in v.notes.toList.take 20 do IO.println s!"    {n}"
   return some v
 
@@ -316,7 +390,7 @@ def runCase (o : Opts) (julia : String) (c : Case) : IO (Option Verdict) := do
   IO.FS.writeFile (dir / s!"{c.name}_ka.jl") (emitJuliaKA c.name cg)
   IO.FS.writeFile (dir / s!"{c.name}_parity.jl") (driver c.name cg.numOutputs cg.tables)
   IO.FS.writeFile (dir / s!"{c.name}_parity_ka.jl") (driver c.name cg.numOutputs cg.tables (ka := true))
-  let envs := (List.range o.pixels).map (pixelEnv c.centre cg.inputs)
+  let envs := c.pixels.getD ((List.range o.pixels).map (pixelEnv c.centre cg.inputs))
   let rows := envs.map fun env => String.intercalate " " (cg.inputs.toList.map (fun nm => hexOfBits (env nm).toBits))
   IO.FS.writeFile (dir / s!"{c.name}_inputs.txt")
     (String.intercalate "\n" (String.intercalate " " cg.inputs.toList :: rows) ++ "\n")

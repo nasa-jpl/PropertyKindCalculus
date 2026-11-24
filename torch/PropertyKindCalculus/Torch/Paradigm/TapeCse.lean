@@ -11,7 +11,7 @@ morally ~150 distinct elementwise ops). That is value-correct but ruinous for "g
 roofline/arithmetic-intensity analysis, and any eventual lowering to a fused CUDA kernel, want the
 DAG of *distinct* sub-expressions, not its exponential unfolding.
 
-**This pass recovers the DAG.** `cseCompact` hash-conses a recorded `Tape Float` by each node's
+**This pass recovers the DAG.** `cseCompact` hash-conses a recorded `CpuTape Float` by each node's
 `(op-name, remapped-parent-ids, forward-value-bits)`: two nodes with the same op applied to the
 same (already-canonicalised) inputs — equivalently, two builds of the same sub-expression — collapse
 to one. It is **value-preserving** by construction: the canonical node keeps the stored forward
@@ -48,8 +48,8 @@ public import Std.Data.HashMap
 
 @[expose] public section Blanket
 
-open Spec TorchLean
-open Runtime.Autograd
+open TorchLean
+open PropertyKindCalculus.Paradigm (TapeM CpuTape CpuNode)
 open PropertyKindCalculus.Paradigm (TapeBuilder)
 
 namespace PropertyKindCalculus.Paradigm.TapeCSE
@@ -58,7 +58,7 @@ namespace PropertyKindCalculus.Paradigm.TapeCSE
 (so duplicates of a shared input collapse before the node is keyed), and the bit pattern of its
 stored forward value (disambiguates constant leaves, and bulletproofs the key against any future
 scalar-baking op). Two nodes share a key iff they are the same op on the same canonical inputs. -/
-def nodeKey (remap : Array Nat) (node : Node Float) : Option String × Array Nat × List UInt64 :=
+def nodeKey (remap : Array Nat) (node : CpuNode Float) : Option String × Array Nat × List UInt64 :=
   ( node.name
   , node.parents.map (fun p => remap.getD p p)
   , (TorchLean.Storage.toArray node.value.tensor.buffer).toList.map Float.toBits )
@@ -67,8 +67,8 @@ def nodeKey (remap : Array Nat) (node : Node Float) : Option String × Array Nat
 remap of every parent is already known), collapsing structurally-identical nodes onto one. Returns
 the compacted tape and the `remap : oldId ↦ newId` array. Forward-value-preserving: each surviving
 node carries the original's stored value, so reading any remapped id yields the original value. -/
-def cseCompact (t : Tape Float) : Tape Float × Array Nat := Id.run do
-  let mut newTape : Tape Float := Tape.empty
+def cseCompact (t : CpuTape Float) : CpuTape Float × Array Nat := Id.run do
+  let mut newTape : CpuTape Float := Tape.empty
   let mut remap : Array Nat := Array.mkEmpty t.size
   let mut memo : Std.HashMap (Option String × Array Nat × List UInt64) Nat := {}
   for node in t.nodes do
@@ -87,13 +87,13 @@ def cseCompact (t : Tape Float) : Tape Float × Array Nat := Id.run do
 /-- Build a tape sub-program, CSE-compact it, and read back the result — returning the result
 tensor, the **raw** node count (the carrier's unfolded emission), and the **compacted** node count
 (the distinct sub-expressions). The tensor is bit-identical to the uncompacted run of `b` —
-`TapeM.run Tape.empty b.run`, then `Tape.requireValue` at its result node — since CSE preserves
+`TapeM.run Tape.empty b.run`, then `TorchLean.Tape.requireValue` at its result node — since CSE preserves
 every stored forward value; only the count shrinks. -/
 def runBuilderCSE {s : Shape} (b : TapeBuilder s) :
     Except String (Tensor Float s × Nat × Nat) := do
   let (id, t) ← TapeM.run Tape.empty b.run
   let (t', remap) := cseCompact t
-  let v ← Tape.requireValue (t := t') (s := s) (remap.getD id id)
+  let v ← TorchLean.Tape.requireValue (t := t') (s := s) (remap.getD id id)
   pure (v, Tape.size t, Tape.size t')
 
 end PropertyKindCalculus.Paradigm.TapeCSE

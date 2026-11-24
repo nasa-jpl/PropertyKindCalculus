@@ -29,8 +29,8 @@ meta import PropertyKindCalculus.Tests.Graph.Bisimulation
 
 namespace PropertyKindCalculus.Tests.TapeSeal
 
-open Spec TorchLean
-open Runtime.Autograd (Tape Node TapeM)
+open TorchLean
+open PropertyKindCalculus.Paradigm (TapeM CpuTape CpuNode)
 open PropertyKindCalculus
 open PropertyKindCalculus.Paradigm (TapeBuilder TapeGraph TapeVertex Match Realized)
 open PropertyKindCalculus.Paradigm.TapeCodegen (ofTape evalTape WF)
@@ -53,7 +53,7 @@ def e : Complex TB := ⟨TapeBuilder.const 1.5, TapeBuilder.const 2.0⟩
 def y : Complex TB := a * b + e
 
 /-- Record both parts of `y` on one tape and compact it. -/
-def recorded : Except String (Tape Float × Nat × Nat) := do
+def recorded : Except String (CpuTape Float × Nat × Nat) := do
   let ((r, i), t) ← TapeM.run Tape.empty (do
     let r ← y.re.run
     let i ← y.im.run
@@ -89,7 +89,7 @@ lemma accepted : m.Accepts g T := by decide
 
 /-- The seal of the computation, on any well-formed tape whose graph is `T` — the recorded
 one, by the runtime check above. -/
-example (t : Tape Float) (hwft : WF t) (hT : ofTape t = T) :
+example (t : CpuTape Float) (hwft : WF t) (hT : ofTape t = T) :
     ∀ (env₁ env₂ : String → Float) (vals₁ vals₂ : Array Float),
       (∀ s ∈ g.influencers 4, ∀ u ∈ m.comps s, ∀ nm, (ofTape t).name? u = some nm →
         env₁ nm = env₂ nm) →

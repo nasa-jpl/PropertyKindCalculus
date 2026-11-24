@@ -34,10 +34,9 @@ meta import PropertyKindCalculus.Uncertainty.Adequacy.ExecBridge
 namespace PropertyKindCalculus.UncertaintyExamples.AdequacyExecBridge
 
 open PropertyKindCalculus.Uncertainty.Adequacy
-open TorchLean.Floats
+open TorchLean (FP32)
 open PropertyKindCalculus.Fp32
-open TorchLean.Floats.IEEE754
-open TorchLean.Floats.IEEE754.IEEE32Exec
+open TorchLean.IEEE754
 open FloatLib.Floats (ExecFloat)
 open FloatLib.Floats.ExecFloat.Binary (isFinite toModel)
 open FloatLib.Floats.Formats.Flocq (bpow)

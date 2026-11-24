@@ -33,7 +33,7 @@ public import PropertyKindCalculus.QuantityFunction
 
 @[expose] public section Blanket
 
-open Spec TorchLean
+open TorchLean
 open PropertyKindCalculus.Paradigm (FusedExp)
 
 namespace PropertyKindCalculus

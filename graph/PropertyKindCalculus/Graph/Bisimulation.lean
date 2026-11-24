@@ -572,8 +572,8 @@ lemma isSWBisimulation_contraction {g : Provenance ν κ} {T : TapeGraph} {m : M
       have ha'oc : a' = oc.1 := by
         simp only [operandAt, hro, hops] at ha'
         cases i with
-        | zero => simpa using ha'.symm
-        | succ j => simp at ha'
+        | zero => exact (Option.some.inj ha').symm
+        | succ j => exact nomatch ha'
       subst ha'oc
       refine ⟨v', by rw [hlab]; exact LTS.STr.refl, ?_⟩
       rcases hvv' with ⟨c, hvc, hv'c⟩ | ⟨r₀, hr₀, hw₀, hvr₀, hv'i⟩

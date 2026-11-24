@@ -6,7 +6,7 @@ layer and the refinement bridge are written in: the exponent grid `fexp32`, the 
 rounded-real `NF` at binary32 precision, with gradual underflow and no upper exponent bound).
 
 Every name here is an abbreviation of, or a one-line consequence of, FloatLib's format-indexed
-rounding theory at `FloatFormat.binary32`: `Model.roundAt`, `Model.ulpAt`, `Model.epsilonAt`,
+rounding theory at `FloatFormat.binary32`: `Model.roundAt`, `Model.ulpAt`, `Model.halfUlpAt`,
 `Model.abs_roundAt_sub_le`, `Model.roundAt_sub_eq_of_sterbenz`. The grid `Model.fexpOf binary32`
 is `fltExp (-149) 24` by computation (`fexp32_eq_fltExp`). TorchLean states its executable
 refinement theorems (`toReal_add_eq_round_of_isFinite` and its siblings) against the same
@@ -16,14 +16,14 @@ them. A `module` file, like the TorchLean and FloatLib modules it imports.
 
 module
 
-public import NN.Floats.FP32
+public import TorchLean.Verify.Floats.FP32
 public import FloatLib.Floats.Formats.BinaryInterchange.Analysis.Sterbenz
 
 @[expose] public section Blanket
 
 open FloatLib.Numerics FloatLib.Floats.Formats.Flocq
 open FloatLib.Floats.Formats.BinaryInterchange (Model FloatFormat)
-open TorchLean.Floats (FP32)
+open TorchLean (FP32)
 
 namespace PropertyKindCalculus.Fp32
 
@@ -45,22 +45,22 @@ noncomputable abbrev round32 (x : ℝ) : ℝ := Model.roundAt FloatFormat.binary
 noncomputable abbrev ulp32 (x : ℝ) : ℝ := Model.ulpAt FloatFormat.binary32 x
 
 /-- Half a unit in the last place at `x`: the distance one nearest-even rounding can move `x`. -/
-noncomputable abbrev eps32 (x : ℝ) : ℝ := Model.epsilonAt FloatFormat.binary32 x
+noncomputable abbrev eps32 (x : ℝ) : ℝ := Model.halfUlpAt FloatFormat.binary32 x
 
 /-- Binary32 has a smallest grid step, so its ulp at zero is `2^-149`. -/
 @[simp] theorem ulp32_zero : ulp32 0 = bpow binaryRadix (-149) :=
-  ulp_zero_FLT (-149) 24 (by norm_num)
+  ulp_zero_flt (-149) 24 (by norm_num)
 
 /-- Rounding fixes zero: it is on the grid. -/
 theorem round32_zero : round32 0 = 0 := Model.roundAt_zero FloatFormat.binary32
 
-/-- **Sterbenz at binary32.** If two positive binary32-representable reals are within a factor of
+/-- **Sterbenz at binary32.** If two binary32-representable reals are within a factor of
 two, rounding their exact difference is the identity. -/
 theorem round32_sub_exact_of_sterbenz {u v : ℝ}
-    (hu : genericFormat binaryRadix fexp32 u) (hv : genericFormat binaryRadix fexp32 v)
-    (hupos : 0 < u) (hvpos : 0 < v) (huv : u ≤ 2 * v) (hvu : v ≤ 2 * u) :
+    (hu : GenericRepresentable binaryRadix fexp32 u) (hv : GenericRepresentable binaryRadix fexp32 v)
+    (huv : u ≤ 2 * v) (hvu : v ≤ 2 * u) :
     round32 (u - v) = u - v :=
-  Model.roundAt_sub_eq_of_sterbenz FloatFormat.binary32 hu hv hupos hvpos huv hvu
+  Model.roundAt_sub_eq_of_sterbenz FloatFormat.binary32 hu hv huv hvu
 
 namespace FP32
 
@@ -88,13 +88,12 @@ theorem div_abs_error (a b : FP32) :
     |(a / b).val - (a.val / b.val)| ≤ eps32 (a.val / b.val) :=
   Model.abs_roundAt_sub_le FloatFormat.binary32 (a.val / b.val)
 
-/-- Subtraction of positive representable `FP32` values within a factor of two is exact. -/
+/-- Subtraction of representable `FP32` values within a factor of two is exact. -/
 theorem sub_exact_of_sterbenz {a b : FP32}
     (ha : a.IsRepresentable) (hb : b.IsRepresentable)
-    (hapos : 0 < a.val) (hbpos : 0 < b.val)
     (hab : a.val ≤ 2 * b.val) (hba : b.val ≤ 2 * a.val) :
     (a - b).val = a.val - b.val :=
-  round32_sub_exact_of_sterbenz ha hb hapos hbpos hab hba
+  round32_sub_exact_of_sterbenz ha hb hab hba
 
 end FP32
 

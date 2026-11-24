@@ -306,7 +306,7 @@ source run at `Float` for Monte Carlo — is interpreted at TorchLean's reverse-
 carrier; each input enters as a differentiable leaf, and one *total dense* reverse pass
 (`Tape.backwardDenseFrom`, seeded $`1` at the scalar output) reads every $`c_i`, with no model
 rewrite. Since Stage 3.5 this is the very entry point TorchLean's soundness theorem
-`backwardDenseFrom_lowerGraphToTape_adjoint_fderiv` characterizes: on a compiled graph at the `ℝ`
+`Tape.Graph.backwardDenseFrom_eq_fderiv` characterizes: on a compiled graph at the `ℝ`
 carrier its input-prefix output *is* the adjoint of the Fréchet derivative of the forward
 evaluation (the eager-tape provenance — narrowed at Stage 3.6 to a closure-provenance question,
 see the direct-simulation theorem below — and the `Float`-vs-`ℝ` deviation remain the two
@@ -321,16 +321,16 @@ pass on a compiled tape succeeds, and the input-prefix of its gradient *array* �
 shape-erased representation, block by block (`ArrCorr`) — realises exactly the adjoint of the
 Fréchet derivative of the forward evaluation applied to the seed. Separately, and for *arbitrary*
 (not just compiled) value-correct tapes: the reverse pass returns `.ok` provided every backward
-closure is *shape-total* — a hypothesis the eager `leaf`/`add`/`mul` tape constructors are proved
-to provide, constructor by constructor.
+closure is *shape-total* — a hypothesis proved for the empty tape, for an appended leaf, and for
+any appended node whose contributions go to earlier nodes at their shapes.
 :::
 
 :::proof "thm_uq_direct_sim"
 Realized (`PRSim.direct_PR_soundness_compiled`, with `backwardDenseFrom_ok` for the totality half
-and `forwardSim_lowerGraphToTape` inhabiting the simulation relation; `Experiments/PRSimulation.lean`,
+and `forwardSim_toTape` inhabiting the simulation relation; `Experiments/PRSimulation.lean`,
 sorry-free). The endpoint is the input-prefix projection of the Stage-3.5 theorem transported to
-the runtime array by two erasure lemmas (block-reads invert context flattening; `Array.extract` is
-the erased typed prefix) — no reverse-pass fold argument is re-derived, so the adjoint mathematics
+the runtime array by two erasure lemmas (an erased context realises its own vectorization;
+`Array.extract` is the erased typed prefix) — no reverse-pass fold argument is re-derived, so the adjoint mathematics
 enters exactly once, through the Stage-3.5 bridge. The totality half threads the "every slot
 carries its node's shape" invariant through the accumulation fold, value-free; the shape-totality
 hypothesis is honest and necessary, since a value-correct tape with an erroring closure refutes
@@ -340,28 +340,28 @@ profiles to the classical trio.
 :::
 
 :::theorem "thm_uq_eager_provenance" (parent := "uncertainty") (lean := "PRSim.direct_PR_soundness_eager")
-*Eager provenance (Stage 3.6 addendum).* The tape the eager runtime constructors actually build —
-input leaves, then one `add`/`mul` call per graph node, which is the construction pattern the
-sensitivity bridge uses — runs the *same* total dense reverse pass as the compiled tape of the
+*Eager provenance (Stage 3.6 addendum).* The tape a program actually records — input leaves, then
+one `Tape.apply` call per graph node, which is the construction pattern the sensitivity bridge
+uses — runs the *same* total dense reverse pass as the compiled tape of the
 corresponding graph: same result, same gradient array, from any erased-context seed. Therefore
 the Fréchet-adjoint endpoint above holds on the eagerly built tape itself, with no compilation
 anywhere in the trusted path.
 :::
 
 :::proof "thm_uq_eager_provenance"
-Realized (`PRSim.direct_PR_soundness_eager`, via `backwardDenseFrom_eager_eq_compiled`;
-`Experiments/EagerProvenance.lean`, sorry-free). `EagerBuilds` is the provenance relation — its
-base tape *is* the compiled tape of the empty graph, definitionally — and the identification is
-pure accounting, never a re-derived fold: the compiled node's dense contribution list is folded by
-the upstream accumulation bridge, the eager node's sparse two-element list by a new single-slot
-lemma (one accumulation call is a one-hot context addition), and the two context updates coincide
-by flatten-injectivity through the vectorization homomorphisms — the eager closure's stored
-product-rule payloads are exactly the `ofVec`-authored node's Hadamard vjp blocks. Push-invariance
-lemmas restrict the extended tape's loop to its prefix, so the structural induction consumes its
-hypothesis directly. Honest residuals: ops beyond `add`/`mul` (one more crank of the same machine
-per op), the `TapeM` state-monad sugar (a one-line wrapper per op), and the `Float`-vs-`ℝ`
-deviation — the workstream's own Adequacy claim. The `AutogradDirectSim` example witnesses
-`EagerBuilds` for the concrete product tape and pins the classical-trio axiom profile.
+Realized (`PRSim.direct_PR_soundness_eager`, via `backwardDenseFrom_eager`;
+`Experiments/EagerProvenance.lean`, sorry-free). `EagerBuilds` is the provenance relation: leaves,
+then one recorded unary or binary operator per graph node, the node being the operator's own
+`LawfulNode.ofArm`. The induction carries one invariant (`TapeInv`): the tape has one live node per
+context entry, stores the graph's context, sends contributions only to earlier nodes, and its
+dense reverse pass computes the graph's reverse program. `TapeInv.apply` is the step for any
+operator of the table with one value output, so no operator is treated separately; it uses the
+upstream description of the node `Tape.apply` records. Each recorded operator carries two
+hypotheses: no alias rule applies at its parents (`min x x` and `max x x` record one parent), and
+its rule emits contributions in port order. Remaining gaps: operators with frozen or detached
+ports or several outputs, and the `Float`-vs-`ℝ` deviation — the workstream's own Adequacy claim.
+The `AutogradDirectSim` example witnesses `EagerBuilds` for recorded `mul`, `sub` and `exp` tapes,
+and `TapeMBridge` for a `do`-block program; both pin the classical-trio axiom profile.
 :::
 
 :::theorem "thm_uq_cumulant_additivity" (parent := "uncertainty") (lean := "PropertyKindCalculus.Uncertainty.willinkCumulants_cons")
@@ -1152,10 +1152,10 @@ direct-simulation closure.
   (one absorption), with `contribution_absorbed_at_scale` applying the A3 verdict at that scale,
   `#print axioms` confirming no `sorryAx`.
 - `PropertyKindCalculus.UncertaintyExamples.AutogradDirectSim` — the Stage-3.6 closure instantiated
-  concretely: the vectorization homomorphisms at a 3-vector shape; the compiled product graph
+  concretely: the compiled product graph
   $`x_0 \cdot x_1` with `direct_PR_soundness_compiled` (the runtime dense reverse pass succeeds and
   its input-prefix realises the adjoint of the Fréchet derivative) and its inhabited forward
-  simulation; an eager two-leaf/`mul` runtime tape whose shape-total-closure hypothesis is
-  discharged constructor by constructor; and, via the eager-provenance addendum, `EagerBuilds`
-  witnessing that runtime tape with `direct_PR_soundness_eager` giving the endpoint on it — no
+  simulation; a two-leaf runtime tape whose shape-total-closure hypothesis is discharged
+  constructor by constructor; and, via the eager-provenance addendum, `EagerBuilds` witnessing
+  recorded `mul`, `sub` and `exp` tapes with `direct_PR_soundness_eager` giving the endpoint — no
   compilation involved — with `#print axioms` pinning the classical trio only.

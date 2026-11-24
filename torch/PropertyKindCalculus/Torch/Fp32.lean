@@ -29,15 +29,14 @@ module
 public import PropertyKindCalculus.QuantityRefinement
 public import PropertyKindCalculus.QuantityReal
 public import PropertyKindCalculus.Torch.Fp32Spec
-public import NN.Proofs.RuntimeApprox.IEEE32.Arithmetic
+public import TorchLean.Verify.Floats.IEEE754
 
 @[expose] public section Blanket
 
-open TorchLean.Floats          -- `FP32`
-open TorchLean.Floats.IEEE754  -- the `IEEE32Exec` theorem namespace (`toReal_*_eq_round_*`)
+open TorchLean (FP32)
 open PropertyKindCalculus.Fp32 (round32 round32_zero)
 open FloatLib.Floats (ExecFloat)
-open FloatLib.Floats.ExecFloat.Binary (isFinite toModel)
+open FloatLib.Floats.ExecFloat.Binary (isFinite toModel toReal_add_eq_roundAt toReal_mul_eq_roundAt)
 
 namespace PropertyKindCalculus
 
@@ -124,7 +123,7 @@ theorem Quantity.add_refines_exec {k : KindOfProperty} (h : DifferenceKind k)
       = Quantity.mk
           (IEEE32Exec.fp32Round
             (IEEE32Exec.toReal x.magnitude + IEEE32Exec.toReal y.magnitude))
-  rw [IEEE32Exec.toReal, IEEE32Exec.toReal_add_eq_round_of_isFinite hfin]
+  exact congrArg Quantity.mk (toReal_add_eq_roundAt hfin)
 
 /-! ## The multiplicative surface at binary32
 
@@ -188,7 +187,7 @@ theorem Quantity.mul_refines_exec {k₁ k₂ k : KindOfProperty} (h : ProductKin
       = Quantity.mk
           (IEEE32Exec.fp32Round
             (IEEE32Exec.toReal x.magnitude * IEEE32Exec.toReal y.magnitude))
-  rw [IEEE32Exec.toReal, IEEE32Exec.toReal_mul_eq_round_of_isFinite hfin]
+  exact congrArg Quantity.mk (toReal_mul_eq_roundAt hfin)
 
 /-- **Executable division refinement, conditional (R10) — and this is the one that carries
 the zero denominator.** The one hypothesis is that the executable quotient is finite, and that
@@ -212,7 +211,7 @@ theorem Quantity.div_refines_exec {k₁ k₂ k : KindOfProperty} (h : QuotientKi
       = Quantity.mk
           (IEEE32Exec.fp32Round
             (IEEE32Exec.toReal x.magnitude / IEEE32Exec.toReal y.magnitude))
-  rw [IEEE32Exec.toReal, IEEE32Exec.toReal_div_eq_round_of_isFinite x.magnitude y.magnitude hfin]
+  exact congrArg Quantity.mk (TorchLean.IEEE754.toReal_div_eq_round hfin)
 
 end PropertyKindCalculus
 

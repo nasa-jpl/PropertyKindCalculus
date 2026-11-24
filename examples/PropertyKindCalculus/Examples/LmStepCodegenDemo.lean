@@ -38,8 +38,8 @@ meta import PropertyKindCalculus.Examples.AvsForward
 
 @[expose] public section Blanket
 
-open Spec TorchLean
-open Runtime.Autograd (Tape TapeM)
+open TorchLean
+open PropertyKindCalculus.Paradigm (TapeM CpuTape CpuNode)
 open PropertyKindCalculus (MathCarrier)
 open PropertyKindCalculus.Paradigm (TapeBuilder NumCarrier BatchCarrier)
 open PropertyKindCalculus.Paradigm.TapeCSE (cseCompact)
@@ -244,7 +244,7 @@ def lbTB : Theta TB := { a := kconst lbV.a, b := kconst lbV.b, c := kconst lbV.c
 def ubTB : Theta TB := { a := kconst ubV.a, b := kconst ubV.b, c := kconst ubV.c, d := kconst ubV.d }
 
 /-- Record `lmStepLavs`'s four outputs (θ') on one shared tape, then hash-cons to the distinct-op DAG. -/
-def recordStep : Except String (Tape Float × List Nat) := do
+def recordStep : Except String (CpuTape Float × List Nat) := do
   let θ' := lmStepLavs (α := TB) lamTB lbTB ubTB obsTB theta0TB
   let (ids, t) ← TapeM.run Tape.empty (do
     let i0 ← θ'.a.run

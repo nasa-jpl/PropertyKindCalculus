@@ -36,7 +36,7 @@ meta import PropertyKindCalculus.Examples.TapeCseStructural
 
 @[expose] public section Blanket
 
-open Runtime.Autograd (Tape Node)
+open PropertyKindCalculus.Paradigm (TapeM CpuTape CpuNode)
 open PropertyKindCalculus.Paradigm (LutTable lutNodeName?)
 open PropertyKindCalculus.Paradigm.TapeCodegen
 open PropertyKindCalculus.Examples.TapeCodegenEndToEnd (recordRaw)
@@ -69,7 +69,7 @@ theorem landing_abi_consistent (cg : Codegen) :
 
 /-! ### `gen`'s ABI fields are pure functions of the tape (universal) -/
 
-theorem gen_inputs_eq {t : Tape Float} {outIds : List Nat} {tables : Array LutTable}
+theorem gen_inputs_eq {t : CpuTape Float} {outIds : List Nat} {tables : Array LutTable}
     {mode : LutFilterMode} {cg : Codegen}
     (h : gen t outIds tables mode = .ok cg) : cg.inputs = collectInputs t := by
   unfold gen at h
@@ -99,7 +99,7 @@ theorem gen_inputs_eq {t : Tape Float} {outIds : List Nat} {tables : Array LutTa
     | error e => rw [hb] at h; simp [Except.map] at h
     | ok body => rw [hb] at h; simp [Except.map] at h; subst h; rfl
 
-theorem gen_numOutputs {t : Tape Float} {outIds : List Nat} {tables : Array LutTable}
+theorem gen_numOutputs {t : CpuTape Float} {outIds : List Nat} {tables : Array LutTable}
     {mode : LutFilterMode} {cg : Codegen}
     (h : gen t outIds tables mode = .ok cg) : cg.numOutputs = outIds.length := by
   unfold gen at h
@@ -131,7 +131,7 @@ theorem gen_numOutputs {t : Tape Float} {outIds : List Nat} {tables : Array LutT
 
 /-- The generated table ABI is a pure function of the tape and the supplied tables: `gen` succeeds
 only with `cg.tables` = the resolution of the tape's first-seen referenced table names. -/
-theorem gen_tables_eq {t : Tape Float} {outIds : List Nat} {tables : Array LutTable}
+theorem gen_tables_eq {t : CpuTape Float} {outIds : List Nat} {tables : Array LutTable}
     {mode : LutFilterMode} {cg : Codegen}
     (h : gen t outIds tables mode = .ok cg) :
     resolveTables (collectTableNames t) tables = .ok cg.tables := by
@@ -164,7 +164,7 @@ theorem gen_tables_eq {t : Tape Float} {outIds : List Nat} {tables : Array LutTa
 
 /-! ### The generated input ABI is duplicate-free (universal) -/
 
-theorem collectInputs_nodup (t : Tape Float) : (collectInputs t).toList.Nodup := by
+theorem collectInputs_nodup (t : CpuTape Float) : (collectInputs t).toList.Nodup := by
   unfold collectInputs
   refine Array.foldl_induction (motive := fun _ (acc : Array String) => acc.toList.Nodup) ?_ ?_
   · simp
@@ -186,7 +186,7 @@ theorem collectInputs_nodup (t : Tape Float) : (collectInputs t).toList.Nodup :=
 
 /-- The referenced-table name list is duplicate-free — same first-seen `foldl` shape as
 `collectInputs`, so no two table kernel parameters collide (`tex_x` declared twice). -/
-theorem collectTableNames_nodup (t : Tape Float) : (collectTableNames t).toList.Nodup := by
+theorem collectTableNames_nodup (t : CpuTape Float) : (collectTableNames t).toList.Nodup := by
   unfold collectTableNames
   refine Array.foldl_induction (motive := fun _ (acc : Array String) => acc.toList.Nodup) ?_ ?_
   · simp

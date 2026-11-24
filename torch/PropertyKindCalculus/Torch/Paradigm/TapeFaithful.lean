@@ -1,308 +1,296 @@
 /-
-# Forward-value faithfulness for the eager autograd tape
+`paradigm.tape_faithful` — **forward-value faithfulness** of the elementwise tape recorders.
 
-The eager engine (`NN.Runtime.Autograd.Tape`) records a forward pass as a grow-only array of
-nodes, each storing a shape-erased forward value; `requireValue` reads a typed value back. This
-module proves that the value stored by each elementwise op is *exactly* the corresponding pure
-`Spec` operation of its inputs:
+Each recorder of `paradigm.tape_m` is `Tape.apply` at one operator of TorchLean's table. The
+lemmas here read: given the input values, the recorded node reads back as the table rule's forward
+map of those values, at the new id `t.size`, and every earlier value survives (`FrameOver`). That
+turns a whole-program faithfulness proof into a mechanical chain, even for *symbolic* inputs
+`a b : Tensor α s`, where evaluating the tape is impossible (see `Demo.kernel_eq_spec`).
 
-  **every elementwise tape op stores, as its forward value, the matching `Spec` op applied to its
-  inputs' values** — `Tape.div` stores `divSpec a b`, `Tape.add` stores `addSpec a b`, and so on.
-
-This is the *forward-value faithfulness* of the eager tape. It matters whenever the same numeric
-program is interpreted at more than one carrier `α` (e.g. an exact carrier for proofs and `Float`
-for execution): building the program on a `Tape α` and reading the output back equals the pure
-`Spec` computation **by construction**, so agreement between a tape program and its specification
-becomes a *proof*, not a numerical comparison.
-
-The op lemmas are proved op-by-op from three generic building blocks:
-
-  1. `requireValue_addNode_self` — reading back the value of a freshly-appended node returns its
-     stored tensor (the `cast_shape_self` boundary of the dynamic shape check);
-  2. `requireValue_addNode_of_lt` — appending a node does not disturb the value read back at any
-     earlier id (value stability, so a multi-op tape can re-read its inputs);
-  3. `leaf_value` — a leaf node reads back as the tensor it was created with.
-
-Each op lemma additionally exposes a `FrameOver` witness: the op preserves every earlier node's
-value, so a later op can re-read an earlier input. Together the `*_value` lemmas reduce a
-whole-program faithfulness proof to a mechanical chain — each op's output rewrites to its `Spec`
-term and earlier values survive by `FrameOver` — even for *symbolic* inputs `a b : Tensor α s`,
-where evaluating/`decide`-ing the tape is impossible (see `Demo.kernel_eq_spec`).
-
-Covered ops: the binary arithmetic (`add`/`sub`/`mul`/`div`), the scalar `scale`, the branchless
-selectors (`min`/`max`/`relu`), and the unary family (`abs`/`sqrt`/`clamp`/`exp`/`log`/`inv`) via
-one `unary_value` lemma over the shared `Tape.unary` builder.
+Covered ops: `add`/`sub`/`mul`/`div`, `min`/`max`, and the unary `abs`/`sqrt`/`exp`/`log`, through
+one `binary_value` and one `unary_value` lemma over `Tape.apply`.
 -/
 
 module
 
-public import NN.Runtime.Autograd.Engine.TapeM
+public import PropertyKindCalculus.Torch.Paradigm.TapeM
+public import TorchLean.NN.Tape.Apply.Correctness
 
 @[expose] public section Blanket
 
-open Spec TorchLean
-open TorchLean TorchLean.Tensor
-open Runtime.Autograd
+open TorchLean
 
 namespace PropertyKindCalculus.Paradigm.TapeFaithful
 
-open Runtime.Autograd.Tape
+open TorchLean.Tape
+open PropertyKindCalculus.Paradigm
 
 variable {α : Type} [TorchLean.Storage α]
 
 /-! ## Generic building blocks -/
 
-/-- `requireValue` depends only on the stored value (`getValue?`): two tapes that agree on `id`'s
-stored value agree on `requireValue`. This is the congruence that turns *value stability* under
-`addNode` into *`requireValue` stability*. -/
-theorem requireValue_congr [DecidableEq Shape] {s : Shape}
-    (t₁ t₂ : Tape α) (id : Nat) (hg : t₁.getValue? id = t₂.getValue? id) :
-    t₁.requireValue (s := s) id = t₂.requireValue (s := s) id := by
-  unfold Tape.requireValue
+/-- `requireValue` depends only on the stored value: two tapes that agree on `id`'s stored value
+agree on `requireValue`. -/
+theorem requireValue_congr {s : Shape}
+    (t₁ t₂ : CpuTape α) (id : Nat) (hg : t₁.getValue? id = t₂.getValue? id) :
+    requireValue (s := s) t₁ id = requireValue (s := s) t₂ id := by
+  unfold requireValue
   rw [hg]
 
-/-- `requireValue` succeeds with exactly the stored tensor when `getValue?` returns it (the dynamic
-shape check passes via `cast_shape_self`). -/
-theorem requireValue_of_getValue [DecidableEq Shape] {s : Shape}
-    (t : Tape α) (id : Nat) {y : Tensor α s}
-    (h : t.getValue? id = some (Spec.SomeTensor.ofTensor y)) :
-    t.requireValue (s := s) id = .ok y := by
-  unfold Tape.requireValue
+/-- `requireValue` succeeds with exactly the stored tensor when `getValue?` returns it. -/
+theorem requireValue_of_getValue {s : Shape}
+    (t : CpuTape α) (id : Nat) {y : Tensor α s}
+    (h : t.getValue? id = some (SomeTensor.ofTensor y)) :
+    requireValue (s := s) t id = .ok y := by
+  unfold requireValue
   rw [h]
-  simp [Spec.SomeTensor.ofTensor]
+  simp [SomeTensor.ofTensor]
 
-/-- Reading back the value of a freshly-appended node returns its stored tensor. The new node's id
-is `t.size`. -/
-theorem requireValue_addNode_self [DecidableEq Shape] {s : Shape}
-    (t : Tape α) (node : Node α) {y : Tensor α s}
-    (hval : node.value = Spec.SomeTensor.ofTensor y) :
-    (t.addNode node).1.requireValue (s := s) t.size = .ok y := by
+/-- Reading back the value of a freshly-appended node returns its stored tensor, at id
+`t.size`. -/
+theorem requireValue_addNode_self {s : Shape}
+    (t : CpuTape α) (node : Tape.Node (SomeTensor α)) {y : Tensor α s}
+    (hval : node.value = SomeTensor.ofTensor y) :
+    requireValue (s := s) (t.addNode node).1 t.size = .ok y := by
   apply requireValue_of_getValue
   simp only [Tape.addNode, Tape.getValue?, Tape.getNode?, Tape.size]
   rw [Array.getElem?_push_size]
   simp [hval]
 
-/-- Appending a node does not disturb the value read back at any pre-existing id `id < t.size`
-(value stability: a later op can still re-read an earlier input). -/
-theorem requireValue_addNode_of_lt [DecidableEq Shape] {s : Shape}
-    (t : Tape α) (node : Node α) (id : Nat) (hlt : id < t.size) :
-    (t.addNode node).1.requireValue (s := s) id = t.requireValue (s := s) id := by
+/-- Appending a node does not disturb the value read back at any earlier id. -/
+theorem requireValue_addNode_of_lt {s : Shape}
+    (t : CpuTape α) (node : Tape.Node (SomeTensor α)) (id : Nat) (hlt : id < t.size) :
+    requireValue (s := s) (t.addNode node).1 id = requireValue (s := s) t id := by
   apply requireValue_congr
   simp only [Tape.addNode, Tape.getValue?, Tape.getNode?]
   congr 1
   rw [Array.getElem?_push, ite_eq_right (Nat.ne_of_lt (by simpa [Tape.size] using hlt))]
 
-/-- `t'` extends `t` by appending one node: it reads back the same value as `t` at every
-pre-existing id. This is the *frame* an op carries so a later op can re-read an earlier input. -/
-def FrameOver [DecidableEq Shape] (t' t : Tape α) : Prop :=
-  ∀ {s : Shape} (id : Nat), id < t.size → t'.requireValue (s := s) id = t.requireValue (s := s) id
+/-- `t'` reads back the same value as `t` at every id of `t`: the *frame* an op carries so a later
+op can re-read an earlier input. -/
+def FrameOver (t' t : CpuTape α) : Prop :=
+  ∀ {s : Shape} (id : Nat), id < t.size →
+    requireValue (s := s) t' id = requireValue (s := s) t id
 
 /-- Appending a node frames the previous tape. -/
-theorem frameOver_addNode [DecidableEq Shape] (t : Tape α) (node : Node α) :
+theorem frameOver_addNode (t : CpuTape α) (node : Tape.Node (SomeTensor α)) :
     FrameOver (t.addNode node).1 t := by
   intro s id h
   exact requireValue_addNode_of_lt t node id h
 
 /-- A leaf node reads back as the tensor it was created with. -/
-theorem leaf_value [DecidableEq Shape] {s : Shape}
-    (t : Tape α) (x : Tensor α s) (name : Option String) (rg : Bool) :
-    (Tape.leaf (t := t) x (name := name) (requiresGrad := rg)).1.requireValue (s := s) t.size
-      = .ok x := by
-  unfold Tape.leaf
+theorem leaf_value {s : Shape}
+    (t : CpuTape α) (x : Tensor α s) (name : Option String) (rg : Bool) :
+    requireValue (s := s) (CpuTape.leaf t x name rg).1 t.size = .ok x := by
+  unfold CpuTape.leaf Tape.leaf
   exact requireValue_addNode_self t _ rfl
 
 /-! ## Per-op forward-value faithfulness
 
-Each lemma reads: given the input values, the op's output node reads back as the corresponding
-`Spec` operation of those values. The successor tape is `(op …).1` at the new id `t.size`. Every
-elementwise op is a `Tape.binary` or `Tape.unary` node with a fixed `forward`, so each per-op lemma
-is the generic one at that `forward`. -/
+Every recorder is `Tape.apply` at a table operator with one value output, so each per-op lemma is
+the generic one at that operator's rule. -/
 
-/-- Generic binary forward-value: a `Tape.binary` node stores `forward a b`. -/
-theorem binary_value [DecidableEq Shape] {σ₁ σ₂ τ : Shape}
-    (t : Tape α) (opName : String) (aId bId : Nat)
-    (forward : Tensor α σ₁ → Tensor α σ₂ → Tensor α τ)
-    (backward : Tensor α σ₁ → Tensor α σ₂ → Tensor α τ → Tensor α σ₁ × Tensor α σ₂)
+variable [Context α] [Op.Capabilities α]
+
+/-- The node a binary table operator appends: its name, its value parents and the rule's forward
+value. The parents are stated for rules without an alias rule: an aliased `min x x` records one
+parent. -/
+theorem binary_node {σ₁ σ₂ τ : Shape}
+    (t : CpuTape α) (name : String) (op : Op [⟨.value, σ₁⟩, ⟨.value, σ₂⟩] [⟨.value, τ⟩])
+    (aId bId : Nat) {rule : Op.Rule α [⟨.value, σ₁⟩, ⟨.value, σ₂⟩] [⟨.value, τ⟩]}
+    (hc : op.check = .ok ()) (hr : op.rule? (α := α) = some rule)
+    (hv : rule.validate = fun _ => .ok ())
     {a : Tensor α σ₁} {b : Tensor α σ₂}
-    (ha : t.requireValue (s := σ₁) aId = .ok a) (hb : t.requireValue (s := σ₂) bId = .ok b) :
-    ∃ t', t.binary opName aId bId forward backward = .ok (t', t.size) ∧
-          t'.requireValue (s := τ) t.size = .ok (forward a b) ∧ FrameOver t' t := by
-  unfold Tape.binary
-  rw [ha, hb]
-  exact ⟨_, rfl, requireValue_addNode_self t _ rfl, frameOver_addNode t _⟩
+    (ha : requireValue (s := σ₁) t aId = .ok a) (hb : requireValue (s := σ₂) t bId = .ok b) :
+    ∃ node : Tape.Node (SomeTensor α),
+      CpuTape.binary t name op aId bId = .ok ((t.addNode node).1, t.size) ∧
+      node.name = some name ∧ (rule.alias? = none → node.parents = #[aId, bId]) ∧
+      node.value = SomeTensor.ofTensor (rule.forward (a, b, ())).1 := by
+  have hread : Args.read t [⟨.value, σ₁⟩, ⟨.value, σ₂⟩] (aId, bId, ()) = .ok (a, b, ()) := by
+    simp [Args.read, Arg.read, ha, hb, bind, Except.bind, pure, Except.pure]
+  have hpv := prepared_value rule
+    (Args.ids [⟨.value, σ₁⟩, ⟨.value, σ₂⟩] (show Args α [⟨.value, σ₁⟩, ⟨.value, σ₂⟩] from (aId, bId, ()))) (a, b, ())
+    (Args.flags t [⟨.value, σ₁⟩, ⟨.value, σ₂⟩] (aId, bId, ()))
+  unfold CpuTape.binary Tape.apply
+  simp only [hc, hr, hread, hv, bind, Except.bind, record, valuePorts,
+    List.countP_singleton, beq_self_eq_true, ite_true, gt_iff_lt, Nat.lt_irrefl, ite_false, pure,
+    Except.pure]
+  exact ⟨_, _root_.rfl, _root_.rfl,
+    fun hal => by simp [recordedNode, Args.ids, Arg.id?, prepared, aliasOf, hal, List.finRange],
+    congrArg (fun v : Values α [⟨.value, τ⟩] => SomeTensor.ofTensor v.1) hpv⟩
 
-/-- Generic unary forward-value: a `Tape.unary` node stores `forward x`. Covers
-`abs`/`sqrt`/`clamp`/`exp`/`log`/`inv`, each of which is a `Tape.unary` with a fixed `forward`. -/
-theorem unary_value [DecidableEq Shape] {σ τ : Shape}
-    (t : Tape α) (opName : String) (xId : Nat)
-    (forward : Tensor α σ → Tensor α τ)
-    (backward : Tensor α σ → Tensor α τ → Tensor α σ)
-    {x : Tensor α σ} (hx : t.requireValue (s := σ) xId = .ok x) :
-    ∃ t', t.unary opName xId forward backward = .ok (t', t.size) ∧
-          t'.requireValue (s := τ) t.size = .ok (forward x) ∧ FrameOver t' t := by
-  unfold Tape.unary
-  rw [hx]
-  exact ⟨_, rfl, requireValue_addNode_self t _ rfl, frameOver_addNode t _⟩
+/-- Generic binary forward-value: the recorded node stores the rule's forward map. -/
+theorem binary_value {σ₁ σ₂ τ : Shape}
+    (t : CpuTape α) (name : String) (op : Op [⟨.value, σ₁⟩, ⟨.value, σ₂⟩] [⟨.value, τ⟩])
+    (aId bId : Nat) {rule : Op.Rule α [⟨.value, σ₁⟩, ⟨.value, σ₂⟩] [⟨.value, τ⟩]}
+    (hc : op.check = .ok ()) (hr : op.rule? (α := α) = some rule)
+    (hv : rule.validate = fun _ => .ok ())
+    {a : Tensor α σ₁} {b : Tensor α σ₂}
+    (ha : requireValue (s := σ₁) t aId = .ok a) (hb : requireValue (s := σ₂) t bId = .ok b) :
+    ∃ t', CpuTape.binary t name op aId bId = .ok (t', t.size) ∧
+          requireValue (s := τ) t' t.size = .ok (rule.forward (a, b, ())).1 ∧ FrameOver t' t := by
+  obtain ⟨node, hrun, -, -, hval⟩ := binary_node t name op aId bId hc hr hv ha hb
+  exact ⟨_, hrun, requireValue_addNode_self t node hval, frameOver_addNode t node⟩
 
-/-- `Tape.add` stores `addSpec a b`. -/
-theorem add_value [Add α] [DecidableEq Shape] {s : Shape}
-    (t : Tape α) (aId bId : Nat) {a b : Tensor α s}
-    (ha : t.requireValue (s := s) aId = .ok a)
-    (hb : t.requireValue (s := s) bId = .ok b) :
-    ∃ t', t.add (s := s) aId bId = .ok (t', t.size) ∧
-          t'.requireValue (s := s) t.size = .ok (addSpec a b) ∧ FrameOver t' t := by
-  unfold Tape.add
-  exact binary_value t _ aId bId _ _ ha hb
+/-- The node a unary table operator appends: its name, its value parent and the rule's forward
+value. -/
+theorem unary_node {σ τ : Shape}
+    (t : CpuTape α) (name : String) (op : Op [⟨.value, σ⟩] [⟨.value, τ⟩])
+    (xId : Nat) {rule : Op.Rule α [⟨.value, σ⟩] [⟨.value, τ⟩]}
+    (hc : op.check = .ok ()) (hr : op.rule? (α := α) = some rule)
+    (hv : rule.validate = fun _ => .ok ())
+    {x : Tensor α σ} (hx : requireValue (s := σ) t xId = .ok x) :
+    ∃ node : Tape.Node (SomeTensor α),
+      CpuTape.unary t name op xId = .ok ((t.addNode node).1, t.size) ∧
+      node.name = some name ∧ (rule.alias? = none → node.parents = #[xId]) ∧
+      node.value = SomeTensor.ofTensor (rule.forward (x, ())).1 := by
+  have hread : Args.read t [⟨.value, σ⟩] (xId, ()) = .ok (x, ()) := by
+    simp [Args.read, Arg.read, hx, bind, Except.bind, pure, Except.pure]
+  have hpv := prepared_value rule
+    (Args.ids [⟨.value, σ⟩] (show Args α [⟨.value, σ⟩] from (xId, ()))) (x, ())
+    (Args.flags t [⟨.value, σ⟩] (xId, ()))
+  unfold CpuTape.unary Tape.apply
+  simp only [hc, hr, hread, hv, bind, Except.bind, record, valuePorts,
+    List.countP_singleton, beq_self_eq_true, ite_true, gt_iff_lt, Nat.lt_irrefl, ite_false, pure,
+    Except.pure]
+  exact ⟨_, _root_.rfl, _root_.rfl,
+    fun hal => by simp [recordedNode, Args.ids, Arg.id?, prepared, aliasOf, hal, List.finRange],
+    congrArg (fun v : Values α [⟨.value, τ⟩] => SomeTensor.ofTensor v.1) hpv⟩
 
-/-- `Tape.sub` stores `subSpec a b`. -/
-theorem sub_value [Sub α] [Zero α] [DecidableEq Shape] {s : Shape}
-    (t : Tape α) (aId bId : Nat) {a b : Tensor α s}
-    (ha : t.requireValue (s := s) aId = .ok a)
-    (hb : t.requireValue (s := s) bId = .ok b) :
-    ∃ t', t.sub (s := s) aId bId = .ok (t', t.size) ∧
-          t'.requireValue (s := s) t.size = .ok (subSpec a b) ∧ FrameOver t' t := by
-  unfold Tape.sub
-  exact binary_value t _ aId bId _ _ ha hb
+/-- Generic unary forward-value: the recorded node stores the rule's forward map. -/
+theorem unary_value {σ τ : Shape}
+    (t : CpuTape α) (name : String) (op : Op [⟨.value, σ⟩] [⟨.value, τ⟩])
+    (xId : Nat) {rule : Op.Rule α [⟨.value, σ⟩] [⟨.value, τ⟩]}
+    (hc : op.check = .ok ()) (hr : op.rule? (α := α) = some rule)
+    (hv : rule.validate = fun _ => .ok ())
+    {x : Tensor α σ} (hx : requireValue (s := σ) t xId = .ok x) :
+    ∃ t', CpuTape.unary t name op xId = .ok (t', t.size) ∧
+          requireValue (s := τ) t' t.size = .ok (rule.forward (x, ())).1 ∧ FrameOver t' t := by
+  obtain ⟨node, hrun, -, -, hval⟩ := unary_node t name op xId hc hr hv hx
+  exact ⟨_, hrun, requireValue_addNode_self t node hval, frameOver_addNode t node⟩
 
-/-- `Tape.mul` stores `mulSpec a b`. -/
-theorem mul_value [Mul α] [DecidableEq Shape] {s : Shape}
-    (t : Tape α) (aId bId : Nat) {a b : Tensor α s}
-    (ha : t.requireValue (s := s) aId = .ok a)
-    (hb : t.requireValue (s := s) bId = .ok b) :
-    ∃ t', t.mul (s := s) aId bId = .ok (t', t.size) ∧
-          t'.requireValue (s := s) t.size = .ok (mulSpec a b) ∧ FrameOver t' t := by
-  unfold Tape.mul
-  exact binary_value t _ aId bId _ _ ha hb
+variable {s : Shape}
 
-/-- `Tape.div` stores `divSpec a b`. -/
-theorem div_value [Context α] [DecidableEq Shape] {s : Shape}
-    (t : Tape α) (aId bId : Nat) {a b : Tensor α s}
-    (ha : t.requireValue (s := s) aId = .ok a)
-    (hb : t.requireValue (s := s) bId = .ok b) :
-    ∃ t', t.div (s := s) aId bId = .ok (t', t.size) ∧
-          t'.requireValue (s := s) t.size = .ok (divSpec a b) ∧ FrameOver t' t := by
-  unfold Tape.div
-  exact binary_value t _ aId bId _ _ ha hb
+/-- `CpuTape.add` stores `a + b`. -/
+theorem add_value (t : CpuTape α) (aId bId : Nat) {a b : Tensor α s}
+    (ha : requireValue (s := s) t aId = .ok a) (hb : requireValue (s := s) t bId = .ok b) :
+    ∃ t', CpuTape.add (s := s) t aId bId = .ok (t', t.size) ∧
+          requireValue (s := s) t' t.size = .ok (a + b) ∧ FrameOver t' t :=
+  binary_value t _ _ aId bId _root_.rfl Op.rule?_add _root_.rfl ha hb
 
-/-- `Tape.scale` stores `scaleSpec x c`. -/
-theorem scale_value [Mul α] [DecidableEq Shape] {s : Shape}
-    (t : Tape α) (xId : Nat) (c : α) {x : Tensor α s}
-    (hx : t.requireValue (s := s) xId = .ok x) :
-    ∃ t', t.scale (s := s) xId c = .ok (t', t.size) ∧
-          t'.requireValue (s := s) t.size = .ok (scaleSpec x c) ∧ FrameOver t' t := by
-  unfold Tape.scale
-  exact unary_value t _ xId _ _ hx
+/-- `CpuTape.sub` stores `a - b`. -/
+theorem sub_value (t : CpuTape α) (aId bId : Nat) {a b : Tensor α s}
+    (ha : requireValue (s := s) t aId = .ok a) (hb : requireValue (s := s) t bId = .ok b) :
+    ∃ t', CpuTape.sub (s := s) t aId bId = .ok (t', t.size) ∧
+          requireValue (s := s) t' t.size = .ok (a - b) ∧ FrameOver t' t :=
+  binary_value t _ _ aId bId _root_.rfl Op.rule?_sub _root_.rfl ha hb
 
-/-- `Tape.min` stores `minSpec a b`. -/
-theorem min_value [Context α] [DecidableRel ((· > ·) : α → α → Prop)] [DecidableEq Shape] {s : Shape}
-    (t : Tape α) (aId bId : Nat) {a b : Tensor α s}
-    (ha : t.requireValue (s := s) aId = .ok a)
-    (hb : t.requireValue (s := s) bId = .ok b) :
-    ∃ t', t.min (s := s) aId bId = .ok (t', t.size) ∧
-          t'.requireValue (s := s) t.size = .ok (minSpec a b) ∧ FrameOver t' t := by
-  unfold Tape.min
-  exact binary_value t _ aId bId _ _ ha hb
+/-- `CpuTape.mul` stores `a * b`. -/
+theorem mul_value (t : CpuTape α) (aId bId : Nat) {a b : Tensor α s}
+    (ha : requireValue (s := s) t aId = .ok a) (hb : requireValue (s := s) t bId = .ok b) :
+    ∃ t', CpuTape.mul (s := s) t aId bId = .ok (t', t.size) ∧
+          requireValue (s := s) t' t.size = .ok (a * b) ∧ FrameOver t' t :=
+  binary_value t _ _ aId bId _root_.rfl Op.rule?_mul _root_.rfl ha hb
 
-/-- `Tape.max` stores `maxSpec a b`. -/
-theorem max_value [Context α] [DecidableRel ((· > ·) : α → α → Prop)] [DecidableEq Shape] {s : Shape}
-    (t : Tape α) (aId bId : Nat) {a b : Tensor α s}
-    (ha : t.requireValue (s := s) aId = .ok a)
-    (hb : t.requireValue (s := s) bId = .ok b) :
-    ∃ t', t.max (s := s) aId bId = .ok (t', t.size) ∧
-          t'.requireValue (s := s) t.size = .ok (maxSpec a b) ∧ FrameOver t' t := by
-  unfold Tape.max
-  exact binary_value t _ aId bId _ _ ha hb
+/-- `CpuTape.div` stores `a / b`. -/
+theorem div_value (t : CpuTape α) (aId bId : Nat) {a b : Tensor α s}
+    (ha : requireValue (s := s) t aId = .ok a) (hb : requireValue (s := s) t bId = .ok b) :
+    ∃ t', CpuTape.div (s := s) t aId bId = .ok (t', t.size) ∧
+          requireValue (s := s) t' t.size = .ok (a / b) ∧ FrameOver t' t :=
+  binary_value t _ _ aId bId _root_.rfl Op.rule?_div _root_.rfl ha hb
 
-/-- `Tape.relu` stores `Activation.reluSpec x`. -/
-theorem relu_value [Mul α] [Zero α] [Max α] [BEq α] [One α] [LT α]
-    [DecidableRel ((· > ·) : α → α → Prop)] [DecidableEq Shape] {s : Shape}
-    (t : Tape α) (xId : Nat) {x : Tensor α s}
-    (hx : t.requireValue (s := s) xId = .ok x) :
-    ∃ t', t.relu (s := s) xId = .ok (t', t.size) ∧
-          t'.requireValue (s := s) t.size = .ok (Activation.reluSpec x) ∧ FrameOver t' t := by
-  unfold Tape.relu
-  exact unary_value t _ xId _ _ hx
+/-- `CpuTape.min` stores `Tensor.minimum a b`. -/
+theorem min_value (t : CpuTape α) (aId bId : Nat) {a b : Tensor α s}
+    (ha : requireValue (s := s) t aId = .ok a) (hb : requireValue (s := s) t bId = .ok b) :
+    ∃ t', CpuTape.min (s := s) t aId bId = .ok (t', t.size) ∧
+          requireValue (s := s) t' t.size = .ok (Tensor.minimum a b) ∧ FrameOver t' t :=
+  binary_value t _ _ aId bId _root_.rfl Op.rule?_min _root_.rfl ha hb
 
-/-- `Tape.sqrt` stores `sqrtSpec x` (unary specialization). -/
-theorem sqrt_value [Context α] [DecidableRel ((· > ·) : α → α → Prop)] [DecidableEq Shape] {s : Shape}
-    (t : Tape α) (xId : Nat) {x : Tensor α s}
-    (hx : t.requireValue (s := s) xId = .ok x) :
-    ∃ t', t.sqrt (s := s) xId = .ok (t', t.size) ∧
-          t'.requireValue (s := s) t.size = .ok (sqrtSpec (α := α) (s := s) x) ∧ FrameOver t' t := by
-  unfold Tape.sqrt
-  exact unary_value t _ xId _ _ hx
+/-- `CpuTape.max` stores `Tensor.maximum a b`. -/
+theorem max_value (t : CpuTape α) (aId bId : Nat) {a b : Tensor α s}
+    (ha : requireValue (s := s) t aId = .ok a) (hb : requireValue (s := s) t bId = .ok b) :
+    ∃ t', CpuTape.max (s := s) t aId bId = .ok (t', t.size) ∧
+          requireValue (s := s) t' t.size = .ok (Tensor.maximum a b) ∧ FrameOver t' t :=
+  binary_value t _ _ aId bId _root_.rfl Op.rule?_max _root_.rfl ha hb
 
-/-- `Tape.exp` stores `expSpec x` — the one extra transcendental the AVS forward model names
-(`exp(−2·b·ndvi)`), a `Tape.unary` like the others. -/
-theorem exp_value [Context α] [DecidableEq Shape] {s : Shape}
-    (t : Tape α) (xId : Nat) {x : Tensor α s}
-    (hx : t.requireValue (s := s) xId = .ok x) :
-    ∃ t', t.exp (s := s) xId = .ok (t', t.size) ∧
-          t'.requireValue (s := s) t.size = .ok (expSpec (α := α) (s := s) x) ∧ FrameOver t' t := by
-  unfold Tape.exp
-  exact unary_value t _ xId _ _ hx
+/-- `CpuTape.abs` stores `Tensor.abs x`. -/
+theorem abs_value (t : CpuTape α) (xId : Nat) {x : Tensor α s}
+    (hx : requireValue (s := s) t xId = .ok x) :
+    ∃ t', CpuTape.abs (s := s) t xId = .ok (t', t.size) ∧
+          requireValue (s := s) t' t.size = .ok (Tensor.abs x) ∧ FrameOver t' t :=
+  unary_value t _ _ xId _root_.rfl Op.rule?_abs _root_.rfl hx
+
+/-- `CpuTape.sqrt` stores the clamped root `Tensor.sqrt x .clampNegative`. -/
+theorem sqrt_value (t : CpuTape α) (xId : Nat) {x : Tensor α s}
+    (hx : requireValue (s := s) t xId = .ok x) :
+    ∃ t', CpuTape.sqrt (s := s) t xId = .ok (t', t.size) ∧
+          requireValue (s := s) t' t.size = .ok (Tensor.sqrt x .clampNegative) ∧
+          FrameOver t' t :=
+  unary_value t _ _ xId _root_.rfl Op.rule?_sqrt_clampNegative _root_.rfl hx
+
+/-- `CpuTape.exp` stores `Tensor.exp x`. -/
+theorem exp_value (t : CpuTape α) (xId : Nat) {x : Tensor α s}
+    (hx : requireValue (s := s) t xId = .ok x) :
+    ∃ t', CpuTape.exp (s := s) t xId = .ok (t', t.size) ∧
+          requireValue (s := s) t' t.size = .ok (Tensor.exp x) ∧ FrameOver t' t :=
+  unary_value t _ _ xId _root_.rfl Op.rule?_exp _root_.rfl hx
+
+/-- `CpuTape.log` stores `Tensor.log x`. -/
+theorem log_value (t : CpuTape α) (xId : Nat) {x : Tensor α s}
+    (hx : requireValue (s := s) t xId = .ok x) :
+    ∃ t', CpuTape.log (s := s) t xId = .ok (t', t.size) ∧
+          requireValue (s := s) t' t.size = .ok (Tensor.log x) ∧ FrameOver t' t :=
+  unary_value t _ _ xId _root_.rfl Op.rule?_log _root_.rfl hx
 
 /-! ## Faithfulness-by-construction demonstrator
 
-A symbolic kernel `g(a,b) = (a / b) + b` built on the eager tape, proved equal to its `Spec` term
-`addSpec (divSpec a b) b` with **no execution** — the inputs are abstract `Tensor α s`. It shows the
-intended composition: every intermediate value rewrites to a `Spec` op via the `*_value` lemmas, and
-the re-read of the earlier leaf `b` survives the `div` by the carried `FrameOver`. -/
+A symbolic kernel `g(a,b) = (a / b) + b` recorded on the tape, proved equal to `a / b + b` with
+**no execution**: the inputs are abstract `Tensor α s`. Every intermediate value rewrites through a
+`*_value` lemma, and the re-read of the earlier leaf `b` survives the `div` by `FrameOver`. -/
 
 namespace Demo
 
-variable [Context α] [DecidableEq Shape] {s : Shape}
-
 /-- Leaf tape holding only `a` (node id `0`). -/
-def ta (a : Tensor α s) : Tape α := (Tape.leaf (t := (Tape.empty : Tape α)) a).1
-/-- Leaf tape holding `a` (id `0`) then `b` (id `1`). -/
-def tab (a b : Tensor α s) : Tape α := (Tape.leaf (t := ta a) b).1
+def ta (a : Tensor α s) : CpuTape α := (CpuTape.leaf (Tape.empty : CpuTape α) a).1
 
-/-- The kernel `g(a,b) = (a / b) + b`: leaf `a` (id 0), leaf `b` (id 1), `div 0 1` (id 2 = a/b),
-`add 2 1` (id 3 = a/b + b, *re-reading* leaf `b` across the `div`). Returns the final node's value. -/
+/-- Leaf tape holding `a` (id `0`) then `b` (id `1`). -/
+def tab (a b : Tensor α s) : CpuTape α := (CpuTape.leaf (ta a) b).1
+
+/-- The kernel `g(a,b) = (a / b) + b`: `div 0 1` (id 2), then `add 2 1` (id 3), re-reading leaf
+`b` across the `div`. Returns the final node's value. -/
 def kernel (a b : Tensor α s) : Result (Tensor α s) :=
   let t2 := tab a b
   do
-    let (t3, id2) ← Tape.div (t := t2) (s := s) 0 1
-    let (t4, id3) ← Tape.add (t := t3) (s := s) id2 1
-    t4.requireValue (s := s) id3
+    let (t3, id2) ← CpuTape.div (s := s) t2 0 1
+    let (t4, id3) ← CpuTape.add (s := s) t3 id2 1
+    requireValue (s := s) t4 id3
 
-/-- **Faithfulness by construction**: the symbolic tape kernel equals its `Spec` term, with no
-execution — each op's output rewrites to a `Spec` op via the `*_value` lemmas, and the re-read of
-leaf `b` survives the `div` by the carried `FrameOver`. -/
+/-- **Faithfulness by construction**: the symbolic tape kernel equals its tensor term. -/
 theorem kernel_eq_spec (a b : Tensor α s) :
-    kernel a b = .ok (addSpec (divSpec a b) b) := by
-  -- Concrete tape sizes (the Array lengths are decidable even though the values are symbolic).
-  have hsz_e : (Tape.empty : Tape α).size = 0 := by simp [Tape.empty, Tape.size]
-  have hsz_a : (ta a).size = 1 := by simp [ta, Tape.leaf, Tape.addNode, Tape.size, Tape.empty]
+    kernel a b = .ok (a / b + b) := by
+  have hsz_e : (Tape.empty : CpuTape α).size = 0 := by simp [Tape.empty, Tape.size]
+  have hsz_a : (ta a).size = 1 := by
+    simp [ta, CpuTape.leaf, Tape.leaf, Tape.addNode, Tape.size, Tape.empty]
   have hsz_ab : (tab a b).size = 2 := by
-    simp [tab, ta, Tape.leaf, Tape.addNode, Tape.size, Tape.empty]
-  -- Leaf values, read back symbolically.
-  have hA_a : (ta a).requireValue (s := s) 0 = .ok a := by
-    have h := leaf_value (Tape.empty : Tape α) a none true
+    simp [tab, ta, CpuTape.leaf, Tape.leaf, Tape.addNode, Tape.size, Tape.empty]
+  have hA_a : requireValue (s := s) (ta a) 0 = .ok a := by
+    have h := leaf_value (Tape.empty : CpuTape α) a none true
     rwa [hsz_e] at h
-  have hB_ab : (tab a b).requireValue (s := s) 1 = .ok b := by
+  have hB_ab : requireValue (s := s) (tab a b) 1 = .ok b := by
     have h := leaf_value (ta a) b none true
     rwa [hsz_a] at h
-  -- `a` (id 0) survives the second leaf append (frame).
-  have hA_ab : (tab a b).requireValue (s := s) 0 = .ok a := by
-    unfold tab Tape.leaf
+  have hA_ab : requireValue (s := s) (tab a b) 0 = .ok a := by
+    unfold tab CpuTape.leaf Tape.leaf
     rw [requireValue_addNode_of_lt (ta a) _ 0 (by rw [hsz_a]; decide)]
     exact hA_a
-  -- `div` output value, plus its frame.
   obtain ⟨t3, hdiv, hv3, hf3⟩ := div_value (tab a b) 0 1 hA_ab hB_ab
-  -- `b` (id 1) survives the `div` append (frame), so `add` can re-read it.
-  have hB_3 : t3.requireValue (s := s) 1 = .ok b := by
-    have hfr : t3.requireValue (s := s) 1 = (tab a b).requireValue (s := s) 1 :=
-      hf3 (s := s) 1 (by rw [hsz_ab]; decide)
-    rw [hfr]; exact hB_ab
-  -- `add` output value = the full Spec term.
+  have hB_3 : requireValue (s := s) t3 1 = .ok b := by
+    rw [hf3 (s := s) 1 (by rw [hsz_ab]; decide)]; exact hB_ab
   obtain ⟨t4, hadd, hv4, _⟩ := add_value t3 (tab a b).size 1 hv3 hB_3
-  -- Reduce the kernel's monadic binds with the two op equations.
   show (let t2 := tab a b;
-        Tape.div (t := t2) (s := s) 0 1 >>= fun r3 =>
-          Tape.add (t := r3.1) (s := s) r3.2 1 >>= fun r4 =>
-            r4.1.requireValue (s := s) r4.2) = _
+        CpuTape.div (s := s) t2 0 1 >>= fun r3 =>
+          CpuTape.add (s := s) r3.1 r3.2 1 >>= fun r4 =>
+            requireValue (s := s) r4.1 r4.2) = _
   simp only []
   rw [hdiv]
   simp only [bind, Except.bind]

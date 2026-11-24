@@ -108,9 +108,9 @@ def tieOdd32 : Adequacy32 :=
 back to `1` under `round₃₂`. Instantiating `add_flag_sound` at the run's operands. -/
 theorem tieEven_round32 :
     PropertyKindCalculus.Fp32.round32
-        ((FloatLib.Floats.ExecFloat.Binary.toModel (FloatLib.Floats.ExecFloat.Binary.ofFloat32 (1.0 : Float32))).toReal +
-          (FloatLib.Floats.ExecFloat.Binary.toModel (FloatLib.Floats.ExecFloat.Binary.ofFloat32 halfUlpAtOne32)).toReal) =
-      (FloatLib.Floats.ExecFloat.Binary.toModel (FloatLib.Floats.ExecFloat.Binary.ofFloat32 (1.0 : Float32))).toReal :=
+        ((FloatLib.Floats.ExecFloat.Binary.toModel (Adequacy32.ofFloat32 (1.0 : Float32))).toReal +
+          (FloatLib.Floats.ExecFloat.Binary.toModel (Adequacy32.ofFloat32 halfUlpAtOne32)).toReal) =
+      (FloatLib.Floats.ExecFloat.Binary.toModel (Adequacy32.ofFloat32 (1.0 : Float32))).toReal :=
   Adequacy32.add_flag_sound (by native_decide) (by native_decide) (by native_decide)
 
 /-! ## The coupled API, certified route — `analyzeQ32` on the Degenhardt model

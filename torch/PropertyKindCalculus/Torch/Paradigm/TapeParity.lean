@@ -13,7 +13,7 @@ THE BRIDGE. We relate a tape-carrier value `b : TapeBuilder s` to the tensor it 
                        run only *extends* the tape (every earlier node's value survives).
 
 Each `NumCarrier` operation on `TapeBuilder` preserves `Evaluates` with the matching `Spec`
-op (`Evaluates a va → Evaluates b vb → Evaluates (a + b) (addSpec va vb)`, etc.), proved from
+op (`Evaluates a va → Evaluates b vb → Evaluates (a + b) (va + vb)`, etc.), proved from
 the forward-value faithfulness lemmas of `paradigm.tape_faithful` (`add_value`, …) plus a
 `TapeM`→`Tape` run bridge. A composite kernel's parity is then the mechanical chaining of these
 — shown here for the real SM kernels `nkToEps` (complex-permittivity assembly) and `mixedNK`
@@ -21,7 +21,7 @@ the forward-value faithfulness lemmas of `paradigm.tape_faithful` (`add_value`, 
 
 The `Spec` tensor expression on the right is exactly what the *same* source term computes at the
 eager `Tensor Float s` carrier; the agreement needs **no** numerical side conditions (both use
-the same clamped `sqrtSpec`, the same `min`/`max`), so it holds for symbolic inputs.
+the same clamped root, the same `min`/`max`), so it holds for symbolic inputs.
 
 A `module` file: imports the tape carrier and the faithfulness lemmas.
 -/
@@ -30,77 +30,72 @@ module
 
 public import PropertyKindCalculus.Torch.Paradigm.TapeCarrier
 public import PropertyKindCalculus.Torch.Paradigm.TapeFaithful
-public import NN.Proofs.Autograd.Tape.Builder
 
 @[expose] public section Blanket
 
-open Spec TorchLean
-open TorchLean TorchLean.Tensor
-open Runtime.Autograd
+open TorchLean TorchLean.Tape
 open PropertyKindCalculus.Paradigm.TapeFaithful
 
 namespace PropertyKindCalculus.Paradigm.TapeParity
 
 open PropertyKindCalculus.Paradigm
 open PropertyKindCalculus.Paradigm.TapeBuilder
-open Proofs.Autograd.Builder (run_add_ok run_sub_ok run_mul_ok run_div_ok run_min_ok run_max_ok
-  run_sqrt_ok run_exp_ok)
 
 variable {s : Shape}
 
 /-! ## The `TapeM`→`Tape` run bridge
 
-`TapeM.X` is `TapeM.Internal.record` applied to the pure `Tape.X`, and TorchLean reduces that
-threading once: `Proofs.Autograd.Builder.record_run_ok` turns a pure op's success into the
+`TapeM.X` is `TapeM.record` applied to the pure `CpuTape.X`, and `paradigm.tape_m` reduces that
+threading once: `TapeM.record_run_ok` turns a pure op's success into the
 wrapped op's `.run` success (the pair swaps: a pure op returns tape-then-id, `run` returns
-id-then-tape), and the `Builder.run_<op>_ok` family is that lemma at each op. The per-op
-`Evaluates` lemmas below use the family directly. -/
+id-then-tape). The per-op
+`Evaluates` lemmas below use it directly. -/
 
 /-! ## `Evaluates` and its compositional skeleton -/
 
 /-- `requireValue` succeeding pins the id in range (a stored node exists). -/
-theorem requireValue_lt_of_ok (t : Tape Float) (id : Nat) {v : Tensor Float s}
-    (h : t.requireValue (s := s) id = .ok v) : id < t.size := by
+theorem requireValue_lt_of_ok (t : CpuTape Float) (id : Nat) {v : Tensor Float s}
+    (h : requireValue (s := s) t id = .ok v) : id < t.size := by
   by_contra hge
   rw [not_lt] at hge
   have : t.getValue? id = none := by
     simp only [Tape.getValue?, Tape.getNode?, Option.map_eq_none_iff]
     exact Array.getElem?_eq_none (by simpa [Tape.size] using hge)
-  rw [Tape.requireValue, this] at h
+  rw [requireValue, this] at h
   simp at h
 
 /-- `t'` extends `t`: it is at least as large and preserves every earlier node's value. The
 append-monotone closure of `FrameOver`; transitive, so frames chain across a kernel. -/
-def Extends (t' t : Tape Float) : Prop :=
+def Extends (t' t : CpuTape Float) : Prop :=
   t.size ≤ t'.size ∧ FrameOver t' t
 
-theorem Extends.refl (t : Tape Float) : Extends t t :=
+theorem Extends.refl (t : CpuTape Float) : Extends t t :=
   ⟨Nat.le_refl _, fun _ _ => _root_.rfl⟩
 
-theorem Extends.trans {a b c : Tape Float} (hab : Extends a b) (hbc : Extends b c) :
+theorem Extends.trans {a b c : CpuTape Float} (hab : Extends a b) (hbc : Extends b c) :
     Extends a c := by
   refine ⟨Nat.le_trans hbc.1 hab.1, ?_⟩
   intro s id hid
-  have h1 : b.requireValue (s := s) id = c.requireValue (s := s) id := hbc.2 id hid
-  have h2 : a.requireValue (s := s) id = b.requireValue (s := s) id :=
+  have h1 : requireValue (s := s) b id = requireValue (s := s) c id := hbc.2 id hid
+  have h2 : requireValue (s := s) a id = requireValue (s := s) b id :=
     hab.2 id (Nat.lt_of_lt_of_le hid hbc.1)
   rw [h2, h1]
 
 /-- An `addNode`-style op (delivers its new value at `t.size`, frames `t`) extends `t`. -/
-theorem extends_of_value {t t' : Tape Float} {v : Tensor Float s}
-    (hval : t'.requireValue t.size = .ok v) (hframe : FrameOver t' t) : Extends t' t :=
+theorem extends_of_value {t t' : CpuTape Float} {v : Tensor Float s}
+    (hval : requireValue (s := s) t' t.size = .ok v) (hframe : FrameOver t' t) : Extends t' t :=
   ⟨Nat.le_of_lt (requireValue_lt_of_ok t' t.size hval), hframe⟩
 
 /-- **The carrier-to-tensor bridge.** On any tape, running `b` succeeds with a node carrying
 `v`, the node id is in range, and the run only extends the tape. -/
 def Evaluates (b : TapeBuilder s) (v : Tensor Float s) : Prop :=
-  ∀ (t : Tape Float), ∃ (id : Nat) (t' : Tape Float),
+  ∀ (t : CpuTape Float), ∃ (id : Nat) (t' : CpuTape Float),
     b.run t = .ok (id, t') ∧ id < t'.size ∧
-    t'.requireValue (s := s) id = .ok v ∧ Extends t' t
+    requireValue (s := s) t' id = .ok v ∧ Extends t' t
 
 /-- Reduce `(bin f x y).run` given the three sub-runs (the carrier's binary-op threading). -/
 theorem bin_run (f : Nat → Nat → TapeM Float Nat) (x y : TapeBuilder s)
-    (t tA tB t' : Tape Float) (idA idB id : Nat)
+    (t tA tB t' : CpuTape Float) (idA idB id : Nat)
     (hx : x.run t = .ok (idA, tA)) (hy : y.run tA = .ok (idB, tB))
     (hf : (f idA idB).run tB = .ok (id, t')) :
     (TapeBuilder.bin f x y).run t = .ok (id, t') := by
@@ -110,7 +105,7 @@ theorem bin_run (f : Nat → Nat → TapeM Float Nat) (x y : TapeBuilder s)
 
 /-- Reduce `(un f x).run` given the operand sub-run (the carrier's unary-op threading). -/
 theorem un_run (f : Nat → TapeM Float Nat) (x : TapeBuilder s)
-    (t tA t' : Tape Float) (idA id : Nat)
+    (t tA t' : CpuTape Float) (idA id : Nat)
     (hx : x.run t = .ok (idA, tA)) (hf : (f idA).run tA = .ok (id, t')) :
     (TapeBuilder.un f x).run t = .ok (id, t') := by
   unfold TapeBuilder.un
@@ -122,17 +117,17 @@ theorem un_run (f : Nat → TapeM Float Nat) (x : TapeBuilder s)
 `Evaluates` with `sop`. Instantiated per op below. -/
 theorem Evaluates_bin
     (top : Nat → Nat → TapeM Float Nat) (sop : Tensor Float s → Tensor Float s → Tensor Float s)
-    (hfaith : ∀ (tt : Tape Float) (aId bId : Nat) {va vb : Tensor Float s},
-      tt.requireValue aId = .ok va → tt.requireValue bId = .ok vb →
+    (hfaith : ∀ (tt : CpuTape Float) (aId bId : Nat) {va vb : Tensor Float s},
+      requireValue (s := s) tt aId = .ok va → requireValue (s := s) tt bId = .ok vb →
       ∃ t', (top aId bId).run tt = .ok (tt.size, t') ∧
-            t'.requireValue tt.size = .ok (sop va vb) ∧ FrameOver t' tt)
+            requireValue (s := s) t' tt.size = .ok (sop va vb) ∧ FrameOver t' tt)
     {x y : TapeBuilder s} {vx vy : Tensor Float s}
     (hx : Evaluates x vx) (hy : Evaluates y vy) :
     Evaluates (TapeBuilder.bin top x y) (sop vx vy) := by
   intro t
   obtain ⟨idA, tA, hxr, hxlt, hxv, hxe⟩ := hx t
   obtain ⟨idB, tB, hyr, hylt, hyv, hye⟩ := hy tA
-  have hAinB : tB.requireValue idA = .ok vx := (hye.2 idA hxlt).trans hxv
+  have hAinB : requireValue (s := s) tB idA = .ok vx := (hye.2 idA hxlt).trans hxv
   obtain ⟨t', htopr, htopv, htopf⟩ := hfaith tB idA idB hAinB hyv
   refine ⟨tB.size, t', bin_run top x y t tA tB t' idA idB tB.size hxr hyr htopr,
     requireValue_lt_of_ok t' tB.size htopv, htopv, ?_⟩
@@ -141,10 +136,10 @@ theorem Evaluates_bin
 /-- Unary analogue of `Evaluates_bin`. -/
 theorem Evaluates_un
     (top : Nat → TapeM Float Nat) (sop : Tensor Float s → Tensor Float s)
-    (hfaith : ∀ (tt : Tape Float) (xId : Nat) {vx : Tensor Float s},
-      tt.requireValue xId = .ok vx →
+    (hfaith : ∀ (tt : CpuTape Float) (xId : Nat) {vx : Tensor Float s},
+      requireValue (s := s) tt xId = .ok vx →
       ∃ t', (top xId).run tt = .ok (tt.size, t') ∧
-            t'.requireValue tt.size = .ok (sop vx) ∧ FrameOver t' tt)
+            requireValue (s := s) t' tt.size = .ok (sop vx) ∧ FrameOver t' tt)
     {x : TapeBuilder s} {vx : Tensor Float s}
     (hx : Evaluates x vx) :
     Evaluates (TapeBuilder.un top x) (sop vx) := by
@@ -162,11 +157,11 @@ theorem Evaluates_un
 theorem Evaluates_leaf (v : Tensor Float s) (name : Option String := none) (rg : Bool := true) :
     Evaluates (⟨TapeM.leaf v (name := name) (requiresGrad := rg)⟩ : TapeBuilder s) v := by
   intro t
-  have hval : (Tape.leaf (t := t) v (name := name) (requiresGrad := rg)).1.requireValue
-      (s := s) t.size = .ok v := leaf_value t v name rg
-  refine ⟨t.size, (Tape.leaf (t := t) v (name := name) (requiresGrad := rg)).1,
+  have hval : requireValue (s := s) (CpuTape.leaf t v name rg).1 t.size = .ok v :=
+    leaf_value t v name rg
+  refine ⟨t.size, (CpuTape.leaf t v name rg).1,
     ?_, ?_, hval, extends_of_value hval (frameOver_addNode t _)⟩
-  · unfold TapeM.leaf Tape.leaf Tape.addNode; rfl
+  · rfl
   · exact requireValue_lt_of_ok _ t.size hval
 
 /-- A constant leaf evaluates to the filled tensor — the `fill`-valued instance of a leaf. -/
@@ -176,97 +171,97 @@ theorem Evaluates_const (x : Float) : Evaluates (TapeBuilder.const (s := s) x) (
 /-- Per-op faithfulness in the `Evaluates_bin` shape: the `TapeM` op's `.run` delivers its
 `Spec` value at the new id, framing the tape. Folds tape_faithful's `add_value` with the
 `TapeM`→`Tape` run bridge. -/
-theorem faith_add (tt : Tape Float) (aId bId : Nat) {va vb : Tensor Float s}
-    (ha : tt.requireValue aId = .ok va) (hb : tt.requireValue bId = .ok vb) :
+theorem faith_add (tt : CpuTape Float) (aId bId : Nat) {va vb : Tensor Float s}
+    (ha : requireValue (s := s) tt aId = .ok va) (hb : requireValue (s := s) tt bId = .ok vb) :
     ∃ t', (TapeM.add (s := s) aId bId).run tt = .ok (tt.size, t') ∧
-          t'.requireValue tt.size = .ok (addSpec va vb) ∧ FrameOver t' tt := by
+          requireValue (s := s) t' tt.size = .ok (va + vb) ∧ FrameOver t' tt := by
   obtain ⟨t', he, hv, hf⟩ := add_value tt aId bId ha hb
-  exact ⟨t', run_add_ok aId bId he, hv, hf⟩
+  exact ⟨t', TapeM.record_run_ok he, hv, hf⟩
 
-theorem faith_sub (tt : Tape Float) (aId bId : Nat) {va vb : Tensor Float s}
-    (ha : tt.requireValue aId = .ok va) (hb : tt.requireValue bId = .ok vb) :
+theorem faith_sub (tt : CpuTape Float) (aId bId : Nat) {va vb : Tensor Float s}
+    (ha : requireValue (s := s) tt aId = .ok va) (hb : requireValue (s := s) tt bId = .ok vb) :
     ∃ t', (TapeM.sub (s := s) aId bId).run tt = .ok (tt.size, t') ∧
-          t'.requireValue tt.size = .ok (subSpec va vb) ∧ FrameOver t' tt := by
+          requireValue (s := s) t' tt.size = .ok (va - vb) ∧ FrameOver t' tt := by
   obtain ⟨t', he, hv, hf⟩ := sub_value tt aId bId ha hb
-  exact ⟨t', run_sub_ok aId bId he, hv, hf⟩
+  exact ⟨t', TapeM.record_run_ok he, hv, hf⟩
 
-theorem faith_mul (tt : Tape Float) (aId bId : Nat) {va vb : Tensor Float s}
-    (ha : tt.requireValue aId = .ok va) (hb : tt.requireValue bId = .ok vb) :
+theorem faith_mul (tt : CpuTape Float) (aId bId : Nat) {va vb : Tensor Float s}
+    (ha : requireValue (s := s) tt aId = .ok va) (hb : requireValue (s := s) tt bId = .ok vb) :
     ∃ t', (TapeM.mul (s := s) aId bId).run tt = .ok (tt.size, t') ∧
-          t'.requireValue tt.size = .ok (mulSpec va vb) ∧ FrameOver t' tt := by
+          requireValue (s := s) t' tt.size = .ok (va * vb) ∧ FrameOver t' tt := by
   obtain ⟨t', he, hv, hf⟩ := mul_value tt aId bId ha hb
-  exact ⟨t', run_mul_ok aId bId he, hv, hf⟩
+  exact ⟨t', TapeM.record_run_ok he, hv, hf⟩
 
-theorem faith_div (tt : Tape Float) (aId bId : Nat) {va vb : Tensor Float s}
-    (ha : tt.requireValue aId = .ok va) (hb : tt.requireValue bId = .ok vb) :
+theorem faith_div (tt : CpuTape Float) (aId bId : Nat) {va vb : Tensor Float s}
+    (ha : requireValue (s := s) tt aId = .ok va) (hb : requireValue (s := s) tt bId = .ok vb) :
     ∃ t', (TapeM.div (s := s) aId bId).run tt = .ok (tt.size, t') ∧
-          t'.requireValue tt.size = .ok (divSpec va vb) ∧ FrameOver t' tt := by
+          requireValue (s := s) t' tt.size = .ok (va / vb) ∧ FrameOver t' tt := by
   obtain ⟨t', he, hv, hf⟩ := div_value tt aId bId ha hb
-  exact ⟨t', run_div_ok aId bId he, hv, hf⟩
+  exact ⟨t', TapeM.record_run_ok he, hv, hf⟩
 
-theorem faith_min (tt : Tape Float) (aId bId : Nat) {va vb : Tensor Float s}
-    (ha : tt.requireValue aId = .ok va) (hb : tt.requireValue bId = .ok vb) :
+theorem faith_min (tt : CpuTape Float) (aId bId : Nat) {va vb : Tensor Float s}
+    (ha : requireValue (s := s) tt aId = .ok va) (hb : requireValue (s := s) tt bId = .ok vb) :
     ∃ t', (TapeM.min (s := s) aId bId).run tt = .ok (tt.size, t') ∧
-          t'.requireValue tt.size = .ok (minSpec va vb) ∧ FrameOver t' tt := by
+          requireValue (s := s) t' tt.size = .ok (Tensor.minimum va vb) ∧ FrameOver t' tt := by
   obtain ⟨t', he, hv, hf⟩ := min_value tt aId bId ha hb
-  exact ⟨t', run_min_ok aId bId he, hv, hf⟩
+  exact ⟨t', TapeM.record_run_ok he, hv, hf⟩
 
-theorem faith_max (tt : Tape Float) (aId bId : Nat) {va vb : Tensor Float s}
-    (ha : tt.requireValue aId = .ok va) (hb : tt.requireValue bId = .ok vb) :
+theorem faith_max (tt : CpuTape Float) (aId bId : Nat) {va vb : Tensor Float s}
+    (ha : requireValue (s := s) tt aId = .ok va) (hb : requireValue (s := s) tt bId = .ok vb) :
     ∃ t', (TapeM.max (s := s) aId bId).run tt = .ok (tt.size, t') ∧
-          t'.requireValue tt.size = .ok (maxSpec va vb) ∧ FrameOver t' tt := by
+          requireValue (s := s) t' tt.size = .ok (Tensor.maximum va vb) ∧ FrameOver t' tt := by
   obtain ⟨t', he, hv, hf⟩ := max_value tt aId bId ha hb
-  exact ⟨t', run_max_ok aId bId he, hv, hf⟩
+  exact ⟨t', TapeM.record_run_ok he, hv, hf⟩
 
-theorem faith_sqrt (tt : Tape Float) (xId : Nat) {vx : Tensor Float s}
-    (hx : tt.requireValue xId = .ok vx) :
+theorem faith_sqrt (tt : CpuTape Float) (xId : Nat) {vx : Tensor Float s}
+    (hx : requireValue (s := s) tt xId = .ok vx) :
     ∃ t', (TapeM.sqrt (s := s) xId).run tt = .ok (tt.size, t') ∧
-          t'.requireValue tt.size = .ok (sqrtSpec vx) ∧ FrameOver t' tt := by
+          requireValue (s := s) t' tt.size = .ok (Tensor.sqrt vx .clampNegative) ∧ FrameOver t' tt := by
   obtain ⟨t', he, hv, hf⟩ := sqrt_value tt xId hx
-  exact ⟨t', run_sqrt_ok xId he, hv, hf⟩
+  exact ⟨t', TapeM.record_run_ok he, hv, hf⟩
 
-theorem faith_exp (tt : Tape Float) (xId : Nat) {vx : Tensor Float s}
-    (hx : tt.requireValue xId = .ok vx) :
+theorem faith_exp (tt : CpuTape Float) (xId : Nat) {vx : Tensor Float s}
+    (hx : requireValue (s := s) tt xId = .ok vx) :
     ∃ t', (TapeM.exp (s := s) xId).run tt = .ok (tt.size, t') ∧
-          t'.requireValue tt.size = .ok (expSpec vx) ∧ FrameOver t' tt := by
+          requireValue (s := s) t' tt.size = .ok (Tensor.exp vx) ∧ FrameOver t' tt := by
   obtain ⟨t', he, hv, hf⟩ := exp_value tt xId hx
-  exact ⟨t', run_exp_ok xId he, hv, hf⟩
+  exact ⟨t', TapeM.record_run_ok he, hv, hf⟩
 
 theorem Evaluates_add {x y : TapeBuilder s} {vx vy : Tensor Float s}
-    (hx : Evaluates x vx) (hy : Evaluates y vy) : Evaluates (x + y) (addSpec vx vy) :=
-  Evaluates_bin (TapeM.add (s := s)) addSpec faith_add hx hy
+    (hx : Evaluates x vx) (hy : Evaluates y vy) : Evaluates (x + y) (vx + vy) :=
+  Evaluates_bin (TapeM.add (s := s)) _ faith_add hx hy
 
 theorem Evaluates_sub {x y : TapeBuilder s} {vx vy : Tensor Float s}
-    (hx : Evaluates x vx) (hy : Evaluates y vy) : Evaluates (x - y) (subSpec vx vy) :=
-  Evaluates_bin (TapeM.sub (s := s)) subSpec faith_sub hx hy
+    (hx : Evaluates x vx) (hy : Evaluates y vy) : Evaluates (x - y) (vx - vy) :=
+  Evaluates_bin (TapeM.sub (s := s)) _ faith_sub hx hy
 
 theorem Evaluates_mul {x y : TapeBuilder s} {vx vy : Tensor Float s}
-    (hx : Evaluates x vx) (hy : Evaluates y vy) : Evaluates (x * y) (mulSpec vx vy) :=
-  Evaluates_bin (TapeM.mul (s := s)) mulSpec faith_mul hx hy
+    (hx : Evaluates x vx) (hy : Evaluates y vy) : Evaluates (x * y) (vx * vy) :=
+  Evaluates_bin (TapeM.mul (s := s)) _ faith_mul hx hy
 
 theorem Evaluates_div {x y : TapeBuilder s} {vx vy : Tensor Float s}
-    (hx : Evaluates x vx) (hy : Evaluates y vy) : Evaluates (x / y) (divSpec vx vy) :=
-  Evaluates_bin (TapeM.div (s := s)) divSpec faith_div hx hy
+    (hx : Evaluates x vx) (hy : Evaluates y vy) : Evaluates (x / y) (vx / vy) :=
+  Evaluates_bin (TapeM.div (s := s)) _ faith_div hx hy
 
 theorem Evaluates_min {x y : TapeBuilder s} {vx vy : Tensor Float s}
-    (hx : Evaluates x vx) (hy : Evaluates y vy) : Evaluates (Min.min x y) (minSpec vx vy) :=
-  Evaluates_bin (TapeM.min (s := s)) minSpec faith_min hx hy
+    (hx : Evaluates x vx) (hy : Evaluates y vy) : Evaluates (Min.min x y) (Tensor.minimum vx vy) :=
+  Evaluates_bin (TapeM.min (s := s)) _ faith_min hx hy
 
 theorem Evaluates_max {x y : TapeBuilder s} {vx vy : Tensor Float s}
-    (hx : Evaluates x vx) (hy : Evaluates y vy) : Evaluates (Max.max x y) (maxSpec vx vy) :=
-  Evaluates_bin (TapeM.max (s := s)) maxSpec faith_max hx hy
+    (hx : Evaluates x vx) (hy : Evaluates y vy) : Evaluates (Max.max x y) (Tensor.maximum vx vy) :=
+  Evaluates_bin (TapeM.max (s := s)) _ faith_max hx hy
 
-/-- The unary `sqrt` op preserves `Evaluates` with the clamped `sqrtSpec` — the one
+/-- The unary `sqrt` op preserves `Evaluates` with the clamped root — the one
 transcendental the Mironov ε kernel names (six times, through `nkOfEps`'s three real roots). -/
 theorem Evaluates_sqrt {x : TapeBuilder s} {vx : Tensor Float s}
-    (hx : Evaluates x vx) : Evaluates (PropertyKindCalculus.MathCarrier.sqrt x) (sqrtSpec vx) :=
-  Evaluates_un (TapeM.sqrt (s := s)) sqrtSpec faith_sqrt hx
+    (hx : Evaluates x vx) : Evaluates (PropertyKindCalculus.MathCarrier.sqrt x) (Tensor.sqrt vx .clampNegative) :=
+  Evaluates_un (TapeM.sqrt (s := s)) _ faith_sqrt hx
 
-/-- The unary `exp` op preserves `Evaluates` with `expSpec` — the AVS forward model's vegetation
+/-- The unary `exp` op preserves `Evaluates` with `Tensor.exp` — the AVS forward model's vegetation
 attenuation `exp(−2·b·ndvi)` (the one transcendental beyond `sqrt` the WO kernels name). -/
 theorem Evaluates_exp {x : TapeBuilder s} {vx : Tensor Float s}
-    (hx : Evaluates x vx) : Evaluates (PropertyKindCalculus.MathCarrier.exp x) (expSpec vx) :=
-  Evaluates_un (TapeM.exp (s := s)) expSpec faith_exp hx
+    (hx : Evaluates x vx) : Evaluates (PropertyKindCalculus.MathCarrier.exp x) (Tensor.exp vx) :=
+  Evaluates_un (TapeM.exp (s := s)) _ faith_exp hx
 
 end PropertyKindCalculus.Paradigm.TapeParity
 

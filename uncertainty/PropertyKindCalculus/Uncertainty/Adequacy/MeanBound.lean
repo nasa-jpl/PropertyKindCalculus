@@ -56,10 +56,10 @@ public import PropertyKindCalculus.Torch.Fp32
 
 namespace PropertyKindCalculus.Uncertainty.Adequacy
 
-open TorchLean.Floats
+open TorchLean (FP32)
 open PropertyKindCalculus.Fp32
-open TorchLean.Floats.IEEE754
-open FloatLib.Floats.Formats.Flocq (genericFormat)
+open TorchLean.IEEE754
+open FloatLib.Floats.Formats.Flocq (GenericRepresentable)
 open FloatLib.Numerics (binaryRadix)
 
 universe u
@@ -253,7 +253,7 @@ the sum return `x` unchanged — that is the whole phenomenon — but it cannot 
 
 The executable rung's rounding is the spec rung's: `IEEE32Exec.fp32Round` and `round32` are the same
 function, so the grid lemmas of `Fp32Grounding` apply here with no transport. -/
-theorem fp32Round_add_ge {x y : ℝ} (hx : genericFormat binaryRadix fexp32 x) (hy : 0 ≤ y) :
+theorem fp32Round_add_ge {x y : ℝ} (hx : GenericRepresentable binaryRadix fexp32 x) (hy : 0 ≤ y) :
     x ≤ IEEE32Exec.fp32Round (x + y) := by
   calc x = IEEE32Exec.fp32Round x := (round32_fix hx).symm
     _ ≤ IEEE32Exec.fp32Round (x + y) := round32_mono (by linarith)
@@ -261,7 +261,7 @@ theorem fp32Round_add_ge {x y : ℝ} (hx : genericFormat binaryRadix fexp32 x) (
 /-- The rounded fold stays on the grid when the weights do — at a leaf by hypothesis, at a join
 because a rounded value is a grid value. -/
 theorem totalWeight_onGrid (w : P → FP32) (hg : ∀ p, (w p).IsRepresentable) :
-    ∀ d : Decomposition P, genericFormat binaryRadix fexp32 (totalWeight w d).val
+    ∀ d : Decomposition P, GenericRepresentable binaryRadix fexp32 (totalWeight w d).val
   | .atom p => hg p
   | .union _ _ => round32_representable _
 

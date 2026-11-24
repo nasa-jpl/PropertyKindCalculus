@@ -1294,6 +1294,13 @@ The four residuals — all "one more crank of the same machine," none a new work
        proves a user-style monadic program's successful `exec` is `EagerBuilds`-covered — composed
        with `direct_PR_soundness_eager`, the reverse pass of the tape a `do`-block built realises
        `(fderiv ℝ eval x)† seed`. Axiom-pinned.
+     * **Ported to TorchLean's operator table** (2026-11-23, Lean 4.36.0): TorchLean now records
+       every operator with `Tape.apply`, and the per-op `Tape.<op>` constructors, `TapeNodes` and
+       the `Proofs.Autograd` modules named above are gone. `EagerProvenance.lean` is rebuilt on
+       one invariant (`TapeInv`) with one generic step (`TapeInv.apply`), so `EagerBuilds` has a
+       unary and a binary constructor that cover every one-output operator of the table with
+       value ports only; each carries a no-alias and a port-order hypothesis. The demo is
+       `progMulExp_run_eagerBuilds`. Entries above keep the names of their date.
      * **Planned upstream TorchLean PR — the `TapeM` reduction layer.** Everything above the demo
        is TorchLean-generic, not PKC-specific: `opM` and its three run lemmas, `run_bind_inv`/
        `exec_inv`, `run_leaf`, and the per-op `run_<op>_ok` family are all statable over an
@@ -1367,7 +1374,7 @@ The four residuals — all "one more crank of the same machine," none a new work
   VJP. Models using trig can be *evaluated* (Float/CudaT have the transcendentals as values) but not
   *differentiated* on the tape until `_fwd/_bwd` nodes are added. Decision: accept the exp/log/sqrt
   model class for Stages 1–2, or fund the trig VJP nodes early.
-* **Toolchain / build coupling.** PKC is pinned `v4.35.0` (Mathlib v4.35.0, TorchLean `combined`).
+* **Toolchain / build coupling.** PKC is pinned `v4.36.0` (Mathlib v4.36.0, TorchLean `combined`).
   Stage 0 avoids the issue entirely (Mathlib/TorchLean-free). Stage 1+ pull in much more of
   TorchLean (autograd + interval + FFT), enlarging build surface and tightening the PKC↔TorchLean
   coupling (cf. the FGM↔DVB single-toolchain constraint). TorchLean's autograd functional API is

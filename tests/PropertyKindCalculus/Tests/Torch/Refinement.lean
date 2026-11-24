@@ -16,9 +16,9 @@ is checked here rather than asserted in a docstring: at `FP32` a zero divisor is
 
 import PropertyKindCalculus.Torch.Fp32
 
-open TorchLean.Floats
+open TorchLean (FP32)
 open PropertyKindCalculus.Fp32
-open TorchLean.Floats.IEEE754
+open TorchLean.IEEE754
 open FloatLib.Floats (ExecFloat)
 open FloatLib.Floats.ExecFloat.Binary (isFinite toModel)
 

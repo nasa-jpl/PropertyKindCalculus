@@ -24,7 +24,7 @@ public import PropertyKindCalculus.Uncertainty.SsprcBatched
 public import PropertyKindCalculus.Uncertainty.Ssprc
 public import PropertyKindCalculus.Uncertainty.InputDist
 public import PropertyKindCalculus.Uncertainty.Carriers
-public import NN.Runtime.Autograd.Engine.LibTorch.Controls
+public import TorchLean.CUDA.LibTorch.Controls
 
 @[expose] public section Blanket
 
@@ -58,7 +58,7 @@ def main : IO UInt32 := do
   -- that does not say which it measured is a line nobody can compare. A build with no bridge, or
   -- a CUDA SDK with no visible device, is refused here with exit `2` — distinct from `1`, a
   -- parity failure — rather than left to the first device op's panic.
-  match Runtime.Autograd.LibTorch.Buffer.runtimeStatus with
+  match ← TorchLean.LibTorch.Buffer.RuntimeStatus.query with
   | .notLinked =>
     IO.eprintln "CANNOT RUN — this build links no LibTorch bridge (TorchLean's default backend). \
 Build with `-K libtorch=true -K libtorch_home=<CPU-only SDK>` (scripts/libtorch-cpu-sdk.sh) \
@@ -69,7 +69,7 @@ or `-K cuda=true` with a CUDA SDK."
 with no visible CUDA device; TORCHLEAN_LIBTORCH_DEVICE=cpu selects the host instead)."
     return 2
   | .nativeAvailable =>
-    IO.println s!"LibTorch device : {match ← Runtime.Autograd.LibTorch.deviceKind with
+    IO.println s!"LibTorch device : {match ← TorchLean.LibTorch.deviceKind with
       | .host => "host" | .cuda => "cuda"}"
   let (ebB, ubB) := SsprcBatched.run modelL inputs ns          -- batched, over CudaT
   let (ebR, ubR) := Ssprc.run (modelL (α := Float)) inputs ns   -- scalar reference, over Float

@@ -31,13 +31,16 @@ A `module` file: imports the core `NumCarrier` and TorchLean's `Context`.
 module
 
 public import PropertyKindCalculus.Paradigm.NumCarrier
-public import NN.Spec.Core.Context
+public import TorchLean.Tensor.Context
 -- `Context ℝ` lives in its own module upstream (it needs `MathFunctions ℝ`); it is imported here
 -- so every consumer of this bridge sees `NumCarrier ℝ`, which the real-number floors of the
 -- correctness proofs downstream instantiate.
-public import NN.Spec.Core.Context.Real
+public import TorchLean.Tensor.Context.Real
 
 @[expose] public section Blanket
+
+open TorchLean (Context)
+open FloatLib.Numerics (MathFunctions)
 
 namespace PropertyKindCalculus.Paradigm
 
