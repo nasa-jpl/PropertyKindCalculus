@@ -5,8 +5,8 @@ codegen'd → landed**, on a small fully-decidable fixture.
 `paradigm.lut_carrier`'s `LutInterp` extends the write-once vocabulary with a table fetch the
 branchless `NumCarrier` alphabet cannot express; `paradigm.tape_codegen` lowers the recorded
 `lutfetch:<table>` nodes to texture-object fetches (point mode: two point fetches + a
-contraction-blocked fp32 lerp, bit-reproducible; hardware mode: one filtered fetch, 9-bit-weight
-tolerance). This module certifies the extension end to end on a mixed arithmetic+fetch model:
+contraction-blocked lerp in binary64 rounded once to fp32, bit-reproducible; hardware mode: one
+filtered fetch, 9-bit-weight tolerance). This module certifies the extension end to end on a mixed arithmetic+fetch model:
 
 * **recorder faithfulness** (computational): the recorded fetch node *stores* exactly the `Float`
   instance's value (`LutTable.refFetch` of the leaf values) — `#guard lutRecorderFaithful`;
@@ -184,19 +184,19 @@ def lutLandingHolds : Bool :=
         && hasSub cuP "static const float lut_demolut_data[10]"
         && hasSub cuP "tl_get_tex_demolut"
         && hasSub cuP "tex1DLayered<float>"
-        && hasSub cuP "__fmul_rn"                 -- point mode: explicit lerp
-        && hasSub cuP "if (layer != layer || u != u) return layer + u;"
-        && hasSub cuP "float lm = (lmax <= ls ? lmax : ls)"
+        && hasSub cuP "__dmul_rn"                 -- point mode: explicit lerp
+        && hasSub cuP "if (layer != layer || u != u) return (float)(layer + u);"
+        && hasSub cuP "double lm = (lmax <= ls ? lmax : ls)"
         && hasSub cuP "cudaFilterModePoint"
         && hasSub cuH "cudaFilterModeLinear"      -- hardware mode: filtered fetch,
-        && !(hasSub cuH "__fmul_rn")              -- no ALU lerp
+        && !(hasSub cuH "__dmul_rn")              -- no ALU lerp
         && hasSub stP "static const float lut_demolut_data[10]"
         && hasSub stP "lut_demo_launch"
         && hasSub cuP "lut_demo_launch"
         && hasSub stP "TL_LUTFETCH"
-        && hasSub stP "if (layer != layer || u != u) return layer + u;"
-        && hasSub stP "float lm = (lmax <= ls ? lmax : ls)"
-        && hasSub jlText "(isnan(layer) || isnan(u)) && return layer + u"
+        && hasSub stP "if (layer != layer || u != u) return (float)(layer + u);"
+        && hasSub stP "double lm = (lmax <= ls ? lmax : ls)"
+        && hasSub jlText "(isnan(layer) || isnan(u)) && return T(layer + u)"
         && hasSub jlText "lm = ifelse(lmax <= ls, lmax, ls)"
     | _, _, _ => false
 

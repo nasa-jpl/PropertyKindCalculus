@@ -124,8 +124,8 @@ def printLineC (e : SL.SLExpr) (i : Nat) : String := s!"  const float v{i} = {pr
 
 /-- How a generated kernel realises a `lutfetch` node (`paradigm.lut_carrier`).
 
-* `point` — two texture point fetches + an explicit contraction-blocked fp32 lerp: bit-identical
-  between the CUDA kernel and the C stub (the bit-exactness carrier).
+* `point` — two texture point fetches + an explicit contraction-blocked lerp in binary64, rounded
+  once to fp32: bit-identical between the CUDA kernel and the C stub (the bit-exactness carrier).
 * `hardware` — one hardware-filtered `tex1DLayered` fetch: zero ALU cost, but CUDA's 9-bit
   fixed-point lerp weight makes it tolerance-only (`≤ 2⁻⁸·|Δsample|` per fetch, stub emulated);
   it is excluded from the bit-exact claims. -/
@@ -349,81 +349,75 @@ def paramList (cg : Codegen) (stub : Bool := false) : String :=
     ++ ", float* __restrict__ out"
 
 /-- The CUDA-side `lutfetch` helper + the `TL_LUTFETCH` macro `genBody`'s neutral body lines call.
-Point mode: two point fetches + a `__f*_rn` contraction-blocked fp32 lerp (bit-identical to the
-stub). A NaN coordinate or layer returns NaN before the clamps, as `LutTable.refFetch` does. Hardware mode: one hardware-filtered fetch (9-bit weight, tolerance-only).
+Point mode: two point fetches + a `__d*_rn` contraction-blocked lerp in `double`, rounded once to
+`float` (bit-identical to the stub). A NaN coordinate or layer returns NaN before the clamps, as
+`LutTable.refFetch` does. Hardware mode: one hardware-filtered fetch (9-bit weight, tolerance-only).
 Empty when the kernel uses no tables. -/
 def lutHelperCuda (cg : Codegen) : String :=
   if cg.tables.isEmpty then "" else
   let body := match cg.lutMode with
     | .point => String.intercalate "\n"
-        [ "  float j = floorf(uc);"
-        , "  float f = __fsub_rn(uc, j);"
-        , "  float a = tex1DLayered<float>(tex, j + 0.5f, L);"
-        , "  float b = tex1DLayered<float>(tex, (j + 1.0f <= wmax ? j + 1.0f : wmax) + 0.5f, L);"
-        , "  float z = __fadd_rn(__fmul_rn(a, 0.0f), __fmul_rn(b, 0.0f));"
-        , "  if (__fadd_rn(__fmul_rn(a, b), z) < 0.0f)"
-        , "    return __fadd_rn(__fmul_rn(a, __fsub_rn(1.0f, f)), __fmul_rn(b, f));"
-        , "  return __fadd_rn(a, __fmul_rn(f, __fsub_rn(b, a)));" ]
-    | .hardware => "  return tex1DLayered<float>(tex, uc + 0.5f, L);"
+        [ "  double j = floor(uc);"
+        , "  double f = __dsub_rn(uc, j);"
+        , "  double j1 = (j + 1.0 <= wmax ? j + 1.0 : wmax);"
+        , "  double a = (double)tex1DLayered<float>(tex, (float)j + 0.5f, L);"
+        , "  double b = (double)tex1DLayered<float>(tex, (float)j1 + 0.5f, L);"
+        , "  return (float)__dadd_rn(a, __dmul_rn(f, __dsub_rn(b, a)));" ]
+    | .hardware => "  return tex1DLayered<float>(tex, (float)uc + 0.5f, L);"
   String.intercalate "\n"
-    [ "__device__ __forceinline__ float tl_lutfetch(cudaTextureObject_t tex, int W, int LAYERS, float layer, float u) {"
-    , "  if (layer != layer || u != u) return layer + u;"
-    , "  float wmax = (float)(W - 1);"
-    , "  float um = (wmax <= u ? wmax : u);"
-    , "  float uc = (0.0f <= um ? um : 0.0f);"
-    , "  float lmax = (float)(LAYERS - 1);"
-    , "  float ls = layer + 0.5f;"
-    , "  float lm = (lmax <= ls ? lmax : ls);"
-    , "  float lc = (0.0f <= lm ? lm : 0.0f);"
+    [ "__device__ __forceinline__ float tl_lutfetch(cudaTextureObject_t tex, int W, int LAYERS, float layer32, float u32) {"
+    , "  double layer = (double)layer32;"
+    , "  double u = (double)u32;"
+    , "  if (layer != layer || u != u) return (float)(layer + u);"
+    , "  double wmax = (double)(W - 1);"
+    , "  double um = (wmax <= u ? wmax : u);"
+    , "  double uc = (0.0 <= um ? um : 0.0);"
+    , "  double lmax = (double)(LAYERS - 1);"
+    , "  double ls = __dadd_rn(layer, 0.5);"
+    , "  double lm = (lmax <= ls ? lmax : ls);"
+    , "  double lc = (0.0 <= lm ? lm : 0.0);"
     , "  int L = (int)lc;"
     , body
     , "}"
     , "#define TL_LUTFETCH(NAME, W, LAYERS, L, U) tl_lutfetch(tex_##NAME, W, LAYERS, L, U)"
     , "" ]
 
-/-- The stub-side `lutfetch` helper + macro: `LutTable.refFetch`'s clamp/floor/lerp as a host loop over
-the baked table. A NaN coordinate or layer returns NaN before the clamps. The layer is clamped as a float before it is
-truncated, so a huge finite layer cannot overflow the index; the CUDA helper does the same before
-its `int` conversion. Point mode is bit-identical to the device kernel; hardware mode emulates the
-9-bit weight, tolerance-only. Empty when the kernel uses no tables. -/
+/-- The stub-side `lutfetch` helper + macro: `LutTable.refFetch`'s clamp/floor/lerp in `double` as
+a host loop over the baked table, rounded once to `float`. A NaN coordinate or layer returns NaN
+before the clamps. The layer is clamped before it is truncated, so a huge finite layer cannot
+overflow the index; the CUDA helper does the same before its `int` conversion. Point mode is
+bit-identical to the device kernel; hardware mode emulates the 9-bit weight, tolerance-only. Empty
+when the kernel uses no tables. -/
 def lutHelperStub (cg : Codegen) : String :=
   if cg.tables.isEmpty then "" else
   let quant := match cg.lutMode with
     | .point => ""
     -- A weight that rounds to one is the next grid point at weight zero.
     | .hardware =>
-      "  f = floorf(f * 256.0f + 0.5f) / 256.0f;\n  if (f >= 1.0f) { j = j + 1.0f; f = 0.0f; }\n"
+      "  f = floor(f * 256.0 + 0.5) / 256.0;\n  if (f >= 1.0) { j = j + 1.0; f = 0.0; }\n"
   String.intercalate "\n"
-    [ "static float tl_lutfetch(const float* tab, int W, int LAYERS, float layer, float u) {"
-    , "  if (layer != layer || u != u) return layer + u;"
-    , "  float wmax = (float)(W - 1);"
-    , "  float um = (wmax <= u ? wmax : u);"
-    , "  float uc = (0.0f <= um ? um : 0.0f);"
-    , "  float lmax = (float)(LAYERS - 1);"
-    , "  float ls = layer + 0.5f;"
-    , "  float lm = (lmax <= ls ? lmax : ls);"
-    , "  float lc = (0.0f <= lm ? lm : 0.0f);"
+    [ "static float tl_lutfetch(const float* tab, int W, int LAYERS, float layer32, float u32) {"
+    , "  double layer = (double)layer32;"
+    , "  double u = (double)u32;"
+    , "  if (layer != layer || u != u) return (float)(layer + u);"
+    , "  double wmax = (double)(W - 1);"
+    , "  double um = (wmax <= u ? wmax : u);"
+    , "  double uc = (0.0 <= um ? um : 0.0);"
+    , "  double lmax = (double)(LAYERS - 1);"
+    , "  double ls = layer + 0.5;"
+    , "  double lm = (lmax <= ls ? lmax : ls);"
+    , "  double lc = (0.0 <= lm ? lm : 0.0);"
     , "  long L = (long)lc;"
-    , "  float j = floorf(uc);"
-    , s!"  float f = uc - j;\n{quant}  const float* row = tab + (long)L * (long)W;"
+    , "  double j = floor(uc);"
+    , s!"  double f = uc - j;\n{quant}  const float* row = tab + (long)L * (long)W;"
     , "  long j0 = (long)j;"
     , "  long j1 = j0 + 1 < (long)W ? j0 + 1 : (long)W - 1;"
-    , "  float a = row[j0];"
-    , "  float b = row[j1];"
-    , "  float za = a * 0.0f;"
-    , "  float zb = b * 0.0f;"
-    , "  float z = za + zb;"
-    , "  float p = a * b;"
-    , "  float t = p + z;"
-    , "  if (t < 0.0f) {"
-    , "    float g = 1.0f - f;"
-    , "    float ag = a * g;"
-    , "    float bf = b * f;"
-    , "    return ag + bf;"
-    , "  }"
-    , "  float d = b - a;"
-    , "  float fd = f * d;"
-    , "  return a + fd;"
+    , "  double a = (double)row[j0];"
+    , "  double b = (double)row[j1];"
+    , "  double d = b - a;"
+    , "  double fd = f * d;"
+    , "  double r = a + fd;"
+    , "  return (float)r;"
     , "}"
     , "#define TL_LUTFETCH(NAME, W, LAYERS, L, U) tl_lutfetch(lut_##NAME, W, LAYERS, L, U)"
     , "" ]

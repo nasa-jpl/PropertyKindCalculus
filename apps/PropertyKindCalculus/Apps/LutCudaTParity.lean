@@ -2,14 +2,17 @@
 `lut_cudat_parity` — a self-checking harness for the **table-fetch kernel**
 (`LutTable.fetchProgram` in `paradigm.lut_carrier`) against the fp64 reference `LutTable.refFetch`.
 
-The kernel is a TorchLean `Kernel.Program Float32`. The harness always evaluates it in Lean on the
-CPU (`Program.run`). When a LibTorch bridge with a CUDA device is linked (`-K cuda=true`) it also
-runs the generated CUDA, once through `Program.run` and once on resident `CudaT` buffers
+The kernel is a TorchLean `Kernel.Program Float` on binary32 tensors. The harness always evaluates
+it in Lean on the CPU (`Program.runBinary32`). When a LibTorch bridge with a CUDA device is linked
+(`-K cuda=true`) it also runs the generated CUDA, once through `Program.runBinary32` and once on
+resident `CudaT` buffers
 (`CudaT.lutFetchIO`). The probes cover NaN, ±∞, out-of-range and interior coordinates and layers;
 `refFetch` and the kernel both return NaN on a NaN coordinate or layer. Further tables check grid points,
 clamped endpoints and interior points: NaN and infinite samples, finite neighbour differences that
-overflow float32, a flat segment, cancelling opposite-sign samples and `-0.0` samples. `pins` fixes
-`refFetch` itself on the cases where the lerp forms differ. Exits `0` on parity and `1` on mismatch.
+overflow float32, a flat segment, cancelling opposite-sign samples and `-0.0` samples. The kernel
+must equal `refFetch` on the float32 inputs, rounded once to float32, bit for bit. `pins` fixes
+`refFetch` itself on the cases where float32 lerp forms differ. Exits `0` on parity and `1` on
+mismatch.
 -/
 
 module
@@ -57,7 +60,7 @@ def big : Float := Float.scaleB 1.0 127
 def fmax : Float := Float.scaleB (2.0 - Float.scaleB 1.0 (-23)) 127
 
 /-- Finite samples whose neighbour differences overflow float32, then two at the float32 maximum:
-the lerp weights opposite-sign samples separately, so it stays finite where `a + f·(b − a)` would not. -/
+the lerp is in float64, so it stays finite where `a + f·(b − a)` in float32 would not. -/
 def overflowTable : LutTable :=
   { name := "overflow", width := 6, layers := 1, values := #[big, -big, -big, big, fmax, fmax] }
 
@@ -78,11 +81,14 @@ def flatTable : LutTable :=
 def flatProbes : Array (Float × Float) :=
   #[(0.0, 1.0), (0.0, 1.25), (0.0, 1.5), (0.0, 1.859375), (0.0, 2.0)]
 
-/-- Opposite-sign samples that nearly cancel: the midpoint is exactly `0.5`. -/
+/-- Opposite-sign samples that nearly cancel: `0.5` at the midpoint of the first segment, and
+`-0.25` at weight `0.375` of the last, where float32 products of the samples round to `0`. -/
 def cancelTable : LutTable :=
-  { name := "cancel", width := 2, layers := 1, values := #[8388608.0, -8388607.0] }
+  { name := "cancel", width := 4, layers := 1,
+    values := #[8388608.0, -8388607.0, 4194299.0, -6990499.0] }
 
-def cancelProbes : Array (Float × Float) := #[(0.0, 0.0), (0.0, 0.5), (0.0, 1.0)]
+def cancelProbes : Array (Float × Float) :=
+  #[(0.0, 0.0), (0.0, 0.5), (0.0, 1.0), (0.0, 2.0), (0.0, 2.375), (0.0, 3.0)]
 
 /-- A single sample: every coordinate reads it as both neighbours. -/
 def oneTable : LutTable := { name := "one", width := 1, layers := 1, values := #[-3.0] }
@@ -115,6 +121,7 @@ def pins : Array (LutTable × Float × Float × Float) :=
     (infTable, 0.0, 2.5, nan),
     (overflowTable, 0.0, 0.0, big), (overflowTable, 0.0, 0.5, 0.0), (overflowTable, 0.0, 4.5, fmax),
     (flatTable, 0.0, 1.859375, flat), (cancelTable, 0.0, 0.5, 0.5),
+    (cancelTable, 0.0, 2.375, -0.25),
     (zeroTable, 0.0, 0.0, -0.0), (zeroTable, 0.0, 2.0, 0.0), (zeroTable, 0.0, 4.0, 0.0)]
 
 /-- Count the pins `refFetch` misses, printing each. -/
@@ -127,21 +134,20 @@ def checkPins : IO Nat := do
     unless ok do bad := bad + 1
   return bad
 
-/-- Float32 rounding of exactly representable samples and dyadic weights is exact, so the slack
-absorbs nothing on these probes. -/
-def tol : Float := 1e-5
+/-- The table with each sample rounded to float32, as the kernel reads it. -/
+def rounded (tbl : LutTable) : LutTable :=
+  { tbl with values := tbl.values.map fun v => v.toFloat32.toFloat }
 
-/-- Count the probes whose `got` value differs from `refFetch`, printing each comparison. -/
+/-- Count the probes whose `got` value is not `refFetch` on the float32 inputs, rounded once to
+float32, printing each comparison. -/
 def check (tbl : LutTable) (ps : Array (Float × Float)) (label : String) (got : Nat → Float) :
     IO Nat := do
   let mut bad := 0
   for i in [0:ps.size] do
     let (l, u) := ps[i]!
-    let want := tbl.refFetch l u
+    let want := ((rounded tbl).refFetch l.toFloat32.toFloat u.toFloat32.toFloat).toFloat32.toFloat
     let out := got i
-    -- A zero must match in sign.
-    let ok := if want.isNaN || want == 0 then same out want
-      else out == want || Float.abs (out - want) ≤ tol
+    let ok := same out want
     IO.println s!"{if ok then "ok  " else "FAIL"} {label} {tbl.name} layer={l} u={u}  got={out}  refFetch={want}"
     unless ok do bad := bad + 1
   return bad
@@ -166,10 +172,10 @@ def runTable (tbl : LutTable) (ps : Array (Float × Float)) (cuda : Bool) : IO N
     .cons layers (.cons coords (.cons samples .nil))
   let read (t : Tensor Float32 s) (i : Nat) : Float :=
     if h : i < ps.size then t[(⟨i, h⟩ : Fin ps.size)].toFloat else 0.0 / 0.0
-  let cpu ← tbl.program.run inputs s
+  let cpu ← tbl.program.runBinary32 inputs s
   let mut bad ← check tbl ps "cpu   " (read cpu)
   if cuda then
-    let gpu ← tbl.program.run inputs s (device := .cuda)
+    let gpu ← tbl.program.runBinary32 inputs s (device := .cuda)
     bad := bad + (← check tbl ps "cuda  " (read gpu))
     let l : CudaCarrier.CudaT s := .ofFloatArray ⟨ps.map (·.1)⟩
     let u : CudaCarrier.CudaT s := .ofFloatArray ⟨ps.map (·.2)⟩

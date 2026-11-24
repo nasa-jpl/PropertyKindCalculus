@@ -275,9 +275,9 @@ Status: ✅ done · 🚧 in progress · ⬜ planned
   minimum/maximum (Lean 4.36's `Float`), an explicit conditional in C/CUDA and `min`/`max` in Julia: NaN
   propagates and `-0.0` orders below `+0.0` (`fminf`/`fmaxf`, which return the non-NaN operand, are
   gone); the C, CUDA and Julia `lutfetch` helpers return NaN on a NaN coordinate or layer, matching `refFetch`.
-  `refFetch`, the fetch kernel and the three helpers interpolate as `a·(1 − f) + b·f` for finite samples
-  of opposite sign and `a + f·(b − a)` otherwise: finite on finite samples and exact on flat segments and at
-  weight zero (rationale in `Paradigm/LutCarrier.lean`).
+  `refFetch`, the fetch kernel and the three helpers interpolate as `a + f·(b − a)` in binary64 on binary32
+  samples and round once: finite on finite samples and exact on flat segments and at weight zero
+  (rationale in `Paradigm/LutCarrier.lean`).
   ✅ **The denotation of the rendering, for all backends** (`TapeStraightLine`): every emitter is a
   printer of one straight-line program, `genSL_denotes` proves the program runs as `evalTapeT`,
   `genSL_isOk_iff_evalTapeT` that it exists exactly when the interpreter runs the tape, and
@@ -500,8 +500,8 @@ Status: ✅ done · 🚧 in progress · ⬜ planned
   bit-exact against `KernelSpec.tableLookupSpec`; upstream PR
   [lean-dojo/TorchLean#34](https://github.com/lean-dojo/TorchLean/pull/34)). The codegen lowers fetch nodes to `tex1DLayered` through one backend-neutral
   helper, with the **exactness split fixed at generation**: point mode (two point fetches + a
-  contraction-blocked fp32 lerp) is *bit-reproducible* — the A4500 kernel, the C stub, and the
-  Lean `Float32` reference agree bit-for-bit, machine-checked — while hardware-filtered mode
+  contraction-blocked lerp in binary64, rounded once to fp32) is *bit-reproducible* — the A4500
+  kernel, the C stub, and the Lean reference agree bit-for-bit — while hardware-filtered mode
   (zero-ALU lerp, CUDA's 9-bit fixed-point weight) is tolerance-only and excluded from bit-exact
   claims. The table's identity rides in the node *name*, so `tape_cse`'s `nodeKey` distinguishes
   tables with **no CSE change** (its scalar-baking hazard, resolved by construction —

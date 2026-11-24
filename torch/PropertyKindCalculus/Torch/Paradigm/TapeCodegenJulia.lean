@@ -35,7 +35,8 @@ the honest check is an ulp bound (`apps.julia_parity`). The semantics choices th
   * precision is the type parameter `T<:AbstractFloat`: one emitted function is the `Float64` parity
     twin of `evalTape` and the `Float32` deployment kernel;
   * `lutfetch` is the C stub's clamp/floor/lerp over the same flat `layers × width` row-major vector
-    (`tl_lutfetch`), point mode bit-identical, hardware mode emulating the 9-bit weight.
+    (`tl_lutfetch`), in `Float64` and rounded once to `T`, point mode bit-identical, hardware mode
+    emulating the 9-bit weight.
 
 Two surfaces are emitted from one body: a plain `function name!(out, in_…) … end` host loop
 (`emitJulia`, no package dependencies — the **bit-exact twin**, what the parity probe gates), and a
@@ -233,51 +234,42 @@ def mathHelpers : String := String.intercalate "\n"
   , "@inline tl_log(x::T) where {T<:AbstractFloat} = x < zero(T) ? T(NaN) : log(x)"
   , "" ]
 
-/-- The `lutfetch` helper: `LutTable.refFetch`'s clamp/floor/lerp over the flat row-major table —
-an empty table (`W == 0 || LAYERS == 0`) fetches `zero(T)` as `refFetch` returns `0.0`. A NaN
-coordinate or layer returns NaN before the clamps, matching the C stub and CUDA helper. The layer is clamped as a float before it is
-truncated, so a huge finite layer cannot overflow the index. Point mode is the stub's arithmetic
-step for step; hardware mode emulates the 9-bit weight, tolerance-only. Empty when the kernel uses
-no tables. -/
+/-- The `lutfetch` helper: `LutTable.refFetch`'s clamp/floor/lerp in `Float64` over the flat
+row-major table, rounded once to `T` — an empty table (`W == 0 || LAYERS == 0`) fetches `zero(T)`
+as `refFetch` returns `0.0`. A NaN coordinate or layer returns NaN before the clamps, matching the
+C stub and CUDA helper. The layer is clamped before it is truncated, so a huge finite layer cannot
+overflow the index. Point mode is the stub's arithmetic step for step; hardware mode emulates the
+9-bit weight, tolerance-only. Empty when the kernel uses no tables. -/
 def lutHelperJulia (cg : JuliaCodegen) : String :=
   if cg.tables.isEmpty then "" else
   let quant := match cg.lutMode with
     | .point => ""
     -- A weight that rounds to one is the next grid point at weight zero.
     | .hardware =>
-      "    f = floor(f * T(256) + T(0.5)) / T(256)\n    if f >= one(T)\n        j = j + one(T)\n        f = zero(T)\n    end\n"
+      "    f = floor(f * 256.0 + 0.5) / 256.0\n    if f >= 1.0\n        j = j + 1.0\n        f = 0.0\n    end\n"
   String.intercalate "\n"
-    [ "@inline function tl_lutfetch(tab::AbstractVector{T}, W::Int, LAYERS::Int, layer::T, u::T) where {T<:AbstractFloat}"
+    [ "@inline function tl_lutfetch(tab::AbstractVector{T}, W::Int, LAYERS::Int, layer32::T, u32::T) where {T<:AbstractFloat}"
     , "    (W == 0 || LAYERS == 0) && return zero(T)"
-    , "    (isnan(layer) || isnan(u)) && return layer + u"
-    , "    wmax = T(W - 1)"
+    , "    layer = Float64(layer32)"
+    , "    u = Float64(u32)"
+    , "    (isnan(layer) || isnan(u)) && return T(layer + u)"
+    , "    wmax = Float64(W - 1)"
     , "    um = ifelse(wmax <= u, wmax, u)"
-    , "    uc = ifelse(zero(T) <= um, um, zero(T))"
-    , "    lmax = T(LAYERS - 1)"
-    , "    ls = layer + T(0.5)"
+    , "    uc = ifelse(0.0 <= um, um, 0.0)"
+    , "    lmax = Float64(LAYERS - 1)"
+    , "    ls = layer + 0.5"
     , "    lm = ifelse(lmax <= ls, lmax, ls)"
-    , "    lc = ifelse(zero(T) <= lm, lm, zero(T))"
+    , "    lc = ifelse(0.0 <= lm, lm, 0.0)"
     , "    L = unsafe_trunc(Int, lc)"
     , "    j = floor(uc)"
     , s!"    f = uc - j\n{quant}    j0 = unsafe_trunc(Int, j)"
     , "    j1 = j0 + 1 < W ? j0 + 1 : W - 1"
     , "    base = L * W"
-    , "    @inbounds a = tab[base + j0 + 1]"
-    , "    @inbounds b = tab[base + j1 + 1]"
-    , "    za = a * zero(T)"
-    , "    zb = b * zero(T)"
-    , "    z = za + zb"
-    , "    p = a * b"
-    , "    t = p + z"
-    , "    if t < zero(T)"
-    , "        g = one(T) - f"
-    , "        ag = a * g"
-    , "        bf = b * f"
-    , "        return ag + bf"
-    , "    end"
+    , "    @inbounds a = Float64(tab[base + j0 + 1])"
+    , "    @inbounds b = Float64(tab[base + j1 + 1])"
     , "    d = b - a"
     , "    fd = f * d"
-    , "    return a + fd"
+    , "    return T(a + fd)"
     , "end"
     , "" ]
 
