@@ -14,7 +14,8 @@ must equal `refFetch` on the float32 inputs, rounded once to float32, bit for bi
 `refFetch` itself on the cases where float32 lerp forms differ. The same probes run through the
 emitted `tl_lutfetch` helpers: the C stub when `cc` is on the path, and both Julia methods on
 `Float32` data when `julia` is. The CUDA texture helper runs only inside a generated kernel on a
-device, so no probe here executes it. Exits `0` on parity and `1` on mismatch.
+device, so no probe here executes it. `--require-emitted` fails when `cc` or Julia is missing
+(`--julia PATH` names the Julia). Exits `0` on parity and `1` on mismatch.
 -/
 
 module
@@ -228,7 +229,7 @@ def checkEmitted (tbl : LutTable) (ps : Array (Float × Float)) (labels : List S
 /-- Run every probe of one table through the emitted point-mode `tl_lutfetch` helpers on float32
 data: the C stub, and the `Float32` and generic (`Float64`) Julia methods. -/
 def runEmitted (dir : System.FilePath) (tbl : LutTable) (ps : Array (Float × Float))
-    (cc julia : Bool) : IO Nat := do
+    (cc : Bool) (julia : Option String) : IO Nat := do
   let tab := tbl.values.toList.map f32Hex
   let ls := ps.toList.map (f32Hex ·.1)
   let us := ps.toList.map (f32Hex ·.2)
@@ -259,7 +260,7 @@ def runEmitted (dir : System.FilePath) (tbl : LutTable) (ps : Array (Float × Fl
       bad := bad + 1
     else
       bad := bad + (← checkEmitted tbl ps ["C stub"] (← IO.Process.output { cmd := exe.toString }))
-  if julia then
+  if let some julia := julia then
     let cg : TapeCodegen.Julia.JuliaCodegen :=
       { inputs := #[], numOutputs := 0, body := #[], outLines := #[], tables := #[tbl] }
     let vec (nm : String) (xs : List String) :=
@@ -276,10 +277,20 @@ def runEmitted (dir : System.FilePath) (tbl : LutTable) (ps : Array (Float × Fl
     let jlFile := dir / s!"{tbl.name}.jl"
     IO.FS.writeFile jlFile src
     bad := bad + (← checkEmitted tbl ps ["jl F32", "jl F64"]
-      (← IO.Process.output { cmd := "julia", args := #["--startup-file=no", jlFile.toString] }))
+      (← IO.Process.output { cmd := julia, args := #["--startup-file=no", jlFile.toString] }))
   return bad
 
-def main : IO UInt32 := do
+/-- `--julia PATH` names the Julia to run (default `julia` on the path); `--require-emitted` makes a
+missing `cc` or Julia a failure instead of a skip. -/
+def main (args : List String) : IO UInt32 := do
+  let rec parse : List String → String × Bool → Except String (String × Bool)
+    | [], o => .ok o
+    | "--julia" :: p :: rest, (_, req) => parse rest (p, req)
+    | "--require-emitted" :: rest, (j, _) => parse rest (j, true)
+    | a :: _, _ => .error s!"unknown argument: {a} (usage: lut_cudat_parity [--julia PATH] [--require-emitted])"
+  let (juliaCmd, required) ← match parse args ("julia", false) with
+    | .ok o => pure o
+    | .error e => do IO.eprintln e; return 2
   let cuda ← cudaLinked
   unless cuda do
     IO.println "No CUDA device is linked: the generated CUDA was not run, only the CPU evaluation."
@@ -288,9 +299,12 @@ def main : IO UInt32 := do
     + (← runTable cancelTable cancelProbes cuda) + (← runTable zeroTable zeroProbes cuda)
     + (← runTable infTable infProbes cuda) + (← runTable oneTable oneProbes cuda) + (← checkPins)
   let cc ← hasTool "cc"
-  let julia ← hasTool "julia"
+  let julia := if (← hasTool juliaCmd) then some juliaCmd else none
   unless cc do IO.println "No cc on the path: the emitted C stub helper was not run."
-  unless julia do IO.println "No julia on the path: the emitted Julia helpers were not run."
+  if julia.isNone then IO.println s!"{juliaCmd} does not run: the emitted Julia helpers were not run."
+  if required && !(cc && julia.isSome) then
+    IO.eprintln "PARITY FAILED — --require-emitted, and an emitted helper could not be run."
+    return 1
   let dir : System.FilePath := "_out/lut-parity"
   IO.FS.createDirAll dir
   let mut bad := bad
@@ -308,6 +322,6 @@ def main : IO UInt32 := do
 end PropertyKindCalculus.Apps.LutCudaTParity
 
 /-- The executable entry point. -/
-def main : IO UInt32 := PropertyKindCalculus.Apps.LutCudaTParity.main
+def main (args : List String) : IO UInt32 := PropertyKindCalculus.Apps.LutCudaTParity.main args
 
 end Blanket
