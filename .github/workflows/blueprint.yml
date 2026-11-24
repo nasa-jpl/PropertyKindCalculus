@@ -19,8 +19,8 @@ on:
 
 jobs:
   blueprint:
-    # Only in the repository this workflow is written for: a mirror or a fork has neither its
-    # self-hosted runner nor its Pages branch, so the job is skipped there.
+    # Runs created in a mirror or a fork, which lack this repository's self-hosted runner and Pages
+    # branch, are skipped. A fork's pull request into this repository still runs here.
     if: github.repository == 'nasa-jpl/PropertyKindCalculus'
     runs-on: self-hosted
 
