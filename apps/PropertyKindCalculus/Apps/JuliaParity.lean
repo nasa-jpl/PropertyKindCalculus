@@ -272,6 +272,12 @@ def softFetchCheck : String := String.intercalate "\n"
   , "    for a in ev, b in ev, f in ef"
   , "        same(tl_lerp64(a, b, f), lerp(a, b, f)) || (bad += 1)"
   , "    end"
+  , "    for (w, n) in ((16777218, 1), (16777220, 1), (16777219, 2), (3, 16777218))"
+  , "        big = Float32[Float32(i % 251) - 100.25f0 for i in 1:w * n]"
+  , "        for l in Float32[-1, 0, 0.5, 1, 1.6777216f7, 1.6777218f7, 1.677722f7, 1f30, Inf32], u in Float32[-1, 0, 1.5, 2, 3, 1.6777215f7, 1.6777216f7, 1.6777218f7, 1.677722f7, 1.6777222f7, 1f30, Inf32]"
+  , "            same(tl_lutfetch(big, w, n, l, u), ref(big, w, n, l, u)) || (bad += 1)"
+  , "        end"
+  , "    end"
   , "    bad == 0 || error(\"tl_lutfetch: the Float32 method differs from the Float64 method on $bad probes\")"
   , "end" ]
 
