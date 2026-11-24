@@ -16,7 +16,7 @@ not cited — by the AI-accounting section below (`aiReport`/`intensity`), so a 
 eager-vs-fused roofline gap rather than asserting it.
 
 FAITHFULNESS. `evalTape` (`paradigm.tape_eval`) gives the generated kernel's denotation as a Float interpreter with the
-SAME scalar op-semantics the emitted C uses (`+ − × ÷`, the `≤`-ternaries for `min`/`max`, `expf`/`logf`/`sqrtf`).
+SAME scalar op-semantics the emitted C uses (`+ − × ÷`, IEEE minimum/maximum for `min`/`max`, `expf`/`logf`/`sqrtf`).
 By tape forward-value faithfulness (`paradigm.tape_faithful`/`paradigm.tape_parity`) the recorded
 tape's stored values already equal the source kernel at `Float`, so `evalTape` re-evaluated at any
 inputs equals the source kernel — the codegen changes only *where intermediates live* (registers vs
@@ -43,8 +43,8 @@ public import PropertyKindCalculus.Torch.Paradigm.TapeStraightLine
 
 @[expose] public section Blanket
 
-open Spec TorchLean
-open Runtime.Autograd (Tape Node TapeM)
+open TorchLean
+open PropertyKindCalculus.Paradigm (TapeM CpuTape CpuNode)
 open PropertyKindCalculus (MathCarrier)
 open PropertyKindCalculus.Paradigm (TapeBuilder NumCarrier LutTable lutNodeName?)
 open PropertyKindCalculus.Paradigm.TapeCSE (cseCompact)
@@ -87,12 +87,11 @@ def floatLit (x : Float) : String :=
     if expBits == 0 then s!"{sign}0x0.{mantHex}p-1022f"          -- subnormal
     else s!"{sign}0x1.{mantHex}p{Int.ofNat expBits - 1023}f"
 
-/-- The C text of one program line — **the C printer**, total over `SLExpr`. `min`/`max` are the
-ternaries `(a <= b ? a : b)` / `(a <= b ? b : a)` — Lean's `Min Float`/`Max Float`
-(`minOfLe`/`maxOfLe`, `if x ≤ y then x else y`), which is what `cOp` computes, NaN cases included
-(`x ≤ y` is false when either is NaN, so `min` yields `b` and `max` yields `a`). `fminf`/`fmaxf` would
-return the non-NaN operand instead, a different function on NaN inputs; one reading across the
-interpreter and the three renderings (C, CUDA, Julia). A fetch is the backend-neutral `TL_LUTFETCH`
+/-- The C text of one program line — **the C printer**, total over `SLExpr`. `min`/`max` are
+IEEE 754-2019 minimum/maximum, Lean 4.36's `Min Float`/`Max Float` and so what `cOp` computes: a NaN
+operand gives NaN, and `-0.0` orders below `+0.0`. `fminf`/`fmaxf` would return the non-NaN operand
+instead, a different function on NaN inputs; one reading across the interpreter and the three
+renderings (C, CUDA, Julia). A fetch is the backend-neutral `TL_LUTFETCH`
 macro call; the CUDA/stub emitters prepend the matching definition (texture fetch vs array lerp).
 What a reader must trust of this printer is that each of these forms means, in C with
 `--fmad=false`, what `SL.SLExpr.denote` means — nothing about any kernel. -/
@@ -105,8 +104,8 @@ def printC : SL.SLExpr → String
       | .sub => s!"v{a} - v{b}"
       | .mul => s!"v{a} * v{b}"
       | .div => s!"v{a} / v{b}"
-      | .min => s!"(v{a} <= v{b} ? v{a} : v{b})"
-      | .max => s!"(v{a} <= v{b} ? v{b} : v{a})"
+      | .min => s!"(v{a} != v{a} || v{a} < v{b} || (v{a} == v{b} && signbit(v{a})) ? v{a} : v{b})"
+      | .max => s!"(v{a} != v{a} || v{a} > v{b} || (v{a} == v{b} && !signbit(v{a})) ? v{a} : v{b})"
   | .un o a =>
       match o with
       | .exp => s!"expf(v{a})"
@@ -125,8 +124,8 @@ def printLineC (e : SL.SLExpr) (i : Nat) : String := s!"  const float v{i} = {pr
 
 /-- How a generated kernel realises a `lutfetch` node (`paradigm.lut_carrier`).
 
-* `point` — two texture point fetches + an explicit contraction-blocked fp32 lerp: bit-identical
-  between the CUDA kernel and the C stub (the bit-exactness carrier).
+* `point` — two texture point fetches + an explicit contraction-blocked lerp in binary64, rounded
+  once to fp32: bit-identical between the CUDA kernel and the C stub (the bit-exactness carrier).
 * `hardware` — one hardware-filtered `tex1DLayered` fetch: zero ALU cost, but CUDA's 9-bit
   fixed-point lerp weight makes it tolerance-only (`≤ 2⁻⁸·|Δsample|` per fetch, stub emulated);
   it is excluded from the bit-exact claims. -/
@@ -156,7 +155,7 @@ structure Codegen where
 `const float* in_<nm>`). A pure `foldl`, so it is duplicate-free by construction
 (`collectInputs_nodup`) and the generated ABI's input list is a pure function of the tape — `gen`
 builds its `inputs` field with exactly this (`gen_inputs_eq`). -/
-def collectInputs (t : Tape Float) : Array String :=
+def collectInputs (t : CpuTape Float) : Array String :=
   t.nodes.foldl (init := #[]) fun inputs n =>
     if n.parents.isEmpty then
       match n.name with
@@ -168,7 +167,7 @@ def collectInputs (t : Tape Float) : Array String :=
 pure-`foldl` shape as `collectInputs`, so it is duplicate-free by construction
 (`collectTableNames_nodup`) and the generated table ABI is a pure function of the tape
 (`gen_tables_eq`). -/
-def collectTableNames (t : Tape Float) : Array String :=
+def collectTableNames (t : CpuTape Float) : Array String :=
   t.nodes.foldl (init := #[]) fun tabs n =>
     if n.parents.isEmpty then tabs
     else
@@ -195,19 +194,19 @@ def resolveTables (names : Array String) (avail : Array LutTable) :
 fail, and it fails exactly where `genSL` does (an op node without a name, an off-alphabet op, an
 unresolved or malformed fetch). `SL.genSL_denotes` is the theorem that the program these lines print
 runs as `evalTapeT`. -/
-def genBody (t : Tape Float) (tables : Array LutTable := #[]) :
+def genBody (t : CpuTape Float) (tables : Array LutTable := #[]) :
     Except String (Array String) :=
   (SL.genSL t tables).map fun prog => prog.zipIdx.map fun p => printLineC p.1 p.2
 
 /-- `genBody` is the printer of the program: on a tape `genSL` accepts, its lines are `printLineC`
 of the program's lines, slot by slot. -/
-theorem genBody_of_genSL {t : Tape Float} {tables : Array LutTable} {prog : SL.SLProg}
+theorem genBody_of_genSL {t : CpuTape Float} {tables : Array LutTable} {prog : SL.SLProg}
     (h : SL.genSL t tables = .ok prog) :
     genBody t tables = .ok (prog.zipIdx.map fun p => printLineC p.1 p.2) := by
   unfold genBody; rw [h]; rfl
 
 /-- The C body exists exactly when the program does. -/
-theorem genBody_isOk_eq_genSL (t : Tape Float) (tables : Array LutTable) :
+theorem genBody_isOk_eq_genSL (t : CpuTape Float) (tables : Array LutTable) :
     (genBody t tables).isOk = (SL.genSL t tables).isOk := by
   unfold genBody; cases SL.genSL t tables <;> rfl
 
@@ -215,14 +214,14 @@ theorem genBody_isOk_eq_genSL (t : Tape Float) (tables : Array LutTable) :
 and `genJulia` before anything is emitted, so a hand-assembled tape with a forward reference is
 rejected rather than printed with a temporary used before its definition; `checkWF_ok` is the
 `WF` every slot-discipline theorem consumes. -/
-def checkWF (t : Tape Float) : Except String Unit :=
+def checkWF (t : CpuTape Float) : Except String Unit :=
   if (List.range t.size).all (fun id =>
       match t.nodes[id]? with
       | some nd => nd.parents.toList.all (· < id)
       | none => true) then .ok ()
   else .error "tape_codegen: tape is not well-formed (a node references a parent at or after its own id)"
 
-theorem checkWF_ok {t : Tape Float} (h : checkWF t = .ok ()) : WF t := by
+theorem checkWF_ok {t : CpuTape Float} (h : checkWF t = .ok ()) : WF t := by
   unfold checkWF at h
   split at h
   · rename_i hall
@@ -237,11 +236,11 @@ theorem checkWF_ok {t : Tape Float} (h : checkWF t = .ok ()) : WF t := by
 /-- Every output id names a node of the tape — otherwise an `out[…] = v<id>` line would reference a
 temporary no body line defines (ill-formed C/Julia that the denotation theorem, reading `getD`,
 would not notice). Checked by `gen` and `genJulia` before anything is emitted (`checkOutputs_ok`). -/
-def checkOutputs (t : Tape Float) (outIds : List Nat) : Except String Unit :=
+def checkOutputs (t : CpuTape Float) (outIds : List Nat) : Except String Unit :=
   if outIds.all (· < t.size) then .ok ()
   else .error s!"tape_codegen: an output id is out of range (the tape has {t.size} nodes)"
 
-theorem checkOutputs_ok {t : Tape Float} {outIds : List Nat} (h : checkOutputs t outIds = .ok ()) :
+theorem checkOutputs_ok {t : CpuTape Float} {outIds : List Nat} (h : checkOutputs t outIds = .ok ()) :
     ∀ o ∈ outIds, o < t.size := by
   unfold checkOutputs at h
   split at h
@@ -254,11 +253,11 @@ buffer (`headD 0.0`), so a leaf recorded with an empty or a multi-element buffer
 the literal `0.0` or as its first element without a word; `gen` and `genJulia` reject such a tape
 instead (`checkScalarLeaves`). A `TapeBuilder.const` leaf stores one element, so recorded tapes pass
 — the AVS and LM-step `#guard`s run `gen` and so decide it. -/
-def ScalarLeaves (t : Tape Float) : Prop :=
+def ScalarLeaves (t : CpuTape Float) : Prop :=
   ∀ id nd, t.getNode? id = some nd → nd.parents.isEmpty = true → nd.name = none →
     (TorchLean.Storage.toArray nd.value.tensor.buffer).size = 1
 
-def checkScalarLeaves (t : Tape Float) : Except String Unit :=
+def checkScalarLeaves (t : CpuTape Float) : Except String Unit :=
   if (List.range t.size).all (fun id =>
       match t.nodes[id]? with
       | some nd =>
@@ -267,7 +266,7 @@ def checkScalarLeaves (t : Tape Float) : Except String Unit :=
       | none => true) then .ok ()
   else .error "tape_codegen: a constant leaf does not store exactly one scalar"
 
-theorem checkScalarLeaves_ok {t : Tape Float} (h : checkScalarLeaves t = .ok ()) : ScalarLeaves t := by
+theorem checkScalarLeaves_ok {t : CpuTape Float} (h : checkScalarLeaves t = .ok ()) : ScalarLeaves t := by
   unfold checkScalarLeaves at h
   split at h
   · rename_i hall
@@ -283,7 +282,7 @@ theorem checkScalarLeaves_ok {t : Tape Float} (h : checkScalarLeaves t = .ok ())
 (tape ids are array indices), so a node's `vID` is `v{arrayIndex}` and its parents reference earlier
 `v`s. The `inputs`/`numOutputs`/`outLines` fields are pure functions of `t`/`outIds`; only `body`
 runs the (fallible) node walk (`genBody`). -/
-def gen (t : Tape Float) (outIds : List Nat) (tables : Array LutTable := #[])
+def gen (t : CpuTape Float) (outIds : List Nat) (tables : Array LutTable := #[])
     (lutMode : LutFilterMode := .point) : Except String Codegen :=
   (checkWF t).bind fun _ =>
   (checkOutputs t outIds).bind fun _ =>
@@ -299,7 +298,7 @@ def gen (t : Tape Float) (outIds : List Nat) (tables : Array LutTable := #[])
 
 /-- `gen` succeeds only on a well-formed tape: every parent precedes its node, so every operand slot
 of every body line is already defined (`SL.genSL_slots_lt`). -/
-theorem gen_wf {t : Tape Float} {outIds : List Nat} {tables : Array LutTable}
+theorem gen_wf {t : CpuTape Float} {outIds : List Nat} {tables : Array LutTable}
     {mode : LutFilterMode} {cg : Codegen} (h : gen t outIds tables mode = .ok cg) : WF t := by
   unfold gen at h
   cases hw : checkWF t with
@@ -308,7 +307,7 @@ theorem gen_wf {t : Tape Float} {outIds : List Nat} {tables : Array LutTable}
 
 /-- `gen` succeeds only when every constant leaf stores exactly one scalar: the literal the program
 bakes at a const leaf (`genSL_lit_iff`) is the leaf's whole stored value, not the head of a buffer. -/
-theorem gen_scalar_leaves {t : Tape Float} {outIds : List Nat} {tables : Array LutTable}
+theorem gen_scalar_leaves {t : CpuTape Float} {outIds : List Nat} {tables : Array LutTable}
     {mode : LutFilterMode} {cg : Codegen} (h : gen t outIds tables mode = .ok cg) : ScalarLeaves t := by
   unfold gen at h
   cases hw : checkWF t with
@@ -327,7 +326,7 @@ theorem gen_scalar_leaves {t : Tape Float} {outIds : List Nat} {tables : Array L
 
 /-- `gen` succeeds only with every output id in range: every `out[…] = v<id>` line names a
 temporary the body defines. -/
-theorem gen_outIds_lt {t : Tape Float} {outIds : List Nat} {tables : Array LutTable}
+theorem gen_outIds_lt {t : CpuTape Float} {outIds : List Nat} {tables : Array LutTable}
     {mode : LutFilterMode} {cg : Codegen} (h : gen t outIds tables mode = .ok cg) :
     ∀ o ∈ outIds, o < t.size := by
   unfold gen at h
@@ -350,65 +349,75 @@ def paramList (cg : Codegen) (stub : Bool := false) : String :=
     ++ ", float* __restrict__ out"
 
 /-- The CUDA-side `lutfetch` helper + the `TL_LUTFETCH` macro `genBody`'s neutral body lines call.
-Point mode: two point fetches + a `__f*_rn` contraction-blocked fp32 lerp (bit-identical to the
-stub). Its hi-first minima feed the existing zero floors, so NaN coordinates and layers select
-sample 0 and layer 0. Hardware mode: one hardware-filtered fetch (9-bit weight, tolerance-only).
+Point mode: two point fetches + a `__d*_rn` contraction-blocked lerp in `double`, rounded once to
+`float` (bit-identical to the stub). A NaN coordinate or layer returns NaN before the clamps, as
+`LutTable.refFetch` does. Hardware mode: one hardware-filtered fetch (9-bit weight, tolerance-only).
 Empty when the kernel uses no tables. -/
 def lutHelperCuda (cg : Codegen) : String :=
   if cg.tables.isEmpty then "" else
   let body := match cg.lutMode with
     | .point => String.intercalate "\n"
-        [ "  float j = floorf(uc);"
-        , "  float f = __fsub_rn(uc, j);"
-        , "  float a = tex1DLayered<float>(tex, j + 0.5f, L);"
-        , "  float b = tex1DLayered<float>(tex, (j + 1.0f <= wmax ? j + 1.0f : wmax) + 0.5f, L);"
-        , "  return __fadd_rn(a, __fmul_rn(f, __fsub_rn(b, a)));" ]
-    | .hardware => "  return tex1DLayered<float>(tex, uc + 0.5f, L);"
+        [ "  double j = floor(uc);"
+        , "  double f = __dsub_rn(uc, j);"
+        , "  double j1 = (j + 1.0 <= wmax ? j + 1.0 : wmax);"
+        , "  double a = (double)tex1DLayered<float>(tex, (float)j + 0.5f, L);"
+        , "  double b = (double)tex1DLayered<float>(tex, (float)j1 + 0.5f, L);"
+        , "  return (float)__dadd_rn(a, __dmul_rn(f, __dsub_rn(b, a)));" ]
+    | .hardware => "  return tex1DLayered<float>(tex, (float)uc + 0.5f, L);"
   String.intercalate "\n"
-    [ "__device__ __forceinline__ float tl_lutfetch(cudaTextureObject_t tex, int W, int LAYERS, float layer, float u) {"
-    , "  float wmax = (float)(W - 1);"
-    , "  float um = (wmax <= u ? wmax : u);"
-    , "  float uc = (0.0f <= um ? um : 0.0f);"
-    , "  float lmax = (float)(LAYERS - 1);"
-    , "  float ls = layer + 0.5f;"
-    , "  float lm = (lmax <= ls ? lmax : ls);"
-    , "  float lc = (0.0f <= lm ? lm : 0.0f);"
+    [ "__device__ __forceinline__ float tl_lutfetch(cudaTextureObject_t tex, int W, int LAYERS, float layer32, float u32) {"
+    , "  double layer = (double)layer32;"
+    , "  double u = (double)u32;"
+    , "  if (layer != layer || u != u) return (float)(layer + u);"
+    , "  double wmax = (double)(W - 1);"
+    , "  double um = (wmax <= u ? wmax : u);"
+    , "  double uc = (0.0 <= um ? um : 0.0);"
+    , "  double lmax = (double)(LAYERS - 1);"
+    , "  double ls = __dadd_rn(layer, 0.5);"
+    , "  double lm = (lmax <= ls ? lmax : ls);"
+    , "  double lc = (0.0 <= lm ? lm : 0.0);"
     , "  int L = (int)lc;"
     , body
     , "}"
     , "#define TL_LUTFETCH(NAME, W, LAYERS, L, U) tl_lutfetch(tex_##NAME, W, LAYERS, L, U)"
     , "" ]
 
-/-- The stub-side `lutfetch` helper + macro: `LutTable.refFetch`'s clamp/floor/lerp as a host loop over
-the baked table. The hi-first minima preserve NaN until the existing zero floors map a NaN
-coordinate to sample 0 and a NaN layer to layer 0. The layer is clamped as a float before it is
-truncated, so a huge finite layer cannot overflow the index; the CUDA helper does the same before
-its `int` conversion. Point mode is bit-identical to the device kernel; hardware mode emulates the
-9-bit weight, tolerance-only. Empty when the kernel uses no tables. -/
+/-- The stub-side `lutfetch` helper + macro: `LutTable.refFetch`'s clamp/floor/lerp in `double` as
+a host loop over the baked table, rounded once to `float`. A NaN coordinate or layer returns NaN
+before the clamps. The layer is clamped before it is truncated, so a huge finite layer cannot
+overflow the index; the CUDA helper does the same before its `int` conversion. Point mode is
+bit-identical to the device kernel; hardware mode emulates the 9-bit weight, tolerance-only. Empty
+when the kernel uses no tables. -/
 def lutHelperStub (cg : Codegen) : String :=
   if cg.tables.isEmpty then "" else
   let quant := match cg.lutMode with
     | .point => ""
-    | .hardware => "  f = floorf(f * 256.0f + 0.5f) / 256.0f;\n"
+    -- A weight that rounds to one is the next grid point at weight zero.
+    | .hardware =>
+      "  f = floor(f * 256.0 + 0.5) / 256.0;\n  if (f >= 1.0) { j = j + 1.0; f = 0.0; }\n"
   String.intercalate "\n"
-    [ "static float tl_lutfetch(const float* tab, int W, int LAYERS, float layer, float u) {"
-    , "  float wmax = (float)(W - 1);"
-    , "  float um = (wmax <= u ? wmax : u);"
-    , "  float uc = (0.0f <= um ? um : 0.0f);"
-    , "  float lmax = (float)(LAYERS - 1);"
-    , "  float ls = layer + 0.5f;"
-    , "  float lm = (lmax <= ls ? lmax : ls);"
-    , "  float lc = (0.0f <= lm ? lm : 0.0f);"
+    [ "static float tl_lutfetch(const float* tab, int W, int LAYERS, float layer32, float u32) {"
+    , "  double layer = (double)layer32;"
+    , "  double u = (double)u32;"
+    , "  if (layer != layer || u != u) return (float)(layer + u);"
+    , "  double wmax = (double)(W - 1);"
+    , "  double um = (wmax <= u ? wmax : u);"
+    , "  double uc = (0.0 <= um ? um : 0.0);"
+    , "  double lmax = (double)(LAYERS - 1);"
+    , "  double ls = layer + 0.5;"
+    , "  double lm = (lmax <= ls ? lmax : ls);"
+    , "  double lc = (0.0 <= lm ? lm : 0.0);"
     , "  long L = (long)lc;"
-    , "  float j = floorf(uc);"
-    , s!"  float f = uc - j;\n{quant}  const float* row = tab + (long)L * (long)W;"
+    , "  double j = floor(uc);"
+    , s!"  double f = uc - j;\n{quant}  const float* row = tab + (long)L * (long)W;"
     , "  long j0 = (long)j;"
     , "  long j1 = j0 + 1 < (long)W ? j0 + 1 : (long)W - 1;"
-    , "  float a = row[j0];"
-    , "  float b = row[j1];"
-    , "  float d = b - a;"
-    , "  float fd = f * d;"
-    , "  return a + fd;"
+    , "  double a = (double)row[j0];"
+    , "  double b = (double)row[j1];"
+    , "  double d = b - a;"
+    , "  double fd = f * d;"
+    , "  double r = a + fd;"
+    , "  return (float)r;"
     , "}"
     , "#define TL_LUTFETCH(NAME, W, LAYERS, L, U) tl_lutfetch(lut_##NAME, W, LAYERS, L, U)"
     , "" ]
@@ -735,7 +744,7 @@ perElement·P`: peak eager residency of a `P`-pixel batch is `maxLiveNodes t · 
 **lower bound** — GC-finalizer lag delays frees, and a loop-with-carry driver holds carry
 state across recorded steps — so it is the static *prior* a measured probe calibrates,
 never the authority. -/
-def maxLiveNodes (t : Tape Float) : Nat := Id.run do
+def maxLiveNodes (t : CpuTape Float) : Nat := Id.run do
   let n := t.nodes.size
   if n == 0 then return 0
   -- last consumer of each node: ascending walk, so the final write is the max consumer id
@@ -752,7 +761,7 @@ def maxLiveNodes (t : Tape Float) : Nat := Id.run do
       freeAt := freeAt.set! k (freeAt[k]! + 1)
   -- forward walk: named inputs pre-counted, each other node allocates at its id, operands
   -- last used at a node are freed only after it executes (op reads them, then writes)
-  let isInput := fun (nd : Node Float) => nd.parents.isEmpty && nd.name.isSome
+  let isInput := fun (nd : CpuNode Float) => nd.parents.isEmpty && nd.name.isSome
   let mut live := t.nodes.foldl (fun acc nd => if isInput nd then acc + 1 else acc) 0
   let mut peak := live
   j := 0
@@ -790,7 +799,7 @@ structure AiReport where
   `nInputs + nOut` registers-only residency. -/
   maxLive : Nat := 0
 
-def aiReport (t : Tape Float) (nOut : Nat) (tables : Array LutTable := #[]) :
+def aiReport (t : CpuTape Float) (nOut : Nat) (tables : Array LutTable := #[]) :
     AiReport := Id.run do
   let mut nInputs := 0
   let mut nConsts := 0

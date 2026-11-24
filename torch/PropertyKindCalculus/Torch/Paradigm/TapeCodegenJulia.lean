@@ -22,9 +22,9 @@ the honest check is an ulp bound (`apps.julia_parity`). The semantics choices th
 
   * no `@fastmath`, no `muladd` — Julia does not contract `a*b + c` to an FMA or re-associate unless
     asked, so the default is the `nvcc --fmad=false` regime; the header says so;
-  * `min`/`max` render as `ifelse(a <= b, a, b)` / `ifelse(a <= b, b, a)`, which is *exactly* Lean's
-    `Min Float`/`Max Float` (`minOfLe`/`maxOfLe`, `if x ≤ y then x else y`), NaN cases included — the
-    same `≤`-ternary the C rendering (`cExpr`) writes, so interpreter and all three renderings agree;
+  * `min`/`max` render as Julia's `min(a, b)` / `max(a, b)`, IEEE 754-2019 minimum/maximum like Lean
+    4.36's `Min Float`/`Max Float`: a NaN operand gives NaN and `-0.0` orders below `+0.0`, the
+    function the C rendering (`cExpr`) spells out, so interpreter and all three renderings agree;
   * `sqrt`/`log` of a negative argument throw a `DomainError` in Julia where IEEE (and `Float.sqrt`,
     `Float.log`, `sqrtf`, `logf`) return a quiet NaN; the emitted `tl_sqrt`/`tl_log` helpers restore
     the NaN, and are the identity on the non-negative domain (`-0.0` is not negative, so `sqrt(-0.0)
@@ -35,12 +35,14 @@ the honest check is an ulp bound (`apps.julia_parity`). The semantics choices th
   * precision is the type parameter `T<:AbstractFloat`: one emitted function is the `Float64` parity
     twin of `evalTape` and the `Float32` deployment kernel;
   * `lutfetch` is the C stub's clamp/floor/lerp over the same flat `layers × width` row-major vector
-    (`tl_lutfetch`), point mode bit-identical, hardware mode emulating the 9-bit weight.
+    (`tl_lutfetch`), in binary64 and rounded once to `T`, point mode bit-identical, hardware mode
+    emulating the 9-bit weight.
 
 Two surfaces are emitted from one body: a plain `function name!(out, in_…) … end` host loop
 (`emitJulia`, no package dependencies — the **bit-exact twin**, what the parity probe gates), and a
 KernelAbstractions.jl `@kernel` (`emitJuliaKA`) that the same `.jl` runs on CPU, CUDA, AMDGPU or
 Metal — the **portability twin**, the Julia side of "choosing a carrier, not rewriting the model".
+A table fetch on `Float32` data uses no `Float64`, so it runs on Metal too.
 The portability twin is tolerance-only, like the `.hardware` table mode: a KernelAbstractions backend
 may contract `a*b + c` to a fused multiply-add — KernelAbstractions 0.10's CPU backend compiles the
 kernel through PoCL (OpenCL) with `fuse_muladd` on whenever the host has hardware FMA
@@ -59,7 +61,7 @@ public import PropertyKindCalculus.Torch.Paradigm.TapeCodegen
 
 @[expose] public section Blanket
 
-open Runtime.Autograd (Tape Node)
+open PropertyKindCalculus.Paradigm (TapeM CpuTape CpuNode)
 open PropertyKindCalculus.Paradigm (LutTable lutNodeName?)
 
 namespace PropertyKindCalculus.Paradigm.TapeCodegen.Julia
@@ -86,7 +88,7 @@ def jlLit (x : Float) : String :=
     s!"T(reinterpret(Float64, 0x{hex}))"
 
 /-- The Julia text of one program line — **the Julia printer**, total over `SLExpr`. `min`/`max`
-are Lean's `minOfLe`/`maxOfLe` spelled out as `ifelse`; `sqrt`/`log` go through the NaN-restoring
+are Julia's, the IEEE minimum/maximum Lean's `Min Float`/`Max Float` compute; `sqrt`/`log` go through the NaN-restoring
 helpers the emitted header defines; a fetch is the `tl_lutfetch` helper on the table's flat vector. -/
 def printJulia : SL.SLExpr → String
   | .input nm => s!"in_{nm}[p]"
@@ -97,8 +99,8 @@ def printJulia : SL.SLExpr → String
       | .sub => s!"v{a} - v{b}"
       | .mul => s!"v{a} * v{b}"
       | .div => s!"v{a} / v{b}"
-      | .min => s!"ifelse(v{a} <= v{b}, v{a}, v{b})"
-      | .max => s!"ifelse(v{a} <= v{b}, v{b}, v{a})"
+      | .min => s!"min(v{a}, v{b})"
+      | .max => s!"max(v{a}, v{b})"
   | .un o a =>
       match o with
       | .exp => s!"exp(v{a})"
@@ -137,26 +139,26 @@ structure JuliaCodegen where
 /-- The Julia body lines — the program `SL.genSL` reads off the tape, printed line by line by
 `printJulia`. Fails exactly where `genBody` does (`genBodyJulia_isOk_eq_genBody`): the two emitters
 print one program. -/
-def genBodyJulia (t : Tape Float) (tables : Array LutTable := #[]) :
+def genBodyJulia (t : CpuTape Float) (tables : Array LutTable := #[]) :
     Except String (Array String) :=
   (SL.genSL t tables).map fun prog => prog.zipIdx.map fun p => printLineJulia p.1 p.2
 
 /-- `genBodyJulia` is the printer of the program: on a tape `genSL` accepts, its lines are
 `printLineJulia` of the program's lines, slot by slot. -/
-theorem genBodyJulia_of_genSL {t : Tape Float} {tables : Array LutTable} {prog : SL.SLProg}
+theorem genBodyJulia_of_genSL {t : CpuTape Float} {tables : Array LutTable} {prog : SL.SLProg}
     (h : SL.genSL t tables = .ok prog) :
     genBodyJulia t tables = .ok (prog.zipIdx.map fun p => printLineJulia p.1 p.2) := by
   unfold genBodyJulia; rw [h]; rfl
 
 /-- The Julia body and the C body exist on exactly the same tapes — one program, two printers. -/
-theorem genBodyJulia_isOk_eq_genBody (t : Tape Float) (tables : Array LutTable) :
+theorem genBodyJulia_isOk_eq_genBody (t : CpuTape Float) (tables : Array LutTable) :
     (genBodyJulia t tables).isOk = (genBody t tables).isOk := by
   unfold genBodyJulia genBody; cases SL.genSL t tables <;> rfl
 
 /-- Lower a CSE'd tape + its output ids to a Julia kernel — `gen`'s twin. The ABI fields
 (`inputs`, `tables`) are the same pure functions of the tape `gen` uses, so the Julia function's
 argument list is the C kernel's parameter list, name for name. -/
-def genJulia (t : Tape Float) (outIds : List Nat) (tables : Array LutTable := #[])
+def genJulia (t : CpuTape Float) (outIds : List Nat) (tables : Array LutTable := #[])
     (lutMode : LutFilterMode := .point) : Except String JuliaCodegen :=
   (checkWF t).bind fun _ =>
   (checkOutputs t outIds).bind fun _ =>
@@ -171,7 +173,7 @@ def genJulia (t : Tape Float) (outIds : List Nat) (tables : Array LutTable := #[
       , lutMode }
 
 /-- `genJulia` succeeds only on a well-formed tape — the same check `gen` makes. -/
-theorem genJulia_wf {t : Tape Float} {outIds : List Nat} {tables : Array LutTable}
+theorem genJulia_wf {t : CpuTape Float} {outIds : List Nat} {tables : Array LutTable}
     {mode : LutFilterMode} {cg : JuliaCodegen} (h : genJulia t outIds tables mode = .ok cg) : WF t := by
   unfold genJulia at h
   cases hw : checkWF t with
@@ -180,7 +182,7 @@ theorem genJulia_wf {t : Tape Float} {outIds : List Nat} {tables : Array LutTabl
 
 /-- `genJulia` succeeds only when every constant leaf stores exactly one scalar — the same check
 `gen` makes. -/
-theorem genJulia_scalar_leaves {t : Tape Float} {outIds : List Nat} {tables : Array LutTable}
+theorem genJulia_scalar_leaves {t : CpuTape Float} {outIds : List Nat} {tables : Array LutTable}
     {mode : LutFilterMode} {cg : JuliaCodegen} (h : genJulia t outIds tables mode = .ok cg) :
     ScalarLeaves t := by
   unfold genJulia at h
@@ -199,7 +201,7 @@ theorem genJulia_scalar_leaves {t : Tape Float} {outIds : List Nat} {tables : Ar
   | ok u => exact checkScalarLeaves_ok hs
 
 /-- `genJulia` succeeds only with every output id in range — the same check `gen` makes. -/
-theorem genJulia_outIds_lt {t : Tape Float} {outIds : List Nat} {tables : Array LutTable}
+theorem genJulia_outIds_lt {t : CpuTape Float} {outIds : List Nat} {tables : Array LutTable}
     {mode : LutFilterMode} {cg : JuliaCodegen} (h : genJulia t outIds tables mode = .ok cg) :
     ∀ o ∈ outIds, o < t.size := by
   unfold genJulia at h
@@ -219,7 +221,7 @@ alone knows which regime it is in. -/
 def header : String := String.intercalate "\n"
   [ "# generated by paradigm.tape_codegen_julia — the Julia twin of the CUDA megakernel / C stub."
   , "# Semantics pinned by the emitter: no @fastmath, no muladd (no FMA contraction, no re-association);"
-  , "# min/max are `ifelse(a <= b, a, b)` / `ifelse(a <= b, b, a)` (Lean's Min/Max Float, NaN included);"
+  , "# min/max are Julia's `min`/`max`: IEEE minimum/maximum (Lean's Min/Max Float), NaN propagates, -0.0 < +0.0;"
   , "# tl_sqrt/tl_log return NaN on a negative argument where Julia would throw (IEEE behaviour);"
   , "# T = Float64 is bit-identical to Lean's evalTape on + - * / sqrt abs min max, ulp-close on exp/log;"
   , "# T = Float32 is the device precision of the CUDA kernel."
@@ -233,38 +235,169 @@ def mathHelpers : String := String.intercalate "\n"
   , "@inline tl_log(x::T) where {T<:AbstractFloat} = x < zero(T) ? T(NaN) : log(x)"
   , "" ]
 
-/-- The `lutfetch` helper: `LutTable.refFetch`'s clamp/floor/lerp over the flat row-major table —
-an empty table (`W == 0 || LAYERS == 0`) fetches `zero(T)` as `refFetch` returns `0.0`. The
-hi-first minima preserve NaN until the zero floors map a NaN coordinate to sample 0 and a NaN
-layer to layer 0, matching the C stub and CUDA helper. The layer is clamped as a float before it is
-truncated, so a huge finite layer cannot overflow the index. Point mode is the stub's arithmetic
-step for step; hardware mode emulates the 9-bit weight, tolerance-only. Empty when the kernel uses
-no tables. -/
+/-- Binary64 `a + f*(b - a)` on finite `Float32` values, rounded once to `Float32`, in integer
+arithmetic only: the table fetch for backends without `Float64` (Metal). -/
+def softFloatJulia : String := String.intercalate "\n"
+    [ "# Finite Float32 as sign, integer significand and exponent: x = (-1)^s * m * 2^e."
+    , "@inline function tl_sf_split(x::Float32)"
+    , "    bits = reinterpret(UInt32, x)"
+    , "    ex = (bits >> 23) & 0x000000ff"
+    , "    fr = (bits & 0x007fffff) % UInt64"
+    , "    s = (bits >> 31) % UInt64"
+    , "    return ex == 0x00000000 ? (s, fr, -149) : (s, fr | 0x0000000000800000, (ex % Int) - 150)"
+    , "end"
+    , "# Round m * 2^e to a 53-bit significand, ties to even; bit 0 of m may be a sticky bit."
+    , "@inline function tl_sf_round(s::UInt64, m::UInt64, e::Int)"
+    , "    m == 0x0000000000000000 && return (s, m, 0)"
+    , "    k = 11 - leading_zeros(m)"
+    , "    k <= 0 && return (s, m << (-k), e + k)"
+    , "    q = m >> k"
+    , "    r = m & ((0x0000000000000001 << k) - 0x0000000000000001)"
+    , "    h = 0x0000000000000001 << (k - 1)"
+    , "    q += ((r > h) | ((r == h) & ((q & 0x0000000000000001) == 0x0000000000000001))) % UInt64"
+    , "    return q == 0x0020000000000000 ? (s, q >> 1, e + k + 1) : (s, q, e + k)"
+    , "end"
+    , "# Binary64 sum of two finite values, each with a significand of at most 53 bits."
+    , "@inline function tl_sf_add(sa::UInt64, ma::UInt64, ea::Int, sb::UInt64, mb::UInt64, eb::Int)"
+    , "    ma == 0x0000000000000000 && mb == 0x0000000000000000 && return (sa & sb, ma, 0)"
+    , "    ma == 0x0000000000000000 && return tl_sf_round(sb, mb, eb)"
+    , "    mb == 0x0000000000000000 && return tl_sf_round(sa, ma, ea)"
+    , "    ka = leading_zeros(ma) - 2"
+    , "    kb = leading_zeros(mb) - 2"
+    , "    xa = ma << ka"
+    , "    xb = mb << kb"
+    , "    fa = ea - ka"
+    , "    fb = eb - kb"
+    , "    swap = (fb > fa) | ((fb == fa) & (xb > xa))"
+    , "    sh = swap ? sb : sa"
+    , "    xh = swap ? xb : xa"
+    , "    fh = swap ? fb : fa"
+    , "    sl = swap ? sa : sb"
+    , "    xl = swap ? xa : xb"
+    , "    fl = swap ? fa : fb"
+    , "    dsh = fh - fl"
+    , "    lo = dsh >= 62 ? 0x0000000000000001 :"
+    , "        (xl >> dsh) | ((xl & ((0x0000000000000001 << dsh) - 0x0000000000000001)) != 0x0000000000000000) % UInt64"
+    , "    sh == sl && return tl_sf_round(sh, xh + lo, fh)"
+    , "    xh == lo && return (0x0000000000000000, 0x0000000000000000, 0)"
+    , "    return tl_sf_round(sh, xh - lo, fh)"
+    , "end"
+    , "# Binary64 product of a significand below 2^24 and one below 2^53, both normalised first."
+    , "@inline function tl_sf_mul(sf::UInt64, m1::UInt64, e1::Int, sd::UInt64, m2::UInt64, e2::Int)"
+    , "    (m1 == 0x0000000000000000 || m2 == 0x0000000000000000) && return (sf ⊻ sd, 0x0000000000000000, 0)"
+    , "    kf = leading_zeros(m1) - 40"
+    , "    kd = leading_zeros(m2) - 11"
+    , "    mf = m1 << kf"
+    , "    md = m2 << kd"
+    , "    ef = e1 - kf"
+    , "    ed = e2 - kd"
+    , "    ph = mf * (md >> 26)"
+    , "    pl = mf * (md & 0x0000000003ffffff)"
+    , "    q = ph + (pl >> 26)"
+    , "    r = pl & 0x0000000003ffffff"
+    , "    x = (q << 11) | (r >> 15) | ((r & 0x0000000000007fff) != 0x0000000000000000) % UInt64"
+    , "    return tl_sf_round(sf ⊻ sd, x, ef + ed + 15)"
+    , "end"
+    , "# Round a binary64 value with a 53-bit significand to Float32, ties to even."
+    , "@inline function tl_sf_narrow(s::UInt64, m::UInt64, e::Int)"
+    , "    sbit = (s % UInt32) << 31"
+    , "    m == 0x0000000000000000 && return reinterpret(Float32, sbit)"
+    , "    top = e + 52"
+    , "    q = top - 23 < -149 ? -149 : top - 23"
+    , "    k = q - e"
+    , "    n = 0x0000000000000000"
+    , "    if k <= 60"
+    , "        n = m >> k"
+    , "        r = m & ((0x0000000000000001 << k) - 0x0000000000000001)"
+    , "        h = 0x0000000000000001 << (k - 1)"
+    , "        n += ((r > h) | ((r == h) & ((n & 0x0000000000000001) == 0x0000000000000001))) % UInt64"
+    , "    end"
+    , "    if n == 0x0000000001000000"
+    , "        n = n >> 1"
+    , "        q += 1"
+    , "    end"
+    , "    n < 0x0000000000800000 && return reinterpret(Float32, sbit | (n % UInt32))"
+    , "    field = q + 150"
+    , "    field >= 255 && return reinterpret(Float32, sbit | 0x7f800000)"
+    , "    return reinterpret(Float32, sbit | ((field % UInt32) << 23) | ((n % UInt32) & 0x007fffff))"
+    , "end"
+    , "# a + f*(b - a) in binary64 arithmetic rounded once to Float32, using integers only."
+    , "@inline function tl_lerp64(a::Float32, b::Float32, f::Float32)"
+    , "    (isfinite(a) && isfinite(b)) || return a + f * (b - a)"
+    , "    (sa, ma, ea) = tl_sf_split(a)"
+    , "    (sb, mb, eb) = tl_sf_split(b)"
+    , "    (sf, mf, ef) = tl_sf_split(f)"
+    , "    (sd, md, ed) = tl_sf_add(sb, mb, eb, sa ⊻ 0x0000000000000001, ma, ea)"
+    , "    (sp, mp, ep) = tl_sf_mul(sf, mf, ef, sd, md, ed)"
+    , "    (sr, mr, er) = tl_sf_add(sa, ma, ea, sp, mp, ep)"
+    , "    return tl_sf_narrow(sr, mr, er)"
+    , "end" ]
+
+/-- The `lutfetch` helper: `LutTable.refFetch`'s clamp/floor/lerp in binary64 over the flat
+row-major table, rounded once to `T` — an empty table (`W == 0 || LAYERS == 0`) fetches `zero(T)`
+as `refFetch` returns `0.0`. A NaN coordinate or layer returns NaN before the clamps, matching the
+C stub and CUDA helper. The layer is clamped before it is truncated, so a huge finite layer cannot
+overflow the index. Two methods give the same values: the generic one computes in `Float64`, and
+the `Float32` one in `Float32` and integers (`softFloatJulia`), so it runs on a backend without
+`Float64`. Point mode is the stub's arithmetic step for step; hardware mode emulates the 9-bit
+weight, tolerance-only. Empty when the kernel uses no tables. -/
 def lutHelperJulia (cg : JuliaCodegen) : String :=
   if cg.tables.isEmpty then "" else
-  let quant := match cg.lutMode with
-    | .point => ""
-    | .hardware => "    f = floor(f * T(256) + T(0.5)) / T(256)\n"
+  -- A weight that rounds to one is the next grid point at weight zero.
+  let (quant, quant32) := match cg.lutMode with
+    | .point => ("", "")
+    | .hardware =>
+      ( "    f = floor(f * 256.0 + 0.5) / 256.0\n    if f >= 1.0\n        j = j + 1.0\n        f = 0.0\n    end\n"
+      , "    g = f * 256.0f0\n    gf = floor(g)\n    f = ifelse(g - gf >= 0.5f0, gf + 1.0f0, gf) / 256.0f0\n"
+          ++ "    if f >= 1.0f0\n        j = j + 1.0f0\n        f = 0.0f0\n    end\n" )
   String.intercalate "\n"
-    [ "@inline function tl_lutfetch(tab::AbstractVector{T}, W::Int, LAYERS::Int, layer::T, u::T) where {T<:AbstractFloat}"
+    [ "@inline function tl_lutfetch(tab::AbstractVector{T}, W::Int, LAYERS::Int, layer32::T, u32::T) where {T<:AbstractFloat}"
     , "    (W == 0 || LAYERS == 0) && return zero(T)"
-    , "    wmax = T(W - 1)"
+    , "    layer = Float64(layer32)"
+    , "    u = Float64(u32)"
+    , "    (isnan(layer) || isnan(u)) && return T(layer + u)"
+    , "    wmax = Float64(W - 1)"
     , "    um = ifelse(wmax <= u, wmax, u)"
-    , "    uc = ifelse(zero(T) <= um, um, zero(T))"
-    , "    lmax = T(LAYERS - 1)"
-    , "    ls = layer + T(0.5)"
+    , "    uc = ifelse(0.0 <= um, um, 0.0)"
+    , "    lmax = Float64(LAYERS - 1)"
+    , "    ls = layer + 0.5"
     , "    lm = ifelse(lmax <= ls, lmax, ls)"
-    , "    lc = ifelse(zero(T) <= lm, lm, zero(T))"
+    , "    lc = ifelse(0.0 <= lm, lm, 0.0)"
     , "    L = unsafe_trunc(Int, lc)"
     , "    j = floor(uc)"
     , s!"    f = uc - j\n{quant}    j0 = unsafe_trunc(Int, j)"
     , "    j1 = j0 + 1 < W ? j0 + 1 : W - 1"
     , "    base = L * W"
-    , "    @inbounds a = tab[base + j0 + 1]"
-    , "    @inbounds b = tab[base + j1 + 1]"
+    , "    @inbounds a = Float64(tab[base + j0 + 1])"
+    , "    @inbounds b = Float64(tab[base + j1 + 1])"
     , "    d = b - a"
     , "    fd = f * d"
-    , "    return a + fd"
+    , "    return T(a + fd)"
+    , "end"
+    , softFloatJulia
+    , "# The Float32 method: the same values with no Float64, for backends that lack it."
+    , "@inline function tl_lutfetch(tab::AbstractVector{Float32}, W::Int, LAYERS::Int, layer::Float32, u::Float32)"
+    , "    (W == 0 || LAYERS == 0) && return 0.0f0"
+    , "    (isnan(layer) || isnan(u)) && return layer + u"
+    , "    # The upper clamps compare integers: Float32(W - 1) is inexact above 2^24."
+    , "    um = ifelse(4.6116860f18 <= u, 4.6116860f18, u)"
+    , "    uc = ifelse(0.0f0 <= um, um, 0.0f0)"
+    , "    lf = floor(layer)"
+    , "    ls = ifelse(layer - lf >= 0.5f0, lf + 1.0f0, lf)"
+    , "    lm = ifelse(4.6116860f18 <= ls, 4.6116860f18, ls)"
+    , "    lc = ifelse(0.0f0 <= lm, lm, 0.0f0)"
+    , "    L = min(unsafe_trunc(Int, lc), LAYERS - 1)"
+    , "    j = floor(uc)"
+    , s!"    f = uc - j\n{quant32}    j0 = unsafe_trunc(Int, j)"
+    , "    if j0 >= W - 1"
+    , "        j0 = W - 1"
+    , "        f = 0.0f0"
+    , "    end"
+    , "    j1 = j0 + 1 < W ? j0 + 1 : W - 1"
+    , "    base = L * W"
+    , "    @inbounds a = tab[base + j0 + 1]"
+    , "    @inbounds b = tab[base + j1 + 1]"
+    , "    return tl_lerp64(a, b, f)"
     , "end"
     , "" ]
 
@@ -343,19 +476,17 @@ theorem jlExpr_isOk_eq_cExpr_binary (i j : Nat) :
 the emitter accepts, the body lines are the program's lines printed, and the program runs as
 `evalTapeT`. The Julia-specific content of this corollary is nil; that is the point. -/
 theorem julia_body_denotes {tbls : Array LutTable} {tables : String → Option LutTable}
-    (hT : SL.TablesAgree tbls tables) (env : String → Float) {t : Tape Float} {prog : SL.SLProg}
+    (hT : SL.TablesAgree tbls tables) (env : String → Float) {t : CpuTape Float} {prog : SL.SLProg}
     (h : SL.genSL t tbls = .ok prog) :
     genBodyJulia t tbls = .ok (prog.zipIdx.map fun p => printLineJulia p.1 p.2) ∧
     evalTapeT tables env t = .ok (SL.run env prog) :=
   ⟨genBodyJulia_of_genSL h, SL.genSL_denotes hT env h⟩
 
-/-- `min`/`max` as rendered are Lean's: the `Min Float`/`Max Float` instances are `minOfLe`/`maxOfLe`,
-`if x ≤ y then x else y` and `if x ≤ y then y else x` — the `ifelse(a <= b, a, b)` / `ifelse(a <= b,
-b, a)` the emitter writes, NaN cases included (`x ≤ y` is false when either is NaN, so `min` returns
-`y` and `max` returns `x`, as the emitted `ifelse` does). -/
-theorem min_eq_ite (x y : Float) : Min.min x y = if x ≤ y then x else y := rfl
+/-- `min`/`max` as rendered are Lean's: the `Min Float`/`Max Float` instances are `Float.minimum` and
+`Float.maximum`, the IEEE 754-2019 operations Julia's `min`/`max` and the C conditional compute. -/
+theorem min_eq_minimum (x y : Float) : Min.min x y = Float.minimum x y := rfl
 
-theorem max_eq_ite (x y : Float) : Max.max x y = if x ≤ y then y else x := rfl
+theorem max_eq_maximum (x y : Float) : Max.max x y = Float.maximum x y := rfl
 
 end PropertyKindCalculus.Paradigm.TapeCodegen.Julia
 

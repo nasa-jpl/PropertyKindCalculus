@@ -3,7 +3,7 @@
 graph (`ofTape`), and the value characterisation the cone lemma and the megakernel codegen rest on.
 
 `evalTape env t` re-evaluates a recorded tape at `Float` with the SAME scalar op-semantics the
-emitted CUDA/C kernel uses (`+ − × ÷`, the `≤`-ternaries for `min`/`max` — Lean's `minOfLe`/`maxOfLe`, NaN included — `expf`/`logf`/`sqrtf`): named leaves read
+emitted CUDA/C kernel uses (`+ − × ÷`, IEEE minimum/maximum for `min`/`max` — Lean's `Min Float`/`Max Float`, NaN-propagating — `expf`/`logf`/`sqrtf`): named leaves read
 from `env`, constant leaves keep their stored value, an op node applies its scalar to its parents'
 values. It is the denotation the codegen (`paradigm.tape_codegen`) must match, the CPU-side
 bit-exact validator, and — by tape forward-value faithfulness (`paradigm.tape_parity`) — equal at
@@ -29,8 +29,8 @@ public import PropertyKindCalculus.Paradigm.TapeGraph
 
 @[expose] public section Blanket
 
-open Spec TorchLean
-open Runtime.Autograd (Tape Node TapeM)
+open TorchLean
+open PropertyKindCalculus.Paradigm (TapeM CpuTape CpuNode)
 open PropertyKindCalculus.Paradigm (TapeBuilder NumCarrier TapeGraph TapeVertex)
 
 namespace PropertyKindCalculus.Paradigm.TapeCodegen
@@ -39,11 +39,11 @@ namespace PropertyKindCalculus.Paradigm.TapeCodegen
 
 /-- The scalar constant a node stores as its forward value (a scalar tape node holds one `Float`;
 the same accessor `paradigm.tape_cse.nodeKey` uses). -/
-def nodeScalar (n : Node Float) : Float := (TorchLean.Storage.toArray n.value.tensor.buffer).toList.headD 0.0
+def nodeScalar (n : CpuNode Float) : Float := (TorchLean.Storage.toArray n.value.tensor.buffer).toList.headD 0.0
 
 /-- A leaf has no parents; it is a graph **input** (a named leaf) or a **constant** (an unnamed
 `TapeBuilder.const` leaf). An op node has ≥1 parent and carries the op name. -/
-def isLeaf (n : Node Float) : Bool := n.parents.isEmpty
+def isLeaf (n : CpuNode Float) : Bool := n.parents.isEmpty
 
 /-! ### The generated-kernel semantics — a Float reference interpreter
 
@@ -58,15 +58,15 @@ def cOp (nm : String) (args : List Float) : Except String Float :=
   | "sub",  [a, b] => .ok (a - b)
   | "mul",  [a, b] => .ok (a * b)
   | "div",  [a, b] => .ok (a / b)
-  | "min",  [a, b] => .ok (Min.min a b)   -- (a <= b ? a : b), Lean's minOfLe
-  | "max",  [a, b] => .ok (Max.max a b)   -- (a <= b ? b : a), Lean's maxOfLe
+  | "min",  [a, b] => .ok (Min.min a b)   -- IEEE minimum: NaN propagates, -0 < +0
+  | "max",  [a, b] => .ok (Max.max a b)   -- IEEE maximum: NaN propagates, -0 < +0
   | "exp",  [a]    => .ok (Float.exp a)   -- expf
   | "log",  [a]    => .ok (Float.log a)   -- logf
   | "sqrt", [a]    => .ok (Float.sqrt a)  -- sqrtf
   | "abs",  [a]    => .ok (Float.abs a)   -- fabsf
   | _, _ => .error s!"tape_codegen: unsupported op `{nm}` (arity {args.length})"
 
-def evalTape (env : String → Float) (t : Tape Float) : Except String (Array Float) := do
+def evalTape (env : String → Float) (t : CpuTape Float) : Except String (Array Float) := do
   let mut vals : Array Float := Array.mkEmpty t.nodes.size
   for n in t.nodes do
     let v ← (
@@ -86,10 +86,10 @@ def evalTape (env : String → Float) (t : Tape Float) : Except String (Array Fl
 /-- A recorded tape is **well-formed** when every node's parents are strictly earlier ids (the usual
 tape build invariant: every op appends after its operands). Every tape a `[NumCarrier]` kernel records
 is well-formed by construction. -/
-def WF (t : Tape Float) : Prop :=
+def WF (t : CpuTape Float) : Prop :=
   ∀ id nd, t.getNode? id = some nd → ∀ p ∈ nd.parents, p < id
 
-theorem wf_of_bounded (t : Tape Float)
+theorem wf_of_bounded (t : CpuTape Float)
     (h : ∀ id, (hid : id < t.size) → ∀ p ∈ (t.nodes[id]'hid).parents, p < id) : WF t := by
   intro id nd hnd p hp
   rw [Tape.getNode?] at hnd
@@ -103,7 +103,7 @@ theorem wf_of_bounded (t : Tape Float)
 value array by one `stepVal`. -/
 
 /-- The loop body of `evalTape`, one node at a time. -/
-def stepVal (env : String → Float) (vals : Array Float) (n : Node Float) : Except String Float :=
+def stepVal (env : String → Float) (vals : Array Float) (n : CpuNode Float) : Except String Float :=
   if n.parents.isEmpty then
     match n.name with
     | some nm => pure (env nm)
@@ -113,7 +113,7 @@ def stepVal (env : String → Float) (vals : Array Float) (n : Node Float) : Exc
     | some nm => cOp nm ((n.parents.map (fun p => vals.getD p 0.0)).toList)
     | none => .error "tape_codegen: op node with no op name"
 
-theorem evalTape_eq_foldlM (env : String → Float) (t : Tape Float) :
+theorem evalTape_eq_foldlM (env : String → Float) (t : CpuTape Float) :
     evalTape env t
       = t.nodes.foldlM (fun vals n => (stepVal env vals n).map (fun v => vals.push v)) #[] := by
   unfold evalTape stepVal
@@ -121,12 +121,12 @@ theorem evalTape_eq_foldlM (env : String → Float) (t : Tape Float) :
   rfl
 
 /-- The empty tape evaluates to the empty value array. -/
-theorem evalTape_empty (env : String → Float) : evalTape env (Tape.empty : Tape Float) = .ok #[] := by
+theorem evalTape_empty (env : String → Float) : evalTape env (Tape.empty : CpuTape Float) = .ok #[] := by
   rw [evalTape_eq_foldlM]; rfl
 
 /-- **Append law for `evalTape`.** Extending a tape by one node extends its value array by
 evaluating that node against the already-computed values. -/
-theorem evalTape_addNode (env : String → Float) (t : Tape Float) (n : Node Float) :
+theorem evalTape_addNode (env : String → Float) (t : CpuTape Float) (n : CpuNode Float) :
     evalTape env (t.addNode n).1
       = (evalTape env t) >>= fun vals => (stepVal env vals n).map (fun v => vals.push v) := by
   rw [evalTape_eq_foldlM env (t.addNode n).1, evalTape_eq_foldlM env t]
@@ -144,7 +144,7 @@ theorem getD_push_lt (vals : Array Float) (x : Float) (i : Nat) (h : i < vals.si
 /-- Pushing a fresh value onto the value array does not change `stepVal` of a node whose parents are all
 already in range — the interpreter reads `vals.getD p 0` only at parent indices, and `getD` below the
 array size is push-invariant. -/
-theorem stepVal_push_stable (env : String → Float) (acc : Array Float) (v : Float) (nd : Node Float)
+theorem stepVal_push_stable (env : String → Float) (acc : Array Float) (v : Float) (nd : CpuNode Float)
     (hp : ∀ p ∈ nd.parents, p < acc.size) :
     stepVal env (acc.push v) nd = stepVal env acc nd := by
   unfold stepVal
@@ -163,8 +163,8 @@ nodes at ids `s, s+1, …`) succeeds, then every processed id's value is exactly
 there against the final array — the local recurrence strong induction consumes. Well-formedness (parents
 precede children) is what makes each slot's `stepVal` stable as later slots are appended. Proved by list
 induction because core has no `Array.foldlM_induction`. -/
-theorem foldlM_stepVal_spec (env : String → Float) (t : Tape Float) (hwf : WF t) :
-    ∀ (l : List (Node Float)) (s : Nat) (acc out : Array Float),
+theorem foldlM_stepVal_spec (env : String → Float) (t : CpuTape Float) (hwf : WF t) :
+    ∀ (l : List (CpuNode Float)) (s : Nat) (acc out : Array Float),
       acc.size = s →
       (∀ i (hi : i < l.length), t.getNode? (s + i) = some l[i]) →
       (∀ id, id < s → ∀ nd, t.getNode? id = some nd → stepVal env acc nd = .ok (acc.getD id 0.0)) →
@@ -226,7 +226,7 @@ theorem foldlM_stepVal_spec (env : String → Float) (t : Tape Float) (hwf : WF 
 /-- **`evalTape` node-value characterisation.** A successful `evalTape` run assigns to slot `id` exactly
 the value `stepVal` computes for node `id` against the final array (specialisation of the invariant at
 offset `0`). -/
-theorem evalTape_node_value (env : String → Float) (t : Tape Float) (hwf : WF t)
+theorem evalTape_node_value (env : String → Float) (t : CpuTape Float) (hwf : WF t)
     (vals : Array Float) (hv : evalTape env t = .ok vals) :
     vals.size = t.size ∧
     ∀ id nd, t.getNode? id = some nd → stepVal env vals nd = .ok (vals.getD id 0.0) := by
@@ -255,30 +255,30 @@ theorem evalTape_node_value (env : String → Float) (t : Tape Float) (hwf : WF 
 /-- **The computational tape graph of a tape**: each node's name and parents, in tape order, with
 values and backward rules forgotten. The object the capstone chapter's kind-transporting weak
 bisimulation is stated over (`Paradigm.TapeGraph`, `Graph.Bisimulation`). -/
-def ofTape (t : Tape Float) : TapeGraph :=
+def ofTape (t : CpuTape Float) : TapeGraph :=
   ⟨t.nodes.toList.map fun n => ⟨n.name, n.parents.toList⟩⟩
 
-theorem ofTape_size (t : Tape Float) : (ofTape t).size = t.size := by
+theorem ofTape_size (t : CpuTape Float) : (ofTape t).size = t.size := by
   simp [ofTape, TapeGraph.size, Tape.size]
 
-theorem ofTape_vertex? (t : Tape Float) (v : Nat) :
+theorem ofTape_vertex? (t : CpuTape Float) (v : Nat) :
     (ofTape t).vertex? v = (t.getNode? v).map fun n => ⟨n.name, n.parents.toList⟩ := by
   simp [ofTape, TapeGraph.vertex?, Tape.getNode?, List.getElem?_map, Array.getElem?_toList]
 
-theorem ofTape_parents (t : Tape Float) (v : Nat) (n : Node Float) (h : t.getNode? v = some n) :
+theorem ofTape_parents (t : CpuTape Float) (v : Nat) (n : CpuNode Float) (h : t.getNode? v = some n) :
     (ofTape t).parents v = n.parents.toList := by
   simp [TapeGraph.parents, ofTape_vertex?, h]
 
-theorem ofTape_parents_of_none (t : Tape Float) (v : Nat) (h : t.getNode? v = none) :
+theorem ofTape_parents_of_none (t : CpuTape Float) (v : Nat) (h : t.getNode? v = none) :
     (ofTape t).parents v = [] := by
   simp [TapeGraph.parents, ofTape_vertex?, h]
 
-theorem ofTape_name? (t : Tape Float) (v : Nat) (n : Node Float) (h : t.getNode? v = some n) :
+theorem ofTape_name? (t : CpuTape Float) (v : Nat) (n : CpuNode Float) (h : t.getNode? v = some n) :
     (ofTape t).name? v = n.name := by
   simp [TapeGraph.name?, ofTape_vertex?, h]
 
 /-- A well-formed tape's graph is ordered: every parent precedes its vertex. -/
-theorem ofTape_ordered (t : Tape Float) (hwf : WF t) : (ofTape t).ordered = true := by
+theorem ofTape_ordered (t : CpuTape Float) (hwf : WF t) : (ofTape t).ordered = true := by
   simp only [TapeGraph.ordered, List.all_eq_true, List.mem_range]
   intro v _
   cases h : t.getNode? v with

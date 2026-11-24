@@ -25,8 +25,8 @@ public import PropertyKindCalculus.Torch.Paradigm.BatchCarrier
 
 @[expose] public section Blanket
 
-open Spec TorchLean
-open Runtime.Autograd (Tape TapeM)
+open TorchLean
+open PropertyKindCalculus.Paradigm (TapeM CpuTape CpuNode)
 
 namespace PropertyKindCalculus.Paradigm
 

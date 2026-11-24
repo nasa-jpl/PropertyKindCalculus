@@ -20,6 +20,26 @@ the two neighbouring samples — the uniform-grid analogue of `np.interp`, and e
 `tex1DLayered`-backed fetch computes on a GPU (point mode: bit-reproducibly in fp32; hardware
 filter mode: up to the 9-bit-weight tolerance) and what the LibTorch lookup computes.
 
+INTERPOLATION FORM. Between neighbouring samples `a`, `b` at weight `f ∈ [0, 1)` every
+implementation — `refFetch`, `fetchProgram`, and the emitted C, CUDA and Julia `tl_lutfetch`
+helpers — computes `a + f·(b − a)` in binary64 and rounds the result once to the binary32 of the
+samples. The samples and coordinates are binary32 values, which binary64 holds exactly, so
+`b − a` cannot overflow, a flat segment returns its sample, and weight zero (a grid point or a
+clamped endpoint) returns `a` for finite samples, up to the sign of a zero: `-0.0` is kept only
+before a negative neighbour. A NaN sample gives NaN, and an infinite one gives NaN as the left
+neighbour or at weight zero, and itself as the right neighbour of a finite sample in the interior.
+
+WHY BINARY64 INTERMEDIATES. No form in binary32 add, subtract and multiply has all of these
+properties, since each operation rounds at the magnitude of the samples. `a + f·(b − a)` overflows
+in `b − a` for finite samples of opposite sign (`a = 2¹²⁷`, `b = −2¹²⁷`). `a·(1 − f) + b·f` rounds
+its two products separately: a flat segment can return a neighbour of its sample
+(`a = b = 13100647/65536`, `f = 55/64`), and `a = 4194299`, `b = −6990499`, `f = 3/8` gives `0`
+for the exact `−0.25`. `(a + f·h) + f·h` with `h = b/2 − a/2` gives `0.25` for the exact `0.5` at
+`a = 2²³`, `b = −(2²³ − 1)`, `f = 1/2`. The device kernel is therefore a binary64 kernel on
+binary32 buffers, a capability of the pinned TorchLean revision (`NicolasRouquette/TorchLean`,
+branch `combined`, commit `65aec783e51f7961660971651060d03fdffebf05`): it reads `float`, computes
+in `double` and writes `float`.
+
 INSTANCES.
 * `Float` — `LutTable.refFetch`, the fp64 reference/oracle (the `evalTapeT` denotation).
 * `TapeBuilder s` — records ONE tape node `name := "lutfetch:<tbl.name>"`, `parents :=
@@ -28,30 +48,28 @@ INSTANCES.
   `paradigm.tape_cse`'s `nodeKey` (which keys on the name) distinguishes fetches into different
   tables with no CSE change — the "scalar-baking op" hazard its docstring warns about is resolved
   by construction, PROVIDED distinct tables carry distinct names (the codegen rejects duplicates).
-* `CudaT` — TorchLean's piecewise-linear table lookup on the LibTorch backend
-  (`NN.Runtime.Autograd.Engine.LibTorch.Ops.TableLookup`): `Buffer.tableSegments` locates each
-  coordinate's two neighbouring samples and `Buffer.tableLookupForward` gathers them and lerps,
-  one float32 rounding per primitive, so the result is `KernelSpec.tableLookupSpec` bit for bit
-  (`refFetch`'s float32 twin). The instance uploads the table per call (fine for parity checks);
-  throughput deployments upload the table once and record `Tape.layeredTableLookup`, or land the
-  megakernel (`paradigm.tape_codegen`), where the generated launcher caches the texture
-  create-once.
+* Device — `LutTable.fetchProgram`, the fetch as a TorchLean `Kernel.Program Float` over three
+  binary32 inputs (layers, coordinates, samples). `Program.runBinary32` evaluates it in Lean on the
+  CPU and as generated CUDA on the GPU, and `CudaT.lutFetchIO` runs it on resident device buffers. Running a
+  kernel is an `IO` action, so `CudaT` has no pure `LutInterp` instance. Throughput deployments
+  land the megakernel (`paradigm.tape_codegen`), whose generated launcher caches the texture.
 
-A `module` file: imports the tape carrier, the CUDA carrier, and TorchLean's table lookup.
+A `module` file: imports the tape carrier, the CUDA carrier, and TorchLean's kernel frontend.
 -/
 
 module
 
 public import PropertyKindCalculus.Torch.Paradigm.TapeCarrier
 public import PropertyKindCalculus.Torch.Paradigm.CudaCarrier
-public import NN.Runtime.Autograd.Engine.LibTorch.Ops.TableLookup
+public import TorchLean.NN.Kernel.Tensor
+public import TorchLean.CUDA.Kernel.Launch
+import TorchLean.CUDA.Kernel.Elab
 
 @[expose] public section Blanket
 
-open Spec TorchLean
 open TorchLean TorchLean.Tensor
-open Runtime.Autograd
-open Runtime.Autograd.LibTorch (Buffer)
+open TorchLean.LibTorch (Buffer)
+open scoped Kernel
 
 namespace PropertyKindCalculus.Paradigm
 
@@ -71,12 +89,13 @@ namespace LutTable
 
 /-- The fp64 reference semantics of one fetch: clamp `u` to `[0, width−1]`, clamp the
 integral-valued `layer` to `[0, layers−1]`, floor, and linearly interpolate — the uniform-grid
-analogue of `np.interp`, and the `evalTapeT` denotation of a recorded `lutfetch` node. The
-hi-first minima preserve NaN until the zero floor maps a NaN coordinate to sample 0 and a NaN
-layer to layer 0 for nonempty tables. The deployed fp32 kernels (point mode) compute exactly this
-in float32. -/
+analogue of `np.interp`, and the `evalTapeT` denotation of a recorded `lutfetch` node. A NaN
+coordinate or layer gives NaN for nonempty tables. The deployed kernels (point mode) compute exactly
+this on binary32 samples and coordinates and round it once to binary32 (module docstring,
+INTERPOLATION FORM). -/
 def refFetch (tbl : LutTable) (layer u : Float) : Float :=
   if tbl.width == 0 || tbl.layers == 0 then 0.0
+  else if layer.isNaN || u.isNaN then layer + u
   else Id.run do
     let wmax := Float.ofNat (tbl.width - 1)
     let uc := max 0.0 (min wmax u)
@@ -122,12 +141,12 @@ def TapeBuilder.lutFetchM {s : Shape} (tbl : LutTable) (l u : TapeBuilder s) : T
     let lId ← l.run
     let uId ← u.run
     let t ← get
-    let lVal : Tensor Float s ← liftM (Tape.requireValue (t := t) (s := s) lId)
-    let uVal : Tensor Float s ← liftM (Tape.requireValue (t := t) (s := s) uId)
-    let v := map2Spec (fun a b => tbl.refFetch a b) lVal uVal
+    let lVal : Tensor Float s ← liftM (TorchLean.Tape.requireValue (t := t) (s := s) lId)
+    let uVal : Tensor Float s ← liftM (TorchLean.Tape.requireValue (t := t) (s := s) uId)
+    let v := Tensor.zipWith (fun a b => tbl.refFetch a b) lVal uVal
     let (t', id) := Tape.addNode t
       { name := some tbl.nodeName
-      , value := Spec.SomeTensor.ofTensor v
+      , value := SomeTensor.ofTensor v
       , requiresGrad := false
       , parents := #[lId, uId]
       , backward := fun _ => .ok #[] }
@@ -140,22 +159,58 @@ construction), forward-only. -/
 instance {s : Shape} : LutInterp (TapeBuilder s) where
   lutFetch := TapeBuilder.lutFetchM
 
-/-- The executing device instance: one layered table lookup through TorchLean's LibTorch
-primitives (the bit-reproducible float32 twin of `refFetch`). The table upload is per call —
-parity-check economics; deployments that care upload once via TorchLean or land the megakernel.
-An empty table (no samples or no layers) reads as `0`, as `refFetch` does. `tableSegments` clamps
-with the backend's `clamp`, so a NaN coordinate or layer selects sample 0 or layer 0, as in `refFetch`. -/
-instance {s : Shape} : LutInterp (CudaCarrier.CudaT s) where
-  lutFetch tbl layer u :=
-    if tbl.width == 0 || tbl.layers == 0 then CudaCarrier.CudaT.const 0.0
-    else
-      let fa := tbl.values.foldl (init := FloatArray.emptyWithCapacity tbl.values.size)
-        FloatArray.push
-      let table := Buffer.ofFloatArray fa
-      let count := CudaCarrier.CudaT.szU s
-      let seg := Buffer.tableSegments tbl.layers.toUInt32 tbl.width.toUInt32 u.buf (some layer.buf)
-        count
-      ⟨Buffer.tableLookupForward table (tbl.layers * tbl.width).toUInt32 seg count⟩
+/-- **The fetch as a kernel**: `refFetch` over inputs `0` (layers), `1` (coordinates) and `2` (the
+`layers·width` samples, layer-major), for a nonempty table. It runs in binary64 on binary32 buffers,
+so its result is `refFetch`'s rounded once. A NaN layer or coordinate gives NaN. -/
+def LutTable.fetchProgram (width layers : UInt64) : Kernel.Program Float :=
+  Program.of (fun (read : Kernel.Reader Float) (i : UInt64) => (do
+    let layer ← read 0 i
+    let u ← read 1 i
+    if layer ≤ layer then
+      if u ≤ u then do
+        let l := (layer + 0.5).toUInt64
+        -- `over = 1` exactly when `l ≥ layers`, so `base` is row `min l (layers - 1)`.
+        let over := 1 - 1 / (l / layers + 1)
+        let base := (l - over * (l - (layers - 1))) * width
+        -- Every branch evaluates `refFetch`'s lerp, weight zero included, so a NaN or infinite
+        -- neighbour reaches the result there too.
+        if u < (width - 1).toFloat then
+          if 0 < u then do
+            let k := u.toUInt64
+            -- `last = 1` exactly when `k + 1 ≥ width`, so `b` is sample `min (k + 1) (width - 1)`.
+            let last := 1 - 1 / ((k + 1) / width + 1)
+            let a ← read 2 (base + k)
+            let b ← read 2 (base + (k + 1 - last))
+            pure (a + (u - k.toFloat) * (b - a))
+          else do
+            let a ← read 2 base
+            -- Sample `min 1 (width - 1)`.
+            let b ← read 2 (base + 1 / (1 / width + 1))
+            pure (a + 0 * (b - a))
+        else do
+          let a ← read 2 (base + (width - 1))
+          pure (a + 0 * (a - a))
+      else pure (layer + u)
+    else pure (layer + u) : Except Kernel.Error Float))
+
+/-- The device program of a table; meaningful when the table is nonempty. -/
+def LutTable.program (tbl : LutTable) : Kernel.Program Float :=
+  LutTable.fetchProgram tbl.width.toUInt64 tbl.layers.toUInt64
+
+/-- One layered fetch on resident binary32 device buffers, through `LutTable.program` as generated
+CUDA in binary64.
+The table upload is per call. An empty table reads as `0`, as `refFetch` does. -/
+def CudaCarrier.CudaT.lutFetchIO {s : Shape} (tbl : LutTable)
+    (layer u : CudaCarrier.CudaT s) : IO (CudaCarrier.CudaT s) := do
+  if tbl.width == 0 || tbl.layers == 0 then return CudaCarrier.CudaT.const 0.0
+  let fa := tbl.values.foldl (init := FloatArray.emptyWithCapacity tbl.values.size)
+    FloatArray.push
+  let table ← Buffer.ofFloatArrayIO fa
+  let p := tbl.program
+  let out ← Kernel.runBuffers .binary64 Float.toBits
+    p.expression #[layer.buf, u.buf, table] (Shape.size s).toUInt64 (storage := .binary32)
+  return ⟨out⟩
+
 
 end PropertyKindCalculus.Paradigm
 

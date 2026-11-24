@@ -33,7 +33,7 @@ public import PropertyKindCalculus.Uncertainty.Adequacy.Sterbenz32
 namespace PropertyKindCalculus.UncertaintyExamples.AdequacySterbenz32
 
 open PropertyKindCalculus.Uncertainty.Adequacy
-open TorchLean.Floats
+open TorchLean (FP32)
 open PropertyKindCalculus.Fp32
 open FloatLib.Floats.Formats.Flocq
 open FloatLib.Numerics (binaryRadix Radix)
@@ -43,25 +43,25 @@ open FloatLib.Numerics (binaryRadix Radix)
 /-- **Sterbenz over `round32`.** For representable binary32 `u`, `v` within a factor of two, the exact
 difference is already on the binary32 grid — so `round32` is the identity on it. -/
 theorem round32_sterbenz {u v : ℝ}
-    (hu : genericFormat binaryRadix fexp32 u) (hv : genericFormat binaryRadix fexp32 v)
-    (hupos : 0 < u) (hvpos : 0 < v) (huv : u ≤ 2 * v) (hvu : v ≤ 2 * u) :
+    (hu : GenericRepresentable binaryRadix fexp32 u) (hv : GenericRepresentable binaryRadix fexp32 v)
+    (huv : u ≤ 2 * v) (hvu : v ≤ 2 * u) :
     round32 (u - v) = u - v :=
-  round32_sterbenz_exact hu hv hupos hvpos huv hvu
+  round32_sterbenz_exact hu hv huv hvu
 
 /-- **Sterbenz on the `FP32` type.** Near-equal representable binary32 subtraction is lossless. -/
 theorem fp32_sub_exact {a b : FP32}
     (ha : a.IsRepresentable) (hb : b.IsRepresentable)
-    (hapos : 0 < a.val) (hbpos : 0 < b.val) (hab : a.val ≤ 2 * b.val) (hba : b.val ≤ 2 * a.val) :
+    (hab : a.val ≤ 2 * b.val) (hba : b.val ≤ 2 * a.val) :
     (a - b).val = a.val - b.val :=
-  sub32_exact_of_sterbenz ha hb hapos hbpos hab hba
+  sub32_exact_of_sterbenz ha hb hab hba
 
 /-- **The half-ulp bound collapses to zero.** `sub32_within_half_ulp` bounds the binary32 subtraction
 error by `eps32`; in the Sterbenz regime that error is *exactly* `0`. -/
 theorem sub32_error_vanishes {a b : FP32}
     (ha : a.IsRepresentable) (hb : b.IsRepresentable)
-    (hapos : 0 < a.val) (hbpos : 0 < b.val) (hab : a.val ≤ 2 * b.val) (hba : b.val ≤ 2 * a.val) :
+    (hab : a.val ≤ 2 * b.val) (hba : b.val ≤ 2 * a.val) :
     |(a - b).val - (a.val - b.val)| = 0 := by
-  rw [sub32_exact_of_sterbenz ha hb hapos hbpos hab hba]; simp
+  rw [sub32_exact_of_sterbenz ha hb hab hba]; simp
 
 /-! ## Tie to the self-contained `FLX` model of Stage 3 -/
 

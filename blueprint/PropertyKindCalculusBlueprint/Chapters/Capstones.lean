@@ -746,8 +746,8 @@ command does by elaboration and the theorem takes as a hypothesis.
   arithmetic for every op of the alphabet but the two `opaque` externs `exp`/`log`
   (`examples.tape_host_float_model`), so the per-printer obligation is the host's IEEE conformance,
   not a claim about Lean.
-- One `min`/`max` reading on NaN across the interpreter and the three renderings: Lean's `ite`,
-  written as the `≤`-ternary in C and CUDA and as `ifelse` in Julia; the table fetch's clamp likewise
+- One `min`/`max` reading on NaN across the interpreter and the three renderings: IEEE 754-2019
+  minimum/maximum, a conditional in C and CUDA and `min`/`max` in Julia; the table fetch's clamp likewise
   follows `refFetch` in every rendering.
 - The dimension functor, the curated homomorphism, and the coverage command with its pinned
   refutation of an incoherent edge.

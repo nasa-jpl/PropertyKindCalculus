@@ -19,11 +19,11 @@
 # `-K torchlean_build_dir=.lake/build` keeps TorchLean in the tree the libraries were already
 # built in (only the bridge is new); omit it on a machine that also builds the CUDA flavour, so
 # each flavour keeps its own TorchLean tree. The wheel is ~750 MB and needs no toolkit; the
-# version is pinned to the one TorchLean's bridge was validated against. `cmake` (>= 3.22) and a
+# version is pinned to the oldest release TorchLean's bridge accepts (2.13). `cmake` (>= 3.22) and a
 # C++17 compiler must be on PATH for the bridge's build.
 set -euo pipefail
 
-TORCH_VERSION="${TORCHLEAN_TORCH_VERSION:-2.11.0}"
+TORCH_VERSION="${TORCHLEAN_TORCH_VERSION:-2.13.0}"
 SDK_DIR="${TORCHLEAN_SDK_DIR:-$HOME/.cache/torchlean-libtorch-cpu}"
 VENV="$SDK_DIR/venv-$TORCH_VERSION"
 

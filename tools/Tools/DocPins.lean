@@ -918,10 +918,12 @@ def leanFiles (root : System.FilePath) (dir : String) (direct := false) :
 def manifestRevs (text : String) : Except String (List (String × String)) := do
   let j ← Json.parse text
   let pkgs ← (j.getObjVal? "packages").toOption.getD (Json.arr #[]) |>.getArr?
-  pkgs.toList.mapM fun p => do
+  -- FloatLib tags its own versions (`v4.1.0`), which are not Lean release tags.
+  let revs ← pkgs.toList.mapM fun p => do
     let name := ((p.getObjVal? "name").bind Json.getStr?).toOption.getD "?"
     let rev := ((p.getObjVal? "inputRev").bind Json.getStr?).toOption.getD ""
     pure (name, rev)
+  pure (revs.filter (·.1 != "floatlib"))
 
 def Snapshot.read (root : System.FilePath) : IO Snapshot := do
   let toolchain := trim (← readReq root "lean-toolchain")

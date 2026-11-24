@@ -28,14 +28,12 @@ module
 
 public import PropertyKindCalculus.Torch.Paradigm.TapeCarrier
 public import PropertyKindCalculus.Uncertainty.InputDist
-public import NN.Tensor
 public import Std.Data.HashMap
 
 @[expose] public section Blanket
 
-open Spec TorchLean
-open TorchLean TorchLean.Tensor
-open Runtime.Autograd
+open TorchLean
+open PropertyKindCalculus.Paradigm (TapeM)
 open PropertyKindCalculus.Paradigm (TapeBuilder)
 
 namespace PropertyKindCalculus.Uncertainty.Sensitivity
@@ -56,16 +54,16 @@ linearized GUM/Willink methods consume (UNCERTAINTY.md §3.2 item 1).
 
 **Stage 3.5 retarget.** The reverse pass is the *total dense* engine entry
 `Tape.backwardDenseFrom` — the very function TorchLean's soundness theorem
-`backwardDenseFrom_lowerGraphToTape_adjoint_fderiv` (`NN/Proofs/Autograd/Runtime/Link/FDeriv.lean`)
+`Tape.Graph.backwardDenseFrom_eq_fderiv` (`TorchLean/NN/Tape/Lowering/FDeriv.lean`)
 characterizes: on a compiled graph at the `ℝ` carrier, its input-prefix output is the adjoint of
 the Fréchet derivative of the forward evaluation. The seed is `1` at the scalar output and `0`
 everywhere else, which on a topologically-ordered tape computes the same accumulation as the
 previous reachability-pruned `backwardScalar` path (a dead subexpression now contributes an exact
 `0` instead of being skipped). The two honest gaps that remain are recorded in UNCERTAINTY.md
-§3.2/§6: this tape is built eagerly rather than by `lowerGraphToTape` (provenance), and it runs at
+§3.2/§6: this tape is built eagerly rather than by `GraphData.toTape` (provenance), and it runs at
 `Float` while the theorem speaks at `ℝ` (the deviation is this workstream's own Adequacy claim). -/
 def gradient (model : ScalarModel) (point : List Float) : Except String (List Float) := do
-  let ((ids, outId), t) ← TapeM.run Tape.empty do
+  let ((ids, outId), t) ← StateT.run (s := (Tape.empty : Tape (SomeTensor Float))) do
     let ids ← point.mapM fun x => TapeM.leaf (α := Float) (Tensor.full Shape.scalar x)
     let out : TapeBuilder Shape.scalar := model (ids.map fun i => (⟨pure i⟩ : TapeBuilder Shape.scalar))
     let outId ← out.run

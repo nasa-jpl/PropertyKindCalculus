@@ -22,7 +22,7 @@ meta import PropertyKindCalculus.Torch.Paradigm.FusedKinds
 
 namespace PropertyKindCalculus.Tests.FusedKinds
 
-open Spec TorchLean
+open TorchLean
 open PropertyKindCalculus
 open PropertyKindCalculus.Paradigm (FusedExp)
 
