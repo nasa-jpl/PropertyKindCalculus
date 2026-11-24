@@ -22,33 +22,38 @@ filter mode: up to the 9-bit-weight tolerance) and what the LibTorch lookup comp
 
 INTERPOLATION FORM. Between neighbouring samples `a`, `b` at weight `f ∈ [0, 1)` every
 implementation — `refFetch`, `fetchProgram`, and the emitted C, CUDA and Julia `tl_lutfetch`
-helpers — computes `(a + f·h) + f·h` with `h = b/2 − a/2`, in this operation order. In binary32:
-* finite samples give a finite result, since `h` cannot overflow;
-* a flat segment (`a = b`) gives `h = 0`, so the sample is returned exactly;
-* weight zero (a grid point or a clamped endpoint) returns `a` for finite samples, up to the
-  sign of a zero.
-The two textbook forms each lose one of these. `a + f·(b − a)` overflows in `b − a` for finite
-samples of opposite sign (`a = 2¹²⁷`, `b = −2¹²⁷`), giving `±∞` in the interior and `0·∞ = NaN`
-at weight zero. `a·(1 − f) + b·f` rounds its two products separately, so on a flat segment it can
-return a value one ulp off the sample (`a = b = 13100647/65536`, `f = 55/64`). An infinite or
-NaN sample gives NaN wherever it is one of the two neighbours, weight zero included, as
-`a + f·(b − a)` does.
+helpers — selects one of the two textbook forms, in the same operation order:
+* `a·(1 − f) + b·f` when `a` and `b` are finite and of opposite sign (the test is
+  `a·b + (a·0 + b·0) < 0`; the second term is NaN for a non-finite sample, so the test fails);
+* `a + f·(b − a)` otherwise.
+Each form covers the other's defect. `a + f·(b − a)` overflows in `b − a` for finite samples of
+opposite sign (`a = 2¹²⁷`, `b = −2¹²⁷`), giving `±∞` in the interior and `0·∞ = NaN` at weight
+zero; for same-sign samples `b − a` cannot overflow. `a·(1 − f) + b·f` rounds its two products
+separately, so on a flat segment it can return a value one ulp off the sample
+(`a = b = 13100647/65536`, `f = 55/64`); samples of opposite sign are never equal. So in binary32
+finite samples give a finite result, a flat segment returns the sample exactly, and weight zero (a
+grid point or a clamped endpoint) returns `a` for finite samples, up to the sign of a zero: `-0.0`
+is kept only before a negative neighbour. Non-finite samples always take `a + f·(b − a)`: a NaN
+sample gives NaN, and an infinite one gives NaN as the left neighbour or at weight zero, and
+itself as the right neighbour of a finite sample in the interior.
 
-ACCURACY. The rounding error scales with the larger sample, not with the result: on 8·10⁷ random
-binary32 cases (measured, not proved) the result is within 2 ulp of the larger of `|a|`, `|b|`, the
-same as measured for `a + f·(b − a)`. Where samples of opposite sign nearly cancel, that error is
-large relative to the result: `a = 2²³`, `b = −(2²³ − 1)`, `f = 1/2` gives `0.25`, the exact value
-being `0.5`.
+A third form, `(a + f·h) + f·h` with `h = b/2 − a/2`, needs no test and has the three finite-sample
+properties, but its first sum rounds before the second cancels: `a = 2²³`, `b = −(2²³ − 1)`,
+`f = 1/2` gives `0.25`, where both textbook forms give the exact `0.5`.
 
-WHY ONE BRANCHLESS FORM. Selecting between the two textbook forms by the signs of `a` and `b`
-would keep the pre-existing rounding on same-sign segments, but `Program.of` does not certify
-that kernel at the pinned TorchLean revision (`NicolasRouquette/TorchLean`, branch `combined`,
-commit `3ee36f946a6d04bb862545b234397934262ed155`, which merges several TorchLean `main` PRs): its
-source-equivalence proof (`TorchLean/CUDA/Kernel/Elab.lean`) fails with `maximum recursion depth
-has been reached` whenever a conditional sits directly in an `else` branch — `if p then x else if
-q then y else z`, or a value-level `if` there — while conditionals nested in `then` branches, or
-following a `read` in an `else` branch, certify. A two-comparison sign test needs the failing
-shape. The halved form needs no test, so all five implementations share one expression.
+ACCURACY. On 1.2·10⁸ random binary32 cases (measured, not proved) the result is within 2 ulp of
+the larger of `|a|`, `|b|`. `refFetch` evaluates the sign test in fp64, where `a·b` cannot
+underflow; for opposite-sign samples whose fp32 product underflows to zero the fp32 kernels take
+the other form, within the same bound.
+
+KERNEL SHAPE. At the pinned TorchLean revision (`NicolasRouquette/TorchLean`, branch `combined`,
+commit `3ee36f946a6d04bb862545b234397934262ed155`, which merges several TorchLean `main` PRs),
+`Program.of`'s source-equivalence proof (`TorchLean/CUDA/Kernel/Elab.lean`) fails with `maximum
+recursion depth has been reached` whenever a conditional sits directly in an `else` branch —
+`if p then x else if q then y else z`, or a value-level `if` there — while conditionals nested in
+`then` branches, or following a `read` in an `else` branch, certify. A two-comparison test of the
+signs of `a` and `b` needs the failing shape, hence the single product test, and `fetchProgram`
+places every conditional in a `then` branch or after a `read`.
 
 INSTANCES.
 * `Float` — `LutTable.refFetch`, the fp64 reference/oracle (the `evalTapeT` denotation).
@@ -101,8 +106,8 @@ namespace LutTable
 integral-valued `layer` to `[0, layers−1]`, floor, and linearly interpolate — the uniform-grid
 analogue of `np.interp`, and the `evalTapeT` denotation of a recorded `lutfetch` node. A NaN
 coordinate or layer gives NaN for nonempty tables, as `min`/`max` and `clamp` propagate it. The deployed fp32 kernels (point mode) compute exactly this
-in float32. The lerp is `(a + f·h) + f·h` with `h = b/2 − a/2`: the halved difference cannot
-overflow on finite samples, and a flat segment or a zero weight returns the sample exactly. -/
+in float32. The lerp is `a·(1 − f) + b·f` for finite samples of opposite sign and `a + f·(b − a)`
+otherwise (module docstring, INTERPOLATION FORM). -/
 def refFetch (tbl : LutTable) (layer u : Float) : Float :=
   if tbl.width == 0 || tbl.layers == 0 then 0.0
   else if layer.isNaN || u.isNaN then layer + u
@@ -118,8 +123,9 @@ def refFetch (tbl : LutTable) (layer u : Float) : Float :=
     let j1 := if j0 + 1 < tbl.width then j0 + 1 else tbl.width - 1
     let a := tbl.values[L * tbl.width + j0]!
     let b := tbl.values[L * tbl.width + j1]!
-    let h := b * 0.5 - a * 0.5
-    return (a + f * h) + f * h
+    -- NaN when a sample is not finite, so the test below is then false.
+    let z := a * 0 + b * 0
+    return if a * b + z < 0 then a * (1 - f) + b * f else a + f * (b - a)
 
 /-- The recorded node name carrying the table's identity: `lutfetch:<name>`. -/
 def nodeName (tbl : LutTable) : String := s!"lutfetch:{tbl.name}"
@@ -173,7 +179,7 @@ instance {s : Shape} : LutInterp (TapeBuilder s) where
 /-- **The fetch as a kernel**: `refFetch`'s float32 twin over inputs `0` (layers), `1`
 (coordinates) and `2` (the `layers·width` samples, layer-major), for a nonempty table. A NaN
 layer or coordinate gives NaN. Every conditional below is in a `then` branch or follows a `read`:
-`Program.of` does not certify other placements (module docstring, WHY ONE BRANCHLESS FORM). -/
+`Program.of` does not certify other placements (module docstring, KERNEL SHAPE). -/
 def LutTable.fetchProgram (width layers : UInt64) : Kernel.Program Float32 :=
   Program.of (fun (read : Kernel.Reader Float32) (i : UInt64) => (do
     let layer ← read 0 i
@@ -184,22 +190,27 @@ def LutTable.fetchProgram (width layers : UInt64) : Kernel.Program Float32 :=
         -- `over = 1` exactly when `l ≥ layers`, so `base` is row `min l (layers - 1)`.
         let over := 1 - 1 / (l / layers + 1)
         let base := (l - over * (l - (layers - 1))) * width
-        -- Every branch evaluates `refFetch`'s `(a + f * h) + f * h`, so a NaN or infinite
-        -- neighbour reaches the result at weight zero too.
-        if (width - 1).toFloat32 ≤ u then do
-          let a ← read 2 (base + (width - 1))
-          pure ((a + 0 * (a * 0.5 - a * 0.5)) + 0 * (a * 0.5 - a * 0.5))
-        else do
-          let k := u.toUInt64
-          -- `last = 1` exactly when `k + 1 ≥ width`, so `b` is sample `min (k + 1) (width - 1)`.
-          let last := 1 - 1 / ((k + 1) / width + 1)
-          let a ← read 2 (base + k)
-          let b ← read 2 (base + (k + 1 - last))
-          let h := b * 0.5 - a * 0.5
-          if u ≤ 0 then pure ((a + 0 * h) + 0 * h)
-          else
+        -- Every branch evaluates `refFetch`'s lerp, weight zero included, so a NaN or infinite
+        -- neighbour reaches the result there too.
+        if u < (width - 1).toFloat32 then
+          if 0 < u then do
+            let k := u.toUInt64
+            -- `last = 1` exactly when `k + 1 ≥ width`, so `b` is sample `min (k + 1) (width - 1)`.
+            let last := 1 - 1 / ((k + 1) / width + 1)
+            let a ← read 2 (base + k)
+            let b ← read 2 (base + (k + 1 - last))
             let f := u - k.toFloat32
-            pure ((a + f * h) + f * h)
+            if a * b + (a * 0 + b * 0) < 0 then pure (a * (1 - f) + b * f)
+            else pure (a + f * (b - a))
+          else do
+            let a ← read 2 base
+            -- Sample `min 1 (width - 1)`.
+            let b ← read 2 (base + 1 / (1 / width + 1))
+            if a * b + (a * 0 + b * 0) < 0 then pure (a * (1 - 0) + b * 0)
+            else pure (a + 0 * (b - a))
+        else do
+          let a ← read 2 (base + (width - 1))
+          pure (a + 0 * (a - a))
       else pure (layer + u)
     else pure (layer + u) : Except Kernel.Error Float32))
 

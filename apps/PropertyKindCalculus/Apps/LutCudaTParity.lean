@@ -6,10 +6,10 @@ The kernel is a TorchLean `Kernel.Program Float32`. The harness always evaluates
 CPU (`Program.run`). When a LibTorch bridge with a CUDA device is linked (`-K cuda=true`) it also
 runs the generated CUDA, once through `Program.run` and once on resident `CudaT` buffers
 (`CudaT.lutFetchIO`). The probes cover NaN, ±∞, out-of-range and interior coordinates and layers;
-`refFetch` and the kernel both return NaN on a NaN coordinate or layer. Two more tables check the grid
-points and clamped endpoints: one with NaN and infinite samples, one whose finite neighbour
-differences overflow float32. Exits `0` on parity and
-`1` on mismatch.
+`refFetch` and the kernel both return NaN on a NaN coordinate or layer. Further tables check grid points,
+clamped endpoints and interior points: NaN and infinite samples, finite neighbour differences that
+overflow float32, a flat segment, cancelling opposite-sign samples and `-0.0` samples. `pins` fixes
+`refFetch` itself on the cases where the lerp forms differ. Exits `0` on parity and `1` on mismatch.
 -/
 
 module
@@ -57,7 +57,7 @@ def big : Float := Float.scaleB 1.0 127
 def fmax : Float := Float.scaleB (2.0 - Float.scaleB 1.0 (-23)) 127
 
 /-- Finite samples whose neighbour differences overflow float32, then two at the float32 maximum:
-the halved lerp `(a + f·h) + f·h` stays finite where `a + f·(b − a)` would not. -/
+the lerp weights opposite-sign samples separately, so it stays finite where `a + f·(b − a)` would not. -/
 def overflowTable : LutTable :=
   { name := "overflow", width := 6, layers := 1, values := #[big, -big, -big, big, fmax, fmax] }
 
@@ -78,6 +78,55 @@ def flatTable : LutTable :=
 def flatProbes : Array (Float × Float) :=
   #[(0.0, 1.0), (0.0, 1.25), (0.0, 1.5), (0.0, 1.859375), (0.0, 2.0)]
 
+/-- Opposite-sign samples that nearly cancel: the midpoint is exactly `0.5`. -/
+def cancelTable : LutTable :=
+  { name := "cancel", width := 2, layers := 1, values := #[8388608.0, -8388607.0] }
+
+def cancelProbes : Array (Float × Float) := #[(0.0, 0.0), (0.0, 0.5), (0.0, 1.0)]
+
+/-- A single sample: every coordinate reads it as both neighbours. -/
+def oneTable : LutTable := { name := "one", width := 1, layers := 1, values := #[-3.0] }
+
+def oneProbes : Array (Float × Float) := #[(0.0, -1.0), (0.0, 0.0), (0.0, 0.5), (0.0, 2.0)]
+
+/-- `-0.0` samples before a negative, a positive and a `-0.0` neighbour. -/
+def zeroTable : LutTable :=
+  { name := "zero", width := 6, layers := 1, values := #[-0.0, -1.0, -0.0, 1.0, -0.0, -0.0] }
+
+def zeroProbes : Array (Float × Float) :=
+  #[(0.0, -1.0), (0.0, 0.0), (0.0, 2.0), (0.0, 4.0), (0.0, 4.5), (0.0, 5.0), (0.0, 9.0)]
+
+/-- Infinite samples with finite neighbours of the opposite sign. -/
+def infTable : LutTable :=
+  { name := "inf", width := 4, layers := 1, values := #[inf, -1.0, -inf, 1.0] }
+
+def infProbes : Array (Float × Float) :=
+  #[(0.0, 0.0), (0.0, 0.5), (0.0, 1.5), (0.0, 2.0), (0.0, 2.5)]
+
+/-- NaN matches NaN; any other value matches bit for bit, so the two zeros differ. -/
+def same (x y : Float) : Bool := if x.isNaN then y.isNaN else x.toBits == y.toBits
+
+/-- `(table, layer, u, value)`: the value `refFetch` must return. An infinite sample gives NaN as
+the left neighbour or at weight zero, and itself as the right neighbour of a finite sample in the
+interior. `-0.0` survives weight zero only before a negative neighbour. -/
+def pins : Array (LutTable × Float × Float × Float) :=
+  #[(edgeTable, 0.0, 2.0, nan), (edgeTable, 0.0, 2.5, nan), (edgeTable, 1.0, 3.0, nan),
+    (infTable, 0.0, 0.0, nan), (infTable, 0.0, 0.5, nan), (infTable, 0.0, 1.5, -inf),
+    (infTable, 0.0, 2.5, nan),
+    (overflowTable, 0.0, 0.0, big), (overflowTable, 0.0, 0.5, 0.0), (overflowTable, 0.0, 4.5, fmax),
+    (flatTable, 0.0, 1.859375, flat), (cancelTable, 0.0, 0.5, 0.5),
+    (zeroTable, 0.0, 0.0, -0.0), (zeroTable, 0.0, 2.0, 0.0), (zeroTable, 0.0, 4.0, 0.0)]
+
+/-- Count the pins `refFetch` misses, printing each. -/
+def checkPins : IO Nat := do
+  let mut bad := 0
+  for (tbl, l, u, want) in pins do
+    let out := tbl.refFetch l u
+    let ok := same out want
+    IO.println s!"{if ok then "ok  " else "FAIL"} pin    {tbl.name} layer={l} u={u}  refFetch={out}  pinned={want}"
+    unless ok do bad := bad + 1
+  return bad
+
 /-- Float32 rounding of exactly representable samples and dyadic weights is exact, so the slack
 absorbs nothing on these probes. -/
 def tol : Float := 1e-5
@@ -90,7 +139,9 @@ def check (tbl : LutTable) (ps : Array (Float × Float)) (label : String) (got :
     let (l, u) := ps[i]!
     let want := tbl.refFetch l u
     let out := got i
-    let ok := if want.isNaN then out.isNaN else out == want || Float.abs (out - want) ≤ tol
+    -- A zero must match in sign.
+    let ok := if want.isNaN || want == 0 then same out want
+      else out == want || Float.abs (out - want) ≤ tol
     IO.println s!"{if ok then "ok  " else "FAIL"} {label} {tbl.name} layer={l} u={u}  got={out}  refFetch={want}"
     unless ok do bad := bad + 1
   return bad
@@ -135,6 +186,8 @@ def main : IO UInt32 := do
     IO.println "No CUDA device is linked: the generated CUDA was not run, only the CPU evaluation."
   let bad := (← runTable table probes cuda) + (← runTable edgeTable edgeProbes cuda)
     + (← runTable overflowTable overflowProbes cuda) + (← runTable flatTable flatProbes cuda)
+    + (← runTable cancelTable cancelProbes cuda) + (← runTable zeroTable zeroProbes cuda)
+    + (← runTable infTable infProbes cuda) + (← runTable oneTable oneProbes cuda) + (← checkPins)
   if bad == 0 then
     IO.println "PARITY OK — the fetch kernel matches refFetch, NaN probes and non-finite samples included."
     return 0

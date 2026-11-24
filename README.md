@@ -275,8 +275,9 @@ Status: ✅ done · 🚧 in progress · ⬜ planned
   minimum/maximum (Lean 4.36's `Float`), an explicit conditional in C/CUDA and `min`/`max` in Julia: NaN
   propagates and `-0.0` orders below `+0.0` (`fminf`/`fmaxf`, which return the non-NaN operand, are
   gone); the C, CUDA and Julia `lutfetch` helpers return NaN on a NaN coordinate or layer, matching `refFetch`.
-  `refFetch`, the fetch kernel and the three helpers interpolate as `(a + f·h) + f·h`, `h = b/2 − a/2`: finite
-  on finite samples and exact on flat segments and at weight zero (rationale in `Paradigm/LutCarrier.lean`).
+  `refFetch`, the fetch kernel and the three helpers interpolate as `a·(1 − f) + b·f` for finite samples
+  of opposite sign and `a + f·(b − a)` otherwise: finite on finite samples and exact on flat segments and at
+  weight zero (rationale in `Paradigm/LutCarrier.lean`).
   ✅ **The denotation of the rendering, for all backends** (`TapeStraightLine`): every emitter is a
   printer of one straight-line program, `genSL_denotes` proves the program runs as `evalTapeT`,
   `genSL_isOk_iff_evalTapeT` that it exists exactly when the interpreter runs the tape, and
