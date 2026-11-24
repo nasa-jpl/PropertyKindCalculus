@@ -286,7 +286,7 @@ def main (args : List String) : IO UInt32 := do
   let rec parse : List String → String × Bool → Except String (String × Bool)
     | [], o => .ok o
     | "--julia" :: p :: rest, (_, req) =>
-      if p.isEmpty || p.startsWith "-" then .error s!"--julia needs a path, got '{p}'"
+      if p.isEmpty || p == "--julia" || p == "--require-emitted" then .error s!"--julia needs a path, got '{p}'"
       else parse rest (p, req)
     | "--require-emitted" :: rest, (j, _) => parse rest (j, true)
     | a :: _, _ => .error s!"unknown argument: {a} (usage: lut_cudat_parity [--julia PATH] [--require-emitted])"
