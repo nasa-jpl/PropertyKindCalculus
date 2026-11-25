@@ -160,8 +160,8 @@ def BinOp.eval : BinOp → Float → Float → Float
   | .div, a, b => a / b
   | .min, a, b => Min.min a b
   | .max, a, b => Max.max a b
-  | .fmin, a, b => Context.fmin a b
-  | .fmax, a, b => Context.fmax a b
+  | .fmin, a, b => TorchLean.Context.fmin a b
+  | .fmax, a, b => TorchLean.Context.fmax a b
 
 def UnOp.eval : UnOp → Float → Float
   | .exp, a => Float.exp a
