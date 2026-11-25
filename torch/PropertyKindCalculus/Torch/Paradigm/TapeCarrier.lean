@@ -86,6 +86,10 @@ instance : Mul (TapeBuilder s) := ⟨bin (TapeM.mul (s := s))⟩
 instance : Div (TapeBuilder s) := ⟨bin (TapeM.div (s := s))⟩
 instance : Min (TapeBuilder s) := ⟨bin (TapeM.min (s := s))⟩
 instance : Max (TapeBuilder s) := ⟨bin (TapeM.max (s := s))⟩
+/-- The NaN-ignoring minimum (`Op.fmin`, IEEE 754-2019 `minimumNumber`) as one tape node. -/
+def fmin : TapeBuilder s → TapeBuilder s → TapeBuilder s := bin (TapeM.fmin (s := s))
+/-- The NaN-ignoring maximum (`Op.fmax`, IEEE 754-2019 `maximumNumber`) as one tape node. -/
+def fmax : TapeBuilder s → TapeBuilder s → TapeBuilder s := bin (TapeM.fmax (s := s))
 /-- `Nat` literals enter as constant leaves — the same `Float` value `ofN n` produces at
 `α := Float` (`(n : Float)` via the shared `Coe Nat Float`), so parity is preserved. -/
 instance : Coe Nat (TapeBuilder s) := ⟨fun n => const ((n : Float))⟩

@@ -106,6 +106,8 @@ def printC : SL.SLExpr → String
       | .div => s!"v{a} / v{b}"
       | .min => s!"(v{a} != v{a} || v{a} < v{b} || (v{a} == v{b} && signbit(v{a})) ? v{a} : v{b})"
       | .max => s!"(v{a} != v{a} || v{a} > v{b} || (v{a} == v{b} && !signbit(v{a})) ? v{a} : v{b})"
+      | .fmin => s!"(v{b} != v{b} || (v{a} == v{a} && (v{a} < v{b} || (v{a} == v{b} && signbit(v{a})))) ? v{a} : v{b})"
+      | .fmax => s!"(v{b} != v{b} || (v{a} == v{a} && (v{a} > v{b} || (v{a} == v{b} && !signbit(v{a})))) ? v{a} : v{b})"
   | .un o a =>
       match o with
       | .exp => s!"expf(v{a})"

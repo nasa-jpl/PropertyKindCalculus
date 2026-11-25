@@ -101,6 +101,8 @@ def printJulia : SL.SLExpr → String
       | .div => s!"v{a} / v{b}"
       | .min => s!"min(v{a}, v{b})"
       | .max => s!"max(v{a}, v{b})"
+      | .fmin => s!"(isnan(v{b}) || (!isnan(v{a}) && (v{a} < v{b} || (v{a} == v{b} && signbit(v{a})))) ? v{a} : v{b})"
+      | .fmax => s!"(isnan(v{b}) || (!isnan(v{a}) && (v{a} > v{b} || (v{a} == v{b} && !signbit(v{a})))) ? v{a} : v{b})"
   | .un o a =>
       match o with
       | .exp => s!"exp(v{a})"

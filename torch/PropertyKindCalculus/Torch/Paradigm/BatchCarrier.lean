@@ -58,6 +58,11 @@ class BatchCarrier (C : Shape → Type) where
   ofFloatArray : ∀ {s : Shape}, FloatArray → C s
   /-- Read a carrier batch back to a host column. -/
   toFloatArray : ∀ {s : Shape}, C s → FloatArray
+  /-- The NaN-ignoring minimum (IEEE 754-2019 `minimumNumber`): the number against a NaN, where
+  the carrier's `min` gives a NaN. The branchless primitive of a validity mask. -/
+  fmin         : ∀ {s : Shape}, C s → C s → C s
+  /-- The NaN-ignoring maximum (IEEE 754-2019 `maximumNumber`), likewise. -/
+  fmax         : ∀ {s : Shape}, C s → C s → C s
   /-- Live storage measure of one batch — a non-zero liveness sentinel for the fit's
   degenerate-tile guard (`if touched == 0 then throw …`). Real element count on `CudaT`; a
   pure/GC carrier should return `Shape.size s` so the guard still discriminates. -/
@@ -85,6 +90,8 @@ instance : BatchCarrier CudaT where
   const        := fun v => CudaT.const v
   ofFloatArray := fun a => CudaT.ofFloatArray a
   toFloatArray := fun t => CudaT.toFloatArray t
+  fmin         := CudaT.fmin
+  fmax         := CudaT.fmax
   liveSize     := fun t => Buffer.size t.buf
   -- `release` is deliberately left at its default — see the field's docstring. `Buffer.size`
   -- is still pure upstream and still meaningful; `Buffer.release` no longer exists in a form

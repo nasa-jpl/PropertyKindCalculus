@@ -7,7 +7,7 @@ map of those values, at the new id `t.size`, and every earlier value survives (`
 turns a whole-program faithfulness proof into a mechanical chain, even for *symbolic* inputs
 `a b : Tensor α s`, where evaluating the tape is impossible (see `Demo.kernel_eq_spec`).
 
-Covered ops: `add`/`sub`/`mul`/`div`, `min`/`max`, and the unary `abs`/`sqrt`/`exp`/`log`, through
+Covered ops: `add`/`sub`/`mul`/`div`, `min`/`max`, `fmin`/`fmax`, and the unary `abs`/`sqrt`/`exp`/`log`, through
 one `binary_value` and one `unary_value` lemma over `Tape.apply`.
 -/
 
@@ -212,6 +212,20 @@ theorem max_value (t : CpuTape α) (aId bId : Nat) {a b : Tensor α s}
     ∃ t', CpuTape.max (s := s) t aId bId = .ok (t', t.size) ∧
           requireValue (s := s) t' t.size = .ok (Tensor.maximum a b) ∧ FrameOver t' t :=
   binary_value t _ _ aId bId _root_.rfl Op.rule?_max _root_.rfl ha hb
+
+/-- `CpuTape.fmin` stores `Tensor.fmin a b`. -/
+theorem fmin_value (t : CpuTape α) (aId bId : Nat) {a b : Tensor α s}
+    (ha : requireValue (s := s) t aId = .ok a) (hb : requireValue (s := s) t bId = .ok b) :
+    ∃ t', CpuTape.fmin (s := s) t aId bId = .ok (t', t.size) ∧
+          requireValue (s := s) t' t.size = .ok (Tensor.fmin a b) ∧ FrameOver t' t :=
+  binary_value t _ _ aId bId _root_.rfl Op.rule?_fmin _root_.rfl ha hb
+
+/-- `CpuTape.fmax` stores `Tensor.fmax a b`. -/
+theorem fmax_value (t : CpuTape α) (aId bId : Nat) {a b : Tensor α s}
+    (ha : requireValue (s := s) t aId = .ok a) (hb : requireValue (s := s) t bId = .ok b) :
+    ∃ t', CpuTape.fmax (s := s) t aId bId = .ok (t', t.size) ∧
+          requireValue (s := s) t' t.size = .ok (Tensor.fmax a b) ∧ FrameOver t' t :=
+  binary_value t _ _ aId bId _root_.rfl Op.rule?_fmax _root_.rfl ha hb
 
 /-- `CpuTape.abs` stores `Tensor.abs x`. -/
 theorem abs_value (t : CpuTape α) (xId : Nat) {x : Tensor α s}

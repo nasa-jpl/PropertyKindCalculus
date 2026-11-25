@@ -53,6 +53,8 @@ instance instBatchCarrier : BatchCarrier TapeBuilder where
                           (FloatArray.emptyWithCapacity (Shape.size s))
         | none      => FloatArray.emptyWithCapacity 0
     | .error _  => FloatArray.emptyWithCapacity 0
+  fmin         := TapeBuilder.fmin
+  fmax         := TapeBuilder.fmax
   liveSize     := fun {s} _ => (Shape.size s).toUInt32
   release      := fun _ => 0
 

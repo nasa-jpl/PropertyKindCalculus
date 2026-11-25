@@ -60,6 +60,10 @@ def min (t : CpuTape α) (a b : Nat) : Result (CpuTape α × Nat) :=
   binary t "min" (Op.min (s := s)) a b
 def max (t : CpuTape α) (a b : Nat) : Result (CpuTape α × Nat) :=
   binary t "max" (Op.max (s := s)) a b
+def fmin (t : CpuTape α) (a b : Nat) : Result (CpuTape α × Nat) :=
+  binary t "fmin" (Op.fmin (s := s)) a b
+def fmax (t : CpuTape α) (a b : Nat) : Result (CpuTape α × Nat) :=
+  binary t "fmax" (Op.fmax (s := s)) a b
 def abs (t : CpuTape α) (x : Nat) : Result (CpuTape α × Nat) :=
   unary t "abs" (Op.abs (s := s)) x
 def sqrt (t : CpuTape α) (x : Nat) : Result (CpuTape α × Nat) :=
@@ -107,6 +111,8 @@ def mul (a b : Nat) : TapeM α Nat := record fun t => CpuTape.mul (s := s) t a b
 def div (a b : Nat) : TapeM α Nat := record fun t => CpuTape.div (s := s) t a b
 def min (a b : Nat) : TapeM α Nat := record fun t => CpuTape.min (s := s) t a b
 def max (a b : Nat) : TapeM α Nat := record fun t => CpuTape.max (s := s) t a b
+def fmin (a b : Nat) : TapeM α Nat := record fun t => CpuTape.fmin (s := s) t a b
+def fmax (a b : Nat) : TapeM α Nat := record fun t => CpuTape.fmax (s := s) t a b
 def abs (x : Nat) : TapeM α Nat := record fun t => CpuTape.abs (s := s) t x
 def sqrt (x : Nat) : TapeM α Nat := record fun t => CpuTape.sqrt (s := s) t x
 def exp (x : Nat) : TapeM α Nat := record fun t => CpuTape.exp (s := s) t x
