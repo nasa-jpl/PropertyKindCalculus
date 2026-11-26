@@ -56,7 +56,7 @@ Each demand follows from the write-once discipline. None of them is particular t
   * TorchLean's scalar-generic `Context` and `MathFunctions`, which PropertyKindCalculus's `MathCarrier` mirrors field for field; the forwarding instances in `PropertyKindCalculus.Torch.Paradigm.NumCarrierContext`
 *
   * A bit-exact oracle on every machine
-  * The single-threaded `Float` run is the reference every other carrier is checked against, bit for bit. That check has to run where there is no GPU (continuous integration, a CPU-only deployment), and a disagreement between devices is a defect to find, not noise to tolerate.
+  * The single-threaded `Float` run is the reference every other carrier is checked against. The acceptance rule is stated per check: bit for bit where both sides are IEEE-exact at one precision (the table fetch; an emitted kernel's outputs whose cone reaches no `exp` or `log`), within an ulp bound where a library `exp` or `log` is reached (four ulps by default in `julia_parity`), and within a stated tolerance (`1e-3`) where a binary32 batched run is compared with the binary64 reference. That check has to run where there is no GPU (continuous integration, a CPU-only deployment), and a disagreement between devices is a defect to find, not noise to tolerate.
   * The LibTorch bridge running on the host through ATen's CPU kernels; the parity executables `ssprc_batched_parity`, `mcm_batched_parity` and `lut_cudat_parity`
 *
   * Proofs whose cost does not grow with the model
