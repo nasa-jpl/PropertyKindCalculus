@@ -3,8 +3,8 @@
 
 Stage 3 proved A2 — near-equal subtraction is exact — over a self-contained `FLX` (fixed-precision,
 unbounded-exponent) model (`Sterbenz32.flx_sterbenz`). Stage 3.2 carries it to the format binary32
-*actually uses*: TorchLean's `fexp32 = FLTExp (−149) 24` (an `FLT` format with gradual underflow),
-via FloatLib's `generic_format_FLT_sterbenz`. This example applies the grounded
+*actually uses*: `fexp32 = FLTExp (−149) 24` (an `FLT` format with gradual underflow),
+via FloatLib's `genericRepresentable_flt_sterbenz`. This example applies the grounded
 theorems (`Fp32Grounding.round32_sterbenz_exact` / `sub32_exact_of_sterbenz`) and confirms the
 sorry-free axiom profile.
 

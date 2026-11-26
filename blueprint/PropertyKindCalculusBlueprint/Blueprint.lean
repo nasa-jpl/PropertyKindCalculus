@@ -898,12 +898,12 @@ interchangeable — and a fourth *complexifies* any of them:
   specification against which laws (monotonicity, conversion round-trips,
   extensivity) are stated and proved.
 - *A finite floating-point rounding model — for numerical-accuracy reasoning.*
-  TorchLean's `FP32` (`NeuralFloat` at binary32 precision: round-to-nearest,
+  TorchLean's `FP32` (FloatLib's `NF` at the binary32 grid: round-to-nearest,
   ties-to-even over $`\mathbb{R}`, finite-only, with `toReal : FP32 → ℝ`). It is
   *non-computable* — it exists to bound rounding error against the $`\mathbb{R}`
   spec, not to run.
 - *An executable IEEE-754 type — for exact-execution reasoning and code
-  generation.* TorchLean's `IEEE32Exec` (a bit-level `UInt32` binary32 kernel) that
+  generation.* `IEEE32Exec`, this work's name for FloatLib's `ExecFloat.Binary 8 23` (a bit-level binary32 word), which
   models NaN, infinities, signed zeros, and subnormals, with `toFloat`/`ofFloat`
   and `isNaN`. This is the representation that actually runs and the one in which
   exceptional values (NaN) can be reasoned about — what one might call the
@@ -939,7 +939,7 @@ proof) and `Float` (executable, deliberately not lawful). The exec/spec
 abstract bridge `CarrierRefinement` and its kind-indexed capstone
 `Quantity.add_refines` — a law over the lawful spec carrier descends to the exec
 carrier as one rounding step — instantiated in the separately-built `Torch`
-library at TorchLean's binary32: `FP32` (the rounding *spec*, an *unconditional*
+library at binary32: TorchLean's `FP32` (the rounding *spec*, an *unconditional*
 refinement of $`\mathbb{R}`) and `IEEE32Exec` (the *executable* kernel, refining
 $`\mathbb{R}` on the finite/no-overflow path, with overflow surfaced as an explicit
 side condition rather than silently dropped).
@@ -1182,18 +1182,18 @@ contribution is lost — sound and complete). Stage 3.1 then lifts A3 to the who
 measurand's variation over an input box reproduces the exact `ℝ` variation up to a DAG-additive
 rounding budget (composed from the per-operation `FP32` half-ulp bounds), collapsing to *equality*
 when no site rounds anywhere — so rounding is the sole source of the gap. Stage 3.2 then discharges
-the FLT-level Sterbenz: a TorchLean PR (`neural_generic_format_FLT_sterbenz`) lifts A2 from the
+the FLT-level Sterbenz: FloatLib's `Model.roundAt_sub_eq_of_sterbenz` lifts A2 from the
 self-contained `FLX` model to the gradual-underflow format binary32 actually uses (`fexp32`), so
 $`\mathrm{round}_{32}(u - v) = u - v` for near-equal representable operands is a theorem about the real
 rounding operator (`round32_sterbenz_exact`), and a near-equal binary32 subtraction is lossless.
 Stage 3.3 then closes the executable↔spec gap: Lean's host `Float` is binary64 (model-backed on the
 pinned toolchain, but not the float32 this verdict is about, and its `log2`/`exp2` are `opaque` externs),
-so a second TorchLean PR gives TorchLean's *computable* `IEEE32Exec` model an
+so the *computable* `IEEE32Exec` word (FloatLib's `ExecFloat.Binary 8 23`) gets, in `Adequacy.ExecBridge`, an
 executable ULP query (`ulpExp?`, its answers proved equal to `ulp₃₂`, answering on exactly the finite fragment) and an absorption test
-(`absorbs`, the float32 sum unchanged) that is *sound* against the specification — when it fires, the
+(TorchLean's `absorbs`, the float32 sum unchanged) that is *sound* against the specification — when it fires, the
 exact real sum rounds back under `round₃₂` (`exec_verdict_sound`). So the computed adequacy verdict is
-provably the specified one, the residual `Float32 ↔ IEEE32Exec` step being an upstream assumption
-typeclass rather than an axiom. Stage 3.4 then wires the Axis-U significance yardstick: `analyze`
+provably the specified one, the residual `Float32 ↔ IEEE32Exec` step being a FloatLib theorem over Lean's
+logical model of `Float32`, for finite operands, rather than an assumption or an axiom. Stage 3.4 then wires the Axis-U significance yardstick: `analyze`
 drives *both* areas from one `InputDist` descriptor — instantiating a single write-once kernel at the
 autograd carrier for the sensitivities `cᵢ` and at the adequacy carrier (seeded from the same
 descriptor) for the verdict — so a model is adequacy-checked at the scale `cᵢ·uᵢ` its own uncertainty

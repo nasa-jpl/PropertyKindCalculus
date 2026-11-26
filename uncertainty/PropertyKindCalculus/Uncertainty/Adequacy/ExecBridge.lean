@@ -12,8 +12,8 @@ The adequacy story so far has two mirrored halves that never met in a proof:
 Lean's host `Float` is binary64 — on the pinned toolchain a structure over core's `Float.Model`, so its
 arithmetic has a specification — but it is not the float32 this verdict is about, and `Float.log2`/
 `Float.exp2` are `opaque` externs with no model clause, so no theorem relates the host `Float` verdict
-to `ulp32`. Stage 3.3 therefore *states* the certified check on TorchLean's **computable** `IEEE32Exec`
-model, where every
+to `ulp32`. Stage 3.3 therefore *states* the certified check on the **computable** `IEEE32Exec`
+word (FloatLib's `ExecFloat.Binary 8 23`), where every
 operation is "decode → exact dyadic → round once" and is provably `round32` of the exact real result.
 The residual `Float32 ↔ IEEE32Exec` step is a FloatLib theorem over Lean's logical model of
 `Float32`, for finite operands (`ExecFloat.Binary.toModel_ofFloat32_add_of_isFinite` and its
@@ -23,10 +23,10 @@ boundary. `Adequacy32` closes the bridge from the runtime side: the `Float32` ad
 is proved to be this very verdict (`Adequacy32.add_flag_sound`, through FloatLib's
 `ofFloat32_add_of_isFinite` and `exec_verdict_sound` below).
 
-This module re-exposes, under adequacy-layer names, the executable primitives of the Stage-3.3
-TorchLean bridge (`NN/Floats/IEEEExec/Bridge/FP32/Ulp.lean`, upstream form: the ULP query is the
+This module defines the executable ULP query over FloatLib's `ExecFloat.Binary 8 23` (the
 *partial* `ulpExp? : IEEE32Exec → Option Int`, `none` on NaNs and infinities rather than an
-artificial spacing) and states the capstone:
+artificial spacing), takes the absorption test `absorbs` from TorchLean's `Verify/Floats/IEEE754`,
+and states the capstone:
 
   * `exec_ulp_grounds` / `exec_half_ulp_grounds` — when the *executable* ULP query answers
     (`ulpExp? x = some k`, with `k` computed from the bit pattern by `Nat.log2` + `fexp32`), `2^k`

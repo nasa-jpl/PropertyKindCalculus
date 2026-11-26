@@ -11,11 +11,11 @@ genuine **IEEE-754 binary32**, using TorchLean's float stack:
     in ℝ, then round", so the bridge law holds **unconditionally**:
     `(a + b).val = fp32Round (a.val + b.val)`. Hence `CarrierRefinement FP32 ℝ`, and
     the R10 capstone `Quantity.add_refines` specializes to FP32 with no extra proof.
-  * `IEEE32Exec` — TorchLean's *executable* binary32 (a `UInt32` of bits, with NaN
-    and infinities). Here the bridge holds only on the **finite path**: if both
+  * `IEEE32Exec` — FloatLib's *executable* binary32 (`ExecFloat.Binary 8 23`, a word of
+    bits, with NaN and infinities). Here the bridge holds only on the **finite path**: if both
     operands decode to finite values and the result does not overflow, the
     executable sum forgotten to ℝ equals the FP32-rounding of the real sum
-    (`toReal_add_eq_round_of_isFinite`). Overflow is an *explicit side condition* — the
+    (`ExecFloat.Binary.toReal_add_eq_roundAt`). Overflow is an *explicit side condition* — the
     silent failure the unconditional abstract bridge cannot see, surfaced here as a
     hypothesis (`Quantity.add_refines_exec`).
 
@@ -111,8 +111,8 @@ an infinity, no overflow), then forgetting the executable sum to `ℝ` equals th
 FP32-rounding of the real sum. The finiteness hypothesis is the explicit side
 condition: where it fails (overflow to ∞, a NaN operand), the refinement does not
 hold — exactly the silent failure the unconditional spec-side bridge abstracts away,
-made visible here. Lifts TorchLean's `toReal_add_eq_round_of_isFinite` along the
-kind index. -/
+made visible here. Lifts FloatLib's `ExecFloat.Binary.toReal_add_eq_roundAt` along
+the kind index. -/
 theorem Quantity.add_refines_exec {k : KindOfProperty} (h : DifferenceKind k)
     (x y : Quantity k IEEE32Exec)
     (hfin : isFinite (ExecFloat.add x.magnitude y.magnitude) = true) :

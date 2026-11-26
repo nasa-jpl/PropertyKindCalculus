@@ -53,15 +53,15 @@ Stage-3.1 addition (the universal, whole-evaluation lift of A3):
     *exactly* when no site rounds (flag-free). Sorry-free axiom profile confirmed.
 
 Stage-3.2 addition (A2 at the real binary32 format):
-  * `AdequacySterbenz32` — A2 (Sterbenz) lifted from the `FLX` model to TorchLean's genuine
+  * `AdequacySterbenz32` — A2 (Sterbenz) lifted from the `FLX` model to the genuine
     `fexp32 = FLTExp (−149) 24` (gradual underflow): `round32 (u − v) = u − v` and `(a − b).val =
     a.val − b.val` for near-equal representable binary32 values, so the `sub32_within_half_ulp` bound
-    collapses to zero. Grounded in the Stage-3.2 TorchLean PR (`generic_format_FLT_sterbenz`).
+    collapses to zero. Grounded in FloatLib's `Model.roundAt_sub_eq_of_sterbenz`.
 
 Stage-3.3 addition (the executable↔spec bridge):
   * `AdequacyExecBridge` — the runtime adequacy verdict certified against the specification. The
-    executable ULP `ulpExp` and absorption test `absorbs` run over TorchLean's computable
-    `IEEE32Exec` (concrete `#guard`s at `2²⁵` and `10⁸`), while `exec_verdict` proves that whenever
+    executable ULP `ulpExp?` (PKC's `Adequacy.ExecBridge`) and TorchLean's absorption test `absorbs` run over
+    the computable `IEEE32Exec` (FloatLib's `ExecFloat.Binary 8 23`) (concrete `#guard`s at `2²⁵` and `10⁸`), while `exec_verdict` proves that whenever
     the kernel reports absorption, the exact real sum rounds back under the binary32 `round32` spec —
     the computed verdict is provably the specified one. Sorry-free axiom profile confirmed.
 
