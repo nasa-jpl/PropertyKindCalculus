@@ -9,7 +9,8 @@ file adds the missing **GPU** carrier so `fit_tile.lmStep` / `avs_batch` / `spd_
 It is an *eager* carrier: `CudaT s` wraps a TorchLean `LibTorch.Buffer` (a contiguous float32 device buffer
 of `Shape.size s` elements), and each `NumCarrier` operation is the corresponding pure device primitive
 (`Buffer.{add,sub,mul,div,exp,sqrt,abs,log,min,max,fmin,fmax}` from `TorchLean.CUDA.LibTorch.Buffer`),
-each one ATen operation. Those ops are pure `opaque Buffer → Buffer`, so they satisfy `NumCarrier`'s total
+each one FFI call (one ATen operation, except `fmin`/`fmax`, which compose `isnan`, `where` and the IEEE
+extremum). Those ops are pure `opaque Buffer → Buffer`, so they satisfy `NumCarrier`'s total
 interface directly, and `Buffer` carries a GC finalizer that releases the device tensor, so eager
 intermediates free automatically — no manual release, bounded peak memory. The device primitives exist only
 in a `-K cuda=true` build linked against a LibTorch SDK; the default build links TorchLean's
