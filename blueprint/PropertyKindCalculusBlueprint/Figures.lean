@@ -1,9 +1,10 @@
 /-
 # The figures: schematics inlined, captioned, numbered, listed, and cross-referenced
 
-Three figures in this document are schematics rather than harvests: the architecture cake
+Four figures in this document are schematics rather than harvests: the architecture cake
 (the stack a model's trust traces down through), Lowe's square labelled with the calculus's
-identifiers, and the three layers a capstone is stated over. Each is emitted as SVG by a
+identifiers, the three layers a capstone is stated over, and what the calculus adds to
+TorchLean layer by layer. Each is emitted as SVG by a
 generator under `scripts/figures/` into `figures/`, from where this module reads it at
 compile time.
 
@@ -55,6 +56,9 @@ def loweSquare : String := include_str "../figures/lowe-square-pkc.svg"
 
 /-- The three layers and their two ladders: `tools/Tools/Figures/ThreeLayers.lean` (`lake exe blueprint-figures`). -/
 def threeLayers : String := include_str "../figures/three-layers-pkc.svg"
+
+/-- What the calculus adds to TorchLean, layer by layer: `tools/Tools/Figures/Extension.lean` (`lake exe blueprint-figures`). -/
+def torchleanExtension : String := include_str "../figures/torchlean-extension-pkc.svg"
 
 end Figures
 
