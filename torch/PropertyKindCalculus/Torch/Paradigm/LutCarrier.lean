@@ -37,7 +37,7 @@ its two products separately: a flat segment can return a neighbour of its sample
 for the exact `−0.25`. `(a + f·h) + f·h` with `h = b/2 − a/2` gives `0.25` for the exact `0.5` at
 `a = 2²³`, `b = −(2²³ − 1)`, `f = 1/2`. The device kernel is therefore a binary64 kernel on
 binary32 buffers, a capability of the pinned TorchLean revision (`NicolasRouquette/TorchLean`,
-branch `combined`, commit `65aec783e51f7961660971651060d03fdffebf05`): it reads `float`, computes
+branch `combined`, commit `ea452371e7c15697085ae630ec74452d2d2fca27`): it reads `float`, computes
 in `double` and writes `float`.
 
 INSTANCES.
