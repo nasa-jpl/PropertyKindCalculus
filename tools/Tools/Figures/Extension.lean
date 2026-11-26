@@ -189,7 +189,7 @@ def legend : String :=
     "one certified fused kernel holding a model's whole arithmetic.") (size := 10.5) (fill := GRAY5)
 
 public def build : String :=
-  s!"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 {f0 W} {f0 H}\" width=\"{f0 W}\" height=\"{f0 H}\" " ++
+  s!"<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 {f0 W} {f0 H}\" " ++
   s!"font-family=\"{SANS}\" role=\"img\" aria-label=\"What PropertyKindCalculus adds beyond TorchLean, layer by layer\">" ++
   defs ++
   s!"<rect x=\"0\" y=\"0\" width=\"{f0 W}\" height=\"{f0 H}\" fill=\"#FFFFFF\"/>" ++
