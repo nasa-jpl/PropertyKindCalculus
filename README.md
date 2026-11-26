@@ -150,6 +150,21 @@ lake build                  # type-check the doc + its Lean links
 ./scripts/ci-pages.sh --no-pdf   # fast HTML-only loop (~50 s vs ~5.5 min; skips the WeasyPrint PDF)
 ```
 
+### Cleaning the CI pixi cache
+
+The blueprint workflow keeps one pixi package cache per self-hosted runner, in
+`_work/PropertyKindCalculus/.pixi-cache` under that runner's directory (beside the checkout,
+not in `~/.cache/rattler`, which every runner of the account would share). If
+"Set up Python tooling via pixi" stalls or fails on a package, empty the cache one of two ways:
+
+* On GitHub: **Actions → Build and Publish Design Blueprint → Run workflow**, tick
+  **Empty this runner's pixi package cache before installing**. It cleans the cache of the
+  runner that picks the run up, then reinstalls.
+* On the runner host: `rm -rf <runner directory>/_work/PropertyKindCalculus/.pixi-cache`
+  while no job is running there.
+
+The next run downloads the locked environment again (about 400 MB).
+
 ### Don't build Mathlib twice
 
 Because `blueprint/` is a separate Lake package, Lake by default materializes the

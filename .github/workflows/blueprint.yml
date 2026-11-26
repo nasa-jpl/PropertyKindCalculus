@@ -16,6 +16,11 @@ on:
   pull_request:
     branches: [ main, master ]
   workflow_dispatch:
+    inputs:
+      clean_pixi_cache:
+        description: Empty this runner's pixi package cache before installing
+        type: boolean
+        default: false
 
 jobs:
   blueprint:
@@ -91,6 +96,7 @@ jobs:
           # release tarball is fetched directly and checked against the sha256 that release
           # publishes in its `sha256.sum`, then unpacked where the installer would put it.
           PIXI_VERSION: v0.83.0
+          CLEAN_PIXI_CACHE: ${{ inputs.clean_pixi_cache }}
         run: |
           # The blueprint's one Python step (the WeasyPrint PDF render) runs on a
           # pinned Python + WeasyPrint managed by pixi
@@ -115,9 +121,10 @@ jobs:
           fi
           echo "$HOME/.pixi/bin" >> "$GITHUB_PATH"
           export PATH="$HOME/.pixi/bin:$PATH"
-          # A package cache in this checkout (git-ignored): runners of one account otherwise share
-          # ~/.cache/rattler. The checkout step cleans it, so each run downloads the environment.
-          export PIXI_CACHE_DIR="$GITHUB_WORKSPACE/blueprint/.pixi/cache"
+          # One package cache per runner, beside the checkout so it survives the checkout's cleaning:
+          # runners of one account otherwise share ~/.cache/rattler. README.md says how to empty it.
+          export PIXI_CACHE_DIR="$RUNNER_WORKSPACE/.pixi-cache"
+          if [ "$CLEAN_PIXI_CACHE" = true ]; then rm -rf "$PIXI_CACHE_DIR"; fi
           echo "PIXI_CACHE_DIR=$PIXI_CACHE_DIR" >> "$GITHUB_ENV"
           pixi --version
           # Bounded and verbose: an install that stalls fails here with its last action logged.
