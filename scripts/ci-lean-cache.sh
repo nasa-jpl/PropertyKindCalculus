@@ -24,6 +24,11 @@ for pkg in . blueprint; do
   done
 done
 
+# Outputs Lake's traces do not cover: the module that `include_str`s the figures, and the
+# doc-gen4 site and database, which would keep the pages of removed modules.
+rm -rf blueprint/.lake/build/{lib/lean,ir}/PropertyKindCalculusBlueprint/Figures{.*,} \
+  .lake/build/doc .lake/build/doc-data
+
 # Mathlib's download cache is shared by every Lean project of the account: prune by age only.
 cache="${MATHLIB_CACHE_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/mathlib}"
 if [ -d "$cache" ]; then
