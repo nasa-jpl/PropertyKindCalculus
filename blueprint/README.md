@@ -8,7 +8,7 @@ status summary generated from the linked Lean code.
 
 ## What it documents
 
-33 chapters carrying **167 nodes, 38 of them capstones — all of them
+34 chapters carrying **171 nodes, 38 of them capstones — all of them
 `proved`**, each node linking a real, sorry-free declaration through its
 `(lean := …)` field. The capstone chapter was written blueprint-first — three capstone
 theorems and their supporting lemmas, stated with proof sketches before the declarations
@@ -22,7 +22,7 @@ than quietly going unlisted.
 |---|---|
 | Onboarding | Onboarding: Human Context Protocols — L0 and L1 quote their `HCP` lessons live |
 | The foundation | Foundations: system, part, and the ontological square |
-| The spine | The Proved Spine · Capstone theorems — what the calculus can do · Metrological modularity · Write Once, Correctly · Using the library: annotations and generated indexes · External Cross-References · Standards Reference — PKC beside ISO 80000-1 and the VIM · Terminology — the dictionary and the index |
+| The spine | The Proved Spine · Capstone theorems — what the calculus can do · Metrological modularity · Write Once, Correctly · Metrology on a Verified Numerical Framework · Using the library: annotations and generated indexes · External Cross-References · Standards Reference — PKC beside ISO 80000-1 and the VIM · Terminology — the dictionary and the index |
 | Applying it | Applying the calculus to a domain: the model template · Deploying a domain model: the deployment template |
 | The kind layer | The object type · Dedicated kinds-of-property · Extensivity · The Interaction Algebra (Flater Appendix C) · The Function Calculus and Complex-Valued Carriers (R12) |
 | Units and dimension | Units and the Dimension-1 Problem · Dimension as a Forgetful Functor · Scale-spanning units — a third unit category (R13) |
