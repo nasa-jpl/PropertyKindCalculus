@@ -45,7 +45,9 @@ jobs:
 
       - name: Clean the checkout, keeping the Lean build directories
         env:
-          CLEAN_LEAN_CACHE: ${{ inputs.clean_lean_cache }}
+          # A push is a run that publishes: it builds from scratch, never from the `.lake` a
+          # pull request's run left behind.
+          CLEAN_LEAN_CACHE: ${{ github.event_name == 'push' || inputs.clean_lean_cache }}
         run: scripts/ci-lean-cache.sh
 
       - name: Install Elan (Lean toolchain manager)
