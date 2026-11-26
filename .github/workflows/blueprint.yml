@@ -139,10 +139,11 @@ jobs:
           if [ "$CLEAN_PIXI_CACHE" = true ]; then rm -rf "$PIXI_CACHE_DIR"; fi
           echo "PIXI_CACHE_DIR=$PIXI_CACHE_DIR" >> "$GITHUB_ENV"
           pixi --version
-          # The job's view of the package host, since an install that stalls prints nothing about it.
-          echo "proxy variables set: $(env | grep -i '_proxy=' | cut -d= -f1 | tr '\n' ' ')"
-          curl -sSL -o /dev/null --max-time 30 -w 'conda.anaconda.org: %{http_code} in %{time_total}s\n' \
-            https://conda.anaconda.org/conda-forge/noarch/repodata_shards.msgpack.zst || true
+          # pixi asks the desktop keyring (D-Bus secret service) for credentials before its first
+          # download; on this runner that call never returns. No session bus for the job's pixi.
+          echo "session bus before: ${DBUS_SESSION_BUS_ADDRESS:-unset}, XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR:-unset}"
+          export DBUS_SESSION_BUS_ADDRESS=unix:path=/nonexistent/no-keyring-in-ci
+          echo "DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS" >> "$GITHUB_ENV"
           # Bounded and verbose: an install that stalls fails here with its last action logged.
           timeout 15m pixi install -vv --manifest-path blueprint/pyproject.toml
 
