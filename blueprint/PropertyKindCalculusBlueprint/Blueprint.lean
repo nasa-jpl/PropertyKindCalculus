@@ -1192,8 +1192,8 @@ so the *computable* `IEEE32Exec` word (FloatLib's `ExecFloat.Binary 8 23`) gets,
 executable ULP query (`ulpExp?`, its answers proved equal to `ulp₃₂`, answering on exactly the finite fragment) and an absorption test
 (TorchLean's `absorbs`, the float32 sum unchanged) that is *sound* against the specification — when it fires, the
 exact real sum rounds back under `round₃₂` (`exec_verdict_sound`). So the computed adequacy verdict is
-provably the specified one, the residual `Float32 ↔ IEEE32Exec` step being an upstream assumption
-typeclass rather than an axiom. Stage 3.4 then wires the Axis-U significance yardstick: `analyze`
+provably the specified one, the residual `Float32 ↔ IEEE32Exec` step being a FloatLib theorem over Lean's
+logical model of `Float32`, for finite operands, rather than an assumption or an axiom. Stage 3.4 then wires the Axis-U significance yardstick: `analyze`
 drives *both* areas from one `InputDist` descriptor — instantiating a single write-once kernel at the
 autograd carrier for the sensitivities `cᵢ` and at the adequacy carrier (seeded from the same
 descriptor) for the verdict — so a model is adequacy-checked at the scale `cᵢ·uᵢ` its own uncertainty

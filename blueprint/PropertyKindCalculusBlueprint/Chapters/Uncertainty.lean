@@ -674,12 +674,13 @@ agree with that logical model — the irreducible hardware trust boundary.
 :::
 
 :::proof "thm_uq_exec_bridge"
-Realized over `ℝ`/`IEEE32Exec` (Stage 3.3, `Adequacy.ExecBridge`), grounded in this module's
-`ulpExp?` + `bpow_eq_ulp_of_ulpExp?_eq_some` (an executable ULP answer equals
-`ulp₃₂`; the query answers on exactly the finite fragment) and TorchLean's `round_add_eq_left_of_absorbs` (a 3-line corollary of the
-`ExecFloat.Binary.toReal_add_eq_roundAt` op-level refinement of FloatLib, since FloatLib's `Model.roundAt binary32` *is* `round₃₂`). `exec_verdict_sound`
-composes them: when `absorbs s δ` fires, `round₃₂(\mathrm{toReal}\,s + \mathrm{toReal}\,δ) =
-\mathrm{toReal}\,s`. Sorry-free (`[propext, Classical.choice, Quot.sound]`); the executable side is
+Realized over `ℝ`/`IEEE32Exec` (Stage 3.3, `Adequacy.ExecBridge`). `exec_verdict_sound` is TorchLean's
+`round_add_eq_left_of_absorbs` read at `round₃₂` (a 3-line corollary of the
+`ExecFloat.Binary.toReal_add_eq_roundAt` op-level refinement of FloatLib, since FloatLib's `Model.roundAt binary32` *is* `round₃₂`):
+when `absorbs s δ` fires and the sum is finite, `round₃₂(\mathrm{toReal}\,s + \mathrm{toReal}\,δ) =
+\mathrm{toReal}\,s`. It uses no ULP query. The executable ULP is a separate result of the same module:
+`ulpExp?` with `bpow_eq_ulp_of_ulpExp?_eq_some` (an answer equals `ulp₃₂`; the query answers on exactly
+the finite fragment). Sorry-free (`[propext, Classical.choice, Quot.sound]`); the executable side is
 *run* (`#guard`) at $`2^{25}` and $`10^8` in the `AdequacyExecBridge` example, which also confirms the
 axiom profile. The binary64 `Adequacy` carrier stays the illustrative mirror (its binary32 ulp is
 *emulated*); the runtime carrier that is certified is `Adequacy32`, below.

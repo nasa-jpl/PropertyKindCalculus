@@ -931,11 +931,11 @@ and FFT kernels under `NN/Runtime/Autograd/Engine/Cuda/Ops/*` for SSPRC's convol
   model — the irreducible hardware trust boundary. *Exit met:*
   the executable check (`ulpExp?`/`absorbs`, which actually `#eval`s, unlike the noncomputable `FP32`) is
   certified equal to the A1/A3 spec on the finite fragment — exercised by the `AdequacyExecBridge` example
-  (`#guard`s at `2²⁵`/`10⁸` + `exec_verdict` proof term). *(2026-07-27 API modernization: upstream
-  evolved the PR's total `ulpExp : IEEE32Exec → Int` into the partial `ulpExp? : … → Option Int` —
+  (`#guard`s at `2²⁵`/`10⁸` + `exec_verdict` proof term). *(2026-07-27 API modernization: the
+  closed PR's total `ulpExp : IEEE32Exec → Int` became the partial `ulpExp? : … → Option Int` —
   `none` on NaN/∞ rather than an artificial spacing — with the direct soundness form
-  `bpow_eq_ulp_of_ulpExp?_eq_some` and the finiteness-only
-  `round_add_eq_left_of_absorbs`. `ExecBridge`/`AdequacyExecBridge` re-grounded on that
+  `bpow_eq_ulp_of_ulpExp?_eq_some`, both now defined in PKC's `ExecBridge`; TorchLean's
+  `round_add_eq_left_of_absorbs` needs only finiteness. `ExecBridge`/`AdequacyExecBridge` are grounded on that
   API: `exec_ulp_grounds`/`exec_half_ulp_grounds` take `ulpExp? x = some k`, and
   `exec_verdict_sound` needs only the executable finiteness check of the sum.)*
 

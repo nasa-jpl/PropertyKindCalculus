@@ -60,8 +60,8 @@ Stage-3.2 addition (A2 at the real binary32 format):
 
 Stage-3.3 addition (the executable↔spec bridge):
   * `AdequacyExecBridge` — the runtime adequacy verdict certified against the specification. The
-    executable ULP `ulpExp` and absorption test `absorbs` run over TorchLean's computable
-    `IEEE32Exec` (concrete `#guard`s at `2²⁵` and `10⁸`), while `exec_verdict` proves that whenever
+    executable ULP `ulpExp?` (PKC's `Adequacy.ExecBridge`) and TorchLean's absorption test `absorbs` run over
+    the computable `IEEE32Exec` (FloatLib's `ExecFloat.Binary 8 23`) (concrete `#guard`s at `2²⁵` and `10⁸`), while `exec_verdict` proves that whenever
     the kernel reports absorption, the exact real sum rounds back under the binary32 `round32` spec —
     the computed verdict is provably the specified one. Sorry-free axiom profile confirmed.
 
