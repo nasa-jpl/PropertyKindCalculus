@@ -29,7 +29,7 @@ def tbl : LutTable := { name := "probe", width := 2, layers := 2, values := #[0.
 
 /-- A kernel that reuses every intermediate: two outputs over two inputs, naming each op of the
 carrier alphabet (`+ - * /`, `min`/`max`, `fmin`/`fmax`, `sqrt`/`exp`/`log`/`abs`, a constant,
-a `Nat` literal, and a table fetch). -/
+a `Nat` literal, a table fetch), and `min p p` / `max q q` on one shared node. -/
 def kernel {C : Shape → Type} [BatchCarrier C] [∀ s, NumCarrier (C s)] [∀ s, LutInterp (C s)]
     (x y : C Shape.scalar) : C Shape.scalar × C Shape.scalar :=
   let k : C Shape.scalar := BatchCarrier.const 0.25
@@ -38,7 +38,7 @@ def kernel {C : Shape → Type} [BatchCarrier C] [∀ s, NumCarrier (C s)] [∀ 
   let r := BatchCarrier.fmin (BatchCarrier.fmax (q - p) k) (Max.max p (Min.min q x))
   let e := MathCarrier.exp (r / q) + MathCarrier.log q + MathCarrier.abs (r - q)
   let f := LutInterp.lutFetch tbl (Min.min k 1) (r * k)
-  (e * e + r * q + f, (e + r) * (e + r) * p + f * f)
+  (e * e + r * q + f, (e + r) * (e + r) * p + f * f + Min.min p p + Max.max q q)
 
 def xv : Tensor Float Shape.scalar := Tensor.full Shape.scalar 1.5
 def yv : Tensor Float Shape.scalar := Tensor.full Shape.scalar (-0.75)
