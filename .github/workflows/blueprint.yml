@@ -115,6 +115,10 @@ jobs:
           fi
           echo "$HOME/.pixi/bin" >> "$GITHUB_PATH"
           export PATH="$HOME/.pixi/bin:$PATH"
+          # A package cache in this checkout (git-ignored): runners of one account otherwise share
+          # ~/.cache/rattler. The checkout step cleans it, so each run downloads the environment.
+          export PIXI_CACHE_DIR="$GITHUB_WORKSPACE/blueprint/.pixi/cache"
+          echo "PIXI_CACHE_DIR=$PIXI_CACHE_DIR" >> "$GITHUB_ENV"
           pixi --version
           # Bounded and verbose: an install that stalls fails here with its last action logged.
           timeout 15m pixi install -v --manifest-path blueprint/pyproject.toml
