@@ -181,17 +181,14 @@ def sites : List Site := [
   ⟨"lakefile.lean", "Mathlib `v{VER}` pin", 1⟩,
   ⟨"lakefile.lean", "doc-gen4 v{VER}", 1⟩,
   ⟨"blueprint/lakefile.toml", "on the v{VER} toolchain", 1⟩,
-  -- Only the branch NAME tracks the pin here: the commit it names declares a release candidate
-  -- in its own `lean-toolchain`, so a claim that it "still pins toolchain {VER}" would be false
-  -- of the very commit this file pins.
-  ⟨"blueprint/lakefile.toml", "is the `v{VER}`-branch commit", 1⟩,
+  -- The VersoBlueprint pin is an unmerged port in a fork, so the claim is what it ports to.
+  ⟨"blueprint/lakefile.toml", "ports `verso-blueprint` to Lean v{VER}", 1⟩,
   ⟨"RENDERING.md", "transitively (`v{VER}`, `", 1⟩]
 
 /-- Check 3: files whose version claims are allowed to differ, and why. -/
 def exempt : List (String × String) := [
   ("blueprint/README.md", "dates a measurement of the Verso precompilation failure at the toolchain it was taken on; naming the current pin there would claim a run nobody made"),
   ("RENDERING.md", "records the environment of checkouts outside this repository, and a session log whose entries are dated records of what was true when written"),
-  ("blueprint/lakefile.toml", "names the toolchain the verso-blueprint branch tip moved onto — the version this package deliberately does not take, which is why the pin is a SHA"),
   ("lakefile.lean", "names the upstream PhysLib toolchain-bump PR by the version it bumped to"),
   ("dimension/PropertyKindCalculus/Dimension.lean", "names the same upstream PhysLib toolchain-bump PR by the version it bumped to"),
   ("MODULARITY.md", "a staged plan whose status ledger records the version each stage landed at — dated records of what was true when a stage shipped, not claims about the current version")]

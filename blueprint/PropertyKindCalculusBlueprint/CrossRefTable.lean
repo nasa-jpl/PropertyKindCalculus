@@ -70,17 +70,17 @@ block_extension Block.crossRefTable (tableData : CrossRefTableData) where
             if r.label.isEmpty then Option.none
             else Informal.TraversalIndex.Nodes.href? st r.label.toName
           match href? with
-          | some href => {{ <a href={{href}}><code>{{.text true r.shortName}}</code></a> }}
-          | Option.none => {{ <code>{{.text true r.shortName}}</code> }}
+          | some href => {{ <a href={{href}}><code>{{.text r.shortName}}</code></a> }}
+          | Option.none => {{ <code>{{.text r.shortName}}</code> }}
         {{ <tr>
-             <td>{{.text true r.locus}}</td>
-             <td>{{.text true r.term}}</td>
+             <td>{{.text r.locus}}</td>
+             <td>{{.text r.term}}</td>
              <td>{{concept}}</td>
-             <td>{{.text true r.note}}</td>
+             <td>{{.text r.note}}</td>
            </tr> }}
       pure {{
         <div class="bp_crossref_table">
-          <p><strong>{{.text true tableData.sourceCite}}</strong></p>
+          <p><strong>{{.text tableData.sourceCite}}</strong></p>
           <table>
             <thead>
               <tr><th>"Locus"</th><th>"Term"</th><th>"This work"</th><th>"Note"</th></tr>

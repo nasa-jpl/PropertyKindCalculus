@@ -204,10 +204,10 @@ block_extension Block.figure (key : String) (svg : String) (cssWidth : String)
       let caption ← (captionOf content).mapM goI
       let legend ← (legendOf content).mapM goB
       let attrs := #[("class", "pkc-figure")] ++ st.htmlId id
-      pure <| .tag "figure" attrs {{
-        <div class="diagram" style={{s!"width: {css}"}}>{{Html.text false svg}}</div>
+      pure <| .element "figure" attrs {{
+        <div class="diagram" style={{s!"width: {css}"}}>{{Html.raw svg}}</div>
         <figcaption>
-          <p class="figure-caption"><span class="figure-label">{{Html.text true label}}</span> " " {{caption}}</p>
+          <p class="figure-caption"><span class="figure-label">{{Html.text label}}</span> " " {{caption}}</p>
           {{legend}}
         </figcaption>
       }}
@@ -241,7 +241,7 @@ block_extension Block.figureList where
       | .ok figs =>
         let items ← figs.mapIdxM fun i f => do
           let caption ← f.caption.mapM goI
-          let label := Html.text true s!"Figure {i + 1}."
+          let label := Html.text s!"Figure {i + 1}."
           let label ←
             match st.externalTags[f.id]? with
             | some dest => pure {{<a href={{dest.link}}>{{label}}</a>}}
@@ -250,7 +250,7 @@ block_extension Block.figureList where
           pure {{
             <li>
               <span class="figure-label">{{label}}</span> " " {{caption}} " "
-              <span class="figure-where">{{Html.text true s!"— in {«where»}{f.sectionTitle}"}}</span>
+              <span class="figure-where">{{Html.text s!"— in {«where»}{f.sectionTitle}"}}</span>
             </li>
           }}
         pure {{<ol class="figure-list">{{items}}</ol>}}
@@ -281,12 +281,12 @@ inline_extension Inline.figref (key : String) (dest : Option Link := none) where
       | .error e => reportError e; pure .empty
       | .ok { key, dest := none } =>
         reportError s!"No figure is registered under '{key}'"
-        pure (Html.text true "Figure ?")
+        pure (Html.text "Figure ?")
       | .ok { key, dest := some dest } =>
         let st ← state
         let number := (registeredFigures st).toOption.bind (figureNumber · key)
         let txt := number.map (s!"Figure {·}") |>.getD "the figure"
-        pure {{<a href={{dest.link}} class="figref">{{Html.text true txt}}</a>}}
+        pure {{<a href={{dest.link}} class="figref">{{Html.text txt}}</a>}}
   toTeX :=
     some <| fun _ _ data _ => do
       match FromJson.fromJson? (α := FigRefInfo) data with

@@ -28,7 +28,20 @@ SDK_DIR="${TORCHLEAN_SDK_DIR:-$HOME/.cache/torchlean-libtorch-cpu}"
 VENV="$SDK_DIR/venv-$TORCH_VERSION"
 
 if [ ! -f "$VENV/.installed" ]; then
-  python3 -m venv "$VENV" >&2
+  # torch wheels need a recent Python, which a host's python3 may not be: prefer the blueprint's
+  # pixi-pinned one (blueprint/pixi.lock).
+  manifest="$(cd "$(dirname "$0")/.." >/dev/null && pwd)/blueprint/pyproject.toml"
+  case "$(uname -s)-$(uname -m)" in
+    Linux-x86_64) plat=linux-64 ;;   Linux-aarch64) plat=linux-aarch64 ;;
+    Darwin-arm64) plat=osx-arm64 ;;  Darwin-x86_64) plat=osx-64 ;;
+    *) plat=none ;;
+  esac
+  # python3 only without pixi or on a platform the pixi env does not list; a pixi failure is fatal.
+  if command -v pixi >/dev/null 2>&1 && grep -q "^platforms = .*\"$plat\"" "$manifest"; then
+    pixi run --manifest-path "$manifest" python -m venv --clear "$VENV" >&2
+  else
+    python3 -m venv --clear "$VENV" >&2
+  fi
   "$VENV/bin/pip" install --quiet --index-url https://download.pytorch.org/whl/cpu "torch==$TORCH_VERSION" >&2
   touch "$VENV/.installed"
 fi

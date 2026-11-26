@@ -143,7 +143,7 @@ require «cslib» from git
 -- chapter that explains it cannot drift. Requiring it here registers the
 -- `+<module>:highlighted` Lake facet those anchors invoke; no module here imports it.
 -- Pinned to the exact rev the blueprint's verso stack resolves (its `lake-manifest.json`:
--- verso `304b8561`, VersoBlueprint `5a5bfc7e`) so both sides agree on the highlighting JSON;
+-- verso `6674cf83`, VersoBlueprint `74b2c9e6`) so both sides agree on the highlighting JSON;
 -- the two pins move together, as `soil-moisture-model` and `CHDTorch` do for the same facet.
 require subverso from git
   "https://github.com/leanprover/subverso" @

@@ -16,9 +16,21 @@ on:
   pull_request:
     branches: [ main, master ]
   workflow_dispatch:
+    inputs:
+      clean_pixi_cache:
+        description: Empty this runner's pixi package cache before installing
+        type: boolean
+        default: false
+      clean_lean_cache:
+        description: Delete the Lean build directories (.lake) for a build from scratch
+        type: boolean
+        default: false
 
 jobs:
   blueprint:
+    # Runs created in a mirror or a fork, which lack this repository's self-hosted runner and Pages
+    # branch, are skipped. A fork's pull request into this repository still runs here.
+    if: github.repository == 'nasa-jpl/PropertyKindCalculus'
     runs-on: self-hosted
 
     permissions:
@@ -27,6 +39,16 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          # The next step cleans instead, so the `.lake` directories survive between runs.
+          clean: false
+
+      - name: Clean the checkout, keeping the Lean build directories
+        env:
+          # A push is a run that publishes: it builds from scratch, never from the `.lake` a
+          # pull request's run left behind.
+          CLEAN_LEAN_CACHE: ${{ github.event_name == 'push' || inputs.clean_lean_cache }}
+        run: scripts/ci-lean-cache.sh
 
       - name: Install Elan (Lean toolchain manager)
         env:
@@ -88,6 +110,7 @@ jobs:
           # release tarball is fetched directly and checked against the sha256 that release
           # publishes in its `sha256.sum`, then unpacked where the installer would put it.
           PIXI_VERSION: v0.83.0
+          CLEAN_PIXI_CACHE: ${{ inputs.clean_pixi_cache }}
         run: |
           # The blueprint's one Python step (the WeasyPrint PDF render) runs on a
           # pinned Python + WeasyPrint managed by pixi
@@ -112,7 +135,19 @@ jobs:
           fi
           echo "$HOME/.pixi/bin" >> "$GITHUB_PATH"
           export PATH="$HOME/.pixi/bin:$PATH"
-          pixi install --manifest-path blueprint/pyproject.toml
+          # One package cache per runner, beside the checkout so it survives the checkout's cleaning:
+          # runners of one account otherwise share ~/.cache/rattler. README.md says how to empty it.
+          export PIXI_CACHE_DIR="$RUNNER_WORKSPACE/.pixi-cache"
+          if [ "$CLEAN_PIXI_CACHE" = true ]; then rm -rf "$PIXI_CACHE_DIR"; fi
+          echo "PIXI_CACHE_DIR=$PIXI_CACHE_DIR" >> "$GITHUB_ENV"
+          pixi --version
+          # pixi asks the desktop keyring (D-Bus secret service) for credentials before its first
+          # download; on this runner that call never returns. No session bus for the job's pixi.
+          echo "session bus before: ${DBUS_SESSION_BUS_ADDRESS:-unset}, XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR:-unset}"
+          export DBUS_SESSION_BUS_ADDRESS=unix:path=/nonexistent/no-keyring-in-ci
+          echo "DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS" >> "$GITHUB_ENV"
+          # Bounded and verbose: an install that stalls fails here with its last action logged.
+          timeout 15m pixi install -vv --manifest-path blueprint/pyproject.toml
 
       # -------------------------------------------------------
       # Phase 1a: Build the Lean spine (Mathlib-free core + examples)
@@ -215,7 +250,7 @@ jobs:
           # "unavailable" backend, so they are linked against the CPU-only LibTorch SDK here: the
           # `CudaT` ops run on the host through ATen's CPU kernels (float32, no GPU). The final
           # `-R` restores the default configuration for the steps below.
-          eval "$(scripts/libtorch-cpu-sdk.sh)"
+          TORCHLEAN_LIBTORCH_CPU_HOME="$(scripts/libtorch-cpu-sdk.sh --path)"
           lake build -R -K libtorch=true -K libtorch_home="$TORCHLEAN_LIBTORCH_CPU_HOME" \
             -K torchlean_build_dir=.lake/build ssprc_batched_parity mcm_batched_parity lut_cudat_parity
           lake exe ssprc_batched_parity
