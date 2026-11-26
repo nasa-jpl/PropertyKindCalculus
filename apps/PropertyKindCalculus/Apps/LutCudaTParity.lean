@@ -297,20 +297,37 @@ def recordExtrema : Except String (CpuTape Float × List Nat) := do
   let (ids, t) ← TapeM.run (TorchLean.Tape.empty : CpuTape Float) (outs.mapM (·.run))
   pure (t, ids)
 
+/-- IEEE 754-2019 `minimumNumber` written out, independent of the tape and of `Context.fmin`. -/
+def fminRef (a b : Float) : Float :=
+  if b.isNaN then a else if a.isNaN then b
+  else if a < b || (a == b && a.toBits >>> 63 == 1) then a else b
+
+/-- IEEE 754-2019 `maximumNumber` written out, independent of the tape and of `Context.fmax`. -/
+def fmaxRef (a b : Float) : Float :=
+  if b.isNaN then a else if a.isNaN then b
+  else if a > b || (a == b && a.toBits >>> 63 == 0) then a else b
+
+/-- What `recordExtrema`'s six outputs must be at `(x, y)`, stated without the tape. -/
+def extremaWant (x y : Float) : List Float :=
+  [fminRef x y, fmaxRef x y, x, x, if x.isNaN then inf else x, if x.isNaN then -inf else x]
+
 /-- Run `recordExtrema` as the emitted C stub kernel (`cc`), and `fmin`/`fmax` on `CudaT` buffers
-when a LibTorch bridge is linked, against `evalTape`; the number of mismatches. -/
+when a LibTorch bridge is linked; each, and `evalTape`, against `extremaWant`. The number of mismatches. -/
 def runExtrema (dir : System.FilePath) (cc : Bool) : IO Nat := do
   let (t, ids) ← IO.ofExcept recordExtrema
   let pairs := specials.flatMap fun a => specials.map fun b => (a, b)
-  let want ← pairs.mapM fun (a, b) => do
-    let vals ← IO.ofExcept (TapeCodegen.evalTape (fun nm => if nm == "x" then a else b) t)
-    pure (ids.map fun id => (vals.getD id 0.0).toFloat32.toFloat)
+  let want := pairs.map fun (a, b) => extremaWant a b
   let report (label : String) (p j : Nat) (out : Float) : IO Nat := do
     let ok := same out ((want[p]!).getD j 0.0)
     let (a, b) := pairs[p]!
-    unless ok do IO.println s!"FAIL {label} output {j} x={a} y={b}  got={out}  evalTape={(want[p]!).getD j 0.0}"
+    unless ok do IO.println s!"FAIL {label} output {j} x={a} y={b}  got={out}  expected={(want[p]!).getD j 0.0}"
     return if ok then 0 else 1
   let mut bad := 0
+  for p in [0:pairs.size] do
+    let (a, b) := pairs[p]!
+    let vals ← IO.ofExcept (TapeCodegen.evalTape (fun nm => if nm == "x" then a else b) t)
+    for (id, j) in ids.zipIdx do
+      bad := bad + (← report "evalTape" p j (vals.getD id 0.0))
   if cc then
     let cg ← IO.ofExcept (TapeCodegen.gen t ids)
     let arr (nm : String) (xs : Array Float) :=
@@ -340,7 +357,7 @@ def runExtrema (dir : System.FilePath) (cc : Bool) : IO Nat := do
       for j in [0:ids.length] do
         for p in [0:n] do
           bad := bad + (← report "C stub" p j ((ofHex8? words[j * n + p]!).getD 0.0))
-    IO.println s!"extrema C stub: {ids.length * n} outputs compared with evalTape."
+    IO.println s!"extrema C stub: {ids.length * n} outputs compared with the stated expectations."
   if (← TorchLean.LibTorch.Buffer.RuntimeStatus.query) matches .nativeAvailable then
     let s : Shape := [pairs.size]
     let a : CudaCarrier.CudaT s := .ofFloatArray ⟨pairs.map (·.1)⟩
@@ -348,7 +365,7 @@ def runExtrema (dir : System.FilePath) (cc : Bool) : IO Nat := do
     for (j, got) in [(0, (CudaCarrier.CudaT.fmin a b).toFloatArray), (1, (CudaCarrier.CudaT.fmax a b).toFloatArray)] do
       for p in [0:pairs.size] do
         bad := bad + (← report "CudaT " p j (got.get! p))
-    IO.println s!"extrema CudaT: {2 * pairs.size} outputs compared with evalTape."
+    IO.println s!"extrema CudaT: {2 * pairs.size} outputs compared with the stated expectations."
   else
     IO.println "No LibTorch bridge is linked: CudaT fmin/fmax were not run."
   return bad
