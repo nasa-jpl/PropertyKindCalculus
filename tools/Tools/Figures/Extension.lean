@@ -144,9 +144,9 @@ def body : String :=
      "to compute what the function computes",
      "one kernel per function; Julia only as a subprocess"]
     ["!one fused kernel for a whole model",
-     "proved to compute what the model computes;",
-     "one proof covers every target language generated:",
-     "CUDA, C and Julia (their compilers trusted)"] ++
+     "proved: the one program every target is printed from",
+     "computes what the model computes;",
+     "the CUDA, C and Julia printers and compilers are trusted"] ++
   -- Kernel alphabet
   (let t := top "Kernel alphabet"
    wrap (LX0 + 14) (t + 22) ["!what a certified binary32/64 kernel may use"] ++
