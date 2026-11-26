@@ -165,6 +165,23 @@ not in `~/.cache/rattler`, which every runner of the account would share). If
 
 The next run downloads the locked environment again (about 400 MB).
 
+### Cleaning the CI Lean caches
+
+The blueprint workflow keeps `.lake` (dependency clones and build outputs) in the runner's
+checkout between runs, so a run fetches and rebuilds only what changed. Before each build
+`scripts/ci-lean-cache.sh` removes every other untracked file, the dependency clones that
+`lake-manifest.json` and `blueprint/lake-manifest.json` no longer name, and the Mathlib
+download-cache files (`~/.cache/mathlib/*.ltar`, shared by all Lean projects of the account)
+not read for 30 days.
+
+A kept `.lake` can hide a failure that a build from scratch would show. To rebuild from
+scratch: **Actions → Build and Publish Design Blueprint → Run workflow**, tick
+**Delete the Lean build directories (.lake) for a build from scratch**; or, on the runner host
+with no job running, `git clean -ffdx` in
+`<runner directory>/_work/PropertyKindCalculus/PropertyKindCalculus`.
+
+Lean toolchains in `~/.elan` are not pruned: other repositories on the host use them.
+
 ### Don't build Mathlib twice
 
 Because `blueprint/` is a separate Lake package, Lake by default materializes the

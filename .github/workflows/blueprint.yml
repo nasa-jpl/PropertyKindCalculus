@@ -21,6 +21,10 @@ on:
         description: Empty this runner's pixi package cache before installing
         type: boolean
         default: false
+      clean_lean_cache:
+        description: Delete the Lean build directories (.lake) for a build from scratch
+        type: boolean
+        default: false
 
 jobs:
   blueprint:
@@ -35,6 +39,14 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          # The next step cleans instead, so the `.lake` directories survive between runs.
+          clean: false
+
+      - name: Clean the checkout, keeping the Lean build directories
+        env:
+          CLEAN_LEAN_CACHE: ${{ inputs.clean_lean_cache }}
+        run: scripts/ci-lean-cache.sh
 
       - name: Install Elan (Lean toolchain manager)
         env:
