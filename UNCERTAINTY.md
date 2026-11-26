@@ -854,7 +854,7 @@ and FFT kernels under `NN/Runtime/Autograd/Engine/Cuda/Ops/*` for SSPRC's convol
   catastrophic-cancellation check (relative uncertainty ≥ 100%). The `ℝ` rigor sits in `Adequacy/*`:
   **A1** (`absorb`, with converse `resolve`) proves a sub-½-ulp perturbation of a grid value is
   absorbed — and half a ulp is the *exact* threshold; **A2** (`flx_sterbenz`, self-contained over an
-  explicit FLX mantissa/exponent model, the analogue of TorchLean's `neural_generic_format_FLX_sterbenz`)
+  explicit FLX mantissa/exponent model, the analogue of FloatLib's `genericRepresentable_flx_sterbenz`)
   proves near-equal subtraction is exact, plus `relUnc_amplifies` for the relative-uncertainty dual;
   **A3** (`verdict_sound`) proves the biconditional *carrier-flag ⟺ contribution numerically lost* —
   sound *and* complete. `Adequacy/Fp32Grounding.lean` re-exports the genuine (but `noncomputable`)
@@ -894,7 +894,8 @@ and FFT kernels under `NN/Runtime/Autograd/Engine/Cuda/Ops/*` for SSPRC's convol
   split on the underflow boundary `β^(prec+emin)`: the **subnormal** side subtracts exactly on the fixed
   `emin` grid (`flt_to_fix` → `fix_sub` → `fix_to_flt_of_abs_le`, no ratio hypothesis), the **normal**
   side transports through the unbounded FLX family (`flt_to_flx` → `flx_sub_of_le_two_mul` →
-  `flx_to_flt_of_normal`, where the factor-of-two ratio is used).
+  `flx_to_flt_of_normal`, where the factor-of-two ratio is used; each step is a lemma named
+  `genericRepresentable_…`).
   `BinaryInterchange/Analysis/Sterbenz.lean` composes it with `round_preserves_generic` into
   `Model.roundAt_sub_eq_of_sterbenz`. PKC's `Torch.Fp32Spec` states that at binary32 as
   `round32_sub_exact_of_sterbenz` (Sterbenz as a theorem about `round₃₂`) and `FP32.sub_exact_of_sterbenz`
@@ -912,7 +913,7 @@ and FFT kernels under `NN/Runtime/Autograd/Engine/Cuda/Ops/*` for SSPRC's convol
   the **computable** `IEEE32Exec` word (FloatLib's `ExecFloat.Binary 8 23`) — and **closed from the runtime side by `Adequacy32`**, the
   `Float32` carrier whose flag is proved to be that verdict (`Adequacy32.add_flag_sound`) —
   whose ops are provably `round₃₂` of the exact real result. **Exploration finding:** the op-level
-  `IEEE32Exec ↔ round₃₂` refinement (`toReal_{add,sub,…}_eq_fp32Round`) already existed; what was missing
+  `IEEE32Exec ↔ round₃₂` refinement (`toReal_{add,sub,…}_eq_fp32Round`; on the `combined` pin FloatLib's `ExecFloat.Binary.toReal_add_eq_roundAt` and its siblings) already existed; what was missing
   is an executable ULP (existed only as the `noncomputable` `neuralUlp`/`ulp₃₂`) and a certified
   absorption verdict. PKC's `Adequacy.ExecBridge` defines
   `ulpExp?` (bit-level ULP query; `none` on NaN/∞), proved: an

@@ -127,8 +127,8 @@ theorem r9_folds_regular_depth2 (ρ : ℕ → FP32) :
 Three weights: `2²⁴`, `1`, `−2²⁴`. Their exact sum is `1`. Folded at the executable binary32
 carrier in that order, the `1` is absorbed by the first addition and the total is exactly `+0` —
 so the specification's license holds and the executable one fails, on the same weights. By
-`toReal_add_eq_fp32Round` this executable fold is the binary32 rounding spec's fold on the finite
-path, which is the fold `WeightedCarving FP32`'s field is about. -/
+FloatLib's `ExecFloat.Binary.toReal_add_eq_roundAt` this executable fold is the binary32 rounding
+spec's fold on the finite path, which is the fold `WeightedCarving FP32`'s field is about. -/
 
 /-- `2²⁴` at executable binary32. -/
 def bigE : IEEE32Exec := ExecFloat.Binary.ofBits32 0x4B800000

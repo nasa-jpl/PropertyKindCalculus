@@ -8,8 +8,8 @@ rounded-real `NF` at binary32 precision, with gradual underflow and no upper exp
 Every name here is an abbreviation of, or a one-line consequence of, FloatLib's format-indexed
 rounding theory at `FloatFormat.binary32`: `Model.roundAt`, `Model.ulpAt`, `Model.halfUlpAt`,
 `Model.abs_roundAt_sub_le`, `Model.roundAt_sub_eq_of_sterbenz`. The grid `Model.fexpOf binary32`
-is `fltExp (-149) 24` by computation (`fexp32_eq_fltExp`). TorchLean states its executable
-refinement theorems (`toReal_add_eq_round_of_isFinite` and its siblings) against the same
+is `fltExp (-149) 24` by computation (`fexp32_eq_fltExp`). FloatLib states its executable
+refinement theorems (`ExecFloat.Binary.toReal_add_eq_roundAt` and its siblings) against the same
 `Model.roundAt`, so a `round32` fact and an executable fact meet with no conversion lemma between
 them. A `module` file, like the TorchLean and FloatLib modules it imports.
 -/

@@ -91,7 +91,7 @@ private theorem mantissa_pos {a e : ℤ} (h : 0 < (a : ℝ) * (2 : ℝ) ^ e) : 0
 /-- **A2 — Sterbenz's theorem.** The difference of two positive numbers representable at precision
 `p`, when they lie within a factor of two of each other (`y ≤ x ≤ 2y`), is itself representable at
 precision `p` — so the subtraction is *exact*. This is why near-equal floating-point subtraction
-introduces no rounding error. The real-number analogue of TorchLean's
+introduces no rounding error. The real-number analogue of FloatLib's
 `genericRepresentable_flx_sterbenz`. -/
 theorem flx_sterbenz {p : ℕ} {x y : ℝ} (hy : 0 < y) (hyx : y ≤ x) (hx2y : x ≤ 2 * y)
     (hxr : FLX p x) (hyr : FLX p y) : FLX p (x - y) := by

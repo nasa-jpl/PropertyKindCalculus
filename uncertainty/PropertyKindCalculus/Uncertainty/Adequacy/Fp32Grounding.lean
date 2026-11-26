@@ -17,12 +17,12 @@ adequacy-layer names, the exact lemmas the grid model localizes:
     (`Interval.mem_add`): the exact real sum is enclosed by the outward-rounded interval sum.
 
   * `round32_sterbenz_exact` / `sub32_exact_of_sterbenz` (**A2 at the real binary32 format, Stage
-    3.2**) — Sterbenz's theorem lifted from the grid model's `Sterbenz32.flx_sterbenz` to TorchLean's
+    3.2**) — Sterbenz's theorem lifted from the grid model's `Sterbenz32.flx_sterbenz` to the
     genuine `fexp32 = FLTExp (−149) 24` (gradual underflow): a near-equal binary32 subtraction is
-    *exact*, `round32 (u − v) = u − v`. Grounded in TorchLean's `round32_sub_exact_of_sterbenz` /
+    *exact*, `round32 (u − v) = u − v`. Grounded in `round32_sub_exact_of_sterbenz` /
     `FP32.sub_exact_of_sterbenz` (`Torch/Fp32Spec.lean`, over FloatLib's `Model.roundAt_sub_eq_of_sterbenz`).
 
-**Caveat (drives the remaining sub-stage).** TorchLean's entire `FP32`/Flocq layer is
+**Caveat (drives the remaining sub-stage).** The entire `FP32`/Flocq layer is
 `noncomputable` — `round32 : ℝ → ℝ` is an ℝ-level *specification*, not an executable float — so these
 lemmas ground the *proofs*, while the executable `Adequacy` carrier (`Adequacy.lean`) computes over
 Lean's `Float`. Bridging the two (executable rounding that provably matches this spec) is Stage 3.3,
@@ -136,7 +136,7 @@ theorem interval_add_sound {R : Interval.Rounder} {A B : Interval.RInterval} {x 
 /-- **A2 at the real binary32 format — Sterbenz as a theorem about `round32` (Stage 3.2).** For two
 representable binary32 values within a factor of two (`u ≤ 2v`, `v ≤ 2u`), the
 difference is *exactly* representable, so `round32` is the identity on it: `round32 (u − v) = u − v`.
-This is the genuine binary32 realization — over TorchLean's `fexp32 = FLTExp (−149) 24`, gradual
+This is the genuine binary32 realization — over `fexp32 = FLTExp (−149) 24`, gradual
 underflow — of the grid model's self-contained `Sterbenz32.flx_sterbenz`, discharging Stage 3.2:
 near-equal binary32 subtraction is lossless at *the format the model actually uses*. -/
 theorem round32_sterbenz_exact {u v : ℝ}

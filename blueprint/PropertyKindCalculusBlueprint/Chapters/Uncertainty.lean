@@ -558,8 +558,8 @@ is already on the grid, so $`\mathrm{round}_{32}(u - v) = u - v`. This realizes 
 Realized over `ℝ`/`FP32` (Stage 3.2, `Adequacy.Fp32Grounding.round32_sterbenz_exact` /
 `sub32_exact_of_sterbenz`), grounded in FloatLib's `Model.roundAt_sub_eq_of_sterbenz`, over its `genericRepresentable_flt_sterbenz`. That
 `FLT` Sterbenz lemma splits on the underflow boundary `β^(prec+emin)`: on the subnormal side the fixed
-`emin` grid subtracts exactly (`FLT_to_FIX` → `FIX_sub` → `FIX_to_FLT`), on the normal side it
-transports through the unbounded `FLX` family (`FLT_to_FLX` → `FLX_sterbenz` → `FLX_to_FLT_of_normal`).
+`emin` grid subtracts exactly (`flt_to_fix` → `fix_sub` → `fix_to_flt_of_abs_le`), on the normal side it
+transports through the unbounded `FLX` family (`flt_to_flx` → `flx_sub_of_le_two_mul` → `flx_to_flt_of_normal`; each step is a FloatLib lemma named `genericRepresentable_…`).
 Composing it with `round_preserves_generic` (rounding is the identity on representable reals)
 gives $`\mathrm{round}_{32}(u - v) = u - v`, so the per-op `sub32_within_half_ulp` half-ulp bound
 collapses to *zero* in the Sterbenz regime. Sorry-free (`[propext, Classical.choice, Quot.sound]`),
@@ -677,7 +677,7 @@ agree with that logical model — the irreducible hardware trust boundary.
 Realized over `ℝ`/`IEEE32Exec` (Stage 3.3, `Adequacy.ExecBridge`), grounded in this module's
 `ulpExp?` + `bpow_eq_ulp_of_ulpExp?_eq_some` (an executable ULP answer equals
 `ulp₃₂`; the query answers on exactly the finite fragment) and TorchLean's `round_add_eq_left_of_absorbs` (a 3-line corollary of the
-`toReal_add_eq_round_of_isFinite` op-level refinement, since FloatLib's `Model.roundAt binary32` *is* `round₃₂`). `exec_verdict_sound`
+`ExecFloat.Binary.toReal_add_eq_roundAt` op-level refinement of FloatLib, since FloatLib's `Model.roundAt binary32` *is* `round₃₂`). `exec_verdict_sound`
 composes them: when `absorbs s δ` fires, `round₃₂(\mathrm{toReal}\,s + \mathrm{toReal}\,δ) =
 \mathrm{toReal}\,s`. Sorry-free (`[propext, Classical.choice, Quot.sound]`); the executable side is
 *run* (`#guard`) at $`2^{25}` and $`10^8` in the `AdequacyExecBridge` example, which also confirms the
