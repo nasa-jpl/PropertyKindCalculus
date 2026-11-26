@@ -3,13 +3,15 @@ module
 public import Tools.Figures.Lowe
 public import Tools.Figures.ThreeLayers
 public import Tools.Figures.Cake
+public import Tools.Figures.Extension
 
 /-!
-# `blueprint-figures`: the blueprint's three schematics, generated
+# `blueprint-figures`: the blueprint's four schematics, generated
 
     lake exe blueprint-figures [--check] [--out DIR] [--logos DIR] [--audience blueprint|deck]
 
-Writes `architecture-cake.svg`, `lowe-square-pkc.svg` and `three-layers-pkc.svg` into `DIR`
+Writes `architecture-cake.svg`, `lowe-square-pkc.svg`, `three-layers-pkc.svg` and
+`torchlean-extension-pkc.svg` into `DIR`
 (default: `blueprint/figures` of the enclosing checkout), or with `--check` compares what it
 would write with what is there, byte for byte, and exits 1 naming each figure that differs:
 `mismatches` is the gate, `mismatches_nil_iff` its soundness (it passes exactly when every
@@ -62,7 +64,8 @@ theorem mismatches_nil_iff (figs : List (String × String)) (disk : String → O
 def figures (audience : String) (logos : Cake.Logos) : List (String × String) :=
   if audience == "deck" then [("architecture-cake.svg", Cake.build "deck" logos)]
   else [("architecture-cake.svg", Cake.build "blueprint" logos),
-        ("lowe-square-pkc.svg", Lowe.build), ("three-layers-pkc.svg", ThreeLayers.build)]
+        ("lowe-square-pkc.svg", Lowe.build), ("three-layers-pkc.svg", ThreeLayers.build),
+        ("torchlean-extension-pkc.svg", Extension.build)]
 
 def main (args : List String) : IO UInt32 := do
   let o ← match parse args {} with

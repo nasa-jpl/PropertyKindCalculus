@@ -15,6 +15,7 @@ import PropertyKindCalculusBlueprint.Chapters.FunctionCalculus
 import PropertyKindCalculusBlueprint.Chapters.Extensivity
 import PropertyKindCalculusBlueprint.Chapters.ObjectTypes
 import PropertyKindCalculusBlueprint.Chapters.WriteOnce
+import PropertyKindCalculusBlueprint.Chapters.VerifiedFramework
 import PropertyKindCalculusBlueprint.Chapters.MetrologicalModularity
 import PropertyKindCalculusBlueprint.Chapters.Uncertainty
 import PropertyKindCalculusBlueprint.Chapters.Iso80000
@@ -1899,6 +1900,8 @@ and not one of the graphs the calculus itself defines; those are named and kept 
 {include 0 PropertyKindCalculusBlueprint.Chapters.MetrologicalModularity}
 
 {include 0 PropertyKindCalculusBlueprint.Chapters.WriteOnce}
+
+{include 0 PropertyKindCalculusBlueprint.Chapters.VerifiedFramework}
 
 {include 0 PropertyKindCalculusBlueprint.Chapters.Uncertainty}
 
