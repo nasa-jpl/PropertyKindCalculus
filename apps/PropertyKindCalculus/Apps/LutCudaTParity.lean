@@ -15,7 +15,10 @@ must equal `refFetch` on the float32 inputs, rounded once to float32, bit for bi
 emitted `tl_lutfetch` helpers: the C stub when `cc` is on the path, and both Julia methods on
 `Float32` data when `julia` is. The CUDA texture helper runs only inside a generated kernel on a
 device, so no probe here executes it. `--require-emitted` fails when `cc` or Julia is missing
-(`--julia PATH` names the Julia). Exits `0` on parity and `1` on mismatch.
+(`--julia PATH` names the Julia). The C stub reads its table from `lutDataDecl`, so baked samples go
+through `floatLit`. `runExtrema` runs `fmin`/`fmax` at every NaN, `±0`, `±1`, `±∞` pair: as an emitted
+C stub kernel with baked NaN and `±∞` constants, and on `CudaT` when a LibTorch bridge is linked.
+Exits `0` on parity and `1` on mismatch.
 -/
 
 module
@@ -242,12 +245,11 @@ def runEmitted (dir : System.FilePath) (tbl : LutTable) (ps : Array (Float × Fl
     let src := String.intercalate "\n"
       [ "#include <math.h>", "#include <stdint.h>", "#include <stdio.h>", "#include <string.h>"
       , TapeCodegen.lutHelperStub cg
-      , arr "tabBits" tab, arr "lBits" ls, arr "uBits" us
+      , TapeCodegen.lutDataDecl tbl, arr "lBits" ls, arr "uBits" us
       , "int main(void) {"
-      , s!"  float tab[{tab.length}]; memcpy(tab, tabBits, sizeof tab);"
       , s!"  for (int i = 0; i < {ps.size}; i++) \{"
       , "    float l, u; memcpy(&l, &lBits[i], 4); memcpy(&u, &uBits[i], 4);"
-      , s!"    float r = tl_lutfetch(tab, {tbl.width}, {tbl.layers}, l, u);"
+      , s!"    float r = tl_lutfetch(lut_{tbl.name}_data, {tbl.width}, {tbl.layers}, l, u);"
       , "    uint32_t b; memcpy(&b, &r, 4); printf(\"%08x\\n\", b);"
       , "  }", "  return 0;", "}", "" ]
     let cFile := dir / s!"{tbl.name}.c"
@@ -278,6 +280,94 @@ def runEmitted (dir : System.FilePath) (tbl : LutTable) (ps : Array (Float × Fl
     IO.FS.writeFile jlFile src
     bad := bad + (← checkEmitted tbl ps ["jl F32", "jl F64"]
       (← IO.Process.output { cmd := julia, args := #["--startup-file=no", jlFile.toString] }))
+  return bad
+
+/-- NaN, `±0`, `±1` and `±∞`: the operands of the extrema probes, taken in every ordered pair. -/
+def specials : Array Float := #[nan, 0.0, -0.0, 1.0, -1.0, inf, -inf]
+
+/-- `fmin` and `fmax` on two inputs, then against baked NaN and `±∞` constants: six outputs. -/
+def recordExtrema : Except String (CpuTape Float × List Nat) := do
+  let leaf (nm : String) : TapeBuilder Shape.scalar :=
+    ⟨TapeM.leaf (Tensor.full Shape.scalar 0.0) (name := some nm)⟩
+  let x := leaf "x"
+  let y := leaf "y"
+  let outs : List (TapeBuilder Shape.scalar) :=
+    [.fmin x y, .fmax x y, .fmax (.const nan) x, .fmin x (.const nan), .fmin (.const inf) x,
+     .fmax (.const (-inf)) x]
+  let (ids, t) ← TapeM.run (TorchLean.Tape.empty : CpuTape Float) (outs.mapM (·.run))
+  pure (t, ids)
+
+/-- IEEE 754-2019 `minimumNumber` written out, independent of the tape and of `Context.fmin`. -/
+def fminRef (a b : Float) : Float :=
+  if b.isNaN then a else if a.isNaN then b
+  else if a < b || (a == b && a.toBits >>> 63 == 1) then a else b
+
+/-- IEEE 754-2019 `maximumNumber` written out, independent of the tape and of `Context.fmax`. -/
+def fmaxRef (a b : Float) : Float :=
+  if b.isNaN then a else if a.isNaN then b
+  else if a > b || (a == b && a.toBits >>> 63 == 0) then a else b
+
+/-- What `recordExtrema`'s six outputs must be at `(x, y)`, stated without the tape. -/
+def extremaWant (x y : Float) : List Float :=
+  [fminRef x y, fmaxRef x y, x, x, if x.isNaN then inf else x, if x.isNaN then -inf else x]
+
+/-- Run `recordExtrema` as the emitted C stub kernel (`cc`), and `fmin`/`fmax` on `CudaT` buffers
+when a LibTorch bridge is linked; each, and `evalTape`, against `extremaWant`. The number of mismatches. -/
+def runExtrema (dir : System.FilePath) (cc : Bool) : IO Nat := do
+  let (t, ids) ← IO.ofExcept recordExtrema
+  let pairs := specials.flatMap fun a => specials.map fun b => (a, b)
+  let want := pairs.map fun (a, b) => extremaWant a b
+  let report (label : String) (p j : Nat) (out : Float) : IO Nat := do
+    let ok := same out ((want[p]!).getD j 0.0)
+    let (a, b) := pairs[p]!
+    unless ok do IO.println s!"FAIL {label} output {j} x={a} y={b}  got={out}  expected={(want[p]!).getD j 0.0}"
+    return if ok then 0 else 1
+  let mut bad := 0
+  for p in [0:pairs.size] do
+    let (a, b) := pairs[p]!
+    let vals ← IO.ofExcept (TapeCodegen.evalTape (fun nm => if nm == "x" then a else b) t)
+    for (id, j) in ids.zipIdx do
+      bad := bad + (← report "evalTape" p j (vals.getD id 0.0))
+  if cc then
+    let cg ← IO.ofExcept (TapeCodegen.gen t ids)
+    let arr (nm : String) (xs : Array Float) :=
+      s!"static const uint32_t {nm}Bits[] = \{" ++ String.intercalate ", " (xs.toList.map ("0x" ++ f32Hex ·)) ++ "};"
+    let n := pairs.size
+    let src := String.intercalate "\n"
+      [ "#include <math.h>", "#include <stdint.h>", "#include <stdio.h>", "#include <string.h>"
+      , TapeCodegen.emitStub "extrema" cg
+      , arr "x" (pairs.map (·.1)), arr "y" (pairs.map (·.2))
+      , "int main(void) {"
+      , s!"  float x[{n}], y[{n}], out[{ids.length * n}];"
+      , "  memcpy(x, xBits, sizeof x); memcpy(y, yBits, sizeof y);"
+      , s!"  extrema_stub({n}, {String.intercalate ", " cg.inputs.toList}, out);"
+      , s!"  for (int i = 0; i < {ids.length * n}; i++) \{ uint32_t b; memcpy(&b, &out[i], 4); printf(\"%08x\\n\", b); }"
+      , "  return 0;", "}", "" ]
+    let cFile := dir / "extrema.c"
+    let exe := dir / "extrema.out"
+    IO.FS.writeFile cFile src
+    let build ← IO.Process.output
+      { cmd := "cc", args := #["-O2", "-ffp-contract=off", "-o", exe.toString, cFile.toString, "-lm"] }
+    let res ← if build.exitCode != 0 then pure build else IO.Process.output { cmd := exe.toString }
+    let words := (res.stdout.splitOn "\n").filter (· ≠ "") |>.toArray
+    if res.exitCode != 0 || words.size != ids.length * n then
+      IO.eprintln s!"C stub extrema: cc or the kernel failed ({words.size} results):\n{res.stderr}"
+      bad := bad + 1
+    else
+      for j in [0:ids.length] do
+        for p in [0:n] do
+          bad := bad + (← report "C stub" p j ((ofHex8? words[j * n + p]!).getD 0.0))
+    IO.println s!"extrema C stub: {ids.length * n} outputs compared with the stated expectations."
+  if (← TorchLean.LibTorch.Buffer.RuntimeStatus.query) matches .nativeAvailable then
+    let s : Shape := [pairs.size]
+    let a : CudaCarrier.CudaT s := .ofFloatArray ⟨pairs.map (·.1)⟩
+    let b : CudaCarrier.CudaT s := .ofFloatArray ⟨pairs.map (·.2)⟩
+    for (j, got) in [(0, (CudaCarrier.CudaT.fmin a b).toFloatArray), (1, (CudaCarrier.CudaT.fmax a b).toFloatArray)] do
+      for p in [0:pairs.size] do
+        bad := bad + (← report "CudaT " p j (got.get! p))
+    IO.println s!"extrema CudaT: {2 * pairs.size} outputs compared with the stated expectations."
+  else
+    IO.println "No LibTorch bridge is linked: CudaT fmin/fmax were not run."
   return bad
 
 /-- `--julia PATH` names the Julia to run (default `julia` on the path); `--require-emitted` makes a
@@ -314,6 +404,7 @@ def main (args : List String) : IO UInt32 := do
       (flatTable, flatProbes), (cancelTable, cancelProbes), (zeroTable, zeroProbes),
       (infTable, infProbes), (oneTable, oneProbes)] do
     bad := bad + (← runEmitted dir tbl ps cc julia)
+  bad := bad + (← runExtrema dir cc)
   if bad == 0 then
     IO.println "PARITY OK — the fetch kernel matches refFetch, NaN probes and non-finite samples included."
     return 0

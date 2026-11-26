@@ -213,6 +213,20 @@ theorem faith_max (tt : CpuTape Float) (aId bId : Nat) {va vb : Tensor Float s}
   obtain ⟨t', he, hv, hf⟩ := max_value tt aId bId ha hb
   exact ⟨t', TapeM.record_run_ok he, hv, hf⟩
 
+theorem faith_fmin (tt : CpuTape Float) (aId bId : Nat) {va vb : Tensor Float s}
+    (ha : requireValue (s := s) tt aId = .ok va) (hb : requireValue (s := s) tt bId = .ok vb) :
+    ∃ t', (TapeM.fmin (s := s) aId bId).run tt = .ok (tt.size, t') ∧
+          requireValue (s := s) t' tt.size = .ok (Tensor.fmin va vb) ∧ FrameOver t' tt := by
+  obtain ⟨t', he, hv, hf⟩ := fmin_value tt aId bId ha hb
+  exact ⟨t', TapeM.record_run_ok he, hv, hf⟩
+
+theorem faith_fmax (tt : CpuTape Float) (aId bId : Nat) {va vb : Tensor Float s}
+    (ha : requireValue (s := s) tt aId = .ok va) (hb : requireValue (s := s) tt bId = .ok vb) :
+    ∃ t', (TapeM.fmax (s := s) aId bId).run tt = .ok (tt.size, t') ∧
+          requireValue (s := s) t' tt.size = .ok (Tensor.fmax va vb) ∧ FrameOver t' tt := by
+  obtain ⟨t', he, hv, hf⟩ := fmax_value tt aId bId ha hb
+  exact ⟨t', TapeM.record_run_ok he, hv, hf⟩
+
 theorem faith_sqrt (tt : CpuTape Float) (xId : Nat) {vx : Tensor Float s}
     (hx : requireValue (s := s) tt xId = .ok vx) :
     ∃ t', (TapeM.sqrt (s := s) xId).run tt = .ok (tt.size, t') ∧
@@ -250,6 +264,16 @@ theorem Evaluates_min {x y : TapeBuilder s} {vx vy : Tensor Float s}
 theorem Evaluates_max {x y : TapeBuilder s} {vx vy : Tensor Float s}
     (hx : Evaluates x vx) (hy : Evaluates y vy) : Evaluates (Max.max x y) (Tensor.maximum vx vy) :=
   Evaluates_bin (TapeM.max (s := s)) _ faith_max hx hy
+
+theorem Evaluates_fmin {x y : TapeBuilder s} {vx vy : Tensor Float s}
+    (hx : Evaluates x vx) (hy : Evaluates y vy) :
+    Evaluates (TapeBuilder.fmin x y) (Tensor.fmin vx vy) :=
+  Evaluates_bin (TapeM.fmin (s := s)) _ faith_fmin hx hy
+
+theorem Evaluates_fmax {x y : TapeBuilder s} {vx vy : Tensor Float s}
+    (hx : Evaluates x vx) (hy : Evaluates y vy) :
+    Evaluates (TapeBuilder.fmax x y) (Tensor.fmax vx vy) :=
+  Evaluates_bin (TapeM.fmax (s := s)) _ faith_fmax hx hy
 
 /-- The unary `sqrt` op preserves `Evaluates` with the clamped root — the one
 transcendental the Mironov ε kernel names (six times, through `nkOfEps`'s three real roots). -/

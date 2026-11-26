@@ -979,7 +979,8 @@ partial def containerPath (env : Environment) (carriers : Array Name) (e : Expr)
     | .const c _ =>
       match env.getProjectionFnInfo? c with
       | some pi =>
-        !carriers.contains c.getPrefix &&
+        -- a projection applied past its structure is a call of the field, not a path
+        !carriers.contains c.getPrefix && e.getAppNumArgs == pi.numParams + 1 &&
           (match e.getAppArgs[pi.numParams]? with
            | some s => containerPath env carriers s (depth + 1)
            | none => false)

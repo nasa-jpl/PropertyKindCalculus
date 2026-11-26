@@ -123,9 +123,9 @@ namespace SL
 printer is total and the denotation lemma is one `cases`. `ofName?` is the parser `genSL` uses,
 `name` its inverse (`name_ofName?`), and `eval` is `cOp`'s clause for that op (`cOp_eval`). -/
 
-/-- The binary alphabet `add sub mul div min max`. -/
+/-- The binary alphabet `add sub mul div min max fmin fmax`. -/
 inductive BinOp where
-  | add | sub | mul | div | min | max
+  | add | sub | mul | div | min | max | fmin | fmax
 deriving DecidableEq, Repr
 
 /-- The unary alphabet `exp log sqrt abs`. -/
@@ -135,6 +135,7 @@ deriving DecidableEq, Repr
 
 def BinOp.name : BinOp → String
   | .add => "add" | .sub => "sub" | .mul => "mul" | .div => "div" | .min => "min" | .max => "max"
+  | .fmin => "fmin" | .fmax => "fmax"
 
 def UnOp.name : UnOp → String
   | .exp => "exp" | .log => "log" | .sqrt => "sqrt" | .abs => "abs"
@@ -142,6 +143,7 @@ def UnOp.name : UnOp → String
 def BinOp.ofName? : String → Option BinOp
   | "add" => some .add | "sub" => some .sub | "mul" => some .mul
   | "div" => some .div | "min" => some .min | "max" => some .max
+  | "fmin" => some .fmin | "fmax" => some .fmax
   | _ => none
 
 def UnOp.ofName? : String → Option UnOp
@@ -149,7 +151,8 @@ def UnOp.ofName? : String → Option UnOp
   | _ => none
 
 /-- The scalar semantics of a binary op — `cOp`'s clause. `min`/`max` are Lean's
-`Float.minimum`/`Float.maximum`: IEEE 754-2019, NaN-propagating, `-0.0` below `+0.0`. -/
+`Float.minimum`/`Float.maximum` (NaN-propagating), `fmin`/`fmax` the NaN-ignoring `minimumNumber`/
+`maximumNumber`; all four order `-0.0` below `+0.0`. -/
 def BinOp.eval : BinOp → Float → Float → Float
   | .add, a, b => a + b
   | .sub, a, b => a - b
@@ -157,6 +160,8 @@ def BinOp.eval : BinOp → Float → Float → Float
   | .div, a, b => a / b
   | .min, a, b => Min.min a b
   | .max, a, b => Max.max a b
+  | .fmin, a, b => TorchLean.Context.fmin a b
+  | .fmax, a, b => TorchLean.Context.fmax a b
 
 def UnOp.eval : UnOp → Float → Float
   | .exp, a => Float.exp a

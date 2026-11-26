@@ -147,6 +147,7 @@ macro "tape_hom" " [" names:Lean.Parser.Tactic.simpLemma,* "]" : tactic =>
      repeat' first
        | apply Evaluates_add | apply Evaluates_sub | apply Evaluates_mul
        | apply Evaluates_div | apply Evaluates_min | apply Evaluates_max
+       | apply Evaluates_fmin | apply Evaluates_fmax
        | apply Evaluates_sqrt | apply Evaluates_exp
        | apply Evaluates_leaf | apply Evaluates_const
        | assumption))
