@@ -198,14 +198,16 @@ def recordLut : Except String (CpuTape Float × List Nat) := do
   let (t', remap) := cseCompact t
   pure (t', [remap.getD id id])
 
-/-- `min`, `max`, the clamp `max lo (min hi x)` and a table fetch, as four outputs: the ops whose
+/-- `min`, `max`, the clamp `max lo (min hi x)`, a table fetch, and the NaN-ignoring `fmin`, `fmax`,
+as six outputs: the ops whose
 NaN and signed-zero results the renderings must reproduce. -/
 def recordSpecial : Except String (CpuTape Float × List Nat) := do
   let x := TapeCodegenLut.inLeafV "x" 1.0
   let y := TapeCodegenLut.inLeafV "y" 2.0
   let fetch : TapeCodegenLut.TB := LutInterp.lutFetch TapeCodegenLut.demoLut x y
   let outs : List TapeCodegenLut.TB :=
-    [Min.min x y, Max.max x y, Max.max (0 : TapeCodegenLut.TB) (Min.min (1 : TapeCodegenLut.TB) x), fetch]
+    [Min.min x y, Max.max x y, Max.max (0 : TapeCodegenLut.TB) (Min.min (1 : TapeCodegenLut.TB) x), fetch,
+     PropertyKindCalculus.Paradigm.TapeBuilder.fmin x y, PropertyKindCalculus.Paradigm.TapeBuilder.fmax x y]
   let (ids, t) ← TapeM.run (TorchLean.Tape.empty : CpuTape Float) (outs.mapM (·.run))
   pure (t, ids)
 
