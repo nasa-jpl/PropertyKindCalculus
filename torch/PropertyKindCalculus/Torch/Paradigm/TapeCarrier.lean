@@ -28,8 +28,8 @@ errors *if run*. The Mironov ε kernel never runs them (the Fresnel incidence `s
 pixel-invariant host scalars, computed off-tape), so the instantiation is total in practice.
 
 No sharing/CSE here: a sub-expression named twice (`n·n`) emits its node twice. That is
-*value*-correct (both copies compute the same tensor); de-duplication is the WO3 memoizing-
-tape stretch, an optimisation orthogonal to parity.
+*value*-correct (both copies compute the same tensor). For a kernel too large to unfold, record
+at `SharedTapeBuilder` (`paradigm.tape_shared_carrier`), which emits each sub-expression once.
 
 A `module` file: imports the `num_carrier` capability and TorchLean's `TapeM` builder.
 -/
