@@ -139,8 +139,12 @@ jobs:
           if [ "$CLEAN_PIXI_CACHE" = true ]; then rm -rf "$PIXI_CACHE_DIR"; fi
           echo "PIXI_CACHE_DIR=$PIXI_CACHE_DIR" >> "$GITHUB_ENV"
           pixi --version
+          # The job's view of the package host, since an install that stalls prints nothing about it.
+          echo "proxy variables set: $(env | grep -i '_proxy=' | cut -d= -f1 | tr '\n' ' ')"
+          curl -sSL -o /dev/null --max-time 30 -w 'conda.anaconda.org: %{http_code} in %{time_total}s\n' \
+            https://conda.anaconda.org/conda-forge/noarch/repodata_shards.msgpack.zst || true
           # Bounded and verbose: an install that stalls fails here with its last action logged.
-          timeout 15m pixi install -v --manifest-path blueprint/pyproject.toml
+          timeout 15m pixi install -vv --manifest-path blueprint/pyproject.toml
 
       # -------------------------------------------------------
       # Phase 1a: Build the Lean spine (Mathlib-free core + examples)
