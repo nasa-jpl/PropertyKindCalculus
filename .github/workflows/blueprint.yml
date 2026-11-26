@@ -115,7 +115,9 @@ jobs:
           fi
           echo "$HOME/.pixi/bin" >> "$GITHUB_PATH"
           export PATH="$HOME/.pixi/bin:$PATH"
-          pixi install --manifest-path blueprint/pyproject.toml
+          pixi --version
+          # Bounded and verbose: an install that stalls fails here with its last action logged.
+          timeout 15m pixi install -v --manifest-path blueprint/pyproject.toml
 
       # -------------------------------------------------------
       # Phase 1a: Build the Lean spine (Mathlib-free core + examples)
