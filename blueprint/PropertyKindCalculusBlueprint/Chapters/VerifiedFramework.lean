@@ -129,7 +129,8 @@ The links of the trust chain that the capstone chapter does not already carry as
 *The executable binary32 rung, with overflow stated.* For kind-`k` quantities carried at
 the executable binary32 (FloatLib's `ExecFloat.Binary 8 23`, on which TorchLean builds), if the executable sum is finite, forgetting it to `ℝ` gives the
 binary32 rounding of the real sum. Where the hypothesis fails (an overflow to infinity, a NaN
-operand) the refinement does not hold, and the theorem says so by asking for the hypothesis.
+operand) the theorem claims nothing: it proves the equality on the finite path, not its failure off
+it, and the hypothesis marks that boundary.
 :::
 
 :::proof "vf_thm_exec_refinement"
