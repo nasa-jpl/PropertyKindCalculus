@@ -73,14 +73,16 @@ not have. -/
 `0x1.51eb851eb851fp-7f`). The decimal printer is lossy (6 significant digits), which would
 silently detune baked table samples and recorded constants; the hex form reproduces the double
 bit-for-bit, and the compiler's compile-time `double → float` narrowing is round-to-nearest —
-the same conversion the runtime upload paths perform. Zero renders as `0.0f`; NaN/Inf do not
-occur in generated bodies (leaf constants and table samples are finite). -/
+the same conversion the runtime upload paths perform. Zero renders as `0.0f`. A NaN or an infinity
+has no in-range hexadecimal form, so it renders as the constant quotient `(0.0f/0.0f)` or
+`(±1.0f/0.0f)`, which needs no header in C or CUDA; a NaN's sign and payload are not kept. -/
 def floatLit (x : Float) : String :=
   let bits : Nat := x.toBits.toNat
   let sign := if bits / 2 ^ 63 == 1 then "-" else ""
   let expBits : Nat := (bits / 2 ^ 52) % 2 ^ 11
   let mant : Nat := bits % 2 ^ 52
-  if expBits == 0 && mant == 0 then s!"{sign}0.0f"
+  if expBits == 2047 then (if mant == 0 then s!"({sign}1.0f/0.0f)" else "(0.0f/0.0f)")
+  else if expBits == 0 && mant == 0 then s!"{sign}0.0f"
   else
     let mantHex := String.ofList <| (List.range 13).map fun i =>
       Nat.digitChar ((mant / 2 ^ (48 - 4 * i)) % 16)
