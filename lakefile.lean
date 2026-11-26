@@ -111,11 +111,11 @@ require «Physlib» from git
 -- TorchLean (this work's fork, `combined` branch) backs *only* the `Torch` library
 -- below: the concrete IEEE-754 binary32 carriers (`FP32` rounding spec,
 -- `IEEE32Exec` executable) that instantiate the R10 exec/spec refinement bridge.
--- `combined` is upstream `lean-dojo/TorchLean` `main` (Lean `v4.35.0` / Mathlib `v4.35.0`;
+-- `combined` is upstream `lean-dojo/TorchLean` `main` (Lean `v4.36.0` / Mathlib `v4.36.0`;
 -- the GPU path is LibTorch's ATen, and NVRTC compiles the generated custom operations at run
--- time) with the fork's open upstream PRs merged on top: unboxed per-block NPY decoding,
--- piecewise-linear table lookup, the bridge on the host for a CPU-only LibTorch SDK, and
--- per-index device identity; this package pins the same toolchain. TorchLean brings
+-- time) with the fork's open upstream PRs merged on top (lean-dojo/TorchLean #43–#47, #50, #51:
+-- CPU-only LibTorch host bridge, device identity, binary64 arithmetic on binary32 buffers,
+-- NaN-ignoring `fmin`/`fmax`, linear-time tape recording); this package pins the same toolchain. TorchLean brings
 -- `FloatLib` transitively, which is where the executable binary32 word
 -- (`ExecFloat.Binary 8 23`) and the Flocq rounding theory live. Required after PhysLib so
 -- its `doc-gen4 v4.36.0` wins. The core
@@ -152,7 +152,7 @@ require subverso from git
 -- NOTE (2026-08-24): there is deliberately **no mathlib require here**, for the same
 -- reason there is no doc-gen4 one (below). Mathlib arrives transitively, and the two
 -- packages that bring it agree: PhysLib `master` and TorchLean `combined` each require
--- `v4.35.0`, so resolution is unambiguous and a root pin would only restate it. The core
+-- `v4.36.0`, so resolution is unambiguous and a root pin would only restate it. The core
 -- spine never imports Mathlib, so a plain `import PropertyKindCalculus` stays
 -- Mathlib-free either way.
 --

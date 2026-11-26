@@ -23,10 +23,10 @@ boundary. `Adequacy32` closes the bridge from the runtime side: the `Float32` ad
 is proved to be this very verdict (`Adequacy32.add_flag_sound`, through FloatLib's
 `ofFloat32_add_of_isFinite` and `exec_verdict_sound` below).
 
-This module re-exposes, under adequacy-layer names, the executable primitives of the Stage-3.3
-TorchLean bridge (`NN/Floats/IEEEExec/Bridge/FP32/Ulp.lean`, upstream form: the ULP query is the
+This module defines the executable ULP query over FloatLib's `ExecFloat.Binary 8 23` (the
 *partial* `ulpExp? : IEEE32Exec → Option Int`, `none` on NaNs and infinities rather than an
-artificial spacing) and states the capstone:
+artificial spacing), takes the absorption test `absorbs` from TorchLean's `Verify/Floats/IEEE754`,
+and states the capstone:
 
   * `exec_ulp_grounds` / `exec_half_ulp_grounds` — when the *executable* ULP query answers
     (`ulpExp? x = some k`, with `k` computed from the bit pattern by `Nat.log2` + `fexp32`), `2^k`

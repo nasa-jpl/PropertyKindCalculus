@@ -113,7 +113,7 @@ number type and the fast machine number that stands in for it. Builds on the
 
 :::proof "def_carrier_refinement"
 Realized as the `CarrierRefinement` class (core, axiom-free). TorchLean's `FP32`
-gives an _unconditional_ instance over $`\mathbb{R}`, and `IEEE32Exec` refines
+gives an _unconditional_ instance over $`\mathbb{R}`, and `IEEE32Exec` (FloatLib's `ExecFloat.Binary 8 23`) refines
 $`\mathbb{R}` on the finite path — both in the separately built `Torch` library.
 :::
 
@@ -132,7 +132,7 @@ proof and execution.
 :::proof "thm_representation_refinement"
 Proved as `Quantity.add_refines` (core, axiom-free): the `CarrierRefinement` bridge
 law lifted along the kind index. It is instantiated concretely in the separately
-built `Torch` library at TorchLean's binary32 — an _unconditional_
+built `Torch` library at binary32 — an _unconditional_
 `CarrierRefinement FP32 ℝ` (the rounding spec has no overflow, so the law holds by
 computation) and a _conditional_ `IEEE32Exec` refinement on the finite/no-overflow
 path (`Quantity.add_refines_exec`), where overflow is an explicit hypothesis rather

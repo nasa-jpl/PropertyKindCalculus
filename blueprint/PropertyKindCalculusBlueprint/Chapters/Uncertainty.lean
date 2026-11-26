@@ -78,7 +78,7 @@ CI-checked (each item below links to the formal node that realizes it):
     - the universal capstone {bpref "thm_uq_adequacy_soundness"}[A3′] over an arbitrary model DAG and input box;
     - A2 lifted to the genuine {bpref "thm_uq_sterbenz_fp32"}[binary32 format `fexp32`]; and
   - the {bpref "thm_uq_exec_bridge"}[executable↔spec bridge], certifying the runtime absorption verdict against the `round₃₂` specification
-on TorchLean's computable `IEEE32Exec` model
+on the computable `IEEE32Exec` word (FloatLib's `ExecFloat.Binary 8 23`), with TorchLean's absorption test
 {Manual.citep george_torchlean_formalizing_neural_networks}[]; and
   - the Axis-U {bpref "def_uq_significance"}[significance wiring], coupling the autograd $`c_i` with the descriptor's $`u_i` into the significance scale $`c_i u_i` the
 adequacy carrier checks against (Stage 3.4); and
@@ -538,8 +538,8 @@ uncertainty hazard: that exact difference can have *relative* uncertainty ≥ 10
 :::
 
 :::proof "thm_uq_sterbenz"
-Realized over `ℝ` (`Adequacy.Sterbenz32.flx_sterbenz`), the real-number analogue of TorchLean's
-`neural_generic_format_FLX_sterbenz`: align both operands to the smaller exponent, and the factor-of-two
+Realized over `ℝ` (`Adequacy.Sterbenz32.flx_sterbenz`), the real-number analogue of FloatLib's
+`genericRepresentable_flx_sterbenz`: align both operands to the smaller exponent, and the factor-of-two
 condition bounds the difference's mantissa below `2^p`. `sub_exact_on_grid` gives the grid form (the
 difference rounds to itself). Sorry-free. Stage 3.2 carries this to the FLT/`fexp32` format binary32
 actually uses (gradual underflow) — the genuine grounding is `thm_uq_sterbenz_fp32`.
@@ -547,7 +547,7 @@ actually uses (gradual underflow) — the genuine grounding is `thm_uq_sterbenz_
 
 :::theorem "thm_uq_sterbenz_fp32" (parent := "uncertainty") (lean := "PropertyKindCalculus.Uncertainty.Adequacy.round32_sterbenz_exact") (tags := "capstone, proved")
 *Sterbenz at the binary32 format (A2, Stage 3.2).* The same exactness at the format binary32 *actually
-uses* — TorchLean's `fexp32 = \mathrm{FLTExp}\,(-149)\,24`, an `FLT` format with gradual underflow: for
+uses* — `fexp32 = \mathrm{FLTExp}\,(-149)\,24` (FloatLib's `Model.fexpOf` at binary32), an `FLT` format with gradual underflow: for
 representable binary32 `u`, `v` within a factor of two ($`u \le 2v`, $`v \le 2u`), the exact difference
 is already on the grid, so $`\mathrm{round}_{32}(u - v) = u - v`. This realizes the `FLX`-model
 {uses "thm_uq_sterbenz"}[A2] at the real gradual-underflow format, and its `FP32`-typed corollary
@@ -556,11 +556,11 @@ is already on the grid, so $`\mathrm{round}_{32}(u - v) = u - v`. This realizes 
 
 :::proof "thm_uq_sterbenz_fp32"
 Realized over `ℝ`/`FP32` (Stage 3.2, `Adequacy.Fp32Grounding.round32_sterbenz_exact` /
-`sub32_exact_of_sterbenz`), grounded in the TorchLean PR's `neural_generic_format_FLT_sterbenz`. That
+`sub32_exact_of_sterbenz`), grounded in FloatLib's `Model.roundAt_sub_eq_of_sterbenz`, over its `genericRepresentable_flt_sterbenz`. That
 `FLT` Sterbenz lemma splits on the underflow boundary `β^(prec+emin)`: on the subnormal side the fixed
 `emin` grid subtracts exactly (`FLT_to_FIX` → `FIX_sub` → `FIX_to_FLT`), on the normal side it
 transports through the unbounded `FLX` family (`FLT_to_FLX` → `FLX_sterbenz` → `FLX_to_FLT_of_normal`).
-Composing it with `neural_round_preserves_generic` (rounding is the identity on representable reals)
+Composing it with `round_preserves_generic` (rounding is the identity on representable reals)
 gives $`\mathrm{round}_{32}(u - v) = u - v`, so the per-op `sub32_within_half_ulp` half-ulp bound
 collapses to *zero* in the Sterbenz regime. Sorry-free (`[propext, Classical.choice, Quot.sound]`),
 exercised by the `AdequacySterbenz32` example.
@@ -662,8 +662,8 @@ division node the two rungs' licenses are independent in both directions.
 *Executable↔spec bridge (Stage 3.3).* The verdicts above are stated over the `noncomputable` `ℝ`/`FP32`
 specification, but the *runtime* carrier must compute a verdict. Lean's host `Float` is binary64 (and,
 on the pinned toolchain, a structure over core's `Float.Model` — `examples.tape_host_float_model`),
-not the float32 this verdict is about, so the certified check is *stated* on TorchLean's
-*computable* `IEEE32Exec` model (and the runtime `Float32` carrier is then proved to compute exactly
+not the float32 this verdict is about, so the certified check is *stated* on the
+*computable* `IEEE32Exec` word, FloatLib's `ExecFloat.Binary 8 23` (and the runtime `Float32` carrier is then proved to compute exactly
 this verdict — the next node). There the ULP is genuinely computed from a bit pattern (`ulpExp?`, matching
 the spec `ulp₃₂` whenever it answers — `none` on NaNs and infinities), and the kernel's absorption test `absorbs s δ` — the float32 sum is unchanged —
 *certifies* the specification: the exact real sum rounds back under $`\mathrm{round}_{32}`. So the
@@ -674,9 +674,9 @@ agree with that logical model — the irreducible hardware trust boundary.
 :::
 
 :::proof "thm_uq_exec_bridge"
-Realized over `ℝ`/`IEEE32Exec` (Stage 3.3, `Adequacy.ExecBridge`), grounded in TorchLean's
-`IEEE32Exec.ulpExp?` + `bpow_eq_ulp_of_ulpExp?_eq_some` (an executable ULP answer equals
-`ulp₃₂`; the query answers on exactly the finite fragment) and `round_add_eq_left_of_absorbs` (a 3-line corollary of the
+Realized over `ℝ`/`IEEE32Exec` (Stage 3.3, `Adequacy.ExecBridge`), grounded in this module's
+`ulpExp?` + `bpow_eq_ulp_of_ulpExp?_eq_some` (an executable ULP answer equals
+`ulp₃₂`; the query answers on exactly the finite fragment) and TorchLean's `round_add_eq_left_of_absorbs` (a 3-line corollary of the
 `toReal_add_eq_round_of_isFinite` op-level refinement, since FloatLib's `Model.roundAt binary32` *is* `round₃₂`). `exec_verdict_sound`
 composes them: when `absorbs s δ` fires, `round₃₂(\mathrm{toReal}\,s + \mathrm{toReal}\,δ) =
 \mathrm{toReal}\,s`. Sorry-free (`[propext, Classical.choice, Quot.sound]`); the executable side is

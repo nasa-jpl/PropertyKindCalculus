@@ -26,7 +26,7 @@ adequacy-layer names, the exact lemmas the grid model localizes:
 `noncomputable` — `round32 : ℝ → ℝ` is an ℝ-level *specification*, not an executable float — so these
 lemmas ground the *proofs*, while the executable `Adequacy` carrier (`Adequacy.lean`) computes over
 Lean's `Float`. Bridging the two (executable rounding that provably matches this spec) is Stage 3.3,
-which still calls for a TorchLean PR (`UNCERTAINTY.md` §6). Stage 3.2 (this file's Sterbenz grounding)
+realized in `Adequacy.ExecBridge`. Stage 3.2 (this file's Sterbenz grounding)
 is now realized at the FLT/`fexp32` format binary32 actually uses.
 -/
 
