@@ -332,7 +332,7 @@ revision the calculus pins; TorchLean's eager device and tape operations include
 The table fetch is shared: its device kernel is a TorchLean `Program.of` kernel, and its
 semantics is the calculus's vocabulary extension.
 The last two rows of chips on the left are eager device-buffer operations contributed by this
-work (#52, #53); they run outside a kernel.
+work (#52, #53): LibTorch calls on buffers, not operations of a certified `Program.of` kernel.
 :::
 
 :::table +header

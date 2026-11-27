@@ -13,8 +13,8 @@ accepts in binary32 and binary64, and the ones the calculus's straight-line prog
 red chips are exactly the operations `Program.of` refuses; that is a measurement, kept in
 `scratchpad/torchlean-retrospective/{trans,alpha}-probe.log` of the workspace, and the
 chapter states it. Below them the left column lists the eager device-buffer operations this work
-contributed, which run outside a kernel. A `#n` in the left column marks a change contributed to
-TorchLean by this work.
+contributed: LibTorch calls on buffers, not operations of a certified `Program.of` kernel. A `#n`
+in the left column marks a change contributed to TorchLean by this work.
 -/
 
 namespace Tools.Figures.Extension
@@ -155,7 +155,7 @@ def body : String :=
    chips (LX0 + 14) (t + 80) [("⌊u⌋ as index #44", 1), ("f64 on f32 #47", 1)] ++
    chips (LX0 + 14) (t + 110) [("else if #46", 1)] ++
    wrap (LX0 + 14) (t + 138) ["exp, log only by table search, ≤ 20-bit formats"] (fill := GRAY5) (size := 10.5) ++
-   wrap (LX0 + 14) (t + 166) ["!on eager device buffers, outside a kernel"] ++
+   wrap (LX0 + 14) (t + 166) ["!on eager device buffers, not in a certified kernel"] ++
    chips (LX0 + 14) (t + 194) [("pow #52", 1), ("< ≤ > ≥ #52", 1), ("select #52", 1)] ++
    chips (LX0 + 14) (t + 224) [("table lookup #53", 1)] ++
    wrap (RX0 + 14) (t + 22) ["!what remote-sensing forward models add"] (fill := RED) ++
