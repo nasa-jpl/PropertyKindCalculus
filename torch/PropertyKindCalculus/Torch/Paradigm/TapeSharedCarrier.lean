@@ -168,18 +168,18 @@ def unsupported (op : String) : SharedTapeBuilder s :=
 
 /-- Lift a binary tape op: run both operands, look up or emit one node. Fails on a unary op. -/
 @[inline] def bin (o : SharedOp) (x y : SharedTapeBuilder s) : SharedTapeBuilder s :=
-  ⟨do
-    let a ← x.run
-    let b ← y.run
-    if o.binary then SharedTapeM.op o s #[a, b]
+  ⟨if o.binary then do
+      let a ← x.run
+      let b ← y.run
+      SharedTapeM.op o s #[a, b]
     else throw "SharedTapeBuilder.bin: a unary op"⟩
 
 /-- Lift a unary tape op: run the operand, look up or emit one node. Fails on a binary op. -/
 @[inline] def un (o : SharedOp) (x : SharedTapeBuilder s) : SharedTapeBuilder s :=
-  ⟨do
-    let a ← x.run
-    if o.binary then throw "SharedTapeBuilder.un: a binary op"
-    else SharedTapeM.op o s #[a]⟩
+  ⟨if o.binary then throw "SharedTapeBuilder.un: a binary op"
+    else do
+      let a ← x.run
+      SharedTapeM.op o s #[a]⟩
 
 instance : Zero (SharedTapeBuilder s) := ⟨const 0⟩
 instance : One (SharedTapeBuilder s) := ⟨const 1⟩

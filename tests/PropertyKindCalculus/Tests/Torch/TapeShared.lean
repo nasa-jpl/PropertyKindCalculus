@@ -97,7 +97,11 @@ def nameGuard (y : Float) : Bool :=
     let _ ← SharedTapeM.leaf (Tensor.full Shape.scalar (1.5 : Float)) (name := some "v")
     SharedTapeM.leaf (Tensor.full [1] (1.5 : Float)) (name := some "v"))).toOption.isNone
 
--- `un` and `bin` refuse an op of the other arity.
+-- `un` and `bin` refuse an op of the other arity, before running an operand.
+#guard match SharedTapeM.record (SharedTapeBuilder.un .add
+    (SharedTapeBuilder.unsupported (s := Shape.scalar) "x")).run with
+  | .error e => e == "SharedTapeBuilder.un: a binary op"
+  | .ok _ => false
 #guard (SharedTapeM.record (SharedTapeBuilder.un .add
     (SharedTapeBuilder.const (s := Shape.scalar) 1)).run).toOption.isNone
 #guard (SharedTapeM.record (SharedTapeBuilder.bin .exp (SharedTapeBuilder.const (s := Shape.scalar) 1)
