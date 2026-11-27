@@ -720,6 +720,108 @@ theorem Shares.lutFetch {s : Shape} (tbl : LutTable)
   · intro i hi
     rw [step.2.2 i (by omega), st2 i (by omega), st1 i hi]
 
+/-! ### The alphabet as the carriers' instances spell it -/
+
+variable {s : Shape} {x y : TapeBuilder s} {sx sy : SharedTapeBuilder s}
+
+theorem Shares.add (hx : Shares s x sx) (hy : Shares s y sy) : Shares s (x + y) (sx + sy) :=
+  Shares.bin .add rfl hx hy
+theorem Shares.sub (hx : Shares s x sx) (hy : Shares s y sy) : Shares s (x - y) (sx - sy) :=
+  Shares.bin .sub rfl hx hy
+theorem Shares.mul (hx : Shares s x sx) (hy : Shares s y sy) : Shares s (x * y) (sx * sy) :=
+  Shares.bin .mul rfl hx hy
+theorem Shares.div (hx : Shares s x sx) (hy : Shares s y sy) : Shares s (x / y) (sx / sy) :=
+  Shares.bin .div rfl hx hy
+theorem Shares.min (hx : Shares s x sx) (hy : Shares s y sy) :
+    Shares s (Min.min x y) (Min.min sx sy) := Shares.bin .min rfl hx hy
+theorem Shares.max (hx : Shares s x sx) (hy : Shares s y sy) :
+    Shares s (Max.max x y) (Max.max sx sy) := Shares.bin .max rfl hx hy
+theorem Shares.fmin (hx : Shares s x sx) (hy : Shares s y sy) :
+    Shares s (BatchCarrier.fmin x y) (BatchCarrier.fmin sx sy) := Shares.bin .fmin rfl hx hy
+theorem Shares.fmax (hx : Shares s x sx) (hy : Shares s y sy) :
+    Shares s (BatchCarrier.fmax x y) (BatchCarrier.fmax sx sy) := Shares.bin .fmax rfl hx hy
+theorem Shares.exp (hx : Shares s x sx) : Shares s (MathCarrier.exp x) (MathCarrier.exp sx) :=
+  Shares.un .exp rfl hx
+theorem Shares.log (hx : Shares s x sx) : Shares s (MathCarrier.log x) (MathCarrier.log sx) :=
+  Shares.un .log rfl hx
+theorem Shares.abs (hx : Shares s x sx) : Shares s (MathCarrier.abs x) (MathCarrier.abs sx) :=
+  Shares.un .abs rfl hx
+theorem Shares.sqrt (hx : Shares s x sx) : Shares s (MathCarrier.sqrt x) (MathCarrier.sqrt sx) :=
+  Shares.un .sqrt rfl hx
+theorem Shares.batchConst (v : Float) :
+    Shares s (BatchCarrier.const v) (BatchCarrier.const v) := Shares.const v
+theorem Shares.input (name : String) (v : Tensor Float s) :
+    Shares s ⟨TapeM.leaf v (name := some name)⟩ (SharedTapeBuilder.input name v) :=
+  Shares.leaf v _
+
+/-! ## Whole recordings -/
+
+/-- Recording related outputs in order keeps the relation; the sharing ids are the remaps. -/
+theorem Shares.runAll {bs : List (TapeBuilder s)} {sbs : List (SharedTapeBuilder s)}
+    (h : List.Forall₂ (Shares s) bs sbs) :
+    ∀ (t : CpuTape Float) (σ : SharedTape), Rel s t σ → Seen s σ →
+      ((∃ e, TapeBuilder.runAll bs t = .error e) ∧
+        ∃ e, SharedTapeBuilder.runAll sbs σ = .error e) ∨
+      ∃ (ids : List Nat) (t' : CpuTape Float) (σ' : SharedTape),
+        TapeBuilder.runAll bs t = .ok (ids, t') ∧
+        SharedTapeBuilder.runAll sbs σ
+          = .ok (ids.map (fun i => (cseFold t').2.1.getD i i), σ') ∧
+        Rel s t' σ' ∧ Seen s σ' ∧ t.nodes.size ≤ t'.nodes.size ∧
+        ∀ i, i < t.nodes.size → (cseFold t').2.1.getD i i = (cseFold t).2.1.getD i i := by
+  induction h with
+  | nil => exact fun t σ hR hS => .inr ⟨[], t, σ, rfl, rfl, hR, hS, Nat.le_refl _, fun _ _ => rfl⟩
+  | @cons b sb bs sbs hb _ ih =>
+    intro t σ hR hS
+    rw [show TapeBuilder.runAll (b :: bs) = (b.run >>= fun a =>
+        TapeBuilder.runAll bs >>= fun as => pure (a :: as)) from rfl,
+      show SharedTapeBuilder.runAll (sb :: sbs) = (sb.run >>= fun a =>
+        SharedTapeBuilder.runAll sbs >>= fun as => pure (a :: as)) from rfl]
+    rcases hb t σ hR hS with ⟨⟨e, he⟩, ⟨e', he'⟩⟩ | ⟨a, t1, σ1, hr, hsr, hR1, hS1, la, ua, st1⟩
+    · exact .inl ⟨⟨e, bind_error he⟩, ⟨e', bind_error he'⟩⟩
+    rw [bind_ok hr, bind_ok hsr]
+    rcases ih t1 σ1 hR1 hS1 with ⟨⟨e, he⟩, ⟨e', he'⟩⟩ | ⟨ids, t2, σ2, hr2, hsr2, hR2, hS2, le2, st2⟩
+    · exact .inl ⟨⟨e, bind_error he⟩, ⟨e', bind_error he'⟩⟩
+    rw [bind_ok hr2, bind_ok hsr2]
+    refine .inr ⟨a :: ids, t2, σ2, rfl, ?_, hR2, hS2, by omega, fun i hi => ?_⟩
+    · rw [List.map_cons, st2 a ua]; rfl
+    · rw [st2 i (by omega), st1 i hi]
+
+/-- **The sharing recorder records `cseCompact` of the `TapeBuilder` recording.** For outputs
+related by `Shares`, recorded from the empty tape: both recordings fail, or the sharing tape has
+the name, operands and stored value of every node of the compacted `TapeBuilder` tape, in the
+same order, and the sharing ids are the remapped `TapeBuilder` ids. -/
+theorem shares_record {bs : List (TapeBuilder s)} {sbs : List (SharedTapeBuilder s)}
+    (h : List.Forall₂ (Shares s) bs sbs) :
+    ((∃ e, TapeM.run Tape.empty (TapeBuilder.runAll bs) = .error e) ∧
+      ∃ e, SharedTapeM.record (SharedTapeBuilder.runAll sbs) = .error e) ∨
+    ∃ (ids : List Nat) (t ts : CpuTape Float),
+      TapeM.run Tape.empty (TapeBuilder.runAll bs) = .ok (ids, t) ∧
+      SharedTapeM.record (SharedTapeBuilder.runAll sbs)
+        = .ok (ids.map (fun i => (cseCompact t).2.getD i i), ts) ∧
+      ts.nodes.map fwd = (cseCompact t).1.nodes.map fwd := by
+  rcases Shares.runAll h Tape.empty {} (Rel.empty s) (Seen.empty s) with
+    ⟨he, ⟨e', he'⟩⟩ | ⟨ids, t, σ, hr, hsr, hR, -, -, -⟩
+  · refine .inl ⟨he, e', ?_⟩
+    simp [SharedTapeM.record, StateT.run, he', bind, Except.bind]
+  · refine .inr ⟨ids, t, σ.tape, hr, ?_, ?_⟩
+    · simp [SharedTapeM.record, StateT.run, hsr, bind, Except.bind, pure, Except.pure,
+        cseCompact_eq_foldl]
+    · rw [cseCompact_eq_foldl]; exact hR.tape
+
+/-- Close `Shares` / `List.Forall₂ (Shares _)` goals on a kernel: unfold the given definitions,
+then walk the op tree with the alphabet. Not a theorem for every kernel: it proves the one in
+hand, and the unfolded term grows with the kernel's expression tree. -/
+macro "tape_shares" " [" names:Lean.Parser.Tactic.simpLemma,* "]" : tactic =>
+  `(tactic|
+    (simp only [$names,*]
+     repeat' first
+       | apply List.Forall₂.cons | exact List.Forall₂.nil
+       | apply Shares.add | apply Shares.sub | apply Shares.mul | apply Shares.div
+       | apply Shares.min | apply Shares.max | apply Shares.fmin | apply Shares.fmax
+       | apply Shares.exp | apply Shares.log | apply Shares.abs | apply Shares.sqrt
+       | apply Shares.lutFetch | exact Shares.input _ _ | exact Shares.batchConst _
+       | exact Shares.leaf _ _ | exact Shares.const _ | exact Shares.unsupported _))
+
 end PropertyKindCalculus.Examples.TapeSharedCse
 
 end Blanket

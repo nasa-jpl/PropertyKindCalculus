@@ -176,7 +176,17 @@ instance : LutInterp (SharedTapeBuilder s) where
     let u ← y.run
     SharedTapeM.emit #[l, u] (TapeBuilder.lutFetchM (s := s) tbl ⟨pure l⟩ ⟨pure u⟩).run⟩
 
+/-- Record the outputs in order; yields their ids. -/
+def runAll : List (SharedTapeBuilder s) → SharedTapeM (List Nat)
+  | [] => pure []
+  | b :: bs => do let a ← b.run; let as ← runAll bs; pure (a :: as)
+
 end SharedTapeBuilder
+
+/-- Record the outputs in order; yields their ids. -/
+def TapeBuilder.runAll {s : Shape} : List (TapeBuilder s) → TapeM Float (List Nat)
+  | [] => pure []
+  | b :: bs => do let a ← b.run; let as ← TapeBuilder.runAll bs; pure (a :: as)
 
 /-- **The sharing tape carrier as a `BatchCarrier`**, field for field as `TapeBuilder`'s. -/
 instance SharedTapeBuilder.instBatchCarrier : BatchCarrier SharedTapeBuilder where
