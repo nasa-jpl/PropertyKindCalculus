@@ -1,6 +1,26 @@
 /-
-Copyright (c) 2026 California Institute of Technology. All rights reserved.
-Released under Apache 2.0 license as described in the file LICENSE.
+`examples.tape_shared_cse` — **the sharing recorder records what `cseCompact` leaves of the
+`TapeBuilder` recording.**
+
+`SharedTapeBuilder` (`paradigm.tape_shared_carrier`) shares sub-expressions while it records;
+`TapeBuilder` records the expression tree and `cseCompact` shares afterwards. This module proves
+the two give the same tape, so the parity theorems stated over `TapeBuilder` describe the tape
+the sharing recorder emits.
+
+* `Rel` relates a raw tape, `cseCompact`'s fold over it, and a sharing state; `Rel.step` is one
+  node on each side. `Seen` is the soundness of the lookup-before-run table.
+* `Shares b sb` relates a `TapeBuilder` and a `SharedTapeBuilder`. Its alphabet: leaves and
+  constants, `+ - * /`, `min`/`max`, `fmin`/`fmax`, `exp`/`log`/`abs`/`sqrt`, the table fetch,
+  and the unsupported ops (both fail).
+* `shares_record`: for related outputs recorded from the empty tape, the sharing tape has the
+  name, operands and stored value of every node of the compacted tape, and the remapped ids.
+* `keys_distinct_of_fwd`: such a tape holds each key (name, operands, value bits) once.
+* `tape_shares [defs…]` closes `Shares` for a concrete kernel; `kernel_shares_record` is the
+  probe kernel of `Tests.Torch.TapeShared`.
+
+Limits. Equality is of forward content, not of the `backward` closures. All nodes have one shape
+`s` (`cseCompact`'s key has no shape). Lean has no parametricity, so `Shares` is proved per
+kernel by unfolding it, and the unfolded goal grows with the expression tree, not the DAG.
 -/
 module
 
@@ -200,13 +220,13 @@ theorem RelSt.step {s : Shape} {t : CpuTape Float} {st : CseState} {σ : SharedT
     · intro k nid hk
       rw [Std.HashMap.getElem?_insert] at hk
       by_cases hkk : nodeKey rm n = k
-      · simp only [hkk, beq_self_eq_true, if_true, Option.some.injEq] at hk
+      · simp only [hkk, beq_self_eq_true, ite_true, Option.some.injEq] at hk
         subst hk
         refine ⟨{ n with parents := n.parents.map (fun p => rm.getD p p) },
           by simp [Tape.addNode], ?_⟩
         rw [← hkk]
         simp [nodeKey]
-      · simp only [beq_iff_eq, hkk, if_false] at hk
+      · simp only [beq_iff_eq, hkk, ite_false] at hk
         obtain ⟨nc, h1, h2⟩ := h.key k nid hk
         refine ⟨nc, ?_, h2⟩
         show (c.nodes.push _)[nid]? = some nc
