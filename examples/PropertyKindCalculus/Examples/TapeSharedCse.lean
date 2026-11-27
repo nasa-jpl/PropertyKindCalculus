@@ -669,6 +669,57 @@ theorem Shares.un {s : Shape} (o : SharedOp) (hb : binary o = false)
   intro i hi
   rw [st3 i (by omega), st1 i hi]
 
+/-- The node one table fetch appends on operands `l`, `u` reading `vl`, `vu`. -/
+def lutNode {s : Shape} (tbl : LutTable) (vl vu : Tensor Float s) (l u : Nat) : CpuNode Float :=
+  { name := some tbl.nodeName
+  , value := SomeTensor.ofTensor (Tensor.zipWith (fun a b => tbl.refFetch a b) vl vu)
+  , requiresGrad := false
+  , parents := #[l, u]
+  , backward := fun _ => .ok #[] }
+
+/-- The run of one table fetch on recorded operands. -/
+theorem lut_run {s : Shape} (tbl : LutTable) (T : CpuTape Float) (l u : Nat)
+    {vl vu : Tensor Float s} (hl : Tape.requireValue (s := s) T l = .ok vl)
+    (hu : Tape.requireValue (s := s) T u = .ok vu) :
+    (TapeBuilder.lutFetchM (s := s) tbl ⟨pure l⟩ ⟨pure u⟩).run T
+      = .ok (T.nodes.size, (T.addNode (lutNode tbl vl vu l u)).1) := by
+  simp [TapeBuilder.lutFetchM, lutNode, bind, StateT.bind, Except.bind, pure, StateT.pure,
+    Except.pure, get, getThe, MonadStateOf.get, StateT.get, set, StateT.set, liftM, monadLift,
+    MonadLift.monadLift, StateT.lift, hl, hu, Tape.addNode]
+
+/-- A table fetch, at both carriers. -/
+theorem Shares.lutFetch {s : Shape} (tbl : LutTable)
+    {x y : TapeBuilder s} {sx sy : SharedTapeBuilder s} (hx : Shares s x sx)
+    (hy : Shares s y sy) :
+    Shares s (LutInterp.lutFetch tbl x y) (LutInterp.lutFetch tbl sx sy) := by
+  intro t σ hR hS
+  rw [show (LutInterp.lutFetch tbl x y : TapeBuilder s).run
+      = (x.run >>= fun a => y.run >>= fun b =>
+          (TapeBuilder.lutFetchM (s := s) tbl ⟨pure a⟩ ⟨pure b⟩).run) from rfl,
+    show (LutInterp.lutFetch tbl sx sy : SharedTapeBuilder s).run
+      = (sx.run >>= fun a => sy.run >>= fun b => SharedTapeM.emit #[a, b]
+          (TapeBuilder.lutFetchM (s := s) tbl ⟨pure a⟩ ⟨pure b⟩).run) from rfl]
+  rcases hx t σ hR hS with ⟨⟨e, he⟩, ⟨e', he'⟩⟩ | ⟨a, t1, σ1, hxr, hsxr, hR1, hS1, la, ua, st1⟩
+  · exact .inl ⟨⟨e, bind_error he⟩, ⟨e', bind_error he'⟩⟩
+  rw [bind_ok hxr, bind_ok hsxr]
+  rcases hy t1 σ1 hR1 hS1 with ⟨⟨e, he⟩, ⟨e', he'⟩⟩ | ⟨b, t2, σ2, hyr, hsyr, hR2, hS2, lb, ub, st2⟩
+  · exact .inl ⟨⟨e, bind_error he⟩, ⟨e', bind_error he'⟩⟩
+  rw [bind_ok hyr, bind_ok hsyr]
+  right
+  obtain ⟨va, ra, ra', -⟩ := hR2.read (id := a) (by omega)
+  obtain ⟨vb, rb, rb', -⟩ := hR2.read ub
+  rw [st2 a ua] at ra'
+  have step := Rel.step hR2 (n := lutNode tbl va vb a b)
+    (node := { lutNode tbl va vb ((cseFold t1).2.1.getD a a) ((cseFold t2).2.1.getD b b) with
+      parents := #[(cseFold t1).2.1.getD a a, (cseFold t2).2.1.getD b b] })
+    rfl rfl rfl (by simpa [lutNode] using (st2 a ua).symm)
+  refine ⟨t2.nodes.size, _, _, lut_run tbl t2 a b ra rb, ?_, step.1, hS2.emitPure _, by omega,
+    by simp [Tape.addNode], ?_⟩
+  · refine (emit_eq σ2 _ _ _ _ (lut_run tbl σ2.tape _ _ ra' rb')).trans ?_
+    exact congrArg Except.ok (Prod.ext step.2.1 rfl)
+  · intro i hi
+    rw [step.2.2 i (by omega), st2 i (by omega), st1 i hi]
+
 end PropertyKindCalculus.Examples.TapeSharedCse
 
 end Blanket
