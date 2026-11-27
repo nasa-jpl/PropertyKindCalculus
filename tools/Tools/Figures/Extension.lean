@@ -12,8 +12,9 @@ column what PropertyKindCalculus builds on it. The middle layer is the alphabet 
 accepts in binary32 and binary64, and the ones the calculus's straight-line program adds. The
 red chips are exactly the operations `Program.of` refuses; that is a measurement, kept in
 `scratchpad/torchlean-retrospective/{trans,alpha}-probe.log` of the workspace, and the
-chapter states it. A `#n` in the left column marks a change contributed to TorchLean by this
-work.
+chapter states it. Below them the left column lists the eager device-buffer operations this work
+contributed, which run outside a kernel. A `#n` in the left column marks a change contributed to
+TorchLean by this work.
 -/
 
 namespace Tools.Figures.Extension
@@ -26,7 +27,7 @@ def GRAY2 := "#C8C8C8"
 def SANS := "Helvetica Neue, Helvetica, Arial, sans-serif"
 def MONO := "SF Mono, Menlo, Consolas, monospace"
 def W : Float := 960.0
-def H : Float := 915.0
+def H : Float := 1007.0
 def LX0 : Float := 150.0
 def LX1 : Float := 512.0
 def RX0 : Float := 548.0
@@ -91,8 +92,8 @@ there (a measurement of the source text, recorded in the chapter, not a proof of
 def ROWS : List (String × Float × Float × Bool) :=
   [("Meaning", 52.0, 147.0, false), ("Uncertainty", 157.0, 237.0, true),
    ("Performance", 247.0, 387.0, false), ("Code generation", 397.0, 477.0, true),
-   ("Kernel alphabet", 487.0, 635.0, true), ("Recording", 645.0, 725.0, true),
-   ("Numbers", 735.0, 815.0, true)]
+   ("Kernel alphabet", 487.0, 727.0, true), ("Recording", 737.0, 817.0, true),
+   ("Numbers", 827.0, 907.0, true)]
 
 def top (name : String) : Float :=
   match ROWS.find? (·.1 == name) with | some (_, t, _, _) => t | none => 0
@@ -154,6 +155,9 @@ def body : String :=
    chips (LX0 + 14) (t + 80) [("⌊u⌋ as index #44", 1), ("f64 on f32 #47", 1)] ++
    chips (LX0 + 14) (t + 110) [("else if #46", 1)] ++
    wrap (LX0 + 14) (t + 138) ["exp, log only by table search, ≤ 20-bit formats"] (fill := GRAY5) (size := 10.5) ++
+   wrap (LX0 + 14) (t + 166) ["!on eager device buffers, outside a kernel"] ++
+   chips (LX0 + 14) (t + 194) [("pow #52", 1), ("< ≤ > ≥ #52", 1), ("select #52", 1)] ++
+   chips (LX0 + 14) (t + 224) [("table lookup #53", 1)] ++
    wrap (RX0 + 14) (t + 22) ["!what remote-sensing forward models add"] (fill := RED) ++
    chips (RX0 + 14) (t + 50) [("exp", 2), ("log", 2), ("sqrt", 2), ("|x|", 2), ("min", 2), ("max", 2)] ++
    chips (RX0 + 14) (t + 80) [("table fetch", 3)] ++
@@ -174,7 +178,7 @@ def body : String :=
      "Float is the reference run"]
 
 def legend : String :=
-  let ky : Float := 857.0
+  let ky : Float := 949.0
   chips 22 ky [("op", 0)] ++
   txt 62 ky "TorchLean" (size := 10.5) (fill := GRAY5) ++
   chips 140 ky [("op", 1)] ++

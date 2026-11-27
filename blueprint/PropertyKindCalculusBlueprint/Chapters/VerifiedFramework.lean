@@ -205,7 +205,7 @@ A theorem of TorchLean, linked here because the table fetch's device kernel rest
 
 The demands above were met partly by TorchLean as it stands and partly by changes contributed to
 it. The ledger records each contribution by the demand it serves, with its state on
-2026-11-25.
+2026-11-27.
 
 :::table +header
 *
@@ -216,6 +216,10 @@ it. The ledger records each contribution by the demand it serves, with its state
   * One source, many carriers
   * exact Cholesky and QR ([#2](https://github.com/lean-dojo/TorchLean/pull/2)); differentiable `exp`, `log` and scalar-affine maps ([#5](https://github.com/lean-dojo/TorchLean/pull/5)); CPU and proof-side division nodes ([#7](https://github.com/lean-dojo/TorchLean/pull/7), [#26](https://github.com/lean-dojo/TorchLean/pull/26)); the runtime link connected to the Fréchet-derivative model ([#25](https://github.com/lean-dojo/TorchLean/pull/25)); the `TapeM` surface reduced to one lemma ([#31](https://github.com/lean-dojo/TorchLean/pull/31))
   * in TorchLean main
+*
+  * One source, many carriers
+  * power, the ordered comparisons and selection on device buffers ([#52](https://github.com/lean-dojo/TorchLean/pull/52)); a piecewise-linear table lookup with its pullback on device buffers, its positions held on the device ([#53](https://github.com/lean-dojo/TorchLean/pull/53))
+  * open; merged into `combined`
 *
   * A bit-exact oracle on every machine
   * the LibTorch bridge on the host ([#43](https://github.com/lean-dojo/TorchLean/pull/43)); the identity of a CUDA device ([#45](https://github.com/lean-dojo/TorchLean/pull/45)); NaN-ignoring `fmin` and `fmax` on device buffers, with the same bits on both devices ([#50](https://github.com/lean-dojo/TorchLean/pull/50))
@@ -327,6 +331,8 @@ revision the calculus pins; TorchLean's eager device and tape operations include
 `sqrt`, so the extension is to one certified fused kernel holding a model's whole arithmetic.
 The table fetch is shared: its device kernel is a TorchLean `Program.of` kernel, and its
 semantics is the calculus's vocabulary extension.
+The last two rows of chips on the left are eager device-buffer operations contributed by this
+work (#52, #53); they run outside a kernel.
 :::
 
 :::table +header
