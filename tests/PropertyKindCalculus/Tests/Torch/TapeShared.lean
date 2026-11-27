@@ -72,6 +72,18 @@ def agree : Bool :=
 
 #guard agree
 
+/-- A scalar and a one-element vector with the same name and value bits stay two leaves, each
+with its own shape. -/
+def mixedShapes : Except String (List Nat × List Shape) := do
+  let (ids, t) ← SharedTapeM.record (do
+    let a ← SharedTapeM.leaf (Tensor.full Shape.scalar (1.5 : Float)) (name := some "v")
+    let b ← SharedTapeM.leaf (Tensor.full [1] (1.5 : Float)) (name := some "v")
+    let c ← SharedTapeM.leaf (Tensor.full Shape.scalar (1.5 : Float)) (name := some "v")
+    pure [a, b, c])
+  pure (ids, t.nodes.toList.map (·.value.shape))
+
+#guard mixedShapes == .ok ([0, 1, 0], [Shape.scalar, [1]])
+
 -- Not vacuous: the unshared recording is several times its DAG, and compaction removes nothing
 -- from the shared one.
 #guard match unshared, shared with
