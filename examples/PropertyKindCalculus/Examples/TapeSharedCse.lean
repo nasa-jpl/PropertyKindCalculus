@@ -8,6 +8,7 @@ public import PropertyKindCalculus.Examples.TapeCseStructural
 public import PropertyKindCalculus.Torch.Paradigm.TapeSharedCarrier
 public import PropertyKindCalculus.Torch.Paradigm.TapeFaithful
 public import Batteries.Data.Float.Lemmas
+public import PropertyKindCalculus.Tests.Torch.TapeShared
 
 @[expose] public section Blanket
 
@@ -821,6 +822,51 @@ macro "tape_shares" " [" names:Lean.Parser.Tactic.simpLemma,* "]" : tactic =>
        | apply Shares.exp | apply Shares.log | apply Shares.abs | apply Shares.sqrt
        | apply Shares.lutFetch | exact Shares.input _ _ | exact Shares.batchConst _
        | exact Shares.leaf _ _ | exact Shares.const _ | exact Shares.unsupported _))
+
+/-! ## The probe kernel of `Tests.Torch.TapeShared` -/
+
+open PropertyKindCalculus.Tests.TapeShared
+
+/-- The probe kernel's outputs at `TapeBuilder`. -/
+def rawOuts : List (TapeBuilder Shape.scalar) :=
+  let o := kernel (C := TapeBuilder) ⟨TapeM.leaf xv (name := some "x")⟩
+    ⟨TapeM.leaf yv (name := some "y")⟩
+  [o.1, o.2]
+
+/-- The probe kernel's outputs at `SharedTapeBuilder`. -/
+def sharedOuts : List (SharedTapeBuilder Shape.scalar) :=
+  let o := kernel (C := SharedTapeBuilder) (SharedTapeBuilder.input "x" xv)
+    (SharedTapeBuilder.input "y" yv)
+  [o.1, o.2]
+
+section
+attribute [local irreducible] TapeBuilder.bin TapeBuilder.un SharedTapeBuilder.bin
+  SharedTapeBuilder.un TapeBuilder.lutFetchM SharedTapeM.emit
+
+set_option maxHeartbeats 4000000 in
+theorem kernel_shares : List.Forall₂ (Shares Shape.scalar) rawOuts sharedOuts := by
+  tape_shares [rawOuts, sharedOuts, kernel]
+
+end
+
+/-- The probe kernel's sharing recording is `cseCompact` of its `TapeBuilder` recording. -/
+theorem kernel_shares_record :
+    ((∃ e, TapeM.run Tape.empty (TapeBuilder.runAll rawOuts) = .error e) ∧
+      ∃ e, SharedTapeM.record (SharedTapeBuilder.runAll sharedOuts) = .error e) ∨
+    ∃ (ids : List Nat) (t ts : CpuTape Float),
+      TapeM.run Tape.empty (TapeBuilder.runAll rawOuts) = .ok (ids, t) ∧
+      SharedTapeM.record (SharedTapeBuilder.runAll sharedOuts)
+        = .ok (ids.map (fun i => (cseCompact t).2.getD i i), ts) ∧
+      ts.nodes.map fwd = (cseCompact t).1.nodes.map fwd :=
+  shares_record kernel_shares
+
+/-! ## Axiom audit -/
+
+/-- info: 'PropertyKindCalculus.Examples.TapeSharedCse.shares_record' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in #print axioms shares_record
+
+/-- info: 'PropertyKindCalculus.Examples.TapeSharedCse.kernel_shares_record' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in #print axioms kernel_shares_record
 
 end PropertyKindCalculus.Examples.TapeSharedCse
 

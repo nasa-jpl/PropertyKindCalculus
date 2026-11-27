@@ -7,7 +7,8 @@ once over the carrier classes, is recorded twice: at `TapeBuilder` then `cseComp
 the output ids. The kernel reuses sub-expressions, so the `TapeBuilder` recording is larger than
 its DAG and the comparison is not vacuous.
 
-This is the only link between the sharing carrier and the `TapeBuilder` parity theorems.
+`PropertyKindCalculus.Examples.TapeSharedCse` proves this agreement for this kernel
+(`kernel_shares_record`); the probes here show the comparison is not vacuous.
 -/
 
 module
@@ -51,8 +52,7 @@ def nodes (t : CpuTape Float) : Array (Option String × Array Nat × List UInt64
 def unshared : Except String (Nat × CpuTape Float × List Nat) := do
   let o := kernel (C := TapeBuilder) ⟨TapeM.leaf xv (name := some "x")⟩
     ⟨TapeM.leaf yv (name := some "y")⟩
-  let (ids, t) ← TapeM.run Tape.empty (do
-    let a ← o.1.run; let b ← o.2.run; pure [a, b])
+  let (ids, t) ← TapeM.run Tape.empty (TapeBuilder.runAll [o.1, o.2])
   let (t', remap) := cseCompact t
   pure (t.size, t', ids.map (fun i => remap.getD i i))
 
@@ -60,8 +60,7 @@ def unshared : Except String (Nat × CpuTape Float × List Nat) := do
 def shared : Except String (CpuTape Float × List Nat) := do
   let o := kernel (C := SharedTapeBuilder) (SharedTapeBuilder.input "x" xv)
     (SharedTapeBuilder.input "y" yv)
-  let (ids, t) ← SharedTapeM.record (do
-    let a ← o.1.run; let b ← o.2.run; pure [a, b])
+  let (ids, t) ← SharedTapeM.record (SharedTapeBuilder.runAll [o.1, o.2])
   pure (t, ids)
 
 /-- Both recordings succeed and give the same tape and the same output ids. -/
