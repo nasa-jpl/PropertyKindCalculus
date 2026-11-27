@@ -823,6 +823,69 @@ macro "tape_shares" " [" names:Lean.Parser.Tactic.simpLemma,* "]" : tactic =>
        | apply Shares.lutFetch | exact Shares.input _ _ | exact Shares.batchConst _
        | exact Shares.leaf _ _ | exact Shares.const _ | exact Shares.unsupported _))
 
+/-! ## Each key once -/
+
+/-- Every compacted node is the memo's entry for its own key. -/
+def Full (st : CseState) : Prop :=
+  ∀ (i : Nat) (h : i < st.1.nodes.size), st.2.2[nodeKey #[] st.1.nodes[i]]? = some i
+
+theorem Full.step {st : CseState} (h : Full st) (n : CpuNode Float) : Full (cseStep st n) := by
+  unfold cseStep
+  split
+  · exact h
+  · rename_i hnone
+    have hk : nodeKey #[] { n with parents := n.parents.map (fun p => st.2.1.getD p p) }
+        = nodeKey st.2.1 n := by
+      simp only [nodeKey, map_getD_empty]
+    intro i hi
+    simp only [Tape.addNode, Array.size_push] at hi ⊢
+    by_cases hlt : i < st.1.nodes.size
+    · rw [Array.getElem_push_lt hlt, Std.HashMap.getElem?_insert]
+      split
+      · rename_i heq
+        have hi' := h i hlt
+        rw [← beq_iff_eq.mp heq, hnone] at hi'
+        cases hi'
+      · exact h i hlt
+    · obtain rfl : i = st.1.nodes.size := by omega
+      rw [Array.getElem_push_eq, hk]
+      exact Std.HashMap.getElem?_insert_self
+
+theorem cseFold_full (t : CpuTape Float) : Full (cseFold t) :=
+  Array.foldl_induction (fun _ st => Full st) (fun i hi => by simp [cseInit, Tape.empty] at hi)
+    (fun _ _ h => h.step _)
+
+/-- **No two nodes of a compacted tape share a key** (name, operands, value bits). -/
+theorem cseCompact_keys_distinct (t : CpuTape Float) (i j : Nat)
+    (hi : i < (cseCompact t).1.nodes.size) (hj : j < (cseCompact t).1.nodes.size)
+    (h : nodeKey #[] (cseCompact t).1.nodes[i] = nodeKey #[] (cseCompact t).1.nodes[j]) :
+    i = j := by
+  simp only [cseCompact_eq_foldl] at hi hj h
+  have a := cseFold_full t i hi
+  rw [h, cseFold_full t j hj] at a
+  exact (Option.some.inj a).symm
+
+/-- A tape with the forward content of a compacted tape has each key once: with
+`shares_record`, the sharing recorder emits each distinct sub-expression once. -/
+theorem keys_distinct_of_fwd {ts : CpuTape Float} (t : CpuTape Float)
+    (hf : ts.nodes.map fwd = (cseCompact t).1.nodes.map fwd) (i j : Nat)
+    (hi : i < ts.nodes.size) (hj : j < ts.nodes.size)
+    (h : nodeKey #[] ts.nodes[i] = nodeKey #[] ts.nodes[j]) : i = j := by
+  have hsz : ts.nodes.size = (cseCompact t).1.nodes.size := by
+    simpa using congrArg Array.size hf
+  have key : ∀ k (hk : k < ts.nodes.size) (hk' : k < (cseCompact t).1.nodes.size),
+      nodeKey #[] ts.nodes[k] = nodeKey #[] (cseCompact t).1.nodes[k] := by
+    intro k hk hk'
+    have e : fwd ts.nodes[k] = fwd (cseCompact t).1.nodes[k] := by
+      have := congrArg (fun a => a[k]?) hf
+      simpa [Array.getElem?_map, Array.getElem?_eq_getElem hk,
+        Array.getElem?_eq_getElem hk'] using this
+    simp only [fwd, Prod.mk.injEq] at e
+    exact nodeKey_congr e.1 e.2.1 e.2.2
+  have hi' : i < (cseCompact t).1.nodes.size := hsz ▸ hi
+  have hj' : j < (cseCompact t).1.nodes.size := hsz ▸ hj
+  exact cseCompact_keys_distinct t i j hi' hj' (by rw [← key i hi hi', ← key j hj hj', h])
+
 /-! ## The probe kernel of `Tests.Torch.TapeShared` -/
 
 open PropertyKindCalculus.Tests.TapeShared
@@ -843,7 +906,10 @@ section
 attribute [local irreducible] TapeBuilder.bin TapeBuilder.un SharedTapeBuilder.bin
   SharedTapeBuilder.un TapeBuilder.lutFetchM SharedTapeM.emit
 
+-- The unfolded goal is the kernel's expression tree, not its DAG.
 set_option maxHeartbeats 4000000 in
+/-- The probe kernel's outputs at the two carriers are related: every op of the alphabet, with
+reused intermediates and `min p p` / `max q q`. -/
 theorem kernel_shares : List.Forall₂ (Shares Shape.scalar) rawOuts sharedOuts := by
   tape_shares [rawOuts, sharedOuts, kernel]
 
@@ -864,6 +930,9 @@ theorem kernel_shares_record :
 
 /-- info: 'PropertyKindCalculus.Examples.TapeSharedCse.shares_record' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in #print axioms shares_record
+
+/-- info: 'PropertyKindCalculus.Examples.TapeSharedCse.keys_distinct_of_fwd' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in #print axioms keys_distinct_of_fwd
 
 /-- info: 'PropertyKindCalculus.Examples.TapeSharedCse.kernel_shares_record' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in #print axioms kernel_shares_record
