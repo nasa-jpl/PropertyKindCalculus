@@ -348,6 +348,46 @@ theorem raw_natural (o : SharedOp) (s : Shape) (T T' : CpuTape Float) (ps ps' : 
   case sqrt =>
     exact un_natural _ _ rfl Op.rule?_sqrt_clampNegative rfl rfl T T' _ _ h0 h0'
 
+/-! ## Reading an operand on both tapes -/
+
+/-- A node of shape `s` reads back as a tensor of shape `s`. -/
+theorem read_of_node {s : Shape} {T : CpuTape Float} {id : Nat} {n : CpuNode Float}
+    (hn : T.nodes[id]? = some n) (hs : n.value.shape = s) :
+    Tape.requireValue (s := s) T id = .ok (n.value.cast hs) := by
+  unfold Tape.requireValue
+  simp [Tape.getValue?, Tape.getNode?, hn, hs]
+
+/-- Equal stored values cast to equal tensors. -/
+theorem cast_congr {s : Shape} {v w : SomeTensor Float} (h : v = w) (hv : v.shape = s)
+    (hw : w.shape = s) : v.cast hv = w.cast hw := by
+  subst h
+  rfl
+
+/-- A raw id and its remap read the same tensor, on the raw tape and on the sharing tape. -/
+theorem RelSt.read {s : Shape} {t : CpuTape Float} {st : CseState} {σ : SharedTape}
+    (h : RelSt s t st σ) {id : Nat} (hid : id < t.nodes.size) :
+    ∃ v : Tensor Float s, Tape.requireValue (s := s) t id = .ok v ∧
+      Tape.requireValue (s := s) σ.tape (st.2.1.getD id id) = .ok v ∧
+      st.2.1.getD id id < σ.tape.nodes.size := by
+  obtain ⟨nc, hnc, hval⟩ := h.value id hid
+  have hsh : t.nodes[id].value.shape = s := h.shape _ (Array.getElem_mem hid)
+  have hlt : st.2.1.getD id id < st.1.nodes.size := by
+    by_contra hge
+    rw [Array.getElem?_eq_none (by omega)] at hnc
+    cases hnc
+  have hlt' : st.2.1.getD id id < σ.tape.nodes.size := h.tape_size ▸ hlt
+  have hσ : fwd σ.tape.nodes[st.2.1.getD id id] = fwd nc := by
+    have h1 := congrArg (fun a => a[st.2.1.getD id id]?) h.tape
+    simp only [Array.getElem?_map, hnc, Array.getElem?_eq_getElem hlt', Option.map_some,
+      Option.some.injEq] at h1
+    exact h1
+  have hσv : σ.tape.nodes[st.2.1.getD id id].value = t.nodes[id].value := by
+    have := congrArg (fun a => a.2.2) hσ
+    exact this.trans hval
+  refine ⟨t.nodes[id].value.cast hsh, read_of_node (Array.getElem?_eq_getElem hid) hsh, ?_, hlt'⟩
+  rw [read_of_node (Array.getElem?_eq_getElem hlt') (hσv ▸ hsh)]
+  exact congrArg _ (cast_congr hσv _ _)
+
 end PropertyKindCalculus.Examples.TapeSharedCse
 
 end Blanket
