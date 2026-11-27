@@ -267,6 +267,87 @@ theorem binary_node_ne {σ₁ σ₂ τ : Shape}
     obtain ⟨h0, h1⟩ := hal r hr'
     simp [recordedNode, Args.ids, Arg.id?, prepared, aliasOf, hr', List.finRange, h0, h1, hab]
 
+/-- A binary recorder on two tapes whose operands read the same values appends nodes with the
+same name and value. -/
+theorem bin_natural {s : Shape} (name : String)
+    (op : Op [⟨.value, s⟩, ⟨.value, s⟩] [⟨.value, s⟩])
+    {rule : Op.Rule Float [⟨.value, s⟩, ⟨.value, s⟩] [⟨.value, s⟩]}
+    (hc : op.check = .ok ()) (hr : op.rule? (α := Float) = some rule)
+    (hv : rule.validate = fun _ => .ok ())
+    (hal : ∀ r, rule.alias? = some r → r.first.val = 0 ∧ r.second.val = 1)
+    (T T' : CpuTape Float) (a b a' b' : Nat) {va vb : Tensor Float s}
+    (ha : Tape.requireValue (s := s) T a = .ok va) (hb : Tape.requireValue (s := s) T b = .ok vb)
+    (ha' : Tape.requireValue (s := s) T' a' = .ok va)
+    (hb' : Tape.requireValue (s := s) T' b' = .ok vb) :
+    ∃ n n' : CpuNode Float,
+      (TapeM.record fun t => CpuTape.binary t name op a b) T
+        = .ok (T.nodes.size, (T.addNode n).1) ∧
+      (TapeM.record fun t => CpuTape.binary t name op a' b') T'
+        = .ok (T'.nodes.size, (T'.addNode n').1) ∧
+      n'.name = n.name ∧ n'.value = n.value ∧ n.value.shape = s ∧
+      (a ≠ b → n.parents = #[a, b]) := by
+  obtain ⟨n, h1, h2, h3, h4⟩ := binary_node_ne T name op a b hc hr hv hal ha hb
+  obtain ⟨n', h1', h2', -, h4'⟩ := binary_node_ne T' name op a' b' hc hr hv hal ha' hb'
+  refine ⟨n, n', ?_, ?_, h2'.trans h2.symm, h4'.trans h4.symm, by rw [h4]; rfl, h3⟩
+  · simp [TapeM.record, h1, Except.map, Tape.size]
+  · simp [TapeM.record, h1', Except.map, Tape.size]
+
+/-- A unary recorder on two tapes whose operand reads the same value appends nodes with the same
+name and value. -/
+theorem un_natural {s : Shape} (name : String) (op : Op [⟨.value, s⟩] [⟨.value, s⟩])
+    {rule : Op.Rule Float [⟨.value, s⟩] [⟨.value, s⟩]}
+    (hc : op.check = .ok ()) (hr : op.rule? (α := Float) = some rule)
+    (hv : rule.validate = fun _ => .ok ()) (hal : rule.alias? = none)
+    (T T' : CpuTape Float) (a a' : Nat) {va : Tensor Float s}
+    (ha : Tape.requireValue (s := s) T a = .ok va)
+    (ha' : Tape.requireValue (s := s) T' a' = .ok va) :
+    ∃ n n' : CpuNode Float,
+      (TapeM.record fun t => CpuTape.unary t name op a) T
+        = .ok (T.nodes.size, (T.addNode n).1) ∧
+      (TapeM.record fun t => CpuTape.unary t name op a') T'
+        = .ok (T'.nodes.size, (T'.addNode n').1) ∧
+      n'.name = n.name ∧ n'.value = n.value ∧ n.value.shape = s ∧ n.parents = #[a] := by
+  obtain ⟨n, h1, h2, h3, h4⟩ := TapeFaithful.unary_node T name op a hc hr hv ha
+  obtain ⟨n', h1', h2', -, h4'⟩ := TapeFaithful.unary_node T' name op a' hc hr hv ha'
+  refine ⟨n, n', ?_, ?_, h2'.trans h2.symm, h4'.trans h4.symm, by rw [h4]; rfl, h3 hal⟩
+  · simp [TapeM.record, h1, Except.map, Tape.size]
+  · simp [TapeM.record, h1', Except.map, Tape.size]
+
+/-- Whether a `SharedOp` takes two operands. -/
+def binary : SharedOp → Bool
+  | .exp | .log | .abs | .sqrt => false
+  | _ => true
+
+/-- **A `SharedOp` reads only its operands' values.** On two tapes whose operands read the same
+values, its recorder appends nodes with the same name and value; on the first tape the node's
+operands are the ids it was given, when a binary op is given two nodes. -/
+theorem raw_natural (o : SharedOp) (s : Shape) (T T' : CpuTape Float) (ps ps' : Array Nat)
+    {v0 v1 : Tensor Float s}
+    (h0 : Tape.requireValue (s := s) T (ps.getD 0 0) = .ok v0)
+    (h1 : Tape.requireValue (s := s) T (ps.getD 1 0) = .ok v1)
+    (h0' : Tape.requireValue (s := s) T' (ps'.getD 0 0) = .ok v0)
+    (h1' : Tape.requireValue (s := s) T' (ps'.getD 1 0) = .ok v1) :
+    ∃ n n' : CpuNode Float,
+      (o.raw s ps) T = .ok (T.nodes.size, (T.addNode n).1) ∧
+      (o.raw s ps') T' = .ok (T'.nodes.size, (T'.addNode n').1) ∧
+      n'.name = n.name ∧ n'.value = n.value ∧ n.value.shape = s ∧
+      (if binary o then ps.getD 0 0 ≠ ps.getD 1 0 → n.parents = #[ps.getD 0 0, ps.getD 1 0]
+       else n.parents = #[ps.getD 0 0]) := by
+  cases o
+  case add => exact bin_natural _ _ rfl Op.rule?_add rfl (by simp) T T' _ _ _ _ h0 h1 h0' h1'
+  case sub => exact bin_natural _ _ rfl Op.rule?_sub rfl (by simp) T T' _ _ _ _ h0 h1 h0' h1'
+  case mul => exact bin_natural _ _ rfl Op.rule?_mul rfl (by simp) T T' _ _ _ _ h0 h1 h0' h1'
+  case div => exact bin_natural _ _ rfl Op.rule?_div rfl (by simp) T T' _ _ _ _ h0 h1 h0' h1'
+  case min => exact bin_natural _ _ rfl Op.rule?_min rfl (by simp) T T' _ _ _ _ h0 h1 h0' h1'
+  case max => exact bin_natural _ _ rfl Op.rule?_max rfl (by simp) T T' _ _ _ _ h0 h1 h0' h1'
+  case fmin => exact bin_natural _ _ rfl Op.rule?_fmin rfl (by simp) T T' _ _ _ _ h0 h1 h0' h1'
+  case fmax => exact bin_natural _ _ rfl Op.rule?_fmax rfl (by simp) T T' _ _ _ _ h0 h1 h0' h1'
+  case exp => exact un_natural _ _ rfl Op.rule?_exp rfl rfl T T' _ _ h0 h0'
+  case log => exact un_natural _ _ rfl Op.rule?_log rfl rfl T T' _ _ h0 h0'
+  case abs => exact un_natural _ _ rfl Op.rule?_abs rfl rfl T T' _ _ h0 h0'
+  case sqrt =>
+    exact un_natural _ _ rfl Op.rule?_sqrt_clampNegative rfl rfl T T' _ _ h0 h0'
+
 end PropertyKindCalculus.Examples.TapeSharedCse
 
 end Blanket
