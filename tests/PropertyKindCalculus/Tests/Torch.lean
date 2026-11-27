@@ -11,6 +11,7 @@ evaluate without a GPU.
 import PropertyKindCalculus.Tests.Torch.FusedKinds
 import PropertyKindCalculus.Tests.Torch.TapeHom
 import PropertyKindCalculus.Tests.Torch.TapeSeal
+import PropertyKindCalculus.Tests.Torch.TapeShared
 import PropertyKindCalculus.Tests.Torch.AutoScaling
 import PropertyKindCalculus.Tests.Torch.BatchCarrier
 import PropertyKindCalculus.Tests.Torch.Refinement
