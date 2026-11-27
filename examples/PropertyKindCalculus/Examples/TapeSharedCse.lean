@@ -232,6 +232,41 @@ theorem Rel.step {s : Shape} {t : CpuTape Float} {σ : SharedTape} (h : Rel s t 
   rw [cseFold_addNode]
   exact RelSt.step h hs hn hv hp
 
+/-! ## The recorders read only their operands' values -/
+
+open TorchLean.Tape in
+/-- The node a binary table operator appends, with its operands when they are two nodes: an alias
+rule on positions 0 and 1 fires only when both name one node. -/
+theorem binary_node_ne {σ₁ σ₂ τ : Shape}
+    (t : CpuTape Float) (name : String) (op : Op [⟨.value, σ₁⟩, ⟨.value, σ₂⟩] [⟨.value, τ⟩])
+    (aId bId : Nat) {rule : Op.Rule Float [⟨.value, σ₁⟩, ⟨.value, σ₂⟩] [⟨.value, τ⟩]}
+    (hc : op.check = .ok ()) (hr : op.rule? (α := Float) = some rule)
+    (hv : rule.validate = fun _ => .ok ())
+    (hal : ∀ r, rule.alias? = some r → r.first.val = 0 ∧ r.second.val = 1)
+    {a : Tensor Float σ₁} {b : Tensor Float σ₂}
+    (ha : requireValue (s := σ₁) t aId = .ok a) (hb : requireValue (s := σ₂) t bId = .ok b) :
+    ∃ node : CpuNode Float,
+      CpuTape.binary t name op aId bId = .ok ((t.addNode node).1, t.size) ∧
+      node.name = some name ∧ (aId ≠ bId → node.parents = #[aId, bId]) ∧
+      node.value = SomeTensor.ofTensor (rule.forward (a, b, ())).1 := by
+  have hread : Args.read t [⟨.value, σ₁⟩, ⟨.value, σ₂⟩] (aId, bId, ()) = .ok (a, b, ()) := by
+    simp [Args.read, Arg.read, ha, hb, bind, Except.bind, pure, Except.pure]
+  have hpv := prepared_value rule
+    (Args.ids [⟨.value, σ₁⟩, ⟨.value, σ₂⟩]
+      (show Args Float [⟨.value, σ₁⟩, ⟨.value, σ₂⟩] from (aId, bId, ()))) (a, b, ())
+    (Args.flags t [⟨.value, σ₁⟩, ⟨.value, σ₂⟩] (aId, bId, ()))
+  unfold CpuTape.binary Tape.apply
+  simp only [hc, hr, hread, hv, bind, Except.bind, record, valuePorts,
+    List.countP_singleton, beq_self_eq_true, ite_true, gt_iff_lt, Nat.lt_irrefl, ite_false, pure,
+    Except.pure]
+  refine ⟨_, _root_.rfl, _root_.rfl, fun hab => ?_,
+    congrArg (fun v : Values Float [⟨.value, τ⟩] => SomeTensor.ofTensor v.1) hpv⟩
+  cases hr' : rule.alias? with
+  | none => simp [recordedNode, Args.ids, Arg.id?, prepared, aliasOf, hr', List.finRange]
+  | some r =>
+    obtain ⟨h0, h1⟩ := hal r hr'
+    simp [recordedNode, Args.ids, Arg.id?, prepared, aliasOf, hr', List.finRange, h0, h1, hab]
+
 end PropertyKindCalculus.Examples.TapeSharedCse
 
 end Blanket
