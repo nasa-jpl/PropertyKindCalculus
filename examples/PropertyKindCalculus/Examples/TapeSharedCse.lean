@@ -814,18 +814,18 @@ same order, and the sharing ids are the remapped `TapeBuilder` ids. -/
 theorem shares_record {bs : List (TapeBuilder s)} {sbs : List (SharedTapeBuilder s)}
     (h : List.Forall₂ (Shares s) bs sbs) :
     ((∃ e, TapeM.run Tape.empty (TapeBuilder.runAll bs) = .error e) ∧
-      ∃ e, SharedTapeM.record (SharedTapeBuilder.runAll sbs) = .error e) ∨
+      ∃ e, SharedTapeM.recordRaw (SharedTapeBuilder.runAll sbs) = .error e) ∨
     ∃ (ids : List Nat) (t ts : CpuTape Float),
       TapeM.run Tape.empty (TapeBuilder.runAll bs) = .ok (ids, t) ∧
-      SharedTapeM.record (SharedTapeBuilder.runAll sbs)
+      SharedTapeM.recordRaw (SharedTapeBuilder.runAll sbs)
         = .ok (ids.map (fun i => (cseCompact t).2.getD i i), ts) ∧
       ts.nodes.map fwd = (cseCompact t).1.nodes.map fwd := by
   rcases Shares.runAll h Tape.empty {} (Rel.empty s) (Seen.empty s) with
     ⟨he, ⟨e', he'⟩⟩ | ⟨ids, t, σ, hr, hsr, hR, -, -, -⟩
   · refine .inl ⟨he, e', ?_⟩
-    simp [SharedTapeM.record, StateT.run, he', bind, Except.bind]
+    simp [SharedTapeM.recordRaw, StateT.run, he', bind, Except.bind]
   · refine .inr ⟨ids, t, σ.tape, hr, ?_, ?_⟩
-    · simp [SharedTapeM.record, StateT.run, hsr, bind, Except.bind, pure, Except.pure,
+    · simp [SharedTapeM.recordRaw, StateT.run, hsr, bind, Except.bind, pure, Except.pure,
         cseCompact_eq_foldl]
     · rw [cseCompact_eq_foldl]; exact hR.tape
 
@@ -910,6 +910,17 @@ theorem keys_distinct_of_fwd {ts : CpuTape Float} (t : CpuTape Float)
 
 open PropertyKindCalculus.Tests.TapeShared
 
+/-- The guarded `record` is `recordRaw`, or the name-clash error. -/
+theorem record_eq_or_error {β : Type} (m : SharedTapeM β) :
+    SharedTapeM.record m = SharedTapeM.recordRaw m ∨ ∃ e, SharedTapeM.record m = .error e := by
+  unfold SharedTapeM.record
+  cases h : SharedTapeM.recordRaw m with
+  | error e => exact .inl rfl
+  | ok r =>
+    cases h' : SharedTapeM.nameClash? r.2 with
+    | none => left; simp [bind, Except.bind, h', pure, Except.pure]
+    | some nm => right; exact ⟨_, by simp [bind, Except.bind, h', throw, throwThe, MonadExceptOf.throw]; rfl⟩
+
 /-- The probe kernel's outputs at `TapeBuilder`. -/
 def rawOuts : List (TapeBuilder Shape.scalar) :=
   let o := kernel (C := TapeBuilder) ⟨TapeM.leaf xv (name := some "x")⟩
@@ -938,10 +949,10 @@ end
 /-- The probe kernel's sharing recording is `cseCompact` of its `TapeBuilder` recording. -/
 theorem kernel_shares_record :
     ((∃ e, TapeM.run Tape.empty (TapeBuilder.runAll rawOuts) = .error e) ∧
-      ∃ e, SharedTapeM.record (SharedTapeBuilder.runAll sharedOuts) = .error e) ∨
+      ∃ e, SharedTapeM.recordRaw (SharedTapeBuilder.runAll sharedOuts) = .error e) ∨
     ∃ (ids : List Nat) (t ts : CpuTape Float),
       TapeM.run Tape.empty (TapeBuilder.runAll rawOuts) = .ok (ids, t) ∧
-      SharedTapeM.record (SharedTapeBuilder.runAll sharedOuts)
+      SharedTapeM.recordRaw (SharedTapeBuilder.runAll sharedOuts)
         = .ok (ids.map (fun i => (cseCompact t).2.getD i i), ts) ∧
       ts.nodes.map fwd = (cseCompact t).1.nodes.map fwd :=
   shares_record kernel_shares

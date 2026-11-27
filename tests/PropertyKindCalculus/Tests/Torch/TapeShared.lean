@@ -74,7 +74,7 @@ def agree : Bool :=
 /-- A scalar and a one-element vector with the same name and value bits stay two leaves, each
 with its own shape. -/
 def mixedShapes : Except String (List Nat × List Shape) := do
-  let (ids, t) ← SharedTapeM.record (do
+  let (ids, t) ← SharedTapeM.recordRaw (do
     let a ← SharedTapeM.leaf (Tensor.full Shape.scalar (1.5 : Float)) (name := some "v")
     let b ← SharedTapeM.leaf (Tensor.full [1] (1.5 : Float)) (name := some "v")
     let c ← SharedTapeM.leaf (Tensor.full Shape.scalar (1.5 : Float)) (name := some "v")
@@ -82,6 +82,20 @@ def mixedShapes : Except String (List Nat × List Shape) := do
   pure (ids, t.nodes.toList.map (·.value.shape))
 
 #guard mixedShapes == .ok ([0, 1, 0], [Shape.scalar, [1]])
+
+/-- `record` rejects an input name that holds two tensors; one input used twice is accepted. -/
+def nameGuard (y : Float) : Bool :=
+  match SharedTapeM.record (do
+    let a ← SharedTapeM.leaf (Tensor.full Shape.scalar (1.5 : Float)) (name := some "v")
+    let b ← SharedTapeM.leaf (Tensor.full Shape.scalar y) (name := some "v")
+    pure [a, b]) with
+  | .ok _ => true
+  | .error _ => false
+
+#guard nameGuard 1.5 && !nameGuard 2.5
+#guard (SharedTapeM.record (do
+    let _ ← SharedTapeM.leaf (Tensor.full Shape.scalar (1.5 : Float)) (name := some "v")
+    SharedTapeM.leaf (Tensor.full [1] (1.5 : Float)) (name := some "v"))).toOption.isNone
 
 -- Not vacuous: the unshared recording is several times its DAG, and compaction removes nothing
 -- from the shared one.

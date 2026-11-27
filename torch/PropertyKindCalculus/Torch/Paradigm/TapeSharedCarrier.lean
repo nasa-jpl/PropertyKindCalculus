@@ -22,7 +22,9 @@ is run; a leaf or a table fetch is run, then looked up.
 
 NAMES. As with `cseCompact`, two input leaves with one name and one recorded value are one
 node, and so are two tables with one name fetched at the same operands with the same result:
-give inputs and tables distinct names.
+give inputs and tables distinct names. `record` rejects an input name that holds two different
+tensors, and `TapeCodegen.resolveTables` rejects two supplied tables with one name; two inputs
+with one name and one recorded value cannot be told from one input used twice.
 
 PROOF. `examples.tape_shared_cse` (`shares_record`) proves the recording is `cseCompact` of the
 `TapeBuilder` recording, per kernel.
@@ -78,9 +80,30 @@ abbrev SharedTapeM : Type → Type := StateT SharedTape Result
 namespace SharedTapeM
 
 /-- Run a recording program from the empty tape; yields its result and the recorded tape. -/
-def record {β : Type} (m : SharedTapeM β) : Result (β × CpuTape Float) := do
+def recordRaw {β : Type} (m : SharedTapeM β) : Result (β × CpuTape Float) := do
   let (b, st) ← StateT.run m {}
   pure (b, st.tape)
+
+/-- A name carried by two named leaves of `t` that differ in shape or value bits, if any. -/
+def nameClash? (t : CpuTape Float) : Option String :=
+  (t.nodes.foldl (init := (({} : Std.HashMap String (Shape × List UInt64)), none))
+    fun (acc : Std.HashMap String (Shape × List UInt64) × Option String) n =>
+      match n.name with
+      | some nm =>
+        if n.parents.isEmpty then
+          let k := (n.value.shape, (TapeCSE.nodeKey #[] n).2.2)
+          match acc.1[nm]? with
+          | some k' => if k == k' then acc else (acc.1, acc.2.or (some nm))
+          | none => (acc.1.insert nm k, acc.2)
+        else acc
+      | none => acc).2
+
+/-- `recordRaw`, rejecting a recording in which one input name holds two different tensors. -/
+def record {β : Type} (m : SharedTapeM β) : Result (β × CpuTape Float) := do
+  let r ← recordRaw m
+  match nameClash? r.2 with
+  | some nm => throw s!"SharedTapeM.record: input name `{nm}` is used for two different tensors"
+  | none => pure r
 
 /-- Record one node with `raw` on operands `ps`, or return the node already holding its key.
 `raw` must append exactly one node; its operands are set to `ps`. -/

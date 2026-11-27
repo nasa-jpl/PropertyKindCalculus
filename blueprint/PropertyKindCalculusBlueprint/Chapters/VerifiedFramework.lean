@@ -396,7 +396,10 @@ What the chain above does not yet cover, each one checked rather than recalled:
   forward content, not the `backward` closures, and assumes one tensor shape.
 - The sharing recorder inherits `cseCompact`'s key: two input leaves with one name and one
   recorded value, or two tables with one name fetched at the same operands with the same
-  result, are one node.
+  result, are one node. Recording rejects an input name that holds two different tensors, and
+  code generation rejects two supplied tables with one name; two inputs with one name and one
+  recorded value cannot be told from one input used twice, so distinct names remain a
+  precondition there.
 
 # How far it reaches
 
