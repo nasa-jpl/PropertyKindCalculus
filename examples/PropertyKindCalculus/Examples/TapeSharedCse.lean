@@ -318,15 +318,21 @@ def binary : SharedOp → Bool
   | .exp | .log | .abs | .sqrt => false
   | _ => true
 
+/-- The id a `SharedOp` reads as its second operand (a unary op reads its only operand). -/
+def snd (o : SharedOp) (ps : Array Nat) : Nat :=
+  match binary o with
+  | true => ps.getD 1 0
+  | false => ps.getD 0 0
+
 /-- **A `SharedOp` reads only its operands' values.** On two tapes whose operands read the same
 values, its recorder appends nodes with the same name and value; on the first tape the node's
 operands are the ids it was given, when a binary op is given two nodes. -/
 theorem raw_natural (o : SharedOp) (s : Shape) (T T' : CpuTape Float) (ps ps' : Array Nat)
     {v0 v1 : Tensor Float s}
     (h0 : Tape.requireValue (s := s) T (ps.getD 0 0) = .ok v0)
-    (h1 : Tape.requireValue (s := s) T (ps.getD 1 0) = .ok v1)
+    (h1 : Tape.requireValue (s := s) T (snd o ps) = .ok v1)
     (h0' : Tape.requireValue (s := s) T' (ps'.getD 0 0) = .ok v0)
-    (h1' : Tape.requireValue (s := s) T' (ps'.getD 1 0) = .ok v1) :
+    (h1' : Tape.requireValue (s := s) T' (snd o ps') = .ok v1) :
     ∃ n n' : CpuNode Float,
       (o.raw s ps) T = .ok (T.nodes.size, (T.addNode n).1) ∧
       (o.raw s ps') T' = .ok (T'.nodes.size, (T'.addNode n').1) ∧
@@ -387,6 +393,187 @@ theorem RelSt.read {s : Shape} {t : CpuTape Float} {st : CseState} {σ : SharedT
   refine ⟨t.nodes[id].value.cast hsh, read_of_node (Array.getElem?_eq_getElem hid) hsh, ?_, hlt'⟩
   rw [read_of_node (Array.getElem?_eq_getElem hlt') (hσv ▸ hsh)]
   exact congrArg _ (cast_congr hσv _ _)
+
+/-! ## The lookup-before-run table -/
+
+/-- What an op at shape `s` appends on operands reading `v0` and `v1`, on any tape: a node named
+`nm` storing `val`. -/
+def Spec (o : SharedOp) (s : Shape) (v0 v1 : Tensor Float s) (nm : Option String)
+    (val : SomeTensor Float) : Prop :=
+  val.shape = s ∧ ∀ (T : CpuTape Float) (ps : Array Nat),
+    Tape.requireValue (s := s) T (ps.getD 0 0) = .ok v0 →
+    Tape.requireValue (s := s) T (snd o ps) = .ok v1 →
+    ∃ n : CpuNode Float, (o.raw s ps) T = .ok (T.nodes.size, (T.addNode n).1) ∧
+      n.name = nm ∧ n.value = val ∧
+      (if binary o then ps.getD 0 0 ≠ ps.getD 1 0 → n.parents = #[ps.getD 0 0, ps.getD 1 0]
+       else n.parents = #[ps.getD 0 0])
+
+/-- Every op has a `Spec` at the values its operands read. -/
+theorem raw_spec (o : SharedOp) (s : Shape) (T : CpuTape Float) (ps : Array Nat)
+    {v0 v1 : Tensor Float s}
+    (h0 : Tape.requireValue (s := s) T (ps.getD 0 0) = .ok v0)
+    (h1 : Tape.requireValue (s := s) T (snd o ps) = .ok v1) :
+    ∃ nm val, Spec o s v0 v1 nm val := by
+  obtain ⟨n, -, hr, -, -, -, hsh, -⟩ := raw_natural o s T T ps ps h0 h1 h0 h1
+  refine ⟨n.name, n.value, hsh, fun T' ps' g0 g1 => ?_⟩
+  obtain ⟨m, m', k, k', kn, kv, -, kp⟩ := raw_natural o s T' T ps' ps g0 g1 h0 h1
+  have e : (T.addNode n).1 = (T.addNode m').1 :=
+    (Prod.mk.inj (Except.ok.inj (hr.symm.trans k'))).2
+  have e' := congrArg (fun t : CpuTape Float => t.nodes.back?) e
+  simp only [Tape.addNode, Array.back?_push, Option.some.injEq] at e'
+  subst e'
+  exact ⟨m, k, kn.symm, kv.symm, kp⟩
+
+/-- The key depends on a node's name, operands and value only. -/
+theorem nodeKey_congr {a b : CpuNode Float} (hn : a.name = b.name) (hp : a.parents = b.parents)
+    (hv : a.value = b.value) : nodeKey #[] a = nodeKey #[] b := by
+  unfold nodeKey
+  rw [hn, hp, hv]
+
+/-- **The lookup table is sound.** Each entry names the node the memo holds for what the op
+would append: running the op and looking its node up returns the entry. -/
+def Seen (s : Shape) (σ : SharedTape) : Prop :=
+  ∀ (o : SharedOp) (ps : Array Nat) (id : Nat), σ.seen[(o, s, ps)]? = some id →
+    ∃ (v0 v1 : Tensor Float s) (node : CpuNode Float),
+      ps.getD 0 0 < σ.tape.nodes.size ∧ snd o ps < σ.tape.nodes.size ∧
+      Tape.requireValue (s := s) σ.tape (ps.getD 0 0) = .ok v0 ∧
+      Tape.requireValue (s := s) σ.tape (snd o ps) = .ok v1 ∧
+      Spec o s v0 v1 node.name node.value ∧ node.parents = ps ∧
+      σ.memo[(s, nodeKey #[] node)]? = some id
+
+theorem Seen.empty (s : Shape) : Seen s {} := by
+  intro o ps id h
+  simp at h
+
+/-- Emitting a node keeps the lookup table sound: the tape and the memo only grow. -/
+theorem Seen.emitPure {s : Shape} {σ : SharedTape} (h : Seen s σ) (node : CpuNode Float) :
+    Seen s (emitPure σ node).2 := by
+  unfold TapeSharedCse.emitPure
+  split
+  · exact h
+  · rename_i hnone
+    intro o ps id hseen
+    obtain ⟨v0, v1, nd, b0, b1, r0, r1, sp, hps, hm⟩ := h o ps id hseen
+    refine ⟨v0, v1, nd, ?_, ?_, ?_, ?_, sp, hps, ?_⟩
+    · simp only [Array.size_push]; omega
+    · simp only [Array.size_push]; omega
+    · exact (TapeFaithful.requireValue_addNode_of_lt σ.tape node _ b0).trans r0
+    · exact (TapeFaithful.requireValue_addNode_of_lt σ.tape node _ b1).trans r1
+    · show (σ.memo.insert _ _)[(s, nodeKey #[] nd)]? = some id
+      rw [Std.HashMap.getElem?_insert]
+      split
+      · rename_i heq
+        rw [← beq_iff_eq.mp heq, hnone] at hm
+        cases hm
+      · exact hm
+
+/-- The relation does not read the lookup table. -/
+theorem RelSt.withSeen {s : Shape} {t : CpuTape Float} {st : CseState} {σ : SharedTape}
+    (h : RelSt s t st σ) (seen : Std.HashMap (SharedOp × Shape × Array Nat) Nat) :
+    RelSt s t st { σ with seen := seen } :=
+  ⟨h.tape, h.memo, h.shape, h.shapeC, h.size, h.value, h.key⟩
+
+/-- After emitting a node, the memo holds its key at the id returned. -/
+theorem emitPure_memo {s : Shape} (σ : SharedTape) (node : CpuNode Float)
+    (hs : node.value.shape = s) :
+    (emitPure σ node).2.memo[(s, nodeKey #[] node)]? = some (emitPure σ node).1 := by
+  subst hs
+  unfold emitPure
+  split
+  · rename_i h; exact h
+  · exact Std.HashMap.getElem?_insert_self
+
+/-- Emitting a node keeps what earlier ids read. -/
+theorem emitPure_read {s : Shape} (σ : SharedTape) (node : CpuNode Float) {i : Nat}
+    {v : Tensor Float s} (hi : i < σ.tape.nodes.size)
+    (h : Tape.requireValue (s := s) σ.tape i = .ok v) :
+    i < (emitPure σ node).2.tape.nodes.size ∧
+      Tape.requireValue (s := s) (emitPure σ node).2.tape i = .ok v := by
+  unfold emitPure
+  split
+  · exact ⟨hi, h⟩
+  · refine ⟨?_, (TapeFaithful.requireValue_addNode_of_lt σ.tape node _ hi).trans h⟩
+    simp only [Array.size_push]; omega
+
+/-- **One op, both recorders.** On raw operands `ps` and their remaps `ps'`, the raw recorder
+appends a node and `SharedTapeM.op` returns the remap of its id, keeping the relation and the
+lookup table. -/
+theorem op_step {s : Shape} {t : CpuTape Float} {σ : SharedTape} (hR : Rel s t σ)
+    (hS : Seen s σ) (o : SharedOp) (ps ps' : Array Nat)
+    (h0 : ps.getD 0 0 < t.nodes.size) (h1 : snd o ps < t.nodes.size)
+    (e0 : ps'.getD 0 0 = (cseFold t).2.1.getD (ps.getD 0 0) (ps.getD 0 0))
+    (e1 : snd o ps' = (cseFold t).2.1.getD (snd o ps) (snd o ps))
+    (hne : binary o = true → ps.getD 0 0 ≠ ps.getD 1 0)
+    (hpar : ps' = (if binary o then #[ps.getD 0 0, ps.getD 1 0] else #[ps.getD 0 0]).map
+      (fun p => (cseFold t).2.1.getD p p)) :
+    ∃ (n : CpuNode Float) (σ' : SharedTape),
+      (o.raw s ps) t = .ok (t.nodes.size, (t.addNode n).1) ∧
+      SharedTapeM.op o s ps' σ
+        = .ok ((cseFold (t.addNode n).1).2.1.getD t.nodes.size t.nodes.size, σ') ∧
+      Rel s (t.addNode n).1 σ' ∧ Seen s σ' ∧
+      ∀ i, i < t.nodes.size →
+        (cseFold (t.addNode n).1).2.1.getD i i = (cseFold t).2.1.getD i i := by
+  obtain ⟨v0, r0, r0', b0⟩ := hR.read h0
+  obtain ⟨v1, r1, r1', b1⟩ := hR.read h1
+  rw [← e0] at r0' b0
+  rw [← e1] at r1' b1
+  have parents : ∀ n : CpuNode Float,
+      (if binary o then ps.getD 0 0 ≠ ps.getD 1 0 → n.parents = #[ps.getD 0 0, ps.getD 1 0]
+        else n.parents = #[ps.getD 0 0]) →
+      ps' = n.parents.map (fun p => (cseFold t).2.1.getD p p) := by
+    intro n hn
+    rw [hpar]
+    cases hb : binary o
+    · simp only [hb, Bool.false_eq_true, ite_false] at hn; rw [hn]; simp
+    · simp only [hb, ite_true] at hn; rw [hn (hne hb)]; simp
+  cases hseen : σ.seen[(o, s, ps')]? with
+  | some id =>
+    obtain ⟨w0, w1, nd, -, -, q0, q1, sp, hps, hm⟩ := hS o ps' id hseen
+    obtain rfl : w0 = v0 := Except.ok.inj (q0.symm.trans r0')
+    obtain rfl : w1 = v1 := Except.ok.inj (q1.symm.trans r1')
+    obtain ⟨n, hrun, hnm, hval, hpar'⟩ := sp.2 t ps r0 r1
+    have step := Rel.step hR (n := n) (node := nd) (hval ▸ sp.1) hnm.symm hval.symm
+      (hps.trans (parents n hpar'))
+    have hemit : emitPure σ nd = (id, σ) := by
+      unfold emitPure
+      rw [sp.1, hm]
+    rw [hemit] at step
+    refine ⟨n, σ, hrun, ?_, step.1, hS, step.2.2⟩
+    rw [← step.2.1]
+    simp [SharedTapeM.op, hseen, pure, Except.pure]
+  | none =>
+    obtain ⟨nm, val, sp⟩ := raw_spec o s t ps r0 r1
+    obtain ⟨n, hrun, hnm, hval, hpar'⟩ := sp.2 t ps r0 r1
+    obtain ⟨n', hrun', hnm', hval', -⟩ := sp.2 σ.tape ps' r0' r1'
+    have hsh : ({ n' with parents := ps' } : CpuNode Float).value.shape = s := hval' ▸ sp.1
+    have step := Rel.step hR (n := n) (node := { n' with parents := ps' }) (hval ▸ sp.1)
+      (hnm'.trans hnm.symm) (hval'.trans hval.symm) (parents n hpar')
+    have hemit := emit_eq σ ps' (o.raw s ps') n' _ hrun'
+    generalize hE : emitPure σ { n' with parents := ps' } = E at step hemit
+    refine ⟨n, { E.2 with seen := E.2.seen.insert (o, s, ps') E.1 }, hrun, ?_,
+      step.1.withSeen _, ?_, step.2.2⟩
+    · rw [← step.2.1]
+      simp [SharedTapeM.op, hseen, hemit, bind, Except.bind, pure, Except.pure]
+    · intro o2 ps2 id2 hs2
+      simp only [Std.HashMap.getElem?_insert] at hs2
+      split at hs2
+      · rename_i heq
+        have heq' := beq_iff_eq.mp heq
+        obtain ⟨rfl, hh⟩ := Prod.mk.inj heq'
+        obtain rfl : ps' = ps2 := (Prod.mk.inj hh).2
+        obtain rfl := Option.some.inj hs2
+        have m0 := emitPure_read σ { n' with parents := ps' } b0 r0'
+        have m1 := emitPure_read σ { n' with parents := ps' } b1 r1'
+        rw [hE] at m0 m1
+        refine ⟨v0, v1, { n' with parents := ps' }, m0.1, m1.1, m0.2, m1.2, ?_, rfl, ?_⟩
+        · show Spec o s v0 v1 n'.name n'.value
+          rw [hnm', hval']; exact sp
+        · have := emitPure_memo σ { n' with parents := ps' } hsh
+          rw [hE] at this
+          exact this
+      · have := Seen.emitPure hS { n' with parents := ps' }
+        rw [hE] at this
+        exact this o2 ps2 id2 hs2
 
 end PropertyKindCalculus.Examples.TapeSharedCse
 
