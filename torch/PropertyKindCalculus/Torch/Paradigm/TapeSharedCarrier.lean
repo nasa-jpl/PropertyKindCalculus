@@ -26,8 +26,9 @@ give inputs and tables distinct names. `record` rejects an input name that holds
 tensors, and `TapeCodegen.resolveTables` rejects two supplied tables with one name; two inputs
 with one name and one recorded value cannot be told from one input used twice.
 
-PROOF. `examples.tape_shared_cse` (`shares_record`) proves the recording is `cseCompact` of the
-`TapeBuilder` recording, per kernel.
+PROOF. `examples.tape_shared_cse` proves, per kernel, that the recording is `cseCompact` of the
+`TapeBuilder` recording: `shares_record` for `recordRaw` (both fail or both agree), and
+`shares_record_guarded` for `record`, which may also fail on a reused input name.
 
 A `module` file: imports the tape carriers, the CSE key and the LUT vocabulary.
 -/
@@ -65,6 +66,11 @@ def SharedOp.raw (s : Shape) : SharedOp → Array Nat → TapeM Float Nat
   | .log,  ps => TapeM.log  (s := s) (ps.getD 0 0)
   | .abs,  ps => TapeM.abs  (s := s) (ps.getD 0 0)
   | .sqrt, ps => TapeM.sqrt (s := s) (ps.getD 0 0)
+
+/-- Whether the op takes two operands. -/
+def SharedOp.binary : SharedOp → Bool
+  | .exp | .log | .abs | .sqrt => false
+  | _ => true
 
 /-- The sharing recorder's state. -/
 structure SharedTape where
@@ -160,13 +166,20 @@ def input (name : String) (x : Tensor Float s) : SharedTapeBuilder s :=
 def unsupported (op : String) : SharedTapeBuilder s :=
   ⟨throw s!"SharedTapeBuilder: `{op}` has no elementwise tape op"⟩
 
-/-- Lift a binary tape op: run both operands, look up or emit one node. -/
+/-- Lift a binary tape op: run both operands, look up or emit one node. Fails on a unary op. -/
 @[inline] def bin (o : SharedOp) (x y : SharedTapeBuilder s) : SharedTapeBuilder s :=
-  ⟨do let a ← x.run; let b ← y.run; SharedTapeM.op o s #[a, b]⟩
+  ⟨do
+    let a ← x.run
+    let b ← y.run
+    if o.binary then SharedTapeM.op o s #[a, b]
+    else throw "SharedTapeBuilder.bin: a unary op"⟩
 
-/-- Lift a unary tape op: run the operand, look up or emit one node. -/
+/-- Lift a unary tape op: run the operand, look up or emit one node. Fails on a binary op. -/
 @[inline] def un (o : SharedOp) (x : SharedTapeBuilder s) : SharedTapeBuilder s :=
-  ⟨do let a ← x.run; SharedTapeM.op o s #[a]⟩
+  ⟨do
+    let a ← x.run
+    if o.binary then throw "SharedTapeBuilder.un: a binary op"
+    else SharedTapeM.op o s #[a]⟩
 
 instance : Zero (SharedTapeBuilder s) := ⟨const 0⟩
 instance : One (SharedTapeBuilder s) := ⟨const 1⟩

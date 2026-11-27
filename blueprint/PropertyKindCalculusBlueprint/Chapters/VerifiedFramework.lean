@@ -174,7 +174,11 @@ recorder looks each node up by `cseCompact`'s key before appending it. For outpu
 operation by operation at the two carriers and recorded from the empty tape at one tensor shape,
 both recordings fail, or the sharing tape has the name, the operands and the stored value of
 every node of the compacted unshared tape, in the same order, and its output ids are the
-remapped ids. Such a tape holds each key once (`keys_distinct_of_fwd`).
+remapped ids. Such a tape holds each key once (`keys_distinct_of_fwd`). That is the statement
+for the unguarded entry `recordRaw`. The entry models use, `record`, also rejects a recording in
+which one input name holds two different tensors, which the unshared recorder accepts; for it
+the statement is one-sided (`shares_record_guarded`): when `record` succeeds, the unshared
+recording succeeds and the same agreement holds.
 :::
 
 :::proof "vf_thm_shared_record"
@@ -396,7 +400,7 @@ What the chain above does not yet cover, each one checked rather than recalled:
   forward content, not the `backward` closures, and assumes one tensor shape.
 - The sharing recorder inherits `cseCompact`'s key: two input leaves with one name and one
   recorded value, or two tables with one name fetched at the same operands with the same
-  result, are one node. Recording rejects an input name that holds two different tensors, and
+  result, are one node. `record` rejects an input name that holds two different tensors, and
   code generation rejects two supplied tables with one name; two inputs with one name and one
   recorded value cannot be told from one input used twice, so distinct names remain a
   precondition there.

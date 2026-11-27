@@ -97,6 +97,12 @@ def nameGuard (y : Float) : Bool :=
     let _ ← SharedTapeM.leaf (Tensor.full Shape.scalar (1.5 : Float)) (name := some "v")
     SharedTapeM.leaf (Tensor.full [1] (1.5 : Float)) (name := some "v"))).toOption.isNone
 
+-- `un` and `bin` refuse an op of the other arity.
+#guard (SharedTapeM.record (SharedTapeBuilder.un .add
+    (SharedTapeBuilder.const (s := Shape.scalar) 1)).run).toOption.isNone
+#guard (SharedTapeM.record (SharedTapeBuilder.bin .exp (SharedTapeBuilder.const (s := Shape.scalar) 1)
+    (SharedTapeBuilder.const 2)).run).toOption.isNone
+
 -- Not vacuous: the unshared recording is several times its DAG, and compaction removes nothing
 -- from the shared one.
 #guard match unshared, shared with

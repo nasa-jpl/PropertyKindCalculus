@@ -339,6 +339,8 @@ def binary : SharedOp → Bool
   | .exp | .log | .abs | .sqrt => false
   | _ => true
 
+theorem binary_eq (o : SharedOp) : o.binary = binary o := by cases o <;> rfl
+
 /-- The id a `SharedOp` reads as its second operand (a unary op reads its only operand). -/
 def snd (o : SharedOp) (ps : Array Nat) : Nat :=
   match binary o with
@@ -649,7 +651,8 @@ theorem Shares.bin {s : Shape} (o : SharedOp) (hb : binary o = true)
   rw [show (TapeBuilder.bin (fun a b => o.raw s #[a, b]) x y).run
       = (x.run >>= fun a => y.run >>= fun b => o.raw s #[a, b]) from rfl,
     show (SharedTapeBuilder.bin o sx sy).run
-      = (sx.run >>= fun a => sy.run >>= fun b => SharedTapeM.op o s #[a, b]) from rfl]
+      = (sx.run >>= fun a => sy.run >>= fun b => SharedTapeM.op o s #[a, b]) from by
+        simp only [SharedTapeBuilder.bin, binary_eq, hb]; rfl]
   rcases hx t σ hR hS with ⟨⟨e, he⟩, ⟨e', he'⟩⟩ | ⟨a, t1, σ1, hxr, hsxr, hR1, hS1, la, ua, st1⟩
   · exact .inl ⟨⟨e, bind_error he⟩, ⟨e', bind_error he'⟩⟩
   rw [bind_ok hxr, bind_ok hsxr]
@@ -675,7 +678,8 @@ theorem Shares.un {s : Shape} (o : SharedOp) (hb : binary o = false)
   rw [show (TapeBuilder.un (fun a => o.raw s #[a]) x).run
       = (x.run >>= fun a => o.raw s #[a]) from rfl,
     show (SharedTapeBuilder.un o sx).run
-      = (sx.run >>= fun a => SharedTapeM.op o s #[a]) from rfl]
+      = (sx.run >>= fun a => SharedTapeM.op o s #[a]) from by
+        simp only [SharedTapeBuilder.un, binary_eq, hb]; rfl]
   rcases hx t σ hR hS with ⟨⟨e, he⟩, ⟨e', he'⟩⟩ | ⟨a, t1, σ1, hxr, hsxr, hR1, hS1, la, ua, st1⟩
   · exact .inl ⟨⟨e, bind_error he⟩, ⟨e', bind_error he'⟩⟩
   rw [bind_ok hxr, bind_ok hsxr]
@@ -909,6 +913,32 @@ theorem keys_distinct_of_fwd {ts : CpuTape Float} (t : CpuTape Float)
 /-! ## The probe kernel of `Tests.Torch.TapeShared` -/
 
 open PropertyKindCalculus.Tests.TapeShared
+
+/-- The guarded `record`: when it succeeds, the unshared recording succeeds and the sharing tape
+is its compaction. It fails where `recordRaw` does, and on an input name holding two tensors. -/
+theorem shares_record_guarded {bs : List (TapeBuilder s)} {sbs : List (SharedTapeBuilder s)}
+    (h : List.Forall₂ (Shares s) bs sbs) {out : List Nat} {ts : CpuTape Float}
+    (hrec : SharedTapeM.record (SharedTapeBuilder.runAll sbs) = .ok (out, ts)) :
+    ∃ (ids : List Nat) (t : CpuTape Float),
+      TapeM.run Tape.empty (TapeBuilder.runAll bs) = .ok (ids, t) ∧
+      out = ids.map (fun i => (cseCompact t).2.getD i i) ∧
+      ts.nodes.map fwd = (cseCompact t).1.nodes.map fwd := by
+  have hraw : SharedTapeM.recordRaw (SharedTapeBuilder.runAll sbs) = .ok (out, ts) := by
+    unfold SharedTapeM.record at hrec
+    cases hr : SharedTapeM.recordRaw (SharedTapeBuilder.runAll sbs) with
+    | error e => rw [hr] at hrec; cases hrec
+    | ok r =>
+      rw [hr] at hrec
+      cases hc : SharedTapeM.nameClash? r.2 with
+      | some nm =>
+        simp [bind, Except.bind, hc, throw, throwThe, MonadExceptOf.throw] at hrec
+      | none =>
+        simpa [bind, Except.bind, hc, pure, Except.pure] using hrec
+  rcases shares_record h with ⟨-, e, he⟩ | ⟨ids, t, ts', hr, hsr, hf⟩
+  · rw [hraw] at he; cases he
+  · rw [hraw] at hsr
+    cases hsr
+    exact ⟨ids, t, hr, rfl, hf⟩
 
 /-- The guarded `record` is `recordRaw`, or the name-clash error. -/
 theorem record_eq_or_error {β : Type} (m : SharedTapeM β) :
