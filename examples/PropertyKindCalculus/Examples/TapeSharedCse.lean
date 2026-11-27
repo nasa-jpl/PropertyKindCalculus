@@ -575,6 +575,100 @@ theorem op_step {s : Shape} {t : CpuTape Float} {σ : SharedTape} (hR : Rel s t 
         rw [hE] at this
         exact this o2 ps2 id2 hs2
 
+/-! ## The relation between the two carriers, and its alphabet -/
+
+/-- **`sb` records what `cseCompact` leaves of `b`'s recording.** From a raw tape and a sharing
+state related by `Rel`, both fail, or both succeed: the relation holds again, `b`'s id is a new
+raw node, `sb`'s id is its remap, and the remap of earlier nodes does not move. -/
+def Shares (s : Shape) (b : TapeBuilder s) (sb : SharedTapeBuilder s) : Prop :=
+  ∀ (t : CpuTape Float) (σ : SharedTape), Rel s t σ → Seen s σ →
+    ((∃ e, b.run t = .error e) ∧ ∃ e, sb.run σ = .error e) ∨
+    ∃ (id : Nat) (t' : CpuTape Float) (σ' : SharedTape),
+      b.run t = .ok (id, t') ∧
+      sb.run σ = .ok ((cseFold t').2.1.getD id id, σ') ∧
+      Rel s t' σ' ∧ Seen s σ' ∧ t.nodes.size ≤ id ∧ id < t'.nodes.size ∧
+      ∀ i, i < t.nodes.size → (cseFold t').2.1.getD i i = (cseFold t).2.1.getD i i
+
+theorem bind_error {σ α β : Type} {m : StateT σ Result α} {f : α → StateT σ Result β} {t : σ}
+    {e : String} (h : m t = .error e) : (m >>= f) t = .error e := by
+  simp [bind, StateT.bind, Except.bind, h]
+
+theorem bind_ok {σ α β : Type} {m : StateT σ Result α} {f : α → StateT σ Result β} {t t' : σ}
+    {a : α} (h : m t = .ok (a, t')) : (m >>= f) t = f a t' := by
+  simp [bind, StateT.bind, Except.bind, h]
+
+/-- A leaf, at both carriers. -/
+theorem Shares.leaf {s : Shape} (x : Tensor Float s) (name : Option String) :
+    Shares s ⟨TapeM.leaf x (name := name)⟩ ⟨SharedTapeM.leaf x (name := name)⟩ := by
+  intro t σ hR hS
+  right
+  have step := Rel.step hR (n := Tape.Node.leaf (SomeTensor.ofTensor x) name true)
+    (node := { Tape.Node.leaf (SomeTensor.ofTensor x) name true with parents := #[] })
+    rfl rfl rfl (by simp [Tape.Node.leaf])
+  refine ⟨t.nodes.size, (t.addNode (Tape.Node.leaf (SomeTensor.ofTensor x) name true)).1, _, rfl,
+    ?_, step.1, hS.emitPure _, Nat.le_refl _, by simp [Tape.addNode], step.2.2⟩
+  refine (emit_eq σ #[] _ (Tape.Node.leaf (SomeTensor.ofTensor x) name true)
+    σ.tape.nodes.size rfl).trans ?_
+  exact congrArg Except.ok (Prod.ext step.2.1 rfl)
+
+theorem Shares.const {s : Shape} (x : Float) :
+    Shares s (TapeBuilder.const x) (SharedTapeBuilder.const x) := Shares.leaf _ _
+
+/-- An op with no tape realisation fails at both carriers. -/
+theorem Shares.unsupported {s : Shape} (op : String) :
+    Shares s (TapeBuilder.unsupported op) (SharedTapeBuilder.unsupported op) :=
+  fun _ _ _ _ => .inl ⟨⟨_, rfl⟩, ⟨_, rfl⟩⟩
+
+/-- A binary op, at both carriers. -/
+theorem Shares.bin {s : Shape} (o : SharedOp) (hb : binary o = true)
+    {x y : TapeBuilder s} {sx sy : SharedTapeBuilder s} (hx : Shares s x sx)
+    (hy : Shares s y sy) :
+    Shares s (TapeBuilder.bin (fun a b => o.raw s #[a, b]) x y) (SharedTapeBuilder.bin o sx sy) := by
+  intro t σ hR hS
+  rw [show (TapeBuilder.bin (fun a b => o.raw s #[a, b]) x y).run
+      = (x.run >>= fun a => y.run >>= fun b => o.raw s #[a, b]) from rfl,
+    show (SharedTapeBuilder.bin o sx sy).run
+      = (sx.run >>= fun a => sy.run >>= fun b => SharedTapeM.op o s #[a, b]) from rfl]
+  rcases hx t σ hR hS with ⟨⟨e, he⟩, ⟨e', he'⟩⟩ | ⟨a, t1, σ1, hxr, hsxr, hR1, hS1, la, ua, st1⟩
+  · exact .inl ⟨⟨e, bind_error he⟩, ⟨e', bind_error he'⟩⟩
+  rw [bind_ok hxr, bind_ok hsxr]
+  rcases hy t1 σ1 hR1 hS1 with ⟨⟨e, he⟩, ⟨e', he'⟩⟩ | ⟨b, t2, σ2, hyr, hsyr, hR2, hS2, lb, ub, st2⟩
+  · exact .inl ⟨⟨e, bind_error he⟩, ⟨e', bind_error he'⟩⟩
+  rw [bind_ok hyr, bind_ok hsyr]
+  right
+  have hsnd : ∀ ps : Array Nat, snd o ps = ps.getD 1 0 := fun ps => by simp [snd, hb]
+  obtain ⟨n, σ3, hrun, hop, hR3, hS3, st3⟩ := op_step hR2 hS2 o #[a, b]
+    #[(cseFold t1).2.1.getD a a, (cseFold t2).2.1.getD b b]
+    (by simp; omega) (by rw [hsnd]; simpa using ub)
+    (by simpa using (st2 a ua).symm) (by rw [hsnd, hsnd]; simp)
+    (fun _ => by simp; omega) (by simpa [hb] using (st2 a ua).symm)
+  refine ⟨t2.nodes.size, _, σ3, hrun, hop, hR3, hS3, by omega, by simp [Tape.addNode], ?_⟩
+  intro i hi
+  rw [st3 i (by omega), st2 i (by omega), st1 i hi]
+
+/-- A unary op, at both carriers. -/
+theorem Shares.un {s : Shape} (o : SharedOp) (hb : binary o = false)
+    {x : TapeBuilder s} {sx : SharedTapeBuilder s} (hx : Shares s x sx) :
+    Shares s (TapeBuilder.un (fun a => o.raw s #[a]) x) (SharedTapeBuilder.un o sx) := by
+  intro t σ hR hS
+  rw [show (TapeBuilder.un (fun a => o.raw s #[a]) x).run
+      = (x.run >>= fun a => o.raw s #[a]) from rfl,
+    show (SharedTapeBuilder.un o sx).run
+      = (sx.run >>= fun a => SharedTapeM.op o s #[a]) from rfl]
+  rcases hx t σ hR hS with ⟨⟨e, he⟩, ⟨e', he'⟩⟩ | ⟨a, t1, σ1, hxr, hsxr, hR1, hS1, la, ua, st1⟩
+  · exact .inl ⟨⟨e, bind_error he⟩, ⟨e', bind_error he'⟩⟩
+  rw [bind_ok hxr, bind_ok hsxr]
+  right
+  have hsnd : ∀ ps : Array Nat, snd o ps = ps.getD 0 0 := fun ps => by simp [snd, hb]
+  obtain ⟨n, σ3, hrun, hop, hR3, hS3, st3⟩ := op_step hR1 hS1 o #[a]
+    #[(cseFold t1).2.1.getD a a]
+    (by simpa using ua) (by rw [hsnd]; simpa using ua)
+    (by simp) (by rw [hsnd, hsnd]; simp)
+    (fun h => by simp [hb] at h) (by simp [hb])
+  refine ⟨t1.nodes.size, _, σ3, hrun, hop, hR3, hS3, by omega, by simp [Tape.addNode], ?_⟩
+  intro i hi
+  rw [st3 i (by omega), st1 i hi]
+
 end PropertyKindCalculus.Examples.TapeSharedCse
 
 end Blanket
