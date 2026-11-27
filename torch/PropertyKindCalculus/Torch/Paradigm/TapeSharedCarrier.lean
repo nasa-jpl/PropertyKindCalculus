@@ -20,6 +20,13 @@ COST. Memory is bounded by the DAG; time is not: a shared sub-expression is stil
 per reference. An elementwise op (`SharedOp`) is looked up by op, shape and operands before it
 is run; a leaf or a table fetch is run, then looked up.
 
+NAMES. As with `cseCompact`, two input leaves with one name and one recorded value are one
+node, and so are two tables with one name fetched at the same operands with the same result:
+give inputs and tables distinct names.
+
+PROOF. `examples.tape_shared_cse` (`shares_record`) proves the recording is `cseCompact` of the
+`TapeBuilder` recording, per kernel.
+
 A `module` file: imports the tape carriers, the CSE key and the LUT vocabulary.
 -/
 

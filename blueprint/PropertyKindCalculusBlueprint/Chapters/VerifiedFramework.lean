@@ -10,6 +10,7 @@ import PropertyKindCalculusBlueprint.Figures
 import PropertyKindCalculus.Torch.Fp32
 import PropertyKindCalculus.Torch.Paradigm.TapeHom
 import PropertyKindCalculus.Examples.TapeEndToEndChain
+import PropertyKindCalculus.Examples.TapeSharedCse
 import TorchLean.CUDA.Kernel.Emit.Source
 
 open Verso.Genre
@@ -65,7 +66,7 @@ Each demand follows from the write-once discipline. None of them is particular t
 *
   * A recording that costs what the model costs
   * The megakernel path records the _whole_ model, so a recorder whose cost grows faster than the number of operations makes the path unusable on exactly the models that need it.
-  * TorchLean's `Tape.record`, which pushes each node in place; the {tech}[compacted tape], which merges identical sub-expressions without moving a value
+  * TorchLean's `Tape.record`, which pushes each node in place; the {tech}[compacted tape], which merges identical sub-expressions without moving a value; the sharing recorder `SharedTapeBuilder`, which records the compacted tape directly and never holds the expression tree, with `shares_record` proving it is the compaction of the unshared recording
 *
   * Arithmetic intensity
   * Eager device execution round-trips every intermediate through device memory, so it is memory-bound. Fusion into one kernel keeps intermediates in registers. Tabulated data enters as a declared vocabulary extension whose device form is one kernel too.
@@ -163,6 +164,25 @@ computes there. Constant leaves merged by compaction are covered, through the in
 The compaction's denotation theorem, `cseCompact_denotation_unconditional`, composed with the
 program's denotation theorem for table-free tapes; the program's existence supplies the
 compacted tape's evaluation.
+:::
+
+:::theorem "vf_thm_shared_record" (parent := "verified_framework") (lean := "PropertyKindCalculus.Examples.TapeSharedCse.shares_record") (tags := "proved") (effort := "medium")
+*The sharing recorder records the compacted tape.* A carrier-generic model names a shared
+sub-expression once per use, so the recording carrier emits the expression tree and compaction
+shares it afterwards; the tree can be orders of magnitude larger than the model. The sharing
+recorder looks each node up by `cseCompact`'s key before appending it. For outputs related
+operation by operation at the two carriers and recorded from the empty tape at one tensor shape,
+both recordings fail, or the sharing tape has the name, the operands and the stored value of
+every node of the compacted unshared tape, in the same order, and its output ids are the
+remapped ids. Such a tape holds each key once (`keys_distinct_of_fwd`).
+:::
+
+:::proof "vf_thm_shared_record"
+A simulation between the sharing state and `cseCompact`'s fold over the unshared tape, one node
+at a time (`Rel.step`), and a lemma that each elementwise recorder reads only its operands'
+values (`raw_natural`), which makes the lookup before running sound. The relation `Shares` is
+preserved by leaves, constants, `+ - * /`, `min`, `max`, `fmin`, `fmax`, `exp`, `log`, `abs`,
+`sqrt` and the table fetch; the tactic `tape_shares` closes it for a concrete model.
 :::
 
 :::theorem "vf_thm_kernel_denotes" (parent := "verified_framework") (lean := "TorchLean.CUDA.denotes_emit") (tags := "proved") (effort := "medium")
@@ -288,7 +308,9 @@ the addition is the operations remote-sensing forward models are built from: att
 extinction are exponentials, dielectric mixing takes square roots and logarithms, branch-free
 selection takes `min` and `max`, and calibration curves are tables. _Recording_ and _Numbers_:
 the recording carrier and the carrier ladder are built on TorchLean's tape and floating-point
-formats.
+formats. TorchLean's tape records each operation it is given; the sharing recorder adds a tape
+that is proved to be the compaction of that recording, at the memory of the model's graph
+instead of its expression tree.
 
 :::svg_figure "torchlean-extension" PropertyKindCalculusBlueprint.Figures.torchleanExtension
 What PropertyKindCalculus adds beyond TorchLean, layer by layer.
@@ -316,6 +338,10 @@ semantics is the calculus's vocabulary extension.
   * `TapeCse`, with its denotation theorems
   * value-preserving common-subexpression elimination over a recorded tape, keyed on operation, remapped parents and value bits
   * framework machinery
+*
+  * `TapeSharedCarrier`, with `shares_record`
+  * a recording carrier that shares sub-expressions while it records, proved to emit the compaction of the unshared recording
+  * framework machinery, keyed on the calculus's `NumCarrier`
 *
   * `TapeEval`, `TapeStraightLine`, `TapeCodegen`, `TapeCodegenJulia`
   * the tape's forward denotation; one straight-line program per tape with one denotation theorem; CUDA, C and Julia printers of it; arithmetic-intensity and peak-residency accounting
@@ -364,6 +390,13 @@ What the chain above does not yet cover, each one checked rather than recalled:
   only buffer-level forward values exist.
 - The recording-time measurement is a synthetic chain of additions (128 000 additions in
   0.159 s); no science model has been timed through both recorders.
+- `shares_record` is proved per model: `tape_shares` unfolds the model, and its goal grows with
+  the expression tree, so it closes the probe kernel (`kernel_shares_record`) and not a model
+  whose tree is too large to unfold, which is where sharing matters most. The theorem compares
+  forward content, not the `backward` closures, and assumes one tensor shape.
+- The sharing recorder inherits `cseCompact`'s key: two input leaves with one name and one
+  recorded value, or two tables with one name fetched at the same operands with the same
+  result, are one node.
 
 # How far it reaches
 
