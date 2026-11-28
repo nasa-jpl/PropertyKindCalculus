@@ -1,6 +1,7 @@
 import Verso
 import VersoManual
 import VersoBlueprint
+import PropertyKindCalculusBlueprint.ItemIndex
 import PropertyKindCalculusBlueprint.References
 -- The layer-by-layer figure: the `svg_figure` directive and the figure it inlines.
 import PropertyKindCalculusBlueprint.Figures
@@ -17,6 +18,104 @@ open Verso.Genre
 open Verso.Genre.Manual
 open Informal
 open PropertyKindCalculusBlueprint
+open PropertyKindCalculusBlueprint.ItemIndex
+
+/-- A TorchLean pull request as a linked part of a ledger cell. -/
+def torchLeanPR (n : Nat) : String × String :=
+  (s!"https://github.com/lean-dojo/TorchLean/pull/{n}", s!"#{n}")
+
+/-- The ledger of "What the framework gained": one row per topic, every pull request this work
+opened on `lean-dojo/TorchLean` with its state. Term-built, so Verso elaborates it once. -/
+def torchLeanLedgerTable : DocTable :=
+  let pr := torchLeanPR
+  let t (s : String) : String × String := ("", s)
+  { headers := ["Topic", "Pull requests and their state", "Demand it serves"]
+    rows :=
+    [ [.md "Exact matrix factorizations (Cholesky and QR)",
+       .hrefs [pr 1, t " closed by its author, who split it; ", pr 2,
+         t ", its domain-independent exact part, merged"],
+       .md "One source, many carriers"],
+      [.md "Differentiable `exp`, `log` and scalar-affine maps",
+       .hrefs [pr 5, t " merged"],
+       .md "One source, many carriers"],
+      [.md "Elementwise division on the tape",
+       .hrefs [pr 7, t ", the CPU node, merged; ", pr 26,
+         t ", the proof-side node with its Fréchet derivative, merged"],
+       .md "One source, many carriers"],
+      [.md "An asserted leak bound for long eager loops",
+       .hrefs [pr 8, t " closed; ", pr 15,
+         t ", which proposed it again, closed: the maintainers' stress suite covers the need"],
+       .md "A recording that costs what the model costs; met by the maintainers' own work"],
+      [.md "Release of device temporaries",
+       .hrefs [pr 9, t " closed: the trainer came to release tape temporaries itself; ", pr 22,
+         t ", the scoped arena proposed again, closed when TorchLean moved to LibTorch and removed the backend it changed"],
+       .md "A recording that costs what the model costs; met by the maintainers' own work"],
+      [.md "A bounded device block cache",
+       .hrefs [pr 10, t " merged"],
+       .md "A recording that costs what the model costs"],
+      [.md "Sterbenz's lemma for formats with an underflow floor",
+       .hrefs [pr 16,
+         t " closed; the maintainers reported taking its content into `main` in an upgrade, and the theory has since moved to FloatLib"],
+       .md "Numerical adequacy; FloatLib now proves it"],
+      [.md "An executable unit in the last place and an absorption test",
+       .hrefs [pr 17,
+         t " closed; the maintainers reported taking its content into `main` in an upgrade, and the theory has since moved to FloatLib"],
+       .md "Numerical adequacy; TorchLean carries the absorption test and the calculus defines the executable ULP"],
+      [.md "A glibc link failure in CUDA builds",
+       .hrefs [pr 18, t " closed: the maintainers removed the call that caused it"],
+       .md "Met by the maintainers' own work"],
+      [.md "The fused scaled product exponential `exp((c·x)·y)`, bit-identical to its four-operation form",
+       .hrefs [pr 23, t " merged"],
+       .md "Arithmetic intensity"],
+      [.md "A piecewise-linear table lookup on the device",
+       .hrefs [pr 24, t ", on CUDA textures, closed when TorchLean moved to LibTorch; ", pr 34,
+         t ", the same function composed from LibTorch primitives as a tape node, closed when `main` replaced the interfaces it targeted; ",
+         pr 53,
+         t ", the lookup and its pullback on device buffers with its positions held on the device, open"],
+       .md "One source, many carriers"],
+      [.md "The runtime link connected to the Fréchet-derivative model",
+       .hrefs [pr 25, t " merged"],
+       .md "One source, many carriers"],
+      [.md "The choice of CUDA target architecture",
+       .hrefs [pr 27, t " closed: the maintainers added their own selection"],
+       .md "Met by the maintainers' own work"],
+      [.md "Unboxed, concurrent `.npy` decoding",
+       .hrefs [pr 29, t " merged"],
+       .md "A recording that costs what the model costs"],
+      [.md "The identity of a CUDA device",
+       .hrefs [pr 30, t ", on the custom CUDA backend, closed when TorchLean moved to LibTorch; ",
+         pr 35, t ", its LibTorch follow-up, closed when `main` replaced the interfaces it targeted; ",
+         pr 45, t ", which reimplements it, open"],
+       .md "A bit-exact oracle on every machine"],
+      [.md "The `TapeM` surface reduced to one lemma",
+       .hrefs [pr 31, t " merged"],
+       .md "One source, many carriers"],
+      [.md "The LibTorch bridge on the host",
+       .hrefs [pr 36, t " closed when `main` replaced the interfaces it targeted; ", pr 43,
+         t ", which reimplements it, open"],
+       .md "A bit-exact oracle on every machine"],
+      [.md "Conversions between scalars and indices in a certified kernel",
+       .hrefs [pr 44, t " open, answering ",
+         ("https://github.com/lean-dojo/TorchLean/issues/42", "issue #42")],
+       .md "Arithmetic intensity"],
+      [.md "A conditional directly in an `else` branch certified",
+       .hrefs [pr 46, t " open"],
+       .md "Arithmetic intensity"],
+      [.md "Binary64 arithmetic on binary32 buffers",
+       .hrefs [pr 47, t " open"],
+       .md "Arithmetic intensity"],
+      [.md "NaN-ignoring `fmin` and `fmax` on device buffers, with the same bits on both devices",
+       .hrefs [pr 50, t " open"],
+       .md "A bit-exact oracle on every machine"],
+      [.md "A tape node recorded in linear time",
+       .hrefs [pr 51, t " open"],
+       .md "A recording that costs what the model costs"],
+      [.md "Power, the ordered comparisons and selection on device buffers",
+       .hrefs [pr 52, t " open"],
+       .md "One source, many carriers"],
+      [.md "The power `x ^ y` with the exponent a value: a recorded tape node with both operands as parents, so the exponent receives a gradient",
+       .hrefs [pr 54, t " open"],
+       .md "One source, many carriers; available at the pinned revision"] ] }
 
 #doc (Manual) "Metrology on a Verified Numerical Framework" =>
 %%%
@@ -204,43 +303,17 @@ A theorem of TorchLean, linked here because the table fetch's device kernel rest
 # What the framework gained
 
 The demands above were met partly by TorchLean as it stands and partly by changes contributed to
-it. The ledger records each contribution by the demand it serves, with its state on
-2026-11-27.
+it. The ledger has one row per topic and lists every pull request this work opened on
+`lean-dojo/TorchLean` for that topic, each with its state on 2026-11-27. _Merged_ means merged
+into TorchLean's `main`. _Open_ means under review upstream: the calculus reaches an open
+contribution through the `combined` branch of this work's fork, which is TorchLean's `main` with
+the open branches merged on top, and which the calculus pins. _Closed_ means closed without a
+merge, and the row says why and which pull request, if any, took the topic up again.
 
-:::table +header
-*
-  * Demand
-  * Contribution
-  * State
-*
-  * One source, many carriers
-  * exact Cholesky and QR ([#2](https://github.com/lean-dojo/TorchLean/pull/2)); differentiable `exp`, `log` and scalar-affine maps ([#5](https://github.com/lean-dojo/TorchLean/pull/5)); CPU and proof-side division nodes ([#7](https://github.com/lean-dojo/TorchLean/pull/7), [#26](https://github.com/lean-dojo/TorchLean/pull/26)); the runtime link connected to the Fréchet-derivative model ([#25](https://github.com/lean-dojo/TorchLean/pull/25)); the `TapeM` surface reduced to one lemma ([#31](https://github.com/lean-dojo/TorchLean/pull/31))
-  * in TorchLean main
-*
-  * One source, many carriers
-  * power, the ordered comparisons and selection on device buffers ([#52](https://github.com/lean-dojo/TorchLean/pull/52)); a piecewise-linear table lookup with its pullback on device buffers, its positions held on the device ([#53](https://github.com/lean-dojo/TorchLean/pull/53))
-  * open; merged into `combined`
-*
-  * A bit-exact oracle on every machine
-  * the LibTorch bridge on the host ([#43](https://github.com/lean-dojo/TorchLean/pull/43)); the identity of a CUDA device ([#45](https://github.com/lean-dojo/TorchLean/pull/45)); NaN-ignoring `fmin` and `fmax` on device buffers, with the same bits on both devices ([#50](https://github.com/lean-dojo/TorchLean/pull/50))
-  * open; merged into the fork's `combined` branch
-*
-  * A recording that costs what the model costs
-  * a bounded device block cache ([#10](https://github.com/lean-dojo/TorchLean/pull/10)); unboxed, concurrent `.npy` decoding ([#29](https://github.com/lean-dojo/TorchLean/pull/29))
-  * in TorchLean main
-*
-  * A recording that costs what the model costs
-  * a tape node recorded in linear time ([#51](https://github.com/lean-dojo/TorchLean/pull/51))
-  * open; merged into `combined`
-*
-  * Arithmetic intensity
-  * the fused scaled product exponential `exp((c·x)·y)`, bit-identical to its four-operation form ([#23](https://github.com/lean-dojo/TorchLean/pull/23))
-  * in TorchLean main
-*
-  * Arithmetic intensity
-  * conversions between scalars and indices in a certified kernel ([#44](https://github.com/lean-dojo/TorchLean/pull/44), answering [issue #42](https://github.com/lean-dojo/TorchLean/issues/42)); binary64 arithmetic on binary32 buffers ([#47](https://github.com/lean-dojo/TorchLean/pull/47)); a conditional directly in an `else` branch certified ([#46](https://github.com/lean-dojo/TorchLean/pull/46))
-  * open; merged into `combined`
+:::iso_doc_table torchLeanLedgerTable
 :::
+
+The ledger holds 33 pull requests under 24 topics: nine merged, ten open, and fourteen closed.
 
 Two contributions on the floating-point side stand closed unmerged, the theory they extended
 having moved to FloatLib: Sterbenz's lemma for formats with an underflow floor
@@ -249,7 +322,7 @@ executable unit in the last place with an absorption test
 ([#17](https://github.com/lean-dojo/TorchLean/pull/17)), whose absorption test TorchLean carries
 and whose executable ULP the calculus defines itself, in its numerical-adequacy layer.
 
-Five further needs were met by TorchLean's maintainers in their own way, and the corresponding
+Four further needs were met by TorchLean's maintainers in their own way, and the corresponding
 contributions stand closed in favor of that work: an asserted leak bound for long eager loops
 ([#8](https://github.com/lean-dojo/TorchLean/pull/8),
 [#15](https://github.com/lean-dojo/TorchLean/pull/15)), release of tape temporaries
@@ -333,6 +406,8 @@ The table fetch is shared: its device kernel is a TorchLean `Program.of` kernel,
 semantics is the calculus's vocabulary extension.
 The last two rows of chips on the left are eager device-buffer operations contributed by this
 work (#52, #53): LibTorch calls on buffers, not operations of a certified `Program.of` kernel.
+In the recording layer, #54 is the power whose exponent is a recorded value: a tape operation of
+TorchLean, present at the pinned revision.
 :::
 
 :::table +header

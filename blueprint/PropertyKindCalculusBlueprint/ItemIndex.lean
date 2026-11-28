@@ -53,6 +53,9 @@ inductive Cell where
   empty `tag` renders its `text` as inline code (no link); a non-empty `tag`
   renders a Blueprint cross-reference, exactly like `ref`. -/
   | links (items : List (String × String))
+  /-- Prose with external hyperlinks: each `(url, md)` part is an `md` string, linked to `url`
+  when `url` is non-empty. -/
+  | hrefs (parts : List (String × String))
   /-- Labeled groups of code lines: each group an emphasized caption over a list with one code
   line per entry — the rendering of `IndexCell.codeGroups`, which the kind tables' Algebra
   column uses for its produced / consumed equation groups. Each line is a `(tag, text)` pair
@@ -205,6 +208,12 @@ def cellBlock : Cell → DocElabM Term
             #[Verso.Doc.Inline.text $(quote txt)]])
   | .md s => do
     let inls ← (parseRuns s).toArray.mapM runInline
+    `(Verso.Doc.Block.para #[$inls,*])
+  | .hrefs parts => do
+    let inls ← parts.toArray.mapM fun (url, s) => do
+      let runs ← (parseRuns s).toArray.mapM runInline
+      if url.isEmpty then `(Verso.Doc.Inline.concat #[$runs,*])
+      else `(Verso.Doc.Inline.link #[$runs,*] $(quote url))
     `(Verso.Doc.Block.para #[$inls,*])
   | .links items => do
     let parts ← items.toArray.mapM fun (tag, txt) =>

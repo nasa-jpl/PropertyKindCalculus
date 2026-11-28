@@ -113,10 +113,11 @@ require «Physlib» from git
 -- `IEEE32Exec` executable) that instantiate the R10 exec/spec refinement bridge.
 -- `combined` is upstream `lean-dojo/TorchLean` `main` (Lean `v4.36.0` / Mathlib `v4.36.0`;
 -- the GPU path is LibTorch's ATen, and NVRTC compiles the generated custom operations at run
--- time) with the fork's open upstream PRs merged on top (lean-dojo/TorchLean #43–#47, #50, #51:
+-- time) with the fork's open upstream PRs merged on top (lean-dojo/TorchLean #43–#47, #50–#54:
 -- CPU-only LibTorch host bridge, scalar↔index conversion and nested conditionals in custom
 -- computations, device identity, binary64 arithmetic on binary32 buffers, NaN-ignoring
--- `fmin`/`fmax`, linear-time tape recording); this package pins the same toolchain. TorchLean brings
+-- `fmin`/`fmax`, linear-time tape recording, power, comparisons, selection and a table lookup on
+-- device buffers, the power with a value exponent); this package pins the same toolchain. TorchLean brings
 -- `FloatLib` transitively, which is where the executable binary32 word
 -- (`ExecFloat.Binary 8 23`) and the Flocq rounding theory live. Required after PhysLib so
 -- its `doc-gen4 v4.36.0` wins. The core
