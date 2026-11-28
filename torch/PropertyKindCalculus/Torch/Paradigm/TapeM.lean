@@ -56,6 +56,9 @@ def mul (t : CpuTape α) (a b : Nat) : Result (CpuTape α × Nat) :=
   binary t "mul" (Op.mul (s := s)) a b
 def div (t : CpuTape α) (a b : Nat) : Result (CpuTape α × Nat) :=
   binary t "div" (Op.div (s := s)) a b
+/-- Real power with a run-time exponent (`Op.powValue`): both operands are parents of the node. -/
+def pow (t : CpuTape α) (a b : Nat) : Result (CpuTape α × Nat) :=
+  binary t "pow" (Op.powValue (s := s)) a b
 def min (t : CpuTape α) (a b : Nat) : Result (CpuTape α × Nat) :=
   binary t "min" (Op.min (s := s)) a b
 def max (t : CpuTape α) (a b : Nat) : Result (CpuTape α × Nat) :=
@@ -109,6 +112,7 @@ def add (a b : Nat) : TapeM α Nat := record fun t => CpuTape.add (s := s) t a b
 def sub (a b : Nat) : TapeM α Nat := record fun t => CpuTape.sub (s := s) t a b
 def mul (a b : Nat) : TapeM α Nat := record fun t => CpuTape.mul (s := s) t a b
 def div (a b : Nat) : TapeM α Nat := record fun t => CpuTape.div (s := s) t a b
+def pow (a b : Nat) : TapeM α Nat := record fun t => CpuTape.pow (s := s) t a b
 def min (a b : Nat) : TapeM α Nat := record fun t => CpuTape.min (s := s) t a b
 def max (a b : Nat) : TapeM α Nat := record fun t => CpuTape.max (s := s) t a b
 def fmin (a b : Nat) : TapeM α Nat := record fun t => CpuTape.fmin (s := s) t a b

@@ -49,7 +49,7 @@ namespace PropertyKindCalculus.Paradigm
 
 /-- The elementwise tape ops the sharing recorder can look up before running. -/
 inductive SharedOp where
-  | add | sub | mul | div | min | max | fmin | fmax | exp | log | abs | sqrt
+  | add | sub | mul | div | pow | min | max | fmin | fmax | exp | log | abs | sqrt
   deriving DecidableEq, Hashable, Repr
 
 /-- The `TapeM` recorder of `op` at shape `s` on operands `ps` (a missing operand reads id 0). -/
@@ -58,6 +58,7 @@ def SharedOp.raw (s : Shape) : SharedOp → Array Nat → TapeM Float Nat
   | .sub,  ps => TapeM.sub  (s := s) (ps.getD 0 0) (ps.getD 1 0)
   | .mul,  ps => TapeM.mul  (s := s) (ps.getD 0 0) (ps.getD 1 0)
   | .div,  ps => TapeM.div  (s := s) (ps.getD 0 0) (ps.getD 1 0)
+  | .pow,  ps => TapeM.pow  (s := s) (ps.getD 0 0) (ps.getD 1 0)
   | .min,  ps => TapeM.min  (s := s) (ps.getD 0 0) (ps.getD 1 0)
   | .max,  ps => TapeM.max  (s := s) (ps.getD 0 0) (ps.getD 1 0)
   | .fmin, ps => TapeM.fmin (s := s) (ps.getD 0 0) (ps.getD 1 0)
@@ -187,6 +188,7 @@ instance : Add (SharedTapeBuilder s) := ⟨bin .add⟩
 instance : Sub (SharedTapeBuilder s) := ⟨bin .sub⟩
 instance : Mul (SharedTapeBuilder s) := ⟨bin .mul⟩
 instance : Div (SharedTapeBuilder s) := ⟨bin .div⟩
+instance : Pow (SharedTapeBuilder s) (SharedTapeBuilder s) := ⟨bin .pow⟩
 instance : Min (SharedTapeBuilder s) := ⟨bin .min⟩
 instance : Max (SharedTapeBuilder s) := ⟨bin .max⟩
 /-- The NaN-ignoring minimum (`Op.fmin`) as one shared tape node. -/

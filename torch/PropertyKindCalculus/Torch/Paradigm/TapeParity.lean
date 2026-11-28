@@ -199,6 +199,13 @@ theorem faith_div (tt : CpuTape Float) (aId bId : Nat) {va vb : Tensor Float s}
   obtain ⟨t', he, hv, hf⟩ := div_value tt aId bId ha hb
   exact ⟨t', TapeM.record_run_ok he, hv, hf⟩
 
+theorem faith_pow (tt : CpuTape Float) (aId bId : Nat) {va vb : Tensor Float s}
+    (ha : requireValue (s := s) tt aId = .ok va) (hb : requireValue (s := s) tt bId = .ok vb) :
+    ∃ t', (TapeM.pow (s := s) aId bId).run tt = .ok (tt.size, t') ∧
+          requireValue (s := s) t' tt.size = .ok (Tensor.pow va vb) ∧ FrameOver t' tt := by
+  obtain ⟨t', he, hv, hf⟩ := pow_value tt aId bId ha hb
+  exact ⟨t', TapeM.record_run_ok he, hv, hf⟩
+
 theorem faith_min (tt : CpuTape Float) (aId bId : Nat) {va vb : Tensor Float s}
     (ha : requireValue (s := s) tt aId = .ok va) (hb : requireValue (s := s) tt bId = .ok vb) :
     ∃ t', (TapeM.min (s := s) aId bId).run tt = .ok (tt.size, t') ∧
@@ -256,6 +263,10 @@ theorem Evaluates_mul {x y : TapeBuilder s} {vx vy : Tensor Float s}
 theorem Evaluates_div {x y : TapeBuilder s} {vx vy : Tensor Float s}
     (hx : Evaluates x vx) (hy : Evaluates y vy) : Evaluates (x / y) (vx / vy) :=
   Evaluates_bin (TapeM.div (s := s)) _ faith_div hx hy
+
+theorem Evaluates_pow {x y : TapeBuilder s} {vx vy : Tensor Float s}
+    (hx : Evaluates x vx) (hy : Evaluates y vy) : Evaluates (x ^ y) (Tensor.pow vx vy) :=
+  Evaluates_bin (TapeM.pow (s := s)) _ faith_pow hx hy
 
 theorem Evaluates_min {x y : TapeBuilder s} {vx vy : Tensor Float s}
     (hx : Evaluates x vx) (hy : Evaluates y vy) : Evaluates (Min.min x y) (Tensor.minimum vx vy) :=

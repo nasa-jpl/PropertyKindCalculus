@@ -84,6 +84,8 @@ instance : Add (TapeBuilder s) := ⟨bin (TapeM.add (s := s))⟩
 instance : Sub (TapeBuilder s) := ⟨bin (TapeM.sub (s := s))⟩
 instance : Mul (TapeBuilder s) := ⟨bin (TapeM.mul (s := s))⟩
 instance : Div (TapeBuilder s) := ⟨bin (TapeM.div (s := s))⟩
+/-- Real power `x ^ y`, the exponent a recorded operand (`Op.powValue`), as one tape node. -/
+instance : Pow (TapeBuilder s) (TapeBuilder s) := ⟨bin (TapeM.pow (s := s))⟩
 instance : Min (TapeBuilder s) := ⟨bin (TapeM.min (s := s))⟩
 instance : Max (TapeBuilder s) := ⟨bin (TapeM.max (s := s))⟩
 /-- The NaN-ignoring minimum (`Op.fmin`, IEEE 754-2019 `minimumNumber`) as one tape node. -/

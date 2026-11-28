@@ -8,7 +8,7 @@ file adds the missing **GPU** carrier so `fit_tile.lmStep` / `avs_batch` / `spd_
 
 It is an *eager* carrier: `CudaT s` wraps a TorchLean `LibTorch.Buffer` (a contiguous float32 device buffer
 of `Shape.size s` elements), and each `NumCarrier` operation is the corresponding pure device primitive
-(`Buffer.{add,sub,mul,div,exp,sqrt,abs,log,min,max,fmin,fmax}` from `TorchLean.CUDA.LibTorch.Buffer`),
+(`Buffer.{add,sub,mul,div,pow,exp,sqrt,abs,log,min,max,fmin,fmax}` from `TorchLean.CUDA.LibTorch.Buffer`),
 each one FFI call (one ATen operation, except `fmin`/`fmax`, which compose `isnan`, `where` and the IEEE
 extremum). Those ops are pure `opaque Buffer → Buffer`, so they satisfy `NumCarrier`'s total
 interface directly, and `Buffer` carries a GC finalizer that releases the device tensor, so eager
@@ -53,6 +53,8 @@ instance : Add (CudaT s) := ⟨fun a b => ⟨Buffer.add a.buf b.buf⟩⟩
 instance : Sub (CudaT s) := ⟨fun a b => ⟨Buffer.sub a.buf b.buf⟩⟩
 instance : Mul (CudaT s) := ⟨fun a b => ⟨Buffer.mul a.buf b.buf⟩⟩
 instance : Div (CudaT s) := ⟨fun a b => ⟨Buffer.div a.buf b.buf⟩⟩
+/-- Real power on the device (`Buffer.pow`, ATen `pow` of two tensors: C `pow` special cases). -/
+instance : Pow (CudaT s) (CudaT s) := ⟨fun a b => ⟨Buffer.pow a.buf b.buf⟩⟩
 instance : Min (CudaT s) := ⟨fun a b => ⟨Buffer.min a.buf b.buf⟩⟩
 instance : Max (CudaT s) := ⟨fun a b => ⟨Buffer.max a.buf b.buf⟩⟩
 instance : Zero (CudaT s) := ⟨⟨Buffer.zeros (szU s)⟩⟩

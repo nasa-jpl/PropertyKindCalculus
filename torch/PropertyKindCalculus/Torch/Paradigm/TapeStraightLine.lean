@@ -123,9 +123,9 @@ namespace SL
 printer is total and the denotation lemma is one `cases`. `ofName?` is the parser `genSL` uses,
 `name` its inverse (`name_ofName?`), and `eval` is `cOp`'s clause for that op (`cOp_eval`). -/
 
-/-- The binary alphabet `add sub mul div min max fmin fmax`. -/
+/-- The binary alphabet `add sub mul div pow min max fmin fmax`. -/
 inductive BinOp where
-  | add | sub | mul | div | min | max | fmin | fmax
+  | add | sub | mul | div | pow | min | max | fmin | fmax
 deriving DecidableEq, Repr
 
 /-- The unary alphabet `exp log sqrt abs`. -/
@@ -135,7 +135,7 @@ deriving DecidableEq, Repr
 
 def BinOp.name : BinOp → String
   | .add => "add" | .sub => "sub" | .mul => "mul" | .div => "div" | .min => "min" | .max => "max"
-  | .fmin => "fmin" | .fmax => "fmax"
+  | .fmin => "fmin" | .fmax => "fmax" | .pow => "pow"
 
 def UnOp.name : UnOp → String
   | .exp => "exp" | .log => "log" | .sqrt => "sqrt" | .abs => "abs"
@@ -144,6 +144,7 @@ def BinOp.ofName? : String → Option BinOp
   | "add" => some .add | "sub" => some .sub | "mul" => some .mul
   | "div" => some .div | "min" => some .min | "max" => some .max
   | "fmin" => some .fmin | "fmax" => some .fmax
+  | "pow" => some .pow
   | _ => none
 
 def UnOp.ofName? : String → Option UnOp
@@ -158,6 +159,7 @@ def BinOp.eval : BinOp → Float → Float → Float
   | .sub, a, b => a - b
   | .mul, a, b => a * b
   | .div, a, b => a / b
+  | .pow, a, b => Float.pow a b
   | .min, a, b => Min.min a b
   | .max, a, b => Max.max a b
   | .fmin, a, b => TorchLean.Context.fmin a b

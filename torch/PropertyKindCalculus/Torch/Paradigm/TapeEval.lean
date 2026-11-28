@@ -58,6 +58,7 @@ def cOp (nm : String) (args : List Float) : Except String Float :=
   | "sub",  [a, b] => .ok (a - b)
   | "mul",  [a, b] => .ok (a * b)
   | "div",  [a, b] => .ok (a / b)
+  | "pow",  [a, b] => .ok (Float.pow a b)   -- C `pow` (libm); the binary32 kernels call `powf`
   | "min",  [a, b] => .ok (Min.min a b)   -- IEEE minimum: NaN propagates, -0 < +0
   | "max",  [a, b] => .ok (Max.max a b)   -- IEEE maximum: NaN propagates, -0 < +0
   | "fmin", [a, b] => .ok (Context.fmin a b)   -- IEEE minimumNumber: a NaN against a number is ignored

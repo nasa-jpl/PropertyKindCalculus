@@ -90,6 +90,9 @@ structure IsNumCarrierHom (R : TapeBuilder s → Tensor Float s → Prop) : Prop
   /-- `÷` maps to `divSpec`. -/
   div   : ∀ {x y : TapeBuilder s} {vx vy : Tensor Float s},
             R x vx → R y vy → R (x / y) ((vx / vy))
+  /-- `^` maps to the elementwise `Tensor.pow`, both operands run-time values. -/
+  pow   : ∀ {x y : TapeBuilder s} {vx vy : Tensor Float s},
+            R x vx → R y vy → R (x ^ y) (Tensor.pow vx vy)
   /-- `min` maps to `minSpec`. -/
   min   : ∀ {x y : TapeBuilder s} {vx vy : Tensor Float s},
             R x vx → R y vy → R (Min.min x y) (Tensor.minimum vx vy)
@@ -113,6 +116,7 @@ theorem Evaluates.isNumCarrierHom : IsNumCarrierHom (@Evaluates s) where
   sub hx hy := Evaluates_sub hx hy
   mul hx hy := Evaluates_mul hx hy
   div hx hy := Evaluates_div hx hy
+  pow hx hy := Evaluates_pow hx hy
   min hx hy := Evaluates_min hx hy
   max hx hy := Evaluates_max hx hy
   sqrt hx := Evaluates_sqrt hx
@@ -140,7 +144,7 @@ rubber-stamp a parity that does not hold (that failure is clean when the caller 
 macro "tape_hom" " [" names:Lean.Parser.Tactic.simpLemma,* "]" : tactic =>
   `(tactic|
     (simp only [$names,*, Quantity.add_magnitude, Quantity.sub_magnitude,
-        Quantity.mul_magnitude, Quantity.div_magnitude,
+        Quantity.mul_magnitude, Quantity.div_magnitude, Quantity.pow_magnitude,
         Quantity.exp_magnitude, Quantity.sqrt_magnitude,
         OperatorTable.hmul_magnitude, OperatorTable.hdiv_magnitude,
         Quantity.mulK_magnitude, Quantity.divK_magnitude]
@@ -148,6 +152,7 @@ macro "tape_hom" " [" names:Lean.Parser.Tactic.simpLemma,* "]" : tactic =>
        | apply Evaluates_add | apply Evaluates_sub | apply Evaluates_mul
        | apply Evaluates_div | apply Evaluates_min | apply Evaluates_max
        | apply Evaluates_fmin | apply Evaluates_fmax
+       | apply Evaluates_pow
        | apply Evaluates_sqrt | apply Evaluates_exp
        | apply Evaluates_leaf | apply Evaluates_const
        | assumption))
