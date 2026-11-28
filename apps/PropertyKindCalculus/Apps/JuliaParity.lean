@@ -10,12 +10,12 @@ tape and the same inputs.
 
 The verdict is two-tiered, by the cone of each output (`transCone`):
 
-  * an output whose backward cone contains no `exp`/`log` node must be **bit-identical** — the raw
+  * an output whose backward cone contains no `exp`/`log`/`pow` node must be **bit-identical** — the raw
     bit patterns compared, so a `-0.0`/`+0.0` or a NaN-payload difference fails — because
     `+ − × ÷ √ |·| min max` and the table fetch are IEEE-exact and `Float64` is Lean's `Float`, so
     any difference is a rendering bug, not a libm;
-  * an output whose cone reaches `exp`/`log` is compared in **ulps** (`--max-ulp`, default 4):
-    Julia's `exp`/`log` are pure-Julia `Base.Math`, Lean's are glibc's; the two are correctly
+  * an output whose cone reaches `exp`/`log`/`pow` is compared in **ulps** (`--max-ulp`, default 4):
+    Julia's `exp`/`log`/`pow` are pure-Julia `Base.Math`, Lean's are glibc's; the two are correctly
     rounded or nearly so, and the gap is the one the C stub / CUDA pair already carries.
 
 Exit codes: `0` every comparison within its tier; `1` a parity failure (reported per output);
@@ -62,7 +62,7 @@ def usage : String := String.intercalate "\n"
   , "  -o, --out-dir DIR          where the .jl files, inputs and outputs go (default _out/julia-parity)"
   , "  -j, --julia PATH           the julia executable (default: $JULIA, else `julia` on PATH)"
   , "  -n, --pixels N             input pixels per case, deterministic (default 64)"
-  , "  -u, --max-ulp N            tolerance for outputs whose cone reaches exp/log (default 4)"
+  , "  -u, --max-ulp N            tolerance for outputs whose cone reaches exp/log/pow (default 4)"
   , "  -a, --allow-missing-julia  exit 0 with a `skipped` line when julia is not found (default: exit 2)"
   , "  -k, --ka                   also run the KernelAbstractions.jl twin on the CPU backend (needs the package);"
   , "                             tolerance-only — a backend may contract a*b+c to an FMA, so every output is"
@@ -73,7 +73,7 @@ def usage : String := String.intercalate "\n"
   , ""
   , "Cases: avs_resjac (Examples.TapeCodegenDemo), lm_step (Examples.LmStepCodegenDemo),"
   , "       lut_model (Examples.TapeCodegenLut: a lutfetch + arithmetic tape, against evalTapeT)."
-  , "Verdict: bit-identical on outputs with no exp/log in their cone; within --max-ulp otherwise;"
+  , "Verdict: bit-identical on outputs with no exp/log/pow in their cone; within --max-ulp otherwise;"
   , "the KernelAbstractions twin (--ka) within --ka-rtol relative error on every output." ]
 
 /-- A decimal or scientific literal (`1e-9`, `0.5`, `2`) as a `Float`. -/
@@ -153,12 +153,12 @@ def ulpDist (x y : Float) : Option Nat :=
 
 /-! ### The cone classification -/
 
-/-- `transCone t` marks each node whose backward cone contains an `exp` or `log` node (parents
+/-- `transCone t` marks each node whose backward cone contains an `exp`, `log` or `pow` node (parents
 precede children in a tape, so one forward pass suffices). -/
 def transCone (t : CpuTape Float) : Array Bool := Id.run do
   let mut marks : Array Bool := Array.mkEmpty t.nodes.size
   for n in t.nodes do
-    let own := n.name == some "exp" || n.name == some "log"
+    let own := n.name == some "exp" || n.name == some "log" || n.name == some "pow"
     let inherited := n.parents.any (fun p => marks.getD p false)
     marks := marks.push (own || inherited)
   return marks
@@ -199,7 +199,7 @@ def recordLut : Except String (CpuTape Float × List Nat) := do
   pure (t', [remap.getD id id])
 
 /-- `min`, `max`, the clamp `max lo (min hi x)`, a table fetch, and the NaN-ignoring `fmin`, `fmax`,
-as six outputs: the ops whose
+and the power `x ^ y`, as seven outputs: the ops whose
 NaN and signed-zero results the renderings must reproduce. -/
 def recordSpecial : Except String (CpuTape Float × List Nat) := do
   let x := TapeCodegenLut.inLeafV "x" 1.0
@@ -207,7 +207,8 @@ def recordSpecial : Except String (CpuTape Float × List Nat) := do
   let fetch : TapeCodegenLut.TB := LutInterp.lutFetch TapeCodegenLut.demoLut x y
   let outs : List TapeCodegenLut.TB :=
     [Min.min x y, Max.max x y, Max.max (0 : TapeCodegenLut.TB) (Min.min (1 : TapeCodegenLut.TB) x), fetch,
-     PropertyKindCalculus.Paradigm.TapeBuilder.fmin x y, PropertyKindCalculus.Paradigm.TapeBuilder.fmax x y]
+     PropertyKindCalculus.Paradigm.TapeBuilder.fmin x y, PropertyKindCalculus.Paradigm.TapeBuilder.fmax x y,
+     x ^ y]
   let (ids, t) ← TapeM.run (TorchLean.Tape.empty : CpuTape Float) (outs.mapM (·.run))
   pure (t, ids)
 
@@ -349,7 +350,7 @@ def compareSurface (o : Opts) (julia : String) (c : Case) (t : CpuTape Float) (o
         let jl := Float.ofBits bits
         v := { v with compared := v.compared + 1 }
         let trans := marks.getD oid false || ka
-        let tier := if ka then "KernelAbstractions" else if trans then "exp/log cone" else "exact cone"
+        let tier := if ka then "KernelAbstractions" else if trans then "exp/log/pow cone" else "exact cone"
         let detail := s!"lean {hexOfBits lean.toBits} julia {hexOfBits bits}"
         if !trans then
           -- the exact tier: the raw bits, nothing weaker (a `-0.0`/`+0.0` or a NaN-payload
@@ -374,8 +375,8 @@ def compareSurface (o : Opts) (julia : String) (c : Case) (t : CpuTape Float) (o
               let note := s!"pixel {k} out {j} ({tier}): {d} ulp, limit {o.maxUlp}  {detail}"
               v := { v with ulpFailures := v.ulpFailures + 1, notes := v.notes.push note }
   let nTrans := outIds.filter (fun oid => marks.getD oid false) |>.length
-  let tolDesc := if ka then s!"relative tolerance {o.kaRtolText}" else s!"bit-exact outside exp/log cones, {o.maxUlp} ulp inside"
-  IO.println s!"[{c.name}/{surface}] ({tolDesc}) nodes {t.nodes.size}, inputs {cg.inputs.size}, outputs {outIds.length} ({nTrans} in an exp/log cone), pixels {envs.length}: compared {v.compared}, exact failures {v.exactFailures}, ulp failures {v.ulpFailures}, max ulp seen {v.maxUlpSeen}"
+  let tolDesc := if ka then s!"relative tolerance {o.kaRtolText}" else s!"bit-exact outside exp/log/pow cones, {o.maxUlp} ulp inside"
+  IO.println s!"[{c.name}/{surface}] ({tolDesc}) nodes {t.nodes.size}, inputs {cg.inputs.size}, outputs {outIds.length} ({nTrans} in an exp/log/pow cone), pixels {envs.length}: compared {v.compared}, exact failures {v.exactFailures}, ulp failures {v.ulpFailures}, max ulp seen {v.maxUlpSeen}"
   for n in v.notes.toList.take 20 do IO.println s!"    {n}"
   return some v
 

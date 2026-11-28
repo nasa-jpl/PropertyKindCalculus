@@ -59,6 +59,18 @@ theorem lossTangent_to_number : TranscendentalKind lossTangentK.kind numberK.kin
 -- dimensionless number out).
 #guard (Quantity.tanh lossTangent_to_number (⟨0.0⟩ : Quantity lossTangentK.kind Float)).magnitude == 0.0
 
+/-- The loss-tangent ^ number → number real-power kind law (all three ratio-scale). -/
+theorem lossTangent_pow_number : RealPowerKind lossTangentK.kind numberK.kind numberK.kind :=
+  ⟨rfl, rfl, rfl⟩
+
+-- The real power with a run-time exponent, `4 ^ 0.5`, of a dimensionless loss tangent: one
+-- witness, and the value is the carrier's `^`.
+#guard (Quantity.pow lossTangent_pow_number
+    (⟨4.0⟩ : Quantity lossTangentK.kind Float) (⟨0.5⟩ : Quantity numberK.kind Float)).magnitude == 2.0
+
+/-- The dimensional certificate of that power (proved in the `Dimension` layer). -/
+example : DimRealPower lossTangentK numberK numberK := pow_lossTangent_coherent
+
 -- Euler's number is `exp 1`, derived (not a primitive constant) — definitionally so at
 -- the carrier.
 #guard MathCarrier.e (R := Float) == Float.exp 1.0

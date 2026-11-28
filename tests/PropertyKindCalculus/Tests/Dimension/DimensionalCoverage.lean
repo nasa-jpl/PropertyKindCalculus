@@ -11,7 +11,8 @@ One probe world, every verdict class exercised, the full report pinned:
     the same edge as *hypothesis* must NOT appear — an assumed edge is not authored;
   * `⚠ UNDIMENSIONED` — an edge over a kind with no `DimensionedKind` counterpart;
   * `⚠ CONFLICTING` — a kind two `DimensionedKind` declarations dimension differently;
-  * `⚠ INCOHERENT` — the refuted edge: `L · L → L` cannot balance.
+  * `⚠ INCOHERENT` — the refuted edges: `L · L → L` cannot balance; a real power with a length
+    exponent.
 -/
 
 module
@@ -58,6 +59,10 @@ theorem probe_sqrt : PowerKind (1 / 2) probeArea probeLen := PowerKind.ofRatio _
 theorem probe_num_sq : ProductKind probeNum probeNum probeNum := ProductKind.ofRatio _ _ _
 /-- The coherent transcendental: dimension one in, dimension one out. -/
 theorem probe_exp : TranscendentalKind probeNum probeNum := ⟨rfl, rfl⟩
+/-- The coherent real power: base, exponent and result dimension one. -/
+theorem probe_pow : RealPowerKind probeNum probeNum probeNum := ⟨rfl, rfl, rfl⟩
+/-- **The refuted real power**: a length exponent is not dimension one. -/
+theorem probe_pow_bad : RealPowerKind probeNum probeLen probeNum := ⟨rfl, rfl, rfl⟩
 
 /-- **The refuted edge**: `L · L → L` cannot balance (`1 + 1 ≠ 1` on the length exponent). -/
 theorem probe_len_sq_bad : ProductKind probeLen probeLen probeLen := ProductKind.ofRatio _ _ _
@@ -79,13 +84,15 @@ info: dimensional coverage:
 [coherent] probeArea / probeLen → probeLen
 [coherent] probeArea ^ 1 / 2 → probeLen
 [coherent] probeLen · probeLen → probeArea
+[coherent] probeNum ^ probeNum → probeNum
 [coherent] probeNum · probeNum → probeNum
 [coherent] transcendental : probeNum → probeNum
 [parametric] k · probeLen → probeArea
 ⚠ CONFLICTING probeConf · probeNum → probeConf — disagreeing DimensionedKinds for: probeConf
 ⚠ INCOHERENT probeLen · probeLen → probeLen
+⚠ INCOHERENT probeNum ^ probeLen → probeNum
 ⚠ UNDIMENSIONED probeLen · probeBad → probeArea — no DimensionedKind for: probeBad
-9 kind edge(s): 5 coherent, 1 parametric, 1 UNDIMENSIONED, 1 INCOHERENT, 1 CONFLICTING — dimensional-coverage violation
+11 kind edge(s): 6 coherent, 1 parametric, 1 UNDIMENSIONED, 2 INCOHERENT, 1 CONFLICTING — dimensional-coverage violation
 -/
 #guard_msgs (whitespace := lax) in
 #kind_dimensional_coverage PropertyKindCalculus.Tests.Dimension.Coverage
@@ -93,14 +100,15 @@ info: dimensional coverage:
 
 /-! ## `#kind_dimensional_clean` — the invariant, which cannot be re-blessed
 
-The report pinned above is a `#guard_msgs` record of a namespace deliberately holding one edge
+The report pinned above is a `#guard_msgs` record of a namespace deliberately holding at least one edge
 of each violating verdict, and re-pinning such a record is how a real violation would be signed
 away by accident. `#kind_dimensional_clean` carries no message to re-pin: it throws while any
 edge is undimensioned, conflicting or incoherent, so the two commands fail independently. -/
 
-/-- error: dimensional coverage: 3 edge(s) not dimensionally accounted for — dimensional-coverage violation
+/-- error: dimensional coverage: 4 edge(s) not dimensionally accounted for — dimensional-coverage violation
   ⚠ CONFLICTING probeConf · probeNum → probeConf — disagreeing DimensionedKinds for: probeConf
   ⚠ INCOHERENT probeLen · probeLen → probeLen
+  ⚠ INCOHERENT probeNum ^ probeLen → probeNum
   ⚠ UNDIMENSIONED probeLen · probeBad → probeArea — no DimensionedKind for: probeBad
 
 Give the kinds at issue their `DimensionedKind` declarations (`UNDIMENSIONED`), reconcile the disagreeing ones (`CONFLICTING`), or withdraw the authored edge the dimensional rule refutes (`INCOHERENT`). Do NOT re-pin a `#kind_dimensional_coverage` report whose summary says `violation` — that turns the build green and the audit off.

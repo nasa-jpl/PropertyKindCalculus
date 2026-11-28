@@ -170,7 +170,7 @@ under a binder to exercise the recursion. -/
 `propFamilies`, the incidence readers, the dimensional rule, the graph roles and the
 interchange family all read `KindEdges.specs`; these pins keep each entry well-formed
 (every role within the family's arity, an exponent on the `power` family alone) and the
-derived `propFamilies` at the seven witness `Prop`s. -/
+derived `propFamilies` at the eight witness `Prop`s. -/
 
 #guard PropertyKindCalculus.KindEdges.specs.all fun s =>
   s.operands.all (· < s.arity) && s.result < s.arity
@@ -178,7 +178,8 @@ derived `propFamilies` at the seven witness `Prop`s. -/
     && (s.exponent.isSome == (s.law == .power))
 
 #guard PropertyKindCalculus.KindEdges.propFamilies ==
-  #[``ProductKind, ``QuotientKind, ``ReciprocalKind, ``TranscendentalKind, ``PowerKind,
+  #[``ProductKind, ``QuotientKind, ``ReciprocalKind, ``TranscendentalKind, ``RealPowerKind,
+    ``PowerKind,
     ``ReferenceKind, ``DifferenceKind]
 
 /-! ## Authorship — the elaborator's auxiliaries credited to their declaration, nothing else

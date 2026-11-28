@@ -8,9 +8,9 @@ over `Float.Model`, the bit-level IEEE 754 binary64 model in core (`Init.Data.Fl
 sign/exponent/mantissa unpacking, round-to-nearest-even, NaN and infinity rules), and `+ - * /`,
 `sqrt`, `abs`, `≤`, `<`, `==`, `toBits`/`ofBits` are *defined* through that model — the C externs
 are compiled replacements of a definition, not the definition. So for every op of the alphabet but
-two, `BinOp.eval`/`UnOp.eval` unfold, by `rfl`, to model arithmetic, and the obligation reads: the
+three, `BinOp.eval`/`UnOp.eval` unfold, by `rfl`, to model arithmetic, and the obligation reads: the
 host's binary64 `+` is IEEE round-to-nearest-even — a conformance claim about the host, not a claim
-about Lean. The two exceptions are `Float.exp` and `Float.log`: `opaque` externs (libm) with no
+about Lean. The three exceptions are `Float.exp`, `Float.log` and `Float.pow`: `opaque` externs (libm) with no
 model; they are the whole of what "libm" means in the trusted base.
 
 The theorems below pin each clause by `rfl`; their axiom profile is the standard three the model's
@@ -51,6 +51,10 @@ theorem BinOp_eval_min_model (a b : Float) :
 
 theorem BinOp_eval_max_model (a b : Float) :
     BinOp.eval .max a b = Float.ofModel (a.toModel.maximum b.toModel) := rfl
+
+/-- Power unfolds by `rfl` only as far as `Float.pow`, an `opaque` extern (libm `pow`) with no
+model clause: its special cases and rounding are the host libm's, as for `exp` and `log`. -/
+theorem BinOp_eval_pow_extern (a b : Float) : BinOp.eval .pow a b = Float.pow a b := rfl
 
 theorem Float_le_model (a b : Float) : (a ≤ b) = (a.toModel ≤ b.toModel) := rfl
 

@@ -18,6 +18,8 @@ device, so no probe here executes it. `--require-emitted` fails when `cc` or Jul
 (`--julia PATH` names the Julia). The C stub reads its table from `lutDataDecl`, so baked samples go
 through `floatLit`. `runExtrema` runs `fmin`/`fmax` at every NaN, `±0`, `±1`, `±∞` pair: as an emitted
 C stub kernel with baked NaN and `±∞` constants, and on `CudaT` when a LibTorch bridge is linked.
+`runPower` runs `x ^ y` at the same pairs and at ordinary operands against C `pow`'s written-out rules,
+within 4 ulps: `evalTape`, the emitted C stub, the emitted Julia at both precisions, and `CudaT`.
 Exits `0` on parity and `1` on mismatch.
 -/
 
@@ -370,6 +372,170 @@ def runExtrema (dir : System.FilePath) (cc : Bool) : IO Nat := do
     IO.println "No LibTorch bridge is linked: CudaT fmin/fmax were not run."
   return bad
 
+/-- Whether a finite `y` is an odd integer. -/
+def isOddInt (y : Float) : Bool := y.isFinite && y.floor == y && (y / 2).floor != y / 2
+
+/-- C `pow` (ISO C Annex F.10.4.4) where the standard fixes the result, written out without the tape
+or `Float.pow`; `none` on finite operands whose result is a rounded real power. -/
+def powRef (x y : Float) : Option Float :=
+  if y == 0.0 || x == 1.0 then some 1.0
+  else if x.isNaN || y.isNaN then some nan
+  else if y == inf then some (if x.abs == 1.0 then 1.0 else if x.abs < 1.0 then 0.0 else inf)
+  else if y == -inf then some (if x.abs == 1.0 then 1.0 else if x.abs < 1.0 then inf else 0.0)
+  else if x == inf then some (if y < 0.0 then 0.0 else inf)
+  else if x == -inf then
+    some (if isOddInt y then (if y < 0.0 then -0.0 else -inf) else (if y < 0.0 then 0.0 else inf))
+  else if x == 0.0 then
+    let neg := x.toBits >>> 63 == 1 && isOddInt y
+    some (if y < 0.0 then (if neg then -inf else inf) else (if neg then -0.0 else 0.0))
+  else if x < 0.0 && y.floor != y then some nan
+  else if y == 1.0 then some x
+  else if y == -1.0 then some (1.0 / x)
+  else none
+
+/-- Ordinary operands `(x, y, x ^ y)`, each exact in binary32, the power stated by hand
+(`Float.sqrt` is correctly rounded). -/
+def powOrdinary : Array (Float × Float × Float) :=
+  #[(2.0, 3.0, 8.0), (2.0, 0.5, Float.sqrt 2.0), (4.0, -0.5, 0.5), (-2.0, 3.0, -8.0), (-2.0, 2.0, 4.0),
+    (-2.0, 0.5, nan), (9.0, 0.5, 3.0), (10.0, -2.0, 0.01), (0.5, -1.5, Float.sqrt 8.0),
+    (1.5, 2.0, 2.25), (-0.5, -3.0, -8.0), (0.25, 0.5, 0.5), (-8.0, 0.25, nan), (3.0, 4.0, 81.0),
+    (2.0, 10.0, 1024.0), (0.5, 2.0, 0.25), (-1.5, -2.5, nan)]
+
+/-- The power probes `(x, y, x ^ y)`: every ordered pair of `specials` by `powRef`, then `powOrdinary`. -/
+def powProbes : Except String (Array (Float × Float × Float)) := do
+  let sp ← (specials.flatMap fun a => specials.map fun b => (a, b)).mapM fun (a, b) =>
+    match powRef a b with
+    | some w => pure (a, b, w)
+    | none => throw s!"powRef leaves pow({a}, {b}) unstated"
+  pure (sp ++ powOrdinary)
+
+/-- `x ^ y` on two inputs, then with baked NaN and `±∞` constants as base or exponent: four outputs. -/
+def recordPower : Except String (CpuTape Float × List Nat) := do
+  let leaf (nm : String) : TapeBuilder Shape.scalar :=
+    ⟨TapeM.leaf (Tensor.full Shape.scalar 0.0) (name := some nm)⟩
+  let x := leaf "x"
+  let y := leaf "y"
+  let outs : List (TapeBuilder Shape.scalar) :=
+    [x ^ y, (.const nan : TapeBuilder Shape.scalar) ^ x, x ^ (.const inf : TapeBuilder Shape.scalar),
+     (.const (-inf) : TapeBuilder Shape.scalar) ^ x]
+  let (ids, t) ← TapeM.run (TorchLean.Tape.empty : CpuTape Float) (outs.mapM (·.run))
+  pure (t, ids)
+
+/-- What `recordPower`'s four outputs must be at a probe, stated without the tape. -/
+def powerWant (p : Float × Float × Float) : Except String (List Float) := do
+  let ref (a b : Float) : Except String Float :=
+    match powRef a b with
+    | some w => pure w
+    | none => throw s!"powRef leaves pow({a}, {b}) unstated"
+  pure [p.2.2, ← ref nan p.1, ← ref p.1 inf, ← ref (-inf) p.1]
+
+/-- The parity rule of a libm call: NaN, zeros and infinities exactly (sign included), any other
+value within `tol` units in the last place of the lane's format (`f32`: binary32). -/
+def ulpNear (f32 : Bool) (got want : Float) (tol : Nat := 4) : Bool :=
+  let (g, w) := if f32 then (got.toFloat32.toFloat, want.toFloat32.toFloat) else (got, want)
+  let bits (v : Float) : Nat := if f32 then v.toFloat32.toBits.toNat else v.toBits.toNat
+  if w.isNaN || g.isNaN then w.isNaN && g.isNaN
+  else if !w.isFinite || w == 0.0 || !g.isFinite || g == 0.0 then bits g == bits w
+  else (g < 0.0) == (w < 0.0) && (if bits g ≥ bits w then bits g - bits w else bits w - bits g) ≤ tol
+
+def ofHex16? (s : String) : Option Float :=
+  if s.length != 16 then none else
+  (s.toList.foldlM (fun n c => (hexDigit? c).map (n * 16 + ·)) 0).map fun n => Float.ofBits n.toUInt64
+
+/-- Run `recordPower` through `evalTape`, the emitted C stub (`cc`), the emitted Julia function at
+`Float32` and `Float64`, and `^` on `CudaT` buffers when a LibTorch bridge is linked; each against
+`powerWant` under `ulpNear`. The number of mismatches. -/
+def runPower (dir : System.FilePath) (cc : Bool) (julia : Option String) : IO Nat := do
+  let (t, ids) ← IO.ofExcept recordPower
+  let probes ← IO.ofExcept powProbes
+  let want ← IO.ofExcept (probes.mapM powerWant)
+  let n := probes.size
+  let k := ids.length
+  let report (label : String) (f32 : Bool) (p j : Nat) (out : Float) : IO Nat := do
+    let w := (want[p]!).getD j 0.0
+    let ok := ulpNear f32 out w
+    let (a, b, _) := probes[p]!
+    unless ok do IO.println s!"FAIL {label} power output {j} x={a} y={b}  got={out}  expected={w}"
+    return if ok then 0 else 1
+  let mut bad := 0
+  for p in [0:n] do
+    let (a, b, _) := probes[p]!
+    let vals ← IO.ofExcept (TapeCodegen.evalTape (fun nm => if nm == "x" then a else b) t)
+    for (id, j) in ids.zipIdx do
+      bad := bad + (← report "evalTape" false p j (vals.getD id 0.0))
+  if cc then
+    let cg ← IO.ofExcept (TapeCodegen.gen t ids)
+    let arr (nm : String) (xs : Array Float) :=
+      s!"static const uint32_t {nm}Bits[] = \{" ++ String.intercalate ", " (xs.toList.map ("0x" ++ f32Hex ·)) ++ "};"
+    let src := String.intercalate "\n"
+      [ "#include <math.h>", "#include <stdint.h>", "#include <stdio.h>", "#include <string.h>"
+      , TapeCodegen.emitStub "power" cg
+      , arr "x" (probes.map (·.1)), arr "y" (probes.map (·.2.1))
+      , "int main(void) {"
+      , s!"  float x[{n}], y[{n}], out[{k * n}];"
+      , "  memcpy(x, xBits, sizeof x); memcpy(y, yBits, sizeof y);"
+      , s!"  power_stub({n}, {String.intercalate ", " cg.inputs.toList}, out);"
+      , s!"  for (int i = 0; i < {k * n}; i++) \{ uint32_t b; memcpy(&b, &out[i], 4); printf(\"%08x\\n\", b); }"
+      , "  return 0;", "}", "" ]
+    let cFile := dir / "power.c"
+    let exe := dir / "power.out"
+    IO.FS.writeFile cFile src
+    let build ← IO.Process.output
+      { cmd := "cc", args := #["-O2", "-ffp-contract=off", "-o", exe.toString, cFile.toString, "-lm"] }
+    let res ← if build.exitCode != 0 then pure build else IO.Process.output { cmd := exe.toString }
+    let words := (res.stdout.splitOn "\n").filter (· ≠ "") |>.toArray
+    if res.exitCode != 0 || words.size != k * n then
+      IO.eprintln s!"C stub power: cc or the kernel failed ({words.size} results):\n{res.stderr}"
+      bad := bad + 1
+    else
+      for j in [0:k] do
+        for p in [0:n] do
+          match ofHex8? words[j * n + p]! with
+          | some v => bad := bad + (← report "C stub" true p j v)
+          | none => IO.eprintln s!"C stub power: unreadable result {words[j * n + p]!}"; bad := bad + 1
+      IO.println s!"power C stub: {k * n} outputs compared with the stated expectations."
+  if let some julia := julia then
+    let cg ← IO.ofExcept (TapeCodegen.Julia.genJulia t ids)
+    let vec (nm : String) (xs : Array Float) :=
+      s!"{nm} = reinterpret(Float32, UInt32[" ++ String.intercalate ", " (xs.toList.map ("0x" ++ f32Hex ·)) ++ "])"
+    let args := String.intercalate ", " (cg.inputs.toList.map fun nm => s!"T.({nm})")
+    let src := String.intercalate "\n"
+      [ TapeCodegen.Julia.emitJulia "power" cg
+      , vec "x" (probes.map (·.1)), vec "y" (probes.map (·.2.1))
+      , "for T in (Float32, Float64)"
+      , s!"    out = Matrix\{T}(undef, {n}, {k})"
+      , s!"    power!(out, {args})"
+      , s!"    for p in 1:{n}, j in 1:{k}"
+      , "        println(string(reinterpret(UInt64, Float64(out[p, j])); base = 16, pad = 16))"
+      , "    end"
+      , "end", "" ]
+    let jlFile := dir / "power.jl"
+    IO.FS.writeFile jlFile src
+    let res ← IO.Process.output { cmd := julia, args := #["--startup-file=no", jlFile.toString] }
+    let words := (res.stdout.splitOn "\n").filter (· ≠ "") |>.toArray
+    if res.exitCode != 0 || words.size != 2 * k * n then
+      IO.eprintln s!"Julia power: the kernel failed ({words.size} results):\n{res.stderr}"
+      bad := bad + 1
+    else
+      for (label, f32, base) in [("jl F32", true, 0), ("jl F64", false, k * n)] do
+        for p in [0:n] do
+          for j in [0:k] do
+            match ofHex16? words[base + p * k + j]! with
+            | some v => bad := bad + (← report label f32 p j v)
+            | none => IO.eprintln s!"Julia power: unreadable result {words[base + p * k + j]!}"; bad := bad + 1
+      IO.println s!"power Julia: {2 * k * n} outputs compared with the stated expectations."
+  if (← TorchLean.LibTorch.Buffer.RuntimeStatus.query) matches .nativeAvailable then
+    let s : Shape := [n]
+    let a : CudaCarrier.CudaT s := .ofFloatArray ⟨probes.map (·.1)⟩
+    let b : CudaCarrier.CudaT s := .ofFloatArray ⟨probes.map (·.2.1)⟩
+    let got := (a ^ b).toFloatArray
+    for p in [0:n] do
+      bad := bad + (← report "CudaT " true p 0 (got.get! p))
+    IO.println s!"power CudaT: {n} outputs compared with the stated expectations."
+  else
+    IO.println "No LibTorch bridge is linked: CudaT power was not run."
+  return bad
+
 /-- `--julia PATH` names the Julia to run (default `julia` on the path); `--require-emitted` makes a
 missing `cc` or Julia a failure instead of a skip. -/
 def main (args : List String) : IO UInt32 := do
@@ -405,6 +571,7 @@ def main (args : List String) : IO UInt32 := do
       (infTable, infProbes), (oneTable, oneProbes)] do
     bad := bad + (← runEmitted dir tbl ps cc julia)
   bad := bad + (← runExtrema dir cc)
+  bad := bad + (← runPower dir cc julia)
   if bad == 0 then
     IO.println "PARITY OK — the fetch kernel matches refFetch, NaN probes and non-finite samples included."
     return 0

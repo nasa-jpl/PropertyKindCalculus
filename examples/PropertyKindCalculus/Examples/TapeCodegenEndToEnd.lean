@@ -406,9 +406,10 @@ theorem rendering_table_binary (i j : Nat) (x y : Float) :
     (cOp "sub" [x, y] = .ok (x - y) ∧ (cExpr "sub" [i, j]).isOk) ∧
     (cOp "mul" [x, y] = .ok (x * y) ∧ (cExpr "mul" [i, j]).isOk) ∧
     (cOp "div" [x, y] = .ok (x / y) ∧ (cExpr "div" [i, j]).isOk) ∧
+    (cOp "pow" [x, y] = .ok (Float.pow x y) ∧ (cExpr "pow" [i, j]).isOk) ∧
     (cOp "min" [x, y] = .ok (Min.min x y) ∧ (cExpr "min" [i, j]).isOk) ∧
     (cOp "max" [x, y] = .ok (Max.max x y) ∧ (cExpr "max" [i, j]).isOk) :=
-  ⟨⟨rfl, rfl⟩, ⟨rfl, rfl⟩, ⟨rfl, rfl⟩, ⟨rfl, rfl⟩, ⟨rfl, rfl⟩, ⟨rfl, rfl⟩⟩
+  ⟨⟨rfl, rfl⟩, ⟨rfl, rfl⟩, ⟨rfl, rfl⟩, ⟨rfl, rfl⟩, ⟨rfl, rfl⟩, ⟨rfl, rfl⟩, ⟨rfl, rfl⟩⟩
 
 /-- The unary alphabet, likewise. -/
 theorem rendering_table_unary (i : Nat) (x : Float) :
