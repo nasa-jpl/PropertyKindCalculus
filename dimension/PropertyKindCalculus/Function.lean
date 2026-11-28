@@ -174,6 +174,23 @@ value. -/
 theorem tanh_lossTangent_coherent : DimTranscendental lossTangentK numberK :=
   ⟨rfl, rfl⟩
 
+/-- **The dimensional law of the real power** `a ^ b` (`Quantity.pow`): base, exponent and result
+are all dimension one. -/
+def DimRealPower (a b c : DimensionedKind) : Prop :=
+  a.toDimension = 1 ∧ b.toDimension = 1 ∧ c.toDimension = 1
+
+/-- **The law agrees with the spelling `exp (b · log a)`.** Coherent `log a : l`, product
+`b · l : e` and `exp e : c` leave no dimension for the exponent `b`: `dim b = dim e / dim l = 1`. -/
+theorem DimRealPower.of_exp_mul_log {a b l e c : DimensionedKind}
+    (hlog : DimTranscendental a l) (hmul : e.toDimension = b.toDimension * l.toDimension)
+    (hexp : DimTranscendental e c) : DimRealPower a b c := by
+  refine ⟨hlog.1, ?_, hexp.2⟩
+  rw [hlog.2, mul_one] at hmul
+  exact hmul.symm.trans hexp.1
+
+/-- **A loss tangent raised to a number is a number.** A worked real-power edge. -/
+theorem pow_lossTangent_coherent : DimRealPower lossTangentK numberK numberK := ⟨rfl, rfl, rfl⟩
+
 /-! ## Family D — the curated trigonometric algebra (the function-layer disambiguation)
 
 A plane angle is dimension one but a *distinct kind*. `sin` of an angle is sanctioned;

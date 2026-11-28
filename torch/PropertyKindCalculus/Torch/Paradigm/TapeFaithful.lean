@@ -7,7 +7,7 @@ map of those values, at the new id `t.size`, and every earlier value survives (`
 turns a whole-program faithfulness proof into a mechanical chain, even for *symbolic* inputs
 `a b : Tensor α s`, where evaluating the tape is impossible (see `Demo.kernel_eq_spec`).
 
-Covered ops: `add`/`sub`/`mul`/`div`, `min`/`max`, `fmin`/`fmax`, and the unary `abs`/`sqrt`/`exp`/`log`, through
+Covered ops: `add`/`sub`/`mul`/`div`/`pow`, `min`/`max`, `fmin`/`fmax`, and the unary `abs`/`sqrt`/`exp`/`log`, through
 one `binary_value` and one `unary_value` lemma over `Tape.apply`.
 -/
 
@@ -198,6 +198,13 @@ theorem div_value (t : CpuTape α) (aId bId : Nat) {a b : Tensor α s}
     ∃ t', CpuTape.div (s := s) t aId bId = .ok (t', t.size) ∧
           requireValue (s := s) t' t.size = .ok (a / b) ∧ FrameOver t' t :=
   binary_value t _ _ aId bId _root_.rfl Op.rule?_div _root_.rfl ha hb
+
+/-- `CpuTape.pow` stores `Tensor.pow a b`, the exponent read from the tape. -/
+theorem pow_value (t : CpuTape α) (aId bId : Nat) {a b : Tensor α s}
+    (ha : requireValue (s := s) t aId = .ok a) (hb : requireValue (s := s) t bId = .ok b) :
+    ∃ t', CpuTape.pow (s := s) t aId bId = .ok (t', t.size) ∧
+          requireValue (s := s) t' t.size = .ok (Tensor.pow a b) ∧ FrameOver t' t :=
+  binary_value t _ _ aId bId _root_.rfl Op.rule?_powValue _root_.rfl ha hb
 
 /-- `CpuTape.min` stores `Tensor.minimum a b`. -/
 theorem min_value (t : CpuTape α) (aId bId : Nat) {a b : Tensor α s}

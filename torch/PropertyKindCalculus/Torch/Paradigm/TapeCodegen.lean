@@ -106,6 +106,7 @@ def printC : SL.SLExpr → String
       | .sub => s!"v{a} - v{b}"
       | .mul => s!"v{a} * v{b}"
       | .div => s!"v{a} / v{b}"
+      | .pow => s!"powf(v{a}, v{b})"
       | .min => s!"(v{a} != v{a} || v{a} < v{b} || (v{a} == v{b} && signbit(v{a})) ? v{a} : v{b})"
       | .max => s!"(v{a} != v{a} || v{a} > v{b} || (v{a} == v{b} && !signbit(v{a})) ? v{a} : v{b})"
       | .fmin => s!"(v{b} != v{b} || (v{a} == v{a} && (v{a} < v{b} || (v{a} == v{b} && signbit(v{a})))) ? v{a} : v{b})"
@@ -725,10 +726,11 @@ def writeLandingFiles (dir : System.FilePath) (name : String) (cg : Codegen) : I
 
 /-! ### Arithmetic-intensity accounting -/
 
-/-- Per-op FLOP weight (transcendentals cost more): `exp/log ≈ 10`, `sqrt ≈ 8`, `div ≈ 4`,
+/-- Per-op FLOP weight (transcendentals cost more): `exp/log ≈ 10`, `pow ≈ 20`, `sqrt ≈ 8`, `div ≈ 4`,
 `lutfetch:* ≈ 4` (clamp + floor + lerp around the fetch), else 1. -/
 def flopWeight : Option String → Nat
   | some "exp" | some "log" => 10
+  | some "pow"              => 20
   | some "sqrt"             => 8
   | some "div"              => 4
   | some nm                 => if (lutNodeName? nm).isSome then 4 else 1

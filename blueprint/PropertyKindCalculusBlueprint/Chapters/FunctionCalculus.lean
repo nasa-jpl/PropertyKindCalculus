@@ -128,7 +128,12 @@ Realized as `TranscendentalKind` with the constructors `Quantity.exp` / `log` / 
 `cos` / `tanh` (base surface) and `tan` / `asin` / `acos` / `atan` / `atan2` (extended
 surface). The dimensional strengthening is `DimTranscendental` (`tanh_lossTangent_coherent`
 is the worked edge: the conductive-loss $`\tanh` argument is dimensionless and so is its
-value), and the trigonometric curation is the `Dimension`-layer trig algebra.
+value), and the trigonometric curation is the `Dimension`-layer trig algebra. The real power with
+a run-time exponent, `Quantity.pow` (the carrier's `^`), carries one witness, `RealPowerKind`
+(base, exponent → result) — one hyperedge for the one recorded operation — and its dimensional
+rule requires base, exponent and result to be dimension one (`DimRealPower`);
+`DimRealPower.of_exp_mul_log` proves that rule is the one the spelling
+$`\exp(b \cdot \log a)` would force.
 :::
 
 # Complex-valued carriers

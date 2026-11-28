@@ -52,6 +52,7 @@ def dimRule : DimRule (Dimension B)
   | .reciprocal, [a] => some a⁻¹
   | .power p, [a] => some (a ^ p)
   | .transcendental, [a] => if a = 1 then some 1 else none
+  | .realPower, [a, b] => if a = 1 ∧ b = 1 then some 1 else none
   | .reference, [a] => some a
   | .additive, [a, b] => if a = b then some a else none
   | .copy, [a] => some a
@@ -70,6 +71,20 @@ lemma transcendental_rule_of_ne_one (a : Dimension B) (h : a ≠ 1) :
     dimRule .transcendental [a] = none := by
   simp [dimRule, h]
 
+
+/-- The real-power rule refuses a dimensioned base. -/
+lemma realPower_rule_of_base_ne_one (a b : Dimension B) (h : a ≠ 1) :
+    dimRule .realPower [a, b] = none := by
+  simp [dimRule, h]
+
+/-- The real-power rule refuses a dimensioned exponent. -/
+lemma realPower_rule_of_exponent_ne_one (a b : Dimension B) (h : b ≠ 1) :
+    dimRule .realPower [a, b] = none := by
+  simp [dimRule, h]
+
+/-- On a dimension-one base and exponent the real power is dimension one. -/
+lemma realPower_rule_one : dimRule (B := B) .realPower [1, 1] = some 1 := by
+  simp [dimRule]
 variable {ν κ : Type} [BEq ν] [LawfulBEq ν] [BEq κ]
 
 /-- **Dimensional homogeneity along the hypergraph** (the third capstone). Let `g` be a

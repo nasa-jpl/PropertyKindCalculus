@@ -86,6 +86,10 @@ def ndp (s : String) (path : List String) : NodeId := { root := .letBound s, pat
 #guard texOfOccurrence
     ⟨.power (1/2 : Rat), [(fr 1, kx)], nd "r", kx, "probe", `Probe.sqrtQ⟩
   == "t_{1}^{1 / 2}"
+-- The real power: its exponent is an operand node, not edge data.
+#guard texOfOccurrence
+    ⟨.realPower, [(nd "s", kx), (nd "n", kx)], nd "r", kx, "probe", `Probe.powQ⟩
+  == "\\mathit{s}^{\\mathit{n}}"
 #guard texOfOccurrence ⟨.copy, [(nd "a", kx)], nd "b", kx, "probe", .anonymous⟩
   == "\\mathit{a}"
 

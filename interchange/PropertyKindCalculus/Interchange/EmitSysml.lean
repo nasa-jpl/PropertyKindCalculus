@@ -91,7 +91,8 @@ def tierLit : IntroTier → String
 def familyLit : EdgeFamily → String
   | .product => "EdgeFamily::product" | .quotient => "EdgeFamily::quotient"
   | .reciprocal => "EdgeFamily::reciprocal" | .transcendental => "EdgeFamily::transcendental"
-  | .power => "EdgeFamily::power" | .reference => "EdgeFamily::reference"
+  | .power => "EdgeFamily::power" | .realPower => "EdgeFamily::realPower"
+  | .reference => "EdgeFamily::reference"
   | .additive => "EdgeFamily::additive" | .tableMul => "EdgeFamily::tableMul"
   | .tableDiv => "EdgeFamily::tableDiv" | .copy => "EdgeFamily::copy"
   | .step => "EdgeFamily::step" | .select => "EdgeFamily::select"
@@ -124,6 +125,7 @@ def edgeSyntax : EdgeKind → String × String × List String
   | .quotient => ("quotient", "KindQuotient", ["numerator", "denominator", "result"])
   | .reciprocal => ("reciprocal", "KindReciprocal", ["base", "result"])
   | .power => ("power", "KindPower", ["base", "result"])
+  | .realPower => ("realPower", "KindRealPower", ["base", "exponent", "result"])
   | .transcendental => ("transcendental", "KindTranscendental", ["argument", "result"])
   | .reference => ("reference", "KindReference", ["base", "result"])
   | .difference => ("difference", "KindDifference", ["left", "right"])

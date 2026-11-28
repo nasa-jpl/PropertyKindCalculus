@@ -143,6 +143,17 @@ error: a power exponent here is not a rational literal — the graph's edge voca
 -/
 #guard_msgs in #kind_occurrences rootOfGeneric
 
+/-- The real power: its exponent is an operand, so the edge has two incidence positions. -/
+def raised {R : Type} [Pow R R] (a : Quantity epsilonK R) (b : Quantity epsilonK R) :
+    Quantity epsilonK R :=
+  Quantity.pow (⟨rfl, rfl, rfl⟩ : RealPowerKind epsilonK epsilonK epsilonK) a b
+
+/--
+info: inline kind occurrences in 'PropertyKindCalculus.Tests.KindIncidence.raised':
+epsilonK ^ epsilonK → epsilonK ⟨a, b⟩
+-/
+#guard_msgs in #kind_occurrences raised
+
 /- The occurrence walk in isolation, on a hand-built `let`-bound-witness expression —
 the binder-resolution path (`witnessAuthored` through the `let`, operand `.bvar`s named
 from the walk context), deterministic regardless of the elaborator's choices for the

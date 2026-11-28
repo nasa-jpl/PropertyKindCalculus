@@ -347,7 +347,8 @@ def harvestSpecialization (consts : Array Name) : HarvestM Unit := do
 /-- The DSL family of each witness law. -/
 def edgeKindOfLaw : KindEdges.EdgeLaw → EdgeKind
   | .product => .product | .quotient => .quotient | .reciprocal => .reciprocal
-  | .transcendental => .transcendental | .power => .power | .reference => .reference
+  | .transcendental => .transcendental | .power => .power | .realPower => .realPower
+  | .reference => .reference
   | .additive => .difference
 
 /-- The DSL family of each witness constant, with whether it is a table registration —
@@ -459,6 +460,7 @@ def familyOf (f : Provenance.EdgeFamily) : FamilyFields :=
   | .quotient => { family := .quotient }
   | .reciprocal => { family := .reciprocal }
   | .transcendental => { family := .transcendental }
+  | .realPower => { family := .realPower }
   | .power e => { family := .power, powerNum := some e.num, powerDen := some e.den }
   | .reference => { family := .reference }
   | .additive => { family := .additive }

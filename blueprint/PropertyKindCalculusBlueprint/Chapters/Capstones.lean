@@ -604,9 +604,9 @@ statement about `v3 * v4`, `ifelse(a <= b, a, b)` and `expf(v9)`, never about a 
 target is a printer: a few lines and the same theorem. And "what `SLExpr.denote` means in Lean's
 `Float`" is itself a specification, not an oracle: on the pinned toolchain `Float` is a structure
 over `Float.Model`, core's bit-level IEEE 754 binary64 model, and every op of the alphabet but
-`exp`/`log` unfolds by `rfl` to model arithmetic (`examples.tape_host_float_model`), so the
+`exp`/`log`/`pow` unfolds by `rfl` to model arithmetic (`examples.tape_host_float_model`), so the
 obligation reads "the host's binary64 `+` rounds to nearest even" — a conformance claim about the
-host. The host compiler, its `exp`/`log` (the two `opaque` externs, the whole of "libm"), the
+host. The host compiler, its `exp`/`log`/`pow` (the three `opaque` externs, the whole of "libm"), the
 absence of FMA contraction, and (CUDA) the `float` narrowing of the double program remain the
 trusted base each printer names and the parity executables measure; the methodology chapter,
 _Julia, emitted_, says so for the Julia host.
@@ -652,7 +652,7 @@ curated interaction algebra, whenever the algebra sanctions a product, the resul
 dimension is the product of the operands' dimensions. It holds because the algebra carries
 that side condition in its definition, so it is per algebra, and only for the product and
 quotient edges an author chose to mirror into one. The coverage command is mechanical: it
-walks every authored edge under a namespace across all nine witness families and evaluates
+walks every authored edge under a namespace across all ten witness families and evaluates
 each family's dimensional rule. It is total, but per edge, and its output is a report
 rather than a theorem. The capstone below composes both: given a well-formed hypergraph
 whose occurrences all carry coherent families, dimension is a homomorphism along every
@@ -743,7 +743,7 @@ command does by elaboration and the theorem takes as a hypothesis.
   `Float.toBits_inj` (`cseCompact_denotation_unconditional`) the merged-const-leaf case.
 - The host `Float` as a specification: `Float` is a structure over core's `Float.Model` (IEEE 754
   binary64, round-to-nearest-even), and `BinOp.eval`/`UnOp.eval` unfold by `rfl` to model
-  arithmetic for every op of the alphabet but the two `opaque` externs `exp`/`log`
+  arithmetic for every op of the alphabet but the three `opaque` externs `exp`/`log`/`pow`
   (`examples.tape_host_float_model`), so the per-printer obligation is the host's IEEE conformance,
   not a claim about Lean.
 - One `min`/`max` reading on NaN across the interpreter and the three renderings: IEEE 754-2019

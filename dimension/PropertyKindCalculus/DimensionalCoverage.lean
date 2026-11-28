@@ -14,9 +14,9 @@ curate. What no curated algebra can promise is *coverage*: an edge nobody mirror
 algebra is an edge whose dimensional side-condition nobody discharged.
 
 `#kind_dimensional_coverage ns …` closes that gap mechanically. It walks every authored
-kind-algebra edge under the given namespaces — the same nine witness families `#kind_edges`
-scans (`ProductKind`, `QuotientKind`, `ReciprocalKind`, `TranscendentalKind`, `PowerKind`,
-`ReferenceKind`, `DifferenceKind`, and
+kind-algebra edge under the given namespaces — the same ten witness families `#kind_edges`
+scans (`ProductKind`, `QuotientKind`, `ReciprocalKind`, `TranscendentalKind`, `RealPowerKind`,
+`PowerKind`, `ReferenceKind`, `DifferenceKind`, and
 the operator-table classes `KindMul`/`KindDiv`) — resolves each participating kind to its
 declared `DimensionedKind`, and **evaluates the family's dimensional rule** in the PhysLib
 `Dimension` group, exponent by exponent:
@@ -103,6 +103,8 @@ inductive EdgeRule where
   | reciprocal
   /-- `transcendental : k₁ → k₂`: both sides must be dimension one. -/
   | transcendental
+  /-- `k₁ ^ k₂ → k`, the exponent an operand: base, exponent and result must be dimension one. -/
+  | realPower
   /-- `k₁ ^ p → k₂`: the result dimension is the `p`-th power (exponents scale by `p`). -/
   | power
   /-- `reference : k₁ → k`: the two dimensions are *equal*. Two references for one
@@ -123,6 +125,7 @@ def ruleOf : KindEdges.EdgeLaw → EdgeRule
   | .quotient       => .quotient
   | .reciprocal     => .reciprocal
   | .transcendental => .transcendental
+  | .realPower      => .realPower
   | .power          => .power
   | .reference      => .reference
   | .additive       => .additive
@@ -231,6 +234,8 @@ def checkCoherent (gens : Array Name) (rule : EdgeRule) (dks : Array Name)
           pure #[(← expAt dks[1]! g, ← mkAppM ``Neg.neg #[← expAt dks[0]! g])]
       | .transcendental =>
           pure #[(← expAt dks[0]! g, zero), (← expAt dks[1]! g, zero)]
+      | .realPower =>
+          pure #[(← expAt dks[0]! g, zero), (← expAt dks[1]! g, zero), (← expAt dks[2]! g, zero)]
       | .power =>
           -- `p?` is the rule's rational exponent and the factor beside it is an
           -- `Exponent`; there is no `HMul ℚ Exponent`, so the rational is carried across

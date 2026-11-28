@@ -143,6 +143,11 @@ instance : Min Adequacy :=
 instance : Max Adequacy :=
   ⟨fun a b => { value := max a.value b.value, unc := max a.unc b.unc,
                 report := a.report.merge b.report }⟩
+/-- Real power, 0th-order like the transcendentals: the value is `Float.pow`, the uncertainty the
+larger operand uncertainty, the reports merged. -/
+instance : Pow Adequacy Adequacy :=
+  ⟨fun a b => { value := Float.pow a.value b.value, unc := max a.unc b.unc,
+                report := a.report.merge b.report }⟩
 instance : Coe Nat Adequacy := ⟨fun n => exact n.toFloat⟩
 
 instance : MathCarrier Adequacy where

@@ -104,6 +104,11 @@ instance : Min Adequacy32 :=
 instance : Max Adequacy32 :=
   ⟨fun a b => { value := max a.value b.value, unc := max a.unc b.unc,
                 report := a.report.merge b.report }⟩
+/-- Real power, 0th-order like the transcendentals: the value is `Float32.pow`, the uncertainty the
+larger operand uncertainty, the reports merged. -/
+instance : Pow Adequacy32 Adequacy32 :=
+  ⟨fun a b => { value := Float32.pow a.value b.value, unc := max a.unc b.unc,
+                report := a.report.merge b.report }⟩
 instance : Coe Nat Adequacy32 := ⟨fun n => exact n.toFloat32⟩
 
 /-- As in `Adequacy`: the selectors carry the larger uncertainty of both operands (a perturbation may

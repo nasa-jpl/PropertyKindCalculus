@@ -84,7 +84,7 @@ deriving Repr, BEq, Inhabited, ToJson, FromJson
 
 /-- The witness families of the kind algebra, as they are authored. -/
 inductive EdgeKind where
-  | product | quotient | reciprocal | power | transcendental | reference | difference
+  | product | quotient | reciprocal | power | realPower | transcendental | reference | difference
 deriving Repr, BEq, DecidableEq, Inhabited, ToJson, FromJson
 
 /-- One authored kind-algebra edge: the family, its operand kinds in the order the family
@@ -134,7 +134,7 @@ deriving Repr, BEq, DecidableEq, Inhabited, ToJson, FromJson
 
 /-- The hyperedge families of the provenance hypergraph. -/
 inductive EdgeFamily where
-  | product | quotient | reciprocal | transcendental | power | reference
+  | product | quotient | reciprocal | transcendental | power | realPower | reference
   | additive | tableMul | tableDiv | copy | step | select
 deriving Repr, BEq, DecidableEq, Inhabited, ToJson, FromJson
 

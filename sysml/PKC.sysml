@@ -133,6 +133,11 @@ package PKC {
             end base : KindOfProperty;
             end result : KindOfProperty;
         }
+        connection def KindRealPower :> KindEdge {
+            end base : KindOfProperty;
+            end exponent : KindOfProperty;
+            end result : KindOfProperty;
+        }
         connection def KindTranscendental :> KindEdge {
             end argument : KindOfProperty;
             end result : KindOfProperty;
@@ -149,6 +154,7 @@ package PKC {
         abstract connection quotients : KindQuotient[*];
         abstract connection reciprocals : KindReciprocal[*];
         abstract connection powers : KindPower[*];
+        abstract connection realPowers : KindRealPower[*];
         abstract connection transcendentals : KindTranscendental[*];
         abstract connection referenceEdges : KindReference[*];
         abstract connection differences : KindDifference[*];
@@ -163,6 +169,9 @@ package PKC {
         }
         metadata def <power> Power :> SemanticMetadata {
             :>> baseType = powers meta SysML::Usage;
+        }
+        metadata def <realPower> RealPower :> SemanticMetadata {
+            :>> baseType = realPowers meta SysML::Usage;
         }
         metadata def <transcendental> Transcendental :> SemanticMetadata {
             :>> baseType = transcendentals meta SysML::Usage;
@@ -182,7 +191,7 @@ package PKC {
         enum def PortDir { input; config; param; output; conditional; }
         enum def IntroTier { 'derived'; gated; attested; }
         enum def EdgeFamily {
-            product; quotient; reciprocal; transcendental; power; reference;
+            product; quotient; reciprocal; transcendental; power; realPower; reference;
             additive; tableMul; tableDiv; copy; step; select;
         }
         enum def BoundaryRole { model; specification; }

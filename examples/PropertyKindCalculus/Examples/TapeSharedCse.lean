@@ -10,7 +10,7 @@ the sharing recorder emits.
 * `Rel` relates a raw tape, `cseCompact`'s fold over it, and a sharing state; `Rel.step` is one
   node on each side. `Seen` is the soundness of the lookup-before-run table.
 * `Shares b sb` relates a `TapeBuilder` and a `SharedTapeBuilder`. Its alphabet: leaves and
-  constants, `+ - * /`, `min`/`max`, `fmin`/`fmax`, `exp`/`log`/`abs`/`sqrt`, the table fetch,
+  constants, `+ - * /`, `^`, `min`/`max`, `fmin`/`fmax`, `exp`/`log`/`abs`/`sqrt`, the table fetch,
   and the unsupported ops (both fail).
 * `shares_record`: for related outputs recorded from the empty tape, the sharing tape has the
   name, operands and stored value of every node of the compacted tape, and the remapped ids.
@@ -367,6 +367,7 @@ theorem raw_natural (o : SharedOp) (s : Shape) (T T' : CpuTape Float) (ps ps' : 
   case sub => exact bin_natural _ _ rfl Op.rule?_sub rfl (by simp) T T' _ _ _ _ h0 h1 h0' h1'
   case mul => exact bin_natural _ _ rfl Op.rule?_mul rfl (by simp) T T' _ _ _ _ h0 h1 h0' h1'
   case div => exact bin_natural _ _ rfl Op.rule?_div rfl (by simp) T T' _ _ _ _ h0 h1 h0' h1'
+  case pow => exact bin_natural _ _ rfl Op.rule?_powValue rfl (by simp) T T' _ _ _ _ h0 h1 h0' h1'
   case min => exact bin_natural _ _ rfl Op.rule?_min rfl (by simp) T T' _ _ _ _ h0 h1 h0' h1'
   case max => exact bin_natural _ _ rfl Op.rule?_max rfl (by simp) T T' _ _ _ _ h0 h1 h0' h1'
   case fmin => exact bin_natural _ _ rfl Op.rule?_fmin rfl (by simp) T T' _ _ _ _ h0 h1 h0' h1'
@@ -757,6 +758,8 @@ theorem Shares.mul (hx : Shares s x sx) (hy : Shares s y sy) : Shares s (x * y) 
   Shares.bin .mul rfl hx hy
 theorem Shares.div (hx : Shares s x sx) (hy : Shares s y sy) : Shares s (x / y) (sx / sy) :=
   Shares.bin .div rfl hx hy
+theorem Shares.pow (hx : Shares s x sx) (hy : Shares s y sy) : Shares s (x ^ y) (sx ^ sy) :=
+  Shares.bin .pow rfl hx hy
 theorem Shares.min (hx : Shares s x sx) (hy : Shares s y sy) :
     Shares s (Min.min x y) (Min.min sx sy) := Shares.bin .min rfl hx hy
 theorem Shares.max (hx : Shares s x sx) (hy : Shares s y sy) :
@@ -841,7 +844,7 @@ macro "tape_shares" " [" names:Lean.Parser.Tactic.simpLemma,* "]" : tactic =>
     (simp only [$names,*]
      repeat' first
        | apply List.Forall₂.cons | exact List.Forall₂.nil
-       | apply Shares.add | apply Shares.sub | apply Shares.mul | apply Shares.div
+       | apply Shares.add | apply Shares.sub | apply Shares.mul | apply Shares.div | apply Shares.pow
        | apply Shares.min | apply Shares.max | apply Shares.fmin | apply Shares.fmax
        | apply Shares.exp | apply Shares.log | apply Shares.abs | apply Shares.sqrt
        | apply Shares.lutFetch | exact Shares.input _ _ | exact Shares.batchConst _

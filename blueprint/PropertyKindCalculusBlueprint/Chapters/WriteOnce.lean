@@ -402,8 +402,9 @@ every emitted file says the same):
   `Min Float`/`Max Float` compute (NaN propagates, `-0.0` orders below `+0.0`) and that the C and
   CUDA renderings spell as one conditional, so the interpreter and all three renderings are one
   function on NaN inputs (`fminf`/`fmaxf`, which return the non-NaN operand, are not used);
-- `sqrt` and `log` of a negative argument throw in Julia where IEEE returns a quiet NaN; the emitted
-  helpers restore the NaN and are the identity elsewhere;
+- `sqrt` and `log` of a negative argument, and `^` of a negative base with a non-integer exponent, throw
+  in Julia where C returns a quiet NaN; `^` also differs from C `pow` at zeros and infinities; the emitted
+  helpers restore the NaN and are the identity elsewhere, and `tl_pow` writes out the C `pow` special cases;
 - precision is a type parameter `T`: at `Float64` the emitted function is bit-identical to `evalTape`
   on the IEEE-exact alphabet, because Lean's `Float` _is_ binary64 — the first emitted target with no
   narrowing at the boundary, where the CUDA kernel is `float` with `double ↔ float32` casts in its
@@ -411,17 +412,17 @@ every emitted file says the same):
 
 What it does not do, said plainly. It does not put the host's own code under the seal: the Julia
 model's dynamical core, time stepping and communication are the host's, and the seal says nothing
-about them. It does not certify Julia's compiler or its `exp`/`log`: those are the trusted base the
+about them. It does not certify Julia's compiler or its `exp`/`log`/`^`: those are the trusted base the
 target adds, named as such — LLVM compiling a straight-line function, and a third libm (pure-Julia
 `Base.Math`) beside glibc's and CUDA's. The honest check across that base is `apps.julia_parity`, and its
 scope is the three recorded tapes it carries — the AVS residual and Jacobian, the whole projected
 LM step, and the table-fetch model of `examples.tape_codegen_lut` — not every kernel the emitter
 could be given: each emitted file is run under `julia` at `Float64` over deterministic pixels
-against the tape evaluator, bit-identical on every output whose cone has no `exp`/`log`, within an
+against the tape evaluator, bit-identical on every output whose cone has no `exp`/`log`/`pow`, within an
 ulp bound on the outputs whose cone does. A new closure earns the same check by being added as a
 case.
 And it covers the tape's program class and no more — a branchless, fixed-shape computational tape graph over
-ten operations and a table fetch, with reductions only when unrolled — so a closure with a
+thirteen operations and a table fetch, with reductions only when unrolled — so a closure with a
 data-dependent loop, a runtime-size reduction or a stencil is outside it today; the first such
 closure recorded against `[NumCarrier α]` is what tells which operation to add to the alphabet, each
 with its interpreter case, its two renderings and its rendering-table row.

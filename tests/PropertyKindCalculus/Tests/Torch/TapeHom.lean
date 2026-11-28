@@ -46,6 +46,7 @@ variable {s : Shape}
 
 local instance : Zero (Tensor Float s) := ⟨Tensor.full s 0⟩
 local instance : One (Tensor Float s) := ⟨Tensor.full s 1⟩
+local instance : Pow (Tensor Float s) (Tensor Float s) := ⟨Tensor.pow⟩
 local instance : Min (Tensor Float s) := ⟨Tensor.minimum⟩
 local instance : Max (Tensor Float s) := ⟨Tensor.maximum⟩
 local instance : Coe Nat (Tensor Float s) := ⟨fun n => Tensor.full s (n : Float)⟩
@@ -65,7 +66,7 @@ local instance instEagerNumCarrier : NumCarrier (Tensor Float s) where
 -- A wrong fold would otherwise reduce both carriers to `TapeBuilder.bin …` and execute the
 -- tape monad; opacity makes a head mismatch fail immediately (the `paradigm.tape_parity`
 -- client discipline `tape_hom` relies on for its clean negative behaviour).
-attribute [local irreducible] TapeM.add TapeM.sub TapeM.mul TapeM.exp TapeM.leaf
+attribute [local irreducible] TapeM.add TapeM.sub TapeM.mul TapeM.pow TapeM.exp TapeM.leaf
 
 /-! ## The toy kernel — authored once, kinded; derived by erasure -/
 
@@ -93,6 +94,25 @@ theorem g_tape_parity (x y : Tensor Float s) :
     Evaluates (g (leafT x "x") (leafT y "y")) (g (α := Tensor Float s) x y) := by
   tape_hom [g, gQ]
 
+
+/-! ## The kinded real power — the exponent a recorded operand -/
+
+/-- The real-power witness: base, exponent and result in the toy kind. -/
+theorem hpow : RealPowerKind dimlessK dimlessK dimlessK := ⟨rfl, rfl, rfl⟩
+
+/-- Authored once, kinded: `x ^ y + x`, the power carrying its one witness. -/
+def pQ {α : Type} [NumCarrier α] (x y : Quantity dimlessK α) : Quantity dimlessK α :=
+  Quantity.pow hpow x y + x
+
+/-- The naked power kernel, by erasure. -/
+def p {α : Type} [NumCarrier α] (x y : α) : α := (pQ ⟨x⟩ ⟨y⟩).magnitude
+
+/-- The tape recorded by `p` evaluates to the eager `Tensor.pow` reading, for all inputs. -/
+theorem p_tape_parity (x y : Tensor Float s) :
+    Evaluates (p (leafT x "x") (leafT y "y")) (p (α := Tensor Float s) x y) := by
+  tape_hom [p, pQ]
+
+
 /-! ## Negative — `tape_hom` cannot close a false parity -/
 
 -- A deliberately wrong eager RHS (`subSpec` where the exposed tree is a `+`): after the
@@ -117,6 +137,9 @@ example (x y : Tensor Float s) (hx : Evaluates (leafT x "x") x) (hy : Evaluates 
 
 /-- info: 'PropertyKindCalculus.Tests.TapeHom.g_tape_parity' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in #print axioms g_tape_parity
+
+/-- info: 'PropertyKindCalculus.Tests.TapeHom.p_tape_parity' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in #print axioms p_tape_parity
 
 /-- info: 'PropertyKindCalculus.Paradigm.TapeParity.Evaluates.isNumCarrierHom' depends on axioms: [propext,
  Classical.choice,

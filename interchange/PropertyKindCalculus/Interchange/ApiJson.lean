@@ -289,7 +289,8 @@ def tierOf : String → Option IntroTier
 
 def familyOf : String → Option EdgeFamily
   | "product" => some .product | "quotient" => some .quotient | "reciprocal" => some .reciprocal
-  | "transcendental" => some .transcendental | "power" => some .power | "reference" => some .reference
+  | "transcendental" => some .transcendental | "power" => some .power
+  | "realPower" => some .realPower | "reference" => some .reference
   | "additive" => some .additive | "tableMul" => some .tableMul | "tableDiv" => some .tableDiv
   | "copy" => some .copy | "step" => some .step | "select" => some .select | _ => none
 
@@ -329,7 +330,7 @@ def scopeField (b : List (String × Val)) (ctx : String) : ReadM ReqScope :=
 /-- The keyword and connection-definition name of each kind-algebra family. -/
 def edgeKindOf : String → Option EdgeKind
   | "product" => some .product | "quotient" => some .quotient | "reciprocal" => some .reciprocal
-  | "power" => some .power | "transcendental" => some .transcendental
+  | "power" => some .power | "realPower" => some .realPower | "transcendental" => some .transcendental
   | "reference" => some .reference | "difference" => some .difference | _ => none
 
 /-! ## Reading elements -/

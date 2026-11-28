@@ -665,6 +665,7 @@ def edgeOfSpec (spec : KindEdges.EdgeSpec) (a : Array Expr) :
     | _, .quotient => pure .quotient
     | _, .reciprocal => pure .reciprocal
     | _, .transcendental => pure .transcendental
+    | _, .realPower => pure .realPower
     | _, .power =>
       let some i := spec.exponent
         | throw s!"the registry entry for `{spec.const}` states a power law but no exponent \
@@ -2354,6 +2355,7 @@ instance : ToExpr EdgeFamily where
     | .reciprocal => mkConst ``Provenance.EdgeFamily.reciprocal
     | .transcendental => mkConst ``Provenance.EdgeFamily.transcendental
     | .power p => mkApp (mkConst ``Provenance.EdgeFamily.power) (toExpr p)
+    | .realPower => mkConst ``Provenance.EdgeFamily.realPower
     | .reference => mkConst ``Provenance.EdgeFamily.reference
     | .additive => mkConst ``Provenance.EdgeFamily.additive
     | .tableMul => mkConst ``Provenance.EdgeFamily.tableMul

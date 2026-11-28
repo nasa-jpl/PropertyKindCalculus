@@ -99,6 +99,7 @@ def printJulia : SL.SLExpr → String
       | .sub => s!"v{a} - v{b}"
       | .mul => s!"v{a} * v{b}"
       | .div => s!"v{a} / v{b}"
+      | .pow => s!"tl_pow(v{a}, v{b})"
       | .min => s!"min(v{a}, v{b})"
       | .max => s!"max(v{a}, v{b})"
       | .fmin => s!"(isnan(v{b}) || (!isnan(v{a}) && (v{a} < v{b} || (v{a} == v{b} && signbit(v{a})))) ? v{a} : v{b})"
@@ -225,16 +226,33 @@ def header : String := String.intercalate "\n"
   , "# Semantics pinned by the emitter: no @fastmath, no muladd (no FMA contraction, no re-association);"
   , "# min/max are Julia's `min`/`max`: IEEE minimum/maximum (Lean's Min/Max Float), NaN propagates, -0.0 < +0.0;"
   , "# tl_sqrt/tl_log return NaN on a negative argument where Julia would throw (IEEE behaviour);"
-  , "# T = Float64 is bit-identical to Lean's evalTape on + - * / sqrt abs min max, ulp-close on exp/log;"
+  , "# tl_pow is C pow: its special cases are written out (Julia's ^ throws or differs there), ^ elsewhere;"
+  , "# T = Float64 is bit-identical to Lean's evalTape on + - * / sqrt abs min max, ulp-close on exp/log/pow;"
   , "# T = Float32 is the device precision of the CUDA kernel."
   , "# The plain host function is the bit-exact twin; the KernelAbstractions @kernel is the portability twin,"
   , "# tolerance-only: a backend may contract a*b + c to an FMA (the CPU backend compiles via PoCL with fuse_muladd)."
   , "" ]
 
-/-- The NaN-restoring `sqrt`/`log` helpers (identity on the non-negative domain). -/
+/-- The NaN-restoring `sqrt`/`log` helpers (identity on the non-negative domain), and `tl_pow`:
+C `pow`'s special cases written out, Julia's `^` on finite nonzero operands where it cannot throw. -/
 def mathHelpers : String := String.intercalate "\n"
   [ "@inline tl_sqrt(x::T) where {T<:AbstractFloat} = x < zero(T) ? T(NaN) : sqrt(x)"
   , "@inline tl_log(x::T) where {T<:AbstractFloat} = x < zero(T) ? T(NaN) : log(x)"
+  , "@inline function tl_pow(x::T, y::T) where {T<:AbstractFloat}"
+  , "    (y == zero(T) || x == one(T)) && return one(T)"
+  , "    (isnan(x) || isnan(y)) && return T(NaN)"
+  , "    if isinf(y)"
+  , "        ax = abs(x)"
+  , "        return ax == one(T) ? one(T) : ((ax < one(T)) == (y < zero(T)) ? T(Inf) : zero(T))"
+  , "    end"
+  , "    if isinf(x) || x == zero(T)"
+  , "        r = isinf(x) == (y > zero(T)) ? T(Inf) : zero(T)"
+  , "        return (signbit(x) && isinteger(y) && !isinteger(y / 2)) ? -r : r"
+  , "    end"
+  , "    (x < zero(T) && !isinteger(y)) && return T(NaN)"
+  , "    r = abs(x)^y"
+  , "    return (x < zero(T) && !isinteger(y / 2)) ? -r : r"
+  , "end"
   , "" ]
 
 /-- Binary64 `a + f*(b - a)` on finite `Float32` values, rounded once to `Float32`, in integer
@@ -437,16 +455,17 @@ def emitJuliaKA (name : String) (cg : JuliaCodegen) : String :=
 `examples.tape_codegen_end_to_end` makes for `cExpr`, so the two emitters are twins over one
 denotation: wherever the Float interpreter has a value, both renderings have an expression. -/
 
-/-- The binary alphabet: `cOp` computes the op and `jlExpr` renders it, for `add sub mul div min
+/-- The binary alphabet: `cOp` computes the op and `jlExpr` renders it, for `add sub mul div pow min
 max`. -/
 theorem rendering_table_binary (i j : Nat) (x y : Float) :
     (cOp "add" [x, y] = .ok (x + y) ∧ (jlExpr "add" [i, j]).isOk) ∧
     (cOp "sub" [x, y] = .ok (x - y) ∧ (jlExpr "sub" [i, j]).isOk) ∧
     (cOp "mul" [x, y] = .ok (x * y) ∧ (jlExpr "mul" [i, j]).isOk) ∧
     (cOp "div" [x, y] = .ok (x / y) ∧ (jlExpr "div" [i, j]).isOk) ∧
+    (cOp "pow" [x, y] = .ok (Float.pow x y) ∧ (jlExpr "pow" [i, j]).isOk) ∧
     (cOp "min" [x, y] = .ok (Min.min x y) ∧ (jlExpr "min" [i, j]).isOk) ∧
     (cOp "max" [x, y] = .ok (Max.max x y) ∧ (jlExpr "max" [i, j]).isOk) :=
-  ⟨⟨rfl, rfl⟩, ⟨rfl, rfl⟩, ⟨rfl, rfl⟩, ⟨rfl, rfl⟩, ⟨rfl, rfl⟩, ⟨rfl, rfl⟩⟩
+  ⟨⟨rfl, rfl⟩, ⟨rfl, rfl⟩, ⟨rfl, rfl⟩, ⟨rfl, rfl⟩, ⟨rfl, rfl⟩, ⟨rfl, rfl⟩, ⟨rfl, rfl⟩⟩
 
 /-- The unary alphabet, likewise: `exp log sqrt abs`. -/
 theorem rendering_table_unary (i : Nat) (x : Float) :
@@ -469,10 +488,12 @@ theorem jlExpr_isOk_eq_cExpr_binary (i j : Nat) :
     (jlExpr "sub" [i, j]).isOk = (cExpr "sub" [i, j]).isOk ∧
     (jlExpr "mul" [i, j]).isOk = (cExpr "mul" [i, j]).isOk ∧
     (jlExpr "div" [i, j]).isOk = (cExpr "div" [i, j]).isOk ∧
+    (jlExpr "pow" [i, j]).isOk = (cExpr "pow" [i, j]).isOk ∧
     (jlExpr "min" [i, j]).isOk = (cExpr "min" [i, j]).isOk ∧
     (jlExpr "max" [i, j]).isOk = (cExpr "max" [i, j]).isOk :=
   ⟨jlExpr_isOk_eq_cExpr _ _, jlExpr_isOk_eq_cExpr _ _, jlExpr_isOk_eq_cExpr _ _,
-   jlExpr_isOk_eq_cExpr _ _, jlExpr_isOk_eq_cExpr _ _, jlExpr_isOk_eq_cExpr _ _⟩
+   jlExpr_isOk_eq_cExpr _ _, jlExpr_isOk_eq_cExpr _ _, jlExpr_isOk_eq_cExpr _ _,
+   jlExpr_isOk_eq_cExpr _ _⟩
 
 /-- **The Julia kernel runs as the tape** — `SL.genSL_denotes` read through the printer: on a tape
 the emitter accepts, the body lines are the program's lines printed, and the program runs as
