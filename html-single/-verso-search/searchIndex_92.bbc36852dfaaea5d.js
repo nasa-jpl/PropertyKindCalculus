@@ -1,0 +1,1 @@
+window.docContents[92].resolve({"/#hcp-l6":{"contents":"\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n","context":"A Property Kind Calculus for Metrology: proving quantity and unit laws in Lean, from ISO/IEC 80000 to measurement uncertainty\u0009Onboarding: Human Context Protocols","header":"5.7. L6 — What must hold","id":"/#hcp-l6"}});
