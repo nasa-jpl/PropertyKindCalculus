@@ -165,7 +165,8 @@ def body : String :=
      "calibration tables — in one certified fused kernel"] (fill := RED) (size := 10.5)) ++
   cell "Recording" ["!a tape of operations",
      "forward values and reverse-mode gradients",
-     "a node recorded in linear time #51"]
+     "a node recorded in linear time #51",
+     "x ^ y with the exponent a recorded value #54"]
     ["!the model records itself as it runs",
      "proved: the recording computes what the model computes",
      "repeated steps merged, proved to change no value"] ++
