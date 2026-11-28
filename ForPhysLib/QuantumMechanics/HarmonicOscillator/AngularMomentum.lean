@@ -4,7 +4,7 @@
 Angular momentum (ISO 80000-4 item 4-11) and action (item 4-32) share the dimension
 `M·L²·T⁻¹` and nothing else: one is the eigenvalue scale of a rotation generator, the
 other is the quantum of the phase-space area ℏ measures. PhysLib carries both readings
-— `𝐋ᵢⱼ = x̂ᵢp̂ⱼ − x̂ⱼp̂ᵢ` in `Operators/AngularMomentum.lean` and `ℏ` in
+— `𝐋ᵢⱼ = x̂ᵢp̂ⱼ − x̂ⱼp̂ᵢ` in `Operators/SpaceD/AngularMomentum.lean` and `ℏ` in
 `PlanckConstant.lean` — and every `L_z = m·ℏ` sentence in a QM text silently re-kinds
 the right-hand side. This file makes both halves explicit for the oscillator:
 
@@ -28,8 +28,8 @@ module
 
 public import ForPhysLib.QuantumMechanics.HarmonicOscillator.Heisenberg
 meta import ForPhysLib.QuantumMechanics.HarmonicOscillator.Heisenberg
-public import Physlib.QuantumMechanics.Operators.AngularMomentum
-meta import Physlib.QuantumMechanics.Operators.AngularMomentum
+public import Physlib.QuantumMechanics.Operators.SpaceD.AngularMomentum
+meta import Physlib.QuantumMechanics.Operators.SpaceD.AngularMomentum
 
 @[expose] public section
 

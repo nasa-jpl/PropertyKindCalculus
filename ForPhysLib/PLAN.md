@@ -242,16 +242,15 @@ three, so the layer arrives as a design input rather than a retrofit.
 
 
 **And a second, quieter finding in the same file.** `IsInertial.velocity` has the *same type*
-as the displacement it is defined from:
+as the displacement it is related to:
 
 ```lean
-origin_moves_uniformly :
-  ∃ velocity, ∀ t₁ t₂, frame.origin t₂ -ᵥ frame.origin t₁ = (t₂ - t₁).val • velocity
 def IsInertial.velocity (h : frame.IsInertial) : EuclideanSpace ℝ (Fin d)
+lemma IsInertial.origin_vsub_eq (h : frame.IsInertial) (t₁ t₂ : Time) :
+    frame.origin t₂ -ᵥ frame.origin t₁ = (t₂ -ᵥ t₁) • h.velocity
 ```
 
-The defining equation is dimensionally correct only because `.val` erased `Time` to a bare `ℝ`
-first — the L = T · L·T⁻¹ balance is carried *by* the erasure rather than checked *through*
+The displacement law is dimensionally correct only because `t₂ -ᵥ t₁` is already a bare `ℝ` — the L = T · L·T⁻¹ balance is carried *by* the erasure rather than checked *through*
 it. This is the canonical instance of
 [MR30](REQUIREMENTS.md#mr30-the-unkinded-surface-is-measured)'s Mathlib-interface tier, and
 the exhibit should report it as such rather than as a defect: the erasure is how the scalar
@@ -259,9 +258,8 @@ action becomes available at all.
 
 **The shape of the change is small.** `Vector` gains a parameter; `componentEquiv` is where
 the kind is dropped and it stays exactly where it is; every instance — `AddCommGroup`,
-`Module`, `TopologicalSpace`, `NormedAddCommGroup`, `InnerProductSpace` — survives *per kind*,
-and the `Fact frame.IsMetricConserved` machinery is untouched. The current `Vector` is the
-erasure.
+`Module`, `NormedAddCommGroup`, `InnerProductSpace` — survives *per kind*. The current
+`Vector` is the erasure.
 
 **Status: built** — `ForPhysLib/Exhibits/ReferenceFrame/Findings.lean`. The three candidate
 laws (`geometricTransport`, `boostTransport`, `originShiftTransport`) all inhabit

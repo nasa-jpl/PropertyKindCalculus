@@ -19,14 +19,12 @@ map sentence satisfiable: with a kind index the three laws get three types, and 
 wrong pairing stops elaborating.
 
 **Finding 2 — quieter, and not a defect (MR30).** `IsInertial.velocity` has the *same
-type* as the displacement it is defined from, and its defining equation
-`origin t₂ -ᵥ origin t₁ = (t₂ - t₁).val • velocity` balances `L = T · L·T⁻¹` only
-because `.val` erased `Time` first. That is the Mathlib-interface tier: the erasure is
-how the scalar action becomes available at all. The kinded restatement
-`origin_displacement_eq` keeps the same proof term (`Classical.choose_spec`) while making
-every erasure a visible `.magnitude` — and formalizes the API map's `[TODO]` sentence
-stating that over elapsed time the origin is displaced by elapsed time multiplied by its
-constant velocity.
+type* as the displacement it is related to, and PhysLib's displacement law
+`IsInertial.origin_vsub_eq`, `origin t₂ -ᵥ origin t₁ = (t₂ -ᵥ t₁) • velocity`, balances
+`L = T · L·T⁻¹` only because `t₂ -ᵥ t₁` is already a bare `ℝ`. That is the
+Mathlib-interface tier: the erasure is how the scalar action becomes available at all.
+The kinded restatement `origin_displacement_eq` keeps PhysLib's own proof term while
+making every erasure a visible `.magnitude`.
 `#kind_unkinded` measures the surface rather than scoring it.
 
 **The shape of the change is small.** `KVector` below is `frame.Vector` with a kind
@@ -156,22 +154,22 @@ noncomputable example (F : ReferenceFrame d) (h : F.IsInertial) (p q : Space d) 
   (p -ᵥ q) + h.velocity
 
 /-- The frame's origin velocity, kinded at the boundary. The magnitude is PhysLib's own
-`Classical.choose`; only the reading changes. -/
+`IsInertial.velocity`; only the reading changes. -/
 noncomputable def frameVelocityQ {F : ReferenceFrame d} (h : F.IsInertial) :
     Quantity velocityK (EuclideanSpace ℝ (Fin d)) :=
-  .attest "IsInertial.velocity — the chosen witness of origin_moves_uniformly" h.velocity
+  .attest "IsInertial.velocity — the constant value of the origin's velocity" h.velocity
 
 /-- The elapsed time, kinded — this is where `.val` stops being silent. -/
 def elapsedQ (t₁ t₂ : Time) : Quantity durationK ℝ := ⟨t₂ -ᵥ t₁⟩
 
-/-- **Requirement 17, discharged kinded.** The defining property of the origin velocity —
-the API map lists it as not done — with the same proof term PhysLib would use
-(`Classical.choose_spec`), and every erasure now a visible `.magnitude`: the
-`L = T · L·T⁻¹` balance is carried *through* the boundary instead of *by* it. -/
+/-- **Requirement 17, discharged kinded.** The displacement law of the origin velocity,
+proved by PhysLib's own `IsInertial.origin_vsub_eq`, with every erasure now a visible
+`.magnitude`: the `L = T · L·T⁻¹` balance is carried *through* the boundary instead of
+*by* it. -/
 theorem origin_displacement_eq (F : ReferenceFrame d) (h : F.IsInertial) (t₁ t₂ : Time) :
     (Kinded.Space.displacementQ (F.origin t₂) (F.origin t₁)).magnitude
       = (elapsedQ t₁ t₂).magnitude • (frameVelocityQ h).magnitude :=
-  Classical.choose_spec h.origin_moves_uniformly t₁ t₂
+  h.origin_vsub_eq t₁ t₂
 
 /- The kinded readings no longer add: the sum accepted above is unwritable here. -/
 #check_failure fun (F : ReferenceFrame 3) (h : F.IsInertial) (p q : Space 3) =>

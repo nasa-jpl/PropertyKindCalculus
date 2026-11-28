@@ -4,19 +4,12 @@
 
 deltas:
 
-  - reference: TODO
-    file: null
-    declarations: []
-    sentence: "The origin and basis of a frame built in this way are exactly those points and displacements. [TODO]"
+  - reference: 7
+    file: Physlib/SpaceAndTime/ReferenceFrame.lean
+    declarations: ["IsInertial.origin_vsub_eq"]
+    sentence: "Over any elapsed time the origin is displaced by that elapsed time multiplied by this velocity. [7]"
     checked_by:
-      - "ForPhysLib.Exhibits.ReferenceFrame.Findings"   # origin_displacement_eq: the defining property, proved by Classical.choose_spec, with every erasure a visible .magnitude (the fromReferencePoints half stays open)
-
-  - reference: TODO
-    file: null
-    declarations: []
-    sentence: "Over any elapsed time the origin is displaced by that elapsed time multiplied by this velocity. [TODO]"
-    checked_by:
-      - "ForPhysLib.Exhibits.ReferenceFrame.Findings"   # origin_displacement_eq: the defining property, proved by Classical.choose_spec, with every erasure a visible .magnitude (the fromReferencePoints half stays open)
+      - "ForPhysLib.Exhibits.ReferenceFrame.Findings"   # origin_displacement_eq: the same law, proved by IsInertial.origin_vsub_eq, with every erasure a visible .magnitude
 
   - reference: TODO
     file: null

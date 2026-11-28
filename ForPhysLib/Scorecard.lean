@@ -105,7 +105,7 @@ end ExhibitA
 section ExhibitB
 open Exhibits.ReferenceFrame ClassicalMechanics
 
-/-- **B's formalization of the map's TODO statement.** Over elapsed time the origin is
+/-- **B's kinded reading of the map's displacement sentence [7].** Over elapsed time the origin is
 displaced by elapsed time multiplied by its constant velocity, proved with PhysLib's own
 proof term, every erasure a visible `.magnitude`. -/
 theorem exhibitB_requirement17 {d : ℕ} (F : ReferenceFrame d) (h : F.IsInertial)
