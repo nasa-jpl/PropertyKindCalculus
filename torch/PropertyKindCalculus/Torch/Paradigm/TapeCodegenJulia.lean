@@ -250,7 +250,8 @@ def mathHelpers : String := String.intercalate "\n"
   , "        return (signbit(x) && isinteger(y) && !isinteger(y / 2)) ? -r : r"
   , "    end"
   , "    (x < zero(T) && !isinteger(y)) && return T(NaN)"
-  , "    return x^y"
+  , "    r = abs(x)^y"
+  , "    return (x < zero(T) && !isinteger(y / 2)) ? -r : r"
   , "end"
   , "" ]
 

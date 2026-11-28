@@ -399,7 +399,10 @@ def powOrdinary : Array (Float × Float × Float) :=
   #[(2.0, 3.0, 8.0), (2.0, 0.5, Float.sqrt 2.0), (4.0, -0.5, 0.5), (-2.0, 3.0, -8.0), (-2.0, 2.0, 4.0),
     (-2.0, 0.5, nan), (9.0, 0.5, 3.0), (10.0, -2.0, 0.01), (0.5, -1.5, Float.sqrt 8.0),
     (1.5, 2.0, 2.25), (-0.5, -3.0, -8.0), (0.25, 0.5, 0.5), (-8.0, 0.25, nan), (3.0, 4.0, 81.0),
-    (2.0, 10.0, 1024.0), (0.5, 2.0, 0.25), (-1.5, -2.5, nan)]
+    (2.0, 10.0, 1024.0), (0.5, 2.0, 0.25), (-1.5, -2.5, nan),
+    -- finite operands whose power underflows or overflows: the sign is the odd-integer rule's
+    (-0.0625, 513.0, -0.0), (-0.0625, 512.0, 0.0), (-0.0625, -513.0, -inf), (-16.0, 513.0, -inf),
+    (-16.0, -513.0, -0.0), (0.0625, 513.0, 0.0)]
 
 /-- The power probes `(x, y, x ^ y)`: every ordered pair of `specials` by `powRef`, then `powOrdinary`. -/
 def powProbes : Except String (Array (Float × Float × Float)) := do
