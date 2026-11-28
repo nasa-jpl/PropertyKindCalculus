@@ -75,6 +75,7 @@ instance instNumCarrierOfContext {α : Type} [Context α] : NumCarrier α where
   toSub := inferInstance
   toMul := inferInstance
   toDiv := inferInstance
+  toPow := inferInstance
   toMin := inferInstance
   toMax := inferInstance
   toMathCarrier := inferInstance

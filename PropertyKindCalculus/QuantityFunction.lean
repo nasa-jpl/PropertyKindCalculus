@@ -313,6 +313,16 @@ structure TranscendentalKind (k₁ k : KindOfProperty) : Prop where
   /-- The result kind is ratio-scale. -/
   ratioResult : k.IsRational
 
+/-- **A kind-level real-power law** `kb ^ ke → k`: the power whose exponent is a run-time
+quantity. All three kinds are ratio-scale; the `Dimension` layer requires all three dimension one. -/
+structure RealPowerKind (kb ke k : KindOfProperty) : Prop where
+  /-- The base kind is ratio-scale. -/
+  ratioBase : kb.IsRational
+  /-- The exponent kind is ratio-scale. -/
+  ratioExponent : ke.IsRational
+  /-- The result kind is ratio-scale. -/
+  ratioResult : k.IsRational
+
 namespace Quantity
 
 /-- Exponential of a (dimensionless) quantity. -/
@@ -376,6 +386,17 @@ namespace Quantity
 @[expose] def atan2 {k₁ k : KindOfProperty} {R : Type} [MathCarrierExt R]
     (_h : TranscendentalKind k₁ k) (y x : Quantity k₁ R) : Quantity k R :=
   ⟨MathCarrierExt.atan2 y.magnitude x.magnitude⟩
+
+/-- **Real power** `a ^ b` with a run-time exponent, on the toolchain class `Pow R R`: one
+witness, one operation — the `Dimension` layer requires base, exponent and result dimension one. -/
+@[expose] def pow {kb ke k : KindOfProperty} {R : Type} [Pow R R]
+    (_h : RealPowerKind kb ke k) (a : Quantity kb R) (b : Quantity ke R) : Quantity k R :=
+  ⟨a.magnitude ^ b.magnitude⟩
+
+/-- **Erasure is definitional**: the kinded power is the carrier's `^` on the magnitudes. -/
+@[simp] theorem pow_magnitude {kb ke k : KindOfProperty} {R : Type} [Pow R R]
+    (h : RealPowerKind kb ke k) (a : Quantity kb R) (b : Quantity ke R) :
+    (Quantity.pow h a b).magnitude = a.magnitude ^ b.magnitude := rfl
 
 @[simp] theorem exp_magnitude {k₁ k : KindOfProperty} {R : Type} [MathCarrier R]
     (h : TranscendentalKind k₁ k) (a : Quantity k₁ R) :

@@ -34,13 +34,14 @@ public section Interface
 
 namespace PropertyKindCalculus.Paradigm
 
-/-- **The branchless numeric capability.** Bundles arithmetic, the lattice selectors
+/-- **The branchless numeric capability.** Bundles arithmetic, the real power `x ^ y` with a
+run-time exponent (the toolchain class `Pow α α`, as `+ − × ÷` ride on theirs), the lattice selectors
 `min`/`max`, PKC's transcendental surface `MathCarrier`, the constants `0`/`1`, and the
 `Nat → α` embedding — *without* any ordering-to-`Bool`. A kernel over `[NumCarrier α]` is
 branchless by construction, hence lowers to a single fused elementwise kernel; and because it
 *extends* `MathCarrier`, the kind-tracked function calculus instantiates over it directly. -/
 class NumCarrier (α : Type) extends
-  Zero α, One α, Add α, Sub α, Mul α, Div α, Min α, Max α,
+  Zero α, One α, Add α, Sub α, Mul α, Div α, Pow α α, Min α, Max α,
   MathCarrier α, Coe Nat α
 
 /-- **Every `NumCarrier` is a `ScalarCarrier`.** The defining property above is that a kernel
