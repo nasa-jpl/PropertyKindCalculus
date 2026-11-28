@@ -217,6 +217,21 @@ def specialPixels : List (String → Float) :=
   let vs : List Float := [0.0 / 0.0, 0.0, -0.0, 1.0, -1.0, 1.0 / 0.0, -1.0 / 0.0]
   vs.flatMap fun a => vs.map fun b => fun nm => if nm == "x" then a else b
 
+/-- `x ^ y` and `x ^ (y + y)`: the power alone, on ordinary operands. -/
+def recordPower : Except String (CpuTape Float × List Nat) := do
+  let x := TapeCodegenLut.inLeafV "x" 1.0
+  let y := TapeCodegenLut.inLeafV "y" 2.0
+  let outs : List TapeCodegenLut.TB := [x ^ y, x ^ (y + y)]
+  let (ids, t) ← TapeM.run (TorchLean.Tape.empty : CpuTape Float) (outs.mapM (·.run))
+  pure (t, ids)
+
+/-- Finite nonzero bases against fractional and integer exponents of both signs, as `(x, y)`:
+the ordinary domain of van Genuchten's `S ^ (1 / m)`, plus negative bases and an underflow. -/
+def powerPixels : List (String → Float) :=
+  let xs : List Float := [0.125, 0.3, 0.75, 1.5, 2.0, 7.25, 1.0e-3, 1.0e3, -0.0625, -2.0, -3.5]
+  let ys : List Float := [0.5, -0.5, 1.0 / 3.0, 0.7, -1.5, 2.25, 1.8, 2.0, 3.0, -3.0, 257.0, -0.125]
+  xs.flatMap fun a => ys.map fun b => fun nm => if nm == "x" then a else b
+
 def cases : List Case :=
   [ { name := "avs_resjac", record := PropertyKindCalculus.Paradigm.TapeCodegen.Demo.recordResJac
     , centre := PropertyKindCalculus.Paradigm.TapeCodegen.Demo.env0 }
@@ -226,7 +241,9 @@ def cases : List Case :=
     , centre := PropertyKindCalculus.Examples.TapeCodegenLut.recordEnv
     , tables := #[PropertyKindCalculus.Examples.TapeCodegenLut.demoLut] }
   , { name := "nan_signed_zero", record := recordSpecial, centre := fun _ => 0.0
-    , tables := #[PropertyKindCalculus.Examples.TapeCodegenLut.demoLut], pixels := some specialPixels } ]
+    , tables := #[PropertyKindCalculus.Examples.TapeCodegenLut.demoLut], pixels := some specialPixels }
+  , { name := "power_ordinary", record := recordPower, centre := fun _ => 0.0
+    , pixels := some powerPixels } ]
 
 /-- The tables of a case, keyed by name — `evalTapeT`'s table resolver. -/
 def tableLookup (c : Case) : String → Option LutTable := fun tn => c.tables.find? (·.name == tn)
