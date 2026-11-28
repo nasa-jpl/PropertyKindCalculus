@@ -185,7 +185,7 @@ recording succeeds and the same agreement holds.
 A simulation between the sharing state and `cseCompact`'s fold over the unshared tape, one node
 at a time (`Rel.step`), and a lemma that each elementwise recorder reads only its operands'
 values (`raw_natural`), which makes the lookup before running sound. The relation `Shares` is
-preserved by leaves, constants, `+ - * /`, `min`, `max`, `fmin`, `fmax`, `exp`, `log`, `abs`,
+preserved by leaves, constants, `+ - * /`, `^`, `min`, `max`, `fmin`, `fmax`, `exp`, `log`, `abs`,
 `sqrt` and the table fetch; the tactic `tape_shares` closes it for a concrete model.
 :::
 
@@ -355,7 +355,7 @@ work (#52, #53): LibTorch calls on buffers, not operations of a certified `Progr
 *
   * `TapeEval`, `TapeStraightLine`, `TapeCodegen`, `TapeCodegenJulia`
   * the tape's forward denotation; one straight-line program per tape with one denotation theorem; CUDA, C and Julia printers of it; arithmetic-intensity and peak-residency accounting
-  * framework machinery, over an alphabet that includes `exp`, `log`, `sqrt`, `min`, `max` and the table fetch
+  * framework machinery, over an alphabet that includes `exp`, `log`, `sqrt`, `min`, `max`, the real power `x ^ y` and the table fetch
 *
   * `CudaCarrier`, `BatchCarrier`
   * the branchless carrier on device buffers; the backend boundary as a class, and task-sharded CPU execution

@@ -282,7 +282,7 @@ jobs:
         run: |
           # `julia_parity` emits the recorded AVS, LM-step and table tapes as Julia, runs them at
           # Float64 and compares every output with `evalTape`: bit-identical where the cone has no
-          # `exp`/`log`, within `--max-ulp` where it does; `--ka` adds the KernelAbstractions twin
+          # `exp`/`log`/`pow`, within `--max-ulp` where it does; `--ka` adds the KernelAbstractions twin
           # under its relative tolerance. No `--allow-missing-julia`: a missing julia fails here.
           lake exe julia_parity --ka --julia "$JULIA_PARITY_BIN"
 

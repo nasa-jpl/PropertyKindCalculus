@@ -272,7 +272,7 @@ The **megakernel codegen backend** lives in the `Torch` library and is verified:
   `genJulia`/`emitJulia`/`emitJuliaKA`), with the rendering table proved over the whole alphabet
   (`rendering_table_binary`/`_unary`: `jlExpr` renders exactly what `cOp` interprets) and the pinned
   semantics in the emitted header — no `@fastmath`/`muladd`, `min`/`max` as Lean's IEEE `Float.minimum`/`Float.maximum`
-  (`min_eq_minimum`/`max_eq_maximum`), NaN-restoring `tl_sqrt`/`tl_log`, bit-pattern constants.
+  (`min_eq_minimum`/`max_eq_maximum`), NaN-restoring `tl_sqrt`/`tl_log`, C-`pow`-special-cased `tl_pow`, bit-pattern constants.
 - `PropertyKindCalculus.Torch.Paradigm.TapeStraightLine` — **one program, N printers**: the
   backend-neutral straight-line program `SL.genSL` reads off the tape (the only function that reads
   it), its denotation `SL.run`, the theorem `SL.genSL_denotes` that the program runs as `evalTapeT`
@@ -332,9 +332,9 @@ Status: ✅ done · 🚧 in progress · ⬜ planned
   for an ill-shaped leaf; the recorded AVS and LM-step tapes pass (their `gen` `#guard`s decide it).
   ✅ **The host `Float` is a specification** (`Examples.TapeHostFloatModel`): on the pinned toolchain
   `Float` is a structure over core's `Float.Model` (IEEE 754 binary64, round-to-nearest-even), and
-  `BinOp.eval`/`UnOp.eval` unfold by `rfl` to model arithmetic for every op of the alphabet but the two
-  `opaque` externs `exp`/`log` — so what a printer must be trusted for is the host's IEEE conformance
-  (plus libm for `exp`/`log`), not Lean's `Float`.
+  `BinOp.eval`/`UnOp.eval` unfold by `rfl` to model arithmetic for every op of the alphabet but the three
+  `opaque` externs `exp`/`log`/`pow` — so what a printer must be trusted for is the host's IEEE conformance
+  (plus libm for `exp`/`log`/`pow`), not Lean's `Float`.
   ✅ **The runtime adequacy carrier is certified** (`Uncertainty.Adequacy32`): the adequacy checks over
   `Float32`, whose `absorbs`-shaped swamping flag is proved to be `round₃₂`'s verdict
   (`Adequacy32.add_flag_sound`: core's `Float32.Model` → FloatLib's `ofFloat32_add_of_isFinite` →
@@ -347,7 +347,8 @@ Status: ✅ done · 🚧 in progress · ⬜ planned
   committed `apps/julia-parity-env/Manifest.toml` (CI instantiates it and fails if that changed it); a
   missing julia fails the lane rather than skipping it.
   ⬜ First CliMA-shaped closure recorded over `[NumCarrier α]` to find the alphabet gaps (a bounded
-  reduction and a gather are the expected first two).
+  reduction and a gather are the expected first two; a real power with a run-time exponent, `x ^ y`, is
+  in the alphabet).
 - ✅ **Recorded the *whole* trust-region step, not just the residual/Jacobian fragment**
   (`Examples.LmStepCodegenDemo`, parallel to `TapeCodegenDemo`). One full `lmStep` iteration —
   fold the residual + 4 Jacobian columns over all *K* observation rows into the 4×4 normal equations
