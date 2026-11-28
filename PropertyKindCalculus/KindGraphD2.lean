@@ -141,6 +141,7 @@ def familyGlyph : EdgeFamily → String
   | .reciprocal => "1/x"
   | .transcendental => "f"
   | .power p => s!"^{EdgeFamily.renderExp p}"
+  | .realPower => "^"
   | .reference => "ref"
   | .additive => "±"
   | .tableMul => "[T]·"

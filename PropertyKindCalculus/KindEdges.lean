@@ -36,7 +36,7 @@ found by two complementary scans:
 
 The edge families scanned are the witness `Prop`s of the core calculus: `ProductKind`,
 `QuotientKind`, `ReciprocalKind` (`QuantityClassification`), `TranscendentalKind`,
-`PowerKind`, `ReferenceKind` (`QuantityFunction`), `DifferenceKind` (`Quantity`), and
+`RealPowerKind`, `PowerKind`, `ReferenceKind` (`QuantityFunction`), `DifferenceKind` (`Quantity`), and
 the table classes `KindMul`/`KindDiv` (`OperatorTable`).
 
 The *occurrence* reading of these same families — which values met at an edge, read per
@@ -82,6 +82,8 @@ inductive EdgeLaw where
   | reciprocal
   /-- `transcendental : k₁ → k₂`. -/
   | transcendental
+  /-- `k₁ ^ k₂ → k`: the real power, its exponent an operand kind; all three dimension one. -/
+  | realPower
   /-- `k₁ ^ p → k₂`, the exponent `p` a rational, not a kind. -/
   | power
   /-- `reference : k₁ → k₂`: a re-expression relates the value converted; the two
@@ -118,6 +120,8 @@ def specs : Array EdgeSpec := #[
     operands := #[0], result := 1, fmt := fun a => s!"1 / {a[0]!} → {a[1]!}" },
   { const := ``PropertyKindCalculus.TranscendentalKind, arity := 2, law := .transcendental,
     operands := #[0], result := 1, fmt := fun a => s!"transcendental : {a[0]!} → {a[1]!}" },
+  { const := ``PropertyKindCalculus.RealPowerKind, arity := 3, law := .realPower,
+    operands := #[0, 1], result := 2, fmt := fun a => s!"{a[0]!} ^ {a[1]!} → {a[2]!}" },
   { const := ``PropertyKindCalculus.PowerKind, arity := 3, law := .power,
     operands := #[1], result := 2, exponent := some 0,
     fmt := fun a => s!"{a[1]!} ^ {a[0]!} → {a[2]!}" },

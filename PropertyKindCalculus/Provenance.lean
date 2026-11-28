@@ -269,7 +269,8 @@ def Provenance.lastComponent : Lean.Name → String
   | n => toString n
 
 /-- The hyperedge labels: the witness families of the core calculus — `ProductKind`,
-`QuotientKind`, `ReciprocalKind`, `TranscendentalKind`, `PowerKind` (carrying its
+`QuotientKind`, `ReciprocalKind`, `TranscendentalKind`, `RealPowerKind` (the power whose exponent is an
+operand node), `PowerKind` (carrying its
 rational exponent — an exponent is data of the edge, not an operand node),
 `ReferenceKind` (the re-expression, whose two reference quantities are configuration of
 the edge rather than operands of it — the value converted is the one operand),
@@ -293,6 +294,7 @@ inductive Provenance.EdgeFamily where
   | reciprocal
   | transcendental
   | power (exp : Rat)
+  | realPower
   | reference
   | additive
   | tableMul
@@ -307,7 +309,7 @@ counted; a `power` edge's exponent is carried by the label, not an operand). A `
 edge's count is the step's kinded input count, carried by the label — a procedure
 relates however many inputs its interface states. -/
 @[expose] def Provenance.EdgeFamily.operandCount : Provenance.EdgeFamily → Nat
-  | .product | .quotient | .tableMul | .tableDiv | .additive => 2
+  | .product | .quotient | .tableMul | .tableDiv | .additive | .realPower => 2
   | .reciprocal | .transcendental | .power _ | .reference | .copy => 1
   | .step _ _ a => a
   | .select n => n + 1
@@ -332,6 +334,7 @@ def Provenance.EdgeFamily.render (f : Provenance.EdgeFamily)
   | .reciprocal => s!"1 / {o 0} → {result}"
   | .transcendental => s!"transcendental : {o 0} → {result}"
   | .power p => s!"{o 0} ^ {Provenance.EdgeFamily.renderExp p} → {result}"
+  | .realPower => s!"{o 0} ^ {o 1} → {result}"
   | .reference => s!"reference : {o 0} → {result}"
   | .additive => s!"{o 0} ± {o 1} → {result}"
   | .tableMul => s!"[table] {o 0} · {o 1} → {result}"

@@ -100,6 +100,7 @@ def texOfOccurrence (o : Occurrence NodeId KindRef) : String :=
   | .quotient => s!"\\frac\{{arg 0}}\{{arg 1}}"
   | .reciprocal => s!"\\frac\{1}\{{arg 0}}"
   | .power p => s!"{arg 0}^\{{EdgeFamily.renderExp p}}"
+  | .realPower => s!"{arg 0}^\{{arg 1}}"
   | .additive =>
     if o.op == ``HAdd.hAdd then s!"{arg 0} + {arg 1}"
     else if o.op == ``HSub.hSub then s!"{arg 0} - {arg 1}"

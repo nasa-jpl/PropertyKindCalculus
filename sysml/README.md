@@ -57,7 +57,7 @@ OpenSysML: `sysml -validate sysml/PKC.sysml sysml/examples/HarmonicOscillator.sy
 
 | Package | Keywords | Lean counterpart |
 |---|---|---|
-| `PKC::Kinds` | `#kind` (`:>` is specialization), `#principle`, `#dedicated`, `#unit`, and the kind-algebra connections `#product` `#quotient` `#reciprocal` `#power` `#transcendental` `#reference` `#difference` | `KindOfProperty`, `ScaleType`, `ExaminationPrinciple`, `Specializes`, `ProductKind`…/`KindMul`/`KindDiv`, `DedicatedKind`, `MetrologicalUnit`; the `Dimension` layer's vector and the ISO 80000 catalogue locators as metadata |
+| `PKC::Kinds` | `#kind` (`:>` is specialization), `#principle`, `#dedicated`, `#unit`, and the kind-algebra connections `#product` `#quotient` `#reciprocal` `#power` `#realPower` `#transcendental` `#reference` `#difference` | `KindOfProperty`, `ScaleType`, `ExaminationPrinciple`, `Specializes`, `ProductKind`…/`KindMul`/`KindDiv`, `DedicatedKind`, `MetrologicalUnit`; the `Dimension` layer's vector and the ISO 80000 catalogue locators as metadata |
 | `PKC::Modules` | `#module` with `port … : KindPort`, `intros`, `occurrences`, `aggregations`; `#relation`; `#req` | `Provenance.Contract`, `Provenance` (the hypergraph), `Provenance.Relation` with its `RelationLicense`s, `Provenance.Requirement` |
 | `PKC::Tape` | `#tape`, `#match` with `components`, `realized`, `carrier` | `Paradigm.TapeGraph`, `Paradigm.Match`; the carrier rung and platform TorchLean compiles for |
 

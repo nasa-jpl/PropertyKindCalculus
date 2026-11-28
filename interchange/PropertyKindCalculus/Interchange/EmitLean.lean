@@ -162,6 +162,7 @@ def familyCtor (o : Occurrence) : String :=
   | .product => ".product" | .quotient => ".quotient" | .reciprocal => ".reciprocal"
   | .transcendental => ".transcendental" | .reference => ".reference" | .additive => ".additive"
   | .tableMul => ".tableMul" | .tableDiv => ".tableDiv" | .copy => ".copy"
+  | .realPower => ".realPower"
   | .power => s!"(.power (({o.powerNum.getD 1} : Rat) / {o.powerDen.getD 1}))"
   | .step => s!"(.step {nameLit o.member} {match o.inst with | some i => s!"(some {i})" | none => "none"} {o.arity.getD 0})"
   | .select => s!"(.select {o.arity.getD 0})"
