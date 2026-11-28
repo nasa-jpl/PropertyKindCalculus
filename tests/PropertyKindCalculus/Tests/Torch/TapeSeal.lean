@@ -113,6 +113,50 @@ def env₂ : String → Float
 #guard (recorded.bind fun (t, r, i) => (evalTape env₂ t).map fun v => (v.getD r 0.0, v.getD i 0.0))
   == .ok (-3.5, 12.0)
 
+/-! ## The real power — the recorded tape, not a hand-built one
+
+The kinded `Quantity.pow` is recorded; its graph is the one `gPow` is matched against, its
+vertex is the recorder's `pow`, and the tape evaluates to `Float.pow`. -/
+
+open PropertyKindCalculus.Tests.Bisimulation (gPow gPow_wellFormed TPow mPow pow_accepted)
+
+/-- A ratio-scale toy kind for the power's base, exponent and result. -/
+def numK : KindOfProperty := { id := "tape-seal-toy-number", scale := .ratio }
+
+/-- The kinded module `z = x ^ y`, at the recording carrier. -/
+def z : Quantity numK TB :=
+  Quantity.pow (⟨rfl, rfl, rfl⟩ : RealPowerKind numK numK numK) ⟨inLeaf "x"⟩ ⟨inLeaf "y"⟩
+
+/-- Record `z` and compact the tape. -/
+def recordedPow : Except String (CpuTape Float × Nat) := do
+  let (r, t) ← TapeM.run Tape.empty z.magnitude.run
+  let (t', remap) := cseCompact t
+  pure (t', remap.getD r r)
+
+#guard (recordedPow.map fun (t, _) => ofTape t == TPow) == .ok true
+#guard (recordedPow.map (·.2)) == .ok 2
+#guard (recordedPow.map fun (t, _) => (ofTape t).vertices.map (·.name)) ==
+  .ok [some "x", some "y", some "pow"]
+
+/-- The seal of the power: its value depends on the inputs `x` and `y` alone. -/
+example (t : CpuTape Float) (hwft : WF t) (hT : ofTape t = TPow) :
+    ∀ (env₁ env₂ : String → Float) (vals₁ vals₂ : Array Float),
+      (∀ s ∈ gPow.influencers 2, ∀ u ∈ mPow.comps s, ∀ nm, (ofTape t).name? u = some nm →
+        env₁ nm = env₂ nm) →
+      evalTape env₁ t = .ok vals₁ → evalTape env₂ t = .ok vals₂ →
+      vals₁.getD 2 0.0 = vals₂.getD 2 0.0 :=
+  (semantic_seal gPow_wellFormed t hwft (by rw [hT]; exact pow_accepted) (o := 2) (r := 2)
+    (by decide)).1
+
+/-- A power environment: `x = 2`, `y = 10`. -/
+def envPow : String → Float
+  | "x" => 2.0 | "y" => 10.0 | _ => 0.0
+
+-- The recorded vertex computes the power, not another binary operation on the same wiring.
+#guard (recordedPow.bind fun (t, r) => (evalTape envPow t).map (·.getD r 0.0)) == .ok 1024.0
+#guard (recordedPow.bind fun (t, r) =>
+  (evalTape (fun nm => if nm == "x" then -2.0 else 0.5) t).map (·.getD r 0.0 |>.isNaN)) == .ok true
+
 /-! ## Axiom profiles -/
 
 /-- info: 'PropertyKindCalculus.Paradigm.TapeSeal.evalTape_cone' depends on axioms: [propext, Classical.choice, Quot.sound] -/
